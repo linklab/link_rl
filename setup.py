@@ -1,5 +1,5 @@
 import io
-from setuptools import setup
+from setuptools import find_packages, setup
 
 
 # Read in the README for the long description on PyPI
@@ -17,7 +17,7 @@ setup(name='link_rl',
       author='link.koreatech',
       author_email='link.koreatech@gmail.com',
       license='MIT',
-      packages='link_rl',
+      packages=find_packages(),
       classifiers=[
           'Programming Language :: Python :: 3.6',
           'Programming Language :: Python :: 3.7',
