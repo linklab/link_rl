@@ -8,9 +8,9 @@ import torch.multiprocessing as mp
 import os
 import warnings
 
-from fast_rl import dqn_model, rl_agent, actions, experience
-from fast_rl.common import wrappers, utils, statistics
-import atari_params
+from fast_main import atari_params
+from lib.fast_rl import dqn_model, rl_agent, actions, experience
+from lib.fast_rl.common import wrappers, utils, statistics
 
 warnings.filterwarnings("ignore", category=DeprecationWarning)
 warnings.filterwarnings("ignore", category=UserWarning)
