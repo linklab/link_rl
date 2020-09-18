@@ -8,6 +8,7 @@ def long_description():
         readme = f.read()
     return readme
 
+
 setup(name='link_rl',
       version='0.1',
       description='reinforcement learning library and executables by LINK@KOREATECH',
