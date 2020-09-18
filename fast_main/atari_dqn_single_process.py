@@ -56,8 +56,8 @@ if __name__ == "__main__":
     buffer = experience.ExperienceReplayBuffer(exp_source, buffer_size=params.replay_size)
     optimizer = optim.Adam(net.parameters(), lr=params.learning_rate)
 
-    stat = statistics.Statistics(method="nature_dqn", args=args)
-    stat_for_model_loss = statistics.StatisticsForModelLoss(args=args)
+    stat = statistics.Statistics(method="nature_dqn")
+    stat_for_model_loss = statistics.StatisticsForModelLoss()
 
     action_count = []
     for _ in env.unwrapped.get_action_meanings():

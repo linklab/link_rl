@@ -8,7 +8,6 @@ import torch.optim as optim
 import torch.multiprocessing as mp
 import os
 import warnings
-import numpy as np
 
 from fast_main import atari_params
 from lib.fast_rl import dqn_model, rl_agent, actions, experience
@@ -37,7 +36,7 @@ def play_func(env, params, net, device, exp_queue, args):
     agent = rl_agent.DQNAgent(net, action_selector, device=device)
     exp_source = experience.ExperienceSourceFirstLast(env, agent, gamma=params.gamma, steps_count=1)
     exp_source_iter = iter(exp_source)
-    stat = statistics.Statistics(method="nature_dqn", args=args)
+    stat = statistics.Statistics(method="nature_dqn")
 
     action_count = []
     for _ in env.unwrapped.get_action_meanings():
@@ -102,7 +101,7 @@ def main():
     play_proc.start()
 
     time.sleep(0.5)
-    stat_for_model_loss = statistics.StatisticsForModelLoss(args=args)
+    stat_for_model_loss = statistics.StatisticsForModelLoss()
     frame_idx = 0
 
     while play_proc.is_alive():

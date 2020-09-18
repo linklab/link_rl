@@ -44,7 +44,7 @@ class DQN(nn.Module):
 
     def init_weights(self, m):
         if type(m) == nn.Linear or type(m) == nn.Conv2d:
-            torch.nn.init.kaiming_normal(m.weight)
+            torch.nn.init.kaiming_normal_(m.weight)
 
     def _get_conv_out(self, shape):
         o = self.conv(Variable(torch.zeros(1, *shape)))

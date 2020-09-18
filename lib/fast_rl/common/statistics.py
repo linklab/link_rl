@@ -3,8 +3,7 @@ from visdom import Visdom
 # python -m visdom.server
 # http://localhost:8097
 class Statistics:
-    def __init__(self, method, args):
-        self.args = args
+    def __init__(self, method):
         self.method = method
 
         self.vis_dom_info_text = "<div style='margin:1.0em;font-size:1.5em'>Env: {0}<br/>Method: {1}<br/> Global Step: {2}</div>"
@@ -52,8 +51,7 @@ class Statistics:
 
 
 class StatisticsForModelLoss:
-    def __init__(self, args):
-        self.args = args
+    def __init__(self):
         self.plt = None
 
         self.vis = Visdom()
