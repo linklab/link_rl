@@ -70,7 +70,7 @@ if __name__ == "__main__":
     with utils.AtariRewardTracker(stop_mean_episode_reward=params.stop_mean_episode_reward, stat=stat, args=args) as reward_tracker:
         while True:
             frame_idx += params.train_freq
-            buffer.populate(params.train_freq)
+            buffer.populate_stacked_experience(params.train_freq)
             epsilon_tracker.udpate(frame_idx)
 
             episode_rewards = exp_source.pop_episode_reward_lst()

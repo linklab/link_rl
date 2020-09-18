@@ -382,6 +382,22 @@ class ExperienceReplayBuffer:
             entry = next(self.experience_source_iter)
             self._add(entry)
 
+    def populate_stacked_experience(self, num_samples):
+        for _ in range(num_samples):
+            exp = next(self.experience_source_iter)
+            # assert np.array_equal(exp.state.__array__()[1, :, :], exp.last_state.__array__()[0, :, :])
+            # assert np.array_equal(exp.state.__array__()[2, :, :], exp.last_state.__array__()[1, :, :])
+            # assert np.array_equal(exp.state.__array__()[3, :, :], exp.last_state.__array__()[2, :, :])
+
+            extended_frames = np.zeros([5, 84, 84], dtype=np.uint8)
+            extended_frames[0, :, :] = exp.state.__array__()[0, :, :]
+            for i in range(1, 4):
+                extended_frames[i, :, :] = exp.state.__array__()[i, :, :]
+
+            if exp.last_state is not None:
+                extended_frames[4, :, :] = exp.last_state.__array__()[3, :, :]
+
+            self._add((extended_frames, exp.action, exp.reward, exp.last_state is None))
 
 class PrioReplayBufferNaive:
     def __init__(self, exp_source, buf_size, prob_alpha=0.6):
