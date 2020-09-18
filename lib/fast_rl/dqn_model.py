@@ -6,12 +6,10 @@ from torch.autograd import Variable
 
 import numpy as np
 
-from lib.fast_rl.common import MODEL_SAVE_DIR
 
-
-def save_model(args, q_net, step, mean_episode_reward):
+def save_model(model_save_dir, args, q_net, step, mean_episode_reward):
     model_save_filename = os.path.join(
-        MODEL_SAVE_DIR, "{0}_{1}_{2}_{3}.pth".format(
+        model_save_dir, "{0}_{1}_{2}_{3}.pth".format(
             args.env, q_net.__name__, step, mean_episode_reward
         )
     )
