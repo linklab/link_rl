@@ -332,7 +332,7 @@ class TBMeanTracker:
 
 
 class AtariRewardTracker:
-    def __init__(self, stop_mean_episode_reward, stat, args):
+    def __init__(self, stop_mean_episode_reward, stat=None, args=None):
         self.min_ts_diff = 1 # 1 second
         self.stop_mean_episode_reward = stop_mean_episode_reward
         self.args = args
@@ -391,7 +391,7 @@ class AtariRewardTracker:
                 time.strftime("%Hh %Mm %Ss", time.gmtime(elapsed_time)),
                 action_count
             ), flush=True)
-        if self.args.draw_viz:
+        if self.args.draw_viz and self.stat:
             self.stat.draw_performance(episode_done_frame, mean_episode_reward, speed, epsilon)
 
 
