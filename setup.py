@@ -1,5 +1,8 @@
 import io
 from setuptools import find_packages, setup
+import pathlib
+
+here = pathlib.Path(__file__).parent.resolve()
 
 
 # Read in the README for the long description on PyPI
@@ -19,10 +22,6 @@ setup(
     author_email='link.koreatech@gmail.com',
     license='MIT',
     packages=find_packages(),
-    classifiers=[
-      'Programming Language :: Python :: 3.6',
-      'Programming Language :: Python :: 3.7',
-    ],
     install_requires=[
         'visdom==0.1.8.9'
     ],
