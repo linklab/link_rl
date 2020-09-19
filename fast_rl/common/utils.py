@@ -351,7 +351,7 @@ class AtariRewardTracker:
     def __exit__(self, *args):
         pass
 
-    def reward(self, episode_reward, episode_done_frame, epsilon, action_count):
+    def reward(self, episode_reward, episode_done_frame, epsilon, action_count=None):
         self.episode_reward_list.append(episode_reward)
         mean_episode_reward = np.mean(self.episode_reward_list[-self.args.average_size_for_stats:])
 
@@ -381,7 +381,7 @@ class AtariRewardTracker:
         self.ts_frame = episode_done_frame
         self.ts = current_ts
         print(
-            "[{0:6}] done {1:4} games, episode_reward: {2:5.1f}, mean reward: {3:7.3f}, eps: {4:5.3f}, speed: {5:7.2f} fps, elapsed time: {6}, {7}".format(
+            "[{0:6}] done {1:4} games, episode_reward: {2:5.1f}, mean reward: {3:7.3f}, eps: {4:5.3f}, speed: {5:7.2f} fps, elapsed time: {6}".format(
                 episode_done_frame,
                 len(self.episode_reward_list),
                 self.episode_reward_list[-1],
@@ -389,8 +389,13 @@ class AtariRewardTracker:
                 epsilon,
                 speed,
                 time.strftime("%Hh %Mm %Ss", time.gmtime(elapsed_time)),
-                action_count
-            ), flush=True)
+        ), end="")
+
+        if action_count:
+            print(", {0}".format(action_count), flush=True)
+        else:
+            print("", flush=True)
+
         if self.args.draw_viz and self.stat:
             self.stat.draw_performance(episode_done_frame, mean_episode_reward, speed, epsilon)
 
