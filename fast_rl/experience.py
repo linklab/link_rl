@@ -382,9 +382,11 @@ class ExperienceReplayBuffer:
             entry = next(self.experience_source_iter)
             self._add(entry)
 
-    def populate_stacked_experience(self, num_samples):
+    def populate_stacked_experience(self, num_samples, action_count=None):
         for _ in range(num_samples):
             exp = next(self.experience_source_iter)
+            if action_count:
+                action_count[exp.action] += 1
             # assert np.array_equal(exp.state.__array__()[1, :, :], exp.last_state.__array__()[0, :, :])
             # assert np.array_equal(exp.state.__array__()[2, :, :], exp.last_state.__array__()[1, :, :])
             # assert np.array_equal(exp.state.__array__()[3, :, :], exp.last_state.__array__()[2, :, :])
