@@ -24,7 +24,7 @@ class ExperienceSource:
 
     Every experience contains n list of Experience entries
     """
-    def __init__(self, env, agent, steps_count=2, steps_delta=1, vectorized=False):
+    def __init__(self, env, agent, steps_count=1, steps_delta=1, vectorized=False):
         """
         Create simple experience source
         :param env: environment or list of environments to be used
@@ -181,7 +181,7 @@ class ExperienceSourceFirstLast(ExperienceSource):
     """
     def __init__(self, env, agent, gamma, steps_count=1, steps_delta=1, vectorized=False):
         assert isinstance(gamma, float)
-        super(ExperienceSourceFirstLast, self).__init__(env, agent, steps_count+1, steps_delta, vectorized=vectorized)
+        super(ExperienceSourceFirstLast, self).__init__(env, agent, steps_count, steps_delta, vectorized=vectorized)
         self.gamma = gamma
         self.steps = steps_count
 
