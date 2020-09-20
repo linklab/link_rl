@@ -81,7 +81,7 @@ if __name__ == "__main__":
                 )
 
                 if frame_idx >= next_save_frame_idx:
-                    dqn_model.save_model(args, net, frame_idx, mean_episode_reward)
+                    dqn_model.save_model(".", args.env_name, net.__name__, net, frame_idx, mean_episode_reward)
                     next_save_frame_idx += args.model_save_period
 
                 if solved:

@@ -62,7 +62,7 @@ def play_func(env, params, net, device, exp_queue, args):
                 solved, mean_episode_reward = reward_tracker.reward(episode_rewards[0], frame_idx, action_selector.epsilon, action_count)
 
                 if frame_idx >= next_save_frame_idx:
-                    dqn_model.save_model(".", args, net, frame_idx, mean_episode_reward)
+                    dqn_model.save_model(".", args.env_name, net.__name__, net, frame_idx, mean_episode_reward)
                     next_save_frame_idx += args.model_save_period
 
                 if solved:

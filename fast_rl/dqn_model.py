@@ -7,14 +7,17 @@ from torch.autograd import Variable
 import numpy as np
 
 
-def save_model(model_save_dir, args, q_net, step, mean_episode_reward):
+def save_model(model_save_dir, env_name, q_net_name, q_net, step, mean_episode_reward):
     model_save_filename = os.path.join(
         model_save_dir, "{0}_{1}_{2}_{3}.pth".format(
-            args.env_name, q_net.__name__, step, mean_episode_reward
+            env_name, q_net_name, step, mean_episode_reward
         )
     )
     torch.save(q_net.state_dict(), model_save_filename)
     return model_save_filename
+
+def load_model(model_save_dir, env_name, q_net_name, step=None):
+    pass
 
 
 class DQN(nn.Module):
