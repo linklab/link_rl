@@ -9,7 +9,6 @@ import os
 
 print(torch.__version__)
 
-from common.environments.gym.cartpole import CartPole_v0
 from common.fast_rl import actions, experience, dqn_model, rl_agent
 from common.fast_rl.common import statistics, utils
 
@@ -80,7 +79,6 @@ def play_func(exp_queue, env, net):
 def main():
     mp.set_start_method('spawn')
 
-    #env = CartPole_v0()
     env = gym.make("CartPole-v0")
 
     net = dqn_model.DuelingDQNMLP(
