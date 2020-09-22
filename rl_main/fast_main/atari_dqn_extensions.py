@@ -55,7 +55,7 @@ def play_func(env, net, exp_queue):
     with utils.AtariRewardTracker(stop_mean_episode_reward=params.STOP_MEAN_EPISODE_REWARD,
             average_size_for_stats=params.AVG_EPISODE_SIZE_FOR_STAT,
             draw_viz=params.DRAW_VIZ, stat=stat) as reward_tracker:
-        while True:
+        while frame_idx < params.MAX_GLOBAL_STEPS:
             frame_idx += 1
             exp = next(exp_source_iter)
             action_count[exp.action] += 1
