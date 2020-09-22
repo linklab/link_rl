@@ -78,11 +78,11 @@ class DQN(nn.Module):
         return self.fc(conv_out)
 
 
-class DuelingDQN(nn.Module):
+class DuelingDQNCNN(nn.Module):
     def __init__(self, input_shape, n_actions):
-        super(DuelingDQN, self).__init__()
+        super(DuelingDQNCNN, self).__init__()
 
-        self.__name__ = "DuelingDQN"
+        self.__name__ = "DuelingDQNCNN"
 
         self.conv = nn.Sequential(
             nn.Conv2d(input_shape[0], 32, kernel_size=8, stride=4),

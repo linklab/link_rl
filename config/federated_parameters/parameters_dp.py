@@ -18,7 +18,7 @@ class PARAMETERS_DP(PARAMETERS_GENERAL):
     ENVIRONMENT_ID = EnvironmentName.FROZENLAKE_V0
 
     # [2. DEEP_LEARNING_MODELS]
-    DEEP_LEARNING_MODEL = DeepLearningModelName.NoModel
+    DEEP_LEARNING_MODEL = DeepLearningModelName.No_Model
 
     # [3. ALGORITHMS]
     RL_ALGORITHM = RLAlgorithmName.Policy_Iteration
