@@ -10,7 +10,7 @@ sys.path.append(PROJECT_HOME)
 
 from rl_main import rl_utils
 from common.chief_workers.chief import Chief
-from config.parameters_general import PARAMETERS_GENERAL as params
+from config.parameters import PARAMETERS as params
 
 
 import paho.mqtt.client as mqtt
@@ -22,7 +22,7 @@ logger = get_logger("chief")
 env = rl_utils.get_environment()
 rl_model = rl_utils.get_rl_model(env, -1)
 
-chief = Chief(logger=logger, env=env, rl_model=rl_model)
+chief = Chief(logger=logger, env=env, rl_model=rl_model, params=params)
 
 
 def on_chief_connect(client, userdata, flags, rc):

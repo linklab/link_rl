@@ -30,7 +30,7 @@ if __name__ == "__main__":
     utils.ask_file_removal(device)
 
     env = rl_utils.get_environment()
-    rl_model = rl_utils.get_rl_model(env, -1)
+    rl_model = rl_utils.get_rl_model(env, -1, params, device)
 
     utils.print_configuration(env, rl_model, params)
 
