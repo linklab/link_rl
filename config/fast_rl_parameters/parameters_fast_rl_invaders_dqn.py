@@ -2,7 +2,7 @@ from config.names import *
 from config.parameters_general import PARAMETERS_GENERAL
 
 
-class PARAMETERS_FAST_RL_PONG_DQN(PARAMETERS_GENERAL):
+class PARAMETERS_FAST_RL_INVADERS_DQN(PARAMETERS_GENERAL):
     ENVIRONMENT_ID = EnvironmentName.PONG_NO_FRAME_SKIP_V4
     RL_ALGORITHM = RLAlgorithmName.DQN_FAST_V0
     DEEP_LEARNING_MODEL = DeepLearningModelName.Dueling_DQN_CNN

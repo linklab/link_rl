@@ -85,7 +85,7 @@ def main():
 
     env = make_env(params)
 
-    net = dqn_model.DuelingDQN(
+    net = dqn_model.DuelingDQNCNN(
         input_shape=env.observation_space.shape,
         n_actions=env.action_space.n
     ).to(device)

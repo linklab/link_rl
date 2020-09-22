@@ -35,21 +35,22 @@ class EnvironmentName(enum.Enum):
     HUMANOID_STAND_UP_V2 = 'HumanoidStandup-v2'
     INVERTED_PENDULUM_V2 = 'InvertedPendulum-v2'
     WALKER_2D_V2 = 'Walker2d-v2'
-    PONGNOFRAMESKIP_V4 = 'PongNoFrameskip-v4'
+    PONG_NO_FRAME_SKIP_V4 = 'PongNoFrameskip-v4'
+    BREAKOUT_NO_FRAME_SKIP_V4 = 'BreakoutNoFrameskip-v4'
 
 
 class DeepLearningModelName(enum.Enum):
-    ActorCriticMLP = "Actor_Critic_MLP"
-    ActorCriticCNN = "Actor_Critic_CNN"
-    NoModel = "NoModel"
-    DuelingDQNCNN = "Dueling_DQN_CNN"
-    DuelingDQNMLP = "Dueling_DQN_MLP"
+    Actor_Critic_MLP = "Actor_Critic_MLP"
+    Actor_Critic_CNN = "Actor_Critic_CNN"
+    No_Model = "No_Model"
+    Dueling_DQN_CNN = "Dueling_DQN_CNN"
+    Dueling_DQN_MLP = "Dueling_DQN_MLP"
 
 
 class RLAlgorithmName(enum.Enum):
     DQN_V0 = "DQN_v0"
-    DQN_V1 = "DQN_V1"   # FAST_RL
-    DDPG_V1 = "DQN_V1"  # FAST_RL
+    DQN_FAST_V0 = "DQN_FAST_V0"   # FAST_RL
+    DDPG_FAST_V0 = "DQN_FAST_V0"  # FAST_RL
     PPO_V0 = "PPO_v0"
     Policy_Iteration = "DP_Policy_Iteration"
     Value_Iteration = "DP_Value_Iteration"
@@ -59,3 +60,8 @@ class RLAlgorithmName(enum.Enum):
 class OptimizerName(enum.Enum):
     NESTEROV = "nesterov"
     ADAM = "Adam"
+
+
+class ReplayBufferName(enum.Enum):
+    REPLAY_BUFFER = "Replay_Buffer"
+    PRIORITIZED_REPLAY_BUFFER = "Prioritized_Replay_Buffer"
