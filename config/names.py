@@ -37,6 +37,7 @@ class EnvironmentName(enum.Enum):
     WALKER_2D_V2 = 'Walker2d-v2'
     PONG_NO_FRAME_SKIP_V4 = 'PongNoFrameskip-v4'
     BREAKOUT_NO_FRAME_SKIP_V4 = 'BreakoutNoFrameskip-v4'
+    SPACE_INVADERS_NO_FRAME_SKIP_V4 = "SpaceInvadersNoFrameskip-v4"
 
 
 class DeepLearningModelName(enum.Enum):

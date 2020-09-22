@@ -198,9 +198,9 @@ def unpack_batch(batch):
 
 
 def insert_experience_into_buffer(exp, buffer):
-    assert np.array_equal(exp.state.__array__()[1, :, :], exp.last_state.__array__()[0, :, :])
-    assert np.array_equal(exp.state.__array__()[2, :, :], exp.last_state.__array__()[1, :, :])
-    assert np.array_equal(exp.state.__array__()[3, :, :], exp.last_state.__array__()[2, :, :])
+    # assert np.array_equal(exp.state.__array__()[1, :, :], exp.last_state.__array__()[0, :, :])
+    # assert np.array_equal(exp.state.__array__()[2, :, :], exp.last_state.__array__()[1, :, :])
+    # assert np.array_equal(exp.state.__array__()[3, :, :], exp.last_state.__array__()[2, :, :])
 
     extended_frames = np.zeros([5, 84, 84], dtype=np.uint8)
     extended_frames[0, :, :] = exp.state.__array__()[0, :, :]
