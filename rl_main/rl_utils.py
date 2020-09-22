@@ -153,7 +153,7 @@ def get_rl_model(env, worker_id):
     return model
 
 
-def get_rl_algorithm(env, worker_id=0, logger=False):
+def get_rl_algorithm(env, worker_id=0, logger=False, params=params):
     if params.RL_ALGORITHM == RLAlgorithmName.PPO_V0:
         rl_algorithm = PPO_v0(
             env=env,
@@ -161,6 +161,7 @@ def get_rl_algorithm(env, worker_id=0, logger=False):
             gamma=params.GAMMA,
             env_render=params.ENV_RENDER,
             logger=logger,
+            params = params,
             verbose=params.VERBOSE
         )
     elif params.RL_ALGORITHM == RLAlgorithmName.DQN_V0:
@@ -170,17 +171,20 @@ def get_rl_algorithm(env, worker_id=0, logger=False):
             gamma=params.GAMMA,
             env_render=params.ENV_RENDER,
             logger=logger,
+            params=params,
             verbose=params.VERBOSE
         )
     elif params.RL_ALGORITHM == RLAlgorithmName.Policy_Iteration:
         rl_algorithm = Policy_Iteration(
             env=env,
-            gamma=params.GAMMA
+            gamma=params.GAMMA,
+            params=params
         )
     elif params.RL_ALGORITHM == RLAlgorithmName.Value_Iteration:
         rl_algorithm = Value_Iteration(
             env=env,
-            gamma=params.GAMMA
+            gamma=params.GAMMA,
+            params=params
         )
     elif params.RL_ALGORITHM == RLAlgorithmName.Monte_Carlo_Control_V0:
         rl_algorithm = Monte_Carlo_Control_v0(
@@ -189,6 +193,7 @@ def get_rl_algorithm(env, worker_id=0, logger=False):
             gamma=params.GAMMA,
             env_render=params.ENV_RENDER,
             logger=logger,
+            params=params,
             verbose=params.VERBOSE
         )
     else:
