@@ -1,7 +1,7 @@
 from random import *
 from gym_unity.envs import UnityEnv
 
-from common.conf.names import OSName, EnvironmentName
+from config.names import OSName, EnvironmentName
 from common.environments.environment import Environment
 
 

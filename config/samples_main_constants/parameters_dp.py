@@ -1,4 +1,4 @@
-from common.conf.names import *
+from config.names import *
 
 # [GENERAL]
 SEED = 1

@@ -171,7 +171,10 @@ class DuelingDQNMLP(nn.Module):
             torch.nn.init.kaiming_normal(m.weight)
 
     def forward(self, x):
-        x = torch.tensor(x, dtype=torch.float32)
+        if torch.is_tensor(x):
+            x = x.to(torch.float32)
+        else:
+            x = torch.tensor(x, dtype=torch.float32)
         net_out = self.net(x)
         val = self.fc_val(net_out)
         adv = self.fc_adv(net_out)

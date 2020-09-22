@@ -2,7 +2,7 @@
 import gym
 import numpy as np
 
-from common.conf.names import EnvironmentName, DeepLearningModelName
+from config.names import EnvironmentName, DeepLearningModelName
 from common.environments.environment import Environment
 from rl_main.main_constants import DEEP_LEARNING_MODEL
 

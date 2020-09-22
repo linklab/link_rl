@@ -1,6 +1,6 @@
 from gym_unity.envs import UnityEnv
 
-from common.conf.names import EnvironmentName, OSName
+from config.names import EnvironmentName, OSName
 from common.environments.environment import Environment
 
 

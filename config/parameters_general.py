@@ -1,6 +1,6 @@
 import torch
 
-from common.conf.names import OptimizerName
+from config.names import OptimizerName
 
 device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 

@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+import random
 import time
 
 import gym
@@ -6,6 +7,7 @@ import torch
 import torch.multiprocessing as mp
 from torch import optim
 import os
+import numpy as np
 
 print(torch.__version__)
 
@@ -14,6 +16,8 @@ from common.fast_rl.common import statistics, utils
 
 cuda = False
 env_name = 'CartPole-v1'
+seed = 42
+
 epsilon_start = 1.0
 epsilon_final = 0.01
 epsilon_frames = 1000
@@ -38,6 +42,11 @@ target_net_sync = 50
 
 os.environ['KMP_DUPLICATE_LIB_OK'] = 'True'
 device = torch.device("cuda" if cuda else "cpu")
+
+torch.manual_seed(seed)
+torch.cuda.manual_seed_all(seed)
+np.random.seed(seed)
+random.seed(seed)
 
 
 def play_func(exp_queue, env, net):
@@ -92,6 +101,11 @@ def main():
     mp.set_start_method('spawn')
 
     env = gym.make(env_name)
+
+    # Only for ai gym
+    env.seed(seed)
+    env.observation_space.seed(seed)
+    env.action_space.seed(seed)
 
     net = dqn_model.DuelingDQNMLP(
         obs_size=4,

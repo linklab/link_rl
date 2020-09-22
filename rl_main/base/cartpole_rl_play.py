@@ -29,7 +29,7 @@ def play_main():
     ).to(device)
     print(net)
 
-    dqn_model.load_model(MODEL_SAVE_DIR, env_name, net.__name__, net, step=14780)
+    dqn_model.load_model(MODEL_SAVE_DIR, env_name, net.__name__, net, step=14104)
 
     action_selector = actions.ArgmaxActionSelector()
     agent = rl_agent.DQNAgent(net, action_selector, device=device)
