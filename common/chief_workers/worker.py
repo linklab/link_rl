@@ -25,7 +25,7 @@ class Worker:
         self.worker_id = worker_id
         self.worker_mqtt_client = worker_mqtt_client
 
-        self.rl_algorithm = rl_utils.get_rl_algorithm(env=env, worker_id=worker_id, logger=logger)
+        self.rl_algorithm = rl_utils.get_rl_algorithm(env=env, worker_id=worker_id, logger=logger, params=params)
 
         self.score = 0
 
