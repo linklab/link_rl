@@ -68,7 +68,10 @@ if __name__ == "__main__":
 
     next_save_frame_idx = args.model_save_period
 
-    with utils.AtariRewardTracker(stop_mean_episode_reward=params.stop_mean_episode_reward, stat=stat, args=args) as reward_tracker:
+    with utils.AtariRewardTracker(
+            stop_mean_episode_reward=params.stop_mean_episode_reward,
+            average_size_for_stats=params.average_size_for_stats,
+            draw_viz=params.draw_viz, stat=stat) as reward_tracker:
         while True:
             frame_idx += params.train_freq
             buffer.populate_stacked_experience(params.train_freq)

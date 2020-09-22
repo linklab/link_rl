@@ -141,6 +141,42 @@ class DQNMLP(nn.Module):
         return self.net(x.float())
 
 
+class DuelingDQNMLP(nn.Module):
+    def __init__(self, obs_size, hidden_size_1, hidden_size_2, n_actions):
+        super(DuelingDQNMLP, self).__init__()
+
+        self.__name__ = "DuelingDQNMLP"
+
+        self.net = nn.Sequential(
+            nn.Linear(obs_size, hidden_size_1),
+            nn.ReLU(),
+            nn.Linear(hidden_size_1, hidden_size_2),
+            nn.ReLU()
+        )
+
+        self.fc_adv = nn.Sequential(
+            nn.Linear(hidden_size_2, 128),
+            nn.ReLU(),
+            nn.Linear(128, n_actions)
+        )
+        self.fc_val = nn.Sequential(
+            nn.Linear(hidden_size_2, 128),
+            nn.ReLU(),
+            nn.Linear(128, 1)
+        )
+
+    def init_weights(self, m):
+        if type(m) == nn.Linear or type(m) == nn.Conv2d:
+            torch.nn.init.kaiming_normal(m.weight)
+
+    def forward(self, x):
+        x = torch.tensor(x, dtype=torch.float32)
+        net_out = self.net(x)
+        val = self.fc_val(net_out)
+        adv = self.fc_adv(net_out)
+        return val + adv - adv.mean()
+
+
 def unpack_batch(batch):
     states, actions, rewards, dones, last_states = [], [], [], [], []
     for exp in batch:
