@@ -5,7 +5,7 @@ import torch
 from torch import optim
 
 from config.names import EnvironmentName, DeepLearningModelName, RLAlgorithmName, OptimizerName
-from config.parameters_general import PARAMETERS_GENERAL as params
+from config.parameters import PARAMETERS as params
 
 from common.environments.gym.frozenlake import FrozenLake_v0
 from common.environments.gym.breakout import BreakoutDeterministic_v4
@@ -34,6 +34,8 @@ from common.algorithms_rl.Monte_Carlo_Control_v0 import Monte_Carlo_Control_v0
 from common.algorithms_rl.PPO_v0 import PPO_v0
 from common.algorithms_dp.DP_Policy_Iteration import Policy_Iteration
 from common.algorithms_dp.DP_Value_Iteration import Value_Iteration
+
+device = torch.device('cuda' if params.CUDA else 'cpu')
 
 def get_environment(owner="chief"):
     if params.ENVIRONMENT_ID == EnvironmentName.QUANSER_SERVO_2:
@@ -137,13 +139,14 @@ def get_environment(owner="chief"):
     return env
 
 
-def get_rl_model(env, worker_id):
+def get_rl_model(env, worker_id, params=params, device=device):
     if params.DEEP_LEARNING_MODEL == DeepLearningModelName.Actor_Critic_MLP or params.DEEP_LEARNING_MODEL == DeepLearningModelName.Actor_Critic_CNN:
         model = ActorCriticModel(
             s_size=env.n_states,
             a_size=env.n_actions,
             continuous=env.continuous,
             worker_id=worker_id,
+            params=params,
             device=device
         ).to(device)
     elif params.DEEP_LEARNING_MODEL == DeepLearningModelName.No_Model:
@@ -161,7 +164,8 @@ def get_rl_algorithm(env, worker_id=0, logger=False, params=params):
             gamma=params.GAMMA,
             env_render=params.ENV_RENDER,
             logger=logger,
-            params = params,
+            params=params,
+            device=device,
             verbose=params.VERBOSE
         )
     elif params.RL_ALGORITHM == RLAlgorithmName.DQN_V0:
@@ -172,6 +176,7 @@ def get_rl_algorithm(env, worker_id=0, logger=False, params=params):
             env_render=params.ENV_RENDER,
             logger=logger,
             params=params,
+            device=device,
             verbose=params.VERBOSE
         )
     elif params.RL_ALGORITHM == RLAlgorithmName.Policy_Iteration:

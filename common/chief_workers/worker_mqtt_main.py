@@ -9,7 +9,7 @@ idx = os.getcwd().index("{0}link_rl".format(os.sep))
 PROJECT_HOME = os.getcwd()[:idx+1] + "link_rl{0}".format(os.sep)
 sys.path.append(PROJECT_HOME)
 
-from config.parameters_general import PARAMETERS_GENERAL as params
+from config.parameters import PARAMETERS as params
 
 from rl_main.logger import get_logger
 from common.chief_workers.worker import Worker
@@ -95,7 +95,7 @@ if __name__ == "__main__":
     stderr = sys.stderr
     sys.stderr = sys.stdout
     try:
-        worker = Worker(logger, worker_id, worker_mqtt_client)
+        worker = Worker(logger, worker_id, worker_mqtt_client, params)
         worker.start_train()
 
         time.sleep(1)

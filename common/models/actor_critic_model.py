@@ -5,7 +5,6 @@ import numpy as np
 import torch
 import torch.nn as nn
 
-from rl_main.main_constants import *
 from common.models.distributions import DistCategorical, DistDiagGaussian
 
 # from torch.distributions import Categorical

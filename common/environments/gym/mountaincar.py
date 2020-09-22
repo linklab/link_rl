@@ -2,8 +2,8 @@ import gym
 import torch
 import numpy as np
 
-from rl_main.conf.names import EnvironmentName
-from rl_main.environments.environment import Environment
+from config.names import EnvironmentName
+from common.environments.environment import Environment
 
 
 class MountainCarContinuous_v0(Environment):
