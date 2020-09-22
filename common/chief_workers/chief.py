@@ -1,8 +1,14 @@
 # -*- coding:utf-8 -*-
+import os
 import pickle
+import sys
 import zlib
 
-from rl_main.main_constants import *
+idx = os.getcwd().index("{0}link_rl".format(os.sep))
+PROJECT_HOME = os.getcwd()[:idx+1] + "link_rl{0}".format(os.sep)
+sys.path.append(PROJECT_HOME)
+
+from config.parameters_general import PARAMETERS_GENERAL as params
 from rl_main.utils import exp_moving_average
 import rl_main.rl_utils as rl_utils
 
@@ -36,11 +42,11 @@ class Chief:
         self.episode_chief = 0
         self.num_messages = 0
 
-        self.hidden_size = [HIDDEN_1_SIZE, HIDDEN_2_SIZE, HIDDEN_3_SIZE]
+        self.hidden_size = [params.HIDDEN_1_SIZE, params.HIDDEN_2_SIZE, params.HIDDEN_3_SIZE]
 
         self.model = rl_model
 
-        for worker_id in range(NUM_WORKERS):
+        for worker_id in range(params.NUM_WORKERS):
             self.scores[worker_id] = []
             self.losses[worker_id] = []
 
@@ -62,28 +68,28 @@ class Chief:
     def save_graph(self):
         plt.clf()
 
-        fig = plt.figure(figsize=(30, 2 * NUM_WORKERS))
+        fig = plt.figure(figsize=(30, 2 * params.NUM_WORKERS))
         gs = gridspec.GridSpec(
-            nrows=NUM_WORKERS,  # row 몇 개
+            nrows=params.NUM_WORKERS,  # row 몇 개
             ncols=2,  # col 몇 개
             width_ratios=[5, 5],
             hspace=0.2
         )
 
         max_episodes = 1
-        for worker_id in range(NUM_WORKERS):
+        for worker_id in range(params.NUM_WORKERS):
             if len(self.scores[worker_id]) > max_episodes:
                 max_episodes = len(self.scores[worker_id])
 
         ax = {}
-        for row in range(NUM_WORKERS):
+        for row in range(params.NUM_WORKERS):
             ax[row] = {}
             for col in range(2):
                 ax[row][col] = plt.subplot(gs[row * 2 + col])
                 ax[row][col].set_xlim([0, max_episodes])
                 ax[row][col].tick_params(axis='both', which='major', labelsize=10)
 
-        for worker_id in range(NUM_WORKERS):
+        for worker_id in range(params.NUM_WORKERS):
             ax[worker_id][0].plot(
                 range(len(self.losses[worker_id])),
                 self.losses[worker_id],
@@ -91,7 +97,7 @@ class Chief:
             )
             ax[worker_id][0].plot(
                 range(len(self.losses[worker_id])),
-                exp_moving_average(self.losses[worker_id], EMA_WINDOW),
+                exp_moving_average(self.losses[worker_id], params.EMA_WINDOW),
                 c='green'
             )
 
@@ -102,7 +108,7 @@ class Chief:
             )
             ax[worker_id][1].plot(
                 range(len(self.scores[worker_id])),
-                exp_moving_average(self.scores[worker_id], EMA_WINDOW),
+                exp_moving_average(self.scores[worker_id], params.EMA_WINDOW),
                 c='green'
             )
 
@@ -128,23 +134,23 @@ class Chief:
         self.update_loss_score(msg_payload)
         self.save_graph()
 
-        if topic == MQTT_TOPIC_EPISODE_DETAIL and MODE_GRADIENTS_UPDATE:
+        if topic == params.MQTT_TOPIC_EPISODE_DETAIL and params.MODE_GRADIENTS_UPDATE:
             # self.model.accumulate_gradients(msg_payload['gradients'])
             if msg_payload['episode'] == 0:
                 self.model.accumulate_gradients(msg_payload['gradients'])
             else:
-                self.model.get_score_weighted_gradients(NUM_WORKERS - self.NUM_DONE_WORKERS,
+                self.model.get_score_weighted_gradients(params.NUM_WORKERS - self.NUM_DONE_WORKERS,
                                                     self.score_over_recent_100_episodes, msg_payload['gradients'],
                                                     msg_payload['worker_id'], msg_payload['episode'])
 
-        elif topic == MQTT_TOPIC_SUCCESS_DONE:
+        elif topic == params.MQTT_TOPIC_SUCCESS_DONE:
             self.success_done_episode[msg_payload['worker_id']].append(msg_payload['episode'])
             self.success_done_score[msg_payload['worker_id']].append(msg_payload['score'])
 
             self.NUM_DONE_WORKERS += 1
             print("BROKER CHECK! - num_of_done_workers:", self.NUM_DONE_WORKERS)
 
-        elif topic == MQTT_TOPIC_FAIL_DONE:
+        elif topic == params.MQTT_TOPIC_FAIL_DONE:
             self.NUM_DONE_WORKERS += 1
             print("BROKER CHECK! - num_of_done_workers:", self.NUM_DONE_WORKERS)
 
@@ -153,7 +159,7 @@ class Chief:
 
     def get_transfer_ack_msg(self, parameters_transferred):
         log_msg = "[SEND] TOPIC: {0}, PAYLOAD: 'episode': {1}".format(
-            MQTT_TOPIC_TRANSFER_ACK,
+            params.MQTT_TOPIC_TRANSFER_ACK,
             self.episode_chief
         )
 
@@ -161,7 +167,7 @@ class Chief:
             "episode_chief": self.episode_chief
         }
 
-        if MODE_PARAMETERS_TRANSFER:
+        if params.MODE_PARAMETERS_TRANSFER:
             log_msg += ", 'parameters_length': {0}\n".format(
                 len(parameters_transferred)
             )
@@ -178,16 +184,16 @@ class Chief:
         transfer_msg = pickle.dumps(transfer_msg, protocol=-1)
         transfer_msg = zlib.compress(transfer_msg)
 
-        if MODE_GRADIENTS_UPDATE:
+        if params.MODE_GRADIENTS_UPDATE:
             self.model.reset_average_gradients()
             self.model.reset_weighted_gradients()
 
         return transfer_msg
 
     def get_update_ack_msg(self, msg_payload):
-        if MODE_GRADIENTS_UPDATE:
+        if params.MODE_GRADIENTS_UPDATE:
             log_msg = "[SEND] TOPIC: {0}, PAYLOAD: 'episode': {1}, 'global_avg_grad_length': {2}\n".format(
-                MQTT_TOPIC_UPDATE_ACK,
+                params.MQTT_TOPIC_UPDATE_ACK,
                 self.episode_chief,
                 len(self.model.avg_gradients)
             )
@@ -202,7 +208,7 @@ class Chief:
             # self.model.get_score_weighted_gradients(NUM_WORKERS - self.NUM_DONE_WORKERS, self.score_over_recent_100_episodes, msg_payload['gradients'], msg_payload['worker_id'])
             #
             if msg_payload['episode'] == 0:
-                self.model.get_average_gradients(NUM_WORKERS - self.NUM_DONE_WORKERS)
+                self.model.get_average_gradients(params.NUM_WORKERS - self.NUM_DONE_WORKERS)
 
                 grad_update_msg = {
                     "episode_chief": self.episode_chief,
@@ -216,7 +222,7 @@ class Chief:
                 }
         else:
             log_msg = "[SEND] TOPIC: {0}, PAYLOAD: 'episode': {1}\n".format(
-                MQTT_TOPIC_UPDATE_ACK,
+                params.MQTT_TOPIC_UPDATE_ACK,
                 self.episode_chief
             )
 
@@ -229,7 +235,7 @@ class Chief:
         grad_update_msg = pickle.dumps(grad_update_msg, protocol=-1)
         grad_update_msg = zlib.compress(grad_update_msg)
 
-        if MODE_GRADIENTS_UPDATE:
+        if params.MODE_GRADIENTS_UPDATE:
             self.model.reset_average_gradients()
             self.model.reset_weighted_gradients()
 
