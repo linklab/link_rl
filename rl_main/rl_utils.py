@@ -2,35 +2,35 @@ import json
 
 import paho.mqtt.client as mqtt
 from torch import optim
-from rl_main.environments.gym.frozenlake import FrozenLake_v0
+from common.environments.gym.frozenlake import FrozenLake_v0
 from rl_main.main_constants import *
 
-from rl_main.environments.gym.breakout import BreakoutDeterministic_v4
-from rl_main.environments.gym.cartpole import CartPole_v0, CartPole_v1
-from rl_main.environments.gym.pendulum import Pendulum_v0
-from rl_main.environments.gym.gridworld import GRIDWORLD_v0
-from rl_main.environments.gym.blackjack import Blackjack_v0
+from common.environments.gym.breakout import BreakoutDeterministic_v4
+from common.environments.gym.cartpole import CartPole_v0, CartPole_v1
+from common.environments.gym.pendulum import Pendulum_v0
+from common.environments.gym.gridworld import GRIDWORLD_v0
+from common.environments.gym.blackjack import Blackjack_v0
 from rl_main.environments.gym.mountaincar import MountainCarContinuous_v0
 from rl_main.environments.gym.acrobot import Acrobot_v1
-from rl_main.environments.real_device.environment_rip import EnvironmentRIP
-from rl_main.environments.unity.chaser_unity import Chaser_v1
-from rl_main.environments.unity.drone_racing import Drone_Racing
-from rl_main.environments.mujoco.inverted_double_pendulum import InvertedDoublePendulum_v2
-from rl_main.environments.mujoco.hopper import Hopper_v2
-from rl_main.environments.mujoco.ant import Ant_v2
-from rl_main.environments.mujoco.half_cheetah import HalfCheetah_v2
-from rl_main.environments.mujoco.swimmer import Swimmer_v2
-from rl_main.environments.mujoco.reacher import Reacher_v2
-from rl_main.environments.mujoco.humanoid import Humanoid_v2
-from rl_main.environments.mujoco.humanoid_stand_up import HumanoidStandUp_v2
-from rl_main.environments.mujoco.inverted_pendulum import InvertedPendulum_v2
-from rl_main.environments.mujoco.walker_2d import Walker2D_v2
-from rl_main.models.actor_critic_model import ActorCriticModel
-from rl_main.algorithms_rl.DQN_v0 import DQN_v0
-from rl_main.algorithms_rl.Monte_Carlo_Control_v0 import Monte_Carlo_Control_v0
-from rl_main.algorithms_rl.PPO_v0 import PPO_v0
-from rl_main.algorithms_dp.DP_Policy_Iteration import Policy_Iteration
-from rl_main.algorithms_dp.DP_Value_Iteration import Value_Iteration
+from common.environments.real_device.environment_rip import EnvironmentRIP
+from common.environments.unity.chaser_unity import Chaser_v1
+from common.environments.unity.drone_racing import Drone_Racing
+from common.environments.mujoco.inverted_double_pendulum import InvertedDoublePendulum_v2
+from common.environments.mujoco.hopper import Hopper_v2
+from common.environments.mujoco.ant import Ant_v2
+from common.environments.mujoco.half_cheetah import HalfCheetah_v2
+from common.environments.mujoco.swimmer import Swimmer_v2
+from common.environments.mujoco.reacher import Reacher_v2
+from common.environments.mujoco.humanoid import Humanoid_v2
+from common.environments.mujoco.humanoid_stand_up import HumanoidStandUp_v2
+from common.environments.mujoco.inverted_pendulum import InvertedPendulum_v2
+from common.environments.mujoco.walker_2d import Walker2D_v2
+from common.models.actor_critic_model import ActorCriticModel
+from common.algorithms_rl.DQN_v0 import DQN_v0
+from common.algorithms_rl.Monte_Carlo_Control_v0 import Monte_Carlo_Control_v0
+from common.algorithms_rl.PPO_v0 import PPO_v0
+from common.algorithms_dp.DP_Policy_Iteration import Policy_Iteration
+from common.algorithms_dp.DP_Value_Iteration import Value_Iteration
 
 
 def get_environment(owner="chief"):
