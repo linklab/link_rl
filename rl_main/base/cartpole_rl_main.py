@@ -13,14 +13,20 @@ from common.fast_rl import actions, experience, dqn_model, rl_agent
 from common.fast_rl.common import statistics, utils
 
 cuda = False
+env_name = 'CartPole-v1'
 epsilon_start = 1.0
 epsilon_final = 0.01
 epsilon_frames = 1000
 gamma = 0.99
 n_step = 1
 stop_mean_episode_reward = 195
-average_size_for_stats = 10
+average_size_for_stats = 30
+model_save_period = 1000
 draw_viz = 1
+
+MODEL_SAVE_DIR = os.path.join(".", "saved_models")
+if not os.path.exists(MODEL_SAVE_DIR):
+    os.makedirs(MODEL_SAVE_DIR)
 
 train_freq = 2
 batch_size = 32
@@ -55,6 +61,7 @@ def play_func(exp_queue, env, net):
     stat = statistics.Statistics(method="nature_dqn")
 
     frame_idx = 0
+    next_save_frame_idx = model_save_period
 
     with utils.AtariRewardTracker(stop_mean_episode_reward, average_size_for_stats, draw_viz, stat) as reward_tracker:
         while True:
@@ -70,7 +77,12 @@ def play_func(exp_queue, env, net):
                     episode_rewards[0], frame_idx, action_selector.epsilon
                 )
 
+                if frame_idx >= next_save_frame_idx:
+                    dqn_model.save_model(MODEL_SAVE_DIR, env_name, net.__name__, net, frame_idx, mean_episode_reward)
+                    next_save_frame_idx += model_save_period
+
                 if solved:
+                    dqn_model.save_model(MODEL_SAVE_DIR, env_name, net.__name__, net, frame_idx, mean_episode_reward)
                     break
 
     exp_queue.put(None)
@@ -79,7 +91,7 @@ def play_func(exp_queue, env, net):
 def main():
     mp.set_start_method('spawn')
 
-    env = gym.make("CartPole-v0")
+    env = gym.make(env_name)
 
     net = dqn_model.DuelingDQNMLP(
         obs_size=4,

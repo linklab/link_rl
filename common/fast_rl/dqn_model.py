@@ -28,10 +28,11 @@ def load_model(model_save_dir, env_name, q_net_name, q_net, step=None):
             model_save_dir, "{0}_{1}_*.pth".format(env_name, q_net_name)
         ))
 
-    saved_models.sort(key=lambda filename: int(filename.split("/")[-1].split("_")[2]))
+    saved_models.sort(key=lambda filename: int(filename.split("/")[-1].split("_")[-2]))
     assert len(saved_models) > 0, "※※※※※※※※※※ There is no model !!!: {0} ※※※※※※※※※※".format(saved_models)
 
     saved_model = saved_models[-1]
+    print("MODEL FILE NAME: {0}".format(saved_model))
     device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
     model_params = torch.load(saved_model, map_location=device)
 

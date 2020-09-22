@@ -118,4 +118,5 @@ rl_main/main_constants.py
 /src/
 /save_results
 
+*.pth
 
