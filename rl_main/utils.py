@@ -6,6 +6,8 @@ import numpy as np
 import torch
 import torch.nn as nn
 
+from config.parameters import PARAMETERS as params
+
 torch.backends.cudnn.benchmark = True
 
 idx = os.getcwd().index("{0}link_rl".format(os.sep))
@@ -173,7 +175,7 @@ def run_chief(params):
         #         if line == "":
         #             break
         #         output += line
-        os.system(params.PYTHON_PATH + " " + os.path.join(PROJECT_HOME, "rl_main", "chief_workers", "chief_mqtt_main.py"))
+        os.system(params.PYTHON_PATH + " " + os.path.join(PROJECT_HOME, "common", "chief_workers", "chief_mqtt_main.py"))
         sys.stdout = open(os.path.join(PROJECT_HOME, "out_err", "chief_stdout.out"), "wb")
         sys.stderr = open(os.path.join(PROJECT_HOME, "out_err", "chief_stderr.out"), "wb")
     except KeyboardInterrupt:
@@ -183,7 +185,7 @@ def run_chief(params):
 
 def run_worker(worker_id, params):
     try:
-        os.system(params.PYTHON_PATH + " " + os.path.join(PROJECT_HOME, "rl_main", "chief_workers", "worker_mqtt_main.py") + " {0}".format(worker_id))
+        os.system(params.PYTHON_PATH + " " + os.path.join(PROJECT_HOME, "common", "chief_workers", "worker_mqtt_main.py") + " {0}".format(worker_id))
         sys.stdout = open(os.path.join(PROJECT_HOME, "out_err", "worker_{0}_stdout.out").format(worker_id), "wb")
         sys.stderr = open(os.path.join(PROJECT_HOME, "out_err", "worker_{0}_stderr.out").format(worker_id), "wb")
     except KeyboardInterrupt:

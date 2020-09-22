@@ -4,10 +4,12 @@ import glob
 import numpy as np
 import torch
 import torch.nn as nn
+import os
 
 from common.models.distributions import DistCategorical, DistDiagGaussian
 
 # from torch.distributions import Categorical
+from config.names import DeepLearningModelName, PROJECT_HOME
 from rl_main.utils import util_init
 
 EPS_START = 0.9     # e-greedy threshold start value
@@ -21,12 +23,13 @@ class Flatten(nn.Module):
 
 
 class ActorCriticModel(nn.Module):
-    def __init__(self, s_size, a_size, continuous, worker_id, device):
+    def __init__(self, s_size, a_size, continuous, worker_id, params, device):
         super(ActorCriticModel, self).__init__()
 
         self.worker_id = worker_id
+        self.params = params
 
-        if DEEP_LEARNING_MODEL == DeepLearningModelName.Actor_Critic_CNN:
+        if self.params.DEEP_LEARNING_MODEL == DeepLearningModelName.Actor_Critic_CNN:
             self.input_channels = s_size[0]
             self.input_height = s_size[1]
             self.input_width = s_size[2]
@@ -35,12 +38,14 @@ class ActorCriticModel(nn.Module):
                 input_channels=self.input_channels,
                 input_height=self.input_height,
                 input_width=self.input_width,
-                continuous=continuous
+                continuous=continuous,
+                params=self.params
             )
-        elif DEEP_LEARNING_MODEL == DeepLearningModelName.Actor_Critic_MLP:
+        elif self.params.DEEP_LEARNING_MODEL == DeepLearningModelName.Actor_Critic_MLP:
             self.base = MLPBase(
                 num_inputs=s_size,
-                continuous=continuous
+                continuous=continuous,
+                params=self.params
             )
 
             self.s_size = s_size
@@ -55,7 +60,7 @@ class ActorCriticModel(nn.Module):
         self.a_size = a_size
 
         if self.continuous:
-            self.dist = DistDiagGaussian(self.base.output_size, self.a_size)
+            self.dist = DistDiagGaussian(self.base.output_size, self.a_size, device)
         else:
             self.dist = DistCategorical(self.base.output_size, self.a_size)
 
@@ -74,8 +79,8 @@ class ActorCriticModel(nn.Module):
 
         files = glob.glob(os.path.join(PROJECT_HOME, "model_save_files", "{0}_{1}_{2}_*".format(
             self.worker_id,
-            ENVIRONMENT_ID.name,
-            DEEP_LEARNING_MODEL.value,
+            self.params.ENVIRONMENT_ID.name,
+            self.params.DEEP_LEARNING_MODEL.value,
         )))
 
         if self.worker_id >= 0:
@@ -269,12 +274,12 @@ class ActorCriticModel(nn.Module):
 
 
 class MLPBase(nn.Module):
-    def __init__(self, num_inputs, continuous):
+    def __init__(self, num_inputs, continuous, params):
         super(MLPBase, self).__init__()
 
-        self.hidden_1_size = HIDDEN_1_SIZE
-        self.hidden_2_size = HIDDEN_2_SIZE
-        self.hidden_3_size = HIDDEN_3_SIZE
+        self.hidden_1_size = params.HIDDEN_1_SIZE
+        self.hidden_2_size = params.HIDDEN_2_SIZE
+        self.hidden_3_size = params.HIDDEN_3_SIZE
         self.continuous = continuous
 
         init_ = lambda m: util_init(m, nn.init.orthogonal_, lambda x: nn.init.constant_(x, 0), np.sqrt(2))
@@ -314,10 +319,10 @@ class MLPBase(nn.Module):
 
 
 class CNNBase(nn.Module):
-    def __init__(self, input_channels, input_height, input_width, continuous):
+    def __init__(self, input_channels, input_height, input_width, continuous, params):
         super(CNNBase, self).__init__()
-        self.cnn_critic_hidden_1_size = CNN_CRITIC_HIDDEN_1_SIZE
-        self.cnn_critic_hidden_2_size = CNN_CRITIC_HIDDEN_2_SIZE
+        self.cnn_critic_hidden_1_size = params.CNN_CRITIC_HIDDEN_1_SIZE
+        self.cnn_critic_hidden_2_size = params.CNN_CRITIC_HIDDEN_2_SIZE
 
         self.continuous = continuous
 

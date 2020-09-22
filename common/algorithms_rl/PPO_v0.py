@@ -33,7 +33,7 @@ class PPO_v0:
         self.device = device
         self.verbose = verbose
 
-        self.model = rl_utils.get_rl_model(self.env, self.worker_id, self.params, self.device)
+        self.model = rl_utils.get_rl_model(self.env, self.worker_id, self.params)
 
         self.optimizer = rl_utils.get_optimizer(
             parameters=self.model.parameters(),
@@ -153,7 +153,7 @@ class PPO_v0:
             # loss = -torch.mean(torch.min(surr1, surr2)) + PPO_VALUE_LOSS_WEIGHT * torch.mean(
             #     torch.mul(advantage_lst, advantage_lst)) - PPO_ENTROPY_WEIGHT * dist_entropy
 
-            actor_loss = - torch.min(surr1, surr2).to(device) - self.params.PPO_ENTROPY_WEIGHT * dist_entropy
+            actor_loss = - torch.min(surr1, surr2).to('cpu') - self.params.PPO_ENTROPY_WEIGHT * dist_entropy
 
             self.optimizer.zero_grad()
             actor_loss.mean().backward()

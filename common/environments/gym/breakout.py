@@ -4,8 +4,7 @@ import numpy as np
 
 from config.names import EnvironmentName, DeepLearningModelName
 from common.environments.environment import Environment
-from rl_main.main_constants import DEEP_LEARNING_MODEL
-
+from config.parameters import PARAMETERS as params
 
 class BreakoutDeterministic_v4(Environment):
     def __init__(self):
@@ -41,9 +40,9 @@ class BreakoutDeterministic_v4(Environment):
     def preprocess(self, img):
         gray_frame = self.to_grayscale(self.downsample(img))
 
-        if DEEP_LEARNING_MODEL == DeepLearningModelName.Actor_Critic_CNN:
+        if params.DEEP_LEARNING_MODEL == DeepLearningModelName.Actor_Critic_CNN:
             state = np.expand_dims(gray_frame, axis=0)
-        elif DEEP_LEARNING_MODEL == DeepLearningModelName.Actor_Critic_MLP:
+        elif params.DEEP_LEARNING_MODEL == DeepLearningModelName.Actor_Critic_MLP:
             state = gray_frame.flatten()
         else:
             state = None
@@ -51,9 +50,9 @@ class BreakoutDeterministic_v4(Environment):
         return state
 
     def get_n_states(self):
-        if DEEP_LEARNING_MODEL == DeepLearningModelName.Actor_Critic_CNN:
+        if params.DEEP_LEARNING_MODEL == DeepLearningModelName.Actor_Critic_CNN:
             return 1, 105, 80                   # input_channels, input_height, input_width
-        elif DEEP_LEARNING_MODEL == DeepLearningModelName.Actor_Critic_MLP:
+        elif params.DEEP_LEARNING_MODEL == DeepLearningModelName.Actor_Critic_MLP:
             return 8400
         else:
             return None

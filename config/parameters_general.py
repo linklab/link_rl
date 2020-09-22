@@ -13,7 +13,7 @@ class PARAMETERS_GENERAL:
     CUDA = True
 
     # [MQTT]
-    MQTT_SERVER = None
+    MQTT_SERVER = "localhost"
     MQTT_PORT = 1883
     MQTT_TOPIC_EPISODE_DETAIL = "Episode_Detail"
     MQTT_TOPIC_SUCCESS_DONE = "Success_Done"

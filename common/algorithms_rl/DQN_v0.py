@@ -6,8 +6,6 @@ import torch.optim as optim
 import torch.nn.functional as F
 import torch
 
-from rl_main.main_constants import *
-
 from rl_main import rl_utils
 from rl_main.utils import print_torch
 
@@ -19,7 +17,7 @@ Transition = namedtuple('Transition', ('state', 'action', 'next_state', 'adjuste
 TARGET_UPDATE_PERIOD = 10
 
 
-class ReplayMemory(object, device):
+class ReplayMemory(object):
     def __init__(self, capacity):
         self.memory = deque(maxlen=capacity)
 
@@ -157,7 +155,7 @@ class DQN_v0:
         # This is merged based on the mask, such that we'll have either the expected
         # state value or 0 in case the state was final.
         next_critic_value, next_action_probs = self.target_model.evaluate(non_final_next_state_batch)
-        next_state_values = torch.zeros([BATCH_SIZE, 1], device=device)
+        next_state_values = torch.zeros([self.params.BATCH_SIZE, 1], device=device)
         next_state_values[non_final_mask] = next_action_probs.max(dim=1)[0].unsqueeze(dim=1).detach()
 
         # print_torch("next_state_values", next_state_values)

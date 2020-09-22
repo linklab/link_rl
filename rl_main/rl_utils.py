@@ -35,7 +35,7 @@ from common.algorithms_rl.PPO_v0 import PPO_v0
 from common.algorithms_dp.DP_Policy_Iteration import Policy_Iteration
 from common.algorithms_dp.DP_Value_Iteration import Value_Iteration
 
-device = torch.device('cuda' if params.CUDA else 'cpu')
+device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 
 def get_environment(owner="chief"):
     if params.ENVIRONMENT_ID == EnvironmentName.QUANSER_SERVO_2:
@@ -139,7 +139,7 @@ def get_environment(owner="chief"):
     return env
 
 
-def get_rl_model(env, worker_id, params=params, device=device):
+def get_rl_model(env, worker_id, params=params):
     if params.DEEP_LEARNING_MODEL == DeepLearningModelName.Actor_Critic_MLP or params.DEEP_LEARNING_MODEL == DeepLearningModelName.Actor_Critic_CNN:
         model = ActorCriticModel(
             s_size=env.n_states,

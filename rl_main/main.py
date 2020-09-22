@@ -14,7 +14,7 @@ from config.parameters import PARAMETERS as params
 from rl_main import rl_utils
 import rl_main.utils as utils
 
-device = torch.device('cuda' if params.CUDA else 'cpu')
+device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 
 os.environ["CUDA_VISIBLE_DEVICES"] = params.CUDA_VISIBLE_DEVICES_NUMBER_LIST
 
@@ -30,7 +30,7 @@ if __name__ == "__main__":
     utils.ask_file_removal(device)
 
     env = rl_utils.get_environment()
-    rl_model = rl_utils.get_rl_model(env, -1, params, device)
+    rl_model = rl_utils.get_rl_model(env, -1, params)
 
     utils.print_configuration(env, rl_model, params)
 
@@ -42,7 +42,7 @@ if __name__ == "__main__":
 
         workers = []
         for worker_id in range(params.NUM_WORKERS):
-            worker = Process(target=utils.run_worker, args=(worker_id,))
+            worker = Process(target=utils.run_worker, args=(worker_id, params,))
             workers.append(worker)
             worker.start()
 

@@ -1,6 +1,7 @@
 from gym_unity.envs import UnityEnv
 
 from config.names import EnvironmentName, OSName
+from config.parameters import PARAMETERS as params
 from common.environments.environment import Environment
 
 
@@ -67,6 +68,5 @@ class Chaser_v1(Environment):
 
 
 if __name__ == "__main__":
-    from rl_main.main_constants import MY_PLATFORM
-    env = Chaser_v1(MY_PLATFORM)
+    env = Chaser_v1(params.MY_PLATFORM)
     print(env.observation_space)
