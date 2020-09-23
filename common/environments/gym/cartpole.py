@@ -1,6 +1,6 @@
 import gym
 
-from common.conf.names import EnvironmentName
+from config.names import EnvironmentName
 from common.environments.environment import Environment
 
 
@@ -16,7 +16,7 @@ class CartPole_v0(Environment):
         self.WIN_AND_LEARN_FINISH_CONTINUOUS_EPISODES = 10
 
     def get_n_states(self):
-        n_states = int(self.env.observation_space.shape[0] / 2)
+        n_states = int(self.env.observation_space.shape[0])
         return n_states
 
     def get_n_actions(self):
@@ -25,7 +25,7 @@ class CartPole_v0(Environment):
 
     def get_state_shape(self):
         state_shape = list(self.env.observation_space.shape)
-        state_shape[0] = int(state_shape[0] / 2)
+        state_shape[0] = int(state_shape[0])
         return tuple(state_shape)
 
     def get_action_shape(self):
@@ -42,13 +42,13 @@ class CartPole_v0(Environment):
 
     def reset(self):
         state = self.env.reset()
-        return state[2:]
+        return state
 
     def step(self, action):
         action = int(action.item())
         next_state, reward, done, info = self.env.step(action)
 
-        next_state = next_state[2:]
+        next_state = next_state
         adjusted_reward = reward / 100
 
         return next_state, reward, adjusted_reward, done, info

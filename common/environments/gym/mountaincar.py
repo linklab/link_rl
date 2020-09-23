@@ -1,19 +1,21 @@
 import gym
+import torch
+import numpy as np
 
 from config.names import EnvironmentName
 from common.environments.environment import Environment
 
 
-class HumanoidStandUp_v2(Environment):
+class MountainCarContinuous_v0(Environment):
     def __init__(self):
-        self.env = gym.make(EnvironmentName.HUMANOID_STAND_UP_V2.value)
-        super(HumanoidStandUp_v2, self).__init__()
+        self.env = gym.make(EnvironmentName.MOUNTAINCARCONTINUOUS_V0.value)
+        super(MountainCarContinuous_v0, self).__init__()
         self.action_shape = self.get_action_shape()
         self.state_shape = self.get_state_shape()
 
         self.continuous = True
-        self.WIN_AND_LEARN_FINISH_SCORE = 195
-        self.WIN_AND_LEARN_FINISH_CONTINUOUS_EPISODES = 100
+        self.WIN_AND_LEARN_FINISH_SCORE = 200
+        self.WIN_AND_LEARN_FINISH_CONTINUOUS_EPISODES = 10
 
     def get_n_states(self):
         n_states = self.env.observation_space.shape[0]
@@ -24,11 +26,11 @@ class HumanoidStandUp_v2(Environment):
         return n_actions
 
     def get_state_shape(self):
-        state_shape = self.env.observation_space.shape
+        state_shape = self.env.observation_space.shape[0]
         return state_shape
 
     def get_action_shape(self):
-        action_shape = (self.env.action_space.shape[0], )
+        action_shape = (self.env.action_space.shape[0],)
         return action_shape
 
     def get_action_space(self):
@@ -36,7 +38,7 @@ class HumanoidStandUp_v2(Environment):
 
     @property
     def action_meanings(self):
-        action_meanings = ["-1. ~ 1.", ]
+        action_meanings = ["LEFT", "RIGHT"]
         return action_meanings
 
     def reset(self):
@@ -44,8 +46,15 @@ class HumanoidStandUp_v2(Environment):
         return state
 
     def step(self, action):
+        action = np.clip(action, self.env.action_space.low[0], self.env.action_space.high[0])
         next_state, reward, done, info = self.env.step(action)
-        adjusted_reward = reward / 100
+        if next_state[0] > -0.2:
+            reward = 1
+
+        if next_state[0] >= 0.5:
+            reward = 100
+
+        adjusted_reward = reward
 
         return next_state, reward, adjusted_reward, done, info
 
@@ -54,3 +63,7 @@ class HumanoidStandUp_v2(Environment):
 
     def close(self):
         self.env.close()
+
+
+
+

@@ -1,14 +1,6 @@
 import math
-import random
-from collections import namedtuple, deque
+from config.parameters_general import *
 
-import torch.optim as optim
-import torch.nn.functional as F
-
-from rl_main.main_constants import *
-
-from rl_main import rl_utils
-from rl_main.utils import print_torch
 import numpy as np
 import random
 
@@ -34,7 +26,7 @@ class Monte_Carlo_Control_v0:
         self.gamma = GAMMA
 
         self.Q = {}
-        self.epsilon = EPSILON_START
+        self.epsilon = EPSILON_INIT
 
     def check_if_state_and_all_actions_in_Q(self, state):
         is_state_and_action_in_Q = True
@@ -108,7 +100,7 @@ class Monte_Carlo_Control_v0:
 
     def on_episode(self, episode):
         if EPSILON_DECAY:
-            self.epsilon = EPSILON_END + (EPSILON_START - EPSILON_END) * math.exp(-1. * episode / EPSILON_DECAY_RATE)
+            self.epsilon = EPSILON_MIN + (EPSILON_INIT - EPSILON_MIN) * math.exp(-1. * episode / EPSILON_DECAY_RATE)
 
         episode_trajectory, win = self.get_episode_trajectory()
 

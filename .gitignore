@@ -112,7 +112,6 @@ environments/unity/unity_envs/
 *.out
 *.gz
 
-rl_main/main_constants.py
 /model_save_files/
 /temp/
 /src/
@@ -120,3 +119,5 @@ rl_main/main_constants.py
 
 *.pth
 
+# personal parameter's option
+config/parameters.py

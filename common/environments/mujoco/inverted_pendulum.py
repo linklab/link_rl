@@ -1,6 +1,6 @@
 import gym
 
-from common.conf.names import EnvironmentName
+from config.names import EnvironmentName
 from common.environments.environment import Environment
 
 

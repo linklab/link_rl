@@ -465,27 +465,4 @@ class RewardTracker:
             self.stat.draw_performance(episode_done_step, mean_episode_reward, speed, epsilon)
 
 
-def process_args():
-    parser = argparse.ArgumentParser()
-    parser.add_argument("--env", default="pong", type=str)
-    parser.add_argument("--model_save_period", default=1000000, type=int)
-    parser.add_argument("--cuda", default=False, action="store_true", help="Enable cuda")
-    parser.add_argument("--seed", type=int, help="Random seed to use")
-    parser.add_argument("--average_size_for_stats", type=int, default=100)
-    parser.add_argument("--draw_viz", type=int, default=1)
-    parser.add_argument("--n_step", type=int, default=3)
-    parser.add_argument("--omega", default=False, action="store_true")
-    args = parser.parse_args()
-    return args
 
-
-def print_args(args):
-    print('\n' + 'Argument Options')
-    for k, v in vars(args).items():
-        print(k + ': ' + str(v))
-    print()
-
-
-MODEL_SAVE_DIR = os.path.join("..", "saved_models")
-if not os.path.exists(MODEL_SAVE_DIR):
-    os.makedirs(MODEL_SAVE_DIR)

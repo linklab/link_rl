@@ -1,34 +1,35 @@
 import gym
-
+import torch
 from config.names import EnvironmentName
 from common.environments.environment import Environment
 
 
-class HumanoidStandUp_v2(Environment):
+class Acrobot_v1(Environment):
     def __init__(self):
-        self.env = gym.make(EnvironmentName.HUMANOID_STAND_UP_V2.value)
-        super(HumanoidStandUp_v2, self).__init__()
+        self.env = gym.make(EnvironmentName.ACROBOT_V1.value)
+        super(Acrobot_v1, self).__init__()
         self.action_shape = self.get_action_shape()
         self.state_shape = self.get_state_shape()
 
-        self.continuous = True
-        self.WIN_AND_LEARN_FINISH_SCORE = 195
-        self.WIN_AND_LEARN_FINISH_CONTINUOUS_EPISODES = 100
+        self.continuous = False
+        self.WIN_AND_LEARN_FINISH_SCORE = -100
+        self.WIN_AND_LEARN_FINISH_CONTINUOUS_EPISODES = 10
 
     def get_n_states(self):
-        n_states = self.env.observation_space.shape[0]
+        n_states = int(self.env.observation_space.shape[0])
         return n_states
 
     def get_n_actions(self):
-        n_actions = self.env.action_space.shape[0]
+        n_actions = self.env.action_space.n
         return n_actions
 
     def get_state_shape(self):
-        state_shape = self.env.observation_space.shape
-        return state_shape
+        state_shape = list(self.env.observation_space.shape)
+        state_shape[0] = int(state_shape[0])
+        return tuple(state_shape)
 
     def get_action_shape(self):
-        action_shape = (self.env.action_space.shape[0], )
+        action_shape = (self.env.action_space.n,)
         return action_shape
 
     def get_action_space(self):
@@ -36,7 +37,7 @@ class HumanoidStandUp_v2(Environment):
 
     @property
     def action_meanings(self):
-        action_meanings = ["-1. ~ 1.", ]
+        action_meanings = ["left", "stop", "right"]
         return action_meanings
 
     def reset(self):
@@ -44,8 +45,10 @@ class HumanoidStandUp_v2(Environment):
         return state
 
     def step(self, action):
+        action = int(action.item())
         next_state, reward, done, info = self.env.step(action)
-        adjusted_reward = reward / 100
+
+        adjusted_reward = reward
 
         return next_state, reward, adjusted_reward, done, info
 

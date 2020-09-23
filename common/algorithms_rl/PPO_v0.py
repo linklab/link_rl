@@ -9,13 +9,10 @@ import torch
 import torch.nn.functional as F
 
 from rl_main import rl_utils
-from rl_main.main_constants import device, PPO_K_EPOCH, GAE_LAMBDA, PPO_EPSILON_CLIP, \
-    PPO_VALUE_LOSS_WEIGHT, PPO_ENTROPY_WEIGHT, TRAJECTORY_SAMPLING, TRAJECTORY_LIMIT_SIZE, TRAJECTORY_BATCH_SIZE, \
-    LEARNING_RATE, ENVIRONMENT_ID
 
 
 class PPO_v0:
-    def __init__(self, env, worker_id, gamma, env_render, logger, verbose):
+    def __init__(self, env, worker_id, gamma, env_render, logger, params, device, verbose):
         self.env = env
 
         self.worker_id = worker_id
@@ -28,13 +25,15 @@ class PPO_v0:
         self.trajectory = []
 
         # learning rate
-        self.learning_rate = LEARNING_RATE
+        self.learning_rate = params.LEARNING_RATE
 
         self.env_render = env_render
         self.logger = logger
+        self.params = params
+        self.device = device
         self.verbose = verbose
 
-        self.model = rl_utils.get_rl_model(self.env, self.worker_id)
+        self.model = rl_utils.get_rl_model(self.env, self.worker_id, self.params)
 
         self.optimizer = rl_utils.get_optimizer(
             parameters=self.model.parameters(),
@@ -44,13 +43,13 @@ class PPO_v0:
     def put_data(self, transition):
         self.trajectory.append(transition)
 
-    def get_trajectory_data(self, sampling=False):
+    def get_trajectory_data(self, sampling=False, device='cpu'):
         # print("Before - Trajectory Size: {0}".format(len(self.trajectory)))
 
         state_lst, action_lst, reward_lst, next_state_lst, prob_action_lst, done_mask_lst = [], [], [], [], [], []
         if sampling:
-            sampling_index = random.randrange(0, len(self.trajectory) - TRAJECTORY_BATCH_SIZE + 1)
-            trajectory = self.trajectory[sampling_index : sampling_index + TRAJECTORY_BATCH_SIZE]
+            sampling_index = random.randrange(0, len(self.trajectory) - self.params.TRAJECTORY_BATCH_SIZE + 1)
+            trajectory = self.trajectory[sampling_index : sampling_index + self.params.TRAJECTORY_BATCH_SIZE]
         else:
             trajectory = self.trajectory
 
@@ -98,9 +97,9 @@ class PPO_v0:
         state_lst, action_lst, reward_lst, next_state_lst, done_mask_lst, prob_action_lst = self.get_trajectory_data()
 
         loss_sum = 0.0
-        for i in range(PPO_K_EPOCH):
-            if TRAJECTORY_SAMPLING:
-                state_lst, action_lst, reward_lst, next_state_lst, done_mask_lst, prob_action_lst = self.get_trajectory_data(sampling=True)
+        for i in range(self.params.PPO_K_EPOCH):
+            if self.params.TRAJECTORY_SAMPLING:
+                state_lst, action_lst, reward_lst, next_state_lst, done_mask_lst, prob_action_lst = self.get_trajectory_data(sampling=True, device=self.device)
             else:
                 pass
             # print("WORKER: {0} - PPO_K_EPOCH: {1}/{2} - state_lst: {3}".format(self.worker_id, i+1, PPO_K_EPOCH, state_lst.size()))
@@ -129,16 +128,16 @@ class PPO_v0:
             advantage_lst = []
             advantage = 0.0
             for i, delta_t in enumerate(delta[::-1]):
-                advantage = self.gamma * GAE_LAMBDA * done_mask_lst[i] * advantage + delta_t[0]
+                advantage = self.gamma * self.params.GAE_LAMBDA * done_mask_lst[i] * advantage + delta_t[0]
                 advantage_lst.append([advantage])
             advantage_lst.reverse()
-            advantage_lst = torch.tensor(advantage_lst, device=device, dtype=torch.float)
+            advantage_lst = torch.tensor(advantage_lst, device=self.device, dtype=torch.float)
             advantage_lst = (advantage_lst - advantage.mean() + torch.tensor(1e-6, dtype=torch.float)) / torch.max(
                 advantage_lst.std(),
                 torch.tensor(1e-6, dtype=torch.float)
             )
 
-            critic_loss = PPO_VALUE_LOSS_WEIGHT * F.smooth_l1_loss(input=state_values, target=v_target.detach())
+            critic_loss = self.params.PPO_VALUE_LOSS_WEIGHT * F.smooth_l1_loss(input=state_values, target=v_target.detach())
             # critic_loss = PPO_VALUE_LOSS_WEIGHT * F.smooth_l1_loss(input=state_values, target=discount_r.detach())
 
             self.optimizer.zero_grad()
@@ -149,12 +148,12 @@ class PPO_v0:
 
             ratio = torch.exp(new_prob_action_lst - prob_action_lst)  # a/b == exp(log(a)-log(b))
             surr1 = ratio * advantage_lst
-            surr2 = torch.clamp(ratio, 1 - PPO_EPSILON_CLIP, 1 + PPO_EPSILON_CLIP) * advantage_lst
+            surr2 = torch.clamp(ratio, 1 - self.params.PPO_EPSILON_CLIP, 1 + self.params.PPO_EPSILON_CLIP) * advantage_lst
 
             # loss = -torch.mean(torch.min(surr1, surr2)) + PPO_VALUE_LOSS_WEIGHT * torch.mean(
             #     torch.mul(advantage_lst, advantage_lst)) - PPO_ENTROPY_WEIGHT * dist_entropy
 
-            actor_loss = - torch.min(surr1, surr2).to(device) - PPO_ENTROPY_WEIGHT * dist_entropy
+            actor_loss = - torch.min(surr1, surr2).to('cpu') - self.params.PPO_ENTROPY_WEIGHT * dist_entropy
 
             self.optimizer.zero_grad()
             actor_loss.mean().backward()
@@ -235,15 +234,15 @@ class PPO_v0:
         self.trajectory.clear()
 
         gradients = self.model.get_gradients_for_current_parameters()
-        return gradients, loss_sum / PPO_K_EPOCH
+        return gradients, loss_sum / self.params.PPO_K_EPOCH
 
     def on_episode(self, episode):
 
         score = 0.0
         number_of_reset_call = 0.0
 
-        if TRAJECTORY_SAMPLING:
-            max_trajectory_len = TRAJECTORY_LIMIT_SIZE
+        if self.params.TRAJECTORY_SAMPLING:
+            max_trajectory_len = self.params.TRAJECTORY_LIMIT_SIZE
         else:
             max_trajectory_len = 0
 

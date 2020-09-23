@@ -6,36 +6,39 @@ import torch.optim as optim
 import os
 import warnings
 
-from rl_main.fast_main import atari_params
+from common import common_utils
+from common.common_utils import make_atari_env
 from common.fast_rl import experience, rl_agent, dqn_model, actions
 from common.fast_rl.common import utils
 from common.fast_rl.common import statistics, wrappers
+
+##### NOTE #####
+from config.parameters import PARAMETERS as params
+##### NOTE #####
 
 warnings.filterwarnings("ignore", category=DeprecationWarning)
 warnings.filterwarnings("ignore", category=UserWarning)
 os.environ['KMP_DUPLICATE_LIB_OK'] = 'True'
 
+device = torch.device("cuda" if params.CUDA else "cpu")
+
+MODEL_SAVE_DIR = os.path.join(".", "saved_models")
+if not os.path.exists(MODEL_SAVE_DIR):
+    os.makedirs(MODEL_SAVE_DIR)
+
 
 if __name__ == "__main__":
-    args = utils.process_args()
-    utils.print_args(args)
+    common_utils.print_fast_rl_params(params)
 
-    device = torch.device("cuda" if args.cuda else "cpu")
+    params.BATCH_SIZE *= params.TRAIN_STEP_FREQ
 
-    if args.seed is not None:
-        np.random.seed(args.seed)
-        torch.manual_seed(args.seed)
-        torch.cuda.manual_seed_all(args.seed)
+    env = make_atari_env(params.ENVIRONMENT_ID.value, seed=params.SEED)
 
-    params = atari_params.HYPERPARAMS[args.env]
-    params.batch_size *= params.train_freq
+    if params.SEED is not None:
+        env.seed(params.SEED)
 
-    env = gym.make(params.env_name)
-    env = wrappers.wrap_dqn(env)
-    if args.seed is not None:
-        env.seed(args.seed)
+    suffix = "" if params.SEED is None else "_seed=%s" % params.SEED
 
-    suffix = "" if args.seed is None else "_seed=%s" % args.seed
     net = dqn_model.DQN(
         input_shape=env.observation_space.shape,
         n_actions=env.action_space.n
@@ -44,21 +47,25 @@ if __name__ == "__main__":
 
     tgt_net = rl_agent.TargetNet(net)
 
-    action_selector = actions.EpsilonGreedyActionSelector(epsilon=params.epsilon_start)
+    action_selector = actions.EpsilonGreedyActionSelector(epsilon=params.EPSILON_INIT)
     epsilon_tracker = actions.EpsilonTracker(
         action_selector=action_selector,
-        eps_start=params.epsilon_start,
-        eps_final=params.epsilon_final,
-        eps_frames=params.epsilon_frames
+        eps_start=params.EPSILON_INIT,
+        eps_final=params.EPSILON_MIN,
+        eps_frames=params.EPSILON_MIN_STEP
     )
     agent = rl_agent.DQNAgent(net, action_selector, device=device)
 
-    exp_source = experience.ExperienceSourceFirstLast(env, agent, gamma=params.gamma, steps_count=1)
-    buffer = experience.ExperienceReplayBuffer(exp_source, buffer_size=params.replay_size)
-    optimizer = optim.Adam(net.parameters(), lr=params.learning_rate)
+    exp_source = experience.ExperienceSourceFirstLast(env, agent, gamma=params.GAMMA, steps_count=1)
+    buffer = experience.ExperienceReplayBuffer(exp_source, buffer_size=params.REPLAY_BUFFER_SIZE)
+    optimizer = optim.Adam(net.parameters(), lr=params.LEARNING_RATE)
 
-    stat = statistics.Statistics(method="nature_dqn")
-    stat_for_model_loss = statistics.StatisticsForModelLoss()
+    if params.DRAW_VIZ:
+        stat = statistics.Statistics(method="nature_dqn")
+        stat_for_model_loss = statistics.StatisticsForModelLoss()
+    else:
+        stat = None
+        stat_for_model_loss = None
 
     action_count = []
     for _ in env.unwrapped.get_action_meanings():
@@ -66,15 +73,15 @@ if __name__ == "__main__":
 
     frame_idx = 0
 
-    next_save_frame_idx = args.model_save_period
+    next_save_frame_idx = params.MODEL_SAVE_STEP_PERIOD
 
     with utils.AtariRewardTracker(
-            stop_mean_episode_reward=params.stop_mean_episode_reward,
-            average_size_for_stats=params.average_size_for_stats,
-            draw_viz=params.draw_viz, stat=stat) as reward_tracker:
-        while True:
-            frame_idx += params.train_freq
-            buffer.populate_stacked_experience(params.train_freq)
+            stop_mean_episode_reward=params.STOP_MEAN_EPISODE_REWARD,
+            average_size_for_stats=params.AVG_EPISODE_SIZE_FOR_STAT,
+            draw_viz=params.DRAW_VIZ, stat=stat) as reward_tracker:
+        while frame_idx < params.MAX_GLOBAL_STEPS:
+            frame_idx += params.TRAIN_STEP_FREQ
+            buffer.populate_stacked_experience(params.TRAIN_STEP_FREQ)
             epsilon_tracker.udpate(frame_idx)
 
             episode_rewards = exp_source.pop_episode_reward_lst()
@@ -84,23 +91,28 @@ if __name__ == "__main__":
                 )
 
                 if frame_idx >= next_save_frame_idx:
-                    dqn_model.save_model(".", args.env_name, net.__name__, net, frame_idx, mean_episode_reward)
-                    next_save_frame_idx += args.model_save_period
+                    dqn_model.save_model(
+                        MODEL_SAVE_DIR, params.ENVIRONMENT_ID.value, net.__name__, net, frame_idx, mean_episode_reward
+                    )
+                    next_save_frame_idx += params.MODEL_SAVE_STEP_PERIOD
 
                 if solved:
+                    dqn_model.save_model(
+                        MODEL_SAVE_DIR, params.ENVIRONMENT_ID.value, net.__name__, net, frame_idx, mean_episode_reward
+                    )
                     break
 
-            if len(buffer) < params.replay_initial:
+            if len(buffer) < params.MIN_REPLAY_SIZE_FOR_TRAIN:
                 continue
 
             optimizer.zero_grad()
-            batch = buffer.sample(params.batch_size)
-            loss_v = dqn_model.calc_loss_dqn(batch, net, tgt_net, gamma=params.gamma, cuda=args.cuda)
+            batch = buffer.sample(params.BATCH_SIZE)
+            loss_v = dqn_model.calc_loss_dqn(batch, net, tgt_net, gamma=params.GAMMA, cuda=params.CUDA)
             loss_v.backward()
             optimizer.step()
 
-            if args.draw_viz and frame_idx % 1000 == 0:
+            if params.DRAW_VIZ and frame_idx % 1000 == 0:
                 stat_for_model_loss.draw_loss(frame_idx, loss_v.item())
 
-            if frame_idx % params.target_net_sync < params.train_freq:
+            if frame_idx % params.TARGET_NET_SYNC_STEP_PERIOD < params.TRAIN_STEP_FREQ:
                 tgt_net.sync()

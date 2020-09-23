@@ -1,8 +1,6 @@
 import numpy as np
 import random
 
-from rl_main.main_constants import MAX_EPISODES
-
 
 class Policy_Iteration:
     def __init__(self, env, gamma):

@@ -3,24 +3,21 @@ import gym
 import torch
 import os
 
-from rl_main.base.cartpole_rl_main import cuda, MODEL_SAVE_DIR, env_name
+from rl_main.base.cartpole_rl_main import MODEL_SAVE_DIR
 
 print(torch.__version__)
 
 from common.fast_rl import actions, dqn_model, rl_agent
 import numpy as np
 
-os.environ['KMP_DUPLICATE_LIB_OK'] = 'True'
-device = torch.device("cuda" if cuda else "cpu")
+from config.parameters import PARAMETERS as params
 
-"""
-Utility functions to enable video recording of gym environment and displaying it
-To enable video, just do "env = wrap_env(env)""
-"""
+os.environ['KMP_DUPLICATE_LIB_OK'] = 'True'
+device = torch.device("cuda" if params.CUDA else "cpu")
 
 
 def play_main():
-    env = gym.make(env_name)
+    env = gym.make(params.ENVIRONMENT_ID.value)
 
     net = dqn_model.DuelingDQNMLP(
         obs_size=4,
@@ -29,7 +26,7 @@ def play_main():
     ).to(device)
     print(net)
 
-    dqn_model.load_model(MODEL_SAVE_DIR, env_name, net.__name__, net, step=14780)
+    dqn_model.load_model(MODEL_SAVE_DIR, params.ENVIRONMENT_ID.value, net.__name__, net, step=14104)
 
     action_selector = actions.ArgmaxActionSelector()
     agent = rl_agent.DQNAgent(net, action_selector, device=device)

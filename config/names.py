@@ -1,7 +1,7 @@
 import enum
 import os
-idx = os.getcwd().index("{0}rl".format(os.sep))
-PROJECT_HOME = os.getcwd()[:idx+1] + "rl{0}".format(os.sep)
+idx = os.getcwd().index("{0}link_rl".format(os.sep))
+PROJECT_HOME = os.getcwd()[:idx+1] + "link_rl{0}".format(os.sep)
 
 
 class OSName(enum.Enum):
@@ -35,15 +35,25 @@ class EnvironmentName(enum.Enum):
     HUMANOID_STAND_UP_V2 = 'HumanoidStandup-v2'
     INVERTED_PENDULUM_V2 = 'InvertedPendulum-v2'
     WALKER_2D_V2 = 'Walker2d-v2'
+    PONG_NO_FRAME_SKIP_V4 = 'PongNoFrameskip-v4'
+    BREAKOUT_NO_FRAME_SKIP_V4 = 'BreakoutNoFrameskip-v4'
+    SPACE_INVADERS_NO_FRAME_SKIP_V4 = "SpaceInvadersNoFrameskip-v4"
+    PENDULUM_MATLAB_V0 = "Pendulum_Matlab_v0"
+    MINITAUR_BULLET_V0 = "MinitaurBulletEnv-v0"
 
 
 class DeepLearningModelName(enum.Enum):
-    ActorCriticMLP = "Actor_Critic_MLP"
-    ActorCriticCNN = "Actor_Critic_CNN"
-    NoModel = "NoModel"
+    Actor_Critic_MLP = "Actor_Critic_MLP"
+    Actor_Critic_CNN = "Actor_Critic_CNN"
+    No_Model = "No_Model"
+    Dueling_DQN_CNN = "Dueling_DQN_CNN"
+    Dueling_DQN_MLP = "Dueling_DQN_MLP"
 
 
 class RLAlgorithmName(enum.Enum):
+    DQN_FAST_V0 = "DQN_FAST_V0"   # FAST_RL
+    DDPG_FAST_V0 = "DDPG_FAST_V0"  # FAST_RL
+    A2C_FAST_V0 = "A2C_FAST_V0" # FAST_RL
     DQN_V0 = "DQN_v0"
     PPO_V0 = "PPO_v0"
     Policy_Iteration = "DP_Policy_Iteration"
@@ -54,3 +64,8 @@ class RLAlgorithmName(enum.Enum):
 class OptimizerName(enum.Enum):
     NESTEROV = "nesterov"
     ADAM = "Adam"
+
+
+class ReplayBufferName(enum.Enum):
+    REPLAY_BUFFER = "Replay_Buffer"
+    PRIORITIZED_REPLAY_BUFFER = "Prioritized_Replay_Buffer"
