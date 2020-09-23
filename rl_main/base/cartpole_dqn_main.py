@@ -9,6 +9,8 @@ from torch import optim
 import os
 import numpy as np
 
+from common.common_utils import make_gym_env
+
 print(torch.__version__)
 
 from common.fast_rl import actions, experience, dqn_model, rl_agent
@@ -22,12 +24,6 @@ if not os.path.exists(MODEL_SAVE_DIR):
 
 os.environ['KMP_DUPLICATE_LIB_OK'] = 'True'
 device = torch.device("cuda" if params.CUDA else "cpu")
-
-if params.SEED:
-    torch.manual_seed(params.SEED)
-    torch.cuda.manual_seed_all(params.SEED)
-    np.random.seed(params.SEED)
-    random.seed(params.SEED)
 
 
 def play_func(exp_queue, env, net):
@@ -48,7 +44,10 @@ def play_func(exp_queue, env, net):
 
     exp_source_iter = iter(experience_source)
 
-    stat = statistics.Statistics(method="nature_dqn")
+    if params.DRAW_VIZ:
+        stat = statistics.Statistics(method="nature_dqn")
+    else:
+        stat = None
 
     frame_idx = 0
     next_save_frame_idx = params.MODEL_SAVE_STEP_PERIOD
@@ -85,13 +84,7 @@ def play_func(exp_queue, env, net):
 def main():
     mp.set_start_method('spawn')
 
-    env = gym.make(params.ENVIRONMENT_ID.value)
-
-    # Only for ai gym
-    if params.SEED:
-        env.seed(params.SEED)
-        env.observation_space.seed(params.SEED)
-        env.action_space.seed(params.SEED)
+    env = make_gym_env(params.ENVIRONMENT_ID.value, seed=params.SEED)
 
     net = dqn_model.DuelingDQNMLP(
         obs_size=4,
@@ -109,7 +102,12 @@ def main():
     play_proc.start()
 
     time.sleep(0.5)
-    stat_for_model_loss = statistics.StatisticsForModelLoss()
+
+    if params.DRAW_VIZ:
+        stat_for_model_loss = statistics.StatisticsForModelLoss()
+    else:
+        stat_for_model_loss = None
+
     frame_idx = 0
 
     while play_proc.is_alive():

@@ -30,14 +30,9 @@ if not os.path.exists(MODEL_SAVE_DIR):
 if __name__ == "__main__":
     common_utils.print_fast_rl_params(params)
 
-    if params.SEED is not None:
-        np.random.seed(params.SEED)
-        torch.manual_seed(params.SEED)
-        torch.cuda.manual_seed_all(params.SEED)
-
     params.BATCH_SIZE *= params.TRAIN_STEP_FREQ
 
-    env = make_atari_env(params)
+    env = make_atari_env(params.ENVIRONMENT_ID.value, seed=params.SEED)
 
     if params.SEED is not None:
         env.seed(params.SEED)

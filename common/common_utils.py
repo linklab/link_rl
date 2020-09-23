@@ -1,4 +1,7 @@
+import random
+import numpy as np
 import gym
+import torch
 
 from common.fast_rl.common import wrappers
 
@@ -21,7 +24,49 @@ def print_fast_rl_params(params_class):
     print()
 
 
-def make_atari_env(params):
-    env = gym.make(params.ENVIRONMENT_ID.value)
+def set_global_seeds(seed):
+    myseed = seed + 1000 if seed is not None else None
+    try:
+        random.seed(myseed)
+        np.random.seed(myseed)
+        torch.manual_seed(myseed)
+        torch.cuda.manual_seed_all(myseed)
+    except ImportError:
+        pass
+    np.random.seed(myseed)
+    random.seed(myseed)
+
+
+def make_atari_env(env_id, rank=0, seed=0):
+    """
+    Utility function for multiprocessed env.
+
+    :param env_id: (str) the environment ID
+    :param num_env: (int) the number of environment you wish to have in subprocesses
+    :param seed: (int) the inital seed for RNG
+    :param rank: (int) index of the subprocess
+    """
+    set_global_seeds(seed)
+
+    env = gym.make(env_id)
+    env.seed(seed + rank)
     env = wrappers.wrap_dqn(env)
+
+    return env
+
+
+def make_gym_env(env_id, rank=0, seed=0):
+    """
+    Utility function for multiprocessed env.
+
+    :param env_id: (str) the environment ID
+    :param num_env: (int) the number of environment you wish to have in subprocesses
+    :param seed: (int) the inital seed for RNG
+    :param rank: (int) index of the subprocess
+    """
+    set_global_seeds(seed)
+
+    env = gym.make(env_id)
+    env.seed(seed + rank)
+
     return env
