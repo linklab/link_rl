@@ -34,7 +34,7 @@ def play_func(env, params, net, device, exp_queue, args):
     )
     agent = rl_agent.DQNAgent(net, action_selector, device=device)
     if args.omega:
-        exp_source = experience.ExperienceSource(env, agent, steps_count=6)
+        exp_source = experience.ExperienceSource(env, agent, steps_count=1)
     else:
         exp_source = experience.ExperienceSourceFirstLast(env, agent, gamma=params.gamma, steps_count=args.n_step)
     exp_source_iter = iter(exp_source)
@@ -119,7 +119,10 @@ def main():
 
         optimizer.zero_grad()
         batch, batch_indices, batch_weights = buffer.sample(params.batch_size)
-        loss_v, sample_prios = dqn_model.calc_loss_per_double_dqn(batch, batch_weights, net, tgt_net, gamma=params.gamma, cuda=args.cuda, cuda_async=True)
+        if args.omega:
+            loss_v, sample_prios =dqn_model.calc_loss_per_double_dqn_for_omega(buffer.buffer, batch, batch_weights, net, tgt_net, params, cuda=args.cuda, cuda_async=True)
+        else:
+            loss_v, sample_prios = dqn_model.calc_loss_per_double_dqn(buffer.buffer, batch, batch_weights, net, tgt_net, gamma=params.gamma, cuda=args.cuda, cuda_async=True)
         loss_v.backward()
         optimizer.step()
         buffer.update_priorities(batch_indices, sample_prios)

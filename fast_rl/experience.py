@@ -168,7 +168,7 @@ def _group_list(items, lens):
 
 
 # those entries are emitted from ExperienceSourceFirstLast. Reward is discounted over the trajectory piece
-ExperienceFirstLast = collections.namedtuple('ExperienceFirstLast', ('state', 'action', 'reward', 'last_state'))
+ExperienceFirstLast = collections.namedtuple('ExperienceFirstLast', ('state', 'action', 'reward', 'last_state', 'last_step'))
 
 
 class ExperienceSourceFirstLast(ExperienceSource):
@@ -198,7 +198,7 @@ class ExperienceSourceFirstLast(ExperienceSource):
                 total_reward *= self.gamma
                 total_reward += e.reward
             yield ExperienceFirstLast(
-                state=exp[0].state, action=exp[0].action, reward=total_reward, last_state=last_state
+                state=exp[0].state, action=exp[0].action, reward=total_reward, last_state=last_state, last_step=len(elems)
             )
 
 

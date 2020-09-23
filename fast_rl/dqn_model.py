@@ -2,6 +2,7 @@ import os
 
 import torch
 import torch.nn as nn
+import torch.nn.functional as F
 from torch.autograd import Variable
 
 import numpy as np
@@ -51,7 +52,7 @@ class DQN(nn.Module):
         return int(np.prod(o.size()))
 
     def forward(self, x):
-        fx = x.float() / 256
+        fx = x.float() / 255.
         conv_out = self.conv(fx).view(fx.size()[0], -1)
         return self.fc(conv_out)
 
@@ -96,7 +97,7 @@ class DuelingDQN(nn.Module):
         return int(np.prod(o.size()))
 
     def forward(self, x):
-        fx = x.float() / 256
+        fx = x.float() / 255.
         conv_out = self.conv(fx).view(fx.size()[0], -1)
         val = self.fc_val(conv_out)
         adv = self.fc_adv(conv_out)
@@ -121,19 +122,20 @@ class DQNMLP(nn.Module):
 
 
 def unpack_batch(batch):
-    states, actions, rewards, dones, last_states = [], [], [], [], []
+    states, actions, rewards, dones, last_states, last_steps = [], [], [], [], [], []
     for exp in batch:
         state = np.array(exp.state, copy=False)
         states.append(state)
         actions.append(exp.action)
         rewards.append(exp.reward)
         dones.append(exp.last_state is None)
+        last_steps.append(exp.last_step)
         if exp.last_state is None:
             last_states.append(state)       # the result will be masked anyway
         else:
             last_states.append(np.array(exp.last_state, copy=False))
     return np.array(states, copy=False), np.array(actions), np.array(rewards, dtype=np.float32), \
-           np.array(dones, dtype=np.uint8), np.array(last_states, copy=False)
+           np.array(dones, dtype=np.uint8), np.array(last_states, copy=False), np.array(last_steps)
 
 
 def insert_experience_into_buffer(exp, buffer):
@@ -149,22 +151,24 @@ def insert_experience_into_buffer(exp, buffer):
     if exp.last_state is not None:
         extended_frames[4, :, :] = exp.last_state.__array__()[3, :, :]
 
-    buffer._add((extended_frames, exp.action, exp.reward, exp.last_state is None))
+    buffer._add((extended_frames, exp.action, exp.reward, exp.last_state is None, exp.last_step))
 
 
 def unpack_batch_extended_frames(batch):
-    states, actions, rewards, dones, last_states = [], [], [], [], []
+    states, actions, rewards, dones, last_states, last_steps = [], [], [], [], [], []
     for transition in batch:
         extended_frames = transition[0]
         action = transition[1]
         reward = transition[2]
         done = transition[3]
+        last_step = transition[4]
 
         state = extended_frames[0:4, :, :]
         states.append(state)
         actions.append(action)
         rewards.append(reward)
         dones.append(done)
+        last_steps.append(last_step)
         if not done:
             last_state = extended_frames[1:5, :, :]
         else:
@@ -172,11 +176,45 @@ def unpack_batch_extended_frames(batch):
         last_states.append(last_state)
 
     return np.array(states, copy=False), np.array(actions), np.array(rewards, dtype=np.float32), \
-           np.array(dones, dtype=np.uint8), np.array(last_states, copy=False)
+           np.array(dones, dtype=np.uint8), np.array(last_states, copy=False), np.array(last_steps)
+
+
+# TODO
+def unpack_batch_for_n_step(buffer, batch, batch_indices, step_n):
+    return 0
+
+
+def unpack_batch_for_omega(buffer, batch, batch_indices, step_n=6):
+    states, actions, rewards, dones, next_states = [], [], [], [], []
+    for idx, exp in enumerate(batch):
+        state = np.array(exp.state, copy=False)
+        states.append(state)
+        actions.append(exp.action)
+
+        n_step_rewards = []
+        current_exp = exp
+        for i in range(step_n):
+            n_step_rewards.append(current_exp.reward)
+            next_exp = buffer[batch_indices[idx] + i + 1]
+            next_states.append(next_exp.state)
+
+            if current_exp.done:
+                dones.append(True)
+                break
+            else:
+                if i == step_n:
+                    dones.append(False)
+
+            current_exp = next_exp
+
+        rewards.append(n_step_rewards)
+
+    return np.array(states, copy=False), np.array(actions), np.array(rewards, dtype=np.float32), \
+           np.array(dones, dtype=np.uint8), np.array(next_states, copy=False)
 
 
 def calc_loss_dqn(batch, net, tgt_net, gamma, cuda=False, cuda_async=False):
-    states, actions, rewards, dones, next_states = unpack_batch_extended_frames(batch)
+    states, actions, rewards, dones, next_states, last_steps = unpack_batch_extended_frames(batch)
     #states, actions, rewards, dones, next_states = unpack_batch(batch)
 
     states_v = torch.tensor(states)
@@ -184,12 +222,14 @@ def calc_loss_dqn(batch, net, tgt_net, gamma, cuda=False, cuda_async=False):
     actions_v = torch.tensor(actions)
     rewards_v = torch.tensor(rewards)
     done_mask = torch.BoolTensor(dones)
+    last_steps_v = torch.tensor(last_steps)
     if cuda:
         states_v = states_v.cuda(non_blocking=cuda_async)
         next_states_v = next_states_v.cuda(non_blocking=cuda_async)
         actions_v = actions_v.cuda(non_blocking=cuda_async)
         rewards_v = rewards_v.cuda(non_blocking=cuda_async)
         done_mask = done_mask.cuda(non_blocking=cuda_async)
+        last_steps_v = last_steps_v.cuda(non_blocking=cuda_async)
 
     # https://subscription.packtpub.com/book/data/9781838826994/6/ch06lvl1sec45/dqn-on-pong
     # We pass observations to the first model and extract the specific Q - values for the taken actions using the gather() tensor operation.
@@ -206,25 +246,28 @@ def calc_loss_dqn(batch, net, tgt_net, gamma, cuda=False, cuda_async=False):
         next_state_values = tgt_net.target_model(next_states_v).max(1)[0]
         next_state_values[done_mask] = 0.0
 
-    expected_state_action_values = next_state_values.detach() * gamma + rewards_v
+    expected_state_action_values = next_state_values.detach() * (gamma**last_steps_v) + rewards_v
 
-    return nn.MSELoss()(state_action_values, expected_state_action_values)
+    # return nn.MSELoss()(state_action_values, expected_state_action_values)
+    return F.smooth_l1_loss(state_action_values, expected_state_action_values)
 
 
 def calc_loss_double_dqn(batch, net, tgt_net, gamma, cuda=False, cuda_async=False):
-    states, actions, rewards, dones, next_states = unpack_batch(batch)
+    states, actions, rewards, dones, next_states, last_steps = unpack_batch(batch)
 
     states_v = torch.tensor(states)
     next_states_v = torch.tensor(next_states)
     actions_v = torch.tensor(actions)
     rewards_v = torch.tensor(rewards)
     done_mask = torch.BoolTensor(dones)
+    last_steps_v = torch.tensor(last_steps)
     if cuda:
         states_v = states_v.cuda(non_blocking=cuda_async)
         next_states_v = next_states_v.cuda(non_blocking=cuda_async)
         actions_v = actions_v.cuda(non_blocking=cuda_async)
         rewards_v = rewards_v.cuda(non_blocking=cuda_async)
         done_mask = done_mask.cuda(non_blocking=cuda_async)
+        last_steps_v = last_steps_v.cuda(non_blocking=cuda_async)
 
     actions_v = actions_v.unsqueeze(-1)
     state_action_vals = net(states_v).gather(1, actions_v)
@@ -234,18 +277,21 @@ def calc_loss_double_dqn(batch, net, tgt_net, gamma, cuda=False, cuda_async=Fals
         next_state_acts = next_state_acts.unsqueeze(-1)
         next_state_vals = tgt_net.target_model(next_states_v).gather(1, next_state_acts).squeeze(-1)
         next_state_vals[done_mask] = 0.0
-        exp_sa_vals = next_state_vals.detach() * gamma + rewards_v
-    return nn.MSELoss()(state_action_vals, exp_sa_vals)
+        exp_sa_vals = next_state_vals.detach() * (gamma**last_steps_v) + rewards_v
+
+    # return nn.MSELoss()(state_action_vals, exp_sa_vals)
+    return F.smooth_l1_loss(state_action_vals, exp_sa_vals)
 
 
-def calc_loss_per_double_dqn(batch, batch_weights, net, tgt_net, gamma, cuda=False, cuda_async=False):
-    states, actions, rewards, dones, next_states = unpack_batch(batch)
+def calc_loss_per_double_dqn(buffer, batch, batch_weights, net, tgt_net, gamma, cuda=False, cuda_async=False):
+    states, actions, rewards, dones, next_states, last_steps = unpack_batch(batch)
 
     states_v = torch.tensor(states)
     next_states_v = torch.tensor(next_states)
     actions_v = torch.tensor(actions)
     rewards_v = torch.tensor(rewards)
     done_mask = torch.BoolTensor(dones)
+    last_steps_v = torch.tensor(last_steps)
     batch_weights_v = torch.tensor(batch_weights)
     if cuda:
         states_v = states_v.cuda(non_blocking=cuda_async)
@@ -253,6 +299,7 @@ def calc_loss_per_double_dqn(batch, batch_weights, net, tgt_net, gamma, cuda=Fal
         actions_v = actions_v.cuda(non_blocking=cuda_async)
         rewards_v = rewards_v.cuda(non_blocking=cuda_async)
         done_mask = done_mask.cuda(non_blocking=cuda_async)
+        last_steps_v = last_steps_v.cuda(non_blocking=cuda_async)
         batch_weights_v = batch_weights_v.cuda(non_blocking=cuda_async)
 
     actions_v = actions_v.unsqueeze(-1)
@@ -263,6 +310,65 @@ def calc_loss_per_double_dqn(batch, batch_weights, net, tgt_net, gamma, cuda=Fal
         next_state_acts = next_state_acts.unsqueeze(-1)
         next_state_vals = tgt_net.target_model(next_states_v).gather(1, next_state_acts).squeeze(-1)
         next_state_vals[done_mask] = 0.0
-        exp_sa_vals = next_state_vals.detach() * gamma + rewards_v
-    losses_v = batch_weights_v * (state_action_vals - exp_sa_vals) ** 2
+        exp_sa_vals = next_state_vals.detach() * (gamma**last_steps_v) + rewards_v
+
+    # losses_v = batch_weights_v * (state_action_vals - exp_sa_vals) ** 2
+    losses_v = batch_weights_v * F.smooth_l1_loss(state_action_vals, exp_sa_vals)
     return losses_v.mean(), (losses_v + 1e-5).data.cpu().numpy()
+
+
+def calc_loss_per_double_dqn_for_omega(buffer, batch, batch_indices, batch_weights, net, tgt_net, params, cuda=False, cuda_async=False):
+    states, actions, rewards, dones, next_states = unpack_batch_for_omega(buffer, batch, batch_indices)
+
+    states_v = torch.tensor(states)
+    next_states_v = torch.tensor(next_states)
+    actions_v = torch.tensor(actions)
+    done_mask = torch.BoolTensor(dones)
+    batch_weights_v = torch.tensor(batch_weights)
+    if cuda:
+        states_v = states_v.cuda(non_blocking=cuda_async)
+        next_states_v = next_states_v.cuda(non_blocking=cuda_async)
+        actions_v = actions_v.cuda(non_blocking=cuda_async)
+        done_mask = done_mask.cuda(non_blocking=cuda_async)
+        batch_weights_v = batch_weights_v.cuda(non_blocking=cuda_async)
+
+    actions_v = actions_v.unsqueeze(-1)
+    state_action_values = net(states_v).gather(1, actions_v)
+    state_action_values = state_action_values.squeeze(-1)
+
+    with torch.no_grad():
+        # for double DQN
+        next_state_actions = net(next_states_v).max(1)[1]
+        next_state_actions = next_state_actions.unsqueeze(-1)
+        next_state_values = tgt_net.target_model(next_states_v).gather(1, next_state_actions).squeeze(-1)
+
+        expected_state_action_values = calc_omega_return(rewards, done_mask, next_state_values, params)
+
+    losses_v = batch_weights_v * F.smooth_l1_loss(state_action_values, expected_state_action_values)
+    return losses_v.mean(), (losses_v + 1e-5).data.cpu().numpy()
+
+
+def calc_omega_return(rewards, done_mask, next_state_values, params):
+    idx_count = 0
+    target_q_values = []
+    for batch_idx in range(params.batch_size * params.train_freq):
+        n_step_target_list = []
+        n_step_reward_sum_list = []
+        reward_sum = 0
+        gamma_pow = 1
+        for idx, reward in enumerate(rewards):
+            reward_sum += gamma_pow * reward
+            n_step_reward_sum_list.append(reward_sum)
+            gamma_pow *= params.gamma
+        gamma_pow = params.gamma
+        for i in range(len(rewards[batch_idx])):
+            n_step_target_list.append(n_step_reward_sum_list[i] + gamma_pow * next_state_values[idx_count].detach() *
+                                      (done_mask[batch_idx] if i == len(rewards[batch_idx])-1 else 1))
+            gamma_pow *= params.gamma
+            idx_count += 1
+
+        avg = sum(n_step_target_list) / len(n_step_target_list)
+        beta = (max(n_step_target_list) - avg) / (max(n_step_target_list) - min(n_step_target_list) + 0.00001)
+        target_q_values.append((1-beta)*avg + beta*max(n_step_target_list))
+
+    return target_q_values

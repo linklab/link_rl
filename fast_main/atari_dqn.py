@@ -13,7 +13,7 @@ from fast_main import atari_params
 from fast_rl import dqn_model, actions
 from fast_rl import rl_agent, experience
 from fast_rl.common import statistics, wrappers, utils
-from fast_rl import insert_experience_into_buffer
+from fast_rl.dqn_model import insert_experience_into_buffer
 
 warnings.filterwarnings("ignore", category=DeprecationWarning)
 warnings.filterwarnings("ignore", category=UserWarning)
