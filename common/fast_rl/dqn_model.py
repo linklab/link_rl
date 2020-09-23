@@ -412,7 +412,7 @@ def calc_loss_per_double_dqn_for_omega(buffer, batch, batch_indices, batch_weigh
 def calc_omega_return(rewards, done_mask, next_state_values, params):
     idx_count = 0
     target_q_values = []
-    for batch_idx in range(params.batch_size * params.train_freq):
+    for batch_idx in range(params.BATCH_SIZE * params.TRAIN_STEP_FREQ):
         n_step_target_list = []
         n_step_reward_sum_list = []
         reward_sum = 0
@@ -420,16 +420,17 @@ def calc_omega_return(rewards, done_mask, next_state_values, params):
         for idx, reward in enumerate(rewards):
             reward_sum += gamma_pow * reward
             n_step_reward_sum_list.append(reward_sum)
-            gamma_pow *= params.gamma
-        gamma_pow = params.gamma
+            gamma_pow *= params.GAMMA
+        gamma_pow = params.GAMMA
         for i in range(len(rewards[batch_idx])):
             n_step_target_list.append(n_step_reward_sum_list[i] + gamma_pow * next_state_values[idx_count].detach() *
                                       (done_mask[batch_idx] if i == len(rewards[batch_idx])-1 else 1))
-            gamma_pow *= params.gamma
+            gamma_pow *= params.GAMMA
             idx_count += 1
 
         avg = sum(n_step_target_list) / len(n_step_target_list)
-        beta = (max(n_step_target_list) - avg) / (max(n_step_target_list) - min(n_step_target_list) + 0.00001)
-        target_q_values.append((1-beta)*avg + beta*max(n_step_target_list))
+        max_n_step_target = max(n_step_target_list)
+        beta = (max_n_step_target - avg) / (max_n_step_target - min(n_step_target_list) + 0.00001)
+        target_q_values.append((1-beta) * avg + beta * max_n_step_target)
 
     return target_q_values
