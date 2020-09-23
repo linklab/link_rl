@@ -246,7 +246,7 @@ def unpack_batch_for_n_step(buffer, batch, batch_indices, step_n):
 
 
 def unpack_batch_for_omega(buffer, batch, batch_indices, step_n=6):
-    states, actions, rewards, dones, next_states = [], [], [], [], []
+    states, actions, rewards, done_mask, next_states = [], [], [], [], []
     for idx, exp in enumerate(batch):
         state = np.array(exp.state, copy=False)
         states.append(state)
@@ -260,18 +260,18 @@ def unpack_batch_for_omega(buffer, batch, batch_indices, step_n=6):
             next_states.append(next_exp.state)
 
             if current_exp.done:
-                dones.append(True)
+                done_mask.append(0)
                 break
             else:
                 if i == step_n:
-                    dones.append(False)
+                    done_mask.append(1)
 
             current_exp = next_exp
 
         rewards.append(n_step_rewards)
 
     return np.array(states, copy=False), np.array(actions), np.array(rewards, dtype=np.float32), \
-           np.array(dones, dtype=np.uint8), np.array(next_states, copy=False)
+           np.array(done_mask), np.array(next_states, copy=False)
 
 
 def calc_loss_dqn(batch, net, tgt_net, gamma, cuda=False, cuda_async=False):
@@ -379,18 +379,16 @@ def calc_loss_per_double_dqn(buffer, batch, batch_weights, net, tgt_net, gamma, 
 
 
 def calc_loss_per_double_dqn_for_omega(buffer, batch, batch_indices, batch_weights, net, tgt_net, params, cuda=False, cuda_async=False):
-    states, actions, rewards, dones, next_states = unpack_batch_for_omega(buffer, batch, batch_indices)
+    states, actions, rewards, done_mask, next_states = unpack_batch_for_omega(buffer, batch, batch_indices)
 
     states_v = torch.tensor(states)
     next_states_v = torch.tensor(next_states)
     actions_v = torch.tensor(actions)
-    done_mask = torch.BoolTensor(dones)
     batch_weights_v = torch.tensor(batch_weights)
     if cuda:
         states_v = states_v.cuda(non_blocking=cuda_async)
         next_states_v = next_states_v.cuda(non_blocking=cuda_async)
         actions_v = actions_v.cuda(non_blocking=cuda_async)
-        done_mask = done_mask.cuda(non_blocking=cuda_async)
         batch_weights_v = batch_weights_v.cuda(non_blocking=cuda_async)
 
     actions_v = actions_v.unsqueeze(-1)
@@ -423,7 +421,7 @@ def calc_omega_return(rewards, done_mask, next_state_values, params):
             gamma_pow *= params.GAMMA
         gamma_pow = params.GAMMA
         for i in range(len(rewards[batch_idx])):
-            n_step_target_list.append(n_step_reward_sum_list[i] + gamma_pow * next_state_values[idx_count].detach() *
+            n_step_target_list.append(n_step_reward_sum_list[i] + gamma_pow * next_state_values[idx_count].item() *
                                       (done_mask[batch_idx] if i == len(rewards[batch_idx])-1 else 1))
             gamma_pow *= params.GAMMA
             idx_count += 1
