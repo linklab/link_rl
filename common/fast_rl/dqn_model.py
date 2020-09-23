@@ -263,15 +263,14 @@ def unpack_batch_for_omega(buffer, batch, batch_indices, step_n=6):
                 done_mask.append(0)
                 break
             else:
-                if i == step_n:
+                if i == step_n-1:
                     done_mask.append(1)
 
             current_exp = next_exp
 
         rewards.append(n_step_rewards)
 
-    return np.array(states, copy=False), np.array(actions), np.array(rewards, dtype=np.float32), \
-           np.array(done_mask), np.array(next_states, copy=False)
+    return np.array(states, copy=False), np.array(actions), rewards, done_mask, np.array(next_states, copy=False)
 
 
 def calc_loss_dqn(batch, net, tgt_net, gamma, cuda=False, cuda_async=False):
@@ -402,6 +401,8 @@ def calc_loss_per_double_dqn_for_omega(buffer, batch, batch_indices, batch_weigh
         next_state_values = tgt_net.target_model(next_states_v).gather(1, next_state_actions).squeeze(-1)
 
         expected_state_action_values = calc_omega_return(rewards, done_mask, next_state_values, params)
+        if cuda:
+            expected_state_action_values = expected_state_action_values.cuda(non_blocking=cuda_async)
 
     losses_v = batch_weights_v * F.smooth_l1_loss(state_action_values, expected_state_action_values)
     return losses_v.mean(), (losses_v + 1e-5).data.cpu().numpy()
@@ -415,7 +416,7 @@ def calc_omega_return(rewards, done_mask, next_state_values, params):
         n_step_reward_sum_list = []
         reward_sum = 0
         gamma_pow = 1
-        for idx, reward in enumerate(rewards):
+        for idx, reward in enumerate(rewards[batch_idx]):
             reward_sum += gamma_pow * reward
             n_step_reward_sum_list.append(reward_sum)
             gamma_pow *= params.GAMMA
@@ -431,4 +432,5 @@ def calc_omega_return(rewards, done_mask, next_state_values, params):
         beta = (max_n_step_target - avg) / (max_n_step_target - min(n_step_target_list) + 0.00001)
         target_q_values.append((1-beta) * avg + beta * max_n_step_target)
 
+    target_q_values = torch.tensor(target_q_values, dtype=torch.float32)
     return target_q_values
