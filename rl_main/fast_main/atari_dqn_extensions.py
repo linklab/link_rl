@@ -43,7 +43,11 @@ def play_func(env, net, exp_queue):
     else:
         exp_source = experience.ExperienceSourceFirstLast(env, agent, gamma=params.GAMMA, steps_count=params.N_STEP)
     exp_source_iter = iter(exp_source)
-    stat = statistics.Statistics(method="nature_dqn")
+
+    if params.DRAW_VIZ:
+        stat = statistics.Statistics(method="nature_dqn")
+    else:
+        stat = None
 
     action_count = []
     for _ in env.unwrapped.get_action_meanings():
@@ -114,7 +118,11 @@ def main():
     play_proc.start()
 
     time.sleep(0.5)
-    stat_for_model_loss = statistics.StatisticsForModelLoss()
+    if params.DRAW_VIZ:
+        stat_for_model_loss = statistics.StatisticsForModelLoss()
+    else:
+        stat_for_model_loss = None
+
     frame_idx = 0
 
     while play_proc.is_alive():

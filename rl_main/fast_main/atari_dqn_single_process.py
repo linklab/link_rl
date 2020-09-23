@@ -60,8 +60,12 @@ if __name__ == "__main__":
     buffer = experience.ExperienceReplayBuffer(exp_source, buffer_size=params.REPLAY_BUFFER_SIZE)
     optimizer = optim.Adam(net.parameters(), lr=params.LEARNING_RATE)
 
-    stat = statistics.Statistics(method="nature_dqn")
-    stat_for_model_loss = statistics.StatisticsForModelLoss()
+    if params.DRAW_VIZ:
+        stat = statistics.Statistics(method="nature_dqn")
+        stat_for_model_loss = statistics.StatisticsForModelLoss()
+    else:
+        stat = None
+        stat_for_model_loss = None
 
     action_count = []
     for _ in env.unwrapped.get_action_meanings():

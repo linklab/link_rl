@@ -1,8 +1,8 @@
 from config.fast_rl_parameters.parameters_fast_rl_pong_dqn import PARAMETERS_FAST_RL_PONG_DQN
 from config.fast_rl_parameters.parameters_fast_rl_cartpole_dqn import PARAMETERS_FAST_RL_CARTPOLE_DQN
+from config.fast_rl_parameters.parameters_fast_rl_minitaur_bullet_a2c import PARAMETERS_FAST_RL_MINITAUR_BULLET_A2C
 from config.federated_parameters.parameters_cartpole_ppo_mlp import PARAMETERS_CARTPOLE_PPO_MLP
 from config.fast_rl_parameters.parameters_fast_rl_pendulum_matlab_dqn import PARAMETERS_FAST_RL_PENDULUM_MATLAB_DQN
 
-
-class PARAMETERS(PARAMETERS_FAST_RL_CARTPOLE_DQN):
+class PARAMETERS(PARAMETERS_FAST_RL_MINITAUR_BULLET_A2C):
     DRAW_VIZ = 0

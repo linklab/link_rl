@@ -39,6 +39,7 @@ class EnvironmentName(enum.Enum):
     BREAKOUT_NO_FRAME_SKIP_V4 = 'BreakoutNoFrameskip-v4'
     SPACE_INVADERS_NO_FRAME_SKIP_V4 = "SpaceInvadersNoFrameskip-v4"
     PENDULUM_MATLAB_V0 = "Pendulum_Matlab_v0"
+    MINITAUR_BULLET_V0 = "MinitaurBulletEnv-v0"
 
 
 class DeepLearningModelName(enum.Enum):
@@ -50,9 +51,10 @@ class DeepLearningModelName(enum.Enum):
 
 
 class RLAlgorithmName(enum.Enum):
-    DQN_V0 = "DQN_v0"
     DQN_FAST_V0 = "DQN_FAST_V0"   # FAST_RL
     DDPG_FAST_V0 = "DDPG_FAST_V0"  # FAST_RL
+    A2C_FAST_V0 = "A2C_FAST_V0" # FAST_RL
+    DQN_V0 = "DQN_v0"
     PPO_V0 = "PPO_v0"
     Policy_Iteration = "DP_Policy_Iteration"
     Value_Iteration = "DP_Value_Iteration"
