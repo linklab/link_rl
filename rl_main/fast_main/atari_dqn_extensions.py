@@ -39,7 +39,7 @@ def play_func(env, net, exp_queue):
     )
     agent = rl_agent.DQNAgent(net, action_selector, device=device)
     if params.OMEGA:
-        exp_source = experience.ExperienceSource(env, agent, steps_count=6)
+        exp_source = experience.ExperienceSourceNamedTuple(env, agent, steps_count=1)
     else:
         exp_source = experience.ExperienceSourceFirstLast(env, agent, gamma=params.GAMMA, steps_count=params.N_STEP)
     exp_source_iter = iter(exp_source)
@@ -108,7 +108,10 @@ def main():
 
     tgt_net = rl_agent.TargetNet(net)
 
-    buffer = experience.PrioReplayBuffer(exp_source=None, buf_size=params.REPLAY_BUFFER_SIZE)
+    if params.OMEGA:
+        buffer = experience.PrioReplayBuffer(exp_source=None, buf_size=params.REPLAY_BUFFER_SIZE, step_n=6)
+    else:
+        buffer = experience.PrioReplayBuffer(exp_source=None, buf_size=params.REPLAY_BUFFER_SIZE, step_n=params.N_STEP)
     optimizer = optim.Adam(net.parameters(), lr=params.LEARNING_RATE)
 
     exp_queue = mp.Queue(maxsize=params.TRAIN_STEP_FREQ * 2)
@@ -135,9 +138,14 @@ def main():
 
         optimizer.zero_grad()
         batch, batch_indices, batch_weights = buffer.sample(params.BATCH_SIZE)
-        loss_v, sample_prios = dqn_model.calc_loss_per_double_dqn(
-            batch, batch_weights, net, tgt_net, gamma=params.GAMMA, cuda=params.CUDA, cuda_async=True
-        )
+        if params.OMEGA:
+            loss_v, sample_prios =dqn_model.calc_loss_per_double_dqn_for_omega(
+                buffer.buffer, batch, batch_indices, batch_weights, net, tgt_net, params, cuda=params.CUDA, cuda_async=True
+            )
+        else:
+            loss_v, sample_prios = dqn_model.calc_loss_per_double_dqn(
+                buffer.buffer, batch, batch_weights, net, tgt_net, gamma=params.GAMMA, cuda=params.CUDA, cuda_async=True
+            )
         loss_v.backward()
         optimizer.step()
         buffer.update_priorities(batch_indices, sample_prios)

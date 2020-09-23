@@ -129,7 +129,7 @@ def main():
         optimizer.zero_grad()
         batch, batch_indices, batch_weights = buffer.sample(params.BATCH_SIZE)
         loss_v, sample_prios = dqn_model.calc_loss_per_double_dqn(
-            batch, batch_weights, net, tgt_net, gamma=params.GAMMA, cuda=params.CUDA, cuda_async=True
+            buffer.buffer, batch, batch_weights, net, tgt_net, gamma=params.GAMMA, cuda=params.CUDA, cuda_async=True
         )
         loss_v.backward()
         optimizer.step()

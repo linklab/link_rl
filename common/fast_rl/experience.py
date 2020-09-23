@@ -167,8 +167,22 @@ def _group_list(items, lens):
     return res
 
 
+class ExperienceSourceNamedTuple(ExperienceSource):
+    """
+    convert tuple to namedtuple
+    """
+    def __init__(self, env, agent, steps_count=2, steps_delta=1, vectorized=False):
+        super(ExperienceSourceNamedTuple, self).__init__(env, agent, steps_count, steps_delta, vectorized=vectorized)
+
+    def __iter__(self):
+        for exp in super(ExperienceSourceNamedTuple, self).__iter__():
+            yield Experience(
+                state=exp[0].state, action=exp[0].action, reward=exp[0].reward, done=exp[0].done
+            )
+
+
 # those entries are emitted from ExperienceSourceFirstLast. Reward is discounted over the trajectory piece
-ExperienceFirstLast = collections.namedtuple('ExperienceFirstLast', ('state', 'action', 'reward', 'last_state'))
+ExperienceFirstLast = collections.namedtuple('ExperienceFirstLast', ('state', 'action', 'reward', 'last_state', 'last_step'))
 
 
 class ExperienceSourceFirstLast(ExperienceSource):
@@ -198,7 +212,7 @@ class ExperienceSourceFirstLast(ExperienceSource):
                 total_reward *= self.gamma
                 total_reward += e.reward
             yield ExperienceFirstLast(
-                state=exp[0].state, action=exp[0].action, reward=total_reward, last_state=last_state
+                state=exp[0].state, action=exp[0].action, reward=total_reward, last_state=last_state, last_step=len(elems)
             )
 
 
@@ -501,7 +515,7 @@ class PrioritizedReplayBuffer(ExperienceReplayBuffer):
 
 
 class PrioReplayBuffer:
-    def __init__(self, exp_source, buf_size, prob_alpha=0.6):
+    def __init__(self, exp_source, buf_size, prob_alpha=0.6, step_n=1):
         assert isinstance(exp_source, (ExperienceSource, type(None)))
         assert isinstance(buf_size, int)
         self.exp_source_iter = None if exp_source is None else iter(exp_source)
@@ -511,6 +525,7 @@ class PrioReplayBuffer:
         self.buffer = []
         self.priorities = np.zeros((buf_size, ), dtype=np.float32)
         self.beta = BETA_START
+        self.step_n = step_n
 
     def update_beta(self, idx):
         v = BETA_START + idx * (1.0 - BETA_START) / BETA_FRAMES
@@ -547,8 +562,9 @@ class PrioReplayBuffer:
             prios = self.priorities[:self.pos]
         probs = prios ** self.prob_alpha
 
+        probs = probs[:-self.step_n]
         probs /= probs.sum()
-        indices = np.random.choice(len(self.buffer), batch_size, p=probs)
+        indices = np.random.choice(len(self.buffer)-self.step_n, batch_size, p=probs)
         samples = [self.buffer[idx] for idx in indices]
         total = len(self.buffer)
         weights = (total * probs[indices]) ** (-self.beta)

@@ -119,3 +119,5 @@ environments/unity/unity_envs/
 
 *.pth
 
+# personal parameter's option
+config/parameters.py
