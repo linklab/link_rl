@@ -167,6 +167,20 @@ def _group_list(items, lens):
     return res
 
 
+class ExperienceSourceNamedTuple(ExperienceSource):
+    """
+    convert tuple to namedtuple
+    """
+    def __init__(self, env, agent, steps_count=2, steps_delta=1, vectorized=False):
+        super(ExperienceSourceNamedTuple, self).__init__(env, agent, steps_count, steps_delta, vectorized=vectorized)
+
+    def __iter__(self):
+        for exp in super(ExperienceSourceNamedTuple, self).__iter__():
+            yield Experience(
+                state=exp[0].state, action=exp[0].action, reward=exp[0].reward, done=exp[0].done
+            )
+
+
 # those entries are emitted from ExperienceSourceFirstLast. Reward is discounted over the trajectory piece
 ExperienceFirstLast = collections.namedtuple('ExperienceFirstLast', ('state', 'action', 'reward', 'last_state', 'last_step'))
 
