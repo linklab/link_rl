@@ -412,7 +412,7 @@ def calc_loss_per_double_dqn_for_omega(buffer, batch, batch_indices, batch_weigh
 def calc_omega_return(rewards, done_mask, next_state_values, params):
     idx_count = 0
     target_q_values = []
-    for batch_idx in range(params.BATCH_SIZE * params.TRAIN_STEP_FREQ):
+    for batch_idx in range(params.BATCH_SIZE):
         n_step_target_list = []
         n_step_reward_sum_list = []
         reward_sum = 0
