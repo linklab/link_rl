@@ -87,7 +87,7 @@ class MatlabRotaryInvertedPendulumEnv(gym.Env):
             done = False
 
         # print("!!!!!!!!!!!!!!!!!!!!!!!!", np.asarray(next_obs))
-        return self.state, reward, done, info
+        return np.array(self.state), reward, done, info
 
     def render(self, mode='human'):
         pass

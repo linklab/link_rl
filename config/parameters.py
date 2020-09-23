@@ -5,4 +5,5 @@ from config.federated_parameters.parameters_cartpole_ppo_mlp import PARAMETERS_C
 from config.fast_rl_parameters.parameters_fast_rl_pendulum_matlab_dqn import PARAMETERS_FAST_RL_PENDULUM_MATLAB_DQN
 
 class PARAMETERS(PARAMETERS_FAST_RL_MINITAUR_BULLET_A2C):
-    DRAW_VIZ = 0
+    ENV_NAME = 'MatlabRotaryInvertedPendulumEnv'
+    DRAW_VIZ = 1
