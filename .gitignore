@@ -112,9 +112,10 @@ environments/unity/unity_envs/
 *.out
 *.gz
 
-rl_main/main_constants.py
 /model_save_files/
 /temp/
 /src/
 /save_results
+
+*.pth
 

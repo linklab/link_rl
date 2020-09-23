@@ -1,8 +1,12 @@
 import sys, os
 
-idx = os.getcwd().index("{0}rl".format(os.sep))
-PROJECT_HOME = os.getcwd()[:idx+1] + "rl{0}".format(os.sep)
+import torch
+
+idx = os.getcwd().index("{0}link_rl".format(os.sep))
+PROJECT_HOME = os.getcwd()[:idx+1] + "link_rl{0}".format(os.sep)
 sys.path.append(PROJECT_HOME)
+
+device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 
 from rl_main import rl_utils
 
