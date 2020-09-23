@@ -99,7 +99,7 @@ def get_environment(owner="chief"):
     elif params.ENVIRONMENT_ID == EnvironmentName.CHASER_V1_MAC or params.ENVIRONMENT_ID == EnvironmentName.CHASER_V1_WINDOWS:
         env = Chaser_v1(params.MY_PLATFORM)
     elif params.ENVIRONMENT_ID == EnvironmentName.BREAKOUT_DETERMINISTIC_V4:
-        env = BreakoutDeterministic_v4()
+        env = BreakoutDeterministic_v4(params)
     elif params.ENVIRONMENT_ID == EnvironmentName.PENDULUM_V0:
         env = Pendulum_v0()
     elif params.ENVIRONMENT_ID == EnvironmentName.ACROBOT_V1:

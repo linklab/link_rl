@@ -4,7 +4,6 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 from rl_main.utils import AddBiases, util_init
-from config.parameters import PARAMETERS as params
 
 """
 Modify standard PyTorch distributions so they are compatible with this code.
@@ -38,7 +37,7 @@ FixedNormal.entropy = lambda self: normal_entropy(self).sum(-1)
 
 FixedNormal.mode = lambda self: self.mean
 
-device = torch.device('cuda' if params.CUDA else 'cpu')
+device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 
 class DistCategorical(nn.Module):
     def __init__(self, num_inputs, num_outputs):

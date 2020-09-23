@@ -4,10 +4,9 @@ import numpy as np
 
 from config.names import EnvironmentName, DeepLearningModelName
 from common.environments.environment import Environment
-from config.parameters import PARAMETERS as params
 
 class BreakoutDeterministic_v4(Environment):
-    def __init__(self):
+    def __init__(self, params):
         self.env = gym.make(EnvironmentName.BREAKOUT_DETERMINISTIC_V4.value)
         super(BreakoutDeterministic_v4, self).__init__()
         self.action_shape = self.get_action_shape()
@@ -22,6 +21,7 @@ class BreakoutDeterministic_v4(Environment):
 
         self.skipping_state_fq = 3
         self.skipping_state_index = 0
+        self.params = params
 
     @staticmethod
     def to_grayscale(img):
@@ -40,9 +40,9 @@ class BreakoutDeterministic_v4(Environment):
     def preprocess(self, img):
         gray_frame = self.to_grayscale(self.downsample(img))
 
-        if params.DEEP_LEARNING_MODEL == DeepLearningModelName.Actor_Critic_CNN:
+        if self.params.DEEP_LEARNING_MODEL == DeepLearningModelName.Actor_Critic_CNN:
             state = np.expand_dims(gray_frame, axis=0)
-        elif params.DEEP_LEARNING_MODEL == DeepLearningModelName.Actor_Critic_MLP:
+        elif self.params.DEEP_LEARNING_MODEL == DeepLearningModelName.Actor_Critic_MLP:
             state = gray_frame.flatten()
         else:
             state = None
@@ -50,9 +50,9 @@ class BreakoutDeterministic_v4(Environment):
         return state
 
     def get_n_states(self):
-        if params.DEEP_LEARNING_MODEL == DeepLearningModelName.Actor_Critic_CNN:
+        if self.params.DEEP_LEARNING_MODEL == DeepLearningModelName.Actor_Critic_CNN:
             return 1, 105, 80                   # input_channels, input_height, input_width
-        elif params.DEEP_LEARNING_MODEL == DeepLearningModelName.Actor_Critic_MLP:
+        elif self.params.DEEP_LEARNING_MODEL == DeepLearningModelName.Actor_Critic_MLP:
             return 8400
         else:
             return None
