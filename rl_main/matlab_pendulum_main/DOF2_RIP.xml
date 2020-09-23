@@ -1,0 +1,150 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no" ?>
+<SimscapeMultibodyImportXML version="2.0" xmlns="urn:mathworks:SimscapeMultibody:import" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+<Created by="" on="07/05/20||17:26:48" using="Simscape Multibody Link Version 6.1" from="SolidWorks 28.2.0"/>
+<ModelUnits mass="kilogram" length="millimeter"/>
+<DataUnits mass="kilogram" length="meter"/>
+<RootAssembly name="DOF2_RIP" uid="DOF2_RIP" version="145">
+<AssemblyFile name="DOF2_RIP.SLDASM" type="SolidWorks Assembly"/>
+<InstanceTree>
+<Instance name="link2-1" uid="link2-1" entityUid="link2*:*기본">
+<Transform>
+<Rotation>0 0 1 0 -1 0 1 0 0</Rotation>
+<Translation>0.047332431249952921 0.0010966268749752622 0.010000000000000002</Translation>
+</Transform>
+</Instance>
+<Instance name="link1-1" uid="link1-1" entityUid="link1*:*기본">
+<Transform>
+<Rotation>0 0 1 0 1 0 -1 0 0</Rotation>
+<Translation>-0.0051675687500471129 0.0060966268749752875 0.010000000000000002</Translation>
+</Transform>
+</Instance>
+<Instance name="shaft-1" uid="shaft-1" grounded="true" entityUid="shaft*:*기본">
+<Transform>
+<Rotation>1 0 0 0 1 0 0 0 1</Rotation>
+<Translation>-0.0026675687500471133 -0.0064033731250247132 0.01</Translation>
+</Transform>
+</Instance>
+</InstanceTree>
+<Constraints>
+<Concentric name="동심2">
+<ConstraintGeometry geomType="cylinder">
+<InstancePath>
+<Uid>link1-1</Uid>
+</InstancePath>
+<Position>0 0 0.050000000000000003</Position>
+<Axis>0 0 -1</Axis>
+</ConstraintGeometry>
+<ConstraintGeometry geomType="cylinder">
+<InstancePath>
+<Uid>link2-1</Uid>
+</InstancePath>
+<Position>0 -0.0050000000000000001 -0.0025000000000000022</Position>
+<Axis>0 0 1</Axis>
+</ConstraintGeometry>
+</Concentric>
+<Coincident name="일치3">
+<ConstraintGeometry geomType="plane">
+<InstancePath>
+<Uid>shaft-1</Uid>
+</InstancePath>
+<Position>0 0.01 0</Position>
+<Axis>0 1 0</Axis>
+</ConstraintGeometry>
+<ConstraintGeometry geomType="plane">
+<InstancePath>
+<Uid>link1-1</Uid>
+</InstancePath>
+<Position>0 -0.0025000000000000001 0.0025000000000000001</Position>
+<Axis>0 -1 0</Axis>
+</ConstraintGeometry>
+</Coincident>
+<Concentric name="동심3">
+<ConstraintGeometry geomType="circle">
+<InstancePath>
+<Uid>shaft-1</Uid>
+</InstancePath>
+<Position>0 0.01 0</Position>
+<Axis>0 1 0</Axis>
+</ConstraintGeometry>
+<ConstraintGeometry geomType="circle">
+<InstancePath>
+<Uid>link1-1</Uid>
+</InstancePath>
+<Position>0 -0.0025000000000000001 0.0025000000000000001</Position>
+<Axis>0 1 0</Axis>
+</ConstraintGeometry>
+</Concentric>
+<Coincident name="일치4">
+<ConstraintGeometry geomType="plane">
+<InstancePath>
+<Uid>link1-1</Uid>
+</InstancePath>
+<Position>0 0 0.050000000000000003</Position>
+<Axis>0 0 1</Axis>
+</ConstraintGeometry>
+<ConstraintGeometry geomType="plane">
+<InstancePath>
+<Uid>link2-1</Uid>
+</InstancePath>
+<Position>0 -0.0050000000000000001 -0.0025000000000000022</Position>
+<Axis>0 0 -1</Axis>
+</ConstraintGeometry>
+</Coincident>
+</Constraints>
+</RootAssembly>
+<Assemblies>
+</Assemblies>
+<Parts>
+<Part name="link1" uid="link1*:*기본" version="151">
+<ModelUnits mass="kilogram" length="millimeter"/>
+<PartFile name="link1.SLDPRT" type="SolidWorks Part"/>
+<MassProperties>
+<Mass>0.0077649542717894574</Mass>
+<CenterOfMass>-1.2590884508001883e-08 -1.549526154824152e-05 0.024831254820188903</CenterOfMass>
+<Inertia>1.6471813205502109e-06 1.6471195018655321e-06 2.4532452610473314e-08 -2.68721607943463e-09 1.5342656749273739e-13 -8.1426866394655225e-13</Inertia>
+</MassProperties>
+<GeometryFile name="link1_기본_sldprt.STEP" type="STEP"/>
+<VisualProperties>
+<Ambient r="0.65098039215686276" g="0.61960784313725492" b="0.58823529411764708" a="1"/>
+<Diffuse r="0.65098039215686276" g="0.61960784313725492" b="0.58823529411764708" a="1"/>
+<Specular r="0.52078432148578124" g="0.49568628189610503" b="0.47058824230642882" a="1"/>
+<Emissive r="0" g="0" b="0" a="1"/>
+<Shininess>0.10000000149011612</Shininess>
+</VisualProperties>
+</Part>
+<Part name="link2" uid="link2*:*기본" version="155">
+<ModelUnits mass="kilogram" length="millimeter"/>
+<PartFile name="link2.SLDPRT" type="SolidWorks Part"/>
+<MassProperties>
+<Mass>0.01624234569796066</Mass>
+<CenterOfMass>-1.2668784181790654e-08 -0.052329692952302317 -7.4077968532969206e-06</CenterOfMass>
+<Inertia>1.5025676407688272e-05 5.1025273899613119e-08 1.5025613615918486e-05 5.6953831544085662e-09 -1.7157639838747039e-12 -1.1106906264045728e-12</Inertia>
+</MassProperties>
+<GeometryFile name="link2_기본_sldprt.STEP" type="STEP"/>
+<VisualProperties>
+<Ambient r="0.65098039215686276" g="0.61960784313725492" b="0.58823529411764708" a="1"/>
+<Diffuse r="0.65098039215686276" g="0.61960784313725492" b="0.58823529411764708" a="1"/>
+<Specular r="0.52078432148578124" g="0.49568628189610503" b="0.47058824230642882" a="1"/>
+<Emissive r="0" g="0" b="0" a="1"/>
+<Shininess>0.10000000149011612</Shininess>
+</VisualProperties>
+</Part>
+<Part name="shaft" uid="shaft*:*기본" version="116">
+<ModelUnits mass="kilogram" length="millimeter"/>
+<PartFile name="shaft.SLDPRT" type="SolidWorks Part"/>
+<MassProperties>
+<Mass>0.0021283208027941506</Mass>
+<CenterOfMass>0 0.0050000000000000001 0</CenterOfMass>
+<Inertia>3.1038011707414697e-08 2.6604010034926882e-08 3.1038011707414697e-08 0 0 0</Inertia>
+</MassProperties>
+<GeometryFile name="shaft_기본_sldprt.STEP" type="STEP"/>
+<VisualProperties>
+<Ambient r="0.89803921568627454" g="0.91764705882352937" b="0.92941176470588238" a="1"/>
+<Diffuse r="0.89803921568627454" g="0.91764705882352937" b="0.92941176470588238" a="1"/>
+<Specular r="0.44901960784313727" g="0.45882352941176469" b="0.46470588235294119" a="1"/>
+<Emissive r="0" g="0" b="0" a="1"/>
+<Shininess>0.3125</Shininess>
+</VisualProperties>
+</Part>
+</Parts>
+</SimscapeMultibodyImportXML>

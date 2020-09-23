@@ -33,7 +33,7 @@ class ExperienceSource:
         :param steps_delta: how many steps to do between experience items
         :param vectorized: support of vectorized envs from OpenAI universe
         """
-        assert isinstance(env, (gym.Env, list, tuple))
+        # assert isinstance(env, (gym.Env, list, tuple))
         assert isinstance(agent, BaseAgent)
         assert isinstance(steps_count, int)
         assert steps_count >= 1
@@ -53,6 +53,7 @@ class ExperienceSource:
         states, agent_states, histories, cur_rewards, cur_steps = [], [], [], [], []
         env_lens = []
         for env in self.pool:
+
             obs = env.reset()
             # if the environment is vectorized, all it's output is lists of results.
             # Details are here: https://github.com/openai/universe/blob/master/doc/env_semantics.rst
@@ -93,7 +94,12 @@ class ExperienceSource:
             grouped_actions = _group_list(actions, env_lens)
 
             global_ofs = 0
+            # print("!!!!!!!!!!!!!!!", grouped_actions)
+            # print(zip(self.pool, grouped_actions))
             for env_idx, (env, action_n) in enumerate(zip(self.pool, grouped_actions)):
+                print(env_idx,(env,action_n))
+                # print("!!!!!!!!!!!!!!!!!", action_n)
+
                 if self.vectorized:
                     next_state_n, r_n, is_done_n, info = env.step(action_n)
                 else:

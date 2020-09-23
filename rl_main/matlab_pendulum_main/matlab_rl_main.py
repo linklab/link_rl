@@ -7,13 +7,16 @@ import torch.multiprocessing as mp
 from torch import optim
 import os
 
+from common.environments.matlab.matlabenv import MatlabRotaryInvertedPendulumEnv
 print(torch.__version__)
 
 from common.fast_rl import actions, experience, dqn_model, rl_agent
 from common.fast_rl.common import statistics, utils
 
+
 cuda = False
-env_name = 'CartPole-v1'
+env_name = 'MatlabRotaryInvertedPendulumEnv'
+# env_name = 'CartPole-v1'
 epsilon_start = 1.0
 epsilon_final = 0.01
 epsilon_frames = 1000
@@ -31,7 +34,7 @@ if not os.path.exists(MODEL_SAVE_DIR):
 train_freq = 2
 batch_size = 32
 batch_size *= train_freq
-replay_size = 10000
+replay_size = 50000
 learning_rate = 0.001
 replay_initial = 100
 target_net_sync = 50
@@ -51,11 +54,9 @@ def play_func(exp_queue, env, net):
     )
 
     agent = rl_agent.DQNAgent(net, action_selector, device=device)
-
     experience_source = experience.ExperienceSourceFirstLast(
         env, agent, gamma=gamma, steps_count=n_step
     )
-
     exp_source_iter = iter(experience_source)
 
     stat = statistics.Statistics(method="nature_dqn")
@@ -67,7 +68,6 @@ def play_func(exp_queue, env, net):
         while True:
             frame_idx += 1
             exp = next(exp_source_iter)
-            # print(exp)
             exp_queue.put(exp)
 
             epsilon_tracker.udpate(frame_idx)
@@ -92,14 +92,18 @@ def play_func(exp_queue, env, net):
 def main():
     mp.set_start_method('spawn')
 
-    env = gym.make(env_name)
+    # env = gym.make(env_name)
+    env = MatlabRotaryInvertedPendulumEnv()
+    env.start()
 
     net = dqn_model.DuelingDQNMLP(
         obs_size=4,
         hidden_size_1=128, hidden_size_2=128,
-        n_actions=2
+        n_actions=7
     ).to(device)
+
     print(net)
+    print(env)
     tgt_net = rl_agent.TargetNet(net)
 
     buffer = experience.PrioReplayBuffer(exp_source=None, buf_size=replay_size)

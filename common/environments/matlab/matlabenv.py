@@ -5,8 +5,8 @@ import gym
 from gym import spaces
 import time
 import numpy as np
+from common.environments.matlab.matlabcode import SimulinkPlant
 
-from matlabcode import SimulinkPlant
 np.set_printoptions(formatter={'float_kind': lambda x: '{0:0.6f}'.format(x)})
 
 a = 0
@@ -19,8 +19,11 @@ class MatlabRotaryInvertedPendulumEnv(gym.Env):
         self.w = 0
         self.w1 = 0
         self.plant = SimulinkPlant()
+        self.state = None
         self.obs_degree = [None, None]
         self.next_obs_degree = [None, None]
+
+
 
     def pause(self):
         self.plant.conncectpause()
@@ -35,10 +38,10 @@ class MatlabRotaryInvertedPendulumEnv(gym.Env):
         self.plant.connectStart()
         self.episode_steps = 0
         self.q, self.q1, self.w, self.w1 = self.plant.getHistory()
-        obs = (self.q/math.pi, self.q1, self.w, self.w1)
-        self.obs_degree[0] = self.next_obs_degree[0] = self.convert_radian_to_degree(np.round(obs, decimals=4)[0] * math.pi)
-        self.obs_degree[1] = self.next_obs_degree[1] = self.convert_radian_to_degree(np.round(obs, decimals=4)[1])
-        return obs
+        self.state = (self.q/math.pi, self.q1, self.w, self.w1)
+        self.obs_degree[0] = self.next_obs_degree[0] = self.convert_radian_to_degree(np.round(self.state, decimals=4)[0] * math.pi)
+        self.obs_degree[1] = self.next_obs_degree[1] = self.convert_radian_to_degree(np.round(self.state, decimals=4)[1])
+        return np.array(self.state)
 
     def step(self, action):
         self.plant.simulate(action)
@@ -46,7 +49,7 @@ class MatlabRotaryInvertedPendulumEnv(gym.Env):
 
         self.episode_steps += 1
         self.total_steps += 1
-        global a
+
         # if self.episode_steps >= 100:
         #     done = True
         #     reward = 10
@@ -72,10 +75,10 @@ class MatlabRotaryInvertedPendulumEnv(gym.Env):
         self.obs_degree[0] = self.next_obs_degree[0]
         self.obs_degree[1] = self.next_obs_degree[1]
 
-        next_obs, reward, info = (self.q/math.pi, self.q1, self.w, self.w1), 0.1, None
+        self.state, reward, info = (self.q/math.pi, self.q1, self.w, self.w1), 0.1, None
 
-        self.next_obs_degree[0] = self.convert_radian_to_degree(np.round(next_obs, decimals=4)[0] * math.pi)
-        self.next_obs_degree[1] = self.convert_radian_to_degree(np.round(next_obs, decimals=4)[1])
+        self.next_obs_degree[0] = self.convert_radian_to_degree(np.round(self.state, decimals=4)[0] * math.pi)
+        self.next_obs_degree[1] = self.convert_radian_to_degree(np.round(self.state, decimals=4)[1])
 
         if any(done_conditions):
             done = True
@@ -84,7 +87,7 @@ class MatlabRotaryInvertedPendulumEnv(gym.Env):
             done = False
 
         # print("!!!!!!!!!!!!!!!!!!!!!!!!", np.asarray(next_obs))
-        return next_obs, reward, done, info
+        return self.state, reward, done, info
 
     def render(self, mode='human'):
         pass
