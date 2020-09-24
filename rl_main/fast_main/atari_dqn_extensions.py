@@ -43,7 +43,11 @@ def play_func(env, net, exp_queue):
     else:
         exp_source = experience.ExperienceSourceFirstLast(env, agent, gamma=params.GAMMA, steps_count=params.N_STEP)
     exp_source_iter = iter(exp_source)
-    stat = statistics.Statistics(method="nature_dqn")
+
+    if params.DRAW_VIZ:
+        stat = statistics.Statistics(method="nature_dqn")
+    else:
+        stat = None
 
     action_count = []
     for _ in env.unwrapped.get_action_meanings():
@@ -87,14 +91,9 @@ def main():
 
     common_utils.print_fast_rl_params(params)
 
-    if params.SEED is not None:
-        np.random.seed(params.SEED)
-        torch.manual_seed(params.SEED)
-        torch.cuda.manual_seed_all(params.SEED)
-
     params.BATCH_SIZE *= params.TRAIN_STEP_FREQ
 
-    env = make_atari_env(params)
+    env = make_atari_env(params.ENVIRONMENT_ID.value, seed=params.SEED)
     if params.SEED is not None:
         env.seed(params.SEED)
     suffix = "" if params.SEED is None else "_seed=%s" % params.SEED
@@ -119,7 +118,11 @@ def main():
     play_proc.start()
 
     time.sleep(0.5)
-    stat_for_model_loss = statistics.StatisticsForModelLoss()
+    if params.DRAW_VIZ:
+        stat_for_model_loss = statistics.StatisticsForModelLoss()
+    else:
+        stat_for_model_loss = None
+
     frame_idx = 0
 
     while play_proc.is_alive():
