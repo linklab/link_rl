@@ -94,12 +94,7 @@ class ExperienceSource:
             grouped_actions = _group_list(actions, env_lens)
 
             global_ofs = 0
-            # print("!!!!!!!!!!!!!!!", grouped_actions)
-            # print(zip(self.pool, grouped_actions))
             for env_idx, (env, action_n) in enumerate(zip(self.pool, grouped_actions)):
-                print(env_idx,(env,action_n))
-                # print("!!!!!!!!!!!!!!!!!", action_n)
-
                 if self.vectorized:
                     next_state_n, r_n, is_done_n, info = env.step(action_n)
                 else:
