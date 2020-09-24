@@ -13,7 +13,7 @@ device = torch.device("cuda" if params.CUDA else "cpu")
 
 
 def play_main():
-    env = make_atari_env(params)
+    env = make_atari_env(params.ENVIRONMENT_ID.value)
 
     net = dqn_model.DQN(
         input_shape=env.observation_space.shape,
