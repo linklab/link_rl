@@ -51,8 +51,6 @@ def make_atari_env(env_id, rank=0, seed=0):
     env = gym.make(env_id)
     env.seed(seed + rank)
     env = wrappers.wrap_dqn(env)
-<<<<<<< HEAD
-=======
 
     return env
 
@@ -71,5 +69,4 @@ def make_gym_env(env_id, rank=0, seed=0):
     env = gym.make(env_id)
     env.seed(seed + rank)
 
->>>>>>> ad8c21bdf06295b3a980e1c353ac7b2d3e1e1896
     return env
