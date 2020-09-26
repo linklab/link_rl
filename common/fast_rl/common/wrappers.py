@@ -1,5 +1,7 @@
 """basic wrappers, useful for reinforcement learning on gym envs"""
 # Mostly copy-pasted from https://github.com/openai/baselines/blob/master/baselines/common/atari_wrappers.py
+import time
+
 import numpy as np
 from collections import deque
 import gym
@@ -52,9 +54,9 @@ class FireResetEnv(gym.Wrapper):
         obs, _, done, _ = self.env.step(action=1)
         if done:
             self.env.reset()
-        obs, _, done, _ = self.env.step(action=2)
-        if done:
-            self.env.reset()
+        # obs, _, done, _ = self.env.step(action=2)
+        # if done:
+        #     self.env.reset()
         return obs
 
 
@@ -193,6 +195,11 @@ class ClippedRewardsWrapper(gym.RewardWrapper):
     def reward(self, reward):
         """Change all the positive rewards to 1, negative to -1 and keep zero."""
         return np.sign(reward)
+
+    def step(self, action):
+        ob, reward, done, info = self.env.step(action)
+        info['original_reward'] = reward
+        return ob, self.reward(reward), done, info
 
 
 class LazyFrames(object):

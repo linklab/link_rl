@@ -110,8 +110,8 @@ def main():
     tgt_net = rl_agent.TargetNet(net)
 
     buffer = experience.ExperienceReplayBuffer(experience_source=None, buffer_size=params.REPLAY_BUFFER_SIZE)
-    #optimizer = optim.Adam(net.parameters(), lr=params.LEARNING_RATE)
-    optimizer = optim.RMSprop(net.parameters(), lr=params.LEARNING_RATE, momentum=0.95, eps=0.01)
+    optimizer = optim.Adam(net.parameters(), lr=params.LEARNING_RATE)
+    # optimizer = optim.RMSprop(net.parameters(), lr=params.LEARNING_RATE, momentum=0.95, eps=0.01)
 
     exp_queue = mp.Queue(maxsize=params.TRAIN_STEP_FREQ * 2)
     play_proc = mp.Process(target=play_func, args=(env, net, exp_queue))

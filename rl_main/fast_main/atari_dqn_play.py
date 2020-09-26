@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 import gym
 import torch
+import time
 import os
 import numpy as np
 from common.common_utils import make_atari_env
@@ -21,7 +22,7 @@ def play_main():
     ).to(device)
     print(net)
 
-    dqn_model.load_model(MODEL_SAVE_DIR, params.ENVIRONMENT_ID.value, net.__name__, net, step=1731249)
+    dqn_model.load_model(MODEL_SAVE_DIR, params.ENVIRONMENT_ID.value, net.__name__, net, step=1731249)#1731249
 
     action_selector = actions.ArgmaxActionSelector()
     agent = rl_agent.DQNAgent(net, action_selector, device=device)
@@ -29,11 +30,22 @@ def play_main():
     done = False
     state = env.reset()
 
+    episode_reward = 0
     while not done:
+        if episode_reward > 40:
+            time.sleep(0.03)
         env.render()
         state = np.expand_dims(state, axis=0)
         action = agent(state)
         next_state, reward, done, info = env.step(action[0][0])
+
+        # episode_reward += reward
+        episode_reward += info['original_reward']
+        print(episode_reward)
+        if done and info['ale.lives'] != 0:
+            done = False
+            env.reset()
+
         state = next_state
 
 
