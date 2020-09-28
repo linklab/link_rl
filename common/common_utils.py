@@ -27,8 +27,6 @@ def print_fast_rl_params(params_class):
 def set_global_seeds(seed):
     myseed = seed + 1000 if seed is not None else None
     try:
-        random.seed(myseed)
-        np.random.seed(myseed)
         torch.manual_seed(myseed)
         torch.cuda.manual_seed_all(myseed)
     except ImportError:
