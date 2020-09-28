@@ -422,7 +422,7 @@ def calc_omega_return(rewards, done_mask, next_state_values, params):
             gamma_pow *= params.GAMMA
         gamma_pow = params.GAMMA
         for i in range(len(rewards[batch_idx])):
-            n_step_target_list.append(n_step_reward_sum_list[i] + gamma_pow * next_state_values[idx_count].item() *
+            n_step_target_list.append(n_step_reward_sum_list[i] + gamma_pow * next_state_values[idx_count].detach().item() *
                                       (done_mask[batch_idx] if i == len(rewards[batch_idx])-1 else 1))
             gamma_pow *= params.GAMMA
             idx_count += 1
