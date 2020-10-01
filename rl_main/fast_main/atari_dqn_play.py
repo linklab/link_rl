@@ -14,7 +14,7 @@ device = torch.device("cuda" if params.CUDA else "cpu")
 
 
 def play_main():
-    env = make_atari_env(params.ENVIRONMENT_ID.value)
+    env = make_atari_env(params.ENVIRONMENT_ID.value, seed=2)
 
     net = dqn_model.DQN(
         input_shape=env.observation_space.shape,
@@ -22,9 +22,10 @@ def play_main():
     ).to(device)
     print(net)
 
-    dqn_model.load_model(MODEL_SAVE_DIR, params.ENVIRONMENT_ID.value, net.__name__, net, step=1731249)#1731249
+    dqn_model.load_model(MODEL_SAVE_DIR, params.ENVIRONMENT_ID.value, net.__name__, net, step=18720903)#1731249
 
-    action_selector = actions.ArgmaxActionSelector()
+    # action_selector = actions.ArgmaxActionSelector()
+    action_selector = actions.EpsilonGreedyActionSelector(epsilon=0.01)
     agent = rl_agent.DQNAgent(net, action_selector, device=device)
 
     done = False
@@ -33,7 +34,7 @@ def play_main():
     episode_reward = 0
     while not done:
         if episode_reward > 40:
-            time.sleep(0.03)
+            time.sleep(0.01)
         env.render()
         state = np.expand_dims(state, axis=0)
         action = agent(state)
