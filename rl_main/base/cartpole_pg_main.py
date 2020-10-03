@@ -35,15 +35,17 @@ def play_func(exp_queue, env, net):
     exp_source_iter = iter(experience_source)
 
     if params.DRAW_VIZ:
-        stat = statistics.Statistics(method="nature_dqn")
+        stat = statistics.StatisticsForPolicyBasedRL(method="policy_gradient")
     else:
         stat = None
 
     step_idx = 0
     next_save_frame_idx = params.MODEL_SAVE_STEP_PERIOD
 
-    with utils.RewardTracker(params.STOP_MEAN_EPISODE_REWARD, params.AVG_EPISODE_SIZE_FOR_STAT, params.DRAW_VIZ, stat) as reward_tracker:
-        while True:
+    with utils.RewardTracker(
+            params.STOP_MEAN_EPISODE_REWARD, params.AVG_EPISODE_SIZE_FOR_STAT,
+            frame=True, draw_viz=params.DRAW_VIZ, stat=stat) as reward_tracker:
+        while step_idx < params.MAX_GLOBAL_STEPS:
             # 1 스텝 진행하고 exp를 exp_queue에 넣음
             step_idx += 1
             exp = next(exp_source_iter)
@@ -91,7 +93,7 @@ def main():
     time.sleep(0.5)
 
     if params.DRAW_VIZ:
-        stat_for_policy_based_rl = statistics.StatisticsForPolicyBasedRL()
+        stat_for_policy_based_rl = statistics.StatisticsForPolicyBasedRLOptimization()
     else:
         stat_for_policy_based_rl = 0.0
 
@@ -115,10 +117,11 @@ def main():
 
         reward_sum += exp.reward
         baseline = reward_sum / step_idx
+        #print(exp.reward, step_idx, reward_sum, baseline)
 
         batch_states.append(exp.state)
         batch_actions.append(int(exp.action))
-        batch_scales.append(exp.reward - baseline)
+        batch_scales.append(exp.reward - baseline / 2)
 
         if len(batch_states) < params.BATCH_SIZE:
             continue

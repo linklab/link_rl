@@ -9,6 +9,8 @@ import collections
 import torch
 import torch.nn as nn
 
+from common.fast_rl.common.statistics import StatisticsForValueBasedRL, StatisticsForPolicyBasedRL
+
 
 class SMAQueue:
     """
@@ -409,6 +411,9 @@ class RewardTracker:
             print("", flush=True)
 
         if self.draw_viz and self.stat:
-            self.stat.draw_performance(episode_done_step, mean_episode_reward, speed, epsilon)
-
-
+            if isinstance(self.stat, StatisticsForValueBasedRL):
+                self.stat.draw_performance(episode_done_step, mean_episode_reward, speed, epsilon)
+            elif isinstance(self.stat, StatisticsForPolicyBasedRL):
+                self.stat.draw_performance(episode_done_step, mean_episode_reward, speed)
+            else:
+                raise ValueError()

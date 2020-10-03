@@ -41,7 +41,7 @@ def play_func(exp_queue, env, net):
     exp_source_iter = iter(experience_source)
 
     if params.DRAW_VIZ:
-        stat = statistics.Statistics(method="nature_dqn")
+        stat = statistics.StatisticsForValueBasedRL(method="nature_dqn")
     else:
         stat = None
 
@@ -49,7 +49,7 @@ def play_func(exp_queue, env, net):
     next_save_frame_idx = params.MODEL_SAVE_STEP_PERIOD
 
     with utils.RewardTracker(params.STOP_MEAN_EPISODE_REWARD, params.AVG_EPISODE_SIZE_FOR_STAT, params.DRAW_VIZ, stat) as reward_tracker:
-        while True:
+        while step_idx < params.MAX_GLOBAL_STEPS:
             step_idx += 1
             exp = next(exp_source_iter)
             # print(exp)
@@ -101,7 +101,7 @@ def main():
     time.sleep(0.5)
 
     if params.DRAW_VIZ:
-        stat_for_value_optimization = statistics.StatisticsForValueBasedRL()
+        stat_for_value_optimization = statistics.StatisticsForValueBasedOptimization()
     else:
         stat_for_value_optimization = None
 

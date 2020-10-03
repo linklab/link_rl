@@ -44,7 +44,7 @@ def play_func(exp_queue, env, net):
     )
     exp_source_iter = iter(experience_source)
 
-    stat = statistics.Statistics(method="nature_dqn")
+    stat = statistics.StatisticsForValueBasedRL(method="nature_dqn")
 
     frame_idx = 0
     next_save_frame_idx = params.MODEL_SAVE_STEP_PERIOD
@@ -99,7 +99,7 @@ def main():
     play_proc.start()
 
     time.sleep(0.5)
-    stat_for_model_loss = statistics.StatisticsForValueBasedRL()
+    stat_for_model_loss = statistics.StatisticsForValueBasedOptimization()
     frame_idx = 0
 
     while play_proc.is_alive():

@@ -45,7 +45,7 @@ def play_func(exp_queue, env, net):
     exp_source_iter = iter(experience_source)
 
     if params.DRAW_VIZ:
-        stat = statistics.Statistics(method="nature_dqn")
+        stat = statistics.StatisticsForValueBasedRL(method="nature_dqn")
     else:
         stat = None
 
@@ -113,7 +113,7 @@ def main():
     time.sleep(0.5)
 
     if params.DRAW_VIZ:
-        stat_for_model_loss = statistics.StatisticsForValueBasedRL()
+        stat_for_model_loss = statistics.StatisticsForValueBasedOptimization()
     else:
         stat_for_model_loss = None
 

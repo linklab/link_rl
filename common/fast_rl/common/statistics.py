@@ -2,13 +2,11 @@ from visdom import Visdom
 
 # python -m visdom.server
 # http://localhost:8097
-class Statistics:
+class StatisticsForValueBasedRL:
     def __init__(self, method):
         self.method = method
 
         self.vis_dom_info_text = "<div style='margin:1.0em;font-size:1.5em'>Env: {0}<br/>Method: {1}<br/> Global Step: {2}</div>"
-        self.vis = None
-        self.plt = None
 
         self.vis = Visdom()
         self.vis.delete_env("main")
@@ -50,10 +48,33 @@ class Statistics:
         pass
 
 
-class StatisticsForValueBasedRL:
-    def __init__(self):
-        self.plt = None
+class StatisticsForPolicyBasedRL:
+    def __init__(self, method):
+        self.vis = Visdom()
 
+        self.method = method
+        self.vis_dom_info_text = "<div style='margin:1.0em;font-size:1.5em'>Env: {0}<br/>Method: {1}<br/> Global Step: {2}</div>"
+
+        self.mean_episode_reward = self.vis.line(X=[0], Y=[0], opts=dict(title="mean episode reward"))
+        self.speed = self.vis.line(X=[0], Y=[0], opts=dict(title="speed"))
+
+    def draw_performance(self, global_step, mean_episode_reward, speed):
+        self.vis.line(
+            X=[global_step], Y=[mean_episode_reward], win=self.mean_episode_reward, name="mean_episode_reward", update="append",
+            opts=dict(title='mean_episode_reward', showlegend=False)
+        )
+
+        self.vis.line(
+            X=[global_step], Y=[speed], win=self.speed, name="speed", update="append",
+            opts=dict(title='speed', showlegend=False)
+        )
+
+    def conditional_save_model(self, current_global_step, q_nets, model_save_path, periodic_model_save_path, epsilon, method):
+        pass
+
+
+class StatisticsForValueBasedOptimization:
+    def __init__(self):
         self.vis = Visdom()
 
         self.plt = self.vis.line(X=[0], Y=[0], opts=dict(title="model loss"))
@@ -65,14 +86,11 @@ class StatisticsForValueBasedRL:
         )
 
 
-class StatisticsForPolicyBasedRL:
+class StatisticsForPolicyBasedRLOptimization:
     def __init__(self):
-        self.plt = None
-
         self.vis = Visdom()
 
         self.kl_divergence = self.vis.line(X=[0], Y=[0], opts=dict(title="kl divergence"))
-        self.total_loss = self.vis.line(X=[0], Y=[0], opts=dict(title="total loss"))
         self.baseline = self.vis.line(X=[0], Y=[0], opts=dict(title="baseline"))
         self.mean_batch_scale = self.vis.line(X=[0], Y=[0], opts=dict(title="mean batch scale"))
         self.entropy = self.vis.line(X=[0], Y=[0], opts=dict(title="entropy"))

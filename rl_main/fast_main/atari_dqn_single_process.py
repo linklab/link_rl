@@ -61,8 +61,8 @@ if __name__ == "__main__":
     optimizer = optim.Adam(net.parameters(), lr=params.LEARNING_RATE)
 
     if params.DRAW_VIZ:
-        stat = statistics.Statistics(method="nature_dqn")
-        stat_for_model_loss = statistics.StatisticsForValueBasedRL()
+        stat = statistics.StatisticsForValueBasedRL(method="nature_dqn")
+        stat_for_model_loss = statistics.StatisticsForValueBasedOptimization()
     else:
         stat = None
         stat_for_model_loss = None
