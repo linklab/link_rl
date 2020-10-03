@@ -59,7 +59,7 @@ def play_func(exp_queue, env, net):
 
             episode_rewards = experience_source.pop_episode_reward_lst()
             if episode_rewards:
-                solved, mean_episode_reward = reward_tracker.reward(
+                solved, mean_episode_reward = reward_tracker.set_episode_reward(
                     episode_rewards[0], frame_idx, action_selector.epsilon
                 )
 
@@ -99,7 +99,7 @@ def main():
     play_proc.start()
 
     time.sleep(0.5)
-    stat_for_model_loss = statistics.StatisticsForModelLoss()
+    stat_for_model_loss = statistics.StatisticsForValueBasedRL()
     frame_idx = 0
 
     while play_proc.is_alive():
@@ -113,7 +113,7 @@ def main():
 
         if len(buffer) < params.MIN_REPLAY_SIZE_FOR_TRAIN:
             if params.DRAW_VIZ and frame_idx % 100 == 0:
-                stat_for_model_loss.draw_loss(frame_idx, 0.0)
+                stat_for_model_loss.draw_optimization_performance(frame_idx, 0.0)
             continue
 
         optimizer.zero_grad()
@@ -127,7 +127,7 @@ def main():
         buffer.update_beta(frame_idx)
 
         if params.DRAW_VIZ and frame_idx % 100 == 0:
-            stat_for_model_loss.draw_loss(frame_idx, loss_v.item())
+            stat_for_model_loss.draw_optimization_performance(frame_idx, loss_v.item())
 
         if frame_idx % params.TARGET_NET_SYNC_STEP_PERIOD < params.TRAIN_STEP_FREQ:
             tgt_net.sync()

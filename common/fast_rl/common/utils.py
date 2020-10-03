@@ -339,6 +339,8 @@ class RewardTracker:
         self.average_size_for_stats = average_size_for_stats
         self.draw_viz = draw_viz
         self.frame = frame
+        self.episode_reward_list = None
+        self.done_episodes = 0
 
     def __enter__(self):
         self.start_ts = time.time()
@@ -353,7 +355,8 @@ class RewardTracker:
     def __exit__(self, *args):
         pass
 
-    def reward(self, episode_reward, episode_done_frame, epsilon, action_count=None):
+    def set_episode_reward(self, episode_reward, episode_done_step, epsilon, action_count=None):
+        self.done_episodes += 1
         self.episode_reward_list.append(episode_reward)
         mean_episode_reward = np.mean(self.episode_reward_list[-self.average_size_for_stats:])
 
@@ -366,30 +369,33 @@ class RewardTracker:
         if ts_diff > self.min_ts_diff:
             is_print_performance = True
             self.print_performance(
-                episode_done_frame, current_ts, ts_diff, mean_episode_reward, epsilon, elapsed_time, action_count
+                episode_done_step, current_ts, ts_diff, mean_episode_reward, epsilon, elapsed_time, action_count
             )
 
         if mean_episode_reward > self.stop_mean_episode_reward:
             if not is_print_performance:
                 self.print_performance(
-                    episode_done_frame, current_ts, ts_diff, mean_episode_reward, epsilon, elapsed_time, action_count
+                    episode_done_step, current_ts, ts_diff, mean_episode_reward, epsilon, elapsed_time, action_count
                 )
             if self.frame:
-                print("Solved in {0} frames!".format(episode_done_frame))
+                print("Solved in {0} frames and {1} episodes!".format(episode_done_step, self.done_episodes))
             else:
-                print("Solved in {0} steps!".format(episode_done_frame))
+                print("Solved in {0} steps and {1} episodes!".format(episode_done_step, self.done_episodes))
             return True, mean_episode_reward
+
         return False, mean_episode_reward
 
-    def print_performance(self, episode_done_frame, current_ts, ts_diff, mean_episode_reward, epsilon, elapsed_time, action_count):
-        speed = (episode_done_frame - self.ts_frame) / ts_diff
-        self.ts_frame = episode_done_frame
+    def print_performance(self, episode_done_step, current_ts, ts_diff, mean_episode_reward, epsilon, elapsed_time, action_count):
+        speed = (episode_done_step - self.ts_frame) / ts_diff
+        self.ts_frame = episode_done_step
         self.ts = current_ts
         print(
-            "[{0:6}] done {1:4} games, episode_reward: {2:5.1f}, mean reward: {3:7.3f}, eps: {4:5.3f}, speed: {5:7.2f} {6}, elapsed time: {7}".format(
-                episode_done_frame,
+            "[{0:6}] done {1:4} games, episode_reward: {2:5.1f}, mean_{3}_episode_reward: {4:7.3f}, "
+            "eps: {5:5.3f}, speed: {6:7.2f} {7}, elapsed time: {8}".format(
+                episode_done_step,
                 len(self.episode_reward_list),
                 self.episode_reward_list[-1],
+                self.average_size_for_stats,
                 mean_episode_reward,
                 epsilon,
                 speed,
@@ -403,6 +409,6 @@ class RewardTracker:
             print("", flush=True)
 
         if self.draw_viz and self.stat:
-            self.stat.draw_performance(episode_done_frame, mean_episode_reward, speed, epsilon)
+            self.stat.draw_performance(episode_done_step, mean_episode_reward, speed, epsilon)
 
 

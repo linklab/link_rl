@@ -62,7 +62,7 @@ if __name__ == "__main__":
 
     if params.DRAW_VIZ:
         stat = statistics.Statistics(method="nature_dqn")
-        stat_for_model_loss = statistics.StatisticsForModelLoss()
+        stat_for_model_loss = statistics.StatisticsForValueBasedRL()
     else:
         stat = None
         stat_for_model_loss = None
@@ -86,7 +86,7 @@ if __name__ == "__main__":
 
             episode_rewards = exp_source.pop_episode_reward_lst()
             if episode_rewards:
-                solved, mean_episode_reward = reward_tracker.reward(
+                solved, mean_episode_reward = reward_tracker.set_episode_reward(
                     episode_rewards[0], frame_idx, action_selector.epsilon, action_count
                 )
 
@@ -112,7 +112,7 @@ if __name__ == "__main__":
             optimizer.step()
 
             if params.DRAW_VIZ and frame_idx % 1000 == 0:
-                stat_for_model_loss.draw_loss(frame_idx, loss_v.item())
+                stat_for_model_loss.draw_optimization_performance(frame_idx, loss_v.item())
 
             if frame_idx % params.TARGET_NET_SYNC_STEP_PERIOD < params.TRAIN_STEP_FREQ:
                 tgt_net.sync()

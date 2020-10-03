@@ -59,6 +59,7 @@ class RLAlgorithmName(enum.Enum):
     Policy_Iteration = "DP_Policy_Iteration"
     Value_Iteration = "DP_Value_Iteration"
     Monte_Carlo_Control_V0 = "Monte_Carlo_Control_v0"
+    Policy_Gradient_V0 = "POLICY_GRADIENT_V0"
 
 
 class OptimizerName(enum.Enum):

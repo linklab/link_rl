@@ -50,7 +50,7 @@ class Statistics:
         pass
 
 
-class StatisticsForModelLoss:
+class StatisticsForValueBasedRL:
     def __init__(self):
         self.plt = None
 
@@ -58,8 +58,73 @@ class StatisticsForModelLoss:
 
         self.plt = self.vis.line(X=[0], Y=[0], opts=dict(title="model loss"))
 
-    def draw_loss(self, global_step, model_loss):
+    def draw_optimization_performance(self, global_step, model_loss):
         self.vis.line(
             X=[global_step], Y=[model_loss], win=self.plt, name="model_loss", update="append",
             opts=dict(title='model loss', showlegend=False)
+        )
+
+
+class StatisticsForPolicyBasedRL:
+    def __init__(self):
+        self.plt = None
+
+        self.vis = Visdom()
+
+        self.kl_divergence = self.vis.line(X=[0], Y=[0], opts=dict(title="kl divergence"))
+        self.total_loss = self.vis.line(X=[0], Y=[0], opts=dict(title="total loss"))
+        self.baseline = self.vis.line(X=[0], Y=[0], opts=dict(title="baseline"))
+        self.mean_batch_scale = self.vis.line(X=[0], Y=[0], opts=dict(title="mean batch scale"))
+        self.entropy = self.vis.line(X=[0], Y=[0], opts=dict(title="entropy"))
+        self.loss_entropy = self.vis.line(X=[0], Y=[0], opts=dict(title="loss entropy"))
+        self.loss_policy = self.vis.line(X=[0], Y=[0], opts=dict(title="loss policy"))
+        self.loss_total = self.vis.line(X=[0], Y=[0], opts=dict(title="loss total"))
+        self.grad_means = self.vis.line(X=[0], Y=[0], opts=dict(title="gradient means"))
+        self.grad_max = self.vis.line(X=[0], Y=[0], opts=dict(title="gradient max"))
+
+    def draw_optimization_performance(self, global_step, kl_divergence, baseline, mean_batch_scale,
+                                      entropy, loss_entropy, loss_policy, loss_total, grad_means, grad_max):
+        self.vis.line(
+            X=[global_step], Y=[kl_divergence], win=self.kl_divergence, name="kl divergence", update="append",
+            opts=dict(title='kl divergence', showlegend=False)
+        )
+
+        self.vis.line(
+            X=[global_step], Y=[baseline], win=self.baseline, name="baseline", update="append",
+            opts=dict(title='baseline', showlegend=False)
+        )
+
+        self.vis.line(
+            X=[global_step], Y=[mean_batch_scale], win=self.mean_batch_scale, name="mean batch scale", update="append",
+            opts=dict(title='mean batch scale', showlegend=False)
+        )
+
+        self.vis.line(
+            X=[global_step], Y=[entropy], win=self.entropy, name="entropy", update="append",
+            opts=dict(title='entropy', showlegend=False)
+        )
+
+        self.vis.line(
+            X=[global_step], Y=[loss_entropy], win=self.loss_entropy, name="loss entropy", update="append",
+            opts=dict(title='loss entropy', showlegend=False)
+        )
+
+        self.vis.line(
+            X=[global_step], Y=[loss_policy], win=self.loss_policy, name="loss policy", update="append",
+            opts=dict(title='loss policy', showlegend=False)
+        )
+
+        self.vis.line(
+            X=[global_step], Y=[loss_total], win=self.loss_total, name="loss total", update="append",
+            opts=dict(title='loss total', showlegend=False)
+        )
+
+        self.vis.line(
+            X=[global_step], Y=[grad_means], win=self.grad_means, name="gradient means", update="append",
+            opts=dict(title='gradient means', showlegend=False)
+        )
+
+        self.vis.line(
+            X=[global_step], Y=[grad_max], win=self.grad_max, name="gradient max", update="append",
+            opts=dict(title='gradient max', showlegend=False)
         )

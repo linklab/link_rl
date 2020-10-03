@@ -49,32 +49,32 @@ def play_func(exp_queue, env, net):
     else:
         stat = None
 
-    frame_idx = 0
+    step_idx = 0
     next_save_frame_idx = params.MODEL_SAVE_STEP_PERIOD
 
     with utils.RewardTracker(params.STOP_MEAN_EPISODE_REWARD, params.AVG_EPISODE_SIZE_FOR_STAT, params.DRAW_VIZ, stat) as reward_tracker:
         while True:
-            frame_idx += 1
+            step_idx += 1
             exp = next(exp_source_iter)
             exp_queue.put(exp)
 
-            epsilon_tracker.udpate(frame_idx)
+            epsilon_tracker.udpate(step_idx)
 
             episode_rewards = experience_source.pop_episode_reward_lst()
             if episode_rewards:
-                solved, mean_episode_reward = reward_tracker.reward(
-                    episode_rewards[0], frame_idx, action_selector.epsilon
+                solved, mean_episode_reward = reward_tracker.set_episode_reward(
+                    episode_rewards[0], step_idx, action_selector.epsilon
                 )
 
-                if frame_idx >= next_save_frame_idx:
+                if step_idx >= next_save_frame_idx:
                     dqn_model.save_model(
-                        MODEL_SAVE_DIR, params.ENVIRONMENT_ID.value, net.__name__, net, frame_idx, mean_episode_reward
+                        MODEL_SAVE_DIR, params.ENVIRONMENT_ID.value, net.__name__, net, step_idx, mean_episode_reward
                     )
                     next_save_frame_idx += params.MODEL_SAVE_STEP_PERIOD
 
                 if solved:
                     dqn_model.save_model(
-                        MODEL_SAVE_DIR, params.ENVIRONMENT_ID.value, net.__name__, net, frame_idx, mean_episode_reward
+                        MODEL_SAVE_DIR, params.ENVIRONMENT_ID.value, net.__name__, net, step_idx, mean_episode_reward
                     )
                     break
 
@@ -113,14 +113,14 @@ def main():
     time.sleep(0.5)
 
     if params.DRAW_VIZ:
-        stat_for_model_loss = statistics.StatisticsForModelLoss()
+        stat_for_model_loss = statistics.StatisticsForValueBasedRL()
     else:
         stat_for_model_loss = None
 
-    frame_idx = 0
+    step_idx = 0
 
     while play_proc.is_alive():
-        frame_idx += params.TRAIN_STEP_FREQ
+        step_idx += params.TRAIN_STEP_FREQ
         for _ in range(params.TRAIN_STEP_FREQ):
             exp = exp_queue.get()
             if exp is None:
@@ -129,8 +129,8 @@ def main():
             buffer._add(exp)
 
         if len(buffer) < params.MIN_REPLAY_SIZE_FOR_TRAIN:
-            if params.DRAW_VIZ and frame_idx % 100 == 0:
-                stat_for_model_loss.draw_loss(frame_idx, 0.0)
+            if params.DRAW_VIZ and step_idx % 100 == 0:
+                stat_for_model_loss.draw_optimization_performance(step_idx, 0.0)
             continue
 
         optimizer.zero_grad()
@@ -141,12 +141,12 @@ def main():
         loss_v.backward()
         optimizer.step()
         buffer.update_priorities(batch_indices, sample_prios)
-        buffer.update_beta(frame_idx)
+        buffer.update_beta(step_idx)
 
-        if params.DRAW_VIZ and frame_idx % 100 == 0:
-            stat_for_model_loss.draw_loss(frame_idx, loss_v.item())
+        if params.DRAW_VIZ and step_idx % 100 == 0:
+            stat_for_model_loss.draw_optimization_performance(step_idx, loss_v.item())
 
-        if frame_idx % params.TARGET_NET_SYNC_STEP_PERIOD < params.TRAIN_STEP_FREQ:
+        if step_idx % params.TARGET_NET_SYNC_STEP_PERIOD < params.TRAIN_STEP_FREQ:
             tgt_net.sync()
 
 

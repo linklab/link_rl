@@ -78,6 +78,9 @@ class PARAMETERS_GENERAL:
     MAX_EPISODES = 2000
     GAMMA = 0.98 # discount factor
 
+    # [Policy Gradient]
+    ENTROPY_BETA = 0.01
+
     # [MODE]
     MODE_SYNCHRONIZATION = True
     MODE_GRADIENTS_UPDATE = True         # Distributed

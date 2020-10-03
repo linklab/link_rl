@@ -1,4 +1,6 @@
 import random
+from typing import Optional
+
 import numpy as np
 import gym
 import torch
@@ -84,6 +86,12 @@ def epsilon_scheduled(current_episode, max_episodes, initial_epsilon, final_epsi
     cosh = np.cosh(math.exp(-standardized_time))
     epsilon = max(initial_epsilon - (1 / cosh + (current_episode * C / max_episodes)), final_epsilon)
     return epsilon
+
+
+def smooth(old: Optional[float], val: float, alpha: float = 0.95) -> float:
+    if old is None:
+        return val
+    return old * alpha + (1.0 - alpha) * val
 
 
 if __name__=="__main__":

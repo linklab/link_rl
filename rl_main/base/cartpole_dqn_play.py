@@ -3,7 +3,7 @@ import gym
 import torch
 import os
 
-from rl_main.base.cartpole_rl_main import MODEL_SAVE_DIR
+from rl_main.base.cartpole_dqn_main import MODEL_SAVE_DIR
 
 print(torch.__version__)
 
@@ -26,7 +26,7 @@ def play_main():
     ).to(device)
     print(net)
 
-    dqn_model.load_model(MODEL_SAVE_DIR, params.ENVIRONMENT_ID.value, net.__name__, net, step=14104)
+    dqn_model.load_model(MODEL_SAVE_DIR, params.ENVIRONMENT_ID.value, net.__name__, net)
 
     action_selector = actions.ArgmaxActionSelector()
     agent = rl_agent.DQNAgent(net, action_selector, device=device)
