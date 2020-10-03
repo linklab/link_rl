@@ -111,6 +111,7 @@ class ExperienceSource:
                     # cur_rewards[idx] += r
                     cur_rewards[idx] += info['original_reward']
                     cur_steps[idx] += 1
+
                     if state is not None:
                         history.append(Experience(state=state, action=action, reward=r, done=is_done))
                     if len(history) == self.steps_count and iter_idx % self.steps_delta == 0:

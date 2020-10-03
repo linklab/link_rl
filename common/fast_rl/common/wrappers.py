@@ -198,8 +198,17 @@ class ClippedRewardsWrapper(gym.RewardWrapper):
 
     def step(self, action):
         ob, reward, done, info = self.env.step(action)
-        info['original_reward'] = reward
         return ob, self.reward(reward), done, info
+
+
+class OriginalRewardsWrapper(gym.Wrapper):
+    def reset(self, **kwargs):
+        return self.env.reset(**kwargs)
+
+    def step(self, action):
+        ob, reward, done, info = self.env.step(action)
+        info['original_reward'] = reward
+        return ob, reward, done, info
 
 
 class LazyFrames(object):
@@ -310,7 +319,7 @@ def process_experience(exp, buffer):
     buffer._add((history, exp.action, exp.reward, exp.last_state is None))
 
 
-def wrap_dqn(env, stack_frames=4, episodic_life=True, reward_clipping=True):
+def wrap_dqn(env, stack_frames=4, episodic_life=True, original_reward_info=True, reward_clipping=True):
     """Apply a common set of wrappers for Atari games."""
     assert 'NoFrameskip' in env.spec.id
     if episodic_life:
@@ -324,6 +333,8 @@ def wrap_dqn(env, stack_frames=4, episodic_life=True, reward_clipping=True):
     # env = ScaledFloatFrame(env)
     env = ImageToPyTorch(env)
     env = FrameStack(env, k=stack_frames)
+    if original_reward_info:
+        env = OriginalRewardsWrapper(env)
     if reward_clipping:
         env = ClippedRewardsWrapper(env)
     return env

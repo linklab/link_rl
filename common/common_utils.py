@@ -8,6 +8,9 @@ import numpy as np
 import math
 from matplotlib import pyplot as plt
 
+from common.fast_rl.common.wrappers import OriginalRewardsWrapper
+
+
 def print_params(params_class):
     print('\n' + '################ Parameters ################')
     for param in dir(params_class):
@@ -66,6 +69,7 @@ def make_gym_env(env_id, rank=0, seed=0):
     set_global_seeds(seed)
 
     env = gym.make(env_id)
+    env = OriginalRewardsWrapper(env)
     env.seed(seed + rank)
 
     return env

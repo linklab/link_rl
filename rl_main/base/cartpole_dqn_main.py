@@ -1,13 +1,9 @@
 #!/usr/bin/env python3
-import random
 import time
-
-import gym
 import torch
 import torch.multiprocessing as mp
 from torch import optim
 import os
-import numpy as np
 
 from common.common_utils import make_gym_env
 
@@ -32,6 +28,7 @@ target_net_sync = 50
 
 os.environ['KMP_DUPLICATE_LIB_OK'] = 'True'
 device = torch.device("cuda" if params.CUDA else "cpu")
+
 
 def play_func(exp_queue, env, net):
     action_selector = actions.EpsilonGreedyActionSelector(epsilon=params.EPSILON_INIT)
@@ -59,7 +56,7 @@ def play_func(exp_queue, env, net):
     frame_idx = 0
     next_save_frame_idx = params.MODEL_SAVE_STEP_PERIOD
 
-    with utils.AtariRewardTracker(params.STOP_MEAN_EPISODE_REWARD, params.AVG_EPISODE_SIZE_FOR_STAT, params.DRAW_VIZ, stat) as reward_tracker:
+    with utils.RewardTracker(params.STOP_MEAN_EPISODE_REWARD, params.AVG_EPISODE_SIZE_FOR_STAT, params.DRAW_VIZ, stat) as reward_tracker:
         while True:
             frame_idx += 1
             exp = next(exp_source_iter)

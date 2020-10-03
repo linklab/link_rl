@@ -75,7 +75,7 @@ if __name__ == "__main__":
 
     next_save_frame_idx = params.MODEL_SAVE_STEP_PERIOD
 
-    with utils.AtariRewardTracker(
+    with utils.RewardTracker(
             stop_mean_episode_reward=params.STOP_MEAN_EPISODE_REWARD,
             average_size_for_stats=params.AVG_EPISODE_SIZE_FOR_STAT,
             draw_viz=params.DRAW_VIZ, stat=stat) as reward_tracker:

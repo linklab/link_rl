@@ -331,13 +331,14 @@ class TBMeanTracker:
             data.clear()
 
 
-class AtariRewardTracker:
-    def __init__(self, stop_mean_episode_reward, average_size_for_stats, draw_viz, stat=None):
-        self.min_ts_diff = 1 # 1 second
+class RewardTracker:
+    def __init__(self, stop_mean_episode_reward, average_size_for_stats, frame=True, draw_viz=True, stat=None):
+        self.min_ts_diff = 1    # 1 second
         self.stop_mean_episode_reward = stop_mean_episode_reward
         self.stat = stat
         self.average_size_for_stats = average_size_for_stats
         self.draw_viz = draw_viz
+        self.frame = frame
 
     def __enter__(self):
         self.start_ts = time.time()
@@ -373,7 +374,10 @@ class AtariRewardTracker:
                 self.print_performance(
                     episode_done_frame, current_ts, ts_diff, mean_episode_reward, epsilon, elapsed_time, action_count
                 )
-            print("Solved in %d frames!" % episode_done_frame)
+            if self.frame:
+                print("Solved in {0} frames!".format(episode_done_frame))
+            else:
+                print("Solved in {0} steps!".format(episode_done_frame))
             return True, mean_episode_reward
         return False, mean_episode_reward
 
@@ -382,13 +386,14 @@ class AtariRewardTracker:
         self.ts_frame = episode_done_frame
         self.ts = current_ts
         print(
-            "[{0:6}] done {1:4} games, episode_reward: {2:5.1f}, mean reward: {3:7.3f}, eps: {4:5.3f}, speed: {5:7.2f} fps, elapsed time: {6}".format(
+            "[{0:6}] done {1:4} games, episode_reward: {2:5.1f}, mean reward: {3:7.3f}, eps: {4:5.3f}, speed: {5:7.2f} {6}, elapsed time: {7}".format(
                 episode_done_frame,
                 len(self.episode_reward_list),
                 self.episode_reward_list[-1],
                 mean_episode_reward,
                 epsilon,
                 speed,
+                "fps" if self.frame else "steps/sec.",
                 time.strftime("%Hh %Mm %Ss", time.gmtime(elapsed_time)),
         ), end="")
 
@@ -399,70 +404,5 @@ class AtariRewardTracker:
 
         if self.draw_viz and self.stat:
             self.stat.draw_performance(episode_done_frame, mean_episode_reward, speed, epsilon)
-
-
-class RewardTracker:
-    def __init__(self, stop_mean_episode_reward, stat, args):
-        """
-        Constructs RewardTracker
-        :param min_ts_diff: minimal time difference to track speed
-        """
-        self.min_ts_diff = 1 # 1 second
-        self.stop_mean_episode_reward = stop_mean_episode_reward
-        self.args = args
-        self.stat = stat
-
-    def __enter__(self):
-        self.start_ts = time.time()
-        self.ts = time.time()
-        self.ts_step = 0
-        self.episode_reward_list = []
-        return self
-
-    def __exit__(self, *args):
-        pass
-
-    def reward(self, episode_reward, episode_done_step, epsilon, action_count):
-        self.episode_reward_list.append(episode_reward)
-        mean_episode_reward = np.mean(self.episode_reward_list[-self.args.average_size_for_stats:])
-
-        current_ts = time.time()
-        elapsed_time = current_ts - self.start_ts
-        ts_diff = current_ts - self.ts
-
-        is_print_performance = False
-        if ts_diff > self.min_ts_diff:
-            is_print_performance = True
-            self.print_performance(
-                episode_done_step, current_ts, ts_diff, mean_episode_reward, epsilon, elapsed_time, action_count
-            )
-
-        if mean_episode_reward > self.stop_mean_episode_reward:
-            if not is_print_performance:
-                self.print_performance(
-                    episode_done_step, current_ts, ts_diff, mean_episode_reward, epsilon, elapsed_time, action_count
-                )
-            print("Solved in {0} steps!".format(episode_done_step))
-            return True, mean_episode_reward
-        return False, mean_episode_reward
-
-    def print_performance(self, episode_done_step, current_ts, ts_diff, mean_episode_reward, epsilon, elapsed_time, action_count):
-        speed = (episode_done_step - self.ts_step) / ts_diff
-        self.ts_step = episode_done_step
-        self.ts = current_ts
-        print(
-            "[{0:6}] done {1:4} episodes, episode_reward: {2:5.1f}, mean reward: {3:7.3f}, eps: {4:5.3f}, speed: {5:7.2f} steps/sec., elapsed time: {6}, {7}".format(
-                episode_done_step,
-                len(self.episode_reward_list),
-                self.episode_reward_list[-1],
-                mean_episode_reward,
-                epsilon,
-                speed,
-                time.strftime("%Hh %Mm %Ss", time.gmtime(elapsed_time)),
-                action_count
-            ), flush=True)
-        if self.args.draw_viz:
-            self.stat.draw_performance(episode_done_step, mean_episode_reward, speed, epsilon)
-
 
 

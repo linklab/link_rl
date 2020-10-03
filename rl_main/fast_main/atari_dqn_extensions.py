@@ -56,7 +56,7 @@ def play_func(env, net, exp_queue):
     frame_idx = 0
     next_save_frame_idx = params.MODEL_SAVE_STEP_PERIOD
 
-    with utils.AtariRewardTracker(stop_mean_episode_reward=params.STOP_MEAN_EPISODE_REWARD,
+    with utils.RewardTracker(stop_mean_episode_reward=params.STOP_MEAN_EPISODE_REWARD,
             average_size_for_stats=params.AVG_EPISODE_SIZE_FOR_STAT,
             draw_viz=params.DRAW_VIZ, stat=stat) as reward_tracker:
         while frame_idx < params.MAX_GLOBAL_STEPS:
