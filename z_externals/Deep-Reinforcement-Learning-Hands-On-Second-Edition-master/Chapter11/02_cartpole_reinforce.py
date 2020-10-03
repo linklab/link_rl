@@ -2,7 +2,6 @@
 import gym
 import ptan
 import numpy as np
-from tensorboardX import SummaryWriter
 
 import torch
 import torch.nn as nn
@@ -40,13 +39,12 @@ def calc_qvals(rewards):
 
 if __name__ == "__main__":
     env = gym.make("CartPole-v0")
-    writer = SummaryWriter(comment="-cartpole-reinforce")
 
     net = PGN(env.observation_space.shape[0], env.action_space.n)
     print(net)
 
-    agent = ptan.agent.PolicyAgent(net, preprocessor=ptan.agent.float32_preprocessor,
-                                   apply_softmax=True)
+    agent = ptan.agent.PolicyAgent(net, preprocessor=ptan.agent.float32_preprocessor, apply_softmax=True)
+
     exp_source = ptan.experience.ExperienceSourceFirstLast(env, agent, gamma=GAMMA)
 
     optimizer = optim.Adam(net.parameters(), lr=LEARNING_RATE)
@@ -62,6 +60,7 @@ if __name__ == "__main__":
     for step_idx, exp in enumerate(exp_source):
         batch_states.append(exp.state)
         batch_actions.append(int(exp.action))
+
         cur_rewards.append(exp.reward)
 
         if exp.last_state is None:
@@ -76,11 +75,11 @@ if __name__ == "__main__":
             reward = new_rewards[0]
             total_rewards.append(reward)
             mean_rewards = float(np.mean(total_rewards[-100:]))
+
             print("%d: reward: %6.2f, mean_100: %6.2f, episodes: %d" % (
-                step_idx, reward, mean_rewards, done_episodes))
-            writer.add_scalar("reward", reward, step_idx)
-            writer.add_scalar("reward_100", mean_rewards, step_idx)
-            writer.add_scalar("episodes", done_episodes, step_idx)
+                step_idx, reward, mean_rewards, done_episodes
+            ))
+
             if mean_rewards > 195:
                 print("Solved in %d steps and %d episodes!" % (step_idx, done_episodes))
                 break
@@ -106,4 +105,3 @@ if __name__ == "__main__":
         batch_actions.clear()
         batch_qvals.clear()
 
-    writer.close()

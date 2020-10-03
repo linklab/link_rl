@@ -15,7 +15,7 @@ LEARNING_RATE = 0.001
 ENTROPY_BETA = 0.01
 BATCH_SIZE = 8
 
-REWARD_STEPS = 10
+REWARD_STEPS = 8
 
 
 class PGN(nn.Module):
@@ -35,7 +35,7 @@ class PGN(nn.Module):
 def smooth(old: Optional[float], val: float, alpha: float = 0.95) -> float:
     if old is None:
         return val
-    return old * alpha + (1-alpha)*val
+    return old * alpha + (1.0 - alpha) * val
 
 
 if __name__ == "__main__":
@@ -45,14 +45,13 @@ if __name__ == "__main__":
     net = PGN(env.observation_space.shape[0], env.action_space.n)
     print(net)
 
-    agent = ptan.agent.PolicyAgent(net, preprocessor=ptan.agent.float32_preprocessor,
-                                   apply_softmax=True)
-    exp_source = ptan.experience.ExperienceSourceFirstLast(
-        env, agent, gamma=GAMMA, steps_count=REWARD_STEPS)
+    agent = ptan.agent.PolicyAgent(net, preprocessor=ptan.agent.float32_preprocessor, apply_softmax=True)
+
+    exp_source = ptan.experience.ExperienceSourceFirstLast(env, agent, gamma=GAMMA, steps_count=REWARD_STEPS)
 
     optimizer = optim.Adam(net.parameters(), lr=LEARNING_RATE)
 
-    total_rewards = []
+    total_episode_rewards = []
     step_rewards = []
     step_idx = 0
     done_episodes = 0
@@ -63,6 +62,7 @@ if __name__ == "__main__":
 
     for step_idx, exp in enumerate(exp_source):
         reward_sum += exp.reward
+        #print(exp.reward)
         baseline = reward_sum / (step_idx + 1)
         writer.add_scalar("baseline", baseline, step_idx)
         batch_states.append(exp.state)
@@ -70,18 +70,21 @@ if __name__ == "__main__":
         batch_scales.append(exp.reward - baseline)
 
         # handle new rewards
-        new_rewards = exp_source.pop_total_rewards()
-        if new_rewards:
+        new_episode_rewards = exp_source.pop_total_rewards()
+        if new_episode_rewards:
             done_episodes += 1
-            reward = new_rewards[0]
-            total_rewards.append(reward)
-            mean_rewards = float(np.mean(total_rewards[-100:]))
-            print("%d: reward: %6.2f, mean_100: %6.2f, episodes: %d" % (
-                step_idx, reward, mean_rewards, done_episodes))
-            writer.add_scalar("reward", reward, step_idx)
-            writer.add_scalar("reward_100", mean_rewards, step_idx)
+            episode_reward = new_episode_rewards[0]
+            total_episode_rewards.append(episode_reward)
+            mean_100_episode_rewards = float(np.mean(total_episode_rewards[-100:]))
+            print("{0}: episode_reward: {1:6.2f}, mean_100: {2:6.2f}, episodes: {3}".format(
+                step_idx, episode_reward, mean_100_episode_rewards, done_episodes
+            ))
+
+            writer.add_scalar("episode_reward", episode_reward, step_idx)
+            writer.add_scalar("mean_100_episode_rewards", mean_100_episode_rewards, step_idx)
             writer.add_scalar("episodes", done_episodes, step_idx)
-            if mean_rewards > 195:
+
+            if mean_100_episode_rewards > 195:
                 print("Solved in %d steps and %d episodes!" % (step_idx, done_episodes))
                 break
 
@@ -101,6 +104,9 @@ if __name__ == "__main__":
         prob_v = F.softmax(logits_v, dim=1)
         entropy_v = -(prob_v * log_prob_v).sum(dim=1).mean()
         entropy_loss_v = -ENTROPY_BETA * entropy_v
+
+        # loss_policy_v를 작아지도록 만듦 --> log_prob_actions_v.mean()가 커지도록 만듦
+        # entropy_loss_v를 작아지도록 만듦 --> entropy_v가 커지도록 만듦
         loss_v = loss_policy_v + entropy_loss_v
 
         loss_v.backward()
