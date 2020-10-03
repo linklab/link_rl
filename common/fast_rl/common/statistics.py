@@ -97,11 +97,12 @@ class StatisticsForPolicyBasedRLOptimization:
         self.loss_entropy = self.vis.line(X=[0], Y=[0], opts=dict(title="loss entropy"))
         self.loss_policy = self.vis.line(X=[0], Y=[0], opts=dict(title="loss policy"))
         self.loss_total = self.vis.line(X=[0], Y=[0], opts=dict(title="loss total"))
-        self.grad_means = self.vis.line(X=[0], Y=[0], opts=dict(title="gradient means"))
+        self.grad_l2 = self.vis.line(X=[0], Y=[0], opts=dict(title="gradient l2 (square mean)"))
+        self.grad_variance = self.vis.line(X=[0], Y=[0], opts=dict(title="gradient variance"))
         self.grad_max = self.vis.line(X=[0], Y=[0], opts=dict(title="gradient max"))
 
     def draw_optimization_performance(self, global_step, kl_divergence, baseline, mean_batch_scale,
-                                      entropy, loss_entropy, loss_policy, loss_total, grad_means, grad_max):
+                                      entropy, loss_entropy, loss_policy, loss_total, grad_l2, grad_variance, grad_max):
         self.vis.line(
             X=[global_step], Y=[kl_divergence], win=self.kl_divergence, name="kl divergence", update="append",
             opts=dict(title='kl divergence', showlegend=False)
@@ -138,8 +139,13 @@ class StatisticsForPolicyBasedRLOptimization:
         )
 
         self.vis.line(
-            X=[global_step], Y=[grad_means], win=self.grad_means, name="gradient means", update="append",
-            opts=dict(title='gradient means', showlegend=False)
+            X=[global_step], Y=[grad_l2], win=self.grad_l2, name="gradient l2 (square mean)", update="append",
+            opts=dict(title='gradient l2 (square mean)', showlegend=False)
+        )
+
+        self.vis.line(
+            X=[global_step], Y=[grad_variance], win=self.grad_variance, name="gradient variance", update="append",
+            opts=dict(title='gradient variance', showlegend=False)
         )
 
         self.vis.line(

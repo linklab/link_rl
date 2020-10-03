@@ -9,37 +9,6 @@ from torch.autograd import Variable
 import numpy as np
 
 
-def save_model(model_save_dir, env_name, q_net_name, q_net, step, mean_episode_reward):
-    model_save_filename = os.path.join(
-        model_save_dir, "{0}_{1}_{2}_{3}.pth".format(
-            env_name, q_net_name, step, mean_episode_reward
-        )
-    )
-    torch.save(q_net.state_dict(), model_save_filename)
-    return model_save_filename
-
-
-def load_model(model_save_dir, env_name, q_net_name, q_net, step=None):
-    if step:
-        saved_models = glob.glob(os.path.join(
-            model_save_dir, "{0}_{1}_{2}_*.pth".format(env_name, q_net_name, step)
-        ))
-    else:
-        saved_models = glob.glob(os.path.join(
-            model_save_dir, "{0}_{1}_*.pth".format(env_name, q_net_name)
-        ))
-
-    saved_models.sort(key=lambda filename: int(filename.split("/")[-1].split("_")[-2]))
-    assert len(saved_models) > 0, "※※※※※※※※※※ There is no model !!!: {0} ※※※※※※※※※※".format(saved_models)
-
-    saved_model = saved_models[-1]
-    print("MODEL FILE NAME: {0}".format(saved_model))
-    device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
-    model_params = torch.load(saved_model, map_location=device)
-
-    q_net.load_state_dict(model_params)
-
-
 class DQN(nn.Module):
     def __init__(self, input_shape, n_actions):
         super(DQN, self).__init__()

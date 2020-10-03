@@ -12,7 +12,7 @@ from common.fast_rl.rl_agent import float32_preprocessor
 
 print(torch.__version__)
 
-from common.fast_rl import actions, experience, dqn_model, rl_agent
+from common.fast_rl import actions, experience, policy_based_model, rl_agent
 from common.fast_rl.common import statistics, utils
 
 from config.parameters import PARAMETERS as params
@@ -58,13 +58,13 @@ def play_func(exp_queue, env, net):
                 )
 
                 if step_idx >= next_save_frame_idx:
-                    dqn_model.save_model(
+                    rl_agent.save_model(
                         MODEL_SAVE_DIR, params.ENVIRONMENT_ID.value, net.__name__, net, step_idx, mean_episode_reward
                     )
                     next_save_frame_idx += params.MODEL_SAVE_STEP_PERIOD
 
                 if solved:
-                    dqn_model.save_model(
+                    rl_agent.save_model(
                         MODEL_SAVE_DIR, params.ENVIRONMENT_ID.value, net.__name__, net, step_idx, mean_episode_reward
                     )
                     break
@@ -77,7 +77,7 @@ def main():
 
     env = make_gym_env(params.ENVIRONMENT_ID.value, seed=params.SEED)
 
-    net = dqn_model.DuelingDQNMLP(
+    net = policy_based_model.DuelingDQNMLP(
         obs_size=4,
         hidden_size_1=128, hidden_size_2=128,
         n_actions=2
@@ -99,6 +99,10 @@ def main():
 
     step_idx = 0
     reward_sum = 0.0
+
+    grad_l2 = 0.0
+    grad_max = 0.0
+    grad_variance = 0.0
 
     mean_batch_scale = 0.0
     entropy = 0.0
@@ -133,7 +137,8 @@ def main():
         optimizer.zero_grad()
         logits_v = net(states_v)
         log_prob_v = F.log_softmax(logits_v, dim=1)
-        log_prob_actions_v = batch_scale_v * log_prob_v[range(params.BATCH_SIZE), batch_actions_t]
+        log_p_a_v = log_prob_v[range(params.BATCH_SIZE), batch_actions_t]
+        log_prob_actions_v = batch_scale_v * log_p_a_v
         loss_policy_v = -log_prob_actions_v.mean()
 
         prob_v = F.softmax(logits_v, dim=1)
@@ -145,6 +150,11 @@ def main():
         loss_v = loss_policy_v + entropy_loss_v
 
         loss_v.backward()
+
+        grads = np.concatenate([p.grad.data.numpy().flatten()
+                                for p in net.parameters()
+                                if p.grad is not None])
+
         optimizer.step()
 
         # calc KL-div
@@ -152,14 +162,9 @@ def main():
         new_prob_v = F.softmax(new_logits_v, dim=1)
         kl_div_v = -((new_prob_v / prob_v).log() * prob_v).sum(dim=1).mean()
 
-        grad_max = 0.0
-        grad_means = 0.0
-        grad_count = 0
-        for p in net.parameters():
-            grad_max = max(grad_max, p.grad.abs().max().item())
-            grad_means += (p.grad ** 2).mean().sqrt().item()
-            grad_count += 1
-        grad_means = grad_means / grad_count
+        grad_l2 = smooth(grad_l2, np.sqrt(np.mean(np.square(grads))))
+        grad_max = smooth(grad_max, np.max(np.abs(grads)))
+        grad_variance = smooth(grad_variance, float(np.var(grads)))
 
         mean_batch_scale = smooth(mean_batch_scale, float(np.mean(batch_scales)))
         entropy = smooth(entropy, entropy_v.item())
@@ -175,7 +180,7 @@ def main():
                 mean_batch_scale,
                 entropy,
                 loss_entropy, loss_policy, loss_total,
-                grad_means, grad_max
+                grad_l2, grad_variance, grad_max
             )
 
         batch_states.clear()

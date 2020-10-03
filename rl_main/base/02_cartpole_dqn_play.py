@@ -3,11 +3,11 @@ import gym
 import torch
 import os
 
-from rl_main.base.cartpole_dqn_main import MODEL_SAVE_DIR
+MODEL_SAVE_DIR = os.path.join(".", "saved_models")
 
 print(torch.__version__)
 
-from common.fast_rl import actions, dqn_model, rl_agent
+from common.fast_rl import actions, value_based_model, rl_agent
 import numpy as np
 
 from config.parameters import PARAMETERS as params
@@ -19,14 +19,14 @@ device = torch.device("cuda" if params.CUDA else "cpu")
 def play_main():
     env = gym.make(params.ENVIRONMENT_ID.value)
 
-    net = dqn_model.DuelingDQNMLP(
+    net = value_based_model.DuelingDQNMLP(
         obs_size=4,
         hidden_size_1=128, hidden_size_2=128,
         n_actions=2
     ).to(device)
     print(net)
 
-    dqn_model.load_model(MODEL_SAVE_DIR, params.ENVIRONMENT_ID.value, net.__name__, net)
+    rl_agent.load_model(MODEL_SAVE_DIR, params.ENVIRONMENT_ID.value, net.__name__, net)
 
     action_selector = actions.ArgmaxActionSelector()
     agent = rl_agent.DQNAgent(net, action_selector, device=device)

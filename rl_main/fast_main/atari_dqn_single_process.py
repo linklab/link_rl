@@ -8,7 +8,7 @@ import warnings
 
 from common import common_utils
 from common.common_utils import make_atari_env
-from common.fast_rl import experience, rl_agent, dqn_model, actions
+from common.fast_rl import experience, rl_agent, value_based_model, actions
 from common.fast_rl.common import utils
 from common.fast_rl.common import statistics, wrappers
 
@@ -39,7 +39,7 @@ if __name__ == "__main__":
 
     suffix = "" if params.SEED is None else "_seed=%s" % params.SEED
 
-    net = dqn_model.DQN(
+    net = value_based_model.DQN(
         input_shape=env.observation_space.shape,
         n_actions=env.action_space.n
     ).to(device)
@@ -91,13 +91,13 @@ if __name__ == "__main__":
                 )
 
                 if frame_idx >= next_save_frame_idx:
-                    dqn_model.save_model(
+                    rl_agent.save_model(
                         MODEL_SAVE_DIR, params.ENVIRONMENT_ID.value, net.__name__, net, frame_idx, mean_episode_reward
                     )
                     next_save_frame_idx += params.MODEL_SAVE_STEP_PERIOD
 
                 if solved:
-                    dqn_model.save_model(
+                    rl_agent.save_model(
                         MODEL_SAVE_DIR, params.ENVIRONMENT_ID.value, net.__name__, net, frame_idx, mean_episode_reward
                     )
                     break
@@ -107,7 +107,7 @@ if __name__ == "__main__":
 
             optimizer.zero_grad()
             batch = buffer.sample(params.BATCH_SIZE)
-            loss_v = dqn_model.calc_loss_dqn(batch, net, tgt_net, gamma=params.GAMMA, cuda=params.CUDA)
+            loss_v = value_based_model.calc_loss_dqn(batch, net, tgt_net, gamma=params.GAMMA, cuda=params.CUDA)
             loss_v.backward()
             optimizer.step()
 

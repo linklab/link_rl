@@ -107,6 +107,7 @@ if __name__ == "__main__":
         entropy_v = -(prob_v * log_prob_v).sum(dim=1).mean()
         entropy_loss_v = -ENTROPY_BETA * entropy_v
         entropy_loss_v.backward()
+
         optimizer.step()
 
         loss_v = loss_policy_v + entropy_loss_v

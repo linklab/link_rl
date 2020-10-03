@@ -10,7 +10,7 @@ import os
 from common.environments.matlab.matlabenv import MatlabRotaryInvertedPendulumEnv
 print(torch.__version__)
 
-from common.fast_rl import actions, experience, dqn_model, rl_agent
+from common.fast_rl import actions, experience, value_based_model, rl_agent
 from common.fast_rl.common import statistics, utils
 from config.parameters import PARAMETERS as params
 
@@ -64,11 +64,11 @@ def play_func(exp_queue, env, net):
                 )
 
                 if frame_idx >= next_save_frame_idx:
-                    dqn_model.save_model(MODEL_SAVE_DIR, params.ENV_NAME, net.__name__, net, frame_idx, mean_episode_reward)
+                    rl_agent.save_model(MODEL_SAVE_DIR, params.ENV_NAME, net.__name__, net, frame_idx, mean_episode_reward)
                     next_save_frame_idx += params.MODEL_SAVE_STEP_PERIOD
 
                 if solved:
-                    dqn_model.save_model(MODEL_SAVE_DIR, params.ENV_NAME, net.__name__, net, frame_idx, mean_episode_reward)
+                    rl_agent.save_model(MODEL_SAVE_DIR, params.ENV_NAME, net.__name__, net, frame_idx, mean_episode_reward)
                     break
 
     exp_queue.put(None)
@@ -81,7 +81,7 @@ def main():
     env = MatlabRotaryInvertedPendulumEnv()
     env.start()
 
-    net = dqn_model.DuelingDQNMLP(
+    net = value_based_model.DuelingDQNMLP(
         obs_size=4,
         hidden_size_1=128, hidden_size_2=128,
         n_actions=7
@@ -118,7 +118,7 @@ def main():
 
         optimizer.zero_grad()
         batch, batch_indices, batch_weights = buffer.sample(params.BATCH_SIZE)
-        loss_v, sample_prios = dqn_model.calc_loss_per_double_dqn(
+        loss_v, sample_prios = value_based_model.calc_loss_per_double_dqn(
             batch, batch_weights, net, tgt_net, gamma=params.GAMMA, cuda=cuda, cuda_async=True
         )
         loss_v.backward()

@@ -6,7 +6,7 @@ import os
 import numpy as np
 from common.common_utils import make_atari_env
 from rl_main.fast_main.atari_dqn import MODEL_SAVE_DIR
-from common.fast_rl import actions, dqn_model, rl_agent
+from common.fast_rl import actions, value_based_model, rl_agent
 from config.parameters import PARAMETERS as params
 
 os.environ['KMP_DUPLICATE_LIB_OK'] = 'True'
@@ -16,13 +16,13 @@ device = torch.device("cuda" if params.CUDA else "cpu")
 def play_main():
     env = make_atari_env(params.ENVIRONMENT_ID.value, seed=2)
 
-    net = dqn_model.DQN(
+    net = value_based_model.DQN(
         input_shape=env.observation_space.shape,
         n_actions=env.action_space.n
     ).to(device)
     print(net)
 
-    dqn_model.load_model(MODEL_SAVE_DIR, params.ENVIRONMENT_ID.value, net.__name__, net, step=18720903)#1731249
+    rl_agent.load_model(MODEL_SAVE_DIR, params.ENVIRONMENT_ID.value, net.__name__, net, step=18720903)#1731249
 
     # action_selector = actions.ArgmaxActionSelector()
     action_selector = actions.EpsilonGreedyActionSelector(epsilon=0.01)
