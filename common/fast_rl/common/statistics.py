@@ -225,7 +225,7 @@ class StatisticsForA2COptimization:
 
 
 class StatisticsForDDPGOptimization:
-    def __init__(self):
+    def __init__(self, n_actions):
         self.vis = Visdom()
 
         self.loss_actor = self.vis.line(X=[0], Y=[0], opts=dict(title="loss actor"))
@@ -237,10 +237,14 @@ class StatisticsForDDPGOptimization:
         self.critic_grad_l2 = self.vis.line(X=[0], Y=[0], opts=dict(title="critic gradient l2"))
         self.critic_grad_variance = self.vis.line(X=[0], Y=[0], opts=dict(title="critic gradient variance"))
         self.critic_grad_max = self.vis.line(X=[0], Y=[0], opts=dict(title="critic gradient max"))
+        self.n_actions = n_actions
+        self.actions = {}
+        for i in range(n_actions):
+            self.actions[i] = self.vis.line(X=[0], Y=[0], opts=dict(title="action {0}".format(i)))
 
     def draw_optimization_performance(self, global_step, loss_actor, loss_critic, loss_total,
                                       actor_grad_l2, actor_grad_variance, actor_grad_max,
-                                      critic_grad_l2, critic_grad_variance, critic_grad_max):
+                                      critic_grad_l2, critic_grad_variance, critic_grad_max, actions):
         self.vis.line(
             X=[global_step], Y=[loss_actor], win=self.loss_actor, name="loss actor", update="append",
             opts=dict(title='loss actor', showlegend=False)
@@ -285,3 +289,9 @@ class StatisticsForDDPGOptimization:
             X=[global_step], Y=[critic_grad_max], win=self.critic_grad_max, name="critic gradient max", update="append",
             opts=dict(title='critic gradient max', showlegend=False)
         )
+
+        for i in range(self.n_actions):
+            self.vis.line(
+                X=[global_step], Y=[actions[i]], win=self.actions[i], name="action {0}".format(i), update="append",
+                opts=dict(title="action {0}".format(i), showlegend=False)
+            )

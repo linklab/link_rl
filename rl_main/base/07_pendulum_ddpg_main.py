@@ -116,7 +116,7 @@ def main():
     time.sleep(0.5)
 
     if params.DRAW_VIZ:
-        stat_for_ddpg = statistics.StatisticsForDDPGOptimization()
+        stat_for_ddpg = statistics.StatisticsForDDPGOptimization(n_actions=1)
     else:
         stat_for_ddpg = 0.0
 
@@ -201,7 +201,8 @@ def main():
                     step_idx,
                     loss_actor, loss_critic, loss_total,
                     actor_grad_l2, actor_grad_variance, actor_grad_max,
-                    critic_grad_l2, critic_grad_variance, critic_grad_max
+                    critic_grad_l2, critic_grad_variance, critic_grad_max,
+                    exp.action
                 )
 
 
