@@ -11,6 +11,11 @@ import numpy as np
 from common.fast_rl import rl_agent
 
 
+def init_weights(m):
+    if type(m) == nn.Linear or type(m) == nn.Conv2d:
+        torch.nn.init.kaiming_normal(m.weight)
+
+
 class A2CMLP(nn.Module):
     def __init__(self, obs_size, hidden_size_1, hidden_size_2, n_actions):
         super(A2CMLP, self).__init__()
@@ -105,6 +110,8 @@ class DDPGActor(nn.Module):
             nn.Tanh()
         )
 
+        self.net.apply(init_weights)
+
     def forward(self, x):
         return self.net(x)
 
@@ -125,6 +132,9 @@ class DDPGCritic(nn.Module):
             nn.ReLU(),
             nn.Linear(hidden_size_2, 1)
         )
+
+        self.obs_net.apply(init_weights)
+        self.out_net.apply(init_weights)
 
     def forward(self, x, a):
         obs = self.obs_net(x)

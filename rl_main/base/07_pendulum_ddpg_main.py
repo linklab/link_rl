@@ -86,12 +86,6 @@ def main():
     print("observation_space:", env.observation_space)
     print("action_space:", env.action_space)
 
-    net = policy_based_model.ContinuousA2CMLP(
-        obs_size=3,
-        hidden_size_1=128, hidden_size_2=128,
-        n_actions=1
-    ).to(device)
-
     actor_net = policy_based_model.DDPGActor(
         obs_size=3,
         hidden_size_1=512, hidden_size_2=256,
