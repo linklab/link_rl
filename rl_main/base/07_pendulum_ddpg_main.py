@@ -94,13 +94,13 @@ def main():
 
     actor_net = policy_based_model.DDPGActor(
         obs_size=3,
-        hidden_size_1=128, hidden_size_2=128,
+        hidden_size_1=512, hidden_size_2=256,
         n_actions=1
     ).to(device)
 
     critic_net = policy_based_model.DDPGCritic(
         obs_size=3,
-        hidden_size_1=128, hidden_size_2=128,
+        hidden_size_1=512, hidden_size_2=256,
         n_actions=1
     ).to(device)
 
@@ -153,7 +153,7 @@ def main():
         if len(buffer) < params.MIN_REPLAY_SIZE_FOR_TRAIN:
             continue
 
-        if exp.last_state is None:
+        if exp is not None and exp.last_state is None:
             batch = buffer.sample(params.BATCH_SIZE)
             batch_states_v, batch_actions_v, batch_rewards_v, batch_dones_mask, batch_last_states_v = unpack_batch_for_ddpg(
                 batch, device
