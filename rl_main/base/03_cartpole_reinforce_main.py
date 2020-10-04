@@ -12,7 +12,7 @@ from common.fast_rl.rl_agent import float32_preprocessor
 
 print(torch.__version__)
 
-from common.fast_rl import actions, experience, policy_based_model, rl_agent
+from common.fast_rl import actions, experience, value_based_model, rl_agent
 from common.fast_rl.common import statistics, utils
 
 from config.parameters import PARAMETERS as params
@@ -77,7 +77,7 @@ def main():
 
     env = make_gym_env(params.ENVIRONMENT_ID.value, seed=params.SEED)
 
-    net = policy_based_model.A2CMLP(
+    net = value_based_model.DuelingDQNMLP(
         obs_size=4,
         hidden_size_1=128, hidden_size_2=128,
         n_actions=2

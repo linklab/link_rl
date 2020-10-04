@@ -140,7 +140,7 @@ def get_environment(owner="chief"):
 
 
 def get_rl_model(env, worker_id, params=params):
-    if params.DEEP_LEARNING_MODEL == DeepLearningModelName.Actor_Critic_MLP or params.DEEP_LEARNING_MODEL == DeepLearningModelName.Actor_Critic_CNN:
+    if params.DEEP_LEARNING_MODEL == DeepLearningModelName.ACTOR_CRITIC_MLP or params.DEEP_LEARNING_MODEL == DeepLearningModelName.ACTOR_CRITIC_CNN:
         model = ActorCriticModel(
             s_size=env.n_states,
             a_size=env.n_actions,
@@ -149,7 +149,7 @@ def get_rl_model(env, worker_id, params=params):
             params=params,
             device=device
         ).to(device)
-    elif params.DEEP_LEARNING_MODEL == DeepLearningModelName.No_Model:
+    elif params.DEEP_LEARNING_MODEL == DeepLearningModelName.NO_MODEL:
         model = None
     else:
         model = None

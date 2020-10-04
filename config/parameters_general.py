@@ -46,7 +46,7 @@ class PARAMETERS_GENERAL:
     ########################################
     ENVIRONMENT_ID = EnvironmentName.PONG_NO_FRAME_SKIP_V4
     RL_ALGORITHM = RLAlgorithmName.DQN_FAST_V0
-    DEEP_LEARNING_MODEL = DeepLearningModelName.Dueling_DQN_CNN
+    DEEP_LEARNING_MODEL = DeepLearningModelName.DUELING_DQN_CNN
     REPLAY_BUFFER = ReplayBufferName.REPLAY_BUFFER
 
     STOP_MEAN_EPISODE_REWARD = None
