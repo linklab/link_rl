@@ -80,6 +80,7 @@ class PARAMETERS_GENERAL:
 
     # [Policy Gradient]
     ENTROPY_BETA = 0.01
+    CLIP_GRAD = 0.1
 
     # [MODE]
     MODE_SYNCHRONIZATION = True

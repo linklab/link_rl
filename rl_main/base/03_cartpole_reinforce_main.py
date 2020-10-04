@@ -25,12 +25,22 @@ os.environ['KMP_DUPLICATE_LIB_OK'] = 'True'
 device = torch.device("cuda" if params.CUDA else "cpu")
 
 
-def play_func(exp_queue, env, net):
-    agent = rl_agent.PolicyAgent(net, preprocessor=float32_preprocessor, apply_softmax=True)
+def calc_discounted_q_values_baseline(rewards):
+    discounted_q_values = []
+    sum_r = 0.0
+    for r in reversed(rewards):
+        sum_r *= params.GAMMA
+        sum_r += r
+        discounted_q_values.append(sum_r)
+    discounted_q_values = list(reversed(discounted_q_values))
+    baseline = np.mean(discounted_q_values)
+    return [q - baseline for q in discounted_q_values], baseline
 
-    experience_source = experience.ExperienceSourceFirstLast(
-        env, agent, gamma=params.GAMMA, steps_count=params.N_STEP
-    )
+
+def play_func(exp_queue, env, net):
+    agent = rl_agent.PolicyAgent(net, preprocessor=float32_preprocessor, apply_softmax=True, device=device)
+
+    experience_source = experience.ExperienceSourceFirstLast(env, agent, gamma=params.GAMMA, steps_count=1)
 
     exp_source_iter = iter(experience_source)
 
@@ -98,19 +108,18 @@ def main():
         stat_for_policy_based_rl = 0.0
 
     step_idx = 0
-    reward_sum = 0.0
 
     grad_l2 = 0.0
     grad_max = 0.0
     grad_variance = 0.0
 
     mean_batch_scale = 0.0
-    entropy = 0.0
-    loss_entropy = 0.0
-    loss_policy = 0.0
+    baseline = 0.0
     loss_total = 0.0
 
+    batch_episodes = 0
     batch_states, batch_actions, batch_scales = [], [], []
+    single_episode_states, single_episode_actions, single_episode_rewards = [], [], []
 
     while play_proc.is_alive():
         exp = exp_queue.get()
@@ -119,35 +128,38 @@ def main():
             break
         step_idx += 1
 
-        reward_sum += exp.reward
-        baseline = reward_sum / step_idx
-        #print(exp.reward, step_idx, reward_sum, baseline)
+        single_episode_states.append(exp.state)
+        single_episode_actions.append(int(exp.action))
+        single_episode_rewards.append(exp.reward)
 
-        batch_states.append(exp.state)
-        batch_actions.append(int(exp.action))
-        batch_scales.append(exp.reward - baseline / 2)
+        if exp.last_state is None:
+            batch_states.extend(single_episode_states)
+            batch_actions.extend(single_episode_actions)
 
-        if len(batch_states) < params.BATCH_SIZE:
+            discounted_q_values_baseline, baseline = calc_discounted_q_values_baseline(single_episode_rewards)
+            batch_scales.extend(discounted_q_values_baseline)
+
+            single_episode_states.clear()
+            single_episode_actions.clear()
+            single_episode_rewards.clear()
+
+            batch_episodes += 1
+
+        if batch_episodes < params.EPISODES_TO_TRAIN:
             continue
 
-        states_v = torch.FloatTensor(batch_states)
+        batch_states_v = torch.FloatTensor(batch_states)
         batch_actions_t = torch.LongTensor(batch_actions)
-        batch_scale_v = torch.FloatTensor(batch_scales)
+        batch_scales_v = torch.FloatTensor(batch_scales)
 
         optimizer.zero_grad()
-        logits_v = net(states_v)
-        log_prob_v = F.log_softmax(logits_v, dim=1)
-        log_p_a_v = log_prob_v[range(params.BATCH_SIZE), batch_actions_t]
-        log_prob_actions_v = batch_scale_v * log_p_a_v
-        loss_policy_v = -log_prob_actions_v.mean()
+        batch_logits_v = net(batch_states_v)
+        batch_log_prob_v = F.log_softmax(batch_logits_v, dim=1)
+        batch_log_prov_actions_v = batch_log_prob_v[range(len(batch_states)), batch_actions_t]
+        batch_log_prob_actions_v = batch_scales_v * batch_log_prov_actions_v
+        loss_v = -batch_log_prob_actions_v.mean()
 
-        prob_v = F.softmax(logits_v, dim=1)
-        entropy_v = -(prob_v * log_prob_v).sum(dim=1).mean()
-        entropy_loss_v = -params.ENTROPY_BETA * entropy_v
-
-        # loss_policy_v를 작아지도록 만듦 --> log_prob_actions_v.mean()가 커지도록 만듦
-        # entropy_loss_v를 작아지도록 만듦 --> entropy_v가 커지도록 만듦
-        loss_v = loss_policy_v + entropy_loss_v
+        batch_prob_v = F.softmax(batch_logits_v, dim=1)
 
         loss_v.backward()
 
@@ -158,18 +170,18 @@ def main():
         optimizer.step()
 
         # calc KL-div
-        new_logits_v = net(states_v)
-        new_prob_v = F.softmax(new_logits_v, dim=1)
-        kl_div_v = -((new_prob_v / prob_v).log() * prob_v).sum(dim=1).mean()
+        batch_new_logits_v = net(batch_states_v)
+        batch_new_prob_v = F.softmax(batch_new_logits_v, dim=1)
+        kl_div_v = -((batch_new_prob_v / batch_prob_v).log() * batch_prob_v).sum(dim=1).mean()
 
         grad_l2 = smooth(grad_l2, np.sqrt(np.mean(np.square(grads))))
         grad_max = smooth(grad_max, np.max(np.abs(grads)))
         grad_variance = smooth(grad_variance, float(np.var(grads)))
 
         mean_batch_scale = smooth(mean_batch_scale, float(np.mean(batch_scales)))
-        entropy = smooth(entropy, entropy_v.item())
-        loss_entropy = smooth(loss_entropy, entropy_loss_v.item())
-        loss_policy = smooth(loss_policy, loss_policy_v.item())
+        entropy = 0.0
+        loss_policy = smooth(loss_total, loss_v.item())
+        loss_entropy = 0.0
         loss_total = smooth(loss_total, loss_v.item())
 
         if params.DRAW_VIZ:
@@ -179,9 +191,11 @@ def main():
                 baseline,
                 mean_batch_scale,
                 entropy,
-                loss_entropy, loss_policy, loss_total,
+                loss_policy, loss_entropy, loss_total,
                 grad_l2, grad_variance, grad_max
             )
+
+        batch_episodes = 0
 
         batch_states.clear()
         batch_actions.clear()

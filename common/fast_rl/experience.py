@@ -55,7 +55,6 @@ class ExperienceSource:
         states, agent_states, histories, cur_rewards, cur_steps = [], [], [], [], []
         env_lens = []
         for env in self.pool:
-
             obs = env.reset()
             # if the environment is vectorized, all it's output is lists of results.
             # Details are here: https://github.com/openai/universe/blob/master/doc/env_semantics.rst
@@ -89,6 +88,7 @@ class ExperienceSource:
                     states_indices.append(idx)
             if states_input:
                 states_actions, new_agent_states = self.agent(states_input, agent_states)
+
                 for idx, action in enumerate(states_actions):
                     g_idx = states_indices[idx]
                     actions[g_idx] = action
@@ -114,6 +114,7 @@ class ExperienceSource:
 
                     if state is not None:
                         history.append(Experience(state=state, action=action, reward=r, done=is_done))
+
                     if len(history) == self.steps_count and iter_idx % self.steps_delta == 0:
                         yield tuple(history)
                     states[idx] = next_state
@@ -277,11 +278,11 @@ class ExperienceSourceRollouts:
         mb_dones = np.zeros((pool_size, self.steps_count), dtype=np.bool)
         episode_reward_lst = [0.0] * pool_size
         episode_done_step_lst = [0] * pool_size
-        agent_states = None
+        critics = None
         step_idx = 0
 
         while True:
-            actions, agent_states = self.agent(states, agent_states)
+            actions, critics = self.agent(states, critics)
             rewards = []
             dones = []
             new_states = []
@@ -298,10 +299,12 @@ class ExperienceSourceRollouts:
                 new_states.append(np.array(o))
                 dones.append(done)
                 rewards.append(r)
+
             # we need an extra step to get values approximation for rollouts
             if step_idx == self.steps_count:
+                print(mb_rewards, mb_dones, critics)
                 # calculate rollout rewards
-                for env_idx, (env_rewards, env_dones, last_value) in enumerate(zip(mb_rewards, mb_dones, agent_states)):
+                for env_idx, (env_rewards, env_dones, last_value) in enumerate(zip(mb_rewards, mb_dones, critics)):
                     env_rewards = env_rewards.tolist()
                     env_dones = env_dones.tolist()
                     if not env_dones[-1]:
@@ -311,9 +314,10 @@ class ExperienceSourceRollouts:
                     mb_rewards[env_idx] = env_rewards
                 yield mb_states.reshape((-1,) + mb_states.shape[2:]), mb_rewards.flatten(), mb_actions.flatten(), mb_values.flatten()
                 step_idx = 0
+
             mb_states[:, step_idx] = states
             mb_rewards[:, step_idx] = rewards
-            mb_values[:, step_idx] = agent_states
+            mb_values[:, step_idx] = critics
             mb_actions[:, step_idx] = actions
             mb_dones[:, step_idx] = dones
             step_idx += 1

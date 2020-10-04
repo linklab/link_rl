@@ -26,11 +26,9 @@ device = torch.device("cuda" if params.CUDA else "cpu")
 
 
 def play_func(exp_queue, env, net):
-    agent = rl_agent.PolicyAgent(net, preprocessor=float32_preprocessor, apply_softmax=True)
+    agent = rl_agent.PolicyAgent(net, preprocessor=float32_preprocessor, apply_softmax=True, device=device)
 
-    experience_source = experience.ExperienceSourceFirstLast(
-        env, agent, gamma=params.GAMMA, steps_count=params.N_STEP
-    )
+    experience_source = experience.ExperienceSourceFirstLast(env, agent, gamma=params.GAMMA, steps_count=params.N_STEP)
 
     exp_source_iter = iter(experience_source)
 
@@ -130,25 +128,24 @@ def main():
         if len(batch_states) < params.BATCH_SIZE:
             continue
 
-        states_v = torch.FloatTensor(batch_states)
+        batch_states_v = torch.FloatTensor(batch_states)
         batch_actions_t = torch.LongTensor(batch_actions)
         batch_scale_v = torch.FloatTensor(batch_scales)
 
         optimizer.zero_grad()
-        logits_v = net(states_v)
-        log_prob_v = F.log_softmax(logits_v, dim=1)
-        log_p_a_v = log_prob_v[range(params.BATCH_SIZE), batch_actions_t]
-        log_prob_actions_v = batch_scale_v * log_p_a_v
-        loss_policy_v = -log_prob_actions_v.mean()
+        batch_logits_v = net(batch_states_v)
+        batch_log_prob_v = F.log_softmax(batch_logits_v, dim=1)
+        batch_log_prob_actions_v = batch_log_prob_v[range(params.BATCH_SIZE), batch_actions_t]
+        batch_log_prob_actions_v = batch_scale_v * batch_log_prob_actions_v
+        loss_policy_v = -batch_log_prob_actions_v.mean()
 
-        prob_v = F.softmax(logits_v, dim=1)
-        entropy_v = -(prob_v * log_prob_v).sum(dim=1).mean()
+        batch_prob_v = F.softmax(batch_logits_v, dim=1)
+        entropy_v = -(batch_prob_v * batch_log_prob_v).sum(dim=1).mean()
         entropy_loss_v = -params.ENTROPY_BETA * entropy_v
 
         # loss_policy_v를 작아지도록 만듦 --> log_prob_actions_v.mean()가 커지도록 만듦
         # entropy_loss_v를 작아지도록 만듦 --> entropy_v가 커지도록 만듦
         loss_v = loss_policy_v + entropy_loss_v
-
         loss_v.backward()
 
         grads = np.concatenate([p.grad.data.numpy().flatten()
@@ -158,9 +155,9 @@ def main():
         optimizer.step()
 
         # calc KL-div
-        new_logits_v = net(states_v)
-        new_prob_v = F.softmax(new_logits_v, dim=1)
-        kl_div_v = -((new_prob_v / prob_v).log() * prob_v).sum(dim=1).mean()
+        batch_new_logits_v = net(batch_states_v)
+        batch_new_prob_v = F.softmax(batch_new_logits_v, dim=1)
+        kl_div_v = -((batch_new_prob_v / batch_prob_v).log() * batch_prob_v).sum(dim=1).mean()
 
         grad_l2 = smooth(grad_l2, np.sqrt(np.mean(np.square(grads))))
         grad_max = smooth(grad_max, np.max(np.abs(grads)))
@@ -168,8 +165,8 @@ def main():
 
         mean_batch_scale = smooth(mean_batch_scale, float(np.mean(batch_scales)))
         entropy = smooth(entropy, entropy_v.item())
-        loss_entropy = smooth(loss_entropy, entropy_loss_v.item())
         loss_policy = smooth(loss_policy, loss_policy_v.item())
+        loss_entropy = smooth(loss_entropy, entropy_loss_v.item())
         loss_total = smooth(loss_total, loss_v.item())
 
         if params.DRAW_VIZ:
@@ -179,7 +176,7 @@ def main():
                 baseline,
                 mean_batch_scale,
                 entropy,
-                loss_entropy, loss_policy, loss_total,
+                loss_policy, loss_entropy, loss_total,
                 grad_l2, grad_variance, grad_max
             )
 

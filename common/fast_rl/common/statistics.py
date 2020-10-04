@@ -72,6 +72,8 @@ class StatisticsForPolicyBasedRL:
     def conditional_save_model(self, current_global_step, q_nets, model_save_path, periodic_model_save_path, epsilon, method):
         pass
 
+########################################################################################################################
+########################################################################################################################
 
 class StatisticsForValueBasedOptimization:
     def __init__(self):
@@ -94,15 +96,15 @@ class StatisticsForPolicyBasedRLOptimization:
         self.baseline = self.vis.line(X=[0], Y=[0], opts=dict(title="baseline"))
         self.mean_batch_scale = self.vis.line(X=[0], Y=[0], opts=dict(title="mean batch scale"))
         self.entropy = self.vis.line(X=[0], Y=[0], opts=dict(title="entropy"))
-        self.loss_entropy = self.vis.line(X=[0], Y=[0], opts=dict(title="loss entropy"))
         self.loss_policy = self.vis.line(X=[0], Y=[0], opts=dict(title="loss policy"))
+        self.loss_entropy = self.vis.line(X=[0], Y=[0], opts=dict(title="loss entropy"))
         self.loss_total = self.vis.line(X=[0], Y=[0], opts=dict(title="loss total"))
         self.grad_l2 = self.vis.line(X=[0], Y=[0], opts=dict(title="gradient l2 (square mean)"))
         self.grad_variance = self.vis.line(X=[0], Y=[0], opts=dict(title="gradient variance"))
         self.grad_max = self.vis.line(X=[0], Y=[0], opts=dict(title="gradient max"))
 
     def draw_optimization_performance(self, global_step, kl_divergence, baseline, mean_batch_scale,
-                                      entropy, loss_entropy, loss_policy, loss_total, grad_l2, grad_variance, grad_max):
+                                      entropy, loss_policy, loss_entropy, loss_total, grad_l2, grad_variance, grad_max):
         self.vis.line(
             X=[global_step], Y=[kl_divergence], win=self.kl_divergence, name="kl divergence", update="append",
             opts=dict(title='kl divergence', showlegend=False)
@@ -151,4 +153,135 @@ class StatisticsForPolicyBasedRLOptimization:
         self.vis.line(
             X=[global_step], Y=[grad_max], win=self.grad_max, name="gradient max", update="append",
             opts=dict(title='gradient max', showlegend=False)
+        )
+
+
+class StatisticsForA2COptimization:
+    def __init__(self):
+        self.vis = Visdom()
+
+        self.kl_divergence = self.vis.line(X=[0], Y=[0], opts=dict(title="kl divergence"))
+        self.mean_advantage = self.vis.line(X=[0], Y=[0], opts=dict(title="mean advantage"))
+        self.entropy = self.vis.line(X=[0], Y=[0], opts=dict(title="entropy"))
+        self.loss_actor = self.vis.line(X=[0], Y=[0], opts=dict(title="loss actor"))
+        self.loss_critic = self.vis.line(X=[0], Y=[0], opts=dict(title="loss critic"))
+        self.loss_entropy = self.vis.line(X=[0], Y=[0], opts=dict(title="loss entropy"))
+        self.loss_total = self.vis.line(X=[0], Y=[0], opts=dict(title="loss total"))
+        self.grad_l2 = self.vis.line(X=[0], Y=[0], opts=dict(title="gradient l2 (square mean)"))
+        self.grad_variance = self.vis.line(X=[0], Y=[0], opts=dict(title="gradient variance"))
+        self.grad_max = self.vis.line(X=[0], Y=[0], opts=dict(title="gradient max"))
+
+    def draw_optimization_performance(self, global_step, kl_divergence, mean_advantage,
+                                      entropy, loss_actor, loss_critic, loss_entropy, loss_total, grad_l2, grad_variance, grad_max):
+        self.vis.line(
+            X=[global_step], Y=[kl_divergence], win=self.kl_divergence, name="kl divergence", update="append",
+            opts=dict(title='kl divergence', showlegend=False)
+        )
+
+        self.vis.line(
+            X=[global_step], Y=[mean_advantage], win=self.mean_advantage, name="mean advantage", update="append",
+            opts=dict(title='mean advantage', showlegend=False)
+        )
+
+        self.vis.line(
+            X=[global_step], Y=[entropy], win=self.entropy, name="entropy", update="append",
+            opts=dict(title='entropy', showlegend=False)
+        )
+
+        self.vis.line(
+            X=[global_step], Y=[loss_actor], win=self.loss_actor, name="loss actor", update="append",
+            opts=dict(title='loss actor', showlegend=False)
+        )
+
+        self.vis.line(
+            X=[global_step], Y=[loss_critic], win=self.loss_critic, name="loss critic", update="append",
+            opts=dict(title='loss critic', showlegend=False)
+        )
+
+        self.vis.line(
+            X=[global_step], Y=[loss_entropy], win=self.loss_entropy, name="loss entropy", update="append",
+            opts=dict(title='loss entropy', showlegend=False)
+        )
+
+        self.vis.line(
+            X=[global_step], Y=[loss_total], win=self.loss_total, name="loss total", update="append",
+            opts=dict(title='loss total', showlegend=False)
+        )
+
+        self.vis.line(
+            X=[global_step], Y=[grad_l2], win=self.grad_l2, name="gradient l2 (square mean)", update="append",
+            opts=dict(title='gradient l2 (square mean)', showlegend=False)
+        )
+
+        self.vis.line(
+            X=[global_step], Y=[grad_variance], win=self.grad_variance, name="gradient variance", update="append",
+            opts=dict(title='gradient variance', showlegend=False)
+        )
+
+        self.vis.line(
+            X=[global_step], Y=[grad_max], win=self.grad_max, name="gradient max", update="append",
+            opts=dict(title='gradient max', showlegend=False)
+        )
+
+
+class StatisticsForDDPGOptimization:
+    def __init__(self):
+        self.vis = Visdom()
+
+        self.loss_actor = self.vis.line(X=[0], Y=[0], opts=dict(title="loss actor"))
+        self.loss_critic = self.vis.line(X=[0], Y=[0], opts=dict(title="loss critic"))
+        self.loss_total = self.vis.line(X=[0], Y=[0], opts=dict(title="loss total"))
+        self.actor_grad_l2 = self.vis.line(X=[0], Y=[0], opts=dict(title="actor gradient l2 (square mean)"))
+        self.actor_grad_variance = self.vis.line(X=[0], Y=[0], opts=dict(title="actor gradient variance"))
+        self.actor_grad_max = self.vis.line(X=[0], Y=[0], opts=dict(title="actor gradient max"))
+        self.critic_grad_l2 = self.vis.line(X=[0], Y=[0], opts=dict(title="critic gradient l2 (square mean)"))
+        self.critic_grad_variance = self.vis.line(X=[0], Y=[0], opts=dict(title="critic gradient variance"))
+        self.critic_grad_max = self.vis.line(X=[0], Y=[0], opts=dict(title="critic gradient max"))
+
+    def draw_optimization_performance(self, global_step, loss_actor, loss_critic, loss_total,
+                                      actor_grad_l2, actor_grad_variance, actor_grad_max,
+                                      critic_grad_l2, critic_grad_variance, critic_grad_max):
+        self.vis.line(
+            X=[global_step], Y=[loss_actor], win=self.loss_actor, name="loss actor", update="append",
+            opts=dict(title='loss actor', showlegend=False)
+        )
+
+        self.vis.line(
+            X=[global_step], Y=[loss_critic], win=self.loss_critic, name="loss critic", update="append",
+            opts=dict(title='loss critic', showlegend=False)
+        )
+
+        self.vis.line(
+            X=[global_step], Y=[loss_total], win=self.loss_total, name="loss total", update="append",
+            opts=dict(title='loss total', showlegend=False)
+        )
+
+        self.vis.line(
+            X=[global_step], Y=[actor_grad_l2], win=self.actor_grad_l2, name="actor gradient l2 (square mean)", update="append",
+            opts=dict(title='actor gradient l2 (square mean)', showlegend=False)
+        )
+
+        self.vis.line(
+            X=[global_step], Y=[actor_grad_variance], win=self.actor_grad_variance, name="actor gradient variance", update="append",
+            opts=dict(title='actor gradient variance', showlegend=False)
+        )
+
+        self.vis.line(
+            X=[global_step], Y=[actor_grad_max], win=self.actor_grad_max, name="actor gradient max", update="append",
+            opts=dict(title='actor gradient max', showlegend=False)
+        )
+
+        self.vis.line(
+            X=[global_step], Y=[critic_grad_l2], win=self.critic_grad_l2, name="critic gradient l2 (square mean)", update="append",
+            opts=dict(title='critic gradient l2 (square mean)', showlegend=False)
+        )
+
+        self.vis.line(
+            X=[global_step], Y=[critic_grad_variance], win=self.critic_grad_variance, name="critic gradient variance", update="append",
+            opts=dict(title='critic gradient variance', showlegend=False)
+        )
+
+        self.vis.line(
+            X=[global_step], Y=[critic_grad_max], win=self.critic_grad_max, name="critic gradient max", update="append",
+            opts=dict(title='critic gradient max', showlegend=False)
         )

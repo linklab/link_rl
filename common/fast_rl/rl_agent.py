@@ -182,7 +182,7 @@ class ActorCriticAgent(BaseAgent):
         self.preprocessor = preprocessor
 
     @torch.no_grad()
-    def __call__(self, states, agent_states=None):
+    def __call__(self, states, critics=None):
         """
         Return actions from given list of states
         :param states: list of states
@@ -192,10 +192,85 @@ class ActorCriticAgent(BaseAgent):
             states = self.preprocessor(states)
             if torch.is_tensor(states):
                 states = states.to(self.device)
+
         probs_v, values_v = self.model(states)
+
         if self.apply_softmax:
             probs_v = F.softmax(probs_v, dim=1)
+
         probs = probs_v.data.cpu().numpy()
-        actions = self.action_selector(probs)
-        agent_states = values_v.data.squeeze().cpu().numpy().tolist()
-        return np.array(actions), agent_states
+        actions = np.array(self.action_selector(probs))
+        critics = [values_v.data.squeeze().cpu().numpy()]
+        return actions, critics
+
+
+class ContinuousActorCriticAgent(BaseAgent):
+    """
+    Policy agent which returns policy and value tensors from observations. Value are stored in agent's state
+    and could be reused for rollouts calculations by ExperienceSource.
+    """
+    def __init__(self, model, action_min, action_max, action_selector=actions.ContinuousNormalActionSelector(),
+                 device="cpu", preprocessor=default_states_preprocessor):
+        self.model = model
+        self.action_selector = action_selector
+        self.action_min = action_min
+        self.action_max = action_max
+        self.device = device
+        self.preprocessor = preprocessor
+
+    @torch.no_grad()
+    def __call__(self, states, critics=None):
+        if self.preprocessor is not None:
+            states = self.preprocessor(states)
+            if torch.is_tensor(states):
+                states = states.to(self.device)
+
+        mu_v, var_v, values_v = self.model(states)
+        actions = self.action_selector(mu_v, var_v, self.action_min, self.action_max)
+        critics = [values_v.data.squeeze().cpu().numpy()]
+        return actions, critics
+
+
+class AgentDDPG(BaseAgent):
+    """
+    Agent implementing Orstein-Uhlenbeck exploration process
+    """
+    def __init__(self, model, action_min, action_max, device="cpu", ou_enabled=True, ou_mu=0.0, ou_teta=0.15, ou_sigma=0.2, ou_epsilon=1.0,
+                 preprocessor=default_states_preprocessor):
+        self.model = model
+        self.device = device
+        self.ou_enabled = ou_enabled
+        self.ou_mu = ou_mu
+        self.ou_teta = ou_teta
+        self.ou_sigma = ou_sigma
+        self.ou_epsilon = ou_epsilon
+        self.preprocessor = preprocessor
+        self.action_min = action_min
+        self.action_max = action_max
+
+    def initial_state(self):
+        return None
+
+    def __call__(self, states, agent_states):
+        if self.preprocessor is not None:
+            states = self.preprocessor(states)
+            if torch.is_tensor(states):
+                states = states.to(self.device)
+
+        mu_v = self.model(states)
+        actions = mu_v.data.cpu().numpy()
+
+        if self.ou_enabled and self.ou_epsilon > 0:
+            new_a_states = []
+            for a_state, action in zip(agent_states, actions):
+                if a_state is None:
+                    a_state = np.zeros(shape=action.shape, dtype=np.float32)
+                a_state += self.ou_teta * (self.ou_mu - a_state)
+                a_state += self.ou_sigma * np.random.normal(size=action.shape)
+                action += self.ou_epsilon * a_state
+                new_a_states.append(a_state)
+        else:
+            new_a_states = agent_states
+
+        actions = np.clip(actions, self.action_min, self.action_max)
+        return actions, new_a_states

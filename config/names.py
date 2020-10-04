@@ -44,7 +44,9 @@ class EnvironmentName(enum.Enum):
 
 class DeepLearningModelName(enum.Enum):
     ACTOR_CRITIC_MLP = "ACTOR_CRITIC_MLP"
+    ACTOR_CRITIC_CONTINUOUS_ACTION_MLP = "ACTOR_CRITIC_CONTINUOUS_ACTION_MLP"
     ACTOR_CRITIC_CNN = "ACTOR_CRITIC_CNN"
+    DDPG_MLP = "DDPG_MLP"
     NO_MODEL = "NO_MODEL"
     DUELING_DQN_CNN = "DUELING_DQN_CNN"
     DUELING_DQN_MLP = "DUELING_DQN_MLP"
@@ -54,6 +56,7 @@ class RLAlgorithmName(enum.Enum):
     DQN_FAST_V0 = "DQN_FAST_V0"                     # FAST_RL
     DDPG_FAST_V0 = "DDPG_FAST_V0"                   # FAST_RL
     A2C_FAST_V0 = "A2C_FAST_V0"                     # FAST_RL
+    A2C_CONTINUOUS_ACTION_FAST_V0 = "A2C_FAST_V0"   # FAST_RL
     POLICY_GRADIENT_FAST_V0 = "POLICY_GRADIENT_V0"  # FAST_RL
     REINFORCE_FAST_V0 = "REINFORCE_FAST_V0"         # FAST_RL
     DQN_V0 = "DQN_v0"

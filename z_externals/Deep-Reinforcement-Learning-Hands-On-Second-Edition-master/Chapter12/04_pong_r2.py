@@ -15,15 +15,18 @@ import torch.optim as optim
 
 from lib import common
 
+import os
+
 GAMMA = 0.99
 LEARNING_RATE = 5e-4
 ENTROPY_BETA = 0.01
-NUM_ENVS = 16
+NUM_ENVS = 2
 
 REWARD_STEPS = 4
 CLIP_GRAD = 0.1
 IMG_SHAPE = (4, 84, 84)
 
+os.environ['KMP_DUPLICATE_LIB_OK'] = 'True'
 
 class AtariA2C(nn.Module):
     def __init__(self, input_shape, n_actions):
@@ -58,6 +61,9 @@ class AtariA2C(nn.Module):
     def forward(self, x):
         fx = x.float() / 256
         conv_out = self.conv(fx).view(fx.size()[0], -1)
+
+        print(self.policy(conv_out), self.value(conv_out))
+
         return self.policy(conv_out), self.value(conv_out)
 
 
@@ -178,7 +184,7 @@ def set_seed(seed, envs=None, cuda=False):
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument("--cuda", default=False, action="store_true", help="Enable cuda")
-    parser.add_argument("-n", "--name", required=True, help="Name of the run")
+    parser.add_argument("-n", "--name", default="a2c", help="Name of the run")
     args = parser.parse_args()
     device = torch.device("cuda" if args.cuda else "cpu")
 

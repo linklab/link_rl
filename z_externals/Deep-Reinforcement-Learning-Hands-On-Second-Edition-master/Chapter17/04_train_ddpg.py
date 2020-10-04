@@ -69,10 +69,8 @@ if __name__ == "__main__":
 
     writer = SummaryWriter(comment="-ddpg_" + args.name)
     agent = model.AgentDDPG(act_net, device=device)
-    exp_source = ptan.experience.ExperienceSourceFirstLast(
-        env, agent, gamma=GAMMA, steps_count=1)
-    buffer = ptan.experience.ExperienceReplayBuffer(
-        exp_source, buffer_size=REPLAY_SIZE)
+    exp_source = ptan.experience.ExperienceSourceFirstLast(env, agent, gamma=GAMMA, steps_count=1)
+    buffer = ptan.experience.ExperienceReplayBuffer(exp_source, buffer_size=REPLAY_SIZE)
     act_opt = optim.Adam(act_net.parameters(), lr=LEARNING_RATE)
     crt_opt = optim.Adam(crt_net.parameters(), lr=LEARNING_RATE)
 
@@ -101,20 +99,15 @@ if __name__ == "__main__":
                 # train critic
                 crt_opt.zero_grad()
                 q_v = crt_net(states_v, actions_v)
-                last_act_v = tgt_act_net.target_model(
-                    last_states_v)
-                q_last_v = tgt_crt_net.target_model(
-                    last_states_v, last_act_v)
+                last_act_v = tgt_act_net.target_model(last_states_v)
+                q_last_v = tgt_crt_net.target_model(last_states_v, last_act_v)
                 q_last_v[dones_mask] = 0.0
-                q_ref_v = rewards_v.unsqueeze(dim=-1) + \
-                          q_last_v * GAMMA
+                q_ref_v = rewards_v.unsqueeze(dim=-1) + q_last_v * GAMMA
                 critic_loss_v = F.mse_loss(q_v, q_ref_v.detach())
                 critic_loss_v.backward()
                 crt_opt.step()
-                tb_tracker.track("loss_critic",
-                                 critic_loss_v, frame_idx)
-                tb_tracker.track("critic_ref",
-                                 q_ref_v.mean(), frame_idx)
+                tb_tracker.track("loss_critic", critic_loss_v, frame_idx)
+                tb_tracker.track("critic_ref", q_ref_v.mean(), frame_idx)
 
                 # train actor
                 act_opt.zero_grad()
@@ -123,8 +116,7 @@ if __name__ == "__main__":
                 actor_loss_v = actor_loss_v.mean()
                 actor_loss_v.backward()
                 act_opt.step()
-                tb_tracker.track("loss_actor",
-                                 actor_loss_v, frame_idx)
+                tb_tracker.track("loss_actor", actor_loss_v, frame_idx)
 
                 tgt_act_net.alpha_sync(alpha=1 - 1e-3)
                 tgt_crt_net.alpha_sync(alpha=1 - 1e-3)

@@ -28,8 +28,7 @@ class ModelA2C(nn.Module):
 
     def forward(self, x):
         base_out = self.base(x)
-        return self.mu(base_out), self.var(base_out), \
-               self.value(base_out)
+        return self.mu(base_out), self.var(base_out), self.value(base_out)
 
 
 class DDPGActor(nn.Module):

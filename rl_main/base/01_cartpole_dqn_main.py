@@ -34,9 +34,7 @@ def play_func(exp_queue, env, net):
 
     agent = rl_agent.DQNAgent(net, action_selector, device=device)
 
-    experience_source = experience.ExperienceSourceFirstLast(
-        env, agent, gamma=params.GAMMA, steps_count=params.N_STEP
-    )
+    experience_source = experience.ExperienceSourceFirstLast(env, agent, gamma=params.GAMMA, steps_count=params.N_STEP)
 
     exp_source_iter = iter(experience_source)
 
@@ -89,7 +87,7 @@ def main():
         n_actions=2
     ).to(device)
     print(net)
-    tgt_net = rl_agent.TargetNet(net)
+    target_net = rl_agent.TargetNet(net)
 
     buffer = experience.PrioReplayBuffer(exp_source=None, buf_size=params.REPLAY_BUFFER_SIZE)
     optimizer = optim.Adam(net.parameters(), lr=params.LEARNING_RATE)
@@ -124,7 +122,7 @@ def main():
         optimizer.zero_grad()
         batch, batch_indices, batch_weights = buffer.sample(params.BATCH_SIZE)
         loss_v, sample_prios = value_based_model.calc_loss_per_double_dqn(
-            buffer.buffer, batch, batch_weights, net, tgt_net, gamma=params.GAMMA, cuda=params.CUDA, cuda_async=True
+            buffer.buffer, batch, batch_weights, net, target_net, gamma=params.GAMMA, cuda=params.CUDA, cuda_async=True
         )
         loss_v.backward()
         optimizer.step()
@@ -135,7 +133,7 @@ def main():
             stat_for_value_optimization.draw_optimization_performance(step_idx, loss_v.item())
 
         if step_idx % params.TARGET_NET_SYNC_STEP_PERIOD < params.TRAIN_STEP_FREQ:
-            tgt_net.sync()
+            target_net.sync()
 
 
 if __name__ == "__main__":
