@@ -167,10 +167,7 @@ def main():
         nn_utils.clip_grad_norm_(net.parameters(), params.CLIP_GRAD)
         optimizer.step()
 
-        # calc KL-div
-        batch_new_mu_v, batch_new_var_v, _ = net(batch_states_v)
-        batch_new_mu_v = F.softmax(batch_new_mu_v, dim=1)
-        kl_div_v = -((batch_new_mu_v / batch_mu_v).log() * batch_mu_v).sum(dim=1).mean()
+        kl_div_v = 0.0
 
         grad_l2 = smooth(grad_l2, np.sqrt(np.mean(np.square(grads))))
         grad_max = smooth(grad_max, np.max(np.abs(grads)))
@@ -186,7 +183,7 @@ def main():
         if params.DRAW_VIZ:
             stat_for_a2c.draw_optimization_performance(
                 step_idx,
-                kl_div_v.item(),
+                kl_div_v,
                 mean_advantage,
                 entropy,
                 loss_actor, loss_critic, loss_entropy, loss_total,
