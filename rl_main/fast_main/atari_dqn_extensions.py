@@ -20,7 +20,10 @@ warnings.filterwarnings("ignore", category=DeprecationWarning)
 warnings.filterwarnings("ignore", category=UserWarning)
 os.environ['KMP_DUPLICATE_LIB_OK'] = 'True'
 
-device = torch.device("cuda" if params.CUDA else "cpu")
+if torch.cuda.is_available():
+    device = torch.device("cuda" if params.CUDA else "cpu")
+else:
+    device = torch.device("cpu")
 
 MODEL_SAVE_DIR = os.path.join(".", "saved_models")
 if not os.path.exists(MODEL_SAVE_DIR):

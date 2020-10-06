@@ -22,7 +22,10 @@ if not os.path.exists(MODEL_SAVE_DIR):
     os.makedirs(MODEL_SAVE_DIR)
 
 os.environ['KMP_DUPLICATE_LIB_OK'] = 'True'
-device = torch.device("cuda" if params.CUDA else "cpu")
+if torch.cuda.is_available():
+    device = torch.device("cuda" if params.CUDA else "cpu")
+else:
+    device = torch.device("cpu")
 
 
 def calc_discounted_q_values_baseline(rewards):

@@ -10,7 +10,10 @@ from common.fast_rl import actions, value_based_model, rl_agent
 from config.parameters import PARAMETERS as params
 
 os.environ['KMP_DUPLICATE_LIB_OK'] = 'True'
-device = torch.device("cuda" if params.CUDA else "cpu")
+if torch.cuda.is_available():
+    device = torch.device("cuda" if params.CUDA else "cpu")
+else:
+    device = torch.device("cpu")
 
 
 def play_main():
