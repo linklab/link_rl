@@ -161,14 +161,14 @@ def main():
                     stat_for_ddpg, step_idx, exp,
                     actor_grad_l2, actor_grad_max, actor_grad_variance,
                     critic_grad_l2, critic_grad_max, critic_grad_variance,
-                    loss_actor, loss_critic, loss_total
+                    loss_actor, loss_critic, loss_total, len(buffer.buffer)
                 )
 
 
 def model_update(buffer, actor_net, critic_net, target_actor_net, target_critic_net, actor_optimizer, critic_optimizer, stat_for_ddpg, step_idx, exp,
                  actor_grad_l2, actor_grad_max, actor_grad_variance,
                  critic_grad_l2, critic_grad_max, critic_grad_variance,
-                 loss_actor, loss_critic, loss_total):
+                 loss_actor, loss_critic, loss_total, buffer_length):
     batch = buffer.sample(params.BATCH_SIZE)
     batch_states_v, batch_actions_v, batch_rewards_v, batch_dones_mask, batch_last_states_v = unpack_batch_for_ddpg(
         batch, device
@@ -222,7 +222,7 @@ def model_update(buffer, actor_net, critic_net, target_actor_net, target_critic_
             loss_actor, loss_critic, loss_total,
             actor_grad_l2, actor_grad_variance, actor_grad_max,
             critic_grad_l2, critic_grad_variance, critic_grad_max,
-            exp.action
+            buffer_length, exp.action
         )
 
     return actor_grad_l2, actor_grad_max, actor_grad_variance, critic_grad_l2, critic_grad_max, critic_grad_variance, loss_actor, loss_critic, loss_total

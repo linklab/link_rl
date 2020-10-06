@@ -237,6 +237,7 @@ class StatisticsForDDPGOptimization:
         self.critic_grad_l2 = self.vis.line(X=[0], Y=[0], opts=dict(title="critic gradient l2"))
         self.critic_grad_variance = self.vis.line(X=[0], Y=[0], opts=dict(title="critic gradient variance"))
         self.critic_grad_max = self.vis.line(X=[0], Y=[0], opts=dict(title="critic gradient max"))
+        self.buffer_length = self.vis.line(X=[0], Y=[0], opts=dict(title="buffer length"))
         self.n_actions = n_actions
         self.actions = {}
         for i in range(n_actions):
@@ -244,7 +245,7 @@ class StatisticsForDDPGOptimization:
 
     def draw_optimization_performance(self, global_step, loss_actor, loss_critic, loss_total,
                                       actor_grad_l2, actor_grad_variance, actor_grad_max,
-                                      critic_grad_l2, critic_grad_variance, critic_grad_max, actions):
+                                      critic_grad_l2, critic_grad_variance, critic_grad_max, buffer_length, actions):
         self.vis.line(
             X=[global_step], Y=[loss_actor], win=self.loss_actor, name="loss actor", update="append",
             opts=dict(title='loss actor', showlegend=False)
@@ -288,6 +289,11 @@ class StatisticsForDDPGOptimization:
         self.vis.line(
             X=[global_step], Y=[critic_grad_max], win=self.critic_grad_max, name="critic gradient max", update="append",
             opts=dict(title='critic gradient max', showlegend=False)
+        )
+
+        self.vis.line(
+            X=[global_step], Y=[buffer_length], win=self.buffer_length, name="buffer length", update="append",
+            opts=dict(title='buffer length', showlegend=False)
         )
 
         for i in range(self.n_actions):
