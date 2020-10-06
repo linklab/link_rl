@@ -1,3 +1,5 @@
+# https://github.com/openai/gym/blob/master/gym/envs/classic_control/pendulum.py
+# https://mspries.github.io/jimmy_pendulum.html
 #!/usr/bin/env python3
 import math
 import time
@@ -10,7 +12,7 @@ import os
 import numpy as np
 
 from common.common_utils import make_gym_env, smooth
-from common.fast_rl.policy_based_model import unpack_batch_for_policy_gradient, unpack_batch_for_ddpg
+from common.fast_rl.policy_based_model import unpack_batch_for_ddpg
 from common.fast_rl.rl_agent import float32_preprocessor
 
 print(torch.__version__)
