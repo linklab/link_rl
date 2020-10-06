@@ -36,8 +36,8 @@ else:
 
 def play_func(exp_queue, env, net):
     print(env.action_space.low[0], env.action_space.high[0])
-    action_min = env.action_space.low[0]
-    action_max = env.action_space.high[0]
+    action_min = env.action_space.low[0] / 2.0
+    action_max = env.action_space.high[0] / 2.0
 
     agent = rl_agent.AgentDDPG(
         net, n_actions=1, action_min=action_min, action_max=action_max, device=device, preprocessor=float32_preprocessor
