@@ -277,9 +277,12 @@ class AgentDDPG(BaseAgent):
         if agent_states is None:
             agent_states = [None] * len(states)
 
-        noise = torch.Tensor(self.ou_noise.noise()).to(self.device)
-        mu_v += noise
+        noise_v = torch.Tensor(self.ou_noise.noise()).unsqueeze(dim=-1).to(self.device)
+        mu_v += noise_v
 
         actions = mu_v.data.cpu().numpy()
+        noises = noise_v.data.cpu().numpy()
+
         actions = np.clip(actions, self.action_min, self.action_max)
-        return actions, noise, agent_states
+
+        return actions, noises, agent_states

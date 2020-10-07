@@ -224,7 +224,7 @@ def model_update(buffer, actor_net, critic_net, target_actor_net, target_critic_
             loss_actor, loss_critic, loss_total,
             actor_grad_l2, actor_grad_variance, actor_grad_max,
             critic_grad_l2, critic_grad_variance, critic_grad_max,
-            buffer_length, exp.action
+            buffer_length, exp.action, exp.noise
         )
 
     return actor_grad_l2, actor_grad_max, actor_grad_variance, critic_grad_l2, critic_grad_max, critic_grad_variance, loss_actor, loss_critic, loss_total

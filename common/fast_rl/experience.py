@@ -18,12 +18,19 @@ BETA_FRAMES = 100000
 
 # one single experience step
 Experience = namedtuple('Experience', ['state', 'action', 'reward', 'done'])
+ExperienceWithNoise = namedtuple('ExperienceWithNoise', ['state', 'action', 'noise', 'reward', 'done'])
+
+ExperienceFirstLast = collections.namedtuple(
+    'ExperienceFirstLast', ('state', 'action', 'reward', 'last_state', 'last_step')
+)
+ExperienceFirstLastWithNoise = collections.namedtuple(
+    'ExperienceFirstLastWithNoise', ('state', 'action', 'noise', 'reward', 'last_state', 'last_step')
+)
 
 
 class ExperienceSourceSingleEnv:
     """
     Simple n-step experience source using only SINGLE environment
-
     Every experience contains n list of Experience entries
     """
 
@@ -45,6 +52,7 @@ class ExperienceSourceSingleEnv:
         cur_reward = 0.0
         cur_step = 0
         agent_state = self.agent.initial_agent_state()
+        noise = None
 
         iter_idx = 0
         while True:
@@ -52,7 +60,8 @@ class ExperienceSourceSingleEnv:
             states_input.append(state)
 
             if isinstance(self.agent, AgentDDPG):
-                actions, noise, new_agent_states = self.agent(states_input, agent_state)
+                actions, noises, new_agent_states = self.agent(states_input, agent_state)
+                noise = noises[0]
             else:
                 actions, new_agent_states = self.agent(states_input, agent_state)
 
@@ -69,7 +78,10 @@ class ExperienceSourceSingleEnv:
             cur_step += 1
 
             if state is not None:
-                history.append(Experience(state=state, action=action, reward=r, done=is_done))
+                if isinstance(self.agent, AgentDDPG):
+                    history.append(ExperienceWithNoise(state=state, action=action, noise=noise, reward=r, done=is_done))
+                else:
+                    history.append(Experience(state=state, action=action, reward=r, done=is_done))
 
             if len(history) == self.steps_count and iter_idx % self.steps_delta == 0:
                 yield tuple(history)
@@ -134,9 +146,17 @@ class ExperienceSourceSingleEnvFirstLast(ExperienceSourceSingleEnv):
             for e in reversed(elems):
                 total_reward *= self.gamma
                 total_reward += e.reward
-            yield ExperienceFirstLast(
-                state=exp[0].state, action=exp[0].action, reward=total_reward, last_state=last_state, last_step=len(elems)
-            )
+
+            if isinstance(self.agent, AgentDDPG):
+                exp = ExperienceFirstLastWithNoise(
+                    state=exp[0].state, action=exp[0].action, noise=exp[0].noise, reward=total_reward, last_state=last_state, last_step=len(elems)
+                )
+            else:
+                exp = ExperienceFirstLast(
+                    state=exp[0].state, action=exp[0].action, reward=total_reward, last_state=last_state, last_step=len(elems)
+                )
+
+            yield exp
 
 
 #################################
@@ -211,9 +231,11 @@ class ExperienceSource:
                     states_indices.append(idx)
             if states_input:
                 if isinstance(self.agent, AgentDDPG):
-                    states_actions, noise, new_agent_states = self.agent(states_input, agent_states)
+                    states_actions, noises, new_agent_states = self.agent(states_input, agent_states)
                 else:
                     states_actions, new_agent_states = self.agent(states_input, agent_states)
+
+                # TODO: noise에 대한 처리
 
                 for idx, action in enumerate(states_actions):
                     g_idx = states_indices[idx]
@@ -319,10 +341,6 @@ class ExperienceSourceNamedTuple(ExperienceSource):
             )
 
 
-# those entries are emitted from ExperienceSourceFirstLast. Reward is discounted over the trajectory piece
-ExperienceFirstLast = collections.namedtuple('ExperienceFirstLast', ('state', 'action', 'reward', 'last_state', 'last_step'))
-
-
 class ExperienceSourceFirstLast(ExperienceSource):
     """
     This is a wrapper around ExperienceSource to prevent storing full trajectory in replay buffer when we need
@@ -415,6 +433,8 @@ class ExperienceSourceRollouts:
                 actions, noise, critics = self.agent(states, critics)
             else:
                 actions, critics = self.agent(states, critics)
+
+            # TODO: noise에 대한 처리
 
             rewards = []
             dones = []
