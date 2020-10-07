@@ -47,7 +47,7 @@ def play_func(exp_queue, env, net):
         net, n_actions=1, action_min=action_min, action_max=action_max, device=device, preprocessor=float32_preprocessor
     )
 
-    experience_source = experience.ExperienceSourceSingleEnvFirstLast(
+    experience_source = experience.ExperienceSourceFirstLast(
         env, agent, gamma=params.GAMMA, steps_count=params.N_STEP
     )
 
@@ -167,7 +167,8 @@ def main():
 
         if exp is not None and exp.last_state is None:
             for _ in range(3):
-                # actor_grad_l2, actor_grad_max, actor_grad_variance, critic_grad_l2, critic_grad_max, critic_grad_variance, loss_actor, loss_critic, loss_total = lp_wrapper(buffer, actor_net, critic_net, target_actor_net, target_critic_net, actor_optimizer, critic_optimizer,
+                # actor_grad_l2, actor_grad_max, actor_grad_variance, critic_grad_l2, critic_grad_max, critic_grad_variance, loss_actor, loss_critic, loss_total = lp_wrapper(
+                # buffer, actor_net, critic_net, target_actor_net, target_critic_net, actor_optimizer, critic_optimizer,
                 #     stat_for_ddpg, step_idx, exp,
                 #     actor_grad_l2, actor_grad_max, actor_grad_variance,
                 #     critic_grad_l2, critic_grad_max, critic_grad_variance,
