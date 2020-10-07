@@ -2,14 +2,18 @@
 # https://mspries.github.io/jimmy_pendulum.html
 #!/usr/bin/env python3
 import math
+import profile
 import time
 import torch
 import torch.nn.functional as F
 import torch.multiprocessing as mp
-import torch.nn.utils as nn_utils
 from torch import optim
-import os
+import os, sys
 import numpy as np
+
+idx = os.getcwd().index("link_rl")
+PROJECT_HOME = os.getcwd()[:idx] + "link_rl"
+sys.path.append(PROJECT_HOME)
 
 from common.common_utils import make_gym_env, smooth
 from common.fast_rl.policy_based_model import unpack_batch_for_ddpg
@@ -143,6 +147,10 @@ def main():
     loss_critic = 0.0
     loss_total = 0.0
 
+    # from line_profiler import LineProfiler
+    # lp = LineProfiler()
+    # lp_wrapper = lp(model_update)
+
     while play_proc.is_alive():
         step_idx += params.TRAIN_STEP_FREQ
         exp = None
@@ -158,6 +166,15 @@ def main():
 
         if exp is not None and exp.last_state is None:
             for _ in range(3):
+                # actor_grad_l2, actor_grad_max, actor_grad_variance, critic_grad_l2, critic_grad_max, critic_grad_variance, loss_actor, loss_critic, loss_total = lp_wrapper(buffer, actor_net, critic_net, target_actor_net, target_critic_net, actor_optimizer, critic_optimizer,
+                #     stat_for_ddpg, step_idx, exp,
+                #     actor_grad_l2, actor_grad_max, actor_grad_variance,
+                #     critic_grad_l2, critic_grad_max, critic_grad_variance,
+                #     loss_actor, loss_critic, loss_total, len(buffer.buffer)
+                # )
+                #
+                # lp.print_stats()
+
                 actor_grad_l2, actor_grad_max, actor_grad_variance, critic_grad_l2, critic_grad_max, critic_grad_variance, loss_actor, loss_critic, loss_total = model_update(
                     buffer, actor_net, critic_net, target_actor_net, target_critic_net, actor_optimizer, critic_optimizer,
                     stat_for_ddpg, step_idx, exp,
@@ -165,7 +182,6 @@ def main():
                     critic_grad_l2, critic_grad_max, critic_grad_variance,
                     loss_actor, loss_critic, loss_total, len(buffer.buffer)
                 )
-
 
 def model_update(buffer, actor_net, critic_net, target_actor_net, target_critic_net, actor_optimizer, critic_optimizer, stat_for_ddpg, step_idx, exp,
                  actor_grad_l2, actor_grad_max, actor_grad_variance,
