@@ -108,8 +108,11 @@ class ExperienceSource:
                     state = states[idx]
                     history = histories[idx]
 
-                    # cur_rewards[idx] += r
-                    cur_rewards[idx] += info['original_reward']
+                    if 'original_reward' in info:
+                        cur_rewards[idx] += info['original_reward']
+                    else:
+                        cur_rewards[idx] += r
+
                     cur_steps[idx] += 1
 
                     if state is not None:

@@ -29,6 +29,7 @@ device = torch.device("cuda" if cuda else "cpu")
 
 
 def play_func(exp_queue, env, net):
+    env.start()
     action_selector = actions.EpsilonGreedyActionSelector(epsilon=params.EPSILON_INIT)
 
     epsilon_tracker = actions.EpsilonTracker(
@@ -49,7 +50,7 @@ def play_func(exp_queue, env, net):
     frame_idx = 0
     next_save_frame_idx = params.MODEL_SAVE_STEP_PERIOD
 
-    with utils.RewardTracker(params.STOP_MEAN_EPISODE_REWARD, params.AVG_EPISODE_SIZE_FOR_STAT, params.DRAW_VIZ, stat) as reward_tracker:
+    with utils.RewardTracker(params.STOP_MEAN_EPISODE_REWARD, params.AVG_EPISODE_SIZE_FOR_STAT, True, params.DRAW_VIZ, stat) as reward_tracker:
         while True:
             frame_idx += 1
             exp = next(exp_source_iter)
@@ -79,7 +80,6 @@ def main():
 
     # env = gym.make(env_name)
     env = MatlabRotaryInvertedPendulumEnv()
-    env.start()
 
     net = value_based_model.DuelingDQNMLP(
         obs_size=4,
@@ -119,7 +119,7 @@ def main():
         optimizer.zero_grad()
         batch, batch_indices, batch_weights = buffer.sample(params.BATCH_SIZE)
         loss_v, sample_prios = value_based_model.calc_loss_per_double_dqn(
-            batch, batch_weights, net, tgt_net, gamma=params.GAMMA, cuda=cuda, cuda_async=True
+            buffer.buffer, batch, batch_weights, net, tgt_net, gamma=params.GAMMA, cuda=cuda, cuda_async=True
         )
         loss_v.backward()
         optimizer.step()
