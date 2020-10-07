@@ -10,7 +10,7 @@ import os
 from common.environments.matlab.matlabenv import MatlabRotaryInvertedPendulumEnv
 print(torch.__version__)
 
-from common.fast_rl import actions, experience, dqn_model, rl_agent
+from common.fast_rl import actions, experience, value_based_model, rl_agent
 from common.fast_rl.common import statistics, utils
 from config.parameters import PARAMETERS as params
 
@@ -25,10 +25,15 @@ if not os.path.exists(MODEL_SAVE_DIR):
 
 
 os.environ['KMP_DUPLICATE_LIB_OK'] = 'True'
-device = torch.device("cuda" if cuda else "cpu")
+
+if torch.cuda.is_available():
+    device = torch.device("cuda" if params.CUDA else "cpu")
+else:
+    device = torch.device("cpu")
 
 
 def play_func(exp_queue, env, net):
+    env.start()
     action_selector = actions.EpsilonGreedyActionSelector(epsilon=params.EPSILON_INIT)
 
     epsilon_tracker = actions.EpsilonTracker(
@@ -44,12 +49,12 @@ def play_func(exp_queue, env, net):
     )
     exp_source_iter = iter(experience_source)
 
-    stat = statistics.Statistics(method="nature_dqn")
+    stat = statistics.StatisticsForValueBasedRL(method="nature_dqn")
 
     frame_idx = 0
     next_save_frame_idx = params.MODEL_SAVE_STEP_PERIOD
 
-    with utils.AtariRewardTracker(params.STOP_MEAN_EPISODE_REWARD, params.AVG_EPISODE_SIZE_FOR_STAT, params.DRAW_VIZ, stat) as reward_tracker:
+    with utils.RewardTracker(params.STOP_MEAN_EPISODE_REWARD, params.AVG_EPISODE_SIZE_FOR_STAT, True, params.DRAW_VIZ, stat) as reward_tracker:
         while True:
             frame_idx += 1
             exp = next(exp_source_iter)
@@ -59,16 +64,16 @@ def play_func(exp_queue, env, net):
 
             episode_rewards = experience_source.pop_episode_reward_lst()
             if episode_rewards:
-                solved, mean_episode_reward = reward_tracker.reward(
+                solved, mean_episode_reward = reward_tracker.set_episode_reward(
                     episode_rewards[0], frame_idx, action_selector.epsilon
                 )
 
                 if frame_idx >= next_save_frame_idx:
-                    dqn_model.save_model(MODEL_SAVE_DIR, params.ENV_NAME, net.__name__, net, frame_idx, mean_episode_reward)
+                    rl_agent.save_model(MODEL_SAVE_DIR, params.ENV_NAME, net.__name__, net, frame_idx, mean_episode_reward)
                     next_save_frame_idx += params.MODEL_SAVE_STEP_PERIOD
 
                 if solved:
-                    dqn_model.save_model(MODEL_SAVE_DIR, params.ENV_NAME, net.__name__, net, frame_idx, mean_episode_reward)
+                    rl_agent.save_model(MODEL_SAVE_DIR, params.ENV_NAME, net.__name__, net, frame_idx, mean_episode_reward)
                     break
 
     exp_queue.put(None)
@@ -79,9 +84,8 @@ def main():
 
     # env = gym.make(env_name)
     env = MatlabRotaryInvertedPendulumEnv()
-    env.start()
 
-    net = dqn_model.DuelingDQNMLP(
+    net = value_based_model.DuelingDQNMLP(
         obs_size=4,
         hidden_size_1=128, hidden_size_2=128,
         n_actions=7
@@ -99,7 +103,7 @@ def main():
     play_proc.start()
 
     time.sleep(0.5)
-    stat_for_model_loss = statistics.StatisticsForModelLoss()
+    stat_for_model_loss = statistics.StatisticsForValueBasedOptimization()
     frame_idx = 0
 
     while play_proc.is_alive():
@@ -113,13 +117,13 @@ def main():
 
         if len(buffer) < params.MIN_REPLAY_SIZE_FOR_TRAIN:
             if params.DRAW_VIZ and frame_idx % 100 == 0:
-                stat_for_model_loss.draw_loss(frame_idx, 0.0)
+                stat_for_model_loss.draw_optimization_performance(frame_idx, 0.0)
             continue
 
         optimizer.zero_grad()
         batch, batch_indices, batch_weights = buffer.sample(params.BATCH_SIZE)
-        loss_v, sample_prios = dqn_model.calc_loss_per_double_dqn(
-            batch, batch_weights, net, tgt_net, gamma=params.GAMMA, cuda=cuda, cuda_async=True
+        loss_v, sample_prios = value_based_model.calc_loss_per_double_dqn(
+            buffer.buffer, batch, batch_indices, batch_weights, net, tgt_net, params, cuda=cuda, cuda_async=True
         )
         loss_v.backward()
         optimizer.step()
@@ -127,7 +131,7 @@ def main():
         buffer.update_beta(frame_idx)
 
         if params.DRAW_VIZ and frame_idx % 100 == 0:
-            stat_for_model_loss.draw_loss(frame_idx, loss_v.item())
+            stat_for_model_loss.draw_optimization_performance(frame_idx, loss_v.item())
 
         if frame_idx % params.TARGET_NET_SYNC_STEP_PERIOD < params.TRAIN_STEP_FREQ:
             tgt_net.sync()

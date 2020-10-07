@@ -9,7 +9,7 @@ import numpy as np
 
 from collections import namedtuple, deque
 
-from .rl_agent import BaseAgent
+from .rl_agent import BaseAgent, AgentDDPG
 from .common import utils
 
 # replay buffer params
@@ -18,6 +18,152 @@ BETA_FRAMES = 100000
 
 # one single experience step
 Experience = namedtuple('Experience', ['state', 'action', 'reward', 'done'])
+ExperienceWithNoise = namedtuple('ExperienceWithNoise', ['state', 'action', 'noise', 'reward', 'done'])
+
+ExperienceFirstLast = collections.namedtuple(
+    'ExperienceFirstLast', ('state', 'action', 'reward', 'last_state', 'last_step')
+)
+ExperienceFirstLastWithNoise = collections.namedtuple(
+    'ExperienceFirstLastWithNoise', ('state', 'action', 'noise', 'reward', 'last_state', 'last_step')
+)
+
+
+class ExperienceSourceSingleEnv:
+    """
+    Simple n-step experience source using only SINGLE environment
+    Every experience contains n list of Experience entries
+    """
+
+    def __init__(self, env, agent, steps_count=2, steps_delta=1):
+        assert isinstance(agent, BaseAgent)
+        assert isinstance(steps_count, int)
+        assert steps_count >= 1
+        self.env = env
+        self.agent = agent
+        self.steps_count = steps_count
+        self.steps_delta = steps_delta
+        self.episode_reward_lst = []
+        self.episode_done_step_lst = []
+
+    def __iter__(self):
+        state = self.env.reset()
+
+        history = deque(maxlen=self.steps_count)
+        cur_reward = 0.0
+        cur_step = 0
+        agent_state = self.agent.initial_agent_state()
+        noise = None
+
+        iter_idx = 0
+        while True:
+            states_input = []
+            states_input.append(state)
+
+            agent_states_input = []
+            agent_states_input.append(agent_state)
+
+            if isinstance(self.agent, AgentDDPG):
+                actions, noises, new_agent_states = self.agent(states_input, agent_states_input)
+                noise = noises[0]
+            else:
+                actions, new_agent_states = self.agent(states_input, agent_states_input)
+
+            agent_state = new_agent_states[0]
+            action = actions[0]
+
+            next_state, r, is_done, info = self.env.step(action)
+
+            if 'original_reward' in info:
+                cur_reward += info['original_reward']
+            else:
+                cur_reward += r
+
+            cur_step += 1
+
+            if state is not None:
+                if isinstance(self.agent, AgentDDPG):
+                    history.append(ExperienceWithNoise(state=state, action=action, noise=noise, reward=r, done=is_done))
+                else:
+                    history.append(Experience(state=state, action=action, reward=r, done=is_done))
+
+            if len(history) == self.steps_count and iter_idx % self.steps_delta == 0:
+                yield tuple(history)
+
+            state = next_state
+
+            if is_done:
+                # in case of very short episode (shorter than our steps count), send gathered history
+                if 0 < len(history) < self.steps_count:
+                    yield tuple(history)
+
+                # generate tail of history
+                while len(history) > 1:
+                    # removes the element (the old one) from the left side of the deque and returns the value
+                    history.popleft()
+                    yield tuple(history)
+
+                state = self.env.reset()
+                agent_state = self.agent.initial_agent_state()
+
+                if 'ale.lives' not in info or info['ale.lives'] == 0:
+                    self.episode_reward_lst.append(cur_reward)
+                    self.episode_done_step_lst.append(cur_step)
+                    cur_reward = 0.0
+                    cur_step = 0
+
+                history.clear()
+
+            iter_idx += 1
+
+    def pop_episode_reward_lst(self):
+        r = self.episode_reward_lst
+        if r:
+            self.episode_reward_lst = []
+            self.episode_done_step_lst = []
+        return r
+
+    def pop_episode_reward_and_done_step_lst(self):
+        res = list(zip(self.episode_reward_lst, self.episode_done_step_lst))
+        if res:
+            self.episode_reward_lst = []
+            self.episode_done_step_lst = []
+        return res
+
+
+class ExperienceSourceSingleEnvFirstLast(ExperienceSourceSingleEnv):
+    def __init__(self, env, agent, gamma, steps_count=1, steps_delta=1):
+        assert isinstance(gamma, float)
+        super(ExperienceSourceSingleEnvFirstLast, self).__init__(env, agent, steps_count+1, steps_delta)
+        self.gamma = gamma
+        self.steps_count = steps_count
+
+    def __iter__(self):
+        for exp in super(ExperienceSourceSingleEnvFirstLast, self).__iter__():
+            if exp[-1].done and len(exp) <= self.steps_count:
+                last_state = None
+                elems = exp
+            else:
+                last_state = exp[-1].state
+                elems = exp[:-1]
+            total_reward = 0.0
+            for e in reversed(elems):
+                total_reward *= self.gamma
+                total_reward += e.reward
+
+            if isinstance(self.agent, AgentDDPG):
+                exp = ExperienceFirstLastWithNoise(
+                    state=exp[0].state, action=exp[0].action, noise=exp[0].noise, reward=total_reward, last_state=last_state, last_step=len(elems)
+                )
+            else:
+                exp = ExperienceFirstLast(
+                    state=exp[0].state, action=exp[0].action, reward=total_reward, last_state=last_state, last_step=len(elems)
+                )
+
+            yield exp
+
+
+#################################
+#################################
 
 
 class ExperienceSource:
@@ -55,7 +201,6 @@ class ExperienceSource:
         states, agent_states, histories, cur_rewards, cur_steps = [], [], [], [], []
         env_lens = []
         for env in self.pool:
-
             obs = env.reset()
             # if the environment is vectorized, all it's output is lists of results.
             # Details are here: https://github.com/openai/universe/blob/master/doc/env_semantics.rst
@@ -72,7 +217,7 @@ class ExperienceSource:
                 histories.append(deque(maxlen=self.steps_count))
                 cur_rewards.append(0.0)
                 cur_steps.append(0)
-                agent_states.append(self.agent.initial_state())
+                agent_states.append(self.agent.initial_agent_state())
         
         #print(states, agent_states, histories, cur_rewards, cur_steps)
 
@@ -88,7 +233,13 @@ class ExperienceSource:
                     states_input.append(state)
                     states_indices.append(idx)
             if states_input:
-                states_actions, new_agent_states = self.agent(states_input, agent_states)
+                if isinstance(self.agent, AgentDDPG):
+                    states_actions, noises, new_agent_states = self.agent(states_input, agent_states)
+                else:
+                    states_actions, new_agent_states = self.agent(states_input, agent_states)
+
+                # TODO: noise에 대한 처리
+
                 for idx, action in enumerate(states_actions):
                     g_idx = states_indices[idx]
                     actions[g_idx] = action
@@ -108,11 +259,16 @@ class ExperienceSource:
                     state = states[idx]
                     history = histories[idx]
 
-                    # cur_rewards[idx] += r
-                    cur_rewards[idx] += info['original_reward']
+                    if 'original_reward' in info:
+                        cur_rewards[idx] += info['original_reward']
+                    else:
+                        cur_rewards[idx] += r
+
                     cur_steps[idx] += 1
+
                     if state is not None:
                         history.append(Experience(state=state, action=action, reward=r, done=is_done))
+
                     if len(history) == self.steps_count and iter_idx % self.steps_delta == 0:
                         yield tuple(history)
                     states[idx] = next_state
@@ -128,7 +284,7 @@ class ExperienceSource:
                             yield tuple(history)
 
                         states[idx] = env.reset() if not self.vectorized else None
-                        agent_states[idx] = self.agent.initial_state()
+                        agent_states[idx] = self.agent.initial_agent_state()
 
                         if 'ale.lives' not in info or info['ale.lives'] == 0:
                             self.episode_reward_lst.append(cur_rewards[idx])
@@ -137,7 +293,7 @@ class ExperienceSource:
                             cur_steps[idx] = 0
                         #     # vectorized envs are reset automatically
                         #     states[idx] = env.reset() if not self.vectorized else None
-                        #     agent_states[idx] = self.agent.initial_state()
+                        #     agent_states[idx] = self.agent.initial_agent_state()
 
                         history.clear()
                         
@@ -186,10 +342,6 @@ class ExperienceSourceNamedTuple(ExperienceSource):
             yield Experience(
                 state=exp[0].state, action=exp[0].action, reward=exp[0].reward, done=exp[0].done
             )
-
-
-# those entries are emitted from ExperienceSourceFirstLast. Reward is discounted over the trajectory piece
-ExperienceFirstLast = collections.namedtuple('ExperienceFirstLast', ('state', 'action', 'reward', 'last_state', 'last_step'))
 
 
 class ExperienceSourceFirstLast(ExperienceSource):
@@ -276,11 +428,17 @@ class ExperienceSourceRollouts:
         mb_dones = np.zeros((pool_size, self.steps_count), dtype=np.bool)
         episode_reward_lst = [0.0] * pool_size
         episode_done_step_lst = [0] * pool_size
-        agent_states = None
+        critics = None
         step_idx = 0
 
         while True:
-            actions, agent_states = self.agent(states, agent_states)
+            if isinstance(self.agent, AgentDDPG):
+                actions, noise, critics = self.agent(states, critics)
+            else:
+                actions, critics = self.agent(states, critics)
+
+            # TODO: noise에 대한 처리
+
             rewards = []
             dones = []
             new_states = []
@@ -297,10 +455,12 @@ class ExperienceSourceRollouts:
                 new_states.append(np.array(o))
                 dones.append(done)
                 rewards.append(r)
+
             # we need an extra step to get values approximation for rollouts
             if step_idx == self.steps_count:
+                print(mb_rewards, mb_dones, critics)
                 # calculate rollout rewards
-                for env_idx, (env_rewards, env_dones, last_value) in enumerate(zip(mb_rewards, mb_dones, agent_states)):
+                for env_idx, (env_rewards, env_dones, last_value) in enumerate(zip(mb_rewards, mb_dones, critics)):
                     env_rewards = env_rewards.tolist()
                     env_dones = env_dones.tolist()
                     if not env_dones[-1]:
@@ -310,9 +470,10 @@ class ExperienceSourceRollouts:
                     mb_rewards[env_idx] = env_rewards
                 yield mb_states.reshape((-1,) + mb_states.shape[2:]), mb_rewards.flatten(), mb_actions.flatten(), mb_values.flatten()
                 step_idx = 0
+
             mb_states[:, step_idx] = states
             mb_rewards[:, step_idx] = rewards
-            mb_values[:, step_idx] = agent_states
+            mb_values[:, step_idx] = critics
             mb_actions[:, step_idx] = actions
             mb_dones[:, step_idx] = dones
             step_idx += 1
