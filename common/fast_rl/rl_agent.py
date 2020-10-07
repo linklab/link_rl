@@ -236,19 +236,21 @@ class AgentDDPG(BaseAgent):
     """
     Agent implementing Orstein-Uhlenbeck exploration process
     """
-    def __init__(self, model, n_actions, action_min, action_max, device="cpu", ou_enabled=True, ou_mu=0.0, ou_teta=0.15, ou_sigma=0.2, ou_epsilon=1.0,
-                 preprocessor=default_states_preprocessor):
+    def __init__(self, model, n_actions, action_min, action_max, device="cpu", ou_enabled=True,
+                 ou_mu=0.0, ou_theta=0.15, ou_sigma=0.2, ou_epsilon=1.0, preprocessor=default_states_preprocessor):
         self.model = model
         self.device = device
         self.ou_enabled = ou_enabled
         self.ou_mu = ou_mu
-        self.ou_teta = ou_teta
+        self.ou_theta = ou_theta
         self.ou_sigma = ou_sigma
         self.ou_epsilon = ou_epsilon
         self.preprocessor = preprocessor
         self.action_min = action_min
         self.action_max = action_max
-        self.ou_noise = OrnsteinUhlenbeckActionNoise(mu=np.zeros(n_actions), sigma=ou_sigma * np.ones(n_actions))
+        self.ou_noise = OrnsteinUhlenbeckActionNoise(
+            mu=np.zeros(n_actions), sigma=ou_sigma * np.ones(n_actions), theta=ou_theta
+        )
         self.ou_noise.reset()
 
     def initial_agent_state(self):
