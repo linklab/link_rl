@@ -160,6 +160,8 @@ def main():
         if frame_idx % params.TARGET_NET_SYNC_STEP_PERIOD < params.TRAIN_STEP_FREQ:
             tgt_net.sync()
 
+        del sample_prios
+
 # python atari_dqn.py --env=pong --draw_viz=1 --cuda
 # python atari_dqn.py --env=breakout --draw_viz=1 --cuda
 if __name__ == "__main__":
