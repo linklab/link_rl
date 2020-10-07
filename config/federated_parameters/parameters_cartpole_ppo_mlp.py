@@ -64,9 +64,9 @@ class PARAMETERS_CARTPOLE_PPO_MLP(PARAMETERS_GENERAL):
     #ENVIRONMENT_ID = EnvironmentName.FROZENLAKE_V0
 
     # [2. DEEP_LEARNING_MODELS]
-    DEEP_LEARNING_MODEL = DeepLearningModelName.Actor_Critic_MLP
-    #DEEP_LEARNING_MODEL = DeepLearningModelName.Actor_Critic_CNN
-    #DEEP_LEARNING_MODEL = DeepLearningModelName.No_Model
+    DEEP_LEARNING_MODEL = DeepLearningModelName.ACTOR_CRITIC_MLP
+    #DEEP_LEARNING_MODEL = DeepLearningModelName.ACTOR_CRITIC_CNN
+    #DEEP_LEARNING_MODEL = DeepLearningModelName.NO_MODEL
 
     # [3. ALGORITHMS]
     #RL_ALGORITHM = RLAlgorithmName.DQN_V0

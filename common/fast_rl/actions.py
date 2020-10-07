@@ -1,12 +1,22 @@
 import numpy as np
 from typing import Union
 
+import torch
+
 
 class ActionSelector:
     """
     Abstract class which converts scores to the actions
     """
     def __call__(self, scores):
+        raise NotImplementedError
+
+
+class ContinuousActionSelector:
+    """
+    Abstract class which converts scores to the actions
+    """
+    def __call__(self, mu_v, var_v, action_min, action_max):
         raise NotImplementedError
 
 
@@ -44,6 +54,15 @@ class ProbabilityActionSelector(ActionSelector):
         for prob in probs:
             actions.append(np.random.choice(len(prob), p=prob))
         return np.array(actions)
+
+
+class ContinuousNormalActionSelector(ContinuousActionSelector):
+    def __call__(self, mu_v, var_v, action_min, action_max):
+        mu = mu_v.data.cpu().numpy()
+        sigma = torch.sqrt(var_v).data.cpu().numpy()
+        actions = np.random.normal(mu, sigma)
+        actions = np.clip(actions, action_min, action_max)
+        return actions
 
 
 class EpsilonTracker:

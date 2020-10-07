@@ -80,7 +80,7 @@ def print_configuration(env, rl_model, params):
 
     print("\n*** MODEL ***")
     print(" Deep Learning Model: {0}".format(params.DEEP_LEARNING_MODEL.value))
-    if params.DEEP_LEARNING_MODEL == DeepLearningModelName.Actor_Critic_CNN:
+    if params.DEEP_LEARNING_MODEL == DeepLearningModelName.ACTOR_CRITIC_CNN:
         print(" input_width: {0}, input_height: {1}, input_channels: {2}, a_size: {3}, continuous: {4}".format(
             rl_model.input_width,
             rl_model.input_height,
@@ -88,7 +88,7 @@ def print_configuration(env, rl_model, params):
             rl_model.a_size,
             rl_model.continuous
         ))
-    elif params.DEEP_LEARNING_MODEL == DeepLearningModelName.Actor_Critic_MLP:
+    elif params.DEEP_LEARNING_MODEL == DeepLearningModelName.ACTOR_CRITIC_MLP:
         print(" s_size: {0}, hidden_1: {1}, hidden_2: {2}, hidden_3: {3}, a_size: {4}, continuous: {5}".format(
             rl_model.s_size,
             rl_model.hidden_1_size,
@@ -97,7 +97,7 @@ def print_configuration(env, rl_model, params):
             rl_model.a_size,
             rl_model.continuous
         ))
-    elif params.DEEP_LEARNING_MODEL == DeepLearningModelName.No_Model:
+    elif params.DEEP_LEARNING_MODEL == DeepLearningModelName.NO_MODEL:
         pass
     else:
         pass

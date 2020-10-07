@@ -46,7 +46,7 @@ class PARAMETERS_GENERAL:
     ########################################
     ENVIRONMENT_ID = EnvironmentName.PONG_NO_FRAME_SKIP_V4
     RL_ALGORITHM = RLAlgorithmName.DQN_FAST_V0
-    DEEP_LEARNING_MODEL = DeepLearningModelName.Dueling_DQN_CNN
+    DEEP_LEARNING_MODEL = DeepLearningModelName.DUELING_DQN_CNN
     REPLAY_BUFFER = ReplayBufferName.REPLAY_BUFFER
 
     STOP_MEAN_EPISODE_REWARD = None
@@ -61,6 +61,8 @@ class PARAMETERS_GENERAL:
     DRAW_VIZ = 1
     N_STEP = 1
     OMEGA = False
+    OMEGA_WINDOW_SIZE = 6
+    NEXT_STATE_IN_TRAJECTORY = True
     #########################################
     #########################################
 
@@ -77,6 +79,11 @@ class PARAMETERS_GENERAL:
     # [OPTIMIZATION]
     MAX_EPISODES = 2000
     GAMMA = 0.98 # discount factor
+
+    # [Policy Gradient]
+    ENTROPY_BETA = 0.01
+    CLIP_GRAD = 0.1
+    ACTOR_LEARNING_RATE = 0.0001
 
     # [MODE]
     MODE_SYNCHRONIZATION = True

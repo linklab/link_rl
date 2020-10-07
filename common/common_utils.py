@@ -1,4 +1,6 @@
 import random
+from typing import Optional
+
 import numpy as np
 import gym
 import torch
@@ -7,6 +9,9 @@ from common.fast_rl.common import wrappers
 import numpy as np
 import math
 from matplotlib import pyplot as plt
+
+from common.fast_rl.common.wrappers import OriginalRewardsWrapper
+
 
 def print_params(params_class):
     print('\n' + '################ Parameters ################')
@@ -29,8 +34,6 @@ def print_fast_rl_params(params_class):
 def set_global_seeds(seed):
     myseed = seed + 1000 if seed is not None else None
     try:
-        random.seed(myseed)
-        np.random.seed(myseed)
         torch.manual_seed(myseed)
         torch.cuda.manual_seed_all(myseed)
     except ImportError:
@@ -68,6 +71,7 @@ def make_gym_env(env_id, rank=0, seed=0):
     set_global_seeds(seed)
 
     env = gym.make(env_id)
+    env = OriginalRewardsWrapper(env)
     env.seed(seed + rank)
 
     return env
@@ -82,6 +86,12 @@ def epsilon_scheduled(current_episode, max_episodes, initial_epsilon, final_epsi
     cosh = np.cosh(math.exp(-standardized_time))
     epsilon = max(initial_epsilon - (1 / cosh + (current_episode * C / max_episodes)), final_epsilon)
     return epsilon
+
+
+def smooth(old: Optional[float], val: float, alpha: float = 0.95) -> float:
+    if old is None:
+        return val
+    return old * alpha + (1.0 - alpha) * val
 
 
 if __name__=="__main__":

@@ -29,7 +29,7 @@ class ActorCriticModel(nn.Module):
         self.worker_id = worker_id
         self.params = params
 
-        if self.params.DEEP_LEARNING_MODEL == DeepLearningModelName.Actor_Critic_CNN:
+        if self.params.DEEP_LEARNING_MODEL == DeepLearningModelName.ACTOR_CRITIC_CNN:
             self.input_channels = s_size[0]
             self.input_height = s_size[1]
             self.input_width = s_size[2]
@@ -41,7 +41,7 @@ class ActorCriticModel(nn.Module):
                 continuous=continuous,
                 params=self.params
             )
-        elif self.params.DEEP_LEARNING_MODEL == DeepLearningModelName.Actor_Critic_MLP:
+        elif self.params.DEEP_LEARNING_MODEL == DeepLearningModelName.ACTOR_CRITIC_MLP:
             self.base = MLPBase(
                 num_inputs=s_size,
                 continuous=continuous,

@@ -7,7 +7,11 @@ PROJECT_HOME = os.getcwd()[:idx+1] + "link_rl{0}".format(os.sep)
 sys.path.append(PROJECT_HOME)
 
 from config.parameters import PARAMETERS as params
-device = torch.device('cuda' if params.CUDA else 'cpu')
+
+if torch.cuda.is_available():
+    device = torch.device("cuda" if params.CUDA else "cpu")
+else:
+    device = torch.device("cpu")
 
 import rl_main.utils as utils
 

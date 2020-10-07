@@ -11,7 +11,10 @@ from config.parameters import PARAMETERS as params
 import rl_main.utils as utils
 from rl_main import rl_utils
 
-device = torch.device('cuda' if params.CUDA else 'cpu')
+if torch.cuda.is_available():
+    device = torch.device("cuda" if params.CUDA else "cpu")
+else:
+    device = torch.device("cpu")
 
 
 if __name__ == "__main__":

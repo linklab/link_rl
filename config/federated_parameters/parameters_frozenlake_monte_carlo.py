@@ -34,7 +34,7 @@ class PARAMETERS_FROZENLAKE_MONTE_CARLO(PARAMETERS_GENERAL):
     ENVIRONMENT_ID = EnvironmentName.FROZENLAKE_V0
 
     # [2. DEEP_LEARNING_MODELS]
-    DEEP_LEARNING_MODEL = DeepLearningModelName.No_Model
+    DEEP_LEARNING_MODEL = DeepLearningModelName.NO_MODEL
 
     # [3. ALGORITHMS]
     RL_ALGORITHM = RLAlgorithmName.Monte_Carlo_Control_V0

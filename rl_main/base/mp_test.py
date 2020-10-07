@@ -7,17 +7,17 @@ mp.set_start_method('spawn', force=True)
 
 
 def play_func(exp_queue):
-    frame_idx = 0
+    step_idx = 0
 
     while True:
-        frame_idx += 1
-        exp = frame_idx
+        step_idx += 1
+        exp = step_idx
 
         exp_queue.put(exp)
 
-        print(frame_idx)
+        print(step_idx)
 
-        if frame_idx >= 1000:
+        if step_idx >= 1000:
             break
 
     exp_queue.put(None)

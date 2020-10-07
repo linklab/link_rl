@@ -40,9 +40,9 @@ class BreakoutDeterministic_v4(Environment):
     def preprocess(self, img):
         gray_frame = self.to_grayscale(self.downsample(img))
 
-        if self.params.DEEP_LEARNING_MODEL == DeepLearningModelName.Actor_Critic_CNN:
+        if self.params.DEEP_LEARNING_MODEL == DeepLearningModelName.ACTOR_CRITIC_CNN:
             state = np.expand_dims(gray_frame, axis=0)
-        elif self.params.DEEP_LEARNING_MODEL == DeepLearningModelName.Actor_Critic_MLP:
+        elif self.params.DEEP_LEARNING_MODEL == DeepLearningModelName.ACTOR_CRITIC_MLP:
             state = gray_frame.flatten()
         else:
             state = None
@@ -50,9 +50,9 @@ class BreakoutDeterministic_v4(Environment):
         return state
 
     def get_n_states(self):
-        if self.params.DEEP_LEARNING_MODEL == DeepLearningModelName.Actor_Critic_CNN:
+        if self.params.DEEP_LEARNING_MODEL == DeepLearningModelName.ACTOR_CRITIC_CNN:
             return 1, 105, 80                   # input_channels, input_height, input_width
-        elif self.params.DEEP_LEARNING_MODEL == DeepLearningModelName.Actor_Critic_MLP:
+        elif self.params.DEEP_LEARNING_MODEL == DeepLearningModelName.ACTOR_CRITIC_MLP:
             return 8400
         else:
             return None
