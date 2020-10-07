@@ -112,6 +112,8 @@ environments/unity/unity_envs/
 *.out
 *.gz
 
+*.autosave
+
 /model_save_files/
 /temp/
 /src/

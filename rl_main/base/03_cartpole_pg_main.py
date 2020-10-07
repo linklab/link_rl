@@ -3,18 +3,16 @@ import time
 import torch
 import torch.nn.functional as F
 import torch.multiprocessing as mp
-import torch.nn.utils as nn_utils
 from torch import optim
 import os
 import numpy as np
 
 from common.common_utils import make_gym_env, smooth
-from common.fast_rl.policy_based_model import unpack_batch_for_policy_gradient
 from common.fast_rl.rl_agent import float32_preprocessor
 
 print(torch.__version__)
 
-from common.fast_rl import actions, experience, policy_based_model, rl_agent
+from common.fast_rl import actions, experience, value_based_model, rl_agent
 from common.fast_rl.common import statistics, utils
 
 from config.parameters import PARAMETERS as params
@@ -24,11 +22,14 @@ if not os.path.exists(MODEL_SAVE_DIR):
     os.makedirs(MODEL_SAVE_DIR)
 
 os.environ['KMP_DUPLICATE_LIB_OK'] = 'True'
-device = torch.device("cuda" if params.CUDA else "cpu")
+if torch.cuda.is_available():
+    device = torch.device("cuda" if params.CUDA else "cpu")
+else:
+    device = torch.device("cpu")
 
 
 def play_func(exp_queue, env, net):
-    agent = rl_agent.ActorCriticAgent(net, apply_softmax=True, device=device, preprocessor=float32_preprocessor)
+    agent = rl_agent.PolicyAgent(net, preprocessor=float32_preprocessor, apply_softmax=True, device=device)
 
     experience_source = experience.ExperienceSourceFirstLast(env, agent, gamma=params.GAMMA, steps_count=params.N_STEP)
 
@@ -77,7 +78,7 @@ def main():
 
     env = make_gym_env(params.ENVIRONMENT_ID.value, seed=params.SEED)
 
-    net = policy_based_model.A2CMLP(
+    net = value_based_model.DuelingDQNMLP(
         obs_size=4,
         hidden_size_1=128, hidden_size_2=128,
         n_actions=2
@@ -93,24 +94,24 @@ def main():
     time.sleep(0.5)
 
     if params.DRAW_VIZ:
-        stat_for_a2c = statistics.StatisticsForA2COptimization()
+        stat_for_policy_based_rl = statistics.StatisticsForPolicyBasedRLOptimization()
     else:
-        stat_for_a2c = 0.0
+        stat_for_policy_based_rl = 0.0
 
     step_idx = 0
+    reward_sum = 0.0
 
     grad_l2 = 0.0
     grad_max = 0.0
     grad_variance = 0.0
 
-    mean_advantage = 0.0
+    mean_batch_scale = 0.0
     entropy = 0.0
-    loss_actor = 0.0
-    loss_critic = 0.0
     loss_entropy = 0.0
+    loss_policy = 0.0
     loss_total = 0.0
 
-    batch = []
+    batch_states, batch_actions, batch_scales = [], [], []
 
     while play_proc.is_alive():
         exp = exp_queue.get()
@@ -119,44 +120,45 @@ def main():
             break
         step_idx += 1
 
-        batch.append(exp)
+        reward_sum += exp.reward
+        baseline = reward_sum / step_idx
+        #print(exp.reward, step_idx, reward_sum, baseline)
 
-        if len(batch) < params.BATCH_SIZE:
+        batch_states.append(exp.state)
+        batch_actions.append(int(exp.action))
+        batch_scales.append(exp.reward - baseline / 2)
+
+        if len(batch_states) < params.BATCH_SIZE:
             continue
 
-        batch_states_v, batch_actions_v, batch_target_values_v = unpack_batch_for_policy_gradient(
-            batch, net, params, device=device
-        )
-        batch.clear()
+        batch_states_v = torch.FloatTensor(batch_states)
+        batch_actions_t = torch.LongTensor(batch_actions)
+        batch_scale_v = torch.FloatTensor(batch_scales)
 
         optimizer.zero_grad()
-        batch_logits_v, batch_value_v = net(batch_states_v)
-        loss_critic_v = F.mse_loss(batch_value_v.squeeze(-1), batch_target_values_v)
-
-        batch_advantage_v = batch_target_values_v - batch_value_v.squeeze(-1).detach()
+        batch_logits_v = net(batch_states_v)
         batch_log_prob_v = F.log_softmax(batch_logits_v, dim=1)
-        batch_log_prob_actions_v = batch_log_prob_v[range(params.BATCH_SIZE), batch_actions_v]
-        batch_log_prob_actions_v = batch_advantage_v * batch_log_prob_actions_v
-        loss_actor_v = -batch_log_prob_actions_v.mean()
+        batch_log_prob_actions_v = batch_log_prob_v[range(params.BATCH_SIZE), batch_actions_t]
+        batch_log_prob_actions_v = batch_scale_v * batch_log_prob_actions_v
+        loss_policy_v = -batch_log_prob_actions_v.mean()
 
         batch_prob_v = F.softmax(batch_logits_v, dim=1)
         entropy_v = -(batch_prob_v * batch_log_prob_v).sum(dim=1).mean()
-        loss_entropy_v = -params.ENTROPY_BETA * entropy_v
+        entropy_loss_v = -params.ENTROPY_BETA * entropy_v
 
         # loss_policy_v를 작아지도록 만듦 --> log_prob_actions_v.mean()가 커지도록 만듦
-        # loss_entropy_v를 작아지도록 만듦 --> entropy_v가 커지도록 만듦
-        loss_v = loss_actor_v + loss_critic_v + loss_entropy_v
+        # entropy_loss_v를 작아지도록 만듦 --> entropy_v가 커지도록 만듦
+        loss_v = loss_policy_v + entropy_loss_v
         loss_v.backward()
 
-        grads = np.concatenate([p.grad.data.cpu().numpy().flatten()
+        grads = np.concatenate([p.grad.data.numpy().flatten()
                                 for p in net.parameters()
                                 if p.grad is not None])
 
-        #nn_utils.clip_grad_norm_(net.parameters(), params.CLIP_GRAD)
         optimizer.step()
 
         # calc KL-div
-        batch_new_logits_v, _ = net(batch_states_v)
+        batch_new_logits_v = net(batch_states_v)
         batch_new_prob_v = F.softmax(batch_new_logits_v, dim=1)
         kl_div_v = -((batch_new_prob_v / batch_prob_v).log() * batch_prob_v).sum(dim=1).mean()
 
@@ -164,22 +166,26 @@ def main():
         grad_max = smooth(grad_max, np.max(np.abs(grads)))
         grad_variance = smooth(grad_variance, float(np.var(grads)))
 
-        mean_advantage = smooth(mean_advantage, float(np.mean(batch_advantage_v.numpy())))
+        mean_batch_scale = smooth(mean_batch_scale, float(np.mean(batch_scales)))
         entropy = smooth(entropy, entropy_v.item())
-        loss_actor = smooth(loss_actor, loss_actor_v.item())
-        loss_critic = smooth(loss_critic, loss_critic_v.item())
-        loss_entropy = smooth(loss_entropy, loss_entropy_v.item())
+        loss_policy = smooth(loss_policy, loss_policy_v.item())
+        loss_entropy = smooth(loss_entropy, entropy_loss_v.item())
         loss_total = smooth(loss_total, loss_v.item())
 
         if params.DRAW_VIZ:
-            stat_for_a2c.draw_optimization_performance(
+            stat_for_policy_based_rl.draw_optimization_performance(
                 step_idx,
                 kl_div_v.item(),
-                mean_advantage,
+                baseline,
+                mean_batch_scale,
                 entropy,
-                loss_actor, loss_critic, loss_entropy, loss_total,
+                loss_policy, loss_entropy, loss_total,
                 grad_l2, grad_variance, grad_max
             )
+
+        batch_states.clear()
+        batch_actions.clear()
+        batch_scales.clear()
 
 
 if __name__ == "__main__":

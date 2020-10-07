@@ -77,9 +77,9 @@ class SimulinkPlant:
         # Generate the Control action based on the past outputs
 
         if action == 0:
-            torque = -0.001
+            torque = -0.1
         elif action == 1:
-            torque = 0.001
+            torque = 0.1
         else:
             torque = 0
 
