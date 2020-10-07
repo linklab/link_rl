@@ -38,6 +38,7 @@ class EnvironmentName(enum.Enum):
     PONG_NO_FRAME_SKIP_V4 = 'PongNoFrameskip-v4'
     BREAKOUT_NO_FRAME_SKIP_V4 = 'BreakoutNoFrameskip-v4'
     SPACE_INVADERS_NO_FRAME_SKIP_V4 = "SpaceInvadersNoFrameskip-v4"
+    ENDURO_NO_FRAME_SKIP_V4 = "EnduroNoFrameskip-v4"
     PENDULUM_MATLAB_V0 = "Pendulum_Matlab_v0"
     MINITAUR_BULLET_V0 = "MinitaurBulletEnv-v0"
 
