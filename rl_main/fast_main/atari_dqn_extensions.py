@@ -145,7 +145,7 @@ def main():
             )
         else:
             loss_v, sample_prios = value_based_model.calc_loss_per_double_dqn(
-                buffer.buffer, batch, batch_weights, net, tgt_net, gamma=params.GAMMA, cuda=params.CUDA, cuda_async=True
+                buffer.buffer, batch, batch_indices, batch_weights, net, tgt_net, params, cuda=params.CUDA, cuda_async=True
             )
         loss_v.backward()
         optimizer.step()
