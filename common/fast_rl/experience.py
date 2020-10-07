@@ -59,11 +59,14 @@ class ExperienceSourceSingleEnv:
             states_input = []
             states_input.append(state)
 
+            agent_states_input = []
+            agent_states_input.append(agent_state)
+
             if isinstance(self.agent, AgentDDPG):
-                actions, noises, new_agent_states = self.agent(states_input, agent_state)
+                actions, noises, new_agent_states = self.agent(states_input, agent_states_input)
                 noise = noises[0]
             else:
-                actions, new_agent_states = self.agent(states_input, agent_state)
+                actions, new_agent_states = self.agent(states_input, agent_states_input)
 
             agent_state = new_agent_states[0]
             action = actions[0]
