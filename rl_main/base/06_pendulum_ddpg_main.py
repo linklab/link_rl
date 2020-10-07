@@ -147,6 +147,7 @@ def main():
     loss_critic = 0.0
     loss_total = 0.0
 
+    #$ pip install line_profiler
     # from line_profiler import LineProfiler
     # lp = LineProfiler()
     # lp_wrapper = lp(model_update)
