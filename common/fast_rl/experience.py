@@ -683,7 +683,7 @@ class PrioritizedReplayBuffer(ExperienceReplayBuffer):
 
 
 class PrioReplayBuffer:
-    def __init__(self, exp_source, buf_size, prob_alpha=0.6, step_n=1):
+    def __init__(self, exp_source, buf_size, prob_alpha=0.6, n_step=1):
         assert isinstance(exp_source, (ExperienceSource, type(None)))
         assert isinstance(buf_size, int)
         self.exp_source_iter = None if exp_source is None else iter(exp_source)
@@ -693,7 +693,7 @@ class PrioReplayBuffer:
         self.buffer = []
         self.priorities = np.zeros((buf_size, ), dtype=np.float32)
         self.beta = BETA_START
-        self.step_n = step_n
+        self.n_step = n_step
 
     def update_beta(self, idx):
         v = BETA_START + idx * (1.0 - BETA_START) / BETA_FRAMES
@@ -730,9 +730,9 @@ class PrioReplayBuffer:
             prios = self.priorities[:self.pos]
         probs = prios ** self.prob_alpha
 
-        probs = probs[:-self.step_n]
+        probs = probs[:-self.n_step]
         probs /= probs.sum()
-        indices = np.random.choice(len(self.buffer)-self.step_n, batch_size, p=probs)
+        indices = np.random.choice(len(self.buffer) - self.n_step, batch_size, p=probs)
         samples = [self.buffer[idx] for idx in indices]
         total = len(self.buffer)
         weights = (total * probs[indices]) ** (-self.beta)
