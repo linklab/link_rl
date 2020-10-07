@@ -43,7 +43,9 @@ def play_func(exp_queue, env, net):
         net, n_actions=1, action_min=action_min, action_max=action_max, device=device, preprocessor=float32_preprocessor
     )
 
-    experience_source = experience.ExperienceSourceFirstLast(env, agent, gamma=params.GAMMA, steps_count=params.N_STEP)
+    experience_source = experience.ExperienceSourceSingleEnvFirstLast(
+        env, agent, gamma=params.GAMMA, steps_count=params.N_STEP
+    )
 
     exp_source_iter = iter(experience_source)
 

@@ -60,7 +60,7 @@ class AgentDDPG(ptan.agent.BaseAgent):
         self.ou_sigma = ou_sigma
         self.ou_epsilon = ou_epsilon
 
-    def initial_state(self):
+    def initial_agent_state(self):
         return None
 
     def __call__(self, states, agent_states):

@@ -46,7 +46,7 @@ class BaseAgent:
     """
     Abstract Agent interface
     """
-    def initial_state(self):
+    def initial_agent_state(self):
         """
         Should create initial empty state for the agent. It will be called for the start of the episode
         :return: Anything agent want to remember
@@ -251,7 +251,7 @@ class AgentDDPG(BaseAgent):
         self.ou_noise = OrnsteinUhlenbeckActionNoise(mu=np.zeros(n_actions), sigma=ou_sigma * np.ones(n_actions))
         self.ou_noise.reset()
 
-    def initial_state(self):
+    def initial_agent_state(self):
         return None
 
     def __call__(self, states, agent_states):
@@ -274,11 +274,12 @@ class AgentDDPG(BaseAgent):
         # else:
         #     new_a_states = agent_states
 
-        new_a_states = agent_states
+        if agent_states is None:
+            agent_states = [None] * len(states)
 
         noise = torch.Tensor(self.ou_noise.noise()).to(self.device)
         mu_v += noise
 
         actions = mu_v.data.cpu().numpy()
         actions = np.clip(actions, self.action_min, self.action_max)
-        return actions, noise, new_a_states
+        return actions, noise, agent_states
