@@ -13,7 +13,7 @@ from common.fast_rl import rl_agent
 
 def init_weights(m):
     if type(m) == nn.Linear or type(m) == nn.Conv2d:
-        torch.nn.init.kaiming_normal(m.weight)
+        torch.nn.init.kaiming_normal_(m.weight)
 
 
 class A2CMLP(nn.Module):
@@ -43,7 +43,7 @@ class A2CMLP(nn.Module):
 
     def init_weights(self, m):
         if type(m) == nn.Linear or type(m) == nn.Conv2d:
-            torch.nn.init.kaiming_normal(m.weight)
+            torch.nn.init.kaiming_normal_(m.weight)
 
     def forward(self, x):
         if torch.is_tensor(x):

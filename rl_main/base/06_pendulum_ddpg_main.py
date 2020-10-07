@@ -1,3 +1,5 @@
+# https://github.com/openai/gym/blob/master/gym/envs/classic_control/pendulum.py
+# https://mspries.github.io/jimmy_pendulum.html
 #!/usr/bin/env python3
 import math
 import time
@@ -10,7 +12,7 @@ import os
 import numpy as np
 
 from common.common_utils import make_gym_env, smooth
-from common.fast_rl.policy_based_model import unpack_batch_for_policy_gradient, unpack_batch_for_ddpg
+from common.fast_rl.policy_based_model import unpack_batch_for_ddpg
 from common.fast_rl.rl_agent import float32_preprocessor
 
 print(torch.__version__)
@@ -25,13 +27,17 @@ if not os.path.exists(MODEL_SAVE_DIR):
     os.makedirs(MODEL_SAVE_DIR)
 
 os.environ['KMP_DUPLICATE_LIB_OK'] = 'True'
-device = torch.device("cuda" if params.CUDA else "cpu")
+
+if torch.cuda.is_available():
+    device = torch.device("cuda" if params.CUDA else "cpu")
+else:
+    device = torch.device("cpu")
 
 
 def play_func(exp_queue, env, net):
     print(env.action_space.low[0], env.action_space.high[0])
-    action_min = env.action_space.low[0]
-    action_max = env.action_space.high[0]
+    action_min = env.action_space.low[0] / 2.0
+    action_max = env.action_space.high[0] / 2.0
 
     agent = rl_agent.AgentDDPG(
         net, n_actions=1, action_min=action_min, action_max=action_max, device=device, preprocessor=float32_preprocessor
@@ -155,14 +161,14 @@ def main():
                     stat_for_ddpg, step_idx, exp,
                     actor_grad_l2, actor_grad_max, actor_grad_variance,
                     critic_grad_l2, critic_grad_max, critic_grad_variance,
-                    loss_actor, loss_critic, loss_total
+                    loss_actor, loss_critic, loss_total, len(buffer.buffer)
                 )
 
 
 def model_update(buffer, actor_net, critic_net, target_actor_net, target_critic_net, actor_optimizer, critic_optimizer, stat_for_ddpg, step_idx, exp,
                  actor_grad_l2, actor_grad_max, actor_grad_variance,
                  critic_grad_l2, critic_grad_max, critic_grad_variance,
-                 loss_actor, loss_critic, loss_total):
+                 loss_actor, loss_critic, loss_total, buffer_length):
     batch = buffer.sample(params.BATCH_SIZE)
     batch_states_v, batch_actions_v, batch_rewards_v, batch_dones_mask, batch_last_states_v = unpack_batch_for_ddpg(
         batch, device
@@ -216,7 +222,7 @@ def model_update(buffer, actor_net, critic_net, target_actor_net, target_critic_
             loss_actor, loss_critic, loss_total,
             actor_grad_l2, actor_grad_variance, actor_grad_max,
             critic_grad_l2, critic_grad_variance, critic_grad_max,
-            exp.action
+            buffer_length, exp.action
         )
 
     return actor_grad_l2, actor_grad_max, actor_grad_variance, critic_grad_l2, critic_grad_max, critic_grad_variance, loss_actor, loss_critic, loss_total
