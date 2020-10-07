@@ -39,10 +39,7 @@ def play_func(env, net, exp_queue):
         eps_frames=params.EPSILON_MIN_STEP
     )
     agent = rl_agent.DQNAgent(net, action_selector, device=device)
-    if params.OMEGA:
-        exp_source = experience.ExperienceSourceNamedTuple(env, agent, steps_count=1)
-    else:
-        exp_source = experience.ExperienceSourceFirstLast(env, agent, gamma=params.GAMMA, steps_count=params.N_STEP)
+    exp_source = experience.ExperienceSourceNamedTuple(env, agent, steps_count=1)
     exp_source_iter = iter(exp_source)
 
     if params.DRAW_VIZ:
