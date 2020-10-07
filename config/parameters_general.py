@@ -61,6 +61,8 @@ class PARAMETERS_GENERAL:
     DRAW_VIZ = 1
     N_STEP = 1
     OMEGA = False
+    OMEGA_WINDOW_SIZE = 6
+    NEXT_STATE_IN_TRAJECTORY = True
     #########################################
     #########################################
 
