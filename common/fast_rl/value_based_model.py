@@ -335,7 +335,8 @@ def calc_loss_double_dqn(batch, net, tgt_net, gamma, cuda=False, cuda_async=Fals
         next_state_acts = next_state_acts.unsqueeze(-1)
         next_state_vals = tgt_net.target_model(next_states_v).gather(1, next_state_acts).squeeze(-1)
         next_state_vals[done_mask] = 0.0
-        exp_sa_vals = next_state_vals.detach() * (gamma ** last_steps_v) + rewards_v
+
+    exp_sa_vals = next_state_vals.detach() * (gamma ** last_steps_v) + rewards_v
 
     # return nn.MSELoss()(state_action_vals, exp_sa_vals)
     return F.smooth_l1_loss(state_action_vals, exp_sa_vals)
@@ -373,7 +374,8 @@ def calc_loss_per_double_dqn(buffer, batch, batch_indices, batch_weights, net, t
         next_state_acts = next_state_acts.unsqueeze(-1)
         next_state_vals = tgt_net.target_model(next_states_v).gather(1, next_state_acts).squeeze(-1)
         next_state_vals[done_mask] = 0.0
-        exp_sa_vals = next_state_vals.detach() * (params.GAMMA ** last_steps_v) + rewards_v
+
+    exp_sa_vals = next_state_vals.detach() * (params.GAMMA ** last_steps_v) + rewards_v
 
     losses_v = batch_weights_v * F.smooth_l1_loss(state_action_vals, exp_sa_vals)
     return losses_v.mean(), (losses_v + 1e-5).data.cpu().numpy()
@@ -404,9 +406,9 @@ def calc_loss_per_double_dqn_for_omega(buffer, batch, batch_indices, batch_weigh
         next_state_actions = next_state_actions.unsqueeze(-1)
         next_state_values = tgt_net.target_model(next_states_v).gather(1, next_state_actions).squeeze(-1)
 
-        expected_state_action_values = calc_omega_return(rewards, done_mask, next_state_values, params)
-        if cuda:
-            expected_state_action_values = expected_state_action_values.cuda(non_blocking=cuda_async)
+    expected_state_action_values = calc_omega_return(rewards, done_mask, next_state_values, params)
+    if cuda:
+        expected_state_action_values = expected_state_action_values.cuda(non_blocking=cuda_async)
 
     losses_v = batch_weights_v * F.smooth_l1_loss(state_action_values, expected_state_action_values)
     return losses_v.mean(), (losses_v + 1e-5).data.cpu().numpy()
