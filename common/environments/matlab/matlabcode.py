@@ -77,12 +77,22 @@ class SimulinkPlant:
         # Generate the Control action based on the past outputs
 
         if action == 0:
-            torque = -0.1
+            torque = -3
         elif action == 1:
-            torque = 0.1
+            torque = 3
+
+        elif action == 2:
+            torque = -1
+        elif action == 3:
+            torque = 1
+
+        elif action == 4:
+            torque = -0.01
+        elif action == 5:
+            torque = 0.01
+
         else:
             torque = 0
-
 
         simulation_time = self.eng.get_param(self.modelName, 'SimulationTime')
 
