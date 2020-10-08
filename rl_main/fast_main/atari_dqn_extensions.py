@@ -39,10 +39,7 @@ def play_func(env, net, exp_queue):
         eps_frames=params.EPSILON_MIN_STEP
     )
     agent = rl_agent.DQNAgent(net, action_selector, device=device)
-    if params.OMEGA:
-        exp_source = experience.ExperienceSourceNamedTuple(env, agent, steps_count=1)
-    else:
-        exp_source = experience.ExperienceSourceFirstLast(env, agent, gamma=params.GAMMA, steps_count=params.N_STEP)
+    exp_source = experience.ExperienceSourceNamedTuple(env, agent, steps_count=1)
     exp_source_iter = iter(exp_source)
 
     if params.DRAW_VIZ:
@@ -109,9 +106,9 @@ def main():
     tgt_net = rl_agent.TargetNet(net)
 
     if params.OMEGA:
-        buffer = experience.PrioReplayBuffer(exp_source=None, buf_size=params.REPLAY_BUFFER_SIZE, step_n=6)
+        buffer = experience.PrioReplayBuffer(exp_source=None, buf_size=params.REPLAY_BUFFER_SIZE, n_step=params.OMEGA_WINDOW_SIZE)
     else:
-        buffer = experience.PrioReplayBuffer(exp_source=None, buf_size=params.REPLAY_BUFFER_SIZE, step_n=params.N_STEP)
+        buffer = experience.PrioReplayBuffer(exp_source=None, buf_size=params.REPLAY_BUFFER_SIZE, n_step=params.N_STEP)
     optimizer = optim.Adam(net.parameters(), lr=params.LEARNING_RATE)
 
     exp_queue = mp.Queue(maxsize=params.TRAIN_STEP_FREQ * 2)
@@ -148,7 +145,7 @@ def main():
             )
         else:
             loss_v, sample_prios = value_based_model.calc_loss_per_double_dqn(
-                buffer.buffer, batch, batch_weights, net, tgt_net, gamma=params.GAMMA, cuda=params.CUDA, cuda_async=True
+                buffer.buffer, batch, batch_indices, batch_weights, net, tgt_net, params, cuda=params.CUDA, cuda_async=True
             )
         loss_v.backward()
         optimizer.step()
@@ -160,6 +157,8 @@ def main():
 
         if frame_idx % params.TARGET_NET_SYNC_STEP_PERIOD < params.TRAIN_STEP_FREQ:
             tgt_net.sync()
+
+        del sample_prios
 
 # python atari_dqn.py --env=pong --draw_viz=1 --cuda
 # python atari_dqn.py --env=breakout --draw_viz=1 --cuda

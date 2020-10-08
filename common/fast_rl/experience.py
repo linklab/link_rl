@@ -18,25 +18,23 @@ BETA_FRAMES = 100000
 
 # one single experience step
 Experience = namedtuple('Experience', ['state', 'action', 'reward', 'done'])
+ExperienceWithNoise = namedtuple('ExperienceWithNoise', ['state', 'action', 'noise', 'reward', 'done'])
+
+ExperienceFirstLast = collections.namedtuple(
+    'ExperienceFirstLast', ('state', 'action', 'reward', 'last_state', 'last_step')
+)
+ExperienceFirstLastWithNoise = collections.namedtuple(
+    'ExperienceFirstLastWithNoise', ('state', 'action', 'noise', 'reward', 'last_state', 'last_step')
+)
 
 
 class ExperienceSourceSingleEnv:
     """
     Simple n-step experience source using only SINGLE environment
-
     Every experience contains n list of Experience entries
     """
 
     def __init__(self, env, agent, steps_count=2, steps_delta=1):
-        """
-        Create simple experience source
-        :param env: environment or list of environments to be used
-        :param agent: callable to convert batch of states into actions to take
-        :param steps_count: count of steps to track for every experience chain
-        :param steps_delta: how many steps to do between experience items
-        :param vectorized: support of vectorized envs from OpenAI universe
-        """
-        # assert isinstance(env, (gym.Env, list, tuple))
         assert isinstance(agent, BaseAgent)
         assert isinstance(steps_count, int)
         assert steps_count >= 1
@@ -48,92 +46,73 @@ class ExperienceSourceSingleEnv:
         self.episode_done_step_lst = []
 
     def __iter__(self):
-        states, agent_states, histories, cur_rewards, cur_steps = [], [], [], [], []
-        env_lens = []
+        state = self.env.reset()
 
-        obs = self.env.reset()
-        obs_len = 1
-        states.append(obs)
-        env_lens.append(obs_len)
-
-        histories.append(deque(maxlen=self.steps_count))
-        cur_rewards.append(0.0)
-        cur_steps.append(0)
-        agent_states.append(self.agent.initial_state())
+        history = deque(maxlen=self.steps_count)
+        cur_reward = 0.0
+        cur_step = 0
+        agent_state = self.agent.initial_agent_state()
+        noise = None
 
         iter_idx = 0
         while True:
-            actions = [None] * len(states)
             states_input = []
-            states_indices = []
-            for idx, state in enumerate(states):
-                if state is None:
-                    actions[idx] = self.env.action_space.sample()
-                else:
-                    states_input.append(state)
-                    states_indices.append(idx)
+            states_input.append(state)
 
-            if states_input:
+            agent_states_input = []
+            agent_states_input.append(agent_state)
+
+            if isinstance(self.agent, AgentDDPG):
+                actions, noises, new_agent_states = self.agent(states_input, agent_states_input)
+                noise = noises[0]
+            else:
+                actions, new_agent_states = self.agent(states_input, agent_states_input)
+
+            agent_state = new_agent_states[0]
+            action = actions[0]
+
+            next_state, r, is_done, info = self.env.step(action)
+
+            if 'original_reward' in info:
+                cur_reward += info['original_reward']
+            else:
+                cur_reward += r
+
+            cur_step += 1
+
+            if state is not None:
                 if isinstance(self.agent, AgentDDPG):
-                    states_actions, noise, new_agent_states = self.agent(states_input, agent_states)
+                    history.append(ExperienceWithNoise(state=state, action=action, noise=noise, reward=r, done=is_done))
                 else:
-                    states_actions, new_agent_states = self.agent(states_input, agent_states)
+                    history.append(Experience(state=state, action=action, reward=r, done=is_done))
 
-                for idx, action in enumerate(states_actions):
-                    g_idx = states_indices[idx]
-                    actions[g_idx] = action
-                    agent_states[g_idx] = new_agent_states[idx]
-            grouped_actions = _group_list(actions, env_lens)
+            if len(history) == self.steps_count and iter_idx % self.steps_delta == 0:
+                yield tuple(history)
 
-            global_ofs = 0
-            for env_idx, (env, action_n) in enumerate(zip(self.pool, grouped_actions)):
-                if self.vectorized:
-                    next_state_n, r_n, is_done_n, info = env.step(action_n)
-                else:
-                    next_state, r, is_done, info = env.step(action_n[0])
-                    next_state_n, r_n, is_done_n = [next_state], [r], [is_done]
+            state = next_state
 
-                for ofs, (action, next_state, r, is_done) in enumerate(zip(action_n, next_state_n, r_n, is_done_n)):
-                    idx = global_ofs + ofs
-                    state = states[idx]
-                    history = histories[idx]
+            if is_done:
+                # in case of very short episode (shorter than our steps count), send gathered history
+                if 0 < len(history) < self.steps_count:
+                    yield tuple(history)
 
-                    # cur_rewards[idx] += r
-                    cur_rewards[idx] += info['original_reward']
-                    cur_steps[idx] += 1
+                # generate tail of history
+                while len(history) > 1:
+                    # removes the element (the old one) from the left side of the deque and returns the value
+                    history.popleft()
+                    yield tuple(history)
 
-                    if state is not None:
-                        history.append(Experience(state=state, action=action, reward=r, done=is_done))
+                state = self.env.reset()
+                agent_state = self.agent.initial_agent_state()
 
-                    if len(history) == self.steps_count and iter_idx % self.steps_delta == 0:
-                        yield tuple(history)
-                    states[idx] = next_state
+                if 'ale.lives' not in info or info['ale.lives'] == 0:
+                    self.episode_reward_lst.append(cur_reward)
+                    self.episode_done_step_lst.append(cur_step)
+                    cur_reward = 0.0
+                    cur_step = 0
 
-                    if is_done:
-                        # in case of very short episode (shorter than our steps count), send gathered history
-                        if 0 < len(history) < self.steps_count:
-                            yield tuple(history)
+                history.clear()
 
-                        # generate tail of history
-                        while len(history) > 1:
-                            history.popleft()
-                            yield tuple(history)
-
-                        states[idx] = env.reset() if not self.vectorized else None
-                        agent_states[idx] = self.agent.initial_state()
-
-                        if 'ale.lives' not in info or info['ale.lives'] == 0:
-                            self.episode_reward_lst.append(cur_rewards[idx])
-                            self.episode_done_step_lst.append(cur_steps[idx])
-                            cur_rewards[idx] = 0.0
-                            cur_steps[idx] = 0
-                        #     # vectorized envs are reset automatically
-                        #     states[idx] = env.reset() if not self.vectorized else None
-                        #     agent_states[idx] = self.agent.initial_state()
-
-                        history.clear()
-
-                global_ofs += len(action_n)
             iter_idx += 1
 
     def pop_episode_reward_lst(self):
@@ -149,6 +128,42 @@ class ExperienceSourceSingleEnv:
             self.episode_reward_lst = []
             self.episode_done_step_lst = []
         return res
+
+
+class ExperienceSourceSingleEnvFirstLast(ExperienceSourceSingleEnv):
+    def __init__(self, env, agent, gamma, steps_count=1, steps_delta=1):
+        assert isinstance(gamma, float)
+        super(ExperienceSourceSingleEnvFirstLast, self).__init__(env, agent, steps_count+1, steps_delta)
+        self.gamma = gamma
+        self.steps_count = steps_count
+
+    def __iter__(self):
+        for exp in super(ExperienceSourceSingleEnvFirstLast, self).__iter__():
+            if exp[-1].done and len(exp) <= self.steps_count:
+                last_state = None
+                elems = exp
+            else:
+                last_state = exp[-1].state
+                elems = exp[:-1]
+            total_reward = 0.0
+            for e in reversed(elems):
+                total_reward *= self.gamma
+                total_reward += e.reward
+
+            if isinstance(self.agent, AgentDDPG):
+                exp = ExperienceFirstLastWithNoise(
+                    state=exp[0].state, action=exp[0].action, noise=exp[0].noise, reward=total_reward, last_state=last_state, last_step=len(elems)
+                )
+            else:
+                exp = ExperienceFirstLast(
+                    state=exp[0].state, action=exp[0].action, reward=total_reward, last_state=last_state, last_step=len(elems)
+                )
+
+            yield exp
+
+
+#################################
+#################################
 
 
 class ExperienceSource:
@@ -202,7 +217,7 @@ class ExperienceSource:
                 histories.append(deque(maxlen=self.steps_count))
                 cur_rewards.append(0.0)
                 cur_steps.append(0)
-                agent_states.append(self.agent.initial_state())
+                agent_states.append(self.agent.initial_agent_state())
         
         #print(states, agent_states, histories, cur_rewards, cur_steps)
 
@@ -219,9 +234,11 @@ class ExperienceSource:
                     states_indices.append(idx)
             if states_input:
                 if isinstance(self.agent, AgentDDPG):
-                    states_actions, noise, new_agent_states = self.agent(states_input, agent_states)
+                    states_actions, noises, new_agent_states = self.agent(states_input, agent_states)
                 else:
                     states_actions, new_agent_states = self.agent(states_input, agent_states)
+
+                # TODO: noise에 대한 처리
 
                 for idx, action in enumerate(states_actions):
                     g_idx = states_indices[idx]
@@ -267,7 +284,7 @@ class ExperienceSource:
                             yield tuple(history)
 
                         states[idx] = env.reset() if not self.vectorized else None
-                        agent_states[idx] = self.agent.initial_state()
+                        agent_states[idx] = self.agent.initial_agent_state()
 
                         if 'ale.lives' not in info or info['ale.lives'] == 0:
                             self.episode_reward_lst.append(cur_rewards[idx])
@@ -276,7 +293,7 @@ class ExperienceSource:
                             cur_steps[idx] = 0
                         #     # vectorized envs are reset automatically
                         #     states[idx] = env.reset() if not self.vectorized else None
-                        #     agent_states[idx] = self.agent.initial_state()
+                        #     agent_states[idx] = self.agent.initial_agent_state()
 
                         history.clear()
                         
@@ -325,10 +342,6 @@ class ExperienceSourceNamedTuple(ExperienceSource):
             yield Experience(
                 state=exp[0].state, action=exp[0].action, reward=exp[0].reward, done=exp[0].done
             )
-
-
-# those entries are emitted from ExperienceSourceFirstLast. Reward is discounted over the trajectory piece
-ExperienceFirstLast = collections.namedtuple('ExperienceFirstLast', ('state', 'action', 'reward', 'last_state', 'last_step'))
 
 
 class ExperienceSourceFirstLast(ExperienceSource):
@@ -423,6 +436,8 @@ class ExperienceSourceRollouts:
                 actions, noise, critics = self.agent(states, critics)
             else:
                 actions, critics = self.agent(states, critics)
+
+            # TODO: noise에 대한 처리
 
             rewards = []
             dones = []
@@ -668,7 +683,7 @@ class PrioritizedReplayBuffer(ExperienceReplayBuffer):
 
 
 class PrioReplayBuffer:
-    def __init__(self, exp_source, buf_size, prob_alpha=0.6, step_n=1):
+    def __init__(self, exp_source, buf_size, prob_alpha=0.6, n_step=1):
         assert isinstance(exp_source, (ExperienceSource, type(None)))
         assert isinstance(buf_size, int)
         self.exp_source_iter = None if exp_source is None else iter(exp_source)
@@ -678,7 +693,7 @@ class PrioReplayBuffer:
         self.buffer = []
         self.priorities = np.zeros((buf_size, ), dtype=np.float32)
         self.beta = BETA_START
-        self.step_n = step_n
+        self.n_step = n_step
 
     def update_beta(self, idx):
         v = BETA_START + idx * (1.0 - BETA_START) / BETA_FRAMES
@@ -715,9 +730,9 @@ class PrioReplayBuffer:
             prios = self.priorities[:self.pos]
         probs = prios ** self.prob_alpha
 
-        probs = probs[:-self.step_n]
+        probs = probs[:-self.n_step]
         probs /= probs.sum()
-        indices = np.random.choice(len(self.buffer)-self.step_n, batch_size, p=probs)
+        indices = np.random.choice(len(self.buffer) - self.n_step, batch_size, p=probs)
         samples = [self.buffer[idx] for idx in indices]
         total = len(self.buffer)
         weights = (total * probs[indices]) ** (-self.beta)

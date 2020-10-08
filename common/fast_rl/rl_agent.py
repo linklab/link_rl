@@ -46,7 +46,7 @@ class BaseAgent:
     """
     Abstract Agent interface
     """
-    def initial_state(self):
+    def initial_agent_state(self):
         """
         Should create initial empty state for the agent. It will be called for the start of the episode
         :return: Anything agent want to remember
@@ -236,22 +236,24 @@ class AgentDDPG(BaseAgent):
     """
     Agent implementing Orstein-Uhlenbeck exploration process
     """
-    def __init__(self, model, n_actions, action_min, action_max, device="cpu", ou_enabled=True, ou_mu=0.0, ou_teta=0.15, ou_sigma=0.2, ou_epsilon=1.0,
-                 preprocessor=default_states_preprocessor):
+    def __init__(self, model, n_actions, action_min, action_max, device="cpu", ou_enabled=True,
+                 ou_mu=0.0, ou_theta=0.15, ou_sigma=0.2, ou_epsilon=1.0, preprocessor=default_states_preprocessor):
         self.model = model
         self.device = device
         self.ou_enabled = ou_enabled
         self.ou_mu = ou_mu
-        self.ou_teta = ou_teta
+        self.ou_theta = ou_theta
         self.ou_sigma = ou_sigma
         self.ou_epsilon = ou_epsilon
         self.preprocessor = preprocessor
         self.action_min = action_min
         self.action_max = action_max
-        self.ou_noise = OrnsteinUhlenbeckActionNoise(mu=np.zeros(n_actions), sigma=ou_sigma * np.ones(n_actions))
+        self.ou_noise = OrnsteinUhlenbeckActionNoise(
+            mu=np.zeros(n_actions), sigma=ou_sigma * np.ones(n_actions), theta=ou_theta
+        )
         self.ou_noise.reset()
 
-    def initial_state(self):
+    def initial_agent_state(self):
         return None
 
     def __call__(self, states, agent_states):
@@ -261,24 +263,27 @@ class AgentDDPG(BaseAgent):
                 states = states.to(self.device)
 
         mu_v = self.model(states)
-
-        # if self.ou_enabled and self.ou_epsilon > 0:
-        #     new_a_states = []
-        #     for a_state, action in zip(agent_states, actions):
-        #         if a_state is None:
-        #             a_state = np.zeros(shape=action.shape, dtype=np.float32)
-        #         a_state += self.ou_teta * (self.ou_mu - a_state)
-        #         a_state += self.ou_sigma * np.random.normal(size=action.shape)
-        #         action += self.ou_epsilon * a_state
-        #         new_a_states.append(a_state)
-        # else:
-        #     new_a_states = agent_states
-
-        new_a_states = agent_states
-
-        noise = torch.Tensor(self.ou_noise.noise()).to(self.device)
-        mu_v += noise
-
         actions = mu_v.data.cpu().numpy()
+
+        if self.ou_enabled and self.ou_epsilon > 0:
+            new_agent_states = []
+            for agent_state, action in zip(agent_states, actions):
+                if agent_state is None:
+                    agent_state = np.zeros(shape=action.shape, dtype=np.float32)
+                agent_state += self.ou_theta * (self.ou_mu - agent_state)
+                agent_state += self.ou_sigma * np.random.normal(size=action.shape)
+                action += self.ou_epsilon * agent_state
+                new_agent_states.append(agent_state)
+        else:
+            new_agent_states = agent_states
+
+        # if agent_states is None:
+        #     agent_states = [None] * len(states)
+        #
+        # noise_v = torch.Tensor(self.ou_noise.noise()).unsqueeze(dim=-1).to(self.device)
+        # mu_v += noise_v
+        # noises = noise_v.data.cpu().numpy()
+
         actions = np.clip(actions, self.action_min, self.action_max)
-        return actions, noise, new_a_states
+        noises = new_agent_states
+        return actions, noises, new_agent_states
