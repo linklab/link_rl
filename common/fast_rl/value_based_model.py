@@ -225,14 +225,14 @@ def unpack_batch_for_n_step(buffer, batch, batch_indices, params):
 
             if current_exp.done:
                 rewards.append(n_step_rewards)
-                next_states.append(next_exp.state)
+                next_states.append(np.array(next_exp.state, copy=False))
                 dones.append(True)
                 last_steps.append(i + 1)
                 break
             else:
                 if i == params.N_STEP - 1:
                     rewards.append(n_step_rewards)
-                    next_states.append(next_exp.state)
+                    next_states.append(np.array(next_exp.state, copy=False))
                     dones.append(False)
                     last_steps.append(i + 1)
 
@@ -255,7 +255,7 @@ def unpack_batch_for_omega(buffer, batch, batch_indices, omega_window_size):
         for i in range(omega_window_size):
             n_step_rewards.append(current_exp.reward)
             next_exp = buffer[batch_indices[idx] + i + 1]
-            next_states.append(next_exp.state)
+            next_states.append(np.array(next_exp.state, copy=False))
 
             if current_exp.done:
                 done_mask.append(0)
