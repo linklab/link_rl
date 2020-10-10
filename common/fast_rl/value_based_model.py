@@ -39,39 +39,56 @@ class NoisyLinear(nn.Linear):
         return F.linear(input, v, bias)
 
 
-class NoisyFactorizedLinear(nn.Linear):
-    """
-    NoisyNet layer with factorized gaussian noise
+# class NoisyLinear(nn.Module):
+#     def __init__(self, in_features, out_features, std_init=0.4):
+#         super(NoisyLinear, self).__init__()
+#
+#         self.in_features = in_features
+#         self.out_features = out_features
+#         self.std_init = std_init
+#
+#         self.weight_mu = nn.Parameter(torch.FloatTensor(out_features, in_features))
+#         self.weight_sigma = nn.Parameter(torch.FloatTensor(out_features, in_features))
+#         self.register_buffer('weight_epsilon', torch.FloatTensor(out_features, in_features))
+#
+#         self.bias_mu = nn.Parameter(torch.FloatTensor(out_features))
+#         self.bias_sigma = nn.Parameter(torch.FloatTensor(out_features))
+#         self.register_buffer('bias_epsilon', torch.FloatTensor(out_features))
+#
+#         self.reset_parameters()
+#         self.reset_noise()
+#
+#     def forward(self, x):
+#         if self.training:
+#             weight = self.weight_mu + self.weight_sigma.mul(Variable(self.weight_epsilon))
+#             bias = self.bias_mu + self.bias_sigma.mul(Variable(self.bias_epsilon))
+#         else:
+#             weight = self.weight_mu
+#             bias = self.bias_mu
+#
+#         return F.linear(x, weight, bias)
+#
+#     def reset_parameters(self):
+#         mu_range = 1 / math.sqrt(self.weight_mu.size(1))
+#
+#         self.weight_mu.data.uniform_(-mu_range, mu_range)
+#         self.weight_sigma.data.fill_(self.std_init / math.sqrt(self.weight_sigma.size(1)))
+#
+#         self.bias_mu.data.uniform_(-mu_range, mu_range)
+#         self.bias_sigma.data.fill_(self.std_init / math.sqrt(self.bias_sigma.size(0)))
+#
+#     def reset_noise(self):
+#         epsilon_in = self._scale_noise(self.in_features)
+#         epsilon_out = self._scale_noise(self.out_features)
+#
+#         self.weight_epsilon.copy_(epsilon_out.ger(epsilon_in))
+#         self.bias_epsilon.copy_(self._scale_noise(self.out_features))
+#
+#     def _scale_noise(self, size):
+#         x = torch.randn(size)
+#         x = x.sign().mul(x.abs().sqrt())
+#         return x
 
-    N.B. nn.Linear already initializes weight and bias to
-    """
-    def __init__(self, in_features, out_features, sigma_zero=0.4, bias=True):
-        super(NoisyFactorizedLinear, self).__init__(in_features, out_features, bias=bias)
-        sigma_init = sigma_zero / math.sqrt(in_features)
-        w = torch.full((out_features, in_features), sigma_init)
-        self.sigma_weight = nn.Parameter(w)
-        z1 = torch.zeros(1, in_features)
-        self.register_buffer("epsilon_input", z1)
-        z2 = torch.zeros(out_features, 1)
-        self.register_buffer("epsilon_output", z2)
-        if bias:
-            w = torch.full((out_features,), sigma_init)
-            self.sigma_bias = nn.Parameter(w)
-
-    def forward(self, input):
-        self.epsilon_input.normal_()
-        self.epsilon_output.normal_()
-
-        func = lambda x: torch.sign(x) * torch.sqrt(torch.abs(x))
-        eps_in = func(self.epsilon_input.data)
-        eps_out = func(self.epsilon_output.data)
-
-        bias = self.bias
-        if bias is not None:
-            bias = bias + self.sigma_bias * eps_out.t()
-        noise_v = torch.mul(eps_in, eps_out)
-        v = self.weight + self.sigma_weight * noise_v
-        return F.linear(input, v, bias)
 
 
 class NoisyDQN(nn.Module):
@@ -308,16 +325,27 @@ class RainbowDQNMLP(nn.Module):
             nn.ReLU()
         )
 
+        self.noisy_linear_1 = NoisyLinear(hidden_size_2, 128)
+        self.noisy_linear_2 = NoisyLinear(128, n_actions)
+
         self.fc_adv = nn.Sequential(
-            NoisyLinear(hidden_size_2, 128),
+            self.noisy_linear_1,
             nn.ReLU(),
-            NoisyLinear(128, n_actions)
+            self.noisy_linear_2
         )
         self.fc_val = nn.Sequential(
             nn.Linear(hidden_size_2, 128),
             nn.ReLU(),
             nn.Linear(128, 1)
         )
+
+    #     self.net.apply(self.init_weights)
+    #     self.fc_adv.apply(self.init_weights)
+    #     self.fc_val.apply(self.init_weights)
+    #
+    # def init_weights(self, m):
+    #     if type(m) == nn.Linear or type(m) == nn.Conv2d:
+    #         torch.nn.init.kaiming_normal_(m.weight)
 
     def forward(self, x):
         if torch.is_tensor(x):
@@ -548,6 +576,7 @@ def calc_loss_per_double_dqn(buffer, batch, batch_indices, batch_weights, net, t
     actions_v = actions_v.unsqueeze(-1)
     state_action_values = net(states_v).gather(1, actions_v)
     state_action_values = state_action_values.squeeze(-1)
+
     with torch.no_grad():
         next_state_actions = net(next_states_v).max(1)[1]
         next_state_actions = next_state_actions.unsqueeze(-1)
@@ -555,9 +584,7 @@ def calc_loss_per_double_dqn(buffer, batch, batch_indices, batch_weights, net, t
         next_state_values[done_mask] = 0.0
 
     expected_state_action_values = next_state_values.detach() * (params.GAMMA ** last_steps_v) + rewards_v
-
     losses_v = batch_weights_v * F.smooth_l1_loss(state_action_values, expected_state_action_values)
-
     return losses_v.mean(), (losses_v + 1e-5).data.cpu().numpy()
 
 

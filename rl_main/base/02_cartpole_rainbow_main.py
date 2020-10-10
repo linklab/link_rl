@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+# https://github.com/higgsfield/RL-Adventure
 import time
 import torch
 import torch.multiprocessing as mp
@@ -42,7 +43,10 @@ def play_func(exp_queue, env, net):
     step_idx = 0
     next_save_frame_idx = params.MODEL_SAVE_STEP_PERIOD
 
-    with utils.RewardTracker(params.STOP_MEAN_EPISODE_REWARD, params.AVG_EPISODE_SIZE_FOR_STAT, params.DRAW_VIZ, stat) as reward_tracker:
+    with utils.RewardTracker(
+            stop_mean_episode_reward=params.STOP_MEAN_EPISODE_REWARD,
+            average_size_for_stats=params.AVG_EPISODE_SIZE_FOR_STAT,frame=True,
+            draw_viz=params.DRAW_VIZ, stat=stat) as reward_tracker:
         while step_idx < params.MAX_GLOBAL_STEPS:
             step_idx += 1
             exp = next(exp_source_iter)
@@ -116,12 +120,23 @@ def main():
         optimizer.zero_grad()
         batch, batch_indices, batch_weights = buffer.sample(params.BATCH_SIZE)
         loss_v, sample_prios = value_based_model.calc_loss_per_double_dqn(
-            buffer.buffer, batch, batch_indices, batch_weights, net, target_net, params, cuda=params.CUDA, cuda_async=True
+            buffer=buffer.buffer,
+            batch=batch,
+            batch_indices=batch_indices,
+            batch_weights=batch_weights,
+            net=net,
+            tgt_net=target_net,
+            params=params, cuda=params.CUDA, cuda_async=True
         )
         loss_v.backward()
         optimizer.step()
         buffer.update_priorities(batch_indices, sample_prios)
         buffer.update_beta(step_idx)
+
+        # net.noisy_linear_1.reset_parameters()
+        # net.noisy_linear_2.reset_parameters()
+        # target_net.model.noisy_linear_1.reset_parameters()
+        # target_net.model.noisy_linear_2.reset_parameters()
 
         if params.DRAW_VIZ and step_idx % 100 == 0:
             stat_for_value_optimization.draw_optimization_performance(step_idx, loss_v.item())
