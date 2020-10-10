@@ -27,19 +27,11 @@ else:
 
 
 def play_func(exp_queue, env, net):
-    action_selector = actions.EpsilonGreedyActionSelector(epsilon=params.EPSILON_INIT)
-
-    epsilon_tracker = actions.EpsilonTracker(
-        action_selector=action_selector,
-        eps_start=params.EPSILON_INIT,
-        eps_final=params.EPSILON_MIN,
-        eps_frames=params.EPSILON_MIN_STEP
-    )
+    action_selector = actions.ArgmaxActionSelector()
 
     agent = rl_agent.DQNAgent(net, action_selector, device=device)
 
     experience_source = experience.ExperienceSourceFirstLast(env, agent, gamma=params.GAMMA, steps_count=params.N_STEP)
-
     exp_source_iter = iter(experience_source)
 
     if params.DRAW_VIZ:
@@ -50,21 +42,17 @@ def play_func(exp_queue, env, net):
     step_idx = 0
     next_save_frame_idx = params.MODEL_SAVE_STEP_PERIOD
 
-    with utils.RewardTracker(stop_mean_episode_reward=params.STOP_MEAN_EPISODE_REWARD,
-                             average_size_for_stats=params.AVG_EPISODE_SIZE_FOR_STAT,
-                             frame=True, draw_viz=params.DRAW_VIZ, stat=stat) as reward_tracker:
+    with utils.RewardTracker(params.STOP_MEAN_EPISODE_REWARD, params.AVG_EPISODE_SIZE_FOR_STAT, params.DRAW_VIZ, stat) as reward_tracker:
         while step_idx < params.MAX_GLOBAL_STEPS:
             step_idx += 1
             exp = next(exp_source_iter)
             # print(exp)
             exp_queue.put(exp)
 
-            epsilon_tracker.udpate(step_idx)
-
             episode_rewards = experience_source.pop_episode_reward_lst()
             if episode_rewards:
                 solved, mean_episode_reward = reward_tracker.set_episode_reward(
-                    episode_rewards[0], step_idx, action_selector.epsilon
+                    episode_rewards[0], step_idx, 0.0
                 )
 
                 if step_idx >= next_save_frame_idx:
@@ -87,7 +75,7 @@ def main():
 
     env = make_gym_env(params.ENVIRONMENT_ID.value, seed=params.SEED)
 
-    net = value_based_model.DuelingDQNMLP(
+    net = value_based_model.RainbowDQNMLP(
         obs_size=4,
         hidden_size_1=128, hidden_size_2=128,
         n_actions=2

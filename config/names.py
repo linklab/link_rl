@@ -51,10 +51,12 @@ class DeepLearningModelName(enum.Enum):
     NO_MODEL = "NO_MODEL"
     DUELING_DQN_CNN = "DUELING_DQN_CNN"
     DUELING_DQN_MLP = "DUELING_DQN_MLP"
+    RAINBOW_DQN_MLP = "RAINBOW_DQN_MLP"
 
 
 class RLAlgorithmName(enum.Enum):
     DQN_FAST_V0 = "DQN_FAST_V0"                     # FAST_RL
+    RAINBOW_FAST_V0 = "RAINBOW_FAST_V0"             # FAST_RL
     DDPG_FAST_V0 = "DDPG_FAST_V0"                   # FAST_RL
     A2C_FAST_V0 = "A2C_FAST_V0"                     # FAST_RL
     A2C_CONTINUOUS_ACTION_FAST_V0 = "A2C_FAST_V0"   # FAST_RL

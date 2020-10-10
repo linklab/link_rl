@@ -13,6 +13,8 @@ BETA_FRAMES = 100000
 Vmax = 10
 Vmin = -10
 N_ATOMS = 51
+
+# DELTA_Z: the width of every atom in our value range
 DELTA_Z = (Vmax - Vmin) / (N_ATOMS - 1)
 
 
@@ -272,33 +274,39 @@ class DistributionalDQN(nn.Module):
         return self.softmax(t.view(-1, N_ATOMS)).view(t.size())
 
 
-def distr_projection(next_distr, rewards, dones, gamma):
+def distribution_projection(distribution, rewards, dones, Vmin, Vmax, N_ATOMS, gamma):
     """
     Perform distribution projection aka Catergorical Algorithm from the
     "A Distributional Perspective on RL" paper
     """
     batch_size = len(rewards)
-    proj_distr = np.zeros((batch_size, N_ATOMS),
-                          dtype=np.float32)
+
+    # to keep the result of the projection
+    projected_distribution = np.zeros((batch_size, N_ATOMS), dtype=np.float32)
+
+    # the width of every atom in our value range
+    # Vmax: 10, Vmin: -10, N_ATOMS: 51 --> delta_z: 0.4
     delta_z = (Vmax - Vmin) / (N_ATOMS - 1)
+
     for atom in range(N_ATOMS):
+        # reward: 1, Vmin: -10, atom: 0, gamma: 0.99 --> v = 1 + (-10) * 0.99 = -8.9
         v = rewards + (Vmin + atom * delta_z) * gamma
         tz_j = np.minimum(Vmax, np.maximum(Vmin, v))
+
+        # tz_j: -8.9, Vmin: -10, delta_z: 0.4 --> b_j = 2.75
         b_j = (tz_j - Vmin) / delta_z
-        l = np.floor(b_j).astype(np.int64)
-        u = np.ceil(b_j).astype(np.int64)
+        l = np.floor(b_j).astype(np.int64)  # b_j: 2.75 --> l = 2
+        u = np.ceil(b_j).astype(np.int64)   # b_j: 2.75 --> u = 3
         eq_mask = u == l
-        proj_distr[eq_mask, l[eq_mask]] += \
-            next_distr[eq_mask, atom]
+        projected_distribution[eq_mask, l[eq_mask]] += distribution[eq_mask, atom]
+
         ne_mask = u != l
-        proj_distr[ne_mask, l[ne_mask]] += \
-            next_distr[ne_mask, atom] * (u - b_j)[ne_mask]
-        proj_distr[ne_mask, u[ne_mask]] += \
-            next_distr[ne_mask, atom] * (b_j - l)[ne_mask]
+        projected_distribution[ne_mask, l[ne_mask]] += distribution[ne_mask, atom] * (u - b_j)[ne_mask]
+        projected_distribution[ne_mask, u[ne_mask]] += distribution[ne_mask, atom] * (b_j - l)[ne_mask]
+
     if dones.any():
-        proj_distr[dones] = 0.0
-        tz_j = np.minimum(
-            Vmax, np.maximum(Vmin, rewards[dones]))
+        projected_distribution[dones] = 0.0
+        tz_j = np.minimum(Vmax, np.maximum(Vmin, rewards[dones]))
         b_j = (tz_j - Vmin) / delta_z
         l = np.floor(b_j).astype(np.int64)
         u = np.ceil(b_j).astype(np.int64)
@@ -306,16 +314,15 @@ def distr_projection(next_distr, rewards, dones, gamma):
         eq_dones = dones.copy()
         eq_dones[dones] = eq_mask
         if eq_dones.any():
-            proj_distr[eq_dones, l[eq_mask]] = 1.0
+            projected_distribution[eq_dones, l[eq_mask]] = 1.0
         ne_mask = u != l
         ne_dones = dones.copy()
         ne_dones[dones] = ne_mask
         if ne_dones.any():
-            proj_distr[ne_dones, l[ne_mask]] = \
-                (u - b_j)[ne_mask]
-            proj_distr[ne_dones, u[ne_mask]] = \
-                (b_j - l)[ne_mask]
-    return proj_distr
+            projected_distribution[ne_dones, l[ne_mask]] = (u - b_j)[ne_mask]
+            projected_distribution[ne_dones, u[ne_mask]] = (b_j - l)[ne_mask]
+
+    return projected_distribution
 
 
 class RainbowDQN(nn.Module):

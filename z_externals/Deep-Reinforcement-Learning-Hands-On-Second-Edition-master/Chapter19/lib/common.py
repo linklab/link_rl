@@ -1,6 +1,6 @@
 import numpy as np
 import torch
-import torch.distributions as distr
+import torch.distributions as distribution
 
 import ptan
 
@@ -51,7 +51,7 @@ def unpack_batch_sac(batch, val_net, twinq_net, policy_net,
 
     # references for the critic network
     mu_v = policy_net(states_v)
-    act_dist = distr.Normal(mu_v, torch.exp(policy_net.logstd))
+    act_dist = distribution.Normal(mu_v, torch.exp(policy_net.logstd))
     acts_v = act_dist.sample()
     q1_v, q2_v = twinq_net(states_v, acts_v)
     # element-wise minimum

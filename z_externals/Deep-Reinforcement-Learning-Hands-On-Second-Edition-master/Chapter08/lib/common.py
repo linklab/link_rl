@@ -147,34 +147,31 @@ def calc_values_of_states(states, net, device="cpu"):
     return np.mean(mean_vals)
 
 
-def setup_ignite(engine: Engine, params: SimpleNamespace,
-                 exp_source, run_name: str,
-                 extra_metrics: Iterable[str] = ()):
+def setup_ignite(engine: Engine, params: SimpleNamespace, exp_source, run_name: str, extra_metrics: Iterable[str] = ()):
     # get rid of missing metrics warning
     warnings.simplefilter("ignore", category=UserWarning)
 
-    handler = ptan_ignite.EndOfEpisodeHandler(
-        exp_source, bound_avg_reward=params.stop_reward)
+    handler = ptan_ignite.EndOfEpisodeHandler(exp_source, bound_avg_reward=params.stop_reward)
     handler.attach(engine)
     ptan_ignite.EpisodeFPSHandler().attach(engine)
 
     @engine.on(ptan_ignite.EpisodeEvents.EPISODE_COMPLETED)
     def episode_completed(trainer: Engine):
         passed = trainer.state.metrics.get('time_passed', 0)
-        print("Episode %d: reward=%.0f, steps=%s, "
-              "speed=%.1f f/s, elapsed=%s" % (
+        print("Episode %d: reward=%.0f, steps=%s, speed=%.1f f/s, elapsed=%s" % (
             trainer.state.episode, trainer.state.episode_reward,
             trainer.state.episode_steps,
             trainer.state.metrics.get('avg_fps', 0),
-            timedelta(seconds=int(passed))))
+            timedelta(seconds=int(passed)))
+        )
 
     @engine.on(ptan_ignite.EpisodeEvents.BOUND_REWARD_REACHED)
     def game_solved(trainer: Engine):
         passed = trainer.state.metrics['time_passed']
-        print("Game solved in %s, after %d episodes "
-              "and %d iterations!" % (
+        print("Game solved in %s, after %d episodes and %d iterations!" % (
             timedelta(seconds=int(passed)),
-            trainer.state.episode, trainer.state.iteration))
+            trainer.state.episode, trainer.state.iteration)
+        )
         trainer.should_terminate = True
 
     now = datetime.now().isoformat(timespec='minutes')

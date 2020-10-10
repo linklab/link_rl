@@ -1,4 +1,5 @@
 import glob
+import math
 import os
 
 import torch
@@ -7,6 +8,110 @@ import torch.nn.functional as F
 from torch.autograd import Variable
 
 import numpy as np
+
+
+class NoisyLinear(nn.Linear):
+    def __init__(self, in_features, out_features, sigma_init=0.017, bias=True):
+        super(NoisyLinear, self).__init__(in_features, out_features, bias=bias)
+        w = torch.full((out_features, in_features), sigma_init)
+        self.sigma_weight = nn.Parameter(w)
+        z = torch.zeros(out_features, in_features)
+        self.register_buffer("epsilon_weight", z)
+        if bias:
+            w = torch.full((out_features,), sigma_init)
+            self.sigma_bias = nn.Parameter(w)
+            z = torch.zeros(out_features)
+            self.register_buffer("epsilon_bias", z)
+        self.reset_parameters()
+
+    def reset_parameters(self):
+        std = math.sqrt(3 / self.in_features)
+        self.weight.data.uniform_(-std, std)
+        self.bias.data.uniform_(-std, std)
+
+    def forward(self, input):
+        self.epsilon_weight.normal_()
+        bias = self.bias
+        if bias is not None:
+            self.epsilon_bias.normal_()
+            bias = bias + self.sigma_bias * self.epsilon_bias.data
+        v = self.sigma_weight * self.epsilon_weight.data + self.weight
+        return F.linear(input, v, bias)
+
+
+class NoisyFactorizedLinear(nn.Linear):
+    """
+    NoisyNet layer with factorized gaussian noise
+
+    N.B. nn.Linear already initializes weight and bias to
+    """
+    def __init__(self, in_features, out_features, sigma_zero=0.4, bias=True):
+        super(NoisyFactorizedLinear, self).__init__(in_features, out_features, bias=bias)
+        sigma_init = sigma_zero / math.sqrt(in_features)
+        w = torch.full((out_features, in_features), sigma_init)
+        self.sigma_weight = nn.Parameter(w)
+        z1 = torch.zeros(1, in_features)
+        self.register_buffer("epsilon_input", z1)
+        z2 = torch.zeros(out_features, 1)
+        self.register_buffer("epsilon_output", z2)
+        if bias:
+            w = torch.full((out_features,), sigma_init)
+            self.sigma_bias = nn.Parameter(w)
+
+    def forward(self, input):
+        self.epsilon_input.normal_()
+        self.epsilon_output.normal_()
+
+        func = lambda x: torch.sign(x) * torch.sqrt(torch.abs(x))
+        eps_in = func(self.epsilon_input.data)
+        eps_out = func(self.epsilon_output.data)
+
+        bias = self.bias
+        if bias is not None:
+            bias = bias + self.sigma_bias * eps_out.t()
+        noise_v = torch.mul(eps_in, eps_out)
+        v = self.weight + self.sigma_weight * noise_v
+        return F.linear(input, v, bias)
+
+
+class NoisyDQN(nn.Module):
+    def __init__(self, input_shape, n_actions):
+        super(NoisyDQN, self).__init__()
+
+        self.conv = nn.Sequential(
+            nn.Conv2d(input_shape[0], 32, kernel_size=8, stride=4),
+            nn.ReLU(),
+            nn.Conv2d(32, 64, kernel_size=4, stride=2),
+            nn.ReLU(),
+            nn.Conv2d(64, 64, kernel_size=3, stride=1),
+            nn.ReLU()
+        )
+
+        conv_out_size = self._get_conv_out(input_shape)
+        self.noisy_layers = [
+            NoisyLinear(conv_out_size, 512),
+            NoisyLinear(512, n_actions)
+        ]
+        self.fc = nn.Sequential(
+            self.noisy_layers[0],
+            nn.ReLU(),
+            self.noisy_layers[1]
+        )
+
+    def _get_conv_out(self, shape):
+        o = self.conv(torch.zeros(1, *shape))
+        return int(np.prod(o.size()))
+
+    def forward(self, x):
+        fx = x.float() / 256
+        conv_out = self.conv(fx).view(fx.size()[0], -1)
+        return self.fc(conv_out)
+
+    def noisy_layers_sigma_snr(self):
+        return [
+            ((layer.weight ** 2).mean().sqrt() / (layer.sigma_weight ** 2).mean().sqrt()).item()
+            for layer in self.noisy_layers
+        ]
 
 
 class DQN(nn.Module):
@@ -95,6 +200,45 @@ class DuelingDQNCNN(nn.Module):
         return val + adv - adv.mean()
 
 
+class RainbowDQN(nn.Module):
+    def __init__(self, input_shape, n_actions):
+        super(RainbowDQN, self).__init__()
+
+        self.conv = nn.Sequential(
+            nn.Conv2d(input_shape[0], 32, kernel_size=8, stride=4),
+            nn.ReLU(),
+            nn.Conv2d(32, 64, kernel_size=4, stride=2),
+            nn.ReLU(),
+            nn.Conv2d(64, 64, kernel_size=3, stride=1),
+            nn.ReLU()
+        )
+
+        conv_out_size = self._get_conv_out(input_shape)
+        self.fc_adv = nn.Sequential(
+            NoisyLinear(conv_out_size, 256),
+            nn.ReLU(),
+            NoisyLinear(256, n_actions)
+        )
+        self.fc_val = nn.Sequential(
+            nn.Linear(conv_out_size, 256),
+            nn.ReLU(),
+            nn.Linear(256, 1)
+        )
+
+    def _get_conv_out(self, shape):
+        o = self.conv(torch.zeros(1, *shape))
+        return int(np.prod(o.size()))
+
+    def forward(self, x):
+        adv, val = self.adv_val(x)
+        return val + (adv - adv.mean(dim=1, keepdim=True))
+
+    def adv_val(self, x):
+        fx = x.float() / 256
+        conv_out = self.conv(fx).view(fx.size()[0], -1)
+        return self.fc_adv(conv_out), self.fc_val(conv_out)
+
+
 class DQNMLP(nn.Module):
     def __init__(self, obs_size, hidden_size, n_actions):
         super(DQNMLP, self).__init__()
@@ -139,6 +283,41 @@ class DuelingDQNMLP(nn.Module):
     def init_weights(self, m):
         if type(m) == nn.Linear or type(m) == nn.Conv2d:
             torch.nn.init.kaiming_normal_(m.weight)
+
+    def forward(self, x):
+        if torch.is_tensor(x):
+            x = x.to(torch.float32)
+        else:
+            x = torch.tensor(x, dtype=torch.float32)
+        net_out = self.net(x)
+        val = self.fc_val(net_out)
+        adv = self.fc_adv(net_out)
+        return val + adv - adv.mean()
+
+
+class RainbowDQNMLP(nn.Module):
+    def __init__(self, obs_size, hidden_size_1, hidden_size_2, n_actions):
+        super(RainbowDQNMLP, self).__init__()
+
+        self.__name__ = "RainbowDQNMLP"
+
+        self.net = nn.Sequential(
+            nn.Linear(obs_size, hidden_size_1),
+            nn.ReLU(),
+            nn.Linear(hidden_size_1, hidden_size_2),
+            nn.ReLU()
+        )
+
+        self.fc_adv = nn.Sequential(
+            NoisyLinear(hidden_size_2, 128),
+            nn.ReLU(),
+            NoisyLinear(128, n_actions)
+        )
+        self.fc_val = nn.Sequential(
+            nn.Linear(hidden_size_2, 128),
+            nn.ReLU(),
+            nn.Linear(128, 1)
+        )
 
     def forward(self, x):
         if torch.is_tensor(x):
@@ -328,8 +507,8 @@ def calc_loss_double_dqn(batch, net, tgt_net, gamma, cuda=False, cuda_async=Fals
         last_steps_v = last_steps_v.cuda(non_blocking=cuda_async)
 
     actions_v = actions_v.unsqueeze(-1)
-    state_action_vals = net(states_v).gather(1, actions_v)
-    state_action_vals = state_action_vals.squeeze(-1)
+    state_action_values = net(states_v).gather(1, actions_v)
+    state_action_values = state_action_values.squeeze(-1)
     with torch.no_grad():
         next_state_acts = net(next_states_v).max(1)[1]
         next_state_acts = next_state_acts.unsqueeze(-1)
@@ -338,17 +517,17 @@ def calc_loss_double_dqn(batch, net, tgt_net, gamma, cuda=False, cuda_async=Fals
 
     exp_sa_vals = next_state_vals.detach() * (gamma ** last_steps_v) + rewards_v
 
-    # return nn.MSELoss()(state_action_vals, exp_sa_vals)
-    return F.smooth_l1_loss(state_action_vals, exp_sa_vals)
+    # return nn.MSELoss()(state_action_values, exp_sa_vals)
+    return F.smooth_l1_loss(state_action_values, exp_sa_vals)
 
 
-def calc_loss_per_double_dqn(buffer, batch, batch_indices, batch_weights, net, tgt_net, params, cuda=False,
-                             cuda_async=False):
+def calc_loss_per_double_dqn(buffer, batch, batch_indices, batch_weights, net, tgt_net, params, cuda=False, cuda_async=False):
     if params.NEXT_STATE_IN_TRAJECTORY:
         states, actions, rewards, dones, next_states, last_steps = unpack_batch(batch)
     else:
-        states, actions, rewards, dones, next_states, last_steps = unpack_batch_for_n_step(buffer, batch, batch_indices,
-                                                                                           params)
+        states, actions, rewards, dones, next_states, last_steps = unpack_batch_for_n_step(
+            buffer, batch, batch_indices, params
+        )
 
     states_v = torch.tensor(states)
     next_states_v = torch.tensor(next_states)
@@ -367,17 +546,18 @@ def calc_loss_per_double_dqn(buffer, batch, batch_indices, batch_weights, net, t
         batch_weights_v = batch_weights_v.cuda(non_blocking=cuda_async)
 
     actions_v = actions_v.unsqueeze(-1)
-    state_action_vals = net(states_v).gather(1, actions_v)
-    state_action_vals = state_action_vals.squeeze(-1)
+    state_action_values = net(states_v).gather(1, actions_v)
+    state_action_values = state_action_values.squeeze(-1)
     with torch.no_grad():
-        next_state_acts = net(next_states_v).max(1)[1]
-        next_state_acts = next_state_acts.unsqueeze(-1)
-        next_state_vals = tgt_net.target_model(next_states_v).gather(1, next_state_acts).squeeze(-1)
-        next_state_vals[done_mask] = 0.0
+        next_state_actions = net(next_states_v).max(1)[1]
+        next_state_actions = next_state_actions.unsqueeze(-1)
+        next_state_values = tgt_net.target_model(next_states_v).gather(1, next_state_actions).squeeze(-1)
+        next_state_values[done_mask] = 0.0
 
-    exp_sa_vals = next_state_vals.detach() * (params.GAMMA ** last_steps_v) + rewards_v
+    expected_state_action_values = next_state_values.detach() * (params.GAMMA ** last_steps_v) + rewards_v
 
-    losses_v = batch_weights_v * F.smooth_l1_loss(state_action_vals, exp_sa_vals)
+    losses_v = batch_weights_v * F.smooth_l1_loss(state_action_values, expected_state_action_values)
+
     return losses_v.mean(), (losses_v + 1e-5).data.cpu().numpy()
 
 
