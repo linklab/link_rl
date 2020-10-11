@@ -205,7 +205,7 @@ def model_update(buffer, actor_net, critic_net, target_actor_net, target_critic_
     batch_last_act_v = target_actor_net.target_model(batch_last_states_v)
     batch_q_last_v = target_critic_net.target_model(batch_last_states_v, batch_last_act_v)
     batch_q_last_v[batch_dones_mask] = 0.0
-    batch_target_q_v = batch_rewards_v.unsqueeze(dim=-1) + batch_q_last_v * params.GAMMA
+    batch_target_q_v = batch_rewards_v.unsqueeze(dim=-1) + batch_q_last_v * params.GAMMA ** params.N_STEP
     loss_critic_v = F.mse_loss(batch_q_v, batch_target_q_v.detach())
     loss_critic_v.backward()
 

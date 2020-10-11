@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+# https://github.com/higgsfield/RL-Adventure
 import time
 import torch
 import torch.multiprocessing as mp
@@ -27,19 +28,11 @@ else:
 
 
 def play_func(exp_queue, env, net):
-    action_selector = actions.EpsilonGreedyActionSelector(epsilon=params.EPSILON_INIT)
-
-    epsilon_tracker = actions.EpsilonTracker(
-        action_selector=action_selector,
-        eps_start=params.EPSILON_INIT,
-        eps_final=params.EPSILON_MIN,
-        eps_frames=params.EPSILON_MIN_STEP
-    )
+    action_selector = actions.ArgmaxActionSelector()
 
     agent = rl_agent.DQNAgent(net, action_selector, device=device)
 
     experience_source = experience.ExperienceSourceFirstLast(env, agent, gamma=params.GAMMA, steps_count=params.N_STEP)
-
     exp_source_iter = iter(experience_source)
 
     if params.DRAW_VIZ:
@@ -50,21 +43,20 @@ def play_func(exp_queue, env, net):
     step_idx = 0
     next_save_frame_idx = params.MODEL_SAVE_STEP_PERIOD
 
-    with utils.RewardTracker(stop_mean_episode_reward=params.STOP_MEAN_EPISODE_REWARD,
-                             average_size_for_stats=params.AVG_EPISODE_SIZE_FOR_STAT,
-                             frame=True, draw_viz=params.DRAW_VIZ, stat=stat) as reward_tracker:
+    with utils.RewardTracker(
+            stop_mean_episode_reward=params.STOP_MEAN_EPISODE_REWARD,
+            average_size_for_stats=params.AVG_EPISODE_SIZE_FOR_STAT,frame=True,
+            draw_viz=params.DRAW_VIZ, stat=stat) as reward_tracker:
         while step_idx < params.MAX_GLOBAL_STEPS:
             step_idx += 1
             exp = next(exp_source_iter)
             # print(exp)
             exp_queue.put(exp)
 
-            epsilon_tracker.udpate(step_idx)
-
             episode_rewards = experience_source.pop_episode_reward_lst()
             if episode_rewards:
                 solved, mean_episode_reward = reward_tracker.set_episode_reward(
-                    episode_rewards[0], step_idx, action_selector.epsilon
+                    episode_rewards[0], step_idx, 0.0
                 )
 
                 if step_idx >= next_save_frame_idx:
@@ -87,7 +79,7 @@ def main():
 
     env = make_gym_env(params.ENVIRONMENT_ID.value, seed=params.SEED)
 
-    net = value_based_model.DuelingDQNMLP(
+    net = value_based_model.RainbowDQNMLP(
         obs_size=4,
         hidden_size_1=128, hidden_size_2=128,
         n_actions=2
@@ -128,12 +120,23 @@ def main():
         optimizer.zero_grad()
         batch, batch_indices, batch_weights = buffer.sample(params.BATCH_SIZE)
         loss_v, sample_prios = value_based_model.calc_loss_per_double_dqn(
-            buffer.buffer, batch, batch_indices, batch_weights, net, target_net, params, cuda=params.CUDA, cuda_async=True
+            buffer=buffer.buffer,
+            batch=batch,
+            batch_indices=batch_indices,
+            batch_weights=batch_weights,
+            net=net,
+            tgt_net=target_net,
+            params=params, cuda=params.CUDA, cuda_async=True
         )
         loss_v.backward()
         optimizer.step()
         buffer.update_priorities(batch_indices, sample_prios)
         buffer.update_beta(step_idx)
+
+        # net.noisy_linear_1.reset_parameters()
+        # net.noisy_linear_2.reset_parameters()
+        # target_net.model.noisy_linear_1.reset_parameters()
+        # target_net.model.noisy_linear_2.reset_parameters()
 
         if params.DRAW_VIZ and step_idx % 100 == 0:
             stat_for_value_optimization.draw_optimization_performance(step_idx, loss_v.item())

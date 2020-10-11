@@ -80,7 +80,7 @@ if __name__ == "__main__":
 
     with utils.RewardTracker(
             stop_mean_episode_reward=params.STOP_MEAN_EPISODE_REWARD,
-            average_size_for_stats=params.AVG_EPISODE_SIZE_FOR_STAT,
+            average_size_for_stats=params.AVG_EPISODE_SIZE_FOR_STAT, frame=True,
             draw_viz=params.DRAW_VIZ, stat=stat) as reward_tracker:
         while frame_idx < params.MAX_GLOBAL_STEPS:
             frame_idx += params.TRAIN_STEP_FREQ

@@ -148,48 +148,46 @@ def unpack_batch_for_policy_gradient(batch, net, params, device='cpu'):
     :param net:
     :return: states variable, actions tensor, target values variable
     """
-    batch_states = []
-    batch_actions = []
-    batch_rewards = []
-    batch_not_done_idx = []
-    batch_last_states = []
-    for idx, exp in enumerate(batch):
-        batch_states.append(np.array(exp.state, copy=False))
-        batch_actions.append(int(exp.action))
-        batch_rewards.append(exp.reward)
-        if exp.last_state is not None:
-            batch_not_done_idx.append(idx)
-            batch_last_states.append(np.array(exp.last_state, copy=False))
+    states, actions, rewards, not_done_idx, last_states = [], [], [], [], []
 
-    batch_states_v = torch.FloatTensor(np.array(batch_states, copy=False)).to(device)
-    batch_actions_v = torch.LongTensor(batch_actions).to(device)
+    for idx, exp in enumerate(batch):
+        states.append(np.array(exp.state, copy=False))
+        actions.append(int(exp.action))
+        rewards.append(exp.reward)
+        if exp.last_state is not None:
+            not_done_idx.append(idx)
+            last_states.append(np.array(exp.last_state, copy=False))
+
+    states_v = torch.FloatTensor(np.array(states, copy=False)).to(device)
+    actions_v = torch.LongTensor(actions).to(device)
 
     # handle rewards
-    batch_rewards_np = np.array(batch_rewards, dtype=np.float32)
+    rewards_np = np.array(rewards, dtype=np.float32)
 
-    if batch_not_done_idx:
-        batch_last_states_v = torch.FloatTensor(np.array(batch_last_states, copy=False)).to(device)
-        batch_last_values_v = net(batch_last_states_v)[1]
-        batch_last_values_np = batch_last_values_v.data.cpu().numpy()[:, 0]
-        batch_last_values_np *= params.GAMMA ** params.N_STEP
-        batch_rewards_np[batch_not_done_idx] += batch_last_values_np
+    if not_done_idx:
+        last_states_v = torch.FloatTensor(np.array(last_states, copy=False)).to(device)
+        last_values_v = net(last_states_v)[1]
+        last_values_np = last_values_v.data.cpu().numpy()[:, 0] * params.GAMMA ** params.N_STEP
+        rewards_np[not_done_idx] += last_values_np
 
-    batch_target_values_v = torch.FloatTensor(batch_rewards_np).to(device)
+    target_values_v = torch.FloatTensor(rewards_np).to(device)
 
-    return batch_states_v, batch_actions_v, batch_target_values_v
+    return states_v, actions_v, target_values_v
 
 
 def unpack_batch_for_ddpg(batch, device="cpu"):
     states, actions, rewards, dones, last_states = [], [], [], [], []
+
     for exp in batch:
-        states.append(exp.state)
+        states.append(np.array(exp.state, copy=False))
         actions.append(exp.action)
         rewards.append(exp.reward)
         dones.append(exp.last_state is None)
         if exp.last_state is None:
-            last_states.append(exp.state)
+            last_states.append(exp.state)   # the result will be masked anyway
         else:
-            last_states.append(exp.last_state)
+            last_states.append(np.array(exp.last_state, copy=False))
+
     states_v = rl_agent.float32_preprocessor(states).to(device)
     actions_v = rl_agent.float32_preprocessor(actions).to(device)
     rewards_v = rl_agent.float32_preprocessor(rewards).to(device)
