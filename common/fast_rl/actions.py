@@ -44,6 +44,17 @@ class EpsilonGreedyActionSelector(ActionSelector):
         return actions
 
 
+class EpsilonGreedyD4PGActionSelector(ActionSelector):
+    def __init__(self, epsilon=0.05, action_selector=None):
+        self.epsilon = epsilon
+        self.action_selector = action_selector if action_selector is not None else ArgmaxActionSelector()
+
+    def __call__(self, actions):
+        assert isinstance(actions, np.ndarray)
+        actions += self.epsilon * np.random.normal(size=actions.shape)
+        return actions
+
+
 class ProbabilityActionSelector(ActionSelector):
     """
     Converts probabilities of actions into action by sampling them

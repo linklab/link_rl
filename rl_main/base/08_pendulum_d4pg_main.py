@@ -1,8 +1,6 @@
 # https://github.com/openai/gym/blob/master/gym/envs/classic_control/pendulum.py
 # https://mspries.github.io/jimmy_pendulum.html
 #!/usr/bin/env python3
-import math
-import profile
 import time
 import torch
 import torch.nn.functional as F
@@ -10,6 +8,8 @@ import torch.multiprocessing as mp
 from torch import optim
 import os, sys
 import numpy as np
+
+from common.fast_rl.common.utils import distribution_projection
 
 idx = os.getcwd().index("link_rl")
 PROJECT_HOME = os.getcwd()[:idx] + "link_rl"
@@ -38,22 +38,38 @@ else:
     device = torch.device("cpu")
 
 
+V_MAX = 0
+V_MIN = -17
+N_ATOMS = 41
+DELTA_Z = (V_MAX - V_MIN) / (N_ATOMS - 1)
+
+
 def play_func(exp_queue, env, net):
     print(env.action_space.low[0], env.action_space.high[0])
     action_min = env.action_space.low[0]
     action_max = env.action_space.high[0]
 
-    agent = rl_agent.AgentDDPG(
-        net, n_actions=1, action_min=action_min, action_max=action_max, device=device, preprocessor=float32_preprocessor
+    action_selector = actions.EpsilonGreedyD4PGActionSelector(epsilon=params.EPSILON_INIT)
+
+    epsilon_tracker = actions.EpsilonTracker(
+        action_selector=action_selector,
+        eps_start=params.EPSILON_INIT,
+        eps_final=params.EPSILON_MIN,
+        eps_frames=params.EPSILON_MIN_STEP
     )
 
-    experience_source = experience.ExperienceSourceSingleEnvFirstLast(
-        env, agent, gamma=params.GAMMA, steps_count=params.N_STEP
+    agent = rl_agent.AgentD4PG(
+        net, n_actions=1, action_selector=action_selector,
+        action_min=action_min, action_max=action_max, device=device, preprocessor=float32_preprocessor
     )
 
-    # experience_source = experience.ExperienceSourceFirstLast(
+    # experience_source = experience.ExperienceSourceSingleEnvFirstLast(
     #     env, agent, gamma=params.GAMMA, steps_count=params.N_STEP
     # )
+
+    experience_source = experience.ExperienceSourceFirstLast(
+        env, agent, gamma=params.GAMMA, steps_count=params.N_STEP
+    )
 
     exp_source_iter = iter(experience_source)
 
@@ -74,10 +90,12 @@ def play_func(exp_queue, env, net):
             exp = next(exp_source_iter)
             exp_queue.put(exp)
 
+            epsilon_tracker.udpate(step_idx)
+
             episode_rewards = experience_source.pop_episode_reward_lst()
             if episode_rewards:
                 solved, mean_episode_reward = reward_tracker.set_episode_reward(
-                    episode_rewards[0], step_idx, epsilon=0.0
+                    episode_rewards[0], step_idx, epsilon=action_selector.epsilon
                 )
 
                 if step_idx >= next_save_frame_idx:
@@ -109,10 +127,11 @@ def main():
         n_actions=1
     ).to(device)
 
-    critic_net = policy_based_model.DDPGCritic(
+    critic_net = policy_based_model.D4PGCritic(
         obs_size=3,
         hidden_size_1=512, hidden_size_2=256,
-        n_actions=1
+        n_actions=1,
+        v_min=V_MIN, v_max=V_MAX, n_atoms=N_ATOMS
     ).to(device)
 
     print(actor_net)
@@ -124,7 +143,7 @@ def main():
     actor_optimizer = optim.Adam(actor_net.parameters(), lr=params.ACTOR_LEARNING_RATE)
     critic_optimizer = optim.Adam(critic_net.parameters(), lr=params.LEARNING_RATE)
 
-    buffer = experience.ExperienceReplayBuffer(experience_source=None, buffer_size=params.REPLAY_BUFFER_SIZE)
+    buffer = experience.PrioReplayBuffer(exp_source=None, buf_size=params.REPLAY_BUFFER_SIZE)
 
     exp_queue = mp.Queue(maxsize=params.TRAIN_STEP_FREQ * 2)
     play_proc = mp.Process(target=play_func, args=(exp_queue, env, actor_net))
@@ -194,21 +213,28 @@ def model_update(buffer, actor_net, critic_net, target_actor_net, target_critic_
                  actor_grad_l2, actor_grad_max, actor_grad_variance,
                  critic_grad_l2, critic_grad_max, critic_grad_variance,
                  loss_actor, loss_critic, loss_total, buffer_length):
-    batch = buffer.sample(params.BATCH_SIZE)
+    batch, batch_indices, batch_weights = buffer.sample(params.BATCH_SIZE)
     batch_states_v, batch_actions_v, batch_rewards_v, batch_dones_mask, batch_last_states_v = unpack_batch_for_ddpg(
         batch, device
     )
 
     # train critic
     critic_optimizer.zero_grad()
-    batch_q_v = critic_net(batch_states_v, batch_actions_v)
-    batch_last_act_v = target_actor_net.target_model(batch_last_states_v)
-    batch_q_last_v = target_critic_net.target_model(batch_last_states_v, batch_last_act_v)
-    batch_q_last_v[batch_dones_mask] = 0.0
-    batch_target_q_v = batch_rewards_v.unsqueeze(dim=-1) + batch_q_last_v * params.GAMMA ** params.N_STEP
-    loss_critic_v = F.mse_loss(batch_q_v, batch_target_q_v.detach())
-    loss_critic_v.backward()
+    critic_distribution_v = critic_net(batch_states_v, batch_actions_v)
 
+    batch_last_act_v = target_actor_net.target_model(batch_last_states_v)
+    batch_last_target_critic_distribution_v = target_critic_net.target_model(batch_last_states_v, batch_last_act_v)
+    batch_last_distribution_v = F.softmax(batch_last_target_critic_distribution_v, dim=1)
+    projected_distribution_v = distribution_projection(
+        distribution=batch_last_distribution_v,
+        rewards=batch_rewards_v,
+        dones=batch_dones_mask,
+        v_min=V_MIN, v_max=V_MAX, n_atoms=N_ATOMS, gamma=params.GAMMA, device=device
+    )
+
+    prob_distribution_v = -F.log_softmax(critic_distribution_v, dim=1) * projected_distribution_v
+    loss_critic_v = prob_distribution_v.sum(dim=1).mean()
+    loss_critic_v.backward()
     critic_grads = np.concatenate([p.grad.data.cpu().numpy().flatten()
                                    for p in critic_net.parameters()
                                    if p.grad is not None])
@@ -217,7 +243,8 @@ def model_update(buffer, actor_net, critic_net, target_actor_net, target_critic_
     # train actor
     actor_optimizer.zero_grad()
     batch_current_actions_v = actor_net(batch_states_v)
-    actor_loss_v = -critic_net(batch_states_v, batch_current_actions_v)
+
+    actor_loss_v = -critic_net.distribution_to_q_value(critic_net(batch_states_v, batch_current_actions_v))
     loss_actor_v = actor_loss_v.mean()
     loss_actor_v.backward()
 
@@ -225,6 +252,7 @@ def model_update(buffer, actor_net, critic_net, target_actor_net, target_critic_
                                   for p in actor_net.parameters()
                                   if p.grad is not None])
     actor_optimizer.step()
+
 
     target_actor_net.alpha_sync(alpha=1 - 0.001)
     target_critic_net.alpha_sync(alpha=1 - 0.001)
@@ -249,6 +277,9 @@ def model_update(buffer, actor_net, critic_net, target_actor_net, target_critic_
             critic_grad_l2, critic_grad_variance, critic_grad_max,
             buffer_length, exp.action, exp.noise
         )
+
+    buffer.update_priorities(batch_indices, (actor_loss_v + 1e-5).data.cpu().numpy())
+    buffer.update_beta(step_idx)
 
     return actor_grad_l2, actor_grad_max, actor_grad_variance, critic_grad_l2, critic_grad_max, critic_grad_variance, loss_actor, loss_critic, loss_total
 

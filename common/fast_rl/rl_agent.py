@@ -11,24 +11,24 @@ from common.fast_rl.common.noise import OrnsteinUhlenbeckActionNoise
 from . import actions
 
 
-def save_model(model_save_dir, env_name, q_net_name, q_net, step, mean_episode_reward):
+def save_model(model_save_dir, env_name, net_name, net, step, mean_episode_reward):
     model_save_filename = os.path.join(
         model_save_dir, "{0}_{1}_{2}_{3}.pth".format(
-            env_name, q_net_name, step, mean_episode_reward
+            env_name, net_name, step, mean_episode_reward
         )
     )
-    torch.save(q_net.state_dict(), model_save_filename)
+    torch.save(net.state_dict(), model_save_filename)
     return model_save_filename
 
 
-def load_model(model_save_dir, env_name, q_net_name, q_net, step=None):
+def load_model(model_save_dir, env_name, net_name, net, step=None):
     if step:
         saved_models = glob.glob(os.path.join(
-            model_save_dir, "{0}_{1}_{2}_*.pth".format(env_name, q_net_name, step)
+            model_save_dir, "{0}_{1}_{2}_*.pth".format(env_name, net_name, step)
         ))
     else:
         saved_models = glob.glob(os.path.join(
-            model_save_dir, "{0}_{1}_*.pth".format(env_name, q_net_name)
+            model_save_dir, "{0}_{1}_*.pth".format(env_name, net_name)
         ))
 
     saved_models.sort(key=lambda filename: int(filename.split("/")[-1].split("_")[-2]))
@@ -39,7 +39,7 @@ def load_model(model_save_dir, env_name, q_net_name, q_net, step=None):
     device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
     model_params = torch.load(saved_model, map_location=device)
 
-    q_net.load_state_dict(model_params)
+    net.load_state_dict(model_params)
 
 
 class BaseAgent:
@@ -256,7 +256,7 @@ class AgentDDPG(BaseAgent):
     def initial_agent_state(self):
         return None
 
-    def __call__(self, states, agent_states):
+    def __call__(self, states, agent_states=None):
         if self.preprocessor is not None:
             states = self.preprocessor(states)
             if torch.is_tensor(states):
@@ -287,3 +287,29 @@ class AgentDDPG(BaseAgent):
         actions = np.clip(actions, self.action_min, self.action_max)
         noises = new_agent_states
         return actions, noises, new_agent_states
+
+
+class AgentD4PG(BaseAgent):
+    def __init__(self, model, n_actions, action_selector, action_min, action_max, device="cpu",
+                 preprocessor=default_states_preprocessor):
+        self.model = model
+        self.device = device
+        self.action_selector = action_selector
+        self.preprocessor = preprocessor
+        self.action_min = action_min
+        self.action_max = action_max
+        self.n_actions = n_actions
+
+    def __call__(self, states, agent_states):
+        if self.preprocessor is not None:
+            states = self.preprocessor(states)
+            if torch.is_tensor(states):
+                states = states.to(self.device)
+
+        mu_v = self.model(states)
+        new_agent_states = agent_states
+
+        actions = mu_v.data.cpu().numpy()
+        actions += self.action_selector(actions)
+        actions = np.clip(actions, self.action_min, self.action_max)
+        return actions, new_agent_states
