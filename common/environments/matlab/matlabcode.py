@@ -76,29 +76,29 @@ class SimulinkPlant:
 
         # Generate the Control action based on the past outputs
 
-        if action == 0:
-            torque = -3
-        elif action == 1:
-            torque = 3
-
-        elif action == 2:
-            torque = -1
-        elif action == 3:
-            torque = 1
-
-        elif action == 4:
-            torque = -0.01
-        elif action == 5:
-            torque = 0.01
-
-        else:
-            torque = 0
-
+        # if action == 0:
+        #     torque = -3
+        # elif action == 1:
+        #     torque = 3
+        #
+        # elif action == 2:
+        #     torque = -1
+        # elif action == 3:
+        #     torque = 1
+        #
+        # elif action == 4:
+        #     torque = -0.01
+        # elif action == 5:
+        #     torque = 0.01
+        #
+        # else:
+        #     torque = 0
+        # print(action)
         simulation_time = self.eng.get_param(self.modelName, 'SimulationTime')
 
         # self.controller.getControlEffort(self.yHist, self.tHist)
         # Set that Control Action
-        self.setControlAction(torque)
+        self.setControlAction(action)
         self.eng.set_param(self.modelName, 'SimulationCommand', 'continue', 'SimulationCommand', 'pause', nargout=0)
         # self.setControlAction(u)
         # self.eng.set_param(self.modelName, 'SimulationCommand', 'pause', nargout=0)
