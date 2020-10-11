@@ -245,8 +245,8 @@ class DistributionalDQN(nn.Module):
             nn.Linear(512, n_actions * N_ATOMS)
         )
 
-        sups = torch.arange(Vmin, Vmax + DELTA_Z, DELTA_Z)
-        self.register_buffer("supports", sups)
+        supports = torch.arange(Vmin, Vmax + DELTA_Z, DELTA_Z)  # supports.size(): (51,)
+        self.register_buffer("supports", supports)
         self.softmax = nn.Softmax(dim=1)
 
     def _get_conv_out(self, shape):
@@ -261,13 +261,13 @@ class DistributionalDQN(nn.Module):
         return fc_out.view(batch_size, -1, N_ATOMS)
 
     def both(self, x):
-        cat_out = self(x)
-        probs = self.apply_softmax(cat_out)
-        weights = probs * self.supports
-        res = weights.sum(dim=2)
-        return cat_out, res
+        categorical_out = self(x)                       # categorical_out.size(): [1, 6, 51]
+        probs = self.apply_softmax(categorical_out)     # probs.size(): [1, 6, 51]
+        weights = probs * self.supports                 # weights.size(): [1, 6, 51]
+        q_values = weights.sum(dim=2)                   # q_values.size(): [1, 6]
+        return categorical_out, q_values
 
-    def qvals(self, x):
+    def q_values(self, x):
         return self.both(x)[1]
 
     def apply_softmax(self, t):

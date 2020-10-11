@@ -12,8 +12,13 @@ import torch.nn.functional as F
 from ignite.engine import Engine
 
 from lib import common, dqn_extra
+import os
+
+os.environ['KMP_DUPLICATE_LIB_OK'] = 'True'
 
 NAME = "07_distrib"
+
+Vmin, Vmax, N_ATOMS = -10, 10, 51
 
 
 def calc_loss(batch, net, target_network, gamma, device="cpu"):
@@ -25,19 +30,21 @@ def calc_loss(batch, net, target_network, gamma, device="cpu"):
     next_states_v = torch.tensor(next_states).to(device)
 
     # next state distribution
-    next_distr_v, next_qvals_v = target_network.both(next_states_v)
-    next_acts = next_qvals_v.max(1)[1].data.cpu().numpy()
-    next_distr = target_network.apply_softmax(next_distr_v)
-    next_distr = next_distr.data.cpu().numpy()
+    next_distribution_v, next_q_values_v = target_network.both(next_states_v)
+    next_actions = next_q_values_v.max(1)[1].data.cpu().numpy()
+    next_distribution = target_network.apply_softmax(next_distribution_v)
+    next_distribution = next_distribution.data.cpu().numpy()
 
-    next_best_distr = next_distr[range(batch_size), next_acts]
+    next_best_distribution = next_distribution[range(batch_size), next_actions]        # next_distribution: (32, 6, 51)
     dones = dones.astype(np.bool)
 
-    projected_distribution = dqn_extra.distribution_projection(next_best_distr, rewards, dones, gamma)
+    projected_distribution = dqn_extra.distribution_projection(
+        next_best_distribution, rewards, dones, Vmin, Vmax, N_ATOMS, gamma
+    )
 
-    distr_v = net(states_v)
-    selected_action_values = distr_v[range(batch_size), actions_v.data]
-    state_log_softmax_v = F.log_softmax(selected_action_values, dim=1)
+    distribution_v = net(states_v)
+    selected_action_distribution = distribution_v[range(batch_size), actions_v.data]
+    state_log_softmax_v = F.log_softmax(selected_action_distribution, dim=1)
     projected_distribution_v = torch.tensor(projected_distribution).to(device)
 
     loss_v = -state_log_softmax_v * projected_distribution_v
@@ -62,7 +69,7 @@ if __name__ == "__main__":
     target_network = ptan.agent.TargetNet(net)
     selector = ptan.actions.EpsilonGreedyActionSelector(epsilon=params.epsilon_start)
     epsilon_tracker = common.EpsilonTracker(selector, params)
-    agent = ptan.agent.DQNAgent(lambda x: net.qvals(x), selector, device=device)
+    agent = ptan.agent.DQNAgent(lambda x: net.q_values(x), selector, device=device)
 
     exp_source = ptan.experience.ExperienceSourceFirstLast(env, agent, gamma=params.gamma)
     buffer = ptan.experience.ExperienceReplayBuffer(exp_source, buffer_size=params.replay_size)

@@ -360,6 +360,7 @@ class RainbowDQNMLP(nn.Module):
 
 def unpack_batch(batch):
     states, actions, rewards, dones, last_states, last_steps = [], [], [], [], [], []
+
     for exp in batch:
         state = np.array(exp.state, copy=False)
         states.append(state)
