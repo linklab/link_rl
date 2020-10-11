@@ -21,6 +21,6 @@ class PARAMETERS_FAST_RL_PENDULUM_DDPG(PARAMETERS_GENERAL):
     N_STEP = 4
     OMEGA = False
 
-    CUDA = True
+    CUDA = False
 
     CLIP_GRAD = 0.1
