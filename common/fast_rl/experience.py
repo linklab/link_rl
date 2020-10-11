@@ -729,7 +729,6 @@ class PrioReplayBuffer:
         else:
             prios = self.priorities[:self.pos]
         probs = prios ** self.prob_alpha
-
         probs = probs[:-self.n_step]
         probs /= probs.sum()
         indices = np.random.choice(len(self.buffer) - self.n_step, batch_size, p=probs)

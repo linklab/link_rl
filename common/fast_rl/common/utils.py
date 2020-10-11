@@ -417,3 +417,63 @@ class RewardTracker:
                 self.stat.draw_performance(episode_done_step, mean_episode_reward, speed)
             else:
                 raise ValueError()
+
+
+def distribution_projection(distribution, rewards, dones, v_min, v_max, n_atoms, gamma, device="cpu"):
+    """
+    Perform distribution projection aka Catergorical Algorithm from the
+    "A Distributional Perspective on RL" paper
+    """
+    if torch.is_tensor(distribution):
+        distribution = distribution.data.cpu().numpy()
+
+    if torch.is_tensor(rewards):
+        rewards = rewards.data.cpu().numpy()
+
+    if torch.is_tensor(dones):
+        dones = dones.cpu().numpy().astype(np.bool)
+
+    batch_size = len(rewards)
+
+    # to keep the result of the projection
+    projected_distribution = np.zeros((batch_size, n_atoms), dtype=np.float32)
+
+    # the width of every atom in our value range
+    # v_max: 10, v_min: -10, n_atoms: 51 --> delta_z: 0.4
+    delta_z = (v_max - v_min) / (n_atoms - 1)
+
+    for atom in range(n_atoms):
+        # reward: 1, v_min: -10, atom: 0, gamma: 0.99 --> v = 1 + (-10) * 0.99 = -8.9
+        v = rewards + (v_min + atom * delta_z) * gamma
+        tz_j = np.minimum(v_max, np.maximum(v_min, v))
+
+        # tz_j: -8.9, v_min: -10, delta_z: 0.4 --> b_j = 2.75
+        b_j = (tz_j - v_min) / delta_z
+        l = np.floor(b_j).astype(np.int64)  # b_j: 2.75 --> l = 2
+        u = np.ceil(b_j).astype(np.int64)   # b_j: 2.75 --> u = 3
+        eq_mask = u == l
+        projected_distribution[eq_mask, l[eq_mask]] += distribution[eq_mask, atom]
+
+        ne_mask = u != l
+        projected_distribution[ne_mask, l[ne_mask]] += distribution[ne_mask, atom] * (u - b_j)[ne_mask]
+        projected_distribution[ne_mask, u[ne_mask]] += distribution[ne_mask, atom] * (b_j - l)[ne_mask]
+
+    if dones.any():
+        projected_distribution[dones] = 0.0
+        tz_j = np.minimum(v_max, np.maximum(v_min, rewards[dones]))
+        b_j = (tz_j - v_min) / delta_z
+        l = np.floor(b_j).astype(np.int64)
+        u = np.ceil(b_j).astype(np.int64)
+        eq_mask = u == l
+        eq_dones = dones.copy()
+        eq_dones[dones] = eq_mask
+        if eq_dones.any():
+            projected_distribution[eq_dones, l[eq_mask]] = 1.0
+        ne_mask = u != l
+        ne_dones = dones.copy()
+        ne_dones[dones] = ne_mask
+        if ne_dones.any():
+            projected_distribution[ne_dones, l[ne_mask]] = (u - b_j)[ne_mask]
+            projected_distribution[ne_dones, u[ne_mask]] = (b_j - l)[ne_mask]
+
+    return torch.FloatTensor(projected_distribution).to(device)
