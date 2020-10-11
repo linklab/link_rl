@@ -286,6 +286,7 @@ class AgentDDPG(BaseAgent):
 
         actions = np.clip(actions, self.action_min, self.action_max)
         noises = new_agent_states
+        print(action)
         return actions, noises, new_agent_states
 
 

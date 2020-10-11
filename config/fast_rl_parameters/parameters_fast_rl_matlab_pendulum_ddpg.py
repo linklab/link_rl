@@ -1,0 +1,26 @@
+from config.names import *
+from config.parameters_general import PARAMETERS_GENERAL
+
+
+class PARAMETERS_FAST_RL_MATLAB_PENDULUM_DDPG(PARAMETERS_GENERAL):
+    ENVIRONMENT_ID = "MatlabRotaryInvertedPendulumEnv"
+    RL_ALGORITHM = RLAlgorithmName.DDPG_FAST_V0
+    DEEP_LEARNING_MODEL = DeepLearningModelName.DDPG_MLP
+
+    STOP_MEAN_EPISODE_REWARD = 2000
+    REPLAY_BUFFER_SIZE = 500000
+    MAX_GLOBAL_STEPS = 2000000
+    LEARNING_RATE = 0.001
+    ACTOR_LEARNING_RATE = 0.0001
+    TRAIN_STEP_FREQ = 1
+    GAMMA = 0.99
+    BATCH_SIZE = 64
+    AVG_EPISODE_SIZE_FOR_STAT = 100
+    MODEL_SAVE_STEP_PERIOD = 100000
+    DRAW_VIZ = False
+    N_STEP = 4
+    OMEGA = False
+
+    CUDA = False
+
+    CLIP_GRAD = 0.1
