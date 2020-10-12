@@ -526,7 +526,7 @@ class ExperienceReplayBuffer:
         assert isinstance(experience_source, (ExperienceSource, type(None)))
         assert isinstance(buffer_size, int)
         self.experience_source_iter = None if experience_source is None else iter(experience_source)
-        self.buffer = []
+        self.buffer = deque(maxlen=buffer_size)
         self.capacity = buffer_size
         self.pos = 0
 
@@ -550,11 +550,12 @@ class ExperienceReplayBuffer:
         return [self.buffer[key] for key in keys]
 
     def _add(self, sample):
-        if len(self.buffer) < self.capacity:
-            self.buffer.append(sample)
-        else:
-            self.buffer[self.pos] = sample
-        self.pos = (self.pos + 1) % self.capacity
+        self.buffer.append(sample)
+        # if len(self.buffer) < self.capacity:
+        #     self.buffer.append(sample)
+        # else:
+        #     self.buffer[self.pos] = sample
+        # self.pos = (self.pos + 1) % self.capacity
 
     def populate(self, num_samples):
         """
@@ -628,10 +629,12 @@ class PrioReplayBufferNaive:
 
 
 class PrioritizedReplayBuffer(ExperienceReplayBuffer):
-    def __init__(self, experience_source, buffer_size, alpha):
+    def __init__(self, experience_source, buffer_size, alpha=0.6, n_step=1):
         super(PrioritizedReplayBuffer, self).__init__(experience_source, buffer_size)
         assert alpha > 0
         self._alpha = alpha
+        self.beta = BETA_START
+        self.n_step = n_step
 
         it_capacity = 1
         while it_capacity < buffer_size:
@@ -640,6 +643,11 @@ class PrioritizedReplayBuffer(ExperienceReplayBuffer):
         self._it_sum = utils.SumSegmentTree(it_capacity)
         self._it_min = utils.MinSegmentTree(it_capacity)
         self._max_priority = 1.0
+
+    def update_beta(self, idx):
+        v = BETA_START + idx * (1.0 - BETA_START) / BETA_FRAMES
+        self.beta = min(1.0, v)
+        return self.beta
 
     def _add(self, *args, **kwargs):
         idx = self.pos
@@ -650,23 +658,23 @@ class PrioritizedReplayBuffer(ExperienceReplayBuffer):
     def _sample_proportional(self, batch_size):
         res = []
         for _ in range(batch_size):
-            mass = random.random() * self._it_sum.sum(0, len(self) - 1)
+            mass = random.random() * self._it_sum.sum(0, len(self) - self.n_step)
             idx = self._it_sum.find_prefixsum_idx(mass)
             res.append(idx)
         return res
 
-    def sample(self, batch_size, beta):
-        assert beta > 0
+    def sample(self, batch_size):
+        assert self.beta > 0
 
         idxes = self._sample_proportional(batch_size)
 
         weights = []
-        p_min = self._it_min.min() / self._it_sum.sum()
-        max_weight = (p_min * len(self)) ** (-beta)
+        p_min = self._it_min.min(0, len(self) - self.n_step) / self._it_sum.sum(0, len(self) - self.n_step)
+        max_weight = (p_min * (len(self) - self.n_step + 1)) ** (-self.beta)
 
         for idx in idxes:
-            p_sample = self._it_sum[idx] / self._it_sum.sum()
-            weight = (p_sample * len(self)) ** (-beta)
+            p_sample = self._it_sum[idx] / self._it_sum.sum(0, len(self) - self.n_step)
+            weight = (p_sample * (len(self) - self.n_step + 1)) ** (-self.beta)
             weights.append(weight / max_weight)
         weights = np.array(weights, dtype=np.float32)
         samples = [self.buffer[idx] for idx in idxes]
