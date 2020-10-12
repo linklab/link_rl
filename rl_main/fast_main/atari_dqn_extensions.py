@@ -151,18 +151,19 @@ def main():
             loss_v, sample_prios = value_based_model.calc_loss_per_double_dqn(
                 buffer.buffer, batch, batch_indices, batch_weights, net, tgt_net, params, cuda=params.CUDA, cuda_async=True
             )
-        # loss_v.backward()
+        loss_v.backward()
         optimizer.step()
         # buffer.update_priorities(batch_indices, sample_prios)
-        buffer.update_priorities(batch_indices, sample_prios.data.cpu().numpy())
+        buffer.update_priorities(batch_indices, sample_prios.detach().data.cpu().numpy())
         buffer.update_beta(frame_idx)
 
         if params.DRAW_VIZ and frame_idx % 1000 == 0:
-            stat_for_model_loss.draw_optimization_performance(frame_idx, loss_v.item())
+            stat_for_model_loss.draw_optimization_performance(frame_idx, loss_v.detach().item())
 
         if frame_idx % params.TARGET_NET_SYNC_STEP_PERIOD < params.TRAIN_STEP_FREQ:
             tgt_net.sync()
 
+        del loss_v
         # del loss_v, sample_prios
         # gc.collect()
 
