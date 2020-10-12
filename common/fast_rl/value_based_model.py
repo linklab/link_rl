@@ -8,6 +8,7 @@ import torch.nn.functional as F
 from torch.autograd import Variable
 
 import numpy as np
+from memory_profiler import profile
 
 
 class NoisyLinear(nn.Linear):
@@ -550,7 +551,10 @@ def calc_loss_double_dqn(batch, net, tgt_net, gamma, cuda=False, cuda_async=Fals
     return F.smooth_l1_loss(state_action_values, exp_sa_vals)
 
 
-def calc_loss_per_double_dqn(buffer, batch, batch_indices, batch_weights, net, tgt_net, params, cuda=False, cuda_async=False):
+# -m memory_profiler
+# @profile
+def calc_loss_per_double_dqn(buffer, batch, batch_indices, batch_weights, net, tgt_net, params, cuda=False,
+                             cuda_async=False):
     if params.NEXT_STATE_IN_TRAJECTORY:
         states, actions, rewards, dones, next_states, last_steps = unpack_batch(batch)
     else:
@@ -586,7 +590,7 @@ def calc_loss_per_double_dqn(buffer, batch, batch_indices, batch_weights, net, t
 
     expected_state_action_values = next_state_values.detach() * (params.GAMMA ** last_steps_v) + rewards_v
     losses_v = batch_weights_v * F.smooth_l1_loss(state_action_values, expected_state_action_values)
-    return losses_v.mean(), (losses_v + 1e-5).data.cpu().numpy()
+    return losses_v.mean(), (losses_v + 1e-5)
 
 
 def calc_loss_per_double_dqn_for_omega(buffer, batch, batch_indices, batch_weights, net, tgt_net, params, cuda=False,
@@ -619,7 +623,7 @@ def calc_loss_per_double_dqn_for_omega(buffer, batch, batch_indices, batch_weigh
         expected_state_action_values = expected_state_action_values.cuda(non_blocking=cuda_async)
 
     losses_v = batch_weights_v * F.smooth_l1_loss(state_action_values, expected_state_action_values)
-    return losses_v.mean(), (losses_v + 1e-5).data.cpu().numpy()
+    return losses_v.mean(), (losses_v + 1e-5)
 
 
 def calc_omega_return(rewards, done_mask, next_state_values, params):
