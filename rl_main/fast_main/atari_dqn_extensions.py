@@ -13,6 +13,7 @@ from common.fast_rl import experience, rl_agent, value_based_model, actions
 from common.fast_rl.common import utils
 from common.fast_rl.common import statistics, wrappers
 
+from line_profiler import LineProfiler
 from memory_profiler import profile
 import gc
 
@@ -167,8 +168,14 @@ def main():
         # del loss_v, sample_prios
         # gc.collect()
 
+        # if frame_idx % 10000 == 0:
+        #     lp.print_stats()
+
 
 # python atari_dqn.py --env=pong --draw_viz=1 --cuda
 # python atari_dqn.py --env=breakout --draw_viz=1 --cuda
 if __name__ == "__main__":
+    # lp = LineProfiler()
+    # lp_wrapper = lp(main)
+    # lp_wrapper(lp)
     main()
