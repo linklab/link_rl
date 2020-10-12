@@ -265,27 +265,30 @@ class AgentDDPG(BaseAgent):
         mu_v = self.model(states)
         actions = mu_v.data.cpu().numpy()
 
-        if self.ou_enabled and self.ou_epsilon > 0:
-            new_agent_states = []
-            for agent_state, action in zip(agent_states, actions):
-                if agent_state is None:
-                    agent_state = np.zeros(shape=action.shape, dtype=np.float32)
-                agent_state += self.ou_theta * (self.ou_mu - agent_state)
-                agent_state += self.ou_sigma * np.random.normal(size=action.shape)
-                action += self.ou_epsilon * agent_state
-                new_agent_states.append(agent_state)
+        # if self.ou_enabled and self.ou_epsilon > 0:
+        #     new_agent_states = []
+        #     for agent_state, action in zip(agent_states, actions):
+        #         if agent_state is None:
+        #             agent_state = np.zeros(shape=action.shape, dtype=np.float32)
+        #         agent_state += self.ou_theta * (self.ou_mu - agent_state)
+        #         agent_state += self.ou_sigma * np.random.normal(size=action.shape)
+        #         action += self.ou_epsilon * agent_state
+        #         new_agent_states.append(agent_state)
+        # else:
+        #     new_agent_states = agent_states
+        # noises = new_agent_states
+
+        if agent_states is None:
+            new_agent_states = [None] * len(states)
         else:
             new_agent_states = agent_states
 
-        # if agent_states is None:
-        #     agent_states = [None] * len(states)
-        #
-        # noise_v = torch.Tensor(self.ou_noise.noise()).unsqueeze(dim=-1).to(self.device)
-        # mu_v += noise_v
-        # noises = noise_v.data.cpu().numpy()
+        noise_v = torch.Tensor(self.ou_noise.noise()).unsqueeze(dim=-1).to(self.device)
+        mu_v += noise_v
+        noises = noise_v.data.cpu().numpy()
 
         actions = np.clip(actions, self.action_min, self.action_max)
-        noises = new_agent_states
+
         return actions, noises, new_agent_states
 
 
