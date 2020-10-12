@@ -43,8 +43,8 @@ else:
 def play_func(exp_queue, env, net):
     # print(env.action_space.low[0], env.action_space.high[0])
     env.start()
-    action_min = -1
-    action_max = 1
+    action_min = -0.1
+    action_max = 0.1
 
     agent = rl_agent.AgentDDPG(
         net, n_actions=1, action_min=action_min, action_max=action_max, device=device, preprocessor=float32_preprocessor
@@ -85,13 +85,13 @@ def play_func(exp_queue, env, net):
 
                 if step_idx >= next_save_frame_idx:
                     rl_agent.save_model(
-                        MODEL_SAVE_DIR, params.ENVIRONMENT_ID.value, net.__name__, net, step_idx, mean_episode_reward
+                        MODEL_SAVE_DIR, params.ENVIRONMENT_ID, net.__name__, net, step_idx, mean_episode_reward
                     )
                     next_save_frame_idx += params.MODEL_SAVE_STEP_PERIOD
 
                 if solved:
                     rl_agent.save_model(
-                        MODEL_SAVE_DIR, params.ENVIRONMENT_ID.value, net.__name__, net, step_idx, mean_episode_reward
+                        MODEL_SAVE_DIR, params.ENVIRONMENT_ID, net.__name__, net, step_idx, mean_episode_reward
                     )
                     break
 

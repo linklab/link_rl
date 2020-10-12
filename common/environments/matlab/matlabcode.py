@@ -95,7 +95,7 @@ class SimulinkPlant:
         #     torque = 0
         # print(action)
         simulation_time = self.eng.get_param(self.modelName, 'SimulationTime')
-
+        # print(action)
         # self.controller.getControlEffort(self.yHist, self.tHist)
         # Set that Control Action
         self.setControlAction(action)
