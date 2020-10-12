@@ -526,7 +526,7 @@ class ExperienceReplayBuffer:
         assert isinstance(experience_source, (ExperienceSource, type(None)))
         assert isinstance(buffer_size, int)
         self.experience_source_iter = None if experience_source is None else iter(experience_source)
-        self.buffer = deque(maxlen=buffer_size)
+        self.buffer = []
         self.capacity = buffer_size
         self.pos = 0
 
@@ -550,12 +550,11 @@ class ExperienceReplayBuffer:
         return [self.buffer[key] for key in keys]
 
     def _add(self, sample):
-        self.buffer.append(sample)
-        # if len(self.buffer) < self.capacity:
-        #     self.buffer.append(sample)
-        # else:
-        #     self.buffer[self.pos] = sample
-        # self.pos = (self.pos + 1) % self.capacity
+        if len(self.buffer) < self.capacity:
+            self.buffer.append(sample)
+        else:
+            self.buffer[self.pos] = sample
+        self.pos = (self.pos + 1) % self.capacity
 
     def populate(self, num_samples):
         """
@@ -658,9 +657,12 @@ class PrioritizedReplayBuffer(ExperienceReplayBuffer):
     def _sample_proportional(self, batch_size):
         res = []
         for _ in range(batch_size):
-            mass = random.random() * self._it_sum.sum(0, len(self) - self.n_step)
-            idx = self._it_sum.find_prefixsum_idx(mass)
-            res.append(idx)
+            while True:
+                mass = random.random() * self._it_sum.sum(0, len(self) - 1)
+                idx = self._it_sum.find_prefixsum_idx(mass)
+                if idx < self.capacity - self.n_step:
+                    res.append(idx)
+                    break
         return res
 
     def sample(self, batch_size):
@@ -669,12 +671,12 @@ class PrioritizedReplayBuffer(ExperienceReplayBuffer):
         idxes = self._sample_proportional(batch_size)
 
         weights = []
-        p_min = self._it_min.min(0, len(self) - self.n_step) / self._it_sum.sum(0, len(self) - self.n_step)
-        max_weight = (p_min * (len(self) - self.n_step + 1)) ** (-self.beta)
+        p_min = self._it_min.min() / self._it_sum.sum()
+        max_weight = (p_min * len(self)) ** (-self.beta)
 
         for idx in idxes:
-            p_sample = self._it_sum[idx] / self._it_sum.sum(0, len(self) - self.n_step)
-            weight = (p_sample * (len(self) - self.n_step + 1)) ** (-self.beta)
+            p_sample = self._it_sum[idx] / self._it_sum.sum()
+            weight = (p_sample * len(self)) ** (-self.beta)
             weights.append(weight / max_weight)
         weights = np.array(weights, dtype=np.float32)
         samples = [self.buffer[idx] for idx in idxes]
