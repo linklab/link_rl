@@ -86,6 +86,8 @@ def play_func(exp_queue, env, net):
                     )
                     next_save_frame_idx += params.MODEL_SAVE_STEP_PERIOD
 
+                agent.ou_noise.reset()
+
                 if solved:
                     rl_agent.save_model(
                         MODEL_SAVE_DIR, params.ENVIRONMENT_ID.value, net.__name__, net, step_idx, mean_episode_reward
