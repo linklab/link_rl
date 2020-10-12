@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+import sys
 import time
 import torch
 import torch.optim as optim
@@ -11,6 +12,9 @@ from common.common_utils import make_atari_env
 from common.fast_rl import experience, rl_agent, value_based_model, actions
 from common.fast_rl.common import utils
 from common.fast_rl.common import statistics, wrappers
+
+from memory_profiler import profile
+import gc
 
 ##### NOTE #####
 from config.parameters import PARAMETERS as params
@@ -147,9 +151,10 @@ def main():
             loss_v, sample_prios = value_based_model.calc_loss_per_double_dqn(
                 buffer.buffer, batch, batch_indices, batch_weights, net, tgt_net, params, cuda=params.CUDA, cuda_async=True
             )
-        loss_v.backward()
+        # loss_v.backward()
         optimizer.step()
-        buffer.update_priorities(batch_indices, sample_prios)
+        # buffer.update_priorities(batch_indices, sample_prios)
+        buffer.update_priorities(batch_indices, sample_prios.data.cpu().numpy())
         buffer.update_beta(frame_idx)
 
         if params.DRAW_VIZ and frame_idx % 1000 == 0:
@@ -158,7 +163,9 @@ def main():
         if frame_idx % params.TARGET_NET_SYNC_STEP_PERIOD < params.TRAIN_STEP_FREQ:
             tgt_net.sync()
 
-        del sample_prios
+        # del loss_v, sample_prios
+        # gc.collect()
+
 
 # python atari_dqn.py --env=pong --draw_viz=1 --cuda
 # python atari_dqn.py --env=breakout --draw_viz=1 --cuda

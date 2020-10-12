@@ -130,7 +130,7 @@ def main():
         )
         loss_v.backward()
         optimizer.step()
-        buffer.update_priorities(batch_indices, sample_prios)
+        buffer.update_priorities(batch_indices, sample_prios.data.cpu().numpy())
         buffer.update_beta(step_idx)
 
         if params.DRAW_VIZ and step_idx % 100 == 0:
