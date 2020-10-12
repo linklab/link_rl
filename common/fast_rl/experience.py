@@ -665,16 +665,25 @@ class PrioritizedReplayBuffer(ExperienceReplayBuffer):
                 upper = self.pos
                 lower = (self.pos - self.n_step)
                 if lower < 0:
-                    lower = self.capacity + (self.pos - self.n_step)
-                if not (lower < idx or idx < upper):
-                    res.append(idx)
-                    break
+                    lower = self.capacity + lower
+                if lower < upper:
+                    if not lower <= idx <= upper:
+                        res.append(idx)
+                        break
+                else:
+                    if upper < idx < lower:
+                        res.append(idx)
+                        break
         return res
 
     def sample(self, batch_size):
         assert self.beta > 0
 
         idxes = self._sample_proportional(batch_size)
+        # print("#################")
+        # print(idxes)
+        # print(self.pos)
+        # print("#################")
 
         weights = []
         p_min = self._it_min.min() / self._it_sum.sum()
