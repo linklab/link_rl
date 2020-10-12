@@ -430,7 +430,7 @@ def unpack_batch_for_n_step(buffer, batch, batch_indices, params):
         current_exp = exp
         for i in range(params.N_STEP):
             n_step_rewards += gamma * current_exp.reward
-            next_exp = buffer[batch_indices[idx] + i + 1]
+            next_exp = buffer[(batch_indices[idx] + i + 1) % params.REPLAY_BUFFER_SIZE]
 
             if current_exp.done:
                 rewards.append(n_step_rewards)
@@ -452,7 +452,7 @@ def unpack_batch_for_n_step(buffer, batch, batch_indices, params):
            np.array(dones, dtype=np.uint8), np.array(next_states, copy=False), np.array(last_steps)
 
 
-def unpack_batch_for_omega(buffer, batch, batch_indices, omega_window_size):
+def unpack_batch_for_omega(buffer, batch, batch_indices, params):
     states, actions, rewards, done_mask, next_states = [], [], [], [], []
     for idx, exp in enumerate(batch):
         state = np.array(exp.state, copy=False)
@@ -461,16 +461,16 @@ def unpack_batch_for_omega(buffer, batch, batch_indices, omega_window_size):
 
         n_step_rewards = []
         current_exp = exp
-        for i in range(omega_window_size):
+        for i in range(params.OMEGA_WINDOW_SIZE):
             n_step_rewards.append(current_exp.reward)
-            next_exp = buffer[batch_indices[idx] + i + 1]
+            next_exp = buffer[(batch_indices[idx] + i + 1) % params.REPLAY_BUFFER_SIZE]
             next_states.append(np.array(next_exp.state, copy=False))
 
             if current_exp.done:
                 done_mask.append(0)
                 break
             else:
-                if i == omega_window_size - 1:
+                if i == params.OMEGA_WINDOW_SIZE - 1:
                     done_mask.append(1)
 
             current_exp = next_exp
@@ -595,8 +595,7 @@ def calc_loss_per_double_dqn(buffer, batch, batch_indices, batch_weights, net, t
 
 def calc_loss_per_double_dqn_for_omega(buffer, batch, batch_indices, batch_weights, net, tgt_net, params, cuda=False,
                                        cuda_async=False):
-    states, actions, rewards, done_mask, next_states = unpack_batch_for_omega(buffer, batch, batch_indices,
-                                                                              params.OMEGA_WINDOW_SIZE)
+    states, actions, rewards, done_mask, next_states = unpack_batch_for_omega(buffer, batch, batch_indices, params)
 
     states_v = torch.tensor(states)
     next_states_v = torch.tensor(next_states)

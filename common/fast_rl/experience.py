@@ -655,12 +655,18 @@ class PrioritizedReplayBuffer(ExperienceReplayBuffer):
         self._it_min[idx] = self._max_priority ** self._alpha
 
     def _sample_proportional(self, batch_size):
+        assert len(self) > self.n_step
         res = []
         for _ in range(batch_size):
             while True:
                 mass = random.random() * self._it_sum.sum(0, len(self) - 1)
                 idx = self._it_sum.find_prefixsum_idx(mass)
-                if idx < self.capacity - self.n_step:
+
+                upper = self.pos
+                lower = (self.pos - self.n_step)
+                if lower < 0:
+                    lower = self.capacity + (self.pos - self.n_step)
+                if not (lower < idx or idx < upper):
                     res.append(idx)
                     break
         return res
