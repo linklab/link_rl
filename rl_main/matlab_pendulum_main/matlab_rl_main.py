@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 import time
-
+import sys
+sys.path.insert(0,"c:\\users\\wlckd\\anaconda3\\envs\\link_rl\\lib\\site-packages")
 import gym
 import torch
 import torch.multiprocessing as mp
@@ -14,6 +15,8 @@ from common.fast_rl import actions, experience, value_based_model, rl_agent
 from common.fast_rl.common import statistics, utils
 from config.parameters import PARAMETERS as params
 
+from line_profiler import LineProfiler
+lp = LineProfiler()
 
 cuda = False
 # env_name = 'CartPole-v1'
@@ -76,6 +79,10 @@ def play_func(exp_queue, env, net):
                     rl_agent.save_model(MODEL_SAVE_DIR, params.ENV_NAME, net.__name__, net, frame_idx, mean_episode_reward)
                     break
 
+                if frame_idx > params.MAX_GLOBAL_STEPS:
+                    break
+
+
     exp_queue.put(None)
 
 
@@ -97,8 +104,8 @@ def main():
 
     buffer = experience.PrioReplayBuffer(exp_source=None, buf_size=params.REPLAY_BUFFER_SIZE)
     optimizer = optim.Adam(net.parameters(), lr=params.LEARNING_RATE)
-
     exp_queue = mp.Queue(maxsize=params.TRAIN_STEP_FREQ * 2)
+    lp.print_stats()
     play_proc = mp.Process(target=play_func, args=(exp_queue, env, net))
     play_proc.start()
 
@@ -107,14 +114,15 @@ def main():
     frame_idx = 0
 
     while play_proc.is_alive():
+        print("!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!")
         frame_idx += params.TRAIN_STEP_FREQ
         for _ in range(params.TRAIN_STEP_FREQ):
-            exp = exp_queue.get()
+            lp_wrapper = lp(exp_queue.get)
+            exp = lp_wrapper()
             if exp is None:
                 play_proc.join()
                 break
             buffer._add(exp)
-
         if len(buffer) < params.MIN_REPLAY_SIZE_FOR_TRAIN:
             if params.DRAW_VIZ and frame_idx % 100 == 0:
                 stat_for_model_loss.draw_optimization_performance(frame_idx, 0.0)
@@ -137,5 +145,8 @@ def main():
             tgt_net.sync()
 
 
+
+
 if __name__ == "__main__":
     main()
+    lp.print_stats()

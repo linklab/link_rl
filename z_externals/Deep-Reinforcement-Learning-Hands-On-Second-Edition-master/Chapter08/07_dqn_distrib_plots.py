@@ -80,7 +80,7 @@ class DistributionalDQN(nn.Module):
         res = weights.sum(dim=2)
         return cat_out, res
 
-    def qvals(self, x):
+    def q_values(self, x):
         return self.both(x)[1]
 
     def apply_softmax(self, t):
@@ -91,7 +91,7 @@ def calc_values_of_states(states, net, device="cpu"):
     mean_vals = []
     for batch in np.array_split(states, 64):
         states_v = torch.tensor(batch).to(device)
-        action_values_v = net.qvals(states_v)
+        action_values_v = net.q_values(states_v)
         best_action_values_v = action_values_v.max(1)[0]
         mean_vals.append(best_action_values_v.mean().item())
     return np.mean(mean_vals)
@@ -189,7 +189,7 @@ if __name__ == "__main__":
     tgt_net = ptan.agent.TargetNet(net)
     selector = ptan.actions.EpsilonGreedyActionSelector(epsilon=params.epsilon_start)
     epsilon_tracker = common.EpsilonTracker(selector, params)
-    agent = ptan.agent.DQNAgent(lambda x: net.qvals(x), selector, device=device)
+    agent = ptan.agent.DQNAgent(lambda x: net.q_values(x), selector, device=device)
 
     exp_source = ptan.experience.ExperienceSourceFirstLast(
         env, agent, gamma=params.gamma)

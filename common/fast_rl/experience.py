@@ -160,7 +160,6 @@ class ExperienceSourceSingleEnvFirstLast(ExperienceSourceSingleEnv):
                 exp = ExperienceFirstLast(
                     state=exp[0].state, action=exp[0].action, reward=total_reward, last_state=last_state, last_step=len(elems)
                 )
-
             yield exp
 
 
@@ -731,7 +730,6 @@ class PrioReplayBuffer:
         else:
             prios = self.priorities[:self.pos]
         probs = prios ** self.prob_alpha
-
         probs = probs[:-self.n_step]
         probs /= probs.sum()
         indices = np.random.choice(len(self.buffer) - self.n_step, batch_size, p=probs)

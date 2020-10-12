@@ -15,6 +15,8 @@ idx = os.getcwd().index("link_rl")
 PROJECT_HOME = os.getcwd()[:idx] + "link_rl"
 sys.path.append(PROJECT_HOME)
 
+from common.environments.matlab.matlabenv import MatlabRotaryInvertedPendulumEnv
+
 from common.common_utils import make_gym_env, smooth
 from common.fast_rl.policy_based_model import unpack_batch_for_ddpg
 from common.fast_rl.rl_agent import float32_preprocessor
@@ -39,21 +41,22 @@ else:
 
 
 def play_func(exp_queue, env, net):
-    print(env.action_space.low[0], env.action_space.high[0])
-    action_min = env.action_space.low[0]
-    action_max = env.action_space.high[0]
+    # print(env.action_space.low[0], env.action_space.high[0])
+    env.start()
+    action_min = -1
+    action_max = 1
 
     agent = rl_agent.AgentDDPG(
         net, n_actions=1, action_min=action_min, action_max=action_max, device=device, preprocessor=float32_preprocessor
     )
 
-    # experience_source = experience.ExperienceSourceSingleEnvFirstLast(
-    #     env, agent, gamma=params.GAMMA, steps_count=params.N_STEP
-    # )
-
-    experience_source = experience.ExperienceSourceFirstLast(
+    experience_source = experience.ExperienceSourceSingleEnvFirstLast(
         env, agent, gamma=params.GAMMA, steps_count=params.N_STEP
     )
+
+    # experience_source = experience.ExperienceSourceFirstLast(
+    #     env, agent, gamma=params.GAMMA, steps_count=params.N_STEP
+    # )
 
     exp_source_iter = iter(experience_source)
 
@@ -97,20 +100,20 @@ def play_func(exp_queue, env, net):
 
 def main():
     mp.set_start_method('spawn')
-
-    env = make_gym_env(params.ENVIRONMENT_ID.value, seed=params.SEED)
+    env = MatlabRotaryInvertedPendulumEnv()
+    # env = make_gym_env(params.ENVIRONMENT_ID.value, seed=params.SEED)
     print("env:", params.ENVIRONMENT_ID)
-    print("observation_space:", env.observation_space)
-    print("action_space:", env.action_space)
+    print("observation_space:", 4)
+    print("action_space:", 1)
 
     actor_net = policy_based_model.DDPGActor(
-        obs_size=3,
+        obs_size=4,
         hidden_size_1=512, hidden_size_2=256,
         n_actions=1
     ).to(device)
 
     critic_net = policy_based_model.DDPGCritic(
-        obs_size=3,
+        obs_size=4,
         hidden_size_1=512, hidden_size_2=256,
         n_actions=1
     ).to(device)
@@ -189,6 +192,7 @@ def main():
                     loss_actor, loss_critic, loss_total, len(buffer.buffer)
                 )
 
+
 def model_update(buffer, actor_net, critic_net, target_actor_net, target_critic_net, actor_optimizer, critic_optimizer, stat_for_ddpg, step_idx, exp,
                  actor_grad_l2, actor_grad_max, actor_grad_variance,
                  critic_grad_l2, critic_grad_max, critic_grad_variance,
@@ -204,7 +208,7 @@ def model_update(buffer, actor_net, critic_net, target_actor_net, target_critic_
     batch_last_act_v = target_actor_net.target_model(batch_last_states_v)
     batch_q_last_v = target_critic_net.target_model(batch_last_states_v, batch_last_act_v)
     batch_q_last_v[batch_dones_mask] = 0.0
-    batch_target_q_v = batch_rewards_v.unsqueeze(dim=-1) + batch_q_last_v * params.GAMMA
+    batch_target_q_v = batch_rewards_v.unsqueeze(dim=-1) + batch_q_last_v * params.GAMMA ** params.N_STEP
     loss_critic_v = F.mse_loss(batch_q_v, batch_target_q_v.detach())
     loss_critic_v.backward()
 
