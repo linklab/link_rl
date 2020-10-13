@@ -698,14 +698,15 @@ class PrioritizedReplayBuffer(ExperienceReplayBuffer):
         return samples, idxes, weights
 
     def update_priorities(self, idxes, priorities):
-        assert len(idxes) == len(priorities)
-        for idx, priority in zip(idxes, priorities):
-            assert priority > 0
-            assert 0 <= idx < len(self)
-            self._it_sum[idx] = priority ** self._alpha
-            self._it_min[idx] = priority ** self._alpha
+        with torch.no_grad():
+            assert len(idxes) == len(priorities)
+            for idx, priority in zip(idxes, priorities):
+                assert priority > 0
+                assert 0 <= idx < len(self)
+                self._it_sum[idx] = priority ** self._alpha
+                self._it_min[idx] = priority ** self._alpha
 
-            self._max_priority = max(self._max_priority, priority)
+                self._max_priority = max(self._max_priority, priority)
 
 
 class PrioReplayBuffer:
