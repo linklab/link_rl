@@ -8,7 +8,7 @@ import torch.nn.functional as F
 from torch.autograd import Variable
 
 import numpy as np
-from memory_profiler import profile
+# from memory_profiler import profile
 
 
 class NoisyLinear(nn.Linear):
@@ -481,8 +481,8 @@ def unpack_batch_for_omega(buffer, batch, batch_indices, params):
 
 
 def calc_loss_dqn(batch, net, tgt_net, gamma, cuda=False, cuda_async=False):
-    states, actions, rewards, dones, next_states, last_steps = unpack_batch_extended_frames(batch)
-    # states, actions, rewards, dones, next_states = unpack_batch(batch)
+    # states, actions, rewards, dones, next_states, last_steps = unpack_batch_extended_frames(batch)
+    states, actions, rewards, dones, next_states, last_steps = unpack_batch(batch)
 
     states_v = torch.tensor(states)
     next_states_v = torch.tensor(next_states)
