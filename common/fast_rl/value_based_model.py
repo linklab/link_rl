@@ -477,7 +477,7 @@ def unpack_batch_for_omega(buffer, batch, batch_indices, params):
 
         rewards.append(n_step_rewards)
 
-    return np.array(states, copy=False), np.array(actions), rewards, done_mask, np.array(next_states, copy=False)
+    return np.array(states, copy=False), np.array(actions), np.array(rewards), np.array(done_mask), np.array(next_states, copy=False)
 
 
 def calc_loss_dqn(batch, net, tgt_net, gamma, cuda=False, cuda_async=False):
@@ -617,7 +617,8 @@ def calc_loss_per_double_dqn_for_omega(buffer, batch, batch_indices, batch_weigh
         next_state_actions = next_state_actions.unsqueeze(-1)
         next_state_values = tgt_net.target_model(next_states_v).gather(1, next_state_actions).squeeze(-1)
 
-    expected_state_action_values = calc_omega_return(rewards, done_mask, next_state_values, params)
+    expected_state_action_values = calc_omega_return(rewards, done_mask, next_state_values.detach().data.cpu().numpy(), params)
+    expected_state_action_values = torch.tensor(expected_state_action_values, dtype=torch.float32)
     if cuda:
         expected_state_action_values = expected_state_action_values.cuda(non_blocking=cuda_async)
 
@@ -639,7 +640,7 @@ def calc_omega_return(rewards, done_mask, next_state_values, params):
             gamma *= params.GAMMA
         gamma = params.GAMMA
         for i in range(len(rewards[batch_idx])):
-            n_step_target_list.append(n_step_reward_sum_list[i] + gamma * next_state_values[idx_count].detach().item() *
+            n_step_target_list.append(n_step_reward_sum_list[i] + gamma * next_state_values[idx_count] *
                                       (done_mask[batch_idx] if i == len(rewards[batch_idx]) - 1 else 1))
             gamma *= params.GAMMA
             idx_count += 1
@@ -649,5 +650,5 @@ def calc_omega_return(rewards, done_mask, next_state_values, params):
         beta = (max_n_step_target - avg) / (max_n_step_target - min(n_step_target_list) + 0.00001)
         target_q_values.append((1 - beta) * avg + beta * max_n_step_target)
 
-    target_q_values = torch.tensor(target_q_values, dtype=torch.float32)
+    # target_q_values = torch.tensor(target_q_values, dtype=torch.float32)
     return target_q_values

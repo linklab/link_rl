@@ -166,7 +166,7 @@ def main():
         if frame_idx % params.TARGET_NET_SYNC_STEP_PERIOD < params.TRAIN_STEP_FREQ:
             tgt_net.sync()
 
-        del loss_v
+        # del loss_v
         # del loss_v, sample_prios
         # gc.collect()
 
