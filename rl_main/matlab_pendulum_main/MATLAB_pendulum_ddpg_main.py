@@ -1,6 +1,8 @@
 # https://github.com/openai/gym/blob/master/gym/envs/classic_control/pendulum.py
 # https://mspries.github.io/jimmy_pendulum.html
 #!/usr/bin/env python3
+import math
+import profile
 import time
 import torch
 import torch.nn.functional as F
@@ -12,6 +14,8 @@ import numpy as np
 idx = os.getcwd().index("link_rl")
 PROJECT_HOME = os.getcwd()[:idx] + "link_rl"
 sys.path.append(PROJECT_HOME)
+
+from common.environments.matlab.matlabenv import MatlabRotaryInvertedPendulumEnv
 
 from common.common_utils import make_gym_env, smooth
 from common.fast_rl.policy_based_model import unpack_batch_for_ddpg
@@ -37,9 +41,10 @@ else:
 
 
 def play_func(exp_queue, env, net):
-    print(env.action_space.low[0], env.action_space.high[0])
-    action_min = env.action_space.low[0]
-    action_max = env.action_space.high[0]
+    # print(env.action_space.low[0], env.action_space.high[0])
+    env.start()
+    action_min = -0.1
+    action_max = 0.1
 
     agent = rl_agent.AgentDDPG(
         net, n_actions=1, action_min=action_min, action_max=action_max, device=device, preprocessor=float32_preprocessor
@@ -80,15 +85,13 @@ def play_func(exp_queue, env, net):
 
                 if step_idx >= next_save_frame_idx:
                     rl_agent.save_model(
-                        MODEL_SAVE_DIR, params.ENVIRONMENT_ID.value, net.__name__, net, step_idx, mean_episode_reward
+                        MODEL_SAVE_DIR, params.ENVIRONMENT_ID, net.__name__, net, step_idx, mean_episode_reward
                     )
                     next_save_frame_idx += params.MODEL_SAVE_STEP_PERIOD
 
-                agent.ou_noise.reset()
-
                 if solved:
                     rl_agent.save_model(
-                        MODEL_SAVE_DIR, params.ENVIRONMENT_ID.value, net.__name__, net, step_idx, mean_episode_reward
+                        MODEL_SAVE_DIR, params.ENVIRONMENT_ID, net.__name__, net, step_idx, mean_episode_reward
                     )
                     break
 
@@ -97,20 +100,20 @@ def play_func(exp_queue, env, net):
 
 def main():
     mp.set_start_method('spawn')
-
-    env = make_gym_env(params.ENVIRONMENT_ID.value, seed=params.SEED)
+    env = MatlabRotaryInvertedPendulumEnv()
+    # env = make_gym_env(params.ENVIRONMENT_ID.value, seed=params.SEED)
     print("env:", params.ENVIRONMENT_ID)
-    print("observation_space:", env.observation_space)
-    print("action_space:", env.action_space)
+    print("observation_space:", 4)
+    print("action_space:", 1)
 
     actor_net = policy_based_model.DDPGActor(
-        obs_size=3,
+        obs_size=4,
         hidden_size_1=512, hidden_size_2=256,
         n_actions=1
     ).to(device)
 
     critic_net = policy_based_model.DDPGCritic(
-        obs_size=3,
+        obs_size=4,
         hidden_size_1=512, hidden_size_2=256,
         n_actions=1
     ).to(device)

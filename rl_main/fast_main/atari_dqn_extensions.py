@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+import sys
 import time
 import torch
 import torch.optim as optim
@@ -11,6 +12,10 @@ from common.common_utils import make_atari_env
 from common.fast_rl import experience, rl_agent, value_based_model, actions
 from common.fast_rl.common import utils
 from common.fast_rl.common import statistics, wrappers
+
+from line_profiler import LineProfiler
+from memory_profiler import profile
+import gc
 
 ##### NOTE #####
 from config.parameters import PARAMETERS as params
@@ -106,9 +111,11 @@ def main():
     tgt_net = rl_agent.TargetNet(net)
 
     if params.OMEGA:
-        buffer = experience.PrioReplayBuffer(exp_source=None, buf_size=params.REPLAY_BUFFER_SIZE, n_step=params.OMEGA_WINDOW_SIZE)
+        # buffer = experience.PrioReplayBuffer(exp_source=None, buf_size=params.REPLAY_BUFFER_SIZE, n_step=params.OMEGA_WINDOW_SIZE)
+        buffer = experience.PrioritizedReplayBuffer(experience_source=None, buffer_size=params.REPLAY_BUFFER_SIZE, n_step=params.OMEGA_WINDOW_SIZE)
     else:
-        buffer = experience.PrioReplayBuffer(exp_source=None, buf_size=params.REPLAY_BUFFER_SIZE, n_step=params.N_STEP)
+        # buffer = experience.PrioReplayBuffer(exp_source=None, buf_size=params.REPLAY_BUFFER_SIZE, n_step=params.N_STEP)
+        buffer = experience.PrioritizedReplayBuffer(experience_source=None, buffer_size=params.REPLAY_BUFFER_SIZE, n_step=params.N_STEP)
     optimizer = optim.Adam(net.parameters(), lr=params.LEARNING_RATE)
 
     exp_queue = mp.Queue(maxsize=params.TRAIN_STEP_FREQ * 2)
@@ -149,18 +156,28 @@ def main():
             )
         loss_v.backward()
         optimizer.step()
-        buffer.update_priorities(batch_indices, sample_prios)
+        # buffer.update_priorities(batch_indices, sample_prios)
+        buffer.update_priorities(batch_indices, sample_prios.detach().data.cpu().numpy())
         buffer.update_beta(frame_idx)
 
         if params.DRAW_VIZ and frame_idx % 1000 == 0:
-            stat_for_model_loss.draw_optimization_performance(frame_idx, loss_v.item())
+            stat_for_model_loss.draw_optimization_performance(frame_idx, loss_v.detach().item())
 
         if frame_idx % params.TARGET_NET_SYNC_STEP_PERIOD < params.TRAIN_STEP_FREQ:
             tgt_net.sync()
 
-        del sample_prios
+        # del loss_v
+        # del loss_v, sample_prios
+        # gc.collect()
+
+        # if frame_idx % 10000 == 0:
+        #     lp.print_stats()
+
 
 # python atari_dqn.py --env=pong --draw_viz=1 --cuda
 # python atari_dqn.py --env=breakout --draw_viz=1 --cuda
 if __name__ == "__main__":
+    # lp = LineProfiler()
+    # lp_wrapper = lp(main)
+    # lp_wrapper(lp)
     main()

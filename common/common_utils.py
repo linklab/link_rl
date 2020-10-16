@@ -3,6 +3,7 @@ from typing import Optional
 
 import numpy as np
 import gym
+import or_gym
 import torch
 
 from common.fast_rl.common import wrappers
@@ -71,6 +72,24 @@ def make_gym_env(env_id, rank=0, seed=0):
     set_global_seeds(seed)
 
     env = gym.make(env_id)
+    env = OriginalRewardsWrapper(env)
+    env.seed(seed + rank)
+
+    return env
+
+
+def make_or_gym_env(env_id, rank=0, seed=0):
+    """
+    Utility function for multiprocessed env.
+
+    :param env_id: (str) the environment ID
+    :param num_env: (int) the number of environment you wish to have in subprocesses
+    :param seed: (int) the inital seed for RNG
+    :param rank: (int) index of the subprocess
+    """
+    set_global_seeds(seed)
+
+    env = or_gym.make(env_id)
     env = OriginalRewardsWrapper(env)
     env.seed(seed + rank)
 

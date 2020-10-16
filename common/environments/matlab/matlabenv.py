@@ -85,7 +85,7 @@ class MatlabRotaryInvertedPendulumEnv(gym.Env):
             self.plant.connectStop()
         else:
             done = False
-
+        # print(self.state)
         # print("!!!!!!!!!!!!!!!!!!!!!!!!", np.asarray(next_obs))
         return np.array(self.state), reward, done, info
 
