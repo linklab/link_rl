@@ -41,6 +41,8 @@ class EnvironmentName(enum.Enum):
     ENDURO_NO_FRAME_SKIP_V4 = "EnduroNoFrameskip-v4"
     PENDULUM_MATLAB_V0 = "Pendulum_Matlab_v0"
     MINITAUR_BULLET_V0 = "MinitaurBulletEnv-v0"
+    TSP_V0 = "TSP-v0"
+    TSP_V1 = "TSP-v1"
 
 
 class DeepLearningModelName(enum.Enum):
