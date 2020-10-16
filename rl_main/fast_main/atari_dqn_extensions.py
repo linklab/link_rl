@@ -26,7 +26,7 @@ from config.parameters import PARAMETERS as params
 warnings.filterwarnings("ignore", category=DeprecationWarning)
 warnings.filterwarnings("ignore", category=UserWarning)
 os.environ['KMP_DUPLICATE_LIB_OK'] = 'True'
-os.environ['LRU_CACHE_CAPACITY'] = '1'
+# os.environ['LRU_CACHE_CAPACITY'] = '1'
 
 if torch.cuda.is_available():
     device = torch.device("cuda" if params.CUDA else "cpu")
@@ -168,7 +168,7 @@ def main():
         loss_v.backward()
         optimizer.step()
         # buffer.update_priorities(batch_indices, sample_prios)
-        buffer.update_priorities(batch_indices, sample_prios.detach().data.cpu().numpy())
+        buffer.update_priorities(batch_indices, sample_prios.detach().cpu().numpy())       # .detach().data.cpu().numpy()
         buffer.update_beta(frame_idx)
 
         if params.DRAW_VIZ and frame_idx % 1000 == 0:
