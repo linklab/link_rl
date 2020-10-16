@@ -123,3 +123,4 @@ environments/unity/unity_envs/
 
 # personal parameter's option
 config/parameters.py
+/rl_main/fast_main/*.pickle

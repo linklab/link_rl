@@ -13,7 +13,7 @@ from common.common_utils import make_atari_env
 from common.fast_rl import experience, rl_agent, value_based_model, actions
 from common.fast_rl.common import utils
 from common.fast_rl.common import statistics, wrappers
-from .atari_draw_graph import save_reward_as_pickle, save_q_loss_as_pickle
+from rl_main.fast_main.atari_draw_graph import save_reward_as_pickle, save_q_loss_as_pickle
 
 from line_profiler import LineProfiler
 from memory_profiler import profile
@@ -76,7 +76,7 @@ def play_func(env, net, exp_queue):
             epsilon_tracker.udpate(frame_idx)
 
             if frame_idx % params.DATA_SAVE_STEP_PERIOD == 0:
-                episode_rewards_across_steps[(frame_idx-1)/params.DATA_SAVE_STEP_PERIOD] = reward_tracker.episode_reward_list[-1]
+                episode_rewards_across_steps[int((frame_idx-1)/params.DATA_SAVE_STEP_PERIOD)] = reward_tracker.episode_reward_list[-1]
                 save_reward_as_pickle(episode_rewards_across_steps, params)
 
             episode_rewards = exp_source.pop_episode_reward_lst()
@@ -178,7 +178,7 @@ def main():
             tgt_net.sync()
 
         if frame_idx % params.DATA_SAVE_STEP_PERIOD < params.TRAIN_STEP_FREQ:
-            q_loss_across_steps[(frame_idx - 1) / params.DATA_SAVE_STEP_PERIOD] = loss_v.detach().item()
+            q_loss_across_steps[int((frame_idx - 1) / params.DATA_SAVE_STEP_PERIOD)] = loss_v.detach().item()
             save_q_loss_as_pickle(q_loss_across_steps, params)
 
         # del loss_v
