@@ -4,6 +4,7 @@ import time
 import torch
 import torch.optim as optim
 import torch.multiprocessing as mp
+import numpy as np
 import os
 import warnings
 
@@ -12,6 +13,7 @@ from common.common_utils import make_atari_env
 from common.fast_rl import experience, rl_agent, value_based_model, actions
 from common.fast_rl.common import utils
 from common.fast_rl.common import statistics, wrappers
+from .atari_draw_graph import save_reward_as_pickle, save_q_loss_as_pickle
 
 from line_profiler import LineProfiler
 from memory_profiler import profile
@@ -24,6 +26,7 @@ from config.parameters import PARAMETERS as params
 warnings.filterwarnings("ignore", category=DeprecationWarning)
 warnings.filterwarnings("ignore", category=UserWarning)
 os.environ['KMP_DUPLICATE_LIB_OK'] = 'True'
+os.environ['LRU_CACHE_CAPACITY'] = '1'
 
 if torch.cuda.is_available():
     device = torch.device("cuda" if params.CUDA else "cpu")
@@ -56,6 +59,8 @@ def play_func(env, net, exp_queue):
     for _ in env.unwrapped.get_action_meanings():
         action_count.append(0)
 
+    episode_rewards_across_steps = np.zeros(int(params.MAX_GLOBAL_STEPS / params.DATA_SAVE_STEP_PERIOD))
+
     frame_idx = 0
     next_save_frame_idx = params.MODEL_SAVE_STEP_PERIOD
 
@@ -69,6 +74,10 @@ def play_func(env, net, exp_queue):
             exp_queue.put(exp)
 
             epsilon_tracker.udpate(frame_idx)
+
+            if frame_idx % params.DATA_SAVE_STEP_PERIOD == 0:
+                episode_rewards_across_steps[(frame_idx-1)/params.DATA_SAVE_STEP_PERIOD] = reward_tracker.episode_reward_list[-1]
+                save_reward_as_pickle(episode_rewards_across_steps, params)
 
             episode_rewards = exp_source.pop_episode_reward_lst()
             if episode_rewards:
@@ -128,6 +137,8 @@ def main():
     else:
         stat_for_model_loss = None
 
+    q_loss_across_steps = np.zeros(int(params.MAX_GLOBAL_STEPS / params.DATA_SAVE_STEP_PERIOD))
+
     frame_idx = 0
 
     while play_proc.is_alive():
@@ -165,6 +176,10 @@ def main():
 
         if frame_idx % params.TARGET_NET_SYNC_STEP_PERIOD < params.TRAIN_STEP_FREQ:
             tgt_net.sync()
+
+        if frame_idx % params.DATA_SAVE_STEP_PERIOD < params.TRAIN_STEP_FREQ:
+            q_loss_across_steps[(frame_idx - 1) / params.DATA_SAVE_STEP_PERIOD] = loss_v.detach().item()
+            save_q_loss_as_pickle(q_loss_across_steps, params)
 
         # del loss_v
         # del loss_v, sample_prios
