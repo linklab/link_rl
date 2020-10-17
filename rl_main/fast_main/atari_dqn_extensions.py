@@ -7,6 +7,7 @@ import torch.multiprocessing as mp
 import numpy as np
 import os
 import warnings
+from collections import deque
 
 from common import common_utils
 from common.common_utils import make_atari_env
@@ -60,6 +61,7 @@ def play_func(env, net, exp_queue):
         action_count.append(0)
 
     episode_rewards_across_steps = np.zeros(int(params.MAX_GLOBAL_STEPS / params.DATA_SAVE_STEP_PERIOD))
+    last_mean_episode_reward = 0
 
     frame_idx = 0
     next_save_frame_idx = params.MODEL_SAVE_STEP_PERIOD
@@ -76,12 +78,13 @@ def play_func(env, net, exp_queue):
             epsilon_tracker.udpate(frame_idx)
 
             if frame_idx % params.DATA_SAVE_STEP_PERIOD == 0:
-                episode_rewards_across_steps[int((frame_idx-1)/params.DATA_SAVE_STEP_PERIOD)] = reward_tracker.episode_reward_list[-1]
+                episode_rewards_across_steps[int((frame_idx-1)/params.DATA_SAVE_STEP_PERIOD)] = last_mean_episode_reward
                 save_reward_as_pickle(episode_rewards_across_steps, params)
 
             episode_rewards = exp_source.pop_episode_reward_lst()
             if episode_rewards:
                 solved, mean_episode_reward = reward_tracker.set_episode_reward(episode_rewards[0], frame_idx, action_selector.epsilon, action_count)
+                last_mean_episode_reward = mean_episode_reward
 
                 if frame_idx >= next_save_frame_idx:
                     rl_agent.save_model(
@@ -138,6 +141,7 @@ def main():
         stat_for_model_loss = None
 
     q_loss_across_steps = np.zeros(int(params.MAX_GLOBAL_STEPS / params.DATA_SAVE_STEP_PERIOD))
+    loss_list = deque(maxlen=params.AVG_EPISODE_SIZE_FOR_STAT)
 
     frame_idx = 0
 
@@ -177,8 +181,9 @@ def main():
         if frame_idx % params.TARGET_NET_SYNC_STEP_PERIOD < params.TRAIN_STEP_FREQ:
             tgt_net.sync()
 
+        loss_list.append(loss_v.detach().item())
         if frame_idx % params.DATA_SAVE_STEP_PERIOD < params.TRAIN_STEP_FREQ:
-            q_loss_across_steps[int((frame_idx - 1) / params.DATA_SAVE_STEP_PERIOD)] = loss_v.detach().item()
+            q_loss_across_steps[int((frame_idx - 1) / params.DATA_SAVE_STEP_PERIOD)] = np.mean(loss_list)
             save_q_loss_as_pickle(q_loss_across_steps, params)
 
         # del loss_v

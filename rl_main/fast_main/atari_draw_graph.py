@@ -27,10 +27,13 @@ def draw_graph(episode_rewards_across_steps, q_loss_across_steps, params):
         else:
             label = "{0} steps".format(n_step)
 
-        runs_avg_cumulative_rewards_across_steps = np.mean(episode_rewards_across_steps[n_step_idx], axis=0)
-        score_ma_steps = exp_moving_average(runs_avg_cumulative_rewards_across_steps, EMA_WINDOW_SIZE)
-        runs_std_cumulative_rewards_across_steps = np.std(episode_rewards_across_steps[n_step_idx], axis=0) / 10
-        std_score_ma_steps = exp_moving_average(runs_std_cumulative_rewards_across_steps, EMA_WINDOW_SIZE)
+        score_ma_steps = np.mean(episode_rewards_across_steps[n_step_idx], axis=0)
+        std_score_ma_steps = np.std(episode_rewards_across_steps[n_step_idx], axis=0) / 10
+
+        # runs_avg_cumulative_rewards_across_steps = np.mean(episode_rewards_across_steps[n_step_idx], axis=0)
+        # score_ma_steps = exp_moving_average(runs_avg_cumulative_rewards_across_steps, EMA_WINDOW_SIZE)
+        # runs_std_cumulative_rewards_across_steps = np.std(episode_rewards_across_steps[n_step_idx], axis=0) / 10
+        # std_score_ma_steps = exp_moving_average(runs_std_cumulative_rewards_across_steps, EMA_WINDOW_SIZE)
         ax0.plot(
             range(int(params.MAX_GLOBAL_STEPS / params.DATA_SAVE_STEP_PERIOD)),
             score_ma_steps,
@@ -48,10 +51,13 @@ def draw_graph(episode_rewards_across_steps, q_loss_across_steps, params):
         )
         ax0.tick_params(labelsize=24)
 
-        runs_avg_q_loss_across_steps = np.mean(q_loss_across_steps[n_step_idx], axis=0)
-        loss_ma_steps = exp_moving_average(runs_avg_q_loss_across_steps, EMA_WINDOW_SIZE)
-        runs_std_q_loss_across_steps = np.std(q_loss_across_steps[n_step_idx], axis=0) / 10
-        std_q_loss_ma_steps = exp_moving_average(runs_std_q_loss_across_steps, EMA_WINDOW_SIZE)
+        loss_ma_steps = np.mean(q_loss_across_steps[n_step_idx], axis=0)
+        std_q_loss_ma_steps = np.std(q_loss_across_steps[n_step_idx], axis=0) / 10
+
+        # runs_avg_q_loss_across_steps = np.mean(q_loss_across_steps[n_step_idx], axis=0)
+        # loss_ma_steps = exp_moving_average(runs_avg_q_loss_across_steps, EMA_WINDOW_SIZE)
+        # runs_std_q_loss_across_steps = np.std(q_loss_across_steps[n_step_idx], axis=0) / 10
+        # std_q_loss_ma_steps = exp_moving_average(runs_std_q_loss_across_steps, EMA_WINDOW_SIZE)
         ax1.plot(
             range(int(params.MAX_GLOBAL_STEPS / params.DATA_SAVE_STEP_PERIOD)),
             loss_ma_steps,
@@ -69,17 +75,17 @@ def draw_graph(episode_rewards_across_steps, q_loss_across_steps, params):
         )
         ax1.tick_params(labelsize=24)
 
-    ax0.set_xlabel('steps x ' + r'$10^2$', fontsize=24)
+    ax0.set_xlabel('steps x ' + r'$10^3$', fontsize=24)
     ax0.set_ylabel('Return', fontsize=24)     # Moving Average of Cumulative Rewards
     ax0.legend(loc="best", fontsize=24)
     ax0.grid()
 
-    ax1.set_xlabel('steps x ' + r'$10^2$', fontsize=24)
+    ax1.set_xlabel('steps x ' + r'$10^3$', fontsize=24)
     ax1.set_ylabel(r'TD'+'-Error', fontsize=24)
     ax1.legend(loc="best", fontsize=24)
     ax1.grid()
 
-    plt.suptitle('Environment: {0} \n Multi-Step DQN'.format(params.env), fontsize=24)
+    plt.suptitle('Environment: {0} \n Multi-Step DQN'.format(params.ENVIRONMENT_ID.value), fontsize=24)
     plt.gcf()
     plt.savefig("./Multi_Step_DQN_graph.png")
     plt.close()
