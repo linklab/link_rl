@@ -100,10 +100,7 @@ def main():
     print("Max weight capacity:\t{}kg".format(env.max_weight))
     print("Number of items:\t{}".format(env.N))
 
-    if env_config['mask']:
-        obs_size = env_config['N'] * 2 + 1
-    else:
-        obs_size = (env_config['N'] + 1) * 2
+    obs_size = (env_config['N'] + 1) * 3
 
     net = value_based_model.DuelingDQNMLP(
         obs_size=obs_size,
