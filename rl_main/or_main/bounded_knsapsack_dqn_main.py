@@ -7,6 +7,7 @@ import os
 import numpy as np
 
 from common.common_utils import make_gym_env, make_or_gym_env
+from config.names import EnvironmentName
 
 print(torch.__version__)
 
@@ -93,6 +94,7 @@ def main():
         'mask': True
     }
 
+    assert params.ENVIRONMENT_ID == EnvironmentName.KNAPSACK_V2
     env = make_or_gym_env(params.ENVIRONMENT_ID.value, env_config=env_config)
 
     print("Max weight capacity:\t{}kg".format(env.max_weight))

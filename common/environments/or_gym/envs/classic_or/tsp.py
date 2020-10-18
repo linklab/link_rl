@@ -1,9 +1,12 @@
 import numpy as np
 import gym
 from gym import spaces
-from or_gym import utils
 from copy import copy, deepcopy
 import matplotlib.pyplot as plt
+from gym.utils import seeding
+
+from common.environments.or_gym.utils import assign_env_config
+
 
 class TSPEnv(gym.Env):
     '''
@@ -178,6 +181,12 @@ class TSPEnv(gym.Env):
         ax.yaxis.set_visible(False)
         plt.show()
 
+    def set_seed(self, seed=None):
+        if seed == None:
+            seed = np.random.randint(0, np.iinfo(np.int32).max)
+        self.np_random, seed = seeding.np_random(seed)
+        return [seed]
+
 class TSPDistCost(TSPEnv):
     '''
     Fully connected network with distance-based cost.
@@ -220,7 +229,7 @@ class TSPDistCost(TSPEnv):
         self.N = 50
         self.invalid_action_cost = -100
         self.mask = False
-        utils.assign_env_config(self, kwargs)
+        assign_env_config(self, kwargs)
         self.nodes = np.arange(self.N)
         self.coords = self._generate_coordinates()
         self.distance_matrix = self._get_distance_matrix()

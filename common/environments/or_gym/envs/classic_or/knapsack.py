@@ -2,8 +2,10 @@ import numpy as np
 import gym
 from gym import spaces, logger
 from gym.utils import seeding
-from or_gym.utils import assign_env_config
 import copy
+
+from common.environments.or_gym.utils import assign_env_config
+
 
 class KnapsackEnv(gym.Env):
     '''
@@ -253,6 +255,7 @@ class BinaryKnapsackEnv(KnapsackEnv):
         self._update_state()
         return self.state
 
+
 class BoundedKnapsackEnv(KnapsackEnv):
     '''
     Bounded Knapsack Problem
@@ -372,6 +375,7 @@ class BoundedKnapsackEnv(KnapsackEnv):
         self.item_limits = self.item_limits_init.copy()
         self._update_state()
         return self.state
+
 
 class OnlineKnapsackEnv(BoundedKnapsackEnv):
     '''

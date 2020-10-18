@@ -5,13 +5,13 @@ GitHub: https://github.com/awslabs/or-rl-benchmarks
 '''
 import numpy as np
 import gym
-from gym import spaces, logger
-from gym.utils import seeding
-from or_gym.utils import assign_env_config
-import copy
+from gym import spaces
+
+from common.environments.or_gym.utils import assign_env_config
 
 BIG_NEG_REWARD = -100
 BIG_POS_REWARD = 10
+
 
 class BinPackingEnv(gym.Env):
     '''

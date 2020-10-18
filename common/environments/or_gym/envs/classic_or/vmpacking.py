@@ -2,8 +2,10 @@ import numpy as np
 import gym
 from gym import spaces, logger
 from gym.utils import seeding
-from or_gym.utils import assign_env_config
 import copy
+
+from common.environments.or_gym.utils import assign_env_config
+
 
 class VMPackingEnv(gym.Env):
     '''
