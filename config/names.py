@@ -41,8 +41,13 @@ class EnvironmentName(enum.Enum):
     ENDURO_NO_FRAME_SKIP_V4 = "EnduroNoFrameskip-v4"
     PENDULUM_MATLAB_V0 = "Pendulum_Matlab_v0"
     MINITAUR_BULLET_V0 = "MinitaurBulletEnv-v0"
-    TSP_V0 = "TSP-v0"
-    TSP_V1 = "TSP-v1"
+    TSP_V0 = "TSP-v0"  # bi-directional connections and uniform cost.
+    TSP_V1 = "TSP-v1"  # bi-directional connections
+    KNAPSACK_V0 = "Knapsack-v0"  # unbounded knapsack problem with 200 items.
+    KNAPSACK_V1 = "Knapsack-v1"  # binary (0-1) knapsack problem with 200 items.
+    KNAPSACK_V2 = "Knapsack-v2"  # bounded knapsack problem with 200 items.
+    KNAPSACK_V3 = "Knapsack-v3"  # stochastic, online knapsack with 200 items.
+
 
 
 class DeepLearningModelName(enum.Enum):

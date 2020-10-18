@@ -6,12 +6,14 @@ import gym
 import or_gym
 import torch
 
+from common.environments.or_gym.knapsack import CustomUnboundedKnapsackEnv
 from common.fast_rl.common import wrappers
 import numpy as np
 import math
 from matplotlib import pyplot as plt
 
 from common.fast_rl.common.wrappers import OriginalRewardsWrapper
+from config.names import EnvironmentName
 
 
 def print_params(params_class):
@@ -78,20 +80,18 @@ def make_gym_env(env_id, rank=0, seed=0):
     return env
 
 
-def make_or_gym_env(env_id, rank=0, seed=0):
-    """
-    Utility function for multiprocessed env.
-
-    :param env_id: (str) the environment ID
-    :param num_env: (int) the number of environment you wish to have in subprocesses
-    :param seed: (int) the inital seed for RNG
-    :param rank: (int) index of the subprocess
-    """
+def make_or_gym_env(env_id, rank=0, seed=0, env_config=None):
     set_global_seeds(seed)
 
-    env = or_gym.make(env_id)
-    env = OriginalRewardsWrapper(env)
-    env.seed(seed + rank)
+    if env_id == EnvironmentName.KNAPSACK_V0.value:
+        env = CustomUnboundedKnapsackEnv(env_config=env_config)
+    else:
+        if env_config is not None:
+            env = or_gym.make(env_id, env_config)
+        else:
+            env = or_gym.make(env_id)
+
+    env.set_seed(seed + rank)
 
     return env
 

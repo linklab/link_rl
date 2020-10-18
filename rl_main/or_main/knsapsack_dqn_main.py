@@ -4,6 +4,7 @@ import torch
 import torch.multiprocessing as mp
 from torch import optim
 import os
+import numpy as np
 
 from common.common_utils import make_gym_env, make_or_gym_env
 
@@ -38,7 +39,7 @@ def play_func(exp_queue, env, net):
 
     agent = rl_agent.DQNAgent(net, action_selector, device=device)
 
-    experience_source = experience.ExperienceSourceFirstLast(env, agent, gamma=params.GAMMA, steps_count=params.N_STEP)
+    experience_source = experience.ExperienceSourceSingleEnvFirstLast(env, agent, gamma=params.GAMMA, steps_count=params.N_STEP)
 
     exp_source_iter = iter(experience_source)
 
@@ -56,7 +57,6 @@ def play_func(exp_queue, env, net):
         while step_idx < params.MAX_GLOBAL_STEPS:
             step_idx += 1
             exp = next(exp_source_iter)
-            # print(exp)
             exp_queue.put(exp)
 
             epsilon_tracker.udpate(step_idx)
@@ -85,12 +85,23 @@ def play_func(exp_queue, env, net):
 def main():
     mp.set_start_method('spawn')
 
-    env = make_or_gym_env(params.ENVIRONMENT_ID.value, seed=params.SEED)
+    env_config = {
+        'N': 5,
+        'max_weight': 15,
+        'item_weights': np.array([1, 12, 2, 1, 4]),
+        'item_values': np.array([2, 4, 2, 1, 10]),
+        'mask': False
+    }
+
+    env = make_or_gym_env(params.ENVIRONMENT_ID.value, env_config=env_config)
+
+    print("Max weight capacity:\t{}kg".format(env.max_weight))
+    print("Number of items:\t{}".format(env.N))
 
     net = value_based_model.DuelingDQNMLP(
-        obs_size=51,
+        obs_size=12,
         hidden_size_1=128, hidden_size_2=128,
-        n_actions=50
+        n_actions=5
     ).to(device)
     print(net)
     target_net = rl_agent.TargetNet(net)
