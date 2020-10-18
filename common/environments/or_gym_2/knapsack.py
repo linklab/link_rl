@@ -1,14 +1,20 @@
-from or_gym.envs.classic_or import KnapsackEnv
+from or_gym.envs.classic_or import KnapsackEnv, BoundedKnapsackEnv
 import numpy as np
 
-class CustomUnboundedKnapsackEnv(KnapsackEnv):
+
+class CustomBoundedKnapsackEnv(BoundedKnapsackEnv):
     def __init__(self, *args, **kwargs):
-        super(CustomUnboundedKnapsackEnv, self).__init__(*args, **kwargs)
+        super(CustomBoundedKnapsackEnv, self).__init__(*args, **kwargs)
+        self.previous_action_mask = None
 
     def reset(self):
         state = super().reset()
+
+        print(state)
+
         if self.mask:
             updated_state = state['state']
+            self.previous_action_mask = state['action_mask']
         else:
             updated_state = []
             for l in state:
@@ -18,6 +24,8 @@ class CustomUnboundedKnapsackEnv(KnapsackEnv):
 
     def step(self, action):
         next_state, reward, done, info = super().step(action)
+
+        print(action, next_state, reward, done)
 
         if self.mask:
             updated_next_state = next_state['state']

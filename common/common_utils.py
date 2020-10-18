@@ -6,7 +6,7 @@ import gym
 import or_gym
 import torch
 
-from common.environments.or_gym.knapsack import CustomUnboundedKnapsackEnv
+from common.environments.or_gym.knapsack import CustomBoundedKnapsackEnv
 from common.fast_rl.common import wrappers
 import numpy as np
 import math
@@ -83,8 +83,8 @@ def make_gym_env(env_id, rank=0, seed=0):
 def make_or_gym_env(env_id, rank=0, seed=0, env_config=None):
     set_global_seeds(seed)
 
-    if env_id == EnvironmentName.KNAPSACK_V0.value:
-        env = CustomUnboundedKnapsackEnv(env_config=env_config)
+    if env_id == EnvironmentName.KNAPSACK_V2.value:
+        env = CustomBoundedKnapsackEnv(env_config=env_config)
     else:
         if env_config is not None:
             env = or_gym.make(env_id, env_config)

@@ -90,7 +90,7 @@ def main():
         'max_weight': 15,
         'item_weights': np.array([1, 12, 2, 1, 4]),
         'item_values': np.array([2, 4, 2, 1, 10]),
-        'mask': False
+        'mask': True
     }
 
     env = make_or_gym_env(params.ENVIRONMENT_ID.value, env_config=env_config)
@@ -98,8 +98,13 @@ def main():
     print("Max weight capacity:\t{}kg".format(env.max_weight))
     print("Number of items:\t{}".format(env.N))
 
+    if env_config['mask']:
+        obs_size = env_config['N'] * 2 + 1
+    else:
+        obs_size = (env_config['N'] + 1) * 2
+
     net = value_based_model.DuelingDQNMLP(
-        obs_size=12,
+        obs_size=obs_size,
         hidden_size_1=128, hidden_size_2=128,
         n_actions=5
     ).to(device)
