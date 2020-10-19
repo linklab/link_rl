@@ -1,11 +1,11 @@
 import random
 from typing import Optional
 
-import numpy as np
 import gym
-import or_gym
 import torch
 
+from common.environments.or_gym.envs.classic_or.knapsack import BoundedKnapsackEnv
+from common.environments.or_gym.envs.classic_or.tsp import TSPEnv, TSPDistCost
 from common.fast_rl.common import wrappers
 import numpy as np
 import math
@@ -78,20 +78,18 @@ def make_gym_env(env_id, rank=0, seed=0):
     return env
 
 
-def make_or_gym_env(env_id, rank=0, seed=0):
-    """
-    Utility function for multiprocessed env.
-
-    :param env_id: (str) the environment ID
-    :param num_env: (int) the number of environment you wish to have in subprocesses
-    :param seed: (int) the inital seed for RNG
-    :param rank: (int) index of the subprocess
-    """
+def make_or_gym_env(env_name, env_config, rank=0, seed=0):
     set_global_seeds(seed)
+    if env_name == 'Knapsack-v2':
+        env = BoundedKnapsackEnv(env_config=env_config)
+    elif env_name == "TSP-v0":
+        env = TSPEnv(env_config=env_config)
+    elif env_name == "TSP-v1":
+        env = TSPDistCost(env_config=env_config)
+    else:
+        raise ValueError(env_name)
 
-    env = or_gym.make(env_id)
-    env = OriginalRewardsWrapper(env)
-    env.seed(seed + rank)
+    env.set_seed(seed + rank)
 
     return env
 

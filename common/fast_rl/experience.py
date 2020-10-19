@@ -48,7 +48,6 @@ class ExperienceSourceSingleEnv:
 
     def __iter__(self):
         state = self.env.reset()
-
         history = deque(maxlen=self.steps_count)
         cur_reward = 0.0
         cur_step = 0
