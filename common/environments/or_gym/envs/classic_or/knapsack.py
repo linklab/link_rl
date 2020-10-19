@@ -344,7 +344,7 @@ class BoundedKnapsackEnv(KnapsackEnv):
             reward = 0
             done = True
 
-        print(item, self.state, reward, done)
+        #print(item, self.state, reward, done)
         updated_state = self._post_process()
             
         return updated_state, reward, done, {}
@@ -398,7 +398,7 @@ class BoundedKnapsackEnv(KnapsackEnv):
         self.item_limits = self.item_limits_init.copy()
         self._update_state()
 
-        print("\n", "RESET", self.state)
+        #print("\n", "RESET", self.state)
 
         updated_state = self._post_process()
 
