@@ -27,7 +27,7 @@ from config.parameters import PARAMETERS as params
 warnings.filterwarnings("ignore", category=DeprecationWarning)
 warnings.filterwarnings("ignore", category=UserWarning)
 os.environ['KMP_DUPLICATE_LIB_OK'] = 'True'
-# os.environ['LRU_CACHE_CAPACITY'] = '1'
+os.environ['LRU_CACHE_CAPACITY'] = '1'
 
 if torch.cuda.is_available():
     device = torch.device("cuda" if params.CUDA else "cpu")

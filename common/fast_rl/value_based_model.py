@@ -198,9 +198,9 @@ class DuelingDQNCNN(nn.Module):
             nn.Linear(512, 1)
         )
 
-        # self.conv.apply(self.init_weights)
-        # self.fc_adv.apply(self.init_weights)
-        # self.fc_val.apply(self.init_weights)
+        self.conv.apply(self.init_weights)
+        self.fc_adv.apply(self.init_weights)
+        self.fc_val.apply(self.init_weights)
 
     def init_weights(self, m):
         if type(m) == nn.Linear or type(m) == nn.Conv2d:
