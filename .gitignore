@@ -122,6 +122,7 @@ environments/unity/unity_envs/
 *.pth
 
 /rl_main/fast_main/*.pickle
+/rl_main/fast_main/data/
 
 # personal parameter's option
 config/parameters.py

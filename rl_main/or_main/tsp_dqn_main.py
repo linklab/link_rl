@@ -5,7 +5,8 @@ import torch.multiprocessing as mp
 from torch import optim
 import os
 
-from common.common_utils import make_gym_env, make_or_gym_env
+from common.common_utils import make_or_gym_env
+from config.names import EnvironmentName
 
 print(torch.__version__)
 
@@ -38,7 +39,7 @@ def play_func(exp_queue, env, net):
 
     agent = rl_agent.DQNAgent(net, action_selector, device=device)
 
-    experience_source = experience.ExperienceSourceFirstLast(env, agent, gamma=params.GAMMA, steps_count=params.N_STEP)
+    experience_source = experience.ExperienceSourceSingleEnvFirstLast(env, agent, gamma=params.GAMMA, steps_count=params.N_STEP)
 
     exp_source_iter = iter(experience_source)
 
@@ -56,7 +57,6 @@ def play_func(exp_queue, env, net):
         while step_idx < params.MAX_GLOBAL_STEPS:
             step_idx += 1
             exp = next(exp_source_iter)
-            # print(exp)
             exp_queue.put(exp)
 
             epsilon_tracker.udpate(step_idx)
@@ -85,7 +85,10 @@ def play_func(exp_queue, env, net):
 def main():
     mp.set_start_method('spawn')
 
-    env = make_or_gym_env(params.ENVIRONMENT_ID.value, seed=params.SEED)
+    assert params.ENVIRONMENT_ID == EnvironmentName.TSP_V0 or params.ENVIRONMENT_ID == EnvironmentName.TSP_V1
+    env = make_or_gym_env(
+        env_name=params.ENVIRONMENT_ID.value, env_config=None, seed=params.SEED
+    )
 
     net = value_based_model.DuelingDQNMLP(
         obs_size=51,
