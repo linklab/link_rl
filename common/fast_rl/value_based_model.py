@@ -620,12 +620,10 @@ def calc_loss_per_double_dqn_for_omega(buffer, batch, batch_indices, batch_weigh
         next_state_actions = next_state_actions.unsqueeze(-1)
         next_state_values = tgt_net.target_model(next_states_v).gather(1, next_state_actions).squeeze(-1)
 
-        start = time.time()
         expected_state_action_values = calc_omega_return(rewards, done_mask, next_state_values.detach().cpu().numpy(), params)
     expected_state_action_values = torch.tensor(expected_state_action_values, dtype=torch.float32)
     if cuda:
         expected_state_action_values = expected_state_action_values.cuda(non_blocking=cuda_async)
-    print("#####################", time.time() - start)
 
     losses_v = batch_weights_v * F.smooth_l1_loss(state_action_values, expected_state_action_values)
     return losses_v.mean(), (losses_v + 1e-5)
