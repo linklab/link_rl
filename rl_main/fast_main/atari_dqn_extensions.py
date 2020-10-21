@@ -4,15 +4,19 @@ import time
 import torch
 import torch.optim as optim
 import torch.multiprocessing as mp
+import numpy as np
 import os
 import warnings
+from collections import deque
 
 from common import common_utils
 from common.common_utils import make_atari_env
 from common.fast_rl import experience, rl_agent, value_based_model, actions
 from common.fast_rl.common import utils
 from common.fast_rl.common import statistics, wrappers
+from rl_main.fast_main.atari_draw_graph import save_reward_as_pickle, save_q_loss_as_pickle
 
+from line_profiler import LineProfiler
 from memory_profiler import profile
 import gc
 
@@ -23,6 +27,7 @@ from config.parameters import PARAMETERS as params
 warnings.filterwarnings("ignore", category=DeprecationWarning)
 warnings.filterwarnings("ignore", category=UserWarning)
 os.environ['KMP_DUPLICATE_LIB_OK'] = 'True'
+os.environ['LRU_CACHE_CAPACITY'] = '1'
 
 if torch.cuda.is_available():
     device = torch.device("cuda" if params.CUDA else "cpu")
@@ -55,6 +60,9 @@ def play_func(env, net, exp_queue):
     for _ in env.unwrapped.get_action_meanings():
         action_count.append(0)
 
+    episode_rewards_across_steps = np.zeros(int(params.MAX_GLOBAL_STEPS / params.DATA_SAVE_STEP_PERIOD))
+    last_mean_episode_reward = 0
+
     frame_idx = 0
     next_save_frame_idx = params.MODEL_SAVE_STEP_PERIOD
 
@@ -69,9 +77,14 @@ def play_func(env, net, exp_queue):
 
             epsilon_tracker.udpate(frame_idx)
 
+            if frame_idx % params.DATA_SAVE_STEP_PERIOD == 0:
+                episode_rewards_across_steps[int((frame_idx-1)/params.DATA_SAVE_STEP_PERIOD)] = last_mean_episode_reward
+                save_reward_as_pickle(episode_rewards_across_steps, params)
+
             episode_rewards = exp_source.pop_episode_reward_lst()
             if episode_rewards:
                 solved, mean_episode_reward = reward_tracker.set_episode_reward(episode_rewards[0], frame_idx, action_selector.epsilon, action_count)
+                last_mean_episode_reward = mean_episode_reward
 
                 if frame_idx >= next_save_frame_idx:
                     rl_agent.save_model(
@@ -110,9 +123,11 @@ def main():
     tgt_net = rl_agent.TargetNet(net)
 
     if params.OMEGA:
-        buffer = experience.PrioReplayBuffer(exp_source=None, buf_size=params.REPLAY_BUFFER_SIZE, n_step=params.OMEGA_WINDOW_SIZE)
+        # buffer = experience.PrioReplayBuffer(exp_source=None, buf_size=params.REPLAY_BUFFER_SIZE, n_step=params.OMEGA_WINDOW_SIZE)
+        buffer = experience.PrioritizedReplayBuffer(experience_source=None, buffer_size=params.REPLAY_BUFFER_SIZE, n_step=params.OMEGA_WINDOW_SIZE)
     else:
-        buffer = experience.PrioReplayBuffer(exp_source=None, buf_size=params.REPLAY_BUFFER_SIZE, n_step=params.N_STEP)
+        # buffer = experience.PrioReplayBuffer(exp_source=None, buf_size=params.REPLAY_BUFFER_SIZE, n_step=params.N_STEP)
+        buffer = experience.PrioritizedReplayBuffer(experience_source=None, buffer_size=params.REPLAY_BUFFER_SIZE, n_step=params.N_STEP)
     optimizer = optim.Adam(net.parameters(), lr=params.LEARNING_RATE)
 
     exp_queue = mp.Queue(maxsize=params.TRAIN_STEP_FREQ * 2)
@@ -124,6 +139,9 @@ def main():
         stat_for_model_loss = statistics.StatisticsForValueBasedOptimization()
     else:
         stat_for_model_loss = None
+
+    q_loss_across_steps = np.zeros(int(params.MAX_GLOBAL_STEPS / params.DATA_SAVE_STEP_PERIOD))
+    loss_list = deque(maxlen=params.AVG_EPISODE_SIZE_FOR_STAT)
 
     frame_idx = 0
 
@@ -154,7 +172,7 @@ def main():
         loss_v.backward()
         optimizer.step()
         # buffer.update_priorities(batch_indices, sample_prios)
-        buffer.update_priorities(batch_indices, sample_prios.detach().data.cpu().numpy())
+        buffer.update_priorities(batch_indices, sample_prios.detach().cpu().numpy())       # .detach().data.cpu().numpy()
         buffer.update_beta(frame_idx)
 
         if params.DRAW_VIZ and frame_idx % 1000 == 0:
@@ -163,12 +181,24 @@ def main():
         if frame_idx % params.TARGET_NET_SYNC_STEP_PERIOD < params.TRAIN_STEP_FREQ:
             tgt_net.sync()
 
-        del loss_v
-        # del loss_v, sample_prios
+        loss_list.append(loss_v.detach().item())
+        if frame_idx % params.DATA_SAVE_STEP_PERIOD < params.TRAIN_STEP_FREQ:
+            q_loss_across_steps[int((frame_idx - 1) / params.DATA_SAVE_STEP_PERIOD)] = np.mean(loss_list)
+            save_q_loss_as_pickle(q_loss_across_steps, params)
+            gc.collect()
+
+        # del loss_v
+        del loss_v, sample_prios
         # gc.collect()
+
+        # if frame_idx % 10000 == 0:
+        #     lp.print_stats()
 
 
 # python atari_dqn.py --env=pong --draw_viz=1 --cuda
 # python atari_dqn.py --env=breakout --draw_viz=1 --cuda
 if __name__ == "__main__":
+    # lp = LineProfiler()
+    # lp_wrapper = lp(main)
+    # lp_wrapper(lp)
     main()

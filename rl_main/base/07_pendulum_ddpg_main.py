@@ -1,8 +1,6 @@
 # https://github.com/openai/gym/blob/master/gym/envs/classic_control/pendulum.py
 # https://mspries.github.io/jimmy_pendulum.html
 #!/usr/bin/env python3
-import math
-import profile
 import time
 import torch
 import torch.nn.functional as F

@@ -1,6 +1,7 @@
 import glob
 import math
 import os
+import time
 
 import torch
 import torch.nn as nn
@@ -8,6 +9,8 @@ import torch.nn.functional as F
 from torch.autograd import Variable
 
 import numpy as np
+
+
 # from memory_profiler import profile
 
 
@@ -89,7 +92,6 @@ class NoisyLinear(nn.Linear):
 #         x = torch.randn(size)
 #         x = x.sign().mul(x.abs().sqrt())
 #         return x
-
 
 
 class NoisyDQN(nn.Module):
@@ -198,9 +200,9 @@ class DuelingDQNCNN(nn.Module):
             nn.Linear(512, 1)
         )
 
-        # self.conv.apply(self.init_weights)
-        # self.fc_adv.apply(self.init_weights)
-        # self.fc_val.apply(self.init_weights)
+        self.conv.apply(self.init_weights)
+        self.fc_adv.apply(self.init_weights)
+        self.fc_val.apply(self.init_weights)
 
     def init_weights(self, m):
         if type(m) == nn.Linear or type(m) == nn.Conv2d:
@@ -430,7 +432,7 @@ def unpack_batch_for_n_step(buffer, batch, batch_indices, params):
         current_exp = exp
         for i in range(params.N_STEP):
             n_step_rewards += gamma * current_exp.reward
-            next_exp = buffer[batch_indices[idx] + i + 1]
+            next_exp = buffer[(batch_indices[idx] + i + 1) % params.REPLAY_BUFFER_SIZE]
 
             if current_exp.done:
                 rewards.append(n_step_rewards)
@@ -452,7 +454,7 @@ def unpack_batch_for_n_step(buffer, batch, batch_indices, params):
            np.array(dones, dtype=np.uint8), np.array(next_states, copy=False), np.array(last_steps)
 
 
-def unpack_batch_for_omega(buffer, batch, batch_indices, omega_window_size):
+def unpack_batch_for_omega(buffer, batch, batch_indices, params):
     states, actions, rewards, done_mask, next_states = [], [], [], [], []
     for idx, exp in enumerate(batch):
         state = np.array(exp.state, copy=False)
@@ -461,28 +463,29 @@ def unpack_batch_for_omega(buffer, batch, batch_indices, omega_window_size):
 
         n_step_rewards = []
         current_exp = exp
-        for i in range(omega_window_size):
+        for i in range(params.OMEGA_WINDOW_SIZE):
             n_step_rewards.append(current_exp.reward)
-            next_exp = buffer[batch_indices[idx] + i + 1]
+            next_exp = buffer[(batch_indices[idx] + i + 1) % params.REPLAY_BUFFER_SIZE]
             next_states.append(np.array(next_exp.state, copy=False))
 
             if current_exp.done:
                 done_mask.append(0)
                 break
             else:
-                if i == omega_window_size - 1:
+                if i == params.OMEGA_WINDOW_SIZE - 1:
                     done_mask.append(1)
 
             current_exp = next_exp
 
         rewards.append(n_step_rewards)
 
-    return np.array(states, copy=False), np.array(actions), rewards, done_mask, np.array(next_states, copy=False)
+    return np.array(states, copy=False), np.array(actions), np.array(rewards), np.array(done_mask), np.array(
+        next_states, copy=False)
 
 
 def calc_loss_dqn(batch, net, tgt_net, gamma, cuda=False, cuda_async=False):
-    states, actions, rewards, dones, next_states, last_steps = unpack_batch_extended_frames(batch)
-    # states, actions, rewards, dones, next_states = unpack_batch(batch)
+    # states, actions, rewards, dones, next_states, last_steps = unpack_batch_extended_frames(batch)
+    states, actions, rewards, dones, next_states, last_steps = unpack_batch(batch)
 
     states_v = torch.tensor(states)
     next_states_v = torch.tensor(next_states)
@@ -588,15 +591,14 @@ def calc_loss_per_double_dqn(buffer, batch, batch_indices, batch_weights, net, t
         next_state_values = tgt_net.target_model(next_states_v).gather(1, next_state_actions).squeeze(-1)
         next_state_values[done_mask] = 0.0
 
-    expected_state_action_values = next_state_values.detach() * (params.GAMMA ** last_steps_v) + rewards_v
+        expected_state_action_values = next_state_values.detach() * (params.GAMMA ** last_steps_v) + rewards_v
     losses_v = batch_weights_v * F.smooth_l1_loss(state_action_values, expected_state_action_values)
     return losses_v.mean(), (losses_v + 1e-5)
 
 
 def calc_loss_per_double_dqn_for_omega(buffer, batch, batch_indices, batch_weights, net, tgt_net, params, cuda=False,
                                        cuda_async=False):
-    states, actions, rewards, done_mask, next_states = unpack_batch_for_omega(buffer, batch, batch_indices,
-                                                                              params.OMEGA_WINDOW_SIZE)
+    states, actions, rewards, done_mask, next_states = unpack_batch_for_omega(buffer, batch, batch_indices, params)
 
     states_v = torch.tensor(states)
     next_states_v = torch.tensor(next_states)
@@ -618,7 +620,8 @@ def calc_loss_per_double_dqn_for_omega(buffer, batch, batch_indices, batch_weigh
         next_state_actions = next_state_actions.unsqueeze(-1)
         next_state_values = tgt_net.target_model(next_states_v).gather(1, next_state_actions).squeeze(-1)
 
-    expected_state_action_values = calc_omega_return(rewards, done_mask, next_state_values, params)
+        expected_state_action_values = calc_omega_return(rewards, done_mask, next_state_values.detach().cpu().numpy(), params)
+    expected_state_action_values = torch.tensor(expected_state_action_values, dtype=torch.float32)
     if cuda:
         expected_state_action_values = expected_state_action_values.cuda(non_blocking=cuda_async)
 
@@ -640,7 +643,7 @@ def calc_omega_return(rewards, done_mask, next_state_values, params):
             gamma *= params.GAMMA
         gamma = params.GAMMA
         for i in range(len(rewards[batch_idx])):
-            n_step_target_list.append(n_step_reward_sum_list[i] + gamma * next_state_values[idx_count].detach().item() *
+            n_step_target_list.append(n_step_reward_sum_list[i] + gamma * next_state_values[idx_count] *
                                       (done_mask[batch_idx] if i == len(rewards[batch_idx]) - 1 else 1))
             gamma *= params.GAMMA
             idx_count += 1
@@ -650,5 +653,4 @@ def calc_omega_return(rewards, done_mask, next_state_values, params):
         beta = (max_n_step_target - avg) / (max_n_step_target - min(n_step_target_list) + 0.00001)
         target_q_values.append((1 - beta) * avg + beta * max_n_step_target)
 
-    target_q_values = torch.tensor(target_q_values, dtype=torch.float32)
     return target_q_values
