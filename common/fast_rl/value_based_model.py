@@ -1,6 +1,7 @@
 import glob
 import math
 import os
+import time
 
 import torch
 import torch.nn as nn
@@ -619,11 +620,12 @@ def calc_loss_per_double_dqn_for_omega(buffer, batch, batch_indices, batch_weigh
         next_state_actions = next_state_actions.unsqueeze(-1)
         next_state_values = tgt_net.target_model(next_states_v).gather(1, next_state_actions).squeeze(-1)
 
-        expected_state_action_values = calc_omega_return(rewards, done_mask, next_state_values.detach().cpu().numpy(),
-                                                         params)
+        start = time.time()
+        expected_state_action_values = calc_omega_return(rewards, done_mask, next_state_values.detach().cpu().numpy(), params)
     expected_state_action_values = torch.tensor(expected_state_action_values, dtype=torch.float32)
     if cuda:
         expected_state_action_values = expected_state_action_values.cuda(non_blocking=cuda_async)
+    print("#####################", time.time() - start)
 
     losses_v = batch_weights_v * F.smooth_l1_loss(state_action_values, expected_state_action_values)
     return losses_v.mean(), (losses_v + 1e-5)
@@ -633,7 +635,7 @@ def calc_omega_return(rewards, done_mask, next_state_values, params):
     idx_count = 0
     target_q_values = []
     for batch_idx in range(params.BATCH_SIZE):
-        n_step_target_list = np.array([])
+        n_step_target_list = []
         n_step_reward_sum_list = []
         reward_sum = 0
         gamma = 1
@@ -643,10 +645,8 @@ def calc_omega_return(rewards, done_mask, next_state_values, params):
             gamma *= params.GAMMA
         gamma = params.GAMMA
         for i in range(len(rewards[batch_idx])):
-            n_step_target_list = np.append(
-                n_step_target_list, n_step_reward_sum_list[i] + gamma * next_state_values[idx_count] *
-                                    (done_mask[batch_idx] if i == len(rewards[batch_idx]) - 1 else 1)
-            )
+            n_step_target_list.append(n_step_reward_sum_list[i] + gamma * next_state_values[idx_count] *
+                                      (done_mask[batch_idx] if i == len(rewards[batch_idx]) - 1 else 1))
             gamma *= params.GAMMA
             idx_count += 1
 
@@ -656,30 +656,3 @@ def calc_omega_return(rewards, done_mask, next_state_values, params):
         target_q_values.append((1 - beta) * avg + beta * max_n_step_target)
 
     return target_q_values
-
-# def calc_omega_return(rewards, done_mask, next_state_values, params):
-#     idx_count = 0
-#     target_q_values = []
-#     for batch_idx in range(params.BATCH_SIZE):
-#         n_step_target_list = []
-#         n_step_reward_sum_list = []
-#         reward_sum = 0
-#         gamma = 1
-#         for idx, reward in enumerate(rewards[batch_idx]):
-#             reward_sum += gamma * reward
-#             n_step_reward_sum_list.append(reward_sum)
-#             gamma *= params.GAMMA
-#         gamma = params.GAMMA
-#         for i in range(len(rewards[batch_idx])):
-#             n_step_target_list.append(n_step_reward_sum_list[i] + gamma * next_state_values[idx_count] *
-#                                       (done_mask[batch_idx] if i == len(rewards[batch_idx]) - 1 else 1))
-#             gamma *= params.GAMMA
-#             idx_count += 1
-#
-#         avg = sum(n_step_target_list) / len(n_step_target_list)
-#         max_n_step_target = max(n_step_target_list)
-#         beta = (max_n_step_target - avg) / (max_n_step_target - min(n_step_target_list) + 0.00001)
-#         target_q_values.append((1 - beta) * avg + beta * max_n_step_target)
-#
-#     # target_q_values = torch.tensor(target_q_values, dtype=torch.float32)
-#     return target_q_values
