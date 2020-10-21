@@ -8,7 +8,7 @@ import collections
 import numpy as np
 
 from collections import namedtuple, deque
-from memory_profiler import profile
+#from memory_profiler import profile
 
 
 from .rl_agent import BaseAgent, AgentDDPG

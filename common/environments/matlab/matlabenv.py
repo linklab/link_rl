@@ -66,7 +66,7 @@ class MatlabRotaryInvertedPendulumEnv(gym.Env):
         #     reward = 1
 
         done_conditions = [
-            self.episode_steps >= 2000,
+            self.episode_steps >= 10000,
             self.q < 3.001966313, # 172
             self.q > 3.281218994  # 188
 
@@ -75,8 +75,10 @@ class MatlabRotaryInvertedPendulumEnv(gym.Env):
         self.obs_degree[0] = self.next_obs_degree[0]
         self.obs_degree[1] = self.next_obs_degree[1]
 
-        self.state, reward, info = (self.q/math.pi, self.q1, self.w, self.w1), 0.1, [None]
 
+
+        self.state, reward, info = (self.q / math.pi, self.q1, self.w, self.w1), 0.1, [None]
+        # self.state, reward, info = (self.q/math.pi, self.q1, self.w, self.w1),(self.q/math.pi)**2+(0.1*(self.w**2))+(0.001*(action[0][0][0]**2)), [None]
         self.next_obs_degree[0] = self.convert_radian_to_degree(np.round(self.state, decimals=4)[0] * math.pi)
         self.next_obs_degree[1] = self.convert_radian_to_degree(np.round(self.state, decimals=4)[1])
 

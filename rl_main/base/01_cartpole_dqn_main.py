@@ -64,7 +64,7 @@ def play_func(exp_queue, env, net):
             episode_rewards = experience_source.pop_episode_reward_lst()
             if episode_rewards:
                 solved, mean_episode_reward = reward_tracker.set_episode_reward(
-                    episode_rewards[0], step_idx, action_selector.epsilon
+                    episode_rewards[0], step_idx, epsilon=action_selector.epsilon
                 )
 
                 if step_idx >= next_save_frame_idx:

@@ -8,7 +8,7 @@ import torch.nn.functional as F
 from torch.autograd import Variable
 
 import numpy as np
-from memory_profiler import profile
+# from memory_profiler import profile
 
 
 class NoisyLinear(nn.Linear):

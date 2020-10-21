@@ -43,8 +43,19 @@ def play_func(exp_queue, env, net):
     action_min = env.action_space.low[0]
     action_max = env.action_space.high[0]
 
+
+    action_selector = actions.EpsilonGreedyDDPGActionSelector(epsilon=params.EPSILON_INIT)
+
+    epsilon_tracker = actions.EpsilonTracker(
+        action_selector=action_selector,
+        eps_start=params.EPSILON_INIT,
+        eps_final=params.EPSILON_MIN,
+        eps_frames=params.EPSILON_MIN_STEP
+    )
+
     agent = rl_agent.AgentDDPG(
-        net, n_actions=1, action_min=action_min, action_max=action_max, device=device, preprocessor=float32_preprocessor
+        net, n_actions=1, action_selector=action_selector,
+        action_min=action_min, action_max=action_max, device=device, preprocessor=float32_preprocessor
     )
 
     experience_source = experience.ExperienceSourceSingleEnvFirstLast(
@@ -74,10 +85,12 @@ def play_func(exp_queue, env, net):
             exp = next(exp_source_iter)
             exp_queue.put(exp)
 
+            epsilon_tracker.udpate(step_idx)
+
             episode_rewards = experience_source.pop_episode_reward_lst()
             if episode_rewards:
                 solved, mean_episode_reward = reward_tracker.set_episode_reward(
-                    episode_rewards[0], step_idx, epsilon=0.0
+                    episode_rewards[0], step_idx, epsilon=action_selector.epsilon
                 )
 
                 if step_idx >= next_save_frame_idx:
@@ -85,8 +98,6 @@ def play_func(exp_queue, env, net):
                         MODEL_SAVE_DIR, params.ENVIRONMENT_ID.value, net.__name__, net, step_idx, mean_episode_reward
                     )
                     next_save_frame_idx += params.MODEL_SAVE_STEP_PERIOD
-
-                agent.ou_noise.reset()
 
                 if solved:
                     rl_agent.save_model(
@@ -135,7 +146,9 @@ def main():
     time.sleep(0.5)
 
     if params.DRAW_VIZ:
-        stat_for_ddpg = statistics.StatisticsForDDPGOptimization(n_actions=1)
+
+        #stat_for_ddpg = statistics.StatisticsForDDPGOptimization(n_actions=1)
+        stat_for_ddpg = statistics.StatisticsForSimpleDDPGOptimization(n_actions=1)
     else:
         stat_for_ddpg = 0.0
 
@@ -244,13 +257,18 @@ def model_update(buffer, actor_net, critic_net, target_actor_net, target_critic_
     loss_total = smooth(loss_total, loss_actor_v.item() + loss_critic_v.item())
 
     if params.DRAW_VIZ:
+        # stat_for_ddpg.draw_optimization_performance(
+        #     step_idx,
+        #     loss_actor, loss_critic, loss_total,
+        #     actor_grad_l2, actor_grad_variance, actor_grad_max,
+        #     critic_grad_l2, critic_grad_variance, critic_grad_max,
+        #     buffer_length, exp.noise, exp.action
+        # )
+
         stat_for_ddpg.draw_optimization_performance(
-            step_idx,
-            loss_actor, loss_critic, loss_total,
-            actor_grad_l2, actor_grad_variance, actor_grad_max,
-            critic_grad_l2, critic_grad_variance, critic_grad_max,
-            buffer_length, exp.action, exp.noise
+            step_idx, exp.noise, exp.action
         )
+
 
     return actor_grad_l2, actor_grad_max, actor_grad_variance, critic_grad_l2, critic_grad_max, critic_grad_variance, loss_actor, loss_critic, loss_total
 

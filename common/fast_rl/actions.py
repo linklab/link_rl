@@ -44,10 +44,30 @@ class EpsilonGreedyActionSelector(ActionSelector):
         return actions
 
 
-class EpsilonGreedyD4PGActionSelector(ActionSelector):
-    def __init__(self, epsilon=0.05, action_selector=None):
+class EpsilonGreedyDDPGActionSelector:
+    def __init__(self, epsilon=0.05):
         self.epsilon = epsilon
-        self.action_selector = action_selector if action_selector is not None else ArgmaxActionSelector()
+
+    def __call__(self, mu, agent_states, ou_enabled, ou_mu, ou_theta, ou_sigma):
+        assert isinstance(mu, np.ndarray)
+        actions = np.copy(mu)
+        if ou_enabled and self.epsilon > 0:
+            new_agent_states = []
+            for agent_state, action in zip(agent_states, actions):
+                if agent_state is None:
+                    agent_state = np.zeros(shape=action.shape, dtype=np.float32)
+
+                agent_state += ou_theta * (ou_mu - agent_state)
+                agent_state += ou_sigma * np.random.normal(size=action.shape)
+                action += self.epsilon * agent_state
+                new_agent_states.append(agent_state)
+        else:
+            new_agent_states = agent_states
+        return actions, new_agent_states
+
+class EpsilonGreedyD4PGActionSelector(ActionSelector):
+    def __init__(self, epsilon=0.05):
+        self.epsilon = epsilon
 
     def __call__(self, actions):
         assert isinstance(actions, np.ndarray)
@@ -81,7 +101,7 @@ class EpsilonTracker:
     Updates epsilon according to linear schedule
     """
     def __init__(
-        self, action_selector: EpsilonGreedyActionSelector,
+        self, action_selector: Union[EpsilonGreedyActionSelector, EpsilonGreedyDDPGActionSelector, EpsilonGreedyD4PGActionSelector],
         eps_start: Union[int, float], eps_final: Union[int, float], eps_frames: int
     ):
         self.action_selector = action_selector

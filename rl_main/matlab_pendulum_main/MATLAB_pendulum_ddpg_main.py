@@ -43,20 +43,26 @@ else:
 def play_func(exp_queue, env, net):
     # print(env.action_space.low[0], env.action_space.high[0])
     env.start()
-    action_min = -0.1
-    action_max = 0.1
+    action_min = -100
+    action_max = 100
+
+    action_selector = actions.EpsilonGreedyDDPGActionSelector(epsilon=params.EPSILON_INIT)
+
+    epsilon_tracker = actions.EpsilonTracker(
+        action_selector=action_selector,
+        eps_start=params.EPSILON_INIT,
+        eps_final=params.EPSILON_MIN,
+        eps_frames=params.EPSILON_MIN_STEP
+    )
 
     agent = rl_agent.AgentDDPG(
-        net, n_actions=1, action_min=action_min, action_max=action_max, device=device, preprocessor=float32_preprocessor
+        net, n_actions=1, action_selector=action_selector,
+        action_min=action_min, action_max=action_max, device=device, preprocessor=float32_preprocessor
     )
 
     experience_source = experience.ExperienceSourceSingleEnvFirstLast(
         env, agent, gamma=params.GAMMA, steps_count=params.N_STEP
     )
-
-    # experience_source = experience.ExperienceSourceFirstLast(
-    #     env, agent, gamma=params.GAMMA, steps_count=params.N_STEP
-    # )
 
     exp_source_iter = iter(experience_source)
 
@@ -77,10 +83,12 @@ def play_func(exp_queue, env, net):
             exp = next(exp_source_iter)
             exp_queue.put(exp)
 
+            epsilon_tracker.udpate(step_idx)
+
             episode_rewards = experience_source.pop_episode_reward_lst()
             if episode_rewards:
                 solved, mean_episode_reward = reward_tracker.set_episode_reward(
-                    episode_rewards[0], step_idx, epsilon=0.0
+                    episode_rewards[0], step_idx, epsilon=action_selector.epsilon
                 )
 
                 if step_idx >= next_save_frame_idx:
@@ -136,9 +144,10 @@ def main():
     time.sleep(0.5)
 
     if params.DRAW_VIZ:
-        stat_for_ddpg = statistics.StatisticsForDDPGOptimization(n_actions=1)
+        #stat_for_ddpg = statistics.StatisticsForDDPGOptimization(n_actions=1)
+        stat_for_ddpg = statistics.StatisticsForSimpleDDPGOptimization(n_actions=1)
     else:
-        stat_for_ddpg = 0.0
+        stat_for_ddpg = None
 
     step_idx = 0
 
@@ -192,9 +201,26 @@ def main():
                     loss_actor, loss_critic, loss_total, len(buffer.buffer)
                 )
 
+            if params.DRAW_VIZ:
+                # stat_for_ddpg.draw_optimization_performance(
+                #     step_idx,
+                #     loss_actor, loss_critic, loss_total,
+                #     actor_grad_l2, actor_grad_variance, actor_grad_max,
+                #     critic_grad_l2, critic_grad_variance, critic_grad_max,
+                #     buffer_length, exp.noise, exp.action
+                # )
 
-def model_update(buffer, actor_net, critic_net, target_actor_net, target_critic_net, actor_optimizer, critic_optimizer, stat_for_ddpg, step_idx, exp,
-                 actor_grad_l2, actor_grad_max, actor_grad_variance,
+                stat_for_ddpg.draw_optimization_performance(
+                    step_idx, exp.noise, exp.action
+                )
+            else:
+                print("[{0:6}] noise: {1:7.4f}, action: {2:7.4f}, loss_actor: {3:7.4f}, loss_actor: {4:7.4f}".format(
+                    step_idx, exp.noise[0], exp.action[0], loss_actor, loss_critic
+                ), end="\n\n")
+
+
+def model_update(buffer, actor_net, critic_net, target_actor_net, target_critic_net, actor_optimizer, critic_optimizer,
+                 stat_for_ddpg, step_idx, exp, actor_grad_l2, actor_grad_max, actor_grad_variance,
                  critic_grad_l2, critic_grad_max, critic_grad_variance,
                  loss_actor, loss_critic, loss_total, buffer_length):
     batch = buffer.sample(params.BATCH_SIZE)
@@ -243,15 +269,6 @@ def model_update(buffer, actor_net, critic_net, target_actor_net, target_critic_
     loss_actor = smooth(loss_actor, loss_actor_v.item())
     loss_critic = smooth(loss_critic, loss_critic_v.item())
     loss_total = smooth(loss_total, loss_actor_v.item() + loss_critic_v.item())
-
-    if params.DRAW_VIZ:
-        stat_for_ddpg.draw_optimization_performance(
-            step_idx,
-            loss_actor, loss_critic, loss_total,
-            actor_grad_l2, actor_grad_variance, actor_grad_max,
-            critic_grad_l2, critic_grad_variance, critic_grad_max,
-            buffer_length, exp.action, exp.noise
-        )
 
     return actor_grad_l2, actor_grad_max, actor_grad_variance, critic_grad_l2, critic_grad_max, critic_grad_variance, loss_actor, loss_critic, loss_total
 

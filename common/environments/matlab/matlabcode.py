@@ -49,7 +49,7 @@ class SimulinkPlant:
         # Initialize Control Action to 0
         self.setControlAction(0)
         # print("Initialized Model")
-        # self.eng.set_param( self.modelName, 'SimMechanicsOpenEditorOnUpdate', 'off', nargout=0) #No Visualization
+        self.eng.set_param( self.modelName, 'SimMechanicsOpenEditorOnUpdate', 'off', nargout=0) #No Visualization
         # Start Simulation and then Instantly pause
         self.eng.set_param(self.modelName, 'SimulationCommand', 'start', 'SimulationCommand', 'pause',
                            nargout=0)
@@ -57,15 +57,13 @@ class SimulinkPlant:
         self.q, self.q1, self.w, self.w1 = self.getHistory()
 
     def connectStart(self):
-        self.eng.set_param(self.modelName, 'SimulationCommand', 'start', 'SimulationCommand', 'pause',
-                           nargout=0)
+        self.eng.set_param(self.modelName, 'SimulationCommand', 'start', 'SimulationCommand', 'pause', nargout=0)
 
     def connectStop(self):
-        self.eng.set_param(self.modelName, 'SimulationCommand', 'stop',
-                           nargout=0)
+        self.eng.set_param(self.modelName, 'SimulationCommand', 'stop', nargout=0)
+
     def conncectpause(self):
-        self.eng.set_param(self.modelName, 'SimulationCommand', 'pause',
-                           nargout=0)
+        self.eng.set_param(self.modelName, 'SimulationCommand', 'pause', nargout=0)
 
     def connectController(self, controller):
         self.controller = controller
@@ -98,7 +96,8 @@ class SimulinkPlant:
         # print(action)
         # self.controller.getControlEffort(self.yHist, self.tHist)
         # Set that Control Action
-        self.setControlAction(action)
+        action_v = action*0.1
+        self.setControlAction(action_v)
         self.eng.set_param(self.modelName, 'SimulationCommand', 'continue', 'SimulationCommand', 'pause', nargout=0)
         # self.setControlAction(u)
         # self.eng.set_param(self.modelName, 'SimulationCommand', 'pause', nargout=0)

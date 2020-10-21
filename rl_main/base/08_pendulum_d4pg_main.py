@@ -152,7 +152,7 @@ def main():
     time.sleep(0.5)
 
     if params.DRAW_VIZ:
-        stat_for_ddpg = statistics.StatisticsForDDPGOptimization(n_actions=1)
+        stat_for_ddpg = statistics.StatisticsForSimpleDDPGOptimization(n_actions=1)
     else:
         stat_for_ddpg = 0.0
 
@@ -275,7 +275,7 @@ def model_update(buffer, actor_net, critic_net, target_actor_net, target_critic_
             loss_actor, loss_critic, loss_total,
             actor_grad_l2, actor_grad_variance, actor_grad_max,
             critic_grad_l2, critic_grad_variance, critic_grad_max,
-            buffer_length, exp.action, exp.noise
+            buffer_length, exp.noise, exp.action
         )
 
     buffer.update_priorities(batch_indices, (actor_loss_v + 1e-5).data.cpu().numpy())
