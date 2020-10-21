@@ -19,7 +19,7 @@ else:
 def play_main():
     env = make_atari_env(params.ENVIRONMENT_ID.value, seed=2)
 
-    net = value_based_model.DQN(
+    net = value_based_model.DuelingDQNCNN(
         input_shape=env.observation_space.shape,
         n_actions=env.action_space.n
     ).to(device)
