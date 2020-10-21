@@ -27,7 +27,7 @@ from config.parameters import PARAMETERS as params
 warnings.filterwarnings("ignore", category=DeprecationWarning)
 warnings.filterwarnings("ignore", category=UserWarning)
 os.environ['KMP_DUPLICATE_LIB_OK'] = 'True'
-# os.environ['LRU_CACHE_CAPACITY'] = '1'
+os.environ['LRU_CACHE_CAPACITY'] = '1'
 
 if torch.cuda.is_available():
     device = torch.device("cuda" if params.CUDA else "cpu")
@@ -185,10 +185,10 @@ def main():
         if frame_idx % params.DATA_SAVE_STEP_PERIOD < params.TRAIN_STEP_FREQ:
             q_loss_across_steps[int((frame_idx - 1) / params.DATA_SAVE_STEP_PERIOD)] = np.mean(loss_list)
             save_q_loss_as_pickle(q_loss_across_steps, params)
-            # gc.collect()
+            gc.collect()
 
         # del loss_v
-        # del loss_v, sample_prios
+        del loss_v, sample_prios
         # gc.collect()
 
         # if frame_idx % 10000 == 0:
