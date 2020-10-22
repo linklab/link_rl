@@ -56,7 +56,7 @@ class MatlabRotaryInvertedPendulumEnv(gym.Env):
         ]
 
         self.state = (math.cos(self.q), math.sin(self.q), self.w)
-        reward = -(self.q ** 2 + 0.1 * (self.w ** 2) + 0.001 * (action ** 2))
+        reward = -((math.pi - self.q) ** 2 + 0.1 * (self.w ** 2) + 0.001 * (action ** 2))
         info = [None]
 
         if any(done_conditions):
