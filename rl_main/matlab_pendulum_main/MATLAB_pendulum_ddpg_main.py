@@ -171,6 +171,7 @@ def main():
                 break
             buffer._add(exp)
 
+        if step_idx % params.DRAW_VIZ_PERIOD_STEPS == 0:
             if params.DRAW_VIZ:
                 # stat_for_ddpg.draw_optimization_performance(
                 #     step_idx,
@@ -192,7 +193,7 @@ def main():
             continue
 
         if exp is not None and exp.last_state is None:
-            for _ in range(3):
+            for _ in range(10):
                 # actor_grad_l2, actor_grad_max, actor_grad_variance, critic_grad_l2, critic_grad_max, critic_grad_variance, loss_actor, loss_critic, loss_total = lp_wrapper(
                 # buffer, actor_net, critic_net, target_actor_net, target_critic_net, actor_optimizer, critic_optimizer,
                 #     stat_for_ddpg, step_idx, exp,
