@@ -72,11 +72,9 @@ class MatlabRotaryInvertedPendulumEnv(gym.Env):
         self.obs_degree[0] = self.next_obs_degree[0]
         self.obs_degree[1] = self.next_obs_degree[1]
 
-
         self.state = (math.cos(self.q), math.sin(self.q), self.w)
-        # reward = (-self.q) ** 2 + (0.1 * (self.w ** 2)) + (0.001 * (action ** 2))
         reward = -(self.q ** 2 + 0.1 * (self.w ** 2) + 0.001 * (action ** 2))
-        info = None
+        info = [None]
 
         # self.state, reward, info = (self.q/math.pi, self.q1, self.w, self.w1),(self.q)**2+(0.1*(self.w**2))+(0.001*(action**2)), [None]
         self.next_obs_degree[0] = self.convert_radian_to_degree(np.round(self.state, decimals=4)[0] * math.pi)
@@ -89,7 +87,7 @@ class MatlabRotaryInvertedPendulumEnv(gym.Env):
             done = False
         # print(self.state)
         # print("!!!!!!!!!!!!!!!!!!!!!!!!", np.asarray(next_obs))
-        return np.array(self.state), reward, done, info
+        return np.array(self.state), reward[-1], done, info
 
     def render(self, mode='human'):
         pass
