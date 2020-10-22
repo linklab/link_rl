@@ -70,7 +70,7 @@ class DDPGActionSelector:
         actions = np.copy(mu)
 
         if ou_enabled > 0:
-            agent_states = ou_rho * (ou_mu - actions) + ou_sigma * np.sqrt(ou_dt) * np.random.normal(size=actions.shape)
+            agent_states = agent_states + ou_rho * (ou_mu - actions) + ou_sigma * np.sqrt(ou_dt) * np.random.normal(size=actions.shape)
             actions = actions + agent_states
 
         new_agent_states = agent_states
