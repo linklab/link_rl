@@ -261,7 +261,6 @@ class AgentDDPG(BaseAgent):
 
         if self.step_idx < 10000:
             actions = np.random.normal(size=(1, 1))
-            actions = np.clip(actions, self.action_min, self.action_max)
             noises = np.zeros_like(actions)
             new_agent_states = np.zeros_like(actions)
         else:
@@ -283,12 +282,11 @@ class AgentDDPG(BaseAgent):
             ####################################
 
             actions, new_agent_states = self.action_selector(mu, agent_states)
-
-            actions = np.clip(actions, self.action_min, self.action_max)
             noises = new_agent_states
 
             #####################################
 
+        actions = np.clip(actions, self.action_min, self.action_max)
         self.step_idx += 1
 
         return actions, noises, new_agent_states
