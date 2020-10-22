@@ -36,9 +36,11 @@ def play_main():
 
     rl_agent.load_model(MODEL_SAVE_DIR, params.ENVIRONMENT_ID.value, actor_net.__name__, actor_net)
 
+    action_selector = actions.DDPGActionSelector(epsilon=0.0, ou_enabled=False)
+
     agent = rl_agent.AgentDDPG(
-        actor_net, n_actions=1, action_min=action_min, action_max=action_max, device=device, ou_enabled=False,
-        preprocessor=float32_preprocessor
+        actor_net, n_actions=1, action_selector=action_selector,
+        action_min=action_min, action_max=action_max, device=device, preprocessor=float32_preprocessor
     )
 
     done = False
