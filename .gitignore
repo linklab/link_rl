@@ -127,6 +127,7 @@ environments/unity/unity_envs/
 # personal parameter's option
 config/parameters.py
 
+*.m
 *.mat
 *.slx
 *.slxc
