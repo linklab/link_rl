@@ -46,24 +46,8 @@ class MatlabRotaryInvertedPendulumEnv(gym.Env):
     def step(self, action):
         self.plant.simulate(action)
         self.q, self.q1, self.w, self.w1 = self.plant.getHistory()
-        print(self.w)
         self.episode_steps += 1
         self.total_steps += 1
-
-        # if self.episode_steps >= 100:
-        #     done = True
-        #     reward = 10
-        #     self.plant.connectStop()
-        # elif self.q > 3.49065 or self.q <2.79252:
-        #     done = True
-        #     self.plant.connectStop()
-        #     if self.episode_steps < 11:
-        #         reward = -10
-        #     else:
-        #         reward = 1
-        # else:
-        #     done = False
-        #     reward = 1
 
         done_conditions = [
             self.episode_steps >= 2000,
@@ -71,24 +55,16 @@ class MatlabRotaryInvertedPendulumEnv(gym.Env):
             self.w < -300
         ]
 
-        self.obs_degree[0] = self.next_obs_degree[0]
-        self.obs_degree[1] = self.next_obs_degree[1]
-
         self.state = (math.cos(self.q), math.sin(self.q), self.w)
         reward = -(self.q ** 2 + 0.1 * (self.w ** 2) + 0.001 * (action ** 2))
         info = [None]
-
-        # self.state, reward, info = (self.q/math.pi, self.q1, self.w, self.w1),(self.q)**2+(0.1*(self.w**2))+(0.001*(action**2)), [None]
-        self.next_obs_degree[0] = self.convert_radian_to_degree(np.round(self.state, decimals=4)[0] * math.pi)
-        self.next_obs_degree[1] = self.convert_radian_to_degree(np.round(self.state, decimals=4)[1])
 
         if any(done_conditions):
             done = True
             self.plant.connectStop()
         else:
             done = False
-        # print(self.state)
-        # print("!!!!!!!!!!!!!!!!!!!!!!!!", np.asarray(next_obs))
+
         return np.array(self.state), reward[-1], done, info
 
     def render(self, mode='human'):
