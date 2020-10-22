@@ -39,8 +39,10 @@ class MatlabRotaryInvertedPendulumEnv(gym.Env):
         self.episode_steps = 0
         self.q, self.q1, self.w, self.w1 = self.plant.getHistory()
         self.state = (math.cos(self.q), math.sin(self.q), self.w)
-        self.obs_degree[0] = self.next_obs_degree[0] = self.convert_radian_to_degree(np.round(self.state, decimals=4)[0] * math.pi)
-        self.obs_degree[1] = self.next_obs_degree[1] = self.convert_radian_to_degree(np.round(self.state, decimals=4)[1])
+        # self.obs_degree[0] = self.next_obs_degree[0] = self.convert_radian_to_degree(np.round(self.state, decimals=4)[0] * math.pi)
+        # self.obs_degree[1] = self.next_obs_degree[1] = self.convert_radian_to_degree(np.round(self.state, decimals=4)[1])
+
+        print(self.q, "reset")
         return np.array(self.state)
 
     def step(self, action):
