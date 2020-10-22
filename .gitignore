@@ -127,3 +127,7 @@ environments/unity/unity_envs/
 # personal parameter's option
 config/parameters.py
 
+*.mat
+*.slx
+*.slxc
+simulink_cache.xml
