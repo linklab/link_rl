@@ -48,7 +48,14 @@ def play_func(exp_queue, env, net):
 
     # action_selector = actions.EpsilonGreedyDDPGActionSelector(epsilon=params.EPSILON_INIT)
 
-    action_selector = actions.DDPGActionSelector()
+    action_selector = actions.DDPGActionSelector(epsilon=params.EPSILON_INIT)
+
+    epsilon_tracker = actions.EpsilonTracker(
+        action_selector=action_selector,
+        eps_start=params.EPSILON_INIT,
+        eps_final=params.EPSILON_MIN,
+        eps_frames=params.EPSILON_MIN_STEP
+    )
 
     agent = rl_agent.AgentDDPG(
         net, n_actions=1, action_selector=action_selector,
@@ -78,10 +85,12 @@ def play_func(exp_queue, env, net):
             exp = next(exp_source_iter)
             exp_queue.put(exp)
 
+            epsilon_tracker.udpate(step_idx)
+
             episode_rewards = experience_source.pop_episode_reward_lst()
             if episode_rewards:
                 solved, mean_episode_reward = reward_tracker.set_episode_reward(
-                    episode_rewards[0], step_idx, epsilon=0.0
+                    episode_rewards[0], step_idx, epsilon=action_selector.epsilon
                 )
 
                 if step_idx >= next_save_frame_idx:
