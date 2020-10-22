@@ -261,7 +261,7 @@ class AgentDDPG(BaseAgent):
 
         if self.step_idx < 10000:
             actions = np.random.normal(size=1)
-            noises = np.zeros(actions)
+            noises = np.zeros_like(actions)
             new_agent_states = None
         else:
             mu_v = self.model(states)
