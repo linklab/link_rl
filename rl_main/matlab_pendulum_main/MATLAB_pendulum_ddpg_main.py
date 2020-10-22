@@ -196,7 +196,7 @@ def main():
             else:
                 print("[{0:6}] noise: {1:7.4f}, action: {2:7.4f}, loss_actor: {3:7.4f}, loss_actor: {4:7.4f}".format(
                     step_idx, exp.noise[0], exp.action[0], loss_actor, loss_critic
-                ), end="\n\n")
+                ), end="\n")
 
         if len(buffer) < params.MIN_REPLAY_SIZE_FOR_TRAIN:
             continue
