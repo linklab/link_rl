@@ -46,7 +46,7 @@ class MatlabRotaryInvertedPendulumEnv(gym.Env):
     def step(self, action):
         self.plant.simulate(action)
         self.q, self.q1, self.w, self.w1 = self.plant.getHistory()
-
+        print(self.w)
         self.episode_steps += 1
         self.total_steps += 1
 
@@ -67,6 +67,8 @@ class MatlabRotaryInvertedPendulumEnv(gym.Env):
 
         done_conditions = [
             self.episode_steps >= 2000,
+            self.w > 300,
+            self.w < -300
         ]
 
         self.obs_degree[0] = self.next_obs_degree[0]
