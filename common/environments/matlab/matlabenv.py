@@ -50,7 +50,7 @@ class MatlabRotaryInvertedPendulumEnv(gym.Env):
         self.total_steps += 1
 
         done_conditions = [
-            self.episode_steps >= 2000,
+            self.episode_steps >= 1000,
             self.w > 300,
             self.w < -300
         ]
