@@ -130,4 +130,5 @@ config/parameters.py
 *.mat
 *.slx
 *.slxc
+*.m
 simulink_cache.xml

@@ -49,7 +49,7 @@ class SimulinkPlant:
         # Initialize Control Action to 0
         self.setControlAction(0)
         # print("Initialized Model")
-        self.eng.set_param( self.modelName, 'SimMechanicsOpenEditorOnUpdate', 'off', nargout=0) #No Visualization
+        # self.eng.set_param( self.modelName, 'SimMechanicsOpenEditorOnUpdate', 'off', nargout=0) #No Visualization
         # Start Simulation and then Instantly pause
         self.eng.set_param(self.modelName, 'SimulationCommand', 'start', 'SimulationCommand', 'pause',
                            nargout=0)

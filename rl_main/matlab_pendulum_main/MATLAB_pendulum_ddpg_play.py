@@ -30,7 +30,7 @@ def play_main():
     action_max = 2
 
     actor_net = policy_based_model.DDPGActor(
-        obs_size=4,
+        obs_size=3,
         hidden_size_1=512, hidden_size_2=256,
         n_actions=1
     ).to(device)
