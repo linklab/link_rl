@@ -113,17 +113,17 @@ def main():
     env = MatlabRotaryInvertedPendulumEnv()
     # env = make_gym_env(params.ENVIRONMENT_ID.value, seed=params.SEED)
     print("env:", params.ENVIRONMENT_ID)
-    print("observation_space:", 4)
+    print("observation_space:", 3)
     print("action_space:", 1)
 
     actor_net = policy_based_model.DDPGActor(
-        obs_size=4,
+        obs_size=3,
         hidden_size_1=512, hidden_size_2=256,
         n_actions=1
     ).to(device)
 
     critic_net = policy_based_model.DDPGCritic(
-        obs_size=4,
+        obs_size=3,
         hidden_size_1=512, hidden_size_2=256,
         n_actions=1
     ).to(device)
