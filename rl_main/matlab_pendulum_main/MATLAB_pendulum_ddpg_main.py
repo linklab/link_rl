@@ -180,6 +180,7 @@ def main():
                 break
             buffer._add(exp)
 
+        if step_idx % params.DRAW_VIZ_PERIOD_STEPS == 0:
             if params.DRAW_VIZ:
                 # stat_for_ddpg.draw_optimization_performance(
                 #     step_idx,
