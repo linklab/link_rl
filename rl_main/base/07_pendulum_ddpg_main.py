@@ -41,8 +41,9 @@ def play_func(exp_queue, env, net):
     action_min = env.action_space.low[0]
     action_max = env.action_space.high[0]
 
+    #action_selector = actions.EpsilonGreedyDDPGActionSelector(epsilon=params.EPSILON_INIT)
 
-    action_selector = actions.EpsilonGreedyDDPGActionSelector(epsilon=params.EPSILON_INIT)
+    action_selector = actions.DDPGActionSelector()
 
     epsilon_tracker = actions.EpsilonTracker(
         action_selector=action_selector,
@@ -202,6 +203,19 @@ def main():
                     loss_actor, loss_critic, loss_total, len(buffer.buffer)
                 )
 
+            if params.DRAW_VIZ:
+                # stat_for_ddpg.draw_optimization_performance(
+                #     step_idx,
+                #     loss_actor, loss_critic, loss_total,
+                #     actor_grad_l2, actor_grad_variance, actor_grad_max,
+                #     critic_grad_l2, critic_grad_variance, critic_grad_max,
+                #     buffer_length, exp.noise, exp.action
+                # )
+
+                stat_for_ddpg.draw_optimization_performance(
+                    step_idx, exp.noise, exp.action
+                )
+
 
 def model_update(buffer, actor_net, critic_net, target_actor_net, target_critic_net, actor_optimizer, critic_optimizer, stat_for_ddpg, step_idx, exp,
                  actor_grad_l2, actor_grad_max, actor_grad_variance,
@@ -253,20 +267,6 @@ def model_update(buffer, actor_net, critic_net, target_actor_net, target_critic_
     loss_actor = smooth(loss_actor, loss_actor_v.item())
     loss_critic = smooth(loss_critic, loss_critic_v.item())
     loss_total = smooth(loss_total, loss_actor_v.item() + loss_critic_v.item())
-
-    if params.DRAW_VIZ:
-        # stat_for_ddpg.draw_optimization_performance(
-        #     step_idx,
-        #     loss_actor, loss_critic, loss_total,
-        #     actor_grad_l2, actor_grad_variance, actor_grad_max,
-        #     critic_grad_l2, critic_grad_variance, critic_grad_max,
-        #     buffer_length, exp.noise, exp.action
-        # )
-
-        stat_for_ddpg.draw_optimization_performance(
-            step_idx, exp.noise, exp.action
-        )
-
 
     return actor_grad_l2, actor_grad_max, actor_grad_variance, critic_grad_l2, critic_grad_max, critic_grad_variance, loss_actor, loss_critic, loss_total
 

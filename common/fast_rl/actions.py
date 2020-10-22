@@ -48,22 +48,35 @@ class EpsilonGreedyDDPGActionSelector:
     def __init__(self, epsilon=0.05):
         self.epsilon = epsilon
 
-    def __call__(self, mu, agent_states, ou_enabled, ou_mu, ou_theta, ou_sigma):
+    def __call__(self, mu, agent_states, ou_enabled=True, ou_rho=0.15, ou_mu=0.0, ou_dt=0.1, ou_sigma=0.2):
         assert isinstance(mu, np.ndarray)
         actions = np.copy(mu)
         if ou_enabled and self.epsilon > 0:
             new_agent_states = []
             for agent_state, action in zip(agent_states, actions):
-                if agent_state is None:
-                    agent_state = np.zeros(shape=action.shape, dtype=np.float32)
-
-                agent_state += ou_theta * (ou_mu - agent_state)
-                agent_state += ou_sigma * np.random.normal(size=action.shape)
+                agent_state = np.zeros(shape=action.shape, dtype=np.float32)
+                agent_state += ou_rho * (ou_mu - actions)
+                agent_state += ou_sigma * np.sqrt(ou_dt) * np.random.normal(size=action.shape)
                 action += self.epsilon * agent_state
                 new_agent_states.append(agent_state)
         else:
             new_agent_states = agent_states
         return actions, new_agent_states
+
+
+class DDPGActionSelector:
+    def __call__(self, mu, agent_states, ou_enabled=True, ou_rho=0.15, ou_mu=0.0, ou_dt=0.1, ou_sigma=0.2):
+        assert isinstance(mu, np.ndarray)
+        actions = np.copy(mu)
+
+        if ou_enabled > 0:
+            agent_states = ou_rho * (ou_mu - actions) + ou_sigma * np.sqrt(ou_dt) * np.random.normal(size=actions.shape)
+            actions = actions + agent_states
+
+        new_agent_states = agent_states
+
+        return actions, new_agent_states
+
 
 class EpsilonGreedyD4PGActionSelector(ActionSelector):
     def __init__(self, epsilon=0.05):

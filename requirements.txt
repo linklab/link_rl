@@ -74,7 +74,7 @@ lockfile==0.12.2
 lxml==4.5.0
 Markdown==3.1.1
 MarkupSafe==1.1.1
-matlabengineforpython===R2020a
+matlabengineforpython===R2020a|R2020b
 matplotlib==3.1.1
 mistune==0.8.4
 mkl-fft==1.0.12

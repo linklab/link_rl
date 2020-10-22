@@ -46,7 +46,9 @@ def play_func(exp_queue, env, net):
     action_min = -100
     action_max = 100
 
-    action_selector = actions.EpsilonGreedyDDPGActionSelector(epsilon=params.EPSILON_INIT)
+    # action_selector = actions.EpsilonGreedyDDPGActionSelector(epsilon=params.EPSILON_INIT)
+
+    action_selector = actions.DDPGActionSelector()
 
     epsilon_tracker = actions.EpsilonTracker(
         action_selector=action_selector,
