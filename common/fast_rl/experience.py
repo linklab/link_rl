@@ -73,7 +73,7 @@ class ExperienceSourceSingleEnv:
 
             next_state, r, is_done, info = self.env.step(action)
 
-            if 'original_reward' in info:
+            if info and 'original_reward' in info:
                 cur_reward += info['original_reward']
             else:
                 cur_reward += r
