@@ -248,6 +248,7 @@ class AgentDDPG(BaseAgent):
         self.action_min = action_min
         self.action_max = action_max
         self.n_actions = n_actions
+        self.step_idx = 0
 
     def initial_agent_state(self):
         return None
@@ -258,30 +259,36 @@ class AgentDDPG(BaseAgent):
             if torch.is_tensor(states):
                 states = states.to(self.device)
 
-        mu_v = self.model(states)
-        mu = mu_v.data.cpu().numpy()
-        ####################################
+        if self.step_idx < 10000:
+            actions = np.random.normal(size=1)
+            noises = np.zeros(actions)
+            new_agent_states = None
+        else:
+            mu_v = self.model(states)
+            mu = mu_v.data.cpu().numpy()
+            ####################################
 
-        # if agent_states is None:
-        #     new_agent_states = [None] * len(states)
-        # else:
-        #     new_agent_states = agent_states
-        #
-        # noises_v = torch.Tensor(self.ou_noise.noise()).unsqueeze(dim=-1).to(self.device)
-        # noises = noises_v.data.cpu().numpy()
-        #
-        # actions = mu + noises
-        # actions = np.clip(actions, self.action_min, self.action_max)
+            # if agent_states is None:
+            #     new_agent_states = [None] * len(states)
+            # else:
+            #     new_agent_states = agent_states
+            #
+            # noises_v = torch.Tensor(self.ou_noise.noise()).unsqueeze(dim=-1).to(self.device)
+            # noises = noises_v.data.cpu().numpy()
+            #
+            # actions = mu + noises
+            # actions = np.clip(actions, self.action_min, self.action_max)
 
-        ####################################
+            ####################################
 
-        actions, new_agent_states = self.action_selector(mu, agent_states)
+            actions, new_agent_states = self.action_selector(mu, agent_states)
 
-        actions = np.clip(actions, self.action_min, self.action_max)
-        noises = new_agent_states
+            actions = np.clip(actions, self.action_min, self.action_max)
+            noises = new_agent_states
 
-        #####################################
+            #####################################
 
+        self.step_idx += 1
 
         return actions, noises, new_agent_states
 
