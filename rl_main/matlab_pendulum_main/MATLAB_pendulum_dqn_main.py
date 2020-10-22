@@ -86,7 +86,7 @@ def main():
     env = MatlabRotaryInvertedPendulumEnv()
 
     net = value_based_model.DuelingDQNMLP(
-        obs_size=4,
+        obs_size=3,
         hidden_size_1=128, hidden_size_2=128,
         n_actions=7
     ).to(device)
