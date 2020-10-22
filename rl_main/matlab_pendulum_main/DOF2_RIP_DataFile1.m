@@ -1,4 +1,4 @@
-% Simscape(TM) Multibody(TM) version: 7.1
+% Simscape(TM) Multibody(TM) version: 7.2
 
 % This is a model data file derived from a Simscape Multibody Import XML file using the smimport function.
 % The data in this file sets the block parameter values in an imported Simscape Multibody model.
