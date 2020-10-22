@@ -68,6 +68,8 @@ class DDPGActionSelector:
     def __call__(self, mu, agent_states, ou_enabled=True, ou_rho=0.15, ou_mu=0.0, ou_dt=0.1, ou_sigma=0.3):
         assert isinstance(mu, np.ndarray)
         actions = np.copy(mu)
+        if isinstance(agent_states, list):
+            agent_states = np.asarray(agent_states)
 
         if ou_enabled > 0:
             agent_states = agent_states + ou_rho * (ou_mu - agent_states) + ou_sigma * np.sqrt(ou_dt) * np.random.normal(size=actions.shape)

@@ -251,7 +251,7 @@ class AgentDDPG(BaseAgent):
         self.step_idx = 0
 
     def initial_agent_state(self):
-        return None
+        return 0.0
 
     def __call__(self, states, agent_states=None):
         if self.preprocessor is not None:
