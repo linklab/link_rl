@@ -73,7 +73,7 @@ class ExperienceSourceSingleEnv:
 
             next_state, r, is_done, info = self.env.step(action)
 
-            if info and 'original_reward' in info:
+            if 'original_reward' in info:
                 cur_reward += info['original_reward']
             else:
                 cur_reward += r
@@ -105,7 +105,7 @@ class ExperienceSourceSingleEnv:
                 state = self.env.reset()
                 agent_state = self.agent.initial_agent_state()
 
-                if info and ('ale.lives' not in info or info['ale.lives']) == 0:
+                if 'ale.lives' not in info or info['ale.lives'] == 0:
                     self.episode_reward_lst.append(cur_reward)
                     self.episode_done_step_lst.append(cur_step)
                     cur_reward = 0.0

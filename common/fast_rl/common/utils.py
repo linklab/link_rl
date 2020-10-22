@@ -391,6 +391,7 @@ class RewardTracker:
         speed = (episode_done_step - self.ts_frame) / ts_diff
         self.ts_frame = episode_done_step
         self.ts = current_ts
+
         print(
             "[{0:6}] done {1:4} games, episode_reward: {2:5.1f}, mean_{3}_episode_reward: {4:7.3f}, "
             "eps: {5:5.3f}, speed: {6:7.2f} {7}, elapsed time: {8}".format(
@@ -399,7 +400,7 @@ class RewardTracker:
                 self.episode_reward_list[-1],
                 self.average_size_for_stats,
                 mean_episode_reward,
-                epsilon,
+                epsilon if epsilon else 0.0,
                 speed,
                 "fps" if self.frame else "steps/sec.",
                 time.strftime("%Hh %Mm %Ss", time.gmtime(elapsed_time)),
