@@ -194,7 +194,7 @@ def main():
                     step_idx, exp.noise, exp.action
                 )
             else:
-                print("[{0:6}] noise: {1:7.4f}, action: {2:7.4f}, loss_actor: {3:7.4f}, loss_actor: {4:7.4f}".format(
+                print("[{0:6}] noise: {1:7.4f}, action: {2:7.4f}, loss_actor: {3:7.4f}, loss_critic: {4:7.4f}".format(
                     step_idx, exp.noise[0], exp.action[0], loss_actor, loss_critic
                 ), end="\n")
 
@@ -220,8 +220,6 @@ def main():
                     critic_grad_l2, critic_grad_max, critic_grad_variance,
                     loss_actor, loss_critic, loss_total, len(buffer.buffer)
                 )
-
-
 
 
 def model_update(buffer, actor_net, critic_net, target_actor_net, target_critic_net, actor_optimizer, critic_optimizer,
