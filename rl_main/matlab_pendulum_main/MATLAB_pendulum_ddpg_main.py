@@ -117,14 +117,14 @@ def main():
     print("action_space:", 1)
 
     actor_net = policy_based_model.DDPGActor(
-        obs_size=3,
+        obs_size=6,
         hidden_size_1=512, hidden_size_2=256,
         n_actions=1,
         scale=0.05
     ).to(device)
 
     critic_net = policy_based_model.DDPGCritic(
-        obs_size=3,
+        obs_size=6,
         hidden_size_1=512, hidden_size_2=256,
         n_actions=1
     ).to(device)
