@@ -65,8 +65,12 @@ class MatlabRotaryInvertedPendulumEnv(gym.Env):
             self.num_continuous_small_torque = 0
 
         # radian을 0과 math.pi 사이 값으로 조정
-        if abs(self.q) > math.pi:
+        if abs(self.q) > 2 * math.pi:
             q_ = abs(self.q) % (2 * math.pi)
+        else:
+            q_ = abs(self.q)
+
+        if q_ > math.pi:
             adjusted_radian = 2 * math.pi - q_
         else:
             adjusted_radian = self.q
