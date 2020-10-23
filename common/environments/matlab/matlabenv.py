@@ -42,6 +42,8 @@ class MatlabRotaryInvertedPendulumEnv(gym.Env):
         self.episode_steps = 0
         self.q, self.q1, self.w, self.w1, self.simulation_time = self.plant.getHistory()
         self.state = (math.cos(self.q), math.sin(self.q), self.w)
+        self.num_continuous_large_torque = 0
+        self.num_continuous_small_torque = 0
         # self.obs_degree[0] = self.next_obs_degree[0] = self.convert_radian_to_degree(np.round(self.state, decimals=4)[0] * math.pi)
         # self.obs_degree[1] = self.next_obs_degree[1] = self.convert_radian_to_degree(np.round(self.state, decimals=4)[1])
 
@@ -64,25 +66,31 @@ class MatlabRotaryInvertedPendulumEnv(gym.Env):
             self.num_continuous_large_torque = 0
             self.num_continuous_small_torque = 0
 
-        # radian을 0과 math.pi 사이 값으로 조정
-        if abs(self.q) > math.pi:
-            adjusted_radian = 2 * math.pi - abs(self.q)
+        # radian을 0과 math.pi 사이 값(양수)으로 조정
+        if abs(self.q) > 2 * math.pi:
+            q_ = abs(self.q) % (2 * math.pi)
         else:
-            adjusted_radian = abs(self.q)
+            q_ = abs(self.q)
 
+        if q_ > math.pi:
+            adjusted_radian = 2 * math.pi - q_
+        else:
+            adjusted_radian = q_
+
+        adjusted_radian = abs(adjusted_radian)
         self.state = (math.cos(self.q), math.sin(self.q), self.w)
 
         info = [None]
 
         done_conditions = [
             self.episode_steps >= 1000,
-            self.q > 2*math.pi,
-            self.q < -2*math.pi
+            self.num_continuous_large_torque >= 7,
+            self.num_continuous_small_torque >= 7
         ]
 
         if any(done_conditions):
             done = True
-            if self.q > 2*math.pi or self.q < -2*math.pi:
+            if self.num_continuous_large_torque >= 7 or self.num_continuous_small_torque >= 7:
                 reward = -100000.0
             else:
                 reward = self._ordinary_reward(adjusted_radian, action)
@@ -96,9 +104,11 @@ class MatlabRotaryInvertedPendulumEnv(gym.Env):
         if not isinstance(reward, float):
             reward = reward[-1]
 
-        print("action: {0}, q: {1:7.4}, w: {2:7.4f}, adjusted_radian: {3:7.4f}, reward: {4:10.4f}, time: {5}".format(
-            action, self.q, self.w, adjusted_radian, reward, self.simulation_time
-        ))
+        # if abs(self.q) > 2 * math.pi:
+        #     print(q_)
+        #     print("action: {0}, q: {1:7.4}, w: {2:7.4f}, adjusted_radian: {3:7.4f}, reward: {4:10.4f}, time: {5}".format(
+        #         action, self.q, self.w, adjusted_radian, reward, self.simulation_time
+        #     ))
 
         return np.array(self.state), reward, done, info
 
