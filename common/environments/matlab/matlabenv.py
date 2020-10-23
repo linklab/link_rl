@@ -62,12 +62,24 @@ class MatlabRotaryInvertedPendulumEnv(gym.Env):
         ]
 
         self.degree = self.degree + self.w * self.dt
-        print("q: {0:7.4}, w: {1:7.4f}, degree: {2:7.4f}, time: {3}".format(
-            self.q, self.w, self.degree, self.simulation_time
-        ))
+
+        # radian을 0과 math.pi 사이 값으로 조정
+        if abs(self.q) > math.pi:
+            adjusted_radian = 2 * math.pi - abs(self.q)
+        else:
+            adjusted_radian = self.q
 
         self.state = (math.cos(self.q), math.sin(self.q), self.w)
-        reward = -((math.pi - self.q) ** 2 + 0.1 * (self.w ** 2) + 0.001 * (action ** 2))
+
+        reward = -((math.pi - adjusted_radian) ** 2 + 0.1 * (self.w ** 2) + 0.001 * (action ** 2))
+
+        if not isinstance(reward, float):
+            reward = reward[-1]
+
+        print("q: {0:7.4}, w: {1:7.4f}, degree: {2:7.4f}, radian: {3:7.4f}, reward: {4:10.4f}, time: {4}".format(
+            self.q, self.w, self.degree, adjusted_radian, reward, self.simulation_time
+        ))
+
         info = [None]
 
         if any(done_conditions):
@@ -75,9 +87,6 @@ class MatlabRotaryInvertedPendulumEnv(gym.Env):
             self.plant.connectStop()
         else:
             done = False
-
-        if not isinstance(reward, float):
-            reward = reward[-1]
 
         return np.array(self.state), reward, done, info
 
