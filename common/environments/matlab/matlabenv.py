@@ -66,25 +66,23 @@ class MatlabRotaryInvertedPendulumEnv(gym.Env):
 
         # radian을 0과 math.pi 사이 값으로 조정
         if abs(self.q) > math.pi:
-            q_ = abs(self.q) % (2 * math.pi)
-            adjusted_radian = 2 * math.pi - q_
+            adjusted_radian = 2 * math.pi - abs(self.q)
         else:
-            adjusted_radian = self.q
+            adjusted_radian = abs(self.q)
 
-        adjusted_radian = abs(adjusted_radian)
         self.state = (math.cos(self.q), math.sin(self.q), self.w)
 
         info = [None]
 
         done_conditions = [
             self.episode_steps >= 1000,
-            self.num_continuous_large_torque >= 7,
-            self.num_continuous_small_torque >= 7
+            self.q > 2*math.pi,
+            self.q < -2*math.pi
         ]
 
         if any(done_conditions):
             done = True
-            if self.num_continuous_large_torque >= 7 or self.num_continuous_small_torque >= 7:
+            if self.q > 2*math.pi or self.q < -2*math.pi:
                 reward = -100000.0
             else:
                 reward = self._ordinary_reward(adjusted_radian, action)
