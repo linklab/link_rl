@@ -84,7 +84,7 @@ class MatlabRotaryInvertedPendulumEnv(gym.Env):
         if any(done_conditions):
             done = True
             if self.num_continuous_large_torque >= 7 or self.num_continuous_small_torque >= 7:
-                reward = -100000
+                reward = -100000.0
             else:
                 reward = self._ordinary_reward(adjusted_radian, action)
 
@@ -94,7 +94,7 @@ class MatlabRotaryInvertedPendulumEnv(gym.Env):
 
             reward = self._ordinary_reward(adjusted_radian, action)
 
-        if not (isinstance(reward, float) or isinstance(reward, int)):
+        if not isinstance(reward, float):
             reward = reward[-1]
 
         # print("action: {0}, q: {1:7.4}, w: {2:7.4f}, adjusted_radian: {3:7.4f}, reward: {4:10.4f}, time: {5}".format(
