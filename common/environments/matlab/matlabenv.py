@@ -23,8 +23,6 @@ class MatlabRotaryInvertedPendulumEnv(gym.Env):
         self.obs_degree = [None, None]
         self.next_obs_degree = [None, None]
         self.simulation_time = 0.0
-        self.dt = 0.005
-        self.degree = 0.0
 
     def pause(self):
         self.plant.conncectpause()
@@ -43,10 +41,9 @@ class MatlabRotaryInvertedPendulumEnv(gym.Env):
         # self.obs_degree[0] = self.next_obs_degree[0] = self.convert_radian_to_degree(np.round(self.state, decimals=4)[0] * math.pi)
         # self.obs_degree[1] = self.next_obs_degree[1] = self.convert_radian_to_degree(np.round(self.state, decimals=4)[1])
 
-        self.degree = 0.0
-        print("q: {0:7.4}, w: {1:7.4f}, degree: {2:7.4f}, time: {3} -- RESET".format(
-            self.q, self.w, self.degree, self.simulation_time
-        ))
+        # print("q: {0:7.4}, w: {1:7.4f}, time: {2} -- RESET".format(
+        #     self.q, self.w, self.simulation_time
+        # ))
         return np.array(self.state)
 
     def step(self, action):
@@ -61,14 +58,13 @@ class MatlabRotaryInvertedPendulumEnv(gym.Env):
             self.w < -300
         ]
 
-        self.degree = self.degree + self.w * self.dt
-
         # radian을 0과 math.pi 사이 값으로 조정
         if abs(self.q) > math.pi:
             adjusted_radian = 2 * math.pi - abs(self.q)
         else:
             adjusted_radian = self.q
 
+        adjusted_radian = abs(adjusted_radian)
         self.state = (math.cos(self.q), math.sin(self.q), self.w)
 
         reward = -((math.pi - adjusted_radian) ** 2 + 0.1 * (self.w ** 2) + 0.001 * (action ** 2))
@@ -76,9 +72,9 @@ class MatlabRotaryInvertedPendulumEnv(gym.Env):
         if not isinstance(reward, float):
             reward = reward[-1]
 
-        print("q: {0:7.4}, w: {1:7.4f}, degree: {2:7.4f}, radian: {3:7.4f}, reward: {4:10.4f}, time: {4}".format(
-            self.q, self.w, self.degree, adjusted_radian, reward, self.simulation_time
-        ))
+        # print("q: {0:7.4}, w: {1:7.4f}, adjusted_radian: {2:7.4f}, reward: {3:10.4f}, time: {4}".format(
+        #     self.q, self.w, adjusted_radian, reward, self.simulation_time
+        # ))
 
         info = [None]
 
