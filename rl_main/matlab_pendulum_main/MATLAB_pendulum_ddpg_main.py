@@ -43,8 +43,8 @@ else:
 def play_func(exp_queue, env, net):
     # print(env.action_space.low[0], env.action_space.high[0])
     env.start()
-    action_min = -0.1
-    action_max = 0.1
+    action_min = -0.05
+    action_max = 0.05
 
     # action_selector = actions.EpsilonGreedyDDPGActionSelector(epsilon=params.EPSILON_INIT)
 
@@ -119,7 +119,8 @@ def main():
     actor_net = policy_based_model.DDPGActor(
         obs_size=3,
         hidden_size_1=512, hidden_size_2=256,
-        n_actions=1
+        n_actions=1,
+        scale=0.05
     ).to(device)
 
     critic_net = policy_based_model.DDPGCritic(

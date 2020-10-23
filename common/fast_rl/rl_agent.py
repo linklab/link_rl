@@ -259,7 +259,7 @@ class AgentDDPG(BaseAgent):
             if torch.is_tensor(states):
                 states = states.to(self.device)
 
-        if self.step_idx < 10000:
+        if self.step_idx < 1000:
             actions = np.random.normal(size=(1, 1))
             noises = np.zeros_like(actions)
             new_agent_states = np.zeros_like(actions)

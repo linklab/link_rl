@@ -96,7 +96,7 @@ class ContinuousA2CMLP(nn.Module):
 
 
 class DDPGActor(nn.Module):
-    def __init__(self, obs_size, hidden_size_1, hidden_size_2, n_actions):
+    def __init__(self, obs_size, hidden_size_1, hidden_size_2, n_actions, scale):
         super(DDPGActor, self).__init__()
 
         self.__name__ = "DDPGActor"
@@ -112,8 +112,10 @@ class DDPGActor(nn.Module):
 
         self.net.apply(init_weights)
 
+        self.scale = scale
+
     def forward(self, x):
-        return self.net(x)
+        return self.net(x) * self.scale
 
 
 class DDPGCritic(nn.Module):
