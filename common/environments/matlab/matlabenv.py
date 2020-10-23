@@ -24,6 +24,10 @@ class MatlabRotaryInvertedPendulumEnv(gym.Env):
         self.next_obs_degree = [None, None]
         self.simulation_time = 0.0
 
+        self.num_continuous_large_torque = 0
+        self.num_continuous_small_torque = 0
+        self.done_torque_threshold = 0.75
+
     def pause(self):
         self.plant.conncectpause()
 
@@ -52,11 +56,13 @@ class MatlabRotaryInvertedPendulumEnv(gym.Env):
         self.episode_steps += 1
         self.total_steps += 1
 
-        done_conditions = [
-            self.episode_steps >= 1000,
-            self.w > 300,
-            self.w < -300
-        ]
+        if action > self.done_torque_threshold:
+            self.num_continuous_large_torque += 1
+        elif action < -self.done_torque_threshold:
+            self.num_continuous_small_torque += 1
+        else:
+            self.num_continuous_large_torque = 0
+            self.num_continuous_small_torque = 0
 
         # radian을 0과 math.pi 사이 값으로 조정
         if abs(self.q) > math.pi:
@@ -67,24 +73,39 @@ class MatlabRotaryInvertedPendulumEnv(gym.Env):
         adjusted_radian = abs(adjusted_radian)
         self.state = (math.cos(self.q), math.sin(self.q), self.w)
 
-        reward = -((math.pi - adjusted_radian) ** 2 + 0.1 * (self.w ** 2) + 0.001 * (action ** 2))
-
-        if not isinstance(reward, float):
-            reward = reward[-1]
-
-        # print("q: {0:7.4}, w: {1:7.4f}, adjusted_radian: {2:7.4f}, reward: {3:10.4f}, time: {4}".format(
-        #     self.q, self.w, adjusted_radian, reward, self.simulation_time
-        # ))
-
         info = [None]
+
+        done_conditions = [
+            self.episode_steps >= 1000,
+            self.num_continuous_large_torque >= 3,
+            self.num_continuous_small_torque >= 3
+        ]
 
         if any(done_conditions):
             done = True
+            if self.num_continuous_large_torque >= 3 or self.num_continuous_small_torque >= 3:
+                reward = -10000
+            else:
+                reward = self._ordinary_reward(adjusted_radian, action)
+
             self.plant.connectStop()
         else:
             done = False
 
+            reward = self._ordinary_reward(adjusted_radian, action)
+
+            if not isinstance(reward, float):
+                reward = reward[-1]
+
+        # print("action: {0}, q: {1:7.4}, w: {2:7.4f}, adjusted_radian: {3:7.4f}, reward: {4:10.4f}, time: {5}".format(
+        #     action, self.q, self.w, adjusted_radian, reward, self.simulation_time
+        # ))
+
         return np.array(self.state), reward, done, info
+
+    def _ordinary_reward(self, adjusted_radian, action):
+        reward = -((math.pi - adjusted_radian) ** 2 + 0.1 * (self.w ** 2) + 0.001 * (action ** 2))
+        return reward
 
     def render(self, mode='human'):
         pass
