@@ -60,10 +60,12 @@ class MatlabRotaryInvertedPendulumEnv(gym.Env):
 
         if action > self.done_torque_threshold:
             self.num_continuous_large_torque += 1
-        elif action < -self.done_torque_threshold:
-            self.num_continuous_small_torque += 1
         else:
             self.num_continuous_large_torque = 0
+
+        if action < -self.done_torque_threshold:
+            self.num_continuous_small_torque += 1
+        else:
             self.num_continuous_small_torque = 0
 
         # radian을 0과 math.pi 사이 값(양수)으로 조정
