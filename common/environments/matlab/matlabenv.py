@@ -94,8 +94,8 @@ class MatlabRotaryInvertedPendulumEnv(gym.Env):
 
             reward = self._ordinary_reward(adjusted_radian, action)
 
-            if not isinstance(reward, float):
-                reward = reward[-1]
+        if not isinstance(reward, float):
+            reward = reward[-1]
 
         # print("action: {0}, q: {1:7.4}, w: {2:7.4f}, adjusted_radian: {3:7.4f}, reward: {4:10.4f}, time: {5}".format(
         #     action, self.q, self.w, adjusted_radian, reward, self.simulation_time
