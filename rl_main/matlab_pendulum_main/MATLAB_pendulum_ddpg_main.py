@@ -43,8 +43,8 @@ else:
 def play_func(exp_queue, env, net):
     # print(env.action_space.low[0], env.action_space.high[0])
     env.start()
-    action_min = -1
-    action_max = 1
+    action_min = -0.1
+    action_max = 0.1
 
     # action_selector = actions.EpsilonGreedyDDPGActionSelector(epsilon=params.EPSILON_INIT)
 

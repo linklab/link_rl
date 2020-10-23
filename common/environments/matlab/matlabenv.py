@@ -59,12 +59,14 @@ class MatlabRotaryInvertedPendulumEnv(gym.Env):
         self.total_steps += 1
 
         if action > self.done_torque_threshold:
-            self.num_continuous_large_torque += 1
+            # self.num_continuous_large_torque += 1
+            pass
         else:
             self.num_continuous_large_torque = 0
 
         if action < -self.done_torque_threshold:
-            self.num_continuous_small_torque += 1
+            # self.num_continuous_small_torque += 1
+            pass
         else:
             self.num_continuous_small_torque = 0
 

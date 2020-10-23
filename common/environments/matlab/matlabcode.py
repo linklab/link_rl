@@ -93,8 +93,8 @@ class SimulinkPlant:
         # print(action)
         # self.controller.getControlEffort(self.yHist, self.tHist)
         # Set that Control Action
-        action_v = action * 0.1
-        self.setControlAction(action_v)
+        # action_v = action * 0.1
+        self.setControlAction(action)
         self.eng.set_param(self.modelName, 'SimulationCommand', 'continue', 'SimulationCommand', 'pause', nargout=0)
         # self.setControlAction(u)
         # self.eng.set_param(self.modelName, 'SimulationCommand', 'pause', nargout=0)
