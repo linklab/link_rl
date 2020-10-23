@@ -22,8 +22,9 @@ class MatlabRotaryInvertedPendulumEnv(gym.Env):
         self.state = None
         self.obs_degree = [None, None]
         self.next_obs_degree = [None, None]
-
-
+        self.simulation_time = 0.0
+        self.dt = 0.005
+        self.degree = 0.0
 
     def pause(self):
         self.plant.conncectpause()
@@ -37,17 +38,20 @@ class MatlabRotaryInvertedPendulumEnv(gym.Env):
     def reset(self):
         self.plant.connectStart()
         self.episode_steps = 0
-        self.q, self.q1, self.w, self.w1 = self.plant.getHistory()
+        self.q, self.q1, self.w, self.w1, self.simulation_time = self.plant.getHistory()
         self.state = (math.cos(self.q), math.sin(self.q), self.w)
         # self.obs_degree[0] = self.next_obs_degree[0] = self.convert_radian_to_degree(np.round(self.state, decimals=4)[0] * math.pi)
         # self.obs_degree[1] = self.next_obs_degree[1] = self.convert_radian_to_degree(np.round(self.state, decimals=4)[1])
 
-        print(self.q, "reset")
+        self.degree = 0.0
+        print("q: {0:7.4}, w: {1:7.4f}, degree: {2:7.4f}, time: {3} -- RESET".format(
+            self.q, self.w, self.degree, self.simulation_time
+        ))
         return np.array(self.state)
 
     def step(self, action):
         self.plant.simulate(action)
-        self.q, self.q1, self.w, self.w1 = self.plant.getHistory()
+        self.q, self.q1, self.w, self.w1, self.simulation_time = self.plant.getHistory()
         self.episode_steps += 1
         self.total_steps += 1
 
@@ -57,7 +61,10 @@ class MatlabRotaryInvertedPendulumEnv(gym.Env):
             self.w < -300
         ]
 
-        print(self.q)
+        self.degree = self.degree + self.w * self.dt
+        print("q: {0:7.4}, w: {1:7.4f}, degree: {2:7.4f}, time: {3}".format(
+            self.q, self.w, self.degree, self.simulation_time
+        ))
 
         self.state = (math.cos(self.q), math.sin(self.q), self.w)
         reward = -((math.pi - self.q) ** 2 + 0.1 * (self.w ** 2) + 0.001 * (action ** 2))

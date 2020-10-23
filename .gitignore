@@ -132,3 +132,5 @@ config/parameters.py
 *.slx
 *.slxc
 simulink_cache.xml
+
+slprj

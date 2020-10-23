@@ -17,20 +17,12 @@ class SimulinkPlant:
         self.q1 = 0
         self.w = 0
         self.w1 = 0
+        self.simulation_time = 0.0
 
     def setControlAction(self, torque):
         # Helper Function to set value of control action
-        self.eng.set_param('{}/u'.format(self.modelName), 'value', str(torque),
-                           nargout=0)  # u블럭의 value 파라미터는 str(u) 이다. 제어값은 여기에 넣는다.
-    # def getworkspace(self):
-    #     return self.eng.workspace['out.q'], self.eng.workspace['out.q1'], self.eng.workspace['out.w'], self.eng.workspace['out.w1']
-    def getHistory(self):
-        # Helper Function to get Plant Output and Time History
-        self.eng.eval('q = out.q(end);, w = out.w(end);, q1 = out.q1(end);, w1 = out.w1(end);', nargout = 0)
-        #self.eng.eval("w = out.w(end)", nargout=0)
-        #self.eng.eval("q1 = out.q1(end)", nargout=0)
-        #self.eng.eval("w1 = out.w1(end)", nargout=0)
-        return self.eng.workspace['q'], self.eng.workspace['q1'], self.eng.workspace['w'], self.eng.workspace['w1']
+        # u블럭의 value 파라미터는 str(u) 이다. 제어값은 여기에 넣는다.
+        self.eng.set_param('{}/u'.format(self.modelName), 'value', str(torque), nargout=0)
 
     def connectToMatlab(self):
         print("Starting matlab")
@@ -40,21 +32,26 @@ class SimulinkPlant:
 
         # Load the model
         self.eng.eval("model = '{}'".format(self.modelName), nargout=0)  # eval : 텍스트로 된 MATLAB 표현식 실행
-        self.eng.eval("load_system(model)",
-                      nargout=0)  # load_system : loads the model sys into memory without opening the model in the Simulink® Editor.
+        # load_system : loads the model sys into memory without opening the model in the Simulink® Editor.
+        self.eng.eval("load_system(model)", nargout=0)
 
-        simulation_time = self.eng.get_param(self.modelName, 'SimulationTime')
-        print("simulation time: {0}".format(simulation_time))
+        #simulation_time = self.eng.get_param(self.modelName, 'SimulationTime')
 
         # Initialize Control Action to 0
         self.setControlAction(0)
         # print("Initialized Model")
         # self.eng.set_param(self.modelName, 'SimMechanicsOpenEditorOnUpdate', 'off', nargout=0) #No Visualization
         # Start Simulation and then Instantly pause
-        self.eng.set_param(self.modelName, 'SimulationCommand', 'start', 'SimulationCommand', 'pause',
-                           nargout=0)
+        self.eng.set_param(self.modelName, 'SimulationCommand', 'start', 'SimulationCommand', 'pause', nargout=0)
         # print(self.eng.get_param(self.modelName, 'SimulationStatus'))
-        self.q, self.q1, self.w, self.w1 = self.getHistory()
+        self.q, self.q1, self.w, self.w1, self.simulation_time = self.getHistory()
+        print("q: {0}, q1: {1}, w: {2}, w1: {3}, simulation time: {4}".format(
+            self.q,
+            self.q1,
+            self.w,
+            self.w1,
+            self.simulation_time
+        ))
 
     def connectStart(self):
         self.eng.set_param(self.modelName, 'SimulationCommand', 'start', 'SimulationCommand', 'pause', nargout=0)
@@ -92,11 +89,11 @@ class SimulinkPlant:
         # else:
         #     torque = 0
         # print(action)
-        simulation_time = self.eng.get_param(self.modelName, 'SimulationTime')
+        # simulation_time = self.eng.get_param(self.modelName, 'SimulationTime')
         # print(action)
         # self.controller.getControlEffort(self.yHist, self.tHist)
         # Set that Control Action
-        action_v = action*0.1
+        action_v = action * 0.1
         self.setControlAction(action_v)
         self.eng.set_param(self.modelName, 'SimulationCommand', 'continue', 'SimulationCommand', 'pause', nargout=0)
         # self.setControlAction(u)
@@ -104,6 +101,18 @@ class SimulinkPlant:
         # self.q, self.q1, self.w, self.w1 = self.getHistory()
 
         # print("simulation time: {0:5.3f}".format(simulation_time))
+
+    # def getworkspace(self):
+    #     return self.eng.workspace['out.q'], self.eng.workspace['out.q1'], self.eng.workspace['out.w'], self.eng.workspace['out.w1']
+
+    def getHistory(self):
+        # Helper Function to get Plant Output and Time History
+        self.eng.eval('q = out.q(end);, w = out.w(end);, q1 = out.q1(end);, w1 = out.w1(end);', nargout=0)
+        simulation_time = self.eng.get_param(self.modelName, 'SimulationTime')
+        #self.eng.eval("w = out.w(end)", nargout=0)
+        #self.eng.eval("q1 = out.q1(end)", nargout=0)
+        #self.eng.eval("w1 = out.w1(end)", nargout=0)
+        return self.eng.workspace['q'], self.eng.workspace['q1'], self.eng.workspace['w'], self.eng.workspace['w1'], simulation_time
 
     def disconnect(self):
         self.eng.set_param(self.modelName, 'SimulationCommand', 'stop', nargout=0)
