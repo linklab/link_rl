@@ -20,11 +20,13 @@ def main():
 
     env.start()
 
-    state = env.reset()
+    env.reset()
     done = False
 
+    action = 1.0
     while not done:
-        next_state, reward, done, _ = env.step(action=[0.1])
+        next_state, reward, done, _ = env.step(action=action)
+        action = -action
 
 
 if __name__ == "__main__":

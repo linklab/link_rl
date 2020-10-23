@@ -76,7 +76,10 @@ class MatlabRotaryInvertedPendulumEnv(gym.Env):
         else:
             done = False
 
-        return np.array(self.state), reward[-1], done, info
+        if not isinstance(reward, float):
+            reward = reward[-1]
+
+        return np.array(self.state), reward, done, info
 
     def render(self, mode='human'):
         pass
