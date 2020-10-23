@@ -64,7 +64,7 @@ class MatlabRotaryInvertedPendulumEnv(gym.Env):
             self.num_continuous_large_torque = 0
             self.num_continuous_small_torque = 0
 
-        # radian을 0과 math.pi 사이 값으로 조정
+        # radian을 0과 math.pi 사이 값(양수)으로 조정
         if abs(self.q) > 2 * math.pi:
             q_ = abs(self.q) % (2 * math.pi)
         else:
@@ -73,7 +73,7 @@ class MatlabRotaryInvertedPendulumEnv(gym.Env):
         if q_ > math.pi:
             adjusted_radian = 2 * math.pi - q_
         else:
-            adjusted_radian = self.q
+            adjusted_radian = q_
 
         adjusted_radian = abs(adjusted_radian)
         self.state = (math.cos(self.q), math.sin(self.q), self.w)
@@ -102,9 +102,11 @@ class MatlabRotaryInvertedPendulumEnv(gym.Env):
         if not isinstance(reward, float):
             reward = reward[-1]
 
-        print("action: {0}, q: {1:7.4}, w: {2:7.4f}, adjusted_radian: {3:7.4f}, reward: {4:10.4f}, time: {5}".format(
-            action, self.q, self.w, adjusted_radian, reward, self.simulation_time
-        ))
+        # if abs(self.q) > 2 * math.pi:
+        #     print(q_)
+        #     print("action: {0}, q: {1:7.4}, w: {2:7.4f}, adjusted_radian: {3:7.4f}, reward: {4:10.4f}, time: {5}".format(
+        #         action, self.q, self.w, adjusted_radian, reward, self.simulation_time
+        #     ))
 
         return np.array(self.state), reward, done, info
 
