@@ -117,7 +117,8 @@ class MatlabRotaryInvertedPendulumEnv(gym.Env):
         return np.array(self.state), reward, done, info
 
     def _ordinary_reward(self, adjusted_radian, action):
-        reward = -((math.pi - adjusted_radian) ** 2 + 0.1 * (self.w ** 2) + 0.001 * (action ** 2))
+        # reward = -((math.pi - adjusted_radian) ** 2 + 0.1 * (self.w ** 2) + 0.001 * (action ** 2))
+        reward = -((math.pi - adjusted_radian) ** 2)
         return reward
 
     def render(self, mode='human'):
