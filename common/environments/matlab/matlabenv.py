@@ -26,7 +26,7 @@ class MatlabRotaryInvertedPendulumEnv(gym.Env):
 
         self.num_continuous_large_torque = 0
         self.num_continuous_small_torque = 0
-        self.done_torque_threshold = 0.75
+        # self.done_torque_threshold = 0.75
 
     def pause(self):
         self.plant.conncectpause()
@@ -58,15 +58,15 @@ class MatlabRotaryInvertedPendulumEnv(gym.Env):
         self.episode_steps += 1
         self.total_steps += 1
 
-        # if action > self.done_torque_threshold:
-        #     self.num_continuous_large_torque += 1
-        # else:
-        #     self.num_continuous_large_torque = 0
-        #
-        # if action < -self.done_torque_threshold:
-        #     self.num_continuous_small_torque += 1
-        # else:
-        #     self.num_continuous_small_torque = 0
+        if action > 0:
+            self.num_continuous_large_torque += 1
+        else:
+            self.num_continuous_large_torque = 0
+
+        if action < 0:
+            self.num_continuous_small_torque += 1
+        else:
+            self.num_continuous_small_torque = 0
 
         # radian을 0과 2 * math.pi 사이 값(양수)으로 조정
         if abs(self.q) > 2 * math.pi:
@@ -90,17 +90,19 @@ class MatlabRotaryInvertedPendulumEnv(gym.Env):
             self.num_continuous_small_torque >= 15
         ]
 
+        # if any(done_conditions):
+        #     done = True
+        #     if self.num_continuous_large_torque >= 15 or self.num_continuous_small_torque >= 15:
+        #         reward = -100000.0
+        #     else:
+        #         reward = self._ordinary_reward(adjusted_radian, action)
+
         if any(done_conditions):
             done = True
-            if self.num_continuous_large_torque >= 15 or self.num_continuous_small_torque >= 15:
-                reward = -100000.0
-            else:
-                reward = self._ordinary_reward(adjusted_radian, action)
-
+            reward = self._ordinary_reward(adjusted_radian, action)
             self.plant.connectStop()
         else:
             done = False
-
             reward = self._ordinary_reward(adjusted_radian, action)
 
         if not isinstance(reward, float):
