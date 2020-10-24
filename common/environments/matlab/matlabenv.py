@@ -58,30 +58,28 @@ class MatlabRotaryInvertedPendulumEnv(gym.Env):
         self.episode_steps += 1
         self.total_steps += 1
 
-        if action > self.done_torque_threshold:
-            # self.num_continuous_large_torque += 1
-            pass
-        else:
-            self.num_continuous_large_torque = 0
+        # if action > self.done_torque_threshold:
+        #     self.num_continuous_large_torque += 1
+        # else:
+        #     self.num_continuous_large_torque = 0
+        #
+        # if action < -self.done_torque_threshold:
+        #     self.num_continuous_small_torque += 1
+        # else:
+        #     self.num_continuous_small_torque = 0
 
-        if action < -self.done_torque_threshold:
-            # self.num_continuous_small_torque += 1
-            pass
-        else:
-            self.num_continuous_small_torque = 0
-
-        # radian을 0과 math.pi 사이 값(양수)으로 조정
+        # radian을 0과 2 * math.pi 사이 값(양수)으로 조정
         if abs(self.q) > 2 * math.pi:
             q_ = abs(self.q) % (2 * math.pi)
         else:
             q_ = abs(self.q)
 
+        # radian을 0과 math.pi 사이 값(양수)으로 조정: 3 * math.pi / 2 -->  2 * math.pi - 3 * math.pi / 2 --> math.pi / 2
         if q_ > math.pi:
             adjusted_radian = 2 * math.pi - q_
         else:
             adjusted_radian = q_
 
-        adjusted_radian = abs(adjusted_radian)
         self.state = (math.cos(self.q), math.sin(self.q), self.w, math.cos(self.q1), math.sin(self.q1), self.w1)
 
         info = [None]
@@ -118,7 +116,10 @@ class MatlabRotaryInvertedPendulumEnv(gym.Env):
 
     def _ordinary_reward(self, adjusted_radian, action):
         # reward = -((math.pi - adjusted_radian) ** 2 + 0.1 * (self.w ** 2) + 0.001 * (action ** 2))
-        reward = -((math.pi - adjusted_radian) ** 2)
+        if adjusted_radian < math.pi / 2:
+            reward = 0
+        else:
+            reward = adjusted_radian
         return reward
 
     def render(self, mode='human'):
