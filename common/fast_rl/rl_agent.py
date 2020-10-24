@@ -11,10 +11,10 @@ from common.fast_rl.common.noise import OrnsteinUhlenbeckActionNoise
 from . import actions
 
 
-def save_model(model_save_dir, env_name, net_name, net, step, mean_episode_reward):
+def save_model(model_save_dir, env_name, net_name, net, step, episode_reward):
     model_save_filename = os.path.join(
         model_save_dir, "{0}_{1}_{2}_{3}.pth".format(
-            env_name, net_name, step, mean_episode_reward
+            env_name, net_name, step, episode_reward
         )
     )
     torch.save(net.state_dict(), model_save_filename)
@@ -42,6 +42,36 @@ def load_model(model_save_dir, env_name, net_name, net, step=None):
 
     net.load_state_dict(model_params)
 
+
+def save_actor_critic_model(
+        model_save_dir, env_name, actor_net_name, actor_net, critic_net_name, critic_net, step, episode_reward
+):
+    actor_model_save_filename = os.path.join(
+        model_save_dir, "{0}_{1}_{2}_{3}.pth".format(
+            env_name, actor_net_name, step, episode_reward
+        )
+    )
+    torch.save(actor_net.state_dict(), actor_model_save_filename)
+
+    critic_model_save_filename = os.path.join(
+        model_save_dir, "{0}_{1}_{2}_{3}.pth".format(
+            env_name, critic_net_name, step, episode_reward
+        )
+    )
+    torch.save(critic_net.state_dict(), critic_model_save_filename)
+
+
+def load_actor_critic_model(actor_model_save_filename, critic_model_save_filename, actor_net, critic_net):
+    print("ACTOR MODEL FILE NAME: {0}".format(actor_model_save_filename))
+    print("CRITIC MODEL FILE NAME: {0}".format(critic_model_save_filename))
+    device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+    actor_model_params = torch.load(actor_model_save_filename, map_location=device)
+    critic_model_params = torch.load(critic_model_save_filename, map_location=device)
+
+    actor_net.load_state_dict(actor_model_params)
+    critic_net.load_state_dict(critic_model_params)
+
+    print("ACTOR / CRITIC MODELS ARE LOADED!!!")
 
 class BaseAgent:
     """

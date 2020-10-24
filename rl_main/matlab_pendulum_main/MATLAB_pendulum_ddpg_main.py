@@ -41,7 +41,8 @@ else:
 
 SCALE_FACTOR = 0.025
 
-def play_func(exp_queue, env, net):
+
+def play_func(exp_queue, env, actor_net, critic_net):
     # print(env.action_space.low[0], env.action_space.high[0])
     env.start()
     action_min = -SCALE_FACTOR
@@ -59,7 +60,7 @@ def play_func(exp_queue, env, net):
     )
 
     agent = rl_agent.AgentDDPG(
-        net, n_actions=1, action_selector=action_selector,
+        actor_net, n_actions=1, action_selector=action_selector,
         action_min=action_min, action_max=action_max, device=device, preprocessor=float32_preprocessor
     )
 
@@ -77,6 +78,14 @@ def play_func(exp_queue, env, net):
     step_idx = 0
     next_save_frame_idx = params.MODEL_SAVE_STEP_PERIOD
 
+    best_episode_reward = 0
+    current_episode_reward = 0
+
+    model_save_condition = [
+        current_episode_reward > best_episode_reward,
+        step_idx > params.MAX_GLOBAL_STEPS / 4
+    ]
+
     with utils.RewardTracker(
             params.STOP_MEAN_EPISODE_REWARD, params.AVG_EPISODE_SIZE_FOR_STAT,
             frame=True, draw_viz=params.DRAW_VIZ, stat=stat) as reward_tracker:
@@ -90,20 +99,23 @@ def play_func(exp_queue, env, net):
 
             episode_rewards = experience_source.pop_episode_reward_lst()
             if episode_rewards:
+                current_episode_reward = episode_rewards[0]
+
                 solved, mean_episode_reward = reward_tracker.set_episode_reward(
-                    episode_rewards[0], step_idx, epsilon=action_selector.epsilon
+                    current_episode_reward, step_idx, epsilon=action_selector.epsilon
                 )
 
-                if step_idx >= next_save_frame_idx:
-                    rl_agent.save_model(
-                        MODEL_SAVE_DIR, params.ENVIRONMENT_ID, net.__name__, net, step_idx, mean_episode_reward
+                if all(model_save_condition):
+                    rl_agent.save_actor_critic_model(
+                        MODEL_SAVE_DIR, params.ENVIRONMENT_ID,
+                        actor_net.__name__, actor_net, critic_net.__name__, critic_net,
+                        step_idx, current_episode_reward
                     )
-                    next_save_frame_idx += params.MODEL_SAVE_STEP_PERIOD
+
+                if current_episode_reward > best_episode_reward:
+                    best_episode_reward = current_episode_reward
 
                 if solved:
-                    rl_agent.save_model(
-                        MODEL_SAVE_DIR, params.ENVIRONMENT_ID, net.__name__, net, step_idx, mean_episode_reward
-                    )
                     break
 
     exp_queue.put(None)
@@ -145,7 +157,7 @@ def main():
     )
 
     exp_queue = mp.Queue(maxsize=params.TRAIN_STEP_FREQ * 2)
-    play_proc = mp.Process(target=play_func, args=(exp_queue, env, actor_net))
+    play_proc = mp.Process(target=play_func, args=(exp_queue, env, actor_net, critic_net))
     play_proc.start()
 
     time.sleep(0.5)
