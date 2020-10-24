@@ -65,6 +65,7 @@ class PARAMETERS_GENERAL:
     OMEGA_WINDOW_SIZE = 6
     NEXT_STATE_IN_TRAJECTORY = True
     DATA_SAVE_STEP_PERIOD = 1000
+    LOAD_SAVED_MODEL = None
     #########################################
     #########################################
 
