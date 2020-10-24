@@ -86,8 +86,8 @@ class MatlabRotaryInvertedPendulumEnv(gym.Env):
 
         done_conditions = [
             self.episode_steps >= 1000,
-            self.num_continuous_large_torque >= 15,
-            self.num_continuous_small_torque >= 15
+            self.num_continuous_large_torque >= 30,
+            self.num_continuous_small_torque >= 30
         ]
 
         # if any(done_conditions):
