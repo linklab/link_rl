@@ -595,6 +595,10 @@ def calc_loss_per_double_dqn(buffer, batch, batch_indices, batch_weights, net, t
     losses_v = batch_weights_v * F.smooth_l1_loss(state_action_values, expected_state_action_values)
     return losses_v.mean(), (losses_v + 1e-5)
 
+    # loss_func = torch.nn.MSELoss(reduction='none')
+    # losses_each = loss_func(state_action_values, expected_state_action_values)
+    # return losses_v.mean(), losses_each
+
 
 def calc_loss_per_double_dqn_for_omega(buffer, batch, batch_indices, batch_weights, net, tgt_net, params, cuda=False,
                                        cuda_async=False):

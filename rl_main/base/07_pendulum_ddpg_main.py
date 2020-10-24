@@ -174,8 +174,6 @@ def main():
     # lp = LineProfiler()
     # lp_wrapper = lp(model_update)
 
-    l1_loss_func = torch.nn.MSELoss(reduction='none')
-
     while play_proc.is_alive():
         step_idx += params.TRAIN_STEP_FREQ
         exp = None
@@ -205,7 +203,7 @@ def main():
                     buffer, actor_net, critic_net, target_actor_net, target_critic_net, actor_optimizer, critic_optimizer,
                     step_idx, actor_grad_l2, actor_grad_max, actor_grad_variance,
                     critic_grad_l2, critic_grad_max, critic_grad_variance,
-                    loss_actor, loss_critic, loss_total, l1_loss_func, per=True
+                    loss_actor, loss_critic, loss_total, per=True
                 )
 
             if params.DRAW_VIZ:
@@ -225,7 +223,7 @@ def main():
 def model_update(buffer, actor_net, critic_net, target_actor_net, target_critic_net, actor_optimizer, critic_optimizer,
                  step_idx, actor_grad_l2, actor_grad_max, actor_grad_variance,
                  critic_grad_l2, critic_grad_max, critic_grad_variance,
-                 loss_actor, loss_critic, loss_total, l1_loss_func, per):
+                 loss_actor, loss_critic, loss_total, per):
     if per:
         batch, batch_indices, batch_weights = buffer.sample(params.BATCH_SIZE)
     else:
@@ -244,17 +242,18 @@ def model_update(buffer, actor_net, critic_net, target_actor_net, target_critic_
     batch_q_last_v[batch_dones_mask] = 0.0
     batch_target_q_v = batch_rewards_v.unsqueeze(dim=-1) + batch_q_last_v * params.GAMMA ** params.N_STEP
 
+    #loss_func = torch.nn.MSELoss(reduction='none')
     if per:
-        #batch_l1_loss = torch.squeeze(l1_loss_func(batch_q_v, batch_target_q_v.detach()), dim=1)  # for PER
+        #batch_l1_loss = torch.squeeze(loss_func(batch_q_v, batch_target_q_v.detach()), dim=1)  # for PER
         batch_l1_loss = F.smooth_l1_loss(batch_q_v, batch_target_q_v.detach())  # for PER
         batch_weights_v = torch.tensor(batch_weights)
         loss_critic_v = batch_weights_v * batch_l1_loss
 
-        buffer.update_priorities(batch_indices, loss_critic_v.detach().cpu().numpy())
+        buffer.update_priorities(batch_indices, batch_l1_loss.detach().cpu().numpy())
         buffer.update_beta(step_idx)
     else:
-        loss_critic_v = torch.squeeze(l1_loss_func(batch_q_v, batch_target_q_v.detach()), dim=1)
-        #loss_critic_v = F.smooth_l1_loss(batch_q_v, batch_target_q_v.detach())
+        #loss_critic_v = torch.squeeze(loss_func(batch_q_v, batch_target_q_v.detach()), dim=1)
+        loss_critic_v = F.smooth_l1_loss(batch_q_v, batch_target_q_v.detach())
 
     loss_critic_v.mean().backward()
 
