@@ -78,9 +78,10 @@ class DDPGActionSelector:
         if self.ou_enabled:
             agent_states = agent_states + ou_rho * (ou_mu - agent_states) + ou_sigma * np.sqrt(ou_dt) * np.random.normal(size=actions.shape)
             # actions = actions + 1.0 * agent_states
-            actions = actions + self.epsilon * agent_states
+            noises = self.epsilon * agent_states
+            actions = actions + noises
 
-        new_agent_states = agent_states
+        new_agent_states = noises
 
         return actions, new_agent_states
 
