@@ -117,7 +117,7 @@ class MatlabRotaryInvertedPendulumEnv(gym.Env):
     def _ordinary_reward(self, adjusted_radian, action):
         # reward = -((math.pi - adjusted_radian) ** 2 + 0.1 * (self.w ** 2) + 0.001 * (action ** 2))
         if adjusted_radian < math.pi / 2:
-            reward = 0
+            reward = 0.0
         else:
             reward = adjusted_radian
         return reward
