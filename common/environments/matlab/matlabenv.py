@@ -42,7 +42,7 @@ class MatlabRotaryInvertedPendulumEnv(gym.Env):
         self.episode_steps = 0
         self.q, self.q1, self.w, self.w1, self.simulation_time = self.plant.getHistory()
         # self.state = (math.cos(self.q), math.sin(self.q), self.w, math.cos(self.q1), math.sin(self.q1), self.w1)
-        self.state = (math.cos(self.q), math.sin(self.q), self.w)
+        self.state = (math.cos(self.q), math.sin(self.q), self.w, 0.0)
         self.num_continuous_large_torque = 0
         self.num_continuous_small_torque = 0
         # self.obs_degree[0] = self.next_obs_degree[0] = self.convert_radian_to_degree(np.round(self.state, decimals=4)[0] * math.pi)
@@ -82,7 +82,7 @@ class MatlabRotaryInvertedPendulumEnv(gym.Env):
             adjusted_radian = q_
 
         # self.state = (math.cos(self.q), math.sin(self.q), self.w, math.cos(self.q1), math.sin(self.q1), self.w1)
-        self.state = (math.cos(self.q), math.sin(self.q), self.w)
+        self.state = (math.cos(self.q), math.sin(self.q), self.w, action[-1])
 
         info = [None]
 
