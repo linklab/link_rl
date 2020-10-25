@@ -24,8 +24,8 @@ class MatlabRotaryInvertedPendulumEnv(gym.Env):
         self.next_obs_degree = [None, None]
         self.simulation_time = 0.0
 
-        self.num_continuous_large_torque = 0
-        self.num_continuous_small_torque = 0
+        self.num_continuous_positive_torque = 0
+        self.num_continuous_negative_torque = 0
         # self.done_torque_threshold = 0.75
 
     def pause(self):
@@ -43,8 +43,8 @@ class MatlabRotaryInvertedPendulumEnv(gym.Env):
         self.q, self.q1, self.w, self.w1, self.simulation_time = self.plant.getHistory()
         # self.state = (math.cos(self.q), math.sin(self.q), self.w, math.cos(self.q1), math.sin(self.q1), self.w1)
         self.state = (math.cos(self.q), math.sin(self.q), self.w, 0.0)
-        self.num_continuous_large_torque = 0
-        self.num_continuous_small_torque = 0
+        self.num_continuous_positive_torque = 0
+        self.num_continuous_negative_torque = 0
         # self.obs_degree[0] = self.next_obs_degree[0] = self.convert_radian_to_degree(np.round(self.state, decimals=4)[0] * math.pi)
         # self.obs_degree[1] = self.next_obs_degree[1] = self.convert_radian_to_degree(np.round(self.state, decimals=4)[1])
 
@@ -60,14 +60,14 @@ class MatlabRotaryInvertedPendulumEnv(gym.Env):
         self.total_steps += 1
 
         if action > 0:
-            self.num_continuous_large_torque += 1
+            self.num_continuous_positive_torque += 1
         else:
-            self.num_continuous_large_torque = 0
+            self.num_continuous_positive_torque = 0
 
         if action < 0:
-            self.num_continuous_small_torque += 1
+            self.num_continuous_negative_torque += 1
         else:
-            self.num_continuous_small_torque = 0
+            self.num_continuous_negative_torque = 0
 
         # radian을 0과 2 * math.pi 사이 값(양수)으로 조정
         if abs(self.q) > 2 * math.pi:
@@ -88,24 +88,28 @@ class MatlabRotaryInvertedPendulumEnv(gym.Env):
 
         done_conditions = [
             self.episode_steps >= 1000,
-            self.num_continuous_large_torque >= 30,
-            self.num_continuous_small_torque >= 30
+            # self.num_continuous_positive_torque >= 30,
+            # self.num_continuous_negative_torque >= 30
         ]
 
         # if any(done_conditions):
         #     done = True
-        #     if self.num_continuous_large_torque >= 15 or self.num_continuous_small_torque >= 15:
+        #     if self.num_continuous_positive_torque >= 15 or self.num_continuous_negative_torque >= 15:
         #         reward = -100000.0
         #     else:
         #         reward = self._ordinary_reward(adjusted_radian, action)
 
         if any(done_conditions):
             done = True
-            reward = self._ordinary_reward(adjusted_radian, action)
+            reward = self._ordinary_reward(
+                adjusted_radian, action, self.num_continuous_positive_torque, self.num_continuous_negative_torque
+            )
             self.plant.connectStop()
         else:
             done = False
-            reward = self._ordinary_reward(adjusted_radian, action)
+            reward = self._ordinary_reward(
+                adjusted_radian, action, self.num_continuous_positive_torque, self.num_continuous_negative_torque
+            )
 
         if not isinstance(reward, float):
             reward = reward[-1]
@@ -116,12 +120,16 @@ class MatlabRotaryInvertedPendulumEnv(gym.Env):
 
         return np.array(self.state), reward, done, info
 
-    def _ordinary_reward(self, adjusted_radian, action):
+    def _ordinary_reward(self, adjusted_radian, action, num_continuous_positive_torque, num_continuous_negative_torque):
         # reward = -((math.pi - adjusted_radian) ** 2 + 0.1 * (self.w ** 2) + 0.001 * (action ** 2))
         if adjusted_radian < math.pi / 2:
             reward = 0.0
         else:
             reward = adjusted_radian
+
+        reward -= num_continuous_positive_torque * 0.01
+        reward -= num_continuous_negative_torque * 0.01
+        
         return reward
 
     def render(self, mode='human'):
