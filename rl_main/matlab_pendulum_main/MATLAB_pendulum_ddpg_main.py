@@ -39,10 +39,9 @@ if torch.cuda.is_available():
 else:
     device = torch.device("cpu")
 
-if params.CH:
-    SCALE_FACTOR = 0.01
-else:
-    SCALE_FACTOR = 0.025
+
+SCALE_FACTOR = 0.025
+
 
 def play_func(exp_queue, env, actor_net, critic_net):
     # print(env.action_space.low[0], env.action_space.high[0])
