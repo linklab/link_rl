@@ -21,18 +21,23 @@ if torch.cuda.is_available():
 else:
     device = torch.device("cpu")
 
+if params.CH:
+    SCALE_FACTOR = 0.01
+else:
+    SCALE_FACTOR = 0.025
 
 def play_main():
     env = MatlabRotaryInvertedPendulumEnv()
     env.start()
 
-    action_min = -2
-    action_max = 2
+    action_min = -SCALE_FACTOR
+    action_max = SCALE_FACTOR
 
     actor_net = policy_based_model.DDPGActor(
-        obs_size=3,
+        obs_size=4,
         hidden_size_1=512, hidden_size_2=256,
-        n_actions=1
+        n_actions=1,
+        scale=SCALE_FACTOR
     ).to(device)
     print(actor_net)
 
@@ -42,7 +47,7 @@ def play_main():
     action_selector = actions.DDPGActionSelector(epsilon=0.0, ou_enabled=False)
 
     agent = rl_agent.AgentDDPG(
-        actor_net, n_actions=1, action_selector=action_selector ,action_min=action_min, action_max=action_max, device=device, ou_enabled=False,
+        actor_net, n_actions=1, action_selector=action_selector, action_min=action_min, action_max=action_max, device=device, ou_enabled=False,
         preprocessor=float32_preprocessor
     )
 
@@ -54,7 +59,7 @@ def play_main():
         state = np.expand_dims(state, axis=0)
         action = agent(state)
         print(action)
-        next_state, reward, done, info = env.step(action)
+        next_state, reward, done, info = env.step(action[-1])
         state = next_state
         print(step)
         step += 1

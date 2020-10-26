@@ -357,7 +357,8 @@ class RewardTracker:
     def __exit__(self, *args):
         pass
 
-    def set_episode_reward(self, episode_reward, episode_done_step, epsilon, action_count=None):
+    def set_episode_reward(self, episode_reward, episode_done_step, epsilon, action_count=None, continuous_action_mean=None):
+        assert not (action_count and continuous_action_mean)
         self.done_episodes += 1
         self.episode_reward_list.append(episode_reward)
         mean_episode_reward = np.mean(self.episode_reward_list[-self.average_size_for_stats:])

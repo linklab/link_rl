@@ -39,7 +39,9 @@ if torch.cuda.is_available():
 else:
     device = torch.device("cpu")
 
+
 SCALE_FACTOR = 0.025
+
 
 def play_func(exp_queue, env, actor_net, critic_net):
     # print(env.action_space.low[0], env.action_space.high[0])
@@ -75,10 +77,10 @@ def play_func(exp_queue, env, actor_net, critic_net):
         stat = None
 
     step_idx = 0
-    next_save_frame_idx = params.MODEL_SAVE_STEP_PERIOD
+    #next_save_frame_idx = params.MODEL_SAVE_STEP_PERIOD
 
     best_episode_reward = 0
-    current_episode_reward = 0
+    #current_episode_reward = 0
 
     with utils.RewardTracker(
             params.STOP_MEAN_EPISODE_REWARD, params.AVG_EPISODE_SIZE_FOR_STAT,
