@@ -568,7 +568,7 @@ def calc_loss_per_double_dqn(buffer, batch, batch_indices, batch_weights, net, t
     states_v = torch.tensor(states)
     next_states_v = torch.tensor(next_states)
     actions_v = torch.tensor(actions)
-    rewards_v = torch.tensor(rewards, dtype=torch.float32)
+    rewards_v = torch.tensor(rewards)
     done_mask = torch.BoolTensor(dones)
     last_steps_v = torch.tensor(last_steps, dtype=torch.float32)
     batch_weights_v = torch.tensor(batch_weights)
