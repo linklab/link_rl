@@ -272,13 +272,10 @@ def model_update(buffer, actor_net, critic_net, target_actor_net, target_critic_
         batch_weights_v = torch.tensor(batch_weights)
         loss_critic_v = batch_weights_v * batch_l1_loss
 
-        buffer.update_priorities(batch_indices, batch_l1_loss.detach().cpu().numpy())
+        buffer.update_priorities(batch_indices, batch_l1_loss.detach().cpu().numpy() + 1e-5)
         buffer.update_beta(step_idx)
-
-        # loss_critic_v = batch_weights_v * F.mse_loss(batch_q_v, batch_target_q_v.detach())
     else:
         loss_critic_v = F.smooth_l1_loss(batch_q_v, batch_target_q_v.detach())
-        # loss_critic_v = F.mse_loss(batch_q_v, batch_target_q_v.detach())
 
     loss_critic_v.mean().backward()
 
