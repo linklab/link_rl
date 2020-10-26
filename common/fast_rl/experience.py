@@ -45,6 +45,8 @@ class ExperienceSourceSingleEnv:
         self.steps_delta = steps_delta
         self.episode_reward_lst = []
         self.episode_done_step_lst = []
+        self.episode_continuous_positive_actions = []
+        self.episode_continuous_negative_actions = []
 
     def __iter__(self):
         state = self.env.reset()
@@ -65,6 +67,11 @@ class ExperienceSourceSingleEnv:
             if isinstance(self.agent, AgentDDPG):
                 actions, noises, new_agent_states = self.agent(states_input, agent_states_input)
                 noise = noises[0]
+                for action_ in actions:
+                    if action_ >= 0.0:
+                        self.episode_continuous_positive_actions.append(action_)
+                    else:
+                        self.episode_continuous_negative_actions.append(action_)
             else:
                 actions, new_agent_states = self.agent(states_input, agent_states_input)
 
@@ -636,6 +643,7 @@ class PrioReplayBufferNaive:
             self.priorities[idx] = prio
 
 
+# sumtree 사용 버전
 class PrioritizedReplayBuffer(ExperienceReplayBuffer):
     def __init__(self, experience_source, buffer_size, alpha=0.6, n_step=1):
         super(PrioritizedReplayBuffer, self).__init__(experience_source, buffer_size)
@@ -710,14 +718,15 @@ class PrioritizedReplayBuffer(ExperienceReplayBuffer):
         # with torch.no_grad():
         assert len(idxes) == len(priorities)
         for idx, priority in zip(idxes, priorities):
-            assert priority > 0
-            assert 0 <= idx < len(self)
+            assert priority > 0.0, priority
+            assert 0 <= idx < len(self), idx
             self._it_sum[idx] = priority ** self._alpha
             self._it_min[idx] = priority ** self._alpha
 
             self._max_priority = max(self._max_priority, priority)
 
 
+# sumtree 사용 안하는 버전
 class PrioReplayBuffer:
     def __init__(self, exp_source, buf_size, prob_alpha=0.6, n_step=1):
         assert isinstance(exp_source, (ExperienceSource, type(None)))

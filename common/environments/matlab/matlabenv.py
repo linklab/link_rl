@@ -6,7 +6,7 @@ from gym import spaces
 import time
 import numpy as np
 from common.environments.matlab.matlabcode import SimulinkPlant
-
+from config.parameters import PARAMETERS as params
 np.set_printoptions(formatter={'float_kind': lambda x: '{0:0.6f}'.format(x)})
 
 a = 0
@@ -99,18 +99,40 @@ class MatlabRotaryInvertedPendulumEnv(gym.Env):
         #     else:
         #         reward = self._ordinary_reward(adjusted_radian, action)
 
+
+        # if any(done_conditions):
+        #     done = True
+        #     reward = self._ordinary_reward(
+        #         adjusted_radian, action, self.num_continuous_positive_torque, self.num_continuous_negative_torque
+        #     )
+        #     self.plant.connectStop()
+        # else:
+        #     done = False
+        #     reward = self._ordinary_reward(
+        #         adjusted_radian, action, self.num_continuous_positive_torque, self.num_continuous_negative_torque
+        #     )
         if any(done_conditions):
             done = True
-            reward = self._ordinary_reward(
-                adjusted_radian, action, self.num_continuous_positive_torque, self.num_continuous_negative_torque
-            )
+            if params.CH:
+                reward = self.CH_ordinary_reward(
+                    adjusted_radian, action, self.num_continuous_positive_torque, self.num_continuous_negative_torque
+                )
+            else:
+                reward = self._ordinary_reward(
+                    adjusted_radian, action, self.num_continuous_positive_torque, self.num_continuous_negative_torque
+                )
             self.plant.connectStop()
+
         else:
             done = False
-            reward = self._ordinary_reward(
-                adjusted_radian, action, self.num_continuous_positive_torque, self.num_continuous_negative_torque
-            )
-
+            if params.CH:
+                reward = self.CH_ordinary_reward(
+                    adjusted_radian, action, self.num_continuous_positive_torque, self.num_continuous_negative_torque
+                )
+            else:
+                reward = self._ordinary_reward(
+                    adjusted_radian, action, self.num_continuous_positive_torque, self.num_continuous_negative_torque
+                )
         if not isinstance(reward, float):
             reward = reward[-1]
 
@@ -126,6 +148,20 @@ class MatlabRotaryInvertedPendulumEnv(gym.Env):
             reward = 0.0
         else:
             reward = adjusted_radian
+
+        reward -= num_continuous_positive_torque * 0.01
+        reward -= num_continuous_negative_torque * 0.01
+
+        return reward
+
+
+    def CH_ordinary_reward(self, adjusted_radian, action, num_continuous_positive_torque,
+                         num_continuous_negative_torque):
+        # reward = -((math.pi - adjusted_radian) ** 2 + 0.1 * (self.w ** 2) + 0.001 * (action ** 2))
+        if adjusted_radian < math.pi / 2:
+            reward = 0.0 - abs(np.tanh(self.w1))*0.1
+        else:
+            reward = adjusted_radian - abs(np.tanh(self.w1))*0.1
 
         reward -= num_continuous_positive_torque * 0.01
         reward -= num_continuous_negative_torque * 0.01

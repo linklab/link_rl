@@ -39,6 +39,7 @@ if torch.cuda.is_available():
 else:
     device = torch.device("cpu")
 
+
 SCALE_FACTOR = 0.025
 
 
@@ -50,7 +51,7 @@ def play_func(exp_queue, env, actor_net, critic_net):
 
     # action_selector = actions.EpsilonGreedyDDPGActionSelector(epsilon=params.EPSILON_INIT)
 
-    action_selector = actions.DDPGActionSelector(epsilon=params.EPSILON_INIT, ou_enabled=True)
+    action_selector = actions.DDPGActionSelector(epsilon=params.EPSILON_INIT, ou_enabled=True, scale_factor=SCALE_FACTOR)
 
     epsilon_tracker = actions.EpsilonTracker(
         action_selector=action_selector,
@@ -76,15 +77,10 @@ def play_func(exp_queue, env, actor_net, critic_net):
         stat = None
 
     step_idx = 0
-    next_save_frame_idx = params.MODEL_SAVE_STEP_PERIOD
+    #next_save_frame_idx = params.MODEL_SAVE_STEP_PERIOD
 
     best_episode_reward = 0
-    current_episode_reward = 0
-
-    model_save_condition = [
-        current_episode_reward > best_episode_reward,
-        step_idx > params.MAX_GLOBAL_STEPS / 4
-    ]
+    #current_episode_reward = 0
 
     with utils.RewardTracker(
             params.STOP_MEAN_EPISODE_REWARD, params.AVG_EPISODE_SIZE_FOR_STAT,
@@ -104,6 +100,11 @@ def play_func(exp_queue, env, actor_net, critic_net):
                 solved, mean_episode_reward = reward_tracker.set_episode_reward(
                     current_episode_reward, step_idx, epsilon=action_selector.epsilon
                 )
+
+                model_save_condition = [
+                    current_episode_reward > best_episode_reward,
+                    step_idx > params.MAX_GLOBAL_STEPS / 4
+                ]
 
                 if all(model_save_condition):
                     rl_agent.save_actor_critic_model(

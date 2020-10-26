@@ -570,7 +570,7 @@ def calc_loss_per_double_dqn(buffer, batch, batch_indices, batch_weights, net, t
     actions_v = torch.tensor(actions)
     rewards_v = torch.tensor(rewards)
     done_mask = torch.BoolTensor(dones)
-    last_steps_v = torch.tensor(last_steps)
+    last_steps_v = torch.tensor(last_steps, dtype=torch.float32)
     batch_weights_v = torch.tensor(batch_weights)
     if cuda:
         states_v = states_v.cuda(non_blocking=cuda_async)
@@ -592,12 +592,11 @@ def calc_loss_per_double_dqn(buffer, batch, batch_indices, batch_weights, net, t
         next_state_values[done_mask] = 0.0
 
         expected_state_action_values = next_state_values.detach() * (params.GAMMA ** last_steps_v) + rewards_v
-    losses_v = batch_weights_v * F.smooth_l1_loss(state_action_values, expected_state_action_values)
-    return losses_v.mean(), (losses_v + 1e-5)
 
-    # loss_func = torch.nn.MSELoss(reduction='none')
-    # losses_each = loss_func(state_action_values, expected_state_action_values)
-    # return losses_v.mean(), losses_each
+    losses_each = F.smooth_l1_loss(state_action_values, expected_state_action_values, reduction='none')
+    weighted_losses_v = batch_weights_v * losses_each
+
+    return weighted_losses_v.mean(), losses_each + 1e-5
 
 
 def calc_loss_per_double_dqn_for_omega(buffer, batch, batch_indices, batch_weights, net, tgt_net, params, cuda=False,
@@ -629,8 +628,10 @@ def calc_loss_per_double_dqn_for_omega(buffer, batch, batch_indices, batch_weigh
     if cuda:
         expected_state_action_values = expected_state_action_values.cuda(non_blocking=cuda_async)
 
-    losses_v = batch_weights_v * F.smooth_l1_loss(state_action_values, expected_state_action_values)
-    return losses_v.mean(), (losses_v + 1e-5)
+    losses_each = F.smooth_l1_loss(state_action_values, expected_state_action_values, reduction='none')
+    weighted_losses_v = batch_weights_v * losses_each
+
+    return weighted_losses_v.mean(), losses_each + 1e-5
 
 
 def calc_omega_return(rewards, done_mask, next_state_values, params):
