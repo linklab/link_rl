@@ -718,7 +718,7 @@ class PrioritizedReplayBuffer(ExperienceReplayBuffer):
         # with torch.no_grad():
         assert len(idxes) == len(priorities)
         for idx, priority in zip(idxes, priorities):
-            assert priority >= 0.0, priority
+            assert priority > 0.0, priority
             assert 0 <= idx < len(self), idx
             self._it_sum[idx] = priority ** self._alpha
             self._it_min[idx] = priority ** self._alpha

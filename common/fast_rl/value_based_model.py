@@ -604,7 +604,7 @@ def calc_loss_per_double_dqn(buffer, batch, batch_indices, batch_weights, net, t
     #
     # print("4", weighted_losses_v)
 
-    return weighted_losses_v.mean(), losses_each
+    return weighted_losses_v.mean(), losses_each + 1e-5
 
 
 def calc_loss_per_double_dqn_for_omega(buffer, batch, batch_indices, batch_weights, net, tgt_net, params, cuda=False,
