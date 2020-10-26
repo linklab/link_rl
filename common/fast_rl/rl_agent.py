@@ -289,32 +289,27 @@ class AgentDDPG(BaseAgent):
             if torch.is_tensor(states):
                 states = states.to(self.device)
 
-        if self.step_idx < 1000:
-            actions = np.random.normal(size=(1, 1))
-            noises = np.zeros_like(actions)
-            new_agent_states = np.zeros_like(actions)
-        else:
-            mu_v = self.model(states)
-            mu = mu_v.data.cpu().numpy()
-            ####################################
+        mu_v = self.model(states)
+        mu = mu_v.data.cpu().numpy()
+        ####################################
 
-            # if agent_states is None:
-            #     new_agent_states = [None] * len(states)
-            # else:
-            #     new_agent_states = agent_states
-            #
-            # noises_v = torch.Tensor(self.ou_noise.noise()).unsqueeze(dim=-1).to(self.device)
-            # noises = noises_v.data.cpu().numpy()
-            #
-            # actions = mu + noises
-            # actions = np.clip(actions, self.action_min, self.action_max)
+        # if agent_states is None:
+        #     new_agent_states = [None] * len(states)
+        # else:
+        #     new_agent_states = agent_states
+        #
+        # noises_v = torch.Tensor(self.ou_noise.noise()).unsqueeze(dim=-1).to(self.device)
+        # noises = noises_v.data.cpu().numpy()
+        #
+        # actions = mu + noises
+        # actions = np.clip(actions, self.action_min, self.action_max)
 
-            ####################################
+        ####################################
 
-            actions, new_agent_states = self.action_selector(mu, agent_states)
-            noises = new_agent_states
+        actions, new_agent_states = self.action_selector(mu, agent_states)
+        noises = new_agent_states
 
-            #####################################
+        #####################################
 
         actions = np.clip(actions, self.action_min, self.action_max)
         self.step_idx += 1
