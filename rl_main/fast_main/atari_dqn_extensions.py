@@ -16,8 +16,8 @@ from common.fast_rl.common import utils
 from common.fast_rl.common import statistics, wrappers
 from rl_main.fast_main.atari_draw_graph import save_reward_as_pickle, save_q_loss_as_pickle
 
-from line_profiler import LineProfiler
-from memory_profiler import profile
+# from line_profiler import LineProfiler
+# from memory_profiler import profile
 import gc
 
 ##### NOTE #####
