@@ -38,6 +38,7 @@ if torch.cuda.is_available():
     device = torch.device("cuda" if params.CUDA else "cpu")
 else:
     device = torch.device("cpu")
+
 if params.CH:
     SCALE_FACTOR = 0.01
 else:
