@@ -593,16 +593,8 @@ def calc_loss_per_double_dqn(buffer, batch, batch_indices, batch_weights, net, t
 
         expected_state_action_values = next_state_values.detach() * (params.GAMMA ** last_steps_v) + rewards_v
 
-    # losses = F.smooth_l1_loss(state_action_values, expected_state_action_values)
-    # weighted_losses_v = batch_weights_v * losses
-    # return weighted_losses_v.mean(), (losses + 1e-5)
-
-    loss_func = torch.nn.MSELoss(reduction='none')
-    losses_each = loss_func(state_action_values, expected_state_action_values)
+    losses_each = F.smooth_l1_loss(state_action_values, expected_state_action_values, reduction='none')
     weighted_losses_v = batch_weights_v * losses_each
-    # print("3", losses_each)
-    #
-    # print("4", weighted_losses_v)
 
     return weighted_losses_v.mean(), losses_each + 1e-5
 
@@ -636,8 +628,10 @@ def calc_loss_per_double_dqn_for_omega(buffer, batch, batch_indices, batch_weigh
     if cuda:
         expected_state_action_values = expected_state_action_values.cuda(non_blocking=cuda_async)
 
-    losses_v = batch_weights_v * F.smooth_l1_loss(state_action_values, expected_state_action_values)
-    return losses_v.mean(), (losses_v + 1e-5)
+    losses_each = F.smooth_l1_loss(state_action_values, expected_state_action_values, reduction='none')
+    weighted_losses_v = batch_weights_v * losses_each
+
+    return weighted_losses_v.mean(), losses_each + 1e-5
 
 
 def calc_omega_return(rewards, done_mask, next_state_values, params):
