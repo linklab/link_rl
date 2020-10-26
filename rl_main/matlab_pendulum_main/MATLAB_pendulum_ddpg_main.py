@@ -81,11 +81,6 @@ def play_func(exp_queue, env, actor_net, critic_net):
     best_episode_reward = 0
     current_episode_reward = 0
 
-    model_save_condition = [
-        current_episode_reward > best_episode_reward,
-        step_idx > params.MAX_GLOBAL_STEPS / 4
-    ]
-
     with utils.RewardTracker(
             params.STOP_MEAN_EPISODE_REWARD, params.AVG_EPISODE_SIZE_FOR_STAT,
             frame=True, draw_viz=params.DRAW_VIZ, stat=stat) as reward_tracker:
@@ -104,6 +99,11 @@ def play_func(exp_queue, env, actor_net, critic_net):
                 solved, mean_episode_reward = reward_tracker.set_episode_reward(
                     current_episode_reward, step_idx, epsilon=action_selector.epsilon
                 )
+
+                model_save_condition = [
+                    current_episode_reward > best_episode_reward,
+                    step_idx > params.MAX_GLOBAL_STEPS / 4
+                ]
 
                 if all(model_save_condition):
                     rl_agent.save_actor_critic_model(
