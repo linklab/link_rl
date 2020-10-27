@@ -67,11 +67,11 @@ class ExperienceSourceSingleEnv:
             if isinstance(self.agent, AgentDDPG):
                 actions, noises, new_agent_states = self.agent(states_input, agent_states_input)
                 noise = noises[0]
-                if action in actions:
-                    if action >= 0.0:
-                        self.episode_continuous_positive_actions.append(action)
+                for action_ in actions:
+                    if action_ >= 0.0:
+                        self.episode_continuous_positive_actions.append(action_)
                     else:
-                        self.episode_continuous_negative_actions.append(action)
+                        self.episode_continuous_negative_actions.append(action_)
             else:
                 actions, new_agent_states = self.agent(states_input, agent_states_input)
 

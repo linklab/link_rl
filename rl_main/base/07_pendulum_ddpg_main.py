@@ -43,7 +43,7 @@ def play_func(exp_queue, env, net):
 
     #action_selector = actions.EpsilonGreedyDDPGActionSelector(epsilon=params.EPSILON_INIT)
 
-    action_selector = actions.DDPGActionSelector(epsilon=params.EPSILON_INIT, ou_enabled=True)
+    action_selector = actions.DDPGActionSelector(epsilon=params.EPSILON_INIT, ou_enabled=True, scale_factor=1.0)
 
     epsilon_tracker = actions.EpsilonTracker(
         action_selector=action_selector,
@@ -242,17 +242,14 @@ def model_update(buffer, actor_net, critic_net, target_actor_net, target_critic_
     batch_q_last_v[batch_dones_mask] = 0.0
     batch_target_q_v = batch_rewards_v.unsqueeze(dim=-1) + batch_q_last_v * params.GAMMA ** params.N_STEP
 
-    #loss_func = torch.nn.MSELoss(reduction='none')
     if per:
-        #batch_l1_loss = torch.squeeze(loss_func(batch_q_v, batch_target_q_v.detach()), dim=1)  # for PER
-        batch_l1_loss = F.smooth_l1_loss(batch_q_v, batch_target_q_v.detach())  # for PER
+        batch_l1_loss = F.smooth_l1_loss(batch_q_v, batch_target_q_v.detach(), reduction='none') # for PER
         batch_weights_v = torch.tensor(batch_weights)
         loss_critic_v = batch_weights_v * batch_l1_loss
 
-        buffer.update_priorities(batch_indices, batch_l1_loss.detach().cpu().numpy())
+        buffer.update_priorities(batch_indices, batch_l1_loss.detach().cpu().numpy() + 1e-5)
         buffer.update_beta(step_idx)
     else:
-        #loss_critic_v = torch.squeeze(loss_func(batch_q_v, batch_target_q_v.detach()), dim=1)
         loss_critic_v = F.smooth_l1_loss(batch_q_v, batch_target_q_v.detach())
 
     loss_critic_v.mean().backward()

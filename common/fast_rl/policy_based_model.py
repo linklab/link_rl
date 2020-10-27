@@ -107,7 +107,6 @@ class DDPGActor(nn.Module):
             nn.Linear(hidden_size_1, hidden_size_2),
             nn.ReLU(),
             nn.Linear(hidden_size_2, n_actions),
-            nn.Tanh()
         )
 
         self.net.apply(init_weights)
@@ -115,7 +114,9 @@ class DDPGActor(nn.Module):
         self.scale = scale
 
     def forward(self, x):
-        return self.net(x) * self.scale
+        n = self.net(x)
+        t = torch.tanh(n)
+        return t * self.scale
 
 
 class DDPGCritic(nn.Module):
