@@ -238,7 +238,7 @@ def main():
                     buffer, actor_net, critic_net, target_actor_net, target_critic_net, actor_optimizer, critic_optimizer,
                     step_idx, actor_grad_l2, actor_grad_max, actor_grad_variance,
                     critic_grad_l2, critic_grad_max, critic_grad_variance,
-                    loss_actor, loss_critic, loss_total, per=False
+                    loss_actor, loss_critic, loss_total, per=True
                 )
 
 
@@ -270,7 +270,7 @@ def model_update(buffer, actor_net, critic_net, target_actor_net, target_critic_
     if per:
         batch_l1_loss = F.smooth_l1_loss(batch_q_v, batch_target_q_v.detach(), reduction='none') # for PER
         batch_weights_v = torch.tensor(batch_weights)
-        loss_critic_v = batch_weights_v * batch_l1_loss
+        loss_critic_v = batch_weights_v.detach() * batch_l1_loss
 
         buffer.update_priorities(batch_indices, batch_l1_loss.detach().cpu().numpy() + 1e-5)
         buffer.update_beta(step_idx)
