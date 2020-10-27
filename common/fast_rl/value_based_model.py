@@ -594,7 +594,7 @@ def calc_loss_per_double_dqn(buffer, batch, batch_indices, batch_weights, net, t
         expected_state_action_values = next_state_values.detach() * (params.GAMMA ** last_steps_v) + rewards_v
 
     losses_each = F.smooth_l1_loss(state_action_values, expected_state_action_values, reduction='none')
-    weighted_losses_v = batch_weights_v * losses_each
+    weighted_losses_v = batch_weights_v.detach() * losses_each
 
     return weighted_losses_v.mean(), losses_each + 1e-5
 
@@ -629,7 +629,7 @@ def calc_loss_per_double_dqn_for_omega(buffer, batch, batch_indices, batch_weigh
         expected_state_action_values = expected_state_action_values.cuda(non_blocking=cuda_async)
 
     losses_each = F.smooth_l1_loss(state_action_values, expected_state_action_values, reduction='none')
-    weighted_losses_v = batch_weights_v * losses_each
+    weighted_losses_v = batch_weights_v.detach() * losses_each
 
     return weighted_losses_v.mean(), losses_each + 1e-5
 
