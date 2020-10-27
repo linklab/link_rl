@@ -238,7 +238,7 @@ def main():
                     buffer, actor_net, critic_net, target_actor_net, target_critic_net, actor_optimizer, critic_optimizer,
                     step_idx, actor_grad_l2, actor_grad_max, actor_grad_variance,
                     critic_grad_l2, critic_grad_max, critic_grad_variance,
-                    loss_actor, loss_critic, loss_total, per=True
+                    loss_actor, loss_critic, loss_total, per=False
                 )
 
 
