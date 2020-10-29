@@ -39,10 +39,9 @@ if torch.cuda.is_available():
 else:
     device = torch.device("cpu")
 
-if params.CH:
-    SCALE_FACTOR = 0.01
-else:
-    SCALE_FACTOR = 0.025
+
+SCALE_FACTOR = 0.025
+
 
 def play_func(exp_queue, env, actor_net, critic_net):
     # print(env.action_space.low[0], env.action_space.high[0])
@@ -52,7 +51,7 @@ def play_func(exp_queue, env, actor_net, critic_net):
 
     # action_selector = actions.EpsilonGreedyDDPGActionSelector(epsilon=params.EPSILON_INIT)
 
-    action_selector = actions.DDPGActionSelector(epsilon=params.EPSILON_INIT, ou_enabled=True)
+    action_selector = actions.DDPGActionSelector(epsilon=params.EPSILON_INIT, ou_enabled=True, scale_factor=SCALE_FACTOR)
 
     epsilon_tracker = actions.EpsilonTracker(
         action_selector=action_selector,
@@ -153,10 +152,10 @@ def main():
     actor_optimizer = optim.Adam(actor_net.parameters(), lr=params.ACTOR_LEARNING_RATE)
     critic_optimizer = optim.Adam(critic_net.parameters(), lr=params.LEARNING_RATE)
 
-    # buffer = experience.ExperienceReplayBuffer(experience_source=None, buffer_size=params.REPLAY_BUFFER_SIZE)
-    buffer = experience.PrioritizedReplayBuffer(
-        experience_source=None, buffer_size=params.REPLAY_BUFFER_SIZE, n_step=params.N_STEP
-    )
+    buffer = experience.ExperienceReplayBuffer(experience_source=None, buffer_size=params.REPLAY_BUFFER_SIZE)
+    # buffer = experience.PrioritizedReplayBuffer(
+    #     experience_source=None, buffer_size=params.REPLAY_BUFFER_SIZE, n_step=params.N_STEP
+    # )
 
     exp_queue = mp.Queue(maxsize=params.TRAIN_STEP_FREQ * 2)
     play_proc = mp.Process(target=play_func, args=(exp_queue, env, actor_net, critic_net))
@@ -239,7 +238,7 @@ def main():
                     buffer, actor_net, critic_net, target_actor_net, target_critic_net, actor_optimizer, critic_optimizer,
                     step_idx, actor_grad_l2, actor_grad_max, actor_grad_variance,
                     critic_grad_l2, critic_grad_max, critic_grad_variance,
-                    loss_actor, loss_critic, loss_total, per=True
+                    loss_actor, loss_critic, loss_total, per=False
                 )
 
 
@@ -269,17 +268,14 @@ def model_update(buffer, actor_net, critic_net, target_actor_net, target_critic_
     batch_target_q_v = batch_rewards_v.unsqueeze(dim=-1) + batch_q_last_v * params.GAMMA ** params.N_STEP
 
     if per:
-        batch_l1_loss = F.smooth_l1_loss(batch_q_v, batch_target_q_v.detach()) # for PER
+        batch_l1_loss = F.smooth_l1_loss(batch_q_v, batch_target_q_v.detach(), reduction='none') # for PER
         batch_weights_v = torch.tensor(batch_weights)
-        loss_critic_v = batch_weights_v * batch_l1_loss
+        loss_critic_v = batch_weights_v.detach() * batch_l1_loss
 
-        buffer.update_priorities(batch_indices, loss_critic_v.detach().cpu().numpy())
+        buffer.update_priorities(batch_indices, batch_l1_loss.detach().cpu().numpy() + 1e-5)
         buffer.update_beta(step_idx)
-
-        # loss_critic_v = batch_weights_v * F.mse_loss(batch_q_v, batch_target_q_v.detach())
     else:
         loss_critic_v = F.smooth_l1_loss(batch_q_v, batch_target_q_v.detach())
-        # loss_critic_v = F.mse_loss(batch_q_v, batch_target_q_v.detach())
 
     loss_critic_v.mean().backward()
 
