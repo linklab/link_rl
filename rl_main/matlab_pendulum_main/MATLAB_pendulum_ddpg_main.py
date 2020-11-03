@@ -10,7 +10,7 @@ import torch.multiprocessing as mp
 from torch import optim
 import os, sys
 import numpy as np
-
+import math
 idx = os.getcwd().index("link_rl")
 PROJECT_HOME = os.getcwd()[:idx] + "link_rl"
 sys.path.append(PROJECT_HOME)
@@ -43,11 +43,12 @@ else:
 SCALE_FACTOR = 0.025
 
 
-def play_func(exp_queue, env, actor_net, critic_net):
+def play_func(exp_queue, env, actor_net, critic_net, actor_bal_net, critic_bal_net):
     # print(env.action_space.low[0], env.action_space.high[0])
     env.start()
     action_min = -SCALE_FACTOR
     action_max = SCALE_FACTOR
+    count_bal = 0
 
     # action_selector = actions.EpsilonGreedyDDPGActionSelector(epsilon=params.EPSILON_INIT)
 
@@ -60,6 +61,11 @@ def play_func(exp_queue, env, actor_net, critic_net):
         eps_frames=params.EPSILON_MIN_STEP
     )
 
+    agent_bal = rl_agent.AgentDDPG(
+        actor_bal_net, n_actions=1, action_selector=action_selector,
+        action_min=action_min, action_max=action_max, device=device, preprocessor=float32_preprocessor
+    )
+
     agent = rl_agent.AgentDDPG(
         actor_net, n_actions=1, action_selector=action_selector,
         action_min=action_min, action_max=action_max, device=device, preprocessor=float32_preprocessor
@@ -69,7 +75,13 @@ def play_func(exp_queue, env, actor_net, critic_net):
         env, agent, gamma=params.GAMMA, steps_count=params.N_STEP
     )
 
+    experience_source_bal = experience.ExperienceSourceSingleEnvFirstLast(
+        env, agent_bal, gamma=params.GAMMA, steps_count=params.N_STEP
+    )
+
     exp_source_iter = iter(experience_source)
+
+    exp_source_iter_bal = iter(experience_source_bal)
 
     if params.DRAW_VIZ:
         stat = statistics.StatisticsForPolicyBasedRL(method="policy_gradient")
@@ -90,34 +102,68 @@ def play_func(exp_queue, env, actor_net, critic_net):
             step_idx += 1
             exp = next(exp_source_iter)
             exp_queue.put(exp)
+            if math.cos(3.0892)<exp[0][0]<math.cos(3.19395): #cos(177) < exp[0][0] < cos(183)
+                count_bal += 1
+            else:
+                count_bal = 0
 
-            epsilon_tracker.udpate(step_idx)
+            if count_bal < 10:
+                epsilon_tracker.udpate(step_idx)
 
-            episode_rewards = experience_source.pop_episode_reward_lst()
-            if episode_rewards:
-                current_episode_reward = episode_rewards[0]
+                episode_rewards = experience_source.pop_episode_reward_lst()
+                if episode_rewards:
+                    current_episode_reward = episode_rewards[0]
 
-                solved, mean_episode_reward = reward_tracker.set_episode_reward(
-                    current_episode_reward, step_idx, epsilon=action_selector.epsilon
-                )
-
-                model_save_condition = [
-                    current_episode_reward > best_episode_reward,
-                    step_idx > params.MAX_GLOBAL_STEPS / 4
-                ]
-
-                if all(model_save_condition):
-                    rl_agent.save_actor_critic_model(
-                        MODEL_SAVE_DIR, params.ENVIRONMENT_ID,
-                        actor_net.__name__, actor_net, critic_net.__name__, critic_net,
-                        step_idx, current_episode_reward
+                    solved, mean_episode_reward = reward_tracker.set_episode_reward(
+                        current_episode_reward, step_idx, epsilon=action_selector.epsilon
                     )
 
-                if current_episode_reward > best_episode_reward:
-                    best_episode_reward = current_episode_reward
+                    model_save_condition = [
+                        current_episode_reward > best_episode_reward,
+                        step_idx > params.MAX_GLOBAL_STEPS / 4
+                    ]
 
-                if solved:
-                    break
+                    if all(model_save_condition):
+                        rl_agent.save_actor_critic_model(
+                            MODEL_SAVE_DIR, params.ENVIRONMENT_ID,
+                            actor_net.__name__, actor_net, critic_net.__name__, critic_net,
+                            step_idx, current_episode_reward
+                        )
+
+                    if current_episode_reward > best_episode_reward:
+                        best_episode_reward = current_episode_reward
+
+                    if solved:
+                        break
+
+            else:
+                epsilon_tracker.udpate(step_idx)
+
+                episode_rewards = experience_source_bal.pop_episode_reward_lst()
+                if episode_rewards:
+                    current_episode_reward = episode_rewards[0]
+
+                    solved, mean_episode_reward = reward_tracker.set_episode_reward(
+                        current_episode_reward, step_idx, epsilon=action_selector.epsilon
+                    )
+
+                    model_save_condition = [
+                        current_episode_reward > best_episode_reward,
+                        step_idx > params.MAX_GLOBAL_STEPS / 4
+                    ]
+
+                    if all(model_save_condition):
+                        rl_agent.save_actor_critic_model(
+                            MODEL_SAVE_DIR, params.ENVIRONMENT_ID,
+                            actor_bal_net.__name__, actor_bal_net, critic_bal_net.__name__, critic_bal_net,
+                            step_idx, current_episode_reward
+                        )
+
+                    if current_episode_reward > best_episode_reward:
+                        best_episode_reward = current_episode_reward
+
+                    if solved:
+                        break
 
     exp_queue.put(None)
 
@@ -149,8 +195,29 @@ def main():
     target_actor_net = rl_agent.TargetNet(actor_net)
     target_critic_net = rl_agent.TargetNet(critic_net)
 
+###########################################################################################
+    actor_bal_net = policy_based_model.DDPGActor(
+        obs_size=4,
+        hidden_size_1=512, hidden_size_2=256,
+        n_actions=1,
+        scale=SCALE_FACTOR
+    ).to(device)
+    critic_bal_net = policy_based_model.DDPGCritic(
+        obs_size=4,
+        hidden_size_1=512, hidden_size_2=256,
+        n_actions=1
+    ).to(device)
+
+    target_actor_bal_net = rl_agent.TargetNet(actor_bal_net)
+    target_critic_bal_net = rl_agent.TargetNet(critic_bal_net)
+
+    actor_bal_optimizer = optim.Adam(actor_bal_net.parameters(), lr=params.ACTOR_LEARNING_RATE)
+    critic_bal_optimizer = optim.Adam(critic_bal_net.parameters(), lr=params.LEARNING_RATE)
+##########################################################################################
+
     actor_optimizer = optim.Adam(actor_net.parameters(), lr=params.ACTOR_LEARNING_RATE)
     critic_optimizer = optim.Adam(critic_net.parameters(), lr=params.LEARNING_RATE)
+
 
     buffer = experience.ExperienceReplayBuffer(experience_source=None, buffer_size=params.REPLAY_BUFFER_SIZE)
     # buffer = experience.PrioritizedReplayBuffer(
@@ -158,7 +225,7 @@ def main():
     # )
 
     exp_queue = mp.Queue(maxsize=params.TRAIN_STEP_FREQ * 2)
-    play_proc = mp.Process(target=play_func, args=(exp_queue, env, actor_net, critic_net))
+    play_proc = mp.Process(target=play_func, args=(exp_queue, env, actor_net, critic_net, actor_bal_net, critic_bal_net))
     play_proc.start()
 
     time.sleep(0.5)
@@ -183,6 +250,22 @@ def main():
     loss_critic = 0.0
     loss_total = 0.0
 
+########################################################################################
+    actor_bal_grad_l2 = 0.0
+    actor_bal_grad_max = 0.0
+    actor_bal_grad_variance = 0.0
+
+    critic_bal_grad_l2 = 0.0
+    critic_bal_grad_max = 0.0
+    critic_bal_grad_variance = 0.0
+
+    loss_bal_actor = 0.0
+    loss_bal_critic = 0.0
+    loss_bal_total = 0.0
+
+    count_bal = 0
+########################################################################################
+
     #$ pip install line_profiler
     # from line_profiler import LineProfiler
     # lp = LineProfiler()
@@ -196,6 +279,12 @@ def main():
             if exp is None:
                 play_proc.join()
                 break
+
+            if math.cos(3.0892)<exp[0][0]<math.cos(3.19395):
+                count_bal += 1
+            else:
+                count_bal = 0
+
             buffer._add(exp)
 
         if step_idx % params.DRAW_VIZ_PERIOD_STEPS == 0:
@@ -223,23 +312,43 @@ def main():
         # if exp is not None and exp.last_state is None:
         #     for _ in range(10):
         if exp is not None:
-            for _ in range(1):
-                # actor_grad_l2, actor_grad_max, actor_grad_variance, critic_grad_l2, critic_grad_max, critic_grad_variance, loss_actor, loss_critic, loss_total = lp_wrapper(
-                # buffer, actor_net, critic_net, target_actor_net, target_critic_net, actor_optimizer, critic_optimizer,
-                #     stat_for_ddpg, step_idx, exp,
-                #     actor_grad_l2, actor_grad_max, actor_grad_variance,
-                #     critic_grad_l2, critic_grad_max, critic_grad_variance,
-                #     loss_actor, loss_critic, loss_total, len(buffer.buffer)
-                # )
-                #
-                # lp.print_stats()
+            if count_bal < 10:
+                for _ in range(1):
+                    # actor_grad_l2, actor_grad_max, actor_grad_variance, critic_grad_l2, critic_grad_max, critic_grad_variance, loss_actor, loss_critic, loss_total = lp_wrapper(
+                    # buffer, actor_net, critic_net, target_actor_net, target_critic_net, actor_optimizer, critic_optimizer,
+                    #     stat_for_ddpg, step_idx, exp,
+                    #     actor_grad_l2, actor_grad_max, actor_grad_variance,
+                    #     critic_grad_l2, critic_grad_max, critic_grad_variance,
+                    #     loss_actor, loss_critic, loss_total, len(buffer.buffer)
+                    # )
+                    #
+                    # lp.print_stats()
 
-                actor_grad_l2, actor_grad_max, actor_grad_variance, critic_grad_l2, critic_grad_max, critic_grad_variance, loss_actor, loss_critic, loss_total = model_update(
-                    buffer, actor_net, critic_net, target_actor_net, target_critic_net, actor_optimizer, critic_optimizer,
-                    step_idx, actor_grad_l2, actor_grad_max, actor_grad_variance,
-                    critic_grad_l2, critic_grad_max, critic_grad_variance,
-                    loss_actor, loss_critic, loss_total, per=False
-                )
+                    actor_grad_l2, actor_grad_max, actor_grad_variance, critic_grad_l2, critic_grad_max, critic_grad_variance, loss_actor, loss_critic, loss_total = model_update(
+                        buffer, actor_net, critic_net, target_actor_net, target_critic_net, actor_optimizer, critic_optimizer,
+                        step_idx, actor_grad_l2, actor_grad_max, actor_grad_variance,
+                        critic_grad_l2, critic_grad_max, critic_grad_variance,
+                        loss_actor, loss_critic, loss_total, per=False
+                    )
+            else:
+                for _ in range(1):
+                    # actor_grad_l2, actor_grad_max, actor_grad_variance, critic_grad_l2, critic_grad_max, critic_grad_variance, loss_actor, loss_critic, loss_total = lp_wrapper(
+                    # buffer, actor_net, critic_net, target_actor_net, target_critic_net, actor_optimizer, critic_optimizer,
+                    #     stat_for_ddpg, step_idx, exp,
+                    #     actor_grad_l2, actor_grad_max, actor_grad_variance,
+                    #     critic_grad_l2, critic_grad_max, critic_grad_variance,
+                    #     loss_actor, loss_critic, loss_total, len(buffer.buffer)
+                    # )
+                    #
+                    # lp.print_stats()
+
+                    actor_bal_grad_l2, actor_bal_grad_max, actor_bal_grad_variance, critic_bal_grad_l2, critic_bal_grad_max, critic_bal_grad_variance, loss_bal_actor, loss_bal_critic, loss_bal_total = model_update(
+                        buffer, actor_bal_net, critic_bal_net, target_actor_bal_net, target_critic_bal_net, actor_bal_optimizer,
+                        critic_bal_optimizer,
+                        step_idx, actor_bal_grad_l2, actor_bal_grad_max, actor_bal_grad_variance,
+                        critic_bal_grad_l2, critic_bal_grad_max, critic_bal_grad_variance,
+                        loss_bal_actor, loss_bal_critic, loss_bal_total, per=False
+                    )
 
 
 def model_update(buffer, actor_net, critic_net, target_actor_net, target_critic_net, actor_optimizer, critic_optimizer,
