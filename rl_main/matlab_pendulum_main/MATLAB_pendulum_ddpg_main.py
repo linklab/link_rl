@@ -40,14 +40,17 @@ else:
     device = torch.device("cpu")
 
 
-SCALE_FACTOR = 0.025
+SWING_UP_SCALE_FACTOR = 0.025
+BALANCING_SCALE_FACTOR = 0.001
 
 
 def play_func(exp_queue, env, actor_net, critic_net, actor_bal_net, critic_bal_net):
     # print(env.action_space.low[0], env.action_space.high[0])
     env.start()
-    action_min = -SCALE_FACTOR
-    action_max = SCALE_FACTOR
+    swing_up_action_min = -SWING_UP_SCALE_FACTOR
+    swing_up_action_max = SWING_UP_SCALE_FACTOR
+    balancing_action_min = -BALANCING_SCALE_FACTOR
+    balancing_action_max = BALANCING_SCALE_FACTOR
     count_bal = 0
 
     # action_selector = actions.EpsilonGreedyDDPGActionSelector(epsilon=params.EPSILON_INIT)
@@ -63,12 +66,12 @@ def play_func(exp_queue, env, actor_net, critic_net, actor_bal_net, critic_bal_n
 
     agent_bal = rl_agent.AgentDDPG(
         actor_bal_net, n_actions=1, action_selector=action_selector,
-        action_min=action_min, action_max=action_max, device=device, preprocessor=float32_preprocessor
+        action_min=balancing_action_min, action_max=balancing_action_max, device=device, preprocessor=float32_preprocessor
     )
 
     agent = rl_agent.AgentDDPG(
         actor_net, n_actions=1, action_selector=action_selector,
-        action_min=action_min, action_max=action_max, device=device, preprocessor=float32_preprocessor
+        action_min=swing_up_action_min, action_max=swing_up_action_max, device=device, preprocessor=float32_preprocessor
     )
 
     experience_source = experience.ExperienceSourceSingleEnvFirstLast(
