@@ -103,14 +103,20 @@ def play_func(exp_queue, env, actor_net, critic_net, actor_bal_net, critic_bal_n
         while step_idx < params.MAX_GLOBAL_STEPS:
             # 1 스텝 진행하고 exp를 exp_queue에 넣음
             step_idx += 1
-            exp = next(exp_source_iter)
-            exp_queue.put(exp)
+            if step_idx == 1:
+                exp = next(exp_source_iter)
+            else:
+                pass
+
             if math.cos(3.0892)<exp[0][0]<math.cos(3.19395): #cos(177) < exp[0][0] < cos(183)
                 count_bal += 1
             else:
                 count_bal = 0
 
             if count_bal < 10:
+                exp = next(exp_source_iter)
+                exp_queue.put(exp)
+
                 epsilon_tracker.udpate(step_idx)
 
                 episode_rewards = experience_source.pop_episode_reward_lst()
@@ -140,6 +146,8 @@ def play_func(exp_queue, env, actor_net, critic_net, actor_bal_net, critic_bal_n
                         break
 
             else:
+                exp = next(exp_source_iter_bal)
+                exp_queue.put(exp)
                 epsilon_tracker.udpate(step_idx)
 
                 episode_rewards = experience_source_bal.pop_episode_reward_lst()
