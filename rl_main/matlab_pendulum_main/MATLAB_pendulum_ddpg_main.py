@@ -147,7 +147,7 @@ def play_func(exp_queue, exp_queue_balance, env, actor_net, critic_net, actor_ba
                 current_episode_reward = episode_rewards[0]
 
                 solved, mean_episode_reward = reward_tracker.set_episode_reward(
-                    current_episode_reward, step_idx, epsilon=action_selector_bal.epsilon
+                    current_episode_reward, step_idx, epsilon=(action_selector.epsilon, action_selector_bal.epsilon)
                 )
 
                 model_save_condition = [
