@@ -40,7 +40,7 @@ else:
     device = torch.device("cpu")
 
 
-SWING_UP_SCALE_FACTOR = 0.025
+SWING_UP_SCALE_FACTOR = 0.035
 BALANCING_SCALE_FACTOR = 0.001
 
 
