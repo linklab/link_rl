@@ -55,18 +55,13 @@ def play_func(exp_queue, env, actor_net, critic_net, actor_bal_net, critic_bal_n
 
     # action_selector = actions.EpsilonGreedyDDPGActionSelector(epsilon=params.EPSILON_INIT)
 
-    action_selector = actions.DDPGActionSelector(epsilon=params.EPSILON_INIT, ou_enabled=True, scale_factor=SCALE_FACTOR)
+    action_selector = actions.DDPGActionSelector(epsilon=params.EPSILON_INIT, ou_enabled=True, scale_factor=SWING_UP_SCALE_FACTOR)
 
     epsilon_tracker = actions.EpsilonTracker(
         action_selector=action_selector,
         eps_start=params.EPSILON_INIT,
         eps_final=params.EPSILON_MIN,
         eps_frames=params.EPSILON_MIN_STEP
-    )
-
-    agent_bal = rl_agent.AgentDDPG(
-        actor_bal_net, n_actions=1, action_selector=action_selector,
-        action_min=balancing_action_min, action_max=balancing_action_max, device=device, preprocessor=float32_preprocessor
     )
 
     agent = rl_agent.AgentDDPG(
@@ -78,13 +73,32 @@ def play_func(exp_queue, env, actor_net, critic_net, actor_bal_net, critic_bal_n
         env, agent, gamma=params.GAMMA, steps_count=params.N_STEP
     )
 
+    exp_source_iter = iter(experience_source)
+
+
+##########################################################################################################################
+    action_selector_bal = actions.DDPGActionSelector(epsilon=params.EPSILON_INIT, ou_enabled=True,
+                                                     scale_factor=BALANCING_SCALE_FACTOR)
+
+    epsilon_tracker_bal = actions.EpsilonTracker(
+        action_selector=action_selector_bal,
+        eps_start=params.EPSILON_INIT,
+        eps_final=params.EPSILON_MIN,
+        eps_frames=params.EPSILON_MIN_STEP
+    )
+
+    agent_bal = rl_agent.AgentDDPG(
+        actor_bal_net, n_actions=1, action_selector=action_selector_bal,
+        action_min=balancing_action_min, action_max=balancing_action_max, device=device,
+        preprocessor=float32_preprocessor
+    )
+
     experience_source_bal = experience.ExperienceSourceSingleEnvFirstLast(
         env, agent_bal, gamma=params.GAMMA, steps_count=params.N_STEP
     )
 
-    exp_source_iter = iter(experience_source)
-
     exp_source_iter_bal = iter(experience_source_bal)
+#########################################################################################################################
 
     if params.DRAW_VIZ:
         stat = statistics.StatisticsForPolicyBasedRL(method="policy_gradient")
@@ -148,14 +162,14 @@ def play_func(exp_queue, env, actor_net, critic_net, actor_bal_net, critic_bal_n
             else:
                 exp = next(exp_source_iter_bal)
                 exp_queue.put(exp)
-                epsilon_tracker.udpate(step_idx)
+                epsilon_tracker_bal.udpate(step_idx)
 
                 episode_rewards = experience_source_bal.pop_episode_reward_lst()
                 if episode_rewards:
                     current_episode_reward = episode_rewards[0]
 
                     solved, mean_episode_reward = reward_tracker.set_episode_reward(
-                        current_episode_reward, step_idx, epsilon=action_selector.epsilon
+                        current_episode_reward, step_idx, epsilon=action_selector_bal.epsilon
                     )
 
                     model_save_condition = [
@@ -191,7 +205,7 @@ def main():
         obs_size=4,
         hidden_size_1=512, hidden_size_2=256,
         n_actions=1,
-        scale=SCALE_FACTOR
+        scale=SWING_UP_SCALE_FACTOR
     ).to(device)
 
     critic_net = policy_based_model.DDPGCritic(
@@ -211,7 +225,7 @@ def main():
         obs_size=4,
         hidden_size_1=512, hidden_size_2=256,
         n_actions=1,
-        scale=SCALE_FACTOR
+        scale=SWING_UP_SCALE_FACTOR
     ).to(device)
     critic_bal_net = policy_based_model.DDPGCritic(
         obs_size=4,
