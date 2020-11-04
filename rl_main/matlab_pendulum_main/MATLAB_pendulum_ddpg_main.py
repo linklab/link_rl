@@ -128,6 +128,8 @@ def play_func(exp_queue, exp_queue_balance, env, actor_net, critic_net, actor_ba
             else:
                 count_bal = 0
 
+            #print(math.cos(3.0892), math.cos(3.19395), exp[0][0], count_bal)
+
             if count_bal < 10:  # Balance 제어로 넘어가는 조건: 177 ~ 183 각도 사이에 연속적으로 10번 이상
                 exp = next(exp_source_iter)
                 exp_queue.put(exp)
@@ -136,6 +138,7 @@ def play_func(exp_queue, exp_queue_balance, env, actor_net, critic_net, actor_ba
                 epsilon_tracker.udpate(step_idx)
                 episode_rewards = experience_source.pop_episode_reward_lst()
             else:
+                print(count_bal, "balance experience !!!", exp[0][0])
                 exp = next(exp_source_iter_balance)
                 exp_queue.put(0)
                 exp_queue_balance.put(exp)
