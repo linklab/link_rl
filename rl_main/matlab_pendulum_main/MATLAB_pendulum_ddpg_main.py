@@ -40,7 +40,7 @@ else:
     device = torch.device("cpu")
 
 
-SWING_UP_SCALE_FACTOR = 0.025
+SWING_UP_SCALE_FACTOR = 0.035
 BALANCING_SCALE_FACTOR = 0.001
 
 
@@ -129,14 +129,15 @@ def play_func(exp_queue, exp_queue_balance, env, actor_net, critic_net, actor_ba
                 count_bal = 0
 
 
+
             if count_bal < 10:  # Balance 제어로 넘어가는 조건: 180 ~ 190 각도 사이에 연속적으로 10번 이상
                 exp = next(exp_source_iter)
                 exp_queue.put(exp)
                 exp_queue_balance.put(0)
-
                 epsilon_tracker.udpate(step_idx)
                 episode_rewards = experience_source.pop_episode_reward_lst()
             else:
+                print(count_bal, "balance experience !!!", exp[0][0])
                 exp = next(exp_source_iter_balance)
                 exp_queue.put(0)
                 exp_queue_balance.put(exp)
@@ -148,7 +149,7 @@ def play_func(exp_queue, exp_queue_balance, env, actor_net, critic_net, actor_ba
                 current_episode_reward = episode_rewards[0]
 
                 solved, mean_episode_reward = reward_tracker.set_episode_reward(
-                    current_episode_reward, step_idx, epsilon=action_selector_bal.epsilon
+                    current_episode_reward, step_idx, epsilon=(action_selector.epsilon, action_selector_bal.epsilon)
                 )
 
                 model_save_condition = [
