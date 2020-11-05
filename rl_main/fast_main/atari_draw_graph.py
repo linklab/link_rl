@@ -77,16 +77,18 @@ def draw_graph(episode_rewards_across_steps, q_loss_across_steps):
         ax1.tick_params(labelsize=24)
 
     ax0.set_xlabel('steps x ' + r'$10^3$', fontsize=24)
-    ax0.set_ylabel('Return', fontsize=24)     # Moving Average of Cumulative Rewards
+    ax0.set_ylabel('Episode Rewards', fontsize=24)     # Moving Average of Cumulative Rewards
     ax0.legend(loc="best", fontsize=24)
     ax0.grid()
 
     ax1.set_xlabel('steps x ' + r'$10^3$', fontsize=24)
     ax1.set_ylabel(r'TD'+'-Error', fontsize=24)
+    ax1.set_yscale('log')
     ax1.legend(loc="best", fontsize=24)
     ax1.grid()
 
-    plt.suptitle('Environment: {0} \n Multi-Step DQN'.format(params.ENVIRONMENT_ID.value), fontsize=24)
+    # plt.suptitle('Environment: {0} \n Multi-Step DQN'.format(params.ENVIRONMENT_ID.value), fontsize=24)
+    plt.tight_layout()
     plt.gcf()
     plt.savefig("./Multi_Step_DQN_graph.png")
     plt.close()
@@ -168,11 +170,11 @@ def main():
 
     for i, n_step in enumerate(EXPERIMENTS_N_STEPS):
         for j in range(MAX_RUNS):
-            with open('data/{0}_{1}-step_reward_{2}.pickle'.format(params.ENVIRONMENT_ID.value, n_step, j + 1), 'rb') as f:
+            with open('data/Pong/{0}_{1}-step_reward_{2}.pickle'.format(params.ENVIRONMENT_ID.value, n_step, j + 1), 'rb') as f:
                 data = pickle.load(f)
                 reward_data[i][j] = data['episode_rewards_across_steps']
 
-            with open('data/{0}_{1}-step_q_loss_{2}.pickle'.format(params.ENVIRONMENT_ID.value, n_step, j + 1), 'rb') as f:
+            with open('data/Pong/{0}_{1}-step_q_loss_{2}.pickle'.format(params.ENVIRONMENT_ID.value, n_step, j + 1), 'rb') as f:
                 data = pickle.load(f)
                 loss_data[i][j] = data['q_loss_across_steps']
 
