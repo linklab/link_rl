@@ -170,6 +170,7 @@ def main():
                 buffer.buffer, batch, batch_indices, batch_weights, net, tgt_net, params, cuda=params.CUDA, cuda_async=True
             )
         loss_v.backward()
+
         optimizer.step()
         buffer.update_priorities(batch_indices, sample_prios.detach().cpu().numpy())       # .detach().data.cpu().numpy()
         buffer.update_beta(frame_idx)

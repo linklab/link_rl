@@ -26,6 +26,7 @@ if params.CH:
 else:
     SCALE_FACTOR = 0.025
 
+
 def play_main():
     env = MatlabRotaryInvertedPendulumEnv()
     print("env:", params.ENVIRONMENT_ID)
