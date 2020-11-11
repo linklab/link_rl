@@ -42,6 +42,7 @@ else:
 
 SWING_UP_SCALE_FACTOR = 0.035
 BALANCING_SCALE_FACTOR = 0.001
+CLIP = 1
 
 
 def play_func(exp_queue, exp_queue_balance, env, actor_net, critic_net, actor_balance_net, critic_balance_net):
@@ -385,6 +386,10 @@ def model_update(buffer, actor_net, critic_net, target_actor_net, target_critic_
     critic_grads = np.concatenate([p.grad.data.cpu().numpy().flatten()
                                    for p in critic_net.parameters()
                                    if p.grad is not None])
+
+    # clip the gradients to prevent the model from exploding gradient
+    torch.nn.utils.clip_grad_norm_(critic_net.parameters(), CLIP)
+
     critic_optimizer.step()
 
     # train actor
@@ -397,6 +402,10 @@ def model_update(buffer, actor_net, critic_net, target_actor_net, target_critic_
     actor_grads = np.concatenate([p.grad.data.cpu().numpy().flatten()
                                   for p in actor_net.parameters()
                                   if p.grad is not None])
+
+    # clip the gradients to prevent the model from exploding gradient
+    torch.nn.utils.clip_grad_norm_(actor_net.parameters(), CLIP)
+
     actor_optimizer.step()
 
     target_actor_net.alpha_sync(alpha=1 - 0.001)
