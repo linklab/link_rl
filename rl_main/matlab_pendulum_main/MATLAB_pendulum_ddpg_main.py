@@ -39,8 +39,10 @@ if torch.cuda.is_available():
 else:
     device = torch.device("cpu")
 
-
-SWING_UP_SCALE_FACTOR = 0.035
+if params.TEAMVIEWER:
+    SWING_UP_SCALE_FACTOR = 0.05
+else:
+    SWING_UP_SCALE_FACTOR = 0.035
 BALANCING_SCALE_FACTOR = 0.001
 
 
@@ -123,10 +125,17 @@ def play_func(exp_queue, exp_queue_balance, env, actor_net, critic_net, actor_ba
             if step_idx == 1:
                 exp = next(exp_source_iter)
 
-            if math.cos(math.pi) < exp[0][0] < math.cos(3.316125): #cos(180) < exp[0][0] < cos(190) (-1<exp[0][0]<-0.98480)
-                count_bal += 1
+            if params.TEAMVIEWER:
+                if math.cos(math.pi) < exp[0][0] < math.cos(3.089232776): #cos(180) < exp[0][0] < cos(183) (-1<exp[0][0]<-0.9985468154)
+                    count_bal += 1
+                else:
+                    count_bal = 0
             else:
-                count_bal = 0
+                if math.cos(math.pi) < exp[0][0] < math.cos(3.316125):  # cos(180) < exp[0][0] < cos(190) (-1<exp[0][0]<-0.9985468154)
+                    count_bal += 1
+                else:
+                    count_bal = 0
+
 
 
 
@@ -332,7 +341,6 @@ def main():
 
         ## buffer_balance를 통하여 경험 정보 가져와 모델 업데이트
         if exp_balance and len(buffer_balance) >= params.MIN_REPLAY_SIZE_FOR_TRAIN:
-            print("Update Balance!!!")
             actor_balance_grad_l2, actor_balance_grad_max, actor_balance_grad_variance, critic_balance_grad_l2, \
             critic_balance_grad_max, critic_balance_grad_variance, loss_balance_actor, loss_balance_critic, \
             loss_balance_total = model_update(
