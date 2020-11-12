@@ -367,10 +367,7 @@ def main():
 
         ## buffer_balance를 통하여 경험 정보 가져와 모델 업데이트
         if exp_balance and len(buffer_balance) >= params.MIN_REPLAY_SIZE_FOR_TRAIN:
-<<<<<<< HEAD
-=======
             #print("Update Balance!!!")
->>>>>>> ef5605c1ffe0d3fe199efd70bf5176a7cebb5ce3
             actor_balance_grad_l2, actor_balance_grad_max, actor_balance_grad_variance, critic_balance_grad_l2, \
             critic_balance_grad_max, critic_balance_grad_variance, loss_balance_actor, loss_balance_critic, \
             loss_balance_total = model_update(
