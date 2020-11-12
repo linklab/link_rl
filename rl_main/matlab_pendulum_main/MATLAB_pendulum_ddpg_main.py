@@ -41,7 +41,8 @@ else:
 
 
 SWING_UP_SCALE_FACTOR = 0.035
-BALANCING_SCALE_FACTOR = 0.001
+BALANCING_SCALE_FACTOR = 0.002
+CLIP = 1
 
 
 def play_func(exp_queue, exp_queue_balance, env, actor_net, critic_net, actor_balance_net, critic_balance_net):
@@ -128,8 +129,6 @@ def play_func(exp_queue, exp_queue_balance, env, actor_net, critic_net, actor_ba
             else:
                 count_bal = 0
 
-
-
             if count_bal < 10:  # Balance 제어로 넘어가는 조건: 180 ~ 190 각도 사이에 연속적으로 10번 이상
                 exp = next(exp_source_iter)
                 exp_queue.put(exp)
@@ -162,7 +161,7 @@ def play_func(exp_queue, exp_queue_balance, env, actor_net, critic_net, actor_ba
                     if solved:
                         break
             else:
-                print(count_bal, "balance experience !!!", exp[0][0])
+                #print(count_bal, "balance experience !!!", exp[0][0])
                 exp = next(exp_source_iter_balance)
                 exp_queue.put(0)
                 exp_queue_balance.put(exp)
@@ -356,6 +355,7 @@ def main():
 
         ## buffer_balance를 통하여 경험 정보 가져와 모델 업데이트
         if exp_balance and len(buffer_balance) >= params.MIN_REPLAY_SIZE_FOR_TRAIN:
+            #print("Update Balance!!!")
             actor_balance_grad_l2, actor_balance_grad_max, actor_balance_grad_variance, critic_balance_grad_l2, \
             critic_balance_grad_max, critic_balance_grad_variance, loss_balance_actor, loss_balance_critic, \
             loss_balance_total = model_update(
@@ -407,6 +407,10 @@ def model_update(buffer, actor_net, critic_net, target_actor_net, target_critic_
     critic_grads = np.concatenate([p.grad.data.cpu().numpy().flatten()
                                    for p in critic_net.parameters()
                                    if p.grad is not None])
+
+    # clip the gradients to prevent the model from exploding gradient
+    torch.nn.utils.clip_grad_norm_(critic_net.parameters(), CLIP)
+
     critic_optimizer.step()
 
     # train actor
@@ -419,6 +423,10 @@ def model_update(buffer, actor_net, critic_net, target_actor_net, target_critic_
     actor_grads = np.concatenate([p.grad.data.cpu().numpy().flatten()
                                   for p in actor_net.parameters()
                                   if p.grad is not None])
+
+    # clip the gradients to prevent the model from exploding gradient
+    torch.nn.utils.clip_grad_norm_(actor_net.parameters(), CLIP)
+
     actor_optimizer.step()
 
     target_actor_net.alpha_sync(alpha=1 - 0.001)

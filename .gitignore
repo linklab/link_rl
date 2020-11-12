@@ -115,7 +115,7 @@ environments/unity/unity_envs/
 *.autosave
 
 /model_save_files/
-/temp/
+/rl_main/temp/*.pickle
 /src/
 /save_results
 
