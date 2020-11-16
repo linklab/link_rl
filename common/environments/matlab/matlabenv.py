@@ -159,14 +159,13 @@ class MatlabRotaryInvertedPendulumEnv(gym.Env):
 
         return reward
 
-
     def CH_ordinary_reward(self, adjusted_radian, action, num_continuous_positive_torque,
                          num_continuous_negative_torque):
         # reward = -((math.pi - adjusted_radian) ** 2 + 0.1 * (self.w ** 2) + 0.001 * (action ** 2))
         if adjusted_radian < math.pi / 2:
-            reward = 0.0 - abs(np.tanh(self.w1))*0.1
+            reward = 0.0 - abs(np.tanh(self.w1)) * 0.1
         else:
-            reward = adjusted_radian - abs(np.tanh(self.w1))*0.1
+            reward = adjusted_radian - abs(np.tanh(self.w1)) * 0.1
 
         reward -= num_continuous_positive_torque * 0.01
         reward -= num_continuous_negative_torque * 0.01

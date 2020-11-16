@@ -95,6 +95,12 @@ class ContinuousA2CMLP(nn.Module):
         return self.mu(net_out), self.var(net_out), self.value(net_out)
 
 
+class DDPGLstmAttentionActor(nn.Module):
+    pass
+
+class DDPGLstmAttentionCritic(nn.Module):
+    pass
+
 class DDPGActor(nn.Module):
     def __init__(self, obs_size, hidden_size_1, hidden_size_2, n_actions, scale):
         super(DDPGActor, self).__init__()
