@@ -4,6 +4,7 @@ from config.parameters_general import PARAMETERS_GENERAL
 
 class PARAMETERS_FAST_RL_PENDULUM_MATLAB_DDPG(PARAMETERS_GENERAL):
     CH = False
+    TEAMVIEWER = False
 
     ENVIRONMENT_ID = "MatlabRotaryInvertedPendulumEnv"
     RL_ALGORITHM = RLAlgorithmName.DDPG_FAST_V0

@@ -40,8 +40,17 @@ else:
     device = torch.device("cpu")
 
 
-SWING_UP_SCALE_FACTOR = 0.035
-BALANCING_SCALE_FACTOR = 0.001
+if params.TEAMVIEWER:
+    SWING_UP_SCALE_FACTOR = 0.05
+    BALANCING_SCALE_FACTOR = 0.001
+elif params.CH:
+    SWING_UP_SCALE_FACTOR = 0.05
+    BALANCING_SCALE_FACTOR = 0.0005
+else:
+    SWING_UP_SCALE_FACTOR = 0.035
+    BALANCING_SCALE_FACTOR = 0.002
+CLIP = 1
+
 
 
 def play_func(exp_queue, exp_queue_balance, env, actor_net, critic_net, actor_balance_net, critic_balance_net):
@@ -123,52 +132,81 @@ def play_func(exp_queue, exp_queue_balance, env, actor_net, critic_net, actor_ba
             if step_idx == 1:
                 exp = next(exp_source_iter)
 
-            if math.cos(math.pi) < exp[0][0] < math.cos(3.316125): #cos(180) < exp[0][0] < cos(190) (-1<exp[0][0]<-0.98480)
-                count_bal += 1
+            if params.TEAMVIEWER:
+                if math.cos(math.pi) < exp[0][0] < math.cos(3.089232776): #cos(180) < exp[0][0] < cos(183) (-1<exp[0][0]<-0.9985468154)
+                    count_bal += 1
+                else:
+                    count_bal = 0
             else:
-                count_bal = 0
-
+                if math.cos(math.pi) < exp[0][0] < math.cos(3.316125):  # cos(180) < exp[0][0] < cos(190) (-1<exp[0][0]<-0.9985468154)
+                    count_bal += 1
+                else:
+                    count_bal = 0
 
 
             if count_bal < 10:  # Balance 제어로 넘어가는 조건: 180 ~ 190 각도 사이에 연속적으로 10번 이상
                 exp = next(exp_source_iter)
                 exp_queue.put(exp)
                 exp_queue_balance.put(0)
+
                 epsilon_tracker.udpate(step_idx)
                 episode_rewards = experience_source.pop_episode_reward_lst()
+                if episode_rewards:  # 에피소드가 종료될 때만 True
+                    current_episode_reward = episode_rewards[0]
+
+                    solved, mean_episode_reward = reward_tracker.set_episode_reward(
+                        current_episode_reward, step_idx, epsilon=(action_selector.epsilon, action_selector_bal.epsilon)
+                    )
+
+                    model_save_condition = [
+                        current_episode_reward > best_episode_reward,
+                        step_idx > params.MAX_GLOBAL_STEPS / 4
+                    ]
+
+                    if all(model_save_condition):
+                        rl_agent.save_actor_critic_model(
+                            MODEL_SAVE_DIR, params.ENVIRONMENT_ID,
+                            actor_net.__name__, actor_net, critic_net.__name__, critic_net,
+                            step_idx, current_episode_reward
+                        )
+
+                    if current_episode_reward > best_episode_reward:
+                        best_episode_reward = current_episode_reward
+
+                    if solved:
+                        break
             else:
-                print(count_bal, "balance experience !!!", exp[0][0])
+                #print(count_bal, "balance experience !!!", exp[0][0])
                 exp = next(exp_source_iter_balance)
                 exp_queue.put(0)
                 exp_queue_balance.put(exp)
 
                 epsilon_tracker_balance.udpate(step_idx)
                 episode_rewards = experience_source_balance.pop_episode_reward_lst()
+                if episode_rewards:  # 에피소드가 종료될 때만 True
+                    current_episode_reward = episode_rewards[0]
 
-            if episode_rewards:  # 에피소드가 종료될 때만 True
-                current_episode_reward = episode_rewards[0]
-
-                solved, mean_episode_reward = reward_tracker.set_episode_reward(
-                    current_episode_reward, step_idx, epsilon=(action_selector.epsilon, action_selector_bal.epsilon)
-                )
-
-                model_save_condition = [
-                    current_episode_reward > best_episode_reward,
-                    step_idx > params.MAX_GLOBAL_STEPS / 4
-                ]
-
-                if all(model_save_condition):
-                    rl_agent.save_actor_critic_model(
-                        MODEL_SAVE_DIR, params.ENVIRONMENT_ID,
-                        actor_balance_net.__name__, actor_balance_net, critic_balance_net.__name__, critic_balance_net,
-                        step_idx, current_episode_reward
+                    solved, mean_episode_reward = reward_tracker.set_episode_reward(
+                        current_episode_reward, step_idx, epsilon=(action_selector.epsilon, action_selector_bal.epsilon)
                     )
 
-                if current_episode_reward > best_episode_reward:
-                    best_episode_reward = current_episode_reward
+                    model_save_condition = [
+                        current_episode_reward > best_episode_reward,
+                        step_idx > params.MAX_GLOBAL_STEPS / 4
+                    ]
 
-                if solved:
-                    break
+                    if all(model_save_condition):
+                        rl_agent.save_actor_critic_model(
+                            MODEL_SAVE_DIR, params.ENVIRONMENT_ID,
+                            actor_balance_net.__name__, actor_balance_net, critic_balance_net.__name__, critic_balance_net,
+                            step_idx, current_episode_reward
+                        )
+
+                    if current_episode_reward > best_episode_reward:
+                        best_episode_reward = current_episode_reward
+
+                    if solved:
+                        break
 
     exp_queue.put(None)
     exp_queue_balance.put(None)
@@ -332,7 +370,7 @@ def main():
 
         ## buffer_balance를 통하여 경험 정보 가져와 모델 업데이트
         if exp_balance and len(buffer_balance) >= params.MIN_REPLAY_SIZE_FOR_TRAIN:
-            print("Update Balance!!!")
+            #print("Update Balance!!!")
             actor_balance_grad_l2, actor_balance_grad_max, actor_balance_grad_variance, critic_balance_grad_l2, \
             critic_balance_grad_max, critic_balance_grad_variance, loss_balance_actor, loss_balance_critic, \
             loss_balance_total = model_update(
@@ -384,6 +422,10 @@ def model_update(buffer, actor_net, critic_net, target_actor_net, target_critic_
     critic_grads = np.concatenate([p.grad.data.cpu().numpy().flatten()
                                    for p in critic_net.parameters()
                                    if p.grad is not None])
+
+    # clip the gradients to prevent the model from exploding gradient
+    torch.nn.utils.clip_grad_norm_(critic_net.parameters(), CLIP)
+
     critic_optimizer.step()
 
     # train actor
@@ -396,6 +438,10 @@ def model_update(buffer, actor_net, critic_net, target_actor_net, target_critic_
     actor_grads = np.concatenate([p.grad.data.cpu().numpy().flatten()
                                   for p in actor_net.parameters()
                                   if p.grad is not None])
+
+    # clip the gradients to prevent the model from exploding gradient
+    torch.nn.utils.clip_grad_norm_(actor_net.parameters(), CLIP)
+
     actor_optimizer.step()
 
     target_actor_net.alpha_sync(alpha=1 - 0.001)

@@ -7,6 +7,7 @@ import time
 import numpy as np
 from common.environments.matlab.matlabcode import SimulinkPlant
 from config.parameters import PARAMETERS as params
+from collections import deque
 np.set_printoptions(formatter={'float_kind': lambda x: '{0:0.6f}'.format(x)})
 
 a = 0
@@ -23,7 +24,7 @@ class MatlabRotaryInvertedPendulumEnv(gym.Env):
         self.obs_degree = [None, None]
         self.next_obs_degree = [None, None]
         self.simulation_time = 0.0
-
+        self.state_deque = deque(maxlen=30)
         self.num_continuous_positive_torque = 0
         self.num_continuous_negative_torque = 0
         # self.done_torque_threshold = 0.75
@@ -59,15 +60,18 @@ class MatlabRotaryInvertedPendulumEnv(gym.Env):
         self.episode_steps += 1
         self.total_steps += 1
 
-        if action > 0:
-            self.num_continuous_positive_torque += 1
+        if params.CH:
+            pass
         else:
-            self.num_continuous_positive_torque = 0
+            if action > 0:
+                self.num_continuous_positive_torque += 1
+            else:
+                self.num_continuous_positive_torque = 0
 
-        if action < 0:
-            self.num_continuous_negative_torque += 1
-        else:
-            self.num_continuous_negative_torque = 0
+            if action < 0:
+                self.num_continuous_negative_torque += 1
+            else:
+                self.num_continuous_negative_torque = 0
 
         # radian을 0과 2 * math.pi 사이 값(양수)으로 조정
         if abs(self.q) > 2 * math.pi:
@@ -83,11 +87,12 @@ class MatlabRotaryInvertedPendulumEnv(gym.Env):
 
         # self.state = (math.cos(self.q), math.sin(self.q), self.w, math.cos(self.q1), math.sin(self.q1), self.w1)
         self.state = (math.cos(self.q), math.sin(self.q), self.w, action[-1])
+        self.state_deque.append(self.state)
 
         info = [None]
 
         done_conditions = [
-            self.episode_steps >= 1000,
+            self.episode_steps >= 2000 if params.TEAMVIEWER else self.episode_steps >=1000
             # self.num_continuous_positive_torque >= 30,
             # self.num_continuous_negative_torque >= 30
         ]
@@ -140,7 +145,7 @@ class MatlabRotaryInvertedPendulumEnv(gym.Env):
         #     action, self.q, self.w, adjusted_radian, reward, self.simulation_time
         # ))
 
-        return np.array(self.state), reward, done, info
+        return np.array(self.state_deque[-1]), reward, done, info
 
     def _ordinary_reward(self, adjusted_radian, action, num_continuous_positive_torque, num_continuous_negative_torque):
         # reward = -((math.pi - adjusted_radian) ** 2 + 0.1 * (self.w ** 2) + 0.001 * (action ** 2))
@@ -154,14 +159,13 @@ class MatlabRotaryInvertedPendulumEnv(gym.Env):
 
         return reward
 
-
     def CH_ordinary_reward(self, adjusted_radian, action, num_continuous_positive_torque,
                          num_continuous_negative_torque):
         # reward = -((math.pi - adjusted_radian) ** 2 + 0.1 * (self.w ** 2) + 0.001 * (action ** 2))
         if adjusted_radian < math.pi / 2:
-            reward = 0.0 - abs(np.tanh(self.w1))*0.1
+            reward = 0.0 - abs(np.tanh(self.w1)) * 0.1
         else:
-            reward = adjusted_radian - abs(np.tanh(self.w1))*0.1
+            reward = adjusted_radian - abs(np.tanh(self.w1)) * 0.1
 
         reward -= num_continuous_positive_torque * 0.01
         reward -= num_continuous_negative_torque * 0.01
