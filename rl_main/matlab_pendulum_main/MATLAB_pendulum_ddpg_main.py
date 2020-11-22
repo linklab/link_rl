@@ -257,13 +257,15 @@ def main():
             obs_size=4,
             hidden_size=128,
             n_actions=1,
+            bidirectional=False,
             scale=SWING_UP_SCALE_FACTOR
         ).to(device)
 
         critic_net = policy_based_model.DDPGLstmAttentionCritic(
             obs_size=4,
             hidden_size_1=128, hidden_size_2=64,
-            n_actions=1
+            n_actions=1,
+            bidirectional=False
         ).to(device)
     else:
         raise ValueError()
@@ -298,13 +300,15 @@ def main():
             obs_size=4,
             hidden_size=128,
             n_actions=1,
+            bidirectional=False,
             scale=BALANCING_SCALE_FACTOR
         ).to(device)
 
         critic_balance_net = policy_based_model.DDPGLstmAttentionCritic(
             obs_size=4,
             hidden_size_1=128, hidden_size_2=64,
-            n_actions=1
+            n_actions=1,
+            bidirectional=False
         ).to(device)
     else:
         raise ValueError()

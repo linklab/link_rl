@@ -181,7 +181,7 @@ class SelfAttentionRNNRegressor(nn.Module):
 
 
 class DDPGLstmAttentionActor(nn.Module):
-    def __init__(self, obs_size, hidden_size, n_actions, scale):
+    def __init__(self, obs_size, hidden_size, n_actions, bidirectional, scale):
         super(DDPGLstmAttentionActor, self).__init__()
 
         self.__name__ = "DDPGLstmAttentionActor"
@@ -191,12 +191,12 @@ class DDPGLstmAttentionActor(nn.Module):
             hidden_dim=hidden_size,
             nlayers=2,
             dropout=0.0,
-            bidirectional=False
+            bidirectional=bidirectional
         )
 
         embedding = NullEmbedding()
 
-        attention_dim = hidden_size * 2
+        attention_dim = hidden_size * 2 if bidirectional else hidden_size
         attention = Attention(attention_dim, attention_dim, attention_dim)
 
         self.net = SelfAttentionRNNRegressor(embedding, encoder, attention, attention_dim, n_actions=n_actions)
@@ -212,7 +212,7 @@ class DDPGLstmAttentionActor(nn.Module):
 
 
 class DDPGLstmAttentionCritic(nn.Module):
-    def __init__(self, obs_size, hidden_size_1, hidden_size_2, n_actions):
+    def __init__(self, obs_size, hidden_size_1, hidden_size_2, n_actions, bidirectional):
         super(DDPGLstmAttentionCritic, self).__init__()
 
         self.__name__ = "DDPGLstmAttentionCritic"
@@ -222,12 +222,12 @@ class DDPGLstmAttentionCritic(nn.Module):
             hidden_dim=hidden_size_1,
             nlayers=2,
             dropout=0.0,
-            bidirectional=False
+            bidirectional=bidirectional
         )
 
         embedding = NullEmbedding()
 
-        attention_dim = hidden_size_1 * 2
+        attention_dim = hidden_size_1 * 2 if bidirectional else hidden_size_1
         attention = Attention(attention_dim, attention_dim, attention_dim)
 
         self.obs_net = SelfAttentionRNNRegressor(embedding, encoder, attention, attention_dim, n_actions=1)
