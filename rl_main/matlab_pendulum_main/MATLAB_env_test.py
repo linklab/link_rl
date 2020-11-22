@@ -15,7 +15,7 @@ from config.parameters import PARAMETERS as params
 def main():
     env = MatlabRotaryInvertedPendulumEnv()
     print("env:", params.ENVIRONMENT_ID)
-    print("observation_space:", 3)
+    print("observation_space:", 4)
     print("action_space:", 1)
 
     env.start()
@@ -23,10 +23,10 @@ def main():
     env.reset()
     done = False
 
-    action = 1.0
+    action = -1.0
     while not done:
         next_state, reward, done, _ = env.step(action=action)
-        action = -action
+        #action = -action
 
 
 if __name__ == "__main__":

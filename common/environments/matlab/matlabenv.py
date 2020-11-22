@@ -37,7 +37,9 @@ class MatlabRotaryInvertedPendulumEnv(gym.Env):
         self.state_deque = deque(maxlen=30)
         self.num_continuous_positive_torque = 0
         self.num_continuous_negative_torque = 0
+
         self.step_size = step_size # FOR LSTM
+        self.too_much_rotate = False
         # self.done_torque_threshold = 0.75
 
     def pause(self):
@@ -71,12 +73,17 @@ class MatlabRotaryInvertedPendulumEnv(gym.Env):
         else:
             raise ValueError()
 
+        self.too_much_rotate = False
+
         # print(state.shape)
         # print(state)
 
         return state
 
     def step(self, action):
+        if type(action) is np.ndarray:
+            action = action[0]
+
         self.plant.simulate(action)
         self.q, self.q1, self.w, self.w1, self.simulation_time = self.plant.getHistory()
         self.episode_steps += 1
@@ -108,13 +115,20 @@ class MatlabRotaryInvertedPendulumEnv(gym.Env):
             adjusted_radian = q_
 
         # self.state = (math.cos(self.q), math.sin(self.q), self.w, math.cos(self.q1), math.sin(self.q1), self.w1)
-        self.state = (math.cos(self.q), math.sin(self.q), self.w, action[-1])
+        self.state = (math.cos(self.q), math.sin(self.q), self.w, action)
         self.state_deque.append(self.state)
+
+        #print(self.q1, math.cos(self.q1), math.sin(self.q1))
+
+        # 3.15 rad => 180 도
+        if self.q1 > 3.15 or self.q1 < -3.15:
+            self.too_much_rotate = True
 
         info = [None]
 
         done_conditions = [
-            self.episode_steps >= 2000 if params.TEAMVIEWER else self.episode_steps >=1000
+            self.episode_steps >= 2000 if params.TEAMVIEWER else self.episode_steps >= 1000,
+            self.too_much_rotate
             # self.num_continuous_positive_torque >= 30,
             # self.num_continuous_negative_torque >= 30
         ]
@@ -148,6 +162,9 @@ class MatlabRotaryInvertedPendulumEnv(gym.Env):
                 reward = self._ordinary_reward(
                     adjusted_radian, action, self.num_continuous_positive_torque, self.num_continuous_negative_torque
                 )
+            if self.too_much_rotate:
+                reward = -100.0
+
             self.plant.connectStop()
 
         else:
@@ -160,6 +177,7 @@ class MatlabRotaryInvertedPendulumEnv(gym.Env):
                 reward = self._ordinary_reward(
                     adjusted_radian, action, self.num_continuous_positive_torque, self.num_continuous_negative_torque
                 )
+
         if not isinstance(reward, float):
             reward = reward[-1]
 
