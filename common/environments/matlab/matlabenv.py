@@ -1,3 +1,4 @@
+import itertools
 import math
 from abc import ABC
 import matlab.engine
@@ -11,8 +12,17 @@ from collections import deque
 np.set_printoptions(formatter={'float_kind': lambda x: '{0:0.6f}'.format(x)})
 
 a = 0
+
+
+def slice_deque(d, start, stop, step):
+    d.rotate(-start)
+    slice = list(itertools.islice(d, 0, stop-start, step))
+    d.rotate(start)
+    return slice
+
+
 class MatlabRotaryInvertedPendulumEnv(gym.Env):
-    def __init__(self):
+    def __init__(self, step_size=-1):
         self.episode_steps = 0
         self.total_steps = 0
         self.q = 0
@@ -27,6 +37,7 @@ class MatlabRotaryInvertedPendulumEnv(gym.Env):
         self.state_deque = deque(maxlen=30)
         self.num_continuous_positive_torque = 0
         self.num_continuous_negative_torque = 0
+        self.step_size = step_size # FOR LSTM
         # self.done_torque_threshold = 0.75
 
     def pause(self):
@@ -52,7 +63,18 @@ class MatlabRotaryInvertedPendulumEnv(gym.Env):
         # print("q: {0:7.4}, w: {1:7.4f}, time: {2} -- RESET".format(
         #     self.q, self.w, self.simulation_time
         # ))
-        return np.array(self.state)
+
+        if self.step_size == -1:
+            state = np.array(self.state)
+        elif self.step_size >= 1:
+            state = np.tile(self.state, (self.step_size, 1)) # state: (step_size, 4)
+        else:
+            raise ValueError()
+
+        # print(state.shape)
+        # print(state)
+
+        return state
 
     def step(self, action):
         self.plant.simulate(action)
@@ -145,7 +167,28 @@ class MatlabRotaryInvertedPendulumEnv(gym.Env):
         #     action, self.q, self.w, adjusted_radian, reward, self.simulation_time
         # ))
 
-        return np.array(self.state_deque[-1]), reward, done, info
+        if self.step_size == -1:
+            next_state = np.array(self.state_deque[-1])
+        elif self.step_size >= 1:
+            if len(self.state_deque) < self.step_size:
+                next_state = list(self.state_deque)
+
+                obs_size = 4  # TODO: 사전에 obs_size 결정하여 넣는 작업 필요
+                for _ in range(self.step_size - len(self.state_deque)):
+                    next_state.insert(0, [0.0] * obs_size)
+                next_state = np.array(next_state)
+            else:
+                next_state = np.array(
+                    [
+                        self.state_deque[-self.step_size + offset] for offset in range(self.step_size)
+                    ]
+                )
+            # print(next_state.shape)
+            # print(next_state)
+        else:
+            raise ValueError()
+
+        return next_state, reward, done, info
 
     def _ordinary_reward(self, adjusted_radian, action, num_continuous_positive_torque, num_continuous_negative_torque):
         # reward = -((math.pi - adjusted_radian) ** 2 + 0.1 * (self.w ** 2) + 0.001 * (action ** 2))

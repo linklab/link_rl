@@ -1,4 +1,5 @@
 import glob
+import math
 import os
 
 import torch
@@ -95,11 +96,160 @@ class ContinuousA2CMLP(nn.Module):
         return self.mu(net_out), self.var(net_out), self.value(net_out)
 
 
+#####################################
+## DDPGLstmAttention: Begin        ##
+#####################################
+class Encoder(nn.Module):
+    def __init__(self, embedding_dim, hidden_dim, nlayers=1, dropout=0., bidirectional=True):
+        super(Encoder, self).__init__()
+        self.bidirectional = bidirectional
+
+        self.rnn = nn.LSTM(
+          embedding_dim, hidden_dim, nlayers, batch_first=True,
+          dropout=dropout, bidirectional=bidirectional
+        )
+
+    def forward(self, input, hidden=None):
+        return self.rnn(input, hidden)
+
+
+class NullEmbedding(nn.Module):
+    def __init__(self):
+        super(NullEmbedding, self).__init__()
+
+    def forward(self, input):
+        return input
+
+
+class Attention(nn.Module):
+    def __init__(self, query_dim, key_dim, value_dim):
+        super(Attention, self).__init__()
+        self.scale = 1. / math.sqrt(query_dim) # Scaled Dot Product
+
+    def forward(self, query, keys, values):
+        # Query = [BxH]       B: Batch Size, Q: Hidden Size
+        # Keys = [BxSxH]      B: Batch Size, S: Seq. Size, H: Hidden Size
+        # Values = [BxSxH]    B: Batch Size, S: Seq. Size, H: Hidden Size
+        # Outputs = score:[BxS], attention_value:[BxH]
+
+        # Here we assume q_dim == k_dim (dot product attention)
+
+        query = query.unsqueeze(1)                    # [BxH] -> [Bx1xH]
+        # keys = keys.transpose(0, 1).transpose(1, 2)   # [BxSxH] -> [BxHxS]
+        keys = keys.transpose(1, 2)                   # [BxSxH] -> [BxHxS]
+        score = torch.bmm(query, keys)                # [Bx1xH]x[BxHxS] -> [Bx1xS]
+        score = F.softmax(score.mul_(self.scale), dim=2)    # scale & normalize
+
+        # values = values.transpose(1, 2)             # [BxSxH] -> [BxHxS]
+        attention_value = torch.bmm(score, values).squeeze(1)    # [Bx1xS]x[BxSxH] -> [BxH]
+
+        return score.unsqueeze(1), attention_value
+
+
+class SelfAttentionRNNRegressor(nn.Module):
+    def __init__(self, embedding, encoder, attention, hidden_dim, n_actions):
+        super(SelfAttentionRNNRegressor, self).__init__()
+        self.embedding = embedding
+        self.encoder = encoder
+        self.attention = attention
+        self.decoder = nn.Linear(hidden_dim, n_actions)
+
+        size = 0
+        for p in self.parameters():
+            size += p.nelement()
+        print('Total param size: {}'.format(size))
+
+    def forward(self, input):
+        outputs, hidden = self.encoder(self.embedding(input))
+        # output: [32, 18, 128]
+
+        if isinstance(hidden, tuple):    # LSTM
+            hidden = hidden[1]    # take the cell state
+            # hidden: [2, 32, 128]
+
+        if self.encoder.bidirectional:    # need to concat the last 2 hidden layers
+            hidden = torch.cat([hidden[-1], hidden[-2]], dim=1)
+        else:
+            hidden = hidden[-1]
+            # hidden: [32, 128]
+
+        score, attention_value = self.attention(hidden, outputs, outputs)
+
+        pred_value = self.decoder(attention_value)  # [B, 1]
+
+        return pred_value, score
+
+
 class DDPGLstmAttentionActor(nn.Module):
-    pass
+    def __init__(self, obs_size, hidden_size, n_actions, scale):
+        super(DDPGLstmAttentionActor, self).__init__()
+
+        self.__name__ = "DDPGLstmAttentionActor"
+
+        encoder = Encoder(
+            embedding_dim=obs_size,
+            hidden_dim=hidden_size,
+            nlayers=2,
+            dropout=0.0,
+            bidirectional=True
+        )
+
+        embedding = NullEmbedding()
+
+        attention_dim = hidden_size * 2
+        attention = Attention(attention_dim, attention_dim, attention_dim)
+
+        self.net = SelfAttentionRNNRegressor(embedding, encoder, attention, attention_dim, n_actions=n_actions)
+
+        self.net.apply(init_weights)
+
+        self.scale = scale
+
+    def forward(self, x):
+        n, _ = self.net(x)
+        t = torch.tanh(n)
+        return t * self.scale
+
 
 class DDPGLstmAttentionCritic(nn.Module):
-    pass
+    def __init__(self, obs_size, hidden_size_1, hidden_size_2, n_actions):
+        super(DDPGLstmAttentionCritic, self).__init__()
+
+        self.__name__ = "DDPGLstmAttentionCritic"
+
+        encoder = Encoder(
+            embedding_dim=obs_size,
+            hidden_dim=hidden_size_1,
+            nlayers=2,
+            dropout=0.0,
+            bidirectional=True
+        )
+
+        embedding = NullEmbedding()
+
+        attention_dim = hidden_size_1 * 2
+        attention = Attention(attention_dim, attention_dim, attention_dim)
+
+        self.obs_net = SelfAttentionRNNRegressor(embedding, encoder, attention, attention_dim, n_actions=1)
+
+        self.out_net = nn.Sequential(
+            nn.Linear(1 + n_actions, hidden_size_2),
+            nn.ReLU(),
+            nn.Linear(hidden_size_2, 1)
+        )
+
+        self.obs_net.apply(init_weights)
+        self.out_net.apply(init_weights)
+
+    def forward(self, x, a):
+        obs, _ = self.obs_net(x)
+        return self.out_net(torch.cat([obs, a], dim=1))
+
+
+#####################################
+## DDPGLstmAttention: End        ##
+#####################################
+
 
 class DDPGActor(nn.Module):
     def __init__(self, obs_size, hidden_size_1, hidden_size_2, n_actions, scale):
