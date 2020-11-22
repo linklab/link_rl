@@ -191,7 +191,7 @@ class DDPGLstmAttentionActor(nn.Module):
             hidden_dim=hidden_size,
             nlayers=2,
             dropout=0.0,
-            bidirectional=True
+            bidirectional=False
         )
 
         embedding = NullEmbedding()
@@ -222,7 +222,7 @@ class DDPGLstmAttentionCritic(nn.Module):
             hidden_dim=hidden_size_1,
             nlayers=2,
             dropout=0.0,
-            bidirectional=True
+            bidirectional=False
         )
 
         embedding = NullEmbedding()

@@ -255,14 +255,14 @@ def main():
     elif params.DEEP_LEARNING_MODEL is DeepLearningModelName.ATTENTION_LSTM:
         actor_net = policy_based_model.DDPGLstmAttentionActor(
             obs_size=4,
-            hidden_size=256,
+            hidden_size=128,
             n_actions=1,
             scale=SWING_UP_SCALE_FACTOR
         ).to(device)
 
         critic_net = policy_based_model.DDPGLstmAttentionCritic(
             obs_size=4,
-            hidden_size_1=256, hidden_size_2=128,
+            hidden_size_1=128, hidden_size_2=64,
             n_actions=1
         ).to(device)
     else:
@@ -296,14 +296,14 @@ def main():
     elif params.DEEP_LEARNING_MODEL is DeepLearningModelName.ATTENTION_LSTM:
         actor_balance_net = policy_based_model.DDPGLstmAttentionActor(
             obs_size=4,
-            hidden_size=256,
+            hidden_size=128,
             n_actions=1,
             scale=BALANCING_SCALE_FACTOR
         ).to(device)
 
         critic_balance_net = policy_based_model.DDPGLstmAttentionCritic(
             obs_size=4,
-            hidden_size_1=256, hidden_size_2=128,
+            hidden_size_1=128, hidden_size_2=64,
             n_actions=1
         ).to(device)
     else:
