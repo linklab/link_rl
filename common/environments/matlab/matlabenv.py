@@ -129,7 +129,7 @@ class MatlabRotaryInvertedPendulumEnv(gym.Env):
         info = [None]
 
         done_conditions = [
-            self.episode_steps >= 2000 if params.TEAMVIEWER else self.episode_steps >= 1000,
+            self.episode_steps >= 2000 if params.TEAMVIEWER else self.episode_steps >= 2000,
             self.too_much_rotate
             # self.num_continuous_positive_torque >= 30,
             # self.num_continuous_negative_torque >= 30

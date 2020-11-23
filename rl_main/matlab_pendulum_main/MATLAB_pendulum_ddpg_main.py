@@ -255,7 +255,7 @@ def main():
             n_actions=1
         ).to(device)
     elif params.DEEP_LEARNING_MODEL is DeepLearningModelName.ATTENTION_LSTM:
-        actor_net = policy_based_model.DDPGLstmAttentionActor(
+        actor_net = policy_based_model.DDPGGruAttentionActor(
             obs_size=OBS_SIZE,
             hidden_size=128,
             n_actions=1,
@@ -263,7 +263,7 @@ def main():
             scale=SWING_UP_SCALE_FACTOR
         ).to(device)
 
-        critic_net = policy_based_model.DDPGLstmAttentionCritic(
+        critic_net = policy_based_model.DDPGGruAttentionCritic(
             obs_size=OBS_SIZE,
             hidden_size_1=128, hidden_size_2=64,
             n_actions=1,
@@ -298,7 +298,7 @@ def main():
             n_actions=1
         ).to(device)
     elif params.DEEP_LEARNING_MODEL is DeepLearningModelName.ATTENTION_LSTM:
-        actor_balance_net = policy_based_model.DDPGLstmAttentionActor(
+        actor_balance_net = policy_based_model.DDPGGruAttentionActor(
             obs_size=OBS_SIZE,
             hidden_size=128,
             n_actions=1,
@@ -306,7 +306,7 @@ def main():
             scale=BALANCING_SCALE_FACTOR
         ).to(device)
 
-        critic_balance_net = policy_based_model.DDPGLstmAttentionCritic(
+        critic_balance_net = policy_based_model.DDPGGruAttentionCritic(
             obs_size=OBS_SIZE,
             hidden_size_1=128, hidden_size_2=64,
             n_actions=1,

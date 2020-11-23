@@ -99,14 +99,15 @@ class ContinuousA2CMLP(nn.Module):
 #####################################
 ## DDPGLstmAttention: Begin        ##
 #####################################
-class Encoder(nn.Module):
-    def __init__(self, embedding_dim, hidden_dim, nlayers=1, dropout=0., bidirectional=True):
-        super(Encoder, self).__init__()
+class GruEncoder(nn.Module):
+    def __init__(self, embedding_dim, hidden_dim, n_layers=1, dropout=0., bidirectional=True):
+        super(GruEncoder, self).__init__()
         self.bidirectional = bidirectional
 
-        self.rnn = nn.LSTM(
-          embedding_dim, hidden_dim, nlayers, batch_first=True,
-          dropout=dropout, bidirectional=bidirectional
+        self.rnn = nn.GRU(
+            embedding_dim, hidden_dim, n_layers,
+            batch_first=True,
+            dropout=dropout, bidirectional=bidirectional
         )
 
     def forward(self, input, hidden=None):
@@ -128,20 +129,18 @@ class Attention(nn.Module):
 
     def forward(self, query, keys, values):
         # Query = [BxH]       B: Batch Size, Q: Hidden Size
-        # Keys = [BxSxH]      B: Batch Size, S: Seq. Size, H: Hidden Size
-        # Values = [BxSxH]    B: Batch Size, S: Seq. Size, H: Hidden Size
+        # Keys = [BxSxH]      B: Batch Size, S: Step Length, H: Hidden Size
+        # Values = [BxSxH]    B: Batch Size, S: Step Length, H: Hidden Size
         # Outputs = score:[BxS], attention_value:[BxH]
 
         # Here we assume q_dim == k_dim (dot product attention)
 
-        query = query.unsqueeze(1)                    # [BxH] -> [Bx1xH]
-        # keys = keys.transpose(0, 1).transpose(1, 2)   # [BxSxH] -> [BxHxS]
-        keys = keys.transpose(1, 2)                   # [BxSxH] -> [BxHxS]
-        score = torch.bmm(query, keys)                # [Bx1xH]x[BxHxS] -> [Bx1xS]
-        score = F.softmax(score.mul_(self.scale), dim=2)    # scale & normalize
+        query = query.unsqueeze(1)                  # [BxH] -> [Bx1xH]
+        keys = keys.transpose(1, 2)                 # [BxSxH] -> [BxHxS]
 
-        # values = values.transpose(1, 2)             # [BxSxH] -> [BxHxS]
-        attention_value = torch.bmm(score, values).squeeze(1)    # [Bx1xS]x[BxSxH] -> [BxH]
+        score = torch.bmm(query, keys)                # [Bx1xH]x[BxHxS] -> [Bx1xS], batch_matrix_multiplication: bmm
+        score = F.softmax(score.mul_(self.scale), dim=2)    # scale & normalize
+        attention_value = torch.bmm(score, values).squeeze(1)    # [Bx1xS]x[BxSxH] -> [Bx1xH], 128개 각 값을 softmax 값을 기반으로 재조정
 
         return score.unsqueeze(1), attention_value
 
@@ -152,7 +151,7 @@ class SelfAttentionRNNRegressor(nn.Module):
         self.embedding = embedding
         self.encoder = encoder
         self.attention = attention
-        self.decoder = nn.Linear(hidden_dim, n_actions)
+        self.dense_decoder = nn.Linear(hidden_dim, n_actions)  # Dense
 
         size = 0
         for p in self.parameters():
@@ -161,35 +160,34 @@ class SelfAttentionRNNRegressor(nn.Module):
 
     def forward(self, input):
         outputs, hidden = self.encoder(self.embedding(input))
-        # output: [32, 18, 128]
+        # output: [32, 4, 128] or [1, 4, 128]
+        # len(hidden): n_layers
+        # hidden: [2, 32, 128] or [2, 1, 128] --> [n_layers, batch_size, hidden_size]
 
-        if isinstance(hidden, tuple):    # LSTM
-            hidden = hidden[1]    # take the cell state
-            # hidden: [2, 32, 128]
+        hidden = hidden[-1]    # take the last layer's cell state
+        # hidden: [32, 128] or [1, 128]
 
-        if self.encoder.bidirectional:    # need to concat the last 2 hidden layers
-            hidden = torch.cat([hidden[-1], hidden[-2]], dim=1)
-        else:
-            hidden = hidden[-1]
-            # hidden: [32, 128]
+        # TODO: bidirectional은 False 라고 가정, 추후 True 고려하여 코딩 개선
+        # if self.encoder.bidirectional:    # need to concat the last 2 hidden layers
+        #     hidden = torch.cat([hidden[-1], hidden[-2]], dim=1)
 
-        score, attention_value = self.attention(hidden, outputs, outputs)
+        score, attention_value = self.attention(hidden, outputs, outputs)  # Q, K, V
 
-        pred_value = self.decoder(attention_value)  # [B, 1]
+        pred_value = self.dense_decoder(attention_value)  # [B, 1]
 
         return pred_value, score
 
 
-class DDPGLstmAttentionActor(nn.Module):
+class DDPGGruAttentionActor(nn.Module):
     def __init__(self, obs_size, hidden_size, n_actions, bidirectional, scale):
-        super(DDPGLstmAttentionActor, self).__init__()
+        super(DDPGGruAttentionActor, self).__init__()
 
         self.__name__ = "DDPGLstmAttentionActor"
 
-        encoder = Encoder(
+        encoder = GruEncoder(
             embedding_dim=obs_size,
             hidden_dim=hidden_size,
-            nlayers=2,
+            n_layers=2,
             dropout=0.0,
             bidirectional=bidirectional
         )
@@ -197,7 +195,7 @@ class DDPGLstmAttentionActor(nn.Module):
         embedding = NullEmbedding()
 
         attention_dim = hidden_size * 2 if bidirectional else hidden_size
-        attention = Attention(attention_dim, attention_dim, attention_dim)
+        attention = Attention(attention_dim, attention_dim, attention_dim)  # Query, Key, Value
 
         self.net = SelfAttentionRNNRegressor(embedding, encoder, attention, attention_dim, n_actions=n_actions)
 
@@ -211,16 +209,16 @@ class DDPGLstmAttentionActor(nn.Module):
         return t * self.scale
 
 
-class DDPGLstmAttentionCritic(nn.Module):
+class DDPGGruAttentionCritic(nn.Module):
     def __init__(self, obs_size, hidden_size_1, hidden_size_2, n_actions, bidirectional):
-        super(DDPGLstmAttentionCritic, self).__init__()
+        super(DDPGGruAttentionCritic, self).__init__()
 
         self.__name__ = "DDPGLstmAttentionCritic"
 
-        encoder = Encoder(
+        encoder = GruEncoder(
             embedding_dim=obs_size,
             hidden_dim=hidden_size_1,
-            nlayers=2,
+            n_layers=2,
             dropout=0.0,
             bidirectional=bidirectional
         )
