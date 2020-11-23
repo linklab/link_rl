@@ -54,6 +54,9 @@ else:
     BALANCING_SCALE_FACTOR = 0.002
 CLIP = 1
 
+OBS_SIZE = 6
+STEP_LENGTH = 4
+
 
 def play_func(exp_queue, exp_queue_balance, env, actor_net, critic_net, actor_balance_net, critic_balance_net):
     # print(env.action_space.low[0], env.action_space.high[0])
@@ -225,15 +228,14 @@ def main():
     mp.set_start_method('spawn')
 
     if params.DEEP_LEARNING_MODEL is DeepLearningModelName.DDPG_MLP:
-        env = MatlabRotaryInvertedPendulumEnv(step_size=-1)
+        env = MatlabRotaryInvertedPendulumEnv(obs_size=OBS_SIZE, step_length=-1)
     elif params.DEEP_LEARNING_MODEL is DeepLearningModelName.ATTENTION_LSTM:
-        step_size = 4
-        env = MatlabRotaryInvertedPendulumEnv(step_size=step_size)
+        env = MatlabRotaryInvertedPendulumEnv(obs_size=OBS_SIZE, step_length=STEP_LENGTH)
     else:
         raise
 
     print("env:", params.ENVIRONMENT_ID)
-    print("observation_space:", 4)
+    print("observation_space:", OBS_SIZE)
     print("action_space:", 1)
 
     ###########################
@@ -241,20 +243,20 @@ def main():
     ###########################
     if params.DEEP_LEARNING_MODEL is DeepLearningModelName.DDPG_MLP:
         actor_net = policy_based_model.DDPGActor(
-            obs_size=4,
+            obs_size=OBS_SIZE,
             hidden_size_1=512, hidden_size_2=256,
             n_actions=1,
             scale=SWING_UP_SCALE_FACTOR
         ).to(device)
 
         critic_net = policy_based_model.DDPGCritic(
-            obs_size=4,
+            obs_size=OBS_SIZE,
             hidden_size_1=512, hidden_size_2=256,
             n_actions=1
         ).to(device)
     elif params.DEEP_LEARNING_MODEL is DeepLearningModelName.ATTENTION_LSTM:
         actor_net = policy_based_model.DDPGLstmAttentionActor(
-            obs_size=4,
+            obs_size=OBS_SIZE,
             hidden_size=128,
             n_actions=1,
             bidirectional=False,
@@ -262,7 +264,7 @@ def main():
         ).to(device)
 
         critic_net = policy_based_model.DDPGLstmAttentionCritic(
-            obs_size=4,
+            obs_size=OBS_SIZE,
             hidden_size_1=128, hidden_size_2=64,
             n_actions=1,
             bidirectional=False
@@ -284,20 +286,20 @@ def main():
     ############################
     if params.DEEP_LEARNING_MODEL is DeepLearningModelName.DDPG_MLP:
         actor_balance_net = policy_based_model.DDPGActor(
-            obs_size=4,
+            obs_size=OBS_SIZE,
             hidden_size_1=512, hidden_size_2=256,
             n_actions=1,
             scale=BALANCING_SCALE_FACTOR
         ).to(device)
 
         critic_balance_net = policy_based_model.DDPGCritic(
-            obs_size=4,
+            obs_size=OBS_SIZE,
             hidden_size_1=512, hidden_size_2=256,
             n_actions=1
         ).to(device)
     elif params.DEEP_LEARNING_MODEL is DeepLearningModelName.ATTENTION_LSTM:
         actor_balance_net = policy_based_model.DDPGLstmAttentionActor(
-            obs_size=4,
+            obs_size=OBS_SIZE,
             hidden_size=128,
             n_actions=1,
             bidirectional=False,
@@ -305,7 +307,7 @@ def main():
         ).to(device)
 
         critic_balance_net = policy_based_model.DDPGLstmAttentionCritic(
-            obs_size=4,
+            obs_size=OBS_SIZE,
             hidden_size_1=128, hidden_size_2=64,
             n_actions=1,
             bidirectional=False

@@ -22,7 +22,7 @@ def slice_deque(d, start, stop, step):
 
 
 class MatlabRotaryInvertedPendulumEnv(gym.Env):
-    def __init__(self, step_size=-1):
+    def __init__(self, obs_size, step_length=-1):
         self.episode_steps = 0
         self.total_steps = 0
         self.q = 0
@@ -38,7 +38,9 @@ class MatlabRotaryInvertedPendulumEnv(gym.Env):
         self.num_continuous_positive_torque = 0
         self.num_continuous_negative_torque = 0
 
-        self.step_size = step_size # FOR LSTM
+
+        self.obs_size = obs_size
+        self.step_length = step_length # FOR LSTM
         self.too_much_rotate = False
         # self.done_torque_threshold = 0.75
 
@@ -56,7 +58,7 @@ class MatlabRotaryInvertedPendulumEnv(gym.Env):
         self.episode_steps = 0
         self.q, self.q1, self.w, self.w1, self.simulation_time = self.plant.getHistory()
         # self.state = (math.cos(self.q), math.sin(self.q), self.w, math.cos(self.q1), math.sin(self.q1), self.w1)
-        self.state = (math.cos(self.q), math.sin(self.q), self.w, 0.0)
+        self.state = (math.cos(self.q), math.sin(self.q), self.w, math.cos(self.q1), math.sin(self.q1), 0.0)
         self.num_continuous_positive_torque = 0
         self.num_continuous_negative_torque = 0
         # self.obs_degree[0] = self.next_obs_degree[0] = self.convert_radian_to_degree(np.round(self.state, decimals=4)[0] * math.pi)
@@ -66,10 +68,10 @@ class MatlabRotaryInvertedPendulumEnv(gym.Env):
         #     self.q, self.w, self.simulation_time
         # ))
 
-        if self.step_size == -1:
+        if self.step_length== -1:
             state = np.array(self.state)
-        elif self.step_size >= 1:
-            state = np.tile(self.state, (self.step_size, 1)) # state: (step_size, 4)
+        elif self.step_length >= 1:
+            state = np.tile(self.state, (self.step_length, 1)) # state: (step_size, 4)
         else:
             raise ValueError()
 
@@ -115,7 +117,7 @@ class MatlabRotaryInvertedPendulumEnv(gym.Env):
             adjusted_radian = q_
 
         # self.state = (math.cos(self.q), math.sin(self.q), self.w, math.cos(self.q1), math.sin(self.q1), self.w1)
-        self.state = (math.cos(self.q), math.sin(self.q), self.w, action)
+        self.state = (math.cos(self.q), math.sin(self.q), self.w, math.cos(self.q1), math.sin(self.q1), action)
         self.state_deque.append(self.state)
 
         #print(self.q1, math.cos(self.q1), math.sin(self.q1))
@@ -185,20 +187,19 @@ class MatlabRotaryInvertedPendulumEnv(gym.Env):
         #     action, self.q, self.w, adjusted_radian, reward, self.simulation_time
         # ))
 
-        if self.step_size == -1:
+        if self.step_length == -1:
             next_state = np.array(self.state_deque[-1])
-        elif self.step_size >= 1:
-            if len(self.state_deque) < self.step_size:
+        elif self.step_length >= 1:
+            if len(self.state_deque) < self.step_length:
                 next_state = list(self.state_deque)
 
-                obs_size = 4  # TODO: 사전에 obs_size 결정하여 넣는 작업 필요
-                for _ in range(self.step_size - len(self.state_deque)):
-                    next_state.insert(0, [0.0] * obs_size)
+                for _ in range(self.step_length - len(self.state_deque)):
+                    next_state.insert(0, [0.0] * self.obs_size)
                 next_state = np.array(next_state)
             else:
                 next_state = np.array(
                     [
-                        self.state_deque[-self.step_size + offset] for offset in range(self.step_size)
+                        self.state_deque[-self.step_length + offset] for offset in range(self.step_length)
                     ]
                 )
             # print(next_state.shape)
