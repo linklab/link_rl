@@ -215,8 +215,8 @@ class MatlabRotaryInvertedPendulumEnv(gym.Env):
         else:
             reward = adjusted_radian
 
-        reward -= num_continuous_positive_torque * 0.01
-        reward -= num_continuous_negative_torque * 0.01
+        # reward -= num_continuous_positive_torque * 0.01
+        # reward -= num_continuous_negative_torque * 0.01
 
         return reward
 
