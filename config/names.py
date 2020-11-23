@@ -40,6 +40,7 @@ class EnvironmentName(enum.Enum):
     SPACE_INVADERS_NO_FRAME_SKIP_V4 = "SpaceInvadersNoFrameskip-v4"
     ENDURO_NO_FRAME_SKIP_V4 = "EnduroNoFrameskip-v4"
     SEAQUEST_NO_FRAME_SKIP_V4 = "SeaquestNoFrameskip-v4"
+    FREEWAY_NO_FRAME_SKIP_V4 = "FreewayNoFrameskip-v4"
     PENDULUM_MATLAB_V0 = "Pendulum_Matlab_v0"
     MINITAUR_BULLET_V0 = "MinitaurBulletEnv-v0"
     TSP_V0 = "TSP-v0"  # bi-directional connections and uniform cost.
@@ -60,6 +61,7 @@ class DeepLearningModelName(enum.Enum):
     DUELING_DQN_CNN = "DUELING_DQN_CNN"
     DUELING_DQN_MLP = "DUELING_DQN_MLP"
     RAINBOW_DQN_MLP = "RAINBOW_DQN_MLP"
+    ATTENTION_LSTM = "ATTENTION_LSTM"
 
 
 class RLAlgorithmName(enum.Enum):

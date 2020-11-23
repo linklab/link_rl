@@ -11,13 +11,16 @@ from torch import optim
 import os, sys
 import numpy as np
 import math
+
+from config.names import DeepLearningModelName
+
 idx = os.getcwd().index("link_rl")
 PROJECT_HOME = os.getcwd()[:idx] + "link_rl"
 sys.path.append(PROJECT_HOME)
 
 from common.environments.matlab.matlabenv import MatlabRotaryInvertedPendulumEnv
 
-from common.common_utils import make_gym_env, smooth
+from common.common_utils import smooth
 from common.fast_rl.policy_based_model import unpack_batch_for_ddpg
 from common.fast_rl.rl_agent import float32_preprocessor
 
@@ -51,6 +54,8 @@ else:
     BALANCING_SCALE_FACTOR = 0.002
 CLIP = 1
 
+OBS_SIZE = 6
+STEP_LENGTH = 4
 
 
 def play_func(exp_queue, exp_queue_balance, env, actor_net, critic_net, actor_balance_net, critic_balance_net):
@@ -132,13 +137,20 @@ def play_func(exp_queue, exp_queue_balance, env, actor_net, critic_net, actor_ba
             if step_idx == 1:
                 exp = next(exp_source_iter)
 
+            if params.DEEP_LEARNING_MODEL is DeepLearningModelName.DDPG_MLP:
+                pendulum_angle = exp[0][0]
+            elif params.DEEP_LEARNING_MODEL is DeepLearningModelName.ATTENTION_LSTM:
+                pendulum_angle = exp[0][-1][0]
+            else:
+                raise ValueError()
+
             if params.TEAMVIEWER:
-                if math.cos(math.pi) < exp[0][0] < math.cos(3.089232776): #cos(180) < exp[0][0] < cos(183) (-1<exp[0][0]<-0.9985468154)
+                if math.cos(math.pi) < pendulum_angle < math.cos(3.089232776): #cos(180) < exp[0][0] < cos(183) (-1<exp[0][0]<-0.9985468154)
                     count_bal += 1
                 else:
                     count_bal = 0
             else:
-                if math.cos(math.pi) < exp[0][0] < math.cos(3.316125):  # cos(180) < exp[0][0] < cos(190) (-1<exp[0][0]<-0.9985468154)
+                if math.cos(math.pi) < pendulum_angle < math.cos(3.316125):  # cos(180) < exp[0][0] < cos(190) (-1<exp[0][0]<-0.9985468154)
                     count_bal += 1
                 else:
                     count_bal = 0
@@ -214,24 +226,51 @@ def play_func(exp_queue, exp_queue_balance, env, actor_net, critic_net, actor_ba
 
 def main():
     mp.set_start_method('spawn')
-    env = MatlabRotaryInvertedPendulumEnv()
-    # env = make_gym_env(params.ENVIRONMENT_ID.value, seed=params.SEED)
+
+    if params.DEEP_LEARNING_MODEL is DeepLearningModelName.DDPG_MLP:
+        env = MatlabRotaryInvertedPendulumEnv(obs_size=OBS_SIZE, step_length=-1)
+    elif params.DEEP_LEARNING_MODEL is DeepLearningModelName.ATTENTION_LSTM:
+        env = MatlabRotaryInvertedPendulumEnv(obs_size=OBS_SIZE, step_length=STEP_LENGTH)
+    else:
+        raise
+
     print("env:", params.ENVIRONMENT_ID)
-    print("observation_space:", 3)
+    print("observation_space:", OBS_SIZE)
     print("action_space:", 1)
 
-    actor_net = policy_based_model.DDPGActor(
-        obs_size=4,
-        hidden_size_1=512, hidden_size_2=256,
-        n_actions=1,
-        scale=SWING_UP_SCALE_FACTOR
-    ).to(device)
+    ###########################
+    ### SWING_UP Controller ###
+    ###########################
+    if params.DEEP_LEARNING_MODEL is DeepLearningModelName.DDPG_MLP:
+        actor_net = policy_based_model.DDPGActor(
+            obs_size=OBS_SIZE,
+            hidden_size_1=512, hidden_size_2=256,
+            n_actions=1,
+            scale=SWING_UP_SCALE_FACTOR
+        ).to(device)
 
-    critic_net = policy_based_model.DDPGCritic(
-        obs_size=4,
-        hidden_size_1=512, hidden_size_2=256,
-        n_actions=1
-    ).to(device)
+        critic_net = policy_based_model.DDPGCritic(
+            obs_size=OBS_SIZE,
+            hidden_size_1=512, hidden_size_2=256,
+            n_actions=1
+        ).to(device)
+    elif params.DEEP_LEARNING_MODEL is DeepLearningModelName.ATTENTION_LSTM:
+        actor_net = policy_based_model.DDPGGruAttentionActor(
+            obs_size=OBS_SIZE,
+            hidden_size=128,
+            n_actions=1,
+            bidirectional=False,
+            scale=SWING_UP_SCALE_FACTOR
+        ).to(device)
+
+        critic_net = policy_based_model.DDPGGruAttentionCritic(
+            obs_size=OBS_SIZE,
+            hidden_size_1=128, hidden_size_2=64,
+            n_actions=1,
+            bidirectional=False
+        ).to(device)
+    else:
+        raise ValueError()
 
     print(actor_net)
     print(critic_net)
@@ -241,19 +280,40 @@ def main():
 
     actor_optimizer = optim.Adam(actor_net.parameters(), lr=params.ACTOR_LEARNING_RATE)
     critic_optimizer = optim.Adam(critic_net.parameters(), lr=params.LEARNING_RATE)
-    
-###########################################################################################
-    actor_balance_net = policy_based_model.DDPGActor(
-        obs_size=4,
-        hidden_size_1=512, hidden_size_2=256,
-        n_actions=1,
-        scale=BALANCING_SCALE_FACTOR
-    ).to(device)
-    critic_balance_net = policy_based_model.DDPGCritic(
-        obs_size=4,
-        hidden_size_1=512, hidden_size_2=256,
-        n_actions=1
-    ).to(device)
+
+    ############################
+    ### BALANCING Controller ###
+    ############################
+    if params.DEEP_LEARNING_MODEL is DeepLearningModelName.DDPG_MLP:
+        actor_balance_net = policy_based_model.DDPGActor(
+            obs_size=OBS_SIZE,
+            hidden_size_1=512, hidden_size_2=256,
+            n_actions=1,
+            scale=BALANCING_SCALE_FACTOR
+        ).to(device)
+
+        critic_balance_net = policy_based_model.DDPGCritic(
+            obs_size=OBS_SIZE,
+            hidden_size_1=512, hidden_size_2=256,
+            n_actions=1
+        ).to(device)
+    elif params.DEEP_LEARNING_MODEL is DeepLearningModelName.ATTENTION_LSTM:
+        actor_balance_net = policy_based_model.DDPGGruAttentionActor(
+            obs_size=OBS_SIZE,
+            hidden_size=128,
+            n_actions=1,
+            bidirectional=False,
+            scale=BALANCING_SCALE_FACTOR
+        ).to(device)
+
+        critic_balance_net = policy_based_model.DDPGGruAttentionCritic(
+            obs_size=OBS_SIZE,
+            hidden_size_1=128, hidden_size_2=64,
+            n_actions=1,
+            bidirectional=False
+        ).to(device)
+    else:
+        raise ValueError()
 
     target_actor_balance_net = rl_agent.TargetNet(actor_balance_net)
     target_critic_balance_net = rl_agent.TargetNet(critic_balance_net)

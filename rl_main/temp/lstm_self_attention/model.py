@@ -180,7 +180,7 @@ def train(model, data, optimizer, criterion):
         total_loss += float(loss)
 
         print("[Batch]: {}/{} in {:.5f} seconds".format(
-            batch_num, len(data), time.time() - t), end='\r', flush=True
+            batch_num + 1, len(data), time.time() - t), end='\r', flush=True
         )
         t = time.time()
 
@@ -211,7 +211,7 @@ def evaluate(model, data, criterion, type='Valid'):
                 raise ValueError()
 
             print("[Batch]: {}/{} in {:.5f} seconds".format(
-                        batch_num, len(data), time.time() - t), end='\r', flush=True
+                batch_num + 1, len(data), time.time() - t), end='\r', flush=True
             )
             t = time.time()
 

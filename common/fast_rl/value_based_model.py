@@ -655,7 +655,8 @@ def calc_omega_return(rewards, done_mask, next_state_values, params):
 
         avg = sum(n_step_target_list) / len(n_step_target_list)
         max_n_step_target = max(n_step_target_list)
-        beta = (max_n_step_target - avg) / (max_n_step_target - min(n_step_target_list) + 0.00001)
+        abs_n_step_target_list = np.abs(n_step_target_list)
+        beta = (max(abs_n_step_target_list)-min(abs_n_step_target_list)) / (max(abs_n_step_target_list) + 0.00000001)
         target_q_values.append((1 - beta) * avg + beta * max_n_step_target)
 
     return target_q_values

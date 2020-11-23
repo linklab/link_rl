@@ -28,14 +28,17 @@ class MyDataset(Dataset):
 
 
 batch_size = 32
-input_feature_size = 3
+input_feature_size = 4
 seq_length = 18
 target_cols = 1
 pin_memory = True
 num_workers = 1
 
+# data shape: (40000,)
 data = torch.tensor([math.sin(x) for x in range(0, 10000 * input_feature_size)])
-data = data.view(10000, input_feature_size)  # [10000, 3]
+
+# data shape: (10000, 4)
+data = data.view(10000, input_feature_size)
 
 dataset = MyDataset(data, seq_length, target_cols)
 

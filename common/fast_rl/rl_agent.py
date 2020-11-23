@@ -119,7 +119,7 @@ def float32_preprocessor(states):
 class DQNAgent(BaseAgent):
     """
     DQNAgent is a memoryless DQN agent which calculates Q values
-    from the observations and  converts them into the actions using action_selector
+    from the observations and converts them into the actions using action_selector
     """
     def __init__(self, dqn_model, action_selector, device="cpu", preprocessor=default_states_preprocessor):
         self.dqn_model = dqn_model
