@@ -30,13 +30,14 @@ def play_main():
     actor_net = policy_based_model.DDPGActor(
         obs_size=3,
         hidden_size_1=512, hidden_size_2=256,
-        n_actions=1
+        n_actions=1,
+        scale=1.0
     ).to(device)
     print(actor_net)
 
     rl_agent.load_model(MODEL_SAVE_DIR, params.ENVIRONMENT_ID.value, actor_net.__name__, actor_net)
 
-    action_selector = actions.DDPGActionSelector(epsilon=0.0, ou_enabled=False)
+    action_selector = actions.DDPGActionSelector(epsilon=0.0, ou_enabled=False, scale_factor=1.0)
 
     agent = rl_agent.AgentDDPG(
         actor_net, n_actions=1, action_selector=action_selector,

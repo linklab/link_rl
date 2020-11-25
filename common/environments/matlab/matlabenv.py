@@ -123,7 +123,8 @@ class MatlabRotaryInvertedPendulumEnv(gym.Env):
         #print(self.q1, math.cos(self.q1), math.sin(self.q1))
 
         # 3.15 rad => 180 도
-        if self.q1 > 3.15 or self.q1 < -3.15:
+        # 6.3 rad => 460 도
+        if self.q1 > 6.3 or self.q1 < -6.3:
             self.too_much_rotate = True
 
         info = [None]
