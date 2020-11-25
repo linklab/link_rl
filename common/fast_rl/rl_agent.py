@@ -312,6 +312,7 @@ class AgentDDPG(BaseAgent):
         #####################################
 
         actions = np.clip(actions, self.action_min, self.action_max)
+
         self.step_idx += 1
 
         return actions, noises, new_agent_states

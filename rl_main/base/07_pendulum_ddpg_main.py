@@ -43,7 +43,7 @@ def play_func(exp_queue, env, net):
 
     #action_selector = actions.EpsilonGreedyDDPGActionSelector(epsilon=params.EPSILON_INIT)
 
-    action_selector = actions.DDPGActionSelector(epsilon=params.EPSILON_INIT, ou_enabled=True, scale_factor=1.0)
+    action_selector = actions.DDPGActionSelector(epsilon=params.EPSILON_INIT, ou_enabled=True, scale_factor=2.0)
 
     epsilon_tracker = actions.EpsilonTracker(
         action_selector=action_selector,
@@ -119,7 +119,7 @@ def main():
         obs_size=3,
         hidden_size_1=512, hidden_size_2=256,
         n_actions=1,
-        scale=1.0
+        scale=2.0
     ).to(device)
 
     critic_net = policy_based_model.DDPGCritic(
@@ -137,10 +137,10 @@ def main():
     actor_optimizer = optim.Adam(actor_net.parameters(), lr=params.ACTOR_LEARNING_RATE)
     critic_optimizer = optim.Adam(critic_net.parameters(), lr=params.LEARNING_RATE)
 
-    # buffer = experience.ExperienceReplayBuffer(experience_source=None, buffer_size=params.REPLAY_BUFFER_SIZE)
-    buffer = experience.PrioritizedReplayBuffer(
-        experience_source=None, buffer_size=params.REPLAY_BUFFER_SIZE, n_step=params.N_STEP
-    )
+    buffer = experience.ExperienceReplayBuffer(experience_source=None, buffer_size=params.REPLAY_BUFFER_SIZE)
+    # buffer = experience.PrioritizedReplayBuffer(
+    #     experience_source=None, buffer_size=params.REPLAY_BUFFER_SIZE, n_step=params.N_STEP
+    # )
 
     exp_queue = mp.Queue(maxsize=params.TRAIN_STEP_FREQ * 2)
     play_proc = mp.Process(target=play_func, args=(exp_queue, env, actor_net))
@@ -203,7 +203,7 @@ def main():
                     buffer, actor_net, critic_net, target_actor_net, target_critic_net, actor_optimizer, critic_optimizer,
                     step_idx, actor_grad_l2, actor_grad_max, actor_grad_variance,
                     critic_grad_l2, critic_grad_max, critic_grad_variance,
-                    loss_actor, loss_critic, loss_total, per=True
+                    loss_actor, loss_critic, loss_total, per=False
                 )
 
             if params.DRAW_VIZ:
@@ -229,6 +229,8 @@ def model_update(buffer, actor_net, critic_net, target_actor_net, target_critic_
     else:
         batch = buffer.sample(params.BATCH_SIZE)
         batch_indices, batch_weights = None, None
+
+    #print(batch)
 
     batch_states_v, batch_actions_v, batch_rewards_v, batch_dones_mask, batch_last_states_v = unpack_batch_for_ddpg(
         batch, device
