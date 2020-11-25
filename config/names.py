@@ -61,7 +61,7 @@ class DeepLearningModelName(enum.Enum):
     DUELING_DQN_CNN = "DUELING_DQN_CNN"
     DUELING_DQN_MLP = "DUELING_DQN_MLP"
     RAINBOW_DQN_MLP = "RAINBOW_DQN_MLP"
-    ATTENTION_LSTM = "ATTENTION_LSTM"
+    DDPG_LSTM_ATTENTION = "DDPG_LSTM_ATTENTION"
 
 
 class RLAlgorithmName(enum.Enum):
