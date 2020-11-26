@@ -282,10 +282,12 @@ class DDPGCritic(nn.Module):
         self.obs_net = nn.Sequential(
             nn.Linear(obs_size, hidden_size_1),
             nn.ReLU(),
+            nn.Linear(hidden_size_1, hidden_size_2),
+            nn.ReLU(),
         )
 
         self.out_net = nn.Sequential(
-            nn.Linear(hidden_size_1 + n_actions, hidden_size_2),
+            nn.Linear(hidden_size_2 + n_actions, hidden_size_2),
             nn.ReLU(),
             nn.Linear(hidden_size_2, 1)
         )
