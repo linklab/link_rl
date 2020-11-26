@@ -234,14 +234,14 @@ def main():
     if params.DEEP_LEARNING_MODEL is DeepLearningModelName.DDPG_MLP:
         actor_net = policy_based_model.DDPGActor(
             obs_size=OBS_SIZE,
-            hidden_size_1=512, hidden_size_2=256,
+            hidden_size_1=512, hidden_size_2=512,
             n_actions=1,
             scale=SWING_UP_SCALE_FACTOR
         ).to(device)
 
         critic_net = policy_based_model.DDPGCritic(
             obs_size=OBS_SIZE,
-            hidden_size_1=512, hidden_size_2=256,
+            hidden_size_1=512, hidden_size_2=512,
             n_actions=1
         ).to(device)
     elif params.DEEP_LEARNING_MODEL is DeepLearningModelName.DDPG_LSTM_ATTENTION:
@@ -277,14 +277,14 @@ def main():
     if params.DEEP_LEARNING_MODEL is DeepLearningModelName.DDPG_MLP:
         actor_balance_net = policy_based_model.DDPGActor(
             obs_size=OBS_SIZE,
-            hidden_size_1=512, hidden_size_2=256,
+            hidden_size_1=512, hidden_size_2=512,
             n_actions=1,
             scale=BALANCING_SCALE_FACTOR
         ).to(device)
 
         critic_balance_net = policy_based_model.DDPGCritic(
             obs_size=OBS_SIZE,
-            hidden_size_1=512, hidden_size_2=256,
+            hidden_size_1=512, hidden_size_2=512,
             n_actions=1
         ).to(device)
     elif params.DEEP_LEARNING_MODEL is DeepLearningModelName.DDPG_LSTM_ATTENTION:
