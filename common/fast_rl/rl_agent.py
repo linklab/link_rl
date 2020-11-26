@@ -9,6 +9,13 @@ import os, glob
 
 from common.fast_rl.common.noise import OrnsteinUhlenbeckActionNoise
 from . import actions
+import logging
+
+mylogger = logging.getLogger("my")
+mylogger.setLevel(logging.INFO)
+
+file_handler = logging.FileHandler('rl_agent.log')
+mylogger.addHandler(file_handler)
 
 
 def save_model(model_save_dir, env_name, net_name, net, step, episode_reward):
@@ -269,7 +276,8 @@ class AgentDDPG(BaseAgent):
     Agent implementing Orstein-Uhlenbeck exploration process
     """
     def __init__(self, model, n_actions, action_selector, action_min, action_max, device="cpu", ou_enabled=True,
-                 preprocessor=default_states_preprocessor):
+                 preprocessor=default_states_preprocessor, name="AgentDDPG"):
+        self.name = name
         self.model = model
         self.device = device
         self.ou_enabled = ou_enabled
@@ -314,6 +322,13 @@ class AgentDDPG(BaseAgent):
         actions = np.clip(actions, self.action_min, self.action_max)
 
         self.step_idx += 1
+
+        if self.step_idx % 10 == 0:
+            mylogger.info(
+                "{0:6d}:{1}: action {2:7.4f}, noise {3:7.4f}, new agent_state {4:7.4f}".format(
+                    self.step_idx, self.name, actions[0][0], noises[0][0], new_agent_states[0][0]
+                )
+            )
 
         return actions, noises, new_agent_states
 
