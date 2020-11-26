@@ -77,6 +77,3 @@ class dummy_env:
 
         print(next_state)
         return next_state, reward, done,info
-
-
-
