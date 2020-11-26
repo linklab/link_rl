@@ -13,6 +13,8 @@ from collections import namedtuple, deque
 from .rl_agent import BaseAgent, AgentDDPG
 from .common import utils
 
+from config.parameters import PARAMETERS as params
+
 # replay buffer params
 BETA_START = 0.4
 BETA_FRAMES = 100000
@@ -47,9 +49,25 @@ class ExperienceSourceSingleEnv:
         self.episode_done_step_lst = []
         self.episode_continuous_positive_actions = []
         self.episode_continuous_negative_actions = []
+        self.state_deque = deque(maxlen=30)
+
 
     def __iter__(self):
         state = self.env.reset()
+
+#########################################################################################################
+        if params.ATTENTION:
+            step_length = 1
+            if step_length== -1:
+                state = np.array(state)
+            elif step_length >= 1:
+                state = np.tile(state, (step_length, 1)) # state: (step_size, 4)
+            else:
+                raise ValueError()
+        else:
+            pass
+#########################################################################################################
+
         history = deque(maxlen=self.steps_count)
         cur_reward = 0.0
         cur_step = 0
@@ -63,7 +81,6 @@ class ExperienceSourceSingleEnv:
 
             agent_states_input = []
             agent_states_input.append(agent_state)
-
             if isinstance(self.agent, AgentDDPG):
                 actions, noises, new_agent_states = self.agent(states_input, agent_states_input)
                 noise = noises[0]
@@ -79,6 +96,39 @@ class ExperienceSourceSingleEnv:
             action = actions[0]
 
             next_state, r, is_done, info = self.env.step(action)
+
+
+
+
+#######################################################################################################################
+            if params.ATTENTION:
+                self.state_deque.append(next_state)
+
+                if step_length == -1:
+                    next_state = np.array(self.state_deque[-1])
+                elif step_length >= 1:
+                    if len(self.state_deque) < step_length:
+                        next_state = list(self.state_deque)
+
+                        for _ in range(step_length - len(self.state_deque)):
+                            next_state.insert(0, [0.0] * 3)
+                        next_state = np.array(next_state)
+                        print()
+                    else:
+                        next_state = np.array(
+                            [
+                                self.state_deque[-step_length + offset] for offset in range(step_length)
+                            ]
+                        )
+                    # print(next_state.shape)
+                    # print(next_state)
+                else:
+                    raise ValueError()
+#####################################################################################################################################
+
+
+
+
 
             if 'original_reward' in info:
                 cur_reward += info['original_reward']
@@ -110,6 +160,21 @@ class ExperienceSourceSingleEnv:
                     yield tuple(history)
 
                 state = self.env.reset()
+
+
+                ######################################################################################
+                if params.ATTENTION:
+                    if step_length == -1:
+                        state = np.array(state)
+                    elif step_length >= 1:
+                        state = np.tile(state, (step_length, 1))  # state: (step_size, 4)
+                    else:
+                        raise ValueError()
+                else:
+                    pass
+                ########################################################################################
+
+
                 agent_state = self.agent.initial_agent_state()
 
                 if 'ale.lives' not in info or info['ale.lives'] == 0:

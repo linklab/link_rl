@@ -152,7 +152,6 @@ class SelfAttentionRNNRegressor(nn.Module):
         self.encoder = encoder
         self.attention = attention
         self.dense_decoder = nn.Linear(hidden_dim, n_actions)  # Dense
-
         size = 0
         for p in self.parameters():
             size += p.nelement()
@@ -247,6 +246,78 @@ class DDPGGruAttentionCritic(nn.Module):
 #####################################
 ## DDPGLstmAttention: End        ##
 #####################################
+
+
+#####################################
+## DDPGLstm: Start        ##
+#####################################
+
+class DDPGGruActor(nn.Module):
+    def __init__(self, obs_size, hidden_size_1, hidden_size_2, n_actions, bidirectional, scale):
+        super(DDPGGruActor, self).__init__()
+
+        self.__name__ = "DDPGLstmActor"
+
+        self.net = GruEncoder(
+            embedding_dim=obs_size,
+            hidden_dim=hidden_size_1,
+            n_layers=2,
+            dropout=0.0,
+            bidirectional=bidirectional
+        )
+
+        self.action_net = nn.Sequential(
+            nn.Linear(hidden_size_1, hidden_size_2),
+            nn.ReLU(),
+            nn.Linear(hidden_size_2, n_actions),
+        )
+
+        self.net.apply(init_weights)
+        self.action_net.apply(init_weights)
+
+        self.scale = scale
+
+    def forward(self, x):
+        num_state_batch = x.shape[0]
+        n_1, _ = self.net(x)
+        n_2 = self.action_net(n_1[0:num_state_batch, -1, :])
+        t = torch.tanh(n_2)
+        return t * self.scale
+
+
+class DDPGGruCritic(nn.Module):
+    def __init__(self, obs_size, hidden_size_1, hidden_size_2, n_actions, bidirectional):
+        super(DDPGGruCritic, self).__init__()
+
+        self.__name__ = "DDPGLstmCritic"
+
+        self.obs_net = GruEncoder(
+            embedding_dim=obs_size,
+            hidden_dim=hidden_size_1,
+            n_layers=2,
+            dropout=0.0,
+            bidirectional=bidirectional
+        )
+
+        self.out_net = nn.Sequential(
+            nn.Linear(hidden_size_1 + n_actions, hidden_size_2),
+            nn.ReLU(),
+            nn.Linear(hidden_size_2, 1)
+        )
+
+        self.obs_net.apply(init_weights)
+        self.out_net.apply(init_weights)
+
+    def forward(self, x, a):
+        num_action_batch = a.shape[0]
+        obs, _ = self.obs_net(x)
+        obs = obs[0:num_action_batch, -1, :]
+        return self.out_net(torch.cat([obs, a], dim=1)).squeeze(dim=0)
+
+#####################################
+## DDPGLstm: End                   ##
+#####################################
+
 
 
 class DDPGActor(nn.Module):
