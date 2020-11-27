@@ -12,9 +12,10 @@ import torch.multiprocessing as mp
 from torch import optim
 import os, sys
 import numpy as np
-import math
+import copy
 
 from config.names import DeepLearningModelName
+from rl_main.matlab_pendulum_main.experience_pendulum_ddpg_two import ExperienceSourceSingleEnvFirstLastDdpgTwo
 
 idx = os.getcwd().index("link_rl")
 PROJECT_HOME = os.getcwd()[:idx] + "link_rl"
@@ -67,7 +68,7 @@ print("action_space:", env.action_space)
 OBS_SIZE = env.observation_space.shape[0]
 
 
-def play_func(exp_queue, exp_queue_balance, actor_net, critic_net, actor_balance_net, critic_balance_net):
+def play_func(exp_queue_swing_up, exp_queue_balancing, actor_net, critic_net, actor_balance_net, critic_balance_net):
     env.start()
     swing_up_action_min = -SWING_UP_SCALE_FACTOR
     swing_up_action_max = SWING_UP_SCALE_FACTOR
@@ -76,49 +77,38 @@ def play_func(exp_queue, exp_queue_balance, actor_net, critic_net, actor_balance
 
     # action_selector = actions.EpsilonGreedyDDPGActionSelector(epsilon=params.EPSILON_INIT)
 
-    action_selector = actions.DDPGActionSelector(
+    action_selector_swing_up = actions.DDPGActionSelector(
         epsilon=params.EPSILON_INIT, ou_enabled=True, scale_factor=SWING_UP_SCALE_FACTOR
     )
 
-    epsilon_tracker = actions.EpsilonTracker(
-        action_selector=action_selector,
+    epsilon_tracker_swing_up = actions.EpsilonTracker(
+        action_selector=action_selector_swing_up,
         eps_start=params.EPSILON_INIT,
         eps_final=params.EPSILON_MIN,
         eps_frames=params.EPSILON_MIN_STEP
     )
 
-    agent = rl_agent.AgentDDPG(
-        actor_net, n_actions=1, action_selector=action_selector,
+    agent_swing_up = rl_agent.AgentDDPG(
+        actor_net, n_actions=1, action_selector=action_selector_swing_up,
         action_min=swing_up_action_min, action_max=swing_up_action_max,
         device=device, preprocessor=float32_preprocessor,
         name="SwingUp_AgentDDPG"
     )
 
-    if params.DEEP_LEARNING_MODEL in [DeepLearningModelName.DDPG_GRU, DeepLearningModelName.DDPG_GRU_ATTENTION]:
-        step_length = params.RNN_STEP_LENGTH
-    else:
-        step_length = -1
 
-    experience_source = experience.ExperienceSourceSingleEnvFirstLast(
-        env, agent, gamma=params.GAMMA, steps_count=params.N_STEP, step_length=step_length
-    )
-
-    exp_source_iter = iter(experience_source)
-
-##########################################################################################################################
-    action_selector_bal = actions.DDPGActionSelector(
+    action_selector_balancing = actions.DDPGActionSelector(
         epsilon=params.EPSILON_INIT, ou_enabled=True, scale_factor=BALANCING_SCALE_FACTOR
     )
 
-    epsilon_tracker_balance = actions.EpsilonTracker(
-        action_selector=action_selector_bal,
+    epsilon_tracker_balancing = actions.EpsilonTracker(
+        action_selector=action_selector_balancing,
         eps_start=params.EPSILON_INIT,
         eps_final=params.EPSILON_MIN,
         eps_frames=params.EPSILON_MIN_STEP
     )
 
-    agent_bal = rl_agent.AgentDDPG(
-        actor_balance_net, n_actions=1, action_selector=action_selector_bal,
+    agent_balancing = rl_agent.AgentDDPG(
+        actor_balance_net, n_actions=1, action_selector=action_selector_balancing,
         action_min=balancing_action_min, action_max=balancing_action_max, device=device,
         preprocessor=float32_preprocessor,
         name="Balance_AgentDDPG"
@@ -129,12 +119,11 @@ def play_func(exp_queue, exp_queue_balance, actor_net, critic_net, actor_balance
     else:
         step_length = -1
 
-    experience_source_balance = experience.ExperienceSourceSingleEnvFirstLast(
-        env, agent_bal, gamma=params.GAMMA, steps_count=params.N_STEP, step_length=step_length
+    experience_source = ExperienceSourceSingleEnvFirstLastDdpgTwo(
+        params, env, agent_swing_up, agent_balancing, gamma=params.GAMMA, steps_count=params.N_STEP, step_length=step_length
     )
 
-    exp_source_iter_balance = iter(experience_source_balance)
-#########################################################################################################################
+    exp_source_iter = iter(experience_source)
 
     if params.DRAW_VIZ:
         stat = statistics.StatisticsForPolicyBasedRL(method="policy_gradient")
@@ -146,11 +135,10 @@ def play_func(exp_queue, exp_queue_balance, actor_net, critic_net, actor_balance
     balancing_step_idx = 0
 
     best_episode_reward = 0
-    #current_episode_reward = 0
-
-    exp = next(exp_source_iter)
 
     balancing_step_reward_list = []
+
+    recent_swing_up_to_balance_exp = None
 
     with utils.RewardTracker(
             params.STOP_MEAN_EPISODE_REWARD, params.AVG_EPISODE_SIZE_FOR_STAT,
@@ -159,48 +147,62 @@ def play_func(exp_queue, exp_queue_balance, actor_net, critic_net, actor_balance
             # 1 스텝 진행하고 exp를 exp_queue에 넣음
             step_idx += 1
 
+            exp = next(exp_source_iter)
+
             if params.DEEP_LEARNING_MODEL is DeepLearningModelName.DDPG_MLP:
-                status = exp[0][-1]
+                status_value = exp[0][-1]
             elif params.DEEP_LEARNING_MODEL is DeepLearningModelName.DDPG_GRU:
-                status = exp[0][-1][-1]
+                status_value = exp[0][-1][-1]
             else:
                 raise ValueError()
 
-            if status in [Status.SWING_UP.value, Status.BALANCING_TO_SWING_UP_CHANGE.value]:  # Balance 제어로 넘어가는 조건: 170 ~ 190 각도 사이에 연속적으로 10번 이상
-                exp = next(exp_source_iter)
-
+            if status_value == Status.SWING_UP.value: # SWING_UP: -1.0
                 swing_up_step_idx += 1
-                epsilon_tracker.udpate(swing_up_step_idx) # swing_up_step_idx 로 epsilon 업데이트
+                epsilon_tracker_swing_up.udpate(swing_up_step_idx)
 
-                if status == Status.BALANCING_TO_SWING_UP_CHANGE.value:
-                    print(balancing_step_reward_list)
-                    balancing_step_reward_list.clear()
-            else:
-                exp = next(exp_source_iter_balance)
+                exp_queue_swing_up.put(exp)
+                exp_queue_balancing.put(0)
 
+            elif status_value == Status.SWING_UP_TO_BALANCING.value:  # SWING_UP_TO_BALANCING: 0.5
+                swing_up_step_idx += 1
+                epsilon_tracker_swing_up.udpate(swing_up_step_idx)
+
+                # NOTE: exp 잠시 대기
+                recent_swing_up_to_balance_exp = copy.deepcopy(exp)
+
+            elif status_value == Status.BALANCING.value:  # BALANCING:1.0, BALANCING_TO_SWING_UP:-0.5
                 balancing_step_idx += 1
-                epsilon_tracker_balance.udpate(balancing_step_idx)
+                epsilon_tracker_balancing.udpate(balancing_step_idx)
+
+                exp_queue_swing_up.put(0)
+                exp_queue_balancing.put(exp)
 
                 balancing_step_reward_list.append(exp.reward)
 
-            print(status)
+            elif status_value == Status.BALANCING_TO_SWING_UP.value:
+                balancing_step_idx += 1
+                epsilon_tracker_balancing.udpate(balancing_step_idx)
 
-            exp_queue.put(exp)
-            exp_queue_balance.put(0)
+                exp_queue_balancing.put(exp)
 
-            episode_rewards_swing_up = experience_source.pop_episode_reward_lst()
-            episode_rewards_balance = experience_source_balance.pop_episode_reward_lst()
+                # NOTE: 대기 중인 exp의 reward를 수정하고 exp_queue_swing_up에 넣기
+                recent_swing_up_to_balance_exp._replace(reward=sum(balancing_step_reward_list))
+                exp_queue_swing_up.put(recent_swing_up_to_balance_exp)
 
-            if episode_rewards_swing_up or episode_rewards_balance:  # 에피소드가 종료될 때만 True
-                if episode_rewards_swing_up:
-                    episode_rewards = episode_rewards_swing_up
-                else:
-                    episode_rewards = episode_rewards_balance
+                balancing_step_reward_list.clear()
+
+            else:
+                raise ValueError()
+
+            episode_rewards = experience_source.pop_episode_reward_lst()
+
+            if episode_rewards:  # 에피소드가 종료될 때만 True
 
                 current_episode_reward = episode_rewards[0]
 
                 solved, mean_episode_reward = reward_tracker.set_episode_reward(
-                    current_episode_reward, step_idx, epsilon=(action_selector.epsilon, action_selector_bal.epsilon)
+                    current_episode_reward, step_idx,
+                    epsilon=(action_selector_swing_up.epsilon, action_selector_balancing.epsilon)
                 )
 
                 model_save_condition = [
@@ -227,8 +229,8 @@ def play_func(exp_queue, exp_queue_balance, actor_net, critic_net, actor_balance
                 if solved:
                     break
 
-    exp_queue.put(None)
-    exp_queue_balance.put(None)
+    exp_queue_swing_up.put(None)
+    exp_queue_balancing.put(None)
 
 
 def main():
@@ -318,18 +320,18 @@ def main():
     critic_balance_optimizer = optim.Adam(critic_balance_net.parameters(), lr=params.LEARNING_RATE)
 ##########################################################################################
 
-    buffer = experience.ExperienceReplayBuffer(experience_source=None, buffer_size=params.REPLAY_BUFFER_SIZE)
-    buffer_balance = experience.ExperienceReplayBuffer(experience_source=None, buffer_size=params.REPLAY_BUFFER_SIZE)
+    buffer_swing_up = experience.ExperienceReplayBuffer(experience_source=None, buffer_size=params.REPLAY_BUFFER_SIZE)
+    buffer_balancing = experience.ExperienceReplayBuffer(experience_source=None, buffer_size=params.REPLAY_BUFFER_SIZE)
 
     # buffer = experience.PrioritizedReplayBuffer(
     #     experience_source=None, buffer_size=params.REPLAY_BUFFER_SIZE, n_step=params.N_STEP
     # )
 
-    exp_queue = mp.Queue(maxsize=params.TRAIN_STEP_FREQ * 2)
-    exp_queue_balance = mp.Queue(maxsize=params.TRAIN_STEP_FREQ * 2)
+    exp_queue_swing_up = mp.Queue(maxsize=params.TRAIN_STEP_FREQ * 2)
+    exp_queue_balancing = mp.Queue(maxsize=params.TRAIN_STEP_FREQ * 2)
 
     play_proc = mp.Process(target=play_func, args=(
-        exp_queue, exp_queue_balance, actor_net, critic_net, actor_balance_net, critic_balance_net
+        exp_queue_swing_up, exp_queue_balancing, actor_net, critic_net, actor_balance_net, critic_balance_net
     ))
     play_proc.start()
 
@@ -382,18 +384,18 @@ def main():
         if step_idx % params.TRAIN_STEP_FREQ:
             continue
 
-        exp = exp_queue.get()
-        exp_balance = exp_queue_balance.get()
+        exp_swing_up = exp_queue_swing_up.get()
+        exp_balancing = exp_queue_balancing.get()
 
-        if exp is None and exp_balance is None:
+        if exp_swing_up is None and exp_balancing is None:
             play_proc.join()
             break
 
-        if exp != 0:
-            buffer._add(exp)
+        if exp_swing_up != 0:
+            buffer_swing_up._add(exp_swing_up)
 
-        if exp_balance != 0:
-            buffer_balance._add(exp_balance)
+        if exp_balancing != 0:
+            buffer_balancing._add(exp_balancing)
 
         if step_idx % params.DRAW_VIZ_PERIOD_STEPS == 0:
             if params.DRAW_VIZ:
@@ -406,7 +408,7 @@ def main():
                 # )
                 # TODO: exp_balance.noise, exp_balance.action 정보 처리
                 stat_for_ddpg.draw_optimization_performance(
-                    step_idx, exp.noise, exp.action
+                    step_idx, exp_swing_up.noise, exp_swing_up.action
                 )
             else:
                 # print("[{0:6}] noise: {1:7.4f}, action: {2:7.4f}, reward: {3:8}, loss_actor: {4:7.4f}, loss_critic: {5:7.4f}".format(
@@ -415,22 +417,22 @@ def main():
                 pass
 
         ## buffer를 통하여 경험 정보 가져와 모델 업데이트
-        if exp and len(buffer) >= params.MIN_REPLAY_SIZE_FOR_TRAIN:
+        if exp_swing_up and len(buffer_swing_up) >= params.MIN_REPLAY_SIZE_FOR_TRAIN:
             actor_grad_l2, actor_grad_max, actor_grad_variance, critic_grad_l2, critic_grad_max, critic_grad_variance, \
             loss_actor, loss_critic, loss_total = model_update(
-                buffer, actor_net, critic_net, target_actor_net, target_critic_net, actor_optimizer, critic_optimizer,
+                buffer_swing_up, actor_net, critic_net, target_actor_net, target_critic_net, actor_optimizer, critic_optimizer,
                 step_idx, actor_grad_l2, actor_grad_max, actor_grad_variance,
                 critic_grad_l2, critic_grad_max, critic_grad_variance,
                 loss_actor, loss_critic, loss_total, per=False
             )
 
         ## buffer_balance를 통하여 경험 정보 가져와 모델 업데이트
-        if exp_balance and len(buffer_balance) >= params.MIN_REPLAY_SIZE_FOR_TRAIN:
+        if exp_balancing and len(buffer_balancing) >= params.MIN_REPLAY_SIZE_FOR_TRAIN:
             #print("Update Balance!!!")
             actor_balance_grad_l2, actor_balance_grad_max, actor_balance_grad_variance, critic_balance_grad_l2, \
             critic_balance_grad_max, critic_balance_grad_variance, loss_balance_actor, loss_balance_critic, \
             loss_balance_total = model_update(
-                buffer_balance, actor_balance_net, critic_balance_net, target_actor_balance_net, target_critic_balance_net,
+                buffer_balancing, actor_balance_net, critic_balance_net, target_actor_balance_net, target_critic_balance_net,
                 actor_balance_optimizer, critic_balance_optimizer,
                 step_idx, actor_balance_grad_l2, actor_balance_grad_max, actor_balance_grad_variance,
                 critic_balance_grad_l2, critic_balance_grad_max, critic_balance_grad_variance,

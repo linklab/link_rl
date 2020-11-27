@@ -14,9 +14,9 @@ a = 0
 
 class Status(Enum):
     SWING_UP = -1.0
-    SWING_UP_TO_BALANCING_CHANGE = 0.5
+    SWING_UP_TO_BALANCING = 0.5
     BALANCING = 1.0
-    BALANCING_TO_SWING_UP_CHANGE = -0.5
+    BALANCING_TO_SWING_UP = -0.5
 
 
 class MatlabRotaryInvertedPendulumEnv(gym.Env):
@@ -210,16 +210,18 @@ class MatlabRotaryInvertedPendulumEnv(gym.Env):
             else:
                 self.count_uprights = 0
 
-            if self.count_uprights < 1:  # Balance 제어로 넘어가는 조건: 170 ~ 190 각도 사이에 연속적으로 10번 이상
-                if self.current_status == Status.BALANCING:
-                    self.current_status = Status.BALANCING_TO_SWING_UP_CHANGE
-                else:
-                    self.current_status = Status.SWING_UP
+        if self.count_uprights >= 1:  # Balance 제어로 넘어가는 조건: 170 ~ 190 각도 사이에 연속적으로 10번 이상
+            if self.current_status in [Status.SWING_UP, Status.BALANCING_TO_SWING_UP]:
+                self.current_status = Status.SWING_UP_TO_BALANCING
             else:
-                if self.current_status == Status.SWING_UP:
-                    self.current_status = Status.SWING_UP_TO_BALANCING_CHANGE
-                else:
-                    self.current_status = Status.BALANCING
+                self.current_status = Status.BALANCING
+        else:
+            if self.current_status in [Status.BALANCING, Status.SWING_UP_TO_BALANCING]:
+                self.current_status = Status.BALANCING_TO_SWING_UP
+            else:
+                self.current_status = Status.SWING_UP
+
+        #print(self.count_uprights, self.current_status, self.current_status.value)
 
         # self.state = (math.cos(self.q), math.sin(self.q), self.w, math.cos(self.q1), math.sin(self.q1), self.w1)
         self.state = (
