@@ -76,10 +76,12 @@ def play_func(exp_queue, env, net):
         stat = None
 
     step_idx = 0
-    next_save_frame_idx = params.MODEL_SAVE_STEP_PERIOD
+
+    best_mean_episode_reward = 0.0
 
     with utils.RewardTracker(
-            params.STOP_MEAN_EPISODE_REWARD, params.AVG_EPISODE_SIZE_FOR_STAT,
+            stop_mean_episode_reward=params.STOP_MEAN_EPISODE_REWARD,
+            average_size_for_stats=params.AVG_EPISODE_SIZE_FOR_STAT,
             frame=True, draw_viz=params.DRAW_VIZ, stat=stat) as reward_tracker:
         while step_idx < params.MAX_GLOBAL_STEPS:
             # 1 스텝 진행하고 exp를 exp_queue에 넣음
@@ -91,15 +93,24 @@ def play_func(exp_queue, env, net):
 
             episode_rewards = experience_source.pop_episode_reward_lst()
             if episode_rewards:
+                current_episode_reward = episode_rewards[0]
+
                 solved, mean_episode_reward = reward_tracker.set_episode_reward(
-                    episode_rewards[0], step_idx, epsilon=action_selector.epsilon
+                    current_episode_reward, step_idx, epsilon=action_selector.epsilon
                 )
 
-                if step_idx >= next_save_frame_idx:
+                model_save_condition = [
+                    reward_tracker.mean_episode_reward > best_mean_episode_reward,
+                    step_idx > params.MAX_GLOBAL_STEPS / 4
+                ]
+
+                if reward_tracker.mean_episode_reward > best_mean_episode_reward:
+                    best_mean_episode_reward = reward_tracker.mean_episode_reward
+
+                if all(model_save_condition):
                     rl_agent.save_model(
                         MODEL_SAVE_DIR, params.ENVIRONMENT_ID.value, net.__name__, net, step_idx, mean_episode_reward
                     )
-                    next_save_frame_idx += params.MODEL_SAVE_STEP_PERIOD
 
                 if solved:
                     rl_agent.save_model(

@@ -343,6 +343,7 @@ class RewardTracker:
         self.frame = frame
         self.episode_reward_list = None
         self.done_episodes = 0
+        self.mean_episode_reward = 0.0
 
     def __enter__(self):
         self.start_ts = time.time()
@@ -361,7 +362,7 @@ class RewardTracker:
         assert not (action_count and continuous_action_mean)
         self.done_episodes += 1
         self.episode_reward_list.append(episode_reward)
-        mean_episode_reward = np.mean(self.episode_reward_list[-self.average_size_for_stats:])
+        self.mean_episode_reward = np.mean(self.episode_reward_list[-self.average_size_for_stats:])
 
         current_ts = time.time()
         elapsed_time = current_ts - self.start_ts
@@ -372,21 +373,21 @@ class RewardTracker:
         if ts_diff > self.min_ts_diff:
             is_print_performance = True
             self.print_performance(
-                episode_done_step, current_ts, ts_diff, mean_episode_reward, epsilon, elapsed_time, action_count
+                episode_done_step, current_ts, ts_diff, self.mean_episode_reward, epsilon, elapsed_time, action_count
             )
 
-        if mean_episode_reward > self.stop_mean_episode_reward:
+        if self.mean_episode_reward > self.stop_mean_episode_reward:
             if not is_print_performance:
                 self.print_performance(
-                    episode_done_step, current_ts, ts_diff, mean_episode_reward, epsilon, elapsed_time, action_count
+                    episode_done_step, current_ts, ts_diff, self.mean_episode_reward, epsilon, elapsed_time, action_count
                 )
             if self.frame:
                 print("Solved in {0} frames and {1} episodes!".format(episode_done_step, self.done_episodes))
             else:
                 print("Solved in {0} steps and {1} episodes!".format(episode_done_step, self.done_episodes))
-            return True, mean_episode_reward
+            return True, self.mean_episode_reward
 
-        return False, mean_episode_reward
+        return False, self.mean_episode_reward
 
     def print_performance(self, episode_done_step, current_ts, ts_diff, mean_episode_reward, epsilon, elapsed_time, action_count):
         speed = (episode_done_step - self.ts_frame) / ts_diff

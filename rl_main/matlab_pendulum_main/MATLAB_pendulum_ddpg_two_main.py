@@ -68,7 +68,7 @@ print("action_space:", env.action_space)
 OBS_SIZE = env.observation_space.shape[0]
 
 
-def play_func(exp_queue_swing_up, exp_queue_balancing, actor_net, critic_net, actor_balance_net, critic_balance_net):
+def play_func(exp_queue_swing_up, exp_queue_balancing, actor_swing_up_net, critic_swing_up_net, actor_balancing_net, critic_balancing_net):
     env.start()
     swing_up_action_min = -SWING_UP_SCALE_FACTOR
     swing_up_action_max = SWING_UP_SCALE_FACTOR
@@ -89,12 +89,11 @@ def play_func(exp_queue_swing_up, exp_queue_balancing, actor_net, critic_net, ac
     )
 
     agent_swing_up = rl_agent.AgentDDPG(
-        actor_net, n_actions=1, action_selector=action_selector_swing_up,
+        actor_swing_up_net, n_actions=1, action_selector=action_selector_swing_up,
         action_min=swing_up_action_min, action_max=swing_up_action_max,
         device=device, preprocessor=float32_preprocessor,
         name="SwingUp_AgentDDPG"
     )
-
 
     action_selector_balancing = actions.DDPGActionSelector(
         epsilon=params.EPSILON_INIT, ou_enabled=True, scale_factor=BALANCING_SCALE_FACTOR
@@ -108,10 +107,10 @@ def play_func(exp_queue_swing_up, exp_queue_balancing, actor_net, critic_net, ac
     )
 
     agent_balancing = rl_agent.AgentDDPG(
-        actor_balance_net, n_actions=1, action_selector=action_selector_balancing,
+        actor_balancing_net, n_actions=1, action_selector=action_selector_balancing,
         action_min=balancing_action_min, action_max=balancing_action_max, device=device,
         preprocessor=float32_preprocessor,
-        name="Balance_AgentDDPG"
+        name="Balancing_AgentDDPG"
     )
 
     if params.DEEP_LEARNING_MODEL in [DeepLearningModelName.DDPG_GRU, DeepLearningModelName.DDPG_GRU_ATTENTION]:
@@ -134,14 +133,15 @@ def play_func(exp_queue_swing_up, exp_queue_balancing, actor_net, critic_net, ac
     swing_up_step_idx = 0
     balancing_step_idx = 0
 
-    best_episode_reward = 0
+    best_mean_episode_reward = 0.0
 
     balancing_step_reward_list = []
 
-    recent_swing_up_to_balance_exp = None
+    recent_swing_up_to_balancing_exp = None
 
     with utils.RewardTracker(
-            params.STOP_MEAN_EPISODE_REWARD, params.AVG_EPISODE_SIZE_FOR_STAT,
+            stop_mean_episode_reward=params.STOP_MEAN_EPISODE_REWARD,
+            average_size_for_stats=params.AVG_EPISODE_SIZE_FOR_STAT,
             frame=True, draw_viz=params.DRAW_VIZ, stat=stat) as reward_tracker:
         while step_idx < params.MAX_GLOBAL_STEPS:
             # 1 스텝 진행하고 exp를 exp_queue에 넣음
@@ -168,7 +168,7 @@ def play_func(exp_queue_swing_up, exp_queue_balancing, actor_net, critic_net, ac
                 epsilon_tracker_swing_up.udpate(swing_up_step_idx)
 
                 # NOTE: exp 잠시 대기
-                recent_swing_up_to_balance_exp = copy.deepcopy(exp)
+                recent_swing_up_to_balancing_exp = copy.deepcopy(exp)
 
             elif status_value == Status.BALANCING.value:  # BALANCING:1.0, BALANCING_TO_SWING_UP:-0.5
                 balancing_step_idx += 1
@@ -186,8 +186,8 @@ def play_func(exp_queue_swing_up, exp_queue_balancing, actor_net, critic_net, ac
                 exp_queue_balancing.put(exp)
 
                 # NOTE: 대기 중인 exp의 reward를 수정하고 exp_queue_swing_up에 넣기
-                recent_swing_up_to_balance_exp._replace(reward=sum(balancing_step_reward_list))
-                exp_queue_swing_up.put(recent_swing_up_to_balance_exp)
+                recent_swing_up_to_balancing_exp._replace(reward=sum(balancing_step_reward_list))
+                exp_queue_swing_up.put(recent_swing_up_to_balancing_exp)
 
                 balancing_step_reward_list.clear()
 
@@ -206,28 +206,25 @@ def play_func(exp_queue_swing_up, exp_queue_balancing, actor_net, critic_net, ac
                 )
 
                 model_save_condition = [
-                    current_episode_reward > best_episode_reward,
+                    reward_tracker.mean_episode_reward > best_mean_episode_reward,
                     step_idx > params.MAX_GLOBAL_STEPS / 4
                 ]
 
-                if all(model_save_condition):
+                if reward_tracker.mean_episode_reward > best_mean_episode_reward:
+                    best_mean_episode_reward = reward_tracker.mean_episode_reward
+
+                if all(model_save_condition) or solved:
                     rl_agent.save_actor_critic_model(
                         MODEL_SAVE_DIR, params.ENVIRONMENT_ID,
-                        actor_net.__name__, actor_net, critic_net.__name__, critic_net,
-                        step_idx, current_episode_reward
+                        actor_swing_up_net.__name__, actor_swing_up_net, critic_swing_up_net.__name__, critic_swing_up_net,
+                        step_idx, reward_tracker.mean_episode_reward
                     )
 
                     rl_agent.save_actor_critic_model(
                         MODEL_SAVE_DIR, params.ENVIRONMENT_ID,
-                        actor_balance_net.__name__, actor_balance_net, critic_balance_net.__name__, critic_balance_net,
-                        step_idx, current_episode_reward
+                        actor_balancing_net.__name__, actor_balancing_net, critic_balancing_net.__name__, critic_balancing_net,
+                        step_idx, reward_tracker.mean_episode_reward
                     )
-
-                if current_episode_reward > best_episode_reward:
-                    best_episode_reward = current_episode_reward
-
-                if solved:
-                    break
 
     exp_queue_swing_up.put(None)
     exp_queue_balancing.put(None)
@@ -240,20 +237,20 @@ def main():
     ### SWING_UP Controller ###
     ###########################
     if params.DEEP_LEARNING_MODEL is DeepLearningModelName.DDPG_MLP:
-        actor_net = policy_based_model.DDPGActor(
+        actor_swing_up_net = policy_based_model.DDPGActor(
             obs_size=OBS_SIZE,
             hidden_size_1=512, hidden_size_2=512,
             n_actions=1,
             scale=SWING_UP_SCALE_FACTOR
         ).to(device)
 
-        critic_net = policy_based_model.DDPGCritic(
+        critic_swing_up_net = policy_based_model.DDPGCritic(
             obs_size=OBS_SIZE,
             hidden_size_1=512, hidden_size_2=512,
             n_actions=1
         ).to(device)
     elif params.DEEP_LEARNING_MODEL is DeepLearningModelName.DDPG_GRU:
-        actor_net = policy_based_model.DDPGGruActor(
+        actor_swing_up_net = policy_based_model.DDPGGruActor(
             obs_size=OBS_SIZE,
             hidden_size_1=256, hidden_size_2=256,
             n_actions=1,
@@ -261,7 +258,7 @@ def main():
             scale=BALANCING_SCALE_FACTOR
         ).to(device)
 
-        critic_net = policy_based_model.DDPGGruCritic(
+        critic_swing_up_net = policy_based_model.DDPGGruCritic(
             obs_size=OBS_SIZE,
             hidden_size_1=256, hidden_size_2=256,
             n_actions=1,
@@ -270,33 +267,33 @@ def main():
     else:
         raise ValueError()
 
-    print(actor_net)
-    print(critic_net)
+    print(actor_swing_up_net)
+    print(critic_swing_up_net)
 
-    target_actor_net = rl_agent.TargetNet(actor_net)
-    target_critic_net = rl_agent.TargetNet(critic_net)
+    target_actor_swing_up_net = rl_agent.TargetNet(actor_swing_up_net)
+    target_critic_swing_up_net = rl_agent.TargetNet(critic_swing_up_net)
 
-    actor_optimizer = optim.Adam(actor_net.parameters(), lr=params.ACTOR_LEARNING_RATE)
-    critic_optimizer = optim.Adam(critic_net.parameters(), lr=params.LEARNING_RATE)
+    actor_swing_up_optimizer = optim.Adam(actor_swing_up_net.parameters(), lr=params.ACTOR_LEARNING_RATE)
+    critic_swing_up_optimizer = optim.Adam(critic_swing_up_net.parameters(), lr=params.LEARNING_RATE)
 
     ############################
     ### BALANCING Controller ###
     ############################
     if params.DEEP_LEARNING_MODEL is DeepLearningModelName.DDPG_MLP:
-        actor_balance_net = policy_based_model.DDPGActor(
+        actor_balancing_net = policy_based_model.DDPGActor(
             obs_size=OBS_SIZE,
             hidden_size_1=512, hidden_size_2=512,
             n_actions=1,
             scale=BALANCING_SCALE_FACTOR
         ).to(device)
 
-        critic_balance_net = policy_based_model.DDPGCritic(
+        critic_balancing_net = policy_based_model.DDPGCritic(
             obs_size=OBS_SIZE,
             hidden_size_1=512, hidden_size_2=512,
             n_actions=1
         ).to(device)
     elif params.DEEP_LEARNING_MODEL is DeepLearningModelName.DDPG_GRU:
-        actor_balance_net = policy_based_model.DDPGGruActor(
+        actor_balancing_net = policy_based_model.DDPGGruActor(
             obs_size=OBS_SIZE,
             hidden_size_1=256, hidden_size_2=256,
             n_actions=1,
@@ -304,7 +301,7 @@ def main():
             scale=BALANCING_SCALE_FACTOR
         ).to(device)
 
-        critic_balance_net = policy_based_model.DDPGGruCritic(
+        critic_balancing_net = policy_based_model.DDPGGruCritic(
             obs_size=OBS_SIZE,
             hidden_size_1=256, hidden_size_2=256,
             n_actions=1,
@@ -313,11 +310,11 @@ def main():
     else:
         raise ValueError()
 
-    target_actor_balance_net = rl_agent.TargetNet(actor_balance_net)
-    target_critic_balance_net = rl_agent.TargetNet(critic_balance_net)
+    target_actor_balancing_net = rl_agent.TargetNet(actor_balancing_net)
+    target_critic_balancing_net = rl_agent.TargetNet(critic_balancing_net)
 
-    actor_balance_optimizer = optim.Adam(actor_balance_net.parameters(), lr=params.ACTOR_LEARNING_RATE)
-    critic_balance_optimizer = optim.Adam(critic_balance_net.parameters(), lr=params.LEARNING_RATE)
+    actor_balancing_optimizer = optim.Adam(actor_balancing_net.parameters(), lr=params.ACTOR_LEARNING_RATE)
+    critic_balancing_optimizer = optim.Adam(critic_balancing_net.parameters(), lr=params.LEARNING_RATE)
 ##########################################################################################
 
     buffer_swing_up = experience.ExperienceReplayBuffer(experience_source=None, buffer_size=params.REPLAY_BUFFER_SIZE)
@@ -331,7 +328,7 @@ def main():
     exp_queue_balancing = mp.Queue(maxsize=params.TRAIN_STEP_FREQ * 2)
 
     play_proc = mp.Process(target=play_func, args=(
-        exp_queue_swing_up, exp_queue_balancing, actor_net, critic_net, actor_balance_net, critic_balance_net
+        exp_queue_swing_up, exp_queue_balancing, actor_swing_up_net, critic_swing_up_net, actor_balancing_net, critic_balancing_net
     ))
     play_proc.start()
 
@@ -358,17 +355,17 @@ def main():
     loss_total = 0.0
 
 ########################################################################################
-    actor_balance_grad_l2 = 0.0
-    actor_balance_grad_max = 0.0
-    actor_balance_grad_variance = 0.0
+    actor_balancing_grad_l2 = 0.0
+    actor_balancing_grad_max = 0.0
+    actor_balancing_grad_variance = 0.0
 
-    critic_balance_grad_l2 = 0.0
-    critic_balance_grad_max = 0.0
-    critic_balance_grad_variance = 0.0
+    critic_balancing_grad_l2 = 0.0
+    critic_balancing_grad_max = 0.0
+    critic_balancing_grad_variance = 0.0
 
-    loss_balance_actor = 0.0
-    loss_balance_critic = 0.0
-    loss_balance_total = 0.0
+    loss_balancing_actor = 0.0
+    loss_balancing_critic = 0.0
+    loss_balancing_total = 0.0
 
     count_bal = 0
 ########################################################################################
@@ -406,7 +403,7 @@ def main():
                 #     critic_grad_l2, critic_grad_variance, critic_grad_max,
                 #     buffer_length, exp.noise, exp.action
                 # )
-                # TODO: exp_balance.noise, exp_balance.action 정보 처리
+                # TODO: exp_balancing.noise, exp_balancing.action 정보 처리
                 stat_for_ddpg.draw_optimization_performance(
                     step_idx, exp_swing_up.noise, exp_swing_up.action
                 )
@@ -420,27 +417,26 @@ def main():
         if exp_swing_up and len(buffer_swing_up) >= params.MIN_REPLAY_SIZE_FOR_TRAIN:
             actor_grad_l2, actor_grad_max, actor_grad_variance, critic_grad_l2, critic_grad_max, critic_grad_variance, \
             loss_actor, loss_critic, loss_total = model_update(
-                buffer_swing_up, actor_net, critic_net, target_actor_net, target_critic_net, actor_optimizer, critic_optimizer,
+                buffer_swing_up, actor_swing_up_net, critic_swing_up_net, target_actor_swing_up_net, target_critic_swing_up_net, actor_swing_up_optimizer, critic_swing_up_optimizer,
                 step_idx, actor_grad_l2, actor_grad_max, actor_grad_variance,
                 critic_grad_l2, critic_grad_max, critic_grad_variance,
                 loss_actor, loss_critic, loss_total, per=False
             )
 
-        ## buffer_balance를 통하여 경험 정보 가져와 모델 업데이트
+        ## buffer_balancing를 통하여 경험 정보 가져와 모델 업데이트
         if exp_balancing and len(buffer_balancing) >= params.MIN_REPLAY_SIZE_FOR_TRAIN:
-            #print("Update Balance!!!")
-            actor_balance_grad_l2, actor_balance_grad_max, actor_balance_grad_variance, critic_balance_grad_l2, \
-            critic_balance_grad_max, critic_balance_grad_variance, loss_balance_actor, loss_balance_critic, \
-            loss_balance_total = model_update(
-                buffer_balancing, actor_balance_net, critic_balance_net, target_actor_balance_net, target_critic_balance_net,
-                actor_balance_optimizer, critic_balance_optimizer,
-                step_idx, actor_balance_grad_l2, actor_balance_grad_max, actor_balance_grad_variance,
-                critic_balance_grad_l2, critic_balance_grad_max, critic_balance_grad_variance,
-                loss_balance_actor, loss_balance_critic, loss_balance_total, per=False
+            actor_balancing_grad_l2, actor_balancing_grad_max, actor_balancing_grad_variance, critic_balancing_grad_l2, \
+            critic_balancing_grad_max, critic_balancing_grad_variance, loss_balancing_actor, loss_balancing_critic, \
+            loss_balancing_total = model_update(
+                buffer_balancing, actor_balancing_net, critic_balancing_net, target_actor_balancing_net, target_critic_balancing_net,
+                actor_balancing_optimizer, critic_balancing_optimizer,
+                step_idx, actor_balancing_grad_l2, actor_balancing_grad_max, actor_balancing_grad_variance,
+                critic_balancing_grad_l2, critic_balancing_grad_max, critic_balancing_grad_variance,
+                loss_balancing_actor, loss_balancing_critic, loss_balancing_total, per=False
             )
 
 
-def model_update(buffer, actor_net, critic_net, target_actor_net, target_critic_net, actor_optimizer, critic_optimizer,
+def model_update(buffer, actor_swing_up_net, critic_swing_up_net, target_actor_swing_up_net, target_critic_swing_up_net, actor_swing_up_optimizer, critic_swing_up_optimizer,
                  step_idx, actor_grad_l2, actor_grad_max, actor_grad_variance,
                  critic_grad_l2, critic_grad_max, critic_grad_variance,
                  loss_actor, loss_critic, loss_total, per):
@@ -456,11 +452,11 @@ def model_update(buffer, actor_net, critic_net, target_actor_net, target_critic_
     )
 
     # train critic
-    critic_optimizer.zero_grad()
-    batch_q_v = critic_net(batch_states_v, batch_actions_v)
+    critic_swing_up_optimizer.zero_grad()
+    batch_q_v = critic_swing_up_net(batch_states_v, batch_actions_v)
 
-    batch_last_act_v = target_actor_net.target_model(batch_last_states_v)
-    batch_q_last_v = target_critic_net.target_model(batch_last_states_v, batch_last_act_v)
+    batch_last_act_v = target_actor_swing_up_net.target_model(batch_last_states_v)
+    batch_q_last_v = target_critic_swing_up_net.target_model(batch_last_states_v, batch_last_act_v)
 
     batch_q_last_v[batch_dones_mask] = 0.0
     batch_target_q_v = batch_rewards_v.unsqueeze(dim=-1) + batch_q_last_v * params.GAMMA ** params.N_STEP
@@ -478,32 +474,32 @@ def model_update(buffer, actor_net, critic_net, target_actor_net, target_critic_
     loss_critic_v.mean().backward()
 
     critic_grads = np.concatenate([p.grad.data.cpu().numpy().flatten()
-                                   for p in critic_net.parameters()
+                                   for p in critic_swing_up_net.parameters()
                                    if p.grad is not None])
 
     # clip the gradients to prevent the model from exploding gradient
-    torch.nn.utils.clip_grad_norm_(critic_net.parameters(), CLIP)
+    torch.nn.utils.clip_grad_norm_(critic_swing_up_net.parameters(), CLIP)
 
-    critic_optimizer.step()
+    critic_swing_up_optimizer.step()
 
     # train actor
-    actor_optimizer.zero_grad()
-    batch_current_actions_v = actor_net(batch_states_v)
-    actor_loss_v = -critic_net(batch_states_v, batch_current_actions_v)
+    actor_swing_up_optimizer.zero_grad()
+    batch_current_actions_v = actor_swing_up_net(batch_states_v)
+    actor_loss_v = -critic_swing_up_net(batch_states_v, batch_current_actions_v)
     loss_actor_v = actor_loss_v.mean()
     loss_actor_v.backward()
 
     actor_grads = np.concatenate([p.grad.data.cpu().numpy().flatten()
-                                  for p in actor_net.parameters()
+                                  for p in actor_swing_up_net.parameters()
                                   if p.grad is not None])
 
     # clip the gradients to prevent the model from exploding gradient
-    torch.nn.utils.clip_grad_norm_(actor_net.parameters(), CLIP)
+    torch.nn.utils.clip_grad_norm_(actor_swing_up_net.parameters(), CLIP)
 
-    actor_optimizer.step()
+    actor_swing_up_optimizer.step()
 
-    target_actor_net.alpha_sync(alpha=1 - 0.001)
-    target_critic_net.alpha_sync(alpha=1 - 0.001)
+    target_actor_swing_up_net.alpha_sync(alpha=1 - 0.001)
+    target_critic_swing_up_net.alpha_sync(alpha=1 - 0.001)
 
     actor_grad_l2 = smooth(actor_grad_l2, np.sqrt(np.mean(np.square(actor_grads))))
     actor_grad_max = smooth(actor_grad_max, np.max(np.abs(actor_grads)))

@@ -102,7 +102,7 @@ def play_func(exp_queue, actor_net, critic_net):
 
     step_idx = 0
 
-    best_episode_reward = 0
+    best_mean_episode_reward = 0
 
     with utils.RewardTracker(
             params.STOP_MEAN_EPISODE_REWARD, params.AVG_EPISODE_SIZE_FOR_STAT,
@@ -126,22 +126,19 @@ def play_func(exp_queue, actor_net, critic_net):
                 )
 
                 model_save_condition = [
-                    current_episode_reward > best_episode_reward,
+                    reward_tracker.mean_episode_reward > best_mean_episode_reward,
                     step_idx > params.MAX_GLOBAL_STEPS / 4
                 ]
 
-                if all(model_save_condition):
+                if reward_tracker.mean_episode_reward > best_mean_episode_reward:
+                    best_mean_episode_reward = reward_tracker.mean_episode_reward
+
+                if all(model_save_condition) or solved:
                     rl_agent.save_actor_critic_model(
                         MODEL_SAVE_DIR, params.ENVIRONMENT_ID,
                         actor_net.__name__, actor_net, critic_net.__name__, critic_net,
-                        step_idx, current_episode_reward
+                        step_idx, reward_tracker.mean_episode_reward
                     )
-
-                if current_episode_reward > best_episode_reward:
-                    best_episode_reward = current_episode_reward
-
-                if solved:
-                    break
 
     exp_queue.put(None)
 
@@ -246,7 +243,6 @@ def main():
                 #     critic_grad_l2, critic_grad_variance, critic_grad_max,
                 #     buffer_length, exp.noise, exp.action
                 # )
-                # TODO: exp_balance.noise, exp_balance.action 정보 처리
                 stat_for_ddpg.draw_optimization_performance(
                     step_idx, exp.noise, exp.action
                 )
