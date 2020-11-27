@@ -45,10 +45,11 @@ else:
 
 if params.TEAMVIEWER:
     SWING_UP_SCALE_FACTOR = 0.05
-    BALANCING_SCALE_FACTOR = 0.001
+    BALANCING_SCALE_FACTOR = 0.0005
+
 elif params.CH:
-    SWING_UP_SCALE_FACTOR = 0.025
-    BALANCING_SCALE_FACTOR = 0.001
+    SWING_UP_SCALE_FACTOR = 0.05
+    BALANCING_SCALE_FACTOR = 0.0005
 else:
     SWING_UP_SCALE_FACTOR = 0.035
     BALANCING_SCALE_FACTOR = 0.002
@@ -147,13 +148,13 @@ def play_func(exp_queue, exp_queue_balance, env, actor_net, critic_net, actor_ba
             else:
                 raise ValueError()
 
-            if params.TEAMVIEWER:
+            if params.CH:
                 if math.cos(math.pi) < pendulum_angle < math.cos(3.089232776): #cos(180) < exp[0][0] < cos(183) (-1<exp[0][0]<-0.9985468154)
                     count_bal += 1
                 else:
                     count_bal = 0
             else:
-                if math.cos(math.pi) < pendulum_angle < math.cos(3.316125):  # cos(180) < exp[0][0] < cos(190) (-1<exp[0][0]<-0.9985468154)
+                if math.cos(math.pi) < pendulum_angle < math.cos(3.316125579):  # cos(180) < exp[0][0] < cos(190) (-1<exp[0][0]<-0.9985468154)
                     count_bal += 1
                 else:
                     count_bal = 0
@@ -178,8 +179,14 @@ def play_func(exp_queue, exp_queue_balance, env, actor_net, critic_net, actor_ba
 
                 epsilon_tracker_balance.udpate(balancing_step_idx)
 
-            episode_rewards = experience_source_balance.pop_episode_reward_lst()
-            if episode_rewards:  # 에피소드가 종료될 때만 True
+            episode_rewards_swing_up = experience_source.pop_episode_reward_lst()
+            episode_rewards_balance = experience_source_balance.pop_episode_reward_lst()
+
+
+
+
+            if episode_rewards_swing_up or episode_rewards_balance:  # 에피소드가 종료될 때만 True
+                episode_rewards = episode_rewards_swing_up + episode_rewards_balance
                 current_episode_reward = episode_rewards[0]
 
                 solved, mean_episode_reward = reward_tracker.set_episode_reward(
