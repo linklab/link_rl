@@ -37,7 +37,6 @@ if torch.cuda.is_available():
 else:
     device = torch.device("cpu")
 
-STEP_LENGTH = 1
 
 def play_func(exp_queue, env, net):
     print(env.action_space.low[0], env.action_space.high[0])
@@ -60,14 +59,14 @@ def play_func(exp_queue, env, net):
         action_min=action_min, action_max=action_max, device=device, preprocessor=float32_preprocessor
     )
 
-    experience_source = experience.ExperienceSourceSingleEnvFirstLast(
-        env, agent, gamma=params.GAMMA, steps_count=params.N_STEP,
-        step_length=STEP_LENGTH if params.DEEP_LEARNING_MODEL in [DeepLearningModelName.DDPG_GRU, DeepLearningModelName.DDPG_GRU_ATTENTION] else -1
-    )
+    if params.DEEP_LEARNING_MODEL in [DeepLearningModelName.DDPG_GRU, DeepLearningModelName.DDPG_GRU_ATTENTION]:
+        step_length = params.RNN_STEP_LENGTH
+    else:
+        step_length = -1
 
-    # experience_source = experience.ExperienceSourceFirstLast(
-    #     env, agent, gamma=params.GAMMA, steps_count=params.N_STEP
-    # )
+    experience_source = experience.ExperienceSourceSingleEnvFirstLast(
+        env, agent, gamma=params.GAMMA, steps_count=params.N_STEP, step_length=step_length
+    )
 
     exp_source_iter = iter(experience_source)
 
@@ -135,7 +134,7 @@ def main():
     elif params.DEEP_LEARNING_MODEL is DeepLearningModelName.DDPG_GRU:
         actor_net = policy_based_model.DDPGGruActor(
             obs_size=3,
-            hidden_size_1=128, hidden_size_2=64,
+            hidden_size_1=256, hidden_size_2=256,
             n_actions=1,
             bidirectional=False,
             scale=2.0
@@ -143,14 +142,14 @@ def main():
 
         critic_net = policy_based_model.DDPGGruCritic(
             obs_size=3,
-            hidden_size_1=128, hidden_size_2=64,
+            hidden_size_1=256, hidden_size_2=256,
             n_actions=1,
             bidirectional=False
         ).to(device)
     elif params.DEEP_LEARNING_MODEL is DeepLearningModelName.DDPG_GRU_ATTENTION:
         actor_net = policy_based_model.DDPGGruAttentionActor(
             obs_size=3,
-            hidden_size=128,
+            hidden_size=256,
             n_actions=1,
             bidirectional=False,
             scale=2.0
@@ -158,7 +157,7 @@ def main():
 
         critic_net = policy_based_model.DDPGGruAttentionCritic(
             obs_size=3,
-            hidden_size_1=128, hidden_size_2=64,
+            hidden_size_1=256, hidden_size_2=256,
             n_actions=1,
             bidirectional=False
         ).to(device)

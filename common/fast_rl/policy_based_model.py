@@ -256,7 +256,7 @@ class DDPGGruActor(nn.Module):
     def __init__(self, obs_size, hidden_size_1, hidden_size_2, n_actions, bidirectional, scale):
         super(DDPGGruActor, self).__init__()
 
-        self.__name__ = "DDPGLstmActor"
+        self.__name__ = "DDPGGruActor"
 
         self.net = GruEncoder(
             embedding_dim=obs_size,
@@ -289,7 +289,7 @@ class DDPGGruCritic(nn.Module):
     def __init__(self, obs_size, hidden_size_1, hidden_size_2, n_actions, bidirectional):
         super(DDPGGruCritic, self).__init__()
 
-        self.__name__ = "DDPGLstmCritic"
+        self.__name__ = "DDPGGruCritic"
 
         self.obs_net = GruEncoder(
             embedding_dim=obs_size,

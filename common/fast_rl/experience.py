@@ -24,10 +24,10 @@ Experience = namedtuple('Experience', ['state', 'action', 'reward', 'done'])
 ExperienceWithNoise = namedtuple('ExperienceWithNoise', ['state', 'action', 'noise', 'reward', 'done'])
 
 ExperienceFirstLast = collections.namedtuple(
-    'ExperienceFirstLast', ('state', 'action', 'reward', 'last_state', 'last_step')
+    'ExperienceFirstLast', ('state', 'action', 'reward', 'last_state', 'last_step', 'done')
 )
 ExperienceFirstLastWithNoise = collections.namedtuple(
-    'ExperienceFirstLastWithNoise', ('state', 'action', 'noise', 'reward', 'last_state', 'last_step')
+    'ExperienceFirstLastWithNoise', ('state', 'action', 'noise', 'reward', 'last_state', 'last_step', 'done')
 )
 
 
@@ -37,7 +37,7 @@ class ExperienceSourceSingleEnv:
     Every experience contains n list of Experience entries
     """
 
-    def __init__(self, env, agent, steps_count=2, step_length=-1):
+    def __init__(self, env, agent, steps_count=2, step_length=-1, render=False):
         assert isinstance(agent, BaseAgent)
         assert isinstance(steps_count, int)
         assert steps_count >= 1
@@ -45,21 +45,39 @@ class ExperienceSourceSingleEnv:
         self.agent = agent
         self.steps_count = steps_count
         self.step_length = step_length  # -1 이면 MLP, 1 이상의 값이면 RNN
+        self.render = render
         self.episode_reward_lst = []
         self.episode_done_step_lst = []
         self.episode_continuous_positive_actions = []
         self.episode_continuous_negative_actions = []
         self.state_deque = deque(maxlen=30)
 
-    def __iter__(self):
-        state = self.env.reset()
+    def get_processed_state(self, new_state):
+        self.state_deque.append(new_state)
 
         if self.step_length == -1:
-            state = np.array(state)
+            next_state = np.array(self.state_deque[-1])
         elif self.step_length >= 1:
-            state = np.tile(state, (self.step_length, 1))  # state: (step_size, 4)
+            if len(self.state_deque) < self.step_length:
+                next_state = list(self.state_deque)
+
+                for _ in range(self.step_length - len(self.state_deque)):
+                    next_state.insert(0, np.zeros(shape=self.env.observation_space.shape))
+
+                next_state = np.array(next_state)
+            else:
+                next_state = np.array(
+                    [
+                        self.state_deque[-self.step_length + offset] for offset in range(self.step_length)
+                    ]
+                )
         else:
             raise ValueError()
+
+        return next_state
+
+    def __iter__(self):
+        state = self.env.reset()
 
         history = deque(maxlen=self.steps_count)
         cur_reward = 0.0
@@ -69,8 +87,14 @@ class ExperienceSourceSingleEnv:
 
         iter_idx = 0
         while True:
+            if self.render:
+                self.env.render()
+
             states_input = []
-            states_input.append(state)
+
+            processed_state = self.get_processed_state(state)
+
+            states_input.append(processed_state)
 
             agent_states_input = []
             agent_states_input.append(agent_state)
@@ -90,29 +114,6 @@ class ExperienceSourceSingleEnv:
 
             next_state, r, is_done, info = self.env.step(action)
 
-            self.state_deque.append(next_state)
-
-            if self.step_length == -1:
-                next_state = np.array(self.state_deque[-1])
-            elif self.step_length >= 1:
-                if len(self.state_deque) < self.step_length:
-                    next_state = list(self.state_deque)
-
-                    for _ in range(self.step_length - len(self.state_deque)):
-                        next_state.insert(0, [0.0] * len(next_state))
-
-                    next_state = np.array(next_state)
-                else:
-                    next_state = np.array(
-                        [
-                            self.state_deque[-self.step_length + offset] for offset in range(self.step_length)
-                        ]
-                    )
-                # print(next_state.shape)
-                # print(next_state)
-            else:
-                raise ValueError()
-
             if 'original_reward' in info:
                 cur_reward += info['original_reward']
             else:
@@ -122,9 +123,9 @@ class ExperienceSourceSingleEnv:
 
             if state is not None:
                 if isinstance(self.agent, AgentDDPG):
-                    history.append(ExperienceWithNoise(state=state, action=action, noise=noise, reward=r, done=is_done))
+                    history.append(ExperienceWithNoise(state=processed_state, action=action, noise=noise, reward=r, done=is_done))
                 else:
-                    history.append(Experience(state=state, action=action, reward=r, done=is_done))
+                    history.append(Experience(state=processed_state, action=action, reward=r, done=is_done))
 
             if len(history) == self.steps_count:
                 yield tuple(history)
@@ -143,13 +144,6 @@ class ExperienceSourceSingleEnv:
                     yield tuple(history)
 
                 state = self.env.reset()
-
-                if self.step_length == -1:
-                    state = np.array(state)
-                elif self.step_length >= 1:
-                    state = np.tile(state, (self.step_length, 1))  # state: (step_size, 4)
-                else:
-                    raise ValueError()
 
                 agent_state = self.agent.initial_agent_state()
 
@@ -179,9 +173,9 @@ class ExperienceSourceSingleEnv:
 
 
 class ExperienceSourceSingleEnvFirstLast(ExperienceSourceSingleEnv):
-    def __init__(self, env, agent, gamma, steps_count=1, step_length=-1):
+    def __init__(self, env, agent, gamma, steps_count=1, step_length=-1, render=False):
         assert isinstance(gamma, float)
-        super(ExperienceSourceSingleEnvFirstLast, self).__init__(env, agent, steps_count + 1, step_length)
+        super(ExperienceSourceSingleEnvFirstLast, self).__init__(env, agent, steps_count + 1, step_length, render)
         self.gamma = gamma
         self.steps_count = steps_count
 
@@ -201,12 +195,12 @@ class ExperienceSourceSingleEnvFirstLast(ExperienceSourceSingleEnv):
             if isinstance(self.agent, AgentDDPG):
                 exp = ExperienceFirstLastWithNoise(
                     state=exp[0].state, action=exp[0].action, noise=exp[0].noise, reward=total_reward,
-                    last_state=last_state, last_step=len(elems)
+                    last_state=last_state, last_step=len(elems), done=exp[-1].done
                 )
             else:
                 exp = ExperienceFirstLast(
                     state=exp[0].state, action=exp[0].action, reward=total_reward, last_state=last_state,
-                    last_step=len(elems)
+                    last_step=len(elems), done=exp[-1].done
                 )
             yield exp
 

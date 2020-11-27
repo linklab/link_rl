@@ -44,11 +44,11 @@ else:
 
 
 if params.TEAMVIEWER:
-    SWING_UP_SCALE_FACTOR = 0.05
+    ACTION_SCALE_FACTOR = 0.05
 elif params.CH:
-    SWING_UP_SCALE_FACTOR = 0.025
+    ACTION_SCALE_FACTOR = 0.025
 else:
-    SWING_UP_SCALE_FACTOR = 0.035
+    ACTION_SCALE_FACTOR = 0.035
 CLIP = 1
 
 OBS_SIZE = 6
@@ -58,13 +58,9 @@ STEP_LENGTH = 4
 def play_func(exp_queue, env, actor_net, critic_net):
     # print(env.action_space.low[0], env.action_space.high[0])
     env.start()
-    swing_up_action_min = -SWING_UP_SCALE_FACTOR
-    swing_up_action_max = SWING_UP_SCALE_FACTOR
-
-    # action_selector = actions.EpsilonGreedyDDPGActionSelector(epsilon=params.EPSILON_INIT)
 
     action_selector = actions.DDPGActionSelector(
-        epsilon=params.EPSILON_INIT, ou_enabled=True, scale_factor=SWING_UP_SCALE_FACTOR
+        epsilon=params.EPSILON_INIT, ou_enabled=True, scale_factor=ACTION_SCALE_FACTOR
     )
 
     epsilon_tracker = actions.EpsilonTracker(
@@ -76,13 +72,18 @@ def play_func(exp_queue, env, actor_net, critic_net):
 
     agent = rl_agent.AgentDDPG(
         actor_net, n_actions=1, action_selector=action_selector,
-        action_min=swing_up_action_min, action_max=swing_up_action_max,
+        action_min=ACTION_SCALE_FACTOR * -1.0, action_max=ACTION_SCALE_FACTOR,
         device=device, preprocessor=float32_preprocessor,
         name="One_AgentDDPG"
     )
 
+    if params.DEEP_LEARNING_MODEL in [DeepLearningModelName.DDPG_GRU, DeepLearningModelName.DDPG_GRU_ATTENTION]:
+        step_length = params.RNN_STEP_LENGTH
+    else:
+        step_length = -1
+
     experience_source = experience.ExperienceSourceSingleEnvFirstLast(
-        env, agent, gamma=params.GAMMA, steps_count=params.N_STEP
+        env, agent, gamma=params.GAMMA, steps_count=params.N_STEP, step_length=step_length
     )
 
     exp_source_iter = iter(experience_source)
@@ -141,12 +142,9 @@ def play_func(exp_queue, env, actor_net, critic_net):
 def main():
     mp.set_start_method('spawn')
 
-    if params.DEEP_LEARNING_MODEL is DeepLearningModelName.DDPG_MLP:
-        env = MatlabRotaryInvertedPendulumEnv(obs_size=OBS_SIZE, step_length=-1)
-    elif params.DEEP_LEARNING_MODEL is DeepLearningModelName.DDPG_GRU_ATTENTION:
-        env = MatlabRotaryInvertedPendulumEnv(obs_size=OBS_SIZE, step_length=STEP_LENGTH)
-    else:
-        raise
+    env = MatlabRotaryInvertedPendulumEnv(
+        obs_size=OBS_SIZE, action_min=ACTION_SCALE_FACTOR * -1.0, action_max=ACTION_SCALE_FACTOR
+    )
 
     print("env:", params.ENVIRONMENT_ID)
     print("observation_space:", OBS_SIZE)
@@ -157,7 +155,7 @@ def main():
             obs_size=OBS_SIZE,
             hidden_size_1=512, hidden_size_2=512,
             n_actions=1,
-            scale=SWING_UP_SCALE_FACTOR
+            scale=ACTION_SCALE_FACTOR
         ).to(device)
 
         critic_net = policy_based_model.DDPGCritic(
@@ -165,18 +163,18 @@ def main():
             hidden_size_1=512, hidden_size_2=512,
             n_actions=1
         ).to(device)
-    elif params.DEEP_LEARNING_MODEL is DeepLearningModelName.DDPG_GRU_ATTENTION:
-        actor_net = policy_based_model.DDPGGruAttentionActor(
+    elif params.DEEP_LEARNING_MODEL is DeepLearningModelName.DDPG_GRU:
+        actor_net = policy_based_model.DDPGGruActor(
             obs_size=OBS_SIZE,
-            hidden_size=128,
+            hidden_size_1=256, hidden_size_2=256,
             n_actions=1,
             bidirectional=False,
-            scale=SWING_UP_SCALE_FACTOR
+            scale=ACTION_SCALE_FACTOR
         ).to(device)
 
-        critic_net = policy_based_model.DDPGGruAttentionCritic(
+        critic_net = policy_based_model.DDPGGruCritic(
             obs_size=OBS_SIZE,
-            hidden_size_1=128, hidden_size_2=64,
+            hidden_size_1=256, hidden_size_2=256,
             n_actions=1,
             bidirectional=False
         ).to(device)

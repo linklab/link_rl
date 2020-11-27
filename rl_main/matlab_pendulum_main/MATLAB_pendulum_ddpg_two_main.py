@@ -88,8 +88,13 @@ def play_func(exp_queue, exp_queue_balance, env, actor_net, critic_net, actor_ba
         name="SwingUp_AgentDDPG"
     )
 
+    if params.DEEP_LEARNING_MODEL in [DeepLearningModelName.DDPG_GRU, DeepLearningModelName.DDPG_GRU_ATTENTION]:
+        step_length = params.RNN_STEP_LENGTH
+    else:
+        step_length = -1
+
     experience_source = experience.ExperienceSourceSingleEnvFirstLast(
-        env, agent, gamma=params.GAMMA, steps_count=params.N_STEP
+        env, agent, gamma=params.GAMMA, steps_count=params.N_STEP, step_length=step_length
     )
 
     exp_source_iter = iter(experience_source)
@@ -113,8 +118,13 @@ def play_func(exp_queue, exp_queue_balance, env, actor_net, critic_net, actor_ba
         name="Balance_AgentDDPG"
     )
 
+    if params.DEEP_LEARNING_MODEL in [DeepLearningModelName.DDPG_GRU, DeepLearningModelName.DDPG_GRU_ATTENTION]:
+        step_length = params.RNN_STEP_LENGTH
+    else:
+        step_length = -1
+
     experience_source_balance = experience.ExperienceSourceSingleEnvFirstLast(
-        env, agent_bal, gamma=params.GAMMA, steps_count=params.N_STEP
+        env, agent_bal, gamma=params.GAMMA, steps_count=params.N_STEP, step_length=step_length
     )
 
     exp_source_iter_balance = iter(experience_source_balance)
@@ -143,7 +153,7 @@ def play_func(exp_queue, exp_queue_balance, env, actor_net, critic_net, actor_ba
 
             if params.DEEP_LEARNING_MODEL is DeepLearningModelName.DDPG_MLP:
                 pendulum_angle = exp[0][0]
-            elif params.DEEP_LEARNING_MODEL is DeepLearningModelName.DDPG_GRU_ATTENTION:
+            elif params.DEEP_LEARNING_MODEL is DeepLearningModelName.DDPG_GRU:
                 pendulum_angle = exp[0][-1][0]
             else:
                 raise ValueError()
@@ -159,7 +169,7 @@ def play_func(exp_queue, exp_queue_balance, env, actor_net, critic_net, actor_ba
                 else:
                     count_bal = 0
 
-            if count_bal < 10:  # Balance 제어로 넘어가는 조건: 180 ~ 190 각도 사이에 연속적으로 10번 이상
+            if count_bal < 3:  # Balance 제어로 넘어가는 조건: 180 ~ 190 각도 사이에 연속적으로 10번 이상
                 exp = next(exp_source_iter)
 
                 swing_up_step_idx += 1
@@ -182,11 +192,12 @@ def play_func(exp_queue, exp_queue_balance, env, actor_net, critic_net, actor_ba
             episode_rewards_swing_up = experience_source.pop_episode_reward_lst()
             episode_rewards_balance = experience_source_balance.pop_episode_reward_lst()
 
-
-
-
             if episode_rewards_swing_up or episode_rewards_balance:  # 에피소드가 종료될 때만 True
-                episode_rewards = episode_rewards_swing_up + episode_rewards_balance
+                if episode_rewards_swing_up:
+                    episode_rewards = episode_rewards_swing_up
+                else:
+                    episode_rewards = episode_rewards_balance
+
                 current_episode_reward = episode_rewards[0]
 
                 solved, mean_episode_reward = reward_tracker.set_episode_reward(
@@ -224,12 +235,9 @@ def play_func(exp_queue, exp_queue_balance, env, actor_net, critic_net, actor_ba
 def main():
     mp.set_start_method('spawn')
 
-    if params.DEEP_LEARNING_MODEL is DeepLearningModelName.DDPG_MLP:
-        env = MatlabRotaryInvertedPendulumEnv(obs_size=OBS_SIZE, step_length=-1)
-    elif params.DEEP_LEARNING_MODEL is DeepLearningModelName.DDPG_GRU_ATTENTION:
-        env = MatlabRotaryInvertedPendulumEnv(obs_size=OBS_SIZE, step_length=STEP_LENGTH)
-    else:
-        raise
+    env = MatlabRotaryInvertedPendulumEnv(
+        obs_size=OBS_SIZE, action_min=SWING_UP_SCALE_FACTOR * -1.0, action_max=SWING_UP_SCALE_FACTOR
+    )
 
     print("env:", params.ENVIRONMENT_ID)
     print("observation_space:", OBS_SIZE)
@@ -251,18 +259,18 @@ def main():
             hidden_size_1=512, hidden_size_2=512,
             n_actions=1
         ).to(device)
-    elif params.DEEP_LEARNING_MODEL is DeepLearningModelName.DDPG_GRU_ATTENTION:
-        actor_net = policy_based_model.DDPGGruAttentionActor(
+    elif params.DEEP_LEARNING_MODEL is DeepLearningModelName.DDPG_GRU:
+        actor_net = policy_based_model.DDPGGruActor(
             obs_size=OBS_SIZE,
-            hidden_size=128,
+            hidden_size_1=256, hidden_size_2=256,
             n_actions=1,
             bidirectional=False,
-            scale=SWING_UP_SCALE_FACTOR
+            scale=BALANCING_SCALE_FACTOR
         ).to(device)
 
-        critic_net = policy_based_model.DDPGGruAttentionCritic(
+        critic_net = policy_based_model.DDPGGruCritic(
             obs_size=OBS_SIZE,
-            hidden_size_1=128, hidden_size_2=64,
+            hidden_size_1=256, hidden_size_2=256,
             n_actions=1,
             bidirectional=False
         ).to(device)
@@ -294,18 +302,18 @@ def main():
             hidden_size_1=512, hidden_size_2=512,
             n_actions=1
         ).to(device)
-    elif params.DEEP_LEARNING_MODEL is DeepLearningModelName.DDPG_GRU_ATTENTION:
-        actor_balance_net = policy_based_model.DDPGGruAttentionActor(
+    elif params.DEEP_LEARNING_MODEL is DeepLearningModelName.DDPG_GRU:
+        actor_balance_net = policy_based_model.DDPGGruActor(
             obs_size=OBS_SIZE,
-            hidden_size=128,
+            hidden_size_1=256, hidden_size_2=256,
             n_actions=1,
             bidirectional=False,
             scale=BALANCING_SCALE_FACTOR
         ).to(device)
 
-        critic_balance_net = policy_based_model.DDPGGruAttentionCritic(
+        critic_balance_net = policy_based_model.DDPGGruCritic(
             obs_size=OBS_SIZE,
-            hidden_size_1=128, hidden_size_2=64,
+            hidden_size_1=256, hidden_size_2=256,
             n_actions=1,
             bidirectional=False
         ).to(device)

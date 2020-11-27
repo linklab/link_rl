@@ -1,28 +1,17 @@
-import itertools
 import math
 from abc import ABC
 import matlab.engine
 import gym
-from gym import spaces
-import time
 import numpy as np
 from common.environments.matlab.matlabcode import SimulinkPlant
 from config.parameters import PARAMETERS as params
-from collections import deque
 np.set_printoptions(formatter={'float_kind': lambda x: '{0:0.6f}'.format(x)})
 
 a = 0
 
 
-def slice_deque(d, start, stop, step):
-    d.rotate(-start)
-    slice = list(itertools.islice(d, 0, stop-start, step))
-    d.rotate(start)
-    return slice
-
-
 class MatlabRotaryInvertedPendulumEnv(gym.Env):
-    def __init__(self, obs_size, step_length=-1):
+    def __init__(self, obs_size, action_min, action_max):
         self.episode_steps = 0
         self.total_steps = 0
         self.q = 0
@@ -34,15 +23,26 @@ class MatlabRotaryInvertedPendulumEnv(gym.Env):
         self.obs_degree = [None, None]
         self.next_obs_degree = [None, None]
         self.simulation_time = 0.0
-        self.state_deque = deque(maxlen=30)
         self.num_continuous_positive_torque = 0
         self.num_continuous_negative_torque = 0
 
-
         self.obs_size = obs_size
-        self.step_length = step_length # FOR LSTM
         self.too_much_rotate = False
         # self.done_torque_threshold = 0.75
+
+        self.max_speed = 100.0
+
+        self.action_space = gym.spaces.Box(
+            low=action_min, high=action_max, shape=(1,),
+            dtype=np.float32
+        )
+
+        high = np.array([1., 1., self.max_speed, 1., 1., action_max], dtype=np.float32)
+        low = high * -1.0
+        self.observation_space = gym.spaces.Box(
+            low=low, high=high,
+            dtype=np.float32
+        )
 
     def pause(self):
         self.plant.conncectpause()
@@ -68,17 +68,10 @@ class MatlabRotaryInvertedPendulumEnv(gym.Env):
         #     self.q, self.w, self.simulation_time
         # ))
 
-        if self.step_length== -1:
-            state = np.array(self.state)
-        elif self.step_length >= 1:
-            state = np.tile(self.state, (self.step_length, 1)) # state: (step_size, 4)
-        else:
-            raise ValueError()
+
+        state = np.array(self.state)
 
         self.too_much_rotate = False
-
-        # print(state.shape)
-        # print(state)
 
         return state
 
@@ -118,7 +111,6 @@ class MatlabRotaryInvertedPendulumEnv(gym.Env):
 
         # self.state = (math.cos(self.q), math.sin(self.q), self.w, math.cos(self.q1), math.sin(self.q1), self.w1)
         self.state = (math.cos(self.q), math.sin(self.q), self.w, math.cos(self.q1), math.sin(self.q1), action)
-        self.state_deque.append(self.state)
 
         #print(self.q1, math.cos(self.q1), math.sin(self.q1))
 
@@ -188,27 +180,7 @@ class MatlabRotaryInvertedPendulumEnv(gym.Env):
         #     action, self.q, self.w, adjusted_radian, reward, self.simulation_time
         # ))
 
-        if self.step_length == -1:
-            next_state = np.array(self.state_deque[-1])
-        elif self.step_length >= 1:
-            if len(self.state_deque) < self.step_length:
-                next_state = list(self.state_deque)
-
-                for _ in range(self.step_length - len(self.state_deque)):
-                    next_state.insert(0, [0.0] * self.obs_size)
-                next_state = np.array(next_state)
-            else:
-                next_state = np.array(
-                    [
-                        self.state_deque[-self.step_length + offset] for offset in range(self.step_length)
-                    ]
-                )
-            # print(next_state.shape)
-            # print(next_state)
-        else:
-            raise ValueError()
-
-        return next_state, reward, done, info
+        return self.state, reward, done, info
 
     def _ordinary_reward(self, adjusted_radian, action, num_continuous_positive_torque, num_continuous_negative_torque):
         # reward = -((math.pi - adjusted_radian) ** 2 + 0.1 * (self.w ** 2) + 0.001 * (action ** 2))
