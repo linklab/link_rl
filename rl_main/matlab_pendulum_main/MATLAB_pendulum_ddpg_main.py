@@ -143,7 +143,7 @@ def play_func(exp_queue, exp_queue_balance, env, actor_net, critic_net, actor_ba
 
             if params.DEEP_LEARNING_MODEL is DeepLearningModelName.DDPG_MLP:
                 pendulum_angle = exp[0][0]
-            elif params.DEEP_LEARNING_MODEL is DeepLearningModelName.DDPG_LSTM_ATTENTION:
+            elif params.DEEP_LEARNING_MODEL is DeepLearningModelName.DDPG_GRU_ATTENTION:
                 pendulum_angle = exp[0][-1][0]
             else:
                 raise ValueError()
@@ -226,7 +226,7 @@ def main():
 
     if params.DEEP_LEARNING_MODEL is DeepLearningModelName.DDPG_MLP:
         env = MatlabRotaryInvertedPendulumEnv(obs_size=OBS_SIZE, step_length=-1)
-    elif params.DEEP_LEARNING_MODEL is DeepLearningModelName.DDPG_LSTM_ATTENTION:
+    elif params.DEEP_LEARNING_MODEL is DeepLearningModelName.DDPG_GRU_ATTENTION:
         env = MatlabRotaryInvertedPendulumEnv(obs_size=OBS_SIZE, step_length=STEP_LENGTH)
     else:
         raise
@@ -251,7 +251,7 @@ def main():
             hidden_size_1=512, hidden_size_2=512,
             n_actions=1
         ).to(device)
-    elif params.DEEP_LEARNING_MODEL is DeepLearningModelName.DDPG_LSTM_ATTENTION:
+    elif params.DEEP_LEARNING_MODEL is DeepLearningModelName.DDPG_GRU_ATTENTION:
         actor_net = policy_based_model.DDPGGruAttentionActor(
             obs_size=OBS_SIZE,
             hidden_size=128,
@@ -294,7 +294,7 @@ def main():
             hidden_size_1=512, hidden_size_2=512,
             n_actions=1
         ).to(device)
-    elif params.DEEP_LEARNING_MODEL is DeepLearningModelName.DDPG_LSTM_ATTENTION:
+    elif params.DEEP_LEARNING_MODEL is DeepLearningModelName.DDPG_GRU_ATTENTION:
         actor_balance_net = policy_based_model.DDPGGruAttentionActor(
             obs_size=OBS_SIZE,
             hidden_size=128,

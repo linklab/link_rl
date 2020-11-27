@@ -5,12 +5,11 @@ from config.parameters_general import PARAMETERS_GENERAL
 class PARAMETERS_FAST_RL_PENDULUM_MATLAB_DDPG(PARAMETERS_GENERAL):
     CH = False
     TEAMVIEWER = False
-    ATTENTION = False
 
     ENVIRONMENT_ID = "MatlabRotaryInvertedPendulumEnv"
     RL_ALGORITHM = RLAlgorithmName.DDPG_FAST_V0
     DEEP_LEARNING_MODEL = DeepLearningModelName.DDPG_MLP
-    # DEEP_LEARNING_MODEL = DeepLearningModelName.DDPG_LSTM_ATTENTION
+    # DEEP_LEARNING_MODEL = DeepLearningModelName.DDPG_GRU_ATTENTION
 
     STOP_MEAN_EPISODE_REWARD = 2700
     REPLAY_BUFFER_SIZE = 300000

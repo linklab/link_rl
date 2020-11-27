@@ -9,6 +9,8 @@ from torch import optim
 import os, sys
 import numpy as np
 
+from config.names import DeepLearningModelName
+
 idx = os.getcwd().index("link_rl")
 PROJECT_HOME = os.getcwd()[:idx] + "link_rl"
 sys.path.append(PROJECT_HOME)
@@ -35,6 +37,7 @@ if torch.cuda.is_available():
 else:
     device = torch.device("cpu")
 
+STEP_LENGTH = 1
 
 def play_func(exp_queue, env, net):
     print(env.action_space.low[0], env.action_space.high[0])
@@ -58,7 +61,8 @@ def play_func(exp_queue, env, net):
     )
 
     experience_source = experience.ExperienceSourceSingleEnvFirstLast(
-        env, agent, gamma=params.GAMMA, steps_count=params.N_STEP
+        env, agent, gamma=params.GAMMA, steps_count=params.N_STEP,
+        step_length=STEP_LENGTH if params.DEEP_LEARNING_MODEL in [DeepLearningModelName.DDPG_GRU, DeepLearningModelName.DDPG_GRU_ATTENTION] else -1
     )
 
     # experience_source = experience.ExperienceSourceFirstLast(
@@ -115,18 +119,51 @@ def main():
     print("observation_space:", env.observation_space)
     print("action_space:", env.action_space)
 
-    actor_net = policy_based_model.DDPGActor(
-        obs_size=3,
-        hidden_size_1=512, hidden_size_2=256,
-        n_actions=1,
-        scale=2.0
-    ).to(device)
+    if params.DEEP_LEARNING_MODEL is DeepLearningModelName.DDPG_MLP:
+        actor_net = policy_based_model.DDPGActor(
+            obs_size=3,
+            hidden_size_1=512, hidden_size_2=256,
+            n_actions=1,
+            scale=2.0
+        ).to(device)
 
-    critic_net = policy_based_model.DDPGCritic(
-        obs_size=3,
-        hidden_size_1=512, hidden_size_2=256,
-        n_actions=1
-    ).to(device)
+        critic_net = policy_based_model.DDPGCritic(
+            obs_size=3,
+            hidden_size_1=512, hidden_size_2=256,
+            n_actions=1
+        ).to(device)
+    elif params.DEEP_LEARNING_MODEL is DeepLearningModelName.DDPG_GRU:
+        actor_net = policy_based_model.DDPGGruActor(
+            obs_size=3,
+            hidden_size_1=128, hidden_size_2=64,
+            n_actions=1,
+            bidirectional=False,
+            scale=2.0
+        ).to(device)
+
+        critic_net = policy_based_model.DDPGGruCritic(
+            obs_size=3,
+            hidden_size_1=128, hidden_size_2=64,
+            n_actions=1,
+            bidirectional=False
+        ).to(device)
+    elif params.DEEP_LEARNING_MODEL is DeepLearningModelName.DDPG_GRU_ATTENTION:
+        actor_net = policy_based_model.DDPGGruAttentionActor(
+            obs_size=3,
+            hidden_size=128,
+            n_actions=1,
+            bidirectional=False,
+            scale=2.0
+        ).to(device)
+
+        critic_net = policy_based_model.DDPGGruAttentionCritic(
+            obs_size=3,
+            hidden_size_1=128, hidden_size_2=64,
+            n_actions=1,
+            bidirectional=False
+        ).to(device)
+    else:
+        raise ValueError()
 
     print(actor_net)
     print(critic_net)

@@ -37,36 +37,29 @@ class ExperienceSourceSingleEnv:
     Every experience contains n list of Experience entries
     """
 
-    def __init__(self, env, agent, steps_count=2, steps_delta=1):
+    def __init__(self, env, agent, steps_count=2, step_length=-1):
         assert isinstance(agent, BaseAgent)
         assert isinstance(steps_count, int)
         assert steps_count >= 1
         self.env = env
         self.agent = agent
         self.steps_count = steps_count
-        self.steps_delta = steps_delta
+        self.step_length = step_length  # -1 이면 MLP, 1 이상의 값이면 RNN
         self.episode_reward_lst = []
         self.episode_done_step_lst = []
         self.episode_continuous_positive_actions = []
         self.episode_continuous_negative_actions = []
         self.state_deque = deque(maxlen=30)
 
-
     def __iter__(self):
         state = self.env.reset()
 
-#########################################################################################################
-        if params.ATTENTION:
-            step_length = 1
-            if step_length== -1:
-                state = np.array(state)
-            elif step_length >= 1:
-                state = np.tile(state, (step_length, 1)) # state: (step_size, 4)
-            else:
-                raise ValueError()
+        if self.step_length == -1:
+            state = np.array(state)
+        elif self.step_length >= 1:
+            state = np.tile(state, (self.step_length, 1))  # state: (step_size, 4)
         else:
-            pass
-#########################################################################################################
+            raise ValueError()
 
         history = deque(maxlen=self.steps_count)
         cur_reward = 0.0
@@ -97,38 +90,28 @@ class ExperienceSourceSingleEnv:
 
             next_state, r, is_done, info = self.env.step(action)
 
+            self.state_deque.append(next_state)
 
+            if self.step_length == -1:
+                next_state = np.array(self.state_deque[-1])
+            elif self.step_length >= 1:
+                if len(self.state_deque) < self.step_length:
+                    next_state = list(self.state_deque)
 
+                    for _ in range(self.step_length - len(self.state_deque)):
+                        next_state.insert(0, [0.0] * len(next_state))
 
-#######################################################################################################################
-            if params.ATTENTION:
-                self.state_deque.append(next_state)
-
-                if step_length == -1:
-                    next_state = np.array(self.state_deque[-1])
-                elif step_length >= 1:
-                    if len(self.state_deque) < step_length:
-                        next_state = list(self.state_deque)
-
-                        for _ in range(step_length - len(self.state_deque)):
-                            next_state.insert(0, [0.0] * 3)
-                        next_state = np.array(next_state)
-                        print()
-                    else:
-                        next_state = np.array(
-                            [
-                                self.state_deque[-step_length + offset] for offset in range(step_length)
-                            ]
-                        )
-                    # print(next_state.shape)
-                    # print(next_state)
+                    next_state = np.array(next_state)
                 else:
-                    raise ValueError()
-#####################################################################################################################################
-
-
-
-
+                    next_state = np.array(
+                        [
+                            self.state_deque[-self.step_length + offset] for offset in range(self.step_length)
+                        ]
+                    )
+                # print(next_state.shape)
+                # print(next_state)
+            else:
+                raise ValueError()
 
             if 'original_reward' in info:
                 cur_reward += info['original_reward']
@@ -143,7 +126,7 @@ class ExperienceSourceSingleEnv:
                 else:
                     history.append(Experience(state=state, action=action, reward=r, done=is_done))
 
-            if len(history) == self.steps_count and iter_idx % self.steps_delta == 0:
+            if len(history) == self.steps_count:
                 yield tuple(history)
 
             state = next_state
@@ -161,19 +144,12 @@ class ExperienceSourceSingleEnv:
 
                 state = self.env.reset()
 
-
-                ######################################################################################
-                if params.ATTENTION:
-                    if step_length == -1:
-                        state = np.array(state)
-                    elif step_length >= 1:
-                        state = np.tile(state, (step_length, 1))  # state: (step_size, 4)
-                    else:
-                        raise ValueError()
+                if self.step_length == -1:
+                    state = np.array(state)
+                elif self.step_length >= 1:
+                    state = np.tile(state, (self.step_length, 1))  # state: (step_size, 4)
                 else:
-                    pass
-                ########################################################################################
-
+                    raise ValueError()
 
                 agent_state = self.agent.initial_agent_state()
 
@@ -203,9 +179,9 @@ class ExperienceSourceSingleEnv:
 
 
 class ExperienceSourceSingleEnvFirstLast(ExperienceSourceSingleEnv):
-    def __init__(self, env, agent, gamma, steps_count=1, steps_delta=1):
+    def __init__(self, env, agent, gamma, steps_count=1, step_length=-1):
         assert isinstance(gamma, float)
-        super(ExperienceSourceSingleEnvFirstLast, self).__init__(env, agent, steps_count + 1, steps_delta)
+        super(ExperienceSourceSingleEnvFirstLast, self).__init__(env, agent, steps_count + 1, step_length)
         self.gamma = gamma
         self.steps_count = steps_count
 
