@@ -285,7 +285,9 @@ def model_update(buffer, actor_net, critic_net, target_actor_net, target_critic_
         batch, device
     )
 
-    # train critic
+    #########################
+    # train critic: start   #
+    #########################
     critic_optimizer.zero_grad()
     batch_q_v = critic_net(batch_states_v, batch_actions_v)
 
@@ -315,8 +317,13 @@ def model_update(buffer, actor_net, critic_net, target_actor_net, target_critic_
     torch.nn.utils.clip_grad_norm_(critic_net.parameters(), CLIP)
 
     critic_optimizer.step()
+    #########################
+    # train critic: end   #
+    #########################
 
-    # train actor
+    #########################
+    # train actor: start    #
+    #########################
     actor_optimizer.zero_grad()
     batch_current_actions_v = actor_net(batch_states_v)
     actor_loss_v = -critic_net(batch_states_v, batch_current_actions_v)
@@ -331,6 +338,10 @@ def model_update(buffer, actor_net, critic_net, target_actor_net, target_critic_
     torch.nn.utils.clip_grad_norm_(actor_net.parameters(), CLIP)
 
     actor_optimizer.step()
+
+    #########################
+    # train actor: end      #
+    #########################
 
     target_actor_net.alpha_sync(alpha=1 - 0.001)
     target_critic_net.alpha_sync(alpha=1 - 0.001)

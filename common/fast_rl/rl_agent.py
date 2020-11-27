@@ -15,6 +15,10 @@ mylogger = logging.getLogger("my")
 mylogger.setLevel(logging.INFO)
 
 file_handler = logging.FileHandler('rl_agent.log')
+
+formatter = logging.Formatter('%(asctime)s-%(name)s-%(levelname)s-%(message)s')
+file_handler.setFormatter(formatter)
+
 mylogger.addHandler(file_handler)
 
 
