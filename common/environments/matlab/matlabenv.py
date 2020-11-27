@@ -14,9 +14,9 @@ a = 0
 
 class Status(Enum):
     SWING_UP = -1.0
-    SWING_UP_TO_BALANCING_CHANGE = -0.5
+    SWING_UP_TO_BALANCING_CHANGE = 0.5
     BALANCING = 1.0
-    BALANCING_TO_SWING_UP_CHANGE = 0.5
+    BALANCING_TO_SWING_UP_CHANGE = -0.5
 
 
 class MatlabRotaryInvertedPendulumEnv(gym.Env):

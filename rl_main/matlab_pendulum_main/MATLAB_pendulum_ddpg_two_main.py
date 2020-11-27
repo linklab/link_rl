@@ -60,13 +60,11 @@ CLIP = 1
 env = MatlabRotaryInvertedPendulumEnv(
     action_min=SWING_UP_SCALE_FACTOR * -1.0, action_max=SWING_UP_SCALE_FACTOR
 )
-# print(env.action_space.low[0], env.action_space.high[0])
 print("env:", params.ENVIRONMENT_ID)
 print("observation_space:", env.observation_space)
 print("action_space:", env.action_space)
 
 OBS_SIZE = env.observation_space.shape[0]
-STEP_LENGTH = 4
 
 
 def play_func(exp_queue, exp_queue_balance, actor_net, critic_net, actor_balance_net, critic_balance_net):

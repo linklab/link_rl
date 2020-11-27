@@ -51,11 +51,18 @@ else:
     ACTION_SCALE_FACTOR = 0.035
 CLIP = 1
 
-OBS_SIZE = 6
-STEP_LENGTH = 4
+
+env = MatlabRotaryInvertedPendulumEnv(
+    action_min=ACTION_SCALE_FACTOR * -1.0, action_max=ACTION_SCALE_FACTOR
+)
+print("env:", params.ENVIRONMENT_ID)
+print("observation_space:", env.observation_space)
+print("action_space:", env.action_space)
+
+OBS_SIZE = env.observation_space.shape[0]
 
 
-def play_func(exp_queue, env, actor_net, critic_net):
+def play_func(exp_queue, actor_net, critic_net):
     # print(env.action_space.low[0], env.action_space.high[0])
     env.start()
 
@@ -142,14 +149,6 @@ def play_func(exp_queue, env, actor_net, critic_net):
 def main():
     mp.set_start_method('spawn')
 
-    env = MatlabRotaryInvertedPendulumEnv(
-        obs_size=OBS_SIZE, action_min=ACTION_SCALE_FACTOR * -1.0, action_max=ACTION_SCALE_FACTOR
-    )
-
-    print("env:", params.ENVIRONMENT_ID)
-    print("observation_space:", OBS_SIZE)
-    print("action_space:", 1)
-
     if params.DEEP_LEARNING_MODEL is DeepLearningModelName.DDPG_MLP:
         actor_net = policy_based_model.DDPGActor(
             obs_size=OBS_SIZE,
@@ -198,7 +197,7 @@ def main():
 
     exp_queue = mp.Queue(maxsize=params.TRAIN_STEP_FREQ * 2)
 
-    play_proc = mp.Process(target=play_func, args=(exp_queue, env, actor_net, critic_net))
+    play_proc = mp.Process(target=play_func, args=(exp_queue, actor_net, critic_net))
     play_proc.start()
 
     time.sleep(0.5)
