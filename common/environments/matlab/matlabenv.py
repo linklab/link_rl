@@ -1,5 +1,7 @@
 import math
 from abc import ABC
+from enum import Enum
+
 import matlab.engine
 import gym
 import numpy as np
@@ -10,8 +12,15 @@ np.set_printoptions(formatter={'float_kind': lambda x: '{0:0.6f}'.format(x)})
 a = 0
 
 
+class Status(Enum):
+    SWING_UP = -1.0
+    SWING_UP_TO_BALANCING_CHANGE = -0.5
+    BALANCING = 1.0
+    BALANCING_TO_SWING_UP_CHANGE = 0.5
+
+
 class MatlabRotaryInvertedPendulumEnv(gym.Env):
-    def __init__(self, obs_size, action_min, action_max):
+    def __init__(self, action_min, action_max):
         self.episode_steps = 0
         self.total_steps = 0
         self.q = 0
@@ -26,7 +35,6 @@ class MatlabRotaryInvertedPendulumEnv(gym.Env):
         self.num_continuous_positive_torque = 0
         self.num_continuous_negative_torque = 0
 
-        self.obs_size = obs_size
         self.too_much_rotate = False
         # self.done_torque_threshold = 0.75
 
@@ -37,12 +45,14 @@ class MatlabRotaryInvertedPendulumEnv(gym.Env):
             dtype=np.float32
         )
 
-        high = np.array([1., 1., self.max_speed, 1., 1., action_max], dtype=np.float32)
+        high = np.array([1., 1., self.max_speed, 1., 1., action_max, 1.0], dtype=np.float32)
         low = high * -1.0
         self.observation_space = gym.spaces.Box(
             low=low, high=high,
             dtype=np.float32
         )
+
+        self.current_status = Status.SWING_UP
 
     def pause(self):
         self.plant.conncectpause()
@@ -56,9 +66,20 @@ class MatlabRotaryInvertedPendulumEnv(gym.Env):
     def reset(self):
         self.plant.connectStart()
         self.episode_steps = 0
+        self.current_status = Status.SWING_UP
+
         self.q, self.q1, self.w, self.w1, self.simulation_time = self.plant.getHistory()
+
         # self.state = (math.cos(self.q), math.sin(self.q), self.w, math.cos(self.q1), math.sin(self.q1), self.w1)
-        self.state = (math.cos(self.q), math.sin(self.q), self.w, math.cos(self.q1), math.sin(self.q1), 0.0)
+        self.state = (
+            math.cos(self.q),
+            math.sin(self.q),
+            self.w,
+            math.cos(self.q1),
+            math.sin(self.q1), 0.0,
+            self.current_status.value
+        )
+
         self.num_continuous_positive_torque = 0
         self.num_continuous_negative_torque = 0
         # self.obs_degree[0] = self.next_obs_degree[0] = self.convert_radian_to_degree(np.round(self.state, decimals=4)[0] * math.pi)
@@ -72,6 +93,7 @@ class MatlabRotaryInvertedPendulumEnv(gym.Env):
         state = np.array(self.state)
 
         self.too_much_rotate = False
+        self.count_uprights = 0
 
         return state
 
@@ -109,14 +131,11 @@ class MatlabRotaryInvertedPendulumEnv(gym.Env):
         else:
             adjusted_radian = q_
 
-        # self.state = (math.cos(self.q), math.sin(self.q), self.w, math.cos(self.q1), math.sin(self.q1), self.w1)
-        self.state = (math.cos(self.q), math.sin(self.q), self.w, math.cos(self.q1), math.sin(self.q1), action)
-
         #print(self.q1, math.cos(self.q1), math.sin(self.q1))
 
         # 3.15 rad => 180 도
         # 6.3 rad => 460 도
-        if self.q1 > 6.3 or self.q1 < -6.3:
+        if self.q1 > math.pi * 2 or self.q1 < math.pi * -2.0:
             self.too_much_rotate = True
 
         info = [None]
@@ -179,6 +198,39 @@ class MatlabRotaryInvertedPendulumEnv(gym.Env):
         # print("action: {0}, q: {1:7.4}, w: {2:7.4f}, adjusted_radian: {3:7.4f}, reward: {4:10.4f}, time: {5}".format(
         #     action, self.q, self.w, adjusted_radian, reward, self.simulation_time
         # ))
+
+        if params.CH:
+            if math.pi - math.radians(3) < adjusted_radian <= math.pi:
+                self.count_uprights += 1
+            else:
+                self.count_uprights = 0
+        else:
+            if math.pi - math.radians(10) < adjusted_radian <= math.pi:
+                self.count_uprights += 1
+            else:
+                self.count_uprights = 0
+
+            if self.count_uprights < 1:  # Balance 제어로 넘어가는 조건: 170 ~ 190 각도 사이에 연속적으로 10번 이상
+                if self.current_status == Status.BALANCING:
+                    self.current_status = Status.BALANCING_TO_SWING_UP_CHANGE
+                else:
+                    self.current_status = Status.SWING_UP
+            else:
+                if self.current_status == Status.SWING_UP:
+                    self.current_status = Status.SWING_UP_TO_BALANCING_CHANGE
+                else:
+                    self.current_status = Status.BALANCING
+
+        # self.state = (math.cos(self.q), math.sin(self.q), self.w, math.cos(self.q1), math.sin(self.q1), self.w1)
+        self.state = (
+            math.cos(self.q),
+            math.sin(self.q),
+            self.w,
+            math.cos(self.q1),
+            math.sin(self.q1),
+            action,
+            self.current_status.value
+        )
 
         return self.state, reward, done, info
 

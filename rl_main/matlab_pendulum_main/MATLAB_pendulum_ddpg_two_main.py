@@ -4,6 +4,8 @@
 import math
 import profile
 import time
+from enum import Enum
+
 import torch
 import torch.nn.functional as F
 import torch.multiprocessing as mp
@@ -18,7 +20,7 @@ idx = os.getcwd().index("link_rl")
 PROJECT_HOME = os.getcwd()[:idx] + "link_rl"
 sys.path.append(PROJECT_HOME)
 
-from common.environments.matlab.matlabenv import MatlabRotaryInvertedPendulumEnv
+from common.environments.matlab.matlabenv import MatlabRotaryInvertedPendulumEnv, Status
 
 from common.common_utils import smooth
 from common.fast_rl.policy_based_model import unpack_batch_for_ddpg
@@ -55,18 +57,24 @@ else:
     BALANCING_SCALE_FACTOR = 0.002
 CLIP = 1
 
-OBS_SIZE = 6
+env = MatlabRotaryInvertedPendulumEnv(
+    action_min=SWING_UP_SCALE_FACTOR * -1.0, action_max=SWING_UP_SCALE_FACTOR
+)
+# print(env.action_space.low[0], env.action_space.high[0])
+print("env:", params.ENVIRONMENT_ID)
+print("observation_space:", env.observation_space)
+print("action_space:", env.action_space)
+
+OBS_SIZE = env.observation_space.shape[0]
 STEP_LENGTH = 4
 
 
-def play_func(exp_queue, exp_queue_balance, env, actor_net, critic_net, actor_balance_net, critic_balance_net):
-    # print(env.action_space.low[0], env.action_space.high[0])
+def play_func(exp_queue, exp_queue_balance, actor_net, critic_net, actor_balance_net, critic_balance_net):
     env.start()
     swing_up_action_min = -SWING_UP_SCALE_FACTOR
     swing_up_action_max = SWING_UP_SCALE_FACTOR
     balancing_action_min = -BALANCING_SCALE_FACTOR
     balancing_action_max = BALANCING_SCALE_FACTOR
-    count_bal = 0
 
     # action_selector = actions.EpsilonGreedyDDPGActionSelector(epsilon=params.EPSILON_INIT)
 
@@ -144,6 +152,8 @@ def play_func(exp_queue, exp_queue_balance, env, actor_net, critic_net, actor_ba
 
     exp = next(exp_source_iter)
 
+    balancing_step_reward_list = []
+
     with utils.RewardTracker(
             params.STOP_MEAN_EPISODE_REWARD, params.AVG_EPISODE_SIZE_FOR_STAT,
             frame=True, draw_viz=params.DRAW_VIZ, stat=stat) as reward_tracker:
@@ -152,42 +162,33 @@ def play_func(exp_queue, exp_queue_balance, env, actor_net, critic_net, actor_ba
             step_idx += 1
 
             if params.DEEP_LEARNING_MODEL is DeepLearningModelName.DDPG_MLP:
-                pendulum_angle = exp[0][0]
+                status = exp[0][-1]
             elif params.DEEP_LEARNING_MODEL is DeepLearningModelName.DDPG_GRU:
-                pendulum_angle = exp[0][-1][0]
+                status = exp[0][-1][-1]
             else:
                 raise ValueError()
 
-            if params.CH:
-                if math.cos(math.pi) < pendulum_angle < math.cos(3.089232776): #cos(180) < exp[0][0] < cos(183) (-1<exp[0][0]<-0.9985468154)
-                    count_bal += 1
-                else:
-                    count_bal = 0
-            else:
-                if math.cos(math.pi) < pendulum_angle < math.cos(3.316125579):  # cos(180) < exp[0][0] < cos(190) (-1<exp[0][0]<-0.9985468154)
-                    count_bal += 1
-                else:
-                    count_bal = 0
-
-            if count_bal < 3:  # Balance 제어로 넘어가는 조건: 180 ~ 190 각도 사이에 연속적으로 10번 이상
+            if status in [Status.SWING_UP.value, Status.BALANCING_TO_SWING_UP_CHANGE.value]:  # Balance 제어로 넘어가는 조건: 170 ~ 190 각도 사이에 연속적으로 10번 이상
                 exp = next(exp_source_iter)
 
                 swing_up_step_idx += 1
-
-                exp_queue.put(exp)
-                exp_queue_balance.put(0)
-
                 epsilon_tracker.udpate(swing_up_step_idx) # swing_up_step_idx 로 epsilon 업데이트
+
+                if status == Status.BALANCING_TO_SWING_UP_CHANGE.value:
+                    print(balancing_step_reward_list)
+                    balancing_step_reward_list.clear()
             else:
-                #print(count_bal, "balance experience !!!", exp[0][0])
                 exp = next(exp_source_iter_balance)
 
                 balancing_step_idx += 1
-
-                exp_queue.put(0)
-                exp_queue_balance.put(exp)
-
                 epsilon_tracker_balance.udpate(balancing_step_idx)
+
+                balancing_step_reward_list.append(exp.reward)
+
+            print(status)
+
+            exp_queue.put(exp)
+            exp_queue_balance.put(0)
 
             episode_rewards_swing_up = experience_source.pop_episode_reward_lst()
             episode_rewards_balance = experience_source_balance.pop_episode_reward_lst()
@@ -234,14 +235,6 @@ def play_func(exp_queue, exp_queue_balance, env, actor_net, critic_net, actor_ba
 
 def main():
     mp.set_start_method('spawn')
-
-    env = MatlabRotaryInvertedPendulumEnv(
-        obs_size=OBS_SIZE, action_min=SWING_UP_SCALE_FACTOR * -1.0, action_max=SWING_UP_SCALE_FACTOR
-    )
-
-    print("env:", params.ENVIRONMENT_ID)
-    print("observation_space:", OBS_SIZE)
-    print("action_space:", 1)
 
     ###########################
     ### SWING_UP Controller ###
@@ -338,7 +331,7 @@ def main():
     exp_queue_balance = mp.Queue(maxsize=params.TRAIN_STEP_FREQ * 2)
 
     play_proc = mp.Process(target=play_func, args=(
-        exp_queue, exp_queue_balance, env, actor_net, critic_net, actor_balance_net, critic_balance_net
+        exp_queue, exp_queue_balance, actor_net, critic_net, actor_balance_net, critic_balance_net
     ))
     play_proc.start()
 
