@@ -27,7 +27,7 @@ from common.common_utils import smooth
 from common.fast_rl.policy_based_model import unpack_batch_for_ddpg
 from common.fast_rl.rl_agent import float32_preprocessor
 
-print(torch.__version__)
+print("PyTorch Version", torch.__version__)
 
 from common.fast_rl import actions, experience, policy_based_model, rl_agent
 from common.fast_rl.common import statistics, utils
@@ -140,6 +140,7 @@ def play_func(exp_queue_swing_up, exp_queue_balancing, actor_swing_up_net, criti
     recent_swing_up_to_balancing_exp = None
 
     with utils.RewardTracker(
+            params=params,
             stop_mean_episode_reward=params.STOP_MEAN_EPISODE_REWARD,
             average_size_for_stats=params.AVG_EPISODE_SIZE_FOR_STAT,
             frame=True, draw_viz=params.DRAW_VIZ, stat=stat) as reward_tracker:
@@ -207,7 +208,7 @@ def play_func(exp_queue_swing_up, exp_queue_balancing, actor_swing_up_net, criti
 
                 model_save_condition = [
                     reward_tracker.mean_episode_reward > best_mean_episode_reward,
-                    step_idx > params.MAX_GLOBAL_STEPS / 4
+                    step_idx > params.EPSILON_MIN_STEP
                 ]
 
                 if reward_tracker.mean_episode_reward > best_mean_episode_reward:

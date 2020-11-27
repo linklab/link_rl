@@ -334,7 +334,8 @@ class TBMeanTracker:
 
 
 class RewardTracker:
-    def __init__(self, stop_mean_episode_reward, average_size_for_stats, frame=True, draw_viz=True, stat=None):
+    def __init__(self, params, stop_mean_episode_reward, average_size_for_stats, frame=True, draw_viz=True, stat=None):
+        self.params = params
         self.min_ts_diff = 1    # 1 second
         self.stop_mean_episode_reward = stop_mean_episode_reward
         self.stat = stat
@@ -395,34 +396,29 @@ class RewardTracker:
         self.ts = current_ts
 
         if isinstance(epsilon, tuple) or isinstance(epsilon, list):
-            print(
-                "[{0:6}] done {1:4} games, episode_reward: {2:5.1f}, mean_{3}_episode_reward: {4:7.3f}, "
-                "eps: {5:5.3f}, {6:5.3f}, speed: {7:7.2f} {8}, elapsed time: {9}".format(
-                    episode_done_step,
-                    len(self.episode_reward_list),
-                    self.episode_reward_list[-1],
-                    self.average_size_for_stats,
-                    mean_episode_reward,
-                    epsilon[0] if epsilon[0] else 0.0,
-                    epsilon[1] if epsilon[1] else 0.0,
-                    speed,
-                    "fps" if self.frame else "steps/sec.",
-                    time.strftime("%Hh %Mm %Ss", time.gmtime(elapsed_time)),
-            ), end="")
+            epsilon_str = "{0:5.3f}, {1:5.3f}".format(
+                epsilon[0] if epsilon[0] else 0.0,
+                epsilon[1] if epsilon[1] else 0.0
+            )
         else:
-            print(
-                "[{0:6}] done {1:4} games, episode_reward: {2:5.1f}, mean_{3}_episode_reward: {4:7.3f}, "
-                "eps: {5:5.3f}, speed: {6:7.2f} {7}, elapsed time: {8}".format(
-                    episode_done_step,
-                    len(self.episode_reward_list),
-                    self.episode_reward_list[-1],
-                    self.average_size_for_stats,
-                    mean_episode_reward,
-                    epsilon if epsilon else 0.0,
-                    speed,
-                    "fps" if self.frame else "steps/sec.",
-                    time.strftime("%Hh %Mm %Ss", time.gmtime(elapsed_time)),
-            ), end="")
+            epsilon_str = "{0:5.3f}".format(
+                epsilon if epsilon else 0.0,
+            )
+
+        print(
+            "[{0:6}/{1}] done {2:4} games, episode_reward: {3:5.1f}, mean_{4}_episode_reward: {5:7.3f}, "
+            "epsilon: {6}, speed: {7:7.2f} {8}, elapsed time: {9}".format(
+                episode_done_step,
+                self.params.MAX_GLOBAL_STEPS,
+                len(self.episode_reward_list),
+                self.episode_reward_list[-1],
+                self.average_size_for_stats,
+                mean_episode_reward,
+                epsilon_str,
+                speed,
+                "fps" if self.frame else "steps/sec.",
+                time.strftime("%Hh %Mm %Ss", time.gmtime(elapsed_time)),
+        ), end="")
 
         if action_count:
             print(", {0}".format(action_count), flush=True)

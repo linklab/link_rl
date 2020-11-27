@@ -24,7 +24,7 @@ from common.common_utils import smooth
 from common.fast_rl.policy_based_model import unpack_batch_for_ddpg
 from common.fast_rl.rl_agent import float32_preprocessor
 
-print(torch.__version__)
+print("PyTorch Version", torch.__version__)
 
 from common.fast_rl import actions, experience, policy_based_model, rl_agent
 from common.fast_rl.common import statistics, utils
@@ -41,7 +41,6 @@ if torch.cuda.is_available():
     device = torch.device("cuda" if params.CUDA else "cpu")
 else:
     device = torch.device("cpu")
-
 
 if params.TEAMVIEWER:
     ACTION_SCALE_FACTOR = 0.05
@@ -105,7 +104,9 @@ def play_func(exp_queue, actor_net, critic_net):
     best_mean_episode_reward = 0
 
     with utils.RewardTracker(
-            params.STOP_MEAN_EPISODE_REWARD, params.AVG_EPISODE_SIZE_FOR_STAT,
+            params=params,
+            stop_mean_episode_reward=params.STOP_MEAN_EPISODE_REWARD,
+            average_size_for_stats=params.AVG_EPISODE_SIZE_FOR_STAT,
             frame=True, draw_viz=params.DRAW_VIZ, stat=stat) as reward_tracker:
         while step_idx < params.MAX_GLOBAL_STEPS:
             # 1 스텝 진행하고 exp를 exp_queue에 넣음
@@ -127,7 +128,7 @@ def play_func(exp_queue, actor_net, critic_net):
 
                 model_save_condition = [
                     reward_tracker.mean_episode_reward > best_mean_episode_reward,
-                    step_idx > params.MAX_GLOBAL_STEPS / 4
+                    step_idx > params.EPSILON_MIN_STEP
                 ]
 
                 if reward_tracker.mean_episode_reward > best_mean_episode_reward:

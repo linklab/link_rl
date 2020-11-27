@@ -19,7 +19,7 @@ from common.common_utils import make_gym_env, smooth
 from common.fast_rl.policy_based_model import unpack_batch_for_ddpg
 from common.fast_rl.rl_agent import float32_preprocessor
 
-print(torch.__version__)
+print("PyTorch Version", torch.__version__)
 
 from common.fast_rl import actions, experience, policy_based_model, rl_agent
 from common.fast_rl.common import statistics, utils
@@ -80,6 +80,7 @@ def play_func(exp_queue, env, net):
     best_mean_episode_reward = 0.0
 
     with utils.RewardTracker(
+            params=params,
             stop_mean_episode_reward=params.STOP_MEAN_EPISODE_REWARD,
             average_size_for_stats=params.AVG_EPISODE_SIZE_FOR_STAT,
             frame=True, draw_viz=params.DRAW_VIZ, stat=stat) as reward_tracker:
@@ -101,13 +102,14 @@ def play_func(exp_queue, env, net):
 
                 model_save_condition = [
                     reward_tracker.mean_episode_reward > best_mean_episode_reward,
-                    step_idx > params.MAX_GLOBAL_STEPS / 4
+                    step_idx > params.EPSILON_MIN_STEP
                 ]
 
                 if reward_tracker.mean_episode_reward > best_mean_episode_reward:
                     best_mean_episode_reward = reward_tracker.mean_episode_reward
 
                 if all(model_save_condition) or solved:
+                    print(best_mean_episode_reward, " !!!!!!!!!!!!!!!!!!!!!!")
                     rl_agent.save_model(
                         MODEL_SAVE_DIR, params.ENVIRONMENT_ID.value, net.__name__, net, step_idx, mean_episode_reward
                     )
