@@ -139,6 +139,8 @@ def play_func(exp_queue, actor_net, critic_net):
                         actor_net.__name__, actor_net, critic_net.__name__, critic_net,
                         step_idx, reward_tracker.mean_episode_reward
                     )
+                    if solved:
+                        break
 
     exp_queue.put(None)
 

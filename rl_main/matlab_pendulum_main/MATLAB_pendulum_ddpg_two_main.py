@@ -226,6 +226,9 @@ def play_func(exp_queue_swing_up, exp_queue_balancing, actor_swing_up_net, criti
                         step_idx, reward_tracker.mean_episode_reward
                     )
 
+                    if solved:
+                        break
+
     exp_queue_swing_up.put(None)
     exp_queue_balancing.put(None)
 

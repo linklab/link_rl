@@ -107,16 +107,12 @@ def play_func(exp_queue, env, net):
                 if reward_tracker.mean_episode_reward > best_mean_episode_reward:
                     best_mean_episode_reward = reward_tracker.mean_episode_reward
 
-                if all(model_save_condition):
+                if all(model_save_condition) or solved:
                     rl_agent.save_model(
                         MODEL_SAVE_DIR, params.ENVIRONMENT_ID.value, net.__name__, net, step_idx, mean_episode_reward
                     )
-
-                if solved:
-                    rl_agent.save_model(
-                        MODEL_SAVE_DIR, params.ENVIRONMENT_ID.value, net.__name__, net, step_idx, mean_episode_reward
-                    )
-                    break
+                    if solved:
+                        break
 
     exp_queue.put(None)
 
