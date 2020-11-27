@@ -78,7 +78,7 @@ def play_func(exp_queue, env, actor_net, critic_net):
         actor_net, n_actions=1, action_selector=action_selector,
         action_min=swing_up_action_min, action_max=swing_up_action_max,
         device=device, preprocessor=float32_preprocessor,
-        name="SwingUp_AgentDDPG"
+        name="One_AgentDDPG"
     )
 
     experience_source = experience.ExperienceSourceSingleEnvFirstLast(
