@@ -406,7 +406,7 @@ class RewardTracker:
             )
 
         print(
-            "[{0:6}/{1}] done {2:4} games, episode_reward: {3:5.1f}, mean_{4}_episode_reward: {5:7.3f}, "
+            "[{0:6}/{1}] done {2:4} games, episode_reward: {3:6.1f}, mean_{4}_episode_reward: {5:7.3f}, "
             "epsilon: {6}, speed: {7:7.2f} {8}, elapsed time: {9}".format(
                 episode_done_step,
                 self.params.MAX_GLOBAL_STEPS,
