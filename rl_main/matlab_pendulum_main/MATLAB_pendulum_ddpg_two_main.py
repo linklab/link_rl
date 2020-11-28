@@ -57,7 +57,7 @@ else:
 CLIP = 1
 
 env = MatlabRotaryInvertedPendulumEnv(
-    action_min=SWING_UP_SCALE_FACTOR * -1.0, action_max=SWING_UP_SCALE_FACTOR
+    action_min=SWING_UP_SCALE_FACTOR * -1.0, action_max=SWING_UP_SCALE_FACTOR, env_reset=params.ENV_RESET
 )
 print("env:", params.ENVIRONMENT_ID)
 print("observation_space:", env.observation_space)
