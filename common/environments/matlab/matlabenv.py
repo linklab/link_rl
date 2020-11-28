@@ -50,7 +50,8 @@ class MatlabRotaryInvertedPendulumEnv(gym.Env):
             dtype=np.float32
         )
 
-        high = np.array([1., 1., self.max_velocity, 1., 1., action_max, 1.0], dtype=np.float32)
+        #high = np.array([1., 1., self.max_velocity, 1., 1., action_max, 1.0], dtype=np.float32)
+        high = np.array([1., 1., self.max_velocity, 1.0], dtype=np.float32)
         low = high * -1.0
         self.observation_space = gym.spaces.Box(
             low=low, high=high,
@@ -92,9 +93,9 @@ class MatlabRotaryInvertedPendulumEnv(gym.Env):
             math.cos(self.pendulum_position),
             math.sin(self.pendulum_position),
             self.pendulum_velocity,
-            0.0,
-            0.0,
-            0.0,
+            # 0.0,
+            # 0.0,
+            # 0.0,
             self.current_status.value
         )
 
@@ -239,9 +240,9 @@ class MatlabRotaryInvertedPendulumEnv(gym.Env):
             math.cos(self.pendulum_position),
             math.sin(self.pendulum_position),
             self.pendulum_velocity,
-            math.cos(self.initial_motor_position - self.motor_position),
-            math.sin(self.initial_motor_position - self.motor_position),
-            action,
+            # math.cos(self.initial_motor_position - self.motor_position),
+            # math.sin(self.initial_motor_position - self.motor_position),
+            # action,
             self.current_status.value
         )
 
