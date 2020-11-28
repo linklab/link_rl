@@ -75,7 +75,6 @@ class MatlabRotaryInvertedPendulumEnv(gym.Env):
 
     def reset(self):
         self.episode_steps = 0
-        self.current_status = Status.SWING_UP
 
         self.count_swing_up_states = 0
         self.count_balancing_states = 0
@@ -109,6 +108,8 @@ class MatlabRotaryInvertedPendulumEnv(gym.Env):
         self.too_much_rotate = False
         self.count_uprights = 0
         self.initial_motor_position = self.motor_position
+
+        self.update_current_state(0.0)
 
         return state
 
