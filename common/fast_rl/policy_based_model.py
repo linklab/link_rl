@@ -319,7 +319,6 @@ class DDPGGruCritic(nn.Module):
 #####################################
 
 
-
 class DDPGActor(nn.Module):
     def __init__(self, obs_size, hidden_size_1, hidden_size_2, n_actions, scale):
         super(DDPGActor, self).__init__()
@@ -330,6 +329,8 @@ class DDPGActor(nn.Module):
             nn.Linear(obs_size, hidden_size_1),
             nn.ReLU(),
             nn.Linear(hidden_size_1, hidden_size_2),
+            nn.ReLU(),
+            nn.Linear(hidden_size_2, hidden_size_2),
             nn.ReLU(),
             nn.Linear(hidden_size_2, n_actions),
         )
@@ -359,6 +360,8 @@ class DDPGCritic(nn.Module):
 
         self.out_net = nn.Sequential(
             nn.Linear(hidden_size_2 + n_actions, hidden_size_2),
+            nn.ReLU(),
+            nn.Linear(hidden_size_2, hidden_size_2),
             nn.ReLU(),
             nn.Linear(hidden_size_2, 1)
         )
