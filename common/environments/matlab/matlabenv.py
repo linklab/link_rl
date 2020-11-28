@@ -258,7 +258,7 @@ class MatlabRotaryInvertedPendulumEnv(gym.Env):
             pendulum_velocity_reward = -0.01 * self.pendulum_velocity ** 2
             self.episode_pendulum_velocity_reward_list.append(pendulum_velocity_reward)
 
-            action_reward = -10.0 * abs(action)
+            action_reward = -100.0 * abs(action)
             self.episode_action_reward_list.append(action_reward)
 
             reward = position_reward + pendulum_velocity_reward + action_reward
