@@ -286,7 +286,7 @@ class RewardTrackerMatlabPendulum:
 
         print(
             "[{0:6}/{1}] done {2:4} games, episode_reward: {3}, mean_{4}_episode_reward: {5:7.3f}, "
-            "status: [{6:3d}|{7:3d}], epsilon: {8}, speed: {9:7.2f} {8}, elapsed time: {10}".format(
+            "status: [{6:3d}|{7:3d}], epsilon: {8}, speed: {9:5.2f} {10}, elapsed time: {11}".format(
                 episode_done_step,
                 self.params.MAX_GLOBAL_STEPS,
                 len(self.episode_reward_list),
