@@ -1,10 +1,7 @@
 # https://github.com/openai/gym/blob/master/gym/envs/classic_control/pendulum.py
 # https://mspries.github.io/jimmy_pendulum.html
 #!/usr/bin/env python3
-import math
-import profile
 import time
-from enum import Enum
 
 import torch
 import torch.nn.functional as F
@@ -15,7 +12,8 @@ import numpy as np
 import copy
 
 from config.names import DeepLearningModelName
-from rl_main.matlab_pendulum_main.experience_pendulum_ddpg_two import ExperienceSourceSingleEnvFirstLastDdpgTwo
+from rl_main.matlab_pendulum_main.experience_pendulum_ddpg_two import ExperienceSourceSingleEnvFirstLastDdpgTwo, \
+    RewardTrackerMatlabPendulum
 
 idx = os.getcwd().index("link_rl")
 PROJECT_HOME = os.getcwd()[:idx] + "link_rl"
@@ -30,7 +28,7 @@ from common.fast_rl.rl_agent import float32_preprocessor
 print("PyTorch Version", torch.__version__)
 
 from common.fast_rl import actions, experience, policy_based_model, rl_agent
-from common.fast_rl.common import statistics, utils
+from common.fast_rl.common import statistics
 
 from config.parameters import PARAMETERS as params
 
@@ -139,7 +137,7 @@ def play_func(exp_queue_swing_up, exp_queue_balancing, actor_swing_up_net, criti
 
     recent_swing_up_to_balancing_exp = None
 
-    with utils.RewardTracker(
+    with RewardTrackerMatlabPendulum(
             params=params,
             stop_mean_episode_reward=params.STOP_MEAN_EPISODE_REWARD,
             average_size_for_stats=params.AVG_EPISODE_SIZE_FOR_STAT,
@@ -195,14 +193,13 @@ def play_func(exp_queue_swing_up, exp_queue_balancing, actor_swing_up_net, criti
             else:
                 raise ValueError()
 
-            episode_rewards = experience_source.pop_episode_reward_lst()
+            episode_reward_and_info_lst = experience_source.pop_episode_reward_and_info_lst()
 
-            if episode_rewards:  # 에피소드가 종료될 때만 True
-
-                current_episode_reward = episode_rewards[0]
+            if episode_reward_and_info_lst:  # 에피소드가 종료될 때만 True
+                current_episode_reward_and_info = episode_reward_and_info_lst[0]
 
                 solved, mean_episode_reward = reward_tracker.set_episode_reward(
-                    current_episode_reward, step_idx,
+                    current_episode_reward_and_info, step_idx,
                     epsilon=(action_selector_swing_up.epsilon, action_selector_balancing.epsilon)
                 )
 

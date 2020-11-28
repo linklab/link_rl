@@ -53,6 +53,8 @@ class SimulinkPlant:
             self.simulation_time
         ))
 
+        self.connectStart()
+
     def connectStart(self):
         self.eng.set_param(self.modelName, 'SimulationCommand', 'start', 'SimulationCommand', 'pause', nargout=0)
 

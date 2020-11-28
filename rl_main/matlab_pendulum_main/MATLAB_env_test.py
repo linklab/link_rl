@@ -9,24 +9,41 @@ PROJECT_HOME = os.getcwd()[:idx] + "link_rl"
 sys.path.append(PROJECT_HOME)
 
 from common.environments.matlab.matlabenv import MatlabRotaryInvertedPendulumEnv
-
 from config.parameters import PARAMETERS as params
+import random
+
+ACTION_SCALE_FACTOR = 0.035
+
+env = MatlabRotaryInvertedPendulumEnv(
+    action_min=ACTION_SCALE_FACTOR * -1.0, action_max=ACTION_SCALE_FACTOR
+)
+print("env:", params.ENVIRONMENT_ID)
+print("observation_space:", 4)
+print("action_space:", 1)
+
+MAX_GLOBAL_STEPS = 10000
+
 
 def main():
-    env = MatlabRotaryInvertedPendulumEnv()
-    print("env:", params.ENVIRONMENT_ID)
-    print("observation_space:", 4)
-    print("action_space:", 1)
-
     env.start()
 
-    env.reset()
-    done = False
+    done_episode = 0
+    step = 0
 
-    action = -1.0
-    while not done:
-        next_state, reward, done, _ = env.step(action=action)
-        #action = -action
+    while step < MAX_GLOBAL_STEPS:
+        episode_reward = 0.0
+        done = False
+        env.reset()
+        while not done:
+            action = random.uniform(ACTION_SCALE_FACTOR * -1.0, ACTION_SCALE_FACTOR)
+            next_state, reward, done, _ = env.step(action=action)
+            episode_reward += reward
+            step += 1
+
+        done_episode += 1
+        print("[{0:5d}/{1}] Episode: {2:3d}, Episode Reward: {3:6.1f}".format(
+            step, MAX_GLOBAL_STEPS, done_episode, episode_reward
+        ), flush=True)
 
 
 if __name__ == "__main__":
