@@ -158,7 +158,7 @@ class MatlabRotaryInvertedPendulumEnv(gym.Env):
         if self.count_continuous_uprights >= 1:  # Balance 제어로 넘어가는 조건: 170 ~ 190 각도 사이에 연속적으로 10번 이상
             if self.current_status in [Status.SWING_UP, Status.BALANCING_TO_SWING_UP]:
                 self.current_status = Status.SWING_UP_TO_BALANCING
-                self.count_swing_up_states += 1
+                self.count_balancing_states += 1
                 self.count_continuous_swing_up_states = 0
             else:
                 self.current_status = Status.BALANCING
@@ -167,7 +167,7 @@ class MatlabRotaryInvertedPendulumEnv(gym.Env):
         else:
             if self.current_status in [Status.BALANCING, Status.SWING_UP_TO_BALANCING]:
                 self.current_status = Status.BALANCING_TO_SWING_UP
-                self.count_balancing_states += 1
+                self.count_swing_up_states += 1
                 self.count_continuous_balancing_states = 0
             else:
                 self.current_status = Status.SWING_UP
