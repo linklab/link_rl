@@ -266,7 +266,7 @@ class MatlabRotaryInvertedPendulumEnv(gym.Env):
     def get_reward(self, adjusted_radian, action):
         #### 1) position_reward
         if self.too_much_rotate:
-            position_reward = -100
+            position_reward = -100.0
         else:
             if adjusted_radian < math.pi / 2:
                 position_reward = 0.0
