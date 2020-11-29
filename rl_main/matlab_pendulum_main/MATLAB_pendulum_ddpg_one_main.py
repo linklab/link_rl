@@ -1,8 +1,6 @@
 # https://github.com/openai/gym/blob/master/gym/envs/classic_control/pendulum.py
 # https://mspries.github.io/jimmy_pendulum.html
 #!/usr/bin/env python3
-import math
-import profile
 import time
 import torch
 import torch.nn.functional as F
@@ -10,8 +8,8 @@ import torch.multiprocessing as mp
 from torch import optim
 import os, sys
 import numpy as np
-import math
 
+from common.fast_rl.common.utils import RewardTracker
 from config.names import DeepLearningModelName
 
 idx = os.getcwd().index("link_rl")
@@ -27,7 +25,7 @@ from common.fast_rl.rl_agent import float32_preprocessor
 print("PyTorch Version", torch.__version__)
 
 from common.fast_rl import actions, experience, policy_based_model, rl_agent
-from common.fast_rl.common import statistics, utils
+from common.fast_rl.common import statistics
 
 from config.parameters import PARAMETERS as params
 
@@ -52,7 +50,7 @@ CLIP = 1
 
 
 env = MatlabRotaryInvertedPendulumEnv(
-    action_min=ACTION_SCALE_FACTOR * -1.0, action_max=ACTION_SCALE_FACTOR
+    action_min=ACTION_SCALE_FACTOR * -1.0, action_max=ACTION_SCALE_FACTOR, env_reset=params.ENV_RESET
 )
 print("env:", params.ENVIRONMENT_ID)
 print("observation_space:", env.observation_space)
@@ -103,7 +101,7 @@ def play_func(exp_queue, actor_net, critic_net):
 
     best_mean_episode_reward = 0
 
-    with utils.RewardTracker(
+    with RewardTracker(
             params=params,
             stop_mean_episode_reward=params.STOP_MEAN_EPISODE_REWARD,
             average_size_for_stats=params.AVG_EPISODE_SIZE_FOR_STAT,
@@ -119,6 +117,7 @@ def play_func(exp_queue, actor_net, critic_net):
             epsilon_tracker.udpate(step_idx)  #step_idx 로 epsilon 업데이트
 
             episode_rewards = experience_source.pop_episode_reward_lst()
+
             if episode_rewards:  # 에피소드가 종료될 때만 True
                 current_episode_reward = episode_rewards[0]
 
