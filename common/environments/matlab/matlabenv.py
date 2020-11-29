@@ -103,8 +103,8 @@ class MatlabRotaryInvertedPendulumEnv(gym.Env):
             math.cos(self.pendulum_position),
             math.sin(self.pendulum_position),
             self.pendulum_velocity,
-            # 0.0,
-            # 0.0,
+            0.0,
+            0.0,
             # 0.0,
             self.current_status.value
         )
@@ -284,8 +284,8 @@ class MatlabRotaryInvertedPendulumEnv(gym.Env):
             math.cos(self.pendulum_position),
             math.sin(self.pendulum_position),
             self.pendulum_velocity,
-            # math.cos(self.initial_motor_position - self.motor_position),
-            # math.sin(self.initial_motor_position - self.motor_position),
+            math.cos(self.initial_motor_position - self.motor_position),
+            math.sin(self.initial_motor_position - self.motor_position),
             # action,
             self.current_status.value
         )
@@ -295,7 +295,7 @@ class MatlabRotaryInvertedPendulumEnv(gym.Env):
     def get_reward(self, adjusted_radian, action):
         #### 1) position_reward
         if self.too_much_rotate:
-            position_reward = -10.0
+            position_reward = -100.0
         else:
             if adjusted_radian < math.pi / 2:
                 position_reward = 0.0
@@ -305,7 +305,7 @@ class MatlabRotaryInvertedPendulumEnv(gym.Env):
         self.episode_position_reward_list.append(position_reward)
 
         #### 2) pendulum_velocity 보상 & action 보상
-        if self.current_status in [Status.BALANCING, Status.BALANCING_TO_SWING_UP]:
+        if self.current_status in [Status.BALANCING, Status.SWING_UP_TO_BALANCING]:
             pendulum_velocity_reward = -0.001 * self.pendulum_velocity ** 2
             self.episode_pendulum_velocity_reward_list.append(pendulum_velocity_reward)
 
