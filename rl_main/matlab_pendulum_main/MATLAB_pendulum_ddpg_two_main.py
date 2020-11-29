@@ -197,7 +197,7 @@ def play_func(exp_queue_swing_up, exp_queue_balancing, actor_swing_up_net, criti
                 recent_swing_up_to_balancing_exp._replace(reward=sum(balancing_step_reward_list))
                 exp_queue_swing_up.put(recent_swing_up_to_balancing_exp)
 
-                recent_swing_up_to_balancing_exp = None
+                #recent_swing_up_to_balancing_exp = None
                 balancing_step_reward_list.clear()
 
             else:
