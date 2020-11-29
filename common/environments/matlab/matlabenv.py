@@ -276,7 +276,7 @@ class MatlabRotaryInvertedPendulumEnv(gym.Env):
         if self.too_much_rotate:
             position_reward += self.count_continuous_swing_up_states * -1.0
 
-        position_reward += self.count_continuous_balancing_states * 100
+        position_reward += self.count_continuous_balancing_states * 2.0
 
         self.episode_position_reward_list.append(position_reward)
 
