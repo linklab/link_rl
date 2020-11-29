@@ -205,7 +205,6 @@ def play_func(exp_queue_swing_up, exp_queue_balancing, actor_swing_up_net, criti
 
             episode_reward_and_info_lst = experience_source.pop_episode_reward_and_info_lst()
 
-
             if episode_reward_and_info_lst:  # 에피소드가 종료될 때만 True
                 current_episode_reward_and_info = episode_reward_and_info_lst[0]
                 episode_reward_list.append(current_episode_reward_and_info[0])
