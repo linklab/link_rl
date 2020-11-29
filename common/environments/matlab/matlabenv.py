@@ -156,22 +156,22 @@ class MatlabRotaryInvertedPendulumEnv(gym.Env):
             return
 
         if self.count_continuous_uprights >= 1:  # Balance 제어로 넘어가는 조건: 170 ~ 190 각도 사이에 연속적으로 10번 이상
+            self.count_balancing_states += 1
+
             if self.current_status in [Status.SWING_UP, Status.BALANCING_TO_SWING_UP]:
                 self.current_status = Status.SWING_UP_TO_BALANCING
-                self.count_balancing_states += 1
                 self.count_continuous_swing_up_states = 0
             else:
                 self.current_status = Status.BALANCING
-                self.count_balancing_states += 1
                 self.count_continuous_balancing_states += 1
         else:
+            self.count_swing_up_states += 1
+
             if self.current_status in [Status.BALANCING, Status.SWING_UP_TO_BALANCING]:
                 self.current_status = Status.BALANCING_TO_SWING_UP
-                self.count_swing_up_states += 1
                 self.count_continuous_balancing_states = 0
             else:
                 self.current_status = Status.SWING_UP
-                self.count_swing_up_states += 1
                 self.count_continuous_swing_up_states += 1
 
     def step(self, action):
@@ -224,9 +224,6 @@ class MatlabRotaryInvertedPendulumEnv(gym.Env):
             else:
                 reward = self.get_reward(adjusted_radian, action)
 
-            # if self.too_much_rotate:
-            #     reward -= 100.0
-
             info = {
                 "count_balancing_states": self.count_balancing_states,
                 "count_swing_up_states": self.count_swing_up_states,
@@ -268,15 +265,13 @@ class MatlabRotaryInvertedPendulumEnv(gym.Env):
 
     def get_reward(self, adjusted_radian, action):
         #### 1) position_reward
-        if adjusted_radian < math.pi / 2:
-            position_reward = 0.0
-        else:
-            position_reward = adjusted_radian
-
         if self.too_much_rotate:
-            position_reward += self.count_continuous_swing_up_states * -1.0
-
-        position_reward += self.count_continuous_balancing_states * 2.0
+            position_reward = -100
+        else:
+            if adjusted_radian < math.pi / 2:
+                position_reward = 0.0
+            else:
+                position_reward = adjusted_radian + self.count_continuous_balancing_states * 2.0
 
         self.episode_position_reward_list.append(position_reward)
 
