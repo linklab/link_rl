@@ -58,6 +58,7 @@ class MatlabRotaryInvertedPendulumEnv(gym.Env):
         self.current_status = None
 
         self.count_continuous_uprights = 0
+        self.is_upright = False
         self.initial_motor_position = 0.0
 
         self.count_swing_up_states = 0
@@ -118,6 +119,7 @@ class MatlabRotaryInvertedPendulumEnv(gym.Env):
         self.too_much_rotate = False
 
         self.count_continuous_uprights = 0
+        self.is_upright = False
         self.initial_motor_position = self.motor_position
 
         return state
@@ -149,30 +151,57 @@ class MatlabRotaryInvertedPendulumEnv(gym.Env):
             else:
                 self.count_continuous_uprights = 0
 
-        if self.current_status is None: # reset
+        if self.count_continuous_uprights >= 1:
+            self.is_upright = True
+        else:
+            self.is_upright = False
+
+        if self.current_status is None:                 # RESET
             self.current_status = Status.SWING_UP
             self.count_swing_up_states += 1
             self.count_continuous_swing_up_states += 1
-            return
-
-        if self.count_continuous_uprights >= 1:  # Balance 제어로 넘어가는 조건: 170 ~ 190 각도 사이에 연속적으로 10번 이상
-            self.count_balancing_states += 1
-
-            if self.current_status in [Status.SWING_UP, Status.BALANCING_TO_SWING_UP]:
+        elif self.current_status == Status.SWING_UP:
+            if self.is_upright:                         # SWING_UP --> SWING_UP_TO_BALANCING
                 self.current_status = Status.SWING_UP_TO_BALANCING
                 self.count_continuous_swing_up_states = 0
-            else:
-                self.current_status = Status.BALANCING
                 self.count_continuous_balancing_states += 1
-        else:
-            self.count_swing_up_states += 1
-
-            if self.current_status in [Status.BALANCING, Status.SWING_UP_TO_BALANCING]:
-                self.current_status = Status.BALANCING_TO_SWING_UP
-                self.count_continuous_balancing_states = 0
-            else:
+                self.count_balancing_states += 1
+            else:                                       # SWING_UP --> SWING_UP
                 self.current_status = Status.SWING_UP
                 self.count_continuous_swing_up_states += 1
+                self.count_swing_up_states += 1
+        elif self.current_status == Status.SWING_UP_TO_BALANCING:
+            if self.is_upright:                         # SWING_UP_TO_BALANCING --> BALANCING
+                self.current_status = Status.BALANCING
+                self.count_continuous_balancing_states += 1
+                self.count_balancing_states += 1
+            else:                                       # SWING_UP_TO_BALANCING --> BALANCING_TO_SWING_UP
+                self.current_status = Status.BALANCING_TO_SWING_UP
+                self.count_swing_up_states += 1
+                self.count_continuous_balancing_states = 0
+                self.count_continuous_swing_up_states += 1
+        elif self.current_status == Status.BALANCING:
+            if self.is_upright:                         # BALANCING --> BALANCING
+                self.current_status = Status.BALANCING
+                self.count_balancing_states += 1
+                self.count_continuous_balancing_states += 1
+            else:                                       # BALANCING --> BALANCING_TO_SWING_UP
+                self.current_status = Status.BALANCING_TO_SWING_UP
+                self.count_swing_up_states += 1
+                self.count_continuous_balancing_states = 0
+                self.count_continuous_swing_up_states += 1
+        elif self.current_status == Status.BALANCING_TO_SWING_UP:
+            if self.is_upright:                         # BALANCING_TO_SWING_UP --> SWING_UP_TI_BALANCING
+                self.current_status = Status.SWING_UP_TO_BALANCING
+                self.count_balancing_states += 1
+                self.count_continuous_swing_up_states = 0
+                self.count_continuous_balancing_states += 1
+            else:                                       # BALANCING_TO_SWING_UP --> SWING_UP
+                self.current_status = Status.SWING_UP
+                self.count_swing_up_states += 1
+                self.count_continuous_swing_up_states += 1
+        else:
+            raise ValueError()
 
     def step(self, action):
         if type(action) is np.ndarray:
