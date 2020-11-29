@@ -34,6 +34,11 @@ from common.fast_rl.common import statistics, utils
 
 from config.parameters import PARAMETERS as params
 
+import pickle
+import matplotlib
+import matplotlib.pyplot as plt
+
+
 MODEL_SAVE_DIR = os.path.join(".", "saved_models")
 if not os.path.exists(MODEL_SAVE_DIR):
     os.makedirs(MODEL_SAVE_DIR)
@@ -66,6 +71,8 @@ print("observation_space:", env.observation_space)
 print("action_space:", env.action_space)
 
 OBS_SIZE = env.observation_space.shape[0]
+
+episode_reward_list = []
 
 
 def play_func(exp_queue_swing_up, exp_queue_balancing, actor_swing_up_net, critic_swing_up_net, actor_balancing_net, critic_balancing_net):
@@ -197,9 +204,12 @@ def play_func(exp_queue_swing_up, exp_queue_balancing, actor_swing_up_net, criti
 
             episode_rewards = experience_source.pop_episode_reward_lst()
 
+
+
             if episode_rewards:  # 에피소드가 종료될 때만 True
 
                 current_episode_reward = episode_rewards[0]
+                episode_reward_list.append(current_episode_reward)
 
                 solved, mean_episode_reward = reward_tracker.set_episode_reward(
                     current_episode_reward, step_idx,
@@ -229,6 +239,23 @@ def play_func(exp_queue_swing_up, exp_queue_balancing, actor_swing_up_net, criti
 
                     if solved:
                         break
+
+        print("!!!!")
+
+        x = [i+1 for i in range(len(episode_reward_list))]
+        y = episode_reward_list
+
+        print(x)
+        print(y)
+
+        plt.plot(x,y)
+        plt.title("MATLAB DDPG EPISODE REWARD")
+        plt.xticks(x)
+        plt.xlabel('episode')
+        plt.ylabel('episode reward')
+        plt.show()
+
+        print("@@@@@")
 
     exp_queue_swing_up.put(None)
     exp_queue_balancing.put(None)
