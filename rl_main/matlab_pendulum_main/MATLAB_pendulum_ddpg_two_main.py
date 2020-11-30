@@ -154,7 +154,6 @@ def play_func(exp_queue_swing_up, exp_queue_balancing, actor_swing_up_net, criti
             step_idx += 1
 
             exp = next(exp_source_iter)
-
             if params.DEEP_LEARNING_MODEL is DeepLearningModelName.DDPG_MLP:
                 status_value = exp[0][-1]
             elif params.DEEP_LEARNING_MODEL is DeepLearningModelName.DDPG_GRU:
@@ -174,7 +173,7 @@ def play_func(exp_queue_swing_up, exp_queue_balancing, actor_swing_up_net, criti
                 epsilon_tracker_swing_up.udpate(swing_up_step_idx)
 
                 # NOTE: exp 잠시 대기
-                recent_swing_up_to_balancing_exp = copy.deepcopy(exp)
+                recent_swing_up_to_balancing_exp = copy.deepcopy(  exp)
 
             elif status_value == Status.BALANCING.value:  # BALANCING:1.0, BALANCING_TO_SWING_UP:-0.5
                 balancing_step_idx += 1
@@ -220,6 +219,8 @@ def play_func(exp_queue_swing_up, exp_queue_balancing, actor_swing_up_net, criti
             if episode_reward_and_info_lst:  # 에피소드가 종료될 때만 True
                 current_episode_reward_and_info = episode_reward_and_info_lst[0]
                 episode_reward_list.append(current_episode_reward_and_info[0])
+                with open('episode_reward_list.txt', 'wb') as f:
+                    pickle.dump(episode_reward_list,f)
 
                 solved, mean_episode_reward = reward_tracker.set_episode_reward(
                     current_episode_reward_and_info, step_idx,
@@ -250,9 +251,10 @@ def play_func(exp_queue_swing_up, exp_queue_balancing, actor_swing_up_net, criti
                     if solved:
                         break
 
-
-        x = [i+1 for i in range(len(episode_reward_list))]
-        y = episode_reward_list
+        with open('episode_reward_list.txt', 'rb') as f:
+            data = pickle.load(f)
+        x = [i+1 for i in range(len(data))]
+        y = data
 
         print(x)
         print(y)
@@ -262,6 +264,7 @@ def play_func(exp_queue_swing_up, exp_queue_balancing, actor_swing_up_net, criti
         plt.xticks(x)
         plt.xlabel('episode')
         plt.ylabel('episode reward')
+        plt.yticks([i for i in range(params.MAX_GLOBAL_STEPS) if i%100 ==0 ])
         plt.show()
 
     exp_queue_swing_up.put(None)
