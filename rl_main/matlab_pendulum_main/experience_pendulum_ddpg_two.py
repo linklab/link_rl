@@ -9,7 +9,6 @@ from collections import namedtuple, deque
 from common.environments.matlab.matlabenv import Status
 from common.fast_rl.common.statistics import StatisticsForValueBasedRL, StatisticsForPolicyBasedRL
 from common.fast_rl.rl_agent import BaseAgent, AgentDDPG
-from config.names import DeepLearningModelName
 
 ExperienceWithNoise = namedtuple('ExperienceWithNoise', ['state', 'action', 'noise', 'reward', 'done', 'agent_type'])
 
@@ -78,7 +77,7 @@ class ExperienceSourceSingleEnvDdpgTwo:
     def set_current_agent(self, state):
         status_value = state[-1]
 
-        if status_value in [Status.SWING_UP.value, Status.SWING_UP_TO_BALANCING]:
+        if status_value in [Status.SWING_UP.value, Status.SWING_UP_TO_BALANCING.value]:
             self.current_agent = self.agent_swing_up
             self.current_agent_type = AgentType.SWING_UP_AGENT
         else:
@@ -87,7 +86,6 @@ class ExperienceSourceSingleEnvDdpgTwo:
 
     def __iter__(self):
         state = self.env.reset()
-        self.set_current_agent(state)
 
         history = deque(maxlen=self.steps_count)
         cur_reward = 0.0
@@ -98,6 +96,8 @@ class ExperienceSourceSingleEnvDdpgTwo:
         while True:
             if self.render:
                 self.env.render()
+
+            self.set_current_agent(state)
 
             states_input = []
 
@@ -134,7 +134,6 @@ class ExperienceSourceSingleEnvDdpgTwo:
                 yield tuple(history)
 
             state = next_state
-            self.set_current_agent(state)
 
             if is_done:
                 # in case of very short episode (shorter than our steps count), send gathered history
@@ -148,7 +147,6 @@ class ExperienceSourceSingleEnvDdpgTwo:
                     yield tuple(history)
 
                 state = self.env.reset()
-                self.set_current_agent(state)
 
                 agent_state = self.current_agent.initial_agent_state()
 
@@ -194,7 +192,7 @@ class ExperienceSourceSingleEnvFirstLastDdpgTwo(ExperienceSourceSingleEnvDdpgTwo
 
             exp = ExperienceFirstLastWithNoise(
                 state=exp[0].state, action=exp[0].action, noise=exp[0].noise, reward=total_reward,
-                last_state=last_state, last_step=len(elems), done=exp[-1].done, agent_type=self.current_agent_type
+                last_state=last_state, last_step=len(elems), done=exp[-1].done, agent_type=exp[0].agent_type
             )
 
             yield exp
@@ -277,7 +275,7 @@ class RewardTrackerMatlabPendulum:
                 epsilon if epsilon else 0.0,
             )
 
-        episode_reward_str = "{0:6.1f} [{1:6.1f}, {2:6.1f}, {3:6.1f}]".format(
+        episode_reward_str = "{0:7.3f} [{1:7.3f}, {2:6.2f}, {3:6.2f}]".format(
             self.episode_reward_list[-1],
             episode_info["episode_position_reward_list"],
             episode_info["episode_pendulum_velocity_reward"],
