@@ -225,7 +225,6 @@ class MatlabRotaryInvertedPendulumEnv(gym.Env):
             else:
                 self.num_continuous_negative_torque = 0
 
-
         #print(self.motor_position, math.cos(self.motor_position), math.sin(self.motor_position))
 
         if abs(self.initial_motor_position - self.motor_position) > math.pi * 2:
@@ -300,11 +299,11 @@ class MatlabRotaryInvertedPendulumEnv(gym.Env):
             if adjusted_radian < math.pi / 2:
                 position_reward = 0.0
             else:
-                position_reward = adjusted_radian + self.count_continuous_balancing_states * 2.0
+                position_reward = adjusted_radian
 
         self.episode_position_reward_list.append(position_reward)
 
-        #### 2) pendulum_velocity 보상 & action 보상
+        #### 2) pendulum_velocity 보상 & 3) action 보상
         if self.current_status in [Status.BALANCING, Status.SWING_UP_TO_BALANCING]:
             pendulum_velocity_reward = -0.001 * self.pendulum_velocity ** 2
             self.episode_pendulum_velocity_reward_list.append(pendulum_velocity_reward)
@@ -315,6 +314,8 @@ class MatlabRotaryInvertedPendulumEnv(gym.Env):
             reward = position_reward + pendulum_velocity_reward + action_reward
         else:
             reward = position_reward
+
+        reward /= 1000.0
 
         return reward
 
