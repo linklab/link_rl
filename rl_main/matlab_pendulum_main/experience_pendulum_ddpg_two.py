@@ -275,7 +275,7 @@ class RewardTrackerMatlabPendulum:
                 epsilon if epsilon else 0.0,
             )
 
-        episode_reward_str = "{0:6.1f} [{1:6.1f}, {2:6.1f}, {3:6.1f}]".format(
+        episode_reward_str = "{0:7.3f} [{1:7.3f}, {2:6.2f}, {3:6.2f}]".format(
             self.episode_reward_list[-1],
             episode_info["episode_position_reward_list"],
             episode_info["episode_pendulum_velocity_reward"],

@@ -299,7 +299,7 @@ class MatlabRotaryInvertedPendulumEnv(gym.Env):
             if adjusted_radian < math.pi / 2:
                 position_reward = 0.0
             else:
-                position_reward = adjusted_radian + self.count_continuous_balancing_states * 2.0
+                position_reward = adjusted_radian
 
         self.episode_position_reward_list.append(position_reward)
 
@@ -314,6 +314,8 @@ class MatlabRotaryInvertedPendulumEnv(gym.Env):
             reward = position_reward + pendulum_velocity_reward + action_reward
         else:
             reward = position_reward
+
+        reward /= 1000.0
 
         return reward
 

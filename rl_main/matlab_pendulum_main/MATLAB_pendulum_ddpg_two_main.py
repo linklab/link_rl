@@ -197,9 +197,16 @@ def play_func(exp_queue_swing_up, exp_queue_balancing, actor_swing_up_net, criti
                 exp_queue_balancing.put(exp)
 
                 # NOTE: 대기 중인 exp의 reward를 수정하고 exp_queue_swing_up에 넣기
-                recent_swing_up_to_balancing_exp = recent_swing_up_to_balancing_exp._replace(
-                    reward=sum(balancing_step_reward_list), done=True
-                )
+                if len(balancing_step_reward_list) < 10:
+                    recent_swing_up_to_balancing_exp = recent_swing_up_to_balancing_exp._replace(
+                        done=True
+                    )
+                else:
+                    recent_swing_up_to_balancing_exp = recent_swing_up_to_balancing_exp._replace(
+                        reward=recent_swing_up_to_balancing_exp.reward + sum(balancing_step_reward_list),
+                        done=True
+                    )
+
                 exp_queue_swing_up.put(recent_swing_up_to_balancing_exp)
 
                 #recent_swing_up_to_balancing_exp = None
@@ -398,7 +405,6 @@ def main():
     loss_balancing_critic = 0.0
     loss_balancing_total = 0.0
 
-    count_bal = 0
 ########################################################################################
 
     #$ pip install line_profiler
