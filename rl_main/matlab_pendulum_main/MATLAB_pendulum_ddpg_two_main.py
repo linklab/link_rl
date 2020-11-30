@@ -261,10 +261,9 @@ def play_func(exp_queue_swing_up, exp_queue_balancing, actor_swing_up_net, criti
 
         plt.plot(x,y)
         plt.title("MATLAB DDPG EPISODE REWARD")
-        plt.xticks(x)
+        plt.xticks([i for i in range(params.MAX_GLOBAL_STEPS) if i%100000 ==0 ])
         plt.xlabel('episode')
         plt.ylabel('episode reward')
-        plt.yticks([i for i in range(params.MAX_GLOBAL_STEPS) if i%100 ==0 ])
         plt.show()
 
     exp_queue_swing_up.put(None)
