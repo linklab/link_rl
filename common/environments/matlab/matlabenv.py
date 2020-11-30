@@ -303,7 +303,7 @@ class MatlabRotaryInvertedPendulumEnv(gym.Env):
 
         self.episode_position_reward_list.append(position_reward)
 
-        #### 2) pendulum_velocity 보상 & action 보상
+        #### 2) pendulum_velocity 보상 & 3) action 보상
         if self.current_status in [Status.BALANCING, Status.SWING_UP_TO_BALANCING]:
             pendulum_velocity_reward = -0.001 * self.pendulum_velocity ** 2
             self.episode_pendulum_velocity_reward_list.append(pendulum_velocity_reward)
