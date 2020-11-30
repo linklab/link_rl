@@ -225,7 +225,6 @@ class MatlabRotaryInvertedPendulumEnv(gym.Env):
             else:
                 self.num_continuous_negative_torque = 0
 
-
         #print(self.motor_position, math.cos(self.motor_position), math.sin(self.motor_position))
 
         if abs(self.initial_motor_position - self.motor_position) > math.pi * 2:

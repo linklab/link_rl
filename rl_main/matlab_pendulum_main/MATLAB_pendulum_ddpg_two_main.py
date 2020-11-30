@@ -189,12 +189,17 @@ def play_func(exp_queue_swing_up, exp_queue_balancing, actor_swing_up_net, criti
                 balancing_step_idx += 1
                 epsilon_tracker_balancing.udpate(balancing_step_idx)
 
-                exp_queue_balancing.put(exp)
-
+                # 추후 swing_up 에이전트를 위한 경험 정보에 reward 업데이트를 위하여 사용됨
                 balancing_step_reward_list.append(exp.reward)
 
+                # Balancing Agent의 경험 정보에 done=True 변경
+                exp = exp._replace(done=True)
+                exp_queue_balancing.put(exp)
+
                 # NOTE: 대기 중인 exp의 reward를 수정하고 exp_queue_swing_up에 넣기
-                recent_swing_up_to_balancing_exp._replace(reward=sum(balancing_step_reward_list))
+                recent_swing_up_to_balancing_exp = recent_swing_up_to_balancing_exp._replace(
+                    reward=sum(balancing_step_reward_list), done=True
+                )
                 exp_queue_swing_up.put(recent_swing_up_to_balancing_exp)
 
                 #recent_swing_up_to_balancing_exp = None
@@ -208,7 +213,6 @@ def play_func(exp_queue_swing_up, exp_queue_balancing, actor_swing_up_net, criti
             if episode_reward_and_info_lst:  # 에피소드가 종료될 때만 True
                 current_episode_reward_and_info = episode_reward_and_info_lst[0]
                 episode_reward_list.append(current_episode_reward_and_info[0])
-
 
                 solved, mean_episode_reward = reward_tracker.set_episode_reward(
                     current_episode_reward_and_info, step_idx,
