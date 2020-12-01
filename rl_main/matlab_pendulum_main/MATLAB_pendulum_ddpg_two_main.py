@@ -11,6 +11,7 @@ import os, sys
 import numpy as np
 import copy
 
+from common.logger import get_logger
 from config.names import DeepLearningModelName
 from rl_main.matlab_pendulum_main.experience_pendulum_ddpg_two import ExperienceSourceSingleEnvFirstLastDdpgTwo, \
     RewardTrackerMatlabPendulum
@@ -57,8 +58,8 @@ elif params.CH:
     SWING_UP_SCALE_FACTOR = 0.05
     BALANCING_SCALE_FACTOR = 0.0005
 else:
-    SWING_UP_SCALE_FACTOR = 0.035
-    BALANCING_SCALE_FACTOR = 0.010
+    SWING_UP_SCALE_FACTOR = 0.05
+    BALANCING_SCALE_FACTOR = 0.01
 CLIP = 1
 
 env = MatlabRotaryInvertedPendulumEnv(
@@ -71,6 +72,8 @@ print("action_space:", env.action_space)
 OBS_SIZE = env.observation_space.shape[0]
 
 episode_reward_list = []
+
+my_logger = get_logger("matlab_pendulum_ddpg_two_main")
 
 
 def play_func(exp_queue_swing_up, exp_queue_balancing, actor_swing_up_net, critic_swing_up_net, actor_balancing_net, critic_balancing_net):
@@ -148,7 +151,7 @@ def play_func(exp_queue_swing_up, exp_queue_balancing, actor_swing_up_net, criti
             params=params,
             stop_mean_episode_reward=params.STOP_MEAN_EPISODE_REWARD,
             average_size_for_stats=params.AVG_EPISODE_SIZE_FOR_STAT,
-            frame=True, draw_viz=params.DRAW_VIZ, stat=stat) as reward_tracker:
+            frame=True, draw_viz=params.DRAW_VIZ, stat=stat, logger=my_logger) as reward_tracker:
         while step_idx < params.MAX_GLOBAL_STEPS:
             # 1 스텝 진행하고 exp를 exp_queue에 넣음
             step_idx += 1

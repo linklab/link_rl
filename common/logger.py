@@ -1,7 +1,8 @@
 import logging, os, sys
 from logging.handlers import RotatingFileHandler
 
-from rl_main.utils import PROJECT_HOME
+idx = os.getcwd().index("link_rl")
+PROJECT_HOME = os.getcwd()[:idx] + "link_rl"
 
 
 def get_logger(name):
