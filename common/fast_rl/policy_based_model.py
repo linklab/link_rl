@@ -327,10 +327,13 @@ class DDPGActor(nn.Module):
 
         self.net = nn.Sequential(
             nn.Linear(obs_size, hidden_size_1),
+            nn.BatchNorm1d(num_features=hidden_size_1),
             nn.ReLU(),
             nn.Linear(hidden_size_1, hidden_size_2),
+            nn.BatchNorm1d(num_features=hidden_size_2),
             nn.ReLU(),
             nn.Linear(hidden_size_2, hidden_size_2),
+            nn.BatchNorm1d(num_features=hidden_size_2),
             nn.ReLU(),
             nn.Linear(hidden_size_2, n_actions),
         )

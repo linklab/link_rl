@@ -292,6 +292,11 @@ class AgentDDPG(BaseAgent):
             if torch.is_tensor(states):
                 states = states.to(self.device)
 
+        if len(states) == 1:
+            self.model.eval()
+        else:
+            self.model.train()
+
         mu_v = self.model(states)
         mu = mu_v.data.cpu().numpy()
         ####################################
