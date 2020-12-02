@@ -500,7 +500,6 @@ def model_update(buffer, actor_swing_up_net, critic_swing_up_net, target_actor_s
                  loss_actor, loss_critic, loss_total, per):
     if per:
         batch, batch_indices, batch_weights = buffer.sample(params.BATCH_SIZE)
-        print(batch)
     else:
         batch = buffer.sample(params.BATCH_SIZE)
         batch_indices, batch_weights = None, None
