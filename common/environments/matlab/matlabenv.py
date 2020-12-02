@@ -103,8 +103,8 @@ class MatlabRotaryInvertedPendulumEnv(gym.Env):
             math.cos(self.pendulum_position),
             math.sin(self.pendulum_position),
             self.pendulum_velocity,
-            0.0,
-            0.0,
+            math.cos(0.0),  # 1.0
+            math.sin(0.0),  # 0.0
             #self.motor_velocity,
             self.current_status.value
         )
@@ -231,7 +231,7 @@ class MatlabRotaryInvertedPendulumEnv(gym.Env):
             self.too_much_rotate = True
 
         done_conditions = [
-            self.episode_steps >= 2000 if params.TEAMVIEWER else self.episode_steps >= 2000,
+            self.episode_steps >= 2000,
             self.too_much_rotate
             # self.num_continuous_positive_torque >= 30,
             # self.num_continuous_negative_torque >= 30
@@ -300,7 +300,7 @@ class MatlabRotaryInvertedPendulumEnv(gym.Env):
             elif self.current_status in [Status.SWING_UP_TO_BALANCING]:
                 position_reward = 1.0
             else:
-                position_reward = adjusted_radian
+                position_reward = adjusted_radian  # math.pi - math.radians(12) ~ math.pi
 
         self.episode_position_reward_list.append(position_reward)
         self.episode_pendulum_velocity_reward_list.append(0.0)

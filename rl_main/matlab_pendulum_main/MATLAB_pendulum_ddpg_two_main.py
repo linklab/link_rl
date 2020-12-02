@@ -53,7 +53,6 @@ else:
 if params.TEAMVIEWER:
     SWING_UP_SCALE_FACTOR = 0.05
     BALANCING_SCALE_FACTOR = 0.0005
-
 elif params.CH:
     SWING_UP_SCALE_FACTOR = 0.05
     BALANCING_SCALE_FACTOR = 0.0005
@@ -78,8 +77,10 @@ my_logger = get_logger("matlab_pendulum_ddpg_two_main")
 
 def play_func(exp_queue_swing_up, exp_queue_balancing, actor_swing_up_net, critic_swing_up_net, actor_balancing_net, critic_balancing_net):
     env.start()
+
     swing_up_action_min = -SWING_UP_SCALE_FACTOR
     swing_up_action_max = SWING_UP_SCALE_FACTOR
+
     balancing_action_min = -BALANCING_SCALE_FACTOR
     balancing_action_max = BALANCING_SCALE_FACTOR
 
@@ -127,7 +128,8 @@ def play_func(exp_queue_swing_up, exp_queue_balancing, actor_swing_up_net, criti
         step_length = -1
 
     experience_source = ExperienceSourceSingleEnvFirstLastDdpgTwo(
-        params, env, agent_swing_up, agent_balancing, gamma=params.GAMMA, steps_count=params.N_STEP, step_length=step_length
+        params, env, agent_swing_up, agent_balancing, gamma=params.GAMMA, steps_count=params.N_STEP,
+        step_length=step_length
     )
 
     exp_source_iter = iter(experience_source)
@@ -157,6 +159,7 @@ def play_func(exp_queue_swing_up, exp_queue_balancing, actor_swing_up_net, criti
             step_idx += 1
 
             exp = next(exp_source_iter)
+
             if params.DEEP_LEARNING_MODEL is DeepLearningModelName.DDPG_MLP:
                 status_value = exp[0][-1]
             elif params.DEEP_LEARNING_MODEL is DeepLearningModelName.DDPG_GRU:
@@ -176,7 +179,7 @@ def play_func(exp_queue_swing_up, exp_queue_balancing, actor_swing_up_net, criti
                 epsilon_tracker_swing_up.udpate(swing_up_step_idx)
 
                 # NOTE: exp 잠시 대기
-                recent_swing_up_to_balancing_exp = copy.deepcopy(  exp)
+                recent_swing_up_to_balancing_exp = copy.deepcopy(exp)
 
             elif status_value == Status.BALANCING.value:  # BALANCING:1.0, BALANCING_TO_SWING_UP:-0.5
                 balancing_step_idx += 1
@@ -371,7 +374,9 @@ def main():
     exp_queue_balancing = mp.Queue(maxsize=params.TRAIN_STEP_FREQ * 2)
 
     play_proc = mp.Process(target=play_func, args=(
-        exp_queue_swing_up, exp_queue_balancing, actor_swing_up_net, critic_swing_up_net, actor_balancing_net, critic_balancing_net
+        exp_queue_swing_up, exp_queue_balancing,
+        actor_swing_up_net, critic_swing_up_net,
+        actor_balancing_net, critic_balancing_net
     ))
     play_proc.start()
 
