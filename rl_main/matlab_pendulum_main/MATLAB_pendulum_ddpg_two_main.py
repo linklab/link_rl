@@ -363,12 +363,20 @@ def main():
     critic_balancing_optimizer = optim.Adam(critic_balancing_net.parameters(), lr=params.LEARNING_RATE)
 ##########################################################################################
 
-    buffer_swing_up = experience.ExperienceReplayBuffer(experience_source=None, buffer_size=params.REPLAY_BUFFER_SIZE)
-    buffer_balancing = experience.ExperienceReplayBuffer(experience_source=None, buffer_size=params.REPLAY_BUFFER_SIZE)
-
-    # buffer = experience.PrioritizedReplayBuffer(
-    #     experience_source=None, buffer_size=params.REPLAY_BUFFER_SIZE, n_step=params.N_STEP
-    # )
+    if params.PER:
+        buffer_swing_up = experience.PrioritizedReplayBuffer(
+            experience_source=None, buffer_size=params.REPLAY_BUFFER_SIZE, n_step=params.N_STEP
+        )
+        buffer_balancing = experience.PrioritizedReplayBuffer(
+            experience_source=None, buffer_size=params.REPLAY_BUFFER_SIZE, n_step=params.N_STEP
+        )
+    else:
+        buffer_swing_up = experience.ExperienceReplayBuffer(
+            experience_source=None, buffer_size=params.REPLAY_BUFFER_SIZE
+        )
+        buffer_balancing = experience.ExperienceReplayBuffer(
+            experience_source=None, buffer_size=params.REPLAY_BUFFER_SIZE
+        )
 
     exp_queue_swing_up = mp.Queue(maxsize=params.TRAIN_STEP_FREQ * 2)
     exp_queue_balancing = mp.Queue(maxsize=params.TRAIN_STEP_FREQ * 2)
