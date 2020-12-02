@@ -464,7 +464,9 @@ def main():
         if exp_swing_up and len(buffer_swing_up) >= params.MIN_REPLAY_SIZE_FOR_TRAIN:
             actor_grad_l2, actor_grad_max, actor_grad_variance, critic_grad_l2, critic_grad_max, critic_grad_variance, \
             loss_actor, loss_critic, loss_total = model_update(
-                buffer_swing_up, actor_swing_up_net, critic_swing_up_net, target_actor_swing_up_net, target_critic_swing_up_net, actor_swing_up_optimizer, critic_swing_up_optimizer,
+                buffer_swing_up,
+                actor_swing_up_net, critic_swing_up_net, target_actor_swing_up_net, target_critic_swing_up_net,
+                actor_swing_up_optimizer, critic_swing_up_optimizer,
                 step_idx, actor_grad_l2, actor_grad_max, actor_grad_variance,
                 critic_grad_l2, critic_grad_max, critic_grad_variance,
                 loss_actor, loss_critic, loss_total, per=False
@@ -475,7 +477,8 @@ def main():
             actor_balancing_grad_l2, actor_balancing_grad_max, actor_balancing_grad_variance, critic_balancing_grad_l2, \
             critic_balancing_grad_max, critic_balancing_grad_variance, loss_balancing_actor, loss_balancing_critic, \
             loss_balancing_total = model_update(
-                buffer_balancing, actor_balancing_net, critic_balancing_net, target_actor_balancing_net, target_critic_balancing_net,
+                buffer_balancing,
+                actor_balancing_net, critic_balancing_net, target_actor_balancing_net, target_critic_balancing_net,
                 actor_balancing_optimizer, critic_balancing_optimizer,
                 step_idx, actor_balancing_grad_l2, actor_balancing_grad_max, actor_balancing_grad_variance,
                 critic_balancing_grad_l2, critic_balancing_grad_max, critic_balancing_grad_variance,
