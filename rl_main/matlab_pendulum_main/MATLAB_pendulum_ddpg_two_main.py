@@ -477,7 +477,7 @@ def main():
                 actor_swing_up_optimizer, critic_swing_up_optimizer,
                 step_idx, actor_grad_l2, actor_grad_max, actor_grad_variance,
                 critic_grad_l2, critic_grad_max, critic_grad_variance,
-                loss_actor, loss_critic, loss_total, per=False
+                loss_actor, loss_critic, loss_total, per=params.PER
             )
 
         ## buffer_balancing를 통하여 경험 정보 가져와 모델 업데이트
@@ -490,7 +490,7 @@ def main():
                 actor_balancing_optimizer, critic_balancing_optimizer,
                 step_idx, actor_balancing_grad_l2, actor_balancing_grad_max, actor_balancing_grad_variance,
                 critic_balancing_grad_l2, critic_balancing_grad_max, critic_balancing_grad_variance,
-                loss_balancing_actor, loss_balancing_critic, loss_balancing_total, per=False
+                loss_balancing_actor, loss_balancing_critic, loss_balancing_total, per=params.PER
             )
 
 
@@ -500,6 +500,7 @@ def model_update(buffer, actor_swing_up_net, critic_swing_up_net, target_actor_s
                  loss_actor, loss_critic, loss_total, per):
     if per:
         batch, batch_indices, batch_weights = buffer.sample(params.BATCH_SIZE)
+        print(batch)
     else:
         batch = buffer.sample(params.BATCH_SIZE)
         batch_indices, batch_weights = None, None
