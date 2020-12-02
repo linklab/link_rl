@@ -301,7 +301,7 @@ class RewardTrackerMatlabPendulum:
                 "fps" if self.frame else "steps/sec.",
                 time.strftime("%Hh %Mm %Ss", time.gmtime(elapsed_time)),
         )
-        print(msg, end="", flush=True)
+        print(msg, flush=True)
         self.logger.info(msg)
 
         if self.draw_viz and self.stat:
