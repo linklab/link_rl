@@ -94,7 +94,7 @@ def play_func(exp_queue_swing_up, exp_queue_balancing, actor_swing_up_net, criti
         action_selector=action_selector_swing_up,
         eps_start=params.EPSILON_INIT,
         eps_final=params.EPSILON_MIN,
-        eps_frames=params.EPSILON_MIN_STEP
+        eps_frames=params.EPSILON_SWING_UP_MIN_STEP
     )
 
     agent_swing_up = rl_agent.AgentDDPG(
@@ -112,7 +112,7 @@ def play_func(exp_queue_swing_up, exp_queue_balancing, actor_swing_up_net, criti
         action_selector=action_selector_balancing,
         eps_start=params.EPSILON_INIT,
         eps_final=params.EPSILON_MIN,
-        eps_frames=params.EPSILON_MIN_STEP
+        eps_frames=params.EPSILON_BALANCING_MIN_STEP
     )
 
     agent_balancing = rl_agent.AgentDDPG(
