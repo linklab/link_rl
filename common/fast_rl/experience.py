@@ -676,14 +676,14 @@ class PrioReplayBufferNaive:
 
 # sumtree 사용 버전
 class PrioritizedReplayBuffer(ExperienceReplayBuffer):
-    def __init__(self, experience_source, buffer_size, alpha=0.6, n_step=1, BETA_START = 0.4, BETA_FRAMES = 100000):
+    def __init__(self, experience_source, buffer_size, alpha=0.6, n_step=1, beta_start=0.4, beta_frames=100000):
         super(PrioritizedReplayBuffer, self).__init__(experience_source, buffer_size)
         assert alpha > 0
         self.alpha = alpha
-        self.beta = BETA_START
+        self.beta = beta_start
         self.n_step = n_step
-        self.BETA_START = BETA_START
-        self.BETA_FRAMES = BETA_FRAMES
+        self.beta_start = beta_start
+        self.beta_frames = beta_frames
 
         it_capacity = 1
         while it_capacity < buffer_size:
@@ -694,7 +694,7 @@ class PrioritizedReplayBuffer(ExperienceReplayBuffer):
         self._max_priority = 1.0
 
     def update_beta(self, idx):
-        v = self.BETA_START + idx * (1.0 - self.BETA_START) / self.BETA_FRAMES
+        v = self.beta_start + idx * (1.0 - self.beta_start) / self.beta_frames
         self.beta = min(1.0, v)
         return self.beta
 
@@ -762,7 +762,7 @@ class PrioritizedReplayBuffer(ExperienceReplayBuffer):
 
 # sumtree 사용 안하는 버전
 class PrioReplayBuffer:
-    def __init__(self, experience_source, buffer_size, prob_alpha=0.6, n_step=1, BETA_START=0.4, BETA_FRAMES = 100000):
+    def __init__(self, experience_source, buffer_size, prob_alpha=0.6, n_step=1, beta_start=0.4, beta_frames=100000):
         assert isinstance(experience_source, (ExperienceSource, type(None)))
         assert isinstance(buffer_size, int)
         self.exp_source_iter = None if experience_source is None else iter(experience_source)
@@ -771,13 +771,13 @@ class PrioReplayBuffer:
         self.pos = 0
         self.buffer = []
         self.priorities = np.zeros((buffer_size,), dtype=np.float32)
-        self.beta = BETA_START
+        self.beta = beta_start
         self.n_step = n_step
-        self.BETA_START = BETA_START
-        self.BETA_FRAMES = BETA_FRAMES
+        self.beta_start = beta_start
+        self.beta_frames = beta_frames
 
     def update_beta(self, idx):
-        v = self.BETA_START + idx * (1.0 - self.BETA_START) / self.BETA_FRAMES
+        v = self.beta_start + idx * (1.0 - self.beta_start) / self.beta_frames
         self.beta = min(1.0, v)
         return self.beta
 
