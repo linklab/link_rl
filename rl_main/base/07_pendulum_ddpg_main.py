@@ -183,8 +183,9 @@ def main():
     critic_optimizer = optim.Adam(critic_net.parameters(), lr=params.LEARNING_RATE)
 
     if params.PER:
-        buffer = experience.PrioritizedReplayBuffer(
-            experience_source=None, buffer_size=params.REPLAY_BUFFER_SIZE, n_step=params.N_STEP
+        buffer = experience.PrioReplayBuffer(
+            experience_source=None, buffer_size=params.REPLAY_BUFFER_SIZE, n_step=params.N_STEP,
+            BETA_START=0.4, BETA_FRAMES=params.MAX_GLOBAL_STEPS
         )
     else:
         buffer = experience.ExperienceReplayBuffer(experience_source=None, buffer_size=params.REPLAY_BUFFER_SIZE)

@@ -66,10 +66,10 @@ if __name__ == "__main__":
     selector = ptan.actions.EpsilonGreedyActionSelector(
         epsilon=1, selector=selector)
     agent = ptan.agent.DQNAgent(net, selector)
-    exp_source = ptan.experience.ExperienceSourceFirstLast(
+    experience_source = ptan.experience.ExperienceSourceFirstLast(
         env, agent, gamma=GAMMA)
     buffer = ptan.experience.ExperienceReplayBuffer(
-        exp_source, buffer_size=REPLAY_SIZE)
+        experience_source, buffer_size=REPLAY_SIZE)
     optimizer = optim.Adam(net.parameters(), LR)
 
     step = 0
@@ -80,7 +80,7 @@ if __name__ == "__main__":
         step += 1
         buffer.populate(1)
 
-        for reward, steps in exp_source.pop_rewards_steps():
+        for reward, steps in experience_source.pop_rewards_steps():
             episode += 1
             print("%d: episode %d done, reward=%.3f, epsilon=%.2f" % (
                 step, episode, reward, selector.epsilon))

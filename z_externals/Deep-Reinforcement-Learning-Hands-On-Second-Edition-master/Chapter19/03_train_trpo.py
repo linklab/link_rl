@@ -80,15 +80,15 @@ if __name__ == "__main__":
 
     writer = SummaryWriter(comment="-trpo_" + args.name)
     agent = model.AgentA2C(net_act, device=device)
-    exp_source = ptan.experience.ExperienceSource(env, agent, steps_count=1)
+    experience_source = ptan.experience.ExperienceSource(env, agent, steps_count=1)
 
     opt_crt = optim.Adam(net_crt.parameters(), lr=args.lr)
 
     trajectory = []
     best_reward = None
     with ptan.common.utils.RewardTracker(writer) as tracker:
-        for step_idx, exp in enumerate(exp_source):
-            rewards_steps = exp_source.pop_rewards_steps()
+        for step_idx, exp in enumerate(experience_source):
+            rewards_steps = experience_source.pop_rewards_steps()
             if rewards_steps:
                 rewards, steps = zip(*rewards_steps)
                 writer.add_scalar("episode_steps", np.mean(steps), step_idx)

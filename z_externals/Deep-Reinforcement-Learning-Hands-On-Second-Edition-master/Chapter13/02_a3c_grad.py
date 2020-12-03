@@ -47,7 +47,7 @@ def grads_func(proc_name, net, device, train_queue):
 
     agent = ptan.agent.PolicyAgent(
         lambda x: net(x)[0], device=device, apply_softmax=True)
-    exp_source = ptan.experience.ExperienceSourceFirstLast(
+    experience_source = ptan.experience.ExperienceSourceFirstLast(
         envs, agent, gamma=GAMMA, steps_count=REWARD_STEPS)
 
     batch = []
@@ -57,9 +57,9 @@ def grads_func(proc_name, net, device, train_queue):
     with common.RewardTracker(writer, REWARD_BOUND) as tracker:
         with ptan.common.utils.TBMeanTracker(
                 writer, 100) as tb_tracker:
-            for exp in exp_source:
+            for exp in experience_source:
                 frame_idx += 1
-                new_rewards = exp_source.pop_total_rewards()
+                new_rewards = experience_source.pop_total_rewards()
                 if new_rewards and tracker.reward(
                         new_rewards[0], frame_idx):
                     break

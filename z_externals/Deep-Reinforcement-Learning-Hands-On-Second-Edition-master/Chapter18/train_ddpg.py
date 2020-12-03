@@ -82,8 +82,8 @@ if __name__ == "__main__":
 
     writer = SummaryWriter(comment="-ddpg_" + args.name)
     agent = ddpg.AgentDDPG(act_net, device=device)
-    exp_source = ptan.experience.ExperienceSourceFirstLast(env, agent, gamma=GAMMA, steps_count=1)
-    buffer = ptan.experience.ExperienceReplayBuffer(exp_source, buffer_size=REPLAY_SIZE)
+    experience_source = ptan.experience.ExperienceSourceFirstLast(env, agent, gamma=GAMMA, steps_count=1)
+    buffer = ptan.experience.ExperienceReplayBuffer(experience_source, buffer_size=REPLAY_SIZE)
     act_opt = optim.Adam(act_net.parameters(), lr=LEARNING_RATE)
     crt_opt = optim.Adam(crt_net.parameters(), lr=LEARNING_RATE)
 
@@ -94,7 +94,7 @@ if __name__ == "__main__":
             while True:
                 frame_idx += 1
                 buffer.populate(1)
-                rewards_steps = exp_source.pop_rewards_steps()
+                rewards_steps = experience_source.pop_rewards_steps()
                 if rewards_steps:
                     rewards, steps = zip(*rewards_steps)
                     tb_tracker.track("episode_steps", steps[0], frame_idx)

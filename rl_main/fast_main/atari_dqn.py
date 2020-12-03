@@ -41,8 +41,8 @@ def play_func(env, net, exp_queue):
         eps_frames=params.EPSILON_MIN_STEP
     )
     agent = rl_agent.DQNAgent(net, action_selector, device=device)
-    exp_source = experience.ExperienceSourceFirstLast(env, agent, gamma=params.GAMMA, steps_count=1)
-    exp_source_iter = iter(exp_source)
+    experience_source = experience.ExperienceSourceFirstLast(env, agent, gamma=params.GAMMA, steps_count=1)
+    exp_source_iter = iter(experience_source)
 
     if params.DRAW_VIZ:
         stat = statistics.StatisticsForValueBasedRL(method="nature_dqn")
@@ -69,7 +69,7 @@ def play_func(env, net, exp_queue):
 
             epsilon_tracker.udpate(frame_idx)
 
-            episode_rewards = exp_source.pop_episode_reward_lst()
+            episode_rewards = experience_source.pop_episode_reward_lst()
 
             if episode_rewards:
                 solved, mean_episode_reward = reward_tracker.set_episode_reward(episode_rewards[0], frame_idx, action_selector.epsilon, action_count)

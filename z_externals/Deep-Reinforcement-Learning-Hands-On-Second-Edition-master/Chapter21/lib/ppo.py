@@ -76,7 +76,7 @@ def calc_adv_ref(values, dones, rewards, gamma, gae_lambda):
     return torch.FloatTensor(adv), torch.FloatTensor(ref)
 
 
-def batch_generator(exp_source: ptan.experience.ExperienceSource,
+def batch_generator(experience_source: ptan.experience.ExperienceSource,
                     net: nn.Module,
                     trajectory_size: int, ppo_epoches: int,
                     batch_size: int, gamma: float, gae_lambda: float,
@@ -87,7 +87,7 @@ def batch_generator(exp_source: ptan.experience.ExperienceSource,
     trj_rewards = []
     trj_dones = []
     last_done_index = None
-    for (exp,) in exp_source:
+    for (exp,) in experience_source:
         trj_states.append(exp.state)
         trj_actions.append(exp.action)
         trj_rewards.append(exp.reward)
@@ -150,7 +150,7 @@ def batch_generator(exp_source: ptan.experience.ExperienceSource,
         trj_dones.clear()
 
 
-def batch_generator_distill(exp_source: ptan.experience.ExperienceSource,
+def batch_generator_distill(experience_source: ptan.experience.ExperienceSource,
                             net: nn.Module, trajectory_size: int, ppo_epoches: int,
                             batch_size: int, gamma: float, gae_lambda: float,
                             device: Union[torch.device, str] = "cpu", trim_trajectory: bool = True,
@@ -166,7 +166,7 @@ def batch_generator_distill(exp_source: ptan.experience.ExperienceSource,
     trj_dones = []
     last_done_index = None
     trj_time = time.time()
-    for (exp,) in exp_source:
+    for (exp,) in experience_source:
         trj_states.append(exp.state)
         trj_actions.append(exp.action)
         trj_rewards_ext.append(exp.reward[0])

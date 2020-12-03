@@ -43,7 +43,7 @@ def main():
     print(env)
     tgt_net = rl_agent.TargetNet(net)
 
-    buffer = experience.PrioReplayBuffer(exp_source=None, buf_size=params.REPLAY_BUFFER_SIZE)
+    buffer = experience.PrioReplayBuffer(experience_source=None, buffer_size=params.REPLAY_BUFFER_SIZE)
     optimizer = optim.Adam(net.parameters(), lr=params.LEARNING_RATE)
 
     stat_for_value_based_rl = statistics.StatisticsForValueBasedRL(method="nature_dqn")

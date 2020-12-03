@@ -24,8 +24,8 @@ def play_func(params, net, cuda, exp_queue):
     selector = ptan.actions.EpsilonGreedyActionSelector(epsilon=params.epsilon_start)
     epsilon_tracker = common.EpsilonTracker(selector, params)
     agent = ptan.agent.DQNAgent(net, selector, device=device)
-    exp_source = ptan.experience.ExperienceSourceFirstLast(env, agent, gamma=params.gamma, steps_count=1)
-    exp_source_iter = iter(exp_source)
+    experience_source = ptan.experience.ExperienceSourceFirstLast(env, agent, gamma=params.gamma, steps_count=1)
+    exp_source_iter = iter(experience_source)
 
     frame_idx = 0
 
@@ -37,7 +37,7 @@ def play_func(params, net, cuda, exp_queue):
 
             epsilon_tracker.frame(frame_idx)
 
-            new_rewards = exp_source.pop_total_rewards()
+            new_rewards = experience_source.pop_total_rewards()
             if new_rewards:
                 if reward_tracker.reward(new_rewards[0], frame_idx, selector.epsilon):
                     break

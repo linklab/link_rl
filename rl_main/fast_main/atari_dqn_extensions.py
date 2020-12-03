@@ -48,8 +48,8 @@ def play_func(env, net, exp_queue):
         eps_frames=params.EPSILON_MIN_STEP
     )
     agent = rl_agent.DQNAgent(net, action_selector, device=device)
-    exp_source = experience.ExperienceSourceNamedTuple(env, agent, steps_count=1)
-    exp_source_iter = iter(exp_source)
+    experience_source = experience.ExperienceSourceNamedTuple(env, agent, steps_count=1)
+    exp_source_iter = iter(experience_source)
 
     if params.DRAW_VIZ:
         stat = statistics.StatisticsForValueBasedRL(method="nature_dqn")
@@ -81,7 +81,7 @@ def play_func(env, net, exp_queue):
                 episode_rewards_across_steps[int((frame_idx-1)/params.DATA_SAVE_STEP_PERIOD)] = last_mean_episode_reward
                 save_reward_as_pickle(episode_rewards_across_steps, params)
 
-            episode_rewards = exp_source.pop_episode_reward_lst()
+            episode_rewards = experience_source.pop_episode_reward_lst()
             if episode_rewards:
                 solved, mean_episode_reward = reward_tracker.set_episode_reward(episode_rewards[0], frame_idx, action_selector.epsilon, action_count)
                 last_mean_episode_reward = mean_episode_reward
@@ -123,10 +123,10 @@ def main():
     tgt_net = rl_agent.TargetNet(net)
 
     if params.OMEGA:
-        # buffer = experience.PrioReplayBuffer(exp_source=None, buf_size=params.REPLAY_BUFFER_SIZE, n_step=params.OMEGA_WINDOW_SIZE)
+        # buffer = experience.PrioReplayBuffer(experience_source=None, buffer_size=params.REPLAY_BUFFER_SIZE, n_step=params.OMEGA_WINDOW_SIZE)
         buffer = experience.PrioritizedReplayBuffer(experience_source=None, buffer_size=params.REPLAY_BUFFER_SIZE, n_step=params.OMEGA_WINDOW_SIZE)
     else:
-        # buffer = experience.PrioReplayBuffer(exp_source=None, buf_size=params.REPLAY_BUFFER_SIZE, n_step=params.N_STEP)
+        # buffer = experience.PrioReplayBuffer(experience_source=None, buffer_size=params.REPLAY_BUFFER_SIZE, n_step=params.N_STEP)
         buffer = experience.PrioritizedReplayBuffer(experience_source=None, buffer_size=params.REPLAY_BUFFER_SIZE, n_step=params.N_STEP)
     optimizer = optim.Adam(net.parameters(), lr=params.LEARNING_RATE)
 

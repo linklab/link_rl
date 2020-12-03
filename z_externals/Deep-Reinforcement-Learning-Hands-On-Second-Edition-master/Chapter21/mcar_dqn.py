@@ -117,10 +117,10 @@ if __name__ == "__main__":
 
     agent = ptan.agent.DQNAgent(net, selector, preprocessor=ptan.agent.float32_preprocessor)
 
-    exp_source = ptan.experience.ExperienceSourceFirstLast(
+    experience_source = ptan.experience.ExperienceSourceFirstLast(
         env, agent, gamma=params.gamma, steps_count=N_STEPS)
     buffer = ptan.experience.ExperienceReplayBuffer(
-        exp_source, buffer_size=params.replay_size)
+        experience_source, buffer_size=params.replay_size)
     optimizer = optim.Adam(net.parameters(), lr=params.learning_rate)
 
     def process_batch(engine, batch):
@@ -151,7 +151,7 @@ if __name__ == "__main__":
         return res
 
     engine = Engine(process_batch)
-    common.setup_ignite(engine, params, exp_source, args.name, extra_metrics=(
+    common.setup_ignite(engine, params, experience_source, args.name, extra_metrics=(
         'test_reward', 'avg_test_reward', 'test_steps'))
 
     @engine.on(ptan_ignite.EpisodeEvents.EPISODE_COMPLETED)

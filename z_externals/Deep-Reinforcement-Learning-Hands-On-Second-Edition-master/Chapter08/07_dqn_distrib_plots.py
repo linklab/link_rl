@@ -191,10 +191,10 @@ if __name__ == "__main__":
     epsilon_tracker = common.EpsilonTracker(selector, params)
     agent = ptan.agent.DQNAgent(lambda x: net.q_values(x), selector, device=device)
 
-    exp_source = ptan.experience.ExperienceSourceFirstLast(
+    experience_source = ptan.experience.ExperienceSourceFirstLast(
         env, agent, gamma=params.gamma)
     buffer = ptan.experience.ExperienceReplayBuffer(
-        exp_source, buffer_size=params.replay_size)
+        experience_source, buffer_size=params.replay_size)
     optimizer = optim.Adam(net.parameters(), lr=params.learning_rate)
 
     def process_batch(engine, batch):
@@ -232,7 +232,7 @@ if __name__ == "__main__":
         }
 
     engine = Engine(process_batch)
-    ptan_ignite.EndOfEpisodeHandler(exp_source, bound_avg_reward=params.stop_reward).attach(engine)
+    ptan_ignite.EndOfEpisodeHandler(experience_source, bound_avg_reward=params.stop_reward).attach(engine)
     ptan_ignite.EpisodeFPSHandler().attach(engine)
 
     @engine.on(ptan_ignite.EpisodeEvents.EPISODE_COMPLETED)

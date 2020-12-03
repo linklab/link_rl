@@ -48,7 +48,7 @@ if __name__ == "__main__":
 
     writer = SummaryWriter(comment="-acktr_" + args.name)
     agent = model.AgentA2C(net_act, device=device)
-    exp_source = ptan.experience.ExperienceSourceFirstLast(envs, agent, GAMMA, steps_count=REWARD_STEPS)
+    experience_source = ptan.experience.ExperienceSourceFirstLast(envs, agent, GAMMA, steps_count=REWARD_STEPS)
 
     opt_act = kfac.KFACOptimizer(net_act, lr=LEARNING_RATE_ACTOR)
     opt_crt = optim.Adam(net_crt.parameters(), lr=LEARNING_RATE_CRITIC)
@@ -57,8 +57,8 @@ if __name__ == "__main__":
     best_reward = None
     with ptan.common.utils.RewardTracker(writer) as tracker:
         with ptan.common.utils.TBMeanTracker(writer, batch_size=100) as tb_tracker:
-            for step_idx, exp in enumerate(exp_source):
-                rewards_steps = exp_source.pop_rewards_steps()
+            for step_idx, exp in enumerate(experience_source):
+                rewards_steps = experience_source.pop_rewards_steps()
                 if rewards_steps:
                     rewards, steps = zip(*rewards_steps)
                     tb_tracker.track("episode_steps", np.mean(steps), step_idx)
