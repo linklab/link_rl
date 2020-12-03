@@ -6,8 +6,8 @@ from torch import nn as nn
 from torch.nn import functional as F
 
 # replay buffer params
-BETA_START = 0.4
-BETA_FRAMES = 100000
+beta_start = 0.4
+beta_frames = 100000
 
 # distributional DQN params
 Vmax = 10
