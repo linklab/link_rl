@@ -130,7 +130,7 @@ if __name__ == "__main__":
     print(net)
 
     agent = ptan.agent.PolicyAgent(net.actor, apply_softmax=True, preprocessor=ptan.agent.float32_preprocessor)
-    exp_source = ptan.experience.ExperienceSource(env, agent, steps_count=1)
+    experience_source = ptan.experience.ExperienceSource(env, agent, steps_count=1)
     opt_actor = optim.Adam(net.actor.parameters(), lr=params.actor_lr)
     opt_critic = optim.Adam(net.critic.parameters(), lr=params.critic_lr)
     if net_distill is not None:
@@ -181,7 +181,7 @@ if __name__ == "__main__":
 
 
     engine = Engine(process_batch)
-    common.setup_ignite(engine, params, exp_source, args.name, extra_metrics=(
+    common.setup_ignite(engine, params, experience_source, args.name, extra_metrics=(
         'test_reward', 'avg_test_reward', 'test_steps'))
 
     @engine.on(ptan_ignite.PeriodEvents.ITERS_1000_COMPLETED)
@@ -221,6 +221,6 @@ if __name__ == "__main__":
         if args.params == 'noisynet':
             net.sample_noise()
 
-    engine.run(ppo.batch_generator(exp_source, net, params.ppo_trajectory,
+    engine.run(ppo.batch_generator(experience_source, net, params.ppo_trajectory,
                                    params.ppo_epoches, params.batch_size,
                                    params.gamma, params.gae_lambda, new_batch_callable=new_ppo_batch))

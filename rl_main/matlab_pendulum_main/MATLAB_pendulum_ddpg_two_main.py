@@ -11,6 +11,7 @@ import os, sys
 import numpy as np
 import copy
 
+from common.logger import get_logger
 from config.names import DeepLearningModelName
 from rl_main.matlab_pendulum_main.experience_pendulum_ddpg_two import ExperienceSourceSingleEnvFirstLastDdpgTwo, \
     RewardTrackerMatlabPendulum
@@ -52,13 +53,12 @@ else:
 if params.TEAMVIEWER:
     SWING_UP_SCALE_FACTOR = 0.05
     BALANCING_SCALE_FACTOR = 0.0005
-
 elif params.CH:
     SWING_UP_SCALE_FACTOR = 0.05
     BALANCING_SCALE_FACTOR = 0.0005
 else:
-    SWING_UP_SCALE_FACTOR = 0.035
-    BALANCING_SCALE_FACTOR = 0.010
+    SWING_UP_SCALE_FACTOR = 0.05
+    BALANCING_SCALE_FACTOR = 0.01
 CLIP = 1
 
 env = MatlabRotaryInvertedPendulumEnv(
@@ -72,11 +72,15 @@ OBS_SIZE = env.observation_space.shape[0]
 
 episode_reward_list = []
 
+my_logger = get_logger("matlab_pendulum_ddpg_two_main")
+
 
 def play_func(exp_queue_swing_up, exp_queue_balancing, actor_swing_up_net, critic_swing_up_net, actor_balancing_net, critic_balancing_net):
     env.start()
+
     swing_up_action_min = -SWING_UP_SCALE_FACTOR
     swing_up_action_max = SWING_UP_SCALE_FACTOR
+
     balancing_action_min = -BALANCING_SCALE_FACTOR
     balancing_action_max = BALANCING_SCALE_FACTOR
 
@@ -90,7 +94,7 @@ def play_func(exp_queue_swing_up, exp_queue_balancing, actor_swing_up_net, criti
         action_selector=action_selector_swing_up,
         eps_start=params.EPSILON_INIT,
         eps_final=params.EPSILON_MIN,
-        eps_frames=params.EPSILON_MIN_STEP
+        eps_frames=params.EPSILON_SWING_UP_MIN_STEP
     )
 
     agent_swing_up = rl_agent.AgentDDPG(
@@ -108,7 +112,7 @@ def play_func(exp_queue_swing_up, exp_queue_balancing, actor_swing_up_net, criti
         action_selector=action_selector_balancing,
         eps_start=params.EPSILON_INIT,
         eps_final=params.EPSILON_MIN,
-        eps_frames=params.EPSILON_MIN_STEP
+        eps_frames=params.EPSILON_BALANCING_MIN_STEP
     )
 
     agent_balancing = rl_agent.AgentDDPG(
@@ -124,7 +128,8 @@ def play_func(exp_queue_swing_up, exp_queue_balancing, actor_swing_up_net, criti
         step_length = -1
 
     experience_source = ExperienceSourceSingleEnvFirstLastDdpgTwo(
-        params, env, agent_swing_up, agent_balancing, gamma=params.GAMMA, steps_count=params.N_STEP, step_length=step_length
+        params, env, agent_swing_up, agent_balancing, gamma=params.GAMMA, steps_count=params.N_STEP,
+        step_length=step_length
     )
 
     exp_source_iter = iter(experience_source)
@@ -148,12 +153,13 @@ def play_func(exp_queue_swing_up, exp_queue_balancing, actor_swing_up_net, criti
             params=params,
             stop_mean_episode_reward=params.STOP_MEAN_EPISODE_REWARD,
             average_size_for_stats=params.AVG_EPISODE_SIZE_FOR_STAT,
-            frame=True, draw_viz=params.DRAW_VIZ, stat=stat) as reward_tracker:
+            frame=True, draw_viz=params.DRAW_VIZ, stat=stat, logger=my_logger) as reward_tracker:
         while step_idx < params.MAX_GLOBAL_STEPS:
             # 1 스텝 진행하고 exp를 exp_queue에 넣음
             step_idx += 1
 
             exp = next(exp_source_iter)
+
             if params.DEEP_LEARNING_MODEL is DeepLearningModelName.DDPG_MLP:
                 status_value = exp[0][-1]
             elif params.DEEP_LEARNING_MODEL is DeepLearningModelName.DDPG_GRU:
@@ -173,7 +179,7 @@ def play_func(exp_queue_swing_up, exp_queue_balancing, actor_swing_up_net, criti
                 epsilon_tracker_swing_up.udpate(swing_up_step_idx)
 
                 # NOTE: exp 잠시 대기
-                recent_swing_up_to_balancing_exp = copy.deepcopy(  exp)
+                recent_swing_up_to_balancing_exp = copy.deepcopy(exp)
 
             elif status_value == Status.BALANCING.value:  # BALANCING:1.0, BALANCING_TO_SWING_UP:-0.5
                 balancing_step_idx += 1
@@ -217,10 +223,11 @@ def play_func(exp_queue_swing_up, exp_queue_balancing, actor_swing_up_net, criti
             episode_reward_and_info_lst = experience_source.pop_episode_reward_and_info_lst()
 
             if episode_reward_and_info_lst:  # 에피소드가 종료될 때만 True
-                current_episode_reward_and_info = episode_reward_and_info_lst[0]
+                current_episode_reward_and_info = episode_reward_and_info_lst[-1]
                 episode_reward_list.append(current_episode_reward_and_info[0])
+
                 with open('episode_reward_list.txt', 'wb') as f:
-                    pickle.dump(episode_reward_list,f)
+                    pickle.dump(episode_reward_list, f)
 
                 solved, mean_episode_reward = reward_tracker.set_episode_reward(
                     current_episode_reward_and_info, step_idx,
@@ -357,18 +364,28 @@ def main():
     critic_balancing_optimizer = optim.Adam(critic_balancing_net.parameters(), lr=params.LEARNING_RATE)
 ##########################################################################################
 
-    buffer_swing_up = experience.ExperienceReplayBuffer(experience_source=None, buffer_size=params.REPLAY_BUFFER_SIZE)
-    buffer_balancing = experience.ExperienceReplayBuffer(experience_source=None, buffer_size=params.REPLAY_BUFFER_SIZE)
-
-    # buffer = experience.PrioritizedReplayBuffer(
-    #     experience_source=None, buffer_size=params.REPLAY_BUFFER_SIZE, n_step=params.N_STEP
-    # )
+    if params.PER:
+        buffer_swing_up = experience.PrioritizedReplayBuffer(
+            experience_source=None, buffer_size=params.REPLAY_BUFFER_SIZE, n_step=params.N_STEP
+        )
+        buffer_balancing = experience.PrioritizedReplayBuffer(
+            experience_source=None, buffer_size=params.REPLAY_BUFFER_SIZE, n_step=params.N_STEP
+        )
+    else:
+        buffer_swing_up = experience.ExperienceReplayBuffer(
+            experience_source=None, buffer_size=params.REPLAY_BUFFER_SIZE
+        )
+        buffer_balancing = experience.ExperienceReplayBuffer(
+            experience_source=None, buffer_size=params.REPLAY_BUFFER_SIZE
+        )
 
     exp_queue_swing_up = mp.Queue(maxsize=params.TRAIN_STEP_FREQ * 2)
     exp_queue_balancing = mp.Queue(maxsize=params.TRAIN_STEP_FREQ * 2)
 
     play_proc = mp.Process(target=play_func, args=(
-        exp_queue_swing_up, exp_queue_balancing, actor_swing_up_net, critic_swing_up_net, actor_balancing_net, critic_balancing_net
+        exp_queue_swing_up, exp_queue_balancing,
+        actor_swing_up_net, critic_swing_up_net,
+        actor_balancing_net, critic_balancing_net
     ))
     play_proc.start()
 
@@ -456,10 +473,12 @@ def main():
         if exp_swing_up and len(buffer_swing_up) >= params.MIN_REPLAY_SIZE_FOR_TRAIN:
             actor_grad_l2, actor_grad_max, actor_grad_variance, critic_grad_l2, critic_grad_max, critic_grad_variance, \
             loss_actor, loss_critic, loss_total = model_update(
-                buffer_swing_up, actor_swing_up_net, critic_swing_up_net, target_actor_swing_up_net, target_critic_swing_up_net, actor_swing_up_optimizer, critic_swing_up_optimizer,
+                buffer_swing_up,
+                actor_swing_up_net, critic_swing_up_net, target_actor_swing_up_net, target_critic_swing_up_net,
+                actor_swing_up_optimizer, critic_swing_up_optimizer,
                 step_idx, actor_grad_l2, actor_grad_max, actor_grad_variance,
                 critic_grad_l2, critic_grad_max, critic_grad_variance,
-                loss_actor, loss_critic, loss_total, per=False
+                loss_actor, loss_critic, loss_total, per=params.PER
             )
 
         ## buffer_balancing를 통하여 경험 정보 가져와 모델 업데이트
@@ -467,11 +486,12 @@ def main():
             actor_balancing_grad_l2, actor_balancing_grad_max, actor_balancing_grad_variance, critic_balancing_grad_l2, \
             critic_balancing_grad_max, critic_balancing_grad_variance, loss_balancing_actor, loss_balancing_critic, \
             loss_balancing_total = model_update(
-                buffer_balancing, actor_balancing_net, critic_balancing_net, target_actor_balancing_net, target_critic_balancing_net,
+                buffer_balancing,
+                actor_balancing_net, critic_balancing_net, target_actor_balancing_net, target_critic_balancing_net,
                 actor_balancing_optimizer, critic_balancing_optimizer,
                 step_idx, actor_balancing_grad_l2, actor_balancing_grad_max, actor_balancing_grad_variance,
                 critic_balancing_grad_l2, critic_balancing_grad_max, critic_balancing_grad_variance,
-                loss_balancing_actor, loss_balancing_critic, loss_balancing_total, per=False
+                loss_balancing_actor, loss_balancing_critic, loss_balancing_total, per=params.PER
             )
 
 
@@ -484,7 +504,6 @@ def model_update(buffer, actor_swing_up_net, critic_swing_up_net, target_actor_s
     else:
         batch = buffer.sample(params.BATCH_SIZE)
         batch_indices, batch_weights = None, None
-
 
     batch_states_v, batch_actions_v, batch_rewards_v, batch_dones_mask, batch_last_states_v = unpack_batch_for_ddpg(
         batch, device

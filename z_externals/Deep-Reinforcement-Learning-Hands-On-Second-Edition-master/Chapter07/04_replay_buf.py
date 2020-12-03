@@ -46,8 +46,8 @@ class DullAgent(ptan.agent.BaseAgent):
 if __name__ == "__main__":
     env = ToyEnv()
     agent = DullAgent(action=1)
-    exp_source = ptan.experience.ExperienceSourceFirstLast(env, agent, gamma=1.0, steps_count=1)
-    buffer = ptan.experience.ExperienceReplayBuffer(exp_source, buffer_size=100)
+    experience_source = ptan.experience.ExperienceSourceFirstLast(env, agent, gamma=1.0, steps_count=1)
+    buffer = ptan.experience.ExperienceReplayBuffer(experience_source, buffer_size=100)
 
     for step in range(6):
         buffer.populate(1)

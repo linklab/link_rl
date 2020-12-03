@@ -67,17 +67,17 @@ class ValueTargetsMethod(enum.Enum):
     ZeroGoalValue = 'zero_goal_value'
 
 
-def make_scramble_buffer(cube_env, buf_size, scramble_depth):
+def make_scramble_buffer(cube_env, buffer_size, scramble_depth):
     """
     Create data buffer with scramble states and explored substates
     :param cube_env: env to use
-    :param buf_size: how many states to generate
+    :param buffer_size: how many states to generate
     :param scramble_depth: how deep to scramble
     :return: list of tuples
     """
     result = []
     data = []
-    rounds = buf_size // scramble_depth
+    rounds = buffer_size // scramble_depth
     for _ in range(rounds):
         data.extend(cube_env.scramble_cube(scramble_depth, include_initial=True))
 

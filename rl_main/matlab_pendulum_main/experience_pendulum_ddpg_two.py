@@ -88,7 +88,7 @@ class ExperienceSourceSingleEnvDdpgTwo:
         state = self.env.reset()
 
         history = deque(maxlen=self.steps_count)
-        cur_reward = 0.0
+        cur_episode_reward = 0.0
         cur_step = 0
         agent_state = self.current_agent.initial_agent_state()
 
@@ -115,7 +115,7 @@ class ExperienceSourceSingleEnvDdpgTwo:
 
             next_state, r, is_done, info = self.env.step(action)
 
-            cur_reward += r
+            cur_episode_reward += r
             cur_step += 1
 
             if state is not None:
@@ -150,9 +150,9 @@ class ExperienceSourceSingleEnvDdpgTwo:
 
                 agent_state = self.current_agent.initial_agent_state()
 
-                self.episode_reward_and_info_lst.append((cur_reward, info))
+                self.episode_reward_and_info_lst.append((cur_episode_reward, info))
 
-                cur_reward = 0.0
+                cur_episode_reward = 0.0
                 cur_step = 0
 
                 history.clear()
@@ -199,7 +199,7 @@ class ExperienceSourceSingleEnvFirstLastDdpgTwo(ExperienceSourceSingleEnvDdpgTwo
 
 
 class RewardTrackerMatlabPendulum:
-    def __init__(self, params, stop_mean_episode_reward, average_size_for_stats, frame=True, draw_viz=True, stat=None):
+    def __init__(self, params, stop_mean_episode_reward, average_size_for_stats, frame=True, draw_viz=True, stat=None, logger=None):
         self.params = params
         self.min_ts_diff = 1    # 1 second
         self.stop_mean_episode_reward = stop_mean_episode_reward
@@ -210,6 +210,7 @@ class RewardTrackerMatlabPendulum:
         self.episode_reward_list = None
         self.done_episodes = 0
         self.mean_episode_reward = 0.0
+        self.logger = logger
 
     def __enter__(self):
         self.start_ts = time.time()
@@ -224,8 +225,7 @@ class RewardTrackerMatlabPendulum:
     def __exit__(self, *args):
         pass
 
-    def set_episode_reward(self, episode_reward_and_info, episode_done_step, epsilon, action_count=None, continuous_action_mean=None):
-        assert not (action_count and continuous_action_mean)
+    def set_episode_reward(self, episode_reward_and_info, episode_done_step, epsilon):
         self.done_episodes += 1
         self.episode_reward_list.append(episode_reward_and_info[0])
         episode_info = episode_reward_and_info[1]
@@ -241,25 +241,30 @@ class RewardTrackerMatlabPendulum:
             is_print_performance = True
             self.print_performance(
                 episode_done_step, current_ts, ts_diff, self.mean_episode_reward,
-                epsilon, elapsed_time, action_count, episode_info
+                epsilon, elapsed_time, episode_info
             )
 
         if self.mean_episode_reward > self.stop_mean_episode_reward:
             if not is_print_performance:
                 self.print_performance(
                     episode_done_step, current_ts, ts_diff, self.mean_episode_reward,
-                    epsilon, elapsed_time, action_count, episode_info
+                    epsilon, elapsed_time, episode_info
                 )
             if self.frame:
-                print("Solved in {0} frames and {1} episodes!".format(episode_done_step, self.done_episodes))
+                msg = "Solved in {0} frames and {1} episodes!".format(episode_done_step, self.done_episodes)
+                print(msg)
+                self.logger.info(msg)
             else:
-                print("Solved in {0} steps and {1} episodes!".format(episode_done_step, self.done_episodes))
+                msg = "Solved in {0} steps and {1} episodes!".format(episode_done_step, self.done_episodes)
+                print(msg)
+                self.logger.info(msg)
             return True, self.mean_episode_reward
 
         return False, self.mean_episode_reward
 
     def print_performance(
-            self, episode_done_step, current_ts, ts_diff, mean_episode_reward, epsilon, elapsed_time, action_count, episode_info
+        self, episode_done_step, current_ts, ts_diff, mean_episode_reward, epsilon,
+        elapsed_time, episode_info
     ):
         speed = (episode_done_step - self.ts_frame) / ts_diff
         self.ts_frame = episode_done_step
@@ -281,10 +286,8 @@ class RewardTrackerMatlabPendulum:
             episode_info["episode_pendulum_velocity_reward"],
             episode_info["episode_action_reward"]
         )
-
-        print(
-            "[{0:6}/{1}] done {2:4} games, episode_reward: {3}, mean_{4}_episode_reward: {5:7.3f}, "
-            "status: [{6:3d}|{7:3d}], epsilon: {8}, speed: {9:5.2f}{10}, elapsed time: {11}".format(
+        msg = "[{0:6}/{1}] done {2:4} games, episode_reward: {3}, mean_{4}_episode_reward: {5:7.3f}, " \
+              "status: [{6:3d}|{7:3d}], epsilon: {8}, speed: {9:5.2f}{10}, elapsed time: {11}".format(
                 episode_done_step,
                 self.params.MAX_GLOBAL_STEPS,
                 len(self.episode_reward_list),
@@ -297,12 +300,9 @@ class RewardTrackerMatlabPendulum:
                 speed,
                 "fps" if self.frame else "steps/sec.",
                 time.strftime("%Hh %Mm %Ss", time.gmtime(elapsed_time)),
-        ), end="")
-
-        if action_count:
-            print(", {0}".format(action_count), flush=True)
-        else:
-            print("", flush=True)
+        )
+        print(msg, flush=True)
+        self.logger.info(msg)
 
         if self.draw_viz and self.stat:
             if isinstance(self.stat, StatisticsForValueBasedRL):

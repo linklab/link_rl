@@ -35,13 +35,13 @@ def play_func(params, net, cuda, exp_queue):
         epsilon=params.epsilon_start)
     epsilon_tracker = common.EpsilonTracker(selector, params)
     agent = ptan.agent.DQNAgent(net, selector, device=device)
-    exp_source = ptan.experience.ExperienceSourceFirstLast(
+    experience_source = ptan.experience.ExperienceSourceFirstLast(
         env, agent, gamma=params.gamma)
 
-    for frame_idx, exp in enumerate(exp_source):
+    for frame_idx, exp in enumerate(experience_source):
         epsilon_tracker.frame(frame_idx/BATCH_MUL)
         exp_queue.put(exp)
-        for reward, steps in exp_source.pop_rewards_steps():
+        for reward, steps in experience_source.pop_rewards_steps():
             exp_queue.put(EpisodeEnded(reward, steps, selector.epsilon))
 
 

@@ -130,14 +130,14 @@ class NoisyDQN(nn.Module):
 
 
 class PrioReplayBuffer:
-    def __init__(self, exp_source, buf_size, prob_alpha=0.6):
-        self.exp_source_iter = iter(exp_source)
+    def __init__(self, experience_source, buffer_size, prob_alpha=0.6):
+        self.exp_source_iter = iter(experience_source)
         self.prob_alpha = prob_alpha
-        self.capacity = buf_size
+        self.capacity = buffer_size
         self.pos = 0
         self.buffer = []
         self.priorities = np.zeros(
-            (buf_size, ), dtype=np.float32)
+            (buffer_size, ), dtype=np.float32)
         self.beta = BETA_START
 
     def update_beta(self, idx):

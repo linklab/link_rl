@@ -11,7 +11,7 @@ sys.path.append(PROJECT_HOME)
 
 from config.parameters import PARAMETERS as params
 
-from rl_main.logger import get_logger
+from common.logger import get_logger
 from common.chief_workers.worker import Worker
 
 worker_id = int(sys.argv[1])

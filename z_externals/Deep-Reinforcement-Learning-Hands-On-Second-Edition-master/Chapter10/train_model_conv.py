@@ -76,8 +76,8 @@ if __name__ == "__main__":
     eps_tracker = ptan.actions.EpsilonTracker(selector, EPS_START, EPS_FINAL, EPS_STEPS)
 
     agent = ptan.agent.DQNAgent(net, selector, device=device)
-    exp_source = ptan.experience.ExperienceSourceFirstLast(env, agent, GAMMA, steps_count=REWARD_STEPS)
-    buffer = ptan.experience.ExperienceReplayBuffer(exp_source, REPLAY_SIZE)
+    experience_source = ptan.experience.ExperienceSourceFirstLast(env, agent, GAMMA, steps_count=REWARD_STEPS)
+    buffer = ptan.experience.ExperienceReplayBuffer(experience_source, REPLAY_SIZE)
     optimizer = optim.Adam(net.parameters(), lr=LEARNING_RATE)
 
     def process_batch(engine, batch):
@@ -98,7 +98,7 @@ if __name__ == "__main__":
         }
 
     engine = Engine(process_batch)
-    tb = common.setup_ignite(engine, exp_source, f"conv-{args.run}", extra_metrics=('values_mean',))
+    tb = common.setup_ignite(engine, experience_source, f"conv-{args.run}", extra_metrics=('values_mean',))
 
     @engine.on(ptan.ignite.PeriodEvents.ITERS_1000_COMPLETED)
     def sync_eval(engine: Engine):

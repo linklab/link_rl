@@ -182,10 +182,13 @@ def main():
     actor_optimizer = optim.Adam(actor_net.parameters(), lr=params.ACTOR_LEARNING_RATE)
     critic_optimizer = optim.Adam(critic_net.parameters(), lr=params.LEARNING_RATE)
 
-    buffer = experience.ExperienceReplayBuffer(experience_source=None, buffer_size=params.REPLAY_BUFFER_SIZE)
-    # buffer = experience.PrioritizedReplayBuffer(
-    #     experience_source=None, buffer_size=params.REPLAY_BUFFER_SIZE, n_step=params.N_STEP
-    # )
+    if params.PER:
+        buffer = experience.PrioReplayBuffer(
+            experience_source=None, buffer_size=params.REPLAY_BUFFER_SIZE, n_step=params.N_STEP,
+            BETA_START=0.4, BETA_FRAMES=params.MAX_GLOBAL_STEPS
+        )
+    else:
+        buffer = experience.ExperienceReplayBuffer(experience_source=None, buffer_size=params.REPLAY_BUFFER_SIZE)
 
     exp_queue = mp.Queue(maxsize=params.TRAIN_STEP_FREQ * 2)
     play_proc = mp.Process(target=play_func, args=(exp_queue, env, actor_net))
@@ -194,7 +197,6 @@ def main():
     time.sleep(0.5)
 
     if params.DRAW_VIZ:
-
         #stat_for_ddpg = statistics.StatisticsForDDPGOptimization(n_actions=1)
         stat_for_ddpg = statistics.StatisticsForSimpleDDPGOptimization(n_actions=1)
     else:
@@ -248,7 +250,7 @@ def main():
                     buffer, actor_net, critic_net, target_actor_net, target_critic_net, actor_optimizer, critic_optimizer,
                     step_idx, actor_grad_l2, actor_grad_max, actor_grad_variance,
                     critic_grad_l2, critic_grad_max, critic_grad_variance,
-                    loss_actor, loss_critic, loss_total, per=False
+                    loss_actor, loss_critic, loss_total, per=params.PER
                 )
 
             if params.DRAW_VIZ:

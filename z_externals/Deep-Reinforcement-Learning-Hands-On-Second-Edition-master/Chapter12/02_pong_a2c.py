@@ -112,7 +112,7 @@ if __name__ == "__main__":
     print(net)
 
     agent = ptan.agent.PolicyAgent(lambda x: net(x)[0], apply_softmax=True, device=device)
-    exp_source = ptan.experience.ExperienceSourceFirstLast(envs, agent, gamma=GAMMA, steps_count=REWARD_STEPS)
+    experience_source = ptan.experience.ExperienceSourceFirstLast(envs, agent, gamma=GAMMA, steps_count=REWARD_STEPS)
 
     optimizer = optim.Adam(net.parameters(), lr=LEARNING_RATE, eps=1e-3)
 
@@ -120,11 +120,11 @@ if __name__ == "__main__":
 
     with common.RewardTracker(writer, stop_reward=18) as tracker:
         with ptan.common.utils.TBMeanTracker(writer, batch_size=10) as tb_tracker:
-            for step_idx, exp in enumerate(exp_source):
+            for step_idx, exp in enumerate(experience_source):
                 batch.append(exp)
 
                 # handle new rewards
-                new_rewards = exp_source.pop_total_rewards()
+                new_rewards = experience_source.pop_total_rewards()
                 if new_rewards:
                     if tracker.reward(new_rewards[0], step_idx):
                         break

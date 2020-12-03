@@ -59,8 +59,8 @@ if __name__ == "__main__":
     )
     agent = rl_agent.DQNAgent(net, action_selector, device=device)
 
-    exp_source = experience.ExperienceSourceFirstLast(env, agent, gamma=params.GAMMA, steps_count=1)
-    buffer = experience.ExperienceReplayBuffer(exp_source, buffer_size=params.REPLAY_BUFFER_SIZE)
+    experience_source = experience.ExperienceSourceFirstLast(env, agent, gamma=params.GAMMA, steps_count=1)
+    buffer = experience.ExperienceReplayBuffer(experience_source, buffer_size=params.REPLAY_BUFFER_SIZE)
     optimizer = optim.Adam(net.parameters(), lr=params.LEARNING_RATE)
 
     if params.DRAW_VIZ:
@@ -87,7 +87,7 @@ if __name__ == "__main__":
             buffer.populate_stacked_experience(params.TRAIN_STEP_FREQ)
             epsilon_tracker.udpate(frame_idx)
 
-            episode_rewards = exp_source.pop_episode_reward_lst()
+            episode_rewards = experience_source.pop_episode_reward_lst()
             if episode_rewards:
                 solved, mean_episode_reward = reward_tracker.set_episode_reward(
                     episode_rewards[0], frame_idx, action_selector.epsilon, action_count

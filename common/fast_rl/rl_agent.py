@@ -7,19 +7,10 @@ import torch
 import torch.nn.functional as F
 import os, glob
 
-from common.fast_rl.common.noise import OrnsteinUhlenbeckActionNoise
+from common.logger import get_logger
 from . import actions
-import logging
 
-mylogger = logging.getLogger("my")
-mylogger.setLevel(logging.INFO)
-
-file_handler = logging.FileHandler('rl_agent.log')
-
-formatter = logging.Formatter('%(asctime)s-%(name)s-%(levelname)s-%(message)s')
-file_handler.setFormatter(formatter)
-
-mylogger.addHandler(file_handler)
+mylogger = get_logger("rl_agent")
 
 
 def save_model(model_save_dir, env_name, net_name, net, step, episode_reward):
@@ -300,6 +291,11 @@ class AgentDDPG(BaseAgent):
             states = self.preprocessor(states)
             if torch.is_tensor(states):
                 states = states.to(self.device)
+
+        if len(states) == 1:
+            self.model.eval()
+        else:
+            self.model.train()
 
         mu_v = self.model(states)
         mu = mu_v.data.cpu().numpy()

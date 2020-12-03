@@ -114,11 +114,11 @@ def calc_values_of_states(states, net, device="cpu"):
 
 
 def setup_ignite(engine: Engine, params: SimpleNamespace,
-                 exp_source, run_name: str,
+                 experience_source, run_name: str,
                  extra_metrics: Iterable[str] = ()):
     warnings.simplefilter("ignore", category=UserWarning)
     handler = ptan_ignite.EndOfEpisodeHandler(
-        exp_source, bound_avg_reward=params.stop_reward)
+        experience_source, bound_avg_reward=params.stop_reward)
     handler.attach(engine)
     ptan_ignite.EpisodeFPSHandler().attach(engine)
 

@@ -103,8 +103,8 @@ class MatlabRotaryInvertedPendulumEnv(gym.Env):
             math.cos(self.pendulum_position),
             math.sin(self.pendulum_position),
             self.pendulum_velocity,
-            0.0,
-            0.0,
+            math.cos(0.0),  # 1.0
+            math.sin(0.0),  # 0.0
             #self.motor_velocity,
             self.current_status.value
         )
@@ -231,8 +231,8 @@ class MatlabRotaryInvertedPendulumEnv(gym.Env):
             self.too_much_rotate = True
 
         done_conditions = [
-            self.episode_steps >= 2000 if params.TEAMVIEWER else self.episode_steps >= 2000,
-            self.too_much_rotate
+            self.episode_steps >= 500,
+            #self.too_much_rotate
             # self.num_continuous_positive_torque >= 30,
             # self.num_continuous_negative_torque >= 30
         ]
@@ -243,6 +243,8 @@ class MatlabRotaryInvertedPendulumEnv(gym.Env):
         #     action, self.pendulum_position, self.pendulum_velocity, adjusted_radian, reward, self.simulation_time
         # ))
 
+        self.update_current_state(adjusted_radian)
+
         if any(done_conditions):
             done = True
             if params.CH:
@@ -250,7 +252,7 @@ class MatlabRotaryInvertedPendulumEnv(gym.Env):
                     adjusted_radian, action, self.num_continuous_positive_torque, self.num_continuous_negative_torque
                 )
             else:
-                reward = self.get_reward(adjusted_radian, action)
+                reward = self.get_reward(adjusted_radian)
 
             info = {
                 "count_balancing_states": self.count_balancing_states,
@@ -262,7 +264,6 @@ class MatlabRotaryInvertedPendulumEnv(gym.Env):
 
             if self.env_reset:
                 self.plant.connectStop()
-
         else:
             done = False
             if params.CH:
@@ -270,14 +271,9 @@ class MatlabRotaryInvertedPendulumEnv(gym.Env):
                     adjusted_radian, action, self.num_continuous_positive_torque, self.num_continuous_negative_torque
                 )
             else:
-                reward = self.get_reward(adjusted_radian, action)
+                reward = self.get_reward(adjusted_radian)
 
             info = {}
-
-        if not isinstance(reward, float):
-            reward = reward[-1]
-
-        self.update_current_state(adjusted_radian)
 
         state = (
             math.cos(self.pendulum_position),
@@ -291,33 +287,52 @@ class MatlabRotaryInvertedPendulumEnv(gym.Env):
 
         return state, reward, done, info
 
-    def get_reward(self, adjusted_radian, action):
-        #### 1) position_reward
+    def get_reward(self, adjusted_radian):
         if self.too_much_rotate:
-            position_reward = -100.0
+            position_reward = -1.0
         else:
-            if adjusted_radian < math.pi / 2:
+            if self.current_status in [Status.SWING_UP]:
                 position_reward = 0.0
+            elif self.current_status in [Status.SWING_UP_TO_BALANCING]:
+                position_reward = 1.0
             else:
-                position_reward = adjusted_radian
+                position_reward = adjusted_radian  # math.pi - math.radians(12) ~ math.pi
 
         self.episode_position_reward_list.append(position_reward)
+        self.episode_pendulum_velocity_reward_list.append(0.0)
+        self.episode_action_reward_list.append(0.0)
 
-        #### 2) pendulum_velocity 보상 & 3) action 보상
-        if self.current_status in [Status.BALANCING, Status.SWING_UP_TO_BALANCING]:
-            pendulum_velocity_reward = -0.001 * self.pendulum_velocity ** 2
-            self.episode_pendulum_velocity_reward_list.append(pendulum_velocity_reward)
-
-            action_reward = -50.0 * abs(action)
-            self.episode_action_reward_list.append(action_reward)
-
-            reward = position_reward + pendulum_velocity_reward + action_reward
-        else:
-            reward = position_reward
-
-        reward /= 1000.0
+        reward = position_reward
 
         return reward
+
+    # def get_reward(self, adjusted_radian, action):
+    #     #### 1) position_reward
+    #     if self.too_much_rotate:
+    #         position_reward = -100.0
+    #     else:
+    #         if adjusted_radian < math.pi / 2:
+    #             position_reward = 0.0
+    #         else:
+    #             position_reward = adjusted_radian
+    #
+    #     self.episode_position_reward_list.append(position_reward)
+    #
+    #     #### 2) pendulum_velocity 보상 & 3) action 보상
+    #     if self.current_status in [Status.BALANCING, Status.SWING_UP_TO_BALANCING]:
+    #         pendulum_velocity_reward = -0.001 * self.pendulum_velocity ** 2
+    #         self.episode_pendulum_velocity_reward_list.append(pendulum_velocity_reward)
+    #
+    #         action_reward = -50.0 * abs(action)
+    #         self.episode_action_reward_list.append(action_reward)
+    #
+    #         reward = position_reward + pendulum_velocity_reward + action_reward
+    #     else:
+    #         reward = position_reward
+    #
+    #     reward /= 1000.0
+    #
+    #     return reward
 
     def CH_ordinary_reward(self, adjusted_radian, action, num_continuous_positive_torque,
                          num_continuous_negative_torque):

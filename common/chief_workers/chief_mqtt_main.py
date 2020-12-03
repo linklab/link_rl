@@ -14,7 +14,7 @@ from config.parameters import PARAMETERS as params
 
 
 import paho.mqtt.client as mqtt
-from rl_main.logger import get_logger
+from common.logger import get_logger
 import numpy as np
 
 logger = get_logger("chief")
