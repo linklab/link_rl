@@ -71,7 +71,7 @@ class DQN_v0:
         state = self.env.reset()
 
         done = False
-        score = 0.0
+        episode_reward = 0.0
 
         while not done:
             if self.env_render:
@@ -86,7 +86,7 @@ class DQN_v0:
 
             # Move to the next state
             state = next_state
-            score += reward
+            episode_reward += reward
 
         gradients, loss = self.train_net()
 
@@ -94,7 +94,7 @@ class DQN_v0:
         if episode % TARGET_UPDATE_PERIOD == 0:
             self.target_model.load_state_dict(self.policy_model.state_dict())
 
-        return gradients, loss, score
+        return gradients, loss, episode_reward
 
     # epsilon greedy policy
     def select_epsilon_greedy_action(self, state):

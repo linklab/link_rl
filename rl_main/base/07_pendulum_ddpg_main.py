@@ -13,7 +13,8 @@ from config.names import DeepLearningModelName
 
 idx = os.getcwd().index("link_rl")
 PROJECT_HOME = os.getcwd()[:idx] + "link_rl"
-sys.path.append(PROJECT_HOME)
+if PROJECT_HOME not in sys.path:
+    sys.path.append(PROJECT_HOME)
 
 from common.common_utils import make_gym_env, smooth
 from common.fast_rl.policy_based_model import unpack_batch_for_ddpg

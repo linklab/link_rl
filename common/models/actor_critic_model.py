@@ -77,7 +77,7 @@ class ActorCriticModel(nn.Module):
 
         self.steps_done = 0
 
-        files = glob.glob(os.path.join(PROJECT_HOME, "model_save_files", "{0}_{1}_{2}_*".format(
+        files = glob.glob(os.path.join(PROJECT_HOME, "out", "model_save_files", "{0}_{1}_{2}_*".format(
             self.worker_id,
             self.params.ENVIRONMENT_ID.name,
             self.params.DEEP_LEARNING_MODEL.value,
@@ -230,7 +230,7 @@ class ActorCriticModel(nn.Module):
 
         self.count += 1
         if self.count == num_workers:
-            self.weighted_scores = [score / self.sum for score in self.ema_scores]
+            self.weighted_scores = [episode_reward / self.sum for episode_reward in self.ema_scores]
             self.count = 0
             self.sum = 0
             self.id_list = []

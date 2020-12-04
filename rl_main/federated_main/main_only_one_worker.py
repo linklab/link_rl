@@ -2,9 +2,10 @@ import sys, os
 from multiprocessing import Process
 import torch
 
-idx = os.getcwd().index("{0}link_rl".format(os.sep))
-PROJECT_HOME = os.getcwd()[:idx+1] + "link_rl{0}".format(os.sep)
-sys.path.append(PROJECT_HOME)
+idx = os.getcwd().index("link_rl")
+PROJECT_HOME = os.getcwd()[:idx] + "link_rl"
+if PROJECT_HOME not in sys.path:
+    sys.path.append(PROJECT_HOME)
 
 from config.parameters import PARAMETERS as params
 

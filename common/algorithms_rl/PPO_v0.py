@@ -238,7 +238,7 @@ class PPO_v0:
 
     def on_episode(self, episode):
 
-        score = 0.0
+        episode_reward = 0.0
         number_of_reset_call = 0.0
 
         if self.params.TRAJECTORY_SAMPLING:
@@ -273,12 +273,12 @@ class PPO_v0:
 
                 # state = next_state + (0.001 * np.random.randn(2) + self.avg_list[self.worker_id])
                 state = next_state
-                score += reward
+                episode_reward += reward
                 #elapsed_time = datetime.datetime.now() - start_time
 
                 #print(elapsed_time, " !!!")
 
-        avrg_score = score / number_of_reset_call
+        avrg_score = episode_reward / number_of_reset_call
         self.scores[self.worker_id] = avrg_score
         gradients, loss = self.train_net()
 

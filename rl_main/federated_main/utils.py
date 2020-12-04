@@ -1,18 +1,22 @@
 import glob
 import math
 import os
-import sys
 import numpy as np
 import torch
 import torch.nn as nn
+import sys
+import socket
+
+import paho.mqtt.client as mqtt
 
 from config.parameters import PARAMETERS as params
 
 torch.backends.cudnn.benchmark = True
 
-idx = os.getcwd().index("{0}link_rl".format(os.sep))
-PROJECT_HOME = os.getcwd()[:idx+1] + "link_rl{0}".format(os.sep)
-sys.path.append(PROJECT_HOME)
+idx = os.getcwd().index("link_rl")
+PROJECT_HOME = os.getcwd()[:idx] + "link_rl"
+if PROJECT_HOME not in sys.path:
+    sys.path.append(PROJECT_HOME)
 
 from config.names import RLAlgorithmName, DeepLearningModelName
 
@@ -126,42 +130,58 @@ def ask_file_removal(device):
     if not (response == "Y" or response == "y"):
         sys.exit(-1)
 
-    files = glob.glob(os.path.join(PROJECT_HOME, "graphs", "*"))
+    files = glob.glob(os.path.join(PROJECT_HOME, "out", "graphs", "*"))
     for f in files:
         os.remove(f)
 
-    files = glob.glob(os.path.join(PROJECT_HOME, "logs", "*"))
+    files = glob.glob(os.path.join(PROJECT_HOME, "out", "logs", "*"))
     for f in files:
         os.remove(f)
 
-    files = glob.glob(os.path.join(PROJECT_HOME, "out_err", "*"))
+    files = glob.glob(os.path.join(PROJECT_HOME, "out", "out_err", "*"))
     for f in files:
         os.remove(f)
 
-    # files = glob.glob(os.path.join(PROJECT_HOME, "model_save_files", "*"))
+    # files = glob.glob(os.path.join(PROJECT_HOME, "out", "model_save_files", "*"))
     # for f in files:
     #     os.remove(f)
 
-    files = glob.glob(os.path.join(PROJECT_HOME, "save_results", "*"))
+    files = glob.glob(os.path.join(PROJECT_HOME, "out", "save_results", "*"))
     for f in files:
         os.remove(f)
 
 
 def make_output_folders():
-    if not os.path.exists(os.path.join(PROJECT_HOME, "graphs")):
-        os.makedirs(os.path.join(PROJECT_HOME, "graphs"))
+    if not os.path.exists(os.path.join(PROJECT_HOME, "out", "graphs")):
+        os.makedirs(os.path.join(PROJECT_HOME, "out", "graphs"))
 
-    if not os.path.exists(os.path.join(PROJECT_HOME, "logs")):
-        os.makedirs(os.path.join(PROJECT_HOME, "logs"))
+    if not os.path.exists(os.path.join(PROJECT_HOME, "out", "logs")):
+        os.makedirs(os.path.join(PROJECT_HOME, "out", "logs"))
 
-    if not os.path.exists(os.path.join(PROJECT_HOME, "out_err")):
-        os.makedirs(os.path.join(PROJECT_HOME, "out_err"))
+    if not os.path.exists(os.path.join(PROJECT_HOME, "out", "out_err")):
+        os.makedirs(os.path.join(PROJECT_HOME, "out", "out_err"))
 
-    if not os.path.exists(os.path.join(PROJECT_HOME, "model_save_files")):
-        os.makedirs(os.path.join(PROJECT_HOME, "model_save_files"))
+    if not os.path.exists(os.path.join(PROJECT_HOME, "out", "model_save_files")):
+        os.makedirs(os.path.join(PROJECT_HOME, "out", "model_save_files"))
 
-    if not os.path.exists(os.path.join(PROJECT_HOME, "save_results")):
-        os.makedirs(os.path.join(PROJECT_HOME, "save_results"))
+    if not os.path.exists(os.path.join(PROJECT_HOME, "out", "save_results")):
+        os.makedirs(os.path.join(PROJECT_HOME, "out", "save_results"))
+
+
+def check_server_running(host, port):
+    try:
+        test_mqtt_client = mqtt.Client("test")
+        test_mqtt_client.connect(params.MQTT_SERVER, params.MQTT_PORT, keepalive=3600)
+        test_mqtt_client.loop_start()
+        return True
+    except ConnectionRefusedError as e:
+        return False
+
+
+def check_mqtt_server():
+    running = check_server_running(params.MQTT_SERVER, params.MQTT_PORT)
+    assert running, "MQTT broker is not running at {0}:{1}.\n/usr/local/sbin/mosquitto -c " \
+                    "/usr/local/etc/mosquitto/mosquitto.conf".format(params.MQTT_SERVER, params.MQTT_PORT)
 
 
 def run_chief(params):
@@ -176,8 +196,8 @@ def run_chief(params):
         #             break
         #         output += line
         os.system(params.PYTHON_PATH + " " + os.path.join(PROJECT_HOME, "common", "chief_workers", "chief_mqtt_main.py"))
-        sys.stdout = open(os.path.join(PROJECT_HOME, "out_err", "chief_stdout.out"), "wb")
-        sys.stderr = open(os.path.join(PROJECT_HOME, "out_err", "chief_stderr.out"), "wb")
+        sys.stdout = open(os.path.join(PROJECT_HOME, "out", "out_err", "chief_stdout.out"), "wb")
+        sys.stderr = open(os.path.join(PROJECT_HOME, "out", "out_err", "chief_stderr.out"), "wb")
     except KeyboardInterrupt:
         sys.stdout.flush()
         sys.stdout.flush()
@@ -186,8 +206,8 @@ def run_chief(params):
 def run_worker(worker_id, params):
     try:
         os.system(params.PYTHON_PATH + " " + os.path.join(PROJECT_HOME, "common", "chief_workers", "worker_mqtt_main.py") + " {0}".format(worker_id))
-        sys.stdout = open(os.path.join(PROJECT_HOME, "out_err", "worker_{0}_stdout.out").format(worker_id), "wb")
-        sys.stderr = open(os.path.join(PROJECT_HOME, "out_err", "worker_{0}_stderr.out").format(worker_id), "wb")
+        sys.stdout = open(os.path.join(PROJECT_HOME, "out", "out_err", "worker_{0}_stdout.out").format(worker_id), "wb")
+        sys.stderr = open(os.path.join(PROJECT_HOME, "out", "out_err", "worker_{0}_stderr.out").format(worker_id), "wb")
     except KeyboardInterrupt:
         sys.stdout.flush()
         sys.stderr.flush()

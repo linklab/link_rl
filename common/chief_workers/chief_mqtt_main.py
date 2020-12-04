@@ -4,9 +4,10 @@ import time
 import zlib
 import sys, os
 
-idx = os.getcwd().index("{0}link_rl".format(os.sep))
-PROJECT_HOME = os.getcwd()[:idx+1] + "link_rl{0}".format(os.sep)
-sys.path.append(PROJECT_HOME)
+idx = os.getcwd().index("link_rl")
+PROJECT_HOME = os.getcwd()[:idx] + "link_rl"
+if PROJECT_HOME not in sys.path:
+    sys.path.append(PROJECT_HOME)
 
 from rl_main import rl_utils
 from common.chief_workers.chief import Chief
@@ -41,12 +42,12 @@ def on_chief_log(mqttc, obj, level, string):
 def on_chief_message(client, userdata, msg):
     msg_payload = zlib.decompress(msg.payload)
     msg_payload = pickle.loads(msg_payload)
-    log_msg = "[RECV] TOPIC: {0}, PAYLOAD: 'episode': {1}, 'worker_id': {2}, 'loss': {3}, 'score': {4}".format(
+    log_msg = "[RECV] TOPIC: {0}, PAYLOAD: 'episode': {1}, 'worker_id': {2}, 'loss': {3}, 'episode_reward': {4}".format(
         msg.topic,
         msg_payload['episode'],
         msg_payload['worker_id'],
         msg_payload['loss'],
-        msg_payload['score']
+        msg_payload['episode_reward']
     )
 
     if params.MODE_PARAMETERS_TRANSFER and msg.topic == params.MQTT_TOPIC_SUCCESS_DONE:
@@ -69,24 +70,24 @@ def on_chief_message(client, userdata, msg):
         if len(chief.messages_received_from_workers[chief.episode_chief]) == params.NUM_WORKERS - chief.NUM_DONE_WORKERS:
             is_include_topic_success_done = False
             parameters_transferred = None
-            worker_score_str = ""
+            worker_episode_reward_str = ""
             for worker_id in range(params.NUM_WORKERS):
                 if worker_id in chief.messages_received_from_workers[chief.episode_chief]:
                     topic, msg_payload = chief.messages_received_from_workers[chief.episode_chief][worker_id]
                     chief.process_message(topic=topic, msg_payload=msg_payload)
 
-                    worker_score_str += "W{0}[{1:5.2f}/{2:5.2f}] ".format(
+                    worker_episode_reward_str += "W{0}[{1:7.4f}/{2:7.4f}] ".format(
                         worker_id,
-                        chief.messages_received_from_workers[chief.episode_chief][worker_id][1]['score'],
-                        np.mean(chief.score_over_recent_100_episodes[worker_id])
+                        chief.messages_received_from_workers[chief.episode_chief][worker_id][1]['episode_reward'],
+                        np.mean(chief.episode_reward_over_recent_100_episodes[worker_id])
                     )
 
                     chief.save_results(
                         worker_id,
                         chief.messages_received_from_workers[chief.episode_chief][worker_id][1]['loss'],
                         np.mean(chief.loss_over_recent_100_episodes[worker_id]),
-                        chief.messages_received_from_workers[chief.episode_chief][worker_id][1]['score'],
-                        np.mean(chief.score_over_recent_100_episodes[worker_id])
+                        chief.messages_received_from_workers[chief.episode_chief][worker_id][1]['episode_reward'],
+                        np.mean(chief.episode_reward_over_recent_100_episodes[worker_id])
                     )
 
                     if topic == params.MQTT_TOPIC_SUCCESS_DONE:
@@ -105,7 +106,7 @@ def on_chief_message(client, userdata, msg):
 
             chief.save_graph()
 
-            print("episode_chief:{0:3d} - {1}\n".format(chief.episode_chief, worker_score_str))
+            print("episode_chief:{0:3d} - {1}\n".format(chief.episode_chief, worker_episode_reward_str))
             chief.episode_chief += 1
     else:
         chief. process_message(msg.topic, msg_payload)
