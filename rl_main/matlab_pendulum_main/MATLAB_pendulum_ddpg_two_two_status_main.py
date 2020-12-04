@@ -58,7 +58,7 @@ elif params.CH:
     BALANCING_SCALE_FACTOR = 0.0005
 else:
     SWING_UP_SCALE_FACTOR = 0.05
-    BALANCING_SCALE_FACTOR = 0.0005     # 0.01
+    BALANCING_SCALE_FACTOR = 0.01     # 0.01
 CLIP = 1
 
 env = MatlabRotaryInvertedPendulumEnv(
@@ -264,7 +264,7 @@ def main():
             hidden_size_1=256, hidden_size_2=256,
             n_actions=1,
             bidirectional=False,
-            scale=BALANCING_SCALE_FACTOR
+            scale=SWING_UP_SCALE_FACTOR
         ).to(device)
 
         critic_swing_up_net = policy_based_model.DDPGGruCritic(

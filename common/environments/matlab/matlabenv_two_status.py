@@ -109,8 +109,8 @@ class MatlabRotaryInvertedPendulumEnv(gym.Env):
 
         self.too_much_rotate = False
 
-        self.count_continuous_uprights = 0
-        self.is_upright = False
+        # self.count_continuous_uprights = 0
+        # self.is_upright = False
         self.initial_motor_position = self.motor_position
 
         return state
@@ -182,6 +182,7 @@ class MatlabRotaryInvertedPendulumEnv(gym.Env):
 
         done_conditions = [
             # self.episode_steps >= 500,
+            self.count_continuous_swing_up_states >= 500,
             self.too_much_rotate,
             self.episode_steps > 1 and self.count_continuous_swing_up_states == 1,
             self.count_continuous_balancing_states == 1
@@ -231,7 +232,7 @@ class MatlabRotaryInvertedPendulumEnv(gym.Env):
             position_reward = -1.0
         else:
             if self.current_status in [Status.SWING_UP]:
-                position_reward = -0.01     # 0.0
+                position_reward = 0.0     # 0.0
             else:
                 if self.count_continuous_balancing_states == 1:
                     position_reward = 5.0 - abs(self.pendulum_velocity)*0.1
