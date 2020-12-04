@@ -88,7 +88,7 @@ class ExperienceSourceSingleEnvDdpgTwo:
         state = self.env.reset()
 
         history = deque(maxlen=self.steps_count)
-        cur_reward = 0.0
+        cur_episode_reward = 0.0
         cur_step = 0
         agent_state = self.current_agent.initial_agent_state()
 
@@ -115,7 +115,7 @@ class ExperienceSourceSingleEnvDdpgTwo:
 
             next_state, r, is_done, info = self.env.step(action)
 
-            cur_reward += r
+            cur_episode_reward += r
             cur_step += 1
 
             if state is not None:
@@ -150,9 +150,9 @@ class ExperienceSourceSingleEnvDdpgTwo:
 
                 agent_state = self.current_agent.initial_agent_state()
 
-                self.episode_reward_and_info_lst.append((cur_reward, info))
+                self.episode_reward_and_info_lst.append((cur_episode_reward, info))
 
-                cur_reward = 0.0
+                cur_episode_reward = 0.0
                 cur_step = 0
 
                 history.clear()

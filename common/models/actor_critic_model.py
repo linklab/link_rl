@@ -10,7 +10,7 @@ from common.models.distributions import DistCategorical, DistDiagGaussian
 
 # from torch.distributions import Categorical
 from config.names import DeepLearningModelName, PROJECT_HOME
-from rl_main.utils import util_init
+from rl_main.federated_main.utils import util_init
 
 EPS_START = 0.9     # e-greedy threshold start value
 EPS_END = 0.05      # e-greedy threshold end value
@@ -326,7 +326,7 @@ class CNNBase(nn.Module):
 
         self.continuous = continuous
 
-        from rl_main.utils import get_conv2d_size
+        from rl_main.federated_main.utils import get_conv2d_size
         h, w = get_conv2d_size(h=input_height, w=input_width, kernel_size=3, padding=0, stride=1)
         print(h, w)
         h, w = get_conv2d_size(h=h, w=w, kernel_size=3, padding=1, stride=1)

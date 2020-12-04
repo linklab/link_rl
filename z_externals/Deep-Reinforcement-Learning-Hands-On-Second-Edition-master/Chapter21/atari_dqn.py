@@ -86,10 +86,10 @@ if __name__ == "__main__":
     tgt_net = ptan.agent.TargetNet(net)
     agent = ptan.agent.DQNAgent(net, selector, device=device)
 
-    exp_source = ptan.experience.ExperienceSourceFirstLast(
+    experience_source = ptan.experience.ExperienceSourceFirstLast(
         envs, agent, gamma=params.gamma, steps_count=N_STEPS)
     buffer = ptan.experience.ExperienceReplayBuffer(
-        exp_source, buffer_size=params.replay_size)
+        experience_source, buffer_size=params.replay_size)
     optimizer = optim.Adam(net.parameters(), lr=params.learning_rate)
 
     def process_batch(engine, batch):
@@ -118,5 +118,5 @@ if __name__ == "__main__":
         return res
 
     engine = Engine(process_batch)
-    common.setup_ignite(engine, params, exp_source, args.name, extra_metrics=('adv', 'val'))
+    common.setup_ignite(engine, params, experience_source, args.name, extra_metrics=('adv', 'val'))
     engine.run(common.batch_generator(buffer, params.replay_initial, params.batch_size))

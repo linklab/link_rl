@@ -119,7 +119,7 @@ if __name__ == "__main__":
     print(net)
 
     agent = ptan.agent.ActorCriticAgent(net, apply_softmax=True, device=device)
-    exp_source = ptan.experience.ExperienceSourceRollouts(envs, agent, gamma=GAMMA, steps_count=REWARD_STEPS)
+    experience_source = ptan.experience.ExperienceSourceRollouts(envs, agent, gamma=GAMMA, steps_count=REWARD_STEPS)
 
     optimizer = optim.RMSprop(net.parameters(), lr=LEARNING_RATE, eps=1e-5)
 
@@ -127,9 +127,9 @@ if __name__ == "__main__":
 
     with common.RewardTracker(writer, stop_reward=18) as tracker:
         with ptan.common.utils.TBMeanTracker(writer, batch_size=10) as tb_tracker:
-            for mb_states, mb_rewards, mb_actions, mb_values in exp_source:
+            for mb_states, mb_rewards, mb_actions, mb_values in experience_source:
                 # handle new rewards
-                new_rewards = exp_source.pop_total_rewards()
+                new_rewards = experience_source.pop_total_rewards()
                 if new_rewards:
                     if tracker.reward(np.mean(new_rewards), step_idx):
                         break

@@ -124,10 +124,10 @@ if __name__ == "__main__":
         epsilon_tracker = common.EpsilonTracker(action_selector, PARAMS)
     preproc = model.MAgentPreprocessor(device)
     agent = ptan.agent.DQNAgent(net, action_selector, device, preprocessor=preproc)
-    exp_source = ptan.experience.ExperienceSourceFirstLast(
+    experience_source = ptan.experience.ExperienceSourceFirstLast(
         env, agent, PARAMS.gamma, vectorized=True)
     buffer = ptan.experience.ExperienceReplayBuffer(
-        exp_source, PARAMS.replay_size)
+        experience_source, PARAMS.replay_size)
     optimizer = optim.Adam(net.parameters(), lr=PARAMS.learning_rate)
 
     def process_batch(engine, batch):
@@ -147,7 +147,7 @@ if __name__ == "__main__":
         return res
 
     engine = Engine(process_batch)
-    common.setup_ignite(engine, PARAMS, exp_source, args.name,
+    common.setup_ignite(engine, PARAMS, experience_source, args.name,
                         extra_metrics=('test_reward', 'test_steps'))
     best_test_reward = None
 

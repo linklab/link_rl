@@ -46,12 +46,12 @@ def data_func(net, device, train_queue):
     envs = [make_env() for _ in range(NUM_ENVS)]
     agent = ptan.agent.PolicyAgent(
         lambda x: net(x)[0], device=device, apply_softmax=True)
-    exp_source = ptan.experience.ExperienceSourceFirstLast(
+    experience_source = ptan.experience.ExperienceSourceFirstLast(
         envs, agent, gamma=GAMMA, steps_count=REWARD_STEPS)
     micro_batch = []
 
-    for exp in exp_source:
-        new_rewards = exp_source.pop_total_rewards()
+    for exp in experience_source:
+        new_rewards = experience_source.pop_total_rewards()
         if new_rewards:
             data = TotalReward(reward=np.mean(new_rewards))
             train_queue.put(data)

@@ -11,17 +11,15 @@ import os, sys
 import numpy as np
 import copy
 
-from common.logger import get_logger
-from config.names import DeepLearningModelName
-from rl_main.matlab_pendulum_main.experience_pendulum_ddpg_two import ExperienceSourceSingleEnvFirstLastDdpgTwo, \
-    RewardTrackerMatlabPendulum
-
 idx = os.getcwd().index("link_rl")
 PROJECT_HOME = os.getcwd()[:idx] + "link_rl"
 sys.path.append(PROJECT_HOME)
 
+from common.logger import get_logger
+from config.names import DeepLearningModelName
+from rl_main.matlab_pendulum_main.experience_pendulum_ddpg_two import ExperienceSourceSingleEnvFirstLastDdpgTwo, \
+    RewardTrackerMatlabPendulum
 from common.environments.matlab.matlabenv import MatlabRotaryInvertedPendulumEnv, Status
-
 from common.common_utils import smooth
 from common.fast_rl.policy_based_model import unpack_batch_for_ddpg
 from common.fast_rl.rl_agent import float32_preprocessor
@@ -223,10 +221,11 @@ def play_func(exp_queue_swing_up, exp_queue_balancing, actor_swing_up_net, criti
             episode_reward_and_info_lst = experience_source.pop_episode_reward_and_info_lst()
 
             if episode_reward_and_info_lst:  # 에피소드가 종료될 때만 True
-                current_episode_reward_and_info = episode_reward_and_info_lst[0]
+                current_episode_reward_and_info = episode_reward_and_info_lst[-1]
                 episode_reward_list.append(current_episode_reward_and_info[0])
+
                 with open('episode_reward_list.txt', 'wb') as f:
-                    pickle.dump(episode_reward_list,f)
+                    pickle.dump(episode_reward_list, f)
 
                 solved, mean_episode_reward = reward_tracker.set_episode_reward(
                     current_episode_reward_and_info, step_idx,
@@ -503,7 +502,6 @@ def model_update(buffer, actor_swing_up_net, critic_swing_up_net, target_actor_s
     else:
         batch = buffer.sample(params.BATCH_SIZE)
         batch_indices, batch_weights = None, None
-
 
     batch_states_v, batch_actions_v, batch_rewards_v, batch_dones_mask, batch_last_states_v = unpack_batch_for_ddpg(
         batch, device

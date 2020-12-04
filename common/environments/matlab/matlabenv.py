@@ -231,7 +231,7 @@ class MatlabRotaryInvertedPendulumEnv(gym.Env):
             self.too_much_rotate = True
 
         done_conditions = [
-            self.episode_steps >= 2000,
+            self.episode_steps >= 500,
             self.too_much_rotate
             # self.num_continuous_positive_torque >= 30,
             # self.num_continuous_negative_torque >= 30
@@ -243,6 +243,8 @@ class MatlabRotaryInvertedPendulumEnv(gym.Env):
         #     action, self.pendulum_position, self.pendulum_velocity, adjusted_radian, reward, self.simulation_time
         # ))
 
+        self.update_current_state(adjusted_radian)
+
         if any(done_conditions):
             done = True
             if params.CH:
@@ -250,7 +252,7 @@ class MatlabRotaryInvertedPendulumEnv(gym.Env):
                     adjusted_radian, action, self.num_continuous_positive_torque, self.num_continuous_negative_torque
                 )
             else:
-                reward = self.get_reward(adjusted_radian, action)
+                reward = self.get_reward(adjusted_radian)
 
             info = {
                 "count_balancing_states": self.count_balancing_states,
@@ -262,7 +264,6 @@ class MatlabRotaryInvertedPendulumEnv(gym.Env):
 
             if self.env_reset:
                 self.plant.connectStop()
-
         else:
             done = False
             if params.CH:
@@ -270,14 +271,9 @@ class MatlabRotaryInvertedPendulumEnv(gym.Env):
                     adjusted_radian, action, self.num_continuous_positive_torque, self.num_continuous_negative_torque
                 )
             else:
-                reward = self.get_reward(adjusted_radian, action)
+                reward = self.get_reward(adjusted_radian)
 
             info = {}
-
-        if not isinstance(reward, float):
-            reward = reward[-1]
-
-        self.update_current_state(adjusted_radian)
 
         state = (
             math.cos(self.pendulum_position),
@@ -291,7 +287,7 @@ class MatlabRotaryInvertedPendulumEnv(gym.Env):
 
         return state, reward, done, info
 
-    def get_reward(self, adjusted_radian, action):
+    def get_reward(self, adjusted_radian):
         if self.too_much_rotate:
             position_reward = -1.0
         else:

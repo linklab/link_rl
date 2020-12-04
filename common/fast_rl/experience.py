@@ -15,10 +15,6 @@ from .common import utils
 
 from config.parameters import PARAMETERS as params
 
-# replay buffer params
-BETA_START = 0.4
-BETA_FRAMES = 100000
-
 # one single experience step
 Experience = namedtuple('Experience', ['state', 'action', 'reward', 'done'])
 ExperienceWithNoise = namedtuple('ExperienceWithNoise', ['state', 'action', 'noise', 'reward', 'done'])
@@ -636,13 +632,13 @@ class ExperienceReplayBuffer:
 
 
 class PrioReplayBufferNaive:
-    def __init__(self, exp_source, buf_size, prob_alpha=0.6):
-        self.exp_source_iter = iter(exp_source)
+    def __init__(self, experience_source, buffer_size, prob_alpha=0.6):
+        self.exp_source_iter = iter(experience_source)
         self.prob_alpha = prob_alpha
-        self.capacity = buf_size
+        self.capacity = buffer_size
         self.pos = 0
         self.buffer = []
-        self.priorities = np.zeros((buf_size,), dtype=np.float32)
+        self.priorities = np.zeros((buffer_size,), dtype=np.float32)
 
     def __len__(self):
         return len(self.buffer)
@@ -680,12 +676,14 @@ class PrioReplayBufferNaive:
 
 # sumtree 사용 버전
 class PrioritizedReplayBuffer(ExperienceReplayBuffer):
-    def __init__(self, experience_source, buffer_size, alpha=0.6, n_step=1):
+    def __init__(self, experience_source, buffer_size, alpha=0.6, n_step=1, beta_start=0.4, beta_frames=100000):
         super(PrioritizedReplayBuffer, self).__init__(experience_source, buffer_size)
         assert alpha > 0
-        self._alpha = alpha
-        self.beta = BETA_START
+        self.alpha = alpha
+        self.beta = beta_start
         self.n_step = n_step
+        self.beta_start = beta_start
+        self.beta_frames = beta_frames
 
         it_capacity = 1
         while it_capacity < buffer_size:
@@ -696,15 +694,15 @@ class PrioritizedReplayBuffer(ExperienceReplayBuffer):
         self._max_priority = 1.0
 
     def update_beta(self, idx):
-        v = BETA_START + idx * (1.0 - BETA_START) / BETA_FRAMES
+        v = self.beta_start + idx * (1.0 - self.beta_start) / self.beta_frames
         self.beta = min(1.0, v)
         return self.beta
 
     def _add(self, *args, **kwargs):
         idx = self.pos
         super()._add(*args, **kwargs)
-        self._it_sum[idx] = self._max_priority ** self._alpha
-        self._it_min[idx] = self._max_priority ** self._alpha
+        self._it_sum[idx] = self._max_priority ** self.alpha
+        self._it_min[idx] = self._max_priority ** self.alpha
 
     def _sample_proportional(self, batch_size):
         assert len(self) > self.n_step
@@ -745,6 +743,7 @@ class PrioritizedReplayBuffer(ExperienceReplayBuffer):
             p_sample = self._it_sum[idx] / self._it_sum.sum()
             weight = (p_sample * len(self)) ** (-self.beta)
             weights.append(weight / max_weight)
+
         weights = np.array(weights, dtype=np.float32)
         samples = [self.buffer[idx] for idx in idxes]
         return samples, idxes, weights
@@ -755,28 +754,30 @@ class PrioritizedReplayBuffer(ExperienceReplayBuffer):
         for idx, priority in zip(idxes, priorities):
             assert priority > 0.0, priority
             assert 0 <= idx < len(self), idx
-            self._it_sum[idx] = priority ** self._alpha
-            self._it_min[idx] = priority ** self._alpha
+            self._it_sum[idx] = priority ** self.alpha
+            self._it_min[idx] = priority ** self.alpha
 
             self._max_priority = max(self._max_priority, priority)
 
 
 # sumtree 사용 안하는 버전
 class PrioReplayBuffer:
-    def __init__(self, exp_source, buf_size, prob_alpha=0.6, n_step=1):
-        assert isinstance(exp_source, (ExperienceSource, type(None)))
-        assert isinstance(buf_size, int)
-        self.exp_source_iter = None if exp_source is None else iter(exp_source)
+    def __init__(self, experience_source, buffer_size, prob_alpha=0.6, n_step=1, beta_start=0.4, beta_frames=100000):
+        assert isinstance(experience_source, (ExperienceSource, type(None)))
+        assert isinstance(buffer_size, int)
+        self.exp_source_iter = None if experience_source is None else iter(experience_source)
         self.prob_alpha = prob_alpha
-        self.capacity = buf_size
+        self.capacity = buffer_size
         self.pos = 0
         self.buffer = []
-        self.priorities = np.zeros((buf_size,), dtype=np.float32)
-        self.beta = BETA_START
+        self.priorities = np.zeros((buffer_size,), dtype=np.float32)
+        self.beta = beta_start
         self.n_step = n_step
+        self.beta_start = beta_start
+        self.beta_frames = beta_frames
 
     def update_beta(self, idx):
-        v = BETA_START + idx * (1.0 - BETA_START) / BETA_FRAMES
+        v = self.beta_start + idx * (1.0 - self.beta_start) / self.beta_frames
         self.beta = min(1.0, v)
         return self.beta
 

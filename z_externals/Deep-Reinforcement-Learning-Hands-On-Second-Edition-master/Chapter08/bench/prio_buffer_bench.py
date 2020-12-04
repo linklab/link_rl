@@ -12,10 +12,10 @@ REPEAT_NUMBER = 10
 
 
 class PrioReplayBufferDeque:
-    def __init__(self, buf_size, prob_alpha=0.6):
+    def __init__(self, buffer_size, prob_alpha=0.6):
         self.prob_alpha = prob_alpha
-        self.buffer = collections.deque(maxlen=buf_size)
-        self.priorities = collections.deque(maxlen=buf_size)
+        self.buffer = collections.deque(maxlen=buffer_size)
+        self.priorities = collections.deque(maxlen=buffer_size)
 
     def __len__(self):
         return len(self.buffer)
@@ -41,12 +41,12 @@ class PrioReplayBufferDeque:
 
 
 class PrioReplayBufferList:
-    def __init__(self, buf_size, prob_alpha=0.6):
+    def __init__(self, buffer_size, prob_alpha=0.6):
         self.prob_alpha = prob_alpha
-        self.capacity = buf_size
+        self.capacity = buffer_size
         self.pos = 0
         self.buffer = []
-        self.priorities = np.zeros((buf_size, ), dtype=np.float32)
+        self.priorities = np.zeros((buffer_size, ), dtype=np.float32)
 
     def __len__(self):
         return len(self.buffer)

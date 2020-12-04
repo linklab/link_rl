@@ -45,7 +45,7 @@ if __name__ == "__main__":
 
     agent = ptan.agent.PolicyAgent(net, preprocessor=ptan.agent.float32_preprocessor,
                                    apply_softmax=True)
-    exp_source = ptan.experience.ExperienceSourceFirstLast(env, agent, gamma=GAMMA, steps_count=REWARD_STEPS)
+    experience_source = ptan.experience.ExperienceSourceFirstLast(env, agent, gamma=GAMMA, steps_count=REWARD_STEPS)
 
     optimizer = optim.Adam(net.parameters(), lr=LEARNING_RATE)
 
@@ -57,7 +57,7 @@ if __name__ == "__main__":
 
     batch_states, batch_actions, batch_scales = [], [], []
 
-    for step_idx, exp in enumerate(exp_source):
+    for step_idx, exp in enumerate(experience_source):
         reward_sum += exp.reward
         baseline = reward_sum / (step_idx + 1)
         writer.add_scalar("baseline", baseline, step_idx)
@@ -69,7 +69,7 @@ if __name__ == "__main__":
             batch_scales.append(exp.reward)
 
         # handle new rewards
-        new_rewards = exp_source.pop_total_rewards()
+        new_rewards = experience_source.pop_total_rewards()
         if new_rewards:
             done_episodes += 1
             reward = new_rewards[0]

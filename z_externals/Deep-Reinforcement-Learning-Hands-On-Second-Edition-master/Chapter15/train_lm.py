@@ -52,10 +52,10 @@ def unpack_batch(batch: List[ptan.experience.ExperienceFirstLast], prep: preproc
     return prep.encode_sequences(states)
 
 
-def batch_generator(exp_source: ptan.experience.ExperienceSourceFirstLast,
+def batch_generator(experience_source: ptan.experience.ExperienceSourceFirstLast,
                     batch_size: int):
     batch = []
-    for exp in exp_source:
+    for exp in experience_source:
         batch.append(exp)
         if len(batch) == batch_size:
             yield batch
@@ -112,10 +112,10 @@ if __name__ == "__main__":
         print("Preprocessor and command generator are loaded from %s" % load_path)
     else:
         agent = model.CmdAgent(env, cmd, prep, device=device)
-        exp_source = ptan.experience.ExperienceSourceFirstLast(
+        experience_source = ptan.experience.ExperienceSourceFirstLast(
             env, agent, gamma=GAMMA, steps_count=1)
         buffer = ptan.experience.ExperienceReplayBuffer(
-            exp_source, params.replay_size)
+            experience_source, params.replay_size)
 
         optimizer = optim.RMSprop(itertools.chain(prep.parameters(), cmd.parameters()),
                                   lr=LEARNING_RATE_LM, eps=1e-5)
@@ -149,7 +149,7 @@ if __name__ == "__main__":
         run_name = f"lm-{args.params}_{args.run}"
         save_path = pathlib.Path("saves") / run_name
         save_path.mkdir(parents=True, exist_ok=True)
-        common.setup_ignite(engine, exp_source, run_name)
+        common.setup_ignite(engine, experience_source, run_name)
 
         try:
             engine.run(common.batch_generator(buffer, BATCH_SIZE, BATCH_SIZE))
@@ -173,10 +173,10 @@ if __name__ == "__main__":
     cmd_encoder = preproc.Encoder(params.embeddings, prep.obs_enc_size).to(device)
     tgt_cmd_encoder = ptan.agent.TargetNet(cmd_encoder)
     agent = model.CmdDQNAgent(env, net, cmd, cmd_encoder, prep, epsilon=1, device=device)
-    exp_source = ptan.experience.ExperienceSourceFirstLast(
+    experience_source = ptan.experience.ExperienceSourceFirstLast(
         env, agent, gamma=GAMMA, steps_count=1)
     buffer = ptan.experience.ExperienceReplayBuffer(
-        exp_source, params.replay_size)
+        experience_source, params.replay_size)
 
     optimizer = optim.RMSprop(itertools.chain(net.parameters(), cmd_encoder.parameters()),
                               lr=LEARNING_RATE, eps=1e-5)
@@ -204,7 +204,7 @@ if __name__ == "__main__":
     save_path = pathlib.Path("saves") / run_name
     save_path.mkdir(parents=True, exist_ok=True)
 
-    common.setup_ignite(engine, exp_source, run_name,
+    common.setup_ignite(engine, experience_source, run_name,
                         extra_metrics=('val_reward', 'val_steps'))
 
     @engine.on(ptan.ignite.PeriodEvents.ITERS_100_COMPLETED)
