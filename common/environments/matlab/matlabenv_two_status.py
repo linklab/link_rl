@@ -231,7 +231,7 @@ class MatlabRotaryInvertedPendulumEnv(gym.Env):
             position_reward = -1.0
         else:
             if self.current_status in [Status.SWING_UP]:
-                position_reward = 0.0
+                position_reward = -0.01     # 0.0
             else:
                 if self.count_continuous_balancing_states == 1:
                     position_reward = 5.0 - abs(self.pendulum_velocity)*0.1

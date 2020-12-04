@@ -58,7 +58,7 @@ elif params.CH:
     BALANCING_SCALE_FACTOR = 0.0005
 else:
     SWING_UP_SCALE_FACTOR = 0.05
-    BALANCING_SCALE_FACTOR = 0.0005#0.01
+    BALANCING_SCALE_FACTOR = 0.0005     # 0.01
 CLIP = 1
 
 env = MatlabRotaryInvertedPendulumEnv(
