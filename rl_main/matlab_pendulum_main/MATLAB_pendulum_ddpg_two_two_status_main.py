@@ -58,7 +58,7 @@ elif params.CH:
     BALANCING_SCALE_FACTOR = 0.0005
 else:
     SWING_UP_SCALE_FACTOR = 0.05
-    BALANCING_SCALE_FACTOR = 0.01
+    BALANCING_SCALE_FACTOR = 0.0005#0.01
 CLIP = 1
 
 env = MatlabRotaryInvertedPendulumEnv(
@@ -157,20 +157,21 @@ def play_func(exp_queue_swing_up, exp_queue_balancing, actor_swing_up_net, criti
             exp = next(exp_source_iter)
 
             if params.DEEP_LEARNING_MODEL is DeepLearningModelName.DDPG_MLP:
-                status_value = exp[0][-1]
+                status_value = int(exp[0][-1])
             elif params.DEEP_LEARNING_MODEL is DeepLearningModelName.DDPG_GRU:
-                status_value = exp[0][-1][-1]
+                status_value = int(exp[0][-1][-1])
             else:
                 raise ValueError()
 
-            if status_value == AgentType.SWING_UP_AGENT.value:   # SWING_UP: 0
+            # print("agent status:", status_value)
+            if status_value == AgentType.SWING_UP_AGENT.value[0]:   # SWING_UP: 0
                 swing_up_step_idx += 1
                 epsilon_tracker_swing_up.udpate(swing_up_step_idx)
 
                 exp_queue_swing_up.put(exp)
                 exp_queue_balancing.put(0)
 
-            elif status_value == AgentType.BALANCING_AGENT.value:  # BALANCING: 1
+            elif status_value == AgentType.BALANCING_AGENT.value[0]:  # BALANCING: 1
                 balancing_step_idx += 1
                 epsilon_tracker_balancing.udpate(balancing_step_idx)
 

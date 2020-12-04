@@ -25,7 +25,7 @@ def play_main():
     ).to(device)
     print(net)
 
-    rl_agent.load_model(MODEL_SAVE_DIR, params.ENVIRONMENT_ID.value, net.__name__, net, step=9775312)#1731249
+    rl_agent.load_model(MODEL_SAVE_DIR, params.ENVIRONMENT_ID.value, net.__name__, net, step=18960320)#1731249
 
     action_selector = actions.ArgmaxActionSelector()
     # action_selector = actions.EpsilonGreedyActionSelector(epsilon=0.01)
@@ -38,6 +38,7 @@ def play_main():
     while not done:
         # if episode_reward > 40:
         #     time.sleep(0.01)
+        time.sleep(0.01)
         env.render()
         state = np.expand_dims(state, axis=0)
         action = agent(state)

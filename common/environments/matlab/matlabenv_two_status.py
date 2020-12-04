@@ -43,7 +43,7 @@ class MatlabRotaryInvertedPendulumEnv(gym.Env):
         )
 
         # high = np.array([1., 1., self.max_velocity, 1., 1., action_max, 1.0], dtype=np.float32)
-        high = np.array([1., 1., self.max_velocity, 1., 1., 1.], dtype=np.float32)
+        high = np.array([1., 1., self.max_velocity, 1., 1.], dtype=np.float32)
         low = high * -1.0
         self.observation_space = gym.spaces.Box(
             low=low, high=high,
