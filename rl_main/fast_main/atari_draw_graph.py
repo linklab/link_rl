@@ -18,7 +18,8 @@ def draw_graph(episode_rewards_across_steps, q_loss_across_steps):
 
     colors = ['b', 'y', 'r', 'c', 'm', 'g', 'k']
 
-    f, (ax0, ax1) = plt.subplots(2, figsize=(20, 20))
+    # f, (ax0, ax1) = plt.subplots(2, figsize=(20, 20))
+    f, (ax0) = plt.subplots(1, figsize=(20, 10))
 
     for n_step_idx, n_step in enumerate(EXPERIMENTS_N_STEPS):
         if n_step == 'Omega':
@@ -50,42 +51,42 @@ def draw_graph(episode_rewards_across_steps, q_loss_across_steps):
             alpha=0.1,
             color=colors[n_step_idx]
         )
-        ax0.tick_params(labelsize=24)
+        ax0.tick_params(labelsize=32)
 
-        loss_ma_steps = np.mean(q_loss_across_steps[n_step_idx], axis=0)
-        std_q_loss_ma_steps = np.std(q_loss_across_steps[n_step_idx], axis=0)# / 10
+        # loss_ma_steps = np.mean(q_loss_across_steps[n_step_idx], axis=0)
+        # std_q_loss_ma_steps = np.std(q_loss_across_steps[n_step_idx], axis=0)# / 10
+        #
+        # # runs_avg_q_loss_across_steps = np.mean(q_loss_across_steps[n_step_idx], axis=0)
+        # # loss_ma_steps = exp_moving_average(runs_avg_q_loss_across_steps, EMA_WINDOW_SIZE)
+        # # runs_std_q_loss_across_steps = np.std(q_loss_across_steps[n_step_idx], axis=0) / 10
+        # # std_q_loss_ma_steps = exp_moving_average(runs_std_q_loss_across_steps, EMA_WINDOW_SIZE)
+        # ax1.plot(
+        #     range(int(params.MAX_GLOBAL_STEPS / params.DATA_SAVE_STEP_PERIOD)),
+        #     loss_ma_steps,
+        #     label=label,
+        #     linewidth=2.0 if n_step == 'Omega' else 1.0,
+        #     linestyle='-' if n_step == 'Omega' else '--',
+        #     color=colors[n_step_idx]
+        # )
+        # ax1.fill_between(
+        #     range(int(params.MAX_GLOBAL_STEPS / params.DATA_SAVE_STEP_PERIOD)),
+        #     np.clip(loss_ma_steps - std_q_loss_ma_steps, 0, loss_ma_steps - std_q_loss_ma_steps),
+        #     loss_ma_steps + std_q_loss_ma_steps,
+        #     alpha=0.1,
+        #     color=colors[n_step_idx]
+        # )
+        # ax1.tick_params(labelsize=24)
 
-        # runs_avg_q_loss_across_steps = np.mean(q_loss_across_steps[n_step_idx], axis=0)
-        # loss_ma_steps = exp_moving_average(runs_avg_q_loss_across_steps, EMA_WINDOW_SIZE)
-        # runs_std_q_loss_across_steps = np.std(q_loss_across_steps[n_step_idx], axis=0) / 10
-        # std_q_loss_ma_steps = exp_moving_average(runs_std_q_loss_across_steps, EMA_WINDOW_SIZE)
-        ax1.plot(
-            range(int(params.MAX_GLOBAL_STEPS / params.DATA_SAVE_STEP_PERIOD)),
-            loss_ma_steps,
-            label=label,
-            linewidth=2.0 if n_step == 'Omega' else 1.0,
-            linestyle='-' if n_step == 'Omega' else '--',
-            color=colors[n_step_idx]
-        )
-        ax1.fill_between(
-            range(int(params.MAX_GLOBAL_STEPS / params.DATA_SAVE_STEP_PERIOD)),
-            np.clip(loss_ma_steps - std_q_loss_ma_steps, 0, loss_ma_steps - std_q_loss_ma_steps),
-            loss_ma_steps + std_q_loss_ma_steps,
-            alpha=0.1,
-            color=colors[n_step_idx]
-        )
-        ax1.tick_params(labelsize=24)
-
-    ax0.set_xlabel('steps x ' + r'$10^3$', fontsize=24)
-    ax0.set_ylabel('Episode Rewards', fontsize=24)     # Moving Average of Cumulative Rewards
-    ax0.legend(loc="best", fontsize=24)
+    ax0.set_xlabel('steps x ' + r'$10^3$', fontsize=32)
+    ax0.set_ylabel('Episode Rewards', fontsize=32)     # Moving Average of Cumulative Rewards
+    ax0.legend(loc="best", fontsize=32)
     ax0.grid()
 
-    ax1.set_xlabel('steps x ' + r'$10^3$', fontsize=24)
-    ax1.set_ylabel(r'TD'+'-Error', fontsize=24)
-    ax1.set_yscale('log')
-    ax1.legend(loc="best", fontsize=24)
-    ax1.grid()
+    # ax1.set_xlabel('steps x ' + r'$10^3$', fontsize=24)
+    # ax1.set_ylabel(r'TD'+'-Error', fontsize=24)
+    # ax1.set_yscale('log')
+    # ax1.legend(loc="best", fontsize=24)
+    # ax1.grid()
 
     # plt.suptitle('Environment: {0} \n Multi-Step DQN'.format(params.ENVIRONMENT_ID.value), fontsize=24)
     plt.tight_layout()
@@ -170,11 +171,11 @@ def main():
 
     for i, n_step in enumerate(EXPERIMENTS_N_STEPS):
         for j in range(MAX_RUNS):
-            with open('data/Pong/{0}_{1}-step_reward_{2}.pickle'.format(params.ENVIRONMENT_ID.value, n_step, j + 1), 'rb') as f:
+            with open('data/Freeway/{0}_{1}-step_reward_{2}.pickle'.format(params.ENVIRONMENT_ID.value, n_step, j + 1), 'rb') as f:
                 data = pickle.load(f)
                 reward_data[i][j] = data['episode_rewards_across_steps']
 
-            with open('data/Pong/{0}_{1}-step_q_loss_{2}.pickle'.format(params.ENVIRONMENT_ID.value, n_step, j + 1), 'rb') as f:
+            with open('data/Freeway/{0}_{1}-step_q_loss_{2}.pickle'.format(params.ENVIRONMENT_ID.value, n_step, j + 1), 'rb') as f:
                 data = pickle.load(f)
                 loss_data[i][j] = data['q_loss_across_steps']
 
