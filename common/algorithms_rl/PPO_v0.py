@@ -33,11 +33,12 @@ class PPO_v0:
         self.device = device
         self.verbose = verbose
 
-        self.model = rl_utils.get_rl_model(self.env, self.worker_id, self.params)
+        self.model = rl_utils.get_rl_model(self.env, self.worker_id, params=self.params)
 
         self.optimizer = rl_utils.get_optimizer(
             parameters=self.model.parameters(),
-            learning_rate=self.learning_rate
+            learning_rate=self.learning_rate,
+            params=params
         )
 
     def put_data(self, transition):

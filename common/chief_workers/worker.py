@@ -16,8 +16,10 @@ if PROJECT_HOME not in sys.path:
 
 from rl_main.federated_main.utils import exp_moving_average
 import rl_main.rl_utils as rl_utils
+from config.parameters import PARAMETERS as params
 
-env = rl_utils.get_environment(owner="worker")
+
+env = rl_utils.get_environment(owner="worker", params=params)
 
 
 class Worker:

@@ -22,8 +22,8 @@ if __name__ == "__main__":
     utils.make_output_folders()
     utils.ask_file_removal(device)
 
-    env = rl_utils.get_environment()
-    rl_model = rl_utils.get_rl_model(env)
+    env = rl_utils.get_environment(params=params)
+    rl_model = rl_utils.get_rl_model(env, params=params)
 
     utils.print_configuration(env, rl_model, params)
 

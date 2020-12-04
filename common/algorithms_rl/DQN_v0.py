@@ -51,15 +51,16 @@ class DQN_v0:
         self.params = params
         self.verbose = verbose
 
-        self.policy_model = rl_utils.get_rl_model(self.env).to(device)
-        self.target_model = rl_utils.get_rl_model(self.env).to(device)
+        self.policy_model = rl_utils.get_rl_model(self.env, params=params).to(device)
+        self.target_model = rl_utils.get_rl_model(self.env, params=params).to(device)
 
         self.target_model.load_state_dict(self.policy_model.state_dict())
         self.target_model.eval()
 
         self.optimizer = rl_utils.get_optimizer(
             parameters=self.policy_model.parameters(),
-            learning_rate=self.learning_rate
+            learning_rate=self.learning_rate,
+            params=params
         )
 
         self.memory = ReplayMemory(10000, device)

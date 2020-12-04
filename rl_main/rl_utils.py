@@ -4,8 +4,8 @@ import paho.mqtt.client as mqtt
 import torch
 from torch import optim
 
+from common.environments.matlab.matlabenv import MatlabRotaryInvertedPendulumEnv
 from config.names import EnvironmentName, DeepLearningModelName, RLAlgorithmName, OptimizerName
-from config.parameters import PARAMETERS as params
 
 from common.environments.gym.frozenlake import FrozenLake_v0
 from common.environments.gym.breakout import BreakoutDeterministic_v4
@@ -37,7 +37,8 @@ from common.algorithms_dp.DP_Value_Iteration import Value_Iteration
 
 device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 
-def get_environment(owner="chief"):
+
+def get_environment(owner="chief", params=None):
     if params.ENVIRONMENT_ID == EnvironmentName.QUANSER_SERVO_2:
         client = mqtt.Client(client_id="env_sub_2", transport="TCP")
         env = EnvironmentRIP(mqtt_client=client)
@@ -134,12 +135,20 @@ def get_environment(owner="chief"):
         env = InvertedPendulum_v2()
     elif params.ENVIRONMENT_ID == EnvironmentName.WALKER_2D_V2:
         env = Walker2D_v2()
+    elif params.ENVIRONMENT_ID == EnvironmentName.PENDULUM_MATLAB_V0:
+        assert params, "'params' should be provided: {0}".format(params)
+
+        env = MatlabRotaryInvertedPendulumEnv(
+            action_min=params.SWING_UP_SCALE_FACTOR * -1.0,
+            action_max=params.SWING_UP_SCALE_FACTOR,
+            env_reset=params.ENV_RESET
+        )
     else:
         env = None
     return env
 
 
-def get_rl_model(env, worker_id, params=params):
+def get_rl_model(env, worker_id, params):
     if params.DEEP_LEARNING_MODEL == DeepLearningModelName.ACTOR_CRITIC_MLP or params.DEEP_LEARNING_MODEL == DeepLearningModelName.ACTOR_CRITIC_CNN:
         model = ActorCriticModel(
             s_size=env.n_states,
@@ -156,7 +165,7 @@ def get_rl_model(env, worker_id, params=params):
     return model
 
 
-def get_rl_algorithm(env, worker_id=0, logger=False, params=params):
+def get_rl_algorithm(env, worker_id=0, logger=False, params=None):
     if params.RL_ALGORITHM == RLAlgorithmName.PPO_V0:
         rl_algorithm = PPO_v0(
             env=env,
@@ -207,7 +216,7 @@ def get_rl_algorithm(env, worker_id=0, logger=False, params=params):
     return rl_algorithm
 
 
-def get_optimizer(parameters, learning_rate):
+def get_optimizer(parameters, learning_rate, params):
     if params.OPTIMIZER == OptimizerName.ADAM:
         optimizer = optim.Adam(params=parameters, lr=learning_rate)
     elif params.OPTIMIZER == OptimizerName.NESTEROV:
