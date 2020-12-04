@@ -75,7 +75,7 @@ class ExperienceSourceSingleEnvDdpgTwo:
     def set_current_agent(self):
         status_value = self.env.current_status
 
-        if status_value == Status.SWING_UP.value:
+        if status_value == Status.SWING_UP:
             self.current_agent = self.agent_swing_up
             self.current_agent_type = AgentType.SWING_UP_AGENT
         else:
