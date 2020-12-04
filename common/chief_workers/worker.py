@@ -13,7 +13,7 @@ idx = os.getcwd().index("{0}link_rl".format(os.sep))
 PROJECT_HOME = os.getcwd()[:idx+1] + "link_rl{0}".format(os.sep)
 sys.path.append(PROJECT_HOME)
 
-from rl_main.utils import exp_moving_average
+from rl_main.federated_main.utils import exp_moving_average
 import rl_main.rl_utils as rl_utils
 
 env = rl_utils.get_environment(owner="worker")

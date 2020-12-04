@@ -12,7 +12,7 @@ sys.path.append(PROJECT_HOME)
 
 from config.parameters import PARAMETERS as params
 from rl_main import rl_utils
-import rl_main.utils as utils
+import rl_main.federated_main.utils as utils
 
 device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 

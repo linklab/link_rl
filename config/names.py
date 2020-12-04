@@ -49,7 +49,8 @@ class EnvironmentName(enum.Enum):
     KNAPSACK_V1 = "Knapsack-v1"  # binary (0-1) knapsack problem with 200 items.
     KNAPSACK_V2 = "Knapsack-v2"  # bounded knapsack problem with 200 items.
     KNAPSACK_V3 = "Knapsack-v3"  # stochastic, online knapsack with 200 items.
-
+    MATLAB_ROTARY_INVERTED_PENDULUM_ENV = "MatlabRotaryInvertedPendulumEnv"
+    REAL_DEVICE_DOUBLE_RIP = "RealDeviceDoubleRip"
 
 
 class DeepLearningModelName(enum.Enum):

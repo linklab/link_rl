@@ -2,12 +2,10 @@ import math
 import random
 from collections import namedtuple, deque
 
-import torch.optim as optim
 import torch.nn.functional as F
 import torch
 
 from rl_main import rl_utils
-from rl_main.utils import print_torch
 
 CUDA=True
 device = torch.device('cuda' if CUDA else 'cpu')
