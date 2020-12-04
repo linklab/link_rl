@@ -1,0 +1,74 @@
+from config.names import *
+from config.parameters_general import PARAMETERS_GENERAL
+
+
+class PARAMETERS_MATLAB_DOUBLE_RIP_DDPG(PARAMETERS_GENERAL):
+    # [GENERAL]
+    SEED = 1
+    MY_PLATFORM = OSName.MAC
+    PYTHON_PATH = "~/anaconda/envs/link_rl/bin/python"
+    ENV_RENDER = False
+
+    # [TRANSFER]
+    SOFT_TRANSFER = False
+    SOFT_TRANSFER_TAU = 0.3
+
+    # [TARGET_UPDATE]
+    SOFT_TARGET_UPDATE = False
+    SOFT_TARGET_UPDATE_TAU = 0.3
+
+    # [WORKER]
+    NUM_WORKERS = 4
+
+    # [OPTIMIZATION]
+    MAX_EPISODES = 10000
+    GAMMA = 0.98
+    #GAMMA = 1.0
+
+    # [MODE]
+    MODE_SYNCHRONIZATION = True
+    MODE_GRADIENTS_UPDATE = True      # Distributed
+    MODE_PARAMETERS_TRANSFER = True    # Transfer
+
+    # [TRAINING]
+    EPSILON_GREEDY_ACT = False
+    EPSILON_DECAY = True
+    EPSILON_INIT = 0.9
+    EPSILON_MIN = 0.05
+    EPSILON_DECAY_RATE = 1000 # Large value means low decaying
+    OPTIMIZER = OptimizerName.ADAM
+    GAE_LAMBDA = 0.99
+    LEARNING_RATE = 0.001
+
+    # [TRAJECTORY_SAMPLING]
+    TRAJECTORY_SAMPLING = True
+    TRAJECTORY_LIMIT_SIZE = 400
+    TRAJECTORY_BATCH_SIZE = 128
+
+    # [PPO]
+    PPO_K_EPOCH = 20
+    PPO_EPSILON_CLIP = 0.1
+    PPO_VALUE_LOSS_WEIGHT = 0.5
+    PPO_ENTROPY_WEIGHT = 0.01
+
+    # [DQN]
+    BATCH_SIZE = 128
+
+    # [1. ENVIRONMENTS]
+    #ENVIRONMENT_ID = EnvironmentName.BREAKOUT_DETERMINISTIC_V4
+    #ENVIRONMENT_ID = EnvironmentName.QUANSER_SERVO_2
+    #ENVIRONMENT_ID = EnvironmentName.PENDULUM_V0
+    #ENVIRONMENT_ID = EnvironmentName.DRONE_RACING_MAC
+    ENVIRONMENT_ID = EnvironmentName.CARTPOLE_V0
+    #ENVIRONMENT_ID = EnvironmentName.BLACKJACK_V0
+    #ENVIRONMENT_ID = EnvironmentName.FROZENLAKE_V0
+
+    # [2. DEEP_LEARNING_MODELS]
+    DEEP_LEARNING_MODEL = DeepLearningModelName.ACTOR_CRITIC_MLP
+    #DEEP_LEARNING_MODEL = DeepLearningModelName.ACTOR_CRITIC_CNN
+    #DEEP_LEARNING_MODEL = DeepLearningModelName.NO_MODEL
+
+    # [3. ALGORITHMS]
+    #RL_ALGORITHM = RLAlgorithmName.DQN_V0
+    RL_ALGORITHM = RLAlgorithmName.PPO_V0
+    #RL_ALGORITHM = RLAlgorithmName.Monte_Carlo_Control_V0
