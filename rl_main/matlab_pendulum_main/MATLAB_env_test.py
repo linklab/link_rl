@@ -1,12 +1,12 @@
 # https://github.com/openai/gym/blob/master/gym/envs/classic_control/pendulum.py
 # https://mspries.github.io/jimmy_pendulum.html
 #!/usr/bin/env python3
-import torch
 import os, sys
 
 idx = os.getcwd().index("link_rl")
 PROJECT_HOME = os.getcwd()[:idx] + "link_rl"
-sys.path.append(PROJECT_HOME)
+if PROJECT_HOME not in sys.path:
+    sys.path.append(PROJECT_HOME)
 
 from common.environments.matlab.matlabenv import MatlabRotaryInvertedPendulumEnv
 from config.parameters import PARAMETERS as params

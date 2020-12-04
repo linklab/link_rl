@@ -9,14 +9,17 @@ from collections import deque
 import numpy as np
 import torch
 
-idx = os.getcwd().index("{0}link_rl".format(os.sep))
-PROJECT_HOME = os.getcwd()[:idx+1] + "link_rl{0}".format(os.sep)
-sys.path.append(PROJECT_HOME)
+idx = os.getcwd().index("link_rl")
+PROJECT_HOME = os.getcwd()[:idx] + "link_rl"
+if PROJECT_HOME not in sys.path:
+    sys.path.append(PROJECT_HOME)
 
-from rl_main.utils import exp_moving_average
+from rl_main.federated_main.utils import exp_moving_average
 import rl_main.rl_utils as rl_utils
+from config.parameters import PARAMETERS as params
 
-env = rl_utils.get_environment(owner="worker")
+
+env = rl_utils.get_environment(owner="worker", params=params)
 
 
 class Worker:
@@ -26,15 +29,15 @@ class Worker:
 
         self.rl_algorithm = rl_utils.get_rl_algorithm(env=env, worker_id=worker_id, logger=logger, params=params)
 
-        self.score = 0
+        self.episode_reward = 0
 
-        self.global_max_ema_score = 0
+        self.global_max_ema_episode_reward = 0
         self.global_min_ema_loss = 1000000000
 
-        self.local_scores = []
+        self.local_episode_rewards = []
         self.local_losses = []
 
-        self.score_dequeue = deque(maxlen=env.WIN_AND_LEARN_FINISH_CONTINUOUS_EPISODES)
+        self.episode_reward_dequeue = deque(maxlen=env.WIN_AND_LEARN_FINISH_CONTINUOUS_EPISODES)
         self.loss_dequeue = deque(maxlen=env.WIN_AND_LEARN_FINISH_CONTINUOUS_EPISODES)
 
         self.episode_chief = -1
@@ -51,12 +54,12 @@ class Worker:
         self.rl_algorithm.transfer_process(parameters, self.params.SOFT_TRANSFER, self.params.SOFT_TRANSFER_TAU)
 
     def send_msg(self, topic, msg):
-        log_msg = "[SEND] TOPIC: {0}, PAYLOAD: 'episode': {1}, 'worker_id': {2} 'loss': {3}, 'score': {4} ".format(
+        log_msg = "[SEND] TOPIC: {0}, PAYLOAD: 'episode': {1}, 'worker_id': {2} 'loss': {3}, 'episode_reward': {4} ".format(
             topic,
             msg['episode'],
             msg['worker_id'],
             msg['loss'],
-            msg['score']
+            msg['episode_reward']
         )
         if self.params.MODE_PARAMETERS_TRANSFER and topic == self.params.MQTT_TOPIC_SUCCESS_DONE:
             log_msg += "'parameters_length': {0}".format(len(msg['parameters']))
@@ -76,32 +79,32 @@ class Worker:
 
     def start_train(self):
         for episode in range(self.params.MAX_EPISODES):
-            gradients, loss, score = self.rl_algorithm.on_episode(episode)
+            gradients, loss, episode_reward = self.rl_algorithm.on_episode(episode)
             self.local_losses.append(loss)
-            self.local_scores.append(score)
+            self.local_episode_rewards.append(episode_reward)
 
             self.loss_dequeue.append(loss)
-            self.score_dequeue.append(score)
+            self.episode_reward_dequeue.append(episode_reward)
 
-            mean_score_over_recent_100_episodes = np.mean(self.score_dequeue)
+            mean_episode_reward_over_recent_100_episodes = np.mean(self.episode_reward_dequeue)
             mean_loss_over_recent_100_episodes = np.mean(self.loss_dequeue)
 
             episode_msg = {
                 "worker_id": self.worker_id,
                 "episode": episode,
                 "loss": loss,
-                "score": score
+                "episode_reward": episode_reward
             }
 
             if self.params.MODEL_SAVE:
-                files = glob.glob(os.path.join(PROJECT_HOME, "model_save_files", "{0}_*".format(self.worker_id)))
+                files = glob.glob(os.path.join(PROJECT_HOME, "out", "model_save_files", "{0}_*".format(self.worker_id)))
                 for f in files:
                     os.remove(f)
 
                 torch.save(
                     self.rl_algorithm.model.state_dict(),
                     os.path.join(
-                        PROJECT_HOME, "model_save_files",
+                        PROJECT_HOME, "out", "model_save_files",
                         "{0}_{1}_{2}_{3}.{4}.pt".format(
                             self.worker_id,
                             self.params.ENVIRONMENT_ID.name,
@@ -112,11 +115,11 @@ class Worker:
                     )
                 )
 
-            if mean_score_over_recent_100_episodes >= env.WIN_AND_LEARN_FINISH_SCORE and episode > env.WIN_AND_LEARN_FINISH_CONTINUOUS_EPISODES:
-                log_msg = "******* Worker {0} - Solved in episode {1}: Mean score = {2}".format(
+            if mean_episode_reward_over_recent_100_episodes >= env.WIN_AND_LEARN_FINISH_SCORE and episode > env.WIN_AND_LEARN_FINISH_CONTINUOUS_EPISODES:
+                log_msg = "******* Worker {0} - Solved in episode {1}: Mean episode_reward = {2}".format(
                     self.worker_id,
                     episode,
-                    mean_score_over_recent_100_episodes
+                    mean_episode_reward_over_recent_100_episodes
                 )
                 self.logger.info(log_msg)
                 print(log_msg)
@@ -130,10 +133,10 @@ class Worker:
                 break
 
             elif episode == self.params.MAX_EPISODES - 1:
-                log_msg = "******* Worker {0} - Failed in episode {1}: Mean score = {2}".format(
+                log_msg = "******* Worker {0} - Failed in episode {1}: Mean Episode Reward = {2}".format(
                     self.worker_id,
                     episode,
-                    mean_score_over_recent_100_episodes
+                    mean_episode_reward_over_recent_100_episodes
                 )
                 self.logger.info(log_msg)
                 print(log_msg)
@@ -147,20 +150,20 @@ class Worker:
 
             else:
                 ema_loss = exp_moving_average(self.local_losses, self.params.EMA_WINDOW)[-1]
-                ema_score = exp_moving_average(self.local_scores, self.params.EMA_WINDOW)[-1]
+                ema_episode_reward = exp_moving_average(self.local_episode_rewards, self.params.EMA_WINDOW)[-1]
 
-                log_msg = "Worker {0}-Ep.{1:>2d}: Loss={2:6.4f} (EMA: {3:6.4f}, Mean: {4:6.4f})".format(
+                log_msg = "Worker {0}-Ep.{1:>2d}: Episode Reward={2:8.4f} (EMA: {3:>7.4f}, Mean: {4:>7.4f})".format(
                     self.worker_id,
                     episode,
+                    episode_reward,
+                    ema_episode_reward,
+                    mean_episode_reward_over_recent_100_episodes
+                )
+
+                log_msg += ", Loss={0:7.4f} (EMA: {1:7.4f}, Mean: {2:7.4f})".format(
                     loss,
                     ema_loss,
                     mean_loss_over_recent_100_episodes
-                )
-
-                log_msg += ", Score={0:6.4f} (EMA: {1:>6.4f}, Mean: {2:>6.4f})".format(
-                    score,
-                    ema_score,
-                    mean_score_over_recent_100_episodes
                 )
 
                 if self.params.EPSILON_GREEDY_ACT:

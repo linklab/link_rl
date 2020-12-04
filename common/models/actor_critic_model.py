@@ -10,7 +10,7 @@ from common.models.distributions import DistCategorical, DistDiagGaussian
 
 # from torch.distributions import Categorical
 from config.names import DeepLearningModelName, PROJECT_HOME
-from rl_main.utils import util_init
+from rl_main.federated_main.utils import util_init
 
 EPS_START = 0.9     # e-greedy threshold start value
 EPS_END = 0.05      # e-greedy threshold end value
@@ -77,7 +77,7 @@ class ActorCriticModel(nn.Module):
 
         self.steps_done = 0
 
-        files = glob.glob(os.path.join(PROJECT_HOME, "model_save_files", "{0}_{1}_{2}_*".format(
+        files = glob.glob(os.path.join(PROJECT_HOME, "out", "model_save_files", "{0}_{1}_{2}_*".format(
             self.worker_id,
             self.params.ENVIRONMENT_ID.name,
             self.params.DEEP_LEARNING_MODEL.value,
@@ -230,7 +230,7 @@ class ActorCriticModel(nn.Module):
 
         self.count += 1
         if self.count == num_workers:
-            self.weighted_scores = [score / self.sum for score in self.ema_scores]
+            self.weighted_scores = [episode_reward / self.sum for episode_reward in self.ema_scores]
             self.count = 0
             self.sum = 0
             self.id_list = []
@@ -326,7 +326,7 @@ class CNNBase(nn.Module):
 
         self.continuous = continuous
 
-        from rl_main.utils import get_conv2d_size
+        from rl_main.federated_main.utils import get_conv2d_size
         h, w = get_conv2d_size(h=input_height, w=input_width, kernel_size=3, padding=0, stride=1)
         print(h, w)
         h, w = get_conv2d_size(h=h, w=w, kernel_size=3, padding=1, stride=1)

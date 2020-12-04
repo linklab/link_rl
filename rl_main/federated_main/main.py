@@ -6,13 +6,14 @@ import torch
 
 os.environ['KMP_DUPLICATE_LIB_OK']='True'
 
-idx = os.getcwd().index("{0}link_rl".format(os.sep))
-PROJECT_HOME = os.getcwd()[:idx+1] + "link_rl{0}".format(os.sep)
-sys.path.append(PROJECT_HOME)
+idx = os.getcwd().index("link_rl")
+PROJECT_HOME = os.getcwd()[:idx] + "link_rl"
+if PROJECT_HOME not in sys.path:
+    sys.path.append(PROJECT_HOME)
 
 from config.parameters import PARAMETERS as params
 from rl_main import rl_utils
-import rl_main.utils as utils
+import rl_main.federated_main.utils as utils
 
 device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 
@@ -26,11 +27,12 @@ if __name__ == "__main__":
         torch.backends.cudnn.benchmark = False
         torch.backends.cudnn.deterministic = True
 
+    utils.check_mqtt_server()
     utils.make_output_folders()
     utils.ask_file_removal(device)
 
-    env = rl_utils.get_environment()
-    rl_model = rl_utils.get_rl_model(env, -1, params)
+    env = rl_utils.get_environment(params=params)
+    rl_model = rl_utils.get_rl_model(env, -1, params=params)
 
     utils.print_configuration(env, rl_model, params)
 

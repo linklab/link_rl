@@ -232,7 +232,7 @@ class MatlabRotaryInvertedPendulumEnv(gym.Env):
 
         done_conditions = [
             self.episode_steps >= 500,
-            #self.too_much_rotate
+            self.too_much_rotate
             # self.num_continuous_positive_torque >= 30,
             # self.num_continuous_negative_torque >= 30
         ]

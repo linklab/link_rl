@@ -8,7 +8,7 @@ class PARAMETERS_FAST_RL_PENDULUM_MATLAB_DDPG(PARAMETERS_GENERAL):
 
     ENV_RESET = True
 
-    ENVIRONMENT_ID = "MatlabRotaryInvertedPendulumEnv"
+    ENVIRONMENT_ID = EnvironmentName.PENDULUM_MATLAB_V0
     RL_ALGORITHM = RLAlgorithmName.DDPG_FAST_V0
     DEEP_LEARNING_MODEL = DeepLearningModelName.DDPG_MLP
     #DEEP_LEARNING_MODEL = DeepLearningModelName.DDPG_GRU

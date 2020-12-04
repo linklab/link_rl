@@ -13,7 +13,8 @@ from config.names import DeepLearningModelName
 
 idx = os.getcwd().index("link_rl")
 PROJECT_HOME = os.getcwd()[:idx] + "link_rl"
-sys.path.append(PROJECT_HOME)
+if PROJECT_HOME not in sys.path:
+    sys.path.append(PROJECT_HOME)
 
 from common.common_utils import make_gym_env, smooth
 from common.fast_rl.policy_based_model import unpack_batch_for_ddpg
@@ -185,7 +186,7 @@ def main():
     if params.PER:
         buffer = experience.PrioReplayBuffer(
             experience_source=None, buffer_size=params.REPLAY_BUFFER_SIZE, n_step=params.N_STEP,
-            BETA_START=0.4, BETA_FRAMES=params.MAX_GLOBAL_STEPS
+            beta_start=0.4, beta_frames=params.MAX_GLOBAL_STEPS
         )
     else:
         buffer = experience.ExperienceReplayBuffer(experience_source=None, buffer_size=params.REPLAY_BUFFER_SIZE)

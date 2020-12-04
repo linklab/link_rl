@@ -11,17 +11,16 @@ import os, sys
 import numpy as np
 import copy
 
+idx = os.getcwd().index("link_rl")
+PROJECT_HOME = os.getcwd()[:idx] + "link_rl"
+if PROJECT_HOME not in sys.path:
+    sys.path.append(PROJECT_HOME)
+
 from common.logger import get_logger
 from config.names import DeepLearningModelName
 from rl_main.matlab_pendulum_main.experience_pendulum_ddpg_two import ExperienceSourceSingleEnvFirstLastDdpgTwo, \
     RewardTrackerMatlabPendulum
-
-idx = os.getcwd().index("link_rl")
-PROJECT_HOME = os.getcwd()[:idx] + "link_rl"
-sys.path.append(PROJECT_HOME)
-
 from common.environments.matlab.matlabenv import MatlabRotaryInvertedPendulumEnv, Status
-
 from common.common_utils import smooth
 from common.fast_rl.policy_based_model import unpack_batch_for_ddpg
 from common.fast_rl.rl_agent import float32_preprocessor
