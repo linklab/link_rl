@@ -34,7 +34,7 @@ class ActorCriticModel(nn.Module):
             self.input_height = s_size[1]
             self.input_width = s_size[2]
 
-            self.base = CNNBase(
+            self.base = ActorCriticCNNBase(
                 input_channels=self.input_channels,
                 input_height=self.input_height,
                 input_width=self.input_width,
@@ -42,7 +42,7 @@ class ActorCriticModel(nn.Module):
                 params=self.params
             )
         elif self.params.DEEP_LEARNING_MODEL == DeepLearningModelName.ACTOR_CRITIC_MLP:
-            self.base = MLPBase(
+            self.base = ActorCriticMLPBase(
                 num_inputs=s_size,
                 continuous=continuous,
                 params=self.params
@@ -273,9 +273,9 @@ class ActorCriticModel(nn.Module):
                 param.data = parameters["actor_linear"][name]
 
 
-class MLPBase(nn.Module):
+class ActorCriticMLPBase(nn.Module):
     def __init__(self, num_inputs, continuous, params):
-        super(MLPBase, self).__init__()
+        super(ActorCriticMLPBase, self).__init__()
 
         self.hidden_1_size = params.HIDDEN_1_SIZE
         self.hidden_2_size = params.HIDDEN_2_SIZE
@@ -303,7 +303,7 @@ class MLPBase(nn.Module):
 
         self.critic_linear = init_(nn.Linear(self.hidden_3_size, 1))
 
-        self.layers_info = {'actor':self.actor, 'critic':self.critic, 'critic_linear':self.critic_linear}
+        self.layers_info = {'actor': self.actor, 'critic': self.critic, 'critic_linear': self.critic_linear}
 
         self.train()
 
@@ -318,9 +318,9 @@ class MLPBase(nn.Module):
         return self.hidden_3_size
 
 
-class CNNBase(nn.Module):
+class ActorCriticCNNBase(nn.Module):
     def __init__(self, input_channels, input_height, input_width, continuous, params):
-        super(CNNBase, self).__init__()
+        super(ActorCriticCNNBase, self).__init__()
         self.cnn_critic_hidden_1_size = params.CNN_CRITIC_HIDDEN_1_SIZE
         self.cnn_critic_hidden_2_size = params.CNN_CRITIC_HIDDEN_2_SIZE
 
@@ -394,5 +394,5 @@ class CNNBase(nn.Module):
 
 
 if __name__ == "__main__":
-    cnnBase = CNNBase(input_channels=2, input_height=5, input_width=5, continuous=False)
+    cnnBase = ActorCriticCNNBase(input_channels=2, input_height=5, input_width=5, continuous=False)
     print(cnnBase)

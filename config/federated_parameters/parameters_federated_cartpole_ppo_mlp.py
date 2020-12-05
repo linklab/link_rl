@@ -2,7 +2,7 @@ from config.names import *
 from config.parameters_general import PARAMETERS_GENERAL
 
 
-class PARAMETERS_CARTPOLE_PPO_MLP(PARAMETERS_GENERAL):
+class PARAMETERS_FEDERATED_CARTPOLE_PPO_MLP(PARAMETERS_GENERAL):
     # [GENERAL]
     SEED = 1
     MY_PLATFORM = OSName.MAC

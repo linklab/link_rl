@@ -2,7 +2,7 @@ from config.names import *
 from config.parameters_general import PARAMETERS_GENERAL
 
 
-class PARAMETERS_DP(PARAMETERS_GENERAL):
+class PARAMETERS_FEDERATED_DP(PARAMETERS_GENERAL):
     # [GENERAL]
     SEED = 1
     MY_PLATFORM = OSName.MAC
