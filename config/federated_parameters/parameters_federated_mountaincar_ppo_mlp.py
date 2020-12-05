@@ -1,4 +1,4 @@
-from config.federated_parameters.parameters_cartpole_ppo_mlp import PARAMETERS_CARTPOLE_PPO_MLP
+from config.federated_parameters.parameters_federated_cartpole_ppo_mlp import PARAMETERS_CARTPOLE_PPO_MLP
 from config.names import *
 
 
