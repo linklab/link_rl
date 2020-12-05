@@ -21,6 +21,7 @@ class MatlabRotaryInvertedPendulumEnv(gym.Env):
         self.episode_steps = 0
         self.total_steps = 0
         self.env_reset = env_reset
+        self.env_reset_state = True
 
         self.pendulum_position = 0
         self.pendulum_velocity = 0
@@ -66,6 +67,8 @@ class MatlabRotaryInvertedPendulumEnv(gym.Env):
         self.episode_pendulum_velocity_reward_list = []
         self.episode_action_reward_list = []
 
+        self.update_current_state(adjusted_radian=0.0)
+
     def pause(self):
         self.plant.conncectpause()
 
@@ -78,21 +81,21 @@ class MatlabRotaryInvertedPendulumEnv(gym.Env):
     def reset(self):
         self.episode_steps = 0
 
-        self.count_swing_up_states = 0
-        self.count_balancing_states = 0
-        self.count_continuous_swing_up_states = 0
-        self.count_continuous_balancing_states = 0
-
         self.episode_position_reward_list.clear()
         self.episode_pendulum_velocity_reward_list.clear()
         self.episode_action_reward_list.clear()
 
         if self.env_reset:
             self.plant.connectStart()
+            self.env_reset_state = True
+            self.current_status = None
+            self.count_swing_up_states = 0
+            self.count_balancing_states = 0
+            self.count_continuous_swing_up_states = 0
+            self.count_continuous_balancing_states = 0
+            self.update_current_state(adjusted_radian=0.0)
 
         self.pendulum_position, self.motor_position, self.pendulum_velocity, self.motor_velocity, self.simulation_time = self.plant.getHistory()
-
-        self.update_current_state(adjusted_radian=0.0)
 
         state = (
             math.cos(self.pendulum_position),
@@ -143,8 +146,8 @@ class MatlabRotaryInvertedPendulumEnv(gym.Env):
 
         if self.current_status is None:  # RESET
             self.current_status = Status.SWING_UP
-            self.count_swing_up_states += 1
-            self.count_continuous_swing_up_states += 1
+            # self.count_swing_up_states += 1
+            # self.count_continuous_swing_up_states += 1
         elif self.current_status == Status.SWING_UP:
             if self.is_upright:  # SWING_UP --> BALANCING
                 self.current_status = Status.BALANCING
@@ -184,7 +187,7 @@ class MatlabRotaryInvertedPendulumEnv(gym.Env):
             # self.episode_steps >= 500,
             self.count_continuous_swing_up_states >= 1000,
             self.too_much_rotate,
-            self.episode_steps > 1 and self.count_continuous_swing_up_states == 1,
+            not self.env_reset_state and self.count_continuous_swing_up_states == 1,
             self.count_continuous_balancing_states == 1
         ]
 
@@ -215,6 +218,8 @@ class MatlabRotaryInvertedPendulumEnv(gym.Env):
             reward = self.get_reward(adjusted_radian)
 
             info = {}
+
+        self.env_reset_state = False
 
         state = (
             math.cos(self.pendulum_position),
