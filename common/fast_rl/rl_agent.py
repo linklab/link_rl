@@ -165,7 +165,7 @@ class TargetNet:
         state = self.model.state_dict()
         tgt_state = self.target_model.state_dict()
         for k, v in state.items():
-            tgt_state[k] = tgt_state[k] * alpha + (1 - alpha) * v
+            tgt_state[k] = tgt_state[k] * alpha + (1.0 - alpha) * v
         self.target_model.load_state_dict(tgt_state)
 
 

@@ -13,7 +13,6 @@ from rl_main import rl_utils
 from common.chief_workers.chief import Chief
 from config.parameters import PARAMETERS as params
 
-
 import paho.mqtt.client as mqtt
 from common.logger import get_logger
 import numpy as np

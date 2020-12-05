@@ -10,8 +10,9 @@ PROJECT_HOME = os.getcwd()[:idx] + "link_rl"
 if PROJECT_HOME not in sys.path:
     sys.path.append(PROJECT_HOME)
 
+from common.chief_workers.worker_fast_rl import WorkerFastRL
+from config.names import RLAlgorithmName
 from config.parameters import PARAMETERS as params
-
 from common.logger import get_logger
 from common.chief_workers.worker import Worker
 
@@ -96,7 +97,11 @@ if __name__ == "__main__":
     stderr = sys.stderr
     sys.stderr = sys.stdout
     try:
-        worker = Worker(logger, worker_id, worker_mqtt_client, params)
+        if params.RL_ALGORITHM in [RLAlgorithmName.DDPG_FAST_V0]:
+            worker = WorkerFastRL(logger, worker_id, worker_mqtt_client, params)
+        else:
+            worker = Worker(logger, worker_id, worker_mqtt_client, params)
+
         worker.start_train()
 
         time.sleep(1)

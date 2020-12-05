@@ -1,0 +1,55 @@
+from config.names import *
+from config.parameters_general import PARAMETERS_GENERAL
+
+
+class PARAMETERS_FEDERATED_OPENAI_PENDULUM_DDPG(PARAMETERS_GENERAL):
+    # [GENERAL]
+    SEED = 1
+    MY_PLATFORM = OSName.MAC
+    PYTHON_PATH = "~/anaconda/envs/rl/bin/python"
+    ENV_RENDER = False
+
+    # [TRANSFER]
+    SOFT_TRANSFER = False
+    SOFT_TRANSFER_TAU = 0.3
+
+    # [TARGET_UPDATE]
+    SOFT_TARGET_UPDATE = False
+    SOFT_TARGET_UPDATE_TAU = 0.3
+
+    # [WORKER]
+    NUM_WORKERS = 1
+
+    # [OPTIMIZATION]
+    MAX_EPISODES = 10000
+    GAMMA = 0.98
+    #GAMMA = 1.0
+
+    # [MODE]
+    MODE_SYNCHRONIZATION = True
+    MODE_GRADIENTS_UPDATE = False      # Distributed
+    MODE_PARAMETERS_TRANSFER = False    # Transfer
+
+    # [PENDULUM]
+    ACTION_SCALE = 2.0
+
+    # [1. ENVIRONMENTS]
+    ENVIRONMENT_ID = EnvironmentName.PENDULUM_V0
+
+    # [2. DEEP_LEARNING_MODELS]
+    DEEP_LEARNING_MODEL = DeepLearningModelName.DDPG_ACTOR_CRITIC_MLP
+
+    # [3. ALGORITHMS]
+    RL_ALGORITHM = RLAlgorithmName.DDPG_FAST_V0
+
+    STOP_MEAN_EPISODE_REWARD = -300
+    AVG_EPISODE_SIZE_FOR_STAT = 100
+    MIN_REPLAY_SIZE_FOR_TRAIN = 500
+    REPLAY_BUFFER_SIZE = 500000
+
+    EPSILON_INIT = 0.9
+    EPSILON_MIN = 0.001
+    EPSILON_MIN_STEP = 100000
+
+    BATCH_SIZE = 128
+    PER = False

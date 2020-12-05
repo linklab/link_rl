@@ -48,6 +48,7 @@ def get_pool2d_size(h, w, kernel_size, stride):
 
 def print_configuration(env, rl_model, params):
     print("\n*** GENERAL ***")
+    print(" NUM WORKERS: {0}".format(params.NUM_WORKERS))
     print(" MODEL SAVE: {0}".format(params.MODEL_SAVE))
     print(" PLATFORM: {0}".format(params.MY_PLATFORM))
     print(" EMA WINDOW: {0}".format(params.EMA_WINDOW))

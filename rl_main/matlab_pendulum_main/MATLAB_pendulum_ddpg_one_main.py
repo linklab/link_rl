@@ -82,7 +82,7 @@ def play_func(exp_queue, actor_net, critic_net):
         name="One_AgentDDPG"
     )
 
-    if params.DEEP_LEARNING_MODEL in [DeepLearningModelName.DDPG_GRU, DeepLearningModelName.DDPG_GRU_ATTENTION]:
+    if params.DEEP_LEARNING_MODEL in [DeepLearningModelName.DDPG_ACTOR_CRITIC_GRU, DeepLearningModelName.DDPG_ACTOR_CRITIC_GRU_ATTENTION]:
         step_length = params.RNN_STEP_LENGTH
     else:
         step_length = -1
@@ -149,7 +149,7 @@ def play_func(exp_queue, actor_net, critic_net):
 def main():
     mp.set_start_method('spawn')
 
-    if params.DEEP_LEARNING_MODEL is DeepLearningModelName.DDPG_MLP:
+    if params.DEEP_LEARNING_MODEL is DeepLearningModelName.DDPG_ACTOR_CRITIC_MLP:
         actor_net = policy_based_model.DDPGActor(
             obs_size=OBS_SIZE,
             hidden_size_1=512, hidden_size_2=512,
@@ -162,7 +162,7 @@ def main():
             hidden_size_1=512, hidden_size_2=512,
             n_actions=1
         ).to(device)
-    elif params.DEEP_LEARNING_MODEL is DeepLearningModelName.DDPG_GRU:
+    elif params.DEEP_LEARNING_MODEL is DeepLearningModelName.DDPG_ACTOR_CRITIC_GRU:
         actor_net = policy_based_model.DDPGGruActor(
             obs_size=OBS_SIZE,
             hidden_size_1=256, hidden_size_2=256,

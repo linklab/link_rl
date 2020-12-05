@@ -4,7 +4,9 @@ import paho.mqtt.client as mqtt
 import torch
 from torch import optim
 
+from common.algorithms_rl.DDPG_v0 import DDPG_v0
 from common.environments.matlab.matlabenv import MatlabRotaryInvertedPendulumEnv
+from common.models.ddpg_actor_critic_model import DDPGActorCriticModel
 from config.names import EnvironmentName, DeepLearningModelName, RLAlgorithmName, OptimizerName
 
 from common.environments.gym.frozenlake import FrozenLake_v0
@@ -149,7 +151,15 @@ def get_environment(owner="chief", params=None):
 
 
 def get_rl_model(env, worker_id, params):
-    if params.DEEP_LEARNING_MODEL == DeepLearningModelName.ACTOR_CRITIC_MLP or params.DEEP_LEARNING_MODEL == DeepLearningModelName.ACTOR_CRITIC_CNN:
+    if params.DEEP_LEARNING_MODEL == DeepLearningModelName.DDPG_ACTOR_CRITIC_MLP:
+        model = DDPGActorCriticModel(
+            s_size=env.n_states,
+            a_size=env.n_actions,
+            worker_id=worker_id,
+            params=params,
+            device=device
+        ).to(device)
+    elif params.DEEP_LEARNING_MODEL == DeepLearningModelName.ACTOR_CRITIC_MLP or params.DEEP_LEARNING_MODEL == DeepLearningModelName.ACTOR_CRITIC_CNN:
         model = ActorCriticModel(
             s_size=env.n_states,
             a_size=env.n_actions,
@@ -166,7 +176,16 @@ def get_rl_model(env, worker_id, params):
 
 
 def get_rl_algorithm(env, worker_id=0, logger=False, params=None):
-    if params.RL_ALGORITHM == RLAlgorithmName.PPO_V0:
+    if params.RL_ALGORITHM == RLAlgorithmName.DDPG_FAST_V0:
+        rl_algorithm = DDPG_v0(
+            env=env,
+            worker_id=worker_id,
+            logger=logger,
+            params=params,
+            device=device,
+            verbose=params.VERBOSE
+        )
+    elif params.RL_ALGORITHM == RLAlgorithmName.PPO_V0:
         rl_algorithm = PPO_v0(
             env=env,
             worker_id=worker_id,

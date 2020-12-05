@@ -1,0 +1,284 @@
+# -*- coding:utf-8 -*-
+import glob
+import os
+import pickle
+import sys
+import time
+import zlib
+from collections import deque
+import numpy as np
+import torch
+import torch.multiprocessing as mp
+
+from common.fast_rl.common import utils
+from common.fast_rl.rl_agent import float32_preprocessor
+
+idx = os.getcwd().index("link_rl")
+PROJECT_HOME = os.getcwd()[:idx] + "link_rl"
+if PROJECT_HOME not in sys.path:
+    sys.path.append(PROJECT_HOME)
+
+from common.fast_rl import actions, rl_agent, experience
+from config.names import RLAlgorithmName
+from rl_main.federated_main.utils import exp_moving_average
+import rl_main.rl_utils as rl_utils
+from config.parameters import PARAMETERS as params
+
+
+class WorkerFastRL:
+    def __init__(self, logger, worker_id, worker_mqtt_client, params):
+        self.worker_id = worker_id
+        self.worker_mqtt_client = worker_mqtt_client
+
+        self.env = rl_utils.get_environment(owner="worker", params=params)
+        print("env:", params.ENVIRONMENT_ID)
+        print("observation_space:", self.env.observation_space)
+        print("action_space:", self.env.action_space)
+
+        self.rl_algorithm = rl_utils.get_rl_algorithm(env=self.env, worker_id=worker_id, logger=logger, params=params)
+
+        self.episode_reward = 0
+
+        self.global_max_ema_episode_reward = 0
+        self.global_min_ema_loss = 1000000000
+
+        self.local_episode_rewards = []
+        self.local_losses = []
+
+        self.episode_reward_dequeue = deque(maxlen=self.env.WIN_AND_LEARN_FINISH_CONTINUOUS_EPISODES)
+        self.loss_dequeue = deque(maxlen=self.env.WIN_AND_LEARN_FINISH_CONTINUOUS_EPISODES)
+
+        self.episode_chief = -1
+
+        self.is_success_or_fail_done = False
+        self.logger = logger
+        self.params = params
+
+    def update_process(self, avg_gradients):
+        self.rl_algorithm.model.set_gradients_to_current_parameters(avg_gradients)
+        self.rl_algorithm.optimizer.step()
+
+    def transfer_process(self, parameters):
+        self.rl_algorithm.transfer_process(parameters, self.params.SOFT_TRANSFER, self.params.SOFT_TRANSFER_TAU)
+
+    def send_msg(self, topic, msg):
+        log_msg = "[SEND] TOPIC: {0}, PAYLOAD: 'episode': {1}, 'worker_id': {2} 'loss': {3}, 'episode_reward': {4} ".format(
+            topic,
+            msg['episode'],
+            msg['worker_id'],
+            msg['loss'],
+            msg['episode_reward']
+        )
+        if self.params.MODE_PARAMETERS_TRANSFER and topic == self.params.MQTT_TOPIC_SUCCESS_DONE:
+            log_msg += "'parameters_length': {0}".format(len(msg['parameters']))
+        elif self.params.MODE_GRADIENTS_UPDATE and topic == self.params.MQTT_TOPIC_EPISODE_DETAIL:
+            log_msg += "'gradients_length': {0}".format(len(msg['gradients']))
+        elif topic == self.params.MQTT_TOPIC_FAIL_DONE:
+            pass
+        else:
+            pass
+
+        self.logger.info(log_msg)
+
+        msg = pickle.dumps(msg, protocol=-1)
+        msg = zlib.compress(msg)
+
+        self.worker_mqtt_client.publish(topic=topic, payload=msg, qos=0, retain=False)
+
+    def start_train(self):
+        mp.set_start_method('spawn')
+
+        exp_queue = mp.Queue(maxsize=params.TRAIN_STEP_FREQ * 2)
+        play_proc = mp.Process(
+            target=play_func, args=(exp_queue, self.env, self.rl_algorithm.model.base, self.params))
+        play_proc.start()
+
+        time.sleep(0.5)
+
+        step_idx = 0
+        episode = 0
+        while play_proc.is_alive():
+            step_idx += params.N_STEP
+            exp = None
+            for _ in range(params.TRAIN_STEP_FREQ):
+                exp = exp_queue.get()
+                if exp is None:
+                    play_proc.join()
+                    break
+                self.rl_algorithm.buffer._add(exp)
+
+            if len(self.rl_algorithm.buffer) < params.MIN_REPLAY_SIZE_FOR_TRAIN:
+                continue
+
+            if exp is not None and exp.done:
+                gradients, loss = self.rl_algorithm.train_net()
+                if self.env.last_episode_reward:
+                    episode += 1
+                    episode_reward = self.env.last_episode_reward
+                    print(exp.done, self.env.last_episode_reward)
+
+                    self.local_losses.append(loss)
+                    self.local_episode_rewards.append(episode_reward)
+
+                    self.loss_dequeue.append(loss)
+                    self.episode_reward_dequeue.append(episode_reward)
+
+                    mean_episode_reward_over_recent_100_episodes = np.mean(self.episode_reward_dequeue)
+                    mean_loss_over_recent_100_episodes = np.mean(self.loss_dequeue)
+
+                    episode_msg = {
+                        "worker_id": self.worker_id,
+                        "episode": episode,
+                        "loss": loss,
+                        "episode_reward": episode_reward
+                    }
+
+                    if mean_episode_reward_over_recent_100_episodes >= self.env.WIN_AND_LEARN_FINISH_SCORE and episode > env.WIN_AND_LEARN_FINISH_CONTINUOUS_EPISODES:
+                        log_msg = "******* Worker {0} - Solved in episode {1}: Mean episode_reward = {2}".format(
+                            self.worker_id,
+                            episode,
+                            mean_episode_reward_over_recent_100_episodes
+                        )
+                        self.logger.info(log_msg)
+                        print(log_msg)
+
+                        if self.params.MODE_PARAMETERS_TRANSFER:
+                            parameters = self.rl_algorithm.get_parameters()
+                            episode_msg["parameters"] = parameters
+
+                        self.send_msg(self.params.MQTT_TOPIC_SUCCESS_DONE, episode_msg)
+                        self.is_success_or_fail_done = True
+                        break
+
+                    elif episode == self.params.MAX_EPISODES - 1:
+                        log_msg = "******* Worker {0} - Failed in episode {1}: Mean Episode Reward = {2}".format(
+                            self.worker_id,
+                            episode,
+                            mean_episode_reward_over_recent_100_episodes
+                        )
+                        self.logger.info(log_msg)
+                        print(log_msg)
+
+                        if self.params.MODE_GRADIENTS_UPDATE:
+                            episode_msg["gradients"] = gradients
+
+                        self.send_msg(self.params.MQTT_TOPIC_FAIL_DONE, episode_msg)
+                        self.is_success_or_fail_done = True
+                        break
+
+                    else:
+                        ema_loss = exp_moving_average(self.local_losses, self.params.EMA_WINDOW)[-1]
+                        ema_episode_reward = exp_moving_average(self.local_episode_rewards, self.params.EMA_WINDOW)[-1]
+
+                        log_msg = "Worker {0}-Ep.{1:>2d}: Episode Reward={2:8.4f} (EMA: {3:>7.4f}, Mean: {4:>7.4f})".format(
+                            self.worker_id,
+                            episode,
+                            episode_reward,
+                            ema_episode_reward,
+                            mean_episode_reward_over_recent_100_episodes
+                        )
+
+                        log_msg += ", Loss={0:7.4f} (EMA: {1:7.4f}, Mean: {2:7.4f})".format(
+                            loss,
+                            ema_loss,
+                            mean_loss_over_recent_100_episodes
+                        )
+
+                        if self.params.EPSILON_GREEDY_ACT:
+                            log_msg += ", Epsilon: {0:5.2f}".format(
+                                self.rl_algorithm.epsilon
+                            )
+
+                        self.logger.info(log_msg)
+                        if self.params.VERBOSE: print(log_msg)
+
+                        if self.params.MODE_GRADIENTS_UPDATE:
+                            episode_msg["gradients"] = gradients
+
+                        self.send_msg(self.params.MQTT_TOPIC_EPISODE_DETAIL, episode_msg)
+
+                    while True:
+                        if episode == self.episode_chief:
+                            break
+                        time.sleep(0.01)
+
+
+def play_func(exp_queue, env, net, params):
+    if torch.cuda.is_available():
+        device = torch.device("cuda" if params.CUDA else "cpu")
+    else:
+        device = torch.device("cpu")
+
+    if params.RL_ALGORITHM is RLAlgorithmName.DDPG_FAST_V0:
+        action_min = env.action_space.low[0]
+        action_max = env.action_space.high[0]
+
+        action_selector = actions.DDPGActionSelector(epsilon=params.EPSILON_INIT, ou_enabled=True, scale_factor=2.0)
+
+        epsilon_tracker = actions.EpsilonTracker(
+            action_selector=action_selector,
+            eps_start=params.EPSILON_INIT,
+            eps_final=params.EPSILON_MIN,
+            eps_frames=params.EPSILON_MIN_STEP
+        )
+
+        agent = rl_agent.AgentDDPG(
+            net, n_actions=1, action_selector=action_selector,
+            action_min=action_min, action_max=action_max, device=device, preprocessor=float32_preprocessor
+        )
+
+        experience_source = experience.ExperienceSourceSingleEnvFirstLast(
+            env, agent, gamma=params.GAMMA, steps_count=params.N_STEP, step_length=-1
+        )
+
+        exp_source_iter = iter(experience_source)
+
+        step_idx = 0
+
+        best_mean_episode_reward = 0.0
+
+        with utils.RewardTracker(
+                params=params,
+                stop_mean_episode_reward=params.STOP_MEAN_EPISODE_REWARD,
+                average_size_for_stats=params.AVG_EPISODE_SIZE_FOR_STAT,
+                frame=True, draw_viz=params.DRAW_VIZ, stat=None) as reward_tracker:
+            while step_idx < params.MAX_GLOBAL_STEPS:
+                # 1 스텝 진행하고 exp를 exp_queue에 넣음
+                step_idx += 1
+                exp = next(exp_source_iter)
+                epsilon_tracker.udpate(step_idx)
+
+                exp_queue.put(exp)
+
+                episode_rewards = experience_source.pop_episode_reward_lst()
+                if episode_rewards:
+                    current_episode_reward = episode_rewards[0]
+
+                    env.last_episode_reward = current_episode_reward
+
+                    solved, mean_episode_reward = reward_tracker.set_episode_reward(
+                        current_episode_reward, step_idx, epsilon=action_selector.epsilon
+                    )
+
+                    model_save_condition = [
+                        reward_tracker.mean_episode_reward > best_mean_episode_reward,
+                        step_idx > params.EPSILON_MIN_STEP
+                    ]
+
+                    if reward_tracker.mean_episode_reward > best_mean_episode_reward:
+                        best_mean_episode_reward = reward_tracker.mean_episode_reward
+
+                    if all(model_save_condition) or solved:
+                        rl_agent.save_model(
+                            glob.glob(os.path.join(PROJECT_HOME, "out", "model_save_files")),
+                            params.ENVIRONMENT_ID.value,
+                            net.__name__,
+                            net,
+                            step_idx,
+                            mean_episode_reward
+                        )
+                        if solved:
+                            break
+
+        exp_queue.put(None)
+

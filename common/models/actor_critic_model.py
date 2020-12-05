@@ -9,7 +9,7 @@ import os
 from common.models.distributions import DistCategorical, DistDiagGaussian
 
 # from torch.distributions import Categorical
-from config.names import DeepLearningModelName, PROJECT_HOME
+from config.names import DeepLearningModelName, PROJECT_HOME, RLAlgorithmName
 from rl_main.federated_main.utils import util_init
 
 EPS_START = 0.9     # e-greedy threshold start value
@@ -52,17 +52,19 @@ class ActorCriticModel(nn.Module):
             self.hidden_1_size = self.base.hidden_1_size
             self.hidden_2_size = self.base.hidden_2_size
             self.hidden_3_size = self.base.hidden_3_size
-        else:
             raise NotImplementedError
 
         self.continuous = continuous
 
         self.a_size = a_size
 
-        if self.continuous:
-            self.dist = DistDiagGaussian(self.base.output_size, self.a_size, device)
+        if self.params.RL_ALGORITHM == RLAlgorithmName.DDPG_FAST_V0:
+            self.dist = nn.Linear(self.hidden_3_size, a_size)
         else:
-            self.dist = DistCategorical(self.base.output_size, self.a_size)
+            if self.continuous:
+                self.dist = DistDiagGaussian(self.base.output_size, self.a_size, device)
+            else:
+                self.dist = DistCategorical(self.base.output_size, self.a_size)
 
         self.avg_gradients = {}
         self.weighted_scores = [0, 0, 0, 0]
@@ -103,19 +105,23 @@ class ActorCriticModel(nn.Module):
         _, actor_features = self.base(inputs)
         dist = self.dist(actor_features)
 
-        if deterministic:
-            action = dist.mode()
+        if self.params.RL_ALGORITHM == RLAlgorithmName.DDPG_FAST_V0:
+            t = torch.tanh(dist)
+            return t * self.params.ACTION_SCALE
         else:
-            action = dist.sample()
+            if deterministic:
+                action = dist.mode()
+            else:
+                action = dist.sample()
 
-        # if self.continuous:
-        #     action = torch.tensor([action.item()], device=device, dtype=torch.float)
-        # else:
-        #     action = torch.tensor([action.item()], device=device, dtype=torch.long)
+            # if self.continuous:
+            #     action = torch.tensor([action.item()], device=device, dtype=torch.float)
+            # else:
+            #     action = torch.tensor([action.item()], device=device, dtype=torch.long)
 
-        action_log_probs = dist.log_probs(action)
+            action_log_probs = dist.log_probs(action)
 
-        return action, action_log_probs
+            return action, action_log_probs
 
     def get_critic_value(self, inputs):
         critic_value, _ = self.base(inputs)
