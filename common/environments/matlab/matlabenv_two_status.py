@@ -185,7 +185,7 @@ class MatlabRotaryInvertedPendulumEnv(gym.Env):
 
         done_conditions = [
             # self.episode_steps >= 500,
-            self.count_continuous_swing_up_states >= 1000,
+            # self.count_continuous_swing_up_states >= 1000,
             self.too_much_rotate,
             not self.env_reset_state and self.count_continuous_swing_up_states == 1,
             self.count_continuous_balancing_states == 1
