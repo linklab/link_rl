@@ -204,8 +204,8 @@ class MatlabRotaryInvertedPendulumEnv(gym.Env):
             reward = self.get_reward(adjusted_radian)
 
             info = {
-                "count_balancing_states": self.count_balancing_states,
-                "count_swing_up_states": self.count_swing_up_states,
+                "count_continuous_balancing_states": self.count_continuous_balancing_states,
+                "count_continuous_swing_up_states": self.count_continuous_swing_up_states,
                 "episode_position_reward_list": sum(self.episode_position_reward_list),
                 "episode_pendulum_velocity_reward": sum(self.episode_pendulum_velocity_reward_list),
                 "episode_action_reward": sum(self.episode_action_reward_list)
