@@ -52,6 +52,7 @@ class ActorCriticModel(nn.Module):
             self.hidden_1_size = self.base.hidden_1_size
             self.hidden_2_size = self.base.hidden_2_size
             self.hidden_3_size = self.base.hidden_3_size
+        else:
             raise NotImplementedError
 
         self.continuous = continuous
