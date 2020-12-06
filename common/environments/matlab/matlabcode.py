@@ -26,6 +26,10 @@ class SimulinkPlant:
 
     def connectToMatlab(self):
         print("Starting matlab")
+        import os
+        cwd = os.getcwd()
+        print(cwd, "!!!!!!!!!!!!111")
+
         self.eng = matlab.engine.start_matlab()
 
         print("Connected to Matlab")
