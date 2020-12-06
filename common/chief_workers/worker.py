@@ -86,8 +86,8 @@ class Worker:
             self.loss_dequeue.append(loss)
             self.episode_reward_dequeue.append(episode_reward)
 
-            mean_episode_reward_over_recent_100_episodes = np.mean(self.episode_reward_dequeue)
-            mean_loss_over_recent_100_episodes = np.mean(self.loss_dequeue)
+            mean_episode_reward_over_recent_episodes = np.mean(self.episode_reward_dequeue)
+            mean_loss_over_recent_episodes = np.mean(self.loss_dequeue)
 
             episode_msg = {
                 "worker_id": self.worker_id,
@@ -115,11 +115,11 @@ class Worker:
                     )
                 )
 
-            if mean_episode_reward_over_recent_100_episodes >= env.WIN_AND_LEARN_FINISH_SCORE and episode > env.WIN_AND_LEARN_FINISH_CONTINUOUS_EPISODES:
-                log_msg = "******* Worker {0} - Solved in episode {1}: Mean episode_reward = {2}".format(
+            if mean_episode_reward_over_recent_episodes >= env.WIN_AND_LEARN_FINISH_SCORE and episode > env.WIN_AND_LEARN_FINISH_CONTINUOUS_EPISODES:
+                log_msg = "******* Worker {0} - Solved in episode {1}: Mean episode_reward = {2:8.3f}".format(
                     self.worker_id,
                     episode,
-                    mean_episode_reward_over_recent_100_episodes
+                    mean_episode_reward_over_recent_episodes
                 )
                 self.logger.info(log_msg)
                 print(log_msg)
@@ -136,7 +136,7 @@ class Worker:
                 log_msg = "******* Worker {0} - Failed in episode {1}: Mean Episode Reward = {2}".format(
                     self.worker_id,
                     episode,
-                    mean_episode_reward_over_recent_100_episodes
+                    mean_episode_reward_over_recent_episodes
                 )
                 self.logger.info(log_msg)
                 print(log_msg)
@@ -157,13 +157,13 @@ class Worker:
                     episode,
                     episode_reward,
                     ema_episode_reward,
-                    mean_episode_reward_over_recent_100_episodes
+                    mean_episode_reward_over_recent_episodes
                 )
 
                 log_msg += ", Loss={0:7.4f} (EMA: {1:7.4f}, Mean: {2:7.4f})".format(
                     loss,
                     ema_loss,
-                    mean_loss_over_recent_100_episodes
+                    mean_loss_over_recent_episodes
                 )
 
                 if self.params.EPSILON_GREEDY_ACT:

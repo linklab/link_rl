@@ -145,6 +145,9 @@ class Chief:
             #                                         msg_payload['worker_id'], msg_payload['episode'])
 
         elif topic == self.params.MQTT_TOPIC_SUCCESS_DONE:
+            if self.params.MODE_GRADIENTS_UPDATE:
+                self.model.accumulate_gradients(msg_payload['gradients'])
+
             self.success_done_episode[msg_payload['worker_id']].append(msg_payload['episode'])
             self.success_done_episode_reward[msg_payload['worker_id']].append(msg_payload['episode_reward'])
 
@@ -172,15 +175,19 @@ class Chief:
             log_msg += ", 'parameters_length': {0}\n".format(
                 len(parameters_transferred)
             )
-
-            transfer_msg = {
-                "episode_chief": self.episode_chief,
-                "parameters": parameters_transferred
-            }
+            transfer_msg["parameters"] = parameters_transferred
         else:
-            log_msg += ", No Transfer\n"
+            log_msg += ", No Transfer"
 
-        self.logger.info(log_msg)
+        if self.params.MODE_GRADIENTS_UPDATE:
+            self.model.update_average_gradients(self.params.NUM_WORKERS - self.NUM_DONE_WORKERS)
+            log_msg += ", 'global_avg_grad_length': {0}\n".format(
+                len(self.model.avg_gradients)
+            )
+
+            transfer_msg["avg_gradients"] = self.model.avg_gradients
+
+        self.logger.info(log_msg + "\n")
 
         transfer_msg = pickle.dumps(transfer_msg, protocol=-1)
         transfer_msg = zlib.compress(transfer_msg)
@@ -192,6 +199,10 @@ class Chief:
         return transfer_msg
 
     def get_update_ack_msg(self, msg_payload):
+        grad_update_msg = {
+            "episode_chief": self.episode_chief,
+        }
+
         if self.params.MODE_GRADIENTS_UPDATE:
             log_msg = "[SEND] TOPIC: {0}, PAYLOAD: 'episode': {1}, 'global_avg_grad_length': {2}\n".format(
                 self.params.MQTT_TOPIC_UPDATE_ACK,
@@ -199,17 +210,15 @@ class Chief:
                 len(self.model.avg_gradients)
             )
 
-            self.model.get_average_gradients(self.params.NUM_WORKERS - self.NUM_DONE_WORKERS)
+            self.model.update_average_gradients(self.params.NUM_WORKERS - self.NUM_DONE_WORKERS)
 
-            grad_update_msg = {
-                "episode_chief": self.episode_chief,
-                "avg_gradients": self.model.avg_gradients
-            }
+            grad_update_msg["avg_gradients"] = self.model.avg_gradients
+
             ## weighted_gradients sharing
             # self.model.get_episode_reward_weighted_gradients(NUM_WORKERS - self.NUM_DONE_WORKERS, self.episode_reward_over_recent_episodes, msg_payload['gradients'], msg_payload['worker_id'])
             #
             # if msg_payload['episode'] == 0:
-            #     self.model.get_average_gradients(self.params.NUM_WORKERS - self.NUM_DONE_WORKERS)
+            #     self.model.update_average_gradients(self.params.NUM_WORKERS - self.NUM_DONE_WORKERS)
             #
             #     grad_update_msg = {
             #         "episode_chief": self.episode_chief,
@@ -226,10 +235,6 @@ class Chief:
                 self.params.MQTT_TOPIC_UPDATE_ACK,
                 self.episode_chief
             )
-
-            grad_update_msg = {
-                "episode_chief": self.episode_chief
-            }
 
         self.logger.info(log_msg)
 

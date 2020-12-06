@@ -363,7 +363,6 @@ class RewardTracker:
 
     def set_episode_reward(self, episode_reward, episode_done_step, epsilon, action_count=None, continuous_action_mean=None):
         assert not (action_count and continuous_action_mean)
-        self.done_episodes += 1
         self.episode_reward_list.append(episode_reward)
         self.mean_episode_reward = np.mean(self.episode_reward_list[-self.average_size_for_stats:])
 
@@ -376,7 +375,7 @@ class RewardTracker:
         if ts_diff > self.min_ts_diff:
             is_print_performance = True
             self.print_performance(
-                episode_done_step, current_ts, ts_diff, self.mean_episode_reward, epsilon, elapsed_time, action_count
+                episode_done_step, self.done_episodes, current_ts, ts_diff, self.mean_episode_reward, epsilon, elapsed_time, action_count
             )
 
         if self.mean_episode_reward > self.stop_mean_episode_reward:
@@ -387,7 +386,7 @@ class RewardTracker:
         if self.count_stop_condition_episode:
             if not is_print_performance:
                 self.print_performance(
-                    episode_done_step, current_ts, ts_diff, self.mean_episode_reward, epsilon, elapsed_time, action_count
+                    episode_done_step, self.done_episodes, current_ts, ts_diff, self.mean_episode_reward, epsilon, elapsed_time, action_count
                 )
             if self.frame:
                 print("Solved in {0} frames and {1} episodes!".format(episode_done_step, self.done_episodes))
@@ -395,9 +394,11 @@ class RewardTracker:
                 print("Solved in {0} steps and {1} episodes!".format(episode_done_step, self.done_episodes))
             return True, self.mean_episode_reward
 
+        self.done_episodes += 1
+
         return False, self.mean_episode_reward
 
-    def print_performance(self, episode_done_step, current_ts, ts_diff, mean_episode_reward, epsilon, elapsed_time, action_count):
+    def print_performance(self, episode_done_step, done_episodes, current_ts, ts_diff, mean_episode_reward, epsilon, elapsed_time, action_count):
         speed = (episode_done_step - self.ts_frame) / ts_diff
         self.ts_frame = episode_done_step
         self.ts = current_ts
@@ -423,7 +424,7 @@ class RewardTracker:
                 prefix,
                 episode_done_step,
                 self.params.MAX_GLOBAL_STEPS,
-                len(self.episode_reward_list) - 1,
+                done_episodes,
                 self.episode_reward_list[-1],
                 self.average_size_for_stats,
                 mean_episode_reward,

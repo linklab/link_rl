@@ -168,8 +168,8 @@ class WorkerFastRL:
         self.loss_dequeue.append(loss)
         self.episode_reward_dequeue.append(episode_reward)
 
-        mean_episode_reward_over_recent_100_episodes = np.mean(self.episode_reward_dequeue)
-        mean_loss_over_recent_100_episodes = np.mean(self.loss_dequeue)
+        mean_episode_reward_over_recent_episodes = np.mean(self.episode_reward_dequeue)
+        mean_loss_over_recent_episodes = np.mean(self.loss_dequeue)
 
         episode_msg = {
             "worker_id": self.worker_id,
@@ -181,13 +181,16 @@ class WorkerFastRL:
         is_finish = False
 
         if solved:
-            log_msg = "******* Worker {0} - Solved in episode {1}: Mean episode_reward = {2}".format(
+            log_msg = "******* Worker {0} - Solved in episode {1}: Mean episode_reward = {2:8.3f}".format(
                 self.worker_id,
                 episode,
-                mean_episode_reward_over_recent_100_episodes
+                mean_episode_reward_over_recent_episodes
             )
             self.logger.info(log_msg)
             print(log_msg)
+
+            if self.params.MODE_GRADIENTS_UPDATE:
+                episode_msg["gradients"] = gradients
 
             if self.params.MODE_PARAMETERS_TRANSFER:
                 parameters = self.rl_algorithm.model.get_parameters()
@@ -201,7 +204,7 @@ class WorkerFastRL:
             log_msg = "******* Worker {0} - Failed in episode {1}: Mean Episode Reward = {2}".format(
                 self.worker_id,
                 episode,
-                mean_episode_reward_over_recent_100_episodes
+                mean_episode_reward_over_recent_episodes
             )
             self.logger.info(log_msg)
             print(log_msg)
@@ -222,13 +225,13 @@ class WorkerFastRL:
                 episode,
                 episode_reward,
                 ema_episode_reward,
-                mean_episode_reward_over_recent_100_episodes
+                mean_episode_reward_over_recent_episodes
             )
 
             log_msg += ", Loss={0:7.4f} (EMA: {1:7.4f}, Mean: {2:7.4f})".format(
                 loss,
                 ema_loss,
-                mean_loss_over_recent_100_episodes
+                mean_loss_over_recent_episodes
             )
 
             if self.params.EPSILON_GREEDY_ACT:

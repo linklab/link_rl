@@ -99,13 +99,13 @@ class DDPGActorCriticModel(nn.Module):
             for name, param in named_parameters:
                 self.avg_gradients[layer_name][name] += gradients[layer_name][name]
 
-    def get_average_gradients(self, num_workers):
+    def update_average_gradients(self, num_workers):
         for layer_name, layer in self.base.layers_info.items():
             named_parameters = layer.to(self.device).named_parameters()
             for name, param in named_parameters:
                 self.avg_gradients[layer_name][name] /= num_workers
 
-    def get_score_weighted_gradients(self, num_workers, scores, gradients, worker_id, episode):
+    def update_score_weighted_gradients(self, num_workers, scores, gradients, worker_id, episode):
         self.ema_scores[worker_id] = scores[worker_id][-1]
         self.sum += scores[worker_id][-1]
         self.id_list.append(worker_id)
@@ -144,12 +144,13 @@ class DDPGActorCriticModel(nn.Module):
         for layer_name, layer in self.base.layers_info.items():
             named_parameters = layer.to(self.device).named_parameters()
             for name, param in named_parameters:
+                # if soft_transfer:
+                #     # param.data = param.data * soft_transfer_tau + parameters[layer_name][name] * (1 - soft_transfer_tau)
+                #     score_weighted_tau[self.worker_id] = scores[self.worker_id] / -4000
+                #     print(score_weighted_tau)
+                #     param.data = param.data * score_weighted_tau[self.worker_id] + parameters[layer_name][name] * (1-score_weighted_tau[self.worker_id])
                 if soft_transfer:
-                    # param.data = param.data * soft_transfer_tau + parameters[layer_name][name] * (1 - soft_transfer_tau)
-                    score_weighted_tau[self.worker_id] = scores[self.worker_id] / -4000
-                    print(score_weighted_tau)
-                    param.data = param.data * score_weighted_tau[self.worker_id] + parameters[layer_name][name] * (1-score_weighted_tau[self.worker_id])
-
+                    param.data = param.data * (1.0 - soft_transfer_tau) + parameters[layer_name][name] * soft_transfer_tau
                 else:
                     param.data = parameters[layer_name][name]
 

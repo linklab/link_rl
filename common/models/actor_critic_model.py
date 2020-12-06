@@ -202,16 +202,17 @@ class ActorCriticModel(nn.Module):
         for name, param in named_parameters:
             self.avg_gradients["actor_linear"][name] += gradients["actor_linear"][name]
 
-    def get_average_gradients(self, num_workers):
+    def update_average_gradients(self, num_workers):
         for layer_name, layer in self.base.layers_info.items():
             named_parameters = layer.to(self.device).named_parameters()
             for name, param in named_parameters:
                 self.avg_gradients[layer_name][name] /= num_workers
+
         named_parameters = self.dist.named_parameters()
         for name, param in named_parameters:
             self.avg_gradients["actor_linear"][name] /= num_workers
 
-    def get_score_weighted_gradients(self, num_workers, scores, gradients, worker_id, episode):
+    def update_score_weighted_gradients(self, num_workers, scores, gradients, worker_id, episode):
         self.ema_scores[worker_id] = scores[worker_id][-1]
         self.sum += scores[worker_id][-1]
         self.id_list.append(worker_id)

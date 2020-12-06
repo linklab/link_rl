@@ -66,6 +66,13 @@ def on_worker_message(client, userdata, msg):
                 msg_payload['episode_chief']
             )
 
+            if params.MODE_GRADIENTS_UPDATE:
+                log_msg += ", avg_grad_length: {0} \n".format(
+                    len(msg_payload['avg_gradients'])
+                )
+            else:
+                log_msg += "\n"
+
             if params.MODE_PARAMETERS_TRANSFER:
                 log_msg += ", parameters_length: {0} \n".format(
                     len(msg_payload['parameters'])
@@ -74,6 +81,9 @@ def on_worker_message(client, userdata, msg):
                 log_msg += "\n"
 
             logger.info(log_msg)
+
+            if not worker.is_success_or_fail_done and params.MODE_GRADIENTS_UPDATE:
+                worker.update_process(msg_payload['avg_gradients'])
 
             if not worker.is_success_or_fail_done and params.MODE_PARAMETERS_TRANSFER:
                 worker.transfer_process(msg_payload['parameters'])
