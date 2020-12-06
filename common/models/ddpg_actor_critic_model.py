@@ -15,6 +15,8 @@ class DDPGActorCriticModel(nn.Module):
     def __init__(self, s_size, a_size, worker_id, params, device):
         super(DDPGActorCriticModel, self).__init__()
 
+        self.__name__ = "DDPGActorCriticModel"
+
         self.worker_id = worker_id
         self.params = params
         self.a_size = a_size
