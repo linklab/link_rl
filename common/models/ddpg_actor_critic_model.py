@@ -56,7 +56,7 @@ class DDPGActorCriticModel(nn.Module):
                 print("Worker ID - {0}: There is no saved model".format(self.worker_id))
 
     def forward(self, inputs):
-        raise NotImplementedError
+        return self.base.forward_actor(inputs)
 
     def act(self, inputs):
         if not (type(inputs) is torch.Tensor):

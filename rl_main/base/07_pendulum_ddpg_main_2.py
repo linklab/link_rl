@@ -3,28 +3,23 @@
 #!/usr/bin/env python3
 import time
 import torch
-import torch.nn.functional as F
 import torch.multiprocessing as mp
-from torch import optim
 import os, sys
-import numpy as np
 
-from common.algorithms_rl.DDPG_v0 import DDPG_v0
 from common.logger import get_logger
 from config.names import DeepLearningModelName
+from rl_main import rl_utils
 
 idx = os.getcwd().index("link_rl")
 PROJECT_HOME = os.getcwd()[:idx] + "link_rl"
 if PROJECT_HOME not in sys.path:
     sys.path.append(PROJECT_HOME)
 
-from common.common_utils import make_gym_env, smooth
-from common.fast_rl.policy_based_model import unpack_batch_for_ddpg
 from common.fast_rl.rl_agent import float32_preprocessor
 
 print("PyTorch Version", torch.__version__)
 
-from common.fast_rl import actions, experience, policy_based_model, rl_agent
+from common.fast_rl import actions, experience, rl_agent
 from common.fast_rl.common import statistics, utils
 
 from config.parameters import PARAMETERS as params
@@ -48,9 +43,7 @@ def play_func(exp_queue, env, net):
     action_min = env.action_space.low[0]
     action_max = env.action_space.high[0]
 
-    #action_selector = actions.EpsilonGreedyDDPGActionSelector(epsilon=params.EPSILON_INIT)
-
-    action_selector = actions.DDPGActionSelector(epsilon=params.EPSILON_INIT, ou_enabled=True, scale_factor=2.0)
+    action_selector = actions.DDPGActionSelector(epsilon=params.EPSILON_INIT, ou_enabled=True, scale_factor=params.ACTION_SCALE)
 
     epsilon_tracker = actions.EpsilonTracker(
         action_selector=action_selector,
@@ -127,15 +120,15 @@ def play_func(exp_queue, env, net):
 def main():
     mp.set_start_method('spawn')
 
-    env = make_gym_env(params.ENVIRONMENT_ID.value, seed=params.SEED)
+    env = rl_utils.get_environment(owner="worker", params=params)
     print("env:", params.ENVIRONMENT_ID)
     print("observation_space:", env.observation_space)
     print("action_space:", env.action_space)
 
-    ddpg_model = DDPG_v0(env=env, worker_id=0, logger=my_logger, params=params, device=device, verbose=1)
+    rl_algorithm = rl_utils.get_rl_algorithm(env=env, worker_id=0, logger=my_logger, params=params)
 
     exp_queue = mp.Queue(maxsize=params.TRAIN_STEP_FREQ * 2)
-    play_proc = mp.Process(target=play_func, args=(exp_queue, env, ddpg_model.actor_net))
+    play_proc = mp.Process(target=play_func, args=(exp_queue, env, rl_algorithm.model))
     play_proc.start()
 
     time.sleep(0.5)
@@ -150,14 +143,14 @@ def main():
             if exp is None:
                 play_proc.join()
                 break
-            ddpg_model.buffer._add(exp)
+            rl_algorithm.buffer._add(exp)
 
-        if len(ddpg_model.buffer) < params.MIN_REPLAY_SIZE_FOR_TRAIN:
+        if len(rl_algorithm.buffer) < params.MIN_REPLAY_SIZE_FOR_TRAIN:
             continue
 
         if exp is not None and exp.last_state is None:
             for _ in range(3):
-                ddpg_model.train_net()
+                rl_algorithm.train_net()
 
 
 if __name__ == "__main__":
