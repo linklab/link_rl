@@ -383,7 +383,7 @@ class RewardTracker:
         else:
             self.count_stop_condition_episode = 0
 
-        if self.count_stop_condition_episode:
+        if self.count_stop_condition_episode >= self.params.STOP_CONDITION_CONTINUOUS_EPISODE:
             if not is_print_performance:
                 self.print_performance(
                     episode_done_step, self.done_episodes, current_ts, ts_diff, self.mean_episode_reward, epsilon, elapsed_time, action_count
@@ -418,16 +418,27 @@ class RewardTracker:
                 epsilon if epsilon else 0.0,
             )
 
+        if self.mean_episode_reward > self.stop_mean_episode_reward:
+            episode_reward_str = "mean_{0}_episode_reward: {1:8.3f} (***{2}***)".format(
+                self.average_size_for_stats,
+                mean_episode_reward,
+                self.count_stop_condition_episode + 1
+            )
+        else:
+            episode_reward_str = "mean_{0}_episode_reward: {1:8.3f}".format(
+                self.average_size_for_stats,
+                mean_episode_reward
+            )
+
         print(
-            "{0}[{1:6}/{2}] Episode {3} done, episode_reward: {4:8.3f}, mean_{5}_episode_reward: {6:8.3f}, "
-            "epsilon: {7}, speed: {8:7.2f} {9}, elapsed time: {10}".format(
+            "{0}[{1:6}/{2}] Episode {3} done, episode_reward: {4:8.3f}, {5}, "
+            "epsilon: {6}, speed: {7:7.2f} {8}, elapsed time: {9}".format(
                 prefix,
                 episode_done_step,
                 self.params.MAX_GLOBAL_STEPS,
                 done_episodes,
                 self.episode_reward_list[-1],
-                self.average_size_for_stats,
-                mean_episode_reward,
+                episode_reward_str,
                 epsilon_str,
                 speed,
                 "fps" if self.frame else "steps/sec.",

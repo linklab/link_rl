@@ -573,7 +573,7 @@ class ExperienceSourceBuffer:
 
 class ExperienceReplayBuffer:
     def __init__(self, experience_source, buffer_size):
-        assert isinstance(experience_source, (ExperienceSource, ExperienceSourceFirstLast, ExperienceSourceSingleEnvFirstLast))
+        assert isinstance(experience_source, (ExperienceSource, ExperienceSourceFirstLast, ExperienceSourceSingleEnvFirstLast, type(None)))
         assert isinstance(buffer_size, int)
         self.experience_source_iter = None if experience_source is None else iter(experience_source)
         self.buffer = []
