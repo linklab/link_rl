@@ -150,7 +150,7 @@ def main():
 
         if exp is not None and exp.last_state is None:
             for _ in range(3):
-                rl_algorithm.train_net()
+                rl_algorithm.train_net(step_idx=step_idx)
 
 
 if __name__ == "__main__":

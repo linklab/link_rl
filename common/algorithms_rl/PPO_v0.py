@@ -93,7 +93,7 @@ class PPO_v0:
         # print("prob_action_lst.size()", prob_action_lst.size())
         return state_lst, action_lst, reward_lst, next_state_lst, done_mask_lst, prob_action_lst
 
-    def train_net(self):
+    def train_net(self, step_idx=0):
 
         state_lst, action_lst, reward_lst, next_state_lst, done_mask_lst, prob_action_lst = self.get_trajectory_data()
 

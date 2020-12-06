@@ -37,7 +37,7 @@ class DDPG_v0:
         else:
             self.buffer = experience.ExperienceReplayBuffer(experience_source=None, buffer_size=params.REPLAY_BUFFER_SIZE)
 
-    def train_net(self):
+    def train_net(self, step_idx):
         if self.params.PER:
             batch, batch_indices, batch_weights = self.buffer.sample(self.params.BATCH_SIZE)
         else:
@@ -63,7 +63,7 @@ class DDPG_v0:
             critic_loss_v = batch_weights_v * batch_l1_loss
 
             self.buffer.update_priorities(batch_indices, batch_l1_loss.detach().cpu().numpy() + 1e-5)
-            self.buffer.update_beta(self.step_idx)
+            self.buffer.update_beta(step_idx)
         else:
             critic_loss_v = F.smooth_l1_loss(batch_q_v, batch_target_q_v.detach())
 

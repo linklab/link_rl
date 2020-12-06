@@ -112,7 +112,7 @@ class DQN_v0:
         else:
             return torch.tensor([[random.randrange(self.env.n_actions)]], device=self.device, dtype=torch.long)
 
-    def train_net(self):
+    def train_net(self, step_idx=0):
         if len(self.memory) < self.params.BATCH_SIZE:
             return
 

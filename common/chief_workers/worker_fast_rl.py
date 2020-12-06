@@ -112,7 +112,7 @@ class WorkerFastRL:
 
             if exp is not None and exp.done:
                 for _ in range(3):
-                    gradients, loss = self.rl_algorithm.train_net()
+                    gradients, loss = self.rl_algorithm.train_net(step_idx=step_idx)
 
                 if self.env.last_episode_reward:
                     episode += 1
