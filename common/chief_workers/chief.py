@@ -29,8 +29,8 @@ class Chief:
         self.episode_rewards = {}
         self.losses = {}
 
-        self.episode_reward_over_recent_100_episodes = {}
-        self.loss_over_recent_100_episodes = {}
+        self.episode_reward_over_recent_episodes = {}
+        self.loss_over_recent_episodes = {}
 
         self.success_done_episode = {}
         self.success_done_episode_reward = {}
@@ -54,8 +54,8 @@ class Chief:
             self.success_done_episode[worker_id] = []
             self.success_done_episode_reward[worker_id] = []
 
-            self.episode_reward_over_recent_100_episodes[worker_id] = deque(maxlen=self.env.WIN_AND_LEARN_FINISH_CONTINUOUS_EPISODES)
-            self.loss_over_recent_100_episodes[worker_id] = deque(maxlen=self.env.WIN_AND_LEARN_FINISH_CONTINUOUS_EPISODES)
+            self.episode_reward_over_recent_episodes[worker_id] = deque(maxlen=self.params.AVG_EPISODE_SIZE_FOR_STAT)
+            self.loss_over_recent_episodes[worker_id] = deque(maxlen=self.params.AVG_EPISODE_SIZE_FOR_STAT)
 
     def update_loss_episode_reward(self, msg_payload):
         worker_id = msg_payload['worker_id']
@@ -63,8 +63,8 @@ class Chief:
         episode_reward = msg_payload['episode_reward']
         self.losses[worker_id].append(loss)
         self.episode_rewards[worker_id].append(episode_reward)
-        self.loss_over_recent_100_episodes[worker_id].append(loss)
-        self.episode_reward_over_recent_100_episodes[worker_id].append(episode_reward)
+        self.loss_over_recent_episodes[worker_id].append(loss)
+        self.episode_reward_over_recent_episodes[worker_id].append(episode_reward)
 
     def save_graph(self):
         plt.clf()
@@ -141,7 +141,7 @@ class Chief:
             #     self.model.accumulate_gradients(msg_payload['gradients'])
             # else:
             #     self.model.get_episode_reward_weighted_gradients(self.params.NUM_WORKERS - self.NUM_DONE_WORKERS,
-            #                                         self.episode_reward_over_recent_100_episodes, msg_payload['gradients'],
+            #                                         self.episode_reward_over_recent_episodes, msg_payload['gradients'],
             #                                         msg_payload['worker_id'], msg_payload['episode'])
 
         elif topic == self.params.MQTT_TOPIC_SUCCESS_DONE:
@@ -149,11 +149,11 @@ class Chief:
             self.success_done_episode_reward[msg_payload['worker_id']].append(msg_payload['episode_reward'])
 
             self.NUM_DONE_WORKERS += 1
-            print("BROKER CHECK! - num_of_done_workers:", self.NUM_DONE_WORKERS)
+            print("CHIEF SUCCESS CHECK! - num_of_done_workers:", self.NUM_DONE_WORKERS)
 
         elif topic == self.params.MQTT_TOPIC_FAIL_DONE:
             self.NUM_DONE_WORKERS += 1
-            print("BROKER CHECK! - num_of_done_workers:", self.NUM_DONE_WORKERS)
+            print("CHIEF FAIL CHECK! - num_of_done_workers:", self.NUM_DONE_WORKERS)
 
         else:
             pass
@@ -206,7 +206,7 @@ class Chief:
                 "avg_gradients": self.model.avg_gradients
             }
             ## weighted_gradients sharing
-            # self.model.get_episode_reward_weighted_gradients(NUM_WORKERS - self.NUM_DONE_WORKERS, self.episode_reward_over_recent_100_episodes, msg_payload['gradients'], msg_payload['worker_id'])
+            # self.model.get_episode_reward_weighted_gradients(NUM_WORKERS - self.NUM_DONE_WORKERS, self.episode_reward_over_recent_episodes, msg_payload['gradients'], msg_payload['worker_id'])
             #
             # if msg_payload['episode'] == 0:
             #     self.model.get_average_gradients(self.params.NUM_WORKERS - self.NUM_DONE_WORKERS)

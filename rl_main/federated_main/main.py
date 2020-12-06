@@ -4,6 +4,8 @@ from multiprocessing import Process
 
 import torch
 
+from common import common_utils
+
 os.environ['KMP_DUPLICATE_LIB_OK']='True'
 
 idx = os.getcwd().index("link_rl")
@@ -20,6 +22,8 @@ device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 os.environ["CUDA_VISIBLE_DEVICES"] = params.CUDA_VISIBLE_DEVICES_NUMBER_LIST
 
 if __name__ == "__main__":
+    common_utils.print_fast_rl_params(params)
+
     torch.manual_seed(params.SEED)
 
     if torch.cuda.is_available():

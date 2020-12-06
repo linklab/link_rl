@@ -12,8 +12,6 @@ class Pendulum_v0(Environment):
         self.state_shape = self.get_state_shape()
 
         self.continuous = True
-        self.WIN_AND_LEARN_FINISH_SCORE = -400
-        self.WIN_AND_LEARN_FINISH_CONTINUOUS_EPISODES = 10
         self.observation_space = self.env.observation_space
         self.action_space = self.env.action_space
 

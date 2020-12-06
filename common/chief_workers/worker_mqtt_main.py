@@ -1,6 +1,7 @@
 # -*- coding:utf-8 -*-
 import pickle
 import time
+import traceback
 import zlib
 import paho.mqtt.client as mqtt
 import sys, os
@@ -34,54 +35,58 @@ def on_worker_connect(client, userdata, flags, rc):
 
 
 def on_worker_message(client, userdata, msg):
-    msg_payload = zlib.decompress(msg.payload)
-    msg_payload = pickle.loads(msg_payload)
+    try:
+        msg_payload = zlib.decompress(msg.payload)
+        msg_payload = pickle.loads(msg_payload)
 
-    if msg.topic == params.MQTT_TOPIC_UPDATE_ACK:
-        log_msg = "[RECV] TOPIC: {0}, PAYLOAD: 'episode_chief': {1}".format(
-            msg.topic,
-            msg_payload['episode_chief']
-        )
-
-        if params.MODE_GRADIENTS_UPDATE:
-            log_msg += ", avg_grad_length: {0} \n".format(
-                len(msg_payload['avg_gradients'])
+        if msg.topic == params.MQTT_TOPIC_UPDATE_ACK:
+            log_msg = "[RECV] TOPIC: {0}, PAYLOAD: 'episode_chief': {1}".format(
+                msg.topic,
+                msg_payload['episode_chief']
             )
-        else:
-            log_msg += "\n"
 
-        logger.info(log_msg)
+            if params.MODE_GRADIENTS_UPDATE:
+                log_msg += ", avg_grad_length: {0} \n".format(
+                    len(msg_payload['avg_gradients'])
+                )
+            else:
+                log_msg += "\n"
 
-        if not worker.is_success_or_fail_done and params.MODE_GRADIENTS_UPDATE:
-            worker.update_process(msg_payload['avg_gradients'])
+            logger.info(log_msg)
 
-        worker.episode_chief = msg_payload["episode_chief"]
-        print("Update_Ack: " + worker.episode_chief)
-        
-    elif msg.topic == params.MQTT_TOPIC_TRANSFER_ACK:
-        log_msg = "[RECV] TOPIC: {0}, PAYLOAD: 'episode_chief': {1}".format(
-            msg.topic,
-            msg_payload['episode_chief']
-        )
+            if not worker.is_success_or_fail_done and params.MODE_GRADIENTS_UPDATE:
+                worker.update_process(msg_payload['avg_gradients'])
 
-        if params.MODE_PARAMETERS_TRANSFER:
-            log_msg += ", parameters_length: {0} \n".format(
-                len(msg_payload['parameters'])
+            worker.episode_chief = msg_payload["episode_chief"]
+            #print("Update_Ack: {0}".format(worker.episode_chief))
+
+        elif msg.topic == params.MQTT_TOPIC_TRANSFER_ACK:
+            log_msg = "[RECV] TOPIC: {0}, PAYLOAD: 'episode_chief': {1}".format(
+                msg.topic,
+                msg_payload['episode_chief']
             )
+
+            if params.MODE_PARAMETERS_TRANSFER:
+                log_msg += ", parameters_length: {0} \n".format(
+                    len(msg_payload['parameters'])
+                )
+            else:
+                log_msg += "\n"
+
+            logger.info(log_msg)
+
+            if not worker.is_success_or_fail_done and params.MODE_PARAMETERS_TRANSFER:
+                worker.transfer_process(msg_payload['parameters'])
+
+            worker.episode_chief = msg_payload["episode_chief"]
+            #print("Transfer_Ack: {0}".format(worker.episode_chief))
+
         else:
-            log_msg += "\n"
-
-        logger.info(log_msg)
-
-        if not worker.is_success_or_fail_done and params.MODE_PARAMETERS_TRANSFER:
-            worker.transfer_process(msg_payload['parameters'])
-
-        worker.episode_chief = msg_payload["episode_chief"]
-        print("Transfer_Ack: " + worker.episode_chief)
-
-    else:
-        print("pass")
-        pass
+            print("pass")
+            pass
+    except:
+        traceback.print_exc()
+        sys.exit(-1)
 
 
 if __name__ == "__main__":

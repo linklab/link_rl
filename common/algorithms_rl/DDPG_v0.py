@@ -26,16 +26,28 @@ class DDPG_v0:
 
         self.target_agent = rl_agent.TargetNet(self.model.base)
 
-        self.actor_optimizer = optim.Adam(self.model.base.actor.parameters(), lr=params.ACTOR_LEARNING_RATE)
-        self.critic_optimizer = optim.Adam(self.model.base.critic.parameters(), lr=params.LEARNING_RATE)
+        self.actor_optimizer = rl_utils.get_optimizer(
+            parameters=self.model.base.actor.parameters(),
+            learning_rate=self.params.ACTOR_LEARNING_RATE,
+            params=params
+        )
 
-        if params.PER:
+        self.critic_optimizer = rl_utils.get_optimizer(
+            parameters=self.model.base.critic.parameters(),
+            learning_rate=self.params.LEARNING_RATE,
+            params=params
+        )
+
+    def set_buffer(self, experience_source):
+        if self.params.PER:
             self.buffer = experience.PrioReplayBuffer(
-                experience_source=None, buffer_size=params.REPLAY_BUFFER_SIZE, n_step=params.N_STEP,
-                beta_start=0.4, beta_frames=params.MAX_GLOBAL_STEPS
+                experience_source=experience_source, buffer_size=self.params.REPLAY_BUFFER_SIZE,
+                n_step=self.params.N_STEP, beta_start=0.4, beta_frames=self.params.MAX_GLOBAL_STEPS
             )
         else:
-            self.buffer = experience.ExperienceReplayBuffer(experience_source=None, buffer_size=params.REPLAY_BUFFER_SIZE)
+            self.buffer = experience.ExperienceReplayBuffer(
+                experience_source=experience_source, buffer_size=self.params.REPLAY_BUFFER_SIZE
+            )
 
     def train_net(self, step_idx):
         if self.params.PER:
@@ -85,4 +97,4 @@ class DDPG_v0:
         gradients = self.model.get_gradients_for_current_parameters()
         loss = loss_critic_v + loss_actor_v
 
-        return gradients, loss
+        return gradients, loss.item()

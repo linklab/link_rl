@@ -6,10 +6,6 @@ import os
 
 from config.names import PROJECT_HOME
 
-class Flatten(nn.Module):
-    def forward(self, x):
-        return x.view(x.size(0), -1)
-
 
 class DDPGActorCriticModel(nn.Module):
     def __init__(self, s_size, a_size, worker_id, params, device):
@@ -143,7 +139,7 @@ class DDPGActorCriticModel(nn.Module):
 
         return parameters
 
-    def transfer_process(self, parameters, soft_transfer, soft_transfer_tau, scores):
+    def transfer_process(self, parameters, soft_transfer, soft_transfer_tau, scores=None):
         score_weighted_tau = {}
         for layer_name, layer in self.base.layers_info.items():
             named_parameters = layer.to(self.device).named_parameters()

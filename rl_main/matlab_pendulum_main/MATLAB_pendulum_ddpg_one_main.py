@@ -102,14 +102,10 @@ def play_func(exp_queue, actor_net, critic_net):
 
     best_mean_episode_reward = 0
 
-    with RewardTracker(
-            params=params,
-            stop_mean_episode_reward=params.STOP_MEAN_EPISODE_REWARD,
-            average_size_for_stats=params.AVG_EPISODE_SIZE_FOR_STAT,
-            frame=True, draw_viz=params.DRAW_VIZ, stat=stat) as reward_tracker:
+    with RewardTracker(params=params, frame=False, stat=stat) as reward_tracker:
         while step_idx < params.MAX_GLOBAL_STEPS:
             # 1 스텝 진행하고 exp를 exp_queue에 넣음
-            step_idx += 1
+            step_idx += params.N_STEP
 
             exp = next(exp_source_iter)
 
