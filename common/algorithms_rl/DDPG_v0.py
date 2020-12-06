@@ -45,7 +45,6 @@ class DDPG_v0:
             batch_indices, batch_weights = None, None
 
         # print(batch)
-
         batch_states_v, batch_actions_v, batch_rewards_v, batch_dones_mask, batch_last_states_v = unpack_batch_for_ddpg(
             batch, self.device
         )

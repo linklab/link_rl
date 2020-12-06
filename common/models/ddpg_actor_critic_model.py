@@ -159,6 +159,7 @@ class DDPGActorCriticModel(nn.Module):
 class DDPGActorCriticMLPBase(nn.Module):
     def __init__(self, num_inputs, num_ouputs, params):
         super(DDPGActorCriticMLPBase, self).__init__()
+        self.__name__ = "DDPGActorCriticMLPBase"
         self.params = params
 
         self.hidden_1_size = params.HIDDEN_1_SIZE

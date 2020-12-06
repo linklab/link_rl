@@ -14,6 +14,8 @@ mylogger = get_logger("rl_agent")
 
 
 def save_model(model_save_dir, env_name, net_name, net, step, episode_reward):
+    print(env_name, net_name, step, episode_reward)
+
     model_save_filename = os.path.join(
         model_save_dir, "{0}_{1}_{2}_{3}.pth".format(
             env_name, net_name, step, episode_reward
