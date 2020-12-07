@@ -4,7 +4,7 @@ import paho.mqtt.client as mqtt
 import torch
 from torch import optim
 
-from common.algorithms_rl.DDPG_v0 import DDPG_v0
+from common.fast_rl.algorithms.DDPG_v0 import DDPG_v0
 from common.environments.matlab.matlabenv import MatlabRotaryInvertedPendulumEnv
 from common.models.ddpg_actor_critic_model import DDPGActorCriticModel
 from config.names import EnvironmentName, DeepLearningModelName, RLAlgorithmName, OptimizerName
