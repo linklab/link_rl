@@ -19,7 +19,7 @@ if PROJECT_HOME not in sys.path:
     sys.path.append(PROJECT_HOME)
 
 from common.fast_rl import actions, rl_agent, experience
-from config.names import RLAlgorithmName
+from config.names import RLAlgorithmName, EnvironmentName
 from rl_main.federated_main.utils import exp_moving_average
 import rl_main.rl_utils as rl_utils
 from config.parameters import PARAMETERS as params
@@ -35,6 +35,9 @@ class WorkerFastRL:
         print("env:", params.ENVIRONMENT_ID)
         print("observation_space:", self.env.observation_space)
         print("action_space:", self.env.action_space)
+
+        if params.ENVIRONMENT_ID == EnvironmentName.PENDULUM_MATLAB_V0:
+            self.env.start()
 
         self.rl_algorithm = rl_utils.get_rl_algorithm(env=self.env, worker_id=worker_id, logger=logger, params=params)
 

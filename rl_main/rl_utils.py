@@ -145,7 +145,6 @@ def get_environment(owner="chief", params=None):
             action_max=params.SWING_UP_SCALE_FACTOR,
             env_reset=params.ENV_RESET
         )
-        env.start()
     else:
         env = None
     return env
