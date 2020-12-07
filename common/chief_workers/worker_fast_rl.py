@@ -1,5 +1,4 @@
 # -*- coding:utf-8 -*-
-import glob
 import os
 import pickle
 import sys
@@ -8,7 +7,6 @@ import zlib
 from collections import deque
 import numpy as np
 import torch
-import torch.multiprocessing as mp
 
 from common.fast_rl.common import utils
 from common.fast_rl.rl_agent import float32_preprocessor
@@ -36,7 +34,7 @@ class WorkerFastRL:
         print("observation_space:", self.env.observation_space)
         print("action_space:", self.env.action_space)
 
-        if params.ENVIRONMENT_ID == EnvironmentName.PENDULUM_MATLAB_V0:
+        if params.ENVIRONMENT_ID in [EnvironmentName.PENDULUM_MATLAB_V0, EnvironmentName.PENDULUM_MATLAB_DOUBLE_AGENTS_V0]:
             self.env.start()
 
         self.rl_algorithm = rl_utils.get_rl_algorithm(env=self.env, worker_id=worker_id, logger=logger, params=params)
@@ -103,10 +101,12 @@ class WorkerFastRL:
             device = torch.device("cpu")
 
         if params.RL_ALGORITHM is RLAlgorithmName.DDPG_FAST_V0:
-            action_min = self.env.action_space.low[0]
-            action_max = self.env.action_space.high[0]
+            action_min = -self.params.ACTION_SCALE
+            action_max = self.params.ACTION_SCALE
 
-            action_selector = actions.DDPGActionSelector(epsilon=params.EPSILON_INIT, ou_enabled=True, scale_factor=2.0)
+            action_selector = actions.DDPGActionSelector(
+                epsilon=params.EPSILON_INIT, ou_enabled=True, scale_factor=self.params.ACTION_SCALE
+            )
 
             epsilon_tracker = actions.EpsilonTracker(
                 action_selector=action_selector,
@@ -158,13 +158,16 @@ class WorkerFastRL:
                                 mean_episode_reward
                             )
 
-                        is_finish = self.interact_with_chief(loss, gradients, current_episode_reward, episode, solved)
+                        is_finish = self.interact_with_chief(loss, gradients, current_episode_reward, episode, step_idx, solved)
                         if is_finish:
                             break
 
                         episode += 1
 
-    def interact_with_chief(self, loss, gradients, episode_reward, episode, solved):
+                if not is_finish:
+                    self.interact_with_chief(loss, gradients, current_episode_reward, episode, step_idx, solved)
+
+    def interact_with_chief(self, loss, gradients, episode_reward, episode, step_idx, solved, agent_type=None):
         self.local_losses.append(loss)
         self.local_episode_rewards.append(episode_reward)
 
@@ -180,6 +183,9 @@ class WorkerFastRL:
             "loss": loss,
             "episode_reward": episode_reward
         }
+
+        if agent_type:
+            episode_msg['agent_type'] = agent_type.value
 
         is_finish = False
 
@@ -203,7 +209,7 @@ class WorkerFastRL:
             self.is_success_or_fail_done = True
             is_finish = True
 
-        elif episode == self.params.MAX_EPISODES - 1:
+        elif step_idx >= self.params.MAX_GLOBAL_STEPS:
             log_msg = "******* Worker {0} - Failed in episode {1}: Mean Episode Reward = {2}".format(
                 self.worker_id,
                 episode,

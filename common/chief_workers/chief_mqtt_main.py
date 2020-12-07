@@ -51,6 +51,9 @@ def on_chief_message(client, userdata, msg):
             msg_payload['episode_reward']
         )
 
+        if 'agent_type' in msg_payload:
+            log_msg += ", 'agent_type': {0}".format(msg_payload['agent_type'])
+
         if params.MODE_PARAMETERS_TRANSFER and msg.topic == params.MQTT_TOPIC_SUCCESS_DONE:
             log_msg += ", 'parameters_length': {0}".format(len(msg_payload['parameters']))
         elif params.MODE_GRADIENTS_UPDATE and msg.topic == params.MQTT_TOPIC_EPISODE_DETAIL:
@@ -74,8 +77,8 @@ def on_chief_message(client, userdata, msg):
                 worker_episode_reward_str = ""
                 for worker_id in range(params.NUM_WORKERS):
                     if worker_id in chief.messages_received_from_workers[chief.episode_chief]:
-                        topic, msg_payload = chief.messages_received_from_workers[chief.episode_chief][worker_id]
-                        chief.process_message(topic=topic, msg_payload=msg_payload)
+                        topic, _msg_payload = chief.messages_received_from_workers[chief.episode_chief][worker_id]
+                        chief.process_message(topic=topic, msg_payload=_msg_payload)
 
                         worker_episode_reward_str += "W{0}[{1:7.4f}/{2:7.4f}] ".format(
                             worker_id,
@@ -94,10 +97,10 @@ def on_chief_message(client, userdata, msg):
                         if topic == params.MQTT_TOPIC_SUCCESS_DONE:
                             is_include_topic_success_done = True
                             if params.MODE_PARAMETERS_TRANSFER:
-                                parameters_transferred = msg_payload["parameters"]
+                                parameters_transferred = _msg_payload["parameters"]
 
                 if is_include_topic_success_done:
-                    transfer_msg = chief.get_transfer_ack_msg(parameters_transferred)
+                    transfer_msg = chief.get_transfer_ack_msg(parameters_transferred, msg_payload)
                     chief_mqtt_client.publish(topic=params.MQTT_TOPIC_TRANSFER_ACK, payload=transfer_msg, qos=0, retain=False)
                 else:
                     grad_update_msg = chief.get_update_ack_msg(msg_payload=msg_payload)

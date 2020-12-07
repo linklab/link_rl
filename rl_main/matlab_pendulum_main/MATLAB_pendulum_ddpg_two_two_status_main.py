@@ -2,26 +2,22 @@
 # https://mspries.github.io/jimmy_pendulum.html
 #!/usr/bin/env python3
 import time
-
 import torch
 import torch.nn.functional as F
 import torch.multiprocessing as mp
 from torch import optim
 import os, sys
 import numpy as np
-import copy
-
-from common.logger import get_logger
-from config.names import DeepLearningModelName
-from rl_main.matlab_pendulum_main.experience_pendulum_ddpg_two_two_status import ExperienceSourceSingleEnvFirstLastDdpgTwo, \
-    RewardTrackerMatlabPendulum, AgentType
 
 idx = os.getcwd().index("link_rl")
 PROJECT_HOME = os.getcwd()[:idx] + "link_rl"
 sys.path.append(PROJECT_HOME)
 
-from common.environments.matlab.matlabenv_two_status import MatlabRotaryInvertedPendulumEnv
-
+from common.logger import get_logger
+from config.names import DeepLearningModelName
+from rl_main.matlab_pendulum_main.experience_pendulum_ddpg_two_two_status import ExperienceSourceSingleEnvFirstLastDdpgTwo, \
+    RewardTrackerMatlabPendulum, AgentType
+from common.environments.matlab.matlabenv_double_agents import MatlabRotaryInvertedPendulumDoubleAgentsEnv
 from common.common_utils import smooth
 from common.fast_rl.policy_based_model import unpack_batch_for_ddpg
 from common.fast_rl.rl_agent import float32_preprocessor
@@ -34,7 +30,6 @@ from common.fast_rl.common import statistics
 from config.parameters import PARAMETERS as params
 
 import pickle
-import matplotlib
 import matplotlib.pyplot as plt
 
 
@@ -61,7 +56,7 @@ else:
     BALANCING_SCALE_FACTOR = 0.01     # 0.01
 CLIP = 1
 
-env = MatlabRotaryInvertedPendulumEnv(
+env = MatlabRotaryInvertedPendulumDoubleAgentsEnv(
     action_min=SWING_UP_SCALE_FACTOR * -1.0, action_max=SWING_UP_SCALE_FACTOR, env_reset=params.ENV_RESET
 )
 print("env:", params.ENVIRONMENT_ID)

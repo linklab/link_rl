@@ -139,16 +139,10 @@ class DDPGActorCriticModel(nn.Module):
 
         return parameters
 
-    def transfer_process(self, parameters, soft_transfer, soft_transfer_tau, scores=None):
-        score_weighted_tau = {}
+    def transfer_process(self, parameters, soft_transfer, soft_transfer_tau):
         for layer_name, layer in self.base.layers_info.items():
             named_parameters = layer.to(self.device).named_parameters()
             for name, param in named_parameters:
-                # if soft_transfer:
-                #     # param.data = param.data * soft_transfer_tau + parameters[layer_name][name] * (1 - soft_transfer_tau)
-                #     score_weighted_tau[self.worker_id] = scores[self.worker_id] / -4000
-                #     print(score_weighted_tau)
-                #     param.data = param.data * score_weighted_tau[self.worker_id] + parameters[layer_name][name] * (1-score_weighted_tau[self.worker_id])
                 if soft_transfer:
                     param.data = param.data * (1.0 - soft_transfer_tau) + parameters[layer_name][name] * soft_transfer_tau
                 else:

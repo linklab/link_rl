@@ -4,6 +4,8 @@ import paho.mqtt.client as mqtt
 import torch
 from torch import optim
 
+from common.environments.matlab.matlabenv_double_agents import MatlabRotaryInvertedPendulumDoubleAgentsEnv
+from common.fast_rl.algorithms.DDPG_RIP_DOUBLE_AGENTS_v0 import DDPG_RIP_DOUBLE_AGENTS_v0
 from common.fast_rl.algorithms.DDPG_v0 import DDPG_v0
 from common.environments.matlab.matlabenv import MatlabRotaryInvertedPendulumEnv
 from common.models.ddpg_actor_critic_model import DDPGActorCriticModel
@@ -138,9 +140,13 @@ def get_environment(owner="chief", params=None):
     elif params.ENVIRONMENT_ID == EnvironmentName.WALKER_2D_V2:
         env = Walker2D_v2()
     elif params.ENVIRONMENT_ID == EnvironmentName.PENDULUM_MATLAB_V0:
-        assert params, "'params' should be provided: {0}".format(params)
-
         env = MatlabRotaryInvertedPendulumEnv(
+            action_min=params.SWING_UP_SCALE_FACTOR * -1.0,
+            action_max=params.SWING_UP_SCALE_FACTOR,
+            env_reset=params.ENV_RESET
+        )
+    elif params.ENVIRONMENT_ID == EnvironmentName.PENDULUM_MATLAB_DOUBLE_AGENTS_V0:
+        env = MatlabRotaryInvertedPendulumDoubleAgentsEnv(
             action_min=params.SWING_UP_SCALE_FACTOR * -1.0,
             action_max=params.SWING_UP_SCALE_FACTOR,
             env_reset=params.ENV_RESET
@@ -159,7 +165,7 @@ def get_rl_model(env, worker_id, params):
             params=params,
             device=device
         ).to(device)
-    elif params.DEEP_LEARNING_MODEL == DeepLearningModelName.ACTOR_CRITIC_MLP or params.DEEP_LEARNING_MODEL == DeepLearningModelName.ACTOR_CRITIC_CNN:
+    elif params.DEEP_LEARNING_MODEL in [DeepLearningModelName.ACTOR_CRITIC_MLP, DeepLearningModelName.ACTOR_CRITIC_CNN]:
         model = ActorCriticModel(
             s_size=env.n_states,
             a_size=env.n_actions,
@@ -176,7 +182,16 @@ def get_rl_model(env, worker_id, params):
 
 
 def get_rl_algorithm(env, worker_id=0, logger=False, params=None):
-    if params.RL_ALGORITHM == RLAlgorithmName.DDPG_FAST_V0:
+    if params.RL_ALGORITHM == RLAlgorithmName.DDPG_FAST_DOUBLE_AGENTS_V0:
+        rl_algorithm = DDPG_RIP_DOUBLE_AGENTS_v0(
+            env=env,
+            worker_id=worker_id,
+            logger=logger,
+            params=params,
+            device=device,
+            verbose=params.VERBOSE
+        )
+    elif params.RL_ALGORITHM == RLAlgorithmName.DDPG_FAST_V0:
         rl_algorithm = DDPG_v0(
             env=env,
             worker_id=worker_id,

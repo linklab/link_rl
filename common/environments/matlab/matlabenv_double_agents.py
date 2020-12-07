@@ -16,7 +16,7 @@ class Status(Enum):
     BALANCING = 1.0
 
 
-class MatlabRotaryInvertedPendulumEnv(gym.Env):
+class MatlabRotaryInvertedPendulumDoubleAgentsEnv(gym.Env):
     def __init__(self, action_min, action_max, env_reset=True):
         self.episode_steps = 0
         self.total_steps = 0
@@ -51,6 +51,9 @@ class MatlabRotaryInvertedPendulumEnv(gym.Env):
             dtype=np.float32
         )
 
+        self.n_states = self.observation_space.shape[0]
+        self.n_actions = self.action_space.shape[0]
+
         self.current_status = None
 
         self.count_continuous_uprights = 0
@@ -68,6 +71,19 @@ class MatlabRotaryInvertedPendulumEnv(gym.Env):
         self.episode_action_reward_list = []
 
         self.update_current_state(adjusted_radian=0.0)
+
+    def get_n_states(self):
+        n_states = self.observation_space.shape[0]
+        return n_states
+
+    def get_n_actions(self):
+        n_actions = self.action_space.shape[0]
+        return n_actions
+
+    @property
+    def action_meanings(self):
+        action_meanings = ["Joint effort",]
+        return action_meanings
 
     def pause(self):
         self.plant.conncectpause()

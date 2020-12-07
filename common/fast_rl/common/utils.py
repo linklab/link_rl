@@ -364,6 +364,8 @@ class RewardTracker:
     def set_episode_reward(self, episode_reward, episode_done_step, epsilon, action_count=None, continuous_action_mean=None):
         assert not (action_count and continuous_action_mean)
         self.episode_reward_list.append(episode_reward)
+
+        print(self.episode_reward_list[-self.average_size_for_stats:])
         self.mean_episode_reward = np.mean(self.episode_reward_list[-self.average_size_for_stats:])
 
         current_ts = time.time()
@@ -419,26 +421,27 @@ class RewardTracker:
             )
 
         if self.mean_episode_reward > self.stop_mean_episode_reward:
-            episode_reward_str = "mean_{0}_episode_reward: {1:8.3f} (SOLVED COUNT: {2})".format(
+            mean_episode_reward_str = "mean_{0}_episode_reward: {1:8.3f} (SOLVED COUNT: {2})".format(
                 self.average_size_for_stats,
                 mean_episode_reward,
                 self.count_stop_condition_episode + 1
             )
         else:
-            episode_reward_str = "mean_{0}_episode_reward: {1:8.3f}".format(
+            mean_episode_reward_str = "mean_{0}_episode_reward: {1:8.3f}".format(
                 self.average_size_for_stats,
                 mean_episode_reward
             )
 
         print(
-            "{0}[{1:6}/{2}] Episode {3} done, episode_reward: {4:8.3f}, {5}, "
-            "epsilon: {6}, speed: {7:7.2f} {8}, elapsed time: {9}".format(
+            "{0}[{1:6}/{2}] Episode {3} done, episode_reward: {4:8.3f}, mean_{5}_episode_reward: {6}, "
+            "epsilon: {7}, speed: {8:7.2f} {9}, elapsed time: {10}".format(
                 prefix,
                 episode_done_step,
                 self.params.MAX_GLOBAL_STEPS,
                 done_episodes,
                 self.episode_reward_list[-1],
-                episode_reward_str,
+                self.average_size_for_stats,
+                mean_episode_reward_str,
                 epsilon_str,
                 speed,
                 "fps" if self.frame else "steps/sec.",

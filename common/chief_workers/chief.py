@@ -161,7 +161,7 @@ class Chief:
         else:
             pass
 
-    def get_transfer_ack_msg(self, parameters_transferred):
+    def get_transfer_ack_msg(self, parameters_transferred, msg_payload=None):
         log_msg = "[SEND] TOPIC: {0}, PAYLOAD: 'episode': {1}".format(
             self.params.MQTT_TOPIC_TRANSFER_ACK,
             self.episode_chief
@@ -170,6 +170,9 @@ class Chief:
         transfer_msg = {
             "episode_chief": self.episode_chief
         }
+
+        if msg_payload and 'agent_type' in msg_payload:
+            transfer_msg['agent_type'] = msg_payload['agent_type']
 
         if self.params.MODE_PARAMETERS_TRANSFER:
             log_msg += ", 'parameters_length': {0}\n".format(
@@ -198,10 +201,13 @@ class Chief:
 
         return transfer_msg
 
-    def get_update_ack_msg(self, msg_payload):
+    def get_update_ack_msg(self, msg_payload=None):
         grad_update_msg = {
             "episode_chief": self.episode_chief,
         }
+
+        if msg_payload and 'agent_type' in msg_payload:
+            grad_update_msg['agent_type'] = msg_payload['agent_type']
 
         if self.params.MODE_GRADIENTS_UPDATE:
             log_msg = "[SEND] TOPIC: {0}, PAYLOAD: 'episode': {1}, 'global_avg_grad_length': {2}\n".format(
