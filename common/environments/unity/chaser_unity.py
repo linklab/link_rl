@@ -1,4 +1,4 @@
-from gym_unity.envs import UnityEnv
+from mlagents_envs.environment import UnityEnvironment
 
 from config.names import EnvironmentName, OSName
 from config.parameters import PARAMETERS as params
@@ -16,7 +16,7 @@ class Chaser_v1(Environment):
         else:
             env_filename = None
 
-        self.env = UnityEnv(
+        self.env = UnityEnvironment(
             environment_filename=env_filename,
             worker_id=Chaser_v1.unity_env_worker_id,
             use_visual=True,
