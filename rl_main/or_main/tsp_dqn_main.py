@@ -74,6 +74,7 @@ def play_func(exp_queue, env, net):
                     next_save_frame_idx += params.MODEL_SAVE_STEP_PERIOD
 
                 if solved:
+                    print(env.state)
                     rl_agent.save_model(
                         MODEL_SAVE_DIR, params.ENVIRONMENT_ID.value, net.__name__, net, step_idx, mean_episode_reward
                     )
@@ -85,15 +86,21 @@ def play_func(exp_queue, env, net):
 def main():
     mp.set_start_method('spawn')
 
+    env_config = {
+        'N': 10,
+        'invalid_action_cost': -100,
+        'mask': False
+    }
+
     assert params.ENVIRONMENT_ID == EnvironmentName.TSP_V0 or params.ENVIRONMENT_ID == EnvironmentName.TSP_V1
     env = make_or_gym_env(
-        env_name=params.ENVIRONMENT_ID.value, env_config=None, seed=params.SEED
+        env_name=params.ENVIRONMENT_ID.value, env_config=env_config, seed=params.SEED
     )
 
     net = value_based_model.DuelingDQNMLP(
-        obs_size=51,
+        obs_size=11,
         hidden_size_1=128, hidden_size_2=128,
-        n_actions=50
+        n_actions=10
     ).to(device)
     print(net)
     target_net = rl_agent.TargetNet(net)
