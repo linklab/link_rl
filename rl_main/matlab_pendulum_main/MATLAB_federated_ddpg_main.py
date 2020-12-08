@@ -3,10 +3,11 @@ import time
 from multiprocessing import Process
 
 import torch
+print(torch.__version__)
 
 from common import common_utils
 
-os.environ['KMP_DUPLICATE_LIB_OK']='True'
+os.environ['KMP_DUPLICATE_LIB_OK'] = 'True'
 
 idx = os.getcwd().index("link_rl")
 PROJECT_HOME = os.getcwd()[:idx] + "link_rl"
