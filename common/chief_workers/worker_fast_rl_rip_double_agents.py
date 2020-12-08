@@ -55,6 +55,7 @@ class WorkerFastRLRipDoubleAgents:
         self.is_success_or_fail_done = False
         self.logger = logger
         self.episode_reward_list = []
+        self.num_done_workers = 0
 
     def swing_up_update_process(self, avg_gradients):
         self.rl_algorithm.swing_up_model.set_gradients_to_current_parameters(avg_gradients)
@@ -236,15 +237,16 @@ class WorkerFastRLRipDoubleAgents:
                                 mean_episode_reward
                             )
 
-                        is_finish = self.interact_with_chief(
-                            loss, gradients, current_episode_reward, episode, step_idx, solved, agent_type=agent_type
-                        )
-                        if is_finish:
+                            solved = self.interact_with_chief(
+                                loss, gradients, current_episode_reward, episode, step_idx, solved, agent_type=agent_type
+                            )
+
+                        if solved:
                             break
 
                         episode += 1
 
-                if not is_finish:
+                if not solved:
                     self.interact_with_chief(
                         loss, gradients, current_episode_reward, episode, step_idx, solved, agent_type=agent_type
                     )

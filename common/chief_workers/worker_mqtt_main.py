@@ -71,6 +71,9 @@ def on_worker_message(client, userdata, msg):
             worker.episode_chief = msg_payload["episode_chief"]
             #print("Update_Ack: {0}".format(worker.episode_chief))
 
+            if 'num_done_workers' in msg_payload:
+                worker.num_done_workers = msg_payload["episode_chief"]
+
         elif msg.topic == params.MQTT_TOPIC_TRANSFER_ACK:
             log_msg = "[RECV] TOPIC: {0}, PAYLOAD: 'episode_chief': {1}".format(
                 msg.topic,
@@ -102,6 +105,8 @@ def on_worker_message(client, userdata, msg):
             worker.episode_chief = msg_payload["episode_chief"]
             #print("Transfer_Ack: {0}".format(worker.episode_chief))
 
+            if 'num_done_workers' in msg_payload:
+                worker.num_done_workers = msg_payload["episode_chief"]
         else:
             print("pass")
             pass
@@ -124,6 +129,7 @@ if __name__ == "__main__":
     sys.stderr = sys.stdout
     try:
         if params.RL_ALGORITHM == RLAlgorithmName.DDPG_FAST_DOUBLE_AGENTS_V0:
+            assert params.NUM_WORKERS == 1, "NUM_WORKERS should be 1"
             worker = WorkerFastRLRipDoubleAgents(logger, worker_id, worker_mqtt_client, params)
         elif params.RL_ALGORITHM == RLAlgorithmName.DDPG_FAST_V0:
             worker = WorkerFastRL(logger, worker_id, worker_mqtt_client, params)

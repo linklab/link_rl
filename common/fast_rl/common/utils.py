@@ -364,8 +364,6 @@ class RewardTracker:
     def set_episode_reward(self, episode_reward, episode_done_step, epsilon, action_count=None, continuous_action_mean=None):
         assert not (action_count and continuous_action_mean)
         self.episode_reward_list.append(episode_reward)
-
-        print(self.episode_reward_list[-self.average_size_for_stats:])
         self.mean_episode_reward = np.mean(self.episode_reward_list[-self.average_size_for_stats:])
 
         current_ts = time.time()
@@ -394,6 +392,7 @@ class RewardTracker:
                 print("Solved in {0} frames and {1} episodes!".format(episode_done_step, self.done_episodes))
             else:
                 print("Solved in {0} steps and {1} episodes!".format(episode_done_step, self.done_episodes))
+
             return True, self.mean_episode_reward
 
         self.done_episodes += 1

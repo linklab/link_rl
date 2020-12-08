@@ -45,6 +45,7 @@ class Worker:
         self.is_success_or_fail_done = False
         self.logger = logger
         self.params = params
+        self.num_done_workers = 0
 
     def update_process(self, avg_gradients):
         self.rl_algorithm.model.set_gradients_to_current_parameters(avg_gradients)

@@ -54,6 +54,7 @@ class WorkerFastRL:
 
         self.is_success_or_fail_done = False
         self.logger = logger
+        self.num_done_workers = 0
 
     def update_process(self, avg_gradients):
         self.rl_algorithm.model.set_gradients_to_current_parameters(avg_gradients)
@@ -158,14 +159,19 @@ class WorkerFastRL:
                                 mean_episode_reward
                             )
 
-                        is_finish = self.interact_with_chief(loss, gradients, current_episode_reward, episode, step_idx, solved)
-                        if is_finish:
+                        solved = self.interact_with_chief(
+                            loss, gradients, current_episode_reward, episode, step_idx, solved
+                        )
+
+                        if solved:
                             break
 
                         episode += 1
 
-                if not is_finish:
-                    self.interact_with_chief(loss, gradients, current_episode_reward, episode, step_idx, solved)
+                if not solved:
+                    self.interact_with_chief(
+                        loss, gradients, current_episode_reward, episode, step_idx, solved
+                    )
 
     def interact_with_chief(self, loss, gradients, episode_reward, episode, step_idx, solved, agent_type=None):
         self.local_losses.append(loss)

@@ -43,6 +43,7 @@ def on_chief_message(client, userdata, msg):
     try:
         msg_payload = zlib.decompress(msg.payload)
         msg_payload = pickle.loads(msg_payload)
+
         log_msg = "[RECV] TOPIC: {0}, PAYLOAD: 'episode': {1}, 'worker_id': {2}, 'loss': {3:8.4}, 'episode_reward': {4}".format(
             msg.topic,
             msg_payload['episode'],
@@ -70,7 +71,6 @@ def on_chief_message(client, userdata, msg):
                 chief.messages_received_from_workers[msg_payload['episode']] = {}
 
             chief.messages_received_from_workers[msg_payload['episode']][msg_payload["worker_id"]] = (msg.topic, msg_payload)
-
             if len(chief.messages_received_from_workers[chief.episode_chief]) == params.NUM_WORKERS - chief.NUM_DONE_WORKERS:
                 is_include_topic_success_done = False
                 parameters_transferred = None
@@ -110,7 +110,8 @@ def on_chief_message(client, userdata, msg):
 
                 chief.save_graph()
 
-                print("episode_chief:{0:3d} - {1}\n".format(chief.episode_chief, worker_episode_reward_str))
+                if params.NUM_WORKERS > 1 and params.NUM_WORKERS - chief.NUM_DONE_WORKERS > 1:
+                    print("episode_chief:{0:3d} - {1}\n".format(chief.episode_chief, worker_episode_reward_str))
                 chief.episode_chief += 1
         else:
             chief.process_message(msg.topic, msg_payload)

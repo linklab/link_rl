@@ -152,11 +152,15 @@ class Chief:
             self.success_done_episode_reward[msg_payload['worker_id']].append(msg_payload['episode_reward'])
 
             self.NUM_DONE_WORKERS += 1
-            print("CHIEF SUCCESS CHECK! - num_of_done_workers:", self.NUM_DONE_WORKERS)
+            print("CHIEF SUCCESS CHECK by Worker {0}!  - num_of_done_workers: {1}".format(
+                msg_payload['worker_id'], self.NUM_DONE_WORKERS
+            ))
 
         elif topic == self.params.MQTT_TOPIC_FAIL_DONE:
             self.NUM_DONE_WORKERS += 1
-            print("CHIEF FAIL CHECK! - num_of_done_workers:", self.NUM_DONE_WORKERS)
+            print("CHIEF FAIL CHECK by Worker {0}! - num_of_done_workers: {1}".format(
+                msg_payload['worker_id'], self.NUM_DONE_WORKERS
+            ))
 
         else:
             pass
@@ -168,7 +172,8 @@ class Chief:
         )
 
         transfer_msg = {
-            "episode_chief": self.episode_chief
+            "episode_chief": self.episode_chief,
+            "num_done_workers": self.NUM_DONE_WORKERS
         }
 
         if msg_payload and 'agent_type' in msg_payload:
@@ -204,6 +209,7 @@ class Chief:
     def get_update_ack_msg(self, msg_payload=None):
         grad_update_msg = {
             "episode_chief": self.episode_chief,
+            "num_done_workers": self.NUM_DONE_WORKERS
         }
 
         if msg_payload and 'agent_type' in msg_payload:
