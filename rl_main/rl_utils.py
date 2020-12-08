@@ -3,11 +3,24 @@ import json
 import paho.mqtt.client as mqtt
 import torch
 from torch import optim
+import os, sys
 
-from common.environments.matlab.matlabenv_double_agents import MatlabRotaryInvertedPendulumDoubleAgentsEnv
+idx = os.getcwd().index("link_rl")
+PROJECT_HOME = os.getcwd()[:idx] + "link_rl"
+if PROJECT_HOME not in sys.path:
+    sys.path.append(PROJECT_HOME)
+
+from config.parameters import PARAMETERS as params
+
+if params.MY_PLATFORM != "REAL_RIP_PLATFORM":
+    from common.environments.matlab.matlabenv_double_agents import MatlabRotaryInvertedPendulumDoubleAgentsEnv
+
 from common.fast_rl.algorithms.DDPG_RIP_DOUBLE_AGENTS_v0 import DDPG_RIP_DOUBLE_AGENTS_v0
 from common.fast_rl.algorithms.DDPG_v0 import DDPG_v0
-from common.environments.matlab.matlabenv import MatlabRotaryInvertedPendulumEnv
+
+if params.MY_PLATFORM != "REAL_RIP_PLATFORM":
+    from common.environments.matlab.matlabenv import MatlabRotaryInvertedPendulumEnv
+
 from common.models.ddpg_actor_critic_model import DDPGActorCriticModel
 from config.names import EnvironmentName, DeepLearningModelName, RLAlgorithmName, OptimizerName
 
