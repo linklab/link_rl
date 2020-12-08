@@ -97,7 +97,7 @@ if all(saved_data_file_list):
 
 
 # https://lovit.github.io/nlp/2018/04/09/cohesion_ltokenizer/
-# Cohesion score + L-Tokenizer. 띄어쓰기가 잘 되어있는 한국어 문서를 위한 unsupervised tokenizer 생성
+# Cohesion episode_reward + L-Tokenizer. 띄어쓰기가 잘 되어있는 한국어 문서를 위한 unsupervised tokenizer 생성
 def build_korean_tokenizer():
     """
     Train soynlp tokenizer which will be used to tokenize Korean input sentence
@@ -117,7 +117,7 @@ def build_korean_tokenizer():
 
     word_scores = word_extractor.extract()
     cohesion_scores = {
-        word: score.cohesion_forward for word, score in word_scores.items()
+        word: episode_reward.cohesion_forward for word, episode_reward in word_scores.items()
     }
 
     tokenizer = LTokenizer(scores=cohesion_scores)
@@ -631,7 +631,7 @@ class SelfAttention(nn.Module):
     def forward(self, query, key, value, mask=None):
         # query, key, value = [batch size, sentence length, model dim]
 
-        # create Q, K, V matrices using identical input sentence to calculate self-attention score
+        # create Q, K, V matrices using identical input sentence to calculate self-attention episode_reward
         q = self.q_w(query)
         k = self.k_w(key)
         v = self.v_w(value)
@@ -645,12 +645,12 @@ class SelfAttention(nn.Module):
         if mask is not None:
             self_attention = self_attention.masked_fill(mask, -np.inf)
 
-        # normalize self attention score by applying soft max function on each row
+        # normalize self attention episode_reward by applying soft max function on each row
         attention_score = F.softmax(self_attention, dim=-1)
         norm_attention_score = self.dropout(attention_score)
         # attention_score = [batch size, sentence length, sentence length]
 
-        # compute "weighted" value matrix using self attention score and V matrix
+        # compute "weighted" value matrix using self attention episode_reward and V matrix
         weighted_v = torch.bmm(norm_attention_score, v)
         # weighted_v = [batch size, sentence length, attention dim]
 

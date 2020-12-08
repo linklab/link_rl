@@ -14,7 +14,8 @@ from config.names import DeepLearningModelName
 
 idx = os.getcwd().index("link_rl")
 PROJECT_HOME = os.getcwd()[:idx] + "link_rl"
-sys.path.append(PROJECT_HOME)
+if PROJECT_HOME not in sys.path:
+    sys.path.append(PROJECT_HOME)
 
 from common.environments.matlab.matlabenv import MatlabRotaryInvertedPendulumEnv
 
@@ -81,7 +82,7 @@ def play_func(exp_queue, actor_net, critic_net):
         name="One_AgentDDPG"
     )
 
-    if params.DEEP_LEARNING_MODEL in [DeepLearningModelName.DDPG_GRU, DeepLearningModelName.DDPG_GRU_ATTENTION]:
+    if params.DEEP_LEARNING_MODEL in [DeepLearningModelName.DDPG_ACTOR_CRITIC_GRU, DeepLearningModelName.DDPG_ACTOR_CRITIC_GRU_ATTENTION]:
         step_length = params.RNN_STEP_LENGTH
     else:
         step_length = -1
@@ -101,14 +102,10 @@ def play_func(exp_queue, actor_net, critic_net):
 
     best_mean_episode_reward = 0
 
-    with RewardTracker(
-            params=params,
-            stop_mean_episode_reward=params.STOP_MEAN_EPISODE_REWARD,
-            average_size_for_stats=params.AVG_EPISODE_SIZE_FOR_STAT,
-            frame=True, draw_viz=params.DRAW_VIZ, stat=stat) as reward_tracker:
+    with RewardTracker(params=params, frame=False, stat=stat) as reward_tracker:
         while step_idx < params.MAX_GLOBAL_STEPS:
             # 1 스텝 진행하고 exp를 exp_queue에 넣음
-            step_idx += 1
+            step_idx += params.N_STEP
 
             exp = next(exp_source_iter)
 
@@ -148,7 +145,7 @@ def play_func(exp_queue, actor_net, critic_net):
 def main():
     mp.set_start_method('spawn')
 
-    if params.DEEP_LEARNING_MODEL is DeepLearningModelName.DDPG_MLP:
+    if params.DEEP_LEARNING_MODEL is DeepLearningModelName.DDPG_ACTOR_CRITIC_MLP:
         actor_net = policy_based_model.DDPGActor(
             obs_size=OBS_SIZE,
             hidden_size_1=512, hidden_size_2=512,
@@ -161,7 +158,7 @@ def main():
             hidden_size_1=512, hidden_size_2=512,
             n_actions=1
         ).to(device)
-    elif params.DEEP_LEARNING_MODEL is DeepLearningModelName.DDPG_GRU:
+    elif params.DEEP_LEARNING_MODEL is DeepLearningModelName.DDPG_ACTOR_CRITIC_GRU:
         actor_net = policy_based_model.DDPGGruActor(
             obs_size=OBS_SIZE,
             hidden_size_1=256, hidden_size_2=256,

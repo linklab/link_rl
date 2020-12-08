@@ -136,3 +136,5 @@ config/parameters.py
 simulink_cache.xml
 
 slprj
+
+*.csv

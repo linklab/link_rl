@@ -9,8 +9,8 @@ import os
 from common.models.distributions import DistCategorical, DistDiagGaussian
 
 # from torch.distributions import Categorical
-from config.names import DeepLearningModelName, PROJECT_HOME
-from rl_main.utils import util_init
+from config.names import DeepLearningModelName, PROJECT_HOME, RLAlgorithmName
+from rl_main.federated_main.utils import util_init
 
 EPS_START = 0.9     # e-greedy threshold start value
 EPS_END = 0.05      # e-greedy threshold end value
@@ -34,7 +34,7 @@ class ActorCriticModel(nn.Module):
             self.input_height = s_size[1]
             self.input_width = s_size[2]
 
-            self.base = CNNBase(
+            self.base = ActorCriticCNNBase(
                 input_channels=self.input_channels,
                 input_height=self.input_height,
                 input_width=self.input_width,
@@ -42,7 +42,7 @@ class ActorCriticModel(nn.Module):
                 params=self.params
             )
         elif self.params.DEEP_LEARNING_MODEL == DeepLearningModelName.ACTOR_CRITIC_MLP:
-            self.base = MLPBase(
+            self.base = ActorCriticMLPBase(
                 num_inputs=s_size,
                 continuous=continuous,
                 params=self.params
@@ -59,10 +59,13 @@ class ActorCriticModel(nn.Module):
 
         self.a_size = a_size
 
-        if self.continuous:
-            self.dist = DistDiagGaussian(self.base.output_size, self.a_size, device)
+        if self.params.RL_ALGORITHM == RLAlgorithmName.DDPG_FAST_V0:
+            self.dist = nn.Linear(self.hidden_3_size, a_size)
         else:
-            self.dist = DistCategorical(self.base.output_size, self.a_size)
+            if self.continuous:
+                self.dist = DistDiagGaussian(self.base.output_size, self.a_size, device)
+            else:
+                self.dist = DistCategorical(self.base.output_size, self.a_size)
 
         self.avg_gradients = {}
         self.weighted_scores = [0, 0, 0, 0]
@@ -77,7 +80,7 @@ class ActorCriticModel(nn.Module):
 
         self.steps_done = 0
 
-        files = glob.glob(os.path.join(PROJECT_HOME, "model_save_files", "{0}_{1}_{2}_*".format(
+        files = glob.glob(os.path.join(PROJECT_HOME, "out", "model_save_files", "{0}_{1}_{2}_*".format(
             self.worker_id,
             self.params.ENVIRONMENT_ID.name,
             self.params.DEEP_LEARNING_MODEL.value,
@@ -103,19 +106,23 @@ class ActorCriticModel(nn.Module):
         _, actor_features = self.base(inputs)
         dist = self.dist(actor_features)
 
-        if deterministic:
-            action = dist.mode()
+        if self.params.RL_ALGORITHM == RLAlgorithmName.DDPG_FAST_V0:
+            t = torch.tanh(dist)
+            return t * self.params.ACTION_SCALE
         else:
-            action = dist.sample()
+            if deterministic:
+                action = dist.mode()
+            else:
+                action = dist.sample()
 
-        # if self.continuous:
-        #     action = torch.tensor([action.item()], device=device, dtype=torch.float)
-        # else:
-        #     action = torch.tensor([action.item()], device=device, dtype=torch.long)
+            # if self.continuous:
+            #     action = torch.tensor([action.item()], device=device, dtype=torch.float)
+            # else:
+            #     action = torch.tensor([action.item()], device=device, dtype=torch.long)
 
-        action_log_probs = dist.log_probs(action)
+            action_log_probs = dist.log_probs(action)
 
-        return action, action_log_probs
+            return action, action_log_probs
 
     def get_critic_value(self, inputs):
         critic_value, _ = self.base(inputs)
@@ -195,16 +202,17 @@ class ActorCriticModel(nn.Module):
         for name, param in named_parameters:
             self.avg_gradients["actor_linear"][name] += gradients["actor_linear"][name]
 
-    def get_average_gradients(self, num_workers):
+    def update_average_gradients(self, num_workers):
         for layer_name, layer in self.base.layers_info.items():
             named_parameters = layer.to(self.device).named_parameters()
             for name, param in named_parameters:
                 self.avg_gradients[layer_name][name] /= num_workers
+
         named_parameters = self.dist.named_parameters()
         for name, param in named_parameters:
             self.avg_gradients["actor_linear"][name] /= num_workers
 
-    def get_score_weighted_gradients(self, num_workers, scores, gradients, worker_id, episode):
+    def update_score_weighted_gradients(self, num_workers, scores, gradients, worker_id, episode):
         self.ema_scores[worker_id] = scores[worker_id][-1]
         self.sum += scores[worker_id][-1]
         self.id_list.append(worker_id)
@@ -230,7 +238,7 @@ class ActorCriticModel(nn.Module):
 
         self.count += 1
         if self.count == num_workers:
-            self.weighted_scores = [score / self.sum for score in self.ema_scores]
+            self.weighted_scores = [episode_reward / self.sum for episode_reward in self.ema_scores]
             self.count = 0
             self.sum = 0
             self.id_list = []
@@ -273,9 +281,9 @@ class ActorCriticModel(nn.Module):
                 param.data = parameters["actor_linear"][name]
 
 
-class MLPBase(nn.Module):
+class ActorCriticMLPBase(nn.Module):
     def __init__(self, num_inputs, continuous, params):
-        super(MLPBase, self).__init__()
+        super(ActorCriticMLPBase, self).__init__()
 
         self.hidden_1_size = params.HIDDEN_1_SIZE
         self.hidden_2_size = params.HIDDEN_2_SIZE
@@ -303,7 +311,7 @@ class MLPBase(nn.Module):
 
         self.critic_linear = init_(nn.Linear(self.hidden_3_size, 1))
 
-        self.layers_info = {'actor':self.actor, 'critic':self.critic, 'critic_linear':self.critic_linear}
+        self.layers_info = {'actor': self.actor, 'critic': self.critic, 'critic_linear': self.critic_linear}
 
         self.train()
 
@@ -318,15 +326,15 @@ class MLPBase(nn.Module):
         return self.hidden_3_size
 
 
-class CNNBase(nn.Module):
+class ActorCriticCNNBase(nn.Module):
     def __init__(self, input_channels, input_height, input_width, continuous, params):
-        super(CNNBase, self).__init__()
+        super(ActorCriticCNNBase, self).__init__()
         self.cnn_critic_hidden_1_size = params.CNN_CRITIC_HIDDEN_1_SIZE
         self.cnn_critic_hidden_2_size = params.CNN_CRITIC_HIDDEN_2_SIZE
 
         self.continuous = continuous
 
-        from rl_main.utils import get_conv2d_size
+        from rl_main.federated_main.utils import get_conv2d_size
         h, w = get_conv2d_size(h=input_height, w=input_width, kernel_size=3, padding=0, stride=1)
         print(h, w)
         h, w = get_conv2d_size(h=h, w=w, kernel_size=3, padding=1, stride=1)
@@ -394,5 +402,5 @@ class CNNBase(nn.Module):
 
 
 if __name__ == "__main__":
-    cnnBase = CNNBase(input_channels=2, input_height=5, input_width=5, continuous=False)
+    cnnBase = ActorCriticCNNBase(input_channels=2, input_height=5, input_width=5, continuous=False)
     print(cnnBase)

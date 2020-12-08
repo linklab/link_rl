@@ -13,7 +13,8 @@ import copy
 
 idx = os.getcwd().index("link_rl")
 PROJECT_HOME = os.getcwd()[:idx] + "link_rl"
-sys.path.append(PROJECT_HOME)
+if PROJECT_HOME not in sys.path:
+    sys.path.append(PROJECT_HOME)
 
 from common.logger import get_logger
 from config.names import DeepLearningModelName
@@ -120,7 +121,7 @@ def play_func(exp_queue_swing_up, exp_queue_balancing, actor_swing_up_net, criti
         name="Balancing_AgentDDPG"
     )
 
-    if params.DEEP_LEARNING_MODEL in [DeepLearningModelName.DDPG_GRU, DeepLearningModelName.DDPG_GRU_ATTENTION]:
+    if params.DEEP_LEARNING_MODEL in [DeepLearningModelName.DDPG_ACTOR_CRITIC_GRU, DeepLearningModelName.DDPG_ACTOR_CRITIC_GRU_ATTENTION]:
         step_length = params.RNN_STEP_LENGTH
     else:
         step_length = -1
@@ -154,13 +155,13 @@ def play_func(exp_queue_swing_up, exp_queue_balancing, actor_swing_up_net, criti
             frame=True, draw_viz=params.DRAW_VIZ, stat=stat, logger=my_logger) as reward_tracker:
         while step_idx < params.MAX_GLOBAL_STEPS:
             # 1 스텝 진행하고 exp를 exp_queue에 넣음
-            step_idx += 1
+            step_idx += params.N_STEP
 
             exp = next(exp_source_iter)
 
-            if params.DEEP_LEARNING_MODEL is DeepLearningModelName.DDPG_MLP:
+            if params.DEEP_LEARNING_MODEL is DeepLearningModelName.DDPG_ACTOR_CRITIC_MLP:
                 status_value = exp[0][-1]
-            elif params.DEEP_LEARNING_MODEL is DeepLearningModelName.DDPG_GRU:
+            elif params.DEEP_LEARNING_MODEL is DeepLearningModelName.DDPG_ACTOR_CRITIC_GRU:
                 status_value = exp[0][-1][-1]
             else:
                 raise ValueError()
@@ -281,7 +282,7 @@ def main():
     ###########################
     ### SWING_UP Controller ###
     ###########################
-    if params.DEEP_LEARNING_MODEL is DeepLearningModelName.DDPG_MLP:
+    if params.DEEP_LEARNING_MODEL is DeepLearningModelName.DDPG_ACTOR_CRITIC_MLP:
         actor_swing_up_net = policy_based_model.DDPGActor(
             obs_size=OBS_SIZE,
             hidden_size_1=512, hidden_size_2=512,
@@ -294,7 +295,7 @@ def main():
             hidden_size_1=512, hidden_size_2=512,
             n_actions=1
         ).to(device)
-    elif params.DEEP_LEARNING_MODEL is DeepLearningModelName.DDPG_GRU:
+    elif params.DEEP_LEARNING_MODEL is DeepLearningModelName.DDPG_ACTOR_CRITIC_GRU:
         actor_swing_up_net = policy_based_model.DDPGGruActor(
             obs_size=OBS_SIZE,
             hidden_size_1=256, hidden_size_2=256,
@@ -324,7 +325,7 @@ def main():
     ############################
     ### BALANCING Controller ###
     ############################
-    if params.DEEP_LEARNING_MODEL is DeepLearningModelName.DDPG_MLP:
+    if params.DEEP_LEARNING_MODEL is DeepLearningModelName.DDPG_ACTOR_CRITIC_MLP:
         actor_balancing_net = policy_based_model.DDPGActor(
             obs_size=OBS_SIZE,
             hidden_size_1=512, hidden_size_2=512,
@@ -337,7 +338,7 @@ def main():
             hidden_size_1=512, hidden_size_2=512,
             n_actions=1
         ).to(device)
-    elif params.DEEP_LEARNING_MODEL is DeepLearningModelName.DDPG_GRU:
+    elif params.DEEP_LEARNING_MODEL is DeepLearningModelName.DDPG_ACTOR_CRITIC_GRU:
         actor_balancing_net = policy_based_model.DDPGGruActor(
             obs_size=OBS_SIZE,
             hidden_size_1=256, hidden_size_2=256,

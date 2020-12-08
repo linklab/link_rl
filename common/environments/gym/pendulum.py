@@ -12,8 +12,10 @@ class Pendulum_v0(Environment):
         self.state_shape = self.get_state_shape()
 
         self.continuous = True
-        self.WIN_AND_LEARN_FINISH_SCORE = -400
-        self.WIN_AND_LEARN_FINISH_CONTINUOUS_EPISODES = 10
+        self.observation_space = self.env.observation_space
+        self.action_space = self.env.action_space
+
+        self.last_episode_reward = None
 
     def get_n_states(self):
         n_states = self.env.observation_space.shape[0]
@@ -47,9 +49,11 @@ class Pendulum_v0(Environment):
         next_state, reward, done, info = self.env.step(action)
         if type(reward) == torch.Tensor:
             reward = reward.item()
-        adjusted_reward = (reward + 8) / 8
+        adjusted_reward = reward
 
-        return next_state, reward, adjusted_reward, done, info
+        # return next_state, reward, adjusted_reward, done, info
+
+        return next_state, reward, done, info
 
     def render(self):
         self.env.render()

@@ -67,7 +67,7 @@ class MCTS:
                     0.75 * prob + 0.25 * noise
                     for prob, noise in zip(probs, noises)
                 ]
-            score = [
+            episode_reward = [
                 value + self.c_puct*prob*total_sqrt/(1+count)
                 for value, prob, count in
                     zip(values_avg, probs, counts)
@@ -75,8 +75,8 @@ class MCTS:
             invalid_actions = set(range(game.GAME_COLS)) - \
                               set(game.possible_moves(cur_state))
             for invalid in invalid_actions:
-                score[invalid] = -np.inf
-            action = int(np.argmax(score))
+                episode_reward[invalid] = -np.inf
+            action = int(np.argmax(episode_reward))
             actions.append(action)
             cur_state, won = game.move(
                 cur_state, action, cur_player)

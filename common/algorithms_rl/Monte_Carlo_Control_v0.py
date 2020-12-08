@@ -127,8 +127,8 @@ class Monte_Carlo_Control_v0:
 
         gradients = None
         loss = 0.0
-        score = 1.0 if win else 0.0
+        episode_reward = 1.0 if win else 0.0
 
         #self.print_q_table()
-        return gradients, loss, score
+        return gradients, loss, episode_reward
 

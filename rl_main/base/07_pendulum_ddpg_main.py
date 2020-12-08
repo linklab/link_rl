@@ -13,7 +13,8 @@ from config.names import DeepLearningModelName
 
 idx = os.getcwd().index("link_rl")
 PROJECT_HOME = os.getcwd()[:idx] + "link_rl"
-sys.path.append(PROJECT_HOME)
+if PROJECT_HOME not in sys.path:
+    sys.path.append(PROJECT_HOME)
 
 from common.common_utils import make_gym_env, smooth
 from common.fast_rl.policy_based_model import unpack_batch_for_ddpg
@@ -59,7 +60,7 @@ def play_func(exp_queue, env, net):
         action_min=action_min, action_max=action_max, device=device, preprocessor=float32_preprocessor
     )
 
-    if params.DEEP_LEARNING_MODEL in [DeepLearningModelName.DDPG_GRU, DeepLearningModelName.DDPG_GRU_ATTENTION]:
+    if params.DEEP_LEARNING_MODEL in [DeepLearningModelName.DDPG_ACTOR_CRITIC_GRU, DeepLearningModelName.DDPG_ACTOR_CRITIC_GRU_ATTENTION]:
         step_length = params.RNN_STEP_LENGTH
     else:
         step_length = -1
@@ -79,14 +80,10 @@ def play_func(exp_queue, env, net):
 
     best_mean_episode_reward = 0.0
 
-    with utils.RewardTracker(
-            params=params,
-            stop_mean_episode_reward=params.STOP_MEAN_EPISODE_REWARD,
-            average_size_for_stats=params.AVG_EPISODE_SIZE_FOR_STAT,
-            frame=True, draw_viz=params.DRAW_VIZ, stat=stat) as reward_tracker:
+    with utils.RewardTracker(params=params, frame=True, stat=stat) as reward_tracker:
         while step_idx < params.MAX_GLOBAL_STEPS:
             # 1 스텝 진행하고 exp를 exp_queue에 넣음
-            step_idx += 1
+            step_idx += params.N_STEP
             exp = next(exp_source_iter)
             exp_queue.put(exp)
 
@@ -127,7 +124,7 @@ def main():
     print("observation_space:", env.observation_space)
     print("action_space:", env.action_space)
 
-    if params.DEEP_LEARNING_MODEL is DeepLearningModelName.DDPG_MLP:
+    if params.DEEP_LEARNING_MODEL is DeepLearningModelName.DDPG_ACTOR_CRITIC_MLP:
         actor_net = policy_based_model.DDPGActor(
             obs_size=3,
             hidden_size_1=512, hidden_size_2=256,
@@ -140,7 +137,7 @@ def main():
             hidden_size_1=512, hidden_size_2=256,
             n_actions=1
         ).to(device)
-    elif params.DEEP_LEARNING_MODEL is DeepLearningModelName.DDPG_GRU:
+    elif params.DEEP_LEARNING_MODEL is DeepLearningModelName.DDPG_ACTOR_CRITIC_GRU:
         actor_net = policy_based_model.DDPGGruActor(
             obs_size=3,
             hidden_size_1=256, hidden_size_2=256,
@@ -155,7 +152,7 @@ def main():
             n_actions=1,
             bidirectional=False
         ).to(device)
-    elif params.DEEP_LEARNING_MODEL is DeepLearningModelName.DDPG_GRU_ATTENTION:
+    elif params.DEEP_LEARNING_MODEL is DeepLearningModelName.DDPG_ACTOR_CRITIC_GRU_ATTENTION:
         actor_net = policy_based_model.DDPGGruAttentionActor(
             obs_size=3,
             hidden_size=256,

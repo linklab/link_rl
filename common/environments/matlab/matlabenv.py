@@ -55,6 +55,9 @@ class MatlabRotaryInvertedPendulumEnv(gym.Env):
             dtype=np.float32
         )
 
+        self.n_states = self.observation_space.shape[0]
+        self.n_actions = self.action_space.shape[0]
+
         self.current_status = None
 
         self.count_continuous_uprights = 0
@@ -70,6 +73,19 @@ class MatlabRotaryInvertedPendulumEnv(gym.Env):
         self.episode_position_reward_list = []
         self.episode_pendulum_velocity_reward_list = []
         self.episode_action_reward_list = []
+
+    def get_n_states(self):
+        n_states = self.observation_space.shape[0]
+        return n_states
+
+    def get_n_actions(self):
+        n_actions = self.action_space.shape[0]
+        return n_actions
+
+    @property
+    def action_meanings(self):
+        action_meanings = ["Joint effort",]
+        return action_meanings
 
     def pause(self):
         self.plant.conncectpause()
@@ -232,7 +248,7 @@ class MatlabRotaryInvertedPendulumEnv(gym.Env):
 
         done_conditions = [
             self.episode_steps >= 500,
-            #self.too_much_rotate
+            self.too_much_rotate
             # self.num_continuous_positive_torque >= 30,
             # self.num_continuous_negative_torque >= 30
         ]

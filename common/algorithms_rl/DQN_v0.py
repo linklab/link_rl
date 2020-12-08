@@ -2,12 +2,10 @@ import math
 import random
 from collections import namedtuple, deque
 
-import torch.optim as optim
 import torch.nn.functional as F
 import torch
 
 from rl_main import rl_utils
-from rl_main.utils import print_torch
 
 CUDA=True
 device = torch.device('cuda' if CUDA else 'cpu')
@@ -53,15 +51,16 @@ class DQN_v0:
         self.params = params
         self.verbose = verbose
 
-        self.policy_model = rl_utils.get_rl_model(self.env).to(device)
-        self.target_model = rl_utils.get_rl_model(self.env).to(device)
+        self.policy_model = rl_utils.get_rl_model(self.env, params=params).to(device)
+        self.target_model = rl_utils.get_rl_model(self.env, params=params).to(device)
 
         self.target_model.load_state_dict(self.policy_model.state_dict())
         self.target_model.eval()
 
         self.optimizer = rl_utils.get_optimizer(
             parameters=self.policy_model.parameters(),
-            learning_rate=self.learning_rate
+            learning_rate=self.learning_rate,
+            params=params
         )
 
         self.memory = ReplayMemory(10000, device)
@@ -73,7 +72,7 @@ class DQN_v0:
         state = self.env.reset()
 
         done = False
-        score = 0.0
+        episode_reward = 0.0
 
         while not done:
             if self.env_render:
@@ -88,7 +87,7 @@ class DQN_v0:
 
             # Move to the next state
             state = next_state
-            score += reward
+            episode_reward += reward
 
         gradients, loss = self.train_net()
 
@@ -96,7 +95,7 @@ class DQN_v0:
         if episode % TARGET_UPDATE_PERIOD == 0:
             self.target_model.load_state_dict(self.policy_model.state_dict())
 
-        return gradients, loss, score
+        return gradients, loss, episode_reward
 
     # epsilon greedy policy
     def select_epsilon_greedy_action(self, state):
@@ -113,7 +112,7 @@ class DQN_v0:
         else:
             return torch.tensor([[random.randrange(self.env.n_actions)]], device=self.device, dtype=torch.long)
 
-    def train_net(self):
+    def train_net(self, step_idx=0):
         if len(self.memory) < self.params.BATCH_SIZE:
             return
 

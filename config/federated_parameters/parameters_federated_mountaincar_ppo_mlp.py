@@ -1,8 +1,8 @@
-from config.federated_parameters.parameters_cartpole_ppo_mlp import PARAMETERS_CARTPOLE_PPO_MLP
+from config.federated_parameters.parameters_federated_cartpole_ppo_mlp import PARAMETERS_FEDERATED_CARTPOLE_PPO_MLP
 from config.names import *
 
 
-class PARAMETERS_MOUNTAINCAR_PPO_MLP(PARAMETERS_CARTPOLE_PPO_MLP):
+class PARAMETERS_FEDERATED_MOUNTAINCAR_PPO_MLP(PARAMETERS_FEDERATED_CARTPOLE_PPO_MLP):
     # [WORKER]
     NUM_WORKERS = 8
 

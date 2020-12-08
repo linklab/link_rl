@@ -3,7 +3,6 @@ import time
 import gym
 import torch
 import random
-import collections
 
 import numpy as np
 
@@ -17,13 +16,16 @@ from config.parameters import PARAMETERS as params
 
 # one single experience step
 Experience = namedtuple('Experience', ['state', 'action', 'reward', 'done'])
-ExperienceWithNoise = namedtuple('ExperienceWithNoise', ['state', 'action', 'noise', 'reward', 'done'])
+ExperienceWithNoise = namedtuple(
+    'ExperienceWithNoise', ['state', 'action', 'noise', 'reward', 'done', 'episode_reward']
+)
 
-ExperienceFirstLast = collections.namedtuple(
+ExperienceFirstLast = namedtuple(
     'ExperienceFirstLast', ('state', 'action', 'reward', 'last_state', 'last_step', 'done')
 )
-ExperienceFirstLastWithNoise = collections.namedtuple(
-    'ExperienceFirstLastWithNoise', ('state', 'action', 'noise', 'reward', 'last_state', 'last_step', 'done')
+ExperienceFirstLastWithNoise = namedtuple(
+    'ExperienceFirstLastWithNoise',
+    ('state', 'action', 'noise', 'reward', 'last_state', 'last_step', 'done', 'episode_reward')
 )
 
 
@@ -119,7 +121,9 @@ class ExperienceSourceSingleEnv:
 
             if state is not None:
                 if isinstance(self.agent, AgentDDPG):
-                    history.append(ExperienceWithNoise(state=processed_state, action=action, noise=noise, reward=r, done=is_done))
+                    history.append(ExperienceWithNoise(
+                        state=processed_state, action=action, noise=noise, reward=r, done=is_done, episode_reward=None
+                    ))
                 else:
                     history.append(Experience(state=processed_state, action=action, reward=r, done=is_done))
 
@@ -191,7 +195,7 @@ class ExperienceSourceSingleEnvFirstLast(ExperienceSourceSingleEnv):
             if isinstance(self.agent, AgentDDPG):
                 exp = ExperienceFirstLastWithNoise(
                     state=exp[0].state, action=exp[0].action, noise=exp[0].noise, reward=total_reward,
-                    last_state=last_state, last_step=len(elems), done=exp[-1].done
+                    last_state=last_state, last_step=len(elems), done=exp[-1].done, episode_reward=None
                 )
             else:
                 exp = ExperienceFirstLast(
@@ -569,7 +573,7 @@ class ExperienceSourceBuffer:
 
 class ExperienceReplayBuffer:
     def __init__(self, experience_source, buffer_size):
-        assert isinstance(experience_source, (ExperienceSource, type(None)))
+        assert isinstance(experience_source, (ExperienceSource, ExperienceSourceFirstLast, ExperienceSourceSingleEnvFirstLast, type(None)))
         assert isinstance(buffer_size, int)
         self.experience_source_iter = None if experience_source is None else iter(experience_source)
         self.buffer = []

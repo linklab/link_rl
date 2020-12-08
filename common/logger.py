@@ -3,6 +3,8 @@ from logging.handlers import RotatingFileHandler
 
 idx = os.getcwd().index("link_rl")
 PROJECT_HOME = os.getcwd()[:idx] + "link_rl"
+if PROJECT_HOME not in sys.path:
+    sys.path.append(PROJECT_HOME)
 
 
 def get_logger(name):
@@ -17,11 +19,11 @@ def get_logger(name):
     logger.propagate = False
     logger.setLevel(logging.INFO)
 
-    if not os.path.exists(os.path.join(PROJECT_HOME, "logs")):
-        os.makedirs(os.path.join(PROJECT_HOME, "logs"))
+    if not os.path.exists(os.path.join(PROJECT_HOME, "out", "logs")):
+        os.makedirs(os.path.join(PROJECT_HOME, "out", "logs"))
 
     rotate_handler = RotatingFileHandler(
-        os.path.join(PROJECT_HOME, "logs", name + ".log"),
+        os.path.join(PROJECT_HOME, "out", "logs", name + ".log"),
         'a',
         1024 * 1024 * 5,
         5

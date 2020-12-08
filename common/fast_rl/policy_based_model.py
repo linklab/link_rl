@@ -131,18 +131,18 @@ class Attention(nn.Module):
         # Query = [BxH]       B: Batch Size, Q: Hidden Size
         # Keys = [BxSxH]      B: Batch Size, S: Step Length, H: Hidden Size
         # Values = [BxSxH]    B: Batch Size, S: Step Length, H: Hidden Size
-        # Outputs = score:[BxS], attention_value:[BxH]
+        # Outputs = episode_reward:[BxS], attention_value:[BxH]
 
         # Here we assume q_dim == k_dim (dot product attention)
 
         query = query.unsqueeze(1)                  # [BxH] -> [Bx1xH]
         keys = keys.transpose(1, 2)                 # [BxSxH] -> [BxHxS]
 
-        score = torch.bmm(query, keys)                # [Bx1xH]x[BxHxS] -> [Bx1xS], batch_matrix_multiplication: bmm
-        score = F.softmax(score.mul_(self.scale), dim=2)    # scale & normalize
-        attention_value = torch.bmm(score, values).squeeze(1)    # [Bx1xS]x[BxSxH] -> [Bx1xH], 128개 각 값을 softmax 값을 기반으로 재조정
+        episode_reward = torch.bmm(query, keys)                # [Bx1xH]x[BxHxS] -> [Bx1xS], batch_matrix_multiplication: bmm
+        episode_reward = F.softmax(episode_reward.mul_(self.scale), dim=2)    # scale & normalize
+        attention_value = torch.bmm(episode_reward, values).squeeze(1)    # [Bx1xS]x[BxSxH] -> [Bx1xH], 128개 각 값을 softmax 값을 기반으로 재조정
 
-        return score.unsqueeze(1), attention_value
+        return episode_reward.unsqueeze(1), attention_value
 
 
 class SelfAttentionRNNRegressor(nn.Module):
@@ -170,11 +170,11 @@ class SelfAttentionRNNRegressor(nn.Module):
         # if self.encoder.bidirectional:    # need to concat the last 2 hidden layers
         #     hidden = torch.cat([hidden[-1], hidden[-2]], dim=1)
 
-        score, attention_value = self.attention(hidden, outputs, outputs)  # Q, K, V
+        episode_reward, attention_value = self.attention(hidden, outputs, outputs)  # Q, K, V
 
         pred_value = self.dense_decoder(attention_value)  # [B, 1]
 
-        return pred_value, score
+        return pred_value, episode_reward
 
 
 class DDPGGruAttentionActor(nn.Module):

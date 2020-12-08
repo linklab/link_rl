@@ -15,9 +15,7 @@ mylogger = get_logger("rl_agent")
 
 def save_model(model_save_dir, env_name, net_name, net, step, episode_reward):
     model_save_filename = os.path.join(
-        model_save_dir, "{0}_{1}_{2}_{3}.pth".format(
-            env_name, net_name, step, episode_reward
-        )
+        model_save_dir, "{0}_{1}_{2}_{3:.2f}.pth".format(env_name, net_name, step, float(episode_reward))
     )
     torch.save(net.state_dict(), model_save_filename)
     return model_save_filename
@@ -165,7 +163,7 @@ class TargetNet:
         state = self.model.state_dict()
         tgt_state = self.target_model.state_dict()
         for k, v in state.items():
-            tgt_state[k] = tgt_state[k] * alpha + (1 - alpha) * v
+            tgt_state[k] = tgt_state[k] * alpha + (1.0 - alpha) * v
         self.target_model.load_state_dict(tgt_state)
 
 

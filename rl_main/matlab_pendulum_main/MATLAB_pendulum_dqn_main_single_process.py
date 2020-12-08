@@ -68,8 +68,7 @@ def main():
     next_save_frame_idx = params.MODEL_SAVE_STEP_PERIOD
     frame_idx = 0
 
-    with utils.RewardTracker(params.STOP_MEAN_EPISODE_REWARD, params.AVG_EPISODE_SIZE_FOR_STAT,
-                             True, params.DRAW_VIZ, stat_for_value_based_rl) as reward_tracker:
+    with utils.RewardTracker(params=params, frame=False, stat=stat_for_value_based_rl) as reward_tracker:
         while frame_idx < params.MAX_GLOBAL_STEPS:
             frame_idx += 1
             exp = next(exp_source_iter)
