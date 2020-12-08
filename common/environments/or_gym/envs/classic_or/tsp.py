@@ -175,7 +175,7 @@ class TSPEnv(gym.Env):
                 # dis = np.sqrt(np.power(line[0, 0] - line[1, 0], 2) + 
                 #               np.power(line[0, 1] - line[1, 1], 2))
                 ax.plot(line[:,0], line[:,1], c='g', zorder=-1)
-        #         ax.arrow(line[0, 0], line[0, 1], line[1, 0], line[1, 1])
+                # ax.arrow(line[0, 0], line[0, 1], line[1, 0], line[1, 1])
             ax.annotate(r"$N_{:d}$".format(n), xy=(line[0]+offset), zorder=2)
         ax.xaxis.set_visible(False)
         ax.yaxis.set_visible(False)
@@ -226,9 +226,9 @@ class TSPDistCost(TSPEnv):
         All nodes have been visited or a node has been visited again.
     '''
     def __init__(self, *args, **kwargs):
-        self.N = 50
-        self.invalid_action_cost = -100
-        self.mask = False
+        # self.N = 10
+        # self.invalid_action_cost = -100
+        # self.mask = False
         assign_env_config(self, kwargs)
         self.nodes = np.arange(self.N)
         self.coords = self._generate_coordinates()
