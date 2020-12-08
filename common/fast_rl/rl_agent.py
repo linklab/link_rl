@@ -10,9 +10,6 @@ import os, glob
 from common.logger import get_logger
 from . import actions
 
-mylogger = get_logger("rl_agent")
-
-
 def save_model(model_save_dir, env_name, net_name, net, step, episode_reward):
     model_save_filename = os.path.join(
         model_save_dir, "{0}_{1}_{2}_{3:.2f}.pth".format(env_name, net_name, step, float(episode_reward))
@@ -321,12 +318,12 @@ class AgentDDPG(BaseAgent):
 
         self.step_idx += 1
 
-        if self.step_idx % 10 == 0:
-            mylogger.info(
-                "{0:6d}:{1}: action {2:7.4f}, noise {3:7.4f}, new agent_state {4:7.4f}".format(
-                    self.step_idx, self.name, actions[0][0], noises[0][0], new_agent_states[0][0]
-                )
-            )
+        # if self.step_idx % 10 == 0:
+        #     mylogger.info(
+        #         "{0:6d}:{1}: action {2:7.4f}, noise {3:7.4f}, new agent_state {4:7.4f}".format(
+        #             self.step_idx, self.name, actions[0][0], noises[0][0], new_agent_states[0][0]
+        #         )
+        #     )
 
         return actions, noises, new_agent_states
 

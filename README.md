@@ -27,8 +27,13 @@
   - Linux: https://blog.neonkid.xyz/127
 
 - 모스키토 서비스 실행
-  - /usr/local/sbin/mosquitto -c /usr/local/etc/mosquitto/mosquitto.conf
+  - MAC/Linux
+    $ /usr/local/sbin/mosquitto -c /usr/local/etc/mosquitto/mosquitto.conf
   
+  - Windows  
+    $ cd C:\Program Files\mosquitto  
+    $ mosquitto -v 
+    
 - 메세지 구독
   - mosquitto_sub -h [주소] -p [포트] -t [주제]
   - mosquitto_sub -h 127.0.0.1 -p 1883 -t "topic"
