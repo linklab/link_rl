@@ -295,9 +295,14 @@ class BoundedKnapsackEnv(KnapsackEnv):
         Full knapsack or selection that puts the knapsack over the limit.
     '''
     def __init__(self, *args, **kwargs):
-        super().__init__()
+        # Add env_config, if any
+        assign_env_config(self, kwargs)
+
         self.item_limits_init = np.random.randint(1, 10, size=self.N)
         self.item_limits = self.item_limits_init.copy()
+
+        super().__init__()
+
         self.item_weights = np.random.randint(1, 100, size=self.N)
         self.item_values = np.random.randint(0, 100, size=self.N)
 
@@ -315,6 +320,8 @@ class BoundedKnapsackEnv(KnapsackEnv):
             self.observation_space = obs_space
 
         self._max_reward = 1800 # Used for VF clipping
+
+        self.previous_action_mask = None
         
     def step(self, item):
         # Check item limit
@@ -336,8 +343,24 @@ class BoundedKnapsackEnv(KnapsackEnv):
             # End if item is unavailable
             reward = 0
             done = True
+
+        #print(item, self.state, reward, done)
+        updated_state = self._post_process()
             
-        return self.state, reward, done, {}
+        return updated_state, reward, done, {}
+        # return self.state, reward, done, {}
+
+    def _post_process(self):
+        updated_state = []
+        if self.mask:
+            original_state = self.state['state']
+            self.previous_action_mask = self.state['action_mask']
+        else:
+            original_state = self.state
+
+        for l in original_state:
+            updated_state.extend(l)
+        return updated_state
 
     def _update_state(self, item=None):
         if item is not None:
@@ -374,8 +397,13 @@ class BoundedKnapsackEnv(KnapsackEnv):
         self.current_weight = 0
         self.item_limits = self.item_limits_init.copy()
         self._update_state()
-        return self.state
 
+        #print("\n", "RESET", self.state)
+
+        updated_state = self._post_process()
+
+        return updated_state
+        # return self.state
 
 class OnlineKnapsackEnv(BoundedKnapsackEnv):
     '''

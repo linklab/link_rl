@@ -1,7 +1,10 @@
 import enum
-import os
-idx = os.getcwd().index("{0}link_rl".format(os.sep))
-PROJECT_HOME = os.getcwd()[:idx+1] + "link_rl{0}".format(os.sep)
+import os, sys
+
+idx = os.getcwd().index("link_rl")
+PROJECT_HOME = os.getcwd()[:idx] + "link_rl"
+if PROJECT_HOME not in sys.path:
+    sys.path.append(PROJECT_HOME)
 
 
 class OSName(enum.Enum):
@@ -39,7 +42,8 @@ class EnvironmentName(enum.Enum):
     BREAKOUT_NO_FRAME_SKIP_V4 = 'BreakoutNoFrameskip-v4'
     SPACE_INVADERS_NO_FRAME_SKIP_V4 = "SpaceInvadersNoFrameskip-v4"
     ENDURO_NO_FRAME_SKIP_V4 = "EnduroNoFrameskip-v4"
-    PENDULUM_MATLAB_V0 = "Pendulum_Matlab_v0"
+    SEAQUEST_NO_FRAME_SKIP_V4 = "SeaquestNoFrameskip-v4"
+    FREEWAY_NO_FRAME_SKIP_V4 = "FreewayNoFrameskip-v4"
     MINITAUR_BULLET_V0 = "MinitaurBulletEnv-v0"
     TSP_V0 = "TSP-v0"  # bi-directional connections and uniform cost.
     TSP_V1 = "TSP-v1"  # bi-directional connections
@@ -47,24 +51,28 @@ class EnvironmentName(enum.Enum):
     KNAPSACK_V1 = "Knapsack-v1"  # binary (0-1) knapsack problem with 200 items.
     KNAPSACK_V2 = "Knapsack-v2"  # bounded knapsack problem with 200 items.
     KNAPSACK_V3 = "Knapsack-v3"  # stochastic, online knapsack with 200 items.
-
+    PENDULUM_MATLAB_V0 = "Pendulum_Matlab_v0"
+    PENDULUM_MATLAB_DOUBLE_AGENTS_V0 = "Pendulum_Matlab_Double_Agents_v0"
+    REAL_DEVICE_DOUBLE_RIP = "RealDeviceDoubleRip"
 
 
 class DeepLearningModelName(enum.Enum):
     ACTOR_CRITIC_MLP = "ACTOR_CRITIC_MLP"
     ACTOR_CRITIC_CONTINUOUS_ACTION_MLP = "ACTOR_CRITIC_CONTINUOUS_ACTION_MLP"
     ACTOR_CRITIC_CNN = "ACTOR_CRITIC_CNN"
-    DDPG_MLP = "DDPG_MLP"
     NO_MODEL = "NO_MODEL"
     DUELING_DQN_CNN = "DUELING_DQN_CNN"
     DUELING_DQN_MLP = "DUELING_DQN_MLP"
     RAINBOW_DQN_MLP = "RAINBOW_DQN_MLP"
-
+    DDPG_ACTOR_CRITIC_MLP = "DDPG_ACTOR_CRITIC_MLP"
+    DDPG_ACTOR_CRITIC_GRU = "DDPG_ACTOR_CRITIC_GRU"
+    DDPG_ACTOR_CRITIC_GRU_ATTENTION = "DDPG_ACTOR_CRITIC_GRU_ATTENTION"
 
 class RLAlgorithmName(enum.Enum):
     DQN_FAST_V0 = "DQN_FAST_V0"                     # FAST_RL
     RAINBOW_FAST_V0 = "RAINBOW_FAST_V0"             # FAST_RL
     DDPG_FAST_V0 = "DDPG_FAST_V0"                   # FAST_RL
+    DDPG_FAST_DOUBLE_AGENTS_V0 = "DDPG_FAST_DOUBLE_AGENTS_V0"  # FAST_RL
     A2C_FAST_V0 = "A2C_FAST_V0"                     # FAST_RL
     A2C_CONTINUOUS_ACTION_FAST_V0 = "A2C_FAST_V0"   # FAST_RL
     POLICY_GRADIENT_FAST_V0 = "POLICY_GRADIENT_V0"  # FAST_RL

@@ -113,9 +113,9 @@ if __name__ == "__main__":
     agent = ptan.agent.PolicyAgent(lambda x: net(x)[0], apply_softmax=True, preprocessor=ptan.agent.float32_preprocessor,
                                    device=device)
     if do_distill:
-        exp_source = common.DistillExperienceSource(env, agent, steps_count=1)
+        experience_source = common.DistillExperienceSource(env, agent, steps_count=1)
     else:
-        exp_source = ptan.experience.ExperienceSource(env, agent, steps_count=1)
+        experience_source = ptan.experience.ExperienceSource(env, agent, steps_count=1)
 
     optimizer = optim.Adam(net.parameters(), lr=params.lr)
     if do_distill:
@@ -182,7 +182,7 @@ if __name__ == "__main__":
 
 
     engine = Engine(process_batch)
-    common.setup_ignite(engine, params, exp_source, NAME + "_" + args.name, extra_metrics=(
+    common.setup_ignite(engine, params, experience_source, NAME + "_" + args.name, extra_metrics=(
         'test_reward', 'avg_test_reward', 'test_steps'))
 
     @engine.on(ptan_ignite.PeriodEvents.ITERS_10000_COMPLETED)
@@ -223,12 +223,12 @@ if __name__ == "__main__":
             net.sample_noise()
 
     if do_distill:
-        engine.run(ppo.batch_generator_distill(exp_source, net, params.ppo_trajectory,
+        engine.run(ppo.batch_generator_distill(experience_source, net, params.ppo_trajectory,
                                                params.ppo_epoches, params.batch_size,
                                                params.gamma, params.gae_lambda, device=device,
                                                trim_trajectory=False, new_batch_callable=new_ppo_batch))
     else:
-        engine.run(ppo.batch_generator(exp_source, net, params.ppo_trajectory,
+        engine.run(ppo.batch_generator(experience_source, net, params.ppo_trajectory,
                                        params.ppo_epoches, params.batch_size,
                                        params.gamma, params.gae_lambda, device=device,
                                        trim_trajectory=False, new_batch_callable=new_ppo_batch))

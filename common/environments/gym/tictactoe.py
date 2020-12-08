@@ -1,6 +1,6 @@
 import gym
 from gym import spaces
-from rl_main.logger import get_logger
+from common.logger import get_logger
 import sys
 
 CODE_MARK_MAP = {0: ' ', 1: 'O', 2: 'X'}

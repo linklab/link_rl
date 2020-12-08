@@ -50,6 +50,7 @@ class PARAMETERS_GENERAL:
     REPLAY_BUFFER = ReplayBufferName.REPLAY_BUFFER
 
     STOP_MEAN_EPISODE_REWARD = None
+    STOP_CONDITION_CONTINUOUS_EPISODE = 10
     REPLAY_BUFFER_SIZE = 100000
     MIN_REPLAY_SIZE_FOR_TRAIN = 1000
     TARGET_NET_SYNC_STEP_PERIOD = 1000
@@ -59,10 +60,15 @@ class PARAMETERS_GENERAL:
     AVG_EPISODE_SIZE_FOR_STAT = 100
     MODEL_SAVE_STEP_PERIOD = 10000
     DRAW_VIZ = True
+    DRAW_VIZ_PERIOD_STEPS = 10
     N_STEP = 1
     OMEGA = False
     OMEGA_WINDOW_SIZE = 6
     NEXT_STATE_IN_TRAJECTORY = True
+    DATA_SAVE_STEP_PERIOD = 1000
+
+    LOAD_SAVED_ACTOR_MODEL = None    # 정확하고도 완전한 Full File PATH + NAME 지정 (확장자 포함)
+    LOAD_SAVED_CRITIC_MODEL = None   # 정확하고도 완전한 Full File PATH + NAME 지정 (확장자 포함)
     #########################################
     #########################################
 

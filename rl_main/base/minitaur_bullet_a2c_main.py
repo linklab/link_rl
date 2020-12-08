@@ -55,7 +55,7 @@ def play_func(exp_queue, env, net):
     step_idx = 0
     next_save_frame_idx = params.MODEL_SAVE_STEP_PERIOD
 
-    with utils.RewardTracker(params.STOP_MEAN_EPISODE_REWARD, params.AVG_EPISODE_SIZE_FOR_STAT, params.DRAW_VIZ, stat) as reward_tracker:
+    with utils.RewardTracker(params=params, frame=False, stat=stat) as reward_tracker:
         while True:
             step_idx += 1
             exp = next(exp_source_iter)
@@ -106,7 +106,7 @@ def main():
     print(net)
     tgt_net = rl_agent.TargetNet(net)
 
-    buffer = experience.PrioReplayBuffer(exp_source=None, buf_size=params.REPLAY_BUFFER_SIZE)
+    buffer = experience.PrioReplayBuffer(experience_source=None, buffer_size=params.REPLAY_BUFFER_SIZE)
     optimizer = optim.Adam(net.parameters(), lr=params.LEARNING_RATE)
 
     exp_queue = mp.Queue(maxsize=params.TRAIN_STEP_FREQ * 2)

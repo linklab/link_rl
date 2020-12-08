@@ -85,7 +85,7 @@ if __name__ == "__main__":
 
     agent = ptan.agent.PolicyAgent(
         lambda x: net(x)[0], device=device, apply_softmax=True)
-    exp_source = ptan.experience.ExperienceSourceFirstLast(
+    experience_source = ptan.experience.ExperienceSourceFirstLast(
         [env], agent, gamma=GAMMA, steps_count=REWARD_STEPS,
         vectorized=True)
 
@@ -94,8 +94,8 @@ if __name__ == "__main__":
         with ptan.common.utils.TBMeanTracker(
                 writer, batch_size=10) as tb_tracker:
             batch = []
-            for step_idx, exp in enumerate(exp_source):
-                rewards_steps = exp_source.pop_rewards_steps()
+            for step_idx, exp in enumerate(experience_source):
+                rewards_steps = experience_source.pop_rewards_steps()
                 if rewards_steps:
                     rewards, steps = zip(*rewards_steps)
                     tb_tracker.track("episode_steps",

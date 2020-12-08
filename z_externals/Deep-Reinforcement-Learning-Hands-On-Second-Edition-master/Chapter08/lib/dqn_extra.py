@@ -6,8 +6,8 @@ from torch import nn as nn
 from torch.nn import functional as F
 
 # replay buffer params
-BETA_START = 0.4
-BETA_FRAMES = 100000
+beta_start = 0.4
+beta_frames = 100000
 
 # distributional DQN params
 Vmax = 10
@@ -130,19 +130,19 @@ class NoisyDQN(nn.Module):
 
 
 class PrioReplayBuffer:
-    def __init__(self, exp_source, buf_size, prob_alpha=0.6):
-        self.exp_source_iter = iter(exp_source)
+    def __init__(self, experience_source, buffer_size, prob_alpha=0.6):
+        self.exp_source_iter = iter(experience_source)
         self.prob_alpha = prob_alpha
-        self.capacity = buf_size
+        self.capacity = buffer_size
         self.pos = 0
         self.buffer = []
         self.priorities = np.zeros(
-            (buf_size, ), dtype=np.float32)
-        self.beta = BETA_START
+            (buffer_size, ), dtype=np.float32)
+        self.beta = beta_start
 
     def update_beta(self, idx):
-        v = BETA_START + idx * (1.0 - BETA_START) / \
-            BETA_FRAMES
+        v = beta_start + idx * (1.0 - beta_start) / \
+            beta_frames
         self.beta = min(1.0, v)
         return self.beta
 

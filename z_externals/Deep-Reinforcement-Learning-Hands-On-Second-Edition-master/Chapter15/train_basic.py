@@ -75,10 +75,10 @@ if __name__ == "__main__":
     tgt_net = ptan.agent.TargetNet(net)
 
     agent = model.DQNAgent(net, prep, epsilon=1, device=device)
-    exp_source = ptan.experience.ExperienceSourceFirstLast(
+    experience_source = ptan.experience.ExperienceSourceFirstLast(
         env, agent, gamma=GAMMA, steps_count=1)
     buffer = ptan.experience.ExperienceReplayBuffer(
-        exp_source, params.replay_size)
+        experience_source, params.replay_size)
 
     optimizer = optim.RMSprop(itertools.chain(net.parameters(), prep.parameters()),
                               lr=LEARNING_RATE, eps=1e-5)
@@ -104,7 +104,7 @@ if __name__ == "__main__":
     save_path = pathlib.Path("saves") / run_name
     save_path.mkdir(parents=True, exist_ok=True)
 
-    common.setup_ignite(engine, exp_source, run_name,
+    common.setup_ignite(engine, experience_source, run_name,
                         extra_metrics=('val_reward', 'val_steps'))
 
     @engine.on(ptan.ignite.PeriodEvents.ITERS_100_COMPLETED)

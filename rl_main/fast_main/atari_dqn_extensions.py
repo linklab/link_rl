@@ -16,8 +16,8 @@ from common.fast_rl.common import utils
 from common.fast_rl.common import statistics, wrappers
 from rl_main.fast_main.atari_draw_graph import save_reward_as_pickle, save_q_loss_as_pickle
 
-from line_profiler import LineProfiler
-from memory_profiler import profile
+# from line_profiler import LineProfiler
+# from memory_profiler import profile
 import gc
 
 ##### NOTE #####
@@ -27,7 +27,7 @@ from config.parameters import PARAMETERS as params
 warnings.filterwarnings("ignore", category=DeprecationWarning)
 warnings.filterwarnings("ignore", category=UserWarning)
 os.environ['KMP_DUPLICATE_LIB_OK'] = 'True'
-# os.environ['LRU_CACHE_CAPACITY'] = '1'
+os.environ['LRU_CACHE_CAPACITY'] = '1'
 
 if torch.cuda.is_available():
     device = torch.device("cuda" if params.CUDA else "cpu")
@@ -48,8 +48,8 @@ def play_func(env, net, exp_queue):
         eps_frames=params.EPSILON_MIN_STEP
     )
     agent = rl_agent.DQNAgent(net, action_selector, device=device)
-    exp_source = experience.ExperienceSourceNamedTuple(env, agent, steps_count=1)
-    exp_source_iter = iter(exp_source)
+    experience_source = experience.ExperienceSourceNamedTuple(env, agent, steps_count=1)
+    exp_source_iter = iter(experience_source)
 
     if params.DRAW_VIZ:
         stat = statistics.StatisticsForValueBasedRL(method="nature_dqn")
@@ -66,9 +66,7 @@ def play_func(env, net, exp_queue):
     frame_idx = 0
     next_save_frame_idx = params.MODEL_SAVE_STEP_PERIOD
 
-    with utils.RewardTracker(stop_mean_episode_reward=params.STOP_MEAN_EPISODE_REWARD,
-            average_size_for_stats=params.AVG_EPISODE_SIZE_FOR_STAT, frame=True,
-            draw_viz=params.DRAW_VIZ, stat=stat) as reward_tracker:
+    with utils.RewardTracker(params=params, frame=True, stat=stat) as reward_tracker:
         while frame_idx < params.MAX_GLOBAL_STEPS:
             frame_idx += 1
             exp = next(exp_source_iter)
@@ -81,7 +79,7 @@ def play_func(env, net, exp_queue):
                 episode_rewards_across_steps[int((frame_idx-1)/params.DATA_SAVE_STEP_PERIOD)] = last_mean_episode_reward
                 save_reward_as_pickle(episode_rewards_across_steps, params)
 
-            episode_rewards = exp_source.pop_episode_reward_lst()
+            episode_rewards = experience_source.pop_episode_reward_lst()
             if episode_rewards:
                 solved, mean_episode_reward = reward_tracker.set_episode_reward(episode_rewards[0], frame_idx, action_selector.epsilon, action_count)
                 last_mean_episode_reward = mean_episode_reward
@@ -123,10 +121,10 @@ def main():
     tgt_net = rl_agent.TargetNet(net)
 
     if params.OMEGA:
-        # buffer = experience.PrioReplayBuffer(exp_source=None, buf_size=params.REPLAY_BUFFER_SIZE, n_step=params.OMEGA_WINDOW_SIZE)
+        # buffer = experience.PrioReplayBuffer(experience_source=None, buffer_size=params.REPLAY_BUFFER_SIZE, n_step=params.OMEGA_WINDOW_SIZE)
         buffer = experience.PrioritizedReplayBuffer(experience_source=None, buffer_size=params.REPLAY_BUFFER_SIZE, n_step=params.OMEGA_WINDOW_SIZE)
     else:
-        # buffer = experience.PrioReplayBuffer(exp_source=None, buf_size=params.REPLAY_BUFFER_SIZE, n_step=params.N_STEP)
+        # buffer = experience.PrioReplayBuffer(experience_source=None, buffer_size=params.REPLAY_BUFFER_SIZE, n_step=params.N_STEP)
         buffer = experience.PrioritizedReplayBuffer(experience_source=None, buffer_size=params.REPLAY_BUFFER_SIZE, n_step=params.N_STEP)
     optimizer = optim.Adam(net.parameters(), lr=params.LEARNING_RATE)
 
@@ -170,8 +168,8 @@ def main():
                 buffer.buffer, batch, batch_indices, batch_weights, net, tgt_net, params, cuda=params.CUDA, cuda_async=True
             )
         loss_v.backward()
+
         optimizer.step()
-        # buffer.update_priorities(batch_indices, sample_prios)
         buffer.update_priorities(batch_indices, sample_prios.detach().cpu().numpy())       # .detach().data.cpu().numpy()
         buffer.update_beta(frame_idx)
 
@@ -185,6 +183,7 @@ def main():
         if frame_idx % params.DATA_SAVE_STEP_PERIOD < params.TRAIN_STEP_FREQ:
             q_loss_across_steps[int((frame_idx - 1) / params.DATA_SAVE_STEP_PERIOD)] = np.mean(loss_list)
             save_q_loss_as_pickle(q_loss_across_steps, params)
+            # gc.collect()
 
         # del loss_v
         # del loss_v, sample_prios

@@ -4,12 +4,12 @@ import pickle
 import sys
 import zlib
 
-idx = os.getcwd().index("{0}link_rl".format(os.sep))
-PROJECT_HOME = os.getcwd()[:idx+1] + "link_rl{0}".format(os.sep)
-sys.path.append(PROJECT_HOME)
+idx = os.getcwd().index("link_rl")
+PROJECT_HOME = os.getcwd()[:idx] + "link_rl"
+if PROJECT_HOME not in sys.path:
+    sys.path.append(PROJECT_HOME)
 
-from rl_main.utils import exp_moving_average
-import rl_main.rl_utils as rl_utils
+from rl_main.federated_main.utils import exp_moving_average
 
 import matplotlib.pyplot as plt
 from matplotlib import gridspec
@@ -26,16 +26,16 @@ class Chief:
         self.messages_received_from_workers = {}
 
         self.NUM_DONE_WORKERS = 0
-        self.scores = {}
+        self.episode_rewards = {}
         self.losses = {}
 
-        self.score_over_recent_100_episodes = {}
-        self.loss_over_recent_100_episodes = {}
+        self.episode_reward_over_recent_episodes = {}
+        self.loss_over_recent_episodes = {}
 
         self.success_done_episode = {}
-        self.success_done_score = {}
+        self.success_done_episode_reward = {}
 
-        self.global_max_ema_score = 0
+        self.global_max_ema_episode_reward = 0
         self.global_min_ema_loss = 1000000000
 
         self.episode_chief = 0
@@ -48,23 +48,23 @@ class Chief:
         self.params = params
 
         for worker_id in range(self.params.NUM_WORKERS):
-            self.scores[worker_id] = []
+            self.episode_rewards[worker_id] = []
             self.losses[worker_id] = []
 
             self.success_done_episode[worker_id] = []
-            self.success_done_score[worker_id] = []
+            self.success_done_episode_reward[worker_id] = []
 
-            self.score_over_recent_100_episodes[worker_id] = deque(maxlen=self.env.WIN_AND_LEARN_FINISH_CONTINUOUS_EPISODES)
-            self.loss_over_recent_100_episodes[worker_id] = deque(maxlen=self.env.WIN_AND_LEARN_FINISH_CONTINUOUS_EPISODES)
+            self.episode_reward_over_recent_episodes[worker_id] = deque(maxlen=self.params.AVG_EPISODE_SIZE_FOR_STAT)
+            self.loss_over_recent_episodes[worker_id] = deque(maxlen=self.params.AVG_EPISODE_SIZE_FOR_STAT)
 
-    def update_loss_score(self, msg_payload):
+    def update_loss_episode_reward(self, msg_payload):
         worker_id = msg_payload['worker_id']
         loss = msg_payload['loss']
-        score = msg_payload['score']
+        episode_reward = msg_payload['episode_reward']
         self.losses[worker_id].append(loss)
-        self.scores[worker_id].append(score)
-        self.loss_over_recent_100_episodes[worker_id].append(loss)
-        self.score_over_recent_100_episodes[worker_id].append(score)
+        self.episode_rewards[worker_id].append(episode_reward)
+        self.loss_over_recent_episodes[worker_id].append(loss)
+        self.episode_reward_over_recent_episodes[worker_id].append(episode_reward)
 
     def save_graph(self):
         plt.clf()
@@ -79,8 +79,8 @@ class Chief:
 
         max_episodes = 1
         for worker_id in range(self.params.NUM_WORKERS):
-            if len(self.scores[worker_id]) > max_episodes:
-                max_episodes = len(self.scores[worker_id])
+            if len(self.episode_rewards[worker_id]) > max_episodes:
+                max_episodes = len(self.episode_rewards[worker_id])
 
         ax = {}
         for row in range(self.params.NUM_WORKERS):
@@ -103,36 +103,36 @@ class Chief:
             )
 
             ax[worker_id][1].plot(
-                range(len(self.scores[worker_id])),
-                self.scores[worker_id],
+                range(len(self.episode_rewards[worker_id])),
+                self.episode_rewards[worker_id],
                 c='blue'
             )
             ax[worker_id][1].plot(
-                range(len(self.scores[worker_id])),
-                exp_moving_average(self.scores[worker_id], self.params.EMA_WINDOW),
+                range(len(self.episode_rewards[worker_id])),
+                exp_moving_average(self.episode_rewards[worker_id], self.params.EMA_WINDOW),
                 c='green'
             )
 
             ax[worker_id][1].scatter(
                 self.success_done_episode[worker_id],
-                self.success_done_score[worker_id],
+                self.success_done_episode_reward[worker_id],
                 marker="*",
                 s=70,
                 c='red'
             )
 
-        plt.savefig(os.path.join(PROJECT_HOME, "graphs", "loss_score.png"))
+        plt.savefig(os.path.join(PROJECT_HOME, "out", "graphs", "loss_episode_reward.png"))
         plt.close('all')
 
-    def save_results(self, worker_id, loss, ema_loss, score, ema_score):
-        save_dir = PROJECT_HOME + "save_results/outputs.csv"
+    def save_results(self, worker_id, loss, ema_loss, episode_reward, ema_episode_reward):
+        save_dir = os.path.join(PROJECT_HOME, "out", "save_results", "outputs.csv")
         f = open(save_dir, 'a', encoding='utf-8', newline='')
         wr = csv.writer(f)
-        wr.writerow([self.episode_chief, worker_id, loss, ema_loss, score, ema_score])
+        wr.writerow([self.episode_chief, worker_id, loss, ema_loss, episode_reward, ema_episode_reward])
         f.close()
 
     def process_message(self, topic, msg_payload):
-        self.update_loss_score(msg_payload)
+        self.update_loss_episode_reward(msg_payload)
         self.save_graph()
 
         if topic == self.params.MQTT_TOPIC_EPISODE_DETAIL and self.params.MODE_GRADIENTS_UPDATE:
@@ -140,47 +140,62 @@ class Chief:
             # if msg_payload['episode'] == 0:
             #     self.model.accumulate_gradients(msg_payload['gradients'])
             # else:
-            #     self.model.get_score_weighted_gradients(self.params.NUM_WORKERS - self.NUM_DONE_WORKERS,
-            #                                         self.score_over_recent_100_episodes, msg_payload['gradients'],
+            #     self.model.get_episode_reward_weighted_gradients(self.params.NUM_WORKERS - self.NUM_DONE_WORKERS,
+            #                                         self.episode_reward_over_recent_episodes, msg_payload['gradients'],
             #                                         msg_payload['worker_id'], msg_payload['episode'])
 
         elif topic == self.params.MQTT_TOPIC_SUCCESS_DONE:
+            if self.params.MODE_GRADIENTS_UPDATE:
+                self.model.accumulate_gradients(msg_payload['gradients'])
+
             self.success_done_episode[msg_payload['worker_id']].append(msg_payload['episode'])
-            self.success_done_score[msg_payload['worker_id']].append(msg_payload['score'])
+            self.success_done_episode_reward[msg_payload['worker_id']].append(msg_payload['episode_reward'])
 
             self.NUM_DONE_WORKERS += 1
-            print("BROKER CHECK! - num_of_done_workers:", self.NUM_DONE_WORKERS)
+            print("CHIEF SUCCESS CHECK by Worker {0}!  - num_of_done_workers: {1}".format(
+                msg_payload['worker_id'], self.NUM_DONE_WORKERS
+            ))
 
         elif topic == self.params.MQTT_TOPIC_FAIL_DONE:
             self.NUM_DONE_WORKERS += 1
-            print("BROKER CHECK! - num_of_done_workers:", self.NUM_DONE_WORKERS)
+            print("CHIEF FAIL CHECK by Worker {0}! - num_of_done_workers: {1}".format(
+                msg_payload['worker_id'], self.NUM_DONE_WORKERS
+            ))
 
         else:
             pass
 
-    def get_transfer_ack_msg(self, parameters_transferred):
+    def get_transfer_ack_msg(self, parameters_transferred, msg_payload=None):
         log_msg = "[SEND] TOPIC: {0}, PAYLOAD: 'episode': {1}".format(
             self.params.MQTT_TOPIC_TRANSFER_ACK,
             self.episode_chief
         )
 
         transfer_msg = {
-            "episode_chief": self.episode_chief
+            "episode_chief": self.episode_chief,
+            "num_done_workers": self.NUM_DONE_WORKERS
         }
+
+        if msg_payload and 'agent_type' in msg_payload:
+            transfer_msg['agent_type'] = msg_payload['agent_type']
 
         if self.params.MODE_PARAMETERS_TRANSFER:
             log_msg += ", 'parameters_length': {0}\n".format(
                 len(parameters_transferred)
             )
-
-            transfer_msg = {
-                "episode_chief": self.episode_chief,
-                "parameters": parameters_transferred
-            }
+            transfer_msg["parameters"] = parameters_transferred
         else:
-            log_msg += ", No Transfer\n"
+            log_msg += ", No Transfer"
 
-        self.logger.info(log_msg)
+        if self.params.MODE_GRADIENTS_UPDATE:
+            self.model.update_average_gradients(self.params.NUM_WORKERS - self.NUM_DONE_WORKERS)
+            log_msg += ", 'global_avg_grad_length': {0}\n".format(
+                len(self.model.avg_gradients)
+            )
+
+            transfer_msg["avg_gradients"] = self.model.avg_gradients
+
+        self.logger.info(log_msg + "\n")
 
         transfer_msg = pickle.dumps(transfer_msg, protocol=-1)
         transfer_msg = zlib.compress(transfer_msg)
@@ -191,7 +206,15 @@ class Chief:
 
         return transfer_msg
 
-    def get_update_ack_msg(self, msg_payload):
+    def get_update_ack_msg(self, msg_payload=None):
+        grad_update_msg = {
+            "episode_chief": self.episode_chief,
+            "num_done_workers": self.NUM_DONE_WORKERS
+        }
+
+        if msg_payload and 'agent_type' in msg_payload:
+            grad_update_msg['agent_type'] = msg_payload['agent_type']
+
         if self.params.MODE_GRADIENTS_UPDATE:
             log_msg = "[SEND] TOPIC: {0}, PAYLOAD: 'episode': {1}, 'global_avg_grad_length': {2}\n".format(
                 self.params.MQTT_TOPIC_UPDATE_ACK,
@@ -199,17 +222,15 @@ class Chief:
                 len(self.model.avg_gradients)
             )
 
-            self.model.get_average_gradients(self.params.NUM_WORKERS - self.NUM_DONE_WORKERS)
+            self.model.update_average_gradients(self.params.NUM_WORKERS - self.NUM_DONE_WORKERS)
 
-            grad_update_msg = {
-                "episode_chief": self.episode_chief,
-                "avg_gradients": self.model.avg_gradients
-            }
+            grad_update_msg["avg_gradients"] = self.model.avg_gradients
+
             ## weighted_gradients sharing
-            # self.model.get_score_weighted_gradients(NUM_WORKERS - self.NUM_DONE_WORKERS, self.score_over_recent_100_episodes, msg_payload['gradients'], msg_payload['worker_id'])
+            # self.model.get_episode_reward_weighted_gradients(NUM_WORKERS - self.NUM_DONE_WORKERS, self.episode_reward_over_recent_episodes, msg_payload['gradients'], msg_payload['worker_id'])
             #
             # if msg_payload['episode'] == 0:
-            #     self.model.get_average_gradients(self.params.NUM_WORKERS - self.NUM_DONE_WORKERS)
+            #     self.model.update_average_gradients(self.params.NUM_WORKERS - self.NUM_DONE_WORKERS)
             #
             #     grad_update_msg = {
             #         "episode_chief": self.episode_chief,
@@ -226,10 +247,6 @@ class Chief:
                 self.params.MQTT_TOPIC_UPDATE_ACK,
                 self.episode_chief
             )
-
-            grad_update_msg = {
-                "episode_chief": self.episode_chief
-            }
 
         self.logger.info(log_msg)
 

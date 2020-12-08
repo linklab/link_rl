@@ -41,12 +41,12 @@ def batch_generator(buffer: ptan.experience.ExperienceReplayBuffer,
         yield buffer.sample(batch_size)
 
 
-def setup_ignite(engine: Engine, exp_source, run_name: str,
+def setup_ignite(engine: Engine, experience_source, run_name: str,
                  extra_metrics: Iterable[str] = ()):
     # get rid of missing metrics warning
     warnings.simplefilter("ignore", category=UserWarning)
 
-    handler = ptan_ignite.EndOfEpisodeHandler(exp_source)
+    handler = ptan_ignite.EndOfEpisodeHandler(experience_source)
     handler.attach(engine)
     ptan_ignite.EpisodeFPSHandler().attach(engine)
 

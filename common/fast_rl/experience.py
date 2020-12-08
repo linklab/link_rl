@@ -3,7 +3,6 @@ import time
 import gym
 import torch
 import random
-import collections
 
 import numpy as np
 
@@ -13,19 +12,20 @@ from collections import namedtuple, deque
 from .rl_agent import BaseAgent, AgentDDPG
 from .common import utils
 
-# replay buffer params
-BETA_START = 0.4
-BETA_FRAMES = 100000
+from config.parameters import PARAMETERS as params
 
 # one single experience step
 Experience = namedtuple('Experience', ['state', 'action', 'reward', 'done'])
-ExperienceWithNoise = namedtuple('ExperienceWithNoise', ['state', 'action', 'noise', 'reward', 'done'])
-
-ExperienceFirstLast = collections.namedtuple(
-    'ExperienceFirstLast', ('state', 'action', 'reward', 'last_state', 'last_step')
+ExperienceWithNoise = namedtuple(
+    'ExperienceWithNoise', ['state', 'action', 'noise', 'reward', 'done', 'episode_reward']
 )
-ExperienceFirstLastWithNoise = collections.namedtuple(
-    'ExperienceFirstLastWithNoise', ('state', 'action', 'noise', 'reward', 'last_state', 'last_step')
+
+ExperienceFirstLast = namedtuple(
+    'ExperienceFirstLast', ('state', 'action', 'reward', 'last_state', 'last_step', 'done')
+)
+ExperienceFirstLastWithNoise = namedtuple(
+    'ExperienceFirstLastWithNoise',
+    ('state', 'action', 'noise', 'reward', 'last_state', 'last_step', 'done', 'episode_reward')
 )
 
 
@@ -35,19 +35,48 @@ class ExperienceSourceSingleEnv:
     Every experience contains n list of Experience entries
     """
 
-    def __init__(self, env, agent, steps_count=2, steps_delta=1):
+    def __init__(self, env, agent, steps_count=2, step_length=-1, render=False):
         assert isinstance(agent, BaseAgent)
         assert isinstance(steps_count, int)
         assert steps_count >= 1
         self.env = env
         self.agent = agent
         self.steps_count = steps_count
-        self.steps_delta = steps_delta
+        self.step_length = step_length  # -1 이면 MLP, 1 이상의 값이면 RNN
+        self.render = render
         self.episode_reward_lst = []
         self.episode_done_step_lst = []
+        self.episode_continuous_positive_actions = []
+        self.episode_continuous_negative_actions = []
+        self.state_deque = deque(maxlen=30)
+
+    def get_processed_state(self, new_state):
+        self.state_deque.append(new_state)
+
+        if self.step_length == -1:
+            next_state = np.array(self.state_deque[-1])
+        elif self.step_length >= 1:
+            if len(self.state_deque) < self.step_length:
+                next_state = list(self.state_deque)
+
+                for _ in range(self.step_length - len(self.state_deque)):
+                    next_state.insert(0, np.zeros(shape=self.env.observation_space.shape))
+
+                next_state = np.array(next_state)
+            else:
+                next_state = np.array(
+                    [
+                        self.state_deque[-self.step_length + offset] for offset in range(self.step_length)
+                    ]
+                )
+        else:
+            raise ValueError()
+
+        return next_state
 
     def __iter__(self):
         state = self.env.reset()
+
         history = deque(maxlen=self.steps_count)
         cur_reward = 0.0
         cur_step = 0
@@ -56,15 +85,25 @@ class ExperienceSourceSingleEnv:
 
         iter_idx = 0
         while True:
+            if self.render:
+                self.env.render()
+
             states_input = []
-            states_input.append(state)
+
+            processed_state = self.get_processed_state(state)
+
+            states_input.append(processed_state)
 
             agent_states_input = []
             agent_states_input.append(agent_state)
-
             if isinstance(self.agent, AgentDDPG):
                 actions, noises, new_agent_states = self.agent(states_input, agent_states_input)
                 noise = noises[0]
+                for action_ in actions:
+                    if action_ >= 0.0:
+                        self.episode_continuous_positive_actions.append(action_)
+                    else:
+                        self.episode_continuous_negative_actions.append(action_)
             else:
                 actions, new_agent_states = self.agent(states_input, agent_states_input)
 
@@ -82,11 +121,13 @@ class ExperienceSourceSingleEnv:
 
             if state is not None:
                 if isinstance(self.agent, AgentDDPG):
-                    history.append(ExperienceWithNoise(state=state, action=action, noise=noise, reward=r, done=is_done))
+                    history.append(ExperienceWithNoise(
+                        state=processed_state, action=action, noise=noise, reward=r, done=is_done, episode_reward=None
+                    ))
                 else:
-                    history.append(Experience(state=state, action=action, reward=r, done=is_done))
+                    history.append(Experience(state=processed_state, action=action, reward=r, done=is_done))
 
-            if len(history) == self.steps_count and iter_idx % self.steps_delta == 0:
+            if len(history) == self.steps_count:
                 yield tuple(history)
 
             state = next_state
@@ -103,6 +144,7 @@ class ExperienceSourceSingleEnv:
                     yield tuple(history)
 
                 state = self.env.reset()
+
                 agent_state = self.agent.initial_agent_state()
 
                 if 'ale.lives' not in info or info['ale.lives'] == 0:
@@ -131,9 +173,9 @@ class ExperienceSourceSingleEnv:
 
 
 class ExperienceSourceSingleEnvFirstLast(ExperienceSourceSingleEnv):
-    def __init__(self, env, agent, gamma, steps_count=1, steps_delta=1):
+    def __init__(self, env, agent, gamma, steps_count=1, step_length=-1, render=False):
         assert isinstance(gamma, float)
-        super(ExperienceSourceSingleEnvFirstLast, self).__init__(env, agent, steps_count + 1, steps_delta)
+        super(ExperienceSourceSingleEnvFirstLast, self).__init__(env, agent, steps_count + 1, step_length, render)
         self.gamma = gamma
         self.steps_count = steps_count
 
@@ -153,12 +195,12 @@ class ExperienceSourceSingleEnvFirstLast(ExperienceSourceSingleEnv):
             if isinstance(self.agent, AgentDDPG):
                 exp = ExperienceFirstLastWithNoise(
                     state=exp[0].state, action=exp[0].action, noise=exp[0].noise, reward=total_reward,
-                    last_state=last_state, last_step=len(elems)
+                    last_state=last_state, last_step=len(elems), done=exp[-1].done, episode_reward=None
                 )
             else:
                 exp = ExperienceFirstLast(
                     state=exp[0].state, action=exp[0].action, reward=total_reward, last_state=last_state,
-                    last_step=len(elems)
+                    last_step=len(elems), done=exp[-1].done
                 )
             yield exp
 
@@ -531,7 +573,7 @@ class ExperienceSourceBuffer:
 
 class ExperienceReplayBuffer:
     def __init__(self, experience_source, buffer_size):
-        assert isinstance(experience_source, (ExperienceSource, type(None)))
+        assert isinstance(experience_source, (ExperienceSource, ExperienceSourceFirstLast, ExperienceSourceSingleEnvFirstLast, type(None)))
         assert isinstance(buffer_size, int)
         self.experience_source_iter = None if experience_source is None else iter(experience_source)
         self.buffer = []
@@ -594,13 +636,13 @@ class ExperienceReplayBuffer:
 
 
 class PrioReplayBufferNaive:
-    def __init__(self, exp_source, buf_size, prob_alpha=0.6):
-        self.exp_source_iter = iter(exp_source)
+    def __init__(self, experience_source, buffer_size, prob_alpha=0.6):
+        self.exp_source_iter = iter(experience_source)
         self.prob_alpha = prob_alpha
-        self.capacity = buf_size
+        self.capacity = buffer_size
         self.pos = 0
         self.buffer = []
-        self.priorities = np.zeros((buf_size,), dtype=np.float32)
+        self.priorities = np.zeros((buffer_size,), dtype=np.float32)
 
     def __len__(self):
         return len(self.buffer)
@@ -636,13 +678,16 @@ class PrioReplayBufferNaive:
             self.priorities[idx] = prio
 
 
+# sumtree 사용 버전
 class PrioritizedReplayBuffer(ExperienceReplayBuffer):
-    def __init__(self, experience_source, buffer_size, alpha=0.6, n_step=1):
+    def __init__(self, experience_source, buffer_size, alpha=0.6, n_step=1, beta_start=0.4, beta_frames=100000):
         super(PrioritizedReplayBuffer, self).__init__(experience_source, buffer_size)
         assert alpha > 0
-        self._alpha = alpha
-        self.beta = BETA_START
+        self.alpha = alpha
+        self.beta = beta_start
         self.n_step = n_step
+        self.beta_start = beta_start
+        self.beta_frames = beta_frames
 
         it_capacity = 1
         while it_capacity < buffer_size:
@@ -653,15 +698,15 @@ class PrioritizedReplayBuffer(ExperienceReplayBuffer):
         self._max_priority = 1.0
 
     def update_beta(self, idx):
-        v = BETA_START + idx * (1.0 - BETA_START) / BETA_FRAMES
+        v = self.beta_start + idx * (1.0 - self.beta_start) / self.beta_frames
         self.beta = min(1.0, v)
         return self.beta
 
     def _add(self, *args, **kwargs):
         idx = self.pos
         super()._add(*args, **kwargs)
-        self._it_sum[idx] = self._max_priority ** self._alpha
-        self._it_min[idx] = self._max_priority ** self._alpha
+        self._it_sum[idx] = self._max_priority ** self.alpha
+        self._it_min[idx] = self._max_priority ** self.alpha
 
     def _sample_proportional(self, batch_size):
         assert len(self) > self.n_step
@@ -702,6 +747,7 @@ class PrioritizedReplayBuffer(ExperienceReplayBuffer):
             p_sample = self._it_sum[idx] / self._it_sum.sum()
             weight = (p_sample * len(self)) ** (-self.beta)
             weights.append(weight / max_weight)
+
         weights = np.array(weights, dtype=np.float32)
         samples = [self.buffer[idx] for idx in idxes]
         return samples, idxes, weights
@@ -710,29 +756,32 @@ class PrioritizedReplayBuffer(ExperienceReplayBuffer):
         # with torch.no_grad():
         assert len(idxes) == len(priorities)
         for idx, priority in zip(idxes, priorities):
-            assert priority > 0
-            assert 0 <= idx < len(self)
-            self._it_sum[idx] = priority ** self._alpha
-            self._it_min[idx] = priority ** self._alpha
+            assert priority > 0.0, priority
+            assert 0 <= idx < len(self), idx
+            self._it_sum[idx] = priority ** self.alpha
+            self._it_min[idx] = priority ** self.alpha
 
             self._max_priority = max(self._max_priority, priority)
 
 
+# sumtree 사용 안하는 버전
 class PrioReplayBuffer:
-    def __init__(self, exp_source, buf_size, prob_alpha=0.6, n_step=1):
-        assert isinstance(exp_source, (ExperienceSource, type(None)))
-        assert isinstance(buf_size, int)
-        self.exp_source_iter = None if exp_source is None else iter(exp_source)
+    def __init__(self, experience_source, buffer_size, prob_alpha=0.6, n_step=1, beta_start=0.4, beta_frames=100000):
+        assert isinstance(experience_source, (ExperienceSource, type(None)))
+        assert isinstance(buffer_size, int)
+        self.exp_source_iter = None if experience_source is None else iter(experience_source)
         self.prob_alpha = prob_alpha
-        self.capacity = buf_size
+        self.capacity = buffer_size
         self.pos = 0
         self.buffer = []
-        self.priorities = np.zeros((buf_size,), dtype=np.float32)
-        self.beta = BETA_START
+        self.priorities = np.zeros((buffer_size,), dtype=np.float32)
+        self.beta = beta_start
         self.n_step = n_step
+        self.beta_start = beta_start
+        self.beta_frames = beta_frames
 
     def update_beta(self, idx):
-        v = BETA_START + idx * (1.0 - BETA_START) / BETA_FRAMES
+        v = self.beta_start + idx * (1.0 - self.beta_start) / self.beta_frames
         self.beta = min(1.0, v)
         return self.beta
 

@@ -13,7 +13,8 @@ from common.fast_rl.common.utils import distribution_projection
 
 idx = os.getcwd().index("link_rl")
 PROJECT_HOME = os.getcwd()[:idx] + "link_rl"
-sys.path.append(PROJECT_HOME)
+if PROJECT_HOME not in sys.path:
+    sys.path.append(PROJECT_HOME)
 
 from common.common_utils import make_gym_env, smooth
 from common.fast_rl.policy_based_model import unpack_batch_for_ddpg
@@ -81,9 +82,7 @@ def play_func(exp_queue, env, net):
     step_idx = 0
     next_save_frame_idx = params.MODEL_SAVE_STEP_PERIOD
 
-    with utils.RewardTracker(
-            params.STOP_MEAN_EPISODE_REWARD, params.AVG_EPISODE_SIZE_FOR_STAT,
-            frame=True, draw_viz=params.DRAW_VIZ, stat=stat) as reward_tracker:
+    with utils.RewardTracker(params=params, frame=False, stat=stat) as reward_tracker:
         while step_idx < params.MAX_GLOBAL_STEPS:
             # 1 스텝 진행하고 exp를 exp_queue에 넣음
             step_idx += 1
@@ -143,7 +142,7 @@ def main():
     actor_optimizer = optim.Adam(actor_net.parameters(), lr=params.ACTOR_LEARNING_RATE)
     critic_optimizer = optim.Adam(critic_net.parameters(), lr=params.LEARNING_RATE)
 
-    buffer = experience.PrioReplayBuffer(exp_source=None, buf_size=params.REPLAY_BUFFER_SIZE)
+    buffer = experience.PrioReplayBuffer(experience_source=None, buffer_size=params.REPLAY_BUFFER_SIZE)
 
     exp_queue = mp.Queue(maxsize=params.TRAIN_STEP_FREQ * 2)
     play_proc = mp.Process(target=play_func, args=(exp_queue, env, actor_net))
@@ -152,7 +151,7 @@ def main():
     time.sleep(0.5)
 
     if params.DRAW_VIZ:
-        stat_for_ddpg = statistics.StatisticsForDDPGOptimization(n_actions=1)
+        stat_for_ddpg = statistics.StatisticsForSimpleDDPGOptimization(n_actions=1)
     else:
         stat_for_ddpg = 0.0
 
@@ -275,7 +274,7 @@ def model_update(buffer, actor_net, critic_net, target_actor_net, target_critic_
             loss_actor, loss_critic, loss_total,
             actor_grad_l2, actor_grad_variance, actor_grad_max,
             critic_grad_l2, critic_grad_variance, critic_grad_max,
-            buffer_length, exp.action, exp.noise
+            buffer_length, exp.noise, exp.action
         )
 
     buffer.update_priorities(batch_indices, (actor_loss_v + 1e-5).data.cpu().numpy())

@@ -304,6 +304,30 @@ class StatisticsForDDPGOptimization:
                 X=[global_step], Y=[noises[i]], win=self.noises[i], name="noise {0}".format(i), update="append",
                 opts=dict(title="noise {0}".format(i), showlegend=False)
             )
+
+            self.vis.line(
+                X=[global_step], Y=[actions[i]], win=self.actions[i], name="action {0}".format(i), update="append",
+                opts=dict(title="action {0}".format(i), showlegend=False)
+            )
+
+
+class StatisticsForSimpleDDPGOptimization:
+    def __init__(self, n_actions):
+        self.vis = Visdom()
+        self.n_actions = n_actions
+        self.noises = {}
+        self.actions = {}
+        for i in range(n_actions):
+            self.noises[i] = self.vis.line(X=[0], Y=[0], opts=dict(title="noise {0}".format(i)))
+            self.actions[i] = self.vis.line(X=[0], Y=[0], opts=dict(title="action {0}".format(i)))
+
+    def draw_optimization_performance(self, global_step, noises, actions):
+        for i in range(self.n_actions):
+            self.vis.line(
+                X=[global_step], Y=[noises[i]], win=self.noises[i], name="noise {0}".format(i), update="append",
+                opts=dict(title="noise {0}".format(i), showlegend=False)
+            )
+
             self.vis.line(
                 X=[global_step], Y=[actions[i]], win=self.actions[i], name="action {0}".format(i), update="append",
                 opts=dict(title="action {0}".format(i), showlegend=False)

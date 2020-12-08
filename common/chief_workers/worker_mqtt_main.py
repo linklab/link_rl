@@ -1,17 +1,23 @@
 # -*- coding:utf-8 -*-
 import pickle
 import time
+import traceback
 import zlib
 import paho.mqtt.client as mqtt
 import sys, os
 
-idx = os.getcwd().index("{0}link_rl".format(os.sep))
-PROJECT_HOME = os.getcwd()[:idx+1] + "link_rl{0}".format(os.sep)
-sys.path.append(PROJECT_HOME)
+from common.chief_workers.worker_fast_rl_rip_double_agents import WorkerFastRLRipDoubleAgents
+from rl_main.matlab_pendulum_main.experience_pendulum_ddpg_two_two_status import AgentType
 
+idx = os.getcwd().index("link_rl")
+PROJECT_HOME = os.getcwd()[:idx] + "link_rl"
+if PROJECT_HOME not in sys.path:
+    sys.path.append(PROJECT_HOME)
+
+from common.chief_workers.worker_fast_rl import WorkerFastRL
+from config.names import RLAlgorithmName
 from config.parameters import PARAMETERS as params
-
-from rl_main.logger import get_logger
+from common.logger import get_logger
 from common.chief_workers.worker import Worker
 
 worker_id = int(sys.argv[1])
@@ -32,54 +38,81 @@ def on_worker_connect(client, userdata, flags, rc):
 
 
 def on_worker_message(client, userdata, msg):
-    msg_payload = zlib.decompress(msg.payload)
-    msg_payload = pickle.loads(msg_payload)
+    try:
+        msg_payload = zlib.decompress(msg.payload)
+        msg_payload = pickle.loads(msg_payload)
 
-    if msg.topic == params.MQTT_TOPIC_UPDATE_ACK:
-        log_msg = "[RECV] TOPIC: {0}, PAYLOAD: 'episode_chief': {1}".format(
-            msg.topic,
-            msg_payload['episode_chief']
-        )
-
-        if params.MODE_GRADIENTS_UPDATE:
-            log_msg += ", avg_grad_length: {0} \n".format(
-                len(msg_payload['avg_gradients'])
+        if msg.topic == params.MQTT_TOPIC_UPDATE_ACK:
+            log_msg = "[RECV] TOPIC: {0}, PAYLOAD: 'episode_chief': {1}".format(
+                msg.topic,
+                msg_payload['episode_chief']
             )
-        else:
-            log_msg += "\n"
 
-        logger.info(log_msg)
+            if params.MODE_GRADIENTS_UPDATE:
+                log_msg += ", avg_grad_length: {0} \n".format(
+                    len(msg_payload['avg_gradients'])
+                )
+            else:
+                log_msg += "\n"
 
-        if not worker.is_success_or_fail_done and params.MODE_GRADIENTS_UPDATE:
-            worker.update_process(msg_payload['avg_gradients'])
+            logger.info(log_msg)
 
-        worker.episode_chief = msg_payload["episode_chief"]
-        print("Update_Ack: " + worker.episode_chief)
-        
-    elif msg.topic == params.MQTT_TOPIC_TRANSFER_ACK:
-        log_msg = "[RECV] TOPIC: {0}, PAYLOAD: 'episode_chief': {1}".format(
-            msg.topic,
-            msg_payload['episode_chief']
-        )
+            if not worker.is_success_or_fail_done and params.MODE_GRADIENTS_UPDATE:
+                if params.RL_ALGORITHM == RLAlgorithmName.DDPG_FAST_DOUBLE_AGENTS_V0:
+                    if msg_payload['agent_type'] == AgentType.SWING_UP_AGENT.value:
+                        worker.swing_up_update_process(msg_payload['avg_gradients'])
+                    elif msg_payload['agent_type'] == AgentType.BALANCING_AGENT.value:
+                        worker.balancing_update_process(msg_payload['avg_gradients'])
+                    else:
+                        raise ValueError()
+                else:
+                    worker.update_process(msg_payload['avg_gradients'])
 
-        if params.MODE_PARAMETERS_TRANSFER:
-            log_msg += ", parameters_length: {0} \n".format(
-                len(msg_payload['parameters'])
+            worker.episode_chief = msg_payload["episode_chief"]
+            #print("Update_Ack: {0}".format(worker.episode_chief))
+
+            if 'num_done_workers' in msg_payload:
+                worker.num_done_workers = msg_payload["episode_chief"]
+
+        elif msg.topic == params.MQTT_TOPIC_TRANSFER_ACK:
+            log_msg = "[RECV] TOPIC: {0}, PAYLOAD: 'episode_chief': {1}".format(
+                msg.topic,
+                msg_payload['episode_chief']
             )
+
+            if params.MODE_GRADIENTS_UPDATE:
+                log_msg += ", avg_grad_length: {0} \n".format(
+                    len(msg_payload['avg_gradients'])
+                )
+            else:
+                log_msg += "\n"
+
+            if params.MODE_PARAMETERS_TRANSFER:
+                log_msg += ", parameters_length: {0} \n".format(
+                    len(msg_payload['parameters'])
+                )
+            else:
+                log_msg += "\n"
+
+            logger.info(log_msg)
+
+            if not worker.is_success_or_fail_done and params.MODE_GRADIENTS_UPDATE:
+                worker.update_process(msg_payload['avg_gradients'])
+
+            if not worker.is_success_or_fail_done and params.MODE_PARAMETERS_TRANSFER:
+                worker.transfer_process(msg_payload['parameters'])
+
+            worker.episode_chief = msg_payload["episode_chief"]
+            #print("Transfer_Ack: {0}".format(worker.episode_chief))
+
+            if 'num_done_workers' in msg_payload:
+                worker.num_done_workers = msg_payload["episode_chief"]
         else:
-            log_msg += "\n"
-
-        logger.info(log_msg)
-
-        if not worker.is_success_or_fail_done and params.MODE_PARAMETERS_TRANSFER:
-            worker.transfer_process(msg_payload['parameters'])
-
-        worker.episode_chief = msg_payload["episode_chief"]
-        print("Transfer_Ack: " + worker.episode_chief)
-
-    else:
-        print("pass")
-        pass
+            print("pass")
+            pass
+    except:
+        traceback.print_exc()
+        sys.exit(-1)
 
 
 if __name__ == "__main__":
@@ -95,7 +128,14 @@ if __name__ == "__main__":
     stderr = sys.stderr
     sys.stderr = sys.stdout
     try:
-        worker = Worker(logger, worker_id, worker_mqtt_client, params)
+        if params.RL_ALGORITHM == RLAlgorithmName.DDPG_FAST_DOUBLE_AGENTS_V0:
+            assert params.NUM_WORKERS == 1, "NUM_WORKERS should be 1"
+            worker = WorkerFastRLRipDoubleAgents(logger, worker_id, worker_mqtt_client, params)
+        elif params.RL_ALGORITHM == RLAlgorithmName.DDPG_FAST_V0:
+            worker = WorkerFastRL(logger, worker_id, worker_mqtt_client, params)
+        else:
+            worker = Worker(logger, worker_id, worker_mqtt_client, params)
+
         worker.start_train()
 
         time.sleep(1)

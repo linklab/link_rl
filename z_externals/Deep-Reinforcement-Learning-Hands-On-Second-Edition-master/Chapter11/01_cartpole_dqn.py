@@ -49,8 +49,8 @@ if __name__ == "__main__":
 
     selector = ptan.actions.EpsilonGreedyActionSelector(epsilon=EPSILON_START)
     agent = ptan.agent.DQNAgent(net, selector, preprocessor=ptan.agent.float32_preprocessor)
-    exp_source = ptan.experience.ExperienceSourceFirstLast(env, agent, gamma=GAMMA)
-    replay_buffer = ptan.experience.ExperienceReplayBuffer(exp_source, REPLAY_BUFFER)
+    experience_source = ptan.experience.ExperienceSourceFirstLast(env, agent, gamma=GAMMA)
+    replay_buffer = ptan.experience.ExperienceReplayBuffer(experience_source, REPLAY_BUFFER)
 
     optimizer = optim.Adam(net.parameters(), lr=LEARNING_RATE)
     mse_loss = nn.MSELoss()
@@ -85,7 +85,7 @@ if __name__ == "__main__":
         optimizer.step()
 
         # handle new rewards
-        new_rewards = exp_source.pop_total_rewards()
+        new_rewards = experience_source.pop_total_rewards()
         if new_rewards:
             done_episodes += 1
             reward = new_rewards[0]

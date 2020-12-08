@@ -33,11 +33,12 @@ class PPO_v0:
         self.device = device
         self.verbose = verbose
 
-        self.model = rl_utils.get_rl_model(self.env, self.worker_id, self.params)
+        self.model = rl_utils.get_rl_model(self.env, self.worker_id, params=self.params)
 
         self.optimizer = rl_utils.get_optimizer(
             parameters=self.model.parameters(),
-            learning_rate=self.learning_rate
+            learning_rate=self.learning_rate,
+            params=params
         )
 
     def put_data(self, transition):
@@ -92,7 +93,7 @@ class PPO_v0:
         # print("prob_action_lst.size()", prob_action_lst.size())
         return state_lst, action_lst, reward_lst, next_state_lst, done_mask_lst, prob_action_lst
 
-    def train_net(self):
+    def train_net(self, step_idx=0):
 
         state_lst, action_lst, reward_lst, next_state_lst, done_mask_lst, prob_action_lst = self.get_trajectory_data()
 
@@ -238,7 +239,7 @@ class PPO_v0:
 
     def on_episode(self, episode):
 
-        score = 0.0
+        episode_reward = 0.0
         number_of_reset_call = 0.0
 
         if self.params.TRAJECTORY_SAMPLING:
@@ -273,12 +274,12 @@ class PPO_v0:
 
                 # state = next_state + (0.001 * np.random.randn(2) + self.avg_list[self.worker_id])
                 state = next_state
-                score += reward
+                episode_reward += reward
                 #elapsed_time = datetime.datetime.now() - start_time
 
                 #print(elapsed_time, " !!!")
 
-        avrg_score = score / number_of_reset_call
+        avrg_score = episode_reward / number_of_reset_call
         self.scores[self.worker_id] = avrg_score
         gradients, loss = self.train_net()
 

@@ -3,7 +3,7 @@ import math
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
-from rl_main.utils import AddBiases, util_init
+from rl_main.federated_main.utils import AddBiases, util_init
 
 """
 Modify standard PyTorch distributions so they are compatible with this code.
@@ -58,13 +58,13 @@ class DistCategorical(nn.Module):
 
 
 class DistDiagGaussian(nn.Module):
-    def __init__(self, num_inputs, num_outputs):
+    def __init__(self, num_inputs, num_outputs, device):
         super(DistDiagGaussian, self).__init__()
 
         init_ = lambda m: util_init(m, nn.init.orthogonal_, lambda x: nn.init.constant_(x, 0))
 
         self.linear = init_(nn.Linear(num_inputs, num_outputs))
-        self.logstd = AddBiases(torch.zeros(num_outputs).torch(device))
+        self.logstd = AddBiases(torch.zeros(num_outputs).to(device))
 
     def forward(self, x):
         action_mean = torch.tanh(self.linear(x))

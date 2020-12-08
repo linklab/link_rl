@@ -7,15 +7,12 @@ import torch
 import torch.nn.functional as F
 import os, glob
 
-from common.fast_rl.common.noise import OrnsteinUhlenbeckActionNoise
+from common.logger import get_logger
 from . import actions
 
-
-def save_model(model_save_dir, env_name, net_name, net, step, mean_episode_reward):
+def save_model(model_save_dir, env_name, net_name, net, step, episode_reward):
     model_save_filename = os.path.join(
-        model_save_dir, "{0}_{1}_{2}_{3}.pth".format(
-            env_name, net_name, step, mean_episode_reward
-        )
+        model_save_dir, "{0}_{1}_{2}_{3:.2f}.pth".format(env_name, net_name, step, float(episode_reward))
     )
     torch.save(net.state_dict(), model_save_filename)
     return model_save_filename
@@ -26,6 +23,7 @@ def load_model(model_save_dir, env_name, net_name, net, step=None):
         saved_models = glob.glob(os.path.join(
             model_save_dir, "{0}_{1}_{2}_*.pth".format(env_name, net_name, step)
         ))
+
     else:
         saved_models = glob.glob(os.path.join(
             model_save_dir, "{0}_{1}_*.pth".format(env_name, net_name)
@@ -41,6 +39,36 @@ def load_model(model_save_dir, env_name, net_name, net, step=None):
 
     net.load_state_dict(model_params)
 
+
+def save_actor_critic_model(
+        model_save_dir, env_name, actor_net_name, actor_net, critic_net_name, critic_net, step, episode_reward
+):
+    actor_model_save_filename = os.path.join(
+        model_save_dir, "{0}_{1}_{2}_{3}.pth".format(
+            env_name, actor_net_name, step, episode_reward
+        )
+    )
+    torch.save(actor_net.state_dict(), actor_model_save_filename)
+
+    critic_model_save_filename = os.path.join(
+        model_save_dir, "{0}_{1}_{2}_{3}.pth".format(
+            env_name, critic_net_name, step, episode_reward
+        )
+    )
+    torch.save(critic_net.state_dict(), critic_model_save_filename)
+
+
+def load_actor_critic_model(actor_model_save_filename, critic_model_save_filename, actor_net, critic_net):
+    print("ACTOR MODEL FILE NAME: {0}".format(actor_model_save_filename))
+    print("CRITIC MODEL FILE NAME: {0}".format(critic_model_save_filename))
+    device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+    actor_model_params = torch.load(actor_model_save_filename, map_location=device)
+    critic_model_params = torch.load(critic_model_save_filename, map_location=device)
+
+    actor_net.load_state_dict(actor_model_params)
+    critic_net.load_state_dict(critic_model_params)
+
+    print("ACTOR / CRITIC MODELS ARE LOADED!!!")
 
 class BaseAgent:
     """
@@ -88,7 +116,7 @@ def float32_preprocessor(states):
 class DQNAgent(BaseAgent):
     """
     DQNAgent is a memoryless DQN agent which calculates Q values
-    from the observations and  converts them into the actions using action_selector
+    from the observations and converts them into the actions using action_selector
     """
     def __init__(self, dqn_model, action_selector, device="cpu", preprocessor=default_states_preprocessor):
         self.dqn_model = dqn_model
@@ -132,7 +160,7 @@ class TargetNet:
         state = self.model.state_dict()
         tgt_state = self.target_model.state_dict()
         for k, v in state.items():
-            tgt_state[k] = tgt_state[k] * alpha + (1 - alpha) * v
+            tgt_state[k] = tgt_state[k] * alpha + (1.0 - alpha) * v
         self.target_model.load_state_dict(tgt_state)
 
 
@@ -237,25 +265,21 @@ class AgentDDPG(BaseAgent):
     """
     Agent implementing Orstein-Uhlenbeck exploration process
     """
-    def __init__(self, model, n_actions, action_min, action_max, device="cpu", ou_enabled=True,
-                 ou_mu=0.0, ou_theta=0.15, ou_sigma=0.2, ou_epsilon=1.0, preprocessor=default_states_preprocessor):
+    def __init__(self, model, n_actions, action_selector, action_min, action_max, device="cpu", ou_enabled=True,
+                 preprocessor=default_states_preprocessor, name="AgentDDPG"):
+        self.name = name
         self.model = model
         self.device = device
         self.ou_enabled = ou_enabled
-        self.ou_mu = ou_mu
-        self.ou_theta = ou_theta
-        self.ou_sigma = ou_sigma
-        self.ou_epsilon = ou_epsilon
         self.preprocessor = preprocessor
+        self.action_selector = action_selector
         self.action_min = action_min
         self.action_max = action_max
-        self.ou_noise = OrnsteinUhlenbeckActionNoise(
-            mu=np.zeros(n_actions), sigma=ou_sigma * np.ones(n_actions), theta=ou_theta
-        )
-        self.ou_noise.reset()
+        self.n_actions = n_actions
+        self.step_idx = 0
 
     def initial_agent_state(self):
-        return None
+        return 0.0
 
     def __call__(self, states, agent_states=None):
         if self.preprocessor is not None:
@@ -263,32 +287,43 @@ class AgentDDPG(BaseAgent):
             if torch.is_tensor(states):
                 states = states.to(self.device)
 
-        mu_v = self.model(states)
-        actions = mu_v.data.cpu().numpy()
+        if len(states) == 1:
+            self.model.eval()
+        else:
+            self.model.train()
 
-        # if self.ou_enabled and self.ou_epsilon > 0:
-        #     new_agent_states = []
-        #     for agent_state, action in zip(agent_states, actions):
-        #         if agent_state is None:
-        #             agent_state = np.zeros(shape=action.shape, dtype=np.float32)
-        #         agent_state += self.ou_theta * (self.ou_mu - agent_state)
-        #         agent_state += self.ou_sigma * np.random.normal(size=action.shape)
-        #         action += self.ou_epsilon * agent_state
-        #         new_agent_states.append(agent_state)
+        mu_v = self.model(states)
+        mu = mu_v.data.cpu().numpy()
+        ####################################
+
+        # if agent_states is None:
+        #     new_agent_states = [None] * len(states)
         # else:
         #     new_agent_states = agent_states
-        # noises = new_agent_states
+        #
+        # noises_v = torch.Tensor(self.ou_noise.noise()).unsqueeze(dim=-1).to(self.device)
+        # noises = noises_v.data.cpu().numpy()
+        #
+        # actions = mu + noises
+        # actions = np.clip(actions, self.action_min, self.action_max)
 
-        if agent_states is None:
-            new_agent_states = [None] * len(states)
-        else:
-            new_agent_states = agent_states
+        ####################################
 
-        noise_v = torch.Tensor(self.ou_noise.noise()).unsqueeze(dim=-1).to(self.device)
-        mu_v += noise_v
-        noises = noise_v.data.cpu().numpy()
+        actions, new_agent_states = self.action_selector(mu, agent_states)
+        noises = new_agent_states
+
+        #####################################
 
         actions = np.clip(actions, self.action_min, self.action_max)
+
+        self.step_idx += 1
+
+        # if self.step_idx % 10 == 0:
+        #     mylogger.info(
+        #         "{0:6d}:{1}: action {2:7.4f}, noise {3:7.4f}, new agent_state {4:7.4f}".format(
+        #             self.step_idx, self.name, actions[0][0], noises[0][0], new_agent_states[0][0]
+        #         )
+        #     )
 
         return actions, noises, new_agent_states
 

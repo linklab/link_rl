@@ -9,15 +9,18 @@ from torch import optim
 import os, sys
 import numpy as np
 
+from config.names import DeepLearningModelName
+
 idx = os.getcwd().index("link_rl")
 PROJECT_HOME = os.getcwd()[:idx] + "link_rl"
-sys.path.append(PROJECT_HOME)
+if PROJECT_HOME not in sys.path:
+    sys.path.append(PROJECT_HOME)
 
 from common.common_utils import make_gym_env, smooth
 from common.fast_rl.policy_based_model import unpack_batch_for_ddpg
 from common.fast_rl.rl_agent import float32_preprocessor
 
-print(torch.__version__)
+print("PyTorch Version", torch.__version__)
 
 from common.fast_rl import actions, experience, policy_based_model, rl_agent
 from common.fast_rl.common import statistics, utils
@@ -41,17 +44,30 @@ def play_func(exp_queue, env, net):
     action_min = env.action_space.low[0]
     action_max = env.action_space.high[0]
 
-    agent = rl_agent.AgentDDPG(
-        net, n_actions=1, action_min=action_min, action_max=action_max, device=device, preprocessor=float32_preprocessor
+    #action_selector = actions.EpsilonGreedyDDPGActionSelector(epsilon=params.EPSILON_INIT)
+
+    action_selector = actions.DDPGActionSelector(epsilon=params.EPSILON_INIT, ou_enabled=True, scale_factor=2.0)
+
+    epsilon_tracker = actions.EpsilonTracker(
+        action_selector=action_selector,
+        eps_start=params.EPSILON_INIT,
+        eps_final=params.EPSILON_MIN,
+        eps_frames=params.EPSILON_MIN_STEP
     )
+
+    agent = rl_agent.AgentDDPG(
+        net, n_actions=1, action_selector=action_selector,
+        action_min=action_min, action_max=action_max, device=device, preprocessor=float32_preprocessor
+    )
+
+    if params.DEEP_LEARNING_MODEL in [DeepLearningModelName.DDPG_ACTOR_CRITIC_GRU, DeepLearningModelName.DDPG_ACTOR_CRITIC_GRU_ATTENTION]:
+        step_length = params.RNN_STEP_LENGTH
+    else:
+        step_length = -1
 
     experience_source = experience.ExperienceSourceSingleEnvFirstLast(
-        env, agent, gamma=params.GAMMA, steps_count=params.N_STEP
+        env, agent, gamma=params.GAMMA, steps_count=params.N_STEP, step_length=step_length
     )
-
-    # experience_source = experience.ExperienceSourceFirstLast(
-    #     env, agent, gamma=params.GAMMA, steps_count=params.N_STEP
-    # )
 
     exp_source_iter = iter(experience_source)
 
@@ -61,36 +77,41 @@ def play_func(exp_queue, env, net):
         stat = None
 
     step_idx = 0
-    next_save_frame_idx = params.MODEL_SAVE_STEP_PERIOD
 
-    with utils.RewardTracker(
-            params.STOP_MEAN_EPISODE_REWARD, params.AVG_EPISODE_SIZE_FOR_STAT,
-            frame=True, draw_viz=params.DRAW_VIZ, stat=stat) as reward_tracker:
+    best_mean_episode_reward = 0.0
+
+    with utils.RewardTracker(params=params, frame=True, stat=stat) as reward_tracker:
         while step_idx < params.MAX_GLOBAL_STEPS:
             # 1 스텝 진행하고 exp를 exp_queue에 넣음
-            step_idx += 1
+            step_idx += params.N_STEP
             exp = next(exp_source_iter)
             exp_queue.put(exp)
 
+            epsilon_tracker.udpate(step_idx)
+
             episode_rewards = experience_source.pop_episode_reward_lst()
             if episode_rewards:
+                current_episode_reward = episode_rewards[0]
+
                 solved, mean_episode_reward = reward_tracker.set_episode_reward(
-                    episode_rewards[0], step_idx, epsilon=0.0
+                    current_episode_reward, step_idx, epsilon=action_selector.epsilon
                 )
 
-                if step_idx >= next_save_frame_idx:
+                model_save_condition = [
+                    reward_tracker.mean_episode_reward > best_mean_episode_reward,
+                    step_idx > params.EPSILON_MIN_STEP
+                ]
+
+                if reward_tracker.mean_episode_reward > best_mean_episode_reward:
+                    best_mean_episode_reward = reward_tracker.mean_episode_reward
+
+                if all(model_save_condition) or solved:
+                    print(best_mean_episode_reward, " !!!!!!!!!!!!!!!!!!!!!!")
                     rl_agent.save_model(
                         MODEL_SAVE_DIR, params.ENVIRONMENT_ID.value, net.__name__, net, step_idx, mean_episode_reward
                     )
-                    next_save_frame_idx += params.MODEL_SAVE_STEP_PERIOD
-
-                agent.ou_noise.reset()
-
-                if solved:
-                    rl_agent.save_model(
-                        MODEL_SAVE_DIR, params.ENVIRONMENT_ID.value, net.__name__, net, step_idx, mean_episode_reward
-                    )
-                    break
+                    if solved:
+                        break
 
     exp_queue.put(None)
 
@@ -103,17 +124,51 @@ def main():
     print("observation_space:", env.observation_space)
     print("action_space:", env.action_space)
 
-    actor_net = policy_based_model.DDPGActor(
-        obs_size=3,
-        hidden_size_1=512, hidden_size_2=256,
-        n_actions=1
-    ).to(device)
+    if params.DEEP_LEARNING_MODEL is DeepLearningModelName.DDPG_ACTOR_CRITIC_MLP:
+        actor_net = policy_based_model.DDPGActor(
+            obs_size=3,
+            hidden_size_1=512, hidden_size_2=256,
+            n_actions=1,
+            scale=2.0
+        ).to(device)
 
-    critic_net = policy_based_model.DDPGCritic(
-        obs_size=3,
-        hidden_size_1=512, hidden_size_2=256,
-        n_actions=1
-    ).to(device)
+        critic_net = policy_based_model.DDPGCritic(
+            obs_size=3,
+            hidden_size_1=512, hidden_size_2=256,
+            n_actions=1
+        ).to(device)
+    elif params.DEEP_LEARNING_MODEL is DeepLearningModelName.DDPG_ACTOR_CRITIC_GRU:
+        actor_net = policy_based_model.DDPGGruActor(
+            obs_size=3,
+            hidden_size_1=256, hidden_size_2=256,
+            n_actions=1,
+            bidirectional=False,
+            scale=2.0
+        ).to(device)
+
+        critic_net = policy_based_model.DDPGGruCritic(
+            obs_size=3,
+            hidden_size_1=256, hidden_size_2=256,
+            n_actions=1,
+            bidirectional=False
+        ).to(device)
+    elif params.DEEP_LEARNING_MODEL is DeepLearningModelName.DDPG_ACTOR_CRITIC_GRU_ATTENTION:
+        actor_net = policy_based_model.DDPGGruAttentionActor(
+            obs_size=3,
+            hidden_size=256,
+            n_actions=1,
+            bidirectional=False,
+            scale=2.0
+        ).to(device)
+
+        critic_net = policy_based_model.DDPGGruAttentionCritic(
+            obs_size=3,
+            hidden_size_1=256, hidden_size_2=256,
+            n_actions=1,
+            bidirectional=False
+        ).to(device)
+    else:
+        raise ValueError()
 
     print(actor_net)
     print(critic_net)
@@ -124,7 +179,13 @@ def main():
     actor_optimizer = optim.Adam(actor_net.parameters(), lr=params.ACTOR_LEARNING_RATE)
     critic_optimizer = optim.Adam(critic_net.parameters(), lr=params.LEARNING_RATE)
 
-    buffer = experience.ExperienceReplayBuffer(experience_source=None, buffer_size=params.REPLAY_BUFFER_SIZE)
+    if params.PER:
+        buffer = experience.PrioReplayBuffer(
+            experience_source=None, buffer_size=params.REPLAY_BUFFER_SIZE, n_step=params.N_STEP,
+            beta_start=0.4, beta_frames=params.MAX_GLOBAL_STEPS
+        )
+    else:
+        buffer = experience.ExperienceReplayBuffer(experience_source=None, buffer_size=params.REPLAY_BUFFER_SIZE)
 
     exp_queue = mp.Queue(maxsize=params.TRAIN_STEP_FREQ * 2)
     play_proc = mp.Process(target=play_func, args=(exp_queue, env, actor_net))
@@ -133,7 +194,8 @@ def main():
     time.sleep(0.5)
 
     if params.DRAW_VIZ:
-        stat_for_ddpg = statistics.StatisticsForDDPGOptimization(n_actions=1)
+        #stat_for_ddpg = statistics.StatisticsForDDPGOptimization(n_actions=1)
+        stat_for_ddpg = statistics.StatisticsForSimpleDDPGOptimization(n_actions=1)
     else:
         stat_for_ddpg = 0.0
 
@@ -157,7 +219,7 @@ def main():
     # lp_wrapper = lp(model_update)
 
     while play_proc.is_alive():
-        step_idx += params.TRAIN_STEP_FREQ
+        step_idx += params.N_STEP
         exp = None
         for _ in range(params.TRAIN_STEP_FREQ):
             exp = exp_queue.get()
@@ -183,18 +245,37 @@ def main():
 
                 actor_grad_l2, actor_grad_max, actor_grad_variance, critic_grad_l2, critic_grad_max, critic_grad_variance, loss_actor, loss_critic, loss_total = model_update(
                     buffer, actor_net, critic_net, target_actor_net, target_critic_net, actor_optimizer, critic_optimizer,
-                    stat_for_ddpg, step_idx, exp,
-                    actor_grad_l2, actor_grad_max, actor_grad_variance,
+                    step_idx, actor_grad_l2, actor_grad_max, actor_grad_variance,
                     critic_grad_l2, critic_grad_max, critic_grad_variance,
-                    loss_actor, loss_critic, loss_total, len(buffer.buffer)
+                    loss_actor, loss_critic, loss_total, per=params.PER
+                )
+
+            if params.DRAW_VIZ:
+                # stat_for_ddpg.draw_optimization_performance(
+                #     step_idx,
+                #     loss_actor, loss_critic, loss_total,
+                #     actor_grad_l2, actor_grad_variance, actor_grad_max,
+                #     critic_grad_l2, critic_grad_variance, critic_grad_max,
+                #     buffer_length, exp.noise, exp.action
+                # )
+
+                stat_for_ddpg.draw_optimization_performance(
+                    step_idx, exp.noise, exp.action
                 )
 
 
-def model_update(buffer, actor_net, critic_net, target_actor_net, target_critic_net, actor_optimizer, critic_optimizer, stat_for_ddpg, step_idx, exp,
-                 actor_grad_l2, actor_grad_max, actor_grad_variance,
+def model_update(buffer, actor_net, critic_net, target_actor_net, target_critic_net, actor_optimizer, critic_optimizer,
+                 step_idx, actor_grad_l2, actor_grad_max, actor_grad_variance,
                  critic_grad_l2, critic_grad_max, critic_grad_variance,
-                 loss_actor, loss_critic, loss_total, buffer_length):
-    batch = buffer.sample(params.BATCH_SIZE)
+                 loss_actor, loss_critic, loss_total, per):
+    if per:
+        batch, batch_indices, batch_weights = buffer.sample(params.BATCH_SIZE)
+    else:
+        batch = buffer.sample(params.BATCH_SIZE)
+        batch_indices, batch_weights = None, None
+
+    #print(batch)
+
     batch_states_v, batch_actions_v, batch_rewards_v, batch_dones_mask, batch_last_states_v = unpack_batch_for_ddpg(
         batch, device
     )
@@ -206,8 +287,18 @@ def model_update(buffer, actor_net, critic_net, target_actor_net, target_critic_
     batch_q_last_v = target_critic_net.target_model(batch_last_states_v, batch_last_act_v)
     batch_q_last_v[batch_dones_mask] = 0.0
     batch_target_q_v = batch_rewards_v.unsqueeze(dim=-1) + batch_q_last_v * params.GAMMA ** params.N_STEP
-    loss_critic_v = F.mse_loss(batch_q_v, batch_target_q_v.detach())
-    loss_critic_v.backward()
+
+    if per:
+        batch_l1_loss = F.smooth_l1_loss(batch_q_v, batch_target_q_v.detach(), reduction='none') # for PER
+        batch_weights_v = torch.tensor(batch_weights)
+        loss_critic_v = batch_weights_v * batch_l1_loss
+
+        buffer.update_priorities(batch_indices, batch_l1_loss.detach().cpu().numpy() + 1e-5)
+        buffer.update_beta(step_idx)
+    else:
+        loss_critic_v = F.smooth_l1_loss(batch_q_v, batch_target_q_v.detach())
+
+    loss_critic_v.mean().backward()
 
     critic_grads = np.concatenate([p.grad.data.cpu().numpy().flatten()
                                    for p in critic_net.parameters()
@@ -238,17 +329,8 @@ def model_update(buffer, actor_net, critic_net, target_actor_net, target_critic_
     critic_grad_variance = smooth(critic_grad_variance, float(np.var(critic_grads)))
 
     loss_actor = smooth(loss_actor, loss_actor_v.item())
-    loss_critic = smooth(loss_critic, loss_critic_v.item())
-    loss_total = smooth(loss_total, loss_actor_v.item() + loss_critic_v.item())
-
-    if params.DRAW_VIZ:
-        stat_for_ddpg.draw_optimization_performance(
-            step_idx,
-            loss_actor, loss_critic, loss_total,
-            actor_grad_l2, actor_grad_variance, actor_grad_max,
-            critic_grad_l2, critic_grad_variance, critic_grad_max,
-            buffer_length, exp.action, exp.noise
-        )
+    loss_critic = smooth(loss_critic, loss_critic_v.mean().item())
+    loss_total = smooth(loss_total, loss_actor_v.item() + loss_critic_v.mean().item())
 
     return actor_grad_l2, actor_grad_max, actor_grad_variance, critic_grad_l2, critic_grad_max, critic_grad_variance, loss_actor, loss_critic, loss_total
 

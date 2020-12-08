@@ -17,18 +17,18 @@ else:
 
 
 def play_main():
-    env = make_atari_env(params.ENVIRONMENT_ID.value, seed=2)
+    env = make_atari_env(params.ENVIRONMENT_ID.value, seed=0)
 
-    net = value_based_model.DQN(
+    net = value_based_model.DuelingDQNCNN(
         input_shape=env.observation_space.shape,
         n_actions=env.action_space.n
     ).to(device)
     print(net)
 
-    rl_agent.load_model(MODEL_SAVE_DIR, params.ENVIRONMENT_ID.value, net.__name__, net, step=18720903)#1731249
+    rl_agent.load_model(MODEL_SAVE_DIR, params.ENVIRONMENT_ID.value, net.__name__, net, step=18960320)#1731249
 
-    # action_selector = actions.ArgmaxActionSelector()
-    action_selector = actions.EpsilonGreedyActionSelector(epsilon=0.01)
+    action_selector = actions.ArgmaxActionSelector()
+    # action_selector = actions.EpsilonGreedyActionSelector(epsilon=0.01)
     agent = rl_agent.DQNAgent(net, action_selector, device=device)
 
     done = False
@@ -36,8 +36,9 @@ def play_main():
 
     episode_reward = 0
     while not done:
-        if episode_reward > 40:
-            time.sleep(0.01)
+        # if episode_reward > 40:
+        #     time.sleep(0.01)
+        time.sleep(0.01)
         env.render()
         state = np.expand_dims(state, axis=0)
         action = agent(state)
@@ -45,12 +46,13 @@ def play_main():
 
         # episode_reward += reward
         episode_reward += info['original_reward']
-        print(episode_reward)
         if done and info['ale.lives'] != 0:
             done = False
             env.reset()
 
         state = next_state
+
+    print(episode_reward)
 
 
 if __name__ == "__main__":
