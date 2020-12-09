@@ -61,7 +61,7 @@ def play_main():
 
         while not done:
             action, _, _ = agent(state)
-            next_state, reward, done, info = env.step(action[0][-1])
+            next_state, reward, done, info = env.step(action[0])
             state = next_state
             state = np.expand_dims(state, axis=0)
             episode_reward += reward

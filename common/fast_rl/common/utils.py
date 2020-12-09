@@ -420,14 +420,12 @@ class RewardTracker:
             )
 
         if self.mean_episode_reward > self.stop_mean_episode_reward:
-            mean_episode_reward_str = "mean_{0}_episode_reward: {1:8.3f} (SOLVED COUNT: {2})".format(
-                self.average_size_for_stats,
+            mean_episode_reward_str = "{0:8.3f} (SOLVED COUNT: {1})".format(
                 mean_episode_reward,
                 self.count_stop_condition_episode + 1
             )
         else:
-            mean_episode_reward_str = "mean_{0}_episode_reward: {1:8.3f}".format(
-                self.average_size_for_stats,
+            mean_episode_reward_str = "{0:8.3f}".format(
                 mean_episode_reward
             )
 

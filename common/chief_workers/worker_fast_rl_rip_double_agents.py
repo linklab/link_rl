@@ -42,7 +42,6 @@ class WorkerFastRLRipDoubleAgents:
         self.episode_reward = 0
 
         self.global_max_ema_episode_reward = 0
-        self.global_min_ema_loss = 1000000000
 
         self.local_episode_rewards = []
         self.local_losses = []
