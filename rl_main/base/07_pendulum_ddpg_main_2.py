@@ -6,15 +6,14 @@ import torch
 import torch.multiprocessing as mp
 import os, sys
 
-from common.logger import get_logger
-from config.names import DeepLearningModelName
-from rl_main import rl_utils
-
 idx = os.getcwd().index("link_rl")
 PROJECT_HOME = os.getcwd()[:idx] + "link_rl"
 if PROJECT_HOME not in sys.path:
     sys.path.append(PROJECT_HOME)
 
+from common.logger import get_logger
+from config.names import DeepLearningModelName
+from rl_main import rl_utils
 from common.fast_rl.rl_agent import float32_preprocessor
 
 print("PyTorch Version", torch.__version__)
@@ -80,7 +79,7 @@ def play_func(exp_queue, env, net):
     with utils.RewardTracker(params=params, frame=False, stat=stat) as reward_tracker:
         while step_idx < params.MAX_GLOBAL_STEPS:
             # 1 스텝 진행하고 exp를 exp_queue에 넣음
-            step_idx += 1
+            step_idx += params.N_STEP
             exp = next(exp_source_iter)
             exp_queue.put(exp)
 
