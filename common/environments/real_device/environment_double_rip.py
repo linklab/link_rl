@@ -135,9 +135,6 @@ class EnvironmentDoubleRIP(Environment):
             require_response=False
         )
 
-        # sub state from drip
-        self.pendulum_position, self.motor_position, self.pendulum_velocity, self.motor_velocity, self.simulation_time = self.plant.getHistory()
-
         self.update_current_state(adjusted_radian=0.0)
 
         state = (
@@ -254,7 +251,6 @@ class EnvironmentDoubleRIP(Environment):
             require_response=False
         )
 
-        self.pendulum_position, self.motor_position, self.pendulum_velocity, self.motor_velocity, self.simulation_time = self.plant.getHistory()
         self.episode_steps += 1
         self.total_steps += 1
 
@@ -308,8 +304,6 @@ class EnvironmentDoubleRIP(Environment):
                 "episode_action_reward": sum(self.episode_action_reward_list)
             }
 
-            if self.env_reset:
-                self.plant.connectStop()
         else:
             done = False
             if params.CH:
