@@ -32,6 +32,7 @@ from common.environments.mujoco.humanoid import Humanoid_v2
 from common.environments.mujoco.humanoid_stand_up import HumanoidStandUp_v2
 from common.environments.mujoco.inverted_pendulum import InvertedPendulum_v2
 from common.environments.mujoco.walker_2d import Walker2D_v2
+from common.environments.real_device.environment_double_rip import EnvironmentDoubleRIP
 from common.models.actor_critic_model import ActorCriticModel
 from common.algorithms_rl.DQN_v0 import DQN_v0
 from common.algorithms_rl.Monte_Carlo_Control_v0 import Monte_Carlo_Control_v0
@@ -43,6 +44,45 @@ device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 
 
 def get_environment(owner="chief", params=None):
+    if params.ENVIRONMENT_ID == EnvironmentName.REAL_DEVICE_DOUBLE_RIP:
+        client = mqtt.Client(client_id="env_sub", transport="TCP")
+        env = MatlabRotaryInvertedPendulumEnv(
+            action_min=params.SWING_UP_SCALE_FACTOR * -1.0,
+            action_max=params.SWING_UP_SCALE_FACTOR,
+            env_reset=params.ENV_RESET,
+            mqtt_client = client
+        )
+
+        def __on_connect(client, userdata, flags, rc):
+            print("mqtt broker connected with result code " + str(rc), flush=False)
+            client.subscribe(topic=params.MQTT_SUB_FROM_SERVO)
+            client.subscribe(topic=params.MQTT_SUB_MOTOR_LIMIT)
+            client.subscribe(topic=params.MQTT_SUB_RESET_COMPLETE)
+
+        def __on_log(client, userdata, level, buf):
+            print(buf)
+
+        def __on_message(client, userdata, msg):
+            global PUB_ID
+
+            if msg.topic == params.MQTT_SUB_FROM_DRIP:
+                servo_info = json.loads(msg.payload.decode("utf-8"))
+                pendulum_position = float(servo_info["motor_radian"])
+                motor_position = float(servo_info["motor_velocity"])
+                pendulum_velocity = float(servo_info["pendulum_radian"])
+                motor_velocity = float(servo_info["pendulum_velocity"])
+                pub_id = servo_info["pub_id"]
+                env.set_state(pendulum_position, motor_position, pendulum_velocity, motor_velocity)
+
+            elif msg.topic == params.MQTT_SUB_RESET_COMPLETE:
+                servo_info = str(msg.payload.decode("utf-8")).split('|')
+                pendulum_position = float(servo_info["motor_radian"])
+                motor_position = float(servo_info["motor_velocity"])
+                pendulum_velocity = float(servo_info["pendulum_radian"])
+                motor_velocity = float(servo_info["pendulum_velocity"])
+                pub_id = servo_info["pub_id"]
+                env.set_state(pendulum_position, motor_position, pendulum_velocity, motor_velocity)
+
     if params.ENVIRONMENT_ID == EnvironmentName.QUANSER_SERVO_2:
         client = mqtt.Client(client_id="env_sub_2", transport="TCP")
         env = EnvironmentRIP(mqtt_client=client)

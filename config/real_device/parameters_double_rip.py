@@ -25,11 +25,11 @@ class PARAMETERS_DOUBLE_RIP:
 
     # MQTT for RIP
     MQTT_SERVER_FOR_RIP = "192.168.0.10"
-    MQTT_PUB_TO_SERVO_POWER = 'motor_power_2'
-    MQTT_PUB_RESET = 'reset_2'
-    MQTT_SUB_FROM_SERVO = 'servo_info_2'
-    MQTT_SUB_MOTOR_LIMIT = 'motor_limit_info_2'
-    MQTT_SUB_RESET_COMPLETE = 'reset_complete_2'
+    MQTT_PUB_TO_DRIP = 'motor_power'
+    MQTT_PUB_RESET = 'reset'
+    MQTT_SUB_RESET_COMPLETE = 'reset_complete'
+    MQTT_SUB_FROM_DRIP = 'next_state'
+    MQTT_ERROR = 'error'
 
     # [WORKER]
     NUM_WORKERS = 1
