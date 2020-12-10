@@ -54,7 +54,7 @@ class EpsilonGreedyDDPGActionSelector:
         if ou_enabled and self.epsilon > 0:
             new_agent_states = []
             for agent_state, action in zip(agent_states, actions):
-                agent_state = np.zeros(shape=action.shape, dtype=np.float32)
+                #agent_state = np.zeros(shape=action.shape, dtype=np.float32)
                 agent_state += ou_rho * (ou_mu - actions)
                 agent_state += ou_sigma * np.sqrt(ou_dt) * np.random.normal(size=action.shape)
                 action += self.epsilon * agent_state
