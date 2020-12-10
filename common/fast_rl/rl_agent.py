@@ -295,8 +295,8 @@ class AgentDDPG(BaseAgent):
 
         mu_v = self.model(states)
         mu = mu_v.data.cpu().numpy()
-        ####################################
 
+        ####################################
         # if agent_states is None:
         #     new_agent_states = [None] * len(states)
         # else:
@@ -307,15 +307,13 @@ class AgentDDPG(BaseAgent):
         #
         # actions = mu + noises
         # actions = np.clip(actions, self.action_min, self.action_max)
-
         ####################################
 
         actions, new_agent_states = self.action_selector(mu, agent_states)
-        noises = new_agent_states
-
-        #####################################
-
         actions = np.clip(actions, self.action_min, self.action_max)
+
+        noises = new_agent_states
+        #####################################
 
         self.step_idx += 1
 
