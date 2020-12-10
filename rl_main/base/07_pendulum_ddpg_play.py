@@ -3,9 +3,9 @@ import gym
 import torch
 import os
 
-from config.names import DeepLearningModelName
+from config.names import DeepLearningModelName, PROJECT_HOME
 
-MODEL_SAVE_DIR = os.path.join(".", "saved_models")
+MODEL_SAVE_DIR = os.path.join(PROJECT_HOME, "saved_models")
 
 print(torch.__version__)
 

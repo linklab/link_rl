@@ -13,6 +13,7 @@ from common.fast_rl.common import utils
 from common.fast_rl.common import statistics, wrappers
 
 ##### NOTE #####
+from config.names import PROJECT_HOME
 from config.parameters import PARAMETERS as params
 ##### NOTE #####
 
@@ -25,7 +26,7 @@ if torch.cuda.is_available():
 else:
     device = torch.device("cpu")
 
-MODEL_SAVE_DIR = os.path.join(".", "saved_models")
+MODEL_SAVE_DIR = os.path.join(PROJECT_HOME, "saved_models")
 if not os.path.exists(MODEL_SAVE_DIR):
     os.makedirs(MODEL_SAVE_DIR)
 

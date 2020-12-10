@@ -6,6 +6,7 @@ from torch import optim
 import os
 
 from common.common_utils import make_gym_env
+from config.names import PROJECT_HOME
 
 print(torch.__version__)
 
@@ -14,7 +15,7 @@ from common.fast_rl.common import statistics, utils
 
 from config.parameters import PARAMETERS as params
 
-MODEL_SAVE_DIR = os.path.join(".", "saved_models")
+MODEL_SAVE_DIR = os.path.join(PROJECT_HOME, "saved_models")
 if not os.path.exists(MODEL_SAVE_DIR):
     os.makedirs(MODEL_SAVE_DIR)
 

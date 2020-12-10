@@ -12,6 +12,7 @@ import numpy as np
 from common.common_utils import make_gym_env, smooth
 from common.fast_rl.policy_based_model import unpack_batch_for_policy_gradient
 from common.fast_rl.rl_agent import float32_preprocessor
+from config.names import PROJECT_HOME
 
 print(torch.__version__)
 
@@ -20,7 +21,7 @@ from common.fast_rl.common import statistics, utils
 
 from config.parameters import PARAMETERS as params
 
-MODEL_SAVE_DIR = os.path.join(".", "saved_models")
+MODEL_SAVE_DIR = os.path.join(PROJECT_HOME, "saved_models")
 if not os.path.exists(MODEL_SAVE_DIR):
     os.makedirs(MODEL_SAVE_DIR)
 

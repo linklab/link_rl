@@ -1,9 +1,10 @@
 #!/usr/bin/env python3
-import gym
 import torch
 import os
 
-MODEL_SAVE_DIR = os.path.join(".", "saved_models")
+from config.names import PROJECT_HOME
+
+MODEL_SAVE_DIR = os.path.join(PROJECT_HOME, "saved_models")
 
 print(torch.__version__)
 
