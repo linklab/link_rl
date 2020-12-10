@@ -42,7 +42,6 @@ class WorkerFastRL:
         self.episode_reward = 0
 
         self.global_max_ema_episode_reward = 0
-        self.global_min_ema_loss = 1000000000
 
         self.local_episode_rewards = []
         self.local_losses = []
@@ -138,7 +137,7 @@ class WorkerFastRL:
                     self.rl_algorithm.buffer.populate(params.TRAIN_STEP_FREQ)
                     epsilon_tracker.udpate(step_idx)
 
-                    gradients, loss = self.rl_algorithm.train_net(step_idx=step_idx)
+                    gradients, critic_loss, actor_objective = self.rl_algorithm.train_net(step_idx=step_idx)
 
                     episode_rewards = experience_source.pop_episode_reward_lst()
 
@@ -160,7 +159,7 @@ class WorkerFastRL:
                             )
 
                         solved = self.interact_with_chief(
-                            loss, gradients, current_episode_reward, episode, step_idx, solved
+                            gradients, current_episode_reward, episode, step_idx, solved, critic_loss, actor_objective
                         )
 
                         if solved:
@@ -170,10 +169,10 @@ class WorkerFastRL:
 
                 if not solved:
                     self.interact_with_chief(
-                        loss, gradients, current_episode_reward, episode, step_idx, solved
+                        gradients, current_episode_reward, episode, step_idx, solved, critic_loss, actor_objective
                     )
 
-    def interact_with_chief(self, loss, gradients, episode_reward, episode, step_idx, solved, agent_type=None):
+    def interact_with_chief(self, gradients, episode_reward, episode, step_idx, solved, loss, actor_objective=None):
         self.local_losses.append(loss)
         self.local_episode_rewards.append(episode_reward)
 
@@ -190,8 +189,8 @@ class WorkerFastRL:
             "episode_reward": episode_reward
         }
 
-        if agent_type:
-            episode_msg['agent_type'] = agent_type.value
+        if actor_objective:  # for Policy-Based RL
+            episode_msg['actor_objective'] = actor_objective
 
         is_finish = False
 

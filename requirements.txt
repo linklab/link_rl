@@ -39,7 +39,7 @@ google-pasta==0.2.0
 grpcio==1.28.1
 gym==0.17.3
 gym-gridworlds==0.0.2
-gym-unity==0.4.3
+gym-unity==0.22.0
 h5py==2.10.0
 hyperlink==19.0.0
 icc-rt==2019.0
@@ -71,10 +71,10 @@ mkl==2019.0
 mkl-fft==1.0.6
 mkl-random==1.0.2
 mkl-service==2.0.2
-mlagents-envs==0.9.0
+mlagents-envs==0.22.0
 more-itertools==7.2.0
 networkx==2.5
-numpy==1.16.4
+numpy==1.16.1
 oauthlib==3.1.0
 olefile==0.46
 opencv-python==4.1.0.25

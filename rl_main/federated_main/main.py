@@ -3,6 +3,7 @@ import time
 from multiprocessing import Process
 
 import torch
+print(torch.__version__)
 
 from common import common_utils
 

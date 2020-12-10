@@ -3,9 +3,12 @@ from abc import ABC
 from enum import Enum
 
 import matlab.engine
+
 import gym
 import numpy as np
+
 from common.environments.matlab.matlabcode import SimulinkPlant
+
 from config.parameters import PARAMETERS as params
 
 np.set_printoptions(formatter={'float_kind': lambda x: '{0:0.6f}'.format(x)})

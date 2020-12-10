@@ -63,6 +63,10 @@ class DDPG_v0:
 
         # train critic
         self.critic_optimizer.zero_grad()
+        critic_parameters = self.model.base.critic.parameters()
+        for p in critic_parameters:
+            p.requires_grad = True
+
         batch_q_v = self.model.base.forward_critic(batch_states_v, batch_actions_v)
         batch_last_act_v = self.target_agent.target_model.forward_actor(batch_last_states_v)
         batch_q_last_v = self.target_agent.target_model.forward_critic(batch_last_states_v, batch_last_act_v)
@@ -80,14 +84,20 @@ class DDPG_v0:
             critic_loss_v = F.smooth_l1_loss(batch_q_v, batch_target_q_v.detach())
 
         loss_critic_v = critic_loss_v.mean()
+
         loss_critic_v.backward()
         self.critic_optimizer.step()
 
         # train actor
         self.actor_optimizer.zero_grad()
+        critic_parameters = self.model.base.critic.parameters()
+        for p in critic_parameters:
+            p.requires_grad = False
+
         batch_current_actions_v = self.model.base.forward_actor(batch_states_v)
-        actor_loss_v = -self.model.base.forward_critic(batch_states_v, batch_current_actions_v)
+        actor_loss_v = -1.0 * self.model.base.forward_critic(batch_states_v, batch_current_actions_v)
         loss_actor_v = actor_loss_v.mean()
+
         loss_actor_v.backward()
 
         self.actor_optimizer.step()
@@ -95,6 +105,5 @@ class DDPG_v0:
         self.target_agent.alpha_sync(alpha=1 - 0.001)
 
         gradients = self.model.get_gradients_for_current_parameters()
-        loss = loss_critic_v + loss_actor_v
 
-        return gradients, loss.item()
+        return gradients, loss_critic_v.item(), loss_actor_v.item() * -1.0

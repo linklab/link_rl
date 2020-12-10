@@ -100,7 +100,15 @@ def on_worker_message(client, userdata, msg):
                 worker.update_process(msg_payload['avg_gradients'])
 
             if not worker.is_success_or_fail_done and params.MODE_PARAMETERS_TRANSFER:
-                worker.transfer_process(msg_payload['parameters'])
+                if params.RL_ALGORITHM == RLAlgorithmName.DDPG_FAST_DOUBLE_AGENTS_V0:
+                    if msg_payload['agent_type'] == AgentType.SWING_UP_AGENT.value:
+                        worker.swing_up_transfer_process(msg_payload['parameters'])
+                    elif msg_payload['agent_type'] == AgentType.BALANCING_AGENT.value:
+                        worker.balancing_transfer_process(msg_payload['parameters'])
+                    else:
+                        raise ValueError()
+                else:
+                    worker.transfer_process(msg_payload['parameters'])
 
             worker.episode_chief = msg_payload["episode_chief"]
             #print("Transfer_Ack: {0}".format(worker.episode_chief))
