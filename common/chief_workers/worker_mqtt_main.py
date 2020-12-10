@@ -4,6 +4,7 @@ import time
 import traceback
 import zlib
 import paho.mqtt.client as mqtt
+import threading
 import sys, os
 
 from common.chief_workers.worker_fast_rl_rip_double_agents import WorkerFastRLRipDoubleAgents
@@ -127,11 +128,12 @@ if __name__ == "__main__":
     worker_mqtt_client = mqtt.Client("rl_worker_{0}".format(worker_id))
     worker_mqtt_client.on_connect = on_worker_connect
     worker_mqtt_client.on_message = on_worker_message
+    worker_mqtt_client.loop_start()
+
     if params.MQTT_LOG:
         worker_mqtt_client.on_log = on_worker_log
 
     worker_mqtt_client.connect(params.MQTT_SERVER, params.MQTT_PORT, keepalive=3600)
-    worker_mqtt_client.loop_start()
 
     stderr = sys.stderr
     sys.stderr = sys.stdout

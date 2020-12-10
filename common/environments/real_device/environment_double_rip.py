@@ -8,6 +8,7 @@ import gym
 from common.environments.environment import Environment
 from config.parameters import PARAMETERS as params
 
+MQTT_SERVER = '192.168.0.10'
 MQTT_PUB_TO_DRIP = 'motor_power'
 MQTT_PUB_RESET = 'reset'
 MQTT_SUB_RESET_COMPLETE = 'reset_complete'
@@ -15,8 +16,6 @@ MQTT_SUB_FROM_DRIP = 'next_state'
 MQTT_ERROR = 'error'
 
 STATE_SIZE = 4
-
-balance_motor_power_list = [-60, 0, 60]
 
 PUB_ID = 0
 
@@ -88,13 +87,6 @@ class EnvironmentDoubleRIP(Environment):
         self.mqtt_client.publish(topic=topic, payload=payload)
         PUB_ID += 1
 
-    def __pendulum_reset(self):
-        self.__pub(
-            MQTT_PUB_RESET,
-            "0|reset|{0}".format(PUB_ID),
-            require_response=False
-        )
-
     def get_n_states(self):
         n_states = self.observation_space.shape[0]
         return n_states
@@ -108,8 +100,8 @@ class EnvironmentDoubleRIP(Environment):
         action_meanings = ["Joint effort", ]
         return action_meanings
 
-    def set_state(self, pendulum_position, motor_position, pendulum_velocity, motor_velocity):
-        self.state = [pendulum_position, motor_position, pendulum_velocity, motor_velocity]
+    def set_state(self, motor_position, motor_velocity, pendulum_position, pendulum_velocity):
+        self.state = [motor_position, motor_velocity, pendulum_position, pendulum_velocity]
 
         self.pendulum_position = pendulum_position
         self.motor_position = motor_position
@@ -163,15 +155,15 @@ class EnvironmentDoubleRIP(Environment):
         return state
 
     def pendulum_position_to_adjusted_radian(self):
-        # radian을 0과 2 * math.pi 사이 값(양수)으로 조정
-        if abs(self.pendulum_position) > 2 * math.pi:
-            q_ = abs(self.pendulum_position) % (2 * math.pi)
+        # angle을 0과 360 사이 값(양수)으로 조정
+        if abs(self.pendulum_position) > 360:
+            q_ = abs(self.pendulum_position) % (360)
         else:
             q_ = abs(self.pendulum_position)
 
         # radian을 0과 math.pi 사이 값(양수)으로 조정: 3 * math.pi / 2 -->  2 * math.pi - 3 * math.pi / 2 --> math.pi / 2
-        if q_ > math.pi:
-            adjusted_radian = 2 * math.pi - q_
+        if q_ > 180:
+            adjusted_radian = 360 - q_
         else:
             adjusted_radian = q_
 
@@ -244,32 +236,32 @@ class EnvironmentDoubleRIP(Environment):
     def step(self, action):
         if type(action) is np.ndarray:
             action = action[0]
-
+        action = int(action)
+        time.sleep(1)
         self.__pub(
             MQTT_PUB_TO_DRIP,
-            "{0}|action|{1}".format(action, PUB_ID),
+            "{0}|action".format(action),
             require_response=False
         )
 
         self.episode_steps += 1
         self.total_steps += 1
 
-        if params.CH:
-            pass
+        if action > 0:
+            self.num_continuous_positive_torque += 1
         else:
-            if action > 0:
-                self.num_continuous_positive_torque += 1
-            else:
-                self.num_continuous_positive_torque = 0
+            self.num_continuous_positive_torque = 0
 
-            if action < 0:
-                self.num_continuous_negative_torque += 1
-            else:
-                self.num_continuous_negative_torque = 0
+        if action < 0:
+            self.num_continuous_negative_torque += 1
+        else:
+            self.num_continuous_negative_torque = 0
 
         # print(self.motor_position, math.cos(self.motor_position), math.sin(self.motor_position))
 
-        if abs(self.initial_motor_position - self.motor_position) > math.pi * 2:
+
+
+        if abs(self.initial_motor_position - self.motor_position) > 360:
             self.too_much_rotate = True
 
         done_conditions = [
@@ -368,5 +360,6 @@ class EnvironmentDoubleRIP(Environment):
         return degree
 
     def close(self):
-        self.pub.publish(topic=MQTT_PUB_TO_SERVO_POWER, payload=str(0))
+        self.pub.publish(topic=MQTT_PUB_TO_DRIP, payload=str(0))
+        self.pub.publish(topic=MQTT_PUB_RESET, payload=str(0))
         # self.env.close()

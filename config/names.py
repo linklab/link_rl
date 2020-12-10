@@ -11,6 +11,7 @@ class OSName(enum.Enum):
     MAC = "MAC"
     WINDOWS = "WINDOWS"
     LINUX = "LINUX"
+    REAL_RIP = "REAL_RIP_PLATFORM"
 
 
 class EnvironmentName(enum.Enum):
