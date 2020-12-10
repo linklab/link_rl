@@ -14,6 +14,25 @@ from matplotlib import pyplot as plt
 from common.fast_rl.common.wrappers import OriginalRewardsWrapper
 
 
+#https://medium.com/analytics-vidhya/stretched-exponential-decay-function-for-epsilon-greedy-algorithm-98da6224c22f
+def stretched_exponential_decay(epsilon_start, epsilon_minimum, epsilon_end_step, current_step):
+    end_step = epsilon_end_step
+    if current_step < end_step:
+        A = 0.5
+        B = 0.3
+        C = 0.1
+        standardized_time = (current_step - A * end_step) / (B * end_step)
+        cosh = np.cosh(math.exp(-standardized_time))
+        epsilon = epsilon_start - (1 / cosh + (current_step * C / end_step))
+        if epsilon >= epsilon_start:
+            epsilon = epsilon_start
+        elif epsilon <= epsilon_minimum:
+            epsilon = epsilon_minimum
+    else:
+        epsilon = epsilon_minimum
+    return epsilon
+
+
 def print_params(params_class):
     print('\n' + '################ Parameters ################')
     for param in dir(params_class):
