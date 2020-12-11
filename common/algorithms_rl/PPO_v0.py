@@ -14,8 +14,14 @@ from rl_main import rl_utils
 class PPO_v0:
     def __init__(self, env, worker_id, gamma, env_render, logger, params, device, verbose):
         self.env = env
-
         self.worker_id = worker_id
+        self.params = params
+        self.device = device
+        self.logger = logger
+        self.verbose = verbose
+
+        self.model = rl_utils.get_rl_model(self.env, self.worker_id, params=self.params)
+
         self.avg_list = [0.002, 0.003, -0.002, -0.003]
         self.scores = {}
 
@@ -28,12 +34,6 @@ class PPO_v0:
         self.learning_rate = params.LEARNING_RATE
 
         self.env_render = env_render
-        self.logger = logger
-        self.params = params
-        self.device = device
-        self.verbose = verbose
-
-        self.model = rl_utils.get_rl_model(self.env, self.worker_id, params=self.params)
 
         self.optimizer = rl_utils.get_optimizer(
             parameters=self.model.parameters(),

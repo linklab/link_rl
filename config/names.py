@@ -68,6 +68,8 @@ class DeepLearningModelName(enum.Enum):
     DDPG_ACTOR_CRITIC_MLP = "DDPG_ACTOR_CRITIC_MLP"
     DDPG_ACTOR_CRITIC_GRU = "DDPG_ACTOR_CRITIC_GRU"
     DDPG_ACTOR_CRITIC_GRU_ATTENTION = "DDPG_ACTOR_CRITIC_GRU_ATTENTION"
+    PPO_ACTOR_CRITIC_MLP = "PPO_ACTOR_CRITIC_MLP"
+
 
 class RLAlgorithmName(enum.Enum):
     DQN_FAST_V0 = "DQN_FAST_V0"                     # FAST_RL
@@ -80,6 +82,7 @@ class RLAlgorithmName(enum.Enum):
     REINFORCE_FAST_V0 = "REINFORCE_FAST_V0"         # FAST_RL
     DQN_V0 = "DQN_v0"
     PPO_V0 = "PPO_v0"
+    PPO_FAST_V0 = "PPO_FAST_v0"
     Policy_Iteration = "DP_Policy_Iteration"
     Value_Iteration = "DP_Value_Iteration"
     Monte_Carlo_Control_V0 = "Monte_Carlo_Control_v0"

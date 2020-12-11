@@ -124,7 +124,7 @@ class WorkerFastRL:
                 self.env, agent, gamma=params.GAMMA, steps_count=params.N_STEP, step_length=-1
             )
 
-            self.rl_algorithm.set_buffer(experience_source=experience_source)
+            self.rl_algorithm.set_experience_source_to_buffer(experience_source=experience_source)
 
             step_idx = 0
             episode = 0

@@ -6,6 +6,8 @@ import torch
 from torch import optim
 import os, sys
 
+from common.fast_rl.algorithms.PPO_v0 import PPO_FAST_v0
+
 idx = os.getcwd().index("link_rl")
 PROJECT_HOME = os.getcwd()[:idx] + "link_rl"
 if PROJECT_HOME not in sys.path:
@@ -16,13 +18,13 @@ from config.parameters import PARAMETERS as params
 if params.MY_PLATFORM != "REAL_RIP_PLATFORM":
     from common.environments.real_device.environment_double_rip import EnvironmentDoubleRIP
 
-from common.fast_rl.algorithms.DDPG_RIP_DOUBLE_AGENTS_v0 import DDPG_RIP_DOUBLE_AGENTS_v0
-from common.fast_rl.algorithms.DDPG_v0 import DDPG_v0
+from common.fast_rl.algorithms.DDPG_RIP_DOUBLE_AGENTS_v0 import DDPG_FAST_RIP_DOUBLE_AGENTS_v0
+from common.fast_rl.algorithms.DDPG_v0 import DDPG_FAST_v0
 
 if params.MY_PLATFORM != "REAL_RIP_PLATFORM":
     from common.environments.matlab.matlabenv import MatlabRotaryInvertedPendulumEnv
 
-from common.models.ddpg_actor_critic_model import DDPGActorCriticModel
+from common.models.actor_critic_model import ActorCriticModel
 from config.names import EnvironmentName, DeepLearningModelName, RLAlgorithmName, OptimizerName
 
 from common.environments.gym.frozenlake import FrozenLake_v0
@@ -47,7 +49,7 @@ from common.environments.mujoco.humanoid_stand_up import HumanoidStandUp_v2
 from common.environments.mujoco.inverted_pendulum import InvertedPendulum_v2
 from common.environments.mujoco.walker_2d import Walker2D_v2
 from common.environments.real_device.environment_double_rip import EnvironmentDoubleRIP
-from common.models.actor_critic_model import ActorCriticModel
+from common.models.old_actor_critic_model import OldActorCriticModel
 from common.algorithms_rl.DQN_v0 import DQN_v0
 from common.algorithms_rl.Monte_Carlo_Control_v0 import Monte_Carlo_Control_v0
 from common.algorithms_rl.PPO_v0 import PPO_v0
@@ -206,12 +208,12 @@ def get_environment(owner="chief", params=None):
             action_max=params.SWING_UP_SCALE_FACTOR,
             env_reset=params.ENV_RESET
         )
-    elif params.ENVIRONMENT_ID == EnvironmentName.PENDULUM_MATLAB_DOUBLE_AGENTS_V0:
-        env = MatlabRotaryInvertedPendulumDoubleAgentsEnv(
-            action_min=params.SWING_UP_SCALE_FACTOR * -1.0,
-            action_max=params.SWING_UP_SCALE_FACTOR,
-            env_reset=params.ENV_RESET
-        )
+    # elif params.ENVIRONMENT_ID == EnvironmentName.PENDULUM_MATLAB_DOUBLE_AGENTS_V0:
+    #     env = MatlabRotaryInvertedPendulumDoubleAgentsEnv(
+    #         action_min=params.SWING_UP_SCALE_FACTOR * -1.0,
+    #         action_max=params.SWING_UP_SCALE_FACTOR,
+    #         env_reset=params.ENV_RESET
+    #     )
     else:
         env = None
     return env
@@ -219,15 +221,25 @@ def get_environment(owner="chief", params=None):
 
 def get_rl_model(env, worker_id, params):
     if params.DEEP_LEARNING_MODEL == DeepLearningModelName.DDPG_ACTOR_CRITIC_MLP:
-        model = DDPGActorCriticModel(
+        model = ActorCriticModel(
             s_size=env.n_states,
             a_size=env.n_actions,
             worker_id=worker_id,
             params=params,
-            device=device
+            device=device,
+            rl_algorithm=RLAlgorithmName.DDPG_FAST_V0
+        ).to(device)
+    elif params.DEEP_LEARNING_MODEL == DeepLearningModelName.PPO_ACTOR_CRITIC_MLP:
+        model = ActorCriticModel(
+            s_size=env.n_states,
+            a_size=env.n_actions,
+            worker_id=worker_id,
+            params=params,
+            device=device,
+            rl_algorithm=RLAlgorithmName.PPO_FAST_V0
         ).to(device)
     elif params.DEEP_LEARNING_MODEL in [DeepLearningModelName.ACTOR_CRITIC_MLP, DeepLearningModelName.ACTOR_CRITIC_CNN]:
-        model = ActorCriticModel(
+        model = OldActorCriticModel(
             s_size=env.n_states,
             a_size=env.n_actions,
             continuous=env.continuous,
@@ -244,7 +256,7 @@ def get_rl_model(env, worker_id, params):
 
 def get_rl_algorithm(env, worker_id=0, logger=False, params=None):
     if params.RL_ALGORITHM == RLAlgorithmName.DDPG_FAST_DOUBLE_AGENTS_V0:
-        rl_algorithm = DDPG_RIP_DOUBLE_AGENTS_v0(
+        rl_algorithm = DDPG_FAST_RIP_DOUBLE_AGENTS_v0(
             env=env,
             worker_id=worker_id,
             logger=logger,
@@ -253,7 +265,16 @@ def get_rl_algorithm(env, worker_id=0, logger=False, params=None):
             verbose=params.VERBOSE
         )
     elif params.RL_ALGORITHM == RLAlgorithmName.DDPG_FAST_V0:
-        rl_algorithm = DDPG_v0(
+        rl_algorithm = DDPG_FAST_v0(
+            env=env,
+            worker_id=worker_id,
+            logger=logger,
+            params=params,
+            device=device,
+            verbose=params.VERBOSE
+        )
+    elif params.RL_ALGORITHM == RLAlgorithmName.PPO_FAST_V0:
+        rl_algorithm = PPO_FAST_v0(
             env=env,
             worker_id=worker_id,
             logger=logger,

@@ -165,7 +165,7 @@ class WorkerFastRLRipDoubleAgents:
                 steps_count=params.N_STEP, step_length=-1
             )
 
-            self.rl_algorithm.set_buffer(experience_source=None)
+            self.rl_algorithm.set_experience_source_to_buffer(experience_source=None)
             exp_source_iter = iter(experience_source)
 
             step_idx = 0

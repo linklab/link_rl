@@ -1,6 +1,6 @@
 from random import *
 
-from mlagents_envs.environment import UnityEnvironment
+from mlagents.envs import UnityEnvironment
 
 from config.names import OSName, EnvironmentName
 from common.environments.environment import Environment
@@ -18,10 +18,8 @@ class Drone_Racing(Environment):
             env_filename = None
 
         self.env = UnityEnvironment(
-            environment_filename=env_filename,
-            worker_id=randrange(65536),
-            use_visual=False,
-            multiagent=False
+            file_name=env_filename,
+            worker_id=randrange(65536)
         ).unwrapped
 
         super(Drone_Racing, self).__init__()

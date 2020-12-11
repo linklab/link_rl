@@ -34,7 +34,7 @@ if torch.cuda.is_available():
 else:
     device = torch.device("cpu")
 
-my_logger = get_logger("openai_pendulum_ddpg")
+my_logger = get_logger("openai_pendulum_ppo")
 
 
 def play_func(exp_queue, env, net):
@@ -42,27 +42,12 @@ def play_func(exp_queue, env, net):
     action_min = env.action_space.low[0]
     action_max = env.action_space.high[0]
 
-    action_selector = actions.DDPGActionSelector(epsilon=params.EPSILON_INIT, ou_enabled=True, scale_factor=params.ACTION_SCALE)
-
-    epsilon_tracker = actions.EpsilonTracker(
-        action_selector=action_selector,
-        eps_start=params.EPSILON_INIT,
-        eps_final=params.EPSILON_MIN,
-        eps_frames=params.EPSILON_MIN_STEP
+    agent = rl_agent.AgentPPO(
+        net, action_min=action_min, action_max=action_max, preprocessor=float32_preprocessor, device=device
     )
-
-    agent = rl_agent.AgentDDPG(
-        net, n_actions=1, action_selector=action_selector,
-        action_min=action_min, action_max=action_max, device=device, preprocessor=float32_preprocessor
-    )
-
-    if params.DEEP_LEARNING_MODEL in [DeepLearningModelName.DDPG_ACTOR_CRITIC_GRU, DeepLearningModelName.DDPG_ACTOR_CRITIC_GRU_ATTENTION]:
-        step_length = params.RNN_STEP_LENGTH
-    else:
-        step_length = -1
 
     experience_source = experience.ExperienceSourceSingleEnvFirstLast(
-        env, agent, gamma=params.GAMMA, steps_count=params.N_STEP, step_length=step_length
+        env, agent, gamma=params.GAMMA, steps_count=params.N_STEP, step_length=-1
     )
 
     exp_source_iter = iter(experience_source)
@@ -83,14 +68,12 @@ def play_func(exp_queue, env, net):
             exp = next(exp_source_iter)
             exp_queue.put(exp)
 
-            epsilon_tracker.udpate(step_idx)
-
             episode_rewards = experience_source.pop_episode_reward_lst()
             if episode_rewards:
                 current_episode_reward = episode_rewards[0]
 
                 solved, mean_episode_reward = reward_tracker.set_episode_reward(
-                    current_episode_reward, step_idx, epsilon=action_selector.epsilon
+                    current_episode_reward, step_idx, epsilon=-1.0
                 )
 
                 model_save_condition = [

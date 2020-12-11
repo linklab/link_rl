@@ -71,6 +71,7 @@ def load_actor_critic_model(actor_model_save_filename, critic_model_save_filenam
 
     print("ACTOR / CRITIC MODELS ARE LOADED!!!")
 
+
 class BaseAgent:
     """
     Abstract Agent interface
@@ -350,4 +351,30 @@ class AgentD4PG(BaseAgent):
         actions = mu_v.data.cpu().numpy()
         actions += self.action_selector(actions)
         actions = np.clip(actions, self.action_min, self.action_max)
+        return actions, new_agent_states
+
+
+class AgentPPO(BaseAgent):
+    def __init__(self, model, action_min, action_max, preprocessor=default_states_preprocessor, device="cpu"):
+        self.model = model
+        self.device = device
+        self.action_min = action_min
+        self.action_max = action_max
+        self.preprocessor = preprocessor
+
+    def __call__(self, states, agent_states):
+        if self.preprocessor is not None:
+            states = self.preprocessor(states)
+            if torch.is_tensor(states):
+                states = states.to(self.device)
+
+        mu_v = self.model(states)
+        new_agent_states = agent_states
+
+        mu = mu_v.data.cpu().numpy()
+        logstd = self.model.logstd.data.cpu().numpy()
+        rnd = np.random.normal(size=logstd.shape)
+        actions = mu + np.exp(logstd) * rnd
+        actions = np.clip(actions, self.action_min, self.action_max)
+
         return actions, new_agent_states

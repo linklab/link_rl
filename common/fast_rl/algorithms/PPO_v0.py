@@ -10,7 +10,7 @@ from common.fast_rl.policy_based_model import unpack_batch_for_ddpg
 from rl_main import rl_utils
 
 
-class DDPG_FAST_v0:
+class PPO_FAST_v0:
     def __init__(self, env, worker_id, logger, params, device, verbose):
         self.env = env
         self.worker_id = worker_id
@@ -37,16 +37,6 @@ class DDPG_FAST_v0:
             learning_rate=self.params.LEARNING_RATE,
             params=params
         )
-
-        if self.params.PER:
-            self.buffer = experience.PrioReplayBuffer(
-                experience_source=None, buffer_size=self.params.REPLAY_BUFFER_SIZE,
-                n_step=self.params.N_STEP, beta_start=0.4, beta_frames=self.params.MAX_GLOBAL_STEPS
-            )
-        else:
-            self.buffer = experience.ExperienceReplayBuffer(
-                experience_source=None, buffer_size=self.params.REPLAY_BUFFER_SIZE
-            )
 
     def set_experience_source_to_buffer(self, experience_source):
         if self.params.PER:
