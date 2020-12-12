@@ -57,7 +57,7 @@ class WorkerFastRL:
 
     def update_process(self, avg_gradients):
         self.rl_algorithm.model.set_gradients_to_current_parameters(avg_gradients)
-        if self.params.RL_ALGORITHM in [RLAlgorithmName.DDPG_FAST_V0]:
+        if self.params.RL_ALGORITHM in [RLAlgorithmName.DDPG_FAST_V0, RLAlgorithmName.D4PG_FAST_V0]:
             self.rl_algorithm.actor_optimizer.step()
             self.rl_algorithm.critic_optimizer.step()
         else:
@@ -100,25 +100,43 @@ class WorkerFastRL:
         else:
             device = torch.device("cpu")
 
-        if params.RL_ALGORITHM is RLAlgorithmName.DDPG_FAST_V0:
+        if params.RL_ALGORITHM in [RLAlgorithmName.DDPG_FAST_V0, RLAlgorithmName.D4PG_FAST_V0]:
             action_min = -self.params.ACTION_SCALE
             action_max = self.params.ACTION_SCALE
 
-            action_selector = actions.DDPGActionSelector(
-                epsilon=params.EPSILON_INIT, ou_enabled=True, scale_factor=self.params.ACTION_SCALE
-            )
+            if params.RL_ALGORITHM == RLAlgorithmName.DDPG_FAST_V0:
+                action_selector = actions.DDPGActionSelector(
+                    epsilon=params.EPSILON_INIT, ou_enabled=True, scale_factor=self.params.ACTION_SCALE
+                )
 
-            epsilon_tracker = actions.EpsilonTracker(
-                action_selector=action_selector,
-                eps_start=params.EPSILON_INIT,
-                eps_final=params.EPSILON_MIN,
-                eps_frames=params.EPSILON_MIN_STEP
-            )
+                epsilon_tracker = actions.EpsilonTracker(
+                    action_selector=action_selector,
+                    eps_start=params.EPSILON_INIT,
+                    eps_final=params.EPSILON_MIN,
+                    eps_frames=params.EPSILON_MIN_STEP
+                )
 
-            agent = rl_agent.AgentDDPG(
-                self.rl_algorithm.model, n_actions=1, action_selector=action_selector,
-                action_min=action_min, action_max=action_max, device=device, preprocessor=float32_preprocessor
-            )
+                agent = rl_agent.AgentDDPG(
+                    self.rl_algorithm.model, n_actions=1, action_selector=action_selector,
+                    action_min=action_min, action_max=action_max, device=device, preprocessor=float32_preprocessor
+                )
+
+            else:
+                action_selector = actions.EpsilonGreedyD4PGActionSelector(
+                    epsilon=params.EPSILON_INIT
+                )
+
+                epsilon_tracker = actions.EpsilonTracker(
+                    action_selector=action_selector,
+                    eps_start=params.EPSILON_INIT,
+                    eps_final=params.EPSILON_MIN,
+                    eps_frames=params.EPSILON_MIN_STEP
+                )
+
+                agent = rl_agent.AgentD4PG(
+                    self.rl_algorithm.model, n_actions=1, action_selector=action_selector,
+                    action_min=action_min, action_max=action_max, device=device, preprocessor=float32_preprocessor
+                )
 
             experience_source = experience.ExperienceSourceSingleEnvFirstLast(
                 self.env, agent, gamma=params.GAMMA, steps_count=params.N_STEP, step_length=-1

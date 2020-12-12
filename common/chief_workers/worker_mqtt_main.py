@@ -141,7 +141,7 @@ if __name__ == "__main__":
         if params.RL_ALGORITHM == RLAlgorithmName.DDPG_FAST_DOUBLE_AGENTS_V0:
             assert params.NUM_WORKERS == 1, "NUM_WORKERS should be 1"
             worker = WorkerFastRLRipDoubleAgents(logger, worker_id, worker_mqtt_client, params)
-        elif params.RL_ALGORITHM == RLAlgorithmName.DDPG_FAST_V0:
+        elif params.RL_ALGORITHM in [RLAlgorithmName.DDPG_FAST_V0, RLAlgorithmName.D4PG_FAST_V0]:
             worker = WorkerFastRL(logger, worker_id, worker_mqtt_client, params)
         else:
             worker = Worker(logger, worker_id, worker_mqtt_client, params)
