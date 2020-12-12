@@ -46,8 +46,6 @@ class ExperienceSourceSingleEnv:
         self.render = render
         self.episode_reward_lst = []
         self.episode_done_step_lst = []
-        self.episode_continuous_positive_actions = []
-        self.episode_continuous_negative_actions = []
         self.state_deque = deque(maxlen=30)
 
     def get_processed_state(self, new_state):
@@ -98,12 +96,6 @@ class ExperienceSourceSingleEnv:
             agent_states_input.append(agent_state)
             if isinstance(self.agent, AgentDDPG):
                 actions, noises, new_agent_states = self.agent(states_input, agent_states_input)
-                noise = noises[0]
-                for action_ in actions:
-                    if action_ >= 0.0:
-                        self.episode_continuous_positive_actions.append(action_)
-                    else:
-                        self.episode_continuous_negative_actions.append(action_)
             else:
                 actions, new_agent_states = self.agent(states_input, agent_states_input)
 
