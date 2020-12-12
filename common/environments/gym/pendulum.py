@@ -17,6 +17,9 @@ class Pendulum_v0(Environment):
 
         self.last_episode_reward = None
 
+        self.n_states = self.get_n_states()
+        self.n_actions = self.get_n_actions()
+
     def get_n_states(self):
         n_states = self.env.observation_space.shape[0]
         return n_states

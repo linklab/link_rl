@@ -3,7 +3,7 @@ import argparse
 import gym
 import pybullet_envs
 
-from lib import model
+from z_externals.handson_second_edition.Chapter17.lib import model
 
 import numpy as np
 import torch

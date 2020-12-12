@@ -3,6 +3,7 @@ import glob
 import torch
 import torch.nn as nn
 import os
+import torch.nn.functional as F
 
 from config.names import PROJECT_HOME, RLAlgorithmName
 
@@ -18,11 +19,20 @@ class ActorCriticModel(nn.Module):
         self.a_size = a_size
         self.rl_algorithm = rl_algorithm
 
-        self.base = DDPGActorCriticMLPBase(
-            num_inputs=s_size,
-            num_ouputs=a_size,
-            params=self.params
-        )
+        if self.rl_algorithm in [RLAlgorithmName.DDPG_FAST_V0, RLAlgorithmName.DDPG_FAST_DOUBLE_AGENTS_V0]:
+            self.base = DDPGActorCriticMLPBase(
+                num_inputs=s_size,
+                num_ouputs=a_size,
+                params=self.params
+            )
+        elif self.rl_algorithm == RLAlgorithmName.D4PG_FAST_V0:
+            self.base = D4PGActorCriticMLPBase(
+                num_inputs=s_size,
+                num_ouputs=a_size,
+                params=self.params
+            )
+        else:
+            raise ValueError()
 
         self.avg_gradients = {}
         self.weighted_scores = [0, 0, 0, 0]
@@ -170,8 +180,6 @@ class DDPGActorCriticMLPBase(nn.Module):
             nn.Linear(self.hidden_3_size, num_ouputs),
         )
 
-        self.logstd = nn.Parameter(torch.zeros(num_ouputs))
-
         self.actor.apply(self.init_weights)
 
         self.critic = nn.Sequential(
@@ -208,3 +216,71 @@ class DDPGActorCriticMLPBase(nn.Module):
         critic_value = self.critic(torch.cat([inputs, actions], dim=1))
 
         return critic_value
+
+
+class D4PGActorCriticMLPBase(nn.Module):
+    def __init__(self, num_inputs, num_ouputs, params):
+        super(D4PGActorCriticMLPBase, self).__init__()
+        self.__name__ = "D4PGActorCriticMLPBase"
+        self.params = params
+
+        self.hidden_1_size = params.HIDDEN_1_SIZE
+        self.hidden_2_size = params.HIDDEN_2_SIZE
+        self.hidden_3_size = params.HIDDEN_3_SIZE
+
+        self.actor = nn.Sequential(
+            nn.Linear(num_inputs, self.hidden_1_size),
+            nn.ReLU(),
+            nn.Linear(self.hidden_1_size, self.hidden_2_size),
+            nn.ReLU(),
+            nn.Linear(self.hidden_2_size, self.hidden_3_size),
+            nn.ReLU(),
+            nn.Linear(self.hidden_3_size, num_ouputs),
+        )
+
+        self.logstd = nn.Parameter(torch.zeros(num_ouputs))
+
+        self.actor.apply(self.init_weights)
+
+        self.critic = nn.Sequential(
+            nn.Linear(num_inputs + num_ouputs, self.hidden_1_size),
+            nn.ReLU(),
+            nn.Linear(self.hidden_1_size, self.hidden_2_size),
+            nn.ReLU(),
+            nn.Linear(self.hidden_2_size, self.hidden_3_size),
+            nn.ReLU(),
+            nn.Linear(self.hidden_3_size, params.N_ATOMS)
+        )
+
+        self.critic.apply(self.init_weights)
+
+        self.layers_info = {'actor': self.actor, 'critic': self.critic}
+
+        delta = (params.V_MAX - params.V_MIN) / (params.N_ATOMS - 1)
+        self.register_buffer("supports", torch.arange(params.V_MIN, params.V_MAX + delta, delta))
+
+        self.train()
+
+    @staticmethod
+    def init_weights(m):
+        if type(m) == nn.Linear:
+            torch.nn.init.kaiming_normal_(m.weight)
+
+    def forward(self, inputs):
+        return self.forward_actor(inputs)
+
+    def forward_actor(self, inputs):
+        actions = self.actor(inputs)
+        actions = torch.tanh(actions)
+
+        return actions * self.params.ACTION_SCALE
+
+    def forward_critic(self, inputs, actions):
+        critic_value = self.critic(torch.cat([inputs, actions], dim=1))
+
+        return critic_value
+
+    def distribution_to_q(self, distribution):
+        weights = F.softmax(distribution, dim=1) * self.supports
+        res = weights.sum(dim=1)
+        return res.unsqueeze(dim=-1)

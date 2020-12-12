@@ -4,10 +4,12 @@ import time
 import math
 import ptan
 import gym
+import pybullet_envs
+
 import argparse
 from tensorboardX import SummaryWriter
 
-from lib import model, common
+from z_externals.handson_second_edition.Chapter17.lib import model, common
 
 import numpy as np
 import torch
@@ -25,7 +27,7 @@ ENTROPY_BETA = 1e-4
 TEST_ITERS = 1000
 
 
-def test_net(net, env, count=10, device="cpu"):
+def a2c_test_net(net, env, count=10, device="cpu"):
     rewards = 0.0
     steps = 0
     for _ in range(count):
@@ -53,7 +55,7 @@ def calc_logprob(mu_v, var_v, actions_v):
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument("--cuda", default=False, action='store_true', help='Enable CUDA')
-    parser.add_argument("-n", "--name", required=True, help="Name of the run")
+    parser.add_argument("-n", "--name", default="a2c", help="Name of the run")
     args = parser.parse_args()
     device = torch.device("cuda" if args.cuda else "cpu")
 
@@ -85,7 +87,7 @@ if __name__ == "__main__":
 
                 if step_idx % TEST_ITERS == 0:
                     ts = time.time()
-                    rewards, steps = test_net(net, test_env, device=device)
+                    rewards, steps = a2c_test_net(net, test_env, device=device)
                     print("Test done is %.2f sec, reward %.3f, steps %d" % (
                         time.time() - ts, rewards, steps))
                     writer.add_scalar("test_reward", rewards, step_idx)

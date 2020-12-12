@@ -6,6 +6,7 @@ import torch
 from torch import optim
 import os, sys
 
+from common.fast_rl.algorithms.D4PG_v0 import D4PG_FAST_v0
 from common.fast_rl.algorithms.PPO_v0 import PPO_FAST_v0
 
 idx = os.getcwd().index("link_rl")
@@ -229,6 +230,15 @@ def get_rl_model(env, worker_id, params):
             device=device,
             rl_algorithm=RLAlgorithmName.DDPG_FAST_V0
         ).to(device)
+    elif params.DEEP_LEARNING_MODEL == DeepLearningModelName.D4PG_ACTOR_CRITIC_MLP:
+            model = ActorCriticModel(
+                s_size=env.n_states,
+                a_size=env.n_actions,
+                worker_id=worker_id,
+                params=params,
+                device=device,
+                rl_algorithm=RLAlgorithmName.D4PG_FAST_V0
+            ).to(device)
     elif params.DEEP_LEARNING_MODEL == DeepLearningModelName.PPO_ACTOR_CRITIC_MLP:
         model = ActorCriticModel(
             s_size=env.n_states,
@@ -257,6 +267,15 @@ def get_rl_model(env, worker_id, params):
 def get_rl_algorithm(env, worker_id=0, logger=False, params=None):
     if params.RL_ALGORITHM == RLAlgorithmName.DDPG_FAST_DOUBLE_AGENTS_V0:
         rl_algorithm = DDPG_FAST_RIP_DOUBLE_AGENTS_v0(
+            env=env,
+            worker_id=worker_id,
+            logger=logger,
+            params=params,
+            device=device,
+            verbose=params.VERBOSE
+        )
+    elif params.RL_ALGORITHM == RLAlgorithmName.D4PG_FAST_V0:
+        rl_algorithm = D4PG_FAST_v0(
             env=env,
             worker_id=worker_id,
             logger=logger,

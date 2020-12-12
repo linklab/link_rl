@@ -329,8 +329,10 @@ class AgentDDPG(BaseAgent):
 
 
 class AgentD4PG(BaseAgent):
-    def __init__(self, model, n_actions, action_selector, action_min, action_max, device="cpu",
-                 preprocessor=default_states_preprocessor):
+    def __init__(
+            self, model, n_actions, action_selector, action_min, action_max,
+            device="cpu", preprocessor=default_states_preprocessor
+    ):
         self.model = model
         self.device = device
         self.action_selector = action_selector
@@ -349,7 +351,7 @@ class AgentD4PG(BaseAgent):
         new_agent_states = agent_states
 
         actions = mu_v.data.cpu().numpy()
-        actions += self.action_selector(actions)
+        actions = self.action_selector(actions)
         actions = np.clip(actions, self.action_min, self.action_max)
         return actions, new_agent_states
 

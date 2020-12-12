@@ -69,8 +69,7 @@ class DDPGCritic(nn.Module):
 
 
 class D4PGCritic(nn.Module):
-    def __init__(self, obs_size, act_size,
-                 n_atoms, v_min, v_max):
+    def __init__(self, obs_size, act_size, n_atoms, v_min, v_max):
         super(D4PGCritic, self).__init__()
 
         self.obs_net = nn.Sequential(
@@ -85,8 +84,7 @@ class D4PGCritic(nn.Module):
         )
 
         delta = (v_max - v_min) / (n_atoms - 1)
-        self.register_buffer("supports", torch.arange(
-            v_min, v_max + delta, delta))
+        self.register_buffer("supports", torch.arange(v_min, v_max + delta, delta))
 
     def forward(self, x, a):
         obs = self.obs_net(x)
@@ -143,11 +141,9 @@ class AgentDDPG(ptan.agent.BaseAgent):
             new_a_states = []
             for a_state, action in zip(agent_states, actions):
                 if a_state is None:
-                    a_state = np.zeros(
-                        shape=action.shape, dtype=np.float32)
+                    a_state = np.zeros(shape=action.shape, dtype=np.float32)
                 a_state += self.ou_teta * (self.ou_mu - a_state)
-                a_state += self.ou_sigma * np.random.normal(
-                    size=action.shape)
+                a_state += self.ou_sigma * np.random.normal(size=action.shape)
 
                 action += self.ou_epsilon * a_state
                 new_a_states.append(a_state)
