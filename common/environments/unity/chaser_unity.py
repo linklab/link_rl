@@ -1,4 +1,4 @@
-from mlagents.envs import UnityEnvironment
+from mlagents_envs.environment import UnityEnvironment
 
 from config.names import EnvironmentName, OSName
 from config.parameters import PARAMETERS as params
