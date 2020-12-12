@@ -1,6 +1,6 @@
 from random import *
 
-from mlagents.envs import UnityEnvironment
+from mlagents_envs.environment import UnityEnvironment
 
 from config.names import OSName, EnvironmentName
 from common.environments.environment import Environment
