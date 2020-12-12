@@ -239,7 +239,7 @@ class MatlabRotaryInvertedPendulumEnv(gym.Env):
             if self.is_upright:
                 position_reward = adjusted_radian / math.pi  # math.pi - math.radians(12) ~ math.pi
             else:
-                position_reward = 0
+                position_reward = 0.0
 
         self.episode_position_reward_list.append(position_reward)
         self.episode_pendulum_velocity_reward_list.append(0.0)
