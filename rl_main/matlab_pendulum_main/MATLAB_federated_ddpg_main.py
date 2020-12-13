@@ -5,8 +5,6 @@ from multiprocessing import Process
 import torch
 print(torch.__version__)
 
-from common import common_utils
-
 os.environ['KMP_DUPLICATE_LIB_OK'] = 'True'
 
 idx = os.getcwd().index("link_rl")
@@ -14,6 +12,7 @@ PROJECT_HOME = os.getcwd()[:idx] + "link_rl"
 if PROJECT_HOME not in sys.path:
     sys.path.append(PROJECT_HOME)
 
+from common import common_utils
 from config.parameters import PARAMETERS as params
 from rl_main import rl_utils
 import rl_main.federated_main.utils as utils
