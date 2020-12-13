@@ -8,14 +8,13 @@ from collections import deque
 import numpy as np
 import torch
 
-from common.fast_rl.common import utils
-from common.fast_rl.rl_agent import float32_preprocessor
-
 idx = os.getcwd().index("link_rl")
 PROJECT_HOME = os.getcwd()[:idx] + "link_rl"
 if PROJECT_HOME not in sys.path:
     sys.path.append(PROJECT_HOME)
 
+from common.fast_rl.common import utils
+from common.fast_rl.rl_agent import float32_preprocessor
 from common.fast_rl import actions, rl_agent, experience
 from config.names import RLAlgorithmName, EnvironmentName
 from rl_main.federated_main.utils import exp_moving_average
