@@ -180,7 +180,7 @@ class MatlabRotaryInvertedPendulumEnv(gym.Env):
 
         done_conditions = [
             self.episode_steps >= 500 and not self.is_upright,
-            self.too_much_rotate
+            self.too_much_rotate and not self.is_upright
             # self.num_continuous_positive_torque >= 30,
             # self.num_continuous_negative_torque >= 30
         ]
@@ -233,23 +233,29 @@ class MatlabRotaryInvertedPendulumEnv(gym.Env):
         return state, reward, done, info
 
     def get_reward(self, adjusted_radian):
-        if self.too_much_rotate:
-            position_reward = -1.0
+        # if self.too_much_rotate:
+        #     position_reward = -1.0
+        #     energy_penalty = 0.0
+        # else:
+
+        if self.is_upright:
+            position_reward = adjusted_radian / math.pi  # math.pi - math.radians(12) ~ math.pi
+        elif adjusted_radian > math.pi / 2.0:
+            position_reward = adjusted_radian / (math.pi * 2.0)
         else:
-            if self.is_upright:
-                position_reward = 2 * adjusted_radian / math.pi  # math.pi - math.radians(12) ~ math.pi
-            elif adjusted_radian > math.pi / 2.0:
-                position_reward = adjusted_radian / math.pi
-            else:
-                position_reward = 0.0
+            position_reward = 0.0
+
+        energy_penalty = -1.0 * abs(self.pendulum_velocity) / 100
 
         self.episode_position_reward_list.append(position_reward)
-        self.episode_pendulum_velocity_reward_list.append(0.0)
+        self.episode_pendulum_velocity_reward_list.append(energy_penalty)
         self.episode_action_reward_list.append(0.0)
 
-        reward = position_reward - abs(self.pendulum_velocity) / 200.0
+        reward = position_reward + energy_penalty
 
-        # print(position_reward, abs(self.pendulum_velocity) / 100.0, abs(self.motor_velocity) / 100.0)
+        reward = max(0.0, reward)
+
+        print(position_reward, energy_penalty, reward)
 
         return reward
 
