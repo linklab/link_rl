@@ -255,7 +255,7 @@ class MatlabRotaryInvertedPendulumEnv(gym.Env):
 
         reward = max(0.0, reward)
 
-        print(position_reward, energy_penalty, reward)
+        # print(position_reward, energy_penalty, reward)
 
         return reward
 
