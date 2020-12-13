@@ -155,11 +155,12 @@ class WorkerFastRL:
                     self.rl_algorithm.buffer.populate(params.TRAIN_STEP_FREQ)
                     epsilon_tracker.udpate(step_idx)
 
-                    gradients, critic_loss, actor_objective = self.rl_algorithm.train_net(step_idx=step_idx)
-
                     episode_rewards = experience_source.pop_episode_reward_lst()
 
                     if episode_rewards:
+                        for _ in range(10):
+                            gradients, critic_loss, actor_objective = self.rl_algorithm.train_net(step_idx=step_idx)
+
                         current_episode_reward = episode_rewards[0]
 
                         solved, mean_episode_reward = reward_tracker.set_episode_reward(
