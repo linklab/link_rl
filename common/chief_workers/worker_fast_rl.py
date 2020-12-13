@@ -158,8 +158,16 @@ class WorkerFastRL:
                     episode_rewards = experience_source.pop_episode_reward_lst()
 
                     if episode_rewards:
+                        critic_loss_lst = []
+                        actor_objective_lst = []
+
                         for _ in range(10):
                             gradients, critic_loss, actor_objective = self.rl_algorithm.train_net(step_idx=step_idx)
+                            critic_loss_lst.append(critic_loss)
+                            actor_objective_lst.append(actor_objective)
+
+                        critic_loss = np.mean(critic_loss_lst)
+                        actor_objective = np.mean(actor_objective)
 
                         current_episode_reward = episode_rewards[0]
 
