@@ -9,19 +9,20 @@ import numpy as np
 from collections import namedtuple, deque
 # from memory_profiler import profile
 
-from .rl_agent import BaseAgent, AgentDDPG
+from .rl_agent import BaseAgent, AgentDDPG, AgentD4PG
 from .common import utils
 
 from config.parameters import PARAMETERS as params
 
 # one single experience step
-Experience = namedtuple('Experience', ['state', 'action', 'reward', 'done'])
+Experience = namedtuple('Experience', ['state', 'action', 'reward', 'done', 'episode_reward'])
 ExperienceWithNoise = namedtuple(
     'ExperienceWithNoise', ['state', 'action', 'noise', 'reward', 'done', 'episode_reward']
 )
 
 ExperienceFirstLast = namedtuple(
-    'ExperienceFirstLast', ('state', 'action', 'reward', 'last_state', 'last_step', 'done')
+    'ExperienceFirstLast',
+    ('state', 'action', 'reward', 'last_state', 'last_step', 'done', 'episode_reward')
 )
 ExperienceFirstLastWithNoise = namedtuple(
     'ExperienceFirstLastWithNoise',
@@ -117,7 +118,9 @@ class ExperienceSourceSingleEnv:
                         state=processed_state, action=action, noise=noise, reward=r, done=is_done, episode_reward=None
                     ))
                 else:
-                    history.append(Experience(state=processed_state, action=action, reward=r, done=is_done))
+                    history.append(Experience(
+                        state=processed_state, action=action, reward=r, done=is_done, episode_reward=None
+                    ))
 
             if len(history) == self.steps_count:
                 yield tuple(history)
@@ -184,7 +187,7 @@ class ExperienceSourceSingleEnvFirstLast(ExperienceSourceSingleEnv):
                 total_reward *= self.gamma
                 total_reward += e.reward
 
-            if isinstance(self.agent, AgentDDPG):
+            if isinstance(self.agent, AgentDDPG) or isinstance(self.agent, AgentD4PG):
                 exp = ExperienceFirstLastWithNoise(
                     state=exp[0].state, action=exp[0].action, noise=exp[0].noise, reward=total_reward,
                     last_state=last_state, last_step=len(elems), done=exp[-1].done, episode_reward=None
@@ -192,7 +195,7 @@ class ExperienceSourceSingleEnvFirstLast(ExperienceSourceSingleEnv):
             else:
                 exp = ExperienceFirstLast(
                     state=exp[0].state, action=exp[0].action, reward=total_reward, last_state=last_state,
-                    last_step=len(elems), done=exp[-1].done
+                    last_step=len(elems), done=exp[-1].done, episode_reward=None
                 )
             yield exp
 
@@ -269,7 +272,7 @@ class ExperienceSource:
                     states_input.append(state)
                     states_indices.append(idx)
             if states_input:
-                if isinstance(self.agent, AgentDDPG):
+                if isinstance(self.agent, AgentDDPG) or isinstance(self.agent, AgentD4PG):
                     states_actions, noises, new_agent_states = self.agent(states_input, agent_states)
                 else:
                     states_actions, new_agent_states = self.agent(states_input, agent_states)
@@ -280,6 +283,7 @@ class ExperienceSource:
                     g_idx = states_indices[idx]
                     actions[g_idx] = action
                     agent_states[g_idx] = new_agent_states[idx]
+
             grouped_actions = _group_list(actions, env_lens)
 
             global_ofs = 0

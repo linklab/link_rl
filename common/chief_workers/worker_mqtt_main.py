@@ -134,6 +134,8 @@ if __name__ == "__main__":
 
     worker_mqtt_client.connect(params.MQTT_SERVER, params.MQTT_PORT, keepalive=3600)
 
+    time.sleep(2.0)
+
     stderr = sys.stderr
     sys.stderr = sys.stdout
     try:

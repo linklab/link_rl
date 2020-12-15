@@ -7,7 +7,7 @@ from torch import optim
 import os, sys
 
 from common.fast_rl.algorithms.D4PG_v0 import D4PG_FAST_v0
-from common.fast_rl.algorithms.Dueling_Double_DQN_v0 import Dueling_Double_DQN_v0
+from common.fast_rl.algorithms.DUELING_DOUBLE_DQN_v0 import Dueling_Double_DQN_v0
 from common.fast_rl.algorithms.PPO_v0 import PPO_FAST_v0
 from common.models.basic_model import DuelingDQNModel
 

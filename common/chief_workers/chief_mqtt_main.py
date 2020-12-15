@@ -20,7 +20,6 @@ import numpy as np
 
 logger = get_logger("chief")
 
-
 try:
     env = rl_utils.get_environment(params=params)
     rl_model = rl_utils.get_rl_model(env, -1, params=params)

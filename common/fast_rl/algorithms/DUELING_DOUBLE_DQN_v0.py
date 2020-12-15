@@ -60,9 +60,6 @@ class Dueling_Double_DQN_v0:
             batch_indices, batch_weights = None, None
 
         # print(batch)
-        batch_states_v, batch_actions_v, batch_rewards_v, batch_dones_mask, batch_last_states_v = unpack_batch_for_ddpg(
-            batch, self.device
-        )
 
         self.optimizer.zero_grad()
 
@@ -76,7 +73,7 @@ class Dueling_Double_DQN_v0:
             self.buffer.update_beta(step_idx)
         else:
             loss_v = value_based_model.calc_loss_double_dqn(
-                batch, self.model, self.target_agent, self.params.GAMMA, cuda=False, cuda_async=False
+                batch, self.model, self.target_agent, self.params.GAMMA, cuda=self.params.CUDA, cuda_async=False
             )
 
         loss_v.backward()

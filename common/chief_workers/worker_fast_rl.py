@@ -56,6 +56,7 @@ class WorkerFastRL:
 
     def update_process(self, avg_gradients):
         self.rl_algorithm.model.set_gradients_to_current_parameters(avg_gradients)
+
         if self.params.RL_ALGORITHM in [RLAlgorithmName.DDPG_FAST_V0, RLAlgorithmName.D4PG_FAST_V0]:
             self.rl_algorithm.actor_optimizer.step()
             self.rl_algorithm.critic_optimizer.step()
@@ -147,6 +148,8 @@ class WorkerFastRL:
                     self.rl_algorithm.model, n_actions=1, action_selector=action_selector,
                     action_min=action_min, action_max=action_max, device=device, preprocessor=float32_preprocessor
                 )
+        else:
+            raise ValueError()
 
         experience_source = experience.ExperienceSourceSingleEnvFirstLast(
             self.env, agent, gamma=params.GAMMA, steps_count=params.N_STEP, step_length=-1
@@ -165,27 +168,21 @@ class WorkerFastRL:
                 self.rl_algorithm.buffer.populate(params.TRAIN_STEP_FREQ)
                 epsilon_tracker.udpate(step_idx)
 
+                ###################
+                actor_objective = None
+
+                if self.params.RL_ALGORITHM == RLAlgorithmName.DQN_FAST_V0:
+                    gradients, loss = self.rl_algorithm.train_net(step_idx=step_idx)
+                elif self.params.RL_ALGORITHM in [RLAlgorithmName.DDPG_FAST_V0, RLAlgorithmName.D4PG_FAST_V0]:
+                    gradients, loss, actor_objective = self.rl_algorithm.train_net(step_idx=step_idx)
+                else:
+                    raise ValueError()
+                ###################
+
                 episode_rewards = experience_source.pop_episode_reward_lst()
 
                 if episode_rewards:
-                    loss_lst = []  # for actor critic model, loss means critic_loss
-                    actor_objective_lst = []
-                    actor_objective = None
-
-                    for _ in range(10):
-                        if self.params.RL_ALGORITHM == RLAlgorithmName.DQN_FAST_V0:
-                            gradients, loss = self.rl_algorithm.train_net(step_idx=step_idx)
-                            loss_lst.append(loss)
-                        elif self.params.RL_ALGORITHM in [RLAlgorithmName.DDPG_FAST_V0, RLAlgorithmName.D4PG_FAST_V0]:
-                            gradients, loss, actor_objective = self.rl_algorithm.train_net(step_idx=step_idx)
-                            loss_lst.append(loss)
-                            actor_objective_lst.append(actor_objective)
-
-                    loss = np.mean(loss_lst)
-
-                    if self.params.RL_ALGORITHM in [RLAlgorithmName.DDPG_FAST_V0, RLAlgorithmName.D4PG_FAST_V0]:
-                        actor_objective = np.mean(actor_objective)
-
+                    #loss, actor_objective = self.train_at_episode_end(step_idx)
                     current_episode_reward = episode_rewards[0]
 
                     solved, mean_episode_reward = reward_tracker.set_episode_reward(
@@ -215,6 +212,31 @@ class WorkerFastRL:
                 self.interact_with_chief(
                     gradients, current_episode_reward, episode, step_idx, solved, loss, actor_objective
                 )
+
+    def train_at_episode_end(self, step_idx):
+        ###################
+        loss_lst = []  # for actor critic model, loss means critic_loss
+        actor_objective_lst = []
+        actor_objective = None
+
+        for _ in range(10):
+            if self.params.RL_ALGORITHM == RLAlgorithmName.DQN_FAST_V0:
+                gradients, loss = self.rl_algorithm.train_net(step_idx=step_idx)
+                loss_lst.append(loss)
+            elif self.params.RL_ALGORITHM in [RLAlgorithmName.DDPG_FAST_V0, RLAlgorithmName.D4PG_FAST_V0]:
+                gradients, loss, actor_objective = self.rl_algorithm.train_net(step_idx=step_idx)
+                loss_lst.append(loss)
+                actor_objective_lst.append(actor_objective)
+            else:
+                raise ValueError()
+
+        loss = np.mean(loss_lst)
+
+        if self.params.RL_ALGORITHM in [RLAlgorithmName.DDPG_FAST_V0, RLAlgorithmName.D4PG_FAST_V0]:
+            actor_objective = np.mean(actor_objective_lst)
+
+        return loss, actor_objective
+        ###################
 
     def interact_with_chief(self, gradients, episode_reward, episode, step_idx, solved, loss, actor_objective=None):
         self.local_losses.append(loss)
