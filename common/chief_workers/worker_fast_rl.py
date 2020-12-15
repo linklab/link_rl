@@ -99,7 +99,18 @@ class WorkerFastRL:
         else:
             device = torch.device("cpu")
 
-        if params.RL_ALGORITHM in [RLAlgorithmName.DDPG_FAST_V0, RLAlgorithmName.D4PG_FAST_V0]:
+        if params.RL_ALGORITHM in [RLAlgorithmName.DQN_FAST_V0]:
+            action_selector = actions.EpsilonGreedyActionSelector(epsilon=params.EPSILON_INIT)
+
+            epsilon_tracker = actions.EpsilonTracker(
+                action_selector=action_selector,
+                eps_start=params.EPSILON_INIT,
+                eps_final=params.EPSILON_MIN,
+                eps_frames=params.EPSILON_MIN_STEP
+            )
+
+            agent = rl_agent.DQNAgent(self.rl_algorithm.model, action_selector, device=device)
+        elif params.RL_ALGORITHM in [RLAlgorithmName.DDPG_FAST_V0, RLAlgorithmName.D4PG_FAST_V0]:
             action_min = -self.params.ACTION_SCALE
             action_max = self.params.ACTION_SCALE
 
@@ -137,66 +148,73 @@ class WorkerFastRL:
                     action_min=action_min, action_max=action_max, device=device, preprocessor=float32_preprocessor
                 )
 
-            experience_source = experience.ExperienceSourceSingleEnvFirstLast(
-                self.env, agent, gamma=params.GAMMA, steps_count=params.N_STEP, step_length=-1
-            )
+        experience_source = experience.ExperienceSourceSingleEnvFirstLast(
+            self.env, agent, gamma=params.GAMMA, steps_count=params.N_STEP, step_length=-1
+        )
 
-            self.rl_algorithm.set_experience_source_to_buffer(experience_source=experience_source)
+        self.rl_algorithm.set_experience_source_to_buffer(experience_source=experience_source)
 
-            step_idx = 0
-            episode = 0
+        step_idx = 0
+        episode = 0
 
-            with utils.RewardTracker(params=params, frame=None, stat=None, worker_id=self.worker_id) as reward_tracker:
-                while step_idx < params.MAX_GLOBAL_STEPS:
-                    # 1 스텝 진행하고 exp를 exp_queue에 넣음
-                    step_idx += params.N_STEP
+        with utils.RewardTracker(params=params, frame=None, stat=None, worker_id=self.worker_id) as reward_tracker:
+            while step_idx < params.MAX_GLOBAL_STEPS:
+                # 1 스텝 진행하고 exp를 exp_queue에 넣음
+                step_idx += params.N_STEP
 
-                    self.rl_algorithm.buffer.populate(params.TRAIN_STEP_FREQ)
-                    epsilon_tracker.udpate(step_idx)
+                self.rl_algorithm.buffer.populate(params.TRAIN_STEP_FREQ)
+                epsilon_tracker.udpate(step_idx)
 
-                    episode_rewards = experience_source.pop_episode_reward_lst()
+                episode_rewards = experience_source.pop_episode_reward_lst()
 
-                    if episode_rewards:
-                        critic_loss_lst = []
-                        actor_objective_lst = []
+                if episode_rewards:
+                    loss_lst = []  # for actor critic model, loss means critic_loss
+                    actor_objective_lst = []
+                    actor_objective = None
 
-                        for _ in range(10):
-                            gradients, critic_loss, actor_objective = self.rl_algorithm.train_net(step_idx=step_idx)
-                            critic_loss_lst.append(critic_loss)
+                    for _ in range(10):
+                        if self.params.RL_ALGORITHM == RLAlgorithmName.DQN_FAST_V0:
+                            gradients, loss = self.rl_algorithm.train_net(step_idx=step_idx)
+                            loss_lst.append(loss)
+                        elif self.params.RL_ALGORITHM in [RLAlgorithmName.DDPG_FAST_V0, RLAlgorithmName.D4PG_FAST_V0]:
+                            gradients, loss, actor_objective = self.rl_algorithm.train_net(step_idx=step_idx)
+                            loss_lst.append(loss)
                             actor_objective_lst.append(actor_objective)
 
-                        critic_loss = np.mean(critic_loss_lst)
+                    loss = np.mean(loss_lst)
+
+                    if self.params.RL_ALGORITHM in [RLAlgorithmName.DDPG_FAST_V0, RLAlgorithmName.D4PG_FAST_V0]:
                         actor_objective = np.mean(actor_objective)
 
-                        current_episode_reward = episode_rewards[0]
+                    current_episode_reward = episode_rewards[0]
 
-                        solved, mean_episode_reward = reward_tracker.set_episode_reward(
-                            current_episode_reward, step_idx, epsilon=action_selector.epsilon
-                        )
-
-                        if solved:
-                            rl_agent.save_model(
-                                os.path.join(PROJECT_HOME, "out", "model_save_files"),
-                                params.ENVIRONMENT_ID.value,
-                                self.rl_algorithm.model.__name__,
-                                self.rl_algorithm.model,
-                                step_idx,
-                                mean_episode_reward
-                            )
-
-                        solved = self.interact_with_chief(
-                            gradients, current_episode_reward, episode, step_idx, solved, critic_loss, actor_objective
-                        )
-
-                        if solved:
-                            break
-
-                        episode += 1
-
-                if not solved:
-                    self.interact_with_chief(
-                        gradients, current_episode_reward, episode, step_idx, solved, critic_loss, actor_objective
+                    solved, mean_episode_reward = reward_tracker.set_episode_reward(
+                        current_episode_reward, step_idx, epsilon=action_selector.epsilon
                     )
+
+                    if solved:
+                        rl_agent.save_model(
+                            os.path.join(PROJECT_HOME, "out", "model_save_files"),
+                            params.ENVIRONMENT_ID.value,
+                            self.rl_algorithm.model.__name__,
+                            self.rl_algorithm.model,
+                            step_idx,
+                            mean_episode_reward
+                        )
+
+                    solved = self.interact_with_chief(
+                        gradients, current_episode_reward, episode, step_idx, solved, loss, actor_objective
+                    )
+
+                    if solved:
+                        break
+
+                    episode += 1
+
+            if not solved:
+                self.interact_with_chief(
+                    gradients, current_episode_reward, episode, step_idx, solved, loss, actor_objective
+                )
 
     def interact_with_chief(self, gradients, episode_reward, episode, step_idx, solved, loss, actor_objective=None):
         self.local_losses.append(loss)

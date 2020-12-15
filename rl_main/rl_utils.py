@@ -7,7 +7,9 @@ from torch import optim
 import os, sys
 
 from common.fast_rl.algorithms.D4PG_v0 import D4PG_FAST_v0
+from common.fast_rl.algorithms.Dueling_Double_DQN_v0 import Dueling_Double_DQN_v0
 from common.fast_rl.algorithms.PPO_v0 import PPO_FAST_v0
+from common.models.basic_model import DuelingDQNModel
 
 idx = os.getcwd().index("link_rl")
 PROJECT_HOME = os.getcwd()[:idx] + "link_rl"
@@ -257,6 +259,14 @@ def get_rl_model(env, worker_id, params):
             params=params,
             device=device
         ).to(device)
+    elif params.DEEP_LEARNING_MODEL in [DeepLearningModelName.DUELING_DQN_MLP]:
+        model = DuelingDQNModel(
+            s_size=env.n_states,
+            a_size=env.n_actions,
+            worker_id=worker_id,
+            params=params,
+            device=device
+        ).to(device)
     elif params.DEEP_LEARNING_MODEL == DeepLearningModelName.NO_MODEL:
         model = None
     else:
@@ -307,6 +317,15 @@ def get_rl_algorithm(env, worker_id=0, logger=False, params=None):
             worker_id=worker_id,
             gamma=params.GAMMA,
             env_render=params.ENV_RENDER,
+            logger=logger,
+            params=params,
+            device=device,
+            verbose=params.VERBOSE
+        )
+    elif params.RL_ALGORITHM == RLAlgorithmName.DQN_FAST_V0:
+        rl_algorithm = Dueling_Double_DQN_v0(
+            env=env,
+            worker_id=worker_id,
             logger=logger,
             params=params,
             device=device,

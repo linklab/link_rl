@@ -42,8 +42,6 @@ class Chief:
         self.episode_chief = 0
         self.num_messages = 0
 
-        self.hidden_size = [params.HIDDEN_1_SIZE, params.HIDDEN_2_SIZE, params.HIDDEN_3_SIZE]
-
         self.model = rl_model
 
         self.params = params

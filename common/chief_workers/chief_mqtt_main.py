@@ -20,10 +20,15 @@ import numpy as np
 
 logger = get_logger("chief")
 
-env = rl_utils.get_environment(params=params)
-rl_model = rl_utils.get_rl_model(env, -1, params=params)
 
-chief = Chief(logger=logger, env=env, rl_model=rl_model, params=params)
+try:
+    env = rl_utils.get_environment(params=params)
+    rl_model = rl_utils.get_rl_model(env, -1, params=params)
+
+    chief = Chief(logger=logger, env=env, rl_model=rl_model, params=params)
+except:
+    traceback.print_exc()
+    sys.exit(-1)
 
 
 def on_chief_connect(client, userdata, flags, rc):
@@ -161,3 +166,6 @@ if __name__ == "__main__":
                 break
         except KeyboardInterrupt as error:
             print("=== {0:>8} is aborted by keyboard interrupt".format('Chief'))
+        except Exception as e:
+            traceback.print_exc()
+            sys.exit(-1)

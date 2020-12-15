@@ -140,7 +140,7 @@ if __name__ == "__main__":
         if params.RL_ALGORITHM == RLAlgorithmName.DDPG_FAST_DOUBLE_AGENTS_V0:
             assert params.NUM_WORKERS == 1, "NUM_WORKERS should be 1"
             worker = WorkerFastRLRipDoubleAgents(logger, worker_id, worker_mqtt_client, params)
-        elif params.RL_ALGORITHM in [RLAlgorithmName.DDPG_FAST_V0, RLAlgorithmName.D4PG_FAST_V0]:
+        elif params.RL_ALGORITHM in [RLAlgorithmName.DQN_FAST_V0, RLAlgorithmName.DDPG_FAST_V0, RLAlgorithmName.D4PG_FAST_V0]:
             worker = WorkerFastRL(logger, worker_id, worker_mqtt_client, params)
         else:
             worker = Worker(logger, worker_id, worker_mqtt_client, params)
@@ -151,5 +151,8 @@ if __name__ == "__main__":
         worker_mqtt_client.loop_stop()
     except KeyboardInterrupt as error:
         print("=== {0:>8} is aborted by keyboard interrupt".format('Worker {0}'.format(worker_id)))
+    except Exception as e:
+        traceback.print_exc()
+        sys.exit(-1)
     finally:
         sys.stderr = stderr
