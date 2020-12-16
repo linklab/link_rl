@@ -6,8 +6,11 @@ import matlab.engine
 import gym
 import numpy as np
 from common.environments.matlab.matlabcode import SimulinkPlant
+from config.names import RLAlgorithmName
 from config.parameters import PARAMETERS as params
 np.set_printoptions(formatter={'float_kind': lambda x: '{0:0.6f}'.format(x)})
+
+action_index_to_voltage = [-0.05, -0.025, -0.008, 0, 0.008, 0.025, 0.05]
 
 
 class MatlabRotaryInvertedPendulumEnv(gym.Env):
@@ -33,10 +36,15 @@ class MatlabRotaryInvertedPendulumEnv(gym.Env):
 
         self.max_velocity = 100.0
 
-        self.action_space = gym.spaces.Box(
-            low=action_min, high=action_max, shape=(1,),
-            dtype=np.float32
-        )
+        if params.RL_ALGORITHM in [RLAlgorithmName.DQN_FAST_V0, RLAlgorithmName.DQN_V0]:
+            self.action_space = gym.spaces.Discrete(len(action_index_to_voltage))
+            self.n_actions = self.action_space.n
+        else:
+            self.action_space = gym.spaces.Box(
+                low=action_min, high=action_max, shape=(1,),
+                dtype=np.float32
+            )
+            self.n_actions = self.action_space.shape[0]
 
         #high = np.array([1., 1., self.max_velocity, 1., 1., action_max, 1.0], dtype=np.float32)
         high = np.array([1., 1., self.max_velocity, 1., 1.], dtype=np.float32)
@@ -47,7 +55,6 @@ class MatlabRotaryInvertedPendulumEnv(gym.Env):
         )
 
         self.n_states = self.observation_space.shape[0]
-        self.n_actions = self.action_space.shape[0]
 
         self.current_status = None
 
@@ -64,12 +71,18 @@ class MatlabRotaryInvertedPendulumEnv(gym.Env):
         return n_states
 
     def get_n_actions(self):
-        n_actions = self.action_space.shape[0]
+        if params.RL_ALGORITHM in [RLAlgorithmName.DQN_FAST_V0, RLAlgorithmName.DQN_V0]:
+            n_actions = self.action_space.n
+        else:
+            n_actions = self.action_space.shape[0]
         return n_actions
 
     @property
     def action_meanings(self):
-        action_meanings = ["Joint effort",]
+        if params.RL_ALGORITHM in [RLAlgorithmName.DQN_FAST_V0, RLAlgorithmName.DQN_V0]:
+            action_meanings = action_index_to_voltage
+        else:
+            action_meanings = ["Joint effort",]
         return action_meanings
 
     def pause(self):
@@ -155,7 +168,13 @@ class MatlabRotaryInvertedPendulumEnv(gym.Env):
         if type(action) is np.ndarray:
             action = action[0]
 
+        #print(action, action_index_to_voltage[action])
+
+        if params.RL_ALGORITHM in [RLAlgorithmName.DQN_FAST_V0, RLAlgorithmName.DQN_V0]:
+            action = action_index_to_voltage[action]
+
         self.plant.simulate(action)
+
         self.pendulum_position, self.motor_position, self.pendulum_velocity, self.motor_velocity, self.simulation_time = self.plant.getHistory()
         self.episode_steps += 1
         self.total_steps += 1
