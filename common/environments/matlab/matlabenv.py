@@ -47,8 +47,14 @@ class MatlabRotaryInvertedPendulumEnv(gym.Env):
             self.n_actions = self.action_space.shape[0]
 
         #high = np.array([1., 1., self.max_velocity, 1., 1., action_max, 1.0], dtype=np.float32)
-        high = np.array([1., 1., self.max_velocity, 1., 1.], dtype=np.float32)
+
+        if params.STATE_INCLUSION_MOTOR_VELOCITY:
+            high = np.array([1., 1., self.max_velocity, 1., 1., self.max_velocity], dtype=np.float32)
+        else:
+            high = np.array([1., 1., self.max_velocity, 1., 1.], dtype=np.float32)
+
         low = high * -1.0
+
         self.observation_space = gym.spaces.Box(
             low=low, high=high,
             dtype=np.float32
@@ -108,14 +114,23 @@ class MatlabRotaryInvertedPendulumEnv(gym.Env):
 
         self.update_current_state(adjusted_radian=0.0)
 
-        state = (
-            math.cos(self.pendulum_position),
-            math.sin(self.pendulum_position),
-            self.pendulum_velocity,
-            math.cos(0.0),  # 1.0
-            math.sin(0.0),  # 0.0
-            #self.motor_velocity,
-        )
+        if params.STATE_INCLUSION_MOTOR_VELOCITY:
+            state = (
+                math.cos(self.pendulum_position),
+                math.sin(self.pendulum_position),
+                self.pendulum_velocity,
+                math.cos(0.0),  # 1.0
+                math.sin(0.0),  # 0.0
+                self.motor_velocity,
+            )
+        else:
+            state = (
+                math.cos(self.pendulum_position),
+                math.sin(self.pendulum_position),
+                self.pendulum_velocity,
+                math.cos(0.0),  # 1.0
+                math.sin(0.0),  # 0.0
+            )
 
         self.num_continuous_positive_torque = 0
         self.num_continuous_negative_torque = 0
@@ -240,14 +255,23 @@ class MatlabRotaryInvertedPendulumEnv(gym.Env):
 
             info = {}
 
-        state = (
-            math.cos(self.pendulum_position),
-            math.sin(self.pendulum_position),
-            self.pendulum_velocity,
-            math.cos(self.initial_motor_position - self.motor_position),
-            math.sin(self.initial_motor_position - self.motor_position),
-            #self.motor_velocity,
-        )
+        if params.STATE_INCLUSION_MOTOR_VELOCITY:
+            state = (
+                math.cos(self.pendulum_position),
+                math.sin(self.pendulum_position),
+                self.pendulum_velocity,
+                math.cos(self.initial_motor_position - self.motor_position),
+                math.sin(self.initial_motor_position - self.motor_position),
+                self.motor_velocity,
+            )
+        else:
+            state = (
+                math.cos(self.pendulum_position),
+                math.sin(self.pendulum_position),
+                self.pendulum_velocity,
+                math.cos(self.initial_motor_position - self.motor_position),
+                math.sin(self.initial_motor_position - self.motor_position),
+            )
 
         return state, reward, done, info
 
