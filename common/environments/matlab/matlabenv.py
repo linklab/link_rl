@@ -1,16 +1,14 @@
 import math
-from abc import ABC
-from enum import Enum
-
-import matlab.engine
 import gym
 import numpy as np
+
 from common.environments.matlab.matlabcode import SimulinkPlant
 from config.names import RLAlgorithmName
 from config.parameters import PARAMETERS as params
 np.set_printoptions(formatter={'float_kind': lambda x: '{0:0.6f}'.format(x)})
 
-action_index_to_voltage = [-0.05, -0.025, -0.008, 0, 0.008, 0.025, 0.05]
+#action_index_to_voltage = [-0.05, -0.025, -0.008, 0, 0.008, 0.025, 0.05]
+action_index_to_voltage = [-0.08, -0.05, -0.025, -0.0125, -0.008, -0.002, 0.0, 0.002, 0.008, 0.0125, 0.025, 0.05, 0.08]
 
 
 class MatlabRotaryInvertedPendulumEnv(gym.Env):
