@@ -177,7 +177,7 @@ class WorkerFastRLRipDoubleAgents:
             with RewardTrackerMatlabPendulum(params=params, frame=None, stat=None, worker_id=self.worker_id) as reward_tracker:
                 while step_idx < params.MAX_GLOBAL_STEPS:
                     # 1 스텝 진행하고 exp를 exp_queue에 넣음
-                    step_idx += params.N_STEP
+                    step_idx += 1
 
                     exp = next(exp_source_iter)
 

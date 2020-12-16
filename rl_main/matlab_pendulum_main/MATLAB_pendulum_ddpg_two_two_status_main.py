@@ -148,7 +148,7 @@ def play_func(exp_queue_swing_up, exp_queue_balancing, actor_swing_up_net, criti
             frame=True, draw_viz=params.DRAW_VIZ, stat=stat, logger=my_logger) as reward_tracker:
         while step_idx < params.MAX_GLOBAL_STEPS:
             # 1 스텝 진행하고 exp를 exp_queue에 넣음
-            step_idx += params.N_STEP
+            step_idx += 1
 
             exp = next(exp_source_iter)
 

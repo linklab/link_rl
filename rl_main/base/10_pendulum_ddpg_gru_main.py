@@ -210,7 +210,7 @@ def main():
     # lp_wrapper = lp(model_update)
 
     while play_proc.is_alive():
-        step_idx += params.N_STEP
+        step_idx += params.TRAIN_STEP_FREQ
         exp = None
         for _ in range(params.TRAIN_STEP_FREQ):
             exp = exp_queue.get()

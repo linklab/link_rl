@@ -1,4 +1,6 @@
 import math
+import random
+
 import gym
 import numpy as np
 
@@ -6,6 +8,8 @@ from common.environments.matlab.matlabcode import SimulinkPlant
 from config.names import RLAlgorithmName
 from config.parameters import PARAMETERS as params
 np.set_printoptions(formatter={'float_kind': lambda x: '{0:0.6f}'.format(x)})
+
+BLOWING_ACTION_RATE = 0.0001  # 10000 스텝에 1번 정도(지수 분포)의 주가로 외력이 가해짐
 
 #action_index_to_voltage = [-0.05, -0.025, -0.008, 0, 0.008, 0.025, 0.05]
 action_index_to_voltage = [-0.08, -0.05, -0.025, -0.0125, -0.008, -0.002, 0.0, 0.002, 0.008, 0.0125, 0.025, 0.05, 0.08]
@@ -69,6 +73,8 @@ class MatlabRotaryInvertedPendulumEnv(gym.Env):
         self.episode_position_reward_list = []
         self.episode_pendulum_velocity_reward_list = []
         self.episode_action_reward_list = []
+
+        self.next_time_step_of_external_blow = int(random.expovariate(BLOWING_ACTION_RATE))
 
     def get_n_states(self):
         n_states = self.observation_space.shape[0]
@@ -178,19 +184,29 @@ class MatlabRotaryInvertedPendulumEnv(gym.Env):
             self.is_upright = False
 
     def step(self, action):
-        if type(action) is np.ndarray:
-            action = action[0]
+        self.episode_steps += 1
 
-        #print(action, action_index_to_voltage[action])
+        self.total_steps += 1
+        if self.total_steps >= self.next_time_step_of_external_blow:
+            action = random.uniform(
+                action_index_to_voltage[0] * 5,
+                action_index_to_voltage[-1] * 5,
+            )
+            self.next_time_step_of_external_blow = self.total_steps + int(random.expovariate(BLOWING_ACTION_RATE))
+            print("blowing action: {0:7.5f}, next_time_step_of_external_blow: {1}".format(
+                action,
+                self.next_time_step_of_external_blow
+            ))
+        else:
+            if type(action) is np.ndarray:
+                action = action[0]
 
-        if params.RL_ALGORITHM in [RLAlgorithmName.DQN_FAST_V0, RLAlgorithmName.DQN_V0]:
-            action = action_index_to_voltage[action]
+            if params.RL_ALGORITHM in [RLAlgorithmName.DQN_FAST_V0, RLAlgorithmName.DQN_V0]:
+                action = action_index_to_voltage[action]
 
         self.plant.simulate(action)
 
         self.pendulum_position, self.motor_position, self.pendulum_velocity, self.motor_velocity, self.simulation_time = self.plant.getHistory()
-        self.episode_steps += 1
-        self.total_steps += 1
 
         if params.CH:
             pass

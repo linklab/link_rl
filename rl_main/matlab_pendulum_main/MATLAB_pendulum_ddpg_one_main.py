@@ -105,7 +105,7 @@ def play_func(exp_queue, actor_net, critic_net):
     with RewardTracker(params=params, frame=False, stat=stat) as reward_tracker:
         while step_idx < params.MAX_GLOBAL_STEPS:
             # 1 스텝 진행하고 exp를 exp_queue에 넣음
-            step_idx += params.N_STEP
+            step_idx += 1
 
             exp = next(exp_source_iter)
 
@@ -219,19 +219,14 @@ def main():
     loss_total = 0.0
 
     while play_proc.is_alive():
-        step_idx += params.N_STEP # 4, 8, 12, 16
-
-        if step_idx % params.TRAIN_STEP_FREQ:
-            continue
-
-        exp = exp_queue.get()
-
-        if exp is None:
-            play_proc.join()
-            break
-
-        if exp != 0:
-            buffer._add(exp)
+        step_idx += params.TRAIN_STEP_FREQ
+        for _ in range(params.TRAIN_STEP_FREQ):
+            exp = exp_queue.get()
+            if exp is None:
+                play_proc.join()
+                break
+            if exp != 0:
+                buffer._add(exp)
 
         if step_idx % params.DRAW_VIZ_PERIOD_STEPS == 0:
             if params.DRAW_VIZ:

@@ -78,7 +78,6 @@ class PARAMETERS_DOUBLE_RIP:
     CNN_CRITIC_HIDDEN_2_SIZE = 128
 
     # [OPTIMIZATION]
-    MAX_EPISODES = 2000
     GAMMA = 0.98 # discount factor
 
     # [Policy Gradient]
