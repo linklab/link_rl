@@ -82,7 +82,7 @@ def play_func(exp_queue_swing_up, exp_queue_balancing, actor_swing_up_net, criti
 
     # action_selector = actions.EpsilonGreedyDDPGActionSelector(epsilon=params.EPSILON_INIT)
 
-    action_selector_swing_up = actions.DDPGActionSelector(
+    action_selector_swing_up = actions.EpsilonGreedyDDPGActionSelector(
         epsilon=params.EPSILON_INIT, ou_enabled=True, scale_factor=SWING_UP_SCALE_FACTOR
     )
 
@@ -100,7 +100,7 @@ def play_func(exp_queue_swing_up, exp_queue_balancing, actor_swing_up_net, criti
         name="SwingUp_AgentDDPG"
     )
 
-    action_selector_balancing = actions.DDPGActionSelector(
+    action_selector_balancing = actions.EpsilonGreedyDDPGActionSelector(
         epsilon=params.EPSILON_INIT, ou_enabled=True, scale_factor=BALANCING_SCALE_FACTOR
     )
 

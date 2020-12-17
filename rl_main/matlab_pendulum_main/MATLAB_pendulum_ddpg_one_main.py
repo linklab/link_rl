@@ -64,7 +64,7 @@ def play_func(exp_queue, actor_net, critic_net):
     # print(env.action_space.low[0], env.action_space.high[0])
     env.start()
 
-    action_selector = actions.DDPGActionSelector(
+    action_selector = actions.EpsilonGreedyDDPGActionSelector(
         epsilon=params.EPSILON_INIT, ou_enabled=True, scale_factor=ACTION_SCALE_FACTOR
     )
 

@@ -48,7 +48,7 @@ def play_main():
         action_min = -params.ACTION_SCALE
         action_max = params.ACTION_SCALE
 
-        action_selector = actions.DDPGActionSelector(
+        action_selector = actions.EpsilonGreedyDDPGActionSelector(
             epsilon=0.0, ou_enabled=False, scale_factor=params.ACTION_SCALE
         )
 
