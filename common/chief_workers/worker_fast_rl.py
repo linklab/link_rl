@@ -235,6 +235,16 @@ class WorkerFastRL:
                     gradients, current_episode_reward, episode, step_idx, solved, loss, actor_objective
                 )
 
+            if params.SAVE_AT_MAX_GLOBAL_STEPS:
+                rl_agent.save_model(
+                    os.path.join(PROJECT_HOME, "out", "model_save_files"),
+                    params.ENVIRONMENT_ID.value,
+                    self.rl_algorithm.model.__name__,
+                    self.rl_algorithm.model,
+                    step_idx,
+                    mean_episode_reward
+                )
+
     def train_at_episode_end(self, step_idx):
         ###################
         loss_lst = []  # for actor critic model, loss means critic_loss
