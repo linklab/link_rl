@@ -72,7 +72,7 @@ if __name__ == "__main__":
     net = models.DQNConv1D(env.observation_space.shape, env.action_space.n).to(device)
     tgt_net = ptan.agent.TargetNet(net)
 
-    selector = ptan.actions.EpsilonGreedyActionSelector(EPS_START)
+    selector = ptan.actions.EpsilonGreedyDQNActionSelector(EPS_START)
     eps_tracker = ptan.actions.EpsilonTracker(selector, EPS_START, EPS_FINAL, EPS_STEPS)
 
     agent = ptan.agent.DQNAgent(net, selector, device=device)

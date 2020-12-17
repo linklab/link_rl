@@ -40,8 +40,6 @@ class EnvironmentDoubleRIP(Environment):
         self.obs_degree = [None, None]
         self.next_obs_degree = [None, None]
         self.simulation_time = 0.0
-        self.num_continuous_positive_torque = 0
-        self.num_continuous_negative_torque = 0
 
         self.too_much_rotate = False
         # self.done_torque_threshold = 0.75
@@ -138,9 +136,6 @@ class EnvironmentDoubleRIP(Environment):
             # self.motor_velocity,
             self.current_status.value
         )
-
-        self.num_continuous_positive_torque = 0
-        self.num_continuous_negative_torque = 0
 
         # print("q: {0:7.4}, w: {1:7.4f}, time: {2} -- RESET".format(
         #     self.pendulum_position, self.pendulum_velocity, self.simulation_time
@@ -247,16 +242,6 @@ class EnvironmentDoubleRIP(Environment):
         self.episode_steps += 1
         self.total_steps += 1
 
-        if action > 0:
-            self.num_continuous_positive_torque += 1
-        else:
-            self.num_continuous_positive_torque = 0
-
-        if action < 0:
-            self.num_continuous_negative_torque += 1
-        else:
-            self.num_continuous_negative_torque = 0
-
         # print(self.motor_position, math.cos(self.motor_position), math.sin(self.motor_position))
 
 
@@ -267,8 +252,6 @@ class EnvironmentDoubleRIP(Environment):
         done_conditions = [
             self.episode_steps >= 500,
             self.too_much_rotate
-            # self.num_continuous_positive_torque >= 30,
-            # self.num_continuous_negative_torque >= 30
         ]
 
         adjusted_radian = self.pendulum_position_to_adjusted_radian()
@@ -281,12 +264,8 @@ class EnvironmentDoubleRIP(Environment):
 
         if any(done_conditions):
             done = True
-            if params.CH:
-                reward = self.CH_ordinary_reward(
-                    adjusted_radian, action, self.num_continuous_positive_torque, self.num_continuous_negative_torque
-                )
-            else:
-                reward = self.get_reward(adjusted_radian)
+
+            reward = self.get_reward(adjusted_radian)
 
             info = {
                 "count_balancing_states": self.count_balancing_states,
@@ -298,12 +277,8 @@ class EnvironmentDoubleRIP(Environment):
 
         else:
             done = False
-            if params.CH:
-                reward = self.CH_ordinary_reward(
-                    adjusted_radian, action, self.num_continuous_positive_torque, self.num_continuous_negative_torque
-                )
-            else:
-                reward = self.get_reward(adjusted_radian)
+
+            reward = self.get_reward(adjusted_radian)
 
             info = {}
 
@@ -338,18 +313,18 @@ class EnvironmentDoubleRIP(Environment):
 
         return reward
 
-    def CH_ordinary_reward(self, adjusted_radian, action, num_continuous_positive_torque,
-                           num_continuous_negative_torque):
-        # reward = -((math.pi - adjusted_radian) ** 2 + 0.1 * (self.pendulum_velocity ** 2) + 0.001 * (action ** 2))
-        if adjusted_radian < math.pi / 2:
-            reward = 0.0 - abs(np.tanh(self.motor_velocity)) * 0.1
-        else:
-            reward = adjusted_radian - abs(np.tanh(self.motor_velocity)) * 0.1
-
-        reward -= num_continuous_positive_torque * 0.01
-        reward -= num_continuous_negative_torque * 0.01
-
-        return reward
+    # def CH_ordinary_reward(self, adjusted_radian, action, num_continuous_positive_torque,
+    #                        num_continuous_negative_torque):
+    #     # reward = -((math.pi - adjusted_radian) ** 2 + 0.1 * (self.pendulum_velocity ** 2) + 0.001 * (action ** 2))
+    #     if adjusted_radian < math.pi / 2:
+    #         reward = 0.0 - abs(np.tanh(self.motor_velocity)) * 0.1
+    #     else:
+    #         reward = adjusted_radian - abs(np.tanh(self.motor_velocity)) * 0.1
+    #
+    #     reward -= num_continuous_positive_torque * 0.01
+    #     reward -= num_continuous_negative_torque * 0.01
+    #
+    #     return reward
 
     def render(self, mode='human'):
         pass

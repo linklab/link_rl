@@ -1,7 +1,11 @@
+import random
+
 import numpy as np
 from typing import Union
 
 import torch
+
+from config.names import RLAlgorithmName
 
 
 class ActionSelector:
@@ -29,7 +33,7 @@ class ArgmaxActionSelector(ActionSelector):
         return np.argmax(scores, axis=1)
 
 
-class EpsilonGreedyActionSelector(ActionSelector):
+class EpsilonGreedyDQNActionSelector(ActionSelector):
     def __init__(self, epsilon=0.05, action_selector=None):
         self.epsilon = epsilon
         self.action_selector = action_selector if action_selector is not None else ArgmaxActionSelector()
@@ -41,6 +45,53 @@ class EpsilonGreedyActionSelector(ActionSelector):
         mask = np.random.random(size=batch_size) < self.epsilon
         rand_actions = np.random.choice(n_actions, sum(mask))
         actions[mask] = rand_actions
+        return actions
+
+
+class EpsilonGreedySomeTimesBlowDQNActionSelector(ActionSelector):
+    def __init__(
+            self, epsilon=0.05, blowing_action_rate=0.0002,
+            min_blowing_action_idx=0, max_blowing_action_idx=1, action_selector=None, params=None
+    ):
+        self.epsilon = epsilon
+        self.action_selector = action_selector if action_selector is not None else ArgmaxActionSelector()
+
+        self.blowing_action_rate = blowing_action_rate
+        self.min_blowing_action_idx = min_blowing_action_idx
+        self.max_blowing_action_idx = max_blowing_action_idx
+        self.time_steps = 0
+        self.next_time_steps_of_random_blowing_action = int(random.expovariate(self.blowing_action_rate))
+        self.params = params
+
+    def __call__(self, scores):
+        assert isinstance(scores, np.ndarray)
+        if self.time_steps == 0:
+            print("next_time_steps_of_random_blowing_action: {0}".format(
+                self.next_time_steps_of_random_blowing_action
+            ))
+
+        self.time_steps += 1
+        batch_size, n_actions = scores.shape
+        actions = self.action_selector(scores)
+
+        if self.time_steps >= self.next_time_steps_of_random_blowing_action:
+            actions = np.random.choice(
+                a=[self.min_blowing_action_idx, self.max_blowing_action_idx], size=actions.shape
+            )
+
+            # actions += np.random.uniform(
+            #     low=self.min_blowing_action, high=self.max_blowing_action, size=actions.shape
+            # )
+
+            self.next_time_steps_of_random_blowing_action = self.time_steps + int(random.expovariate(self.blowing_action_rate))
+            print("Internal Blowing Action: {0}, next_time_steps_of_random_blowing_action: {1}".format(
+                actions,
+                self.next_time_steps_of_random_blowing_action
+            ))
+        else:
+            mask = np.random.random(size=batch_size) < self.epsilon
+            rand_actions = np.random.choice(n_actions, sum(mask))
+            actions[mask] = rand_actions
         return actions
 
 
@@ -126,7 +177,7 @@ class EpsilonTracker:
     Updates epsilon according to linear schedule
     """
     def __init__(
-        self, action_selector: Union[EpsilonGreedyActionSelector, EpsilonGreedyDDPGActionSelector, EpsilonGreedyD4PGActionSelector],
+        self, action_selector: Union[EpsilonGreedyDQNActionSelector, EpsilonGreedyDDPGActionSelector, EpsilonGreedyD4PGActionSelector],
         eps_start: Union[int, float], eps_final: Union[int, float], eps_frames: int
     ):
         self.action_selector = action_selector

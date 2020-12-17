@@ -107,7 +107,7 @@ if __name__ == "__main__":
     print(net)
 
     if args.params.startswith('egreedy'):
-        selector = ptan.actions.EpsilonGreedyActionSelector(epsilon=params.epsilon_start)
+        selector = ptan.actions.EpsilonGreedyDQNActionSelector(epsilon=params.epsilon_start)
         epsilon_tracker = common.EpsilonTracker(selector, params)
         training_enabled = not params.eps_decay_trigger
         epsilon_tracker_frame = 0

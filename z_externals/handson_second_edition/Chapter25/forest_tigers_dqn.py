@@ -119,7 +119,7 @@ if __name__ == "__main__":
         action_selector = ptan.actions.ArgmaxActionSelector()
         epsilon_tracker = None
     else:
-        action_selector = ptan.actions.EpsilonGreedyActionSelector(
+        action_selector = ptan.actions.EpsilonGreedyDQNActionSelector(
             epsilon=PARAMS.epsilon_start)
         epsilon_tracker = common.EpsilonTracker(action_selector, PARAMS)
     preproc = model.MAgentPreprocessor(device)

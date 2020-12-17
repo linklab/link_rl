@@ -67,7 +67,7 @@ if __name__ == "__main__":
     net = dqn_extra.DistributionalDQN(env.observation_space.shape, env.action_space.n).to(device)
     print(net)
     target_network = ptan.agent.TargetNet(net)
-    selector = ptan.actions.EpsilonGreedyActionSelector(epsilon=params.epsilon_start)
+    selector = ptan.actions.EpsilonGreedyDQNActionSelector(epsilon=params.epsilon_start)
     epsilon_tracker = common.EpsilonTracker(selector, params)
     agent = ptan.agent.DQNAgent(lambda x: net.q_values(x), selector, device=device)
 

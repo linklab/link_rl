@@ -11,7 +11,7 @@ from ignite.contrib.handlers import tensorboard_logger as tb_logger
 
 
 class EpsilonTracker:
-    def __init__(self, selector: ptan.actions.EpsilonGreedyActionSelector,
+    def __init__(self, selector: ptan.actions.EpsilonGreedyDQNActionSelector,
                  params: SimpleNamespace):
         self.selector = selector
         self.params = params
