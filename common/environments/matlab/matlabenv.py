@@ -17,6 +17,8 @@ class MatlabRotaryInvertedPendulumEnv(gym.Env):
         self.episode_steps = 0
         self.total_steps = 0
         self.env_reset = env_reset
+        self.action_min = action_min
+        self.action_max = action_max
 
         self.pendulum_position = 0
         self.pendulum_velocity = 0
@@ -42,7 +44,7 @@ class MatlabRotaryInvertedPendulumEnv(gym.Env):
             self.n_actions = self.action_space.n
         else:
             self.action_space = gym.spaces.Box(
-                low=action_min, high=action_max, shape=(1,),
+                low=self.action_min, high=self.action_max, shape=(1,),
                 dtype=np.float32
             )
             self.n_actions = self.action_space.shape[0]
@@ -193,10 +195,19 @@ class MatlabRotaryInvertedPendulumEnv(gym.Env):
 
         self.total_steps += 1
         if self.total_steps >= self.next_time_step_of_external_blow:
-            action = random.uniform(
-                self.action_index_to_voltage[0] * 10,
-                self.action_index_to_voltage[-1] * 10,
-            )
+            if params.RL_ALGORITHM in [RLAlgorithmName.DQN_FAST_V0, RLAlgorithmName.DQN_V0]:
+                action = random.uniform(
+                    a=self.action_index_to_voltage[0] * 10,
+                    b=self.action_index_to_voltage[-1] * 10,
+                )
+            elif params.RL_ALGORITHM in [RLAlgorithmName.DDPG_FAST_V0, RLAlgorithmName.DDPG_FAST_DOUBLE_AGENTS_V0]:
+                action = random.uniform(
+                    a=self.action_min * 10.0,
+                    b=self.action_max * 10.0
+                )
+            else:
+                raise ValueError()
+
             self.next_time_step_of_external_blow = self.total_steps + int(random.expovariate(BLOWING_ACTION_RATE))
             print("External Blow: {0:7.5f}, next_time_step_of_external_blow: {1}".format(
                 action,
