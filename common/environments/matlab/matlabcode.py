@@ -10,13 +10,15 @@ ans = []
 
 
 class SimulinkPlant:
-    def __init__(self, modelName='plant'):
+    def __init__(self, modelName='single_RIP'):
         self.modelName = modelName  # The name of the Simulink Model (To be placed in the same directory as the Python Code)
         # Logging the variables
         self.q = 0
         self.q1 = 0
+        self.q2 = 0
         self.w = 0
         self.w1 = 0
+        self.w2 = 0
         self.simulation_time = 0.0
 
     def setControlAction(self, torque):
@@ -44,14 +46,26 @@ class SimulinkPlant:
         # Start Simulation and then Instantly pause
         self.eng.set_param(self.modelName, 'SimulationCommand', 'start', 'SimulationCommand', 'pause', nargout=0)
         # print(self.eng.get_param(self.modelName, 'SimulationStatus'))
-        self.q, self.q1, self.w, self.w1, self.simulation_time = self.getHistory()
-        print("q: {0}, q1: {1}, w: {2}, w1: {3}, simulation time: {4}".format(
-            self.q,
-            self.q1,
-            self.w,
-            self.w1,
-            self.simulation_time
-        ))
+        if self.modelName == 'single_RIP':
+            self.q, self.q1, self.w, self.w1, self.simulation_time = self.getHistory()
+            print("q: {0}, q1: {1}, w: {2}, w1: {3}, simulation time: {4}".format(
+                self.q,
+                self.q1,
+                self.w,
+                self.w1,
+                self.simulation_time
+            ))
+        else:
+            self.q, self.q1, self.q2, self.w, self.w1,self.w2, self.simulation_time = self.getHistory()
+            print("q: {0}, q1: {1}, q2 : {2} w: {3}, w1: {4}, w2 : {5}, simulation time: {6}".format(
+                self.q,
+                self.q1,
+                self.q2,
+                self.w,
+                self.w1,
+                self.w2,
+                self.simulation_time
+            ))
 
         self.connectStart()
 
@@ -109,12 +123,13 @@ class SimulinkPlant:
 
     def getHistory(self):
         # Helper Function to get Plant Output and Time History
-        self.eng.eval('q = out.q(end);, w = out.w(end);, q1 = out.q1(end);, w1 = out.w1(end);', nargout=0)
         simulation_time = self.eng.get_param(self.modelName, 'SimulationTime')
-        #self.eng.eval("w = out.w(end)", nargout=0)
-        #self.eng.eval("q1 = out.q1(end)", nargout=0)
-        #self.eng.eval("w1 = out.w1(end)", nargout=0)
-        return self.eng.workspace['q'], self.eng.workspace['q1'], self.eng.workspace['w'], self.eng.workspace['w1'], simulation_time
+        if self.modelName == 'single_RIP':
+            self.eng.eval('q = out.q(end);, w = out.w(end);, q1 = out.q1(end);, w1 = out.w1(end);', nargout=0)
+            return self.eng.workspace['q'], self.eng.workspace['q1'], self.eng.workspace['w'], self.eng.workspace['w1'], simulation_time
+        else:
+            self.eng.eval('q = out.q(end);, w = out.w(end);, q1 = out.q1(end);, w1 = out.w1(end);, q2 = out.q2(end);, w2 = out.w2(end);', nargout=0)
+            return self.eng.workspace['q'], self.eng.workspace['q1'], self.eng.workspace['q2'], self.eng.workspace['w'], self.eng.workspace['w1'],self.eng.workspace['w2'], simulation_time
 
     def disconnect(self):
         self.eng.set_param(self.modelName, 'SimulationCommand', 'stop', nargout=0)
