@@ -14,11 +14,9 @@ import numpy as np
 
 from config.parameters import PARAMETERS as params
 
-os.environ['KMP_DUPLICATE_LIB_OK'] = 'True'
-if torch.cuda.is_available():
-    device = torch.device("cuda" if params.CUDA else "cpu")
-else:
-    device = torch.device("cpu")
+device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
+
+os.environ["CUDA_VISIBLE_DEVICES"] = params.CUDA_VISIBLE_DEVICES_NUMBER_LIST
 
 logger = get_logger("maplab_fedetated_play")
 

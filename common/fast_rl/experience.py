@@ -763,7 +763,7 @@ class PrioritizedReplayBuffer(ExperienceReplayBuffer):
 # sumtree 사용 안하는 버전
 class PrioReplayBuffer:
     def __init__(self, experience_source, buffer_size, prob_alpha=0.6, n_step=1, beta_start=0.4, beta_frames=100000):
-        assert isinstance(experience_source, (ExperienceSource, type(None)))
+        assert isinstance(experience_source, (ExperienceSource, ExperienceSourceFirstLast, ExperienceSourceSingleEnvFirstLast, type(None)))
         assert isinstance(buffer_size, int)
         self.exp_source_iter = None if experience_source is None else iter(experience_source)
         self.prob_alpha = prob_alpha
