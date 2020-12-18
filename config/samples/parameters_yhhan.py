@@ -24,7 +24,6 @@ from config.or_parameters.parameters_fast_rl_tsp_dqn import PARAMETERS_FAST_RL_T
 
 from config.fast_rl_parameters.parameters_fast_rl_pendulum_matlab_ddpg import PARAMETERS_FAST_RL_PENDULUM_MATLAB_DDPG
 
-from config.federated_parameters.parameters_federated_matlab_double_rip_ddpg import PARAMETERS_FEDERATED_MATLAB_DOUBLE_RIP_DDPG
 from config.federated_parameters.parameters_federated_cartpole_ppo_mlp import PARAMETERS_FEDERATED_CARTPOLE_PPO_MLP
 
 #
@@ -88,12 +87,6 @@ class PARAMETERS(PARAMETERS_FEDERATED_CARTPOLE_DQN):
 #     MODE_GRADIENTS_UPDATE = True      # Distributed
 #     MODE_PARAMETERS_TRANSFER = False    # Transfer
 #     ENV_RESET = False
-
-
-# class PARAMETERS(PARAMETERS_FEDERATED_MATLAB_DOUBLE_RIP_DDPG):
-#     PYTHON_PATH = "~/anaconda3/envs/rl/bin/python"
-#     DRAW_VIZ = False
-#     PER = False
 
 
 # class PARAMETERS(PARAMETERS_FAST_RL_PENDULUM_DDPG):

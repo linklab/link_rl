@@ -29,7 +29,7 @@ def play_main():
     print("observation_space:", env.observation_space)
     print("action_space:", env.action_space)
 
-    if params.ENVIRONMENT_ID in [EnvironmentName.PENDULUM_MATLAB_V0, EnvironmentName.PENDULUM_MATLAB_DOUBLE_AGENTS_V0]:
+    if params.ENVIRONMENT_ID in [EnvironmentName.PENDULUM_MATLAB_V0, EnvironmentName.PENDULUM_MATLAB_DOUBLE_RIP_V0]:
         env.start()
 
     rl_algorithm = rl_utils.get_rl_algorithm(env=env, worker_id=-1, logger=logger, params=params)
