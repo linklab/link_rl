@@ -44,14 +44,11 @@ class MatlabRotaryInvertedPendulumEnv(gym.Env):
         self.max_velocity = 100.0
 
         # self.action_index_to_voltage = [-0.05, -0.025, -0.008, 0, 0.008, 0.025, 0.05]
-        if self.pendulum_type == 'PENDULUM_MATLAB_V0':
-            self.action_index_to_voltage = [
-                -0.08, -0.05, -0.025, -0.0125, -0.008, -0.002, 0.0, 0.002, 0.008, 0.0125, 0.025, 0.05, 0.08
-            ]
-        elif self.pendulum_type == 'PENDULUM_MATLAB_DOUBLE_RIP_V0':
-            self.action_index_to_voltage = [
-                -1, -0.7, -0.25, -0.1,  0.0, 0.1, 0.25, 0.7, 1
-            ]
+
+        self.action_index_to_voltage = [
+            -0.08, -0.05, -0.025, -0.0125, -0.008, -0.002, 0.0, 0.002, 0.008, 0.0125, 0.025, 0.05, 0.08
+        ]
+
 
         if params.RL_ALGORITHM in [RLAlgorithmName.DQN_FAST_V0, RLAlgorithmName.DQN_V0]:
             self.action_space = gym.spaces.Discrete(len(self.action_index_to_voltage))
@@ -149,17 +146,17 @@ class MatlabRotaryInvertedPendulumEnv(gym.Env):
 
         if params.STATE_INCLUSION_MOTOR_VELOCITY:
             state = (
-                math.cos(self.pendulum_1_position),
-                math.sin(self.pendulum_1_position),
-                self.pendulum_1_velocity,
+                math.cos(self.pendulum_2_position),
+                math.sin(self.pendulum_2_position),
+                self.pendulum_2_velocity,
                 math.cos(0.0),  # 1.0
                 math.sin(0.0),  # 0.0
                 self.motor_velocity,
             )
         else:
             state = (
-                math.cos(self.pendulum_1_position),
-                math.sin(self.pendulum_1_position),
+                math.cos(self.pendulum_2_position),
+                math.sin(self.pendulum_2_position),
                 self.pendulum_1_velocity,
                 math.cos(0.0),  # 1.0
                 math.sin(0.0),  # 0.0
@@ -180,10 +177,10 @@ class MatlabRotaryInvertedPendulumEnv(gym.Env):
 
     def pendulum_position_to_adjusted_radian(self):
         # radian을 0과 2 * math.pi 사이 값(양수)으로 조정
-        if abs(self.pendulum_1_position) > 2 * math.pi:
-            q_ = abs(self.pendulum_1_position) % (2 * math.pi)
+        if abs(self.pendulum_2_position) > 2 * math.pi:
+            q_ = abs(self.pendulum_2_position) % (2 * math.pi)
         else:
-            q_ = abs(self.pendulum_1_position)
+            q_ = abs(self.pendulum_2_position)
 
         # radian을 0과 math.pi 사이 값(양수)으로 조정: 3 * math.pi / 2 -->  2 * math.pi - 3 * math.pi / 2 --> math.pi / 2
         if q_ > math.pi:
@@ -240,6 +237,7 @@ class MatlabRotaryInvertedPendulumEnv(gym.Env):
 
             if params.RL_ALGORITHM in [RLAlgorithmName.DQN_FAST_V0, RLAlgorithmName.DQN_V0]:
                 action = self.action_index_to_voltage[action]
+
 
         self.plant.simulate(action)
 
