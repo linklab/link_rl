@@ -62,10 +62,12 @@ class MatlabRotaryInvertedPendulumEnv(gym.Env):
 
         #high = np.array([1., 1., self.max_velocity, 1., 1., action_max, 1.0], dtype=np.float32)
 
-        if params.STATE_INCLUSION_MOTOR_VELOCITY:
+        if self.pendulum_type == 'PENDULUM_MATLAB_V0':
             high = np.array([1., 1., self.max_velocity, 1., 1., self.max_velocity], dtype=np.float32)
+        elif self.pendulum_type == 'PENDULUM_MATLAB_DOUBLE_RIP_V0':
+            high = np.array([1., 1., self.max_velocity, 1., 1., self.max_velocity, 1., 1., self.max_velocity], dtype=np.float32)
         else:
-            high = np.array([1., 1., self.max_velocity, 1., 1.], dtype=np.float32)
+            raise ValueError()
 
         low = high * -1.0
 
@@ -135,17 +137,25 @@ class MatlabRotaryInvertedPendulumEnv(gym.Env):
         self.episode_pendulum_velocity_reward_list.clear()
         self.episode_action_reward_list.clear()
 
-
         if self.pendulum_type == 'PENDULUM_MATLAB_V0':
             self.pendulum_1_position, self.motor_position, self.pendulum_1_velocity, self.motor_velocity, self.simulation_time = self.plant.getHistory()
+
+            state = (
+                math.cos(self.pendulum_1_position),
+                math.sin(self.pendulum_1_position),
+                self.pendulum_1_velocity,
+                math.cos(0.0),  # 1.0
+                math.sin(0.0),  # 0.0
+                self.motor_velocity,
+            )
         elif self.pendulum_type == 'PENDULUM_MATLAB_DOUBLE_RIP_V0':
             self.pendulum_1_position, self.motor_position, self.pendulum_2_position, self.pendulum_1_velocity, self.motor_velocity, self.pendulum_2_velocity, self.simulation_time = self.plant.getHistory()
             # print("!!!!!!!!!!!!!!!", self.pendulum_1_position, self.motor_position, self.pendulum_2_position,self.pendulum_1_velocity, self.motor_velocity, self.pendulum_2_velocity)
 
-        self.update_current_state(adjusted_radian=0.0)
-
-        if params.STATE_INCLUSION_MOTOR_VELOCITY:
             state = (
+                math.cos(self.pendulum_1_position),
+                math.sin(self.pendulum_1_position),
+                self.pendulum_1_velocity,
                 math.cos(self.pendulum_2_position),
                 math.sin(self.pendulum_2_position),
                 self.pendulum_2_velocity,
@@ -154,18 +164,9 @@ class MatlabRotaryInvertedPendulumEnv(gym.Env):
                 self.motor_velocity,
             )
         else:
-            state = (
-                math.cos(self.pendulum_2_position),
-                math.sin(self.pendulum_2_position),
-                self.pendulum_1_velocity,
-                math.cos(0.0),  # 1.0
-                math.sin(0.0),  # 0.0
-            )
+            raise ValueError()
 
-
-        # print("q: {0:7.4}, w: {1:7.4f}, time: {2} -- RESET".format(
-        #     self.pendulum_1_position, self.pendulum_1_velocity, self.simulation_time
-        # ))
+        self.update_current_state(adjusted_radian=0.0)
 
         self.too_much_rotate = False
 
@@ -290,8 +291,20 @@ class MatlabRotaryInvertedPendulumEnv(gym.Env):
             info = {}
 
 
-        if params.STATE_INCLUSION_MOTOR_VELOCITY:
+        if self.pendulum_type == 'PENDULUM_MATLAB_V0':
             state = (
+                math.cos(self.pendulum_1_position),
+                math.sin(self.pendulum_1_position),
+                self.pendulum_1_velocity,
+                math.cos(self.initial_motor_position - self.motor_position),
+                math.sin(self.initial_motor_position - self.motor_position),
+                self.motor_velocity,
+            )
+        elif self.pendulum_type == 'PENDULUM_MATLAB_DOUBLE_RIP_V0':
+            state = (
+                math.cos(self.pendulum_1_position),
+                math.sin(self.pendulum_1_position),
+                self.pendulum_1_velocity,
                 math.cos(self.pendulum_2_position),
                 math.sin(self.pendulum_2_position),
                 self.pendulum_2_velocity,
@@ -300,13 +313,7 @@ class MatlabRotaryInvertedPendulumEnv(gym.Env):
                 self.motor_velocity,
             )
         else:
-            state = (
-                math.cos(self.pendulum_2_position),
-                math.sin(self.pendulum_2_position),
-                self.pendulum_2_velocity,
-                math.cos(self.initial_motor_position - self.motor_position),
-                math.sin(self.initial_motor_position - self.motor_position),
-            )
+            raise ValueError()
 
         return state, reward, done, info
 

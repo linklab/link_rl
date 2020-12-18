@@ -123,12 +123,13 @@ class SimulinkPlant:
 
     def getHistory(self):
         # Helper Function to get Plant Output and Time History
-        simulation_time = self.eng.get_param(self.modelName, 'SimulationTime')
         if self.modelName == 'single_RIP':
             self.eng.eval('q = out.q(end);, w = out.w(end);, q1 = out.q1(end);, w1 = out.w1(end);', nargout=0)
+            simulation_time = self.eng.get_param(self.modelName, 'SimulationTime')
             return self.eng.workspace['q'], self.eng.workspace['q1'], self.eng.workspace['w'], self.eng.workspace['w1'], simulation_time
         else:
             self.eng.eval('q = out.q(end);, w = out.w(end);, q1 = out.q1(end);, w1 = out.w1(end);, q2 = out.q2(end);, w2 = out.w2(end);', nargout=0)
+            simulation_time = self.eng.get_param(self.modelName, 'SimulationTime')
             return self.eng.workspace['q'], self.eng.workspace['q1'], self.eng.workspace['q2'], self.eng.workspace['w'], self.eng.workspace['w1'],self.eng.workspace['w2'], simulation_time
 
     def disconnect(self):

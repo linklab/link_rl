@@ -20,8 +20,6 @@ os.environ["CUDA_VISIBLE_DEVICES"] = params.CUDA_VISIBLE_DEVICES_NUMBER_LIST
 
 logger = get_logger("maplab_fedetated_play")
 
-MODEL_SAVE_DIR = os.path.join(PROJECT_HOME, "out", "model_save_files")
-
 
 def play_main():
     env = rl_utils.get_environment(owner="worker", params=params)
@@ -35,13 +33,18 @@ def play_main():
     rl_algorithm = rl_utils.get_rl_algorithm(env=env, worker_id=-1, logger=logger, params=params)
 
     rl_agent.load_model(
-        MODEL_SAVE_DIR, params.ENVIRONMENT_ID.value, rl_algorithm.model.__name__, rl_algorithm.model
+        os.path.join(PROJECT_HOME, "out", "model_save_files"),
+        params.ENVIRONMENT_ID.value,
+        rl_algorithm.model.__name__,
+        rl_algorithm.model
     )
 
     if params.RL_ALGORITHM == RLAlgorithmName.DQN_FAST_V0:
         action_selector = actions.EpsilonGreedyDQNActionSelector(epsilon=0.0)
 
-        agent = rl_agent.DQNAgent(rl_algorithm.model, action_selector, device=device)
+        agent = rl_agent.DQNAgent(
+            rl_algorithm.model, action_selector, device=device
+        )
     elif params.RL_ALGORITHM == RLAlgorithmName.DDPG_FAST_V0:
         action_min = -params.ACTION_SCALE
         action_max = params.ACTION_SCALE
