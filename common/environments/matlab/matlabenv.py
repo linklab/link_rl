@@ -44,9 +44,14 @@ class MatlabRotaryInvertedPendulumEnv(gym.Env):
         self.max_velocity = 100.0
 
         # self.action_index_to_voltage = [-0.05, -0.025, -0.008, 0, 0.008, 0.025, 0.05]
-        self.action_index_to_voltage = [
-            -0.08, -0.05, -0.025, -0.0125, -0.008, -0.002, 0.0, 0.002, 0.008, 0.0125, 0.025, 0.05, 0.08
-        ]
+        if self.pendulum_type == 'PENDULUM_MATLAB_V0':
+            self.action_index_to_voltage = [
+                -0.08, -0.05, -0.025, -0.0125, -0.008, -0.002, 0.0, 0.002, 0.008, 0.0125, 0.025, 0.05, 0.08
+            ]
+        elif self.pendulum_type == 'PENDULUM_MATLAB_DOUBLE_RIP_V0':
+            self.action_index_to_voltage = [
+                -1, -0.7, -0.25, -0.1,  0.0, 0.1, 0.25, 0.7, 1
+            ]
 
         if params.RL_ALGORITHM in [RLAlgorithmName.DQN_FAST_V0, RLAlgorithmName.DQN_V0]:
             self.action_space = gym.spaces.Discrete(len(self.action_index_to_voltage))
@@ -138,8 +143,7 @@ class MatlabRotaryInvertedPendulumEnv(gym.Env):
             self.pendulum_1_position, self.motor_position, self.pendulum_1_velocity, self.motor_velocity, self.simulation_time = self.plant.getHistory()
         elif self.pendulum_type == 'PENDULUM_MATLAB_DOUBLE_RIP_V0':
             self.pendulum_1_position, self.motor_position, self.pendulum_2_position, self.pendulum_1_velocity, self.motor_velocity, self.pendulum_2_velocity, self.simulation_time = self.plant.getHistory()
-            print("!!!!!!!!!!!!!!!", self.pendulum_1_position, self.motor_position, self.pendulum_2_position,
-                  self.pendulum_1_velocity, self.motor_velocity, self.pendulum_2_velocity)
+            # print("!!!!!!!!!!!!!!!", self.pendulum_1_position, self.motor_position, self.pendulum_2_position,self.pendulum_1_velocity, self.motor_velocity, self.pendulum_2_velocity)
 
         self.update_current_state(adjusted_radian=0.0)
 
@@ -208,17 +212,6 @@ class MatlabRotaryInvertedPendulumEnv(gym.Env):
 
     def step(self, action):
 
-        if type(action) is np.ndarray:
-            action = action[0]
-
-        self.plant.simulate(action)
-
-        if self.pendulum_type == 'PENDULUM_MATLAB_V0':
-            self.pendulum_1_position, self.motor_position, self.pendulum_1_velocity, self.motor_velocity, self.simulation_time = self.plant.getHistory()
-        elif self.pendulum_type == 'PENDULUM_MATLAB_DOUBLE_RIP_V0':
-            self.pendulum_1_position, self.motor_position, self.pendulum_2_position, self.pendulum_1_velocity, self.motor_velocity, self.pendulum_2_velocity, self.simulation_time = self.plant.getHistory()
-            print("!!!!!!!!!!!!!!!", self.pendulum_1_position, self.motor_position, self.pendulum_2_position, self.pendulum_1_velocity, self.motor_velocity, self.pendulum_2_velocity)
-
         self.episode_steps += 1
 
         self.total_steps += 1
@@ -254,8 +247,7 @@ class MatlabRotaryInvertedPendulumEnv(gym.Env):
             self.pendulum_1_position, self.motor_position, self.pendulum_1_velocity, self.motor_velocity, self.simulation_time = self.plant.getHistory()
         elif self.pendulum_type == 'PENDULUM_MATLAB_DOUBLE_RIP_V0':
             self.pendulum_1_position, self.motor_position, self.pendulum_2_position, self.pendulum_1_velocity, self.motor_velocity, self.pendulum_2_velocity, self.simulation_time = self.plant.getHistory()
-            print("!!!!!!!!!!!!!!!", self.pendulum_1_position, self.motor_position, self.pendulum_2_position,
-                  self.pendulum_1_velocity, self.motor_velocity, self.pendulum_2_velocity)
+            # print("!!!!!!!!!!!!!!!", self.pendulum_1_position, self.motor_position, self.pendulum_2_position,self.pendulum_1_velocity, self.motor_velocity, self.pendulum_2_velocity)
 
         #print(self.motor_position, math.cos(self.motor_position), math.sin(self.motor_position))
 
@@ -302,18 +294,18 @@ class MatlabRotaryInvertedPendulumEnv(gym.Env):
 
         if params.STATE_INCLUSION_MOTOR_VELOCITY:
             state = (
-                math.cos(self.pendulum_1_position),
-                math.sin(self.pendulum_1_position),
-                self.pendulum_1_velocity,
+                math.cos(self.pendulum_2_position),
+                math.sin(self.pendulum_2_position),
+                self.pendulum_2_velocity,
                 math.cos(self.initial_motor_position - self.motor_position),
                 math.sin(self.initial_motor_position - self.motor_position),
                 self.motor_velocity,
             )
         else:
             state = (
-                math.cos(self.pendulum_1_position),
-                math.sin(self.pendulum_1_position),
-                self.pendulum_1_velocity,
+                math.cos(self.pendulum_2_position),
+                math.sin(self.pendulum_2_position),
+                self.pendulum_2_velocity,
                 math.cos(self.initial_motor_position - self.motor_position),
                 math.sin(self.initial_motor_position - self.motor_position),
             )
@@ -331,7 +323,7 @@ class MatlabRotaryInvertedPendulumEnv(gym.Env):
         else:
             position_reward = adjusted_radian / (math.pi * 2.0)
 
-        energy_penalty = -1.0 * (abs(self.pendulum_1_velocity) + abs(self.motor_velocity)) / 100
+        energy_penalty = -1.0 * (abs(self.pendulum_2_velocity) + abs(self.motor_velocity)) / 100
 
         self.episode_position_reward_list.append(position_reward)
         self.episode_pendulum_velocity_reward_list.append(energy_penalty)
