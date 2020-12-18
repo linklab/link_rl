@@ -20,10 +20,14 @@ import numpy as np
 
 logger = get_logger("chief")
 
-env = rl_utils.get_environment(params=params)
-rl_model = rl_utils.get_rl_model(env, -1, params=params)
+try:
+    env = rl_utils.get_environment(params=params)
+    rl_model = rl_utils.get_rl_model(env, -1, params=params)
 
-chief = Chief(logger=logger, env=env, rl_model=rl_model, params=params)
+    chief = Chief(logger=logger, env=env, rl_model=rl_model, params=params)
+except:
+    traceback.print_exc()
+    sys.exit(-1)
 
 
 def on_chief_connect(client, userdata, flags, rc):
@@ -44,13 +48,18 @@ def on_chief_message(client, userdata, msg):
         msg_payload = zlib.decompress(msg.payload)
         msg_payload = pickle.loads(msg_payload)
 
-        log_msg = "[RECV] TOPIC: {0}, PAYLOAD: 'episode': {1}, 'worker_id': {2}, 'loss': {3:8.4}, 'episode_reward': {4}".format(
+        log_msg = "[RECV] TOPIC: {0}, PAYLOAD: 'episode': {1}, 'worker_id': {2}, 'loss': {3:8.4}".format(
             msg.topic,
             msg_payload['episode'],
             msg_payload['worker_id'],
             msg_payload['loss'],
-            msg_payload['episode_reward']
         )
+
+        if 'actor_objective' in msg_payload:
+            log_msg += ", 'actor_objective': {0}".format(msg_payload['actor_objective'])
+
+        if 'episode_reward' in msg_payload:
+            log_msg += ", 'episode_reward': {0}".format(msg_payload['episode_reward'])
 
         if 'agent_type' in msg_payload:
             log_msg += ", 'agent_type': {0}".format(msg_payload['agent_type'])
@@ -86,13 +95,24 @@ def on_chief_message(client, userdata, msg):
                             np.mean(chief.episode_reward_over_recent_episodes[worker_id])
                         )
 
-                        chief.save_results(
-                            worker_id,
-                            chief.messages_received_from_workers[chief.episode_chief][worker_id][1]['loss'],
-                            np.mean(chief.loss_over_recent_episodes[worker_id]),
-                            chief.messages_received_from_workers[chief.episode_chief][worker_id][1]['episode_reward'],
-                            np.mean(chief.episode_reward_over_recent_episodes[worker_id])
-                        )
+                        if 'actor_objective' in msg_payload:
+                            chief.save_results(
+                                worker_id,
+                                chief.messages_received_from_workers[chief.episode_chief][worker_id][1]['episode_reward'],
+                                np.mean(chief.episode_reward_over_recent_episodes[worker_id]),
+                                chief.messages_received_from_workers[chief.episode_chief][worker_id][1]['loss'],
+                                np.mean(chief.loss_over_recent_episodes[worker_id]),
+                                chief.messages_received_from_workers[chief.episode_chief][worker_id][1]['actor_objective'],
+                                np.mean(chief.actor_objective_over_recent_episodes[worker_id])
+                            )
+                        else:
+                            chief.save_results(
+                                worker_id,
+                                chief.messages_received_from_workers[chief.episode_chief][worker_id][1]['episode_reward'],
+                                np.mean(chief.episode_reward_over_recent_episodes[worker_id]),
+                                chief.messages_received_from_workers[chief.episode_chief][worker_id][1]['loss'],
+                                np.mean(chief.loss_over_recent_episodes[worker_id])
+                            )
 
                         if topic == params.MQTT_TOPIC_SUCCESS_DONE:
                             is_include_topic_success_done = True
@@ -145,3 +165,6 @@ if __name__ == "__main__":
                 break
         except KeyboardInterrupt as error:
             print("=== {0:>8} is aborted by keyboard interrupt".format('Chief'))
+        except Exception as e:
+            traceback.print_exc()
+            sys.exit(-1)

@@ -26,7 +26,7 @@ from common.fast_rl.common import statistics, utils
 from config.parameters import PARAMETERS as params
 from collections import deque
 
-MODEL_SAVE_DIR = os.path.join(".", "saved_models")
+MODEL_SAVE_DIR = os.path.join(PROJECT_HOME, "saved_models")
 if not os.path.exists(MODEL_SAVE_DIR):
     os.makedirs(MODEL_SAVE_DIR)
 
@@ -48,7 +48,7 @@ def play_func(exp_queue, env, net):
 
     #action_selector = actions.EpsilonGreedyDDPGActionSelector(epsilon=params.EPSILON_INIT)
 
-    action_selector = actions.DDPGActionSelector(epsilon=params.EPSILON_INIT, ou_enabled=True, scale_factor=2.0)
+    action_selector = actions.EpsilonGreedyDDPGActionSelector(epsilon=params.EPSILON_INIT, ou_enabled=True, scale_factor=2.0)
 
     epsilon_tracker = actions.EpsilonTracker(
         action_selector=action_selector,
@@ -210,7 +210,7 @@ def main():
     # lp_wrapper = lp(model_update)
 
     while play_proc.is_alive():
-        step_idx += params.N_STEP
+        step_idx += params.TRAIN_STEP_FREQ
         exp = None
         for _ in range(params.TRAIN_STEP_FREQ):
             exp = exp_queue.get()

@@ -1,6 +1,9 @@
 #!/usr/bin/env python3
 import time
 import sys
+
+from config.names import PROJECT_HOME
+
 sys.path.insert(0,"c:\\users\\wlckd\\anaconda3\\envs\\link_rl\\lib\\site-packages")
 import gym
 import torch
@@ -20,7 +23,7 @@ cuda = False
 # env_name = 'CartPole-v1'
 
 
-MODEL_SAVE_DIR = os.path.join(".", "saved_models")
+MODEL_SAVE_DIR = os.path.join(PROJECT_HOME, "saved_models")
 if not os.path.exists(MODEL_SAVE_DIR):
     os.makedirs(MODEL_SAVE_DIR)
 
@@ -35,7 +38,7 @@ else:
 
 def play_func(exp_queue, env, net):
     env.reset()
-    action_selector = actions.EpsilonGreedyActionSelector(epsilon=params.EPSILON_INIT)
+    action_selector = actions.EpsilonGreedyDQNActionSelector(epsilon=params.EPSILON_INIT)
 
     epsilon_tracker = actions.EpsilonTracker(
         action_selector=action_selector,

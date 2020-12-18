@@ -10,6 +10,7 @@ import os, glob
 from common.logger import get_logger
 from . import actions
 
+
 def save_model(model_save_dir, env_name, net_name, net, step, episode_reward):
     model_save_filename = os.path.join(
         model_save_dir, "{0}_{1}_{2}_{3:.2f}.pth".format(env_name, net_name, step, float(episode_reward))
@@ -69,6 +70,7 @@ def load_actor_critic_model(actor_model_save_filename, critic_model_save_filenam
     critic_net.load_state_dict(critic_model_params)
 
     print("ACTOR / CRITIC MODELS ARE LOADED!!!")
+
 
 class BaseAgent:
     """
@@ -294,8 +296,8 @@ class AgentDDPG(BaseAgent):
 
         mu_v = self.model(states)
         mu = mu_v.data.cpu().numpy()
-        ####################################
 
+        ####################################
         # if agent_states is None:
         #     new_agent_states = [None] * len(states)
         # else:
@@ -306,15 +308,13 @@ class AgentDDPG(BaseAgent):
         #
         # actions = mu + noises
         # actions = np.clip(actions, self.action_min, self.action_max)
-
         ####################################
 
         actions, new_agent_states = self.action_selector(mu, agent_states)
-        noises = new_agent_states
-
-        #####################################
-
         actions = np.clip(actions, self.action_min, self.action_max)
+
+        noises = new_agent_states
+        #####################################
 
         self.step_idx += 1
 
@@ -329,8 +329,10 @@ class AgentDDPG(BaseAgent):
 
 
 class AgentD4PG(BaseAgent):
-    def __init__(self, model, n_actions, action_selector, action_min, action_max, device="cpu",
-                 preprocessor=default_states_preprocessor):
+    def __init__(
+            self, model, n_actions, action_selector, action_min, action_max,
+            device="cpu", preprocessor=default_states_preprocessor
+    ):
         self.model = model
         self.device = device
         self.action_selector = action_selector
@@ -349,6 +351,32 @@ class AgentD4PG(BaseAgent):
         new_agent_states = agent_states
 
         actions = mu_v.data.cpu().numpy()
-        actions += self.action_selector(actions)
+        actions = self.action_selector(actions)
         actions = np.clip(actions, self.action_min, self.action_max)
+        return actions, new_agent_states
+
+
+class AgentPPO(BaseAgent):
+    def __init__(self, model, action_min, action_max, preprocessor=default_states_preprocessor, device="cpu"):
+        self.model = model
+        self.device = device
+        self.action_min = action_min
+        self.action_max = action_max
+        self.preprocessor = preprocessor
+
+    def __call__(self, states, agent_states):
+        if self.preprocessor is not None:
+            states = self.preprocessor(states)
+            if torch.is_tensor(states):
+                states = states.to(self.device)
+
+        mu_v = self.model(states)
+        new_agent_states = agent_states
+
+        mu = mu_v.data.cpu().numpy()
+        logstd = self.model.logstd.data.cpu().numpy()
+        rnd = np.random.normal(size=logstd.shape)
+        actions = mu + np.exp(logstd) * rnd
+        actions = np.clip(actions, self.action_min, self.action_max)
+
         return actions, new_agent_states

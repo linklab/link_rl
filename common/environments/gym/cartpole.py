@@ -15,6 +15,9 @@ class CartPole_v0(Environment):
         self.WIN_AND_LEARN_FINISH_SCORE = 195
         self.WIN_AND_LEARN_FINISH_CONTINUOUS_EPISODES = 10
 
+        self.observation_space = self.env.observation_space
+        self.action_space = self.env.action_space
+
     def get_n_states(self):
         n_states = int(self.env.observation_space.shape[0])
         return n_states
@@ -49,9 +52,13 @@ class CartPole_v0(Environment):
         next_state, reward, done, info = self.env.step(action)
 
         next_state = next_state
-        adjusted_reward = reward / 100
+        #adjusted_reward = reward / 100
 
-        return next_state, reward, adjusted_reward, done, info
+        reward /= 100.0
+
+        #return next_state, reward, adjusted_reward, done, info
+
+        return next_state, reward, done, info
 
     def render(self):
         self.env.render()

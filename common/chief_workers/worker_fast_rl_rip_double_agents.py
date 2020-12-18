@@ -42,7 +42,6 @@ class WorkerFastRLRipDoubleAgents:
         self.episode_reward = 0
 
         self.global_max_ema_episode_reward = 0
-        self.global_min_ema_loss = 1000000000
 
         self.local_episode_rewards = []
         self.local_losses = []
@@ -119,7 +118,7 @@ class WorkerFastRLRipDoubleAgents:
             swing_up_action_min = -self.params.SWING_UP_SCALE_FACTOR
             swing_up_action_max = self.params.SWING_UP_SCALE_FACTOR
 
-            swing_up_action_selector = actions.DDPGActionSelector(
+            swing_up_action_selector = actions.EpsilonGreedyDDPGActionSelector(
                 epsilon=params.EPSILON_INIT, ou_enabled=True, scale_factor=self.params.SWING_UP_SCALE_FACTOR
             )
 
@@ -143,7 +142,7 @@ class WorkerFastRLRipDoubleAgents:
             balancing_action_min = -self.params.BALANCING_SCALE_FACTOR
             balancing_action_max = self.params.BALANCING_SCALE_FACTOR
 
-            balancing_action_selector = actions.DDPGActionSelector(
+            balancing_action_selector = actions.EpsilonGreedyDDPGActionSelector(
                 epsilon=params.EPSILON_INIT, ou_enabled=True, scale_factor=self.params.BALANCING_SCALE_FACTOR
             )
 
@@ -166,7 +165,7 @@ class WorkerFastRLRipDoubleAgents:
                 steps_count=params.N_STEP, step_length=-1
             )
 
-            self.rl_algorithm.set_buffer(experience_source=None)
+            self.rl_algorithm.set_experience_source_to_buffer(experience_source=None)
             exp_source_iter = iter(experience_source)
 
             step_idx = 0
@@ -178,7 +177,7 @@ class WorkerFastRLRipDoubleAgents:
             with RewardTrackerMatlabPendulum(params=params, frame=None, stat=None, worker_id=self.worker_id) as reward_tracker:
                 while step_idx < params.MAX_GLOBAL_STEPS:
                     # 1 스텝 진행하고 exp를 exp_queue에 넣음
-                    step_idx += params.N_STEP
+                    step_idx += 1
 
                     exp = next(exp_source_iter)
 

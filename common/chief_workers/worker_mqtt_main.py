@@ -4,16 +4,16 @@ import time
 import traceback
 import zlib
 import paho.mqtt.client as mqtt
+import threading
 import sys, os
-
-from common.chief_workers.worker_fast_rl_rip_double_agents import WorkerFastRLRipDoubleAgents
-from rl_main.matlab_pendulum_main.experience_pendulum_ddpg_two_two_status import AgentType
 
 idx = os.getcwd().index("link_rl")
 PROJECT_HOME = os.getcwd()[:idx] + "link_rl"
 if PROJECT_HOME not in sys.path:
     sys.path.append(PROJECT_HOME)
 
+from common.chief_workers.worker_fast_rl_rip_double_agents import WorkerFastRLRipDoubleAgents
+from rl_main.matlab_pendulum_main.experience_pendulum_ddpg_two_two_status import AgentType
 from common.chief_workers.worker_fast_rl import WorkerFastRL
 from config.names import RLAlgorithmName
 from config.parameters import PARAMETERS as params
@@ -100,7 +100,15 @@ def on_worker_message(client, userdata, msg):
                 worker.update_process(msg_payload['avg_gradients'])
 
             if not worker.is_success_or_fail_done and params.MODE_PARAMETERS_TRANSFER:
-                worker.transfer_process(msg_payload['parameters'])
+                if params.RL_ALGORITHM == RLAlgorithmName.DDPG_FAST_DOUBLE_AGENTS_V0:
+                    if msg_payload['agent_type'] == AgentType.SWING_UP_AGENT.value:
+                        worker.swing_up_transfer_process(msg_payload['parameters'])
+                    elif msg_payload['agent_type'] == AgentType.BALANCING_AGENT.value:
+                        worker.balancing_transfer_process(msg_payload['parameters'])
+                    else:
+                        raise ValueError()
+                else:
+                    worker.transfer_process(msg_payload['parameters'])
 
             worker.episode_chief = msg_payload["episode_chief"]
             #print("Transfer_Ack: {0}".format(worker.episode_chief))
@@ -119,11 +127,14 @@ if __name__ == "__main__":
     worker_mqtt_client = mqtt.Client("rl_worker_{0}".format(worker_id))
     worker_mqtt_client.on_connect = on_worker_connect
     worker_mqtt_client.on_message = on_worker_message
+    worker_mqtt_client.loop_start()
+
     if params.MQTT_LOG:
         worker_mqtt_client.on_log = on_worker_log
 
     worker_mqtt_client.connect(params.MQTT_SERVER, params.MQTT_PORT, keepalive=3600)
-    worker_mqtt_client.loop_start()
+
+    time.sleep(2.0)
 
     stderr = sys.stderr
     sys.stderr = sys.stdout
@@ -131,7 +142,7 @@ if __name__ == "__main__":
         if params.RL_ALGORITHM == RLAlgorithmName.DDPG_FAST_DOUBLE_AGENTS_V0:
             assert params.NUM_WORKERS == 1, "NUM_WORKERS should be 1"
             worker = WorkerFastRLRipDoubleAgents(logger, worker_id, worker_mqtt_client, params)
-        elif params.RL_ALGORITHM == RLAlgorithmName.DDPG_FAST_V0:
+        elif params.RL_ALGORITHM in [RLAlgorithmName.DQN_FAST_V0, RLAlgorithmName.DDPG_FAST_V0, RLAlgorithmName.D4PG_FAST_V0]:
             worker = WorkerFastRL(logger, worker_id, worker_mqtt_client, params)
         else:
             worker = Worker(logger, worker_id, worker_mqtt_client, params)
@@ -142,5 +153,8 @@ if __name__ == "__main__":
         worker_mqtt_client.loop_stop()
     except KeyboardInterrupt as error:
         print("=== {0:>8} is aborted by keyboard interrupt".format('Worker {0}'.format(worker_id)))
+    except Exception as e:
+        traceback.print_exc()
+        sys.exit(-1)
     finally:
         sys.stderr = stderr

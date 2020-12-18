@@ -37,7 +37,7 @@ import matplotlib
 import matplotlib.pyplot as plt
 
 
-MODEL_SAVE_DIR = os.path.join(".", "saved_models")
+MODEL_SAVE_DIR = os.path.join(PROJECT_HOME, "saved_models")
 if not os.path.exists(MODEL_SAVE_DIR):
     os.makedirs(MODEL_SAVE_DIR)
 
@@ -85,7 +85,7 @@ def play_func(exp_queue_swing_up, exp_queue_balancing, actor_swing_up_net, criti
 
     # action_selector = actions.EpsilonGreedyDDPGActionSelector(epsilon=params.EPSILON_INIT)
 
-    action_selector_swing_up = actions.DDPGActionSelector(
+    action_selector_swing_up = actions.EpsilonGreedyDDPGActionSelector(
         epsilon=params.EPSILON_INIT, ou_enabled=True, scale_factor=SWING_UP_SCALE_FACTOR
     )
 
@@ -103,7 +103,7 @@ def play_func(exp_queue_swing_up, exp_queue_balancing, actor_swing_up_net, criti
         name="SwingUp_AgentDDPG"
     )
 
-    action_selector_balancing = actions.DDPGActionSelector(
+    action_selector_balancing = actions.EpsilonGreedyDDPGActionSelector(
         epsilon=params.EPSILON_INIT, ou_enabled=True, scale_factor=BALANCING_SCALE_FACTOR
     )
 
@@ -155,7 +155,7 @@ def play_func(exp_queue_swing_up, exp_queue_balancing, actor_swing_up_net, criti
             frame=True, draw_viz=params.DRAW_VIZ, stat=stat, logger=my_logger) as reward_tracker:
         while step_idx < params.MAX_GLOBAL_STEPS:
             # 1 스텝 진행하고 exp를 exp_queue에 넣음
-            step_idx += params.N_STEP
+            step_idx += 1
 
             exp = next(exp_source_iter)
 
@@ -431,23 +431,21 @@ def main():
     # lp_wrapper = lp(model_update)
 
     while play_proc.is_alive():
-        step_idx += params.N_STEP # 4, 8, 12, 16
+        step_idx += params.TRAIN_STEP_FREQ
 
-        if step_idx % params.TRAIN_STEP_FREQ:
-            continue
+        for _ in range(params.TRAIN_STEP_FREQ):
+            exp_swing_up = exp_queue_swing_up.get()
+            exp_balancing = exp_queue_balancing.get()
 
-        exp_swing_up = exp_queue_swing_up.get()
-        exp_balancing = exp_queue_balancing.get()
+            if exp_swing_up is None and exp_balancing is None:
+                play_proc.join()
+                break
 
-        if exp_swing_up is None and exp_balancing is None:
-            play_proc.join()
-            break
+            if exp_swing_up != 0:
+                buffer_swing_up._add(exp_swing_up)
 
-        if exp_swing_up != 0:
-            buffer_swing_up._add(exp_swing_up)
-
-        if exp_balancing != 0:
-            buffer_balancing._add(exp_balancing)
+            if exp_balancing != 0:
+                buffer_balancing._add(exp_balancing)
 
         if step_idx % params.DRAW_VIZ_PERIOD_STEPS == 0:
             if params.DRAW_VIZ:

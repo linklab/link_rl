@@ -15,6 +15,7 @@ from common.fast_rl.common import statistics, wrappers
 from common.fast_rl.value_based_model import insert_experience_into_buffer
 
 ##### NOTE #####
+from config.names import PROJECT_HOME
 from config.parameters import PARAMETERS as params
 ##### NOTE #####
 
@@ -27,13 +28,13 @@ if torch.cuda.is_available():
 else:
     device = torch.device("cpu")
 
-MODEL_SAVE_DIR = os.path.join(".", "saved_models")
+MODEL_SAVE_DIR = os.path.join(PROJECT_HOME, "saved_models")
 if not os.path.exists(MODEL_SAVE_DIR):
     os.makedirs(MODEL_SAVE_DIR)
 
 
 def play_func(env, net, exp_queue):
-    action_selector = actions.EpsilonGreedyActionSelector(epsilon=params.EPSILON_INIT)
+    action_selector = actions.EpsilonGreedyDQNActionSelector(epsilon=params.EPSILON_INIT)
     epsilon_tracker = actions.EpsilonTracker(
         action_selector=action_selector,
         eps_start=params.EPSILON_INIT,

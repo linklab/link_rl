@@ -1,14 +1,33 @@
 import json
+import threading
 
 import paho.mqtt.client as mqtt
 import torch
 from torch import optim
+import os, sys
 
-from common.environments.matlab.matlabenv_double_agents import MatlabRotaryInvertedPendulumDoubleAgentsEnv
-from common.fast_rl.algorithms.DDPG_RIP_DOUBLE_AGENTS_v0 import DDPG_RIP_DOUBLE_AGENTS_v0
-from common.fast_rl.algorithms.DDPG_v0 import DDPG_v0
-from common.environments.matlab.matlabenv import MatlabRotaryInvertedPendulumEnv
-from common.models.ddpg_actor_critic_model import DDPGActorCriticModel
+from common.fast_rl.algorithms.D4PG_v0 import D4PG_FAST_v0
+from common.fast_rl.algorithms.DUELING_DOUBLE_DQN_v0 import Dueling_Double_DQN_v0
+from common.fast_rl.algorithms.PPO_v0 import PPO_FAST_v0
+from common.models.basic_model import DuelingDQNModel
+
+idx = os.getcwd().index("link_rl")
+PROJECT_HOME = os.getcwd()[:idx] + "link_rl"
+if PROJECT_HOME not in sys.path:
+    sys.path.append(PROJECT_HOME)
+
+from config.parameters import PARAMETERS as params
+
+if params.MY_PLATFORM != "REAL_RIP_PLATFORM":
+    from common.environments.real_device.environment_double_rip import EnvironmentDoubleRIP
+
+from common.fast_rl.algorithms.DDPG_RIP_DOUBLE_AGENTS_v0 import DDPG_FAST_RIP_DOUBLE_AGENTS_v0
+from common.fast_rl.algorithms.DDPG_v0 import DDPG_FAST_v0
+
+if params.MY_PLATFORM != "REAL_RIP_PLATFORM":
+    from common.environments.matlab.matlabenv import MatlabRotaryInvertedPendulumEnv
+
+from common.models.actor_critic_model import ActorCriticModel
 from config.names import EnvironmentName, DeepLearningModelName, RLAlgorithmName, OptimizerName
 
 from common.environments.gym.frozenlake import FrozenLake_v0
@@ -32,7 +51,8 @@ from common.environments.mujoco.humanoid import Humanoid_v2
 from common.environments.mujoco.humanoid_stand_up import HumanoidStandUp_v2
 from common.environments.mujoco.inverted_pendulum import InvertedPendulum_v2
 from common.environments.mujoco.walker_2d import Walker2D_v2
-from common.models.actor_critic_model import ActorCriticModel
+from common.environments.real_device.environment_double_rip import EnvironmentDoubleRIP
+from common.models.old_actor_critic_model import OldActorCriticModel
 from common.algorithms_rl.DQN_v0 import DQN_v0
 from common.algorithms_rl.Monte_Carlo_Control_v0 import Monte_Carlo_Control_v0
 from common.algorithms_rl.PPO_v0 import PPO_v0
@@ -43,7 +63,53 @@ device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 
 
 def get_environment(owner="chief", params=None):
-    if params.ENVIRONMENT_ID == EnvironmentName.QUANSER_SERVO_2:
+    if params.ENVIRONMENT_ID == EnvironmentName.REAL_DEVICE_DOUBLE_RIP:
+        client = mqtt.Client(client_id="env_pub_1", transport="TCP")
+        env = EnvironmentDoubleRIP(
+            action_min=params.SWING_UP_SCALE_FACTOR * -1.0,
+            action_max=params.SWING_UP_SCALE_FACTOR,
+            env_reset=params.ENV_RESET,
+            mqtt_client = client
+        )
+
+        def __on_connect(client, userdata, flags, rc):
+            print("mqtt broker connected with result code " + str(rc), flush=False)
+            client.subscribe(topic=params.MQTT_SUB_FROM_DRIP)
+            client.subscribe(topic=params.MQTT_SUB_RESET_COMPLETE)
+
+        def __on_log(client, userdata, level, buf):
+            print(buf)
+
+        def __on_message(client, userdata, msg):
+            global PUB_ID
+
+            if msg.topic == params.MQTT_SUB_FROM_DRIP:
+                servo_info = json.loads(msg.payload.decode("utf-8")).split('|')
+                motor_position = float(servo_info[0])
+                motor_velocity = float(servo_info[1])
+                pendulum_position = float(servo_info[2])
+                pendulum_velocity = float(servo_info[3])
+                env.set_state(motor_position, motor_velocity, pendulum_position, pendulum_velocity)
+
+            elif msg.topic == params.MQTT_SUB_RESET_COMPLETE:
+                servo_info = str(msg.payload.decode("utf-8")).split('|')
+                motor_position = float(servo_info[0])
+                motor_velocity = float(servo_info[1])
+                pendulum_position = float(servo_info[2])
+                pendulum_velocity = float(servo_info[3])
+                env.set_state(motor_position, motor_velocity, pendulum_position, pendulum_velocity)
+
+        client.on_connect = __on_connect
+        client.on_message = __on_message
+        # client.on_log = __on_log
+        #
+        # # client.username_pw_set(username="link", password="0123")
+        client.connect(params.MQTT_SERVER, 1883, 3600)
+        #
+        print("***** Sub thread started!!! *****", flush=False)
+        client.loop_start()
+
+    elif params.ENVIRONMENT_ID == EnvironmentName.QUANSER_SERVO_2:
         client = mqtt.Client(client_id="env_sub_2", transport="TCP")
         env = EnvironmentRIP(mqtt_client=client)
 
@@ -88,7 +154,7 @@ def get_environment(owner="chief", params=None):
 
         if owner == "worker":
             client.on_connect = __on_connect
-            client.on_message =  __on_message
+            client.on_message = __on_message
             # client.on_log = __on_log
 
             # client.username_pw_set(username="link", password="0123")
@@ -153,12 +219,12 @@ def get_environment(owner="chief", params=None):
             env_reset=params.ENV_RESET,
             pendulum_type= 'PENDULUM_MATLAB_DOUBLE_RIP_V0'
         )
-    elif params.ENVIRONMENT_ID == EnvironmentName.PENDULUM_MATLAB_DOUBLE_AGENTS_V0:
-        env = MatlabRotaryInvertedPendulumDoubleAgentsEnv(
-            action_min=params.SWING_UP_SCALE_FACTOR * -1.0,
-            action_max=params.SWING_UP_SCALE_FACTOR,
-            env_reset=params.ENV_RESET
-        )
+    # elif params.ENVIRONMENT_ID == EnvironmentName.PENDULUM_MATLAB_DOUBLE_AGENTS_V0:
+    #     env = MatlabRotaryInvertedPendulumDoubleAgentsEnv(
+    #         action_min=params.SWING_UP_SCALE_FACTOR * -1.0,
+    #         action_max=params.SWING_UP_SCALE_FACTOR,
+    #         env_reset=params.ENV_RESET
+    #     )
     else:
         env = None
     return env
@@ -166,18 +232,45 @@ def get_environment(owner="chief", params=None):
 
 def get_rl_model(env, worker_id, params):
     if params.DEEP_LEARNING_MODEL == DeepLearningModelName.DDPG_ACTOR_CRITIC_MLP:
-        model = DDPGActorCriticModel(
+        model = ActorCriticModel(
             s_size=env.n_states,
             a_size=env.n_actions,
             worker_id=worker_id,
             params=params,
-            device=device
+            device=device,
+            rl_algorithm=RLAlgorithmName.DDPG_FAST_V0
         ).to(device)
-    elif params.DEEP_LEARNING_MODEL in [DeepLearningModelName.ACTOR_CRITIC_MLP, DeepLearningModelName.ACTOR_CRITIC_CNN]:
+    elif params.DEEP_LEARNING_MODEL == DeepLearningModelName.D4PG_ACTOR_CRITIC_MLP:
+            model = ActorCriticModel(
+                s_size=env.n_states,
+                a_size=env.n_actions,
+                worker_id=worker_id,
+                params=params,
+                device=device,
+                rl_algorithm=RLAlgorithmName.D4PG_FAST_V0
+            ).to(device)
+    elif params.DEEP_LEARNING_MODEL == DeepLearningModelName.PPO_ACTOR_CRITIC_MLP:
         model = ActorCriticModel(
             s_size=env.n_states,
             a_size=env.n_actions,
+            worker_id=worker_id,
+            params=params,
+            device=device,
+            rl_algorithm=RLAlgorithmName.PPO_FAST_V0
+        ).to(device)
+    elif params.DEEP_LEARNING_MODEL in [DeepLearningModelName.ACTOR_CRITIC_MLP, DeepLearningModelName.ACTOR_CRITIC_CNN]:
+        model = OldActorCriticModel(
+            s_size=env.n_states,
+            a_size=env.n_actions,
             continuous=env.continuous,
+            worker_id=worker_id,
+            params=params,
+            device=device
+        ).to(device)
+    elif params.DEEP_LEARNING_MODEL in [DeepLearningModelName.DUELING_DQN_MLP]:
+        model = DuelingDQNModel(
+            s_size=env.n_states,
+            a_size=env.n_actions,
             worker_id=worker_id,
             params=params,
             device=device
@@ -191,7 +284,16 @@ def get_rl_model(env, worker_id, params):
 
 def get_rl_algorithm(env, worker_id=0, logger=False, params=None):
     if params.RL_ALGORITHM == RLAlgorithmName.DDPG_FAST_DOUBLE_AGENTS_V0:
-        rl_algorithm = DDPG_RIP_DOUBLE_AGENTS_v0(
+        rl_algorithm = DDPG_FAST_RIP_DOUBLE_AGENTS_v0(
+            env=env,
+            worker_id=worker_id,
+            logger=logger,
+            params=params,
+            device=device,
+            verbose=params.VERBOSE
+        )
+    elif params.RL_ALGORITHM == RLAlgorithmName.D4PG_FAST_V0:
+        rl_algorithm = D4PG_FAST_v0(
             env=env,
             worker_id=worker_id,
             logger=logger,
@@ -200,7 +302,16 @@ def get_rl_algorithm(env, worker_id=0, logger=False, params=None):
             verbose=params.VERBOSE
         )
     elif params.RL_ALGORITHM == RLAlgorithmName.DDPG_FAST_V0:
-        rl_algorithm = DDPG_v0(
+        rl_algorithm = DDPG_FAST_v0(
+            env=env,
+            worker_id=worker_id,
+            logger=logger,
+            params=params,
+            device=device,
+            verbose=params.VERBOSE
+        )
+    elif params.RL_ALGORITHM == RLAlgorithmName.PPO_FAST_V0:
+        rl_algorithm = PPO_FAST_v0(
             env=env,
             worker_id=worker_id,
             logger=logger,
@@ -214,6 +325,15 @@ def get_rl_algorithm(env, worker_id=0, logger=False, params=None):
             worker_id=worker_id,
             gamma=params.GAMMA,
             env_render=params.ENV_RENDER,
+            logger=logger,
+            params=params,
+            device=device,
+            verbose=params.VERBOSE
+        )
+    elif params.RL_ALGORITHM == RLAlgorithmName.DQN_FAST_V0:
+        rl_algorithm = Dueling_Double_DQN_v0(
+            env=env,
+            worker_id=worker_id,
             logger=logger,
             params=params,
             device=device,

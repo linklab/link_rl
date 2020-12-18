@@ -10,6 +10,7 @@ import os
 import numpy as np
 
 from common.common_utils import make_gym_env
+from config.names import PROJECT_HOME
 
 print(torch.__version__)
 
@@ -18,7 +19,7 @@ from common.fast_rl.common import statistics, utils
 
 from config.parameters import PARAMETERS as params
 
-MODEL_SAVE_DIR = os.path.join(".", "saved_models")
+MODEL_SAVE_DIR = os.path.join(PROJECT_HOME, "saved_models")
 if not os.path.exists(MODEL_SAVE_DIR):
     os.makedirs(MODEL_SAVE_DIR)
 
@@ -30,7 +31,7 @@ else:
 
 
 def play_func(exp_queue, env, net):
-    action_selector = actions.EpsilonGreedyActionSelector(epsilon=params.EPSILON_INIT)
+    action_selector = actions.EpsilonGreedyDQNActionSelector(epsilon=params.EPSILON_INIT)
 
     epsilon_tracker = actions.EpsilonTracker(
         action_selector=action_selector,

@@ -8,14 +8,13 @@ from collections import deque
 import numpy as np
 import torch
 
-from common.fast_rl.common import utils
-from common.fast_rl.rl_agent import float32_preprocessor
-
 idx = os.getcwd().index("link_rl")
 PROJECT_HOME = os.getcwd()[:idx] + "link_rl"
 if PROJECT_HOME not in sys.path:
     sys.path.append(PROJECT_HOME)
 
+from common.fast_rl.common import utils
+from common.fast_rl.rl_agent import float32_preprocessor
 from common.fast_rl import actions, rl_agent, experience
 from config.names import RLAlgorithmName, EnvironmentName
 from rl_main.federated_main.utils import exp_moving_average
@@ -42,7 +41,6 @@ class WorkerFastRL:
         self.episode_reward = 0
 
         self.global_max_ema_episode_reward = 0
-        self.global_min_ema_loss = 1000000000
 
         self.local_episode_rewards = []
         self.local_losses = []
@@ -58,7 +56,8 @@ class WorkerFastRL:
 
     def update_process(self, avg_gradients):
         self.rl_algorithm.model.set_gradients_to_current_parameters(avg_gradients)
-        if self.params.RL_ALGORITHM in [RLAlgorithmName.DDPG_FAST_V0]:
+
+        if self.params.RL_ALGORITHM in [RLAlgorithmName.DDPG_FAST_V0, RLAlgorithmName.D4PG_FAST_V0]:
             self.rl_algorithm.actor_optimizer.step()
             self.rl_algorithm.critic_optimizer.step()
         else:
@@ -101,13 +100,44 @@ class WorkerFastRL:
         else:
             device = torch.device("cpu")
 
-        if params.RL_ALGORITHM is RLAlgorithmName.DDPG_FAST_V0:
+        if params.RL_ALGORITHM in [RLAlgorithmName.DQN_FAST_V0]:
+            if params.ENVIRONMENT_ID in [
+                EnvironmentName.PENDULUM_MATLAB_V0, EnvironmentName.PENDULUM_MATLAB_DOUBLE_AGENTS_V0
+            ]:
+                action_selector = actions.EpsilonGreedySomeTimesBlowDQNActionSelector(
+                    epsilon=params.EPSILON_INIT,
+                    blowing_action_rate=0.0002,  # 5000 스텝에 1번 정도(지수 분포)의 주기로 Blowing Action 가해짐
+                    min_blowing_action_idx=0,
+                    max_blowing_action_idx=self.env.n_actions - 1,
+                )
+            else:
+                action_selector = actions.EpsilonGreedyDQNActionSelector(epsilon=params.EPSILON_INIT)
+
+            epsilon_tracker = actions.EpsilonTracker(
+                action_selector=action_selector,
+                eps_start=params.EPSILON_INIT,
+                eps_final=params.EPSILON_MIN,
+                eps_frames=params.EPSILON_MIN_STEP
+            )
+
+            agent = rl_agent.DQNAgent(self.rl_algorithm.model, action_selector, device=device)
+        elif params.RL_ALGORITHM == RLAlgorithmName.DDPG_FAST_V0:
             action_min = -self.params.ACTION_SCALE
             action_max = self.params.ACTION_SCALE
 
-            action_selector = actions.DDPGActionSelector(
-                epsilon=params.EPSILON_INIT, ou_enabled=True, scale_factor=self.params.ACTION_SCALE
-            )
+            if params.ENVIRONMENT_ID in [
+                EnvironmentName.PENDULUM_MATLAB_V0, EnvironmentName.PENDULUM_MATLAB_DOUBLE_AGENTS_V0
+            ]:
+                action_selector = actions.EpsilonGreedySomeTimesBlowDDPGActionSelector(
+                    epsilon=params.EPSILON_INIT, ou_enabled=True, scale_factor=self.params.ACTION_SCALE,
+                    blowing_action_rate=0.0002,  # 5000 스텝에 1번 정도(지수 분포)의 주기로 Blowing Action 가해짐
+                    min_blowing_action=-10.0 * self.params.ACTION_SCALE,
+                    max_blowing_action=10.0 * self.params.ACTION_SCALE,
+                )
+            else:
+                action_selector = actions.EpsilonGreedyDDPGActionSelector(
+                    epsilon=params.EPSILON_INIT, ou_enabled=True, scale_factor=self.params.ACTION_SCALE
+                )
 
             epsilon_tracker = actions.EpsilonTracker(
                 action_selector=action_selector,
@@ -121,59 +151,126 @@ class WorkerFastRL:
                 action_min=action_min, action_max=action_max, device=device, preprocessor=float32_preprocessor
             )
 
-            experience_source = experience.ExperienceSourceSingleEnvFirstLast(
-                self.env, agent, gamma=params.GAMMA, steps_count=params.N_STEP, step_length=-1
+        elif params.RL_ALGORITHM == RLAlgorithmName.D4PG_FAST_V0:
+            action_min = -self.params.ACTION_SCALE
+            action_max = self.params.ACTION_SCALE
+
+            action_selector = actions.EpsilonGreedyD4PGActionSelector(
+                epsilon=params.EPSILON_INIT
             )
 
-            self.rl_algorithm.set_buffer(experience_source=experience_source)
+            epsilon_tracker = actions.EpsilonTracker(
+                action_selector=action_selector,
+                eps_start=params.EPSILON_INIT,
+                eps_final=params.EPSILON_MIN,
+                eps_frames=params.EPSILON_MIN_STEP
+            )
 
-            step_idx = 0
-            episode = 0
+            agent = rl_agent.AgentD4PG(
+                self.rl_algorithm.model, n_actions=1, action_selector=action_selector,
+                action_min=action_min, action_max=action_max, device=device, preprocessor=float32_preprocessor
+            )
+        else:
+            raise ValueError()
 
-            with utils.RewardTracker(params=params, frame=None, stat=None, worker_id=self.worker_id) as reward_tracker:
-                while step_idx < params.MAX_GLOBAL_STEPS:
-                    # 1 스텝 진행하고 exp를 exp_queue에 넣음
-                    step_idx += params.N_STEP
+        experience_source = experience.ExperienceSourceSingleEnvFirstLast(
+            self.env, agent, gamma=params.GAMMA, steps_count=params.N_STEP, step_length=-1
+        )
 
-                    self.rl_algorithm.buffer.populate(params.TRAIN_STEP_FREQ)
-                    epsilon_tracker.udpate(step_idx)
+        self.rl_algorithm.set_experience_source_to_buffer(experience_source=experience_source)
 
+        step_idx = 0
+        episode = 0
+
+        with utils.RewardTracker(params=params, frame=None, stat=None, worker_id=self.worker_id) as reward_tracker:
+            while step_idx < params.MAX_GLOBAL_STEPS:
+                # 1 스텝 진행하고 exp를 exp_queue에 넣음
+                step_idx += 1
+
+                self.rl_algorithm.buffer.populate(params.TRAIN_STEP_FREQ)
+                epsilon_tracker.udpate(step_idx)
+
+                ###################
+                actor_objective = None
+
+                if self.params.RL_ALGORITHM == RLAlgorithmName.DQN_FAST_V0:
                     gradients, loss = self.rl_algorithm.train_net(step_idx=step_idx)
+                elif self.params.RL_ALGORITHM in [RLAlgorithmName.DDPG_FAST_V0, RLAlgorithmName.D4PG_FAST_V0]:
+                    gradients, loss, actor_objective = self.rl_algorithm.train_net(step_idx=step_idx)
+                else:
+                    raise ValueError()
+                ###################
 
-                    episode_rewards = experience_source.pop_episode_reward_lst()
+                episode_rewards = experience_source.pop_episode_reward_lst()
 
-                    if episode_rewards:
-                        current_episode_reward = episode_rewards[0]
+                if episode_rewards:
+                    #loss, actor_objective = self.train_at_episode_end(step_idx)
+                    current_episode_reward = episode_rewards[0]
 
-                        solved, mean_episode_reward = reward_tracker.set_episode_reward(
-                            current_episode_reward, step_idx, epsilon=action_selector.epsilon
-                        )
-
-                        if solved:
-                            rl_agent.save_model(
-                                os.path.join(PROJECT_HOME, "out", "model_save_files"),
-                                params.ENVIRONMENT_ID.value,
-                                self.rl_algorithm.model.__name__,
-                                self.rl_algorithm.model,
-                                step_idx,
-                                mean_episode_reward
-                            )
-
-                        solved = self.interact_with_chief(
-                            loss, gradients, current_episode_reward, episode, step_idx, solved
-                        )
-
-                        if solved:
-                            break
-
-                        episode += 1
-
-                if not solved:
-                    self.interact_with_chief(
-                        loss, gradients, current_episode_reward, episode, step_idx, solved
+                    solved, mean_episode_reward = reward_tracker.set_episode_reward(
+                        current_episode_reward, step_idx, epsilon=action_selector.epsilon
                     )
 
-    def interact_with_chief(self, loss, gradients, episode_reward, episode, step_idx, solved, agent_type=None):
+                    if solved:
+                        rl_agent.save_model(
+                            os.path.join(PROJECT_HOME, "out", "model_save_files"),
+                            params.ENVIRONMENT_ID.value,
+                            self.rl_algorithm.model.__name__,
+                            self.rl_algorithm.model,
+                            step_idx,
+                            mean_episode_reward
+                        )
+
+                    solved = self.interact_with_chief(
+                        gradients, current_episode_reward, episode, step_idx, solved, loss, actor_objective
+                    )
+
+                    if solved:
+                        break
+
+                    episode += 1
+
+            if not solved:
+                self.interact_with_chief(
+                    gradients, current_episode_reward, episode, step_idx, solved, loss, actor_objective
+                )
+
+            if params.SAVE_AT_MAX_GLOBAL_STEPS:
+                rl_agent.save_model(
+                    os.path.join(PROJECT_HOME, "out", "model_save_files"),
+                    params.ENVIRONMENT_ID.value,
+                    self.rl_algorithm.model.__name__,
+                    self.rl_algorithm.model,
+                    step_idx,
+                    mean_episode_reward
+                )
+
+    def train_at_episode_end(self, step_idx):
+        ###################
+        loss_lst = []  # for actor critic model, loss means critic_loss
+        actor_objective_lst = []
+        actor_objective = None
+
+        for _ in range(10):
+            if self.params.RL_ALGORITHM == RLAlgorithmName.DQN_FAST_V0:
+                gradients, loss = self.rl_algorithm.train_net(step_idx=step_idx)
+                loss_lst.append(loss)
+            elif self.params.RL_ALGORITHM in [RLAlgorithmName.DDPG_FAST_V0, RLAlgorithmName.D4PG_FAST_V0]:
+                gradients, loss, actor_objective = self.rl_algorithm.train_net(step_idx=step_idx)
+                loss_lst.append(loss)
+                actor_objective_lst.append(actor_objective)
+            else:
+                raise ValueError()
+
+        loss = np.mean(loss_lst)
+
+        if self.params.RL_ALGORITHM in [RLAlgorithmName.DDPG_FAST_V0, RLAlgorithmName.D4PG_FAST_V0]:
+            actor_objective = np.mean(actor_objective_lst)
+
+        return loss, actor_objective
+        ###################
+
+    def interact_with_chief(self, gradients, episode_reward, episode, step_idx, solved, loss, actor_objective=None):
         self.local_losses.append(loss)
         self.local_episode_rewards.append(episode_reward)
 
@@ -190,8 +287,8 @@ class WorkerFastRL:
             "episode_reward": episode_reward
         }
 
-        if agent_type:
-            episode_msg['agent_type'] = agent_type.value
+        if actor_objective:  # for Policy-Based RL
+            episode_msg['actor_objective'] = actor_objective
 
         is_finish = False
 

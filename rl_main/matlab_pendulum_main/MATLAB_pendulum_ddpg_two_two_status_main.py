@@ -33,7 +33,8 @@ import pickle
 import matplotlib.pyplot as plt
 
 
-MODEL_SAVE_DIR = os.path.join(".", "saved_models")
+MODEL_SAVE_DIR = os.path.join(PROJECT_HOME, "saved_models")
+
 if not os.path.exists(MODEL_SAVE_DIR):
     os.makedirs(MODEL_SAVE_DIR)
 
@@ -81,7 +82,7 @@ def play_func(exp_queue_swing_up, exp_queue_balancing, actor_swing_up_net, criti
 
     # action_selector = actions.EpsilonGreedyDDPGActionSelector(epsilon=params.EPSILON_INIT)
 
-    action_selector_swing_up = actions.DDPGActionSelector(
+    action_selector_swing_up = actions.EpsilonGreedyDDPGActionSelector(
         epsilon=params.EPSILON_INIT, ou_enabled=True, scale_factor=SWING_UP_SCALE_FACTOR
     )
 
@@ -99,7 +100,7 @@ def play_func(exp_queue_swing_up, exp_queue_balancing, actor_swing_up_net, criti
         name="SwingUp_AgentDDPG"
     )
 
-    action_selector_balancing = actions.DDPGActionSelector(
+    action_selector_balancing = actions.EpsilonGreedyDDPGActionSelector(
         epsilon=params.EPSILON_INIT, ou_enabled=True, scale_factor=BALANCING_SCALE_FACTOR
     )
 
@@ -147,7 +148,7 @@ def play_func(exp_queue_swing_up, exp_queue_balancing, actor_swing_up_net, criti
             frame=True, draw_viz=params.DRAW_VIZ, stat=stat, logger=my_logger) as reward_tracker:
         while step_idx < params.MAX_GLOBAL_STEPS:
             # 1 스텝 진행하고 exp를 exp_queue에 넣음
-            step_idx += params.N_STEP
+            step_idx += 1
 
             exp = next(exp_source_iter)
 

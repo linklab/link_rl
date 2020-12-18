@@ -1,196 +1,340 @@
 import time
+import math
 import numpy as np
+from enum import Enum
 
 # MQTT Topic for RIP
+import gym
 from common.environments.environment import Environment
+from config.parameters import PARAMETERS as params
 
-MQTT_PUB_TO_SERVO_POWER = 'motor_power_2'
-MQTT_PUB_RESET = 'reset_2'
-MQTT_SUB_FROM_SERVO = 'servo_info_2'
-MQTT_SUB_MOTOR_LIMIT = 'motor_limit_info_2'
-MQTT_SUB_RESET_COMPLETE = 'reset_complete_2'
+MQTT_SERVER = '192.168.0.10'
+MQTT_PUB_TO_DRIP = 'motor_power'
+MQTT_PUB_RESET = 'reset'
+MQTT_SUB_RESET_COMPLETE = 'reset_complete'
+MQTT_SUB_FROM_DRIP = 'next_state'
+MQTT_ERROR = 'error'
 
 STATE_SIZE = 4
 
-balance_motor_power_list = [-60, 0, 60]
-
 PUB_ID = 0
+
+class Status(Enum):
+    SWING_UP = -1.0
+    SWING_UP_TO_BALANCING = 0.5
+    BALANCING = 1.0
+    BALANCING_TO_SWING_UP = -0.5
 
 
 class EnvironmentDoubleRIP(Environment):
-    def __init__(self, mqtt_client):
-        self.episode = 0
+    def __init__(self, action_min, action_max, env_reset=True, mqtt_client=None):
+        self.episode_steps = 0
+        self.total_steps = 0
+        self.env_reset = env_reset
 
-        self.state_space_shape = (STATE_SIZE,)
-        self.action_space_shape = (len(balance_motor_power_list),)
+        self.pendulum_position = 0
+        self.pendulum_velocity = 0
+        self.motor_position = 0
+        self.motor_velocity = 0
 
-        self.reward = 0
+        self.obs_degree = [None, None]
+        self.next_obs_degree = [None, None]
+        self.simulation_time = 0.0
 
-        self.steps = 0
-        self.pendulum_radians = []
-        self.state = []
-        self.current_pendulum_radian = 0
-        self.current_pendulum_velocity = 0
-        self.current_motor_velocity = 0
-        self.previous_time = 0.0
+        self.too_much_rotate = False
+        # self.done_torque_threshold = 0.75
 
-        self.is_swing_up = True
-        self.is_state_changed = False
-        self.is_motor_limit = False
-        self.is_limit_complete = False
-        self.is_reset_complete = False
+        self.max_velocity = 100.0
+
+        self.action_space = gym.spaces.Box(
+            low=action_min, high=action_max, shape=(1,),
+            dtype=np.float32
+        )
+
+        # high = np.array([1., 1., self.max_velocity, 1., 1., action_max, 1.0], dtype=np.float32)
+        high = np.array([1., 1., self.max_velocity, 1., 1., 1.], dtype=np.float32)
+        low = high * -1.0
+        self.observation_space = gym.spaces.Box(
+            low=low, high=high,
+            dtype=np.float32
+        )
+
+        self.n_states = self.observation_space.shape[0]
+        self.n_actions = self.action_space.shape[0]
+
+        self.current_status = None
+
+        self.count_continuous_uprights = 0
+        self.is_upright = False
+        self.initial_motor_position = 0.0
+
+        self.count_swing_up_states = 0
+        self.count_balancing_states = 0
+
+        self.count_continuous_swing_up_states = 0
+        self.count_continuous_balancing_states = 0
+
+        self.episode_position_reward_list = []
+        self.episode_pendulum_velocity_reward_list = []
+        self.episode_action_reward_list = []
 
         self.mqtt_client = mqtt_client
-        super(EnvironmentDoubleRIP, self).__init__()
-
-        self.n_states = self.get_n_states()
-        self.n_actions = self.get_n_actions()
-
-        self.state_shape = self.get_state_shape()
-        self.action_shape = self.get_action_shape()
-
-        self.continuous = False
 
     def __pub(self, topic, payload, require_response=True):
         global PUB_ID
         self.mqtt_client.publish(topic=topic, payload=payload)
         PUB_ID += 1
 
-        if require_response:
-            is_sub = False
-            while not is_sub:
-                if self.is_state_changed or self.is_limit_complete or self.is_reset_complete:
-                    is_sub = True
-                time.sleep(0.0001)
+    def get_n_states(self):
+        n_states = self.observation_space.shape[0]
+        return n_states
 
-        self.is_state_changed = False
-        self.is_limit_complete = False
-        self.is_reset_complete = False
+    def get_n_actions(self):
+        n_actions = self.action_space.shape[0]
+        return n_actions
 
-    def set_state(self, motor_radian, motor_velocity, pendulum_radian, pendulum_velocity):
-        self.is_state_changed = True
-        self.state = [pendulum_radian, pendulum_velocity, motor_radian, motor_velocity]
-        # self.state = [pendulum_radian, pendulum_velocity]
+    @property
+    def action_meanings(self):
+        action_meanings = ["Joint effort", ]
+        return action_meanings
 
-        self.current_pendulum_radian = pendulum_radian
-        self.current_pendulum_velocity = pendulum_velocity
-        self.current_motor_velocity = motor_velocity
+    def set_state(self, motor_position, motor_velocity, pendulum_position, pendulum_velocity):
+        self.state = [motor_position, motor_velocity, pendulum_position, pendulum_velocity]
 
-    def __pendulum_reset(self):
+        self.pendulum_position = pendulum_position
+        self.motor_position = motor_position
+        self.pendulum_velocity = pendulum_velocity
+        self.motor_velocity = motor_velocity
+
+    def reset(self):
+        self.episode_steps = 0
+
+        self.count_swing_up_states = 0
+        self.count_balancing_states = 0
+        self.count_continuous_swing_up_states = 0
+        self.count_continuous_balancing_states = 0
+
+        self.episode_position_reward_list.clear()
+        self.episode_pendulum_velocity_reward_list.clear()
+        self.episode_action_reward_list.clear()
+
+        ### Pub reset message
         self.__pub(
-            MQTT_PUB_TO_SERVO_POWER,
+            MQTT_PUB_RESET,
             "0|pendulum_reset|{0}".format(PUB_ID),
             require_response=False
         )
 
-    # RIP Manual Swing & Balance
-    def manual_swingup_balance(self):
-        self.__pub(MQTT_PUB_RESET, "reset|{0}".format(PUB_ID))
+        self.update_current_state(adjusted_radian=0.0)
 
-    # for restarting episode
-    def wait(self):
-        self.__pub(MQTT_PUB_TO_SERVO_POWER, "0|wait|{0}".format(PUB_ID))
+        state = (
+            math.cos(self.pendulum_position),
+            math.sin(self.pendulum_position),
+            self.pendulum_velocity,
+            math.cos(0.0),  # 1.0
+            math.sin(0.0),  # 0.0
+            # self.motor_velocity,
+            self.current_status.value
+        )
 
-    def get_n_states(self):
-        n_states = 4
-        return n_states
+        # print("q: {0:7.4}, w: {1:7.4f}, time: {2} -- RESET".format(
+        #     self.pendulum_position, self.pendulum_velocity, self.simulation_time
+        # ))
 
-    def get_n_actions(self):
-        n_actions = 3
-        return n_actions
+        self.too_much_rotate = False
 
-    def get_state_shape(self):
-        state_shape = (2,)
-        return state_shape
+        self.count_continuous_uprights = 0
+        self.is_upright = False
+        self.initial_motor_position = self.motor_position
 
-    def get_action_shape(self):
-        action_shape = (3,)
-        return action_shape
+        return state
 
-    @property
-    def action_meanings(self):
-        action_meanings = ["LEFT", "STOP", "RIGHT"]
-        return action_meanings
+    def pendulum_position_to_adjusted_radian(self):
+        # angle을 0과 360 사이 값(양수)으로 조정
+        if abs(self.pendulum_position) > 360:
+            q_ = abs(self.pendulum_position) % (360)
+        else:
+            q_ = abs(self.pendulum_position)
 
-    @property
-    def action_meanings(self):
-        action_meanings = ["LEFT", "STOP", "RIGHT"]
-        return action_meanings
+        # radian을 0과 math.pi 사이 값(양수)으로 조정: 3 * math.pi / 2 -->  2 * math.pi - 3 * math.pi / 2 --> math.pi / 2
+        if q_ > 180:
+            adjusted_radian = 360 - q_
+        else:
+            adjusted_radian = q_
 
-    def reset(self):
-        self.steps = 0
-        self.pendulum_radians = []
-        self.reward = 0
-        self.is_motor_limit = False
+        return adjusted_radian
 
-        wait_time = 1 if self.episode == 0 else 15  # if self.episode % 10 == 0 else 3
-        previousTime = time.perf_counter()
-        time_done = False
+    def update_current_state(self, adjusted_radian):
+        if params.CH:
+            if math.pi - math.radians(3) < adjusted_radian <= math.pi:
+                self.count_continuous_uprights += 1
+            else:
+                self.count_continuous_uprights = 0
+        else:
+            if math.pi - math.radians(12) < adjusted_radian <= math.pi:
+                self.count_continuous_uprights += 1
+            else:
+                self.count_continuous_uprights = 0
 
-        while not time_done:
-            currentTime = time.perf_counter()
-            if currentTime - previousTime >= wait_time:
-                time_done = True
-            time.sleep(0.0001)
+        if self.count_continuous_uprights >= 1:
+            self.is_upright = True
+        else:
+            self.is_upright = False
 
-        self.__pendulum_reset()
-        self.wait()
-        self.manual_swingup_balance()
-        self.is_motor_limit = False
-
-        self.episode += 1
-        self.previous_time = time.perf_counter()
-
-        return np.asarray(self.state)
+        if self.current_status is None:  # RESET
+            self.current_status = Status.SWING_UP
+            self.count_swing_up_states += 1
+            self.count_continuous_swing_up_states += 1
+        elif self.current_status == Status.SWING_UP:
+            if self.is_upright:  # SWING_UP --> SWING_UP_TO_BALANCING
+                self.current_status = Status.SWING_UP_TO_BALANCING
+                self.count_continuous_swing_up_states = 0
+                self.count_continuous_balancing_states += 1
+                self.count_balancing_states += 1
+            else:  # SWING_UP --> SWING_UP
+                self.current_status = Status.SWING_UP
+                self.count_continuous_swing_up_states += 1
+                self.count_swing_up_states += 1
+        elif self.current_status == Status.SWING_UP_TO_BALANCING:
+            if self.is_upright:  # SWING_UP_TO_BALANCING --> BALANCING
+                self.current_status = Status.BALANCING
+                self.count_continuous_balancing_states += 1
+                self.count_balancing_states += 1
+            else:  # SWING_UP_TO_BALANCING --> BALANCING_TO_SWING_UP
+                self.current_status = Status.BALANCING_TO_SWING_UP
+                self.count_swing_up_states += 1
+                self.count_continuous_balancing_states = 0
+                self.count_continuous_swing_up_states += 1
+        elif self.current_status == Status.BALANCING:
+            if self.is_upright:  # BALANCING --> BALANCING
+                self.current_status = Status.BALANCING
+                self.count_balancing_states += 1
+                self.count_continuous_balancing_states += 1
+            else:  # BALANCING --> BALANCING_TO_SWING_UP
+                self.current_status = Status.BALANCING_TO_SWING_UP
+                self.count_swing_up_states += 1
+                self.count_continuous_balancing_states = 0
+                self.count_continuous_swing_up_states += 1
+        elif self.current_status == Status.BALANCING_TO_SWING_UP:
+            if self.is_upright:  # BALANCING_TO_SWING_UP --> SWING_UP_TI_BALANCING
+                self.current_status = Status.SWING_UP_TO_BALANCING
+                self.count_balancing_states += 1
+                self.count_continuous_swing_up_states = 0
+                self.count_continuous_balancing_states += 1
+            else:  # BALANCING_TO_SWING_UP --> SWING_UP
+                self.current_status = Status.SWING_UP
+                self.count_swing_up_states += 1
+                self.count_continuous_swing_up_states += 1
+        else:
+            raise ValueError()
 
     def step(self, action):
-        motor_power = balance_motor_power_list[int(action)]
+        if type(action) is np.ndarray:
+            action = action[0]
+        action = int(action)
+        time.sleep(1)
+        self.__pub(
+            MQTT_PUB_TO_DRIP,
+            "{0}|action".format(action),
+            require_response=False
+        )
 
-        self.__pub(MQTT_PUB_TO_SERVO_POWER, "{0}|{1}|{2}".format(motor_power, "balance", PUB_ID))
-        pendulum_radian = self.current_pendulum_radian
-        pendulum_angular_velocity = self.current_pendulum_velocity
+        self.episode_steps += 1
+        self.total_steps += 1
 
-        next_state = np.asarray(self.state)
-        self.reward = 1.0
-        adjusted_reward = self.reward / 100
-        self.steps += 1
-        self.pendulum_radians.append(pendulum_radian)
-        done, info = self.__isDone()
+        # print(self.motor_position, math.cos(self.motor_position), math.sin(self.motor_position))
 
-        if not done:
-            while True:
-                current_time = time.perf_counter()
-                if current_time - self.previous_time >= 6 / 1000:
-                    break
+
+
+        if abs(self.initial_motor_position - self.motor_position) > 360:
+            self.too_much_rotate = True
+
+        done_conditions = [
+            self.episode_steps >= 500,
+            self.too_much_rotate
+        ]
+
+        adjusted_radian = self.pendulum_position_to_adjusted_radian()
+
+        # print("action: {0}, q: {1:7.4}, w: {2:7.4f}, adjusted_radian: {3:7.4f}, reward: {4:10.4f}, time: {5}".format(
+        #     action, self.pendulum_position, self.pendulum_velocity, adjusted_radian, reward, self.simulation_time
+        # ))
+
+        self.update_current_state(adjusted_radian)
+
+        if any(done_conditions):
+            done = True
+
+            reward = self.get_reward(adjusted_radian)
+
+            info = {
+                "count_balancing_states": self.count_balancing_states,
+                "count_swing_up_states": self.count_swing_up_states,
+                "episode_position_reward_list": sum(self.episode_position_reward_list),
+                "episode_pendulum_velocity_reward": sum(self.episode_pendulum_velocity_reward_list),
+                "episode_action_reward": sum(self.episode_action_reward_list)
+            }
+
         else:
-            self.wait()
+            done = False
 
-        self.previous_time = time.perf_counter()
+            reward = self.get_reward(adjusted_radian)
 
-        return next_state, self.reward, adjusted_reward, done, info
+            info = {}
 
-    def __isDone(self):
-        info = {}
+        state = (
+            math.cos(self.pendulum_position),
+            math.sin(self.pendulum_position),
+            self.pendulum_velocity,
+            math.cos(self.initial_motor_position - self.motor_position),
+            math.sin(self.initial_motor_position - self.motor_position),
+            # self.motor_velocity,
+            self.current_status.value
+        )
 
-        def insert_to_info(s):
-            info["result"] = s
+        return state, reward, done, info
 
-        if self.steps >= 5000:
-            insert_to_info("*** Success ***")
-            return True, info
-        elif self.is_motor_limit:
-            self.reward = 0
-            insert_to_info("*** Limit position ***")
-            return True, info
-        elif abs(self.pendulum_radians[-1]) > 3.14 / 24:
-            self.is_fail = True
-            self.reward = 0
-            insert_to_info("*** Success ***")
-            return True, info
+    def get_reward(self, adjusted_radian):
+        if self.too_much_rotate:
+            position_reward = -1.0
         else:
-            insert_to_info("")
-            return False, info
+            if self.current_status in [Status.SWING_UP]:
+                position_reward = 0.0
+            elif self.current_status in [Status.SWING_UP_TO_BALANCING]:
+                position_reward = 1.0
+            else:
+                position_reward = adjusted_radian  # math.pi - math.radians(12) ~ math.pi
+
+        self.episode_position_reward_list.append(position_reward)
+        self.episode_pendulum_velocity_reward_list.append(0.0)
+        self.episode_action_reward_list.append(0.0)
+
+        reward = position_reward
+
+        return reward
+
+    # def CH_ordinary_reward(self, adjusted_radian, action, num_continuous_positive_torque,
+    #                        num_continuous_negative_torque):
+    #     # reward = -((math.pi - adjusted_radian) ** 2 + 0.1 * (self.pendulum_velocity ** 2) + 0.001 * (action ** 2))
+    #     if adjusted_radian < math.pi / 2:
+    #         reward = 0.0 - abs(np.tanh(self.motor_velocity)) * 0.1
+    #     else:
+    #         reward = adjusted_radian - abs(np.tanh(self.motor_velocity)) * 0.1
+    #
+    #     reward -= num_continuous_positive_torque * 0.01
+    #     reward -= num_continuous_negative_torque * 0.01
+    #
+    #     return reward
+
+    def render(self, mode='human'):
+        pass
+
+    @staticmethod
+    def convert_radian_to_degree(radian):
+        degree = radian * 180 / math.pi
+        return degree
 
     def close(self):
-        self.pub.publish(topic=MQTT_PUB_TO_SERVO_POWER, payload=str(0))
+        self.pub.publish(topic=MQTT_PUB_TO_DRIP, payload=str(0))
+        self.pub.publish(topic=MQTT_PUB_RESET, payload=str(0))
         # self.env.close()

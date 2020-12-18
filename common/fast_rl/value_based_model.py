@@ -300,6 +300,10 @@ class DuelingDQNMLP(nn.Module):
             nn.Linear(128, 1)
         )
 
+        self.layers_info = {"net": self.net, "fc_adv": self.fc_adv, "fc_val": self.fc_val}
+
+        self.train()
+
     def init_weights(self, m):
         if type(m) == nn.Linear or type(m) == nn.Conv2d:
             torch.nn.init.kaiming_normal_(m.weight)

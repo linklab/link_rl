@@ -43,8 +43,6 @@ class ExperienceSourceSingleEnvDdpgTwo:
 
         self.episode_reward_and_info_lst = []
 
-        self.episode_continuous_positive_actions = []
-        self.episode_continuous_negative_actions = []
         self.state_deque = deque(maxlen=30)
 
         self.current_agent = self.agent_swing_up

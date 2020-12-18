@@ -25,10 +25,10 @@ def play_main():
     ).to(device)
     print(net)
 
-    rl_agent.load_model(MODEL_SAVE_DIR, params.ENVIRONMENT_ID.value, net.__name__, net, step=18960320)#1731249
+    rl_agent.load_model(MODEL_SAVE_DIR, params.ENVIRONMENT_ID.value, net.__name__, net, step=9431043)#1731249
 
     action_selector = actions.ArgmaxActionSelector()
-    # action_selector = actions.EpsilonGreedyActionSelector(epsilon=0.01)
+    # action_selector = actions.EpsilonGreedyDQNActionSelector(epsilon=0.01)
     agent = rl_agent.DQNAgent(net, action_selector, device=device)
 
     done = False

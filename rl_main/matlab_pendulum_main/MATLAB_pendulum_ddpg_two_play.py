@@ -1,9 +1,10 @@
 #!/usr/bin/env python3
-import gym
 import torch
 import os
 
-MODEL_SAVE_DIR = os.path.join(".", "saved_models")
+from config.names import PROJECT_HOME
+
+MODEL_SAVE_DIR = os.path.join(PROJECT_HOME, "saved_models")
 
 print(torch.__version__)
 
@@ -54,7 +55,7 @@ def play_main():
     rl_agent.load_model(MODEL_SAVE_DIR, params.ENVIRONMENT_ID, actor_net.__name__, actor_net)
     # action_selector = actions.EpsilonGreedyDDPGActionSelector(epsilon=params.EPSILON_INIT)
 
-    action_selector = actions.DDPGActionSelector(epsilon=0.0, ou_enabled=False, scale_factor=SWING_UP_SCALE_FACTOR)
+    action_selector = actions.EpsilonGreedyDDPGActionSelector(epsilon=0.0, ou_enabled=False, scale_factor=SWING_UP_SCALE_FACTOR)
 
     agent = rl_agent.AgentDDPG(
         actor_net, n_actions=1, action_selector=action_selector,
@@ -73,7 +74,7 @@ def play_main():
     rl_agent.load_model(MODEL_SAVE_DIR, params.ENVIRONMENT_ID, actor_balance_net.__name__, actor_balance_net)
     # action_selector = actions.EpsilonGreedyDDPGActionSelector(epsilon=params.EPSILON_INIT)
 
-    action_selector_balance = actions.DDPGActionSelector(epsilon=0.0, ou_enabled=False, scale_factor=BALANCING_SCALE_FACTOR)
+    action_selector_balance = actions.EpsilonGreedyDDPGActionSelector(epsilon=0.0, ou_enabled=False, scale_factor=BALANCING_SCALE_FACTOR)
 
     agent_balance = rl_agent.AgentDDPG(
         actor_balance_net, n_actions=1, action_selector=action_selector_balance,

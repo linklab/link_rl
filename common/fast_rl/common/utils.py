@@ -420,14 +420,12 @@ class RewardTracker:
             )
 
         if self.mean_episode_reward > self.stop_mean_episode_reward:
-            mean_episode_reward_str = "mean_{0}_episode_reward: {1:8.3f} (SOLVED COUNT: {2})".format(
-                self.average_size_for_stats,
+            mean_episode_reward_str = "{0:8.3f} (SOLVED COUNT: {1})".format(
                 mean_episode_reward,
                 self.count_stop_condition_episode + 1
             )
         else:
-            mean_episode_reward_str = "mean_{0}_episode_reward: {1:8.3f}".format(
-                self.average_size_for_stats,
+            mean_episode_reward_str = "{0:8.3f}".format(
                 mean_episode_reward
             )
 
@@ -461,13 +459,13 @@ class RewardTracker:
                 raise ValueError()
 
 
-def distribution_projection(distribution, rewards, dones, v_min, v_max, n_atoms, gamma, device="cpu"):
+def distribution_projection(next_distribution, rewards, dones, v_min, v_max, n_atoms, gamma, device="cpu"):
     """
     Perform distribution projection aka Catergorical Algorithm from the
     "A Distributional Perspective on RL" paper
     """
-    if torch.is_tensor(distribution):
-        distribution = distribution.data.cpu().numpy()
+    if torch.is_tensor(next_distribution):
+        next_distribution = next_distribution.data.cpu().numpy()
 
     if torch.is_tensor(rewards):
         rewards = rewards.data.cpu().numpy()
@@ -494,11 +492,11 @@ def distribution_projection(distribution, rewards, dones, v_min, v_max, n_atoms,
         l = np.floor(b_j).astype(np.int64)  # b_j: 2.75 --> l = 2
         u = np.ceil(b_j).astype(np.int64)   # b_j: 2.75 --> u = 3
         eq_mask = u == l
-        projected_distribution[eq_mask, l[eq_mask]] += distribution[eq_mask, atom]
+        projected_distribution[eq_mask, l[eq_mask]] += next_distribution[eq_mask, atom]
 
         ne_mask = u != l
-        projected_distribution[ne_mask, l[ne_mask]] += distribution[ne_mask, atom] * (u - b_j)[ne_mask]
-        projected_distribution[ne_mask, u[ne_mask]] += distribution[ne_mask, atom] * (b_j - l)[ne_mask]
+        projected_distribution[ne_mask, l[ne_mask]] += next_distribution[ne_mask, atom] * (u - b_j)[ne_mask]
+        projected_distribution[ne_mask, u[ne_mask]] += next_distribution[ne_mask, atom] * (b_j - l)[ne_mask]
 
     if dones.any():
         projected_distribution[dones] = 0.0
