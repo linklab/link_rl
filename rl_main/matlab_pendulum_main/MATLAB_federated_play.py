@@ -39,7 +39,7 @@ def play_main():
     )
 
     if params.RL_ALGORITHM == RLAlgorithmName.DQN_FAST_V0:
-        action_selector = actions.EpsilonGreedyDQNActionSelector(epsilon=params.EPSILON_INIT)
+        action_selector = actions.EpsilonGreedyDQNActionSelector(epsilon=0.0)
 
         agent = rl_agent.DQNAgent(rl_algorithm.model, action_selector, device=device)
     elif params.RL_ALGORITHM == RLAlgorithmName.DDPG_FAST_V0:
