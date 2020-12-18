@@ -39,14 +39,14 @@ def play_main():
     )
 
     if params.RL_ALGORITHM == RLAlgorithmName.DQN_FAST_V0:
-        action_selector = actions.EpsilonGreedyActionSelector(epsilon=params.EPSILON_INIT)
+        action_selector = actions.EpsilonGreedyDQNActionSelector(epsilon=params.EPSILON_INIT)
 
         agent = rl_agent.DQNAgent(rl_algorithm.model, action_selector, device=device)
     elif params.RL_ALGORITHM == RLAlgorithmName.DDPG_FAST_V0:
         action_min = -params.ACTION_SCALE
         action_max = params.ACTION_SCALE
 
-        action_selector = actions.DDPGActionSelector(
+        action_selector = actions.EpsilonGreedyDDPGActionSelector(
             epsilon=0.0, ou_enabled=False, scale_factor=params.ACTION_SCALE
         )
 

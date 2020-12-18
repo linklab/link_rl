@@ -142,7 +142,7 @@ if __name__ == "__main__":
     tgt_net_tiger = ptan.agent.TargetNet(net_tiger)
     print(net_tiger)
 
-    action_selector = ptan.actions.EpsilonGreedyActionSelector(
+    action_selector = ptan.actions.EpsilonGreedyDQNActionSelector(
         epsilon=PARAMS.epsilon_start)
     epsilon_tracker = common.EpsilonTracker(action_selector, PARAMS)
     preproc = model.MAgentPreprocessor(device)

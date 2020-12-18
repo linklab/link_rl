@@ -63,7 +63,7 @@ if __name__ == "__main__":
     net = Net(obs_size, HIDDEN_SIZE, n_actions)
     tgt_net = ptan.agent.TargetNet(net)
     selector = ptan.actions.ArgmaxActionSelector()
-    selector = ptan.actions.EpsilonGreedyActionSelector(
+    selector = ptan.actions.EpsilonGreedyDQNActionSelector(
         epsilon=1, selector=selector)
     agent = ptan.agent.DQNAgent(net, selector)
     experience_source = ptan.experience.ExperienceSourceFirstLast(

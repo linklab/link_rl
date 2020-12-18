@@ -47,7 +47,7 @@ if __name__ == "__main__":
     net = DQN(env.observation_space.shape[0], env.action_space.n)
     print(net)
 
-    selector = ptan.actions.EpsilonGreedyActionSelector(epsilon=EPSILON_START)
+    selector = ptan.actions.EpsilonGreedyDQNActionSelector(epsilon=EPSILON_START)
     agent = ptan.agent.DQNAgent(net, selector, preprocessor=ptan.agent.float32_preprocessor)
     experience_source = ptan.experience.ExperienceSourceFirstLast(env, agent, gamma=GAMMA)
     replay_buffer = ptan.experience.ExperienceReplayBuffer(experience_source, REPLAY_BUFFER)

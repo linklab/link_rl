@@ -33,7 +33,7 @@ def play_func(params, net, cuda, exp_queue):
     env.seed(common.SEED)
     device = torch.device("cuda" if cuda else "cpu")
 
-    selector = ptan.actions.EpsilonGreedyActionSelector(
+    selector = ptan.actions.EpsilonGreedyDQNActionSelector(
         epsilon=params.epsilon_start)
     epsilon_tracker = common.EpsilonTracker(selector, params)
     agent = ptan.agent.DQNAgent(net, selector, device=device)

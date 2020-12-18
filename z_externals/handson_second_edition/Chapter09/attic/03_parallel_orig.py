@@ -21,7 +21,7 @@ def play_func(params, net, cuda, exp_queue):
 
     writer = SummaryWriter(comment="-" + params.run_name + "-03_parallel")
 
-    selector = ptan.actions.EpsilonGreedyActionSelector(epsilon=params.epsilon_start)
+    selector = ptan.actions.EpsilonGreedyDQNActionSelector(epsilon=params.epsilon_start)
     epsilon_tracker = common.EpsilonTracker(selector, params)
     agent = ptan.agent.DQNAgent(net, selector, device=device)
     experience_source = ptan.experience.ExperienceSourceFirstLast(env, agent, gamma=params.gamma, steps_count=1)

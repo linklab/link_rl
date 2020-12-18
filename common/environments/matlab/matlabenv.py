@@ -9,10 +9,7 @@ from config.names import RLAlgorithmName
 from config.parameters import PARAMETERS as params
 np.set_printoptions(formatter={'float_kind': lambda x: '{0:0.6f}'.format(x)})
 
-BLOWING_ACTION_RATE = 0.0001  # 10000 스텝에 1번 정도(지수 분포)의 주가로 외력이 가해짐
-
-#action_index_to_voltage = [-0.05, -0.025, -0.008, 0, 0.008, 0.025, 0.05]
-action_index_to_voltage = [-0.08, -0.05, -0.025, -0.0125, -0.008, -0.002, 0.0, 0.002, 0.008, 0.0125, 0.025, 0.05, 0.08]
+BLOWING_ACTION_RATE = 0.0002  # 5000 스텝에 1번 정도(지수 분포)의 주가로 외력이 가해짐 --> Stochastic Env.
 
 
 class MatlabRotaryInvertedPendulumEnv(gym.Env):
@@ -20,6 +17,8 @@ class MatlabRotaryInvertedPendulumEnv(gym.Env):
         self.episode_steps = 0
         self.total_steps = 0
         self.env_reset = env_reset
+        self.action_min = action_min
+        self.action_max = action_max
 
         self.pendulum_position = 0
         self.pendulum_velocity = 0
@@ -30,20 +29,22 @@ class MatlabRotaryInvertedPendulumEnv(gym.Env):
         self.obs_degree = [None, None]
         self.next_obs_degree = [None, None]
         self.simulation_time = 0.0
-        self.num_continuous_positive_torque = 0
-        self.num_continuous_negative_torque = 0
 
         self.too_much_rotate = False
-        # self.done_torque_threshold = 0.75
 
         self.max_velocity = 100.0
 
+        # self.action_index_to_voltage = [-0.05, -0.025, -0.008, 0, 0.008, 0.025, 0.05]
+        self.action_index_to_voltage = [
+            -0.08, -0.05, -0.025, -0.0125, -0.008, -0.002, 0.0, 0.002, 0.008, 0.0125, 0.025, 0.05, 0.08
+        ]
+
         if params.RL_ALGORITHM in [RLAlgorithmName.DQN_FAST_V0, RLAlgorithmName.DQN_V0]:
-            self.action_space = gym.spaces.Discrete(len(action_index_to_voltage))
+            self.action_space = gym.spaces.Discrete(len(self.action_index_to_voltage))
             self.n_actions = self.action_space.n
         else:
             self.action_space = gym.spaces.Box(
-                low=action_min, high=action_max, shape=(1,),
+                low=self.action_min, high=self.action_max, shape=(1,),
                 dtype=np.float32
             )
             self.n_actions = self.action_space.shape[0]
@@ -76,6 +77,9 @@ class MatlabRotaryInvertedPendulumEnv(gym.Env):
 
         self.next_time_step_of_external_blow = int(random.expovariate(BLOWING_ACTION_RATE))
 
+        self.num_episodes = 0
+        self.episode_period_env_reset_forced = 10
+
     def get_n_states(self):
         n_states = self.observation_space.shape[0]
         return n_states
@@ -90,7 +94,7 @@ class MatlabRotaryInvertedPendulumEnv(gym.Env):
     @property
     def action_meanings(self):
         if params.RL_ALGORITHM in [RLAlgorithmName.DQN_FAST_V0, RLAlgorithmName.DQN_V0]:
-            action_meanings = action_index_to_voltage
+            action_meanings = self.action_index_to_voltage
         else:
             action_meanings = ["Joint effort",]
         return action_meanings
@@ -107,12 +111,18 @@ class MatlabRotaryInvertedPendulumEnv(gym.Env):
     def reset(self):
         self.episode_steps = 0
 
+        if self.total_steps == 0:
+            print("next_time_step_of_external_blow: {0}".format(
+                self.next_time_step_of_external_blow
+            ))
+
+        if self.env_reset or self.num_episodes % self.episode_period_env_reset_forced == 0:
+            print("ENV RESET")
+            self.plant.connectStart()
+
         self.episode_position_reward_list.clear()
         self.episode_pendulum_velocity_reward_list.clear()
         self.episode_action_reward_list.clear()
-
-        if self.env_reset:
-            self.plant.connectStart()
 
         self.pendulum_position, self.motor_position, self.pendulum_velocity, self.motor_velocity, self.simulation_time = self.plant.getHistory()
 
@@ -135,9 +145,6 @@ class MatlabRotaryInvertedPendulumEnv(gym.Env):
                 math.cos(0.0),  # 1.0
                 math.sin(0.0),  # 0.0
             )
-
-        self.num_continuous_positive_torque = 0
-        self.num_continuous_negative_torque = 0
 
         # print("q: {0:7.4}, w: {1:7.4f}, time: {2} -- RESET".format(
         #     self.pendulum_position, self.pendulum_velocity, self.simulation_time
@@ -188,12 +195,21 @@ class MatlabRotaryInvertedPendulumEnv(gym.Env):
 
         self.total_steps += 1
         if self.total_steps >= self.next_time_step_of_external_blow:
-            action = random.uniform(
-                action_index_to_voltage[0] * 5,
-                action_index_to_voltage[-1] * 5,
-            )
+            if params.RL_ALGORITHM in [RLAlgorithmName.DQN_FAST_V0, RLAlgorithmName.DQN_V0]:
+                action = random.uniform(
+                    a=self.action_index_to_voltage[0] * 10,
+                    b=self.action_index_to_voltage[-1] * 10,
+                )
+            elif params.RL_ALGORITHM in [RLAlgorithmName.DDPG_FAST_V0, RLAlgorithmName.DDPG_FAST_DOUBLE_AGENTS_V0]:
+                action = random.uniform(
+                    a=self.action_min * 10.0,
+                    b=self.action_max * 10.0
+                )
+            else:
+                raise ValueError()
+
             self.next_time_step_of_external_blow = self.total_steps + int(random.expovariate(BLOWING_ACTION_RATE))
-            print("blowing action: {0:7.5f}, next_time_step_of_external_blow: {1}".format(
+            print("External Blow: {0:7.5f}, next_time_step_of_external_blow: {1}".format(
                 action,
                 self.next_time_step_of_external_blow
             ))
@@ -202,24 +218,11 @@ class MatlabRotaryInvertedPendulumEnv(gym.Env):
                 action = action[0]
 
             if params.RL_ALGORITHM in [RLAlgorithmName.DQN_FAST_V0, RLAlgorithmName.DQN_V0]:
-                action = action_index_to_voltage[action]
+                action = self.action_index_to_voltage[action]
 
         self.plant.simulate(action)
 
         self.pendulum_position, self.motor_position, self.pendulum_velocity, self.motor_velocity, self.simulation_time = self.plant.getHistory()
-
-        if params.CH:
-            pass
-        else:
-            if action > 0:
-                self.num_continuous_positive_torque += 1
-            else:
-                self.num_continuous_positive_torque = 0
-
-            if action < 0:
-                self.num_continuous_negative_torque += 1
-            else:
-                self.num_continuous_negative_torque = 0
 
         #print(self.motor_position, math.cos(self.motor_position), math.sin(self.motor_position))
 
@@ -227,10 +230,9 @@ class MatlabRotaryInvertedPendulumEnv(gym.Env):
             self.too_much_rotate = True
 
         done_conditions = [
+            self.episode_steps >= 10000,
             self.episode_steps >= 500 and not self.is_upright,
             self.too_much_rotate and not self.is_upright
-            # self.num_continuous_positive_torque >= 30,
-            # self.num_continuous_negative_torque >= 30
         ]
 
         adjusted_radian = self.pendulum_position_to_adjusted_radian()
@@ -243,12 +245,8 @@ class MatlabRotaryInvertedPendulumEnv(gym.Env):
 
         if any(done_conditions):
             done = True
-            if params.CH:
-                reward = self.CH_ordinary_reward(
-                    adjusted_radian, action, self.num_continuous_positive_torque, self.num_continuous_negative_torque
-                )
-            else:
-                reward = self.get_reward(adjusted_radian)
+
+            reward = self.get_reward(adjusted_radian)
 
             info = {
                 "episode_position_reward_list": sum(self.episode_position_reward_list),
@@ -256,16 +254,15 @@ class MatlabRotaryInvertedPendulumEnv(gym.Env):
                 "episode_action_reward": sum(self.episode_action_reward_list)
             }
 
-            if self.env_reset:
+            self.num_episodes += 1
+
+            if self.env_reset or self.num_episodes % self.episode_period_env_reset_forced == 0:
                 self.plant.connectStop()
+
         else:
             done = False
-            if params.CH:
-                reward = self.CH_ordinary_reward(
-                    adjusted_radian, action, self.num_continuous_positive_torque, self.num_continuous_negative_torque
-                )
-            else:
-                reward = self.get_reward(adjusted_radian)
+
+            reward = self.get_reward(adjusted_radian)
 
             info = {}
 
@@ -342,18 +339,18 @@ class MatlabRotaryInvertedPendulumEnv(gym.Env):
     #
     #     return reward
 
-    def CH_ordinary_reward(self, adjusted_radian, action, num_continuous_positive_torque,
-                         num_continuous_negative_torque):
-        # reward = -((math.pi - adjusted_radian) ** 2 + 0.1 * (self.pendulum_velocity ** 2) + 0.001 * (action ** 2))
-        if adjusted_radian < math.pi / 2:
-            reward = 0.0 - abs(np.tanh(self.motor_velocity)) * 0.1
-        else:
-            reward = adjusted_radian - abs(np.tanh(self.motor_velocity)) * 0.1
-
-        reward -= num_continuous_positive_torque * 0.01
-        reward -= num_continuous_negative_torque * 0.01
-        
-        return reward
+    # def CH_ordinary_reward(self, adjusted_radian, action, num_continuous_positive_torque,
+    #                      num_continuous_negative_torque):
+    #     # reward = -((math.pi - adjusted_radian) ** 2 + 0.1 * (self.pendulum_velocity ** 2) + 0.001 * (action ** 2))
+    #     if adjusted_radian < math.pi / 2:
+    #         reward = 0.0 - abs(np.tanh(self.motor_velocity)) * 0.1
+    #     else:
+    #         reward = adjusted_radian - abs(np.tanh(self.motor_velocity)) * 0.1
+    #
+    #     reward -= num_continuous_positive_torque * 0.01
+    #     reward -= num_continuous_negative_torque * 0.01
+    #
+    #     return reward
 
     def render(self, mode='human'):
         pass

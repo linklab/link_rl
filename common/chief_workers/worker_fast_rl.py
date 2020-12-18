@@ -101,7 +101,17 @@ class WorkerFastRL:
             device = torch.device("cpu")
 
         if params.RL_ALGORITHM in [RLAlgorithmName.DQN_FAST_V0]:
-            action_selector = actions.EpsilonGreedyActionSelector(epsilon=params.EPSILON_INIT)
+            if params.ENVIRONMENT_ID in [
+                EnvironmentName.PENDULUM_MATLAB_V0, EnvironmentName.PENDULUM_MATLAB_DOUBLE_AGENTS_V0
+            ]:
+                action_selector = actions.EpsilonGreedySomeTimesBlowDQNActionSelector(
+                    epsilon=params.EPSILON_INIT,
+                    blowing_action_rate=0.0002,  # 5000 스텝에 1번 정도(지수 분포)의 주기로 Blowing Action 가해짐
+                    min_blowing_action_idx=0,
+                    max_blowing_action_idx=self.env.n_actions - 1,
+                )
+            else:
+                action_selector = actions.EpsilonGreedyDQNActionSelector(epsilon=params.EPSILON_INIT)
 
             epsilon_tracker = actions.EpsilonTracker(
                 action_selector=action_selector,
@@ -111,43 +121,55 @@ class WorkerFastRL:
             )
 
             agent = rl_agent.DQNAgent(self.rl_algorithm.model, action_selector, device=device)
-        elif params.RL_ALGORITHM in [RLAlgorithmName.DDPG_FAST_V0, RLAlgorithmName.D4PG_FAST_V0]:
+        elif params.RL_ALGORITHM == RLAlgorithmName.DDPG_FAST_V0:
             action_min = -self.params.ACTION_SCALE
             action_max = self.params.ACTION_SCALE
 
-            if params.RL_ALGORITHM == RLAlgorithmName.DDPG_FAST_V0:
-                action_selector = actions.DDPGActionSelector(
+            if params.ENVIRONMENT_ID in [
+                EnvironmentName.PENDULUM_MATLAB_V0, EnvironmentName.PENDULUM_MATLAB_DOUBLE_AGENTS_V0
+            ]:
+                action_selector = actions.EpsilonGreedySomeTimesBlowDDPGActionSelector(
+                    epsilon=params.EPSILON_INIT, ou_enabled=True, scale_factor=self.params.ACTION_SCALE,
+                    blowing_action_rate=0.0002,  # 5000 스텝에 1번 정도(지수 분포)의 주기로 Blowing Action 가해짐
+                    min_blowing_action=-10.0 * self.params.ACTION_SCALE,
+                    max_blowing_action=10.0 * self.params.ACTION_SCALE,
+                )
+            else:
+                action_selector = actions.EpsilonGreedyDDPGActionSelector(
                     epsilon=params.EPSILON_INIT, ou_enabled=True, scale_factor=self.params.ACTION_SCALE
                 )
 
-                epsilon_tracker = actions.EpsilonTracker(
-                    action_selector=action_selector,
-                    eps_start=params.EPSILON_INIT,
-                    eps_final=params.EPSILON_MIN,
-                    eps_frames=params.EPSILON_MIN_STEP
-                )
+            epsilon_tracker = actions.EpsilonTracker(
+                action_selector=action_selector,
+                eps_start=params.EPSILON_INIT,
+                eps_final=params.EPSILON_MIN,
+                eps_frames=params.EPSILON_MIN_STEP
+            )
 
-                agent = rl_agent.AgentDDPG(
-                    self.rl_algorithm.model, n_actions=1, action_selector=action_selector,
-                    action_min=action_min, action_max=action_max, device=device, preprocessor=float32_preprocessor
-                )
+            agent = rl_agent.AgentDDPG(
+                self.rl_algorithm.model, n_actions=1, action_selector=action_selector,
+                action_min=action_min, action_max=action_max, device=device, preprocessor=float32_preprocessor
+            )
 
-            else:
-                action_selector = actions.EpsilonGreedyD4PGActionSelector(
-                    epsilon=params.EPSILON_INIT
-                )
+        elif params.RL_ALGORITHM == RLAlgorithmName.D4PG_FAST_V0:
+            action_min = -self.params.ACTION_SCALE
+            action_max = self.params.ACTION_SCALE
 
-                epsilon_tracker = actions.EpsilonTracker(
-                    action_selector=action_selector,
-                    eps_start=params.EPSILON_INIT,
-                    eps_final=params.EPSILON_MIN,
-                    eps_frames=params.EPSILON_MIN_STEP
-                )
+            action_selector = actions.EpsilonGreedyD4PGActionSelector(
+                epsilon=params.EPSILON_INIT
+            )
 
-                agent = rl_agent.AgentD4PG(
-                    self.rl_algorithm.model, n_actions=1, action_selector=action_selector,
-                    action_min=action_min, action_max=action_max, device=device, preprocessor=float32_preprocessor
-                )
+            epsilon_tracker = actions.EpsilonTracker(
+                action_selector=action_selector,
+                eps_start=params.EPSILON_INIT,
+                eps_final=params.EPSILON_MIN,
+                eps_frames=params.EPSILON_MIN_STEP
+            )
+
+            agent = rl_agent.AgentD4PG(
+                self.rl_algorithm.model, n_actions=1, action_selector=action_selector,
+                action_min=action_min, action_max=action_max, device=device, preprocessor=float32_preprocessor
+            )
         else:
             raise ValueError()
 
@@ -211,6 +233,16 @@ class WorkerFastRL:
             if not solved:
                 self.interact_with_chief(
                     gradients, current_episode_reward, episode, step_idx, solved, loss, actor_objective
+                )
+
+            if params.SAVE_AT_MAX_GLOBAL_STEPS:
+                rl_agent.save_model(
+                    os.path.join(PROJECT_HOME, "out", "model_save_files"),
+                    params.ENVIRONMENT_ID.value,
+                    self.rl_algorithm.model.__name__,
+                    self.rl_algorithm.model,
+                    step_idx,
+                    mean_episode_reward
                 )
 
     def train_at_episode_end(self, step_idx):

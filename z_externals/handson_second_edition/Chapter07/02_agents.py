@@ -39,7 +39,7 @@ if __name__ == "__main__":
     ag_out = agent(torch.zeros(2, 5))
     print("Argmax:", ag_out)
 
-    selector = ptan.actions.EpsilonGreedyActionSelector(epsilon=1.0)
+    selector = ptan.actions.EpsilonGreedyDQNActionSelector(epsilon=1.0)
     agent = ptan.agent.DQNAgent(dqn_model=net, action_selector=selector)
     ag_out = agent(torch.zeros(10, 5))[0]
     print("eps=1.0:", ag_out)

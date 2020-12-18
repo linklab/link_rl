@@ -10,7 +10,7 @@ if __name__ == "__main__":
     selector = ptan.actions.ArgmaxActionSelector()
     print("argmax:", selector(q_vals))
 
-    selector = ptan.actions.EpsilonGreedyActionSelector(epsilon=0.0)
+    selector = ptan.actions.EpsilonGreedyDQNActionSelector(epsilon=0.0)
     print("epsilon=0.0:", selector(q_vals))
 
     selector.epsilon = 1.0

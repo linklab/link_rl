@@ -118,7 +118,7 @@ class WorkerFastRLRipDoubleAgents:
             swing_up_action_min = -self.params.SWING_UP_SCALE_FACTOR
             swing_up_action_max = self.params.SWING_UP_SCALE_FACTOR
 
-            swing_up_action_selector = actions.DDPGActionSelector(
+            swing_up_action_selector = actions.EpsilonGreedyDDPGActionSelector(
                 epsilon=params.EPSILON_INIT, ou_enabled=True, scale_factor=self.params.SWING_UP_SCALE_FACTOR
             )
 
@@ -142,7 +142,7 @@ class WorkerFastRLRipDoubleAgents:
             balancing_action_min = -self.params.BALANCING_SCALE_FACTOR
             balancing_action_max = self.params.BALANCING_SCALE_FACTOR
 
-            balancing_action_selector = actions.DDPGActionSelector(
+            balancing_action_selector = actions.EpsilonGreedyDDPGActionSelector(
                 epsilon=params.EPSILON_INIT, ou_enabled=True, scale_factor=self.params.BALANCING_SCALE_FACTOR
             )
 
