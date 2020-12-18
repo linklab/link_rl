@@ -52,6 +52,7 @@ class EnvironmentName(enum.Enum):
     KNAPSACK_V2 = "Knapsack-v2"  # bounded knapsack problem with 200 items.
     KNAPSACK_V3 = "Knapsack-v3"  # stochastic, online knapsack with 200 items.
     PENDULUM_MATLAB_V0 = "Pendulum_Matlab_v0"
+    PENDULUM_MATLAB_DOUBLE_RIP_V0 = "Pendulum_Matlab_Double_RIP_v0"
     PENDULUM_MATLAB_DOUBLE_AGENTS_V0 = "Pendulum_Matlab_Double_Agents_v0"
     REAL_DEVICE_DOUBLE_RIP = "RealDeviceDoubleRip"
 

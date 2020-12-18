@@ -34,7 +34,7 @@ class WorkerFastRL:
         print("observation_space:", self.env.observation_space)
         print("action_space:", self.env.action_space)
 
-        if params.ENVIRONMENT_ID in [EnvironmentName.PENDULUM_MATLAB_V0, EnvironmentName.PENDULUM_MATLAB_DOUBLE_AGENTS_V0]:
+        if params.ENVIRONMENT_ID in [EnvironmentName.PENDULUM_MATLAB_V0, EnvironmentName.PENDULUM_MATLAB_DOUBLE_RIP_V0, EnvironmentName.PENDULUM_MATLAB_DOUBLE_AGENTS_V0]:
             self.env.start()
 
         self.rl_algorithm = rl_utils.get_rl_algorithm(env=self.env, worker_id=worker_id, logger=logger, params=params)

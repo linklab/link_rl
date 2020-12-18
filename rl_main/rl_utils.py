@@ -143,7 +143,15 @@ def get_environment(owner="chief", params=None):
         env = MatlabRotaryInvertedPendulumEnv(
             action_min=params.SWING_UP_SCALE_FACTOR * -1.0,
             action_max=params.SWING_UP_SCALE_FACTOR,
-            env_reset=params.ENV_RESET
+            env_reset=params.ENV_RESET,
+            pendulum_type= 'PENDULUM_MATLAB_V0'
+        )
+    elif params.ENVIRONMENT_ID == EnvironmentName.PENDULUM_MATLAB_DOUBLE_RIP_V0:
+        env = MatlabRotaryInvertedPendulumEnv(
+            action_min=params.SWING_UP_SCALE_FACTOR * -1.0,
+            action_max=params.SWING_UP_SCALE_FACTOR,
+            env_reset=params.ENV_RESET,
+            pendulum_type= 'PENDULUM_MATLAB_DOUBLE_RIP_V0'
         )
     elif params.ENVIRONMENT_ID == EnvironmentName.PENDULUM_MATLAB_DOUBLE_AGENTS_V0:
         env = MatlabRotaryInvertedPendulumDoubleAgentsEnv(
