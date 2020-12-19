@@ -101,9 +101,7 @@ class WorkerFastRL:
             device = torch.device("cpu")
 
         if params.RL_ALGORITHM in [RLAlgorithmName.DQN_FAST_V0]:
-            if params.ENVIRONMENT_ID in [
-                EnvironmentName.PENDULUM_MATLAB_V0, EnvironmentName.PENDULUM_MATLAB_DOUBLE_AGENTS_V0
-            ]:
+            if params.ENVIRONMENT_ID in [EnvironmentName.PENDULUM_MATLAB_V0]:
                 action_selector = actions.EpsilonGreedySomeTimesBlowDQNActionSelector(
                     epsilon=params.EPSILON_INIT,
                     blowing_action_rate=0.0002,  # 5000 스텝에 1번 정도(지수 분포)의 주기로 Blowing Action 가해짐
@@ -125,9 +123,7 @@ class WorkerFastRL:
             action_min = -self.params.ACTION_SCALE
             action_max = self.params.ACTION_SCALE
 
-            if params.ENVIRONMENT_ID in [
-                EnvironmentName.PENDULUM_MATLAB_V0, EnvironmentName.PENDULUM_MATLAB_DOUBLE_AGENTS_V0
-            ]:
+            if params.ENVIRONMENT_ID in [EnvironmentName.PENDULUM_MATLAB_V0]:
                 action_selector = actions.EpsilonGreedySomeTimesBlowDDPGActionSelector(
                     epsilon=params.EPSILON_INIT, ou_enabled=True, scale_factor=self.params.ACTION_SCALE,
                     blowing_action_rate=0.0002,  # 5000 스텝에 1번 정도(지수 분포)의 주기로 Blowing Action 가해짐
