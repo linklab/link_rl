@@ -184,12 +184,13 @@ class MatlabRotaryInvertedPendulumEnv(gym.Env):
 
         return state
 
-    def pendulum_position_to_adjusted_radian(self):
+    @staticmethod
+    def pendulum_position_to_adjusted_radian(position):
         # radian을 0과 2 * math.pi 사이 값(양수)으로 조정
-        if abs(self.pendulum_2_position) > 2 * math.pi:
-            q_ = abs(self.pendulum_2_position) % (2 * math.pi)
+        if abs(position) > 2 * math.pi:
+            q_ = abs(position) % (2 * math.pi)
         else:
-            q_ = abs(self.pendulum_2_position)
+            q_ = abs(position)
 
         # radian을 0과 math.pi 사이 값(양수)으로 조정: 3 * math.pi / 2 -->  2 * math.pi - 3 * math.pi / 2 --> math.pi / 2
         if q_ > math.pi:
@@ -200,16 +201,26 @@ class MatlabRotaryInvertedPendulumEnv(gym.Env):
         return adjusted_radian
 
     def update_current_state(self, adjusted_radian):
-        if params.CH:
-            if math.pi - math.radians(3) < adjusted_radian <= math.pi:
-                self.count_continuous_uprights += 1
-            else:
-                self.count_continuous_uprights = 0
+        if math.pi - math.radians(12) < adjusted_radian <= math.pi:
+            self.count_continuous_uprights += 1
         else:
-            if math.pi - math.radians(12) < adjusted_radian <= math.pi:
-                self.count_continuous_uprights += 1
-            else:
-                self.count_continuous_uprights = 0
+            self.count_continuous_uprights = 0
+
+        if self.count_continuous_uprights >= 1:
+            self.is_upright = True
+        else:
+            self.is_upright = False
+
+    def update_current_state_for_double_rip(self, adjusted_pendulum_1_radian, adjusted_pendulum_2_radian):
+        upright_conditions = [
+            math.pi - math.radians(12) < adjusted_pendulum_1_radian <= math.pi,
+            math.pi - math.radians(12) < adjusted_pendulum_2_radian <= math.pi
+        ]
+
+        if all(upright_conditions):
+            self.count_continuous_uprights += 1
+        else:
+            self.count_continuous_uprights = 0
 
         if self.count_continuous_uprights >= 1:
             self.is_upright = True
@@ -267,18 +278,30 @@ class MatlabRotaryInvertedPendulumEnv(gym.Env):
             self.too_much_rotate and not self.is_upright
         ]
 
-        adjusted_radian = self.pendulum_position_to_adjusted_radian()
+        adjusted_pendulum_1_radian = self.pendulum_position_to_adjusted_radian(self.pendulum_1_position)
+        adjusted_pendulum_2_radian = self.pendulum_position_to_adjusted_radian(self.pendulum_2_position)
 
         # print("action: {0}, q: {1:7.4}, w: {2:7.4f}, adjusted_radian: {3:7.4f}, reward: {4:10.4f}, time: {5}".format(
         #     action, self.pendulum_1_position, self.pendulum_1_velocity, adjusted_radian, reward, self.simulation_time
         # ))
 
-        self.update_current_state(adjusted_radian)
+        if self.pendulum_type == 'PENDULUM_MATLAB_V0':
+            self.update_current_state(adjusted_pendulum_1_radian)
+        elif self.pendulum_type == 'PENDULUM_MATLAB_DOUBLE_RIP_V0':
+            self.update_current_state_for_double_rip(adjusted_pendulum_1_radian, adjusted_pendulum_2_radian)
+        else:
+            raise ValueError()
+
+
+        if self.pendulum_type == 'PENDULUM_MATLAB_V0':
+            reward = self.get_reward(adjusted_pendulum_1_radian)
+        elif self.pendulum_type == 'PENDULUM_MATLAB_DOUBLE_RIP_V0':
+            reward = self.get_reward_for_double_rip(adjusted_pendulum_1_radian, adjusted_pendulum_2_radian)
+        else:
+            raise ValueError()
 
         if any(done_conditions):
             done = True
-
-            reward = self.get_reward(adjusted_radian)
 
             info = {
                 "episode_position_reward_list": sum(self.episode_position_reward_list),
@@ -293,11 +316,7 @@ class MatlabRotaryInvertedPendulumEnv(gym.Env):
 
         else:
             done = False
-
-            reward = self.get_reward(adjusted_radian)
-
             info = {}
-
 
         if self.pendulum_type == 'PENDULUM_MATLAB_V0':
             state = (
@@ -326,11 +345,6 @@ class MatlabRotaryInvertedPendulumEnv(gym.Env):
         return state, reward, done, info
 
     def get_reward(self, adjusted_radian):
-        # if self.too_much_rotate:
-        #     position_reward = -1.0
-        #     energy_penalty = 0.0
-        # else:
-
         if self.is_upright:
             position_reward = adjusted_radian / math.pi  # math.pi - math.radians(12) ~ math.pi
         else:
@@ -350,48 +364,27 @@ class MatlabRotaryInvertedPendulumEnv(gym.Env):
 
         return reward
 
-    # def get_reward(self, adjusted_radian, action):
-    #     #### 1) position_reward
-    #     if self.too_much_rotate:
-    #         position_reward = -100.0
-    #     else:
-    #         if adjusted_radian < math.pi / 2:
-    #             position_reward = 0.0
-    #         else:
-    #             position_reward = adjusted_radian
-    #
-    #     self.episode_position_reward_list.append(position_reward)
-    #
-    #     #### 2) pendulum_velocity 보상 & 3) action 보상
-    #     if self.current_status in [Status.BALANCING, Status.SWING_UP_TO_BALANCING]:
-    #         pendulum_velocity_reward = -0.001 * self.pendulum_1_velocity ** 2
-    #         self.episode_pendulum_velocity_reward_list.append(pendulum_velocity_reward)
-    #
-    #         action_reward = -50.0 * abs(action)
-    #         self.episode_action_reward_list.append(action_reward)
-    #
-    #         reward = position_reward + pendulum_velocity_reward + action_reward
-    #     else:
-    #         reward = position_reward
-    #
-    #     reward /= 1000.0
-    #
-    #     return reward
+    def get_reward_for_double_rip(self, adjusted_pendulum_1_radian, adjusted_pendulum_2_radian):
+        mean_radian = (adjusted_pendulum_1_radian + adjusted_pendulum_2_radian) / 2
 
+        if self.is_upright:
+            position_reward = mean_radian / math.pi  # math.pi - math.radians(12) ~ math.pi
+        else:
+            position_reward = mean_radian / (math.pi * 2.0)
 
-    # def CH_ordinary_reward(self, adjusted_radian, action, num_continuous_positive_torque,
-    #                      num_continuous_negative_torque):
-    #     # reward = -((math.pi - adjusted_radian) ** 2 + 0.1 * (self.pendulum_1_velocity ** 2) + 0.001 * (action ** 2))
-    #     if adjusted_radian < math.pi / 2:
-    #         reward = 0.0 - abs(np.tanh(self.motor_velocity)) * 0.1
-    #     else:
-    #         reward = adjusted_radian - abs(np.tanh(self.motor_velocity)) * 0.1
-    #
-    #     reward -= num_continuous_positive_torque * 0.01
-    #     reward -= num_continuous_negative_torque * 0.01
-    #
-    #     return reward
+        energy_penalty = -1.0 * (abs(self.pendulum_1_velocity) + abs(self.pendulum_2_velocity) + abs(self.motor_velocity)) / 150
 
+        self.episode_position_reward_list.append(position_reward)
+        self.episode_pendulum_velocity_reward_list.append(energy_penalty)
+        self.episode_action_reward_list.append(0.0)
+
+        reward = position_reward + energy_penalty
+
+        reward = max(0.0, reward)
+
+        # print(position_reward, energy_penalty, reward)
+
+        return reward
 
     def render(self, mode='human'):
         pass
