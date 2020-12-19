@@ -235,8 +235,8 @@ class MatlabRotaryInvertedPendulumEnv(gym.Env):
         if self.total_steps >= self.next_time_step_of_external_blow:
             if params.RL_ALGORITHM in [RLAlgorithmName.DQN_FAST_V0, RLAlgorithmName.DQN_V0]:
                 action = random.uniform(
-                    a=self.action_index_to_voltage[0] * 10,
-                    b=self.action_index_to_voltage[-1] * 10,
+                    a=self.action_index_to_voltage[0] * 10.0,
+                    b=self.action_index_to_voltage[-1] * 10.0,
                 )
             elif params.RL_ALGORITHM in [RLAlgorithmName.DDPG_FAST_V0, RLAlgorithmName.DDPG_FAST_DOUBLE_AGENTS_V0]:
                 action = random.uniform(
@@ -266,6 +266,8 @@ class MatlabRotaryInvertedPendulumEnv(gym.Env):
         elif self.pendulum_type == 'PENDULUM_MATLAB_DOUBLE_RIP_V0':
             self.pendulum_1_position, self.motor_position, self.pendulum_2_position, self.pendulum_1_velocity, self.motor_velocity, self.pendulum_2_velocity, self.simulation_time = self.plant.getHistory()
             # print("!!!!!!!!!!!!!!!", self.pendulum_1_position, self.motor_position, self.pendulum_2_position,self.pendulum_1_velocity, self.motor_velocity, self.pendulum_2_velocity)
+        else:
+            raise ValueError()
 
         #print(self.motor_position, math.cos(self.motor_position), math.sin(self.motor_position))
 
@@ -287,15 +289,9 @@ class MatlabRotaryInvertedPendulumEnv(gym.Env):
 
         if self.pendulum_type == 'PENDULUM_MATLAB_V0':
             self.update_current_state(adjusted_pendulum_1_radian)
-        elif self.pendulum_type == 'PENDULUM_MATLAB_DOUBLE_RIP_V0':
-            self.update_current_state_for_double_rip(adjusted_pendulum_1_radian, adjusted_pendulum_2_radian)
-        else:
-            raise ValueError()
-
-
-        if self.pendulum_type == 'PENDULUM_MATLAB_V0':
             reward = self.get_reward(adjusted_pendulum_1_radian)
         elif self.pendulum_type == 'PENDULUM_MATLAB_DOUBLE_RIP_V0':
+            self.update_current_state_for_double_rip(adjusted_pendulum_1_radian, adjusted_pendulum_2_radian)
             reward = self.get_reward_for_double_rip(adjusted_pendulum_1_radian, adjusted_pendulum_2_radian)
         else:
             raise ValueError()
@@ -365,7 +361,7 @@ class MatlabRotaryInvertedPendulumEnv(gym.Env):
         return reward
 
     def get_reward_for_double_rip(self, adjusted_pendulum_1_radian, adjusted_pendulum_2_radian):
-        mean_radian = (adjusted_pendulum_1_radian + adjusted_pendulum_2_radian) / 2
+        mean_radian = (adjusted_pendulum_1_radian + adjusted_pendulum_2_radian) / 2.0
 
         if self.is_upright:
             position_reward = mean_radian / math.pi  # math.pi - math.radians(12) ~ math.pi
