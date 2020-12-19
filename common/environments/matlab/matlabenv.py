@@ -361,8 +361,7 @@ class MatlabRotaryInvertedPendulumEnv(gym.Env):
         return reward
 
     def get_reward_for_double_rip(self, adjusted_pendulum_1_radian, adjusted_pendulum_2_radian):
-        #combined_radian = adjusted_pendulum_1_radian + adjusted_pendulum_2_radian
-        combined_radian = adjusted_pendulum_2_radian
+        combined_radian = adjusted_pendulum_2_radian + adjusted_pendulum_1_radian - abs(adjusted_pendulum_1_radian - adjusted_pendulum_2_radian)
 
         if self.is_upright:
             position_reward = combined_radian / (math.pi * 2.0) # math.pi - math.radians(12) ~ math.pi
