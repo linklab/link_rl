@@ -47,11 +47,12 @@ class MatlabRotaryInvertedPendulumEnv(gym.Env):
 
         if self.pendulum_type == 'PENDULUM_MATLAB_V0':
             self.action_index_to_voltage = [
-                -0.25, -0.15, -0.08, -0.05, -0.025, -0.0125, -0.008, -0.002, 0.0, 0.002, 0.008, 0.0125, 0.025, 0.05, 0.08, 0.15, 0.25
+                -0.08, -0.05, -0.025, -0.0125, -0.008, -0.002, 0.0, 0.002, 0.008, 0.0125, 0.025, 0.05, 0.08
             ]
         elif self.pendulum_type == 'PENDULUM_MATLAB_DOUBLE_RIP_V0':
             self.action_index_to_voltage = [
-                -0.08, -0.05, -0.025, -0.0125, -0.008, -0.002, 0.0, 0.002, 0.008, 0.0125, 0.025, 0.05, 0.08
+                -0.25, -0.15, -0.08, -0.05, -0.025, -0.0125, -0.008, -0.002, 0.0, 0.002, 0.008, 0.0125, 0.025, 0.05,
+                0.08, 0.15, 0.25
             ]
         else:
             raise ValueError()
