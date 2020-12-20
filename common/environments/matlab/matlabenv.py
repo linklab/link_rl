@@ -30,7 +30,6 @@ class MatlabRotaryInvertedPendulumEnv(gym.Env):
         self.motor_position = 0
         self.motor_velocity = 0
 
-
         if self.pendulum_type == 'PENDULUM_MATLAB_V0':
             self.plant = SimulinkPlant()
         elif self.pendulum_type == 'PENDULUM_MATLAB_DOUBLE_RIP_V0':
@@ -156,6 +155,8 @@ class MatlabRotaryInvertedPendulumEnv(gym.Env):
                 math.sin(0.0),  # 0.0
                 self.motor_velocity,
             )
+
+            self.update_current_state(adjusted_pendulum_1_radian=0.0)
         elif self.pendulum_type == 'PENDULUM_MATLAB_DOUBLE_RIP_V0':
             self.pendulum_1_position, self.motor_position, self.pendulum_2_position, self.pendulum_1_velocity, self.motor_velocity, self.pendulum_2_velocity, self.simulation_time = self.plant.getHistory()
             # print("!!!!!!!!!!!!!!!", self.pendulum_1_position, self.motor_position, self.pendulum_2_position,self.pendulum_1_velocity, self.motor_velocity, self.pendulum_2_velocity)
@@ -171,15 +172,16 @@ class MatlabRotaryInvertedPendulumEnv(gym.Env):
                 math.sin(0.0),  # 0.0
                 self.motor_velocity,
             )
+
+            self.update_current_state_for_double_rip(adjusted_pendulum_1_radian=0.0, adjusted_pendulum_2_radian=0.0)
         else:
             raise ValueError()
-
-        self.update_current_state(adjusted_radian=0.0)
 
         self.too_much_rotate = False
 
         self.count_continuous_uprights = 0
         self.is_upright = False
+
         self.initial_motor_position = self.motor_position
 
         return state
@@ -200,8 +202,8 @@ class MatlabRotaryInvertedPendulumEnv(gym.Env):
 
         return adjusted_radian
 
-    def update_current_state(self, adjusted_radian):
-        if math.pi - math.radians(12) < adjusted_radian <= math.pi:
+    def update_current_state(self, adjusted_pendulum_1_radian):
+        if math.pi - math.radians(12) < adjusted_pendulum_1_radian <= math.pi:
             self.count_continuous_uprights += 1
         else:
             self.count_continuous_uprights = 0
@@ -300,6 +302,8 @@ class MatlabRotaryInvertedPendulumEnv(gym.Env):
             done = True
 
             info = {
+                "adjusted_pendulum_1_radian": adjusted_pendulum_1_radian,
+                "adjusted_pendulum_2_radian": adjusted_pendulum_2_radian if self.pendulum_type == 'PENDULUM_MATLAB_DOUBLE_RIP_V0' else None,
                 "episode_position_reward_list": sum(self.episode_position_reward_list),
                 "episode_pendulum_velocity_reward": sum(self.episode_pendulum_velocity_reward_list),
                 "episode_action_reward": sum(self.episode_action_reward_list)
@@ -312,7 +316,10 @@ class MatlabRotaryInvertedPendulumEnv(gym.Env):
 
         else:
             done = False
-            info = {}
+            info = {
+                "adjusted_pendulum_1_radian": adjusted_pendulum_1_radian,
+                "adjusted_pendulum_2_radian": adjusted_pendulum_2_radian if self.pendulum_type == 'PENDULUM_MATLAB_DOUBLE_RIP_V0' else None
+            }
 
         if self.pendulum_type == 'PENDULUM_MATLAB_V0':
             state = (
