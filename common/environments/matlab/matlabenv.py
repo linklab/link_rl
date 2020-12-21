@@ -216,7 +216,7 @@ class MatlabRotaryInvertedPendulumEnv(gym.Env):
     def update_current_state_for_double_rip(self, adjusted_pendulum_1_radian, adjusted_pendulum_2_radian):
         upright_conditions = [
             math.pi - math.radians(12) < adjusted_pendulum_1_radian <= math.pi,
-            math.pi - math.radians(12) < adjusted_pendulum_2_radian <= math.pi
+            #math.pi - math.radians(12) < adjusted_pendulum_2_radian <= math.pi
         ]
 
         if all(upright_conditions):
@@ -230,7 +230,6 @@ class MatlabRotaryInvertedPendulumEnv(gym.Env):
             self.is_upright = False
 
     def step(self, action):
-
         self.episode_steps += 1
 
         self.total_steps += 1
@@ -368,7 +367,7 @@ class MatlabRotaryInvertedPendulumEnv(gym.Env):
         return reward
 
     def get_reward_for_double_rip(self, adjusted_pendulum_1_radian, adjusted_pendulum_2_radian):
-        combined_radian = adjusted_pendulum_1_radian + adjusted_pendulum_2_radian - abs(adjusted_pendulum_1_radian - adjusted_pendulum_2_radian)
+        combined_radian = adjusted_pendulum_1_radian + (math.pi - adjusted_pendulum_2_radian) / 2.0
 
         if self.is_upright:
             position_reward = combined_radian / math.pi  # math.pi - math.radians(12) ~ math.pi
