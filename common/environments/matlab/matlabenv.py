@@ -371,9 +371,9 @@ class MatlabRotaryInvertedPendulumEnv(gym.Env):
         combined_radian = adjusted_pendulum_1_radian + adjusted_pendulum_2_radian - abs(adjusted_pendulum_1_radian - adjusted_pendulum_2_radian)
 
         if self.is_upright:
-            position_reward = combined_radian / (math.pi * 2.0) # math.pi - math.radians(12) ~ math.pi
+            position_reward = combined_radian / math.pi  # math.pi - math.radians(12) ~ math.pi
         else:
-            position_reward = combined_radian / (math.pi * 4.0)
+            position_reward = combined_radian / math.pi * 2.0
 
         energy_penalty = -1.0 * (abs(self.pendulum_1_velocity) + abs(self.pendulum_2_velocity) + abs(self.motor_velocity)) / 150
 

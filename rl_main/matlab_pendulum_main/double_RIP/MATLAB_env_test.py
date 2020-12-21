@@ -24,7 +24,7 @@ print("observation_space:", env.observation_space)
 print("action_space:", env.action_space)
 
 
-MAX_GLOBAL_STEPS = 10000
+MAX_GLOBAL_STEPS = 50000
 
 
 def main():
@@ -38,8 +38,19 @@ def main():
         done = False
         state = env.reset()
         episode_step = 0
+        action_left = 0
+        action_right = 20
+
+        action = action_left
+
         while not done:
-            action = random.choice(range(env.action_space.n))
+            if action == action_left and episode_step % 10 == 0:
+                action = action_right
+            elif action == action_right and episode_step % 10 == 0:
+                action = action_left
+            else:
+                pass
+
             next_state, reward, done, info = env.step(action=action)
             print("[Step:{0}] {1:2d}, {2:6.3f}, {3:6.3f}, {4:6.3f}, {5}".format(
                 step, action, info["adjusted_pendulum_1_radian"], info["adjusted_pendulum_2_radian"], reward, done
