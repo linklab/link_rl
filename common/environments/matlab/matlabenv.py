@@ -346,7 +346,6 @@ class MatlabRotaryInvertedPendulumEnv(gym.Env):
             )
         else:
             raise ValueError()
-
         return state, reward, done, info
 
     def get_reward(self, adjusted_pendulum_1_radian):
@@ -382,58 +381,55 @@ class MatlabRotaryInvertedPendulumEnv(gym.Env):
         self.episode_position_reward_list.append(position_reward)
         self.episode_pendulum_velocity_reward_list.append(energy_penalty)
         self.episode_action_reward_list.append(0.0)
-
         reward = position_reward + energy_penalty
-
         reward = max(0.0, reward)
-
         # print(position_reward, energy_penalty, reward)
 
         return reward
 
     def CH_reward_for_double_rip(self, pendulum_1_position, pendulum_2_position):
-        if pendulum_1_position > 0:
-            pendulum_1_position = pendulum_1_position % (2 * math.pi)
+        if pendulum_1_position > 0.0:
+            pendulum_1_position = pendulum_1_position % (2.0 * math.pi)
             if pendulum_1_position > math.pi:
-                adjusted_pendulum_1_position = pendulum_1_position - (2 * math.pi)
+                adjusted_pendulum_1_position = pendulum_1_position - (2.0 * math.pi)
                 best_pendulum_2_position = math.pi + adjusted_pendulum_1_position
             else:
                 adjusted_pendulum_1_position = pendulum_1_position
                 best_pendulum_2_position = adjusted_pendulum_1_position - math.pi
         else:
             pendulum_1_position = -pendulum_1_position
-            pendulum_1_position = pendulum_1_position % (2 * math.pi)
+            pendulum_1_position = pendulum_1_position % (2.0 * math.pi)
             pendulum_1_position = -pendulum_1_position
             if pendulum_1_position < -math.pi:
-                adjusted_pendulum_1_position = pendulum_1_position + (2 * math.pi)
+                adjusted_pendulum_1_position = pendulum_1_position + (2.0 * math.pi)
                 best_pendulum_2_position = adjusted_pendulum_1_position - math.pi
             else:
                 adjusted_pendulum_1_position = pendulum_1_position
                 best_pendulum_2_position = math.pi + adjusted_pendulum_1_position
 
-        if pendulum_2_position > 0:
-            pendulum_2_position = pendulum_2_position % (2 * math.pi)
+        if pendulum_2_position > 0.0:
+            pendulum_2_position = pendulum_2_position % (2.0 * math.pi)
             if pendulum_2_position > math.pi:
                 adjusted_pendulum_2_position = pendulum_2_position - (2 * math.pi)
             else:
                 adjusted_pendulum_2_position = pendulum_2_position
         else:
             pendulum_2_position = -pendulum_2_position
-            pendulum_2_position = pendulum_2_position % (2 * math.pi)
+            pendulum_2_position = pendulum_2_position % (2.0 * math.pi)
             pendulum_2_position = -pendulum_2_position
             if pendulum_2_position < -math.pi:
-                adjusted_pendulum_2_position = pendulum_2_position + (2 * math.pi)
+                adjusted_pendulum_2_position = pendulum_2_position + (2.0 * math.pi)
             else:
                 adjusted_pendulum_2_position = pendulum_2_position
 
         reward_pendulum_2 = math.pi - abs(best_pendulum_2_position - adjusted_pendulum_2_position)
-        position_reward = reward_pendulum_2 + abs(adjusted_pendulum_1_position)
+        position_reward = abs(reward_pendulum_2) + abs(adjusted_pendulum_1_position)
         energy_penalty = -1.0 * (abs(self.pendulum_1_velocity) + abs(self.pendulum_2_velocity) + abs(self.motor_velocity)) / 150
         self.episode_position_reward_list.append(position_reward)
         self.episode_pendulum_velocity_reward_list.append(energy_penalty)
         self.episode_action_reward_list.append(0.0)
         reward = position_reward + energy_penalty
-        reward = (0,0 , reward)
+        reward = max(0.0 , reward)
 
         return reward
 
