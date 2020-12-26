@@ -138,3 +138,5 @@ simulink_cache.xml
 slprj
 
 *.csv
+
+config.ini
