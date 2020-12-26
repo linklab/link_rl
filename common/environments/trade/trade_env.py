@@ -132,14 +132,15 @@ class UpbitEnvironment(gym.Env):
                 self.hold_coin_quantity = 0
                 self.hold_coin_krw = 0
                 effective_action = True
-                reward = self.sold_profit / 1000000
+
+                reward = 100 * self.sold_profit / INITIAL_TOTAL_KRW
             else:
                 reward = 0.0
         else:
             raise ValueError()
 
         done_conditions = [
-            action == Action.MARKET_SELL,
+            action == Action.MARKET_SELL.value,
             data['datetime_krw'] == self.last_data_datetime_krw
         ]
 
