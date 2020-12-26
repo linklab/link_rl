@@ -103,6 +103,7 @@ class UpbitEnvironment(gym.Env):
             # Action이 HOLD이면 현 시점에서 모든 코인을 매도한다고 가정할 때의 정보를 transaction_info에 담음
             transaction_info = self.get_transaction_sell_info(data=data, num_buys=len(self.positions))
             reward = 0.0
+            effective_action = False
         elif action == Action.MARKET_BUY.value:
             transaction_info = self.get_transaction_buy_info(data=data)
 
@@ -129,8 +130,8 @@ class UpbitEnvironment(gym.Env):
 
                 self.balance += transaction_info["coin_krw"]
                 self.sold_coin_quantity = self.hold_coin_quantity
-                self.hold_coin_quantity = 0
-                self.hold_coin_krw = 0
+                self.hold_coin_quantity = 0.0
+                self.hold_coin_krw = 0.0
                 effective_action = True
 
                 reward = 100 * self.sold_profit / INITIAL_TOTAL_KRW
@@ -185,7 +186,7 @@ class UpbitEnvironment(gym.Env):
                 sum_position += p
 
             slippage = get_order_unit(data['final']) * SLIPPAGE_COUNT * len(self.positions)
-            coin_unit_price = data['open'] - slippage
+            coin_unit_price = data['final'] - slippage
             commission_fee = self.hold_coin_quantity * coin_unit_price * COMMISSION_RATE
             return self.hold_coin_quantity * coin_unit_price - commission_fee - sum_position
         else:

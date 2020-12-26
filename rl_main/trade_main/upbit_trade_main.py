@@ -3,7 +3,6 @@ import time
 import torch
 import torch.optim as optim
 import torch.multiprocessing as mp
-import numpy as np
 import os
 import warnings
 from collections import deque
@@ -16,7 +15,6 @@ from common.fast_rl import experience, rl_agent, value_based_model, actions
 from common.fast_rl.common import utils
 from common.fast_rl.common import statistics
 from config.names import PROJECT_HOME
-from rl_main.fast_main.atari_draw_graph import save_q_loss_as_pickle
 
 ##### NOTE #####
 from config.parameters import PARAMETERS as params
@@ -162,8 +160,10 @@ def main():
         buffer.update_priorities(batch_indices, sample_prios.detach().cpu().numpy())       # .detach().data.cpu().numpy()
         buffer.update_beta(step_idx)
 
+        draw_loss = min(10.0, loss_v.detach().item())
+
         if params.DRAW_VIZ and step_idx % 1000 == 0:
-            stat_for_model_loss.draw_optimization_performance(step_idx, loss_v.detach().item())
+            stat_for_model_loss.draw_optimization_performance(step_idx, draw_loss)
 
         if step_idx % params.TARGET_NET_SYNC_STEP_PERIOD < params.TRAIN_STEP_FREQ:
             tgt_net.sync()
