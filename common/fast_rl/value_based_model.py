@@ -220,6 +220,53 @@ class DuelingDQNCNN(nn.Module):
         return val + adv - adv.mean()
 
 
+class DuelingDQNSmallCNN(nn.Module):
+    def __init__(self, input_shape, n_actions):
+        super(DuelingDQNSmallCNN, self).__init__()
+
+        self.__name__ = "DuelingDQNSmallCNN"
+
+        self.conv = nn.Sequential(
+            nn.Conv2d(input_shape[0], 24, kernel_size=2, stride=1),
+            nn.ReLU(),
+            nn.Conv2d(24, 32, kernel_size=1, stride=1),
+            nn.ReLU(),
+            nn.Conv2d(32, 32, kernel_size=1, stride=1),
+            nn.ReLU()
+        )
+
+        conv_out_size = self._get_conv_out(input_shape)
+        self.fc_adv = nn.Sequential(
+            nn.Linear(conv_out_size, 128),
+            nn.ReLU(),
+            nn.Linear(128, n_actions)
+        )
+        self.fc_val = nn.Sequential(
+            nn.Linear(conv_out_size, 128),
+            nn.ReLU(),
+            nn.Linear(128, 1)
+        )
+
+        self.conv.apply(self.init_weights)
+        self.fc_adv.apply(self.init_weights)
+        self.fc_val.apply(self.init_weights)
+
+    def init_weights(self, m):
+        if type(m) == nn.Linear or type(m) == nn.Conv2d:
+            torch.nn.init.kaiming_normal_(m.weight)
+
+    def _get_conv_out(self, shape):
+        o = self.conv(Variable(torch.zeros(1, *shape)))
+        return int(np.prod(o.size()))
+
+    def forward(self, x):
+        fx = x.float() / 255.
+        conv_out = self.conv(fx).view(fx.size()[0], -1)
+        val = self.fc_val(conv_out)
+        adv = self.fc_adv(conv_out)
+        return val + adv - adv.mean()
+
+
 class RainbowDQN(nn.Module):
     def __init__(self, input_shape, n_actions):
         super(RainbowDQN, self).__init__()

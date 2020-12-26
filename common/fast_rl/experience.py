@@ -43,7 +43,7 @@ class ExperienceSourceSingleEnv:
         self.env = env
         self.agent = agent
         self.steps_count = steps_count
-        self.step_length = step_length  # -1 이면 MLP, 1 이상의 값이면 RNN
+        self.step_length = step_length  # -1 이면 MLP or CNN, 1 이상의 값이면 RNN
         self.render = render
         self.episode_reward_lst = []
         self.episode_done_step_lst = []

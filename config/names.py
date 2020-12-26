@@ -56,6 +56,7 @@ class EnvironmentName(enum.Enum):
     PENDULUM_MATLAB_DOUBLE_RIP_V0 = "Pendulum_Matlab_Double_RIP_v0"
     #PENDULUM_MATLAB_DOUBLE_AGENTS_V0 = "Pendulum_Matlab_Double_Agents_v0"
     REAL_DEVICE_DOUBLE_RIP = "RealDeviceDoubleRip"
+    TRADE_V0 = "Trade-v0"
 
 
 class DeepLearningModelName(enum.Enum):
@@ -64,6 +65,7 @@ class DeepLearningModelName(enum.Enum):
     ACTOR_CRITIC_CNN = "ACTOR_CRITIC_CNN"
     NO_MODEL = "NO_MODEL"
     DUELING_DQN_CNN = "DUELING_DQN_CNN"
+    DUELING_DQN_SMALL_CNN = "DUELING_DQN_SMALL_CNN"
     DUELING_DQN_MLP = "DUELING_DQN_MLP"
     RAINBOW_DQN_MLP = "RAINBOW_DQN_MLP"
     DDPG_ACTOR_CRITIC_MLP = "DDPG_ACTOR_CRITIC_MLP"

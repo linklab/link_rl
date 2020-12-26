@@ -140,3 +140,5 @@ slprj
 *.csv
 
 config.ini
+
+common/environments/trade/raw_data
