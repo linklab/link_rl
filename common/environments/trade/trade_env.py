@@ -299,7 +299,7 @@ class UpbitEnvironment(gym.Env):
         return info
 
     def get_action_meanings(self):
-        return [Action.HOLD, Action.MARKET_BUY, Action.MARKET_SELL]
+        return ["HOLD", "BUY", "SELL"]
 
 
 if __name__ == "__main__":

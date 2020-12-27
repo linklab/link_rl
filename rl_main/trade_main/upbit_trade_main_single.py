@@ -7,7 +7,7 @@ import os
 import warnings
 
 from common import common_utils
-from common.environments.trade.trade_constant import TimeUnit, EnvironmentType
+from common.environments.trade.trade_constant import TimeUnit, EnvironmentType, Action
 from common.environments.trade.trade_env import UpbitEnvironment
 
 from common.fast_rl import rl_agent, value_based_model, actions, experience_single, replay_buffer
@@ -41,11 +41,12 @@ def test(test_env, net):
 
     done = False
     state = test_env.reset()
+
     agent_state = agent.initial_agent_state()
 
     episode_reward = 0.0
+    num_buys = 0
     info = None
-
     while not done:
         states_input = []
         processed_state = experience_source.get_processed_state(state)
@@ -59,12 +60,51 @@ def test(test_env, net):
         agent_state = new_agent_states[0]
         action = new_actions[0]
 
+        if action == Action.MARKET_BUY.value:
+            num_buys += 1
+            if num_buys > 10:
+                action_str = "BUY({0})".format(10)
+            else:
+                action_str = "BUY({0})".format(num_buys)
+        else:
+            action_str = test_env.get_action_meanings()[action]
+
+        msg = "Datetime: {0}, OHLCV: {1}, {2}, {3}, {4}, {5:<10.1f}, Action: {6:6} --> ".format(
+            test_env.data.iloc[test_env.transaction_state_idx]['datetime_krw'],
+            test_env.data.iloc[test_env.transaction_state_idx]['open'],
+            test_env.data.iloc[test_env.transaction_state_idx]['high'],
+            test_env.data.iloc[test_env.transaction_state_idx]['low'],
+            test_env.data.iloc[test_env.transaction_state_idx]['final'],
+            test_env.data.iloc[test_env.transaction_state_idx]['volume'],
+            action_str
+        )
+
         next_state, reward, done, info = test_env.step(action)
+
+        if action in [Action.HOLD.value]:
+            msg += "Reward: {0:.3f}, hold coin: {1:.1f}".format(
+                reward, info["hold_coin"]
+            )
+        elif action == Action.MARKET_BUY.value:
+            msg += "Reward: {0:.3f}, slippage: {1}, coin_unit_price: {2:.1f}, c" \
+                   "oin_krw: {3}, commission: {4}, hold coin: {5:.1f}".format(
+                reward, info["slippage"], info["coin_unit_price"],
+                info['coin_krw'] if num_buys <= 10 else "-",
+                info['commission_fee'] if num_buys <= 10 else "-",
+                info["hold_coin"]
+            )
+        elif action == Action.MARKET_SELL.value:
+            msg += "Reward: {0:.3f}, sold coin: {1:.1f}, profit: {2:.1f}".format(
+                reward, info["sold_coin"], info["profit"]
+            )
+        else:
+            raise ValueError()
+        print(msg)
+
 
         episode_reward += reward
         state = next_state
-
-    return episode_reward, info["profit"]
+    print("EPISODE REWARD: {0:.3f}, PROFIT: {1:.1f}".format(episode_reward, info["profit"]))
 
 
 def main():
@@ -138,8 +178,11 @@ def main():
                         break
 
                     if reward_tracker.done_episodes % params.TEST_EPISODE_PERIOD == 0:
-                        episode_reward, profit = test(test_env, net)
-                        print("[TEST] episode_reward: {0:7.3f}, profit: {1:6.1f}".format(episode_reward, profit))
+                        print("#" * 200)
+                        print("[TEST START]")
+                        test(test_env, net)
+                        print("[TEST END]")
+                        print("#" * 200)
 
             if len(buffer) < params.MIN_REPLAY_SIZE_FOR_TRAIN:
                 continue
@@ -158,8 +201,6 @@ def main():
 
             if step_idx % params.TARGET_NET_SYNC_STEP_PERIOD < params.TRAIN_STEP_FREQ:
                 tgt_net.sync()
-
-
 
 
 if __name__ == "__main__":
