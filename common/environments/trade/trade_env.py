@@ -40,7 +40,7 @@ class UpbitEnvironment(gym.Env):
 
         ##### STATISTICS: BEGIN #####
         self.hold_coin_quantity = None
-        self.profits = None
+        self.profit = None
         self.position_value = None
         self.hold_coin_krw = None
         self.sold_coin_quantity = None
@@ -54,7 +54,7 @@ class UpbitEnvironment(gym.Env):
     def reset(self):
         ##### STATISTICS: BEGIN #####
         self.hold_coin_quantity = 0.0
-        self.profits = 0.0
+        self.profit = 0.0
         self.position_value = 0.0
         self.hold_coin_krw = 0.0
         self.sold_coin_quantity = 0.0
@@ -128,7 +128,7 @@ class UpbitEnvironment(gym.Env):
 
                 self.sold_profit = transaction_info["coin_krw"] - sum_position
 
-                self.profits += self.sold_profit
+                self.profit += self.sold_profit
                 self.positions.clear()
 
                 self.balance += transaction_info["coin_krw"]
@@ -276,7 +276,8 @@ class UpbitEnvironment(gym.Env):
                 "close_price": data['final'],
                 "open_price": data['open'],
                 "hold_coin": self.hold_coin_quantity,
-                "balance": self.balance
+                "balance": self.balance,
+                "profit": self.profit
             }
         elif action == Action.MARKET_SELL.value:
             info = {
@@ -288,7 +289,8 @@ class UpbitEnvironment(gym.Env):
                 "hold_coin": self.hold_coin_quantity,
                 "sold_coin": self.sold_coin_quantity,
                 "sold_profit": self.sold_profit,
-                "balance": self.balance
+                "balance": self.balance,
+                "profit": self.profit
             }
         else:
             raise ValueError()

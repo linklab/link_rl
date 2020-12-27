@@ -10,7 +10,7 @@ import os, sys
 from common.fast_rl.algorithms.D4PG_v0 import D4PG_FAST_v0
 from common.fast_rl.algorithms.DUELING_DOUBLE_DQN_v0 import Dueling_Double_DQN_v0
 from common.fast_rl.algorithms.PPO_v0 import PPO_FAST_v0
-from common.models.basic_model import DuelingDQNModel
+from common.models.dqn_model import DuelingDQNModel
 
 from pathlib import Path
 PROJECT_HOME = os.path.dirname(Path(__file__).parent)
@@ -28,7 +28,7 @@ from common.fast_rl.algorithms.DDPG_v0 import DDPG_FAST_v0
 if params.MY_PLATFORM != "REAL_RIP_PLATFORM":
     from common.environments.matlab.matlabenv import MatlabRotaryInvertedPendulumEnv
 
-from common.models.actor_critic_model import ActorCriticModel
+from common.models.deterministic_actor_critic_model import DeterministicActorCriticModel
 from config.names import EnvironmentName, DeepLearningModelName, RLAlgorithmName, OptimizerName
 
 from common.environments.gym.frozenlake import FrozenLake_v0
@@ -231,7 +231,7 @@ def get_environment(owner="chief", params=None):
 
 def get_rl_model(env, worker_id, params):
     if params.DEEP_LEARNING_MODEL == DeepLearningModelName.ACTOR_CRITIC_MLP:
-        model = ActorCriticModel(
+        model = DeterministicActorCriticModel(
             s_size=env.n_states,
             a_size=env.n_actions,
             worker_id=worker_id,

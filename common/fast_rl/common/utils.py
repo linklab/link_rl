@@ -10,6 +10,7 @@ import torch
 import torch.nn as nn
 
 from common.fast_rl.common.statistics import StatisticsForValueBasedRL, StatisticsForPolicyBasedRL
+from config.names import EnvironmentName
 
 
 class SMAQueue:
@@ -377,8 +378,7 @@ class RewardTracker:
             is_print_performance = True
             self.print_performance(
                 episode_done_step, self.done_episodes, current_ts, ts_diff, self.mean_episode_reward, epsilon,
-                elapsed_time, last_info["action_count"] if last_info and "action_count" in last_info else None,
-                last_loss
+                elapsed_time, last_info, last_loss
             )
 
         if self.mean_episode_reward > self.stop_mean_episode_reward:
@@ -390,8 +390,7 @@ class RewardTracker:
             if not is_print_performance:
                 self.print_performance(
                     episode_done_step, self.done_episodes, current_ts, ts_diff, self.mean_episode_reward, epsilon,
-                    elapsed_time, last_info["action_count"] if last_info and "action_count" in last_info else None,
-                    last_loss
+                    elapsed_time, last_info, last_loss
                 )
             if self.frame:
                 print("Solved in {0} frames and {1} episodes!".format(episode_done_step, self.done_episodes))
@@ -403,7 +402,7 @@ class RewardTracker:
         return False, self.mean_episode_reward
 
     def print_performance(self, episode_done_step, done_episodes, current_ts, ts_diff, mean_episode_reward, epsilon,
-                          elapsed_time, action_count, last_loss):
+                          elapsed_time, last_info, last_loss):
         speed = (episode_done_step - self.ts_frame) / ts_diff
         self.ts_frame = episode_done_step
         self.ts = current_ts
@@ -434,8 +433,8 @@ class RewardTracker:
             )
 
         print(
-            "{0}[{1:6}/{2}] Episode {3} done, episode_reward: {4:8.3f}, mean_{5}_episode_reward: {6}, "
-            "epsilon: {7}, speed: {8:7.2f} {9}, elapsed time: {10}".format(
+            "{0}[{1:6}/{2}] Ep. {3}, ep._reward: {4:8.3f}, mean_{5}_ep._reward: {6}, "
+            "eps.: {7}, speed: {8:7.2f} {9}, {10}".format(
                 prefix,
                 episode_done_step,
                 self.params.MAX_GLOBAL_STEPS,
@@ -449,13 +448,16 @@ class RewardTracker:
                 time.strftime("%Hh %Mm %Ss", time.gmtime(elapsed_time)),
         ), end="")
 
-        if action_count is not None:
-            print(", {0}".format(action_count), end="")
+        if last_info and "action_count" in last_info:
+            print(", {0}".format(last_info["action_count"]), end="")
 
         if last_loss is not None:
-            print(", loss {0:6.2f}".format(last_loss), flush=True)
-        else:
-            print("", flush=True)
+            print(", opti. loss {0:6.2f}".format(last_loss), end="")
+
+        if self.params.ENVIRONMENT_ID == EnvironmentName.TRADE_V0:
+            print(", profit {0:8.1f}".format(last_info['profit']), end="")
+
+        print("", flush=True)
 
         if self.draw_viz and self.stat:
             if isinstance(self.stat, StatisticsForValueBasedRL):
