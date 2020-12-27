@@ -69,7 +69,7 @@ def get_history_entry(data, previous_data):
         [data[2] - previous_data[2], data[8] - previous_data[8]],
         [data[3] - previous_data[3], data[9] - previous_data[9]],
         [data[4] - previous_data[4], data[10] - previous_data[10]],
-        [data[5] - previous_data[5], data[11] - previous_data[11]],
+        [(data[5] - previous_data[5])/1000000, (data[11] - previous_data[11])/1000000],
     ]
     return np.asarray(entry)
 

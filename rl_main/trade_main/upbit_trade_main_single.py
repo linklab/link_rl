@@ -47,7 +47,9 @@ def test(test_env, net):
     episode_reward = 0.0
     num_buys = 0
     info = None
+    step_idx = 0
     while not done:
+        step_idx += 1
         states_input = []
         processed_state = experience_source.get_processed_state(state)
         states_input.append(processed_state)
@@ -69,7 +71,8 @@ def test(test_env, net):
         else:
             action_str = test_env.get_action_meanings()[action]
 
-        msg = "[{0}] OHLCV: {1}, {2}, {3}, {4}, {5:<10.1f}, Action: {6:7} --> ".format(
+        msg = "[{0:2}|{1}] OHLCV: {2}, {3}, {4}, {5}, {6:<10.1f}, Action: {7:7} --> ".format(
+            step_idx,
             test_env.data.iloc[test_env.transaction_state_idx]['datetime_krw'],
             test_env.data.iloc[test_env.transaction_state_idx]['open'],
             test_env.data.iloc[test_env.transaction_state_idx]['high'],
@@ -82,8 +85,8 @@ def test(test_env, net):
         next_state, reward, done, info = test_env.step(action)
 
         if action in [Action.HOLD.value]:
-            msg += "Reward: {0:.3f}, hold coin: {1:.1f}".format(
-                reward, info["hold_coin"]
+            msg += "Reward: {0:.3f}, hold coin: {1:.1f} (possible profit by sell: {2:.1f})".format(
+                reward, info["hold_coin"], info["profit"]
             )
         elif action == Action.MARKET_BUY.value:
             if num_buys <= 10:
@@ -92,7 +95,6 @@ def test(test_env, net):
             else:
                 coin_krw_str = "-"
                 commission_fee_str = "-"
-
 
             msg += "Reward: {0:.3f}, slippage: {1}, coin_unit_price: {2:.1f}, " \
                    "coin_krw: {3}, commission: {4}, hold coin: {5:.1f}".format(
