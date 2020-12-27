@@ -146,6 +146,7 @@ class UpbitEnvironment(gym.Env):
         ]
 
         if self.environment_type in [EnvironmentType.TRAIN, EnvironmentType.TEST]:
+            self.transaction_state_idx += 1
             if any(done_conditions):
                 done = True
                 next_state = None
@@ -163,9 +164,9 @@ class UpbitEnvironment(gym.Env):
                 next_state = self.get_state(self.hold_coin_krw, self.position_value, self.history)
 
             info = self.get_info(action, effective_action, data, transaction_info)
-            self.transaction_state_idx += 1
 
         elif self.environment_type == EnvironmentType.LIVE:
+            self.transaction_state_idx += 1
             done = True
             next_state = None
             info = self.get_info(action, effective_action, data, transaction_info)
