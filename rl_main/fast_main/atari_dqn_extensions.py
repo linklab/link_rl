@@ -57,10 +57,6 @@ def play_func(env, net, exp_queue):
     else:
         stat = None
 
-    action_count = []
-    for _ in env.unwrapped.get_action_meanings():
-        action_count.append(0)
-
     episode_rewards_across_steps = np.zeros(int(params.MAX_GLOBAL_STEPS / params.DATA_SAVE_STEP_PERIOD))
     last_mean_episode_reward = 0
 
@@ -71,7 +67,6 @@ def play_func(env, net, exp_queue):
         while frame_idx < params.MAX_GLOBAL_STEPS:
             frame_idx += 1
             exp = next(exp_source_iter)
-            action_count[exp.action] += 1
             exp_queue.put(exp)
 
             epsilon_tracker.udpate(frame_idx)
@@ -82,7 +77,9 @@ def play_func(env, net, exp_queue):
 
             episode_rewards = experience_source.pop_episode_reward_lst()
             if episode_rewards:
-                solved, mean_episode_reward = reward_tracker.set_episode_reward(episode_rewards[0], frame_idx, action_selector.epsilon, action_count)
+                solved, mean_episode_reward = reward_tracker.set_episode_reward(
+                    episode_rewards[0], frame_idx, action_selector.epsilon
+                )
                 last_mean_episode_reward = mean_episode_reward
 
                 if frame_idx >= next_save_frame_idx:

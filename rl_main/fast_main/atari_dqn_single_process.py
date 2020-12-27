@@ -71,10 +71,6 @@ if __name__ == "__main__":
         stat = None
         stat_for_model_loss = None
 
-    action_count = []
-    for _ in env.unwrapped.get_action_meanings():
-        action_count.append(0)
-
     frame_idx = 0
 
     next_save_frame_idx = params.MODEL_SAVE_STEP_PERIOD
@@ -88,7 +84,7 @@ if __name__ == "__main__":
             episode_rewards = experience_source.pop_episode_reward_lst()
             if episode_rewards:
                 solved, mean_episode_reward = reward_tracker.set_episode_reward(
-                    episode_rewards[0], frame_idx, action_selector.epsilon, action_count
+                    episode_rewards[0], frame_idx, action_selector.epsilon
                 )
 
                 if frame_idx >= next_save_frame_idx:

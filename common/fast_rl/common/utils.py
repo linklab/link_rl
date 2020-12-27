@@ -361,8 +361,9 @@ class RewardTracker:
     def __exit__(self, *args):
         pass
 
-    def set_episode_reward(self, episode_reward, episode_done_step, epsilon, action_count=None, continuous_action_mean=None):
-        assert not (action_count and continuous_action_mean)
+    def set_episode_reward(self, episode_reward, episode_done_step, epsilon, last_info=None):
+        self.done_episodes += 1
+
         self.episode_reward_list.append(episode_reward)
         self.mean_episode_reward = np.mean(self.episode_reward_list[-self.average_size_for_stats:])
 
@@ -375,7 +376,8 @@ class RewardTracker:
         if ts_diff > self.min_ts_diff:
             is_print_performance = True
             self.print_performance(
-                episode_done_step, self.done_episodes, current_ts, ts_diff, self.mean_episode_reward, epsilon, elapsed_time, action_count
+                episode_done_step, self.done_episodes, current_ts, ts_diff, self.mean_episode_reward, epsilon,
+                elapsed_time, last_info["action_count"] if last_info and "action_count" in last_info else None
             )
 
         if self.mean_episode_reward > self.stop_mean_episode_reward:
@@ -386,7 +388,8 @@ class RewardTracker:
         if self.count_stop_condition_episode >= self.params.STOP_CONDITION_CONTINUOUS_EPISODE:
             if not is_print_performance:
                 self.print_performance(
-                    episode_done_step, self.done_episodes, current_ts, ts_diff, self.mean_episode_reward, epsilon, elapsed_time, action_count
+                    episode_done_step, self.done_episodes, current_ts, ts_diff, self.mean_episode_reward, epsilon,
+                    elapsed_time, last_info["action_count"] if last_info and "action_count" in last_info else None
                 )
             if self.frame:
                 print("Solved in {0} frames and {1} episodes!".format(episode_done_step, self.done_episodes))
@@ -394,8 +397,6 @@ class RewardTracker:
                 print("Solved in {0} steps and {1} episodes!".format(episode_done_step, self.done_episodes))
 
             return True, self.mean_episode_reward
-
-        self.done_episodes += 1
 
         return False, self.mean_episode_reward
 
@@ -445,7 +446,7 @@ class RewardTracker:
                 time.strftime("%Hh %Mm %Ss", time.gmtime(elapsed_time)),
         ), end="")
 
-        if action_count:
+        if action_count is not None:
             print(", {0}".format(action_count), flush=True)
         else:
             print("", flush=True)

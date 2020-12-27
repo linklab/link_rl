@@ -50,10 +50,6 @@ def play_func(env, net, exp_queue):
     else:
         stat = None
 
-    action_count = []
-    for _ in env.unwrapped.get_action_meanings():
-        action_count.append(0)
-
     frame_idx = 0
 
     next_save_frame_idx = params.MODEL_SAVE_STEP_PERIOD
@@ -62,7 +58,6 @@ def play_func(env, net, exp_queue):
         while frame_idx < params.MAX_GLOBAL_STEPS:
             frame_idx += 1
             exp = next(exp_source_iter)
-            action_count[exp.action] += 1
             exp_queue.put(exp)
 
             epsilon_tracker.udpate(frame_idx)
@@ -70,7 +65,9 @@ def play_func(env, net, exp_queue):
             episode_rewards = experience_source.pop_episode_reward_lst()
 
             if episode_rewards:
-                solved, mean_episode_reward = reward_tracker.set_episode_reward(episode_rewards[0], frame_idx, action_selector.epsilon, action_count)
+                solved, mean_episode_reward = reward_tracker.set_episode_reward(
+                    episode_rewards[0], frame_idx, action_selector.epsilon
+                )
 
                 if frame_idx >= next_save_frame_idx:
                     rl_agent.save_model(

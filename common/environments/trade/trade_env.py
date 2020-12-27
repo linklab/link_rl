@@ -49,6 +49,8 @@ class UpbitEnvironment(gym.Env):
         self.positions = None
         ##### STATISTICS: END   #####
 
+        self.action_count = np.zeros(shape=self.action_space.n)
+
     def reset(self):
         ##### STATISTICS: BEGIN #####
         self.hold_coin_quantity = 0.0
@@ -96,6 +98,7 @@ class UpbitEnvironment(gym.Env):
         return initial_state  # obs
 
     def step(self, action):
+        self.action_count[action] += 1
         data = self.data.iloc[self.transaction_state_idx, :]
         effective_action = False
 
@@ -172,6 +175,8 @@ class UpbitEnvironment(gym.Env):
             info = self.get_info(action, effective_action, data, transaction_info)
         else:
             raise ValueError()
+
+        info["action_count"] = self.action_count
 
         return next_state, reward, done, info
 

@@ -69,38 +69,33 @@ if __name__ == "__main__":
         stat = None
         stat_for_model_loss = None
 
-    action_count = []
-    for _ in env.get_action_meanings():
-        action_count.append(0)
-
     step_idx = 0
 
     with utils.RewardTracker(params=params, frame=False, stat=stat) as reward_tracker:
         while step_idx < params.MAX_GLOBAL_STEPS:
             step_idx += params.TRAIN_STEP_FREQ
-            buffer.populate_with_action_count(params.TRAIN_STEP_FREQ, action_count)
+            last_entry = buffer.populate(params.TRAIN_STEP_FREQ)
 
             epsilon_tracker.udpate(step_idx)
 
             episode_rewards = experience_source.pop_episode_reward_lst()
 
             if episode_rewards:
-                current_episode_reward = episode_rewards[0]
-
-                solved, mean_episode_reward = reward_tracker.set_episode_reward(
-                    current_episode_reward, step_idx, action_selector.epsilon, action_count
-                )
-
-                if solved:
-                    rl_agent.save_model(
-                        MODEL_SAVE_DIR,
-                        params.ENVIRONMENT_ID.value,
-                        net.__name__,
-                        net,
-                        step_idx,
-                        mean_episode_reward
+                for episode_reward in episode_rewards:
+                    solved, mean_episode_reward = reward_tracker.set_episode_reward(
+                        episode_reward, step_idx, action_selector.epsilon, last_entry.info
                     )
-                    break
+
+                    if solved:
+                        rl_agent.save_model(
+                            MODEL_SAVE_DIR,
+                            params.ENVIRONMENT_ID.value,
+                            net.__name__,
+                            net,
+                            step_idx,
+                            mean_episode_reward
+                        )
+                        break
 
             if len(buffer) < params.MIN_REPLAY_SIZE_FOR_TRAIN:
                 continue
