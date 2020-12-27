@@ -50,7 +50,7 @@ class UpbitEnvironment(gym.Env):
         ##### STATISTICS: END   #####
 
         self.step_idx = None
-        self.action_count = None
+        self.action_count = np.zeros(shape=self.action_space.n)
 
     def reset(self):
         ##### STATISTICS: BEGIN #####
@@ -95,7 +95,6 @@ class UpbitEnvironment(gym.Env):
         assert state_idx + idx == self.transaction_state_idx, (state_idx + idx, self.transaction_state_idx)
 
         self.step_idx = 0
-        self.action_count = np.zeros(shape=self.action_space.n)
 
         initial_state = self.get_state(0.0, 0.0, self.history)
 
