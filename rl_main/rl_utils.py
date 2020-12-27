@@ -12,8 +12,8 @@ from common.fast_rl.algorithms.DUELING_DOUBLE_DQN_v0 import Dueling_Double_DQN_v
 from common.fast_rl.algorithms.PPO_v0 import PPO_FAST_v0
 from common.models.basic_model import DuelingDQNModel
 
-idx = os.getcwd().index("link_rl")
-PROJECT_HOME = os.getcwd()[:idx] + "link_rl"
+from pathlib import Path
+PROJECT_HOME = os.path.dirname(Path(__file__).parent)
 if PROJECT_HOME not in sys.path:
     sys.path.append(PROJECT_HOME)
 

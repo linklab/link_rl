@@ -11,8 +11,8 @@ import os, sys
 import numpy as np
 import copy
 
-idx = os.getcwd().index("link_rl")
-PROJECT_HOME = os.getcwd()[:idx] + "link_rl"
+from pathlib import Path
+PROJECT_HOME = os.path.dirname(Path(__file__).parent)
 if PROJECT_HOME not in sys.path:
     sys.path.append(PROJECT_HOME)
 
@@ -33,7 +33,6 @@ from common.fast_rl.common import statistics
 from config.parameters import PARAMETERS as params
 
 import pickle
-import matplotlib
 import matplotlib.pyplot as plt
 
 

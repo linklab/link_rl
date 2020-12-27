@@ -9,9 +9,10 @@ from torch import optim
 import os, sys
 import numpy as np
 
-idx = os.getcwd().index("link_rl")
-PROJECT_HOME = os.getcwd()[:idx] + "link_rl"
-sys.path.append(PROJECT_HOME)
+from pathlib import Path
+PROJECT_HOME = os.path.dirname(Path(__file__).parent.parent)
+if PROJECT_HOME not in sys.path:
+    sys.path.append(PROJECT_HOME)
 
 from common.logger import get_logger
 from config.names import DeepLearningModelName

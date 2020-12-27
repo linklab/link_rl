@@ -10,18 +10,15 @@ import os, sys
 import numpy as np
 
 from common.logger import get_logger
-from rl_main import rl_utils
 
 print("PyTorch Version", torch.__version__)
 
-idx = os.getcwd().index("link_rl")
-PROJECT_HOME = os.getcwd()[:idx] + "link_rl"
+from pathlib import Path
+PROJECT_HOME = os.path.dirname(Path(__file__).parent.parent)
 if PROJECT_HOME not in sys.path:
     sys.path.append(PROJECT_HOME)
 
-from common.fast_rl.common.utils import distribution_projection
-from common.common_utils import make_gym_env, smooth
-from common.fast_rl.policy_based_model import unpack_batch_for_ddpg
+from rl_main import rl_utils
 from common.fast_rl.rl_agent import float32_preprocessor
 from common.fast_rl import actions, experience, policy_based_model, rl_agent, experience_single
 from common.fast_rl.common import statistics, utils

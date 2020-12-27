@@ -5,8 +5,8 @@ import os, sys
 
 from rl_main import rl_utils
 
-idx = os.getcwd().index("link_rl")
-PROJECT_HOME = os.getcwd()[:idx] + "link_rl"
+from pathlib import Path
+PROJECT_HOME = os.path.dirname(Path(__file__).parent.parent.parent)
 if PROJECT_HOME not in sys.path:
     sys.path.append(PROJECT_HOME)
 

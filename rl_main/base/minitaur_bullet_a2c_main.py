@@ -7,9 +7,7 @@ import torch
 import torch.multiprocessing as mp
 from torch import optim
 import os
-import numpy as np
 
-from common.common_utils import make_gym_env
 from config.names import PROJECT_HOME
 
 print(torch.__version__)
