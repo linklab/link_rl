@@ -239,7 +239,7 @@ class MatlabRotaryInvertedPendulumEnv(gym.Env):
                     a=self.action_index_to_voltage[0] * 10.0,
                     b=self.action_index_to_voltage[-1] * 10.0,
                 )
-            elif params.RL_ALGORITHM in [RLAlgorithmName.DDPG_FAST_V0, RLAlgorithmName.DDPG_FAST_DOUBLE_AGENTS_V0]:
+            elif params.RL_ALGORITHM in [RLAlgorithmName.DDPG_FAST_V0]:
                 action = random.uniform(
                     a=self.action_min * 10.0,
                     b=self.action_max * 10.0

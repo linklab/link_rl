@@ -54,7 +54,6 @@ class EnvironmentName(enum.Enum):
     KNAPSACK_V3 = "Knapsack-v3"  # stochastic, online knapsack with 200 items.
     PENDULUM_MATLAB_V0 = "Pendulum_Matlab_v0"
     PENDULUM_MATLAB_DOUBLE_RIP_V0 = "Pendulum_Matlab_Double_RIP_v0"
-    #PENDULUM_MATLAB_DOUBLE_AGENTS_V0 = "Pendulum_Matlab_Double_Agents_v0"
     REAL_DEVICE_DOUBLE_RIP = "RealDeviceDoubleRip"
     TRADE_V0 = "Trade-v0"
 
@@ -80,7 +79,6 @@ class RLAlgorithmName(enum.Enum):
     RAINBOW_FAST_V0 = "RAINBOW_FAST_V0"             # FAST_RL
     D4PG_FAST_V0 = "D4PG_FAST_V0"                   # FAST_RL
     DDPG_FAST_V0 = "DDPG_FAST_V0"                   # FAST_RL
-    DDPG_FAST_DOUBLE_AGENTS_V0 = "DDPG_FAST_DOUBLE_AGENTS_V0"  # FAST_RL
     A2C_FAST_V0 = "A2C_FAST_V0"                     # FAST_RL
     A2C_CONTINUOUS_ACTION_FAST_V0 = "A2C_FAST_V0"   # FAST_RL
     POLICY_GRADIENT_FAST_V0 = "POLICY_GRADIENT_V0"  # FAST_RL

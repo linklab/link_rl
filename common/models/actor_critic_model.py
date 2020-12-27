@@ -19,7 +19,7 @@ class ActorCriticModel(nn.Module):
         self.a_size = a_size
         self.rl_algorithm = rl_algorithm
 
-        if self.rl_algorithm in [RLAlgorithmName.DDPG_FAST_V0, RLAlgorithmName.DDPG_FAST_DOUBLE_AGENTS_V0]:
+        if self.rl_algorithm == RLAlgorithmName.DDPG_FAST_V0:
             self.base = DDPGActorCriticMLPBase(
                 num_inputs=s_size,
                 num_ouputs=a_size,

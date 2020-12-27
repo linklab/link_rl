@@ -11,8 +11,6 @@ PROJECT_HOME = os.getcwd()[:idx] + "link_rl"
 if PROJECT_HOME not in sys.path:
     sys.path.append(PROJECT_HOME)
 
-from temp.old.worker_fast_rl_rip_double_agents import WorkerFastRLRipDoubleAgents
-from temp.old.experience_pendulum_ddpg_two_two_status import AgentType
 from common.chief_workers.worker_fast_rl import WorkerFastRL
 from config.names import RLAlgorithmName
 from config.parameters import PARAMETERS as params
@@ -57,15 +55,7 @@ def on_worker_message(client, userdata, msg):
             logger.info(log_msg)
 
             if not worker.is_success_or_fail_done and params.MODE_GRADIENTS_UPDATE:
-                if params.RL_ALGORITHM == RLAlgorithmName.DDPG_FAST_DOUBLE_AGENTS_V0:
-                    if msg_payload['agent_type'] == AgentType.SWING_UP_AGENT.value:
-                        worker.swing_up_update_process(msg_payload['avg_gradients'])
-                    elif msg_payload['agent_type'] == AgentType.BALANCING_AGENT.value:
-                        worker.balancing_update_process(msg_payload['avg_gradients'])
-                    else:
-                        raise ValueError()
-                else:
-                    worker.update_process(msg_payload['avg_gradients'])
+                worker.update_process(msg_payload['avg_gradients'])
 
             worker.episode_chief = msg_payload["episode_chief"]
             #print("Update_Ack: {0}".format(worker.episode_chief))
@@ -99,15 +89,7 @@ def on_worker_message(client, userdata, msg):
                 worker.update_process(msg_payload['avg_gradients'])
 
             if not worker.is_success_or_fail_done and params.MODE_PARAMETERS_TRANSFER:
-                if params.RL_ALGORITHM == RLAlgorithmName.DDPG_FAST_DOUBLE_AGENTS_V0:
-                    if msg_payload['agent_type'] == AgentType.SWING_UP_AGENT.value:
-                        worker.swing_up_transfer_process(msg_payload['parameters'])
-                    elif msg_payload['agent_type'] == AgentType.BALANCING_AGENT.value:
-                        worker.balancing_transfer_process(msg_payload['parameters'])
-                    else:
-                        raise ValueError()
-                else:
-                    worker.transfer_process(msg_payload['parameters'])
+                worker.transfer_process(msg_payload['parameters'])
 
             worker.episode_chief = msg_payload["episode_chief"]
             #print("Transfer_Ack: {0}".format(worker.episode_chief))
@@ -138,10 +120,7 @@ if __name__ == "__main__":
     stderr = sys.stderr
     sys.stderr = sys.stdout
     try:
-        if params.RL_ALGORITHM == RLAlgorithmName.DDPG_FAST_DOUBLE_AGENTS_V0:
-            assert params.NUM_WORKERS == 1, "NUM_WORKERS should be 1"
-            worker = WorkerFastRLRipDoubleAgents(logger, worker_id, worker_mqtt_client, params)
-        elif params.RL_ALGORITHM in [RLAlgorithmName.DQN_FAST_V0, RLAlgorithmName.DDPG_FAST_V0, RLAlgorithmName.D4PG_FAST_V0]:
+        if params.RL_ALGORITHM in [RLAlgorithmName.DQN_FAST_V0, RLAlgorithmName.DDPG_FAST_V0, RLAlgorithmName.D4PG_FAST_V0]:
             worker = WorkerFastRL(logger, worker_id, worker_mqtt_client, params)
         else:
             worker = Worker(logger, worker_id, worker_mqtt_client, params)

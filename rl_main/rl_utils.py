@@ -1,6 +1,7 @@
 import json
 import threading
 
+import gym
 import paho.mqtt.client as mqtt
 import torch
 from torch import optim
@@ -219,12 +220,10 @@ def get_environment(owner="chief", params=None):
             env_reset=params.ENV_RESET,
             pendulum_type= 'PENDULUM_MATLAB_DOUBLE_RIP_V0'
         )
-    # elif params.ENVIRONMENT_ID == EnvironmentName.PENDULUM_MATLAB_DOUBLE_AGENTS_V0:
-    #     env = MatlabRotaryInvertedPendulumDoubleAgentsEnv(
-    #         action_min=params.SWING_UP_SCALE_FACTOR * -1.0,
-    #         action_max=params.SWING_UP_SCALE_FACTOR,
-    #         env_reset=params.ENV_RESET
-    #     )
+    elif params.ENVIRONMENT_ID == EnvironmentName.MINITAUR_BULLET_V0:
+        spec = gym.envs.registry.spec("MinitaurBulletEnv-v0")
+        spec._kwargs['render'] = params.ENV_RENDER
+        env = gym.make("MinitaurBulletEnv-v0")
     else:
         env = None
     return env
@@ -283,16 +282,7 @@ def get_rl_model(env, worker_id, params):
 
 
 def get_rl_algorithm(env, worker_id=0, logger=False, params=None):
-    if params.RL_ALGORITHM == RLAlgorithmName.DDPG_FAST_DOUBLE_AGENTS_V0:
-        rl_algorithm = DDPG_FAST_RIP_DOUBLE_AGENTS_v0(
-            env=env,
-            worker_id=worker_id,
-            logger=logger,
-            params=params,
-            device=device,
-            verbose=params.VERBOSE
-        )
-    elif params.RL_ALGORITHM == RLAlgorithmName.D4PG_FAST_V0:
+    if params.RL_ALGORITHM == RLAlgorithmName.D4PG_FAST_V0:
         rl_algorithm = D4PG_FAST_v0(
             env=env,
             worker_id=worker_id,
