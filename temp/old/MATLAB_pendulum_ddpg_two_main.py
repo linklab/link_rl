@@ -158,7 +158,7 @@ def play_func(exp_queue_swing_up, exp_queue_balancing, actor_swing_up_net, criti
 
             exp = next(exp_source_iter)
 
-            if params.DEEP_LEARNING_MODEL is DeepLearningModelName.DDPG_ACTOR_CRITIC_MLP:
+            if params.DEEP_LEARNING_MODEL is DeepLearningModelName.ACTOR_CRITIC_MLP:
                 status_value = exp[0][-1]
             elif params.DEEP_LEARNING_MODEL is DeepLearningModelName.DDPG_ACTOR_CRITIC_GRU:
                 status_value = exp[0][-1][-1]
@@ -281,7 +281,7 @@ def main():
     ###########################
     ### SWING_UP Controller ###
     ###########################
-    if params.DEEP_LEARNING_MODEL is DeepLearningModelName.DDPG_ACTOR_CRITIC_MLP:
+    if params.DEEP_LEARNING_MODEL is DeepLearningModelName.ACTOR_CRITIC_MLP:
         actor_swing_up_net = policy_based_model.DDPGActor(
             obs_size=OBS_SIZE,
             hidden_size_1=512, hidden_size_2=512,
@@ -324,7 +324,7 @@ def main():
     ############################
     ### BALANCING Controller ###
     ############################
-    if params.DEEP_LEARNING_MODEL is DeepLearningModelName.DDPG_ACTOR_CRITIC_MLP:
+    if params.DEEP_LEARNING_MODEL is DeepLearningModelName.ACTOR_CRITIC_MLP:
         actor_balancing_net = policy_based_model.DDPGActor(
             obs_size=OBS_SIZE,
             hidden_size_1=512, hidden_size_2=512,

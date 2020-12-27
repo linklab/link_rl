@@ -145,7 +145,7 @@ def play_func(exp_queue, actor_net, critic_net):
 def main():
     mp.set_start_method('spawn')
 
-    if params.DEEP_LEARNING_MODEL is DeepLearningModelName.DDPG_ACTOR_CRITIC_MLP:
+    if params.DEEP_LEARNING_MODEL is DeepLearningModelName.ACTOR_CRITIC_MLP:
         actor_net = policy_based_model.DDPGActor(
             obs_size=OBS_SIZE,
             hidden_size_1=512, hidden_size_2=512,

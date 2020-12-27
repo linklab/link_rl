@@ -124,7 +124,7 @@ def main():
     print("observation_space:", env.observation_space)
     print("action_space:", env.action_space)
 
-    if params.DEEP_LEARNING_MODEL is DeepLearningModelName.DDPG_ACTOR_CRITIC_MLP:
+    if params.DEEP_LEARNING_MODEL is DeepLearningModelName.ACTOR_CRITIC_MLP:
         actor_net = policy_based_model.DDPGActor(
             obs_size=3,
             hidden_size_1=512, hidden_size_2=256,

@@ -5,7 +5,7 @@ from config.parameters_general import PARAMETERS_GENERAL
 class PARAMETERS_FAST_RL_MINITAUR_BULLET_A2C(PARAMETERS_GENERAL):
     ENVIRONMENT_ID      = EnvironmentName.MINITAUR_BULLET_V0
     RL_ALGORITHM        = RLAlgorithmName.A2C_FAST_V0
-    DEEP_LEARNING_MODEL = DeepLearningModelName.ACTOR_CRITIC_CONTINUOUS_ACTION_MLP
+    DEEP_LEARNING_MODEL = DeepLearningModelName.ACTOR_CRITIC_MLP
     REPLAY_BUFFER       = ReplayBufferName.REPLAY_BUFFER
     OPTIMIZER           = OptimizerName.ADAM
 

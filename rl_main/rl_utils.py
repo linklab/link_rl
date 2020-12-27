@@ -230,34 +230,15 @@ def get_environment(owner="chief", params=None):
 
 
 def get_rl_model(env, worker_id, params):
-    if params.DEEP_LEARNING_MODEL == DeepLearningModelName.DDPG_ACTOR_CRITIC_MLP:
+    if params.DEEP_LEARNING_MODEL == DeepLearningModelName.ACTOR_CRITIC_MLP:
         model = ActorCriticModel(
             s_size=env.n_states,
             a_size=env.n_actions,
             worker_id=worker_id,
             params=params,
-            device=device,
-            rl_algorithm=RLAlgorithmName.DDPG_FAST_V0
+            device=device
         ).to(device)
-    elif params.DEEP_LEARNING_MODEL == DeepLearningModelName.D4PG_ACTOR_CRITIC_MLP:
-            model = ActorCriticModel(
-                s_size=env.n_states,
-                a_size=env.n_actions,
-                worker_id=worker_id,
-                params=params,
-                device=device,
-                rl_algorithm=RLAlgorithmName.D4PG_FAST_V0
-            ).to(device)
-    elif params.DEEP_LEARNING_MODEL == DeepLearningModelName.PPO_ACTOR_CRITIC_MLP:
-        model = ActorCriticModel(
-            s_size=env.n_states,
-            a_size=env.n_actions,
-            worker_id=worker_id,
-            params=params,
-            device=device,
-            rl_algorithm=RLAlgorithmName.PPO_FAST_V0
-        ).to(device)
-    elif params.DEEP_LEARNING_MODEL in [DeepLearningModelName.ACTOR_CRITIC_MLP, DeepLearningModelName.ACTOR_CRITIC_CNN]:
+    elif params.DEEP_LEARNING_MODEL in [DeepLearningModelName.OLD_ACTOR_CRITIC_MLP, DeepLearningModelName.OLD_ACTOR_CRITIC_CNN]:
         model = OldActorCriticModel(
             s_size=env.n_states,
             a_size=env.n_actions,
