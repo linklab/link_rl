@@ -1,4 +1,6 @@
 #!/usr/bin/env python3
+import copy
+
 import torch
 import torch.optim as optim
 import os
@@ -31,7 +33,41 @@ if not os.path.exists(MODEL_SAVE_DIR):
     os.makedirs(MODEL_SAVE_DIR)
 
 
-if __name__ == "__main__":
+def test(test_env, net):
+    action_selector = actions.ArgmaxActionSelector()
+    agent = rl_agent.DQNAgent(net, action_selector, device=device)
+
+    experience_source = experience_single.ExperienceSourceSingleEnvFirstLast(test_env, agent, gamma=params.GAMMA, steps_count=params.N_STEP)
+
+    done = False
+    state = test_env.reset()
+    agent_state = agent.initial_agent_state()
+
+    episode_reward = 0.0
+    info = None
+
+    while not done:
+        states_input = []
+        processed_state = experience_source.get_processed_state(state)
+        states_input.append(processed_state)
+
+        agent_states_input = []
+        agent_states_input.append(agent_state)
+
+        new_actions, new_agent_states = agent(states_input, agent_states_input)
+
+        agent_state = new_agent_states[0]
+        action = new_actions[0]
+
+        next_state, reward, done, info = test_env.step(action)
+
+        episode_reward += reward
+        state = next_state
+
+    return episode_reward, info["profit"]
+
+
+def main():
     common_utils.print_fast_rl_params(params)
 
     params.BATCH_SIZE *= params.TRAIN_STEP_FREQ
@@ -39,6 +75,8 @@ if __name__ == "__main__":
     env = UpbitEnvironment(
         coin_name="MOC", time_unit=TimeUnit.ONE_HOUR, environment_type=EnvironmentType.TRAIN
     )
+
+    test_env = copy.deepcopy(env)
 
     net = value_based_model.DuelingDQNSmallCNN(
         input_shape=env.observation_space.shape,
@@ -99,6 +137,10 @@ if __name__ == "__main__":
                         )
                         break
 
+                    if reward_tracker.done_episodes % params.TEST_EPISODE_PERIOD == 0:
+                        episode_reward, profit = test(test_env, net)
+                        print("[TEST] episode_reward: {0:7.3f}, profit: {1:6.1f}".format(episode_reward, profit))
+
             if len(buffer) < params.MIN_REPLAY_SIZE_FOR_TRAIN:
                 continue
 
@@ -116,3 +158,9 @@ if __name__ == "__main__":
 
             if step_idx % params.TARGET_NET_SYNC_STEP_PERIOD < params.TRAIN_STEP_FREQ:
                 tgt_net.sync()
+
+
+
+
+if __name__ == "__main__":
+    main()

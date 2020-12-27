@@ -1,12 +1,10 @@
 # https://github.com/ikostrikov/pytorch-a2c-ppo-acktr-gail
-import glob
 import torch
 import torch.nn as nn
-import os
 import torch.nn.functional as F
 
 from common.models.base_model import BaseModel
-from config.names import PROJECT_HOME, RLAlgorithmName
+from config.names import RLAlgorithmName
 
 
 class DeterministicActorCriticModel(BaseModel):
