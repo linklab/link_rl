@@ -143,6 +143,8 @@ class UpbitEnvironment(gym.Env):
         else:
             raise ValueError()
 
+        reward = max(0.0, reward)
+
         done_conditions = [
             action == Action.MARKET_SELL.value,
             data['datetime_krw'] == self.last_data_datetime_krw
