@@ -8,7 +8,8 @@ import warnings
 
 from common import common_utils
 from common.environments.trade.trade_constant import TimeUnit, EnvironmentType, Action
-from common.environments.trade.trade_env import UpbitEnvironment
+from common.environments.trade.trade_env import UpbitEnvironment, EpsilonGreedyTradeDQNActionSelector, \
+    ArgmaxTradeActionSelector
 
 from common.fast_rl import rl_agent, value_based_model, actions, experience_single, replay_buffer
 from common.fast_rl.common import utils
@@ -34,7 +35,7 @@ if not os.path.exists(MODEL_SAVE_DIR):
 
 
 def test(test_env, net):
-    action_selector = actions.ArgmaxActionSelector()
+    action_selector = ArgmaxTradeActionSelector(env=test_env)
     agent = rl_agent.DQNAgent(net, action_selector, device=device)
 
     experience_source = experience_single.ExperienceSourceSingleEnvFirstLast(test_env, agent, gamma=params.GAMMA, steps_count=params.N_STEP)
@@ -137,7 +138,7 @@ def main():
 
     tgt_net = rl_agent.TargetNet(net)
 
-    action_selector = actions.EpsilonGreedyDQNActionSelector(epsilon=params.EPSILON_INIT)
+    action_selector = EpsilonGreedyTradeDQNActionSelector(epsilon=params.EPSILON_INIT, env=env)
     epsilon_tracker = actions.EpsilonTracker(
         action_selector=action_selector,
         eps_start=params.EPSILON_INIT,

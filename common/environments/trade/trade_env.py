@@ -8,6 +8,42 @@ from common.environments.trade.trade_constant import EnvironmentType, WINDOW_SIZ
     INITIAL_TOTAL_KRW, Action, BUY_AMOUNT, COMMISSION_RATE, SLIPPAGE_COUNT
 from common.environments.trade.trade_data import get_data
 from common.environments.trade.trade_utils import get_history_entry, get_order_unit, get_previous_one_unit_date_time
+from common.fast_rl.actions import ActionSelector, ArgmaxActionSelector
+
+
+class ArgmaxTradeActionSelector(ActionSelector):
+    """
+    Selects actions using argmax
+    """
+    def __init__(self, env=None):
+        self.env = env
+
+    def __call__(self, scores):
+        assert isinstance(scores, np.ndarray)
+        if self.env.step_idx == 335 if self.env.time_unit == TimeUnit.ONE_HOUR else 13:
+            return np.array([Action.MARKET_SELL.value] * len(scores))
+        else:
+            return np.argmax(scores, axis=1)
+
+
+class EpsilonGreedyTradeDQNActionSelector(ActionSelector):
+    def __init__(self, epsilon=0.05, env=None):
+        self.epsilon = epsilon
+        self.env = env
+        self.action_selector = ArgmaxActionSelector()
+
+    def __call__(self, scores):
+        assert isinstance(scores, np.ndarray)
+        batch_size, n_actions = scores.shape
+        actions = self.action_selector(scores)
+        mask = np.random.random(size=batch_size) < self.epsilon
+        rand_actions = np.random.choice(a=n_actions, size=sum(mask))
+        actions[mask] = rand_actions
+
+        if self.env.step_idx == 335 if self.env.time_unit == TimeUnit.ONE_HOUR else 13:
+            actions = np.array([Action.MARKET_SELL.value] * len(actions))
+
+        return actions
 
 
 class UpbitEnvironment(gym.Env):
@@ -102,10 +138,6 @@ class UpbitEnvironment(gym.Env):
 
     def step(self, action):
         self.step_idx += 1
-
-        if self.step_idx == 336 if self.time_unit == TimeUnit.ONE_HOUR else 14:
-            action = Action.MARKET_SELL.value
-
         self.action_count[action] += 1
 
         data = self.data.iloc[self.transaction_state_idx, :]
