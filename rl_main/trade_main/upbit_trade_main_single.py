@@ -97,13 +97,13 @@ def test(test_env, net):
                 coin_krw_str = "-"
                 commission_fee_str = "-"
 
-            msg += "Reward: {0:.3f}, slippage: {1}, coin_unit_price: {2:.1f}, " \
+            msg += "Reward: {0:.3f}, slippage: {1:.1f}, coin_unit_price: {2:.1f}, " \
                    "coin_krw: {3}, commission: {4}, hold coin: {5:.1f}".format(
                 reward, info["slippage"], info["coin_unit_price"],
                 coin_krw_str, commission_fee_str, info["hold_coin"]
             )
         elif action == Action.MARKET_SELL.value:
-            msg += "Reward: {0:.3f}, slippage: {1}, coin_unit_price: {2:.1f}, " \
+            msg += "Reward: {0:.3f}, slippage: {1:.1f}, coin_unit_price: {2:.1f}, " \
                    "coin_krw: {3:.1f}, commission: {4:.1f}, sold coin: {5:.1f}, profit: {6:.1f}".format(
                 reward, info["slippage"], info["coin_unit_price"],
                 info['coin_krw'], info['commission_fee'], info["sold_coin"], info["profit"]
@@ -118,13 +118,13 @@ def test(test_env, net):
     print("EPISODE REWARD: {0:.3f}, PROFIT: {1:.1f}".format(episode_reward, info["profit"]))
 
 
-def main():
+def main(coin_name):
     common_utils.print_fast_rl_params(params)
 
     params.BATCH_SIZE *= params.TRAIN_STEP_FREQ
 
     env = UpbitEnvironment(
-        coin_name="MOC", time_unit=TimeUnit.ONE_HOUR, environment_type=EnvironmentType.TRAIN
+        coin_name=coin_name, time_unit=TimeUnit.ONE_HOUR, environment_type=EnvironmentType.TRAIN
     )
 
     test_env = copy.deepcopy(env)
@@ -215,4 +215,4 @@ def main():
 
 
 if __name__ == "__main__":
-    main()
+    main(coin_name="OMG")

@@ -1,3 +1,4 @@
+import math
 import random
 
 import gym
@@ -235,7 +236,7 @@ class UpbitEnvironment(gym.Env):
             for p in self.positions:
                 sum_position += p
 
-            slippage = get_order_unit(data['final']) * SLIPPAGE_COUNT * len(self.positions)
+            slippage = get_order_unit(data['final']) * SLIPPAGE_COUNT * math.ceil(len(self.positions) / 3)
             coin_unit_price = data['final'] - slippage
             commission_fee = self.hold_coin_quantity * coin_unit_price * COMMISSION_RATE
             return self.hold_coin_quantity * coin_unit_price - commission_fee - sum_position
@@ -286,7 +287,7 @@ class UpbitEnvironment(gym.Env):
 
     def get_transaction_sell_info(self, data, num_buys=0):
         if self.environment_type in [EnvironmentType.TRAIN, EnvironmentType.TEST]:
-            slippage = get_order_unit(data['final']) * SLIPPAGE_COUNT * num_buys
+            slippage = get_order_unit(data['final']) * SLIPPAGE_COUNT * math.ceil(num_buys / 3)
             coin_unit_price = data['final'] - slippage
             commission_fee = self.hold_coin_quantity * coin_unit_price * COMMISSION_RATE
             coin_krw = self.hold_coin_quantity * coin_unit_price - commission_fee
