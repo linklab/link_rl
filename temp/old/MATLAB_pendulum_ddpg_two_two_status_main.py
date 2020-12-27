@@ -2,25 +2,22 @@
 # https://mspries.github.io/jimmy_pendulum.html
 #!/usr/bin/env python3
 import time
-
 import torch
 import torch.nn.functional as F
 import torch.multiprocessing as mp
 from torch import optim
 import os, sys
 import numpy as np
-import copy
 
 idx = os.getcwd().index("link_rl")
 PROJECT_HOME = os.getcwd()[:idx] + "link_rl"
-if PROJECT_HOME not in sys.path:
-    sys.path.append(PROJECT_HOME)
+sys.path.append(PROJECT_HOME)
 
 from common.logger import get_logger
 from config.names import DeepLearningModelName
-from rl_main.matlab_pendulum_main.experience_pendulum_ddpg_two import ExperienceSourceSingleEnvFirstLastDdpgTwo, \
-    RewardTrackerMatlabPendulum
-from common.environments.matlab.matlabenv import MatlabRotaryInvertedPendulumEnv, Status
+from temp.old.experience_pendulum_ddpg_two_two_status import ExperienceSourceSingleEnvFirstLastDdpgTwo, \
+    RewardTrackerMatlabPendulum, AgentType
+from common.environments.matlab.matlabenv_double_agents import MatlabRotaryInvertedPendulumDoubleAgentsEnv
 from common.common_utils import smooth
 from common.fast_rl.policy_based_model import unpack_batch_for_ddpg
 from common.fast_rl.rl_agent import float32_preprocessor
@@ -33,11 +30,11 @@ from common.fast_rl.common import statistics
 from config.parameters import PARAMETERS as params
 
 import pickle
-import matplotlib
 import matplotlib.pyplot as plt
 
 
 MODEL_SAVE_DIR = os.path.join(PROJECT_HOME, "out", "model_save_files")
+
 if not os.path.exists(MODEL_SAVE_DIR):
     os.makedirs(MODEL_SAVE_DIR)
 
@@ -57,10 +54,10 @@ elif params.CH:
     BALANCING_SCALE_FACTOR = 0.0005
 else:
     SWING_UP_SCALE_FACTOR = 0.05
-    BALANCING_SCALE_FACTOR = 0.01
+    BALANCING_SCALE_FACTOR = 0.01     # 0.01
 CLIP = 1
 
-env = MatlabRotaryInvertedPendulumEnv(
+env = MatlabRotaryInvertedPendulumDoubleAgentsEnv(
     action_min=SWING_UP_SCALE_FACTOR * -1.0, action_max=SWING_UP_SCALE_FACTOR, env_reset=params.ENV_RESET
 )
 print("env:", params.ENVIRONMENT_ID)
@@ -144,10 +141,6 @@ def play_func(exp_queue_swing_up, exp_queue_balancing, actor_swing_up_net, criti
 
     best_mean_episode_reward = 0.0
 
-    balancing_step_reward_list = []
-
-    recent_swing_up_to_balancing_exp = None
-
     with RewardTrackerMatlabPendulum(
             params=params,
             stop_mean_episode_reward=params.STOP_MEAN_EPISODE_REWARD,
@@ -160,65 +153,31 @@ def play_func(exp_queue_swing_up, exp_queue_balancing, actor_swing_up_net, criti
             exp = next(exp_source_iter)
 
             if params.DEEP_LEARNING_MODEL is DeepLearningModelName.DDPG_ACTOR_CRITIC_MLP:
-                status_value = exp[0][-1]
+                status_value = int(exp[0][-1])
             elif params.DEEP_LEARNING_MODEL is DeepLearningModelName.DDPG_ACTOR_CRITIC_GRU:
-                status_value = exp[0][-1][-1]
+                status_value = int(exp[0][-1][-1])
             else:
                 raise ValueError()
 
-            if status_value == Status.SWING_UP.value: # SWING_UP: -1.0
+            # print("agent status:", status_value)
+            if status_value == AgentType.SWING_UP_AGENT.value[0]:   # SWING_UP: 0
                 swing_up_step_idx += 1
                 epsilon_tracker_swing_up.udpate(swing_up_step_idx)
 
                 exp_queue_swing_up.put(exp)
                 exp_queue_balancing.put(0)
 
-            elif status_value == Status.SWING_UP_TO_BALANCING.value:  # SWING_UP_TO_BALANCING: 0.5
-                swing_up_step_idx += 1
-                epsilon_tracker_swing_up.udpate(swing_up_step_idx)
-
-                # NOTE: exp 잠시 대기
-                recent_swing_up_to_balancing_exp = copy.deepcopy(exp)
-
-            elif status_value == Status.BALANCING.value:  # BALANCING:1.0, BALANCING_TO_SWING_UP:-0.5
+            elif status_value == AgentType.BALANCING_AGENT.value[0]:  # BALANCING: 1
                 balancing_step_idx += 1
                 epsilon_tracker_balancing.udpate(balancing_step_idx)
 
                 exp_queue_swing_up.put(0)
                 exp_queue_balancing.put(exp)
 
-                balancing_step_reward_list.append(exp.reward)
-
-            elif status_value == Status.BALANCING_TO_SWING_UP.value:
-                balancing_step_idx += 1
-                epsilon_tracker_balancing.udpate(balancing_step_idx)
-
-                # 추후 swing_up 에이전트를 위한 경험 정보에 reward 업데이트를 위하여 사용됨
-                balancing_step_reward_list.append(exp.reward)
-
-                # Balancing Agent의 경험 정보에 done=True 변경
-                exp = exp._replace(done=True)
-                exp_queue_balancing.put(exp)
-
-                # NOTE: 대기 중인 exp의 reward를 수정하고 exp_queue_swing_up에 넣기
-                if len(balancing_step_reward_list) < 10:
-                    recent_swing_up_to_balancing_exp = recent_swing_up_to_balancing_exp._replace(
-                        done=True
-                    )
-                else:
-                    recent_swing_up_to_balancing_exp = recent_swing_up_to_balancing_exp._replace(
-                        reward=recent_swing_up_to_balancing_exp.reward + sum(balancing_step_reward_list),
-                        done=True
-                    )
-
-                exp_queue_swing_up.put(recent_swing_up_to_balancing_exp)
-
-                #recent_swing_up_to_balancing_exp = None
-                balancing_step_reward_list.clear()
-
             else:
                 raise ValueError()
 
+            # TODO
             episode_reward_and_info_lst = experience_source.pop_episode_reward_and_info_lst()
 
             if episode_reward_and_info_lst:  # 에피소드가 종료될 때만 True
@@ -301,7 +260,7 @@ def main():
             hidden_size_1=256, hidden_size_2=256,
             n_actions=1,
             bidirectional=False,
-            scale=BALANCING_SCALE_FACTOR
+            scale=SWING_UP_SCALE_FACTOR
         ).to(device)
 
         critic_swing_up_net = policy_based_model.DDPGGruCritic(
@@ -447,7 +406,7 @@ def main():
             if exp_balancing != 0:
                 buffer_balancing._add(exp_balancing)
 
-        if step_idx % params.DRAW_VIZ_PERIOD_STEPS == 0:
+        if step_idx % params.DRAW_VIZ_PERIOD_STEPS < params.TRAIN_STEP_FREQ:
             if params.DRAW_VIZ:
                 # stat_for_ddpg.draw_optimization_performance(
                 #     step_idx,

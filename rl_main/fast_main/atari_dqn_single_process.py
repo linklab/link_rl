@@ -8,7 +8,7 @@ import warnings
 
 from common import common_utils
 from common.common_utils import make_atari_env
-from common.fast_rl import experience, rl_agent, value_based_model, actions
+from common.fast_rl import experience, rl_agent, value_based_model, actions, replay_buffer
 from common.fast_rl.common import utils
 from common.fast_rl.common import statistics, wrappers
 
@@ -61,7 +61,7 @@ if __name__ == "__main__":
     agent = rl_agent.DQNAgent(net, action_selector, device=device)
 
     experience_source = experience.ExperienceSourceFirstLast(env, agent, gamma=params.GAMMA, steps_count=1)
-    buffer = experience.ExperienceReplayBuffer(experience_source, buffer_size=params.REPLAY_BUFFER_SIZE)
+    buffer = replay_buffer.ExperienceReplayBuffer(experience_source, buffer_size=params.REPLAY_BUFFER_SIZE)
     optimizer = optim.Adam(net.parameters(), lr=params.LEARNING_RATE)
 
     if params.DRAW_VIZ:

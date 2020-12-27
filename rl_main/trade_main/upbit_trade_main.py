@@ -11,7 +11,7 @@ from common.environments.trade.trade_constant import TimeUnit, EnvironmentType, 
 from common.environments.trade.trade_env import UpbitEnvironment
 
 from common import common_utils
-from common.fast_rl import experience, rl_agent, value_based_model, actions
+from common.fast_rl import experience, rl_agent, value_based_model, actions, experience_single
 from common.fast_rl.common import utils
 from common.fast_rl.common import statistics
 from config.names import PROJECT_HOME
@@ -44,7 +44,7 @@ def play_func(env, net, exp_queue):
         eps_frames=params.EPSILON_MIN_STEP
     )
     agent = rl_agent.DQNAgent(net, action_selector, device=device)
-    experience_source = experience.ExperienceSourceSingleEnvFirstLast(
+    experience_source = experience_single.ExperienceSourceSingleEnvFirstLast(
         env=env, agent=agent, gamma=params.GAMMA, steps_count=params.N_STEP
     )
     exp_source_iter = iter(experience_source)

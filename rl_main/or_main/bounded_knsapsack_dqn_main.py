@@ -6,12 +6,12 @@ from torch import optim
 import os
 import numpy as np
 
-from common.common_utils import make_gym_env, make_or_gym_env
+from common.common_utils import make_or_gym_env
 from config.names import EnvironmentName, PROJECT_HOME
 
 print(torch.__version__)
 
-from common.fast_rl import actions, experience, value_based_model, rl_agent
+from common.fast_rl import actions, experience, value_based_model, rl_agent, experience_single, replay_buffer
 from common.fast_rl.common import statistics, utils
 
 from config.parameters import PARAMETERS as params
@@ -40,7 +40,7 @@ def play_func(exp_queue, env, net):
 
     agent = rl_agent.DQNAgent(net, action_selector, device=device)
 
-    experience_source = experience.ExperienceSourceSingleEnvFirstLast(env, agent, gamma=params.GAMMA, steps_count=params.N_STEP)
+    experience_source = experience_single.ExperienceSourceSingleEnvFirstLast(env, agent, gamma=params.GAMMA, steps_count=params.N_STEP)
 
     exp_source_iter = iter(experience_source)
 
@@ -108,7 +108,7 @@ def main():
     print(net)
     target_net = rl_agent.TargetNet(net)
 
-    buffer = experience.PrioReplayBuffer(experience_source=None, buffer_size=params.REPLAY_BUFFER_SIZE)
+    buffer = replay_buffer.PrioReplayBuffer(experience_source=None, buffer_size=params.REPLAY_BUFFER_SIZE)
     optimizer = optim.Adam(net.parameters(), lr=params.LEARNING_RATE)
 
     exp_queue = mp.Queue(maxsize=params.TRAIN_STEP_FREQ * 2)

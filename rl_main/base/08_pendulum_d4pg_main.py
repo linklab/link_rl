@@ -23,7 +23,7 @@ from common.fast_rl.common.utils import distribution_projection
 from common.common_utils import make_gym_env, smooth
 from common.fast_rl.policy_based_model import unpack_batch_for_ddpg
 from common.fast_rl.rl_agent import float32_preprocessor
-from common.fast_rl import actions, experience, policy_based_model, rl_agent
+from common.fast_rl import actions, experience, policy_based_model, rl_agent, experience_single
 from common.fast_rl.common import statistics, utils
 
 from config.parameters import PARAMETERS as params
@@ -64,7 +64,7 @@ def play_func(exp_queue, env, net):
         action_min=action_min, action_max=action_max, device=device, preprocessor=float32_preprocessor
     )
 
-    experience_source = experience.ExperienceSourceSingleEnvFirstLast(
+    experience_source = experience_single.ExperienceSourceSingleEnvFirstLast(
         env, agent, gamma=params.GAMMA, steps_count=params.N_STEP, step_length=-1
     )
 

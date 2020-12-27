@@ -5,7 +5,7 @@ import torch
 from torch import optim
 import torch.nn.functional as F
 
-from common.fast_rl import rl_agent, experience
+from common.fast_rl import rl_agent, experience, replay_buffer
 from common.fast_rl.policy_based_model import unpack_batch_for_ddpg
 from rl_main import rl_utils
 
@@ -39,23 +39,23 @@ class DDPG_FAST_v0:
         )
 
         if self.params.PER:
-            self.buffer = experience.PrioReplayBuffer(
+            self.buffer = replay_buffer.PrioReplayBuffer(
                 experience_source=None, buffer_size=self.params.REPLAY_BUFFER_SIZE,
                 n_step=self.params.N_STEP, beta_start=0.4, beta_frames=self.params.MAX_GLOBAL_STEPS
             )
         else:
-            self.buffer = experience.ExperienceReplayBuffer(
+            self.buffer = replay_buffer.ExperienceReplayBuffer(
                 experience_source=None, buffer_size=self.params.REPLAY_BUFFER_SIZE
             )
 
     def set_experience_source_to_buffer(self, experience_source):
         if self.params.PER:
-            self.buffer = experience.PrioReplayBuffer(
+            self.buffer = replay_buffer.PrioReplayBuffer(
                 experience_source=experience_source, buffer_size=self.params.REPLAY_BUFFER_SIZE,
                 n_step=self.params.N_STEP, beta_start=0.4, beta_frames=self.params.MAX_GLOBAL_STEPS
             )
         else:
-            self.buffer = experience.ExperienceReplayBuffer(
+            self.buffer = replay_buffer.ExperienceReplayBuffer(
                 experience_source=experience_source, buffer_size=self.params.REPLAY_BUFFER_SIZE
             )
 

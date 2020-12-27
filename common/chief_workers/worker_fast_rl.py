@@ -15,7 +15,7 @@ if PROJECT_HOME not in sys.path:
 
 from common.fast_rl.common import utils
 from common.fast_rl.rl_agent import float32_preprocessor
-from common.fast_rl import actions, rl_agent, experience
+from common.fast_rl import actions, rl_agent, experience, experience_single
 from config.names import RLAlgorithmName, EnvironmentName
 from rl_main.federated_main.utils import exp_moving_average
 import rl_main.rl_utils as rl_utils
@@ -169,7 +169,7 @@ class WorkerFastRL:
         else:
             raise ValueError()
 
-        experience_source = experience.ExperienceSourceSingleEnvFirstLast(
+        experience_source = experience_single.ExperienceSourceSingleEnvFirstLast(
             self.env, agent, gamma=params.GAMMA, steps_count=params.N_STEP, step_length=-1
         )
 

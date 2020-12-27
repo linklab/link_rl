@@ -20,7 +20,7 @@ from common.fast_rl.rl_agent import float32_preprocessor
 
 print(torch.__version__)
 
-from common.fast_rl import actions, experience, policy_based_model, rl_agent
+from common.fast_rl import actions, experience, policy_based_model, rl_agent, experience_single
 from common.fast_rl.common import statistics, utils
 
 from config.parameters import PARAMETERS as params
@@ -62,7 +62,7 @@ def play_func(exp_queue, env, net):
         action_min=action_min, action_max=action_max, device=device, preprocessor=float32_preprocessor
     )
 
-    experience_source = experience.ExperienceSourceSingleEnvFirstLast(
+    experience_source = experience_single.ExperienceSourceSingleEnvFirstLast(
         env, agent, gamma=params.GAMMA, steps_count=params.N_STEP
     )
 

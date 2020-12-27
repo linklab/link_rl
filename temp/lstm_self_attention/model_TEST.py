@@ -5,10 +5,9 @@ import torch.nn.functional as F
 import math
 import numpy as np
 import time
-from rl_main.temp.lstm_self_attention.datasets import train_iter, valid_iter, test_iter, input_feature_size
+from temp import train_iter, valid_iter, test_iter, input_feature_size
 
 from enum import Enum
-
 
 class RNN(Enum):
     LSTM = 0
@@ -132,7 +131,7 @@ class SelfAttentionRNNRegressor(nn.Module):
         size = 0
         for p in self.parameters():
             size += p.nelement()
-        print('Total param size: {}'.format(size))
+        print('ToFtal param size: {}'.format(size))
 
     def forward(self, input):
         outputs, hidden = self.encoder(self.embedding(input))
@@ -180,7 +179,7 @@ def train(model, data, optimizer, criterion):
         total_loss += float(loss)
 
         print("[Batch]: {}/{} in {:.5f} seconds".format(
-            batch_num + 1, len(data), time.time() - t), end='\r', flush=True
+            batch_num, len(data), time.time() - t), end='\r', flush=True
         )
         t = time.time()
 
@@ -211,7 +210,7 @@ def evaluate(model, data, criterion, type='Valid'):
                 raise ValueError()
 
             print("[Batch]: {}/{} in {:.5f} seconds".format(
-                batch_num + 1, len(data), time.time() - t), end='\r', flush=True
+                        batch_num, len(data), time.time() - t), end='\r', flush=True
             )
             t = time.time()
 
@@ -223,7 +222,7 @@ def evaluate(model, data, criterion, type='Valid'):
 if __name__ == "__main__":
     cuda = torch.cuda.is_available()
     seed_everything(seed=1337, cuda=cuda)
-    device = torch.device("cpu") if not cuda else torch.device("cuda:0")
+    device = torch.device("cpu")
 
     encoder = Encoder(
         embedding_dim=input_feature_size,

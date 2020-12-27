@@ -22,7 +22,7 @@ from common.fast_rl.rl_agent import float32_preprocessor
 
 print("PyTorch Version", torch.__version__)
 
-from common.fast_rl import actions, experience, policy_based_model, rl_agent
+from common.fast_rl import actions, experience, policy_based_model, rl_agent, replay_buffer, experience_single
 from common.fast_rl.common import statistics, utils
 
 from config.parameters import PARAMETERS as params
@@ -65,7 +65,7 @@ def play_func(exp_queue, env, net):
     else:
         step_length = -1
 
-    experience_source = experience.ExperienceSourceSingleEnvFirstLast(
+    experience_source = experience_single.ExperienceSourceSingleEnvFirstLast(
         env, agent, gamma=params.GAMMA, steps_count=params.N_STEP, step_length=step_length
     )
 
@@ -180,12 +180,12 @@ def main():
     critic_optimizer = optim.Adam(critic_net.parameters(), lr=params.LEARNING_RATE)
 
     if params.PER:
-        buffer = experience.PrioReplayBuffer(
+        buffer = replay_buffer.PrioReplayBuffer(
             experience_source=None, buffer_size=params.REPLAY_BUFFER_SIZE, n_step=params.N_STEP,
             beta_start=0.4, beta_frames=params.MAX_GLOBAL_STEPS
         )
     else:
-        buffer = experience.ExperienceReplayBuffer(experience_source=None, buffer_size=params.REPLAY_BUFFER_SIZE)
+        buffer = replay_buffer.ExperienceReplayBuffer(experience_source=None, buffer_size=params.REPLAY_BUFFER_SIZE)
 
     exp_queue = mp.Queue(maxsize=params.TRAIN_STEP_FREQ * 2)
     play_proc = mp.Process(target=play_func, args=(exp_queue, env, actor_net))

@@ -5,10 +5,10 @@ import os
 import warnings
 
 from common import common_utils
-from common.common_utils import make_atari_env
 from common.environments.trade.trade_constant import TimeUnit, EnvironmentType
 from common.environments.trade.trade_env import UpbitEnvironment
-from common.fast_rl import experience, rl_agent, value_based_model, actions
+
+from common.fast_rl import rl_agent, value_based_model, actions, experience_single, replay_buffer
 from common.fast_rl.common import utils
 from common.fast_rl.common import statistics, wrappers
 
@@ -58,8 +58,8 @@ if __name__ == "__main__":
     )
     agent = rl_agent.DQNAgent(net, action_selector, device=device)
 
-    experience_source = experience.ExperienceSourceSingleEnvFirstLast(env, agent, gamma=params.GAMMA, steps_count=params.N_STEP)
-    buffer = experience.ExperienceReplayBuffer(experience_source, buffer_size=params.REPLAY_BUFFER_SIZE)
+    experience_source = experience_single.ExperienceSourceSingleEnvFirstLast(env, agent, gamma=params.GAMMA, steps_count=params.N_STEP)
+    buffer = replay_buffer.ExperienceReplayBuffer(experience_source, buffer_size=params.REPLAY_BUFFER_SIZE)
     optimizer = optim.Adam(net.parameters(), lr=params.LEARNING_RATE)
 
     if params.DRAW_VIZ:

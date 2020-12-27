@@ -17,9 +17,9 @@ if PROJECT_HOME not in sys.path:
 from rl_main import rl_utils
 from rl_main.federated_main.utils import exp_moving_average
 from common.fast_rl.rl_agent import float32_preprocessor
-from rl_main.matlab_pendulum_main.experience_pendulum_ddpg_two_two_status import \
+from temp.old.experience_pendulum_ddpg_two_two_status import \
     ExperienceSourceSingleEnvFirstLastDdpgTwo, AgentType, RewardTrackerMatlabPendulum
-from common.fast_rl import actions, rl_agent, experience
+from common.fast_rl import actions, rl_agent
 from config.names import RLAlgorithmName
 from config.parameters import PARAMETERS as params
 

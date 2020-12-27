@@ -9,7 +9,7 @@ import warnings
 
 from common import common_utils
 from common.common_utils import make_atari_env
-from common.fast_rl import experience, rl_agent, value_based_model, actions
+from common.fast_rl import experience, rl_agent, value_based_model, actions, replay_buffer
 from common.fast_rl.common import utils
 from common.fast_rl.common import statistics, wrappers
 from common.fast_rl.value_based_model import insert_experience_into_buffer
@@ -105,7 +105,7 @@ def main():
 
     tgt_net = rl_agent.TargetNet(net)
 
-    buffer = experience.ExperienceReplayBuffer(experience_source=None, buffer_size=params.REPLAY_BUFFER_SIZE)
+    buffer = replay_buffer.ExperienceReplayBuffer(experience_source=None, buffer_size=params.REPLAY_BUFFER_SIZE)
     optimizer = optim.Adam(net.parameters(), lr=params.LEARNING_RATE)
     # optimizer = optim.RMSprop(net.parameters(), lr=params.LEARNING_RATE, momentum=0.95, eps=0.01)
 

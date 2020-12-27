@@ -10,7 +10,7 @@ MODEL_SAVE_DIR = os.path.join(PROJECT_HOME, "out", "model_save_files")
 print(torch.__version__)
 
 from common.fast_rl.rl_agent import float32_preprocessor
-from common.fast_rl import actions, value_based_model, rl_agent, policy_based_model, experience
+from common.fast_rl import actions, value_based_model, rl_agent, policy_based_model, experience, experience_single
 import numpy as np
 
 from config.parameters import PARAMETERS as params
@@ -73,7 +73,7 @@ def play_main():
     else:
         step_length = -1
 
-    experience_source = experience.ExperienceSourceSingleEnvFirstLast(
+    experience_source = experience_single.ExperienceSourceSingleEnvFirstLast(
         env, agent, gamma=params.GAMMA, steps_count=params.N_STEP,
         step_length=step_length, render=True
     )

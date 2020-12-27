@@ -4,7 +4,6 @@ import time
 import traceback
 import zlib
 import paho.mqtt.client as mqtt
-import threading
 import sys, os
 
 idx = os.getcwd().index("link_rl")
@@ -12,8 +11,8 @@ PROJECT_HOME = os.getcwd()[:idx] + "link_rl"
 if PROJECT_HOME not in sys.path:
     sys.path.append(PROJECT_HOME)
 
-from common.chief_workers.worker_fast_rl_rip_double_agents import WorkerFastRLRipDoubleAgents
-from rl_main.matlab_pendulum_main.experience_pendulum_ddpg_two_two_status import AgentType
+from temp.old.worker_fast_rl_rip_double_agents import WorkerFastRLRipDoubleAgents
+from temp.old.experience_pendulum_ddpg_two_two_status import AgentType
 from common.chief_workers.worker_fast_rl import WorkerFastRL
 from config.names import RLAlgorithmName
 from config.parameters import PARAMETERS as params
