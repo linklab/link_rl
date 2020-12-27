@@ -611,6 +611,16 @@ class ExperienceReplayBuffer:
             entry = next(self.experience_source_iter)
             self._add(entry)
 
+    def populate_with_action_count(self, num_samples, action_count):
+        """
+        Populates samples into the buffer
+        :param samples: how many samples to populate
+        """
+        for _ in range(num_samples):
+            entry = next(self.experience_source_iter)
+            action_count[entry.action] += 1
+            self._add(entry)
+
     def populate_stacked_experience(self, num_samples, action_count=None):
         for _ in range(num_samples):
             exp = next(self.experience_source_iter)

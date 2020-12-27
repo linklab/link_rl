@@ -4,7 +4,7 @@ import os
 
 from config.names import PROJECT_HOME
 
-MODEL_SAVE_DIR = os.path.join(PROJECT_HOME, "saved_models")
+MODEL_SAVE_DIR = os.path.join(PROJECT_HOME, "out", "model_save_files")
 
 print(torch.__version__)
 

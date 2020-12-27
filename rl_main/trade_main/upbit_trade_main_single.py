@@ -1,6 +1,4 @@
 #!/usr/bin/env python3
-import gym
-import numpy as np
 import torch
 import torch.optim as optim
 import os
@@ -8,6 +6,8 @@ import warnings
 
 from common import common_utils
 from common.common_utils import make_atari_env
+from common.environments.trade.trade_constant import TimeUnit, EnvironmentType
+from common.environments.trade.trade_env import UpbitEnvironment
 from common.fast_rl import experience, rl_agent, value_based_model, actions
 from common.fast_rl.common import utils
 from common.fast_rl.common import statistics, wrappers
@@ -36,18 +36,16 @@ if __name__ == "__main__":
 
     params.BATCH_SIZE *= params.TRAIN_STEP_FREQ
 
-    env = make_atari_env(params.ENVIRONMENT_ID.value, seed=params.SEED)
+    env = UpbitEnvironment(
+        coin_name="MOC", time_unit=TimeUnit.ONE_HOUR, environment_type=EnvironmentType.TRAIN
+    )
 
-    if params.SEED is not None:
-        env.seed(params.SEED)
-
-    suffix = "" if params.SEED is None else "_seed=%s" % params.SEED
-
-    net = value_based_model.DQN(
+    net = value_based_model.DuelingDQNSmallCNN(
         input_shape=env.observation_space.shape,
         n_actions=env.action_space.n
     ).to(device)
     print(net)
+    print("ACTION MEANING: {0}".format(env.get_action_meanings()))
 
     tgt_net = rl_agent.TargetNet(net)
 
@@ -60,7 +58,7 @@ if __name__ == "__main__":
     )
     agent = rl_agent.DQNAgent(net, action_selector, device=device)
 
-    experience_source = experience.ExperienceSourceFirstLast(env, agent, gamma=params.GAMMA, steps_count=1)
+    experience_source = experience.ExperienceSourceSingleEnvFirstLast(env, agent, gamma=params.GAMMA, steps_count=params.N_STEP)
     buffer = experience.ExperienceReplayBuffer(experience_source, buffer_size=params.REPLAY_BUFFER_SIZE)
     optimizer = optim.Adam(net.parameters(), lr=params.LEARNING_RATE)
 
@@ -72,34 +70,35 @@ if __name__ == "__main__":
         stat_for_model_loss = None
 
     action_count = []
-    for _ in env.unwrapped.get_action_meanings():
+    for _ in env.get_action_meanings():
         action_count.append(0)
 
-    frame_idx = 0
+    step_idx = 0
 
-    next_save_frame_idx = params.MODEL_SAVE_STEP_PERIOD
+    with utils.RewardTracker(params=params, frame=False, stat=stat) as reward_tracker:
+        while step_idx < params.MAX_GLOBAL_STEPS:
+            step_idx += params.TRAIN_STEP_FREQ
+            buffer.populate_with_action_count(params.TRAIN_STEP_FREQ, action_count)
 
-    with utils.RewardTracker(params=params, frame=True, stat=stat) as reward_tracker:
-        while frame_idx < params.MAX_GLOBAL_STEPS:
-            frame_idx += params.TRAIN_STEP_FREQ
-            buffer.populate_stacked_experience(params.TRAIN_STEP_FREQ)
-            epsilon_tracker.udpate(frame_idx)
+            epsilon_tracker.udpate(step_idx)
 
             episode_rewards = experience_source.pop_episode_reward_lst()
-            if episode_rewards:
-                solved, mean_episode_reward = reward_tracker.set_episode_reward(
-                    episode_rewards[0], frame_idx, action_selector.epsilon, action_count
-                )
 
-                if frame_idx >= next_save_frame_idx:
-                    rl_agent.save_model(
-                        MODEL_SAVE_DIR, params.ENVIRONMENT_ID.value, net.__name__, net, frame_idx, mean_episode_reward
-                    )
-                    next_save_frame_idx += params.MODEL_SAVE_STEP_PERIOD
+            if episode_rewards:
+                current_episode_reward = episode_rewards[0]
+
+                solved, mean_episode_reward = reward_tracker.set_episode_reward(
+                    current_episode_reward, step_idx, action_selector.epsilon, action_count
+                )
 
                 if solved:
                     rl_agent.save_model(
-                        MODEL_SAVE_DIR, params.ENVIRONMENT_ID.value, net.__name__, net, frame_idx, mean_episode_reward
+                        MODEL_SAVE_DIR,
+                        params.ENVIRONMENT_ID.value,
+                        net.__name__,
+                        net,
+                        step_idx,
+                        mean_episode_reward
                     )
                     break
 
@@ -112,8 +111,10 @@ if __name__ == "__main__":
             loss_v.backward()
             optimizer.step()
 
-            if params.DRAW_VIZ and frame_idx % 1000 == 0:
-                stat_for_model_loss.draw_optimization_performance(frame_idx, loss_v.item())
+            draw_loss = min(1.0, loss_v.detach().item())
 
-            if frame_idx % params.TARGET_NET_SYNC_STEP_PERIOD < params.TRAIN_STEP_FREQ:
+            if params.DRAW_VIZ and step_idx % 1000 == 0:
+                stat_for_model_loss.draw_optimization_performance(step_idx, draw_loss)
+
+            if step_idx % params.TARGET_NET_SYNC_STEP_PERIOD < params.TRAIN_STEP_FREQ:
                 tgt_net.sync()
