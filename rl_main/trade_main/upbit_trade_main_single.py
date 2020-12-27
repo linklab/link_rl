@@ -71,6 +71,8 @@ if __name__ == "__main__":
 
     step_idx = 0
 
+    last_loss = 0.0
+
     with utils.RewardTracker(params=params, frame=False, stat=stat) as reward_tracker:
         while step_idx < params.MAX_GLOBAL_STEPS:
             step_idx += params.TRAIN_STEP_FREQ
@@ -83,7 +85,7 @@ if __name__ == "__main__":
             if episode_rewards:
                 for episode_reward in episode_rewards:
                     solved, mean_episode_reward = reward_tracker.set_episode_reward(
-                        episode_reward, step_idx, action_selector.epsilon, last_entry.info
+                        episode_reward, step_idx, action_selector.epsilon, last_info=last_entry.info, last_loss=last_loss
                     )
 
                     if solved:
@@ -107,6 +109,7 @@ if __name__ == "__main__":
             optimizer.step()
 
             draw_loss = min(1.0, loss_v.detach().item())
+            last_loss = loss_v.detach().item()
 
             if params.DRAW_VIZ and step_idx % 1000 == 0:
                 stat_for_model_loss.draw_optimization_performance(step_idx, draw_loss)

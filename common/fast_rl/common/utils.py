@@ -361,7 +361,7 @@ class RewardTracker:
     def __exit__(self, *args):
         pass
 
-    def set_episode_reward(self, episode_reward, episode_done_step, epsilon, last_info=None):
+    def set_episode_reward(self, episode_reward, episode_done_step, epsilon, last_info=None, last_loss=None):
         self.done_episodes += 1
 
         self.episode_reward_list.append(episode_reward)
@@ -377,7 +377,8 @@ class RewardTracker:
             is_print_performance = True
             self.print_performance(
                 episode_done_step, self.done_episodes, current_ts, ts_diff, self.mean_episode_reward, epsilon,
-                elapsed_time, last_info["action_count"] if last_info and "action_count" in last_info else None
+                elapsed_time, last_info["action_count"] if last_info and "action_count" in last_info else None,
+                last_loss
             )
 
         if self.mean_episode_reward > self.stop_mean_episode_reward:
@@ -389,7 +390,8 @@ class RewardTracker:
             if not is_print_performance:
                 self.print_performance(
                     episode_done_step, self.done_episodes, current_ts, ts_diff, self.mean_episode_reward, epsilon,
-                    elapsed_time, last_info["action_count"] if last_info and "action_count" in last_info else None
+                    elapsed_time, last_info["action_count"] if last_info and "action_count" in last_info else None,
+                    last_loss
                 )
             if self.frame:
                 print("Solved in {0} frames and {1} episodes!".format(episode_done_step, self.done_episodes))
@@ -400,7 +402,8 @@ class RewardTracker:
 
         return False, self.mean_episode_reward
 
-    def print_performance(self, episode_done_step, done_episodes, current_ts, ts_diff, mean_episode_reward, epsilon, elapsed_time, action_count):
+    def print_performance(self, episode_done_step, done_episodes, current_ts, ts_diff, mean_episode_reward, epsilon,
+                          elapsed_time, action_count, last_loss):
         speed = (episode_done_step - self.ts_frame) / ts_diff
         self.ts_frame = episode_done_step
         self.ts = current_ts
@@ -447,7 +450,10 @@ class RewardTracker:
         ), end="")
 
         if action_count is not None:
-            print(", {0}".format(action_count), flush=True)
+            print(", {0}".format(action_count), end="")
+
+        if last_loss is not None:
+            print(", loss {0:6.2f}".format(last_loss), flush=True)
         else:
             print("", flush=True)
 
