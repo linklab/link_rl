@@ -112,7 +112,7 @@ class UpbitEnvironment(gym.Env):
 
         if self.environment_type in [EnvironmentType.TRAIN, EnvironmentType.TEST]:
             self.transaction_state_idx = random.randint(
-                a=WINDOW_SIZE, b=self.data_size - WINDOW_SIZE - (MAX_BUY_SIZE + 1)
+                a=WINDOW_SIZE, b=self.data_size - 336 if self.time_unit == TimeUnit.ONE_HOUR else 14
             )
         elif self.environment_type == EnvironmentType.LIVE:
             self.transaction_state_idx = self.data_size - 1

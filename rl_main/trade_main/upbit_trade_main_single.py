@@ -86,8 +86,8 @@ def test(test_env, net):
         next_state, reward, done, info = test_env.step(action)
 
         if action in [Action.HOLD.value]:
-            msg += "Reward: {0:.3f}, hold coin: {1:.1f} (possible profit by sell: {2:.1f})".format(
-                reward, info["hold_coin"], info["profit"]
+            msg += "Reward: {0:.3f}, hold coin: {1:.1f}".format(
+                reward, info["hold_coin"]
             )
         elif action == Action.MARKET_BUY.value:
             if num_buys <= 10:
