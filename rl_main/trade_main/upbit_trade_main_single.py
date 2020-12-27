@@ -69,7 +69,7 @@ def test(test_env, net):
         else:
             action_str = test_env.get_action_meanings()[action]
 
-        msg = "Datetime: {0}, OHLCV: {1}, {2}, {3}, {4}, {5:<10.1f}, Action: {6:7} --> ".format(
+        msg = "[{0}] OHLCV: {1}, {2}, {3}, {4}, {5:<10.1f}, Action: {6:7} --> ".format(
             test_env.data.iloc[test_env.transaction_state_idx]['datetime_krw'],
             test_env.data.iloc[test_env.transaction_state_idx]['open'],
             test_env.data.iloc[test_env.transaction_state_idx]['high'],
@@ -86,20 +86,24 @@ def test(test_env, net):
                 reward, info["hold_coin"]
             )
         elif action == Action.MARKET_BUY.value:
+            if num_buys <= 10:
+                coin_krw_str = "{0:.1f}".format(info['coin_krw'])
+                commission_fee_str = "{0:.1f}".format(info['commission_fee'])
+            else:
+                coin_krw_str = "-"
+                commission_fee_str = "-"
+
+
             msg += "Reward: {0:.3f}, slippage: {1}, coin_unit_price: {2:.1f}, " \
-                   "coin_krw: {3:.1f}, commission: {4:.1f}, hold coin: {5:.1f}".format(
+                   "coin_krw: {3}, commission: {4}, hold coin: {5:.1f}".format(
                 reward, info["slippage"], info["coin_unit_price"],
-                info['coin_krw'] if num_buys <= 10 else "-",
-                info['commission_fee'] if num_buys <= 10 else "-",
-                info["hold_coin"]
+                coin_krw_str, commission_fee_str, info["hold_coin"]
             )
         elif action == Action.MARKET_SELL.value:
             msg += "Reward: {0:.3f}, slippage: {1}, coin_unit_price: {2:.1f}, " \
                    "coin_krw: {3:.1f}, commission: {4:.1f}, sold coin: {5:.1f}, profit: {6:.1f}".format(
                 reward, info["slippage"], info["coin_unit_price"],
-                info['coin_krw'],
-                info['commission_fee'],
-                info["sold_coin"], info["profit"]
+                info['coin_krw'], info['commission_fee'], info["sold_coin"], info["profit"]
             )
         else:
             raise ValueError()
