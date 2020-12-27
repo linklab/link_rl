@@ -454,6 +454,9 @@ class RewardTracker:
         if last_loss is not None:
             print(", opti. loss {0:7.1f}".format(last_loss), end="")
 
+        if self.params.ENVIRONMENT_ID == EnvironmentName.TRADE_V0:
+            print(", profit {0:8.1f}".format(last_info['profit']), end="")
+
         print("", flush=True)
 
         if self.draw_viz and self.stat:
