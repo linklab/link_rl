@@ -49,7 +49,8 @@ class UpbitEnvironment(gym.Env):
         self.positions = None
         ##### STATISTICS: END   #####
 
-        self.action_count = np.zeros(shape=self.action_space.n)
+        self.step_idx = None
+        self.action_count = None
 
     def reset(self):
         ##### STATISTICS: BEGIN #####
@@ -93,12 +94,21 @@ class UpbitEnvironment(gym.Env):
 
         assert state_idx + idx == self.transaction_state_idx, (state_idx + idx, self.transaction_state_idx)
 
+        self.step_idx = 0
+        self.action_count = np.zeros(shape=self.action_space.n)
+
         initial_state = self.get_state(0.0, 0.0, self.history)
 
         return initial_state  # obs
 
     def step(self, action):
+        self.step_idx += 1
+
+        if self.step_idx == 336 if self.time_unit == TimeUnit.ONE_HOUR else 14:
+            action = Action.MARKET_SELL.value
+
         self.action_count[action] += 1
+
         data = self.data.iloc[self.transaction_state_idx, :]
         effective_action = False
 
@@ -147,7 +157,8 @@ class UpbitEnvironment(gym.Env):
 
         done_conditions = [
             action == Action.MARKET_SELL.value,
-            data['datetime_krw'] == self.last_data_datetime_krw
+            self.step_idx == 336 if self.time_unit == TimeUnit.ONE_HOUR else 14,
+            data['datetime_krw'] == self.last_data_datetime_krw,
         ]
 
         if self.environment_type in [EnvironmentType.TRAIN, EnvironmentType.TEST]:
