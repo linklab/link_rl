@@ -9,16 +9,15 @@ from torch import optim
 import os, sys
 import numpy as np
 
-from common.fast_rl.common.utils import RewardTracker
-from config.names import DeepLearningModelName
-
-from pathlib import Path
-PROJECT_HOME = os.path.dirname(Path(__file__).parent.parent)
+current_path = os.path.dirname(os.path.realpath(__file__))
+PROJECT_HOME = os.path.abspath(os.path.join(current_path, os.pardir, os.pardir))
+print("PROJECT_HOME:", PROJECT_HOME)
 if PROJECT_HOME not in sys.path:
     sys.path.append(PROJECT_HOME)
 
 from common.environments.matlab.matlabenv import MatlabRotaryInvertedPendulumEnv
-
+from common.fast_rl.common.utils import RewardTracker
+from config.names import DeepLearningModelName
 from common.common_utils import smooth
 from common.fast_rl.policy_based_model import unpack_batch_for_ddpg
 from common.fast_rl.rl_agent import float32_preprocessor

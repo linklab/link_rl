@@ -12,8 +12,9 @@ from common.fast_rl.algorithms.DUELING_DOUBLE_DQN_v0 import Dueling_Double_DQN_v
 from common.fast_rl.algorithms.PPO_v0 import PPO_FAST_v0
 from common.models.dqn_model import DuelingDQNModel
 
-from pathlib import Path
-PROJECT_HOME = os.path.dirname(Path(__file__).parent)
+current_path = os.path.dirname(os.path.realpath(__file__))
+PROJECT_HOME = os.path.abspath(os.path.join(current_path, os.pardir, os.pardir))
+print("PROJECT_HOME:", PROJECT_HOME)
 if PROJECT_HOME not in sys.path:
     sys.path.append(PROJECT_HOME)
 

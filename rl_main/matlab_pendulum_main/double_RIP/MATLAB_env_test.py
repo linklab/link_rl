@@ -5,8 +5,9 @@ import os, sys
 
 from rl_main import rl_utils
 
-from pathlib import Path
-PROJECT_HOME = os.path.dirname(Path(__file__).parent.parent.parent)
+current_path = os.path.dirname(os.path.realpath(__file__))
+PROJECT_HOME = os.path.abspath(os.path.join(current_path, os.pardir, os.pardir))
+print("PROJECT_HOME:", PROJECT_HOME)
 if PROJECT_HOME not in sys.path:
     sys.path.append(PROJECT_HOME)
 
