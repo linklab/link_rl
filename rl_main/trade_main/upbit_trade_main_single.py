@@ -22,7 +22,6 @@ from common.fast_rl.common import utils
 from common.fast_rl.common import statistics
 
 ##### NOTE #####
-from config.names import PROJECT_HOME
 from config.parameters import PARAMETERS as params
 ##### NOTE #####
 
@@ -34,7 +33,6 @@ if torch.cuda.is_available():
     device = torch.device("cuda" if params.CUDA else "cpu")
 else:
     device = torch.device("cpu")
-
 
 
 def test(test_env, net, verbose=True):
