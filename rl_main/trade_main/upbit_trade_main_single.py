@@ -11,6 +11,8 @@ PROJECT_HOME = os.path.abspath(os.path.join(current_path, os.pardir, os.pardir))
 if PROJECT_HOME not in sys.path:
     sys.path.append(PROJECT_HOME)
 
+print(PROJECT_HOME)
+
 from common import common_utils
 from common.environments.trade.trade_constant import TimeUnit, EnvironmentType, Action
 from common.environments.trade.trade_env import UpbitEnvironment, EpsilonGreedyTradeDQNActionSelector, \
