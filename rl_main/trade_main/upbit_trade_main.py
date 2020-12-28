@@ -6,15 +6,12 @@ import torch.optim as optim
 import os, sys
 import warnings
 
-from common.fast_rl.common.utils import EarlyStopping
-
 current_path = os.path.dirname(os.path.realpath(__file__))
 PROJECT_HOME = os.path.abspath(os.path.join(current_path, os.pardir, os.pardir))
 if PROJECT_HOME not in sys.path:
     sys.path.append(PROJECT_HOME)
 
-print(PROJECT_HOME)
-
+from common.fast_rl.common.utils import EarlyStopping
 from common.environments.trade.trade_data import get_data
 from common import common_utils
 from common.environments.trade.trade_constant import TimeUnit, EnvironmentType, Action, WINDOW_SIZE
