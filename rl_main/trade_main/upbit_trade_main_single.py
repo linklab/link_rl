@@ -8,7 +8,7 @@ import warnings
 
 from pathlib import Path
 PROJECT_HOME = os.path.dirname(Path(__file__).parent.parent)
-print(PROJECT_HOME)
+print(PROJECT_HOME, "!!!!")
 if PROJECT_HOME not in sys.path:
     sys.path.append(PROJECT_HOME)
 
