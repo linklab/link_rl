@@ -122,16 +122,40 @@ def get_data(coin_name, time_unit):
         left=target_df, right=btc_df, on='datetime_utc', how='inner', suffixes=('', '_btc')
     )
 
-    last_data_datetime_krw = data.iloc[-1, :]['datetime_krw']
-
     state_data = data[[
         'daily_base_timestamp', 'open', 'high', 'low', 'final', 'volume',
          'final', 'open_btc', 'high_btc', 'low_btc', 'final_btc', 'volume_btc'
     ]].to_numpy()
 
-    return data, state_data, last_data_datetime_krw
+    num_train_data = int(len(data) * 0.8)
+    num_test_data = len(data) - num_train_data
 
+    first_train_datetime_krw = str(data.iloc[0, 2])
+    last_train_datetime_krw = str(data.iloc[num_train_data, 2])
+    first_test_datetime_krw = str(data.iloc[num_train_data + 1, 2])
+    last_test_datetime_krw = str(data.iloc[-1, 2])
 
-if __name__ == "__main__":
-    data, state_data, last_data_datetime_krw = get_data("MOC", TimeUnit.ONE_HOUR)
-    print(state_data.shape, last_data_datetime_krw)
+    train_data = data[:num_train_data]
+    train_state_data = state_data[:num_train_data]
+
+    test_data = data[num_train_data:]
+    test_state_data = state_data[num_train_data:]
+
+    assert len(train_data) == len(train_state_data) == num_train_data
+    assert len(test_data) == len(test_state_data) == num_test_data
+
+    train_data_info = {
+        "data": train_data,
+        "state_data": train_state_data,
+        "first_datetime_krw": first_train_datetime_krw,
+        "last_datetime_krw": last_train_datetime_krw
+    }
+
+    test_data_info = {
+        "data": test_data,
+        "state_data": test_state_data,
+        "first_datetime_krw": first_test_datetime_krw,
+        "last_datetime_krw": last_test_datetime_krw
+    }
+
+    return train_data_info, test_data_info

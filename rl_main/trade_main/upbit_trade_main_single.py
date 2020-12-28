@@ -6,6 +6,8 @@ import torch.optim as optim
 import os, sys
 import warnings
 
+from common.environments.trade.trade_data import get_data
+
 current_path = os.path.dirname(os.path.realpath(__file__))
 PROJECT_HOME = os.path.abspath(os.path.join(current_path, os.pardir, os.pardir))
 if PROJECT_HOME not in sys.path:
@@ -34,6 +36,10 @@ if torch.cuda.is_available():
     device = torch.device("cuda" if params.CUDA else "cpu")
 else:
     device = torch.device("cpu")
+
+MODEL_SAVE_DIR = os.path.join(PROJECT_HOME, "out", "model_save_files")
+if not os.path.exists(MODEL_SAVE_DIR):
+    os.makedirs(MODEL_SAVE_DIR)
 
 
 def test(test_env, net, verbose=True):
@@ -124,27 +130,21 @@ def test(test_env, net, verbose=True):
     ))
 
 
-def main(coin_name):
+def main(train_env, test_env):
     common_utils.print_fast_rl_params(params)
 
     params.BATCH_SIZE *= params.TRAIN_STEP_FREQ
 
-    env = UpbitEnvironment(
-        coin_name=coin_name, time_unit=TimeUnit.ONE_HOUR, environment_type=EnvironmentType.TRAIN
-    )
-
-    test_env = copy.deepcopy(env)
-
     net = value_based_model.DuelingDQNSmallCNN(
-        input_shape=env.observation_space.shape,
-        n_actions=env.action_space.n
+        input_shape=train_env.observation_space.shape,
+        n_actions=train_env.action_space.n
     ).to(device)
     print(net)
-    print("ACTION MEANING: {0}".format(env.get_action_meanings()))
+    print("ACTION MEANING: {0}".format(train_env.get_action_meanings()))
 
     tgt_net = rl_agent.TargetNet(net)
 
-    action_selector = EpsilonGreedyTradeDQNActionSelector(epsilon=params.EPSILON_INIT, env=env)
+    action_selector = EpsilonGreedyTradeDQNActionSelector(epsilon=params.EPSILON_INIT, env=train_env)
     epsilon_tracker = actions.EpsilonTracker(
         action_selector=action_selector,
         eps_start=params.EPSILON_INIT,
@@ -153,7 +153,7 @@ def main(coin_name):
     )
     agent = rl_agent.DQNAgent(net, action_selector, device=device)
 
-    experience_source = experience_single.ExperienceSourceSingleEnvFirstLast(env, agent, gamma=params.GAMMA, steps_count=params.N_STEP)
+    experience_source = experience_single.ExperienceSourceSingleEnvFirstLast(train_env, agent, gamma=params.GAMMA, steps_count=params.N_STEP)
     buffer = replay_buffer.ExperienceReplayBuffer(experience_source, buffer_size=params.REPLAY_BUFFER_SIZE)
     optimizer = optim.Adam(net.parameters(), lr=params.LEARNING_RATE)
 
@@ -222,6 +222,27 @@ def main(coin_name):
 
 
 if __name__ == "__main__":
-    test_env, net = main(coin_name="OMG")
+    coin_name = "OMG"
+
+    train_data_info, test_data_info = get_data(coin_name=coin_name, time_unit=TimeUnit.ONE_HOUR)
+
+    print(train_data_info["first_datetime_krw"], train_data_info["last_datetime_krw"])
+    print(test_data_info["first_datetime_krw"], test_data_info["last_datetime_krw"])
+
+    train_env = UpbitEnvironment(
+        coin_name=coin_name,
+        time_unit=TimeUnit.ONE_HOUR,
+        data_info=train_data_info,
+        environment_type=EnvironmentType.TRAIN
+    )
+
+    test_env = UpbitEnvironment(
+        coin_name=coin_name,
+        time_unit=TimeUnit.ONE_HOUR,
+        data_info=test_data_info,
+        environment_type=EnvironmentType.TRAIN,
+    )
+
+    test_env, net = main(train_env, test_env)
     for _ in range(100):
         test(test_env, net, verbose=False)

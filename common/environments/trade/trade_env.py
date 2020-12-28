@@ -48,20 +48,23 @@ class EpsilonGreedyTradeDQNActionSelector(ActionSelector):
 
 
 class UpbitEnvironment(gym.Env):
-    def __init__(self, coin_name, time_unit, environment_type=EnvironmentType.TRAIN, previous_one_datetime=None):
+    def __init__(self, coin_name, time_unit, data_info, environment_type=EnvironmentType.TRAIN):
         super(UpbitEnvironment, self).__init__()
         self.coin_name = coin_name
         self.time_unit = time_unit
         self.environment_type = environment_type
-        self.previous_one_datetime = previous_one_datetime
 
         if self.environment_type == EnvironmentType.LIVE:
-            assert self.previous_one_datetime
+            self.previous_one_datetime = get_previous_one_unit_date_time(time_unit)
 
         self.history = None
         self.input_size = (2, WINDOW_SIZE + 1, 6)
 
-        self.data, self.state_data, self.last_data_datetime_krw = get_data(self.coin_name, self.time_unit)
+        self.data = data_info["data"]
+        self.state_data = data_info["state_data"]
+        self.first_datetime_krw = data_info["first_datetime_krw"]
+        self.last_datetime_krw = data_info["last_datetime_krw"]
+
         self.data_size = len(self.data)
 
         self.transaction_state_idx = None
@@ -190,7 +193,7 @@ class UpbitEnvironment(gym.Env):
         done_conditions = [
             action == Action.MARKET_SELL.value,
             self.step_idx == 336 if self.time_unit == TimeUnit.ONE_HOUR else 14,
-            data['datetime_krw'] == self.last_data_datetime_krw,
+            data['datetime_krw'] == self.last_datetime_krw,
         ]
 
         if self.environment_type in [EnvironmentType.TRAIN, EnvironmentType.TEST]:
