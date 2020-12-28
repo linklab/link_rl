@@ -6,8 +6,6 @@ import torch.optim as optim
 import os, sys
 import warnings
 
-from common.environments.trade.trade_data import get_data
-
 current_path = os.path.dirname(os.path.realpath(__file__))
 PROJECT_HOME = os.path.abspath(os.path.join(current_path, os.pardir, os.pardir))
 if PROJECT_HOME not in sys.path:
@@ -15,6 +13,7 @@ if PROJECT_HOME not in sys.path:
 
 print(PROJECT_HOME)
 
+from common.environments.trade.trade_data import get_data
 from common import common_utils
 from common.environments.trade.trade_constant import TimeUnit, EnvironmentType, Action
 from common.environments.trade.trade_env import UpbitEnvironment, EpsilonGreedyTradeDQNActionSelector, \
