@@ -3,9 +3,14 @@ import time
 import torch
 import torch.optim as optim
 import torch.multiprocessing as mp
-import os
+import os, sys
 import warnings
 from collections import deque
+
+from pathlib import Path
+PROJECT_HOME = os.path.dirname(Path(__file__).parent.parent)
+if PROJECT_HOME not in sys.path:
+    sys.path.append(PROJECT_HOME)
 
 from common.environments.trade.trade_constant import TimeUnit, EnvironmentType, Action
 from common.environments.trade.trade_env import UpbitEnvironment

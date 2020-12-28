@@ -3,8 +3,13 @@ import copy
 
 import torch
 import torch.optim as optim
-import os
+import os, sys
 import warnings
+
+from pathlib import Path
+PROJECT_HOME = os.path.dirname(Path(__file__).parent.parent)
+if PROJECT_HOME not in sys.path:
+    sys.path.append(PROJECT_HOME)
 
 from common import common_utils
 from common.environments.trade.trade_constant import TimeUnit, EnvironmentType, Action
@@ -29,12 +34,9 @@ if torch.cuda.is_available():
 else:
     device = torch.device("cpu")
 
-MODEL_SAVE_DIR = os.path.join(PROJECT_HOME, "out", "model_save_files")
-if not os.path.exists(MODEL_SAVE_DIR):
-    os.makedirs(MODEL_SAVE_DIR)
 
 
-def test(test_env, net):
+def test(test_env, net, verbose=True):
     action_selector = ArgmaxTradeActionSelector(env=test_env)
     agent = rl_agent.DQNAgent(net, action_selector, device=device)
 
@@ -110,12 +112,16 @@ def test(test_env, net):
             )
         else:
             raise ValueError()
-        print(msg)
+        if verbose:
+            print(msg)
 
 
         episode_reward += reward
         state = next_state
-    print("EPISODE REWARD: {0:.3f}, PROFIT: {1:.1f}".format(episode_reward, info["profit"]))
+
+    print("TRANSACTION START DATETIME: {0}, EPISODE REWARD: {1:.3f}, PROFIT: {2:.1f}, STEPS: {3}".format(
+        test_env.transaction_start_datetime, episode_reward, info["profit"], step_idx
+    ))
 
 
 def main(coin_name):
@@ -212,7 +218,10 @@ def main(coin_name):
 
             if step_idx % params.TARGET_NET_SYNC_STEP_PERIOD < params.TRAIN_STEP_FREQ:
                 tgt_net.sync()
+    return test_env, net
 
 
 if __name__ == "__main__":
-    main(coin_name="OMG")
+    test_env, net = main(coin_name="OMG")
+    for _ in range(100):
+        test(test_env, net, verbose=False)
