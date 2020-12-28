@@ -9,6 +9,7 @@ import collections
 import torch
 import torch.nn as nn
 
+from common.fast_rl import rl_agent
 from common.fast_rl.common.statistics import StatisticsForValueBasedRL, StatisticsForPolicyBasedRL
 from config.names import EnvironmentName
 
@@ -335,12 +336,10 @@ class TBMeanTracker:
 
 
 class RewardTracker:
-    def __init__(self, params, frame=True, stat=None, worker_id=None):
+    def __init__(self, params, frame=True, stat=None, worker_id=None, early_stopping=None):
         self.params = params
         self.min_ts_diff = 1    # 1 second
-        self.stop_mean_episode_reward = params.STOP_MEAN_EPISODE_REWARD
         self.stat = stat
-        self.average_size_for_stats = params.AVG_EPISODE_SIZE_FOR_STAT
         self.draw_viz = params.DRAW_VIZ
         self.frame = frame
         self.episode_reward_list = None
@@ -348,6 +347,7 @@ class RewardTracker:
         self.mean_episode_reward = 0.0
         self.count_stop_condition_episode = 0
         self.worker_id = worker_id
+        self.early_stopping = early_stopping
 
     def __enter__(self):
         self.start_ts = time.time()
@@ -362,11 +362,12 @@ class RewardTracker:
     def __exit__(self, *args):
         pass
 
-    def set_episode_reward(self, episode_reward, episode_done_step, epsilon, last_info=None, last_loss=None):
+    def set_episode_reward(self, episode_reward, episode_done_step, epsilon,
+                           last_info=None, last_loss=None, model=None, step_idx=None):
         self.done_episodes += 1
 
         self.episode_reward_list.append(episode_reward)
-        self.mean_episode_reward = np.mean(self.episode_reward_list[-self.average_size_for_stats:])
+        self.mean_episode_reward = np.mean(self.episode_reward_list[-self.params.AVG_EPISODE_SIZE_FOR_STAT:])
 
         current_ts = time.time()
         elapsed_time = current_ts - self.start_ts
@@ -381,25 +382,30 @@ class RewardTracker:
                 elapsed_time, last_info, last_loss
             )
 
-        if self.mean_episode_reward > self.stop_mean_episode_reward:
-            self.count_stop_condition_episode += 1
+        solved = False
+        if self.early_stopping:
+            solved = self.early_stopping(self.mean_episode_reward, model, step_idx)
         else:
-            self.count_stop_condition_episode = 0
-
-        if self.count_stop_condition_episode >= self.params.STOP_CONDITION_CONTINUOUS_EPISODE:
-            if not is_print_performance:
-                self.print_performance(
-                    episode_done_step, self.done_episodes, episode_reward, current_ts, ts_diff, self.mean_episode_reward, epsilon,
-                    elapsed_time, last_info, last_loss
-                )
-            if self.frame:
-                print("Solved in {0} frames and {1} episodes!".format(episode_done_step, self.done_episodes))
+            if self.mean_episode_reward > self.params.STOP_MEAN_EPISODE_REWARD:
+                self.count_stop_condition_episode += 1
             else:
-                print("Solved in {0} steps and {1} episodes!".format(episode_done_step, self.done_episodes))
-
+                self.count_stop_condition_episode = 0
+            if self.count_stop_condition_episode >= self.params.STOP_CONDITION_CONTINUOUS_EPISODE:
+                if not is_print_performance:
+                    self.print_performance(
+                        episode_done_step, self.done_episodes, episode_reward, current_ts, ts_diff, self.mean_episode_reward, epsilon,
+                        elapsed_time, last_info, last_loss
+                    )
+                    solved = True
+        if solved:
+            print("Solved in {0} {1} and {2} episodes!".format(
+                episode_done_step,
+                "frame" if self.frame else "step",
+                self.done_episodes
+            ))
             return True, self.mean_episode_reward
-
-        return False, self.mean_episode_reward
+        else:
+            return False, self.mean_episode_reward
 
     def print_performance(self, episode_done_step, done_episodes, episode_reward, current_ts, ts_diff, mean_episode_reward, epsilon,
                           elapsed_time, last_info, last_loss):
@@ -422,7 +428,7 @@ class RewardTracker:
                 epsilon if epsilon else 0.0,
             )
 
-        if self.mean_episode_reward > self.stop_mean_episode_reward:
+        if self.mean_episode_reward > self.params.STOP_MEAN_EPISODE_REWARD:
             mean_episode_reward_str = "{0:7.3f} (SOLVED COUNT: {1})".format(
                 mean_episode_reward,
                 self.count_stop_condition_episode + 1
@@ -440,7 +446,7 @@ class RewardTracker:
                 self.params.MAX_GLOBAL_STEPS,
                 done_episodes,
                 episode_reward,
-                self.average_size_for_stats,
+                self.params.AVG_EPISODE_SIZE_FOR_STAT,
                 mean_episode_reward_str,
                 epsilon_str,
                 speed,
@@ -466,6 +472,75 @@ class RewardTracker:
                 self.stat.draw_performance(episode_done_step, mean_episode_reward, speed)
             else:
                 raise ValueError()
+
+
+class EarlyStopping:
+    """Early stops the training if validation loss doesn't improve after a given patience."""
+    def __init__(self, patience=7, stop_mean_episode_reward=0.0, verbose=False, delta=0.0, trace_func=print,
+                 model_save_dir=".", env_name="anonymous_env", model_name="anonymous_model"):
+        """
+        Args:
+            patience (int): How long to wait after last time validation loss improved.
+                            Default: 7
+            verbose (bool): If True, prints a message for each validation loss improvement.
+                            Default: False
+            delta (float): Minimum change in the monitored quantity to qualify as an improvement.
+                            Default: 0
+            path (str): Path for the checkpoint to be saved to.
+                            Default: 'checkpoint.pt'
+            trace_func (function): trace print function.
+                            Default: print
+        """
+        self.patience = patience
+        self.stop_mean_episode_reward = stop_mean_episode_reward
+        self.verbose = verbose
+        self.counter = 0
+        self.best_mean_episode_reward = -1.0e10
+        self.early_stop = False
+        self.delta = delta
+        self.model_save_dir = model_save_dir
+        self.env_name = env_name
+        self.model_name = model_name
+
+    def __call__(self, mean_episode_reward, model, step_idx):
+        solved = False
+
+        if self.best_mean_episode_reward == -1.0e10:
+            self.best_mean_episode_reward = mean_episode_reward
+
+        if mean_episode_reward >= self.stop_mean_episode_reward:
+            if mean_episode_reward < self.best_mean_episode_reward + self.delta:
+                self.counter += 1
+                print(f'EarlyStopping counter: {self.counter} out of {self.patience}')
+                if self.counter >= self.patience:
+                    solved = True
+            elif mean_episode_reward >= self.stop_mean_episode_reward + self.delta:
+                self.best_mean_episode_reward = mean_episode_reward
+                self.save_checkpoint(mean_episode_reward, model, step_idx)
+                self.counter = 0
+            else:
+                raise ValueError()
+        else:
+            self.counter = 0
+
+        return solved
+
+    def save_checkpoint(self, mean_episode_reward, model, step_idx):
+        '''Saves model when validation loss decrease.'''
+        if self.verbose:
+            if self.best_mean_episode_reward == -1.0e10:
+                print(f'mean_episode_reward recored first ({mean_episode_reward:.2f}).  Saving model ...')
+            else:
+                print(f'mean_episode_reward increased ({self.best_mean_episode_reward:.2f} --> {mean_episode_reward:.2f}).  Saving model ...')
+
+        rl_agent.save_model(
+            self.model_save_dir,
+            self.env_name,
+            self.model_name,
+            model,
+            step_idx,
+            mean_episode_reward
+        )
 
 
 def distribution_projection(next_distribution, rewards, dones, v_min, v_max, n_atoms, gamma, device="cpu"):

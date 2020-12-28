@@ -67,7 +67,14 @@ class UpbitEnvironment(gym.Env):
 
         self.data_size = len(self.data)
 
+        print("DATA SIZE: {0}".format(self.data_size))
+        print("FIRST DATETIME KRW: {0}".format(self.first_datetime_krw))
+        print("LAST DATETIME KRW: {0}".format(self.last_datetime_krw))
+
+        ############## [NOTE] Transaction 시작 인덱스 ################
         self.transaction_state_idx = None
+        ###########################################################
+
         self.transaction_start_datetime = None
 
         self.observation_space = gym.spaces.Box(
@@ -104,7 +111,7 @@ class UpbitEnvironment(gym.Env):
         self.positions = []
         ##### STATISTICS: END   #####
 
-        if self.environment_type in [EnvironmentType.TRAIN, EnvironmentType.TEST]:
+        if self.environment_type in [EnvironmentType.TRAIN, EnvironmentType.TEST_RANDOM, EnvironmentType.TEST_SEQUENTIAL]:
             self.balance = INITIAL_TOTAL_KRW
         elif self.environment_type == EnvironmentType.LIVE:
             self.balance = 0
@@ -113,10 +120,13 @@ class UpbitEnvironment(gym.Env):
 
         self.history = []
 
-        if self.environment_type in [EnvironmentType.TRAIN, EnvironmentType.TEST]:
+        if self.environment_type in [EnvironmentType.TRAIN, EnvironmentType.TEST_RANDOM]:
             self.transaction_state_idx = random.randint(
-                a=WINDOW_SIZE, b=self.data_size - 336 if self.time_unit == TimeUnit.ONE_HOUR else 14
+                a=WINDOW_SIZE - 1,
+                b=self.data_size - (336 if self.time_unit == TimeUnit.ONE_HOUR else 14)
             )
+        elif self.environment_type == EnvironmentType.TEST_SEQUENTIAL:
+            self.transaction_state_idx = WINDOW_SIZE - 1
         elif self.environment_type == EnvironmentType.LIVE:
             self.transaction_state_idx = self.data_size - 1
         else:
@@ -193,10 +203,10 @@ class UpbitEnvironment(gym.Env):
         done_conditions = [
             action == Action.MARKET_SELL.value,
             self.step_idx == 336 if self.time_unit == TimeUnit.ONE_HOUR else 14,
-            data['datetime_krw'] == self.last_datetime_krw,
+            str(self.data.iloc[self.transaction_state_idx]['datetime_krw']) == str(self.last_datetime_krw),
         ]
 
-        if self.environment_type in [EnvironmentType.TRAIN, EnvironmentType.TEST]:
+        if self.environment_type in [EnvironmentType.TRAIN, EnvironmentType.TEST_RANDOM, EnvironmentType.TEST_SEQUENTIAL]:
             self.transaction_state_idx += 1
             if any(done_conditions):
                 done = True
@@ -264,7 +274,7 @@ class UpbitEnvironment(gym.Env):
         return next_state
 
     def get_transaction_buy_info(self, data):
-        if self.environment_type in [EnvironmentType.TRAIN, EnvironmentType.TEST]:
+        if self.environment_type in [EnvironmentType.TRAIN, EnvironmentType.TEST_RANDOM, EnvironmentType.TEST_SEQUENTIAL]:
             commission_fee = BUY_AMOUNT * COMMISSION_RATE
             coin_krw = BUY_AMOUNT - commission_fee
             slippage = get_order_unit(data['final']) * SLIPPAGE_COUNT
@@ -289,7 +299,7 @@ class UpbitEnvironment(gym.Env):
         return transaction_info
 
     def get_transaction_sell_info(self, data, num_buys=0):
-        if self.environment_type in [EnvironmentType.TRAIN, EnvironmentType.TEST]:
+        if self.environment_type in [EnvironmentType.TRAIN, EnvironmentType.TEST_RANDOM, EnvironmentType.TEST_SEQUENTIAL]:
             slippage = get_order_unit(data['final']) * SLIPPAGE_COUNT * math.ceil(num_buys / 3)
             coin_unit_price = data['final'] - slippage
             commission_fee = self.hold_coin_quantity * coin_unit_price * COMMISSION_RATE
