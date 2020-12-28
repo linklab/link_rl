@@ -486,10 +486,6 @@ class EarlyStopping:
                             Default: False
             delta (float): Minimum change in the monitored quantity to qualify as an improvement.
                             Default: 0
-            path (str): Path for the checkpoint to be saved to.
-                            Default: 'checkpoint.pt'
-            trace_func (function): trace print function.
-                            Default: print
         """
         self.patience = patience
         self.stop_mean_episode_reward = stop_mean_episode_reward
@@ -514,6 +510,12 @@ class EarlyStopping:
                 print(f'EarlyStopping counter: {self.counter} out of {self.patience}')
                 if self.counter >= self.patience:
                     solved = True
+                    rl_agent.load_model(
+                        self.model_save_dir,
+                        self.env_name,
+                        self.model_name,
+                        model
+                    )
             elif mean_episode_reward >= self.stop_mean_episode_reward + self.delta:
                 self.best_mean_episode_reward = mean_episode_reward
                 self.save_checkpoint(mean_episode_reward, model, step_idx)
