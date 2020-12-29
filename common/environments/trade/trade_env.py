@@ -38,9 +38,14 @@ class EpsilonGreedyTradeDQNActionSelector(ActionSelector):
             actions = np.array([Action.MARKET_SELL.value] * len(q_values))
         else:
             if random.random() < self.epsilon:
-                return np.array(
-                    [random.choice([Action.HOLD.value, Action.MARKET_BUY.value])] * len(q_values)
-                )
+                if self.env.hold_coin_quantity == 0.0:
+                    return np.array(
+                        [random.choice([Action.HOLD.value, Action.MARKET_BUY.value])] * len(q_values)
+                    )
+                else:
+                    return np.array(
+                        [random.choice([Action.HOLD.value, Action.MARKET_BUY.value, Action.MARKET_SELL.value])] * len(q_values)
+                    )
             else:
                 actions = self.default_action_selector(q_values)
 
