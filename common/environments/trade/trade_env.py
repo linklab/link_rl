@@ -140,9 +140,6 @@ class UpbitEnvironment(gym.Env):
         else:
             raise ValueError()
 
-        if self.environment_type in [EnvironmentType.TEST_RANDOM, EnvironmentType.TEST_SEQUENTIAL]:
-            print(self.transaction_state_idx)
-
         self.transaction_start_datetime = self.data.iloc[self.transaction_state_idx]['datetime_krw']
         state_idx = self.transaction_state_idx - WINDOW_SIZE + 1
 
@@ -214,7 +211,7 @@ class UpbitEnvironment(gym.Env):
         done_conditions = [
             action == Action.MARKET_SELL.value,
             self.step_idx == (336 if self.time_unit == TimeUnit.ONE_HOUR else 14),
-            self.transaction_state_idx >= self.data_size
+            self.transaction_state_idx >= self.data_size - 1
         ]
 
         if self.environment_type in [EnvironmentType.TRAIN, EnvironmentType.TEST_RANDOM, EnvironmentType.TEST_SEQUENTIAL]:
