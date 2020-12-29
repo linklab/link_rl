@@ -274,22 +274,23 @@ def test_sequential_all(test_env, net, last_datetime_krw):
 
 def main():
     coin_name = "OMG"
+    time_unit = TimeUnit.ONE_DAY
 
-    train_data_info, test_data_info = get_data(coin_name=coin_name, time_unit=TimeUnit.ONE_HOUR)
+    train_data_info, test_data_info = get_data(coin_name=coin_name, time_unit=time_unit)
 
     print(train_data_info["first_datetime_krw"], train_data_info["last_datetime_krw"])
     print(test_data_info["first_datetime_krw"], test_data_info["last_datetime_krw"])
 
     train_env = UpbitEnvironment(
         coin_name=coin_name,
-        time_unit=TimeUnit.ONE_HOUR,
+        time_unit=time_unit,
         data_info=train_data_info,
         environment_type=EnvironmentType.TRAIN
     )
 
     test_random_env = UpbitEnvironment(
         coin_name=coin_name,
-        time_unit=TimeUnit.ONE_HOUR,
+        time_unit=time_unit,
         data_info=test_data_info,
         environment_type=EnvironmentType.TEST_RANDOM,
     )
@@ -303,7 +304,7 @@ def main():
 
     test_sequential_env = UpbitEnvironment(
         coin_name=coin_name,
-        time_unit=TimeUnit.ONE_HOUR,
+        time_unit=time_unit,
         data_info=test_data_info,
         environment_type=EnvironmentType.TEST_SEQUENTIAL,
     )

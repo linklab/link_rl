@@ -21,7 +21,7 @@ class ArgmaxTradeActionSelector(ActionSelector):
 
     def __call__(self, scores):
         assert isinstance(scores, np.ndarray)
-        if self.env.step_idx == 335 if self.env.time_unit == TimeUnit.ONE_HOUR else 13:
+        if self.env.step_idx == (335 if self.env.time_unit == TimeUnit.ONE_HOUR else 13):
             return np.array([Action.MARKET_SELL.value] * len(scores))
         else:
             return np.argmax(scores, axis=1)
@@ -41,7 +41,7 @@ class EpsilonGreedyTradeDQNActionSelector(ActionSelector):
         rand_actions = np.random.choice(a=n_actions, size=sum(mask))
         actions[mask] = rand_actions
 
-        if self.env.step_idx == 335 if self.env.time_unit == TimeUnit.ONE_HOUR else 13:
+        if self.env.step_idx == (335 if self.env.time_unit == TimeUnit.ONE_HOUR else 13):
             actions = np.array([Action.MARKET_SELL.value] * len(actions))
 
         return actions
@@ -202,7 +202,7 @@ class UpbitEnvironment(gym.Env):
 
         done_conditions = [
             action == Action.MARKET_SELL.value,
-            self.step_idx == 336 if self.time_unit == TimeUnit.ONE_HOUR else 14,
+            self.step_idx == (336 if self.time_unit == TimeUnit.ONE_HOUR else 14),
             str(self.data.iloc[self.transaction_state_idx]['datetime_krw']) == str(self.last_datetime_krw),
         ]
 
