@@ -308,7 +308,7 @@ class RewardTrackerMatlabPendulum:
               "status: [{7:3d}|{8:3d}], epsilon: {9}, speed: {10:5.2f}{11}, elapsed time: {12}".format(
                 prefix,
                 episode_done_step,
-                self.params.MAX_GLOBAL_STEPS,
+                self.params.MAX_GLOBAL_STEP,
                 done_episodes,
                 episode_reward_str,
                 self.average_size_for_stats,

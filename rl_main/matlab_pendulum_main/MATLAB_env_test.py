@@ -22,7 +22,7 @@ print("env:", params.ENVIRONMENT_ID)
 print("observation_space:", 4)
 print("action_space:", 1)
 
-MAX_GLOBAL_STEPS = 10000
+MAX_GLOBAL_STEP = 10000
 
 
 def main():
@@ -31,7 +31,7 @@ def main():
     done_episode = 0
     step = 0
 
-    while step < MAX_GLOBAL_STEPS:
+    while step < MAX_GLOBAL_STEP:
         episode_reward = 0.0
         done = False
         env.reset()
@@ -43,7 +43,7 @@ def main():
 
         done_episode += 1
         print("[{0:5d}/{1}] Episode: {2:3d}, Episode Reward: {3:6.1f}".format(
-            step, MAX_GLOBAL_STEPS, done_episode, episode_reward
+            step, MAX_GLOBAL_STEP, done_episode, episode_reward
         ), flush=True)
 
 

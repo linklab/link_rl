@@ -57,14 +57,14 @@ def play_func(env, net, exp_queue):
     else:
         stat = None
 
-    episode_rewards_across_steps = np.zeros(int(params.MAX_GLOBAL_STEPS / params.DATA_SAVE_STEP_PERIOD))
+    episode_rewards_across_steps = np.zeros(int(params.MAX_GLOBAL_STEP / params.DATA_SAVE_STEP_PERIOD))
     last_mean_episode_reward = 0
 
     frame_idx = 0
     next_save_frame_idx = params.MODEL_SAVE_STEP_PERIOD
 
     with utils.RewardTracker(params=params, frame=True, stat=stat) as reward_tracker:
-        while frame_idx < params.MAX_GLOBAL_STEPS:
+        while frame_idx < params.MAX_GLOBAL_STEP:
             frame_idx += 1
             exp = next(exp_source_iter)
             exp_queue.put(exp)
@@ -136,7 +136,7 @@ def main():
     else:
         stat_for_model_loss = None
 
-    q_loss_across_steps = np.zeros(int(params.MAX_GLOBAL_STEPS / params.DATA_SAVE_STEP_PERIOD))
+    q_loss_across_steps = np.zeros(int(params.MAX_GLOBAL_STEP / params.DATA_SAVE_STEP_PERIOD))
     loss_list = deque(maxlen=params.AVG_EPISODE_SIZE_FOR_STAT)
 
     frame_idx = 0

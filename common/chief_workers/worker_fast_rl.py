@@ -180,7 +180,7 @@ class WorkerFastRL:
         episode = 0
 
         with utils.RewardTracker(params=params, frame=None, stat=None, worker_id=self.worker_id) as reward_tracker:
-            while step_idx < params.MAX_GLOBAL_STEPS:
+            while step_idx < params.MAX_GLOBAL_STEP:
                 # 1 스텝 진행하고 exp를 exp_queue에 넣음
                 step_idx += params.TRAIN_STEP_FREQ
 
@@ -309,7 +309,7 @@ class WorkerFastRL:
             self.is_success_or_fail_done = True
             is_finish = True
 
-        elif step_idx >= self.params.MAX_GLOBAL_STEPS:
+        elif step_idx >= self.params.MAX_GLOBAL_STEP:
             log_msg = "******* Worker {0} - Failed in episode {1}: Mean Episode Reward = {2}".format(
                 self.worker_id,
                 episode,

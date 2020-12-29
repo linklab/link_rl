@@ -443,7 +443,7 @@ class RewardTracker:
             "eps.: {7}, speed: {8:7.2f} {9}, {10}".format(
                 prefix,
                 episode_done_step,
-                self.params.MAX_GLOBAL_STEPS,
+                self.params.MAX_GLOBAL_STEP,
                 done_episodes,
                 episode_reward,
                 self.params.AVG_EPISODE_SIZE_FOR_STAT,

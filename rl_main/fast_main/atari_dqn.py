@@ -55,7 +55,7 @@ def play_func(env, net, exp_queue):
     next_save_frame_idx = params.MODEL_SAVE_STEP_PERIOD
 
     with utils.RewardTracker(params=params, frame=True, stat=stat) as reward_tracker:
-        while frame_idx < params.MAX_GLOBAL_STEPS:
+        while frame_idx < params.MAX_GLOBAL_STEP:
             frame_idx += 1
             exp = next(exp_source_iter)
             exp_queue.put(exp)

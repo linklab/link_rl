@@ -25,7 +25,7 @@ print("observation_space:", env.observation_space)
 print("action_space:", env.action_space)
 
 
-MAX_GLOBAL_STEPS = 50000
+MAX_GLOBAL_STEP = 50000
 
 
 def main():
@@ -34,7 +34,7 @@ def main():
     done_episode = 0
     step = 0
 
-    while step < MAX_GLOBAL_STEPS:
+    while step < MAX_GLOBAL_STEP:
         episode_reward = 0.0
         done = False
         state = env.reset()
@@ -63,7 +63,7 @@ def main():
 
         done_episode += 1
         print("[{0:5d}/{1}] Episode: {2:3d}, Episode Reward: {3:6.1f}".format(
-            step, MAX_GLOBAL_STEPS, done_episode, episode_reward
+            step, MAX_GLOBAL_STEP, done_episode, episode_reward
         ), flush=True)
 
 

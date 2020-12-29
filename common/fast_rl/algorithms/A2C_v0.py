@@ -41,7 +41,7 @@ class A2C_FAST_v0:
         if self.params.PER:
             self.buffer = replay_buffer.PrioReplayBuffer(
                 experience_source=None, buffer_size=self.params.REPLAY_BUFFER_SIZE,
-                n_step=self.params.N_STEP, beta_start=0.4, beta_frames=self.params.MAX_GLOBAL_STEPS
+                n_step=self.params.N_STEP, beta_start=0.4, beta_frames=self.params.MAX_GLOBAL_STEP
             )
         else:
             self.buffer = replay_buffer.ExperienceReplayBuffer(
@@ -52,7 +52,7 @@ class A2C_FAST_v0:
         if self.params.PER:
             self.buffer = replay_buffer.PrioReplayBuffer(
                 experience_source=experience_source, buffer_size=self.params.REPLAY_BUFFER_SIZE,
-                n_step=self.params.N_STEP, beta_start=0.4, beta_frames=self.params.MAX_GLOBAL_STEPS
+                n_step=self.params.N_STEP, beta_start=0.4, beta_frames=self.params.MAX_GLOBAL_STEP
             )
         else:
             self.buffer = replay_buffer.ExperienceReplayBuffer(

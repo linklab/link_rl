@@ -76,7 +76,7 @@ if __name__ == "__main__":
     next_save_frame_idx = params.MODEL_SAVE_STEP_PERIOD
 
     with utils.RewardTracker(params=params, frame=True, stat=stat) as reward_tracker:
-        while frame_idx < params.MAX_GLOBAL_STEPS:
+        while frame_idx < params.MAX_GLOBAL_STEP:
             frame_idx += params.TRAIN_STEP_FREQ
             buffer.populate_stacked_experience(params.TRAIN_STEP_FREQ)
             epsilon_tracker.udpate(frame_idx)

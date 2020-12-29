@@ -81,7 +81,7 @@ def play_func(exp_queue, env, net):
     best_mean_episode_reward = 0.0
 
     with utils.RewardTracker(params=params, frame=True, stat=stat) as reward_tracker:
-        while step_idx < params.MAX_GLOBAL_STEPS:
+        while step_idx < params.MAX_GLOBAL_STEP:
             # 1 스텝 진행하고 exp를 exp_queue에 넣음
             step_idx += 1
             exp = next(exp_source_iter)
@@ -182,7 +182,7 @@ def main():
     if params.PER:
         buffer = replay_buffer.PrioReplayBuffer(
             experience_source=None, buffer_size=params.REPLAY_BUFFER_SIZE, n_step=params.N_STEP,
-            beta_start=0.4, beta_frames=params.MAX_GLOBAL_STEPS
+            beta_start=0.4, beta_frames=params.MAX_GLOBAL_STEP
         )
     else:
         buffer = replay_buffer.ExperienceReplayBuffer(experience_source=None, buffer_size=params.REPLAY_BUFFER_SIZE)

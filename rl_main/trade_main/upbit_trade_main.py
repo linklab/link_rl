@@ -40,15 +40,13 @@ if not os.path.exists(MODEL_SAVE_DIR):
     os.makedirs(MODEL_SAVE_DIR)
 
 
-def test(test_env, net, verbose=True):
-    action_selector = ArgmaxTradeActionSelector(env=test_env)
+def test(env, net, verbose=True):
+    action_selector = ArgmaxTradeActionSelector(env=env)
     agent = rl_agent.DQNAgent(net, action_selector, device=device)
-
-    experience_source = experience_single.ExperienceSourceSingleEnvFirstLast(test_env, agent, gamma=params.GAMMA, steps_count=params.N_STEP)
+    experience_source = experience_single.ExperienceSourceSingleEnvFirstLast(env, agent, gamma=params.GAMMA, steps_count=params.N_STEP)
 
     done = False
-    state = test_env.reset()
-
+    state = env.reset()
     agent_state = agent.initial_agent_state()
 
     episode_reward = 0.0
@@ -76,20 +74,20 @@ def test(test_env, net, verbose=True):
             else:
                 action_str = "BUY({0})".format(num_buys)
         else:
-            action_str = test_env.get_action_meanings()[action]
+            action_str = env.get_action_meanings()[action]
 
         msg = "[{0:2}|{1}] OHLCV: {2}, {3}, {4}, {5}, {6:<10.1f}, Action: {7:7} --> ".format(
             step_idx,
-            test_env.data.iloc[test_env.transaction_state_idx]['datetime_krw'],
-            test_env.data.iloc[test_env.transaction_state_idx]['open'],
-            test_env.data.iloc[test_env.transaction_state_idx]['high'],
-            test_env.data.iloc[test_env.transaction_state_idx]['low'],
-            test_env.data.iloc[test_env.transaction_state_idx]['final'],
-            test_env.data.iloc[test_env.transaction_state_idx]['volume'],
+            env.data.iloc[env.transaction_state_idx]['datetime_krw'],
+            env.data.iloc[env.transaction_state_idx]['open'],
+            env.data.iloc[env.transaction_state_idx]['high'],
+            env.data.iloc[env.transaction_state_idx]['low'],
+            env.data.iloc[env.transaction_state_idx]['final'],
+            env.data.iloc[env.transaction_state_idx]['volume'],
             action_str
         )
 
-        next_state, reward, done, info = test_env.step(action)
+        next_state, reward, done, info = env.step(action)
 
         if action in [Action.HOLD.value]:
             msg += "Reward: {0:.3f}, hold coin: {1:.1f}".format(
@@ -119,12 +117,11 @@ def test(test_env, net, verbose=True):
         if verbose:
             print(msg)
 
-
         episode_reward += reward
         state = next_state
 
     print("TRANSACTION START DATETIME: {0}, EPISODE REWARD: {1:>8.3f}, PROFIT: {2:>10.1f}, STEPS: {3}".format(
-        test_env.transaction_start_datetime, episode_reward, info["profit"], step_idx
+        env.transaction_start_datetime, episode_reward, info["profit"], step_idx
     ))
 
     return info["profit"], step_idx
@@ -179,7 +176,7 @@ def train(train_env, test_env):
     )
 
     with utils.RewardTracker(params=params, frame=False, stat=stat, early_stopping=early_stopping) as reward_tracker:
-        while step_idx < params.MAX_GLOBAL_STEPS:
+        while step_idx < params.MAX_GLOBAL_STEP:
             step_idx += params.TRAIN_STEP_FREQ
             last_entry = buffer.populate(params.TRAIN_STEP_FREQ)
 
@@ -227,14 +224,14 @@ def train(train_env, test_env):
     return net
 
 
-def test_random(test_env, net, num_episodes):
+def test_random(env, net, num_episodes):
     num_positive = 0
     num_negative = 0
     total_profit = 0.0
     total_steps = 0
 
     for _ in range(num_episodes):
-        profit, step = test(test_env, net, verbose=False)
+        profit, step = test(env, net, verbose=False)
         if profit > 0:
             num_positive += 1
         else:
@@ -247,16 +244,17 @@ def test_random(test_env, net, num_episodes):
     ))
 
 
-def test_sequential_all(test_env, net, last_datetime_krw):
+def test_sequential_all(env, net, data_size):
     num_positive = 0
     num_negative = 0
     total_profit = 0.0
     total_steps = 0
 
     num_episodes = 0
+    env.transaction_state_idx = 0
     while True:
         num_episodes += 1
-        profit, step = test(test_env, net, verbose=False)
+        profit, step = test(env, net, verbose=False)
         if profit > 0:
             num_positive += 1
         else:
@@ -264,10 +262,10 @@ def test_sequential_all(test_env, net, last_datetime_krw):
         total_profit += profit
         total_steps += step
 
-        if test_env.data.iloc[test_env.transaction_state_idx]['datetime_krw'] == last_datetime_krw:
+        if env.transaction_state_idx >= data_size:
             break
 
-    print("### POSTITIVE: {0}/{2}, NEGATIVE: {1}/{2}, TOTAL PROFIT: {3:.1f}, AVG. STEP FOR EPISODE: {4:.1f}".format(
+    print("### POSITIVE: {0}/{2}, NEGATIVE: {1}/{2}, TOTAL PROFIT: {3:.1f}, AVG. STEP FOR EPISODE: {4:.1f}".format(
         num_positive, num_negative, num_episodes, total_profit, total_steps / num_episodes
     ))
 
@@ -297,19 +295,16 @@ if __name__ == "__main__":
 
     net = train(train_env, test_random_env)
 
-    print("#### TEST RANDOM 100")
-    test_random(test_random_env, net, num_episodes=100)
+    # print("#### TEST RANDOM 100")
+    # test_random(test_random_env, net, num_episodes=100)
 
     print()
 
+    print("#### TEST SEQUENTIALLY")
     test_sequential_env = UpbitEnvironment(
         coin_name=coin_name,
         time_unit=time_unit,
         data_info=test_data_info,
         environment_type=EnvironmentType.TEST_SEQUENTIAL,
     )
-
-    print("#### TEST SEQUENTIALLY")
-    transaction_state_idx = WINDOW_SIZE - 1
-    test_sequential_env.transaction_state_idx = transaction_state_idx
-    test_sequential_all(test_sequential_env, net, test_data_info["last_datetime_krw"])
+    test_sequential_all(test_sequential_env, net, len(test_data_info["data"]))

@@ -148,7 +148,7 @@ def play_func(exp_queue_swing_up, exp_queue_balancing, actor_swing_up_net, criti
             stop_mean_episode_reward=params.STOP_MEAN_EPISODE_REWARD,
             average_size_for_stats=params.AVG_EPISODE_SIZE_FOR_STAT,
             frame=True, draw_viz=params.DRAW_VIZ, stat=stat, logger=my_logger) as reward_tracker:
-        while step_idx < params.MAX_GLOBAL_STEPS:
+        while step_idx < params.MAX_GLOBAL_STEP:
             # 1 스텝 진행하고 exp를 exp_queue에 넣음
             step_idx += 1
 
@@ -228,7 +228,7 @@ def play_func(exp_queue_swing_up, exp_queue_balancing, actor_swing_up_net, criti
 
         plt.plot(x,y)
         plt.title("MATLAB DDPG EPISODE REWARD")
-        plt.xticks([i for i in range(params.MAX_GLOBAL_STEPS) if i%100000 ==0 ])
+        plt.xticks([i for i in range(params.MAX_GLOBAL_STEP) if i%100000 ==0 ])
         plt.xlabel('episode')
         plt.ylabel('episode reward')
         plt.show()

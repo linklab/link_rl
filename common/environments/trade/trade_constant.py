@@ -33,8 +33,8 @@ class Action(enum.Enum):
 class EnvironmentType(enum.Enum):
     TRAIN = 0
     TEST_RANDOM = 1
-    TEST_SEQUENTIAL = 1
-    LIVE = 2
+    TEST_SEQUENTIAL = 2
+    LIVE = 3
 
 OHLCV_FEATURES = ["daily_base_timestamp", "open", "high", "low", "final", "volume"]
 SIZE_OF_OHLCV_FEATURE = len(OHLCV_FEATURES)

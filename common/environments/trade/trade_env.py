@@ -34,15 +34,18 @@ class EpsilonGreedyTradeDQNActionSelector(ActionSelector):
         self.action_selector = ArgmaxActionSelector()
 
     def __call__(self, scores):
-        assert isinstance(scores, np.ndarray)
-        batch_size, n_actions = scores.shape
-        actions = self.action_selector(scores)
-        mask = np.random.random(size=batch_size) < self.epsilon
-        rand_actions = np.random.choice(a=n_actions, size=sum(mask))
-        actions[mask] = rand_actions
-
         if self.env.step_idx == (335 if self.env.time_unit == TimeUnit.ONE_HOUR else 13):
-            actions = np.array([Action.MARKET_SELL.value] * len(actions))
+            actions = np.array([Action.MARKET_SELL.value] * len(scores))
+        else:
+            assert isinstance(scores, np.ndarray)
+            batch_size, n_actions = scores.shape
+            actions = self.action_selector(scores)
+            mask = np.random.random(size=batch_size) < self.epsilon
+            rand_actions = np.random.choice(a=n_actions, size=sum(mask))
+            actions[mask] = rand_actions
+
+            if self.env.step_idx == (335 if self.env.time_unit == TimeUnit.ONE_HOUR else 13):
+                actions = np.array([Action.MARKET_SELL.value] * len(actions))
 
         return actions
 
@@ -120,17 +123,25 @@ class UpbitEnvironment(gym.Env):
 
         self.history = []
 
-        if self.environment_type in [EnvironmentType.TRAIN, EnvironmentType.TEST_RANDOM]:
+        if self.environment_type == EnvironmentType.TRAIN:
             self.transaction_state_idx = random.randint(
                 a=WINDOW_SIZE - 1,
                 b=self.data_size - (336 if self.time_unit == TimeUnit.ONE_HOUR else 14)
             )
+        elif self.environment_type == EnvironmentType.TEST_RANDOM:
+            self.transaction_state_idx = random.randint(
+                a=0,
+                b=self.data_size - (336 if self.time_unit == TimeUnit.ONE_HOUR else 14)
+            )
         elif self.environment_type == EnvironmentType.TEST_SEQUENTIAL:
-            self.transaction_state_idx = WINDOW_SIZE - 1
+            assert self.transaction_state_idx >= 0
         elif self.environment_type == EnvironmentType.LIVE:
             self.transaction_state_idx = self.data_size - 1
         else:
             raise ValueError()
+
+        if self.environment_type in [EnvironmentType.TEST_RANDOM, EnvironmentType.TEST_SEQUENTIAL]:
+            print(self.transaction_state_idx)
 
         self.transaction_start_datetime = self.data.iloc[self.transaction_state_idx]['datetime_krw']
         state_idx = self.transaction_state_idx - WINDOW_SIZE + 1
@@ -203,7 +214,7 @@ class UpbitEnvironment(gym.Env):
         done_conditions = [
             action == Action.MARKET_SELL.value,
             self.step_idx == (336 if self.time_unit == TimeUnit.ONE_HOUR else 14),
-            str(self.data.iloc[self.transaction_state_idx]['datetime_krw']) == str(self.last_datetime_krw),
+            self.transaction_state_idx >= self.data_size
         ]
 
         if self.environment_type in [EnvironmentType.TRAIN, EnvironmentType.TEST_RANDOM, EnvironmentType.TEST_SEQUENTIAL]:
@@ -359,28 +370,29 @@ class UpbitEnvironment(gym.Env):
 
 
 if __name__ == "__main__":
-    train_env = UpbitEnvironment(
-        coin_name="MOC", time_unit=TimeUnit.ONE_HOUR, environment_type=EnvironmentType.TRAIN
-    )
-
-    test_env = UpbitEnvironment(
-        coin_name="MOC", time_unit=TimeUnit.ONE_HOUR, environment_type=EnvironmentType.TEST
-    )
-
-    live_env = UpbitEnvironment(
-        coin_name="MOC", time_unit=TimeUnit.ONE_HOUR, environment_type=EnvironmentType.LIVE,
-        previous_one_datetime=get_previous_one_unit_date_time(TimeUnit.ONE_HOUR)
-    )
+    pass
+    # train_env = UpbitEnvironment(
+    #     coin_name="MOC", time_unit=TimeUnit.ONE_HOUR, environment_type=EnvironmentType.TRAIN
+    # )
+    #
+    # test_env = UpbitEnvironment(
+    #     coin_name="MOC", time_unit=TimeUnit.ONE_HOUR, environment_type=EnvironmentType.TEST
+    # )
+    #
+    # live_env = UpbitEnvironment(
+    #     coin_name="MOC", time_unit=TimeUnit.ONE_HOUR, environment_type=EnvironmentType.LIVE,
+    #     previous_one_datetime=get_previous_one_unit_date_time(TimeUnit.ONE_HOUR)
+    # )
 
     # print(train_env.data)
     # print(train_env.state_data)
     # print(train_env.state_data.shape)
-
-    state = train_env.reset()
-    print(state.shape)
-
-    state = test_env.reset()
-    print(state.shape)
-
-    state = live_env.reset()
-    print(state.shape)
+    #
+    # state = train_env.reset()
+    # print(state.shape)
+    #
+    # state = test_env.reset()
+    # print(state.shape)
+    #
+    # state = live_env.reset()
+    # print(state.shape)
