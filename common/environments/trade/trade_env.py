@@ -31,7 +31,7 @@ class EpsilonGreedyTradeDQNActionSelector(ActionSelector):
     def __init__(self, epsilon=0.05, env=None):
         self.epsilon = epsilon
         self.env = env
-        self.default_action_selector = ArgmaxActionSelector()
+        self.default_action_selector = ArgmaxTradeActionSelector(env=env)
 
     def __call__(self, q_values):
         if self.env.step_idx == (335 if self.env.time_unit == TimeUnit.ONE_HOUR else 13):
