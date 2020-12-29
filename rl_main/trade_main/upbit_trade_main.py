@@ -194,7 +194,7 @@ def train(train_env, test_env):
                     if solved:
                         break
 
-                    if reward_tracker.done_episodes % params.TEST_EPISODE_PERIOD == 0:
+                    if reward_tracker.done_episodes % params.TEST_PERIOD_EPISODE == 0:
                         print("#" * 200)
                         print("[TEST START]")
                         test(test_env, net)

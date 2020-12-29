@@ -99,7 +99,7 @@ def get_data(coin_name, time_unit):
             queryset = naver_ohlcv_price_session.query(candle_coin_class).order_by(
                 candle_coin_class.datetime_krw.asc()
             )
-            df = pd.read_sql(queryset.statement, naver_ohlcv_price_session.bind)[:-1]
+            df = pd.read_sql(queryset.statement, naver_ohlcv_price_session.bind)
             last_datetime_krw = str(df.iloc[-1, 2])
 
             if last_datetime_krw != previous_one_unit_datetime_krw:

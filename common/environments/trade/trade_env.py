@@ -18,33 +18,35 @@ class ArgmaxTradeActionSelector(ActionSelector):
     def __init__(self, env=None):
         self.env = env
 
-    def __call__(self, scores):
-        assert isinstance(scores, np.ndarray)
+    def __call__(self, q_values):
+        assert isinstance(q_values, np.ndarray)
         if self.env.step_idx == (335 if self.env.time_unit == TimeUnit.ONE_HOUR else 13):
-            return np.array([Action.MARKET_SELL.value] * len(scores))
+            return np.array([Action.MARKET_SELL.value] * len(q_values))
         else:
-            return np.argmax(scores, axis=1)
+            if self.env.hold_coin_quantity == 0.0:
+                q_values[:, Action.MARKET_SELL.value] = np.nan
+
+            return np.nanargmax(q_values, axis=1)
 
 
 class EpsilonGreedyTradeDQNActionSelector(ActionSelector):
     def __init__(self, epsilon=0.05, env=None):
         self.epsilon = epsilon
         self.env = env
-        self.action_selector = ArgmaxActionSelector()
+        self.default_action_selector = ArgmaxActionSelector()
 
-    def __call__(self, scores):
+    def __call__(self, q_values):
         if self.env.step_idx == (335 if self.env.time_unit == TimeUnit.ONE_HOUR else 13):
-            actions = np.array([Action.MARKET_SELL.value] * len(scores))
+            actions = np.array([Action.MARKET_SELL.value] * len(q_values))
         else:
-            assert isinstance(scores, np.ndarray)
-            batch_size, n_actions = scores.shape
-            actions = self.action_selector(scores)
-            mask = np.random.random(size=batch_size) < self.epsilon
-            rand_actions = np.random.choice(a=n_actions, size=sum(mask))
-            actions[mask] = rand_actions
+            assert isinstance(q_values, np.ndarray)
 
-            if self.env.step_idx == (335 if self.env.time_unit == TimeUnit.ONE_HOUR else 13):
-                actions = np.array([Action.MARKET_SELL.value] * len(actions))
+            if random.random() < self.epsilon:
+                return np.array(
+                    [random.choice([Action.HOLD.value, Action.MARKET_BUY.value])] * len(q_values)
+                )
+            else:
+                actions = self.default_action_selector(q_values)
 
         return actions
 
