@@ -123,7 +123,7 @@ def test(test_env, net, verbose=True):
         episode_reward += reward
         state = next_state
 
-    print("TRANSACTION START DATETIME: {0}, EPISODE REWARD: {1:.3f}, PROFIT: {2:.1f}, STEPS: {3}".format(
+    print("TRANSACTION START DATETIME: {0}, EPISODE REWARD: {1:>8.3f}, PROFIT: {2:>10.1f}, STEPS: {3}".format(
         test_env.transaction_start_datetime, episode_reward, info["profit"], step_idx
     ))
 
@@ -272,7 +272,7 @@ def test_sequential_all(test_env, net, last_datetime_krw):
     ))
 
 
-def main():
+if __name__ == "__main__":
     coin_name = "OMG"
 
     train_data_info, test_data_info = get_data(coin_name=coin_name, time_unit=TimeUnit.ONE_HOUR)
@@ -312,7 +312,3 @@ def main():
     transaction_state_idx = WINDOW_SIZE - 1
     test_sequential_env.transaction_state_idx = transaction_state_idx
     test_sequential_all(test_sequential_env, net, test_data_info["last_datetime_krw"])
-
-
-if __name__ == "__main__":
-    main()
