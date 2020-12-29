@@ -295,8 +295,8 @@ if __name__ == "__main__":
 
     net = train(train_env, test_random_env)
 
-    # print("#### TEST RANDOM 100")
-    # test_random(test_random_env, net, num_episodes=100)
+    print("#### TEST RANDOM 100")
+    test_random(test_random_env, net, num_episodes=100)
 
     print()
 
