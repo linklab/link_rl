@@ -7,7 +7,6 @@ import numpy as np
 
 from common.environments.trade.trade_constant import EnvironmentType, WINDOW_SIZE, TimeUnit, MAX_BUY_SIZE, \
     INITIAL_TOTAL_KRW, Action, BUY_AMOUNT, COMMISSION_RATE, SLIPPAGE_COUNT
-from common.environments.trade.trade_data import get_data
 from common.environments.trade.trade_utils import get_history_entry, get_order_unit, get_previous_one_unit_date_time
 from common.fast_rl.actions import ActionSelector, ArgmaxActionSelector
 
