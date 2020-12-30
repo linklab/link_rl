@@ -121,9 +121,10 @@ def evaluate(env, agent, verbose=True):
         episode_reward += reward
         state = next_state
 
-    print("TRANSACTION START DATETIME: {0}, EPISODE REWARD: {1:>8.3f}, PROFIT: {2:>10.1f}, STEPS: {3}".format(
-        env.transaction_start_datetime, episode_reward, info["profit"], step_idx
-    ))
+    if verbose:
+        print("TRANSACTION START DATETIME: {0}, EPISODE REWARD: {1:>8.3f}, PROFIT: {2:>10.1f}, STEPS: {3}".format(
+            env.transaction_start_datetime, episode_reward, info["profit"], step_idx
+        ))
 
     return info["profit"], step_idx
 
