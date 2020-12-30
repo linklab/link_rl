@@ -45,7 +45,7 @@ class PARAMETERS_DOUBLE_RIP:
     ########################################
     ########################################
     STOP_MEAN_EPISODE_REWARD = 1000
-    STOP_CONDITION_CONTINUOUS_EPISODE = 10
+    STOP_PATIENCE_COUNT = 10
 
     REPLAY_BUFFER_SIZE = 100000
     MIN_REPLAY_SIZE_FOR_TRAIN = 1000

@@ -24,6 +24,7 @@ def draw_performance(evaluate_steps, dqn_performance, random_performance):
 
     plt.plot(evaluate_steps, dqn_performance, label="Double+Dueling DQN")
     plt.plot(evaluate_steps, random_performance, label="Random")
+    plt.ticklabel_format(useOffset=False)
 
     plt.ylabel("Profit")
     plt.xlabel("Step")

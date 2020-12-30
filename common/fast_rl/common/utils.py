@@ -389,7 +389,7 @@ class RewardTracker:
                 self.count_stop_condition_episode += 1
             else:
                 self.count_stop_condition_episode = 0
-            if self.count_stop_condition_episode >= self.params.STOP_CONDITION_CONTINUOUS_EPISODE:
+            if self.count_stop_condition_episode >= self.params.STOP_PATIENCE_COUNT:
                 if not is_print_performance:
                     self.print_performance(
                         episode_done_step, self.done_episodes, episode_reward, current_ts, ts_diff, self.mean_episode_reward, epsilon,
@@ -505,7 +505,8 @@ class EarlyStopping:
 
         if evaluation_value < self.evaluation_min_threshold or evaluation_value < self.best_evaluation_value + self.delta:
             self.counter += 1
-            print(f'EarlyStopping counter: {self.counter} out of {self.patience}')
+            print(f'EarlyStopping counter: {self.counter} out of {self.patience}. '
+                  f'Best evaluation value is still {self.best_evaluation_value:.2f}')
             if self.counter >= self.patience:
                 solved = True
                 rl_agent.load_model(
@@ -527,9 +528,9 @@ class EarlyStopping:
         '''Saves model when validation loss decrease.'''
         if self.verbose:
             if self.best_evaluation_value == -1.0e10:
-                print(f'mean_episode_reward recored first ({evaluation_value:.2f}).  Saving model ...')
+                print(f'evaluation_value recorded first ({evaluation_value:.2f}).  Saving model ...')
             else:
-                print(f'mean_episode_reward increased ({self.best_evaluation_value:.2f} --> {evaluation_value:.2f}).  Saving model ...')
+                print(f'evaluation_value increased ({self.best_evaluation_value:.2f} --> {evaluation_value:.2f}).  Saving model ...')
 
         rl_agent.save_model(
             self.model_save_dir,
