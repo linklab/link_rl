@@ -475,7 +475,7 @@ class RewardTracker:
 
 class EarlyStopping:
     """Early stops the training if validation loss doesn't improve after a given patience."""
-    def __init__(self, patience=7, stop_mean_episode_reward=0.0, verbose=False, delta=0.0, trace_func=print,
+    def __init__(self, patience=7, evaluation_min_threshold=0.0, verbose=False, delta=0.0, trace_func=print,
                  model_save_dir=".", env_name="anonymous_env", model_name="anonymous_model"):
         """
         Args:
@@ -487,24 +487,24 @@ class EarlyStopping:
                             Default: 0
         """
         self.patience = patience
-        self.stop_mean_episode_reward = stop_mean_episode_reward
+        self.evaluation_min_threshold = evaluation_min_threshold
         self.verbose = verbose
         self.counter = 0
-        self.best_mean_episode_reward = -1.0e10
+        self.best_evaluation_value = -1.0e10
         self.early_stop = False
         self.delta = delta
         self.model_save_dir = model_save_dir
         self.env_name = env_name
         self.model_name = model_name
 
-    def __call__(self, mean_episode_reward, model, step_idx):
+    def __call__(self, evaluation_value, model, step_idx):
         solved = False
 
-        if self.best_mean_episode_reward == -1.0e10:
-            self.best_mean_episode_reward = mean_episode_reward
+        if self.best_evaluation_value == -1.0e10:
+            self.best_evaluation_value = evaluation_value
 
-        if mean_episode_reward >= self.stop_mean_episode_reward:
-            if mean_episode_reward < self.best_mean_episode_reward + self.delta:
+        if evaluation_value >= self.best_evaluation_value:
+            if evaluation_value < self.best_evaluation_value + self.delta:
                 self.counter += 1
                 print(f'EarlyStopping counter: {self.counter} out of {self.patience}')
                 if self.counter >= self.patience:
@@ -515,9 +515,9 @@ class EarlyStopping:
                         self.model_name,
                         model
                     )
-            elif mean_episode_reward >= self.stop_mean_episode_reward + self.delta:
-                self.best_mean_episode_reward = mean_episode_reward
-                self.save_checkpoint(mean_episode_reward, model, step_idx)
+            elif evaluation_value >= self.best_evaluation_value + self.delta:
+                self.best_evaluation_value = evaluation_value
+                self.save_checkpoint(evaluation_value, model, step_idx)
                 self.counter = 0
             else:
                 raise ValueError()
@@ -526,13 +526,13 @@ class EarlyStopping:
 
         return solved
 
-    def save_checkpoint(self, mean_episode_reward, model, step_idx):
+    def save_checkpoint(self, evaluation_value, model, step_idx):
         '''Saves model when validation loss decrease.'''
         if self.verbose:
-            if self.best_mean_episode_reward == -1.0e10:
-                print(f'mean_episode_reward recored first ({mean_episode_reward:.2f}).  Saving model ...')
+            if self.best_evaluation_value == -1.0e10:
+                print(f'mean_episode_reward recored first ({evaluation_value:.2f}).  Saving model ...')
             else:
-                print(f'mean_episode_reward increased ({self.best_mean_episode_reward:.2f} --> {mean_episode_reward:.2f}).  Saving model ...')
+                print(f'mean_episode_reward increased ({self.best_evaluation_value:.2f} --> {evaluation_value:.2f}).  Saving model ...')
 
         rl_agent.save_model(
             self.model_save_dir,
@@ -540,7 +540,7 @@ class EarlyStopping:
             self.model_name,
             model,
             step_idx,
-            mean_episode_reward
+            evaluation_value
         )
 
 

@@ -5,6 +5,7 @@ import torch
 import torch.optim as optim
 import os, sys
 import warnings
+import numpy as np
 
 current_path = os.path.dirname(os.path.realpath(__file__))
 PROJECT_HOME = os.path.abspath(os.path.join(current_path, os.pardir, os.pardir))
@@ -173,19 +174,19 @@ def train(train_env, evaluate_env):
 
     last_loss = 0.0
 
-    # early_stopping = EarlyStopping(
-    #     patience=7,
-    #     stop_mean_episode_reward=params.STOP_MEAN_EPISODE_REWARD,
-    #     verbose=True,
-    #     delta=0.0,
-    #     model_save_dir=MODEL_SAVE_DIR,
-    #     env_name=params.ENVIRONMENT_ID.value + "_" + coin_name,
-    #     model_name=net.__name__
-    # )
-
     evaluate_steps = []
     evaluate_dqn_total_profits = []
     evaluate_random_total_profits = []
+
+    early_stopping = EarlyStopping(
+        patience=10,
+        evaluation_min_threshold=params.STOP_MEAN_EPISODE_REWARD,
+        verbose=True,
+        delta=0.0,
+        model_save_dir=MODEL_SAVE_DIR,
+        env_name=params.ENVIRONMENT_ID.value + "_" + coin_name,
+        model_name=net.__name__
+    )
 
     with utils.RewardTracker(params=params, frame=False, stat=stat, early_stopping=None) as reward_tracker:
         while step_idx < params.MAX_GLOBAL_STEP:
@@ -196,15 +197,13 @@ def train(train_env, evaluate_env):
 
             episode_rewards = experience_source.pop_episode_reward_lst()
 
+            solved = False
             if episode_rewards:
                 for episode_reward in episode_rewards:
-                    solved, _ = reward_tracker.set_episode_reward(
+                    reward_tracker.set_episode_reward(
                         episode_reward, step_idx, action_selector.epsilon, last_info=last_entry.info,
                         last_loss=last_loss, model=net
                     )
-
-                    if solved:
-                        break
 
                     if reward_tracker.done_episodes % params.TEST_PERIOD_EPISODE == 0:
                         print("#" * 200)
@@ -223,11 +222,16 @@ def train(train_env, evaluate_env):
                         )
                         evaluate_random_total_profits.append(random_total_profit)
 
+                        solved = early_stopping(random_total_profit, model=net, step_idx=step_idx)
+
                         print("[TEST END]")
                         print("#" * 200)
 
-                if solved:
-                    break
+                    if solved:
+                        break
+
+            if solved:
+                break
 
             if len(buffer) < params.MIN_REPLAY_SIZE_FOR_TRAIN:
                 continue
@@ -326,14 +330,6 @@ if __name__ == "__main__":
 
     net = train(train_env, evaluate_random_env)
 
-    print("#### TEST RANDOM 100")
-
-    argmax_action_selector = ArgmaxTradeActionSelector(env=evaluate_random_env)
-    evaluate_agent = rl_agent.DQNAgent(dqn_model=net, action_selector=argmax_action_selector, device=device)
-    evaluate_random("DQN", evaluate_random_env, evaluate_agent, num_episodes=100)
-
-    print()
-
     print("#### TEST SEQUENTIALLY")
     evaluate_sequential_env = UpbitEnvironment(
         coin_name=coin_name,
@@ -341,6 +337,23 @@ if __name__ == "__main__":
         data_info=evaluate_data_info,
         environment_type=EnvironmentType.TEST_SEQUENTIAL,
     )
+
     argmax_action_selector = ArgmaxTradeActionSelector(env=evaluate_sequential_env)
     evaluate_agent = rl_agent.DQNAgent(dqn_model=net, action_selector=argmax_action_selector, device=device)
-    evaluate_sequential_all("DQN", evaluate_sequential_env, evaluate_agent, data_size=len(evaluate_data_info["data"]))
+    sequential_dqn_total_profits = []
+    for _ in range(100):
+        total_profit = evaluate_sequential_all("DQN", evaluate_sequential_env, evaluate_agent, data_size=len(evaluate_data_info["data"]))
+        sequential_dqn_total_profits.append(total_profit)
+    print("SEQUENTIAL: DQN - AVERAGE PROFIT {0:.1f}/STD {1:.1f}".format(
+        np.mean(sequential_dqn_total_profits), np.std(sequential_dqn_total_profits)
+    ))
+
+    random_action_selector = RandomTradeDQNActionSelector(env=evaluate_sequential_env)
+    random_agent = rl_agent.DQNAgent(dqn_model=None, action_selector=random_action_selector, device=device)
+    sequential_random_total_profits = []
+    for _ in range(100):
+        total_profit = evaluate_sequential_all("DQN", evaluate_sequential_env, random_agent, data_size=len(evaluate_data_info["data"]))
+        sequential_random_total_profits.append(total_profit)
+    print("SEQUENTIAL: RANDOM - AVERAGE PROFIT {0:.1f}/STD {1:.1f}".format(
+        np.mean(sequential_random_total_profits), np.std(sequential_random_total_profits)
+    ))
