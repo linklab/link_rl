@@ -15,7 +15,8 @@ from common.fast_rl.common.utils import EarlyStopping
 from common.environments.trade.trade_data import get_data
 from common import common_utils
 from common.environments.trade.trade_constant import TimeUnit, EnvironmentType, Action, WINDOW_SIZE
-from common.environments.trade.trade_env import UpbitEnvironment, EpsilonGreedyTradeDQNActionSelector, \
+from common.environments.trade.trade_env import UpbitEnvironment
+from common.environments.trade.trade_action_selector import EpsilonGreedyTradeDQNActionSelector, \
     ArgmaxTradeActionSelector
 
 from common.fast_rl import rl_agent, value_based_model, actions, experience_single, replay_buffer
@@ -40,9 +41,7 @@ if not os.path.exists(MODEL_SAVE_DIR):
     os.makedirs(MODEL_SAVE_DIR)
 
 
-def test(env, net, verbose=True):
-    action_selector = ArgmaxTradeActionSelector(env=env)
-    agent = rl_agent.DQNAgent(net, action_selector, device=device)
+def test(env, agent, verbose=True):
     experience_source = experience_single.ExperienceSourceSingleEnvFirstLast(env, agent, gamma=params.GAMMA, steps_count=params.N_STEP)
 
     done = False
@@ -148,9 +147,14 @@ def train(train_env, test_env):
         eps_final=params.EPSILON_MIN,
         eps_frames=params.EPSILON_MIN_STEP
     )
-    agent = rl_agent.DQNAgent(net, action_selector, device=device)
+    agent = rl_agent.DQNAgent(dqn_model=net, action_selector=action_selector, device=device)
 
-    experience_source = experience_single.ExperienceSourceSingleEnvFirstLast(train_env, agent, gamma=params.GAMMA, steps_count=params.N_STEP)
+    argmax_action_selector = ArgmaxTradeActionSelector(env=test_env)
+    test_agent = rl_agent.DQNAgent(dqn_model=net, action_selector=argmax_action_selector, device=device)
+
+    experience_source = experience_single.ExperienceSourceSingleEnvFirstLast(
+        train_env, agent, gamma=params.GAMMA, steps_count=params.N_STEP
+    )
     buffer = replay_buffer.ExperienceReplayBuffer(experience_source, buffer_size=params.REPLAY_BUFFER_SIZE)
     optimizer = optim.Adam(net.parameters(), lr=params.LEARNING_RATE)
 
@@ -171,7 +175,7 @@ def train(train_env, test_env):
         verbose=True,
         delta=0.0,
         model_save_dir=MODEL_SAVE_DIR,
-        env_name=params.ENVIRONMENT_ID.value,
+        env_name=params.ENVIRONMENT_ID.value + "_" + coin_name,
         model_name=net.__name__
     )
 
@@ -197,7 +201,7 @@ def train(train_env, test_env):
                     if reward_tracker.done_episodes % params.TEST_PERIOD_EPISODE == 0:
                         print("#" * 200)
                         print("[TEST START]")
-                        test(test_env, net)
+                        test(test_env, test_agent)
                         print("[TEST END]")
                         print("#" * 200)
 
@@ -224,14 +228,14 @@ def train(train_env, test_env):
     return net
 
 
-def test_random(env, net, num_episodes):
+def test_random(env, agent, num_episodes):
     num_positive = 0
     num_negative = 0
     total_profit = 0.0
     total_steps = 0
 
     for _ in range(num_episodes):
-        profit, step = test(env, net, verbose=False)
+        profit, step = test(env, agent, verbose=False)
         if profit > 0:
             num_positive += 1
         else:
@@ -244,7 +248,7 @@ def test_random(env, net, num_episodes):
     ))
 
 
-def test_sequential_all(env, net, data_size):
+def test_sequential_all(env, agent, data_size):
     num_positive = 0
     num_negative = 0
     total_profit = 0.0
@@ -254,7 +258,7 @@ def test_sequential_all(env, net, data_size):
     env.transaction_state_idx = 0
     while True:
         num_episodes += 1
-        profit, step = test(env, net, verbose=False)
+        profit, step = test(env, agent, verbose=False)
         if profit > 0:
             num_positive += 1
         else:
@@ -296,7 +300,10 @@ if __name__ == "__main__":
     net = train(train_env, test_random_env)
 
     print("#### TEST RANDOM 100")
-    test_random(test_random_env, net, num_episodes=100)
+
+    argmax_action_selector = ArgmaxTradeActionSelector(env=test_random_env)
+    test_agent = rl_agent.DQNAgent(dqn_model=net, action_selector=argmax_action_selector, device=device)
+    test_random(test_random_env, test_agent, num_episodes=100)
 
     print()
 
@@ -307,4 +314,6 @@ if __name__ == "__main__":
         data_info=test_data_info,
         environment_type=EnvironmentType.TEST_SEQUENTIAL,
     )
-    test_sequential_all(test_sequential_env, net, len(test_data_info["data"]))
+    argmax_action_selector = ArgmaxTradeActionSelector(env=test_sequential_env)
+    test_agent = rl_agent.DQNAgent(dqn_model=net, action_selector=argmax_action_selector, device=device)
+    test_sequential_all(test_sequential_env, test_agent, data_size=len(test_data_info["data"]))

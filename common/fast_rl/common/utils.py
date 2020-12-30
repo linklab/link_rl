@@ -362,8 +362,7 @@ class RewardTracker:
     def __exit__(self, *args):
         pass
 
-    def set_episode_reward(self, episode_reward, episode_done_step, epsilon,
-                           last_info=None, last_loss=None, model=None, step_idx=None):
+    def set_episode_reward(self, episode_reward, episode_done_step, epsilon, last_info=None, last_loss=None, model=None):
         self.done_episodes += 1
 
         self.episode_reward_list.append(episode_reward)
@@ -384,7 +383,7 @@ class RewardTracker:
 
         solved = False
         if self.early_stopping:
-            solved = self.early_stopping(self.mean_episode_reward, model, step_idx)
+            solved = self.early_stopping(self.mean_episode_reward, model, episode_done_step)
         else:
             if self.mean_episode_reward > self.params.STOP_MEAN_EPISODE_REWARD:
                 self.count_stop_condition_episode += 1

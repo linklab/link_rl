@@ -11,47 +11,6 @@ from common.environments.trade.trade_utils import get_history_entry, get_order_u
 from common.fast_rl.actions import ActionSelector, ArgmaxActionSelector
 
 
-class ArgmaxTradeActionSelector(ActionSelector):
-    """
-    Selects actions using argmax
-    """
-    def __init__(self, env=None):
-        self.env = env
-
-    def __call__(self, q_values):
-        if self.env.step_idx == (335 if self.env.time_unit == TimeUnit.ONE_HOUR else 13):
-            return np.array([Action.MARKET_SELL.value] * len(q_values))
-        else:
-            if self.env.hold_coin_quantity == 0.0:
-                q_values[:, Action.MARKET_SELL.value] = np.nan
-            return np.nanargmax(q_values, axis=1)
-
-
-class EpsilonGreedyTradeDQNActionSelector(ActionSelector):
-    def __init__(self, epsilon=0.05, env=None):
-        self.epsilon = epsilon
-        self.env = env
-        self.default_action_selector = ArgmaxTradeActionSelector(env=env)
-
-    def __call__(self, q_values):
-        if self.env.step_idx == (335 if self.env.time_unit == TimeUnit.ONE_HOUR else 13):
-            actions = np.array([Action.MARKET_SELL.value] * len(q_values))
-        else:
-            if random.random() < self.epsilon:
-                if self.env.hold_coin_quantity == 0.0:
-                    return np.array(
-                        [random.choice([Action.HOLD.value, Action.MARKET_BUY.value])] * len(q_values)
-                    )
-                else:
-                    return np.array(
-                        [random.choice([Action.HOLD.value, Action.MARKET_BUY.value, Action.MARKET_SELL.value])] * len(q_values)
-                    )
-            else:
-                actions = self.default_action_selector(q_values)
-
-        return actions
-
-
 class UpbitEnvironment(gym.Env):
     def __init__(self, coin_name, time_unit, data_info, environment_type=EnvironmentType.TRAIN):
         super(UpbitEnvironment, self).__init__()

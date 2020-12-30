@@ -5,9 +5,8 @@ import copy
 import numpy as np
 import torch
 import torch.nn.functional as F
-import os, glob
+import os, glob, sys
 
-from common.logger import get_logger
 from . import actions
 
 
@@ -134,8 +133,12 @@ class DQNAgent(BaseAgent):
             states = self.preprocessor(states)
             if torch.is_tensor(states):
                 states = states.to(self.device)
-        q_v = self.dqn_model(states)
-        q = q_v.detach().cpu().numpy()
+        if self.dqn_model:
+            q_v = self.dqn_model(states)
+            q = q_v.detach().cpu().numpy()
+        else:
+            q = [[]]
+
         actions = self.action_selector(q)
         return actions, agent_states
 
