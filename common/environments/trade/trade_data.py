@@ -130,10 +130,10 @@ def get_data(coin_name, time_unit):
     num_train_data = int(len(data) * 0.8)
     num_test_data = len(data) - num_train_data
 
-    first_train_datetime_krw = str(data.iloc[0, 2])
-    last_train_datetime_krw = str(data.iloc[num_train_data, 2])
-    first_test_datetime_krw = str(data.iloc[num_train_data + 1, 2])
-    last_test_datetime_krw = str(data.iloc[-1, 2])
+    first_train_datetime_krw = str(data.iloc[0]['datetime_krw'])
+    last_train_datetime_krw = str(data.iloc[num_train_data]['datetime_krw'])
+    first_test_datetime_krw = str(data.iloc[num_train_data + 1]['datetime_krw'])
+    last_test_datetime_krw = str(data.iloc[-1]['datetime_krw'])
 
     train_data = data[:num_train_data]
     train_state_data = state_data[:num_train_data]

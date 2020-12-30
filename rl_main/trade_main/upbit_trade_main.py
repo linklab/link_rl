@@ -240,9 +240,6 @@ def train(coin_name, train_env, evaluate_env):
             if solved:
                 break
 
-            if len(buffer) < params.MIN_REPLAY_SIZE_FOR_TRAIN:
-                continue
-
             optimizer.zero_grad()
             batch = buffer.sample(params.BATCH_SIZE)
             loss_v = value_based_model.calc_loss_double_dqn(batch, net, tgt_net, gamma=params.GAMMA, cuda=params.CUDA)
