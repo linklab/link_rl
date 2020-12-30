@@ -277,7 +277,7 @@ def evaluate_random(agent_type, env, agent, num_episodes, verbose=True):
         total_steps += step
 
     if verbose:
-        print("###[{0}] POSTITIVE: {1}/{3}, NEGATIVE: {2}/{3}, TOTAL PROFIT: {4:.1f}, AVG. STEP FOR EPISODE: {5:.1f}".format(
+        print("###[{0:6}] POSTITIVE: {1}/{3}, NEGATIVE: {2}/{3}, TOTAL PROFIT: {4:.1f}, AVG. STEP FOR EPISODE: {5:.1f}".format(
             agent_type, num_positive, num_negative, num_episodes, total_profit, total_steps / num_episodes
         ))
 
@@ -306,7 +306,7 @@ def evaluate_sequential_all(agent_type, env, agent, data_size, verbose=True):
             break
 
     if verbose:
-        print("###[{0}] POSITIVE: {1}/{3}, NEGATIVE: {2}/{3}, TOTAL PROFIT: {4:.1f}, AVG. STEP FOR EPISODE: {5:.1f}".format(
+        print("###[{0:6}] POSITIVE: {1}/{3}, NEGATIVE: {2}/{3}, TOTAL PROFIT: {4:.1f}, AVG. STEP FOR EPISODE: {5:.1f}".format(
             agent_type, num_positive, num_negative, num_episodes, total_profit, total_steps / num_episodes
         ))
 
