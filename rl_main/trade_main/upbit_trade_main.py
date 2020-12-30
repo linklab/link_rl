@@ -315,7 +315,7 @@ def evaluate_sequential_all(agent_type, env, agent, data_size, verbose=True):
 
 def main():
     coin_name = "OMG"
-    time_unit = TimeUnit.ONE_DAY
+    time_unit = TimeUnit.ONE_HOUR
 
     train_data_info, evaluate_data_info = get_data(coin_name=coin_name, time_unit=time_unit)
 
