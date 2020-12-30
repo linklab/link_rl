@@ -224,6 +224,12 @@ def train(train_env, evaluate_env):
 
                         solved = early_stopping(random_total_profit, model=net, step_idx=step_idx)
 
+                        visualizer.draw_performance(
+                            evaluate_steps,
+                            evaluate_dqn_total_profits,
+                            evaluate_random_total_profits
+                        )
+
                         print("[TEST END]")
                         print("#" * 200)
 
@@ -250,7 +256,6 @@ def train(train_env, evaluate_env):
 
             if step_idx % params.TARGET_NET_SYNC_STEP_PERIOD < params.TRAIN_STEP_FREQ:
                 tgt_net.sync()
-                visualizer.draw_performance(evaluate_steps, evaluate_dqn_total_profits, evaluate_random_total_profits)
 
     return net
 
