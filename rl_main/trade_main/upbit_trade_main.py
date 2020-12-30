@@ -129,7 +129,7 @@ def evaluate(env, agent, verbose=True):
     return info["profit"], step_idx
 
 
-def train(train_env, evaluate_env):
+def train(coin_name, train_env, evaluate_env):
     common_utils.print_fast_rl_params(params)
 
     params.BATCH_SIZE *= params.TRAIN_STEP_FREQ
@@ -155,7 +155,7 @@ def train(train_env, evaluate_env):
     argmax_action_selector = ArgmaxTradeActionSelector(env=evaluate_env)
     evaluate_agent = rl_agent.DQNAgent(dqn_model=net, action_selector=argmax_action_selector, device=device)
 
-    random_action_selector = RandomTradeDQNActionSelector(env=evaluate_random_env)
+    random_action_selector = RandomTradeDQNActionSelector(env=evaluate_env)
     random_agent = rl_agent.DQNAgent(dqn_model=None, action_selector=random_action_selector, device=device)
 
     experience_source = experience_single.ExperienceSourceSingleEnvFirstLast(
@@ -219,7 +219,7 @@ def train(train_env, evaluate_env):
                         evaluate_dqn_total_profits.append(dqn_total_profit)
 
                         random_total_profit = evaluate_random(
-                            "RANDOM", evaluate_random_env, random_agent, num_episodes=100
+                            "RANDOM", evaluate_env, random_agent, num_episodes=100
                         )
                         evaluate_random_total_profits.append(random_total_profit)
 
@@ -313,7 +313,7 @@ def evaluate_sequential_all(agent_type, env, agent, data_size, verbose=True):
     return total_profit
 
 
-if __name__ == "__main__":
+def main():
     coin_name = "OMG"
     time_unit = TimeUnit.ONE_DAY
 
@@ -336,7 +336,7 @@ if __name__ == "__main__":
         environment_type=EnvironmentType.TEST_RANDOM,
     )
 
-    net = train(train_env, evaluate_random_env)
+    net = train(coin_name, train_env, evaluate_random_env)
 
     print("#### TEST SEQUENTIALLY")
     evaluate_sequential_env = UpbitEnvironment(
@@ -369,3 +369,7 @@ if __name__ == "__main__":
     print("SEQUENTIAL: RANDOM - 100 AVERAGE PROFIT {0:.1f}/STD {1:.1f}".format(
         np.mean(sequential_random_total_profits), np.std(sequential_random_total_profits)
     ))
+
+
+if __name__ == "__main__":
+    main()
