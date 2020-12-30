@@ -12,8 +12,8 @@ if PROJECT_HOME not in sys.path:
 from common.environments.trade.trade_constant import TimeUnit, EnvironmentType, Action
 from common.environments.trade.trade_data import get_data
 from common.environments.trade.trade_env import UpbitEnvironment
-from common.fast_rl import experience_single, rl_agent
-from rl_main.trade_main.upbit_trade_main import test_random, test_sequential_all
+from common.fast_rl import rl_agent
+from rl_main.trade_main.upbit_trade_main import evaluate_random, evaluate_sequential_all
 
 ##### NOTE #####
 from config.parameters import PARAMETERS as params
@@ -33,31 +33,31 @@ if __name__ == "__main__":
     coin_name = "OMG"
     time_unit = TimeUnit.ONE_DAY
 
-    train_data_info, test_data_info = get_data(coin_name=coin_name, time_unit=time_unit)
+    train_data_info, evaluate_data_info = get_data(coin_name=coin_name, time_unit=time_unit)
 
     print(train_data_info["first_datetime_krw"], train_data_info["last_datetime_krw"])
-    print(test_data_info["first_datetime_krw"], test_data_info["last_datetime_krw"])
+    print(evaluate_data_info["first_datetime_krw"], evaluate_data_info["last_datetime_krw"])
 
     print("#### TEST RANDOM 100")
-    test_random_env = UpbitEnvironment(
+    evaluate_random_env = UpbitEnvironment(
         coin_name=coin_name,
         time_unit=time_unit,
-        data_info=test_data_info,
+        data_info=evaluate_data_info,
         environment_type=EnvironmentType.TEST_RANDOM,
     )
-    random_action_selector = RandomTradeDQNActionSelector(env=test_random_env)
+    random_action_selector = RandomTradeDQNActionSelector(env=evaluate_random_env)
     random_agent = rl_agent.DQNAgent(dqn_model=None, action_selector=random_action_selector, device=device)
-    test_random(test_random_env, random_agent, num_episodes=100)
+    evaluate_random(evaluate_random_env, random_agent, num_episodes=100)
 
     print()
 
     print("#### TEST SEQUENTIALLY")
-    test_sequential_env = UpbitEnvironment(
+    evaluate_sequential_env = UpbitEnvironment(
         coin_name=coin_name,
         time_unit=time_unit,
-        data_info=test_data_info,
+        data_info=evaluate_data_info,
         environment_type=EnvironmentType.TEST_SEQUENTIAL,
     )
-    random_action_selector = RandomTradeDQNActionSelector(env=test_sequential_env)
+    random_action_selector = RandomTradeDQNActionSelector(env=evaluate_sequential_env)
     random_agent = rl_agent.DQNAgent(dqn_model=None, action_selector=random_action_selector, device=device)
-    test_sequential_all(test_sequential_env, random_agent, data_size=len(test_data_info["data"]))
+    evaluate_sequential_all(evaluate_sequential_env, random_agent, data_size=len(evaluate_data_info["data"]))

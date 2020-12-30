@@ -14,7 +14,7 @@ if PROJECT_HOME not in sys.path:
 from common.fast_rl.common.utils import EarlyStopping
 from common.environments.trade.trade_data import get_data
 from common import common_utils
-from common.environments.trade.trade_constant import TimeUnit, EnvironmentType, Action, WINDOW_SIZE
+from common.environments.trade.trade_constant import TimeUnit, EnvironmentType, Action
 from common.environments.trade.trade_env import UpbitEnvironment
 from common.environments.trade.trade_action_selector import EpsilonGreedyTradeDQNActionSelector, \
     ArgmaxTradeActionSelector
@@ -41,7 +41,7 @@ if not os.path.exists(MODEL_SAVE_DIR):
     os.makedirs(MODEL_SAVE_DIR)
 
 
-def test(env, agent, verbose=True):
+def evaluate(env, agent, verbose=True):
     experience_source = experience_single.ExperienceSourceSingleEnvFirstLast(env, agent, gamma=params.GAMMA, steps_count=params.N_STEP)
 
     done = False
@@ -126,7 +126,7 @@ def test(env, agent, verbose=True):
     return info["profit"], step_idx
 
 
-def train(train_env, test_env):
+def train(train_env, evaluate_env):
     common_utils.print_fast_rl_params(params)
 
     params.BATCH_SIZE *= params.TRAIN_STEP_FREQ
@@ -149,8 +149,8 @@ def train(train_env, test_env):
     )
     agent = rl_agent.DQNAgent(dqn_model=net, action_selector=action_selector, device=device)
 
-    argmax_action_selector = ArgmaxTradeActionSelector(env=test_env)
-    test_agent = rl_agent.DQNAgent(dqn_model=net, action_selector=argmax_action_selector, device=device)
+    argmax_action_selector = ArgmaxTradeActionSelector(env=evaluate_env)
+    evaluate_agent = rl_agent.DQNAgent(dqn_model=net, action_selector=argmax_action_selector, device=device)
 
     experience_source = experience_single.ExperienceSourceSingleEnvFirstLast(
         train_env, agent, gamma=params.GAMMA, steps_count=params.N_STEP
@@ -169,17 +169,20 @@ def train(train_env, test_env):
 
     last_loss = 0.0
 
-    early_stopping = EarlyStopping(
-        patience=7,
-        stop_mean_episode_reward=params.STOP_MEAN_EPISODE_REWARD,
-        verbose=True,
-        delta=0.0,
-        model_save_dir=MODEL_SAVE_DIR,
-        env_name=params.ENVIRONMENT_ID.value + "_" + coin_name,
-        model_name=net.__name__
-    )
+    # early_stopping = EarlyStopping(
+    #     patience=7,
+    #     stop_mean_episode_reward=params.STOP_MEAN_EPISODE_REWARD,
+    #     verbose=True,
+    #     delta=0.0,
+    #     model_save_dir=MODEL_SAVE_DIR,
+    #     env_name=params.ENVIRONMENT_ID.value + "_" + coin_name,
+    #     model_name=net.__name__
+    # )
 
-    with utils.RewardTracker(params=params, frame=False, stat=stat, early_stopping=early_stopping) as reward_tracker:
+    evaluate_steps = []
+    evaluate_total_profits = []
+
+    with utils.RewardTracker(params=params, frame=False, stat=stat, early_stopping=None) as reward_tracker:
         while step_idx < params.MAX_GLOBAL_STEP:
             step_idx += params.TRAIN_STEP_FREQ
             last_entry = buffer.populate(params.TRAIN_STEP_FREQ)
@@ -201,7 +204,12 @@ def train(train_env, test_env):
                     if reward_tracker.done_episodes % params.TEST_PERIOD_EPISODE == 0:
                         print("#" * 200)
                         print("[TEST START]")
-                        test(test_env, test_agent)
+                        evaluate(evaluate_env, evaluate_agent)
+
+                        total_profit = evaluate_random(evaluate_env, evaluate_agent, num_episodes=100)
+                        evaluate_steps.append(step_idx)
+                        evaluate_total_profits.append(total_profit)
+
                         print("[TEST END]")
                         print("#" * 200)
 
@@ -228,14 +236,14 @@ def train(train_env, test_env):
     return net
 
 
-def test_random(env, agent, num_episodes):
+def evaluate_random(env, agent, num_episodes):
     num_positive = 0
     num_negative = 0
     total_profit = 0.0
     total_steps = 0
 
     for _ in range(num_episodes):
-        profit, step = test(env, agent, verbose=False)
+        profit, step = evaluate(env, agent, verbose=False)
         if profit > 0:
             num_positive += 1
         else:
@@ -250,7 +258,7 @@ def test_random(env, agent, num_episodes):
     return total_profit
 
 
-def test_sequential_all(env, agent, data_size):
+def evaluate_sequential_all(env, agent, data_size):
     num_positive = 0
     num_negative = 0
     total_profit = 0.0
@@ -260,7 +268,7 @@ def test_sequential_all(env, agent, data_size):
     env.transaction_state_idx = 0
     while True:
         num_episodes += 1
-        profit, step = test(env, agent, verbose=False)
+        profit, step = evaluate(env, agent, verbose=False)
         if profit > 0:
             num_positive += 1
         else:
@@ -282,10 +290,10 @@ if __name__ == "__main__":
     coin_name = "OMG"
     time_unit = TimeUnit.ONE_DAY
 
-    train_data_info, test_data_info = get_data(coin_name=coin_name, time_unit=time_unit)
+    train_data_info, evaluate_data_info = get_data(coin_name=coin_name, time_unit=time_unit)
 
     print(train_data_info["first_datetime_krw"], train_data_info["last_datetime_krw"])
-    print(test_data_info["first_datetime_krw"], test_data_info["last_datetime_krw"])
+    print(evaluate_data_info["first_datetime_krw"], evaluate_data_info["last_datetime_krw"])
 
     train_env = UpbitEnvironment(
         coin_name=coin_name,
@@ -294,30 +302,30 @@ if __name__ == "__main__":
         environment_type=EnvironmentType.TRAIN
     )
 
-    test_random_env = UpbitEnvironment(
+    evaluate_random_env = UpbitEnvironment(
         coin_name=coin_name,
         time_unit=time_unit,
-        data_info=test_data_info,
+        data_info=evaluate_data_info,
         environment_type=EnvironmentType.TEST_RANDOM,
     )
 
-    net = train(train_env, test_random_env)
+    net = train(train_env, evaluate_random_env)
 
     print("#### TEST RANDOM 100")
 
-    argmax_action_selector = ArgmaxTradeActionSelector(env=test_random_env)
-    test_agent = rl_agent.DQNAgent(dqn_model=net, action_selector=argmax_action_selector, device=device)
-    test_random(test_random_env, test_agent, num_episodes=100)
+    argmax_action_selector = ArgmaxTradeActionSelector(env=evaluate_random_env)
+    evaluate_agent = rl_agent.DQNAgent(dqn_model=net, action_selector=argmax_action_selector, device=device)
+    evaluate_random(evaluate_random_env, evaluate_agent, num_episodes=100)
 
     print()
 
     print("#### TEST SEQUENTIALLY")
-    test_sequential_env = UpbitEnvironment(
+    evaluate_sequential_env = UpbitEnvironment(
         coin_name=coin_name,
         time_unit=time_unit,
-        data_info=test_data_info,
+        data_info=evaluate_data_info,
         environment_type=EnvironmentType.TEST_SEQUENTIAL,
     )
-    argmax_action_selector = ArgmaxTradeActionSelector(env=test_sequential_env)
-    test_agent = rl_agent.DQNAgent(dqn_model=net, action_selector=argmax_action_selector, device=device)
-    test_sequential_all(test_sequential_env, test_agent, data_size=len(test_data_info["data"]))
+    argmax_action_selector = ArgmaxTradeActionSelector(env=evaluate_sequential_env)
+    evaluate_agent = rl_agent.DQNAgent(dqn_model=net, action_selector=argmax_action_selector, device=device)
+    evaluate_sequential_all(evaluate_sequential_env, evaluate_agent, data_size=len(evaluate_data_info["data"]))
