@@ -516,8 +516,8 @@ class EarlyStopping:
                     model
                 )
         elif evaluation_value >= self.best_evaluation_value + self.delta:
-            self.best_evaluation_value = evaluation_value
             self.save_checkpoint(evaluation_value, model, step_idx)
+            self.best_evaluation_value = evaluation_value
             self.counter = 0
         else:
             raise ValueError()
