@@ -260,7 +260,7 @@ def train(train_env, evaluate_env):
     return net
 
 
-def evaluate_random(agent_type, env, agent, num_episodes):
+def evaluate_random(agent_type, env, agent, num_episodes, verbose=True):
     num_positive = 0
     num_negative = 0
     total_profit = 0.0
@@ -275,14 +275,15 @@ def evaluate_random(agent_type, env, agent, num_episodes):
         total_profit += profit
         total_steps += step
 
-    print("###[{0}] POSTITIVE: {1}/{3}, NEGATIVE: {2}/{3}, TOTAL PROFIT: {4:.1f}, AVG. STEP FOR EPISODE: {5:.1f}".format(
-        agent_type, num_positive, num_negative, num_episodes, total_profit, total_steps / num_episodes
-    ))
+    if verbose:
+        print("###[{0}] POSTITIVE: {1}/{3}, NEGATIVE: {2}/{3}, TOTAL PROFIT: {4:.1f}, AVG. STEP FOR EPISODE: {5:.1f}".format(
+            agent_type, num_positive, num_negative, num_episodes, total_profit, total_steps / num_episodes
+        ))
 
     return total_profit
 
 
-def evaluate_sequential_all(agent_type, env, agent, data_size):
+def evaluate_sequential_all(agent_type, env, agent, data_size, verbose=True):
     num_positive = 0
     num_negative = 0
     total_profit = 0.0
@@ -303,9 +304,10 @@ def evaluate_sequential_all(agent_type, env, agent, data_size):
         if env.transaction_state_idx >= data_size:
             break
 
-    print("###[{0}] POSITIVE: {1}/{3}, NEGATIVE: {2}/{3}, TOTAL PROFIT: {4:.1f}, AVG. STEP FOR EPISODE: {5:.1f}".format(
-        agent_type, num_positive, num_negative, num_episodes, total_profit, total_steps / num_episodes
-    ))
+    if verbose:
+        print("###[{0}] POSITIVE: {1}/{3}, NEGATIVE: {2}/{3}, TOTAL PROFIT: {4:.1f}, AVG. STEP FOR EPISODE: {5:.1f}".format(
+            agent_type, num_positive, num_negative, num_episodes, total_profit, total_steps / num_episodes
+        ))
 
     return total_profit
 
@@ -347,9 +349,11 @@ if __name__ == "__main__":
     evaluate_agent = rl_agent.DQNAgent(dqn_model=net, action_selector=argmax_action_selector, device=device)
     sequential_dqn_total_profits = []
     for _ in range(100):
-        total_profit = evaluate_sequential_all("DQN", evaluate_sequential_env, evaluate_agent, data_size=len(evaluate_data_info["data"]))
+        total_profit = evaluate_sequential_all(
+            "DQN", evaluate_sequential_env, evaluate_agent, data_size=len(evaluate_data_info["data"]), verbose=False
+        )
         sequential_dqn_total_profits.append(total_profit)
-    print("SEQUENTIAL: DQN - AVERAGE PROFIT {0:.1f}/STD {1:.1f}".format(
+    print("SEQUENTIAL: DQN - 100 AVERAGE PROFIT {0:.1f}/STD {1:.1f}".format(
         np.mean(sequential_dqn_total_profits), np.std(sequential_dqn_total_profits)
     ))
 
@@ -357,8 +361,10 @@ if __name__ == "__main__":
     random_agent = rl_agent.DQNAgent(dqn_model=None, action_selector=random_action_selector, device=device)
     sequential_random_total_profits = []
     for _ in range(100):
-        total_profit = evaluate_sequential_all("DQN", evaluate_sequential_env, random_agent, data_size=len(evaluate_data_info["data"]))
+        total_profit = evaluate_sequential_all(
+            "RANDOM", evaluate_sequential_env, random_agent, data_size=len(evaluate_data_info["data"]), verbose=False
+        )
         sequential_random_total_profits.append(total_profit)
-    print("SEQUENTIAL: RANDOM - AVERAGE PROFIT {0:.1f}/STD {1:.1f}".format(
+    print("SEQUENTIAL: RANDOM - 100 AVERAGE PROFIT {0:.1f}/STD {1:.1f}".format(
         np.mean(sequential_random_total_profits), np.std(sequential_random_total_profits)
     ))
