@@ -180,7 +180,7 @@ def train(train_env, evaluate_env):
     evaluate_random_total_profits = []
 
     early_stopping = EarlyStopping(
-        patience=10,
+        patience=params.STOP_PATIENCE_COUNT,
         evaluation_min_threshold=params.STOP_MEAN_EPISODE_REWARD,
         verbose=True,
         delta=0.0,
