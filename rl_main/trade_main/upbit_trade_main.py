@@ -222,7 +222,7 @@ def train(train_env, evaluate_env):
                         )
                         evaluate_random_total_profits.append(random_total_profit)
 
-                        solved = early_stopping(random_total_profit, model=net, step_idx=step_idx)
+                        solved = early_stopping(dqn_total_profit, model=net, step_idx=step_idx)
 
                         visualizer.draw_performance(
                             evaluate_steps,
