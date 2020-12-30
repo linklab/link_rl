@@ -503,26 +503,23 @@ class EarlyStopping:
         if self.best_evaluation_value == -1.0e10:
             self.best_evaluation_value = evaluation_value
 
-        if evaluation_value >= self.best_evaluation_value:
-            if evaluation_value < self.best_evaluation_value + self.delta:
-                self.counter += 1
-                print(f'EarlyStopping counter: {self.counter} out of {self.patience}')
-                if self.counter >= self.patience:
-                    solved = True
-                    rl_agent.load_model(
-                        self.model_save_dir,
-                        self.env_name,
-                        self.model_name,
-                        model
-                    )
-            elif evaluation_value >= self.best_evaluation_value + self.delta:
-                self.best_evaluation_value = evaluation_value
-                self.save_checkpoint(evaluation_value, model, step_idx)
-                self.counter = 0
-            else:
-                raise ValueError()
-        else:
+        if evaluation_value < self.evaluation_min_threshold or evaluation_value < self.best_evaluation_value + self.delta:
+            self.counter += 1
+            print(f'EarlyStopping counter: {self.counter} out of {self.patience}')
+            if self.counter >= self.patience:
+                solved = True
+                rl_agent.load_model(
+                    self.model_save_dir,
+                    self.env_name,
+                    self.model_name,
+                    model
+                )
+        elif evaluation_value >= self.best_evaluation_value + self.delta:
+            self.best_evaluation_value = evaluation_value
+            self.save_checkpoint(evaluation_value, model, step_idx)
             self.counter = 0
+        else:
+            raise ValueError()
 
         return solved
 
