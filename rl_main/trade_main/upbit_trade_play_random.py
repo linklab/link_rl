@@ -47,7 +47,7 @@ if __name__ == "__main__":
     )
     random_action_selector = RandomTradeDQNActionSelector(env=evaluate_random_env)
     random_agent = rl_agent.DQNAgent(dqn_model=None, action_selector=random_action_selector, device=device)
-    evaluate_random(evaluate_random_env, random_agent, num_episodes=100)
+    evaluate_random("DQN", evaluate_random_env, random_agent, num_episodes=100)
 
     print()
 
@@ -60,4 +60,4 @@ if __name__ == "__main__":
     )
     random_action_selector = RandomTradeDQNActionSelector(env=evaluate_sequential_env)
     random_agent = rl_agent.DQNAgent(dqn_model=None, action_selector=random_action_selector, device=device)
-    evaluate_sequential_all(evaluate_sequential_env, random_agent, data_size=len(evaluate_data_info["data"]))
+    evaluate_sequential_all("DQN", evaluate_sequential_env, random_agent, data_size=len(evaluate_data_info["data"]))

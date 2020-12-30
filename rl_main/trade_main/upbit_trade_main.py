@@ -6,6 +6,8 @@ import torch.optim as optim
 import os, sys
 import warnings
 
+from rl_main.trade_main import visualizer
+
 current_path = os.path.dirname(os.path.realpath(__file__))
 PROJECT_HOME = os.path.abspath(os.path.join(current_path, os.pardir, os.pardir))
 if PROJECT_HOME not in sys.path:
@@ -17,7 +19,7 @@ from common import common_utils
 from common.environments.trade.trade_constant import TimeUnit, EnvironmentType, Action
 from common.environments.trade.trade_env import UpbitEnvironment
 from common.environments.trade.trade_action_selector import EpsilonGreedyTradeDQNActionSelector, \
-    ArgmaxTradeActionSelector
+    ArgmaxTradeActionSelector, RandomTradeDQNActionSelector
 
 from common.fast_rl import rl_agent, value_based_model, actions, experience_single, replay_buffer
 from common.fast_rl.common import utils
@@ -152,6 +154,9 @@ def train(train_env, evaluate_env):
     argmax_action_selector = ArgmaxTradeActionSelector(env=evaluate_env)
     evaluate_agent = rl_agent.DQNAgent(dqn_model=net, action_selector=argmax_action_selector, device=device)
 
+    random_action_selector = RandomTradeDQNActionSelector(env=evaluate_random_env)
+    random_agent = rl_agent.DQNAgent(dqn_model=None, action_selector=random_action_selector, device=device)
+
     experience_source = experience_single.ExperienceSourceSingleEnvFirstLast(
         train_env, agent, gamma=params.GAMMA, steps_count=params.N_STEP
     )
@@ -180,7 +185,8 @@ def train(train_env, evaluate_env):
     # )
 
     evaluate_steps = []
-    evaluate_total_profits = []
+    evaluate_dqn_total_profits = []
+    evaluate_random_total_profits = []
 
     with utils.RewardTracker(params=params, frame=False, stat=stat, early_stopping=None) as reward_tracker:
         while step_idx < params.MAX_GLOBAL_STEP:
@@ -206,9 +212,17 @@ def train(train_env, evaluate_env):
                         print("[TEST START]")
                         evaluate(evaluate_env, evaluate_agent)
 
-                        total_profit = evaluate_random(evaluate_env, evaluate_agent, num_episodes=100)
                         evaluate_steps.append(step_idx)
-                        evaluate_total_profits.append(total_profit)
+
+                        dqn_total_profit = evaluate_random(
+                            "DQN", evaluate_env, evaluate_agent, num_episodes=100
+                        )
+                        evaluate_dqn_total_profits.append(dqn_total_profit)
+
+                        random_total_profit = evaluate_random(
+                            "RANDOM", evaluate_random_env, random_agent, num_episodes=100
+                        )
+                        evaluate_random_total_profits.append(random_total_profit)
 
                         print("[TEST END]")
                         print("#" * 200)
@@ -233,10 +247,12 @@ def train(train_env, evaluate_env):
 
             if step_idx % params.TARGET_NET_SYNC_STEP_PERIOD < params.TRAIN_STEP_FREQ:
                 tgt_net.sync()
+                visualizer.draw_performance(evaluate_steps, evaluate_dqn_total_profits, evaluate_random_total_profits)
+
     return net
 
 
-def evaluate_random(env, agent, num_episodes):
+def evaluate_random(agent_type, env, agent, num_episodes):
     num_positive = 0
     num_negative = 0
     total_profit = 0.0
@@ -251,14 +267,14 @@ def evaluate_random(env, agent, num_episodes):
         total_profit += profit
         total_steps += step
 
-    print("### POSTITIVE: {0}/{2}, NEGATIVE: {1}/{2}, TOTAL PROFIT: {3:.1f}, AVG. STEP FOR EPISODE: {4:.1f}".format(
-        num_positive, num_negative, num_episodes, total_profit, total_steps / num_episodes
+    print("###[{0}] POSTITIVE: {1}/{3}, NEGATIVE: {2}/{3}, TOTAL PROFIT: {4:.1f}, AVG. STEP FOR EPISODE: {5:.1f}".format(
+        agent_type, num_positive, num_negative, num_episodes, total_profit, total_steps / num_episodes
     ))
 
     return total_profit
 
 
-def evaluate_sequential_all(env, agent, data_size):
+def evaluate_sequential_all(agent_type, env, agent, data_size):
     num_positive = 0
     num_negative = 0
     total_profit = 0.0
@@ -279,8 +295,8 @@ def evaluate_sequential_all(env, agent, data_size):
         if env.transaction_state_idx >= data_size:
             break
 
-    print("### POSITIVE: {0}/{2}, NEGATIVE: {1}/{2}, TOTAL PROFIT: {3:.1f}, AVG. STEP FOR EPISODE: {4:.1f}".format(
-        num_positive, num_negative, num_episodes, total_profit, total_steps / num_episodes
+    print("###[{0}] POSITIVE: {1}/{3}, NEGATIVE: {2}/{3}, TOTAL PROFIT: {4:.1f}, AVG. STEP FOR EPISODE: {5:.1f}".format(
+        agent_type, num_positive, num_negative, num_episodes, total_profit, total_steps / num_episodes
     ))
 
     return total_profit
@@ -315,7 +331,7 @@ if __name__ == "__main__":
 
     argmax_action_selector = ArgmaxTradeActionSelector(env=evaluate_random_env)
     evaluate_agent = rl_agent.DQNAgent(dqn_model=net, action_selector=argmax_action_selector, device=device)
-    evaluate_random(evaluate_random_env, evaluate_agent, num_episodes=100)
+    evaluate_random("DQN", evaluate_random_env, evaluate_agent, num_episodes=100)
 
     print()
 
@@ -328,4 +344,4 @@ if __name__ == "__main__":
     )
     argmax_action_selector = ArgmaxTradeActionSelector(env=evaluate_sequential_env)
     evaluate_agent = rl_agent.DQNAgent(dqn_model=net, action_selector=argmax_action_selector, device=device)
-    evaluate_sequential_all(evaluate_sequential_env, evaluate_agent, data_size=len(evaluate_data_info["data"]))
+    evaluate_sequential_all("DQN", evaluate_sequential_env, evaluate_agent, data_size=len(evaluate_data_info["data"]))
