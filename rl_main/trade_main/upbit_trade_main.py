@@ -6,8 +6,6 @@ import torch.optim as optim
 import os, sys
 import warnings
 
-from rl_main.trade_main import visualizer
-
 current_path = os.path.dirname(os.path.realpath(__file__))
 PROJECT_HOME = os.path.abspath(os.path.join(current_path, os.pardir, os.pardir))
 if PROJECT_HOME not in sys.path:
@@ -24,6 +22,7 @@ from common.environments.trade.trade_action_selector import EpsilonGreedyTradeDQ
 from common.fast_rl import rl_agent, value_based_model, actions, experience_single, replay_buffer
 from common.fast_rl.common import utils
 from common.fast_rl.common import statistics
+from rl_main.trade_main import visualizer
 
 ##### NOTE #####
 from config.parameters import PARAMETERS as params
