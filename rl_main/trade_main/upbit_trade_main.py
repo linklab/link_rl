@@ -213,7 +213,7 @@ def train(train_env, test_env):
 
             optimizer.zero_grad()
             batch = buffer.sample(params.BATCH_SIZE)
-            loss_v = value_based_model.calc_loss_dqn(batch, net, tgt_net, gamma=params.GAMMA, cuda=params.CUDA)
+            loss_v = value_based_model.calc_loss_double_dqn(batch, net, tgt_net, gamma=params.GAMMA, cuda=params.CUDA)
             loss_v.backward()
             optimizer.step()
 
@@ -247,6 +247,8 @@ def test_random(env, agent, num_episodes):
         num_positive, num_negative, num_episodes, total_profit, total_steps / num_episodes
     ))
 
+    return total_profit
+
 
 def test_sequential_all(env, agent, data_size):
     num_positive = 0
@@ -272,6 +274,8 @@ def test_sequential_all(env, agent, data_size):
     print("### POSITIVE: {0}/{2}, NEGATIVE: {1}/{2}, TOTAL PROFIT: {3:.1f}, AVG. STEP FOR EPISODE: {4:.1f}".format(
         num_positive, num_negative, num_episodes, total_profit, total_steps / num_episodes
     ))
+
+    return total_profit
 
 
 if __name__ == "__main__":
