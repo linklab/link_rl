@@ -301,7 +301,7 @@ def evaluate_sequential_all(agent_type, env, agent, data_size, verbose=True):
         total_profit += profit
         total_steps += step
 
-        if env.transaction_state_idx >= data_size:
+        if env.transaction_state_idx >= data_size - 1:
             break
 
     avg_num_steps_per_episode = total_steps / num_episodes
@@ -363,7 +363,7 @@ def main():
     random_agent = rl_agent.DQNAgent(dqn_model=None, action_selector=random_action_selector, device=device)
     sequential_random_total_profits = []
     for _ in range(100):
-        total_profit = evaluate_sequential_all(
+        total_profit, avg_num_steps_per_episode = evaluate_sequential_all(
             "RANDOM", evaluate_sequential_env, random_agent, data_size=len(evaluate_data_info["data"]), verbose=False
         )
         sequential_random_total_profits.append(total_profit)

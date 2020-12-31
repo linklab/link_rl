@@ -80,6 +80,11 @@ def get_data(coin_name, time_unit):
     assert len(glob.glob(csv_target_raw_data_file)) <= 1, \
         "len(glob.glob(csv_target_raw_data_file)) is more that 1: {0}".format(csv_target_raw_data_file)
 
+    if len(glob.glob(csv_target_raw_data_file)) == 1:
+        file_name = glob.glob(csv_target_raw_data_file)[0]
+        if not file_name.endswith(current_unit_datetime_krw.replace(" ", "T").replace(":", "-")):
+            os.remove(file_name)
+
     if len(glob.glob(csv_target_raw_data_file)) == 0:
         queryset = naver_ohlcv_price_session.query(candle_target_coin_class).order_by(
             candle_target_coin_class.datetime_krw.asc()
@@ -117,6 +122,11 @@ def get_data(coin_name, time_unit):
 
     assert len(glob.glob(csv_btc_raw_data_file)) <= 1, \
         "len(glob.glob(csv_raw_data_file)) is more that 1: {0}".format(csv_btc_raw_data_file)
+
+    if len(glob.glob(csv_btc_raw_data_file)) == 1:
+        file_name = glob.glob(csv_btc_raw_data_file)[0]
+        if not file_name.endswith(current_unit_datetime_krw.replace(" ", "T").replace(":", "-")):
+            os.remove(file_name)
 
     if len(glob.glob(csv_btc_raw_data_file)) == 0:
         queryset = naver_ohlcv_price_session.query(candle_btc_coin_class).order_by(
