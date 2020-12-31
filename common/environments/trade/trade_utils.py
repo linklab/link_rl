@@ -18,8 +18,11 @@ def convert_utc_to_seoul_time(date_time_utc, return_str=True):
         return local_time
 
 
-def get_previous_one_unit_date_time(time_unit):
-    date_time = convert_utc_to_seoul_time(dt.datetime.utcnow(), return_str=False)
+def get_previous_one_unit_date_time(time_unit, krw=True):
+    if krw:
+        date_time = convert_utc_to_seoul_time(dt.datetime.utcnow(), return_str=False)
+    else:
+        date_time = dt.datetime.utcnow().strftime(fmt2)
 
     if time_unit == TimeUnit.ONE_HOUR:
         delta = dt.timedelta(hours=1)
@@ -45,8 +48,11 @@ def get_previous_one_unit_date_time(time_unit):
         raise ValueError("{0} unit is not supported".format(time_unit))
 
 
-def get_current_unit_date_time(time_unit):
-    date_time = convert_utc_to_seoul_time(dt.datetime.utcnow(), return_str=True)
+def get_current_unit_date_time(time_unit, krw=True):
+    if krw:
+        date_time = convert_utc_to_seoul_time(dt.datetime.utcnow(), return_str=True)
+    else:
+        date_time = dt.datetime.utcnow().strftime(fmt2)
 
     if time_unit == TimeUnit.ONE_DAY:
         if date_time.endswith("00:00:00"):
@@ -93,3 +99,27 @@ def get_order_unit(price):
         return 0.1
     else:
         return 0.01
+
+
+def convert_to_daily_timestamp(datetime_):
+    if isinstance(datetime_, str):
+        datetime_str = datetime_
+    else:
+        datetime_str = datetime_.strftime(fmt2)
+
+    time_str_hour = datetime_str.split(" ")[1].split(":")[0]
+    time_str_minute = datetime_str.split(" ")[1].split(":")[1]
+
+    if time_str_hour[0] == "0":
+        time_str_hour = time_str_hour[1:]
+
+    if time_str_minute[0] == "0":
+        time_str_minute = time_str_minute[1:]
+
+    daily_base_timestamp = int(time_str_hour) * 100 + int(time_str_minute)
+
+    return daily_base_timestamp
+
+
+if __name__ == "__main__":
+    print(get_current_unit_date_time(TimeUnit.ONE_DAY))
