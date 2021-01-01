@@ -24,6 +24,9 @@ from common.fast_rl import rl_agent, value_based_model, actions, experience_sing
 from common.fast_rl.common import utils
 from common.fast_rl.common import statistics
 from rl_main.trade_main import visualizer
+from common.slack import PushSlack
+
+pusher = PushSlack()
 
 ##### NOTE #####
 from config.parameters import PARAMETERS as params
@@ -365,13 +368,13 @@ def main():
         sequential_dqn_num_episodes.append(num_episodes)
         sequential_dqn_total_profits.append(total_profit)
         sequential_dqn_num_steps_per_episode.append(avg_num_steps_per_episode)
-    print(
-        f"SEQUENTIAL: DQN - {np.mean(sequential_dqn_num_episodes):.1f} EPISODES - "
-        f"POSITIVE: {np.mean(sequential_dqn_num_positives):.1f}, "
-        f"NEGATIVE: {np.mean(sequential_dqn_num_negatives):.1f}, "
-        f"AVERAGE PROFIT {np.mean(sequential_dqn_total_profits):.1f}/STD {np.std(sequential_dqn_total_profits):.1f}, "
-        f"AVERAGE STEP {np.mean(sequential_dqn_num_steps_per_episode):.1f}"
-    )
+
+    dqn_msg = f"SEQUENTIAL: DQN - {np.mean(sequential_dqn_num_episodes):.1f} EPISODES - " \
+              f"POSITIVE: {np.mean(sequential_dqn_num_positives):.1f}, " \
+              f"NEGATIVE: {np.mean(sequential_dqn_num_negatives):.1f}, " \
+              f"AVERAGE PROFIT {np.mean(sequential_dqn_total_profits):.1f}/STD {np.std(sequential_dqn_total_profits):.1f}, " \
+              f"AVERAGE STEP {np.mean(sequential_dqn_num_steps_per_episode):.1f}"
+    print(dqn_msg)
 
     random_action_selector = RandomTradeDQNActionSelector(env=evaluate_sequential_env)
     random_agent = rl_agent.DQNAgent(dqn_model=None, action_selector=random_action_selector, device=device)
@@ -389,14 +392,21 @@ def main():
         sequential_random_num_episodes.append(num_episodes)
         sequential_random_total_profits.append(total_profit)
         sequential_random_num_steps_per_episode.append(avg_num_steps_per_episode)
-    print(
-        f"SEQUENTIAL: RANDOM - {np.mean(sequential_random_num_episodes):.1f} EPISODES - "
-        f"POSITIVE: {np.mean(sequential_random_num_positives):.1f}, "
-        f"NEGATIVE: {np.mean(sequential_random_num_negatives):.1f}, "
-        f"AVERAGE PROFIT {np.mean(sequential_random_total_profits):.1f}/STD {np.std(sequential_random_total_profits):.1f}, "
-        f"AVERAGE STEP {np.mean(sequential_random_num_steps_per_episode):.1f}"
+
+    random_msg = f"SEQUENTIAL: RANDOM - {np.mean(sequential_random_num_episodes):.1f} EPISODES - " \
+                 f"POSITIVE: {np.mean(sequential_random_num_positives):.1f}, " \
+                 f"NEGATIVE: {np.mean(sequential_random_num_negatives):.1f}, " \
+                 f"AVERAGE PROFIT {np.mean(sequential_random_total_profits):.1f}/STD {np.std(sequential_random_total_profits):.1f}, " \
+                 f"AVERAGE STEP {np.mean(sequential_random_num_steps_per_episode):.1f}"
+    print(random_msg)
+
+    pusher.send_message(
+        "me", dqn_msg
     )
 
+    pusher.send_message(
+        "me", random_msg
+    )
 
 if __name__ == "__main__":
     main()
