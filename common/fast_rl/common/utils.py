@@ -476,7 +476,7 @@ class RewardTracker:
 class EarlyStopping:
     """Early stops the training if validation loss doesn't improve after a given patience."""
     def __init__(self, patience=7, evaluation_min_threshold=0.0, evaluation_min_step_idx=0,
-                 verbose=False, delta=0.0, model_save_dir=".", env_name="anonymous_env", model_name="anonymous_model"):
+                 verbose=False, delta=0.0, model_save_dir=".", model_save_file_prefix=None, model_name=None):
         """
         Args:
             patience (int): How long to wait after last time validation loss improved.
@@ -495,7 +495,7 @@ class EarlyStopping:
         self.early_stop = False
         self.delta = delta
         self.model_save_dir = model_save_dir
-        self.env_name = env_name
+        self.model_save_file_prefix = model_save_file_prefix
         self.model_name = model_name
 
     def __call__(self, evaluation_value, model, step_idx):
@@ -516,7 +516,7 @@ class EarlyStopping:
                     solved = True
                     rl_agent.load_model(
                         self.model_save_dir,
-                        self.env_name,
+                        self.model_save_file_prefix,
                         self.model_name,
                         model
                     )
@@ -539,7 +539,7 @@ class EarlyStopping:
 
         rl_agent.save_model(
             self.model_save_dir,
-            self.env_name,
+            self.model_save_file_prefix,
             self.model_name,
             model,
             step_idx,

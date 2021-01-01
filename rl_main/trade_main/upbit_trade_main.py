@@ -122,14 +122,15 @@ def evaluate(env, agent, verbose=True):
         state = next_state
 
     if verbose:
-        print("TRANSACTION START DATETIME: {0}, EPISODE REWARD: {1:>8.3f}, PROFIT: {2:>10.1f}, STEPS: {3}".format(
+        print("SAMPLED TRANSACTION DONE! - START DATETIME: {0}, EPISODE REWARD: {1:>8.3f}, "
+              "PROFIT: {2:>10.1f}, STEPS: {3}".format(
             env.transaction_start_datetime, episode_reward, info["profit"], step_idx
         ))
 
     return info["profit"], step_idx
 
 
-def train(coin_name, train_env, evaluate_env):
+def train(coin_name, time_unit, train_env, evaluate_env):
     common_utils.print_fast_rl_params(params)
 
     params.BATCH_SIZE *= params.TRAIN_STEP_FREQ
@@ -186,7 +187,7 @@ def train(coin_name, train_env, evaluate_env):
         verbose=True,
         delta=0.0,
         model_save_dir=MODEL_SAVE_DIR,
-        env_name=params.ENVIRONMENT_ID.value + "_" + coin_name,
+        model_save_file_prefix=params.ENVIRONMENT_ID + "_" + coin_name + "_" + time_unit,
         model_name=net.__name__
     )
 
@@ -338,7 +339,7 @@ def main():
         environment_type=EnvironmentType.TEST_RANDOM,
     )
 
-    net = train(coin_name, train_env, evaluate_random_env)
+    net = train(coin_name, time_unit, train_env, evaluate_random_env)
 
     print("#### TEST SEQUENTIALLY")
     evaluate_sequential_env = UpbitEnvironment(

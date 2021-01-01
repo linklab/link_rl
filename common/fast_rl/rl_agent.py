@@ -10,15 +10,15 @@ import os, glob, sys
 from . import actions
 
 
-def save_model(model_save_dir, env_name, net_name, net, step, episode_reward):
+def save_model(model_save_dir, env_name, net_name, model, step, episode_reward):
     model_save_filename = os.path.join(
         model_save_dir, "{0}_{1}_{2}_{3:.2f}.pth".format(env_name, net_name, step, float(episode_reward))
     )
-    torch.save(net.state_dict(), model_save_filename)
+    torch.save(model.state_dict(), model_save_filename)
     return model_save_filename
 
 
-def load_model(model_save_dir, env_name, net_name, net, step=None):
+def load_model(model_save_dir, env_name, net_name, model, step=None):
     if step:
         saved_models = glob.glob(os.path.join(
             model_save_dir, "{0}_{1}_{2}_*.pth".format(env_name, net_name, step)
@@ -37,7 +37,7 @@ def load_model(model_save_dir, env_name, net_name, net, step=None):
     device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
     model_params = torch.load(saved_model, map_location=device)
 
-    net.load_state_dict(model_params)
+    model.load_state_dict(model_params)
 
 
 def save_actor_critic_model(
