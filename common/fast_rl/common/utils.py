@@ -537,6 +537,12 @@ class EarlyStopping:
             else:
                 print(f'evaluation_value increased ({self.best_evaluation_value:.2f} --> {evaluation_value:.2f}).  Saving model ...')
 
+        rl_agent.remove_models(
+            self.model_save_dir,
+            self.model_save_file_prefix,
+            self.model_name
+        )
+
         rl_agent.save_model(
             self.model_save_dir,
             self.model_save_file_prefix,
