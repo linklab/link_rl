@@ -182,6 +182,7 @@ def train(coin_name, train_env, evaluate_env):
     early_stopping = EarlyStopping(
         patience=params.STOP_PATIENCE_COUNT,
         evaluation_min_threshold=params.STOP_MEAN_EPISODE_REWARD,
+        evaluation_min_step_idx=params.EPSILON_MIN_STEP,
         verbose=True,
         delta=0.0,
         model_save_dir=MODEL_SAVE_DIR,
