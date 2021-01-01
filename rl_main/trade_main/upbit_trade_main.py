@@ -356,7 +356,7 @@ def main():
     sequential_dqn_num_episodes = []
     sequential_dqn_num_steps_per_episode = []
     sequential_dqn_total_profits = []
-    for _ in range(100):
+    for _ in range(10):
         num_positive, num_negative, num_episodes, total_profit, avg_num_steps_per_episode = evaluate_sequential_all(
             "DQN", evaluate_sequential_env, evaluate_agent, data_size=len(evaluate_data_info["data"]), verbose=False
         )
@@ -380,7 +380,7 @@ def main():
     sequential_random_num_episodes = []
     sequential_random_num_steps_per_episode = []
     sequential_random_total_profits = []
-    for _ in range(100):
+    for _ in range(10):
         num_positive, num_negative, num_episodes, total_profit, avg_num_steps_per_episode = evaluate_sequential_all(
             "RANDOM", evaluate_sequential_env, random_agent, data_size=len(evaluate_data_info["data"]), verbose=False
         )
@@ -390,7 +390,7 @@ def main():
         sequential_random_total_profits.append(total_profit)
         sequential_random_num_steps_per_episode.append(avg_num_steps_per_episode)
     print(
-        f"SEQUENTIAL: DQN - {np.mean(sequential_random_num_episodes):.1f} EPISODES - "
+        f"SEQUENTIAL: RANDOM - {np.mean(sequential_random_num_episodes):.1f} EPISODES - "
         f"POSITIVE: {np.mean(sequential_random_num_positives):.1f}, "
         f"NEGATIVE: {np.mean(sequential_random_num_negatives):.1f}, "
         f"AVERAGE PROFIT {np.mean(sequential_random_total_profits):.1f}/STD {np.std(sequential_random_total_profits):.1f}, "
