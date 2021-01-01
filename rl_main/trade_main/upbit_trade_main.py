@@ -187,7 +187,7 @@ def train(coin_name, time_unit, train_env, evaluate_env):
         verbose=True,
         delta=0.0,
         model_save_dir=MODEL_SAVE_DIR,
-        model_save_file_prefix=params.ENVIRONMENT_ID + "_" + coin_name + "_" + time_unit,
+        model_save_file_prefix=params.ENVIRONMENT_ID.value + "_" + coin_name + "_" + time_unit.value,
         model_name=net.__name__
     )
 
