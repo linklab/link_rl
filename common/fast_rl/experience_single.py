@@ -91,13 +91,11 @@ class ExperienceSourceSingleEnv:
             if state is not None:
                 if isinstance(self.agent, AgentDDPG):
                     history.append(ExperienceWithNoise(
-                        state=processed_state, action=action, noise=noise, reward=r, done=is_done, info=info,
-                        episode_reward=None
+                        state=processed_state, action=action, noise=noise, reward=r, done=is_done, info=info
                     ))
                 else:
                     history.append(Experience(
-                        state=processed_state, action=action, reward=r, done=is_done, info=info,
-                        episode_reward=None
+                        state=processed_state, action=action, reward=r, done=is_done, info=info
                     ))
 
             if len(history) == self.steps_count:
@@ -168,11 +166,11 @@ class ExperienceSourceSingleEnvFirstLast(ExperienceSourceSingleEnv):
             if isinstance(self.agent, AgentDDPG) or isinstance(self.agent, AgentD4PG):
                 exp = ExperienceFirstLastWithNoise(
                     state=exp[0].state, action=exp[0].action, noise=exp[0].noise, reward=total_reward,
-                    last_state=last_state, last_step=len(elems), done=exp[-1].done, info=exp[-1].info, episode_reward=None
+                    last_state=last_state, last_step=len(elems), done=exp[-1].done, info=exp[-1].info
                 )
             else:
                 exp = ExperienceFirstLast(
                     state=exp[0].state, action=exp[0].action, reward=total_reward, last_state=last_state,
-                    last_step=len(elems), done=exp[-1].done, info=exp[-1].info, episode_reward=None
+                    last_step=len(elems), done=exp[-1].done, info=exp[-1].info
                 )
             yield exp

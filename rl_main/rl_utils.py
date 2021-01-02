@@ -222,6 +222,7 @@ def get_environment(owner="chief", params=None):
             pendulum_type= 'PENDULUM_MATLAB_DOUBLE_RIP_V0'
         )
     elif params.ENVIRONMENT_ID == EnvironmentName.MINITAUR_BULLET_V0:
+        import pybullet_envs
         spec = gym.envs.registry.spec("MinitaurBulletEnv-v0")
         spec._kwargs['render'] = params.ENV_RENDER
         env = gym.make("MinitaurBulletEnv-v0")

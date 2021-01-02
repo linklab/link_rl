@@ -8,18 +8,18 @@ from collections import namedtuple, deque
 from .rl_agent import BaseAgent, AgentDDPG, AgentD4PG
 
 # one single experience step
-Experience = namedtuple('Experience', ['state', 'action', 'reward', 'done', 'info', 'episode_reward'])
+Experience = namedtuple('Experience', ['state', 'action', 'reward', 'done', 'info'])
 ExperienceWithNoise = namedtuple(
-    'ExperienceWithNoise', ['state', 'action', 'noise', 'reward', 'done', 'info', 'episode_reward']
+    'ExperienceWithNoise', ['state', 'action', 'noise', 'reward', 'done', 'info']
 )
 
 ExperienceFirstLast = namedtuple(
     'ExperienceFirstLast',
-    ('state', 'action', 'reward', 'last_state', 'last_step', 'done', 'info', 'episode_reward')
+    ('state', 'action', 'reward', 'last_state', 'last_step', 'done', 'info')
 )
 ExperienceFirstLastWithNoise = namedtuple(
     'ExperienceFirstLastWithNoise',
-    ('state', 'action', 'noise', 'reward', 'last_state', 'last_step', 'done', 'info', 'episode_reward')
+    ('state', 'action', 'noise', 'reward', 'last_state', 'last_step', 'done', 'info')
 )
 
 
@@ -126,7 +126,7 @@ class ExperienceSource:
                     cur_steps[idx] += 1
 
                     if state is not None:
-                        history.append(Experience(state=state, action=action, reward=r, done=is_done))
+                        history.append(Experience(state=state, action=action, reward=r, done=is_done, info=info))
 
                     if len(history) == self.steps_count and iter_idx % self.steps_delta == 0:
                         yield tuple(history)
@@ -233,7 +233,7 @@ class ExperienceSourceFirstLast(ExperienceSource):
                 total_reward += e.reward
             yield ExperienceFirstLast(
                 state=exp[0].state, action=exp[0].action, reward=total_reward, last_state=last_state,
-                last_step=len(elems)
+                last_step=len(elems), info=exp[0].info, done=exp[0].done
             )
 
 
