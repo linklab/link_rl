@@ -227,7 +227,7 @@ class DuelingDQNSmallCNN(nn.Module):
         self.__name__ = "DuelingDQNSmallCNN"
 
         self.conv = nn.Sequential(
-            nn.Conv2d(input_shape[0], 24, kernel_size=2, stride=1, padding=1),
+            nn.Conv2d(input_shape[0], 24, kernel_size=3, stride=1, padding=1),
             nn.ReLU(),
             nn.Conv2d(24, 32, kernel_size=2, stride=1, padding=1),
             nn.ReLU(),

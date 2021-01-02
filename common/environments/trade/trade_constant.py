@@ -43,6 +43,9 @@ NAVER_MYSQL_ID = config_parser['MYSQL_NAVER']['mysql_id']
 NAVER_MYSQL_PASSWORD = config_parser['MYSQL_NAVER']['mysql_password']
 NAVER_MYSQL_HOST = config_parser['MYSQL_NAVER']['mysql_host']
 
+SLACK_WEBHOOK_URL_1 = config_parser['SLACK']['webhook_url_1']
+SLACK_WEBHOOK_URL_2 = config_parser['SLACK']['webhook_url_2']
+SLACK_API_TOKEN = config_parser['SLACK']['SLACK_API_TOKEN']
 
 RAW_DATA_DIR = os.path.join(PROJECT_HOME, "common", "environments", "trade", "raw_data")
 CSV_RAW_DATA_FILE = os.path.join(RAW_DATA_DIR, '{0}_{1}_{2}.csv')

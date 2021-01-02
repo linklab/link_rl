@@ -24,6 +24,9 @@ from common.fast_rl import rl_agent, value_based_model, actions, experience_sing
 from common.fast_rl.common import utils
 from common.fast_rl.common import statistics
 from rl_main.trade_main import visualizer
+from common.slack import PushSlack
+
+pusher = PushSlack()
 
 ##### NOTE #####
 from config.parameters import PARAMETERS as params
@@ -122,14 +125,15 @@ def evaluate(env, agent, verbose=True):
         state = next_state
 
     if verbose:
-        print("TRANSACTION START DATETIME: {0}, EPISODE REWARD: {1:>8.3f}, PROFIT: {2:>10.1f}, STEPS: {3}".format(
+        print("SAMPLED TRANSACTION DONE! - START DATETIME: {0}, EPISODE REWARD: {1:>8.3f}, "
+              "PROFIT: {2:>10.1f}, STEPS: {3}".format(
             env.transaction_start_datetime, episode_reward, info["profit"], step_idx
         ))
 
     return info["profit"], step_idx
 
 
-def train(coin_name, train_env, evaluate_env):
+def train(coin_name, time_unit, train_env, evaluate_env):
     common_utils.print_fast_rl_params(params)
 
     params.BATCH_SIZE *= params.TRAIN_STEP_FREQ
@@ -182,10 +186,11 @@ def train(coin_name, train_env, evaluate_env):
     early_stopping = EarlyStopping(
         patience=params.STOP_PATIENCE_COUNT,
         evaluation_min_threshold=params.STOP_MEAN_EPISODE_REWARD,
+        evaluation_min_step_idx=params.EPSILON_MIN_STEP,
         verbose=True,
         delta=0.0,
         model_save_dir=MODEL_SAVE_DIR,
-        env_name=params.ENVIRONMENT_ID.value + "_" + coin_name,
+        model_save_file_prefix=params.ENVIRONMENT_ID.value + "_" + coin_name + "_" + time_unit.value,
         model_name=net.__name__
     )
 
@@ -213,12 +218,12 @@ def train(coin_name, train_env, evaluate_env):
 
                         evaluate_steps.append(step_idx)
 
-                        dqn_total_profit = evaluate_random(
+                        dqn_total_profit, _ = evaluate_random(
                             "DQN", evaluate_env, evaluate_agent, num_episodes=100
                         )
                         evaluate_dqn_total_profits.append(dqn_total_profit)
 
-                        random_total_profit = evaluate_random(
+                        random_total_profit, _ = evaluate_random(
                             "RANDOM", evaluate_env, random_agent, num_episodes=100
                         )
                         evaluate_random_total_profits.append(random_total_profit)
@@ -239,9 +244,6 @@ def train(coin_name, train_env, evaluate_env):
 
             if solved:
                 break
-
-            if len(buffer) < params.MIN_REPLAY_SIZE_FOR_TRAIN:
-                continue
 
             optimizer.zero_grad()
             batch = buffer.sample(params.BATCH_SIZE)
@@ -276,12 +278,14 @@ def evaluate_random(agent_type, env, agent, num_episodes, verbose=True):
         total_profit += profit
         total_steps += step
 
+    avg_num_steps_per_episode = total_steps / num_episodes
+
     if verbose:
-        print("###[{0:6}] POSTITIVE: {1}/{3}, NEGATIVE: {2}/{3}, TOTAL PROFIT: {4:.1f}, AVG. STEP FOR EPISODE: {5:.1f}".format(
-            agent_type, num_positive, num_negative, num_episodes, total_profit, total_steps / num_episodes
+        print("###[{0:6}] POSITIVE: {1}/{3}, NEGATIVE: {2}/{3}, TOTAL PROFIT: {4:.1f}, AVG. STEP FOR EPISODE: {5:.1f}".format(
+            agent_type, num_positive, num_negative, num_episodes, total_profit, avg_num_steps_per_episode
         ))
 
-    return total_profit
+    return total_profit, avg_num_steps_per_episode
 
 
 def evaluate_sequential_all(agent_type, env, agent, data_size, verbose=True):
@@ -302,20 +306,22 @@ def evaluate_sequential_all(agent_type, env, agent, data_size, verbose=True):
         total_profit += profit
         total_steps += step
 
-        if env.transaction_state_idx >= data_size:
+        if env.transaction_state_idx >= data_size - 1:
             break
+
+    avg_num_steps_per_episode = total_steps / num_episodes
 
     if verbose:
         print("###[{0:6}] POSITIVE: {1}/{3}, NEGATIVE: {2}/{3}, TOTAL PROFIT: {4:.1f}, AVG. STEP FOR EPISODE: {5:.1f}".format(
-            agent_type, num_positive, num_negative, num_episodes, total_profit, total_steps / num_episodes
+            agent_type, num_positive, num_negative, num_episodes, total_profit, avg_num_steps_per_episode
         ))
 
-    return total_profit
+    return num_positive, num_negative, num_episodes, total_profit, avg_num_steps_per_episode
 
 
 def main():
     coin_name = "OMG"
-    time_unit = TimeUnit.ONE_DAY
+    time_unit = TimeUnit.ONE_HOUR
 
     train_data_info, evaluate_data_info = get_data(coin_name=coin_name, time_unit=time_unit)
 
@@ -336,7 +342,7 @@ def main():
         environment_type=EnvironmentType.TEST_RANDOM,
     )
 
-    net = train(coin_name, train_env, evaluate_random_env)
+    net = train(coin_name, time_unit, train_env, evaluate_random_env)
 
     print("#### TEST SEQUENTIALLY")
     evaluate_sequential_env = UpbitEnvironment(
@@ -348,28 +354,59 @@ def main():
 
     argmax_action_selector = ArgmaxTradeActionSelector(env=evaluate_sequential_env)
     evaluate_agent = rl_agent.DQNAgent(dqn_model=net, action_selector=argmax_action_selector, device=device)
+    sequential_dqn_num_positives = []
+    sequential_dqn_num_negatives = []
+    sequential_dqn_num_episodes = []
+    sequential_dqn_num_steps_per_episode = []
     sequential_dqn_total_profits = []
-    for _ in range(100):
-        total_profit = evaluate_sequential_all(
+    for _ in range(10):
+        num_positive, num_negative, num_episodes, total_profit, avg_num_steps_per_episode = evaluate_sequential_all(
             "DQN", evaluate_sequential_env, evaluate_agent, data_size=len(evaluate_data_info["data"]), verbose=False
         )
+        sequential_dqn_num_positives.append(num_positive)
+        sequential_dqn_num_negatives.append(num_negative)
+        sequential_dqn_num_episodes.append(num_episodes)
         sequential_dqn_total_profits.append(total_profit)
-    print("SEQUENTIAL: DQN - 100 AVERAGE PROFIT {0:.1f}/STD {1:.1f}".format(
-        np.mean(sequential_dqn_total_profits), np.std(sequential_dqn_total_profits)
-    ))
+        sequential_dqn_num_steps_per_episode.append(avg_num_steps_per_episode)
+
+    dqn_msg = f"SEQUENTIAL: DQN - {np.mean(sequential_dqn_num_episodes):.1f} EPISODES - " \
+              f"POSITIVE: {np.mean(sequential_dqn_num_positives):.1f}, " \
+              f"NEGATIVE: {np.mean(sequential_dqn_num_negatives):.1f}, " \
+              f"AVERAGE PROFIT {np.mean(sequential_dqn_total_profits):.1f}/STD {np.std(sequential_dqn_total_profits):.1f}, " \
+              f"AVERAGE STEP {np.mean(sequential_dqn_num_steps_per_episode):.1f}"
+    print(dqn_msg)
 
     random_action_selector = RandomTradeDQNActionSelector(env=evaluate_sequential_env)
     random_agent = rl_agent.DQNAgent(dqn_model=None, action_selector=random_action_selector, device=device)
+    sequential_random_num_positives = []
+    sequential_random_num_negatives = []
+    sequential_random_num_episodes = []
+    sequential_random_num_steps_per_episode = []
     sequential_random_total_profits = []
-    for _ in range(100):
-        total_profit = evaluate_sequential_all(
+    for _ in range(10):
+        num_positive, num_negative, num_episodes, total_profit, avg_num_steps_per_episode = evaluate_sequential_all(
             "RANDOM", evaluate_sequential_env, random_agent, data_size=len(evaluate_data_info["data"]), verbose=False
         )
+        sequential_random_num_positives.append(num_positive)
+        sequential_random_num_negatives.append(num_negative)
+        sequential_random_num_episodes.append(num_episodes)
         sequential_random_total_profits.append(total_profit)
-    print("SEQUENTIAL: RANDOM - 100 AVERAGE PROFIT {0:.1f}/STD {1:.1f}".format(
-        np.mean(sequential_random_total_profits), np.std(sequential_random_total_profits)
-    ))
+        sequential_random_num_steps_per_episode.append(avg_num_steps_per_episode)
 
+    random_msg = f"SEQUENTIAL: RANDOM - {np.mean(sequential_random_num_episodes):.1f} EPISODES - " \
+                 f"POSITIVE: {np.mean(sequential_random_num_positives):.1f}, " \
+                 f"NEGATIVE: {np.mean(sequential_random_num_negatives):.1f}, " \
+                 f"AVERAGE PROFIT {np.mean(sequential_random_total_profits):.1f}/STD {np.std(sequential_random_total_profits):.1f}, " \
+                 f"AVERAGE STEP {np.mean(sequential_random_num_steps_per_episode):.1f}"
+    print(random_msg)
+
+    pusher.send_message(
+        "me", dqn_msg
+    )
+
+    pusher.send_message(
+        "me", random_msg
+    )
 
 if __name__ == "__main__":
     main()
