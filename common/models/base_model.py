@@ -17,7 +17,11 @@ class BaseModel(nn.Module):
 
         self.worker_id = worker_id
         self.params = params
+        self.s_size = s_size
         self.a_size = a_size
+        self.hidden_1_size = params.HIDDEN_1_SIZE
+        self.hidden_2_size = params.HIDDEN_2_SIZE
+        self.hidden_3_size = params.HIDDEN_3_SIZE
 
         self.base = None
 
@@ -29,8 +33,6 @@ class BaseModel(nn.Module):
         self.count = 0
         self.sum = 0
         self.device = device
-
-        self.reset_average_gradients()
 
         self.steps_done = 0
 
@@ -52,6 +54,8 @@ class BaseModel(nn.Module):
                 print("Worker ID - {0}: There is no saved model".format(self.worker_id))
 
     def forward(self, inputs):
+        if not (type(inputs) is torch.Tensor):
+            inputs = torch.tensor([inputs], dtype=torch.float).to(self.device)
         return self.base.forward(inputs)
 
     def act(self, inputs):

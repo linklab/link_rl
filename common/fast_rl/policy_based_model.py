@@ -411,7 +411,7 @@ class D4PGCritic(nn.Module):
         return res.unsqueeze(dim=-1)
 
 
-def unpack_batch_for_policy_gradient(batch, net, params, device='cpu'):
+def unpack_batch_for_a2c(batch, net, params, device='cpu'):
     """
     Convert batch into training tensors
     :param batch:
@@ -436,13 +436,13 @@ def unpack_batch_for_policy_gradient(batch, net, params, device='cpu'):
 
     if not_done_idx:
         last_states_v = torch.FloatTensor(np.array(last_states, copy=False)).to(device)
-        last_values_v = net(last_states_v)[1]
+        last_values_v = net.base.forward_critic(last_states_v)
         last_values_np = last_values_v.data.cpu().numpy()[:, 0] * params.GAMMA ** params.N_STEP
         rewards_np[not_done_idx] += last_values_np
 
-    target_values_v = torch.FloatTensor(rewards_np).to(device)
+    target_action_values_v = torch.FloatTensor(rewards_np).to(device)
 
-    return states_v, actions_v, target_values_v
+    return states_v, actions_v, target_action_values_v
 
 
 def unpack_batch_for_ddpg(batch, device="cpu"):

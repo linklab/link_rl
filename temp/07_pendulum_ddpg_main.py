@@ -60,7 +60,7 @@ def play_func(exp_queue, env, net):
         action_min=action_min, action_max=action_max, device=device, preprocessor=float32_preprocessor
     )
 
-    if params.DEEP_LEARNING_MODEL in [DeepLearningModelName.DDPG_ACTOR_CRITIC_GRU, DeepLearningModelName.DDPG_ACTOR_CRITIC_GRU_ATTENTION]:
+    if params.DEEP_LEARNING_MODEL in [DeepLearningModelName.DETERMINISTIC_ACTOR_CRITIC_GRU, DeepLearningModelName.DETERMINISTIC_ACTOR_CRITIC_GRU_ATTENTION]:
         step_length = params.RNN_STEP_LENGTH
     else:
         step_length = -1
@@ -124,7 +124,7 @@ def main():
     print("observation_space:", env.observation_space)
     print("action_space:", env.action_space)
 
-    if params.DEEP_LEARNING_MODEL is DeepLearningModelName.ACTOR_CRITIC_MLP:
+    if params.DEEP_LEARNING_MODEL is DeepLearningModelName.DETERMINISTIC_ACTOR_CRITIC_MLP:
         actor_net = policy_based_model.DDPGActor(
             obs_size=3,
             hidden_size_1=512, hidden_size_2=256,
@@ -137,7 +137,7 @@ def main():
             hidden_size_1=512, hidden_size_2=256,
             n_actions=1
         ).to(device)
-    elif params.DEEP_LEARNING_MODEL is DeepLearningModelName.DDPG_ACTOR_CRITIC_GRU:
+    elif params.DEEP_LEARNING_MODEL is DeepLearningModelName.DETERMINISTIC_ACTOR_CRITIC_GRU:
         actor_net = policy_based_model.DDPGGruActor(
             obs_size=3,
             hidden_size_1=256, hidden_size_2=256,
@@ -152,7 +152,7 @@ def main():
             n_actions=1,
             bidirectional=False
         ).to(device)
-    elif params.DEEP_LEARNING_MODEL is DeepLearningModelName.DDPG_ACTOR_CRITIC_GRU_ATTENTION:
+    elif params.DEEP_LEARNING_MODEL is DeepLearningModelName.DETERMINISTIC_ACTOR_CRITIC_GRU_ATTENTION:
         actor_net = policy_based_model.DDPGGruAttentionActor(
             obs_size=3,
             hidden_size=256,

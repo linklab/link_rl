@@ -79,8 +79,7 @@ def unpack_batch(batch, net, device='cpu'):
             not_done_idx.append(idx)
             last_states.append(np.array(exp.last_state, copy=False))
 
-    states_v = torch.FloatTensor(
-        np.array(states, copy=False)).to(device)
+    states_v = torch.FloatTensor(np.array(states, copy=False)).to(device)
     actions_t = torch.LongTensor(actions).to(device)
 
     # handle rewards

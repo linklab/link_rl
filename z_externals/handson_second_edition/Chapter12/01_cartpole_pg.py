@@ -35,7 +35,7 @@ class PGN(nn.Module):
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
-    parser.add_argument("--baseline", default=False, action='store_true', help="Enable mean baseline")
+    parser.add_argument("--baseline", default=True, action='store_true', help="Enable mean baseline")
     args = parser.parse_args()
 
     env = gym.make("CartPole-v0")
@@ -59,7 +59,9 @@ if __name__ == "__main__":
 
     for step_idx, exp in enumerate(experience_source):
         reward_sum += exp.reward
-        baseline = reward_sum / (step_idx + 1)
+
+        baseline = reward_sum / (step_idx + 1)  # 상태, 행동에 관련 없이 보상값으로만 Baseline 구성
+
         writer.add_scalar("baseline", baseline, step_idx)
         batch_states.append(exp.state)
         batch_actions.append(int(exp.action))

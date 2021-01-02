@@ -50,14 +50,6 @@ class CartPole_v0(Environment):
     def step(self, action):
         action = int(action.item())
         next_state, reward, done, info = self.env.step(action)
-
-        next_state = next_state
-        #adjusted_reward = reward / 100
-
-        reward /= 100.0
-
-        #return next_state, reward, adjusted_reward, done, info
-
         return next_state, reward, done, info
 
     def render(self):

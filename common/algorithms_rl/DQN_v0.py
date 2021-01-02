@@ -51,14 +51,14 @@ class DQN_v0:
         self.params = params
         self.verbose = verbose
 
-        self.policy_model = rl_utils.get_rl_model(self.env, params=params).to(device)
-        self.target_model = rl_utils.get_rl_model(self.env, params=params).to(device)
+        self.q_model = rl_utils.get_rl_model(self.env, params=params).to(device)
+        self.target_q_model = rl_utils.get_rl_model(self.env, params=params).to(device)
 
-        self.target_model.load_state_dict(self.policy_model.state_dict())
-        self.target_model.eval()
+        self.target_q_model.load_state_dict(self.q_model.state_dict())
+        self.target_q_model.eval()
 
         self.optimizer = rl_utils.get_optimizer(
-            parameters=self.policy_model.parameters(),
+            parameters=self.q_model.parameters(),
             learning_rate=self.learning_rate,
             params=params
         )
@@ -66,7 +66,7 @@ class DQN_v0:
         self.memory = ReplayMemory(10000, device)
         self.steps_done = 0
 
-        self.model = self.policy_model
+        self.model = self.q_model
 
     def on_episode(self, episode):
         state = self.env.reset()
@@ -93,7 +93,7 @@ class DQN_v0:
 
         # Update the target network, copying all weights and biases in DQN
         if episode % TARGET_UPDATE_PERIOD == 0:
-            self.target_model.load_state_dict(self.policy_model.state_dict())
+            self.target_q_model.load_state_dict(self.q_model.state_dict())
 
         return gradients, loss, episode_reward
 
@@ -107,7 +107,7 @@ class DQN_v0:
                 # t.max(1) will return largest column value of each row.
                 # second column on max result is index of where max element was
                 # found, so we pick action with the larger expected reward.
-                action, _ = self.policy_model.act(state)
+                action, _ = self.q_model.act(state)
                 return action.unsqueeze(0)
         else:
             return torch.tensor([[random.randrange(self.env.n_actions)]], device=self.device, dtype=torch.long)
@@ -143,7 +143,7 @@ class DQN_v0:
         # Compute Q(s_t, a) - the model computes Q(s_t), then we select the
         # columns of actions taken. These are the actions which would've been taken
         # for each batch state according to policy_net
-        critic_values, actor_values = self.policy_model.evaluate(state_batch)
+        critic_values, actor_values = self.q_model.evaluate(state_batch)
         q_values = actor_values.gather(1, action_batch)
         # print_torch("critic_values", critic_values)
         # print_torch("q_values", q_values)
@@ -153,7 +153,7 @@ class DQN_v0:
         # on the "older" target_net; selecting their best reward with max(1)[0].
         # This is merged based on the mask, such that we'll have either the expected
         # state value or 0 in case the state was final.
-        next_critic_value, next_action_probs = self.target_model.evaluate(non_final_next_state_batch)
+        next_critic_value, next_action_probs = self.target_q_model.evaluate(non_final_next_state_batch)
         next_state_values = torch.zeros([self.params.BATCH_SIZE, 1], device=device)
         next_state_values[non_final_mask] = next_action_probs.max(dim=1)[0].unsqueeze(dim=1).detach()
 
@@ -195,16 +195,16 @@ class DQN_v0:
         # Optimize the model
         self.optimizer.zero_grad()
         loss.backward()
-        for name, param in self.policy_model.named_parameters():
+        for name, param in self.q_model.named_parameters():
             param.grad.data.clamp_(-1, 1)
         self.optimizer.step()
 
-        gradients = self.policy_model.get_gradients_for_current_parameters()
+        gradients = self.q_model.get_gradients_for_current_parameters()
 
         return gradients, loss.item()
 
     def get_parameters(self):
-        return self.policy_model.get_parameters()
+        return self.q_model.get_parameters()
 
     def transfer_process(self, parameters, soft_transfer, soft_transfer_tau):
-        self.policy_model.transfer_process(parameters, soft_transfer, soft_transfer_tau)
+        self.q_model.transfer_process(parameters, soft_transfer, soft_transfer_tau)

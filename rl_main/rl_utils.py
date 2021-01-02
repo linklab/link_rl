@@ -1,5 +1,4 @@
 import json
-import threading
 
 import gym
 import paho.mqtt.client as mqtt
@@ -7,10 +6,14 @@ import torch
 from torch import optim
 import os, sys
 
+from common.fast_rl.algorithms.A2C_v0 import A2C_FAST_v0
+from common.fast_rl.algorithms.CONTINUOUS_A2C_v0 import CONTINUOUS_A2C_FAST_v0
 from common.fast_rl.algorithms.D4PG_v0 import D4PG_FAST_v0
 from common.fast_rl.algorithms.DUELING_DOUBLE_DQN_v0 import Dueling_Double_DQN_v0
 from common.fast_rl.algorithms.PPO_v0 import PPO_FAST_v0
-from common.models.dqn_model import DuelingDQNModel
+from common.models.continuous_action.stochastic_actor_critic_model import StochasticActorCriticModel
+from common.models.discrete_action.actor_critic_model import ActorCriticModel
+from common.models.discrete_action.dqn_model import DuelingDQNModel
 
 current_path = os.path.dirname(os.path.realpath(__file__))
 PROJECT_HOME = os.path.abspath(os.path.join(current_path, os.pardir, os.pardir))
@@ -23,13 +26,12 @@ from config.parameters import PARAMETERS as params
 if params.MY_PLATFORM != "REAL_RIP_PLATFORM":
     from common.environments.real_device.environment_double_rip import EnvironmentDoubleRIP
 
-from common.fast_rl.algorithms.DDPG_RIP_DOUBLE_AGENTS_v0 import DDPG_FAST_RIP_DOUBLE_AGENTS_v0
 from common.fast_rl.algorithms.DDPG_v0 import DDPG_FAST_v0
 
 if params.MY_PLATFORM != "REAL_RIP_PLATFORM":
     from common.environments.matlab.matlabenv import MatlabRotaryInvertedPendulumEnv
 
-from common.models.deterministic_actor_critic_model import DeterministicActorCriticModel
+from common.models.continuous_action.deterministic_actor_critic_model import DeterministicActorCriticModel
 from config.names import EnvironmentName, DeepLearningModelName, RLAlgorithmName, OptimizerName
 
 from common.environments.gym.frozenlake import FrozenLake_v0
@@ -54,7 +56,7 @@ from common.environments.mujoco.humanoid_stand_up import HumanoidStandUp_v2
 from common.environments.mujoco.inverted_pendulum import InvertedPendulum_v2
 from common.environments.mujoco.walker_2d import Walker2D_v2
 from common.environments.real_device.environment_double_rip import EnvironmentDoubleRIP
-from common.models.old_actor_critic_model import OldActorCriticModel
+from temp.ppo.old_actor_critic_model import OldActorCriticModel
 from common.algorithms_rl.DQN_v0 import DQN_v0
 from common.algorithms_rl.Monte_Carlo_Control_v0 import Monte_Carlo_Control_v0
 from common.algorithms_rl.PPO_v0 import PPO_v0
@@ -222,7 +224,6 @@ def get_environment(owner="chief", params=None):
             pendulum_type= 'PENDULUM_MATLAB_DOUBLE_RIP_V0'
         )
     elif params.ENVIRONMENT_ID == EnvironmentName.MINITAUR_BULLET_V0:
-        import pybullet_envs
         spec = gym.envs.registry.spec("MinitaurBulletEnv-v0")
         spec._kwargs['render'] = params.ENV_RENDER
         env = gym.make("MinitaurBulletEnv-v0")
@@ -232,7 +233,23 @@ def get_environment(owner="chief", params=None):
 
 
 def get_rl_model(env, worker_id, params):
-    if params.DEEP_LEARNING_MODEL == DeepLearningModelName.ACTOR_CRITIC_MLP:
+    if params.DEEP_LEARNING_MODEL == DeepLearningModelName.CONTINUOUS_ACTOR_CRITIC_MLP:
+        model = StochasticActorCriticModel(
+            s_size=env.n_states,
+            a_size=env.n_actions,
+            worker_id=worker_id,
+            params=params,
+            device=device
+        )
+    elif params.DEEP_LEARNING_MODEL == DeepLearningModelName.ACTOR_CRITIC_MLP:
+        model = ActorCriticModel(
+            s_size=env.n_states,
+            a_size=env.n_actions,
+            worker_id=worker_id,
+            params=params,
+            device=device
+        ).to(device)
+    elif params.DEEP_LEARNING_MODEL == DeepLearningModelName.DETERMINISTIC_ACTOR_CRITIC_MLP:
         model = DeterministicActorCriticModel(
             s_size=env.n_states,
             a_size=env.n_actions,
@@ -265,7 +282,25 @@ def get_rl_model(env, worker_id, params):
 
 
 def get_rl_algorithm(env, worker_id=0, logger=False, params=None):
-    if params.RL_ALGORITHM == RLAlgorithmName.D4PG_FAST_V0:
+    if params.RL_ALGORITHM == RLAlgorithmName.CONTINUOUS_A2C_FAST_V0:
+        rl_algorithm = CONTINUOUS_A2C_FAST_v0(
+            env=env,
+            worker_id=worker_id,
+            logger=logger,
+            params=params,
+            device=device,
+            verbose=params.VERBOSE
+        )
+    elif params.RL_ALGORITHM == RLAlgorithmName.A2C_FAST_V0:
+        rl_algorithm = A2C_FAST_v0(
+            env=env,
+            worker_id=worker_id,
+            logger=logger,
+            params=params,
+            device=device,
+            verbose=params.VERBOSE
+        )
+    elif params.RL_ALGORITHM == RLAlgorithmName.D4PG_FAST_V0:
         rl_algorithm = D4PG_FAST_v0(
             env=env,
             worker_id=worker_id,

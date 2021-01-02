@@ -8,7 +8,6 @@ import os, sys
 
 current_path = os.path.dirname(os.path.realpath(__file__))
 PROJECT_HOME = os.path.abspath(os.path.join(current_path, os.pardir, os.pardir))
-
 if PROJECT_HOME not in sys.path:
     sys.path.append(PROJECT_HOME)
 
@@ -35,7 +34,7 @@ if torch.cuda.is_available():
 else:
     device = torch.device("cpu")
 
-my_logger = get_logger("openai_pendulum_ddpg")
+my_logger = get_logger("openai_minitaur_bullet_a2c")
 
 
 def play_func(exp_queue, env, net):
@@ -57,7 +56,7 @@ def play_func(exp_queue, env, net):
         action_min=action_min, action_max=action_max, device=device, preprocessor=float32_preprocessor
     )
 
-    if params.DEEP_LEARNING_MODEL in [DeepLearningModelName.DDPG_ACTOR_CRITIC_GRU, DeepLearningModelName.DDPG_ACTOR_CRITIC_GRU_ATTENTION]:
+    if params.DEEP_LEARNING_MODEL in [DeepLearningModelName.DETERMINISTIC_ACTOR_CRITIC_GRU, DeepLearningModelName.DETERMINISTIC_ACTOR_CRITIC_GRU_ATTENTION]:
         step_length = params.RNN_STEP_LENGTH
     else:
         step_length = -1
@@ -145,8 +144,7 @@ def main():
             continue
 
         if exp is not None and exp.last_state is None:
-            for _ in range(3):
-                rl_algorithm.train_net(step_idx=step_idx)
+            rl_algorithm.train_net(step_idx=step_idx)
 
 
 if __name__ == "__main__":

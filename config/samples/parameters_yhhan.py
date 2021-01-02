@@ -8,7 +8,7 @@ from config.fast_rl_parameters.parameters_fast_rl_cartpole_reinforce    import P
 from config.fast_rl_parameters.parameters_fast_rl_minitaur_bullet_a2c   import PARAMETERS_FAST_RL_MINITAUR_BULLET_A2C
 from config.fast_rl_parameters.parameters_fast_rl_pendulum_matlab_dqn   import PARAMETERS_FAST_RL_PENDULUM_MATLAB_DQN
 
-from config.fast_rl_parameters.parameters_fast_rl_pendulum_a2c_continuous_action import PARAMETERS_FAST_RL_PENDULUM_A2C_CONTINUOUS_ACTION
+from config.fast_rl_parameters.parameters_fast_rl_pendulum_a2c import PARAMETERS_FAST_RL_PENDULUM_A2C_CONTINUOUS_ACTION
 from config.fast_rl_parameters.parameters_fast_rl_pendulum_ddpg                  import PARAMETERS_FAST_RL_PENDULUM_DDPG
 from config.fast_rl_parameters.parameters_fast_rl_pendulum_d4pg                  import PARAMETERS_FAST_RL_PENDULUM_D4PG
 from config.federated_parameters.parameters_federated_cartpole_dqn import PARAMETERS_FEDERATED_CARTPOLE_DQN

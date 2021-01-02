@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-# PARAMETERS_FAST_RL_CARTPOLE_A2C
+# PARAMETERS_FAST_RL_PENDULUM_A2C
 import time
 import torch
 import torch.multiprocessing as mp
@@ -34,7 +34,13 @@ print(torch.__version__)
 
 
 def play_func(exp_queue, env, net):
-    agent = rl_agent.ActorCriticAgent(net, apply_softmax=True, device=device, preprocessor=float32_preprocessor)
+    print(env.action_space.low[0], env.action_space.high[0])
+    action_min = env.action_space.low[0]
+    action_max = env.action_space.high[0]
+
+    agent = rl_agent.ContinuousActorCriticAgent(
+        net, action_min=action_min, action_max=action_max, device=device, preprocessor=float32_preprocessor
+    )
 
     experience_source = experience.ExperienceSourceFirstLast(env, agent, gamma=params.GAMMA, steps_count=params.N_STEP)
 

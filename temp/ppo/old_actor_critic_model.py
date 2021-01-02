@@ -6,7 +6,7 @@ import torch
 import torch.nn as nn
 import os
 
-from common.models.old_distributions import DistCategorical, DistDiagGaussian
+from temp.ppo.old_distributions import DistCategorical, DistDiagGaussian
 
 # from torch.distributions import Categorical
 from config.names import DeepLearningModelName, PROJECT_HOME, RLAlgorithmName

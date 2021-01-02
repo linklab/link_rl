@@ -2,10 +2,10 @@
 from collections import deque
 
 import torch
-from torch import optim
 import torch.nn.functional as F
+import numpy as np
 
-from common.fast_rl import rl_agent, experience, replay_buffer
+from common.fast_rl import rl_agent, replay_buffer
 from common.fast_rl.policy_based_model import unpack_batch_for_ddpg
 from rl_main import rl_utils
 
@@ -47,6 +47,8 @@ class DDPG_FAST_v0:
             self.buffer = replay_buffer.ExperienceReplayBuffer(
                 experience_source=None, buffer_size=self.params.REPLAY_BUFFER_SIZE
             )
+
+
 
     def set_experience_source_to_buffer(self, experience_source):
         if self.params.PER:

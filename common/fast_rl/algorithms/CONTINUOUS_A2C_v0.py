@@ -1,16 +1,16 @@
 # -*- coding: utf-8 -*-
-from collections import deque
-
+import math
 import torch
 import torch.nn.functional as F
 import torch.nn.utils as nn_utils
 
 from common.fast_rl import replay_buffer
 from common.fast_rl.policy_based_model import unpack_batch_for_a2c
+from config.names import DeepLearningModelName
 from rl_main import rl_utils
 
 
-class A2C_FAST_v0:
+class CONTINUOUS_A2C_FAST_v0:
     def __init__(self, env, worker_id, logger, params, device, verbose):
         self.env = env
         self.worker_id = worker_id
@@ -19,19 +19,16 @@ class A2C_FAST_v0:
         self.logger = logger
         self.verbose = verbose
 
+        assert self.params.DEEP_LEARNING_MODEL == DeepLearningModelName.CONTINUOUS_ACTOR_CRITIC_MLP
         self.model = rl_utils.get_rl_model(self.env, self.worker_id, params=self.params)
 
-        print(self.model.base.actor)
-        print(self.model.base.critic)
+        print(self.model.base.net)
+        print(self.model.base.mu)
+        print(self.model.base.var)
+        print(self.model.base.value)
 
-        self.actor_optimizer = rl_utils.get_optimizer(
-            parameters=self.model.base.actor.parameters(),
-            learning_rate=self.params.ACTOR_LEARNING_RATE,
-            params=params
-        )
-
-        self.critic_optimizer = rl_utils.get_optimizer(
-            parameters=self.model.base.critic.parameters(),
+        self.optimizer = rl_utils.get_optimizer(
+            parameters=self.model.base.parameters(),
             learning_rate=self.params.LEARNING_RATE,
             params=params
         )
@@ -70,10 +67,9 @@ class A2C_FAST_v0:
 
         batch.clear()
 
-        self.actor_optimizer.zero_grad()
-        self.critic_optimizer.zero_grad()
+        self.optimizer.zero_grad()
 
-        batch_logits_v, batch_value_v = self.model(batch_states_v)
+        batch_mu_v, batch_var_v, batch_value_v = self.model(batch_states_v)
 
         if self.params.PER:
             batch_loss_critic_v = F.mse_loss(batch_value_v.squeeze(-1), batch_target_action_values_v, reduction="none")
@@ -85,27 +81,29 @@ class A2C_FAST_v0:
         else:
             loss_critic_v = F.mse_loss(batch_value_v.squeeze(-1), batch_target_action_values_v)
 
-        loss_critic_v.backward(retain_graph=True)
-
         batch_advantage_v = batch_target_action_values_v - batch_value_v.squeeze(-1).detach()
-        batch_log_prob_v = F.log_softmax(batch_logits_v, dim=1)
-        batch_log_prob_actions_v = batch_log_prob_v[range(self.params.BATCH_SIZE), batch_actions_v]
+        batch_log_prob_actions_v = batch_advantage_v * self.calc_log_prob_actions(batch_mu_v, batch_var_v, batch_actions_v)
         batch_log_prob_actions_v = batch_advantage_v * batch_log_prob_actions_v
         loss_actor_v = -batch_log_prob_actions_v.mean()
 
-        batch_prob_v = F.softmax(batch_logits_v, dim=1)
-        entropy_v = -(batch_prob_v * batch_log_prob_v).sum(dim=1).mean()
+        entropy_v = (torch.log(2 * math.pi * batch_var_v) + 1) / 2
+        entropy_v = entropy_v.mean()
         loss_entropy_v = -self.params.ENTROPY_BETA * entropy_v
 
         # loss_actor_v를 작아지도록 만듦 --> batch_log_prob_actions_v.mean()가 커지도록 만듦
         # loss_entropy_v를 작아지도록 만듦 --> entropy_v가 커지도록 만듦
-        loss_actor_and_entropy_v = loss_actor_v + loss_entropy_v
-        loss_actor_and_entropy_v.backward()
+        loss_v = loss_critic_v + loss_actor_v + loss_entropy_v
+        loss_v.backward()
 
         nn_utils.clip_grad_norm_(self.model.parameters(), self.params.CLIP_GRAD)
-        self.actor_optimizer.step()
-        self.critic_optimizer.step()
+        self.optimizer.step()
 
         gradients = self.model.get_gradients_for_current_parameters()
 
         return gradients, loss_critic_v.item(), loss_actor_v.item() * -1.0
+
+    @staticmethod
+    def calc_log_prob_actions(mu_v, var_v, actions_v):
+        p1 = - ((mu_v - actions_v) ** 2) / (2 * var_v.clamp(min=1e-3))
+        p2 = - torch.log(torch.sqrt(2 * math.pi * var_v))
+        return p1 + p2

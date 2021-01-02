@@ -10,11 +10,10 @@ from config.names import RLAlgorithmName
 class DeterministicActorCriticModel(BaseModel):
     def __init__(self, s_size, a_size, worker_id, params, device):
         super(DeterministicActorCriticModel, self).__init__(s_size, a_size, worker_id, params, device)
-
         self.__name__ = "DeterministicActorCriticModel"
 
         if self.params.RL_ALGORITHM == RLAlgorithmName.DDPG_FAST_V0:
-            self.base = ActorCriticMLPBase(
+            self.base = DeterministicActorCriticMLPBase(
                 num_inputs=s_size,
                 num_ouputs=a_size,
                 params=self.params
@@ -28,19 +27,12 @@ class DeterministicActorCriticModel(BaseModel):
         else:
             raise ValueError()
 
-    def forward(self, inputs):
-        return self.base.forward_actor(inputs)
-
-    def act(self, inputs):
-        if not (type(inputs) is torch.Tensor):
-            inputs = torch.tensor([inputs], dtype=torch.float).to(self.device)
-        actions = self.base.forward_actor(inputs)
-        return actions, None
+        self.reset_average_gradients()
 
 
-class ActorCriticMLPBase(nn.Module):
+class DeterministicActorCriticMLPBase(nn.Module):
     def __init__(self, num_inputs, num_ouputs, params):
-        super(ActorCriticMLPBase, self).__init__()
+        super(DeterministicActorCriticMLPBase, self).__init__()
         self.__name__ = "ActorCriticMLPBase"
         self.params = params
 
@@ -96,9 +88,9 @@ class ActorCriticMLPBase(nn.Module):
         return critic_value
 
 
-class DistributionalActorCriticMLPBase(ActorCriticMLPBase):
+class DistributionalActorCriticMLPBase(DeterministicActorCriticMLPBase):
     def __init__(self, num_inputs, num_ouputs, params):
-        super(DistributionalActorCriticMLPBase, self).__init__()
+        super(DistributionalActorCriticMLPBase, self).__init__(num_inputs, num_ouputs, params)
         self.__name__ = "DistributionalActorCriticMLPBase"
 
         self.logstd = nn.Parameter(torch.zeros(num_ouputs))
