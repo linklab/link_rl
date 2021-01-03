@@ -16,13 +16,13 @@ if PROJECT_HOME not in sys.path:
     sys.path.append(PROJECT_HOME)
 
 from config.names import DeepLearningModelName
-from common.common_utils import make_gym_env, smooth
+from codes.f_utils.common_utils import make_gym_env, smooth
 from common.fast_rl.policy_based_model import unpack_batch_for_ddpg
 from common.fast_rl.rl_agent import float32_preprocessor
 
 print("PyTorch Version", torch.__version__)
 
-from common.fast_rl import actions, experience, policy_based_model, rl_agent, replay_buffer, experience_single
+from common.fast_rl import actions, policy_based_model, rl_agent, replay_buffer, experience_single
 from common.fast_rl.common import statistics, utils
 
 from config.parameters import PARAMETERS as params

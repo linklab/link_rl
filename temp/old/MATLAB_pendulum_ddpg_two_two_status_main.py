@@ -19,8 +19,8 @@ from common.logger import get_logger
 from config.names import DeepLearningModelName
 from temp.old.experience_pendulum_ddpg_two_two_status import ExperienceSourceSingleEnvFirstLastDdpgTwo, \
     RewardTrackerMatlabPendulum, AgentType
-from common.environments.matlab.matlabenv_double_agents import MatlabRotaryInvertedPendulumDoubleAgentsEnv
-from common.common_utils import smooth
+from common.environments import MatlabRotaryInvertedPendulumDoubleAgentsEnv
+from codes.f_utils.common_utils import smooth
 from common.fast_rl.policy_based_model import unpack_batch_for_ddpg
 from common.fast_rl.rl_agent import float32_preprocessor
 

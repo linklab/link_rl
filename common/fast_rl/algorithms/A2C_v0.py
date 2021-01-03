@@ -10,7 +10,7 @@ from common.fast_rl.policy_based_model import unpack_batch_for_a2c
 from rl_main import rl_utils
 
 
-class A2C_FAST_v0:
+class DISCRETE_A2C_FAST_v0:
     def __init__(self, env, worker_id, logger, params, device, verbose):
         self.env = env
         self.worker_id = worker_id

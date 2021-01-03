@@ -1,5 +1,4 @@
 #!/usr/bin/env python3
-import sys
 import time
 import torch
 import torch.optim as optim
@@ -9,17 +8,16 @@ import os
 import warnings
 from collections import deque
 
-from common import common_utils
-from common.common_utils import make_atari_env
+from codes.f_utils import common_utils
+from codes.f_utils.common_utils import make_atari_env
 from common.fast_rl import experience, rl_agent, value_based_model, actions, replay_buffer
 from common.fast_rl.common import utils
-from common.fast_rl.common import statistics, wrappers
+from common.fast_rl.common import statistics
 from config.names import PROJECT_HOME
 from rl_main.fast_main.atari_draw_graph import save_reward_as_pickle, save_q_loss_as_pickle
 
 # from line_profiler import LineProfiler
 # from memory_profiler import profile
-import gc
 
 ##### NOTE #####
 from config.parameters import PARAMETERS as params

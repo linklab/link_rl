@@ -113,6 +113,12 @@ class ExperienceReplayBuffer:
 
             self._add((extended_frames, exp.action, exp.reward, exp.last_state is None))
 
+    def update_priorities(self, batch_indices, batch_priorities):
+        raise NotImplementedError()
+
+    def update_beta(self, idx):
+        raise NotImplementedError()
+
 
 class PrioReplayBufferNaive:
     def __init__(self, experience_source, buffer_size, prob_alpha=0.6):

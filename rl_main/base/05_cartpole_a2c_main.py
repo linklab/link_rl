@@ -14,7 +14,7 @@ from common.fast_rl.rl_agent import float32_preprocessor
 from config.names import PROJECT_HOME
 from rl_main import rl_utils
 from common.logger import get_logger
-from common.fast_rl import experience, policy_based_model, rl_agent
+from common.fast_rl import experience, rl_agent
 from common.fast_rl.common import statistics, utils
 from config.parameters import PARAMETERS as params
 

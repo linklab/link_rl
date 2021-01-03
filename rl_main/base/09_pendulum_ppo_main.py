@@ -13,13 +13,12 @@ if PROJECT_HOME not in sys.path:
     sys.path.append(PROJECT_HOME)
 
 from common.logger import get_logger
-from config.names import DeepLearningModelName
 from rl_main import rl_utils
 from common.fast_rl.rl_agent import float32_preprocessor
 
 print("PyTorch Version", torch.__version__)
 
-from common.fast_rl import actions, experience, rl_agent, experience_single
+from common.fast_rl import rl_agent, experience_single
 from common.fast_rl.common import statistics, utils
 
 from config.parameters import PARAMETERS as params

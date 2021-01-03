@@ -6,14 +6,14 @@ import torch
 from torch import optim
 import os, sys
 
-from common.fast_rl.algorithms.A2C_v0 import A2C_FAST_v0
+from common.fast_rl.algorithms.A2C_v0 import DISCRETE_A2C_FAST_v0
 from common.fast_rl.algorithms.CONTINUOUS_A2C_v0 import CONTINUOUS_A2C_FAST_v0
 from common.fast_rl.algorithms.D4PG_v0 import D4PG_FAST_v0
 from common.fast_rl.algorithms.DUELING_DOUBLE_DQN_v0 import Dueling_Double_DQN_v0
 from common.fast_rl.algorithms.PPO_v0 import PPO_FAST_v0
-from common.models.continuous_action.stochastic_actor_critic_model import StochasticActorCriticModel
-from common.models.discrete_action.actor_critic_model import ActorCriticModel
-from common.models.discrete_action.dqn_model import DuelingDQNModel
+from common.models import StochasticActorCriticModel
+from common.models import ActorCriticModel
+from common.models import DuelingDQNModel
 
 current_path = os.path.dirname(os.path.realpath(__file__))
 PROJECT_HOME = os.path.abspath(os.path.join(current_path, os.pardir, os.pardir))
@@ -24,38 +24,38 @@ if PROJECT_HOME not in sys.path:
 from config.parameters import PARAMETERS as params
 
 if params.MY_PLATFORM != "REAL_RIP_PLATFORM":
-    from common.environments.real_device.environment_double_rip import EnvironmentDoubleRIP
+    from common.environments import EnvironmentDoubleRIP
 
 from common.fast_rl.algorithms.DDPG_v0 import DDPG_FAST_v0
 
 if params.MY_PLATFORM != "REAL_RIP_PLATFORM":
-    from common.environments.matlab.matlabenv import MatlabRotaryInvertedPendulumEnv
+    from common.environments import MatlabRotaryInvertedPendulumEnv
 
-from common.models.continuous_action.deterministic_actor_critic_model import DeterministicActorCriticModel
+from common.models import DeterministicActorCriticModel
 from config.names import EnvironmentName, DeepLearningModelName, RLAlgorithmName, OptimizerName
 
-from common.environments.gym.frozenlake import FrozenLake_v0
-from common.environments.gym.breakout import BreakoutDeterministic_v4
-from common.environments.gym.cartpole import CartPole_v0, CartPole_v1
-from common.environments.gym.pendulum import Pendulum_v0
-from common.environments.gym.gridworld import GRIDWORLD_v0
-from common.environments.gym.blackjack import Blackjack_v0
-from common.environments.gym.mountaincar import MountainCarContinuous_v0
-from common.environments.gym.acrobot import Acrobot_v1
-from common.environments.real_device.environment_rip import EnvironmentRIP
-from common.environments.unity.chaser_unity import Chaser_v1
-from common.environments.unity.drone_racing import Drone_Racing
-from common.environments.mujoco.inverted_double_pendulum import InvertedDoublePendulum_v2
-from common.environments.mujoco.hopper import Hopper_v2
-from common.environments.mujoco.ant import Ant_v2
-from common.environments.mujoco.half_cheetah import HalfCheetah_v2
-from common.environments.mujoco.swimmer import Swimmer_v2
-from common.environments.mujoco.reacher import Reacher_v2
-from common.environments.mujoco.humanoid import Humanoid_v2
-from common.environments.mujoco.humanoid_stand_up import HumanoidStandUp_v2
-from common.environments.mujoco.inverted_pendulum import InvertedPendulum_v2
-from common.environments.mujoco.walker_2d import Walker2D_v2
-from common.environments.real_device.environment_double_rip import EnvironmentDoubleRIP
+from common.environments import FrozenLake_v0
+from common.environments import BreakoutDeterministic_v4
+from common.environments import CartPole_v0, CartPole_v1
+from common.environments import Pendulum_v0
+from common.environments import GRIDWORLD_v0
+from common.environments import Blackjack_v0
+from common.environments import MountainCarContinuous_v0
+from common.environments import Acrobot_v1
+from common.environments import EnvironmentRIP
+from common.environments import Chaser_v1
+from common.environments import Drone_Racing
+from common.environments import InvertedDoublePendulum_v2
+from common.environments import Hopper_v2
+from common.environments import Ant_v2
+from common.environments import HalfCheetah_v2
+from common.environments import Swimmer_v2
+from common.environments import Reacher_v2
+from common.environments import Humanoid_v2
+from common.environments import HumanoidStandUp_v2
+from common.environments import InvertedPendulum_v2
+from common.environments import Walker2D_v2
+from common.environments import EnvironmentDoubleRIP
 from temp.ppo.old_actor_critic_model import OldActorCriticModel
 from common.algorithms_rl.DQN_v0 import DQN_v0
 from common.algorithms_rl.Monte_Carlo_Control_v0 import Monte_Carlo_Control_v0
@@ -291,8 +291,8 @@ def get_rl_algorithm(env, worker_id=0, logger=False, params=None):
             device=device,
             verbose=params.VERBOSE
         )
-    elif params.RL_ALGORITHM == RLAlgorithmName.A2C_FAST_V0:
-        rl_algorithm = A2C_FAST_v0(
+    elif params.RL_ALGORITHM == RLAlgorithmName.DISCRETE_A2C_FAST_V0:
+        rl_algorithm = DISCRETE_A2C_FAST_v0(
             env=env,
             worker_id=worker_id,
             logger=logger,

@@ -6,9 +6,9 @@ import numpy as np
 from collections import namedtuple, deque
 
 # one single experience step
-from common.environments.matlab.matlabenv_double_agents import Status
+from common.environments import Status
 from common.fast_rl.common.statistics import StatisticsForValueBasedRL, StatisticsForPolicyBasedRL
-from common.fast_rl.rl_agent import BaseAgent, AgentDDPG
+from common.fast_rl.rl_agent import BaseAgent
 
 ExperienceWithNoise = namedtuple('ExperienceWithNoise', ['state', 'action', 'noise', 'reward', 'done', 'agent_type'])
 

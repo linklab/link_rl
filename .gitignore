@@ -127,7 +127,7 @@ environments/unity/unity_envs/
 /rl_main/fast_main/data/
 
 # personal parameter's option
-config/parameters.py
+codes/a_config/parameters.py
 
 *.m
 *.mat
@@ -141,4 +141,7 @@ slprj
 
 config.ini
 
-common/environments/trade/raw_data
+codes/1.environments/trade/raw_data
+
+*.para
+*.local

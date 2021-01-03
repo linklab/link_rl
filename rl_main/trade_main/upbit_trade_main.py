@@ -1,5 +1,4 @@
 #!/usr/bin/env python3
-import copy
 
 import torch
 import torch.optim as optim
@@ -13,11 +12,11 @@ if PROJECT_HOME not in sys.path:
     sys.path.append(PROJECT_HOME)
 
 from common.fast_rl.common.utils import EarlyStopping
-from common.environments.trade.trade_data import get_data
-from common import common_utils
-from common.environments.trade.trade_constant import TimeUnit, EnvironmentType, Action
-from common.environments.trade.trade_env import UpbitEnvironment
-from common.environments.trade.trade_action_selector import EpsilonGreedyTradeDQNActionSelector, \
+from common.environments import get_data
+from codes.f_utils import common_utils
+from common.environments import TimeUnit, EnvironmentType, Action
+from common.environments import UpbitEnvironment
+from common.environments import EpsilonGreedyTradeDQNActionSelector, \
     ArgmaxTradeActionSelector, RandomTradeDQNActionSelector
 
 from common.fast_rl import rl_agent, value_based_model, actions, experience_single, replay_buffer

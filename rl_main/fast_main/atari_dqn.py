@@ -7,11 +7,11 @@ import torch.multiprocessing as mp
 import os
 import warnings
 
-from common import common_utils
-from common.common_utils import make_atari_env
+from codes.f_utils import common_utils
+from codes.f_utils.common_utils import make_atari_env
 from common.fast_rl import experience, rl_agent, value_based_model, actions, replay_buffer
 from common.fast_rl.common import utils
-from common.fast_rl.common import statistics, wrappers
+from common.fast_rl.common import statistics
 from common.fast_rl.value_based_model import insert_experience_into_buffer
 
 ##### NOTE #####

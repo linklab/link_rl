@@ -1,5 +1,3 @@
-import argparse
-import os
 import time
 import operator
 from datetime import timedelta
@@ -11,7 +9,6 @@ import torch.nn as nn
 
 from common.fast_rl import rl_agent
 from common.fast_rl.common.statistics import StatisticsForValueBasedRL, StatisticsForPolicyBasedRL
-from config.names import EnvironmentName
 
 
 class SMAQueue:

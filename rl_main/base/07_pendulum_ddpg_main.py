@@ -19,7 +19,7 @@ from common.fast_rl.rl_agent import float32_preprocessor
 
 print("PyTorch Version", torch.__version__)
 
-from common.fast_rl import actions, experience, rl_agent, experience_single
+from common.fast_rl import actions, rl_agent, experience_single
 from common.fast_rl.common import statistics, utils
 
 from config.parameters import PARAMETERS as params
@@ -144,8 +144,7 @@ def main():
             continue
 
         if exp is not None and exp.last_state is None:
-            for _ in range(3):
-                rl_algorithm.train_net(step_idx=step_idx)
+            rl_algorithm.train_net(step_idx=step_idx)
 
 
 if __name__ == "__main__":

@@ -1,6 +1,6 @@
 import gym
 from config.names import EnvironmentName
-from common.environments.environment import Environment
+from common.environments import Environment
 
 # states
 # 0   1   2   3
@@ -15,7 +15,7 @@ from common.environments.environment import Environment
 # The reward is -1 for all tranistion until the terminal state is reached.
 
 
-class GRIDWORLD_v0(Environment):
+class GRIDWORLD_v0(gym):
     def __init__(self):
         self.env = gym.make(EnvironmentName.GRIDWORLD_V0.value)
         super(GRIDWORLD_v0, self).__init__()

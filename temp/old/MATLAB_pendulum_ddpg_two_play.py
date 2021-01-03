@@ -9,12 +9,12 @@ MODEL_SAVE_DIR = os.path.join(PROJECT_HOME, "out", "model_save_files")
 print(torch.__version__)
 
 from common.fast_rl.rl_agent import float32_preprocessor
-from common.fast_rl import actions, value_based_model, rl_agent, policy_based_model
+from common.fast_rl import actions, rl_agent, policy_based_model
 import numpy as np
 
 from config.parameters import PARAMETERS as params
 
-from common.environments.matlab.matlabenv import MatlabRotaryInvertedPendulumEnv
+from common.environments import MatlabRotaryInvertedPendulumEnv
 import math
 os.environ['KMP_DUPLICATE_LIB_OK'] = 'True'
 if torch.cuda.is_available():

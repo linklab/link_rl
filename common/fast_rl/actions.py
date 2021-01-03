@@ -5,8 +5,6 @@ from typing import Union
 
 import torch
 
-from config.names import RLAlgorithmName
-
 
 class ActionSelector:
     """

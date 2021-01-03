@@ -15,7 +15,7 @@ PROJECT_HOME = os.path.abspath(os.path.join(current_path, os.pardir, os.pardir))
 if PROJECT_HOME not in sys.path:
     sys.path.append(PROJECT_HOME)
 
-from common.common_utils import make_gym_env, smooth
+from codes.f_utils.common_utils import make_gym_env, smooth
 from common.fast_rl.policy_based_model import unpack_batch_for_ddpg
 from common.fast_rl.rl_agent import float32_preprocessor
 

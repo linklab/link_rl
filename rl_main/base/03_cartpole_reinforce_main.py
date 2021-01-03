@@ -7,7 +7,7 @@ from torch import optim
 import os
 import numpy as np
 
-from common.common_utils import make_gym_env, smooth
+from codes.f_utils.common_utils import make_gym_env, smooth
 from common.fast_rl.rl_agent import float32_preprocessor
 from config.names import PROJECT_HOME
 

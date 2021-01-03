@@ -49,7 +49,6 @@ class DDPG_FAST_v0:
             )
 
 
-
     def set_experience_source_to_buffer(self, experience_source):
         if self.params.PER:
             self.buffer = replay_buffer.PrioReplayBuffer(

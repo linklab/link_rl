@@ -1,7 +1,7 @@
 import gym
 
 from config.names import EnvironmentName
-from common.environments.environment import Environment
+from common.environments import Environment
 
 
 class CartPole_v0(Environment):

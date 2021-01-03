@@ -6,12 +6,12 @@ from torch import optim
 import os
 import numpy as np
 
-from common.common_utils import make_or_gym_env
+from codes.f_utils.common_utils import make_or_gym_env
 from config.names import EnvironmentName, PROJECT_HOME
 
 print(torch.__version__)
 
-from common.fast_rl import actions, experience, value_based_model, rl_agent, experience_single, replay_buffer
+from common.fast_rl import actions, value_based_model, rl_agent, experience_single, replay_buffer
 from common.fast_rl.common import statistics, utils
 
 from config.parameters import PARAMETERS as params

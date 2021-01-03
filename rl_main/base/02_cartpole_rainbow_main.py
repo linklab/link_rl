@@ -6,7 +6,7 @@ import torch.multiprocessing as mp
 from torch import optim
 import os
 
-from common.common_utils import make_gym_env
+from codes.f_utils.common_utils import make_gym_env
 from config.names import PROJECT_HOME
 
 print(torch.__version__)

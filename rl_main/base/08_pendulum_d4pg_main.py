@@ -3,7 +3,6 @@
 #!/usr/bin/env python3
 import time
 import torch
-import torch.nn.functional as F
 import torch.multiprocessing as mp
 import os, sys
 print("PyTorch Version", torch.__version__)
@@ -17,7 +16,7 @@ if PROJECT_HOME not in sys.path:
 from common.logger import get_logger
 from rl_main import rl_utils
 from common.fast_rl.rl_agent import float32_preprocessor
-from common.fast_rl import actions, experience, policy_based_model, rl_agent, experience_single
+from common.fast_rl import actions, rl_agent, experience_single
 from common.fast_rl.common import statistics, utils
 
 from config.parameters import PARAMETERS as params

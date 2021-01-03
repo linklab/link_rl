@@ -10,8 +10,7 @@ MODEL_SAVE_DIR = os.path.join(PROJECT_HOME, "out", "model_save_files")
 print(torch.__version__)
 
 from common.fast_rl.rl_agent import float32_preprocessor
-from common.fast_rl import actions, value_based_model, rl_agent, policy_based_model, experience, experience_single
-import numpy as np
+from common.fast_rl import actions, rl_agent, policy_based_model, experience_single
 
 from config.parameters import PARAMETERS as params
 
