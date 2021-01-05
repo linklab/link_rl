@@ -1,7 +1,7 @@
 import gym
 import torch
 from config.names import EnvironmentName
-from common.environments.environment import Environment
+from common.environments import Environment
 
 
 class Pendulum_v0(Environment):
@@ -16,6 +16,9 @@ class Pendulum_v0(Environment):
         self.action_space = self.env.action_space
 
         self.last_episode_reward = None
+
+        self.n_states = self.get_n_states()
+        self.n_actions = self.get_n_actions()
 
     def get_n_states(self):
         n_states = self.env.observation_space.shape[0]

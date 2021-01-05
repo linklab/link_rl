@@ -1,10 +1,9 @@
 #!/usr/bin/env python3
-import gym
 import torch
 import time
 import os
 import numpy as np
-from common.common_utils import make_atari_env
+from codes.f_utils.common_utils import make_atari_env
 from rl_main.fast_main.atari_dqn import MODEL_SAVE_DIR
 from common.fast_rl import actions, value_based_model, rl_agent
 from config.parameters import PARAMETERS as params
@@ -28,7 +27,7 @@ def play_main():
     rl_agent.load_model(MODEL_SAVE_DIR, params.ENVIRONMENT_ID.value, net.__name__, net, step=9431043)#1731249
 
     action_selector = actions.ArgmaxActionSelector()
-    # action_selector = actions.EpsilonGreedyActionSelector(epsilon=0.01)
+    # action_selector = actions.EpsilonGreedyDQNActionSelector(epsilon=0.01)
     agent = rl_agent.DQNAgent(net, action_selector, device=device)
 
     done = False

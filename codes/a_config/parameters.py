@@ -13,16 +13,13 @@ from codes.a_config.fast_rl_parameters.parameters_fast_rl_pendulum_d4pg         
 from codes.a_config.federated_parameters.parameters_federated_matlab_rip_ddpg import PARAMETERS_FEDERATED_MATLAB_RIP_DDPG
 from codes.a_config.federated_parameters.parameters_federated_pendulum_ddpg import \
     PARAMETERS_FEDERATED_PENDULUM_DDPG
-from codes.e_utils.names import DeepLearningModelName, RLAlgorithmName, EnvironmentName, OSName
-
 from codes.a_config.or_parameters.parameters_fast_rl_knapsack_dqn import PARAMETERS_FAST_RL_KNAPSACK_DQN
 from codes.a_config.or_parameters.parameters_fast_rl_tsp_dqn import PARAMETERS_FAST_RL_TSP_DQN
-
 from codes.a_config.fast_rl_parameters.parameters_fast_rl_pendulum_matlab_ddpg import PARAMETERS_FAST_RL_PENDULUM_MATLAB_DDPG
-
 from codes.a_config.federated_parameters.parameters_federated_cartpole_ppo_mlp import PARAMETERS_FEDERATED_CARTPOLE_PPO_MLP
 from codes.a_config.real_device.parameters_double_rip import PARAMETERS_DOUBLE_RIP
-from codes.a_config.names import *
+
+from codes.e_utils.names import DeepLearningModelName, RLAlgorithmName, EnvironmentName, OSName
 
 
 #

@@ -1,0 +1,30 @@
+from codes.a_config.parameters_general import PARAMETERS_GENERAL
+from codes.e_utils.names import EnvironmentName, RLAlgorithmName, DeepLearningModelName, ReplayBufferName, OptimizerName
+
+
+class PARAMETERS_FAST_RL_CARTPOLE_DQN(PARAMETERS_GENERAL):
+    ENVIRONMENT_ID = EnvironmentName.CARTPOLE_V1
+    RL_ALGORITHM = RLAlgorithmName.DQN_FAST_V0
+    DEEP_LEARNING_MODEL = DeepLearningModelName.DUELING_DQN_MLP
+    REPLAY_BUFFER = ReplayBufferName.PRIORITIZED_REPLAY_BUFFER
+
+    STOP_MEAN_EPISODE_REWARD = 195.0
+    STOP_PATIENCE_COUNT = 10
+    REPLAY_BUFFER_SIZE = 50000
+    MIN_REPLAY_SIZE_FOR_TRAIN = 100
+    TARGET_NET_SYNC_STEP_PERIOD = 100
+    MAX_GLOBAL_STEP = 30000
+    EPSILON_MIN_STEP = 5000
+    EPSILON_INIT = 1.0
+    EPSILON_MIN = 0.01
+    LEARNING_RATE = 0.001
+    GAMMA = 0.99
+    BATCH_SIZE = 32
+    TRAIN_STEP_FREQ = 2
+    AVG_EPISODE_SIZE_FOR_STAT = 30
+    MODEL_SAVE_STEP_PERIOD = 1000
+    DRAW_VIZ = True
+    N_STEP = 4
+    OMEGA = False
+
+    CUDA = False

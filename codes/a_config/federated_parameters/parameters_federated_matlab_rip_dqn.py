@@ -1,0 +1,80 @@
+from codes.a_config.parameters_general import PARAMETERS_GENERAL
+from codes.e_utils.names import EnvironmentName, RLAlgorithmName, DeepLearningModelName, OSName, OptimizerName
+
+
+class PARAMETERS_FEDERATED_MATLAB_RIP_DQN(PARAMETERS_GENERAL):
+    # [GENERAL]
+    SEED = 1
+    MY_PLATFORM = OSName.MAC
+    PYTHON_PATH = "~/anaconda/envs/rl/bin/python"
+
+    # [TRANSFER]
+    SOFT_TRANSFER = True
+    SOFT_TRANSFER_TAU = 0.3
+
+    # [TARGET_UPDATE]
+    SOFT_TARGET_UPDATE = False
+    SOFT_TARGET_UPDATE_TAU = 0.3
+
+    # [WORKER]
+    NUM_WORKERS = 1
+
+    # [MODE]
+    MODE_SYNCHRONIZATION = True
+    MODE_GRADIENTS_UPDATE = True      # Distributed
+    MODE_PARAMETERS_TRANSFER = False    # Transfer
+
+    # [1. ENVIRONMENTS]
+    ENVIRONMENT_ID = EnvironmentName.PENDULUM_MATLAB_V0
+
+    # [2. DEEP_LEARNING_MODELS]
+    DEEP_LEARNING_MODEL = DeepLearningModelName.DUELING_DQN_MLP
+
+    # [3. ALGORITHMS]
+    RL_ALGORITHM = RLAlgorithmName.DQN_FAST_V0
+
+    # [4. OPTIMIZER]
+    OPTIMIZER = OptimizerName.ADAM
+
+    STOP_MEAN_EPISODE_REWARD = 10000
+    STOP_PATIENCE_COUNT = 10
+    AVG_EPISODE_SIZE_FOR_STAT = 10
+
+    REPLAY_BUFFER_SIZE = 500000
+    MAX_GLOBAL_STEP = 2000000
+    LEARNING_RATE = 0.001
+    ACTOR_LEARNING_RATE = 0.0001
+    TRAIN_STEP_FREQ = 1
+    GAMMA = 0.99
+    BATCH_SIZE = 64
+
+    MODEL_SAVE_STEP_PERIOD = 100000
+    MIN_REPLAY_SIZE_FOR_TRAIN = 500
+    DRAW_VIZ = False
+    N_STEP = 4
+    OMEGA = False
+
+    EPSILON_INIT = 1.0
+    EPSILON_MIN = 0.001
+    EPSILON_MIN_STEP = 400000
+
+    EPSILON_SWING_UP_MIN_STEP = 500000
+    EPSILON_BALANCING_MIN_STEP = 200000
+
+    CUDA = False
+
+    CLIP_GRAD = 0.1
+
+    RNN_STEP_LENGTH = 2
+    PER = False
+
+    ENV_RENDER = False
+
+    ACTION_SCALE = SWING_UP_SCALE_FACTOR = 0.035
+    BALANCING_SCALE_FACTOR = 0.01
+
+    ENV_RESET = False
+    CH = False
+    TEAMVIEWER = False
+
+    SAVE_AT_MAX_GLOBAL_STEPS = True

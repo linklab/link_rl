@@ -3,7 +3,7 @@ import gym
 import numpy as np
 
 from config.names import EnvironmentName, DeepLearningModelName
-from common.environments.environment import Environment
+from common.environments import Environment
 
 class BreakoutDeterministic_v4(Environment):
     def __init__(self, params):

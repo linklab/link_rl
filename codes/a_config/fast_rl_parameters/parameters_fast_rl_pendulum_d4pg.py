@@ -1,0 +1,42 @@
+from codes.a_config.parameters_general import PARAMETERS_GENERAL
+from codes.e_utils.names import EnvironmentName, RLAlgorithmName, DeepLearningModelName, ReplayBufferName, OptimizerName
+
+class PARAMETERS_FAST_RL_PENDULUM_D4PG(PARAMETERS_GENERAL):
+    ENVIRONMENT_ID = EnvironmentName.PENDULUM_V0
+    DEEP_LEARNING_MODEL = DeepLearningModelName.DETERMINISTIC_ACTOR_CRITIC_MLP
+    RL_ALGORITHM = RLAlgorithmName.D4PG_FAST_V0
+
+    STOP_MEAN_EPISODE_REWARD = -200
+    STOP_PATIENCE_COUNT = 10
+    REPLAY_BUFFER_SIZE = 500000
+    MAX_GLOBAL_STEP = 500000
+    LEARNING_RATE = 0.001
+    ACTOR_LEARNING_RATE = 0.0001
+    TRAIN_STEP_FREQ = 1
+    GAMMA = 0.99
+    BATCH_SIZE = 64
+    AVG_EPISODE_SIZE_FOR_STAT = 100
+    MODEL_SAVE_STEP_PERIOD = 100000
+    MIN_REPLAY_SIZE_FOR_TRAIN = 500
+    DRAW_VIZ = False
+    N_STEP = 4
+    OMEGA = False
+
+    EPSILON_INIT = 0.9
+    EPSILON_MIN = 0.001
+    EPSILON_MIN_STEP = 200000
+
+    CUDA = False
+
+    CLIP_GRAD = 0.1
+
+    RNN_STEP_LENGTH = 2
+    PER = False
+
+    ENV_RENDER = False
+
+    ACTION_SCALE = 2.0
+
+    V_MAX = 0
+    V_MIN = -1800
+    N_ATOMS = 251

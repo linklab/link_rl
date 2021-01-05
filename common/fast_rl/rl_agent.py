@@ -5,29 +5,36 @@ import copy
 import numpy as np
 import torch
 import torch.nn.functional as F
-import os, glob
+import os, glob, sys
 
-from common.logger import get_logger
 from . import actions
 
 
-def save_model(model_save_dir, env_name, net_name, net, step, episode_reward):
-    model_save_filename = os.path.join(
-        model_save_dir, "{0}_{1}_{2}_{3:.2f}.pth".format(env_name, net_name, step, float(episode_reward))
+def remove_models(model_save_dir, env_name, model_name):
+    files = glob.glob(os.path.join(
+        model_save_dir, "{0}_{1}_*.pth".format(env_name, model_name))
     )
-    torch.save(net.state_dict(), model_save_filename)
+    for f in files:
+        os.remove(f)
+
+
+def save_model(model_save_dir, env_name, model_name, model, step, episode_reward):
+    model_save_filename = os.path.join(
+        model_save_dir, "{0}_{1}_{2}_{3:.2f}.pth".format(env_name, model_name, step, float(episode_reward))
+    )
+    torch.save(model.state_dict(), model_save_filename)
     return model_save_filename
 
 
-def load_model(model_save_dir, env_name, net_name, net, step=None):
+def load_model(model_save_dir, env_name, model_name, model, step=None):
     if step:
         saved_models = glob.glob(os.path.join(
-            model_save_dir, "{0}_{1}_{2}_*.pth".format(env_name, net_name, step)
+            model_save_dir, "{0}_{1}_{2}_*.pth".format(env_name, model_name, step)
         ))
 
     else:
         saved_models = glob.glob(os.path.join(
-            model_save_dir, "{0}_{1}_*.pth".format(env_name, net_name)
+            model_save_dir, "{0}_{1}_*.pth".format(env_name, model_name)
         ))
 
     saved_models.sort(key=lambda filename: int(filename.split("/")[-1].split("_")[-2]))
@@ -38,7 +45,7 @@ def load_model(model_save_dir, env_name, net_name, net, step=None):
     device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
     model_params = torch.load(saved_model, map_location=device)
 
-    net.load_state_dict(model_params)
+    model.load_state_dict(model_params)
 
 
 def save_actor_critic_model(
@@ -70,6 +77,7 @@ def load_actor_critic_model(actor_model_save_filename, critic_model_save_filenam
     critic_net.load_state_dict(critic_model_params)
 
     print("ACTOR / CRITIC MODELS ARE LOADED!!!")
+
 
 class BaseAgent:
     """
@@ -133,9 +141,12 @@ class DQNAgent(BaseAgent):
             states = self.preprocessor(states)
             if torch.is_tensor(states):
                 states = states.to(self.device)
-        q_v = self.dqn_model(states)
-        # q = q_v.data.cpu().numpy()
-        q = q_v.detach().cpu().numpy()
+        if self.dqn_model:
+            q_v = self.dqn_model(states)
+            q = q_v.detach().cpu().numpy()
+        else:
+            q = [[]]
+
         actions = self.action_selector(q)
         return actions, agent_states
 
@@ -328,8 +339,10 @@ class AgentDDPG(BaseAgent):
 
 
 class AgentD4PG(BaseAgent):
-    def __init__(self, model, n_actions, action_selector, action_min, action_max, device="cpu",
-                 preprocessor=default_states_preprocessor):
+    def __init__(
+            self, model, n_actions, action_selector, action_min, action_max,
+            device="cpu", preprocessor=default_states_preprocessor
+    ):
         self.model = model
         self.device = device
         self.action_selector = action_selector
@@ -348,6 +361,32 @@ class AgentD4PG(BaseAgent):
         new_agent_states = agent_states
 
         actions = mu_v.data.cpu().numpy()
-        actions += self.action_selector(actions)
+        actions = self.action_selector(actions)
         actions = np.clip(actions, self.action_min, self.action_max)
+        return actions, new_agent_states
+
+
+class AgentPPO(BaseAgent):
+    def __init__(self, model, action_min, action_max, preprocessor=default_states_preprocessor, device="cpu"):
+        self.model = model
+        self.device = device
+        self.action_min = action_min
+        self.action_max = action_max
+        self.preprocessor = preprocessor
+
+    def __call__(self, states, agent_states):
+        if self.preprocessor is not None:
+            states = self.preprocessor(states)
+            if torch.is_tensor(states):
+                states = states.to(self.device)
+
+        mu_v = self.model(states)
+        new_agent_states = agent_states
+
+        mu = mu_v.data.cpu().numpy()
+        logstd = self.model.logstd.data.cpu().numpy()
+        rnd = np.random.normal(size=logstd.shape)
+        actions = mu + np.exp(logstd) * rnd
+        actions = np.clip(actions, self.action_min, self.action_max)
+
         return actions, new_agent_states

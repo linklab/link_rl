@@ -1,52 +1,62 @@
 import json
 
+import gym
 import paho.mqtt.client as mqtt
 import torch
 from torch import optim
 import os, sys
 
-idx = os.getcwd().index("link_rl")
-PROJECT_HOME = os.getcwd()[:idx] + "link_rl"
+from common.fast_rl.algorithms.A2C_v0 import DISCRETE_A2C_FAST_v0
+from common.fast_rl.algorithms.CONTINUOUS_A2C_v0 import CONTINUOUS_A2C_FAST_v0
+from common.fast_rl.algorithms.D4PG_v0 import D4PG_FAST_v0
+from common.fast_rl.algorithms.DUELING_DOUBLE_DQN_v0 import Dueling_Double_DQN_v0
+from common.fast_rl.algorithms.PPO_v0 import PPO_FAST_v0
+from common.models import StochasticActorCriticModel
+from common.models import ActorCriticModel
+from common.models import DuelingDQNModel
+
+current_path = os.path.dirname(os.path.realpath(__file__))
+PROJECT_HOME = os.path.abspath(os.path.join(current_path, os.pardir, os.pardir))
+
 if PROJECT_HOME not in sys.path:
     sys.path.append(PROJECT_HOME)
 
 from config.parameters import PARAMETERS as params
 
 if params.MY_PLATFORM != "REAL_RIP_PLATFORM":
-    from common.environments.real_device.environment_double_rip import EnvironmentDoubleRIP
+    from common.environments import EnvironmentDoubleRIP
 
-from common.fast_rl.algorithms.DDPG_RIP_DOUBLE_AGENTS_v0 import DDPG_RIP_DOUBLE_AGENTS_v0
-from common.fast_rl.algorithms.DDPG_v0 import DDPG_v0
+from common.fast_rl.algorithms.DDPG_v0 import DDPG_FAST_v0
 
 if params.MY_PLATFORM != "REAL_RIP_PLATFORM":
-    from common.environments.matlab.matlabenv import MatlabRotaryInvertedPendulumEnv
+    from common.environments import MatlabRotaryInvertedPendulumEnv
 
-from common.models.ddpg_actor_critic_model import DDPGActorCriticModel
+from common.models import DeterministicActorCriticModel
 from config.names import EnvironmentName, DeepLearningModelName, RLAlgorithmName, OptimizerName
 
-from common.environments.gym.frozenlake import FrozenLake_v0
-from common.environments.gym.breakout import BreakoutDeterministic_v4
-from common.environments.gym.cartpole import CartPole_v0, CartPole_v1
-from common.environments.gym.pendulum import Pendulum_v0
-from common.environments.gym.gridworld import GRIDWORLD_v0
-from common.environments.gym.blackjack import Blackjack_v0
-from common.environments.gym.mountaincar import MountainCarContinuous_v0
-from common.environments.gym.acrobot import Acrobot_v1
-from common.environments.real_device.environment_rip import EnvironmentRIP
-from common.environments.unity.chaser_unity import Chaser_v1
-from common.environments.unity.drone_racing import Drone_Racing
-from common.environments.mujoco.inverted_double_pendulum import InvertedDoublePendulum_v2
-from common.environments.mujoco.hopper import Hopper_v2
-from common.environments.mujoco.ant import Ant_v2
-from common.environments.mujoco.half_cheetah import HalfCheetah_v2
-from common.environments.mujoco.swimmer import Swimmer_v2
-from common.environments.mujoco.reacher import Reacher_v2
-from common.environments.mujoco.humanoid import Humanoid_v2
-from common.environments.mujoco.humanoid_stand_up import HumanoidStandUp_v2
-from common.environments.mujoco.inverted_pendulum import InvertedPendulum_v2
-from common.environments.mujoco.walker_2d import Walker2D_v2
-from common.environments.real_device.environment_double_rip import EnvironmentDoubleRIP
-from common.models.actor_critic_model import ActorCriticModel
+from common.environments import FrozenLake_v0
+from common.environments import BreakoutDeterministic_v4
+from common.environments import CartPole_v0, CartPole_v1
+from common.environments import Pendulum_v0
+from common.environments import GRIDWORLD_v0
+from common.environments import Blackjack_v0
+from common.environments import MountainCarContinuous_v0
+from common.environments import Acrobot_v1
+from common.environments import EnvironmentRIP
+from common.environments import Chaser_v1
+from common.environments import Drone_Racing
+from common.environments import InvertedDoublePendulum_v2
+from common.environments import Hopper_v2
+from common.environments import Ant_v2
+from common.environments import HalfCheetah_v2
+from common.environments import Swimmer_v2
+from common.environments import Reacher_v2
+from common.environments import Humanoid_v2
+from common.environments import HumanoidStandUp_v2
+from common.environments import InvertedPendulum_v2
+from common.environments import Walker2D_v2
+from common.environments import EnvironmentDoubleRIP
+from temp.ppo.old_actor_critic_model import OldActorCriticModel
 from common.algorithms_rl.DQN_v0 import DQN_v0
 from common.algorithms_rl.Monte_Carlo_Control_v0 import Monte_Carlo_Control_v0
 from common.algorithms_rl.PPO_v0 import PPO_v0
@@ -63,6 +73,7 @@ def get_environment(owner="chief", params=None):
             action_min=params.SWING_UP_SCALE_FACTOR * -1.0,
             action_max=params.SWING_UP_SCALE_FACTOR,
             env_reset=params.ENV_RESET,
+            params=params
         )
 
     elif params.ENVIRONMENT_ID == EnvironmentName.QUANSER_SERVO_2:
@@ -166,33 +177,63 @@ def get_environment(owner="chief", params=None):
         env = MatlabRotaryInvertedPendulumEnv(
             action_min=params.SWING_UP_SCALE_FACTOR * -1.0,
             action_max=params.SWING_UP_SCALE_FACTOR,
-            env_reset=params.ENV_RESET
+            env_reset=params.ENV_RESET,
+            pendulum_type= 'PENDULUM_MATLAB_V0'
         )
-    elif params.ENVIRONMENT_ID == EnvironmentName.PENDULUM_MATLAB_DOUBLE_AGENTS_V0:
-        env = MatlabRotaryInvertedPendulumDoubleAgentsEnv(
+    elif params.ENVIRONMENT_ID == EnvironmentName.PENDULUM_MATLAB_DOUBLE_RIP_V0:
+        env = MatlabRotaryInvertedPendulumEnv(
             action_min=params.SWING_UP_SCALE_FACTOR * -1.0,
             action_max=params.SWING_UP_SCALE_FACTOR,
-            env_reset=params.ENV_RESET
+            env_reset=params.ENV_RESET,
+            pendulum_type= 'PENDULUM_MATLAB_DOUBLE_RIP_V0'
         )
+    elif params.ENVIRONMENT_ID == EnvironmentName.MINITAUR_BULLET_V0:
+        spec = gym.envs.registry.spec("MinitaurBulletEnv-v0")
+        spec._kwargs['render'] = params.ENV_RENDER
+        env = gym.make("MinitaurBulletEnv-v0")
     else:
         env = None
     return env
 
 
 def get_rl_model(env, worker_id, params):
-    if params.DEEP_LEARNING_MODEL == DeepLearningModelName.DDPG_ACTOR_CRITIC_MLP:
-        model = DDPGActorCriticModel(
+    if params.DEEP_LEARNING_MODEL == DeepLearningModelName.CONTINUOUS_ACTOR_CRITIC_MLP:
+        model = StochasticActorCriticModel(
+            s_size=env.n_states,
+            a_size=env.n_actions,
+            worker_id=worker_id,
+            params=params,
+            device=device
+        )
+    elif params.DEEP_LEARNING_MODEL == DeepLearningModelName.ACTOR_CRITIC_MLP:
+        model = ActorCriticModel(
             s_size=env.n_states,
             a_size=env.n_actions,
             worker_id=worker_id,
             params=params,
             device=device
         ).to(device)
-    elif params.DEEP_LEARNING_MODEL in [DeepLearningModelName.ACTOR_CRITIC_MLP, DeepLearningModelName.ACTOR_CRITIC_CNN]:
-        model = ActorCriticModel(
+    elif params.DEEP_LEARNING_MODEL == DeepLearningModelName.DETERMINISTIC_ACTOR_CRITIC_MLP:
+        model = DeterministicActorCriticModel(
+            s_size=env.n_states,
+            a_size=env.n_actions,
+            worker_id=worker_id,
+            params=params,
+            device=device
+        ).to(device)
+    elif params.DEEP_LEARNING_MODEL in [DeepLearningModelName.OLD_ACTOR_CRITIC_MLP, DeepLearningModelName.OLD_ACTOR_CRITIC_CNN]:
+        model = OldActorCriticModel(
             s_size=env.n_states,
             a_size=env.n_actions,
             continuous=env.continuous,
+            worker_id=worker_id,
+            params=params,
+            device=device
+        ).to(device)
+    elif params.DEEP_LEARNING_MODEL in [DeepLearningModelName.DUELING_DQN_MLP]:
+        model = DuelingDQNModel(
+            s_size=env.n_states,
+            a_size=env.n_actions,
             worker_id=worker_id,
             params=params,
             device=device
@@ -205,8 +246,26 @@ def get_rl_model(env, worker_id, params):
 
 
 def get_rl_algorithm(env, worker_id=0, logger=False, params=None):
-    if params.RL_ALGORITHM == RLAlgorithmName.DDPG_FAST_DOUBLE_AGENTS_V0:
-        rl_algorithm = DDPG_RIP_DOUBLE_AGENTS_v0(
+    if params.RL_ALGORITHM == RLAlgorithmName.CONTINUOUS_A2C_FAST_V0:
+        rl_algorithm = CONTINUOUS_A2C_FAST_v0(
+            env=env,
+            worker_id=worker_id,
+            logger=logger,
+            params=params,
+            device=device,
+            verbose=params.VERBOSE
+        )
+    elif params.RL_ALGORITHM == RLAlgorithmName.DISCRETE_A2C_FAST_V0:
+        rl_algorithm = DISCRETE_A2C_FAST_v0(
+            env=env,
+            worker_id=worker_id,
+            logger=logger,
+            params=params,
+            device=device,
+            verbose=params.VERBOSE
+        )
+    elif params.RL_ALGORITHM == RLAlgorithmName.D4PG_FAST_V0:
+        rl_algorithm = D4PG_FAST_v0(
             env=env,
             worker_id=worker_id,
             logger=logger,
@@ -215,7 +274,16 @@ def get_rl_algorithm(env, worker_id=0, logger=False, params=None):
             verbose=params.VERBOSE
         )
     elif params.RL_ALGORITHM == RLAlgorithmName.DDPG_FAST_V0:
-        rl_algorithm = DDPG_v0(
+        rl_algorithm = DDPG_FAST_v0(
+            env=env,
+            worker_id=worker_id,
+            logger=logger,
+            params=params,
+            device=device,
+            verbose=params.VERBOSE
+        )
+    elif params.RL_ALGORITHM == RLAlgorithmName.PPO_FAST_V0:
+        rl_algorithm = PPO_FAST_v0(
             env=env,
             worker_id=worker_id,
             logger=logger,
@@ -229,6 +297,15 @@ def get_rl_algorithm(env, worker_id=0, logger=False, params=None):
             worker_id=worker_id,
             gamma=params.GAMMA,
             env_render=params.ENV_RENDER,
+            logger=logger,
+            params=params,
+            device=device,
+            verbose=params.VERBOSE
+        )
+    elif params.RL_ALGORITHM == RLAlgorithmName.DQN_FAST_V0:
+        rl_algorithm = Dueling_Double_DQN_v0(
+            env=env,
+            worker_id=worker_id,
             logger=logger,
             params=params,
             device=device,

@@ -1,0 +1,49 @@
+from codes.a_config.federated_parameters.parameters_federated_cartpole_ppo_mlp import \
+    PARAMETERS_FEDERATED_CARTPOLE_PPO_MLP
+from codes.e_utils.names import EnvironmentName, RLAlgorithmName, DeepLearningModelName, OSName, OptimizerName
+
+class PARAMETERS_FEDERATED_MOUNTAINCAR_PPO_MLP(PARAMETERS_FEDERATED_CARTPOLE_PPO_MLP):
+    # [WORKER]
+    NUM_WORKERS = 8
+
+    # [OPTIMIZATION]
+    MAX_EPISODES = 5000
+    GAMMA = 0.98
+
+    # [MODE]
+    MODE_SYNCHRONIZATION = True
+    MODE_GRADIENTS_UPDATE = True      # Distributed
+    MODE_PARAMETERS_TRANSFER = True    # Transfer
+
+    # [TRAINING]
+    EPSILON_GREEDY_ACT = False
+    EPSILON_DECAY = True
+    EPSILON_INIT = 0.9
+    EPSILON_MIN = 0.05
+    EPSILON_DECAY_RATE = 1000 # Large value means low decaying
+    OPTIMIZER = OptimizerName.ADAM
+    GAE_LAMBDA = 0.99
+    LEARNING_RATE = 0.001
+
+    # [TRAJECTORY_SAMPLING]
+    TRAJECTORY_SAMPLING = True
+    TRAJECTORY_LIMIT_SIZE = 200
+    TRAJECTORY_BATCH_SIZE = 64
+
+    # [PPO]
+    PPO_K_EPOCH = 10
+    PPO_EPSILON_CLIP = 0.1
+    PPO_VALUE_LOSS_WEIGHT = 0.5
+    PPO_ENTROPY_WEIGHT = 0.01
+
+    # [DQN]
+    BATCH_SIZE = 128
+
+    # [1. ENVIRONMENTS]
+    ENVIRONMENT_ID = EnvironmentName.MOUNTAINCARCONTINUOUS_V0
+
+    # [2. DEEP_LEARNING_MODELS]
+    DEEP_LEARNING_MODEL = DeepLearningModelName.ACTOR_CRITIC_MLP
+
+    # [3. ALGORITHMS]
+    RL_ALGORITHM = RLAlgorithmName.PPO_V0

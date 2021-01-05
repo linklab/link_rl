@@ -7,7 +7,7 @@ from torch import optim
 import os
 import numpy as np
 
-from common.common_utils import make_gym_env, smooth
+from codes.f_utils.common_utils import make_gym_env, smooth
 from common.fast_rl.rl_agent import float32_preprocessor
 from config.names import PROJECT_HOME
 
@@ -18,7 +18,7 @@ from common.fast_rl.common import statistics, utils
 
 from config.parameters import PARAMETERS as params
 
-MODEL_SAVE_DIR = os.path.join(PROJECT_HOME, "saved_models")
+MODEL_SAVE_DIR = os.path.join(PROJECT_HOME, "out", "model_save_files")
 if not os.path.exists(MODEL_SAVE_DIR):
     os.makedirs(MODEL_SAVE_DIR)
 
@@ -57,7 +57,7 @@ def play_func(exp_queue, env, net):
     next_save_frame_idx = params.MODEL_SAVE_STEP_PERIOD
 
     with utils.RewardTracker(params=params, frame=False, stat=stat) as reward_tracker:
-        while step_idx < params.MAX_GLOBAL_STEPS:
+        while step_idx < params.MAX_GLOBAL_STEP:
             # 1 스텝 진행하고 exp를 exp_queue에 넣음
             step_idx += 1
             exp = next(exp_source_iter)
