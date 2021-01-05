@@ -115,7 +115,10 @@
     - brew install cmake openmpi
     - cd baselines
     - pip install -e .
-
+    
+### 14. database
+- pip install sqlalchemy
+- pip install mysql-connector-python
 
 ### 참고 문헌
 - https://medium.com/aureliantactics/ppo-hyperparameters-and-ranges-6fc2d29bccbev

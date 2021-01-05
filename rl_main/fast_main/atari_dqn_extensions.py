@@ -1,5 +1,4 @@
 #!/usr/bin/env python3
-import sys
 import time
 import torch
 import torch.optim as optim
@@ -9,17 +8,16 @@ import os
 import warnings
 from collections import deque
 
-from common import common_utils
-from common.common_utils import make_atari_env
-from common.fast_rl import experience, rl_agent, value_based_model, actions
+from codes.f_utils import common_utils
+from codes.f_utils.common_utils import make_atari_env
+from common.fast_rl import experience, rl_agent, value_based_model, actions, replay_buffer
 from common.fast_rl.common import utils
-from common.fast_rl.common import statistics, wrappers
+from common.fast_rl.common import statistics
 from config.names import PROJECT_HOME
 from rl_main.fast_main.atari_draw_graph import save_reward_as_pickle, save_q_loss_as_pickle
 
 # from line_profiler import LineProfiler
 # from memory_profiler import profile
-import gc
 
 ##### NOTE #####
 from config.parameters import PARAMETERS as params
@@ -35,13 +33,13 @@ if torch.cuda.is_available():
 else:
     device = torch.device("cpu")
 
-MODEL_SAVE_DIR = os.path.join(PROJECT_HOME, "saved_models")
+MODEL_SAVE_DIR = os.path.join(PROJECT_HOME, "out", "model_save_files")
 if not os.path.exists(MODEL_SAVE_DIR):
     os.makedirs(MODEL_SAVE_DIR)
 
 
 def play_func(env, net, exp_queue):
-    action_selector = actions.EpsilonGreedyActionSelector(epsilon=params.EPSILON_INIT)
+    action_selector = actions.EpsilonGreedyDQNActionSelector(epsilon=params.EPSILON_INIT)
     epsilon_tracker = actions.EpsilonTracker(
         action_selector=action_selector,
         eps_start=params.EPSILON_INIT,
@@ -57,21 +55,16 @@ def play_func(env, net, exp_queue):
     else:
         stat = None
 
-    action_count = []
-    for _ in env.unwrapped.get_action_meanings():
-        action_count.append(0)
-
-    episode_rewards_across_steps = np.zeros(int(params.MAX_GLOBAL_STEPS / params.DATA_SAVE_STEP_PERIOD))
+    episode_rewards_across_steps = np.zeros(int(params.MAX_GLOBAL_STEP / params.DATA_SAVE_STEP_PERIOD))
     last_mean_episode_reward = 0
 
     frame_idx = 0
     next_save_frame_idx = params.MODEL_SAVE_STEP_PERIOD
 
     with utils.RewardTracker(params=params, frame=True, stat=stat) as reward_tracker:
-        while frame_idx < params.MAX_GLOBAL_STEPS:
+        while frame_idx < params.MAX_GLOBAL_STEP:
             frame_idx += 1
             exp = next(exp_source_iter)
-            action_count[exp.action] += 1
             exp_queue.put(exp)
 
             epsilon_tracker.udpate(frame_idx)
@@ -82,7 +75,9 @@ def play_func(env, net, exp_queue):
 
             episode_rewards = experience_source.pop_episode_reward_lst()
             if episode_rewards:
-                solved, mean_episode_reward = reward_tracker.set_episode_reward(episode_rewards[0], frame_idx, action_selector.epsilon, action_count)
+                solved, mean_episode_reward = reward_tracker.set_episode_reward(
+                    episode_rewards[0], frame_idx, action_selector.epsilon
+                )
                 last_mean_episode_reward = mean_episode_reward
 
                 if frame_idx >= next_save_frame_idx:
@@ -122,11 +117,11 @@ def main():
     tgt_net = rl_agent.TargetNet(net)
 
     if params.OMEGA:
-        # buffer = experience.PrioReplayBuffer(experience_source=None, buffer_size=params.REPLAY_BUFFER_SIZE, n_step=params.OMEGA_WINDOW_SIZE)
-        buffer = experience.PrioritizedReplayBuffer(experience_source=None, buffer_size=params.REPLAY_BUFFER_SIZE, n_step=params.OMEGA_WINDOW_SIZE)
+        # buffer = replay_buffer.PrioReplayBuffer(experience_source=None, buffer_size=params.REPLAY_BUFFER_SIZE, n_step=params.OMEGA_WINDOW_SIZE)
+        buffer = replay_buffer.PrioritizedReplayBuffer(experience_source=None, buffer_size=params.REPLAY_BUFFER_SIZE, n_step=params.OMEGA_WINDOW_SIZE)
     else:
-        # buffer = experience.PrioReplayBuffer(experience_source=None, buffer_size=params.REPLAY_BUFFER_SIZE, n_step=params.N_STEP)
-        buffer = experience.PrioritizedReplayBuffer(experience_source=None, buffer_size=params.REPLAY_BUFFER_SIZE, n_step=params.N_STEP)
+        # buffer = replay_buffer.PrioReplayBuffer(experience_source=None, buffer_size=params.REPLAY_BUFFER_SIZE, n_step=params.N_STEP)
+        buffer = replay_buffer.PrioritizedReplayBuffer(experience_source=None, buffer_size=params.REPLAY_BUFFER_SIZE, n_step=params.N_STEP)
     optimizer = optim.Adam(net.parameters(), lr=params.LEARNING_RATE)
 
     exp_queue = mp.Queue(maxsize=params.TRAIN_STEP_FREQ * 2)
@@ -139,7 +134,7 @@ def main():
     else:
         stat_for_model_loss = None
 
-    q_loss_across_steps = np.zeros(int(params.MAX_GLOBAL_STEPS / params.DATA_SAVE_STEP_PERIOD))
+    q_loss_across_steps = np.zeros(int(params.MAX_GLOBAL_STEP / params.DATA_SAVE_STEP_PERIOD))
     loss_list = deque(maxlen=params.AVG_EPISODE_SIZE_FOR_STAT)
 
     frame_idx = 0

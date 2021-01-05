@@ -117,7 +117,7 @@ environments/unity/unity_envs/
 *.autosave
 
 /model_save_files/
-/rl_main/temp/*.pickle
+/temp/*.pickle
 /src/
 /save_results
 
@@ -127,7 +127,7 @@ environments/unity/unity_envs/
 /rl_main/fast_main/data/
 
 # personal parameter's option
-config/parameters.py
+codes/a_config/parameters.py
 
 *.m
 *.mat
@@ -138,3 +138,10 @@ simulink_cache.xml
 slprj
 
 *.csv
+
+config.ini
+
+codes/1.environments/trade/raw_data
+
+*.para
+*.local

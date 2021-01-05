@@ -1,7 +1,6 @@
 import gym
-import torch
 from config.names import EnvironmentName
-from common.environments.environment import Environment
+from common.environments import Environment
 
 
 class Acrobot_v1(Environment):

@@ -37,7 +37,7 @@ def draw_graph(episode_rewards_across_steps, q_loss_across_steps):
         # runs_std_cumulative_rewards_across_steps = np.std(episode_rewards_across_steps[n_step_idx], axis=0) / 10
         # std_score_ma_steps = exp_moving_average(runs_std_cumulative_rewards_across_steps, EMA_WINDOW_SIZE)
         ax0.plot(
-            range(int(params.MAX_GLOBAL_STEPS / params.DATA_SAVE_STEP_PERIOD)),
+            range(int(params.MAX_GLOBAL_STEP / params.DATA_SAVE_STEP_PERIOD)),
             score_ma_steps,
             label=label,
             linewidth=2.0 if n_step == 'Omega' else 1.0,
@@ -45,7 +45,7 @@ def draw_graph(episode_rewards_across_steps, q_loss_across_steps):
             color=colors[n_step_idx]
         )
         ax0.fill_between(
-            range(int(params.MAX_GLOBAL_STEPS / params.DATA_SAVE_STEP_PERIOD)),
+            range(int(params.MAX_GLOBAL_STEP / params.DATA_SAVE_STEP_PERIOD)),
             np.clip(score_ma_steps - std_score_ma_steps, env_episode_min_reward(params.ENVIRONMENT_ID.value), score_ma_steps - std_score_ma_steps),    # score_ma_steps - std_score_ma_steps
             score_ma_steps + std_score_ma_steps,
             alpha=0.1,
@@ -61,7 +61,7 @@ def draw_graph(episode_rewards_across_steps, q_loss_across_steps):
         # # runs_std_q_loss_across_steps = np.std(q_loss_across_steps[n_step_idx], axis=0) / 10
         # # std_q_loss_ma_steps = exp_moving_average(runs_std_q_loss_across_steps, EMA_WINDOW_SIZE)
         # ax1.plot(
-        #     range(int(params.MAX_GLOBAL_STEPS / params.DATA_SAVE_STEP_PERIOD)),
+        #     range(int(params.MAX_GLOBAL_STEP / params.DATA_SAVE_STEP_PERIOD)),
         #     loss_ma_steps,
         #     label=label,
         #     linewidth=2.0 if n_step == 'Omega' else 1.0,
@@ -69,7 +69,7 @@ def draw_graph(episode_rewards_across_steps, q_loss_across_steps):
         #     color=colors[n_step_idx]
         # )
         # ax1.fill_between(
-        #     range(int(params.MAX_GLOBAL_STEPS / params.DATA_SAVE_STEP_PERIOD)),
+        #     range(int(params.MAX_GLOBAL_STEP / params.DATA_SAVE_STEP_PERIOD)),
         #     np.clip(loss_ma_steps - std_q_loss_ma_steps, 0, loss_ma_steps - std_q_loss_ma_steps),
         #     loss_ma_steps + std_q_loss_ma_steps,
         #     alpha=0.1,
@@ -166,8 +166,8 @@ def main():
 
     # episode_rewards_across_steps[n_steps][max_runs][max_steps / save_period]
 
-    reward_data = np.zeros((len(EXPERIMENTS_N_STEPS), MAX_RUNS, int(params.MAX_GLOBAL_STEPS / params.DATA_SAVE_STEP_PERIOD)))
-    loss_data = np.zeros((len(EXPERIMENTS_N_STEPS), MAX_RUNS, int(params.MAX_GLOBAL_STEPS / params.DATA_SAVE_STEP_PERIOD)))
+    reward_data = np.zeros((len(EXPERIMENTS_N_STEPS), MAX_RUNS, int(params.MAX_GLOBAL_STEP / params.DATA_SAVE_STEP_PERIOD)))
+    loss_data = np.zeros((len(EXPERIMENTS_N_STEPS), MAX_RUNS, int(params.MAX_GLOBAL_STEP / params.DATA_SAVE_STEP_PERIOD)))
 
     for i, n_step in enumerate(EXPERIMENTS_N_STEPS):
         for j in range(MAX_RUNS):

@@ -1,16 +1,14 @@
 #!/usr/bin/env python3
-import gym
-import numpy as np
 import torch
 import torch.optim as optim
 import os
 import warnings
 
-from common import common_utils
-from common.common_utils import make_atari_env
-from common.fast_rl import experience, rl_agent, value_based_model, actions
+from codes.f_utils import common_utils
+from codes.f_utils.common_utils import make_atari_env
+from common.fast_rl import experience, rl_agent, value_based_model, actions, replay_buffer
 from common.fast_rl.common import utils
-from common.fast_rl.common import statistics, wrappers
+from common.fast_rl.common import statistics
 
 ##### NOTE #####
 from config.names import PROJECT_HOME
@@ -26,7 +24,7 @@ if torch.cuda.is_available():
 else:
     device = torch.device("cpu")
 
-MODEL_SAVE_DIR = os.path.join(PROJECT_HOME, "saved_models")
+MODEL_SAVE_DIR = os.path.join(PROJECT_HOME, "out", "model_save_files")
 if not os.path.exists(MODEL_SAVE_DIR):
     os.makedirs(MODEL_SAVE_DIR)
 
@@ -51,7 +49,7 @@ if __name__ == "__main__":
 
     tgt_net = rl_agent.TargetNet(net)
 
-    action_selector = actions.EpsilonGreedyActionSelector(epsilon=params.EPSILON_INIT)
+    action_selector = actions.EpsilonGreedyDQNActionSelector(epsilon=params.EPSILON_INIT)
     epsilon_tracker = actions.EpsilonTracker(
         action_selector=action_selector,
         eps_start=params.EPSILON_INIT,
@@ -61,7 +59,7 @@ if __name__ == "__main__":
     agent = rl_agent.DQNAgent(net, action_selector, device=device)
 
     experience_source = experience.ExperienceSourceFirstLast(env, agent, gamma=params.GAMMA, steps_count=1)
-    buffer = experience.ExperienceReplayBuffer(experience_source, buffer_size=params.REPLAY_BUFFER_SIZE)
+    buffer = replay_buffer.ExperienceReplayBuffer(experience_source, buffer_size=params.REPLAY_BUFFER_SIZE)
     optimizer = optim.Adam(net.parameters(), lr=params.LEARNING_RATE)
 
     if params.DRAW_VIZ:
@@ -71,16 +69,12 @@ if __name__ == "__main__":
         stat = None
         stat_for_model_loss = None
 
-    action_count = []
-    for _ in env.unwrapped.get_action_meanings():
-        action_count.append(0)
-
     frame_idx = 0
 
     next_save_frame_idx = params.MODEL_SAVE_STEP_PERIOD
 
     with utils.RewardTracker(params=params, frame=True, stat=stat) as reward_tracker:
-        while frame_idx < params.MAX_GLOBAL_STEPS:
+        while frame_idx < params.MAX_GLOBAL_STEP:
             frame_idx += params.TRAIN_STEP_FREQ
             buffer.populate_stacked_experience(params.TRAIN_STEP_FREQ)
             epsilon_tracker.udpate(frame_idx)
@@ -88,7 +82,7 @@ if __name__ == "__main__":
             episode_rewards = experience_source.pop_episode_reward_lst()
             if episode_rewards:
                 solved, mean_episode_reward = reward_tracker.set_episode_reward(
-                    episode_rewards[0], frame_idx, action_selector.epsilon, action_count
+                    episode_rewards[0], frame_idx, action_selector.epsilon
                 )
 
                 if frame_idx >= next_save_frame_idx:

@@ -1,0 +1,239 @@
+import glob
+import os
+import random
+from typing import Optional
+import numpy as np
+import math
+from matplotlib import pyplot as plt
+import gym
+import torch
+
+from codes.b_environments.or_gym.envs.classic_or.knapsack import BoundedKnapsackEnv
+from codes.b_environments.or_gym.envs.classic_or.tsp import TSPEnv, TSPDistCost
+
+from codes.d_agents.base_agent import float32_preprocessor
+
+#https://medium.com/analytics-vidhya/stretched-exponential-decay-function-for-epsilon-greedy-algorithm-98da6224c22f
+from codes.e_utils import wrappers
+from codes.e_utils.wrappers import OriginalRewardsWrapper
+
+
+def stretched_exponential_decay(epsilon_start, epsilon_minimum, epsilon_end_step, current_step):
+    end_step = epsilon_end_step
+    if current_step < end_step:
+        A = 0.5
+        B = 0.3
+        C = 0.1
+        standardized_time = (current_step - A * end_step) / (B * end_step)
+        cosh = np.cosh(math.exp(-standardized_time))
+        epsilon = epsilon_start - (1 / cosh + (current_step * C / end_step))
+        if epsilon >= epsilon_start:
+            epsilon = epsilon_start
+        elif epsilon <= epsilon_minimum:
+            epsilon = epsilon_minimum
+    else:
+        epsilon = epsilon_minimum
+    return epsilon
+
+
+def print_params(params_class):
+    print('\n' + '################ Parameters ################')
+    for param in dir(params_class):
+        if not param.startswith("__"):
+            print("{0}: {1}".format(param, getattr(params_class, param)))
+    print('############################################')
+    print()
+
+
+def print_fast_rl_params(params_class):
+    print('\n' + '################ Parameters ################')
+    for param in dir(params_class):
+        if not param.startswith("__") and not param.startswith("MQTT"):
+            print("{0}: {1}".format(param, getattr(params_class, param)))
+    print('############################################')
+    print()
+
+
+def set_global_seeds(seed):
+    myseed = seed + 1000 if seed is not None else None
+    try:
+        torch.manual_seed(myseed)
+        torch.cuda.manual_seed_all(myseed)
+    except ImportError:
+        pass
+    np.random.seed(myseed)
+    random.seed(myseed)
+
+
+def make_atari_env(env_id, rank=0, seed=0):
+    """
+    Utility function for multiprocessed env.
+
+    :param env_id: (str) the environment ID
+    :param num_env: (int) the number of environment you wish to have in subprocesses
+    :param seed: (int) the inital seed for RNG
+    :param rank: (int) index of the subprocess
+    """
+    set_global_seeds(seed)
+
+    env = gym.make(env_id)
+    env.seed(seed + rank)
+    env = wrappers.wrap_dqn(env)
+    return env
+
+
+def make_gym_env(env_id, rank=0, seed=0):
+    """
+    Utility function for multiprocessed env.
+
+    :param env_id: (str) the environment ID
+    :param num_env: (int) the number of environment you wish to have in subprocesses
+    :param seed: (int) the inital seed for RNG
+    :param rank: (int) index of the subprocess
+    """
+    set_global_seeds(seed)
+
+    env = gym.make(env_id)
+    env = OriginalRewardsWrapper(env)
+    env.seed(seed + rank)
+
+    return env
+
+
+def make_or_gym_env(env_name, env_config, rank=0, seed=0):
+    set_global_seeds(seed)
+    if env_name == 'Knapsack-v2':
+        env = BoundedKnapsackEnv(env_config=env_config)
+    elif env_name == "TSP-v0":
+        env = TSPEnv(env_config=env_config)
+    elif env_name == "TSP-v1":
+        env = TSPDistCost(env_config=env_config)
+    else:
+        raise ValueError(env_name)
+
+    env.set_seed(seed + rank)
+
+    return env
+
+
+# https://medium.com/analytics-vidhya/stretched-exponential-decay-function-for-epsilon-greedy-algorithm-98da6224c22f
+def epsilon_scheduled(current_episode, max_episodes, initial_epsilon, final_epsilon):
+    A = 0.05     # spend more time, either on Exploration or on Exploitation
+    B = 0.04     # the slope of transition region between Exploration to Exploitation zone
+    C = 0.1     # the steepness of left and right tail of the graph
+    standardized_time = (current_episode - A * max_episodes)/(B * max_episodes)
+    cosh = np.cosh(math.exp(-standardized_time))
+    epsilon = max(initial_epsilon - (1 / cosh + (current_episode * C / max_episodes)), final_epsilon)
+    return epsilon
+
+
+def smooth(old: Optional[float], val: float, alpha: float = 0.95) -> float:
+    if old is None:
+        return val
+    return old * alpha + (1.0 - alpha) * val
+
+
+def unpack_batch_for_a2c(batch, net, params, device='cpu'):
+    """
+    Convert batch into training tensors
+    :param batch:
+    :param net:
+    :return: states variable, actions tensor, target values variable
+    """
+    states, actions, rewards, not_done_idx, last_states = [], [], [], [], []
+
+    for idx, exp in enumerate(batch):
+        states.append(np.array(exp.state, copy=False))
+        actions.append(int(exp.action))
+        rewards.append(exp.reward)
+        if exp.last_state is not None:
+            not_done_idx.append(idx)
+            last_states.append(np.array(exp.last_state, copy=False))
+
+    states_v = float32_preprocessor(states).to(device)
+    actions_v = float32_preprocessor(actions).to(device)
+
+    # handle rewards
+    rewards_np = np.array(rewards, dtype=np.float32)
+
+    if not_done_idx:
+        last_states_v = float32_preprocessor(last_states).to(device)
+        last_values_v = net.base.forward_critic(last_states_v)
+        last_values_np = last_values_v.data.cpu().numpy()[:, 0] * params.GAMMA ** params.N_STEP
+        rewards_np[not_done_idx] += last_values_np
+
+    target_action_values_v = float32_preprocessor(rewards_np).to(device)
+
+    return states_v, actions_v, target_action_values_v
+
+
+def unpack_batch_for_ddpg(batch, device="cpu"):
+    states, actions, rewards, dones, last_states = [], [], [], [], []
+
+    for exp in batch:
+        states.append(np.array(exp.state, copy=False))
+        actions.append(exp.action)
+        rewards.append(exp.reward)
+        dones.append(exp.last_state is None)
+        if exp.last_state is None:
+            last_states.append(exp.state)   # the result will be masked anyway
+        else:
+            last_states.append(np.array(exp.last_state, copy=False))
+
+    states_v = float32_preprocessor(states).to(device)
+    actions_v = float32_preprocessor(actions).to(device)
+    rewards_v = float32_preprocessor(rewards).to(device)
+    last_states_v = float32_preprocessor(last_states).to(device)
+    dones_t = torch.BoolTensor(dones).to(device)
+    return states_v, actions_v, rewards_v, dones_t, last_states_v
+
+
+def remove_models(model_save_dir, env_name, model_name):
+    files = glob.glob(os.path.join(
+        model_save_dir, "{0}_{1}_*.pth".format(env_name, model_name))
+    )
+    for f in files:
+        os.remove(f)
+
+
+def save_model(model_save_dir, env_name, model, step, episode_reward):
+    model_save_filename = os.path.join(
+        model_save_dir, "{0}_{1}_{2}_{3:.2f}.pth".format(env_name, model.__name__, step, float(episode_reward))
+    )
+    torch.save(model.state_dict(), model_save_filename)
+    return model_save_filename
+
+
+def load_model(model_save_dir, env_name, model, step=None):
+    if step:
+        saved_models = glob.glob(os.path.join(
+            model_save_dir, "{0}_{1}_{2}_*.pth".format(env_name, model.__name__, step)
+        ))
+
+    else:
+        saved_models = glob.glob(os.path.join(
+            model_save_dir, "{0}_{1}_*.pth".format(env_name, model.__name__)
+        ))
+
+    saved_models.sort(key=lambda filename: int(filename.split("/")[-1].split("_")[-2]))
+    assert len(saved_models) > 0, "※※※※※※※※※※ There is no model !!!: {0} ※※※※※※※※※※".format(saved_models)
+
+    saved_model = saved_models[-1]
+    print("MODEL FILE NAME: {0}".format(saved_model))
+    device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+    model_params = torch.load(saved_model, map_location=device)
+
+    model.load_state_dict(model_params)
+
+
+if __name__=="__main__":
+    # max_episode = 20000000
+    max_episode = 200
+    initial_epsilon = 1.0
+    final_epsilon = 0.01
+    epsilon_list = []
+    plt.plot(
+        [x for x in range(max_episode)],
+        [epsilon_scheduled(x, max_episode, initial_epsilon, final_epsilon) for x in range(max_episode)]
+    )
+    plt.show()

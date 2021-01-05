@@ -5,17 +5,17 @@ import torch.multiprocessing as mp
 from torch import optim
 import os
 
-from common.common_utils import make_or_gym_env
+from codes.f_utils.common_utils import make_or_gym_env
 from config.names import EnvironmentName, PROJECT_HOME
 
 print(torch.__version__)
 
-from common.fast_rl import actions, experience, value_based_model, rl_agent
+from common.fast_rl import actions, value_based_model, rl_agent, experience_single, replay_buffer
 from common.fast_rl.common import statistics, utils
 
 from config.parameters import PARAMETERS as params
 
-MODEL_SAVE_DIR = os.path.join(PROJECT_HOME, "saved_models")
+MODEL_SAVE_DIR = os.path.join(PROJECT_HOME, "out", "model_save_files")
 if not os.path.exists(MODEL_SAVE_DIR):
     os.makedirs(MODEL_SAVE_DIR)
 
@@ -28,7 +28,7 @@ else:
 
 
 def play_func(exp_queue, env, net):
-    action_selector = actions.EpsilonGreedyActionSelector(epsilon=params.EPSILON_INIT)
+    action_selector = actions.EpsilonGreedyDQNActionSelector(epsilon=params.EPSILON_INIT)
 
     epsilon_tracker = actions.EpsilonTracker(
         action_selector=action_selector,
@@ -39,7 +39,7 @@ def play_func(exp_queue, env, net):
 
     agent = rl_agent.DQNAgent(net, action_selector, device=device)
 
-    experience_source = experience.ExperienceSourceSingleEnvFirstLast(env, agent, gamma=params.GAMMA, steps_count=params.N_STEP)
+    experience_source = experience_single.ExperienceSourceSingleEnvFirstLast(env, agent, gamma=params.GAMMA, steps_count=params.N_STEP)
 
     exp_source_iter = iter(experience_source)
 
@@ -52,7 +52,7 @@ def play_func(exp_queue, env, net):
     next_save_frame_idx = params.MODEL_SAVE_STEP_PERIOD
 
     with utils.RewardTracker(params=params, frame=False, stat=stat) as reward_tracker:
-        while step_idx < params.MAX_GLOBAL_STEPS:
+        while step_idx < params.MAX_GLOBAL_STEP:
             step_idx += 1
             exp = next(exp_source_iter)
             exp_queue.put(exp)
@@ -103,7 +103,7 @@ def main():
     print(net)
     target_net = rl_agent.TargetNet(net)
 
-    buffer = experience.PrioReplayBuffer(experience_source=None, buffer_size=params.REPLAY_BUFFER_SIZE)
+    buffer = replay_buffer.PrioReplayBuffer(experience_source=None, buffer_size=params.REPLAY_BUFFER_SIZE)
     optimizer = optim.Adam(net.parameters(), lr=params.LEARNING_RATE)
 
     exp_queue = mp.Queue(maxsize=params.TRAIN_STEP_FREQ * 2)

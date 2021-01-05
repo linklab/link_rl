@@ -1,7 +1,7 @@
 import gym
 import numpy as np
 from config.names import EnvironmentName
-from common.environments.environment import Environment
+from common.environments import Environment
 
 """
     FrozenLake-v0 environment

@@ -1,26 +1,24 @@
 #!/usr/bin/env python3
+# PARAMETERS_FAST_RL_CARTPOLE_A2C
 import time
 import torch
-import torch.nn.functional as F
 import torch.multiprocessing as mp
-import torch.nn.utils as nn_utils
-from torch import optim
-import os
-import numpy as np
+import sys, os
 
-from common.common_utils import make_gym_env, smooth
-from common.fast_rl.policy_based_model import unpack_batch_for_policy_gradient
+current_path = os.path.dirname(os.path.realpath(__file__))
+PROJECT_HOME = os.path.abspath(os.path.join(current_path, os.pardir, os.pardir))
+if PROJECT_HOME not in sys.path:
+    sys.path.append(PROJECT_HOME)
+
 from common.fast_rl.rl_agent import float32_preprocessor
 from config.names import PROJECT_HOME
-
-print(torch.__version__)
-
-from common.fast_rl import actions, experience, policy_based_model, rl_agent
+from rl_main import rl_utils
+from common.logger import get_logger
+from common.fast_rl import experience, rl_agent
 from common.fast_rl.common import statistics, utils
-
 from config.parameters import PARAMETERS as params
 
-MODEL_SAVE_DIR = os.path.join(PROJECT_HOME, "saved_models")
+MODEL_SAVE_DIR = os.path.join(PROJECT_HOME, "out", "model_save_files")
 if not os.path.exists(MODEL_SAVE_DIR):
     os.makedirs(MODEL_SAVE_DIR)
 
@@ -29,6 +27,10 @@ if torch.cuda.is_available():
     device = torch.device("cuda" if params.CUDA else "cpu")
 else:
     device = torch.device("cpu")
+
+my_logger = get_logger("openai_minitaur_bullet_a2c")
+
+print(torch.__version__)
 
 
 def play_func(exp_queue, env, net):
@@ -47,7 +49,7 @@ def play_func(exp_queue, env, net):
     next_save_frame_idx = params.MODEL_SAVE_STEP_PERIOD
 
     with utils.RewardTracker(params=params, frame=False, stat=stat) as reward_tracker:
-        while step_idx < params.MAX_GLOBAL_STEPS:
+        while step_idx < params.MAX_GLOBAL_STEP:
             # 1 스텝 진행하고 exp를 exp_queue에 넣음
             step_idx += 1
             exp = next(exp_source_iter)
@@ -77,111 +79,36 @@ def play_func(exp_queue, env, net):
 def main():
     mp.set_start_method('spawn')
 
-    env = make_gym_env(params.ENVIRONMENT_ID.value, seed=params.SEED)
+    env = rl_utils.get_environment(owner="worker", params=params)
+    print("env:", params.ENVIRONMENT_ID)
+    print("observation_space:", env.observation_space)
+    print("action_space:", env.action_space)
 
-    net = policy_based_model.A2CMLP(
-        obs_size=4,
-        hidden_size_1=128, hidden_size_2=128,
-        n_actions=2
-    ).to(device)
-    print(net)
-
-    optimizer = optim.Adam(net.parameters(), lr=params.LEARNING_RATE)
+    rl_algorithm = rl_utils.get_rl_algorithm(env=env, worker_id=0, logger=my_logger, params=params)
 
     exp_queue = mp.Queue(maxsize=params.TRAIN_STEP_FREQ * 2)
-    play_proc = mp.Process(target=play_func, args=(exp_queue, env, net))
+    play_proc = mp.Process(target=play_func, args=(exp_queue, env, rl_algorithm.model))
     play_proc.start()
 
     time.sleep(0.5)
 
-    if params.DRAW_VIZ:
-        stat_for_a2c = statistics.StatisticsForA2COptimization()
-    else:
-        stat_for_a2c = 0.0
-
     step_idx = 0
 
-    grad_l2 = 0.0
-    grad_max = 0.0
-    grad_variance = 0.0
-
-    mean_advantage = 0.0
-    entropy = 0.0
-    loss_actor = 0.0
-    loss_critic = 0.0
-    loss_entropy = 0.0
-    loss_total = 0.0
-
-    batch = []
-
     while play_proc.is_alive():
-        exp = exp_queue.get()
-        if exp is None:
-            play_proc.join()
-            break
-        step_idx += 1
+        step_idx += params.TRAIN_STEP_FREQ
+        exp = None
+        for _ in range(params.TRAIN_STEP_FREQ):
+            exp = exp_queue.get()
+            if exp is None:
+                play_proc.join()
+                break
+            rl_algorithm.buffer._add(exp)
 
-        batch.append(exp)
-
-        if len(batch) < params.BATCH_SIZE:
+        if len(rl_algorithm.buffer) < params.MIN_REPLAY_SIZE_FOR_TRAIN:
             continue
 
-        batch_states_v, batch_actions_v, batch_target_values_v = unpack_batch_for_policy_gradient(
-            batch, net, params, device=device
-        )
-        batch.clear()
-
-        optimizer.zero_grad()
-        batch_logits_v, batch_value_v = net(batch_states_v)
-        loss_critic_v = F.mse_loss(batch_value_v.squeeze(-1), batch_target_values_v)
-
-        batch_advantage_v = batch_target_values_v - batch_value_v.squeeze(-1).detach()
-        batch_log_prob_v = F.log_softmax(batch_logits_v, dim=1)
-        batch_log_prob_actions_v = batch_log_prob_v[range(params.BATCH_SIZE), batch_actions_v]
-        batch_log_prob_actions_v = batch_advantage_v * batch_log_prob_actions_v
-        loss_actor_v = -batch_log_prob_actions_v.mean()
-
-        batch_prob_v = F.softmax(batch_logits_v, dim=1)
-        entropy_v = -(batch_prob_v * batch_log_prob_v).sum(dim=1).mean()
-        loss_entropy_v = -params.ENTROPY_BETA * entropy_v
-
-        # loss_policy_v를 작아지도록 만듦 --> log_prob_actions_v.mean()가 커지도록 만듦
-        # loss_entropy_v를 작아지도록 만듦 --> entropy_v가 커지도록 만듦
-        loss_v = loss_actor_v + loss_critic_v + loss_entropy_v
-        loss_v.backward()
-
-        grads = np.concatenate([p.grad.data.cpu().numpy().flatten()
-                                for p in net.parameters()
-                                if p.grad is not None])
-
-        #nn_utils.clip_grad_norm_(net.parameters(), params.CLIP_GRAD)
-        optimizer.step()
-
-        # calc KL-div
-        batch_new_logits_v, _ = net(batch_states_v)
-        batch_new_prob_v = F.softmax(batch_new_logits_v, dim=1)
-        kl_div_v = -((batch_new_prob_v / batch_prob_v).log() * batch_prob_v).sum(dim=1).mean()
-
-        grad_l2 = smooth(grad_l2, np.sqrt(np.mean(np.square(grads))))
-        grad_max = smooth(grad_max, np.max(np.abs(grads)))
-        grad_variance = smooth(grad_variance, float(np.var(grads)))
-
-        mean_advantage = smooth(mean_advantage, float(np.mean(batch_advantage_v.numpy())))
-        entropy = smooth(entropy, entropy_v.item())
-        loss_actor = smooth(loss_actor, loss_actor_v.item())
-        loss_critic = smooth(loss_critic, loss_critic_v.item())
-        loss_entropy = smooth(loss_entropy, loss_entropy_v.item())
-        loss_total = smooth(loss_total, loss_v.item())
-
-        if params.DRAW_VIZ:
-            stat_for_a2c.draw_optimization_performance(
-                step_idx,
-                kl_div_v.item(),
-                mean_advantage,
-                entropy,
-                loss_actor, loss_critic, loss_entropy, loss_total,
-                grad_l2, grad_variance, grad_max
-            )
+        if exp is not None and exp.last_state is None:
+            rl_algorithm.train_net(step_idx=step_idx)
 
 
 if __name__ == "__main__":
