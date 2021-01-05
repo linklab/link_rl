@@ -23,7 +23,7 @@ logger = get_logger("chief")
 env = rl_utils.get_environment(params=params)
 rl_model = rl_utils.get_rl_model(env, -1, params=params)
 
-chief = Chief(logger=logger, env=env, rl_model=rl_model, params=params)
+chief = Chief(logger=logger, rl_model=rl_model, params=params)
 
 
 def on_chief_connect(client, userdata, flags, rc):

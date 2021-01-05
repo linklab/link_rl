@@ -2,6 +2,8 @@ import time
 import math
 import numpy as np
 from enum import Enum
+import json
+import paho.mqtt.client as paho
 
 # MQTT Topic for RIP
 import gym
@@ -15,9 +17,10 @@ MQTT_SUB_RESET_COMPLETE = 'reset_complete'
 MQTT_SUB_FROM_DRIP = 'next_state'
 MQTT_ERROR = 'error'
 
-STATE_SIZE = 4
+STATE_SIZE = 6
 
 PUB_ID = 0
+
 
 class Status(Enum):
     SWING_UP = -1.0
@@ -27,7 +30,7 @@ class Status(Enum):
 
 
 class EnvironmentDoubleRIP(Environment):
-    def __init__(self, action_min, action_max, env_reset=True, mqtt_client=None):
+    def __init__(self, owner, action_min, action_max, env_reset=True):
         self.episode_steps = 0
         self.total_steps = 0
         self.env_reset = env_reset
@@ -80,52 +83,66 @@ class EnvironmentDoubleRIP(Environment):
         self.episode_pendulum_velocity_reward_list = []
         self.episode_action_reward_list = []
 
-        self.mqtt_client = mqtt_client
+        self.reset_complete = False
+        self.action_complete = False
+        self.sample_time = 10/1000
 
-    def __pub(self, topic, payload, require_response=True):
-        global PUB_ID
-        self.mqtt_client.publish(topic=topic, payload=payload)
-        PUB_ID += 1
+        if owner == "actual_worker":
+            self.mqtt_client = paho.Client(client_id="Environment")
+            self.mqtt_client.connect(params.MQTT_SERVER, 1883)
+            self.mqtt_client.on_connect = self.__on_connect
+            self.mqtt_client.on_message = self.__on_message
+            # self.client.on_log = __on_log
+            self.mqtt_client.loop_start()
 
-    def get_n_states(self):
-        n_states = self.observation_space.shape[0]
-        return n_states
+    def __on_connect(self, client, userdata, flags, rc):
+        print("mqtt broker connected with result code " + str(rc), flush=False)
+        self.mqtt_client.subscribe(topic=params.MQTT_SUB_FROM_DRIP)
+        self.mqtt_client.subscribe(topic=params.MQTT_SUB_RESET_COMPLETE)
 
-    def get_n_actions(self):
-        n_actions = self.action_space.shape[0]
-        return n_actions
+    @staticmethod
+    def __on_log(userdata, level, buf):
+        print(buf)
 
-    @property
-    def action_meanings(self):
-        action_meanings = ["Joint effort", ]
-        return action_meanings
+    def __on_message(self, client, userdata, msg):
+        if msg.topic == params.MQTT_SUB_RESET_COMPLETE:
+            print("\n==================== Reset Complete ====================")
+            self.reset_complete = True
+            servo_info = msg.payload.decode("utf-8").split('|')
+            self.motor_position = float(servo_info[0])
+            self.motor_velocity = float(servo_info[1])
+            self.pendulum_position = float(servo_info[2])
+            self.pendulum_velocity = float(servo_info[3])
+        elif msg.topic == params.MQTT_SUB_FROM_DRIP:
+            print("\n==================== Receive Next States ====================")
+            self.action_complete = True
+            servo_info = msg.payload.decode("utf-8").split('|')
+            self.motor_position = float(servo_info[0])
+            self.motor_velocity = float(servo_info[1])
+            self.pendulum_position = float(servo_info[2])
+            self.pendulum_velocity = float(servo_info[3])
 
-    def set_state(self, motor_position, motor_velocity, pendulum_position, pendulum_velocity):
-        self.state = [motor_position, motor_velocity, pendulum_position, pendulum_velocity]
-
-        self.pendulum_position = pendulum_position
-        self.motor_position = motor_position
-        self.pendulum_velocity = pendulum_velocity
-        self.motor_velocity = motor_velocity
+            print(self.motor_position, self.motor_velocity, self.pendulum_position, self.pendulum_velocity)
+        else:
+            raise ValueError
 
     def reset(self):
         self.episode_steps = 0
-
         self.count_swing_up_states = 0
         self.count_balancing_states = 0
         self.count_continuous_swing_up_states = 0
         self.count_continuous_balancing_states = 0
-
         self.episode_position_reward_list.clear()
         self.episode_pendulum_velocity_reward_list.clear()
-        self.episode_action_reward_list.clear()
+#        self.episode_action_reward_list.clear()
 
-        ### Pub reset message
-        self.__pub(
-            MQTT_PUB_RESET,
-            "0|pendulum_reset|{0}".format(PUB_ID),
-            require_response=False
-        )
+        # Pub reset message
+        # ================================================================================== #
+        self.mqtt_client.publish(topic=MQTT_PUB_RESET, payload="")
+        while not self.reset_complete:
+            time.sleep(0.001)
+        self.reset_complete = False
+        # ================================================================================== #
 
         self.update_current_state(adjusted_radian=0.0)
 
@@ -135,8 +152,8 @@ class EnvironmentDoubleRIP(Environment):
             self.pendulum_velocity,
             math.cos(0.0),  # 1.0
             math.sin(0.0),  # 0.0
-            # self.motor_velocity,
-            self.current_status.value
+            self.motor_velocity,
+            # self.current_status.value
         )
 
         self.num_continuous_positive_torque = 0
@@ -153,6 +170,115 @@ class EnvironmentDoubleRIP(Environment):
         self.initial_motor_position = self.motor_position
 
         return state
+
+    def step(self, action):
+        if type(action) is np.ndarray:
+            action = action[0]
+        action = int(action)
+
+        # ============================================================================================= #
+        self.mqtt_client.publish(topic=MQTT_PUB_TO_DRIP, payload="{0}".format(action))
+
+        previous_time = time.perf_counter()
+
+        while not self.action_complete:
+            time.sleep(0.001)
+        self.action_complete = False
+
+        current_time = time.perf_counter()
+        print("time : ", previous_time - current_time)
+        while not current_time - previous_time >= self.sample_time:
+            time.sleep(0.0001)
+            current_time = time.perf_counter()
+        # ============================================================================================= #
+
+        self.episode_steps += 1
+        self.total_steps += 1
+
+        if action > 0:
+            self.num_continuous_positive_torque += 1
+        else:
+            self.num_continuous_positive_torque = 0
+
+        if action < 0:
+            self.num_continuous_negative_torque += 1
+        else:
+            self.num_continuous_negative_torque = 0
+
+        # print(self.motor_position, math.cos(self.motor_position), math.sin(self.motor_position))
+
+        if abs(self.initial_motor_position - self.motor_position) > 360:
+            self.too_much_rotate = True
+
+        done_conditions = [
+            self.episode_steps >= 500,
+            self.too_much_rotate
+            # self.num_continuous_positive_torque >= 30,
+            # self.num_continuous_negative_torque >= 30
+        ]
+
+        adjusted_radian = self.pendulum_position_to_adjusted_radian()
+
+        # print("action: {0}, q: {1:7.4}, w: {2:7.4f}, adjusted_radian: {3:7.4f}, reward: {4:10.4f}, time: {5}".format(
+        #     action, self.pendulum_position, self.pendulum_velocity, adjusted_radian, reward, self.simulation_time
+        # ))
+
+        self.update_current_state(adjusted_radian)
+
+        if any(done_conditions):
+            done = True
+            if params.CH:
+                reward = self.CH_ordinary_reward(
+                    adjusted_radian, action, self.num_continuous_positive_torque, self.num_continuous_negative_torque
+                )
+            else:
+                reward = self.get_reward(adjusted_radian)
+
+            info = {
+                "count_balancing_states": self.count_balancing_states,
+                "count_swing_up_states": self.count_swing_up_states,
+                "episode_position_reward_list": sum(self.episode_position_reward_list),
+                "episode_pendulum_velocity_reward": sum(self.episode_pendulum_velocity_reward_list),
+                "episode_action_reward": sum(self.episode_action_reward_list)
+            }
+
+        else:
+            done = False
+            if params.CH:
+                reward = self.CH_ordinary_reward(
+                    adjusted_radian, action, self.num_continuous_positive_torque, self.num_continuous_negative_torque
+                )
+            else:
+                reward = self.get_reward(adjusted_radian)
+
+            info = {}
+
+        state = (
+            math.cos(self.pendulum_position),
+            math.sin(self.pendulum_position),
+            self.pendulum_velocity,
+            math.cos(self.initial_motor_position - self.motor_position),
+            math.sin(self.initial_motor_position - self.motor_position),
+            self.motor_velocity,
+            # self.current_status.value
+        )
+        return state, reward, done, info
+
+    def stop(self):
+        self.mqtt_client.publish(topic=MQTT_ERROR, payload="")
+
+    def get_n_states(self):
+        n_states = self.observation_space.shape[0]
+        return n_states
+
+    def get_n_actions(self):
+        n_actions = self.action_space.shape[0]
+        return n_actions
+
+    @property
+    def action_meanings(self):
+        action_meanings = ["Joint effort", ]
+        return action_meanings
 
     def pendulum_position_to_adjusted_radian(self):
         # angle을 0과 360 사이 값(양수)으로 조정
@@ -233,91 +359,10 @@ class EnvironmentDoubleRIP(Environment):
         else:
             raise ValueError()
 
-    def step(self, action):
-        if type(action) is np.ndarray:
-            action = action[0]
-        action = int(action)
-        time.sleep(1)
-        self.__pub(
-            MQTT_PUB_TO_DRIP,
-            "{0}|action".format(action),
-            require_response=False
-        )
-
-        self.episode_steps += 1
-        self.total_steps += 1
-
-        if action > 0:
-            self.num_continuous_positive_torque += 1
-        else:
-            self.num_continuous_positive_torque = 0
-
-        if action < 0:
-            self.num_continuous_negative_torque += 1
-        else:
-            self.num_continuous_negative_torque = 0
-
-        # print(self.motor_position, math.cos(self.motor_position), math.sin(self.motor_position))
-
-
-
-        if abs(self.initial_motor_position - self.motor_position) > 360:
-            self.too_much_rotate = True
-
-        done_conditions = [
-            self.episode_steps >= 500,
-            self.too_much_rotate
-            # self.num_continuous_positive_torque >= 30,
-            # self.num_continuous_negative_torque >= 30
-        ]
-
-        adjusted_radian = self.pendulum_position_to_adjusted_radian()
-
-        # print("action: {0}, q: {1:7.4}, w: {2:7.4f}, adjusted_radian: {3:7.4f}, reward: {4:10.4f}, time: {5}".format(
-        #     action, self.pendulum_position, self.pendulum_velocity, adjusted_radian, reward, self.simulation_time
-        # ))
-
-        self.update_current_state(adjusted_radian)
-
-        if any(done_conditions):
-            done = True
-            if params.CH:
-                reward = self.CH_ordinary_reward(
-                    adjusted_radian, action, self.num_continuous_positive_torque, self.num_continuous_negative_torque
-                )
-            else:
-                reward = self.get_reward(adjusted_radian)
-
-            info = {
-                "count_balancing_states": self.count_balancing_states,
-                "count_swing_up_states": self.count_swing_up_states,
-                "episode_position_reward_list": sum(self.episode_position_reward_list),
-                "episode_pendulum_velocity_reward": sum(self.episode_pendulum_velocity_reward_list),
-                "episode_action_reward": sum(self.episode_action_reward_list)
-            }
-
-        else:
-            done = False
-            if params.CH:
-                reward = self.CH_ordinary_reward(
-                    adjusted_radian, action, self.num_continuous_positive_torque, self.num_continuous_negative_torque
-                )
-            else:
-                reward = self.get_reward(adjusted_radian)
-
-            info = {}
-
-        state = (
-            math.cos(self.pendulum_position),
-            math.sin(self.pendulum_position),
-            self.pendulum_velocity,
-            math.cos(self.initial_motor_position - self.motor_position),
-            math.sin(self.initial_motor_position - self.motor_position),
-            # self.motor_velocity,
-            self.current_status.value
-        )
-
-        return state, reward, done, info
+    @staticmethod
+    def convert_radian_to_degree(radian):
+        degree = radian * 180 / math.pi
+        return degree
 
     def get_reward(self, adjusted_radian):
         if self.too_much_rotate:
@@ -353,13 +398,3 @@ class EnvironmentDoubleRIP(Environment):
 
     def render(self, mode='human'):
         pass
-
-    @staticmethod
-    def convert_radian_to_degree(radian):
-        degree = radian * 180 / math.pi
-        return degree
-
-    def close(self):
-        self.pub.publish(topic=MQTT_PUB_TO_DRIP, payload=str(0))
-        self.pub.publish(topic=MQTT_PUB_RESET, payload=str(0))
-        # self.env.close()

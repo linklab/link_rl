@@ -36,26 +36,27 @@ if __name__ == "__main__":
     utils.make_output_folders()
     utils.ask_file_removal(device)
 
-    env = rl_utils.get_environment(params=params)
-    rl_model = rl_utils.get_rl_model(env, -1, params=params)
-
-    utils.print_configuration(env, rl_model, params)
+    # env = rl_utils.get_environment(params=params)
+    # rl_model = rl_utils.get_rl_model(env, -1, params=params)
+    #
+    # utils.print_configuration(env, rl_model, params)
 
     try:
+        processes = []
+
         chief = Process(target=utils.run_chief, args=(params,))
         chief.start()
-
+        processes.append(chief)
         time.sleep(1.5)
 
-        workers = []
         for worker_id in range(params.NUM_WORKERS):
             worker = Process(target=utils.run_worker, args=(worker_id, params,))
-            workers.append(worker)
+            processes.append(worker)
             worker.start()
 
-        for worker in workers:
-            worker.join()
+        for process in processes:
+            process.join()
 
-        chief.join()
     except KeyboardInterrupt as error:
         print("=== {0:>8} is aborted by keyboard interrupt".format('Main'))
+        # env.stop()

@@ -19,9 +19,8 @@ from collections import deque
 from pathlib import Path
 
 class Chief:
-    def __init__(self, logger, env, rl_model, params):
+    def __init__(self, logger, rl_model, params):
         self.logger = logger
-        self.env = env
 
         self.messages_received_from_workers = {}
 

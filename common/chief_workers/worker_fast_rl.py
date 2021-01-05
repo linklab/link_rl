@@ -29,7 +29,7 @@ class WorkerFastRL:
         self.worker_mqtt_client = worker_mqtt_client
         self.params = params
 
-        self.env = rl_utils.get_environment(owner="worker", params=params)
+        self.env = rl_utils.get_environment(owner="actual_worker", params=params)
         print("env:", params.ENVIRONMENT_ID)
         print("observation_space:", self.env.observation_space)
         print("action_space:", self.env.action_space)

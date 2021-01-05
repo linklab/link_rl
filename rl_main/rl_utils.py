@@ -1,5 +1,4 @@
 import json
-import threading
 
 import paho.mqtt.client as mqtt
 import torch
@@ -59,50 +58,12 @@ device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 
 def get_environment(owner="chief", params=None):
     if params.ENVIRONMENT_ID == EnvironmentName.REAL_DEVICE_DOUBLE_RIP:
-        client = mqtt.Client(client_id="env_pub_1", transport="TCP")
         env = EnvironmentDoubleRIP(
+            owner=owner,
             action_min=params.SWING_UP_SCALE_FACTOR * -1.0,
             action_max=params.SWING_UP_SCALE_FACTOR,
             env_reset=params.ENV_RESET,
-            mqtt_client = client
         )
-
-        def __on_connect(client, userdata, flags, rc):
-            print("mqtt broker connected with result code " + str(rc), flush=False)
-            client.subscribe(topic=params.MQTT_SUB_FROM_DRIP)
-            client.subscribe(topic=params.MQTT_SUB_RESET_COMPLETE)
-
-        def __on_log(client, userdata, level, buf):
-            print(buf)
-
-        def __on_message(client, userdata, msg):
-            global PUB_ID
-
-            if msg.topic == params.MQTT_SUB_FROM_DRIP:
-                servo_info = json.loads(msg.payload.decode("utf-8")).split('|')
-                motor_position = float(servo_info[0])
-                motor_velocity = float(servo_info[1])
-                pendulum_position = float(servo_info[2])
-                pendulum_velocity = float(servo_info[3])
-                env.set_state(motor_position, motor_velocity, pendulum_position, pendulum_velocity)
-
-            elif msg.topic == params.MQTT_SUB_RESET_COMPLETE:
-                servo_info = str(msg.payload.decode("utf-8")).split('|')
-                motor_position = float(servo_info[0])
-                motor_velocity = float(servo_info[1])
-                pendulum_position = float(servo_info[2])
-                pendulum_velocity = float(servo_info[3])
-                env.set_state(motor_position, motor_velocity, pendulum_position, pendulum_velocity)
-
-        client.on_connect = __on_connect
-        client.on_message = __on_message
-        # client.on_log = __on_log
-        #
-        # # client.username_pw_set(username="link", password="0123")
-        client.connect(params.MQTT_SERVER, 1883, 3600)
-        #
-        print("***** Sub thread started!!! *****", flush=False)
-        client.loop_start()
 
     elif params.ENVIRONMENT_ID == EnvironmentName.QUANSER_SERVO_2:
         client = mqtt.Client(client_id="env_sub_2", transport="TCP")
@@ -120,13 +81,14 @@ def get_environment(owner="chief", params=None):
         def __on_message(client, userdata, msg):
             global PUB_ID
 
-            if msg.topic == params.MQTT_SUB_FROM_SERVO:
-                servo_info = json.loads(msg.payload.decode("utf-8"))
+            if msg.topic == params.MQTT_SUB_FROM_DRIP:
+                servo_info = json.loads(msg.payload.decode("utf-8")).split('|')
                 motor_radian = float(servo_info["motor_radian"])
                 motor_velocity = float(servo_info["motor_velocity"])
                 pendulum_radian = float(servo_info["pendulum_radian"])
                 pendulum_velocity = float(servo_info["pendulum_velocity"])
                 pub_id = servo_info["pub_id"]
+                print("!!!!!!!!!!!!!!", motor_velocity, motor_radian)
                 env.set_state(motor_radian, motor_velocity, pendulum_radian, pendulum_velocity)
 
             elif msg.topic == params.MQTT_SUB_MOTOR_LIMIT:
@@ -153,7 +115,7 @@ def get_environment(owner="chief", params=None):
             # client.on_log = __on_log
 
             # client.username_pw_set(username="link", password="0123")
-            client.connect(params.MQTT_SERVER_FOR_RIP, 1883, 3600)
+            client.connect(params.MQTT_SERVER, 1883, 3600)
 
             print("***** Sub thread started!!! *****", flush=False)
             client.loop_start()
