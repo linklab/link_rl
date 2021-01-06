@@ -26,7 +26,7 @@ class PARAMETERS_FAST_RL_CARTPOLE_DQN(PARAMETERS_GENERAL):
     MODEL_SAVE_STEP_PERIOD = 1000
     DRAW_VIZ = True
     N_STEP = 4
-    CUDA = False
+    CUDA = True
 
     OMEGA = False
     PER = True

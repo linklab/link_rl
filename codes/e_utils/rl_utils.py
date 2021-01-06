@@ -37,9 +37,6 @@ if params.MY_PLATFORM != "REAL_RIP_PLATFORM":
 if params.MY_PLATFORM != "REAL_RIP_PLATFORM":
     from codes.b_environments.matlab.matlabenv import MatlabRotaryInvertedPendulumEnv
 
-device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
-
-
 def get_environment(owner="chief", params=None):
     if params.ENVIRONMENT_ID == EnvironmentName.REAL_DEVICE_DOUBLE_RIP:
         env = EnvironmentDoubleRIP(
@@ -149,16 +146,16 @@ def get_environment(owner="chief", params=None):
         env = gym.make(EnvironmentName.WALKER_2D_V2.value)
     elif params.ENVIRONMENT_ID == EnvironmentName.PENDULUM_MATLAB_V0:
         env = MatlabRotaryInvertedPendulumEnv(
-            action_min=params.SWING_UP_SCALE_FACTOR * -1.0,
-            action_max=params.SWING_UP_SCALE_FACTOR,
+            action_min=params.ACTION_SCALE * -1.0,
+            action_max=params.ACTION_SCALE,
             env_reset=params.ENV_RESET,
             pendulum_type='PENDULUM_MATLAB_V0',
             params=params
         )
     elif params.ENVIRONMENT_ID == EnvironmentName.PENDULUM_MATLAB_DOUBLE_RIP_V0:
         env = MatlabRotaryInvertedPendulumEnv(
-            action_min=params.SWING_UP_SCALE_FACTOR * -1.0,
-            action_max=params.SWING_UP_SCALE_FACTOR,
+            action_min=params.ACTION_SCALE * -1.0,
+            action_max=params.ACTION_SCALE,
             env_reset=params.ENV_RESET,
             pendulum_type='PENDULUM_MATLAB_DOUBLE_RIP_V0',
             params=params
@@ -172,7 +169,7 @@ def get_environment(owner="chief", params=None):
     return env
 
 
-def get_rl_model(env, worker_id, params):
+def get_rl_model(env, worker_id, params, device):
     if params.DEEP_LEARNING_MODEL == DeepLearningModelName.CONTINUOUS_ACTOR_CRITIC_MLP:
         model = StochasticActorCriticModel(
             env=env,

@@ -23,7 +23,7 @@ class AgentDQN(BaseAgent):
         self.params = params
         self.device = device
 
-        self.model = rl_utils.get_rl_model(env=self.env, worker_id=worker_id, params=params)
+        self.model = rl_utils.get_rl_model(env=self.env, worker_id=worker_id, params=params, device=self.device)
 
         self.target_agent = TargetNet(self.model.base)
 

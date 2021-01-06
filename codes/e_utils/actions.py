@@ -224,8 +224,7 @@ class EpsilonTracker:
     Updates epsilon according to linear schedule
     """
     def __init__(
-        self, action_selector: Union[EpsilonGreedyDQNActionSelector, EpsilonGreedyD4PGActionSelector],
-        eps_start: Union[int, float], eps_final: Union[int, float], eps_frames: int
+        self, action_selector, eps_start: Union[int, float], eps_final: Union[int, float], eps_frames: int
     ):
         self.action_selector = action_selector
         self.eps_start = eps_start

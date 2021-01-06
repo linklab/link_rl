@@ -20,7 +20,7 @@ from codes.e_utils.common_utils import save_model
 from codes.e_utils.experience_single import ExperienceSourceSingleEnvFirstLast
 from codes.e_utils.experience_tracker import RewardTracker
 from codes.e_utils.logger import get_logger
-from codes.e_utils.names import DeepLearningModelName
+from codes.e_utils.names import DeepLearningModelName, RLAlgorithmName
 
 MODEL_SAVE_DIR = os.path.join(PROJECT_HOME, "out", "model_save_files")
 if not os.path.exists(MODEL_SAVE_DIR):
@@ -43,12 +43,9 @@ def main():
     print("env:", params.ENVIRONMENT_ID)
     print("observation_space:", env.observation_space)
     print("action_space:", env.action_space)
-    print("action_min: ", env.action_space.low[0], "action_max:", env.action_space.high[0])
-    action_min = env.action_space.low[0]
-    action_max = env.action_space.high[0]
 
     agent, epsilon_tracker = rl_utils.get_rl_agent(
-        env=env, worker_id=0, action_min=action_min, action_max=action_max, params=params
+        env=env, worker_id=0, params=params
     )
 
     if params.DEEP_LEARNING_MODEL in [
@@ -97,7 +94,12 @@ def main():
             if len(agent.buffer) < params.MIN_REPLAY_SIZE_FOR_TRAIN:
                 continue
 
-            _, last_loss, _ = agent.train_net(step_idx=step_idx)
+            if params.RL_ALGORITHM == RLAlgorithmName.DDPG_FAST_V0:
+                _, last_loss, _ = agent.train_net(step_idx=step_idx)
+            elif params.RL_ALGORITHM == RLAlgorithmName.DQN_FAST_V0:
+                _, last_loss = agent.train_net(step_idx=step_idx)
+            else:
+                raise ValueError()
 
 
 if __name__ == "__main__":

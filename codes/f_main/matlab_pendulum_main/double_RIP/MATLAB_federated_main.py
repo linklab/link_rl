@@ -17,10 +17,12 @@ if PROJECT_HOME not in sys.path:
 
 from codes.a_config.parameters import PARAMETERS as params
 
-device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
-
 os.environ["CUDA_VISIBLE_DEVICES"] = params.CUDA_VISIBLE_DEVICES_NUMBER_LIST
 
+if torch.cuda.is_available():
+    device = torch.device("cuda" if params.CUDA else "cpu")
+else:
+    device = torch.device("cpu")
 
 if __name__ == "__main__":
     common_utils.print_fast_rl_params(params)
@@ -37,9 +39,9 @@ if __name__ == "__main__":
     utils.ask_file_removal(device)
 
     env = rl_utils.get_environment(params=params)
-    rl_model = rl_utils.get_rl_model(env, -1, params=params)
+    rl_model = rl_utils.get_rl_model(env, worker_id=-1, params=params, device=device)
 
-    utils.print_configuration(env, rl_model, params)
+    #utils.print_configuration(env, rl_model, params)
 
     try:
         chief = Process(target=utils.run_chief, args=(params,))

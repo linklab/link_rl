@@ -6,6 +6,7 @@ import zlib
 import sys, os
 import paho.mqtt.client as mqtt
 import numpy as np
+import torch
 
 current_path = os.path.dirname(os.path.realpath(__file__))
 PROJECT_HOME = os.path.abspath(os.path.join(current_path, os.pardir, os.pardir, os.pardir, os.pardir))
@@ -21,9 +22,14 @@ from codes.f_main.federation_main.chief_workers.chief import Chief
 
 logger = get_logger("chief")
 
+if torch.cuda.is_available():
+    device = torch.device("cuda" if params.CUDA else "cpu")
+else:
+    device = torch.device("cpu")
+
 try:
     env = rl_utils.get_environment(params=params)
-    rl_model = rl_utils.get_rl_model(env, -1, params=params)
+    rl_model = rl_utils.get_rl_model(env, worker_id=-1, params=params, device=device)
     chief = Chief(logger=logger, rl_model=rl_model, params=params)
 except:
     traceback.print_exc()

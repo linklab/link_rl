@@ -32,14 +32,14 @@ from codes.e_utils.names import DeepLearningModelName, RLAlgorithmName, Environm
 #     MODE_GRADIENTS_UPDATE = False  # Distributed
 #     MODE_PARAMETERS_TRANSFER = False  # Transfer
 
-class PARAMETERS(PARAMETERS_DOUBLE_RIP):
-    MY_PLATFORM = OSName.REAL_RIP
-    PYTHON_PATH = "~/anaconda3/envs/rl/bin/python"
-    ENV_RENDER = False
-    NUM_WORKERS = 1
-    MODE_SYNCHRONIZATION = True
-    MODE_GRADIENTS_UPDATE = False  # Distributed
-    MODE_PARAMETERS_TRANSFER = False  # Transfer
+# class PARAMETERS(PARAMETERS_DOUBLE_RIP):
+#     MY_PLATFORM = OSName.REAL_RIP
+#     PYTHON_PATH = "~/anaconda3/envs/rl/bin/python"
+#     ENV_RENDER = False
+#     NUM_WORKERS = 1
+#     MODE_SYNCHRONIZATION = True
+#     MODE_GRADIENTS_UPDATE = False  # Distributed
+#     MODE_PARAMETERS_TRANSFER = False  # Transfer
 
 # class PARAMETERS(PARAMETERS_FEDERATED_PENDULUM_DDPG):
 #     MY_PLATFORM = OSName.REAL_RIP
@@ -50,16 +50,17 @@ class PARAMETERS(PARAMETERS_DOUBLE_RIP):
 #     MODE_GRADIENTS_UPDATE = True      # Distributed
 #     MODE_PARAMETERS_TRANSFER = False    # Transfer
 
-# class PARAMETERS(PARAMETERS_FEDERATED_MATLAB_RIP_DDPG):
-#     PYTHON_PATH = "~/anaconda3/envs/rl/bin/python"
-#     ENV_RENDER = False
-#     NUM_WORKERS = 1
-#     MODE_SYNCHRONIZATION = True
-#     MODE_GRADIENTS_UPDATE = True      # Distributed
-#     MODE_PARAMETERS_TRANSFER = False    # Transfer
-#     ENV_RESET = False
-#     ENVIRONMENT_ID = EnvironmentName.PENDULUM_MATLAB_DOUBLE_AGENTS_V0
-#     RL_ALGORITHM = RLAlgorithmName.DDPG_FAST_DOUBLE_AGENTS_V0
+class PARAMETERS(PARAMETERS_FEDERATED_MATLAB_RIP_DDPG):
+    PYTHON_PATH = "~/anaconda3/envs/rl/bin/python"
+    ENV_RENDER = False
+    NUM_WORKERS = 1
+    MODE_SYNCHRONIZATION = True
+    MODE_GRADIENTS_UPDATE = False     # Distributed
+    MODE_PARAMETERS_TRANSFER = False    # Transfer
+    ENV_RESET = False
+    ENVIRONMENT_ID = EnvironmentName.PENDULUM_MATLAB_DOUBLE_RIP_V0
+    RL_ALGORITHM = RLAlgorithmName.DDPG_FAST_V0
+    CUDA = True
     # ENVIRONMENT_ID = EnvironmentName.PENDULUM_MATLAB_V0
     # RL_ALGORITHM = RLAlgorithmName.DDPG_FAST_V0
 
@@ -79,3 +80,11 @@ class PARAMETERS(PARAMETERS_DOUBLE_RIP):
 
 # class PARAMETERS(PARAMETERS_FAST_RL_CARTPOLE_DQN):
 #     DRAW_VIZ = False
+
+# class PARAMETERS(PARAMETERS_FAST_RL_PENDULUM_MATLAB_DDPG):
+#     PYTHON_PATH = "~/anaconda3/envs/rl/bin/python"
+#     ENV_RENDER = False
+#     NUM_WORKERS = 1
+#     MODE_SYNCHRONIZATION = True
+#     MODE_GRADIENTS_UPDATE = False  # Distributed
+#     MODE_PARAMETERS_TRANSFER = False  # Transfer
