@@ -6,13 +6,13 @@ from codes.c_models.base_model import BaseModel
 
 
 class ActorCriticModel(BaseModel):
-    def __init__(self, s_size, a_size, worker_id, params, device):
-        super(ActorCriticModel, self).__init__(s_size, a_size, worker_id, params, device)
+    def __init__(self, env, worker_id, params, device):
+        super(ActorCriticModel, self).__init__(worker_id, params, device)
         self.__name__ = "ActorCriticModel"
 
         self.base = ActorCriticMLPBase(
-            num_inputs=s_size,
-            num_ouputs=a_size,
+            num_inputs=env.observation_space.shape[0],
+            num_outputs=env.action_space.shape[0],
             params=self.params
         )
 
@@ -25,7 +25,7 @@ class ActorCriticModel(BaseModel):
 
 
 class ActorCriticMLPBase(nn.Module):
-    def __init__(self, num_inputs, num_ouputs, params):
+    def __init__(self, num_inputs, num_outputs, params):
         super(ActorCriticMLPBase, self).__init__()
         self.__name__ = "ActorCriticMLPBase"
         self.params = params
@@ -41,7 +41,7 @@ class ActorCriticMLPBase(nn.Module):
             nn.ReLU(),
             nn.Linear(self.hidden_2_size, self.hidden_3_size),
             nn.ReLU(),
-            nn.Linear(self.hidden_3_size, num_ouputs),
+            nn.Linear(self.hidden_3_size, num_outputs),
         )
 
         #self.actor.apply(self.init_weights)

@@ -1,4 +1,4 @@
-from config.federated_parameters.parameters_federated_cartpole_dqn import PARAMETERS_FEDERATED_CARTPOLE_DQN
+from codes.a_config.federated_parameters.parameters_federated_cartpole_dqn import PARAMETERS_FEDERATED_CARTPOLE_DQN
 
 
 #

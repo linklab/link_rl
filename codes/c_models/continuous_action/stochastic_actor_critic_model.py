@@ -6,13 +6,13 @@ from codes.c_models.base_model import BaseModel
 
 
 class StochasticActorCriticModel(BaseModel):
-    def __init__(self, s_size, a_size, worker_id, params, device):
-        super(StochasticActorCriticModel, self).__init__(s_size, a_size, worker_id, params, device)
+    def __init__(self, env, worker_id, params, device):
+        super(StochasticActorCriticModel, self).__init__(worker_id, params, device)
         self.__name__ = "StochasticActorCriticModel"
 
         self.base = StochasticActorCriticMLPBase(
-            num_inputs=s_size,
-            num_outputs=a_size,
+            num_inputs=env.observation_space.shape[0],
+            num_outputs=env.action_space.shape[0],
             params=self.params
         )
 

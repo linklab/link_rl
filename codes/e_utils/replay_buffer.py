@@ -8,7 +8,7 @@ from codes.e_utils.experience_single import ExperienceSourceSingleEnvFirstLast
 
 class ExperienceSourceBuffer:
     """
-    The same as ExperienceSource, but takes episodes from the buffer
+    The same as ExperienceSource, but takes episodes from the simple buffer
     """
 
     def __init__(self, buffer, steps_count=1):
@@ -41,6 +41,7 @@ class ExperienceReplayBuffer:
             (ExperienceSource, ExperienceSourceFirstLast, ExperienceSourceSingleEnvFirstLast, type(None))
         )
         assert isinstance(buffer_size, int)
+        self.experience_source = experience_source
         self.experience_source_iter = None if experience_source is None else iter(experience_source)
         self.buffer = []
         self.capacity = buffer_size
@@ -51,6 +52,10 @@ class ExperienceReplayBuffer:
 
     def __iter__(self):
         return iter(self.buffer)
+
+    def set_experience_source(self, experience_source):
+        self.experience_source = experience_source
+        self.experience_source_iter = None if experience_source is None else iter(experience_source)
 
     def sample(self, batch_size):
         """
@@ -121,7 +126,7 @@ class ExperienceReplayBuffer:
 
 class PrioReplayBufferNaive:
     def __init__(self, experience_source, buffer_size, prob_alpha=0.6):
-        self.exp_source_iter = iter(experience_source)
+        self.experience_source_iter = iter(experience_source)
         self.prob_alpha = prob_alpha
         self.capacity = buffer_size
         self.pos = 0
@@ -131,10 +136,14 @@ class PrioReplayBufferNaive:
     def __len__(self):
         return len(self.buffer)
 
+    def set_experience_source(self, experience_source):
+        self.experience_source = experience_source
+        self.experience_source_iter = None if experience_source is None else iter(experience_source)
+        
     def populate(self, count):
         max_prio = self.priorities.max() if self.buffer else 1.0
         for _ in range(count):
-            sample = next(self.exp_source_iter)
+            sample = next(self.experience_source_iter)
             if len(self.buffer) < self.capacity:
                 self.buffer.append(sample)
             else:
@@ -247,72 +256,6 @@ class PrioritizedReplayBuffer(ExperienceReplayBuffer):
 
             self._max_priority = max(self._max_priority, priority)
 
-
-# sumtree 사용 안하는 버전
-class PrioReplayBuffer:
-    def __init__(self, experience_source, buffer_size, prob_alpha=0.6, n_step=1, beta_start=0.4, beta_frames=100000):
-        assert isinstance(
-            experience_source,
-            (ExperienceSource, ExperienceSourceFirstLast, ExperienceSourceSingleEnvFirstLast, type(None))
-        )
-        assert isinstance(buffer_size, int)
-        self.exp_source_iter = None if experience_source is None else iter(experience_source)
-        self.prob_alpha = prob_alpha
-        self.capacity = buffer_size
-        self.pos = 0
-        self.buffer = []
-        self.priorities = np.zeros((buffer_size,), dtype=np.float32)
-        self.beta = beta_start
-        self.n_step = n_step
-        self.beta_start = beta_start
-        self.beta_frames = beta_frames
-
-    def update_beta(self, idx):
-        v = self.beta_start + idx * (1.0 - self.beta_start) / self.beta_frames
-        self.beta = min(1.0, v)
-        return self.beta
-
-    def __len__(self):
-        return len(self.buffer)
-
-    def _add(self, sample):
-        max_prio = self.priorities.max() if self.buffer else 1.0
-        if len(self.buffer) < self.capacity:
-            self.buffer.append(sample)
-        else:
-            self.buffer[self.pos] = sample
-        self.priorities[self.pos] = max_prio
-        self.pos = (self.pos + 1) % self.capacity
-
-    def populate(self, count):
-        max_prio = self.priorities.max() if self.buffer else 1.0
-        for _ in range(count):
-            sample = next(self.exp_source_iter)
-            if len(self.buffer) < self.capacity:
-                self.buffer.append(sample)
-            else:
-                self.buffer[self.pos] = sample
-            self.priorities[self.pos] = max_prio
-            self.pos = (self.pos + 1) % self.capacity
-
-    def sample(self, batch_size):
-        if len(self.buffer) == self.capacity:
-            prios = self.priorities
-        else:
-            prios = self.priorities[:self.pos]
-        probs = prios ** self.prob_alpha
-        probs = probs[:-self.n_step]
-        probs /= probs.sum()
-        indices = np.random.choice(len(self.buffer) - self.n_step, batch_size, p=probs)
-        samples = [self.buffer[idx] for idx in indices]
-        total = len(self.buffer)
-        weights = (total * probs[indices]) ** (-self.beta)
-        weights /= weights.max()
-        return samples, indices, np.array(weights, dtype=np.float32)
-
-    def update_priorities(self, batch_indices, batch_priorities):
-        for idx, prio in zip(batch_indices, batch_priorities):
-            self.priorities[idx] = prio
 
 class SegmentTree(object):
     def __init__(self, capacity, operation, neutral_element):

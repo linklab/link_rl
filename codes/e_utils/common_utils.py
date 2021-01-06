@@ -11,7 +11,7 @@ import torch
 from codes.b_environments.or_gym.envs.classic_or.knapsack import BoundedKnapsackEnv
 from codes.b_environments.or_gym.envs.classic_or.tsp import TSPEnv, TSPDistCost
 
-from codes.d_agents.base_agent import float32_preprocessor
+from codes.d_agents.a0_base_agent import float32_preprocessor
 
 #https://medium.com/analytics-vidhya/stretched-exponential-decay-function-for-epsilon-greedy-algorithm-98da6224c22f
 from codes.e_utils import wrappers
@@ -167,25 +167,7 @@ def unpack_batch_for_a2c(batch, net, params, device='cpu'):
     return states_v, actions_v, target_action_values_v
 
 
-def unpack_batch_for_ddpg(batch, device="cpu"):
-    states, actions, rewards, dones, last_states = [], [], [], [], []
 
-    for exp in batch:
-        states.append(np.array(exp.state, copy=False))
-        actions.append(exp.action)
-        rewards.append(exp.reward)
-        dones.append(exp.last_state is None)
-        if exp.last_state is None:
-            last_states.append(exp.state)   # the result will be masked anyway
-        else:
-            last_states.append(np.array(exp.last_state, copy=False))
-
-    states_v = float32_preprocessor(states).to(device)
-    actions_v = float32_preprocessor(actions).to(device)
-    rewards_v = float32_preprocessor(rewards).to(device)
-    last_states_v = float32_preprocessor(last_states).to(device)
-    dones_t = torch.BoolTensor(dones).to(device)
-    return states_v, actions_v, rewards_v, dones_t, last_states_v
 
 
 def remove_models(model_save_dir, env_name, model_name):

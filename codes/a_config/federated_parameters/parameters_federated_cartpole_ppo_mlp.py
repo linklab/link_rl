@@ -1,5 +1,5 @@
-from config.names import *
-from config.parameters_general import PARAMETERS_GENERAL
+from codes.e_utils.names import *
+from codes.a_config.parameters_general import PARAMETERS_GENERAL
 
 
 class PARAMETERS_FEDERATED_CARTPOLE_PPO_MLP(PARAMETERS_GENERAL):

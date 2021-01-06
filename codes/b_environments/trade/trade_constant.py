@@ -2,10 +2,10 @@ import configparser
 import enum
 import os
 
-from config.names import PROJECT_HOME
+from codes.e_utils.names import PROJECT_HOME
 
 config_parser = configparser.ConfigParser()
-read_ok = config_parser.read(os.path.join(PROJECT_HOME, "config", "config.ini"))
+read_ok = config_parser.read(os.path.join(PROJECT_HOME, "config", "codes.a_config.ini"))
 
 fmt = "%Y-%m-%dT%H:%M:%S"
 fmt2 = "%Y-%m-%d %H:%M:%S"

@@ -2,23 +2,23 @@ import numpy as np
 import torch
 import torch.nn.functional as F
 
-from codes.d_agents.base_agent import BaseAgent, TargetNet, float32_preprocessor
+from codes.d_agents.a0_base_agent import BaseAgent, TargetNet, float32_preprocessor
 from codes.e_utils import rl_utils, replay_buffer
-from codes.e_utils.common_utils import unpack_batch_for_ddpg
 
 
 class AgentDDPG(BaseAgent):
     """
     Agent implementing Orstein-Uhlenbeck exploration process
     """
-    def __init__(self, env, worker_id, action_selector, action_min, action_max,
-                 params, preprocessor=float32_preprocessor, device="cpu"):
+    def __init__(self, env, worker_id, action_selector, params,
+                 preprocessor=float32_preprocessor, device="cpu"):
+        super(AgentDDPG, self).__init__()
         self.__name__ = "AgentDDPG"
         self.device = device
         self.preprocessor = preprocessor
         self.action_selector = action_selector
-        self.action_min = action_min
-        self.action_max = action_max
+        self.action_min = env.action_space.low[0]
+        self.action_max = env.action_space.high[0]
         self.step_idx = 0
 
         self.env = env
@@ -46,7 +46,7 @@ class AgentDDPG(BaseAgent):
         )
 
         if self.params.PER:
-            self.buffer = replay_buffer.PrioReplayBuffer(
+            self.buffer = replay_buffer.PrioritizedReplayBuffer(
                 experience_source=None, buffer_size=self.params.REPLAY_BUFFER_SIZE,
                 n_step=self.params.N_STEP, beta_start=0.4, beta_frames=self.params.MAX_GLOBAL_STEP
             )
@@ -54,9 +54,6 @@ class AgentDDPG(BaseAgent):
             self.buffer = replay_buffer.ExperienceReplayBuffer(
                 experience_source=None, buffer_size=self.params.REPLAY_BUFFER_SIZE
             )
-
-    def initial_agent_state(self):
-        return 0.0
 
     def __call__(self, states, agent_states=None):
         if self.preprocessor:
@@ -93,17 +90,6 @@ class AgentDDPG(BaseAgent):
 
         return actions, new_agent_states
 
-    def set_experience_source_to_buffer(self, experience_source):
-        if self.params.PER:
-            self.buffer = replay_buffer.PrioReplayBuffer(
-                experience_source=experience_source, buffer_size=self.params.REPLAY_BUFFER_SIZE,
-                n_step=self.params.N_STEP, beta_start=0.4, beta_frames=self.params.MAX_GLOBAL_STEP
-            )
-        else:
-            self.buffer = replay_buffer.ExperienceReplayBuffer(
-                experience_source=experience_source, buffer_size=self.params.REPLAY_BUFFER_SIZE
-            )
-
     def train_net(self, step_idx):
         if self.params.PER:
             batch, batch_indices, batch_weights = self.buffer.sample(self.params.BATCH_SIZE)
@@ -112,9 +98,8 @@ class AgentDDPG(BaseAgent):
             batch_indices, batch_weights = None, None
 
         # print(batch)
-        batch_states_v, batch_actions_v, batch_rewards_v, batch_dones_mask, batch_last_states_v = unpack_batch_for_ddpg(
-            batch, self.device
-        )
+        batch_states_v, batch_actions_v, batch_rewards_v, batch_dones_mask, batch_last_states_v \
+            = self.unpack_batch_for_ddpg(batch)
 
         # train critic
         self.critic_optimizer.zero_grad()
@@ -162,3 +147,24 @@ class AgentDDPG(BaseAgent):
         gradients = self.model.get_gradients_for_current_parameters()
 
         return gradients, loss_critic_v.item(), loss_actor_v.item() * -1.0
+
+    def unpack_batch_for_ddpg(self, batch):
+        states, actions, rewards, dones, last_states = [], [], [], [], []
+
+        for exp in batch:
+            states.append(np.array(exp.state, copy=False))
+            actions.append(exp.action)
+            rewards.append(exp.reward)
+            dones.append(exp.last_state is None)
+            if exp.last_state is None:
+                last_states.append(exp.state)   # the result will be masked anyway
+            else:
+                last_states.append(np.array(exp.last_state, copy=False))
+
+        states_v = float32_preprocessor(states).to(self.device)
+        actions_v = float32_preprocessor(actions).to(self.device)
+        rewards_v = float32_preprocessor(rewards).to(self.device)
+        last_states_v = float32_preprocessor(last_states).to(self.device)
+        dones_t = torch.BoolTensor(dones).to(self.device)
+
+        return states_v, actions_v, rewards_v, dones_t, last_states_v

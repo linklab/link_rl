@@ -15,7 +15,7 @@ PROJECT_HOME = os.path.abspath(os.path.join(current_path, os.pardir, os.pardir))
 if PROJECT_HOME not in sys.path:
     sys.path.append(PROJECT_HOME)
 
-from config.parameters import PARAMETERS as params
+from codes.a_config.parameters import PARAMETERS as params
 from rl_main import rl_utils
 import rl_main.federated_main.utils as utils
 

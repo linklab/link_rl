@@ -10,7 +10,7 @@ if PROJECT_HOME not in sys.path:
 
 device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 
-from config.parameters import PARAMETERS as params
+from codes.a_config.parameters import PARAMETERS as params
 from rl_main import rl_utils
 
 env = rl_utils.get_environment(params=params)

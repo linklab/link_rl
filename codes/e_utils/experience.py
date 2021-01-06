@@ -11,7 +11,7 @@ if PROJECT_HOME not in sys.path:
     sys.path.append(PROJECT_HOME)
 
 # one single experience step
-from codes.d_agents.base_agent import BaseAgent
+from codes.d_agents.a0_base_agent import BaseAgent
 
 Experience = namedtuple('Experience', ['state', 'action', 'reward', 'done', 'info'])
 ExperienceWithNoise = namedtuple(

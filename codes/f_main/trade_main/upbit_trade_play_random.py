@@ -16,7 +16,7 @@ from common.fast_rl import rl_agent
 from rl_main.trade_main.upbit_trade_main import evaluate_random, evaluate_sequential_all
 
 ##### NOTE #####
-from config.parameters import PARAMETERS as params
+from codes.a_config.parameters import PARAMETERS as params
 ##### NOTE #####
 
 warnings.filterwarnings("ignore", category=DeprecationWarning)

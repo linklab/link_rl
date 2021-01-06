@@ -13,12 +13,22 @@ class BaseAgent:
     """
     Abstract Agent interface
     """
+    def __init__(self):
+        self.buffer = None
+        pass
+
     def initial_agent_state(self):
         """
         Should create initial empty state for the agent. It will be called for the start of the episode
         :return: Anything agent want to remember
         """
         return None
+
+    def initial_agent_state(self):
+        return 0.0
+
+    def set_experience_source_to_buffer(self, experience_source):
+        self.buffer.set_experience_source(experience_source)
 
     def __call__(self, states, agent_states):
         """

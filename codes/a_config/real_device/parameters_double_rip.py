@@ -1,4 +1,4 @@
-from config.names import OptimizerName, RLAlgorithmName, EnvironmentName, DeepLearningModelName
+from codes.e_utils.names import OptimizerName, RLAlgorithmName, EnvironmentName, DeepLearningModelName
 
 
 class PARAMETERS_DOUBLE_RIP:
@@ -107,7 +107,7 @@ class PARAMETERS_DOUBLE_RIP:
     OPTIMIZER = OptimizerName.ADAM
     GAE_LAMBDA = 0.95
     LEARNING_RATE = 0.001
-    ACTION_SCALE = SWING_UP_SCALE_FACTOR = 200
+    ACTION_SCALE = 200
     BALANCING_SCALE_FACTOR = 0.01
     ENV_RESET = False
 

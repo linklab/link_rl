@@ -552,15 +552,6 @@ def calc_loss_dqn(batch, net, tgt_net, gamma, cuda=False, cuda_async=False):
         done_mask = done_mask.cuda(non_blocking=cuda_async)
         last_steps_v = last_steps_v.cuda(non_blocking=cuda_async)
 
-    # https://subscription.packtpub.com/book/data/9781838826994/6/ch06lvl1sec45/dqn-on-pong
-    # We pass observations to the first model and extract the specific Q - values for the taken actions using the gather() tensor operation.
-    # The first argument to the gather() call is a dimension index that we want to perform gathering on.
-    # In our case, it is equal to 1, which corresponds to actions.
-    # The second argument is a tensor of indices of elements to be chosen.
-    # Extra unsqueeze() and squeeze() calls are required to compute the index argument for the gather functions,
-    # and to get rid of the extra dimensions that we created, respectively.
-    # The index should have the same number of dimensions as the data we are processing.
-    # In Figure 6.3, you can see an illustration of what gather() does on the example case, with a batch of six entries and four actions:
     state_action_values = net(states_v).gather(1, actions_v.unsqueeze(-1)).squeeze(-1)
 
     with torch.no_grad():
@@ -590,6 +581,15 @@ def calc_loss_double_dqn(batch, net, tgt_net, gamma, cuda=False, cuda_async=Fals
         done_mask = done_mask.cuda(non_blocking=cuda_async)
         last_steps_v = last_steps_v.cuda(non_blocking=cuda_async)
 
+    # https://subscription.packtpub.com/book/data/9781838826994/6/ch06lvl1sec45/dqn-on-pong
+    # We pass observations to the first model and extract the specific Q - values for the taken actions using the gather() tensor operation.
+    # The first argument to the gather() call is a dimension index that we want to perform gathering on.
+    # In our case, it is equal to 1, which corresponds to actions.
+    # The second argument is a tensor of indices of elements to be chosen.
+    # Extra unsqueeze() and squeeze() calls are required to compute the index argument for the gather functions,
+    # and to get rid of the extra dimensions that we created, respectively.
+    # The index should have the same number of dimensions as the data we are processing.
+    # In Figure 6.3, you can see an illustration of what gather() does on the example case, with a batch of six entries and four actions:
     actions_v = actions_v.unsqueeze(-1)
     state_action_values = net(states_v).gather(1, actions_v)
     state_action_values = state_action_values.squeeze(-1)
