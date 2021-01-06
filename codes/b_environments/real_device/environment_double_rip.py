@@ -1,11 +1,8 @@
 import time
 import math
 import numpy as np
-from enum import Enum
-import json
 import paho.mqtt.client as paho
 
-# MQTT Topic for RIP
 import gym
 
 MQTT_SERVER = '192.168.0.10'
@@ -18,13 +15,6 @@ MQTT_ERROR = 'error'
 STATE_SIZE = 6
 
 PUB_ID = 0
-
-
-class Status(Enum):
-    SWING_UP = -1.0
-    SWING_UP_TO_BALANCING = 0.5
-    BALANCING = 1.0
-    BALANCING_TO_SWING_UP = -0.5
 
 
 class EnvironmentDoubleRIP():
@@ -94,15 +84,15 @@ class EnvironmentDoubleRIP():
 
     def __on_connect(self, client, userdata, flags, rc):
         print("mqtt broker connected with result code " + str(rc), flush=False)
-        self.mqtt_client.subscribe(topic=params.MQTT_SUB_FROM_DRIP)
-        self.mqtt_client.subscribe(topic=params.MQTT_SUB_RESET_COMPLETE)
+        self.mqtt_client.subscribe(topic=self.params.MQTT_SUB_FROM_DRIP)
+        self.mqtt_client.subscribe(topic=self.params.MQTT_SUB_RESET_COMPLETE)
 
     @staticmethod
     def __on_log(userdata, level, buf):
         print(buf)
 
     def __on_message(self, client, userdata, msg):
-        if msg.topic == params.MQTT_SUB_RESET_COMPLETE:
+        if msg.topic == self.params.MQTT_SUB_RESET_COMPLETE:
             print("\n==================== Reset Complete ====================")
             self.reset_complete = True
             servo_info = msg.payload.decode("utf-8").split('|')
@@ -110,7 +100,7 @@ class EnvironmentDoubleRIP():
             self.motor_velocity = float(servo_info[1])
             self.pendulum_position = float(servo_info[2])
             self.pendulum_velocity = float(servo_info[3])
-        elif msg.topic == params.MQTT_SUB_FROM_DRIP:
+        elif msg.topic == self.params.MQTT_SUB_FROM_DRIP:
             print("\n==================== Receive Next States ====================")
             self.action_complete = True
             servo_info = msg.payload.decode("utf-8").split('|')
@@ -189,15 +179,6 @@ class EnvironmentDoubleRIP():
         self.episode_steps += 1
         self.total_steps += 1
 
-        if action > 0:
-            self.num_continuous_positive_torque += 1
-        else:
-            self.num_continuous_positive_torque = 0
-
-        if action < 0:
-            self.num_continuous_negative_torque += 1
-        else:
-            self.num_continuous_negative_torque = 0
 
         # print(self.motor_position, math.cos(self.motor_position), math.sin(self.motor_position))
 
@@ -207,8 +188,6 @@ class EnvironmentDoubleRIP():
         done_conditions = [
             self.episode_steps >= 500,
             self.too_much_rotate
-            # self.num_continuous_positive_torque >= 30,
-            # self.num_continuous_negative_torque >= 30
         ]
 
         adjusted_radian = self.pendulum_position_to_adjusted_radian()
@@ -221,12 +200,7 @@ class EnvironmentDoubleRIP():
 
         if any(done_conditions):
             done = True
-            if params.CH:
-                reward = self.CH_ordinary_reward(
-                    adjusted_radian, action, self.num_continuous_positive_torque, self.num_continuous_negative_torque
-                )
-            else:
-                reward = self.get_reward(adjusted_radian)
+            reward = self.get_reward(adjusted_radian)
 
             info = {
                 "count_balancing_states": self.count_balancing_states,
@@ -238,12 +212,7 @@ class EnvironmentDoubleRIP():
 
         else:
             done = False
-            if params.CH:
-                reward = self.CH_ordinary_reward(
-                    adjusted_radian, action, self.num_continuous_positive_torque, self.num_continuous_negative_torque
-                )
-            else:
-                reward = self.get_reward(adjusted_radian)
+            reward = self.get_reward(adjusted_radian)
 
             info = {}
 
@@ -306,69 +275,16 @@ class EnvironmentDoubleRIP():
         else:
             self.is_upright = False
 
-        if self.current_status is None:  # RESET
-            self.current_status = Status.SWING_UP
-            self.count_swing_up_states += 1
-            self.count_continuous_swing_up_states += 1
-        elif self.current_status == Status.SWING_UP:
-            if self.is_upright:  # SWING_UP --> SWING_UP_TO_BALANCING
-                self.current_status = Status.SWING_UP_TO_BALANCING
-                self.count_continuous_swing_up_states = 0
-                self.count_continuous_balancing_states += 1
-                self.count_balancing_states += 1
-            else:  # SWING_UP --> SWING_UP
-                self.current_status = Status.SWING_UP
-                self.count_continuous_swing_up_states += 1
-                self.count_swing_up_states += 1
-        elif self.current_status == Status.SWING_UP_TO_BALANCING:
-            if self.is_upright:  # SWING_UP_TO_BALANCING --> BALANCING
-                self.current_status = Status.BALANCING
-                self.count_continuous_balancing_states += 1
-                self.count_balancing_states += 1
-            else:  # SWING_UP_TO_BALANCING --> BALANCING_TO_SWING_UP
-                self.current_status = Status.BALANCING_TO_SWING_UP
-                self.count_swing_up_states += 1
-                self.count_continuous_balancing_states = 0
-                self.count_continuous_swing_up_states += 1
-        elif self.current_status == Status.BALANCING:
-            if self.is_upright:  # BALANCING --> BALANCING
-                self.current_status = Status.BALANCING
-                self.count_balancing_states += 1
-                self.count_continuous_balancing_states += 1
-            else:  # BALANCING --> BALANCING_TO_SWING_UP
-                self.current_status = Status.BALANCING_TO_SWING_UP
-                self.count_swing_up_states += 1
-                self.count_continuous_balancing_states = 0
-                self.count_continuous_swing_up_states += 1
-        elif self.current_status == Status.BALANCING_TO_SWING_UP:
-            if self.is_upright:  # BALANCING_TO_SWING_UP --> SWING_UP_TI_BALANCING
-                self.current_status = Status.SWING_UP_TO_BALANCING
-                self.count_balancing_states += 1
-                self.count_continuous_swing_up_states = 0
-                self.count_continuous_balancing_states += 1
-            else:  # BALANCING_TO_SWING_UP --> SWING_UP
-                self.current_status = Status.SWING_UP
-                self.count_swing_up_states += 1
-                self.count_continuous_swing_up_states += 1
-        else:
-            raise ValueError()
-
     @staticmethod
     def convert_radian_to_degree(radian):
         degree = radian * 180 / math.pi
         return degree
 
-
     def get_reward(self, adjusted_radian):
         if self.too_much_rotate:
             position_reward = -1.0
-        else:
-            if self.current_status in [Status.SWING_UP]:
-                position_reward = 0.0
-            elif self.current_status in [Status.SWING_UP_TO_BALANCING]:
-                position_reward = 1.0
-            else:
-                position_reward = adjusted_radian  # math.pi - math.radians(12) ~ math.pi
+
+        position_reward = 0.0
 
         self.episode_position_reward_list.append(position_reward)
         self.episode_pendulum_velocity_reward_list.append(0.0)

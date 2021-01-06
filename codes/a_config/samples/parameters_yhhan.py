@@ -1,6 +1,5 @@
 from codes.a_config.federated_parameters.parameters_federated_cartpole_dqn import PARAMETERS_FEDERATED_CARTPOLE_DQN
 
-
 #
 # class PARAMETERS(PARAMETERS_FEDERATED_CARTPOLE_PPO_MLP):
 #     PYTHON_PATH = "~/anaconda3/envs/rl/bin/python"

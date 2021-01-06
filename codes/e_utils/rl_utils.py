@@ -49,6 +49,7 @@ def get_environment(owner="chief", params=None):
             env_reset=params.ENV_RESET,
             params=params
         )
+
     elif params.ENVIRONMENT_ID == EnvironmentName.QUANSER_SERVO_2:
         client = mqtt.Client(client_id="env_sub_2", transport="TCP")
         env = EnvironmentRIP(mqtt_client=client)

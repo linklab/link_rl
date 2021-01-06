@@ -73,6 +73,7 @@ def get_environment(owner="chief", params=None):
             action_min=params.SWING_UP_SCALE_FACTOR * -1.0,
             action_max=params.SWING_UP_SCALE_FACTOR,
             env_reset=params.ENV_RESET,
+            params=params
         )
 
     elif params.ENVIRONMENT_ID == EnvironmentName.QUANSER_SERVO_2:

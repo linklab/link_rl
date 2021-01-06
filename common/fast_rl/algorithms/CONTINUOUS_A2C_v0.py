@@ -3,9 +3,9 @@ import math
 import torch
 import torch.nn.functional as F
 
+from codes.e_utils.names import DeepLearningModelName
 from common.fast_rl import replay_buffer
 from common.fast_rl.policy_based_model import unpack_batch_for_a2c
-from config.names import DeepLearningModelName
 from rl_main import rl_utils
 
 

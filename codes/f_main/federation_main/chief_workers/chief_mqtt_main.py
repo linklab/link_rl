@@ -21,10 +21,13 @@ from codes.f_main.federation_main.chief_workers.chief import Chief
 
 logger = get_logger("chief")
 
-env = rl_utils.get_environment(params=params)
-rl_model = rl_utils.get_rl_model(env, -1, params=params)
-
-chief = Chief(logger=logger, rl_model=rl_model, params=params)
+try:
+    env = rl_utils.get_environment(params=params)
+    rl_model = rl_utils.get_rl_model(env, -1, params=params)
+    chief = Chief(logger=logger, rl_model=rl_model, params=params)
+except:
+    traceback.print_exc()
+    sys.exit(-1)
 
 
 def on_chief_connect(client, userdata, flags, rc):
