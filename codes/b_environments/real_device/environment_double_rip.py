@@ -17,16 +17,6 @@ STATE_SIZE = 6
 PUB_ID = 0
 
 
-<<<<<<< HEAD
-=======
-class Status(Enum):
-    SWING_UP = -1.0
-    SWING_UP_TO_BALANCING = 0.5
-    BALANCING = 1.0
-    BALANCING_TO_SWING_UP = -0.5
-
-
->>>>>>> c5ba1baeeb6e90356c4490c6ec7836fafa7cc99f
 class EnvironmentDoubleRIP():
     def __init__(self, owner, action_min, action_max, env_reset=True, params=None):
         self.episode_steps = 0
@@ -285,64 +275,10 @@ class EnvironmentDoubleRIP():
         else:
             self.is_upright = False
 
-<<<<<<< HEAD
-=======
-        if self.current_status is None:  # RESET
-            self.current_status = Status.SWING_UP
-            self.count_swing_up_states += 1
-            self.count_continuous_swing_up_states += 1
-        elif self.current_status == Status.SWING_UP:
-            if self.is_upright:  # SWING_UP --> SWING_UP_TO_BALANCING
-                self.current_status = Status.SWING_UP_TO_BALANCING
-                self.count_continuous_swing_up_states = 0
-                self.count_continuous_balancing_states += 1
-                self.count_balancing_states += 1
-            else:  # SWING_UP --> SWING_UP
-                self.current_status = Status.SWING_UP
-                self.count_continuous_swing_up_states += 1
-                self.count_swing_up_states += 1
-        elif self.current_status == Status.SWING_UP_TO_BALANCING:
-            if self.is_upright:  # SWING_UP_TO_BALANCING --> BALANCING
-                self.current_status = Status.BALANCING
-                self.count_continuous_balancing_states += 1
-                self.count_balancing_states += 1
-            else:  # SWING_UP_TO_BALANCING --> BALANCING_TO_SWING_UP
-                self.current_status = Status.BALANCING_TO_SWING_UP
-                self.count_swing_up_states += 1
-                self.count_continuous_balancing_states = 0
-                self.count_continuous_swing_up_states += 1
-        elif self.current_status == Status.BALANCING:
-            if self.is_upright:  # BALANCING --> BALANCING
-                self.current_status = Status.BALANCING
-                self.count_balancing_states += 1
-                self.count_continuous_balancing_states += 1
-            else:  # BALANCING --> BALANCING_TO_SWING_UP
-                self.current_status = Status.BALANCING_TO_SWING_UP
-                self.count_swing_up_states += 1
-                self.count_continuous_balancing_states = 0
-                self.count_continuous_swing_up_states += 1
-        elif self.current_status == Status.BALANCING_TO_SWING_UP:
-            if self.is_upright:  # BALANCING_TO_SWING_UP --> SWING_UP_TI_BALANCING
-                self.current_status = Status.SWING_UP_TO_BALANCING
-                self.count_balancing_states += 1
-                self.count_continuous_swing_up_states = 0
-                self.count_continuous_balancing_states += 1
-            else:  # BALANCING_TO_SWING_UP --> SWING_UP
-                self.current_status = Status.SWING_UP
-                self.count_swing_up_states += 1
-                self.count_continuous_swing_up_states += 1
-        else:
-            raise ValueError()
->>>>>>> c5ba1baeeb6e90356c4490c6ec7836fafa7cc99f
-
     @staticmethod
     def convert_radian_to_degree(radian):
         degree = radian * 180 / math.pi
         return degree
-<<<<<<< HEAD
-=======
-
->>>>>>> c5ba1baeeb6e90356c4490c6ec7836fafa7cc99f
 
     def get_reward(self, adjusted_radian):
         if self.too_much_rotate:

@@ -48,7 +48,7 @@ class WorkerFastRL:
             self.env.start()
 
         self.agent, self.epsilon_tracker = rl_utils.get_rl_agent(
-            env=self.env, worker_id=0, action_min=action_min, action_max=action_max, params=params
+            env=self.env, worker_id=0, params=params
         )
 
         self.episode_reward = 0
