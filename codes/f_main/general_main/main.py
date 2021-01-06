@@ -35,8 +35,13 @@ else:
 
 my_logger = get_logger("openai_pendulum_ddpg")
 
+env = rl_utils.get_environment(owner="actual_worker", params=params)
+print("env:", params.ENVIRONMENT_ID)
+print("observation_space:", env.observation_space)
+print("action_space:", env.action_space)
 
-def play_func(exp_queue, env, agent, epsilon_tracker):
+
+def play_func(exp_queue, agent, epsilon_tracker):
     if params.DEEP_LEARNING_MODEL in [
         DeepLearningModelName.DETERMINISTIC_ACTOR_CRITIC_GRU,
         DeepLearningModelName.DETERMINISTIC_ACTOR_CRITIC_GRU_ATTENTION
@@ -85,15 +90,10 @@ def play_func(exp_queue, env, agent, epsilon_tracker):
 def main():
     mp.set_start_method('spawn')
 
-    env = rl_utils.get_environment(owner="worker", params=params)
-    print("env:", params.ENVIRONMENT_ID)
-    print("observation_space:", env.observation_space)
-    print("action_space:", env.action_space)
-
     agent, epsilon_tracker = rl_utils.get_rl_agent(env=env, worker_id=0, params=params)
 
     exp_queue = mp.Queue(maxsize=params.TRAIN_STEP_FREQ * 2)
-    play_proc = mp.Process(target=play_func, args=(exp_queue, env, agent, epsilon_tracker))
+    play_proc = mp.Process(target=play_func, args=(exp_queue, agent, epsilon_tracker))
     play_proc.start()
 
     time.sleep(0.5)

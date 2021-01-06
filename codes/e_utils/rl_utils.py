@@ -169,25 +169,28 @@ def get_environment(owner="chief", params=None):
     return env
 
 
-def get_rl_model(env, worker_id, params, device):
+def get_rl_model(worker_id, input_shape=None, num_inputs=None, num_outputs=None, params=None, device=None):
     if params.DEEP_LEARNING_MODEL == DeepLearningModelName.CONTINUOUS_ACTOR_CRITIC_MLP:
         model = StochasticActorCriticModel(
-            env=env,
             worker_id=worker_id,
+            num_inputs=num_inputs,
+            num_outputs=num_outputs,
             params=params,
             device=device
         )
     elif params.DEEP_LEARNING_MODEL == DeepLearningModelName.ACTOR_CRITIC_MLP:
         model = ActorCriticModel(
-            env=env,
             worker_id=worker_id,
+            num_inputs=num_inputs,
+            num_outputs=num_outputs,
             params=params,
             device=device
         ).to(device)
     elif params.DEEP_LEARNING_MODEL == DeepLearningModelName.DETERMINISTIC_ACTOR_CRITIC_MLP:
         model = DeterministicActorCriticModel(
-            env=env,
             worker_id=worker_id,
+            num_inputs=num_inputs,
+            num_outputs=num_outputs,
             params=params,
             device=device
         ).to(device)
@@ -197,8 +200,10 @@ def get_rl_model(env, worker_id, params, device):
         DeepLearningModelName.DUELING_DQN_SMALL_CNN
     ]:
         model = DuelingDQNModel(
-            env=env,
             worker_id=worker_id,
+            input_shape=input_shape,
+            num_inputs=num_inputs,
+            num_outputs=num_outputs,
             params=params,
             device=device
         ).to(device)
@@ -209,7 +214,7 @@ def get_rl_model(env, worker_id, params, device):
     return model
 
 
-def get_rl_agent(env, worker_id, params=None):
+def get_rl_agent(env, worker_id, params=None, device="cpu"):
     if params.RL_ALGORITHM == RLAlgorithmName.DDPG_FAST_V0:
         print("action_min: ", env.action_space.low[0], "action_max:", env.action_space.high[0])
 
@@ -224,8 +229,15 @@ def get_rl_agent(env, worker_id, params=None):
             eps_frames=params.EPSILON_MIN_STEP
         )
 
+        num_inputs = env.observation_space.shape[0]
+        num_outputs = env.action_space.shape[0]
+        action_min = env.action_space.low[0]
+        action_max = env.action_space.high[0]
+
         agent = AgentDDPG(
-            env=env, worker_id=worker_id, action_selector=action_selector, params=params
+            num_inputs=num_inputs, num_outputs=num_outputs,
+            action_min=action_min, action_max=action_max,
+            worker_id=worker_id, action_selector=action_selector, params=params, device=device
         )
 
         return agent, epsilon_tracker
@@ -239,8 +251,13 @@ def get_rl_agent(env, worker_id, params=None):
             eps_frames=params.EPSILON_MIN_STEP
         )
 
+        input_shape = env.observation_space.shape
+        num_inputs = env.observation_space.shape[0]
+        num_outputs = env.action_space.n
+
         agent = AgentDQN(
-            env=env, worker_id=worker_id, action_selector=action_selector, params=params, device=device
+            worker_id=worker_id, input_shape=input_shape, num_inputs=num_inputs, num_outputs=num_outputs,
+            action_selector=action_selector, params=params, device=device
         )
 
         return agent, epsilon_tracker

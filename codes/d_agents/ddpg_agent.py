@@ -10,23 +10,24 @@ class AgentDDPG(BaseAgent):
     """
     Agent implementing Orstein-Uhlenbeck exploration process
     """
-    def __init__(self, env, worker_id, action_selector, params,
+    def __init__(self, num_inputs, num_outputs, action_min, action_max, worker_id, action_selector, params,
                  preprocessor=float32_preprocessor, device="cpu"):
         super(AgentDDPG, self).__init__()
         self.__name__ = "AgentDDPG"
         self.device = device
         self.preprocessor = preprocessor
         self.action_selector = action_selector
-        self.action_min = env.action_space.low[0]
-        self.action_max = env.action_space.high[0]
+        self.action_min = action_min
+        self.action_max = action_max
         self.step_idx = 0
 
-        self.env = env
         self.worker_id = worker_id
         self.params = params
         self.device = device
 
-        self.model = rl_utils.get_rl_model(env=self.env, worker_id=worker_id, params=params, device=self.device)
+        self.model = rl_utils.get_rl_model(
+            worker_id=worker_id, num_inputs=num_inputs, num_outputs=num_outputs, params=params, device=self.device
+        )
 
         print(self.model.base.actor)
         print(self.model.base.critic)

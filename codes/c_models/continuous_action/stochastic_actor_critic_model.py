@@ -6,14 +6,12 @@ from codes.c_models.base_model import BaseModel
 
 
 class StochasticActorCriticModel(BaseModel):
-    def __init__(self, env, worker_id, params, device):
+    def __init__(self, worker_id, num_inputs, num_outputs, params, device):
         super(StochasticActorCriticModel, self).__init__(worker_id, params, device)
         self.__name__ = "StochasticActorCriticModel"
 
         self.base = StochasticActorCriticMLPBase(
-            num_inputs=env.observation_space.shape[0],
-            num_outputs=env.action_space.shape[0],
-            params=self.params
+            num_inputs=num_inputs, num_outputs=num_outputs, params=self.params
         )
 
         self.reset_average_gradients()

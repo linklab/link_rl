@@ -13,7 +13,7 @@ class PARAMETERS_DOUBLE_RIP:
     CUDA = True
 
     # [MQTT]
-    MQTT_SERVER = "127.0.0.1"
+    # MQTT_SERVER = "127.0.0.1"
     MQTT_PORT = 1883
     MQTT_TOPIC_EPISODE_DETAIL = "Episode_Detail"
     MQTT_TOPIC_SUCCESS_DONE = "Success_Done"
@@ -56,7 +56,7 @@ class PARAMETERS_DOUBLE_RIP:
     MODEL_SAVE_STEP_PERIOD = 10000
     DRAW_VIZ = True
     DRAW_VIZ_PERIOD_STEPS = 10
-    N_STEP = 1
+    N_STEP = 4
     OMEGA = False
     OMEGA_WINDOW_SIZE = 6
     NEXT_STATE_IN_TRAJECTORY = True
@@ -101,10 +101,9 @@ class PARAMETERS_DOUBLE_RIP:
 
     PER = False
     CH = False
-    OPTIMIZER = OptimizerName.ADAM
     GAE_LAMBDA = 0.95
     LEARNING_RATE = 0.001
-    ACTION_SCALE = 500
+    ACTION_SCALE = 200
     BALANCING_SCALE_FACTOR = 0.01
     ENV_RESET = False
 
@@ -138,3 +137,5 @@ class PARAMETERS_DOUBLE_RIP:
 
     # [4. OPTIMIZER]
     OPTIMIZER = OptimizerName.ADAM
+
+    SAVE_AT_MAX_GLOBAL_STEPS = True

@@ -39,7 +39,7 @@ my_logger = get_logger("openai_pendulum_ddpg")
 def main():
     mp.set_start_method('spawn')
 
-    env = rl_utils.get_environment(owner="worker", params=params)
+    env = rl_utils.get_environment(owner="actual_worker", params=params)
     print("env:", params.ENVIRONMENT_ID)
     print("observation_space:", env.observation_space)
     print("action_space:", env.action_space)

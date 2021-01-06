@@ -9,21 +9,25 @@ from codes.e_utils import rl_utils, replay_buffer
 class AgentDQN(BaseAgent):
     """
     """
-    def __init__(self, env, worker_id, action_selector, params, preprocessor=float32_preprocessor, device="cpu"):
+    def __init__(
+            self, worker_id, input_shape, num_inputs, num_outputs, action_selector, params,
+            preprocessor=float32_preprocessor, device="cpu"
+    ):
         super(AgentDQN, self).__init__()
         self.__name__ = "AgentDQN"
         self.device = device
         self.preprocessor = preprocessor
         self.action_selector = action_selector
-        self.n_actions = env.action_space.n
         self.step_idx = 0
 
-        self.env = env
         self.worker_id = worker_id
         self.params = params
         self.device = device
 
-        self.model = rl_utils.get_rl_model(env=self.env, worker_id=worker_id, params=params, device=self.device)
+        self.model = rl_utils.get_rl_model(
+            worker_id=worker_id, input_shape=input_shape, num_inputs=num_inputs, num_outputs=num_outputs,
+            params=params, device=device
+        )
 
         self.target_agent = TargetNet(self.model.base)
 

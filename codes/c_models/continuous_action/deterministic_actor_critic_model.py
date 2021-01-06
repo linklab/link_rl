@@ -8,21 +8,17 @@ from codes.e_utils.names import RLAlgorithmName
 
 
 class DeterministicActorCriticModel(BaseModel):
-    def __init__(self, env, worker_id, params, device):
+    def __init__(self, worker_id, num_inputs, num_outputs, params, device):
         super(DeterministicActorCriticModel, self).__init__(worker_id, params, device)
         self.__name__ = "DeterministicActorCriticModel"
 
         if self.params.RL_ALGORITHM == RLAlgorithmName.DDPG_FAST_V0:
             self.base = DeterministicActorCriticMLPBase(
-                num_inputs=env.observation_space.shape[0],
-                num_outputs=env.action_space.shape[0],
-                params=self.params
+                num_inputs=num_inputs, num_outputs=num_outputs, params=self.params
             )
         elif self.params.RL_ALGORITHM == RLAlgorithmName.D4PG_FAST_V0:
             self.base = DistributionalActorCriticMLPBase(
-                num_inputs=env.observation_space.shape[0],
-                num_outputs=env.action_space.shape[0],
-                params=self.params
+                num_inputs=num_inputs, num_outputs=num_outputs, params=self.params
             )
         else:
             raise ValueError()
@@ -90,7 +86,7 @@ class DeterministicActorCriticMLPBase(nn.Module):
 
 class DistributionalActorCriticMLPBase(DeterministicActorCriticMLPBase):
     def __init__(self, num_inputs, num_outputs, params):
-        super(DistributionalActorCriticMLPBase, self).__init__(num_inputs, num_ouputs, params)
+        super(DistributionalActorCriticMLPBase, self).__init__(num_inputs, num_outputs, params)
         self.__name__ = "DistributionalActorCriticMLPBase"
 
         self.logstd = nn.Parameter(torch.zeros(num_outputs))
