@@ -13,7 +13,7 @@ class PARAMETERS_DOUBLE_RIP:
     CUDA = True
 
     # [MQTT]
-    MQTT_SERVER = "localhost"
+    MQTT_SERVER = "127.0.0.1"
     MQTT_PORT = 1883
     MQTT_TOPIC_EPISODE_DETAIL = "Episode_Detail"
     MQTT_TOPIC_SUCCESS_DONE = "Success_Done"

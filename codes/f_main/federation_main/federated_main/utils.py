@@ -169,7 +169,7 @@ def make_output_folders():
 def check_server_running(host, port):
     try:
         test_mqtt_client = mqtt.Client("test")
-        test_mqtt_client.connect(params.MQTT_SERVER, params.MQTT_PORT, keepalive=3600)
+        test_mqtt_client.connect(host, port)
         test_mqtt_client.disconnect()
         return True
     except ConnectionRefusedError as e:
