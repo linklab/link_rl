@@ -20,7 +20,7 @@ from codes.e_utils.common_utils import save_model
 from codes.e_utils.experience_single import ExperienceSourceSingleEnvFirstLast
 from codes.e_utils.experience_tracker import RewardTracker
 from codes.e_utils.logger import get_logger
-from codes.e_utils.names import DeepLearningModelName
+from codes.e_utils.names import DeepLearningModelName, RLAlgorithmName, EnvironmentName
 
 MODEL_SAVE_DIR = os.path.join(PROJECT_HOME, "out", "model_save_files")
 if not os.path.exists(MODEL_SAVE_DIR):
@@ -60,7 +60,8 @@ def play_func(exp_queue, env, agent, epsilon_tracker):
             exp = next(exp_source_iter)
             exp_queue.put(exp)
 
-            epsilon_tracker.udpate(step_idx)
+            if epsilon_tracker:
+                epsilon_tracker.udpate(step_idx)
 
             episode_rewards = experience_source.pop_episode_reward_lst()
             if episode_rewards:
@@ -88,13 +89,8 @@ def main():
     print("env:", params.ENVIRONMENT_ID)
     print("observation_space:", env.observation_space)
     print("action_space:", env.action_space)
-    print("action_min: ", env.action_space.low[0], "action_max:", env.action_space.high[0])
-    action_min = env.action_space.low[0]
-    action_max = env.action_space.high[0]
 
-    agent, epsilon_tracker = rl_utils.get_rl_agent(
-        env=env, worker_id=0, action_min=action_min, action_max=action_max, params=params
-    )
+    agent, epsilon_tracker = rl_utils.get_rl_agent(env=env, worker_id=0, params=params)
 
     exp_queue = mp.Queue(maxsize=params.TRAIN_STEP_FREQ * 2)
     play_proc = mp.Process(target=play_func, args=(exp_queue, env, agent, epsilon_tracker))

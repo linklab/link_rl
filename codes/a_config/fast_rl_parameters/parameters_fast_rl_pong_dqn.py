@@ -1,5 +1,6 @@
+from codes.e_utils.names import *
 from codes.a_config.parameters_general import PARAMETERS_GENERAL
-from codes.e_utils.names import EnvironmentName, RLAlgorithmName, DeepLearningModelName, ReplayBufferName, OptimizerName
+
 
 class PARAMETERS_FAST_RL_PONG_DQN(PARAMETERS_GENERAL):
     ENVIRONMENT_ID = EnvironmentName.PONG_NO_FRAME_SKIP_V4

@@ -28,7 +28,7 @@ from common.slack import PushSlack
 pusher = PushSlack()
 
 ##### NOTE #####
-from config.parameters import PARAMETERS as params
+from codes.a_config.parameters import PARAMETERS as params
 ##### NOTE #####
 
 warnings.filterwarnings("ignore", category=DeprecationWarning)

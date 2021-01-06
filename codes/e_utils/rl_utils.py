@@ -6,6 +6,8 @@ import torch
 from torch import optim
 import os, sys
 
+from codes.d_agents.dqn_agent import AgentDQN
+
 current_path = os.path.dirname(os.path.realpath(__file__))
 PROJECT_HOME = os.path.abspath(os.path.join(current_path, os.pardir, os.pardir))
 if PROJECT_HOME not in sys.path:
@@ -24,7 +26,7 @@ from codes.c_models.discrete_action.dqn_model import DuelingDQNModel
 
 from codes.d_agents.ddpg_agent import AgentDDPG
 
-from codes.e_utils.actions import EpsilonGreedyDDPGActionSelector, EpsilonTracker
+from codes.e_utils.actions import EpsilonGreedyDDPGActionSelector, EpsilonTracker, EpsilonGreedyDQNActionSelector
 from codes.e_utils.common_utils import make_atari_env
 from codes.e_utils.names import EnvironmentName, DeepLearningModelName, RLAlgorithmName, OptimizerName
 
@@ -40,6 +42,7 @@ device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 
 def get_environment(owner="chief", params=None):
     if params.ENVIRONMENT_ID == EnvironmentName.REAL_DEVICE_DOUBLE_RIP:
+<<<<<<< HEAD
         # client = mqtt.Client(client_id="env_pub_1", transport="TCP")
         env = EnvironmentDoubleRIP(
             owner=owner,
@@ -86,6 +89,15 @@ def get_environment(owner="chief", params=None):
         # print("***** Sub thread started!!! *****", flush=False)
         # client.loop_start()
 
+=======
+        env = EnvironmentDoubleRIP(
+            owner=owner,
+            action_min=params.ACTION_SCALE * -1.0,
+            action_max=params.ACTION_SCALE,
+            env_reset=params.ENV_RESET,
+            params=params
+        )
+>>>>>>> c5ba1baeeb6e90356c4490c6ec7836fafa7cc99f
     elif params.ENVIRONMENT_ID == EnvironmentName.QUANSER_SERVO_2:
         client = mqtt.Client(client_id="env_sub_2", transport="TCP")
         env = EnvironmentRIP(mqtt_client=client)
@@ -146,8 +158,8 @@ def get_environment(owner="chief", params=None):
         env = gym.make(EnvironmentName.CARTPOLE_V1.value)
     elif params.ENVIRONMENT_ID == EnvironmentName.CHASER_V1_MAC or params.ENVIRONMENT_ID == EnvironmentName.CHASER_V1_WINDOWS:
         env = Chaser_v1(params.MY_PLATFORM)
-    elif params.ENVIRONMENT_ID == EnvironmentName.BREAKOUT_DETERMINISTIC_V4:
-        env = gym.make(EnvironmentName.BREAKOUT_DETERMINISTIC_V4.value)
+    elif params.ENVIRONMENT_ID in [EnvironmentName.BREAKOUT_DETERMINISTIC_V4, EnvironmentName.BREAKOUT_NO_FRAME_SKIP_V4]:
+        env = gym.make(params.ENVIRONMENT_ID.value)
         env = make_atari_env(params.ENVIRONMENT_ID.value, seed=params.SEED)
         if params.SEED is not None:
             env.seed(params.SEED)
@@ -211,32 +223,32 @@ def get_environment(owner="chief", params=None):
 def get_rl_model(env, worker_id, params):
     if params.DEEP_LEARNING_MODEL == DeepLearningModelName.CONTINUOUS_ACTOR_CRITIC_MLP:
         model = StochasticActorCriticModel(
-            s_size=env.n_states,
-            a_size=env.n_actions,
+            env=env,
             worker_id=worker_id,
             params=params,
             device=device
         )
     elif params.DEEP_LEARNING_MODEL == DeepLearningModelName.ACTOR_CRITIC_MLP:
         model = ActorCriticModel(
-            s_size=env.n_states,
-            a_size=env.n_actions,
+            env=env,
             worker_id=worker_id,
             params=params,
             device=device
         ).to(device)
     elif params.DEEP_LEARNING_MODEL == DeepLearningModelName.DETERMINISTIC_ACTOR_CRITIC_MLP:
         model = DeterministicActorCriticModel(
-            s_size=env.observation_space.shape[0],
-            a_size=env.action_space.shape[0],
+            env=env,
             worker_id=worker_id,
             params=params,
             device=device
         ).to(device)
-    elif params.DEEP_LEARNING_MODEL in [DeepLearningModelName.DUELING_DQN_MLP]:
+    elif params.DEEP_LEARNING_MODEL in [
+        DeepLearningModelName.DUELING_DQN_MLP,
+        DeepLearningModelName.DUELING_DQN_CNN,
+        DeepLearningModelName.DUELING_DQN_SMALL_CNN
+    ]:
         model = DuelingDQNModel(
-            s_size=env.n_states,
-            a_size=env.n_actions,
+            env=env,
             worker_id=worker_id,
             params=params,
             device=device
@@ -248,8 +260,10 @@ def get_rl_model(env, worker_id, params):
     return model
 
 
-def get_rl_agent(env, worker_id, action_min, action_max, params):
+def get_rl_agent(env, worker_id, params=None):
     if params.RL_ALGORITHM == RLAlgorithmName.DDPG_FAST_V0:
+        print("action_min: ", env.action_space.low[0], "action_max:", env.action_space.high[0])
+
         action_selector = EpsilonGreedyDDPGActionSelector(
             epsilon=params.EPSILON_INIT, ou_enabled=True, scale_factor=params.ACTION_SCALE
         )
@@ -262,11 +276,25 @@ def get_rl_agent(env, worker_id, action_min, action_max, params):
         )
 
         agent = AgentDDPG(
-            env, worker_id, action_selector, action_min, action_max, params
+            env=env, worker_id=worker_id, action_selector=action_selector, params=params
         )
 
         return agent, epsilon_tracker
+    elif params.RL_ALGORITHM == RLAlgorithmName.DQN_FAST_V0:
+        action_selector = EpsilonGreedyDQNActionSelector(epsilon=params.EPSILON_INIT)
 
+        epsilon_tracker = EpsilonTracker(
+            action_selector=action_selector,
+            eps_start=params.EPSILON_INIT,
+            eps_final=params.EPSILON_MIN,
+            eps_frames=params.EPSILON_MIN_STEP
+        )
+
+        agent = AgentDQN(
+            env=env, worker_id=worker_id, action_selector=action_selector, params=params, device=device
+        )
+
+        return agent, epsilon_tracker
 #
 # def get_rl_algorithm(env, worker_id=0, logger=False, params=None):
 #     if params.RL_ALGORITHM == RLAlgorithmName.CONTINUOUS_A2C_FAST_V0:
@@ -298,15 +326,6 @@ def get_rl_agent(env, worker_id, action_min, action_max, params):
 #         )
 #     elif params.RL_ALGORITHM == RLAlgorithmName.DDPG_FAST_V0:
 #         rl_algorithm = DDPG_FAST_v0(
-#             env=env,
-#             worker_id=worker_id,
-#             logger=logger,
-#             params=params,
-#             device=device,
-#             verbose=params.VERBOSE
-#         )
-#     elif params.RL_ALGORITHM == RLAlgorithmName.DQN_FAST_V0:
-#         rl_algorithm = Dueling_Double_DQN_v0(
 #             env=env,
 #             worker_id=worker_id,
 #             logger=logger,

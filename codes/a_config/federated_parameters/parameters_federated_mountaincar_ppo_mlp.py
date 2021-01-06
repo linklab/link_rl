@@ -1,6 +1,6 @@
-from codes.a_config.federated_parameters.parameters_federated_cartpole_ppo_mlp import \
-    PARAMETERS_FEDERATED_CARTPOLE_PPO_MLP
-from codes.e_utils.names import EnvironmentName, RLAlgorithmName, DeepLearningModelName, OSName, OptimizerName
+from codes.a_config.federated_parameters.parameters_federated_cartpole_ppo_mlp import PARAMETERS_FEDERATED_CARTPOLE_PPO_MLP
+from codes.e_utils.names import *
+
 
 class PARAMETERS_FEDERATED_MOUNTAINCAR_PPO_MLP(PARAMETERS_FEDERATED_CARTPOLE_PPO_MLP):
     # [WORKER]

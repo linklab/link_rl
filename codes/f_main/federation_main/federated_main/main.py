@@ -18,7 +18,12 @@ if PROJECT_HOME not in sys.path:
     sys.path.append(PROJECT_HOME)
 
 from codes.a_config.parameters import PARAMETERS as params
+<<<<<<< HEAD
 
+=======
+from rl_main import rl_utils
+import rl_main.federated_main.utils as utils
+>>>>>>> c5ba1baeeb6e90356c4490c6ec7836fafa7cc99f
 
 device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 

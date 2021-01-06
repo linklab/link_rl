@@ -11,15 +11,13 @@ if PROJECT_HOME not in sys.path:
 
 
 class BaseModel(nn.Module):
-    def __init__(self, s_size, a_size, worker_id, params, device):
+    def __init__(self, worker_id, params, device):
         super(BaseModel, self).__init__()
 
         self.__name__ = "BaseModel"
 
         self.worker_id = worker_id
         self.params = params
-        self.s_size = s_size
-        self.a_size = a_size
         self.hidden_1_size = params.HIDDEN_1_SIZE
         self.hidden_2_size = params.HIDDEN_2_SIZE
         self.hidden_3_size = params.HIDDEN_3_SIZE

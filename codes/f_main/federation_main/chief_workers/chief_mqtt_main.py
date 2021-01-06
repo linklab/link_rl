@@ -21,6 +21,7 @@ from codes.f_main.federation_main.chief_workers.chief import Chief
 
 logger = get_logger("chief")
 
+<<<<<<< HEAD
 try:
     env = rl_utils.get_environment(params=params)
     rl_model = rl_utils.get_rl_model(env, -1, params=params)
@@ -28,6 +29,12 @@ try:
 except:
     traceback.print_exc()
     sys.exit(-1)
+=======
+env = rl_utils.get_environment(params=params)
+rl_model = rl_utils.get_rl_model(env, -1, params=params)
+
+chief = Chief(logger=logger, rl_model=rl_model, params=params)
+>>>>>>> c5ba1baeeb6e90356c4490c6ec7836fafa7cc99f
 
 
 def on_chief_connect(client, userdata, flags, rc):

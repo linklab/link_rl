@@ -1,5 +1,6 @@
+from codes.e_utils.names import *
 from codes.a_config.parameters_general import PARAMETERS_GENERAL
-from codes.e_utils.names import EnvironmentName, RLAlgorithmName, DeepLearningModelName, ReplayBufferName, OptimizerName
+
 
 class PARAMETERS_FAST_RL_INVADERS_DQN(PARAMETERS_GENERAL):
     ENVIRONMENT_ID = EnvironmentName.SPACE_INVADERS_NO_FRAME_SKIP_V4

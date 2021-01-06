@@ -10,7 +10,7 @@ if PROJECT_HOME not in sys.path:
     sys.path.append(PROJECT_HOME)
 
 from common.environments import MatlabRotaryInvertedPendulumEnv
-from config.parameters import PARAMETERS as params
+from codes.a_config.parameters import PARAMETERS as params
 import random
 
 ACTION_SCALE_FACTOR = 0.035

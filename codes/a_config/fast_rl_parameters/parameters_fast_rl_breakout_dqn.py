@@ -1,5 +1,5 @@
+from codes.e_utils.names import *
 from codes.a_config.parameters_general import PARAMETERS_GENERAL
-from codes.e_utils.names import EnvironmentName, RLAlgorithmName, DeepLearningModelName, ReplayBufferName
 
 
 class PARAMETERS_FAST_RL_BREAKOUT_DQN(PARAMETERS_GENERAL):
@@ -30,5 +30,8 @@ class PARAMETERS_FAST_RL_BREAKOUT_DQN(PARAMETERS_GENERAL):
     DATA_SAVE_STEP_PERIOD = 20000
     DRAW_VIZ = True
     N_STEP = 1
-    OMEGA = False
     NEXT_STATE_IN_TRAJECTORY = False
+
+    OMEGA = False
+    PER = True
+    DOUBLE = True

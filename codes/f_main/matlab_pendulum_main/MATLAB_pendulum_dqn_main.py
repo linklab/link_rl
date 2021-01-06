@@ -2,7 +2,7 @@
 import time
 import sys
 
-from config.names import PROJECT_HOME
+from codes.e_utils.names import PROJECT_HOME
 
 sys.path.insert(0,"c:\\users\\wlckd\\anaconda3\\envs\\link_rl\\lib\\site-packages")
 import torch
@@ -15,7 +15,7 @@ print(torch.__version__)
 
 from common.fast_rl import actions, value_based_model, rl_agent, experience_single, replay_buffer
 from common.fast_rl.common import statistics, utils
-from config.parameters import PARAMETERS as params
+from codes.a_config.parameters import PARAMETERS as params
 
 cuda = False
 # env_name = 'CartPole-v1'

@@ -2,7 +2,7 @@ import numpy as np
 
 from collections import namedtuple, deque
 
-from codes.d_agents.base_agent import BaseAgent
+from codes.d_agents.a0_base_agent import BaseAgent
 from codes.e_utils.experience import Experience, ExperienceFirstLast
 
 

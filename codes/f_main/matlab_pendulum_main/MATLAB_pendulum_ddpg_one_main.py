@@ -17,7 +17,7 @@ if PROJECT_HOME not in sys.path:
 
 from common.environments import MatlabRotaryInvertedPendulumEnv
 from common.fast_rl.common.utils import RewardTracker
-from config.names import DeepLearningModelName
+from codes.e_utils.names import DeepLearningModelName
 from codes.f_utils.common_utils import smooth
 from common.fast_rl.policy_based_model import unpack_batch_for_ddpg
 from common.fast_rl.rl_agent import float32_preprocessor
@@ -27,7 +27,7 @@ print("PyTorch Version", torch.__version__)
 from common.fast_rl import actions, experience, policy_based_model, rl_agent, experience_single
 from common.fast_rl.common import statistics
 
-from config.parameters import PARAMETERS as params
+from codes.a_config.parameters import PARAMETERS as params
 
 MODEL_SAVE_DIR = os.path.join(PROJECT_HOME, "out", "model_save_files")
 if not os.path.exists(MODEL_SAVE_DIR):

@@ -8,20 +8,20 @@ from codes.e_utils.names import RLAlgorithmName
 
 
 class DeterministicActorCriticModel(BaseModel):
-    def __init__(self, s_size, a_size, worker_id, params, device):
-        super(DeterministicActorCriticModel, self).__init__(s_size, a_size, worker_id, params, device)
+    def __init__(self, env, worker_id, params, device):
+        super(DeterministicActorCriticModel, self).__init__(worker_id, params, device)
         self.__name__ = "DeterministicActorCriticModel"
 
         if self.params.RL_ALGORITHM == RLAlgorithmName.DDPG_FAST_V0:
             self.base = DeterministicActorCriticMLPBase(
-                num_inputs=s_size,
-                num_ouputs=a_size,
+                num_inputs=env.observation_space.shape[0],
+                num_outputs=env.action_space.shape[0],
                 params=self.params
             )
         elif self.params.RL_ALGORITHM == RLAlgorithmName.D4PG_FAST_V0:
             self.base = DistributionalActorCriticMLPBase(
-                num_inputs=s_size,
-                num_ouputs=a_size,
+                num_inputs=env.observation_space.shape[0],
+                num_outputs=env.action_space.shape[0],
                 params=self.params
             )
         else:
@@ -31,7 +31,7 @@ class DeterministicActorCriticModel(BaseModel):
 
 
 class DeterministicActorCriticMLPBase(nn.Module):
-    def __init__(self, num_inputs, num_ouputs, params):
+    def __init__(self, num_inputs, num_outputs, params):
         super(DeterministicActorCriticMLPBase, self).__init__()
         self.__name__ = "DeterministicActorCriticMLPBase"
         self.params = params
@@ -47,13 +47,13 @@ class DeterministicActorCriticMLPBase(nn.Module):
             nn.ReLU(),
             nn.Linear(self.hidden_2_size, self.hidden_3_size),
             nn.ReLU(),
-            nn.Linear(self.hidden_3_size, num_ouputs),
+            nn.Linear(self.hidden_3_size, num_outputs),
         )
 
         self.actor.apply(self.init_weights)
 
         self.critic = nn.Sequential(
-            nn.Linear(num_inputs + num_ouputs, self.hidden_1_size),
+            nn.Linear(num_inputs + num_outputs, self.hidden_1_size),
             nn.ReLU(),
             nn.Linear(self.hidden_1_size, self.hidden_2_size),
             nn.ReLU(),
@@ -89,11 +89,11 @@ class DeterministicActorCriticMLPBase(nn.Module):
 
 
 class DistributionalActorCriticMLPBase(DeterministicActorCriticMLPBase):
-    def __init__(self, num_inputs, num_ouputs, params):
+    def __init__(self, num_inputs, num_outputs, params):
         super(DistributionalActorCriticMLPBase, self).__init__(num_inputs, num_ouputs, params)
         self.__name__ = "DistributionalActorCriticMLPBase"
 
-        self.logstd = nn.Parameter(torch.zeros(num_ouputs))
+        self.logstd = nn.Parameter(torch.zeros(num_outputs))
 
         delta = (params.V_MAX - params.V_MIN) / (params.N_ATOMS - 1)
         self.register_buffer("supports", torch.arange(params.V_MIN, params.V_MAX + delta, delta))

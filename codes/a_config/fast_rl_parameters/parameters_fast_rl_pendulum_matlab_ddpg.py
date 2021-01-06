@@ -1,5 +1,5 @@
+from codes.e_utils.names import *
 from codes.a_config.parameters_general import PARAMETERS_GENERAL
-from codes.e_utils.names import EnvironmentName, RLAlgorithmName, DeepLearningModelName, OSName, OptimizerName
 
 
 class PARAMETERS_FAST_RL_PENDULUM_MATLAB_DDPG(PARAMETERS_GENERAL):
