@@ -8,9 +8,11 @@ from codes.e_utils.names import RLAlgorithmName
 
 
 class DeterministicActorCriticModel(BaseModel):
-    def __init__(self, worker_id, num_inputs, num_outputs, params, device):
+    def __init__(self, worker_id, input_shape, num_outputs, params, device):
         super(DeterministicActorCriticModel, self).__init__(worker_id, params, device)
         self.__name__ = "DeterministicActorCriticModel"
+
+        num_inputs = input_shape[0]
 
         if self.params.RL_ALGORITHM == RLAlgorithmName.DDPG_FAST_V0:
             self.base = DeterministicActorCriticMLPBase(

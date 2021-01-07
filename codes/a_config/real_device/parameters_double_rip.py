@@ -10,7 +10,6 @@ class PARAMETERS_DOUBLE_RIP:
     VERBOSE = True
     MODEL_SAVE = False
     ENV_RENDER = False
-    CUDA = True
 
     # [MQTT]
     # MQTT_SERVER = "127.0.0.1"
@@ -122,7 +121,7 @@ class PARAMETERS_DOUBLE_RIP:
     BATCH_SIZE = 128
 
     # [CUDA]
-    CUDA_VISIBLE_DEVICES_NUMBER_LIST = '2, 3'
+    CUDA_VISIBLE_DEVICES_NUMBER_LIST = '1, 2'
 
 
 

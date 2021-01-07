@@ -2,6 +2,8 @@ import sys, os
 from multiprocessing import Process
 import torch
 
+from codes.f_main.federation_main.federated_main import utils
+
 current_path = os.path.dirname(os.path.realpath(__file__))
 PROJECT_HOME = os.path.abspath(os.path.join(current_path, os.pardir, os.pardir))
 
@@ -11,11 +13,9 @@ if PROJECT_HOME not in sys.path:
 from codes.a_config.parameters import PARAMETERS as params
 
 if torch.cuda.is_available():
-    device = torch.device("cuda" if params.CUDA else "cpu")
+    device = torch.device("cuda")
 else:
     device = torch.device("cpu")
-
-import rl_main.federated_main.utils as utils
 
 if __name__ == "__main__":
     utils.make_output_folders()

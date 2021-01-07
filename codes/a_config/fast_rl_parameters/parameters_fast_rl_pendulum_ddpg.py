@@ -1,5 +1,5 @@
 from codes.a_config.parameters_general import PARAMETERS_GENERAL
-from codes.e_utils.names import EnvironmentName, DeepLearningModelName, RLAlgorithmName, ReplayBufferName, OptimizerName
+from codes.e_utils.names import EnvironmentName, DeepLearningModelName, RLAlgorithmName, OptimizerName
 
 
 class PARAMETERS_FAST_RL_PENDULUM_DDPG(PARAMETERS_GENERAL):
@@ -8,7 +8,6 @@ class PARAMETERS_FAST_RL_PENDULUM_DDPG(PARAMETERS_GENERAL):
     # DEEP_LEARNING_MODEL = DeepLearningModelName.DETERMINISTIC_ACTOR_CRITIC_GRU
     # DEEP_LEARNING_MODEL = DeepLearningModelName.DETERMINISTIC_ACTOR_CRITIC_GRU_ATTENTION
     RL_ALGORITHM = RLAlgorithmName.DDPG_FAST_V0
-    REPLAY_BUFFER = ReplayBufferName.REPLAY_BUFFER
     OPTIMIZER = OptimizerName.ADAM
 
     STOP_MEAN_EPISODE_REWARD = -200
@@ -30,8 +29,6 @@ class PARAMETERS_FAST_RL_PENDULUM_DDPG(PARAMETERS_GENERAL):
     EPSILON_INIT = 0.9
     EPSILON_MIN = 0.001
     EPSILON_MIN_STEP = 100000
-
-    CUDA = True
 
     CLIP_GRAD = 0.1
 

@@ -30,7 +30,7 @@ if not os.path.exists(MODEL_SAVE_DIR):
     os.makedirs(MODEL_SAVE_DIR)
 
 if torch.cuda.is_available():
-    device = torch.device("cuda" if params.CUDA else "cpu")
+    device = torch.device("cuda")
 else:
     device = torch.device("cpu")
 
@@ -49,9 +49,7 @@ class WorkerFastRL:
         if params.ENVIRONMENT_ID in [EnvironmentName.PENDULUM_MATLAB_V0, EnvironmentName.PENDULUM_MATLAB_DOUBLE_RIP_V0]:
             self.env.start()
 
-        self.agent, self.epsilon_tracker = rl_utils.get_rl_agent(
-            env=self.env, worker_id=0, params=params, device=device
-        )
+        self.agent, self.epsilon_tracker = rl_utils.get_rl_agent(env=self.env, worker_id=0, params=params, device=device)
 
         self.episode_reward = 0
 
@@ -109,11 +107,6 @@ class WorkerFastRL:
 
     def start_train(self):
         params.BATCH_SIZE *= params.TRAIN_STEP_FREQ
-
-        if torch.cuda.is_available():
-            device = torch.device("cuda" if params.CUDA else "cpu")
-        else:
-            device = torch.device("cpu")
 
         if params.RL_ALGORITHM in [RLAlgorithmName.DQN_FAST_V0]:
             if params.ENVIRONMENT_ID in [EnvironmentName.PENDULUM_MATLAB_V0]:

@@ -10,7 +10,7 @@ class AgentDQN(BaseAgent):
     """
     """
     def __init__(
-            self, worker_id, input_shape, num_inputs, num_outputs, action_selector, params,
+            self, worker_id, input_shape, num_outputs, action_selector, params,
             preprocessor=float32_preprocessor, device="cpu"
     ):
         super(AgentDQN, self).__init__()
@@ -18,15 +18,12 @@ class AgentDQN(BaseAgent):
         self.device = device
         self.preprocessor = preprocessor
         self.action_selector = action_selector
-        self.step_idx = 0
-
         self.worker_id = worker_id
         self.params = params
         self.device = device
 
         self.model = rl_utils.get_rl_model(
-            worker_id=worker_id, input_shape=input_shape, num_inputs=num_inputs, num_outputs=num_outputs,
-            params=params, device=device
+            worker_id=worker_id, input_shape=input_shape, num_outputs=num_outputs, params=params, device=device
         )
 
         self.target_agent = TargetNet(self.model.base)
@@ -189,7 +186,7 @@ class AgentDQN(BaseAgent):
         rewards_v = torch.tensor(rewards)
         done_mask = torch.BoolTensor(dones)
         last_steps_v = torch.tensor(last_steps)
-        if self.params.CUDA:
+        if self.device:
             states_v = states_v.cuda(non_blocking=True)
             next_states_v = next_states_v.cuda(non_blocking=True)
             actions_v = actions_v.cuda(non_blocking=True)
@@ -226,7 +223,7 @@ class AgentDQN(BaseAgent):
         rewards_v = torch.tensor(rewards)
         done_mask = torch.BoolTensor(dones)
         last_steps_v = torch.tensor(last_steps)
-        if self.params.CUDA:
+        if self.device == torch.device("cuda"):
             states_v = states_v.cuda(non_blocking=True)
             next_states_v = next_states_v.cuda(non_blocking=True)
             actions_v = actions_v.cuda(non_blocking=True)
@@ -261,7 +258,7 @@ class AgentDQN(BaseAgent):
         done_mask = torch.BoolTensor(dones)
         last_steps_v = torch.tensor(last_steps, dtype=torch.float32)
         batch_weights_v = torch.tensor(batch_weights)
-        if self.params.CUDA:
+        if self.device == torch.device("cuda"):
             states_v = states_v.cuda(non_blocking=True)
             next_states_v = next_states_v.cuda(non_blocking=True)
             actions_v = actions_v.cuda(non_blocking=True)
@@ -294,7 +291,7 @@ class AgentDQN(BaseAgent):
         next_states_v = torch.tensor(next_states)
         actions_v = torch.tensor(actions)
         batch_weights_v = torch.tensor(batch_weights)
-        if self.params.CUDA:
+        if self.device == torch.device("cuda"):
             states_v = states_v.cuda(non_blocking=True)
             next_states_v = next_states_v.cuda(non_blocking=True)
             actions_v = actions_v.cuda(non_blocking=True)
@@ -314,7 +311,7 @@ class AgentDQN(BaseAgent):
                 rewards, done_mask, next_state_values.detach().cpu().numpy()
             )
         expected_state_action_values = torch.tensor(expected_state_action_values, dtype=torch.float32)
-        if self.params.CUDA:
+        if self.device == torch.device("cuda"):
             expected_state_action_values = expected_state_action_values.cuda(non_blocking=True)
 
         losses_each = F.smooth_l1_loss(state_action_values, expected_state_action_values.detach(), reduction='none')

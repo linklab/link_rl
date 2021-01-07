@@ -30,7 +30,7 @@ if not os.path.exists(MODEL_SAVE_DIR):
 os.environ['KMP_DUPLICATE_LIB_OK'] = 'True'
 
 if torch.cuda.is_available():
-    device = torch.device("cuda" if params.CUDA else "cpu")
+    device = torch.device("cuda")
 else:
     device = torch.device("cpu")
 

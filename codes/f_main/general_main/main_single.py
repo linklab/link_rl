@@ -1,10 +1,9 @@
 # https://github.com/openai/gym/blob/master/gym/envs/classic_control/pendulum.py
 # https://mspries.github.io/jimmy_pendulum.html
 #!/usr/bin/env python3
-import time
 import torch
-import torch.multiprocessing as mp
 import os, sys
+import numpy as np
 
 print("PyTorch Version", torch.__version__)
 
@@ -12,8 +11,6 @@ current_path = os.path.dirname(os.path.realpath(__file__))
 PROJECT_HOME = os.path.abspath(os.path.join(current_path, os.pardir, os.pardir, os.pardir))
 if PROJECT_HOME not in sys.path:
     sys.path.append(PROJECT_HOME)
-
-from codes.a_config.parameters import PARAMETERS as params
 
 from codes.e_utils import rl_utils
 from codes.e_utils.common_utils import save_model
@@ -29,24 +26,20 @@ if not os.path.exists(MODEL_SAVE_DIR):
 os.environ['KMP_DUPLICATE_LIB_OK'] = 'True'
 
 if torch.cuda.is_available():
-    device = torch.device("cuda" if params.CUDA else "cpu")
+    device = torch.device("cuda")
 else:
     device = torch.device("cpu")
 
 my_logger = get_logger("openai_pendulum_ddpg")
 
 
-def main():
-    mp.set_start_method('spawn')
-
+def main(params):
     env = rl_utils.get_environment(owner="actual_worker", params=params)
     print("env:", params.ENVIRONMENT_ID)
     print("observation_space:", env.observation_space)
     print("action_space:", env.action_space)
 
-    agent, epsilon_tracker = rl_utils.get_rl_agent(
-        env=env, worker_id=0, params=params
-    )
+    agent, epsilon_tracker = rl_utils.get_rl_agent(env=env, worker_id=0, params=params, device=device)
 
     if params.DEEP_LEARNING_MODEL in [
         DeepLearningModelName.DETERMINISTIC_ACTOR_CRITIC_GRU,
@@ -64,23 +57,31 @@ def main():
 
     stat = None
     step_idx = 0
-    last_loss = 0.0
+    loss_list = []
 
     with RewardTracker(params=params, frame=False, stat=stat, early_stopping=None) as reward_tracker:
         while step_idx < params.MAX_GLOBAL_STEP:
             step_idx += params.TRAIN_STEP_FREQ
             last_entry = agent.buffer.populate(params.TRAIN_STEP_FREQ)
-            epsilon_tracker.udpate(step_idx)
+
+            if epsilon_tracker:
+                epsilon_tracker.udpate(step_idx)
 
             episode_rewards = experience_source.pop_episode_reward_lst()
 
             solved = False
             if episode_rewards:
                 for current_episode_reward in episode_rewards:
+
+                    epsilon = agent.action_selector.epsilon if hasattr(agent.action_selector, 'epsilon') else None
+                    mean_loss = np.mean(loss_list) if len(loss_list) > 0 else 0.0
+
                     solved, mean_episode_reward = reward_tracker.set_episode_reward(
-                        current_episode_reward, step_idx, agent.action_selector.epsilon, last_info=last_entry.info,
-                        last_loss=last_loss, model=agent.model
+                        current_episode_reward, step_idx, epsilon, last_info=last_entry.info,
+                        mean_loss=mean_loss, model=agent.model
                     )
+
+                    loss_list.clear()
 
                     if solved:
                         save_model(
@@ -94,13 +95,17 @@ def main():
             if len(agent.buffer) < params.MIN_REPLAY_SIZE_FOR_TRAIN:
                 continue
 
-            if params.RL_ALGORITHM == RLAlgorithmName.DDPG_FAST_V0:
+            if params.RL_ALGORITHM in [RLAlgorithmName.DDPG_FAST_V0, RLAlgorithmName.DISCRETE_A2C_FAST_V0]:
                 _, last_loss, _ = agent.train_net(step_idx=step_idx)
             elif params.RL_ALGORITHM == RLAlgorithmName.DQN_FAST_V0:
                 _, last_loss = agent.train_net(step_idx=step_idx)
             else:
                 raise ValueError()
 
+            loss_list.append(last_loss)
+
 
 if __name__ == "__main__":
-    main()
+    from codes.a_config.parameters import PARAMETERS as parameters
+    params = parameters
+    main(params)

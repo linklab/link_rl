@@ -66,6 +66,7 @@ class ExperienceReplayBuffer:
         """
         if len(self.buffer) <= batch_size:
             return self.buffer
+
         # Warning: replace=False makes random.choice O(n)
         keys = np.random.choice(len(self.buffer), batch_size, replace=True)
         return [self.buffer[key] for key in keys]
@@ -97,25 +98,6 @@ class ExperienceReplayBuffer:
             entry = next(self.experience_source_iter)
             action_count[entry.action] += 1
             self._add(entry)
-
-    def populate_stacked_experience(self, num_samples, action_count=None):
-        for _ in range(num_samples):
-            exp = next(self.experience_source_iter)
-            if action_count:
-                action_count[exp.action] += 1
-            # assert np.array_equal(exp.state.__array__()[1, :, :], exp.last_state.__array__()[0, :, :])
-            # assert np.array_equal(exp.state.__array__()[2, :, :], exp.last_state.__array__()[1, :, :])
-            # assert np.array_equal(exp.state.__array__()[3, :, :], exp.last_state.__array__()[2, :, :])
-
-            extended_frames = np.zeros([5, 84, 84], dtype=np.uint8)
-            extended_frames[0, :, :] = exp.state.__array__()[0, :, :]
-            for i in range(1, 4):
-                extended_frames[i, :, :] = exp.state.__array__()[i, :, :]
-
-            if exp.last_state is not None:
-                extended_frames[4, :, :] = exp.last_state.__array__()[3, :, :]
-
-            self._add((extended_frames, exp.action, exp.reward, exp.last_state is None))
 
     def update_priorities(self, batch_indices, batch_priorities):
         raise NotImplementedError()

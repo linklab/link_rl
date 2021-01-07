@@ -10,7 +10,7 @@ class AgentDDPG(BaseAgent):
     """
     Agent implementing Orstein-Uhlenbeck exploration process
     """
-    def __init__(self, num_inputs, num_outputs, action_min, action_max, worker_id, action_selector, params,
+    def __init__(self, input_shape, num_outputs, action_min, action_max, worker_id, action_selector, params,
                  preprocessor=float32_preprocessor, device="cpu"):
         super(AgentDDPG, self).__init__()
         self.__name__ = "AgentDDPG"
@@ -19,18 +19,14 @@ class AgentDDPG(BaseAgent):
         self.action_selector = action_selector
         self.action_min = action_min
         self.action_max = action_max
-        self.step_idx = 0
 
         self.worker_id = worker_id
         self.params = params
         self.device = device
 
         self.model = rl_utils.get_rl_model(
-            worker_id=worker_id, num_inputs=num_inputs, num_outputs=num_outputs, params=params, device=self.device
+            worker_id=worker_id, input_shape=input_shape, num_outputs=num_outputs, params=params, device=self.device
         )
-
-        print(self.model.base.actor)
-        print(self.model.base.critic)
 
         self.target_agent = TargetNet(self.model.base)
 
@@ -86,8 +82,6 @@ class AgentDDPG(BaseAgent):
         actions, new_agent_states = self.action_selector(mu, agent_states)
         actions = np.clip(actions, self.action_min, self.action_max)
         #####################################
-
-        self.step_idx += 1
 
         return actions, new_agent_states
 

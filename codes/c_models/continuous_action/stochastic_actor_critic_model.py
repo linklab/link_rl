@@ -6,9 +6,11 @@ from codes.c_models.base_model import BaseModel
 
 
 class StochasticActorCriticModel(BaseModel):
-    def __init__(self, worker_id, num_inputs, num_outputs, params, device):
+    def __init__(self, worker_id, input_shape, num_outputs, params, device):
         super(StochasticActorCriticModel, self).__init__(worker_id, params, device)
         self.__name__ = "StochasticActorCriticModel"
+
+        num_inputs = input_shape[0]
 
         self.base = StochasticActorCriticMLPBase(
             num_inputs=num_inputs, num_outputs=num_outputs, params=self.params

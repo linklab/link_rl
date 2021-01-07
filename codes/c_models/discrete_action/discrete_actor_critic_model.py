@@ -5,10 +5,12 @@ import torch.nn as nn
 from codes.c_models.base_model import BaseModel
 
 
-class ActorCriticModel(BaseModel):
-    def __init__(self, worker_id, num_inputs, num_outputs, params, device):
-        super(ActorCriticModel, self).__init__(worker_id, params, device)
-        self.__name__ = "ActorCriticModel"
+class DiscreteActorCriticModel(BaseModel):
+    def __init__(self, worker_id, input_shape, num_outputs, params, device):
+        super(DiscreteActorCriticModel, self).__init__(worker_id, params, device)
+        self.__name__ = "DiscreteActorCriticModel"
+
+        num_inputs = input_shape[0]
 
         self.base = ActorCriticMLPBase(
             num_inputs=num_inputs, num_outputs=num_outputs, params=self.params

@@ -36,7 +36,7 @@ warnings.filterwarnings("ignore", category=UserWarning)
 os.environ['KMP_DUPLICATE_LIB_OK'] = 'True'
 
 if torch.cuda.is_available():
-    device = torch.device("cuda" if params.CUDA else "cpu")
+    device = torch.device("cuda")
 else:
     device = torch.device("cpu")
 
@@ -246,7 +246,7 @@ def train(coin_name, time_unit, train_env, evaluate_env):
 
             optimizer.zero_grad()
             batch = buffer.sample(params.BATCH_SIZE)
-            loss_v = value_based_model.calc_loss_double_dqn(batch, net, tgt_net, gamma=params.GAMMA, cuda=params.CUDA)
+            loss_v = value_based_model.calc_loss_double_dqn(batch, net, tgt_net, gamma=params.GAMMA, device=device)
             loss_v.backward()
             optimizer.step()
 

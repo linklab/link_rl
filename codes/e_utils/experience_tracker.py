@@ -32,7 +32,7 @@ class RewardTracker:
     def __exit__(self, *args):
         pass
 
-    def set_episode_reward(self, episode_reward, episode_done_step, epsilon, last_info=None, last_loss=None, model=None):
+    def set_episode_reward(self, episode_reward, episode_done_step, epsilon, last_info=None, mean_loss=None, model=None):
         self.done_episodes += 1
 
         self.episode_reward_list.append(episode_reward)
@@ -48,7 +48,7 @@ class RewardTracker:
             is_print_performance = True
             self.print_performance(
                 episode_done_step, self.done_episodes, episode_reward, current_ts, ts_diff, self.mean_episode_reward, epsilon,
-                elapsed_time, last_info, last_loss
+                elapsed_time, last_info, mean_loss
             )
 
         solved = False
@@ -64,7 +64,7 @@ class RewardTracker:
                 if not is_print_performance:
                     self.print_performance(
                         episode_done_step, self.done_episodes, episode_reward, current_ts, ts_diff, self.mean_episode_reward, epsilon,
-                        elapsed_time, last_info, last_loss
+                        elapsed_time, last_info, mean_loss
                     )
                 solved = True
         if solved:
@@ -78,7 +78,7 @@ class RewardTracker:
             return False, self.mean_episode_reward
 
     def print_performance(self, episode_done_step, done_episodes, episode_reward, current_ts, ts_diff, mean_episode_reward, epsilon,
-                          elapsed_time, last_info, last_loss):
+                          elapsed_time, last_info, mean_loss):
         speed = (episode_done_step - self.ts_frame) / ts_diff
         self.ts_frame = episode_done_step
         self.ts = current_ts
@@ -89,14 +89,16 @@ class RewardTracker:
             prefix = ""
 
         if isinstance(epsilon, tuple) or isinstance(epsilon, list):
-            epsilon_str = "{0:5.3f}, {1:5.3f}".format(
+            epsilon_str = "eps.: {0:5.3f}, {1:5.3f}".format(
                 epsilon[0] if epsilon[0] else 0.0,
                 epsilon[1] if epsilon[1] else 0.0
             )
-        else:
-            epsilon_str = "{0:5.3f}".format(
+        elif isinstance(epsilon, float):
+            epsilon_str = "eps.: {0:5.3f}".format(
                 epsilon if epsilon else 0.0,
             )
+        else:
+            epsilon_str = ""
 
         if self.mean_episode_reward > self.params.STOP_MEAN_EPISODE_REWARD:
             mean_episode_reward_str = "{0:7.3f} (SOLVED COUNT: {1})".format(
@@ -110,7 +112,7 @@ class RewardTracker:
 
         print(
             "{0}[{1:6}/{2}] Ep. {3}, ep._reward: {4:7.3f}, mean_{5}_ep._reward: {6}, "
-            "eps.: {7}, speed: {8:7.2f} {9}, {10}".format(
+            "{7}, speed: {8:7.2f} {9}, {10}".format(
                 prefix,
                 episode_done_step,
                 self.params.MAX_GLOBAL_STEP,
@@ -127,8 +129,8 @@ class RewardTracker:
         if last_info and "action_count" in last_info:
             print(", {0}".format(last_info["action_count"]), end="")
 
-        if last_loss is not None:
-            print(", opti. loss {0:7.2f}".format(last_loss), end="")
+        if mean_loss is not None:
+            print(", mean (critic) loss {0:7.4f}".format(mean_loss), end="")
 
         if self.params.ENVIRONMENT_ID == EnvironmentName.TRADE_V0:
             print(", profit {0:8.1f}".format(last_info['profit']), end="")
