@@ -39,7 +39,17 @@ if __name__ == "__main__":
     utils.ask_file_removal(device)
 
     env = rl_utils.get_environment(params=params)
-    rl_model = rl_utils.get_rl_model(env, worker_id=-1, params=params, device=device)
+
+    input_shape = env.observation_space.shape
+    num_inputs = env.observation_space.shape[0]
+    num_outputs = env.action_space.shape[0]
+    action_min = env.action_space.low[0]
+    action_max = env.action_space.high[0]
+
+    rl_model = rl_utils.get_rl_model(
+        worker_id=-1, input_shape=input_shape, num_inputs=num_inputs, num_outputs=num_outputs,
+        params=params, device=device
+    )
 
     #utils.print_configuration(env, rl_model, params)
 
