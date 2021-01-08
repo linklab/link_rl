@@ -80,7 +80,7 @@ def play_func(exp_queue, agent, epsilon_tracker):
 
                 if solved:
                     save_model(
-                        MODEL_SAVE_DIR, params.ENVIRONMENT_ID.value, agent.model, step_idx, mean_episode_reward
+                        MODEL_SAVE_DIR, params.ENVIRONMENT_ID.value, agent, step_idx, mean_episode_reward
                     )
                     if solved:
                         break

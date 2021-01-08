@@ -172,8 +172,7 @@ class WorkerFastRL:
 
                         if solved:
                             save_model(
-                                MODEL_SAVE_DIR, params.ENVIRONMENT_ID.value, self.agent.model,
-                                step_idx, mean_episode_reward
+                                MODEL_SAVE_DIR, params.ENVIRONMENT_ID.value, self.agent, step_idx, mean_episode_reward
                             )
 
                         solved = self.interact_with_chief(
@@ -193,8 +192,7 @@ class WorkerFastRL:
 
             if params.SAVE_AT_MAX_GLOBAL_STEPS:
                 save_model(
-                    MODEL_SAVE_DIR, params.ENVIRONMENT_ID.value, self.agent.model,
-                    step_idx, mean_episode_reward
+                    MODEL_SAVE_DIR, params.ENVIRONMENT_ID.value, self.agent, step_idx, mean_episode_reward
                 )
 
     def train_at_episode_end(self, step_idx):
