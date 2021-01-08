@@ -55,7 +55,7 @@ class AgentDiscreteA2C(BaseAgent):
 
         probs = probs_v.data.cpu().numpy()
         actions = np.array(self.action_selector(probs))
-        critics = [values_v.data.squeeze().cpu().numpy()]
+        critics = values_v.data.cpu().numpy()
         return actions, critics
 
     def train_net(self, step_idx):
