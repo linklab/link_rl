@@ -29,14 +29,19 @@ if not os.path.exists(MODEL_SAVE_DIR):
 os.environ['KMP_DUPLICATE_LIB_OK'] = 'True'
 
 if torch.cuda.is_available():
-    device = torch.device("cuda" if params.CUDA else "cpu")
+    device = torch.device("cuda")
 else:
     device = torch.device("cpu")
 
 my_logger = get_logger("openai_pendulum_ddpg")
 
+env = rl_utils.get_environment(owner="actual_worker", params=params)
+print("env:", params.ENVIRONMENT_ID)
+print("observation_space:", env.observation_space)
+print("action_space:", env.action_space)
 
-def play_func(exp_queue, env, agent, epsilon_tracker):
+
+def play_func(exp_queue, agent, epsilon_tracker):
     if params.DEEP_LEARNING_MODEL in [
         DeepLearningModelName.DETERMINISTIC_ACTOR_CRITIC_GRU,
         DeepLearningModelName.DETERMINISTIC_ACTOR_CRITIC_GRU_ATTENTION
@@ -67,9 +72,10 @@ def play_func(exp_queue, env, agent, epsilon_tracker):
             if episode_rewards:
                 current_episode_reward = episode_rewards[0]
 
+                epsilon = agent.action_selector.epsilon if hasattr(agent.action_selector, 'epsilon') else None
+
                 solved, mean_episode_reward = reward_tracker.set_episode_reward(
-                    current_episode_reward, step_idx, epsilon=agent.action_selector.epsilon, last_info=exp.info,
-                    model=agent.model
+                    current_episode_reward, step_idx, epsilon=epsilon, last_info=exp.info, model=agent.model
                 )
 
                 if solved:
@@ -85,15 +91,10 @@ def play_func(exp_queue, env, agent, epsilon_tracker):
 def main():
     mp.set_start_method('spawn')
 
-    env = rl_utils.get_environment(owner="worker", params=params)
-    print("env:", params.ENVIRONMENT_ID)
-    print("observation_space:", env.observation_space)
-    print("action_space:", env.action_space)
-
-    agent, epsilon_tracker = rl_utils.get_rl_agent(env=env, worker_id=0, params=params)
+    agent, epsilon_tracker = rl_utils.get_rl_agent(env=env, worker_id=0, params=params, device=device)
 
     exp_queue = mp.Queue(maxsize=params.TRAIN_STEP_FREQ * 2)
-    play_proc = mp.Process(target=play_func, args=(exp_queue, env, agent, epsilon_tracker))
+    play_proc = mp.Process(target=play_func, args=(exp_queue, agent, epsilon_tracker))
     play_proc.start()
 
     time.sleep(0.5)

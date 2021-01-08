@@ -1,4 +1,4 @@
-from codes.e_utils.names import EnvironmentName, RLAlgorithmName, DeepLearningModelName, ReplayBufferName, OptimizerName
+from codes.e_utils.names import EnvironmentName, RLAlgorithmName, DeepLearningModelName, OptimizerName
 
 
 class PARAMETERS_GENERAL:
@@ -10,7 +10,6 @@ class PARAMETERS_GENERAL:
     VERBOSE = True
     MODEL_SAVE = False
     ENV_RENDER = False
-    CUDA = True
 
     # [MQTT]
     MQTT_SERVER = "localhost"
@@ -47,7 +46,6 @@ class PARAMETERS_GENERAL:
     ENVIRONMENT_ID = EnvironmentName.PONG_NO_FRAME_SKIP_V4
     RL_ALGORITHM = RLAlgorithmName.DQN_FAST_V0
     DEEP_LEARNING_MODEL = DeepLearningModelName.DUELING_DQN_CNN
-    REPLAY_BUFFER = ReplayBufferName.REPLAY_BUFFER
 
     STOP_MEAN_EPISODE_REWARD = None
     STOP_PATIENCE_COUNT = 10
@@ -120,6 +118,7 @@ class PARAMETERS_GENERAL:
     BATCH_SIZE = 128
 
     # [CUDA]
-    CUDA_VISIBLE_DEVICES_NUMBER_LIST = '2, 3'
+    CUDA_VISIBLE_DEVICES_NUMBER_LIST = '1, 2'
 
+    RNN_STEP_LENGTH = 2
     SAVE_AT_MAX_GLOBAL_STEPS = False

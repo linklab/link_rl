@@ -29,6 +29,11 @@ MODEL_SAVE_DIR = os.path.join(PROJECT_HOME, "out", "model_save_files")
 if not os.path.exists(MODEL_SAVE_DIR):
     os.makedirs(MODEL_SAVE_DIR)
 
+if torch.cuda.is_available():
+    device = torch.device("cuda")
+else:
+    device = torch.device("cpu")
+
 
 class WorkerFastRL:
     def __init__(self, logger, worker_id, worker_mqtt_client, params):
@@ -40,16 +45,11 @@ class WorkerFastRL:
         print("env:", params.ENVIRONMENT_ID)
         print("observation_space:", self.env.observation_space)
         print("action_space:", self.env.action_space)
-        print("action_min: ", self.env.action_space.low[0], "action_max:", self.env.action_space.high[0])
-        action_min = self.env.action_space.low[0]
-        action_max = self.env.action_space.high[0]
 
         if params.ENVIRONMENT_ID in [EnvironmentName.PENDULUM_MATLAB_V0, EnvironmentName.PENDULUM_MATLAB_DOUBLE_RIP_V0]:
             self.env.start()
 
-        self.agent, self.epsilon_tracker = rl_utils.get_rl_agent(
-            env=self.env, worker_id=0, params=params
-        )
+        self.agent, self.epsilon_tracker = rl_utils.get_rl_agent(env=self.env, worker_id=0, params=params, device=device)
 
         self.episode_reward = 0
 
@@ -108,11 +108,6 @@ class WorkerFastRL:
     def start_train(self):
         params.BATCH_SIZE *= params.TRAIN_STEP_FREQ
 
-        if torch.cuda.is_available():
-            device = torch.device("cuda" if params.CUDA else "cpu")
-        else:
-            device = torch.device("cpu")
-
         if params.RL_ALGORITHM in [RLAlgorithmName.DQN_FAST_V0]:
             if params.ENVIRONMENT_ID in [EnvironmentName.PENDULUM_MATLAB_V0]:
                 action_selector = EpsilonGreedySomeTimesBlowDQNActionSelector(
@@ -154,7 +149,7 @@ class WorkerFastRL:
                 last_entry = self.agent.buffer.populate(params.TRAIN_STEP_FREQ)
                 self.epsilon_tracker.udpate(step_idx)
 
-                ###################
+                ###################  TRAIN!!!
                 actor_objective = None
 
                 if self.params.RL_ALGORITHM == RLAlgorithmName.DQN_FAST_V0:

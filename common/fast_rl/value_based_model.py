@@ -564,7 +564,7 @@ def calc_loss_dqn(batch, net, tgt_net, gamma, cuda=False, cuda_async=False):
     return F.smooth_l1_loss(state_action_values, expected_state_action_values)
 
 
-def calc_loss_double_dqn(batch, net, tgt_net, gamma, cuda=False, cuda_async=False):
+def calc_loss_double_dqn(batch, net, tgt_net, gamma, device):
     states, actions, rewards, dones, next_states, last_steps = unpack_batch(batch)
 
     states_v = torch.tensor(states)
@@ -573,13 +573,13 @@ def calc_loss_double_dqn(batch, net, tgt_net, gamma, cuda=False, cuda_async=Fals
     rewards_v = torch.tensor(rewards)
     done_mask = torch.BoolTensor(dones)
     last_steps_v = torch.tensor(last_steps)
-    if cuda:
-        states_v = states_v.cuda(non_blocking=cuda_async)
-        next_states_v = next_states_v.cuda(non_blocking=cuda_async)
-        actions_v = actions_v.cuda(non_blocking=cuda_async)
-        rewards_v = rewards_v.cuda(non_blocking=cuda_async)
-        done_mask = done_mask.cuda(non_blocking=cuda_async)
-        last_steps_v = last_steps_v.cuda(non_blocking=cuda_async)
+    if device == torch.device("cuda"):
+        states_v = states_v.cuda(non_blocking=True)
+        next_states_v = next_states_v.cuda(non_blocking=True)
+        actions_v = actions_v.cuda(non_blocking=True)
+        rewards_v = rewards_v.cuda(non_blocking=True)
+        done_mask = done_mask.cuda(non_blocking=True)
+        last_steps_v = last_steps_v.cuda(non_blocking=True)
 
     # https://subscription.packtpub.com/book/data/9781838826994/6/ch06lvl1sec45/dqn-on-pong
     # We pass observations to the first model and extract the specific Q - values for the taken actions using the gather() tensor operation.

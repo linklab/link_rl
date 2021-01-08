@@ -9,7 +9,7 @@ from codes.e_utils.names import DeepLearningModelName
 
 
 class DuelingDQNModel(BaseModel):
-    def __init__(self, env, worker_id, params, device):
+    def __init__(self, worker_id, input_shape=None, num_outputs=None, params=None, device=None):
         super(DuelingDQNModel, self).__init__(worker_id, params, device)
         self.__name__ = "DuelingDQNModel"
         self.params = params
@@ -19,20 +19,17 @@ class DuelingDQNModel(BaseModel):
         self.hidden_3_size = params.HIDDEN_3_SIZE
 
         if params.DEEP_LEARNING_MODEL == DeepLearningModelName.DUELING_DQN_MLP:
+            num_inputs = input_shape[0]
             self.base = DuelingDQN_MLP_Base(
-                num_inputs=env.observation_space.shape[0],
-                num_outputs=env.action_space.n,
-                params=self.params
+                num_inputs=num_inputs, num_outputs=num_outputs, params=self.params
             )
         elif params.DEEP_LEARNING_MODEL == DeepLearningModelName.DUELING_DQN_CNN:
             self.base = DuelingDQN_CNN_Base(
-                input_shape=env.observation_space.shape,
-                num_outputs=env.action_space.n
+                input_shape=input_shape, num_outputs=num_outputs
             )
         elif params.DEEP_LEARNING_MODEL == DeepLearningModelName.DUELING_DQN_SMALL_CNN:
             self.base = DuelingDQN_SmallCNN_Base(
-                input_shape=env.observation_space.shape,
-                num_outputs=env.action_space.n
+                input_shape=input_shape, num_outputs=num_outputs
             )
         else:
             raise ValueError()

@@ -9,21 +9,22 @@ from codes.e_utils import rl_utils, replay_buffer
 class AgentDQN(BaseAgent):
     """
     """
-    def __init__(self, env, worker_id, action_selector, params, preprocessor=float32_preprocessor, device="cpu"):
+    def __init__(
+            self, worker_id, input_shape, num_outputs, action_selector, params,
+            preprocessor=float32_preprocessor, device="cpu"
+    ):
         super(AgentDQN, self).__init__()
         self.__name__ = "AgentDQN"
         self.device = device
         self.preprocessor = preprocessor
         self.action_selector = action_selector
-        self.n_actions = env.action_space.n
-        self.step_idx = 0
-
-        self.env = env
         self.worker_id = worker_id
         self.params = params
         self.device = device
 
-        self.model = rl_utils.get_rl_model(env=self.env, worker_id=worker_id, params=params, device=self.device)
+        self.model = rl_utils.get_rl_model(
+            worker_id=worker_id, input_shape=input_shape, num_outputs=num_outputs, params=params, device=device
+        )
 
         self.target_agent = TargetNet(self.model.base)
 
@@ -176,7 +177,6 @@ class AgentDQN(BaseAgent):
             next_states, copy=False)
 
     def calc_loss_dqn(self, batch):
-        # states, actions, rewards, dones, next_states, last_steps = unpack_batch_extended_frames(batch)
         states, actions, rewards, dones, next_states, last_steps = self.unpack_batch(batch)
 
         states_v = torch.tensor(states)
@@ -185,7 +185,7 @@ class AgentDQN(BaseAgent):
         rewards_v = torch.tensor(rewards)
         done_mask = torch.BoolTensor(dones)
         last_steps_v = torch.tensor(last_steps)
-        if self.params.CUDA:
+        if self.device == torch.device("cuda"):
             states_v = states_v.cuda(non_blocking=True)
             next_states_v = next_states_v.cuda(non_blocking=True)
             actions_v = actions_v.cuda(non_blocking=True)
@@ -208,10 +208,10 @@ class AgentDQN(BaseAgent):
             next_state_values = self.target_agent.target_model(next_states_v).max(1)[0]
             next_state_values[done_mask] = 0.0
 
-        expected_state_action_values = next_state_values.detach() * (self.params.GAMMA ** last_steps_v) + rewards_v
+        target_state_action_values = next_state_values.detach() * (self.params.GAMMA ** last_steps_v) + rewards_v
 
-        # return nn.MSELoss()(state_action_values, expected_state_action_values)
-        return F.smooth_l1_loss(state_action_values, expected_state_action_values)
+        # return nn.MSELoss()(state_action_values, target_state_action_values)
+        return F.smooth_l1_loss(state_action_values, target_state_action_values)
 
     def calc_loss_double_dqn(self, batch):
         states, actions, rewards, dones, next_states, last_steps = self.unpack_batch(batch)
@@ -222,7 +222,7 @@ class AgentDQN(BaseAgent):
         rewards_v = torch.tensor(rewards)
         done_mask = torch.BoolTensor(dones)
         last_steps_v = torch.tensor(last_steps)
-        if self.params.CUDA:
+        if self.device == torch.device("cuda"):
             states_v = states_v.cuda(non_blocking=True)
             next_states_v = next_states_v.cuda(non_blocking=True)
             actions_v = actions_v.cuda(non_blocking=True)
@@ -257,7 +257,7 @@ class AgentDQN(BaseAgent):
         done_mask = torch.BoolTensor(dones)
         last_steps_v = torch.tensor(last_steps, dtype=torch.float32)
         batch_weights_v = torch.tensor(batch_weights)
-        if self.params.CUDA:
+        if self.device == torch.device("cuda"):
             states_v = states_v.cuda(non_blocking=True)
             next_states_v = next_states_v.cuda(non_blocking=True)
             actions_v = actions_v.cuda(non_blocking=True)
@@ -276,9 +276,11 @@ class AgentDQN(BaseAgent):
             next_state_values = self.target_agent.target_model(next_states_v).gather(1, next_state_actions).squeeze(-1)
             next_state_values[done_mask] = 0.0
 
-            expected_state_action_values = next_state_values.detach() * (self.params.GAMMA ** last_steps_v) + rewards_v
+            target_state_action_values = next_state_values.detach() * (self.params.GAMMA ** last_steps_v) + rewards_v
 
-        losses_each = F.smooth_l1_loss(state_action_values, expected_state_action_values.detach(), reduction='none')
+        print(rewards_v)
+
+        losses_each = F.smooth_l1_loss(state_action_values, target_state_action_values.detach(), reduction='none')
         weighted_losses_v = batch_weights_v.detach() * losses_each
 
         return weighted_losses_v.mean(), losses_each + 1e-5
@@ -290,7 +292,7 @@ class AgentDQN(BaseAgent):
         next_states_v = torch.tensor(next_states)
         actions_v = torch.tensor(actions)
         batch_weights_v = torch.tensor(batch_weights)
-        if self.params.CUDA:
+        if self.device == torch.device("cuda"):
             states_v = states_v.cuda(non_blocking=True)
             next_states_v = next_states_v.cuda(non_blocking=True)
             actions_v = actions_v.cuda(non_blocking=True)
@@ -306,14 +308,14 @@ class AgentDQN(BaseAgent):
             next_state_actions = next_state_actions.unsqueeze(-1)
             next_state_values = self.target_agent.target_model(next_states_v).gather(1, next_state_actions).squeeze(-1)
 
-            expected_state_action_values = self.calc_omega_return(
+            target_state_action_values = self.calc_omega_return(
                 rewards, done_mask, next_state_values.detach().cpu().numpy()
             )
-        expected_state_action_values = torch.tensor(expected_state_action_values, dtype=torch.float32)
-        if self.params.CUDA:
-            expected_state_action_values = expected_state_action_values.cuda(non_blocking=True)
+        target_state_action_values = torch.tensor(target_state_action_values, dtype=torch.float32)
+        if self.device == torch.device("cuda"):
+            target_state_action_values = target_state_action_values.cuda(non_blocking=True)
 
-        losses_each = F.smooth_l1_loss(state_action_values, expected_state_action_values.detach(), reduction='none')
+        losses_each = F.smooth_l1_loss(state_action_values, target_state_action_values.detach(), reduction='none')
         weighted_losses_v = batch_weights_v.detach() * losses_each
 
         return weighted_losses_v.mean(), losses_each + 1e-5

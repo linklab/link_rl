@@ -59,10 +59,10 @@ class EnvironmentName(enum.Enum):
 
 
 class DeepLearningModelName(enum.Enum):
-    ACTOR_CRITIC_MLP = "ACTOR_CRITIC_MLP"
+    DISCRETE_ACTOR_CRITIC_MLP = "DISCRETE_ACTOR_CRITIC_MLP"
     CONTINUOUS_ACTOR_CRITIC_MLP = "CONTINUOUS_ACTOR_CRITIC_MLP"
 
-    ACTOR_CRITIC_CNN = "ACTOR_CRITIC_CNN"
+    DISCRETE_ACTOR_CRITIC_CNN = "DISCRETE_ACTOR_CRITIC_CNN"
     CONTINUOUS_ACTOR_CRITIC_CNN = "CONTINUOUS_ACTOR_CRITIC_CNN"
 
     DUELING_DQN_MLP = "DUELING_DQN_MLP"
@@ -94,8 +94,3 @@ class RLAlgorithmName(enum.Enum):
 class OptimizerName(enum.Enum):
     NESTEROV = "nesterov"
     ADAM = "Adam"
-
-
-class ReplayBufferName(enum.Enum):
-    REPLAY_BUFFER = "Replay_Buffer"
-    PRIORITIZED_REPLAY_BUFFER = "Prioritized_Replay_Buffer"

@@ -39,11 +39,9 @@ class ExperienceSourceSingleEnv:
 
                 next_state = np.array(next_state)
             else:
-                next_state = np.array(
-                    [
-                        self.state_deque[-self.step_length + offset] for offset in range(self.step_length)
-                    ]
-                )
+                next_state = np.array([
+                    self.state_deque[-self.step_length + offset] for offset in range(self.step_length)
+                ])
         else:
             raise ValueError()
 
@@ -141,23 +139,23 @@ class ExperienceSourceSingleEnvFirstLast(ExperienceSourceSingleEnv):
         assert isinstance(gamma, float)
         super(ExperienceSourceSingleEnvFirstLast, self).__init__(env, agent, steps_count + 1, step_length, render)
         self.gamma = gamma
-        self.steps_count = steps_count
 
     def __iter__(self):
-        for exp in super(ExperienceSourceSingleEnvFirstLast, self).__iter__():
-            if exp[-1].done and len(exp) <= self.steps_count:
+        for history in super(ExperienceSourceSingleEnvFirstLast, self).__iter__():
+            if history[-1].done and len(history) <= self.steps_count:
                 last_state = None
-                elems = exp
+                elems = history
             else:
-                last_state = exp[-1].state
-                elems = exp[:-1]
+                last_state = history[-1].state
+                elems = history[:-1]
+
             total_reward = 0.0
             for e in reversed(elems):
                 total_reward *= self.gamma
                 total_reward += e.reward
 
             exp = ExperienceFirstLast(
-                state=exp[0].state, action=exp[0].action, reward=total_reward, last_state=last_state,
-                last_step=len(elems), done=exp[-1].done, info=exp[-1].info
+                state=history[0].state, action=history[0].action, reward=total_reward, last_state=last_state,
+                last_step=len(elems), done=history[-1].done, info=history[-1].info
             )
             yield exp

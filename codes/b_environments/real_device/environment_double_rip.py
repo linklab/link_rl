@@ -162,15 +162,17 @@ class EnvironmentDoubleRIP():
 
         # ============================================================================================= #
         self.mqtt_client.publish(topic=MQTT_PUB_TO_DRIP, payload="{0}".format(action))
-
         previous_time = time.perf_counter()
 
         while not self.action_complete:
             time.sleep(0.001)
+
         self.action_complete = False
 
         current_time = time.perf_counter()
-        print("time : ", previous_time - current_time)
+
+        print("time : ", current_time - previous_time)
+
         while not current_time - previous_time >= self.sample_time:
             time.sleep(0.0001)
             current_time = time.perf_counter()

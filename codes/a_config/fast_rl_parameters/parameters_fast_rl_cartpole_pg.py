@@ -19,5 +19,3 @@ class PARAMETERS_FAST_RL_CARTPOLE_PG(PARAMETERS_GENERAL):
     DRAW_VIZ = True
     N_STEP = 10
     OMEGA = False
-
-    CUDA = False
