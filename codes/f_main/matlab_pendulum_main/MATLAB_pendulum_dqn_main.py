@@ -2,6 +2,7 @@
 import time
 import sys
 
+from codes.e_utils import rl_utils
 from codes.e_utils.names import PROJECT_HOME
 
 sys.path.insert(0,"c:\\users\\wlckd\\anaconda3\\envs\\link_rl\\lib\\site-packages")
@@ -35,7 +36,6 @@ else:
 
 
 def play_func(exp_queue, env, net):
-    env.start()
     action_selector = actions.EpsilonGreedyDQNActionSelector(epsilon=params.EPSILON_INIT)
 
     epsilon_tracker = actions.EpsilonTracker(
@@ -85,7 +85,7 @@ def main():
     mp.set_start_method('spawn')
 
     # env = gym.make(env_name)
-    env = MatlabRotaryInvertedPendulumEnv()
+    env = rl_utils.get_environment(owner="worker", params=params)
 
     net = value_based_model.DuelingDQNMLP(
         obs_size=4,
@@ -93,8 +93,6 @@ def main():
         n_actions=7
     ).to(device)
 
-    print(net)
-    print(env)
     tgt_net = rl_agent.TargetNet(net)
 
     buffer = replay_buffer.PrioReplayBuffer(experience_source=None, buffer_size=params.REPLAY_BUFFER_SIZE)

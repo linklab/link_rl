@@ -28,8 +28,6 @@ MAX_GLOBAL_STEP = 50000
 
 
 def main():
-    env.start()
-
     done_episode = 0
     step = 0
 

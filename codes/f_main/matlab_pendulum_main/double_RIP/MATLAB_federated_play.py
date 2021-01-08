@@ -35,10 +35,9 @@ def play_main():
     print("observation_space:", env.observation_space)
     print("action_space:", env.action_space)
 
-    if params.ENVIRONMENT_ID in [EnvironmentName.PENDULUM_MATLAB_V0, EnvironmentName.PENDULUM_MATLAB_DOUBLE_RIP_V0]:
-        env.start()
-
-    agent, epsilon_tracker = rl_utils.get_rl_agent(env=env, worker_id=0, params=params)
+    agent, epsilon_tracker = rl_utils.get_rl_agent(
+        env=env, worker_id=0, params=params
+    )
 
     load_model(
         MODEL_SAVE_DIR, params.ENVIRONMENT_ID.value, agent.model
