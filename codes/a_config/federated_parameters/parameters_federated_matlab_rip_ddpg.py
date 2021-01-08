@@ -4,7 +4,6 @@ from codes.e_utils.names import OSName, EnvironmentName, RLAlgorithmName, DeepLe
 
 class PARAMETERS_FEDERATED_MATLAB_RIP_DDPG(PARAMETERS_GENERAL):
     # [GENERAL]
-    CH = False
     SEED = 1
     MY_PLATFORM = OSName.MAC
     PYTHON_PATH = "~/anaconda/envs/rl/bin/python"
