@@ -102,7 +102,7 @@ def main(params):
             if solved:
                 break
 
-            if len(agent.buffer) < params.BATCH_SIZE:
+            if len(agent.buffer) < params.MIN_REPLAY_SIZE_FOR_TRAIN:
                 continue
 
             if params.RL_ALGORITHM in [
