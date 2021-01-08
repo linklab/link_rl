@@ -138,7 +138,7 @@ class WorkerFastRL:
         self.agent.set_experience_source_to_buffer(experience_source=experience_source)
 
         step_idx = 0
-        last_loss = 0.0
+        loss_list = []
         episode = 0
         stat = None
 
@@ -158,15 +158,19 @@ class WorkerFastRL:
                     gradients, loss, actor_objective = self.agent.train_net(step_idx=step_idx)
                 else:
                     raise ValueError()
+
+                loss_list.append(loss)
                 ###################
 
                 episode_rewards = experience_source.pop_episode_reward_lst()
 
                 if episode_rewards:
                     for current_episode_reward in episode_rewards:
+                        mean_loss = np.mean(loss_list) if len(loss_list) > 0 else 0.0
+
                         solved, mean_episode_reward = reward_tracker.set_episode_reward(
                             current_episode_reward, step_idx, epsilon=self.agent.action_selector.epsilon,
-                            last_info=last_entry.info, last_loss=last_loss, model=self.agent.model
+                            last_info=last_entry.info, mean_loss=mean_loss, model=self.agent.model
                         )
 
                         if solved:
@@ -182,6 +186,7 @@ class WorkerFastRL:
                         if solved:
                             break
 
+                        loss_list.clear()
                         episode += 1
 
             if not solved:

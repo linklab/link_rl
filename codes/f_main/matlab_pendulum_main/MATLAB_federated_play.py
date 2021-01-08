@@ -5,7 +5,7 @@ import os, sys
 import numpy as np
 
 current_path = os.path.dirname(os.path.realpath(__file__))
-PROJECT_HOME = os.path.abspath(os.path.join(current_path, os.pardir, os.pardir, os.pardir, os.pardir))
+PROJECT_HOME = os.path.abspath(os.path.join(current_path, os.pardir, os.pardir, os.pardir))
 if PROJECT_HOME not in sys.path:
     sys.path.append(PROJECT_HOME)
 
@@ -42,7 +42,7 @@ def play_main():
         env.start()
 
     agent, epsilon_tracker = rl_utils.get_rl_agent(
-        env=env, worker_id=0, action_min=action_min, action_max=action_max, params=params
+        env=env, worker_id=0, params=params
     )
 
     load_model(

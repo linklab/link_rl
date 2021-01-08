@@ -278,8 +278,6 @@ class AgentDQN(BaseAgent):
 
             target_state_action_values = next_state_values.detach() * (self.params.GAMMA ** last_steps_v) + rewards_v
 
-        print(rewards_v)
-
         losses_each = F.smooth_l1_loss(state_action_values, target_state_action_values.detach(), reduction='none')
         weighted_losses_v = batch_weights_v.detach() * losses_each
 

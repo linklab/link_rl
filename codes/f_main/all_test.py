@@ -7,15 +7,15 @@ from codes.f_main.general_main.main_single import main
 if __name__ == "__main__":
     print("\n################## {0} ##################".format(PARAMETERS_FAST_RL_CARTPOLE_DQN.__name__))
     params = PARAMETERS_FAST_RL_CARTPOLE_DQN
-    params.MAX_GLOBAL_STEP = 1000
+    params.MAX_GLOBAL_STEP = 5000
     main(params)
 
     print("\n################## {0} ##################".format(PARAMETERS_FAST_RL_PENDULUM_DDPG.__name__))
     params = PARAMETERS_FAST_RL_PENDULUM_DDPG
-    params.MAX_GLOBAL_STEP = 1000
+    params.MAX_GLOBAL_STEP = 5000
     main(params)
 
     print("\n################## {0} ##################".format(PARAMETERS_FAST_RL_BREAKOUT_DQN.__name__))
     params = PARAMETERS_FAST_RL_BREAKOUT_DQN
-    params.MAX_GLOBAL_STEP = 1000
+    params.MAX_GLOBAL_STEP = 5000
     main(params)

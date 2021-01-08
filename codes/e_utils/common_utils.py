@@ -196,6 +196,7 @@ def load_model(model_save_dir, env_name, model, step=None):
         saved_models = glob.glob(os.path.join(
             model_save_dir, "{0}_{1}_*.pth".format(env_name, model.__name__)
         ))
+    print(model_save_dir, env_name, model.__name__, saved_models)
 
     saved_models.sort(key=lambda filename: int(filename.split("/")[-1].split("_")[-2]))
     assert len(saved_models) > 0, "※※※※※※※※※※ There is no model !!!: {0} ※※※※※※※※※※".format(saved_models)
