@@ -110,7 +110,7 @@ def main():
                 break
             agent.buffer._add(exp)
 
-        if len(agent.buffer) < params.MIN_REPLAY_SIZE_FOR_TRAIN:
+        if len(agent.buffer) < params.BATCH_SIZE:
             continue
 
         agent.train_net(step_idx=step_idx)

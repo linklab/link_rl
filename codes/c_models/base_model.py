@@ -57,12 +57,6 @@ class BaseModel(nn.Module):
             inputs = torch.tensor([inputs], dtype=torch.float).to(self.device)
         return self.base.forward(inputs)
 
-    def act(self, inputs):
-        if not (type(inputs) is torch.Tensor):
-            inputs = torch.tensor([inputs], dtype=torch.float).to(self.device)
-        actions = self.base.forward(inputs)
-        return actions, None
-
     def reset_average_gradients(self):
         for layer_name, layer in self.base.layers_info.items():
             named_parameters = layer.to(self.device).named_parameters()

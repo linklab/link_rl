@@ -92,10 +92,14 @@ def main(params):
             if solved:
                 break
 
-            if len(agent.buffer) < params.MIN_REPLAY_SIZE_FOR_TRAIN:
+            if len(agent.buffer) < params.BATCH_SIZE:
                 continue
 
-            if params.RL_ALGORITHM in [RLAlgorithmName.DDPG_FAST_V0, RLAlgorithmName.DISCRETE_A2C_FAST_V0]:
+            if params.RL_ALGORITHM in [
+                RLAlgorithmName.DDPG_FAST_V0,
+                RLAlgorithmName.DISCRETE_A2C_FAST_V0,
+                RLAlgorithmName.CONTINUOUS_A2C_FAST_V0
+            ]:
                 _, last_loss, _ = agent.train_net(step_idx=step_idx)
             elif params.RL_ALGORITHM == RLAlgorithmName.DQN_FAST_V0:
                 _, last_loss = agent.train_net(step_idx=step_idx)

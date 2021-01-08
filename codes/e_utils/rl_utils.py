@@ -2,12 +2,12 @@ import json
 
 import gym
 import paho.mqtt.client as mqtt
-import torch
 from torch import optim
 import os, sys
 
-from codes.d_agents.discrete_a2c_agent import AgentDiscreteA2C
-from codes.d_agents.dqn_agent import AgentDQN
+from codes.d_agents.continuous_action.continuous_a2c_agent import AgentContinuousA2C
+from codes.d_agents.discrete_action.discrete_a2c_agent import AgentDiscreteA2C
+from codes.d_agents.discrete_action.dqn_agent import AgentDQN
 
 current_path = os.path.dirname(os.path.realpath(__file__))
 PROJECT_HOME = os.path.abspath(os.path.join(current_path, os.pardir, os.pardir))
@@ -25,10 +25,10 @@ from codes.c_models.continuous_action.stochastic_actor_critic_model import Stoch
 from codes.c_models.discrete_action.discrete_actor_critic_model import DiscreteActorCriticModel
 from codes.c_models.discrete_action.dqn_model import DuelingDQNModel
 
-from codes.d_agents.ddpg_agent import AgentDDPG
+from codes.d_agents.continuous_action.ddpg_agent import AgentDDPG
 
 from codes.e_utils.actions import EpsilonGreedyDDPGActionSelector, EpsilonTracker, EpsilonGreedyDQNActionSelector, \
-    ProbabilityActionSelector
+    ProbabilityActionSelector, ContinuousNormalActionSelector
 from codes.e_utils.common_utils import make_atari_env
 from codes.e_utils.names import EnvironmentName, DeepLearningModelName, RLAlgorithmName, OptimizerName
 
@@ -219,8 +219,6 @@ def get_rl_model(worker_id, input_shape=None, num_outputs=None, params=None, dev
 
 def get_rl_agent(env, worker_id, params, device="cpu"):
     if params.RL_ALGORITHM == RLAlgorithmName.DDPG_FAST_V0:
-        print("action_min: ", env.action_space.low[0], "action_max:", env.action_space.high[0])
-
         action_selector = EpsilonGreedyDDPGActionSelector(
             epsilon=params.EPSILON_INIT, ou_enabled=True, scale_factor=params.ACTION_SCALE
         )
@@ -237,12 +235,30 @@ def get_rl_agent(env, worker_id, params, device="cpu"):
         action_min = env.action_space.low[0]
         action_max = env.action_space.high[0]
 
+        print("action_min: ", action_min, "action_max:", action_max)
+
         agent = AgentDDPG(
-            input_shape=input_shape, num_outputs=num_outputs, action_min=action_min, action_max=action_max,
-            worker_id=worker_id, action_selector=action_selector, params=params, device=device
+            input_shape=input_shape, num_outputs=num_outputs, worker_id=worker_id, action_selector=action_selector,
+            action_min=action_min, action_max=action_max, params=params, device=device
         )
 
         return agent, epsilon_tracker
+    elif params.RL_ALGORITHM == RLAlgorithmName.CONTINUOUS_A2C_FAST_V0:
+        action_selector = ContinuousNormalActionSelector()
+
+        input_shape = env.observation_space.shape
+        num_outputs = env.action_space.shape[0]
+        action_min = env.action_space.low[0]
+        action_max = env.action_space.high[0]
+
+        print("action_min: ", action_min, "action_max:", action_max)
+
+        agent = AgentContinuousA2C(
+            worker_id=worker_id, input_shape=input_shape, num_outputs=num_outputs, action_selector=action_selector,
+            action_min=action_min, action_max=action_max, params=params, device=device
+        )
+
+        return agent, None
     elif params.RL_ALGORITHM == RLAlgorithmName.DQN_FAST_V0:
         action_selector = EpsilonGreedyDQNActionSelector(epsilon=params.EPSILON_INIT)
 
