@@ -1,19 +1,17 @@
 #!/usr/bin/env python3
 import os
 import math
-import ptan
 import time
 import gym
 import argparse
 from tensorboardX import SummaryWriter
-
-from lib import model, common, test_net, calc_logprob
 
 import numpy as np
 import torch
 import torch.optim as optim
 import torch.nn.functional as F
 
+from z_externals.handson_second_edition.Chapter19.lib import model
 
 ENV_ID = "RoboschoolHalfCheetah-v1"
 GAMMA = 0.99
@@ -48,7 +46,7 @@ if __name__ == "__main__":
 
     writer = SummaryWriter(comment="-a2c_" + args.name)
     agent = model.AgentA2C(net_act, device=device)
-    experience_source = ptan.experience.ExperienceSourceFirstLast(envs, agent, GAMMA, steps_count=REWARD_STEPS)
+    experience_source = ExperienceSourceFirstLast(envs, agent, GAMMA, steps_count=REWARD_STEPS)
 
     opt_act = optim.Adam(net_act.parameters(), lr=LEARNING_RATE_ACTOR)
     opt_crt = optim.Adam(net_crt.parameters(), lr=LEARNING_RATE_CRITIC)

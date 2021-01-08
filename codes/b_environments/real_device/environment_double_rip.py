@@ -261,16 +261,10 @@ class EnvironmentDoubleRIP():
         return adjusted_radian
 
     def update_current_state(self, adjusted_radian):
-        if self.params.CH:
-            if math.pi - math.radians(3) < adjusted_radian <= math.pi:
-                self.count_continuous_uprights += 1
-            else:
-                self.count_continuous_uprights = 0
+        if math.pi - math.radians(12) < adjusted_radian <= math.pi:
+            self.count_continuous_uprights += 1
         else:
-            if math.pi - math.radians(12) < adjusted_radian <= math.pi:
-                self.count_continuous_uprights += 1
-            else:
-                self.count_continuous_uprights = 0
+            self.count_continuous_uprights = 0
 
         if self.count_continuous_uprights >= 1:
             self.is_upright = True

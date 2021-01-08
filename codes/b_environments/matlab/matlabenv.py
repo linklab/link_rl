@@ -304,10 +304,7 @@ class MatlabRotaryInvertedPendulumEnv(gym.Env):
             reward = self.get_reward(adjusted_pendulum_1_radian)
         elif self.pendulum_type == 'PENDULUM_MATLAB_DOUBLE_RIP_V0':
             self.update_current_state_for_double_rip(adjusted_pendulum_1_radian, adjusted_pendulum_2_radian)
-            if self.params.CH:
-                reward = self.CH_reward_for_double_rip(self.pendulum_1_position, self.pendulum_2_position)
-            else:
-                reward = self.get_reward_for_double_rip(adjusted_pendulum_1_radian, adjusted_pendulum_2_radian)
+            reward = self.get_reward_for_double_rip(adjusted_pendulum_1_radian, adjusted_pendulum_2_radian)
         else:
             raise ValueError()
 
@@ -379,26 +376,26 @@ class MatlabRotaryInvertedPendulumEnv(gym.Env):
 
         return reward
 
-    def get_reward_for_double_rip(self, adjusted_pendulum_1_radian, adjusted_pendulum_2_radian):
-        combined_radian = adjusted_pendulum_1_radian + (math.pi - adjusted_pendulum_2_radian) / 2.0
+    # def get_reward_for_double_rip(self, adjusted_pendulum_1_radian, adjusted_pendulum_2_radian):
+    #     combined_radian = adjusted_pendulum_1_radian + (math.pi - adjusted_pendulum_2_radian) / 2.0
+    #
+    #     if self.is_upright:
+    #         position_reward = combined_radian / math.pi  # math.pi - math.radians(12) ~ math.pi
+    #     else:
+    #         position_reward = combined_radian / math.pi * 2.0
+    #
+    #     energy_penalty = -1.0 * (abs(self.pendulum_1_velocity) + abs(self.pendulum_2_velocity) + abs(self.motor_velocity)) / 150
+    #
+    #     self.episode_position_reward_list.append(position_reward)
+    #     self.episode_pendulum_velocity_reward_list.append(energy_penalty)
+    #     self.episode_action_reward_list.append(0.0)
+    #     reward = position_reward + energy_penalty
+    #     reward = max(0.0, reward)
+    #     # print(position_reward, energy_penalty, reward)
+    #
+    #     return reward
 
-        if self.is_upright:
-            position_reward = combined_radian / math.pi  # math.pi - math.radians(12) ~ math.pi
-        else:
-            position_reward = combined_radian / math.pi * 2.0
-
-        energy_penalty = -1.0 * (abs(self.pendulum_1_velocity) + abs(self.pendulum_2_velocity) + abs(self.motor_velocity)) / 150
-
-        self.episode_position_reward_list.append(position_reward)
-        self.episode_pendulum_velocity_reward_list.append(energy_penalty)
-        self.episode_action_reward_list.append(0.0)
-        reward = position_reward + energy_penalty
-        reward = max(0.0, reward)
-        # print(position_reward, energy_penalty, reward)
-
-        return reward
-
-    def CH_reward_for_double_rip(self, pendulum_1_position, pendulum_2_position):
+    def get_reward_for_double_rip(self, pendulum_1_position, pendulum_2_position):
         if pendulum_1_position > 0.0:
             pendulum_1_position = pendulum_1_position % (2.0 * math.pi)
             if pendulum_1_position > math.pi:
@@ -435,12 +432,16 @@ class MatlabRotaryInvertedPendulumEnv(gym.Env):
 
         reward_pendulum_2 = math.pi - abs(best_pendulum_2_position - adjusted_pendulum_2_position)
         position_reward = abs(reward_pendulum_2) + abs(adjusted_pendulum_1_position)
-        energy_penalty = -1.0 * (abs(self.pendulum_1_velocity) + abs(self.pendulum_2_velocity) + abs(self.motor_velocity)) / 150
+
+        energy_penalty = -1.0 * (abs(self.pendulum_1_velocity) + abs(self.pendulum_2_velocity) + 1.5 * abs(self.motor_velocity)) / 150
+
         self.episode_position_reward_list.append(position_reward)
         self.episode_pendulum_velocity_reward_list.append(energy_penalty)
         self.episode_action_reward_list.append(0.0)
+
         reward = position_reward + energy_penalty
-        reward = max(0.0 , reward)
+
+        reward = max(0.0, reward)
 
         return reward
 

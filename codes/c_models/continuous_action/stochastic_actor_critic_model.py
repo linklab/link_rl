@@ -21,10 +21,10 @@ class StochasticActorCriticModel(BaseModel):
     def forward(self, inputs):
         if not (type(inputs) is torch.Tensor):
             inputs = torch.tensor([inputs], dtype=torch.float).to(self.device)
-        return self.base.forward(inputs)
 
-    def act(self, inputs):
-        raise NotImplementedError()
+        mu, var, value = self.base.forward(inputs)
+
+        return mu, var, value
 
 
 class StochasticActorCriticMLPBase(nn.Module):
@@ -49,7 +49,7 @@ class StochasticActorCriticMLPBase(nn.Module):
             nn.Linear(self.hidden_3_size, 1),
         )
 
-        self.layers_info = {'actor': self.actor, 'ciritc': self.critic}
+        self.layers_info = {'actor': self.actor, 'critic': self.critic}
 
         self.train()
 
@@ -72,14 +72,11 @@ class ActorMLPBase(nn.Module):
         self.hidden_2_size = params.HIDDEN_2_SIZE
         self.hidden_3_size = params.HIDDEN_3_SIZE
 
-        self.net = nn.Sequential(
+        self.mu = nn.Sequential(
             nn.Linear(num_inputs, self.hidden_1_size),
             nn.ReLU(),
             nn.Linear(self.hidden_1_size, self.hidden_2_size),
-            nn.ReLU()
-        )
-
-        self.mu = nn.Sequential(
+            nn.ReLU(),
             nn.Linear(self.hidden_2_size, self.hidden_3_size),
             nn.ReLU(),
             nn.Linear(self.hidden_3_size, num_outputs),
@@ -87,6 +84,10 @@ class ActorMLPBase(nn.Module):
         )
 
         self.var = nn.Sequential(
+            nn.Linear(num_inputs, self.hidden_1_size),
+            nn.ReLU(),
+            nn.Linear(self.hidden_1_size, self.hidden_2_size),
+            nn.ReLU(),
             nn.Linear(self.hidden_2_size, self.hidden_3_size),
             nn.ReLU(),
             nn.Linear(self.hidden_3_size, num_outputs),
@@ -99,5 +100,4 @@ class ActorMLPBase(nn.Module):
             torch.nn.init.kaiming_normal_(m.weight)
 
     def forward(self, inputs):
-        net_out = self.net(inputs)
-        return self.mu(net_out), self.var(net_out)
+        return self.mu(inputs), self.var(inputs)

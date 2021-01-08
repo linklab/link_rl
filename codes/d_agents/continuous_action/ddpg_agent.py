@@ -10,7 +10,7 @@ class AgentDDPG(BaseAgent):
     """
     Agent implementing Orstein-Uhlenbeck exploration process
     """
-    def __init__(self, input_shape, num_outputs, action_min, action_max, worker_id, action_selector, params,
+    def __init__(self, input_shape, num_outputs, worker_id, action_selector, action_min, action_max, params,
                  preprocessor=float32_preprocessor, device="cpu"):
         super(AgentDDPG, self).__init__()
         self.__name__ = "AgentDDPG"

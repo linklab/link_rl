@@ -198,7 +198,8 @@ def train(coin_name, time_unit, train_env, evaluate_env):
             step_idx += params.TRAIN_STEP_FREQ
             last_entry = buffer.populate(params.TRAIN_STEP_FREQ)
 
-            epsilon_tracker.udpate(step_idx)
+            if epsilon_tracker:
+                epsilon_tracker.udpate(step_idx)
 
             episode_rewards = experience_source.pop_episode_reward_lst()
 

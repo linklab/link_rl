@@ -144,7 +144,9 @@ class WorkerFastRL:
                 # 1 스텝 진행하고 exp를 exp_queue에 넣음
                 step_idx += params.TRAIN_STEP_FREQ
                 last_entry = self.agent.buffer.populate(params.TRAIN_STEP_FREQ)
-                self.epsilon_tracker.udpate(step_idx)
+
+                if self.epsilon_tracker:
+                    self.epsilon_tracker.udpate(step_idx)
 
                 ###################  TRAIN!!!
                 actor_objective = None

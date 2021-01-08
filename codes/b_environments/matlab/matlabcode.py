@@ -36,6 +36,10 @@ class SimulinkPlant:
         self.eng.eval("model = '{}'".format(self.modelName), nargout=0)  # eval : 텍스트로 된 MATLAB 표현식 실행
         # load_system : loads the model sys into memory without opening the model in the Simulink® Editor.
         self.eng.eval("load_system(model)", nargout=0)
+        if self.modelName=='single_RIP':
+            self.eng.eval("single_RIP_DataFile", nargout=0)
+        elif self.modelName=='double_RIP':
+            self.eng.eval("double_RIP_DataFile", nargout=0)
 
         #simulation_time = self.eng.get_param(self.modelName, 'SimulationTime')
 
