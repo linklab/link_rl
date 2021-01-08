@@ -102,8 +102,12 @@ def main(params):
             if solved:
                 break
 
-            if len(agent.buffer) < params.MIN_REPLAY_SIZE_FOR_TRAIN:
-                continue
+            if params.RL_ALGORITHM in [RLAlgorithmName.DDPG_FAST_V0, RLAlgorithmName.DQN_FAST_V0]:
+                if len(agent.buffer) < params.MIN_REPLAY_SIZE_FOR_TRAIN:
+                    continue
+            else:
+                if len(agent.buffer) < params.BATCH_SIZE:
+                    continue
 
             if params.RL_ALGORITHM in [
                 RLAlgorithmName.DDPG_FAST_V0,
