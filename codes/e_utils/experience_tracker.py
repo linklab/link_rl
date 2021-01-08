@@ -89,12 +89,12 @@ class RewardTracker:
             prefix = ""
 
         if isinstance(epsilon, tuple) or isinstance(epsilon, list):
-            epsilon_str = "eps.: {0:5.3f}, {1:5.3f}".format(
+            epsilon_str = " eps.: {0:5.3f}, {1:5.3f},".format(
                 epsilon[0] if epsilon[0] else 0.0,
                 epsilon[1] if epsilon[1] else 0.0
             )
         elif isinstance(epsilon, float):
-            epsilon_str = "eps.: {0:5.3f}".format(
+            epsilon_str = " eps.: {0:5.3f},".format(
                 epsilon if epsilon else 0.0,
             )
         else:
@@ -111,8 +111,8 @@ class RewardTracker:
             )
 
         print(
-            "{0}[{1:6}/{2}] Ep. {3}, ep._reward: {4:7.3f}, mean_{5}_ep._reward: {6}, "
-            "{7}, speed: {8:7.2f} {9}, {10}".format(
+            "{0}[{1:6}/{2}] Ep. {3}, ep._reward: {4:7.3f}, mean_{5}_ep._reward: {6},{7} "
+            "speed: {8:7.2f} {9}, {10}".format(
                 prefix,
                 episode_done_step,
                 self.params.MAX_GLOBAL_STEP,
