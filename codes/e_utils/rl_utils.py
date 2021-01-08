@@ -154,6 +154,7 @@ def get_environment(owner="chief", params=None):
             pendulum_type='PENDULUM_MATLAB_V0',
             params=params
         )
+        env.start()
     elif params.ENVIRONMENT_ID == EnvironmentName.PENDULUM_MATLAB_DOUBLE_RIP_V0:
         env = MatlabRotaryInvertedPendulumEnv(
             action_min=params.ACTION_SCALE * -1.0,
@@ -162,6 +163,7 @@ def get_environment(owner="chief", params=None):
             pendulum_type='PENDULUM_MATLAB_DOUBLE_RIP_V0',
             params=params
         )
+        env.start()
     elif params.ENVIRONMENT_ID == EnvironmentName.MINITAUR_BULLET_V0:
         spec = gym.envs.registry.spec("MinitaurBulletEnv-v0")
         spec._kwargs['render'] = params.ENV_RENDER

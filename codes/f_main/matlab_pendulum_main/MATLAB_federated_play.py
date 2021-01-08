@@ -35,11 +35,6 @@ def play_main():
     print("observation_space:", env.observation_space)
     print("action_space:", env.action_space)
     print("action_min: ", env.action_space.low[0], "action_max:", env.action_space.high[0])
-    action_min = env.action_space.low[0]
-    action_max = env.action_space.high[0]
-
-    if params.ENVIRONMENT_ID in [EnvironmentName.PENDULUM_MATLAB_V0, EnvironmentName.PENDULUM_MATLAB_DOUBLE_RIP_V0]:
-        env.start()
 
     agent, epsilon_tracker = rl_utils.get_rl_agent(
         env=env, worker_id=0, params=params

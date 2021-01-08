@@ -9,6 +9,8 @@ from torch import optim
 import os, sys
 import numpy as np
 
+from codes.e_utils import rl_utils
+
 current_path = os.path.dirname(os.path.realpath(__file__))
 PROJECT_HOME = os.path.abspath(os.path.join(current_path, os.pardir, os.pardir))
 
@@ -48,10 +50,7 @@ else:
     ACTION_SCALE_FACTOR = 0.035
 CLIP = 1
 
-
-env = MatlabRotaryInvertedPendulumEnv(
-    action_min=ACTION_SCALE_FACTOR * -1.0, action_max=ACTION_SCALE_FACTOR, env_reset=params.ENV_RESET
-)
+env = rl_utils.get_environment(owner="worker", params=params)
 print("env:", params.ENVIRONMENT_ID)
 print("observation_space:", env.observation_space)
 print("action_space:", env.action_space)
@@ -60,9 +59,6 @@ OBS_SIZE = env.observation_space.shape[0]
 
 
 def play_func(exp_queue, actor_net, critic_net):
-    # print(env.action_space.low[0], env.action_space.high[0])
-    env.start()
-
     action_selector = actions.EpsilonGreedyDDPGActionSelector(
         epsilon=params.EPSILON_INIT, ou_enabled=True, scale_factor=ACTION_SCALE_FACTOR
     )

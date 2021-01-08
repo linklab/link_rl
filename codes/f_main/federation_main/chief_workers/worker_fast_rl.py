@@ -46,9 +46,6 @@ class WorkerFastRL:
         print("observation_space:", self.env.observation_space)
         print("action_space:", self.env.action_space)
 
-        if params.ENVIRONMENT_ID in [EnvironmentName.PENDULUM_MATLAB_V0, EnvironmentName.PENDULUM_MATLAB_DOUBLE_RIP_V0]:
-            self.env.start()
-
         self.agent, self.epsilon_tracker = rl_utils.get_rl_agent(env=self.env, worker_id=0, params=params, device=device)
 
         self.episode_reward = 0
