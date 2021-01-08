@@ -129,9 +129,6 @@ environments/unity/unity_envs/
 # personal parameter's option
 codes/a_config/parameters.py
 
-*.m
-*.mat
-*.slx
 *.slxc
 simulink_cache.xml
 

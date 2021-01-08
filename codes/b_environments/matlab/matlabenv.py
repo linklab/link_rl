@@ -2,6 +2,12 @@ import math
 import random
 import gym
 import numpy as np
+import sys,os
+
+current_path = os.path.dirname(os.path.realpath(__file__))
+PROJECT_HOME = os.path.abspath(os.path.join(current_path, os.pardir, os.pardir, os.pardir))
+if PROJECT_HOME not in sys.path:
+    sys.path.append(PROJECT_HOME)
 
 from codes.b_environments.matlab.matlabcode import SimulinkPlant
 from codes.e_utils.names import RLAlgorithmName
@@ -9,7 +15,6 @@ from codes.e_utils.names import RLAlgorithmName
 np.set_printoptions(formatter={'float_kind': lambda x: '{0:0.6f}'.format(x)})
 
 BLOWING_ACTION_RATE = 0.0002  # 5000 스텝에 1번 정도(지수 분포)의 주가로 외력이 가해짐 --> Stochastic Env.
-
 
 class MatlabRotaryInvertedPendulumEnv(gym.Env):
     def __init__(self, action_min, action_max, env_reset=True, pendulum_type='PENDULUM_MATLAB_V0', params=None):
@@ -28,10 +33,19 @@ class MatlabRotaryInvertedPendulumEnv(gym.Env):
         self.motor_position = 0
         self.motor_velocity = 0
 
+        current_path = os.path.dirname(os.path.realpath(__file__))
+        MATLAB_ENGINE_DIR = os.path.abspath(os.path.join(current_path, "engine"))
+        os.chdir(MATLAB_ENGINE_DIR) # change working directory
+
         if self.pendulum_type == 'PENDULUM_MATLAB_V0':
-            self.plant = SimulinkPlant()
+            self.plant = SimulinkPlant(modelName="single_RIP")
         elif self.pendulum_type == 'PENDULUM_MATLAB_DOUBLE_RIP_V0':
-            self.plant = SimulinkPlant(modelName='double_RIP')
+            self.plant = SimulinkPlant(modelName="double_RIP")
+        else:
+            raise ValueError()
+
+        #self.plant = SimulinkPlant(modelName=RIP_filename)
+
         self.obs_degree = [None, None]
         self.next_obs_degree = [None, None]
         self.simulation_time = 0.0

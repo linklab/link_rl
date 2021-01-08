@@ -35,13 +35,9 @@ def play_main():
     print("observation_space:", env.observation_space)
     print("action_space:", env.action_space)
 
-    agent, epsilon_tracker = rl_utils.get_rl_agent(
-        env=env, worker_id=0, params=params
-    )
+    agent, epsilon_tracker = rl_utils.get_rl_agent(env=env, worker_id=0, params=params)
 
-    load_model(
-        MODEL_SAVE_DIR, params.ENVIRONMENT_ID.value, agent.model
-    )
+    load_model(MODEL_SAVE_DIR, params.ENVIRONMENT_ID.value, agent.model)
 
     if params.RL_ALGORITHM == RLAlgorithmName.DQN_FAST_V0:
         action_selector = EpsilonGreedySomeTimesBlowDQNActionSelector(epsilon=0.0)
@@ -69,10 +65,11 @@ def play_main():
             num_episode_step += 1
 
             state = np.expand_dims(state, axis=0)
-            if params.RL_ALGORITHM == RLAlgorithmName.DQN_FAST_V0:
+            if params.RL_ALGORITHM in [RLAlgorithmName.DQN_FAST_V0, RLAlgorithmName.DDPG_FAST_V0]:
                 action, _, = agent(state)
             else:
                 action, _, _ = agent(state)
+
             next_state, reward, done, info = env.step(action[0])
             state = next_state
             episode_reward += reward
