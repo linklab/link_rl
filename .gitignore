@@ -121,7 +121,7 @@ environments/unity/unity_envs/
 /src/
 /save_results
 
-*.pth
+out
 
 /rl_main/fast_main/*.pickle
 /rl_main/fast_main/data/

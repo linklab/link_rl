@@ -190,7 +190,7 @@ def train(coin_name, time_unit, train_env, evaluate_env):
         delta=0.0,
         model_save_dir=MODEL_SAVE_DIR,
         model_save_file_prefix=params.ENVIRONMENT_ID.value + "_" + coin_name + "_" + time_unit.value,
-        model_name=net.__name__
+        agent=agent
     )
 
     with utils.RewardTracker(params=params, frame=False, stat=stat, early_stopping=None) as reward_tracker:
@@ -227,7 +227,7 @@ def train(coin_name, time_unit, train_env, evaluate_env):
                         )
                         evaluate_random_total_profits.append(random_total_profit)
 
-                        solved = early_stopping(dqn_total_profit, model=net, step_idx=step_idx)
+                        solved = early_stopping(dqn_total_profit, step_idx=step_idx)
 
                         visualizer.draw_performance(
                             evaluate_steps,

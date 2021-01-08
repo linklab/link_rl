@@ -10,31 +10,33 @@ import os, glob, sys
 from . import actions
 
 
-def remove_models(model_save_dir, env_name, model_name):
+def remove_models(model_save_dir, env_name, agent):
     files = glob.glob(os.path.join(
-        model_save_dir, "{0}_{1}_*.pth".format(env_name, model_name))
+        model_save_dir, "{0}_{1}_{2}_*.pth".format(env_name, agent.__name__, agent.model.__name__))
     )
     for f in files:
         os.remove(f)
 
 
-def save_model(model_save_dir, env_name, model_name, model, step, episode_reward):
+def save_model(model_save_dir, env_name, agent, step, episode_reward):
     model_save_filename = os.path.join(
-        model_save_dir, "{0}_{1}_{2}_{3:.2f}.pth".format(env_name, model_name, step, float(episode_reward))
+        model_save_dir, "{0}_{1}_{2}_{3}_{4:.2f}.pth".format(
+            env_name, agent.__name__, agent.model.__name__, step, float(episode_reward)
+        )
     )
-    torch.save(model.state_dict(), model_save_filename)
+    torch.save(agent.model.state_dict(), model_save_filename)
     return model_save_filename
 
 
-def load_model(model_save_dir, env_name, model_name, model, step=None):
+def load_model(model_save_dir, env_name, agent, step=None):
     if step:
         saved_models = glob.glob(os.path.join(
-            model_save_dir, "{0}_{1}_{2}_*.pth".format(env_name, model_name, step)
+            model_save_dir, "{0}_{1}_{2}_{3}_*.pth".format(env_name, agent.__name__, agent.model.__name__, step)
         ))
 
     else:
         saved_models = glob.glob(os.path.join(
-            model_save_dir, "{0}_{1}_*.pth".format(env_name, model_name)
+            model_save_dir, "{0}_{1}_{2}_*.pth".format(env_name, agent.__name__, agent.model.__name__)
         ))
 
     saved_models.sort(key=lambda filename: int(filename.split("/")[-1].split("_")[-2]))

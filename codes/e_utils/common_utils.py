@@ -170,33 +170,34 @@ def unpack_batch_for_a2c(batch, net, params, device='cpu'):
 
 
 
-def remove_models(model_save_dir, env_name, model_name):
+def remove_models(model_save_dir, env_name, agent):
     files = glob.glob(os.path.join(
-        model_save_dir, "{0}_{1}_*.pth".format(env_name, model_name))
+        model_save_dir, "{0}_{1}_{2}_*.pth".format(env_name, agent.__name__, agent.model.__name__))
     )
     for f in files:
         os.remove(f)
 
 
-def save_model(model_save_dir, env_name, model, step, episode_reward):
+def save_model(model_save_dir, env_name, agent, step, episode_reward):
     model_save_filename = os.path.join(
-        model_save_dir, "{0}_{1}_{2}_{3:.2f}.pth".format(env_name, model.__name__, step, float(episode_reward))
+        model_save_dir, "{0}_{1}_{2}_{3}_{4:.2f}.pth".format(
+            env_name, agent.__name__, agent.model.__name__, step, float(episode_reward)
+        )
     )
-    torch.save(model.state_dict(), model_save_filename)
+    torch.save(agent.model.state_dict(), model_save_filename)
     return model_save_filename
 
 
-def load_model(model_save_dir, env_name, model, step=None):
+def load_model(model_save_dir, env_name, agent, step=None):
     if step:
         saved_models = glob.glob(os.path.join(
-            model_save_dir, "{0}_{1}_{2}_*.pth".format(env_name, model.__name__, step)
+            model_save_dir, "{0}_{1}_{2}_{3}_*.pth".format(env_name, agent.__name__, agent.model.__name__, step)
         ))
 
     else:
         saved_models = glob.glob(os.path.join(
-            model_save_dir, "{0}_{1}_*.pth".format(env_name, model.__name__)
+            model_save_dir, "{0}_{1}_{2}_*.pth".format(env_name, agent.__name__, agent.model.__name__)
         ))
-    print(model_save_dir, env_name, model.__name__, saved_models)
 
     saved_models.sort(key=lambda filename: int(filename.split("/")[-1].split("_")[-2]))
     assert len(saved_models) > 0, "※※※※※※※※※※ There is no model !!!: {0} ※※※※※※※※※※".format(saved_models)
@@ -206,7 +207,7 @@ def load_model(model_save_dir, env_name, model, step=None):
     device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
     model_params = torch.load(saved_model, map_location=device)
 
-    model.load_state_dict(model_params)
+    agent.model.load_state_dict(model_params)
 
 
 if __name__=="__main__":

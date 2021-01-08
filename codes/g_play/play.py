@@ -12,7 +12,7 @@ from codes.e_utils.actions import EpsilonGreedySomeTimesBlowDQNActionSelector, \
 print("PyTorch Version", torch.__version__)
 
 current_path = os.path.dirname(os.path.realpath(__file__))
-PROJECT_HOME = os.path.abspath(os.path.join(current_path, os.pardir, os.pardir, os.pardir))
+PROJECT_HOME = os.path.abspath(os.path.join(current_path, os.pardir, os.pardir))
 if PROJECT_HOME not in sys.path:
     sys.path.append(PROJECT_HOME)
 
@@ -21,9 +21,7 @@ from codes.e_utils.common_utils import load_model
 from codes.e_utils.logger import get_logger
 from codes.e_utils.names import RLAlgorithmName, EnvironmentName
 
-MODEL_SAVE_DIR = os.path.join(PROJECT_HOME, "out", "model_save_files")
-if not os.path.exists(MODEL_SAVE_DIR):
-    os.makedirs(MODEL_SAVE_DIR)
+MODEL_ZOO_SAVE_DIR = os.path.join(PROJECT_HOME, "codes", "g_play", "model_zoo")
 
 os.environ['KMP_DUPLICATE_LIB_OK'] = 'True'
 
@@ -43,9 +41,7 @@ def play_main(params):
 
     agent, epsilon_tracker = rl_utils.get_rl_agent(env=env, worker_id=0, params=params, device=device)
 
-    load_model(
-        MODEL_SAVE_DIR, params.ENVIRONMENT_ID.value, agent.model
-    )
+    load_model(MODEL_ZOO_SAVE_DIR, params.ENVIRONMENT_ID.value, agent)
 
     if params.ENVIRONMENT_ID in [EnvironmentName.PENDULUM_MATLAB_V0, EnvironmentName.PENDULUM_MATLAB_DOUBLE_RIP_V0]:
         if params.RL_ALGORITHM == RLAlgorithmName.DQN_FAST_V0:
