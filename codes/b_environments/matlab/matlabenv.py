@@ -435,12 +435,16 @@ class MatlabRotaryInvertedPendulumEnv(gym.Env):
 
         reward_pendulum_2 = math.pi - abs(best_pendulum_2_position - adjusted_pendulum_2_position)
         position_reward = abs(reward_pendulum_2) + abs(adjusted_pendulum_1_position)
-        energy_penalty = -1.0 * (abs(self.pendulum_1_velocity) + abs(self.pendulum_2_velocity) + abs(self.motor_velocity)) / 150
+
+        energy_penalty = -1.0 * (abs(self.pendulum_1_velocity) + abs(self.pendulum_2_velocity) + 1.5 * abs(self.motor_velocity)) / 150
+
         self.episode_position_reward_list.append(position_reward)
         self.episode_pendulum_velocity_reward_list.append(energy_penalty)
         self.episode_action_reward_list.append(0.0)
+
         reward = position_reward + energy_penalty
-        reward = max(0.0 , reward)
+
+        reward = max(0.0, reward)
 
         return reward
 

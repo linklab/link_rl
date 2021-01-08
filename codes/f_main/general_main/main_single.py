@@ -1,6 +1,8 @@
 # https://github.com/openai/gym/blob/master/gym/envs/classic_control/pendulum.py
 # https://mspries.github.io/jimmy_pendulum.html
 #!/usr/bin/env python3
+import pickle
+
 import torch
 import os, sys
 import numpy as np
@@ -58,6 +60,8 @@ def main(params):
     stat = None
     step_idx = 0
     loss_list = []
+    episode_reward_list = []
+    episode_mean_loss_list = []
 
     with RewardTracker(params=params, frame=False, stat=stat, early_stopping=None) as reward_tracker:
         while step_idx < params.MAX_GLOBAL_STEP:
@@ -72,9 +76,15 @@ def main(params):
             solved = False
             if episode_rewards:
                 for current_episode_reward in episode_rewards:
-
                     epsilon = agent.action_selector.epsilon if hasattr(agent.action_selector, 'epsilon') else None
                     mean_loss = np.mean(loss_list) if len(loss_list) > 0 else 0.0
+
+                    ##################################################
+                    #####  FOR PAPER
+                    ##################################################
+                    episode_reward_list.append(current_episode_reward)
+                    episode_mean_loss_list.append(mean_loss)
+                    ##################################################
 
                     solved, mean_episode_reward = reward_tracker.set_episode_reward(
                         current_episode_reward, step_idx, epsilon, last_info=last_entry.info,
@@ -108,6 +118,20 @@ def main(params):
 
             loss_list.append(last_loss)
 
+        if params.SAVE_AT_MAX_GLOBAL_STEPS:
+            save_model(
+                MODEL_SAVE_DIR, params.ENVIRONMENT_ID.value, agent, step_idx, mean_episode_reward
+            )
+
+        ##################################################
+        #####  FOR PAPER
+        ##################################################
+        with open('episode_reward_list.dump', 'wb') as f:
+            pickle.dump(episode_reward_list, f)
+
+        with open('episode_mean_loss_list.dump', 'wb') as f:
+            pickle.dump(episode_mean_loss_list, f)
+        ##################################################
 
 if __name__ == "__main__":
     from codes.a_config.parameters import PARAMETERS as parameters
