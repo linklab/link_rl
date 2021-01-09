@@ -52,6 +52,11 @@ class AgentContinuousA2C(BaseAgent):
             if torch.is_tensor(states):
                 states = states.to(self.device)
 
+        if len(states) == 1:
+            self.model.eval()
+        else:
+            self.model.train()
+
         mu_v, var_v, values_v = self.model(states)
         actions = self.action_selector(mu_v, var_v, self.action_min, self.action_max)
         critics = [values_v.data.squeeze().cpu().numpy()]

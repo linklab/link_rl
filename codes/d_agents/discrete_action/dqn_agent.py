@@ -53,11 +53,13 @@ class AgentDQN(BaseAgent):
             if torch.is_tensor(states):
                 states = states.to(self.device)
 
-        if self.model:
-            q_v = self.model(states)
-            q = q_v.detach().cpu().numpy()
+        if len(states) == 1:
+            self.model.eval()
         else:
-            q = [[]]
+            self.model.train()
+
+        q_v = self.model(states)
+        q = q_v.detach().cpu().numpy()
 
         actions = self.action_selector(q)
         return actions, agent_states
