@@ -71,16 +71,16 @@ class AgentDiscreteA2C(BaseAgent):
         logits_v, value_v = self.model(states_v)
 
         advantage_v = target_action_values_v - value_v.squeeze(-1).detach()
-        log_prob_v = F.log_softmax(logits_v, dim=1)
-        log_prob_actions_v = log_prob_v[range(self.params.BATCH_SIZE), actions_v]
-        log_prob_actions_v = advantage_v * log_prob_actions_v
-        loss_actor_v = -1.0 * log_prob_actions_v.mean()
+        log_pi_v = F.log_softmax(logits_v, dim=1)
+        log_pi_v = log_pi_v[range(self.params.BATCH_SIZE), actions_v]
+        log_pi_v = advantage_v * log_pi_v
+        loss_actor_v = -1.0 * log_pi_v.mean()
 
         prob_v = F.softmax(logits_v, dim=1)
-        entropy_v = -(prob_v * log_prob_v).sum(dim=1).mean()
+        entropy_v = -(prob_v * log_pi_v).sum(dim=1).mean()
         loss_entropy_v = -1.0 * self.params.ENTROPY_BETA * entropy_v
 
-        # loss_actor_v를 작아지도록 만듦 --> batch_log_prob_actions_v.mean()가 커지도록 만듦
+        # loss_actor_v를 작아지도록 만듦 --> log_pi_v.mean()가 커지도록 만듦
         # loss_entropy_v를 작아지도록 만듦 --> entropy_v가 커지도록 만듦
         loss_actor_and_entropy_v = loss_actor_v + loss_entropy_v
 

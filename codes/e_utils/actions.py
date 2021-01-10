@@ -190,12 +190,22 @@ class ProbabilityActionSelector(ActionSelector):
 
 
 class ContinuousNormalActionSelector(ContinuousActionSelector):
-    def __call__(self, mu_v, var_v, action_min, action_max):
+    def __call__(self, mu_v, logstd_v, action_min, action_max):
         mu = mu_v.data.cpu().numpy()
-        sigma = torch.sqrt(var_v).data.cpu().numpy()
-        actions = np.random.normal(mu, sigma)
+        logstd = logstd_v.data.cpu().numpy()
+        rnd = np.random.normal(size=logstd.shape)
+        actions = mu + np.exp(logstd) * rnd
         actions = np.clip(actions, action_min, action_max)
         return actions
+
+
+# class ContinuousNormalActionSelector(ContinuousActionSelector):
+#     def __call__(self, mu_v, var_v, action_min, action_max):
+#         mu = mu_v.data.cpu().numpy()
+#         sigma = torch.sqrt(var_v).data.cpu().numpy()
+#         actions = np.random.normal(mu, sigma)
+#         actions = np.clip(actions, action_min, action_max)
+#         return actions
 
 
 class EpsilonTracker:

@@ -59,8 +59,8 @@ class AgentContinuousPPO(BaseAgent):
         else:
             self.model.train()
 
-        mu_v, var_v, values_v = self.model(states)
-        actions = self.action_selector(mu_v, var_v, self.action_min, self.action_max)
+        mu_v, values_v = self.model(states)
+        actions = self.action_selector(mu_v, self.model.base.actor.logstd, self.action_min, self.action_max)
         critics = [values_v.data.squeeze().cpu().numpy()]
         return actions, critics
 
@@ -71,12 +71,15 @@ class AgentContinuousPPO(BaseAgent):
         trajectory_actions = [experience.action for experience in trajectory]
         trajectory_actions_v = torch.FloatTensor(trajectory_actions).to(self.device)
 
+        trajectory_mu_v, _ = self.model(trajectory_states_v)
+        trajectory_old_log_pi_v = self.calc_log_pi(
+            trajectory_mu_v, self.model.base.actor.logstd, trajectory_actions_v
+        )
+
+        # 아래 변수는 전체 trajectory의 원소보다 1 적음
         trajectory_advantage_v, trajectory_target_action_value_v = self.get_advantage_and_target_action_values(
             trajectory, trajectory_states_v
         )
-
-        trajectory_mu_v, trajectory_var_v, _ = self.model(trajectory_states_v)
-        trajectory_old_log_prob_v = self.calc_log_prob(trajectory_mu_v, trajectory_var_v, trajectory_actions_v)
 
         # normalize advantages
         trajectory_advantage_v = trajectory_advantage_v - torch.mean(trajectory_advantage_v)
@@ -84,61 +87,71 @@ class AgentContinuousPPO(BaseAgent):
 
         # drop last entry from the trajectory, an our adv and target action value calculated without it
         trajectory = trajectory[:-1]
-        trajectory_old_log_prob_v = trajectory_old_log_prob_v[:-1].detach()
+        trajectory_states_v = trajectory_states_v[:-1]
+        trajectory_actions_v = trajectory_actions_v[:-1]
+        trajectory_old_log_pi_v = trajectory_old_log_pi_v[:-1].detach()
 
-        sum_loss_value = 0.0
-        sum_loss_policy = 0.0
+        sum_loss_critic = 0.0
+        sum_loss_actor = 0.0
         count_steps = 0
 
         for epoch in range(self.params.PPO_K_EPOCHS):
             for batch_offset in range(0, len(trajectory), self.params.TRAJECTORY_BATCH_SIZE):
                 batch_l = batch_offset + self.params.TRAJECTORY_BATCH_SIZE
+
                 batch_states_v = trajectory_states_v[batch_offset:batch_l]
                 batch_actions_v = trajectory_actions_v[batch_offset:batch_l]
                 batch_advantage_v = trajectory_advantage_v[batch_offset:batch_l].unsqueeze(-1)
                 batch_target_action_value_v = trajectory_target_action_value_v[batch_offset:batch_l]
-                batch_old_log_prob_v = trajectory_old_log_prob_v[batch_offset:batch_l]
-
-                # critic training
-                self.critic_optimizer.zero_grad()
-
-                batch_values_v = self.model.base.forward_critic(batch_states_v)
-
-                print(batch_states_v.size(), batch_values_v.squeeze(-1).size(), batch_target_action_value_v.size())
-
-                loss_value_v = F.mse_loss(batch_values_v.squeeze(-1), batch_target_action_value_v)
-                loss_value_v.backward()
-                self.critic_optimizer.step()
+                batch_old_log_pi_v = trajectory_old_log_pi_v[batch_offset:batch_l]
 
                 # actor training
                 self.actor_optimizer.zero_grad()
-                batch_mu_v, batch_var_v, _ = self.model(batch_states_v)
-                batch_log_prob_pi_v = self.calc_log_prob(batch_mu_v, batch_var_v, batch_actions_v)
-                batch_ratio_v = torch.exp(batch_log_prob_pi_v - batch_old_log_prob_v)
-                surrogate_objective_v = batch_advantage_v * batch_ratio_v
+                batch_mu_v, _ = self.model(batch_states_v)
+                batch_log_pi_v = self.calc_log_pi(
+                    batch_mu_v, self.model.base.actor.logstd, batch_actions_v
+                )
+                batch_ratio_v = torch.exp(batch_log_pi_v - batch_old_log_pi_v)
+                batch_surrogate_v = batch_advantage_v * batch_ratio_v
                 batch_clipped_ratio_v = torch.clamp(
                     batch_ratio_v, min=1.0 - self.params.PPO_EPSILON_CLIP, max=1.0 + self.params.PPO_EPSILON_CLIP
                 )
                 batch_clipped_surrogate_v = batch_advantage_v * batch_clipped_ratio_v
-                loss_policy_v = -torch.min(surrogate_objective_v, batch_clipped_surrogate_v).mean()
-                loss_policy_v.backward()
+                loss_actor_v = -1.0 * torch.min(batch_surrogate_v, batch_clipped_surrogate_v).mean()
+
+                batch_entropy_v = -1.0 * (torch.log(2.0 * math.pi * torch.exp(self.model.base.actor.logstd)) + 1) / 2
+                loss_entropy_v = self.params.PPO_ENTROPY_WEIGHT * batch_entropy_v.mean()
+
+                loss_actor_and_entropy_v = loss_actor_v + loss_entropy_v
+                loss_actor_and_entropy_v.backward(retain_graph=True)
                 self.actor_optimizer.step()
 
-                sum_loss_value += loss_value_v.item()
-                sum_loss_policy += loss_policy_v.item()
+                # critic training
+                self.critic_optimizer.zero_grad()
+                batch_values_v = self.model.base.forward_critic(batch_states_v)
+                loss_critic_v = F.mse_loss(batch_values_v.squeeze(-1), batch_target_action_value_v)
+                loss_critic_v.backward()
+                self.critic_optimizer.step()
+
+                sum_loss_critic += loss_critic_v.item()
+                sum_loss_actor += loss_actor_v.item()
                 count_steps += 1
 
         gradients = self.model.get_gradients_for_current_parameters()
 
-        trajectory.clear()
+        return gradients, sum_loss_critic / count_steps, (sum_loss_actor / count_steps) * -1.0
 
-        return gradients, sum_loss_value / count_steps, (sum_loss_policy / count_steps) * -1.0
+    # @staticmethod
+    # def calc_log_pi(mu_v, var_v, actions_v):
+    #     # https://pytorch.org/docs/stable/generated/torch.clamp.html, clamp: 단단히 고정시키다.
+    #     p1 = - ((mu_v - actions_v) ** 2) / (2 * var_v.clamp(min=1e-3))
+    #     p2 = - torch.log(torch.sqrt(2 * math.pi * var_v))
+    #     return p1 + p2
 
     @staticmethod
-    def calc_log_prob(mu_v, var_v, actions_v):
-        # https://pytorch.org/docs/stable/generated/torch.clamp.html, clamp: 단단히 고정시키다.
-        p1 = - ((mu_v - actions_v) ** 2) / (2 * var_v.clamp(min=1e-3))
-        p2 = - torch.log(torch.sqrt(2 * math.pi * var_v))
+    def calc_log_pi(mu_v, logstd_v, actions_v):
+        p1 = - ((mu_v - actions_v) ** 2) / (2 * torch.exp(logstd_v).clamp(min=1e-3))
+        p2 = - torch.log(torch.sqrt(2 * math.pi * torch.exp(logstd_v)))
         return p1 + p2
 
     def get_advantage_and_target_action_values(self, trajectory, states_v, device="cpu"):

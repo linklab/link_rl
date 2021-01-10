@@ -22,9 +22,9 @@ class StochasticActorCriticModel(BaseModel):
         if not (type(inputs) is torch.Tensor):
             inputs = torch.tensor([inputs], dtype=torch.float).to(self.device)
 
-        mu, var, value = self.base.forward(inputs)
+        mu, value = self.base.forward(inputs)
 
-        return mu, var, value
+        return mu, value
 
 
 class StochasticActorCriticMLPBase(nn.Module):
@@ -54,9 +54,9 @@ class StochasticActorCriticMLPBase(nn.Module):
         self.train()
 
     def forward(self, inputs):
-        mu, var = self.actor(inputs)
+        mu = self.actor(inputs)
         value = self.critic(inputs)
-        return mu, var, value
+        return mu, value
 
     def forward_critic(self, inputs):
         return self.critic(inputs)
@@ -83,16 +83,18 @@ class ActorMLPBase(nn.Module):
             nn.Tanh()
         )
 
-        self.var = nn.Sequential(
-            nn.Linear(num_inputs, self.hidden_1_size),
-            nn.ReLU(),
-            nn.Linear(self.hidden_1_size, self.hidden_2_size),
-            nn.ReLU(),
-            nn.Linear(self.hidden_2_size, self.hidden_3_size),
-            nn.ReLU(),
-            nn.Linear(self.hidden_3_size, num_outputs),
-            nn.Softplus(),
-        )
+        self.logstd = nn.Parameter(torch.zeros(num_outputs))
+
+        # self.var = nn.Sequential(
+        #     nn.Linear(num_inputs, self.hidden_1_size),
+        #     nn.ReLU(),
+        #     nn.Linear(self.hidden_1_size, self.hidden_2_size),
+        #     nn.ReLU(),
+        #     nn.Linear(self.hidden_2_size, self.hidden_3_size),
+        #     nn.ReLU(),
+        #     nn.Linear(self.hidden_3_size, num_outputs),
+        #     nn.Softplus(),
+        # )
 
     @staticmethod
     def init_weights(m):
@@ -100,4 +102,4 @@ class ActorMLPBase(nn.Module):
             torch.nn.init.kaiming_normal_(m.weight)
 
     def forward(self, inputs):
-        return self.mu(inputs), self.var(inputs)
+        return self.mu(inputs)

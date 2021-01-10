@@ -119,6 +119,7 @@ def main(params):
 
             if params.RL_ALGORITHM in [RLAlgorithmName.CONTINUOUS_PPO_FAST_V0]:
                 _, last_loss, _ = agent.train_net(trajectory=trajectory)
+                trajectory.clear()
             elif params.RL_ALGORITHM in [
                 RLAlgorithmName.DDPG_FAST_V0,
                 RLAlgorithmName.DISCRETE_A2C_FAST_V0,

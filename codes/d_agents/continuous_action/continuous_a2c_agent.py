@@ -57,8 +57,8 @@ class AgentContinuousA2C(BaseAgent):
         else:
             self.model.train()
 
-        mu_v, var_v, values_v = self.model(states)
-        actions = self.action_selector(mu_v, var_v, self.action_min, self.action_max)
+        mu_v, values_v = self.model(states)
+        actions = self.action_selector(mu_v, self.model.base.actor.logstd, self.action_min, self.action_max)
         critics = [values_v.data.squeeze().cpu().numpy()]
         return actions, critics
 
@@ -78,17 +78,17 @@ class AgentContinuousA2C(BaseAgent):
         # mu_v.shape: (32, 1)
         # var_v.shape: (32, 1)
         # value_v.shape; (32, 1)
-        mu_v, var_v, value_v = self.model(states_v)
+        mu_v, value_v = self.model(states_v)
 
         # advantage_v.shape: (32, 1)
         advantage_v = target_action_values_v.unsqueeze(dim=-1) - value_v.detach()
-        log_prob_actions_v = advantage_v * self.calc_log_prob(mu_v, var_v, actions_v)
-        loss_actor_v = -1.0 * log_prob_actions_v.mean()
+        log_pi_v = advantage_v * self.calc_log_pi(mu_v, self.model.base.actor.logstd, actions_v)
+        loss_actor_v = -1.0 * log_pi_v.mean()
 
-        entropy_v = -1.0 * (torch.log(2.0 * math.pi * var_v) + 1) / 2
+        entropy_v = -1.0 * (torch.log(2.0 * math.pi * torch.exp(self.model.base.actor.logstd)) + 1) / 2
         loss_entropy_v = self.params.ENTROPY_BETA * entropy_v.mean()
 
-        # loss_actor_v를 작아지도록 만듦 --> batch_log_prob_actions_v.mean()가 커지도록 만듦
+        # loss_actor_v를 작아지도록 만듦 --> batch_log_pi_v.mean()가 커지도록 만듦
         # loss_entropy_v를 작아지도록 만듦 --> entropy_v가 커지도록 만듦
         # print(loss_critic_v, loss_actor_v, loss_entropy_v)
         loss_actor_and_entropy_v = loss_actor_v + loss_entropy_v
@@ -97,7 +97,7 @@ class AgentContinuousA2C(BaseAgent):
         nn_utils.clip_grad_norm_(self.model.base.actor.parameters(), self.params.CLIP_GRAD)
         self.actor_optimizer.step()
 
-        loss_critic_v = F.mse_loss(value_v.squeeze(-1), target_action_values_v)
+        loss_critic_v = F.mse_loss(input=value_v.squeeze(-1), target=target_action_values_v)
         loss_critic_v.backward()
         nn_utils.clip_grad_norm_(self.model.base.critic.parameters(), self.params.CLIP_GRAD)
         self.critic_optimizer.step()
@@ -109,14 +109,20 @@ class AgentContinuousA2C(BaseAgent):
         return gradients, loss_critic_v.item(), loss_actor_v.item() * -1.0
 
     @staticmethod
-    def calc_log_prob(mu_v, var_v, actions_v):
-        # https://pytorch.org/docs/stable/generated/torch.clamp.html, clamp: 단단히 고정시키다.
-        p1 = - ((mu_v - actions_v) ** 2) / (2 * var_v.clamp(min=1e-3))
-        p2 = - torch.log(torch.sqrt(2 * math.pi * var_v))
+    def calc_log_pi(mu_v, logstd_v, actions_v):
+        p1 = - ((mu_v - actions_v) ** 2) / (2 * torch.exp(logstd_v).clamp(min=1e-3))
+        p2 = - torch.log(torch.sqrt(2 * math.pi * torch.exp(logstd_v)))
         return p1 + p2
 
     # @staticmethod
-    # def calc_log_prob(mu_v, var_v, actions_v):
+    # def calc_log_pi(mu_v, var_v, actions_v):
+    #     # https://pytorch.org/docs/stable/generated/torch.clamp.html, clamp: 단단히 고정시키다.
+    #     p1 = - ((mu_v - actions_v) ** 2) / (2 * var_v.clamp(min=1e-3))
+    #     p2 = - torch.log(torch.sqrt(2 * math.pi * var_v))
+    #     return p1 + p2
+
+    # @staticmethod
+    # def calc_log_pi(mu_v, var_v, actions_v):
     #     n = Normal(mu_v, torch.sqrt(var_v))
-    #     log_prob = n.log_prob(actions_v)
-    #     return log_prob
+    #     log_pi = n.log_pi(actions_v)
+    #     return log_pi
