@@ -153,39 +153,18 @@ class EpsilonGreedyDDPGActionSelector:
         self.ou_enabled = ou_enabled
         self.scale_factor = scale_factor
 
-    def __call__(self, mu, agent_states, ou_rho=0.15, ou_mu=0.0, ou_dt=0.1, ou_sigma=0.2): #default ou_sigma = 0.2
+    def __call__(self, mu, agent_states, ou_theta=0.15, ou_mu=0.0, ou_sigma=0.2): #default ou_sigma = 0.2
         assert isinstance(mu, np.ndarray)
         actions = np.copy(mu)
         if isinstance(agent_states, list):
             agent_states = np.asarray(agent_states)
 
-        if self.ou_enabled:
-            # agent_states = 1.0       +    0.15 * (0.0 - 1.0)            + new_random
-            agent_states = agent_states + ou_rho * (ou_mu - agent_states) + ou_sigma * np.sqrt(ou_dt) * np.random.normal(size=actions.shape)
+        if self.ou_enabled and self.epsilon > 0.0:
+            # agent_states = 1.0       +    0.15 * (0.0 - 1.0)            + new_normal_random
+            agent_states = agent_states + ou_theta * (ou_mu - agent_states) + ou_sigma * np.random.normal(size=actions.shape)
+            actions = actions + self.epsilon * agent_states
 
-            noises = self.epsilon * agent_states
-            actions = actions + noises
-        else:
-            noises = np.zeros_like(actions)
-
-        new_agent_states = noises
-
-        return actions, new_agent_states
-
-    # def __call__(self, mu, agent_states, ou_enabled=True, ou_rho=0.15, ou_mu=0.0, ou_dt=0.1, ou_sigma=0.2):
-    #     assert isinstance(mu, np.ndarray)
-    #     actions = np.copy(mu)
-    #     if ou_enabled and self.epsilon > 0:
-    #         new_agent_states = []
-    #         for agent_state, action in zip(agent_states, actions):
-    #             #agent_state = np.zeros(shape=action.shape, dtype=np.float32)
-    #             agent_state += ou_rho * (ou_mu - actions)
-    #             agent_state += ou_sigma * np.sqrt(ou_dt) * np.random.normal(size=action.shape)
-    #             action += self.epsilon * agent_state
-    #             new_agent_states.append(agent_state)
-    #     else:
-    #         new_agent_states = agent_states
-    #     return actions, new_agent_states
+        return actions, agent_states
 
 
 class EpsilonGreedyD4PGActionSelector(ActionSelector):

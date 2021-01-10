@@ -4,6 +4,8 @@ import random
 from typing import Optional
 import numpy as np
 import math
+
+from gym.spaces import Box
 from matplotlib import pyplot as plt
 import gym
 import torch
@@ -167,9 +169,6 @@ def unpack_batch_for_a2c(batch, net, params, device='cpu'):
     return states_v, actions_v, target_action_values_v
 
 
-
-
-
 def remove_models(model_save_dir, env_name, agent):
     files = glob.glob(os.path.join(
         model_save_dir, "{0}_{1}_{2}_*.pth".format(env_name, agent.__name__, agent.model.__name__))
@@ -208,6 +207,19 @@ def load_model(model_save_dir, env_name, agent, step=None):
     model_params = torch.load(saved_model, map_location=device)
 
     agent.model.load_state_dict(model_params)
+
+
+def print_environment_info(env, params):
+    print(f"env: {params.ENVIRONMENT_ID}")
+    print(f"env.observation_space: {env.observation_space} and env.observation_space.shape: {env.observation_space.shape}")
+    if isinstance(env.observation_space, Box):
+        print(f"observation low: {[min_value for min_value in env.observation_space.low]}")
+        print(f"observation high: {[max_value for max_value in env.observation_space.high]}")
+
+    print(f"env.action_space: {env.action_space} and env.observation_space.shape: {env.action_space.shape}")
+    if isinstance(env.action_space, Box):
+        print(f"action low: {[min_value for min_value in env.action_space.low]}")
+        print(f"action high: {[max_value for max_value in env.action_space.high]}")
 
 
 if __name__=="__main__":
