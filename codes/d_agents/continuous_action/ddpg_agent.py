@@ -67,6 +67,7 @@ class AgentDDPG(BaseAgent):
         mu = mu_v.data.cpu().numpy()
 
         actions, new_agent_states = self.action_selector(mu, agent_states)
+
         actions = np.clip(actions, self.action_min, self.action_max)
         #####################################
 

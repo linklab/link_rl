@@ -108,14 +108,15 @@ class AgentContinuousA2C(BaseAgent):
 
         return gradients, loss_critic_v.item(), loss_actor_v.item() * -1.0
 
-    # @staticmethod
-    # def calc_log_prob(mu_v, var_v, actions_v):
-    #     p1 = - ((mu_v - actions_v) ** 2) / (2 * var_v.clamp(min=1e-3))
-    #     p2 = - torch.log(torch.sqrt(2 * math.pi * var_v))
-    #     return p1 + p2
-
     @staticmethod
     def calc_log_prob(mu_v, var_v, actions_v):
-        n = Normal(mu_v, torch.sqrt(var_v))
-        log_prob = n.log_prob(actions_v)
-        return log_prob
+        # https://pytorch.org/docs/stable/generated/torch.clamp.html, clamp: 단단히 고정시키다.
+        p1 = - ((mu_v - actions_v) ** 2) / (2 * var_v.clamp(min=1e-3))
+        p2 = - torch.log(torch.sqrt(2 * math.pi * var_v))
+        return p1 + p2
+
+    # @staticmethod
+    # def calc_log_prob(mu_v, var_v, actions_v):
+    #     n = Normal(mu_v, torch.sqrt(var_v))
+    #     log_prob = n.log_prob(actions_v)
+    #     return log_prob

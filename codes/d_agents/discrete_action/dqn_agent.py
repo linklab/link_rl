@@ -204,16 +204,16 @@ class AgentDQN(BaseAgent):
         # and to get rid of the extra dimensions that we created, respectively.
         # The index should have the same number of dimensions as the data we are processing.
         # In Figure 6.3, you can see an illustration of what gather() does on the example case, with a batch of six entries and four actions:
-        state_action_values = self.model(states_v).gather(1, actions_v.unsqueeze(-1)).squeeze(-1)
+        action_values = self.model(states_v).gather(1, actions_v.unsqueeze(-1)).squeeze(-1)
 
         with torch.no_grad():
             next_state_values = self.target_agent.target_model(next_states_v).max(1)[0]
             next_state_values[done_mask] = 0.0
 
-        target_state_action_values = next_state_values.detach() * (self.params.GAMMA ** last_steps_v) + rewards_v
+        target_action_values = next_state_values.detach() * (self.params.GAMMA ** last_steps_v) + rewards_v
 
-        # return nn.MSELoss()(state_action_values, target_state_action_values)
-        return F.smooth_l1_loss(state_action_values, target_state_action_values)
+        # return nn.MSELoss()(action_values, target_action_values)
+        return F.smooth_l1_loss(action_values, target_action_values)
 
     def calc_loss_double_dqn(self, batch):
         states, actions, rewards, dones, next_states, last_steps = self.unpack_batch(batch)
@@ -233,8 +233,8 @@ class AgentDQN(BaseAgent):
             last_steps_v = last_steps_v.cuda(non_blocking=True)
 
         actions_v = actions_v.unsqueeze(-1)
-        state_action_values = self.model(states_v).gather(1, actions_v)
-        state_action_values = state_action_values.squeeze(-1)
+        action_values = self.model(states_v).gather(1, actions_v)
+        action_values = action_values.squeeze(-1)
         with torch.no_grad():
             next_state_acts = self.model(next_states_v).max(1)[1]
             next_state_acts = next_state_acts.unsqueeze(-1)
@@ -243,8 +243,8 @@ class AgentDQN(BaseAgent):
 
         exp_sa_vals = next_state_vals.detach() * (self.params.GAMMA ** last_steps_v) + rewards_v
 
-        # return nn.MSELoss()(state_action_values, exp_sa_vals)
-        return F.smooth_l1_loss(state_action_values, exp_sa_vals)
+        # return nn.MSELoss()(action_values, exp_sa_vals)
+        return F.smooth_l1_loss(action_values, exp_sa_vals)
 
     def calc_loss_per_double_dqn(self, batch, batch_indices, batch_weights):
         if self.params.NEXT_STATE_IN_TRAJECTORY:
@@ -269,8 +269,8 @@ class AgentDQN(BaseAgent):
             batch_weights_v = batch_weights_v.cuda(non_blocking=True)
 
         actions_v = actions_v.unsqueeze(-1)
-        state_action_values = self.model(states_v).gather(1, actions_v)
-        state_action_values = state_action_values.squeeze(-1)
+        action_values = self.model(states_v).gather(1, actions_v)
+        action_values = action_values.squeeze(-1)
 
         with torch.no_grad():
             next_state_actions = self.model(next_states_v).max(1)[1]
@@ -278,9 +278,9 @@ class AgentDQN(BaseAgent):
             next_state_values = self.target_agent.target_model(next_states_v).gather(1, next_state_actions).squeeze(-1)
             next_state_values[done_mask] = 0.0
 
-            target_state_action_values = next_state_values.detach() * (self.params.GAMMA ** last_steps_v) + rewards_v
+            target_action_values = next_state_values.detach() * (self.params.GAMMA ** last_steps_v) + rewards_v
 
-        losses_each = F.smooth_l1_loss(state_action_values, target_state_action_values.detach(), reduction='none')
+        losses_each = F.smooth_l1_loss(action_values, target_action_values.detach(), reduction='none')
         weighted_losses_v = batch_weights_v.detach() * losses_each
 
         return weighted_losses_v.mean(), losses_each + 1e-5
@@ -299,8 +299,8 @@ class AgentDQN(BaseAgent):
             batch_weights_v = batch_weights_v.cuda(non_blocking=True)
 
         actions_v = actions_v.unsqueeze(-1)
-        state_action_values = self.model(states_v).gather(1, actions_v)
-        state_action_values = state_action_values.squeeze(-1)
+        action_values = self.model(states_v).gather(1, actions_v)
+        action_values = action_values.squeeze(-1)
 
         with torch.no_grad():
             # for double DQN
@@ -308,14 +308,14 @@ class AgentDQN(BaseAgent):
             next_state_actions = next_state_actions.unsqueeze(-1)
             next_state_values = self.target_agent.target_model(next_states_v).gather(1, next_state_actions).squeeze(-1)
 
-            target_state_action_values = self.calc_omega_return(
+            target_action_values = self.calc_omega_return(
                 rewards, done_mask, next_state_values.detach().cpu().numpy()
             )
-        target_state_action_values = torch.tensor(target_state_action_values, dtype=torch.float32)
+        target_action_values = torch.tensor(target_action_values, dtype=torch.float32)
         if self.device == torch.device("cuda"):
-            target_state_action_values = target_state_action_values.cuda(non_blocking=True)
+            target_action_values = target_action_values.cuda(non_blocking=True)
 
-        losses_each = F.smooth_l1_loss(state_action_values, target_state_action_values.detach(), reduction='none')
+        losses_each = F.smooth_l1_loss(action_values, target_action_values.detach(), reduction='none')
         weighted_losses_v = batch_weights_v.detach() * losses_each
 
         return weighted_losses_v.mean(), losses_each + 1e-5

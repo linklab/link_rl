@@ -61,18 +61,23 @@ def main(params):
     episode_reward_list = []
     episode_mean_loss_list = []
 
+    trajectory = []
+
     with RewardTracker(params=params, frame=False, stat=stat, early_stopping=None) as reward_tracker:
         while step_idx < params.MAX_GLOBAL_STEP:
             step_idx += params.TRAIN_STEP_FREQ
-            last_entry = agent.buffer.populate(params.TRAIN_STEP_FREQ)
+            last_experience = agent.buffer.populate(params.TRAIN_STEP_FREQ)
 
             if epsilon_tracker:
                 epsilon_tracker.udpate(step_idx)
 
-            episode_rewards = experience_source.pop_episode_reward_lst()
-
+            episode_rewards_and_done_step_lst = experience_source.pop_episode_reward_and_done_step_lst()
             solved = False
-            if episode_rewards:
+
+            if episode_rewards_and_done_step_lst:
+
+                episode_rewards, done_steps = zip(*episode_rewards_and_done_step_lst)
+
                 for current_episode_reward in episode_rewards:
                     epsilon = agent.action_selector.epsilon if hasattr(agent.action_selector, 'epsilon') else None
                     mean_loss = np.mean(loss_list) if len(loss_list) > 0 else 0.0
@@ -85,7 +90,7 @@ def main(params):
                     ##################################################
 
                     solved, mean_episode_reward = reward_tracker.set_episode_reward(
-                        current_episode_reward, step_idx, epsilon, last_info=last_entry.info,
+                        current_episode_reward, step_idx, epsilon, last_info=last_experience.info,
                         mean_loss=mean_loss, model=agent.model
                     )
 
@@ -100,14 +105,21 @@ def main(params):
             if solved:
                 break
 
-            if params.RL_ALGORITHM in [RLAlgorithmName.DDPG_FAST_V0, RLAlgorithmName.DQN_FAST_V0]:
+            if params.RL_ALGORITHM in [RLAlgorithmName.CONTINUOUS_PPO_FAST_V0]:
+                #print(last_experience[0])
+                trajectory.append(last_experience)
+                if len(trajectory) < params.TRAJECTORY_SIZE:
+                    continue
+            elif params.RL_ALGORITHM in [RLAlgorithmName.DDPG_FAST_V0, RLAlgorithmName.DQN_FAST_V0]:
                 if len(agent.buffer) < params.MIN_REPLAY_SIZE_FOR_TRAIN:
                     continue
             else:
                 if len(agent.buffer) < params.BATCH_SIZE:
                     continue
 
-            if params.RL_ALGORITHM in [
+            if params.RL_ALGORITHM in [RLAlgorithmName.CONTINUOUS_PPO_FAST_V0]:
+                _, last_loss, _ = agent.train_net(trajectory=trajectory)
+            elif params.RL_ALGORITHM in [
                 RLAlgorithmName.DDPG_FAST_V0,
                 RLAlgorithmName.DISCRETE_A2C_FAST_V0,
                 RLAlgorithmName.CONTINUOUS_A2C_FAST_V0
