@@ -142,3 +142,4 @@ codes/1.environments/trade/raw_data
 
 *.para
 *.local
+*.dump
