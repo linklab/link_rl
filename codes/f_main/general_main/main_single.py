@@ -15,7 +15,7 @@ if PROJECT_HOME not in sys.path:
     sys.path.append(PROJECT_HOME)
 
 from codes.e_utils import rl_utils
-from codes.e_utils.common_utils import save_model
+from codes.e_utils.common_utils import save_model, print_environment_info
 from codes.e_utils.experience_single import ExperienceSourceSingleEnvFirstLast
 from codes.e_utils.experience_tracker import RewardTracker
 from codes.e_utils.logger import get_logger
@@ -37,15 +37,13 @@ my_logger = get_logger("openai_pendulum_ddpg")
 
 def main(params):
     env = rl_utils.get_environment(owner="actual_worker", params=params)
-    print("env:", params.ENVIRONMENT_ID)
-    print("observation_space:", env.observation_space)
-    print("action_space:", env.action_space)
+    print_environment_info(env, params)
 
     agent, epsilon_tracker = rl_utils.get_rl_agent(env=env, worker_id=0, params=params, device=device)
 
     if params.DEEP_LEARNING_MODEL in [
-        DeepLearningModelName.DETERMINISTIC_ACTOR_CRITIC_GRU,
-        DeepLearningModelName.DETERMINISTIC_ACTOR_CRITIC_GRU_ATTENTION
+        DeepLearningModelName.DETERMINISTIC_CONTINUOUS_ACTOR_CRITIC_GRU,
+        DeepLearningModelName.DETERMINISTIC_CONTINUOUS_ACTOR_CRITIC_GRU_ATTENTION
     ]:
         step_length = params.RNN_STEP_LENGTH
     else:
@@ -136,6 +134,7 @@ def main(params):
         with open('episode_mean_loss_list.dump', 'wb') as f:
             pickle.dump(episode_mean_loss_list, f)
         ##################################################
+
 
 if __name__ == "__main__":
     from codes.a_config.parameters import PARAMETERS as parameters

@@ -165,6 +165,7 @@ def get_environment(owner="chief", params=None):
         )
         env.start()
     elif params.ENVIRONMENT_ID == EnvironmentName.MINITAUR_BULLET_V0:
+        import pybullet_envs
         spec = gym.envs.registry.spec("MinitaurBulletEnv-v0")
         spec._kwargs['render'] = params.ENV_RENDER
         env = gym.make("MinitaurBulletEnv-v0")
@@ -174,7 +175,7 @@ def get_environment(owner="chief", params=None):
 
 
 def get_rl_model(worker_id, input_shape=None, num_outputs=None, params=None, device=None):
-    if params.DEEP_LEARNING_MODEL == DeepLearningModelName.CONTINUOUS_ACTOR_CRITIC_MLP:
+    if params.DEEP_LEARNING_MODEL == DeepLearningModelName.STOCHASTIC_CONTINUOUS_ACTOR_CRITIC_MLP:
         model = StochasticActorCriticModel(
             worker_id=worker_id,
             input_shape=input_shape,
@@ -182,7 +183,7 @@ def get_rl_model(worker_id, input_shape=None, num_outputs=None, params=None, dev
             params=params,
             device=device
         )
-    elif params.DEEP_LEARNING_MODEL == DeepLearningModelName.DISCRETE_ACTOR_CRITIC_MLP:
+    elif params.DEEP_LEARNING_MODEL == DeepLearningModelName.STOCHASTIC_DISCRETE_ACTOR_CRITIC_MLP:
         model = DiscreteActorCriticModel(
             worker_id=worker_id,
             input_shape=input_shape,
@@ -190,7 +191,7 @@ def get_rl_model(worker_id, input_shape=None, num_outputs=None, params=None, dev
             params=params,
             device=device
         ).to(device)
-    elif params.DEEP_LEARNING_MODEL == DeepLearningModelName.DETERMINISTIC_ACTOR_CRITIC_MLP:
+    elif params.DEEP_LEARNING_MODEL == DeepLearningModelName.DETERMINISTIC_CONTINUOUS_ACTOR_CRITIC_MLP:
         model = DeterministicActorCriticModel(
             worker_id=worker_id,
             input_shape=input_shape,

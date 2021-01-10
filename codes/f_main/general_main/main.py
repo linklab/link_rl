@@ -43,8 +43,8 @@ print("action_space:", env.action_space)
 
 def play_func(exp_queue, agent, epsilon_tracker):
     if params.DEEP_LEARNING_MODEL in [
-        DeepLearningModelName.DETERMINISTIC_ACTOR_CRITIC_GRU,
-        DeepLearningModelName.DETERMINISTIC_ACTOR_CRITIC_GRU_ATTENTION
+        DeepLearningModelName.DETERMINISTIC_CONTINUOUS_ACTOR_CRITIC_GRU,
+        DeepLearningModelName.DETERMINISTIC_CONTINUOUS_ACTOR_CRITIC_GRU_ATTENTION
     ]:
         step_length = params.RNN_STEP_LENGTH
     else:

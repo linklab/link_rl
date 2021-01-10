@@ -159,10 +159,9 @@ class EpsilonGreedyDDPGActionSelector:
         if isinstance(agent_states, list):
             agent_states = np.asarray(agent_states)
 
-        if self.ou_enabled:
+        if self.ou_enabled and self.epsilon > 0.0:
             # agent_states = 1.0       +    0.15 * (0.0 - 1.0)            + new_normal_random
             agent_states = agent_states + ou_theta * (ou_mu - agent_states) + ou_sigma * np.random.normal(size=actions.shape)
-
             actions = actions + self.epsilon * agent_states
 
         return actions, agent_states

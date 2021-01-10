@@ -92,7 +92,7 @@ def print_configuration(env, rl_model, params):
         ))
     elif params.DEEP_LEARNING_MODEL in (
             DeepLearningModelName.ACTOR_CRITIC_MLP,
-            DeepLearningModelName.DETERMINISTIC_ACTOR_CRITIC_MLP
+            DeepLearningModelName.DETERMINISTIC_CONTINUOUS_ACTOR_CRITIC_MLP
     ):
         print(" s_size: {0}, hidden_1: {1}, hidden_2: {2}, hidden_3: {3}, a_size: {4}, continuous: {5}".format(
             rl_model.s_size,
@@ -100,7 +100,7 @@ def print_configuration(env, rl_model, params):
             rl_model.hidden_2_size,
             rl_model.hidden_3_size,
             rl_model.a_size,
-            True if params.DEEP_LEARNING_MODEL == DeepLearningModelName.DETERMINISTIC_ACTOR_CRITIC_MLP else False
+            True if params.DEEP_LEARNING_MODEL == DeepLearningModelName.DETERMINISTIC_CONTINUOUS_ACTOR_CRITIC_MLP else False
         ))
     elif params.DEEP_LEARNING_MODEL == DeepLearningModelName.NO_MODEL:
         pass
