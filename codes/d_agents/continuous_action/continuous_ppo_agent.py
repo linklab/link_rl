@@ -96,8 +96,8 @@ class AgentContinuousPPO(BaseAgent):
         count_steps = 0
 
         for epoch in range(self.params.PPO_K_EPOCHS):
-            for batch_offset in range(0, len(trajectory), self.params.TRAJECTORY_BATCH_SIZE):
-                batch_l = batch_offset + self.params.TRAJECTORY_BATCH_SIZE
+            for batch_offset in range(0, len(trajectory), self.params.PPO_TRAJECTORY_BATCH_SIZE):
+                batch_l = batch_offset + self.params.PPO_TRAJECTORY_BATCH_SIZE
 
                 batch_states_v = trajectory_states_v[batch_offset:batch_l]
                 batch_actions_v = trajectory_actions_v[batch_offset:batch_l]
@@ -175,7 +175,7 @@ class AgentContinuousPPO(BaseAgent):
                 last_gae = delta
             else:
                 delta = exp.reward + self.params.GAMMA * next_value - value
-                last_gae = delta + self.params.GAMMA * self.params.GAE_LAMBDA * last_gae
+                last_gae = delta + self.params.GAMMA * self.params.PPO_GAE_LAMBDA * last_gae
             result_advantages.append(last_gae)
             result_target_action_values.append(last_gae + value)
 

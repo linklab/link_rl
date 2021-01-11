@@ -108,7 +108,7 @@ def main(params):
             if params.RL_ALGORITHM in [RLAlgorithmName.CONTINUOUS_PPO_FAST_V0]:
                 #print(last_experience[0])
                 trajectory.append(last_experience)
-                if len(trajectory) < params.TRAJECTORY_SIZE:
+                if len(trajectory) < params.PPO_TRAJECTORY_SIZE:
                     continue
             elif params.RL_ALGORITHM in [RLAlgorithmName.DDPG_FAST_V0, RLAlgorithmName.DQN_FAST_V0]:
                 if len(agent.buffer) < params.MIN_REPLAY_SIZE_FOR_TRAIN:

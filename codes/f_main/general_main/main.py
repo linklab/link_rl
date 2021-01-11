@@ -85,6 +85,11 @@ def play_func(exp_queue, agent, epsilon_tracker):
                     if solved:
                         break
 
+        if params.SAVE_AT_MAX_GLOBAL_STEPS:
+            save_model(
+                MODEL_SAVE_DIR, params.ENVIRONMENT_ID.value, agent, step_idx, mean_episode_reward
+            )
+
     exp_queue.put(None)
 
 
@@ -100,6 +105,8 @@ def main():
     time.sleep(0.5)
 
     step_idx = 0
+    trajectory = []
+    exp = None
 
     while play_proc.is_alive():
         step_idx += params.TRAIN_STEP_FREQ
@@ -110,10 +117,32 @@ def main():
                 break
             agent.buffer._add(exp)
 
-        if len(agent.buffer) < params.BATCH_SIZE:
-            continue
+        if params.RL_ALGORITHM in [RLAlgorithmName.CONTINUOUS_PPO_FAST_V0]:
+            # print(last_experience[0])
+            assert params.TRAIN_STEP_FREQ == 1 and exp is not None
+            trajectory.append(exp)
+            if len(trajectory) < params.PPO_TRAJECTORY_SIZE:
+                continue
+        elif params.RL_ALGORITHM in [RLAlgorithmName.DDPG_FAST_V0, RLAlgorithmName.DQN_FAST_V0]:
+            if len(agent.buffer) < params.MIN_REPLAY_SIZE_FOR_TRAIN:
+                continue
+        else:
+            if len(agent.buffer) < params.BATCH_SIZE:
+                continue
 
-        agent.train_net(step_idx=step_idx)
+        if params.RL_ALGORITHM in [RLAlgorithmName.CONTINUOUS_PPO_FAST_V0]:
+            _, last_loss, _ = agent.train_net(trajectory=trajectory)
+            trajectory.clear()
+        elif params.RL_ALGORITHM in [
+            RLAlgorithmName.DDPG_FAST_V0,
+            RLAlgorithmName.DISCRETE_A2C_FAST_V0,
+            RLAlgorithmName.CONTINUOUS_A2C_FAST_V0
+        ]:
+            _, last_loss, _ = agent.train_net(step_idx=step_idx)
+        elif params.RL_ALGORITHM == RLAlgorithmName.DQN_FAST_V0:
+            _, last_loss = agent.train_net(step_idx=step_idx)
+        else:
+            raise ValueError()
 
 
 if __name__ == "__main__":
