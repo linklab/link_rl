@@ -127,7 +127,7 @@ class ExperienceSourceSingleEnv:
         return r
 
     def pop_episode_reward_and_done_step_lst(self):
-        res = list(zip(self.episode_reward_lst, self.episode_done_step_lst))
+        res = self.episode_reward_lst, self.episode_done_step_lst
         if res:
             self.episode_reward_lst = []
             self.episode_done_step_lst = []

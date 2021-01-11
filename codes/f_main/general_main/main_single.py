@@ -2,7 +2,7 @@
 # https://mspries.github.io/jimmy_pendulum.html
 #!/usr/bin/env python3
 import pickle
-
+import wandb
 import torch
 import os, sys
 import numpy as np
@@ -36,6 +36,8 @@ my_logger = get_logger("openai_pendulum_ddpg")
 
 
 def main(params):
+    wandb.init(project=params.wandb_project, entity=params.wandb_entity)
+
     env = rl_utils.get_environment(owner="actual_worker", params=params)
     print_environment_info(env, params)
 
@@ -58,10 +60,12 @@ def main(params):
     stat = None
     step_idx = 0
     loss_list = []
-    episode_reward_list = []
-    episode_mean_loss_list = []
 
     trajectory = []
+    previous_done_step = 0
+    solved = False
+
+    wandb.watch(agent.model.base)
 
     with RewardTracker(params=params, frame=False, stat=stat, early_stopping=None) as reward_tracker:
         while step_idx < params.MAX_GLOBAL_STEP:
@@ -71,23 +75,20 @@ def main(params):
             if epsilon_tracker:
                 epsilon_tracker.udpate(step_idx)
 
-            episode_rewards_and_done_step_lst = experience_source.pop_episode_reward_and_done_step_lst()
-            solved = False
+            episode_rewards, done_steps = experience_source.pop_episode_reward_and_done_step_lst()
 
-            if episode_rewards_and_done_step_lst:
-
-                episode_rewards, done_steps = zip(*episode_rewards_and_done_step_lst)
-
-                for current_episode_reward in episode_rewards:
+            if episode_rewards and done_steps:
+                for current_episode_reward, done_step in zip(episode_rewards, done_steps):
                     epsilon = agent.action_selector.epsilon if hasattr(agent.action_selector, 'epsilon') else None
                     mean_loss = np.mean(loss_list) if len(loss_list) > 0 else 0.0
 
-                    ##################################################
-                    #####  FOR PAPER
-                    ##################################################
-                    episode_reward_list.append(current_episode_reward)
-                    episode_mean_loss_list.append(mean_loss)
-                    ##################################################
+                    wandb.log({
+                        "episode reward": current_episode_reward,
+                        "episode mean loss": mean_loss,
+                        "epiosde steps": done_step - previous_done_step
+                    })
+
+                    previous_done_step = done_step
 
                     solved, mean_episode_reward = reward_tracker.set_episode_reward(
                         episode_reward=current_episode_reward, episode_done_step=step_idx, epsilon=epsilon,
@@ -137,18 +138,10 @@ def main(params):
                 MODEL_SAVE_DIR, params.ENVIRONMENT_ID.value, agent, step_idx, mean_episode_reward
             )
 
-        ##################################################
-        #####  FOR PAPER
-        ##################################################
-        with open('episode_reward_list.dump', 'wb') as f:
-            pickle.dump(episode_reward_list, f)
-
-        with open('episode_mean_loss_list.dump', 'wb') as f:
-            pickle.dump(episode_mean_loss_list, f)
-        ##################################################
-
 
 if __name__ == "__main__":
     from codes.a_config.parameters import PARAMETERS as parameters
+
     params = parameters
     main(params)
+
