@@ -40,7 +40,7 @@ def play_main(params):
     print("observation_space:", env.observation_space)
     print("action_space:", env.action_space)
 
-    agent, epsilon_tracker = rl_utils.get_rl_agent(env=env, worker_id=0, params=params, device=device)
+    agent, _ = rl_utils.get_rl_agent(env=env, worker_id=0, params=params, device=device)
 
     load_model(MODEL_ZOO_SAVE_DIR, params.ENVIRONMENT_ID.value, agent)
 
@@ -51,7 +51,8 @@ def play_main(params):
             )
         elif params.RL_ALGORITHM == RLAlgorithmName.DDPG_FAST_V0:
             action_selector = EpsilonGreedySomeTimesBlowDDPGActionSelector(
-                epsilon=0.0, ou_enabled=False, scale_factor=params.ACTION_SCALE
+                epsilon=0.0, ou_enabled=False, scale_factor=params.ACTION_SCALE,
+                min_blowing_action=-10.0 * params.ACTION_SCALE, max_blowing_action=10.0 * params.ACTION_SCALE
             )
         else:
             raise ValueError()
