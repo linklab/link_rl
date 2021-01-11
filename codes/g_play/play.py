@@ -7,7 +7,8 @@ import os, sys
 import numpy as np
 
 from codes.e_utils.actions import EpsilonGreedySomeTimesBlowDQNActionSelector, \
-    EpsilonGreedySomeTimesBlowDDPGActionSelector, ArgmaxActionSelector, EpsilonGreedyDDPGActionSelector
+    EpsilonGreedySomeTimesBlowDDPGActionSelector, ArgmaxActionSelector, EpsilonGreedyDDPGActionSelector, \
+    ContinuousNormalActionSelector
 
 print("PyTorch Version", torch.__version__)
 
@@ -55,7 +56,9 @@ def play_main(params):
         else:
             raise ValueError()
     else:
-        if params.RL_ALGORITHM == RLAlgorithmName.DQN_FAST_V0:
+        if params.RL_ALGORITHM == RLAlgorithmName.CONTINUOUS_PPO_FAST_V0:
+            action_selector = ContinuousNormalActionSelector()
+        elif params.RL_ALGORITHM == RLAlgorithmName.DQN_FAST_V0:
             action_selector = ArgmaxActionSelector()
         elif params.RL_ALGORITHM == RLAlgorithmName.DDPG_FAST_V0:
             action_selector = EpsilonGreedyDDPGActionSelector(

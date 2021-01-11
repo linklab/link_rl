@@ -90,8 +90,8 @@ def main(params):
                     ##################################################
 
                     solved, mean_episode_reward = reward_tracker.set_episode_reward(
-                        current_episode_reward, step_idx, epsilon, last_info=last_experience.info,
-                        mean_loss=mean_loss, model=agent.model
+                        episode_reward=current_episode_reward, episode_done_step=step_idx, epsilon=epsilon,
+                        last_info=last_experience.info, mean_loss=mean_loss, model=agent.model
                     )
 
                     loss_list.clear()
@@ -100,8 +100,7 @@ def main(params):
                         save_model(
                             MODEL_SAVE_DIR, params.ENVIRONMENT_ID.value, agent, step_idx, mean_episode_reward
                         )
-                        if solved:
-                            break
+                        break
             if solved:
                 break
 
