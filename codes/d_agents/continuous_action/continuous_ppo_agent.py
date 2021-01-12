@@ -108,7 +108,7 @@ class AgentContinuousPPO(BaseAgent):
                 batch_log_pi_v = self.calc_log_pi(
                     batch_mu_v, self.model.base.actor.logstd, batch_actions_v
                 )
-                batch_ratio_v = torch.exp(batch_log_pi_v - batch_old_log_pi_v)
+                batch_ratio_v = torch.exp(batch_log_pi_v - batch_old_log_pi_v).to(self.device)
                 batch_surrogate_v = batch_advantage_v * batch_ratio_v
                 batch_clipped_ratio_v = torch.clamp(
                     batch_ratio_v, min=1.0 - self.params.PPO_EPSILON_CLIP, max=1.0 + self.params.PPO_EPSILON_CLIP
@@ -145,9 +145,10 @@ class AgentContinuousPPO(BaseAgent):
     #     p2 = - torch.log(torch.sqrt(2 * math.pi * var_v))
     #     return p1 + p2
 
-    def calc_log_pi(self, mu_v, logstd_v, actions_v):
-        p1 = - ((mu_v - actions_v) ** 2) / (2 * torch.exp(logstd_v).clamp(min=1e-3)).to(self.device)
-        p2 = - torch.log(torch.sqrt(2 * math.pi * torch.exp(logstd_v))).to(self.device)
+    @staticmethod
+    def calc_log_pi(mu_v, logstd_v, actions_v):
+        p1 = - ((mu_v - actions_v) ** 2) / (2 * torch.exp(logstd_v).clamp(min=1e-3))
+        p2 = - torch.log(torch.sqrt(2 * math.pi * torch.exp(logstd_v)))
         return p1 + p2
 
     def get_advantage_and_target_action_values(self, trajectory, states_v, device="cpu"):
