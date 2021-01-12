@@ -330,7 +330,6 @@ class RotaryInvertedPendulumEnv(gym.Env):
             self.simulation_time = self.plant.getHistory()
         elif self.pendulum_type == EnvironmentName.REAL_DEVICE_RIP:
             rip_response = self.server_obj.step(RipRequest(value=action))
-
             self.motor_position = rip_response.arm_angle
             self.motor_velocity = rip_response.arm_velocity
             self.pendulum_1_position = rip_response.link_1_angle

@@ -6,7 +6,6 @@ from torch import optim
 import os, sys
 import pybullet_envs
 
-from codes.b_environments.real_device.real_rip_env import RealRotaryInvertedPendulumEnv
 from codes.d_agents.continuous_action.continuous_a2c_agent import AgentContinuousA2C
 from codes.d_agents.continuous_action.continuous_ppo_agent import AgentContinuousPPO
 from codes.d_agents.discrete_action.discrete_a2c_agent import AgentDiscreteA2C
@@ -19,9 +18,10 @@ if PROJECT_HOME not in sys.path:
 
 from codes.a_config.parameters import PARAMETERS as params
 
-from codes.b_environments.real_device.environment_rip import EnvironmentRIP
+from codes.b_environments.quanser_rotary_inverted_pendulum.environment_rip import EnvironmentRIP
 from codes.b_environments.unity.chaser_unity import Chaser_v1
 from codes.b_environments.unity.drone_racing import Drone_Racing
+from codes.b_environments.rotary_inverted_pendulum.rip import RotaryInvertedPendulumEnv
 
 from codes.c_models.continuous_action.deterministic_actor_critic_model import DeterministicActorCriticModel
 from codes.c_models.continuous_action.stochastic_actor_critic_model import StochasticActorCriticModel
@@ -36,11 +36,7 @@ from codes.e_utils.common_utils import make_atari_env
 from codes.e_utils.names import EnvironmentName, DeepLearningModelName, RLAlgorithmName, OptimizerName
 
 
-if params.MY_PLATFORM != "REAL_RIP_PLATFORM":
-    from codes.b_environments.real_device.environment_double_rip import EnvironmentDoubleRIP
 
-if params.MY_PLATFORM != "REAL_RIP_PLATFORM":
-    from codes.b_environments.rotary_inverted_pendulum.rip import RotaryInvertedPendulumEnv
 
 def get_environment(owner="cheif", params=None):
     if params.ENVIRONMENT_ID == EnvironmentName.REAL_DEVICE_RIP:
