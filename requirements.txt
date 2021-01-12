@@ -160,7 +160,7 @@ scipy==1.4.1
 Send2Trash==1.5.0
 service-identity==17.0.0
 simple-crypt==4.1.7
-six==1.12.0
+six==1.15.0
 smart-open==1.11.1
 soynlp==0.0.493
 spacy==2.3.2
