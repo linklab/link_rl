@@ -195,7 +195,7 @@ def get_rl_model(worker_id, input_shape=None, num_outputs=None, params=None, dev
             num_outputs=num_outputs,
             params=params,
             device=device
-        )
+        ).to(device)
     elif params.DEEP_LEARNING_MODEL == DeepLearningModelName.STOCHASTIC_DISCRETE_ACTOR_CRITIC_MLP:
         model = DiscreteActorCriticModel(
             worker_id=worker_id,
