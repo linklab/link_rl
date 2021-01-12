@@ -10,10 +10,11 @@ import torch.multiprocessing as mp
 from torch import optim
 import os
 
-from common.environments import MatlabRotaryInvertedPendulumEnv
 print(torch.__version__)
+from dummy_env import dummy_env
 
-from common.fast_rl import actions, value_based_model, rl_agent, experience_single, replay_buffer
+from common.fast_rl import actions, policy_based_model, rl_agent, value_based_model, experience_single, \
+    replay_buffer
 from common.fast_rl.common import statistics, utils
 from codes.a_config.parameters import PARAMETERS as params
 
@@ -29,13 +30,13 @@ if not os.path.exists(MODEL_SAVE_DIR):
 os.environ['KMP_DUPLICATE_LIB_OK'] = 'True'
 
 if torch.cuda.is_available():
-    device = torch.device("cuda" if params.CUDA else "cpu")
+    device = torch.device("cuda")
 else:
     device = torch.device("cpu")
 
 
 def play_func(exp_queue, env, net):
-    env.start()
+    env.reset()
     action_selector = actions.EpsilonGreedyDQNActionSelector(epsilon=params.EPSILON_INIT)
 
     epsilon_tracker = actions.EpsilonTracker(
@@ -46,6 +47,7 @@ def play_func(exp_queue, env, net):
     )
 
     agent = rl_agent.DQNAgent(net, action_selector, device=device)
+
     experience_source = experience_single.ExperienceSourceSingleEnvFirstLast(
         env, agent, params.GAMMA, steps_count=params.N_STEP
     )
@@ -56,7 +58,7 @@ def play_func(exp_queue, env, net):
     frame_idx = 0
     next_save_frame_idx = params.MODEL_SAVE_STEP_PERIOD
 
-    with utils.RewardTracker(params=params, frame=False, stat=stat) as reward_tracker:
+    with utils.RewardTracker(params=params, frame=True, stat=stat) as reward_tracker:
         while frame_idx < params.MAX_GLOBAL_STEP:
             frame_idx += 1
             exp = next(exp_source_iter)
@@ -85,16 +87,19 @@ def main():
     mp.set_start_method('spawn')
 
     # env = gym.make(env_name)
-    env = MatlabRotaryInvertedPendulumEnv()
+    env = dummy_env()
 
-    net = value_based_model.DuelingDQNMLP(
-        obs_size=4,
-        hidden_size_1=128, hidden_size_2=128,
-        n_actions=7
+    net = policy_based_model.DDPGGruAttentionActor(
+        obs_size=1,
+        hidden_size=128,
+        n_actions=2,
+        bidirectional=False,
+        scale=1
     ).to(device)
 
     print(net)
     print(env)
+
     tgt_net = rl_agent.TargetNet(net)
 
     buffer = replay_buffer.PrioReplayBuffer(experience_source=None, buffer_size=params.REPLAY_BUFFER_SIZE)

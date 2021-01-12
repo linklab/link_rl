@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 import sys
 
+from codes.e_utils import rl_utils
 from codes.e_utils.names import PROJECT_HOME
 
 sys.path.insert(0,"c:\\users\\wlckd\\anaconda3\\envs\\link_rl\\lib\\site-packages")
@@ -27,13 +28,13 @@ if not os.path.exists(MODEL_SAVE_DIR):
 os.environ['KMP_DUPLICATE_LIB_OK'] = 'True'
 
 if torch.cuda.is_available():
-    device = torch.device("cuda" if params.CUDA else "cpu")
+    device = torch.device("cuda")
 else:
     device = torch.device("cpu")
 
 
 def main():
-    env = MatlabRotaryInvertedPendulumEnv()
+    env = rl_utils.get_environment(owner="worker", params=params)
 
     net = value_based_model.DuelingDQNMLP(
         obs_size=4,
@@ -41,8 +42,6 @@ def main():
         n_actions=7
     ).to(device)
 
-    print(net)
-    print(env)
     tgt_net = rl_agent.TargetNet(net)
 
     buffer = replay_buffer.PrioReplayBuffer(experience_source=None, buffer_size=params.REPLAY_BUFFER_SIZE)
@@ -51,7 +50,6 @@ def main():
     stat_for_value_based_rl = statistics.StatisticsForValueBasedRL(method="nature_dqn")
     stat_for_model_loss = statistics.StatisticsForValueBasedOptimization()
 
-    env.start()
     action_selector = actions.EpsilonGreedyDQNActionSelector(epsilon=params.EPSILON_INIT)
 
     epsilon_tracker = actions.EpsilonTracker(

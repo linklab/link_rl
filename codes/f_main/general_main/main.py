@@ -29,7 +29,7 @@ if not os.path.exists(MODEL_SAVE_DIR):
 os.environ['KMP_DUPLICATE_LIB_OK'] = 'True'
 
 if torch.cuda.is_available():
-    device = torch.device("cuda" if params.CUDA else "cpu")
+    device = torch.device("cuda")
 else:
     device = torch.device("cpu")
 
@@ -42,8 +42,8 @@ print("action_space:", env.action_space)
 
 def play_func(exp_queue, agent, epsilon_tracker):
     if params.DEEP_LEARNING_MODEL in [
-        DeepLearningModelName.DETERMINISTIC_ACTOR_CRITIC_GRU,
-        DeepLearningModelName.DETERMINISTIC_ACTOR_CRITIC_GRU_ATTENTION
+        DeepLearningModelName.DETERMINISTIC_CONTINUOUS_ACTOR_CRITIC_GRU,
+        DeepLearningModelName.DETERMINISTIC_CONTINUOUS_ACTOR_CRITIC_GRU_ATTENTION
     ]:
         step_length = params.RNN_STEP_LENGTH
     else:
@@ -71,17 +71,23 @@ def play_func(exp_queue, agent, epsilon_tracker):
             if episode_rewards:
                 current_episode_reward = episode_rewards[0]
 
+                epsilon = agent.action_selector.epsilon if hasattr(agent.action_selector, 'epsilon') else None
+
                 solved, mean_episode_reward = reward_tracker.set_episode_reward(
-                    current_episode_reward, step_idx, epsilon=agent.action_selector.epsilon, last_info=exp.info,
-                    model=agent.model
+                    current_episode_reward, step_idx, epsilon=epsilon, last_info=exp.info, model=agent.model
                 )
 
                 if solved:
                     save_model(
-                        MODEL_SAVE_DIR, params.ENVIRONMENT_ID.value, agent.model, step_idx, mean_episode_reward
+                        MODEL_SAVE_DIR, params.ENVIRONMENT_ID.value, agent, step_idx, mean_episode_reward
                     )
                     if solved:
                         break
+
+        if params.SAVE_AT_MAX_GLOBAL_STEPS:
+            save_model(
+                MODEL_SAVE_DIR, params.ENVIRONMENT_ID.value, agent, step_idx, mean_episode_reward
+            )
 
     exp_queue.put(None)
 
@@ -89,7 +95,7 @@ def play_func(exp_queue, agent, epsilon_tracker):
 def main():
     mp.set_start_method('spawn')
 
-    agent, epsilon_tracker = rl_utils.get_rl_agent(env=env, worker_id=0, params=params)
+    agent, epsilon_tracker = rl_utils.get_rl_agent(env=env, worker_id=0, params=params, device=device)
 
     exp_queue = mp.Queue(maxsize=params.TRAIN_STEP_FREQ * 2)
     play_proc = mp.Process(target=play_func, args=(exp_queue, agent, epsilon_tracker))
@@ -98,6 +104,8 @@ def main():
     time.sleep(0.5)
 
     step_idx = 0
+    trajectory = []
+    exp = None
 
     while play_proc.is_alive():
         step_idx += params.TRAIN_STEP_FREQ
@@ -108,10 +116,32 @@ def main():
                 break
             agent.buffer._add(exp)
 
-        if len(agent.buffer) < params.MIN_REPLAY_SIZE_FOR_TRAIN:
-            continue
+        if params.RL_ALGORITHM in [RLAlgorithmName.CONTINUOUS_PPO_FAST_V0]:
+            # print(last_experience[0])
+            assert params.TRAIN_STEP_FREQ == 1 and exp is not None
+            trajectory.append(exp)
+            if len(trajectory) < params.PPO_TRAJECTORY_SIZE:
+                continue
+        elif params.RL_ALGORITHM in [RLAlgorithmName.DDPG_FAST_V0, RLAlgorithmName.DQN_FAST_V0]:
+            if len(agent.buffer) < params.MIN_REPLAY_SIZE_FOR_TRAIN:
+                continue
+        else:
+            if len(agent.buffer) < params.BATCH_SIZE:
+                continue
 
-        agent.train_net(step_idx=step_idx)
+        if params.RL_ALGORITHM in [RLAlgorithmName.CONTINUOUS_PPO_FAST_V0]:
+            _, last_loss, _ = agent.train_net(trajectory=trajectory)
+            trajectory.clear()
+        elif params.RL_ALGORITHM in [
+            RLAlgorithmName.DDPG_FAST_V0,
+            RLAlgorithmName.DISCRETE_A2C_FAST_V0,
+            RLAlgorithmName.CONTINUOUS_A2C_FAST_V0
+        ]:
+            _, last_loss, _ = agent.train_net(step_idx=step_idx)
+        elif params.RL_ALGORITHM == RLAlgorithmName.DQN_FAST_V0:
+            _, last_loss = agent.train_net(step_idx=step_idx)
+        else:
+            raise ValueError()
 
 
 if __name__ == "__main__":

@@ -282,7 +282,7 @@ def get_rl_algorithm(env, worker_id=0, logger=False, params=None):
             device=device,
             verbose=params.VERBOSE
         )
-    elif params.RL_ALGORITHM == RLAlgorithmName.PPO_FAST_V0:
+    elif params.RL_ALGORITHM == RLAlgorithmName.CONTINUOUS_PPO_FAST_V0:
         rl_algorithm = PPO_FAST_v0(
             env=env,
             worker_id=worker_id,
@@ -291,7 +291,7 @@ def get_rl_algorithm(env, worker_id=0, logger=False, params=None):
             device=device,
             verbose=params.VERBOSE
         )
-    elif params.RL_ALGORITHM == RLAlgorithmName.PPO_V0:
+    elif params.RL_ALGORITHM == RLAlgorithmName.CONTINUOUS_PPO_FAST_V0:
         rl_algorithm = PPO_v0(
             env=env,
             worker_id=worker_id,

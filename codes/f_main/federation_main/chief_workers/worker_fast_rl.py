@@ -30,7 +30,7 @@ if not os.path.exists(MODEL_SAVE_DIR):
     os.makedirs(MODEL_SAVE_DIR)
 
 if torch.cuda.is_available():
-    device = torch.device("cuda" if params.CUDA else "cpu")
+    device = torch.device("cuda")
 else:
     device = torch.device("cpu")
 
@@ -45,12 +45,7 @@ class WorkerFastRL:
         print("observation_space:", self.env.observation_space)
         print("action_space:", self.env.action_space)
 
-        if params.ENVIRONMENT_ID in [EnvironmentName.PENDULUM_MATLAB_V0, EnvironmentName.PENDULUM_MATLAB_DOUBLE_RIP_V0]:
-            self.env.start()
-
-        self.agent, self.epsilon_tracker = rl_utils.get_rl_agent(
-            env=self.env, worker_id=0, params=params, device=device
-        )
+        self.agent, self.epsilon_tracker = rl_utils.get_rl_agent(env=self.env, worker_id=0, params=params, device=device)
 
         self.episode_reward = 0
 
@@ -109,11 +104,6 @@ class WorkerFastRL:
     def start_train(self):
         params.BATCH_SIZE *= params.TRAIN_STEP_FREQ
 
-        if torch.cuda.is_available():
-            device = torch.device("cuda" if params.CUDA else "cpu")
-        else:
-            device = torch.device("cpu")
-
         if params.RL_ALGORITHM in [RLAlgorithmName.DQN_FAST_V0]:
             if params.ENVIRONMENT_ID in [EnvironmentName.PENDULUM_MATLAB_V0]:
                 action_selector = EpsilonGreedySomeTimesBlowDQNActionSelector(
@@ -144,7 +134,7 @@ class WorkerFastRL:
         self.agent.set_experience_source_to_buffer(experience_source=experience_source)
 
         step_idx = 0
-        last_loss = 0.0
+        loss_list = []
         episode = 0
         stat = None
 
@@ -153,7 +143,9 @@ class WorkerFastRL:
                 # 1 스텝 진행하고 exp를 exp_queue에 넣음
                 step_idx += params.TRAIN_STEP_FREQ
                 last_entry = self.agent.buffer.populate(params.TRAIN_STEP_FREQ)
-                self.epsilon_tracker.udpate(step_idx)
+
+                if self.epsilon_tracker:
+                    self.epsilon_tracker.udpate(step_idx)
 
                 ###################  TRAIN!!!
                 actor_objective = None
@@ -164,21 +156,24 @@ class WorkerFastRL:
                     gradients, loss, actor_objective = self.agent.train_net(step_idx=step_idx)
                 else:
                     raise ValueError()
+
+                loss_list.append(loss)
                 ###################
 
                 episode_rewards = experience_source.pop_episode_reward_lst()
 
                 if episode_rewards:
                     for current_episode_reward in episode_rewards:
+                        mean_loss = np.mean(loss_list) if len(loss_list) > 0 else 0.0
+
                         solved, mean_episode_reward = reward_tracker.set_episode_reward(
                             current_episode_reward, step_idx, epsilon=self.agent.action_selector.epsilon,
-                            last_info=last_entry.info, last_loss=last_loss, model=self.agent.model
+                            last_info=last_entry.info, mean_loss=mean_loss, model=self.agent.model
                         )
 
                         if solved:
                             save_model(
-                                MODEL_SAVE_DIR, params.ENVIRONMENT_ID.value, self.agent.model,
-                                step_idx, mean_episode_reward
+                                MODEL_SAVE_DIR, params.ENVIRONMENT_ID.value, self.agent, step_idx, mean_episode_reward
                             )
 
                         solved = self.interact_with_chief(
@@ -188,6 +183,7 @@ class WorkerFastRL:
                         if solved:
                             break
 
+                        loss_list.clear()
                         episode += 1
 
             if not solved:
@@ -197,8 +193,7 @@ class WorkerFastRL:
 
             if params.SAVE_AT_MAX_GLOBAL_STEPS:
                 save_model(
-                    MODEL_SAVE_DIR, params.ENVIRONMENT_ID.value, self.agent.model,
-                    step_idx, mean_episode_reward
+                    MODEL_SAVE_DIR, params.ENVIRONMENT_ID.value, self.agent, step_idx, mean_episode_reward
                 )
 
     def train_at_episode_end(self, step_idx):

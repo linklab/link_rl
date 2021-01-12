@@ -10,7 +10,7 @@ class AgentDDPG(BaseAgent):
     """
     Agent implementing Orstein-Uhlenbeck exploration process
     """
-    def __init__(self, num_inputs, num_outputs, action_min, action_max, worker_id, action_selector, params,
+    def __init__(self, input_shape, num_outputs, worker_id, action_selector, action_min, action_max, params,
                  preprocessor=float32_preprocessor, device="cpu"):
         super(AgentDDPG, self).__init__()
         self.__name__ = "AgentDDPG"
@@ -19,18 +19,14 @@ class AgentDDPG(BaseAgent):
         self.action_selector = action_selector
         self.action_min = action_min
         self.action_max = action_max
-        self.step_idx = 0
 
         self.worker_id = worker_id
         self.params = params
         self.device = device
 
         self.model = rl_utils.get_rl_model(
-            worker_id=worker_id, num_inputs=num_inputs, num_outputs=num_outputs, params=params, device=self.device
+            worker_id=worker_id, input_shape=input_shape, num_outputs=num_outputs, params=params, device=self.device
         )
-
-        print(self.model.base.actor)
-        print(self.model.base.critic)
 
         self.target_agent = TargetNet(self.model.base)
 
@@ -70,24 +66,10 @@ class AgentDDPG(BaseAgent):
         mu_v = self.model(states)
         mu = mu_v.data.cpu().numpy()
 
-        ####################################
-        # if agent_states is None:
-        #     new_agent_states = [None] * len(states)
-        # else:
-        #     new_agent_states = agent_states
-        #
-        # noises_v = torch.Tensor(self.ou_noise.noise()).unsqueeze(dim=-1).to(self.device)
-        # noises = noises_v.data.cpu().numpy()
-        #
-        # actions = mu + noises
-        # actions = np.clip(actions, self.action_min, self.action_max)
-        ####################################
-
         actions, new_agent_states = self.action_selector(mu, agent_states)
+
         actions = np.clip(actions, self.action_min, self.action_max)
         #####################################
-
-        self.step_idx += 1
 
         return actions, new_agent_states
 
@@ -99,30 +81,29 @@ class AgentDDPG(BaseAgent):
             batch_indices, batch_weights = None, None
 
         # print(batch)
-        batch_states_v, batch_actions_v, batch_rewards_v, batch_dones_mask, batch_last_states_v \
-            = self.unpack_batch_for_ddpg(batch)
+        states_v, actions_v, rewards_v, dones_mask, last_states_v = self.unpack_batch_for_ddpg(batch)
 
         # train critic
         self.critic_optimizer.zero_grad()
-        critic_parameters = self.model.base.critic.parameters()
-        for p in critic_parameters:
-            p.requires_grad = True
+        # critic_parameters = self.model.base.critic.parameters()
+        # for p in critic_parameters:
+        #     p.requires_grad = True
 
-        batch_q_v = self.model.base.forward_critic(batch_states_v, batch_actions_v)
-        batch_last_act_v = self.target_agent.target_model.forward_actor(batch_last_states_v)
-        batch_q_last_v = self.target_agent.target_model.forward_critic(batch_last_states_v, batch_last_act_v)
-        batch_q_last_v[batch_dones_mask] = 0.0
-        batch_target_q_v = batch_rewards_v.unsqueeze(dim=-1) + batch_q_last_v * self.params.GAMMA ** self.params.N_STEP
+        q_v = self.model.base.forward_critic(states_v, actions_v)
+        last_act_v = self.target_agent.target_model.forward_actor(last_states_v)
+        q_last_v = self.target_agent.target_model.forward_critic(last_states_v, last_act_v)
+        q_last_v[dones_mask] = 0.0
+        target_q_v = rewards_v.unsqueeze(dim=-1) + q_last_v * self.params.GAMMA ** self.params.N_STEP
 
         if self.params.PER:
-            batch_l1_loss = F.smooth_l1_loss(batch_q_v, batch_target_q_v.detach(), reduction='none')  # for PER
+            batch_l1_loss = F.smooth_l1_loss(q_v, target_q_v.detach(), reduction='none')  # for PER
             batch_weights_v = torch.tensor(batch_weights)
             critic_loss_v = batch_weights_v * batch_l1_loss
 
             self.buffer.update_priorities(batch_indices, batch_l1_loss.detach().cpu().numpy() + 1e-5)
             self.buffer.update_beta(step_idx)
         else:
-            critic_loss_v = F.smooth_l1_loss(batch_q_v, batch_target_q_v.detach())
+            critic_loss_v = F.smooth_l1_loss(q_v, target_q_v.detach(), reduction='none')
 
         loss_critic_v = critic_loss_v.mean()
 
@@ -131,13 +112,13 @@ class AgentDDPG(BaseAgent):
 
         # train actor
         self.actor_optimizer.zero_grad()
-        critic_parameters = self.model.base.critic.parameters()
-        for p in critic_parameters:
-            p.requires_grad = False
+        # critic_parameters = self.model.base.critic.parameters()
+        # for p in critic_parameters:
+        #     p.requires_grad = False
 
-        batch_current_actions_v = self.model.base.forward_actor(batch_states_v)
-        actor_loss_v = -1.0 * self.model.base.forward_critic(batch_states_v, batch_current_actions_v)
-        loss_actor_v = actor_loss_v.mean()
+        current_actions_v = self.model.base.forward_actor(states_v)
+        q_v_for_actor = self.model.base.forward_critic(states_v, current_actions_v)
+        loss_actor_v = -1.0 * q_v_for_actor.mean()
 
         loss_actor_v.backward()
 

@@ -4,6 +4,8 @@ import random
 from typing import Optional
 import numpy as np
 import math
+
+from gym.spaces import Box
 from matplotlib import pyplot as plt
 import gym
 import torch
@@ -167,34 +169,33 @@ def unpack_batch_for_a2c(batch, net, params, device='cpu'):
     return states_v, actions_v, target_action_values_v
 
 
-
-
-
-def remove_models(model_save_dir, env_name, model_name):
+def remove_models(model_save_dir, env_name, agent):
     files = glob.glob(os.path.join(
-        model_save_dir, "{0}_{1}_*.pth".format(env_name, model_name))
+        model_save_dir, "{0}_{1}_{2}_*.pth".format(env_name, agent.__name__, agent.model.__name__))
     )
     for f in files:
         os.remove(f)
 
 
-def save_model(model_save_dir, env_name, model, step, episode_reward):
+def save_model(model_save_dir, env_name, agent, step, episode_reward):
     model_save_filename = os.path.join(
-        model_save_dir, "{0}_{1}_{2}_{3:.2f}.pth".format(env_name, model.__name__, step, float(episode_reward))
+        model_save_dir, "{0}_{1}_{2}_{3}_{4:.2f}.pth".format(
+            env_name, agent.__name__, agent.model.__name__, step, float(episode_reward)
+        )
     )
-    torch.save(model.state_dict(), model_save_filename)
+    torch.save(agent.model.state_dict(), model_save_filename)
     return model_save_filename
 
 
-def load_model(model_save_dir, env_name, model, step=None):
+def load_model(model_save_dir, env_name, agent, step=None):
     if step:
         saved_models = glob.glob(os.path.join(
-            model_save_dir, "{0}_{1}_{2}_*.pth".format(env_name, model.__name__, step)
+            model_save_dir, "{0}_{1}_{2}_{3}_*.pth".format(env_name, agent.__name__, agent.model.__name__, step)
         ))
 
     else:
         saved_models = glob.glob(os.path.join(
-            model_save_dir, "{0}_{1}_*.pth".format(env_name, model.__name__)
+            model_save_dir, "{0}_{1}_{2}_*.pth".format(env_name, agent.__name__, agent.model.__name__)
         ))
 
     saved_models.sort(key=lambda filename: int(filename.split("/")[-1].split("_")[-2]))
@@ -205,7 +206,20 @@ def load_model(model_save_dir, env_name, model, step=None):
     device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
     model_params = torch.load(saved_model, map_location=device)
 
-    model.load_state_dict(model_params)
+    agent.model.load_state_dict(model_params)
+
+
+def print_environment_info(env, params):
+    print(f"env: {params.ENVIRONMENT_ID}")
+    print(f"env.observation_space: {env.observation_space} and env.observation_space.shape: {env.observation_space.shape}")
+    if isinstance(env.observation_space, Box):
+        print(f"observation low: {[min_value for min_value in env.observation_space.low]}")
+        print(f"observation high: {[max_value for max_value in env.observation_space.high]}")
+
+    print(f"env.action_space: {env.action_space} and env.observation_space.shape: {env.action_space.shape}")
+    if isinstance(env.action_space, Box):
+        print(f"action low: {[min_value for min_value in env.action_space.low]}")
+        print(f"action high: {[max_value for max_value in env.action_space.high]}")
 
 
 if __name__=="__main__":

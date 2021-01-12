@@ -1,40 +1,39 @@
 from codes.e_utils.names import *
 from codes.a_config.parameters_general import PARAMETERS_GENERAL
 
-
+# https://github.com/bulletphysics/bullet3/blob/master/examples/pybullet/gym/pybullet_envs/minitaur/envs/minitaur_gym_env.py
 class PARAMETERS_FAST_RL_PENDULUM_PPO(PARAMETERS_GENERAL):
-    ENVIRONMENT_ID = EnvironmentName.PENDULUM_V0
-    DEEP_LEARNING_MODEL = DeepLearningModelName.ACTOR_CRITIC_MLP
-    RL_ALGORITHM = RLAlgorithmName.PPO_FAST_V0
-    OPTIMIZER = OptimizerName.ADAM
+    ENVIRONMENT_ID      = EnvironmentName.PENDULUM_V0
+    DEEP_LEARNING_MODEL = DeepLearningModelName.STOCHASTIC_CONTINUOUS_ACTOR_CRITIC_MLP
+    RL_ALGORITHM        = RLAlgorithmName.CONTINUOUS_PPO_FAST_V0
+    OPTIMIZER           = OptimizerName.ADAM
 
-    STOP_MEAN_EPISODE_REWARD = -200
+    STOP_MEAN_EPISODE_REWARD = -140
     STOP_PATIENCE_COUNT = 10
-    REPLAY_BUFFER_SIZE = 500000
-    MAX_GLOBAL_STEP = 500000
-    LEARNING_RATE = 0.001
-    ACTOR_LEARNING_RATE = 0.0001
-    TRAIN_STEP_FREQ = 1
-    GAMMA = 0.99
-    BATCH_SIZE = 64
-    AVG_EPISODE_SIZE_FOR_STAT = 100
-    MODEL_SAVE_STEP_PERIOD = 100000
-    MIN_REPLAY_SIZE_FOR_TRAIN = 500
-    DRAW_VIZ = False
-    N_STEP = 4
-    OMEGA = False
-
+    REPLAY_BUFFER_SIZE = 1000000
+    TARGET_NET_SYNC_STEP_PERIOD = 10000
+    MAX_GLOBAL_STEP = 1000000
+    EPSILON_MIN_STEP = 200000
     EPSILON_INIT = 0.9
     EPSILON_MIN = 0.001
-    EPSILON_MIN_STEP = 100000
-
-    CUDA = False
-
-    CLIP_GRAD = 0.1
+    GAMMA = 0.99
+    BATCH_SIZE = 32
+    AVG_EPISODE_SIZE_FOR_STAT = 100
+    DRAW_VIZ = True
+    N_STEP = 1
 
     RNN_STEP_LENGTH = 2
-    PER = False
 
-    ENV_RENDER = False
+    ACTION_SCALE = 1.0
 
-    ACTION_SCALE = 2.0
+    ## PPO
+    PPO_GAE_LAMBDA = 0.95
+    PPO_TRAJECTORY_SIZE = 2049
+    PPO_TRAJECTORY_BATCH_SIZE = 32
+    ACTOR_LEARNING_RATE = 0.0001
+    LEARNING_RATE = 0.0003
+    PPO_K_EPOCHS = 10
+    PPO_EPSILON_CLIP = 0.2
+    PPO_VALUE_LOSS_WEIGHT = 0.5
+    PPO_ENTROPY_WEIGHT = 0.01
+    TRAIN_STEP_FREQ = 1

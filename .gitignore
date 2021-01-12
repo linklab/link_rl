@@ -121,7 +121,7 @@ environments/unity/unity_envs/
 /src/
 /save_results
 
-*.pth
+out
 
 /rl_main/fast_main/*.pickle
 /rl_main/fast_main/data/
@@ -129,9 +129,6 @@ environments/unity/unity_envs/
 # personal parameter's option
 codes/a_config/parameters.py
 
-*.m
-*.mat
-*.slx
 *.slxc
 simulink_cache.xml
 
@@ -145,3 +142,6 @@ codes/1.environments/trade/raw_data
 
 *.para
 *.local
+*.dump
+
+wandb

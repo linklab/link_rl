@@ -14,7 +14,7 @@ import rl_main.federated_main.utils as utils
 from rl_main import rl_utils
 
 if torch.cuda.is_available():
-    device = torch.device("cuda" if params.CUDA else "cpu")
+    device = torch.device("cuda")
 else:
     device = torch.device("cpu")
 

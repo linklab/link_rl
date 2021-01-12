@@ -43,6 +43,39 @@ class BaseAgent:
 
         raise NotImplementedError
 
+    def unpack_batch_for_actor_critic(self, batch, net, params, device='cpu'):
+        """
+        Convert batch into training tensors
+        :param batch:
+        :param net:
+        :return: states variable, actions tensor, target values variable
+        """
+        states, actions, rewards, not_done_idx, last_states = [], [], [], [], []
+
+        for idx, exp in enumerate(batch):
+            states.append(np.array(exp.state, copy=False))
+            actions.append(int(exp.action))
+            rewards.append(exp.reward)
+            if exp.last_state is not None:
+                not_done_idx.append(idx)
+                last_states.append(np.array(exp.last_state, copy=False))
+
+        states_v = torch.FloatTensor(np.array(states, copy=False)).to(device)
+        actions_v = torch.LongTensor(actions).to(device)
+
+        # handle rewards
+        target_action_values_np = np.array(rewards, dtype=np.float32)
+
+        if not_done_idx:
+            last_states_v = torch.FloatTensor(np.array(last_states, copy=False)).to(device)
+            last_values_v = net.base.forward_critic(last_states_v)
+            last_values_np = last_values_v.data.cpu().numpy()[:, 0] * params.GAMMA ** params.N_STEP
+            target_action_values_np[not_done_idx] += last_values_np
+
+        target_action_values_v = torch.FloatTensor(target_action_values_np).to(device)
+
+        return states_v, actions_v, target_action_values_v
+
 
 class TargetNet:
     """

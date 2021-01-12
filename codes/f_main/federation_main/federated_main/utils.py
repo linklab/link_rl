@@ -74,10 +74,9 @@ def print_configuration(env, rl_model, params):
 
     print("\n*** RL ALGORITHM ***")
     print(" RL Algorithm: {0}".format(params.RL_ALGORITHM.value))
-    if params.RL_ALGORITHM == RLAlgorithmName.PPO_V0:
-        print(" PPO_K_EPOCH: {0}".format(params.PPO_K_EPOCH))
+    if params.RL_ALGORITHM == RLAlgorithmName.CONTINUOUS_PPO_FAST_V0:
+        print(" PPO_K_EPOCHS: {0}".format(params.PPO_K_EPOCHS))
         print(" PPO_EPSILON_CLIP: {0}".format(params.PPO_EPSILON_CLIP))
-        print(" PPO_VALUE_LOSS_WEIGHT: {0}".format(params.PPO_VALUE_LOSS_WEIGHT))
         print(" PPO_ENTROPY_WEIGHT: {0}".format(params.PPO_ENTROPY_WEIGHT))
 
     print("\n*** MODEL ***")
@@ -92,7 +91,7 @@ def print_configuration(env, rl_model, params):
         ))
     elif params.DEEP_LEARNING_MODEL in (
             DeepLearningModelName.ACTOR_CRITIC_MLP,
-            DeepLearningModelName.DETERMINISTIC_ACTOR_CRITIC_MLP
+            DeepLearningModelName.DETERMINISTIC_CONTINUOUS_ACTOR_CRITIC_MLP
     ):
         print(" s_size: {0}, hidden_1: {1}, hidden_2: {2}, hidden_3: {3}, a_size: {4}, continuous: {5}".format(
             rl_model.s_size,
@@ -100,7 +99,7 @@ def print_configuration(env, rl_model, params):
             rl_model.hidden_2_size,
             rl_model.hidden_3_size,
             rl_model.a_size,
-            True if params.DEEP_LEARNING_MODEL == DeepLearningModelName.DETERMINISTIC_ACTOR_CRITIC_MLP else False
+            True if params.DEEP_LEARNING_MODEL == DeepLearningModelName.DETERMINISTIC_CONTINUOUS_ACTOR_CRITIC_MLP else False
         ))
     elif params.DEEP_LEARNING_MODEL == DeepLearningModelName.NO_MODEL:
         pass

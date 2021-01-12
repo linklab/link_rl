@@ -4,6 +4,7 @@ from collections import deque
 import torch
 import torch.nn.functional as F
 import torch.nn.utils as nn_utils
+import numpy as np
 
 from common.fast_rl import replay_buffer
 from common.fast_rl.policy_based_model import unpack_batch_for_a2c

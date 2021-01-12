@@ -7,6 +7,7 @@ import collections
 import torch
 import torch.nn as nn
 
+from codes.e_utils.names import EnvironmentName
 from common.fast_rl import rl_agent
 from common.fast_rl.common.statistics import StatisticsForValueBasedRL, StatisticsForPolicyBasedRL
 
@@ -473,7 +474,7 @@ class RewardTracker:
 class EarlyStopping:
     """Early stops the training if validation loss doesn't improve after a given patience."""
     def __init__(self, patience=7, evaluation_min_threshold=0.0, evaluation_min_step_idx=0,
-                 verbose=False, delta=0.0, model_save_dir=".", model_save_file_prefix=None, model_name=None):
+                 verbose=False, delta=0.0, model_save_dir=".", model_save_file_prefix=None, agent=None):
         """
         Args:
             patience (int): How long to wait after last time validation loss improved.
@@ -493,9 +494,9 @@ class EarlyStopping:
         self.delta = delta
         self.model_save_dir = model_save_dir
         self.model_save_file_prefix = model_save_file_prefix
-        self.model_name = model_name
+        self.agent = agent
 
-    def __call__(self, evaluation_value, model, step_idx):
+    def __call__(self, evaluation_value, step_idx):
         solved = False
 
         if step_idx < self.evaluation_min_step_idx:
@@ -514,11 +515,10 @@ class EarlyStopping:
                     rl_agent.load_model(
                         self.model_save_dir,
                         self.model_save_file_prefix,
-                        self.model_name,
-                        model
+                        self.agent
                     )
             elif evaluation_value >= self.best_evaluation_value + self.delta:
-                self.save_checkpoint(evaluation_value, model, step_idx)
+                self.save_checkpoint(evaluation_value, step_idx)
                 self.best_evaluation_value = evaluation_value
                 self.counter = 0
             else:
@@ -526,7 +526,7 @@ class EarlyStopping:
 
         return solved
 
-    def save_checkpoint(self, evaluation_value, model, step_idx):
+    def save_checkpoint(self, evaluation_value, step_idx):
         '''Saves model when validation loss decrease.'''
         if self.verbose:
             if self.best_evaluation_value == -1.0e10:
@@ -537,14 +537,13 @@ class EarlyStopping:
         rl_agent.remove_models(
             self.model_save_dir,
             self.model_save_file_prefix,
-            self.model_name
+            self.agent
         )
 
         rl_agent.save_model(
             self.model_save_dir,
             self.model_save_file_prefix,
-            self.model_name,
-            model,
+            self.agent,
             step_idx,
             evaluation_value
         )

@@ -1,4 +1,4 @@
-from codes.e_utils.names import EnvironmentName, RLAlgorithmName, DeepLearningModelName, ReplayBufferName, OptimizerName
+from codes.e_utils.names import EnvironmentName, RLAlgorithmName, DeepLearningModelName, OptimizerName
 
 
 class PARAMETERS_GENERAL:
@@ -10,7 +10,6 @@ class PARAMETERS_GENERAL:
     VERBOSE = True
     MODEL_SAVE = False
     ENV_RENDER = False
-    CUDA = True
 
     # [MQTT]
     MQTT_SERVER = "localhost"
@@ -47,18 +46,16 @@ class PARAMETERS_GENERAL:
     ENVIRONMENT_ID = EnvironmentName.PONG_NO_FRAME_SKIP_V4
     RL_ALGORITHM = RLAlgorithmName.DQN_FAST_V0
     DEEP_LEARNING_MODEL = DeepLearningModelName.DUELING_DQN_CNN
-    REPLAY_BUFFER = ReplayBufferName.REPLAY_BUFFER
 
     STOP_MEAN_EPISODE_REWARD = None
     STOP_PATIENCE_COUNT = 10
     REPLAY_BUFFER_SIZE = 100000
-    MIN_REPLAY_SIZE_FOR_TRAIN = 1000
     TARGET_NET_SYNC_STEP_PERIOD = 1000
+    MIN_REPLAY_SIZE_FOR_TRAIN = 10000
     EPSILON_MIN_STEP = 1000
     MAX_GLOBAL_STEP = 1000000
     TRAIN_STEP_FREQ = 4
     AVG_EPISODE_SIZE_FOR_STAT = 100
-    MODEL_SAVE_STEP_PERIOD = 10000
     DRAW_VIZ = True
     DRAW_VIZ_PERIOD_STEPS = 10
     N_STEP = 1
@@ -102,24 +99,27 @@ class PARAMETERS_GENERAL:
     EPSILON_MIN = 0.05
     EPSILON_DECAY_RATE = 1000 #Large value means low decaying
     OPTIMIZER = OptimizerName.ADAM
-    GAE_LAMBDA = 0.95
+    PPO_GAE_LAMBDA = 0.95
     LEARNING_RATE = 0.001
 
     # [TRAJECTORY_SAMPLING]
     TRAJECTORY_SAMPLING = True
     TRAJECTORY_LIMIT_SIZE = 200
-    TRAJECTORY_BATCH_SIZE = 64
+    PPO_TRAJECTORY_BATCH_SIZE = 64
 
     # [PPO]
-    PPO_K_EPOCH = 10
+    PPO_K_EPOCHS = 10
     PPO_EPSILON_CLIP = 0.2
     PPO_VALUE_LOSS_WEIGHT = 0.5
     PPO_ENTROPY_WEIGHT = 0.01
+    PPO_TRAJECTORY_SIZE = 2049
 
     # [DQN]
     BATCH_SIZE = 128
 
     # [CUDA]
-    CUDA_VISIBLE_DEVICES_NUMBER_LIST = '2, 3'
+    CUDA_VISIBLE_DEVICES_NUMBER_LIST = '1, 2'
 
+    RNN_STEP_LENGTH = 2
     SAVE_AT_MAX_GLOBAL_STEPS = False
+

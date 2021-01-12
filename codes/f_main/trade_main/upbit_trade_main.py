@@ -36,7 +36,7 @@ warnings.filterwarnings("ignore", category=UserWarning)
 os.environ['KMP_DUPLICATE_LIB_OK'] = 'True'
 
 if torch.cuda.is_available():
-    device = torch.device("cuda" if params.CUDA else "cpu")
+    device = torch.device("cuda")
 else:
     device = torch.device("cpu")
 
@@ -190,7 +190,7 @@ def train(coin_name, time_unit, train_env, evaluate_env):
         delta=0.0,
         model_save_dir=MODEL_SAVE_DIR,
         model_save_file_prefix=params.ENVIRONMENT_ID.value + "_" + coin_name + "_" + time_unit.value,
-        model_name=net.__name__
+        agent=agent
     )
 
     with utils.RewardTracker(params=params, frame=False, stat=stat, early_stopping=None) as reward_tracker:
@@ -198,7 +198,8 @@ def train(coin_name, time_unit, train_env, evaluate_env):
             step_idx += params.TRAIN_STEP_FREQ
             last_entry = buffer.populate(params.TRAIN_STEP_FREQ)
 
-            epsilon_tracker.udpate(step_idx)
+            if epsilon_tracker:
+                epsilon_tracker.udpate(step_idx)
 
             episode_rewards = experience_source.pop_episode_reward_lst()
 
@@ -227,7 +228,7 @@ def train(coin_name, time_unit, train_env, evaluate_env):
                         )
                         evaluate_random_total_profits.append(random_total_profit)
 
-                        solved = early_stopping(dqn_total_profit, model=net, step_idx=step_idx)
+                        solved = early_stopping(dqn_total_profit, step_idx=step_idx)
 
                         visualizer.draw_performance(
                             evaluate_steps,
@@ -246,7 +247,7 @@ def train(coin_name, time_unit, train_env, evaluate_env):
 
             optimizer.zero_grad()
             batch = buffer.sample(params.BATCH_SIZE)
-            loss_v = value_based_model.calc_loss_double_dqn(batch, net, tgt_net, gamma=params.GAMMA, cuda=params.CUDA)
+            loss_v = value_based_model.calc_loss_double_dqn(batch, net, tgt_net, gamma=params.GAMMA, device=device)
             loss_v.backward()
             optimizer.step()
 

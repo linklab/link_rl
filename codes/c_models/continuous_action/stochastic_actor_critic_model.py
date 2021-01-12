@@ -6,9 +6,11 @@ from codes.c_models.base_model import BaseModel
 
 
 class StochasticActorCriticModel(BaseModel):
-    def __init__(self, worker_id, num_inputs, num_outputs, params, device):
+    def __init__(self, worker_id, input_shape, num_outputs, params, device):
         super(StochasticActorCriticModel, self).__init__(worker_id, params, device)
         self.__name__ = "StochasticActorCriticModel"
+
+        num_inputs = input_shape[0]
 
         self.base = StochasticActorCriticMLPBase(
             num_inputs=num_inputs, num_outputs=num_outputs, params=self.params
@@ -19,10 +21,10 @@ class StochasticActorCriticModel(BaseModel):
     def forward(self, inputs):
         if not (type(inputs) is torch.Tensor):
             inputs = torch.tensor([inputs], dtype=torch.float).to(self.device)
-        return self.base.forward(inputs)
 
-    def act(self, inputs):
-        raise NotImplementedError()
+        mu, value = self.base.forward(inputs)
+
+        return mu, value
 
 
 class StochasticActorCriticMLPBase(nn.Module):
@@ -47,14 +49,14 @@ class StochasticActorCriticMLPBase(nn.Module):
             nn.Linear(self.hidden_3_size, 1),
         )
 
-        self.layers_info = {'actor': self.actor, 'ciritc': self.critic}
+        self.layers_info = {'actor': self.actor, 'critic': self.critic}
 
         self.train()
 
     def forward(self, inputs):
-        mu, var = self.actor(inputs)
+        mu = self.actor(inputs)
         value = self.critic(inputs)
-        return mu, var, value
+        return mu, value
 
     def forward_critic(self, inputs):
         return self.critic(inputs)
@@ -70,26 +72,29 @@ class ActorMLPBase(nn.Module):
         self.hidden_2_size = params.HIDDEN_2_SIZE
         self.hidden_3_size = params.HIDDEN_3_SIZE
 
-        self.net = nn.Sequential(
+        self.mu = nn.Sequential(
             nn.Linear(num_inputs, self.hidden_1_size),
             nn.ReLU(),
             nn.Linear(self.hidden_1_size, self.hidden_2_size),
-            nn.ReLU()
-        )
-
-        self.mu = nn.Sequential(
+            nn.ReLU(),
             nn.Linear(self.hidden_2_size, self.hidden_3_size),
             nn.ReLU(),
             nn.Linear(self.hidden_3_size, num_outputs),
             nn.Tanh()
         )
 
-        self.var = nn.Sequential(
-            nn.Linear(self.hidden_2_size, self.hidden_3_size),
-            nn.ReLU(),
-            nn.Linear(self.hidden_3_size, num_outputs),
-            nn.Softplus(),
-        )
+        self.logstd = nn.Parameter(torch.zeros(num_outputs))
+
+        # self.var = nn.Sequential(
+        #     nn.Linear(num_inputs, self.hidden_1_size),
+        #     nn.ReLU(),
+        #     nn.Linear(self.hidden_1_size, self.hidden_2_size),
+        #     nn.ReLU(),
+        #     nn.Linear(self.hidden_2_size, self.hidden_3_size),
+        #     nn.ReLU(),
+        #     nn.Linear(self.hidden_3_size, num_outputs),
+        #     nn.Softplus(),
+        # )
 
     @staticmethod
     def init_weights(m):
@@ -97,5 +102,4 @@ class ActorMLPBase(nn.Module):
             torch.nn.init.kaiming_normal_(m.weight)
 
     def forward(self, inputs):
-        net_out = self.net(inputs)
-        return self.mu(net_out), self.var(net_out)
+        return self.mu(inputs)

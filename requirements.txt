@@ -123,7 +123,7 @@ ptyprocess==0.6.0
 py==1.8.0
 pyasn1==0.4.6
 pyasn1-modules==0.2.1
-pybullet==2.5.1
+pybullet==3.0.8
 pybullet-object-models @ git+https://github.com/eleramp/pybullet-object-models.git@57cc4007607f6bcbb0a5364ccab7636faf7a91e4
 -e git+https://github.com/robotology-playground/pybullet-robot-envs.git@eb3463c23eaa5822b76ce28568430e16187e5374#egg=pybullet_robot_envs
 pycparser==2.19

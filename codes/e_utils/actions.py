@@ -47,9 +47,10 @@ class EpsilonGreedyDQNActionSelector(ActionSelector):
 
 
 class EpsilonGreedySomeTimesBlowDQNActionSelector(ActionSelector):
+    #TODO: max_blowing_action_idx
     def __init__(
             self, epsilon=0.05, blowing_action_rate=0.0002,
-            min_blowing_action_idx=-1.0, max_blowing_action_idx=1.0, action_selector=None
+            min_blowing_action_idx=0, max_blowing_action_idx=-1, action_selector=None
     ):
         self.epsilon = epsilon
         self.action_selector = action_selector if action_selector is not None else ArgmaxActionSelector()
@@ -153,39 +154,18 @@ class EpsilonGreedyDDPGActionSelector:
         self.ou_enabled = ou_enabled
         self.scale_factor = scale_factor
 
-    def __call__(self, mu, agent_states, ou_rho=0.15, ou_mu=0.0, ou_dt=0.1, ou_sigma=0.2): #default ou_sigma = 0.2
+    def __call__(self, mu, agent_states, ou_theta=0.15, ou_mu=0.0, ou_sigma=0.2): #default ou_sigma = 0.2
         assert isinstance(mu, np.ndarray)
         actions = np.copy(mu)
         if isinstance(agent_states, list):
             agent_states = np.asarray(agent_states)
 
-        if self.ou_enabled:
-            # agent_states = 1.0       +    0.15 * (0.0 - 1.0)            + new_random
-            agent_states = agent_states + ou_rho * (ou_mu - agent_states) + ou_sigma * np.sqrt(ou_dt) * np.random.normal(size=actions.shape)
+        if self.ou_enabled and self.epsilon > 0.0:
+            # agent_states = 1.0       +    0.15 * (0.0 - 1.0)            + new_normal_random
+            agent_states = agent_states + ou_theta * (ou_mu - agent_states) + ou_sigma * np.random.normal(size=actions.shape)
+            actions = actions + self.epsilon * agent_states
 
-            noises = self.epsilon * agent_states
-            actions = actions + noises
-        else:
-            noises = np.zeros_like(actions)
-
-        new_agent_states = noises
-
-        return actions, new_agent_states
-
-    # def __call__(self, mu, agent_states, ou_enabled=True, ou_rho=0.15, ou_mu=0.0, ou_dt=0.1, ou_sigma=0.2):
-    #     assert isinstance(mu, np.ndarray)
-    #     actions = np.copy(mu)
-    #     if ou_enabled and self.epsilon > 0:
-    #         new_agent_states = []
-    #         for agent_state, action in zip(agent_states, actions):
-    #             #agent_state = np.zeros(shape=action.shape, dtype=np.float32)
-    #             agent_state += ou_rho * (ou_mu - actions)
-    #             agent_state += ou_sigma * np.sqrt(ou_dt) * np.random.normal(size=action.shape)
-    #             action += self.epsilon * agent_state
-    #             new_agent_states.append(agent_state)
-    #     else:
-    #         new_agent_states = agent_states
-    #     return actions, new_agent_states
+        return actions, agent_states
 
 
 class EpsilonGreedyD4PGActionSelector(ActionSelector):
@@ -211,12 +191,22 @@ class ProbabilityActionSelector(ActionSelector):
 
 
 class ContinuousNormalActionSelector(ContinuousActionSelector):
-    def __call__(self, mu_v, var_v, action_min, action_max):
+    def __call__(self, mu_v, logstd_v, action_min, action_max):
         mu = mu_v.data.cpu().numpy()
-        sigma = torch.sqrt(var_v).data.cpu().numpy()
-        actions = np.random.normal(mu, sigma)
+        logstd = logstd_v.data.cpu().numpy()
+        rnd = np.random.normal(size=logstd.shape)
+        actions = mu + np.exp(logstd) * rnd
         actions = np.clip(actions, action_min, action_max)
         return actions
+
+
+# class ContinuousNormalActionSelector(ContinuousActionSelector):
+#     def __call__(self, mu_v, var_v, action_min, action_max):
+#         mu = mu_v.data.cpu().numpy()
+#         sigma = torch.sqrt(var_v).data.cpu().numpy()
+#         actions = np.random.normal(mu, sigma)
+#         actions = np.clip(actions, action_min, action_max)
+#         return actions
 
 
 class EpsilonTracker:
