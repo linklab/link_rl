@@ -156,7 +156,7 @@ class AgentContinuousPPO(BaseAgent):
 
     def get_advantage_and_target_action_values(self, trajectory, states_v, device="cpu"):
         """
-        By trajectory calculate advantage and 1-step ref value
+        By trajectory calculate advantage and 1-step target action value
         :param trajectory: trajectory list
         :param critic_model: critic deep learning network
         :param states_v: states tensor
