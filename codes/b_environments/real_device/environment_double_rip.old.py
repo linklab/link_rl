@@ -1,9 +1,14 @@
 import time
 import math
+
+import grpc
 import numpy as np
 import paho.mqtt.client as paho
 
 import gym
+
+from codes.b_environments.real_device import rip_service_pb2_grpc
+from codes.b_environments.real_device.rip_service_pb2 import RipRequest
 
 MQTT_SERVER = '192.168.0.10'
 MQTT_PUB_TO_DRIP = 'motor_power'
@@ -82,6 +87,9 @@ class EnvironmentDoubleRIP():
             # self.client.on_log = __on_log
             self.mqtt_client.loop_start()
 
+        channel = grpc.insecure_channel('localhost:50051')
+        self.server_obj = rip_service_pb2_grpc.RDIPStub(channel)
+
     def __on_connect(self, client, userdata, flags, rc):
         print("mqtt broker connected with result code " + str(rc), flush=False)
         self.mqtt_client.subscribe(topic=self.params.MQTT_SUB_FROM_DRIP)
@@ -123,12 +131,12 @@ class EnvironmentDoubleRIP():
         self.episode_pendulum_velocity_reward_list.clear()
 #        self.episode_action_reward_list.clear()
 
-        # Pub reset message
+        # grpc reset message
         # ================================================================================== #
-        self.mqtt_client.publish(topic=MQTT_PUB_RESET, payload="")
-        while not self.reset_complete:
-            time.sleep(0.001)
-        self.reset_complete = False
+        rip_response = self.server_obj.reset(RipRequest(value=None))
+
+        if rip_response.message != "OK":
+            raise ValueError()
         # ================================================================================== #
 
         self.update_current_state(adjusted_radian=0.0)
@@ -158,9 +166,11 @@ class EnvironmentDoubleRIP():
     def step(self, action):
         if type(action) is np.ndarray:
             action = action[0]
-        action = int(action)
 
-        # ============================================================================================= #
+        # grpc step message
+        # ================================================================================== #
+        rip_response = self.server_obj.step(RipRequest(value=action))
+
         self.mqtt_client.publish(topic=MQTT_PUB_TO_DRIP, payload="{0}".format(action))
         previous_time = time.perf_counter()
 

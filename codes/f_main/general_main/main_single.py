@@ -19,7 +19,7 @@ from codes.e_utils.common_utils import save_model, print_environment_info
 from codes.e_utils.experience_single import ExperienceSourceSingleEnvFirstLast
 from codes.e_utils.experience_tracker import RewardTracker
 from codes.e_utils.logger import get_logger
-from codes.e_utils.names import DeepLearningModelName, RLAlgorithmName
+from codes.e_utils.names import DeepLearningModelName, RLAlgorithmName, EnvironmentName
 
 MODEL_SAVE_DIR = os.path.join(PROJECT_HOME, "out", "model_save_files")
 if not os.path.exists(MODEL_SAVE_DIR):
@@ -68,80 +68,88 @@ def main(params):
     wandb.watch(agent.model.base)
 
     with RewardTracker(params=params, frame=False, stat=stat, early_stopping=None) as reward_tracker:
-        while step_idx < params.MAX_GLOBAL_STEP:
-            step_idx += params.TRAIN_STEP_FREQ
-            last_experience = agent.buffer.populate(params.TRAIN_STEP_FREQ)
+        try:
+            while step_idx < params.MAX_GLOBAL_STEP:
+                step_idx += params.TRAIN_STEP_FREQ
+                last_experience = agent.buffer.populate(params.TRAIN_STEP_FREQ)
 
-            if epsilon_tracker:
-                epsilon_tracker.udpate(step_idx)
+                if epsilon_tracker:
+                    epsilon_tracker.udpate(step_idx)
 
-            episode_rewards, done_steps = experience_source.pop_episode_reward_and_done_step_lst()
+                episode_rewards, done_steps = experience_source.pop_episode_reward_and_done_step_lst()
 
-            if episode_rewards and done_steps:
-                for current_episode_reward, done_step in zip(episode_rewards, done_steps):
-                    epsilon = agent.action_selector.epsilon if hasattr(agent.action_selector, 'epsilon') else None
-                    mean_loss = np.mean(loss_list) if len(loss_list) > 0 else 0.0
+                if episode_rewards and done_steps:
+                    for current_episode_reward, done_step in zip(episode_rewards, done_steps):
+                        epsilon = agent.action_selector.epsilon if hasattr(agent.action_selector, 'epsilon') else None
+                        mean_loss = np.mean(loss_list) if len(loss_list) > 0 else 0.0
 
-                    wandb.log({
-                        "episode reward": current_episode_reward,
-                        "episode mean loss": mean_loss,
-                        "epiosde steps": done_step - previous_done_step
-                    })
+                        wandb.log({
+                            "episode reward": current_episode_reward,
+                            "episode mean loss": mean_loss,
+                            "epiosde steps": done_step - previous_done_step
+                        })
 
-                    previous_done_step = done_step
+                        previous_done_step = done_step
 
-                    solved, mean_episode_reward = reward_tracker.set_episode_reward(
-                        episode_reward=current_episode_reward, episode_done_step=step_idx, epsilon=epsilon,
-                        last_info=last_experience.info, mean_loss=mean_loss, model=agent.model
-                    )
-
-                    loss_list.clear()
-
-                    if solved:
-                        save_model(
-                            MODEL_SAVE_DIR, params.ENVIRONMENT_ID.value, agent, step_idx, mean_episode_reward
+                        solved, mean_episode_reward = reward_tracker.set_episode_reward(
+                            episode_reward=current_episode_reward, episode_done_step=step_idx, epsilon=epsilon,
+                            last_info=last_experience.info, mean_loss=mean_loss, model=agent.model
                         )
-                        break
-            if solved:
-                break
 
-            if params.RL_ALGORITHM in [RLAlgorithmName.CONTINUOUS_PPO_FAST_V0]:
-                #print(last_experience[0])
-                trajectory.append(last_experience)
-                if len(trajectory) < params.PPO_TRAJECTORY_SIZE:
-                    continue
-            elif params.RL_ALGORITHM in [RLAlgorithmName.DDPG_FAST_V0, RLAlgorithmName.DQN_FAST_V0]:
-                if len(agent.buffer) < params.MIN_REPLAY_SIZE_FOR_TRAIN:
-                    continue
-            else:
-                if len(agent.buffer) < params.BATCH_SIZE:
-                    continue
+                        loss_list.clear()
 
-            if params.RL_ALGORITHM in [RLAlgorithmName.CONTINUOUS_PPO_FAST_V0]:
-                _, last_loss, _ = agent.train_net(trajectory=trajectory)
-                trajectory.clear()
-            elif params.RL_ALGORITHM in [
-                RLAlgorithmName.DDPG_FAST_V0,
-                RLAlgorithmName.DISCRETE_A2C_FAST_V0,
-                RLAlgorithmName.CONTINUOUS_A2C_FAST_V0
-            ]:
-                _, last_loss, _ = agent.train_net(step_idx=step_idx)
-            elif params.RL_ALGORITHM == RLAlgorithmName.DQN_FAST_V0:
-                _, last_loss = agent.train_net(step_idx=step_idx)
-            else:
-                raise ValueError()
+                        if solved:
+                            save_model(
+                                MODEL_SAVE_DIR, params.ENVIRONMENT_ID.value, agent, step_idx, mean_episode_reward
+                            )
+                            break
+                if solved:
+                    break
 
-            loss_list.append(last_loss)
+                if params.RL_ALGORITHM in [RLAlgorithmName.CONTINUOUS_PPO_FAST_V0]:
+                    #print(last_experience[0])
+                    trajectory.append(last_experience)
+                    if len(trajectory) < params.PPO_TRAJECTORY_SIZE:
+                        continue
+                elif params.RL_ALGORITHM in [RLAlgorithmName.DDPG_FAST_V0, RLAlgorithmName.DQN_FAST_V0]:
+                    if len(agent.buffer) < params.MIN_REPLAY_SIZE_FOR_TRAIN:
+                        continue
+                else:
+                    if len(agent.buffer) < params.BATCH_SIZE:
+                        continue
 
-        if params.SAVE_AT_MAX_GLOBAL_STEPS:
-            save_model(
-                MODEL_SAVE_DIR, params.ENVIRONMENT_ID.value, agent, step_idx, mean_episode_reward
-            )
+                if params.RL_ALGORITHM in [RLAlgorithmName.CONTINUOUS_PPO_FAST_V0]:
+                    _, last_loss, _ = agent.train_net(trajectory=trajectory)
+                    trajectory.clear()
+                elif params.RL_ALGORITHM in [
+                    RLAlgorithmName.DDPG_FAST_V0,
+                    RLAlgorithmName.DISCRETE_A2C_FAST_V0,
+                    RLAlgorithmName.CONTINUOUS_A2C_FAST_V0
+                ]:
+                    _, last_loss, _ = agent.train_net(step_idx=step_idx)
+                elif params.RL_ALGORITHM == RLAlgorithmName.DQN_FAST_V0:
+                    _, last_loss = agent.train_net(step_idx=step_idx)
+                else:
+                    raise ValueError()
+
+                loss_list.append(last_loss)
+
+            if params.SAVE_AT_MAX_GLOBAL_STEPS:
+                save_model(
+                    MODEL_SAVE_DIR, params.ENVIRONMENT_ID.value, agent, step_idx, mean_episode_reward
+                )
+        finally:
+            if params.ENVIRONMENT_ID in [EnvironmentName.REAL_DEVICE_RIP, EnvironmentName.REAL_DEVICE_DOUBLE_RIP]:
+                env.stop()
 
 
 if __name__ == "__main__":
     from codes.a_config.parameters import PARAMETERS as parameters
 
     params = parameters
-    main(params)
+    try:
+        main(params)
+    except KeyboardInterrupt as e:
+        print(e)
+
 

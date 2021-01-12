@@ -2,17 +2,43 @@ syntax="proto3";
 
 service Greeter {
   // Sends a greeting
-  rpc SayHello (HelloRequest) returns (HelloReply) {}
+  rpc say_hello(HelloRequest) returns (HelloReply) {}
+
   // Sends another greeting
-  rpc SayHelloAgain (HelloRequest) returns (HelloReply) {}
+  rpc add(InputNumbers) returns (OutputNumber) {}
+
+  // Sends another greeting
+  rpc empty_message() returns (State) {}
 }
 
 // The request message containing the user's name.
 message HelloRequest {
   string name = 1;
+  string address = 2;
+  string phone_number = 3;
 }
 
 // The response message containing the greetings
 message HelloReply {
-  string message = 1;
+  string reply_message = 1;
+}
+
+message InputNumbers {
+  int64 num1 = 1;
+  int64 num2 = 2;
+}
+
+message OutputNumber {
+  int64 num = 1;
+}
+
+message Action {
+  float action = 1;
+}
+
+message State {
+  float num_1 = 1;
+  float num_2 = 2;
+  float num_3 = 3;
+  float num_4 = 4;
 }

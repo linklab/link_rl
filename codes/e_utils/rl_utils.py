@@ -6,6 +6,7 @@ from torch import optim
 import os, sys
 import pybullet_envs
 
+from codes.b_environments.real_device.real_rip_env import RealRotaryInvertedPendulumEnv
 from codes.d_agents.continuous_action.continuous_a2c_agent import AgentContinuousA2C
 from codes.d_agents.continuous_action.continuous_ppo_agent import AgentContinuousPPO
 from codes.d_agents.discrete_action.discrete_a2c_agent import AgentDiscreteA2C
@@ -39,15 +40,23 @@ if params.MY_PLATFORM != "REAL_RIP_PLATFORM":
     from codes.b_environments.real_device.environment_double_rip import EnvironmentDoubleRIP
 
 if params.MY_PLATFORM != "REAL_RIP_PLATFORM":
-    from codes.b_environments.matlab.matlabenv import MatlabRotaryInvertedPendulumEnv
+    from codes.b_environments.rotary_inverted_pendulum.rip import RotaryInvertedPendulumEnv
 
 def get_environment(owner="cheif", params=None):
-    if params.ENVIRONMENT_ID == EnvironmentName.REAL_DEVICE_DOUBLE_RIP:
-        env = EnvironmentDoubleRIP(
-            owner=owner,
+    if params.ENVIRONMENT_ID == EnvironmentName.REAL_DEVICE_RIP:
+        env = RotaryInvertedPendulumEnv(
             action_min=params.ACTION_SCALE * -1.0,
             action_max=params.ACTION_SCALE,
             env_reset=params.ENV_RESET,
+            pendulum_type=EnvironmentName.REAL_DEVICE_RIP,
+            params=params
+        )
+    elif params.ENVIRONMENT_ID == EnvironmentName.REAL_DEVICE_DOUBLE_RIP:
+        env = RotaryInvertedPendulumEnv(
+            action_min=params.ACTION_SCALE * -1.0,
+            action_max=params.ACTION_SCALE,
+            env_reset=params.ENV_RESET,
+            pendulum_type=EnvironmentName.REAL_DEVICE_DOUBLE_RIP,
             params=params
         )
 
@@ -155,20 +164,20 @@ def get_environment(owner="cheif", params=None):
     elif params.ENVIRONMENT_ID == EnvironmentName.WALKER_2D_V2:
         env = gym.make(EnvironmentName.WALKER_2D_V2.value)
     elif params.ENVIRONMENT_ID == EnvironmentName.PENDULUM_MATLAB_V0:
-        env = MatlabRotaryInvertedPendulumEnv(
+        env = RotaryInvertedPendulumEnv(
             action_min=params.ACTION_SCALE * -1.0,
             action_max=params.ACTION_SCALE,
             env_reset=params.ENV_RESET,
-            pendulum_type='PENDULUM_MATLAB_V0',
+            pendulum_type=EnvironmentName.PENDULUM_MATLAB_V0,
             params=params
         )
         env.start()
     elif params.ENVIRONMENT_ID == EnvironmentName.PENDULUM_MATLAB_DOUBLE_RIP_V0:
-        env = MatlabRotaryInvertedPendulumEnv(
+        env = RotaryInvertedPendulumEnv(
             action_min=params.ACTION_SCALE * -1.0,
             action_max=params.ACTION_SCALE,
             env_reset=params.ENV_RESET,
-            pendulum_type='PENDULUM_MATLAB_DOUBLE_RIP_V0',
+            pendulum_type=EnvironmentName.PENDULUM_MATLAB_DOUBLE_RIP_V0,
             params=params
         )
         env.start()

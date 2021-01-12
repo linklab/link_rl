@@ -13,11 +13,13 @@ from temp.grpc import helloworld_pb2_grpc, helloworld_pb2
 
 
 class Greeter(helloworld_pb2_grpc.GreeterServicer):
-    def SayHello(self, request, context):
-        return helloworld_pb2.HelloReply(message='Hello, {0}!'.format(request.name))
+    def say_hello(self, request, context):
+        return helloworld_pb2.HelloReply(reply_message='Hello, {0} {1} {2}!'.format(
+            request.name, request.address, request.phone_number
+        ))
 
-    def SayHelloAgain(self, request, context):
-        return helloworld_pb2.HelloReply(message='Hello again, {0}!'.format(request.name))
+    def add(self, request, context):
+        return helloworld_pb2.OutputNumber(num=request.num1 + request.num2)
 
 
 def serve_main():
@@ -26,6 +28,7 @@ def serve_main():
     server.add_insecure_port('[::]:50051')
     server.start()
     server.wait_for_termination()
+
 
 if __name__ == "__main__":
     serve_main()

@@ -1,4 +1,18 @@
-import os
-current_path = os.path.dirname(os.path.realpath(__file__))
-PROJECT_HOME = os.path.abspath(os.path.join(current_path, os.pardir, os.pardir))
-print(PROJECT_HOME)
+class A:
+    def __init__(self):
+        self.f()
+
+    def f(self):
+        print("AAAA")
+
+
+class B(A):
+    def __init__(self):
+        super(B, self).__init__()
+
+    def f(self):
+        print("BBBB")
+
+
+if __name__ == "__main__":
+    b = B()

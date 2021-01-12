@@ -1,5 +1,7 @@
 import math
 import random
+
+import grpc
 import gym
 import numpy as np
 import sys,os
@@ -9,15 +11,23 @@ PROJECT_HOME = os.path.abspath(os.path.join(current_path, os.pardir, os.pardir, 
 if PROJECT_HOME not in sys.path:
     sys.path.append(PROJECT_HOME)
 
-from codes.b_environments.matlab.matlabcode import SimulinkPlant
-from codes.e_utils.names import RLAlgorithmName
+from codes.b_environments.rotary_inverted_pendulum import rip_service_pb2_grpc
+from codes.b_environments.rotary_inverted_pendulum.rip_service_pb2 import RipRequest
+from codes.b_environments.rotary_inverted_pendulum.matlabcode import SimulinkPlant
+
+from codes.e_utils.names import RLAlgorithmName, EnvironmentName
 
 np.set_printoptions(formatter={'float_kind': lambda x: '{0:0.6f}'.format(x)})
 
 BLOWING_ACTION_RATE = 0.0002  # 5000 스텝에 1번 정도(지수 분포)의 주가로 외력이 가해짐 --> Stochastic Env.
 
-class MatlabRotaryInvertedPendulumEnv(gym.Env):
-    def __init__(self, action_min, action_max, env_reset=True, pendulum_type='PENDULUM_MATLAB_V0', params=None):
+RIP_SERVER = '192.168.0.254'
+
+class RotaryInvertedPendulumEnv(gym.Env):
+    def __init__(
+            self, action_min, action_max, env_reset=True,
+            pendulum_type=EnvironmentName.PENDULUM_MATLAB_V0, params=None
+    ):
         self.episode_steps = 0
         self.total_steps = 0
         self.env_reset = env_reset
@@ -37,14 +47,14 @@ class MatlabRotaryInvertedPendulumEnv(gym.Env):
         MATLAB_ENGINE_DIR = os.path.abspath(os.path.join(current_path, "engine"))
         os.chdir(MATLAB_ENGINE_DIR) # change working directory
 
-        if self.pendulum_type == 'PENDULUM_MATLAB_V0':
+        if self.pendulum_type == EnvironmentName.PENDULUM_MATLAB_V0:
             self.plant = SimulinkPlant(modelName="single_RIP")
-        elif self.pendulum_type == 'PENDULUM_MATLAB_DOUBLE_RIP_V0':
+        elif self.pendulum_type == EnvironmentName.PENDULUM_MATLAB_DOUBLE_RIP_V0:
             self.plant = SimulinkPlant(modelName="double_RIP")
+        elif self.pendulum_type in [EnvironmentName.REAL_DEVICE_RIP, EnvironmentName.REAL_DEVICE_DOUBLE_RIP]:
+            self.plant = None
         else:
             raise ValueError()
-
-        #self.plant = SimulinkPlant(modelName=RIP_filename)
 
         self.obs_degree = [None, None]
         self.next_obs_degree = [None, None]
@@ -56,15 +66,17 @@ class MatlabRotaryInvertedPendulumEnv(gym.Env):
 
         # self.action_index_to_voltage = [-0.05, -0.025, -0.008, 0, 0.008, 0.025, 0.05]
 
-        if self.pendulum_type == 'PENDULUM_MATLAB_V0':
+        if self.pendulum_type == EnvironmentName.PENDULUM_MATLAB_V0:
             self.action_index_to_voltage = [
                 -0.08, -0.05, -0.025, -0.0125, -0.008, -0.002, 0.0, 0.002, 0.008, 0.0125, 0.025, 0.05, 0.08
             ]
-        elif self.pendulum_type == 'PENDULUM_MATLAB_DOUBLE_RIP_V0':
+        elif self.pendulum_type == EnvironmentName.PENDULUM_MATLAB_DOUBLE_RIP_V0:
             self.action_index_to_voltage = [
                 -3.5, -2.75, -2.0, -1.5, -0.75, -0.35, -0.10, -0.05, -0.025, -0.016, 0.0,
                 0.016, 0.025, 0.05, 0.10, 0.35, 0.75, 1.5, 2.0, 2.75, 3.5
             ]
+        elif self.pendulum_type in [EnvironmentName.REAL_DEVICE_RIP, EnvironmentName.REAL_DEVICE_DOUBLE_RIP]:
+            self.action_index_to_voltage = None
         else:
             raise ValueError()
 
@@ -80,18 +92,27 @@ class MatlabRotaryInvertedPendulumEnv(gym.Env):
 
         #high = np.array([1., 1., self.max_velocity, 1., 1., action_max, 1.0], dtype=np.float32)
 
-        if self.pendulum_type == 'PENDULUM_MATLAB_V0':
-            high = np.array([1., 1., self.max_velocity, 1., 1., self.max_velocity], dtype=np.float32)
-        elif self.pendulum_type == 'PENDULUM_MATLAB_DOUBLE_RIP_V0':
-            high = np.array([1., 1., self.max_velocity, 1., 1., self.max_velocity, 1., 1., self.max_velocity], dtype=np.float32)
+        if self.pendulum_type in [
+            EnvironmentName.PENDULUM_MATLAB_V0, EnvironmentName.REAL_DEVICE_RIP
+        ]:
+            high = np.array(
+                [1., 1., self.max_velocity, 1., 1., self.max_velocity],
+                dtype=np.float32
+            )
+        elif self.pendulum_type in [
+            EnvironmentName.PENDULUM_MATLAB_DOUBLE_RIP_V0, EnvironmentName.REAL_DEVICE_DOUBLE_RIP
+        ]:
+            high = np.array(
+                [1., 1., self.max_velocity, 1., 1., self.max_velocity, 1., 1., self.max_velocity],
+                dtype=np.float32
+            )
         else:
             raise ValueError()
 
         low = high * -1.0
 
         self.observation_space = gym.spaces.Box(
-            low=low, high=high,
-            dtype=np.float32
+            low=low, high=high, dtype=np.float32
         )
 
         self.n_states = self.observation_space.shape[0]
@@ -110,6 +131,12 @@ class MatlabRotaryInvertedPendulumEnv(gym.Env):
 
         self.num_episodes = 0
         self.episode_period_env_reset_forced = 10
+
+        if self.pendulum_type in [EnvironmentName.REAL_DEVICE_RIP, EnvironmentName.REAL_DEVICE_DOUBLE_RIP]:
+            channel = grpc.insecure_channel('{0}:50051'.format(RIP_SERVER))
+            self.server_obj = rip_service_pb2_grpc.RDIPStub(channel)
+        else:
+            self.server_obj = None
 
     def get_n_states(self):
         n_states = self.observation_space.shape[0]
@@ -155,8 +182,18 @@ class MatlabRotaryInvertedPendulumEnv(gym.Env):
         self.episode_pendulum_velocity_reward_list.clear()
         self.episode_action_reward_list.clear()
 
-        if self.pendulum_type == 'PENDULUM_MATLAB_V0':
-            self.pendulum_1_position, self.motor_position, self.pendulum_1_velocity, self.motor_velocity, self.simulation_time = self.plant.getHistory()
+        if self.pendulum_type in [EnvironmentName.PENDULUM_MATLAB_V0, EnvironmentName.REAL_DEVICE_RIP]:
+            if self.pendulum_type == EnvironmentName.PENDULUM_MATLAB_V0:
+                self.pendulum_1_position, self.motor_position, self.pendulum_1_velocity, self.motor_velocity, \
+                self.simulation_time = self.plant.getHistory()
+            else:
+                rip_response = self.server_obj.reset(RipRequest(value=None))
+
+                self.motor_position = rip_response.arm_angle
+                self.motor_velocity = rip_response.arm_velocity
+                self.pendulum_1_position = rip_response.link_1_angle
+                self.pendulum_1_velocity = rip_response.link_1_velocity
+                self.simulation_time =None
 
             state = (
                 math.cos(self.pendulum_1_position),
@@ -168,9 +205,20 @@ class MatlabRotaryInvertedPendulumEnv(gym.Env):
             )
 
             self.update_current_state(adjusted_pendulum_1_radian=0.0)
-        elif self.pendulum_type == 'PENDULUM_MATLAB_DOUBLE_RIP_V0':
-            self.pendulum_1_position, self.motor_position, self.pendulum_2_position, self.pendulum_1_velocity, self.motor_velocity, self.pendulum_2_velocity, self.simulation_time = self.plant.getHistory()
-            # print("!!!!!!!!!!!!!!!", self.pendulum_1_position, self.motor_position, self.pendulum_2_position,self.pendulum_1_velocity, self.motor_velocity, self.pendulum_2_velocity)
+        elif self.pendulum_type in [EnvironmentName.PENDULUM_MATLAB_DOUBLE_RIP_V0, EnvironmentName.REAL_DEVICE_DOUBLE_RIP]:
+            if self.pendulum_type == EnvironmentName.PENDULUM_MATLAB_DOUBLE_RIP_V0:
+                self.pendulum_1_position, self.motor_position, self.pendulum_2_position, self.pendulum_1_velocity, \
+                self.motor_velocity, self.pendulum_2_velocity, self.simulation_time = self.plant.getHistory()
+            else:
+                rip_response = self.server_obj.reset(RipRequest(value=None))
+
+                self.motor_position = rip_response.arm_angle
+                self.motor_velocity = rip_response.arm_velocity
+                self.pendulum_1_position = rip_response.link_1_angle
+                self.pendulum_1_velocity = rip_response.link_1_velocity
+                self.pendulum_2_position = rip_response.link_2_angle
+                self.pendulum_2_velocity = rip_response.link_2_velocity
+                self.simulation_time = None
 
             state = (
                 math.cos(self.pendulum_1_position),
@@ -275,13 +323,34 @@ class MatlabRotaryInvertedPendulumEnv(gym.Env):
                 action = self.action_index_to_voltage[action]
 
 
-        self.plant.simulate(action)
+        if self.pendulum_type == EnvironmentName.PENDULUM_MATLAB_V0:
+            self.plant.simulate(action)
 
-        if self.pendulum_type == 'PENDULUM_MATLAB_V0':
-            self.pendulum_1_position, self.motor_position, self.pendulum_1_velocity, self.motor_velocity, self.simulation_time = self.plant.getHistory()
-        elif self.pendulum_type == 'PENDULUM_MATLAB_DOUBLE_RIP_V0':
-            self.pendulum_1_position, self.motor_position, self.pendulum_2_position, self.pendulum_1_velocity, self.motor_velocity, self.pendulum_2_velocity, self.simulation_time = self.plant.getHistory()
-            # print("!!!!!!!!!!!!!!!", self.pendulum_1_position, self.motor_position, self.pendulum_2_position,self.pendulum_1_velocity, self.motor_velocity, self.pendulum_2_velocity)
+            self.pendulum_1_position, self.motor_position, self.pendulum_1_velocity, self.motor_velocity, \
+            self.simulation_time = self.plant.getHistory()
+        elif self.pendulum_type == EnvironmentName.REAL_DEVICE_RIP:
+            rip_response = self.server_obj.step(RipRequest(value=action))
+
+            self.motor_position = rip_response.arm_angle
+            self.motor_velocity = rip_response.arm_velocity
+            self.pendulum_1_position = rip_response.link_1_angle
+            self.pendulum_1_velocity = rip_response.link_1_velocity
+            self.simulation_time = None
+        elif self.pendulum_type == EnvironmentName.PENDULUM_MATLAB_DOUBLE_RIP_V0:
+            self.plant.simulate(action)
+
+            self.pendulum_1_position, self.motor_position, self.pendulum_2_position, self.pendulum_1_velocity, \
+            self.motor_velocity, self.pendulum_2_velocity, self.simulation_time = self.plant.getHistory()
+        elif self.pendulum_type == EnvironmentName.REAL_DEVICE_DOUBLE_RIP:
+            rip_response = self.server_obj.step(RipRequest(value=action))
+
+            self.motor_position = rip_response.arm_angle
+            self.motor_velocity = rip_response.arm_velocity
+            self.pendulum_1_position = rip_response.link_1_angle
+            self.pendulum_1_velocity = rip_response.link_1_velocity
+            self.pendulum_2_position = rip_response.link_2_angle
+            self.pendulum_2_velocity = rip_response.link_2_velocity
+            self.simulation_time = None
         else:
             raise ValueError()
 
@@ -303,10 +372,14 @@ class MatlabRotaryInvertedPendulumEnv(gym.Env):
         #     action, self.pendulum_1_position, self.pendulum_1_velocity, adjusted_radian, reward, self.simulation_time
         # ))
 
-        if self.pendulum_type == 'PENDULUM_MATLAB_V0':
+        if self.pendulum_type in [
+            EnvironmentName.PENDULUM_MATLAB_V0, EnvironmentName.REAL_DEVICE_RIP
+        ]:
             self.update_current_state(adjusted_pendulum_1_radian)
             reward = self.get_reward(adjusted_pendulum_1_radian)
-        elif self.pendulum_type == 'PENDULUM_MATLAB_DOUBLE_RIP_V0':
+        elif self.pendulum_type in [
+            EnvironmentName.PENDULUM_MATLAB_DOUBLE_RIP_V0, EnvironmentName.REAL_DEVICE_DOUBLE_RIP
+        ]:
             self.update_current_state_for_double_rip(adjusted_pendulum_1_radian, adjusted_pendulum_2_radian)
             reward = self.get_reward_for_double_rip(adjusted_pendulum_1_radian, adjusted_pendulum_2_radian)
         else:
@@ -317,7 +390,7 @@ class MatlabRotaryInvertedPendulumEnv(gym.Env):
 
             info = {
                 "adjusted_pendulum_1_radian": adjusted_pendulum_1_radian,
-                "adjusted_pendulum_2_radian": adjusted_pendulum_2_radian if self.pendulum_type == 'PENDULUM_MATLAB_DOUBLE_RIP_V0' else None,
+                "adjusted_pendulum_2_radian": adjusted_pendulum_2_radian if self.pendulum_type in [EnvironmentName.PENDULUM_MATLAB_DOUBLE_RIP_V0, EnvironmentName.REAL_DEVICE_DOUBLE_RIP] else None,
                 "episode_position_reward_list": sum(self.episode_position_reward_list),
                 "episode_pendulum_velocity_reward": sum(self.episode_pendulum_velocity_reward_list),
                 "episode_action_reward": sum(self.episode_action_reward_list)
@@ -332,10 +405,10 @@ class MatlabRotaryInvertedPendulumEnv(gym.Env):
             done = False
             info = {
                 "adjusted_pendulum_1_radian": adjusted_pendulum_1_radian,
-                "adjusted_pendulum_2_radian": adjusted_pendulum_2_radian if self.pendulum_type == 'PENDULUM_MATLAB_DOUBLE_RIP_V0' else None
+                "adjusted_pendulum_2_radian": adjusted_pendulum_2_radian if self.pendulum_type in [EnvironmentName.PENDULUM_MATLAB_DOUBLE_RIP_V0, EnvironmentName.REAL_DEVICE_DOUBLE_RIP] else None
             }
 
-        if self.pendulum_type == 'PENDULUM_MATLAB_V0':
+        if self.pendulum_type in [EnvironmentName.PENDULUM_MATLAB_V0, EnvironmentName.REAL_DEVICE_RIP]:
             state = (
                 math.cos(self.pendulum_1_position),
                 math.sin(self.pendulum_1_position),
@@ -344,7 +417,7 @@ class MatlabRotaryInvertedPendulumEnv(gym.Env):
                 math.sin(self.initial_motor_position - self.motor_position),
                 self.motor_velocity,
             )
-        elif self.pendulum_type == 'PENDULUM_MATLAB_DOUBLE_RIP_V0':
+        elif self.pendulum_type in [EnvironmentName.PENDULUM_MATLAB_DOUBLE_RIP_V0, EnvironmentName.REAL_DEVICE_DOUBLE_RIP]:
             state = (
                 math.cos(self.pendulum_1_position),
                 math.sin(self.pendulum_1_position),
@@ -457,3 +530,8 @@ class MatlabRotaryInvertedPendulumEnv(gym.Env):
         degree = radian * 180 / math.pi
         return degree
 
+    def stop(self):
+        rip_response = self.server_obj.terminate(RipRequest(value=None))
+
+        if rip_response.message != "OK":
+            raise ValueError()
