@@ -28,6 +28,7 @@ else:
     device = torch.device("cpu")
 
 try:
+    print("cheif")
     env = rl_utils.get_environment(params=params)
     rl_model = rl_utils.get_rl_model(env, worker_id=-1, params=params, device=device)
     chief = Chief(logger=logger, rl_model=rl_model, params=params)

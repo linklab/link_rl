@@ -40,7 +40,6 @@ print("env:", params.ENVIRONMENT_ID)
 print("observation_space:", env.observation_space)
 print("action_space:", env.action_space)
 
-
 def play_func(exp_queue, agent, epsilon_tracker):
     if params.DEEP_LEARNING_MODEL in [
         DeepLearningModelName.DETERMINISTIC_ACTOR_CRITIC_GRU,
