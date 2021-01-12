@@ -30,7 +30,7 @@ from codes.c_models.discrete_action.dqn_model import DuelingDQNModel
 from codes.d_agents.continuous_action.ddpg_agent import AgentDDPG
 
 from codes.e_utils.actions import EpsilonGreedyDDPGActionSelector, EpsilonTracker, EpsilonGreedyDQNActionSelector, \
-    ProbabilityActionSelector, ContinuousNormalActionSelector
+    ProbabilityActionSelector, ContinuousNormalActionSelector, EpsilonGreedySomeTimesBlowDDPGActionSelector
 from codes.e_utils.common_utils import make_atari_env
 from codes.e_utils.names import EnvironmentName, DeepLearningModelName, RLAlgorithmName, OptimizerName
 
@@ -228,9 +228,15 @@ def get_rl_model(worker_id, input_shape=None, num_outputs=None, params=None, dev
 
 def get_rl_agent(env, worker_id, params, device="cpu"):
     if params.RL_ALGORITHM == RLAlgorithmName.DDPG_FAST_V0:
-        action_selector = EpsilonGreedyDDPGActionSelector(
-            epsilon=params.EPSILON_INIT, ou_enabled=True, scale_factor=params.ACTION_SCALE
-        )
+        if params.ENVIRONMENT_ID in [EnvironmentName.PENDULUM_MATLAB_V0, EnvironmentName.PENDULUM_MATLAB_DOUBLE_RIP_V0]:
+            action_selector = EpsilonGreedySomeTimesBlowDDPGActionSelector(
+                epsilon=params.EPSILON_INIT, ou_enabled=True, scale_factor=params.ACTION_SCALE,
+                min_blowing_action=-10.0 * params.ACTION_SCALE, max_blowing_action=10.0 * params.ACTION_SCALE
+            )
+        else:
+            action_selector = EpsilonGreedyDDPGActionSelector(
+                epsilon=params.EPSILON_INIT, ou_enabled=True, scale_factor=params.ACTION_SCALE
+            )
 
         epsilon_tracker = EpsilonTracker(
             action_selector=action_selector,

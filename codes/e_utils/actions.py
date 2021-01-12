@@ -47,9 +47,10 @@ class EpsilonGreedyDQNActionSelector(ActionSelector):
 
 
 class EpsilonGreedySomeTimesBlowDQNActionSelector(ActionSelector):
+    #TODO: max_blowing_action_idx
     def __init__(
             self, epsilon=0.05, blowing_action_rate=0.0002,
-            min_blowing_action_idx=-1.0, max_blowing_action_idx=1.0, action_selector=None
+            min_blowing_action_idx=0, max_blowing_action_idx=-1, action_selector=None
     ):
         self.epsilon = epsilon
         self.action_selector = action_selector if action_selector is not None else ArgmaxActionSelector()
