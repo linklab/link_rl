@@ -145,10 +145,9 @@ class AgentContinuousPPO(BaseAgent):
     #     p2 = - torch.log(torch.sqrt(2 * math.pi * var_v))
     #     return p1 + p2
 
-    @staticmethod
-    def calc_log_pi(mu_v, logstd_v, actions_v):
-        p1 = - ((mu_v - actions_v) ** 2) / (2 * torch.exp(logstd_v).clamp(min=1e-3))
-        p2 = - torch.log(torch.sqrt(2 * math.pi * torch.exp(logstd_v)))
+    def calc_log_pi(self, mu_v, logstd_v, actions_v):
+        p1 = - ((mu_v - actions_v) ** 2) / (2 * torch.exp(logstd_v).clamp(min=1e-3)).to(self.device)
+        p2 = - torch.log(torch.sqrt(2 * math.pi * torch.exp(logstd_v))).to(self.device)
         return p1 + p2
 
     def get_advantage_and_target_action_values(self, trajectory, states_v, device="cpu"):
