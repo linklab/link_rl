@@ -28,6 +28,7 @@ else:
     device = torch.device("cpu")
 
 try:
+    print("cheif")
     env = rl_utils.get_environment(params=params)
     input_shape = env.observation_space.shape
     num_outputs = env.action_space.shape[0]

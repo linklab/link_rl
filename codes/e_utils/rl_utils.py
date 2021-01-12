@@ -41,7 +41,7 @@ if params.MY_PLATFORM != "REAL_RIP_PLATFORM":
 if params.MY_PLATFORM != "REAL_RIP_PLATFORM":
     from codes.b_environments.matlab.matlabenv import MatlabRotaryInvertedPendulumEnv
 
-def get_environment(owner="chief", params=None):
+def get_environment(owner="cheif", params=None):
     if params.ENVIRONMENT_ID == EnvironmentName.REAL_DEVICE_DOUBLE_RIP:
         env = EnvironmentDoubleRIP(
             owner=owner,
