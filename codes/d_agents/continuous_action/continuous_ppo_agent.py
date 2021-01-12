@@ -109,6 +109,8 @@ class AgentContinuousPPO(BaseAgent):
                     batch_mu_v, self.model.base.actor.logstd, batch_actions_v
                 )
                 batch_ratio_v = torch.exp(batch_log_pi_v - batch_old_log_pi_v).to(self.device)
+                print("1", batch_advantage_v)
+                print("2", batch_ratio_v)
                 batch_surrogate_v = batch_advantage_v * batch_ratio_v
                 batch_clipped_ratio_v = torch.clamp(
                     batch_ratio_v, min=1.0 - self.params.PPO_EPSILON_CLIP, max=1.0 + self.params.PPO_EPSILON_CLIP
