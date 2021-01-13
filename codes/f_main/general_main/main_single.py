@@ -67,14 +67,18 @@ def main(params):
     loss_list = []
 
     trajectory = []
-    previous_done_step = 0
+
     solved = False
 
     if params.WANDB:
         wandb.watch(agent.model.base)
 
-    with RewardTracker(params=params, frame=False, stat=stat, early_stopping=None) as reward_tracker:
+    current_episode_reward = 0.0
+    mean_loss = 0.0
+    previous_done_step = 0
+    episode_steps = 0
 
+    with RewardTracker(params=params, frame=False, stat=stat, early_stopping=None) as reward_tracker:
         try:
             while step_idx < params.MAX_GLOBAL_STEP:
                 step_idx += params.TRAIN_STEP_FREQ
@@ -90,14 +94,8 @@ def main(params):
                         epsilon = agent.action_selector.epsilon if hasattr(agent.action_selector, 'epsilon') else None
                         mean_loss = np.mean(loss_list) if len(loss_list) > 0 else 0.0
 
-                        if params.WANDB:
-                            wandb.log({
-                                "episode reward": current_episode_reward,
-                                "episode mean loss": mean_loss,
-                                "epiosde steps": done_step - previous_done_step
-                            })
-
-                        previous_done_step = done_step
+                        episode_steps = step_idx - previous_done_step
+                        previous_done_step = step_idx
 
                         solved, mean_episode_reward = reward_tracker.set_episode_reward(
                             episode_reward=current_episode_reward, episode_done_step=step_idx, epsilon=epsilon,
@@ -113,6 +111,13 @@ def main(params):
                             break
                 if solved:
                     break
+
+                if params.WANDB:
+                    wandb.log({
+                        "episode reward": current_episode_reward,
+                        "episode mean loss": mean_loss,
+                        "episode steps": episode_steps
+                    })
 
                 if params.RL_ALGORITHM in [RLAlgorithmName.CONTINUOUS_PPO_FAST_V0]:
                     #print(last_experience[0])
