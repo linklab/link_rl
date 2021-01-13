@@ -10,7 +10,6 @@ class RewardTracker:
         self.params = params
         self.min_ts_diff = 1    # 1 second
         self.stat = stat
-        self.draw_viz = params.DRAW_VIZ
         self.frame = frame
         self.episode_reward_list = None
         self.done_episodes = 0
