@@ -40,7 +40,8 @@ my_logger = get_logger("openai_pendulum_ddpg")
 
 
 def main(params):
-    wandb.init(project=params.wandb_project, entity=params.wandb_entity, dir=WANDB_DIR)
+    if params.WANDB:
+        wandb.init(project=params.wandb_project, entity=params.wandb_entity, dir=WANDB_DIR)
 
     env = rl_utils.get_environment(owner="actual_worker", params=params)
     print_environment_info(env, params)
@@ -69,8 +70,9 @@ def main(params):
     previous_done_step = 0
     solved = False
 
-    wandb.watch(agent.model.base)
-    print("!!!!!!!!!!!!!")
+    if params.WANDB:
+        wandb.watch(agent.model.base)
+
     with RewardTracker(params=params, frame=False, stat=stat, early_stopping=None) as reward_tracker:
 
         try:
@@ -88,11 +90,12 @@ def main(params):
                         epsilon = agent.action_selector.epsilon if hasattr(agent.action_selector, 'epsilon') else None
                         mean_loss = np.mean(loss_list) if len(loss_list) > 0 else 0.0
 
-                        wandb.log({
-                            "episode reward": current_episode_reward,
-                            "episode mean loss": mean_loss,
-                            "epiosde steps": done_step - previous_done_step
-                        })
+                        if params.WANDB:
+                            wandb.log({
+                                "episode reward": current_episode_reward,
+                                "episode mean loss": mean_loss,
+                                "epiosde steps": done_step - previous_done_step
+                            })
 
                         previous_done_step = done_step
 
