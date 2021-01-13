@@ -93,6 +93,13 @@ def main(params):
                         epsilon = agent.action_selector.epsilon if hasattr(agent.action_selector, 'epsilon') else None
                         mean_loss = np.mean(loss_list) if len(loss_list) > 0 else 0.0
 
+                        if params.WANDB:
+                            wandb.log({
+                                "episode reward": current_episode_reward,
+                                "episode mean loss": mean_loss,
+                                "episode steps": current_episode_step
+                            })
+
                         solved, mean_episode_reward = reward_tracker.set_episode_reward(
                             episode_reward=current_episode_reward, episode_done_step=step_idx, epsilon=epsilon,
                             last_info=last_experience.info, mean_loss=mean_loss, model=agent.model
@@ -108,12 +115,7 @@ def main(params):
                 if solved:
                     break
 
-                if params.WANDB:
-                    wandb.log({
-                        "episode reward": current_episode_reward,
-                        "episode mean loss": mean_loss,
-                        "episode steps": current_episode_step
-                    })
+
 
                 if params.RL_ALGORITHM in [RLAlgorithmName.CONTINUOUS_PPO_FAST_V0]:
                     #print(last_experience[0])
