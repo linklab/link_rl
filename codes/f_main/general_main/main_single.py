@@ -2,6 +2,8 @@
 # https://mspries.github.io/jimmy_pendulum.html
 #!/usr/bin/env python3
 import pickle
+from collections import deque
+
 import torch
 import os, sys
 import numpy as np
@@ -64,7 +66,7 @@ def main(params):
 
     stat = None
     step_idx = 0
-    loss_list = []
+    loss_queue = deque(maxlen=100)
 
     trajectory = []
 
@@ -89,7 +91,7 @@ def main(params):
                     episode += 1
                     for current_episode_reward, current_episode_step in zip(episode_rewards, episode_steps):
                         epsilon = agent.action_selector.epsilon if hasattr(agent.action_selector, 'epsilon') else None
-                        mean_loss = np.mean(loss_list) if len(loss_list) > 0 else 0.0
+                        mean_loss = np.mean(loss_queue) if len(loss_queue) > 0 else 0.0
 
                         if params.WANDB:
                             wandb.log({
@@ -104,8 +106,6 @@ def main(params):
                             episode_reward=current_episode_reward, episode_done_step=step_idx, epsilon=epsilon,
                             last_info=last_experience.info, mean_loss=mean_loss, model=agent.model
                         )
-
-                        loss_list.clear()
 
                         if solved:
                             save_model(
@@ -141,7 +141,7 @@ def main(params):
                 else:
                     raise ValueError()
 
-                loss_list.append(last_loss)
+                loss_queue.append(last_loss)
 
             if params.SAVE_AT_MAX_GLOBAL_STEPS:
                 save_model(
