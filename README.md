@@ -121,7 +121,11 @@
 - pip install mysql-connector-python
 
 
-### 15. grpc 
+### 15. matlab
+- cd "matlabroot/extern/engines/python"
+- python setup.py install
+
+### 16. grpc 
 - python -m pip install --upgrade pip
 - pip install grpcio
 - pip install grpcio-tools
