@@ -73,10 +73,7 @@ def main(params):
     if params.WANDB:
         wandb.watch(agent.model.base)
 
-    current_episode_reward = 0.0
-    mean_loss = 0.0
-    current_episode_step = 0
-
+    episode = 0
     with RewardTracker(params=params, frame=False, stat=stat, early_stopping=None) as reward_tracker:
         try:
             while step_idx < params.MAX_GLOBAL_STEP:
@@ -89,6 +86,7 @@ def main(params):
                 episode_rewards, episode_steps = experience_source.pop_episode_reward_and_done_step_lst()
 
                 if episode_rewards and episode_steps:
+                    episode += 1
                     for current_episode_reward, current_episode_step in zip(episode_rewards, episode_steps):
                         epsilon = agent.action_selector.epsilon if hasattr(agent.action_selector, 'epsilon') else None
                         mean_loss = np.mean(loss_list) if len(loss_list) > 0 else 0.0
@@ -97,7 +95,9 @@ def main(params):
                             wandb.log({
                                 "episode reward": current_episode_reward,
                                 "episode mean loss": mean_loss,
-                                "episode steps": current_episode_step
+                                "episode steps": current_episode_step,
+                                "step_idx": step_idx,
+                                "episode": episode
                             })
 
                         solved, mean_episode_reward = reward_tracker.set_episode_reward(
@@ -114,8 +114,6 @@ def main(params):
                             break
                 if solved:
                     break
-
-
 
                 if params.RL_ALGORITHM in [RLAlgorithmName.CONTINUOUS_PPO_FAST_V0]:
                     #print(last_experience[0])
