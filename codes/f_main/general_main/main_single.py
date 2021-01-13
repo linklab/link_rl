@@ -2,10 +2,10 @@
 # https://mspries.github.io/jimmy_pendulum.html
 #!/usr/bin/env python3
 import pickle
-import wandb
 import torch
 import os, sys
 import numpy as np
+import wandb
 
 print("PyTorch Version", torch.__version__)
 
@@ -21,6 +21,9 @@ from codes.e_utils.experience_tracker import RewardTracker
 from codes.e_utils.logger import get_logger
 from codes.e_utils.names import DeepLearningModelName, RLAlgorithmName, EnvironmentName
 
+WANDB_DIR = os.path.join(PROJECT_HOME, "out", "wandb")
+if not os.path.exists(WANDB_DIR):
+    os.makedirs(WANDB_DIR)
 
 MODEL_SAVE_DIR = os.path.join(PROJECT_HOME, "out", "model_save_files")
 if not os.path.exists(MODEL_SAVE_DIR):
@@ -37,7 +40,7 @@ my_logger = get_logger("openai_pendulum_ddpg")
 
 
 def main(params):
-    wandb.init(project=params.wandb_project, entity=params.wandb_entity)
+    wandb.init(project=params.wandb_project, entity=params.wandb_entity, dir=WANDB_DIR)
 
     env = rl_utils.get_environment(owner="actual_worker", params=params)
     print_environment_info(env, params)
@@ -67,8 +70,9 @@ def main(params):
     solved = False
 
     wandb.watch(agent.model.base)
-
+    print("!!!!!!!!!!!!!")
     with RewardTracker(params=params, frame=False, stat=stat, early_stopping=None) as reward_tracker:
+
         try:
             while step_idx < params.MAX_GLOBAL_STEP:
                 step_idx += params.TRAIN_STEP_FREQ
