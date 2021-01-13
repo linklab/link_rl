@@ -21,6 +21,7 @@ from codes.e_utils.experience_tracker import RewardTracker
 from codes.e_utils.logger import get_logger
 from codes.e_utils.names import DeepLearningModelName, RLAlgorithmName, EnvironmentName
 
+
 MODEL_SAVE_DIR = os.path.join(PROJECT_HOME, "out", "model_save_files")
 if not os.path.exists(MODEL_SAVE_DIR):
     os.makedirs(MODEL_SAVE_DIR)
@@ -145,11 +146,6 @@ def main(params):
 
 if __name__ == "__main__":
     from codes.a_config.parameters import PARAMETERS as parameters
-
     params = parameters
-    try:
-        main(params)
-    except KeyboardInterrupt as e:
-        print(e)
-
+    main(params)
 

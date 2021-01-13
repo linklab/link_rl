@@ -31,7 +31,7 @@ class EnvironmentName(enum.Enum):
     FROZENLAKE_V0 = 'FrozenLake-v0'
     INVERTED_DOUBLE_PENDULUM_V2 = 'InvertedDoublePendulum-v2'
     HOPPER_V2 = 'Hopper-v2'
-    ANT_V2 = 'Ant-v2'
+    ANT_V0 = 'AntBulletEnv-v0'
     HALF_CHEETAH_V2 = 'HalfCheetah-v2'
     SWIMMER_V2 = 'Swimmer-v2'
     REACHER_V2 = 'Reacher-v2'

@@ -16,8 +16,6 @@ PROJECT_HOME = os.path.abspath(os.path.join(current_path, os.pardir, os.pardir))
 if PROJECT_HOME not in sys.path:
     sys.path.append(PROJECT_HOME)
 
-from codes.a_config.parameters import PARAMETERS as params
-
 from codes.b_environments.quanser_rotary_inverted_pendulum.environment_rip import EnvironmentRIP
 from codes.b_environments.unity.chaser_unity import Chaser_v1
 from codes.b_environments.unity.drone_racing import Drone_Racing
@@ -137,7 +135,7 @@ def get_environment(owner="cheif", params=None):
         env = gym.make(EnvironmentName.INVERTED_DOUBLE_PENDULUM_V2.value)
     elif params.ENVIRONMENT_ID == EnvironmentName.HOPPER_V2:
         env = gym.make(EnvironmentName.HOPPER_V2.value)
-    elif params.ENVIRONMENT_ID == EnvironmentName.ANT_V2:
+    elif params.ENVIRONMENT_ID == EnvironmentName.ANT_V0:
         spec = gym.envs.registry.spec("AntBulletEnv-v0")
         spec._kwargs['render'] = params.ENV_RENDER
         env = gym.make("AntBulletEnv-v0")

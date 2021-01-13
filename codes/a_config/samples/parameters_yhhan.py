@@ -3,7 +3,6 @@ from codes.a_config.federated_parameters.parameters_federated_cartpole_dqn impor
 #
 # class PARAMETERS(PARAMETERS_FEDERATED_CARTPOLE_PPO_MLP):
 #     PYTHON_PATH = "~/anaconda3/envs/rl/bin/python"
-#     DRAW_VIZ = False
 #     ENV_RENDER = False
 #     MODE_SYNCHRONIZATION = True
 #     MODE_GRADIENTS_UPDATE = False  # Distributed
@@ -45,7 +44,6 @@ from codes.a_config.federated_parameters.parameters_federated_cartpole_dqn impor
 
 class PARAMETERS(PARAMETERS_FEDERATED_CARTPOLE_DQN):
     PYTHON_PATH = "~/anaconda3/envs/rl/bin/python"
-    DRAW_VIZ = False
     ENV_RENDER = True
     NUM_WORKERS = 1
     MODE_SYNCHRONIZATION = True
@@ -64,20 +62,16 @@ class PARAMETERS(PARAMETERS_FEDERATED_CARTPOLE_DQN):
 
 
 # class PARAMETERS(PARAMETERS_FAST_RL_PENDULUM_DDPG):
-#     DRAW_VIZ = False
 #     PER = False
 
 # class PARAMETERS(PARAMETERS_FAST_RL_PENDULUM_D4PG):
-#     DRAW_VIZ = False
 #     PER = False
 
 # class PARAMETERS(PARAMETERS_FAST_RL_PENDULUM_PPO):
-#     DRAW_VIZ = False
 #     PER = False
 
 # class PARAMETERS(PARAMETERS_FAST_RL_PENDULUM_MATLAB_DDPG):
-#     DRAW_VIZ = False
 #     ENV_RESET = False
 
 # class PARAMETERS(PARAMETERS_FAST_RL_CARTPOLE_DQN):
-#     DRAW_VIZ = False
+#     pass

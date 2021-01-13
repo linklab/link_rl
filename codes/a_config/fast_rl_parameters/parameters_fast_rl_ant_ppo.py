@@ -3,12 +3,12 @@ from codes.a_config.parameters_general import PARAMETERS_GENERAL
 
 # https://github.com/bulletphysics/bullet3/blob/master/examples/pybullet/gym/pybullet_envs/minitaur/envs/minitaur_gym_env.py
 class PARAMETERS_FAST_RL_ANT_PPO(PARAMETERS_GENERAL):
-    ENVIRONMENT_ID      = EnvironmentName.ANT_V2
+    ENVIRONMENT_ID      = EnvironmentName.ANT_V0
     DEEP_LEARNING_MODEL = DeepLearningModelName.STOCHASTIC_CONTINUOUS_ACTOR_CRITIC_MLP
     RL_ALGORITHM        = RLAlgorithmName.CONTINUOUS_PPO_FAST_V0
     OPTIMIZER           = OptimizerName.ADAM
 
-    STOP_MEAN_EPISODE_REWARD = 500.0
+    STOP_MEAN_EPISODE_REWARD = 15.0
     STOP_PATIENCE_COUNT = 10
     REPLAY_BUFFER_SIZE = 1000000
     TARGET_NET_SYNC_STEP_PERIOD = 10000
@@ -19,7 +19,6 @@ class PARAMETERS_FAST_RL_ANT_PPO(PARAMETERS_GENERAL):
     GAMMA = 0.99
     BATCH_SIZE = 32
     AVG_EPISODE_SIZE_FOR_STAT = 100
-    DRAW_VIZ = True
 
     RNN_STEP_LENGTH = 2
 
@@ -33,7 +32,6 @@ class PARAMETERS_FAST_RL_ANT_PPO(PARAMETERS_GENERAL):
     LEARNING_RATE = 0.0001
     PPO_K_EPOCHS = 10
     PPO_EPSILON_CLIP = 0.2
-    PPO_VALUE_LOSS_WEIGHT = 0.5
     PPO_ENTROPY_WEIGHT = 0.01
     TRAIN_STEP_FREQ = 1
     N_STEP = 1
