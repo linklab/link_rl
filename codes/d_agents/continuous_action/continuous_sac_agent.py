@@ -90,6 +90,7 @@ class AgentSAC(BaseAgent):
         q1_loss_v = F.mse_loss(q1_v.squeeze(), target_action_values_v.detach())
         q2_loss_v = F.mse_loss(q2_v.squeeze(), target_action_values_v.detach())
         q_loss_v = q1_loss_v + q2_loss_v
+        q_loss_v = q_loss_v.mean()
         q_loss_v.backward()
         self.twinq_optimizer.step()
 
