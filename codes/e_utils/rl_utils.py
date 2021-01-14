@@ -4,22 +4,16 @@ import gym
 import paho.mqtt.client as mqtt
 from torch import optim
 import os, sys
-import pybullet_envs
-
-from codes.d_agents.continuous_action.continuous_a2c_agent import AgentContinuousA2C
-from codes.d_agents.continuous_action.continuous_ppo_agent import AgentContinuousPPO
-from codes.d_agents.discrete_action.discrete_a2c_agent import AgentDiscreteA2C
-from codes.d_agents.discrete_action.dqn_agent import AgentDQN
 
 current_path = os.path.dirname(os.path.realpath(__file__))
 PROJECT_HOME = os.path.abspath(os.path.join(current_path, os.pardir, os.pardir))
 if PROJECT_HOME not in sys.path:
     sys.path.append(PROJECT_HOME)
 
-from codes.b_environments.quanser_rotary_inverted_pendulum.environment_rip import EnvironmentRIP
-from codes.b_environments.unity.chaser_unity import Chaser_v1
-from codes.b_environments.unity.drone_racing import Drone_Racing
-from codes.b_environments.rotary_inverted_pendulum.rip import RotaryInvertedPendulumEnv
+from codes.d_agents.continuous_action.continuous_a2c_agent import AgentContinuousA2C
+from codes.d_agents.continuous_action.continuous_ppo_agent import AgentContinuousPPO
+from codes.d_agents.discrete_action.discrete_a2c_agent import AgentDiscreteA2C
+from codes.d_agents.discrete_action.dqn_agent import AgentDQN
 
 from codes.c_models.continuous_action.deterministic_actor_critic_model import DeterministicActorCriticModel
 from codes.c_models.continuous_action.stochastic_actor_critic_model import StochasticActorCriticModel
@@ -33,11 +27,9 @@ from codes.e_utils.actions import EpsilonGreedyDDPGActionSelector, EpsilonTracke
 from codes.e_utils.common_utils import make_atari_env
 from codes.e_utils.names import EnvironmentName, DeepLearningModelName, RLAlgorithmName, OptimizerName
 
-
-
-
 def get_environment(owner="cheif", params=None):
     if params.ENVIRONMENT_ID == EnvironmentName.REAL_DEVICE_RIP:
+        from codes.b_environments.rotary_inverted_pendulum.rip import RotaryInvertedPendulumEnv
         env = RotaryInvertedPendulumEnv(
             action_min=params.ACTION_SCALE * -1.0,
             action_max=params.ACTION_SCALE,
@@ -46,6 +38,7 @@ def get_environment(owner="cheif", params=None):
             params=params
         )
     elif params.ENVIRONMENT_ID == EnvironmentName.REAL_DEVICE_DOUBLE_RIP:
+        from codes.b_environments.rotary_inverted_pendulum.rip import RotaryInvertedPendulumEnv
         env = RotaryInvertedPendulumEnv(
             action_min=params.ACTION_SCALE * -1.0,
             action_max=params.ACTION_SCALE,
@@ -55,6 +48,7 @@ def get_environment(owner="cheif", params=None):
         )
 
     elif params.ENVIRONMENT_ID == EnvironmentName.QUANSER_SERVO_2:
+        from codes.b_environments.quanser_rotary_inverted_pendulum.environment_rip import EnvironmentRIP
         client = mqtt.Client(client_id="env_sub_2", transport="TCP")
         env = EnvironmentRIP(mqtt_client=client)
 
@@ -113,6 +107,7 @@ def get_environment(owner="cheif", params=None):
     elif params.ENVIRONMENT_ID == EnvironmentName.CARTPOLE_V1:
         env = gym.make(EnvironmentName.CARTPOLE_V1.value)
     elif params.ENVIRONMENT_ID == EnvironmentName.CHASER_V1_MAC or params.ENVIRONMENT_ID == EnvironmentName.CHASER_V1_WINDOWS:
+        from codes.b_environments.unity.chaser_unity import Chaser_v1
         env = Chaser_v1(params.MY_PLATFORM)
     elif params.ENVIRONMENT_ID in [EnvironmentName.BREAKOUT_DETERMINISTIC_V4, EnvironmentName.BREAKOUT_NO_FRAME_SKIP_V4]:
         env = gym.make(params.ENVIRONMENT_ID.value)
@@ -123,7 +118,8 @@ def get_environment(owner="cheif", params=None):
         env = gym.make(EnvironmentName.PENDULUM_V0.value)
     elif params.ENVIRONMENT_ID == EnvironmentName.ACROBOT_V1:
         env = gym.make(EnvironmentName.ACROBOT_V1.value)
-    elif params.ENVIRONMENT_ID == EnvironmentName.DRONE_RACING_MAC or params.ENVIRONMENT_ID == EnvironmentName.DRONE_RACING_WINDOWS:
+    elif params.ENVIRONMENT_ID in [EnvironmentName.DRONE_RACING_MAC, EnvironmentName.DRONE_RACING_WINDOWS]:
+        from codes.b_environments.unity.drone_racing import Drone_Racing
         env = Drone_Racing(params.MY_PLATFORM)
     elif params.ENVIRONMENT_ID == EnvironmentName.BLACKJACK_V0:
         env = gym.make(EnvironmentName.BLACKJACK_V0.value)
@@ -136,12 +132,14 @@ def get_environment(owner="cheif", params=None):
     elif params.ENVIRONMENT_ID == EnvironmentName.HOPPER_V2:
         env = gym.make(EnvironmentName.HOPPER_V2.value)
     elif params.ENVIRONMENT_ID == EnvironmentName.ANT_V0:
+        import pybullet_envs
         spec = gym.envs.registry.spec("AntBulletEnv-v0")
         spec._kwargs['render'] = params.ENV_RENDER
         env = gym.make("AntBulletEnv-v0")
     elif params.ENVIRONMENT_ID == EnvironmentName.SWIMMER_V2:
         env = gym.make(EnvironmentName.SWIMMER_V2.value)
     elif params.ENVIRONMENT_ID == EnvironmentName.HALF_CHEETAH_V2:
+        import pybullet_envs
         spec = gym.envs.registry.spec("HalfCheetahBulletEnv-v0")
         spec._kwargs['render'] = params.ENV_RENDER
         env = gym.make("HalfCheetahBulletEnv-v0")
@@ -158,6 +156,7 @@ def get_environment(owner="cheif", params=None):
     elif params.ENVIRONMENT_ID == EnvironmentName.WALKER_2D_V2:
         env = gym.make(EnvironmentName.WALKER_2D_V2.value)
     elif params.ENVIRONMENT_ID == EnvironmentName.PENDULUM_MATLAB_V0:
+        from codes.b_environments.rotary_inverted_pendulum.rip import RotaryInvertedPendulumEnv
         env = RotaryInvertedPendulumEnv(
             action_min=params.ACTION_SCALE * -1.0,
             action_max=params.ACTION_SCALE,
@@ -167,6 +166,7 @@ def get_environment(owner="cheif", params=None):
         )
         env.start()
     elif params.ENVIRONMENT_ID == EnvironmentName.PENDULUM_MATLAB_DOUBLE_RIP_V0:
+        from codes.b_environments.rotary_inverted_pendulum.rip import RotaryInvertedPendulumEnv
         env = RotaryInvertedPendulumEnv(
             action_min=params.ACTION_SCALE * -1.0,
             action_max=params.ACTION_SCALE,
