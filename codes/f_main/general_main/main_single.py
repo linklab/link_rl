@@ -42,8 +42,15 @@ my_logger = get_logger("openai_pendulum_ddpg")
 
 
 def main(params):
+    configuration = {key: getattr(params, key) for key in dir(params) if not key.startswith("__")}
+
     if params.WANDB:
-        wandb.init(project=params.wandb_project, entity=params.wandb_entity, dir=WANDB_DIR)
+        wandb.init(
+            project=params.wandb_project,
+            entity=params.wandb_entity,
+            dir=WANDB_DIR,
+            config=configuration
+        )
 
     env = rl_utils.get_environment(owner="actual_worker", params=params)
     print_environment_info(env, params)

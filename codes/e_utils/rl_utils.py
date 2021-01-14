@@ -27,6 +27,7 @@ from codes.e_utils.actions import EpsilonGreedyDDPGActionSelector, EpsilonTracke
 from codes.e_utils.common_utils import make_atari_env
 from codes.e_utils.names import EnvironmentName, DeepLearningModelName, RLAlgorithmName, OptimizerName
 
+
 def get_environment(owner="cheif", params=None):
     if params.ENVIRONMENT_ID == EnvironmentName.REAL_DEVICE_RIP:
         from codes.b_environments.rotary_inverted_pendulum.rip import RotaryInvertedPendulumEnv

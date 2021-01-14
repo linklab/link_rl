@@ -119,3 +119,4 @@ class PARAMETERS_GENERAL:
     SAVE_AT_MAX_GLOBAL_STEPS = False
 
     WANDB = True
+
