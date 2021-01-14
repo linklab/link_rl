@@ -74,7 +74,7 @@ def print_configuration(env, rl_model, params):
 
     print("\n*** RL ALGORITHM ***")
     print(" RL Algorithm: {0}".format(params.RL_ALGORITHM.value))
-    if params.RL_ALGORITHM == RLAlgorithmName.CONTINUOUS_PPO_FAST_V0:
+    if params.RL_ALGORITHM == RLAlgorithmName.CONTINUOUS_PPO_V0:
         print(" PPO_K_EPOCHS: {0}".format(params.PPO_K_EPOCHS))
         print(" PPO_EPSILON_CLIP: {0}".format(params.PPO_EPSILON_CLIP))
         print(" PPO_ENTROPY_WEIGHT: {0}".format(params.PPO_ENTROPY_WEIGHT))

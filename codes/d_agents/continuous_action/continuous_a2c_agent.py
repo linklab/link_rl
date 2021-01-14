@@ -8,6 +8,7 @@ from torch.distributions import Normal
 
 from codes.d_agents.a0_base_agent import BaseAgent, float32_preprocessor
 from codes.e_utils import rl_utils, replay_buffer
+from codes.e_utils.names import DeepLearningModelName
 
 
 class AgentContinuousA2C(BaseAgent):
@@ -28,6 +29,7 @@ class AgentContinuousA2C(BaseAgent):
         self.action_min = action_min
         self.action_max = action_max
 
+        assert params.DEEP_LEARNING_MODEL == DeepLearningModelName.STOCHASTIC_CONTINUOUS_ACTOR_CRITIC_MLP
         self.model = rl_utils.get_rl_model(
             worker_id=worker_id, input_shape=input_shape, num_outputs=num_outputs, params=params, device=self.device
         )

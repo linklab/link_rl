@@ -80,7 +80,7 @@ class RotaryInvertedPendulumEnv(gym.Env):
         else:
             raise ValueError()
 
-        if self.params.RL_ALGORITHM in [RLAlgorithmName.DQN_FAST_V0]:
+        if self.params.RL_ALGORITHM in [RLAlgorithmName.DQN_V0]:
             self.action_space = gym.spaces.Discrete(len(self.action_index_to_voltage))
             self.n_actions = self.action_space.n
         else:
@@ -143,7 +143,7 @@ class RotaryInvertedPendulumEnv(gym.Env):
         return n_states
 
     def get_n_actions(self):
-        if self.params.RL_ALGORITHM in [RLAlgorithmName.DQN_FAST_V0]:
+        if self.params.RL_ALGORITHM in [RLAlgorithmName.DQN_V0]:
             n_actions = self.action_space.n
         else:
             n_actions = self.action_space.shape[0]
@@ -151,7 +151,7 @@ class RotaryInvertedPendulumEnv(gym.Env):
 
     @property
     def action_meanings(self):
-        if self.params.RL_ALGORITHM in [RLAlgorithmName.DQN_FAST_V0]:
+        if self.params.RL_ALGORITHM in [RLAlgorithmName.DQN_V0]:
             action_meanings = self.action_index_to_voltage
         else:
             action_meanings = ["Joint effort",]
@@ -293,15 +293,15 @@ class RotaryInvertedPendulumEnv(gym.Env):
 
         self.total_steps += 1
         if self.total_steps >= self.next_time_step_of_external_blow:
-            if self.params.RL_ALGORITHM in [RLAlgorithmName.DQN_FAST_V0]:
+            if self.params.RL_ALGORITHM in [RLAlgorithmName.DQN_V0]:
                 action = random.uniform(
                     a=self.action_index_to_voltage[0] * 10.0,
                     b=self.action_index_to_voltage[-1] * 10.0,
                 )
             elif self.params.RL_ALGORITHM in [
-                RLAlgorithmName.DDPG_FAST_V0,
-                RLAlgorithmName.CONTINUOUS_A2C_FAST_V0,
-                RLAlgorithmName.CONTINUOUS_PPO_FAST_V0
+                RLAlgorithmName.DDPG_V0,
+                RLAlgorithmName.CONTINUOUS_A2C_V0,
+                RLAlgorithmName.CONTINUOUS_PPO_V0
             ]:
                 action = random.uniform(
                     a=self.action_min * 10.0,
@@ -319,7 +319,7 @@ class RotaryInvertedPendulumEnv(gym.Env):
             if type(action) is np.ndarray:
                 action = action[0]
 
-            if self.params.RL_ALGORITHM in [RLAlgorithmName.DQN_FAST_V0]:
+            if self.params.RL_ALGORITHM in [RLAlgorithmName.DQN_V0]:
                 action = self.action_index_to_voltage[action]
 
 

@@ -14,11 +14,11 @@ class DeterministicActorCriticModel(BaseModel):
 
         num_inputs = input_shape[0]
 
-        if self.params.RL_ALGORITHM == RLAlgorithmName.DDPG_FAST_V0:
+        if self.params.RL_ALGORITHM == RLAlgorithmName.DDPG_V0:
             self.base = DeterministicActorCriticMLPBase(
                 num_inputs=num_inputs, num_outputs=num_outputs, params=self.params
             )
-        elif self.params.RL_ALGORITHM == RLAlgorithmName.D4PG_FAST_V0:
+        elif self.params.RL_ALGORITHM == RLAlgorithmName.D4PG_V0:
             self.base = DistributionalActorCriticMLPBase(
                 num_inputs=num_inputs, num_outputs=num_outputs, params=self.params
             )

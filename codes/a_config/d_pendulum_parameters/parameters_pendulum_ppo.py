@@ -2,10 +2,10 @@ from codes.e_utils.names import *
 from codes.a_config.parameters_general import PARAMETERS_GENERAL
 
 # https://github.com/bulletphysics/bullet3/blob/master/examples/pybullet/gym/pybullet_envs/minitaur/envs/minitaur_gym_env.py
-class PARAMETERS_FAST_RL_PENDULUM_PPO(PARAMETERS_GENERAL):
+class PARAMETERS_RL_PENDULUM_PPO(PARAMETERS_GENERAL):
     ENVIRONMENT_ID      = EnvironmentName.PENDULUM_V0
     DEEP_LEARNING_MODEL = DeepLearningModelName.STOCHASTIC_CONTINUOUS_ACTOR_CRITIC_MLP
-    RL_ALGORITHM        = RLAlgorithmName.CONTINUOUS_PPO_FAST_V0
+    RL_ALGORITHM        = RLAlgorithmName.CONTINUOUS_PPO_V0
     OPTIMIZER           = OptimizerName.ADAM
 
     STOP_MEAN_EPISODE_REWARD = -140

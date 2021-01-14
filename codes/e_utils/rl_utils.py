@@ -5,6 +5,9 @@ import paho.mqtt.client as mqtt
 from torch import optim
 import os, sys
 
+from codes.c_models.continuous_action.soft_actor_critic_model import SoftActorCriticModel
+from codes.d_agents.continuous_action.continuous_sac_agent import AgentSAC
+
 current_path = os.path.dirname(os.path.realpath(__file__))
 PROJECT_HOME = os.path.abspath(os.path.join(current_path, os.pardir, os.pardir))
 if PROJECT_HOME not in sys.path:
@@ -187,7 +190,15 @@ def get_environment(owner="cheif", params=None):
 
 
 def get_rl_model(worker_id, input_shape=None, num_outputs=None, params=None, device=None):
-    if params.DEEP_LEARNING_MODEL == DeepLearningModelName.STOCHASTIC_CONTINUOUS_ACTOR_CRITIC_MLP:
+    if params.DEEP_LEARNING_MODEL == DeepLearningModelName.SOFT_ACTOR_CRITIC_MLP:
+        model = SoftActorCriticModel(
+            worker_id=worker_id,
+            input_shape=input_shape,
+            num_outputs=num_outputs,
+            params=params,
+            device=device
+        ).to(device)
+    elif params.DEEP_LEARNING_MODEL == DeepLearningModelName.STOCHASTIC_CONTINUOUS_ACTOR_CRITIC_MLP:
         model = StochasticActorCriticModel(
             worker_id=worker_id,
             input_shape=input_shape,
@@ -231,7 +242,7 @@ def get_rl_model(worker_id, input_shape=None, num_outputs=None, params=None, dev
 
 
 def get_rl_agent(env, worker_id, params, device="cpu"):
-    if params.RL_ALGORITHM == RLAlgorithmName.DDPG_FAST_V0:
+    if params.RL_ALGORITHM == RLAlgorithmName.DDPG_V0:
         if params.ENVIRONMENT_ID in [EnvironmentName.PENDULUM_MATLAB_V0, EnvironmentName.PENDULUM_MATLAB_DOUBLE_RIP_V0]:
             action_selector = EpsilonGreedySomeTimesBlowDDPGActionSelector(
                 epsilon=params.EPSILON_INIT, ou_enabled=True, scale_factor=params.ACTION_SCALE,
@@ -262,7 +273,32 @@ def get_rl_agent(env, worker_id, params, device="cpu"):
         )
 
         return agent, epsilon_tracker
-    elif params.RL_ALGORITHM == RLAlgorithmName.CONTINUOUS_A2C_FAST_V0:
+    elif params.RL_ALGORITHM == RLAlgorithmName.SAC_V0:
+        action_selector = EpsilonGreedyDDPGActionSelector(
+            epsilon=params.EPSILON_INIT, ou_enabled=True, scale_factor=params.ACTION_SCALE
+        )
+
+        epsilon_tracker = EpsilonTracker(
+            action_selector=action_selector,
+            eps_start=params.EPSILON_INIT,
+            eps_final=params.EPSILON_MIN,
+            eps_frames=params.EPSILON_MIN_STEP
+        )
+
+        input_shape = env.observation_space.shape
+        num_outputs = env.action_space.shape[0]
+        action_min = env.action_space.low[0]
+        action_max = env.action_space.high[0]
+
+        print("action_min: ", action_min, "action_max:", action_max)
+
+        agent = AgentSAC(
+            input_shape=input_shape, num_outputs=num_outputs, worker_id=worker_id, action_selector=action_selector,
+            action_min=action_min, action_max=action_max, params=params, device=device
+        )
+
+        return agent, epsilon_tracker
+    elif params.RL_ALGORITHM == RLAlgorithmName.CONTINUOUS_A2C_V0:
         action_selector = ContinuousNormalActionSelector()
 
         input_shape = env.observation_space.shape
@@ -278,7 +314,7 @@ def get_rl_agent(env, worker_id, params, device="cpu"):
         )
 
         return agent, None
-    elif params.RL_ALGORITHM == RLAlgorithmName.CONTINUOUS_PPO_FAST_V0:
+    elif params.RL_ALGORITHM == RLAlgorithmName.CONTINUOUS_PPO_V0:
         action_selector = ContinuousNormalActionSelector()
 
         input_shape = env.observation_space.shape
@@ -294,7 +330,7 @@ def get_rl_agent(env, worker_id, params, device="cpu"):
         )
 
         return agent, None
-    elif params.RL_ALGORITHM == RLAlgorithmName.DQN_FAST_V0:
+    elif params.RL_ALGORITHM == RLAlgorithmName.DQN_V0:
         action_selector = EpsilonGreedyDQNActionSelector(epsilon=params.EPSILON_INIT)
 
         epsilon_tracker = EpsilonTracker(
@@ -313,7 +349,7 @@ def get_rl_agent(env, worker_id, params, device="cpu"):
         )
 
         return agent, epsilon_tracker
-    elif params.RL_ALGORITHM == RLAlgorithmName.DISCRETE_A2C_FAST_V0:
+    elif params.RL_ALGORITHM == RLAlgorithmName.DISCRETE_A2C_V0:
         action_selector = ProbabilityActionSelector()
 
         input_shape = env.observation_space.shape
@@ -327,8 +363,8 @@ def get_rl_agent(env, worker_id, params, device="cpu"):
         return agent, None
 #
 # def get_rl_algorithm(env, worker_id=0, logger=False, params=None):
-#     if params.RL_ALGORITHM == RLAlgorithmName.CONTINUOUS_A2C_FAST_V0:
-#         rl_algorithm = CONTINUOUS_A2C_FAST_v0(
+#     if params.RL_ALGORITHM == RLAlgorithmName.CONTINUOUS_A2C_V0:
+#         rl_algorithm = CONTINUOUS_A2C_v0(
 #             env=env,
 #             worker_id=worker_id,
 #             logger=logger,
@@ -336,8 +372,8 @@ def get_rl_agent(env, worker_id, params, device="cpu"):
 #             device=device,
 #             verbose=params.VERBOSE
 #         )
-#     elif params.RL_ALGORITHM == RLAlgorithmName.DISCRETE_A2C_FAST_V0:
-#         rl_algorithm = DISCRETE_A2C_FAST_v0(
+#     elif params.RL_ALGORITHM == RLAlgorithmName.DISCRETE_A2C_V0:
+#         rl_algorithm = DISCRETE_A2C_v0(
 #             env=env,
 #             worker_id=worker_id,
 #             logger=logger,
@@ -345,8 +381,8 @@ def get_rl_agent(env, worker_id, params, device="cpu"):
 #             device=device,
 #             verbose=params.VERBOSE
 #         )
-#     elif params.RL_ALGORITHM == RLAlgorithmName.D4PG_FAST_V0:
-#         rl_algorithm = D4PG_FAST_v0(
+#     elif params.RL_ALGORITHM == RLAlgorithmName.D4PG_V0:
+#         rl_algorithm = D4PG_v0(
 #             env=env,
 #             worker_id=worker_id,
 #             logger=logger,
@@ -354,8 +390,8 @@ def get_rl_agent(env, worker_id, params, device="cpu"):
 #             device=device,
 #             verbose=params.VERBOSE
 #         )
-#     elif params.RL_ALGORITHM == RLAlgorithmName.DDPG_FAST_V0:
-#         rl_algorithm = DDPG_FAST_v0(
+#     elif params.RL_ALGORITHM == RLAlgorithmName.DDPG_V0:
+#         rl_algorithm = DDPG_v0(
 #             env=env,
 #             worker_id=worker_id,
 #             logger=logger,

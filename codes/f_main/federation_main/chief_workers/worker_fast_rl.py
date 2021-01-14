@@ -66,7 +66,7 @@ class WorkerFastRL:
     def update_process(self, avg_gradients):
         self.agent.model.set_gradients_to_current_parameters(avg_gradients)
 
-        if self.params.RL_ALGORITHM in [RLAlgorithmName.DDPG_FAST_V0, RLAlgorithmName.D4PG_FAST_V0]:
+        if self.params.RL_ALGORITHM in [RLAlgorithmName.DDPG_V0, RLAlgorithmName.D4PG_V0]:
             self.agent.actor_optimizer.step()
             self.agent.critic_optimizer.step()
         else:
@@ -104,7 +104,7 @@ class WorkerFastRL:
     def start_train(self):
         params.BATCH_SIZE *= params.TRAIN_STEP_FREQ
 
-        if params.RL_ALGORITHM in [RLAlgorithmName.DQN_FAST_V0]:
+        if params.RL_ALGORITHM in [RLAlgorithmName.DQN_V0]:
             if params.ENVIRONMENT_ID in [EnvironmentName.PENDULUM_MATLAB_V0]:
                 action_selector = EpsilonGreedySomeTimesBlowDQNActionSelector(
                     epsilon=params.EPSILON_INIT,
@@ -114,7 +114,7 @@ class WorkerFastRL:
                 )
                 self.agent.action_selector = action_selector
                 self.epsilon_tracker.action_selector = action_selector
-        elif params.RL_ALGORITHM in (RLAlgorithmName.DDPG_FAST_V0, RLAlgorithmName.D4PG_FAST_V0):
+        elif params.RL_ALGORITHM in (RLAlgorithmName.DDPG_V0, RLAlgorithmName.D4PG_V0):
             if params.ENVIRONMENT_ID in [EnvironmentName.PENDULUM_MATLAB_V0]:
                 action_selector = EpsilonGreedySomeTimesBlowDDPGActionSelector(
                     epsilon=params.EPSILON_INIT, ou_enabled=True, scale_factor=self.params.ACTION_SCALE,
@@ -150,9 +150,9 @@ class WorkerFastRL:
                 ###################  TRAIN!!!
                 actor_objective = None
 
-                if self.params.RL_ALGORITHM == RLAlgorithmName.DQN_FAST_V0:
+                if self.params.RL_ALGORITHM == RLAlgorithmName.DQN_V0:
                     gradients, loss = self.agent.train_net(step_idx=step_idx)
-                elif self.params.RL_ALGORITHM in [RLAlgorithmName.DDPG_FAST_V0, RLAlgorithmName.D4PG_FAST_V0]:
+                elif self.params.RL_ALGORITHM in [RLAlgorithmName.DDPG_V0, RLAlgorithmName.D4PG_V0]:
                     gradients, loss, actor_objective = self.agent.train_net(step_idx=step_idx)
                 else:
                     raise ValueError()
@@ -203,10 +203,10 @@ class WorkerFastRL:
         actor_objective = None
 
         for _ in range(10):
-            if self.params.RL_ALGORITHM == RLAlgorithmName.DQN_FAST_V0:
+            if self.params.RL_ALGORITHM == RLAlgorithmName.DQN_V0:
                 gradients, loss = self.agent.train_net(step_idx=step_idx)
                 loss_lst.append(loss)
-            elif self.params.RL_ALGORITHM in [RLAlgorithmName.DDPG_FAST_V0, RLAlgorithmName.D4PG_FAST_V0]:
+            elif self.params.RL_ALGORITHM in [RLAlgorithmName.DDPG_V0, RLAlgorithmName.D4PG_V0]:
                 gradients, loss, actor_objective = self.agent.train_net(step_idx=step_idx)
                 loss_lst.append(loss)
                 actor_objective_lst.append(actor_objective)
@@ -215,7 +215,7 @@ class WorkerFastRL:
 
         loss = np.mean(loss_lst)
 
-        if self.params.RL_ALGORITHM in [RLAlgorithmName.DDPG_FAST_V0, RLAlgorithmName.D4PG_FAST_V0]:
+        if self.params.RL_ALGORITHM in [RLAlgorithmName.DDPG_V0, RLAlgorithmName.D4PG_V0]:
             actor_objective = np.mean(actor_objective_lst)
 
         return loss, actor_objective
