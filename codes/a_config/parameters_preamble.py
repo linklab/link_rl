@@ -22,6 +22,9 @@ from codes.a_config.d_pendulum_parameters.parameters_pendulum_a2c import PARAMET
 from codes.a_config.d_pendulum_parameters.parameters_pendulum_ddpg import PARAMETERS_RL_PENDULUM_DDPG
 from codes.a_config.d_pendulum_parameters.parameters_pendulum_d4pg import PARAMETERS_RL_PENDULUM_D4PG
 
+from codes.a_config.e_real_device.parameters_rip import PARAMETERS_RIP
+from codes.a_config.e_real_device.parameters_double_rip import PARAMETERS_DOUBLE_RIP
+
 from codes.a_config.federated_parameters.parameters_federated_matlab_rip_ddpg   import PARAMETERS_FEDERATED_MATLAB_RIP_DDPG
 from codes.a_config.federated_parameters.parameters_federated_pendulum_ddpg     import PARAMETERS_FEDERATED_PENDULUM_DDPG
 
@@ -31,4 +34,3 @@ from codes.a_config.or_parameters.parameters_fast_rl_knapsack_dqn import PARAMET
 from codes.a_config.or_parameters.parameters_fast_rl_tsp_dqn import PARAMETERS_RL_TSP_DQN
 
 from codes.a_config.federated_parameters.parameters_federated_cartpole_ppo_mlp import PARAMETERS_FEDERATED_CARTPOLE_PPO_MLP
-from codes.a_config.real_device.parameters_double_rip import PARAMETERS_DOUBLE_RIP

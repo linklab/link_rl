@@ -1,7 +1,7 @@
 from codes.e_utils.names import OptimizerName, RLAlgorithmName, EnvironmentName, DeepLearningModelName
 
 
-class PARAMETERS_DOUBLE_RIP:
+class PARAMETERS_RIP:
     # [GENERAL]
     SEED = 1
     MY_PLATFORM = None
