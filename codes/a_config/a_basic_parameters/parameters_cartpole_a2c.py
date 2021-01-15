@@ -2,7 +2,7 @@ from codes.e_utils.names import *
 from codes.a_config.parameters_general import PARAMETERS_GENERAL
 
 
-class PARAMETERS_RL_CARTPOLE_A2C(PARAMETERS_GENERAL):
+class PARAMETERS_CARTPOLE_A2C(PARAMETERS_GENERAL):
     ENVIRONMENT_ID = EnvironmentName.CARTPOLE_V1
     DEEP_LEARNING_MODEL = DeepLearningModelName.STOCHASTIC_DISCRETE_ACTOR_CRITIC_MLP
     RL_ALGORITHM = RLAlgorithmName.DISCRETE_A2C_V0

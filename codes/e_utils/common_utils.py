@@ -222,6 +222,14 @@ def print_environment_info(env, params):
         print(f"action high: {[max_value for max_value in env.action_space.high]}")
 
 
+def print_agent_info(agent, epsilon_tracker, params):
+    print(f"Model: {params.DEEP_LEARNING_MODEL}")
+    print(f"Algorithm: {params.RL_ALGORITHM}")
+    print(f"Action Selector: {agent.action_selector}")
+    print(f"Epsilon Tracker: {epsilon_tracker if epsilon_tracker else None}")
+    print(f"Optimizer: {params.OPTIMIZER}")
+
+
 if __name__=="__main__":
     # max_episode = 20000000
     max_episode = 200

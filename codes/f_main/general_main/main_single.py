@@ -17,7 +17,7 @@ if PROJECT_HOME not in sys.path:
     sys.path.append(PROJECT_HOME)
 
 from codes.e_utils import rl_utils
-from codes.e_utils.common_utils import save_model, print_environment_info
+from codes.e_utils.common_utils import save_model, print_environment_info, print_agent_info
 from codes.e_utils.experience_single import ExperienceSourceSingleEnvFirstLast
 from codes.e_utils.experience_tracker import RewardTracker
 from codes.e_utils.logger import get_logger
@@ -56,6 +56,7 @@ def main(params):
     print_environment_info(env, params)
 
     agent, epsilon_tracker = rl_utils.get_rl_agent(env=env, worker_id=0, params=params, device=device)
+    print_agent_info(agent, epsilon_tracker, params)
 
     if params.DEEP_LEARNING_MODEL in [
         DeepLearningModelName.DETERMINISTIC_CONTINUOUS_ACTOR_CRITIC_GRU,
@@ -152,7 +153,7 @@ def main(params):
 
                 loss_queue.append(last_loss)
 
-                if params.PER_RANK_BASED:
+                if hasattr(params, "PER_RANK_BASED") and params.PER_RANK_BASED:
                     if step_idx % 100 < params.TRAIN_STEP_FREQ:
                         agent.buffer.rebalance()
 

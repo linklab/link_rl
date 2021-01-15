@@ -2,7 +2,7 @@ from codes.a_config.parameters_general import PARAMETERS_GENERAL
 from codes.e_utils.names import EnvironmentName, DeepLearningModelName, RLAlgorithmName, OptimizerName
 
 
-class PARAMETERS_RL_PENDULUM_DDPG(PARAMETERS_GENERAL):
+class PARAMETERS_PENDULUM_DDPG(PARAMETERS_GENERAL):
     ENVIRONMENT_ID = EnvironmentName.PENDULUM_V0
     DEEP_LEARNING_MODEL = DeepLearningModelName.DETERMINISTIC_CONTINUOUS_ACTOR_CRITIC_MLP
     # DEEP_LEARNING_MODEL = DeepLearningModelName.DETERMINISTIC_CONTINUOUS_ACTOR_CRITIC_GRU
