@@ -78,6 +78,8 @@ def play_main(params):
         num_episode += 1
         num_episode_step = 0
         while not done:
+            env.render()
+
             num_step += 1
             num_episode_step += 1
 

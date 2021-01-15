@@ -34,10 +34,15 @@ class AgentDQN(BaseAgent):
             params=params
         )
 
-        if self.params.PER:
+        if self.params.PER_PROPORTIONAL:
             self.buffer = replay_buffer.PrioritizedReplayBuffer(
                 experience_source=None, buffer_size=self.params.REPLAY_BUFFER_SIZE,
                 n_step=self.params.N_STEP, beta_start=0.4, beta_frames=self.params.MAX_GLOBAL_STEP
+            )
+        elif self.params.PER_RANK_BASED:
+            self.buffer = replay_buffer.RankBasedPrioritizedReplayBuffer(
+                experience_source=None, buffer_size=self.params.REPLAY_BUFFER_SIZE,
+                params=self.params, alpha=0.7, beta_start=0.5, beta_frames=self.params.MAX_GLOBAL_STEP
             )
         else:
             self.buffer = replay_buffer.ExperienceReplayBuffer(
@@ -65,7 +70,7 @@ class AgentDQN(BaseAgent):
         return actions, agent_states
 
     def train_net(self, step_idx):
-        if self.params.PER:
+        if self.params.PER_PROPORTIONAL or self.params.PER_RANK_BASED:
             batch, batch_indices, batch_weights = self.buffer.sample(self.params.BATCH_SIZE)
         else:
             batch = self.buffer.sample(self.params.BATCH_SIZE)
@@ -74,12 +79,12 @@ class AgentDQN(BaseAgent):
         self.optimizer.zero_grad()
 
         if self.params.OMEGA:
-            assert self.params.PER
+            assert self.params.PER_PROPORTIONAL or self.params.PER_RANK_BASED
             loss_v, sample_prios = self.calc_loss_per_double_dqn_for_omega(batch, batch_indices, batch_weights)
             self.buffer.update_priorities(batch_indices, sample_prios.detach().cpu().numpy())
             self.buffer.update_beta(step_idx)
         else:
-            if self.params.PER:
+            if self.params.PER_PROPORTIONAL or self.params.PER_RANK_BASED:
                 loss_v, sample_prios = self.calc_loss_per_double_dqn(batch, batch_indices, batch_weights)
                 self.buffer.update_priorities(batch_indices, sample_prios.detach().cpu().numpy())
                 self.buffer.update_beta(step_idx)

@@ -25,5 +25,6 @@ class PARAMETERS_FAST_RL_CARTPOLE_DQN(PARAMETERS_GENERAL):
     N_STEP = 4
 
     OMEGA = False
-    PER = True
+    PER_PROPORTIONAL = False
+    PER_RANK_BASED = False
     DOUBLE = True
