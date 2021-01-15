@@ -2,9 +2,9 @@ from codes.e_utils.names import *
 from codes.a_config.parameters_general import PARAMETERS_GENERAL
 
 
-class PARAMETERS_FAST_RL_ENDURO_DQN(PARAMETERS_GENERAL):
+class PARAMETERS_RL_ENDURO_DQN(PARAMETERS_GENERAL):
     ENVIRONMENT_ID = EnvironmentName.ENDURO_NO_FRAME_SKIP_V4
-    RL_ALGORITHM = RLAlgorithmName.DQN_FAST_V0
+    RL_ALGORITHM = RLAlgorithmName.DQN_V0
     DEEP_LEARNING_MODEL = DeepLearningModelName.DUELING_DQN_CNN
 
     STOP_MEAN_EPISODE_REWARD = 4000.0

@@ -42,8 +42,15 @@ my_logger = get_logger("openai_pendulum_ddpg")
 
 
 def main(params):
+    configuration = {key: getattr(params, key) for key in dir(params) if not key.startswith("__")}
+
     if params.WANDB:
-        wandb.init(project=params.wandb_project, entity=params.wandb_entity, dir=WANDB_DIR)
+        wandb.init(
+            project=params.wandb_project,
+            entity=params.wandb_entity,
+            dir=WANDB_DIR,
+            config=configuration
+        )
 
     env = rl_utils.get_environment(owner="actual_worker", params=params)
     print_environment_info(env, params)
@@ -115,28 +122,29 @@ def main(params):
                 if solved:
                     break
 
-                if params.RL_ALGORITHM in [RLAlgorithmName.CONTINUOUS_PPO_FAST_V0]:
+                if params.RL_ALGORITHM in [RLAlgorithmName.CONTINUOUS_PPO_V0]:
                     #print(last_experience[0])
                     trajectory.append(last_experience)
                     if len(trajectory) < params.PPO_TRAJECTORY_SIZE:
                         continue
-                elif params.RL_ALGORITHM in [RLAlgorithmName.DDPG_FAST_V0, RLAlgorithmName.DQN_FAST_V0]:
+                elif params.RL_ALGORITHM in [RLAlgorithmName.DDPG_V0, RLAlgorithmName.DQN_V0]:
                     if len(agent.buffer) < params.MIN_REPLAY_SIZE_FOR_TRAIN:
                         continue
                 else:
                     if len(agent.buffer) < params.BATCH_SIZE:
                         continue
 
-                if params.RL_ALGORITHM in [RLAlgorithmName.CONTINUOUS_PPO_FAST_V0]:
+                if params.RL_ALGORITHM in [RLAlgorithmName.CONTINUOUS_PPO_V0]:
                     _, last_loss, _ = agent.train_net(trajectory=trajectory)
                     trajectory.clear()
                 elif params.RL_ALGORITHM in [
-                    RLAlgorithmName.DDPG_FAST_V0,
-                    RLAlgorithmName.DISCRETE_A2C_FAST_V0,
-                    RLAlgorithmName.CONTINUOUS_A2C_FAST_V0
+                    RLAlgorithmName.DDPG_V0,
+                    RLAlgorithmName.DISCRETE_A2C_V0,
+                    RLAlgorithmName.CONTINUOUS_A2C_V0,
+                    RLAlgorithmName.SAC_V0
                 ]:
                     _, last_loss, _ = agent.train_net(step_idx=step_idx)
-                elif params.RL_ALGORITHM == RLAlgorithmName.DQN_FAST_V0:
+                elif params.RL_ALGORITHM == RLAlgorithmName.DQN_V0:
                     _, last_loss = agent.train_net(step_idx=step_idx)
                 else:
                     raise ValueError()

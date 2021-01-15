@@ -4,6 +4,7 @@ import torch.nn.functional as F
 
 from codes.d_agents.a0_base_agent import BaseAgent, TargetNet, float32_preprocessor
 from codes.e_utils import rl_utils, replay_buffer
+from codes.e_utils.names import DeepLearningModelName
 
 
 class AgentDQN(BaseAgent):
@@ -22,6 +23,10 @@ class AgentDQN(BaseAgent):
         self.params = params
         self.device = device
 
+        assert params.DEEP_LEARNING_MODEL in [
+            DeepLearningModelName.DUELING_DQN_MLP,
+            DeepLearningModelName.DUELING_DQN_CNN,
+            DeepLearningModelName.DUELING_DQN_SMALL_CNN]
         self.model = rl_utils.get_rl_model(
             worker_id=worker_id, input_shape=input_shape, num_outputs=num_outputs, params=params, device=device
         )

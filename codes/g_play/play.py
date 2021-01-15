@@ -45,11 +45,11 @@ def play_main(params):
     load_model(MODEL_ZOO_SAVE_DIR, params.ENVIRONMENT_ID.value, agent)
 
     if params.ENVIRONMENT_ID in [EnvironmentName.PENDULUM_MATLAB_V0, EnvironmentName.PENDULUM_MATLAB_DOUBLE_RIP_V0]:
-        if params.RL_ALGORITHM == RLAlgorithmName.DQN_FAST_V0:
+        if params.RL_ALGORITHM == RLAlgorithmName.DQN_V0:
             action_selector = EpsilonGreedySomeTimesBlowDQNActionSelector(
                 epsilon=0.0
             )
-        elif params.RL_ALGORITHM == RLAlgorithmName.DDPG_FAST_V0:
+        elif params.RL_ALGORITHM == RLAlgorithmName.DDPG_V0:
             action_selector = EpsilonGreedySomeTimesBlowDDPGActionSelector(
                 epsilon=0.0, ou_enabled=False, scale_factor=params.ACTION_SCALE,
                 min_blowing_action=-10.0 * params.ACTION_SCALE, max_blowing_action=10.0 * params.ACTION_SCALE
@@ -57,11 +57,11 @@ def play_main(params):
         else:
             raise ValueError()
     else:
-        if params.RL_ALGORITHM == RLAlgorithmName.CONTINUOUS_PPO_FAST_V0:
+        if params.RL_ALGORITHM == RLAlgorithmName.CONTINUOUS_PPO_V0:
             action_selector = ContinuousNormalActionSelector()
-        elif params.RL_ALGORITHM == RLAlgorithmName.DQN_FAST_V0:
+        elif params.RL_ALGORITHM == RLAlgorithmName.DQN_V0:
             action_selector = ArgmaxActionSelector()
-        elif params.RL_ALGORITHM == RLAlgorithmName.DDPG_FAST_V0:
+        elif params.RL_ALGORITHM == RLAlgorithmName.DDPG_V0:
             action_selector = EpsilonGreedyDDPGActionSelector(
                 epsilon=0.0, ou_enabled=False, scale_factor=params.ACTION_SCALE
             )
