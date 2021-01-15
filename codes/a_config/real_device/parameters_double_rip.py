@@ -11,36 +11,6 @@ class PARAMETERS_DOUBLE_RIP:
     MODEL_SAVE = False
     ENV_RENDER = False
 
-    # [MQTT]
-    # MQTT_SERVER = "127.0.0.1"
-    MQTT_PORT = 1883
-    MQTT_TOPIC_EPISODE_DETAIL = "Episode_Detail"
-    MQTT_TOPIC_SUCCESS_DONE = "Success_Done"
-    MQTT_TOPIC_FAIL_DONE = "Fail_Done"
-    MQTT_TOPIC_TRANSFER_ACK = "Transfer_Ack"
-    MQTT_TOPIC_UPDATE_ACK = "Update_Ack"
-    MQTT_TOPIC_ACK = "Ack"
-    MQTT_LOG = False
-
-    # MQTT for RIP
-    MQTT_SERVER = '192.168.0.10'
-    MQTT_PUB_TO_DRIP = 'motor_power'
-    MQTT_PUB_RESET = 'reset'
-    MQTT_SUB_RESET_COMPLETE = 'reset_complete'
-    MQTT_SUB_FROM_DRIP = 'next_state'
-    MQTT_ERROR = 'error'
-
-    # [WORKER]
-    NUM_WORKERS = 1
-
-    # [TRANSFER]
-    SOFT_TRANSFER = False
-    SOFT_TRANSFER_TAU = 0.3
-
-    # [TARGET_UPDATE]
-    SOFT_TARGET_UPDATE = False
-    SOFT_TARGET_UPDATE_TAU = 0.3
-
     ########################################
     ########################################
     STOP_MEAN_EPISODE_REWARD = 1000
@@ -51,16 +21,12 @@ class PARAMETERS_DOUBLE_RIP:
     MAX_GLOBAL_STEP = 5000000
     TRAIN_STEP_FREQ = 4
     AVG_EPISODE_SIZE_FOR_STAT = 10
-    DRAW_VIZ = True
-    DRAW_VIZ_PERIOD_STEPS = 10
     N_STEP = 4
     OMEGA = False
     OMEGA_WINDOW_SIZE = 6
     NEXT_STATE_IN_TRAJECTORY = True
     DATA_SAVE_STEP_PERIOD = 1000
 
-    LOAD_SAVED_ACTOR_MODEL = None    # 정확하고도 완전한 Full File PATH + NAME 지정 (확장자 포함)
-    LOAD_SAVED_CRITIC_MODEL = None   # 정확하고도 완전한 Full File PATH + NAME 지정 (확장자 포함)
     #########################################
     #########################################
 
@@ -70,10 +36,6 @@ class PARAMETERS_DOUBLE_RIP:
     HIDDEN_3_SIZE = 128
     # HIDDEN_SIZE_LIST = [128, 128, 128, 256]
 
-    # [CNN_DEEP_LEARNING_MODEL]
-    CNN_CRITIC_HIDDEN_1_SIZE = 128
-    CNN_CRITIC_HIDDEN_2_SIZE = 128
-
     # [OPTIMIZATION]
     GAMMA = 0.98 # discount factor
 
@@ -81,11 +43,6 @@ class PARAMETERS_DOUBLE_RIP:
     ENTROPY_BETA = 0.01
     CLIP_GRAD = 0.1
     ACTOR_LEARNING_RATE = 0.0001
-
-    # [MODE]
-    MODE_SYNCHRONIZATION = True
-    MODE_GRADIENTS_UPDATE = True         # Distributed
-    MODE_PARAMETERS_TRANSFER = True     # Transfer
 
     # [TRAINING]
     EPSILON_GREEDY_ACT = False
@@ -104,24 +61,11 @@ class PARAMETERS_DOUBLE_RIP:
     BALANCING_SCALE_FACTOR = 0.01
     ENV_RESET = False
 
-    # [TRAJECTORY_SAMPLING]
-    TRAJECTORY_SAMPLING = True
-    TRAJECTORY_LIMIT_SIZE = 200
-    PPO_TRAJECTORY_BATCH_SIZE = 64
-
-    # [PPO]
-    PPO_K_EPOCHS = 10
-    PPO_EPSILON_CLIP = 0.2
-    PPO_VALUE_LOSS_WEIGHT = 0.5
-    PPO_ENTROPY_WEIGHT = 0.01
-
     # [DQN]
-    BATCH_SIZE = 128
+    BATCH_SIZE = 32
 
     # [CUDA]
     CUDA_VISIBLE_DEVICES_NUMBER_LIST = '1, 2'
-
-
 
     # [1. ENVIRONMENTS]
     ENVIRONMENT_ID = EnvironmentName.REAL_DEVICE_DOUBLE_RIP
@@ -130,7 +74,7 @@ class PARAMETERS_DOUBLE_RIP:
     DEEP_LEARNING_MODEL = DeepLearningModelName.DETERMINISTIC_CONTINUOUS_ACTOR_CRITIC_MLP
 
     # [3. ALGORITHMS]
-    RL_ALGORITHM = RLAlgorithmName.DDPG_FAST_V0
+    RL_ALGORITHM = RLAlgorithmName.DDPG_V0
 
     # [4. OPTIMIZER]
     OPTIMIZER = OptimizerName.ADAM

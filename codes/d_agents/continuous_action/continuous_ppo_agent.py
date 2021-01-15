@@ -1,13 +1,11 @@
 import math
 
-import numpy as np
 import torch
 import torch.nn.functional as F
-import torch.nn.utils as nn_utils
-from torch.distributions import Normal
 
 from codes.d_agents.a0_base_agent import BaseAgent, float32_preprocessor
 from codes.e_utils import rl_utils, replay_buffer
+from codes.e_utils.names import DeepLearningModelName
 
 
 class AgentContinuousPPO(BaseAgent):
@@ -28,6 +26,7 @@ class AgentContinuousPPO(BaseAgent):
         self.action_min = action_min
         self.action_max = action_max
 
+        assert params.DEEP_LEARNING_MODEL == DeepLearningModelName.STOCHASTIC_CONTINUOUS_ACTOR_CRITIC_MLP
         self.model = rl_utils.get_rl_model(
             worker_id=worker_id, input_shape=input_shape, num_outputs=num_outputs, params=params, device=self.device
         )
@@ -78,7 +77,7 @@ class AgentContinuousPPO(BaseAgent):
 
         # 아래 변수는 전체 trajectory의 원소보다 1 적음
         trajectory_advantage_v, trajectory_target_action_value_v = self.get_advantage_and_target_action_values(
-            trajectory, trajectory_states_v
+            trajectory, trajectory_states_v, device=self.device
         )
 
         # normalize advantages
@@ -111,7 +110,7 @@ class AgentContinuousPPO(BaseAgent):
                 batch_log_pi_v = self.calc_log_pi(
                     batch_mu_v, self.model.base.actor.logstd, batch_actions_v
                 )
-                batch_ratio_v = torch.exp(batch_log_pi_v - batch_old_log_pi_v)
+                batch_ratio_v = torch.exp(batch_log_pi_v - batch_old_log_pi_v).to(self.device)
                 batch_surrogate_v = batch_advantage_v * batch_ratio_v
                 batch_clipped_ratio_v = torch.clamp(
                     batch_ratio_v, min=1.0 - self.params.PPO_EPSILON_CLIP, max=1.0 + self.params.PPO_EPSILON_CLIP
@@ -156,7 +155,7 @@ class AgentContinuousPPO(BaseAgent):
 
     def get_advantage_and_target_action_values(self, trajectory, states_v, device="cpu"):
         """
-        By trajectory calculate advantage and 1-step ref value
+        By trajectory calculate advantage and 1-step target action value
         :param trajectory: trajectory list
         :param critic_model: critic deep learning network
         :param states_v: states tensor

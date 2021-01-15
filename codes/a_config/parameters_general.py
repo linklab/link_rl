@@ -44,7 +44,7 @@ class PARAMETERS_GENERAL:
     ########################################
     ########################################
     ENVIRONMENT_ID = EnvironmentName.PONG_NO_FRAME_SKIP_V4
-    RL_ALGORITHM = RLAlgorithmName.DQN_FAST_V0
+    RL_ALGORITHM = RLAlgorithmName.DQN_V0
     DEEP_LEARNING_MODEL = DeepLearningModelName.DUELING_DQN_CNN
 
     STOP_MEAN_EPISODE_REWARD = None
@@ -56,16 +56,12 @@ class PARAMETERS_GENERAL:
     MAX_GLOBAL_STEP = 1000000
     TRAIN_STEP_FREQ = 4
     AVG_EPISODE_SIZE_FOR_STAT = 100
-    DRAW_VIZ = True
-    DRAW_VIZ_PERIOD_STEPS = 10
     N_STEP = 1
     OMEGA = False
     OMEGA_WINDOW_SIZE = 6
     NEXT_STATE_IN_TRAJECTORY = True
     DATA_SAVE_STEP_PERIOD = 1000
 
-    LOAD_SAVED_ACTOR_MODEL = None    # 정확하고도 완전한 Full File PATH + NAME 지정 (확장자 포함)
-    LOAD_SAVED_CRITIC_MODEL = None   # 정확하고도 완전한 Full File PATH + NAME 지정 (확장자 포함)
     #########################################
     #########################################
 
@@ -110,7 +106,6 @@ class PARAMETERS_GENERAL:
     # [PPO]
     PPO_K_EPOCHS = 10
     PPO_EPSILON_CLIP = 0.2
-    PPO_VALUE_LOSS_WEIGHT = 0.5
     PPO_ENTROPY_WEIGHT = 0.01
     PPO_TRAJECTORY_SIZE = 2049
 
@@ -122,3 +117,6 @@ class PARAMETERS_GENERAL:
 
     RNN_STEP_LENGTH = 2
     SAVE_AT_MAX_GLOBAL_STEPS = False
+
+    WANDB = True
+

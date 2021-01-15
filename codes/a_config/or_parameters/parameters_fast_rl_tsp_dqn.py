@@ -2,9 +2,9 @@ from codes.e_utils.names import *
 from codes.a_config.parameters_general import PARAMETERS_GENERAL
 
 
-class PARAMETERS_FAST_RL_TSP_DQN(PARAMETERS_GENERAL):
+class PARAMETERS_RL_TSP_DQN(PARAMETERS_GENERAL):
     ENVIRONMENT_ID = EnvironmentName.TSP_V1
-    RL_ALGORITHM = RLAlgorithmName.DQN_FAST_V0
+    RL_ALGORITHM = RLAlgorithmName.DQN_V0
     DEEP_LEARNING_MODEL = DeepLearningModelName.DUELING_DQN_MLP
 
     STOP_MEAN_EPISODE_REWARD = 0
@@ -19,6 +19,5 @@ class PARAMETERS_FAST_RL_TSP_DQN(PARAMETERS_GENERAL):
     BATCH_SIZE = 32
     TRAIN_STEP_FREQ = 2
     AVG_EPISODE_SIZE_FOR_STAT = 30
-    DRAW_VIZ = True
     N_STEP = 4
     OMEGA = False

@@ -54,7 +54,7 @@ class BaseAgent:
 
         for idx, exp in enumerate(batch):
             states.append(np.array(exp.state, copy=False))
-            actions.append(int(exp.action))
+            actions.append(exp.action)
             rewards.append(exp.reward)
             if exp.last_state is not None:
                 not_done_idx.append(idx)

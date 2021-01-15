@@ -167,13 +167,6 @@ def train(coin_name, time_unit, train_env, evaluate_env):
     buffer = replay_buffer.ExperienceReplayBuffer(experience_source, buffer_size=params.REPLAY_BUFFER_SIZE)
     optimizer = optim.Adam(net.parameters(), lr=params.LEARNING_RATE)
 
-    if params.DRAW_VIZ:
-        stat = statistics.StatisticsForValueBasedRL(method="nature_dqn")
-        stat_for_model_loss = statistics.StatisticsForValueBasedOptimization()
-    else:
-        stat = None
-        stat_for_model_loss = None
-
     step_idx = 0
 
     last_loss = 0.0
@@ -253,9 +246,6 @@ def train(coin_name, time_unit, train_env, evaluate_env):
 
             draw_loss = min(1.0, loss_v.detach().item())
             last_loss = loss_v.detach().item()
-
-            if params.DRAW_VIZ and step_idx % 1000 == 0:
-                stat_for_model_loss.draw_optimization_performance(step_idx, draw_loss)
 
             if step_idx % params.TARGET_NET_SYNC_STEP_PERIOD < params.TRAIN_STEP_FREQ:
                 tgt_net.sync()

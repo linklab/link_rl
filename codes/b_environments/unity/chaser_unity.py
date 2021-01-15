@@ -1,5 +1,6 @@
 from mlagents_envs.environment import UnityEnvironment
 
+
 from codes.e_utils.names import OSName, EnvironmentName
 
 
@@ -64,5 +65,8 @@ class Chaser_v1():
 
 
 if __name__ == "__main__":
+    from codes.a_config.parameters import PARAMETERS as parameters
+    params = parameters
+
     env = Chaser_v1(params.MY_PLATFORM)
     print(env.observation_space)

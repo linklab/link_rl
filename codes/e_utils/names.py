@@ -31,7 +31,7 @@ class EnvironmentName(enum.Enum):
     FROZENLAKE_V0 = 'FrozenLake-v0'
     INVERTED_DOUBLE_PENDULUM_V2 = 'InvertedDoublePendulum-v2'
     HOPPER_V2 = 'Hopper-v2'
-    ANT_V2 = 'Ant-v2'
+    ANT_V0 = 'AntBulletEnv-v0'
     HALF_CHEETAH_V2 = 'HalfCheetah-v2'
     SWIMMER_V2 = 'Swimmer-v2'
     REACHER_V2 = 'Reacher-v2'
@@ -54,7 +54,8 @@ class EnvironmentName(enum.Enum):
     KNAPSACK_V3 = "Knapsack-v3"  # stochastic, online knapsack with 200 items.
     PENDULUM_MATLAB_V0 = "Pendulum_Matlab_v0"
     PENDULUM_MATLAB_DOUBLE_RIP_V0 = "Pendulum_Matlab_Double_RIP_v0"
-    REAL_DEVICE_DOUBLE_RIP = "RealDeviceDoubleRip"
+    REAL_DEVICE_RIP = "Real_Device_Rip"
+    REAL_DEVICE_DOUBLE_RIP = "Real_Device_Double_Rip"
     TRADE_V0 = "Trade-v0"
 
 
@@ -64,6 +65,8 @@ class DeepLearningModelName(enum.Enum):
 
     STOCHASTIC_DISCRETE_ACTOR_CRITIC_CNN = "STOCHASTIC_DISCRETE_ACTOR_CRITIC_CNN"
     STOCHASTIC_CONTINUOUS_ACTOR_CRITIC_CNN = "STOCHASTIC_CONTINUOUS_ACTOR_CRITIC_CNN"
+
+    SOFT_ACTOR_CRITIC_MLP = "SOFT_ACTOR_CRITIC_MLP"
 
     DUELING_DQN_MLP = "DUELING_DQN_MLP"
     DUELING_DQN_CNN = "DUELING_DQN_CNN"
@@ -77,19 +80,21 @@ class DeepLearningModelName(enum.Enum):
 
 
 class RLAlgorithmName(enum.Enum):
-    DQN_FAST_V0 = "DQN_FAST_V0"
-    RAINBOW_FAST_V0 = "RAINBOW_FAST_V0"
+    DQN_V0 = "DQN_V0"
+    RAINBOW_V0 = "RAINBOW_V0"
 
-    DDPG_FAST_V0 = "DDPG_FAST_V0"
-    D4PG_FAST_V0 = "D4PG_FAST_V0"
+    DDPG_V0 = "DDPG_V0"
+    D4PG_V0 = "D4PG_V0"
 
-    DISCRETE_A2C_FAST_V0 = "DISCRETE_A2C_FAST_V0"
-    CONTINUOUS_A2C_FAST_V0 = "CONTINUOUS_A2C_FAST_V0"
+    SAC_V0 = "SAC_V0"
 
-    POLICY_GRADIENT_FAST_V0 = "POLICY_GRADIENT_V0"
-    REINFORCE_FAST_V0 = "REINFORCE_FAST_V0"
+    DISCRETE_A2C_V0 = "DISCRETE_A2C_V0"
+    CONTINUOUS_A2C_V0 = "CONTINUOUS_A2C_V0"
 
-    CONTINUOUS_PPO_FAST_V0 = "CONTINUOUS_PPO_FAST_V0"
+    POLICY_GRADIENT_V0 = "POLICY_GRADIENT_V0"
+    REINFORCE_V0 = "REINFORCE_V0"
+
+    CONTINUOUS_PPO_V0 = "CONTINUOUS_PPO_V0"
 
 
 class OptimizerName(enum.Enum):

@@ -121,7 +121,7 @@ if __name__ == "__main__":
     stderr = sys.stderr
     sys.stderr = sys.stdout
     try:
-        if params.RL_ALGORITHM in [RLAlgorithmName.DQN_FAST_V0, RLAlgorithmName.DDPG_FAST_V0, RLAlgorithmName.D4PG_FAST_V0]:
+        if params.RL_ALGORITHM in [RLAlgorithmName.DQN_V0, RLAlgorithmName.DDPG_V0, RLAlgorithmName.D4PG_V0]:
             worker = WorkerFastRL(logger, worker_id, worker_mqtt_client, params)
         else:
             worker = Worker(logger, worker_id, worker_mqtt_client, params)

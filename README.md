@@ -120,9 +120,24 @@
 - pip install sqlalchemy
 - pip install mysql-connector-python
 
+
+### 15. matlab
+- cd "matlabroot/extern/engines/python"
+- python setup.py install
+
+### 16. grpc 
+- python -m pip install --upgrade pip
+- pip install grpcio
+- pip install grpcio-tools
+- stub 생성 방법 예: 
+  - python -m grpc_tools.protoc --proto_path=. --python_out=. --grpc_python_out=. rip_service.proto
+
+
 ### 참고 문헌
 - https://medium.com/aureliantactics/ppo-hyperparameters-and-ranges-6fc2d29bccbev
 - https://arxiv.org/pdf/1709.06009.pdf
 - https://medium.com/@jonathan_hui/rl-proximal-policy-optimization-ppo-explained-77f014ec3f12
 - https://en.wikipedia.org/wiki/MM_algorithm
 - https://drive.google.com/file/d/0BxXI_RttTZAhMVhsNk5VSXU0U3c/view
+
+

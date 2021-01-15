@@ -4,23 +4,19 @@ import gym
 import paho.mqtt.client as mqtt
 from torch import optim
 import os, sys
-import pybullet_envs
 
-from codes.d_agents.continuous_action.continuous_a2c_agent import AgentContinuousA2C
-from codes.d_agents.continuous_action.continuous_ppo_agent import AgentContinuousPPO
-from codes.d_agents.discrete_action.discrete_a2c_agent import AgentDiscreteA2C
-from codes.d_agents.discrete_action.dqn_agent import AgentDQN
+from codes.c_models.continuous_action.soft_actor_critic_model import SoftActorCriticModel
+from codes.d_agents.continuous_action.continuous_sac_agent import AgentSAC
 
 current_path = os.path.dirname(os.path.realpath(__file__))
 PROJECT_HOME = os.path.abspath(os.path.join(current_path, os.pardir, os.pardir))
 if PROJECT_HOME not in sys.path:
     sys.path.append(PROJECT_HOME)
 
-from codes.a_config.parameters import PARAMETERS as params
-
-from codes.b_environments.real_device.environment_rip import EnvironmentRIP
-from codes.b_environments.unity.chaser_unity import Chaser_v1
-from codes.b_environments.unity.drone_racing import Drone_Racing
+from codes.d_agents.continuous_action.continuous_a2c_agent import AgentContinuousA2C
+from codes.d_agents.continuous_action.continuous_ppo_agent import AgentContinuousPPO
+from codes.d_agents.discrete_action.discrete_a2c_agent import AgentDiscreteA2C
+from codes.d_agents.discrete_action.dqn_agent import AgentDQN
 
 from codes.c_models.continuous_action.deterministic_actor_critic_model import DeterministicActorCriticModel
 from codes.c_models.continuous_action.stochastic_actor_critic_model import StochasticActorCriticModel
@@ -30,28 +26,33 @@ from codes.c_models.discrete_action.dqn_model import DuelingDQNModel
 from codes.d_agents.continuous_action.ddpg_agent import AgentDDPG
 
 from codes.e_utils.actions import EpsilonGreedyDDPGActionSelector, EpsilonTracker, EpsilonGreedyDQNActionSelector, \
-    ProbabilityActionSelector, ContinuousNormalActionSelector
+    ProbabilityActionSelector, ContinuousNormalActionSelector, EpsilonGreedySomeTimesBlowDDPGActionSelector
 from codes.e_utils.common_utils import make_atari_env
 from codes.e_utils.names import EnvironmentName, DeepLearningModelName, RLAlgorithmName, OptimizerName
 
 
-if params.MY_PLATFORM != "REAL_RIP_PLATFORM":
-    from codes.b_environments.real_device.environment_double_rip import EnvironmentDoubleRIP
-
-if params.MY_PLATFORM != "REAL_RIP_PLATFORM":
-    from codes.b_environments.matlab.matlabenv import MatlabRotaryInvertedPendulumEnv
-
-def get_environment(owner="chief", params=None):
-    if params.ENVIRONMENT_ID == EnvironmentName.REAL_DEVICE_DOUBLE_RIP:
-        env = EnvironmentDoubleRIP(
-            owner=owner,
+def get_environment(owner="cheif", params=None):
+    if params.ENVIRONMENT_ID == EnvironmentName.REAL_DEVICE_RIP:
+        from codes.b_environments.rotary_inverted_pendulum.rip import RotaryInvertedPendulumEnv
+        env = RotaryInvertedPendulumEnv(
             action_min=params.ACTION_SCALE * -1.0,
             action_max=params.ACTION_SCALE,
             env_reset=params.ENV_RESET,
+            pendulum_type=EnvironmentName.REAL_DEVICE_RIP,
+            params=params
+        )
+    elif params.ENVIRONMENT_ID == EnvironmentName.REAL_DEVICE_DOUBLE_RIP:
+        from codes.b_environments.rotary_inverted_pendulum.rip import RotaryInvertedPendulumEnv
+        env = RotaryInvertedPendulumEnv(
+            action_min=params.ACTION_SCALE * -1.0,
+            action_max=params.ACTION_SCALE,
+            env_reset=params.ENV_RESET,
+            pendulum_type=EnvironmentName.REAL_DEVICE_DOUBLE_RIP,
             params=params
         )
 
     elif params.ENVIRONMENT_ID == EnvironmentName.QUANSER_SERVO_2:
+        from codes.b_environments.quanser_rotary_inverted_pendulum.environment_rip import EnvironmentRIP
         client = mqtt.Client(client_id="env_sub_2", transport="TCP")
         env = EnvironmentRIP(mqtt_client=client)
 
@@ -110,6 +111,7 @@ def get_environment(owner="chief", params=None):
     elif params.ENVIRONMENT_ID == EnvironmentName.CARTPOLE_V1:
         env = gym.make(EnvironmentName.CARTPOLE_V1.value)
     elif params.ENVIRONMENT_ID == EnvironmentName.CHASER_V1_MAC or params.ENVIRONMENT_ID == EnvironmentName.CHASER_V1_WINDOWS:
+        from codes.b_environments.unity.chaser_unity import Chaser_v1
         env = Chaser_v1(params.MY_PLATFORM)
     elif params.ENVIRONMENT_ID in [EnvironmentName.BREAKOUT_DETERMINISTIC_V4, EnvironmentName.BREAKOUT_NO_FRAME_SKIP_V4, EnvironmentName.PONG_NO_FRAME_SKIP_V4, EnvironmentName.ENDURO_NO_FRAME_SKIP_V4, EnvironmentName.SEAQUEST_NO_FRAME_SKIP_V4, EnvironmentName.FREEWAY_NO_FRAME_SKIP_V4]:
         # env = gym.make(params.ENVIRONMENT_ID.value)
@@ -120,7 +122,8 @@ def get_environment(owner="chief", params=None):
         env = gym.make(EnvironmentName.PENDULUM_V0.value)
     elif params.ENVIRONMENT_ID == EnvironmentName.ACROBOT_V1:
         env = gym.make(EnvironmentName.ACROBOT_V1.value)
-    elif params.ENVIRONMENT_ID == EnvironmentName.DRONE_RACING_MAC or params.ENVIRONMENT_ID == EnvironmentName.DRONE_RACING_WINDOWS:
+    elif params.ENVIRONMENT_ID in [EnvironmentName.DRONE_RACING_MAC, EnvironmentName.DRONE_RACING_WINDOWS]:
+        from codes.b_environments.unity.drone_racing import Drone_Racing
         env = Drone_Racing(params.MY_PLATFORM)
     elif params.ENVIRONMENT_ID == EnvironmentName.BLACKJACK_V0:
         env = gym.make(EnvironmentName.BLACKJACK_V0.value)
@@ -132,13 +135,15 @@ def get_environment(owner="chief", params=None):
         env = gym.make(EnvironmentName.INVERTED_DOUBLE_PENDULUM_V2.value)
     elif params.ENVIRONMENT_ID == EnvironmentName.HOPPER_V2:
         env = gym.make(EnvironmentName.HOPPER_V2.value)
-    elif params.ENVIRONMENT_ID == EnvironmentName.ANT_V2:
+    elif params.ENVIRONMENT_ID == EnvironmentName.ANT_V0:
+        import pybullet_envs
         spec = gym.envs.registry.spec("AntBulletEnv-v0")
         spec._kwargs['render'] = params.ENV_RENDER
         env = gym.make("AntBulletEnv-v0")
     elif params.ENVIRONMENT_ID == EnvironmentName.SWIMMER_V2:
         env = gym.make(EnvironmentName.SWIMMER_V2.value)
     elif params.ENVIRONMENT_ID == EnvironmentName.HALF_CHEETAH_V2:
+        import pybullet_envs
         spec = gym.envs.registry.spec("HalfCheetahBulletEnv-v0")
         spec._kwargs['render'] = params.ENV_RENDER
         env = gym.make("HalfCheetahBulletEnv-v0")
@@ -155,20 +160,22 @@ def get_environment(owner="chief", params=None):
     elif params.ENVIRONMENT_ID == EnvironmentName.WALKER_2D_V2:
         env = gym.make(EnvironmentName.WALKER_2D_V2.value)
     elif params.ENVIRONMENT_ID == EnvironmentName.PENDULUM_MATLAB_V0:
-        env = MatlabRotaryInvertedPendulumEnv(
+        from codes.b_environments.rotary_inverted_pendulum.rip import RotaryInvertedPendulumEnv
+        env = RotaryInvertedPendulumEnv(
             action_min=params.ACTION_SCALE * -1.0,
             action_max=params.ACTION_SCALE,
             env_reset=params.ENV_RESET,
-            pendulum_type='PENDULUM_MATLAB_V0',
+            pendulum_type=EnvironmentName.PENDULUM_MATLAB_V0,
             params=params
         )
         env.start()
     elif params.ENVIRONMENT_ID == EnvironmentName.PENDULUM_MATLAB_DOUBLE_RIP_V0:
-        env = MatlabRotaryInvertedPendulumEnv(
+        from codes.b_environments.rotary_inverted_pendulum.rip import RotaryInvertedPendulumEnv
+        env = RotaryInvertedPendulumEnv(
             action_min=params.ACTION_SCALE * -1.0,
             action_max=params.ACTION_SCALE,
             env_reset=params.ENV_RESET,
-            pendulum_type='PENDULUM_MATLAB_DOUBLE_RIP_V0',
+            pendulum_type=EnvironmentName.PENDULUM_MATLAB_DOUBLE_RIP_V0,
             params=params
         )
         env.start()
@@ -183,14 +190,22 @@ def get_environment(owner="chief", params=None):
 
 
 def get_rl_model(worker_id, input_shape=None, num_outputs=None, params=None, device=None):
-    if params.DEEP_LEARNING_MODEL == DeepLearningModelName.STOCHASTIC_CONTINUOUS_ACTOR_CRITIC_MLP:
+    if params.DEEP_LEARNING_MODEL == DeepLearningModelName.SOFT_ACTOR_CRITIC_MLP:
+        model = SoftActorCriticModel(
+            worker_id=worker_id,
+            input_shape=input_shape,
+            num_outputs=num_outputs,
+            params=params,
+            device=device
+        ).to(device)
+    elif params.DEEP_LEARNING_MODEL == DeepLearningModelName.STOCHASTIC_CONTINUOUS_ACTOR_CRITIC_MLP:
         model = StochasticActorCriticModel(
             worker_id=worker_id,
             input_shape=input_shape,
             num_outputs=num_outputs,
             params=params,
             device=device
-        )
+        ).to(device)
     elif params.DEEP_LEARNING_MODEL == DeepLearningModelName.STOCHASTIC_DISCRETE_ACTOR_CRITIC_MLP:
         model = DiscreteActorCriticModel(
             worker_id=worker_id,
@@ -227,10 +242,16 @@ def get_rl_model(worker_id, input_shape=None, num_outputs=None, params=None, dev
 
 
 def get_rl_agent(env, worker_id, params, device="cpu"):
-    if params.RL_ALGORITHM == RLAlgorithmName.DDPG_FAST_V0:
-        action_selector = EpsilonGreedyDDPGActionSelector(
-            epsilon=params.EPSILON_INIT, ou_enabled=True, scale_factor=params.ACTION_SCALE
-        )
+    if params.RL_ALGORITHM == RLAlgorithmName.DDPG_V0:
+        if params.ENVIRONMENT_ID in [EnvironmentName.PENDULUM_MATLAB_V0, EnvironmentName.PENDULUM_MATLAB_DOUBLE_RIP_V0]:
+            action_selector = EpsilonGreedySomeTimesBlowDDPGActionSelector(
+                epsilon=params.EPSILON_INIT, ou_enabled=True, scale_factor=params.ACTION_SCALE,
+                min_blowing_action=-10.0 * params.ACTION_SCALE, max_blowing_action=10.0 * params.ACTION_SCALE
+            )
+        else:
+            action_selector = EpsilonGreedyDDPGActionSelector(
+                epsilon=params.EPSILON_INIT, ou_enabled=True, scale_factor=params.ACTION_SCALE
+            )
 
         epsilon_tracker = EpsilonTracker(
             action_selector=action_selector,
@@ -252,7 +273,32 @@ def get_rl_agent(env, worker_id, params, device="cpu"):
         )
 
         return agent, epsilon_tracker
-    elif params.RL_ALGORITHM == RLAlgorithmName.CONTINUOUS_A2C_FAST_V0:
+    elif params.RL_ALGORITHM == RLAlgorithmName.SAC_V0:
+        action_selector = EpsilonGreedyDDPGActionSelector(
+            epsilon=params.EPSILON_INIT, ou_enabled=True, scale_factor=params.ACTION_SCALE
+        )
+
+        epsilon_tracker = EpsilonTracker(
+            action_selector=action_selector,
+            eps_start=params.EPSILON_INIT,
+            eps_final=params.EPSILON_MIN,
+            eps_frames=params.EPSILON_MIN_STEP
+        )
+
+        input_shape = env.observation_space.shape
+        num_outputs = env.action_space.shape[0]
+        action_min = env.action_space.low[0]
+        action_max = env.action_space.high[0]
+
+        print("action_min: ", action_min, "action_max:", action_max)
+
+        agent = AgentSAC(
+            input_shape=input_shape, num_outputs=num_outputs, worker_id=worker_id, action_selector=action_selector,
+            action_min=action_min, action_max=action_max, params=params, device=device
+        )
+
+        return agent, epsilon_tracker
+    elif params.RL_ALGORITHM == RLAlgorithmName.CONTINUOUS_A2C_V0:
         action_selector = ContinuousNormalActionSelector()
 
         input_shape = env.observation_space.shape
@@ -268,7 +314,7 @@ def get_rl_agent(env, worker_id, params, device="cpu"):
         )
 
         return agent, None
-    elif params.RL_ALGORITHM == RLAlgorithmName.CONTINUOUS_PPO_FAST_V0:
+    elif params.RL_ALGORITHM == RLAlgorithmName.CONTINUOUS_PPO_V0:
         action_selector = ContinuousNormalActionSelector()
 
         input_shape = env.observation_space.shape
@@ -284,7 +330,7 @@ def get_rl_agent(env, worker_id, params, device="cpu"):
         )
 
         return agent, None
-    elif params.RL_ALGORITHM == RLAlgorithmName.DQN_FAST_V0:
+    elif params.RL_ALGORITHM == RLAlgorithmName.DQN_V0:
         action_selector = EpsilonGreedyDQNActionSelector(epsilon=params.EPSILON_INIT)
 
         epsilon_tracker = EpsilonTracker(
@@ -303,7 +349,7 @@ def get_rl_agent(env, worker_id, params, device="cpu"):
         )
 
         return agent, epsilon_tracker
-    elif params.RL_ALGORITHM == RLAlgorithmName.DISCRETE_A2C_FAST_V0:
+    elif params.RL_ALGORITHM == RLAlgorithmName.DISCRETE_A2C_V0:
         action_selector = ProbabilityActionSelector()
 
         input_shape = env.observation_space.shape
@@ -317,8 +363,8 @@ def get_rl_agent(env, worker_id, params, device="cpu"):
         return agent, None
 #
 # def get_rl_algorithm(env, worker_id=0, logger=False, params=None):
-#     if params.RL_ALGORITHM == RLAlgorithmName.CONTINUOUS_A2C_FAST_V0:
-#         rl_algorithm = CONTINUOUS_A2C_FAST_v0(
+#     if params.RL_ALGORITHM == RLAlgorithmName.CONTINUOUS_A2C_V0:
+#         rl_algorithm = CONTINUOUS_A2C_v0(
 #             env=env,
 #             worker_id=worker_id,
 #             logger=logger,
@@ -326,8 +372,8 @@ def get_rl_agent(env, worker_id, params, device="cpu"):
 #             device=device,
 #             verbose=params.VERBOSE
 #         )
-#     elif params.RL_ALGORITHM == RLAlgorithmName.DISCRETE_A2C_FAST_V0:
-#         rl_algorithm = DISCRETE_A2C_FAST_v0(
+#     elif params.RL_ALGORITHM == RLAlgorithmName.DISCRETE_A2C_V0:
+#         rl_algorithm = DISCRETE_A2C_v0(
 #             env=env,
 #             worker_id=worker_id,
 #             logger=logger,
@@ -335,8 +381,8 @@ def get_rl_agent(env, worker_id, params, device="cpu"):
 #             device=device,
 #             verbose=params.VERBOSE
 #         )
-#     elif params.RL_ALGORITHM == RLAlgorithmName.D4PG_FAST_V0:
-#         rl_algorithm = D4PG_FAST_v0(
+#     elif params.RL_ALGORITHM == RLAlgorithmName.D4PG_V0:
+#         rl_algorithm = D4PG_v0(
 #             env=env,
 #             worker_id=worker_id,
 #             logger=logger,
@@ -344,8 +390,8 @@ def get_rl_agent(env, worker_id, params, device="cpu"):
 #             device=device,
 #             verbose=params.VERBOSE
 #         )
-#     elif params.RL_ALGORITHM == RLAlgorithmName.DDPG_FAST_V0:
-#         rl_algorithm = DDPG_FAST_v0(
+#     elif params.RL_ALGORITHM == RLAlgorithmName.DDPG_V0:
+#         rl_algorithm = DDPG_v0(
 #             env=env,
 #             worker_id=worker_id,
 #             logger=logger,

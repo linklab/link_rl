@@ -2,10 +2,12 @@
 # https://mspries.github.io/jimmy_pendulum.html
 #!/usr/bin/env python3
 import pickle
+from collections import deque
 
 import torch
 import os, sys
 import numpy as np
+import wandb
 
 print("PyTorch Version", torch.__version__)
 
@@ -19,7 +21,11 @@ from codes.e_utils.common_utils import save_model, print_environment_info
 from codes.e_utils.experience_single import ExperienceSourceSingleEnvFirstLast
 from codes.e_utils.experience_tracker import RewardTracker
 from codes.e_utils.logger import get_logger
-from codes.e_utils.names import DeepLearningModelName, RLAlgorithmName
+from codes.e_utils.names import DeepLearningModelName, RLAlgorithmName, EnvironmentName
+
+WANDB_DIR = os.path.join(PROJECT_HOME, "out", "wandb")
+if not os.path.exists(WANDB_DIR):
+    os.makedirs(WANDB_DIR)
 
 MODEL_SAVE_DIR = os.path.join(PROJECT_HOME, "out", "model_save_files")
 if not os.path.exists(MODEL_SAVE_DIR):
@@ -36,6 +42,16 @@ my_logger = get_logger("openai_pendulum_ddpg")
 
 
 def main(params):
+    configuration = {key: getattr(params, key) for key in dir(params) if not key.startswith("__")}
+
+    if params.WANDB:
+        wandb.init(
+            project=params.wandb_project,
+            entity=params.wandb_entity,
+            dir=WANDB_DIR,
+            config=configuration
+        )
+
     env = rl_utils.get_environment(owner="actual_worker", params=params)
     print_environment_info(env, params)
 
@@ -57,103 +73,100 @@ def main(params):
 
     stat = None
     step_idx = 0
-    loss_list = []
-    episode_reward_list = []
-    episode_mean_loss_list = []
+    loss_queue = deque(maxlen=100)
 
     trajectory = []
 
+    solved = False
+
+    if params.WANDB:
+        wandb.watch(agent.model.base)
+
+    episode = 0
     with RewardTracker(params=params, frame=False, stat=stat, early_stopping=None) as reward_tracker:
-        while step_idx < params.MAX_GLOBAL_STEP:
-            step_idx += params.TRAIN_STEP_FREQ
-            last_experience = agent.buffer.populate(params.TRAIN_STEP_FREQ)
+        try:
+            while step_idx < params.MAX_GLOBAL_STEP:
+                step_idx += params.TRAIN_STEP_FREQ
+                last_experience = agent.buffer.populate(params.TRAIN_STEP_FREQ)
 
-            if epsilon_tracker:
-                epsilon_tracker.udpate(step_idx)
+                if epsilon_tracker:
+                    epsilon_tracker.udpate(step_idx)
 
-            episode_rewards_and_done_step_lst = experience_source.pop_episode_reward_and_done_step_lst()
-            solved = False
+                episode_rewards, episode_steps = experience_source.pop_episode_reward_and_done_step_lst()
 
-            if episode_rewards_and_done_step_lst:
+                if episode_rewards and episode_steps:
+                    episode += 1
+                    for current_episode_reward, current_episode_step in zip(episode_rewards, episode_steps):
+                        epsilon = agent.action_selector.epsilon if hasattr(agent.action_selector, 'epsilon') else None
+                        mean_loss = np.mean(loss_queue) if len(loss_queue) > 0 else 0.0
 
-                episode_rewards, done_steps = zip(*episode_rewards_and_done_step_lst)
+                        if params.WANDB:
+                            wandb.log({
+                                "episode reward": current_episode_reward,
+                                "episode mean loss": mean_loss,
+                                "episode steps": current_episode_step,
+                                "step_idx": step_idx,
+                                "episode": episode
+                            })
 
-                for current_episode_reward in episode_rewards:
-                    epsilon = agent.action_selector.epsilon if hasattr(agent.action_selector, 'epsilon') else None
-                    mean_loss = np.mean(loss_list) if len(loss_list) > 0 else 0.0
-
-                    ##################################################
-                    #####  FOR PAPER
-                    ##################################################
-                    episode_reward_list.append(current_episode_reward)
-                    episode_mean_loss_list.append(mean_loss)
-                    ##################################################
-
-                    solved, mean_episode_reward = reward_tracker.set_episode_reward(
-                        current_episode_reward, step_idx, epsilon, last_info=last_experience.info,
-                        mean_loss=mean_loss, model=agent.model
-                    )
-
-                    loss_list.clear()
-
-                    if solved:
-                        save_model(
-                            MODEL_SAVE_DIR, params.ENVIRONMENT_ID.value, agent, step_idx, mean_episode_reward
+                        solved, mean_episode_reward = reward_tracker.set_episode_reward(
+                            episode_reward=current_episode_reward, episode_done_step=step_idx, epsilon=epsilon,
+                            last_info=last_experience.info, mean_loss=mean_loss, model=agent.model
                         )
+
                         if solved:
+                            save_model(
+                                MODEL_SAVE_DIR, params.ENVIRONMENT_ID.value, agent, step_idx, mean_episode_reward
+                            )
                             break
-            if solved:
-                break
 
-            if params.RL_ALGORITHM in [RLAlgorithmName.CONTINUOUS_PPO_FAST_V0]:
-                #print(last_experience[0])
-                trajectory.append(last_experience)
-                if len(trajectory) < params.PPO_TRAJECTORY_SIZE:
-                    continue
-            elif params.RL_ALGORITHM in [RLAlgorithmName.DDPG_FAST_V0, RLAlgorithmName.DQN_FAST_V0]:
-                if len(agent.buffer) < params.MIN_REPLAY_SIZE_FOR_TRAIN:
-                    continue
-            else:
-                if len(agent.buffer) < params.BATCH_SIZE:
-                    continue
+                if solved:
+                    break
 
-            if params.RL_ALGORITHM in [RLAlgorithmName.CONTINUOUS_PPO_FAST_V0]:
-                _, last_loss, _ = agent.train_net(trajectory=trajectory)
-                trajectory.clear()
-            elif params.RL_ALGORITHM in [
-                RLAlgorithmName.DDPG_FAST_V0,
-                RLAlgorithmName.DISCRETE_A2C_FAST_V0,
-                RLAlgorithmName.CONTINUOUS_A2C_FAST_V0
-            ]:
-                _, last_loss, _ = agent.train_net(step_idx=step_idx)
-            elif params.RL_ALGORITHM == RLAlgorithmName.DQN_FAST_V0:
-                _, last_loss = agent.train_net(step_idx=step_idx)
-            else:
-                raise ValueError()
+                if params.RL_ALGORITHM in [RLAlgorithmName.CONTINUOUS_PPO_V0]:
+                    #print(last_experience[0])
+                    trajectory.append(last_experience)
+                    if len(trajectory) < params.PPO_TRAJECTORY_SIZE:
+                        continue
+                elif params.RL_ALGORITHM in [RLAlgorithmName.DDPG_V0, RLAlgorithmName.DQN_V0]:
+                    if len(agent.buffer) < params.MIN_REPLAY_SIZE_FOR_TRAIN:
+                        continue
+                else:
+                    if len(agent.buffer) < params.BATCH_SIZE:
+                        continue
 
-            loss_list.append(last_loss)
+                if params.RL_ALGORITHM in [RLAlgorithmName.CONTINUOUS_PPO_V0]:
+                    _, last_loss, _ = agent.train_net(trajectory=trajectory)
+                    trajectory.clear()
+                elif params.RL_ALGORITHM in [
+                    RLAlgorithmName.DDPG_V0,
+                    RLAlgorithmName.DISCRETE_A2C_V0,
+                    RLAlgorithmName.CONTINUOUS_A2C_V0,
+                    RLAlgorithmName.SAC_V0
+                ]:
+                    _, last_loss, _ = agent.train_net(step_idx=step_idx)
+                elif params.RL_ALGORITHM == RLAlgorithmName.DQN_V0:
+                    _, last_loss = agent.train_net(step_idx=step_idx)
+                else:
+                    raise ValueError()
 
-            if params.PER_RANK_BASED:
-                if step_idx % 100 < params.TRAIN_STEP_FREQ:
-                    agent.buffer.rebalance()
+                loss_queue.append(last_loss)
 
-        if params.SAVE_AT_MAX_GLOBAL_STEPS:
-            save_model(
-                MODEL_SAVE_DIR, params.ENVIRONMENT_ID.value, agent, step_idx, mean_episode_reward
-            )
+                if params.PER_RANK_BASED:
+                    if step_idx % 100 < params.TRAIN_STEP_FREQ:
+                        agent.buffer.rebalance()
 
-        ##################################################
-        #####  FOR PAPER
-        ##################################################
-        with open('episode_reward_list.dump', 'wb') as f:
-            pickle.dump(episode_reward_list, f)
-
-        with open('episode_mean_loss_list.dump', 'wb') as f:
-            pickle.dump(episode_mean_loss_list, f)
-        ##################################################
+            if params.SAVE_AT_MAX_GLOBAL_STEPS:
+                save_model(
+                    MODEL_SAVE_DIR, params.ENVIRONMENT_ID.value, agent, step_idx, mean_episode_reward
+                )
+        finally:
+            if params.ENVIRONMENT_ID in [EnvironmentName.REAL_DEVICE_RIP, EnvironmentName.REAL_DEVICE_DOUBLE_RIP]:
+                env.stop()
 
 
 if __name__ == "__main__":
     from codes.a_config.parameters import PARAMETERS as parameters
     params = parameters
     main(params)
+

@@ -6,7 +6,7 @@ import time
 import argparse
 from tensorboardX import SummaryWriter
 
-from lib import model, common, test_net
+from z_externals.handson_second_edition.Chapter19.lib import model, common, test_net
 
 import torch
 import torch.optim as optim
