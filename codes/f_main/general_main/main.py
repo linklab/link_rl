@@ -143,6 +143,10 @@ def main():
         else:
             raise ValueError()
 
+        if params.PER_RANK_BASED:
+            if step_idx % 100 < params.TRAIN_STEP_FREQ:
+                agent.buffer.rebalance()
+
 
 if __name__ == "__main__":
     main()

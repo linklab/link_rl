@@ -113,8 +113,8 @@ def get_environment(owner="cheif", params=None):
     elif params.ENVIRONMENT_ID == EnvironmentName.CHASER_V1_MAC or params.ENVIRONMENT_ID == EnvironmentName.CHASER_V1_WINDOWS:
         from codes.b_environments.unity.chaser_unity import Chaser_v1
         env = Chaser_v1(params.MY_PLATFORM)
-    elif params.ENVIRONMENT_ID in [EnvironmentName.BREAKOUT_DETERMINISTIC_V4, EnvironmentName.BREAKOUT_NO_FRAME_SKIP_V4]:
-        env = gym.make(params.ENVIRONMENT_ID.value)
+    elif params.ENVIRONMENT_ID in [EnvironmentName.BREAKOUT_DETERMINISTIC_V4, EnvironmentName.BREAKOUT_NO_FRAME_SKIP_V4, EnvironmentName.PONG_NO_FRAME_SKIP_V4, EnvironmentName.ENDURO_NO_FRAME_SKIP_V4, EnvironmentName.SEAQUEST_NO_FRAME_SKIP_V4, EnvironmentName.FREEWAY_NO_FRAME_SKIP_V4]:
+        # env = gym.make(params.ENVIRONMENT_ID.value)
         env = make_atari_env(params.ENVIRONMENT_ID.value, seed=params.SEED)
         if params.SEED is not None:
             env.seed(params.SEED)

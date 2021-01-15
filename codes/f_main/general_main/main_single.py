@@ -119,6 +119,7 @@ def main(params):
                                 MODEL_SAVE_DIR, params.ENVIRONMENT_ID.value, agent, step_idx, mean_episode_reward
                             )
                             break
+
                 if solved:
                     break
 
@@ -150,6 +151,10 @@ def main(params):
                     raise ValueError()
 
                 loss_queue.append(last_loss)
+
+                if params.PER_RANK_BASED:
+                    if step_idx % 100 < params.TRAIN_STEP_FREQ:
+                        agent.buffer.rebalance()
 
             if params.SAVE_AT_MAX_GLOBAL_STEPS:
                 save_model(
