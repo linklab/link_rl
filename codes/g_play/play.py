@@ -35,8 +35,8 @@ my_logger = get_logger("openai_pendulum_ddpg")
 
 
 def play_main(params):
-    env = rl_utils.get_single_environment(owner="actual_worker", params=params)
     params.ENV_RENDER = True
+    env = rl_utils.get_single_environment(owner="actual_worker", params=params)
     print("env:", params.ENVIRONMENT_ID)
     print("observation_space:", env.observation_space)
     print("action_space:", env.action_space)
@@ -96,10 +96,10 @@ def play_main(params):
             state = next_state
             episode_reward += reward
 
-            if num_step % 1000 == 0:
-                print("EPISODE: {0}, EPISODE STEPS: {1}, TOTAL STEPS: {2}".format(
-                    num_episode, num_episode_step, num_step
-                ))
+            # if num_step % 1000 == 0:
+            #     print("EPISODE: {0}, EPISODE STEPS: {1}, TOTAL STEPS: {2}".format(
+            #         num_episode, num_episode_step, num_step
+            #     ))
 
         print("EPISODE: {0}, EPISODE STEPS: {1}, TOTAL STEPS: {2}, EPISODE DONE --> EPISODE REWARD: {3}".format(
             num_episode, num_episode_step, num_step, episode_reward

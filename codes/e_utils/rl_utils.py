@@ -49,12 +49,6 @@ def get_environment(params):
     assert env.num_envs == params.NUM_ENVIRONMENTS
     return env
 
-# def get_environment(params):
-#     envs = []
-#     for _ in range(params.NUM_ENVIRONMENTS):
-#         envs.append(get_single_environment(params=params))
-#     return envs
-
 
 def get_single_environment(owner="cheif", params=None):
     if params.ENVIRONMENT_ID == EnvironmentName.REAL_DEVICE_RIP:
@@ -135,7 +129,7 @@ def get_single_environment(owner="cheif", params=None):
         EnvironmentName.ACROBOT_V1, EnvironmentName.BLACKJACK_V0, EnvironmentName.MOUNTAINCARCONTINUOUS_V0,
         EnvironmentName.INVERTED_DOUBLE_PENDULUM_V2, EnvironmentName.HOPPER_V2, EnvironmentName.SWIMMER_V2,
         EnvironmentName.REACHER_V2, EnvironmentName.HUMANOID_V2, EnvironmentName.HUMANOID_STAND_UP_V2,
-        EnvironmentName.INVERTED_PENDULUM_V2, EnvironmentName.WALKER_2D_V2
+        EnvironmentName.INVERTED_PENDULUM_V2, EnvironmentName.WALKER_2D_V2,
     ]:
         env = gym.make(params.ENVIRONMENT_ID.value)
     elif params.ENVIRONMENT_ID == EnvironmentName.FROZENLAKE_V0:
@@ -156,9 +150,8 @@ def get_single_environment(owner="cheif", params=None):
         from codes.b_environments.unity.drone_racing import Drone_Racing
         env = Drone_Racing(params.MY_PLATFORM)
     elif params.ENVIRONMENT_ID in [
-        EnvironmentName.ANT_V0,
-        EnvironmentName.HALF_CHEETAH_V0,
-        EnvironmentName.MINITAUR_BULLET_V0
+        EnvironmentName.PYBULLET_ANT_V0, EnvironmentName.PYBULLET_HALF_CHEETAH_V0,
+        EnvironmentName.PYBULLET_MINITAUR_BULLET_V0, EnvironmentName.PYBULLET_INVERTED_DOUBLE_PENDULUM_V0
     ]:
         import pybullet_envs
         spec = gym.envs.registry.spec(params.ENVIRONMENT_ID.value)
@@ -193,6 +186,37 @@ def get_single_environment(owner="cheif", params=None):
         env.seed(random.randint(sys.maxsize))
 
     return env
+
+
+def get_environment_input_output_info(env):
+    if isinstance(env, VectorEnv):
+        input_shape = env.single_observation_space.shape
+        if isinstance(env.single_action_space, Discrete):
+            num_outputs = env.single_action_space.n
+            action_min, action_max = None, None
+        elif isinstance(env.single_action_space, Box):
+            num_outputs = env.single_action_space.shape[0]
+            action_min = env.single_action_space.low[0]
+            action_max = env.single_action_space.high[0]
+        else:
+            num_outputs, action_min, action_max = None, None, None
+    elif isinstance(env, Env):
+        input_shape = env.observation_space.shape
+        if isinstance(env.action_space, Discrete):
+            num_outputs = env.action_space.n
+            action_min, action_max = None, None
+        elif isinstance(env.action_space, Box):
+            num_outputs = env.action_space.shape[0]
+            action_min = env.action_space.low[0]
+            action_max = env.action_space.high[0]
+        else:
+            num_outputs, action_min, action_max = None, None, None
+    else:
+        raise ValueError()
+
+    print(f"num_outputs: {num_outputs}, action_min: {action_min}, action_max: {action_max}")
+
+    return input_shape, num_outputs, action_min, action_max
 
 
 def get_rl_model(worker_id, input_shape=None, num_outputs=None, params=None, device=None):
@@ -248,43 +272,7 @@ def get_rl_model(worker_id, input_shape=None, num_outputs=None, params=None, dev
 
 
 def get_rl_agent(env, worker_id, params, device="cpu"):
-    if isinstance(env, VectorEnv):
-        input_shape = env.single_observation_space.shape
-        if isinstance(env.single_action_space, Discrete):
-            num_outputs = env.single_action_space.n
-            action_min, action_max = None, None
-        elif isinstance(env.single_action_space, Box):
-            num_outputs = env.single_action_space.shape[0]
-            action_min = env.single_action_space.low[0]
-            action_max = env.single_action_space.high[0]
-        else:
-            num_outputs, action_min, action_max = None, None, None
-    elif isinstance(env, Env):
-        input_shape = env.observation_space.shape
-        if isinstance(env.action_space, Discrete):
-            num_outputs = env.action_space.n
-            action_min, action_max = None, None
-        elif isinstance(env.action_space, Box):
-            num_outputs = env.action_space.shape[0]
-            action_min = env.action_space.low[0]
-            action_max = env.action_space.high[0]
-        else:
-            num_outputs, action_min, action_max = None, None, None
-    else:
-        raise ValueError()
-
-    # input_shape = env[0].observation_space.shape
-    # if isinstance(env[0].action_space, Discrete):
-    #     num_outputs = env[0].action_space.n
-    #     action_min, action_max = None, None
-    # elif isinstance(env[0].action_space, Box):
-    #     num_outputs = env[0].action_space.shape[0]
-    #     action_min = env[0].action_space.low[0]
-    #     action_max = env[0].action_space.high[0]
-    # else:
-    #     num_outputs, action_min, action_max = None, None, None
-
-    print(f"num_outputs: {num_outputs}, action_min: {action_min}, action_max: {action_max}")
+    input_shape, num_outputs, action_min, action_max = get_environment_input_output_info(env)
 
     if params.RL_ALGORITHM == RLAlgorithmName.DDPG_V0:
         if params.ENVIRONMENT_ID in [EnvironmentName.PENDULUM_MATLAB_V0, EnvironmentName.PENDULUM_MATLAB_DOUBLE_RIP_V0]:

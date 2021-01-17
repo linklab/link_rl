@@ -19,10 +19,9 @@ if PROJECT_HOME not in sys.path:
 from codes.e_utils.experience import ExperienceSourceFirstLast
 from codes.e_utils import rl_utils
 from codes.e_utils.common_utils import save_model, print_environment_info, print_agent_info
-from codes.e_utils.experience_single import ExperienceSourceSingleEnvFirstLast
 from codes.e_utils.experience_tracker import RewardTracker
 from codes.e_utils.logger import get_logger
-from codes.e_utils.names import DeepLearningModelName, RLAlgorithmName, EnvironmentName
+from codes.e_utils.names import RLAlgorithmName, EnvironmentName
 
 WANDB_DIR = os.path.join(PROJECT_HOME, "out", "wandb")
 if not os.path.exists(WANDB_DIR):
@@ -39,7 +38,7 @@ if torch.cuda.is_available():
 else:
     device = torch.device("cpu")
 
-my_logger = get_logger("openai_pendulum_ddpg")
+my_logger = get_logger("main_single")
 
 
 def main(params):
@@ -54,7 +53,6 @@ def main(params):
         )
 
     env = rl_utils.get_environment(params=params)
-    # env = rl_utils.get_environment(owner="actual_worker", params=params)
     print_environment_info(env, params)
 
     agent, epsilon_tracker = rl_utils.get_rl_agent(env=env, worker_id=0, params=params, device=device)
@@ -90,23 +88,14 @@ def main(params):
                 episode_rewards, episode_steps = experience_source.pop_episode_reward_and_done_step_lst()
 
                 if episode_rewards and episode_steps:
-                    episode += 1
                     for current_episode_reward, current_episode_step in zip(episode_rewards, episode_steps):
+                        episode += 1
                         epsilon = agent.action_selector.epsilon if hasattr(agent.action_selector, 'epsilon') else None
                         mean_loss = np.mean(loss_queue) if len(loss_queue) > 0 else 0.0
 
-                        if params.WANDB:
-                            wandb.log({
-                                "episode reward": current_episode_reward,
-                                "episode mean loss": mean_loss,
-                                "episode steps": current_episode_step,
-                                "step_idx": step_idx,
-                                "episode": episode
-                            })
-
                         solved, mean_episode_reward = reward_tracker.set_episode_reward(
                             episode_reward=current_episode_reward, episode_done_step=step_idx, epsilon=epsilon,
-                            last_info=last_experience.info, mean_loss=mean_loss, model=agent.model
+                            last_info=last_experience.info, mean_loss=mean_loss, model=agent.model, wandb=wandb
                         )
 
                         if solved:
@@ -119,7 +108,7 @@ def main(params):
                     break
 
                 if params.RL_ALGORITHM in [RLAlgorithmName.CONTINUOUS_PPO_V0]:
-                    #print(last_experience[0])
+                    assert params.TRAIN_STEP_FREQ == 1 and last_experience is not None
                     trajectory.append(last_experience)
                     if len(trajectory) < params.PPO_TRAJECTORY_SIZE:
                         continue
@@ -134,10 +123,8 @@ def main(params):
                     _, last_loss, _ = agent.train_net(trajectory=trajectory)
                     trajectory.clear()
                 elif params.RL_ALGORITHM in [
-                    RLAlgorithmName.DDPG_V0,
-                    RLAlgorithmName.DISCRETE_A2C_V0,
-                    RLAlgorithmName.CONTINUOUS_A2C_V0,
-                    RLAlgorithmName.SAC_V0
+                    RLAlgorithmName.DDPG_V0, RLAlgorithmName.DISCRETE_A2C_V0,
+                    RLAlgorithmName.CONTINUOUS_A2C_V0, RLAlgorithmName.SAC_V0
                 ]:
                     _, last_loss, _ = agent.train_net(step_idx=step_idx)
                 elif params.RL_ALGORITHM == RLAlgorithmName.DQN_V0:

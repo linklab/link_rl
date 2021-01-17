@@ -31,8 +31,9 @@ class EnvironmentName(enum.Enum):
     FROZENLAKE_V0 = 'FrozenLake-v0'
     INVERTED_DOUBLE_PENDULUM_V2 = 'InvertedDoublePendulum-v2'
     HOPPER_V2 = 'Hopper-v2'
-    ANT_V0 = 'AntBulletEnv-v0'
-    HALF_CHEETAH_V0 = 'HalfCheetahBulletEnv-v0'
+    PYBULLET_ANT_V0 = 'AntBulletEnv-v0'
+    PYBULLET_INVERTED_DOUBLE_PENDULUM_V0 = 'InvertedDoublePendulumBulletEnv-v0'
+    PYBULLET_HALF_CHEETAH_V0 = 'HalfCheetahBulletEnv-v0'
     SWIMMER_V2 = 'Swimmer-v2'
     REACHER_V2 = 'Reacher-v2'
     HUMANOID_V2 = 'Humanoid-v2'
@@ -45,7 +46,7 @@ class EnvironmentName(enum.Enum):
     ENDURO_NO_FRAME_SKIP_V4 = "EnduroNoFrameskip-v4"
     SEAQUEST_NO_FRAME_SKIP_V4 = "SeaquestNoFrameskip-v4"
     FREEWAY_NO_FRAME_SKIP_V4 = "FreewayNoFrameskip-v4"
-    MINITAUR_BULLET_V0 = "MinitaurBulletEnv-v0"
+    PYBULLET_MINITAUR_BULLET_V0 = "MinitaurBulletEnv-v0"
     TSP_V0 = "TSP-v0"  # bi-directional connections and uniform cost.
     TSP_V1 = "TSP-v1"  # bi-directional connections
     KNAPSACK_V0 = "Knapsack-v0"  # unbounded knapsack problem with 200 items.
