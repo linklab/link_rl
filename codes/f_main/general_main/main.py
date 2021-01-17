@@ -45,15 +45,20 @@ my_logger = get_logger("main")
 
 
 def play_func(exp_queue, loss_queue, agent, epsilon_tracker):
-    configuration = {key: getattr(params, key) for key in dir(params) if not key.startswith("__")}
-
     if params.WANDB:
+        configuration = {key: getattr(params, key) for key in dir(params) if not key.startswith("__")}
         wandb.init(
             project=params.wandb_project,
             entity=params.wandb_entity,
             dir=WANDB_DIR,
             config=configuration
         )
+        run_name = wandb.run.name
+        run_number = run_name.split("-")[0]
+        wandb.run.name = "{0}_{1}_{2}_{3}".format(
+            run_number, params.ENVIRONMENT_ID.value, agent.__name__, agent.model.__name__
+        )
+        wandb.run.save()
 
     env = rl_utils.get_environment(params=params)
     print_environment_info(env, params)
@@ -195,7 +200,7 @@ def main():
 
         loss_queue.put(loss)
 
-        if hasattr(params, "PER_RANK_BASED") and params.PER_RANK_BASED:
+        if hasattr(params, "PER_RANK_BASED") and getattr(params, "PER_RANK_BASED"):
             if step_idx % 100 < params.TRAIN_STEP_FREQ:
                 agent.buffer.rebalance()
 

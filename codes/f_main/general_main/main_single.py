@@ -42,21 +42,26 @@ my_logger = get_logger("main_single")
 
 
 def main(params):
-    configuration = {key: getattr(params, key) for key in dir(params) if not key.startswith("__")}
+    env = rl_utils.get_environment(params=params)
+    print_environment_info(env, params)
+
+    agent, epsilon_tracker = rl_utils.get_rl_agent(env=env, worker_id=0, params=params, device=device)
+    print_agent_info(agent, epsilon_tracker, params)
 
     if params.WANDB:
+        configuration = {key: getattr(params, key) for key in dir(params) if not key.startswith("__")}
         wandb.init(
             project=params.wandb_project,
             entity=params.wandb_entity,
             dir=WANDB_DIR,
             config=configuration
         )
-
-    env = rl_utils.get_environment(params=params)
-    print_environment_info(env, params)
-
-    agent, epsilon_tracker = rl_utils.get_rl_agent(env=env, worker_id=0, params=params, device=device)
-    print_agent_info(agent, epsilon_tracker, params)
+        run_name = wandb.run.name
+        run_number = run_name.split("-")[0]
+        wandb.run.name = "{0}_{1}_{2}_{3}".format(
+            run_number, params.ENVIRONMENT_ID.value, agent.__name__, agent.model.__name__
+        )
+        wandb.run.save()
 
     experience_source = ExperienceSourceFirstLast(
         env=env, agent=agent, gamma=params.GAMMA, n_step=params.N_STEP, vectorized=True
@@ -135,7 +140,7 @@ def main(params):
 
                 loss_queue.append(last_loss)
 
-                if hasattr(params, "PER_RANK_BASED") and params.PER_RANK_BASED:
+                if hasattr(params, "PER_RANK_BASED") and getattr(params, "PER_RANK_BASED"):
                     if step_idx % 100 < params.TRAIN_STEP_FREQ:
                         agent.buffer.rebalance()
 
