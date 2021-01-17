@@ -33,7 +33,8 @@ class RewardTracker:
         pass
 
     def set_episode_reward(
-            self, episode_reward, episode_done_step, epsilon, last_info=None, mean_loss=None, model=None, wandb=None
+            self, episode_reward, episode_done_step, epsilon, last_info=None,
+            current_episode_step=None, mean_loss=None, model=None, wandb=None
     ):
         self.done_episodes += 1
 
@@ -50,7 +51,7 @@ class RewardTracker:
             is_print_performance = True
             self.print_performance(
                 episode_done_step, self.done_episodes, episode_reward, current_ts, ts_diff, self.mean_episode_reward, epsilon,
-                elapsed_time, last_info, mean_loss, wandb
+                elapsed_time, last_info, current_episode_step, mean_loss, wandb
             )
 
         solved = False
@@ -66,7 +67,7 @@ class RewardTracker:
                 if not is_print_performance:
                     self.print_performance(
                         episode_done_step, self.done_episodes, episode_reward, current_ts, ts_diff, self.mean_episode_reward, epsilon,
-                        elapsed_time, last_info, mean_loss, wandb
+                        elapsed_time, last_info, current_episode_step, mean_loss, wandb
                     )
                 solved = True
         if solved:
@@ -80,7 +81,7 @@ class RewardTracker:
             return False, self.mean_episode_reward
 
     def print_performance(self, episode_done_step, done_episodes, episode_reward, current_ts, ts_diff,
-                          mean_episode_reward, epsilon, elapsed_time, last_info, mean_loss, wandb=None):
+                          mean_episode_reward, epsilon, elapsed_time, last_info, current_episode_step, mean_loss, wandb=None):
         speed = (episode_done_step - self.ts_frame) / ts_diff
         self.ts_frame = episode_done_step
         self.ts = current_ts
@@ -146,6 +147,7 @@ class RewardTracker:
             wandb_info = {
                 "episode reward": episode_reward,
                 "mean_loss": mean_loss,
+                "steps/episode": current_episode_step,
                 "speed": speed,
                 "step_idx": episode_done_step,
                 "episode": done_episodes

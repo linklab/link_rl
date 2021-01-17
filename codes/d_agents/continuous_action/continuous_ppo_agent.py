@@ -60,7 +60,7 @@ class AgentContinuousPPO(BaseAgent):
 
         mu_v, values_v = self.model(states)
         actions = self.action_selector(mu_v, self.model.base.actor.logstd, self.action_min, self.action_max)
-        critics = values_v.data.squeeze().cpu().numpy()
+        critics = values_v.data.cpu().numpy()
 
         return actions, critics
 

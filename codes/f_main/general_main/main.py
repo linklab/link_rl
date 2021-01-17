@@ -110,7 +110,8 @@ def play_func(exp_queue, loss_queue, agent, epsilon_tracker):
 
                         solved, mean_episode_reward = reward_tracker.set_episode_reward(
                             episode_reward=current_episode_reward, episode_done_step=step_idx, epsilon=epsilon,
-                            last_info=exp.info, model=agent.model, mean_loss=mean_loss, wandb=wandb
+                            last_info=exp.info, current_episode_step=current_episode_step, mean_loss=mean_loss,
+                            model=agent.model, wandb=wandb
                         )
 
                         if solved:

@@ -61,6 +61,7 @@ class ExperienceSource:
         self.episode_done_step_lst = []
         self.vectorized = vectorized
 
+    @property
     def __iter__(self):
         states, agent_states, histories, cur_rewards, cur_steps = [], [], [], [], []
         env_lens = []
@@ -113,7 +114,8 @@ class ExperienceSource:
                     try:
                         agent_states[g_idx] = new_agent_states[idx]
                     except IndexError as e:
-                        ic(agent_states, new_actions, new_agent_states)
+                        ic(idx, g_idx, agent_states, new_actions, new_agent_states)
+                        sys.exit(-1)
 
             grouped_actions = _group_list(actions, env_lens)
 
@@ -210,7 +212,7 @@ class ExperienceSourceNamedTuple(ExperienceSource):
         super(ExperienceSourceNamedTuple, self).__init__(env, agent, n_step, steps_delta, vectorized=vectorized)
 
     def __iter__(self):
-        for exp in super(ExperienceSourceNamedTuple, self).__iter__():
+        for exp in super(ExperienceSourceNamedTuple, self).__iter__:
             yield Experience(
                 state=exp[0].state, action=exp[0].action, reward=exp[0].reward, done=exp[0].done
             )
@@ -231,7 +233,7 @@ class ExperienceSourceFirstLast(ExperienceSource):
         self.steps = n_step
 
     def __iter__(self):
-        for exp in super(ExperienceSourceFirstLast, self).__iter__():
+        for exp in super(ExperienceSourceFirstLast, self).__iter__:
             if exp[-1].done and len(exp) <= self.steps:
                 last_state = None
                 elems = exp

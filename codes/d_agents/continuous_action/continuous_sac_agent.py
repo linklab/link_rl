@@ -65,15 +65,11 @@ class AgentSAC(BaseAgent):
         else:
             self.model.train()
 
-        mu_v = self.model.base.actor(states)
-        mu = mu_v.data.cpu().numpy()
+        mu_v, values_v = self.model(states)
+        actions = self.action_selector(mu_v, self.model.base.actor.logstd, self.action_min, self.action_max)
+        critics = values_v.data.cpu().numpy()
 
-        actions, new_agent_states = self.action_selector(mu, agent_states)
-
-        actions = np.clip(actions, self.action_min, self.action_max)
-        #####################################
-
-        return actions, new_agent_states
+        return actions, critics
 
     def train_net(self, step_idx):
         if self.params.PER:
@@ -91,7 +87,7 @@ class AgentSAC(BaseAgent):
         q1_loss_v = F.mse_loss(q1_v.squeeze(), target_action_values_v.detach())
         q2_loss_v = F.mse_loss(q2_v.squeeze(), target_action_values_v.detach())
         q_loss_v = q1_loss_v + q2_loss_v
-        q_loss_v = q_loss_v.mean()
+        #q_loss_v = q_loss_v.mean()
         q_loss_v.backward()
         nn_utils.clip_grad_norm_(self.model.base.twinq.parameters(), self.params.CLIP_GRAD)
         self.twinq_optimizer.step()
@@ -117,7 +113,6 @@ class AgentSAC(BaseAgent):
 
         # train actor
         self.actor_optimizer.zero_grad()
-
         current_actions_v = self.model.base.actor(states_v)
         q1_v, q2_v = self.model.base.twinq(states_v, current_actions_v)
         loss_actor_v = -1.0 * torch.min(q1_v, q2_v).squeeze().mean()

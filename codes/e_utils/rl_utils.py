@@ -299,23 +299,14 @@ def get_rl_agent(env, worker_id, params, device="cpu"):
 
         return agent, epsilon_tracker
     elif params.RL_ALGORITHM == RLAlgorithmName.SAC_V0:
-        action_selector = EpsilonGreedyDDPGActionSelector(
-            epsilon=params.EPSILON_INIT, ou_enabled=True, scale_factor=params.ACTION_SCALE
-        )
-
-        epsilon_tracker = EpsilonTracker(
-            action_selector=action_selector,
-            eps_start=params.EPSILON_INIT,
-            eps_final=params.EPSILON_MIN,
-            eps_frames=params.EPSILON_MIN_STEP
-        )
+        action_selector = ContinuousNormalActionSelector()
 
         agent = AgentSAC(
             input_shape=input_shape, num_outputs=num_outputs, worker_id=worker_id, action_selector=action_selector,
             action_min=action_min, action_max=action_max, params=params, device=device
         )
 
-        return agent, epsilon_tracker
+        return agent, None
     elif params.RL_ALGORITHM == RLAlgorithmName.CONTINUOUS_A2C_V0:
         action_selector = ContinuousNormalActionSelector()
 
