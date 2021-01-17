@@ -2,6 +2,10 @@ from codes.a_config.a_basic_parameters.parameters_cartpole_a2c          import P
 from codes.a_config.a_basic_parameters.parameters_cartpole_dqn          import PARAMETERS_CARTPOLE_DQN
 from codes.a_config.a_basic_parameters.parameters_cartpole_pg           import PARAMETERS_CARTPOLE_PG
 from codes.a_config.a_basic_parameters.parameters_cartpole_reinforce    import PARAMETERS_CARTPOLE_REINFORCE
+from codes.a_config.a_basic_parameters.parameters_pendulum_a2c import PARAMETERS_PENDULUM_A2C
+from codes.a_config.a_basic_parameters.parameters_pendulum_ddpg import PARAMETERS_PENDULUM_DDPG
+from codes.a_config.a_basic_parameters.parameters_pendulum_d4pg import PARAMETERS_PENDULUM_D4PG
+from codes.a_config.a_basic_parameters.parameters_pendulum_ppo import PARAMETERS_PENDULUM_PPO
 
 from codes.a_config.b_atari_parameters.parameters_atati_pong_dqn              import PARAMETERS_PONG_DQN
 from codes.a_config.b_atari_parameters.parameters_atari_breakout_dqn          import PARAMETERS_BREAKOUT_DQN
@@ -15,14 +19,10 @@ from codes.a_config.c_pybullet_parameters.parameters_minitaur_bullet_ppo import 
 from codes.a_config.c_pybullet_parameters.parameters_ant_ppo import PARAMETERS_ANT_PPO
 from codes.a_config.c_pybullet_parameters.parameters_ant_ddpg import PARAMETERS_ANT_DDPG
 
-from codes.a_config.d_pendulum_parameters.parameters_matlab_pendulum_ppo import \
+from codes.a_config.d_matlab_parameters.parameters_matlab_pendulum_ppo import \
     PARAMETERS_PENDULUM_MATLAB_PPO
-from codes.a_config.d_pendulum_parameters.parameters_matlab_pendulum_dqn import PARAMETERS_PENDULUM_MATLAB_DQN
-from codes.a_config.d_pendulum_parameters.parameters_matlab_pendulum_ddpg import PARAMETERS_PENDULUM_MATLAB_DDPG
-from codes.a_config.d_pendulum_parameters.parameters_pendulum_a2c import PARAMETERS_PENDULUM_A2C
-from codes.a_config.d_pendulum_parameters.parameters_pendulum_ddpg import PARAMETERS_PENDULUM_DDPG
-from codes.a_config.d_pendulum_parameters.parameters_pendulum_d4pg import PARAMETERS_PENDULUM_D4PG
-from codes.a_config.d_pendulum_parameters.parameters_pendulum_ppo import PARAMETERS_PENDULUM_PPO
+from codes.a_config.d_matlab_parameters.parameters_matlab_pendulum_dqn import PARAMETERS_PENDULUM_MATLAB_DQN
+from codes.a_config.d_matlab_parameters.parameters_matlab_pendulum_ddpg import PARAMETERS_PENDULUM_MATLAB_DDPG
 
 from codes.a_config.e_real_device.parameters_rip import PARAMETERS_RIP
 from codes.a_config.e_real_device.parameters_double_rip import PARAMETERS_DOUBLE_RIP

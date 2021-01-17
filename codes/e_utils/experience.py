@@ -83,7 +83,7 @@ class ExperienceSource:
                 cur_steps.append(0)
                 agent_states.append(self.agent.initial_agent_state())
 
-        #ic(states, agent_states, histories, cur_rewards, cur_steps, env_lens)
+        ic(states, agent_states, histories, cur_rewards, cur_steps, env_lens)
 
         iter_idx = 0
         while True:
@@ -99,17 +99,17 @@ class ExperienceSource:
                 else:
                     states_input.append(state)
                     agent_states_input.append(agent_state)
-                    #ic(agent_states_input, "@@")
                     states_indices.append(idx)
+                    #ic(agent_states_input, "@@")
 
             #ic(states_input, agent_states_input)
 
             if states_input:
-                states_actions, new_agent_states = self.agent(states_input, agent_states_input)
+                new_actions, new_agent_states = self.agent(states_input, agent_states_input)
 
-                #ic(states_actions)
+                #ic(new_actions, new_agent_states)
 
-                for idx, action in enumerate(states_actions):
+                for idx, action in enumerate(new_actions):
                     g_idx = states_indices[idx]
                     actions[g_idx] = action
                     agent_states[g_idx] = new_agent_states[idx]

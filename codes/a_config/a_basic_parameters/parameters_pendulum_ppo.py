@@ -1,6 +1,7 @@
 from codes.e_utils.names import *
 from codes.a_config.parameters_general import PARAMETERS_GENERAL
 
+
 # https://github.com/bulletphysics/bullet3/blob/master/examples/pybullet/gym/pybullet_envs/minitaur/envs/minitaur_gym_env.py
 class PARAMETERS_PENDULUM_PPO(PARAMETERS_GENERAL):
     ENVIRONMENT_ID      = EnvironmentName.PENDULUM_V0
