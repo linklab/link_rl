@@ -57,7 +57,7 @@ def main(params):
             config=configuration
         )
         run_name = wandb.run.name
-        run_number = run_name.split("-")[0]
+        run_number = run_name.split("-")[-1]
         wandb.run.name = "{0}_{1}_{2}_{3}".format(
             run_number, params.ENVIRONMENT_ID.value, agent.__name__, agent.model.__name__
         )
