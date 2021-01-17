@@ -80,7 +80,7 @@ class PARAMETERS_GENERAL:
 
     # [Policy Gradient]
     ENTROPY_BETA = 0.01
-    CLIP_GRAD = 0.1
+    CLIP_GRAD = 0.5
     ACTOR_LEARNING_RATE = 0.0001
 
     # [MODE]

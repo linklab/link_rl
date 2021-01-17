@@ -2,6 +2,7 @@ import numpy as np
 import torch
 import torch.nn.functional as F
 from torch.distributions import Normal
+import torch.nn.utils as nn_utils
 
 from codes.d_agents.a0_base_agent import BaseAgent, float32_preprocessor, TargetNet
 from codes.e_utils import rl_utils, replay_buffer
@@ -92,6 +93,7 @@ class AgentSAC(BaseAgent):
         q_loss_v = q1_loss_v + q2_loss_v
         q_loss_v = q_loss_v.mean()
         q_loss_v.backward()
+        nn_utils.clip_grad_norm_(self.model.base.twinq.parameters(), self.params.CLIP_GRAD)
         self.twinq_optimizer.step()
 
         # train critic
@@ -99,17 +101,18 @@ class AgentSAC(BaseAgent):
         val_v = self.model.base.critic(states_v)
 
         if self.params.PER:
-            batch_l1_loss = F.mse_loss(val_v.squeeze(), target_values_v.detach())
+            batch_l1_loss = F.smooth_l1_loss(val_v.squeeze(), target_values_v.detach(), reduction="none")
             batch_weights_v = torch.tensor(batch_weights)
             critic_loss_v = batch_weights_v * batch_l1_loss
 
             self.buffer.update_priorities(batch_indices, batch_l1_loss.detach().cpu().numpy() + 1e-5)
             self.buffer.update_beta(step_idx)
         else:
-            critic_loss_v = F.mse_loss(val_v.squeeze(), target_values_v.detach())
+            critic_loss_v = F.smooth_l1_loss(val_v.squeeze(), target_values_v.detach(), reduction="none")
 
         loss_critic_v = critic_loss_v.mean()
         loss_critic_v.backward()
+        nn_utils.clip_grad_norm_(self.model.base.critic.parameters(), self.params.CLIP_GRAD)
         self.critic_optimizer.step()
 
         # train actor
@@ -119,6 +122,7 @@ class AgentSAC(BaseAgent):
         q1_v, q2_v = self.model.base.twinq(states_v, current_actions_v)
         loss_actor_v = -1.0 * torch.min(q1_v, q2_v).squeeze().mean()
         loss_actor_v.backward()
+        nn_utils.clip_grad_norm_(self.model.base.actor.parameters(), self.params.CLIP_GRAD)
         self.actor_optimizer.step()
 
         self.target_agent.alpha_sync(alpha=1 - 0.001)
