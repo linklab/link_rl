@@ -126,5 +126,5 @@ class TwinMLPBase(nn.Module):
         )
 
     def forward(self, obs, act):
-        x = torch.cat([obs, act], dim=1)
+        x = torch.cat([obs, act], dim=-1)
         return self.q1(x), self.q2(x)

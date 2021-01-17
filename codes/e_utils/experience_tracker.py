@@ -1,5 +1,6 @@
 import time
 import numpy as np
+from icecream import ic
 
 from codes.e_utils.common_utils import load_model, remove_models, save_model
 from codes.e_utils.names import EnvironmentName
@@ -108,6 +109,9 @@ class RewardTracker:
             mean_episode_reward_str = "{0:7.3f}".format(
                 mean_episode_reward
             )
+
+        if isinstance(episode_reward, np.ndarray):
+            episode_reward = episode_reward[0]
 
         print(
             "{0}[{1:6}/{2}] Ep. {3}, ep._reward: {4:7.3f}, mean_{5}_ep._reward: {6},{7} "

@@ -1,33 +1,29 @@
 import gym
 
-class VectorEnv:
-    def __init__(self, make_env_fn, n):
-        self.envs = tuple(make_env_fn() for _ in range(n))
+from gym.vector import SyncVectorEnv, AsyncVectorEnv
+from gym.vector.tests.utils import make_env
 
-    # Call this only once at the beginning of training (optional):
-    def seed(self, seeds):
-        assert len(self.envs) == len(seeds)
-        return tuple(env.seed(s) for env, s in zip(self.envs, seeds))
 
-    # Call this only once at the beginning of training:
-    def reset(self):
-        return tuple(env.reset() for env in self.envs)
+def test_create_sync_vector_env():
+    env_fns = [make_env('CartPole-v0', i) for i in range(8)]
+    env = AsyncVectorEnv(env_fns)
+    assert env.num_envs == 8
 
-    # Call this on every timestep:
-    def step(self, actions):
-        assert len(self.envs) == len(actions)
-        return_values = []
-        for env, a in zip(self.envs, actions):
-            observation, reward, done, info = env.step(a)
-            if done:
-                observation = env.reset()
-            return_values.append((observation, reward, done, info))
-        return tuple(return_values)
+    observation_space = env.observation_space
+    print(observation_space)
 
-    # Call this at the end of training:
-    def close(self):
-        for env in self.envs:
-            env.close()
+    action_space = env.action_space
+    print(action_space)
 
-make_env_fn = lambda: gym.make('CartPole-v0')
-env = VectorEnv(make_env_fn, n=4)
+    while True:
+        state = env.reset()
+        done = False
+        while not done:
+            action = action_space.sample()
+            next_state, reward, done, info = env.step(action)
+            print(state, action, next_state, reward, done, info)
+            state = next_state
+
+
+if __name__ == "__main__":
+    test_create_sync_vector_env()

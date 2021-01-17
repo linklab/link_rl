@@ -234,6 +234,7 @@ class AgentDQN(BaseAgent):
         rewards_v = torch.tensor(rewards)
         done_mask = torch.BoolTensor(dones)
         last_steps_v = torch.tensor(last_steps)
+
         if self.device == torch.device("cuda"):
             states_v = states_v.cuda(non_blocking=True)
             next_states_v = next_states_v.cuda(non_blocking=True)

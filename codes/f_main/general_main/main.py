@@ -51,7 +51,7 @@ def play_func(exp_queue, agent, epsilon_tracker):
         step_length = -1
 
     experience_source = ExperienceSourceSingleEnvFirstLast(
-        env=env, agent=agent, gamma=params.GAMMA, steps_count=params.N_STEP, step_length=step_length
+        env=env, agent=agent, gamma=params.GAMMA, n_step=params.N_STEP, step_length=step_length
     )
 
     exp_source_iter = iter(experience_source)

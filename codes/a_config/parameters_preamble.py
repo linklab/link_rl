@@ -21,6 +21,7 @@ from codes.a_config.d_pendulum_parameters.parameters_matlab_pendulum_ddpg import
 from codes.a_config.d_pendulum_parameters.parameters_pendulum_a2c import PARAMETERS_PENDULUM_A2C
 from codes.a_config.d_pendulum_parameters.parameters_pendulum_ddpg import PARAMETERS_PENDULUM_DDPG
 from codes.a_config.d_pendulum_parameters.parameters_pendulum_d4pg import PARAMETERS_PENDULUM_D4PG
+from codes.a_config.d_pendulum_parameters.parameters_pendulum_ppo import PARAMETERS_PENDULUM_PPO
 
 from codes.a_config.e_real_device.parameters_rip import PARAMETERS_RIP
 from codes.a_config.e_real_device.parameters_double_rip import PARAMETERS_DOUBLE_RIP

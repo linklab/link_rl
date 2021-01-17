@@ -18,14 +18,7 @@ class BaseAgent:
         pass
 
     def initial_agent_state(self):
-        """
-        Should create initial empty state for the agent. It will be called for the start of the episode
-        :return: Anything agent want to remember
-        """
-        return None
-
-    def initial_agent_state(self):
-        return 0.0
+        return np.array([0.0])
 
     def set_experience_source_to_buffer(self, experience_source):
         self.buffer.set_experience_source(experience_source)

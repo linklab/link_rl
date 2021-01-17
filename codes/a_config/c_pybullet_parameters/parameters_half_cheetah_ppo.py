@@ -3,7 +3,7 @@ from codes.a_config.parameters_general import PARAMETERS_GENERAL
 
 # https://github.com/bulletphysics/bullet3/blob/master/examples/pybullet/gym/pybullet_envs/minitaur/envs/minitaur_gym_env.py
 class PARAMETERS_HALF_CHEETAH_PPO(PARAMETERS_GENERAL):
-    ENVIRONMENT_ID      = EnvironmentName.HALF_CHEETAH_V2
+    ENVIRONMENT_ID      = EnvironmentName.HALF_CHEETAH_V0
     DEEP_LEARNING_MODEL = DeepLearningModelName.STOCHASTIC_CONTINUOUS_ACTOR_CRITIC_MLP
     RL_ALGORITHM        = RLAlgorithmName.CONTINUOUS_PPO_V0
     OPTIMIZER           = OptimizerName.ADAM

@@ -30,6 +30,9 @@ class PARAMETERS_GENERAL:
     MQTT_SUB_MOTOR_LIMIT = 'motor_limit_info_2'
     MQTT_SUB_RESET_COMPLETE = 'reset_complete_2'
 
+    # [ENV]
+    NUM_ENVIRONMENTS = 1
+
     # [WORKER]
     NUM_WORKERS = 1
 

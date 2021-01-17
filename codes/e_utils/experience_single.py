@@ -12,13 +12,13 @@ class ExperienceSourceSingleEnv:
     Every experience contains n list of Experience entries
     """
 
-    def __init__(self, env, agent, steps_count=2, step_length=-1, render=False):
+    def __init__(self, env, agent, n_step=2, step_length=-1, render=False):
         assert isinstance(agent, BaseAgent)
-        assert isinstance(steps_count, int)
-        assert steps_count >= 1
+        assert isinstance(n_step, int)
+        assert n_step >= 1
         self.env = env
         self.agent = agent
-        self.steps_count = steps_count
+        self.n_step = n_step
         self.step_length = step_length  # -1 이면 MLP or CNN, 1 이상의 값이면 RNN
         self.render = render
         self.episode_reward_lst = []
@@ -50,7 +50,7 @@ class ExperienceSourceSingleEnv:
     def __iter__(self):
         state = self.env.reset()
 
-        history = deque(maxlen=self.steps_count)
+        history = deque(maxlen=self.n_step)
         cur_reward = 0.0
         cur_step = 0
         agent_state = self.agent.initial_agent_state()
@@ -89,14 +89,14 @@ class ExperienceSourceSingleEnv:
                     state=processed_state, action=action, reward=r, done=is_done, info=info
                 ))
 
-            if len(history) == self.steps_count:
+            if len(history) == self.n_step:
                 yield tuple(history)
 
             state = next_state
 
             if is_done:
                 # in case of very short episode (shorter than our steps count), send gathered history
-                if 0 < len(history) < self.steps_count:
+                if 0 < len(history) < self.n_step:
                     yield tuple(history)
 
                 # generate tail of history
@@ -135,14 +135,14 @@ class ExperienceSourceSingleEnv:
 
 
 class ExperienceSourceSingleEnvFirstLast(ExperienceSourceSingleEnv):
-    def __init__(self, env, agent, gamma, steps_count=1, step_length=-1, render=False):
+    def __init__(self, env, agent, gamma, n_step=1, step_length=-1, render=False):
         assert isinstance(gamma, float)
-        super(ExperienceSourceSingleEnvFirstLast, self).__init__(env, agent, steps_count + 1, step_length, render)
+        super(ExperienceSourceSingleEnvFirstLast, self).__init__(env, agent, n_step + 1, step_length, render)
         self.gamma = gamma
 
     def __iter__(self):
         for history in super(ExperienceSourceSingleEnvFirstLast, self).__iter__():
-            if history[-1].done and len(history) <= self.steps_count:
+            if history[-1].done and len(history) <= self.n_step:
                 last_state = None
                 elems = history
             else:

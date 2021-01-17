@@ -81,7 +81,7 @@ class DeterministicActorCriticMLPBase(nn.Module):
         return actions * self.params.ACTION_SCALE
 
     def forward_critic(self, inputs, actions):
-        critic_value = self.critic(torch.cat([inputs, actions], dim=1))
+        critic_value = self.critic(torch.cat([inputs, actions], dim=-1))
 
         return critic_value
 
@@ -97,6 +97,6 @@ class DistributionalActorCriticMLPBase(DeterministicActorCriticMLPBase):
         self.register_buffer("supports", torch.arange(params.V_MIN, params.V_MAX + delta, delta))
 
     def distribution_to_q(self, distribution):
-        weights = F.softmax(distribution, dim=1) * self.supports
-        res = weights.sum(dim=1)
+        weights = F.softmax(distribution, dim=-1) * self.supports
+        res = weights.sum(dim=-1)
         return res.unsqueeze(dim=-1)

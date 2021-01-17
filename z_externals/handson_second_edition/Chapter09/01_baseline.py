@@ -19,8 +19,7 @@ from lib import dqn_model, common
 NAME = "01_baseline"
 
 
-def batch_generator(buffer: ptan.experience.ExperienceReplayBuffer,
-                    initial: int, batch_size: int):
+def batch_generator(buffer: ptan.experience.ExperienceReplayBuffer, initial: int, batch_size: int):
     buffer.populate(initial)
     while True:
         buffer.populate(1)

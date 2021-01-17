@@ -1,6 +1,7 @@
 import numpy as np
 import torch
 import torch.nn.functional as F
+from icecream import ic
 
 from codes.d_agents.a0_base_agent import BaseAgent, TargetNet, float32_preprocessor
 from codes.e_utils import rl_utils, replay_buffer
@@ -60,6 +61,9 @@ class AgentDDPG(BaseAgent):
             )
 
     def __call__(self, states, agent_states=None):
+        if not agent_states:
+            agent_states = [None] * len(states)
+
         if self.preprocessor:
             states = self.preprocessor(states)
             if torch.is_tensor(states):
@@ -71,11 +75,13 @@ class AgentDDPG(BaseAgent):
             self.model.train()
 
         mu_v = self.model(states)
-        mu = mu_v.data.cpu().numpy()
+        mu = mu_v.detach().cpu().numpy()
+
+        #ic(len(states), len(mu_v), len(agent_states))
 
         actions, new_agent_states = self.action_selector(mu, agent_states)
-
         actions = np.clip(actions, self.action_min, self.action_max)
+
         #####################################
 
         return actions, new_agent_states

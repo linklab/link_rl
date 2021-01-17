@@ -14,14 +14,14 @@ class ExperienceSourceBuffer:
     The same as ExperienceSource, but takes episodes from the simple buffer
     """
 
-    def __init__(self, buffer, steps_count=1):
+    def __init__(self, buffer, n_step=1):
         """
         Create buffered experience source
         :param buffer: list of episodes, each is a list of Experience object
-        :param steps_count: count of steps in every entry
+        :param n_step: count of steps in every entry
         """
         self.update_buffer(buffer)
-        self.steps_count = steps_count
+        self.n_step = n_step
 
     def update_buffer(self, buffer):
         self.buffer = buffer
@@ -33,8 +33,8 @@ class ExperienceSourceBuffer:
         """
         while True:
             episode = random.randrange(len(self.buffer))
-            ofs = random.randrange(self.lens[episode] - self.steps_count - 1)
-            yield self.buffer[episode][ofs:ofs + self.steps_count]
+            ofs = random.randrange(self.lens[episode] - self.n_step - 1)
+            yield self.buffer[episode][ofs:ofs + self.n_step]
 
 
 class ExperienceReplayBuffer:

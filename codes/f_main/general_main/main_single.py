@@ -16,6 +16,7 @@ PROJECT_HOME = os.path.abspath(os.path.join(current_path, os.pardir, os.pardir, 
 if PROJECT_HOME not in sys.path:
     sys.path.append(PROJECT_HOME)
 
+from codes.e_utils.experience import ExperienceSourceFirstLast
 from codes.e_utils import rl_utils
 from codes.e_utils.common_utils import save_model, print_environment_info, print_agent_info
 from codes.e_utils.experience_single import ExperienceSourceSingleEnvFirstLast
@@ -52,22 +53,15 @@ def main(params):
             config=configuration
         )
 
-    env = rl_utils.get_environment(owner="actual_worker", params=params)
+    env = rl_utils.get_environment(params=params)
+    # env = rl_utils.get_environment(owner="actual_worker", params=params)
     print_environment_info(env, params)
 
     agent, epsilon_tracker = rl_utils.get_rl_agent(env=env, worker_id=0, params=params, device=device)
     print_agent_info(agent, epsilon_tracker, params)
 
-    if params.DEEP_LEARNING_MODEL in [
-        DeepLearningModelName.DETERMINISTIC_CONTINUOUS_ACTOR_CRITIC_GRU,
-        DeepLearningModelName.DETERMINISTIC_CONTINUOUS_ACTOR_CRITIC_GRU_ATTENTION
-    ]:
-        step_length = params.RNN_STEP_LENGTH
-    else:
-        step_length = -1
-
-    experience_source = ExperienceSourceSingleEnvFirstLast(
-        env=env, agent=agent, gamma=params.GAMMA, steps_count=params.N_STEP, step_length=step_length
+    experience_source = ExperienceSourceFirstLast(
+        env=env, agent=agent, gamma=params.GAMMA, n_step=params.N_STEP, vectorized=True
     )
 
     agent.set_experience_source_to_buffer(experience_source=experience_source)
