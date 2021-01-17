@@ -35,7 +35,8 @@ my_logger = get_logger("openai_pendulum_ddpg")
 
 
 def play_main(params):
-    env = rl_utils.get_environment(owner="actual_worker", params=params)
+    env = rl_utils.get_single_environment(owner="actual_worker", params=params)
+    params.ENV_RENDER = True
     print("env:", params.ENVIRONMENT_ID)
     print("observation_space:", env.observation_space)
     print("action_space:", env.action_space)
