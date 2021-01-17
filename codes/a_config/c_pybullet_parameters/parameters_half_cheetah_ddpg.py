@@ -2,8 +2,8 @@ from codes.e_utils.names import *
 from codes.a_config.parameters_general import PARAMETERS_GENERAL
 
 # https://github.com/bulletphysics/bullet3/blob/master/examples/pybullet/gym/pybullet_envs/minitaur/envs/minitaur_gym_env.py
-class PARAMETERS_RL_HALF_CHEETAH_DDPG(PARAMETERS_GENERAL):
-    ENVIRONMENT_ID      = EnvironmentName.HALF_CHEETAH_V2
+class PARAMETERS_HALF_CHEETAH_DDPG(PARAMETERS_GENERAL):
+    ENVIRONMENT_ID      = EnvironmentName.HALF_CHEETAH_V0
     DEEP_LEARNING_MODEL = DeepLearningModelName.DETERMINISTIC_CONTINUOUS_ACTOR_CRITIC_MLP
     RL_ALGORITHM        = RLAlgorithmName.DDPG_V0
     OPTIMIZER           = OptimizerName.ADAM
@@ -27,4 +27,5 @@ class PARAMETERS_RL_HALF_CHEETAH_DDPG(PARAMETERS_GENERAL):
 
     ACTION_SCALE = 1.0
 
-    PER = False
+    PER_PROPORTIONAL = False
+    PER_RANK_BASED = False

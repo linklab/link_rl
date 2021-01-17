@@ -4,6 +4,7 @@ import numpy as np
 from typing import Union
 
 import torch
+from icecream import ic
 
 
 class ActionSelector:
@@ -160,9 +161,14 @@ class EpsilonGreedyDDPGActionSelector:
         if isinstance(agent_states, list):
             agent_states = np.asarray(agent_states)
 
+        #ic(agent_states)
+
+        if agent_states.ndim == 1:
+            agent_states = np.expand_dims(agent_states, axis=-1)
+
         if self.ou_enabled and self.epsilon > 0.0:
             # agent_states = 1.0       +    0.15 * (0.0 - 1.0)            + new_normal_random
-            agent_states = agent_states + ou_theta * (ou_mu - agent_states) + ou_sigma * np.random.normal(size=actions.shape)
+            agent_states = agent_states + ou_theta * (ou_mu - agent_states) + ou_sigma * np.random.normal(size=agent_states.shape)
             actions = actions + self.epsilon * agent_states
 
         return actions, agent_states

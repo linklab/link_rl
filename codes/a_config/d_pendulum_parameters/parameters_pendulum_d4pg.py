@@ -2,7 +2,7 @@ from codes.e_utils.names import *
 from codes.a_config.parameters_general import PARAMETERS_GENERAL
 
 
-class PARAMETERS_RL_PENDULUM_D4PG(PARAMETERS_GENERAL):
+class PARAMETERS_PENDULUM_D4PG(PARAMETERS_GENERAL):
     ENVIRONMENT_ID = EnvironmentName.PENDULUM_V0
     DEEP_LEARNING_MODEL = DeepLearningModelName.DETERMINISTIC_CONTINUOUS_ACTOR_CRITIC_MLP
     RL_ALGORITHM = RLAlgorithmName.D4PG_V0
@@ -27,7 +27,8 @@ class PARAMETERS_RL_PENDULUM_D4PG(PARAMETERS_GENERAL):
     CLIP_GRAD = 0.1
 
     RNN_STEP_LENGTH = 2
-    PER = False
+    PER_PROPORTIONAL = False
+    PER_RANK_BASED = False
 
     ENV_RENDER = False
 

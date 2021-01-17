@@ -46,7 +46,7 @@ if not os.path.exists(MODEL_SAVE_DIR):
 
 
 def evaluate(env, agent, verbose=True):
-    experience_source = experience_single.ExperienceSourceSingleEnvFirstLast(env, agent, gamma=params.GAMMA, steps_count=params.N_STEP)
+    experience_source = experience_single.ExperienceSourceSingleEnvFirstLast(env, agent, gamma=params.GAMMA, n_step=params.N_STEP)
 
     done = False
     state = env.reset()
@@ -162,7 +162,7 @@ def train(coin_name, time_unit, train_env, evaluate_env):
     random_agent = rl_agent.DQNAgent(dqn_model=None, action_selector=random_action_selector, device=device)
 
     experience_source = experience_single.ExperienceSourceSingleEnvFirstLast(
-        train_env, agent, gamma=params.GAMMA, steps_count=params.N_STEP
+        train_env, agent, gamma=params.GAMMA, n_step=params.N_STEP
     )
     buffer = replay_buffer.ExperienceReplayBuffer(experience_source, buffer_size=params.REPLAY_BUFFER_SIZE)
     optimizer = optim.Adam(net.parameters(), lr=params.LEARNING_RATE)

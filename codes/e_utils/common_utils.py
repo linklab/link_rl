@@ -209,17 +209,40 @@ def load_model(model_save_dir, env_name, agent, step=None):
     agent.model.load_state_dict(model_params)
 
 
-def print_environment_info(env, params):
-    print(f"env: {params.ENVIRONMENT_ID}")
-    print(f"env.observation_space: {env.observation_space} and env.observation_space.shape: {env.observation_space.shape}")
-    if isinstance(env.observation_space, Box):
-        print(f"observation low: {[min_value for min_value in env.observation_space.low]}")
-        print(f"observation high: {[max_value for max_value in env.observation_space.high]}")
+# def print_environment_info(env, params):
+#     print(f"env id: {params.ENVIRONMENT_ID}")
+#     print(f"number of unique envs: {params.NUM_ENVIRONMENTS}")
+#     print(f"env.observation_space: {env[0].observation_space}")
+#     if isinstance(env[0].observation_space, Box):
+#         print(f"observation low: {[min_value for min_value in env[0].observation_space.low]}")
+#         print(f"observation high: {[max_value for max_value in env[0].observation_space.high]}")
+#
+#     print(f"env.action_space: {env[0].action_space}")
+#     if isinstance(env[0].action_space, Box):
+#         print(f"action low: {[min_value for min_value in env[0].action_space.low]}")
+#         print(f"action high: {[max_value for max_value in env[0].action_space.high]}")
 
-    print(f"env.action_space: {env.action_space} and env.observation_space.shape: {env.action_space.shape}")
-    if isinstance(env.action_space, Box):
-        print(f"action low: {[min_value for min_value in env.action_space.low]}")
-        print(f"action high: {[max_value for max_value in env.action_space.high]}")
+
+def print_environment_info(env, params):
+    print(f"env id: {params.ENVIRONMENT_ID}")
+    print(f"number of unique envs: {params.NUM_ENVIRONMENTS}")
+    print(f"env.single_observation_space: {env.single_observation_space}")
+    if isinstance(env.single_observation_space, Box):
+        print(f"single_observation low: {[min_value for min_value in env.single_observation_space.low]}")
+        print(f"single_observation high: {[max_value for max_value in env.single_observation_space.high]}")
+
+    print(f"env.single_action_space: {env.single_action_space}")
+    if isinstance(env.single_action_space, Box):
+        print(f"single_action low: {[min_value for min_value in env.single_action_space.low]}")
+        print(f"single_action high: {[max_value for max_value in env.single_action_space.high]}")
+
+
+def print_agent_info(agent, epsilon_tracker, params):
+    print(f"Model: {params.DEEP_LEARNING_MODEL}")
+    print(f"Algorithm: {params.RL_ALGORITHM}")
+    print(f"Action Selector: {agent.action_selector}")
+    print(f"Epsilon Tracker: {epsilon_tracker if epsilon_tracker else None}")
+    print(f"Optimizer: {params.OPTIMIZER}")
 
 
 if __name__=="__main__":

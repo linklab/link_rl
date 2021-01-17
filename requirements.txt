@@ -1,14 +1,4 @@
-absl-py==0.11.0
-appdirs==1.4.3
-appnope @ file:///opt/concourse/worker/volumes/live/4f734db2-9ca8-4d8b-5b29-6ca15b4b4772/volume/appnope_1606859466979/work
-asn1crypto @ file:///tmp/build/80754af9/asn1crypto_1596577642040/work
-attrs==20.3.0
-backcall==0.2.0
-cached-property==1.5.2
-cachetools==4.2.0
-cattrs==1.0.0
 certifi==2020.12.5
-cffi @ file:///opt/concourse/worker/volumes/live/2aa8abfe-8b8d-4889-78d9-837b74c3cd64/volume/cffi_1606255119410/work
 chardet==4.0.0
 click==7.1.2
 cloudpickle==1.6.0
@@ -16,64 +6,36 @@ configparser==5.0.1
 cycler==0.10.0
 decorator==4.4.2
 docker-pycreds==0.4.0
-entrypoints==0.3
 future==0.18.2
 gitdb==4.0.5
 GitPython==3.1.12
-google-auth==1.24.0
-google-auth-oauthlib==0.4.2
-grpcio==1.34.0
+grpcio==1.34.1
+grpcio-tools==1.34.1
 gym==0.18.0
-h5py==3.1.0
-hyperlink==19.0.0
 idna==2.10
 imageio==2.9.0
-importlib-metadata==3.4.0
-ipython-genutils @ file:///tmp/build/80754af9/ipython_genutils_1606773439826/work
-jedi==0.16.0
-jupyter-client==6.1.2
-kiwisolver==1.2.0
-Markdown==3.3.3
+kiwisolver==1.3.1
 matlabengineforpython===R2020b
-matplotlib==3.3.0
-mkl-fft==1.0.15
-mkl-random==1.1.0
+matplotlib==3.3.3
+mkl-fft==1.2.0
+mkl-random==1.1.1
 mkl-service==2.3.0
-mlagents==0.23.0
-mlagents-envs==0.23.0
 networkx==2.5
-numpy==1.18.5
-oauthlib==3.1.0
+numpy==1.19.2
 olefile==0.46
 paho-mqtt==1.5.1
-parso==0.6.2
 pathtools==0.1.2
-pexpect @ file:///tmp/build/80754af9/pexpect_1605563209008/work
-pickleshare @ file:///tmp/build/80754af9/pickleshare_1606932040724/work
 Pillow==7.2.0
 promise==2.3
-prompt-toolkit==3.0.4
 protobuf==3.14.0
 psutil==5.8.0
-ptyprocess @ file:///tmp/build/80754af9/ptyprocess_1609355006118/work/dist/ptyprocess-0.7.0-py2.py3-none-any.whl
-pyasn1==0.4.6
-pyasn1-modules==0.2.8
 pybullet==3.0.8
--e git+https://github.com/benelot/pybullet-gym.git@40b5b4e00793929f6d1d2adaf26ce97b4408fe06#egg=pybulletgym
-pycparser @ file:///tmp/build/80754af9/pycparser_1594388511720/work
-pycrypto==2.6.1
 pyglet==1.5.0
-Pygments==2.6.1
 pyparsing==2.4.7
-PySocks==1.7.0
 python-dateutil==2.8.1
-pytz==2019.1
 PyWavelets==1.1.1
 PyYAML==5.3.1
-pyzmq==18.1.1
 requests==2.25.1
-requests-oauthlib==1.3.0
-rsa==4.7
 scikit-image==0.18.1
 scipy==1.6.0
 sentry-sdk==0.19.5
@@ -81,18 +43,11 @@ shortuuid==1.0.1
 six==1.15.0
 smmap==3.0.4
 subprocess32==3.5.4
-tensorboard==2.4.0
-tensorboard-plugin-wit==1.7.0
 tifffile==2021.1.11
 torch==1.7.1
 torchaudio==0.7.0a0+a853dff
 torchvision==0.8.2
-tornado @ file:///opt/concourse/worker/volumes/live/d531d395-893c-4ca1-6a5f-717b318eb08c/volume/tornado_1606942307627/work
-typing-extensions @ file:///tmp/build/80754af9/typing_extensions_1598376058250/work
-tzlocal==2.0.0
+typing-extensions==3.7.4.3
 urllib3==1.26.2
 wandb==0.10.13
 watchdog==0.10.4
-wcwidth==0.1.9
-Werkzeug==1.0.1
-zipp==3.4.0

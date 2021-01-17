@@ -40,6 +40,7 @@ print("env:", params.ENVIRONMENT_ID)
 print("observation_space:", env.observation_space)
 print("action_space:", env.action_space)
 
+
 def play_func(exp_queue, agent, epsilon_tracker):
     if params.DEEP_LEARNING_MODEL in [
         DeepLearningModelName.DETERMINISTIC_CONTINUOUS_ACTOR_CRITIC_GRU,
@@ -50,7 +51,7 @@ def play_func(exp_queue, agent, epsilon_tracker):
         step_length = -1
 
     experience_source = ExperienceSourceSingleEnvFirstLast(
-        env=env, agent=agent, gamma=params.GAMMA, steps_count=params.N_STEP, step_length=step_length
+        env=env, agent=agent, gamma=params.GAMMA, n_step=params.N_STEP, step_length=step_length
     )
 
     exp_source_iter = iter(experience_source)
@@ -142,6 +143,10 @@ def main():
             _, last_loss = agent.train_net(step_idx=step_idx)
         else:
             raise ValueError()
+
+        if params.PER_RANK_BASED:
+            if step_idx % 100 < params.TRAIN_STEP_FREQ:
+                agent.buffer.rebalance()
 
 
 if __name__ == "__main__":

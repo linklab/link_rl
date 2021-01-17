@@ -128,7 +128,7 @@ class WorkerFastRL:
             raise ValueError()
 
         experience_source = ExperienceSourceSingleEnvFirstLast(
-            self.env, self.agent, gamma=params.GAMMA, steps_count=params.N_STEP, step_length=-1
+            self.env, self.agent, gamma=params.GAMMA, n_step=params.N_STEP, step_length=-1
         )
 
         self.agent.set_experience_source_to_buffer(experience_source=experience_source)

@@ -1,7 +1,7 @@
 from codes.e_utils.names import OptimizerName, RLAlgorithmName, EnvironmentName, DeepLearningModelName
 
 
-class PARAMETERS_DOUBLE_RIP:
+class PARAMETERS_RIP:
     # [GENERAL]
     SEED = 1
     MY_PLATFORM = None
@@ -66,7 +66,7 @@ class PARAMETERS_DOUBLE_RIP:
     CUDA_VISIBLE_DEVICES_NUMBER_LIST = '1, 2'
 
     # [1. ENVIRONMENTS]
-    ENVIRONMENT_ID = EnvironmentName.REAL_DEVICE_DOUBLE_RIP
+    ENVIRONMENT_ID = EnvironmentName.REAL_DEVICE_RIP
 
     # [2. DEEP_LEARNING_MODELS]
     DEEP_LEARNING_MODEL = DeepLearningModelName.DETERMINISTIC_CONTINUOUS_ACTOR_CRITIC_MLP

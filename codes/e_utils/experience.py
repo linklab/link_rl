@@ -4,6 +4,7 @@ import gym
 import torch
 import numpy as np
 from collections import namedtuple, deque
+from icecream import ic
 
 current_path = os.path.dirname(os.path.realpath(__file__))
 PROJECT_HOME = os.path.abspath(os.path.join(current_path, os.pardir, os.pardir))
@@ -35,26 +36,26 @@ class ExperienceSource:
     Every experience contains n list of Experience entries
     """
 
-    def __init__(self, env, agent, steps_count=2, steps_delta=1, vectorized=False):
+    def __init__(self, env, agent, n_step=2, steps_delta=1, vectorized=False):
         """
         Create simple experience source
         :param env: environment or list of environments to be used
         :param agent: callable to convert batch of states into actions to take
-        :param steps_count: count of steps to track for every experience chain
+        :param n_step: count of steps to track for every experience chain
         :param steps_delta: how many steps to do between experience items
         :param vectorized: support of vectorized envs from OpenAI universe
         """
         # assert isinstance(env, (gym.Env, list, tuple))
         assert isinstance(agent, BaseAgent)
-        assert isinstance(steps_count, int)
-        assert steps_count >= 1
+        assert isinstance(n_step, int)
+        assert n_step >= 1
         assert isinstance(vectorized, bool)
         if isinstance(env, (list, tuple)):
             self.pool = env
         else:
             self.pool = [env]
         self.agent = agent
-        self.steps_count = steps_count
+        self.n_step = n_step
         self.steps_delta = steps_delta
         self.episode_reward_lst = []
         self.episode_done_step_lst = []
@@ -74,29 +75,39 @@ class ExperienceSource:
                 obs_len = 1
                 states.append(obs)
 
-            env_lens.append(obs_len)
+            env_lens.append(obs_len)   # vectorized env는 self.pool 자체가 env이며 env_lens는 그 내부의 env 개수를 지니고 있음.
 
             for _ in range(obs_len):
-                histories.append(deque(maxlen=self.steps_count))
+                histories.append(deque(maxlen=self.n_step))
                 cur_rewards.append(0.0)
                 cur_steps.append(0)
                 agent_states.append(self.agent.initial_agent_state())
 
-        # print(states, agent_states, histories, cur_rewards, cur_steps)
+        #ic(states, agent_states, histories, cur_rewards, cur_steps, env_lens)
 
         iter_idx = 0
         while True:
+            #ic("!!!!!!!!!!!!!!1")
+
             actions = [None] * len(states)
             states_input = []
             states_indices = []
-            for idx, state in enumerate(states):
+            agent_states_input = []
+            for idx, (state, agent_state) in enumerate(zip(states, agent_states)):
                 if state is None:
-                    actions[idx] = self.pool[0].action_space.sample()  # assume that all envs are from the same family
+                    actions[idx] = self.pool[0].single_action_space.sample()  # assume that all envs are from the same family
                 else:
                     states_input.append(state)
+                    agent_states_input.append(agent_state)
+                    #ic(agent_states_input, "@@")
                     states_indices.append(idx)
+
+            #ic(states_input, agent_states_input)
+
             if states_input:
-                states_actions, new_agent_states = self.agent(states_input, agent_states)
+                states_actions, new_agent_states = self.agent(states_input, agent_states_input)
+
+                #ic(states_actions)
 
                 for idx, action in enumerate(states_actions):
                     g_idx = states_indices[idx]
@@ -108,12 +119,14 @@ class ExperienceSource:
             global_ofs = 0
             for env_idx, (env, action_n) in enumerate(zip(self.pool, grouped_actions)):
                 if self.vectorized:
-                    next_state_n, r_n, is_done_n, info = env.step(action_n)
+                    #print(action_n)
+                    next_state_n, r_n, is_done_n, info_n = env.step(action_n)
+                    #ic(env_idx, env, len(action_n), len(next_state_n), len(r_n), len(is_done_n), len(info_n))
                 else:
                     next_state, r, is_done, info = env.step(action_n[0])
-                    next_state_n, r_n, is_done_n = [next_state], [r], [is_done]
+                    next_state_n, r_n, is_done_n, info_n = [next_state], [r], [is_done], [info]
 
-                for ofs, (action, next_state, r, is_done) in enumerate(zip(action_n, next_state_n, r_n, is_done_n)):
+                for ofs, (action, next_state, r, is_done, info) in enumerate(zip(action_n, next_state_n, r_n, is_done_n, info_n)):
                     idx = global_ofs + ofs
                     state = states[idx]
                     history = histories[idx]
@@ -128,13 +141,14 @@ class ExperienceSource:
                     if state is not None:
                         history.append(Experience(state=state, action=action, reward=r, done=is_done, info=info))
 
-                    if len(history) == self.steps_count and iter_idx % self.steps_delta == 0:
+                    if len(history) == self.n_step and iter_idx % self.steps_delta == 0:
                         yield tuple(history)
+
                     states[idx] = next_state
 
                     if is_done:
                         # in case of very short episode (shorter than our steps count), send gathered history
-                        if 0 < len(history) < self.steps_count:
+                        if 0 < len(history) < self.n_step:
                             yield tuple(history)
 
                         # generate tail of history
@@ -142,18 +156,15 @@ class ExperienceSource:
                             history.popleft()
                             yield tuple(history)
 
-                        states[idx] = env.reset() if not self.vectorized else None
-                        agent_states[idx] = self.agent.initial_agent_state()
-
                         if 'ale.lives' not in info or info['ale.lives'] == 0:
                             self.episode_reward_lst.append(cur_rewards[idx])
                             self.episode_done_step_lst.append(cur_steps[idx])
                             cur_rewards[idx] = 0.0
                             cur_steps[idx] = 0
-                        #     # vectorized envs are reset automatically
-                        #     states[idx] = env.reset() if not self.vectorized else None
-                        #     agent_states[idx] = self.agent.initial_agent_state()
 
+                        # vectorized envs are reset automatically
+                        states[idx] = env.reset() if not self.vectorized else None
+                        agent_states[idx] = self.agent.initial_agent_state()
                         history.clear()
 
                 global_ofs += len(action_n)
@@ -167,14 +178,14 @@ class ExperienceSource:
         return r
 
     def pop_episode_reward_and_done_step_lst(self):
-        res = list(zip(self.episode_reward_lst, self.episode_done_step_lst))
+        res = self.episode_reward_lst, self.episode_done_step_lst
         if res:
             self.episode_reward_lst = []
             self.episode_done_step_lst = []
         return res
 
 
-def _group_list(items, lens):
+def _group_list(actions, env_lens):
     """
     Unflat the list of items by lens
     :param items: list of items
@@ -183,8 +194,8 @@ def _group_list(items, lens):
     """
     res = []
     cur_ofs = 0
-    for g_len in lens:
-        res.append(items[cur_ofs:cur_ofs + g_len])
+    for g_len in env_lens:
+        res.append(actions[cur_ofs: cur_ofs + g_len])
         cur_ofs += g_len
     return res
 
@@ -194,8 +205,8 @@ class ExperienceSourceNamedTuple(ExperienceSource):
     convert tuple to namedtuple
     """
 
-    def __init__(self, env, agent, steps_count=2, steps_delta=1, vectorized=False):
-        super(ExperienceSourceNamedTuple, self).__init__(env, agent, steps_count, steps_delta, vectorized=vectorized)
+    def __init__(self, env, agent, n_step=2, steps_delta=1, vectorized=False):
+        super(ExperienceSourceNamedTuple, self).__init__(env, agent, n_step, steps_delta, vectorized=vectorized)
 
     def __iter__(self):
         for exp in super(ExperienceSourceNamedTuple, self).__iter__():
@@ -212,12 +223,11 @@ class ExperienceSourceFirstLast(ExperienceSource):
 
     If we have partial trajectory at the end of episode, last_state will be None
     """
-
-    def __init__(self, env, agent, gamma, steps_count=1, steps_delta=1, vectorized=False):
+    def __init__(self, env, agent, gamma, n_step=1, steps_delta=1, vectorized=False):
         assert isinstance(gamma, float)
-        super(ExperienceSourceFirstLast, self).__init__(env, agent, steps_count + 1, steps_delta, vectorized=vectorized)
+        super(ExperienceSourceFirstLast, self).__init__(env, agent, n_step + 1, steps_delta, vectorized=vectorized)
         self.gamma = gamma
-        self.steps = steps_count
+        self.steps = n_step
 
     def __iter__(self):
         for exp in super(ExperienceSourceFirstLast, self).__iter__():
@@ -258,18 +268,18 @@ class ExperienceSourceRollouts:
     4. values
     """
 
-    def __init__(self, env, agent, gamma, steps_count=5):
+    def __init__(self, env, agent, gamma, n_step=5):
         """
         Constructs the rollout experience source
         :param env: environment or list of environments to be used
         :param agent: callable to convert batch of states into actions
-        :param steps_count: how many steps to perform rollouts
+        :param n_step: how many steps to perform rollouts
         """
         assert isinstance(env, (gym.Env, list, tuple))
         assert isinstance(agent, BaseAgent)
         assert isinstance(gamma, float)
-        assert isinstance(steps_count, int)
-        assert steps_count >= 1
+        assert isinstance(n_step, int)
+        assert n_step >= 1
 
         if isinstance(env, (list, tuple)):
             self.pool = env
@@ -277,18 +287,18 @@ class ExperienceSourceRollouts:
             self.pool = [env]
         self.agent = agent
         self.gamma = gamma
-        self.steps_count = steps_count
+        self.n_step = n_step
         self.episode_reward_lst = []
         self.episode_done_step_lst = []
 
     def __iter__(self):
         pool_size = len(self.pool)
         states = [np.array(e.reset()) for e in self.pool]
-        mb_states = np.zeros((pool_size, self.steps_count) + states[0].shape, dtype=states[0].dtype)
-        mb_rewards = np.zeros((pool_size, self.steps_count), dtype=np.float32)
-        mb_values = np.zeros((pool_size, self.steps_count), dtype=np.float32)
-        mb_actions = np.zeros((pool_size, self.steps_count), dtype=np.int64)
-        mb_dones = np.zeros((pool_size, self.steps_count), dtype=np.bool)
+        mb_states = np.zeros((pool_size, self.n_step) + states[0].shape, dtype=states[0].dtype)
+        mb_rewards = np.zeros((pool_size, self.n_step), dtype=np.float32)
+        mb_values = np.zeros((pool_size, self.n_step), dtype=np.float32)
+        mb_actions = np.zeros((pool_size, self.n_step), dtype=np.int64)
+        mb_dones = np.zeros((pool_size, self.n_step), dtype=np.bool)
         episode_reward_lst = [0.0] * pool_size
         episode_done_step_lst = [0] * pool_size
         critics = None
@@ -296,9 +306,6 @@ class ExperienceSourceRollouts:
 
         while True:
             actions, critics = self.agent(states, critics)
-
-            # TODO: noise에 대한 처리
-
             rewards = []
             dones = []
             new_states = []
@@ -317,7 +324,7 @@ class ExperienceSourceRollouts:
                 rewards.append(r)
 
             # we need an extra step to get values approximation for rollouts
-            if step_idx == self.steps_count:
+            if step_idx == self.n_step:
                 print(mb_rewards, mb_dones, critics)
                 # calculate rollout rewards
                 for env_idx, (env_rewards, env_dones, last_value) in enumerate(zip(mb_rewards, mb_dones, critics)):
@@ -329,8 +336,10 @@ class ExperienceSourceRollouts:
                     else:
                         env_rewards = discount_with_dones(env_rewards, env_dones, self.gamma)
                     mb_rewards[env_idx] = env_rewards
-                yield mb_states.reshape(
-                    (-1,) + mb_states.shape[2:]), mb_rewards.flatten(), mb_actions.flatten(), mb_values.flatten()
+                yield mb_states.reshape((-1,) + mb_states.shape[2:]), \
+                      mb_rewards.flatten(), \
+                      mb_actions.flatten(), \
+                      mb_values.flatten()
                 step_idx = 0
 
             mb_states[:, step_idx] = states
@@ -340,6 +349,24 @@ class ExperienceSourceRollouts:
             mb_dones[:, step_idx] = dones
             step_idx += 1
             states = new_states
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
     def pop_episode_reward_lst(self):
         r = self.episode_reward_lst

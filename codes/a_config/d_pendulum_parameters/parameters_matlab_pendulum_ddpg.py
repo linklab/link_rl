@@ -2,7 +2,7 @@ from codes.e_utils.names import *
 from codes.a_config.parameters_general import PARAMETERS_GENERAL
 
 
-class PARAMETERS_RL_PENDULUM_MATLAB_DDPG(PARAMETERS_GENERAL):
+class PARAMETERS_PENDULUM_MATLAB_DDPG(PARAMETERS_GENERAL):
     ENV_RESET = True
 
     ENVIRONMENT_ID = EnvironmentName.PENDULUM_MATLAB_V0
@@ -33,7 +33,8 @@ class PARAMETERS_RL_PENDULUM_MATLAB_DDPG(PARAMETERS_GENERAL):
 
     RNN_STEP_LENGTH = 2
 
-    PER = False
+    PER_PROPORTIONAL = False
+    PER_RANK_BASED = False
 
     ACTION_SCALE = 3.0
 

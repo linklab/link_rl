@@ -1,34 +1,37 @@
-from codes.a_config.a_basic_parameters.parameters_cartpole_a2c          import PARAMETERS_RL_CARTPOLE_A2C
-from codes.a_config.a_basic_parameters.parameters_cartpole_dqn          import PARAMETERS_RL_CARTPOLE_DQN
-from codes.a_config.a_basic_parameters.parameters_cartpole_pg           import PARAMETERS_RL_CARTPOLE_PG
-from codes.a_config.a_basic_parameters.parameters_cartpole_reinforce    import PARAMETERS_RL_CARTPOLE_REINFORCE
+from codes.a_config.a_basic_parameters.parameters_cartpole_a2c          import PARAMETERS_CARTPOLE_A2C
+from codes.a_config.a_basic_parameters.parameters_cartpole_dqn          import PARAMETERS_CARTPOLE_DQN
+from codes.a_config.a_basic_parameters.parameters_cartpole_pg           import PARAMETERS_CARTPOLE_PG
+from codes.a_config.a_basic_parameters.parameters_cartpole_reinforce    import PARAMETERS_CARTPOLE_REINFORCE
 
-from codes.a_config.b_atari_parameters.parameters_atati_pong_dqn              import PARAMETERS_RL_PONG_DQN
-from codes.a_config.b_atari_parameters.parameters_atari_breakout_dqn          import PARAMETERS_RL_BREAKOUT_DQN
+from codes.a_config.b_atari_parameters.parameters_atati_pong_dqn              import PARAMETERS_PONG_DQN
+from codes.a_config.b_atari_parameters.parameters_atari_breakout_dqn          import PARAMETERS_BREAKOUT_DQN
 
-from codes.a_config.c_pybullet_parameters.parameters_half_cheetah_ppo import PARAMETERS_RL_HALF_CHEETAH_PPO
-from codes.a_config.c_pybullet_parameters.parameters_ant_sac import PARAMETERS_RL_ANT_SAC
+from codes.a_config.c_pybullet_parameters.parameters_half_cheetah_ppo import PARAMETERS_HALF_CHEETAH_PPO
+from codes.a_config.c_pybullet_parameters.parameters_ant_sac import PARAMETERS_ANT_SAC
 from codes.a_config.c_pybullet_parameters.parameters_minitaur_bullet_ddpg import \
-    PARAMETERS_RL_MINITAUR_BULLET_DDPG
+    PARAMETERS_MINITAUR_BULLET_DDPG
 from codes.a_config.c_pybullet_parameters.parameters_minitaur_bullet_ppo import \
-    PARAMETERS_RL_MINITAUR_BULLET_PPO
-from codes.a_config.c_pybullet_parameters.parameters_ant_ppo import PARAMETERS_RL_ANT_PPO
+    PARAMETERS_MINITAUR_BULLET_PPO
+from codes.a_config.c_pybullet_parameters.parameters_ant_ppo import PARAMETERS_ANT_PPO
 
 from codes.a_config.d_pendulum_parameters.parameters_matlab_pendulum_ppo import \
-    PARAMETERS_RL_PENDULUM_MATLAB_PPO
-from codes.a_config.d_pendulum_parameters.parameters_matlab_pendulum_dqn import PARAMETERS_RL_PENDULUM_MATLAB_DQN
-from codes.a_config.d_pendulum_parameters.parameters_matlab_pendulum_ddpg import PARAMETERS_RL_PENDULUM_MATLAB_DDPG
-from codes.a_config.d_pendulum_parameters.parameters_pendulum_a2c import PARAMETERS_RL_PENDULUM_A2C
-from codes.a_config.d_pendulum_parameters.parameters_pendulum_ddpg import PARAMETERS_RL_PENDULUM_DDPG
-from codes.a_config.d_pendulum_parameters.parameters_pendulum_d4pg import PARAMETERS_RL_PENDULUM_D4PG
+    PARAMETERS_PENDULUM_MATLAB_PPO
+from codes.a_config.d_pendulum_parameters.parameters_matlab_pendulum_dqn import PARAMETERS_PENDULUM_MATLAB_DQN
+from codes.a_config.d_pendulum_parameters.parameters_matlab_pendulum_ddpg import PARAMETERS_PENDULUM_MATLAB_DDPG
+from codes.a_config.d_pendulum_parameters.parameters_pendulum_a2c import PARAMETERS_PENDULUM_A2C
+from codes.a_config.d_pendulum_parameters.parameters_pendulum_ddpg import PARAMETERS_PENDULUM_DDPG
+from codes.a_config.d_pendulum_parameters.parameters_pendulum_d4pg import PARAMETERS_PENDULUM_D4PG
+from codes.a_config.d_pendulum_parameters.parameters_pendulum_ppo import PARAMETERS_PENDULUM_PPO
+
+from codes.a_config.e_real_device.parameters_rip import PARAMETERS_RIP
+from codes.a_config.e_real_device.parameters_double_rip import PARAMETERS_DOUBLE_RIP
 
 from codes.a_config.federated_parameters.parameters_federated_matlab_rip_ddpg   import PARAMETERS_FEDERATED_MATLAB_RIP_DDPG
 from codes.a_config.federated_parameters.parameters_federated_pendulum_ddpg     import PARAMETERS_FEDERATED_PENDULUM_DDPG
 
 from codes.e_utils.names import OSName, EnvironmentName, RLAlgorithmName
 
-from codes.a_config.or_parameters.parameters_fast_rl_knapsack_dqn import PARAMETERS_RL_KNAPSACK_DQN
-from codes.a_config.or_parameters.parameters_fast_rl_tsp_dqn import PARAMETERS_RL_TSP_DQN
+from codes.a_config.or_parameters.parameters_fast_rl_knapsack_dqn import PARAMETERS_KNAPSACK_DQN
+from codes.a_config.or_parameters.parameters_fast_rl_tsp_dqn import PARAMETERS_TSP_DQN
 
 from codes.a_config.federated_parameters.parameters_federated_cartpole_ppo_mlp import PARAMETERS_FEDERATED_CARTPOLE_PPO_MLP
-from codes.a_config.real_device.parameters_double_rip import PARAMETERS_DOUBLE_RIP

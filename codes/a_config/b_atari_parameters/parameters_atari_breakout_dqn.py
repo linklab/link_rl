@@ -2,7 +2,7 @@ from codes.e_utils.names import *
 from codes.a_config.parameters_general import PARAMETERS_GENERAL
 
 
-class PARAMETERS_RL_BREAKOUT_DQN(PARAMETERS_GENERAL):
+class PARAMETERS_BREAKOUT_DQN(PARAMETERS_GENERAL):
     ENVIRONMENT_ID = EnvironmentName.BREAKOUT_NO_FRAME_SKIP_V4
     # ENVIRONMENT_ID = EnvironmentName.BREAKOUT_DETERMINISTIC_V4
     RL_ALGORITHM = RLAlgorithmName.DQN_V0
@@ -29,5 +29,6 @@ class PARAMETERS_RL_BREAKOUT_DQN(PARAMETERS_GENERAL):
     NEXT_STATE_IN_TRAJECTORY = False
 
     OMEGA = False
-    PER = True
+    PER_PROPORTIONAL = False
+    PER_RANK_BASED = False
     DOUBLE = True

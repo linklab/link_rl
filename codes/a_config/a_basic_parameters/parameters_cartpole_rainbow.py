@@ -2,7 +2,7 @@ from codes.e_utils.names import *
 from codes.a_config.parameters_general import PARAMETERS_GENERAL
 
 
-class PARAMETERS_RL_CARTPOLE_RAINBOW(PARAMETERS_GENERAL):
+class PARAMETERS_CARTPOLE_RAINBOW(PARAMETERS_GENERAL):
     ENVIRONMENT_ID = EnvironmentName.CARTPOLE_V1
     RL_ALGORITHM = RLAlgorithmName.RAINBOW_V0
     DEEP_LEARNING_MODEL = DeepLearningModelName.RAINBOW_DQN_MLP

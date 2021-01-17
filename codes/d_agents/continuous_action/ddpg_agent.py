@@ -1,6 +1,7 @@
 import numpy as np
 import torch
 import torch.nn.functional as F
+from icecream import ic
 
 from codes.d_agents.a0_base_agent import BaseAgent, TargetNet, float32_preprocessor
 from codes.e_utils import rl_utils, replay_buffer
@@ -44,10 +45,15 @@ class AgentDDPG(BaseAgent):
             params=params
         )
 
-        if self.params.PER:
+        if self.params.PER_PROPORTIONAL:
             self.buffer = replay_buffer.PrioritizedReplayBuffer(
                 experience_source=None, buffer_size=self.params.REPLAY_BUFFER_SIZE,
                 n_step=self.params.N_STEP, beta_start=0.4, beta_frames=self.params.MAX_GLOBAL_STEP
+            )
+        elif self.params.PER_RANK_BASED:
+            self.buffer = replay_buffer.RankBasedPrioritizedReplayBuffer(
+                experience_source=None, buffer_size=self.params.REPLAY_BUFFER_SIZE,
+                params=self.params, alpha=0.7, beta_start=0.5, beta_frames=self.params.MAX_GLOBAL_STEP
             )
         else:
             self.buffer = replay_buffer.ExperienceReplayBuffer(
@@ -55,6 +61,9 @@ class AgentDDPG(BaseAgent):
             )
 
     def __call__(self, states, agent_states=None):
+        if not agent_states:
+            agent_states = [None] * len(states)
+
         if self.preprocessor:
             states = self.preprocessor(states)
             if torch.is_tensor(states):
@@ -66,17 +75,19 @@ class AgentDDPG(BaseAgent):
             self.model.train()
 
         mu_v = self.model(states)
-        mu = mu_v.data.cpu().numpy()
+        mu = mu_v.detach().cpu().numpy()
+
+        #ic(len(states), len(mu_v), len(agent_states))
 
         actions, new_agent_states = self.action_selector(mu, agent_states)
-
         actions = np.clip(actions, self.action_min, self.action_max)
+
         #####################################
 
         return actions, new_agent_states
 
     def train_net(self, step_idx):
-        if self.params.PER:
+        if self.params.PER_PROPORTIONAL or self.params.PER_RANK_BASED:
             batch, batch_indices, batch_weights = self.buffer.sample(self.params.BATCH_SIZE)
         else:
             batch = self.buffer.sample(self.params.BATCH_SIZE)
@@ -97,7 +108,7 @@ class AgentDDPG(BaseAgent):
         q_last_v[dones_mask] = 0.0
         target_q_v = rewards_v.unsqueeze(dim=-1) + q_last_v * self.params.GAMMA ** self.params.N_STEP
 
-        if self.params.PER:
+        if self.params.PER_PROPORTIONAL or self.params.PER_RANK_BASED:
             batch_l1_loss = F.smooth_l1_loss(q_v, target_q_v.detach(), reduction='none')  # for PER
             batch_weights_v = torch.tensor(batch_weights)
             critic_loss_v = batch_weights_v * batch_l1_loss

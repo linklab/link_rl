@@ -1,4 +1,10 @@
 import json
+import random
+
+from gym import Env
+from gym.spaces import Box, Discrete
+from gym.vector import AsyncVectorEnv, SyncVectorEnv, VectorEnv
+from numpy import random
 
 import gym
 import paho.mqtt.client as mqtt
@@ -31,7 +37,26 @@ from codes.e_utils.common_utils import make_atari_env
 from codes.e_utils.names import EnvironmentName, DeepLearningModelName, RLAlgorithmName, OptimizerName
 
 
-def get_environment(owner="cheif", params=None):
+def get_environment(params):
+    def make_environment(params):
+        def _make():
+            env = get_single_environment(params=params)
+            return env
+
+        return _make
+    env_fns = [make_environment(params=params) for _ in range(params.NUM_ENVIRONMENTS)]
+    env = SyncVectorEnv(env_fns)
+    assert env.num_envs == params.NUM_ENVIRONMENTS
+    return env
+
+# def get_environment(params):
+#     envs = []
+#     for _ in range(params.NUM_ENVIRONMENTS):
+#         envs.append(get_single_environment(params=params))
+#     return envs
+
+
+def get_single_environment(owner="cheif", params=None):
     if params.ENVIRONMENT_ID == EnvironmentName.REAL_DEVICE_RIP:
         from codes.b_environments.rotary_inverted_pendulum.rip import RotaryInvertedPendulumEnv
         env = RotaryInvertedPendulumEnv(
@@ -105,60 +130,40 @@ def get_environment(owner="cheif", params=None):
 
             print("***** Sub thread started!!! *****", flush=False)
             client.loop_start()
-
-    elif params.ENVIRONMENT_ID == EnvironmentName.CARTPOLE_V0:
-        env = gym.make(EnvironmentName.CARTPOLE_V0.value)
-    elif params.ENVIRONMENT_ID == EnvironmentName.CARTPOLE_V1:
-        env = gym.make(EnvironmentName.CARTPOLE_V1.value)
+    elif params.ENVIRONMENT_ID in [
+        EnvironmentName.CARTPOLE_V0, EnvironmentName.CARTPOLE_V1, EnvironmentName.PENDULUM_V0,
+        EnvironmentName.ACROBOT_V1, EnvironmentName.BLACKJACK_V0, EnvironmentName.MOUNTAINCARCONTINUOUS_V0,
+        EnvironmentName.INVERTED_DOUBLE_PENDULUM_V2, EnvironmentName.HOPPER_V2, EnvironmentName.SWIMMER_V2,
+        EnvironmentName.REACHER_V2, EnvironmentName.HUMANOID_V2, EnvironmentName.HUMANOID_STAND_UP_V2,
+        EnvironmentName.INVERTED_PENDULUM_V2, EnvironmentName.WALKER_2D_V2
+    ]:
+        env = gym.make(params.ENVIRONMENT_ID.value)
+    elif params.ENVIRONMENT_ID == EnvironmentName.FROZENLAKE_V0:
+        env = gym.make(EnvironmentName.FROZENLAKE_V0.value, is_slippery=False)
     elif params.ENVIRONMENT_ID == EnvironmentName.CHASER_V1_MAC or params.ENVIRONMENT_ID == EnvironmentName.CHASER_V1_WINDOWS:
         from codes.b_environments.unity.chaser_unity import Chaser_v1
         env = Chaser_v1(params.MY_PLATFORM)
-    elif params.ENVIRONMENT_ID in [EnvironmentName.BREAKOUT_DETERMINISTIC_V4, EnvironmentName.BREAKOUT_NO_FRAME_SKIP_V4]:
-        env = gym.make(params.ENVIRONMENT_ID.value)
-        env = make_atari_env(params.ENVIRONMENT_ID.value, seed=params.SEED)
-        if params.SEED is not None:
-            env.seed(params.SEED)
-    elif params.ENVIRONMENT_ID == EnvironmentName.PENDULUM_V0:
-        env = gym.make(EnvironmentName.PENDULUM_V0.value)
-    elif params.ENVIRONMENT_ID == EnvironmentName.ACROBOT_V1:
-        env = gym.make(EnvironmentName.ACROBOT_V1.value)
+    elif params.ENVIRONMENT_ID in [
+        EnvironmentName.BREAKOUT_DETERMINISTIC_V4,
+        EnvironmentName.BREAKOUT_NO_FRAME_SKIP_V4,
+        EnvironmentName.PONG_NO_FRAME_SKIP_V4,
+        EnvironmentName.ENDURO_NO_FRAME_SKIP_V4,
+        EnvironmentName.SEAQUEST_NO_FRAME_SKIP_V4,
+        EnvironmentName.FREEWAY_NO_FRAME_SKIP_V4
+    ]:
+        env = make_atari_env(params.ENVIRONMENT_ID.value)
     elif params.ENVIRONMENT_ID in [EnvironmentName.DRONE_RACING_MAC, EnvironmentName.DRONE_RACING_WINDOWS]:
         from codes.b_environments.unity.drone_racing import Drone_Racing
         env = Drone_Racing(params.MY_PLATFORM)
-    elif params.ENVIRONMENT_ID == EnvironmentName.BLACKJACK_V0:
-        env = gym.make(EnvironmentName.BLACKJACK_V0.value)
-    elif params.ENVIRONMENT_ID == EnvironmentName.FROZENLAKE_V0:
-        env = gym.make(EnvironmentName.FROZENLAKE_V0.value, is_slippery=False)
-    elif params.ENVIRONMENT_ID == EnvironmentName.MOUNTAINCARCONTINUOUS_V0:
-        env = gym.make(EnvironmentName.MOUNTAINCARCONTINUOUS_V0.value)
-    elif params.ENVIRONMENT_ID == EnvironmentName.INVERTED_DOUBLE_PENDULUM_V2:
-        env = gym.make(EnvironmentName.INVERTED_DOUBLE_PENDULUM_V2.value)
-    elif params.ENVIRONMENT_ID == EnvironmentName.HOPPER_V2:
-        env = gym.make(EnvironmentName.HOPPER_V2.value)
-    elif params.ENVIRONMENT_ID == EnvironmentName.ANT_V0:
+    elif params.ENVIRONMENT_ID in [
+        EnvironmentName.ANT_V0,
+        EnvironmentName.HALF_CHEETAH_V0,
+        EnvironmentName.MINITAUR_BULLET_V0
+    ]:
         import pybullet_envs
-        spec = gym.envs.registry.spec("AntBulletEnv-v0")
+        spec = gym.envs.registry.spec(params.ENVIRONMENT_ID.value)
         spec._kwargs['render'] = params.ENV_RENDER
-        env = gym.make("AntBulletEnv-v0")
-    elif params.ENVIRONMENT_ID == EnvironmentName.SWIMMER_V2:
-        env = gym.make(EnvironmentName.SWIMMER_V2.value)
-    elif params.ENVIRONMENT_ID == EnvironmentName.HALF_CHEETAH_V2:
-        import pybullet_envs
-        spec = gym.envs.registry.spec("HalfCheetahBulletEnv-v0")
-        spec._kwargs['render'] = params.ENV_RENDER
-        env = gym.make("HalfCheetahBulletEnv-v0")
-    elif params.ENVIRONMENT_ID == EnvironmentName.SWIMMER_V2:
-        env = gym.make(EnvironmentName.SWIMMER_V2.value)
-    elif params.ENVIRONMENT_ID == EnvironmentName.REACHER_V2:
-        env = gym.make(EnvironmentName.REACHER_V2.value)
-    elif params.ENVIRONMENT_ID == EnvironmentName.HUMANOID_V2:
-        env = gym.make(EnvironmentName.HUMANOID_V2.value)
-    elif params.ENVIRONMENT_ID == EnvironmentName.HUMANOID_STAND_UP_V2:
-        env = gym.make(EnvironmentName.HUMANOID_STAND_UP_V2.value)
-    elif params.ENVIRONMENT_ID == EnvironmentName.INVERTED_PENDULUM_V2:
-        env = gym.make(EnvironmentName.INVERTED_PENDULUM_V2.value)
-    elif params.ENVIRONMENT_ID == EnvironmentName.WALKER_2D_V2:
-        env = gym.make(EnvironmentName.WALKER_2D_V2.value)
+        env = gym.make(params.ENVIRONMENT_ID.value)
     elif params.ENVIRONMENT_ID == EnvironmentName.PENDULUM_MATLAB_V0:
         from codes.b_environments.rotary_inverted_pendulum.rip import RotaryInvertedPendulumEnv
         env = RotaryInvertedPendulumEnv(
@@ -179,13 +184,14 @@ def get_environment(owner="cheif", params=None):
             params=params
         )
         env.start()
-    elif params.ENVIRONMENT_ID == EnvironmentName.MINITAUR_BULLET_V0:
-        import pybullet_envs
-        spec = gym.envs.registry.spec("MinitaurBulletEnv-v0")
-        spec._kwargs['render'] = params.ENV_RENDER
-        env = gym.make("MinitaurBulletEnv-v0")
     else:
         env = None
+
+    if hasattr(env, "seed") and hasattr(params, "SEED") and params.SEED is not None:
+        env.seed(params.SEED)
+    else:
+        env.seed(random.randint(sys.maxsize))
+
     return env
 
 
@@ -242,6 +248,44 @@ def get_rl_model(worker_id, input_shape=None, num_outputs=None, params=None, dev
 
 
 def get_rl_agent(env, worker_id, params, device="cpu"):
+    if isinstance(env, VectorEnv):
+        input_shape = env.single_observation_space.shape
+        if isinstance(env.single_action_space, Discrete):
+            num_outputs = env.single_action_space.n
+            action_min, action_max = None, None
+        elif isinstance(env.single_action_space, Box):
+            num_outputs = env.single_action_space.shape[0]
+            action_min = env.single_action_space.low[0]
+            action_max = env.single_action_space.high[0]
+        else:
+            num_outputs, action_min, action_max = None, None, None
+    elif isinstance(env, Env):
+        input_shape = env.observation_space.shape
+        if isinstance(env.action_space, Discrete):
+            num_outputs = env.action_space.n
+            action_min, action_max = None, None
+        elif isinstance(env.action_space, Box):
+            num_outputs = env.action_space.shape[0]
+            action_min = env.action_space.low[0]
+            action_max = env.action_space.high[0]
+        else:
+            num_outputs, action_min, action_max = None, None, None
+    else:
+        raise ValueError()
+
+    # input_shape = env[0].observation_space.shape
+    # if isinstance(env[0].action_space, Discrete):
+    #     num_outputs = env[0].action_space.n
+    #     action_min, action_max = None, None
+    # elif isinstance(env[0].action_space, Box):
+    #     num_outputs = env[0].action_space.shape[0]
+    #     action_min = env[0].action_space.low[0]
+    #     action_max = env[0].action_space.high[0]
+    # else:
+    #     num_outputs, action_min, action_max = None, None, None
+
+    print(f"num_outputs: {num_outputs}, action_min: {action_min}, action_max: {action_max}")
+
     if params.RL_ALGORITHM == RLAlgorithmName.DDPG_V0:
         if params.ENVIRONMENT_ID in [EnvironmentName.PENDULUM_MATLAB_V0, EnvironmentName.PENDULUM_MATLAB_DOUBLE_RIP_V0]:
             action_selector = EpsilonGreedySomeTimesBlowDDPGActionSelector(
@@ -259,13 +303,6 @@ def get_rl_agent(env, worker_id, params, device="cpu"):
             eps_final=params.EPSILON_MIN,
             eps_frames=params.EPSILON_MIN_STEP
         )
-
-        input_shape = env.observation_space.shape
-        num_outputs = env.action_space.shape[0]
-        action_min = env.action_space.low[0]
-        action_max = env.action_space.high[0]
-
-        print("action_min: ", action_min, "action_max:", action_max)
 
         agent = AgentDDPG(
             input_shape=input_shape, num_outputs=num_outputs, worker_id=worker_id, action_selector=action_selector,
@@ -285,13 +322,6 @@ def get_rl_agent(env, worker_id, params, device="cpu"):
             eps_frames=params.EPSILON_MIN_STEP
         )
 
-        input_shape = env.observation_space.shape
-        num_outputs = env.action_space.shape[0]
-        action_min = env.action_space.low[0]
-        action_max = env.action_space.high[0]
-
-        print("action_min: ", action_min, "action_max:", action_max)
-
         agent = AgentSAC(
             input_shape=input_shape, num_outputs=num_outputs, worker_id=worker_id, action_selector=action_selector,
             action_min=action_min, action_max=action_max, params=params, device=device
@@ -301,13 +331,6 @@ def get_rl_agent(env, worker_id, params, device="cpu"):
     elif params.RL_ALGORITHM == RLAlgorithmName.CONTINUOUS_A2C_V0:
         action_selector = ContinuousNormalActionSelector()
 
-        input_shape = env.observation_space.shape
-        num_outputs = env.action_space.shape[0]
-        action_min = env.action_space.low[0]
-        action_max = env.action_space.high[0]
-
-        print("action_min: ", action_min, "action_max:", action_max)
-
         agent = AgentContinuousA2C(
             worker_id=worker_id, input_shape=input_shape, num_outputs=num_outputs, action_selector=action_selector,
             action_min=action_min, action_max=action_max, params=params, device=device
@@ -316,13 +339,6 @@ def get_rl_agent(env, worker_id, params, device="cpu"):
         return agent, None
     elif params.RL_ALGORITHM == RLAlgorithmName.CONTINUOUS_PPO_V0:
         action_selector = ContinuousNormalActionSelector()
-
-        input_shape = env.observation_space.shape
-        num_outputs = env.action_space.shape[0]
-        action_min = env.action_space.low[0]
-        action_max = env.action_space.high[0]
-
-        print("action_min: ", action_min, "action_max:", action_max)
 
         agent = AgentContinuousPPO(
             worker_id=worker_id, input_shape=input_shape, num_outputs=num_outputs, action_selector=action_selector,
@@ -340,9 +356,6 @@ def get_rl_agent(env, worker_id, params, device="cpu"):
             eps_frames=params.EPSILON_MIN_STEP
         )
 
-        input_shape = env.observation_space.shape
-        num_outputs = env.action_space.n
-
         agent = AgentDQN(
             worker_id=worker_id, input_shape=input_shape, num_outputs=num_outputs,
             action_selector=action_selector, params=params, device=device
@@ -352,57 +365,12 @@ def get_rl_agent(env, worker_id, params, device="cpu"):
     elif params.RL_ALGORITHM == RLAlgorithmName.DISCRETE_A2C_V0:
         action_selector = ProbabilityActionSelector()
 
-        input_shape = env.observation_space.shape
-        num_outputs = env.action_space.n
-
         agent = AgentDiscreteA2C(
             worker_id=worker_id, input_shape=input_shape, num_outputs=num_outputs,
             action_selector=action_selector, params=params, device=device
         )
 
         return agent, None
-#
-# def get_rl_algorithm(env, worker_id=0, logger=False, params=None):
-#     if params.RL_ALGORITHM == RLAlgorithmName.CONTINUOUS_A2C_V0:
-#         rl_algorithm = CONTINUOUS_A2C_v0(
-#             env=env,
-#             worker_id=worker_id,
-#             logger=logger,
-#             params=params,
-#             device=device,
-#             verbose=params.VERBOSE
-#         )
-#     elif params.RL_ALGORITHM == RLAlgorithmName.DISCRETE_A2C_V0:
-#         rl_algorithm = DISCRETE_A2C_v0(
-#             env=env,
-#             worker_id=worker_id,
-#             logger=logger,
-#             params=params,
-#             device=device,
-#             verbose=params.VERBOSE
-#         )
-#     elif params.RL_ALGORITHM == RLAlgorithmName.D4PG_V0:
-#         rl_algorithm = D4PG_v0(
-#             env=env,
-#             worker_id=worker_id,
-#             logger=logger,
-#             params=params,
-#             device=device,
-#             verbose=params.VERBOSE
-#         )
-#     elif params.RL_ALGORITHM == RLAlgorithmName.DDPG_V0:
-#         rl_algorithm = DDPG_v0(
-#             env=env,
-#             worker_id=worker_id,
-#             logger=logger,
-#             params=params,
-#             device=device,
-#             verbose=params.VERBOSE
-#         )
-#     else:
-#         rl_algorithm = None
-#
-#     return rl_algorithm
 
 
 def get_optimizer(parameters, learning_rate, params):

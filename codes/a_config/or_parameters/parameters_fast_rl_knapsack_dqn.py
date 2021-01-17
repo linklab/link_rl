@@ -2,7 +2,7 @@ from codes.e_utils.names import *
 from codes.a_config.parameters_general import PARAMETERS_GENERAL
 
 
-class PARAMETERS_RL_KNAPSACK_DQN(PARAMETERS_GENERAL):
+class PARAMETERS_KNAPSACK_DQN(PARAMETERS_GENERAL):
     ENVIRONMENT_ID = EnvironmentName.KNAPSACK_V2
     RL_ALGORITHM = RLAlgorithmName.DQN_V0
     DEEP_LEARNING_MODEL = DeepLearningModelName.DUELING_DQN_MLP
