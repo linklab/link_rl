@@ -107,12 +107,13 @@ class ExperienceSource:
             if states_input:
                 new_actions, new_agent_states = self.agent(states_input, agent_states_input)
 
-                #ic(new_actions, new_agent_states)
-
                 for idx, action in enumerate(new_actions):
                     g_idx = states_indices[idx]
                     actions[g_idx] = action
-                    agent_states[g_idx] = new_agent_states[idx]
+                    try:
+                        agent_states[g_idx] = new_agent_states[idx]
+                    except IndexError as e:
+                        ic(agent_states, new_actions, new_agent_states)
 
             grouped_actions = _group_list(actions, env_lens)
 
