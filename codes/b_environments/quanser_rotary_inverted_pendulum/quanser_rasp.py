@@ -11,8 +11,8 @@ import json
 import datetime
 
 import grpc
-import quanser_service_pb2_grpc
-from quanser_service_pb2 import QuanserStateResponse
+from codes.b_environments.quanser_rotary_inverted_pendulum import quanser_service_pb2_grpc
+from codes.b_environments.quanser_rotary_inverted_pendulum.quanser_service_pb2 import QuanserStateResponse
 
 # MQTT_SERVER = '10.0.0.1'
 MQTT_SERVER = '192.168.0.10'
@@ -82,16 +82,16 @@ class QubeServo2:
             motor_radian, motor_velocity, pendulum_radian, pendulum_velocity, pub_id, _ = self_servo.read_and_pub()
             self.limit_check()
             return QuanserStateResponse(
-                motor_radian = motor_radian, motor_velocity = motor_velocity,
-                pendulum_radian = pendulum_radian, pendulum_velocity = pendulum_velocity,
-                pub_id = pub_id, is_motor_limit = self.motor_limit, reset_complete=self.reset_complete
+                motor_radian=motor_radian, motor_velocity=motor_velocity,
+                pendulum_radian=pendulum_radian, pendulum_velocity=pendulum_velocity,
+                pub_id=pub_id, is_motor_limit=self.motor_limit, reset_complete=self.reset_complete
             )
         elif info == "wait":
             motor_radian, motor_velocity, pendulum_radian, pendulum_velocity, pub_id, _ = self_servo.set_wait()
             return QuanserStateResponse(
-                motor_radian = motor_radian, motor_velocity=motor_velocity,
-                pendulum_radian = pendulum_radian, pendulum_velocity=pendulum_velocity,
-                pub_id = pub_id, is_motor_limit = self.motor_limit, reset_complete=self.reset_complete
+                motor_radian=motor_radian, motor_velocity=motor_velocity,
+                pendulum_radian=pendulum_radian, pendulum_velocity=pendulum_velocity,
+                pub_id=pub_id, is_motor_limit=self.motor_limit, reset_complete=self.reset_complete
             )
         elif info == "pendulum_reset":
             print("pendulum_reset")
@@ -260,18 +260,18 @@ class QubeServo2:
     def manual_swing_up(self):
         print("\n***** Swing Up Start!!! *****")
 
-        previousTime = time.perf_counter()
+        previous_time = time.perf_counter()
         last_pendulum_radian = 0
-        motorPWM = 0
+        motor_PWM = 0
 
         while True:
             # if the difference between the current time and the last time an SPI transaction
             # occurred is greater than the sample time, start a new SPI transaction
-            currentTime = time.perf_counter()
-            if currentTime - previousTime >= UNIT_TIME:
-                # print("|| Time difference: {0} s ||".format(currentTime - previousTime))
+            current_time = time.perf_counter()
+            if current_time - previous_time >= UNIT_TIME:
+                # print("|| Time difference: {0} s ||".format(current_time - previous_time))
 
-                previousTime = currentTime
+                previous_time = current_time
 
                 motor_radian, pendulum_radian = self.read_data()
 
@@ -298,19 +298,19 @@ class QubeServo2:
                     if pendulum_radian >= 0:
                         pendulum_radian = math.pi - pendulum_radian
                     else:
-                        pendulum_radian = - math.pi + abs(pendulum_radian)
+                        pendulum_radian = -math.pi + abs(pendulum_radian)
 
                     if pendulum_angular_velocity == 0:
                         if random.random() < 0.5:
-                            motorPWM = int(-2 * math.cos(pendulum_radian) * voltage)
+                            motor_PWM = int(-2 * math.cos(pendulum_radian) * voltage)
                         else:
-                            motorPWM = int(2 * math.cos(pendulum_radian) * voltage)
+                            motor_PWM = int(2 * math.cos(pendulum_radian) * voltage)
                     elif pendulum_angular_velocity < 0:
-                        motorPWM = int(-2 * math.cos(pendulum_radian) * voltage)
+                        motor_PWM = int(-2 * math.cos(pendulum_radian) * voltage)
                     else:
-                        motorPWM = int(2 * math.cos(pendulum_radian) * voltage)
+                        motor_PWM = int(2 * math.cos(pendulum_radian) * voltage)
 
-                self.__set_motor_command(motorPWM, "blue")
+                self.__set_motor_command(motor_PWM, "blue")
 
         print("\n***** Swing Up complete!!! *****")
 
@@ -325,7 +325,7 @@ class QubeServo2:
         kp_alpha = -30.0
         kd_alpha = 2.5
 
-        previousTime = time.perf_counter()
+        previous_time = time.perf_counter()
 
         count = 0
 
@@ -333,11 +333,11 @@ class QubeServo2:
         while count < 1500 / 5:
             # if the difference between the current time and the last time an SPI transaction
             # occurred is greater than the sample time, start a new SPI transaction
-            currentTime = time.perf_counter()
-            if currentTime - previousTime >= UNIT_TIME * 5:
-                # print("|| Time difference: {0} s ||".format(currentTime - previousTime))
+            current_time = time.perf_counter()
+            if current_time - previous_time >= UNIT_TIME * 5:
+                # print("|| Time difference: {0} s ||".format(current_time - previous_time))
 
-                previousTime = currentTime
+                previous_time = current_time
 
                 # LED Blue
                 theta, alpha = self.read_data()
@@ -359,28 +359,28 @@ class QubeServo2:
                     alpha_dot_k1 = alpha_dot
 
                     # multiply by proportional and derivative gains
-                    motorVoltage = (theta * kp_theta) + (theta_dot * kd_theta) + (alpha * kp_alpha) + (
+                    motor_voltage = (theta * kp_theta) + (theta_dot * kd_theta) + (alpha * kp_alpha) + (
                             alpha_dot * kd_alpha)
 
                     # set the saturation limit to +/- 15V
-                    if motorVoltage > 15.0:
-                        motorVoltage = 15.0
-                    elif motorVoltage < -15.0:
-                        motorVoltage = -15.0
+                    if motor_voltage > 15.0:
+                        motor_voltage = 15.0
+                    elif motor_voltage < -15.0:
+                        motor_voltage = -15.0
 
                     # invert for positive CCW
-                    motorVoltage = -motorVoltage
+                    motor_voltage = -motor_voltage
 
                     # convert the analog value to the PWM duty cycle that will produce the same average voltage
-                    motorPWM = int(motorVoltage * (625.0 / 15.0))
-                    if motorPWM > 280:
-                        motorPWM = 280
-                    elif motorPWM < -280:
-                        motorPWM = -280
+                    motor_PWM = int(motor_voltage * (625.0 / 15.0))
+                    if motor_PWM > 280:
+                        motor_PWM = 280
+                    elif motor_PWM < -280:
+                        motor_PWM = -280
 
-                    # print(motorPWM)
+                    # print(motor_PWM)
 
-                    self.__set_motor_command(motorPWM, "green")
+                    self.__set_motor_command(motor_PWM, "green")
 
                     count += 1
 
@@ -392,11 +392,11 @@ class QubeServo2:
         self.is_reset = False
 
         self.pub.publish(
-            topic=MQTT_PUB_RESET_COMPLETE,
-            payload="{0}|{1}|{2}|{3}|{4}|{5}|{6}|{7}|{8}".format(
+            topic = MQTT_PUB_RESET_COMPLETE,
+            payload = "{0}|{1}|{2}|{3}|{4}|{5}|{6}|{7}|{8}".format(
                 theta, 0, alpha, 0, self.pub_id, theta_n_k1, theta_dot_k1, alpha_n_k1, alpha_dot_k1
             ),
-            qos=0
+            qos = 0
         )
 
     # read radian and if pub_id is changed, publish to env.
@@ -414,18 +414,18 @@ class QubeServo2:
             self.last_pub_id = self.pub_id
 
             # self.pub.publish(
-            #    topic=MQTT_PUB_TO_ENV,
-            #    payload="{0}|{1}|{2}|{3}|{4}".format(
+            #    topic = MQTT_PUB_TO_ENV,
+            #    payload = "{0}|{1}|{2}|{3}|{4}".format(
             #        motor_radian, motor_velocity, pendulum_radian, pendulum_velocity, self.pub_id),
-            #    qos=0
+            #    qos = 0
             # )
-            # currentTime = float(datetime.utcnow().strftime('%S.%f')[:-1])
+            # current_time = float(datetime.utcnow().strftime('%S.%f')[:-1])
             # with open(self.log_f, 'a') as log:
-            #     t_d = currentTime - self.last_pub_time
+            #     t_d = current_time - self.last_pub_time
             #     log.write(" <== pub time : {:f}".format(t_d) + '\n')
             #     if not t_d > 1.0:
             #         self.pub_t_list.append(t_d)
-            # self.last_pub_time = currentTime
+            # self.last_pub_time = current_time
             if self.pub_id_for_edgex == 11:
                 self.pub_id_for_edgex = 0
             # print("[INFO] motor_radian- ", motor_radian)
@@ -439,7 +439,7 @@ class QubeServo2:
     def set_motor_command(self):
         self.is_action = True
         color = "blue" if self.is_swing_up else "green"
-        # print(datetime.utcnow().strftime('%S.%f')[:-1], self.motor_command, flush=True)
+        # print(datetime.utcnow().strftime('%S.%f')[:-1], self.motor_command, flush = True)
         self.__set_motor_command(self.motor_command, color)
 
     def set_wait(self):
@@ -450,10 +450,10 @@ class QubeServo2:
         motor_radian, pendulum_radian = self.read_data()
 
         # self.pub.publish(
-        #    topic=MQTT_PUB_TO_ENV,
-        #    payload="{0}|{1}|{2}|{3}|{4}".format(
+        #    topic = MQTT_PUB_TO_ENV,
+        #    payload = "{0}|{1}|{2}|{3}|{4}".format(
         #        motor_radian, 0, pendulum_radian, 0, self.pub_id),
-        #    qos=0
+        #    qos = 0
         # )
 
         if self.pendulum_count == 11:

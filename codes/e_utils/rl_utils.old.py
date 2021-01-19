@@ -11,7 +11,6 @@ import paho.mqtt.client as mqtt
 from torch import optim
 import os, sys
 
-from codes.b_environments.quanser_rotary_inverted_pendulum.quanser_rip import EnvironmentQuanserRIP
 from codes.c_models.continuous_action.soft_actor_critic_model import SoftActorCriticModel
 from codes.d_agents.continuous_action.continuous_sac_agent import AgentSAC
 
@@ -51,7 +50,7 @@ def get_environment(params):
     return env
 
 
-def get_single_environment(params=None):
+def get_single_environment(owner="cheif", params=None):
     if params.ENVIRONMENT_ID == EnvironmentName.REAL_DEVICE_RIP:
         from codes.b_environments.rotary_inverted_pendulum.rip import RotaryInvertedPendulumEnv
         env = RotaryInvertedPendulumEnv(
@@ -72,8 +71,59 @@ def get_single_environment(params=None):
         )
 
     elif params.ENVIRONMENT_ID == EnvironmentName.QUANSER_SERVO_2:
-        from codes.b_environments.quanser_rotary_inverted_pendulum.quanser_rip import EnvironmentQuanserRIP
-        env = EnvironmentQuanserRIP()
+        from codes.b_environments.quanser_rotary_inverted_pendulum.quanser_rip import EnvironmentRIP
+        client = mqtt.Client(client_id="env_sub_2", transport="TCP")
+        env = EnvironmentRIP(mqtt_client=client)
+
+        def __on_connect(client, userdata, flags, rc):
+            print("mqtt broker connected with result code " + str(rc), flush=False)
+            client.subscribe(topic=params.MQTT_SUB_FROM_SERVO)
+            client.subscribe(topic=params.MQTT_SUB_MOTOR_LIMIT)
+            client.subscribe(topic=params.MQTT_SUB_RESET_COMPLETE)
+
+        def __on_log(client, userdata, level, buf):
+            print(buf)
+
+        def __on_message(client, userdata, msg):
+            global PUB_ID
+
+            if msg.topic == params.MQTT_SUB_FROM_SERVO:
+                servo_info = json.loads(msg.payload.decode("utf-8"))
+                motor_radian = float(servo_info["motor_radian"])
+                motor_velocity = float(servo_info["motor_velocity"])
+                pendulum_radian = float(servo_info["pendulum_radian"])
+                pendulum_velocity = float(servo_info["pendulum_velocity"])
+                pub_id = servo_info["pub_id"]
+                env.set_state(motor_radian, motor_velocity, pendulum_radian, pendulum_velocity)
+
+            elif msg.topic == params.MQTT_SUB_MOTOR_LIMIT:
+                info = str(msg.payload.decode("utf-8")).split('|')
+                pub_id = info[1]
+                if info[0] == "limit_position":
+                    env.is_motor_limit = True
+                elif info[0] == "reset_complete":
+                    env.is_limit_complete = True
+
+            elif msg.topic == params.MQTT_SUB_RESET_COMPLETE:
+                env.is_reset_complete = True
+                servo_info = str(msg.payload.decode("utf-8")).split('|')
+                motor_radian = float(servo_info[0])
+                motor_velocity = float(servo_info[1])
+                pendulum_radian = float(servo_info[2])
+                pendulum_velocity = float(servo_info[3])
+                pub_id = servo_info[4]
+                env.set_state(motor_radian, motor_velocity, pendulum_radian, pendulum_velocity)
+
+        if owner == "worker":
+            client.on_connect = __on_connect
+            client.on_message = __on_message
+            # client.on_log = __on_log
+
+            # client.username_pw_set(username="link", password="0123")
+            client.connect(params.MQTT_SERVER_FOR_RIP, 1883, 3600)
+
+            print("***** Sub thread started!!! *****", flush=False)
+            client.loop_start()
     elif params.ENVIRONMENT_ID in [
         EnvironmentName.CARTPOLE_V0, EnvironmentName.CARTPOLE_V1, EnvironmentName.PENDULUM_V0,
         EnvironmentName.ACROBOT_V1, EnvironmentName.BLACKJACK_V0, EnvironmentName.MOUNTAINCARCONTINUOUS_V0,

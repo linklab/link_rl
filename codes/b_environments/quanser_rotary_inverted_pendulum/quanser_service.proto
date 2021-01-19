@@ -1,6 +1,6 @@
 syntax="proto3";
 
-service RDIP {
+service QuanserRIP {
 
   rpc reset(QuanserResetRequest) returns (QuanserStateResponse) {}
 
@@ -20,11 +20,12 @@ message QuanserResetRequest {
 }
 
 message QuanserStateResponse {
-  float motor_radian = 1;
-  float motor_velocity = 2;
-  float pendulum_radian = 3;
-  float pendulum_velocity = 4;
-  float pub_id = 5;
-  bool is_motor_limit = 6;
-  bool reset_complete = 7;
+  string message = 1;
+  float motor_radian = 2;
+  float motor_velocity = 3;
+  float pendulum_radian = 4;
+  float pendulum_velocity = 5;
+  float pub_id = 6;
+  bool is_motor_limit = 7;
+  bool reset_complete = 8;
 }

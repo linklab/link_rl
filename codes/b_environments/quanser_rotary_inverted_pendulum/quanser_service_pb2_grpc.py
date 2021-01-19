@@ -2,10 +2,10 @@
 """Client and server classes corresponding to protobuf-defined services."""
 import grpc
 
-import quanser_service_pb2 as quanser__service__pb2
+import codes.b_environments.quanser_rotary_inverted_pendulum.quanser_service_pb2 as quanser__service__pb2
 
 
-class RDIPStub(object):
+class QuanserRIPStub(object):
     """Missing associated documentation comment in .proto file."""
 
     def __init__(self, channel):
@@ -15,18 +15,18 @@ class RDIPStub(object):
             channel: A grpc.Channel.
         """
         self.reset = channel.unary_unary(
-                '/RDIP/reset',
+                '/QuanserRIP/reset',
                 request_serializer=quanser__service__pb2.QuanserResetRequest.SerializeToString,
                 response_deserializer=quanser__service__pb2.QuanserStateResponse.FromString,
                 )
         self.step = channel.unary_unary(
-                '/RDIP/step',
+                '/QuanserRIP/step',
                 request_serializer=quanser__service__pb2.QuanserStepRequest.SerializeToString,
                 response_deserializer=quanser__service__pb2.QuanserStateResponse.FromString,
                 )
 
 
-class RDIPServicer(object):
+class QuanserRIPServicer(object):
     """Missing associated documentation comment in .proto file."""
 
     def reset(self, request, context):
@@ -42,7 +42,7 @@ class RDIPServicer(object):
         raise NotImplementedError('Method not implemented!')
 
 
-def add_RDIPServicer_to_server(servicer, server):
+def add_QuanserRIPServicer_to_server(servicer, server):
     rpc_method_handlers = {
             'reset': grpc.unary_unary_rpc_method_handler(
                     servicer.reset,
@@ -56,12 +56,12 @@ def add_RDIPServicer_to_server(servicer, server):
             ),
     }
     generic_handler = grpc.method_handlers_generic_handler(
-            'RDIP', rpc_method_handlers)
+            'QuanserRIP', rpc_method_handlers)
     server.add_generic_rpc_handlers((generic_handler,))
 
 
  # This class is part of an EXPERIMENTAL API.
-class RDIP(object):
+class QuanserRIP(object):
     """Missing associated documentation comment in .proto file."""
 
     @staticmethod
@@ -75,7 +75,7 @@ class RDIP(object):
             wait_for_ready=None,
             timeout=None,
             metadata=None):
-        return grpc.experimental.unary_unary(request, target, '/RDIP/reset',
+        return grpc.experimental.unary_unary(request, target, '/QuanserRIP/reset',
             quanser__service__pb2.QuanserResetRequest.SerializeToString,
             quanser__service__pb2.QuanserStateResponse.FromString,
             options, channel_credentials,
@@ -92,7 +92,7 @@ class RDIP(object):
             wait_for_ready=None,
             timeout=None,
             metadata=None):
-        return grpc.experimental.unary_unary(request, target, '/RDIP/step',
+        return grpc.experimental.unary_unary(request, target, '/QuanserRIP/step',
             quanser__service__pb2.QuanserStepRequest.SerializeToString,
             quanser__service__pb2.QuanserStateResponse.FromString,
             options, channel_credentials,

@@ -1,12 +1,14 @@
 import time
+
+import gym
 import numpy as np
 import grpc
 
 # MQTT Topic for RIP
+from codes.b_environments.quanser_rotary_inverted_pendulum import quanser_service_pb2_grpc
 from common.environments.environment import Environment
 
-import quanser_service_pb2_grpc
-from quanser_service_pb2 import QuanserResetRequest,QuanserStepRequest
+from codes.b_environments.quanser_rotary_inverted_pendulum.quanser_service_pb2 import QuanserResetRequest, QuanserStepRequest
 
 
 STATE_SIZE = 4
@@ -15,9 +17,12 @@ balance_motor_power_list = [-60, 0, 60]
 
 PUB_ID = 0
 
+RIP_SERVER = '192.168.0.254'
 
-class EnvironmentRIP(Environment):
-    def __init__(self, mqtt_client):
+
+class EnvironmentQuanserRIP(gym.Env):
+    def __init__(self):
+        super(EnvironmentQuanserRIP, self).__init__()
         self.episode = 0
 
         self.state_space_shape = (STATE_SIZE,)
@@ -39,9 +44,6 @@ class EnvironmentRIP(Environment):
         self.is_limit_complete = False
         self.is_reset_complete = False
 
-        self.mqtt_client = mqtt_client
-        super(EnvironmentRIP, self).__init__()
-
         self.n_states = self.get_n_states()
         self.n_actions = self.get_n_actions()
 
@@ -50,8 +52,11 @@ class EnvironmentRIP(Environment):
 
         self.continuous = False
 
+        channel = grpc.insecure_channel('{0}:50051'.format(RIP_SERVER))
+        self.server_obj = quanser_service_pb2_grpc.QuanserRIPStub(channel)
+
     def __pendulum_reset(self):
-        quanser_response = self.server_obf.step(QuanserStepRequest(value=0, info='pendulum_reset', pub_id=PUB_ID))
+        quanser_response = self.server_obj.step(QuanserStepRequest(value=0, info='pendulum_reset', pub_id=PUB_ID))
         # require_response=False
 
     # RIP Manual Swing & Balance
@@ -60,7 +65,7 @@ class EnvironmentRIP(Environment):
 
     # for restarting episode
     def wait(self):
-        quanser_response = self.server_obf.step(QuanserStepRequest(value=0, info='wait', pub_id=PUB_ID))
+        quanser_response = self.server_obj.step(QuanserStepRequest(value=0, info='wait', pub_id=PUB_ID))
 
     def get_n_states(self):
         n_states = 4
@@ -117,7 +122,7 @@ class EnvironmentRIP(Environment):
     def step(self, action):
         motor_power = balance_motor_power_list[int(action)]
 
-        quanser_response = self.server_obf.step(QuanserStepRequest(value=motor_power, info='balance', pub_id=PUB_ID))
+        quanser_response = self.server_obj.step(QuanserStepRequest(value=motor_power, info='balance', pub_id=PUB_ID))
 
         motor_radian = quanser_response.motor_radian
         motor_velocity = quanser_response.motor_velocity
@@ -178,4 +183,6 @@ class EnvironmentRIP(Environment):
             return False, info
 
     def close(self):
-        quanser_response = self.server_obf.step(QuanserStepRequest(value=0, info='None', pub_id=None))
+        quanser_response = self.server_obj.step(QuanserStepRequest(value=0, info='None', pub_id=None))
+        if quanser_response.message != "OK":
+            raise ValueError()
