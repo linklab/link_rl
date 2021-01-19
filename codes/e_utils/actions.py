@@ -5,6 +5,7 @@ from typing import Union
 
 import torch
 from icecream import ic
+from torch.distributions import MultivariateNormal, Normal
 
 
 class ActionSelector:
@@ -196,23 +197,24 @@ class ProbabilityActionSelector(ActionSelector):
         return np.array(actions)
 
 
-class ContinuousNormalActionSelector(ContinuousActionSelector):
-    def __call__(self, mu_v, logstd_v, action_min, action_max):
-        mu = mu_v.data.cpu().numpy()
-        logstd = logstd_v.data.cpu().numpy()
-        rnd = np.random.normal(size=logstd.shape)
-        actions = mu + np.exp(logstd) * rnd
-        actions = np.clip(actions, action_min, action_max)
-        return actions
-
-
 # class ContinuousNormalActionSelector(ContinuousActionSelector):
-#     def __call__(self, mu_v, var_v, action_min, action_max):
+#     def __call__(self, mu_v, logstd_v, action_min, action_max):
 #         mu = mu_v.data.cpu().numpy()
-#         sigma = torch.sqrt(var_v).data.cpu().numpy()
-#         actions = np.random.normal(mu, sigma)
+#         logstd = logstd_v.data.cpu().numpy()
+#         rnd = np.random.normal(size=logstd.shape)
+#         actions = mu + np.exp(logstd) * rnd
 #         actions = np.clip(actions, action_min, action_max)
 #         return actions
+
+
+class ContinuousNormalActionSelector(ContinuousActionSelector):
+    def __call__(self, mu_v, var_v, action_min, action_max):
+        # covariance_matrix = torch.diag(var_v)
+        # dist = MultivariateNormal(loc=mu_v, covariance_matrix=covariance_matrix)
+        dist = Normal(loc=mu_v, scale=torch.sqrt(var_v))
+        actions = dist.sample().data.cpu().numpy()
+        actions = np.clip(actions, action_min, action_max)
+        return actions
 
 
 class EpsilonTracker:

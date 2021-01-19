@@ -230,11 +230,11 @@ class ExperienceSourceFirstLast(ExperienceSource):
         assert isinstance(gamma, float)
         super(ExperienceSourceFirstLast, self).__init__(env, agent, n_step + 1, steps_delta, vectorized=vectorized)
         self.gamma = gamma
-        self.steps = n_step
+        self.n_step = n_step
 
     def __iter__(self):
         for exp in super(ExperienceSourceFirstLast, self).__iter__:
-            if exp[-1].done and len(exp) <= self.steps:
+            if exp[-1].done and len(exp) <= self.n_step:
                 last_state = None
                 elems = exp
             else:

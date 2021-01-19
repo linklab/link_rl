@@ -2,6 +2,7 @@ import math
 
 import torch
 import torch.nn.functional as F
+from torch.distributions import MultivariateNormal
 
 from codes.d_agents.a0_base_agent import BaseAgent, float32_preprocessor
 from codes.e_utils import rl_utils, replay_buffer
@@ -16,6 +17,8 @@ class AgentContinuousPPO(BaseAgent):
             preprocessor=float32_preprocessor, device="cpu"
     ):
         super(AgentContinuousPPO, self).__init__()
+        assert params.TRAIN_STEP_FREQ == 1
+        assert params.N_STEP == 1  # GAE will consider various N_STEPs
         self.__name__ = "AgentContinuousPPO"
         self.device = device
         self.preprocessor = preprocessor
@@ -58,9 +61,9 @@ class AgentContinuousPPO(BaseAgent):
         else:
             self.model.train()
 
-        mu_v, values_v = self.model(states)
-        actions = self.action_selector(mu_v, self.model.base.actor.logstd, self.action_min, self.action_max)
-        critics = values_v.data.cpu().numpy()
+        mu_v = self.model.base.actor(states)
+        actions = self.action_selector(mu_v, self.model.base.actor.var, self.action_min, self.action_max)
+        critics = torch.zeros(size=mu_v.size())
 
         return actions, critics
 
@@ -71,25 +74,30 @@ class AgentContinuousPPO(BaseAgent):
         trajectory_actions = [experience.action for experience in trajectory]
         trajectory_actions_v = torch.FloatTensor(trajectory_actions).to(self.device)
 
-        trajectory_mu_v, _ = self.model(trajectory_states_v)
-        trajectory_old_log_pi_v = self.calc_log_pi(
-            trajectory_mu_v, self.model.base.actor.logstd, trajectory_actions_v
-        )
+        trajectory_mu_v, trajectory_values_v = self.model.base.forward(trajectory_states_v)
+
+        trajectory_var_v = self.model.base.actor.var.expand_as(trajectory_mu_v)
+        trajectory_covariance_matrix = torch.diag_embed(trajectory_var_v).to(self.device)
+
+        trajectory_dist = MultivariateNormal(loc=trajectory_mu_v, covariance_matrix=trajectory_covariance_matrix)
+
+        trajectory_old_log_pi_action_v = torch.FloatTensor(trajectory_dist.log_prob(trajectory_actions_v))
 
         # 아래 변수는 전체 trajectory의 원소보다 1 적음
-        trajectory_advantage_v, trajectory_target_action_value_v = self.get_advantage_and_target_action_values(
-            trajectory, trajectory_states_v, device=self.device
-        )
+        with torch.no_grad():
+            trajectory_advantage_v, trajectory_target_action_value_v = self.get_advantage_and_target_action_values(
+                trajectory, trajectory_values_v, device=self.device
+            )
 
         # normalize advantages
         trajectory_advantage_v = trajectory_advantage_v - torch.mean(trajectory_advantage_v)
-        trajectory_advantage_v /= torch.std(trajectory_advantage_v)
+        trajectory_advantage_v /= torch.std(trajectory_advantage_v) + 1e-5
 
         # drop last entry from the trajectory, an our adv and target action value calculated without it
         trajectory = trajectory[:-1]
         trajectory_states_v = trajectory_states_v[:-1]
         trajectory_actions_v = trajectory_actions_v[:-1]
-        trajectory_old_log_pi_v = trajectory_old_log_pi_v[:-1].detach()
+        trajectory_old_log_pi_action_v = trajectory_old_log_pi_action_v[:-1].detach()
 
         sum_loss_critic = 0.0
         sum_loss_actor = 0.0
@@ -103,35 +111,39 @@ class AgentContinuousPPO(BaseAgent):
                 batch_actions_v = trajectory_actions_v[batch_offset:batch_l]
                 batch_advantage_v = trajectory_advantage_v[batch_offset:batch_l].unsqueeze(-1)
                 batch_target_action_value_v = trajectory_target_action_value_v[batch_offset:batch_l]
-                batch_old_log_pi_v = trajectory_old_log_pi_v[batch_offset:batch_l]
+                batch_old_log_pi_action_v = trajectory_old_log_pi_action_v[batch_offset:batch_l]
 
-                # actor training
-                self.actor_optimizer.zero_grad()
-                batch_mu_v, _ = self.model(batch_states_v)
-                batch_log_pi_v = self.calc_log_pi(
-                    batch_mu_v, self.model.base.actor.logstd, batch_actions_v
-                )
-                batch_ratio_v = torch.exp(batch_log_pi_v - batch_old_log_pi_v).to(self.device)
-                batch_surrogate_v = batch_advantage_v * batch_ratio_v
-                batch_clipped_ratio_v = torch.clamp(
-                    batch_ratio_v, min=1.0 - self.params.PPO_EPSILON_CLIP, max=1.0 + self.params.PPO_EPSILON_CLIP
-                )
-                batch_clipped_surrogate_v = batch_advantage_v * batch_clipped_ratio_v
-                loss_actor_v = -1.0 * torch.min(batch_surrogate_v, batch_clipped_surrogate_v).mean()
-
-                batch_entropy_v = -1.0 * (torch.log(2.0 * math.pi * torch.exp(self.model.base.actor.logstd)) + 1) / 2
-                loss_entropy_v = self.params.PPO_ENTROPY_WEIGHT * batch_entropy_v.mean()
-
-                loss_actor_and_entropy_v = loss_actor_v + loss_entropy_v
-                loss_actor_and_entropy_v.backward(retain_graph=True)
-                self.actor_optimizer.step()
+                batch_mu_v, batch_values_v = self.model(batch_states_v)
 
                 # critic training
                 self.critic_optimizer.zero_grad()
-                batch_values_v = self.model.base.forward_critic(batch_states_v)
-                loss_critic_v = F.mse_loss(batch_values_v.squeeze(-1), batch_target_action_value_v)
-                loss_critic_v.backward()
+                loss_critic_v = F.smooth_l1_loss(batch_values_v.squeeze(-1), batch_target_action_value_v)
+                loss_critic_v.backward(retain_graph=True)
                 self.critic_optimizer.step()
+
+                # actor training
+                self.actor_optimizer.zero_grad()
+                batch_var_v = self.model.base.actor.var.expand_as(batch_mu_v)
+                batch_covariance_matrix = torch.diag_embed(batch_var_v).to(self.device)
+
+                batch_dist = MultivariateNormal(loc=batch_mu_v, covariance_matrix=batch_covariance_matrix)
+
+                batch_log_pi_action_v = batch_dist.log_prob(batch_actions_v)
+                batch_dist_entropy_v = batch_dist.entropy()
+
+                batch_ratio_v = torch.exp(batch_log_pi_action_v - batch_old_log_pi_action_v.detach())
+
+                batch_surrogate_1_v = batch_advantage_v * batch_ratio_v
+                batch_surrogate_2_v = batch_advantage_v * torch.clamp(
+                    batch_ratio_v, min=1.0 - self.params.PPO_EPSILON_CLIP, max=1.0 + self.params.PPO_EPSILON_CLIP
+                )
+                loss_actor_v = -1.0 * torch.min(batch_surrogate_1_v, batch_surrogate_2_v).mean()
+
+                loss_entropy_v = -1.0 * self.params.PPO_ENTROPY_WEIGHT * batch_dist_entropy_v.mean()
+
+                loss_actor_and_entropy_v = loss_actor_v + loss_entropy_v
+                loss_actor_and_entropy_v.backward()
+                self.actor_optimizer.step()
 
                 sum_loss_critic += loss_critic_v.item()
                 sum_loss_actor += loss_actor_v.item()
@@ -148,13 +160,13 @@ class AgentContinuousPPO(BaseAgent):
     #     p2 = - torch.log(torch.sqrt(2 * math.pi * var_v))
     #     return p1 + p2
 
-    @staticmethod
-    def calc_log_pi(mu_v, logstd_v, actions_v):
-        p1 = - ((mu_v - actions_v) ** 2) / (2 * torch.exp(logstd_v).clamp(min=1e-3))
-        p2 = - torch.log(torch.sqrt(2 * math.pi * torch.exp(logstd_v)))
-        return p1 + p2
+    # @staticmethod
+    # def calc_log_pi(mu_v, logstd_v, actions_v):
+    #     p1 = - ((mu_v - actions_v) ** 2) / (2 * torch.exp(logstd_v).clamp(min=1e-3))
+    #     p2 = - torch.log(torch.sqrt(2 * math.pi * torch.exp(logstd_v)))
+    #     return p1 + p2
 
-    def get_advantage_and_target_action_values(self, trajectory, states_v, device="cpu"):
+    def get_advantage_and_target_action_values(self, trajectory, values_v, device="cpu"):
         """
         By trajectory calculate advantage and 1-step target action value
         :param trajectory: trajectory list
@@ -162,7 +174,6 @@ class AgentContinuousPPO(BaseAgent):
         :param states_v: states tensor
         :return: tuple with advantage numpy array and reference values
         """
-        values_v = self.model.base.forward_critic(states_v)
         values = values_v.squeeze().data.cpu().numpy()
 
         # generalized advantage estimator: smoothed version of the advantage
