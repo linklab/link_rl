@@ -5,7 +5,7 @@ from typing import Union
 
 import torch
 from icecream import ic
-from torch.distributions import MultivariateNormal
+from torch.distributions import MultivariateNormal, Normal
 
 
 class ActionSelector:
@@ -209,8 +209,9 @@ class ProbabilityActionSelector(ActionSelector):
 
 class ContinuousNormalActionSelector(ContinuousActionSelector):
     def __call__(self, mu_v, var_v, action_min, action_max):
-        covariance_matrix = torch.diag(var_v)
-        dist = MultivariateNormal(loc=mu_v, covariance_matrix=covariance_matrix)
+        # covariance_matrix = torch.diag(var_v)
+        # dist = MultivariateNormal(loc=mu_v, covariance_matrix=covariance_matrix)
+        dist = Normal(loc=mu_v, scale=torch.sqrt(var_v))
         actions = dist.sample().data.cpu().numpy()
         actions = np.clip(actions, action_min, action_max)
         return actions

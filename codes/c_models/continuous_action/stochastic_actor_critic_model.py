@@ -83,9 +83,9 @@ class ActorMLPBase(nn.Module):
             nn.Tanh()
         )
 
-        #self.var = nn.Parameter(torch.ones(num_outputs) * 0.25)
+        self.var = nn.Parameter(torch.ones(num_outputs) * 0.25)
 
-        self.var = torch.ones(num_outputs) * 0.25
+        #self.var = torch.ones(num_outputs) * 0.25
 
         #self.logstd = nn.Parameter(torch.zeros(num_outputs))
 

@@ -17,6 +17,8 @@ class AgentContinuousPPO(BaseAgent):
             preprocessor=float32_preprocessor, device="cpu"
     ):
         super(AgentContinuousPPO, self).__init__()
+        assert params.TRAIN_STEP_FREQ == 1
+        assert params.N_STEP == 1  # GAE will consider various N_STEPs
         self.__name__ = "AgentContinuousPPO"
         self.device = device
         self.preprocessor = preprocessor
@@ -72,7 +74,7 @@ class AgentContinuousPPO(BaseAgent):
         trajectory_actions = [experience.action for experience in trajectory]
         trajectory_actions_v = torch.FloatTensor(trajectory_actions).to(self.device)
 
-        trajectory_mu_v = self.model.base.actor(trajectory_states_v)
+        trajectory_mu_v, trajectory_values_v = self.model.base.forward(trajectory_states_v)
 
         trajectory_var_v = self.model.base.actor.var.expand_as(trajectory_mu_v)
         trajectory_covariance_matrix = torch.diag_embed(trajectory_var_v).to(self.device)
@@ -82,13 +84,14 @@ class AgentContinuousPPO(BaseAgent):
         trajectory_old_log_pi_action_v = torch.FloatTensor(trajectory_dist.log_prob(trajectory_actions_v))
 
         # 아래 변수는 전체 trajectory의 원소보다 1 적음
-        trajectory_advantage_v, trajectory_target_action_value_v = self.get_advantage_and_target_action_values(
-            trajectory, trajectory_states_v, device=self.device
-        )
+        with torch.no_grad():
+            trajectory_advantage_v, trajectory_target_action_value_v = self.get_advantage_and_target_action_values(
+                trajectory, trajectory_values_v, device=self.device
+            )
 
         # normalize advantages
         trajectory_advantage_v = trajectory_advantage_v - torch.mean(trajectory_advantage_v)
-        trajectory_advantage_v /= torch.std(trajectory_advantage_v)
+        trajectory_advantage_v /= torch.std(trajectory_advantage_v) + 1e-5
 
         # drop last entry from the trajectory, an our adv and target action value calculated without it
         trajectory = trajectory[:-1]
@@ -110,10 +113,16 @@ class AgentContinuousPPO(BaseAgent):
                 batch_target_action_value_v = trajectory_target_action_value_v[batch_offset:batch_l]
                 batch_old_log_pi_action_v = trajectory_old_log_pi_action_v[batch_offset:batch_l]
 
+                batch_mu_v, batch_values_v = self.model(batch_states_v)
+
+                # critic training
+                self.critic_optimizer.zero_grad()
+                loss_critic_v = F.smooth_l1_loss(batch_values_v.squeeze(-1), batch_target_action_value_v)
+                loss_critic_v.backward(retain_graph=True)
+                self.critic_optimizer.step()
+
                 # actor training
                 self.actor_optimizer.zero_grad()
-                batch_mu_v, _ = self.model(batch_states_v)
-
                 batch_var_v = self.model.base.actor.var.expand_as(batch_mu_v)
                 batch_covariance_matrix = torch.diag_embed(batch_var_v).to(self.device)
 
@@ -133,15 +142,8 @@ class AgentContinuousPPO(BaseAgent):
                 loss_entropy_v = -1.0 * self.params.PPO_ENTROPY_WEIGHT * batch_dist_entropy_v.mean()
 
                 loss_actor_and_entropy_v = loss_actor_v + loss_entropy_v
-                loss_actor_and_entropy_v.backward(retain_graph=True)
+                loss_actor_and_entropy_v.backward()
                 self.actor_optimizer.step()
-
-                # critic training
-                self.critic_optimizer.zero_grad()
-                batch_values_v = self.model.base.forward_critic(batch_states_v)
-                loss_critic_v = F.smooth_l1_loss(batch_values_v.squeeze(-1), batch_target_action_value_v)
-                loss_critic_v.backward()
-                self.critic_optimizer.step()
 
                 sum_loss_critic += loss_critic_v.item()
                 sum_loss_actor += loss_actor_v.item()
@@ -164,7 +166,7 @@ class AgentContinuousPPO(BaseAgent):
     #     p2 = - torch.log(torch.sqrt(2 * math.pi * torch.exp(logstd_v)))
     #     return p1 + p2
 
-    def get_advantage_and_target_action_values(self, trajectory, states_v, device="cpu"):
+    def get_advantage_and_target_action_values(self, trajectory, values_v, device="cpu"):
         """
         By trajectory calculate advantage and 1-step target action value
         :param trajectory: trajectory list
@@ -172,7 +174,6 @@ class AgentContinuousPPO(BaseAgent):
         :param states_v: states tensor
         :return: tuple with advantage numpy array and reference values
         """
-        values_v = self.model.base.forward_critic(states_v)
         values = values_v.squeeze().data.cpu().numpy()
 
         # generalized advantage estimator: smoothed version of the advantage
