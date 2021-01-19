@@ -1,13 +1,14 @@
 import time
 import numpy as np
-import grpc
 
 # MQTT Topic for RIP
 from common.environments.environment import Environment
 
-import quanser_service_pb2_grpc
-from quanser_service_pb2 import QuanserResetRequest,QuanserStepRequest
-
+MQTT_PUB_TO_SERVO_POWER = 'motor_power_2'
+MQTT_PUB_RESET = 'reset_2'
+MQTT_SUB_FROM_SERVO = 'servo_info_2'
+MQTT_SUB_MOTOR_LIMIT = 'motor_limit_info_2'
+MQTT_SUB_RESET_COMPLETE = 'reset_complete_2'
 
 STATE_SIZE = 4
 
@@ -50,9 +51,37 @@ class EnvironmentRIP(Environment):
 
         self.continuous = False
 
+    def __pub(self, topic, payload, require_response=True):
+        global PUB_ID
+        self.mqtt_client.publish(topic=topic, payload=payload)
+        PUB_ID += 1
+
+        if require_response:
+            is_sub = False
+            while not is_sub:
+                if self.is_state_changed or self.is_limit_complete or self.is_reset_complete:
+                    is_sub = True
+                time.sleep(0.0001)
+
+        self.is_state_changed = False
+        self.is_limit_complete = False
+        self.is_reset_complete = False
+
+    def set_state(self, motor_radian, motor_velocity, pendulum_radian, pendulum_velocity):
+        self.is_state_changed = True
+        self.state = [pendulum_radian, pendulum_velocity, motor_radian, motor_velocity]
+        # self.state = [pendulum_radian, pendulum_velocity]
+
+        self.current_pendulum_radian = pendulum_radian
+        self.current_pendulum_velocity = pendulum_velocity
+        self.current_motor_velocity = motor_velocity
+
     def __pendulum_reset(self):
-        quanser_response = self.server_obf.step(QuanserStepRequest(value=0, info='pendulum_reset', pub_id=PUB_ID))
-        # require_response=False
+        self.__pub(
+            MQTT_PUB_TO_SERVO_POWER,
+            "0|pendulum_reset|{0}".format(PUB_ID),
+            require_response=False
+        )
 
     # RIP Manual Swing & Balance
     def manual_swingup_balance(self):
@@ -60,7 +89,7 @@ class EnvironmentRIP(Environment):
 
     # for restarting episode
     def wait(self):
-        quanser_response = self.server_obf.step(QuanserStepRequest(value=0, info='wait', pub_id=PUB_ID))
+        self.__pub(MQTT_PUB_TO_SERVO_POWER, "0|wait|{0}".format(PUB_ID))
 
     def get_n_states(self):
         n_states = 4
@@ -117,22 +146,7 @@ class EnvironmentRIP(Environment):
     def step(self, action):
         motor_power = balance_motor_power_list[int(action)]
 
-        quanser_response = self.server_obf.step(QuanserStepRequest(value=motor_power, info='balance', pub_id=PUB_ID))
-
-        motor_radian = quanser_response.motor_radian
-        motor_velocity = quanser_response.motor_velocity
-        pendulum_radian = quanser_response.pendulum_radian
-        pendulum_velocity = quanser_response.pendulum_velocity
-        self.is_motor_limit = quanser_response.is_motor_limit
-        self.is_limit_complete = quanser_response.reset_complete
-
-        self.state = [pendulum_radian, pendulum_velocity, motor_radian, motor_velocity]
-        # self.state = [pendulum_radian, pendulum_velocity]
-
-        self.current_pendulum_radian = pendulum_radian
-        self.current_pendulum_velocity = pendulum_velocity
-        self.current_motor_velocity = motor_velocity
-
+        self.__pub(MQTT_PUB_TO_SERVO_POWER, "{0}|{1}|{2}".format(motor_power, "balance", PUB_ID))
         pendulum_radian = self.current_pendulum_radian
         pendulum_angular_velocity = self.current_pendulum_velocity
 
@@ -178,4 +192,5 @@ class EnvironmentRIP(Environment):
             return False, info
 
     def close(self):
-        quanser_response = self.server_obf.step(QuanserStepRequest(value=0, info='None', pub_id=None))
+        self.pub.publish(topic=MQTT_PUB_TO_SERVO_POWER, payload=str(0))
+        # self.env.close()
