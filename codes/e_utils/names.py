@@ -41,6 +41,7 @@ class EnvironmentName(enum.Enum):
     INVERTED_PENDULUM_V2 = 'InvertedPendulum-v2'
     WALKER_2D_V2 = 'Walker2d-v2'
     PONG_NO_FRAME_SKIP_V4 = 'PongNoFrameskip-v4'
+    KUNGFU_MASTER_FRAME_SKIP_V4 = 'KungFuMasterNoFrameskip-v4'
     BREAKOUT_NO_FRAME_SKIP_V4 = 'BreakoutNoFrameskip-v4'
     SPACE_INVADERS_NO_FRAME_SKIP_V4 = "SpaceInvadersNoFrameskip-v4"
     ENDURO_NO_FRAME_SKIP_V4 = "EnduroNoFrameskip-v4"

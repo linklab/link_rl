@@ -143,7 +143,8 @@ def get_single_environment(owner="cheif", params=None):
         EnvironmentName.PONG_NO_FRAME_SKIP_V4,
         EnvironmentName.ENDURO_NO_FRAME_SKIP_V4,
         EnvironmentName.SEAQUEST_NO_FRAME_SKIP_V4,
-        EnvironmentName.FREEWAY_NO_FRAME_SKIP_V4
+        EnvironmentName.FREEWAY_NO_FRAME_SKIP_V4,
+        EnvironmentName.KUNGFU_MASTER_FRAME_SKIP_V4
     ]:
         env = make_atari_env(params.ENVIRONMENT_ID.value)
     elif params.ENVIRONMENT_ID in [EnvironmentName.DRONE_RACING_MAC, EnvironmentName.DRONE_RACING_WINDOWS]:
