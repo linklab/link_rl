@@ -124,6 +124,7 @@ class ExperienceSource:
                 if self.vectorized:
                     #print(action_n)
                     next_state_n, r_n, is_done_n, info_n = env.step(action_n)
+                    #r_n = (r_n + 8.1) / 8.1
                     #ic(env_idx, env, len(action_n), len(next_state_n), len(r_n), len(is_done_n), len(info_n))
                 else:
                     next_state, r, is_done, info = env.step(action_n[0])

@@ -2,7 +2,7 @@ import numpy as np
 import torch
 from torch.autograd import Variable
 
-import ptan
+from codes.d_agents.a0_base_agent import float32_preprocessor
 
 
 def unpack_batch_a2c(batch, net, last_val_gamma, device="cpu"):
@@ -24,13 +24,13 @@ def unpack_batch_a2c(batch, net, last_val_gamma, device="cpu"):
         if exp.last_state is not None:
             not_done_idx.append(idx)
             last_states.append(exp.last_state)
-    states_v = ptan.agent.float32_preprocessor(states).to(device)
+    states_v = float32_preprocessor(states).to(device)
     actions_v = torch.FloatTensor(actions).to(device)
 
     # handle rewards
     rewards_np = np.array(rewards, dtype=np.float32)
     if not_done_idx:
-        last_states_v = ptan.agent.float32_preprocessor(last_states).to(device)
+        last_states_v = float32_preprocessor(last_states).to(device)
         last_vals_v = net(last_states_v)[2]
         last_vals_np = last_vals_v.data.cpu().numpy()[:, 0]
         rewards_np[not_done_idx] += last_val_gamma * last_vals_np
@@ -50,9 +50,9 @@ def unpack_batch_ddqn(batch, device="cpu"):
             last_states.append(exp.state)
         else:
             last_states.append(exp.last_state)
-    states_v = ptan.agent.float32_preprocessor(states).to(device)
-    actions_v = ptan.agent.float32_preprocessor(actions).to(device)
-    rewards_v = ptan.agent.float32_preprocessor(rewards).to(device)
-    last_states_v = ptan.agent.float32_preprocessor(last_states).to(device)
+    states_v = float32_preprocessor(states).to(device)
+    actions_v = float32_preprocessor(actions).to(device)
+    rewards_v = float32_preprocessor(rewards).to(device)
+    last_states_v = float32_preprocessor(last_states).to(device)
     dones_t = torch.BoolTensor(dones).to(device)
     return states_v, actions_v, rewards_v, dones_t, last_states_v

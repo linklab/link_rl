@@ -1,19 +1,22 @@
 #!/usr/bin/env python3
 import os
 import math
-import ptan
 import gym
 
 import argparse
-from tensorboardX import SummaryWriter
 
-from config.names import EnvironmentName
+from codes.e_utils.experience import ExperienceSourceFirstLast
+from codes.e_utils.experience_tracker import RewardTracker
+from codes.e_utils.names import EnvironmentName
 from z_externals.handson_second_edition.Chapter17.lib import model, common
 
 import torch
 import torch.optim as optim
 import torch.nn.functional as F
 
+from codes.a_config.parameters import PARAMETERS as parameters
+
+params = parameters
 
 ENV_ID = "MinitaurBulletEnv-v0"
 GAMMA = 0.99
@@ -46,53 +49,51 @@ if __name__ == "__main__":
     net = model.ModelA2C(env.observation_space.shape[0], env.action_space.shape[0]).to(device)
     print(net)
 
-    writer = SummaryWriter(comment="-a2c_" + args.name)
     agent = model.AgentA2C(net, device=device)
-    experience_source = ptan.experience.ExperienceSourceFirstLast(env, agent, GAMMA, steps_count=REWARD_STEPS)
+    experience_source = ExperienceSourceFirstLast(env, agent, GAMMA)
 
     optimizer = optim.Adam(net.parameters(), lr=LEARNING_RATE)
 
     batch = []
+    episode = 0
     best_reward = None
-    with ptan.common.utils.RewardTracker(writer) as tracker:
-        with ptan.common.utils.TBMeanTracker(writer, batch_size=10) as tb_tracker:
-            for step_idx, exp in enumerate(experience_source):
-                rewards_steps = experience_source.pop_rewards_steps()
-                if rewards_steps:
-                    rewards, steps = zip(*rewards_steps)
-                    tb_tracker.track("episode_steps", steps[0], step_idx)
-                    tracker.reward(rewards[0], step_idx)
+    with RewardTracker(params=params) as tracker:
+        for step_idx, exp in enumerate(experience_source):
+            episode_rewards, episode_steps = experience_source.pop_episode_reward_and_done_step_lst()
+            if episode_rewards and episode_steps:
+                for current_episode_reward, current_episode_step in zip(episode_rewards, episode_steps):
+                    episode += 1
+                    epsilon = 0.0
+                    mean_loss = 0.0
 
-                batch.append(exp)
-                if len(batch) < BATCH_SIZE:
-                    continue
+                    solved, mean_episode_reward = tracker.set_episode_reward(
+                        episode_reward=current_episode_reward, episode_done_step=step_idx, epsilon=epsilon,
+                        last_info=exp.info, current_episode_step=current_episode_step,
+                        mean_loss=mean_loss, model=agent.net, wandb=False
+                    )
 
-                states_v, actions_v, vals_ref_v = common.unpack_batch_a2c(
-                    batch, net, device=device, last_val_gamma=GAMMA ** REWARD_STEPS
-                )
-                batch.clear()
+            batch.append(exp)
+            if len(batch) < BATCH_SIZE:
+                continue
 
-                optimizer.zero_grad()
-                mu_v, var_v, value_v = net(states_v)
+            states_v, actions_v, vals_ref_v = common.unpack_batch_a2c(
+                batch, net, device=device, last_val_gamma=GAMMA ** REWARD_STEPS
+            )
+            batch.clear()
 
-                loss_value_v = F.mse_loss(value_v.squeeze(-1), vals_ref_v)
+            optimizer.zero_grad()
+            mu_v, var_v, value_v = net(states_v)
 
-                adv_v = vals_ref_v.unsqueeze(dim=-1) - value_v.detach()
-                log_prob_v = adv_v * calc_logprob(mu_v, var_v, actions_v)
-                loss_policy_v = -log_prob_v.mean()
+            loss_value_v = F.mse_loss(value_v.squeeze(-1), vals_ref_v)
 
-                ent_v = -(torch.log(2*math.pi*var_v) + 1)/2
-                entropy_loss_v = ENTROPY_BETA * ent_v.mean()
+            adv_v = vals_ref_v.unsqueeze(dim=-1) - value_v.detach()
+            log_prob_v = adv_v * calc_logprob(mu_v, var_v, actions_v)
+            loss_policy_v = -log_prob_v.mean()
 
-                loss_v = loss_policy_v + entropy_loss_v + loss_value_v
-                loss_v.backward()
-                optimizer.step()
+            ent_v = -(torch.log(2*math.pi*var_v) + 1)/2
+            entropy_loss_v = ENTROPY_BETA * ent_v.mean()
 
-                tb_tracker.track("advantage", adv_v, step_idx)
-                tb_tracker.track("values", value_v, step_idx)
-                tb_tracker.track("batch_rewards", vals_ref_v, step_idx)
-                tb_tracker.track("loss_entropy", entropy_loss_v, step_idx)
-                tb_tracker.track("loss_policy", loss_policy_v, step_idx)
-                tb_tracker.track("loss_value", loss_value_v, step_idx)
-                tb_tracker.track("loss_total", loss_v, step_idx)
+            loss_v = loss_policy_v + entropy_loss_v + loss_value_v
+            loss_v.backward()
+            optimizer.step()
 
