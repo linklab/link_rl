@@ -61,7 +61,6 @@ class ExperienceSource:
         self.episode_done_step_lst = []
         self.vectorized = vectorized
 
-    @property
     def __iter__(self):
         states, agent_states, histories, cur_rewards, cur_steps = [], [], [], [], []
         env_lens = []
@@ -106,6 +105,7 @@ class ExperienceSource:
             #ic(states_input, agent_states_input)
 
             if states_input:
+                #print(states_input)
                 new_actions, new_agent_states = self.agent(states_input, agent_states_input)
 
                 for idx, action in enumerate(new_actions):
@@ -212,7 +212,7 @@ class ExperienceSourceNamedTuple(ExperienceSource):
         super(ExperienceSourceNamedTuple, self).__init__(env, agent, n_step, steps_delta, vectorized=vectorized)
 
     def __iter__(self):
-        for exp in super(ExperienceSourceNamedTuple, self).__iter__:
+        for exp in super(ExperienceSourceNamedTuple, self).__iter__():
             yield Experience(
                 state=exp[0].state, action=exp[0].action, reward=exp[0].reward, done=exp[0].done
             )
@@ -230,11 +230,14 @@ class ExperienceSourceFirstLast(ExperienceSource):
         assert isinstance(gamma, float)
         super(ExperienceSourceFirstLast, self).__init__(env, agent, n_step + 1, steps_delta, vectorized=vectorized)
         self.gamma = gamma
-        self.n_step = n_step
+        self.n_step_ = n_step
 
     def __iter__(self):
-        for exp in super(ExperienceSourceFirstLast, self).__iter__:
-            if exp[-1].done and len(exp) <= self.n_step:
+        for exp in super(ExperienceSourceFirstLast, self).__iter__():
+
+            #print(exp)
+
+            if exp[-1].done and len(exp) <= self.n_step_:
                 last_state = None
                 elems = exp
             else:
@@ -244,10 +247,15 @@ class ExperienceSourceFirstLast(ExperienceSource):
             for e in reversed(elems):
                 total_reward *= self.gamma
                 total_reward += e.reward
-            yield ExperienceFirstLast(
+
+            e = ExperienceFirstLast(
                 state=exp[0].state, action=exp[0].action, reward=total_reward, last_state=last_state,
                 last_step=len(elems), info=exp[0].info, done=exp[0].done
             )
+
+            #print(e)
+
+            yield e
 
 
 class BatchPreprocessor:
