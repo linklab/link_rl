@@ -100,7 +100,7 @@ class AgentContinuousA2C(OnPolicyAgent):
         dist = Normal(loc=mu_v, scale=torch.sqrt(var_v))
         log_pi_action_v = advantage_v * dist.log_prob(actions_v)
 
-        print(advantage_v.size(), dist.log_prob(actions_v).size(), log_pi_action_v.size())
+        # print(advantage_v.size(), dist.log_prob(actions_v).size(), log_pi_action_v.size())
 
         # log_pi_v = advantage_v * self.calc_log_pi(mu_v, self.model.base.actor.logstd, actions_v)
         loss_actor_v = -1.0 * log_pi_action_v.mean()
