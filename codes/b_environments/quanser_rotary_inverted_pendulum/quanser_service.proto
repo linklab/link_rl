@@ -11,12 +11,12 @@ service QuanserRIP {
 message QuanserStepRequest {
   float value = 1;
   string info = 2;
-  float pub_id = 3;
+  float step = 3;
 }
 
 message QuanserResetRequest {
   string info = 1;
-  float pub_id = 2;
+  float step = 2;
 }
 
 message QuanserStateResponse {
@@ -25,7 +25,7 @@ message QuanserStateResponse {
   float motor_velocity = 3;
   float pendulum_radian = 4;
   float pendulum_velocity = 5;
-  float pub_id = 6;
+  float step = 6;
   bool is_motor_limit = 7;
   bool reset_complete = 8;
 }

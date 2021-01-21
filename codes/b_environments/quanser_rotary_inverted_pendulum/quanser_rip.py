@@ -52,20 +52,28 @@ class EnvironmentQuanserRIP(gym.Env):
 
         self.continuous = False
 
+        self.global_step = 0
+
         channel = grpc.insecure_channel('{0}:50051'.format(RIP_SERVER))
         self.server_obj = quanser_service_pb2_grpc.QuanserRIPStub(channel)
 
     def __pendulum_reset(self):
-        quanser_response = self.server_obj.step(QuanserStepRequest(value=0, info='pendulum_reset', pub_id=PUB_ID))
+        quanser_response = self.server_obj.step(QuanserStepRequest(value=0, info='pendulum_reset', step=self.global_step))
+        if quanser_response.message != "OK":
+            raise ValueError()
         # require_response=False
 
     # RIP Manual Swing & Balance
     def manual_swingup_balance(self):
-        self.__pub(MQTT_PUB_RESET, "reset|{0}".format(PUB_ID))
+        quanser_response = self.server_obj.step(QuanserStepRequest(value=0, info='reset', step=self.global_step))
+        if quanser_response.message != "OK":
+            raise ValueError()
 
     # for restarting episode
     def wait(self):
-        quanser_response = self.server_obj.step(QuanserStepRequest(value=0, info='wait', pub_id=PUB_ID))
+        quanser_response = self.server_obj.step(QuanserStepRequest(value=0, info='wait', step=self.global_step))
+        if quanser_response.message != "OK":
+            raise ValueError()
 
     def get_n_states(self):
         n_states = 4
@@ -122,7 +130,9 @@ class EnvironmentQuanserRIP(gym.Env):
     def step(self, action):
         motor_power = balance_motor_power_list[int(action)]
 
-        quanser_response = self.server_obj.step(QuanserStepRequest(value=motor_power, info='balance', pub_id=PUB_ID))
+        quanser_response = self.server_obj.step(QuanserStepRequest(value=motor_power, info='balance', step=self.global_step))
+        if quanser_response.message != "OK":
+            raise ValueError()
 
         motor_radian = quanser_response.motor_radian
         motor_velocity = quanser_response.motor_velocity
@@ -158,6 +168,8 @@ class EnvironmentQuanserRIP(gym.Env):
 
         self.previous_time = time.perf_counter()
 
+        self.global_step += 1
+
         return next_state, self.reward, adjusted_reward, done, info
 
     def __isDone(self):
@@ -183,6 +195,6 @@ class EnvironmentQuanserRIP(gym.Env):
             return False, info
 
     def close(self):
-        quanser_response = self.server_obj.step(QuanserStepRequest(value=0, info='None', pub_id=None))
+        quanser_response = self.server_obj.step(QuanserStepRequest(value=0, info='None', step=self.global_step))
         if quanser_response.message != "OK":
             raise ValueError()
