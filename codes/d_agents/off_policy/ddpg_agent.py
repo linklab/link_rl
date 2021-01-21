@@ -3,28 +3,27 @@ import torch
 import torch.nn.functional as F
 from icecream import ic
 
-from codes.d_agents.a0_base_agent import BaseAgent, TargetNet, float32_preprocessor
+from codes.d_agents.a0_base_agent import TargetNet, float32_preprocessor
+from codes.d_agents.off_policy.off_policy_agent import OffPolicyAgent
 from codes.e_utils import rl_utils, replay_buffer
 from codes.e_utils.names import DeepLearningModelName
 
 
-class AgentDDPG(BaseAgent):
+class AgentDDPG(OffPolicyAgent):
     """
     Agent implementing Orstein-Uhlenbeck exploration process
     """
     def __init__(self, input_shape, num_outputs, worker_id, action_selector, action_min, action_max, params,
                  preprocessor=float32_preprocessor, device="cpu"):
-        super(AgentDDPG, self).__init__()
+        super(AgentDDPG, self).__init__(params=params, device=device)
+
         self.__name__ = "AgentDDPG"
-        self.device = device
         self.preprocessor = preprocessor
         self.action_selector = action_selector
         self.action_min = action_min
         self.action_max = action_max
 
         self.worker_id = worker_id
-        self.params = params
-        self.device = device
 
         assert params.DEEP_LEARNING_MODEL == DeepLearningModelName.DETERMINISTIC_CONTINUOUS_ACTOR_CRITIC_MLP
         self.model = rl_utils.get_rl_model(
@@ -44,21 +43,6 @@ class AgentDDPG(BaseAgent):
             learning_rate=self.params.LEARNING_RATE,
             params=params
         )
-
-        if self.params.PER_PROPORTIONAL:
-            self.buffer = replay_buffer.PrioritizedReplayBuffer(
-                experience_source=None, buffer_size=self.params.REPLAY_BUFFER_SIZE,
-                n_step=self.params.N_STEP, beta_start=0.4, beta_frames=self.params.MAX_GLOBAL_STEP
-            )
-        elif self.params.PER_RANK_BASED:
-            self.buffer = replay_buffer.RankBasedPrioritizedReplayBuffer(
-                experience_source=None, buffer_size=self.params.REPLAY_BUFFER_SIZE,
-                params=self.params, alpha=0.7, beta_start=0.5, beta_frames=self.params.MAX_GLOBAL_STEP
-            )
-        else:
-            self.buffer = replay_buffer.ExperienceReplayBuffer(
-                experience_source=None, buffer_size=self.params.REPLAY_BUFFER_SIZE
-            )
 
     def __call__(self, states, agent_states=None):
         if not agent_states:

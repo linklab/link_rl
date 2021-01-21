@@ -3,25 +3,24 @@ import torch
 import torch.nn.functional as F
 
 from codes.d_agents.a0_base_agent import BaseAgent, TargetNet, float32_preprocessor
+from codes.d_agents.off_policy.off_policy_agent import OffPolicyAgent
 from codes.e_utils import rl_utils, replay_buffer
 from codes.e_utils.names import DeepLearningModelName
 
 
-class AgentDQN(BaseAgent):
+class AgentDQN(OffPolicyAgent):
     """
     """
     def __init__(
             self, worker_id, input_shape, num_outputs, action_selector, params,
             preprocessor=float32_preprocessor, device="cpu"
     ):
-        super(AgentDQN, self).__init__()
+        super(AgentDQN, self).__init__(params=params, device=device)
         self.__name__ = "AgentDQN"
         self.device = device
         self.preprocessor = preprocessor
         self.action_selector = action_selector
         self.worker_id = worker_id
-        self.params = params
-        self.device = device
 
         assert params.DEEP_LEARNING_MODEL in [
             DeepLearningModelName.DUELING_DQN_MLP,
@@ -38,21 +37,6 @@ class AgentDQN(BaseAgent):
             learning_rate=self.params.LEARNING_RATE,
             params=params
         )
-
-        if self.params.PER_PROPORTIONAL:
-            self.buffer = replay_buffer.PrioritizedReplayBuffer(
-                experience_source=None, buffer_size=self.params.REPLAY_BUFFER_SIZE,
-                n_step=self.params.N_STEP, beta_start=0.4, beta_frames=self.params.MAX_GLOBAL_STEP
-            )
-        elif self.params.PER_RANK_BASED:
-            self.buffer = replay_buffer.RankBasedPrioritizedReplayBuffer(
-                experience_source=None, buffer_size=self.params.REPLAY_BUFFER_SIZE,
-                params=self.params, alpha=0.7, beta_start=0.5, beta_frames=self.params.MAX_GLOBAL_STEP
-            )
-        else:
-            self.buffer = replay_buffer.ExperienceReplayBuffer(
-                experience_source=None, buffer_size=self.params.REPLAY_BUFFER_SIZE
-            )
 
     def __call__(self, states, agent_states=None):
         if not agent_states:

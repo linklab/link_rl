@@ -22,9 +22,9 @@ class StochasticActorCriticModel(BaseModel):
         if not (type(inputs) is torch.Tensor):
             inputs = torch.tensor([inputs], dtype=torch.float).to(self.device)
 
-        mu, value = self.base.forward(inputs)
+        mu, var, value = self.base.forward(inputs)
 
-        return mu, value
+        return mu, var, value
 
 
 class StochasticActorCriticMLPBase(nn.Module):
@@ -54,9 +54,9 @@ class StochasticActorCriticMLPBase(nn.Module):
         self.train()
 
     def forward(self, inputs):
-        mu = self.actor(inputs)
+        mu, var = self.actor(inputs)
         value = self.critic(inputs)
-        return mu, value
+        return mu, var, value
 
     def forward_critic(self, inputs):
         return self.critic(inputs)
@@ -72,18 +72,24 @@ class ActorMLPBase(nn.Module):
         self.hidden_2_size = params.HIDDEN_2_SIZE
         self.hidden_3_size = params.HIDDEN_3_SIZE
 
-        self.mu = nn.Sequential(
+        self.net = nn.Sequential(
             nn.Linear(num_inputs, self.hidden_1_size),
             nn.ReLU(),
             nn.Linear(self.hidden_1_size, self.hidden_2_size),
             nn.ReLU(),
             nn.Linear(self.hidden_2_size, self.hidden_3_size),
             nn.ReLU(),
+        )
+
+        self.mu = nn.Sequential(
             nn.Linear(self.hidden_3_size, num_outputs),
             nn.Tanh()
         )
 
-        self.var = nn.Parameter(torch.ones(num_outputs) * 0.25)
+        self.var = nn.Sequential(
+            nn.Linear(self.hidden_3_size, num_outputs),
+            nn.Softplus()
+        )
 
         #self.var = torch.ones(num_outputs) * 0.25
 
@@ -106,4 +112,5 @@ class ActorMLPBase(nn.Module):
             torch.nn.init.kaiming_normal_(m.weight)
 
     def forward(self, inputs):
-        return self.mu(inputs)
+        net_out = self.net(inputs)
+        return self.mu(net_out), self.var(net_out)

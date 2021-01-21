@@ -67,7 +67,7 @@ class ExperienceReplayBuffer:
         :param batch_size:
         :return:
         """
-        if len(self.buffer) <= batch_size:
+        if batch_size is None or len(self.buffer) <= batch_size:
             return self.buffer
 
         # Warning: replace=False makes random.choice O(n)
@@ -573,7 +573,6 @@ class RankBasedPrioritizedReplayBuffer(ExperienceReplayBuffer):
 
 
 class BinaryHeap(object):
-
     def __init__(self, priority_size=100, priority_init=None, replace=True):
         self.e2p = {}
         self.p2e = {}
