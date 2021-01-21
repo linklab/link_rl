@@ -83,7 +83,7 @@ class AgentContinuousA2C(OnPolicyAgent):
         mu_v, var_v, value_v = self.model(states_v)
 
         # Critic Optimization
-        loss_critic_v = F.mse_loss(input=value_v.squeeze(-1), target=target_action_values_v.detach())
+        loss_critic_v = F.mse_loss(input=value_v.squeeze(-1), target=target_action_values_v)
         loss_critic_v.backward(retain_graph=True)
         #nn_utils.clip_grad_norm_(self.model.base.critic.parameters(), self.params.CLIP_GRAD)
         self.critic_optimizer.step()
@@ -92,7 +92,7 @@ class AgentContinuousA2C(OnPolicyAgent):
         self.actor_optimizer.zero_grad()
 
         # advantage_v.shape: (32, 1)
-        advantage_v = target_action_values_v.unsqueeze(dim=-1).detach() - value_v.detach()
+        advantage_v = target_action_values_v.unsqueeze(dim=-1) - value_v.detach()
 
         # covariance_matrix = torch.diag_embed(var_v).to(self.device)
         # dist = MultivariateNormal(loc=mu_v, covariance_matrix=covariance_matrix)
@@ -102,15 +102,10 @@ class AgentContinuousA2C(OnPolicyAgent):
 
         # print(advantage_v.size(), dist.log_prob(actions_v).size(), log_pi_action_v.size())
 
-        # log_pi_v = advantage_v * self.calc_log_pi(mu_v, self.model.base.actor.logstd, actions_v)
         loss_actor_v = -1.0 * log_pi_action_v.mean()
 
         loss_entropy_v = -1.0 * self.params.PPO_ENTROPY_WEIGHT * dist.entropy().mean()
 
-        #print(loss_actor_v, loss_entropy_v)
-
-        # entropy_v = -1.0 * (torch.log(2.0 * math.pi * torch.exp(self.model.base.actor.logstd)) + 1) / 2
-        # loss_entropy_v = self.params.ENTROPY_BETA * entropy_v.mean()
 
         # loss_actor_v를 작아지도록 만듦 --> batch_log_pi_v.mean()가 커지도록 만듦
         # loss_entropy_v를 작아지도록 만듦 --> entropy_v가 커지도록 만듦

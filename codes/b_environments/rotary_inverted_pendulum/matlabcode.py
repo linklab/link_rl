@@ -114,8 +114,20 @@ class SimulinkPlant:
         # self.controller.getControlEffort(self.yHist, self.tHist)
         # Set that Control Action
         # action_v = action * 0.1
+        # simulation_time = self.eng.get_param(self.modelName, 'SimulationTime')
+        # print(simulation_time, "- action")
         self.setControlAction(action)
+
         self.eng.set_param(self.modelName, 'SimulationCommand', 'continue', 'SimulationCommand', 'pause', nargout=0)
+        # simulation_time = self.eng.get_param(self.modelName, 'SimulationTime')
+        # print(simulation_time, "- !!!!!")
+
+        # self.eng.set_param(self.modelName, 'SimulationCommand', 'continue', nargout=0)
+        # simulation_time = self.eng.get_param(self.modelName, 'SimulationTime')
+        # print(simulation_time, "!!!!!")
+        # self.eng.set_param(self.modelName, 'SimulationCommand', 'pause', nargout=0)
+        # simulation_time = self.eng.get_param(self.modelName, 'SimulationTime')
+        # print(simulation_time, "@@@@@")
         # self.setControlAction(u)
         # self.eng.set_param(self.modelName, 'SimulationCommand', 'pause', nargout=0)
         # self.q, self.q1, self.w, self.w1 = self.getHistory()

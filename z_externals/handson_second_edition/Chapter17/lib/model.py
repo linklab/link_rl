@@ -1,9 +1,10 @@
-import ptan
 import numpy as np
 
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
+
+from codes.d_agents.a0_base_agent import BaseAgent, float32_preprocessor
 
 HID_SIZE = 128
 
@@ -96,13 +97,14 @@ class D4PGCritic(nn.Module):
         return res.unsqueeze(dim=-1)
 
 
-class AgentA2C(ptan.agent.BaseAgent):
+class AgentA2C(BaseAgent):
     def __init__(self, net, device="cpu"):
+        super().__init__()
         self.net = net
         self.device = device
 
     def __call__(self, states, agent_states):
-        states_v = ptan.agent.float32_preprocessor(states)
+        states_v = float32_preprocessor(states)
         states_v = states_v.to(self.device)
 
         mu_v, var_v, _ = self.net(states_v)
@@ -113,13 +115,12 @@ class AgentA2C(ptan.agent.BaseAgent):
         return actions, agent_states
 
 
-class AgentDDPG(ptan.agent.BaseAgent):
+class AgentDDPG(BaseAgent):
     """
     Agent implementing Orstein-Uhlenbeck exploration process
     """
-    def __init__(self, net, device="cpu", ou_enabled=True,
-                 ou_mu=0.0, ou_teta=0.15, ou_sigma=0.2,
-                 ou_epsilon=1.0):
+    def __init__(self, net, device="cpu", ou_enabled=True, ou_mu=0.0, ou_teta=0.15, ou_sigma=0.2, ou_epsilon=1.0):
+        super().__init__()
         self.net = net
         self.device = device
         self.ou_enabled = ou_enabled
@@ -132,7 +133,7 @@ class AgentDDPG(ptan.agent.BaseAgent):
         return None
 
     def __call__(self, states, agent_states):
-        states_v = ptan.agent.float32_preprocessor(states)
+        states_v = float32_preprocessor(states)
         states_v = states_v.to(self.device)
         mu_v = self.net(states_v)
         actions = mu_v.data.cpu().numpy()
@@ -154,17 +155,18 @@ class AgentDDPG(ptan.agent.BaseAgent):
         return actions, new_a_states
 
 
-class AgentD4PG(ptan.agent.BaseAgent):
+class AgentD4PG(BaseAgent):
     """
     Agent implementing noisy agent
     """
     def __init__(self, net, device="cpu", epsilon=0.3):
+        super().__init__()
         self.net = net
         self.device = device
         self.epsilon = epsilon
 
     def __call__(self, states, agent_states):
-        states_v = ptan.agent.float32_preprocessor(states)
+        states_v = float32_preprocessor(states)
         states_v = states_v.to(self.device)
         mu_v = self.net(states_v)
         actions = mu_v.data.cpu().numpy()
