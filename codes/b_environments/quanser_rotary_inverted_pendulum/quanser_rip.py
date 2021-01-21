@@ -138,9 +138,12 @@ class EnvironmentQuanserRIP(gym.Env):
 
     def step(self, action):
         motor_power = balance_motor_power_list[int(action)]
+        start_time = time.perf_counter()
         quanser_response = self.server_obj.step(QuanserStepRequest(value=float(motor_power), info='balance', step_id=float(self.global_step)))
         if quanser_response.message != "OK":
             raise ValueError()
+        transfer_time = time.perf_counter() - start_time
+        print("======================transfer_time : ", transfer_time)
 
         motor_radian = quanser_response.motor_radian
         motor_velocity = quanser_response.motor_velocity
@@ -178,7 +181,7 @@ class EnvironmentQuanserRIP(gym.Env):
 
         self.global_step += 1
 
-        return next_state, adjusted_reward, done, info
+        return next_state, self.reward, done, info
 
     def __isDone(self):
         info = {}

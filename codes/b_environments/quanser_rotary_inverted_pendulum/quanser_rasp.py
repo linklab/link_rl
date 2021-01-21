@@ -1,18 +1,13 @@
-import paho.mqtt.client as mqtt
-import threading
 import random
 import spidev
 from concurrent import futures
 import time
 import math
 import numpy as np
-from datetime import datetime
-import json
-import datetime
 
 import grpc
-from codes.b_environments.quanser_rotary_inverted_pendulum import quanser_service_pb2_grpc
-from codes.b_environments.quanser_rotary_inverted_pendulum.quanser_service_pb2 import QuanserStateResponse
+import quanser_service_pb2_grpc
+from quanser_service_pb2 import QuanserStateResponse
 
 self_servo = None
 
@@ -55,7 +50,7 @@ class QubeServo2:
         self.motor_limit = False
         self.reset_complete = False
 
-    def step(self, QuanserStepRequest):
+    def step(self, QuanserStepRequest, context):
         global last_time
 
         self.motor_limit = False
@@ -67,27 +62,20 @@ class QubeServo2:
 
         if info == "swingup":
             self_servo.is_swing_up = True
-            motor_radian, motor_velocity, pendulum_radian, pendulum_velocity, step_id, _ = self_servo.read_and_pub()
-            self.limit_check()
             self.step_id += 1
             return QuanserStateResponse(
-                message="OK",
-                motor_radian=motor_radian, motor_velocity=motor_velocity,
-                pendulum_radian=pendulum_radian, pendulum_velocity=pendulum_velocity,
-                step_id=step_id, is_motor_limit=self.motor_limit, reset_complete=self.reset_complete
+                message="OK"
             )
         elif info == "balance":
             current_time = time.time()
             elapsed = current_time - last_time
-            print(elapsed * 1000)
+            print("elapsed: ", elapsed * 1000)
             last_time = current_time
             self_servo.is_swing_up = False
             self_servo.set_motor_command()
-            self_servo.read_and_pub()
-
-            motor_radian, motor_velocity, pendulum_radian, pendulum_velocity, step_id, _ = self_servo.read_and_pub()
+            motor_radian, motor_velocity, pendulum_radian, pendulum_velocity, step_id = self_servo.read_and_pub()
             self.limit_check()
-            self.step_id += 1
+            print("@@@@@@@@@@@@@@@", motor_radian)
             return QuanserStateResponse(
                 message="OK",
                 motor_radian=motor_radian, motor_velocity=motor_velocity,
@@ -95,7 +83,7 @@ class QubeServo2:
                 step_id=step_id, is_motor_limit=self.motor_limit, reset_complete=self.reset_complete
             )
         elif info == "wait":
-            motor_radian, motor_velocity, pendulum_radian, pendulum_velocity, step_id, _ = self_servo.set_wait()
+            motor_radian, motor_velocity, pendulum_radian, pendulum_velocity, step_id, _  = self_servo.set_wait()
             self.step_id += 1
             return QuanserStateResponse(
                 message = "OK",
@@ -107,21 +95,23 @@ class QubeServo2:
             print("pendulum_reset")
             self.step_id += 1
             self_servo.pendulum_reset(self_servo.step_id)
-            motor_radian, motor_velocity, pendulum_radian, pendulum_velocity, step_id, _ = self_servo.read_and_pub()
-            self.limit_check()
+            print("!!!!!!!!!", self.step_id)
             return QuanserStateResponse(
                 message="OK"
             )
 
         elif info == "reset":
             print("reset")
+            self.step_id += 1
             self.manual_swing_up()
             self.manual_balance()
-            motor_radian, motor_velocity, pendulum_radian, pendulum_velocity, step_id, _ = self_servo.read_and_pub()
-            self.limit_check()
-            self.step_id += 1
+            motor_radian, motor_velocity, pendulum_radian, pendulum_velocity, step_id = self_servo.read_and_pub()
+            print(motor_radian, motor_velocity, pendulum_radian, pendulum_velocity)
+        
             return QuanserStateResponse(
-                message="OK"
+                message="OK",
+                motor_radian=motor_radian, motor_velocity=motor_velocity,
+                pendulum_radian=pendulum_radian, pendulum_velocity=pendulum_velocity
             )
 
     def reset(self):
@@ -177,6 +167,8 @@ class QubeServo2:
         # to signed
         if motor_command & 0x0400:
             motor_command = motor_command | 0xfc00
+        
+        print("__motor_command_split : ", motor_command, type(motor_command)) 
 
         # add amplifier bit
         motor_command = (motor_command & 0x7fff) | 0x8000
@@ -215,7 +207,7 @@ class QubeServo2:
             red_h, red_l, green_h, green_l, blue_h, blue_l = 0x03, 0xe7, 0x03, 0xe7, 0x03, 0xe7
         else:
             red_h, red_l, green_h, green_l, blue_h, blue_l = 0x00, 0x00, 0x00, 0x00, 0x00, 0x00
-
+        print("motor_command : ",motor_command)
         motor_command_h, motor_command_l = self.__motor_command_split(motor_command)
 
         data = self.spi.xfer2([
@@ -241,7 +233,6 @@ class QubeServo2:
         ])
 
         print("***** Pendulum Reset Complete!!! step : {} ***** ".format(step_id))
-
 
 
     def limit_check(self):
@@ -340,6 +331,8 @@ class QubeServo2:
                 self.__set_motor_command(motor_PWM, "blue")
 
         print("\n***** Swing Up complete!!! *****")
+        
+        return None
 
     def manual_balance(self):
         theta_n_k1 = 0.0
@@ -420,39 +413,21 @@ class QubeServo2:
 
     # read radian and if step_id is changed, publish to env.
     def read_and_pub(self):
-        if self.step_id != self.last_step_id and self.is_action:
-            motor_radian, pendulum_radian = self.__set_motor_command(self.motor_command, "green")
+        print(self.step_id, self.last_step_id, self.motor_command)
+        motor_radian, pendulum_radian = self.__set_motor_command(int(self.motor_command), "green")
+        print("motor_radian, pendulum_radian", motor_radian, pendulum_radian)
 
-            motor_velocity = (motor_radian - self.last_motor_radian) / (UNIT_TIME * 5)
-            pendulum_velocity = (pendulum_radian - self.last_pendulum_radian) / (UNIT_TIME * 5)
+        motor_velocity = (motor_radian - self.last_motor_radian) / (UNIT_TIME * 5)
+        pendulum_velocity = (pendulum_radian - self.last_pendulum_radian) / (UNIT_TIME * 5)
 
-            self.last_motor_radian = motor_radian
-            self.last_pendulum_radian = pendulum_radian
+        self.last_motor_radian = motor_radian
+        self.last_pendulum_radian = pendulum_radian
 
-            self.is_action = False
-            self.last_step_id = self.step_id
+        self.is_action = False
+        self.last_step_id = self.step_id
 
-            # self.pub.publish(
-            #    topic = MQTT_PUB_TO_ENV,
-            #    payload = "{0}|{1}|{2}|{3}|{4}".format(
-            #        motor_radian, motor_velocity, pendulum_radian, pendulum_velocity, self.step),
-            #    qos = 0
-            # )
-            # current_time = float(datetime.utcnow().strftime('%S.%f')[:-1])
-            # with open(self.log_f, 'a') as log:
-            #     t_d = current_time - self.last_pub_time
-            #     log.write(" <== pub time : {:f}".format(t_d) + '\n')
-            #     if not t_d > 1.0:
-            #         self.pub_t_list.append(t_d)
-            # self.last_pub_time = current_time
-            if self.step_id_for_edgex == 11:
-                self.step_id_for_edgex = 0
-            # print("[INFO] motor_radian- ", motor_radian)
-            # print("[INFO] motor_velocity- ", motor_velocity)
-            # print("[INFO] pendulum_radian- ", pendulum_radian)
-            # print("[INFO] pendulum_velocity- ", pendulum_velocity)
-            self.step_id_for_edgex = self.step_id_for_edgex + 1
-            return motor_radian, motor_velocity, pendulum_radian, pendulum_velocity, int(self.step_id), self.step_id_for_edgex
+        
+        return motor_radian, motor_velocity, pendulum_radian, pendulum_velocity, float(self.step_id)
 
     # set motor command to last subscribe command.
     def set_motor_command(self):
@@ -467,13 +442,6 @@ class QubeServo2:
         self.__set_motor_command(0, color)
 
         motor_radian, pendulum_radian = self.read_data()
-
-        # self.pub.publish(
-        #    topic = MQTT_PUB_TO_ENV,
-        #    payload = "{0}|{1}|{2}|{3}|{4}".format(
-        #        motor_radian, 0, pendulum_radian, 0, self.step),
-        #    qos = 0
-        # )
 
         if self.pendulum_count == 11:
             self.pendulum_count = 0
