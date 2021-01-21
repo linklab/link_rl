@@ -1,6 +1,7 @@
 import time
 
 import gym
+from gym import spaces
 import numpy as np
 import grpc
 
@@ -8,16 +9,14 @@ import grpc
 from codes.b_environments.quanser_rotary_inverted_pendulum import quanser_service_pb2_grpc
 from common.environments.environment import Environment
 
-from codes.b_environments.quanser_rotary_inverted_pendulum.quanser_service_pb2 import QuanserResetRequest, QuanserStepRequest
+from codes.b_environments.quanser_rotary_inverted_pendulum.quanser_service_pb2 import QuanserStepRequest
 
 
 STATE_SIZE = 4
 
-balance_motor_power_list = [-60, 0, 60]
+balance_motor_power_list = [-60., 0., 60.]
 
-PUB_ID = 0
-
-RIP_SERVER = '192.168.0.254'
+RIP_SERVER = '192.168.0.13'
 
 
 class EnvironmentQuanserRIP(gym.Env):
@@ -54,24 +53,33 @@ class EnvironmentQuanserRIP(gym.Env):
 
         self.global_step = 0
 
+        low = np.array([0, 0, 0, 0], dtype=np.float32)
+        high = np.array([360, 100, 360, 100], dtype=np.float32)
+
+        self.observation_space = gym.spaces.Box(
+            low=low, high=high, dtype=np.float32
+        )
+
+        self.action_space = spaces.Discrete(3)
+
         channel = grpc.insecure_channel('{0}:50051'.format(RIP_SERVER))
         self.server_obj = quanser_service_pb2_grpc.QuanserRIPStub(channel)
 
     def __pendulum_reset(self):
-        quanser_response = self.server_obj.step(QuanserStepRequest(value=0, info='pendulum_reset', step=self.global_step))
+        quanser_response = self.server_obj.step(QuanserStepRequest(value=0., info='pendulum_reset', step_id=float(self.global_step)))
         if quanser_response.message != "OK":
             raise ValueError()
-        # require_response=False
 
     # RIP Manual Swing & Balance
     def manual_swingup_balance(self):
-        quanser_response = self.server_obj.step(QuanserStepRequest(value=0, info='reset', step=self.global_step))
+        quanser_response = self.server_obj.step(QuanserStepRequest(value=0., info='reset', step_id=float(self.global_step)))
         if quanser_response.message != "OK":
             raise ValueError()
+        return [quanser_response.pendulum_radian, quanser_response.motor_velocity, quanser_response.motor_radian, quanser_response.motor_velocity]
 
     # for restarting episode
     def wait(self):
-        quanser_response = self.server_obj.step(QuanserStepRequest(value=0, info='wait', step=self.global_step))
+        quanser_response = self.server_obj.step(QuanserStepRequest(value=0., info='wait', step_id=float(self.global_step)))
         if quanser_response.message != "OK":
             raise ValueError()
 
@@ -119,18 +127,18 @@ class EnvironmentQuanserRIP(gym.Env):
 
         self.__pendulum_reset()
         self.wait()
-        self.manual_swingup_balance()
+        self.state = self.manual_swingup_balance()
         self.is_motor_limit = False
 
         self.episode += 1
         self.previous_time = time.perf_counter()
+        self.global_step += 1
 
         return np.asarray(self.state)
 
     def step(self, action):
         motor_power = balance_motor_power_list[int(action)]
-
-        quanser_response = self.server_obj.step(QuanserStepRequest(value=motor_power, info='balance', step=self.global_step))
+        quanser_response = self.server_obj.step(QuanserStepRequest(value=float(motor_power), info='balance', step_id=float(self.global_step)))
         if quanser_response.message != "OK":
             raise ValueError()
 
@@ -170,7 +178,7 @@ class EnvironmentQuanserRIP(gym.Env):
 
         self.global_step += 1
 
-        return next_state, self.reward, adjusted_reward, done, info
+        return next_state, adjusted_reward, done, info
 
     def __isDone(self):
         info = {}
@@ -195,6 +203,6 @@ class EnvironmentQuanserRIP(gym.Env):
             return False, info
 
     def close(self):
-        quanser_response = self.server_obj.step(QuanserStepRequest(value=0, info='None', step=self.global_step))
+        quanser_response = self.server_obj.step(QuanserStepRequest(value=0., info='None', step_id=float(self.global_step)))
         if quanser_response.message != "OK":
             raise ValueError()

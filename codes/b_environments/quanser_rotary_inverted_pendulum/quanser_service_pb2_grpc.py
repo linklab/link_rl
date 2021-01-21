@@ -2,7 +2,7 @@
 """Client and server classes corresponding to protobuf-defined services."""
 import grpc
 
-import codes.b_environments.quanser_rotary_inverted_pendulum.quanser_service_pb2 as quanser__service__pb2
+from codes.b_environments.quanser_rotary_inverted_pendulum import quanser_service_pb2 as quanser__service__pb2
 
 
 class QuanserRIPStub(object):
@@ -14,11 +14,6 @@ class QuanserRIPStub(object):
         Args:
             channel: A grpc.Channel.
         """
-        self.reset = channel.unary_unary(
-                '/QuanserRIP/reset',
-                request_serializer=quanser__service__pb2.QuanserResetRequest.SerializeToString,
-                response_deserializer=quanser__service__pb2.QuanserStateResponse.FromString,
-                )
         self.step = channel.unary_unary(
                 '/QuanserRIP/step',
                 request_serializer=quanser__service__pb2.QuanserStepRequest.SerializeToString,
@@ -29,12 +24,6 @@ class QuanserRIPStub(object):
 class QuanserRIPServicer(object):
     """Missing associated documentation comment in .proto file."""
 
-    def reset(self, request, context):
-        """Missing associated documentation comment in .proto file."""
-        context.set_code(grpc.StatusCode.UNIMPLEMENTED)
-        context.set_details('Method not implemented!')
-        raise NotImplementedError('Method not implemented!')
-
     def step(self, request, context):
         """Missing associated documentation comment in .proto file."""
         context.set_code(grpc.StatusCode.UNIMPLEMENTED)
@@ -44,11 +33,6 @@ class QuanserRIPServicer(object):
 
 def add_QuanserRIPServicer_to_server(servicer, server):
     rpc_method_handlers = {
-            'reset': grpc.unary_unary_rpc_method_handler(
-                    servicer.reset,
-                    request_deserializer=quanser__service__pb2.QuanserResetRequest.FromString,
-                    response_serializer=quanser__service__pb2.QuanserStateResponse.SerializeToString,
-            ),
             'step': grpc.unary_unary_rpc_method_handler(
                     servicer.step,
                     request_deserializer=quanser__service__pb2.QuanserStepRequest.FromString,
@@ -63,23 +47,6 @@ def add_QuanserRIPServicer_to_server(servicer, server):
  # This class is part of an EXPERIMENTAL API.
 class QuanserRIP(object):
     """Missing associated documentation comment in .proto file."""
-
-    @staticmethod
-    def reset(request,
-            target,
-            options=(),
-            channel_credentials=None,
-            call_credentials=None,
-            insecure=False,
-            compression=None,
-            wait_for_ready=None,
-            timeout=None,
-            metadata=None):
-        return grpc.experimental.unary_unary(request, target, '/QuanserRIP/reset',
-            quanser__service__pb2.QuanserResetRequest.SerializeToString,
-            quanser__service__pb2.QuanserStateResponse.FromString,
-            options, channel_credentials,
-            insecure, call_credentials, compression, wait_for_ready, timeout, metadata)
 
     @staticmethod
     def step(request,
