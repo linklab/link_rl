@@ -3,7 +3,7 @@ import random
 
 from gym import Env
 from gym.spaces import Box, Discrete
-from gym.vector import AsyncVectorEnv, SyncVectorEnv, VectorEnv
+from gym.vector import SyncVectorEnv, VectorEnv
 from numpy import random
 
 import gym
@@ -12,24 +12,24 @@ from torch import optim
 import os, sys
 
 from codes.c_models.continuous_action.soft_actor_critic_model import SoftActorCriticModel
-from codes.d_agents.continuous_action.continuous_sac_agent import AgentSAC
+from codes.d_agents.on_policy.continuous_sac_agent import AgentSAC
 
 current_path = os.path.dirname(os.path.realpath(__file__))
 PROJECT_HOME = os.path.abspath(os.path.join(current_path, os.pardir, os.pardir))
 if PROJECT_HOME not in sys.path:
     sys.path.append(PROJECT_HOME)
 
-from codes.d_agents.continuous_action.continuous_a2c_agent import AgentContinuousA2C
-from codes.d_agents.continuous_action.continuous_ppo_agent import AgentContinuousPPO
-from codes.d_agents.discrete_action.discrete_a2c_agent import AgentDiscreteA2C
-from codes.d_agents.discrete_action.dqn_agent import AgentDQN
+from codes.d_agents.on_policy.continuous_a2c_agent import AgentContinuousA2C
+from codes.d_agents.on_policy.continuous_ppo_agent import AgentContinuousPPO
+from codes.d_agents.on_policy.discrete_a2c_agent import AgentDiscreteA2C
+from codes.d_agents.off_policy.dqn_agent import AgentDQN
 
 from codes.c_models.continuous_action.deterministic_actor_critic_model import DeterministicActorCriticModel
 from codes.c_models.continuous_action.stochastic_actor_critic_model import StochasticActorCriticModel
 from codes.c_models.discrete_action.discrete_actor_critic_model import DiscreteActorCriticModel
 from codes.c_models.discrete_action.dqn_model import DuelingDQNModel
 
-from codes.d_agents.continuous_action.ddpg_agent import AgentDDPG
+from codes.d_agents.off_policy.ddpg_agent import AgentDDPG
 
 from codes.e_utils.actions import EpsilonGreedyDDPGActionSelector, EpsilonTracker, EpsilonGreedyDQNActionSelector, \
     ProbabilityActionSelector, ContinuousNormalActionSelector, EpsilonGreedySomeTimesBlowDDPGActionSelector
@@ -153,7 +153,6 @@ def get_single_environment(owner="cheif", params=None):
         EnvironmentName.PYBULLET_ANT_V0, EnvironmentName.PYBULLET_HALF_CHEETAH_V0,
         EnvironmentName.PYBULLET_MINITAUR_BULLET_V0, EnvironmentName.PYBULLET_INVERTED_DOUBLE_PENDULUM_V0
     ]:
-        import pybullet_envs
         spec = gym.envs.registry.spec(params.ENVIRONMENT_ID.value)
         spec._kwargs['render'] = params.ENV_RENDER
         env = gym.make(params.ENVIRONMENT_ID.value)

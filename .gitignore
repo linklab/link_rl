@@ -145,3 +145,5 @@ codes/1.environments/trade/raw_data
 *.dump
 
 wandb
+
+/temp/*.pth
