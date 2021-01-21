@@ -94,13 +94,13 @@ class AgentContinuousA2C(OnPolicyAgent):
         # advantage_v.shape: (32, 1)
         advantage_v = target_action_values_v.unsqueeze(dim=-1).detach() - value_v.detach()
 
-        covariance_matrix = torch.diag_embed(var_v).to(self.device)
-        dist = MultivariateNormal(loc=mu_v, covariance_matrix=covariance_matrix)
-        # dist = Normal(loc=mu_v, scale=torch.sqrt(var_v))
+        # covariance_matrix = torch.diag_embed(var_v).to(self.device)
+        # dist = MultivariateNormal(loc=mu_v, covariance_matrix=covariance_matrix)
+        # log_pi_action_v = advantage_v * dist.log_prob(actions_v).unsqueeze(-1)
+        dist = Normal(loc=mu_v, scale=torch.sqrt(var_v))
+        log_pi_action_v = advantage_v * dist.log_prob(actions_v)
 
-        log_pi_action_v = advantage_v * dist.log_prob(actions_v).unsqueeze(-1)
-
-        #print(advantage_v.size(), dist.log_prob(actions_v).unsqueeze(-1).size(), log_pi_action_v.size())
+        print(advantage_v.size(), dist.log_prob(actions_v).size(), log_pi_action_v.size())
 
         # log_pi_v = advantage_v * self.calc_log_pi(mu_v, self.model.base.actor.logstd, actions_v)
         loss_actor_v = -1.0 * log_pi_action_v.mean()
