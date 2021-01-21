@@ -2,8 +2,6 @@ syntax="proto3";
 
 service QuanserRIP {
 
-  rpc reset(QuanserResetRequest) returns (QuanserStateResponse) {}
-
   rpc step(QuanserStepRequest) returns (QuanserStateResponse) {}
 
 }
@@ -11,12 +9,7 @@ service QuanserRIP {
 message QuanserStepRequest {
   float value = 1;
   string info = 2;
-  float step = 3;
-}
-
-message QuanserResetRequest {
-  string info = 1;
-  float step = 2;
+  float step_id = 3;
 }
 
 message QuanserStateResponse {
@@ -25,7 +18,7 @@ message QuanserStateResponse {
   float motor_velocity = 3;
   float pendulum_radian = 4;
   float pendulum_velocity = 5;
-  float step = 6;
+  float step_id = 6;
   bool is_motor_limit = 7;
   bool reset_complete = 8;
 }
