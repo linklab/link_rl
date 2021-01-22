@@ -198,7 +198,7 @@ class AgentDQN(OffPolicyAgent):
         # and to get rid of the extra dimensions that we created, respectively.
         # The index should have the same number of dimensions as the data we are processing.
         # In Figure 6.3, you can see an illustration of what gather() does on the example case, with a batch of six entries and four actions:
-        action_values = self.model(states_v).gather(1, actions_v.unsqueeze(-1)).squeeze(-1)
+        action_values = self.model(states_v).gather(dim=1, index=actions_v.unsqueeze(-1)).squeeze(-1)
 
         with torch.no_grad():
             next_state_values = self.target_agent.target_model(next_states_v).max(1)[0]

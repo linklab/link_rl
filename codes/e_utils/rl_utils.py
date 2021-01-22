@@ -272,6 +272,15 @@ def get_rl_agent(env, worker_id, params, device="cpu"):
         )
 
         return agent, None
+    elif params.RL_ALGORITHM == RLAlgorithmName.DISCRETE_A2C_V0:
+        action_selector = ProbabilityActionSelector()
+
+        agent = AgentDiscreteA2C(
+            worker_id=worker_id, input_shape=input_shape, num_outputs=num_outputs,
+            action_selector=action_selector, params=params, device=device
+        )
+
+        return agent, None
     elif params.RL_ALGORITHM == RLAlgorithmName.CONTINUOUS_PPO_V0:
         action_selector = ContinuousNormalActionSelector()
 
@@ -297,15 +306,6 @@ def get_rl_agent(env, worker_id, params, device="cpu"):
         )
 
         return agent, epsilon_tracker
-    elif params.RL_ALGORITHM == RLAlgorithmName.DISCRETE_A2C_V0:
-        action_selector = ProbabilityActionSelector()
-
-        agent = AgentDiscreteA2C(
-            worker_id=worker_id, input_shape=input_shape, num_outputs=num_outputs,
-            action_selector=action_selector, params=params, device=device
-        )
-
-        return agent, None
 
 
 def get_optimizer(parameters, learning_rate, params):

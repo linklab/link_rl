@@ -8,6 +8,10 @@ def float32_preprocessor(values):
     np_values = np.array(values, dtype=np.float32)
     return torch.tensor(np_values)
 
+def long64_preprocessor(values):
+    np_values = np.array(values, dtype=np.int64)
+    return torch.tensor(np_values)
+
 
 class BaseAgent:
     """

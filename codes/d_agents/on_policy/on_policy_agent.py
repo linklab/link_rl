@@ -1,7 +1,7 @@
 import numpy as np
 import torch
 
-from codes.d_agents.a0_base_agent import BaseAgent, float32_preprocessor
+from codes.d_agents.a0_base_agent import BaseAgent, float32_preprocessor, long64_preprocessor
 from codes.e_utils import replay_buffer
 
 
@@ -18,7 +18,7 @@ class OnPolicyAgent(BaseAgent):
             experience_source=None, buffer_size=self.params.REPLAY_BUFFER_SIZE
         )
 
-    def unpack_batch_for_actor_critic(self, batch, net, params):
+    def unpack_batch_for_actor_critic(self, batch, net, params, discrete=False):
         """
         Convert batch into training tensors
         :param batch:
@@ -36,7 +36,10 @@ class OnPolicyAgent(BaseAgent):
                 last_states.append(np.array(exp.last_state, copy=False))
 
         states_v = float32_preprocessor(states).to(self.device)
-        actions_v = float32_preprocessor(actions).to(self.device)
+        if discrete:
+            actions_v = long64_preprocessor(actions).to(self.device)
+        else:
+            actions_v = float32_preprocessor(actions).to(self.device)
 
         # handle rewards
         target_action_values_np = np.array(rewards, dtype=np.float32)
