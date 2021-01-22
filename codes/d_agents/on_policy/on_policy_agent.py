@@ -39,9 +39,7 @@ class OnPolicyAgent(BaseAgent):
         actions_v = float32_preprocessor(actions).to(self.device)
 
         # handle rewards
-        rewards_np = np.array(rewards, dtype=np.float32)
-
-        target_action_values_np = (rewards_np - rewards_np.mean()) / (rewards_np.std() + 1e-5)
+        target_action_values_np = np.array(rewards, dtype=np.float32)
 
         if not_done_idx:
             last_states_v = torch.FloatTensor(np.array(last_states, copy=False)).to(self.device)

@@ -4,7 +4,11 @@ import gym
 import torch
 import numpy as np
 from collections import namedtuple, deque
+
+from gym.vector import SyncVectorEnv
 from icecream import ic
+
+from codes.e_utils.reward_changer import RewardChanger
 
 current_path = os.path.dirname(os.path.realpath(__file__))
 PROJECT_HOME = os.path.abspath(os.path.join(current_path, os.pardir, os.pardir))
@@ -49,11 +53,15 @@ class ExperienceSource:
         assert isinstance(agent, BaseAgent)
         assert isinstance(n_step, int)
         assert n_step >= 1
+
         assert isinstance(vectorized, bool)
+        self.env = env
+
         if isinstance(env, (list, tuple)):
             self.pool = env
         else:
             self.pool = [env]
+
         self.agent = agent
         self.n_step = n_step
         self.steps_delta = steps_delta
@@ -135,8 +143,8 @@ class ExperienceSource:
                     state = states[idx]
                     history = histories[idx]
 
-                    if 'original_reward' in info:
-                        cur_rewards[idx] += info['original_reward']
+                    if isinstance(self.env, RewardChanger):
+                        cur_rewards[idx] += self.env.reverse_reward(r)
                     else:
                         cur_rewards[idx] += r
 

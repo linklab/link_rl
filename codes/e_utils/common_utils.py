@@ -17,7 +17,6 @@ from codes.d_agents.a0_base_agent import float32_preprocessor
 
 #https://medium.com/analytics-vidhya/stretched-exponential-decay-function-for-epsilon-greedy-algorithm-98da6224c22f
 from codes.e_utils import wrappers
-from codes.e_utils.wrappers import OriginalRewardsWrapper
 
 
 def stretched_exponential_decay(epsilon_start, epsilon_minimum, epsilon_end_step, current_step):
@@ -96,7 +95,6 @@ def make_gym_env(env_id, rank=0, seed=0):
     set_global_seeds(seed)
 
     env = gym.make(env_id)
-    env = OriginalRewardsWrapper(env)
     env.seed(seed + rank)
 
     return env
