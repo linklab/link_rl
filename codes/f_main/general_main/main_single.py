@@ -43,13 +43,15 @@ my_logger = get_logger("main_single")
 
 
 def main(params):
+    # if params.ENVIRONMENT_ID == EnvironmentName.QUANSER_SERVO_2:
+    #     env = rl_utils.get_single_environment(params=params)
+    #     print_environment_info(env, params)
+    #     env.pendulum_reset()
+    # else:
+    #     env = rl_utils.get_environment(params=params)
+    #     print_environment_info(env, params)
     env = rl_utils.get_environment(params=params)
     print_environment_info(env, params)
-
-    if params.ENVIRONMENT_ID == EnvironmentName.QUANSER_SERVO_2:
-        env.pendulum_reset()
-    else:
-        pass
 
     agent, epsilon_tracker = rl_utils.get_rl_agent(env=env, worker_id=0, params=params, device=device)
     print_agent_info(agent, epsilon_tracker, params)

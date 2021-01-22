@@ -13,7 +13,7 @@ from common.environments.environment import Environment
 from codes.b_environments.quanser_rotary_inverted_pendulum.quanser_service_pb2 import QuanserRequest
 
 
-STATE_SIZE = 4
+STATE_SIZE = 6
 
 balance_motor_power_list = [-60., 0., 60.]
 
@@ -21,12 +21,16 @@ RIP_SERVER = '192.168.0.13'
 
 
 class EnvironmentQuanserRIP(gym.Env):
-    def __init__(self):
+    def __init__(self, action_min, action_max, env_reset=True):
         super(EnvironmentQuanserRIP, self).__init__()
         self.episode = 0
 
         self.state_space_shape = (STATE_SIZE,)
         self.action_space_shape = (len(balance_motor_power_list),)
+
+        self.action_min = action_min
+        self.action_max = action_max
+        self.env_reset = False
 
         self.reward = 0
 
@@ -44,35 +48,35 @@ class EnvironmentQuanserRIP(gym.Env):
 
         self.is_motor_limit = False
 
-        self.n_states = self.get_n_states()
-        self.n_actions = self.get_n_actions()
-
-        self.state_shape = self.get_state_shape()
-        self.action_shape = self.get_action_shape()
         self.initial_motor_radian = 0.0
-
-
-        self.continuous = False
-
-        low = np.array([0, 0, 0, 0], dtype=np.float32)
-        high = np.array([360, 100, 360, 100], dtype=np.float32)
-
+        #==================observation==========================================================
+        low = np.array([0, 0, 0, 0, 0, 0], dtype=np.float32)
+        high = np.array([1., 1., 500., 1., 1., 500,], dtype=np.float32)
         self.observation_space = gym.spaces.Box(
             low=low, high=high, dtype=np.float32
         )
+        self.n_states = self.observation_space.shape[0]
+        #=======================================================================================
 
-        self.action_space = spaces.Discrete(3)
+
+        #==================action===============================================================
+        self.action_space = gym.spaces.Box(
+            low=self.action_min, high=self.action_max, shape=(1,),
+            dtype=np.float32
+        )
+        self.n_actions = self.action_space.shape[0]
+        #=======================================================================================
 
         channel = grpc.insecure_channel('{0}:50051'.format(RIP_SERVER))
         self.server_obj = quanser_service_pb2_grpc.QuanserRIPStub(channel)
 
     def get_n_states(self):
-        n_states = 4
+        n_states = 6
         return n_states
-
-    def get_n_actions(self):
-        n_actions = 3
-        return n_actions
+    #
+    # def get_n_actions(self):
+    #     n_actions = 3
+    #     return n_actions
 
     def get_state_shape(self):
         state_shape = (2,)
@@ -137,7 +141,10 @@ class EnvironmentQuanserRIP(gym.Env):
         return np.asarray(self.state)
 
     def step(self, action):
-        motor_power = balance_motor_power_list[int(action)]
+        if type(action) is np.ndarray:
+            action = action[0]
+
+        motor_power = action
 
         #==================== Grpc and use sample time========================================
         previous_time = time.perf_counter()
@@ -145,10 +152,9 @@ class EnvironmentQuanserRIP(gym.Env):
         quanser_response = self.server_obj.step(QuanserRequest(value=float(motor_power)))
         if quanser_response.message != "STEP":
             raise ValueError()
-
         while True:
             current_time = time.perf_counter()
-            if current_time - previous_time >= 60 / 1000:
+            if current_time - previous_time >= 25 / 1000:
                 break
             time.sleep(0.0001)
         #=====================================================================================
@@ -158,6 +164,13 @@ class EnvironmentQuanserRIP(gym.Env):
         self.pendulum_radian = quanser_response.pendulum_radian
         self.pendulum_velocity = quanser_response.pendulum_velocity
         self.is_motor_limit = quanser_response.is_motor_limit
+
+        # print("===========transfer time : {0:1.6f} action : {1:3.2f}".format(previous_time - time.perf_counter(), action))
+        # print("motor radian : {0:1.3f}, motor velocity : {1:1.3f}, pendulum radian : {2:1.3f}, pendulum velocity : {3:1.3f}".format(
+        #     self.motor_radian, self.motor_velocity,
+        #       self.pendulum_radian, self.pendulum_velocity
+        #     ))
+        # print("is motor limit", self.is_motor_limit)
 
         self.state = [
             math.cos(self.pendulum_radian),
@@ -192,9 +205,10 @@ class EnvironmentQuanserRIP(gym.Env):
             self.reward = 0
             insert_to_info("*** Limit position ***")
             return True, info
-        elif abs(self.initial_motor_radian - self.motor_radian) > 0.27:
-            insert_to_info("*** Relative motor_radian exceed 15***")
-            return True, info
+        # elif abs(self.initial_motor_radian - self.motor_radian) > 0.27:
+        #     print("##############################################")
+        #     insert_to_info("*** Relative motor_radian exceed 15***")
+        #     return True, info
         else:
             insert_to_info("")
             return False, info

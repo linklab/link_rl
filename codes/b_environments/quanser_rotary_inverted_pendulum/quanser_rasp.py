@@ -59,9 +59,9 @@ class QubeServo2:
             is_motor_limit=self.motor_limit
         )
     
-    def reset(self, QuanserRequest):
+    def reset(self):
         self.motor_limit = False
-        motor_radian, motor_velocity, pendulum_radian, pendulum_velocity, step_id, _  = self_servo.set_wait()
+        motor_radian, motor_velocity, pendulum_radian, pendulum_velocity, step_id, _ = self_servo.set_wait()
         return QuanserResponse(
             message="RESET",
             motor_radian=motor_radian, motor_velocity=motor_velocity,
