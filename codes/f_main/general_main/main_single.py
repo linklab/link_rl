@@ -23,6 +23,7 @@ from codes.e_utils.experience_tracker import RewardTracker
 from codes.e_utils.logger import get_logger
 from codes.e_utils.names import RLAlgorithmName, EnvironmentName
 
+
 WANDB_DIR = os.path.join(PROJECT_HOME, "out", "wandb")
 if not os.path.exists(WANDB_DIR):
     os.makedirs(WANDB_DIR)
@@ -44,6 +45,11 @@ my_logger = get_logger("main_single")
 def main(params):
     env = rl_utils.get_environment(params=params)
     print_environment_info(env, params)
+
+    if params.ENVIRONMENT_ID == EnvironmentName.QUANSER_SERVO_2:
+        env.pendulum_reset()
+    else:
+        pass
 
     agent, epsilon_tracker = rl_utils.get_rl_agent(env=env, worker_id=0, params=params, device=device)
     print_agent_info(agent, epsilon_tracker, params)

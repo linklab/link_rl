@@ -1,4 +1,5 @@
 import time
+import math
 
 import gym
 from gym import spaces
@@ -9,7 +10,7 @@ import grpc
 from codes.b_environments.quanser_rotary_inverted_pendulum import quanser_service_pb2_grpc
 from common.environments.environment import Environment
 
-from codes.b_environments.quanser_rotary_inverted_pendulum.quanser_service_pb2 import QuanserStepRequest
+from codes.b_environments.quanser_rotary_inverted_pendulum.quanser_service_pb2 import QuanserRequest
 
 
 STATE_SIZE = 4
@@ -32,26 +33,26 @@ class EnvironmentQuanserRIP(gym.Env):
         self.steps = 0
         self.pendulum_radians = []
         self.state = []
-        self.current_pendulum_radian = 0
-        self.current_pendulum_velocity = 0
-        self.current_motor_velocity = 0
-        self.previous_time = 0.0
 
-        self.is_swing_up = True
-        self.is_state_changed = False
+        self.count_continuous_uprights = 0
+        self.is_upright = False
+
+        self.motor_radian = 0
+        self.motor_velocity = 0
+        self.pendulum_radian = 0
+        self.pendulum_velocity = 0
+
         self.is_motor_limit = False
-        self.is_limit_complete = False
-        self.is_reset_complete = False
 
         self.n_states = self.get_n_states()
         self.n_actions = self.get_n_actions()
 
         self.state_shape = self.get_state_shape()
         self.action_shape = self.get_action_shape()
+        self.initial_motor_radian = 0.0
+
 
         self.continuous = False
-
-        self.global_step = 0
 
         low = np.array([0, 0, 0, 0], dtype=np.float32)
         high = np.array([360, 100, 360, 100], dtype=np.float32)
@@ -64,24 +65,6 @@ class EnvironmentQuanserRIP(gym.Env):
 
         channel = grpc.insecure_channel('{0}:50051'.format(RIP_SERVER))
         self.server_obj = quanser_service_pb2_grpc.QuanserRIPStub(channel)
-
-    def __pendulum_reset(self):
-        quanser_response = self.server_obj.step(QuanserStepRequest(value=0., info='pendulum_reset', step_id=float(self.global_step)))
-        if quanser_response.message != "OK":
-            raise ValueError()
-
-    # RIP Manual Swing & Balance
-    def manual_swingup_balance(self):
-        quanser_response = self.server_obj.step(QuanserStepRequest(value=0., info='reset', step_id=float(self.global_step)))
-        if quanser_response.message != "OK":
-            raise ValueError()
-        return [quanser_response.pendulum_radian, quanser_response.motor_velocity, quanser_response.motor_radian, quanser_response.motor_velocity]
-
-    # for restarting episode
-    def wait(self):
-        quanser_response = self.server_obj.step(QuanserStepRequest(value=0., info='wait', step_id=float(self.global_step)))
-        if quanser_response.message != "OK":
-            raise ValueError()
 
     def get_n_states(self):
         n_states = 4
@@ -109,15 +92,37 @@ class EnvironmentQuanserRIP(gym.Env):
         action_meanings = ["LEFT", "STOP", "RIGHT"]
         return action_meanings
 
+    def pendulum_reset(self):
+        quanser_response = self.server_obj.step(QuanserRequest(value=0.0))
+        if quanser_response.message != "PENDULUM_RESET":
+            raise ValueError()
+
     def reset(self):
         self.steps = 0
         self.pendulum_radians = []
         self.reward = 0
-        self.is_motor_limit = False
 
         wait_time = 1 if self.episode == 0 else 15  # if self.episode % 10 == 0 else 3
         previousTime = time.perf_counter()
         time_done = False
+
+        quanser_response = self.server_obj.reset(QuanserRequest(value=0.0))
+        if quanser_response.message != "RESET":
+            raise ValueError()
+
+        self.motor_radian = quanser_response.motor_radian
+        self.motor_velocity = quanser_response.motor_velocity
+        self.pendulum_radian = quanser_response.pendulum_radian
+        self.pendulum_velocity = quanser_response.pendulum_velocity
+
+        self.state = [
+            math.cos(self.pendulum_radian),
+            math.sin(self.pendulum_radian),
+            self.pendulum_velocity,
+            math.cos(0),
+            math.sin(0),
+            self.motor_velocity
+        ]
 
         while not time_done:
             currentTime = time.perf_counter()
@@ -125,61 +130,52 @@ class EnvironmentQuanserRIP(gym.Env):
                 time_done = True
             time.sleep(0.0001)
 
-        self.__pendulum_reset()
-        self.wait()
-        self.state = self.manual_swingup_balance()
+        self.initial_motor_radian = self.motor_radian
         self.is_motor_limit = False
-
         self.episode += 1
-        self.previous_time = time.perf_counter()
-        self.global_step += 1
 
         return np.asarray(self.state)
 
     def step(self, action):
         motor_power = balance_motor_power_list[int(action)]
-        start_time = time.perf_counter()
-        quanser_response = self.server_obj.step(QuanserStepRequest(value=float(motor_power), info='balance', step_id=float(self.global_step)))
-        if quanser_response.message != "OK":
+
+        #==================== Grpc and use sample time========================================
+        previous_time = time.perf_counter()
+
+        quanser_response = self.server_obj.step(QuanserRequest(value=float(motor_power)))
+        if quanser_response.message != "STEP":
             raise ValueError()
-        transfer_time = time.perf_counter() - start_time
-        print("======================transfer_time : ", transfer_time)
 
-        motor_radian = quanser_response.motor_radian
-        motor_velocity = quanser_response.motor_velocity
-        pendulum_radian = quanser_response.pendulum_radian
-        pendulum_velocity = quanser_response.pendulum_velocity
+        while True:
+            current_time = time.perf_counter()
+            if current_time - previous_time >= 60 / 1000:
+                break
+            time.sleep(0.0001)
+        #=====================================================================================
+
+        self.motor_radian = quanser_response.motor_radian
+        self.motor_velocity = quanser_response.motor_velocity
+        self.pendulum_radian = quanser_response.pendulum_radian
+        self.pendulum_velocity = quanser_response.pendulum_velocity
         self.is_motor_limit = quanser_response.is_motor_limit
-        self.is_limit_complete = quanser_response.reset_complete
 
-        self.state = [pendulum_radian, pendulum_velocity, motor_radian, motor_velocity]
-        # self.state = [pendulum_radian, pendulum_velocity]
-
-        self.current_pendulum_radian = pendulum_radian
-        self.current_pendulum_velocity = pendulum_velocity
-        self.current_motor_velocity = motor_velocity
-
-        pendulum_radian = self.current_pendulum_radian
-        pendulum_angular_velocity = self.current_pendulum_velocity
-
+        self.state = [
+            math.cos(self.pendulum_radian),
+            math.sin(self.pendulum_radian),
+            self.pendulum_velocity,
+            math.cos(self.initial_motor_radian - self.motor_radian),
+            math.sin(self.initial_motor_radian - self.motor_radian),
+            self.motor_velocity
+        ]
         next_state = np.asarray(self.state)
-        self.reward = 1.0
-        adjusted_reward = self.reward / 100
+
+
+        #=======================reward===============================================================
+        self.reward = self.get_reward()
+        #=============================================================================================
+
         self.steps += 1
-        self.pendulum_radians.append(pendulum_radian)
         done, info = self.__isDone()
-
-        if not done:
-            while True:
-                current_time = time.perf_counter()
-                if current_time - self.previous_time >= 6 / 1000:
-                    break
-        else:
-            self.wait()
-
-        self.previous_time = time.perf_counter()
-
-        self.global_step += 1
 
         return next_state, self.reward, done, info
 
@@ -196,16 +192,36 @@ class EnvironmentQuanserRIP(gym.Env):
             self.reward = 0
             insert_to_info("*** Limit position ***")
             return True, info
-        elif abs(self.pendulum_radians[-1]) > 3.14 / 24:
-            self.is_fail = True
-            self.reward = 0
-            insert_to_info("*** Success ***")
+        elif abs(self.initial_motor_radian - self.motor_radian) > 0.27:
+            insert_to_info("*** Relative motor_radian exceed 15***")
             return True, info
         else:
             insert_to_info("")
             return False, info
 
-    def close(self):
-        quanser_response = self.server_obj.step(QuanserStepRequest(value=0., info='None', step_id=float(self.global_step)))
-        if quanser_response.message != "OK":
-            raise ValueError()
+    def update_current_state(self, ):
+        if abs(self.motor_radian) < math.radians(12):
+            self.count_continuous_uprights += 1
+        else:
+            self.count_continuous_uprights = 0
+
+        if self.count_continuous_uprights >= 1:
+            self.is_upright = True
+        else:
+            self.is_upright = False
+
+    def get_reward(self):
+        self.update_current_state()
+
+        if self.is_upright:
+            position_reward = math.pi - abs(self.pendulum_radian)  # math.pi - math.radians(12) ~ math.pi
+        else:
+            position_reward = (math.pi - abs(self.pendulum_radian)) / 2
+
+        energy_penalty = 2.0 * -1.0 * (abs(self.pendulum_velocity) + abs(self.motor_velocity)) / 100
+
+        reward = position_reward + energy_penalty
+
+        reward = max(0.0, reward)
+
+        return reward

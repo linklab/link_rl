@@ -19,37 +19,23 @@ DESCRIPTOR = _descriptor.FileDescriptor(
   syntax='proto3',
   serialized_options=None,
   create_key=_descriptor._internal_create_key,
-  serialized_pb=b'\n\x15quanser_service.proto\"B\n\x12QuanserStepRequest\x12\r\n\x05value\x18\x01 \x01(\x02\x12\x0c\n\x04info\x18\x02 \x01(\t\x12\x0f\n\x07step_id\x18\x03 \x01(\x02\"\xca\x01\n\x14QuanserStateResponse\x12\x0f\n\x07message\x18\x01 \x01(\t\x12\x14\n\x0cmotor_radian\x18\x02 \x01(\x02\x12\x16\n\x0emotor_velocity\x18\x03 \x01(\x02\x12\x17\n\x0fpendulum_radian\x18\x04 \x01(\x02\x12\x19\n\x11pendulum_velocity\x18\x05 \x01(\x02\x12\x0f\n\x07step_id\x18\x06 \x01(\x02\x12\x16\n\x0eis_motor_limit\x18\x07 \x01(\x08\x12\x16\n\x0ereset_complete\x18\x08 \x01(\x08\x32\x42\n\nQuanserRIP\x12\x34\n\x04step\x12\x13.QuanserStepRequest\x1a\x15.QuanserStateResponse\"\x00\x62\x06proto3'
+  serialized_pb=b'\n\x15quanser_service.proto\"\x1f\n\x0eQuanserRequest\x12\r\n\x05value\x18\x01 \x01(\x02\"\x9c\x01\n\x0fQuanserResponse\x12\x0f\n\x07message\x18\x01 \x01(\t\x12\x14\n\x0cmotor_radian\x18\x02 \x01(\x02\x12\x16\n\x0emotor_velocity\x18\x03 \x01(\x02\x12\x17\n\x0fpendulum_radian\x18\x04 \x01(\x02\x12\x19\n\x11pendulum_velocity\x18\x05 \x01(\x02\x12\x16\n\x0eis_motor_limit\x18\x06 \x01(\x08\x32\x9e\x01\n\nQuanserRIP\x12,\n\x05reset\x12\x0f.QuanserRequest\x1a\x10.QuanserResponse\"\x00\x12+\n\x04step\x12\x0f.QuanserRequest\x1a\x10.QuanserResponse\"\x00\x12\x35\n\x0ependulum_reset\x12\x0f.QuanserRequest\x1a\x10.QuanserResponse\"\x00\x62\x06proto3'
 )
 
 
 
 
-_QUANSERSTEPREQUEST = _descriptor.Descriptor(
-  name='QuanserStepRequest',
-  full_name='QuanserStepRequest',
+_QUANSERREQUEST = _descriptor.Descriptor(
+  name='QuanserRequest',
+  full_name='QuanserRequest',
   filename=None,
   file=DESCRIPTOR,
   containing_type=None,
   create_key=_descriptor._internal_create_key,
   fields=[
     _descriptor.FieldDescriptor(
-      name='value', full_name='QuanserStepRequest.value', index=0,
+      name='value', full_name='QuanserRequest.value', index=0,
       number=1, type=2, cpp_type=6, label=1,
-      has_default_value=False, default_value=float(0),
-      message_type=None, enum_type=None, containing_type=None,
-      is_extension=False, extension_scope=None,
-      serialized_options=None, file=DESCRIPTOR,  create_key=_descriptor._internal_create_key),
-    _descriptor.FieldDescriptor(
-      name='info', full_name='QuanserStepRequest.info', index=1,
-      number=2, type=9, cpp_type=9, label=1,
-      has_default_value=False, default_value=b"".decode('utf-8'),
-      message_type=None, enum_type=None, containing_type=None,
-      is_extension=False, extension_scope=None,
-      serialized_options=None, file=DESCRIPTOR,  create_key=_descriptor._internal_create_key),
-    _descriptor.FieldDescriptor(
-      name='step_id', full_name='QuanserStepRequest.step_id', index=2,
-      number=3, type=2, cpp_type=6, label=1,
       has_default_value=False, default_value=float(0),
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
@@ -67,70 +53,56 @@ _QUANSERSTEPREQUEST = _descriptor.Descriptor(
   oneofs=[
   ],
   serialized_start=25,
-  serialized_end=91,
+  serialized_end=56,
 )
 
 
-_QUANSERSTATERESPONSE = _descriptor.Descriptor(
-  name='QuanserStateResponse',
-  full_name='QuanserStateResponse',
+_QUANSERRESPONSE = _descriptor.Descriptor(
+  name='QuanserResponse',
+  full_name='QuanserResponse',
   filename=None,
   file=DESCRIPTOR,
   containing_type=None,
   create_key=_descriptor._internal_create_key,
   fields=[
     _descriptor.FieldDescriptor(
-      name='message', full_name='QuanserStateResponse.message', index=0,
+      name='message', full_name='QuanserResponse.message', index=0,
       number=1, type=9, cpp_type=9, label=1,
       has_default_value=False, default_value=b"".decode('utf-8'),
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
       serialized_options=None, file=DESCRIPTOR,  create_key=_descriptor._internal_create_key),
     _descriptor.FieldDescriptor(
-      name='motor_radian', full_name='QuanserStateResponse.motor_radian', index=1,
+      name='motor_radian', full_name='QuanserResponse.motor_radian', index=1,
       number=2, type=2, cpp_type=6, label=1,
       has_default_value=False, default_value=float(0),
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
       serialized_options=None, file=DESCRIPTOR,  create_key=_descriptor._internal_create_key),
     _descriptor.FieldDescriptor(
-      name='motor_velocity', full_name='QuanserStateResponse.motor_velocity', index=2,
+      name='motor_velocity', full_name='QuanserResponse.motor_velocity', index=2,
       number=3, type=2, cpp_type=6, label=1,
       has_default_value=False, default_value=float(0),
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
       serialized_options=None, file=DESCRIPTOR,  create_key=_descriptor._internal_create_key),
     _descriptor.FieldDescriptor(
-      name='pendulum_radian', full_name='QuanserStateResponse.pendulum_radian', index=3,
+      name='pendulum_radian', full_name='QuanserResponse.pendulum_radian', index=3,
       number=4, type=2, cpp_type=6, label=1,
       has_default_value=False, default_value=float(0),
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
       serialized_options=None, file=DESCRIPTOR,  create_key=_descriptor._internal_create_key),
     _descriptor.FieldDescriptor(
-      name='pendulum_velocity', full_name='QuanserStateResponse.pendulum_velocity', index=4,
+      name='pendulum_velocity', full_name='QuanserResponse.pendulum_velocity', index=4,
       number=5, type=2, cpp_type=6, label=1,
       has_default_value=False, default_value=float(0),
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
       serialized_options=None, file=DESCRIPTOR,  create_key=_descriptor._internal_create_key),
     _descriptor.FieldDescriptor(
-      name='step_id', full_name='QuanserStateResponse.step_id', index=5,
-      number=6, type=2, cpp_type=6, label=1,
-      has_default_value=False, default_value=float(0),
-      message_type=None, enum_type=None, containing_type=None,
-      is_extension=False, extension_scope=None,
-      serialized_options=None, file=DESCRIPTOR,  create_key=_descriptor._internal_create_key),
-    _descriptor.FieldDescriptor(
-      name='is_motor_limit', full_name='QuanserStateResponse.is_motor_limit', index=6,
-      number=7, type=8, cpp_type=7, label=1,
-      has_default_value=False, default_value=False,
-      message_type=None, enum_type=None, containing_type=None,
-      is_extension=False, extension_scope=None,
-      serialized_options=None, file=DESCRIPTOR,  create_key=_descriptor._internal_create_key),
-    _descriptor.FieldDescriptor(
-      name='reset_complete', full_name='QuanserStateResponse.reset_complete', index=7,
-      number=8, type=8, cpp_type=7, label=1,
+      name='is_motor_limit', full_name='QuanserResponse.is_motor_limit', index=5,
+      number=6, type=8, cpp_type=7, label=1,
       has_default_value=False, default_value=False,
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
@@ -147,27 +119,27 @@ _QUANSERSTATERESPONSE = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=94,
-  serialized_end=296,
+  serialized_start=59,
+  serialized_end=215,
 )
 
-DESCRIPTOR.message_types_by_name['QuanserStepRequest'] = _QUANSERSTEPREQUEST
-DESCRIPTOR.message_types_by_name['QuanserStateResponse'] = _QUANSERSTATERESPONSE
+DESCRIPTOR.message_types_by_name['QuanserRequest'] = _QUANSERREQUEST
+DESCRIPTOR.message_types_by_name['QuanserResponse'] = _QUANSERRESPONSE
 _sym_db.RegisterFileDescriptor(DESCRIPTOR)
 
-QuanserStepRequest = _reflection.GeneratedProtocolMessageType('QuanserStepRequest', (_message.Message,), {
-  'DESCRIPTOR' : _QUANSERSTEPREQUEST,
+QuanserRequest = _reflection.GeneratedProtocolMessageType('QuanserRequest', (_message.Message,), {
+  'DESCRIPTOR' : _QUANSERREQUEST,
   '__module__' : 'quanser_service_pb2'
-  # @@protoc_insertion_point(class_scope:QuanserStepRequest)
+  # @@protoc_insertion_point(class_scope:QuanserRequest)
   })
-_sym_db.RegisterMessage(QuanserStepRequest)
+_sym_db.RegisterMessage(QuanserRequest)
 
-QuanserStateResponse = _reflection.GeneratedProtocolMessageType('QuanserStateResponse', (_message.Message,), {
-  'DESCRIPTOR' : _QUANSERSTATERESPONSE,
+QuanserResponse = _reflection.GeneratedProtocolMessageType('QuanserResponse', (_message.Message,), {
+  'DESCRIPTOR' : _QUANSERRESPONSE,
   '__module__' : 'quanser_service_pb2'
-  # @@protoc_insertion_point(class_scope:QuanserStateResponse)
+  # @@protoc_insertion_point(class_scope:QuanserResponse)
   })
-_sym_db.RegisterMessage(QuanserStateResponse)
+_sym_db.RegisterMessage(QuanserResponse)
 
 
 
@@ -178,16 +150,36 @@ _QUANSERRIP = _descriptor.ServiceDescriptor(
   index=0,
   serialized_options=None,
   create_key=_descriptor._internal_create_key,
-  serialized_start=298,
-  serialized_end=364,
+  serialized_start=218,
+  serialized_end=376,
   methods=[
+  _descriptor.MethodDescriptor(
+    name='reset',
+    full_name='QuanserRIP.reset',
+    index=0,
+    containing_service=None,
+    input_type=_QUANSERREQUEST,
+    output_type=_QUANSERRESPONSE,
+    serialized_options=None,
+    create_key=_descriptor._internal_create_key,
+  ),
   _descriptor.MethodDescriptor(
     name='step',
     full_name='QuanserRIP.step',
-    index=0,
+    index=1,
     containing_service=None,
-    input_type=_QUANSERSTEPREQUEST,
-    output_type=_QUANSERSTATERESPONSE,
+    input_type=_QUANSERREQUEST,
+    output_type=_QUANSERRESPONSE,
+    serialized_options=None,
+    create_key=_descriptor._internal_create_key,
+  ),
+  _descriptor.MethodDescriptor(
+    name='pendulum_reset',
+    full_name='QuanserRIP.pendulum_reset',
+    index=2,
+    containing_service=None,
+    input_type=_QUANSERREQUEST,
+    output_type=_QUANSERRESPONSE,
     serialized_options=None,
     create_key=_descriptor._internal_create_key,
   ),

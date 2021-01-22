@@ -69,7 +69,7 @@ def get_single_environment(params=None):
         )
 
     elif params.ENVIRONMENT_ID == EnvironmentName.QUANSER_SERVO_2:
-        from codes.b_environments.quanser_rotary_inverted_pendulum.quanser_rip import EnvironmentQuanserRIP
+        from codes.b_environments.quanser_rotary_inverted_pendulum.old.quanser_rip import EnvironmentQuanserRIP
         env = EnvironmentQuanserRIP()
     elif params.ENVIRONMENT_ID in [
         EnvironmentName.CARTPOLE_V0, EnvironmentName.CARTPOLE_V1, EnvironmentName.PENDULUM_V0,

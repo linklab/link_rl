@@ -71,7 +71,7 @@ def get_single_environment(owner="cheif", params=None):
         )
 
     elif params.ENVIRONMENT_ID == EnvironmentName.QUANSER_SERVO_2:
-        from codes.b_environments.quanser_rotary_inverted_pendulum.quanser_rip import EnvironmentRIP
+        from codes.b_environments.quanser_rotary_inverted_pendulum.old.quanser_rip import EnvironmentRIP
         client = mqtt.Client(client_id="env_sub_2", transport="TCP")
         env = EnvironmentRIP(mqtt_client=client)
 
