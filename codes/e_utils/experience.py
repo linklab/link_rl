@@ -5,7 +5,7 @@ import torch
 import numpy as np
 from collections import namedtuple, deque
 
-from gym.vector import SyncVectorEnv
+from gym.vector import SyncVectorEnv, VectorEnv
 from icecream import ic
 
 from codes.e_utils.reward_changer import RewardChanger
@@ -54,13 +54,17 @@ class ExperienceSource:
         assert isinstance(n_step, int)
         assert n_step >= 1
 
-        assert isinstance(vectorized, bool)
+        assert isinstance(env, VectorEnv)
+        assert isinstance(vectorized, bool) and vectorized
+
         self.env = env
 
-        if isinstance(env, (list, tuple)):
-            self.pool = env
-        else:
-            self.pool = [env]
+        self.pool = [env]
+
+        # if isinstance(env, (list, tuple)):
+        #     self.pool = env
+        # else:
+        #     self.pool = [env]
 
         self.agent = agent
         self.n_step = n_step
@@ -95,8 +99,6 @@ class ExperienceSource:
 
         iter_idx = 0
         while True:
-            #ic("!!!!!!!!!!!!!!1")
-
             actions = [None] * len(states)
             states_input = []
             states_indices = []
@@ -130,9 +132,7 @@ class ExperienceSource:
             global_ofs = 0
             for env_idx, (env, action_n) in enumerate(zip(self.pool, grouped_actions)):
                 if self.vectorized:
-                    #print(action_n)
                     next_state_n, r_n, is_done_n, info_n = env.step(action_n)
-                    #r_n = (r_n + 8.1) / 8.1
                     #ic(env_idx, env, len(action_n), len(next_state_n), len(r_n), len(is_done_n), len(info_n))
                 else:
                     next_state, r, is_done, info = env.step(action_n[0])
@@ -143,8 +143,8 @@ class ExperienceSource:
                     state = states[idx]
                     history = histories[idx]
 
-                    if isinstance(self.env, RewardChanger):
-                        cur_rewards[idx] += self.env.reverse_reward(r)
+                    if isinstance(self.env.envs[0], RewardChanger):
+                        cur_rewards[idx] += self.env.envs[0].reverse_reward(r)
                     else:
                         cur_rewards[idx] += r
 
