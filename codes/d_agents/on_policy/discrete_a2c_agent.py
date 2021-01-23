@@ -65,8 +65,6 @@ class AgentDiscreteA2C(OnPolicyAgent):
             batch, self.model, self.params, discrete=True
         )
 
-        batch.clear()
-
         logits_v, value_v = self.model(states_v)
 
         # Critic Optimization
@@ -102,5 +100,7 @@ class AgentDiscreteA2C(OnPolicyAgent):
         self.actor_optimizer.step()
 
         gradients = self.model.get_gradients_for_current_parameters()
+
+        self.buffer.clear()
 
         return gradients, loss_critic_v.item(), loss_actor_v.item() * -1.0

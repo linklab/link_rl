@@ -186,7 +186,7 @@ class EarlyStopping:
         solved = False
 
         if step_idx < self.evaluation_min_step_idx:
-            print(f"Current step {step_idx} is less than {self.evaluation_min_step_idx}. "
+            print(f"---> Current step {step_idx} is less than {self.evaluation_min_step_idx}. "
                   f"No early stopping (and no saving) processed")
         else:
             if self.best_evaluation_value == -1.0e10:
@@ -194,7 +194,7 @@ class EarlyStopping:
 
             if evaluation_value < self.evaluation_min_threshold or evaluation_value < self.best_evaluation_value + self.delta:
                 self.counter += 1
-                print(f'EarlyStopping counter: {self.counter} out of {self.patience}. '
+                print(f'---> EarlyStopping counter: {self.counter} out of {self.patience}. '
                       f'Best evaluation value is still {self.best_evaluation_value:.2f}')
                 if self.counter >= self.patience:
                     solved = True
@@ -216,9 +216,9 @@ class EarlyStopping:
         '''Saves model when validation loss decrease.'''
         if self.verbose:
             if self.best_evaluation_value == -1.0e10:
-                print(f'evaluation_value recorded first ({evaluation_value:.2f}).  Saving model ...')
+                print(f'---> evaluation_value recorded first ({evaluation_value:.2f}).  Saving model ...')
             else:
-                print(f'evaluation_value increased ({self.best_evaluation_value:.2f} --> {evaluation_value:.2f}).  Saving model ...')
+                print(f'---> evaluation_value increased ({self.best_evaluation_value:.2f} --> {evaluation_value:.2f}).  Saving model ...')
 
         remove_models(
             self.model_save_dir,

@@ -1,13 +1,15 @@
 # https://github.com/openai/gym/blob/master/gym/envs/classic_control/pendulum.py
 # https://mspries.github.io/jimmy_pendulum.html
 #!/usr/bin/env python3
-import pickle
 from collections import deque
 
 import torch
 import os, sys
 import numpy as np
 import wandb
+
+from codes.d_agents.on_policy.on_policy_agent import OnPolicyAgent
+from codes.d_agents.off_policy.off_policy_agent import OffPolicyAgent
 
 print("PyTorch Version", torch.__version__)
 
@@ -34,26 +36,17 @@ if not os.path.exists(MODEL_SAVE_DIR):
 
 os.environ['KMP_DUPLICATE_LIB_OK'] = 'True'
 
-if torch.cuda.is_available():
-    device = torch.device("cuda")
-else:
-    device = torch.device("cpu")
+device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 
 my_logger = get_logger("main_single")
 
 
 def main(params):
-    # if params.ENVIRONMENT_ID == EnvironmentName.QUANSER_SERVO_2:
-    #     env = rl_utils.get_single_environment(params=params)
-    #     print_environment_info(env, params)
-    #     env.pendulum_reset()
-    # else:
-    #     env = rl_utils.get_environment(params=params)
-    #     print_environment_info(env, params)
-    env = rl_utils.get_environment(params=params)
-    print_environment_info(env, params)
+    train_env = rl_utils.get_environment(params=params)
+    test_env = rl_utils.get_environment(params=params)
+    print_environment_info(train_env, params)
 
-    agent, epsilon_tracker = rl_utils.get_rl_agent(env=env, worker_id=0, params=params, device=device)
+    agent, epsilon_tracker = rl_utils.get_rl_agent(env=train_env, worker_id=0, params=params, device=device)
     print_agent_info(agent, epsilon_tracker, params)
 
     if params.WANDB:
@@ -72,7 +65,7 @@ def main(params):
         wandb.run.save()
 
     experience_source = ExperienceSourceFirstLast(
-        env=env, agent=agent, gamma=params.GAMMA, n_step=params.N_STEP, vectorized=True
+        env=train_env, agent=agent, gamma=params.GAMMA, n_step=params.N_STEP, vectorized=True
     )
 
     agent.set_experience_source_to_buffer(experience_source=experience_source)
@@ -80,9 +73,6 @@ def main(params):
     stat = None
     step_idx = 0
     loss_queue = deque(maxlen=100)
-
-    trajectory = []
-
     solved = False
 
     if params.WANDB:
@@ -99,6 +89,9 @@ def main(params):
                     epsilon_tracker.udpate(step_idx)
 
                 episode_rewards, episode_steps = experience_source.pop_episode_reward_and_done_step_lst()
+
+                if len(episode_rewards) >= 1:
+                    print(episode_rewards, episode_steps)
 
                 if episode_rewards and episode_steps:
                     for current_episode_reward, current_episode_step in zip(episode_rewards, episode_steps):
@@ -121,20 +114,21 @@ def main(params):
                 if solved:
                     break
 
-                if params.RL_ALGORITHM in [RLAlgorithmName.CONTINUOUS_PPO_V0, RLAlgorithmName.DISCRETE_PPO_V0]:
-                    trajectory.append(last_experience)
-                    if len(trajectory) < params.PPO_TRAJECTORY_SIZE:
-                        continue
-                    _, last_loss, _ = agent.train_net(trajectory=trajectory)
-                    trajectory.clear()
-                elif params.RL_ALGORITHM in [RLAlgorithmName.DDPG_V0, RLAlgorithmName.DQN_V0]:
+                if isinstance(agent, OnPolicyAgent):
+                    if params.RL_ALGORITHM in [RLAlgorithmName.CONTINUOUS_PPO_V0, RLAlgorithmName.DISCRETE_PPO_V0]:
+                        if len(agent.buffer) < params.PPO_TRAJECTORY_SIZE:
+                            continue
+                    else:
+                        if len(agent.buffer) < params.BATCH_SIZE:
+                            continue
+                    _, last_loss, _ = agent.train_net(step_idx=step_idx)
+                    agent.buffer.clear()
+                elif isinstance(agent, OffPolicyAgent):
                     if len(agent.buffer) < params.MIN_REPLAY_SIZE_FOR_TRAIN:
                         continue
                     _, last_loss, _ = agent.train_net(step_idx=step_idx)
                 else:
-                    if len(agent.buffer) < params.BATCH_SIZE:
-                        continue
-                    _, last_loss, _ = agent.train_net(step_idx=step_idx)
+                    raise ValueError()
 
                 loss_queue.append(last_loss)
 
@@ -148,7 +142,8 @@ def main(params):
                 )
         finally:
             if params.ENVIRONMENT_ID in [EnvironmentName.REAL_DEVICE_RIP, EnvironmentName.REAL_DEVICE_DOUBLE_RIP]:
-                env.stop()
+                train_env.stop()
+                test_env.stop()
 
 
 if __name__ == "__main__":

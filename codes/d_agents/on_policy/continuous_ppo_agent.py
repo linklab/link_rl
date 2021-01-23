@@ -42,9 +42,9 @@ class AgentContinuousPPO(OnPolicyAgent):
             params=params
         )
 
-        self.trajectory = []
-
-        self.buffer = replay_buffer.ExperienceReplayBuffer(experience_source=None, buffer_size=self.params.BATCH_SIZE)
+        self.buffer = replay_buffer.ExperienceReplayBuffer(
+            experience_source=None, buffer_size=self.params.PPO_TRAJECTORY_SIZE
+        )
 
     def __call__(self, states, critics=None):
         if not isinstance(states, torch.FloatTensor):
@@ -56,7 +56,9 @@ class AgentContinuousPPO(OnPolicyAgent):
 
         return actions, critics
 
-    def train_net(self, trajectory):
+    def train_net(self, step_idx):
+        trajectory = self.buffer.sample(batch_size=None)
+
         trajectory_states = [experience.state for experience in trajectory]
         trajectory_states_v = torch.FloatTensor(trajectory_states).to(self.device)
 

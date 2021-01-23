@@ -1,3 +1,5 @@
+from abc import abstractmethod
+
 from codes.d_agents.a0_base_agent import BaseAgent
 from codes.e_utils import replay_buffer
 
@@ -25,3 +27,7 @@ class OffPolicyAgent(BaseAgent):
             self.buffer = replay_buffer.ExperienceReplayBuffer(
                 experience_source=None, buffer_size=self.params.REPLAY_BUFFER_SIZE
             )
+
+    @abstractmethod
+    def train_net(self, step_idx):
+        pass

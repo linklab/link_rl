@@ -1,3 +1,5 @@
+from abc import abstractmethod
+
 import numpy as np
 import torch
 
@@ -17,6 +19,10 @@ class OnPolicyAgent(BaseAgent):
         self.buffer = replay_buffer.ExperienceReplayBuffer(
             experience_source=None, buffer_size=self.params.REPLAY_BUFFER_SIZE
         )
+
+    @abstractmethod
+    def train_net(self, step_idx):
+        pass
 
     def unpack_batch_for_actor_critic(self, batch, net, params, discrete=False):
         """

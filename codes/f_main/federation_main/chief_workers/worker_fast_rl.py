@@ -29,11 +29,7 @@ MODEL_SAVE_DIR = os.path.join(PROJECT_HOME, "out", "model_save_files")
 if not os.path.exists(MODEL_SAVE_DIR):
     os.makedirs(MODEL_SAVE_DIR)
 
-if torch.cuda.is_available():
-    device = torch.device("cuda")
-else:
-    device = torch.device("cpu")
-
+device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 
 class WorkerFastRL:
     def __init__(self, logger, worker_id, worker_mqtt_client, params):

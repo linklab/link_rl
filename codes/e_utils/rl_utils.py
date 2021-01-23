@@ -3,7 +3,6 @@ import random
 from gym import Env
 from gym.spaces import Box, Discrete
 from gym.vector import SyncVectorEnv, VectorEnv
-from gym.wrappers import TransformReward
 from numpy import random
 
 import gym
@@ -111,6 +110,7 @@ def get_single_environment(params=None):
         EnvironmentName.PYBULLET_ANT_V0, EnvironmentName.PYBULLET_HALF_CHEETAH_V0,
         EnvironmentName.PYBULLET_MINITAUR_BULLET_V0, EnvironmentName.PYBULLET_INVERTED_DOUBLE_PENDULUM_V0
     ]:
+        import pybullet_envs
         spec = gym.envs.registry.spec(params.ENVIRONMENT_ID.value)
         spec._kwargs['render'] = params.ENV_RENDER
         env = gym.make(params.ENVIRONMENT_ID.value)
