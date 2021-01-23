@@ -82,7 +82,6 @@ class AgentDiscreteA2C(OnPolicyAgent):
         # advantage_v.shape: (32,)
         advantage_v = target_action_values_v - value_v.squeeze(-1).detach()
         log_pi_v = F.log_softmax(logits_v, dim=1)
-
         log_pi_action_v = log_pi_v.gather(dim=1, index=actions_v.unsqueeze(-1)).squeeze(-1)
         reinforced_log_pi_action_v = advantage_v * log_pi_action_v
 
@@ -92,7 +91,7 @@ class AgentDiscreteA2C(OnPolicyAgent):
 
         prob_v = F.softmax(logits_v, dim=1)
         entropy_v = -1.0 * (prob_v * log_pi_v).sum(dim=1).mean()
-        loss_entropy_v = -1.0 * self.params.ENTROPY_BETA * entropy_v
+        loss_entropy_v = -1.0 * self.params.ENTROPY_LOSS_WEIGHT * entropy_v
 
         # loss_actor_v를 작아지도록 만듦 --> log_pi_v.mean()가 커지도록 만듦
         # loss_entropy_v를 작아지도록 만듦 --> entropy_v가 커지도록 만듦

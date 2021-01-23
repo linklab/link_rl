@@ -12,6 +12,7 @@ import os, sys
 
 from codes.c_models.continuous_action.soft_actor_critic_model import SoftActorCriticModel
 from codes.d_agents.on_policy.continuous_sac_agent import AgentSAC
+from codes.d_agents.on_policy.discrete_ppo_agent import AgentDiscretePPO
 from codes.e_utils.reward_changer import RewardChanger
 
 current_path = os.path.dirname(os.path.realpath(__file__))
@@ -287,6 +288,15 @@ def get_rl_agent(env, worker_id, params, device="cpu"):
         agent = AgentContinuousPPO(
             worker_id=worker_id, input_shape=input_shape, num_outputs=num_outputs, action_selector=action_selector,
             action_min=action_min, action_max=action_max, params=params, device=device
+        )
+
+        return agent, None
+    elif params.RL_ALGORITHM == RLAlgorithmName.DISCRETE_PPO_V0:
+        action_selector = ProbabilityActionSelector()
+
+        agent = AgentDiscretePPO(
+            worker_id=worker_id, input_shape=input_shape, num_outputs=num_outputs,
+            action_selector=action_selector, params=params, device=device
         )
 
         return agent, None

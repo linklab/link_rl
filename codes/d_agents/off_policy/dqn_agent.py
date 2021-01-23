@@ -11,21 +11,17 @@ from codes.e_utils.names import DeepLearningModelName
 class AgentDQN(OffPolicyAgent):
     """
     """
-    def __init__(
-            self, worker_id, input_shape, num_outputs, action_selector, params,
-            preprocessor=float32_preprocessor, device="cpu"
-    ):
+    def __init__(self, worker_id, input_shape, num_outputs, action_selector, params, device="cpu"):
         super(AgentDQN, self).__init__(params=params, device=device)
         self.__name__ = "AgentDQN"
-        self.device = device
-        self.preprocessor = preprocessor
         self.action_selector = action_selector
         self.worker_id = worker_id
 
         assert params.DEEP_LEARNING_MODEL in [
             DeepLearningModelName.DUELING_DQN_MLP,
             DeepLearningModelName.DUELING_DQN_CNN,
-            DeepLearningModelName.DUELING_DQN_SMALL_CNN]
+            DeepLearningModelName.DUELING_DQN_SMALL_CNN
+        ]
         self.model = rl_utils.get_rl_model(
             worker_id=worker_id, input_shape=input_shape, num_outputs=num_outputs, params=params, device=device
         )
@@ -42,10 +38,8 @@ class AgentDQN(OffPolicyAgent):
         if not agent_states:
             agent_states = [None] * len(states)
 
-        if self.preprocessor:
-            states = self.preprocessor(states)
-            if torch.is_tensor(states):
-                states = states.to(self.device)
+        if not isinstance(states, torch.FloatTensor):
+            states = float32_preprocessor(states).to(self.device)
 
         if len(states) == 1:
             self.model.eval()
@@ -92,7 +86,7 @@ class AgentDQN(OffPolicyAgent):
 
         gradients = self.model.get_gradients_for_current_parameters()
 
-        return gradients, loss_v.detach().item()
+        return gradients, loss_v.detach().item(), None
 
     def unpack_batch(self, batch):
         states, actions, rewards, dones, last_states, last_steps = [], [], [], [], [], []

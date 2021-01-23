@@ -62,8 +62,6 @@ class AgentContinuousA2C(OnPolicyAgent):
         # target_action_values_v.shape: (32,)
         states_v, actions_v, target_action_values_v = self.unpack_batch_for_actor_critic(batch, self.model, self.params)
 
-        batch.clear()
-
         # mu_v.shape: (32, 1)
         # var_v.shape: (32, 1)
         # value_v.shape; (32, 1)
@@ -91,7 +89,7 @@ class AgentContinuousA2C(OnPolicyAgent):
         #print(advantage_v.size(), dist.log_prob(actions_v).squeeze(-1).size(), reinforced_log_pi_action_v.size())
 
         loss_actor_v = -1.0 * reinforced_log_pi_action_v.mean()
-        loss_entropy_v = -1.0 * self.params.ENTROPY_BETA * dist.entropy().mean()
+        loss_entropy_v = -1.0 * self.params.ENTROPY_LOSS_WEIGHT * dist.entropy().mean()
 
 
         # loss_actor_v를 작아지도록 만듦 --> log_pi_v.mean()가 커지도록 만듦
@@ -104,5 +102,7 @@ class AgentContinuousA2C(OnPolicyAgent):
         self.actor_optimizer.step()
 
         gradients = self.model.get_gradients_for_current_parameters()
+
+        batch.clear()
 
         return gradients, loss_critic_v.item(), loss_actor_v.item() * -1.0

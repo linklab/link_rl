@@ -137,5 +137,5 @@ class AgentSAC(BaseAgent):
         acts_v = act_dist.sample()
         q1_v, q2_v = self.model.base.twinq(states_v, acts_v)
         # element-wise minimum
-        target_values_v = torch.min(q1_v, q2_v).squeeze() - self.params.PPO_ENTROPY_WEIGHT * act_dist.log_prob(acts_v).sum(dim=1)
+        target_values_v = torch.min(q1_v, q2_v).squeeze() - self.params.ENTROPY_LOSS_WEIGHT * act_dist.log_prob(acts_v).sum(dim=1)
         return states_v, actions_v, target_values_v, target_action_values_v

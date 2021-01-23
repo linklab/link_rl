@@ -77,7 +77,7 @@ def print_configuration(env, rl_model, params):
     if params.RL_ALGORITHM == RLAlgorithmName.CONTINUOUS_PPO_V0:
         print(" PPO_K_EPOCHS: {0}".format(params.PPO_K_EPOCHS))
         print(" PPO_EPSILON_CLIP: {0}".format(params.PPO_EPSILON_CLIP))
-        print(" PPO_ENTROPY_WEIGHT: {0}".format(params.PPO_ENTROPY_WEIGHT))
+        print(" ENTROPY_LOSS_WEIGHT: {0}".format(params.ENTROPY_LOSS_WEIGHT))
 
     print("\n*** MODEL ***")
     print(" Deep Learning Model: {0}".format(params.DEEP_LEARNING_MODEL.value))

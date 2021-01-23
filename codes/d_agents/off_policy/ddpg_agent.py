@@ -13,12 +13,12 @@ class AgentDDPG(OffPolicyAgent):
     """
     Agent implementing Orstein-Uhlenbeck exploration process
     """
-    def __init__(self, input_shape, num_outputs, worker_id, action_selector, action_min, action_max, params,
-                 preprocessor=float32_preprocessor, device="cpu"):
+    def __init__(
+            self, input_shape, num_outputs, worker_id, action_selector, action_min, action_max, params, device="cpu"
+    ):
         super(AgentDDPG, self).__init__(params=params, device=device)
 
         self.__name__ = "AgentDDPG"
-        self.preprocessor = preprocessor
         self.action_selector = action_selector
         self.action_min = action_min
         self.action_max = action_max
@@ -48,10 +48,8 @@ class AgentDDPG(OffPolicyAgent):
         if not agent_states:
             agent_states = [None] * len(states)
 
-        if self.preprocessor:
-            states = self.preprocessor(states)
-            if torch.is_tensor(states):
-                states = states.to(self.device)
+        if not isinstance(states, torch.FloatTensor):
+            states = float32_preprocessor(states).to(self.device)
 
         if len(states) == 1:
             self.model.eval()
