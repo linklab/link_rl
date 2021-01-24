@@ -169,11 +169,22 @@ def main():
                 assert params.TRAIN_STEP_FREQ == 1 and exp is not None
                 trajectory.append(exp)
 
+        # #===============================20 train for one step================================
+        # if params.ENVIRONMENT_ID == EnvironmentName.QUANSER_SERVO_2:
+        #     for i in range(20):
+        #         print(i)
+        #         if len(agent.buffer) < params.MIN_REPLAY_SIZE_FOR_TRAIN:
+        #             loss_queue.put(0.0)
+        #             continue
+        #         _, loss, _ = agent.train_net(step_idx=step_idx)
+        #         loss_queue.put(loss)
+        # else:
+        # #=====================================================================================
+
         if params.RL_ALGORITHM in [RLAlgorithmName.CONTINUOUS_PPO_V0]:
             if len(trajectory) < params.PPO_TRAJECTORY_SIZE:
                 loss_queue.put(0.0)
                 continue
-
             _, loss, _ = agent.train_net(trajectory=trajectory)
             trajectory.clear()
 
