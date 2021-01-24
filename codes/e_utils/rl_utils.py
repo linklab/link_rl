@@ -32,7 +32,8 @@ from codes.c_models.discrete_action.dqn_model import DuelingDQNModel
 from codes.d_agents.off_policy.ddpg_agent import AgentDDPG
 
 from codes.e_utils.actions import EpsilonGreedyDDPGActionSelector, EpsilonTracker, EpsilonGreedyDQNActionSelector, \
-    ProbabilityActionSelector, ContinuousNormalActionSelector, EpsilonGreedySomeTimesBlowDDPGActionSelector
+    ProbabilityActionSelector, ContinuousNormalActionSelector, EpsilonGreedySomeTimesBlowDDPGActionSelector, \
+    ArgmaxActionSelector
 from codes.e_utils.common_utils import make_atari_env
 from codes.e_utils.names import EnvironmentName, DeepLearningModelName, RLAlgorithmName, OptimizerName
 
@@ -231,80 +232,45 @@ def get_rl_model(worker_id, input_shape=None, num_outputs=None, params=None, dev
 def get_rl_agent(env, worker_id, params, device="cpu"):
     input_shape, num_outputs, action_min, action_max = get_environment_input_output_info(env)
 
+    agent = None
+    epsilon_tracker = None
+
     if params.RL_ALGORITHM == RLAlgorithmName.DDPG_V0:
         if params.ENVIRONMENT_ID in [EnvironmentName.PENDULUM_MATLAB_V0, EnvironmentName.PENDULUM_MATLAB_DOUBLE_RIP_V0]:
-            action_selector = EpsilonGreedySomeTimesBlowDDPGActionSelector(
+            train_action_selector = EpsilonGreedySomeTimesBlowDDPGActionSelector(
                 epsilon=params.EPSILON_INIT, ou_enabled=True, scale_factor=params.ACTION_SCALE,
                 min_blowing_action=-10.0 * params.ACTION_SCALE, max_blowing_action=10.0 * params.ACTION_SCALE
             )
+            test_and_play_action_selector = EpsilonGreedySomeTimesBlowDDPGActionSelector(
+                epsilon=0.0, ou_enabled=False, scale_factor=params.ACTION_SCALE,
+                min_blowing_action=-10.0 * params.ACTION_SCALE, max_blowing_action=10.0 * params.ACTION_SCALE
+            )
         else:
-            action_selector = EpsilonGreedyDDPGActionSelector(
+            train_action_selector = EpsilonGreedyDDPGActionSelector(
                 epsilon=params.EPSILON_INIT, ou_enabled=True, scale_factor=params.ACTION_SCALE
+            )
+            test_and_play_action_selector = EpsilonGreedyDDPGActionSelector(
+                epsilon=0.0, ou_enabled=False, scale_factor=params.ACTION_SCALE
             )
 
         epsilon_tracker = EpsilonTracker(
-            action_selector=action_selector,
+            action_selector=train_action_selector,
             eps_start=params.EPSILON_INIT,
             eps_final=params.EPSILON_MIN,
             eps_frames=params.EPSILON_MIN_STEP
         )
 
         agent = AgentDDPG(
-            input_shape=input_shape, num_outputs=num_outputs, worker_id=worker_id, action_selector=action_selector,
+            input_shape=input_shape, num_outputs=num_outputs, worker_id=worker_id,
+            train_action_selector=train_action_selector, test_and_play_action_selector=test_and_play_action_selector,
             action_min=action_min, action_max=action_max, params=params, device=device
         )
-
-        return agent, epsilon_tracker
-    elif params.RL_ALGORITHM == RLAlgorithmName.SAC_V0:
-        action_selector = ContinuousNormalActionSelector()
-
-        agent = AgentSAC(
-            input_shape=input_shape, num_outputs=num_outputs, worker_id=worker_id, action_selector=action_selector,
-            action_min=action_min, action_max=action_max, params=params, device=device
-        )
-
-        return agent, None
-    elif params.RL_ALGORITHM == RLAlgorithmName.CONTINUOUS_A2C_V0:
-        action_selector = ContinuousNormalActionSelector()
-
-        agent = AgentContinuousA2C(
-            worker_id=worker_id, input_shape=input_shape, num_outputs=num_outputs, action_selector=action_selector,
-            action_min=action_min, action_max=action_max, params=params, device=device
-        )
-
-        return agent, None
-    elif params.RL_ALGORITHM == RLAlgorithmName.DISCRETE_A2C_V0:
-        action_selector = ProbabilityActionSelector()
-
-        agent = AgentDiscreteA2C(
-            worker_id=worker_id, input_shape=input_shape, num_outputs=num_outputs,
-            action_selector=action_selector, params=params, device=device
-        )
-
-        return agent, None
-    elif params.RL_ALGORITHM == RLAlgorithmName.CONTINUOUS_PPO_V0:
-        action_selector = ContinuousNormalActionSelector()
-
-        agent = AgentContinuousPPO(
-            worker_id=worker_id, input_shape=input_shape, num_outputs=num_outputs, action_selector=action_selector,
-            action_min=action_min, action_max=action_max, params=params, device=device
-        )
-
-        return agent, None
-    elif params.RL_ALGORITHM == RLAlgorithmName.DISCRETE_PPO_V0:
-        action_selector = ProbabilityActionSelector()
-
-        agent = AgentDiscretePPO(
-            worker_id=worker_id, input_shape=input_shape, num_outputs=num_outputs,
-            action_selector=action_selector, params=params, device=device
-        )
-
-        return agent, None
     elif params.RL_ALGORITHM == RLAlgorithmName.DQN_V0:
-        action_selector = EpsilonGreedyDQNActionSelector(epsilon=params.EPSILON_INIT)
+        train_action_selector = EpsilonGreedyDQNActionSelector(epsilon=params.EPSILON_INIT)
+        test_and_play_action_selector = ArgmaxActionSelector()
 
         epsilon_tracker = EpsilonTracker(
-            action_selector=action_selector,
+            action_selector=train_action_selector,
             eps_start=params.EPSILON_INIT,
             eps_final=params.EPSILON_MIN,
             eps_frames=params.EPSILON_MIN_STEP
@@ -312,10 +278,56 @@ def get_rl_agent(env, worker_id, params, device="cpu"):
 
         agent = AgentDQN(
             worker_id=worker_id, input_shape=input_shape, num_outputs=num_outputs,
-            action_selector=action_selector, params=params, device=device
+            train_action_selector=train_action_selector, test_and_play_action_selector=test_and_play_action_selector,
+            params=params, device=device
+        )
+    elif params.RL_ALGORITHM == RLAlgorithmName.SAC_V0:
+        train_action_selector = ContinuousNormalActionSelector()
+        test_and_play_action_selector = ContinuousNormalActionSelector()
+
+        agent = AgentSAC(
+            input_shape=input_shape, num_outputs=num_outputs, worker_id=worker_id,
+            train_action_selector=train_action_selector, test_and_play_action_selector=test_and_play_action_selector,
+            action_min=action_min, action_max=action_max, params=params, device=device
+        )
+    elif params.RL_ALGORITHM == RLAlgorithmName.CONTINUOUS_A2C_V0:
+        train_action_selector = ContinuousNormalActionSelector()
+        test_and_play_action_selector = ContinuousNormalActionSelector()
+
+        agent = AgentContinuousA2C(
+            worker_id=worker_id, input_shape=input_shape, num_outputs=num_outputs,
+            train_action_selector=train_action_selector, test_and_play_action_selector=test_and_play_action_selector,
+            action_min=action_min, action_max=action_max, params=params, device=device
+        )
+    elif params.RL_ALGORITHM == RLAlgorithmName.DISCRETE_A2C_V0:
+        train_action_selector = ProbabilityActionSelector()
+        test_and_play_action_selector = ProbabilityActionSelector()
+
+        agent = AgentDiscreteA2C(
+            worker_id=worker_id, input_shape=input_shape, num_outputs=num_outputs,
+            train_action_selector=train_action_selector, test_and_play_action_selector=test_and_play_action_selector,
+            params=params, device=device
+        )
+    elif params.RL_ALGORITHM == RLAlgorithmName.CONTINUOUS_PPO_V0:
+        train_action_selector = ContinuousNormalActionSelector()
+        test_and_play_action_selector = ContinuousNormalActionSelector()
+
+        agent = AgentContinuousPPO(
+            worker_id=worker_id, input_shape=input_shape, num_outputs=num_outputs,
+            train_action_selector=train_action_selector, test_and_play_action_selector=test_and_play_action_selector,
+            action_min=action_min, action_max=action_max, params=params, device=device
+        )
+    elif params.RL_ALGORITHM == RLAlgorithmName.DISCRETE_PPO_V0:
+        train_action_selector = ProbabilityActionSelector()
+        test_and_play_action_selector = ProbabilityActionSelector()
+
+        agent = AgentDiscretePPO(
+            worker_id=worker_id, input_shape=input_shape, num_outputs=num_outputs,
+            train_action_selector=train_action_selector, test_and_play_action_selector=test_and_play_action_selector,
+            params=params, device=device
         )
 
-        return agent, epsilon_tracker
+    return agent, epsilon_tracker
 
 
 def get_optimizer(parameters, learning_rate, params):

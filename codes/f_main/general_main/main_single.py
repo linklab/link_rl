@@ -1,6 +1,7 @@
 # https://github.com/openai/gym/blob/master/gym/envs/classic_control/pendulum.py
 # https://mspries.github.io/jimmy_pendulum.html
 #!/usr/bin/env python3
+import time
 from collections import deque
 
 import torch
@@ -21,10 +22,9 @@ if PROJECT_HOME not in sys.path:
 from codes.e_utils.experience import ExperienceSourceFirstLast
 from codes.e_utils import rl_utils
 from codes.e_utils.common_utils import save_model, print_environment_info, print_agent_info
-from codes.e_utils.experience_tracker import RewardTracker
+from codes.e_utils.experience_tracker import RewardTracker, EarlyStopping
 from codes.e_utils.logger import get_logger
-from codes.e_utils.names import RLAlgorithmName, EnvironmentName
-
+from codes.e_utils.names import RLAlgorithmName, EnvironmentName, AgentMode
 
 WANDB_DIR = os.path.join(PROJECT_HOME, "out", "wandb")
 if not os.path.exists(WANDB_DIR):
@@ -41,11 +41,7 @@ device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 my_logger = get_logger("main_single")
 
 
-def main(params):
-    train_env = rl_utils.get_environment(params=params)
-    test_env = rl_utils.get_environment(params=params)
-    print_environment_info(train_env, params)
-
+def train_main(params, train_env, test_env):
     agent, epsilon_tracker = rl_utils.get_rl_agent(env=train_env, worker_id=0, params=params, device=device)
     print_agent_info(agent, epsilon_tracker, params)
 
@@ -70,16 +66,26 @@ def main(params):
 
     agent.set_experience_source_to_buffer(experience_source=experience_source)
 
-    stat = None
     step_idx = 0
     loss_queue = deque(maxlen=100)
-    solved = False
 
     if params.WANDB:
         wandb.watch(agent.model.base)
 
+    early_stopping = EarlyStopping(
+        patience=params.STOP_PATIENCE_COUNT,
+        evaluation_min_threshold=params.STOP_MEAN_EPISODE_REWARD,
+        evaluation_min_step_idx=params.EPSILON_MIN_STEP if hasattr(params, "EPSILON_MIN_STEP") and params.EPSILON_MIN_STEP else None,
+        verbose=True,
+        delta=0.0,
+        model_save_dir=MODEL_SAVE_DIR,
+        model_save_file_prefix=params.ENVIRONMENT_ID.value,
+        agent=agent
+    )
+
     episode = 0
-    with RewardTracker(params=params, frame=False, stat=stat, early_stopping=None) as reward_tracker:
+    solved = False
+    with RewardTracker(params=params) as reward_tracker:
         try:
             while step_idx < params.MAX_GLOBAL_STEP:
                 step_idx += params.TRAIN_STEP_FREQ
@@ -96,22 +102,39 @@ def main(params):
                 if episode_rewards and episode_steps:
                     for current_episode_reward, current_episode_step in zip(episode_rewards, episode_steps):
                         episode += 1
-                        epsilon = agent.action_selector.epsilon if hasattr(agent.action_selector, 'epsilon') else None
+                        epsilon = agent.train_action_selector.epsilon if hasattr(agent.train_action_selector, 'epsilon') else None
                         mean_loss = np.mean(loss_queue) if len(loss_queue) > 0 else 0.0
 
-                        solved, mean_episode_reward = reward_tracker.set_episode_reward(
+                        train_mean_episode_reward, speed = reward_tracker.set_episode_reward(
                             episode_reward=current_episode_reward, episode_done_step=step_idx, epsilon=epsilon,
-                            last_info=last_experience.info, current_episode_step=current_episode_step,
-                            mean_loss=mean_loss, model=agent.model, wandb=wandb
+                            last_info=last_experience.info, mean_loss=mean_loss
                         )
 
-                        if solved:
-                            save_model(
-                                MODEL_SAVE_DIR, params.ENVIRONMENT_ID.value, agent, step_idx, mean_episode_reward
-                            )
-                            break
+                    test_episode_reward_mean, test_episode_reward_std = test(params, test_env, agent)
+
+                    print("[TEST EPISODES] EPISODE REWARD: {0:.4f}\u00B1{1:.4f}".format(
+                        test_episode_reward_mean, test_episode_reward_std
+                    ))
+
+                    solved = early_stopping.evaluate(
+                        evaluation_value=test_episode_reward_mean, model=agent.model, episode_done_step=step_idx
+                    )
+
+                    if params.WANDB:
+                        wandb_info = {
+                            "train episode reward": train_mean_episode_reward,
+                            "mean_loss": mean_loss,
+                            "steps/episode": current_episode_step,
+                            "speed": speed,
+                            "step_idx": step_idx,
+                            "episode": episode
+                        }
+                        if epsilon:
+                            wandb_info["epsilon"] = epsilon
+                        wandb.log(wandb_info)
 
                 if solved:
+                    print("Solved in {0} steps and {1} episodes!".format(step_idx, episode))
                     break
 
                 if isinstance(agent, OnPolicyAgent):
@@ -121,12 +144,12 @@ def main(params):
                     else:
                         if len(agent.buffer) < params.BATCH_SIZE:
                             continue
-                    _, last_loss, _ = agent.train_net(step_idx=step_idx)
+                    _, last_loss, _ = agent.train(step_idx=step_idx)
                     agent.buffer.clear()
                 elif isinstance(agent, OffPolicyAgent):
                     if len(agent.buffer) < params.MIN_REPLAY_SIZE_FOR_TRAIN:
                         continue
-                    _, last_loss, _ = agent.train_net(step_idx=step_idx)
+                    _, last_loss, _ = agent.train(step_idx=step_idx)
                 else:
                     raise ValueError()
 
@@ -146,8 +169,49 @@ def main(params):
                 test_env.stop()
 
 
+def test(params, test_env, agent):
+    agent.agent_mode = AgentMode.TEST
+
+    num_step = 0
+
+    episode_rewards = np.zeros(params.TEST_NUM_EPISODES)
+
+    for test_episode in range(params.TEST_NUM_EPISODES):
+        done = False
+        episode_reward = 0
+
+        state = test_env.reset()
+
+        num_episode_step = 0
+        while not done:
+            test_env.render()
+
+            num_step += 1
+            num_episode_step += 1
+
+            state = np.expand_dims(state, axis=0)
+
+            action, _, = agent(state)
+
+            next_state, reward, done, info = test_env.step(action[0])
+            state = next_state
+            episode_reward += reward
+
+        episode_rewards[test_episode] = episode_reward
+
+        print("[TEST EPISODE {0}] EPISODE STEPS: {1}, TOTAL STEPS: {2}, EPISODE REWARD: {3}".format(
+            test_episode, num_episode_step, num_step, episode_reward
+        ))
+
+    return np.mean(episode_rewards), np.std(episode_rewards)
+
+
 if __name__ == "__main__":
     from codes.a_config.parameters import PARAMETERS as parameters
     params = parameters
-    main(params)
+
+    train_env = rl_utils.get_environment(params=params)
+    test_env = rl_utils.get_environment(params=params)
+    print_environment_info(train_env, params)
+    train_main(params, train_env, test_env)
 

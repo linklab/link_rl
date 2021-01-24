@@ -171,26 +171,26 @@ def main():
                 loss_queue.put(0.0)
                 continue
 
-            _, loss, _ = agent.train_net(trajectory=trajectory)
+            _, loss, _ = agent.train(trajectory=trajectory)
             trajectory.clear()
 
         elif params.RL_ALGORITHM in [RLAlgorithmName.DDPG_V0]:
             if len(agent.buffer) < params.MIN_REPLAY_SIZE_FOR_TRAIN:
                 loss_queue.put(0.0)
                 continue
-            _, loss, _ = agent.train_net(step_idx=step_idx)
+            _, loss, _ = agent.train(step_idx=step_idx)
 
         elif params.RL_ALGORITHM in [RLAlgorithmName.DQN_V0]:
             if len(agent.buffer) < params.MIN_REPLAY_SIZE_FOR_TRAIN:
                 loss_queue.put(0.0)
                 continue
-            _, loss = agent.train_net(step_idx=step_idx)
+            _, loss = agent.train(step_idx=step_idx)
 
         elif params.RL_ALGORITHM in [RLAlgorithmName.DISCRETE_A2C_V0, RLAlgorithmName.CONTINUOUS_A2C_V0, RLAlgorithmName.SAC_V0]:
             if len(agent.buffer) < params.BATCH_SIZE:
                 loss_queue.put(0.0)
                 continue
-            _, loss, _ = agent.train_net(step_idx=step_idx)
+            _, loss, _ = agent.train(step_idx=step_idx)
 
         else:
             raise ValueError()

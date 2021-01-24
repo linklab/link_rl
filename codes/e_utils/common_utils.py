@@ -238,7 +238,8 @@ def print_environment_info(env, params):
 def print_agent_info(agent, epsilon_tracker, params):
     print(f"Model: {params.DEEP_LEARNING_MODEL}")
     print(f"Algorithm: {params.RL_ALGORITHM}")
-    print(f"Action Selector: {agent.action_selector}")
+    print(f"Train Action Selector: {agent.train_action_selector}")
+    print(f"Test and Play Action Selector: {agent.test_and_play_action_selector}")
     print(f"Epsilon Tracker: {epsilon_tracker if epsilon_tracker else None}")
     print(f"Optimizer: {params.OPTIMIZER}")
 

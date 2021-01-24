@@ -1,7 +1,10 @@
 import copy
+from abc import abstractmethod
 
 import numpy as np
 import torch
+
+from codes.e_utils.names import AgentMode
 
 
 def float32_preprocessor(values):
@@ -17,8 +20,13 @@ class BaseAgent:
     """
     Abstract Agent interface
     """
-    def __init__(self):
+    def __init__(self, train_action_selector, test_and_play_action_selector, params, device):
+        self.train_action_selector = train_action_selector
+        self.test_and_play_action_selector = test_and_play_action_selector
+        self.params = params
+        self.device = device
         self.buffer = None
+        self.agent_mode = AgentMode.TRAIN
         pass
 
     def initial_agent_state(self):
@@ -38,6 +46,10 @@ class BaseAgent:
         assert isinstance(agent_states, list)
         assert len(agent_states) == len(states)
 
+        raise NotImplementedError
+
+    @abstractmethod
+    def train(self, step_idx):
         raise NotImplementedError
 
 

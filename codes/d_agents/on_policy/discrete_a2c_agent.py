@@ -7,21 +7,25 @@ from codes.d_agents.a0_base_agent import BaseAgent, float32_preprocessor
 from codes.d_agents.on_policy.on_policy_agent import OnPolicyAgent
 from codes.e_utils import rl_utils, replay_buffer
 from codes.e_utils.actions import ProbabilityActionSelector
-from codes.e_utils.names import DeepLearningModelName
+from codes.e_utils.names import DeepLearningModelName, AgentMode
 
 
 class AgentDiscreteA2C(OnPolicyAgent):
     """
     """
-    def __init__(self, worker_id, input_shape, num_outputs, action_selector, params, device="cpu"):
-        super(AgentDiscreteA2C, self).__init__(params, device)
+    def __init__(
+            self, worker_id, input_shape, num_outputs,
+            train_action_selector, test_and_play_action_selector, params, device
+    ):
+        assert isinstance(train_action_selector, ProbabilityActionSelector)
+        assert isinstance(test_and_play_action_selector, ProbabilityActionSelector)
+        assert params.DEEP_LEARNING_MODEL == DeepLearningModelName.STOCHASTIC_DISCRETE_ACTOR_CRITIC_MLP
+
+        super(AgentDiscreteA2C, self).__init__(train_action_selector, test_and_play_action_selector, params, device)
+
         self.__name__ = "AgentDiscreteA2C"
         self.worker_id = worker_id
 
-        assert isinstance(action_selector, ProbabilityActionSelector)
-        self.action_selector = action_selector
-
-        assert params.DEEP_LEARNING_MODEL == DeepLearningModelName.STOCHASTIC_DISCRETE_ACTOR_CRITIC_MLP
         self.model = rl_utils.get_rl_model(
             worker_id=worker_id, input_shape=input_shape, num_outputs=num_outputs, params=params, device=self.device
         )
@@ -51,11 +55,16 @@ class AgentDiscreteA2C(OnPolicyAgent):
         probs_v = F.softmax(logits_v, dim=1)
 
         probs = probs_v.data.cpu().numpy()
-        actions = np.array(self.action_selector(probs))
+
+        if self.agent_mode == AgentMode.TRAIN:
+            actions = np.array(self.train_action_selector(probs))
+        else:
+            actions = np.array(self.test_and_play_action_selector(probs))
+
         critics = torch.zeros(size=probs_v.size())
         return actions, critics
 
-    def train_net(self, step_idx):
+    def train(self, step_idx):
         batch = self.buffer.sample(batch_size=None)
 
         # states_v.shape: (32, 3)

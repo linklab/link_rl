@@ -5,16 +5,18 @@ import torch.nn.functional as F
 from codes.d_agents.a0_base_agent import BaseAgent, TargetNet, float32_preprocessor
 from codes.d_agents.off_policy.off_policy_agent import OffPolicyAgent
 from codes.e_utils import rl_utils, replay_buffer
-from codes.e_utils.names import DeepLearningModelName
+from codes.e_utils.names import DeepLearningModelName, AgentMode
 
 
 class AgentDQN(OffPolicyAgent):
     """
     """
-    def __init__(self, worker_id, input_shape, num_outputs, action_selector, params, device="cpu"):
-        super(AgentDQN, self).__init__(params=params, device=device)
+    def __init__(
+            self, worker_id, input_shape, num_outputs,
+            train_action_selector, test_and_play_action_selector, params, device
+    ):
+        super(AgentDQN, self).__init__(train_action_selector, test_and_play_action_selector, params=params, device=device)
         self.__name__ = "AgentDQN"
-        self.action_selector = action_selector
         self.worker_id = worker_id
 
         assert params.DEEP_LEARNING_MODEL in [
@@ -49,10 +51,14 @@ class AgentDQN(OffPolicyAgent):
         q_v = self.model(states)
         q = q_v.detach().cpu().numpy()
 
-        actions = self.action_selector(q)
+        if self.agent_mode == AgentMode.TRAIN:
+            actions = self.train_action_selector(q)
+        else:
+            actions = self.test_and_play_action_selector(q)
+
         return actions, agent_states
 
-    def train_net(self, step_idx):
+    def train(self, step_idx):
         if self.params.PER_PROPORTIONAL or self.params.PER_RANK_BASED:
             batch, batch_indices, batch_weights = self.buffer.sample(self.params.BATCH_SIZE)
         else:
