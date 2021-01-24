@@ -96,9 +96,6 @@ def train_main(params, train_env, test_env):
 
                 episode_rewards, episode_steps = experience_source.pop_episode_reward_and_done_step_lst()
 
-                if len(episode_rewards) >= 1:
-                    print(episode_rewards, episode_steps)
-
                 if episode_rewards and episode_steps:
                     for current_episode_reward, current_episode_step in zip(episode_rewards, episode_steps):
                         episode += 1
