@@ -132,6 +132,9 @@
 - stub 생성 방법 예: 
   - python -m grpc_tools.protoc --proto_path=. --python_out=. --grpc_python_out=. rip_service.proto
 
+### 17. swap 설치 및 에러 수정 
+- https://kibua20.tistory.com/40
+- http://aodis.egloos.com/5964233
 
 ### 참고 문헌
 - https://medium.com/aureliantactics/ppo-hyperparameters-and-ranges-6fc2d29bccbev

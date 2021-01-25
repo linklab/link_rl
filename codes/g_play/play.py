@@ -26,21 +26,12 @@ MODEL_ZOO_SAVE_DIR = os.path.join(PROJECT_HOME, "codes", "g_play", "model_zoo")
 
 os.environ['KMP_DUPLICATE_LIB_OK'] = 'True'
 
-if torch.cuda.is_available():
-    device = torch.device("cuda")
-else:
-    device = torch.device("cpu")
+device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 
 my_logger = get_logger("openai_pendulum_ddpg")
 
 
-def play_main(params):
-    params.ENV_RENDER = True
-    env = rl_utils.get_single_environment(owner="actual_worker", params=params)
-    print("env:", params.ENVIRONMENT_ID)
-    print("observation_space:", env.observation_space)
-    print("action_space:", env.action_space)
-
+def play_main(params, env):
     agent, _ = rl_utils.get_rl_agent(env=env, worker_id=0, params=params, device=device)
 
     load_model(MODEL_ZOO_SAVE_DIR, params.ENVIRONMENT_ID.value, agent)
@@ -111,4 +102,11 @@ def play_main(params):
 if __name__ == "__main__":
     from codes.a_config.parameters import PARAMETERS as parameters
     params = parameters
-    play_main(params)
+
+    params.ENV_RENDER = True
+    env = rl_utils.get_single_environment(params=params)
+    print("env:", params.ENVIRONMENT_ID)
+    print("observation_space:", env.observation_space)
+    print("action_space:", env.action_space)
+
+    play_main(params, env)

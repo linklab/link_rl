@@ -29,11 +29,7 @@ MODEL_SAVE_DIR = os.path.join(PROJECT_HOME, "out", "model_save_files")
 if not os.path.exists(MODEL_SAVE_DIR):
     os.makedirs(MODEL_SAVE_DIR)
 
-if torch.cuda.is_available():
-    device = torch.device("cuda")
-else:
-    device = torch.device("cpu")
-
+device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 
 class WorkerFastRL:
     def __init__(self, logger, worker_id, worker_mqtt_client, params):
@@ -151,9 +147,9 @@ class WorkerFastRL:
                 actor_objective = None
 
                 if self.params.RL_ALGORITHM == RLAlgorithmName.DQN_V0:
-                    gradients, loss = self.agent.train_net(step_idx=step_idx)
+                    gradients, loss = self.agent.train(step_idx=step_idx)
                 elif self.params.RL_ALGORITHM in [RLAlgorithmName.DDPG_V0, RLAlgorithmName.D4PG_V0]:
-                    gradients, loss, actor_objective = self.agent.train_net(step_idx=step_idx)
+                    gradients, loss, actor_objective = self.agent.train(step_idx=step_idx)
                 else:
                     raise ValueError()
 
@@ -204,10 +200,10 @@ class WorkerFastRL:
 
         for _ in range(10):
             if self.params.RL_ALGORITHM == RLAlgorithmName.DQN_V0:
-                gradients, loss = self.agent.train_net(step_idx=step_idx)
+                gradients, loss = self.agent.train(step_idx=step_idx)
                 loss_lst.append(loss)
             elif self.params.RL_ALGORITHM in [RLAlgorithmName.DDPG_V0, RLAlgorithmName.D4PG_V0]:
-                gradients, loss, actor_objective = self.agent.train_net(step_idx=step_idx)
+                gradients, loss, actor_objective = self.agent.train(step_idx=step_idx)
                 loss_lst.append(loss)
                 actor_objective_lst.append(actor_objective)
             else:

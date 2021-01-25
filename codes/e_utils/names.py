@@ -7,6 +7,12 @@ if PROJECT_HOME not in sys.path:
     sys.path.append(PROJECT_HOME)
 
 
+class AgentMode(enum.Enum):
+    TRAIN = "TRAIN"
+    TEST = "TEST"
+    PLAY = "PLAY"
+
+
 class OSName(enum.Enum):
     MAC = "MAC"
     WINDOWS = "WINDOWS"
@@ -96,6 +102,7 @@ class RLAlgorithmName(enum.Enum):
     POLICY_GRADIENT_V0 = "POLICY_GRADIENT_V0"
     REINFORCE_V0 = "REINFORCE_V0"
 
+    DISCRETE_PPO_V0 = "DISCRETE_PPO_V0"
     CONTINUOUS_PPO_V0 = "CONTINUOUS_PPO_V0"
 
 

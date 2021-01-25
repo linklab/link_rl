@@ -5,27 +5,25 @@ import torch.nn.functional as F
 from codes.d_agents.a0_base_agent import BaseAgent, TargetNet, float32_preprocessor
 from codes.d_agents.off_policy.off_policy_agent import OffPolicyAgent
 from codes.e_utils import rl_utils, replay_buffer
-from codes.e_utils.names import DeepLearningModelName
+from codes.e_utils.names import DeepLearningModelName, AgentMode
 
 
 class AgentDQN(OffPolicyAgent):
     """
     """
     def __init__(
-            self, worker_id, input_shape, num_outputs, action_selector, params,
-            preprocessor=float32_preprocessor, device="cpu"
+            self, worker_id, input_shape, num_outputs,
+            train_action_selector, test_and_play_action_selector, params, device
     ):
-        super(AgentDQN, self).__init__(params=params, device=device)
+        super(AgentDQN, self).__init__(train_action_selector, test_and_play_action_selector, params=params, device=device)
         self.__name__ = "AgentDQN"
-        self.device = device
-        self.preprocessor = preprocessor
-        self.action_selector = action_selector
         self.worker_id = worker_id
 
         assert params.DEEP_LEARNING_MODEL in [
             DeepLearningModelName.DUELING_DQN_MLP,
             DeepLearningModelName.DUELING_DQN_CNN,
-            DeepLearningModelName.DUELING_DQN_SMALL_CNN]
+            DeepLearningModelName.DUELING_DQN_SMALL_CNN
+        ]
         self.model = rl_utils.get_rl_model(
             worker_id=worker_id, input_shape=input_shape, num_outputs=num_outputs, params=params, device=device
         )
@@ -42,10 +40,8 @@ class AgentDQN(OffPolicyAgent):
         if not agent_states:
             agent_states = [None] * len(states)
 
-        if self.preprocessor:
-            states = self.preprocessor(states)
-            if torch.is_tensor(states):
-                states = states.to(self.device)
+        if not isinstance(states, torch.FloatTensor):
+            states = float32_preprocessor(states).to(self.device)
 
         if len(states) == 1:
             self.model.eval()
@@ -55,10 +51,14 @@ class AgentDQN(OffPolicyAgent):
         q_v = self.model(states)
         q = q_v.detach().cpu().numpy()
 
-        actions = self.action_selector(q)
+        if self.agent_mode == AgentMode.TRAIN:
+            actions = self.train_action_selector(q)
+        else:
+            actions = self.test_and_play_action_selector(q)
+
         return actions, agent_states
 
-    def train_net(self, step_idx):
+    def train(self, step_idx):
         if self.params.PER_PROPORTIONAL or self.params.PER_RANK_BASED:
             batch, batch_indices, batch_weights = self.buffer.sample(self.params.BATCH_SIZE)
         else:
@@ -92,7 +92,7 @@ class AgentDQN(OffPolicyAgent):
 
         gradients = self.model.get_gradients_for_current_parameters()
 
-        return gradients, loss_v.detach().item()
+        return gradients, loss_v.detach().item(), None
 
     def unpack_batch(self, batch):
         states, actions, rewards, dones, last_states, last_steps = [], [], [], [], [], []
@@ -198,7 +198,7 @@ class AgentDQN(OffPolicyAgent):
         # and to get rid of the extra dimensions that we created, respectively.
         # The index should have the same number of dimensions as the data we are processing.
         # In Figure 6.3, you can see an illustration of what gather() does on the example case, with a batch of six entries and four actions:
-        action_values = self.model(states_v).gather(1, actions_v.unsqueeze(-1)).squeeze(-1)
+        action_values = self.model(states_v).gather(dim=1, index=actions_v.unsqueeze(-1)).squeeze(-1)
 
         with torch.no_grad():
             next_state_values = self.target_agent.target_model(next_states_v).max(1)[0]

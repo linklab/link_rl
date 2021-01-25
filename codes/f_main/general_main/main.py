@@ -36,10 +36,7 @@ if not os.path.exists(MODEL_SAVE_DIR):
 
 os.environ['KMP_DUPLICATE_LIB_OK'] = 'True'
 
-if torch.cuda.is_available():
-    device = torch.device("cuda")
-else:
-    device = torch.device("cpu")
+device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 
 my_logger = get_logger("main")
 
@@ -185,26 +182,31 @@ def main():
             if len(trajectory) < params.PPO_TRAJECTORY_SIZE:
                 loss_queue.put(0.0)
                 continue
+<<<<<<< HEAD
             _, loss, _ = agent.train_net(trajectory=trajectory)
+=======
+
+            _, loss, _ = agent.train(trajectory=trajectory)
+>>>>>>> ddb1f8a0ca0b5d42bfefdb88ec0700a782e7e241
             trajectory.clear()
 
         elif params.RL_ALGORITHM in [RLAlgorithmName.DDPG_V0]:
             if len(agent.buffer) < params.MIN_REPLAY_SIZE_FOR_TRAIN:
                 loss_queue.put(0.0)
                 continue
-            _, loss, _ = agent.train_net(step_idx=step_idx)
+            _, loss, _ = agent.train(step_idx=step_idx)
 
         elif params.RL_ALGORITHM in [RLAlgorithmName.DQN_V0]:
             if len(agent.buffer) < params.MIN_REPLAY_SIZE_FOR_TRAIN:
                 loss_queue.put(0.0)
                 continue
-            _, loss = agent.train_net(step_idx=step_idx)
+            _, loss = agent.train(step_idx=step_idx)
 
         elif params.RL_ALGORITHM in [RLAlgorithmName.DISCRETE_A2C_V0, RLAlgorithmName.CONTINUOUS_A2C_V0, RLAlgorithmName.SAC_V0]:
             if len(agent.buffer) < params.BATCH_SIZE:
                 loss_queue.put(0.0)
                 continue
-            _, loss, _ = agent.train_net(step_idx=step_idx)
+            _, loss, _ = agent.train(step_idx=step_idx)
 
         else:
             raise ValueError()

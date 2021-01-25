@@ -6,6 +6,7 @@ from codes.a_config.a_basic_parameters.parameters_pendulum_a2c import PARAMETERS
 from codes.a_config.a_basic_parameters.parameters_pendulum_ddpg import PARAMETERS_PENDULUM_DDPG
 from codes.a_config.a_basic_parameters.parameters_pendulum_d4pg import PARAMETERS_PENDULUM_D4PG
 from codes.a_config.a_basic_parameters.parameters_pendulum_ppo import PARAMETERS_PENDULUM_PPO
+from codes.a_config.a_basic_parameters.parameters_cartpole_ppo import PARAMETERS_CARTPOLE_PPO
 
 from codes.a_config.b_atari_parameters.parameters_atati_pong_dqn              import PARAMETERS_PONG_DQN
 from codes.a_config.b_atari_parameters.parameters_atari_breakout_dqn          import PARAMETERS_BREAKOUT_DQN
