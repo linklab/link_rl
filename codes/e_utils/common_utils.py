@@ -17,6 +17,7 @@ from codes.d_agents.a0_base_agent import float32_preprocessor
 
 #https://medium.com/analytics-vidhya/stretched-exponential-decay-function-for-epsilon-greedy-algorithm-98da6224c22f
 from codes.e_utils import wrappers
+from codes.e_utils.names import AgentMode
 
 
 def stretched_exponential_decay(epsilon_start, epsilon_minimum, epsilon_end_step, current_step):
@@ -200,11 +201,43 @@ def load_model(model_save_dir, env_name, agent, step=None):
     assert len(saved_models) > 0, "※※※※※※※※※※ There is no model !!!: {0} ※※※※※※※※※※".format(saved_models)
 
     saved_model = saved_models[-1]
-    print("MODEL FILE NAME: {0}".format(saved_model))
+    print("SAVED MODEL FILE NAME: {0}".format(saved_model))
     device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
     model_params = torch.load(saved_model, map_location=device)
 
     agent.model.load_state_dict(model_params)
+
+
+def agent_model_test(params, test_env, agent):
+    agent.agent_mode = AgentMode.TEST
+
+    num_step = 0
+
+    episode_rewards = np.zeros(params.TEST_NUM_EPISODES)
+
+    for test_episode in range(params.TEST_NUM_EPISODES):
+        done = False
+        episode_reward = 0
+
+        state = test_env.reset()
+
+        num_episode_step = 0
+        while not done:
+            num_step += 1
+            num_episode_step += 1
+
+            state = np.expand_dims(state, axis=0)
+
+            action, _, = agent(state)
+
+            next_state, reward, done, info = test_env.step(action[0])
+            state = next_state
+            episode_reward += reward
+
+        episode_rewards[test_episode] = episode_reward
+
+    return np.mean(episode_rewards), np.std(episode_rewards)
+
 
 
 # def print_environment_info(env, params):

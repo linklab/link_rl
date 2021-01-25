@@ -7,10 +7,9 @@ from codes.e_utils.names import EnvironmentName
 
 
 class RewardTracker:
-    def __init__(self, params, frame=True, worker_id=None):
+    def __init__(self, params, worker_id=None):
         self.params = params
         self.min_ts_diff = 1    # 1 second
-        self.frame = frame
         self.episode_reward_list = None
         self.done_episodes = 0
         self.mean_episode_reward = 0.0
@@ -74,22 +73,14 @@ class RewardTracker:
         else:
             epsilon_str = ""
 
-        if self.mean_episode_reward > self.params.STOP_MEAN_EPISODE_REWARD:
-            mean_episode_reward_str = "{0:7.3f} (SOLVED COUNT: {1})".format(
-                mean_episode_reward,
-                self.count_stop_condition_episode + 1
-            )
-        else:
-            mean_episode_reward_str = "{0:7.3f}".format(
-                mean_episode_reward
-            )
+        mean_episode_reward_str = "{0:7.3f}".format(mean_episode_reward)
 
         if isinstance(episode_reward, np.ndarray):
             episode_reward = episode_reward[0]
 
         print(
-            "{0}[{1:6}/{2}] Ep. {3}, ep._reward: {4:7.3f}, mean_{5}_ep._reward: {6},{7} "
-            "speed: {8:7.2f} {9}, {10}".format(
+            "{0}[{1:6}/{2}] Ep. {3}, EPISODE REWARD: {4:7.3f}, MEAN_{5} EPSIODE REWARD: {6},{7} "
+            "SPEED: {8:7.2f} {9}, {10}".format(
                 prefix,
                 episode_done_step,
                 self.params.MAX_GLOBAL_STEP,
@@ -99,7 +90,7 @@ class RewardTracker:
                 mean_episode_reward_str,
                 epsilon_str,
                 speed,
-                "fps" if self.frame else "steps/sec.",
+                "steps/sec.",
                 time.strftime("%Hh %Mm %Ss", time.gmtime(elapsed_time)),
         ), end="")
 
@@ -118,7 +109,7 @@ class RewardTracker:
 class EarlyStopping:
     """Early stops the training if validation loss doesn't improve after a given patience."""
     def __init__(self, patience=7, evaluation_min_threshold=0.0, evaluation_min_step_idx=0,
-                 verbose=False, delta=0.0, model_save_dir=".", model_save_file_prefix=None, agent=None):
+                 verbose=False, delta=0.0, model_save_dir=".", model_save_file_prefix=None, agent=None, params=None):
         """
         Args:
             patience (int): How long to wait after last time validation loss improved.
@@ -139,21 +130,25 @@ class EarlyStopping:
         self.model_save_dir = model_save_dir
         self.model_save_file_prefix = model_save_file_prefix
         self.agent = agent
+        self.params = params
 
-    def evaluate(self, evaluation_value, model, episode_done_step):
+    def evaluate(self, evaluation_value, episode_done_step):
         solved = False
 
         if episode_done_step < self.evaluation_min_step_idx:
-            print(f"---> Current step {episode_done_step} is less than {self.evaluation_min_step_idx}. "
-                  f"No early stopping (and no saving) processed")
+            if self.verbose:
+                print(f"---> Current step {episode_done_step} is less than {self.evaluation_min_step_idx}. "
+                      f"No early stopping (and no saving) processed")
+        elif evaluation_value < self.evaluation_min_threshold:
+            if self.verbose:
+                print(f"---> Current episode reward {evaluation_value} is less than {self.evaluation_min_threshold}. "
+                      f"No early stopping (and no saving) processed")
         else:
-            if self.best_evaluation_value == -1.0e10:
-                self.best_evaluation_value = evaluation_value
-
-            if evaluation_value < self.evaluation_min_threshold or evaluation_value < self.best_evaluation_value + self.delta:
+            if evaluation_value < self.best_evaluation_value + self.delta:
                 self.counter += 1
-                print(f'---> EarlyStopping counter: {self.counter} out of {self.patience}. '
-                      f'Best evaluation value is still {self.best_evaluation_value:.2f}')
+                if self.verbose:
+                    print(f'---> EarlyStopping counter: {self.counter} out of {self.patience}. '
+                          f'Best evaluation value is still {self.best_evaluation_value:.2f}')
                 if self.counter >= self.patience:
                     solved = True
                     load_model(
@@ -162,6 +157,14 @@ class EarlyStopping:
                         self.agent
                     )
             elif evaluation_value >= self.best_evaluation_value + self.delta:
+                if self.verbose:
+                    if self.best_evaluation_value == -1.0e10:
+                        print(f'---> *** Evaluation value {evaluation_value:.2f} recorded first.  Saving model ...')
+                    else:
+                        print(
+                            f'---> *** Evaluation value {self.best_evaluation_value:.2f} is '
+                            f'increased into {evaluation_value:.2f}.  Saving model ...'
+                        )
                 self.save_checkpoint(evaluation_value, episode_done_step)
                 self.best_evaluation_value = evaluation_value
                 self.counter = 0
@@ -172,12 +175,6 @@ class EarlyStopping:
 
     def save_checkpoint(self, evaluation_value, episode_done_step):
         '''Saves model when validation loss decrease.'''
-        if self.verbose:
-            if self.best_evaluation_value == -1.0e10:
-                print(f'---> evaluation_value recorded first ({evaluation_value:.2f}).  Saving model ...')
-            else:
-                print(f'---> evaluation_value increased ({self.best_evaluation_value:.2f} --> {evaluation_value:.2f}).  Saving model ...')
-
         remove_models(
             self.model_save_dir,
             self.model_save_file_prefix,

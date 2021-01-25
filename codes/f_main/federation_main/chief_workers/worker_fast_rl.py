@@ -22,7 +22,7 @@ from codes.e_utils.actions import EpsilonGreedySomeTimesBlowDQNActionSelector, \
     EpsilonGreedySomeTimesBlowDDPGActionSelector
 from codes.e_utils.common_utils import save_model
 from codes.e_utils.experience_single import ExperienceSourceSingleEnvFirstLast
-from codes.e_utils.names import EnvironmentName, RLAlgorithmName
+from codes.e_utils.names import EnvironmentName, RLAlgorithmName, ModelSaveMode
 from codes.f_main.federation_main.federated_main.utils import exp_moving_average
 
 MODEL_SAVE_DIR = os.path.join(PROJECT_HOME, "out", "model_save_files")
@@ -187,7 +187,7 @@ class WorkerFastRL:
                     gradients, current_episode_reward, episode, step_idx, solved, loss, actor_objective
                 )
 
-            if params.SAVE_AT_MAX_GLOBAL_STEPS:
+            if params.MODEL_SAVE_MODE == ModelSaveMode.FINAL_ONLY:
                 save_model(
                     MODEL_SAVE_DIR, params.ENVIRONMENT_ID.value, self.agent, step_idx, mean_episode_reward
                 )

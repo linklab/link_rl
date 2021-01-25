@@ -8,7 +8,7 @@ import numpy as np
 
 from codes.e_utils.actions import EpsilonGreedySomeTimesBlowDQNActionSelector, \
     EpsilonGreedySomeTimesBlowDDPGActionSelector, ArgmaxActionSelector, EpsilonGreedyDDPGActionSelector, \
-    ContinuousNormalActionSelector
+    ContinuousNormalActionSelector, ProbabilityActionSelector
 
 print("PyTorch Version", torch.__version__)
 
@@ -49,8 +49,10 @@ def play_main(params, env):
         else:
             raise ValueError()
     else:
-        if params.RL_ALGORITHM == RLAlgorithmName.CONTINUOUS_PPO_V0:
+        if params.RL_ALGORITHM in [RLAlgorithmName.CONTINUOUS_A2C_V0, RLAlgorithmName.CONTINUOUS_PPO_V0]:
             action_selector = ContinuousNormalActionSelector()
+        elif params.RL_ALGORITHM in [RLAlgorithmName.DISCRETE_A2C_V0, RLAlgorithmName.DISCRETE_PPO_V0]:
+            action_selector = ProbabilityActionSelector()
         elif params.RL_ALGORITHM == RLAlgorithmName.DQN_V0:
             action_selector = ArgmaxActionSelector()
         elif params.RL_ALGORITHM == RLAlgorithmName.DDPG_V0:

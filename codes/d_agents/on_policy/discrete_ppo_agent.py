@@ -58,7 +58,6 @@ class AgentDiscretePPO(OnPolicyAgent):
         logits_v = self.model.base.forward_actor(states)
 
         probs_v = F.softmax(logits_v, dim=1)
-
         probs = probs_v.data.cpu().numpy()
 
         if self.agent_mode == AgentMode.TRAIN:

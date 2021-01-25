@@ -1,4 +1,4 @@
-from codes.e_utils.names import EnvironmentName, RLAlgorithmName, DeepLearningModelName, OptimizerName
+from codes.e_utils.names import EnvironmentName, RLAlgorithmName, DeepLearningModelName, OptimizerName, ModelSaveMode
 
 
 class PARAMETERS_GENERAL:
@@ -118,9 +118,10 @@ class PARAMETERS_GENERAL:
     CUDA_VISIBLE_DEVICES_NUMBER_LIST = '1, 2'
 
     RNN_STEP_LENGTH = 2
-    SAVE_AT_MAX_GLOBAL_STEPS = False
 
     WANDB = True
 
     TEST_NUM_EPISODES = 5
+    EARLY_STOPPING_TEST_EPISODE_PERIOD = 10
+    MODEL_SAVE_MODE = ModelSaveMode.TRAIN
 
