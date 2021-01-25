@@ -182,12 +182,7 @@ def main():
             if len(trajectory) < params.PPO_TRAJECTORY_SIZE:
                 loss_queue.put(0.0)
                 continue
-<<<<<<< HEAD
-            _, loss, _ = agent.train_net(trajectory=trajectory)
-=======
-
             _, loss, _ = agent.train(trajectory=trajectory)
->>>>>>> ddb1f8a0ca0b5d42bfefdb88ec0700a782e7e241
             trajectory.clear()
 
         elif params.RL_ALGORITHM in [RLAlgorithmName.DDPG_V0]:
