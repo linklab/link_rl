@@ -212,7 +212,6 @@ def main():
                 play_proc.join()
                 break
             agent.buffer._add(exp)
-
         if isinstance(agent, OnPolicyAgent):
             if params.RL_ALGORITHM in [RLAlgorithmName.CONTINUOUS_PPO_V0, RLAlgorithmName.DISCRETE_PPO_V0]:
                 if len(agent.buffer) < params.PPO_TRAJECTORY_SIZE:
@@ -223,6 +222,17 @@ def main():
             _, last_loss, _ = agent.train(step_idx=step_idx)
             agent.buffer.clear()
         elif isinstance(agent, OffPolicyAgent):
+            # #===============================20 train for one step================================
+            # if params.ENVIRONMENT_ID == EnvironmentName.QUANSER_SERVO_2:
+            #     for i in range(20):
+            #         print(i)
+            #         if len(agent.buffer) < params.MIN_REPLAY_SIZE_FOR_TRAIN:
+            #             loss_queue.put(0.0)
+            #             continue
+            #         _, loss, _ = agent.train_net(step_idx=step_idx)
+            #         loss_queue.put(loss)
+            # else:
+            # #=====================================================================================
             if len(agent.buffer) < params.MIN_REPLAY_SIZE_FOR_TRAIN:
                 continue
             _, last_loss, _ = agent.train(step_idx=step_idx)

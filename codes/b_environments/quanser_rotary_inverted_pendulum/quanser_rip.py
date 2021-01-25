@@ -183,13 +183,12 @@ class EnvironmentQuanserRIP(gym.Env):
         next_state = np.asarray(self.state)
 
 
-        #=======================reward===============================================================
+        #=======================reward================================================================
         self.reward = self.get_reward()
         #=============================================================================================
 
         self.steps += 1
         done, info = self.__isDone()
-
         return next_state, self.reward, done, info
 
     def __isDone(self):
@@ -209,6 +208,9 @@ class EnvironmentQuanserRIP(gym.Env):
         #     print("##############################################")
         #     insert_to_info("*** Relative motor_radian exceed 15***")
         #     return True, info
+        elif abs(self.motor_radian) > math.radians(70):
+            insert_to_info("***motor_radian exceed 70***")
+            return True, info
         else:
             insert_to_info("")
             return False, info
