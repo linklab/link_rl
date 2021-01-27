@@ -19,7 +19,10 @@ class AgentDiscreteA2C(OnPolicyAgent):
     ):
         assert isinstance(train_action_selector, ProbabilityActionSelector)
         assert isinstance(test_and_play_action_selector, ProbabilityActionSelector)
-        assert params.DEEP_LEARNING_MODEL == DeepLearningModelName.STOCHASTIC_DISCRETE_ACTOR_CRITIC_MLP
+        assert params.DEEP_LEARNING_MODEL in [
+            DeepLearningModelName.STOCHASTIC_DISCRETE_ACTOR_CRITIC_MLP,
+            DeepLearningModelName.STOCHASTIC_DISCRETE_ACTOR_CRITIC_CNN
+        ]
 
         super(AgentDiscreteA2C, self).__init__(train_action_selector, test_and_play_action_selector, params, device)
 
