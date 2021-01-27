@@ -81,11 +81,9 @@ def play_func(exp_queue, agent, epsilon_tracker):
     )
 
     exp_source_iter = iter(experience_source)
-    stat = None
     step_idx = 0
     loss_dequeue = deque(maxlen=100)
 
-    solved = False
 
     if params.WANDB:
         wandb.watch(agent.model.base)
@@ -222,20 +220,18 @@ def main():
             _, last_loss, _ = agent.train(step_idx=step_idx)
             agent.buffer.clear()
         elif isinstance(agent, OffPolicyAgent):
-            # #===============================20 train for one step================================
-            # if params.ENVIRONMENT_ID == EnvironmentName.QUANSER_SERVO_2:
-            #     for i in range(20):
-            #         print(i)
-            #         if len(agent.buffer) < params.MIN_REPLAY_SIZE_FOR_TRAIN:
-            #             loss_queue.put(0.0)
-            #             continue
-            #         _, loss, _ = agent.train_net(step_idx=step_idx)
-            #         loss_queue.put(loss)
-            # else:
-            # #=====================================================================================
-            if len(agent.buffer) < params.MIN_REPLAY_SIZE_FOR_TRAIN:
-                continue
-            _, last_loss, _ = agent.train(step_idx=step_idx)
+            #===============================20 train for one step================================
+            if params.ENVIRONMENT_ID == EnvironmentName.QUANSER_SERVO_2:
+                if len(agent.buffer) < params.MIN_REPLAY_SIZE_FOR_TRAIN:
+                    continue
+
+                for i in range(20):
+                    _, last_loss, _ = agent.train(step_idx=step_idx)
+            #=====================================================================================
+            else:
+                if len(agent.buffer) < params.MIN_REPLAY_SIZE_FOR_TRAIN:
+                    continue
+                _, last_loss, _ = agent.train(step_idx=step_idx)
         else:
             raise ValueError()
 

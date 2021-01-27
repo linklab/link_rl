@@ -75,8 +75,7 @@ def get_single_environment(params=None):
         from codes.b_environments.quanser_rotary_inverted_pendulum.quanser_rip import EnvironmentQuanserRIP
         env = EnvironmentQuanserRIP(
             action_min=params.ACTION_SCALE * -1.0,
-            action_max=params.ACTION_SCALE,
-            env_reset=params.ENV_RESET
+            action_max=params.ACTION_SCALE
         )
     elif params.ENVIRONMENT_ID in [
         EnvironmentName.CARTPOLE_V0, EnvironmentName.CARTPOLE_V1,
