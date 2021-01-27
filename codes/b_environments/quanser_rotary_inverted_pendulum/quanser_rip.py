@@ -21,7 +21,7 @@ RIP_SERVER = '192.168.0.13'
 
 
 class EnvironmentQuanserRIP(gym.Env):
-    def __init__(self, action_min, action_max, env_reset=True):
+    def __init__(self, action_min, action_max):
         super(EnvironmentQuanserRIP, self).__init__()
         self.episode = 0
 
@@ -35,7 +35,6 @@ class EnvironmentQuanserRIP(gym.Env):
         self.reward = 0
 
         self.steps = 0
-        self.pendulum_radians = []
         self.state = []
 
         self.count_continuous_uprights = 0
@@ -103,12 +102,7 @@ class EnvironmentQuanserRIP(gym.Env):
 
     def reset(self):
         self.steps = 0
-        self.pendulum_radians = []
         self.reward = 0
-
-        wait_time = 1 if self.episode == 0 else 15  # if self.episode % 10 == 0 else 3
-        previousTime = time.perf_counter()
-        time_done = False
 
         quanser_response = self.server_obj.reset(QuanserRequest(value=0.0))
         if quanser_response.message != "RESET":
@@ -123,16 +117,22 @@ class EnvironmentQuanserRIP(gym.Env):
             math.cos(self.pendulum_radian),
             math.sin(self.pendulum_radian),
             self.pendulum_velocity,
-            math.cos(0),
-            math.sin(0),
+            # math.cos(0.0),
+            # math.sin(0.0),
+            math.cos(quanser_response.motor_radian),
+            math.sin(quanser_response.motor_radian),
             self.motor_velocity
         ]
 
+        # wait_time = 1 if self.episode == 0 else 15  # if self.episode % 10 == 0 else 3
+        wait_time = 1
+        previousTime = time.perf_counter()
+        time_done = False
         while not time_done:
             currentTime = time.perf_counter()
             if currentTime - previousTime >= wait_time:
                 time_done = True
-            time.sleep(0.0001)
+            time.sleep(0.001)
 
         self.initial_motor_radian = self.motor_radian
         self.is_motor_limit = False
@@ -176,19 +176,22 @@ class EnvironmentQuanserRIP(gym.Env):
             math.cos(self.pendulum_radian),
             math.sin(self.pendulum_radian),
             self.pendulum_velocity,
-            math.cos(self.initial_motor_radian - self.motor_radian),
-            math.sin(self.initial_motor_radian - self.motor_radian),
+            # math.cos(self.initial_motor_radian - self.motor_radian),
+            # math.sin(self.initial_motor_radian - self.motor_radian),
+            math.cos(quanser_response.motor_radian),
+            math.sin(quanser_response.motor_radian),
             self.motor_velocity
         ]
         next_state = np.asarray(self.state)
 
 
-        #=======================reward===============================================================
+        done, info = self.__isDone()
+
+        #=======================reward================================================================
         self.reward = self.get_reward()
         #=============================================================================================
 
         self.steps += 1
-        done, info = self.__isDone()
 
         return next_state, self.reward, done, info
 
@@ -198,17 +201,17 @@ class EnvironmentQuanserRIP(gym.Env):
         def insert_to_info(s):
             info["result"] = s
 
-        if self.steps >= 5000:
+        if self.steps >= 5000: # 5000 * 25ms (0.025sec.) = 125 sec.
             insert_to_info("*** Success ***")
             return True, info
-        elif self.is_motor_limit:
-            self.reward = 0
-            insert_to_info("*** Limit position ***")
-            return True, info
-        # elif abs(self.initial_motor_radian - self.motor_radian) > 0.27:
-        #     print("##############################################")
-        #     insert_to_info("*** Relative motor_radian exceed 15***")
+        # elif self.is_motor_limit:
+        #     print(self.motor_radian, " !!!!!!!")
+        #     insert_to_info("*** Limit position ***")
         #     return True, info
+        elif abs(self.motor_radian) > math.radians(70) or self.is_motor_limit:
+            insert_to_info("***motor_radian exceed 70***")
+            self.is_motor_limit = True
+            return True, info
         else:
             insert_to_info("")
             return False, info
@@ -230,7 +233,10 @@ class EnvironmentQuanserRIP(gym.Env):
         if self.is_upright:
             position_reward = math.pi - abs(self.pendulum_radian)  # math.pi - math.radians(12) ~ math.pi
         else:
-            position_reward = (math.pi - abs(self.pendulum_radian)) / 2
+            if self.is_motor_limit:
+                position_reward = 0.0
+            else:
+                position_reward = (math.pi - abs(self.pendulum_radian)) / 2
 
         energy_penalty = 2.0 * -1.0 * (abs(self.pendulum_velocity) + abs(self.motor_velocity)) / 100
 

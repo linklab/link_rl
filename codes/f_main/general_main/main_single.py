@@ -1,13 +1,16 @@
 # https://github.com/openai/gym/blob/master/gym/envs/classic_control/pendulum.py
 # https://mspries.github.io/jimmy_pendulum.html
 #!/usr/bin/env python3
-import pickle
+import time
 from collections import deque
 
 import torch
 import os, sys
 import numpy as np
 import wandb
+
+from codes.d_agents.on_policy.on_policy_agent import OnPolicyAgent
+from codes.d_agents.off_policy.off_policy_agent import OffPolicyAgent
 
 print("PyTorch Version", torch.__version__)
 
@@ -18,11 +21,11 @@ if PROJECT_HOME not in sys.path:
 
 from codes.e_utils.experience import ExperienceSourceFirstLast
 from codes.e_utils import rl_utils
-from codes.e_utils.common_utils import save_model, print_environment_info, print_agent_info
-from codes.e_utils.experience_tracker import RewardTracker
+from codes.e_utils.common_utils import save_model, print_environment_info, print_agent_info, remove_models, \
+    agent_model_test
+from codes.e_utils.experience_tracker import RewardTracker, EarlyStopping
 from codes.e_utils.logger import get_logger
-from codes.e_utils.names import RLAlgorithmName, EnvironmentName
-
+from codes.e_utils.names import RLAlgorithmName, EnvironmentName, AgentMode, ModelSaveMode
 
 WANDB_DIR = os.path.join(PROJECT_HOME, "out", "wandb")
 if not os.path.exists(WANDB_DIR):
@@ -34,26 +37,13 @@ if not os.path.exists(MODEL_SAVE_DIR):
 
 os.environ['KMP_DUPLICATE_LIB_OK'] = 'True'
 
-if torch.cuda.is_available():
-    device = torch.device("cuda")
-else:
-    device = torch.device("cpu")
+device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 
 my_logger = get_logger("main_single")
 
 
-def main(params):
-    # if params.ENVIRONMENT_ID == EnvironmentName.QUANSER_SERVO_2:
-    #     env = rl_utils.get_single_environment(params=params)
-    #     print_environment_info(env, params)
-    #     env.pendulum_reset()
-    # else:
-    #     env = rl_utils.get_environment(params=params)
-    #     print_environment_info(env, params)
-    env = rl_utils.get_environment(params=params)
-    print_environment_info(env, params)
-
-    agent, epsilon_tracker = rl_utils.get_rl_agent(env=env, worker_id=0, params=params, device=device)
+def train_main(params, train_env, test_env):
+    agent, epsilon_tracker = rl_utils.get_rl_agent(env=train_env, worker_id=0, params=params, device=device)
     print_agent_info(agent, epsilon_tracker, params)
 
     if params.WANDB:
@@ -72,24 +62,36 @@ def main(params):
         wandb.run.save()
 
     experience_source = ExperienceSourceFirstLast(
-        env=env, agent=agent, gamma=params.GAMMA, n_step=params.N_STEP, vectorized=True
+        env=train_env, agent=agent, gamma=params.GAMMA, n_step=params.N_STEP, vectorized=True
     )
 
     agent.set_experience_source_to_buffer(experience_source=experience_source)
 
-    stat = None
     step_idx = 0
     loss_queue = deque(maxlen=100)
-
-    trajectory = []
-
-    solved = False
 
     if params.WANDB:
         wandb.watch(agent.model.base)
 
+    early_stopping = EarlyStopping(
+        patience=params.STOP_PATIENCE_COUNT,
+        evaluation_min_threshold=params.STOP_MEAN_EPISODE_REWARD,
+        verbose=True,
+        delta=0.0,
+        model_save_dir=MODEL_SAVE_DIR,
+        model_save_file_prefix=params.ENVIRONMENT_ID.value,
+        agent=agent,
+        params=params
+    )
+
+    if hasattr(agent.train_action_selector, 'epsilon') and hasattr(params, "EPSILON_MIN_STEP"):
+        early_stopping.evaluation_min_step_idx = params.EPSILON_MIN_STEP
+
     episode = 0
-    with RewardTracker(params=params, frame=False, stat=stat, early_stopping=None) as reward_tracker:
+    solved = False
+    test_mean_episode_reward = 0.0
+
+    with RewardTracker(params=params) as reward_tracker:
         try:
             while step_idx < params.MAX_GLOBAL_STEP:
                 step_idx += params.TRAIN_STEP_FREQ
@@ -103,38 +105,73 @@ def main(params):
                 if episode_rewards and episode_steps:
                     for current_episode_reward, current_episode_step in zip(episode_rewards, episode_steps):
                         episode += 1
-                        epsilon = agent.action_selector.epsilon if hasattr(agent.action_selector, 'epsilon') else None
+                        epsilon = agent.train_action_selector.epsilon if hasattr(agent.train_action_selector, 'epsilon') else None
                         mean_loss = np.mean(loss_queue) if len(loss_queue) > 0 else 0.0
 
-                        solved, mean_episode_reward = reward_tracker.set_episode_reward(
+                        train_mean_episode_reward, speed = reward_tracker.set_episode_reward(
                             episode_reward=current_episode_reward, episode_done_step=step_idx, epsilon=epsilon,
-                            last_info=last_experience.info, current_episode_step=current_episode_step,
-                            mean_loss=mean_loss, model=agent.model, wandb=wandb
+                            last_info=last_experience.info, mean_loss=mean_loss
                         )
 
-                        if solved:
-                            save_model(
-                                MODEL_SAVE_DIR, params.ENVIRONMENT_ID.value, agent, step_idx, mean_episode_reward
+                    if params.MODEL_SAVE_MODE == ModelSaveMode.TRAIN:
+                        if episode % params.EARLY_STOPPING_TEST_EPISODE_PERIOD == 0:
+                            test_mean_episode_reward = 0.0
+                            print("[{0:6}/{1}] Ep. {2}: * MODEL SAVE TEST * TRAIN EPISODE REWARD: {3:7.2f} ".format(
+                                step_idx, params.MAX_GLOBAL_STEP, episode, train_mean_episode_reward
+                            ), end="")
+                            solved = early_stopping.evaluate(
+                                evaluation_value=train_mean_episode_reward,
+                                episode_done_step=step_idx
                             )
-                            break
+                    elif params.MODEL_SAVE_MODE == ModelSaveMode.TEST:
+                        if episode % params.EARLY_STOPPING_TEST_EPISODE_PERIOD == 0:
+                            test_mean_episode_reward = agent_model_test(params, test_env, agent)
+                            print("[{0:6}/{1}] Ep. {2}: * MODEL SAVE TEST * TEST EPISODE REWARD: {3:7.2f} ".format(
+                                step_idx, params.MAX_GLOBAL_STEP, episode, test_mean_episode_reward
+                            ), end="")
+                            solved = early_stopping.evaluate(
+                                evaluation_value=test_mean_episode_reward,
+                                episode_done_step=step_idx
+                            )
+                    elif params.MODEL_SAVE_MODE == ModelSaveMode.FINAL_ONLY:
+                        test_mean_episode_reward = 0.0
+                        solved = False
+                    else:
+                        raise ValueError()
+
+                    if params.WANDB:
+                        wandb_info = {
+                            "train episode reward": train_mean_episode_reward,
+                            "train_mean_loss": mean_loss,
+                            "test episode reward": test_mean_episode_reward,
+                            "steps/episode": current_episode_step,
+                            "speed": speed,
+                            "step_idx": step_idx,
+                            "episode": episode
+                        }
+                        if epsilon:
+                            wandb_info["epsilon"] = epsilon
+                        wandb.log(wandb_info)
 
                 if solved:
+                    print("Solved in {0} steps and {1} episodes!".format(step_idx, episode))
                     break
 
-                if params.RL_ALGORITHM in [RLAlgorithmName.CONTINUOUS_PPO_V0, RLAlgorithmName.DISCRETE_PPO_V0]:
-                    trajectory.append(last_experience)
-                    if len(trajectory) < params.PPO_TRAJECTORY_SIZE:
-                        continue
-                    _, last_loss, _ = agent.train_net(trajectory=trajectory)
-                    trajectory.clear()
-                elif params.RL_ALGORITHM in [RLAlgorithmName.DDPG_V0, RLAlgorithmName.DQN_V0]:
+                if isinstance(agent, OnPolicyAgent):
+                    if params.RL_ALGORITHM in [RLAlgorithmName.CONTINUOUS_PPO_V0, RLAlgorithmName.DISCRETE_PPO_V0]:
+                        if len(agent.buffer) < params.PPO_TRAJECTORY_SIZE:
+                            continue
+                    else:
+                        if len(agent.buffer) < params.BATCH_SIZE:
+                            continue
+                    _, last_loss, _ = agent.train(step_idx=step_idx)
+                    agent.buffer.clear()
+                elif isinstance(agent, OffPolicyAgent):
                     if len(agent.buffer) < params.MIN_REPLAY_SIZE_FOR_TRAIN:
                         continue
-                    _, last_loss, _ = agent.train_net(step_idx=step_idx)
+                    _, last_loss, _ = agent.train(step_idx=step_idx)
                 else:
-                    if len(agent.buffer) < params.BATCH_SIZE:
-                        continue
-                    _, last_loss, _ = agent.train_net(step_idx=step_idx)
+                    raise ValueError()
 
                 loss_queue.append(last_loss)
 
@@ -142,17 +179,29 @@ def main(params):
                     if step_idx % 100 < params.TRAIN_STEP_FREQ:
                         agent.buffer.rebalance()
 
-            if params.SAVE_AT_MAX_GLOBAL_STEPS:
+            if params.MODEL_SAVE_MODE == ModelSaveMode.FINAL_ONLY:
+                remove_models(
+                    MODEL_SAVE_DIR, params.ENVIRONMENT_ID.value, agent
+                )
                 save_model(
-                    MODEL_SAVE_DIR, params.ENVIRONMENT_ID.value, agent, step_idx, mean_episode_reward
+                    MODEL_SAVE_DIR, params.ENVIRONMENT_ID.value, agent, step_idx, train_mean_episode_reward
                 )
         finally:
             if params.ENVIRONMENT_ID in [EnvironmentName.REAL_DEVICE_RIP, EnvironmentName.REAL_DEVICE_DOUBLE_RIP]:
-                env.stop()
+                train_env.stop()
 
 
 if __name__ == "__main__":
     from codes.a_config.parameters import PARAMETERS as parameters
     params = parameters
-    main(params)
+
+    train_env = rl_utils.get_environment(params=params)
+    print_environment_info(train_env, params)
+
+    if params.MODEL_SAVE_MODE == ModelSaveMode.TEST:
+        test_env = rl_utils.get_single_environment(params=params)
+    else:
+        test_env = None
+
+    train_main(params, train_env, test_env)
 

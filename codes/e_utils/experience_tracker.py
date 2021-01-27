@@ -1,5 +1,12 @@
 import time
 import numpy as np
+
+import subprocess
+subprocess.call('', shell=True)
+import colorama
+from termcolor import colored
+colorama.init(autoreset=False)
+
 from icecream import ic
 
 from codes.e_utils.common_utils import load_model, remove_models, save_model
@@ -7,17 +14,14 @@ from codes.e_utils.names import EnvironmentName
 
 
 class RewardTracker:
-    def __init__(self, params, frame=True, stat=None, worker_id=None, early_stopping=None):
+    def __init__(self, params, worker_id=None):
         self.params = params
         self.min_ts_diff = 1    # 1 second
-        self.stat = stat
-        self.frame = frame
         self.episode_reward_list = None
         self.done_episodes = 0
         self.mean_episode_reward = 0.0
         self.count_stop_condition_episode = 0
         self.worker_id = worker_id
-        self.early_stopping = early_stopping
 
     def __enter__(self):
         self.start_ts = time.time()
@@ -33,8 +37,7 @@ class RewardTracker:
         pass
 
     def set_episode_reward(
-            self, episode_reward, episode_done_step, epsilon, last_info=None,
-            current_episode_step=None, mean_loss=None, model=None, wandb=None
+            self, episode_reward, episode_done_step, epsilon, last_info=None, mean_loss=None
     ):
         self.done_episodes += 1
 
@@ -45,44 +48,18 @@ class RewardTracker:
         elapsed_time = current_ts - self.start_ts
         ts_diff = current_ts - self.ts
 
-        is_print_performance = False
+        speed = (episode_done_step - self.ts_frame) / ts_diff
 
         if ts_diff > self.min_ts_diff:
-            is_print_performance = True
             self.print_performance(
                 episode_done_step, self.done_episodes, episode_reward, current_ts, ts_diff, self.mean_episode_reward, epsilon,
-                elapsed_time, last_info, current_episode_step, mean_loss, wandb
+                elapsed_time, last_info, speed, mean_loss
             )
 
-        solved = False
-        if self.early_stopping:
-            solved = self.early_stopping(self.mean_episode_reward, model, episode_done_step)
-        else:
-            if self.mean_episode_reward > self.params.STOP_MEAN_EPISODE_REWARD:
-                self.count_stop_condition_episode += 1
-            else:
-                self.count_stop_condition_episode = 0
-
-            if self.count_stop_condition_episode >= self.params.STOP_PATIENCE_COUNT:
-                if not is_print_performance:
-                    self.print_performance(
-                        episode_done_step, self.done_episodes, episode_reward, current_ts, ts_diff, self.mean_episode_reward, epsilon,
-                        elapsed_time, last_info, current_episode_step, mean_loss, wandb
-                    )
-                solved = True
-        if solved:
-            print("Solved in {0} {1} and {2} episodes!".format(
-                episode_done_step,
-                "frame" if self.frame else "step",
-                self.done_episodes
-            ))
-            return True, self.mean_episode_reward
-        else:
-            return False, self.mean_episode_reward
+        return self.mean_episode_reward, speed
 
     def print_performance(self, episode_done_step, done_episodes, episode_reward, current_ts, ts_diff,
-                          mean_episode_reward, epsilon, elapsed_time, last_info, current_episode_step, mean_loss, wandb=None):
-        speed = (episode_done_step - self.ts_frame) / ts_diff
+                          mean_episode_reward, epsilon, elapsed_time, last_info, speed, mean_loss):
         self.ts_frame = episode_done_step
         self.ts = current_ts
 
@@ -103,22 +80,14 @@ class RewardTracker:
         else:
             epsilon_str = ""
 
-        if self.mean_episode_reward > self.params.STOP_MEAN_EPISODE_REWARD:
-            mean_episode_reward_str = "{0:7.3f} (SOLVED COUNT: {1})".format(
-                mean_episode_reward,
-                self.count_stop_condition_episode + 1
-            )
-        else:
-            mean_episode_reward_str = "{0:7.3f}".format(
-                mean_episode_reward
-            )
+        mean_episode_reward_str = "{0:7.3f}".format(mean_episode_reward)
 
         if isinstance(episode_reward, np.ndarray):
             episode_reward = episode_reward[0]
 
         print(
-            "{0}[{1:6}/{2}] Ep. {3}, ep._reward: {4:7.3f}, mean_{5}_ep._reward: {6},{7} "
-            "speed: {8:7.2f} {9}, {10}".format(
+            "{0}[{1:6}/{2}] Ep. {3}, EPISODE REWARD: {4:7.3f}, MEAN_{5} EPSIODE REWARD: {6},{7} "
+            "SPEED: {8:7.2f} {9}, {10}".format(
                 prefix,
                 episode_done_step,
                 self.params.MAX_GLOBAL_STEP,
@@ -128,39 +97,26 @@ class RewardTracker:
                 mean_episode_reward_str,
                 epsilon_str,
                 speed,
-                "fps" if self.frame else "steps/sec.",
+                "steps/sec.",
                 time.strftime("%Hh %Mm %Ss", time.gmtime(elapsed_time)),
         ), end="")
 
         if last_info and "action_count" in last_info:
             print(", {0}".format(last_info["action_count"]), end="")
 
-        if mean_loss is not None:
-            print(", mean (critic) loss {0:7.4f}".format(mean_loss), end="")
+        # if mean_loss is not None:
+        #     print(", mean (critic) loss {0:7.4f}".format(mean_loss), end="")
 
         if self.params.ENVIRONMENT_ID == EnvironmentName.TRADE_V0:
             print(", profit {0:8.1f}".format(last_info['profit']), end="")
 
         print("", flush=True)
 
-        if self.params.WANDB:
-            wandb_info = {
-                "episode reward": episode_reward,
-                "mean_loss": mean_loss,
-                "steps/episode": current_episode_step,
-                "speed": speed,
-                "step_idx": episode_done_step,
-                "episode": done_episodes
-            }
-            if epsilon:
-                wandb_info["epsilon"] = epsilon
-            wandb.log(wandb_info)
-
 
 class EarlyStopping:
     """Early stops the training if validation loss doesn't improve after a given patience."""
     def __init__(self, patience=7, evaluation_min_threshold=0.0, evaluation_min_step_idx=0,
-                 verbose=False, delta=0.0, model_save_dir=".", model_save_file_prefix=None, agent=None):
+                 verbose=False, delta=0.0, model_save_dir=".", model_save_file_prefix=None, agent=None, params=None):
         """
         Args:
             patience (int): How long to wait after last time validation loss improved.
@@ -181,21 +137,32 @@ class EarlyStopping:
         self.model_save_dir = model_save_dir
         self.model_save_file_prefix = model_save_file_prefix
         self.agent = agent
+        self.params = params
 
-    def __call__(self, evaluation_value, model, step_idx):
+    def evaluate(self, evaluation_value, episode_done_step):
         solved = False
 
-        if step_idx < self.evaluation_min_step_idx:
-            print(f"Current step {step_idx} is less than {self.evaluation_min_step_idx}. "
-                  f"No early stopping (and no saving) processed")
+        if episode_done_step < self.evaluation_min_step_idx and self.best_evaluation_value == -1.0e10:
+            if self.verbose:
+                evaluation_str = colored(
+                    f'Current step {episode_done_step} is less than {self.evaluation_min_step_idx}',
+                    "magenta"
+                )
+                print(f"---> {evaluation_str}. No early stopping (and no saving) processed")
+        elif evaluation_value < self.evaluation_min_threshold and self.best_evaluation_value == -1.0e10:
+            if self.verbose:
+                evaluation_str = colored(
+                    f'Current episode reward {evaluation_value:.2f} is less than {self.evaluation_min_threshold}',
+                    'blue'
+                )
+                print(f"---> {evaluation_str}. No early stopping (and no saving) processed")
         else:
-            if self.best_evaluation_value == -1.0e10:
-                self.best_evaluation_value = evaluation_value
-
-            if evaluation_value < self.evaluation_min_threshold or evaluation_value < self.best_evaluation_value + self.delta:
+            if evaluation_value < self.best_evaluation_value + self.delta:
                 self.counter += 1
-                print(f'EarlyStopping counter: {self.counter} out of {self.patience}. '
-                      f'Best evaluation value is still {self.best_evaluation_value:.2f}')
+                if self.verbose:
+                    counter_str = colored(f'{self.counter} out of {self.patience}', 'red')
+                    best_str = colored(f'{self.best_evaluation_value:.2f}', 'green')
+                    print(f'---> EarlyStopping counter: {counter_str}. Best evaluation value is still {best_str}')
                 if self.counter >= self.patience:
                     solved = True
                     load_model(
@@ -204,7 +171,17 @@ class EarlyStopping:
                         self.agent
                     )
             elif evaluation_value >= self.best_evaluation_value + self.delta:
-                self.save_checkpoint(evaluation_value, step_idx)
+                if self.verbose:
+                    saving_str = colored(f"Saving model ...", 'green')
+                    if self.best_evaluation_value == -1.0e10:
+                        evaluation_str = colored(f'{evaluation_value:.2f} recorded first.', 'green')
+                        print(f'---> *** Evaluation value {evaluation_str}', saving_str)
+                    else:
+                        evaluation_str = colored(
+                            f'{self.best_evaluation_value:.2f} is increased into {evaluation_value:.2f}', 'green'
+                        )
+                        print(f'---> *** Evaluation value {evaluation_str}.', saving_str)
+                self.save_checkpoint(evaluation_value, episode_done_step)
                 self.best_evaluation_value = evaluation_value
                 self.counter = 0
             else:
@@ -212,14 +189,8 @@ class EarlyStopping:
 
         return solved
 
-    def save_checkpoint(self, evaluation_value, step_idx):
+    def save_checkpoint(self, evaluation_value, episode_done_step):
         '''Saves model when validation loss decrease.'''
-        if self.verbose:
-            if self.best_evaluation_value == -1.0e10:
-                print(f'evaluation_value recorded first ({evaluation_value:.2f}).  Saving model ...')
-            else:
-                print(f'evaluation_value increased ({self.best_evaluation_value:.2f} --> {evaluation_value:.2f}).  Saving model ...')
-
         remove_models(
             self.model_save_dir,
             self.model_save_file_prefix,
@@ -230,6 +201,6 @@ class EarlyStopping:
             self.model_save_dir,
             self.model_save_file_prefix,
             self.agent,
-            step_idx,
+            episode_done_step,
             evaluation_value
         )

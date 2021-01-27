@@ -35,10 +35,7 @@ warnings.filterwarnings("ignore", category=DeprecationWarning)
 warnings.filterwarnings("ignore", category=UserWarning)
 os.environ['KMP_DUPLICATE_LIB_OK'] = 'True'
 
-if torch.cuda.is_available():
-    device = torch.device("cuda")
-else:
-    device = torch.device("cpu")
+device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 
 MODEL_SAVE_DIR = os.path.join(PROJECT_HOME, "out", "model_save_files")
 if not os.path.exists(MODEL_SAVE_DIR):
@@ -186,7 +183,7 @@ def train(coin_name, time_unit, train_env, evaluate_env):
         agent=agent
     )
 
-    with utils.RewardTracker(params=params, frame=False, stat=stat, early_stopping=None) as reward_tracker:
+    with utils.RewardTracker(params=params, frame=False, early_stopping=None) as reward_tracker:
         while step_idx < params.MAX_GLOBAL_STEP:
             step_idx += params.TRAIN_STEP_FREQ
             last_entry = buffer.populate(params.TRAIN_STEP_FREQ)

@@ -13,10 +13,7 @@ from codes.a_config.parameters import PARAMETERS as params
 import rl_main.federated_main.utils as utils
 from rl_main import rl_utils
 
-if torch.cuda.is_available():
-    device = torch.device("cuda")
-else:
-    device = torch.device("cpu")
+device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 
 
 if __name__ == "__main__":

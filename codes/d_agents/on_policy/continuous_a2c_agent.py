@@ -7,25 +7,26 @@ from codes.d_agents.a0_base_agent import BaseAgent, float32_preprocessor
 from codes.d_agents.on_policy.on_policy_agent import OnPolicyAgent
 from codes.e_utils import rl_utils, replay_buffer
 from codes.e_utils.actions import ContinuousNormalActionSelector
-from codes.e_utils.names import DeepLearningModelName
+from codes.e_utils.names import DeepLearningModelName, AgentMode
 
 
 class AgentContinuousA2C(OnPolicyAgent):
     """
     """
     def __init__(
-            self, worker_id, input_shape, num_outputs, action_selector, action_min, action_max, params, device="cpu"
+            self, worker_id, input_shape, num_outputs,
+            train_action_selector, test_and_play_action_selector, action_min, action_max, params, device="cpu"
     ):
-        super(AgentContinuousA2C, self).__init__(params, device)
+        assert isinstance(train_action_selector, ContinuousNormalActionSelector)
+        assert isinstance(test_and_play_action_selector, ContinuousNormalActionSelector)
+        assert params.DEEP_LEARNING_MODEL == DeepLearningModelName.STOCHASTIC_CONTINUOUS_ACTOR_CRITIC_MLP
+
+        super(AgentContinuousA2C, self).__init__(train_action_selector, test_and_play_action_selector, params, device)
         self.__name__ = "AgentContinuousA2C"
         self.worker_id = worker_id
         self.action_min = action_min
         self.action_max = action_max
 
-        assert isinstance(action_selector, ContinuousNormalActionSelector)
-        self.action_selector = action_selector
-
-        assert params.DEEP_LEARNING_MODEL == DeepLearningModelName.STOCHASTIC_CONTINUOUS_ACTOR_CRITIC_MLP
         self.model = rl_utils.get_rl_model(
             worker_id=worker_id, input_shape=input_shape, num_outputs=num_outputs, params=params, device=self.device
         )
@@ -49,12 +50,15 @@ class AgentContinuousA2C(OnPolicyAgent):
             states = float32_preprocessor(states).to(self.device)
 
         mu_v, var_v = self.model.base.actor(states)
-        actions = self.action_selector(mu_v, var_v, self.action_min, self.action_max)
+        if self.agent_mode == AgentMode.TRAIN:
+            actions = self.train_action_selector(mu_v, var_v, self.action_min, self.action_max)
+        else:
+            actions = self.test_and_play_action_selector(mu_v, var_v, self.action_min, self.action_max)
         critics = torch.zeros(size=mu_v.size())
 
         return actions, critics
 
-    def train_net(self, step_idx):
+    def train(self, step_idx):
         batch = self.buffer.sample(batch_size=None)
 
         # states_v.shape: (32, 3)
@@ -103,6 +107,6 @@ class AgentContinuousA2C(OnPolicyAgent):
 
         gradients = self.model.get_gradients_for_current_parameters()
 
-        batch.clear()
+        self.buffer.clear()
 
         return gradients, loss_critic_v.item(), loss_actor_v.item() * -1.0

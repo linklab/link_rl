@@ -6,7 +6,7 @@ from icecream import ic
 from codes.d_agents.a0_base_agent import TargetNet, float32_preprocessor
 from codes.d_agents.off_policy.off_policy_agent import OffPolicyAgent
 from codes.e_utils import rl_utils, replay_buffer
-from codes.e_utils.names import DeepLearningModelName
+from codes.e_utils.names import DeepLearningModelName, AgentMode
 
 
 class AgentDDPG(OffPolicyAgent):
@@ -14,12 +14,12 @@ class AgentDDPG(OffPolicyAgent):
     Agent implementing Orstein-Uhlenbeck exploration process
     """
     def __init__(
-            self, input_shape, num_outputs, worker_id, action_selector, action_min, action_max, params, device="cpu"
+            self, input_shape, num_outputs, worker_id,
+            train_action_selector, test_and_play_action_selector, action_min, action_max, params, device
     ):
-        super(AgentDDPG, self).__init__(params=params, device=device)
+        super(AgentDDPG, self).__init__(train_action_selector, test_and_play_action_selector, params=params, device=device)
 
         self.__name__ = "AgentDDPG"
-        self.action_selector = action_selector
         self.action_min = action_min
         self.action_max = action_max
 
@@ -59,16 +59,17 @@ class AgentDDPG(OffPolicyAgent):
         mu_v = self.model(states)
         mu = mu_v.detach().cpu().numpy()
 
-        #ic(len(states), len(mu_v), len(agent_states))
+        if self.agent_mode == AgentMode.TRAIN:
+            actions, new_agent_states = self.train_action_selector(mu, agent_states)
+        else:
+            actions, new_agent_states = self.test_and_play_action_selector(mu, agent_states)
 
-        actions, new_agent_states = self.action_selector(mu, agent_states)
         actions = np.clip(actions, self.action_min, self.action_max)
-
         #####################################
 
         return actions, new_agent_states
 
-    def train_net(self, step_idx):
+    def train(self, step_idx):
         if self.params.PER_PROPORTIONAL or self.params.PER_RANK_BASED:
             batch, batch_indices, batch_weights = self.buffer.sample(self.params.BATCH_SIZE)
         else:
@@ -119,7 +120,7 @@ class AgentDDPG(OffPolicyAgent):
 
         self.actor_optimizer.step()
 
-        self.target_agent.alpha_sync(alpha=1 - 0.001)
+        self.target_agent.alpha_sync(alpha=1 - 0.00005) #(1 - 0.001)
 
         gradients = self.model.get_gradients_for_current_parameters()
 

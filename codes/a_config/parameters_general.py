@@ -1,4 +1,4 @@
-from codes.e_utils.names import EnvironmentName, RLAlgorithmName, DeepLearningModelName, OptimizerName
+from codes.e_utils.names import EnvironmentName, RLAlgorithmName, DeepLearningModelName, OptimizerName, ModelSaveMode
 
 
 class PARAMETERS_GENERAL:
@@ -55,7 +55,7 @@ class PARAMETERS_GENERAL:
     REPLAY_BUFFER_SIZE = 100000
     TARGET_NET_SYNC_STEP_PERIOD = 1000
     MIN_REPLAY_SIZE_FOR_TRAIN = 10000
-    EPSILON_MIN_STEP = 1000
+    EPSILON_MIN_STEP = None
     MAX_GLOBAL_STEP = 1000000
     TRAIN_STEP_FREQ = 4
     AVG_EPISODE_SIZE_FOR_STAT = 50
@@ -118,7 +118,10 @@ class PARAMETERS_GENERAL:
     CUDA_VISIBLE_DEVICES_NUMBER_LIST = '1, 2'
 
     RNN_STEP_LENGTH = 2
-    SAVE_AT_MAX_GLOBAL_STEPS = False
 
     WANDB = True
 
+    TEST_NUM_EPISODES = 5
+    EARLY_STOPPING_TEST_EPISODE_PERIOD = 10
+    MODEL_SAVE_MODE = ModelSaveMode.TRAIN
+    AVG_STEP_SIZE_FOR_TRAIN_LOSS = 50

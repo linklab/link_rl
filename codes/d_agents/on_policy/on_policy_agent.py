@@ -1,3 +1,5 @@
+from abc import abstractmethod
+
 import numpy as np
 import torch
 
@@ -9,10 +11,8 @@ class OnPolicyAgent(BaseAgent):
     """
     Abstract Agent interface
     """
-    def __init__(self, params, device):
-        super(OnPolicyAgent, self).__init__()
-        self.params = params
-        self.device = device
+    def __init__(self, train_action_selector, test_and_play_action_selector, params, device):
+        super(OnPolicyAgent, self).__init__(train_action_selector, test_and_play_action_selector, params, device)
 
         self.buffer = replay_buffer.ExperienceReplayBuffer(
             experience_source=None, buffer_size=self.params.REPLAY_BUFFER_SIZE

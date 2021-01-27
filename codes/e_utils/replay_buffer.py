@@ -9,6 +9,34 @@ from codes.e_utils.experience import ExperienceSource, ExperienceSourceFirstLast
 from codes.e_utils.experience_single import ExperienceSourceSingleEnvFirstLast
 
 
+class TrajectoryBuffer:
+    def __init__(self, experience_source):
+        self.experience_source = experience_source
+        self.experience_source_iter = None if experience_source is None else iter(experience_source)
+        self.buffer = []
+
+    def __len__(self):
+        return len(self.buffer)
+
+    def set_experience_source(self, experience_source):
+        self.experience_source = experience_source
+        self.experience_source_iter = None if experience_source is None else iter(experience_source)
+
+    def populate(self, num_samples):
+        entry = None
+        for _ in range(num_samples):
+            entry = next(self.experience_source_iter)
+            self.buffer.append(entry)
+
+        return entry
+
+    def sample_all(self):
+        return self.buffer
+
+    def clear(self):
+        self.buffer.clear()
+
+
 class ExperienceSourceBuffer:
     """
     The same as ExperienceSource, but takes episodes from the simple buffer
@@ -108,6 +136,9 @@ class ExperienceReplayBuffer:
     def update_beta(self, idx):
         raise NotImplementedError()
 
+    def clear(self):
+        self.buffer.clear()
+        self.pos = 0
 
 class PrioReplayBufferNaive:
     def __init__(self, experience_source, buffer_size, prob_alpha=0.6):
@@ -166,9 +197,21 @@ class PrioritizedReplayBuffer(ExperienceReplayBuffer):
         self.n_step = n_step
         self.beta_start = beta_start
         self.beta_frames = beta_frames
+        self.buffer_size = buffer_size
 
         it_capacity = 1
-        while it_capacity < buffer_size:
+        while it_capacity < self.buffer_size:
+            it_capacity *= 2
+
+        self._it_sum = SumSegmentTree(it_capacity)
+        self._it_min = MinSegmentTree(it_capacity)
+        self._max_priority = 1.0
+
+    def clear(self):
+        self.buffer.clear()
+
+        it_capacity = 1
+        while it_capacity < self.buffer_size:
             it_capacity *= 2
 
         self._it_sum = SumSegmentTree(it_capacity)

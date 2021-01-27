@@ -7,6 +7,18 @@ if PROJECT_HOME not in sys.path:
     sys.path.append(PROJECT_HOME)
 
 
+class ModelSaveMode(enum.Enum):
+    TRAIN = "TRAIN"
+    TEST = "TEST"
+    FINAL_ONLY = "FINAL_ONLY"
+
+
+class AgentMode(enum.Enum):
+    TRAIN = "TRAIN"
+    TEST = "TEST"
+    PLAY = "PLAY"
+
+
 class OSName(enum.Enum):
     MAC = "MAC"
     WINDOWS = "WINDOWS"

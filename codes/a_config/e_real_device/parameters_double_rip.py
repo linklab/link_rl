@@ -1,4 +1,4 @@
-from codes.e_utils.names import OptimizerName, RLAlgorithmName, EnvironmentName, DeepLearningModelName
+from codes.e_utils.names import OptimizerName, RLAlgorithmName, EnvironmentName, DeepLearningModelName, ModelSaveMode
 
 
 class PARAMETERS_DOUBLE_RIP:
@@ -79,4 +79,4 @@ class PARAMETERS_DOUBLE_RIP:
     # [4. OPTIMIZER]
     OPTIMIZER = OptimizerName.ADAM
 
-    SAVE_AT_MAX_GLOBAL_STEPS = True
+    MODEL_SAVE_MODE = ModelSaveMode.FINAL_ONLY

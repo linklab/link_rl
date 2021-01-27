@@ -7,24 +7,28 @@ from codes.d_agents.a0_base_agent import BaseAgent, float32_preprocessor
 from codes.d_agents.on_policy.on_policy_agent import OnPolicyAgent
 from codes.e_utils import rl_utils, replay_buffer
 from codes.e_utils.actions import ContinuousNormalActionSelector, ProbabilityActionSelector
-from codes.e_utils.names import DeepLearningModelName
+from codes.e_utils.names import DeepLearningModelName, AgentMode
 
 
 class AgentDiscretePPO(OnPolicyAgent):
     """
     """
     def __init__(
-            self, worker_id, input_shape, num_outputs, action_selector, params, device="cpu"
+            self, worker_id, input_shape, num_outputs,
+            train_action_selector, test_and_play_action_selector, params, device
     ):
-        super(AgentDiscretePPO, self).__init__(params=params, device=device)
+        assert isinstance(train_action_selector, ProbabilityActionSelector)
+        assert isinstance(test_and_play_action_selector, ProbabilityActionSelector)
+        assert params.DEEP_LEARNING_MODEL == DeepLearningModelName.STOCHASTIC_DISCRETE_ACTOR_CRITIC_MLP
         assert params.N_STEP == 1  # GAE will consider various N_STEPs
+
+        super(AgentDiscretePPO, self).__init__(
+            train_action_selector, test_and_play_action_selector, params=params, device=device
+        )
+
         self.__name__ = "AgentDiscretePPO"
         self.worker_id = worker_id
 
-        assert isinstance(action_selector, ProbabilityActionSelector)
-        self.action_selector = action_selector
-
-        assert params.DEEP_LEARNING_MODEL == DeepLearningModelName.STOCHASTIC_DISCRETE_ACTOR_CRITIC_MLP
         self.model = rl_utils.get_rl_model(
             worker_id=worker_id, input_shape=input_shape, num_outputs=num_outputs, params=params, device=self.device
         )
@@ -43,7 +47,9 @@ class AgentDiscretePPO(OnPolicyAgent):
 
         self.trajectory = []
 
-        self.buffer = replay_buffer.ExperienceReplayBuffer(experience_source=None, buffer_size=self.params.BATCH_SIZE)
+        self.buffer = replay_buffer.ExperienceReplayBuffer(
+            experience_source=None, buffer_size=self.params.PPO_TRAJECTORY_SIZE
+        )
 
     def __call__(self, states, critics=None):
         if not isinstance(states, torch.FloatTensor):
@@ -52,13 +58,19 @@ class AgentDiscretePPO(OnPolicyAgent):
         logits_v = self.model.base.forward_actor(states)
 
         probs_v = F.softmax(logits_v, dim=1)
-
         probs = probs_v.data.cpu().numpy()
-        actions = np.array(self.action_selector(probs))
+
+        if self.agent_mode == AgentMode.TRAIN:
+            actions = np.array(self.train_action_selector(probs))
+        else:
+            actions = np.array(self.test_and_play_action_selector(probs))
+
         critics = torch.zeros(size=probs_v.size())
         return actions, critics
 
-    def train_net(self, trajectory):
+    def train(self, step_idx):
+        trajectory = self.buffer.sample(batch_size=None)
+
         trajectory_states = [experience.state for experience in trajectory]
         trajectory_states_v = torch.FloatTensor(trajectory_states).to(self.device)
 
