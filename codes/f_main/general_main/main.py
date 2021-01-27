@@ -231,20 +231,17 @@ def main():
             loss_dequeue.append(last_loss)
             agent.buffer.clear()
         elif isinstance(agent, OffPolicyAgent):
-            # #===============================20 train for one step================================
-            # if params.ENVIRONMENT_ID == EnvironmentName.QUANSER_SERVO_2:
-            #     for i in range(20):
-            #         print(i)
-            #         if len(agent.buffer) < params.MIN_REPLAY_SIZE_FOR_TRAIN:
-            #             loss_queue.put(0.0)
-            #             continue
-            #         _, loss, _ = agent.train_net(step_idx=step_idx)
-            #         loss_queue.put(loss)
-            # else:
-            # #=====================================================================================
             if len(agent.buffer) < params.MIN_REPLAY_SIZE_FOR_TRAIN:
                 continue
-            _, last_loss, _ = agent.train(step_idx=step_idx)
+
+            if params.ENVIRONMENT_ID == EnvironmentName.QUANSER_SERVO_2:
+                # ===============================20 train for one step================================
+                last_loss = 0.0
+                for i in range(20):
+                    _, last_loss, _ = agent.train(step_idx=step_idx)
+                #=====================================================================================
+            else:
+                _, last_loss, _ = agent.train(step_idx=step_idx)
             loss_dequeue.append(last_loss)
         else:
             raise ValueError()
