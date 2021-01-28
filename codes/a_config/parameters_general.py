@@ -115,6 +115,7 @@ class PARAMETERS_GENERAL:
     # [DQN]
     PER_PROPORTIONAL = False
     PER_RANK_BASED = False
+    DOUBLE = True
 
     # [CUDA]
     CUDA_VISIBLE_DEVICES_NUMBER_LIST = '1, 2'
