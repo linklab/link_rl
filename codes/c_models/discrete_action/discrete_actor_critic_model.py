@@ -95,7 +95,7 @@ class ActorCriticCNNBase(nn.Module):
         self.__name__ = "ActorCriticCNNBase"
 
         self.actor = ActorCNNBase(input_shape, num_outputs)
-        self.critic = CriticCNNBase(input_shape, num_outputs)
+        self.critic = CriticCNNBase(input_shape, 1)
 
         self.layers_info = {'actor': self.actor, 'critic': self.critic}
 
@@ -166,7 +166,7 @@ class ActorCNNBase(nn.Module):
 
 
 class CriticCNNBase(nn.Module):
-    def __init__(self, input_shape, num_outputs):
+    def __init__(self, input_shape, num_outputs=1):
         super(CriticCNNBase, self).__init__()
         self.__name__ = "CriticCNNBase"
 
@@ -183,7 +183,7 @@ class CriticCNNBase(nn.Module):
         self.critic_fc = nn.Sequential(
             nn.Linear(critic_conv_out_size, 512),
             nn.ReLU(),
-            nn.Linear(512, 1)
+            nn.Linear(512, num_outputs)
         )
 
         # self.critic.apply(self.init_weights)
