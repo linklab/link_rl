@@ -46,6 +46,9 @@ def get_environment(params):
 
         return _make
     env_fns = [make_environment(params=params) for _ in range(params.NUM_ENVIRONMENTS)]
+
+    # 매 타임 스텝마다 모든 env들로 부터 transition을 가져옴.
+    # 각 env에 대한 통신은 parallel 하지 않음.
     env = SyncVectorEnv(env_fns)
     assert env.num_envs == params.NUM_ENVIRONMENTS
     return env
@@ -75,8 +78,7 @@ def get_single_environment(params=None):
         from codes.b_environments.quanser_rotary_inverted_pendulum.quanser_rip import EnvironmentQuanserRIP
         env = EnvironmentQuanserRIP(
             action_min=params.ACTION_SCALE * -1.0,
-            action_max=params.ACTION_SCALE,
-            env_reset=params.ENV_RESET
+            action_max=params.ACTION_SCALE
         )
     elif params.ENVIRONMENT_ID in [
         EnvironmentName.CARTPOLE_V0, EnvironmentName.CARTPOLE_V1,
@@ -194,7 +196,10 @@ def get_rl_model(worker_id, input_shape=None, num_outputs=None, params=None, dev
             params=params,
             device=device
         ).to(device)
-    elif params.DEEP_LEARNING_MODEL == DeepLearningModelName.STOCHASTIC_DISCRETE_ACTOR_CRITIC_MLP:
+    elif params.DEEP_LEARNING_MODEL in [
+        DeepLearningModelName.STOCHASTIC_DISCRETE_ACTOR_CRITIC_MLP,
+        DeepLearningModelName.STOCHASTIC_DISCRETE_ACTOR_CRITIC_CNN
+    ]:
         model = DiscreteActorCriticModel(
             worker_id=worker_id,
             input_shape=input_shape,

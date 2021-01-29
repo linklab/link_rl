@@ -1,5 +1,12 @@
 import time
 import numpy as np
+
+import subprocess
+subprocess.call('', shell=True)
+import colorama
+from termcolor import colored
+colorama.init(autoreset=False)
+
 from icecream import ic
 
 from codes.e_utils.common_utils import load_model, remove_models, save_model
@@ -46,13 +53,13 @@ class RewardTracker:
         if ts_diff > self.min_ts_diff:
             self.print_performance(
                 episode_done_step, self.done_episodes, episode_reward, current_ts, ts_diff, self.mean_episode_reward, epsilon,
-                elapsed_time, last_info, mean_loss, speed
+                elapsed_time, last_info, speed, mean_loss
             )
 
         return self.mean_episode_reward, speed
 
     def print_performance(self, episode_done_step, done_episodes, episode_reward, current_ts, ts_diff,
-                          mean_episode_reward, epsilon, elapsed_time, last_info, mean_loss, speed):
+                          mean_episode_reward, epsilon, elapsed_time, last_info, speed, mean_loss):
         self.ts_frame = episode_done_step
         self.ts = current_ts
 
@@ -97,8 +104,8 @@ class RewardTracker:
         if last_info and "action_count" in last_info:
             print(", {0}".format(last_info["action_count"]), end="")
 
-        if mean_loss is not None:
-            print(", mean (critic) loss {0:7.4f}".format(mean_loss), end="")
+        # if mean_loss is not None:
+        #     print(", mean (critic) loss {0:7.4f}".format(mean_loss), end="")
 
         if self.params.ENVIRONMENT_ID == EnvironmentName.TRADE_V0:
             print(", profit {0:8.1f}".format(last_info['profit']), end="")
@@ -135,20 +142,27 @@ class EarlyStopping:
     def evaluate(self, evaluation_value, episode_done_step):
         solved = False
 
-        if episode_done_step < self.evaluation_min_step_idx:
+        if episode_done_step < self.evaluation_min_step_idx and self.best_evaluation_value == -1.0e10:
             if self.verbose:
-                print(f"---> Current step {episode_done_step} is less than {self.evaluation_min_step_idx}. "
-                      f"No early stopping (and no saving) processed")
-        elif evaluation_value < self.evaluation_min_threshold:
+                evaluation_str = colored(
+                    f'Current step {episode_done_step} is less than {self.evaluation_min_step_idx}',
+                    "magenta"
+                )
+                print(f"---> {evaluation_str}. No early stopping (and no saving) processed")
+        elif evaluation_value < self.evaluation_min_threshold and self.best_evaluation_value == -1.0e10:
             if self.verbose:
-                print(f"---> Current episode reward {evaluation_value} is less than {self.evaluation_min_threshold}. "
-                      f"No early stopping (and no saving) processed")
+                evaluation_str = colored(
+                    f'Current episode reward {evaluation_value:.2f} is less than {self.evaluation_min_threshold}',
+                    'blue'
+                )
+                print(f"---> {evaluation_str}. No early stopping (and no saving) processed")
         else:
             if evaluation_value < self.best_evaluation_value + self.delta:
                 self.counter += 1
                 if self.verbose:
-                    print(f'---> EarlyStopping counter: {self.counter} out of {self.patience}. '
-                          f'Best evaluation value is still {self.best_evaluation_value:.2f}')
+                    counter_str = colored(f'{self.counter} out of {self.patience}', 'red')
+                    best_str = colored(f'{self.best_evaluation_value:.2f}', 'green')
+                    print(f'---> EarlyStopping counter: {counter_str}. Best evaluation value is still {best_str}')
                 if self.counter >= self.patience:
                     solved = True
                     load_model(
@@ -158,13 +172,15 @@ class EarlyStopping:
                     )
             elif evaluation_value >= self.best_evaluation_value + self.delta:
                 if self.verbose:
+                    saving_str = colored(f"Saving model ...", 'green')
                     if self.best_evaluation_value == -1.0e10:
-                        print(f'---> *** Evaluation value {evaluation_value:.2f} recorded first.  Saving model ...')
+                        evaluation_str = colored(f'{evaluation_value:.2f} recorded first.', 'green')
+                        print(f'---> *** Evaluation value {evaluation_str}', saving_str)
                     else:
-                        print(
-                            f'---> *** Evaluation value {self.best_evaluation_value:.2f} is '
-                            f'increased into {evaluation_value:.2f}.  Saving model ...'
+                        evaluation_str = colored(
+                            f'{self.best_evaluation_value:.2f} is increased into {evaluation_value:.2f}', 'green'
                         )
+                        print(f'---> *** Evaluation value {evaluation_str}.', saving_str)
                 self.save_checkpoint(evaluation_value, episode_done_step)
                 self.best_evaluation_value = evaluation_value
                 self.counter = 0

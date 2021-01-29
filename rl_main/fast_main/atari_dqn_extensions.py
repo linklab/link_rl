@@ -8,8 +8,8 @@ import os
 import warnings
 from collections import deque
 
-from codes.f_utils import common_utils
-from codes.f_utils.common_utils import make_atari_env
+from codes.e_utils import common_utils
+from codes.e_utils.common_utils import make_atari_env
 from common.fast_rl import experience, rl_agent, value_based_model, actions, replay_buffer
 from common.fast_rl.common import utils
 from common.fast_rl.common import statistics

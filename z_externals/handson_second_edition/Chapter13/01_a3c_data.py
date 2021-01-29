@@ -1,11 +1,9 @@
 #!/usr/bin/env python3
 import gym
 import os
-import ptan
 import numpy as np
 import argparse
 import collections
-from tensorboardX import SummaryWriter
 
 import torch
 import torch.nn.utils as nn_utils
@@ -13,6 +11,7 @@ import torch.nn.functional as F
 import torch.optim as optim
 import torch.multiprocessing as mp
 
+from codes.e_utils.wrappers import wrap_dqn
 from lib import common
 
 GAMMA = 0.99
@@ -36,7 +35,7 @@ else:
 
 
 def make_env():
-    return ptan.common.wrappers.wrap_dqn(gym.make(ENV_NAME))
+    return wrap_dqn(gym.make(ENV_NAME))
 
 
 TotalReward = collections.namedtuple('TotalReward', field_names='reward')

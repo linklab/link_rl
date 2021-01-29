@@ -15,7 +15,9 @@ class AgentDQN(OffPolicyAgent):
             self, worker_id, input_shape, num_outputs,
             train_action_selector, test_and_play_action_selector, params, device
     ):
-        super(AgentDQN, self).__init__(train_action_selector, test_and_play_action_selector, params=params, device=device)
+        super(AgentDQN, self).__init__(
+            train_action_selector, test_and_play_action_selector, params=params, device=device
+        )
         self.__name__ = "AgentDQN"
         self.worker_id = worker_id
 

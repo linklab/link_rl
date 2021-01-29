@@ -19,7 +19,10 @@ class AgentDiscreteA2C(OnPolicyAgent):
     ):
         assert isinstance(train_action_selector, ProbabilityActionSelector)
         assert isinstance(test_and_play_action_selector, ProbabilityActionSelector)
-        assert params.DEEP_LEARNING_MODEL == DeepLearningModelName.STOCHASTIC_DISCRETE_ACTOR_CRITIC_MLP
+        assert params.DEEP_LEARNING_MODEL in [
+            DeepLearningModelName.STOCHASTIC_DISCRETE_ACTOR_CRITIC_MLP,
+            DeepLearningModelName.STOCHASTIC_DISCRETE_ACTOR_CRITIC_CNN
+        ]
 
         super(AgentDiscreteA2C, self).__init__(train_action_selector, test_and_play_action_selector, params, device)
 
@@ -65,14 +68,14 @@ class AgentDiscreteA2C(OnPolicyAgent):
         return actions, critics
 
     def train(self, step_idx):
+        # Lucky Episode에서 얻어낸 batch를 통해 학습할 때와, Unlucky Episode에서 얻어낸 batch를 통해 학습할 때마다 NN의 파라미터들이
+        # 서로 다른 방향으로 반복적으로 휩쓸려가듯이 학습이 됨 --> Gradients의 Variance가 매우 큼
         batch = self.buffer.sample(batch_size=None)
 
         # states_v.shape: (32, 3)
         # actions_v.shape: (32, 1)
         # target_action_values_v.shape: (32,)
-        states_v, actions_v, target_action_values_v = self.unpack_batch_for_actor_critic(
-            batch, self.model, self.params, discrete=True
-        )
+        states_v, actions_v, target_action_values_v = self.unpack_batch_for_actor_critic(batch, self.model, self.params)
 
         logits_v, value_v = self.model(states_v)
 
@@ -109,7 +112,5 @@ class AgentDiscreteA2C(OnPolicyAgent):
         self.actor_optimizer.step()
 
         gradients = self.model.get_gradients_for_current_parameters()
-
-        self.buffer.clear()
 
         return gradients, loss_critic_v.item(), loss_actor_v.item() * -1.0

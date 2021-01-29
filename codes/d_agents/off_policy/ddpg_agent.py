@@ -120,7 +120,7 @@ class AgentDDPG(OffPolicyAgent):
 
         self.actor_optimizer.step()
 
-        self.target_agent.alpha_sync(alpha=1 - 0.001)
+        self.target_agent.alpha_sync(alpha=1 - 0.00005) #(1 - 0.001)
 
         gradients = self.model.get_gradients_for_current_parameters()
 
