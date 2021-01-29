@@ -180,7 +180,7 @@ def main():
     agent, epsilon_tracker = rl_utils.get_rl_agent(env=env, worker_id=0, params=params, device=device)
     agent.model.share_memory()
 
-    exp_queue = mp.Queue(maxsize=params.TRAIN_STEP_FREQ * 2)
+    exp_queue = mp.Queue(maxsize=params.TRAIN_STEP_FREQ * 2) #params.TRAIN_STEP_FREQ * 2
     play_proc = mp.Process(target=play_func, args=(exp_queue, agent, epsilon_tracker))
     play_proc.start()
 
@@ -236,15 +236,7 @@ def main():
         elif isinstance(agent, OffPolicyAgent):
             if len(agent.buffer) < params.MIN_REPLAY_SIZE_FOR_TRAIN:
                 continue
-
-            if params.ENVIRONMENT_ID == EnvironmentName.QUANSER_SERVO_2:
-                # ===============================20 train for one step================================
-                last_loss = 0.0
-                for i in range(20):
-                    _, last_loss, _ = agent.train(step_idx=step_idx)
-                #=====================================================================================
-            else:
-                _, last_loss, _ = agent.train(step_idx=step_idx)
+            _, last_loss, _ = agent.train(step_idx=step_idx)
             loss_dequeue.append(last_loss)
         else:
             raise ValueError()
