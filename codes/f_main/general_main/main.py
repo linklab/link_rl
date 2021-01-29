@@ -87,7 +87,6 @@ def play_func(exp_queue, agent, epsilon_tracker):
 
     episode = 0
     solved = False
-    test_mean_episode_reward = 0.0
 
     with RewardTracker(params=params) as reward_tracker:
         try:

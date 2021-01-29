@@ -37,50 +37,80 @@ class StochasticActorCriticMLPBase(nn.Module):
         self.hidden_2_size = params.HIDDEN_2_SIZE
         self.hidden_3_size = params.HIDDEN_3_SIZE
 
-        self.common = nn.Sequential(
+        self.actor = ActorMLPBase(num_inputs, num_outputs, params)
+
+        self.critic = nn.Sequential(
             nn.Linear(num_inputs, self.hidden_1_size),
             nn.ReLU(),
             nn.Linear(self.hidden_1_size, self.hidden_2_size),
             nn.ReLU(),
-        )
-
-        self.mu = nn.Sequential(
-            nn.Linear(self.hidden_2_size, self.hidden_3_size),
-            nn.ReLU(),
-            nn.Linear(self.hidden_3_size, num_outputs),
-            nn.Tanh()
-        )
-
-        self.var = nn.Sequential(
-            nn.Linear(self.hidden_2_size, self.hidden_3_size),
-            nn.ReLU(),
-            nn.Linear(self.hidden_3_size, num_outputs),
-            nn.Softplus()
-        )
-
-        self.critic = nn.Sequential(
             nn.Linear(self.hidden_2_size, self.hidden_3_size),
             nn.ReLU(),
             nn.Linear(self.hidden_3_size, 1),
         )
 
-        self.layers_info = {'common': self.common, 'mu': self.mu, 'var': self.var, 'critic': self.critic}
+        self.layers_info = {'actor': self.actor, 'critic': self.critic}
 
         self.train()
 
     def forward(self, inputs):
-        common = self.common(inputs)
-        mu = self.mu(common)
-        var = self.var(common)
-        value = self.critic(common)
+        mu, var = self.actor(inputs)
+        value = self.critic(inputs)
         return mu, var, value
 
-    def forward_actor(self, inputs):
-        common = self.common(inputs)
-        return self.mu(common), self.var(common)
-
     def forward_critic(self, inputs):
-        common = self.common(inputs)
-        return self.critic(common)
+        return self.critic(inputs)
 
 
+class ActorMLPBase(nn.Module):
+    def __init__(self, num_inputs, num_outputs, params):
+        super(ActorMLPBase, self).__init__()
+        self.__name__ = "ActorMLPBase"
+        self.params = params
+
+        self.hidden_1_size = params.HIDDEN_1_SIZE
+        self.hidden_2_size = params.HIDDEN_2_SIZE
+        self.hidden_3_size = params.HIDDEN_3_SIZE
+
+        self.net = nn.Sequential(
+            nn.Linear(num_inputs, self.hidden_1_size),
+            nn.ReLU(),
+            nn.Linear(self.hidden_1_size, self.hidden_2_size),
+            nn.ReLU(),
+            nn.Linear(self.hidden_2_size, self.hidden_3_size),
+            nn.ReLU(),
+        )
+
+        self.mu = nn.Sequential(
+            nn.Linear(self.hidden_3_size, num_outputs),
+            nn.Tanh()
+        )
+
+        self.var = nn.Sequential(
+            nn.Linear(self.hidden_3_size, num_outputs),
+            nn.Softplus()
+        )
+
+        #self.var = torch.ones(num_outputs) * 0.25
+
+        #self.logstd = nn.Parameter(torch.zeros(num_outputs))
+
+        # self.var = nn.Sequential(
+        #     nn.Linear(num_inputs, self.hidden_1_size),
+        #     nn.ReLU(),
+        #     nn.Linear(self.hidden_1_size, self.hidden_2_size),
+        #     nn.ReLU(),
+        #     nn.Linear(self.hidden_2_size, self.hidden_3_size),
+        #     nn.ReLU(),
+        #     nn.Linear(self.hidden_3_size, num_outputs),
+        #     nn.Softplus(),
+        # )
+
+    @staticmethod
+    def init_weights(m):
+        if type(m) == nn.Linear:
+            torch.nn.init.kaiming_normal_(m.weight)
+
+    def forward(self, inputs):
+        net_out = self.net(inputs)
+        return self.mu(net_out), self.var(net_out)
