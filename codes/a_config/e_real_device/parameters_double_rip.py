@@ -47,7 +47,6 @@ class PARAMETERS_DOUBLE_RIP:
     # [TRAINING]
     EPSILON_GREEDY_ACT = False
     EPSILON_DECAY = True
-    EPSILON_DECAY_RATE = 1000 #Large value means low decaying
 
     EPSILON_INIT = 0.9
     EPSILON_MIN = 0.001

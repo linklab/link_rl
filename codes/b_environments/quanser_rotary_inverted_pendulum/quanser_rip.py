@@ -25,6 +25,7 @@ class EnvironmentQuanserRIP(gym.Env):
         super(EnvironmentQuanserRIP, self).__init__()
         self.episode = 0
 
+        self.previous_time = time.perf_counter()
         self.state_space_shape = (STATE_SIZE,)
         self.action_space_shape = (len(balance_motor_power_list),)
 
@@ -141,22 +142,31 @@ class EnvironmentQuanserRIP(gym.Env):
         return np.asarray(self.state)
 
     def step(self, action):
+        current_time = time.perf_counter()
+        # print("current_time - self.previous_time", current_time - self.previous_time)
+        while True:
+            current_time = time.perf_counter()
+            if current_time - self.previous_time >= 7 / 1000:
+                break
+            time.sleep(0.0001)
+        #
         if type(action) is np.ndarray:
             action = action[0]
 
         motor_power = action
 
+        self.previous_time = time.perf_counter()
         #==================== Grpc and use sample time========================================
         previous_time = time.perf_counter()
 
         quanser_response = self.server_obj.step(QuanserRequest(value=float(motor_power)))
-        if quanser_response.message != "STEP":
-            raise ValueError()
-        while True:
-            current_time = time.perf_counter()
-            if current_time - previous_time >= 25 / 1000:
-                break
-            time.sleep(0.0001)
+        # if quanser_response.message != "STEP":
+        #     raise ValueError()
+        # while True:
+        #     current_time = time.perf_counter()
+        #     if current_time - previous_time >= 25 / 1000:
+        #         break
+        #     time.sleep(0.0001)
         #=====================================================================================
 
         self.motor_radian = quanser_response.motor_radian
@@ -164,7 +174,7 @@ class EnvironmentQuanserRIP(gym.Env):
         self.pendulum_radian = quanser_response.pendulum_radian
         self.pendulum_velocity = quanser_response.pendulum_velocity
         self.is_motor_limit = quanser_response.is_motor_limit
-
+        # print("motor: ", self.motor_radian)
         # print("===========transfer time : {0:1.6f} action : {1:3.2f}".format(previous_time - time.perf_counter(), action))
         # print("motor radian : {0:1.3f}, motor velocity : {1:1.3f}, pendulum radian : {2:1.3f}, pendulum velocity : {3:1.3f}".format(
         #     self.motor_radian, self.motor_velocity,
@@ -192,7 +202,6 @@ class EnvironmentQuanserRIP(gym.Env):
         #=============================================================================================
 
         self.steps += 1
-
         return next_state, self.reward, done, info
 
     def __isDone(self):
@@ -208,9 +217,9 @@ class EnvironmentQuanserRIP(gym.Env):
         #     print(self.motor_radian, " !!!!!!!")
         #     insert_to_info("*** Limit position ***")
         #     return True, info
-        elif abs(self.motor_radian) > math.radians(70) or self.is_motor_limit:
-            insert_to_info("***motor_radian exceed 70***")
-            self.is_motor_limit = True
+        elif self.is_motor_limit:#abs(self.motor_radian) > math.radians(90) or self.is_motor_limit:
+            insert_to_info("***motor_radian exceed 90***")
+            self.is_motor_limit = False
             return True, info
         else:
             insert_to_info("")

@@ -2,10 +2,11 @@ import spidev
 from concurrent import futures
 import time
 import math
-
+import numpy as np
 import grpc
 import quanser_service_pb2_grpc
 from quanser_service_pb2 import QuanserResponse
+import random
 
 self_servo = None
 
@@ -42,7 +43,7 @@ class QubeServo2:
         self.initial_state()
         self.motor_limit = False
 
-    def step(self, QuanserRequest):
+    def step(self, QuanserRequest, context):
         global last_time
 
         self.color = "green"
@@ -59,16 +60,16 @@ class QubeServo2:
             is_motor_limit=self.motor_limit
         )
     
-    def reset(self):
+    def reset(self, QuanserRequest, context):
         self.motor_limit = False
-        motor_radian, motor_velocity, pendulum_radian, pendulum_velocity, step_id, _ = self_servo.set_wait()
+        motor_radian, motor_velocity, pendulum_radian, pendulum_velocity, step_id, _  = self_servo.set_wait()
         return QuanserResponse(
             message="RESET",
             motor_radian=motor_radian, motor_velocity=motor_velocity,
             pendulum_radian=pendulum_radian, pendulum_velocity=pendulum_velocity
         )
 
-    def pendulum_reset(self, QuanserRequest):
+    def pendulum_reset(self, QuanserRequest, context):
         self.color = "yellow"
 
         self.spi.xfer2([
@@ -138,7 +139,7 @@ class QubeServo2:
         if motor_command & 0x0400:
             motor_command = motor_command | 0xfc00
         
-        print("__motor_command_split : ", motor_command, type(motor_command)) 
+        # print("__motor_command_split : ", motor_command, type(motor_command)) 
 
         # add amplifier bit
         motor_command = (motor_command & 0x7fff) | 0x8000
@@ -177,7 +178,7 @@ class QubeServo2:
             red_h, red_l, green_h, green_l, blue_h, blue_l = 0x03, 0xe7, 0x03, 0xe7, 0x03, 0xe7
         else:
             red_h, red_l, green_h, green_l, blue_h, blue_l = 0x00, 0x00, 0x00, 0x00, 0x00, 0x00
-        print("motor_command : ",motor_command)
+        # print("motor_command : ",motor_command)
         motor_command_h, motor_command_l = self.__motor_command_split(motor_command)
 
         data = self.spi.xfer2([
@@ -194,39 +195,24 @@ class QubeServo2:
 
     def limit_check(self):
         motor_radian, _ = self.__set_motor_command(self.motor_command)
-
-        if motor_radian > PI / 1.4 or motor_radian < -PI / 2:
+        # print("motor: ", motor_radian)
+        if abs(motor_radian) >= 80 * PI / 180.0:
             self.motor_limit = True
             self.protection()
             # print("<<=== pub reset complete")
 
     def protection(self):
-        is_protect = True
-        while is_protect:
-            start_motor_radian, _ = self.read_data()
-
+        n_protection_completion = 0
+        default_motor_command_ratio = 0.5
+        self.color = "yellow"
+        while n_protection_completion < 10:
+            motor_radian, _ = self.read_data()
             time.sleep(UNIT_TIME)
-
-            motor_command = 150 if start_motor_radian > 0 else -150
+            motor_command = motor_radian * default_motor_command_ratio
             end_motor_radian, _ = self.__set_motor_command(motor_command)
-
-            motor_velocity = end_motor_radian - start_motor_radian
-            # print("limit m_v:", motor_velocity)
-
-            motor_command = 0
-            if end_motor_radian > 0:
-                if motor_velocity > 0:
-                    motor_command = MOTOR_PROTECTION_VOLTAGE
-            else:
-                if motor_velocity < 0:
-                    motor_command = -MOTOR_PROTECTION_VOLTAGE
-
-            protect_motor_radian, _ = self.__set_motor_command(motor_command)
-
-            time.sleep(UNIT_TIME)
-
-            if abs(protect_motor_radian) < 8 * PI / 18:
-                is_protect = False
+            time.sleep(UNIT_TIME * 10)
+            if abs(motor_radian) < 5 and n_protection_completion is not 0:
+                n_protection_completion += 1
 
     # read radian and if step_id is changed, publish to env.
     def read_and_pub(self):
@@ -257,11 +243,153 @@ class QubeServo2:
             self.pendulum_count = 0
         self.pendulum_count += 1
         return motor_radian, 0, pendulum_radian, 0 ,int(self.step_id), self.pendulum_count
+    
+    def manual_swing_up(self):
+        print("\n***** Swing Up Start!!! *****")
+
+        previousTime = time.perf_counter()
+        last_pendulum_radian = 0
+        motorPWM = 0
+
+        while True:
+            # if the difference between the current time and the last time an SPI transaction
+            # occurred is greater than the sample time, start a new SPI transaction
+            currentTime = time.perf_counter()
+            if currentTime - previousTime >= UNIT_TIME:
+                # print("|| Time difference: {0} s ||".format(currentTime - previousTime))
+
+                previousTime = currentTime
+
+                motor_radian, pendulum_radian = self.read_data()
+
+                if 0.0 <= abs(pendulum_radian) <= PI * 11.0 / 180.0:
+                    break
+
+                angular_variation = (pendulum_radian - last_pendulum_radian)
+                # angular variation filtering
+                if angular_variation > 2.5:
+                    angular_variation -= math.pi * 2
+                elif angular_variation < -2.5:
+                    angular_variation += math.pi * 2
+
+                pendulum_angular_velocity = angular_variation / UNIT_TIME
+
+                last_pendulum_radian = pendulum_radian
+
+                voltage = 80.0  # 48.65 # 49.215
+
+                if abs(pendulum_angular_velocity) > 25:
+                    voltage /= int(10 * np.log(abs(pendulum_angular_velocity)))
+
+                if PI >= abs(pendulum_radian) >= PI * 90.0 / 180.0:
+                    if pendulum_radian >= 0:
+                        pendulum_radian = math.pi - pendulum_radian
+                    else:
+                        pendulum_radian = - math.pi + abs(pendulum_radian)
+
+                    if pendulum_angular_velocity == 0:
+                        if random.random() < 0.5:
+                            motorPWM = int(-2 * math.cos(pendulum_radian) * voltage)
+                        else:
+                            motorPWM = int(2 * math.cos(pendulum_radian) * voltage)
+                    elif pendulum_angular_velocity < 0:
+                        motorPWM = int(-2 * math.cos(pendulum_radian) * voltage)
+                    else:
+                        motorPWM = int(2 * math.cos(pendulum_radian) * voltage)
+
+                self.__set_motor_command(motorPWM)
+                
+                self.color = "blue"
+
+        print("\n***** Swing Up complete!!! *****")
+
+
+    def manual_balance(self):
+        theta_n_k1 = 0.0
+        theta_dot_k1 = 0.0
+        alpha_n_k1 = 0.0
+        alpha_dot_k1 = 0.0
+
+        kp_theta = 2.0
+        kd_theta = -2.0
+        kp_alpha = -30.0
+        kd_alpha = 2.5
+
+        previousTime = time.perf_counter()
+
+        count = 0
+
+        # time
+        while count < 1500 / 5:
+            # if the difference between the current time and the last time an SPI transaction
+            # occurred is greater than the sample time, start a new SPI transaction
+            currentTime = time.perf_counter()
+            if currentTime - previousTime >= UNIT_TIME * 5:
+                # print("|| Time difference: {0} s ||".format(currentTime - previousTime))
+
+                previousTime = currentTime
+
+                # LED Blue
+                theta, alpha = self.read_data()
+
+                # if the pendulum is within +/-30 degrees of upright, enable balance control
+                if abs(alpha) <= (30.0 * math.pi / 180.0):
+                    # transfer function = 50s/(s+50)
+                    # z-transform at 1ms = (50z - 50)/(z-0.9512)
+                    theta_n = -theta
+                    theta_dot = (50.0 * theta_n) - (50.0 * theta_n_k1) + (0.7612 * theta_dot_k1)
+                    theta_n_k1 = theta_n
+                    theta_dot_k1 = theta_dot
+
+                    # transfer function = 50s/(s+50)
+                    # z-transform at 1ms = (50z - 50)/(z-0.9512)
+                    alpha_n = -alpha
+                    alpha_dot = (50.0 * alpha_n) - (50.0 * alpha_n_k1) + (0.7612 * alpha_dot_k1)
+                    alpha_n_k1 = alpha_n
+                    alpha_dot_k1 = alpha_dot
+
+                    # multiply by proportional and derivative gains
+                    motorVoltage = (theta * kp_theta) + (theta_dot * kd_theta) + (alpha * kp_alpha) + (
+                            alpha_dot * kd_alpha)
+
+                    # set the saturation limit to +/- 15V
+                    if motorVoltage > 15.0:
+                        motorVoltage = 15.0
+                    elif motorVoltage < -15.0:
+                        motorVoltage = -15.0
+
+                    # invert for positive CCW
+                    motorVoltage = -motorVoltage
+
+                    # convert the analog value to the PWM duty cycle that will produce the same average voltage
+                    motorPWM = int(motorVoltage * (625.0 / 15.0))
+                    if motorPWM > 280:
+                        motorPWM = 280
+                    elif motorPWM < -280:
+                        motorPWM = -280
+
+                    # print(motorPWM)
+
+                    self.__set_motor_command(motorPWM)
+                    self.color = "green"
+
+                    count += 1
+
+                else:
+                    self.read_data()
+                    break
+        self.last_motor_radian = theta
+        self.last_pendulum_radian = alpha
+        self.is_reset = False
+
+
 
 
 if __name__ == "__main__":
+    qs = QubeServo2()
+    qs.pendulum_reset(0,None)
     server = grpc.server(futures.ThreadPoolExecutor(max_workers=10))
-    quanser_service_pb2_grpc.add_QuanserRIPServicer_to_server(QubeServo2(), server)
+    quanser_service_pb2_grpc.add_QuanserRIPServicer_to_server(qs, server)
     server.add_insecure_port('[::]:50051')
     server.start()
     server.wait_for_termination()

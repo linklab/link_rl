@@ -87,6 +87,7 @@ def play_func(exp_queue, agent, epsilon_tracker):
 
     episode = 0
     solved = False
+
     test_mean_episode_reward = 0.0
 
     with RewardTracker(params=params) as reward_tracker:
@@ -112,31 +113,30 @@ def play_func(exp_queue, agent, epsilon_tracker):
                             episode_reward=current_episode_reward, episode_done_step=step_idx,
                             epsilon=epsilon, last_info=exp.info
                         )
-                        if params.MODEL_SAVE_MODE == ModelSaveMode.TRAIN:
-                            if episode % params.EARLY_STOPPING_TEST_EPISODE_PERIOD == 0:
-                                test_mean_episode_reward = 0.0
-                                print("[{0:6}/{1}] Ep. {2}: * MODEL SAVE TEST * TRAIN EPISODE REWARD: {3:7.2f} ".format(
+
+                        if episode % params.EARLY_STOPPING_TEST_EPISODE_PERIOD == 0:
+                            if params.MODEL_SAVE_MODE == ModelSaveMode.TRAIN:
+                                print("[{0:6}/{1}] Ep. {2}: * MODEL SAVE TEST **TRAIN** ENV, EPISODE REWARD: {3:7.2f} ".format(
                                     step_idx, params.MAX_GLOBAL_STEP, episode, train_mean_episode_reward
                                 ), end="")
                                 solved = early_stopping.evaluate(
                                     evaluation_value=train_mean_episode_reward,
                                     episode_done_step=step_idx
                                 )
-                        elif params.MODEL_SAVE_MODE == ModelSaveMode.TEST:
-                            if episode % params.EARLY_STOPPING_TEST_EPISODE_PERIOD == 0:
+                            elif params.MODEL_SAVE_MODE == ModelSaveMode.TEST:
                                 test_mean_episode_reward = agent_model_test(params, test_env, agent)
-                                print("[{0:6}/{1}] Ep. {2}: * MODEL SAVE TEST * TEST EPISODE REWARD: {3:7.2f} ".format(
+                                print("[{0:6}/{1}] Ep. {2}: * MODEL SAVE TEST **TEST** ENV, EPISODE REWARD: {3:7.2f} ".format(
                                     step_idx, params.MAX_GLOBAL_STEP, episode, test_mean_episode_reward
                                 ), end="")
                                 solved = early_stopping.evaluate(
                                     evaluation_value=test_mean_episode_reward,
                                     episode_done_step=step_idx
                                 )
-                        elif params.MODEL_SAVE_MODE == ModelSaveMode.FINAL_ONLY:
-                            test_mean_episode_reward = 0.0
-                            solved = False
-                        else:
-                            raise ValueError()
+                            elif params.MODEL_SAVE_MODE == ModelSaveMode.FINAL_ONLY:
+                                test_mean_episode_reward = 0.0
+                                solved = False
+                            else:
+                                raise ValueError()
 
                         if params.WANDB:
                             wandb_info_dict = {
@@ -145,7 +145,8 @@ def play_func(exp_queue, agent, epsilon_tracker):
                                 "steps/episode": current_episode_step,
                                 "speed": speed,
                                 "step_idx": step_idx,
-                                "episode": episode
+                                "episode": episode,
+                                'actions': exp.action
                             }
                             if epsilon:
                                 wandb_info_dict["epsilon"] = epsilon
@@ -179,7 +180,7 @@ def main():
     agent, epsilon_tracker = rl_utils.get_rl_agent(env=env, worker_id=0, params=params, device=device)
     agent.model.share_memory()
 
-    exp_queue = mp.Queue(maxsize=params.TRAIN_STEP_FREQ * 2)
+    exp_queue = mp.Queue(maxsize=params.TRAIN_STEP_FREQ * 2) #params.TRAIN_STEP_FREQ * 2
     play_proc = mp.Process(target=play_func, args=(exp_queue, agent, epsilon_tracker))
     play_proc.start()
 
@@ -235,15 +236,7 @@ def main():
         elif isinstance(agent, OffPolicyAgent):
             if len(agent.buffer) < params.MIN_REPLAY_SIZE_FOR_TRAIN:
                 continue
-
-            if params.ENVIRONMENT_ID == EnvironmentName.QUANSER_SERVO_2:
-                # ===============================20 train for one step================================
-                last_loss = 0.0
-                for i in range(20):
-                    _, last_loss, _ = agent.train(step_idx=step_idx)
-                #=====================================================================================
-            else:
-                _, last_loss, _ = agent.train(step_idx=step_idx)
+            _, last_loss, _ = agent.train(step_idx=step_idx)
             loss_dequeue.append(last_loss)
         else:
             raise ValueError()
