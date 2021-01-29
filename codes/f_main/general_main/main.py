@@ -229,6 +229,8 @@ def main():
                     continue
             _, last_loss, _ = agent.train(step_idx=step_idx)
             loss_dequeue.append(last_loss)
+            # On-policy는 현재의 정책을 통해 산출된 경험정보만을 활용하여 NN을 업데이트해야 함.
+            # 따라서, 현재 학습에 사용된 Buffer는 깨끗하게 지워야 함.
             agent.buffer.clear()
         elif isinstance(agent, OffPolicyAgent):
             if len(agent.buffer) < params.MIN_REPLAY_SIZE_FOR_TRAIN:

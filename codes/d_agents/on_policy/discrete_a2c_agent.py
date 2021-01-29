@@ -115,7 +115,4 @@ class AgentDiscreteA2C(OnPolicyAgent):
 
         gradients = self.model.get_gradients_for_current_parameters()
 
-        # On-policy는 현재의 정책을 통해 산출된 경험정보만을 활용하여 NN을 업데이트해야 함. --> 따라서, 현재 학습에 사용된 Buffer는 깨끗하게 지워야 함.
-        self.buffer.clear()
-
         return gradients, loss_critic_v.item(), loss_actor_v.item() * -1.0
