@@ -88,6 +88,8 @@ def play_func(exp_queue, agent, epsilon_tracker):
     episode = 0
     solved = False
 
+    test_mean_episode_reward = 0.0
+
     with RewardTracker(params=params) as reward_tracker:
         try:
             while step_idx < params.MAX_GLOBAL_STEP:
@@ -111,8 +113,6 @@ def play_func(exp_queue, agent, epsilon_tracker):
                             episode_reward=current_episode_reward, episode_done_step=step_idx,
                             epsilon=epsilon, last_info=exp.info
                         )
-
-                        test_mean_episode_reward = train_mean_episode_reward
 
                         if episode % params.EARLY_STOPPING_TEST_EPISODE_PERIOD == 0:
                             if params.MODEL_SAVE_MODE == ModelSaveMode.TRAIN:
