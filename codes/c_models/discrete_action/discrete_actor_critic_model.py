@@ -49,31 +49,30 @@ class ActorCriticMLPBase(nn.Module):
         self.hidden_2_size = params.HIDDEN_2_SIZE
         self.hidden_3_size = params.HIDDEN_3_SIZE
 
-        self.actor = nn.Sequential(
+        self.common = nn.Sequential(
             nn.Linear(num_inputs, self.hidden_1_size),
             nn.ReLU(),
             nn.Linear(self.hidden_1_size, self.hidden_2_size),
-            nn.ReLU(),
+            nn.ReLU()
+        )
+
+        self.actor = nn.Sequential(
             nn.Linear(self.hidden_2_size, self.hidden_3_size),
             nn.ReLU(),
-            nn.Linear(self.hidden_3_size, num_outputs),
+            nn.Linear(self.hidden_3_size, num_outputs)
         )
 
         #self.actor.apply(self.init_weights)
 
         self.critic = nn.Sequential(
-            nn.Linear(num_inputs, self.hidden_1_size),
-            nn.ReLU(),
-            nn.Linear(self.hidden_1_size, self.hidden_2_size),
-            nn.ReLU(),
             nn.Linear(self.hidden_2_size, self.hidden_3_size),
             nn.ReLU(),
-            nn.Linear(self.hidden_3_size, 1),
+            nn.Linear(self.hidden_3_size, 1)
         )
 
         #self.critic.apply(self.init_weights)
 
-        self.layers_info = {'actor': self.actor, 'critic': self.critic}
+        self.layers_info = {'common': self.common, 'actor': self.actor, 'critic': self.critic}
 
         self.train()
 
@@ -83,16 +82,16 @@ class ActorCriticMLPBase(nn.Module):
             torch.nn.init.kaiming_normal_(m.weight)
 
     def forward(self, inputs):
-        return self.forward_actor(inputs)
+        return self.forward_actor(inputs), self.forward_critic(inputs)
 
     def forward_actor(self, inputs):
-        actions = self.actor(inputs)
-
+        common = self.common(inputs)
+        actions = self.actor(common)
         return actions
 
     def forward_critic(self, inputs):
-        critic_values = self.critic(inputs)
-
+        common = self.common(inputs)
+        critic_values = self.critic(common)
         return critic_values
 
 

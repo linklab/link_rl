@@ -112,31 +112,30 @@ def play_func(exp_queue, agent, epsilon_tracker):
                             episode_reward=current_episode_reward, episode_done_step=step_idx,
                             epsilon=epsilon, last_info=exp.info
                         )
-                        if params.MODEL_SAVE_MODE == ModelSaveMode.TRAIN:
-                            if episode % params.EARLY_STOPPING_TEST_EPISODE_PERIOD == 0:
-                                test_mean_episode_reward = 0.0
-                                print("[{0:6}/{1}] Ep. {2}: * MODEL SAVE TEST * TRAIN EPISODE REWARD: {3:7.2f} ".format(
+                        if episode % params.EARLY_STOPPING_TEST_EPISODE_PERIOD == 0:
+                            if params.MODEL_SAVE_MODE == ModelSaveMode.TRAIN:
+                                test_mean_episode_reward = train_mean_episode_reward
+                                print("[{0:6}/{1}] Ep. {2}: * MODEL SAVE TEST **TRAIN** ENV, EPISODE REWARD: {3:7.2f} ".format(
                                     step_idx, params.MAX_GLOBAL_STEP, episode, train_mean_episode_reward
                                 ), end="")
                                 solved = early_stopping.evaluate(
                                     evaluation_value=train_mean_episode_reward,
                                     episode_done_step=step_idx
                                 )
-                        elif params.MODEL_SAVE_MODE == ModelSaveMode.TEST:
-                            if episode % params.EARLY_STOPPING_TEST_EPISODE_PERIOD == 0:
+                            elif params.MODEL_SAVE_MODE == ModelSaveMode.TEST:
                                 test_mean_episode_reward = agent_model_test(params, test_env, agent)
-                                print("[{0:6}/{1}] Ep. {2}: * MODEL SAVE TEST * TEST EPISODE REWARD: {3:7.2f} ".format(
+                                print("[{0:6}/{1}] Ep. {2}: * MODEL SAVE TEST **TEST** ENV, EPISODE REWARD: {3:7.2f} ".format(
                                     step_idx, params.MAX_GLOBAL_STEP, episode, test_mean_episode_reward
                                 ), end="")
                                 solved = early_stopping.evaluate(
                                     evaluation_value=test_mean_episode_reward,
                                     episode_done_step=step_idx
                                 )
-                        elif params.MODEL_SAVE_MODE == ModelSaveMode.FINAL_ONLY:
-                            test_mean_episode_reward = 0.0
-                            solved = False
-                        else:
-                            raise ValueError()
+                            elif params.MODEL_SAVE_MODE == ModelSaveMode.FINAL_ONLY:
+                                test_mean_episode_reward = 0.0
+                                solved = False
+                            else:
+                                raise ValueError()
 
                         if params.WANDB:
                             wandb_info_dict = {

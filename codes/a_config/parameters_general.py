@@ -83,6 +83,7 @@ class PARAMETERS_GENERAL:
     GAMMA = 0.98 # discount factor
 
     # [Policy Gradient]
+    CRITIC_LOSS_WEIGHT = 0.5
     ENTROPY_LOSS_WEIGHT = 0.01
     CLIP_GRAD = 0.5
     ACTOR_LEARNING_RATE = 0.0001

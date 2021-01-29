@@ -91,11 +91,12 @@ class AgentDiscreteA2C(OnPolicyAgent):
 
         prob_v = F.softmax(logits_v, dim=1)
         entropy_v = -1.0 * (prob_v * log_pi_v).sum(dim=1).mean()
-        loss_entropy_v = -1.0 * self.params.ENTROPY_LOSS_WEIGHT * entropy_v
+        loss_entropy_v = -1.0 * entropy_v
 
         # loss_actor_v를 작아지도록 만듦 --> log_pi_v.mean()가 커지도록 만듦
         # loss_entropy_v를 작아지도록 만듦 --> entropy_v가 커지도록 만듦
-        loss_v = loss_critic_v + loss_actor_v + loss_entropy_v
+        loss_v = loss_actor_v + \
+                 self.params.CRITIC_LOSS_WEIGHT * loss_critic_v + self.params.ENTROPY_LOSS_WEIGHT * loss_entropy_v
 
         loss_v.backward()
         #nn_utils.clip_grad_norm_(self.model.base.actor.parameters(), self.params.CLIP_GRAD)
