@@ -111,9 +111,11 @@ def play_func(exp_queue, agent, epsilon_tracker):
                             episode_reward=current_episode_reward, episode_done_step=step_idx,
                             epsilon=epsilon, last_info=exp.info
                         )
+
+                        test_mean_episode_reward = train_mean_episode_reward
+
                         if episode % params.EARLY_STOPPING_TEST_EPISODE_PERIOD == 0:
                             if params.MODEL_SAVE_MODE == ModelSaveMode.TRAIN:
-                                test_mean_episode_reward = train_mean_episode_reward
                                 print("[{0:6}/{1}] Ep. {2}: * MODEL SAVE TEST **TRAIN** ENV, EPISODE REWARD: {3:7.2f} ".format(
                                     step_idx, params.MAX_GLOBAL_STEP, episode, train_mean_episode_reward
                                 ), end="")
