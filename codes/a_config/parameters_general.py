@@ -64,6 +64,7 @@ class PARAMETERS_GENERAL:
     OMEGA_WINDOW_SIZE = 6
     NEXT_STATE_IN_TRAJECTORY = True
     DATA_SAVE_STEP_PERIOD = 1000
+    BATCH_SIZE = 32
 
     #########################################
     #########################################
@@ -112,7 +113,9 @@ class PARAMETERS_GENERAL:
     PPO_TRAJECTORY_SIZE = 2049
 
     # [DQN]
-    BATCH_SIZE = 128
+    PER_PROPORTIONAL = False
+    PER_RANK_BASED = False
+    DOUBLE = True
 
     # [CUDA]
     CUDA_VISIBLE_DEVICES_NUMBER_LIST = '1, 2'
@@ -124,4 +127,4 @@ class PARAMETERS_GENERAL:
     TEST_NUM_EPISODES = 5
     EARLY_STOPPING_TEST_EPISODE_PERIOD = 10
     MODEL_SAVE_MODE = ModelSaveMode.TRAIN
-
+    AVG_STEP_SIZE_FOR_TRAIN_LOSS = 50

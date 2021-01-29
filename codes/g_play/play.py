@@ -20,7 +20,7 @@ if PROJECT_HOME not in sys.path:
 from codes.e_utils import rl_utils
 from codes.e_utils.common_utils import load_model
 from codes.e_utils.logger import get_logger
-from codes.e_utils.names import RLAlgorithmName, EnvironmentName
+from codes.e_utils.names import RLAlgorithmName, EnvironmentName, AgentMode
 
 MODEL_ZOO_SAVE_DIR = os.path.join(PROJECT_HOME, "codes", "g_play", "model_zoo")
 
@@ -33,36 +33,8 @@ my_logger = get_logger("openai_pendulum_ddpg")
 
 def play_main(params, env):
     agent, _ = rl_utils.get_rl_agent(env=env, worker_id=0, params=params, device=device)
-
     load_model(MODEL_ZOO_SAVE_DIR, params.ENVIRONMENT_ID.value, agent)
-
-    if params.ENVIRONMENT_ID in [EnvironmentName.PENDULUM_MATLAB_V0, EnvironmentName.PENDULUM_MATLAB_DOUBLE_RIP_V0]:
-        if params.RL_ALGORITHM == RLAlgorithmName.DQN_V0:
-            action_selector = EpsilonGreedySomeTimesBlowDQNActionSelector(
-                epsilon=0.0
-            )
-        elif params.RL_ALGORITHM == RLAlgorithmName.DDPG_V0:
-            action_selector = EpsilonGreedySomeTimesBlowDDPGActionSelector(
-                epsilon=0.0, ou_enabled=False, scale_factor=params.ACTION_SCALE,
-                min_blowing_action=-10.0 * params.ACTION_SCALE, max_blowing_action=10.0 * params.ACTION_SCALE
-            )
-        else:
-            raise ValueError()
-    else:
-        if params.RL_ALGORITHM in [RLAlgorithmName.CONTINUOUS_A2C_V0, RLAlgorithmName.CONTINUOUS_PPO_V0]:
-            action_selector = ContinuousNormalActionSelector()
-        elif params.RL_ALGORITHM in [RLAlgorithmName.DISCRETE_A2C_V0, RLAlgorithmName.DISCRETE_PPO_V0]:
-            action_selector = ProbabilityActionSelector()
-        elif params.RL_ALGORITHM == RLAlgorithmName.DQN_V0:
-            action_selector = ArgmaxActionSelector()
-        elif params.RL_ALGORITHM == RLAlgorithmName.DDPG_V0:
-            action_selector = EpsilonGreedyDDPGActionSelector(
-                epsilon=0.0, ou_enabled=False, scale_factor=params.ACTION_SCALE
-            )
-        else:
-            raise ValueError()
-
-    agent.action_selector = action_selector
+    agent.agent_mode = AgentMode.PLAY
 
     num_step = 0
     num_episode = 0
@@ -93,6 +65,8 @@ def play_main(params, env):
             #     print("EPISODE: {0}, EPISODE STEPS: {1}, TOTAL STEPS: {2}".format(
             #         num_episode, num_episode_step, num_step
             #     ))
+
+            time.sleep(0.05)
 
         print("EPISODE: {0}, EPISODE STEPS: {1}, TOTAL STEPS: {2}, EPISODE DONE --> EPISODE REWARD: {3}".format(
             num_episode, num_episode_step, num_step, episode_reward

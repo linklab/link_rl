@@ -47,7 +47,7 @@ class State:
         if self.volumes:
             return 4 * self.bars_count + 1 + 1,
         else:
-            return 3*self.bars_count + 1 + 1,
+            return 3 * self.bars_count + 1 + 1,
 
     def encode(self):
         """
@@ -167,14 +167,16 @@ class StocksEnv(gym.Env):
         self.action_space = gym.spaces.Discrete(n=len(Actions))
         self.observation_space = gym.spaces.Box(
             low=-np.inf, high=np.inf,
-            shape=self._state.shape, dtype=np.float32)
+            shape=self._state.shape, dtype=np.float32
+        )
         self.random_ofs_on_reset = random_ofs_on_reset
         self.seed()
 
     def reset(self):
         # make selection of the instrument and it's offset. Then reset the state
         self._instrument = self.np_random.choice(
-            list(self._prices.keys()))
+            list(self._prices.keys())
+        )
         prices = self._prices[self._instrument]
         bars = self._state.bars_count
         if self.random_ofs_on_reset:

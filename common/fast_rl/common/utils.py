@@ -9,7 +9,6 @@ import torch.nn as nn
 
 from codes.e_utils.names import EnvironmentName
 from common.fast_rl import rl_agent
-from common.fast_rl.common.statistics import StatisticsForValueBasedRL, StatisticsForPolicyBasedRL
 
 
 class SMAQueue:
@@ -461,14 +460,6 @@ class RewardTracker:
             print(", profit {0:8.1f}".format(last_info['profit']), end="")
 
         print("", flush=True)
-
-        if self.draw_viz and self.stat:
-            if isinstance(self.stat, StatisticsForValueBasedRL):
-                self.stat.draw_performance(episode_done_step, mean_episode_reward, speed, epsilon)
-            elif isinstance(self.stat, StatisticsForPolicyBasedRL):
-                self.stat.draw_performance(episode_done_step, mean_episode_reward, speed)
-            else:
-                raise ValueError()
 
 
 class EarlyStopping:

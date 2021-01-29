@@ -1,0 +1,24 @@
+from codes.e_utils.names import *
+from codes.a_config.parameters_general import PARAMETERS_GENERAL
+
+
+class PARAMETERS_PONG_A2C(PARAMETERS_GENERAL):
+    ENVIRONMENT_ID = EnvironmentName.PONG_NO_FRAME_SKIP_V4
+    DEEP_LEARNING_MODEL = DeepLearningModelName.STOCHASTIC_DISCRETE_ACTOR_CRITIC_CNN
+    RL_ALGORITHM = RLAlgorithmName.DISCRETE_A2C_V0
+    OPTIMIZER = OptimizerName.ADAM
+
+    STOP_MEAN_EPISODE_REWARD = 20.0
+    STOP_PATIENCE_COUNT = 10
+
+    MAX_GLOBAL_STEP = 30000000
+    LEARNING_RATE = 0.001
+
+    GAMMA = 0.99
+    BATCH_SIZE = 32
+
+    AVG_EPISODE_SIZE_FOR_STAT = 50
+    N_STEP = 1
+    TRAIN_STEP_FREQ = 1
+
+    CLIP_GRAD = 0.5

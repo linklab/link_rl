@@ -140,6 +140,10 @@ class ExperienceReplayBuffer:
         self.buffer.clear()
         self.pos = 0
 
+    def size(self):
+        return len(self.buffer)
+
+
 class PrioReplayBufferNaive:
     def __init__(self, experience_source, buffer_size, prob_alpha=0.6):
         self.experience_source_iter = iter(experience_source)
@@ -185,6 +189,9 @@ class PrioReplayBufferNaive:
     def update_priorities(self, batch_indices, batch_priorities):
         for idx, prio in zip(batch_indices, batch_priorities):
             self.priorities[idx] = prio
+
+    def size(self):
+        return len(self.buffer)
 
 
 # sumtree 사용 버전

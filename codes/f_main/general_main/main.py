@@ -1,6 +1,7 @@
 # https://github.com/openai/gym/blob/master/gym/envs/classic_control/pendulum.py
 # https://mspries.github.io/jimmy_pendulum.html
 #!/usr/bin/env python3
+import collections
 import time
 from collections import deque
 
@@ -43,23 +44,10 @@ device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 
 my_logger = get_logger("main")
 
+WandbInfo = collections.namedtuple('WandbInfo', field_names='wandb_info')
+
 
 def play_func(exp_queue, agent, epsilon_tracker):
-    if params.WANDB:
-        configuration = {key: getattr(params, key) for key in dir(params) if not key.startswith("__")}
-        wandb.init(
-            project=params.wandb_project,
-            entity=params.wandb_entity,
-            dir=WANDB_DIR,
-            config=configuration
-        )
-        run_name = wandb.run.name
-        run_number = run_name.split("-")[-1]
-        wandb.run.name = "{0}_{1}_{2}_{3}".format(
-            run_number, params.ENVIRONMENT_ID.value, agent.__name__, agent.model.__name__
-        )
-        wandb.run.save()
-
     train_env = rl_utils.get_environment(params=params)
     print_environment_info(train_env, params)
 
@@ -82,11 +70,6 @@ def play_func(exp_queue, agent, epsilon_tracker):
 
     exp_source_iter = iter(experience_source)
     step_idx = 0
-    loss_dequeue = deque(maxlen=100)
-
-
-    if params.WANDB:
-        wandb.watch(agent.model.base)
 
     early_stopping = EarlyStopping(
         patience=params.STOP_PATIENCE_COUNT,
@@ -124,11 +107,10 @@ def play_func(exp_queue, agent, epsilon_tracker):
                         episode += 1
 
                         epsilon = agent.train_action_selector.epsilon if hasattr(agent.train_action_selector, 'epsilon') else None
-                        mean_loss = np.mean(loss_dequeue) if len(loss_dequeue) > 0 else 0.0
 
                         train_mean_episode_reward, speed = reward_tracker.set_episode_reward(
-                            episode_reward=current_episode_reward, episode_done_step=step_idx, epsilon=epsilon,
-                            last_info=exp.info, mean_loss=mean_loss,
+                            episode_reward=current_episode_reward, episode_done_step=step_idx,
+                            epsilon=epsilon, last_info=exp.info
                         )
                         if params.MODEL_SAVE_MODE == ModelSaveMode.TRAIN:
                             if episode % params.EARLY_STOPPING_TEST_EPISODE_PERIOD == 0:
@@ -157,9 +139,8 @@ def play_func(exp_queue, agent, epsilon_tracker):
                             raise ValueError()
 
                         if params.WANDB:
-                            wandb_info = {
+                            wandb_info_dict = {
                                 "train episode reward": train_mean_episode_reward,
-                                "train_mean_loss": mean_loss,
                                 "test episode reward": test_mean_episode_reward,
                                 "steps/episode": current_episode_step,
                                 "speed": speed,
@@ -167,8 +148,10 @@ def play_func(exp_queue, agent, epsilon_tracker):
                                 "episode": episode
                             }
                             if epsilon:
-                                wandb_info["epsilon"] = epsilon
-                            wandb.log(wandb_info)
+                                wandb_info_dict["epsilon"] = epsilon
+
+                            wandb_info = WandbInfo(wandb_info=wandb_info_dict)
+                            exp_queue.put(wandb_info)
 
                 if solved:
                     print("Solved in {0} steps and {1} episodes!".format(step_idx, episode))
@@ -190,9 +173,11 @@ def play_func(exp_queue, agent, epsilon_tracker):
 
 def main():
     mp.set_start_method('spawn')
+    os.environ['OMP_NUM_THREADS'] = "1"
 
     env = rl_utils.get_single_environment(params=params)
     agent, epsilon_tracker = rl_utils.get_rl_agent(env=env, worker_id=0, params=params, device=device)
+    agent.model.share_memory()
 
     exp_queue = mp.Queue(maxsize=params.TRAIN_STEP_FREQ * 2) #params.TRAIN_STEP_FREQ * 2
     play_proc = mp.Process(target=play_func, args=(exp_queue, agent, epsilon_tracker))
@@ -200,16 +185,41 @@ def main():
 
     time.sleep(0.5)
 
+    if params.WANDB:
+        configuration = {key: getattr(params, key) for key in dir(params) if not key.startswith("__")}
+        wandb.init(
+            project=params.wandb_project,
+            entity=params.wandb_entity,
+            dir=WANDB_DIR,
+            config=configuration
+        )
+        run_name = wandb.run.name
+        run_number = run_name.split("-")[-1]
+        wandb.run.name = "{0}_{1}_{2}_{3}".format(
+            run_number, params.ENVIRONMENT_ID.value, agent.__name__, agent.model.__name__
+        )
+        wandb.run.save()
+
+        wandb.watch(agent.model.base)
+
+    loss_dequeue = deque(maxlen=params.AVG_STEP_SIZE_FOR_TRAIN_LOSS)
     step_idx = 0
 
     while play_proc.is_alive():
         step_idx += params.TRAIN_STEP_FREQ
         for _ in range(params.TRAIN_STEP_FREQ):
             exp = exp_queue.get()
+            if isinstance(exp, WandbInfo):
+                mean_loss = np.mean(loss_dequeue) if len(loss_dequeue) > 0 else 0.0
+                exp.wandb_info["train (critic) mean loss"] = mean_loss
+                wandb.log(exp.wandb_info)
+                continue
+
             if exp is None:
                 play_proc.join()
                 break
             agent.buffer._add(exp)
+
         if isinstance(agent, OnPolicyAgent):
             if params.RL_ALGORITHM in [RLAlgorithmName.CONTINUOUS_PPO_V0, RLAlgorithmName.DISCRETE_PPO_V0]:
                 if len(agent.buffer) < params.PPO_TRAJECTORY_SIZE:
@@ -218,11 +228,15 @@ def main():
                 if len(agent.buffer) < params.BATCH_SIZE:
                     continue
             _, last_loss, _ = agent.train(step_idx=step_idx)
+            loss_dequeue.append(last_loss)
+            # On-policy는 현재의 정책을 통해 산출된 경험정보만을 활용하여 NN을 업데이트해야 함.
+            # 따라서, 현재 학습에 사용된 Buffer는 깨끗하게 지워야 함.
             agent.buffer.clear()
         elif isinstance(agent, OffPolicyAgent):
             if len(agent.buffer) < params.MIN_REPLAY_SIZE_FOR_TRAIN:
                 continue
             _, last_loss, _ = agent.train(step_idx=step_idx)
+            loss_dequeue.append(last_loss)
         else:
             raise ValueError()
 
