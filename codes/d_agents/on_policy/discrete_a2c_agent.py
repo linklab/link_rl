@@ -33,26 +33,11 @@ class AgentDiscreteA2C(OnPolicyAgent):
             worker_id=worker_id, input_shape=input_shape, num_outputs=num_outputs, params=params, device=self.device
         )
 
-        if self.params.DEEP_LEARNING_MODEL == DeepLearningModelName.STOCHASTIC_DISCRETE_ACTOR_CRITIC_MLP:
-            self.actor_optimizer = rl_utils.get_optimizer(
-                parameters=self.model.base.actor.parameters(),
-                learning_rate=self.params.ACTOR_LEARNING_RATE,
-                params=params
-            )
-
-            self.critic_optimizer = rl_utils.get_optimizer(
-                parameters=self.model.base.critic.parameters(),
-                learning_rate=self.params.LEARNING_RATE,
-                params=params
-            )
-        elif self.params.DEEP_LEARNING_MODEL == DeepLearningModelName.STOCHASTIC_DISCRETE_ACTOR_CRITIC_CNN:
-            self.optimizer = rl_utils.get_optimizer(
-                parameters=list(self.model.base.common_conv.parameters()) + list(self.model.base.critic_fc.parameters()),
-                learning_rate=self.params.LEARNING_RATE,
-                params=params
-            )
-        else:
-            raise ValueError()
+        self.optimizer = rl_utils.get_optimizer(
+            parameters=self.model.base.parameters(),
+            learning_rate=self.params.LEARNING_RATE,
+            params=params
+        )
 
         self.buffer = replay_buffer.ExperienceReplayBuffer(
             experience_source=None, buffer_size=self.params.BATCH_SIZE
