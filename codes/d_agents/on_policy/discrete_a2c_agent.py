@@ -83,7 +83,7 @@ class AgentDiscreteA2C(OnPolicyAgent):
         self.critic_optimizer.zero_grad()
         loss_critic_v = F.mse_loss(input=value_v.squeeze(-1), target=target_action_values_v)
         loss_critic_v.backward()
-        nn_utils.clip_grad_norm_(self.model.base.critic.parameters(), self.params.CLIP_GRAD)
+        #nn_utils.clip_grad_norm_(self.model.base.critic.parameters(), self.params.CLIP_GRAD)
         self.critic_optimizer.step()
 
         # Actor Optimization
@@ -108,7 +108,7 @@ class AgentDiscreteA2C(OnPolicyAgent):
         loss_actor_and_entropy_v = loss_actor_v + loss_entropy_v
 
         loss_actor_and_entropy_v.backward()
-        nn_utils.clip_grad_norm_(self.model.base.actor.parameters(), self.params.CLIP_GRAD)
+        #nn_utils.clip_grad_norm_(self.model.base.actor.parameters(), self.params.CLIP_GRAD)
         self.actor_optimizer.step()
 
         gradients = self.model.get_gradients_for_current_parameters()
