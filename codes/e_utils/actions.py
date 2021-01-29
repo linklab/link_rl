@@ -137,7 +137,7 @@ class EpsilonGreedySomeTimesBlowDDPGActionSelector:
             noises = np.zeros_like(actions)
         else:
             if self.ou_enabled:
-                # agent_states = 1.0       +    0.15 * (0.0 - 1.0)            + new_random
+                # agent_states = 1.0        +    0.15 * (0.0 - 1.0)           + new_random
                 agent_states = agent_states + ou_rho * (ou_mu - agent_states) + ou_sigma * np.sqrt(ou_dt) * np.random.normal(size=actions.shape)
 
                 noises = self.epsilon * agent_states

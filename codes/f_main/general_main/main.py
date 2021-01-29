@@ -145,7 +145,8 @@ def play_func(exp_queue, agent, epsilon_tracker):
                                 "steps/episode": current_episode_step,
                                 "speed": speed,
                                 "step_idx": step_idx,
-                                "episode": episode
+                                "episode": episode,
+                                'actions': exp.action
                             }
                             if epsilon:
                                 wandb_info_dict["epsilon"] = epsilon
