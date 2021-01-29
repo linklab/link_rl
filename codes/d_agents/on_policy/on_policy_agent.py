@@ -5,6 +5,7 @@ import torch
 
 from codes.d_agents.a0_base_agent import BaseAgent, float32_preprocessor, long64_preprocessor
 from codes.e_utils import replay_buffer
+from codes.e_utils.names import RLAlgorithmName
 
 
 class OnPolicyAgent(BaseAgent):
@@ -36,10 +37,12 @@ class OnPolicyAgent(BaseAgent):
                 last_states.append(np.array(exp.last_state, copy=False))
 
         states_v = float32_preprocessor(states).to(self.device)
-        if discrete:
+        if params.RL_ALGORITHM in [RLAlgorithmName.DISCRETE_A2C_V0, RLAlgorithmName.DISCRETE_PPO_V0]:
             actions_v = long64_preprocessor(actions).to(self.device)
-        else:
+        elif params.RL_ALGORITHM in [RLAlgorithmName.CONTINUOUS_A2C_V0, RLAlgorithmName.CONTINUOUS_PPO_V0]:
             actions_v = float32_preprocessor(actions).to(self.device)
+        else:
+            raise ValueError()
 
         # handle rewards
         target_action_values_np = np.array(rewards, dtype=np.float32)
@@ -47,7 +50,7 @@ class OnPolicyAgent(BaseAgent):
         if not_done_idx:
             last_states_v = torch.FloatTensor(np.array(last_states, copy=False)).to(self.device)
             last_values_v = net.base.forward_critic(last_states_v)
-            last_values_np = last_values_v.data.cpu().numpy()[:, 0] * params.GAMMA ** params.N_STEP
+            last_values_np = last_values_v.data.cpu().numpy()[:, 0] * (params.GAMMA ** params.N_STEP)
             target_action_values_np[not_done_idx] += last_values_np
 
         target_action_values_v = float32_preprocessor(target_action_values_np).to(self.device)

@@ -1,17 +1,20 @@
 #!/usr/bin/env python3
 import gym
-import ptan
 import numpy as np
 import argparse
-from tensorboardX import SummaryWriter
 
 import torch
 import torch.nn as nn
 import torch.nn.utils as nn_utils
 import torch.nn.functional as F
 import torch.optim as optim
+from tensorboardX import SummaryWriter
 
-from lib import common
+from codes.e_utils.experience import ExperienceSourceFirstLast
+from common.fast_rl.common.utils import TBMeanTracker
+from common.fast_rl.common.wrappers import wrap_dqn
+from common.fast_rl.rl_agent import PolicyAgent
+from z_externals.handson_second_edition.Chapter11.lib.common import RewardTracker
 
 GAMMA = 0.99
 LEARNING_RATE = 0.001
@@ -99,31 +102,28 @@ def unpack_batch(batch, net, device='cpu'):
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument("--cuda", default=False, action="store_true", help="Enable cuda")
-    parser.add_argument("-n", "--name", required=True, help="Name of the run")
     args = parser.parse_args()
     device = torch.device("cuda" if args.cuda else "cpu")
+    writer = SummaryWriter(comment="-pong-a2c-rollouts")
 
-    make_env = lambda: ptan.common.wrappers.wrap_dqn(gym.make("PongNoFrameskip-v4"))
-    envs = [make_env() for _ in range(NUM_ENVS)]
-    writer = SummaryWriter(comment="-pong-a2c_" + args.name)
-
-    net = AtariA2C(envs[0].observation_space.shape, envs[0].action_space.n).to(device)
+    env = wrap_dqn(gym.make("PongNoFrameskip-v4"))
+    net = AtariA2C(env.observation_space.shape, env.action_space.n).to(device)
     print(net)
 
-    agent = ptan.agent.PolicyAgent(lambda x: net(x)[0], apply_softmax=True, device=device)
-    experience_source = ptan.experience.ExperienceSourceFirstLast(envs, agent, gamma=GAMMA, steps_count=REWARD_STEPS)
+    agent = PolicyAgent(lambda x: net(x)[0], apply_softmax=True, device=device)
+    experience_source = ExperienceSourceFirstLast(env, agent, gamma=GAMMA, n_step=REWARD_STEPS)
 
     optimizer = optim.Adam(net.parameters(), lr=LEARNING_RATE, eps=1e-3)
 
     batch = []
 
-    with common.RewardTracker(writer, stop_reward=18) as tracker:
-        with ptan.common.utils.TBMeanTracker(writer, batch_size=10) as tb_tracker:
+    with RewardTracker(writer, stop_reward=18) as tracker:
+        with TBMeanTracker(writer, batch_size=10) as tb_tracker:
             for step_idx, exp in enumerate(experience_source):
                 batch.append(exp)
 
                 # handle new rewards
-                new_rewards = experience_source.pop_total_rewards()
+                new_rewards = experience_source.pop_episode_reward_lst()
                 if new_rewards:
                     if tracker.reward(new_rewards[0], step_idx):
                         break
@@ -131,7 +131,7 @@ if __name__ == "__main__":
                 if len(batch) < BATCH_SIZE:
                     continue
 
-                states_v, actions_t, vals_ref_v = unpack_batch(batch, net, device=device)
+                states_v, actions_t, vals_ref_v = unpack_batch(batch, net)
                 batch.clear()
 
                 optimizer.zero_grad()
@@ -159,14 +159,3 @@ if __name__ == "__main__":
                 optimizer.step()
                 # get full loss
                 loss_v += loss_policy_v
-
-                tb_tracker.track("advantage",       adv_v, step_idx)
-                tb_tracker.track("values",          value_v, step_idx)
-                tb_tracker.track("batch_rewards",   vals_ref_v, step_idx)
-                tb_tracker.track("loss_entropy",    entropy_loss_v, step_idx)
-                tb_tracker.track("loss_policy",     loss_policy_v, step_idx)
-                tb_tracker.track("loss_value",      loss_value_v, step_idx)
-                tb_tracker.track("loss_total",      loss_v, step_idx)
-                tb_tracker.track("grad_l2",         np.sqrt(np.mean(np.square(grads))), step_idx)
-                tb_tracker.track("grad_max",        np.max(np.abs(grads)), step_idx)
-                tb_tracker.track("grad_var",        np.var(grads), step_idx)
