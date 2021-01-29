@@ -80,9 +80,10 @@ class PARAMETERS_GENERAL:
     CNN_CRITIC_HIDDEN_2_SIZE = 128
 
     # [OPTIMIZATION]
-    GAMMA = 0.98 # discount factor
+    GAMMA = 0.99 # discount factor
 
     # [Policy Gradient]
+    CRITIC_LOSS_WEIGHT = 1.0
     ENTROPY_LOSS_WEIGHT = 0.01
     CLIP_GRAD = 0.5
     ACTOR_LEARNING_RATE = 0.0001
@@ -97,7 +98,6 @@ class PARAMETERS_GENERAL:
     EPSILON_DECAY = True
     EPSILON_INIT = 0.9
     EPSILON_MIN = 0.05
-    EPSILON_DECAY_RATE = 1000 #Large value means low decaying
     OPTIMIZER = OptimizerName.ADAM
     PPO_GAE_LAMBDA = 0.95
     LEARNING_RATE = 0.001

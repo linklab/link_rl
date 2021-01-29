@@ -19,7 +19,10 @@ class AgentDiscretePPO(OnPolicyAgent):
     ):
         assert isinstance(train_action_selector, ProbabilityActionSelector)
         assert isinstance(test_and_play_action_selector, ProbabilityActionSelector)
-        assert params.DEEP_LEARNING_MODEL == DeepLearningModelName.STOCHASTIC_DISCRETE_ACTOR_CRITIC_MLP
+        assert params.DEEP_LEARNING_MODEL in [
+            DeepLearningModelName.STOCHASTIC_DISCRETE_ACTOR_CRITIC_MLP,
+            DeepLearningModelName.STOCHASTIC_DISCRETE_ACTOR_CRITIC_CNN,
+        ]
         assert params.N_STEP == 1  # GAE will consider various N_STEPs
 
         super(AgentDiscretePPO, self).__init__(
@@ -33,17 +36,23 @@ class AgentDiscretePPO(OnPolicyAgent):
             worker_id=worker_id, input_shape=input_shape, num_outputs=num_outputs, params=params, device=self.device
         )
 
-        self.actor_optimizer = rl_utils.get_optimizer(
-            parameters=self.model.base.actor.parameters(),
-            learning_rate=self.params.ACTOR_LEARNING_RATE,
-            params=params
-        )
-
-        self.critic_optimizer = rl_utils.get_optimizer(
-            parameters=self.model.base.critic.parameters(),
+        self.optimizer = rl_utils.get_optimizer(
+            parameters=self.model.base.parameters(),
             learning_rate=self.params.LEARNING_RATE,
             params=params
         )
+
+        # self.actor_optimizer = rl_utils.get_optimizer(
+        #     parameters=self.model.base.actor.parameters(),
+        #     learning_rate=self.params.ACTOR_LEARNING_RATE,
+        #     params=params
+        # )
+        #
+        # self.critic_optimizer = rl_utils.get_optimizer(
+        #     parameters=self.model.base.critic.parameters(),
+        #     learning_rate=self.params.LEARNING_RATE,
+        #     params=params
+        # )
 
         self.trajectory = []
 
@@ -117,16 +126,12 @@ class AgentDiscretePPO(OnPolicyAgent):
                 batch_logits_v, batch_values_v = self.model(batch_states_v)
 
                 # critic training
-                self.critic_optimizer.zero_grad()
+                self.optimizer.zero_grad()
 
                 # batch_values_v.squeeze(-1) : (64,)
                 # batch_target_action_value_v : (64,)
                 loss_critic_v = F.smooth_l1_loss(batch_values_v.squeeze(-1), batch_target_action_value_v)
-                loss_critic_v.backward(retain_graph=True)
-                self.critic_optimizer.step()
 
-                # actor training
-                self.actor_optimizer.zero_grad()
 
                 # batch_log_pi_v: (64, 2)
                 batch_log_pi_v = F.log_softmax(batch_logits_v, dim=1)
@@ -145,11 +150,14 @@ class AgentDiscretePPO(OnPolicyAgent):
                 )
                 loss_actor_v = -1.0 * torch.min(batch_surrogate_1_v, batch_surrogate_2_v).mean()
 
-                loss_entropy_v = -1.0 * self.params.ENTROPY_LOSS_WEIGHT * batch_entropy_v.mean()
+                loss_entropy_v = -1.0 * batch_entropy_v.mean()
 
-                loss_actor_and_entropy_v = loss_actor_v + loss_entropy_v
-                loss_actor_and_entropy_v.backward()
-                self.actor_optimizer.step()
+                loss_v = loss_actor_v + \
+                         self.params.CRITIC_LOSS_WEIGHT * loss_critic_v + \
+                         self.params.ENTROPY_LOSS_WEIGHT * loss_entropy_v
+
+                loss_v.backward()
+                self.optimizer.step()
 
                 sum_loss_critic += loss_critic_v.item()
                 sum_loss_actor += loss_actor_v.item()

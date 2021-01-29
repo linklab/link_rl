@@ -18,7 +18,10 @@ class AgentContinuousPPO(OnPolicyAgent):
     ):
         assert isinstance(train_action_selector, ContinuousNormalActionSelector)
         assert isinstance(test_and_play_action_selector, ContinuousNormalActionSelector)
-        assert params.DEEP_LEARNING_MODEL == DeepLearningModelName.STOCHASTIC_CONTINUOUS_ACTOR_CRITIC_MLP
+        assert params.DEEP_LEARNING_MODEL in [
+            DeepLearningModelName.STOCHASTIC_CONTINUOUS_ACTOR_CRITIC_MLP,
+            DeepLearningModelName.STOCHASTIC_CONTINUOUS_ACTOR_CRITIC_CNN
+        ]
         assert params.N_STEP == 1  # GAE will consider various N_STEPs
 
         super(AgentContinuousPPO, self).__init__(train_action_selector, test_and_play_action_selector, params=params, device=device)

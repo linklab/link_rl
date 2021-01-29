@@ -114,8 +114,8 @@ def print_configuration(env, rl_model, params):
     if params.EPSILON_GREEDY_ACT:
         print(" EPSILON_DECAY: {0}".format(params.EPSILON_DECAY))
         if params.EPSILON_DECAY:
-            print(" EPSILON_INIT: {0}, EPSILON_MIN: {1}, EPSILON_DECAY_RATE: {2}".format(
-                params.EPSILON_INIT, params.EPSILON_MIN, params.EPSILON_DECAY_RATE
+            print(" EPSILON_INIT: {0}, EPSILON_MIN: {1}".format(
+                params.EPSILON_INIT, params.EPSILON_MIN
             ))
 
     print()

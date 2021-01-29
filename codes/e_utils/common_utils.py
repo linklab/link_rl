@@ -67,19 +67,17 @@ def set_global_seeds(seed):
     random.seed(myseed)
 
 
-def make_atari_env(env_id, rank=0, seed=0):
+def make_atari_env(env_id, seed=0):
     """
     Utility function for multiprocessed env.
 
     :param env_id: (str) the environment ID
     :param num_env: (int) the number of environment you wish to have in subprocesses
     :param seed: (int) the inital seed for RNG
-    :param rank: (int) index of the subprocess
     """
     set_global_seeds(seed)
 
     env = gym.make(env_id)
-    env.seed(seed + rank)
     env = wrappers.wrap_dqn(env)
     return env
 
