@@ -23,13 +23,20 @@ class DiscreteActorCriticModel(BaseModel):
             self.base = ActorCriticCNNBase(
                 input_shape=input_shape, num_outputs=num_outputs
             )
+        else:
+            raise ValueError()
 
         self.reset_average_gradients()
 
     def forward(self, inputs):
-        if not (type(inputs) is torch.Tensor):
-            inputs = torch.tensor([inputs], dtype=torch.float).to(self.device)
-        return self.base.forward_actor(inputs), self.base.forward_critic(inputs)
+        if self.params.DEEP_LEARNING_MODEL == DeepLearningModelName.STOCHASTIC_DISCRETE_ACTOR_CRITIC_MLP:
+            if not (type(inputs) is torch.Tensor):
+                inputs = torch.tensor([inputs], dtype=torch.float).to(self.device)
+            return self.base.forward_actor(inputs), self.base.forward_critic(inputs)
+        elif self.params.DEEP_LEARNING_MODEL == DeepLearningModelName.STOCHASTIC_DISCRETE_ACTOR_CRITIC_CNN:
+            return self.base.forward(inputs)
+        else:
+            raise ValueError()
 
 
 class ActorCriticMLPBase(nn.Module):
@@ -94,31 +101,7 @@ class ActorCriticCNNBase(nn.Module):
         super(ActorCriticCNNBase, self).__init__()
         self.__name__ = "ActorCriticCNNBase"
 
-        self.actor = ActorCNNBase(input_shape, num_outputs)
-        self.critic = CriticCNNBase(input_shape, 1)
-
-        self.layers_info = {'actor': self.actor, 'critic': self.critic}
-
-        self.train()
-
-    def forward(self, inputs):
-        return self.forward_actor(inputs)
-
-    def forward_actor(self, inputs):
-        actions = self.actor.forward_actor(inputs)
-        return actions
-
-    def forward_critic(self, inputs):
-        critic_values = self.critic.forward_critic(inputs)
-        return critic_values
-
-
-class ActorCNNBase(nn.Module):
-    def __init__(self, input_shape, num_outputs):
-        super(ActorCNNBase, self).__init__()
-        self.__name__ = "ActorCNNBase"
-
-        self.actor_conv = nn.Sequential(
+        self.common_conv = nn.Sequential(
             nn.Conv2d(in_channels=input_shape[0], out_channels=32, kernel_size=8, stride=4),
             nn.ReLU(),
             nn.Conv2d(in_channels=32, out_channels=64, kernel_size=4, stride=2),
@@ -127,18 +110,20 @@ class ActorCNNBase(nn.Module):
             nn.ReLU()
         )
 
-        actor_conv_out_size = self._get_conv_out(self.actor_conv, input_shape)
+        common_conv_out_size = self._get_conv_out(self.common_conv, input_shape)
+
         self.actor_fc = nn.Sequential(
-            nn.Linear(actor_conv_out_size, 512),
+            nn.Linear(common_conv_out_size, 512),
             nn.ReLU(),
             nn.Linear(512, num_outputs)
         )
+        self.critic_fc = nn.Sequential(
+            nn.Linear(common_conv_out_size, 512),
+            nn.ReLU(),
+            nn.Linear(512, 1)
+        )
 
-        # self.actor.apply(self.init_weights)
-
-        self.layers_info = {
-            'actor_conv': self.actor_conv, 'actor_fc': self.actor_fc,
-        }
+        self.layers_info = {'common_conv': self.common_conv, 'actor_fc': self.actor_fc, 'critic_fc': self.critic_fc}
 
         self.train()
 
@@ -146,13 +131,18 @@ class ActorCNNBase(nn.Module):
         o = conv(Variable(torch.zeros(1, *shape)))
         return int(np.prod(o.size()))
 
-    @staticmethod
-    def init_weights(m):
-        if type(m) == nn.Linear:
-            torch.nn.init.kaiming_normal_(m.weight)
-
     def forward(self, inputs):
-        return self.forward_actor(inputs)
+        if torch.is_tensor(inputs):
+            fx = inputs.to(torch.float32)
+        else:
+            fx = torch.tensor(inputs, dtype=torch.float32)
+
+        common_conv_out = self.common_conv(fx).view(fx.size()[0], -1)
+
+        actions = self.actor_fc(common_conv_out)
+        critic_values = self.critic_fc(common_conv_out)
+
+        return actions, critic_values
 
     def forward_actor(self, inputs):
         if torch.is_tensor(inputs):
@@ -160,51 +150,9 @@ class ActorCNNBase(nn.Module):
         else:
             fx = torch.tensor(inputs, dtype=torch.float32)
 
-        actor_conv_out = self.actor_conv(fx).view(fx.size()[0], -1)
-        actions = self.actor_fc(actor_conv_out)
+        common_conv_out = self.common_conv(fx).view(fx.size()[0], -1)
+        actions = self.actor_fc(common_conv_out)
         return actions
-
-
-class CriticCNNBase(nn.Module):
-    def __init__(self, input_shape, num_outputs=1):
-        super(CriticCNNBase, self).__init__()
-        self.__name__ = "CriticCNNBase"
-
-        self.critic_conv = nn.Sequential(
-            nn.Conv2d(in_channels=input_shape[0], out_channels=32, kernel_size=8, stride=4),
-            nn.ReLU(),
-            nn.Conv2d(in_channels=32, out_channels=64, kernel_size=4, stride=2),
-            nn.ReLU(),
-            nn.Conv2d(in_channels=64, out_channels=64, kernel_size=3, stride=1),
-            nn.ReLU()
-        )
-
-        critic_conv_out_size = self._get_conv_out(self.critic_conv, input_shape)
-        self.critic_fc = nn.Sequential(
-            nn.Linear(critic_conv_out_size, 512),
-            nn.ReLU(),
-            nn.Linear(512, num_outputs)
-        )
-
-        # self.critic.apply(self.init_weights)
-
-        self.layers_info = {
-            'critic_conv': self.critic_conv, 'critic_fc': self.critic_fc
-        }
-
-        self.train()
-
-    def _get_conv_out(self, conv, shape):
-        o = conv(Variable(torch.zeros(1, *shape)))
-        return int(np.prod(o.size()))
-
-    @staticmethod
-    def init_weights(m):
-        if type(m) == nn.Linear:
-            torch.nn.init.kaiming_normal_(m.weight)
-
-    def forward(self, inputs):
-        return self.forward_critic(inputs)
 
     def forward_critic(self, inputs):
         if torch.is_tensor(inputs):
@@ -212,7 +160,137 @@ class CriticCNNBase(nn.Module):
         else:
             fx = torch.tensor(inputs, dtype=torch.float32)
 
-        critic_conv_out = self.critic_conv(fx).view(fx.size()[0], -1)
-        critic_values = self.critic_fc(critic_conv_out)
-
+        common_conv_out = self.common_conv(fx).view(fx.size()[0], -1)
+        critic_values = self.critic_fc(common_conv_out)
         return critic_values
+
+
+
+
+# class ActorCriticCNNBase(nn.Module):
+#     def __init__(self, input_shape, num_outputs):
+#         super(ActorCriticCNNBase, self).__init__()
+#         self.__name__ = "ActorCriticCNNBase"
+#
+#         self.actor = ActorCNNBase(input_shape, num_outputs)
+#         self.critic = CriticCNNBase(input_shape, 1)
+#
+#         self.layers_info = {'actor': self.actor, 'critic': self.critic}
+#
+#         self.train()
+#
+#     def forward(self, inputs):
+#         return self.forward_actor(inputs)
+#
+#     def forward_actor(self, inputs):
+#         actions = self.actor.forward_actor(inputs)
+#         return actions
+#
+#     def forward_critic(self, inputs):
+#         critic_values = self.critic.forward_critic(inputs)
+#         return critic_values
+#
+#
+# class ActorCNNBase(nn.Module):
+#     def __init__(self, input_shape, num_outputs):
+#         super(ActorCNNBase, self).__init__()
+#         self.__name__ = "ActorCNNBase"
+#
+#         self.actor_conv = nn.Sequential(
+#             nn.Conv2d(in_channels=input_shape[0], out_channels=32, kernel_size=8, stride=4),
+#             nn.ReLU(),
+#             nn.Conv2d(in_channels=32, out_channels=64, kernel_size=4, stride=2),
+#             nn.ReLU(),
+#             nn.Conv2d(in_channels=64, out_channels=64, kernel_size=3, stride=1),
+#             nn.ReLU()
+#         )
+#
+#         actor_conv_out_size = self._get_conv_out(self.actor_conv, input_shape)
+#         self.actor_fc = nn.Sequential(
+#             nn.Linear(actor_conv_out_size, 512),
+#             nn.ReLU(),
+#             nn.Linear(512, num_outputs)
+#         )
+#
+#         # self.actor.apply(self.init_weights)
+#
+#         self.layers_info = {
+#             'actor_conv': self.actor_conv, 'actor_fc': self.actor_fc,
+#         }
+#
+#         self.train()
+#
+#     def _get_conv_out(self, conv, shape):
+#         o = conv(Variable(torch.zeros(1, *shape)))
+#         return int(np.prod(o.size()))
+#
+#     @staticmethod
+#     def init_weights(m):
+#         if type(m) == nn.Linear:
+#             torch.nn.init.kaiming_normal_(m.weight)
+#
+#     def forward(self, inputs):
+#         return self.forward_actor(inputs)
+#
+#     def forward_actor(self, inputs):
+#         if torch.is_tensor(inputs):
+#             fx = inputs.to(torch.float32)
+#         else:
+#             fx = torch.tensor(inputs, dtype=torch.float32)
+#
+#         actor_conv_out = self.actor_conv(fx).view(fx.size()[0], -1)
+#         actions = self.actor_fc(actor_conv_out)
+#         return actions
+#
+#
+# class CriticCNNBase(nn.Module):
+#     def __init__(self, input_shape, num_outputs=1):
+#         super(CriticCNNBase, self).__init__()
+#         self.__name__ = "CriticCNNBase"
+#
+#         self.critic_conv = nn.Sequential(
+#             nn.Conv2d(in_channels=input_shape[0], out_channels=32, kernel_size=8, stride=4),
+#             nn.ReLU(),
+#             nn.Conv2d(in_channels=32, out_channels=64, kernel_size=4, stride=2),
+#             nn.ReLU(),
+#             nn.Conv2d(in_channels=64, out_channels=64, kernel_size=3, stride=1),
+#             nn.ReLU()
+#         )
+#
+#         critic_conv_out_size = self._get_conv_out(self.critic_conv, input_shape)
+#         self.critic_fc = nn.Sequential(
+#             nn.Linear(critic_conv_out_size, 512),
+#             nn.ReLU(),
+#             nn.Linear(512, num_outputs)
+#         )
+#
+#         # self.critic.apply(self.init_weights)
+#
+#         self.layers_info = {
+#             'critic_conv': self.critic_conv, 'critic_fc': self.critic_fc
+#         }
+#
+#         self.train()
+#
+#     def _get_conv_out(self, conv, shape):
+#         o = conv(Variable(torch.zeros(1, *shape)))
+#         return int(np.prod(o.size()))
+#
+#     @staticmethod
+#     def init_weights(m):
+#         if type(m) == nn.Linear:
+#             torch.nn.init.kaiming_normal_(m.weight)
+#
+#     def forward(self, inputs):
+#         return self.forward_critic(inputs)
+#
+#     def forward_critic(self, inputs):
+#         if torch.is_tensor(inputs):
+#             fx = inputs.to(torch.float32)
+#         else:
+#             fx = torch.tensor(inputs, dtype=torch.float32)
+#
+#         critic_conv_out = self.critic_conv(fx).view(fx.size()[0], -1)
+#         critic_values = self.critic_fc(critic_conv_out)
+#
+#         return critic_values
