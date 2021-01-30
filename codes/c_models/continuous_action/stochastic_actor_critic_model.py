@@ -60,7 +60,9 @@ class StochasticActorCriticMLPBase(nn.Module):
             nn.Linear(self.hidden_3_size, 1),
         )
 
-        self.layers_info = {'commo': self.common, 'actor_mu': self.actor_mu, 'actor_var': self.actor_var, 'critic': self.critic}
+        self.layers_info = {
+            'common': self.common, 'actor_mu': self.actor_mu, 'actor_var': self.actor_var, 'critic': self.critic
+        }
 
         self.train()
 

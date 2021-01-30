@@ -238,8 +238,8 @@ def agent_model_test(params, test_env, agent):
     return np.mean(episode_rewards), np.std(episode_rewards)
 
 
-def print_performance(params, episode_done_step, done_episode, episode_reward,
-                      mean_episode_reward, epsilon, elapsed_time, last_info, speed, mean_loss, worker_id=None):
+def print_performance(params, episode_done_step, done_episode, episode_reward, mean_episode_reward, epsilon,
+                      elapsed_time, last_info, speed, mean_loss, worker_id=None, last_action=None):
 
     if worker_id is not None:
         prefix = "[Worker ID: {0}]".format(worker_id)
@@ -286,6 +286,9 @@ def print_performance(params, episode_done_step, done_episode, episode_reward,
 
     if params.ENVIRONMENT_ID == EnvironmentName.TRADE_V0:
         print(", profit {0:8.1f}".format(last_info['profit']), end="")
+
+    if last_action is not None:
+        print(", last action {0}".format(last_action), end="")
 
     print("", flush=True)
 

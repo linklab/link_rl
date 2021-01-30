@@ -242,7 +242,9 @@ def main():
                     elapsed_time=train_info_dict["elapsed_time"],
                     last_info=train_info_dict["last_info"],
                     speed=train_info_dict["speed"],
-                    mean_loss=mean_loss)
+                    mean_loss=mean_loss,
+                    last_action=train_info_dict["actions"]
+                )
 
                 if params.WANDB:
                     del train_info_dict["last_info"]

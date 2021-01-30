@@ -54,20 +54,18 @@ class ActorCriticMLPBase(nn.Module):
             nn.Linear(num_inputs, self.hidden_1_size),
             nn.ReLU(),
             nn.Linear(self.hidden_1_size, self.hidden_2_size),
-            nn.ReLU()
+            nn.ReLU(),
+            nn.Linear(self.hidden_2_size, self.hidden_3_size),
+            nn.ReLU(),
         )
 
         self.actor = nn.Sequential(
-            nn.Linear(self.hidden_2_size, self.hidden_3_size),
-            nn.ReLU(),
             nn.Linear(self.hidden_3_size, num_outputs)
         )
 
         #self.actor.apply(self.init_weights)
 
         self.critic = nn.Sequential(
-            nn.Linear(self.hidden_2_size, self.hidden_3_size),
-            nn.ReLU(),
             nn.Linear(self.hidden_3_size, 1)
         )
 

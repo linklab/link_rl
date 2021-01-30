@@ -1,6 +1,7 @@
 import torch
 import torch.nn.functional as F
 from torch.distributions import MultivariateNormal, Normal
+import torch.nn.utils as nn_utils
 
 from codes.d_agents.a0_base_agent import BaseAgent, float32_preprocessor
 from codes.d_agents.on_policy.on_policy_agent import OnPolicyAgent
@@ -135,6 +136,7 @@ class AgentContinuousPPO(OnPolicyAgent):
                          self.params.ENTROPY_LOSS_WEIGHT * loss_entropy_v
 
                 loss_v.backward()
+                nn_utils.clip_grad_norm_(self.model.base.parameters(), self.params.CLIP_GRAD)
                 self.optimizer.step()
 
                 sum_loss_critic += loss_critic_v.item()
