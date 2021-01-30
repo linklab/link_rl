@@ -8,7 +8,7 @@ import numpy as np
 
 from codes.e_utils.actions import EpsilonGreedySomeTimesBlowDQNActionSelector, \
     EpsilonGreedySomeTimesBlowDDPGActionSelector, ArgmaxActionSelector, EpsilonGreedyDDPGActionSelector, \
-    ContinuousNormalActionSelector, ProbabilityActionSelector
+    ContinuousNormalActionSelector, DiscreteCategoricalActionSelector
 
 print("PyTorch Version", torch.__version__)
 

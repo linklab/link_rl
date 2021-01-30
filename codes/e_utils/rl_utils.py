@@ -32,7 +32,7 @@ from codes.c_models.discrete_action.dqn_model import DuelingDQNModel
 from codes.d_agents.off_policy.ddpg_agent import AgentDDPG
 
 from codes.e_utils.actions import EpsilonGreedyDDPGActionSelector, EpsilonTracker, EpsilonGreedyDQNActionSelector, \
-    ProbabilityActionSelector, ContinuousNormalActionSelector, EpsilonGreedySomeTimesBlowDDPGActionSelector, \
+    DiscreteCategoricalActionSelector, ContinuousNormalActionSelector, EpsilonGreedySomeTimesBlowDDPGActionSelector, \
     ArgmaxActionSelector
 from codes.e_utils.common_utils import make_atari_env
 from codes.e_utils.names import EnvironmentName, DeepLearningModelName, RLAlgorithmName, OptimizerName
@@ -85,7 +85,8 @@ def get_single_environment(params=None):
         EnvironmentName.ACROBOT_V1, EnvironmentName.BLACKJACK_V0, EnvironmentName.MOUNTAINCARCONTINUOUS_V0,
         EnvironmentName.INVERTED_DOUBLE_PENDULUM_V2, EnvironmentName.HOPPER_V2, EnvironmentName.SWIMMER_V2,
         EnvironmentName.REACHER_V2, EnvironmentName.HUMANOID_V2, EnvironmentName.HUMANOID_STAND_UP_V2,
-        EnvironmentName.INVERTED_PENDULUM_V2, EnvironmentName.WALKER_2D_V2,
+        EnvironmentName.INVERTED_PENDULUM_V2, EnvironmentName.WALKER_2D_V2, EnvironmentName.LUNAR_LANDER_V2,
+        EnvironmentName.LUNAR_LANDER_CONTINUOUS_V2
     ]:
         env = gym.make(params.ENVIRONMENT_ID.value)
     elif params.ENVIRONMENT_ID in [EnvironmentName.PENDULUM_V0]:
@@ -305,8 +306,8 @@ def get_rl_agent(env, worker_id, params, device="cpu"):
             action_min=action_min, action_max=action_max, params=params, device=device
         )
     elif params.RL_ALGORITHM == RLAlgorithmName.DISCRETE_A2C_V0:
-        train_action_selector = ProbabilityActionSelector()
-        test_and_play_action_selector = ProbabilityActionSelector()
+        train_action_selector = DiscreteCategoricalActionSelector()
+        test_and_play_action_selector = DiscreteCategoricalActionSelector()
 
         agent = AgentDiscreteA2C(
             worker_id=worker_id, input_shape=input_shape, num_outputs=num_outputs,
@@ -323,8 +324,8 @@ def get_rl_agent(env, worker_id, params, device="cpu"):
             action_min=action_min, action_max=action_max, params=params, device=device
         )
     elif params.RL_ALGORITHM == RLAlgorithmName.DISCRETE_PPO_V0:
-        train_action_selector = ProbabilityActionSelector()
-        test_and_play_action_selector = ProbabilityActionSelector()
+        train_action_selector = DiscreteCategoricalActionSelector()
+        test_and_play_action_selector = DiscreteCategoricalActionSelector()
 
         agent = AgentDiscretePPO(
             worker_id=worker_id, input_shape=input_shape, num_outputs=num_outputs,

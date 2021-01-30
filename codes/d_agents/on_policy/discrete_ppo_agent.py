@@ -1,12 +1,10 @@
-import numpy as np
 import torch
 import torch.nn.functional as F
-from torch.distributions import MultivariateNormal, Normal
 
 from codes.d_agents.a0_base_agent import BaseAgent, float32_preprocessor
 from codes.d_agents.on_policy.on_policy_agent import OnPolicyAgent
 from codes.e_utils import rl_utils, replay_buffer
-from codes.e_utils.actions import ContinuousNormalActionSelector, ProbabilityActionSelector
+from codes.e_utils.actions import DiscreteCategoricalActionSelector
 from codes.e_utils.names import DeepLearningModelName, AgentMode
 
 
@@ -17,8 +15,8 @@ class AgentDiscretePPO(OnPolicyAgent):
             self, worker_id, input_shape, num_outputs,
             train_action_selector, test_and_play_action_selector, params, device
     ):
-        assert isinstance(train_action_selector, ProbabilityActionSelector)
-        assert isinstance(test_and_play_action_selector, ProbabilityActionSelector)
+        assert isinstance(train_action_selector, DiscreteCategoricalActionSelector)
+        assert isinstance(test_and_play_action_selector, DiscreteCategoricalActionSelector)
         assert params.DEEP_LEARNING_MODEL in [
             DeepLearningModelName.STOCHASTIC_DISCRETE_ACTOR_CRITIC_MLP,
             DeepLearningModelName.STOCHASTIC_DISCRETE_ACTOR_CRITIC_CNN,
@@ -67,12 +65,11 @@ class AgentDiscretePPO(OnPolicyAgent):
         logits_v = self.model.base.forward_actor(states)
 
         probs_v = F.softmax(logits_v, dim=1)
-        probs = probs_v.data.cpu().numpy()
 
         if self.agent_mode == AgentMode.TRAIN:
-            actions = np.array(self.train_action_selector(probs))
+            actions = self.train_action_selector(probs_v)
         else:
-            actions = np.array(self.test_and_play_action_selector(probs))
+            actions = self.test_and_play_action_selector(probs_v)
 
         critics = torch.zeros(size=probs_v.size())
         return actions, critics
@@ -130,8 +127,7 @@ class AgentDiscretePPO(OnPolicyAgent):
 
                 # batch_values_v.squeeze(-1) : (64,)
                 # batch_target_action_value_v : (64,)
-                loss_critic_v = F.smooth_l1_loss(batch_values_v.squeeze(-1), batch_target_action_value_v)
-
+                loss_critic_v = F.smooth_l1_loss(batch_values_v.squeeze(-1), batch_target_action_value_v.detach())
 
                 # batch_log_pi_v: (64, 2)
                 batch_log_pi_v = F.log_softmax(batch_logits_v, dim=1)

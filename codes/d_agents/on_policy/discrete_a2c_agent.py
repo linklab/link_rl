@@ -6,7 +6,7 @@ import torch.nn.utils as nn_utils
 from codes.d_agents.a0_base_agent import BaseAgent, float32_preprocessor
 from codes.d_agents.on_policy.on_policy_agent import OnPolicyAgent
 from codes.e_utils import rl_utils, replay_buffer
-from codes.e_utils.actions import ProbabilityActionSelector
+from codes.e_utils.actions import DiscreteCategoricalActionSelector
 from codes.e_utils.names import DeepLearningModelName, AgentMode
 
 
@@ -17,8 +17,8 @@ class AgentDiscreteA2C(OnPolicyAgent):
             self, worker_id, input_shape, num_outputs,
             train_action_selector, test_and_play_action_selector, params, device
     ):
-        assert isinstance(train_action_selector, ProbabilityActionSelector)
-        assert isinstance(test_and_play_action_selector, ProbabilityActionSelector)
+        assert isinstance(train_action_selector, DiscreteCategoricalActionSelector)
+        assert isinstance(test_and_play_action_selector, DiscreteCategoricalActionSelector)
         assert params.DEEP_LEARNING_MODEL in [
             DeepLearningModelName.STOCHASTIC_DISCRETE_ACTOR_CRITIC_MLP,
             DeepLearningModelName.STOCHASTIC_DISCRETE_ACTOR_CRITIC_CNN
@@ -51,12 +51,10 @@ class AgentDiscreteA2C(OnPolicyAgent):
 
         probs_v = F.softmax(logits_v, dim=1)
 
-        probs = probs_v.data.cpu().numpy()
-
         if self.agent_mode == AgentMode.TRAIN:
-            actions = np.array(self.train_action_selector(probs))
+            actions = self.train_action_selector(probs_v)
         else:
-            actions = np.array(self.test_and_play_action_selector(probs))
+            actions = self.test_and_play_action_selector(probs_v)
 
         critics = torch.zeros(size=probs_v.size())
         return actions, critics
@@ -75,7 +73,7 @@ class AgentDiscreteA2C(OnPolicyAgent):
 
         # Critic Optimization
         self.optimizer.zero_grad()
-        loss_critic_v = F.mse_loss(input=value_v.squeeze(-1), target=target_action_values_v)
+        loss_critic_v = F.mse_loss(input=value_v.squeeze(-1), target=target_action_values_v.detach())
 
         #nn_utils.clip_grad_norm_(self.model.base.critic.parameters(), self.params.CLIP_GRAD)
 

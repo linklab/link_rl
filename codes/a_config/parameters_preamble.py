@@ -7,12 +7,16 @@ from codes.a_config.a_basic_parameters.parameters_pendulum_ddpg import PARAMETER
 from codes.a_config.a_basic_parameters.parameters_pendulum_d4pg import PARAMETERS_PENDULUM_D4PG
 from codes.a_config.a_basic_parameters.parameters_pendulum_ppo import PARAMETERS_PENDULUM_PPO
 from codes.a_config.a_basic_parameters.parameters_cartpole_ppo import PARAMETERS_CARTPOLE_PPO
+from codes.a_config.a_basic_parameters.parameters_lunar_lander_a2c import PARAMETERS_LUNAR_LANDER_A2C
+from codes.a_config.a_basic_parameters.parameters_lunar_lander_ppo import PARAMETERS_LUNAR_LANDER_PPO
+from codes.a_config.a_basic_parameters.parameters_lunar_lander_continuous_ppo import PARAMETERS_LUNAR_LANDER_CONTINUOUS_PPO
 
 from codes.a_config.b_atari_parameters.parameters_atati_pong_a2c        import PARAMETERS_PONG_A2C
 from codes.a_config.b_atari_parameters.parameters_atati_pong_dqn        import PARAMETERS_PONG_DQN
 from codes.a_config.b_atari_parameters.parameters_atari_breakout_dqn    import PARAMETERS_BREAKOUT_DQN
 from codes.a_config.b_atari_parameters.parameters_atari_kungfumaster_dqn import PARAMETERS_KUNGFU_MASTER_DQN
 from codes.a_config.b_atari_parameters.parameters_atati_pong_ppo        import PARAMETERS_PONG_PPO
+from codes.a_config.b_atari_parameters.parameters_atati_pong_a2c import PARAMETERS_PONG_A2C
 
 from codes.a_config.c_pybullet_parameters.parameters_half_cheetah_ppo import PARAMETERS_HALF_CHEETAH_PPO
 from codes.a_config.c_pybullet_parameters.parameters_ant_sac import PARAMETERS_ANT_SAC

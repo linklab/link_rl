@@ -10,6 +10,7 @@ import torch.multiprocessing as mp
 import os, sys
 import numpy as np
 import wandb
+from termcolor import colored
 
 from codes.d_agents.off_policy.off_policy_agent import OffPolicyAgent
 from codes.d_agents.on_policy.on_policy_agent import OnPolicyAgent
@@ -24,7 +25,8 @@ if PROJECT_HOME not in sys.path:
 from codes.a_config.parameters import PARAMETERS as params
 
 from codes.e_utils import rl_utils
-from codes.e_utils.common_utils import save_model, print_environment_info, remove_models, agent_model_test
+from codes.e_utils.common_utils import save_model, print_environment_info, remove_models, agent_model_test, \
+    print_performance
 from codes.e_utils.experience_tracker import RewardTracker, EarlyStopping
 from codes.e_utils.logger import get_logger
 from codes.e_utils.names import DeepLearningModelName, RLAlgorithmName, EnvironmentName, ModelSaveMode
@@ -43,8 +45,6 @@ os.environ['KMP_DUPLICATE_LIB_OK'] = 'True'
 device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 
 my_logger = get_logger("main")
-
-WandbInfo = collections.namedtuple('WandbInfo', field_names='wandb_info')
 
 
 def play_func(exp_queue, agent, epsilon_tracker):
@@ -89,6 +89,14 @@ def play_func(exp_queue, agent, epsilon_tracker):
     solved = False
 
     test_mean_episode_reward = 0.0
+    train_episode_reward_lst = []
+
+    if params.MODEL_SAVE_MODE == ModelSaveMode.TRAIN:
+        num_tests = params.EARLY_STOPPING_TEST_EPISODE_PERIOD
+    elif params.MODEL_SAVE_MODE == ModelSaveMode.TEST:
+        num_tests = params.TEST_NUM_EPISODES
+    else:
+        num_tests = 0
 
     with RewardTracker(params=params) as reward_tracker:
         try:
@@ -106,25 +114,33 @@ def play_func(exp_queue, agent, epsilon_tracker):
                 if episode_rewards and episode_steps:
                     for current_episode_reward, current_episode_step in zip(episode_rewards, episode_steps):
                         episode += 1
+                        train_episode_reward_lst.append(current_episode_reward)
 
                         epsilon = agent.train_action_selector.epsilon if hasattr(agent.train_action_selector, 'epsilon') else None
 
-                        train_mean_episode_reward, speed = reward_tracker.set_episode_reward(
-                            episode_reward=current_episode_reward, episode_done_step=step_idx,
-                            epsilon=epsilon, last_info=exp.info
+                        train_mean_episode_reward, speed, elapsed_time = reward_tracker.set_episode_reward(
+                            episode_reward=current_episode_reward, episode_done_step=step_idx
                         )
 
                         if episode % params.EARLY_STOPPING_TEST_EPISODE_PERIOD == 0:
                             if params.MODEL_SAVE_MODE in [ModelSaveMode.TRAIN, ModelSaveMode.TEST]:
                                 if params.MODEL_SAVE_MODE == ModelSaveMode.TRAIN:
-                                    test_mean_episode_reward, test_std = agent_model_test(params, train_env.envs[0], agent)
+                                    test_mean_episode_reward = np.mean(train_episode_reward_lst)
+                                    test_std = np.std(train_episode_reward_lst)
+                                    train_episode_reward_lst.clear()
+                                    test_env_str = colored("TRAIN ENV", "yellow")
                                 else:
                                     test_mean_episode_reward, test_std = agent_model_test(params, test_env, agent)
-                                print("[{0:6}/{1}] Ep. {2}: * MODEL SAVE TEST **TRAIN** ENV, EPISODE REWARD ({3} RUNS): "
-                                      "{4:7.2f}\u00B1{5:.2f} ".format(
-                                    step_idx, params.MAX_GLOBAL_STEP, episode, params.TEST_NUM_EPISODES,
-                                    test_mean_episode_reward, test_std
+                                    test_env_str = colored("TEST ENV", "yellow")
+
+                                mean_std_str = colored(
+                                    "{0:7.2f}\u00B1{1:.2f}".format(test_mean_episode_reward, test_std), "yellow"
+                                )
+
+                                print("* MODEL SAVE & TRAIN STOP TEST for {0} *, EPISODE REWARD ({1} EPISODES): {2}".format(
+                                    test_env_str, num_tests, mean_std_str
                                 ), end="")
+
                                 solved = early_stopping.evaluate(
                                     evaluation_value=test_mean_episode_reward,
                                     episode_done_step=step_idx
@@ -135,24 +151,23 @@ def play_func(exp_queue, agent, epsilon_tracker):
                             else:
                                 raise ValueError()
 
-                        if params.WANDB:
-                            wandb_info_dict = {
-                                "train episode reward": current_episode_reward,
-                                "train mean_{0} episode reward".format(params.AVG_EPISODE_SIZE_FOR_STAT):
-                                    current_episode_reward,
-                                "test mean_{0} episode reward".format(params.TEST_NUM_EPISODES):
-                                    test_mean_episode_reward,
-                                "steps/episode": current_episode_step,
-                                "speed": speed,
-                                "step_idx": step_idx,
-                                "episode": episode,
-                                'actions': exp.action
-                            }
-                            if epsilon:
-                                wandb_info_dict["epsilon"] = epsilon
+                        train_info_dict = {
+                            "train episode reward": current_episode_reward,
+                            "train mean_{0} episode reward".format(params.AVG_EPISODE_SIZE_FOR_STAT):
+                                train_mean_episode_reward,
+                            "test mean_{0} episode reward".format(num_tests): test_mean_episode_reward,
+                            "steps/episode": current_episode_step,
+                            "speed": speed,
+                            "step_idx": step_idx,
+                            "episode": episode,
+                            'actions': exp.action,
+                            "elapsed_time": elapsed_time,
+                            "last_info": exp.info
+                        }
+                        if epsilon:
+                            train_info_dict["epsilon"] = epsilon
 
-                            wandb_info = WandbInfo(wandb_info=wandb_info_dict)
-                            exp_queue.put(wandb_info)
+                        exp_queue.put(train_info_dict)
 
                 if solved:
                     print("Solved in {0} steps and {1} episodes!".format(step_idx, episode))
@@ -210,10 +225,32 @@ def main():
         step_idx += params.TRAIN_STEP_FREQ
         for _ in range(params.TRAIN_STEP_FREQ):
             exp = exp_queue.get()
-            if isinstance(exp, WandbInfo):
+            if isinstance(exp, dict):
+                train_info_dict = exp
+
                 mean_loss = np.mean(loss_dequeue) if len(loss_dequeue) > 0 else 0.0
-                exp.wandb_info["train (critic) mean loss"] = mean_loss
-                wandb.log(exp.wandb_info)
+
+                print_performance(
+                    params=params,
+                    episode_done_step=train_info_dict["step_idx"],
+                    done_episode=train_info_dict["episode"],
+                    episode_reward=train_info_dict["train episode reward"],
+                    mean_episode_reward=train_info_dict[
+                        "train mean_{0} episode reward".format(params.AVG_EPISODE_SIZE_FOR_STAT)
+                    ],
+                    epsilon=train_info_dict["epsilon"] if "epsilon" in train_info_dict else None,
+                    elapsed_time=train_info_dict["elapsed_time"],
+                    last_info=train_info_dict["last_info"],
+                    speed=train_info_dict["speed"],
+                    mean_loss=mean_loss)
+
+                if params.WANDB:
+                    del train_info_dict["last_info"]
+                    del train_info_dict["elapsed_time"]
+                    train_info_dict["train (critic) mean loss"] = mean_loss
+
+                    wandb.log(train_info_dict)
+
                 continue
 
             if exp is None:

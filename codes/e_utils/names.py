@@ -37,6 +37,8 @@ class EnvironmentName(enum.Enum):
     CHASER_V1_WINDOWS = os.path.join(PROJECT_HOME, "rl_main", "environments", "unity", "unity_envs", "Chaser_v1.exe")
     BREAKOUT_DETERMINISTIC_V4 = "BreakoutDeterministic-v4"
     PENDULUM_V0 = 'Pendulum-v0'
+    LUNAR_LANDER_V2 = 'LunarLander-v2'
+    LUNAR_LANDER_CONTINUOUS_V2 = "LunarLanderContinuous-v2"
     DRONE_RACING_MAC = os.path.join(PROJECT_HOME, "rl_main", "environments", "unity", "unity_envs", "DroneEnv_forMac")
     DRONE_RACING_WINDOWS = os.path.join(PROJECT_HOME, "rl_main", "environments", "unity", "unity_envs", "Dron_Racing.exe")
     GRIDWORLD_V0 = 'Gridworld-v0'

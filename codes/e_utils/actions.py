@@ -5,7 +5,7 @@ from typing import Union
 
 import torch
 from icecream import ic
-from torch.distributions import MultivariateNormal, Normal
+from torch.distributions import MultivariateNormal, Normal, Categorical
 
 
 class ActionSelector:
@@ -185,15 +185,13 @@ class EpsilonGreedyD4PGActionSelector(ActionSelector):
         return actions
 
 
-class ProbabilityActionSelector(ActionSelector):
+class DiscreteCategoricalActionSelector(ActionSelector):
     """
     Converts probabilities of actions into action by sampling them
     """
     def __call__(self, probs):
-        assert isinstance(probs, np.ndarray)
-        actions = []
-        for prob in probs:
-            actions.append(np.random.choice(len(prob), p=prob))
+        dist = Categorical(probs=probs)
+        actions = dist.sample().data.cpu().numpy()
         return np.array(actions)
 
 

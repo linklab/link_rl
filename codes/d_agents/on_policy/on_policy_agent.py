@@ -78,6 +78,7 @@ class OnPolicyAgent(BaseAgent):
             else:
                 delta = exp.reward + self.params.GAMMA * next_value - value
                 last_gae = delta + self.params.GAMMA * self.params.PPO_GAE_LAMBDA * last_gae
+
             result_advantages.append(last_gae)
             result_target_action_values.append(last_gae + value)
 

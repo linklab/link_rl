@@ -40,7 +40,7 @@ class PARAMETERS_DOUBLE_RIP:
     GAMMA = 0.98 # discount factor
 
     # [Policy Gradient]
-    ENTROPY_LOSS_WEIGHT = 0.01
+    ENTROPY_LOSS_WEIGHT = 0.0001
     CLIP_GRAD = 0.1
     ACTOR_LEARNING_RATE = 0.0001
 

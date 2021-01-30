@@ -4,6 +4,7 @@ import random
 from typing import Optional
 import numpy as np
 import math
+import time
 
 from gym.spaces import Box
 from matplotlib import pyplot as plt
@@ -17,7 +18,7 @@ from codes.d_agents.a0_base_agent import float32_preprocessor
 
 #https://medium.com/analytics-vidhya/stretched-exponential-decay-function-for-epsilon-greedy-algorithm-98da6224c22f
 from codes.e_utils import wrappers
-from codes.e_utils.names import AgentMode
+from codes.e_utils.names import AgentMode, EnvironmentName
 
 
 def stretched_exponential_decay(epsilon_start, epsilon_minimum, epsilon_end_step, current_step):
@@ -236,6 +237,57 @@ def agent_model_test(params, test_env, agent):
 
     return np.mean(episode_rewards), np.std(episode_rewards)
 
+
+def print_performance(params, episode_done_step, done_episode, episode_reward,
+                      mean_episode_reward, epsilon, elapsed_time, last_info, speed, mean_loss, worker_id=None):
+
+    if worker_id is not None:
+        prefix = "[Worker ID: {0}]".format(worker_id)
+    else:
+        prefix = ""
+
+    if isinstance(epsilon, tuple) or isinstance(epsilon, list):
+        epsilon_str = " eps.: {0:5.3f}, {1:5.3f},".format(
+            epsilon[0] if epsilon[0] else 0.0,
+            epsilon[1] if epsilon[1] else 0.0
+        )
+    elif isinstance(epsilon, float):
+        epsilon_str = " eps.: {0:5.3f},".format(
+            epsilon if epsilon else 0.0,
+        )
+    else:
+        epsilon_str = ""
+
+    mean_episode_reward_str = "{0:9.3f}".format(mean_episode_reward)
+
+    if isinstance(episode_reward, np.ndarray):
+        episode_reward = episode_reward[0]
+
+    print(
+        "{0}[{1:6}/{2}] Ep. {3}, EPISODE REWARD: {4:9.3f}, MEAN_{5} EPSIODE REWARD: {6},{7} SPEED: {8:7.2f} {9}, {10}".format(
+            prefix,
+            episode_done_step,
+            params.MAX_GLOBAL_STEP,
+            done_episode,
+            episode_reward,
+            params.AVG_EPISODE_SIZE_FOR_STAT,
+            mean_episode_reward_str,
+            epsilon_str,
+            speed,
+            "steps/sec.",
+            time.strftime("%Hh %Mm %Ss", time.gmtime(elapsed_time)),
+    ), end="")
+
+    if last_info and "action_count" in last_info:
+        print(", {0}".format(last_info["action_count"]), end="")
+
+    if mean_loss is not None:
+        print(", mean (critic) loss {0:7.4f}".format(mean_loss), end="")
+
+    if params.ENVIRONMENT_ID == EnvironmentName.TRADE_V0:
+        print(", profit {0:8.1f}".format(last_info['profit']), end="")
+
+    print("", flush=True)
 
 
 # def print_environment_info(env, params):
