@@ -115,18 +115,15 @@ def play_func(exp_queue, agent, epsilon_tracker):
                         )
 
                         if episode % params.EARLY_STOPPING_TEST_EPISODE_PERIOD == 0:
-                            if params.MODEL_SAVE_MODE == ModelSaveMode.TRAIN:
-                                print("[{0:6}/{1}] Ep. {2}: * MODEL SAVE TEST **TRAIN** ENV, EPISODE REWARD: {3:7.2f} ".format(
-                                    step_idx, params.MAX_GLOBAL_STEP, episode, train_mean_episode_reward
-                                ), end="")
-                                solved = early_stopping.evaluate(
-                                    evaluation_value=train_mean_episode_reward,
-                                    episode_done_step=step_idx
-                                )
-                            elif params.MODEL_SAVE_MODE == ModelSaveMode.TEST:
-                                test_mean_episode_reward = agent_model_test(params, test_env, agent)
-                                print("[{0:6}/{1}] Ep. {2}: * MODEL SAVE TEST **TEST** ENV, EPISODE REWARD: {3:7.2f} ".format(
-                                    step_idx, params.MAX_GLOBAL_STEP, episode, test_mean_episode_reward
+                            if params.MODEL_SAVE_MODE in [ModelSaveMode.TRAIN, ModelSaveMode.TEST]:
+                                if params.MODEL_SAVE_MODE == ModelSaveMode.TRAIN:
+                                    test_mean_episode_reward, test_std = agent_model_test(params, train_env.envs[0], agent)
+                                else:
+                                    test_mean_episode_reward, test_std = agent_model_test(params, test_env, agent)
+                                print("[{0:6}/{1}] Ep. {2}: * MODEL SAVE TEST **TRAIN** ENV, EPISODE REWARD ({3} RUNS): "
+                                      "{4:7.2f}\u00B1{5:.2f} ".format(
+                                    step_idx, params.MAX_GLOBAL_STEP, episode, params.TEST_NUM_EPISODES,
+                                    test_mean_episode_reward, test_std
                                 ), end="")
                                 solved = early_stopping.evaluate(
                                     evaluation_value=test_mean_episode_reward,
@@ -140,8 +137,11 @@ def play_func(exp_queue, agent, epsilon_tracker):
 
                         if params.WANDB:
                             wandb_info_dict = {
-                                "train episode reward": train_mean_episode_reward,
-                                "test episode reward": test_mean_episode_reward,
+                                "train episode reward": current_episode_reward,
+                                "train mean_{0} episode reward".format(params.AVG_EPISODE_SIZE_FOR_STAT):
+                                    current_episode_reward,
+                                "test mean_{0} episode reward".format(params.TEST_NUM_EPISODES):
+                                    test_mean_episode_reward,
                                 "steps/episode": current_episode_step,
                                 "speed": speed,
                                 "step_idx": step_idx,
