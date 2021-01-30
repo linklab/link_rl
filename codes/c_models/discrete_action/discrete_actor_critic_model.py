@@ -132,9 +132,9 @@ class ActorCriticCNNBase(nn.Module):
 
     def forward(self, inputs):
         if torch.is_tensor(inputs):
-            fx = inputs.to(torch.float32)
+            fx = inputs.to(torch.float32) / 256
         else:
-            fx = torch.tensor(inputs, dtype=torch.float32)
+            fx = torch.tensor(inputs, dtype=torch.float32) / 256
 
         common_conv_out = self.common_conv(fx).view(fx.size()[0], -1)
 
@@ -145,9 +145,9 @@ class ActorCriticCNNBase(nn.Module):
 
     def forward_actor(self, inputs):
         if torch.is_tensor(inputs):
-            fx = inputs.to(torch.float32)
+            fx = inputs.to(torch.float32) / 256
         else:
-            fx = torch.tensor(inputs, dtype=torch.float32)
+            fx = torch.tensor(inputs, dtype=torch.float32) / 256
 
         common_conv_out = self.common_conv(fx).view(fx.size()[0], -1)
         actions = self.actor_fc(common_conv_out)
@@ -155,9 +155,9 @@ class ActorCriticCNNBase(nn.Module):
 
     def forward_critic(self, inputs):
         if torch.is_tensor(inputs):
-            fx = inputs.to(torch.float32)
+            fx = inputs.to(torch.float32) / 256
         else:
-            fx = torch.tensor(inputs, dtype=torch.float32)
+            fx = torch.tensor(inputs, dtype=torch.float32) / 256
 
         common_conv_out = self.common_conv(fx).view(fx.size()[0], -1)
         critic_values = self.critic_fc(common_conv_out)
