@@ -82,10 +82,7 @@ class AgentContinuousPPO(OnPolicyAgent):
         # trajectory_dist = MultivariateNormal(loc=trajectory_mu_v, covariance_matrix=trajectory_covariance_matrix)
 
         trajectory_dist = Normal(loc=trajectory_mu_v, scale=torch.sqrt(trajectory_var_v))
-
-        print(trajectory_actions_v.is_cuda, trajectory_dist.log_prob(trajectory_actions_v).is_cuda)
-
-        trajectory_old_log_pi_action_v = torch.FloatTensor(trajectory_dist.log_prob(trajectory_actions_v)).to(self.device)
+        trajectory_old_log_pi_action_v = trajectory_dist.log_prob(trajectory_actions_v)
 
         # 아래 변수는 전체 trajectory의 원소보다 1 적음
         with torch.no_grad():
