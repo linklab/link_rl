@@ -54,11 +54,17 @@ class StochasticActorCriticMLPBase(nn.Module):
         self.train()
 
     def forward(self, inputs):
+        if not (type(inputs) is torch.Tensor):
+            inputs = torch.tensor([inputs], dtype=torch.float).to(self.device)
+
         mu, var = self.actor(inputs)
         value = self.critic(inputs)
         return mu, var, value
 
     def forward_critic(self, inputs):
+        if not (type(inputs) is torch.Tensor):
+            inputs = torch.tensor([inputs], dtype=torch.float).to(self.device)
+
         return self.critic(inputs)
 
 
@@ -112,5 +118,8 @@ class ActorMLPBase(nn.Module):
             torch.nn.init.kaiming_normal_(m.weight)
 
     def forward(self, inputs):
+        if not (type(inputs) is torch.Tensor):
+            inputs = torch.tensor([inputs], dtype=torch.float).to(self.device)
+
         net_out = self.net(inputs)
         return self.mu(net_out), self.var(net_out)

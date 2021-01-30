@@ -29,9 +29,10 @@ class DiscreteActorCriticModel(BaseModel):
         self.reset_average_gradients()
 
     def forward(self, inputs):
+        if not (type(inputs) is torch.Tensor):
+            inputs = torch.tensor([inputs], dtype=torch.float).to(self.device)
+
         if self.params.DEEP_LEARNING_MODEL == DeepLearningModelName.STOCHASTIC_DISCRETE_ACTOR_CRITIC_MLP:
-            if not (type(inputs) is torch.Tensor):
-                inputs = torch.tensor([inputs], dtype=torch.float).to(self.device)
             return self.base.forward_actor(inputs), self.base.forward_critic(inputs)
         elif self.params.DEEP_LEARNING_MODEL == DeepLearningModelName.STOCHASTIC_DISCRETE_ACTOR_CRITIC_CNN:
             return self.base.forward(inputs)

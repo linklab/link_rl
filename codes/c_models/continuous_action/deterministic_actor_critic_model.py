@@ -72,6 +72,8 @@ class DeterministicActorCriticMLPBase(nn.Module):
             torch.nn.init.kaiming_normal_(m.weight)
 
     def forward(self, inputs):
+        if not (type(inputs) is torch.Tensor):
+            inputs = torch.tensor([inputs], dtype=torch.float).to(self.device)
         return self.forward_actor(inputs)
 
     def forward_actor(self, inputs):
