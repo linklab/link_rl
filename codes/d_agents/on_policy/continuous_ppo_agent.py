@@ -35,14 +35,8 @@ class AgentContinuousPPO(OnPolicyAgent):
             worker_id=worker_id, input_shape=input_shape, num_outputs=num_outputs, params=params, device=self.device
         )
 
-        self.actor_optimizer = rl_utils.get_optimizer(
-            parameters=self.model.base.actor.parameters(),
-            learning_rate=self.params.ACTOR_LEARNING_RATE,
-            params=params
-        )
-
-        self.critic_optimizer = rl_utils.get_optimizer(
-            parameters=self.model.base.critic.parameters(),
+        self.optimizer = rl_utils.get_optimizer(
+            parameters=self.model.base.parameters(),
             learning_rate=self.params.LEARNING_RATE,
             params=params
         )
@@ -55,7 +49,7 @@ class AgentContinuousPPO(OnPolicyAgent):
         if not isinstance(states, torch.FloatTensor):
             states = float32_preprocessor(states).to(self.device)
 
-        mu_v, var_v = self.model.base.actor(states)
+        mu_v, var_v = self.model.base.forward_actor(states)
 
         if self.agent_mode == AgentMode.TRAIN:
             actions = self.train_action_selector(mu_v, var_v, self.action_min, self.action_max)
@@ -117,17 +111,10 @@ class AgentContinuousPPO(OnPolicyAgent):
                 batch_mu_v, batch_var_v, batch_values_v = self.model(batch_states_v)
 
                 # critic training
-                self.critic_optimizer.zero_grad()
+                self.optimizer.zero_grad()
                 loss_critic_v = F.smooth_l1_loss(batch_values_v.squeeze(-1), batch_target_action_value_v)
-                loss_critic_v.backward(retain_graph=True)
-                self.critic_optimizer.step()
 
                 # actor training
-                self.actor_optimizer.zero_grad()
-
-                # batch_var_v = self.model.base.actor.var.expand_as(batch_mu_v)
-                # batch_covariance_matrix = torch.diag_embed(batch_var_v).to(self.device)
-                # batch_dist = MultivariateNormal(loc=batch_mu_v, covariance_matrix=batch_covariance_matrix)
                 batch_dist = Normal(loc=batch_mu_v, scale=torch.sqrt(batch_var_v))
 
                 batch_log_pi_action_v = batch_dist.log_prob(batch_actions_v)
@@ -141,11 +128,14 @@ class AgentContinuousPPO(OnPolicyAgent):
                 )
                 loss_actor_v = -1.0 * torch.min(batch_surrogate_1_v, batch_surrogate_2_v).mean()
 
-                loss_entropy_v = -1.0 * self.params.ENTROPY_LOSS_WEIGHT * batch_dist_entropy_v.mean()
+                loss_entropy_v = -1.0 * batch_dist_entropy_v.mean()
 
-                loss_actor_and_entropy_v = loss_actor_v + loss_entropy_v
-                loss_actor_and_entropy_v.backward()
-                self.actor_optimizer.step()
+                loss_v = loss_actor_v + \
+                         self.params.CRITIC_LOSS_WEIGHT * loss_critic_v + \
+                         self.params.ENTROPY_LOSS_WEIGHT * loss_entropy_v
+
+                loss_v.backward()
+                self.optimizer.step()
 
                 sum_loss_critic += loss_critic_v.item()
                 sum_loss_actor += loss_actor_v.item()

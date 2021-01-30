@@ -37,48 +37,7 @@ class StochasticActorCriticMLPBase(nn.Module):
         self.hidden_2_size = params.HIDDEN_2_SIZE
         self.hidden_3_size = params.HIDDEN_3_SIZE
 
-        self.actor = ActorMLPBase(num_inputs, num_outputs, params)
-
-        self.critic = nn.Sequential(
-            nn.Linear(num_inputs, self.hidden_1_size),
-            nn.ReLU(),
-            nn.Linear(self.hidden_1_size, self.hidden_2_size),
-            nn.ReLU(),
-            nn.Linear(self.hidden_2_size, self.hidden_3_size),
-            nn.ReLU(),
-            nn.Linear(self.hidden_3_size, 1),
-        )
-
-        self.layers_info = {'actor': self.actor, 'critic': self.critic}
-
-        self.train()
-
-    def forward(self, inputs):
-        if not (type(inputs) is torch.Tensor):
-            inputs = torch.tensor([inputs], dtype=torch.float).to(self.device)
-
-        mu, var = self.actor(inputs)
-        value = self.critic(inputs)
-        return mu, var, value
-
-    def forward_critic(self, inputs):
-        if not (type(inputs) is torch.Tensor):
-            inputs = torch.tensor([inputs], dtype=torch.float).to(self.device)
-
-        return self.critic(inputs)
-
-
-class ActorMLPBase(nn.Module):
-    def __init__(self, num_inputs, num_outputs, params):
-        super(ActorMLPBase, self).__init__()
-        self.__name__ = "ActorMLPBase"
-        self.params = params
-
-        self.hidden_1_size = params.HIDDEN_1_SIZE
-        self.hidden_2_size = params.HIDDEN_2_SIZE
-        self.hidden_3_size = params.HIDDEN_3_SIZE
-
-        self.net = nn.Sequential(
+        self.common = nn.Sequential(
             nn.Linear(num_inputs, self.hidden_1_size),
             nn.ReLU(),
             nn.Linear(self.hidden_1_size, self.hidden_2_size),
@@ -87,39 +46,37 @@ class ActorMLPBase(nn.Module):
             nn.ReLU(),
         )
 
-        self.mu = nn.Sequential(
+        self.actor_mu = nn.Sequential(
             nn.Linear(self.hidden_3_size, num_outputs),
             nn.Tanh()
         )
 
-        self.var = nn.Sequential(
+        self.actor_var = nn.Sequential(
             nn.Linear(self.hidden_3_size, num_outputs),
             nn.Softplus()
         )
 
-        #self.var = torch.ones(num_outputs) * 0.25
+        self.critic = nn.Sequential(
+            nn.Linear(self.hidden_3_size, 1),
+        )
 
-        #self.logstd = nn.Parameter(torch.zeros(num_outputs))
+        self.layers_info = {'commo': self.common, 'actor_mu': self.actor_mu, 'actor_var': self.actor_var, 'critic': self.critic}
 
-        # self.var = nn.Sequential(
-        #     nn.Linear(num_inputs, self.hidden_1_size),
-        #     nn.ReLU(),
-        #     nn.Linear(self.hidden_1_size, self.hidden_2_size),
-        #     nn.ReLU(),
-        #     nn.Linear(self.hidden_2_size, self.hidden_3_size),
-        #     nn.ReLU(),
-        #     nn.Linear(self.hidden_3_size, num_outputs),
-        #     nn.Softplus(),
-        # )
-
-    @staticmethod
-    def init_weights(m):
-        if type(m) == nn.Linear:
-            torch.nn.init.kaiming_normal_(m.weight)
+        self.train()
 
     def forward(self, inputs):
-        if not (type(inputs) is torch.Tensor):
-            inputs = torch.tensor([inputs], dtype=torch.float).to(self.device)
+        common_out = self.common(inputs)
+        mu = self.actor_mu(common_out)
+        var = self.actor_var(common_out)
+        value = self.critic(common_out)
+        return mu, var, value
 
-        net_out = self.net(inputs)
-        return self.mu(net_out), self.var(net_out)
+    def forward_actor(self, inputs):
+        common_out = self.common(inputs)
+        mu = self.actor_mu(common_out)
+        var = self.actor_var(common_out)
+        return mu, var
+
+    def forward_critic(self, inputs):
+        common_out = self.common(inputs)
+        return self.critic(common_out)
