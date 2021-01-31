@@ -37,6 +37,7 @@ class OnPolicyAgent(BaseAgent):
                 last_states.append(np.array(exp.last_state, copy=False))
 
         states_v = float32_preprocessor(states).to(self.device)
+
         if params.RL_ALGORITHM in [RLAlgorithmName.DISCRETE_A2C_V0, RLAlgorithmName.DISCRETE_PPO_V0]:
             actions_v = long64_preprocessor(actions).to(self.device)
         elif params.RL_ALGORITHM in [RLAlgorithmName.CONTINUOUS_A2C_V0, RLAlgorithmName.CONTINUOUS_PPO_V0]:
