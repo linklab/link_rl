@@ -32,12 +32,7 @@ class DiscreteActorCriticModel(BaseModel):
         if not (type(inputs) is torch.Tensor):
             inputs = torch.tensor([inputs], dtype=torch.float).to(self.device)
 
-        if self.params.DEEP_LEARNING_MODEL == DeepLearningModelName.STOCHASTIC_DISCRETE_ACTOR_CRITIC_MLP:
-            return self.base.forward_actor(inputs), self.base.forward_critic(inputs)
-        elif self.params.DEEP_LEARNING_MODEL == DeepLearningModelName.STOCHASTIC_DISCRETE_ACTOR_CRITIC_CNN:
-            return self.base.forward(inputs)
-        else:
-            raise ValueError()
+        return self.base.forward(inputs)
 
 
 class ActorCriticMLPBase(nn.Module):
@@ -81,7 +76,10 @@ class ActorCriticMLPBase(nn.Module):
             torch.nn.init.kaiming_normal_(m.weight)
 
     def forward(self, inputs):
-        return self.forward_actor(inputs), self.forward_critic(inputs)
+        common = self.common(inputs)
+        actions = self.actor(common)
+        critic_values = self.critic(common)
+        return actions, critic_values
 
     def forward_actor(self, inputs):
         common = self.common(inputs)

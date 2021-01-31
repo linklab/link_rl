@@ -57,7 +57,7 @@ class OnPolicyAgent(BaseAgent):
 
         return states_v, actions_v, target_action_values_v
 
-    def get_advantage_and_target_action_values(self, trajectory, values_v, device="cpu"):
+    def get_advantage_and_target_action_values(self, trajectory, values_v, device):
         """
         By trajectory calculate advantage and 1-step target action value
         :param trajectory: trajectory list

@@ -96,10 +96,9 @@ class AgentDiscretePPO(OnPolicyAgent):
             trajectory_advantage_v, trajectory_target_action_value_v = self.get_advantage_and_target_action_values(
                 trajectory, trajectory_values_v, device=self.device
             )
-
-        # normalize advantages
-        trajectory_advantage_v = trajectory_advantage_v - torch.mean(trajectory_advantage_v)
-        trajectory_advantage_v /= torch.std(trajectory_advantage_v) + 1e-5
+            # normalize advantages
+            trajectory_advantage_v = trajectory_advantage_v - torch.mean(trajectory_advantage_v)
+            trajectory_advantage_v /= torch.std(trajectory_advantage_v) + 1e-5
 
         # drop last entry from the trajectory, an our adv and target action value calculated without it
         trajectory = trajectory[:-1]
@@ -124,22 +123,18 @@ class AgentDiscretePPO(OnPolicyAgent):
                 batch_logits_v, batch_values_v = self.model(batch_states_v)
 
                 # critic training
-                self.optimizer.zero_grad()
-
                 # batch_values_v.squeeze(-1) : (64,)
                 # batch_target_action_value_v : (64,)
                 loss_critic_v = F.smooth_l1_loss(batch_values_v.squeeze(-1), batch_target_action_value_v.detach())
 
                 # batch_log_pi_v: (64, 2)
                 batch_log_pi_v = F.log_softmax(batch_logits_v, dim=1)
+                #print(batch_logits_v.size())
 
                 # batch_log_pi_action_v: (64,)
                 batch_log_pi_action_v = batch_log_pi_v.gather(dim=1, index=batch_actions_v.unsqueeze(-1)).squeeze(-1)
 
-                batch_prob_v = F.softmax(batch_logits_v, dim=1)
-                batch_entropy_v = -1.0 * (batch_prob_v * batch_log_pi_v).sum(dim=1).mean()
-
-                batch_ratio_v = torch.exp(batch_log_pi_action_v - batch_old_log_pi_action_v.detach())
+                batch_ratio_v = torch.exp(batch_log_pi_action_v - batch_old_log_pi_action_v)
 
                 batch_surrogate_1_v = batch_advantage_v * batch_ratio_v
                 batch_surrogate_2_v = batch_advantage_v * torch.clamp(
@@ -147,12 +142,15 @@ class AgentDiscretePPO(OnPolicyAgent):
                 )
                 loss_actor_v = -1.0 * torch.min(batch_surrogate_1_v, batch_surrogate_2_v).mean()
 
+                batch_prob_v = F.softmax(batch_logits_v, dim=1)
+                batch_entropy_v = -1.0 * (batch_prob_v * batch_log_pi_v).sum(dim=1).mean()
                 loss_entropy_v = -1.0 * batch_entropy_v.mean()
 
                 loss_v = loss_actor_v + \
                          self.params.CRITIC_LOSS_WEIGHT * loss_critic_v + \
                          self.params.ENTROPY_LOSS_WEIGHT * loss_entropy_v
 
+                self.optimizer.zero_grad()
                 loss_v.backward()
                 nn_utils.clip_grad_norm_(self.model.base.parameters(), self.params.CLIP_GRAD)
                 self.optimizer.step()

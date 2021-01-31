@@ -40,7 +40,7 @@ class ExperienceSource:
     Every experience contains n list of Experience entries
     """
 
-    def __init__(self, env, agent, n_step=2, steps_delta=1, vectorized=False):
+    def __init__(self, env, agent, n_step=2, steps_delta=1):
         """
         Create simple experience source
         :param env: environment or list of environments to be used
@@ -55,23 +55,15 @@ class ExperienceSource:
         assert n_step >= 1
 
         assert isinstance(env, VectorEnv)
-        assert isinstance(vectorized, bool) and vectorized
 
         self.env = env
-
         self.pool = [env]
-
-        # if isinstance(env, (list, tuple)):
-        #     self.pool = env
-        # else:
-        #     self.pool = [env]
 
         self.agent = agent
         self.n_step = n_step
         self.steps_delta = steps_delta
         self.episode_reward_lst = []
         self.episode_done_step_lst = []
-        self.vectorized = vectorized
 
     def __iter__(self):
         states, agent_states, histories, cur_rewards, cur_steps = [], [], [], [], []
@@ -80,12 +72,8 @@ class ExperienceSource:
             obs = env.reset()
             # if the environment is vectorized, all it's output is lists of results.
             # Details are here: https://github.com/openai/universe/blob/master/doc/env_semantics.rst
-            if self.vectorized:
-                obs_len = len(obs)
-                states.extend(obs)
-            else:
-                obs_len = 1
-                states.append(obs)
+            obs_len = len(obs)
+            states.extend(obs)
 
             env_lens.append(obs_len)   # vectorized env는 self.pool 자체가 env이며 env_lens는 그 내부의 env 개수를 지니고 있음.
 
@@ -121,22 +109,14 @@ class ExperienceSource:
                 for idx, action in enumerate(new_actions):
                     g_idx = states_indices[idx]
                     actions[g_idx] = action
-                    try:
-                        agent_states[g_idx] = new_agent_states[idx]
-                    except IndexError as e:
-                        ic(idx, g_idx, agent_states, new_actions, new_agent_states)
-                        sys.exit(-1)
+                    agent_states[g_idx] = new_agent_states[idx]
 
             grouped_actions = _group_list(actions, env_lens)
 
             global_ofs = 0
             for env_idx, (env, action_n) in enumerate(zip(self.pool, grouped_actions)):
-                if self.vectorized:
-                    next_state_n, r_n, is_done_n, info_n = env.step(action_n)
-                    #ic(env_idx, env, len(action_n), len(next_state_n), len(r_n), len(is_done_n), len(info_n))
-                else:
-                    next_state, r, is_done, info = env.step(action_n[0])
-                    next_state_n, r_n, is_done_n, info_n = [next_state], [r], [is_done], [info]
+                next_state_n, r_n, is_done_n, info_n = env.step(action_n)
+                #ic(env_idx, env, len(action_n), len(next_state_n), len(r_n), len(is_done_n), len(info_n))
 
                 for ofs, (action, next_state, r, is_done, info) in enumerate(zip(action_n, next_state_n, r_n, is_done_n, info_n)):
                     idx = global_ofs + ofs
@@ -175,7 +155,7 @@ class ExperienceSource:
                             cur_steps[idx] = 0
 
                         # vectorized envs are reset automatically
-                        states[idx] = env.reset() if not self.vectorized else None
+                        states[idx] = None
                         agent_states[idx] = self.agent.initial_agent_state()
                         history.clear()
 
@@ -217,8 +197,8 @@ class ExperienceSourceNamedTuple(ExperienceSource):
     convert tuple to namedtuple
     """
 
-    def __init__(self, env, agent, n_step=2, steps_delta=1, vectorized=False):
-        super(ExperienceSourceNamedTuple, self).__init__(env, agent, n_step, steps_delta, vectorized=vectorized)
+    def __init__(self, env, agent, n_step=2, steps_delta=1):
+        super(ExperienceSourceNamedTuple, self).__init__(env, agent, n_step, steps_delta)
 
     def __iter__(self):
         for exp in super(ExperienceSourceNamedTuple, self).__iter__():
@@ -235,9 +215,9 @@ class ExperienceSourceFirstLast(ExperienceSource):
 
     If we have partial trajectory at the end of episode, last_state will be None
     """
-    def __init__(self, env, agent, gamma, n_step=1, steps_delta=1, vectorized=False):
+    def __init__(self, env, agent, gamma, n_step=1, steps_delta=1):
         assert isinstance(gamma, float)
-        super(ExperienceSourceFirstLast, self).__init__(env, agent, n_step + 1, steps_delta, vectorized=vectorized)
+        super(ExperienceSourceFirstLast, self).__init__(env, agent, n_step + 1, steps_delta)
         self.gamma = gamma
         self.n_step_ = n_step
 
@@ -252,10 +232,10 @@ class ExperienceSourceFirstLast(ExperienceSource):
             else:
                 last_state = exp[-1].state
                 elems = exp[:-1]
+
             total_reward = 0.0
             for e in reversed(elems):
-                total_reward *= self.gamma
-                total_reward += e.reward
+                total_reward = e.reward + self.gamma * total_reward
 
             e = ExperienceFirstLast(
                 state=exp[0].state, action=exp[0].action, reward=total_reward, last_state=last_state,

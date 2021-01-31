@@ -14,6 +14,7 @@ from termcolor import colored
 
 from codes.d_agents.off_policy.off_policy_agent import OffPolicyAgent
 from codes.d_agents.on_policy.on_policy_agent import OnPolicyAgent
+from codes.e_utils.experience_rollouts import ExperienceSourceRollouts
 
 print("PyTorch Version", torch.__version__)
 
@@ -56,16 +57,16 @@ def play_func(exp_queue, agent, epsilon_tracker):
     else:
         test_env = None
 
-    if params.DEEP_LEARNING_MODEL in [
-        DeepLearningModelName.DETERMINISTIC_CONTINUOUS_ACTOR_CRITIC_GRU,
-        DeepLearningModelName.DETERMINISTIC_CONTINUOUS_ACTOR_CRITIC_GRU_ATTENTION
-    ]:
-        step_length = params.RNN_STEP_LENGTH
-    else:
-        step_length = -1
+    # if params.DEEP_LEARNING_MODEL in [
+    #     DeepLearningModelName.DETERMINISTIC_CONTINUOUS_ACTOR_CRITIC_GRU,
+    #     DeepLearningModelName.DETERMINISTIC_CONTINUOUS_ACTOR_CRITIC_GRU_ATTENTION
+    # ]:
+    #     step_length = params.RNN_STEP_LENGTH
+    # else:
+    #     step_length = -1
 
     experience_source = ExperienceSourceFirstLast(
-        env=train_env, agent=agent, gamma=params.GAMMA, n_step=params.N_STEP, vectorized=True
+        env=train_env, agent=agent, gamma=params.GAMMA, n_step=params.N_STEP
     )
 
     exp_source_iter = iter(experience_source)

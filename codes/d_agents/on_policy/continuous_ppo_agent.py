@@ -84,10 +84,9 @@ class AgentContinuousPPO(OnPolicyAgent):
             trajectory_advantage_v, trajectory_target_action_value_v = self.get_advantage_and_target_action_values(
                 trajectory, trajectory_values_v, device=self.device
             )
-
-        # normalize advantages
-        trajectory_advantage_v = trajectory_advantage_v - torch.mean(trajectory_advantage_v)
-        trajectory_advantage_v /= torch.std(trajectory_advantage_v) + 1e-5
+            # normalize advantages
+            trajectory_advantage_v = trajectory_advantage_v - torch.mean(trajectory_advantage_v)
+            trajectory_advantage_v /= torch.std(trajectory_advantage_v) + 1e-5
 
         # drop last entry from the trajectory, an our adv and target action value calculated without it
         trajectory = trajectory[:-1]
@@ -112,8 +111,7 @@ class AgentContinuousPPO(OnPolicyAgent):
                 batch_mu_v, batch_var_v, batch_values_v = self.model(batch_states_v)
 
                 # critic training
-                self.optimizer.zero_grad()
-                loss_critic_v = F.smooth_l1_loss(batch_values_v.squeeze(-1), batch_target_action_value_v)
+                loss_critic_v = F.smooth_l1_loss(batch_values_v.squeeze(-1), batch_target_action_value_v.detach())
 
                 # actor training
                 batch_dist = Normal(loc=batch_mu_v, scale=torch.sqrt(batch_var_v))
@@ -121,7 +119,7 @@ class AgentContinuousPPO(OnPolicyAgent):
                 batch_log_pi_action_v = batch_dist.log_prob(batch_actions_v)
                 batch_dist_entropy_v = batch_dist.entropy()
 
-                batch_ratio_v = torch.exp(batch_log_pi_action_v - batch_old_log_pi_action_v.detach())
+                batch_ratio_v = torch.exp(batch_log_pi_action_v - batch_old_log_pi_action_v)
 
                 batch_surrogate_1_v = batch_advantage_v * batch_ratio_v
                 batch_surrogate_2_v = batch_advantage_v * torch.clamp(
@@ -135,6 +133,7 @@ class AgentContinuousPPO(OnPolicyAgent):
                          self.params.CRITIC_LOSS_WEIGHT * loss_critic_v + \
                          self.params.ENTROPY_LOSS_WEIGHT * loss_entropy_v
 
+                self.optimizer.zero_grad()
                 loss_v.backward()
                 nn_utils.clip_grad_norm_(self.model.base.parameters(), self.params.CLIP_GRAD)
                 self.optimizer.step()
