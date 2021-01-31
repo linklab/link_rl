@@ -20,6 +20,8 @@
 ### 3. 패키지 설치 후 requirements.txt 신규 구성 
 
 - pip freeze > requirements.txt
+- conda install swig
+- pip install box2d-py
 
 ### 4. mosquitto
 - 모스키토 설치
