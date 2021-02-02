@@ -14,15 +14,14 @@ class AgentContinuousA2C(OnPolicyAgent):
     """
     """
     def __init__(
-            self, worker_id, input_shape, num_outputs,
-            train_action_selector, test_and_play_action_selector, action_min, action_max, params, device="cpu"
+            self, worker_id, input_shape, num_outputs, action_min, action_max, params, device="cpu"
     ):
-        assert isinstance(train_action_selector, ContinuousNormalActionSelector)
-        assert isinstance(test_and_play_action_selector, ContinuousNormalActionSelector)
         assert params.DEEP_LEARNING_MODEL == DeepLearningModelName.STOCHASTIC_CONTINUOUS_ACTOR_CRITIC_MLP
 
-        super(AgentContinuousA2C, self).__init__(train_action_selector, test_and_play_action_selector, params, device)
+        super(AgentContinuousA2C, self).__init__(params, device)
         self.__name__ = "AgentContinuousA2C"
+        self.train_action_selector = ContinuousNormalActionSelector()
+        self.test_and_play_action_selector = ContinuousNormalActionSelector()
         self.worker_id = worker_id
         self.action_min = action_min
         self.action_max = action_max

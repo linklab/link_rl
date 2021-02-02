@@ -34,14 +34,14 @@ class ArgmaxActionSelector(ActionSelector):
 
 
 class EpsilonGreedyDQNActionSelector(ActionSelector):
-    def __init__(self, epsilon=0.05, action_selector=None):
+    def __init__(self, epsilon=0.05, default_action_selector=None):
         self.epsilon = epsilon
-        self.action_selector = action_selector if action_selector is not None else ArgmaxActionSelector()
+        self.default_action_selector = default_action_selector if default_action_selector is not None else ArgmaxActionSelector()
 
     def __call__(self, scores):
         assert isinstance(scores, np.ndarray)
         batch_size, n_actions = scores.shape
-        actions = self.action_selector(scores)
+        actions = self.default_action_selector(scores)
         mask = np.random.random(size=batch_size) < self.epsilon
         rand_actions = np.random.choice(n_actions, sum(mask))
         actions[mask] = rand_actions
@@ -52,10 +52,10 @@ class EpsilonGreedySomeTimesBlowDQNActionSelector(ActionSelector):
     #TODO: max_blowing_action_idx
     def __init__(
             self, epsilon=0.05, blowing_action_rate=0.0002,
-            min_blowing_action_idx=0, max_blowing_action_idx=-1, action_selector=None
+            min_blowing_action_idx=0, max_blowing_action_idx=-1, default_action_selector=None
     ):
         self.epsilon = epsilon
-        self.action_selector = action_selector if action_selector is not None else ArgmaxActionSelector()
+        self.default_action_selector = default_action_selector if default_action_selector is not None else ArgmaxActionSelector()
 
         self.blowing_action_rate = blowing_action_rate
         self.min_blowing_action_idx = min_blowing_action_idx
@@ -72,7 +72,7 @@ class EpsilonGreedySomeTimesBlowDQNActionSelector(ActionSelector):
 
         self.time_steps += 1
         batch_size, n_actions = scores.shape
-        actions = self.action_selector(scores)
+        actions = self.default_action_selector(scores)
 
         if self.time_steps >= self.next_time_steps_of_random_blowing_action:
             actions = np.random.choice(

@@ -5,27 +5,49 @@ from icecream import ic
 
 from codes.d_agents.a0_base_agent import TargetNet, float32_preprocessor
 from codes.d_agents.off_policy.off_policy_agent import OffPolicyAgent
-from codes.e_utils import rl_utils, replay_buffer
-from codes.e_utils.names import DeepLearningModelName, AgentMode
+from codes.e_utils import rl_utils
+from codes.e_utils.actions import EpsilonGreedySomeTimesBlowDDPGActionSelector, EpsilonGreedyDDPGActionSelector, \
+    EpsilonTracker
+from codes.e_utils.names import DeepLearningModelName, AgentMode, EnvironmentName
 
 
 class AgentDDPG(OffPolicyAgent):
     """
     Agent implementing Orstein-Uhlenbeck exploration process
     """
-    def __init__(
-            self, input_shape, num_outputs, worker_id,
-            train_action_selector, test_and_play_action_selector, action_min, action_max, params, device
-    ):
-        super(AgentDDPG, self).__init__(train_action_selector, test_and_play_action_selector, params=params, device=device)
+    def __init__(self, input_shape, num_outputs, worker_id, action_min, action_max, params, device):
+        assert params.DEEP_LEARNING_MODEL == DeepLearningModelName.DETERMINISTIC_CONTINUOUS_ACTOR_CRITIC_MLP
 
+        super(AgentDDPG, self).__init__(params=params, device=device)
         self.__name__ = "AgentDDPG"
         self.action_min = action_min
         self.action_max = action_max
-
         self.worker_id = worker_id
 
-        assert params.DEEP_LEARNING_MODEL == DeepLearningModelName.DETERMINISTIC_CONTINUOUS_ACTOR_CRITIC_MLP
+        if params.ENVIRONMENT_ID in [EnvironmentName.PENDULUM_MATLAB_V0, EnvironmentName.PENDULUM_MATLAB_DOUBLE_RIP_V0]:
+            self.train_action_selector = EpsilonGreedySomeTimesBlowDDPGActionSelector(
+                epsilon=params.EPSILON_INIT, ou_enabled=True, scale_factor=params.ACTION_SCALE,
+                min_blowing_action=-10.0 * params.ACTION_SCALE, max_blowing_action=10.0 * params.ACTION_SCALE
+            )
+            self.test_and_play_action_selector = EpsilonGreedySomeTimesBlowDDPGActionSelector(
+                epsilon=0.0, ou_enabled=False, scale_factor=params.ACTION_SCALE,
+                min_blowing_action=-10.0 * params.ACTION_SCALE, max_blowing_action=10.0 * params.ACTION_SCALE
+            )
+        else:
+            self.train_action_selector = EpsilonGreedyDDPGActionSelector(
+                epsilon=params.EPSILON_INIT, ou_enabled=True, scale_factor=params.ACTION_SCALE
+            )
+            self.test_and_play_action_selector = EpsilonGreedyDDPGActionSelector(
+                epsilon=0.0, ou_enabled=False, scale_factor=params.ACTION_SCALE
+            )
+
+        self.epsilon_tracker = EpsilonTracker(
+            action_selector=self.train_action_selector,
+            eps_start=params.EPSILON_INIT,
+            eps_final=params.EPSILON_MIN,
+            eps_frames=params.EPSILON_MIN_STEP
+        )
+
         self.model = rl_utils.get_rl_model(
             worker_id=worker_id, input_shape=input_shape, num_outputs=num_outputs, params=params, device=self.device
         )

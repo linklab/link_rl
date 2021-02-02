@@ -27,7 +27,7 @@ from codes.a_config.parameters import PARAMETERS as params
 
 from codes.e_utils import rl_utils
 from codes.e_utils.common_utils import save_model, print_environment_info, remove_models, agent_model_test, \
-    print_performance
+    print_performance, print_agent_info
 from codes.e_utils.experience_tracker import RewardTracker, EarlyStopping
 from codes.e_utils.logger import get_logger
 from codes.e_utils.names import DeepLearningModelName, RLAlgorithmName, EnvironmentName, ModelSaveMode
@@ -48,7 +48,7 @@ device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 my_logger = get_logger("main")
 
 
-def play_func(exp_queue, agent, epsilon_tracker):
+def play_func(exp_queue, agent):
     train_env = rl_utils.get_environment(params=params)
     print_environment_info(train_env, params)
 
@@ -107,8 +107,8 @@ def play_func(exp_queue, agent, epsilon_tracker):
                 exp = next(exp_source_iter)
                 exp_queue.put(exp)
 
-                if epsilon_tracker:
-                    epsilon_tracker.udpate(step_idx)
+                if hasattr(agent, "epsilon_tracker") and agent.epsilon_tracker:
+                    agent.epsilon_tracker.udpate(step_idx)
 
                 episode_rewards, episode_steps = experience_source.pop_episode_reward_and_done_step_lst()
 
@@ -193,11 +193,13 @@ def main():
     os.environ['OMP_NUM_THREADS'] = "1"
 
     env = rl_utils.get_single_environment(params=params)
-    agent, epsilon_tracker = rl_utils.get_rl_agent(env=env, worker_id=0, params=params, device=device)
+    agent = rl_utils.get_rl_agent(env=env, worker_id=0, params=params, device=device)
+    print_agent_info(agent, params)
+
     agent.model.share_memory()
 
     exp_queue = mp.Queue(maxsize=params.TRAIN_STEP_FREQ * 2) #params.TRAIN_STEP_FREQ * 2
-    play_proc = mp.Process(target=play_func, args=(exp_queue, agent, epsilon_tracker))
+    play_proc = mp.Process(target=play_func, args=(exp_queue, agent))
     play_proc.start()
 
     time.sleep(0.5)
