@@ -89,7 +89,7 @@ def play_func(exp_queue, agent, epsilon_tracker):
     episode = 0
     solved = False
 
-    test_mean_episode_reward = 0.0
+    test_mean_episode_reward = None
     train_episode_reward_lst = []
 
     if params.MODEL_SAVE_MODE == ModelSaveMode.TRAIN:
@@ -147,7 +147,7 @@ def play_func(exp_queue, agent, epsilon_tracker):
                                     episode_done_step=step_idx
                                 )
                             elif params.MODEL_SAVE_MODE == ModelSaveMode.FINAL_ONLY:
-                                test_mean_episode_reward = 0.0
+                                test_mean_episode_reward = None
                                 solved = False
                             else:
                                 raise ValueError()
