@@ -57,7 +57,10 @@ class StochasticActorCriticMLPBase(nn.Module):
         )
 
         self.critic = nn.Sequential(
+            nn.Linear(self.hidden_3_size, self.hidden_3_size),
+            nn.ReLU(),
             nn.Linear(self.hidden_3_size, 1),
+            nn.Tanh()
         )
 
         self.layers_info = {
