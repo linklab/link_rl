@@ -89,7 +89,7 @@ def play_func(exp_queue, agent, epsilon_tracker):
     episode = 0
     solved = False
 
-    test_mean_episode_reward = 0.0
+    test_mean_episode_reward = None
     train_episode_reward_lst = []
 
     if params.MODEL_SAVE_MODE == ModelSaveMode.TRAIN:
