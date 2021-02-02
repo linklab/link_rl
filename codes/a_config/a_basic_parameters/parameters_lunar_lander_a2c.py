@@ -1,3 +1,4 @@
+# https://towardsdatascience.com/learning-to-play-cartpole-and-lunarlander-with-proximal-policy-optimization-dacbd6045417
 from codes.e_utils.names import *
 from codes.a_config.parameters_general import PARAMETERS_GENERAL
 
@@ -8,10 +9,10 @@ class PARAMETERS_LUNAR_LANDER_A2C(PARAMETERS_GENERAL):
     RL_ALGORITHM = RLAlgorithmName.DISCRETE_A2C_V0
     OPTIMIZER = OptimizerName.ADAM
 
-    STOP_MEAN_EPISODE_REWARD = 120.0
+    STOP_MEAN_EPISODE_REWARD = 200.0
     STOP_PATIENCE_COUNT = 10
 
-    MAX_GLOBAL_STEP = 300000
+    MAX_GLOBAL_STEP = 10000000
     LEARNING_RATE = 0.001
 
     GAMMA = 0.99

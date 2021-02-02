@@ -12,8 +12,8 @@ class OnPolicyAgent(BaseAgent):
     """
     Abstract Agent interface
     """
-    def __init__(self, train_action_selector, test_and_play_action_selector, params, device):
-        super(OnPolicyAgent, self).__init__(train_action_selector, test_and_play_action_selector, params, device)
+    def __init__(self, params, device):
+        super(OnPolicyAgent, self).__init__(params, device)
 
         self.buffer = replay_buffer.ExperienceReplayBuffer(
             experience_source=None, buffer_size=self.params.REPLAY_BUFFER_SIZE

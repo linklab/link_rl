@@ -321,12 +321,12 @@ def print_environment_info(env, params):
         print(f"single_action high: {[max_value for max_value in env.single_action_space.high]}")
 
 
-def print_agent_info(agent, epsilon_tracker, params):
+def print_agent_info(agent, params):
     print(f"Model: {params.DEEP_LEARNING_MODEL}")
     print(f"Algorithm: {params.RL_ALGORITHM}")
     print(f"Train Action Selector: {agent.train_action_selector}")
     print(f"Test and Play Action Selector: {agent.test_and_play_action_selector}")
-    print(f"Epsilon Tracker: {epsilon_tracker if epsilon_tracker else None}")
+    print(f"Epsilon Tracker: {agent.epsilon_tracker if hasattr(agent, 'epsilon_tracker') and agent.epsilon_tracker else None}")
     print(f"Optimizer: {params.OPTIMIZER}")
 
 

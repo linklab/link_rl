@@ -44,8 +44,8 @@ my_logger = get_logger("main_single")
 
 
 def train_main(params, train_env, test_env):
-    agent, epsilon_tracker = rl_utils.get_rl_agent(env=train_env, worker_id=0, params=params, device=device)
-    print_agent_info(agent, epsilon_tracker, params)
+    agent = rl_utils.get_rl_agent(env=train_env, worker_id=0, params=params, device=device)
+    print_agent_info(agent, params)
 
     if params.WANDB:
         configuration = {key: getattr(params, key) for key in dir(params) if not key.startswith("__")}

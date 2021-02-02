@@ -20,9 +20,7 @@ class BaseAgent:
     """
     Abstract Agent interface
     """
-    def __init__(self, train_action_selector, test_and_play_action_selector, params, device):
-        self.train_action_selector = train_action_selector
-        self.test_and_play_action_selector = test_and_play_action_selector
+    def __init__(self, params, device):
         self.params = params
         self.device = device
         self.buffer = None

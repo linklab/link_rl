@@ -57,6 +57,8 @@ class StochasticActorCriticMLPBase(nn.Module):
         )
 
         self.critic = nn.Sequential(
+            nn.Linear(self.hidden_3_size, self.hidden_3_size),
+            nn.ReLU(),
             nn.Linear(self.hidden_3_size, 1),
         )
 
@@ -70,7 +72,7 @@ class StochasticActorCriticMLPBase(nn.Module):
         common_out = self.common(inputs)
         mu = self.actor_mu(common_out)
         var = self.actor_var(common_out)
-        value = self.critic(common_out)
+        value = self.critic(common_out.detach())
         return mu, var, value
 
     def forward_actor(self, inputs):
@@ -80,5 +82,5 @@ class StochasticActorCriticMLPBase(nn.Module):
         return mu, var
 
     def forward_critic(self, inputs):
-        common_out = self.common(inputs)
+        common_out = self.common(inputs.detach())
         return self.critic(common_out)

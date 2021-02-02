@@ -14,19 +14,18 @@ class AgentDiscreteA2C(OnPolicyAgent):
     """
     """
     def __init__(
-            self, worker_id, input_shape, num_outputs,
-            train_action_selector, test_and_play_action_selector, params, device
+            self, worker_id, input_shape, num_outputs, params, device
     ):
-        assert isinstance(train_action_selector, DiscreteCategoricalActionSelector)
-        assert isinstance(test_and_play_action_selector, DiscreteCategoricalActionSelector)
         assert params.DEEP_LEARNING_MODEL in [
             DeepLearningModelName.STOCHASTIC_DISCRETE_ACTOR_CRITIC_MLP,
             DeepLearningModelName.STOCHASTIC_DISCRETE_ACTOR_CRITIC_CNN
         ]
 
-        super(AgentDiscreteA2C, self).__init__(train_action_selector, test_and_play_action_selector, params, device)
+        super(AgentDiscreteA2C, self).__init__(params, device)
 
         self.__name__ = "AgentDiscreteA2C"
+        self.train_action_selector = DiscreteCategoricalActionSelector()
+        self.test_and_play_action_selector = DiscreteCategoricalActionSelector()
         self.worker_id = worker_id
 
         self.model = rl_utils.get_rl_model(

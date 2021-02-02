@@ -2,30 +2,47 @@ import numpy as np
 import torch
 import torch.nn.functional as F
 
-from codes.d_agents.a0_base_agent import BaseAgent, TargetNet, float32_preprocessor
+from codes.d_agents.a0_base_agent import TargetNet, float32_preprocessor
 from codes.d_agents.off_policy.off_policy_agent import OffPolicyAgent
-from codes.e_utils import rl_utils, replay_buffer
-from codes.e_utils.names import DeepLearningModelName, AgentMode
+from codes.e_utils import rl_utils
+from codes.e_utils.actions import EpsilonGreedyDQNActionSelector, ArgmaxActionSelector, EpsilonTracker, \
+    EpsilonGreedySomeTimesBlowDQNActionSelector
+from codes.e_utils.names import DeepLearningModelName, AgentMode, EnvironmentName
 
 
 class AgentDQN(OffPolicyAgent):
     """
     """
-    def __init__(
-            self, worker_id, input_shape, num_outputs,
-            train_action_selector, test_and_play_action_selector, params, device
-    ):
-        super(AgentDQN, self).__init__(
-            train_action_selector, test_and_play_action_selector, params=params, device=device
-        )
-        self.__name__ = "AgentDQN"
-        self.worker_id = worker_id
-
+    def __init__(self, worker_id, input_shape, num_outputs, params, device):
         assert params.DEEP_LEARNING_MODEL in [
             DeepLearningModelName.DUELING_DQN_MLP,
             DeepLearningModelName.DUELING_DQN_CNN,
             DeepLearningModelName.DUELING_DQN_SMALL_CNN
         ]
+
+        super(AgentDQN, self).__init__(params=params, device=device)
+        if params.ENVIRONMENT_ID in [EnvironmentName.PENDULUM_MATLAB_V0, EnvironmentName.PENDULUM_MATLAB_DOUBLE_RIP_V0]:
+            self.train_action_selector = EpsilonGreedySomeTimesBlowDQNActionSelector(
+                epsilon=params.EPSILON_INIT, blowing_action_rate=0.0002,
+                min_blowing_action_idx=0, max_blowing_action_idx=-1
+            )
+            self.test_and_play_action_selector = EpsilonGreedySomeTimesBlowDQNActionSelector(
+                epsilon=0.0, blowing_action_rate=0.0002, min_blowing_action_idx=0, max_blowing_action_idx=-1
+            )
+        else:
+            self.train_action_selector = EpsilonGreedyDQNActionSelector(epsilon=params.EPSILON_INIT)
+            self.test_and_play_action_selector = ArgmaxActionSelector()
+
+        self.epsilon_tracker = EpsilonTracker(
+            action_selector=self.train_action_selector,
+            eps_start=params.EPSILON_INIT,
+            eps_final=params.EPSILON_MIN,
+            eps_frames=params.EPSILON_MIN_STEP
+        )
+
+        self.__name__ = "AgentDQN"
+        self.worker_id = worker_id
+
         self.model = rl_utils.get_rl_model(
             worker_id=worker_id, input_shape=input_shape, num_outputs=num_outputs, params=params, device=device
         )

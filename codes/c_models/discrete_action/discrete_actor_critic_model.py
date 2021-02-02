@@ -61,7 +61,10 @@ class ActorCriticMLPBase(nn.Module):
         #self.actor.apply(self.init_weights)
 
         self.critic = nn.Sequential(
-            nn.Linear(self.hidden_3_size, 1)
+            nn.Linear(self.hidden_3_size, self.hidden_3_size),
+            nn.ReLU(),
+            nn.Linear(self.hidden_3_size, 1),
+            nn.Tanh()
         )
 
         #self.critic.apply(self.init_weights)
@@ -78,7 +81,7 @@ class ActorCriticMLPBase(nn.Module):
     def forward(self, inputs):
         common = self.common(inputs)
         actions = self.actor(common)
-        critic_values = self.critic(common)
+        critic_values = self.critic(common.detach())
         return actions, critic_values
 
     def forward_actor(self, inputs):
@@ -87,7 +90,7 @@ class ActorCriticMLPBase(nn.Module):
         return actions
 
     def forward_critic(self, inputs):
-        common = self.common(inputs)
+        common = self.common(inputs).detach()
         critic_values = self.critic(common)
         return critic_values
 
@@ -116,7 +119,8 @@ class ActorCriticCNNBase(nn.Module):
         self.critic_fc = nn.Sequential(
             nn.Linear(common_conv_out_size, 512),
             nn.ReLU(),
-            nn.Linear(512, 1)
+            nn.Linear(512, 1),
+            nn.Tanh()
         )
 
         self.layers_info = {'common_conv': self.common_conv, 'actor_fc': self.actor_fc, 'critic_fc': self.critic_fc}
@@ -136,7 +140,7 @@ class ActorCriticCNNBase(nn.Module):
         common_conv_out = self.common_conv(fx).view(fx.size()[0], -1)
 
         actions = self.actor_fc(common_conv_out)
-        critic_values = self.critic_fc(common_conv_out)
+        critic_values = self.critic_fc(common_conv_out.detach())
 
         return actions, critic_values
 
@@ -157,7 +161,7 @@ class ActorCriticCNNBase(nn.Module):
             fx = torch.tensor(inputs, dtype=torch.float32) / 256
 
         common_conv_out = self.common_conv(fx).view(fx.size()[0], -1)
-        critic_values = self.critic_fc(common_conv_out)
+        critic_values = self.critic_fc(common_conv_out.detach())
         return critic_values
 
 
