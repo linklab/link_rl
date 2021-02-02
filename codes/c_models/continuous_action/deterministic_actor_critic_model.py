@@ -38,31 +38,31 @@ class DeterministicActorCriticMLPBase(nn.Module):
         self.hidden_2_size = params.HIDDEN_2_SIZE
         self.hidden_3_size = params.HIDDEN_3_SIZE
 
-        self.common = nn.Sequential(
+        self.actor = nn.Sequential(
             nn.Linear(num_inputs, self.hidden_1_size),
             nn.ReLU(),
             nn.Linear(self.hidden_1_size, self.hidden_2_size),
             nn.ReLU(),
             nn.Linear(self.hidden_2_size, self.hidden_3_size),
             nn.ReLU(),
-        )
-
-        self.actor = nn.Sequential(
             nn.Linear(self.hidden_3_size, num_outputs),
         )
 
-        # self.actor.apply(self.init_weights)
+        self.actor.apply(self.init_weights)
 
         self.critic = nn.Sequential(
-            nn.Linear(self.hidden_3_size + num_outputs, self.hidden_3_size),
+            nn.Linear(num_inputs + num_outputs, self.hidden_1_size),
+            nn.ReLU(),
+            nn.Linear(self.hidden_1_size, self.hidden_2_size),
+            nn.ReLU(),
+            nn.Linear(self.hidden_2_size, self.hidden_3_size),
             nn.ReLU(),
             nn.Linear(self.hidden_3_size, 1),
-            nn.Tanh()
         )
 
-        # self.critic.apply(self.init_weights)
+        self.critic.apply(self.init_weights)
 
-        self.layers_info = {'common': self.common, 'actor': self.actor, 'critic': self.critic}
+        self.layers_info = {'actor': self.actor, 'critic': self.critic}
 
         self.train()
 
@@ -75,15 +75,13 @@ class DeterministicActorCriticMLPBase(nn.Module):
         return self.forward_actor(inputs)
 
     def forward_actor(self, inputs):
-        common_out = self.common(inputs)
-        actions = self.actor(common_out)
+        actions = self.actor(inputs)
         actions = torch.tanh(actions)
 
         return actions * self.params.ACTION_SCALE
 
     def forward_critic(self, inputs, actions):
-        common_out = self.common(inputs).detach()
-        critic_value = self.critic(torch.cat([common_out, actions], dim=-1))
+        critic_value = self.critic(torch.cat([inputs, actions], dim=-1))
 
         return critic_value
 

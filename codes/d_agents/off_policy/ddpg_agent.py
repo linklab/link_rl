@@ -5,7 +5,7 @@ from icecream import ic
 
 from codes.d_agents.a0_base_agent import TargetNet, float32_preprocessor
 from codes.d_agents.off_policy.off_policy_agent import OffPolicyAgent
-from codes.e_utils import rl_utils
+from codes.e_utils import rl_utils, replay_buffer
 from codes.e_utils.actions import EpsilonGreedySomeTimesBlowDDPGActionSelector, EpsilonGreedyDDPGActionSelector, \
     EpsilonTracker
 from codes.e_utils.names import DeepLearningModelName, AgentMode, EnvironmentName
@@ -19,6 +19,7 @@ class AgentDDPG(OffPolicyAgent):
         assert params.DEEP_LEARNING_MODEL == DeepLearningModelName.DETERMINISTIC_CONTINUOUS_ACTOR_CRITIC_MLP
 
         super(AgentDDPG, self).__init__(params=params, device=device)
+
         self.__name__ = "AgentDDPG"
         self.action_min = action_min
         self.action_max = action_max
