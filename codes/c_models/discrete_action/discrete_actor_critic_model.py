@@ -54,11 +54,13 @@ class ActorCriticMLPBase(nn.Module):
             nn.ReLU(),
         )
 
+        self.actor.apply(self.init_weights)
+
         self.actor = nn.Sequential(
             nn.Linear(self.hidden_3_size, num_outputs)
         )
 
-        #self.actor.apply(self.init_weights)
+        self.actor.apply(self.init_weights)
 
         self.critic = nn.Sequential(
             nn.Linear(self.hidden_3_size, self.hidden_3_size),
@@ -67,7 +69,7 @@ class ActorCriticMLPBase(nn.Module):
             nn.Tanh()
         )
 
-        #self.critic.apply(self.init_weights)
+        self.critic.apply(self.init_weights)
 
         self.layers_info = {'common': self.common, 'actor': self.actor, 'critic': self.critic}
 
@@ -133,7 +135,7 @@ class ActorCriticCNNBase(nn.Module):
 
     def forward(self, inputs):
         if torch.is_tensor(inputs):
-            fx = inputs.to(torch.float32) / 256
+            fx = inputs / 256
         else:
             fx = torch.tensor(inputs, dtype=torch.float32) / 256
 
@@ -146,7 +148,7 @@ class ActorCriticCNNBase(nn.Module):
 
     def forward_actor(self, inputs):
         if torch.is_tensor(inputs):
-            fx = inputs.to(torch.float32) / 256
+            fx = inputs / 256
         else:
             fx = torch.tensor(inputs, dtype=torch.float32) / 256
 
@@ -156,7 +158,7 @@ class ActorCriticCNNBase(nn.Module):
 
     def forward_critic(self, inputs):
         if torch.is_tensor(inputs):
-            fx = inputs.to(torch.float32) / 256
+            fx = inputs / 256
         else:
             fx = torch.tensor(inputs, dtype=torch.float32) / 256
 

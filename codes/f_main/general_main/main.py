@@ -219,7 +219,7 @@ def main():
         )
         wandb.run.save()
 
-        wandb.watch(agent.model.base)
+        wandb.watch(agent.model.base, log="all")
 
     loss_dequeue = deque(maxlen=params.AVG_STEP_SIZE_FOR_TRAIN_LOSS)
     step_idx = 0
