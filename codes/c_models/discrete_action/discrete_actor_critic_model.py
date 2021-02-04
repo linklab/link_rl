@@ -136,6 +136,11 @@ class ActorCriticCNNBase(nn.Module):
 
         self.train()
 
+    @staticmethod
+    def init_weights(m):
+        if type(m) == nn.Linear or type(m) == nn.Conv2d:
+            torch.nn.init.kaiming_normal_(m.weight)
+
     def _get_conv_out(self, conv, shape):
         o = conv(Variable(torch.zeros(1, *shape)))
         return int(np.prod(o.size()))
