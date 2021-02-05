@@ -147,7 +147,7 @@ def play_func(exp_queue, agent):
                                     episode_done_step=step_idx
                                 )
                             elif params.MODEL_SAVE_MODE == ModelSaveMode.FINAL_ONLY:
-                                test_mean_episode_reward = 0.0
+                                test_mean_episode_reward = None
                                 solved = False
                             else:
                                 raise ValueError()
@@ -219,7 +219,7 @@ def main():
         )
         wandb.run.save()
 
-        wandb.watch(agent.model.base)
+        wandb.watch(agent.model.base, log="all")
 
     loss_dequeue = deque(maxlen=params.AVG_STEP_SIZE_FOR_TRAIN_LOSS)
     step_idx = 0

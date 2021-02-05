@@ -54,6 +54,8 @@ class ActorCriticMLPBase(nn.Module):
             nn.ReLU(),
         )
 
+        #self.common.apply(self.init_weights)
+
         self.actor = nn.Sequential(
             nn.Linear(self.hidden_3_size, num_outputs)
         )
@@ -109,6 +111,8 @@ class ActorCriticCNNBase(nn.Module):
             nn.ReLU()
         )
 
+        self.common_conv.apply(self.init_weights)
+
         common_conv_out_size = self._get_conv_out(self.common_conv, input_shape)
 
         self.actor_fc = nn.Sequential(
@@ -116,6 +120,9 @@ class ActorCriticCNNBase(nn.Module):
             nn.ReLU(),
             nn.Linear(512, num_outputs)
         )
+
+        self.actor_fc.apply(self.init_weights)
+
         self.critic_fc = nn.Sequential(
             nn.Linear(common_conv_out_size, 512),
             nn.ReLU(),
@@ -123,9 +130,16 @@ class ActorCriticCNNBase(nn.Module):
             nn.Tanh()
         )
 
+        self.critic_fc.apply(self.init_weights)
+
         self.layers_info = {'common_conv': self.common_conv, 'actor_fc': self.actor_fc, 'critic_fc': self.critic_fc}
 
         self.train()
+
+    @staticmethod
+    def init_weights(m):
+        if type(m) == nn.Linear or type(m) == nn.Conv2d:
+            torch.nn.init.kaiming_normal_(m.weight)
 
     def _get_conv_out(self, conv, shape):
         o = conv(Variable(torch.zeros(1, *shape)))
@@ -133,7 +147,7 @@ class ActorCriticCNNBase(nn.Module):
 
     def forward(self, inputs):
         if torch.is_tensor(inputs):
-            fx = inputs.to(torch.float32) / 256
+            fx = inputs / 256
         else:
             fx = torch.tensor(inputs, dtype=torch.float32) / 256
 
@@ -146,7 +160,7 @@ class ActorCriticCNNBase(nn.Module):
 
     def forward_actor(self, inputs):
         if torch.is_tensor(inputs):
-            fx = inputs.to(torch.float32) / 256
+            fx = inputs / 256
         else:
             fx = torch.tensor(inputs, dtype=torch.float32) / 256
 
@@ -156,7 +170,7 @@ class ActorCriticCNNBase(nn.Module):
 
     def forward_critic(self, inputs):
         if torch.is_tensor(inputs):
-            fx = inputs.to(torch.float32) / 256
+            fx = inputs / 256
         else:
             fx = torch.tensor(inputs, dtype=torch.float32) / 256
 
