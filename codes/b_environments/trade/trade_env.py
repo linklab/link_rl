@@ -137,7 +137,12 @@ class UpbitEnvironment(gym.Env):
             transaction_info = self.get_transaction_sell_info(
                 current_trade_data=current_trade_data, num_buys=len(self.positions)
             )
-            reward = 0.0
+
+            if len(self.positions) > 0:
+                reward = -0.01
+            else:
+                reward = 0.0
+
             effective_action = False
         elif action == Action.MARKET_BUY.value:
             transaction_info = self.get_transaction_buy_info(
