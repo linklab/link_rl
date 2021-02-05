@@ -1,4 +1,4 @@
-from common.environments import TimeUnit, EnvironmentType
+from common.environments import TimeUnit, TradeEnvironmentType
 from common.environments import UpbitEnvironment
 from common.environments import get_previous_one_unit_date_time
 
@@ -8,7 +8,7 @@ def main():
     print(previous_one_datetime)
 
     env = UpbitEnvironment(
-        coin_name="MOC", time_unit=TimeUnit.ONE_HOUR, environment_type=EnvironmentType.LIVE,
+        coin_name="MOC", time_unit=TimeUnit.ONE_HOUR, environment_type=TradeEnvironmentType.LIVE,
         previous_one_datetime=previous_one_datetime
     )
 

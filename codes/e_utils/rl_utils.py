@@ -9,6 +9,7 @@ import gym
 from torch import optim
 import os, sys
 
+from codes.b_environments.trade.trade_data import get_data
 from codes.c_models.continuous_action.soft_actor_critic_model import SoftActorCriticModel
 from codes.d_agents.on_policy.continuous_sac_agent import AgentSAC
 from codes.d_agents.on_policy.discrete_ppo_agent import AgentDiscretePPO
@@ -32,13 +33,13 @@ from codes.c_models.discrete_action.dqn_model import DuelingDQNModel
 from codes.d_agents.off_policy.ddpg_agent import AgentDDPG
 
 from codes.e_utils.common_utils import make_atari_env
-from codes.e_utils.names import EnvironmentName, DeepLearningModelName, RLAlgorithmName, OptimizerName
+from codes.e_utils.names import EnvironmentName, DeepLearningModelName, RLAlgorithmName, OptimizerName, AgentMode
 
 
 def get_environment(params):
     def make_environment(params):
         def _make():
-            env = get_single_environment(params=params)
+            env = get_single_environment(params=params, mode=AgentMode.TRAIN)
             return env
 
         return _make
@@ -51,7 +52,7 @@ def get_environment(params):
     return env
 
 
-def get_single_environment(params=None):
+def get_single_environment(params=None, mode=AgentMode.TRAIN):
     if params.ENVIRONMENT_ID == EnvironmentName.REAL_DEVICE_RIP:
         from codes.b_environments.rotary_inverted_pendulum.rip import RotaryInvertedPendulumEnv
         env = RotaryInvertedPendulumEnv(
@@ -135,6 +136,35 @@ def get_single_environment(params=None):
             params=params
         )
         env.start()
+    elif params.ENVIRONMENT_ID == EnvironmentName.TRADE_V0:
+        from codes.b_environments.trade.trade_env import UpbitEnvironment
+        from codes.b_environments.trade.trade_constant import TradeEnvironmentType
+
+        assert hasattr(params, "COIN_NAME")
+        assert hasattr(params, "TIME_UNIT")
+
+        train_data_info, evaluate_data_info = get_data(coin_name=params.COIN_NAME, time_unit=params.TIME_UNIT)
+
+        print(train_data_info["first_datetime_krw"], train_data_info["last_datetime_krw"])
+        print(evaluate_data_info["first_datetime_krw"], evaluate_data_info["last_datetime_krw"])
+
+        if mode == AgentMode.TRAIN:
+            env = UpbitEnvironment(
+                coin_name=params.COIN_NAME, time_unit=params.TIME_UNIT,
+                data_info=train_data_info, environment_type=TradeEnvironmentType.TRAIN
+            )
+        elif mode == AgentMode.TEST:
+            env = UpbitEnvironment(
+                coin_name=params.COIN_NAME, time_unit=params.TIME_UNIT,
+                data_info=evaluate_data_info, environment_type=TradeEnvironmentType.TEST_RANDOM
+            )
+        elif mode == AgentMode.PLAY:
+            env = UpbitEnvironment(
+                coin_name=params.COIN_NAME, time_unit=params.TIME_UNIT,
+                data_info=None, environment_type=TradeEnvironmentType.LIVE
+            )
+        else:
+            raise ValueError()
     else:
         env = None
 

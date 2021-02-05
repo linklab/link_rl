@@ -9,7 +9,7 @@ PROJECT_HOME = os.path.abspath(os.path.join(current_path, os.pardir, os.pardir))
 if PROJECT_HOME not in sys.path:
     sys.path.append(PROJECT_HOME)
 
-from common.environments import TimeUnit, EnvironmentType
+from common.environments import TimeUnit, TradeEnvironmentType
 from common.environments import get_data
 from common.environments import UpbitEnvironment
 from common.fast_rl import rl_agent
@@ -40,7 +40,7 @@ if __name__ == "__main__":
         coin_name=coin_name,
         time_unit=time_unit,
         data_info=evaluate_data_info,
-        environment_type=EnvironmentType.TEST_RANDOM,
+        environment_type=TradeEnvironmentType.TEST_RANDOM,
     )
     random_action_selector = RandomTradeDQNActionSelector(env=evaluate_random_env)
     random_agent = rl_agent.DQNAgent(dqn_model=None, action_selector=random_action_selector, device=device)
@@ -53,7 +53,7 @@ if __name__ == "__main__":
         coin_name=coin_name,
         time_unit=time_unit,
         data_info=evaluate_data_info,
-        environment_type=EnvironmentType.TEST_SEQUENTIAL,
+        environment_type=TradeEnvironmentType.TEST_SEQUENTIAL,
     )
     random_action_selector = RandomTradeDQNActionSelector(env=evaluate_sequential_env)
     random_agent = rl_agent.DQNAgent(dqn_model=None, action_selector=random_action_selector, device=device)

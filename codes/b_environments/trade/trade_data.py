@@ -12,10 +12,8 @@ warnings.filterwarnings("ignore")
 with warnings.catch_warnings():
     warnings.simplefilter("ignore", category=sa_exc.SAWarning)
 
-from common.environments.trade.trade_constant import NAVER_MYSQL_ID, NAVER_MYSQL_PASSWORD, NAVER_MYSQL_HOST, TimeUnit, \
-    CSV_RAW_DATA_FILE
-from common.environments.trade.trade_utils import get_previous_one_unit_date_time, get_current_unit_date_time, \
-    convert_to_daily_timestamp
+from .trade_constant import NAVER_MYSQL_ID, NAVER_MYSQL_PASSWORD, NAVER_MYSQL_HOST, TimeUnit, CSV_RAW_DATA_FILE
+from .trade_utils import get_previous_one_unit_date_time, get_current_unit_date_time, convert_to_daily_timestamp
 
 naver_ohlcv_price_engine = create_engine(
     'mysql+mysqlconnector://{0}:{1}@{2}/record?use_pure=True'.format(

@@ -1,22 +1,21 @@
 import math
 import random
-
 import gym
 import numpy as np
 
 
-from common.environments.trade.trade_constant import EnvironmentType, WINDOW_SIZE, TimeUnit, INITIAL_TOTAL_KRW, Action, BUY_AMOUNT, COMMISSION_RATE, SLIPPAGE_COUNT
-from common.environments.trade.trade_utils import get_history_entry, get_order_unit, get_previous_one_unit_date_time
+from .trade_constant import TradeEnvironmentType, WINDOW_SIZE, TimeUnit, INITIAL_TOTAL_KRW, Action, BUY_AMOUNT, COMMISSION_RATE, SLIPPAGE_COUNT
+from .trade_utils import get_history_entry, get_order_unit, get_previous_one_unit_date_time
 
 
 class UpbitEnvironment(gym.Env):
-    def __init__(self, coin_name, time_unit, data_info, environment_type=EnvironmentType.TRAIN):
+    def __init__(self, coin_name, time_unit, data_info, environment_type=TradeEnvironmentType.TRAIN):
         super(UpbitEnvironment, self).__init__()
         self.coin_name = coin_name
         self.time_unit = time_unit
         self.environment_type = environment_type
 
-        if self.environment_type == EnvironmentType.LIVE:
+        if self.environment_type == TradeEnvironmentType.LIVE:
             self.previous_one_datetime = get_previous_one_unit_date_time(time_unit)
 
         self.history = None
@@ -76,28 +75,28 @@ class UpbitEnvironment(gym.Env):
         self.positions = []
         ##### STATISTICS: END   #####
 
-        if self.environment_type in [EnvironmentType.TRAIN, EnvironmentType.TEST_RANDOM, EnvironmentType.TEST_SEQUENTIAL]:
+        if self.environment_type in [TradeEnvironmentType.TRAIN, TradeEnvironmentType.TEST_RANDOM, TradeEnvironmentType.TEST_SEQUENTIAL]:
             self.balance = INITIAL_TOTAL_KRW
-        elif self.environment_type == EnvironmentType.LIVE:
+        elif self.environment_type == TradeEnvironmentType.LIVE:
             self.balance = 0
         else:
             raise ValueError()
 
         self.history = []
 
-        if self.environment_type == EnvironmentType.TRAIN:
+        if self.environment_type == TradeEnvironmentType.TRAIN:
             self.transaction_state_idx = random.randint(
                 a=WINDOW_SIZE - 1,
                 b=self.data_size - (336 if self.time_unit == TimeUnit.ONE_HOUR else 14)
             )
-        elif self.environment_type == EnvironmentType.TEST_RANDOM:
+        elif self.environment_type == TradeEnvironmentType.TEST_RANDOM:
             self.transaction_state_idx = random.randint(
                 a=0,
                 b=self.data_size - (336 if self.time_unit == TimeUnit.ONE_HOUR else 14)
             )
-        elif self.environment_type == EnvironmentType.TEST_SEQUENTIAL:
+        elif self.environment_type == TradeEnvironmentType.TEST_SEQUENTIAL:
             assert self.transaction_state_idx >= 0
-        elif self.environment_type == EnvironmentType.LIVE:
+        elif self.environment_type == TradeEnvironmentType.LIVE:
             self.transaction_state_idx = self.data_size - 1
         else:
             raise ValueError()
@@ -192,7 +191,7 @@ class UpbitEnvironment(gym.Env):
             self.transaction_state_idx >= self.data_size - 1
         ]
 
-        if self.environment_type in [EnvironmentType.TRAIN, EnvironmentType.TEST_RANDOM, EnvironmentType.TEST_SEQUENTIAL]:
+        if self.environment_type in [TradeEnvironmentType.TRAIN, TradeEnvironmentType.TEST_RANDOM, TradeEnvironmentType.TEST_SEQUENTIAL]:
             self.transaction_state_idx += 1
             if any(done_conditions):
                 done = True
@@ -209,7 +208,7 @@ class UpbitEnvironment(gym.Env):
                     get_history_entry(state_one_data, state_previous_one_data)
                 )
                 next_state = self.get_state(self.hold_coin_krw, self.position_value, self.history)
-        elif self.environment_type == EnvironmentType.LIVE:
+        elif self.environment_type == TradeEnvironmentType.LIVE:
             self.transaction_state_idx += 1
             done = True
             next_state = None
@@ -257,13 +256,13 @@ class UpbitEnvironment(gym.Env):
         return next_state
 
     def get_transaction_buy_info(self, current_trade_data):
-        if self.environment_type in [EnvironmentType.TRAIN, EnvironmentType.TEST_RANDOM, EnvironmentType.TEST_SEQUENTIAL]:
+        if self.environment_type in [TradeEnvironmentType.TRAIN, TradeEnvironmentType.TEST_RANDOM, TradeEnvironmentType.TEST_SEQUENTIAL]:
             commission_fee = BUY_AMOUNT * COMMISSION_RATE
             coin_krw = BUY_AMOUNT - commission_fee
             slippage = get_order_unit(current_trade_data['trade_price']) * SLIPPAGE_COUNT
             coin_unit_price = current_trade_data['trade_price'] + slippage
             coin_quantity = coin_krw / coin_unit_price
-        elif self.environment_type == EnvironmentType.LIVE:
+        elif self.environment_type == TradeEnvironmentType.LIVE:
             commission_fee = current_trade_data['commission_fee']
             coin_krw = current_trade_data['bought_coin_krw']
             slippage = current_trade_data['bought_coin_unit_price'] - current_trade_data['trade_price']
@@ -282,13 +281,13 @@ class UpbitEnvironment(gym.Env):
         return transaction_info
 
     def get_transaction_sell_info(self, current_trade_data, num_buys=0):
-        if self.environment_type in [EnvironmentType.TRAIN, EnvironmentType.TEST_RANDOM, EnvironmentType.TEST_SEQUENTIAL]:
+        if self.environment_type in [TradeEnvironmentType.TRAIN, TradeEnvironmentType.TEST_RANDOM, TradeEnvironmentType.TEST_SEQUENTIAL]:
             slippage = get_order_unit(current_trade_data['trade_price']) * SLIPPAGE_COUNT * math.ceil(num_buys / 3)
             coin_unit_price = current_trade_data['trade_price'] - slippage
             commission_fee = self.hold_coin_quantity * coin_unit_price * COMMISSION_RATE
             coin_krw = self.hold_coin_quantity * coin_unit_price - commission_fee
             coin_quantity = self.hold_coin_quantity
-        elif self.environment_type == EnvironmentType.LIVE:
+        elif self.environment_type == TradeEnvironmentType.LIVE:
             slippage = current_trade_data['trade_price'] - current_trade_data['sold_coin_unit_price']
             coin_unit_price = current_trade_data['sold_coin_unit_price']
             commission_fee = current_trade_data['commission_fee']
@@ -333,15 +332,15 @@ class UpbitEnvironment(gym.Env):
 if __name__ == "__main__":
     pass
     # train_env = UpbitEnvironment(
-    #     coin_name="MOC", time_unit=TimeUnit.ONE_HOUR, environment_type=EnvironmentType.TRAIN
+    #     coin_name="MOC", time_unit=TimeUnit.ONE_HOUR, environment_type=TradeEnvironmentType.TRAIN
     # )
     #
     # test_env = UpbitEnvironment(
-    #     coin_name="MOC", time_unit=TimeUnit.ONE_HOUR, environment_type=EnvironmentType.TEST
+    #     coin_name="MOC", time_unit=TimeUnit.ONE_HOUR, environment_type=TradeEnvironmentType.TEST
     # )
     #
     # live_env = UpbitEnvironment(
-    #     coin_name="MOC", time_unit=TimeUnit.ONE_HOUR, environment_type=EnvironmentType.LIVE,
+    #     coin_name="MOC", time_unit=TimeUnit.ONE_HOUR, environment_type=TradeEnvironmentType.LIVE,
     #     previous_one_datetime=get_previous_one_unit_date_time(TimeUnit.ONE_HOUR)
     # )
 
