@@ -1,7 +1,6 @@
 # https://github.com/openai/gym/blob/master/gym/envs/classic_control/pendulum.py
 # https://mspries.github.io/jimmy_pendulum.html
 #!/usr/bin/env python3
-import collections
 import time
 from collections import deque
 
@@ -12,9 +11,9 @@ import numpy as np
 import wandb
 from termcolor import colored
 
+from codes.a_config.f_trade_parameters.parameters_trade_dqn import PARAMETERS_GENERAL_TRADE_DQN
 from codes.d_agents.off_policy.off_policy_agent import OffPolicyAgent
 from codes.d_agents.on_policy.on_policy_agent import OnPolicyAgent
-from codes.e_utils.experience_rollouts import ExperienceSourceRollouts
 
 print("PyTorch Version", torch.__version__)
 
@@ -30,7 +29,7 @@ from codes.e_utils.common_utils import save_model, print_environment_info, remov
     print_performance, print_agent_info
 from codes.e_utils.experience_tracker import RewardTracker, EarlyStopping
 from codes.e_utils.logger import get_logger
-from codes.e_utils.names import DeepLearningModelName, RLAlgorithmName, EnvironmentName, ModelSaveMode
+from codes.e_utils.names import DeepLearningModelName, RLAlgorithmName, EnvironmentName, ModelSaveMode, AgentMode
 from codes.e_utils.experience import ExperienceSourceFirstLast
 
 WANDB_DIR = os.path.join(PROJECT_HOME, "out", "wandb")
@@ -48,12 +47,18 @@ device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 my_logger = get_logger("main")
 
 
+if isinstance(params, PARAMETERS_GENERAL_TRADE_DQN):
+    model_save_file_prefix = "_".join([params.ENVIRONMENT_ID.value, params.COIN_NAME, params.TIME_UNIT])
+else:
+    model_save_file_prefix = params.ENVIRONMENT_ID.value
+
+
 def play_func(exp_queue, agent):
     train_env = rl_utils.get_environment(params=params)
     print_environment_info(train_env, params)
 
     if params.MODEL_SAVE_MODE == ModelSaveMode.TEST:
-        test_env = rl_utils.get_single_environment(params=params)
+        test_env = rl_utils.get_single_environment(params=params, mode=AgentMode.TEST)
     else:
         test_env = None
 
@@ -78,7 +83,7 @@ def play_func(exp_queue, agent):
         verbose=True,
         delta=0.0,
         model_save_dir=MODEL_SAVE_DIR,
-        model_save_file_prefix=params.ENVIRONMENT_ID.value,
+        model_save_file_prefix=model_save_file_prefix,
         agent=agent,
         params=params
     )
@@ -176,10 +181,10 @@ def play_func(exp_queue, agent):
 
             if params.MODEL_SAVE_MODE == ModelSaveMode.FINAL_ONLY:
                 remove_models(
-                    MODEL_SAVE_DIR, params.ENVIRONMENT_ID.value, agent
+                    MODEL_SAVE_DIR, model_save_file_prefix, agent
                 )
                 save_model(
-                    MODEL_SAVE_DIR, params.ENVIRONMENT_ID.value, agent, step_idx, train_mean_episode_reward
+                    MODEL_SAVE_DIR, model_save_file_prefix, agent, step_idx, train_mean_episode_reward
                 )
         finally:
             if params.ENVIRONMENT_ID in [EnvironmentName.REAL_DEVICE_RIP, EnvironmentName.REAL_DEVICE_DOUBLE_RIP]:

@@ -19,7 +19,7 @@ def visualize(h, color, epoch=None, loss=None):
         if epoch is not None and loss is not None:
             plt.xlabel(f'Epoch: {epoch}, Loss: {loss.item():.4f}', fontsize=16)
     else:
-        nx.draw_networkx(h, pos=nx.spring_layout(G, seed=42), with_labels=False,
+        nx.draw_networkx(h, pos=nx.spring_layout(h, seed=42), with_labels=True,
                          node_color=color, cmap="Set2")
 
     plt.show()
@@ -64,6 +64,7 @@ if __name__ == "__main__":
     # Gather some statistics about the graph.
     print(f'Number of nodes: {data.num_nodes}')
     print(f'Number of edges: {data.num_edges}')
+    print(data.x[0])
     print(f'Average node degree: {data.num_edges / data.num_nodes:.2f}')
     print(f'Number of training nodes: {data.train_mask.sum()}')
     print(f'Training node label rate: {int(data.train_mask.sum()) / data.num_nodes:.2f}')
@@ -73,34 +74,51 @@ if __name__ == "__main__":
 
     print(data.x)
     edge_index = data.edge_index
-    print(edge_index.t())
+    #print(edge_index.t())
 
     G = to_networkx(data, to_undirected=True)
     visualize(G, color=data.y)
 
+    print('==============================================================')
+
     model = GCN()
     print(model)
 
-    _, h = model(data.x, data.edge_index)
+    out, h = model(data.x, data.edge_index)
+    print(f'Output shape: {list(out.shape)}')
+    print(out)
     print(f'Embedding shape: {list(h.shape)}')
+    print(h)
 
     visualize(h, color=data.y)
 
     criterion = torch.nn.CrossEntropyLoss()  # Define loss criterion.
     optimizer = torch.optim.Adam(model.parameters(), lr=0.01)  # Define optimizer.
 
+    print(data.train_mask, data.train_mask.sum())
+
+    # for idx in range(len(data.train_mask)):
+    #     data.train_mask[idx] = True
+    #
+    # print(data.train_mask, data.train_mask.sum())
 
     def train(data):
         optimizer.zero_grad()  # Clear gradients.
         out, h = model(data.x, data.edge_index)  # Perform a single forward pass.
-        loss = criterion(out[data.train_mask],
-                         data.y[data.train_mask])  # Compute the loss solely based on the training nodes.
+
+        # Compute the loss solely based on the training nodes.
+        loss = criterion(
+            out[data.train_mask],
+            data.y[data.train_mask]
+        )
+
         loss.backward()  # Derive gradients.
         optimizer.step()  # Update parameters based on gradients.
         return loss, h
 
 
-    for epoch in range(401):
+    for epoch in range(2001):
         loss, h = train(data)
+        print(loss)
 
     visualize(h, color=data.y)

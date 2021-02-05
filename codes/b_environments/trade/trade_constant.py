@@ -5,7 +5,8 @@ import os
 from codes.e_utils.names import PROJECT_HOME
 
 config_parser = configparser.ConfigParser()
-read_ok = config_parser.read(os.path.join(PROJECT_HOME, "config", "codes.a_config.ini"))
+
+read_ok = config_parser.read(os.path.join(PROJECT_HOME, "a_config", "config.ini"))
 
 fmt = "%Y-%m-%dT%H:%M:%S"
 fmt2 = "%Y-%m-%d %H:%M:%S"
@@ -30,7 +31,7 @@ class Action(enum.Enum):
     MARKET_SELL = 2
 
 
-class EnvironmentType(enum.Enum):
+class TradeEnvironmentType(enum.Enum):
     TRAIN = 0
     TEST_RANDOM = 1
     TEST_SEQUENTIAL = 2

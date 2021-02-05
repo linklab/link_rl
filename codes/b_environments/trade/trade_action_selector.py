@@ -1,8 +1,8 @@
 import numpy as np
 import random
 
-from common.environments.trade.trade_constant import Action, TimeUnit
-from common.fast_rl.actions import ActionSelector
+from codes.e_utils.actions import ActionSelector
+from .trade_constant import Action, TimeUnit
 
 
 class ArgmaxTradeActionSelector(ActionSelector):

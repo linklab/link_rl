@@ -2,7 +2,7 @@ import datetime as dt
 import pytz
 import numpy as np
 
-from common.environments.trade.trade_constant import fmt, fmt2, TimeUnit
+from .trade_constant import fmt, fmt2, TimeUnit
 
 
 def convert_utc_to_seoul_time(date_time_utc, return_str=True):

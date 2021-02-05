@@ -167,33 +167,35 @@ def unpack_batch_for_a2c(batch, net, params, device='cpu'):
     return states_v, actions_v, target_action_values_v
 
 
-def remove_models(model_save_dir, env_name, agent):
+def remove_models(model_save_dir, model_save_file_prefix, agent):
     files = glob.glob(os.path.join(
-        model_save_dir, "{0}_{1}_{2}_*.pth".format(env_name, agent.__name__, agent.model.__name__))
+        model_save_dir, "{0}_{1}_{2}_*.pth".format(model_save_file_prefix, agent.__name__, agent.model.__name__))
     )
     for f in files:
         os.remove(f)
 
 
-def save_model(model_save_dir, env_name, agent, step, episode_reward):
+def save_model(model_save_dir, model_save_file_prefix, agent, step, episode_reward):
     model_save_filename = os.path.join(
         model_save_dir, "{0}_{1}_{2}_{3}_{4:.2f}.pth".format(
-            env_name, agent.__name__, agent.model.__name__, step, float(episode_reward)
+            model_save_file_prefix, agent.__name__, agent.model.__name__, step, float(episode_reward)
         )
     )
     torch.save(agent.model.state_dict(), model_save_filename)
     return model_save_filename
 
 
-def load_model(model_save_dir, env_name, agent, step=None):
+def load_model(model_save_dir, model_save_file_prefix, agent, step=None):
     if step:
         saved_models = glob.glob(os.path.join(
-            model_save_dir, "{0}_{1}_{2}_{3}_*.pth".format(env_name, agent.__name__, agent.model.__name__, step)
+            model_save_dir, "{0}_{1}_{2}_{3}_*.pth".format(
+                model_save_file_prefix, agent.__name__, agent.model.__name__, step
+            )
         ))
 
     else:
         saved_models = glob.glob(os.path.join(
-            model_save_dir, "{0}_{1}_{2}_*.pth".format(env_name, agent.__name__, agent.model.__name__)
+            model_save_dir, "{0}_{1}_{2}_*.pth".format(model_save_file_prefix, agent.__name__, agent.model.__name__)
         ))
 
     saved_models.sort(key=lambda filename: int(filename.split("/")[-1].split("_")[-2]))
@@ -264,7 +266,7 @@ def print_performance(params, episode_done_step, done_episode, episode_reward, m
         episode_reward = episode_reward[0]
 
     print(
-        "{0}[{1:6}/{2}] Ep. {3}, EPISODE REWARD: {4:9.3f}, MEAN_{5} EPSIODE REWARD: {6},{7} SPEED: {8:7.2f} {9}, {10}".format(
+        "{0}[{1:6}/{2}] Ep. {3}, EPISODE REWARD: {4:9.3f}, MEAN_{5} EPSIODE REWARD: {6},{7} SPEED: {8:7.2f}steps/sec., {9}".format(
             prefix,
             episode_done_step,
             params.MAX_GLOBAL_STEP,
@@ -274,7 +276,6 @@ def print_performance(params, episode_done_step, done_episode, episode_reward, m
             mean_episode_reward_str,
             epsilon_str,
             speed,
-            "steps/sec.",
             time.strftime("%Hh %Mm %Ss", time.gmtime(elapsed_time)),
     ), end="")
 
