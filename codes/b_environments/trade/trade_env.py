@@ -138,7 +138,7 @@ class UpbitEnvironment(gym.Env):
             )
 
             if len(self.positions) > 0:
-                reward = -0.01
+                reward = -0.001
             else:
                 reward = 0.0
 
@@ -186,8 +186,8 @@ class UpbitEnvironment(gym.Env):
         #reward = max(0.0, reward)
 
         done_conditions = [
-            action == Action.MARKET_SELL.value,
-            self.step_idx == (336 if self.time_unit == TimeUnit.ONE_HOUR else 14),
+            #action == Action.MARKET_SELL.value,
+            #self.step_idx == (336 if self.time_unit == TimeUnit.ONE_HOUR else 14),
             self.transaction_state_idx >= self.data_size - 1
         ]
 
