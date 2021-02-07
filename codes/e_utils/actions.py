@@ -227,7 +227,7 @@ class EpsilonTracker:
         self.eps_start = eps_start
         self.eps_final = eps_final
         self.eps_frames = eps_frames
-        self.udpate(0)
+        #self.udpate(0)
 
     def udpate(self, frame: int):
         eps = self.eps_start - frame / self.eps_frames

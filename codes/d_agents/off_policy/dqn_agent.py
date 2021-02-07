@@ -2,6 +2,8 @@ import numpy as np
 import torch
 import torch.nn.functional as F
 
+from codes.b_environments.trade.trade_action_selector import EpsilonGreedyTradeDQNActionSelector, \
+    ArgmaxTradeActionSelector
 from codes.d_agents.a0_base_agent import TargetNet, float32_preprocessor
 from codes.d_agents.off_policy.off_policy_agent import OffPolicyAgent
 from codes.e_utils import rl_utils
@@ -29,6 +31,10 @@ class AgentDQN(OffPolicyAgent):
             self.test_and_play_action_selector = EpsilonGreedySomeTimesBlowDQNActionSelector(
                 epsilon=0.0, blowing_action_rate=0.0002, min_blowing_action_idx=0, max_blowing_action_idx=-1
             )
+        elif params.ENVIRONMENT_ID in [EnvironmentName.TRADE_V0]:
+            # main 에서 action_selector 할당
+            self.train_action_selector = None
+            self.test_and_play_action_selector = None
         else:
             self.train_action_selector = EpsilonGreedyDQNActionSelector(epsilon=params.EPSILON_INIT)
             self.test_and_play_action_selector = ArgmaxActionSelector()

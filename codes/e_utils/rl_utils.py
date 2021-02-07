@@ -262,9 +262,7 @@ def get_rl_model(worker_id, input_shape=None, num_outputs=None, params=None, dev
     return model
 
 
-def get_rl_agent(env, worker_id, params, device="cpu"):
-    input_shape, num_outputs, action_min, action_max = get_environment_input_output_info(env)
-
+def get_rl_agent(input_shape, num_outputs, action_min, action_max, worker_id, params, device="cpu"):
     agent = None
 
     if params.RL_ALGORITHM == RLAlgorithmName.DDPG_V0:

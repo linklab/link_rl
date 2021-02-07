@@ -25,7 +25,7 @@ class ArgmaxTradeActionSelector(TradeActionSelector):
         super(ArgmaxTradeActionSelector, self).__init__(env)
 
     def __call__(self, q_values):
-        actions = super(q_values)
+        actions = super(ArgmaxTradeActionSelector, self).__call__(q_values)
         if actions is None:
             if self.env.hold_coin_quantity == 0.0:
                 q_values[:, Action.MARKET_SELL.value] = np.nan
@@ -40,7 +40,7 @@ class EpsilonGreedyTradeDQNActionSelector(TradeActionSelector):
         self.default_action_selector = ArgmaxTradeActionSelector(env=env)
 
     def __call__(self, q_values):
-        actions = super(q_values)
+        actions = super(EpsilonGreedyTradeDQNActionSelector, self).__call__(q_values)
         if actions is None:
             if random.random() < self.epsilon:
                 if self.env.hold_coin_quantity == 0.0:
@@ -64,7 +64,7 @@ class RandomTradeDQNActionSelector(TradeActionSelector):
         super(RandomTradeDQNActionSelector, self).__init__(env)
 
     def __call__(self, q_values):
-        actions = super(q_values)
+        actions = super(RandomTradeDQNActionSelector, self).__call__(q_values)
         if actions is None:
             if self.env.hold_coin_quantity == 0.0:
                 actions = np.array(

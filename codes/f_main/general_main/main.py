@@ -12,8 +12,12 @@ import wandb
 from termcolor import colored
 
 from codes.a_config.f_trade_parameters.parameters_trade_dqn import PARAMETERS_GENERAL_TRADE_DQN
+from codes.b_environments.trade.trade_action_selector import EpsilonGreedyTradeDQNActionSelector, \
+    ArgmaxTradeActionSelector
 from codes.d_agents.off_policy.off_policy_agent import OffPolicyAgent
 from codes.d_agents.on_policy.on_policy_agent import OnPolicyAgent
+from codes.e_utils.rl_utils import get_environment_input_output_info
+from codes.e_utils.actions import EpsilonTracker
 
 print("PyTorch Version", torch.__version__)
 
@@ -54,13 +58,27 @@ else:
 
 
 def play_func(exp_queue, agent):
-    train_env = rl_utils.get_environment(params=params)
-    print_environment_info(train_env, params)
-
-    if params.MODEL_SAVE_MODE == ModelSaveMode.TEST:
+    if params.ENVIRONMENT_ID in [EnvironmentName.TRADE_V0]:
+        assert params.NUM_ENVIRONMENTS == 1
+        train_env = rl_utils.get_environment(params=params)
         test_env = rl_utils.get_single_environment(params=params, mode=AgentMode.TEST)
+        agent.train_action_selector = EpsilonGreedyTradeDQNActionSelector(
+            epsilon=params.EPSILON_INIT, env=train_env.envs[0]
+        )
+        agent.epsilon_tracker = EpsilonTracker(
+            action_selector=agent.train_action_selector,
+            eps_start=params.EPSILON_INIT,
+            eps_final=params.EPSILON_MIN,
+            eps_frames=params.EPSILON_MIN_STEP
+        )
+        agent.test_and_play_action_selector = ArgmaxTradeActionSelector(env=test_env)
     else:
-        test_env = None
+        train_env = rl_utils.get_environment(params=params)
+        print_environment_info(train_env, params)
+        if params.MODEL_SAVE_MODE == ModelSaveMode.TEST:
+            test_env = rl_utils.get_single_environment(params=params, mode=AgentMode.TEST)
+        else:
+            test_env = None
 
     # if params.DEEP_LEARNING_MODEL in [
     #     DeepLearningModelName.DETERMINISTIC_CONTINUOUS_ACTOR_CRITIC_GRU,
@@ -166,7 +184,7 @@ def play_func(exp_queue, agent):
                             "speed": speed,
                             "step_idx": step_idx,
                             "episode": episode,
-                            'actions': exp.action,
+                            'last_actions': exp.action,
                             "elapsed_time": elapsed_time,
                             "last_info": exp.info
                         }
@@ -198,7 +216,10 @@ def main():
     os.environ['OMP_NUM_THREADS'] = "1"
 
     env = rl_utils.get_single_environment(params=params)
-    agent = rl_utils.get_rl_agent(env=env, worker_id=0, params=params, device=device)
+    input_shape, num_outputs, action_min, action_max = get_environment_input_output_info(env)
+    agent = rl_utils.get_rl_agent(
+        input_shape, num_outputs, action_min, action_max, worker_id=0, params=params, device=device
+    )
     print_agent_info(agent, params)
 
     agent.model.share_memory()
@@ -251,7 +272,7 @@ def main():
                     last_info=train_info_dict["last_info"],
                     speed=train_info_dict["speed"],
                     mean_loss=mean_loss,
-                    last_action=train_info_dict["actions"]
+                    last_action=train_info_dict["last_actions"]
                 )
 
                 if params.WANDB:
