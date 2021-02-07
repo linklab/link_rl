@@ -151,17 +151,17 @@ def get_single_environment(params=None, mode=AgentMode.TRAIN):
         if mode == AgentMode.TRAIN:
             env = UpbitEnvironment(
                 coin_name=params.COIN_NAME, time_unit=params.TIME_UNIT,
-                data_info=train_data_info, environment_type=TradeEnvironmentType.TRAIN
+                data_info=train_data_info, params=params, environment_type=TradeEnvironmentType.TRAIN
             )
         elif mode == AgentMode.TEST:
             env = UpbitEnvironment(
                 coin_name=params.COIN_NAME, time_unit=params.TIME_UNIT,
-                data_info=evaluate_data_info, environment_type=TradeEnvironmentType.TEST_RANDOM
+                data_info=evaluate_data_info, params=params, environment_type=TradeEnvironmentType.TEST_RANDOM
             )
         elif mode == AgentMode.PLAY:
             env = UpbitEnvironment(
                 coin_name=params.COIN_NAME, time_unit=params.TIME_UNIT,
-                data_info=None, environment_type=TradeEnvironmentType.LIVE
+                data_info=None, params=params, environment_type=TradeEnvironmentType.LIVE
             )
         else:
             raise ValueError()

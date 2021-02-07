@@ -8,7 +8,7 @@ def main():
     print(previous_one_datetime)
 
     env = UpbitEnvironment(
-        coin_name="MOC", time_unit=TimeUnit.ONE_HOUR, environment_type=TradeEnvironmentType.LIVE,
+        coin_name="MOC", time_unit=TimeUnit.ONE_HOUR, environment_type=TradeEnvironmentType.LIVE, params=params,
         previous_one_datetime=previous_one_datetime
     )
 

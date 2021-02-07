@@ -5,7 +5,8 @@ from codes.a_config.parameters_general import PARAMETERS_GENERAL
 
 class PARAMETERS_GENERAL_TRADE_DQN(PARAMETERS_GENERAL):
     ENVIRONMENT_ID = EnvironmentName.TRADE_V0
-    DEEP_LEARNING_MODEL = DeepLearningModelName.DUELING_DQN_SMALL_CNN
+    DEEP_LEARNING_MODEL = DeepLearningModelName.DUELING_DQN_MLP
+    # DEEP_LEARNING_MODEL = DeepLearningModelName.DUELING_DQN_SMALL_CNN
     RL_ALGORITHM = RLAlgorithmName.DQN_V0
     OPTIMIZER = OptimizerName.ADAM
 

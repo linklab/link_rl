@@ -3,13 +3,13 @@ import random
 import gym
 import numpy as np
 
-
+from codes.e_utils.names import DeepLearningModelName
 from .trade_constant import TradeEnvironmentType, WINDOW_SIZE, TimeUnit, INITIAL_TOTAL_KRW, Action, BUY_AMOUNT, COMMISSION_RATE, SLIPPAGE_COUNT
 from .trade_utils import get_history_entry, get_order_unit, get_previous_one_unit_date_time
 
 
 class UpbitEnvironment(gym.Env):
-    def __init__(self, coin_name, time_unit, data_info, environment_type=TradeEnvironmentType.TRAIN):
+    def __init__(self, coin_name, time_unit, data_info, params, environment_type=TradeEnvironmentType.TRAIN):
         super(UpbitEnvironment, self).__init__()
         self.coin_name = coin_name
         self.time_unit = time_unit
@@ -19,7 +19,14 @@ class UpbitEnvironment(gym.Env):
             self.previous_one_datetime = get_previous_one_unit_date_time(time_unit)
 
         self.history = None
-        self.input_size = (2, WINDOW_SIZE + 1, 6)
+        self.params = params
+
+        if self.params.DEEP_LEARNING_MODEL == DeepLearningModelName.DUELING_DQN_SMALL_CNN:
+            self.input_size = (2, WINDOW_SIZE + 1, 6)
+        elif self.params.DEEP_LEARNING_MODEL == DeepLearningModelName.DUELING_DQN_MLP:
+            self.input_size = (2 * (WINDOW_SIZE + 1) * 6,)
+        else:
+            raise ValueError()
 
         self.data = data_info["data"]
         self.state_data = data_info["state_data"]
@@ -117,6 +124,9 @@ class UpbitEnvironment(gym.Env):
 
         initial_state = self.get_state(hold_coin_krw=0.0, position_value=0.0, history=self.history)
 
+        if self.params.DEEP_LEARNING_MODEL == DeepLearningModelName.DUELING_DQN_MLP:
+            initial_state = initial_state.flatten()
+
         return initial_state  # obs
 
     def step(self, action):
@@ -138,8 +148,8 @@ class UpbitEnvironment(gym.Env):
             )
 
             if len(self.positions) > 0:
-                # reward = -0.001
-                reward = 0.0
+                reward = -0.001
+                # reward = 0.0
             else:
                 reward = 0.0
 
@@ -217,6 +227,9 @@ class UpbitEnvironment(gym.Env):
             raise ValueError()
 
         info = self.get_info(action, effective_action, candle_data, transaction_info)
+
+        if self.params.DEEP_LEARNING_MODEL == DeepLearningModelName.DUELING_DQN_MLP and next_state is not None:
+            next_state = next_state.flatten()
 
         return next_state, reward, done, info
 
