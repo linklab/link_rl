@@ -148,8 +148,8 @@ class UpbitEnvironment(gym.Env):
             )
 
             if len(self.positions) > 0:
-                reward = -0.001
-                # reward = 0.0
+                # reward = -0.001
+                reward = 0.0
             else:
                 reward = 0.0
 
