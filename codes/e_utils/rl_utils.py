@@ -252,10 +252,12 @@ def get_rl_agent(env, worker_id, params, device="cpu"):
             )
         else:
             train_action_selector = EpsilonGreedyDDPGActionSelector(
-                epsilon=params.EPSILON_INIT, ou_enabled=True, scale_factor=params.ACTION_SCALE
+                epsilon=params.EPSILON_INIT, ou_enabled=True,
+                scale_factor=params.ACTION_SCALE, noise_scale_factor=params.NOISE_SCALE
             )
             test_and_play_action_selector = EpsilonGreedyDDPGActionSelector(
-                epsilon=0.0, ou_enabled=False, scale_factor=params.ACTION_SCALE
+                epsilon=0.0, ou_enabled=False,
+                scale_factor=params.ACTION_SCALE, noise_scale_factor=params.NOISE_SCALE
             )
 
         epsilon_tracker = EpsilonTracker(
