@@ -12,8 +12,8 @@ class OnPolicyAgent(BaseAgent):
     """
     Abstract Agent interface
     """
-    def __init__(self, train_action_selector, test_and_play_action_selector, params, device):
-        super(OnPolicyAgent, self).__init__(train_action_selector, test_and_play_action_selector, params, device)
+    def __init__(self, params, device):
+        super(OnPolicyAgent, self).__init__(params, device)
 
         self.buffer = replay_buffer.ExperienceReplayBuffer(
             experience_source=None, buffer_size=self.params.REPLAY_BUFFER_SIZE
@@ -37,6 +37,7 @@ class OnPolicyAgent(BaseAgent):
                 last_states.append(np.array(exp.last_state, copy=False))
 
         states_v = float32_preprocessor(states).to(self.device)
+
         if params.RL_ALGORITHM in [RLAlgorithmName.DISCRETE_A2C_V0, RLAlgorithmName.DISCRETE_PPO_V0]:
             actions_v = long64_preprocessor(actions).to(self.device)
         elif params.RL_ALGORITHM in [RLAlgorithmName.CONTINUOUS_A2C_V0, RLAlgorithmName.CONTINUOUS_PPO_V0]:
@@ -57,7 +58,7 @@ class OnPolicyAgent(BaseAgent):
 
         return states_v, actions_v, target_action_values_v
 
-    def get_advantage_and_target_action_values(self, trajectory, values_v, device="cpu"):
+    def get_advantage_and_target_action_values(self, trajectory, values_v, device):
         """
         By trajectory calculate advantage and 1-step target action value
         :param trajectory: trajectory list
@@ -78,6 +79,7 @@ class OnPolicyAgent(BaseAgent):
             else:
                 delta = exp.reward + self.params.GAMMA * next_value - value
                 last_gae = delta + self.params.GAMMA * self.params.PPO_GAE_LAMBDA * last_gae
+
             result_advantages.append(last_gae)
             result_target_action_values.append(last_gae + value)
 

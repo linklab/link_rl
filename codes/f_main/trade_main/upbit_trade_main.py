@@ -14,7 +14,7 @@ if PROJECT_HOME not in sys.path:
 from common.fast_rl.common.utils import EarlyStopping
 from common.environments import get_data
 from codes.f_utils import common_utils
-from common.environments import TimeUnit, EnvironmentType, Action
+from common.environments import TimeUnit, TradeEnvironmentType, Action
 from common.environments import UpbitEnvironment
 from common.environments import EpsilonGreedyTradeDQNActionSelector, \
     ArgmaxTradeActionSelector, RandomTradeDQNActionSelector
@@ -319,14 +319,14 @@ def main():
         coin_name=coin_name,
         time_unit=time_unit,
         data_info=train_data_info,
-        environment_type=EnvironmentType.TRAIN
+        environment_type=TradeEnvironmentType.TRAIN
     )
 
     evaluate_random_env = UpbitEnvironment(
         coin_name=coin_name,
         time_unit=time_unit,
         data_info=evaluate_data_info,
-        environment_type=EnvironmentType.TEST_RANDOM,
+        environment_type=TradeEnvironmentType.TEST_RANDOM,
     )
 
     net = train(coin_name, time_unit, train_env, evaluate_random_env)
@@ -336,7 +336,7 @@ def main():
         coin_name=coin_name,
         time_unit=time_unit,
         data_info=evaluate_data_info,
-        environment_type=EnvironmentType.TEST_SEQUENTIAL,
+        environment_type=TradeEnvironmentType.TEST_SEQUENTIAL,
     )
 
     argmax_action_selector = ArgmaxTradeActionSelector(env=evaluate_sequential_env)

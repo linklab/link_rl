@@ -8,6 +8,7 @@ import torch
 import os, sys
 import numpy as np
 import wandb
+from termcolor import colored
 
 from codes.d_agents.on_policy.on_policy_agent import OnPolicyAgent
 from codes.d_agents.off_policy.off_policy_agent import OffPolicyAgent
@@ -22,7 +23,7 @@ if PROJECT_HOME not in sys.path:
 from codes.e_utils.experience import ExperienceSourceFirstLast
 from codes.e_utils import rl_utils
 from codes.e_utils.common_utils import save_model, print_environment_info, print_agent_info, remove_models, \
-    agent_model_test
+    agent_model_test, print_performance
 from codes.e_utils.experience_tracker import RewardTracker, EarlyStopping
 from codes.e_utils.logger import get_logger
 from codes.e_utils.names import RLAlgorithmName, EnvironmentName, AgentMode, ModelSaveMode
@@ -43,8 +44,8 @@ my_logger = get_logger("main_single")
 
 
 def train_main(params, train_env, test_env):
-    agent, epsilon_tracker = rl_utils.get_rl_agent(env=train_env, worker_id=0, params=params, device=device)
-    print_agent_info(agent, epsilon_tracker, params)
+    agent = rl_utils.get_rl_agent(env=train_env, worker_id=0, params=params, device=device)
+    print_agent_info(agent, params)
 
     if params.WANDB:
         configuration = {key: getattr(params, key) for key in dir(params) if not key.startswith("__")}
@@ -89,7 +90,16 @@ def train_main(params, train_env, test_env):
 
     episode = 0
     solved = False
+
     test_mean_episode_reward = 0.0
+    train_episode_reward_lst = []
+
+    if params.MODEL_SAVE_MODE == ModelSaveMode.TRAIN:
+        num_tests = params.EARLY_STOPPING_TEST_EPISODE_PERIOD
+    elif params.MODEL_SAVE_MODE == ModelSaveMode.TEST:
+        num_tests = params.TEST_NUM_EPISODES
+    else:
+        num_tests = 0
 
     with RewardTracker(params=params) as reward_tracker:
         try:
@@ -105,53 +115,73 @@ def train_main(params, train_env, test_env):
                 if episode_rewards and episode_steps:
                     for current_episode_reward, current_episode_step in zip(episode_rewards, episode_steps):
                         episode += 1
+                        train_episode_reward_lst.append(current_episode_reward)
+
                         epsilon = agent.train_action_selector.epsilon if hasattr(agent.train_action_selector, 'epsilon') else None
                         mean_loss = np.mean(loss_queue) if len(loss_queue) > 0 else 0.0
 
-                        train_mean_episode_reward, speed = reward_tracker.set_episode_reward(
-                            episode_reward=current_episode_reward, episode_done_step=step_idx, epsilon=epsilon,
-                            last_info=last_experience.info, mean_loss=mean_loss
+                        train_mean_episode_reward, speed, elapsed_time = reward_tracker.set_episode_reward(
+                            episode_reward=current_episode_reward, episode_done_step=step_idx
                         )
 
-                    if params.MODEL_SAVE_MODE == ModelSaveMode.TRAIN:
-                        if episode % params.EARLY_STOPPING_TEST_EPISODE_PERIOD == 0:
-                            test_mean_episode_reward = 0.0
-                            print("[{0:6}/{1}] Ep. {2}: * MODEL SAVE TEST * TRAIN EPISODE REWARD: {3:7.2f} ".format(
-                                step_idx, params.MAX_GLOBAL_STEP, episode, train_mean_episode_reward
-                            ), end="")
-                            solved = early_stopping.evaluate(
-                                evaluation_value=train_mean_episode_reward,
-                                episode_done_step=step_idx
-                            )
-                    elif params.MODEL_SAVE_MODE == ModelSaveMode.TEST:
-                        if episode % params.EARLY_STOPPING_TEST_EPISODE_PERIOD == 0:
-                            test_mean_episode_reward = agent_model_test(params, test_env, agent)
-                            print("[{0:6}/{1}] Ep. {2}: * MODEL SAVE TEST * TEST EPISODE REWARD: {3:7.2f} ".format(
-                                step_idx, params.MAX_GLOBAL_STEP, episode, test_mean_episode_reward
-                            ), end="")
-                            solved = early_stopping.evaluate(
-                                evaluation_value=test_mean_episode_reward,
-                                episode_done_step=step_idx
-                            )
-                    elif params.MODEL_SAVE_MODE == ModelSaveMode.FINAL_ONLY:
-                        test_mean_episode_reward = 0.0
-                        solved = False
-                    else:
-                        raise ValueError()
+                        print_performance(
+                            params=params,
+                            episode_done_step=step_idx,
+                            done_episode=episode,
+                            episode_reward=current_episode_reward,
+                            mean_episode_reward=train_mean_episode_reward,
+                            epsilon=epsilon,
+                            elapsed_time=elapsed_time,
+                            last_info=last_experience.info,
+                            speed=speed,
+                            mean_loss=mean_loss
+                        )
 
-                    if params.WANDB:
-                        wandb_info = {
-                            "train episode reward": train_mean_episode_reward,
-                            "train_mean_loss": mean_loss,
-                            "test episode reward": test_mean_episode_reward,
-                            "steps/episode": current_episode_step,
-                            "speed": speed,
-                            "step_idx": step_idx,
-                            "episode": episode
-                        }
-                        if epsilon:
-                            wandb_info["epsilon"] = epsilon
-                        wandb.log(wandb_info)
+                        if episode % params.EARLY_STOPPING_TEST_EPISODE_PERIOD == 0:
+                            if params.MODEL_SAVE_MODE in [ModelSaveMode.TRAIN, ModelSaveMode.TEST]:
+                                if params.MODEL_SAVE_MODE == ModelSaveMode.TRAIN:
+                                    test_mean_episode_reward = np.mean(train_episode_reward_lst)
+                                    test_std = np.std(train_episode_reward_lst)
+                                    train_episode_reward_lst.clear()
+                                    test_env_str = colored("TRAIN ENV", "yellow")
+                                else:
+                                    test_mean_episode_reward, test_std = agent_model_test(params, test_env, agent)
+                                    test_env_str = colored("TEST ENV", "yellow")
+
+                                mean_std_str = colored(
+                                    "{0:7.2f}\u00B1{1:.2f}".format(test_mean_episode_reward, test_std), "yellow"
+                                )
+
+                                print("[{0:6}/{1}] Ep. {2}: * MODEL SAVE & TRAIN STOP TEST for {3} *, "
+                                      "EPISODE REWARD ({4} EPISODES): {5}".format(
+                                    step_idx, params.MAX_GLOBAL_STEP, episode, test_env_str, num_tests, mean_std_str
+                                ), end="")
+
+                                solved = early_stopping.evaluate(
+                                    evaluation_value=test_mean_episode_reward,
+                                    episode_done_step=step_idx
+                                )
+                            elif params.MODEL_SAVE_MODE == ModelSaveMode.FINAL_ONLY:
+                                test_mean_episode_reward = 0.0
+                                solved = False
+                            else:
+                                raise ValueError()
+
+                        if params.WANDB:
+                            wandb_info = {
+                                "train episode reward": train_mean_episode_reward,
+                                "train mean_{0} episode reward".format(params.AVG_EPISODE_SIZE_FOR_STAT):
+                                    train_mean_episode_reward,
+                                "test mean_{0} episode reward".format(num_tests): test_mean_episode_reward,
+                                "steps/episode": current_episode_step,
+                                "speed": speed,
+                                "step_idx": step_idx,
+                                "episode": episode,
+                                'actions': last_experience.action,
+                            }
+                            if epsilon:
+                                wandb_info["epsilon"] = epsilon
+                            wandb.log(wandb_info)
 
                 if solved:
                     print("Solved in {0} steps and {1} episodes!".format(step_idx, episode))

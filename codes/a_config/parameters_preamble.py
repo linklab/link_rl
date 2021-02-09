@@ -7,12 +7,17 @@ from codes.a_config.a_basic_parameters.parameters_pendulum_ddpg import PARAMETER
 from codes.a_config.a_basic_parameters.parameters_pendulum_d4pg import PARAMETERS_PENDULUM_D4PG
 from codes.a_config.a_basic_parameters.parameters_pendulum_ppo import PARAMETERS_PENDULUM_PPO
 from codes.a_config.a_basic_parameters.parameters_cartpole_ppo import PARAMETERS_CARTPOLE_PPO
+from codes.a_config.a_basic_parameters.parameters_lunar_lander_a2c import PARAMETERS_LUNAR_LANDER_A2C
+from codes.a_config.a_basic_parameters.parameters_lunar_lander_ppo import PARAMETERS_LUNAR_LANDER_PPO
+from codes.a_config.a_basic_parameters.parameters_lunar_lander_continuous_ppo import PARAMETERS_LUNAR_LANDER_CONTINUOUS_PPO
+from codes.a_config.a_basic_parameters.parameters_lunar_lander_continuous_ddpg import PARAMETERS_LUNAR_LANDER_CONTINUOUS_DDPG
 
 from codes.a_config.b_atari_parameters.parameters_atati_pong_a2c        import PARAMETERS_PONG_A2C
 from codes.a_config.b_atari_parameters.parameters_atati_pong_dqn        import PARAMETERS_PONG_DQN
 from codes.a_config.b_atari_parameters.parameters_atari_breakout_dqn    import PARAMETERS_BREAKOUT_DQN
 from codes.a_config.b_atari_parameters.parameters_atari_kungfumaster_dqn import PARAMETERS_KUNGFU_MASTER_DQN
 from codes.a_config.b_atari_parameters.parameters_atati_pong_ppo        import PARAMETERS_PONG_PPO
+from codes.a_config.b_atari_parameters.parameters_atati_pong_a2c import PARAMETERS_PONG_A2C
 
 from codes.a_config.c_pybullet_parameters.parameters_half_cheetah_ppo import PARAMETERS_HALF_CHEETAH_PPO
 from codes.a_config.c_pybullet_parameters.parameters_ant_sac import PARAMETERS_ANT_SAC
@@ -31,6 +36,8 @@ from codes.a_config.d_matlab_parameters.parameters_matlab_pendulum_ddpg import P
 from codes.a_config.e_real_device.parameters_rip import PARAMETERS_RIP
 from codes.a_config.e_real_device.parameters_double_rip import PARAMETERS_DOUBLE_RIP
 from codes.a_config.e_real_device.parameters_quanser_rip_ddpg import PARAMETERS_QUANSER_RIP_DDPG
+
+from codes.a_config.f_trade_parameters.parameters_trade_moc_one_hour_dqn import PARAMETERS_TRADE_MOC_ONE_HOUR_DQN
 
 from codes.a_config.federated_parameters.parameters_federated_matlab_rip_ddpg   import PARAMETERS_FEDERATED_MATLAB_RIP_DDPG
 from codes.a_config.federated_parameters.parameters_federated_pendulum_ddpg     import PARAMETERS_FEDERATED_PENDULUM_DDPG

@@ -142,3 +142,12 @@ class BaseModel(nn.Module):
                     param.data = param.data * (1.0 - soft_transfer_tau) + parameters[layer_name][name] * soft_transfer_tau
                 else:
                     param.data = parameters[layer_name][name]
+
+    def check_gradient_nan(self, gradients):
+        for layer_name, layer in gradients.items():
+            for name, gradients in layer.items():
+                if torch.unique(gradients).shape[0] == 1 and torch.sum(gradients).item() == 0.0:
+                    print(layer_name, name, gradients)
+                if torch.isnan(gradients).any():
+                    print(layer_name, name, gradients.shape)
+                    raise ValueError()

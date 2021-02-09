@@ -37,6 +37,8 @@ class EnvironmentName(enum.Enum):
     CHASER_V1_WINDOWS = os.path.join(PROJECT_HOME, "rl_main", "environments", "unity", "unity_envs", "Chaser_v1.exe")
     BREAKOUT_DETERMINISTIC_V4 = "BreakoutDeterministic-v4"
     PENDULUM_V0 = 'Pendulum-v0'
+    LUNAR_LANDER_V2 = 'LunarLander-v2'
+    LUNAR_LANDER_CONTINUOUS_V2 = "LunarLanderContinuous-v2"
     DRONE_RACING_MAC = os.path.join(PROJECT_HOME, "rl_main", "environments", "unity", "unity_envs", "DroneEnv_forMac")
     DRONE_RACING_WINDOWS = os.path.join(PROJECT_HOME, "rl_main", "environments", "unity", "unity_envs", "Dron_Racing.exe")
     GRIDWORLD_V0 = 'Gridworld-v0'
@@ -70,7 +72,7 @@ class EnvironmentName(enum.Enum):
     PENDULUM_MATLAB_DOUBLE_RIP_V0 = "Pendulum_Matlab_Double_RIP_v0"
     REAL_DEVICE_RIP = "Real_Device_Rip"
     REAL_DEVICE_DOUBLE_RIP = "Real_Device_Double_Rip"
-    TRADE_V0 = "Trade-v0"
+    TRADE_V0 = "Trade_v0"
 
 
 class DeepLearningModelName(enum.Enum):

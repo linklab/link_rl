@@ -8,8 +8,8 @@ class OffPolicyAgent(BaseAgent):
     """
     Abstract Agent interface
     """
-    def __init__(self, train_action_selector, test_and_play_action_selector, params, device):
-        super(OffPolicyAgent, self).__init__(train_action_selector, test_and_play_action_selector, params, device)
+    def __init__(self, params, device):
+        super(OffPolicyAgent, self).__init__(params, device)
 
         if hasattr(self.params, "PER_PROPORTIONAL") and self.params.PER_PROPORTIONAL:
             self.buffer = replay_buffer.PrioritizedReplayBuffer(

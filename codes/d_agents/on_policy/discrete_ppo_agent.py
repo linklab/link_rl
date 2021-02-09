@@ -1,12 +1,11 @@
-import numpy as np
 import torch
 import torch.nn.functional as F
-from torch.distributions import MultivariateNormal, Normal
+import torch.nn.utils as nn_utils
 
 from codes.d_agents.a0_base_agent import BaseAgent, float32_preprocessor
 from codes.d_agents.on_policy.on_policy_agent import OnPolicyAgent
 from codes.e_utils import rl_utils, replay_buffer
-from codes.e_utils.actions import ContinuousNormalActionSelector, ProbabilityActionSelector
+from codes.e_utils.actions import DiscreteCategoricalActionSelector
 from codes.e_utils.names import DeepLearningModelName, AgentMode
 
 
@@ -14,22 +13,18 @@ class AgentDiscretePPO(OnPolicyAgent):
     """
     """
     def __init__(
-            self, worker_id, input_shape, num_outputs,
-            train_action_selector, test_and_play_action_selector, params, device
+            self, worker_id, input_shape, num_outputs, params, device
     ):
-        assert isinstance(train_action_selector, ProbabilityActionSelector)
-        assert isinstance(test_and_play_action_selector, ProbabilityActionSelector)
         assert params.DEEP_LEARNING_MODEL in [
             DeepLearningModelName.STOCHASTIC_DISCRETE_ACTOR_CRITIC_MLP,
             DeepLearningModelName.STOCHASTIC_DISCRETE_ACTOR_CRITIC_CNN,
         ]
         assert params.N_STEP == 1  # GAE will consider various N_STEPs
 
-        super(AgentDiscretePPO, self).__init__(
-            train_action_selector, test_and_play_action_selector, params=params, device=device
-        )
-
+        super(AgentDiscretePPO, self).__init__(params=params, device=device)
         self.__name__ = "AgentDiscretePPO"
+        self.train_action_selector = DiscreteCategoricalActionSelector()
+        self.test_and_play_action_selector = DiscreteCategoricalActionSelector()
         self.worker_id = worker_id
 
         self.model = rl_utils.get_rl_model(
@@ -67,12 +62,11 @@ class AgentDiscretePPO(OnPolicyAgent):
         logits_v = self.model.base.forward_actor(states)
 
         probs_v = F.softmax(logits_v, dim=1)
-        probs = probs_v.data.cpu().numpy()
 
         if self.agent_mode == AgentMode.TRAIN:
-            actions = np.array(self.train_action_selector(probs))
+            actions = self.train_action_selector(probs_v)
         else:
-            actions = np.array(self.test_and_play_action_selector(probs))
+            actions = self.test_and_play_action_selector(probs_v)
 
         critics = torch.zeros(size=probs_v.size())
         return actions, critics
@@ -98,10 +92,9 @@ class AgentDiscretePPO(OnPolicyAgent):
             trajectory_advantage_v, trajectory_target_action_value_v = self.get_advantage_and_target_action_values(
                 trajectory, trajectory_values_v, device=self.device
             )
-
-        # normalize advantages
-        trajectory_advantage_v = trajectory_advantage_v - torch.mean(trajectory_advantage_v)
-        trajectory_advantage_v /= torch.std(trajectory_advantage_v) + 1e-5
+            # normalize advantages
+            trajectory_advantage_v = trajectory_advantage_v - torch.mean(trajectory_advantage_v)
+            trajectory_advantage_v /= torch.std(trajectory_advantage_v) + 1e-5
 
         # drop last entry from the trajectory, an our adv and target action value calculated without it
         trajectory = trajectory[:-1]
@@ -126,23 +119,18 @@ class AgentDiscretePPO(OnPolicyAgent):
                 batch_logits_v, batch_values_v = self.model(batch_states_v)
 
                 # critic training
-                self.optimizer.zero_grad()
-
                 # batch_values_v.squeeze(-1) : (64,)
                 # batch_target_action_value_v : (64,)
-                loss_critic_v = F.smooth_l1_loss(batch_values_v.squeeze(-1), batch_target_action_value_v)
-
+                loss_critic_v = F.smooth_l1_loss(batch_values_v.squeeze(-1), batch_target_action_value_v.detach())
 
                 # batch_log_pi_v: (64, 2)
                 batch_log_pi_v = F.log_softmax(batch_logits_v, dim=1)
+                #print(batch_logits_v.size())
 
                 # batch_log_pi_action_v: (64,)
                 batch_log_pi_action_v = batch_log_pi_v.gather(dim=1, index=batch_actions_v.unsqueeze(-1)).squeeze(-1)
 
-                batch_prob_v = F.softmax(batch_logits_v, dim=1)
-                batch_entropy_v = -1.0 * (batch_prob_v * batch_log_pi_v).sum(dim=1).mean()
-
-                batch_ratio_v = torch.exp(batch_log_pi_action_v - batch_old_log_pi_action_v.detach())
+                batch_ratio_v = torch.exp(batch_log_pi_action_v - batch_old_log_pi_action_v)
 
                 batch_surrogate_1_v = batch_advantage_v * batch_ratio_v
                 batch_surrogate_2_v = batch_advantage_v * torch.clamp(
@@ -150,13 +138,17 @@ class AgentDiscretePPO(OnPolicyAgent):
                 )
                 loss_actor_v = -1.0 * torch.min(batch_surrogate_1_v, batch_surrogate_2_v).mean()
 
+                batch_prob_v = F.softmax(batch_logits_v, dim=1)
+                batch_entropy_v = -1.0 * (batch_prob_v * batch_log_pi_v).sum(dim=1).mean()
                 loss_entropy_v = -1.0 * batch_entropy_v.mean()
 
                 loss_v = loss_actor_v + \
                          self.params.CRITIC_LOSS_WEIGHT * loss_critic_v + \
                          self.params.ENTROPY_LOSS_WEIGHT * loss_entropy_v
 
+                self.optimizer.zero_grad()
                 loss_v.backward()
+                nn_utils.clip_grad_norm_(self.model.base.parameters(), self.params.CLIP_GRAD)
                 self.optimizer.step()
 
                 sum_loss_critic += loss_critic_v.item()

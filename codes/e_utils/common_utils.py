@@ -4,6 +4,7 @@ import random
 from typing import Optional
 import numpy as np
 import math
+import time
 
 from gym.spaces import Box
 from matplotlib import pyplot as plt
@@ -17,7 +18,7 @@ from codes.d_agents.a0_base_agent import float32_preprocessor
 
 #https://medium.com/analytics-vidhya/stretched-exponential-decay-function-for-epsilon-greedy-algorithm-98da6224c22f
 from codes.e_utils import wrappers
-from codes.e_utils.names import AgentMode
+from codes.e_utils.names import AgentMode, EnvironmentName
 
 
 def stretched_exponential_decay(epsilon_start, epsilon_minimum, epsilon_end_step, current_step):
@@ -166,33 +167,35 @@ def unpack_batch_for_a2c(batch, net, params, device='cpu'):
     return states_v, actions_v, target_action_values_v
 
 
-def remove_models(model_save_dir, env_name, agent):
+def remove_models(model_save_dir, model_save_file_prefix, agent):
     files = glob.glob(os.path.join(
-        model_save_dir, "{0}_{1}_{2}_*.pth".format(env_name, agent.__name__, agent.model.__name__))
+        model_save_dir, "{0}_{1}_{2}_*.pth".format(model_save_file_prefix, agent.__name__, agent.model.__name__))
     )
     for f in files:
         os.remove(f)
 
 
-def save_model(model_save_dir, env_name, agent, step, episode_reward):
+def save_model(model_save_dir, model_save_file_prefix, agent, step, episode_reward):
     model_save_filename = os.path.join(
         model_save_dir, "{0}_{1}_{2}_{3}_{4:.2f}.pth".format(
-            env_name, agent.__name__, agent.model.__name__, step, float(episode_reward)
+            model_save_file_prefix, agent.__name__, agent.model.__name__, step, float(episode_reward)
         )
     )
     torch.save(agent.model.state_dict(), model_save_filename)
     return model_save_filename
 
 
-def load_model(model_save_dir, env_name, agent, step=None):
+def load_model(model_save_dir, model_save_file_prefix, agent, step=None):
     if step:
         saved_models = glob.glob(os.path.join(
-            model_save_dir, "{0}_{1}_{2}_{3}_*.pth".format(env_name, agent.__name__, agent.model.__name__, step)
+            model_save_dir, "{0}_{1}_{2}_{3}_*.pth".format(
+                model_save_file_prefix, agent.__name__, agent.model.__name__, step
+            )
         ))
 
     else:
         saved_models = glob.glob(os.path.join(
-            model_save_dir, "{0}_{1}_{2}_*.pth".format(env_name, agent.__name__, agent.model.__name__)
+            model_save_dir, "{0}_{1}_{2}_*.pth".format(model_save_file_prefix, agent.__name__, agent.model.__name__)
         ))
 
     saved_models.sort(key=lambda filename: int(filename.split("/")[-1].split("_")[-2]))
@@ -237,6 +240,59 @@ def agent_model_test(params, test_env, agent):
     return np.mean(episode_rewards), np.std(episode_rewards)
 
 
+def print_performance(params, episode_done_step, done_episode, episode_reward, mean_episode_reward, epsilon,
+                      elapsed_time, last_info, speed, mean_loss, worker_id=None, last_action=None):
+
+    if worker_id is not None:
+        prefix = "[Worker ID: {0}]".format(worker_id)
+    else:
+        prefix = ""
+
+    if isinstance(epsilon, tuple) or isinstance(epsilon, list):
+        epsilon_str = " eps.: {0:5.3f}, {1:5.3f},".format(
+            epsilon[0] if epsilon[0] else 0.0,
+            epsilon[1] if epsilon[1] else 0.0
+        )
+    elif isinstance(epsilon, float):
+        epsilon_str = " eps.: {0:5.3f},".format(
+            epsilon if epsilon else 0.0,
+        )
+    else:
+        epsilon_str = ""
+
+    mean_episode_reward_str = "{0:9.3f}".format(mean_episode_reward)
+
+    if isinstance(episode_reward, np.ndarray):
+        episode_reward = episode_reward[0]
+
+    print(
+        "{0}[{1:6}/{2}] Ep. {3}, EPISODE REWARD: {4:9.3f}, MEAN_{5} EPSIODE REWARD: {6},{7} SPEED: {8:7.2f}steps/sec., {9}".format(
+            prefix,
+            episode_done_step,
+            params.MAX_GLOBAL_STEP,
+            done_episode,
+            episode_reward,
+            params.AVG_EPISODE_SIZE_FOR_STAT,
+            mean_episode_reward_str,
+            epsilon_str,
+            speed,
+            time.strftime("%Hh %Mm %Ss", time.gmtime(elapsed_time)),
+    ), end="")
+
+    if last_info and "action_count" in last_info:
+        print(", {0}".format(last_info["action_count"]), end="")
+
+    if mean_loss is not None:
+        print(", mean (critic) loss {0:7.4f}".format(mean_loss), end="")
+
+    if params.ENVIRONMENT_ID == EnvironmentName.TRADE_V0:
+        print(", profit {0:8.1f}".format(last_info['profit']), end="")
+
+    if last_action is not None:
+        print(", last action {0}".format(last_action), end="")
+
+    print("", flush=True)
+
 
 # def print_environment_info(env, params):
 #     print(f"env id: {params.ENVIRONMENT_ID}")
@@ -266,12 +322,12 @@ def print_environment_info(env, params):
         print(f"single_action high: {[max_value for max_value in env.single_action_space.high]}")
 
 
-def print_agent_info(agent, epsilon_tracker, params):
+def print_agent_info(agent, params):
     print(f"Model: {params.DEEP_LEARNING_MODEL}")
     print(f"Algorithm: {params.RL_ALGORITHM}")
     print(f"Train Action Selector: {agent.train_action_selector}")
     print(f"Test and Play Action Selector: {agent.test_and_play_action_selector}")
-    print(f"Epsilon Tracker: {epsilon_tracker if epsilon_tracker else None}")
+    print(f"Epsilon Tracker: {agent.epsilon_tracker if hasattr(agent, 'epsilon_tracker') and agent.epsilon_tracker else None}")
     print(f"Optimizer: {params.OPTIMIZER}")
 
 
