@@ -151,11 +151,10 @@ class EpsilonGreedySomeTimesBlowDDPGActionSelector:
 
 
 class EpsilonGreedyDDPGActionSelector:
-    def __init__(self, epsilon, ou_enabled, scale_factor, noise_scale_factor):
+    def __init__(self, epsilon, ou_enabled, scale_factor):
         self.epsilon = epsilon
         self.ou_enabled = ou_enabled
         self.scale_factor = scale_factor
-        self.noise_scale_factor = noise_scale_factor
 
     def __call__(self, mu, agent_states, ou_theta=0.15, ou_mu=0.0, ou_sigma=0.2): #default ou_sigma = 0.2
         assert isinstance(mu, np.ndarray)
@@ -171,8 +170,8 @@ class EpsilonGreedyDDPGActionSelector:
         if self.ou_enabled and self.epsilon > 0.0:
             # agent_states = 1.0       +    0.15 * (0.0 - 1.0)            + new_normal_random
             agent_states = agent_states + ou_theta * (ou_mu - agent_states) + ou_sigma * np.random.normal(size=agent_states.shape)
-            actions = actions + self.epsilon * agent_states * self.noise_scale_factor
-            print("actions: ", actions, "noises: ", self.epsilon * agent_states * self.noise_scale_factor)
+            actions = actions + self.epsilon * agent_states
+            # print("actions: ", actions, "noises: ", self.epsilon * agent_states)
 
         return actions, agent_states
 
@@ -232,5 +231,5 @@ class EpsilonTracker:
         #self.udpate(0)
 
     def udpate(self, frame: int):
-        eps = self.eps_start - frame / self.eps_frames
+        eps = self.eps_start - (frame / self.eps_frames) * self.eps_start
         self.action_selector.epsilon = max(self.eps_final, eps)
