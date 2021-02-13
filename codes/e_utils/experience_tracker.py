@@ -125,8 +125,8 @@ class EarlyStopping:
                 self.save_checkpoint(evaluation_value, episode_done_step)
                 self.best_evaluation_value = evaluation_value
                 self.counter = 0
-            # else:
-            #     raise ValueError()
+            else:
+                raise ValueError()
 
         return solved
 

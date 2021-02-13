@@ -45,31 +45,34 @@ class ActorCriticMLPBase(nn.Module):
         self.hidden_2_size = params.HIDDEN_2_SIZE
         self.hidden_3_size = params.HIDDEN_3_SIZE
 
-        self.common = nn.Sequential(
-            nn.Linear(num_inputs, self.hidden_1_size),
-            nn.ReLU(),
-            nn.Linear(self.hidden_1_size, self.hidden_2_size),
-            nn.ReLU()
-        )
-
         #self.common.apply(self.init_weights)
 
         self.actor = nn.Sequential(
+            nn.Linear(num_inputs, self.hidden_1_size),
+            nn.ReLU(),
+            nn.Linear(self.hidden_1_size, self.hidden_2_size),
+            nn.ReLU(),
+            nn.Linear(self.hidden_2_size, self.hidden_3_size),
+            nn.ReLU(),
             nn.Linear(self.hidden_3_size, num_outputs),
             nn.Tanh()
         )
 
-        #self.actor.apply(self.init_weights)
+        # self.actor.apply(self.init_weights)
 
         self.critic = nn.Sequential(
-            nn.Linear(self.hidden_3_size, self.hidden_3_size),
+            nn.Linear(num_inputs, self.hidden_1_size),
             nn.ReLU(),
-            nn.Linear(self.hidden_3_size, 1)
+            nn.Linear(self.hidden_1_size, self.hidden_2_size),
+            nn.ReLU(),
+            nn.Linear(self.hidden_2_size, self.hidden_3_size),
+            nn.ReLU(),
+            nn.Linear(self.hidden_3_size, 1),
         )
 
         #self.critic.apply(self.init_weights)
 
-        self.layers_info = {'common': self.common, 'actor': self.actor, 'critic': self.critic}
+        self.layers_info = {'actor': self.actor, 'critic': self.critic}
 
         self.train()
 
@@ -79,19 +82,16 @@ class ActorCriticMLPBase(nn.Module):
             torch.nn.init.kaiming_normal_(m.weight)
 
     def forward(self, inputs):
-        common = self.common(inputs)
-        actions = self.actor(common)
-        critic_values = self.critic(common.detach())
+        actions = self.actor(inputs)
+        critic_values = self.critic(inputs)
         return actions, critic_values
 
     def forward_actor(self, inputs):
-        common = self.common(inputs)
-        actions = self.actor(common)
+        actions = self.actor(inputs)
         return actions
 
     def forward_critic(self, inputs):
-        common = self.common(inputs).detach()
-        critic_values = self.critic(common)
+        critic_values = self.critic(inputs)
         return critic_values
 
 
