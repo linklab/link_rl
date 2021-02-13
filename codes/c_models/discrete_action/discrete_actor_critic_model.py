@@ -49,15 +49,14 @@ class ActorCriticMLPBase(nn.Module):
             nn.Linear(num_inputs, self.hidden_1_size),
             nn.ReLU(),
             nn.Linear(self.hidden_1_size, self.hidden_2_size),
-            nn.ReLU(),
-            nn.Linear(self.hidden_2_size, self.hidden_3_size),
-            nn.ReLU(),
+            nn.ReLU()
         )
 
         #self.common.apply(self.init_weights)
 
         self.actor = nn.Sequential(
-            nn.Linear(self.hidden_3_size, num_outputs)
+            nn.Linear(self.hidden_3_size, num_outputs),
+            nn.Tanh()
         )
 
         #self.actor.apply(self.init_weights)
@@ -65,8 +64,7 @@ class ActorCriticMLPBase(nn.Module):
         self.critic = nn.Sequential(
             nn.Linear(self.hidden_3_size, self.hidden_3_size),
             nn.ReLU(),
-            nn.Linear(self.hidden_3_size, 1),
-            nn.Tanh()
+            nn.Linear(self.hidden_3_size, 1)
         )
 
         #self.critic.apply(self.init_weights)
@@ -111,26 +109,26 @@ class ActorCriticCNNBase(nn.Module):
             nn.ReLU()
         )
 
-        self.common_conv.apply(self.init_weights)
+        # self.common_conv.apply(self.init_weights)
 
         common_conv_out_size = self._get_conv_out(self.common_conv, input_shape)
 
         self.actor_fc = nn.Sequential(
             nn.Linear(common_conv_out_size, 512),
             nn.ReLU(),
-            nn.Linear(512, num_outputs)
+            nn.Linear(512, num_outputs),
+            nn.Tanh()
         )
 
-        self.actor_fc.apply(self.init_weights)
+        # self.actor_fc.apply(self.init_weights)
 
         self.critic_fc = nn.Sequential(
             nn.Linear(common_conv_out_size, 512),
             nn.ReLU(),
             nn.Linear(512, 1),
-            nn.Tanh()
         )
 
-        self.critic_fc.apply(self.init_weights)
+        # self.critic_fc.apply(self.init_weights)
 
         self.layers_info = {'common_conv': self.common_conv, 'actor_fc': self.actor_fc, 'critic_fc': self.critic_fc}
 
