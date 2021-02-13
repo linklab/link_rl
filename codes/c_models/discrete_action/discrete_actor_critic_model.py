@@ -45,33 +45,34 @@ class ActorCriticMLPBase(nn.Module):
         self.hidden_2_size = params.HIDDEN_2_SIZE
         self.hidden_3_size = params.HIDDEN_3_SIZE
 
-        self.common = nn.Sequential(
+        #self.common.apply(self.init_weights)
+
+        self.actor = nn.Sequential(
             nn.Linear(num_inputs, self.hidden_1_size),
             nn.ReLU(),
             nn.Linear(self.hidden_1_size, self.hidden_2_size),
             nn.ReLU(),
             nn.Linear(self.hidden_2_size, self.hidden_3_size),
             nn.ReLU(),
+            nn.Linear(self.hidden_3_size, num_outputs),
+            nn.Tanh()
         )
 
-        #self.common.apply(self.init_weights)
-
-        self.actor = nn.Sequential(
-            nn.Linear(self.hidden_3_size, num_outputs)
-        )
-
-        #self.actor.apply(self.init_weights)
+        # self.actor.apply(self.init_weights)
 
         self.critic = nn.Sequential(
-            nn.Linear(self.hidden_3_size, self.hidden_3_size),
+            nn.Linear(num_inputs, self.hidden_1_size),
+            nn.ReLU(),
+            nn.Linear(self.hidden_1_size, self.hidden_2_size),
+            nn.ReLU(),
+            nn.Linear(self.hidden_2_size, self.hidden_3_size),
             nn.ReLU(),
             nn.Linear(self.hidden_3_size, 1),
-            nn.Tanh()
         )
 
         #self.critic.apply(self.init_weights)
 
-        self.layers_info = {'common': self.common, 'actor': self.actor, 'critic': self.critic}
+        self.layers_info = {'actor': self.actor, 'critic': self.critic}
 
         self.train()
 
@@ -81,19 +82,16 @@ class ActorCriticMLPBase(nn.Module):
             torch.nn.init.kaiming_normal_(m.weight)
 
     def forward(self, inputs):
-        common = self.common(inputs)
-        actions = self.actor(common)
-        critic_values = self.critic(common.detach())
+        actions = self.actor(inputs)
+        critic_values = self.critic(inputs)
         return actions, critic_values
 
     def forward_actor(self, inputs):
-        common = self.common(inputs)
-        actions = self.actor(common)
+        actions = self.actor(inputs)
         return actions
 
     def forward_critic(self, inputs):
-        common = self.common(inputs).detach()
-        critic_values = self.critic(common)
+        critic_values = self.critic(inputs)
         return critic_values
 
 
@@ -111,26 +109,26 @@ class ActorCriticCNNBase(nn.Module):
             nn.ReLU()
         )
 
-        self.common_conv.apply(self.init_weights)
+        # self.common_conv.apply(self.init_weights)
 
         common_conv_out_size = self._get_conv_out(self.common_conv, input_shape)
 
         self.actor_fc = nn.Sequential(
             nn.Linear(common_conv_out_size, 512),
             nn.ReLU(),
-            nn.Linear(512, num_outputs)
+            nn.Linear(512, num_outputs),
+            nn.Tanh()
         )
 
-        self.actor_fc.apply(self.init_weights)
+        # self.actor_fc.apply(self.init_weights)
 
         self.critic_fc = nn.Sequential(
             nn.Linear(common_conv_out_size, 512),
             nn.ReLU(),
             nn.Linear(512, 1),
-            nn.Tanh()
         )
 
-        self.critic_fc.apply(self.init_weights)
+        # self.critic_fc.apply(self.init_weights)
 
         self.layers_info = {'common_conv': self.common_conv, 'actor_fc': self.actor_fc, 'critic_fc': self.critic_fc}
 
