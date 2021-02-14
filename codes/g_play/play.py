@@ -21,6 +21,7 @@ from codes.e_utils import rl_utils
 from codes.e_utils.common_utils import load_model
 from codes.e_utils.logger import get_logger
 from codes.e_utils.names import RLAlgorithmName, EnvironmentName, AgentMode
+from codes.e_utils.rl_utils import get_environment_input_output_info
 
 MODEL_ZOO_SAVE_DIR = os.path.join(PROJECT_HOME, "codes", "g_play", "model_zoo")
 
@@ -32,7 +33,8 @@ my_logger = get_logger("openai_pendulum_ddpg")
 
 
 def play_main(params, env):
-    agent = rl_utils.get_rl_agent(env=env, worker_id=0, params=params, device=device)
+    input_shape, num_outputs, action_min, action_max = get_environment_input_output_info(env)
+    agent = rl_utils.get_rl_agent(input_shape, num_outputs, action_min, action_max, worker_id=0, params=params, device=device)
     load_model(MODEL_ZOO_SAVE_DIR, params.ENVIRONMENT_ID.value, agent)
     agent.agent_mode = AgentMode.PLAY
 
