@@ -9,6 +9,7 @@ import numpy as np
 from codes.e_utils.actions import EpsilonGreedySomeTimesBlowDQNActionSelector, \
     EpsilonGreedySomeTimesBlowDDPGActionSelector, ArgmaxActionSelector, EpsilonGreedyDDPGActionSelector, \
     ContinuousNormalActionSelector, DiscreteCategoricalActionSelector
+from codes.e_utils.rl_utils import get_environment_input_output_info
 
 print("PyTorch Version", torch.__version__)
 
@@ -34,7 +35,9 @@ my_logger = get_logger("openai_pendulum_ddpg")
 
 def play_main(params, env):
     input_shape, num_outputs, action_min, action_max = get_environment_input_output_info(env)
-    agent = rl_utils.get_rl_agent(input_shape, num_outputs, action_min, action_max, worker_id=0, params=params, device=device)
+    agent = rl_utils.get_rl_agent(
+        input_shape, num_outputs, action_min, action_max, worker_id=0, params=params, device=device
+    )
     load_model(MODEL_ZOO_SAVE_DIR, params.ENVIRONMENT_ID.value, agent)
     agent.agent_mode = AgentMode.PLAY
 

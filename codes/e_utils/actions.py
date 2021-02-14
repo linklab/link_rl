@@ -191,7 +191,7 @@ class DiscreteCategoricalActionSelector(ActionSelector):
     Converts probabilities of actions into action by sampling them
     """
     def __call__(self, probs):
-        dist = Categorical(probs=probs)
+        dist = Categorical(probs=probs + 0.0001)
         actions = dist.sample().data.cpu().numpy()
         return np.array(actions)
 
