@@ -239,13 +239,17 @@ class EnvironmentQuanserRIP(gym.Env):
     def get_reward(self):
         self.update_current_state()
 
-        if self.is_upright:
-            position_reward = math.pi - abs(self.pendulum_radian)  # math.pi - math.radians(12) ~ math.pi
+        if abs(self.pendulum_radian) > math.radians(90):
+            reward = 0.0
+            return reward
         else:
-            if self.is_motor_limit:
-                position_reward = 0.0
+            if self.is_upright:
+                position_reward = math.pi - abs(self.pendulum_radian)  # math.pi - math.radians(12) ~ math.pi
             else:
-                position_reward = (math.pi - abs(self.pendulum_radian)) / 2
+                if self.is_motor_limit:
+                    position_reward = 0.0
+                else:
+                    position_reward = (math.pi - abs(self.pendulum_radian)) / 2
 
         energy_penalty = 2.0 * -1.0 * (abs(self.pendulum_velocity) + abs(self.motor_velocity)) / 100
 
