@@ -207,7 +207,7 @@ class CriticCNNBase(nn.Module):
         o = self.critic_conv(Variable(torch.zeros(1, *shape)))
         return int(np.prod(o.size()))
 
-    def init_weights(m):
+    def init_weights(self, m):
         if type(m) == nn.Linear:
             torch.nn.init.kaiming_normal_(m.weight)
 
