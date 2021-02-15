@@ -91,7 +91,7 @@ class AgentDiscreteA2C(OnPolicyAgent):
         # advantage_v.shape: (32,)
         advantage_v = target_action_values_v - value_v.squeeze(-1).detach()
         log_pi_v = F.log_softmax(logits_v, dim=1)
-        log_pi_action_v = log_pi_v.gather(dim=1, index=actions_v.unsqueeze(-1)).squeeze(-1)
+        log_pi_action_v = log_pi_v.gather(dim=1, index=actions_v).squeeze(-1)
         reinforced_log_pi_action_v = advantage_v.detach() * log_pi_action_v
 
         #print(actions_v.size(), advantage_v.size(), log_pi_v.size(), log_pi_action_v.size(), reinforced_log_pi_action_v.size())
