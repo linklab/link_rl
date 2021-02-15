@@ -103,8 +103,7 @@ class ActorCriticCNNBase(nn.Module):
         self.actor = ActorCNNBase(input_shape, num_outputs)
         self.critic = CriticCNNBase(input_shape, 1)
 
-        self.layers_info = {'actor_conv': self.actor_conv, 'actor_fc': self.actor_fc,
-                            'critic_conv': self.critic_conv, 'critic_fc': self.critic_fc}
+        self.layers_info = {'actor': self.actor, 'critic': self.critic}
 
         self.train()
 
