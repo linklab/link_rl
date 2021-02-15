@@ -189,7 +189,7 @@ class CriticCNNBase(nn.Module):
         self.critic_fc = nn.Sequential(
             nn.Linear(critic_conv_out_size, 128),
             nn.ReLU(),
-            nn.Linear(128, 1)
+            nn.Linear(128, num_outputs)
         )
 
         # self.critic.apply(self.init_weights)
