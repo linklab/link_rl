@@ -127,11 +127,11 @@ class ActorCNNBase(nn.Module):
         self.__name__ = "ActorCNNBase"
 
         self.actor_conv = nn.Sequential(
-            nn.Conv2d(in_channels=input_shape[0], out_channels=32, kernel_size=3, stride=1, padding=1),
+            nn.Conv2d(in_channels=input_shape[0], out_channels=32, kernel_size=8, stride=4),
             nn.ReLU(),
-            nn.Conv2d(in_channels=32, out_channels=64, kernel_size=2, stride=1, padding=1),
+            nn.Conv2d(in_channels=32, out_channels=64, kernel_size=4, stride=2),
             nn.ReLU(),
-            nn.Conv2d(in_channels=64, out_channels=64, kernel_size=2, stride=1),
+            nn.Conv2d(in_channels=64, out_channels=64, kernel_size=3, stride=1),
             nn.ReLU()
         )
 
@@ -139,8 +139,7 @@ class ActorCNNBase(nn.Module):
         self.actor_fc = nn.Sequential(
             nn.Linear(actor_conv_out_size, 512),
             nn.ReLU(),
-            nn.Linear(512, num_outputs),
-            nn.Tanh()
+            nn.Linear(512, num_outputs)
         )
 
         self.actor_conv.apply(self.init_weights)
@@ -156,9 +155,8 @@ class ActorCNNBase(nn.Module):
         o = self.actor_conv(Variable(torch.zeros(1, *shape)))
         return int(np.prod(o.size()))
 
-    @staticmethod
-    def init_weights(m):
-        if type(m) == nn.Linear:
+    def init_weights(self, m):
+        if type(m) == nn.Linear or type(m) == nn.Conv2d:
             torch.nn.init.kaiming_normal_(m.weight)
 
     def forward(self, inputs):
@@ -209,7 +207,6 @@ class CriticCNNBase(nn.Module):
         o = self.critic_conv(Variable(torch.zeros(1, *shape)))
         return int(np.prod(o.size()))
 
-    @staticmethod
     def init_weights(m):
         if type(m) == nn.Linear:
             torch.nn.init.kaiming_normal_(m.weight)
