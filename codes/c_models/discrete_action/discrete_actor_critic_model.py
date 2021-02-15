@@ -140,7 +140,8 @@ class ActorCNNBase(nn.Module):
             nn.Linear(1024, num_outputs)
         )
 
-        # self.actor.apply(self.init_weights)
+        self.actor.apply(self.init_weights)
+        self.actor_fc.apply(self.init_weights)
 
         self.layers_info = {
             'actor_conv': self.actor_conv, 'actor_fc': self.actor_fc,
@@ -192,7 +193,8 @@ class CriticCNNBase(nn.Module):
             nn.Linear(1024, num_outputs)
         )
 
-        # self.critic.apply(self.init_weights)
+        self.critic.apply(self.init_weights)
+        self.critic_fc.apply(self.init_weights)
 
         self.layers_info = {
             'critic_conv': self.critic_conv, 'critic_fc': self.critic_fc
