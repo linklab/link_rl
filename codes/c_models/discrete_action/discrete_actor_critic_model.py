@@ -151,8 +151,8 @@ class ActorCNNBase(nn.Module):
 
         self.train()
 
-    def _get_conv_out(self, conv, shape):
-        o = conv(Variable(torch.zeros(1, *shape)))
+    def _get_conv_out(self, shape):
+        o = self.actor_conv(Variable(torch.zeros(1, *shape)))
         return int(np.prod(o.size()))
 
     @staticmethod
@@ -204,8 +204,8 @@ class CriticCNNBase(nn.Module):
 
         self.train()
 
-    def _get_conv_out(self, conv, shape):
-        o = conv(Variable(torch.zeros(1, *shape)))
+    def _get_conv_out(self, shape):
+        o = self.critic_conv(Variable(torch.zeros(1, *shape)))
         return int(np.prod(o.size()))
 
     @staticmethod
