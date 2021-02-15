@@ -45,7 +45,7 @@ class DeterministicActorCriticMLPBase(nn.Module):
             nn.ReLU(),
             nn.Linear(self.hidden_2_size, self.hidden_3_size),
             nn.ReLU(),
-            nn.Linear(self.hidden_3_size, num_outputs),
+            nn.Linear(self.hidden_3_size, num_outputs)
         )
 
         self.actor.apply(self.init_weights)

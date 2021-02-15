@@ -21,8 +21,12 @@ class AgentDDPG(OffPolicyAgent):
         super(AgentDDPG, self).__init__(params=params, device=device)
 
         self.__name__ = "AgentDDPG"
-        self.action_min = action_min
-        self.action_max = action_max
+        if params.ENVIRONMENT_ID == EnvironmentName.QUANSER_SERVO_2:
+            self.action_max = 150.0
+            self.action_min = -150.0
+        else:
+            self.action_min = action_min
+            self.action_max = action_max
         self.worker_id = worker_id
 
         if params.ENVIRONMENT_ID in [EnvironmentName.PENDULUM_MATLAB_V0, EnvironmentName.PENDULUM_MATLAB_DOUBLE_RIP_V0]:
@@ -36,12 +40,10 @@ class AgentDDPG(OffPolicyAgent):
             )
         else:
             self.train_action_selector = EpsilonGreedyDDPGActionSelector(
-                epsilon=params.EPSILON_INIT, ou_enabled=True,
-                scale_factor=params.ACTION_SCALE, noise_scale_factor=params.NOISE_SCALE
+                epsilon=params.EPSILON_INIT, ou_enabled=True, scale_factor=params.ACTION_SCALE
             )
             self.test_and_play_action_selector = EpsilonGreedyDDPGActionSelector(
-                epsilon=0.0, ou_enabled=False,
-                scale_factor=params.ACTION_SCALE, noise_scale_factor=params.NOISE_SCALE
+                epsilon=0.0, ou_enabled=False, scale_factor=params.ACTION_SCALE
             )
 
         self.epsilon_tracker = EpsilonTracker(
