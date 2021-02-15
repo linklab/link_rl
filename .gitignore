@@ -149,3 +149,4 @@ codes/1.environments/trade/raw_data
 wandb
 
 /temp/*.pth
+*.sh
