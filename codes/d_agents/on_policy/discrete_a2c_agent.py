@@ -52,7 +52,7 @@ class AgentDiscreteA2C(OnPolicyAgent):
         if not isinstance(states, torch.FloatTensor):
             states = float32_preprocessor(states).to(self.device)
 
-        logits_v = self.model.base.forward_actor(states)
+        logits_v = self.model.base.actor(states)
 
         probs_v = F.softmax(logits_v, dim=1)
 
@@ -76,10 +76,8 @@ class AgentDiscreteA2C(OnPolicyAgent):
 
         logits_v, value_v = self.model.base(states_v)
 
-        target_action_values_v = target_action_values_v.detach()
-
         # Critic Optimization
-        loss_critic_v = F.mse_loss(input=value_v.squeeze(-1), target=target_action_values_v)
+        loss_critic_v = F.mse_loss(input=value_v.squeeze(-1), target=target_action_values_v.detach())
 
         self.critic_optimizer.zero_grad()
         loss_critic_v.backward()
