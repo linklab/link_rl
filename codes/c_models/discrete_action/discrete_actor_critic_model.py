@@ -135,9 +135,9 @@ class ActorCNNBase(nn.Module):
 
         actor_conv_out_size = self._get_conv_out(self.actor_conv, input_shape)
         self.actor_fc = nn.Sequential(
-            nn.Linear(actor_conv_out_size, 512),
+            nn.Linear(actor_conv_out_size, 128),
             nn.ReLU(),
-            nn.Linear(512, num_outputs),
+            nn.Linear(128, num_outputs),
         )
 
         # self.actor.apply(self.init_weights)
@@ -187,9 +187,9 @@ class CriticCNNBase(nn.Module):
 
         critic_conv_out_size = self._get_conv_out(self.critic_conv, input_shape)
         self.critic_fc = nn.Sequential(
-            nn.Linear(critic_conv_out_size, 512),
+            nn.Linear(critic_conv_out_size, 128),
             nn.ReLU(),
-            nn.Linear(512, 1)
+            nn.Linear(128, 1)
         )
 
         # self.critic.apply(self.init_weights)
