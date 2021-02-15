@@ -76,8 +76,10 @@ class AgentDiscreteA2C(OnPolicyAgent):
 
         logits_v, value_v = self.model(states_v)
 
+        target_action_values_v = target_action_values_v.detach()
+
         # Critic Optimization
-        loss_critic_v = F.smooth_l1_loss(input=value_v.squeeze(-1), target=target_action_values_v.detach())
+        loss_critic_v = F.mse_loss(input=value_v.squeeze(-1), target=target_action_values_v)
 
         self.critic_optimizer.zero_grad()
         loss_critic_v.backward()
