@@ -212,7 +212,7 @@ class CriticCNNBase(nn.Module):
     def init_weights(self, m):
         if type(m) == nn.Linear:
             # torch.nn.init.kaiming_normal_(m.weight)
-            torch.nn.init.orthogonal(m.weight.data, gain=np.sqrt(2))
+            torch.nn.init.orthogonal(m.weight, gain=np.sqrt(2))
 
     def forward(self, inputs):
         return self.forward_critic(inputs)
