@@ -108,8 +108,8 @@ class AgentDiscreteA2C(OnPolicyAgent):
         #          self.params.CRITIC_LOSS_WEIGHT * loss_critic_v + self.params.ENTROPY_LOSS_WEIGHT * loss_entropy_v
         #
         self.actor_optimizer.zero_grad()
-        # (loss_actor_v + self.params.ENTROPY_LOSS_WEIGHT * loss_entropy_v).backward()
-        loss_actor_v.backward()
+        (loss_actor_v + self.params.ENTROPY_LOSS_WEIGHT * loss_entropy_v).backward()
+        # loss_actor_v.backward()
         nn_utils.clip_grad_norm_(self.model.base.actor.parameters(), self.params.CLIP_GRAD)
         self.actor_optimizer.step()
 
