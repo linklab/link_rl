@@ -138,6 +138,7 @@ class ActorCNNBase(nn.Module):
             nn.Linear(actor_conv_out_size, 1024),
             nn.ReLU(),
             nn.Linear(1024, num_outputs),
+            nn.ReLU()
         )
 
         # self.actor.apply(self.init_weights)
