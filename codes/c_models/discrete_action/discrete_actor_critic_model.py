@@ -138,7 +138,7 @@ class ActorCNNBase(nn.Module):
             nn.Linear(actor_conv_out_size, 512),
             nn.ReLU(),
             nn.Linear(512, num_outputs),
-            nn.Tanh()
+            nn.ReLU()
         )
 
         # self.actor.apply(self.init_weights)
@@ -190,7 +190,7 @@ class CriticCNNBase(nn.Module):
         self.critic_fc = nn.Sequential(
             nn.Linear(critic_conv_out_size, 512),
             nn.ReLU(),
-            nn.Linear(512, num_outputs)
+            nn.Linear(512, 1)
         )
 
         # self.critic.apply(self.init_weights)
