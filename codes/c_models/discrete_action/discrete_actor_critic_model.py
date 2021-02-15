@@ -139,7 +139,8 @@ class ActorCNNBase(nn.Module):
         self.actor_fc = nn.Sequential(
             nn.Linear(actor_conv_out_size, 512),
             nn.ReLU(),
-            nn.Linear(512, num_outputs)
+            nn.Linear(512, num_outputs),
+            nn.Tanh()
         )
 
         self.actor_conv.apply(self.init_weights)

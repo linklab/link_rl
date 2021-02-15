@@ -91,6 +91,7 @@ class AgentDiscreteA2C(OnPolicyAgent):
         log_pi_v = F.log_softmax(logits_v, dim=1)
         log_pi_action_v = log_pi_v.gather(dim=1, index=actions_v.unsqueeze(-1)).squeeze(-1)
         reinforced_log_pi_action_v = advantage_v.detach() * log_pi_action_v
+        reinforced_log_pi_action_v = reinforced_log_pi_action_v.type(torch.float64)
 
         #print(actions_v.size(), advantage_v.size(), log_pi_v.size(), log_pi_action_v.size(), reinforced_log_pi_action_v.size())
 
@@ -112,7 +113,7 @@ class AgentDiscreteA2C(OnPolicyAgent):
 
         gradients = self.model.get_gradients_for_current_parameters()
 
-        # self.model.check_gradient_nan(gradients)
-        print("critic: ", loss_critic_v.item(), "actor: ", loss_actor_v.item())
+        self.model.check_gradient_nan(gradients)
+        # print("critic: ", loss_critic_v.item(), "actor: ", loss_actor_v.item())
 
         return gradients, loss_critic_v.item(), loss_actor_v.item() * -1.0
