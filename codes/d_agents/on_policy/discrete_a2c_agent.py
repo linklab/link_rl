@@ -52,7 +52,7 @@ class AgentDiscreteA2C(OnPolicyAgent):
         if not isinstance(states, torch.FloatTensor):
             states = float32_preprocessor(states).to(self.device)
 
-        logits_v = self.model.base.actor(states)
+        logits_v = self.model.base.forward_actor(states)
 
         probs_v = F.softmax(logits_v, dim=1)
 
@@ -81,7 +81,7 @@ class AgentDiscreteA2C(OnPolicyAgent):
 
         self.critic_optimizer.zero_grad()
         loss_critic_v.backward()
-        nn_utils.clip_grad_norm_(self.model.base.critic.parameters(), self.params.CLIP_GRAD)
+        # nn_utils.clip_grad_norm_(self.model.base.critic.parameters(), self.params.CLIP_GRAD)
         self.critic_optimizer.step()
 
         #nn_utils.clip_grad_norm_(self.model.base.critic.parameters(), self.params.CLIP_GRAD)
@@ -107,7 +107,7 @@ class AgentDiscreteA2C(OnPolicyAgent):
         #
         self.actor_optimizer.zero_grad()
         (loss_actor_v + self.params.ENTROPY_LOSS_WEIGHT * loss_entropy_v).backward()
-        nn_utils.clip_grad_norm_(self.model.base.actor.parameters(), self.params.CLIP_GRAD)
+        # nn_utils.clip_grad_norm_(self.model.base.actor.parameters(), self.params.CLIP_GRAD)
         self.actor_optimizer.step()
 
         gradients = self.model.get_gradients_for_current_parameters()
