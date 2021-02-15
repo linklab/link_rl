@@ -112,6 +112,8 @@ class AgentDiscreteA2C(OnPolicyAgent):
         nn_utils.clip_grad_norm_(self.model.base.actor.parameters(), self.params.CLIP_GRAD)
         self.actor_optimizer.step()
 
+        print("loss: ", loss_critic_v, ", ", loss_actor_v)
+
         gradients = self.model.get_gradients_for_current_parameters()
 
         self.model.check_gradient_nan(gradients)
