@@ -108,14 +108,16 @@ class ActorCriticCNNBase(nn.Module):
         self.train()
 
     def forward(self, inputs):
-        return self.forward_actor(inputs), self.critic.forward_critic(inputs)
+        actions = self.actor(inputs)
+        critic_values = self.critic(inputs)
+        return actions, critic_values
 
     def forward_actor(self, inputs):
-        actions = self.actor.forward_actor(inputs)
+        actions = self.actor(inputs)
         return actions
 
     def forward_critic(self, inputs):
-        critic_values = self.critic.forward_critic(inputs)
+        critic_values = self.critic(inputs)
         return critic_values
 
 
