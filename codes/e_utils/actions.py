@@ -192,7 +192,7 @@ class DiscreteCategoricalActionSelector(ActionSelector):
     """
     def __call__(self, probs):
         dist = Categorical(probs=probs)
-        actions = dist.sample()
+        actions = dist.sample().numpy()
         return np.array(actions)
 
 
