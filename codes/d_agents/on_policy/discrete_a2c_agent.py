@@ -96,9 +96,9 @@ class AgentDiscreteA2C(OnPolicyAgent):
 
         loss_actor_v = -1.0 * reinforced_log_pi_action_v.mean()
 
-        prob_v = F.softmax(logits_v, dim=1)
-        entropy_v = -1.0 * (prob_v * log_pi_v).sum(dim=1).mean()
-        loss_entropy_v = -1.0 * entropy_v
+        # prob_v = F.softmax(logits_v, dim=1)
+        # entropy_v = -1.0 * (prob_v * log_pi_v).sum(dim=1).mean()
+        # loss_entropy_v = -1.0 * entropy_v
 
         # loss_actor_v를 작아지도록 만듦 --> log_pi_v.mean()가 커지도록 만듦
         # loss_entropy_v를 작아지도록 만듦 --> entropy_v가 커지도록 만듦
@@ -106,7 +106,8 @@ class AgentDiscreteA2C(OnPolicyAgent):
         #          self.params.CRITIC_LOSS_WEIGHT * loss_critic_v + self.params.ENTROPY_LOSS_WEIGHT * loss_entropy_v
         #
         self.actor_optimizer.zero_grad()
-        (loss_actor_v + self.params.ENTROPY_LOSS_WEIGHT * loss_entropy_v).backward()
+        # (loss_actor_v + self.params.ENTROPY_LOSS_WEIGHT * loss_entropy_v).backward()
+        loss_actor_v.backward()
         nn_utils.clip_grad_norm_(self.model.base.actor_params, self.params.CLIP_GRAD)
         self.actor_optimizer.step()
 

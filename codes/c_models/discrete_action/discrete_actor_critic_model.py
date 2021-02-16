@@ -104,18 +104,18 @@ class ActorCriticCNNBase(nn.Module):
         self.__name__ = "ActorCriticCNNBase"
 
         self.conv = self.conv = nn.Sequential(
-            # nn.Conv2d(in_channels=input_shape[0], out_channels=32, kernel_size=8, stride=4),
-            # nn.Tanh(),
-            # nn.Conv2d(in_channels=32, out_channels=64, kernel_size=4, stride=2),
-            # nn.Tanh(),
-            # nn.Conv2d(in_channels=64, out_channels=64, kernel_size=3, stride=1),
-            # nn.Tanh()
-            nn.Conv2d(input_shape[0], 24, kernel_size=3, stride=1, padding=1),
+            nn.Conv2d(in_channels=input_shape[0], out_channels=32, kernel_size=8, stride=4),
             nn.Tanh(),
-            nn.Conv2d(24, 32, kernel_size=2, stride=1, padding=1),
+            nn.Conv2d(in_channels=32, out_channels=64, kernel_size=4, stride=2),
             nn.Tanh(),
-            nn.Conv2d(32, 32, kernel_size=2, stride=1),
+            nn.Conv2d(in_channels=64, out_channels=64, kernel_size=3, stride=1),
             nn.Tanh()
+            # nn.Conv2d(input_shape[0], 24, kernel_size=3, stride=1, padding=1),
+            # nn.Tanh(),
+            # nn.Conv2d(24, 32, kernel_size=2, stride=1, padding=1),
+            # nn.Tanh(),
+            # nn.Conv2d(32, 32, kernel_size=2, stride=1),
+            # nn.Tanh()
         )
 
         conv_out_size = self._get_conv_out(input_shape)
