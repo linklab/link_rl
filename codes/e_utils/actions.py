@@ -7,6 +7,9 @@ import torch
 from icecream import ic
 from torch.distributions import MultivariateNormal, Normal, Categorical
 
+import os
+os.environ['CUDA_LAUNCH_BLOCKING'] = "1"
+
 
 class ActionSelector:
     """
