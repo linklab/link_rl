@@ -76,8 +76,6 @@ class AgentDiscreteA2C(OnPolicyAgent):
         value_v = self.model.base.forward_critic(states_v)
 
         # Critic Optimization
-        target_action_values_v = (target_action_values_v - target_action_values_v.mean()) / \
-                                 (target_action_values_v.std() + 1e-5)
         loss_critic_v = F.mse_loss(input=value_v.squeeze(-1), target=target_action_values_v.detach())
 
         self.critic_optimizer.zero_grad()
