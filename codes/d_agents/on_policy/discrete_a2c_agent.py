@@ -73,7 +73,7 @@ class AgentDiscreteA2C(OnPolicyAgent):
         # target_action_values_v.shape: (32,)
         states_v, actions_v, target_action_values_v = self.unpack_batch_for_actor_critic(batch, self.model, self.params)
 
-        probs_v, value_v = self.model.base(states_v)
+        value_v = self.model.forward_critic(states_v)
 
         # Critic Optimization
         target_action_values_v = (target_action_values_v - target_action_values_v.mean()) / \
@@ -86,6 +86,8 @@ class AgentDiscreteA2C(OnPolicyAgent):
         self.critic_optimizer.step()
 
         #nn_utils.clip_grad_norm_(self.model.base.critic.parameters(), self.params.CLIP_GRAD)
+
+        probs_v = self.model.forward_actor(states_v)
 
         # advantage_v.shape: (32,)
         advantage_v = target_action_values_v.detach() - value_v.squeeze(-1).detach()
