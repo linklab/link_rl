@@ -116,13 +116,13 @@ class ActorCriticCNNBase(nn.Module):
 
         self.actor_fc = nn.Sequential(
             nn.Linear(conv_out_size, 128),
-            nn.ReLU(),
+            nn.Tanh(),
             nn.Linear(128, num_outputs)
         )
 
         self.critic_fc = nn.Sequential(
             nn.Linear(conv_out_size, 128),
-            nn.ReLU(),
+            nn.Tanh(),
             nn.Linear(128, 1)
         )
 
