@@ -104,6 +104,7 @@ class EnvironmentQuanserRIP(gym.Env):
     def reset(self):
         self.steps = 0
         self.reward = 0
+        self.is_motor_limit = False
 
         quanser_response = self.server_obj.reset(QuanserRequest(value=0.0))
         if quanser_response.message != "RESET":
@@ -142,7 +143,7 @@ class EnvironmentQuanserRIP(gym.Env):
         return np.asarray(self.state)
 
     def step(self, action):
-        current_time = time.perf_counter()
+        # current_time = time.perf_counter()
         # print("current_time - self.previous_time", current_time - self.previous_time)
         while True:
             current_time = time.perf_counter()
@@ -157,7 +158,7 @@ class EnvironmentQuanserRIP(gym.Env):
 
         self.previous_time = time.perf_counter()
         #==================== Grpc and use sample time========================================
-        previous_time = time.perf_counter()
+        # previous_time = time.perf_counter()
 
         quanser_response = self.server_obj.step(QuanserRequest(value=float(motor_power)))
         # if quanser_response.message != "STEP":
@@ -194,14 +195,20 @@ class EnvironmentQuanserRIP(gym.Env):
         ]
         next_state = np.asarray(self.state)
 
+        self.update_current_state()
 
         done, info = self.__isDone()
 
         #=======================reward================================================================
         self.reward = self.get_reward()
         #=============================================================================================
-
         self.steps += 1
+
+        # if done:
+        #     print("pendulum radian : {0}, done: {1}, info: {2}, self.is_motor_limit: {3} \n\n".format(
+        #         self.pendulum_radian, done, info, self.is_motor_limit
+        #     ))
+
         return next_state, self.reward, done, info
 
     def __isDone(self):
@@ -219,7 +226,6 @@ class EnvironmentQuanserRIP(gym.Env):
         #     return True, info
         elif self.is_motor_limit:#abs(self.motor_radian) > math.radians(90) or self.is_motor_limit:
             insert_to_info("***motor_radian exceed 90***")
-            self.is_motor_limit = False
             return True, info
         else:
             insert_to_info("")
@@ -236,25 +242,41 @@ class EnvironmentQuanserRIP(gym.Env):
         else:
             self.is_upright = False
 
+    # def get_reward(self):
+    #     if abs(self.pendulum_radian) > math.radians(30):
+    #         position_reward = 0.0
+    #     else:
+    #         if self.is_upright:
+    #             position_reward = math.pi - abs(self.pendulum_radian)  # math.pi - math.radians(12) ~ math.pi
+    #         else:
+    #             if self.is_motor_limit:
+    #                 position_reward = 0.0
+    #             else:
+    #                 position_reward = (math.pi - abs(self.pendulum_radian)) / 2
+    #
+    #     energy_penalty = 2.0 * -1.0 * (abs(self.pendulum_velocity) + abs(self.motor_velocity)) / 100
+    #
+    #     reward = position_reward + energy_penalty
+    #
+    #     reward = max(0.0, reward)
+    #
+    #     return reward
+
     def get_reward(self):
-        self.update_current_state()
-
-        if abs(self.pendulum_radian) > math.radians(90):
-            reward = 0.0
-            return reward
+        if self.is_upright:
+            position_reward = math.pi - abs(self.pendulum_radian)  # math.pi - math.radians(12) ~ math.pi
         else:
-            if self.is_upright:
-                position_reward = math.pi - abs(self.pendulum_radian)  # math.pi - math.radians(12) ~ math.pi
+            if self.is_motor_limit:
+                position_reward = 0.0
             else:
-                if self.is_motor_limit:
-                    position_reward = 0.0
-                else:
-                    position_reward = (math.pi - abs(self.pendulum_radian)) / 2
+                position_reward = (math.pi - abs(self.pendulum_radian)) / 2
 
-        energy_penalty = 2.0 * -1.0 * (abs(self.pendulum_velocity) + abs(self.motor_velocity)) / 100
+        energy_penalty = 1.0 * -1.0 * (abs(self.pendulum_velocity) + abs(self.motor_velocity)) / 100
 
         reward = position_reward + energy_penalty
 
         reward = max(0.0, reward)
+
+        #print(position_reward, energy_penalty, reward)
 
         return reward

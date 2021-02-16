@@ -174,7 +174,7 @@ class EpsilonGreedyDDPGActionSelector:
             # agent_states = 1.0       +    0.15 * (0.0 - 1.0)            + new_normal_random
             agent_states = agent_states + ou_theta * (ou_mu - agent_states) + ou_sigma * np.random.normal(size=agent_states.shape)
             actions = actions + self.epsilon * agent_states
-            # print("actions: ", actions, "noises: ", self.epsilon * agent_states)
+            #print("actions: {0}, epsilon: {1}, noises: {2}".format(actions, self.epsilon, self.epsilon * agent_states))
 
         return actions, agent_states
 
