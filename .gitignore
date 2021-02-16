@@ -150,3 +150,4 @@ wandb
 
 /temp/*.pth
 /codes/a_config/config.ini.original
+*.sh
