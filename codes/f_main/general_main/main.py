@@ -248,6 +248,7 @@ def main():
         wandb.watch(agent.model.base, log="all")
 
     loss_dequeue = deque(maxlen=params.AVG_STEP_SIZE_FOR_TRAIN_LOSS)
+    actor_objective_dequeue = deque(maxlen=params.AVG_STEP_SIZE_FOR_TRAIN_LOSS)
     step_idx = 0
 
     while play_proc.is_alive():
@@ -258,6 +259,7 @@ def main():
                 train_info_dict = exp
 
                 mean_loss = np.mean(loss_dequeue) if len(loss_dequeue) > 0 else 0.0
+                mean_actor_objective = np.mean(actor_objective_dequeue) if len(actor_objective_dequeue) > 0 else 0.0
 
                 print_performance(
                     params=params,
@@ -272,13 +274,15 @@ def main():
                     last_info=train_info_dict["last_info"],
                     speed=train_info_dict["speed"],
                     mean_loss=mean_loss,
+                    mean_actor_objective=mean_actor_objective,
                     last_action=train_info_dict["last_actions"]
                 )
 
                 if params.WANDB:
                     del train_info_dict["last_info"]
                     del train_info_dict["elapsed_time"]
-                    train_info_dict["train (critic) mean loss"] = mean_loss
+                    train_info_dict["train mean (critic) loss"] = mean_loss
+                    train_info_dict["train mean actor objective"] = mean_actor_objective
 
                     wandb.log(train_info_dict)
 
@@ -296,16 +300,20 @@ def main():
             else:
                 if len(agent.buffer) < params.BATCH_SIZE:
                     continue
-            _, last_loss, _ = agent.train(step_idx=step_idx)
+            _, last_loss, actor_objective = agent.train(step_idx=step_idx)
             loss_dequeue.append(last_loss)
+            if actor_objective:
+                actor_objective_dequeue.append(actor_objective)
             # On-policy는 현재의 정책을 통해 산출된 경험정보만을 활용하여 NN을 업데이트해야 함.
             # 따라서, 현재 학습에 사용된 Buffer는 깨끗하게 지워야 함.
             agent.buffer.clear()
         elif isinstance(agent, OffPolicyAgent):
             if len(agent.buffer) < params.MIN_REPLAY_SIZE_FOR_TRAIN:
                 continue
-            _, last_loss, _ = agent.train(step_idx=step_idx)
+            _, last_loss, actor_objective = agent.train(step_idx=step_idx)
             loss_dequeue.append(last_loss)
+            if actor_objective:
+                actor_objective_dequeue.append(actor_objective)
         else:
             raise ValueError()
 
