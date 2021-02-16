@@ -55,10 +55,10 @@ class AgentDiscreteA2C(OnPolicyAgent):
         with torch.no_grad():
             probs_v = self.model.base.forward_actor(states)
 
-            if self.agent_mode == AgentMode.TRAIN:
-                actions = self.train_action_selector(probs_v)
-            else:
-                actions = self.test_and_play_action_selector(probs_v)
+        if self.agent_mode == AgentMode.TRAIN:
+            actions = self.train_action_selector(probs_v)
+        else:
+            actions = self.test_and_play_action_selector(probs_v)
 
         critics = torch.zeros(size=probs_v.size())
         return actions, critics
