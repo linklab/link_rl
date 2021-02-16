@@ -52,8 +52,8 @@ class AgentDiscreteA2C(OnPolicyAgent):
         if not isinstance(states, torch.FloatTensor):
             states = float32_preprocessor(states).to(self.device)
 
-        with torch.no_grad():
-            probs_v = self.model.base.forward_actor(states)
+        # with torch.no_grad():
+        probs_v = self.model.base.forward_actor(states)
 
         if self.agent_mode == AgentMode.TRAIN:
             actions = self.train_action_selector(probs_v)
