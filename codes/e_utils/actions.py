@@ -159,7 +159,7 @@ class EpsilonGreedyDDPGActionSelector:
         self.ou_enabled = ou_enabled
         self.scale_factor = scale_factor
 
-    def __call__(self, mu, agent_states, ou_theta=0.15, ou_mu=0.0, ou_sigma=0.2): #default ou_sigma = 0.2
+    def __call__(self, mu, agent_states, ou_theta=0.15, ou_mu=0.0, ou_sigma=0.9): #default ou_sigma = 0.2
         assert isinstance(mu, np.ndarray)
         actions = np.copy(mu)
         if isinstance(agent_states, list):
@@ -173,8 +173,13 @@ class EpsilonGreedyDDPGActionSelector:
         if self.ou_enabled and self.epsilon > 0.0:
             # agent_states = 1.0       +    0.15 * (0.0 - 1.0)            + new_normal_random
             agent_states = agent_states + ou_theta * (ou_mu - agent_states) + ou_sigma * np.random.normal(size=agent_states.shape)
+
+            print("actions: {0:7.4f}, epsilon: {1:7.4f}, noises: {2:7.4f}, final action: {3:7.4f}".format(
+                actions[0][0], self.epsilon, (self.epsilon * agent_states)[0][0], (actions + self.epsilon * agent_states)[0][0]
+            ))
+
             actions = actions + self.epsilon * agent_states
-            #print("actions: {0}, epsilon: {1}, noises: {2}".format(actions, self.epsilon, self.epsilon * agent_states))
+
 
         return actions, agent_states
 
