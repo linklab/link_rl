@@ -1,6 +1,7 @@
 # https://github.com/ikostrikov/pytorch-a2c-ppo-acktr-gail
 import torch
 import torch.nn as nn
+import torch.nn.functional as F
 from torch.autograd import Variable
 import numpy as np
 
@@ -116,7 +117,7 @@ class ActorCriticCNNBase(nn.Module):
 
         self.actor_fc = nn.Sequential(
             nn.Linear(conv_out_size, 128),
-            nn.Tanh(),
+            nn.ReLU(),
             nn.Linear(128, num_outputs)
         )
 
@@ -159,7 +160,7 @@ class ActorCriticCNNBase(nn.Module):
             fx = torch.tensor(inputs, dtype=torch.float32)
 
         conv_out = self.conv(fx).view(fx.size()[0], -1)
-        actions = self.actor_fc(conv_out)
+        actions = F.softmax(self.actor_fc(conv_out), dim=0)
         return actions
 
     def forward_critic(self, inputs):

@@ -53,14 +53,12 @@ class AgentDiscreteA2C(OnPolicyAgent):
             states = float32_preprocessor(states).to(self.device)
 
         with torch.no_grad():
-            logits_v = self.model.base.forward_actor(states)
+            probs_v = self.model.base.forward_actor(states)
 
-        probs_v = F.softmax(logits_v, dim=1)
-
-        if self.agent_mode == AgentMode.TRAIN:
-            actions = self.train_action_selector(probs_v)
-        else:
-            actions = self.test_and_play_action_selector(probs_v)
+            if self.agent_mode == AgentMode.TRAIN:
+                actions = self.train_action_selector(probs_v)
+            else:
+                actions = self.test_and_play_action_selector(probs_v)
 
         critics = torch.zeros(size=probs_v.size())
         return actions, critics
@@ -75,7 +73,7 @@ class AgentDiscreteA2C(OnPolicyAgent):
         # target_action_values_v.shape: (32,)
         states_v, actions_v, target_action_values_v = self.unpack_batch_for_actor_critic(batch, self.model, self.params)
 
-        logits_v, value_v = self.model.base(states_v)
+        probs_v, value_v = self.model.base(states_v)
 
         # Critic Optimization
         loss_critic_v = F.mse_loss(input=value_v.squeeze(-1), target=target_action_values_v.detach())
@@ -89,8 +87,7 @@ class AgentDiscreteA2C(OnPolicyAgent):
 
         # advantage_v.shape: (32,)
         advantage_v = target_action_values_v.detach() - value_v.squeeze(-1).detach()
-        log_pi_v = F.log_softmax(logits_v, dim=1)
-        log_pi_action_v = log_pi_v.gather(dim=1, index=actions_v.unsqueeze(-1)).squeeze(-1)
+        log_pi_action_v = torch.log(probs_v.gather(dim=1, index=actions_v.unsqueeze(-1))).squeeze(-1)
         advantage_v = (advantage_v - advantage_v.mean()) / (advantage_v.std() + 1e-5)
         reinforced_log_pi_action_v = advantage_v.detach() * log_pi_action_v
 
@@ -98,9 +95,9 @@ class AgentDiscreteA2C(OnPolicyAgent):
 
         loss_actor_v = -1.0 * reinforced_log_pi_action_v.mean()
 
-        prob_v = F.softmax(logits_v, dim=1)
-        entropy_v = -1.0 * (prob_v * log_pi_v).sum(dim=1).mean()
-        loss_entropy_v = -1.0 * entropy_v
+        # prob_v = F.softmax(probs_v, dim=1)
+        # entropy_v = -1.0 * (prob_v * log_pi_v).sum(dim=1).mean()
+        # loss_entropy_v = -1.0 * entropy_v
 
         # loss_actor_v를 작아지도록 만듦 --> log_pi_v.mean()가 커지도록 만듦
         # loss_entropy_v를 작아지도록 만듦 --> entropy_v가 커지도록 만듦
@@ -108,8 +105,8 @@ class AgentDiscreteA2C(OnPolicyAgent):
         #          self.params.CRITIC_LOSS_WEIGHT * loss_critic_v + self.params.ENTROPY_LOSS_WEIGHT * loss_entropy_v
         #
         self.actor_optimizer.zero_grad()
-        (loss_actor_v + self.params.ENTROPY_LOSS_WEIGHT * loss_entropy_v).backward()
-        # loss_actor_v.backward()
+        # (loss_actor_v + self.params.ENTROPY_LOSS_WEIGHT * loss_entropy_v).backward()
+        loss_actor_v.backward()
         nn_utils.clip_grad_norm_(self.model.base.actor_params, self.params.CLIP_GRAD)
         self.actor_optimizer.step()
 
