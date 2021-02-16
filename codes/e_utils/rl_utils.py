@@ -6,6 +6,7 @@ from gym.vector import SyncVectorEnv, VectorEnv
 from numpy import random
 
 import gym
+import torch
 from torch import optim
 import os, sys
 
@@ -309,6 +310,8 @@ def get_optimizer(parameters, learning_rate, params):
         optimizer = optim.Adam(params=parameters, lr=learning_rate)
     elif params.OPTIMIZER == OptimizerName.NESTEROV:
         optimizer = optim.SGD(params=parameters, lr=learning_rate, nesterov=True, momentum=0.9, weight_decay=1e-4)
+    elif params.OPTIMIZER == OptimizerName.RMSProp:
+        optimizer = torch.optim.RMSprop(params=parameters, lr=learning_rate)
     else:
         optimizer = None
 

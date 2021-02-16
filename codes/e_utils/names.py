@@ -117,3 +117,4 @@ class RLAlgorithmName(enum.Enum):
 class OptimizerName(enum.Enum):
     NESTEROV = "nesterov"
     ADAM = "Adam"
+    RMSProp = "RMSProp"
