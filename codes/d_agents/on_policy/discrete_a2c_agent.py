@@ -90,7 +90,6 @@ class AgentDiscreteA2C(OnPolicyAgent):
         # advantage_v.shape: (32,)
         advantage_v = target_action_values_v.detach() - value_v.squeeze(-1).detach()
         log_pi_action_v = torch.log(probs_v.gather(dim=1, index=actions_v.unsqueeze(-1))).squeeze(-1)
-        advantage_v = (advantage_v - advantage_v.mean()) / (advantage_v.std() + 1e-5)
         reinforced_log_pi_action_v = advantage_v.detach() * log_pi_action_v
 
         #print(actions_v.size(), advantage_v.size(), log_pi_v.size(), log_pi_action_v.size(), reinforced_log_pi_action_v.size())
