@@ -85,7 +85,7 @@ class AgentDiscreteA2C(OnPolicyAgent):
 
         #nn_utils.clip_grad_norm_(self.model.base.critic.parameters(), self.params.CLIP_GRAD)
 
-        probs_v = self.model.base.forward_actor(states_v)
+        probs_v, value_v = self.model.base.forward(states_v)
 
         # advantage_v.shape: (32,)
         advantage_v = target_action_values_v.detach() - value_v.squeeze(-1).detach()
