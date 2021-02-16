@@ -52,7 +52,8 @@ class AgentDiscreteA2C(OnPolicyAgent):
         if not isinstance(states, torch.FloatTensor):
             states = float32_preprocessor(states).to(self.device)
 
-        logits_v = self.model.base.forward_actor(states)
+        with torch.no_grad():
+            logits_v = self.model.base.forward_actor(states)
 
         probs_v = F.softmax(logits_v, dim=1)
 
