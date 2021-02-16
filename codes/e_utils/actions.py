@@ -7,6 +7,9 @@ import torch
 from icecream import ic
 from torch.distributions import MultivariateNormal, Normal, Categorical
 
+import os
+os.environ['CUDA_LAUNCH_BLOCKING'] = "1"
+
 
 class ActionSelector:
     """
@@ -191,8 +194,8 @@ class DiscreteCategoricalActionSelector(ActionSelector):
     Converts probabilities of actions into action by sampling them
     """
     def __call__(self, probs):
-        dist = Categorical(probs=probs + 0.0001)
-        actions = dist.sample().data.cpu().numpy()
+        dist = Categorical(probs=probs)
+        actions = dist.sample().cpu().detach().numpy()
         return np.array(actions)
 
 

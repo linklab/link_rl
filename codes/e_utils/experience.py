@@ -17,6 +17,7 @@ if PROJECT_HOME not in sys.path:
 
 # one single experience step
 from codes.d_agents.a0_base_agent import BaseAgent
+from codes.a_config.parameters import PARAMETERS as params
 
 Experience = namedtuple('Experience', ['state', 'action', 'reward', 'done', 'info'])
 ExperienceWithNoise = namedtuple(
@@ -101,15 +102,27 @@ class ExperienceSource:
                     #ic(agent_states_input, "@@")
 
             #ic(states_input, agent_states_input)
+            random_action_flag = False
+            if 'START_STEPS' in dir(self.agent.params):
+                if self.agent.params.START_STEPS >= iter_idx:
+                    random_action_flag = True
 
-            if states_input:
-                #print(states_input)
-                new_actions, new_agent_states = self.agent(states_input, agent_states_input)
+            if random_action_flag:
+                if states_input:
+                    _, new_agent_states = self.agent(states_input, agent_states_input)
 
-                for idx, action in enumerate(new_actions):
-                    g_idx = states_indices[idx]
-                    actions[g_idx] = action
-                    agent_states[g_idx] = new_agent_states[idx]
+                    for idx, new_agent_state in enumerate(new_agent_states):
+                        g_idx = states_indices[idx]
+                        actions[g_idx] = self.pool[0].single_action_space.sample()
+                        agent_states[g_idx] = new_agent_state
+            else:
+                if states_input:
+                    new_actions, new_agent_states = self.agent(states_input, agent_states_input)
+
+                    for idx, action in enumerate(new_actions):
+                        g_idx = states_indices[idx]
+                        actions[g_idx] = action
+                        agent_states[g_idx] = new_agent_states[idx]
 
             grouped_actions = _group_list(actions, env_lens)
 

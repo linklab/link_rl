@@ -149,4 +149,5 @@ codes/1.environments/trade/raw_data
 wandb
 
 /temp/*.pth
+/codes/a_config/config.ini.original
 *.sh
