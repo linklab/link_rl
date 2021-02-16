@@ -111,18 +111,18 @@ class ActorCriticCNNBase(nn.Module):
             # nn.Conv2d(in_channels=64, out_channels=64, kernel_size=3, stride=1),
             # nn.Tanh()
             nn.Conv2d(input_shape[0], 24, kernel_size=3, stride=1, padding=1),
-            nn.ReLU(),
+            nn.Tanh(),
             nn.Conv2d(24, 32, kernel_size=2, stride=1, padding=1),
-            nn.ReLU(),
+            nn.Tanh(),
             nn.Conv2d(32, 32, kernel_size=2, stride=1),
-            nn.ReLU()
+            nn.Tanh()
         )
 
         conv_out_size = self._get_conv_out(input_shape)
 
         self.actor_fc = nn.Sequential(
             nn.Linear(conv_out_size, 128),
-            nn.ReLU(),
+            nn.Tanh(),
             nn.Linear(128, num_outputs)
         )
 
