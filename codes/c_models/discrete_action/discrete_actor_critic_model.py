@@ -110,9 +110,9 @@ class ActorCriticCNNBase(nn.Module):
             # nn.Tanh(),
             # nn.Conv2d(in_channels=64, out_channels=64, kernel_size=3, stride=1),
             # nn.Tanh()
-            nn.Conv2d(input_shape[0], 24, kernel_size=3, stride=1, padding=1),
+            nn.Conv2d(input_shape[0], 24, kernel_size=3, stride=1),
             nn.ReLU(),
-            nn.Conv2d(24, 32, kernel_size=2, stride=1, padding=1),
+            nn.Conv2d(24, 32, kernel_size=2, stride=1),
             nn.ReLU(),
             nn.Conv2d(32, 32, kernel_size=2, stride=1),
             nn.ReLU()
