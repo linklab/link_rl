@@ -90,13 +90,13 @@ class ActorCriticMLPBase(nn.Module):
         return actions, critic_values
 
     def forward_actor(self, inputs):
-        inputs = F.normalize(inputs)
+        # inputs = F.normalize(inputs)
         x = self.actor(inputs)
         actions = F.softmax(x, dim=-1)
         return actions
 
     def forward_critic(self, inputs):
-        inputs = F.normalize(inputs)
+        # inputs = F.normalize(inputs)
         critic_values = self.critic(inputs)
         return critic_values
 
@@ -151,29 +151,30 @@ class ActorCriticCNNBase(nn.Module):
             # torch.nn.init.orthogonal(m.weight, gain=np.sqrt(2))
 
     def forward(self, inputs):
-        inputs = F.normalize(inputs)
-        actions = self.forward_actor(inputs)
-        critic_values = self.forward_critic(inputs)
+        # inputs = F.normalize(inputs)
+        fx = inputs.float() / 256
+        actions = self.forward_actor(fx)
+        critic_values = self.forward_critic(fx)
         return actions, critic_values
 
     def forward_actor(self, inputs):
         # inputs = F.normalize(inputs)
-        if torch.is_tensor(inputs):
-            fx = inputs.to(torch.float32)
-        else:
-            fx = torch.tensor(inputs, dtype=torch.float32)
-        fx = fx.float() / 256
+        # if torch.is_tensor(inputs):
+        #     fx = inputs.to(torch.float32)
+        # else:
+        #     fx = torch.tensor(inputs, dtype=torch.float32)
+        fx = inputs.float() / 256
         conv_out = self.conv(fx).view(fx.size()[0], -1)
         actions = F.softmax(self.actor_fc(conv_out), dim=0)
         return actions
 
     def forward_critic(self, inputs):
         # inputs = F.normalize(inputs)
-        if torch.is_tensor(inputs):
-            fx = inputs.to(torch.float32)
-        else:
-            fx = torch.tensor(inputs, dtype=torch.float32)
-        fx = fx.float() / 256
+        # if torch.is_tensor(inputs):
+        #     fx = inputs.to(torch.float32)
+        # else:
+        #     fx = torch.tensor(inputs, dtype=torch.float32)
+        fx = inputs.float() / 256
         conv_out = self.conv(fx).view(fx.size()[0], -1)
         critic_values = self.critic_fc(conv_out.detach())
         return critic_values
