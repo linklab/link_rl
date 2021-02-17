@@ -105,9 +105,9 @@ class ActorCriticCNNBase(nn.Module):
         self.__name__ = "ActorCriticCNNBase"
 
         self.conv = nn.Sequential(
-            nn.Conv2d(in_channels=input_shape[0], out_channels=32, kernel_size=7, stride=4),
+            nn.Conv2d(in_channels=input_shape[0], out_channels=32, kernel_size=8, stride=4),
             nn.LeakyReLU(),
-            nn.Conv2d(in_channels=32, out_channels=64, kernel_size=5, stride=2),
+            nn.Conv2d(in_channels=32, out_channels=64, kernel_size=4, stride=2),
             nn.LeakyReLU(),
             nn.Conv2d(in_channels=64, out_channels=64, kernel_size=3, stride=1),
             nn.LeakyReLU()
