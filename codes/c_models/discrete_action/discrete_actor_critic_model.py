@@ -129,9 +129,9 @@ class ActorCriticCNNBase(nn.Module):
             nn.Linear(512, 1)
         )
 
-        self.conv.apply(self.init_weights)
-        self.actor_fc.apply(self.init_weights)
-        self.critic_fc.apply(self.init_weights)
+        # self.conv.apply(self.init_weights)
+        # self.actor_fc.apply(self.init_weights)
+        # self.critic_fc.apply(self.init_weights)
 
         self.actor_params = list(self.conv.parameters()) + list(self.actor_fc.parameters())
         self.critic_params = list(self.critic_fc.parameters())
@@ -144,11 +144,11 @@ class ActorCriticCNNBase(nn.Module):
         o = self.conv(Variable(torch.zeros(1, *shape)))
         return int(np.prod(o.size()))
 
-    @staticmethod
-    def init_weights(m):
-        if type(m) == nn.Linear or type(m) == nn.Conv2d:
-            torch.nn.init.kaiming_normal_(m.weight)
-            # torch.nn.init.orthogonal(m.weight, gain=np.sqrt(2))
+    # @staticmethod
+    # def init_weights(m):
+    #     if type(m) == nn.Linear or type(m) == nn.Conv2d:
+    #         torch.nn.init.kaiming_normal_(m.weight)
+    #         # torch.nn.init.orthogonal(m.weight, gain=np.sqrt(2))
 
     def forward(self, inputs):
         # inputs = F.normalize(inputs)
