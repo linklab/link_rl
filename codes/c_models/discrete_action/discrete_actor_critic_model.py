@@ -155,7 +155,7 @@ class ActorCriticCNNBase(nn.Module):
         fx = inputs.float() / 256
         conv_out = self.conv(fx).view(fx.size()[0], -1)
         actions = F.softmax(self.actor_fc(conv_out), dim=-1)
-        critic_values = self.critic_fc(conv_out.detach())
+        critic_values = self.critic_fc(conv_out)
         return actions, critic_values
 
     def forward_actor(self, inputs):
