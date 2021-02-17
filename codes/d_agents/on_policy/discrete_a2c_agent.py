@@ -84,10 +84,10 @@ class AgentDiscreteA2C(OnPolicyAgent):
         # Critic Optimization
         loss_critic_v = F.mse_loss(input=value_v.squeeze(-1), target=target_action_values_v.detach())
 
-        self.critic_optimizer.zero_grad()
-        loss_critic_v.backward()
-        nn_utils.clip_grad_norm_(self.model.base.critic_params, self.params.CLIP_GRAD)
-        self.critic_optimizer.step()
+        # self.critic_optimizer.zero_grad()
+        # loss_critic_v.backward()
+        # nn_utils.clip_grad_norm_(self.model.base.critic_params, self.params.CLIP_GRAD)
+        # self.critic_optimizer.step()
 
         #nn_utils.clip_grad_norm_(self.model.base.critic.parameters(), self.params.CLIP_GRAD)
 
@@ -109,17 +109,17 @@ class AgentDiscreteA2C(OnPolicyAgent):
         # loss_v = loss_actor_v + \
         #          self.params.CRITIC_LOSS_WEIGHT * loss_critic_v + self.params.ENTROPY_LOSS_WEIGHT * loss_entropy_v
         #
-        self.actor_optimizer.zero_grad()
-        (loss_actor_v + self.params.ENTROPY_LOSS_WEIGHT * loss_entropy_v).backward()
-        # loss_actor_v.backward()
-        nn_utils.clip_grad_norm_(self.model.base.actor_params, self.params.CLIP_GRAD)
-        self.actor_optimizer.step()
+        # self.actor_optimizer.zero_grad()
+        # (loss_actor_v + self.params.ENTROPY_LOSS_WEIGHT * loss_entropy_v).backward()
+        # # loss_actor_v.backward()
+        # nn_utils.clip_grad_norm_(self.model.base.actor_params, self.params.CLIP_GRAD)
+        # self.actor_optimizer.step()
 
-        # self.base_optimizer.zero_grad()
-        # (loss_actor_v + self.params.CRITIC_LOSS_WEIGHT * loss_critic_v +
-        #  self.params.ENTROPY_LOSS_WEIGHT * loss_entropy_v).backward()
-        # nn_utils.clip_grad_norm_(self.model.base.parameters(), self.params.CLIP_GRAD)
-        # self.base_optimizer.step()
+        self.base_optimizer.zero_grad()
+        loss_actor_v.backward(retain_graph=True)
+        (loss_critic_v + self.params.ENTROPY_LOSS_WEIGHT * loss_entropy_v).backward()
+        nn_utils.clip_grad_norm_(self.model.base.parameters(), self.params.CLIP_GRAD)
+        self.base_optimizer.step()
 
         gradients = self.model.get_gradients_for_current_parameters()
 
