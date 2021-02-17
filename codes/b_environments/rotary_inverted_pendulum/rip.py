@@ -183,26 +183,7 @@ class RotaryInvertedPendulumEnv(gym.Env):
         self.episode_action_reward_list.clear()
 
         if self.pendulum_type in [EnvironmentName.PENDULUM_MATLAB_V0, EnvironmentName.REAL_DEVICE_RIP]:
-            if self.pendulum_type == EnvironmentName.PENDULUM_MATLAB_V0:
-                self.pendulum_1_position, self.motor_position, self.pendulum_1_velocity, self.motor_velocity, \
-                self.simulation_time = self.plant.getHistory()
-            else:
-                rip_response = self.server_obj.reset(RipRequest(value=None))
 
-                self.motor_position = rip_response.arm_angle
-                self.motor_velocity = rip_response.arm_velocity
-                self.pendulum_1_position = rip_response.link_1_angle
-                self.pendulum_1_velocity = rip_response.link_1_velocity
-                self.simulation_time =None
-
-            state = (
-                math.cos(self.pendulum_1_position),
-                math.sin(self.pendulum_1_position),
-                self.pendulum_1_velocity,
-                math.cos(0.0),  # 1.0
-                math.sin(0.0),  # 0.0
-                self.motor_velocity,
-            )
 
             self.update_current_state(adjusted_pendulum_1_radian=0.0)
         elif self.pendulum_type in [EnvironmentName.PENDULUM_MATLAB_DOUBLE_RIP_V0, EnvironmentName.REAL_DEVICE_DOUBLE_RIP]:
