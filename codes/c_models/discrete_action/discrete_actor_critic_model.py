@@ -177,7 +177,7 @@ class ActorCriticCNNBase(nn.Module):
         #     fx = torch.tensor(inputs, dtype=torch.float32)
         fx = inputs.float() / 256
         conv_out = self.conv(fx).view(fx.size()[0], -1)
-        critic_values = self.critic_fc(conv_out.detach())
+        critic_values = self.critic_fc(conv_out)
         return critic_values
 
 
