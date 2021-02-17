@@ -11,7 +11,7 @@ from codes.b_environments.quanser_rotary_inverted_pendulum import quanser_servic
 from common.environments.environment import Environment
 
 from codes.b_environments.quanser_rotary_inverted_pendulum.quanser_service_pb2 import QuanserRequest
-
+from codes.a_config.parameters import PARAMETERS as params
 
 STATE_SIZE = 6
 
@@ -96,10 +96,10 @@ class EnvironmentQuanserRIP(gym.Env):
         action_meanings = ["LEFT", "STOP", "RIGHT"]
         return action_meanings
 
-    def pendulum_reset(self):
-        quanser_response = self.server_obj.step(QuanserRequest(value=0.0))
-        if quanser_response.message != "PENDULUM_RESET":
-            raise ValueError()
+    # def pendulum_reset(self):
+    #     quanser_response = self.server_obj.step(QuanserRequest(value=0.0))
+    #     if quanser_response.message != "PENDULUM_RESET":
+    #         raise ValueError()
 
     def reset(self):
         self.steps = 0
@@ -125,7 +125,6 @@ class EnvironmentQuanserRIP(gym.Env):
             math.sin(quanser_response.motor_radian),
             self.motor_velocity
         ]
-
         # wait_time = 1 if self.episode == 0 else 15  # if self.episode % 10 == 0 else 3
         wait_time = 1
         previousTime = time.perf_counter()
@@ -200,14 +199,13 @@ class EnvironmentQuanserRIP(gym.Env):
         done, info = self.__isDone()
 
         #=======================reward================================================================
-        self.reward = self.get_reward()
+        self.reward = self.get_reward(action)
         #=============================================================================================
         self.steps += 1
 
-        # if done:
-        #     print("pendulum radian : {0}, done: {1}, info: {2}, self.is_motor_limit: {3} \n\n".format(
-        #         self.pendulum_radian, done, info, self.is_motor_limit
-        #     ))
+        # print("pendulum radian : {0}, motor radian: {1}, reward: {2}, pendulum_velocity : {3} \n\n".format(
+        #     self.pendulum_radian, self.motor_radian, self.is_motor_limit, self.pendulum_velocity
+        # ))
 
         return next_state, self.reward, done, info
 
@@ -262,7 +260,7 @@ class EnvironmentQuanserRIP(gym.Env):
     #
     #     return reward
 
-    def get_reward(self):
+    def get_reward(self, action):
         if self.is_upright:
             position_reward = math.pi - abs(self.pendulum_radian)  # math.pi - math.radians(12) ~ math.pi
         else:
@@ -271,11 +269,14 @@ class EnvironmentQuanserRIP(gym.Env):
             else:
                 position_reward = (math.pi - abs(self.pendulum_radian)) / 2
 
-        energy_penalty = 1.0 * -1.0 * (abs(self.pendulum_velocity) + abs(self.motor_velocity)) / 100
+        energy_penalty = 1.0 * -1.0 * (abs(self.pendulum_velocity) + abs(self.motor_velocity)) / 2000
 
         reward = position_reward + energy_penalty
 
         reward = max(0.0, reward)
+
+        # open ai pendulum reward = -(theta^2 + 0.1theta_dt^2 + 0.001action^2)
+        # reward = -((self.pendulum_radian**2) + 0.1*((self.pendulum_velocity/100)**2) + 0.001*(((2*action)/params.ACTION_SCALE)**2))
 
         #print(position_reward, energy_penalty, reward)
 
