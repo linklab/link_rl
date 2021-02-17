@@ -146,8 +146,8 @@ class BaseModel(nn.Module):
     def check_gradient_nan(self, gradients):
         for layer_name, layer in gradients.items():
             for name, gradients in layer.items():
-                if torch.unique(gradients).shape[0] == 1 and torch.sum(gradients).item() == 0.0:
-                    print(layer_name, name, gradients)
+                # if torch.unique(gradients).shape[0] == 1 and torch.sum(gradients).item() == 0.0:
+                #     print(layer_name, name, gradients)
                 if torch.isnan(gradients).any():
                     print(layer_name, name, gradients.shape)
                     raise ValueError()
