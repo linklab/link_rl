@@ -123,7 +123,7 @@ class AgentDiscreteA2C(OnPolicyAgent):
 
         gradients = self.model.get_gradients_for_current_parameters()
 
-        print("critic: ", loss_critic_v.item(), "actor: ", loss_actor_v.item())
+        # print("critic: ", loss_critic_v.item(), "actor: ", loss_actor_v.item())
         self.model.check_gradient_nan(gradients)
 
         return gradients, loss_critic_v.item(), loss_actor_v.item() * -1.0
