@@ -58,7 +58,7 @@ class ActorCriticMLPBase(nn.Module):
             nn.Linear(self.hidden_3_size, num_outputs)
         )
 
-        self.actor.apply(self.init_weights)
+        # self.actor.apply(self.init_weights)
 
         self.critic = nn.Sequential(
             nn.Linear(num_inputs, self.hidden_1_size),
@@ -70,7 +70,7 @@ class ActorCriticMLPBase(nn.Module):
             nn.Linear(self.hidden_3_size, 1),
         )
 
-        self.critic.apply(self.init_weights)
+        # self.critic.apply(self.init_weights)
 
         self.actor_params = list(self.actor.parameters())
         self.critic_params = list(self.critic.parameters())
@@ -79,10 +79,10 @@ class ActorCriticMLPBase(nn.Module):
 
         self.train()
 
-    @staticmethod
-    def init_weights(m):
-        if type(m) == nn.Linear:
-            torch.nn.init.kaiming_normal_(m.weight)
+    # @staticmethod
+    # def init_weights(m):
+    #     if type(m) == nn.Linear:
+    #         torch.nn.init.kaiming_normal_(m.weight)
 
     def forward(self, inputs):
         actions = self.forward_actor(inputs)
@@ -153,8 +153,9 @@ class ActorCriticCNNBase(nn.Module):
     def forward(self, inputs):
         # inputs = F.normalize(inputs)
         fx = inputs.float() / 256
-        actions = self.forward_actor(fx)
-        critic_values = self.forward_critic(fx)
+        conv_out = self.conv(fx).view(fx.size()[0], -1)
+        actions = F.softmax(self.actor_fc(conv_out), dim=0)
+        critic_values = self.critic_fc(conv_out.detach())
         return actions, critic_values
 
     def forward_actor(self, inputs):
