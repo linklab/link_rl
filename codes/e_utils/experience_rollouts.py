@@ -89,7 +89,7 @@ class ExperienceSourceRollouts:
                     next_state = env.reset()
                     self.episode_reward_lst.append(episode_reward_lst[env_idx])
                     self.episode_done_step_lst.append(episode_done_step_lst[env_idx])
-                    episode_reward_lst[env_idx] = 0.0
+                    # episode_reward_lst[env_idx] = 0.0
                     episode_done_step_lst[env_idx] = 0
                 new_states.append(np.array(next_state))
                 dones.append(done)
