@@ -106,7 +106,16 @@ class ActorCriticCNNBase(nn.Module):
         super(ActorCriticCNNBase, self).__init__()
         self.__name__ = "ActorCriticCNNBase"
 
-        self.conv = nn.Sequential(
+        self.actor_conv = nn.Sequential(
+            nn.Conv2d(in_channels=input_shape[0], out_channels=32, kernel_size=8, stride=4),
+            nn.LeakyReLU(),
+            nn.Conv2d(in_channels=32, out_channels=64, kernel_size=4, stride=2),
+            nn.LeakyReLU(),
+            nn.Conv2d(in_channels=64, out_channels=64, kernel_size=3, stride=1),
+            nn.LeakyReLU()
+        )
+
+        self.critic_conv = nn.Sequential(
             nn.Conv2d(in_channels=input_shape[0], out_channels=32, kernel_size=8, stride=4),
             nn.LeakyReLU(),
             nn.Conv2d(in_channels=32, out_channels=64, kernel_size=4, stride=2),
@@ -129,14 +138,16 @@ class ActorCriticCNNBase(nn.Module):
             nn.Linear(512, 1)
         )
 
-        self.conv.apply(self.init_weights)
+        self.actor_conv.apply(self.init_weights)
+        self.critic_conv.apply(self.init_weights)
         self.actor_fc.apply(self.init_weights)
         self.critic_fc.apply(self.init_weights)
 
-        self.actor_params = list(self.conv.parameters()) + list(self.actor_fc.parameters())
-        self.critic_params = list(self.critic_fc.parameters())
+        self.actor_params = list(self.actor_conv.parameters()) + list(self.actor_fc.parameters())
+        self.critic_params = list(self.critic_conv.parameters()) + list(self.critic_fc.parameters())
 
-        self.layers_info = {'conv': self.conv, 'actor_fc': self.actor_fc, 'critic_fc': self.critic_fc}
+        self.layers_info = {'actor_conv': self.actor_conv, 'critic_conv': self.critic_conv,
+                            'actor_fc': self.actor_fc, 'critic_fc': self.critic_fc}
 
         self.train()
 
@@ -163,7 +174,7 @@ class ActorCriticCNNBase(nn.Module):
         else:
             fx = torch.tensor(inputs, dtype=torch.float32)
 
-        conv_out = self.conv(fx).view(fx.size()[0], -1)
+        conv_out = self.actor_conv(fx).view(fx.size()[0], -1)
         actions = F.softmax(self.actor_fc(conv_out), dim=0)
         return actions
 
@@ -174,7 +185,7 @@ class ActorCriticCNNBase(nn.Module):
         else:
             fx = torch.tensor(inputs, dtype=torch.float32)
 
-        conv_out = self.conv(fx).view(fx.size()[0], -1)
+        conv_out = self.critic_conv(fx).view(fx.size()[0], -1)
         critic_values = self.critic_fc(conv_out.detach())
         return critic_values
 
