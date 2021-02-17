@@ -50,28 +50,27 @@ class ActorCriticMLPBase(nn.Module):
 
         self.actor = nn.Sequential(
             nn.Linear(num_inputs, self.hidden_1_size),
-            nn.ReLU(),
+            nn.LeakyReLU(),
             nn.Linear(self.hidden_1_size, self.hidden_2_size),
-            nn.ReLU(),
+            nn.LeakyReLU(),
             nn.Linear(self.hidden_2_size, self.hidden_3_size),
-            nn.ReLU(),
-            nn.Linear(self.hidden_3_size, num_outputs),
-            nn.Tanh()
+            nn.LeakyReLU(),
+            nn.Linear(self.hidden_3_size, num_outputs)
         )
 
         # self.actor.apply(self.init_weights)
 
         self.critic = nn.Sequential(
             nn.Linear(num_inputs, self.hidden_1_size),
-            nn.ReLU(),
+            nn.LeakyReLU(),
             nn.Linear(self.hidden_1_size, self.hidden_2_size),
-            nn.ReLU(),
+            nn.LeakyReLU(),
             nn.Linear(self.hidden_2_size, self.hidden_3_size),
-            nn.ReLU(),
+            nn.LeakyReLU(),
             nn.Linear(self.hidden_3_size, 1),
         )
 
-        #self.critic.apply(self.init_weights)
+        # self.critic.apply(self.init_weights)
 
         self.actor_params = list(self.actor.parameters())
         self.critic_params = list(self.critic.parameters())
@@ -80,21 +79,24 @@ class ActorCriticMLPBase(nn.Module):
 
         self.train()
 
-    @staticmethod
-    def init_weights(m):
-        if type(m) == nn.Linear:
-            torch.nn.init.kaiming_normal_(m.weight)
+    # @staticmethod
+    # def init_weights(m):
+    #     if type(m) == nn.Linear:
+    #         torch.nn.init.kaiming_normal_(m.weight)
 
     def forward(self, inputs):
-        actions = self.actor(inputs)
-        critic_values = self.critic(inputs)
+        actions = self.forward_actor(inputs)
+        critic_values = self.forward_critic(inputs)
         return actions, critic_values
 
     def forward_actor(self, inputs):
-        actions = self.actor(inputs)
+        # inputs = F.normalize(inputs)
+        x = self.actor(inputs)
+        actions = F.softmax(x, dim=-1)
         return actions
 
     def forward_critic(self, inputs):
+        # inputs = F.normalize(inputs)
         critic_values = self.critic(inputs)
         return critic_values
 
@@ -106,30 +108,30 @@ class ActorCriticCNNBase(nn.Module):
 
         self.conv = nn.Sequential(
             nn.Conv2d(in_channels=input_shape[0], out_channels=32, kernel_size=8, stride=4),
-            nn.Tanh(),
+            nn.LeakyReLU(),
             nn.Conv2d(in_channels=32, out_channels=64, kernel_size=4, stride=2),
-            nn.Tanh(),
+            nn.LeakyReLU(),
             nn.Conv2d(in_channels=64, out_channels=64, kernel_size=3, stride=1),
-            nn.Tanh()
+            nn.LeakyReLU()
         )
 
         conv_out_size = self._get_conv_out(input_shape)
 
         self.actor_fc = nn.Sequential(
             nn.Linear(conv_out_size, 512),
-            nn.Tanh(),
+            nn.LeakyReLU(),
             nn.Linear(512, num_outputs)
         )
 
         self.critic_fc = nn.Sequential(
             nn.Linear(conv_out_size, 512),
-            nn.Tanh(),
+            nn.LeakyReLU(),
             nn.Linear(512, 1)
         )
 
-        self.conv.apply(self.init_weights)
-        self.actor_fc.apply(self.init_weights)
-        self.critic_fc.apply(self.init_weights)
+        # self.conv.apply(self.init_weights)
+        # self.actor_fc.apply(self.init_weights)
+        # self.critic_fc.apply(self.init_weights)
 
         self.actor_params = list(self.conv.parameters()) + list(self.actor_fc.parameters())
         self.critic_params = list(self.critic_fc.parameters())
@@ -142,33 +144,38 @@ class ActorCriticCNNBase(nn.Module):
         o = self.conv(Variable(torch.zeros(1, *shape)))
         return int(np.prod(o.size()))
 
-    @staticmethod
-    def init_weights(m):
-        if type(m) == nn.Linear or type(m) == nn.Conv2d:
-            torch.nn.init.kaiming_normal_(m.weight)
-            # torch.nn.init.orthogonal(m.weight, gain=np.sqrt(2))
+    # @staticmethod
+    # def init_weights(m):
+    #     if type(m) == nn.Linear or type(m) == nn.Conv2d:
+    #         torch.nn.init.kaiming_normal_(m.weight)
+    #         # torch.nn.init.orthogonal(m.weight, gain=np.sqrt(2))
 
     def forward(self, inputs):
-        actions = self.forward_actor(inputs)
-        critic_values = self.forward_critic(inputs)
+        # inputs = F.normalize(inputs)
+        fx = inputs.float() / 256
+        conv_out = self.conv(fx).view(fx.size()[0], -1)
+        actions = F.softmax(self.actor_fc(conv_out), dim=-1)
+        critic_values = self.critic_fc(conv_out.detach())
         return actions, critic_values
 
     def forward_actor(self, inputs):
-        if torch.is_tensor(inputs):
-            fx = inputs.to(torch.float32)
-        else:
-            fx = torch.tensor(inputs, dtype=torch.float32)
-
+        # inputs = F.normalize(inputs)
+        # if torch.is_tensor(inputs):
+        #     fx = inputs.to(torch.float32)
+        # else:
+        #     fx = torch.tensor(inputs, dtype=torch.float32)
+        fx = inputs.float() / 256
         conv_out = self.conv(fx).view(fx.size()[0], -1)
-        actions = F.softmax(self.actor_fc(conv_out), dim=0)
+        actions = F.softmax(self.actor_fc(conv_out), dim=-1)
         return actions
 
     def forward_critic(self, inputs):
-        if torch.is_tensor(inputs):
-            fx = inputs.to(torch.float32)
-        else:
-            fx = torch.tensor(inputs, dtype=torch.float32)
-
+        # inputs = F.normalize(inputs)
+        # if torch.is_tensor(inputs):
+        #     fx = inputs.to(torch.float32)
+        # else:
+        #     fx = torch.tensor(inputs, dtype=torch.float32)
+        fx = inputs.float() / 256
         conv_out = self.conv(fx).view(fx.size()[0], -1)
         critic_values = self.critic_fc(conv_out.detach())
         return critic_values
