@@ -167,13 +167,13 @@ class ActorCriticCNNBase(nn.Module):
             # torch.nn.init.orthogonal(m.weight, gain=np.sqrt(2))
 
     def forward(self, inputs):
-        # inputs = F.normalize(inputs)
+        inputs = F.normalize(inputs)
         actions = self.forward_actor(inputs)
         critic_values = self.forward_critic(inputs)
         return actions, critic_values
 
     def forward_actor(self, inputs):
-        # inputs = F.normalize(inputs)
+        inputs = F.normalize(inputs)
         if torch.is_tensor(inputs):
             fx = inputs.to(torch.float32)
         else:
@@ -184,14 +184,14 @@ class ActorCriticCNNBase(nn.Module):
         return actions
 
     def forward_critic(self, inputs):
-        # inputs = F.normalize(inputs)
+        inputs = F.normalize(inputs)
         if torch.is_tensor(inputs):
             fx = inputs.to(torch.float32)
         else:
             fx = torch.tensor(inputs, dtype=torch.float32)
 
         conv_out = self.critic_conv(fx).view(fx.size()[0], -1)
-        critic_values = self.critic_fc(conv_out.detach())
+        critic_values = self.critic_fc(conv_out)
         return critic_values
 
 
