@@ -50,28 +50,27 @@ class ActorCriticMLPBase(nn.Module):
 
         self.actor = nn.Sequential(
             nn.Linear(num_inputs, self.hidden_1_size),
-            nn.ReLU(),
+            nn.LeakyReLU(),
             nn.Linear(self.hidden_1_size, self.hidden_2_size),
-            nn.ReLU(),
+            nn.LeakyReLU(),
             nn.Linear(self.hidden_2_size, self.hidden_3_size),
-            nn.ReLU(),
-            nn.Linear(self.hidden_3_size, num_outputs),
-            nn.Tanh()
+            nn.LeakyReLU(),
+            nn.Linear(self.hidden_3_size, num_outputs)
         )
 
-        # self.actor.apply(self.init_weights)
+        self.actor.apply(self.init_weights)
 
         self.critic = nn.Sequential(
             nn.Linear(num_inputs, self.hidden_1_size),
-            nn.ReLU(),
+            nn.LeakyReLU(),
             nn.Linear(self.hidden_1_size, self.hidden_2_size),
-            nn.ReLU(),
+            nn.LeakyReLU(),
             nn.Linear(self.hidden_2_size, self.hidden_3_size),
-            nn.ReLU(),
+            nn.LeakyReLU(),
             nn.Linear(self.hidden_3_size, 1),
         )
 
-        #self.critic.apply(self.init_weights)
+        self.critic.apply(self.init_weights)
 
         self.actor_params = list(self.actor.parameters())
         self.critic_params = list(self.critic.parameters())
@@ -86,15 +85,18 @@ class ActorCriticMLPBase(nn.Module):
             torch.nn.init.kaiming_normal_(m.weight)
 
     def forward(self, inputs):
-        actions = self.actor(inputs)
-        critic_values = self.critic(inputs)
+        actions = self.forward_actor(inputs)
+        critic_values = self.forward_critic(inputs)
         return actions, critic_values
 
     def forward_actor(self, inputs):
-        actions = self.actor(inputs)
+        inputs = F.normalize(inputs)
+        x = self.actor(inputs)
+        actions = F.softmax(x, dim=-1)
         return actions
 
     def forward_critic(self, inputs):
+        inputs = F.normalize(inputs)
         critic_values = self.critic(inputs)
         return critic_values
 

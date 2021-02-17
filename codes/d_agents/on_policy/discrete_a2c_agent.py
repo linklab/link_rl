@@ -65,7 +65,6 @@ class AgentDiscreteA2C(OnPolicyAgent):
             actions = self.train_action_selector(probs_v)
         else:
             actions = self.test_and_play_action_selector(probs_v)
-
         critics = torch.zeros(size=probs_v.size())
         return actions, critics
 
@@ -124,7 +123,7 @@ class AgentDiscreteA2C(OnPolicyAgent):
 
         gradients = self.model.get_gradients_for_current_parameters()
 
-        self.model.check_gradient_nan(gradients)
         print("critic: ", loss_critic_v.item(), "actor: ", loss_actor_v.item())
+        self.model.check_gradient_nan(gradients)
 
         return gradients, loss_critic_v.item(), loss_actor_v.item() * -1.0
