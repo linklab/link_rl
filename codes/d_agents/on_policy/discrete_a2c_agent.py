@@ -101,8 +101,7 @@ class AgentDiscreteA2C(OnPolicyAgent):
         loss_actor_v = -1.0 * reinforced_log_pi_action_v.mean()
 
         log_pi_v = torch.log(probs_v + 1e-5)
-        entropy_v = -1.0 * (probs_v * log_pi_v).sum(dim=1).mean()
-        loss_entropy_v = -1.0 * entropy_v
+        loss_entropy_v = (probs_v * log_pi_v).sum(dim=1).mean()
 
         # loss_actor_v를 작아지도록 만듦 --> log_pi_v.mean()가 커지도록 만듦
         # loss_entropy_v를 작아지도록 만듦 --> entropy_v가 커지도록 만듦
