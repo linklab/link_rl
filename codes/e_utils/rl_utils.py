@@ -311,7 +311,7 @@ def get_optimizer(parameters, learning_rate, params):
     elif params.OPTIMIZER == OptimizerName.NESTEROV:
         optimizer = optim.SGD(params=parameters, lr=learning_rate, nesterov=True, momentum=0.9, weight_decay=1e-4)
     elif params.OPTIMIZER == OptimizerName.RMSProp:
-        optimizer = torch.optim.RMSprop(params=parameters, lr=learning_rate, decay=0.99, epsilon=1e-5)
+        optimizer = torch.optim.RMSprop(params=parameters, lr=learning_rate, alpha=0.99, epsilon=1e-5)
     else:
         optimizer = None
 
