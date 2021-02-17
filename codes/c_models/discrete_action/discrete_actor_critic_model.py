@@ -124,16 +124,17 @@ class ActorCriticCNNBase(nn.Module):
             nn.LeakyReLU()
         )
 
-        conv_out_size = self._get_conv_out(input_shape)
+        actor_conv_out_size = self._get_actor_conv_out(input_shape)
+        critic_conv_out_size = self._get_critic_conv_out(input_shape)
 
         self.actor_fc = nn.Sequential(
-            nn.Linear(conv_out_size, 512),
+            nn.Linear(actor_conv_out_size, 512),
             nn.LeakyReLU(),
             nn.Linear(512, num_outputs)
         )
 
         self.critic_fc = nn.Sequential(
-            nn.Linear(conv_out_size, 512),
+            nn.Linear(critic_conv_out_size, 512),
             nn.LeakyReLU(),
             nn.Linear(512, 1)
         )
@@ -151,8 +152,12 @@ class ActorCriticCNNBase(nn.Module):
 
         self.train()
 
-    def _get_conv_out(self, shape):
-        o = self.conv(Variable(torch.zeros(1, *shape)))
+    def _get_actor_conv_out(self, shape):
+        o = self.actor_conv(Variable(torch.zeros(1, *shape)))
+        return int(np.prod(o.size()))
+
+    def _get_critic_conv_out(self, shape):
+        o = self.critic_conv(Variable(torch.zeros(1, *shape)))
         return int(np.prod(o.size()))
 
     @staticmethod
