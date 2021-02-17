@@ -164,7 +164,7 @@ class ExperienceSource:
                         if 'ale.lives' not in info or info['ale.lives'] == 0:
                             self.episode_reward_lst.append(cur_rewards[idx])
                             self.episode_done_step_lst.append(cur_steps[idx])
-                            cur_rewards[idx] = 0.0
+                            # cur_rewards[idx] = 0.0
                             cur_steps[idx] = 0
 
                         # vectorized envs are reset automatically
