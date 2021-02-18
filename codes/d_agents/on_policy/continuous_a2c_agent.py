@@ -30,23 +30,11 @@ class AgentContinuousA2C(OnPolicyAgent):
             worker_id=worker_id, input_shape=input_shape, num_outputs=num_outputs, params=params, device=self.device
         )
 
-        self.actor_optimizer = rl_utils.get_optimizer(
-            parameters=self.model.base.actor.parameters(),
-            learning_rate=self.params.ACTOR_LEARNING_RATE,
-            params=params
-        )
-
-        self.critic_optimizer = rl_utils.get_optimizer(
-            parameters=self.model.base.critic.parameters(),
+        self.optimizer = rl_utils.get_optimizer(
+            parameters=self.model.base.parameters(),
             learning_rate=self.params.LEARNING_RATE,
             params=params
         )
-
-        # self.optimizer = rl_utils.get_optimizer(
-        #     parameters=self.model.base.parameters(),
-        #     learning_rate=self.params.LEARNING_RATE,
-        #     params=params
-        # )
 
         self.buffer = replay_buffer.ExperienceReplayBuffer(experience_source=None, buffer_size=self.params.BATCH_SIZE)
 
@@ -82,11 +70,6 @@ class AgentContinuousA2C(OnPolicyAgent):
         # Critic Optimization
         loss_critic_v = F.mse_loss(input=value_v.squeeze(-1), target=target_action_values_v.detach())
 
-        self.critic_optimizer.zero_grad()
-        loss_critic_v.backward()
-        nn_utils.clip_grad_norm_(self.model.base.critic.parameters(), self.params.CLIP_GRAD)
-        self.critic_optimizer.step()
-
         # Actor Optimization
         # advantage_v.shape: (32,)
         advantage_v = target_action_values_v - value_v.squeeze(-1)
@@ -97,22 +80,17 @@ class AgentContinuousA2C(OnPolicyAgent):
         dist = Normal(loc=mu_v, scale=torch.sqrt(var_v))
         reinforced_log_pi_action_v = advantage_v.detach() * dist.log_prob(actions_v).squeeze(-1)
 
-        #print(advantage_v.size(), dist.log_prob(actions_v).squeeze(-1).size(), reinforced_log_pi_action_v.size())
-
         loss_actor_v = -1.0 * reinforced_log_pi_action_v.mean()
         loss_entropy_v = -1.0 * dist.entropy().mean()
 
         # loss_actor_v를 작아지도록 만듦 --> log_pi_v.mean()가 커지도록 만듦
         # loss_entropy_v를 작아지도록 만듦 --> entropy_v가 커지도록 만듦
-        # print(loss_critic_v, loss_actor_v, loss_entropy_v)
-        # loss_v = loss_actor_v + \
-        #          self.params.CRITIC_LOSS_WEIGHT * loss_critic_v + \
-        #          self.params.ENTROPY_LOSS_WEIGHT * loss_entropy_v
 
-        self.actor_optimizer.zero_grad()
-        (loss_actor_v + self.params.ENTROPY_LOSS_WEIGHT * loss_entropy_v).backward()
-        nn_utils.clip_grad_norm_(self.model.base.actor.parameters(), self.params.CLIP_GRAD)
-        self.actor_optimizer.step()
+        self.optimizer.zero_grad()
+        loss_actor_v.backward(retain_graph=True)
+        (loss_critic_v + self.params.ENTROPY_LOSS_WEIGHT * loss_entropy_v).backward()
+        nn_utils.clip_grad_norm_(self.model.base.parameters(), self.params.CLIP_GRAD)
+        self.optimizer.step()
 
         gradients = self.model.get_gradients_for_current_parameters()
 

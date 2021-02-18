@@ -38,18 +38,6 @@ class AgentDiscreteA2C(OnPolicyAgent):
             params=params
         )
 
-        self.actor_optimizer = rl_utils.get_optimizer(
-            parameters=self.model.base.actor_params,
-            learning_rate=self.params.ACTOR_LEARNING_RATE,
-            params=params
-        )
-
-        self.critic_optimizer = rl_utils.get_optimizer(
-            parameters=self.model.base.critic_params,
-            learning_rate=self.params.LEARNING_RATE,
-            params=params
-        )
-
         self.buffer = replay_buffer.ExperienceReplayBuffer(
             experience_source=None, buffer_size=self.params.BATCH_SIZE
         )
@@ -79,24 +67,14 @@ class AgentDiscreteA2C(OnPolicyAgent):
         states_v, actions_v, target_action_values_v = self.unpack_batch_for_actor_critic(batch, self.model, self.params)
 
         probs_v, value_v = self.model.base.forward(states_v)
-        # value_v = self.model.base.forward_critic(states_v)
 
         # Critic Optimization
         loss_critic_v = F.mse_loss(input=value_v.squeeze(-1), target=target_action_values_v.detach())
-
-        # self.critic_optimizer.zero_grad()
-        # loss_critic_v.backward()
-        # nn_utils.clip_grad_norm_(self.model.base.critic_params, self.params.CLIP_GRAD)
-        # self.critic_optimizer.step()
-
-        #nn_utils.clip_grad_norm_(self.model.base.critic.parameters(), self.params.CLIP_GRAD)
 
         # advantage_v.shape: (32,)
         advantage_v = target_action_values_v.detach() - value_v.squeeze(-1).detach()
         log_pi_action_v = torch.log(probs_v.gather(dim=1, index=actions_v.unsqueeze(-1)) + 1e-5).squeeze(-1)
         reinforced_log_pi_action_v = advantage_v.detach() * log_pi_action_v
-
-        #print(actions_v.size(), advantage_v.size(), log_pi_v.size(), log_pi_action_v.size(), reinforced_log_pi_action_v.size())
 
         loss_actor_v = -1.0 * reinforced_log_pi_action_v.mean()
 
@@ -105,14 +83,6 @@ class AgentDiscreteA2C(OnPolicyAgent):
 
         # loss_actor_v를 작아지도록 만듦 --> log_pi_v.mean()가 커지도록 만듦
         # loss_entropy_v를 작아지도록 만듦 --> entropy_v가 커지도록 만듦
-        # loss_v = loss_actor_v + \
-        #          self.params.CRITIC_LOSS_WEIGHT * loss_critic_v + self.params.ENTROPY_LOSS_WEIGHT * loss_entropy_v
-        #
-        # self.actor_optimizer.zero_grad()
-        # (loss_actor_v + self.params.ENTROPY_LOSS_WEIGHT * loss_entropy_v).backward()
-        # # loss_actor_v.backward()
-        # nn_utils.clip_grad_norm_(self.model.base.actor_params, self.params.CLIP_GRAD)
-        # self.actor_optimizer.step()
 
         self.base_optimizer.zero_grad()
         loss_actor_v.backward(retain_graph=True)
@@ -122,7 +92,6 @@ class AgentDiscreteA2C(OnPolicyAgent):
 
         gradients = self.model.get_gradients_for_current_parameters()
 
-        # print("critic: ", loss_critic_v.item(), "actor: ", loss_actor_v.item())
         self.model.check_gradient_nan(gradients)
 
         return gradients, loss_critic_v.item(), loss_actor_v.item() * -1.0
