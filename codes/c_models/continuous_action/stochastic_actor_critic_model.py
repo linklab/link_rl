@@ -40,11 +40,11 @@ class StochasticActorCriticMLPBase(nn.Module):
 
         self.critic = nn.Sequential(
             nn.Linear(num_inputs, self.hidden_1_size),
-            nn.ReLU(),
+            nn.LeakyReLU(),
             nn.Linear(self.hidden_1_size, self.hidden_2_size),
-            nn.ReLU(),
+            nn.LeakyReLU(),
             nn.Linear(self.hidden_2_size, self.hidden_3_size),
-            nn.ReLU(),
+            nn.LeakyReLU(),
             nn.Linear(self.hidden_3_size, 1),
         )
 
@@ -73,11 +73,11 @@ class ActorMLPBase(nn.Module):
 
         self.net = nn.Sequential(
             nn.Linear(num_inputs, self.hidden_1_size),
-            nn.ReLU(),
+            nn.LeakyReLU(),
             nn.Linear(self.hidden_1_size, self.hidden_2_size),
-            nn.ReLU(),
+            nn.LeakyReLU(),
             nn.Linear(self.hidden_2_size, self.hidden_3_size),
-            nn.ReLU(),
+            nn.LeakyReLU(),
         )
 
         self.mu = nn.Sequential(
@@ -89,21 +89,6 @@ class ActorMLPBase(nn.Module):
             nn.Linear(self.hidden_3_size, num_outputs),
             nn.Softplus()
         )
-
-        #self.var = torch.ones(num_outputs) * 0.25
-
-        #self.logstd = nn.Parameter(torch.zeros(num_outputs))
-
-        # self.var = nn.Sequential(
-        #     nn.Linear(num_inputs, self.hidden_1_size),
-        #     nn.ReLU(),
-        #     nn.Linear(self.hidden_1_size, self.hidden_2_size),
-        #     nn.ReLU(),
-        #     nn.Linear(self.hidden_2_size, self.hidden_3_size),
-        #     nn.ReLU(),
-        #     nn.Linear(self.hidden_3_size, num_outputs),
-        #     nn.Softplus(),
-        # )
 
     @staticmethod
     def init_weights(m):
