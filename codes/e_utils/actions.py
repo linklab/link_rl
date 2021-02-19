@@ -159,7 +159,7 @@ class EpsilonGreedyDDPGActionSelector:
         self.ou_enabled = ou_enabled
         self.scale_factor = scale_factor
 
-    def __call__(self, mu, agent_states, ou_theta=0.15, ou_mu=0.0, ou_sigma=0.9): #default ou_sigma = 0.2
+    def __call__(self, mu, agent_states, ou_theta=0.15, ou_mu=0.0, ou_sigma=0.6): #default ou_sigma = 0.2
         assert isinstance(mu, np.ndarray)
         actions = np.copy(mu)
         if isinstance(agent_states, list):

@@ -48,7 +48,7 @@ class DeterministicActorCriticMLPBase(nn.Module):
             nn.Linear(self.hidden_3_size, num_outputs)
         )
 
-        self.actor.apply(self.init_weights)
+        # self.actor.apply(self.init_weights)
 
         self.critic = nn.Sequential(
             nn.Linear(num_inputs + num_outputs, self.hidden_1_size),
@@ -57,10 +57,10 @@ class DeterministicActorCriticMLPBase(nn.Module):
             nn.LeakyReLU(),
             nn.Linear(self.hidden_2_size, self.hidden_3_size),
             nn.LeakyReLU(),
-            nn.Linear(self.hidden_3_size, 1),
+            nn.Linear(self.hidden_3_size, 1)
         )
 
-        self.critic.apply(self.init_weights)
+        # self.critic.apply(self.init_weights)
 
         self.actor_params = list(self.actor.parameters())
         self.critic_params = list(self.critic.parameters())

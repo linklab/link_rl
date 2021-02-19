@@ -153,7 +153,7 @@ class EnvironmentQuanserRIP(gym.Env):
         if type(action) is np.ndarray:
             action = action[0]
 
-        motor_power = action
+        motor_power = action * 200
 
         self.previous_time = time.perf_counter()
         #==================== Grpc and use sample time========================================
