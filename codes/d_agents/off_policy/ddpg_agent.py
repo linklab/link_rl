@@ -132,13 +132,16 @@ class AgentDDPG(OffPolicyAgent):
 
         if self.params.PER_PROPORTIONAL or self.params.PER_RANK_BASED:
             batch_l1_loss = F.smooth_l1_loss(q_v, target_q_v.detach(), reduction='none')  # for PER
+            batch_mse1_loss = F.mse_loss(q_v, target_q_v.detach(), reduction='none')  # for PER
             batch_weights_v = torch.tensor(batch_weights)
-            critic_loss_v = batch_weights_v * batch_l1_loss
+            # critic_loss_v = batch_weights_v * batch_l1_loss
+            critic_loss_v = batch_weights_v * batch_mse1_loss
 
             self.buffer.update_priorities(batch_indices, batch_l1_loss.detach().cpu().numpy() + 1e-5)
             self.buffer.update_beta(step_idx)
         else:
-            critic_loss_v = F.smooth_l1_loss(q_v, target_q_v.detach(), reduction='none')
+            # critic_loss_v = F.smooth_l1_loss(q_v, target_q_v.detach(), reduction='none')
+            critic_loss_v = F.mse_loss(q_v, target_q_v.detach(), reduction='none')
 
         loss_critic_v = critic_loss_v.mean()
 
