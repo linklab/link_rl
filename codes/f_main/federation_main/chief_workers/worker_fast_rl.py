@@ -8,7 +8,7 @@ from collections import deque
 import numpy as np
 import torch
 
-from codes.e_utils.experience_tracker import RewardTracker
+from codes.e_utils.train_tracker import SpeedTracker
 
 current_path = os.path.dirname(os.path.realpath(__file__))
 PROJECT_HOME = os.path.abspath(os.path.join(current_path, os.pardir, os.pardir, os.pardir, os.pardir))
@@ -134,7 +134,7 @@ class WorkerFastRL:
         episode = 0
         stat = None
 
-        with RewardTracker(params=params, frame=None, stat=stat, worker_id=self.worker_id) as reward_tracker:
+        with SpeedTracker(params=params, frame=None, stat=stat, worker_id=self.worker_id) as reward_tracker:
             while step_idx < params.MAX_GLOBAL_STEP:
                 # 1 스텝 진행하고 exp를 exp_queue에 넣음
                 step_idx += params.TRAIN_STEP_FREQ
