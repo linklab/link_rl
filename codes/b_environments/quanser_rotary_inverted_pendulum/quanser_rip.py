@@ -281,3 +281,6 @@ class EnvironmentQuanserRIP(gym.Env):
         #print(position_reward, energy_penalty, reward)
 
         return reward
+
+    def render(self):
+        pass
