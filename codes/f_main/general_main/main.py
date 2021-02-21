@@ -154,7 +154,7 @@ def play_func(exp_queue, agent):
                             if params.MODEL_SAVE_MODE in [ModelSaveMode.TRAIN, ModelSaveMode.TEST]:
                                 if params.MODEL_SAVE_MODE == ModelSaveMode.TRAIN:
                                     test_mean_episode_reward = np.mean(train_episode_reward_lst_for_test).item()
-                                    test_std = np.std(train_episode_reward_lst_for_test)
+                                    test_std = np.std(train_episode_reward_lst_for_test).item()
                                     train_episode_reward_lst_for_test.clear()
                                     test_env_str = colored("TRAIN ENV", "yellow")
                                 else:
