@@ -48,7 +48,7 @@ os.environ['KMP_DUPLICATE_LIB_OK'] = 'True'
 
 device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 
-print(device, "!!!!")
+print("DEVICE: {0}".format(device))
 
 my_logger = get_logger("main")
 
