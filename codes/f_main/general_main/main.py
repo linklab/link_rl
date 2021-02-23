@@ -258,6 +258,7 @@ def main():
 
     while play_proc.is_alive():
         step_idx += params.TRAIN_STEP_FREQ
+        solved = False
         for _ in range(params.TRAIN_STEP_FREQ):
             exp = exp_queue.get()
             if isinstance(exp, dict):
@@ -294,37 +295,40 @@ def main():
                 continue
 
             if exp is None:
+                solved = True
                 play_proc.join()
                 break
-            agent.buffer._add(exp)
-
-        if isinstance(agent, OnPolicyAgent):
-            if params.RL_ALGORITHM in [RLAlgorithmName.CONTINUOUS_PPO_V0, RLAlgorithmName.DISCRETE_PPO_V0]:
-                if len(agent.buffer) < params.PPO_TRAJECTORY_SIZE:
-                    continue
             else:
-                if len(agent.buffer) < params.BATCH_SIZE:
-                    continue
-            _, last_loss, actor_objective = agent.train(step_idx=step_idx)
-            loss_dequeue.append(last_loss)
-            if actor_objective:
-                actor_objective_dequeue.append(actor_objective)
-            # On-policy는 현재의 정책을 통해 산출된 경험정보만을 활용하여 NN을 업데이트해야 함.
-            # 따라서, 현재 학습에 사용된 Buffer는 깨끗하게 지워야 함.
-            agent.buffer.clear()
-        elif isinstance(agent, OffPolicyAgent):
-            if len(agent.buffer) < params.MIN_REPLAY_SIZE_FOR_TRAIN:
-                continue
-            _, last_loss, actor_objective = agent.train(step_idx=step_idx)
-            loss_dequeue.append(last_loss)
-            if actor_objective:
-                actor_objective_dequeue.append(actor_objective)
-        else:
-            raise ValueError()
+                agent.buffer._add(exp)
 
-        if hasattr(params, "PER_RANK_BASED") and getattr(params, "PER_RANK_BASED"):
-            if step_idx % 100 < params.TRAIN_STEP_FREQ:
-                agent.buffer.rebalance()
+        if not solved:
+            if isinstance(agent, OnPolicyAgent):
+                if params.RL_ALGORITHM in [RLAlgorithmName.CONTINUOUS_PPO_V0, RLAlgorithmName.DISCRETE_PPO_V0]:
+                    if len(agent.buffer) < params.PPO_TRAJECTORY_SIZE:
+                        continue
+                else:
+                    if len(agent.buffer) < params.BATCH_SIZE:
+                        continue
+                _, last_loss, actor_objective = agent.train(step_idx=step_idx)
+                loss_dequeue.append(last_loss)
+                if actor_objective:
+                    actor_objective_dequeue.append(actor_objective)
+                # On-policy는 현재의 정책을 통해 산출된 경험정보만을 활용하여 NN을 업데이트해야 함.
+                # 따라서, 현재 학습에 사용된 Buffer는 깨끗하게 지워야 함.
+                agent.buffer.clear()
+            elif isinstance(agent, OffPolicyAgent):
+                if len(agent.buffer) < params.MIN_REPLAY_SIZE_FOR_TRAIN:
+                    continue
+                _, last_loss, actor_objective = agent.train(step_idx=step_idx)
+                loss_dequeue.append(last_loss)
+                if actor_objective:
+                    actor_objective_dequeue.append(actor_objective)
+            else:
+                raise ValueError()
+
+            if hasattr(params, "PER_RANK_BASED") and getattr(params, "PER_RANK_BASED"):
+                if step_idx % 100 < params.TRAIN_STEP_FREQ:
+                    agent.buffer.rebalance()
 
 
 if __name__ == "__main__":
