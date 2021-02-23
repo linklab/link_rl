@@ -71,7 +71,7 @@ def play_main(params, env):
             #         num_episode, num_episode_step, num_step
             #     ))
 
-            time.sleep(0.05)
+            #time.sleep(0.001)
 
         print("EPISODE: {0}, EPISODE STEPS: {1}, TOTAL STEPS: {2}, EPISODE DONE --> EPISODE REWARD: {3}".format(
             num_episode, num_episode_step, num_step, episode_reward
