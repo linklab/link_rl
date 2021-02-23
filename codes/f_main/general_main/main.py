@@ -16,7 +16,7 @@ from codes.b_environments.trade.trade_action_selector import EpsilonGreedyTradeD
     ArgmaxTradeActionSelector
 from codes.d_agents.off_policy.off_policy_agent import OffPolicyAgent
 from codes.d_agents.on_policy.on_policy_agent import OnPolicyAgent
-from codes.e_utils.rl_utils import get_environment_input_output_info
+from codes.e_utils.rl_utils import get_environment_input_output_info, MODEL_SAVE_FILE_PREFIX, MODEL_ZOO_SAVE_DIR
 from codes.e_utils.actions import EpsilonTracker
 
 print("PyTorch Version", torch.__version__)
@@ -30,7 +30,7 @@ from codes.a_config.parameters import PARAMETERS as params
 
 from codes.e_utils import rl_utils
 from codes.e_utils.common_utils import save_model, print_environment_info, remove_models, agent_model_test, \
-    print_performance, print_agent_info
+    print_performance, print_agent_info, load_model
 from codes.e_utils.train_tracker import SpeedTracker, EarlyStopping
 from codes.e_utils.logger import get_logger
 from codes.e_utils.names import DeepLearningModelName, RLAlgorithmName, EnvironmentName, ModelSaveMode, AgentMode
@@ -51,12 +51,6 @@ device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 print("DEVICE: {0}".format(device))
 
 my_logger = get_logger("main")
-
-
-if isinstance(params, PARAMETERS_GENERAL_TRADE_DQN):
-    model_save_file_prefix = "_".join([params.ENVIRONMENT_ID.value, params.COIN_NAME, params.TIME_UNIT])
-else:
-    model_save_file_prefix = params.ENVIRONMENT_ID.value
 
 
 def play_func(exp_queue, agent):
@@ -103,7 +97,7 @@ def play_func(exp_queue, agent):
         verbose=True,
         delta=0.0,
         model_save_dir=MODEL_SAVE_DIR,
-        model_save_file_prefix=model_save_file_prefix,
+        model_save_file_prefix=MODEL_SAVE_FILE_PREFIX,
         agent=agent,
         params=params
     )
@@ -203,10 +197,10 @@ def play_func(exp_queue, agent):
 
             if params.MODEL_SAVE_MODE == ModelSaveMode.FINAL_ONLY:
                 remove_models(
-                    MODEL_SAVE_DIR, model_save_file_prefix, agent
+                    MODEL_SAVE_DIR, MODEL_SAVE_FILE_PREFIX, agent
                 )
                 save_model(
-                    MODEL_SAVE_DIR, model_save_file_prefix, agent, step_idx, np.mean(train_episode_reward_lst_for_stat)
+                    MODEL_SAVE_DIR, MODEL_SAVE_FILE_PREFIX, agent, step_idx, np.mean(train_episode_reward_lst_for_stat)
                 )
         finally:
             if params.ENVIRONMENT_ID in [EnvironmentName.REAL_DEVICE_RIP, EnvironmentName.REAL_DEVICE_DOUBLE_RIP]:
@@ -225,6 +219,9 @@ def main():
     agent = rl_utils.get_rl_agent(
         input_shape, num_outputs, action_min, action_max, worker_id=0, params=params, device=device
     )
+
+    load_model(MODEL_ZOO_SAVE_DIR, MODEL_SAVE_FILE_PREFIX, agent, inquery=True)
+
     print_agent_info(agent, params)
 
     agent.model.share_memory()

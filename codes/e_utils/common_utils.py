@@ -185,28 +185,40 @@ def save_model(model_save_dir, model_save_file_prefix, agent, step, episode_rewa
     return model_save_filename
 
 
-def load_model(model_save_dir, model_save_file_prefix, agent, step=None):
+def load_model(model_save_dir, model_save_file_prefix, agent, step=None, inquery=False):
     if step:
-        saved_models = glob.glob(os.path.join(
+        model_path = os.path.join(
             model_save_dir, "{0}_{1}_{2}_{3}_*.pth".format(
                 model_save_file_prefix, agent.__name__, agent.model.__name__, step
             )
-        ))
-
+        )
     else:
-        saved_models = glob.glob(os.path.join(
+        model_path = os.path.join(
             model_save_dir, "{0}_{1}_{2}_*.pth".format(model_save_file_prefix, agent.__name__, agent.model.__name__)
-        ))
+        )
 
-    saved_models.sort(key=lambda filename: int(filename.split("/")[-1].split("_")[-2]))
-    assert len(saved_models) > 0, "※※※※※※※※※※ There is no model !!!: {0} ※※※※※※※※※※".format(saved_models)
+    saved_models = glob.glob(model_path)
 
-    saved_model = saved_models[-1]
-    print("SAVED MODEL FILE NAME: {0}".format(saved_model))
-    device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
-    model_params = torch.load(saved_model, map_location=device)
+    if len(saved_models) > 0:
+        saved_models.sort(key=lambda filename: int(filename.split("/")[-1].split("_")[-2]))
+        saved_model = saved_models[-1]
+        print("SAVED MODEL FILE NAME: {0}".format(saved_model))
 
-    agent.model.load_state_dict(model_params)
+        is_load = False
+        if inquery:
+            answer = input("Do you want load the saved model from {0} [Y or y / N or n]".format(saved_model))
+            if answer in ["Y", "y"]:
+                is_load = True
+        else:
+            is_load = True
+
+        if is_load:
+            device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+            model_params = torch.load(saved_model, map_location=device)
+            agent.model.load_state_dict(model_params)
+            print("MODEL LOADED SUCCESSFULLY FROM {0}!".format(saved_model))
+    else:
+        print("※※※※※※※※※※ There is no saved model for !!!: {0} ※※※※※※※※※※".format(model_path))
 
 
 def agent_model_test(params, test_env, agent):
