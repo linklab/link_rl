@@ -174,9 +174,9 @@ class EpsilonGreedyDDPGActionSelector:
             # agent_states = 1.0       +    0.15 * (0.0 - 1.0)            + new_normal_random
             agent_states = agent_states + ou_theta * (ou_mu - agent_states) + ou_sigma * np.random.normal(size=agent_states.shape)
 
-            # print("actions: {0:7.4f}, epsilon: {1:7.4f}, noises: {2:7.4f}, final action: {3:7.4f}".format(
-            #     actions[0][0], self.epsilon, (self.epsilon * agent_states)[0][0], (actions + self.epsilon * agent_states)[0][0]
-            # ))
+            print("actions: {0:7.4f}, epsilon: {1:7.4f}, noises: {2:7.4f}, final action: {3:7.4f}".format(
+                actions[0][0], self.epsilon, (self.epsilon * agent_states)[0][0], (actions + self.epsilon * agent_states)[0][0]
+            ))
 
             actions = actions + self.epsilon * agent_states
 
@@ -239,5 +239,5 @@ class EpsilonTracker:
         #self.udpate(0)
 
     def udpate(self, frame: int):
-        eps = self.eps_start - (frame / self.eps_frames) * self.eps_start
+        eps = self.eps_start - (frame / self.eps_frames)
         self.action_selector.epsilon = max(self.eps_final, eps)
