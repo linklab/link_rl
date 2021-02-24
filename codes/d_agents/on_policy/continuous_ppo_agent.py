@@ -51,7 +51,7 @@ class AgentContinuousPPO(OnPolicyAgent):
         if not isinstance(states, torch.FloatTensor):
             states = float32_preprocessor(states).to(self.device)
 
-        mu_v, var_v = self.model.base.forward_actor(states)
+        mu_v, var_v = self.model.base.actor(states)
 
         if self.agent_mode == AgentMode.TRAIN:
             actions = self.train_action_selector(mu_v, var_v, self.action_min, self.action_max)
@@ -127,7 +127,6 @@ class AgentContinuousPPO(OnPolicyAgent):
                     batch_ratio_v, min=1.0 - self.params.PPO_EPSILON_CLIP, max=1.0 + self.params.PPO_EPSILON_CLIP
                 )
                 loss_actor_v = -1.0 * torch.min(batch_surrogate_1_v, batch_surrogate_2_v).mean()
-
                 loss_entropy_v = -1.0 * batch_dist_entropy_v.mean()
 
                 loss_v = loss_actor_v + \
