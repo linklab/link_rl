@@ -10,6 +10,9 @@ import torch
 from torch import optim
 import os, sys
 
+from codes.a_config.f_trade_parameters.parameters_trade_dqn import PARAMETERS_GENERAL_TRADE_DQN
+from codes.a_config.parameters import PARAMETERS as params
+
 from codes.b_environments.trade.trade_data import get_data
 from codes.c_models.continuous_action.soft_actor_critic_model import SoftActorCriticModel
 from codes.d_agents.on_policy.continuous_sac_agent import AgentSAC
@@ -35,6 +38,14 @@ from codes.d_agents.off_policy.ddpg_agent import AgentDDPG
 
 from codes.e_utils.common_utils import make_atari_env
 from codes.e_utils.names import EnvironmentName, DeepLearningModelName, RLAlgorithmName, OptimizerName, AgentMode
+
+
+MODEL_ZOO_SAVE_DIR = os.path.join(PROJECT_HOME, "codes", "g_play", "model_zoo")
+
+if isinstance(params, PARAMETERS_GENERAL_TRADE_DQN):
+    MODEL_SAVE_FILE_PREFIX = "_".join([params.ENVIRONMENT_ID.value, params.COIN_NAME, params.TIME_UNIT])
+else:
+    MODEL_SAVE_FILE_PREFIX = params.ENVIRONMENT_ID.value
 
 
 def get_environment(params):
@@ -316,3 +327,4 @@ def get_optimizer(parameters, learning_rate, params):
         optimizer = None
 
     return optimizer
+

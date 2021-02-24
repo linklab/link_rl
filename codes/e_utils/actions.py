@@ -239,5 +239,5 @@ class EpsilonTracker:
         #self.udpate(0)
 
     def udpate(self, frame: int):
-        eps = self.eps_start - (frame / self.eps_frames) * self.eps_start
+        eps = self.eps_start - (frame / self.eps_frames)
         self.action_selector.epsilon = max(self.eps_final, eps)

@@ -16,7 +16,7 @@ from codes.b_environments.trade.trade_action_selector import EpsilonGreedyTradeD
     ArgmaxTradeActionSelector
 from codes.d_agents.off_policy.off_policy_agent import OffPolicyAgent
 from codes.d_agents.on_policy.on_policy_agent import OnPolicyAgent
-from codes.e_utils.rl_utils import get_environment_input_output_info
+from codes.e_utils.rl_utils import get_environment_input_output_info, MODEL_SAVE_FILE_PREFIX, MODEL_ZOO_SAVE_DIR
 from codes.e_utils.actions import EpsilonTracker
 
 print("PyTorch Version", torch.__version__)
@@ -30,7 +30,7 @@ from codes.a_config.parameters import PARAMETERS as params
 
 from codes.e_utils import rl_utils
 from codes.e_utils.common_utils import save_model, print_environment_info, remove_models, agent_model_test, \
-    print_performance, print_agent_info
+    print_performance, print_agent_info, load_model
 from codes.e_utils.train_tracker import SpeedTracker, EarlyStopping
 from codes.e_utils.logger import get_logger
 from codes.e_utils.names import DeepLearningModelName, RLAlgorithmName, EnvironmentName, ModelSaveMode, AgentMode
@@ -51,12 +51,6 @@ device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 print("DEVICE: {0}".format(device))
 
 my_logger = get_logger("main")
-
-
-if isinstance(params, PARAMETERS_GENERAL_TRADE_DQN):
-    model_save_file_prefix = "_".join([params.ENVIRONMENT_ID.value, params.COIN_NAME, params.TIME_UNIT])
-else:
-    model_save_file_prefix = params.ENVIRONMENT_ID.value
 
 
 def play_func(exp_queue, agent):
@@ -103,7 +97,7 @@ def play_func(exp_queue, agent):
         verbose=True,
         delta=0.0,
         model_save_dir=MODEL_SAVE_DIR,
-        model_save_file_prefix=model_save_file_prefix,
+        model_save_file_prefix=MODEL_SAVE_FILE_PREFIX,
         agent=agent,
         params=params
     )
@@ -203,10 +197,10 @@ def play_func(exp_queue, agent):
 
             if params.MODEL_SAVE_MODE == ModelSaveMode.FINAL_ONLY:
                 remove_models(
-                    MODEL_SAVE_DIR, model_save_file_prefix, agent
+                    MODEL_SAVE_DIR, MODEL_SAVE_FILE_PREFIX, agent
                 )
                 save_model(
-                    MODEL_SAVE_DIR, model_save_file_prefix, agent, step_idx, np.mean(train_episode_reward_lst_for_stat)
+                    MODEL_SAVE_DIR, MODEL_SAVE_FILE_PREFIX, agent, step_idx, np.mean(train_episode_reward_lst_for_stat)
                 )
         finally:
             if params.ENVIRONMENT_ID in [EnvironmentName.REAL_DEVICE_RIP, EnvironmentName.REAL_DEVICE_DOUBLE_RIP]:
@@ -225,6 +219,9 @@ def main():
     agent = rl_utils.get_rl_agent(
         input_shape, num_outputs, action_min, action_max, worker_id=0, params=params, device=device
     )
+
+    load_model(MODEL_ZOO_SAVE_DIR, MODEL_SAVE_FILE_PREFIX, agent, inquery=True)
+
     print_agent_info(agent, params)
 
     agent.model.share_memory()
@@ -258,6 +255,7 @@ def main():
 
     while play_proc.is_alive():
         step_idx += params.TRAIN_STEP_FREQ
+        solved = False
         for _ in range(params.TRAIN_STEP_FREQ):
             exp = exp_queue.get()
             if isinstance(exp, dict):
@@ -294,37 +292,40 @@ def main():
                 continue
 
             if exp is None:
+                solved = True
                 play_proc.join()
                 break
-            agent.buffer._add(exp)
-
-        if isinstance(agent, OnPolicyAgent):
-            if params.RL_ALGORITHM in [RLAlgorithmName.CONTINUOUS_PPO_V0, RLAlgorithmName.DISCRETE_PPO_V0]:
-                if len(agent.buffer) < params.PPO_TRAJECTORY_SIZE:
-                    continue
             else:
-                if len(agent.buffer) < params.BATCH_SIZE:
-                    continue
-            _, last_loss, actor_objective = agent.train(step_idx=step_idx)
-            loss_dequeue.append(last_loss)
-            if actor_objective:
-                actor_objective_dequeue.append(actor_objective)
-            # On-policy는 현재의 정책을 통해 산출된 경험정보만을 활용하여 NN을 업데이트해야 함.
-            # 따라서, 현재 학습에 사용된 Buffer는 깨끗하게 지워야 함.
-            agent.buffer.clear()
-        elif isinstance(agent, OffPolicyAgent):
-            if len(agent.buffer) < params.MIN_REPLAY_SIZE_FOR_TRAIN:
-                continue
-            _, last_loss, actor_objective = agent.train(step_idx=step_idx)
-            loss_dequeue.append(last_loss)
-            if actor_objective:
-                actor_objective_dequeue.append(actor_objective)
-        else:
-            raise ValueError()
+                agent.buffer._add(exp)
 
-        if hasattr(params, "PER_RANK_BASED") and getattr(params, "PER_RANK_BASED"):
-            if step_idx % 100 < params.TRAIN_STEP_FREQ:
-                agent.buffer.rebalance()
+        if not solved:
+            if isinstance(agent, OnPolicyAgent):
+                if params.RL_ALGORITHM in [RLAlgorithmName.CONTINUOUS_PPO_V0, RLAlgorithmName.DISCRETE_PPO_V0]:
+                    if len(agent.buffer) < params.PPO_TRAJECTORY_SIZE:
+                        continue
+                else:
+                    if len(agent.buffer) < params.BATCH_SIZE:
+                        continue
+                _, last_loss, actor_objective = agent.train(step_idx=step_idx)
+                loss_dequeue.append(last_loss)
+                if actor_objective:
+                    actor_objective_dequeue.append(actor_objective)
+                # On-policy는 현재의 정책을 통해 산출된 경험정보만을 활용하여 NN을 업데이트해야 함.
+                # 따라서, 현재 학습에 사용된 Buffer는 깨끗하게 지워야 함.
+                agent.buffer.clear()
+            elif isinstance(agent, OffPolicyAgent):
+                if len(agent.buffer) < params.MIN_REPLAY_SIZE_FOR_TRAIN:
+                    continue
+                _, last_loss, actor_objective = agent.train(step_idx=step_idx)
+                loss_dequeue.append(last_loss)
+                if actor_objective:
+                    actor_objective_dequeue.append(actor_objective)
+            else:
+                raise ValueError()
+
+            if hasattr(params, "PER_RANK_BASED") and getattr(params, "PER_RANK_BASED"):
+                if step_idx % 100 < params.TRAIN_STEP_FREQ:
+                    agent.buffer.rebalance()
 
 
 if __name__ == "__main__":
