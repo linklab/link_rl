@@ -62,8 +62,6 @@ class OnPolicyAgent(BaseAgent):
         """
         By trajectory calculate advantage and 1-step target action value
         :param trajectory: trajectory list
-        :param critic_model: critic deep learning network
-        :param states_v: states tensor
         :return: tuple with advantage numpy array and reference values
         """
         values = values_v.squeeze().data.cpu().numpy()

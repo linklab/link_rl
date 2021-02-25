@@ -78,6 +78,9 @@ class AgentContinuousA2C(OnPolicyAgent):
         # dist = MultivariateNormal(loc=mu_v, covariance_matrix=covariance_matrix)
         # log_pi_action_v = advantage_v * dist.log_prob(actions_v).unsqueeze(-1)
         dist = Normal(loc=mu_v, scale=torch.sqrt(var_v))
+
+        #print(advantage_v.detach().shape, dist.log_prob(actions_v).shape)
+
         reinforced_log_pi_action_v = advantage_v.detach() * dist.log_prob(actions_v).squeeze(-1)
 
         loss_actor_v = -1.0 * reinforced_log_pi_action_v.mean()
