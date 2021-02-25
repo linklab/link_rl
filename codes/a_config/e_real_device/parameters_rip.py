@@ -1,7 +1,7 @@
 from codes.e_utils.names import OptimizerName, RLAlgorithmName, EnvironmentName, DeepLearningModelName, ModelSaveMode
+from codes.a_config.parameters_general import PARAMETERS_GENERAL
 
-
-class PARAMETERS_RIP:
+class PARAMETERS_RIP(PARAMETERS_GENERAL):
     # [GENERAL]
     SEED = 1
     MY_PLATFORM = None

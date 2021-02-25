@@ -1,13 +1,14 @@
+import time
 from concurrent import futures
 import grpc
 import spidev
 
-from codes.b_environments.rotary_inverted_pendulum import rip_service_pb2_grpc
-from codes.b_environments.rotary_inverted_pendulum.rip_service_pb2 import RipResponse
+import rip_service_pb2_grpc
+from rip_service_pb2 import RipResponse
 
 spi = spidev.SpiDev()
 spi.open(0,0)
-spi.max_speed_hz = 5000
+spi.max_speed_hz = 1000000 # NOTE
 
 
 class RotaryDoubleInvertedPendulum:
@@ -32,15 +33,26 @@ class RotaryDoubleInvertedPendulum:
         self.print_state(arm_angle, arm_velocity, link_angle, link_velocity)
 
     def calculate_state(self):
-        data = spi.xfer2([128 if i == 0 else i for i in range(21)])
+        #data = spi.xfer2([128 if i == 0 else i for i in range(21)])
 
-        t = float((data[1] << 24) + (data[2] << 16) + (data[3] << 8) + data[4])
+        # data = spi.xfer2([128, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20])
+        data = spi.xfer3([
+            0x80,
+            0x00, 0x00, 0x00, 0x00,
+            0x00, 0x00, 0x00, 0x00,
+            0x00, 0x00, 0x00, 0x00,
+            0x00, 0x00, 0x00, 0x00,
+            0x00, 0x00, 0x00, 0x00
+            ])
+
+
+        #t = float((data[1] << 24) + (data[2] << 16) + (data[3] << 8) + data[4])
         arm_angle = float((data[5] << 24) + (data[6] << 16) + (data[7] << 8) + data[8])
         arm_vel = float((data[9] << 24) + (data[10] << 16) + (data[11] << 8) + data[12])
         link_angle = float((data[13] << 24) + (data[14] << 16) + (data[15] << 8) + data[16])
         link_vel = float((data[17] << 24) + (data[18] << 16) + (data[19] << 8) + data[20])
 
-        t = t / 1000
+        #t = t / 1000
         arm_angle = -(4294967296 - arm_angle) / 100 if arm_angle > 4000000000 else arm_angle / 100
         arm_vel = -(4294967296 - arm_vel) / 100 if arm_vel > 4000000000 else arm_vel / 100
         link_angle = -(4294967296 - link_angle) / 100 if link_angle > 4000000000 else link_angle / 100
@@ -70,11 +82,13 @@ class RotaryDoubleInvertedPendulum:
             motor_power = -motor_power
             action_1, action_2 = self.calculate_action(motor_power)
             spi.xfer2([0x40, 0x00, 0x03, action_1, action_2])
+        # print("spi write elapsed time : {0:10.8f} \n\n".format(time.time() - last_time))
+
 
     def reset(self, rip_request, context):
         arm_angle, arm_velocity, link_angle, link_velocity = self.calculate_state()
 
-        self.print_state(arm_angle, arm_velocity, link_angle, link_velocity)
+        # self.print_state(arm_angle, arm_velocity, link_angle, link_velocity)
 
         return RipResponse(
             message='OK',
@@ -83,12 +97,13 @@ class RotaryDoubleInvertedPendulum:
 
     def step(self, rip_request, context):
         motor_power = int(rip_request.value)
-        print("motor_power :", motor_power)
+        #print("motor_power :", motor_power)
+
         self.apply_action(motor_power)
 
         arm_angle, arm_velocity, link_angle, link_velocity = self.calculate_state()
 
-        self.print_state(arm_angle, arm_velocity, link_angle, link_velocity)
+        #self.print_state(arm_angle, arm_velocity, link_angle, link_velocity)
 
         return RipResponse(
             message='OK',
