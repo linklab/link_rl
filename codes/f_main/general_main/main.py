@@ -16,7 +16,7 @@ from codes.b_environments.trade.trade_action_selector import EpsilonGreedyTradeD
     ArgmaxTradeActionSelector
 from codes.d_agents.off_policy.off_policy_agent import OffPolicyAgent
 from codes.d_agents.on_policy.on_policy_agent import OnPolicyAgent
-from codes.e_utils.rl_utils import get_environment_input_output_info
+from codes.e_utils.rl_utils import get_environment_input_output_info, MODEL_SAVE_FILE_PREFIX, MODEL_ZOO_SAVE_DIR
 from codes.e_utils.actions import EpsilonTracker
 
 print("PyTorch Version", torch.__version__)
@@ -30,8 +30,8 @@ from codes.a_config.parameters import PARAMETERS as params
 
 from codes.e_utils import rl_utils
 from codes.e_utils.common_utils import save_model, print_environment_info, remove_models, agent_model_test, \
-    print_performance, print_agent_info
-from codes.e_utils.experience_tracker import RewardTracker, EarlyStopping
+    print_performance, print_agent_info, load_model
+from codes.e_utils.train_tracker import SpeedTracker, EarlyStopping
 from codes.e_utils.logger import get_logger
 from codes.e_utils.names import DeepLearningModelName, RLAlgorithmName, EnvironmentName, ModelSaveMode, AgentMode
 from codes.e_utils.experience import ExperienceSourceFirstLast
@@ -48,15 +48,9 @@ os.environ['KMP_DUPLICATE_LIB_OK'] = 'True'
 
 device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 
-print(device, "!!!!")
+print("DEVICE: {0}".format(device))
 
 my_logger = get_logger("main")
-
-
-if isinstance(params, PARAMETERS_GENERAL_TRADE_DQN):
-    model_save_file_prefix = "_".join([params.ENVIRONMENT_ID.value, params.COIN_NAME, params.TIME_UNIT])
-else:
-    model_save_file_prefix = params.ENVIRONMENT_ID.value
 
 
 def play_func(exp_queue, agent):
@@ -103,7 +97,7 @@ def play_func(exp_queue, agent):
         verbose=True,
         delta=0.0,
         model_save_dir=MODEL_SAVE_DIR,
-        model_save_file_prefix=model_save_file_prefix,
+        model_save_file_prefix=MODEL_SAVE_FILE_PREFIX,
         agent=agent,
         params=params
     )
@@ -115,7 +109,8 @@ def play_func(exp_queue, agent):
     solved = False
 
     test_mean_episode_reward = None
-    train_episode_reward_lst = []
+    train_episode_reward_lst_for_stat = deque(maxlen=params.AVG_STEP_SIZE_FOR_TRAIN_LOSS)
+    train_episode_reward_lst_for_test = []
 
     if params.MODEL_SAVE_MODE == ModelSaveMode.TRAIN:
         num_tests = params.EARLY_STOPPING_TEST_EPISODE_PERIOD
@@ -124,7 +119,7 @@ def play_func(exp_queue, agent):
     else:
         num_tests = 0
 
-    with RewardTracker(params=params) as reward_tracker:
+    with SpeedTracker(params=params) as reward_tracker:
         try:
             while step_idx < params.MAX_GLOBAL_STEP:
                 # 1 스텝 진행하고 exp를 exp_queue에 넣음
@@ -140,20 +135,21 @@ def play_func(exp_queue, agent):
                 if episode_rewards and episode_steps:
                     for current_episode_reward, current_episode_step in zip(episode_rewards, episode_steps):
                         episode += 1
-                        train_episode_reward_lst.append(current_episode_reward)
+                        train_episode_reward_lst_for_test.append(current_episode_reward)
+                        train_episode_reward_lst_for_stat.append(current_episode_reward)
 
                         epsilon = agent.train_action_selector.epsilon if hasattr(agent.train_action_selector, 'epsilon') else None
 
-                        train_mean_episode_reward, speed, elapsed_time = reward_tracker.set_episode_reward(
-                            episode_reward=current_episode_reward, episode_done_step=step_idx
+                        speed, elapsed_time = reward_tracker.set_episode_reward(
+                            episode_done_step=step_idx
                         )
 
                         if episode % params.EARLY_STOPPING_TEST_EPISODE_PERIOD == 0:
                             if params.MODEL_SAVE_MODE in [ModelSaveMode.TRAIN, ModelSaveMode.TEST]:
                                 if params.MODEL_SAVE_MODE == ModelSaveMode.TRAIN:
-                                    test_mean_episode_reward = np.mean(train_episode_reward_lst)
-                                    test_std = np.std(train_episode_reward_lst)
-                                    train_episode_reward_lst.clear()
+                                    test_mean_episode_reward = np.mean(train_episode_reward_lst_for_test).item()
+                                    test_std = np.std(train_episode_reward_lst_for_test).item()
+                                    train_episode_reward_lst_for_test.clear()
                                     test_env_str = colored("TRAIN ENV", "yellow")
                                 else:
                                     test_mean_episode_reward, test_std = agent_model_test(params, test_env, agent)
@@ -180,7 +176,7 @@ def play_func(exp_queue, agent):
                         train_info_dict = {
                             "train episode reward": current_episode_reward,
                             "train mean_{0} episode reward".format(params.AVG_EPISODE_SIZE_FOR_STAT):
-                                train_mean_episode_reward,
+                                np.mean(train_episode_reward_lst_for_stat),
                             "test mean_{0} episode reward".format(num_tests): test_mean_episode_reward,
                             "steps/episode": current_episode_step,
                             "speed": speed,
@@ -201,13 +197,14 @@ def play_func(exp_queue, agent):
 
             if params.MODEL_SAVE_MODE == ModelSaveMode.FINAL_ONLY:
                 remove_models(
-                    MODEL_SAVE_DIR, model_save_file_prefix, agent
+                    MODEL_SAVE_DIR, MODEL_SAVE_FILE_PREFIX, agent
                 )
                 save_model(
-                    MODEL_SAVE_DIR, model_save_file_prefix, agent, step_idx, train_mean_episode_reward
+                    MODEL_SAVE_DIR, MODEL_SAVE_FILE_PREFIX, agent, step_idx, np.mean(train_episode_reward_lst_for_stat)
                 )
         finally:
             if params.ENVIRONMENT_ID in [EnvironmentName.REAL_DEVICE_RIP, EnvironmentName.REAL_DEVICE_DOUBLE_RIP]:
+                print("send 'stop' message into train_env!")
                 train_env.stop()
 
     exp_queue.put(None)
@@ -222,6 +219,9 @@ def main():
     agent = rl_utils.get_rl_agent(
         input_shape, num_outputs, action_min, action_max, worker_id=0, params=params, device=device
     )
+
+    load_model(MODEL_ZOO_SAVE_DIR, MODEL_SAVE_FILE_PREFIX, agent, inquery=True)
+
     print_agent_info(agent, params)
 
     agent.model.share_memory()
@@ -255,6 +255,7 @@ def main():
 
     while play_proc.is_alive():
         step_idx += params.TRAIN_STEP_FREQ
+        solved = False
         for _ in range(params.TRAIN_STEP_FREQ):
             exp = exp_queue.get()
             if isinstance(exp, dict):
@@ -291,37 +292,40 @@ def main():
                 continue
 
             if exp is None:
+                solved = True
                 play_proc.join()
                 break
-            agent.buffer._add(exp)
-
-        if isinstance(agent, OnPolicyAgent):
-            if params.RL_ALGORITHM in [RLAlgorithmName.CONTINUOUS_PPO_V0, RLAlgorithmName.DISCRETE_PPO_V0]:
-                if len(agent.buffer) < params.PPO_TRAJECTORY_SIZE:
-                    continue
             else:
-                if len(agent.buffer) < params.BATCH_SIZE:
-                    continue
-            _, last_loss, actor_objective = agent.train(step_idx=step_idx)
-            loss_dequeue.append(last_loss)
-            if actor_objective:
-                actor_objective_dequeue.append(actor_objective)
-            # On-policy는 현재의 정책을 통해 산출된 경험정보만을 활용하여 NN을 업데이트해야 함.
-            # 따라서, 현재 학습에 사용된 Buffer는 깨끗하게 지워야 함.
-            agent.buffer.clear()
-        elif isinstance(agent, OffPolicyAgent):
-            if len(agent.buffer) < params.MIN_REPLAY_SIZE_FOR_TRAIN:
-                continue
-            _, last_loss, actor_objective = agent.train(step_idx=step_idx)
-            loss_dequeue.append(last_loss)
-            if actor_objective:
-                actor_objective_dequeue.append(actor_objective)
-        else:
-            raise ValueError()
+                agent.buffer._add(exp)
 
-        if hasattr(params, "PER_RANK_BASED") and getattr(params, "PER_RANK_BASED"):
-            if step_idx % 100 < params.TRAIN_STEP_FREQ:
-                agent.buffer.rebalance()
+        if not solved:
+            if isinstance(agent, OnPolicyAgent):
+                if params.RL_ALGORITHM in [RLAlgorithmName.CONTINUOUS_PPO_V0, RLAlgorithmName.DISCRETE_PPO_V0]:
+                    if len(agent.buffer) < params.PPO_TRAJECTORY_SIZE:
+                        continue
+                else:
+                    if len(agent.buffer) < params.BATCH_SIZE:
+                        continue
+                _, last_loss, actor_objective = agent.train(step_idx=step_idx)
+                loss_dequeue.append(last_loss)
+                if actor_objective:
+                    actor_objective_dequeue.append(actor_objective)
+                # On-policy는 현재의 정책을 통해 산출된 경험정보만을 활용하여 NN을 업데이트해야 함.
+                # 따라서, 현재 학습에 사용된 Buffer는 깨끗하게 지워야 함.
+                agent.buffer.clear()
+            elif isinstance(agent, OffPolicyAgent):
+                if len(agent.buffer) < params.MIN_REPLAY_SIZE_FOR_TRAIN:
+                    continue
+                _, last_loss, actor_objective = agent.train(step_idx=step_idx)
+                loss_dequeue.append(last_loss)
+                if actor_objective:
+                    actor_objective_dequeue.append(actor_objective)
+            else:
+                raise ValueError()
+
+            if hasattr(params, "PER_RANK_BASED") and getattr(params, "PER_RANK_BASED"):
+                if step_idx % 100 < params.TRAIN_STEP_FREQ:
+                    agent.buffer.rebalance()
 
 
 if __name__ == "__main__":

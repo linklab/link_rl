@@ -183,7 +183,7 @@ def train(coin_name, time_unit, train_env, evaluate_env):
         agent=agent
     )
 
-    with utils.RewardTracker(params=params, frame=False, early_stopping=None) as reward_tracker:
+    with utils.SpeedTracker(params=params, frame=False, early_stopping=None) as reward_tracker:
         while step_idx < params.MAX_GLOBAL_STEP:
             step_idx += params.TRAIN_STEP_FREQ
             last_entry = buffer.populate(params.TRAIN_STEP_FREQ)

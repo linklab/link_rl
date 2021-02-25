@@ -9,7 +9,7 @@ import numpy as np
 from codes.e_utils.actions import EpsilonGreedySomeTimesBlowDQNActionSelector, \
     EpsilonGreedySomeTimesBlowDDPGActionSelector, ArgmaxActionSelector, EpsilonGreedyDDPGActionSelector, \
     ContinuousNormalActionSelector, DiscreteCategoricalActionSelector
-from codes.e_utils.rl_utils import get_environment_input_output_info
+from codes.e_utils.rl_utils import get_environment_input_output_info, MODEL_ZOO_SAVE_DIR, MODEL_SAVE_FILE_PREFIX
 
 print("PyTorch Version", torch.__version__)
 
@@ -24,7 +24,6 @@ from codes.e_utils.logger import get_logger
 from codes.e_utils.names import RLAlgorithmName, EnvironmentName, AgentMode
 from codes.e_utils.rl_utils import get_environment_input_output_info
 
-MODEL_ZOO_SAVE_DIR = os.path.join(PROJECT_HOME, "codes", "g_play", "model_zoo")
 
 os.environ['KMP_DUPLICATE_LIB_OK'] = 'True'
 
@@ -38,7 +37,7 @@ def play_main(params, env):
     agent = rl_utils.get_rl_agent(
         input_shape, num_outputs, action_min, action_max, worker_id=0, params=params, device=device
     )
-    load_model(MODEL_ZOO_SAVE_DIR, params.ENVIRONMENT_ID.value, agent)
+    load_model(MODEL_ZOO_SAVE_DIR, MODEL_SAVE_FILE_PREFIX, agent, inquery=False)
     agent.agent_mode = AgentMode.PLAY
 
     num_step = 0
@@ -71,7 +70,7 @@ def play_main(params, env):
             #         num_episode, num_episode_step, num_step
             #     ))
 
-            time.sleep(0.05)
+            #time.sleep(0.001)
 
         print("EPISODE: {0}, EPISODE STEPS: {1}, TOTAL STEPS: {2}, EPISODE DONE --> EPISODE REWARD: {3}".format(
             num_episode, num_episode_step, num_step, episode_reward

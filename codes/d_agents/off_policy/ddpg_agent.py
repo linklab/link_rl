@@ -55,6 +55,12 @@ class AgentDDPG(OffPolicyAgent):
 
         self.target_agent = TargetNet(self.model.base)
 
+        # self.base_optimizer = rl_utils.get_optimizer(
+        #     parameters=self.model.base.parameters(),
+        #     learning_rate=self.params.LEARNING_RATE,
+        #     params=params
+        # )
+
         self.actor_optimizer = rl_utils.get_optimizer(
             parameters=self.model.base.actor.parameters(),
             learning_rate=self.params.ACTOR_LEARNING_RATE,
@@ -102,6 +108,16 @@ class AgentDDPG(OffPolicyAgent):
         # print(batch)
         states_v, actions_v, rewards_v, dones_mask, last_states_v = self.unpack_batch_for_ddpg(batch)
 
+        self.actor_optimizer.zero_grad()
+
+        current_actions_v = self.model.base.forward_actor(states_v)
+        q_v_for_actor = self.model.base.forward_critic(states_v, current_actions_v)
+        loss_actor_v = -1.0 * q_v_for_actor.mean()
+
+        loss_actor_v.backward()
+
+        self.actor_optimizer.step()
+
         # train critic
         self.critic_optimizer.zero_grad()
         # critic_parameters = self.model.base.critic.parameters()
@@ -116,13 +132,16 @@ class AgentDDPG(OffPolicyAgent):
 
         if self.params.PER_PROPORTIONAL or self.params.PER_RANK_BASED:
             batch_l1_loss = F.smooth_l1_loss(q_v, target_q_v.detach(), reduction='none')  # for PER
+            batch_mse1_loss = F.mse_loss(q_v, target_q_v.detach(), reduction='none')  # for PER
             batch_weights_v = torch.tensor(batch_weights)
-            critic_loss_v = batch_weights_v * batch_l1_loss
+            # critic_loss_v = batch_weights_v * batch_l1_loss
+            critic_loss_v = batch_weights_v * batch_mse1_loss
 
             self.buffer.update_priorities(batch_indices, batch_l1_loss.detach().cpu().numpy() + 1e-5)
             self.buffer.update_beta(step_idx)
         else:
-            critic_loss_v = F.smooth_l1_loss(q_v, target_q_v.detach(), reduction='none')
+            # critic_loss_v = F.smooth_l1_loss(q_v, target_q_v.detach(), reduction='none')
+            critic_loss_v = F.mse_loss(q_v, target_q_v.detach(), reduction='none')
 
         loss_critic_v = critic_loss_v.mean()
 
@@ -130,22 +149,24 @@ class AgentDDPG(OffPolicyAgent):
         self.critic_optimizer.step()
 
         # train actor
-        self.actor_optimizer.zero_grad()
+        # self.actor_optimizer.zero_grad()
         # critic_parameters = self.model.base.critic.parameters()
         # for p in critic_parameters:
         #     p.requires_grad = False
 
-        current_actions_v = self.model.base.forward_actor(states_v)
-        q_v_for_actor = self.model.base.forward_critic(states_v, current_actions_v)
-        loss_actor_v = -1.0 * q_v_for_actor.mean()
 
-        loss_actor_v.backward()
 
-        self.actor_optimizer.step()
+        # self.base_optimizer.zero_grad()
+        # loss_actor_v.backward(retain_graph=True)
+        # loss_critic_v.backward()
+        # self.base_optimizer.step()
+
 
         self.target_agent.alpha_sync(alpha=1 - 0.0001) #(1 - 0.001)
 
         gradients = self.model.get_gradients_for_current_parameters()
+
+        self.model.check_gradient_nan(gradients)
 
         return gradients, loss_critic_v.item(), loss_actor_v.item() * -1.0
 

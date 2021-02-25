@@ -1,5 +1,4 @@
 import time
-import numpy as np
 
 import subprocess
 subprocess.call('', shell=True)
@@ -7,19 +6,14 @@ import colorama
 from termcolor import colored
 colorama.init(autoreset=False)
 
-from icecream import ic
-
 from codes.e_utils.common_utils import load_model, remove_models, save_model
-from codes.e_utils.names import EnvironmentName
 
 
-class RewardTracker:
+class SpeedTracker:
     def __init__(self, params, worker_id=None):
         self.params = params
         self.min_ts_diff = 1    # 1 second
-        self.episode_reward_list = None
         self.done_episodes = 0
-        self.mean_episode_reward = 0.0
         self.count_stop_condition_episode = 0
         self.worker_id = worker_id
 
@@ -27,7 +21,6 @@ class RewardTracker:
         self.start_ts = time.time()
         self.ts = time.time()
         self.ts_frame = 0
-        self.episode_reward_list = []
         return self
 
     def start_reward_track(self):
@@ -36,11 +29,8 @@ class RewardTracker:
     def __exit__(self, *args):
         pass
 
-    def set_episode_reward(self, episode_reward, episode_done_step):
+    def set_episode_reward(self, episode_done_step):
         self.done_episodes += 1
-
-        self.episode_reward_list.append(episode_reward)
-        self.mean_episode_reward = np.mean(self.episode_reward_list[-self.params.AVG_EPISODE_SIZE_FOR_STAT:])
 
         current_ts = time.time()
         elapsed_time = current_ts - self.start_ts
@@ -51,7 +41,7 @@ class RewardTracker:
         self.ts_frame = episode_done_step
         self.ts = current_ts
 
-        return self.mean_episode_reward, speed, elapsed_time
+        return speed, elapsed_time
 
 
 class EarlyStopping:

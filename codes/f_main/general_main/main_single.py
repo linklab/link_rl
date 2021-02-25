@@ -24,7 +24,7 @@ from codes.e_utils.experience import ExperienceSourceFirstLast
 from codes.e_utils import rl_utils
 from codes.e_utils.common_utils import save_model, print_environment_info, print_agent_info, remove_models, \
     agent_model_test, print_performance
-from codes.e_utils.experience_tracker import RewardTracker, EarlyStopping
+from codes.e_utils.train_tracker import SpeedTracker, EarlyStopping
 from codes.e_utils.logger import get_logger
 from codes.e_utils.names import RLAlgorithmName, EnvironmentName, AgentMode, ModelSaveMode
 
@@ -101,7 +101,7 @@ def train_main(params, train_env, test_env):
     else:
         num_tests = 0
 
-    with RewardTracker(params=params) as reward_tracker:
+    with SpeedTracker(params=params) as reward_tracker:
         try:
             while step_idx < params.MAX_GLOBAL_STEP:
                 step_idx += params.TRAIN_STEP_FREQ
