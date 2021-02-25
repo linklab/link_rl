@@ -79,9 +79,9 @@ class AgentContinuousA2C(OnPolicyAgent):
         # log_pi_action_v = advantage_v * dist.log_prob(actions_v).unsqueeze(-1)
         dist = Normal(loc=mu_v, scale=torch.sqrt(var_v))
 
-        #print(advantage_v.detach().shape, dist.log_prob(actions_v).shape)
+        reinforced_log_pi_action_v = advantage_v.unsqueeze(dim=-1).detach() * dist.log_prob(actions_v)
 
-        reinforced_log_pi_action_v = advantage_v.detach() * dist.log_prob(actions_v).squeeze(-1)
+        #print(reinforced_log_pi_action_v.shape, reinforced_log_pi_action_v.mean().shape, dist.entropy().shape, dist.entropy().mean().shape)
 
         loss_actor_v = -1.0 * reinforced_log_pi_action_v.mean()
         loss_entropy_v = -1.0 * dist.entropy().mean()
