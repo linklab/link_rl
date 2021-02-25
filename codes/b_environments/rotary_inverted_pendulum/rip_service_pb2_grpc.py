@@ -2,8 +2,7 @@
 """Client and server classes corresponding to protobuf-defined services."""
 import grpc
 
-import codes.b_environments.rotary_inverted_pendulum.rip_service_pb2 as rip__service__pb2
-
+from codes.b_environments.rotary_inverted_pendulum import rip_service_pb2 as rip__service__pb2
 
 class RDIPStub(object):
     """Missing associated documentation comment in .proto file."""

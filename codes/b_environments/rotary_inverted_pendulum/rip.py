@@ -4,6 +4,7 @@ import random
 import grpc
 import gym
 import numpy as np
+import time
 import sys,os
 
 current_path = os.path.dirname(os.path.realpath(__file__))
@@ -21,7 +22,7 @@ np.set_printoptions(formatter={'float_kind': lambda x: '{0:0.6f}'.format(x)})
 
 BLOWING_ACTION_RATE = 0.0002  # 5000 스텝에 1번 정도(지수 분포)의 주가로 외력이 가해짐 --> Stochastic Env.
 
-RIP_SERVER = '192.168.0.254'
+RIP_SERVER = '192.168.1.20'
 
 class RotaryInvertedPendulumEnv(gym.Env):
     def __init__(
@@ -43,6 +44,9 @@ class RotaryInvertedPendulumEnv(gym.Env):
         self.motor_position = 0
         self.motor_velocity = 0
 
+        self.last_time = 0.0
+        self.unit_time = 0.007
+        self.over_unit_time = 0
         current_path = os.path.dirname(os.path.realpath(__file__))
         MATLAB_ENGINE_DIR = os.path.abspath(os.path.join(current_path, "engine"))
         os.chdir(MATLAB_ENGINE_DIR) # change working directory
@@ -173,19 +177,44 @@ class RotaryInvertedPendulumEnv(gym.Env):
             print("next_time_step_of_external_blow: {0}".format(
                 self.next_time_step_of_external_blow
             ))
-
-        if self.env_reset or self.num_episodes % self.episode_period_env_reset_forced == 0:
-            print("ENV RESET")
-            self.plant.connectStart()
+        if self.pendulum_type in [EnvironmentName.PENDULUM_MATLAB_V0,EnvironmentName.PENDULUM_MATLAB_DOUBLE_RIP_V0]:
+            if self.env_reset or self.num_episodes % self.episode_period_env_reset_forced == 0:
+                print("ENV RESET")
+                self.plant.connectStart()
+        else:
+            if self.env_reset or self.num_episodes % self.episode_period_env_reset_forced == 0:
+                print("ENV RESET")
+                #TODO : 리셋할때 뭐 할지 코
 
         self.episode_position_reward_list.clear()
         self.episode_pendulum_velocity_reward_list.clear()
         self.episode_action_reward_list.clear()
 
         if self.pendulum_type in [EnvironmentName.PENDULUM_MATLAB_V0, EnvironmentName.REAL_DEVICE_RIP]:
+            # self.update_current_state(adjusted_pendulum_1_radian=0.0)
+            if self.pendulum_type == EnvironmentName.PENDULUM_MATLAB_V0:
+                self.pendulum_1_position, self.motor_position, self.pendulum_1_velocity, self.motor_velocity \
+                 = self.plant.getHistory
+            else:
+                rip_response = self.server_obj.reset(RipRequest(value=None))
 
+                self.motor_position = rip_response.arm_angle
+                self.motor_velocity = rip_response.arm_velocity
+                self.pendulum_1_position = rip_response.link_1_angle
+                self.pendulum_1_velocity = rip_response.link_1_velocity
+                self.simulation_time = None
 
-            self.update_current_state(adjusted_pendulum_1_radian=0.0)
+            state = (
+                math.cos(self.pendulum_1_position),
+                math.sin(self.pendulum_1_position),
+                self.pendulum_1_velocity,
+                math.cos(0.0),  # 1.0
+                math.sin(0.0),  # 0.0
+                self.motor_velocity,
+            )
+
+            self.update_current_state_for_double_rip(adjusted_pendulum_1_radian=0.0, adjusted_pendulum_2_radian=0.0)
+
         elif self.pendulum_type in [EnvironmentName.PENDULUM_MATLAB_DOUBLE_RIP_V0, EnvironmentName.REAL_DEVICE_DOUBLE_RIP]:
             if self.pendulum_type == EnvironmentName.PENDULUM_MATLAB_DOUBLE_RIP_V0:
                 self.pendulum_1_position, self.motor_position, self.pendulum_2_position, self.pendulum_1_velocity, \
@@ -270,6 +299,23 @@ class RotaryInvertedPendulumEnv(gym.Env):
             self.is_upright = False
 
     def step(self, action):
+        # ############# time check #############################
+        # if self.pendulum_type in [EnvironmentName.REAL_DEVICE_RIP,EnvironmentName.REAL_DEVICE_DOUBLE_RIP]:
+        #     current_time = time.perf_counter()
+        #     step_time = current_time - self.last_time
+        #     if step_time > self.unit_time:
+        #         self.over_unit_time += 1
+        #     while True:
+        #         current_time = time.perf_counter()
+        #         if current_time - self.last_time\
+        #                 >= self.unit_time:
+        #
+        #             break
+        #         time.sleep(0.0001)
+        #
+        # self.last_time = time.perf_counter()
+        # ######################################################
+
         self.episode_steps += 1
 
         self.total_steps += 1
@@ -309,7 +355,13 @@ class RotaryInvertedPendulumEnv(gym.Env):
             self.pendulum_1_position, self.motor_position, self.pendulum_1_velocity, self.motor_velocity, \
             self.simulation_time = self.plant.getHistory()
         elif self.pendulum_type == EnvironmentName.REAL_DEVICE_RIP:
+
+            # GRPC CALL
             rip_response = self.server_obj.step(RipRequest(value=action))
+
+            # current_time = time.perf_counter()
+            # print("point 2 - elapsed time: {0:10.8f}".format(current_time - self.last_time))
+
             self.motor_position = rip_response.arm_angle
             self.motor_velocity = rip_response.arm_velocity
             self.pendulum_1_position = rip_response.link_1_angle
@@ -377,8 +429,9 @@ class RotaryInvertedPendulumEnv(gym.Env):
 
             self.num_episodes += 1
 
-            if self.env_reset or self.num_episodes % self.episode_period_env_reset_forced == 0:
-                self.plant.connectStop()
+            if self.pendulum_type in [EnvironmentName.PENDULUM_MATLAB_DOUBLE_RIP_V0, EnvironmentName.PENDULUM_MATLAB_V0]:
+                if self.env_reset or self.num_episodes % self.episode_period_env_reset_forced == 0:
+                    self.plant.connectStop()
 
         else:
             done = False

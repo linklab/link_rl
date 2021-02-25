@@ -31,7 +31,7 @@ class QubeServo2:
         self.spi = spidev.SpiDev()
         self.spi.open(0, 0)
         self.spi.mode = 0b10
-        self.spi.max_speed_hz = 1000000
+        self.spi.max_speed_hz = 4000000
 
         self.step_id = 0
         self.motor_command = 0
