@@ -86,7 +86,7 @@ class AgentContinuousPPO(OnPolicyAgent):
                 trajectory, trajectory_values_v, device=self.device
             )
             # normalize advantages
-            trajectory_advantage_v = trajectory_advantage_v - torch.mean(trajectory_advantage_v)
+            trajectory_advantage_v = trajectory_advantage_v - trajectory_advantage_v.mean()
             trajectory_advantage_v /= torch.std(trajectory_advantage_v) + 1e-5
 
         # drop last entry from the trajectory, an our adv and target action value calculated without it
