@@ -219,6 +219,7 @@ def load_model(model_save_dir, model_save_file_prefix, agent, step=None, inquery
             print("MODEL LOADED SUCCESSFULLY FROM {0}!".format(saved_model))
     else:
         print("※※※※※※※※※※ There is no saved model for !!!: {0} ※※※※※※※※※※".format(model_path))
+    print()
 
 
 def agent_model_test(params, test_env, agent):
@@ -250,63 +251,6 @@ def agent_model_test(params, test_env, agent):
         episode_rewards[test_episode] = episode_reward
 
     return np.mean(episode_rewards), np.std(episode_rewards)
-
-
-def print_performance(params, episode_done_step, done_episode, episode_reward, mean_episode_reward, epsilon,
-                      elapsed_time, last_info, speed, mean_loss, mean_actor_objective, worker_id=None, last_action=None):
-
-    if worker_id is not None:
-        prefix = "[Worker ID: {0}]".format(worker_id)
-    else:
-        prefix = ""
-
-    if isinstance(epsilon, tuple) or isinstance(epsilon, list):
-        epsilon_str = " eps.: {0:5.3f}, {1:5.3f},".format(
-            epsilon[0] if epsilon[0] else 0.0,
-            epsilon[1] if epsilon[1] else 0.0
-        )
-    elif isinstance(epsilon, float):
-        epsilon_str = " eps.: {0:5.3f},".format(
-            epsilon if epsilon else 0.0,
-        )
-    else:
-        epsilon_str = ""
-
-    mean_episode_reward_str = "{0:9.3f}".format(mean_episode_reward)
-
-    if isinstance(episode_reward, np.ndarray):
-        episode_reward = episode_reward[0]
-
-    print(
-        "{0}[{1:6}/{2}] Ep. {3}, EPISODE REWARD: {4:9.3f}, MEAN_{5} EPSIODE REWARD: {6},{7} SPEED: {8:7.2f}steps/sec., {9}".format(
-            prefix,
-            episode_done_step,
-            params.MAX_GLOBAL_STEP,
-            done_episode,
-            episode_reward,
-            params.AVG_EPISODE_SIZE_FOR_STAT,
-            mean_episode_reward_str,
-            epsilon_str,
-            speed,
-            time.strftime("%Hh %Mm %Ss", time.gmtime(elapsed_time)),
-    ), end="")
-
-    if last_info and "action_count" in last_info:
-        print(", {0}".format(last_info["action_count"]), end="")
-
-    if mean_loss is not None:
-        print(", mean (critic) loss {0:7.4f}".format(mean_loss), end="")
-
-    if mean_actor_objective is not None:
-        print(", mean actor obj. {0:7.4f}".format(mean_actor_objective), end="")
-
-    if params.ENVIRONMENT_ID == EnvironmentName.TRADE_V0:
-        print(", profit {0:8.1f}".format(last_info['profit']), end="")
-
-    if last_action is not None:
-        print(", last action {0}".format(last_action), end="")
-
-    print("", flush=True)
 
 
 # def print_environment_info(env, params):
