@@ -35,9 +35,6 @@ def train_main(params, train_env, test_env):
                 step_idx += params.TRAIN_STEP_FREQ
                 last_experience = agent.buffer.populate(params.TRAIN_STEP_FREQ)
 
-                if hasattr(agent, "epsilon_tracker") and agent.epsilon_tracker:
-                    agent.epsilon_tracker.udpate(step_idx)
-
                 episode_rewards, episode_steps = experience_source.pop_episode_reward_and_done_step_lst()
 
                 if episode_rewards and episode_steps:
@@ -89,7 +86,7 @@ def train_main(params, train_env, test_env):
                     print("Solved in {0} steps and {1} episodes!".format(step_idx, episode))
                     break
                 else:
-                    agent_train(agent, step_idx, loss_dequeue, actor_objective_dequeue)
+                    on_policy_agent_train(agent, step_idx, loss_dequeue, actor_objective_dequeue)
 
             if params.MODEL_SAVE_MODE == ModelSaveMode.FINAL_ONLY:
                 last_model_save(agent, step_idx, train_episode_reward_lst_for_stat)

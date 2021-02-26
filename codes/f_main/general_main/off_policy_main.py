@@ -156,7 +156,7 @@ def main():
                     agent.buffer._add(exp)
 
         if not solved:
-            agent_train(agent, step_idx, loss_dequeue, actor_objective_dequeue)
+            off_policy_agent_train(agent, step_idx, loss_dequeue, actor_objective_dequeue)
 
 
 if __name__ == "__main__":
