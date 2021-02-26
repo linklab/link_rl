@@ -112,7 +112,7 @@ class AgentContinuousPPO(OnPolicyAgent):
                 batch_mu_v, batch_var_v, batch_values_v = self.model(batch_states_v)
 
                 # critic training
-                loss_critic_v = F.smooth_l1_loss(batch_values_v.squeeze(-1), batch_target_action_value_v.detach())
+                loss_critic_v = F.mse_loss(batch_values_v.squeeze(-1), batch_target_action_value_v.detach())
 
                 # actor training
                 batch_dist = Normal(loc=batch_mu_v, scale=torch.sqrt(batch_var_v))
@@ -137,7 +137,7 @@ class AgentContinuousPPO(OnPolicyAgent):
                 loss_actor_v.backward(retain_graph=True)
                 (loss_critic_v + self.params.ENTROPY_LOSS_WEIGHT * loss_entropy_v).backward()
                 nn_utils.clip_grad_norm_(self.model.base.parameters(), self.params.CLIP_GRAD)
-                
+
                 # loss_v.backward()
                 self.optimizer.step()
 
