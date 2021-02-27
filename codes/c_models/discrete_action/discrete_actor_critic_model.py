@@ -144,7 +144,7 @@ class ActorCriticCNNBase(nn.Module):
         self.actor_params = list(self.actor_conv.parameters()) + list(self.actor_fc.parameters())
         self.critic_params = list(self.critic_conv.parameters()) + list(self.critic_fc.parameters())
 
-        self.layers_info = {'conv': self.conv, 'actor_fc': self.actor_fc, 'critic_fc': self.critic_fc}
+        self.layers_info = {'actor_conv': self.actor_conv, 'critic_conv': self.critic_conv, 'actor_fc': self.actor_fc, 'critic_fc': self.critic_fc}
 
         self.train()
 
@@ -164,19 +164,21 @@ class ActorCriticCNNBase(nn.Module):
 
     def forward(self, inputs):
         fx = inputs.float() / 256
-        conv_out = self.conv(fx).view(fx.size()[0], -1)
-        probs = F.softmax(self.actor_fc(conv_out), dim=-1)
-        critic_values = self.critic_fc(conv_out)
+        actor_conv_out = self.actor_conv(fx).view(fx.size()[0], -1)
+        probs = F.softmax(self.actor_fc(actor_conv_out), dim=-1)
+
+        critic_conv_out = self.critic_conv(fx).view(fx.size()[0], -1)
+        critic_values = self.critic_fc(critic_conv_out)
         return probs, critic_values
 
     def forward_actor(self, inputs):
         fx = inputs.float() / 256
-        conv_out = self.conv(fx).view(fx.size()[0], -1)
-        probs = F.softmax(self.actor_fc(conv_out), dim=-1)
+        actor_conv_out = self.actor_conv(fx).view(fx.size()[0], -1)
+        probs = F.softmax(self.actor_fc(actor_conv_out), dim=-1)
         return probs
 
     def forward_critic(self, inputs):
         fx = inputs.float() / 256
-        conv_out = self.conv(fx).view(fx.size()[0], -1)
-        critic_values = self.critic_fc(conv_out)
+        critic_conv_out = self.critic_conv(fx).view(fx.size()[0], -1)
+        critic_values = self.critic_fc(critic_conv_out)
         return critic_values
