@@ -52,12 +52,16 @@ class AgentContinuousPPO(AgentPPO):
     def train(self, step_idx):
         trajectory = self.buffer.sample(batch_size=None)
 
+        # trajectory_states_v: (2049, 4)
         trajectory_states = [experience.state for experience in trajectory]
         trajectory_states_v = torch.FloatTensor(trajectory_states).to(self.device)
 
+        # trajectory_actions_v: (2049,)
         trajectory_actions = [experience.action for experience in trajectory]
         trajectory_actions_v = torch.FloatTensor(trajectory_actions).to(self.device)
 
+        # trajectory_probs_v: (2049, 2)
+        # trajectory_values_v: (2849, 1)
         trajectory_mu_v, trajectory_var_v, trajectory_values_v = self.model.base.forward(trajectory_states_v)
 
         # trajectory_var_v = self.model.base.actor.var.expand_as(trajectory_mu_v)
@@ -113,20 +117,11 @@ class AgentContinuousPPO(AgentPPO):
                 batch_surrogate_2_v = batch_advantage_v * torch.clamp(
                     batch_ratio_v, min=1.0 - self.params.PPO_EPSILON_CLIP, max=1.0 + self.params.PPO_EPSILON_CLIP
                 )
+
                 loss_actor_v = -1.0 * torch.min(batch_surrogate_1_v, batch_surrogate_2_v).mean()
                 loss_entropy_v = -1.0 * batch_dist_entropy_v.mean()
 
-                # loss_v = loss_actor_v + \
-                #          self.params.CRITIC_LOSS_WEIGHT * loss_critic_v + \
-                #          self.params.ENTROPY_LOSS_WEIGHT * loss_entropy_v
-
-                self.optimizer.zero_grad()
-                loss_actor_v.backward(retain_graph=True)
-                (loss_critic_v + self.params.ENTROPY_LOSS_WEIGHT * loss_entropy_v).backward()
-                nn_utils.clip_grad_norm_(self.model.base.parameters(), self.params.CLIP_GRAD)
-
-                # loss_v.backward()
-                self.optimizer.step()
+                self.backward_and_step_in_trajectory(loss_critic_v, loss_entropy_v, loss_actor_v)
 
                 sum_loss_critic += loss_critic_v.item()
                 sum_loss_actor += loss_actor_v.item()

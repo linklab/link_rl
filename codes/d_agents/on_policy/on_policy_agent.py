@@ -17,6 +17,8 @@ class OnPolicyAgent(BaseAgent):
         self.model = None
         self.train_action_selector = None
         self.test_and_play_action_selector = None
+        self.action_min = None
+        self.action_max = None
 
     @abstractmethod
     def __call__(self, states, agent_states):

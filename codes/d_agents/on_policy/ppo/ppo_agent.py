@@ -14,7 +14,7 @@ class AgentPPO(OnPolicyAgent):
     """
     """
     def __init__(
-            self, worker_id, input_shape, num_outputs, action_min, action_max, params, device
+            self, worker_id, params, device
     ):
         assert params.N_STEP == 1  # GAE will consider various N_STEPs
 
@@ -34,10 +34,14 @@ class AgentPPO(OnPolicyAgent):
     def train(self, step_idx):
         raise NotImplementedError
 
-    def backward_and_step(self, loss_critic_v, loss_entropy_v, loss_actor_v):
+    def backward_and_step_in_trajectory(self, loss_critic_v, loss_entropy_v, loss_actor_v):
         self.optimizer.zero_grad()
+        # loss_v = loss_actor_v + \
+        #          self.params.CRITIC_LOSS_WEIGHT * loss_critic_v + \
+        #          self.params.ENTROPY_LOSS_WEIGHT * loss_entropy_v
+        # loss_v.backward()
+
         loss_actor_v.backward(retain_graph=True)
         (loss_critic_v + self.params.ENTROPY_LOSS_WEIGHT * loss_entropy_v).backward()
         nn_utils.clip_grad_norm_(self.model.base.parameters(), self.params.CLIP_GRAD)
-        # loss_v.backward()
         self.optimizer.step()

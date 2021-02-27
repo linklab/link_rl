@@ -85,14 +85,14 @@ class ActorCriticMLPBase(nn.Module):
     #         torch.nn.init.kaiming_normal_(m.weight)
 
     def forward(self, inputs):
-        actions = self.forward_actor(inputs)
+        probs = self.forward_actor(inputs)
         critic_values = self.forward_critic(inputs)
-        return actions, critic_values
+        return probs, critic_values
 
     def forward_actor(self, inputs):
         x = self.actor(inputs)
-        actions = F.softmax(x, dim=-1)
-        return actions
+        probs = F.softmax(x, dim=-1)
+        return probs
 
     def forward_critic(self, inputs):
         critic_values = self.critic(inputs)
@@ -151,15 +151,15 @@ class ActorCriticCNNBase(nn.Module):
     def forward(self, inputs):
         fx = inputs.float() / 256
         conv_out = self.conv(fx).view(fx.size()[0], -1)
-        actions = F.softmax(self.actor_fc(conv_out), dim=-1)
+        probs = F.softmax(self.actor_fc(conv_out), dim=-1)
         critic_values = self.critic_fc(conv_out)
-        return actions, critic_values
+        return probs, critic_values
 
     def forward_actor(self, inputs):
         fx = inputs.float() / 256
         conv_out = self.conv(fx).view(fx.size()[0], -1)
-        actions = F.softmax(self.actor_fc(conv_out), dim=-1)
-        return actions
+        probs = F.softmax(self.actor_fc(conv_out), dim=-1)
+        return probs
 
     def forward_critic(self, inputs):
         fx = inputs.float() / 256

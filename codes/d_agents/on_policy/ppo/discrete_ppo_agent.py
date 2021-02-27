@@ -60,20 +60,32 @@ class AgentDiscretePPO(AgentPPO):
     def train(self, step_idx):
         trajectory = self.buffer.sample(batch_size=None)
 
+        # trajectory_states_v: (2049, 4)
         trajectory_states = [experience.state for experience in trajectory]
         trajectory_states_v = torch.FloatTensor(trajectory_states).to(self.device)
 
+        # trajectory_actions_v: (2049,)
         trajectory_actions = [experience.action for experience in trajectory]
         trajectory_actions_v = torch.LongTensor(trajectory_actions).to(self.device)
 
-        trajectory_logits_v, trajectory_values_v = self.model(trajectory_states_v)
+        # trajectory_probs_v: (2049, 2)
+        # trajectory_values_v: (2849, 1)
+        trajectory_probs_v, trajectory_values_v = self.model.base.forward(trajectory_states_v)
 
-        trajectory_log_pi_v = F.log_softmax(trajectory_logits_v, dim=1)
-        trajectory_old_log_pi_action_v = trajectory_log_pi_v.gather(
-            dim=1, index=trajectory_actions_v.unsqueeze(-1)
-        ).squeeze(-1)
+        # trajectory_old_log_pi_action_v: (2849, 1)
+        trajectory_old_log_pi_action_v = torch.log(
+            trajectory_probs_v.gather(dim=1, index=trajectory_actions_v.unsqueeze(-1)) + 1e-5
+        )
+
+        # trajectory_logits_v, trajectory_values_v = self.model(trajectory_states_v)
+        # trajectory_log_pi_v = F.log_softmax(trajectory_logits_v, dim=1)
+        # trajectory_old_log_pi_action_v = trajectory_log_pi_v.gather(
+        #     dim=1, index=trajectory_actions_v.unsqueeze(-1)
+        # ).squeeze(-1)
 
         # 아래 변수는 전체 trajectory의 원소보다 1 적음
+        # trajectory_advantage_v: (2048,)
+        # trajectory_target_action_value_v: (2048,)
         with torch.no_grad():
             trajectory_advantage_v, trajectory_target_action_value_v = self.get_advantage_and_target_action_values(
                 trajectory, trajectory_values_v, device=self.device
@@ -102,43 +114,48 @@ class AgentDiscretePPO(AgentPPO):
                 batch_target_action_value_v = trajectory_target_action_value_v[batch_offset:batch_l]
                 batch_old_log_pi_action_v = trajectory_old_log_pi_action_v[batch_offset:batch_l]
 
-                batch_logits_v, batch_values_v = self.model(batch_states_v)
+                # batch_probs_v: (64, 2)
+                # batch_values_v: (64, 1)
+                batch_probs_v, batch_values_v = self.model.base.forward(batch_states_v)
 
                 # critic training
                 # batch_values_v.squeeze(-1) : (64,)
                 # batch_target_action_value_v : (64,)
-                loss_critic_v = F.smooth_l1_loss(batch_values_v.squeeze(-1), batch_target_action_value_v.detach())
+                batch_loss_critic_v = F.mse_loss(batch_values_v.squeeze(-1), batch_target_action_value_v.detach())
 
-                # batch_log_pi_v: (64, 2)
-                batch_log_pi_v = F.log_softmax(batch_logits_v, dim=1)
-                #print(batch_logits_v.size())
+                # batch_log_pi_v = F.log_softmax(batch_logits_v, dim=1)
+                # print(batch_logits_v.size())
+                # batch_log_pi_action_v = batch_log_pi_v.gather(dim=1, index=batch_actions_v.unsqueeze(-1)).squeeze(-1)
 
                 # batch_log_pi_action_v: (64,)
-                batch_log_pi_action_v = batch_log_pi_v.gather(dim=1, index=batch_actions_v.unsqueeze(-1)).squeeze(-1)
+                batch_log_pi_action_v = torch.log(
+                    batch_probs_v.gather(dim=1, index=batch_actions_v.unsqueeze(-1)) + 1e-5
+                )
 
+                # batch_ratio_v: (64, 1)
                 batch_ratio_v = torch.exp(batch_log_pi_action_v - batch_old_log_pi_action_v)
 
+                # batch_advantage_v: (64, 1)
                 batch_surrogate_1_v = batch_advantage_v * batch_ratio_v
+
                 batch_surrogate_2_v = batch_advantage_v * torch.clamp(
                     batch_ratio_v, min=1.0 - self.params.PPO_EPSILON_CLIP, max=1.0 + self.params.PPO_EPSILON_CLIP
                 )
-                loss_actor_v = -1.0 * torch.min(batch_surrogate_1_v, batch_surrogate_2_v).mean()
+                batch_loss_actor_v = -1.0 * torch.min(batch_surrogate_1_v, batch_surrogate_2_v).mean()
 
-                batch_prob_v = F.softmax(batch_logits_v, dim=1)
-                batch_entropy_v = -1.0 * (batch_prob_v * batch_log_pi_v).sum(dim=1).mean()
-                loss_entropy_v = -1.0 * batch_entropy_v.mean()
+                #print(batch_surrogate_1_v.shape, batch_surrogate_2_v.shape, batch_loss_actor_v.shape, "!!!!!!!!!!!!1")
 
-                loss_v = loss_actor_v + \
-                         self.params.CRITIC_LOSS_WEIGHT * loss_critic_v + \
-                         self.params.ENTROPY_LOSS_WEIGHT * loss_entropy_v
+                # batch_prob_v = F.softmax(batch_logits_v, dim=1)
 
-                self.optimizer.zero_grad()
-                loss_v.backward()
-                nn_utils.clip_grad_norm_(self.model.base.parameters(), self.params.CLIP_GRAD)
-                self.optimizer.step()
+                # batch_probs_v: (64, 2)
+                # batch_log_pi_v: (64, 2)
+                batch_log_pi_v = torch.log(batch_probs_v + 1e-5)
+                batch_loss_entropy_v = (batch_probs_v * batch_log_pi_v).sum(dim=1).mean()
 
-                sum_loss_critic += loss_critic_v.item()
-                sum_loss_actor += loss_actor_v.item()
+                self.backward_and_step_in_trajectory(batch_loss_critic_v, batch_loss_entropy_v, batch_loss_actor_v)
+
+                sum_loss_critic += batch_loss_critic_v.item()
+                sum_loss_actor += batch_loss_actor_v.item()
                 count_steps += 1
 
         gradients = self.model.get_gradients_for_current_parameters()
