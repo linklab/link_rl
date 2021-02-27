@@ -15,15 +15,14 @@ class AgentDDPG(OffPolicyAgent):
     """
     Agent implementing Orstein-Uhlenbeck exploration process
     """
-    def __init__(self, input_shape, num_outputs, worker_id, action_min, action_max, params, device):
+    def __init__(self, worker_id, input_shape, num_outputs, action_min, action_max, params, device):
         assert params.DEEP_LEARNING_MODEL == DeepLearningModelName.DETERMINISTIC_CONTINUOUS_ACTOR_CRITIC_MLP
 
-        super(AgentDDPG, self).__init__(params=params, device=device)
+        super(AgentDDPG, self).__init__(worker_id=worker_id, params=params, device=device)
 
         self.__name__ = "AgentDDPG"
         self.action_min = action_min
         self.action_max = action_max
-        self.worker_id = worker_id
 
         if params.ENVIRONMENT_ID in [EnvironmentName.PENDULUM_MATLAB_V0, EnvironmentName.PENDULUM_MATLAB_DOUBLE_RIP_V0]:
             self.train_action_selector = EpsilonGreedySomeTimesBlowDDPGActionSelector(

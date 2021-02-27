@@ -19,7 +19,6 @@ class AgentDiscreteA2C(AgentA2C):
         self.__name__ = "AgentDiscreteA2C"
         self.train_action_selector = DiscreteCategoricalActionSelector()
         self.test_and_play_action_selector = DiscreteCategoricalActionSelector()
-        self.worker_id = worker_id
 
         assert params.DEEP_LEARNING_MODEL in [
             DeepLearningModelName.STOCHASTIC_DISCRETE_ACTOR_CRITIC_MLP,

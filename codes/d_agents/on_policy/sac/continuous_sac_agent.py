@@ -21,7 +21,6 @@ class AgentSAC(OnPolicyAgent):
 
         super(AgentSAC, self).__init__(worker_id, params, device)
         self.__name__ = "AgentSAC"
-        self.worker_id = worker_id
         self.action_min = action_min
         self.action_max = action_max
 

@@ -27,14 +27,14 @@ if PROJECT_HOME not in sys.path:
 from codes.d_agents.on_policy.a2c.continuous_a2c_agent import AgentContinuousA2C
 from codes.d_agents.on_policy.ppo.continuous_ppo_agent import AgentContinuousPPO
 from codes.d_agents.on_policy.a2c.discrete_a2c_agent import AgentDiscreteA2C
-from codes.d_agents.off_policy.dqn_agent import AgentDQN
+from codes.d_agents.off_policy.dqn.dqn_agent import AgentDQN
 
 from codes.c_models.continuous_action.deterministic_actor_critic_model import DeterministicActorCriticModel
 from codes.c_models.continuous_action.stochastic_continuous_actor_critic_model import StochasticContinuousActorCriticModel
 from codes.c_models.discrete_action.discrete_actor_critic_model import DiscreteActorCriticModel
 from codes.c_models.discrete_action.dqn_model import DuelingDQNModel
 
-from codes.d_agents.off_policy.ddpg_agent import AgentDDPG
+from codes.d_agents.off_policy.ddpg.ddpg_agent import AgentDDPG
 
 from codes.e_utils.common_utils import make_atari_env
 from codes.e_utils.names import EnvironmentName, DeepLearningModelName, RLAlgorithmName, OptimizerName, AgentMode
@@ -278,7 +278,7 @@ def get_rl_agent(input_shape, num_outputs, action_min, action_max, worker_id, pa
 
     if params.RL_ALGORITHM == RLAlgorithmName.DDPG_V0:
         agent = AgentDDPG(
-            input_shape=input_shape, num_outputs=num_outputs, worker_id=worker_id,
+            worker_id=worker_id, input_shape=input_shape, num_outputs=num_outputs,
             action_min=action_min, action_max=action_max, params=params, device=device
         )
     elif params.RL_ALGORITHM == RLAlgorithmName.DQN_V0:

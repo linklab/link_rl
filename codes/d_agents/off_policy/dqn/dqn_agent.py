@@ -22,7 +22,7 @@ class AgentDQN(OffPolicyAgent):
             DeepLearningModelName.DUELING_DQN_SMALL_CNN
         ]
 
-        super(AgentDQN, self).__init__(params=params, device=device)
+        super(AgentDQN, self).__init__(worker_id=worker_id, params=params, device=device)
         if params.ENVIRONMENT_ID in [EnvironmentName.PENDULUM_MATLAB_V0, EnvironmentName.PENDULUM_MATLAB_DOUBLE_RIP_V0]:
             self.train_action_selector = EpsilonGreedySomeTimesBlowDQNActionSelector(
                 epsilon=params.EPSILON_INIT, blowing_action_rate=0.0002,
@@ -47,7 +47,6 @@ class AgentDQN(OffPolicyAgent):
         )
 
         self.__name__ = "AgentDQN"
-        self.worker_id = worker_id
 
         self.model = rl_utils.get_rl_model(
             worker_id=worker_id, input_shape=input_shape, num_outputs=num_outputs, params=params, device=device
