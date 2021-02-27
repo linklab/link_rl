@@ -104,7 +104,7 @@ class ActorCriticCNNBase(nn.Module):
         super(ActorCriticCNNBase, self).__init__()
         self.__name__ = "ActorCriticCNNBase"
 
-        self.conv = nn.Sequential(
+        self.actor_conv = nn.Sequential(
             nn.Conv2d(in_channels=input_shape[0], out_channels=32, kernel_size=8, stride=4),
             nn.LeakyReLU(),
             nn.Conv2d(in_channels=32, out_channels=64, kernel_size=4, stride=2),
@@ -113,16 +113,26 @@ class ActorCriticCNNBase(nn.Module):
             nn.LeakyReLU()
         )
 
-        conv_out_size = self._get_conv_out(input_shape)
+        self.critic_conv = nn.Sequential(
+            nn.Conv2d(in_channels=input_shape[0], out_channels=32, kernel_size=8, stride=4),
+            nn.LeakyReLU(),
+            nn.Conv2d(in_channels=32, out_channels=64, kernel_size=4, stride=2),
+            nn.LeakyReLU(),
+            nn.Conv2d(in_channels=64, out_channels=64, kernel_size=3, stride=1),
+            nn.LeakyReLU()
+        )
+
+        actor_conv_out_size = self._get_actor_conv_out(input_shape)
+        critic_conv_out_size = self._get_critic_conv_out(input_shape)
 
         self.actor_fc = nn.Sequential(
-            nn.Linear(conv_out_size, 512),
+            nn.Linear(actor_conv_out_size, 512),
             nn.LeakyReLU(),
             nn.Linear(512, num_outputs)
         )
 
         self.critic_fc = nn.Sequential(
-            nn.Linear(conv_out_size, 512),
+            nn.Linear(critic_conv_out_size, 512),
             nn.LeakyReLU(),
             nn.Linear(512, 1)
         )
@@ -131,15 +141,19 @@ class ActorCriticCNNBase(nn.Module):
         # self.actor_fc.apply(self.init_weights)
         # self.critic_fc.apply(self.init_weights)
 
-        self.actor_params = list(self.conv.parameters()) + list(self.actor_fc.parameters())
-        self.critic_params = list(self.conv.parameters()) + list(self.critic_fc.parameters())
+        self.actor_params = list(self.actor_conv.parameters()) + list(self.actor_fc.parameters())
+        self.critic_params = list(self.critic_conv.parameters()) + list(self.critic_fc.parameters())
 
         self.layers_info = {'conv': self.conv, 'actor_fc': self.actor_fc, 'critic_fc': self.critic_fc}
 
         self.train()
 
-    def _get_conv_out(self, shape):
-        o = self.conv(Variable(torch.zeros(1, *shape)))
+    def _get_actor_conv_out(self, shape):
+        o = self.actor_conv(Variable(torch.zeros(1, *shape)))
+        return int(np.prod(o.size()))
+
+    def _get_critic_conv_out(self, shape):
+        o = self.critic_conv(Variable(torch.zeros(1, *shape)))
         return int(np.prod(o.size()))
 
     # @staticmethod

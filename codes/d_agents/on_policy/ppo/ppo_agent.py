@@ -41,7 +41,7 @@ class AgentPPO(OnPolicyAgent):
         # batch_target_action_value_v : (64,)
         self.critic_optimizer.zero_grad()
         batch_loss_critic_v = F.mse_loss(batch_values_v.squeeze(-1), batch_target_action_value_v.detach())
-        batch_loss_critic_v.backward(retain_graph=True)
+        batch_loss_critic_v.backward()
         self.critic_optimizer.step()
         return batch_loss_critic_v
 
