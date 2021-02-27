@@ -43,5 +43,5 @@ class AgentPPO(OnPolicyAgent):
 
         loss_actor_v.backward(retain_graph=True)
         (loss_critic_v + self.params.ENTROPY_LOSS_WEIGHT * loss_entropy_v).backward()
-        nn_utils.clip_grad_norm_(self.model.base.parameters(), self.params.CLIP_GRAD)
+        #nn_utils.clip_grad_norm_(self.model.base.parameters(), self.params.CLIP_GRAD)
         self.optimizer.step()
