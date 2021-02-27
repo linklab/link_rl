@@ -42,18 +42,7 @@ class AgentContinuousA2C(AgentA2C):
         )
 
     def __call__(self, states, critics=None):
-        states = self.preprocess(states)
-
-        mu_v, var_v = self.model.base.actor(states)
-
-        if self.agent_mode == AgentMode.TRAIN:
-            actions = self.train_action_selector(mu_v, var_v, self.action_min, self.action_max)
-        else:
-            actions = self.test_and_play_action_selector(mu_v, var_v, self.action_min, self.action_max)
-
-        critics = torch.zeros(size=mu_v.size())
-
-        return actions, critics
+        return self.continuous_call(states, critics)
 
     def train(self, step_idx):
         batch = self.buffer.sample(batch_size=None)

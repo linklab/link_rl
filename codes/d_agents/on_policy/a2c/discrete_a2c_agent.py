@@ -40,19 +40,7 @@ class AgentDiscreteA2C(AgentA2C):
         )
 
     def __call__(self, states, critics=None):
-        states = self.preprocess(states)
-
-        with torch.no_grad():
-            probs_v = self.model.base.forward_actor(states)
-
-        if self.agent_mode == AgentMode.TRAIN:
-            actions = self.train_action_selector(probs_v)
-        else:
-            actions = self.test_and_play_action_selector(probs_v)
-
-        critics = torch.zeros(size=probs_v.size())
-
-        return actions, critics
+        return self.discrete_call(states, critics)
 
     def train(self, step_idx):
         batch = self.buffer.sample(batch_size=None)

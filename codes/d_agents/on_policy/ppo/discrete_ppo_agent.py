@@ -2,14 +2,16 @@ import torch
 import torch.nn.functional as F
 import torch.nn.utils as nn_utils
 
+from codes.c_models.discrete_action.discrete_actor_critic_model import DiscreteActorCriticModel
 from codes.d_agents.a0_base_agent import BaseAgent, float32_preprocessor
 from codes.d_agents.on_policy.on_policy_agent import OnPolicyAgent
+from codes.d_agents.on_policy.ppo.ppo_agent import AgentPPO
 from codes.e_utils import rl_utils, replay_buffer
 from codes.e_utils.actions import DiscreteCategoricalActionSelector
 from codes.e_utils.names import DeepLearningModelName, AgentMode
 
 
-class AgentDiscretePPO(OnPolicyAgent):
+class AgentDiscretePPO(AgentPPO):
     """
     """
     def __init__(
@@ -19,16 +21,20 @@ class AgentDiscretePPO(OnPolicyAgent):
             DeepLearningModelName.STOCHASTIC_DISCRETE_ACTOR_CRITIC_MLP,
             DeepLearningModelName.STOCHASTIC_DISCRETE_ACTOR_CRITIC_CNN,
         ]
-        assert params.N_STEP == 1  # GAE will consider various N_STEPs
 
         super(AgentDiscretePPO, self).__init__(worker_id=worker_id, params=params, device=device)
         self.__name__ = "AgentDiscretePPO"
+
         self.train_action_selector = DiscreteCategoricalActionSelector()
         self.test_and_play_action_selector = DiscreteCategoricalActionSelector()
 
-        self.model = rl_utils.get_rl_model(
-            worker_id=worker_id, input_shape=input_shape, num_outputs=num_outputs, params=params, device=self.device
-        )
+        self.model = DiscreteActorCriticModel(
+            worker_id=worker_id,
+            input_shape=input_shape,
+            num_outputs=num_outputs,
+            params=params,
+            device=device
+        ).to(device)
 
         self.optimizer = rl_utils.get_optimizer(
             parameters=self.model.base.parameters(),
@@ -48,27 +54,8 @@ class AgentDiscretePPO(OnPolicyAgent):
         #     params=params
         # )
 
-        self.trajectory = []
-
-        self.buffer = replay_buffer.ExperienceReplayBuffer(
-            experience_source=None, buffer_size=self.params.PPO_TRAJECTORY_SIZE
-        )
-
     def __call__(self, states, critics=None):
-        if not isinstance(states, torch.FloatTensor):
-            states = float32_preprocessor(states).to(self.device)
-
-        logits_v = self.model.base.forward_actor(states)
-
-        probs_v = F.softmax(logits_v, dim=1)
-
-        if self.agent_mode == AgentMode.TRAIN:
-            actions = self.train_action_selector(probs_v)
-        else:
-            actions = self.test_and_play_action_selector(probs_v)
-
-        critics = torch.zeros(size=probs_v.size())
-        return actions, critics
+        return self.discrete_call(states, critics)
 
     def train(self, step_idx):
         trajectory = self.buffer.sample(batch_size=None)

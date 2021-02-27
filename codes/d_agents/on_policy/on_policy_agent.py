@@ -5,7 +5,7 @@ import torch
 
 from codes.d_agents.a0_base_agent import BaseAgent, float32_preprocessor, long64_preprocessor
 from codes.e_utils import replay_buffer
-from codes.e_utils.names import RLAlgorithmName
+from codes.e_utils.names import RLAlgorithmName, AgentMode
 
 
 class OnPolicyAgent(BaseAgent):
@@ -14,6 +14,9 @@ class OnPolicyAgent(BaseAgent):
     """
     def __init__(self, worker_id, params, device):
         super(OnPolicyAgent, self).__init__(worker_id, params, device)
+        self.model = None
+        self.train_action_selector = None
+        self.test_and_play_action_selector = None
 
     @abstractmethod
     def __call__(self, states, agent_states):
@@ -28,6 +31,35 @@ class OnPolicyAgent(BaseAgent):
         assert len(agent_states) == len(states)
 
         raise NotImplementedError
+
+    def discrete_call(self, states, critics):
+        states = self.preprocess(states)
+
+        with torch.no_grad():
+            probs_v = self.model.base.forward_actor(states)
+
+        if self.agent_mode == AgentMode.TRAIN:
+            actions = self.train_action_selector(probs_v)
+        else:
+            actions = self.test_and_play_action_selector(probs_v)
+
+        critics = torch.zeros(size=probs_v.size())
+        return actions, critics
+
+    def continuous_call(self, states, critics):
+        states = self.preprocess(states)
+
+        with torch.no_grad():
+            mu_v, var_v = self.model.base.actor(states)
+
+        if self.agent_mode == AgentMode.TRAIN:
+            actions = self.train_action_selector(mu_v, var_v, self.action_min, self.action_max)
+        else:
+            actions = self.test_and_play_action_selector(mu_v, var_v, self.action_min, self.action_max)
+
+        critics = torch.zeros(size=mu_v.size())
+
+        return actions, critics
 
     @abstractmethod
     def train(self, step_idx):
