@@ -1,50 +1,47 @@
-import numpy as np
 import torch
 import torch.nn.functional as F
-import torch.nn.utils as nn_utils
 
-from codes.d_agents.a0_base_agent import BaseAgent, float32_preprocessor
-from codes.d_agents.on_policy.on_policy_agent import OnPolicyAgent
-from codes.e_utils import rl_utils, replay_buffer
+from codes.c_models.discrete_action.discrete_actor_critic_model import DiscreteActorCriticModel
+from codes.d_agents.on_policy.a2c.a2c_agent import AgentA2C
+from codes.e_utils import rl_utils
 from codes.e_utils.actions import DiscreteCategoricalActionSelector
 from codes.e_utils.names import DeepLearningModelName, AgentMode
 
 
-class AgentDiscreteA2C(OnPolicyAgent):
+class AgentDiscreteA2C(AgentA2C):
     """
     """
     def __init__(
             self, worker_id, input_shape, num_outputs, params, device
     ):
-        assert params.DEEP_LEARNING_MODEL in [
-            DeepLearningModelName.STOCHASTIC_DISCRETE_ACTOR_CRITIC_MLP,
-            DeepLearningModelName.STOCHASTIC_DISCRETE_ACTOR_CRITIC_CNN
-        ]
-
-        super(AgentDiscreteA2C, self).__init__(params, device)
+        super(AgentDiscreteA2C, self).__init__(worker_id, input_shape, num_outputs, params, device)
 
         self.__name__ = "AgentDiscreteA2C"
         self.train_action_selector = DiscreteCategoricalActionSelector()
         self.test_and_play_action_selector = DiscreteCategoricalActionSelector()
         self.worker_id = worker_id
 
-        self.model = rl_utils.get_rl_model(
-            worker_id=worker_id, input_shape=input_shape, num_outputs=num_outputs, params=params, device=self.device
-        )
+        assert params.DEEP_LEARNING_MODEL in [
+            DeepLearningModelName.STOCHASTIC_DISCRETE_ACTOR_CRITIC_MLP,
+            DeepLearningModelName.STOCHASTIC_DISCRETE_ACTOR_CRITIC_CNN
+        ]
 
-        self.base_optimizer = rl_utils.get_optimizer(
+        self.model = DiscreteActorCriticModel(
+            worker_id=worker_id,
+            input_shape=input_shape,
+            num_outputs=num_outputs,
+            params=params,
+            device=device
+        ).to(device)
+
+        self.optimizer = rl_utils.get_optimizer(
             parameters=self.model.base.parameters(),
             learning_rate=self.params.LEARNING_RATE,
             params=params
         )
 
-        self.buffer = replay_buffer.ExperienceReplayBuffer(
-            experience_source=None, buffer_size=self.params.BATCH_SIZE
-        )
-
     def __call__(self, states, critics=None):
-        if not isinstance(states, torch.FloatTensor):
-            states = float32_preprocessor(states).to(self.device)
+        states = self.preprocess(states)
 
         with torch.no_grad():
             probs_v = self.model.base.forward_actor(states)
@@ -53,12 +50,12 @@ class AgentDiscreteA2C(OnPolicyAgent):
             actions = self.train_action_selector(probs_v)
         else:
             actions = self.test_and_play_action_selector(probs_v)
+
         critics = torch.zeros(size=probs_v.size())
+
         return actions, critics
 
     def train(self, step_idx):
-        # Lucky Episode에서 얻어낸 batch를 통해 학습할 때와, Unlucky Episode에서 얻어낸 batch를 통해 학습할 때마다 NN의 파라미터들이
-        # 서로 다른 방향으로 반복적으로 휩쓸려가듯이 학습이 됨 --> Gradients의 Variance가 매우 큼
         batch = self.buffer.sample(batch_size=None)
 
         # states_v.shape: (32, 3)
@@ -72,26 +69,15 @@ class AgentDiscreteA2C(OnPolicyAgent):
         loss_critic_v = F.mse_loss(input=value_v.squeeze(-1), target=target_action_values_v.detach())
 
         # advantage_v.shape: (32,)
-        advantage_v = target_action_values_v.detach() - value_v.squeeze(-1).detach()
+        advantage_v = target_action_values_v - value_v.squeeze(-1)
+
         log_pi_action_v = torch.log(probs_v.gather(dim=1, index=actions_v.unsqueeze(-1)) + 1e-5).squeeze(-1)
         reinforced_log_pi_action_v = advantage_v.detach() * log_pi_action_v
 
         loss_actor_v = -1.0 * reinforced_log_pi_action_v.mean()
-
         log_pi_v = torch.log(probs_v + 1e-5)
         loss_entropy_v = (probs_v * log_pi_v).sum(dim=1).mean()
-
         # loss_actor_v를 작아지도록 만듦 --> log_pi_v.mean()가 커지도록 만듦
         # loss_entropy_v를 작아지도록 만듦 --> entropy_v가 커지도록 만듦
 
-        self.base_optimizer.zero_grad()
-        loss_actor_v.backward(retain_graph=True)
-        (loss_critic_v + self.params.ENTROPY_LOSS_WEIGHT * loss_entropy_v).backward()
-        nn_utils.clip_grad_norm_(self.model.base.parameters(), self.params.CLIP_GRAD)
-        self.base_optimizer.step()
-
-        gradients = self.model.get_gradients_for_current_parameters()
-
-        self.model.check_gradient_nan(gradients)
-
-        return gradients, loss_critic_v.item(), loss_actor_v.item() * -1.0
+        return self.backward_and_step(loss_critic_v, loss_entropy_v, loss_actor_v)

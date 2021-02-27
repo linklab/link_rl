@@ -1,34 +1,39 @@
 import torch
 import torch.nn.functional as F
-from torch.distributions import Normal, MultivariateNormal
-import torch.nn.utils as nn_utils
+from torch.distributions import Normal
 
-from codes.d_agents.a0_base_agent import BaseAgent, float32_preprocessor
-from codes.d_agents.on_policy.on_policy_agent import OnPolicyAgent
-from codes.e_utils import rl_utils, replay_buffer
+from codes.c_models.continuous_action.stochastic_continuous_actor_critic_model import StochasticContinuousActorCriticModel
+from codes.d_agents.on_policy.a2c.a2c_agent import AgentA2C
+from codes.e_utils import rl_utils
 from codes.e_utils.actions import ContinuousNormalActionSelector
 from codes.e_utils.names import DeepLearningModelName, AgentMode
 
 
-class AgentContinuousA2C(OnPolicyAgent):
+class AgentContinuousA2C(AgentA2C):
     """
     """
     def __init__(
-            self, worker_id, input_shape, num_outputs, action_min, action_max, params, device="cpu"
+            self, worker_id, input_shape, num_outputs, action_min, action_max, params, device
     ):
-        assert params.DEEP_LEARNING_MODEL == DeepLearningModelName.STOCHASTIC_CONTINUOUS_ACTOR_CRITIC_MLP
+        assert params.DEEP_LEARNING_MODEL in [
+            DeepLearningModelName.STOCHASTIC_CONTINUOUS_ACTOR_CRITIC_MLP
+        ]
+        super(AgentContinuousA2C, self).__init__(worker_id, input_shape, num_outputs, params, device)
 
-        super(AgentContinuousA2C, self).__init__(params, device)
         self.__name__ = "AgentContinuousA2C"
         self.train_action_selector = ContinuousNormalActionSelector()
         self.test_and_play_action_selector = ContinuousNormalActionSelector()
-        self.worker_id = worker_id
+
         self.action_min = action_min
         self.action_max = action_max
 
-        self.model = rl_utils.get_rl_model(
-            worker_id=worker_id, input_shape=input_shape, num_outputs=num_outputs, params=params, device=self.device
-        )
+        self.model = StochasticContinuousActorCriticModel(
+            worker_id=worker_id,
+            input_shape=input_shape,
+            num_outputs=num_outputs,
+            params=params,
+            device=device
+        ).to(device)
 
         self.optimizer = rl_utils.get_optimizer(
             parameters=self.model.base.parameters(),
@@ -36,11 +41,8 @@ class AgentContinuousA2C(OnPolicyAgent):
             params=params
         )
 
-        self.buffer = replay_buffer.ExperienceReplayBuffer(experience_source=None, buffer_size=self.params.BATCH_SIZE)
-
     def __call__(self, states, critics=None):
-        if not isinstance(states, torch.FloatTensor):
-            states = float32_preprocessor(states).to(self.device)
+        states = self.preprocess(states)
 
         mu_v, var_v = self.model.base.actor(states)
 
@@ -59,7 +61,6 @@ class AgentContinuousA2C(OnPolicyAgent):
         # states_v.shape: (32, 3)
         # actions_v.shape: (32, 1)
         # target_action_values_v.shape: (32,)
-
         states_v, actions_v, target_action_values_v = self.unpack_batch_for_actor_critic(batch, self.model, self.params)
 
         # mu_v.shape: (32, 1)
@@ -85,18 +86,7 @@ class AgentContinuousA2C(OnPolicyAgent):
 
         loss_actor_v = -1.0 * reinforced_log_pi_action_v.mean()
         loss_entropy_v = -1.0 * dist.entropy().mean()
-
         # loss_actor_v를 작아지도록 만듦 --> log_pi_v.mean()가 커지도록 만듦
         # loss_entropy_v를 작아지도록 만듦 --> entropy_v가 커지도록 만듦
 
-        self.optimizer.zero_grad()
-        loss_actor_v.backward(retain_graph=True)
-        (loss_critic_v + self.params.ENTROPY_LOSS_WEIGHT * loss_entropy_v).backward()
-        nn_utils.clip_grad_norm_(self.model.base.parameters(), self.params.CLIP_GRAD)
-        self.optimizer.step()
-
-        gradients = self.model.get_gradients_for_current_parameters()
-
-        self.buffer.clear()
-
-        return gradients, loss_critic_v.item(), loss_actor_v.item() * -1.0
+        return self.backward_and_step(loss_critic_v, loss_entropy_v, loss_actor_v)

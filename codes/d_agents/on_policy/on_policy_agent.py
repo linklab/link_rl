@@ -12,12 +12,26 @@ class OnPolicyAgent(BaseAgent):
     """
     Abstract Agent interface
     """
-    def __init__(self, params, device):
-        super(OnPolicyAgent, self).__init__(params, device)
+    def __init__(self, worker_id, params, device):
+        super(OnPolicyAgent, self).__init__(worker_id, params, device)
 
-        self.buffer = replay_buffer.ExperienceReplayBuffer(
-            experience_source=None, buffer_size=self.params.REPLAY_BUFFER_SIZE
-        )
+    @abstractmethod
+    def __call__(self, states, agent_states):
+        """
+        Convert observations and states into actions to take
+        :param states: list of environment states to process
+        :param agent_states: list of states with the same length as observations
+        :return: tuple of actions, states
+        """
+        assert isinstance(states, list)
+        assert isinstance(agent_states, list)
+        assert len(agent_states) == len(states)
+
+        raise NotImplementedError
+
+    @abstractmethod
+    def train(self, step_idx):
+        raise NotImplementedError
 
     def unpack_batch_for_actor_critic(self, batch, net, params, discrete=False):
         """

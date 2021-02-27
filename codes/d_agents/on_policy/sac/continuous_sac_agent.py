@@ -19,7 +19,7 @@ class AgentSAC(OnPolicyAgent):
     ):
         assert params.DEEP_LEARNING_MODEL == DeepLearningModelName.SOFT_ACTOR_CRITIC_MLP
 
-        super(AgentSAC, self).__init__(params, device)
+        super(AgentSAC, self).__init__(worker_id, params, device)
         self.__name__ = "AgentSAC"
         self.worker_id = worker_id
         self.action_min = action_min

@@ -15,8 +15,8 @@ from codes.a_config.parameters import PARAMETERS as params
 
 from codes.b_environments.trade.trade_data import get_data
 from codes.c_models.continuous_action.soft_actor_critic_model import SoftActorCriticModel
-from codes.d_agents.on_policy.continuous_sac_agent import AgentSAC
-from codes.d_agents.on_policy.discrete_ppo_agent import AgentDiscretePPO
+from codes.d_agents.on_policy.sac.continuous_sac_agent import AgentSAC
+from codes.d_agents.on_policy.ppo.discrete_ppo_agent import AgentDiscretePPO
 from codes.e_utils.reward_changer import RewardChanger
 
 current_path = os.path.dirname(os.path.realpath(__file__))
@@ -24,13 +24,13 @@ PROJECT_HOME = os.path.abspath(os.path.join(current_path, os.pardir, os.pardir))
 if PROJECT_HOME not in sys.path:
     sys.path.append(PROJECT_HOME)
 
-from codes.d_agents.on_policy.continuous_a2c_agent import AgentContinuousA2C
-from codes.d_agents.on_policy.continuous_ppo_agent import AgentContinuousPPO
-from codes.d_agents.on_policy.discrete_a2c_agent import AgentDiscreteA2C
+from codes.d_agents.on_policy.a2c.continuous_a2c_agent import AgentContinuousA2C
+from codes.d_agents.on_policy.ppo.continuous_ppo_agent import AgentContinuousPPO
+from codes.d_agents.on_policy.a2c.discrete_a2c_agent import AgentDiscreteA2C
 from codes.d_agents.off_policy.dqn_agent import AgentDQN
 
 from codes.c_models.continuous_action.deterministic_actor_critic_model import DeterministicActorCriticModel
-from codes.c_models.continuous_action.stochastic_actor_critic_model import StochasticActorCriticModel
+from codes.c_models.continuous_action.stochastic_continuous_actor_critic_model import StochasticContinuousActorCriticModel
 from codes.c_models.discrete_action.discrete_actor_critic_model import DiscreteActorCriticModel
 from codes.c_models.discrete_action.dqn_model import DuelingDQNModel
 
@@ -124,7 +124,6 @@ def get_single_environment(params=None, mode=AgentMode.TRAIN):
         EnvironmentName.PYBULLET_ANT_V0, EnvironmentName.PYBULLET_HALF_CHEETAH_V0,
         EnvironmentName.PYBULLET_MINITAUR_BULLET_V0, EnvironmentName.PYBULLET_INVERTED_DOUBLE_PENDULUM_V0
     ]:
-        import pybullet_envs
         spec = gym.envs.registry.spec(params.ENVIRONMENT_ID.value)
         spec._kwargs['render'] = params.ENV_RENDER
         env = gym.make(params.ENVIRONMENT_ID.value)
@@ -229,7 +228,7 @@ def get_rl_model(worker_id, input_shape=None, num_outputs=None, params=None, dev
             device=device
         ).to(device)
     elif params.DEEP_LEARNING_MODEL == DeepLearningModelName.STOCHASTIC_CONTINUOUS_ACTOR_CRITIC_MLP:
-        model = StochasticActorCriticModel(
+        model = StochasticContinuousActorCriticModel(
             worker_id=worker_id,
             input_shape=input_shape,
             num_outputs=num_outputs,

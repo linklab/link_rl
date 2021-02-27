@@ -20,7 +20,8 @@ class BaseAgent:
     """
     Abstract Agent interface
     """
-    def __init__(self, params, device):
+    def __init__(self, worker_id, params, device):
+        self.worker_id = worker_id
         self.params = params
         self.device = device
         self.buffer = None
@@ -29,6 +30,12 @@ class BaseAgent:
 
     def initial_agent_state(self):
         return np.array([0.0])
+
+    def preprocess(self, states):
+        if not isinstance(states, torch.FloatTensor):
+            states = float32_preprocessor(states).to(self.device)
+
+        return states
 
     def set_experience_source_to_buffer(self, experience_source):
         self.buffer.set_experience_source(experience_source)

@@ -4,10 +4,10 @@ import torch.nn as nn
 from codes.c_models.base_model import BaseModel
 
 
-class StochasticActorCriticModel(BaseModel):
+class StochasticContinuousActorCriticModel(BaseModel):
     def __init__(self, worker_id, input_shape, num_outputs, params, device):
-        super(StochasticActorCriticModel, self).__init__(worker_id, params, device)
-        self.__name__ = "StochasticActorCriticModel"
+        super(StochasticContinuousActorCriticModel, self).__init__(worker_id, params, device)
+        self.__name__ = "StochasticContinuousActorCriticModel"
 
         num_inputs = input_shape[0]
 

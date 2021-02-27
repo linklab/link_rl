@@ -12,20 +12,20 @@ from torch import optim
 import os, sys
 
 from codes.c_models.continuous_action.soft_actor_critic_model import SoftActorCriticModel
-from codes.d_agents.on_policy.continuous_sac_agent import AgentSAC
+from codes.d_agents.on_policy.sac.continuous_sac_agent import AgentSAC
 
 current_path = os.path.dirname(os.path.realpath(__file__))
 PROJECT_HOME = os.path.abspath(os.path.join(current_path, os.pardir, os.pardir))
 if PROJECT_HOME not in sys.path:
     sys.path.append(PROJECT_HOME)
 
-from codes.d_agents.on_policy.continuous_a2c_agent import AgentContinuousA2C
-from codes.d_agents.on_policy.continuous_ppo_agent import AgentContinuousPPO
-from codes.d_agents.on_policy.discrete_a2c_agent import AgentDiscreteA2C
+from codes.d_agents.on_policy.a2c.continuous_a2c_agent import AgentContinuousA2C
+from codes.d_agents.on_policy.ppo.continuous_ppo_agent import AgentContinuousPPO
+from codes.d_agents.on_policy.a2c.discrete_a2c_agent import AgentDiscreteA2C
 from codes.d_agents.off_policy.dqn_agent import AgentDQN
 
 from codes.c_models.continuous_action.deterministic_actor_critic_model import DeterministicActorCriticModel
-from codes.c_models.continuous_action.stochastic_actor_critic_model import StochasticActorCriticModel
+from codes.c_models.continuous_action.stochastic_continuous_actor_critic_model import StochasticActorCriticModel
 from codes.c_models.discrete_action.discrete_actor_critic_model import DiscreteActorCriticModel
 from codes.c_models.discrete_action.dqn_model import DuelingDQNModel
 
