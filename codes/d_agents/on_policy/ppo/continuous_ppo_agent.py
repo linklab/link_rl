@@ -40,8 +40,20 @@ class AgentContinuousPPO(AgentPPO):
             device=device
         ).to(device)
 
-        self.optimizer = rl_utils.get_optimizer(
-            parameters=self.model.base.parameters(),
+        # self.optimizer = rl_utils.get_optimizer(
+        #     parameters=self.model.base.parameters(),
+        #     learning_rate=self.params.LEARNING_RATE,
+        #     params=params
+        # )
+
+        self.actor_optimizer = rl_utils.get_optimizer(
+            parameters=self.model.base.actor.parameters(),
+            learning_rate=self.params.ACTOR_LEARNING_RATE,
+            params=params
+        )
+
+        self.critic_optimizer = rl_utils.get_optimizer(
+            parameters=self.model.base.critic.parameters(),
             learning_rate=self.params.LEARNING_RATE,
             params=params
         )
@@ -77,7 +89,7 @@ class AgentContinuousPPO(AgentPPO):
                 trajectory, trajectory_values_v, device=self.device
             )
             # normalize advantages
-            trajectory_advantage_v = trajectory_advantage_v - trajectory_advantage_v.mean()
+            trajectory_advantage_v = trajectory_advantage_v - torch.mean(trajectory_advantage_v)
             trajectory_advantage_v /= torch.std(trajectory_advantage_v) + 1e-5
 
         # drop last entry from the trajectory, an our adv and target action value calculated without it
@@ -100,31 +112,28 @@ class AgentContinuousPPO(AgentPPO):
                 batch_target_action_value_v = trajectory_target_action_value_v[batch_offset:batch_l]
                 batch_old_log_pi_action_v = trajectory_old_log_pi_action_v[batch_offset:batch_l]
 
+                # batch_mu_v: (64, 1)
+                # batch_var_v: (64, 1)
+                # batch_values_v: (64, 1)
                 batch_mu_v, batch_var_v, batch_values_v = self.model(batch_states_v)
 
-                # critic training
-                loss_critic_v = F.mse_loss(batch_values_v.squeeze(-1), batch_target_action_value_v.detach())
+                batch_loss_critic_v = self.backward_and_step_for_critic(batch_values_v, batch_target_action_value_v)
 
                 # actor training
                 batch_dist = Normal(loc=batch_mu_v, scale=torch.sqrt(batch_var_v))
 
+                # batch_actions_v: (64, 1)
+                # batch_log_pi_action_v: (64, 1)
                 batch_log_pi_action_v = batch_dist.log_prob(batch_actions_v)
                 batch_dist_entropy_v = batch_dist.entropy()
+                batch_loss_entropy_v = -1.0 * batch_dist_entropy_v.mean()
 
-                batch_ratio_v = torch.exp(batch_log_pi_action_v - batch_old_log_pi_action_v)
-
-                batch_surrogate_1_v = batch_advantage_v * batch_ratio_v
-                batch_surrogate_2_v = batch_advantage_v * torch.clamp(
-                    batch_ratio_v, min=1.0 - self.params.PPO_EPSILON_CLIP, max=1.0 + self.params.PPO_EPSILON_CLIP
+                batch_loss_actor_v = self.backward_and_step_for_actor(
+                    batch_log_pi_action_v, batch_old_log_pi_action_v, batch_advantage_v, batch_loss_entropy_v
                 )
 
-                loss_actor_v = -1.0 * torch.min(batch_surrogate_1_v, batch_surrogate_2_v).mean()
-                loss_entropy_v = -1.0 * batch_dist_entropy_v.mean()
-
-                self.backward_and_step_in_trajectory(loss_critic_v, loss_entropy_v, loss_actor_v)
-
-                sum_loss_critic += loss_critic_v.item()
-                sum_loss_actor += loss_actor_v.item()
+                sum_loss_critic += batch_loss_critic_v.item()
+                sum_loss_actor += batch_loss_actor_v.item()
                 count_steps += 1
 
         gradients = self.model.get_gradients_for_current_parameters()

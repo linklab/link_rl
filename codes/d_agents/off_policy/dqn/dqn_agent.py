@@ -4,6 +4,7 @@ import torch.nn.functional as F
 
 from codes.b_environments.trade.trade_action_selector import EpsilonGreedyTradeDQNActionSelector, \
     ArgmaxTradeActionSelector
+from codes.c_models.discrete_action.dqn_model import DuelingDQNModel
 from codes.d_agents.a0_base_agent import TargetNet, float32_preprocessor
 from codes.d_agents.off_policy.off_policy_agent import OffPolicyAgent
 from codes.e_utils import rl_utils
@@ -48,9 +49,13 @@ class AgentDQN(OffPolicyAgent):
 
         self.__name__ = "AgentDQN"
 
-        self.model = rl_utils.get_rl_model(
-            worker_id=worker_id, input_shape=input_shape, num_outputs=num_outputs, params=params, device=device
-        )
+        self.model = DuelingDQNModel(
+            worker_id=worker_id,
+            input_shape=input_shape,
+            num_outputs=num_outputs,
+            params=params,
+            device=device
+        ).to(device)
 
         self.target_agent = TargetNet(self.model.base)
 

@@ -4,6 +4,7 @@ import torch.nn.functional as F
 from torch.distributions import Normal
 import torch.nn.utils as nn_utils
 
+from codes.c_models.continuous_action.soft_actor_critic_model import SoftActorCriticModel
 from codes.d_agents.a0_base_agent import BaseAgent, float32_preprocessor, TargetNet
 from codes.d_agents.on_policy.on_policy_agent import OnPolicyAgent
 from codes.e_utils import rl_utils, replay_buffer
@@ -27,9 +28,13 @@ class AgentSAC(OnPolicyAgent):
         self.train_action_selector = ContinuousNormalActionSelector()
         self.test_and_play_action_selector = ContinuousNormalActionSelector()
 
-        self.model = rl_utils.get_rl_model(
-            worker_id=worker_id, input_shape=input_shape, num_outputs=num_outputs, params=params, device=self.device
-        )
+        self.model = SoftActorCriticModel(
+            worker_id=worker_id,
+            input_shape=input_shape,
+            num_outputs=num_outputs,
+            params=params,
+            device=device
+        ).to(device)
 
         self.target_agent = TargetNet(self.model.base)
 
