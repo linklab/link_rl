@@ -132,7 +132,7 @@ class ActorCriticCNNBase(nn.Module):
         # self.critic_fc.apply(self.init_weights)
 
         self.actor_params = list(self.conv.parameters()) + list(self.actor_fc.parameters())
-        self.critic_params = list(self.critic_fc.parameters())
+        self.critic_params = list(self.conv.parameters()) + list(self.critic_fc.parameters())
 
         self.layers_info = {'conv': self.conv, 'actor_fc': self.actor_fc, 'critic_fc': self.critic_fc}
 
