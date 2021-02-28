@@ -98,5 +98,5 @@ class ActorMLPBase(nn.Module):
     def forward(self, inputs):
         net_out = self.net(inputs)
         mu = 2 * self.mu(net_out)
-        var = self.var(net_out) + 1e-3
+        var = self.var(net_out) + 1e-5
         return mu, var

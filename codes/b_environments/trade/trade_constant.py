@@ -48,7 +48,7 @@ SLACK_WEBHOOK_URL_1 = config_parser['SLACK']['webhook_url_1']
 SLACK_WEBHOOK_URL_2 = config_parser['SLACK']['webhook_url_2']
 SLACK_API_TOKEN = config_parser['SLACK']['SLACK_API_TOKEN']
 
-RAW_DATA_DIR = os.path.join(PROJECT_HOME, "codes", "b_environments", "trade", "raw_data")
+RAW_DATA_DIR = os.path.join(PROJECT_HOME, "b_environments", "trade", "raw_data")
 CSV_RAW_DATA_FILE = os.path.join(RAW_DATA_DIR, '{0}_{1}_{2}.csv')
 
 if not os.path.exists(RAW_DATA_DIR):
