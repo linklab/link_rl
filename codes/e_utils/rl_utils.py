@@ -29,7 +29,7 @@ from codes.d_agents.on_policy.ppo.continuous_ppo_agent import AgentContinuousPPO
 from codes.d_agents.on_policy.a2c.discrete_a2c_agent import AgentDiscreteA2C
 from codes.d_agents.off_policy.dqn.dqn_agent import AgentDQN
 
-from codes.c_models.continuous_action.deterministic_actor_critic_model import DeterministicActorCriticModel
+from codes.c_models.continuous_action.deterministic_continuous_actor_critic_model import DeterministicContinuousActorCriticModel
 from codes.c_models.continuous_action.stochastic_continuous_actor_critic_model import StochasticContinuousActorCriticModel
 from codes.c_models.discrete_action.discrete_actor_critic_model import DiscreteActorCriticModel
 from codes.c_models.discrete_action.dqn_model import DuelingDQNModel
@@ -246,7 +246,7 @@ def get_rl_model(worker_id, input_shape=None, num_outputs=None, params=None, dev
             device=device
         ).to(device)
     elif params.DEEP_LEARNING_MODEL == DeepLearningModelName.DETERMINISTIC_CONTINUOUS_ACTOR_CRITIC_MLP:
-        model = DeterministicActorCriticModel(
+        model = DeterministicContinuousActorCriticModel(
             worker_id=worker_id,
             input_shape=input_shape,
             num_outputs=num_outputs,

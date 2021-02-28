@@ -7,10 +7,10 @@ from codes.c_models.base_model import BaseModel
 from codes.e_utils.names import RLAlgorithmName
 
 
-class DeterministicActorCriticModel(BaseModel):
+class DeterministicContinuousActorCriticModel(BaseModel):
     def __init__(self, worker_id, input_shape, num_outputs, params, device):
-        super(DeterministicActorCriticModel, self).__init__(worker_id, params, device)
-        self.__name__ = "DeterministicActorCriticModel"
+        super(DeterministicContinuousActorCriticModel, self).__init__(worker_id, params, device)
+        self.__name__ = "DeterministicContinuousActorCriticModel"
 
         num_inputs = input_shape[0]
 

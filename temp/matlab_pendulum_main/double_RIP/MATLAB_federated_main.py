@@ -4,7 +4,7 @@ from multiprocessing import Process
 import torch
 
 from codes.e_utils import common_utils, rl_utils
-from codes.f_main.federation_main.federated_main import utils
+from codes.f_main.federation_main import utils
 
 print(torch.__version__)
 

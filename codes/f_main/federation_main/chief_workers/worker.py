@@ -18,7 +18,7 @@ from codes.a_config.parameters import PARAMETERS as params
 
 from codes.e_utils import rl_utils
 
-from codes.f_main.federation_main.federated_main.utils import exp_moving_average
+from codes.f_main.federation_main.utils import exp_moving_average
 
 env = rl_utils.get_environment(owner="worker", params=params)
 

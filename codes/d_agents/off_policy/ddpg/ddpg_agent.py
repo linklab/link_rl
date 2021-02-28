@@ -3,7 +3,7 @@ import torch
 import torch.nn.functional as F
 from icecream import ic
 
-from codes.c_models.continuous_action.deterministic_actor_critic_model import DeterministicActorCriticModel
+from codes.c_models.continuous_action.deterministic_continuous_actor_critic_model import DeterministicContinuousActorCriticModel
 from codes.d_agents.a0_base_agent import TargetNet, float32_preprocessor
 from codes.d_agents.off_policy.off_policy_agent import OffPolicyAgent
 from codes.e_utils import rl_utils, replay_buffer
@@ -49,7 +49,7 @@ class AgentDDPG(OffPolicyAgent):
             eps_frames=params.EPSILON_MIN_STEP
         )
 
-        self.model = DeterministicActorCriticModel(
+        self.model = DeterministicContinuousActorCriticModel(
             worker_id=worker_id,
             input_shape=input_shape,
             num_outputs=num_outputs,

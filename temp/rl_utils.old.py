@@ -24,7 +24,7 @@ from codes.d_agents.on_policy.ppo.continuous_ppo_agent import AgentContinuousPPO
 from codes.d_agents.on_policy.a2c.discrete_a2c_agent import AgentDiscreteA2C
 from codes.d_agents.off_policy.dqn.dqn_agent import AgentDQN
 
-from codes.c_models.continuous_action.deterministic_actor_critic_model import DeterministicActorCriticModel
+from codes.c_models.continuous_action.deterministic_continuous_actor_critic_model import DeterministicActorCriticModel
 from codes.c_models.continuous_action.stochastic_continuous_actor_critic_model import StochasticActorCriticModel
 from codes.c_models.discrete_action.discrete_actor_critic_model import DiscreteActorCriticModel
 from codes.c_models.discrete_action.dqn_model import DuelingDQNModel
