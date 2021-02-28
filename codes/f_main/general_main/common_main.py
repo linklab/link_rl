@@ -205,37 +205,6 @@ def last_model_save(agent, step_idx, train_episode_reward_lst_for_stat):
     )
 
 
-def on_policy_agent_train(agent, step_idx, loss_dequeue, actor_objective_dequeue):
-    if params.RL_ALGORITHM in [RLAlgorithmName.CONTINUOUS_PPO_V0, RLAlgorithmName.DISCRETE_PPO_V0]:
-        if len(agent.buffer) < params.PPO_TRAJECTORY_SIZE:
-            return
-    else:
-        if len(agent.buffer) < params.BATCH_SIZE:
-            return
-
-    _, last_loss, actor_objective = agent.train(step_idx=step_idx)
-    loss_dequeue.append(last_loss)
-    if actor_objective:
-        actor_objective_dequeue.append(actor_objective)
-    # On-policy는 현재의 정책을 통해 산출된 경험정보만을 활용하여 NN을 업데이트해야 함.
-    # 따라서, 현재 학습에 사용된 Buffer는 깨끗하게 지워야 함.
-    agent.buffer.clear()
-
-
-def off_policy_agent_train(agent, step_idx, loss_dequeue, actor_objective_dequeue):
-    if len(agent.buffer) < params.MIN_REPLAY_SIZE_FOR_TRAIN:
-        return
-
-    _, last_loss, actor_objective = agent.train(step_idx=step_idx)
-    loss_dequeue.append(last_loss)
-    if actor_objective:
-        actor_objective_dequeue.append(actor_objective)
-
-    if hasattr(params, "PER_RANK_BASED") and getattr(params, "PER_RANK_BASED"):
-        if step_idx % 100 < params.TRAIN_STEP_FREQ:
-            agent.buffer.rebalance()
-
-
 def print_performance(params, episode_done_step, done_episode, episode_reward, mean_episode_reward, epsilon,
                       elapsed_time, last_info, speed, mean_loss, mean_actor_objective, worker_id=None, last_action=None):
 

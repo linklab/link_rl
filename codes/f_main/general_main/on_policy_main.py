@@ -86,7 +86,21 @@ def train_main(params, train_env, test_env):
                     print("Solved in {0} steps and {1} episodes!".format(step_idx, episode))
                     break
                 else:
-                    on_policy_agent_train(agent, step_idx, loss_dequeue, actor_objective_dequeue)
+                    if params.RL_ALGORITHM in [RLAlgorithmName.CONTINUOUS_PPO_V0, RLAlgorithmName.DISCRETE_PPO_V0]:
+                        if len(agent.buffer) < params.PPO_TRAJECTORY_SIZE:
+                            return
+                    else:
+                        if len(agent.buffer) < params.BATCH_SIZE:
+                            return
+
+                    _, last_loss, actor_objective = agent.train(step_idx=step_idx)
+                    loss_dequeue.append(last_loss)
+                    if actor_objective:
+                        actor_objective_dequeue.append(actor_objective)
+
+                    # On-policy는 현재의 정책을 통해 산출된 경험정보만을 활용하여 NN을 업데이트해야 함.
+                    # 따라서, 현재 학습에 사용된 Buffer는 깨끗하게 지워야 함.
+                    agent.buffer.clear()
 
             if params.MODEL_SAVE_MODE == ModelSaveMode.FINAL_ONLY:
                 last_model_save(agent, step_idx, train_episode_reward_lst_for_stat)

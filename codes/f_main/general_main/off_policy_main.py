@@ -112,6 +112,7 @@ def main():
     loss_dequeue = deque(maxlen=params.AVG_STEP_SIZE_FOR_TRAIN_LOSS)
     actor_objective_dequeue = deque(maxlen=params.AVG_STEP_SIZE_FOR_TRAIN_LOSS)
     step_idx = 0
+    episode = 0
 
     while play_proc.is_alive():
         step_idx += params.TRAIN_STEP_FREQ
@@ -119,6 +120,7 @@ def main():
         for _ in range(params.TRAIN_STEP_FREQ):
             exp = exp_queue.get()
             if isinstance(exp, dict):
+                episode += 1
                 train_info_dict = exp
 
                 mean_loss = np.mean(loss_dequeue) if len(loss_dequeue) > 0 else 0.0
@@ -155,8 +157,21 @@ def main():
                 else:
                     agent.buffer._add(exp)
 
-        if not solved:
-            off_policy_agent_train(agent, step_idx, loss_dequeue, actor_objective_dequeue)
+        if solved:
+            print("Solved in {0} steps and {1} episodes!".format(step_idx, episode))
+            break
+        else:
+            if len(agent.buffer) < params.MIN_REPLAY_SIZE_FOR_TRAIN:
+                return
+
+            _, last_loss, actor_objective = agent.train(step_idx=step_idx)
+            loss_dequeue.append(last_loss)
+            if actor_objective:
+                actor_objective_dequeue.append(actor_objective)
+
+            if hasattr(params, "PER_RANK_BASED") and getattr(params, "PER_RANK_BASED"):
+                if step_idx % 100 < params.TRAIN_STEP_FREQ:
+                    agent.buffer.rebalance()
 
 
 if __name__ == "__main__":
