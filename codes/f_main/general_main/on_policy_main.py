@@ -88,10 +88,10 @@ def train_main(params, train_env, test_env):
                 else:
                     if params.RL_ALGORITHM in [RLAlgorithmName.CONTINUOUS_PPO_V0, RLAlgorithmName.DISCRETE_PPO_V0]:
                         if len(agent.buffer) < params.PPO_TRAJECTORY_SIZE:
-                            return
+                            continue
                     else:
                         if len(agent.buffer) < params.BATCH_SIZE:
-                            return
+                            continue
 
                     _, last_loss, actor_objective = agent.train(step_idx=step_idx)
                     loss_dequeue.append(last_loss)

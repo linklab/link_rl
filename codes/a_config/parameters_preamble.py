@@ -22,10 +22,10 @@ from codes.a_config.b_atari_parameters.parameters_atati_pong_a2c import PARAMETE
 
 from codes.a_config.c_pybullet_parameters.parameters_half_cheetah_ppo import PARAMETERS_HALF_CHEETAH_PPO
 from codes.a_config.c_pybullet_parameters.parameters_ant_sac import PARAMETERS_ANT_SAC
-from codes.a_config.c_pybullet_parameters.parameters_minitaur_bullet_ddpg import \
-    PARAMETERS_MINITAUR_BULLET_DDPG
-from codes.a_config.c_pybullet_parameters.parameters_minitaur_bullet_ppo import \
-    PARAMETERS_MINITAUR_BULLET_PPO
+from codes.a_config.c_pybullet_parameters.parameters_inverted_double_pendulum_bullet_ddpg import \
+    PARAMETERS_INVERTED_DOUBLE_PENDULUM_BULLET_DDPG
+from codes.a_config.c_pybullet_parameters.parameters_inverted_double_pendulum_bullet_ppo import \
+    PARAMETERS_INVERTED_DOUBLE_PENDULUM_BULLET_PPO
 from codes.a_config.c_pybullet_parameters.parameters_ant_ppo import PARAMETERS_ANT_PPO
 from codes.a_config.c_pybullet_parameters.parameters_ant_ddpg import PARAMETERS_ANT_DDPG
 from codes.a_config.c_pybullet_parameters.parameters_ant_a2c import PARAMETERS_ANT_A2C

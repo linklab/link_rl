@@ -68,7 +68,14 @@
 - cp Downloads/mjkey.txt ~/.mujoco/
 - pip install -U 'mujoco-py<2.1,>=2.0'
 
-### 9. Linux에 NFS 설치하고 MAC에서 원격 파일 시스템으로 MOUNT하기
+### 9. pybullet-gym 설치
+
+- [참고] https://github.com/benelot/pybullet-gym
+- git clone https://github.com/benelot/pybullet-gym.git
+- cd pybullet-gym
+- pip install -e .
+
+### 10. Linux에 NFS 설치하고 MAC에서 원격 파일 시스템으로 MOUNT하기
 - 참고
   - https://vitux.com/install-nfs-server-and-client-on-ubuntu/
   - https://jusungpark.tistory.com/36
@@ -88,11 +95,11 @@
   - sudo mount -t nfs -o resvport,rw,nfc 192.168.0.43:/home/{account_name}/git ~/linux_nfs_git
       - *Your LINUX IP: 192.168.0.43*
       
-### 10. Pytorch CUDA 사용 확인 
+### 11. Pytorch CUDA 사용 확인 
 - python -c 'import torch; print(torch.rand(2,3).cuda())'
 - nvidia-smi
 
-### 11. mujoco-py 설치 with mjpro150 or mujoco200 설치
+### 12. mujoco-py 설치 with mjpro150 or mujoco200 설치
 - 참고
     - https://www.roboti.us/index.html
     - 위 사이트에서 mjpro150 혹은 mujoco200을 ~/.mujoco/ 경로에 다운로드받아 압축풀기
@@ -100,7 +107,7 @@
     - 이 후 설치는 아래 사이트 참고
     - https://github.com/openai/mujoco-py#install-mujoco
 
-### 12. mujoco-worldgen
+### 13. mujoco-worldgen
 설치 11의 mjpro150이 설치 되어있어야함
 - https://github.com/openai/mujoco-worldgen
     - cd ~/.mujoco
@@ -109,7 +116,7 @@
     - open /Library/Developer/CommandLineTools/Packages/macOS_SDK_headers_for_macOS_10.14.pkg
     - pip install -r mujoco-worldgen/requirements.txt
 
-### 13. multi-agent-emergence-environments
+### 14. multi-agent-emergence-environments
 - 참고
 - https://github.com/openai/multi-agent-emergence-environments
     - baselines를 아래 사이트 참고하여 설치
@@ -118,23 +125,22 @@
     - cd baselines
     - pip install -e .
     
-### 14. database
+### 15. database
 - pip install sqlalchemy
 - pip install mysql-connector-python
 
-
-### 15. matlab
+### 16. matlab
 - cd "matlabroot/extern/engines/python"
 - python setup.py install
 
-### 16. grpc 
+### 17. grpc 
 - python -m pip install --upgrade pip
 - pip install grpcio
 - pip install grpcio-tools
 - stub 생성 방법 예: 
   - python -m grpc_tools.protoc --proto_path=. --python_out=. --grpc_python_out=. rip_service.proto
 
-### 17. swap 설치 및 에러 수정 
+### 18. swap 설치 및 에러 수정 
 - https://kibua20.tistory.com/40
 - http://aodis.egloos.com/5964233
 

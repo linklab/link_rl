@@ -162,7 +162,7 @@ def main():
             break
         else:
             if len(agent.buffer) < params.MIN_REPLAY_SIZE_FOR_TRAIN:
-                return
+                continue
 
             _, last_loss, actor_objective = agent.train(step_idx=step_idx)
             loss_dequeue.append(last_loss)
