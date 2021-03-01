@@ -112,6 +112,8 @@ class RLAlgorithmName(enum.Enum):
     DISCRETE_PPO_V0 = "DISCRETE_PPO_V0"
     CONTINUOUS_PPO_V0 = "CONTINUOUS_PPO_V0"
 
+    EVOLUTION_STRATEGY = "EVOLUTION_STRATEGY"
+
 
 class OptimizerName(enum.Enum):
     NESTEROV = "nesterov"

@@ -1,7 +1,7 @@
 # https://github.com/openai/gym/blob/master/gym/envs/classic_control/pendulum.py
 # https://mspries.github.io/jimmy_pendulum.html
 #!/usr/bin/env python3
-from codes.f_main.general_main.common_main import *
+from codes.f_main.general_main.a_common_main import *
 
 
 def train_main(params, train_env, test_env):

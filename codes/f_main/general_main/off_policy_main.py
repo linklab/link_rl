@@ -1,4 +1,4 @@
-from codes.f_main.general_main.common_main import *
+from codes.f_main.general_main.a_common_main import *
 import torch.multiprocessing as mp
 
 
