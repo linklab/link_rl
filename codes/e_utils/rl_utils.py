@@ -15,6 +15,7 @@ from codes.a_config.parameters import PARAMETERS as params
 
 from codes.b_environments.trade.trade_data import get_data
 from codes.c_models.continuous_action.soft_actor_critic_model import SoftActorCriticModel
+from codes.d_agents.black_box.cma_es.cma_es_agent import AgentEMAES
 from codes.d_agents.on_policy.sac.continuous_sac_agent import AgentSAC
 from codes.d_agents.on_policy.ppo.discrete_ppo_agent import AgentDiscretePPO
 from codes.e_utils.reward_changer import RewardChanger
@@ -307,6 +308,11 @@ def get_rl_agent(input_shape, num_outputs, action_min, action_max, worker_id, pa
         )
     elif params.RL_ALGORITHM == RLAlgorithmName.DISCRETE_PPO_V0:
         agent = AgentDiscretePPO(
+            worker_id=worker_id, input_shape=input_shape, num_outputs=num_outputs,
+            params=params, device=device
+        )
+    elif params.RL_ALGORITHM == RLAlgorithmName.EVOLUTION_STRATEGY:
+        agent = AgentEMAES(
             worker_id=worker_id, input_shape=input_shape, num_outputs=num_outputs,
             params=params, device=device
         )

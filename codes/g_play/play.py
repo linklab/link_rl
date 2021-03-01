@@ -90,7 +90,6 @@ if __name__ == "__main__":
     from codes.a_config.parameters import PARAMETERS as parameters
     params = parameters
 
-    params.ENV_RENDER = True
     env = rl_utils.get_single_environment(params=params)
     print("env:", params.ENVIRONMENT_ID)
     print("observation_space:", env.observation_space)

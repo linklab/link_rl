@@ -9,8 +9,6 @@ class PARAMETERS_RIP(PARAMETERS_GENERAL):
     EMA_WINDOW = 10
     VERBOSE = True
     MODEL_SAVE = False
-    ENV_RENDER = False
-
     ########################################
     ########################################
     STOP_MEAN_EPISODE_REWARD = 1000

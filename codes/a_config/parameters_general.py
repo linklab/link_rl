@@ -9,7 +9,6 @@ class PARAMETERS_GENERAL:
     EMA_WINDOW = 10
     VERBOSE = True
     MODEL_SAVE = False
-    ENV_RENDER = False
 
     # [MQTT]
     MQTT_SERVER = "localhost"

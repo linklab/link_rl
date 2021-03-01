@@ -7,7 +7,6 @@ class PARAMETERS_FEDERATED_MUJOCO_PPO_MLP(PARAMETERS_GENERAL):
     SEED = 1
     MY_PLATFORM = OSName.MAC
     PYTHON_PATH = "~/anaconda3/envs/rl/bin/python"
-    ENV_RENDER = False
 
     # [WORKER]
     NUM_WORKERS = 1

@@ -7,7 +7,6 @@ class PARAMETERS_FEDERATED_FROZENLAKE_MONTE_CARLO(PARAMETERS_GENERAL):
     SEED = 1
     MY_PLATFORM = OSName.MAC
     PYTHON_PATH = "~/anaconda/envs/rl/bin/python"
-    ENV_RENDER = False
     MODEL_SAVE = False
 
     # [WORKER]

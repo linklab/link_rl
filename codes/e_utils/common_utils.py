@@ -202,7 +202,7 @@ def load_model(model_save_dir, model_save_file_prefix, agent, step=None, inquery
     if len(saved_models) > 0:
         saved_models.sort(key=lambda filename: int(filename.split("/")[-1].split("_")[-2]))
         saved_model = saved_models[-1]
-        print("SAVED MODEL FILE NAME: {0}".format(saved_model))
+        print("FOUND MODEL FILE NAME: {0}".format(saved_model))
 
         is_load = False
         if inquery:
