@@ -17,14 +17,14 @@ class AgentEMAES(BaseAgent):
             num_outputs=num_outputs,
             params=params,
             device=device
-        ).to(device)
+        ).to(self.device)
 
     def sample_noise(self):
         noises = []
         neg_noises = []
         for parameter in self.model.parameters():
             noise = np.random.normal(size=parameter.data.size())
-            noise_v = torch.FloatTensor(noise)
+            noise_v = torch.FloatTensor(noise).to(self.device)
             noises.append(noise_v)
             neg_noises.append(-noise_v)
         return noises, neg_noises
