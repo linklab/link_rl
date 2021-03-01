@@ -163,12 +163,8 @@ class ActorCriticCNNBase(nn.Module):
     #         # torch.nn.init.orthogonal(m.weight, gain=np.sqrt(2))
 
     def forward(self, inputs):
-        fx = inputs.float() / 256
-        actor_conv_out = self.actor_conv(fx).view(fx.size()[0], -1)
-        probs = F.softmax(self.actor_fc(actor_conv_out), dim=-1)
-
-        critic_conv_out = self.critic_conv(fx).view(fx.size()[0], -1)
-        critic_values = self.critic_fc(critic_conv_out)
+        probs = self.forward_actor(inputs)
+        critic_values = self.forward_critic(inputs)
         return probs, critic_values
 
     def forward_actor(self, inputs):
