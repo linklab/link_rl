@@ -9,7 +9,7 @@ def evaluate(env, model):
         observation_v = torch.FloatTensor([observation]).to(device)
         action_prob = model(observation_v)
         acts = action_prob.max(dim=1)[1]
-        observation, reward, done, _ = env.step(acts.data.detach().numpy()[0])
+        observation, reward, done, _ = env.step(acts.data.cpu().numpy()[0])
         episode_reward += reward
         steps += 1
         if done:
