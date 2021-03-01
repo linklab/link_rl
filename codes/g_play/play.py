@@ -47,6 +47,7 @@ def play_main(params, env):
         done = False
         episode_reward = 0
 
+        env.render()
         state = env.reset()
 
         num_episode += 1
@@ -70,7 +71,13 @@ def play_main(params, env):
             #         num_episode, num_episode_step, num_step
             #     ))
 
-            #time.sleep(0.001)
+            if params.ENVIRONMENT_ID not in [
+                EnvironmentName.PENDULUM_MATLAB_V0,
+                EnvironmentName.PENDULUM_MATLAB_DOUBLE_RIP_V0,
+                EnvironmentName.REAL_DEVICE_RIP,
+                EnvironmentName.REAL_DEVICE_DOUBLE_RIP
+            ]:
+                time.sleep(0.01)
 
         print("EPISODE: {0}, EPISODE STEPS: {1}, TOTAL STEPS: {2}, EPISODE DONE --> EPISODE REWARD: {3}".format(
             num_episode, num_episode_step, num_step, episode_reward
