@@ -1,0 +1,36 @@
+from codes.d_agents.black_box.cma_es.ga_agent import AgentGA
+from codes.f_main.general_main.a_common_main import *
+
+
+def train_main():
+    env = rl_utils.get_single_environment(params=params)
+    input_shape, num_outputs, action_min, action_max = get_environment_input_output_info(env)
+
+    agent = AgentGA(
+        worker_id=-1, input_shape=input_shape, num_outputs=num_outputs, env=env,
+        params=params, device=device
+    )
+
+    generation_idx = 0
+
+    while True:
+        agent.population.sort(key=lambda p: p[1], reverse=True)
+        selected_episode_rewards = [p[1] for p in agent.population[:params.PARENTS_COUNT]]
+        selected_episode_reward_mean = np.mean(selected_episode_rewards)
+        selected_episode_reward_max = np.max(selected_episode_rewards)
+        selected_episode_reward_std = np.std(selected_episode_rewards)
+
+        print("{0}: episode_reward_mean={1:.2f}, episode_reward_max={2:.2f}, episode_reward_std={3:.2f}".format(
+            generation_idx, selected_episode_reward_mean, selected_episode_reward_max, selected_episode_reward_std
+        ))
+
+        if selected_episode_reward_mean > 199:
+            print("Solved in %d generations" % generation_idx)
+            break
+        else:
+            agent.next_generation()
+            generation_idx += 1
+
+
+if __name__ == "__main__":
+    train_main()

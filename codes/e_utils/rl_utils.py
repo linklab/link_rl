@@ -311,11 +311,6 @@ def get_rl_agent(input_shape, num_outputs, action_min, action_max, worker_id, pa
             worker_id=worker_id, input_shape=input_shape, num_outputs=num_outputs,
             params=params, device=device
         )
-    elif params.RL_ALGORITHM == RLAlgorithmName.EVOLUTION_STRATEGY:
-        agent = AgentEMAES(
-            worker_id=worker_id, input_shape=input_shape, num_outputs=num_outputs,
-            params=params, device=device
-        )
 
     return agent
 

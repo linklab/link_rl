@@ -1,3 +1,4 @@
+from codes.d_agents.black_box.cma_es.cma_es_agent import AgentEMAES
 from codes.f_main.general_main.a_common_main import *
 
 
@@ -30,8 +31,9 @@ def train_main():
     env = rl_utils.get_single_environment(params=params)
     input_shape, num_outputs, action_min, action_max = get_environment_input_output_info(env)
 
-    agent = rl_utils.get_rl_agent(
-        input_shape, num_outputs, action_min, action_max, worker_id=0, params=params, device=device
+    agent = AgentEMAES(
+        worker_id=-1, input_shape=input_shape, num_outputs=num_outputs,
+        params=params, device=device
     )
 
     evaluation_idx = 0
@@ -61,7 +63,7 @@ def train_main():
         print("{0}: mean episode reward={1:.2f}".format(evaluation_idx, mean_episode_reward))
 
         if mean_episode_reward > 199:
-            print("Solved in %d steps" % evaluation_idx)
+            print("Solved in %d evaluations" % evaluation_idx)
             break
         else:
             agent.train_step(batch_noises, batch_episode_rewards)

@@ -117,6 +117,7 @@ class RLAlgorithmName(enum.Enum):
     CONTINUOUS_PPO_V0 = "CONTINUOUS_PPO_V0"
 
     EVOLUTION_STRATEGY = "EVOLUTION_STRATEGY"
+    GENETIC_ALGORITHM = "GENETIC_ALGORITHM"
 
 
 class OptimizerName(enum.Enum):
