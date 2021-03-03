@@ -31,9 +31,8 @@ def train_main():
     env = rl_utils.get_single_environment(params=params)
     input_shape, num_outputs, action_min, action_max = get_environment_input_output_info(env)
 
-    agent = AgentEMAES(
-        worker_id=-1, input_shape=input_shape, num_outputs=num_outputs,
-        params=params, device=device
+    agent = rl_utils.get_rl_agent(
+        input_shape, num_outputs, action_min, action_max, worker_id=-1, params=params, device=device
     )
 
     evaluation_idx = 0

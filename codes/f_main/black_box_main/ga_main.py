@@ -6,10 +6,13 @@ def train_main():
     env = rl_utils.get_single_environment(params=params)
     input_shape, num_outputs, action_min, action_max = get_environment_input_output_info(env)
 
-    agent = AgentGA(
-        worker_id=-1, input_shape=input_shape, num_outputs=num_outputs, env=env,
-        params=params, device=device
+    agent = rl_utils.get_rl_agent(
+        input_shape, num_outputs, action_min, action_max, worker_id=-1, params=params, device=device
     )
+
+    agent.initialize(env)
+
+    early_stopping = get_early_stopping(agent)
 
     generation_idx = 0
 
@@ -24,7 +27,12 @@ def train_main():
             generation_idx, selected_episode_reward_mean, selected_episode_reward_max, selected_episode_reward_std
         ))
 
-        if selected_episode_reward_mean > 199:
+        solved = early_stopping.evaluate(
+            evaluation_value=selected_episode_reward_mean,
+            episode_done_step=generation_idx
+        )
+
+        if solved:
             print("Solved in %d generations" % generation_idx)
             break
         else:

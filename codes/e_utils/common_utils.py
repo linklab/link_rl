@@ -181,6 +181,7 @@ def save_model(model_save_dir, model_save_file_prefix, agent, step, episode_rewa
             model_save_file_prefix, agent.__name__, agent.model.__name__, step, float(episode_reward)
         )
     )
+
     torch.save(agent.model.state_dict(), model_save_filename)
     return model_save_filename
 

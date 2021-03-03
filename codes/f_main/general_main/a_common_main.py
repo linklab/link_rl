@@ -99,14 +99,14 @@ def get_early_stopping(agent):
         patience=params.STOP_PATIENCE_COUNT,
         evaluation_min_threshold=params.STOP_MEAN_EPISODE_REWARD,
         verbose=True,
-        delta=0.0,
+        delta=0.001,
         model_save_dir=MODEL_SAVE_DIR,
         model_save_file_prefix=params.ENVIRONMENT_ID.value,
         agent=agent,
         params=params
     )
 
-    if hasattr(agent.train_action_selector, 'epsilon') and hasattr(params, "EPSILON_MIN_STEP"):
+    if hasattr(agent, 'train_action_selector') and hasattr(agent.train_action_selector, 'epsilon') and hasattr(params, "EPSILON_MIN_STEP"):
         early_stopping.evaluation_min_step_idx = params.EPSILON_MIN_STEP
 
     return early_stopping
