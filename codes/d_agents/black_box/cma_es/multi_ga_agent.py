@@ -164,7 +164,7 @@ class AgentMultiGA(BaseAgent):
                     raise ValueError()
 
                 new_chromosome_pool[seeds] = chromosome
-                episode_reward, steps = agent.evaluate(chromosome)
+                episode_reward, steps = agent.evaluate(chromosome)  # 총 evaluate 횟수: params.NUM_SEEDS_PER_WORKER
                 worker_to_master_queue.put(
                     MessageFromWorker(
                         seeds=seeds, episode_reward=episode_reward, steps=steps, best_chromosome=best_chromosome
