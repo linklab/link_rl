@@ -177,10 +177,10 @@ class AgentMultiGA(BaseAgent):
                     agent.ga_worker_id, len(chromosome_pool), idx_lst
                 ))
 
-            # The pool is cleared for every generation.
+            # The pool is updated for every generation.
             # Every new generation is created from the current generation winners.
             # So, there is only a tiny chance that old models (chromosomes) can be reused from the pool.
-            chromosome_pool = new_chromosome_pool
+
 
 
 class WorkerAgentMultiGA():
