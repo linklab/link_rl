@@ -1,4 +1,3 @@
-from codes.d_agents.black_box.cma_es.ga_agent import AgentGA
 from codes.f_main.general_main.a_common_main import *
 
 
@@ -17,14 +16,20 @@ def train_main():
     generation_idx = 0
 
     while True:
+        if params.RL_ALGORITHM == RLAlgorithmName.MULTI_GENETIC_ALGORITHM:
+            agent.gather_evaluation_results()
+
         agent.population.sort(key=lambda p: p[1], reverse=True)
-        selected_episode_rewards = [p[1] for p in agent.population[:params.PARENTS_COUNT]]
+        agent.elite = agent.population[0]
+        agent.set_best_chromosome()
+
+        selected_episode_rewards = [p[1] for p in agent.population[:params.COUNT_FROM_PARENTS]]
         selected_episode_reward_mean = np.mean(selected_episode_rewards)
         selected_episode_reward_max = np.max(selected_episode_rewards)
         selected_episode_reward_std = np.std(selected_episode_rewards)
 
-        print("{0}: episode_reward_mean={1:.2f}, episode_reward_max={2:.2f}, episode_reward_std={3:.2f}".format(
-            generation_idx, selected_episode_reward_mean, selected_episode_reward_max, selected_episode_reward_std
+        print("[GENERATION {0}] episode_reward_mean={1:.2f}, episode_reward_max={2:.2f}, episode_reward_std={3:.2f}".format(
+            generation_idx + 1, selected_episode_reward_mean, selected_episode_reward_max, selected_episode_reward_std
         ))
 
         solved = early_stopping.evaluate(
@@ -33,6 +38,7 @@ def train_main():
         )
 
         if solved:
+            agent.solved = True
             print("Solved in %d generations" % generation_idx)
             break
         else:

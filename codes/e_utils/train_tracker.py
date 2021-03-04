@@ -131,10 +131,6 @@ class EarlyStopping:
             self.agent
         )
 
-        if self.params.RL_ALGORITHM == RLAlgorithmName.GENETIC_ALGORITHM:
-            self.agent.population.sort(key=lambda p: p[1], reverse=True)
-            self.agent.model.load_state_dict(self.agent.population[0][0].state_dict())
-
         save_model(
             self.model_save_dir,
             self.model_save_file_prefix,

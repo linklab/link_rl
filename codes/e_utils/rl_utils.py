@@ -215,7 +215,10 @@ def get_environment_input_output_info(env):
     else:
         raise ValueError()
 
-    print(f"num_outputs: {num_outputs}, action_min: {action_min}, action_max: {action_max}")
+    if action_min and action_max:
+        print(f"input_shape: {input_shape}, num_outputs: {num_outputs}, action_min: {action_min}, action_max: {action_max}")
+    else:
+        print(f"input_shape: {input_shape}, num_outputs: {num_outputs}")
 
     return input_shape, num_outputs, action_min, action_max
 

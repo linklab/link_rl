@@ -33,6 +33,10 @@ class AgentGA(BaseAgent):
 
         self.env = None
         self.population = None
+        self.elite = None
+        self.global_steps = 0
+
+        self.solved = False
 
     def initialize(self, env):
         self.env = env
@@ -65,13 +69,20 @@ class AgentGA(BaseAgent):
     def next_generation(self):
         # generate next population
         prev_population = self.population
-        self.population = [self.population[0]]
+        self.population = []
+
+        if self.elite:
+            self.population.append(self.elite)
+
         for _ in range(self.params.POPULATION_SIZE - 1):
-            parent_chromosome_idx = np.random.randint(0, self.params.PARENTS_COUNT)
+            parent_chromosome_idx = np.random.randint(0, self.params.COUNT_FROM_PARENTS)
             parent_chromosome = prev_population[parent_chromosome_idx][0]
             mutated_chromosome = self.mutate_parent_model(parent_chromosome)
             fitness = self.evaluate(mutated_chromosome)
             self.population.append((mutated_chromosome, fitness))
+
+    def set_best_chromosome(self):
+        self.model.load_state_dict(self.elite[0].state_dict())
 
     def __call__(self, states, agent_states=None):
         states = states[0]
