@@ -7,6 +7,7 @@ import torch.multiprocessing as mp
 from codes.c_models.discrete_action.simple_model import SimpleModel
 from codes.d_agents.a0_base_agent import BaseAgent
 from codes.e_utils import rl_utils
+from codes.e_utils.common_utils import Cache
 
 MessageFromWorker = collections.namedtuple(
     'MessageFromWorker', field_names=['seeds', 'episode_reward', 'steps', 'best_chromosome']
@@ -93,12 +94,16 @@ class AgentMultiGA(BaseAgent):
                 for _ in range(self.params.NUM_SEEDS_PER_WORKER):
                     # population내에서 episord_reward 기준 10위 이내의 chromosome을 임의로 선택
                     parent = np.random.randint(self.params.COUNT_FROM_PARENTS)
+
+                    # 새로운 시드 생성
                     next_seed = np.random.randint(self.params.MAX_SEED)
 
                     # 그 선택된 parent chromosome을 만들 때 사용한 seeds에 새로운 seed를 더하여 새로운 seeds 구성
                     # (1099612850, 3655502209) --> (1099612850, 3655502209, 1087985398)
                     seeds = list(self.population[parent][0]) + [next_seed]
+
                     seeds_lst.append(tuple(seeds))
+
                 master_to_worker_queue.put(MessageFromMaster(seeds_lst=seeds_lst, best_seeds=best_seeds))
 
     def set_best_chromosome(self):
@@ -123,7 +128,7 @@ class AgentMultiGA(BaseAgent):
 
         # Pool of models (chromosomes): minimize the amount of time spent recreating the parameters from the same seeds.
         # Master로 부터 전달받은 seeds에 대해 처리가 된 chromosome 저장
-        chromosome_pool = {}
+        chromosome_pool = Cache(maxlen=50)
 
         while True:
             message = master_to_worker_queue.get()
@@ -142,7 +147,6 @@ class AgentMultiGA(BaseAgent):
             # seeds_lst에는 params.NUM_SEEDS_PER_WORKER (300)개수의 seeds 존재
             # seeds는 일련의 seed로 구성된 tuple
             assert len(seeds_lst) == params.NUM_SEEDS_PER_WORKER
-
 
             idx_lst = []
             for idx, seeds in enumerate(seeds_lst):
@@ -180,7 +184,6 @@ class AgentMultiGA(BaseAgent):
             # The pool is updated for every generation.
             # Every new generation is created from the current generation winners.
             # So, there is only a tiny chance that old models (chromosomes) can be reused from the pool.
-
 
 
 class WorkerAgentMultiGA():
