@@ -40,7 +40,7 @@ class BaseAgent:
     def set_experience_source_to_buffer(self, experience_source):
         self.buffer.set_experience_source(experience_source)
 
-    def __call__(self, states, agent_states):
+    def __call__(self, states, agent_states=None):
         """
         Convert observations and states into actions to take
         :param states: list of environment states to process

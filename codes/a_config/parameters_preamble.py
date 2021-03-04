@@ -12,7 +12,9 @@ from codes.a_config.a_basic_parameters.parameters_lunar_lander_ppo import PARAME
 from codes.a_config.a_basic_parameters.parameters_lunar_lander_continuous_a2c import PARAMETERS_LUNAR_LANDER_CONTINUOUS_A2C
 from codes.a_config.a_basic_parameters.parameters_lunar_lander_continuous_ppo import PARAMETERS_LUNAR_LANDER_CONTINUOUS_PPO
 from codes.a_config.a_basic_parameters.parameters_lunar_lander_continuous_ddpg import PARAMETERS_LUNAR_LANDER_CONTINUOUS_DDPG
-from codes.a_config.a_basic_parameters.parameters_cartpole_emaes import PARAMETERS_CARTPOLE_EMAES
+from codes.a_config.a_basic_parameters.parameters_lunar_lander_multi_ga import PARAMETERS_LUNAR_LANDER_MULTI_GA
+from codes.a_config.a_basic_parameters.parameters_cartpole_emaes    import PARAMETERS_CARTPOLE_EMAES
+from codes.a_config.a_basic_parameters.parameters_cartpole_ga       import PARAMETERS_CARTPOLE_GA
 
 from codes.a_config.b_atari_parameters.parameters_atari_pong_a2c        import PARAMETERS_PONG_A2C
 from codes.a_config.b_atari_parameters.parameters_atari_pong_dqn        import PARAMETERS_PONG_DQN
