@@ -205,7 +205,7 @@ class WorkerAgentMultiGA():
         np.random.seed(seed)
         for parameter in new_chromosome.parameters():
             noise = np.random.normal(size=parameter.data.size())
-            noise_v = torch.FloatTensor(noise)
+            noise_v = torch.FloatTensor(noise).to(self.device)
             parameter.data += self.params.NOISE_STANDARD_DEVIATION * noise_v
         return new_chromosome
 
