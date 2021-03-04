@@ -121,6 +121,8 @@ class AgentMultiGA(BaseAgent):
             ga_worker_id=ga_worker_id, env=env, input_shape=input_shape, num_outputs=num_outputs, params=params, device=device
         )
 
+        # Pool of models (chromosomes): minimize the amount of time spent recreating the parameters from the same seeds.
+        # Master로 부터 전달받은 seeds에 대해 처리가 된 chromosome 저장
         chromosome_pool = {}
 
         while True:
@@ -141,9 +143,6 @@ class AgentMultiGA(BaseAgent):
             # seeds는 일련의 seed로 구성된 tuple
             assert len(seeds_lst) == params.NUM_SEEDS_PER_WORKER
 
-            # Pool of models (chromosomes): minimize the amount of time spent recreating the parameters from the same seeds.
-            # Master로 부터 전달받은 seeds에 대해
-            new_chromosome_pool = {}
 
             idx_lst = []
             for idx, seeds in enumerate(seeds_lst):
@@ -158,6 +157,7 @@ class AgentMultiGA(BaseAgent):
                     if chromosome:
                         # pool에 이미 존재하는 seeds[:-1]인 경우: 연관된 chromosome에 새롭게 추가된 seed 1개에 대해서만 mutate 수행
                         chromosome = agent.mutate(chromosome, seeds[-1], copy_chromosome=True)
+                        del chromosome_pool[seeds[:-1]]
                     else:
                         # pool에 존재하지 않는 seeds[:-1]인 경우: 전달받은 전체 seeds에 대해서 새로운 chromosome 생성
                         chromosome = agent.build(seeds)
@@ -165,7 +165,7 @@ class AgentMultiGA(BaseAgent):
                 else:
                     raise ValueError()
 
-                new_chromosome_pool[seeds] = chromosome
+                chromosome_pool[seeds] = chromosome
                 episode_reward, steps = agent.evaluate(chromosome)  # 총 evaluate 횟수: params.NUM_SEEDS_PER_WORKER
                 worker_to_master_queue.put(
                     MessageFromWorker(
@@ -174,7 +174,7 @@ class AgentMultiGA(BaseAgent):
                 )
                 idx_lst.append(idx)
                 print("[GA_WORKER_ID: {0}] SIZE_CHROMOSOME_POOL: {1}, Processed Seeds: {2}".format(
-                    agent.ga_worker_id, len(new_chromosome_pool), idx_lst
+                    agent.ga_worker_id, len(chromosome_pool), idx_lst
                 ))
 
             # The pool is cleared for every generation.
