@@ -174,7 +174,7 @@ class AgentMultiGA(BaseAgent):
                 )
                 idx_lst.append(idx)
                 print("[GA_WORKER_ID: {0}] SIZE_CHROMOSOME_POOL: {1}, Processed Seeds: {2}".format(
-                    agent.ga_worker_id, len(chromosome_pool), idx_lst
+                    agent.ga_worker_id, len(new_chromosome_pool), idx_lst
                 ))
 
             # The pool is cleared for every generation.
