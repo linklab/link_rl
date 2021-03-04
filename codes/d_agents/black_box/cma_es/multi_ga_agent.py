@@ -112,12 +112,12 @@ class AgentMultiGA(BaseAgent):
         return acts.data.cpu().numpy(), None
 
     @staticmethod
-    def worker_func(master_to_worker_queue, worker_to_master_queue, params, device):
+    def worker_func(ga_worker_id, master_to_worker_queue, worker_to_master_queue, params, device):
         env = rl_utils.get_single_environment(params=params)
         input_shape, num_outputs, action_min, action_max = rl_utils.get_environment_input_output_info(env)
 
         agent = WorkerAgentMultiGA(
-            env=env, input_shape=input_shape, num_outputs=num_outputs, params=params, device=device
+            ga_worker_id=ga_worker_id, env=env, input_shape=input_shape, num_outputs=num_outputs, params=params, device=device
         )
 
         chromosome_pool = {}
@@ -144,7 +144,8 @@ class AgentMultiGA(BaseAgent):
             # Master로 부터 전달받은 seeds에 대해
             new_chromosome_pool = {}
 
-            for seeds in seeds_lst:
+            idx_lst = []
+            for idx, seeds in enumerate(seeds_lst):
                 if len(seeds) == 1:
                     # seeds에 1개의 seed만 있는 경우 --> 최초 chromosome 생성
                     chromosome = agent.build(seeds)
@@ -170,6 +171,10 @@ class AgentMultiGA(BaseAgent):
                         seeds=seeds, episode_reward=episode_reward, steps=steps, best_chromosome=best_chromosome
                     )
                 )
+                idx_lst.append(idx)
+                print("[GA_WORKER_ID: {0}] SIZE_CHROMOSOME_POOL: {1}, Processed Seeds: {2}".format(
+                    agent.ga_worker_id, len(chromosome_pool), idx_lst
+                ))
 
             # The pool is cleared for every generation.
             # Every new generation is created from the current generation winners.
@@ -178,7 +183,8 @@ class AgentMultiGA(BaseAgent):
 
 
 class WorkerAgentMultiGA():
-    def __init__(self, env, input_shape, num_outputs, params, device):
+    def __init__(self, ga_worker_id, env, input_shape, num_outputs, params, device):
+        self.ga_worker_id = ga_worker_id
         self.env = env
         self.input_shape = input_shape
         self.num_outputs = num_outputs
