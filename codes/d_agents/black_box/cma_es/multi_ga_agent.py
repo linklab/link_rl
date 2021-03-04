@@ -48,11 +48,12 @@ class AgentMultiGA(BaseAgent):
     def initialize(self, env):
         self.env = env
 
-        for _ in range(self.params.WORKERS_COUNT):
+        for ga_worker_idx in range(self.params.WORKERS_COUNT):
             master_to_worker_queue = mp.Queue(maxsize=1)
             self.master_to_worker_queue_lst.append(master_to_worker_queue)
             worker = mp.Process(
-                target=self.worker_func, args=(master_to_worker_queue, self.worker_to_master_queue, self.params, self.device)
+                target=self.worker_func,
+                args=(ga_worker_idx, master_to_worker_queue, self.worker_to_master_queue, self.params, self.device)
             )
             worker.start()
 
