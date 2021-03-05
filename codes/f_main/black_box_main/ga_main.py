@@ -16,7 +16,7 @@ def train_main():
     generation_idx = 0
 
     while True:
-        selected_episode_rewards = [p[1] for p in agent.population[:params.COUNT_FROM_PARENTS]]
+        selected_episode_rewards = [p[1] for p in agent.population[:min(params.COUNT_FROM_PARENTS, 3)]]
         selected_episode_reward_mean = np.mean(selected_episode_rewards)
         selected_episode_reward_max = np.max(selected_episode_rewards)
         selected_episode_reward_std = np.std(selected_episode_rewards)
