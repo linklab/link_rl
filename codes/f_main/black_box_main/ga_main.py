@@ -16,13 +16,6 @@ def train_main():
     generation_idx = 0
 
     while True:
-        if params.RL_ALGORITHM == RLAlgorithmName.MULTI_GENETIC_ALGORITHM:
-            agent.gather_evaluation_results()
-
-        agent.population.sort(key=lambda p: p[1], reverse=True)
-        agent.elite = agent.population[0]
-        agent.set_best_chromosome()
-
         selected_episode_rewards = [p[1] for p in agent.population[:params.COUNT_FROM_PARENTS]]
         selected_episode_reward_mean = np.mean(selected_episode_rewards)
         selected_episode_reward_max = np.max(selected_episode_rewards)

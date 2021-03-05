@@ -45,6 +45,9 @@ class AgentGA(BaseAgent):
             (chromosome, self.evaluate(chromosome)) for chromosome in self.chromosomes
         ]
 
+        self.population.sort(key=lambda p: p[1], reverse=True)
+        self.elite = self.population[0]
+
     def evaluate(self, model):
         observation = self.env.reset()
         episode_reward = 0.0
@@ -58,7 +61,7 @@ class AgentGA(BaseAgent):
                 break
         return episode_reward
 
-    def mutate_parent_model(self, model):
+    def mutate(self, model):
         new_model = copy.deepcopy(model)
         for parameter in new_model.parameters():
             noise = np.random.normal(size=parameter.data.size())
@@ -77,11 +80,15 @@ class AgentGA(BaseAgent):
         for _ in range(self.params.POPULATION_SIZE - 1):
             parent_chromosome_idx = np.random.randint(0, self.params.COUNT_FROM_PARENTS)
             parent_chromosome = prev_population[parent_chromosome_idx][0]
-            mutated_chromosome = self.mutate_parent_model(parent_chromosome)
+            mutated_chromosome = self.mutate(parent_chromosome)
             fitness = self.evaluate(mutated_chromosome)
             self.population.append((mutated_chromosome, fitness))
 
-    def set_best_chromosome(self):
+        self.population.sort(key=lambda p: p[1], reverse=True)
+        self.elite = self.population[0]
+        self.set_best_chromosome_to_model()
+
+    def set_best_chromosome_to_model(self):
         self.model.load_state_dict(self.elite[0].state_dict())
 
     def __call__(self, states, agent_states=None):

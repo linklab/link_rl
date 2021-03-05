@@ -67,6 +67,11 @@ class AgentMultiGA(BaseAgent):
 
             master_to_worker_queue.put(MessageFromMaster(seeds_lst=seeds_lst, best_seeds=None))
 
+        self.gather_evaluation_results()
+
+        self.population.sort(key=lambda p: p[1], reverse=True)
+        self.elite = self.population[0]
+
     def gather_evaluation_results(self):
         self.population = []
 
@@ -106,7 +111,13 @@ class AgentMultiGA(BaseAgent):
 
                 master_to_worker_queue.put(MessageFromMaster(seeds_lst=seeds_lst, best_seeds=best_seeds))
 
-    def set_best_chromosome(self):
+        self.gather_evaluation_results()
+
+        self.population.sort(key=lambda p: p[1], reverse=True)
+        self.elite = self.population[0]
+        self.set_best_chromosome_to_model()
+
+    def set_best_chromosome_to_model(self):
         if self.best_chromosome:
             self.model.load_state_dict(self.best_chromosome.state_dict())
 
