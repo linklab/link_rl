@@ -42,7 +42,7 @@ class AgentGA(BaseAgent):
         self.env = env
 
         self.population = [
-            (chromosome, self.evaluate(chromosome)) for chromosome in self.chromosomes
+            (chromosome, self.evaluate(chromosome)[0]) for chromosome in self.chromosomes
         ]
 
         self.population.sort(key=lambda p: p[1], reverse=True)
@@ -50,7 +50,8 @@ class AgentGA(BaseAgent):
 
     def evaluate(self, model):
         sum_episode_reward = 0.0
-        for _ in range(self.params.EVALUATION_RUNS):
+        steps = 0
+        for _ in range(self.params.EVALUATION_EPISODES):
             observation = self.env.reset()
             while True:
                 observation_v = torch.FloatTensor([observation]).to(self.device)
@@ -58,9 +59,10 @@ class AgentGA(BaseAgent):
                 acts = action_prob.max(dim=1)[1]
                 observation, reward, done, _ = self.env.step(acts.data.cpu().numpy()[0])
                 sum_episode_reward += reward
+                steps += 1
                 if done:
                     break
-        return sum_episode_reward / self.params.EVALUATION_RUNS
+        return sum_episode_reward / self.params.EVALUATION_EPISODES, steps
 
     def mutation(self, model):
         new_model = copy.deepcopy(model)
@@ -76,21 +78,21 @@ class AgentGA(BaseAgent):
         self.population = []
 
         if self.elite:
-            fitness = self.evaluate(self.elite[0])
+            fitness, _ = self.evaluate(self.elite[0])
             self.population.append((self.elite[0], fitness))
 
         for _ in range(self.params.POPULATION_SIZE - 1):
             parent_chromosome_idx = np.random.randint(0, self.params.COUNT_FROM_PARENTS)
             parent_chromosome = prev_population[parent_chromosome_idx][0]
             mutated_chromosome = self.mutation(parent_chromosome)
-            fitness = self.evaluate(mutated_chromosome)
+            fitness, _ = self.evaluate(mutated_chromosome)
             self.population.append((mutated_chromosome, fitness))
 
         self.population.sort(key=lambda p: p[1], reverse=True)
         self.elite = self.population[0]
-        self.set_best_chromosome_to_model()
+        self.set_elite_chromosome_to_model()
 
-    def set_best_chromosome_to_model(self):
+    def set_elite_chromosome_to_model(self):
         self.model.load_state_dict(self.elite[0].state_dict())
 
     def __call__(self, states, agent_states=None):

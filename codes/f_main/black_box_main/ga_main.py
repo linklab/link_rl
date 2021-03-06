@@ -11,6 +11,9 @@ def train_main():
 
     agent.initialize(env)
 
+    if params.WANDB:
+        set_wandb(agent)
+
     early_stopping = get_early_stopping(agent)
 
     generation_idx = 0
@@ -24,6 +27,15 @@ def train_main():
         print("[GENERATION {0}] episode_reward_mean={1:.2f}, episode_reward_max={2:.2f}, episode_reward_std={3:.2f}".format(
             generation_idx + 1, selected_episode_reward_mean, selected_episode_reward_max, selected_episode_reward_std
         ))
+
+        if params.WANDB:
+            train_info_dict = {
+                "generation": generation_idx + 1,
+                "episode_reward_mean": selected_episode_reward_mean,
+                "episode_reward_max": selected_episode_reward_max,
+                "episode_reward_std": selected_episode_reward_std
+            }
+            wandb.log(train_info_dict)
 
         solved = early_stopping.evaluate(
             evaluation_value=selected_episode_reward_mean,

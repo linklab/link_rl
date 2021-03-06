@@ -10,15 +10,16 @@ from codes.e_utils import rl_utils
 from codes.e_utils.common_utils import Cache
 
 MessageFromWorker = collections.namedtuple(
-    'MessageFromWorker', field_names=['seeds', 'episode_reward', 'steps', 'best_chromosome']
+    'MessageFromWorker', field_names=['seeds', 'episode_reward', 'steps']
 )
 
 MessageFromMaster = collections.namedtuple(
-    'MessageFromMaster', field_names=['seeds_lst', 'best_seeds']
+    'MessageFromMaster', field_names=['seeds_lst']
 )
 
 # Deep Neuroevolution: Genetic Algorithms are a Competitive
 # Alternative for Training Deep Neural Networks for Reinforcement Learning
+
 
 class AgentMultiGA(BaseAgent):
     def __init__(self, worker_id, input_shape, num_outputs, params, device):
@@ -36,18 +37,23 @@ class AgentMultiGA(BaseAgent):
         self.env = None
         self.population = None
         self.elite = None
-        self.best_chromosome = None
+        self.ga_operator = None
         self.global_steps = 0
+        self.input_shape = input_shape
+        self.num_outputs = num_outputs
 
         mp.set_start_method('spawn')
 
         self.master_to_worker_queue_lst = []
         self.worker_to_master_queue = mp.Queue(maxsize=params.WORKERS_COUNT)
-
         self.solved = False
 
     def initialize(self, env):
         self.env = env
+        self.ga_operator = GAOperator(
+            env=self.env,
+            input_shape=self.input_shape, num_outputs=self.num_outputs, params=self.params, device=self.device
+        )
 
         for ga_worker_idx in range(self.params.WORKERS_COUNT):
             master_to_worker_queue = mp.Queue(maxsize=1)
@@ -65,31 +71,41 @@ class AgentMultiGA(BaseAgent):
                 seeds = (np.random.randint(self.params.MAX_SEED),)
                 seeds_lst.append(seeds)
 
-            master_to_worker_queue.put(MessageFromMaster(seeds_lst=seeds_lst, best_seeds=None))
+            master_to_worker_queue.put(MessageFromMaster(seeds_lst=seeds_lst))
 
-        self.gather_evaluation_results()
+        self.get_population()
+        self.evaluate_population()
+        self.set_elite_chromosome_to_model()
 
-        self.population.sort(key=lambda p: p[1], reverse=True)
-        self.elite = self.population[0]
-
-    def gather_evaluation_results(self):
+    def get_population(self):
         self.population = []
 
         if self.elite:
-            self.population.append(self.elite)
+            fitness, _ = self.ga_operator.evaluate(self.elite[1])
+            self.population.append((self.elite[0], fitness))
 
-        while len(self.population) < self.params.POPULATION_SIZE:
+        for _ in range(self.params.POPULATION_SIZE):
             message = self.worker_to_master_queue.get()
 
             self.population.append((message.seeds, message.episode_reward))
             self.global_steps += message.steps
 
-            if message.best_chromosome:
-                self.best_chromosome = message.best_chromosome
+    def evaluate_population(self):
+        self.population.sort(key=lambda p: p[1], reverse=True)
+        best_seeds = self.population[0][0]
+        best_fitness = self.population[0][1]
+
+        if self.elite and self.elite[0] == best_seeds:
+            best_chromosome = self.elite[1]
+        else:
+            best_chromosome = self.ga_operator.build(best_seeds)
+
+        self.elite = (best_seeds, best_chromosome, best_fitness)
+
+    def set_elite_chromosome_to_model(self):
+        self.model.load_state_dict(self.elite[1].state_dict())
 
     def next_generation(self):
-        best_seeds = self.elite[0]
-
         # 각 worker들에게 새로운 seeds_lst 전달
         for master_to_worker_queue in self.master_to_worker_queue_lst:
             if self.solved:
@@ -109,17 +125,11 @@ class AgentMultiGA(BaseAgent):
 
                     seeds_lst.append(tuple(seeds))
 
-                master_to_worker_queue.put(MessageFromMaster(seeds_lst=seeds_lst, best_seeds=best_seeds))
+                master_to_worker_queue.put(MessageFromMaster(seeds_lst=seeds_lst))
 
-        self.gather_evaluation_results()
-
-        self.population.sort(key=lambda p: p[1], reverse=True)
-        self.elite = self.population[0]
-        self.set_best_chromosome_to_model()
-
-    def set_best_chromosome_to_model(self):
-        if self.best_chromosome:
-            self.model.load_state_dict(self.best_chromosome.state_dict())
+        self.get_population()
+        self.evaluate_population()
+        self.set_elite_chromosome_to_model()
 
     def __call__(self, states, agent_states=None):
         states = states[0]
@@ -133,8 +143,8 @@ class AgentMultiGA(BaseAgent):
         env = rl_utils.get_single_environment(params=params)
         input_shape, num_outputs, action_min, action_max = rl_utils.get_environment_input_output_info(env)
 
-        agent = WorkerAgentMultiGA(
-            ga_worker_id=ga_worker_id, env=env, input_shape=input_shape, num_outputs=num_outputs, params=params, device=device
+        ga_operator = GAOperator(
+            env=env, input_shape=input_shape, num_outputs=num_outputs, params=params, device=device
         )
 
         # Pool of models (chromosomes): minimize the amount of time spent recreating the parameters from the same seeds.
@@ -148,13 +158,6 @@ class AgentMultiGA(BaseAgent):
                 break
 
             seeds_lst = message.seeds_lst
-            best_seeds = message.best_seeds
-
-            if best_seeds in chromosome_pool:
-                best_chromosome = chromosome_pool[best_seeds]
-            else:
-                best_chromosome = None
-
             # seeds_lst에는 params.NUM_SEEDS_PER_WORKER (300)개수의 seeds 존재
             # seeds는 일련의 seed로 구성된 tuple
             assert len(seeds_lst) == params.NUM_SEEDS_PER_WORKER
@@ -163,28 +166,29 @@ class AgentMultiGA(BaseAgent):
             for idx, seeds in enumerate(seeds_lst):
                 if len(seeds) == 1:
                     # seeds에 1개의 seed만 있는 경우 --> 최초 chromosome 생성
-                    chromosome = agent.build(seeds)
+                    chromosome = ga_operator.build(seeds)
 
                 elif len(seeds) > 1:
                     # seeds에 2개 이상의 seed가 있는 경우
                     # 새롭게 추가된 seed를 제외한 기존 seeds를 key로 정하여 pool에서 해당 chromosome 검색
                     chromosome = chromosome_pool.get(seeds[:-1])
                     if chromosome:
-                        # pool에 이미 존재하는 seeds[:-1]인 경우: 연관된 chromosome에 새롭게 추가된 seed 1개에 대해서만 mutation 수행
-                        chromosome = agent.mutation(chromosome, seeds[-1], copy_chromosome=True)
+                        # pool에 seeds[:-1]가 존재하는 경우: 연관된 chromosome에 새롭게 추가된 seed 1개에 대해서만 mutation 수행
+                        chromosome = ga_operator.mutation(chromosome, seeds[-1], copy_chromosome=True)
                         del chromosome_pool[seeds[:-1]]
                     else:
-                        # pool에 존재하지 않는 seeds[:-1]인 경우: 전달받은 전체 seeds에 대해서 새로운 chromosome 생성
-                        chromosome = agent.build(seeds)
+                        # pool에 seeds[:-1]가 존재하지 않는 경우: 전달받은 전체 seeds에 대해서 새로운 chromosome 생성
+                        chromosome = ga_operator.build(seeds)
 
                 else:
                     raise ValueError()
 
                 chromosome_pool[seeds] = chromosome
-                episode_reward, steps = agent.evaluate(chromosome)  # 총 evaluate 횟수: params.NUM_SEEDS_PER_WORKER
+
+                episode_reward, steps = ga_operator.evaluate(chromosome)
                 worker_to_master_queue.put(
                     MessageFromWorker(
-                        seeds=seeds, episode_reward=episode_reward, steps=steps, best_chromosome=best_chromosome
+                        seeds=seeds, episode_reward=episode_reward, steps=steps
                     )
                 )
                 idx_lst.append(idx)
@@ -197,29 +201,13 @@ class AgentMultiGA(BaseAgent):
             # So, there is only a tiny chance that old models (chromosomes) can be reused from the pool.
 
 
-class WorkerAgentMultiGA():
-    def __init__(self, ga_worker_id, env, input_shape, num_outputs, params, device):
-        self.ga_worker_id = ga_worker_id
+class GAOperator():
+    def __init__(self, env, input_shape, num_outputs, params, device):
         self.env = env
         self.input_shape = input_shape
         self.num_outputs = num_outputs
         self.params = params
         self.device = device
-
-    def evaluate(self, model):
-        observation = self.env.reset()
-        episode_reward = 0.0
-        steps = 0
-        while True:
-            observation_v = torch.FloatTensor([observation]).to(self.device)
-            action_prob = model(observation_v)
-            acts = action_prob.max(dim=1)[1]
-            observation, reward, done, _ = self.env.step(acts.data.cpu().numpy()[0])
-            episode_reward += reward
-            steps += 1
-            if done:
-                break
-        return episode_reward, steps
 
     def mutation(self, chromosome, seed, copy_chromosome=True):
         new_chromosome = copy.deepcopy(chromosome) if copy_chromosome else chromosome
@@ -229,6 +217,22 @@ class WorkerAgentMultiGA():
             noise_v = torch.FloatTensor(noise).to(self.device)
             parameter.data += self.params.NOISE_STANDARD_DEVIATION * noise_v
         return new_chromosome
+
+    def evaluate(self, model):
+        sum_episode_reward = 0.0
+        steps = 0
+        for _ in range(self.params.EVALUATION_EPISODES):
+            observation = self.env.reset()
+            while True:
+                observation_v = torch.FloatTensor([observation]).to(self.device)
+                action_prob = model(observation_v)
+                acts = action_prob.max(dim=1)[1]
+                observation, reward, done, _ = self.env.step(acts.data.cpu().numpy()[0])
+                sum_episode_reward += reward
+                steps += 1
+                if done:
+                    break
+        return sum_episode_reward / self.params.EVALUATION_EPISODES, steps
 
     def build(self, seeds):
         # The first seed is passed to PyTorch to influence the model initialization
