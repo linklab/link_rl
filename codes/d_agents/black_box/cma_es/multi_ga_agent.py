@@ -170,8 +170,8 @@ class AgentMultiGA(BaseAgent):
                     # 새롭게 추가된 seed를 제외한 기존 seeds를 key로 정하여 pool에서 해당 chromosome 검색
                     chromosome = chromosome_pool.get(seeds[:-1])
                     if chromosome:
-                        # pool에 이미 존재하는 seeds[:-1]인 경우: 연관된 chromosome에 새롭게 추가된 seed 1개에 대해서만 mutate 수행
-                        chromosome = agent.mutate(chromosome, seeds[-1], copy_chromosome=True)
+                        # pool에 이미 존재하는 seeds[:-1]인 경우: 연관된 chromosome에 새롭게 추가된 seed 1개에 대해서만 mutation 수행
+                        chromosome = agent.mutation(chromosome, seeds[-1], copy_chromosome=True)
                         del chromosome_pool[seeds[:-1]]
                     else:
                         # pool에 존재하지 않는 seeds[:-1]인 경우: 전달받은 전체 seeds에 대해서 새로운 chromosome 생성
@@ -221,7 +221,7 @@ class WorkerAgentMultiGA():
                 break
         return episode_reward, steps
 
-    def mutate(self, chromosome, seed, copy_chromosome=True):
+    def mutation(self, chromosome, seed, copy_chromosome=True):
         new_chromosome = copy.deepcopy(chromosome) if copy_chromosome else chromosome
         np.random.seed(seed)
         for parameter in new_chromosome.parameters():
@@ -243,6 +243,6 @@ class WorkerAgentMultiGA():
 
         # Subsequent seeds are used to apply model mutations
         for seed in seeds[1:]:
-            chromosome = self.mutate(chromosome, seed, copy_chromosome=False)
+            chromosome = self.mutation(chromosome, seed, copy_chromosome=False)
 
         return chromosome

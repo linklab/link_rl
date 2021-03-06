@@ -49,19 +49,20 @@ class AgentGA(BaseAgent):
         self.elite = self.population[0]
 
     def evaluate(self, model):
-        observation = self.env.reset()
-        episode_reward = 0.0
-        while True:
-            observation_v = torch.FloatTensor([observation]).to(self.device)
-            action_prob = model(observation_v)
-            acts = action_prob.max(dim=1)[1]
-            observation, reward, done, _ = self.env.step(acts.data.cpu().numpy()[0])
-            episode_reward += reward
-            if done:
-                break
-        return episode_reward
+        sum_episode_reward = 0.0
+        for _ in range(self.params.EVALUATION_RUNS):
+            observation = self.env.reset()
+            while True:
+                observation_v = torch.FloatTensor([observation]).to(self.device)
+                action_prob = model(observation_v)
+                acts = action_prob.max(dim=1)[1]
+                observation, reward, done, _ = self.env.step(acts.data.cpu().numpy()[0])
+                sum_episode_reward += reward
+                if done:
+                    break
+        return sum_episode_reward / self.params.EVALUATION_RUNS
 
-    def mutate(self, model):
+    def mutation(self, model):
         new_model = copy.deepcopy(model)
         for parameter in new_model.parameters():
             noise = np.random.normal(size=parameter.data.size())
@@ -75,12 +76,13 @@ class AgentGA(BaseAgent):
         self.population = []
 
         if self.elite:
-            self.population.append(self.elite)
+            fitness = self.evaluate(self.elite[0])
+            self.population.append((self.elite[0], fitness))
 
         for _ in range(self.params.POPULATION_SIZE - 1):
             parent_chromosome_idx = np.random.randint(0, self.params.COUNT_FROM_PARENTS)
             parent_chromosome = prev_population[parent_chromosome_idx][0]
-            mutated_chromosome = self.mutate(parent_chromosome)
+            mutated_chromosome = self.mutation(parent_chromosome)
             fitness = self.evaluate(mutated_chromosome)
             self.population.append((mutated_chromosome, fitness))
 
