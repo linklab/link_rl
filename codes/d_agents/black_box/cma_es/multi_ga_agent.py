@@ -73,16 +73,14 @@ class AgentMultiGA(BaseAgent):
 
             master_to_worker_queue.put(MessageFromMaster(seeds_lst=seeds_lst))
 
-        self.get_population()
-        self.evaluate_population()
-        self.set_elite_chromosome_to_model()
+        self._get_population()
 
-    def get_population(self):
+    def _get_population(self):
         self.population = []
 
-        if self.elite:
-            fitness, _ = self.ga_operator.evaluate(self.elite[1])
-            self.population.append((self.elite[0], fitness))
+        # if self.elite:
+        #     fitness, _ = self.ga_operator.evaluate(self.elite[1])
+        #     self.population.append((self.elite[0], fitness))
 
         for _ in range(self.params.POPULATION_SIZE):
             message = self.worker_to_master_queue.get()
@@ -90,7 +88,7 @@ class AgentMultiGA(BaseAgent):
             self.population.append((message.seeds, message.episode_reward))
             self.global_steps += message.steps
 
-    def evaluate_population(self):
+    def sort_population_and_set_elite(self):
         self.population.sort(key=lambda p: p[1], reverse=True)
         best_seeds = self.population[0][0]
         best_fitness = self.population[0][1]
@@ -101,11 +99,21 @@ class AgentMultiGA(BaseAgent):
             best_chromosome = self.ga_operator.build(best_seeds)
 
         self.elite = (best_seeds, best_chromosome, best_fitness)
-
-    def set_elite_chromosome_to_model(self):
         self.model.load_state_dict(self.elite[1].state_dict())
 
-    def next_generation(self):
+    def selection(self):
+        # https://en.wikipedia.org/wiki/Fitness_proportionate_selection: Roulette wheel selection
+        # generate next population based on 'fitness proportionate selection'
+        total = sum(p[1] for p in self.population)
+        selection_probs = [p[1]/total for p in self.population]
+        new_population_idx = np.random.choice(len(self.population), size=self.params.POPULATION_SIZE, p=selection_probs)
+
+        prev_population = self.population
+        self.population = []
+        for idx in new_population_idx:
+            self.population.append(prev_population[idx])
+
+    def mutation(self):
         # 각 worker들에게 새로운 seeds_lst 전달
         for master_to_worker_queue in self.master_to_worker_queue_lst:
             if self.solved:
@@ -113,8 +121,7 @@ class AgentMultiGA(BaseAgent):
             else:
                 seeds_lst = []
                 for _ in range(self.params.NUM_SEEDS_PER_WORKER):
-                    # population내에서 episord_reward 기준 10위 이내의 chromosome을 임의로 선택
-                    parent = np.random.randint(self.params.COUNT_FROM_PARENTS)
+                    parent = np.random.randint(self.params.POPULATION_SIZE)
 
                     # 새로운 시드 생성
                     next_seed = np.random.randint(self.params.MAX_SEED)
@@ -127,9 +134,7 @@ class AgentMultiGA(BaseAgent):
 
                 master_to_worker_queue.put(MessageFromMaster(seeds_lst=seeds_lst))
 
-        self.get_population()
-        self.evaluate_population()
-        self.set_elite_chromosome_to_model()
+        self._get_population()
 
     def __call__(self, states, agent_states=None):
         states = states[0]

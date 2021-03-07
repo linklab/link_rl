@@ -1,3 +1,5 @@
+import random
+
 import numpy as np
 import copy
 
@@ -45,9 +47,6 @@ class AgentGA(BaseAgent):
             (chromosome, self.evaluate(chromosome)[0]) for chromosome in self.chromosomes
         ]
 
-        self.population.sort(key=lambda p: p[1], reverse=True)
-        self.elite = self.population[0]
-
     def evaluate(self, model):
         sum_episode_reward = 0.0
         steps = 0
@@ -64,35 +63,42 @@ class AgentGA(BaseAgent):
                     break
         return sum_episode_reward / self.params.EVALUATION_EPISODES, steps
 
-    def mutation(self, model):
-        new_model = copy.deepcopy(model)
-        for parameter in new_model.parameters():
-            noise = np.random.normal(size=parameter.data.size())
-            noise_v = torch.FloatTensor(noise).to(self.device)
-            parameter.data += self.params.NOISE_STANDARD_DEVIATION * noise_v
-        return new_model
-
-    def next_generation(self):
-        # generate next population
+    def selection(self, tsize=10):
+        # https://en.wikipedia.org/wiki/Tournament_selection
+        # generate next population based on 'tournament selection'
         prev_population = self.population
         self.population = []
 
-        if self.elite:
-            fitness, _ = self.evaluate(self.elite[0])
-            self.population.append((self.elite[0], fitness))
+        for _ in range(self.params.POPULATION_SIZE):
+            candidates = random.sample(prev_population, tsize)
+            self.population.append(max(candidates, key=lambda p: p[1]))
 
-        for _ in range(self.params.POPULATION_SIZE - 1):
-            parent_chromosome_idx = np.random.randint(0, self.params.COUNT_FROM_PARENTS)
-            parent_chromosome = prev_population[parent_chromosome_idx][0]
-            mutated_chromosome = self.mutation(parent_chromosome)
-            fitness, _ = self.evaluate(mutated_chromosome)
-            self.population.append((mutated_chromosome, fitness))
+    # def selection(self):
+    #     # generate next population
+    #     prev_population = self.population
+    #     self.population = []
+    #
+    #     if self.elite:
+    #         fitness, _ = self.evaluate(self.elite[0])
+    #         self.population.append((self.elite[0], fitness))
+    #
+    #     for _ in range(self.params.POPULATION_SIZE - 1):
+    #         parent_chromosome_idx = np.random.randint(0, self.params.COUNT_FROM_PARENTS)
+    #         self.population.append(prev_population[parent_chromosome_idx])
 
+    def mutation(self):
+        for idx, (chromosome, _) in enumerate(self.population):
+            new_chromosome = copy.deepcopy(chromosome)
+            for parameter in new_chromosome.parameters():
+                noise = np.random.normal(size=parameter.data.size())
+                noise_v = torch.FloatTensor(noise).to(self.device)
+                parameter.data += self.params.NOISE_STANDARD_DEVIATION * noise_v
+
+            self.population[idx] = (new_chromosome, self.evaluate(new_chromosome)[0])
+
+    def sort_population_and_set_elite(self):
         self.population.sort(key=lambda p: p[1], reverse=True)
         self.elite = self.population[0]
-        self.set_elite_chromosome_to_model()
-
-    def set_elite_chromosome_to_model(self):
         self.model.load_state_dict(self.elite[0].state_dict())
 
     def __call__(self, states, agent_states=None):
