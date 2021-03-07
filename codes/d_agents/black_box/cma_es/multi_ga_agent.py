@@ -96,7 +96,7 @@ class AgentMultiGA(BaseAgent):
         if self.elite is None or self.elite[0] != best_seeds:
             best_chromosome = self.ga_operator.build(best_seeds)
             self.elite = (best_seeds, best_chromosome, best_fitness)
-            self.model.load_state_dict(self.elite[1].state_dict())
+            self.model.load_state_dict(best_chromosome.state_dict())
 
     def selection(self):
         # https://en.wikipedia.org/wiki/Fitness_proportionate_selection: Roulette wheel selection
@@ -126,7 +126,6 @@ class AgentMultiGA(BaseAgent):
                     # 그 선택된 parent chromosome을 만들 때 사용한 seeds에 새로운 seed를 더하여 새로운 seeds 구성
                     # (1099612850, 3655502209) --> (1099612850, 3655502209, 1087985398)
                     seeds = list(self.population[parent][0]) + [next_seed]
-
                     seeds_lst.append(tuple(seeds))
 
                 master_to_worker_queue.put(MessageFromMaster(seeds_lst=seeds_lst))
