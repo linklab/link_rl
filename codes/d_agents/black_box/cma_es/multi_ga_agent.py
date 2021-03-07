@@ -93,13 +93,10 @@ class AgentMultiGA(BaseAgent):
         best_seeds = self.population[0][0]
         best_fitness = self.population[0][1]
 
-        if self.elite and self.elite[0] == best_seeds:
-            best_chromosome = self.elite[1]
-        else:
+        if self.elite is None or self.elite[0] != best_seeds:
             best_chromosome = self.ga_operator.build(best_seeds)
-
-        self.elite = (best_seeds, best_chromosome, best_fitness)
-        self.model.load_state_dict(self.elite[1].state_dict())
+            self.elite = (best_seeds, best_chromosome, best_fitness)
+            self.model.load_state_dict(self.elite[1].state_dict())
 
     def selection(self):
         # https://en.wikipedia.org/wiki/Fitness_proportionate_selection: Roulette wheel selection
@@ -206,7 +203,7 @@ class AgentMultiGA(BaseAgent):
             # So, there is only a tiny chance that old models (chromosomes) can be reused from the pool.
 
 
-class GAOperator():
+class GAOperator:
     def __init__(self, env, input_shape, num_outputs, params, device):
         self.env = env
         self.input_shape = input_shape
