@@ -16,8 +16,8 @@ from codes.a_config.parameters import PARAMETERS as params
 from codes.b_environments.trade.trade_data import get_data
 from codes.c_models.continuous_action.soft_actor_critic_model import SoftActorCriticModel
 from codes.d_agents.black_box.cma_es.cma_es_agent import AgentEMAES
-from codes.d_agents.black_box.cma_es.ga_agent import AgentGA
-from codes.d_agents.black_box.cma_es.multi_ga_agent import AgentMultiGA
+from codes.d_agents.black_box.ga.ga_agent import AgentGA
+from codes.d_agents.black_box.ga.multi_ga_agent import AgentMultiGA
 from codes.d_agents.on_policy.sac.continuous_sac_agent import AgentSAC
 from codes.d_agents.on_policy.ppo.discrete_ppo_agent import AgentDiscretePPO
 from codes.e_utils.reward_changer import RewardChanger
@@ -127,7 +127,6 @@ def get_single_environment(params=None, mode=AgentMode.TRAIN):
         EnvironmentName.PYBULLET_ANT_V0, EnvironmentName.PYBULLET_HALF_CHEETAH_V0,
         EnvironmentName.PYBULLET_INVERTED_DOUBLE_PENDULUM_V0
     ]:
-        import pybulletgym
         env = gym.make(params.ENVIRONMENT_ID.value)
     elif params.ENVIRONMENT_ID == EnvironmentName.PENDULUM_MATLAB_V0:
         from codes.b_environments.rotary_inverted_pendulum.rip import RotaryInvertedPendulumEnv
@@ -279,8 +278,6 @@ def get_rl_model(worker_id, input_shape=None, num_outputs=None, params=None, dev
 
 
 def get_rl_agent(input_shape, num_outputs, action_min, action_max, worker_id, params, device="cpu"):
-    agent = None
-
     if params.RL_ALGORITHM == RLAlgorithmName.DDPG_V0:
         agent = AgentDDPG(
             worker_id=worker_id, input_shape=input_shape, num_outputs=num_outputs,

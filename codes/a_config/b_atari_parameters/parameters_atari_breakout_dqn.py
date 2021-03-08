@@ -1,8 +1,9 @@
+from codes.a_config._rl_parameters.off_policy.parameter_dqn import PARAMETERS_DQN
 from codes.e_utils.names import *
 from codes.a_config.parameters_general import PARAMETERS_GENERAL
 
 
-class PARAMETERS_BREAKOUT_DQN(PARAMETERS_GENERAL):
+class PARAMETERS_BREAKOUT_DQN(PARAMETERS_GENERAL, PARAMETERS_DQN):
     ENVIRONMENT_ID = EnvironmentName.BREAKOUT_NO_FRAME_SKIP_V4
     # ENVIRONMENT_ID = EnvironmentName.BREAKOUT_DETERMINISTIC_V4
     RL_ALGORITHM = RLAlgorithmName.DQN_V0

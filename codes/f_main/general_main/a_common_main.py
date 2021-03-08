@@ -29,7 +29,7 @@ from codes.a_config.parameters import PARAMETERS as params
 
 from codes.e_utils import rl_utils
 from codes.e_utils.common_utils import save_model, print_environment_info, remove_models, agent_model_test, \
-    print_agent_info, load_model
+    print_agent_info, load_model, print_params
 from codes.e_utils.train_tracker import SpeedTracker, EarlyStopping
 from codes.e_utils.logger import get_logger
 from codes.e_utils.names import DeepLearningModelName, RLAlgorithmName, EnvironmentName, ModelSaveMode, AgentMode
@@ -51,6 +51,8 @@ device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 print("DEVICE: {0}".format(device))
 
 my_logger = get_logger("main")
+
+print_params(params)
 
 
 def get_agent(env):

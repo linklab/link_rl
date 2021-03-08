@@ -1,8 +1,9 @@
+from codes.a_config._rl_parameters.on_policy.parameter_ppo import PARAMETERS_PPO
 from codes.e_utils.names import *
 from codes.a_config.parameters_general import PARAMETERS_GENERAL
 
 
-class PARAMETERS_PONG_PPO(PARAMETERS_GENERAL):
+class PARAMETERS_PONG_PPO(PARAMETERS_GENERAL, PARAMETERS_PPO):
     ENVIRONMENT_ID = EnvironmentName.PONG_NO_FRAME_SKIP_V4
     DEEP_LEARNING_MODEL = DeepLearningModelName.STOCHASTIC_DISCRETE_ACTOR_CRITIC_CNN
     RL_ALGORITHM = RLAlgorithmName.DISCRETE_PPO_V0

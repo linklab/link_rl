@@ -1,4 +1,4 @@
-from codes.a_config._rl_parameters.parameter_genetic_algorithm import GENETIC_NEURO_EVOLUTION_ALGORITHM
+from codes.a_config._rl_parameters.black_box.parameter_ga import GENETIC_NEURO_EVOLUTION_ALGORITHM
 from codes.e_utils.names import *
 from codes.a_config.parameters_general import PARAMETERS_GENERAL
 

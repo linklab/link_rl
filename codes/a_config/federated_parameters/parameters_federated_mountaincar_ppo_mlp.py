@@ -1,8 +1,9 @@
+from codes.a_config._rl_parameters.on_policy.parameter_ppo import PARAMETERS_PPO
 from codes.a_config.federated_parameters.parameters_federated_cartpole_ppo_mlp import PARAMETERS_FEDERATED_CARTPOLE_PPO_MLP
 from codes.e_utils.names import *
 
 
-class PARAMETERS_FEDERATED_MOUNTAINCAR_PPO_MLP(PARAMETERS_FEDERATED_CARTPOLE_PPO_MLP):
+class PARAMETERS_FEDERATED_MOUNTAINCAR_PPO_MLP(PARAMETERS_FEDERATED_CARTPOLE_PPO_MLP, PARAMETERS_PPO):
     # [WORKER]
     NUM_WORKERS = 8
 
@@ -16,8 +17,6 @@ class PARAMETERS_FEDERATED_MOUNTAINCAR_PPO_MLP(PARAMETERS_FEDERATED_CARTPOLE_PPO
     MODE_PARAMETERS_TRANSFER = True    # Transfer
 
     # [TRAINING]
-    EPSILON_GREEDY_ACT = False
-    EPSILON_DECAY = True
     EPSILON_INIT = 0.9
     EPSILON_MIN = 0.05
     OPTIMIZER = OptimizerName.ADAM

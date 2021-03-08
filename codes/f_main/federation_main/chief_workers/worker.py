@@ -168,11 +168,6 @@ class Worker:
                     mean_loss_over_recent_episodes
                 )
 
-                if self.params.EPSILON_GREEDY_ACT:
-                    log_msg += ", Epsilon: {0:5.2f}".format(
-                        self.rl_algorithm.epsilon
-                    )
-
                 self.logger.info(log_msg)
                 if self.params.VERBOSE: print(log_msg)
 

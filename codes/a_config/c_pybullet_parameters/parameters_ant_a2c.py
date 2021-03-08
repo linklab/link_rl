@@ -1,8 +1,9 @@
+from codes.a_config._rl_parameters.on_policy.parameter_a2c import PARAMETERS_A2C
 from codes.e_utils.names import *
 from codes.a_config.parameters_general import PARAMETERS_GENERAL
 
 # https://github.com/bulletphysics/bullet3/blob/master/examples/pybullet/gym/pybullet_envs/minitaur/envs/minitaur_gym_env.py
-class PARAMETERS_ANT_A2C(PARAMETERS_GENERAL):
+class PARAMETERS_ANT_A2C(PARAMETERS_GENERAL, PARAMETERS_A2C):
     ENVIRONMENT_ID = EnvironmentName.PYBULLET_ANT_V0
     DEEP_LEARNING_MODEL = DeepLearningModelName.STOCHASTIC_CONTINUOUS_ACTOR_CRITIC_MLP
     RL_ALGORITHM = RLAlgorithmName.CONTINUOUS_A2C_V0

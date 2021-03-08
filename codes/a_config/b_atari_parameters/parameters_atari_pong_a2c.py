@@ -1,8 +1,9 @@
+from codes.a_config._rl_parameters.on_policy.parameter_a2c import PARAMETERS_A2C
 from codes.e_utils.names import *
 from codes.a_config.parameters_general import PARAMETERS_GENERAL
 
 
-class PARAMETERS_PONG_A2C(PARAMETERS_GENERAL):
+class PARAMETERS_PONG_A2C(PARAMETERS_GENERAL, PARAMETERS_A2C):
     ENVIRONMENT_ID = EnvironmentName.PONG_NO_FRAME_SKIP_V4
     DEEP_LEARNING_MODEL = DeepLearningModelName.STOCHASTIC_DISCRETE_ACTOR_CRITIC_CNN
     RL_ALGORITHM = RLAlgorithmName.DISCRETE_A2C_V0

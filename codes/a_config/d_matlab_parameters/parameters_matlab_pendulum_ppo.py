@@ -1,8 +1,9 @@
+from codes.a_config._rl_parameters.on_policy.parameter_ppo import PARAMETERS_PPO
 from codes.e_utils.names import *
 from codes.a_config.parameters_general import PARAMETERS_GENERAL
 
 
-class PARAMETERS_PENDULUM_MATLAB_PPO(PARAMETERS_GENERAL):
+class PARAMETERS_PENDULUM_MATLAB_PPO(PARAMETERS_GENERAL, PARAMETERS_PPO):
     ENV_RESET = False
 
     ENVIRONMENT_ID      = EnvironmentName.PENDULUM_MATLAB_V0
@@ -28,8 +29,6 @@ class PARAMETERS_PENDULUM_MATLAB_PPO(PARAMETERS_GENERAL):
 
     PER = False
     CLIP_GRAD = 0.1
-
-    RNN_STEP_LENGTH = 2
 
     ACTION_SCALE = 3.0
 

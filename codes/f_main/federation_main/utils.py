@@ -110,13 +110,6 @@ def print_configuration(env, rl_model, params):
     print(" Optimizer: {0}".format(params.OPTIMIZER.value))
     print(" Learning Rate: {0}".format(params.LEARNING_RATE))
     print(" Gamma (Discount Factor): {0}".format(params.GAMMA))
-    print(" Epsilon Greedy Action: {0}".format(params.EPSILON_GREEDY_ACT))
-    if params.EPSILON_GREEDY_ACT:
-        print(" EPSILON_DECAY: {0}".format(params.EPSILON_DECAY))
-        if params.EPSILON_DECAY:
-            print(" EPSILON_INIT: {0}, EPSILON_MIN: {1}".format(
-                params.EPSILON_INIT, params.EPSILON_MIN
-            ))
 
     print()
     response = input("Are you OK for All environmental variables? [y/n]: ")

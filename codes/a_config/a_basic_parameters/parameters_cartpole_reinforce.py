@@ -1,15 +1,16 @@
+from codes.a_config._rl_parameters.off_policy.parameter_dqn import PARAMETERS_DQN
 from codes.e_utils.names import *
 from codes.a_config.parameters_general import PARAMETERS_GENERAL
 
 
-class PARAMETERS_CARTPOLE_REINFORCE(PARAMETERS_GENERAL):
+class PARAMETERS_CARTPOLE_REINFORCE(PARAMETERS_GENERAL, PARAMETERS_DQN):
     ENVIRONMENT_ID = EnvironmentName.CARTPOLE_V1
     RL_ALGORITHM = RLAlgorithmName.REINFORCE_V0
     DEEP_LEARNING_MODEL = DeepLearningModelName.DUELING_DQN_MLP
 
     STOP_MEAN_EPISODE_REWARD = 195.0
     STOP_PATIENCE_COUNT = 10
-    REPLAY_BUFFER_SIZE = 50000
+
     MAX_GLOBAL_STEP = 100000
     LEARNING_RATE = 0.001
     GAMMA = 0.99

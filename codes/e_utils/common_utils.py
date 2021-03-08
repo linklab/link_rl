@@ -10,6 +10,7 @@ from gym.spaces import Box
 from matplotlib import pyplot as plt
 import gym
 import torch
+from termcolor import colored
 
 from codes.b_environments.or_gym.envs.classic_or.knapsack import BoundedKnapsackEnv
 from codes.b_environments.or_gym.envs.classic_or.tsp import TSPEnv, TSPDistCost
@@ -43,7 +44,7 @@ def print_params(params_class):
     print('\n' + '################ Parameters ################')
     for param in dir(params_class):
         if not param.startswith("__"):
-            print("{0}: {1}".format(param, getattr(params_class, param)))
+            print("{0}: {1}".format(param, colored(getattr(params_class, param), color="blue")))
     print('############################################')
     print()
 

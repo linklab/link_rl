@@ -1,8 +1,9 @@
+from codes.a_config._rl_parameters.off_policy.parameter_dqn import PARAMETERS_DQN
 from codes.e_utils.names import *
 from codes.a_config.parameters_general import PARAMETERS_GENERAL
 
 
-class PARAMETERS_FEDERATED_MATLAB_RIP_DQN(PARAMETERS_GENERAL):
+class PARAMETERS_FEDERATED_MATLAB_RIP_DQN(PARAMETERS_GENERAL, PARAMETERS_DQN):
     # [GENERAL]
     SEED = 1
     MY_PLATFORM = OSName.MAC
@@ -59,10 +60,6 @@ class PARAMETERS_FEDERATED_MATLAB_RIP_DQN(PARAMETERS_GENERAL):
     EPSILON_BALANCING_MIN_STEP = 200000
 
     CLIP_GRAD = 0.1
-
-    RNN_STEP_LENGTH = 2
-    PER_PROPORTIONAL = False
-    PER_RANK_BASED = False
 
     ACTION_SCALE = 0.035
 

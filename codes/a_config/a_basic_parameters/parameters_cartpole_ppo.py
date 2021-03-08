@@ -1,8 +1,9 @@
+from codes.a_config._rl_parameters.on_policy.parameter_ppo import PARAMETERS_PPO
 from codes.e_utils.names import *
 from codes.a_config.parameters_general import PARAMETERS_GENERAL
 
 
-class PARAMETERS_CARTPOLE_PPO(PARAMETERS_GENERAL):
+class PARAMETERS_CARTPOLE_PPO(PARAMETERS_GENERAL, PARAMETERS_PPO):
     ENVIRONMENT_ID = EnvironmentName.CARTPOLE_V1
     DEEP_LEARNING_MODEL = DeepLearningModelName.STOCHASTIC_DISCRETE_ACTOR_CRITIC_MLP
     RL_ALGORITHM = RLAlgorithmName.DISCRETE_PPO_V0

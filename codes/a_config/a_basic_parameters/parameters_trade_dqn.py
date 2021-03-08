@@ -1,8 +1,9 @@
+from codes.a_config._rl_parameters.off_policy.parameter_dqn import PARAMETERS_DQN
 from codes.e_utils.names import *
 from codes.a_config.parameters_general import PARAMETERS_GENERAL
 
 
-class PARAMETERS_TRADE_DQN(PARAMETERS_GENERAL):
+class PARAMETERS_TRADE_DQN(PARAMETERS_GENERAL, PARAMETERS_DQN):
     ENVIRONMENT_ID = EnvironmentName.TRADE_V0
     RL_ALGORITHM = RLAlgorithmName.DQN_V0
     DEEP_LEARNING_MODEL = DeepLearningModelName.DUELING_DQN_SMALL_CNN

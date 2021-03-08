@@ -1,0 +1,10 @@
+class PARAMETERS_DDPG:
+    PER_PROPORTIONAL = False
+    PER_RANK_BASED = False
+    DOUBLE = True
+
+    EPSILON_INIT = None
+    EPSILON_MIN = None
+    EPSILON_MIN_STEP = None
+
+    REPLAY_BUFFER_SIZE = None
