@@ -1,4 +1,4 @@
-from codes.a_config._rl_parameters.genetic_algorithm import GENETIC_NEURO_EVOLUTION_ALGORITHM
+from codes.a_config._rl_parameters.parameter_genetic_algorithm import GENETIC_NEURO_EVOLUTION_ALGORITHM
 
 
 class MULTI_GENETIC_NEURO_EVOLUTION_ALGORITHM(GENETIC_NEURO_EVOLUTION_ALGORITHM):
