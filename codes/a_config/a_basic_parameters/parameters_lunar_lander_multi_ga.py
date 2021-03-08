@@ -1,4 +1,4 @@
-from codes.a_config._rl_parameters.multi_genetic_algorithm import MULTI_GENETIC_NEURO_EVOLUTION_ALGORITHM
+from codes.a_config._rl_parameters.parameter_multi_genetic_algorithm import MULTI_GENETIC_NEURO_EVOLUTION_ALGORITHM
 from codes.e_utils.names import *
 from codes.a_config.parameters_general import PARAMETERS_GENERAL
 
