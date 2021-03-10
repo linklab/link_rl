@@ -1,8 +1,9 @@
+from codes.a_config._rl_parameters.off_policy.parameter_ddpg import PARAMETERS_DDPG
 from codes.a_config.parameters_general import PARAMETERS_GENERAL
 from codes.e_utils.names import OSName, EnvironmentName, RLAlgorithmName, DeepLearningModelName, OptimizerName
 
 
-class PARAMETERS_FEDERATED_MATLAB_RIP_DDPG(PARAMETERS_GENERAL):
+class PARAMETERS_FEDERATED_MATLAB_RIP_DDPG(PARAMETERS_GENERAL, PARAMETERS_DDPG):
     # [GENERAL]
     SEED = 1
     MY_PLATFORM = OSName.MAC
@@ -56,10 +57,6 @@ class PARAMETERS_FEDERATED_MATLAB_RIP_DDPG(PARAMETERS_GENERAL):
     EPSILON_MIN_STEP = 400000
 
     CLIP_GRAD = 0.1
-
-    RNN_STEP_LENGTH = 2
-    PER_PROPORTIONAL = False
-    PER_RANK_BASED = False
 
     ACTION_SCALE = 3.0
 

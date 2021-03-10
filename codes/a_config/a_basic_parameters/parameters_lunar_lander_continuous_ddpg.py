@@ -1,9 +1,10 @@
 # https://towardsdatascience.com/solving-lunar-lander-openaigym-reinforcement-learning-785675066197
+from codes.a_config._rl_parameters.off_policy.parameter_ddpg import PARAMETERS_DDPG
 from codes.e_utils.names import *
 from codes.a_config.parameters_general import PARAMETERS_GENERAL
 
 
-class PARAMETERS_LUNAR_LANDER_CONTINUOUS_DDPG(PARAMETERS_GENERAL):
+class PARAMETERS_LUNAR_LANDER_CONTINUOUS_DDPG(PARAMETERS_GENERAL, PARAMETERS_DDPG):
     ENVIRONMENT_ID = EnvironmentName.LUNAR_LANDER_CONTINUOUS_V2
     DEEP_LEARNING_MODEL = DeepLearningModelName.DETERMINISTIC_CONTINUOUS_ACTOR_CRITIC_MLP
     RL_ALGORITHM = RLAlgorithmName.DDPG_V0
@@ -29,9 +30,5 @@ class PARAMETERS_LUNAR_LANDER_CONTINUOUS_DDPG(PARAMETERS_GENERAL):
     EPSILON_MIN_STEP = 200000
 
     CLIP_GRAD = 0.1
-
-    RNN_STEP_LENGTH = 2
-    PER_PROPORTIONAL = False
-    PER_RANK_BASED = False
 
     ACTION_SCALE = 1.0

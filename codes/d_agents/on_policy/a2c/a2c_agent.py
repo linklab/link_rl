@@ -24,7 +24,7 @@ class AgentA2C(OnPolicyAgent):
         self.model = None
         self.optimizer = None
         self.buffer = replay_buffer.ExperienceReplayBuffer(
-            experience_source=None, buffer_size=self.params.REPLAY_BUFFER_SIZE
+            experience_source=None, buffer_size=self.params.BATCH_SIZE
         )
 
     def __call__(self, states, critics=None):

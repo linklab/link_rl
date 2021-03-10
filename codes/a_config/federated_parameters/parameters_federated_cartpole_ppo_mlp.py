@@ -1,8 +1,9 @@
+from codes.a_config._rl_parameters.on_policy.parameter_ppo import PARAMETERS_PPO
 from codes.e_utils.names import *
 from codes.a_config.parameters_general import PARAMETERS_GENERAL
 
 
-class PARAMETERS_FEDERATED_CARTPOLE_PPO_MLP(PARAMETERS_GENERAL):
+class PARAMETERS_FEDERATED_CARTPOLE_PPO_MLP(PARAMETERS_GENERAL, PARAMETERS_PPO):
     # [GENERAL]
     SEED = 1
     MY_PLATFORM = OSName.MAC
@@ -30,8 +31,6 @@ class PARAMETERS_FEDERATED_CARTPOLE_PPO_MLP(PARAMETERS_GENERAL):
     MODE_PARAMETERS_TRANSFER = True    # Transfer
 
     # [TRAINING]
-    EPSILON_GREEDY_ACT = False
-    EPSILON_DECAY = True
     EPSILON_INIT = 0.9
     EPSILON_MIN = 0.05
     OPTIMIZER = OptimizerName.ADAM

@@ -1,8 +1,9 @@
+from codes.a_config._rl_parameters.off_policy.parameter_ddpg import PARAMETERS_DDPG
 from codes.e_utils.names import *
 from codes.a_config.parameters_general import PARAMETERS_GENERAL
 
 
-class PARAMETERS_PENDULUM_MATLAB_DDPG(PARAMETERS_GENERAL):
+class PARAMETERS_PENDULUM_MATLAB_DDPG(PARAMETERS_GENERAL, PARAMETERS_DDPG):
     ENV_RESET = True
 
     ENVIRONMENT_ID = EnvironmentName.PENDULUM_MATLAB_V0
@@ -29,11 +30,6 @@ class PARAMETERS_PENDULUM_MATLAB_DDPG(PARAMETERS_GENERAL):
     OMEGA = False
 
     CLIP_GRAD = 0.1
-
-    RNN_STEP_LENGTH = 2
-
-    PER_PROPORTIONAL = False
-    PER_RANK_BASED = False
 
     ACTION_SCALE = 3.0
 

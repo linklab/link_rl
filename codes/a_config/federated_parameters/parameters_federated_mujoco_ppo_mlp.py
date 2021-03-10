@@ -1,8 +1,9 @@
+from codes.a_config._rl_parameters.on_policy.parameter_ppo import PARAMETERS_PPO
 from codes.e_utils.names import *
 from codes.a_config.parameters_general import PARAMETERS_GENERAL
 
 
-class PARAMETERS_FEDERATED_MUJOCO_PPO_MLP(PARAMETERS_GENERAL):
+class PARAMETERS_FEDERATED_MUJOCO_PPO_MLP(PARAMETERS_GENERAL, PARAMETERS_PPO):
     # [GENERAL]
     SEED = 1
     MY_PLATFORM = OSName.MAC

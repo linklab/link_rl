@@ -1,8 +1,9 @@
+from codes.a_config._rl_parameters.off_policy.parameter_dqn import PARAMETERS_DQN
 from codes.e_utils.names import *
 from codes.a_config.parameters_general import PARAMETERS_GENERAL
 
 
-class PARAMETERS_FEDERATED_CARTPOLE_DQN(PARAMETERS_GENERAL):
+class PARAMETERS_FEDERATED_CARTPOLE_DQN(PARAMETERS_GENERAL, PARAMETERS_DQN):
     # [GENERAL]
     SEED = 1
     MY_PLATFORM = OSName.MAC
@@ -29,8 +30,6 @@ class PARAMETERS_FEDERATED_CARTPOLE_DQN(PARAMETERS_GENERAL):
     MODE_PARAMETERS_TRANSFER = True    # Transfer
 
     # [TRAINING]
-    EPSILON_GREEDY_ACT = False
-    EPSILON_DECAY = True
     PPO_GAE_LAMBDA = 0.99
 
     # [TRAJECTORY_SAMPLING]

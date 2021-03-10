@@ -1,8 +1,9 @@
+from codes.a_config._rl_parameters.off_policy.parameter_ddpg import PARAMETERS_DDPG
 from codes.e_utils.names import *
 from codes.a_config.parameters_general import PARAMETERS_GENERAL
 
 
-class PARAMETERS_PENDULUM_D4PG(PARAMETERS_GENERAL):
+class PARAMETERS_PENDULUM_D4PG(PARAMETERS_GENERAL, PARAMETERS_DDPG):
     ENVIRONMENT_ID = EnvironmentName.PENDULUM_V0
     DEEP_LEARNING_MODEL = DeepLearningModelName.DETERMINISTIC_CONTINUOUS_ACTOR_CRITIC_MLP
     RL_ALGORITHM = RLAlgorithmName.D4PG_V0
@@ -25,10 +26,6 @@ class PARAMETERS_PENDULUM_D4PG(PARAMETERS_GENERAL):
     EPSILON_MIN_STEP = 200000
 
     CLIP_GRAD = 0.1
-
-    RNN_STEP_LENGTH = 2
-    PER_PROPORTIONAL = False
-    PER_RANK_BASED = False
 
     ACTION_SCALE = 2.0
 
