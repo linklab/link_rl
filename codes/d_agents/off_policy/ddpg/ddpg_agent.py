@@ -111,7 +111,6 @@ class AgentDDPG(OffPolicyAgent):
 
         # print(batch)
         states_v, actions_v, rewards_v, dones_mask, last_states_v = self.unpack_batch_for_ddpg(batch)
-
         self.actor_optimizer.zero_grad()
 
         current_actions_v = self.model.base.forward_actor(states_v)

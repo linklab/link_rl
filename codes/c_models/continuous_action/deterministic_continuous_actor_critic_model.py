@@ -22,6 +22,10 @@ class DeterministicContinuousActorCriticModel(BaseModel):
             self.base = DistributionalActorCriticMLPBase(
                 num_inputs=num_inputs, num_outputs=num_outputs, params=self.params
             )
+        elif self.params.RL_ALGORITHM == RLAlgorithmName.TD3_V0:
+            self.base = DeterministicActorCriticTD3MLPBase(
+                num_inputs=num_inputs, num_outputs=num_outputs, params=self.params
+            )
         else:
             raise ValueError()
 
@@ -103,3 +107,84 @@ class DistributionalActorCriticMLPBase(DeterministicActorCriticMLPBase):
         weights = F.softmax(distribution, dim=-1) * self.supports
         res = weights.sum(dim=-1)
         return res.unsqueeze(dim=-1)
+
+
+class DeterministicActorCriticTD3MLPBase(nn.Module):
+    def __init__(self, num_inputs, num_outputs, params):
+        super(DeterministicActorCriticTD3MLPBase, self).__init__()
+        self.__name__ = "DeterministicActorCriticTD3MLPBase"
+        self.params = params
+
+        self.num_inputs = num_inputs
+        self.num_outputs = num_outputs
+
+        self.hidden_1_size = params.HIDDEN_1_SIZE
+        self.hidden_2_size = params.HIDDEN_2_SIZE
+        self.hidden_3_size = params.HIDDEN_3_SIZE
+
+        self.actor = nn.Sequential(
+            nn.Linear(num_inputs, self.hidden_1_size),
+            nn.LeakyReLU(),
+            nn.Linear(self.hidden_1_size, self.hidden_2_size),
+            nn.LeakyReLU(),
+            nn.Linear(self.hidden_2_size, self.hidden_3_size),
+            nn.LeakyReLU(),
+            nn.Linear(self.hidden_3_size, num_outputs)
+        )
+
+        # self.actor.apply(self.init_weights)
+
+        self.critic_1 = nn.Sequential(
+            nn.Linear(num_inputs + num_outputs, self.hidden_1_size),
+            nn.LeakyReLU(),
+            nn.Linear(self.hidden_1_size, self.hidden_2_size),
+            nn.LeakyReLU(),
+            nn.Linear(self.hidden_2_size, self.hidden_3_size),
+            nn.LeakyReLU(),
+            nn.Linear(self.hidden_3_size, 1)
+        )
+
+        self.critic_2 = nn.Sequential(
+            nn.Linear(num_inputs + num_outputs, self.hidden_1_size),
+            nn.LeakyReLU(),
+            nn.Linear(self.hidden_1_size, self.hidden_2_size),
+            nn.LeakyReLU(),
+            nn.Linear(self.hidden_2_size, self.hidden_3_size),
+            nn.LeakyReLU(),
+            nn.Linear(self.hidden_3_size, 1)
+        )
+
+        # self.critic.apply(self.init_weights)
+
+        self.critic_params = list(self.critic_1.parameters()) + list(self.critic_2.parameters())
+        # self.critic_1_params = list(self.critic_1.parameters())
+        # self.critic_2_params = list(self.critic_2.parameters())
+
+        self.layers_info = {'actor': self.actor, 'critic_1': self.critic_1, 'critic_2': self.critic_2}
+
+        self.train()
+
+    @staticmethod
+    def init_weights(m):
+        if type(m) == nn.Linear:
+            torch.nn.init.kaiming_normal_(m.weight)
+
+    def forward(self, inputs):
+        return self.forward_actor(inputs)
+
+    def forward_actor(self, inputs):
+        actions = self.actor(inputs)
+        actions = torch.tanh(actions)
+
+        return actions * self.params.ACTION_SCALE
+
+    def forward_critic(self, inputs, actions):
+        critic_1_value = self.critic_1(torch.cat([inputs, actions], dim=-1))
+        critic_2_value = self.critic_2(torch.cat([inputs, actions], dim=-1))
+
+        return critic_1_value, critic_2_value
+
+    def forward_only_critic_1(self, inputs, actions):
+        critic_1_value = self.critic_1(torch.cat([inputs, actions], dim=-1))
+
+        return critic_1_value
