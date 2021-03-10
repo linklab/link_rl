@@ -107,22 +107,6 @@ class AgentTD3(OffPolicyAgent):
         # print(batch)
         states_v, actions_v, rewards_v, dones_mask, last_states_v = self.unpack_batch(batch)
 
-        # Delayed policy updates
-        if step_idx % self.params.POLICY_UPDATE_FREQUENCY == 0:
-            self.actor_optimizer.zero_grad()
-
-            current_actions_v = self.model.base.forward_actor(states_v)
-            q_v_for_actor = self.model.base.forward_only_critic_1(states_v, current_actions_v)
-            loss_actor_v = -1.0 * q_v_for_actor.mean()
-            self.cache_loss_actor_v = loss_actor_v
-
-            loss_actor_v.backward()
-            self.actor_optimizer.step()
-
-            self.target_agent.alpha_sync(alpha=1 - self.params.TAU)  # (1 - 0.001)
-        else:
-            loss_actor_v = self.cache_loss_actor_v
-
         # train critic
         self.critic_optimizer.zero_grad()
 
@@ -159,6 +143,23 @@ class AgentTD3(OffPolicyAgent):
         loss_critic_v = loss_critic_v.mean()
         loss_critic_v.backward()
         self.critic_optimizer.step()
+
+        # train actor
+        # Delayed policy updates
+        if step_idx % self.params.POLICY_UPDATE_FREQUENCY == 0:
+            self.actor_optimizer.zero_grad()
+
+            current_actions_v = self.model.base.forward_actor(states_v)
+            q_v_for_actor = self.model.base.forward_only_critic_1(states_v, current_actions_v)
+            loss_actor_v = -1.0 * q_v_for_actor.mean()
+            self.cache_loss_actor_v = loss_actor_v
+
+            loss_actor_v.backward()
+            self.actor_optimizer.step()
+
+            self.target_agent.alpha_sync(alpha=1 - self.params.TAU)  # (1 - 0.001)
+        else:
+            loss_actor_v = self.cache_loss_actor_v
 
         gradients = self.model.get_gradients_for_current_parameters()
 
