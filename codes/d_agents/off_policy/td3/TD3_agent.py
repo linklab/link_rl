@@ -69,6 +69,8 @@ class AgentTD3(OffPolicyAgent):
             params=params
         )
 
+        self.cache_loss_actor_v = 0.0
+
     def __call__(self, states, agent_states=None):
         if not agent_states:
             agent_states = [None] * len(states)
@@ -106,12 +108,12 @@ class AgentTD3(OffPolicyAgent):
 
         with torch.no_grad():
             noise = (
-                    torch.randn_like(actions_v) * self.params.TARGET_NOISE
+                    torch.randn_like(actions_v) * self.params.ACT_NOISE
             ).clamp(-self.params.NOISE_CLIP, self.params.NOISE_CLIP)
 
             last_actions_v = (
                     self.target_agent.target_model.forward_actor(last_states_v) + noise
-            ).clamp(-self.action_min, self.action_max)
+            ).clamp(self.action_min, self.action_max)
 
             target_q_v_1, target_q_v_2 = self.target_agent.target_model.forward_critic(last_states_v, last_actions_v)
             target_q_v = torch.min(target_q_v_1, target_q_v_2)
@@ -131,18 +133,22 @@ class AgentTD3(OffPolicyAgent):
         loss_critic_v.backward()
         self.critic_optimizer.step()
 
-        current_actions_v = self.model.base.forward_actor(states_v)
-        loss_actor_v = self.model.base.forward_only_critic_1(states_v, current_actions_v)
-        loss_actor_v = -1.0 * loss_actor_v.mean()
+        # Delayed policy updates
+        if step_idx % self.params.POLICY_UPDATE_FREQUENCY == 0:
+            current_actions_v = self.model.base.forward_actor(states_v)
+            loss_actor_v = self.model.base.forward_only_critic_1(states_v, current_actions_v)
+            loss_actor_v = -1.0 * loss_actor_v.mean()
+            self.cache_loss_actor_v = loss_actor_v
 
-        self.actor_optimizer.zero_grad()
-        loss_actor_v.backward()
-        self.actor_optimizer.step()
+            self.actor_optimizer.zero_grad()
+            loss_actor_v.backward()
+            self.actor_optimizer.step()
 
-        self.target_agent.alpha_sync(alpha=1 - 0.0001)  # (1 - 0.001)
+            self.target_agent.alpha_sync(alpha=1 - self.params.TAU)  # (1 - 0.001)
+        else:
+            loss_actor_v = self.cache_loss_actor_v
 
         gradients = self.model.get_gradients_for_current_parameters()
 
         self.model.check_gradient_nan(gradients)
-
         return gradients, loss_critic_v.item(), loss_actor_v.item() * -1.0
