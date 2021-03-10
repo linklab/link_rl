@@ -11,3 +11,5 @@ class PARAMETERS_DQN:
 
     OMEGA = False
     OMEGA_WINDOW_SIZE = None
+
+    NOISY_NET = False

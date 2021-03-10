@@ -37,15 +37,21 @@ class AgentDQN(OffPolicyAgent):
             self.train_action_selector = None
             self.test_and_play_action_selector = None
         else:
-            self.train_action_selector = EpsilonGreedyDQNActionSelector(epsilon=params.EPSILON_INIT)
+            if self.params.NOISY_NET:
+                self.train_action_selector = ArgmaxActionSelector()
+            else:
+                self.train_action_selector = EpsilonGreedyDQNActionSelector(epsilon=params.EPSILON_INIT)
             self.test_and_play_action_selector = ArgmaxActionSelector()
 
-        self.epsilon_tracker = EpsilonTracker(
-            action_selector=self.train_action_selector,
-            eps_start=params.EPSILON_INIT,
-            eps_final=params.EPSILON_MIN,
-            eps_frames=params.EPSILON_MIN_STEP
-        )
+        if self.params.NOISY_NET:
+            self.epsilon_tracker = None
+        else:
+            self.epsilon_tracker = EpsilonTracker(
+                action_selector=self.train_action_selector,
+                eps_start=params.EPSILON_INIT,
+                eps_final=params.EPSILON_MIN,
+                eps_frames=params.EPSILON_MIN_STEP
+            )
 
         self.__name__ = "AgentDQN"
 
@@ -120,7 +126,6 @@ class AgentDQN(OffPolicyAgent):
             self.target_agent.sync()
 
         gradients = self.model.get_gradients_for_current_parameters()
-
         return gradients, loss_v.detach().item(), None
 
     def unpack_batch(self, batch):
@@ -266,6 +271,8 @@ class AgentDQN(OffPolicyAgent):
             next_state_vals[done_mask] = 0.0
 
         exp_sa_vals = next_state_vals.detach() * (self.params.GAMMA ** last_steps_v) + rewards_v
+
+        # print(action_values, exp_sa_vals, "#####")
 
         # return nn.MSELoss()(action_values, exp_sa_vals)
         return F.smooth_l1_loss(action_values, exp_sa_vals)

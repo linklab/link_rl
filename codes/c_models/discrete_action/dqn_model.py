@@ -4,6 +4,7 @@ import torch.nn as nn
 from torch.autograd import Variable
 import numpy as np
 
+from codes.c_models.advanced_exploration.noisy_net import NoisyLinear
 from codes.c_models.base_model import BaseModel
 from codes.e_utils.names import DeepLearningModelName
 
@@ -21,11 +22,11 @@ class DuelingDQNModel(BaseModel):
             )
         elif params.DEEP_LEARNING_MODEL == DeepLearningModelName.DUELING_DQN_CNN:
             self.base = DuelingDQN_CNN_Base(
-                input_shape=input_shape, num_outputs=num_outputs
+                input_shape=input_shape, num_outputs=num_outputs, params=self.params
             )
         elif params.DEEP_LEARNING_MODEL == DeepLearningModelName.DUELING_DQN_SMALL_CNN:
             self.base = DuelingDQN_SmallCNN_Base(
-                input_shape=input_shape, num_outputs=num_outputs
+                input_shape=input_shape, num_outputs=num_outputs, params=self.params
             )
         else:
             raise ValueError()
@@ -56,14 +57,14 @@ class DuelingDQN_MLP_Base(nn.Module):
         )
 
         self.fc_adv = nn.Sequential(
-            nn.Linear(self.hidden_2_size, self.hidden_3_size),
+            NoisyLinear(self.hidden_2_size, self.hidden_3_size) if self.params.NOISY_NET else nn.Linear(self.hidden_2_size, self.hidden_3_size),
             nn.ReLU(),
-            nn.Linear(self.hidden_3_size, num_outputs)
+            NoisyLinear(self.hidden_3_size, num_outputs) if self.params.NOISY_NET else nn.Linear(self.hidden_3_size, num_outputs)
         )
         self.fc_val = nn.Sequential(
-            nn.Linear(self.hidden_2_size, self.hidden_3_size),
+            NoisyLinear(self.hidden_2_size, self.hidden_3_size) if self.params.NOISY_NET else nn.Linear(self.hidden_2_size, self.hidden_3_size),
             nn.ReLU(),
-            nn.Linear(self.hidden_3_size, 1)
+            NoisyLinear(self.hidden_3_size, 1) if self.params.NOISY_NET else nn.Linear(self.hidden_3_size, 1)
         )
 
         self.layers_info = {"net": self.net, "fc_adv": self.fc_adv, "fc_val": self.fc_val}
@@ -88,11 +89,12 @@ class DuelingDQN_MLP_Base(nn.Module):
 
 
 class DuelingDQN_CNN_Base(nn.Module):
-    def __init__(self, input_shape, num_outputs):
+    def __init__(self, input_shape, num_outputs, params):
         super(DuelingDQN_CNN_Base, self).__init__()
 
         self.__name__ = "DuelingDQN_CNN_Base"
 
+        self.params = params
         self.conv = nn.Sequential(
             nn.Conv2d(in_channels=input_shape[0], out_channels=32, kernel_size=8, stride=4),
             nn.ReLU(),
@@ -104,14 +106,14 @@ class DuelingDQN_CNN_Base(nn.Module):
 
         conv_out_size = self._get_conv_out(input_shape)
         self.fc_adv = nn.Sequential(
-            nn.Linear(conv_out_size, 512),
+            NoisyLinear(conv_out_size, 512) if self.params.NOISY_NET else nn.Linear(conv_out_size, 512),
             nn.ReLU(),
-            nn.Linear(512, num_outputs)
+            NoisyLinear(512, num_outputs) if self.params.NOISY_NET else nn.Linear(512, num_outputs),
         )
         self.fc_val = nn.Sequential(
-            nn.Linear(conv_out_size, 512),
+            NoisyLinear(conv_out_size, 512) if self.params.NOISY_NET else nn.Linear(conv_out_size, 512),
             nn.ReLU(),
-            nn.Linear(512, 1)
+            NoisyLinear(512, 1) if self.params.NOISY_NET else nn.Linear(512, 1),
         )
 
         self.conv.apply(self.init_weights)
@@ -143,11 +145,12 @@ class DuelingDQN_CNN_Base(nn.Module):
 
 
 class DuelingDQN_SmallCNN_Base(nn.Module):
-    def __init__(self, input_shape, num_outputs):
+    def __init__(self, input_shape, num_outputs, params):
         super(DuelingDQN_SmallCNN_Base, self).__init__()
 
         self.__name__ = "DuelingDQN_SmallCNN_Base"
 
+        self.params = params
         self.conv = nn.Sequential(
             nn.Conv2d(input_shape[0], 24, kernel_size=3, stride=1, padding=1),
             nn.ReLU(),
@@ -159,14 +162,14 @@ class DuelingDQN_SmallCNN_Base(nn.Module):
 
         conv_out_size = self._get_conv_out(input_shape)
         self.fc_adv = nn.Sequential(
-            nn.Linear(conv_out_size, 128),
+            NoisyLinear(conv_out_size, 128) if self.params.NOISY_NET else nn.Linear(conv_out_size, 128),
             nn.ReLU(),
-            nn.Linear(128, num_outputs)
+            NoisyLinear(128, num_outputs) if self.params.NOISY_NET else nn.Linear(128, num_outputs),
         )
         self.fc_val = nn.Sequential(
-            nn.Linear(conv_out_size, 128),
+            NoisyLinear(conv_out_size, 128) if self.params.NOISY_NET else nn.Linear(conv_out_size, 128),
             nn.ReLU(),
-            nn.Linear(128, 1)
+            NoisyLinear(128, 1) if self.params.NOISY_NET else nn.Linear(128, 1),
         )
 
         self.conv.apply(self.init_weights)
