@@ -19,7 +19,7 @@ from codes.d_agents.black_box.cma_es.cma_es_agent import AgentEMAES
 
 from codes.d_agents.black_box.ga.ga_agent import AgentGA
 from codes.d_agents.black_box.ga.multi_ga_agent import AgentMultiGA
-from codes.d_agents.off_policy.td3.TD3_agent import AgentTD3
+from codes.d_agents.off_policy.td3.td3_agent import AgentTD3
 from codes.d_agents.on_policy.sac.continuous_sac_agent import AgentSAC
 from codes.d_agents.on_policy.ppo.discrete_ppo_agent import AgentDiscretePPO
 from codes.e_utils.reward_changer import RewardChanger

@@ -12,7 +12,8 @@ from codes.e_utils.actions import TD3ActionSelector, EpsilonTracker
 from codes.e_utils.names import DeepLearningModelName, AgentMode, EnvironmentName
 import copy
 
-
+# https://github.com/sfujim/TD3
+# https://spinningup.openai.com/en/latest/algorithms/td3.html
 class AgentTD3(OffPolicyAgent):
     """
     Agent implementing Orstein-Uhlenbeck exploration process
@@ -106,41 +107,15 @@ class AgentTD3(OffPolicyAgent):
         # print(batch)
         states_v, actions_v, rewards_v, dones_mask, last_states_v = self.unpack_batch(batch)
 
-        with torch.no_grad():
-            noise = (
-                    torch.randn_like(actions_v) * self.params.ACT_NOISE
-            ).clamp(-self.params.NOISE_CLIP, self.params.NOISE_CLIP)
-
-            last_actions_v = (
-                    self.target_agent.target_model.forward_actor(last_states_v) + noise
-            ).clamp(self.action_min, self.action_max)
-
-            target_q_v_1, target_q_v_2 = self.target_agent.target_model.forward_critic(last_states_v, last_actions_v)
-            target_q_v = torch.min(target_q_v_1, target_q_v_2)
-            next_target_q_v = self.params.GAMMA * target_q_v
-            next_target_q_v[dones_mask] = 0.0
-            target_q_v = rewards_v + next_target_q_v
-
-            # for i in range(len(dones_mask)):
-            #     if not dones_mask[i]:
-            #         target_q_v = rewards_v + (self.params.GAMMA * target_q_v)
-
-        current_q_v_1, current_q_v_2 = self.model.base.forward_critic(last_states_v, actions_v)
-
-        loss_critic_v = F.mse_loss(current_q_v_1, target_q_v) + F.mse_loss(current_q_v_2, target_q_v)
-
-        self.critic_optimizer.zero_grad()
-        loss_critic_v.backward()
-        self.critic_optimizer.step()
-
         # Delayed policy updates
         if step_idx % self.params.POLICY_UPDATE_FREQUENCY == 0:
+            self.actor_optimizer.zero_grad()
+
             current_actions_v = self.model.base.forward_actor(states_v)
             loss_actor_v = self.model.base.forward_only_critic_1(states_v, current_actions_v)
             loss_actor_v = -1.0 * loss_actor_v.mean()
             self.cache_loss_actor_v = loss_actor_v
 
-            self.actor_optimizer.zero_grad()
             loss_actor_v.backward()
             self.actor_optimizer.step()
 
@@ -148,7 +123,37 @@ class AgentTD3(OffPolicyAgent):
         else:
             loss_actor_v = self.cache_loss_actor_v
 
+        # train critic
+        self.critic_optimizer.zero_grad()
+        noise = (
+                torch.randn_like(actions_v) * self.params.ACT_NOISE
+        ).clamp(-self.params.NOISE_CLIP, self.params.NOISE_CLIP)
+
+        last_actions_v = (
+                self.target_agent.target_model.forward_actor(last_states_v) + noise
+        ).clamp(self.action_min, self.action_max)
+
+        target_q_v_1, target_q_v_2 = self.target_agent.target_model.forward_critic(last_states_v, last_actions_v)
+        target_min_q_v = torch.min(target_q_v_1, target_q_v_2)
+        next_target_q_v = (self.params.GAMMA ** self.params.N_STEP) * target_min_q_v
+        next_target_q_v[dones_mask] = 0.0
+        target_q_v = rewards_v + next_target_q_v
+
+        # for i in range(len(dones_mask)):
+        #     if not dones_mask[i]:
+        #         target_q_v = rewards_v + (self.params.GAMMA * target_q_v)
+
+        current_q_v_1, current_q_v_2 = self.model.base.forward_critic(states_v, actions_v)
+
+        loss_critic_v = F.mse_loss(current_q_v_1, target_q_v.detach(), reduction='none') + \
+                        F.mse_loss(current_q_v_2, target_q_v.detach(), reduction='none')
+
+        loss_critic_v = loss_critic_v.mean()
+        loss_critic_v.backward()
+        self.critic_optimizer.step()
+
         gradients = self.model.get_gradients_for_current_parameters()
 
         self.model.check_gradient_nan(gradients)
+
         return gradients, loss_critic_v.item(), loss_actor_v.item() * -1.0

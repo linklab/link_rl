@@ -233,7 +233,6 @@ class TD3ActionSelector:
         assert isinstance(mu, np.ndarray)
         actions = np.copy(mu)
         agent_states = np.random.normal(size=mu.shape, loc=0, scale=self.act_noise)
-        agent_states = np.clip(agent_states, -1.0 * self.noise_clip, self.noise_clip)
         actions = actions + self.epsilon * agent_states
 
         #ic(agent_states)
