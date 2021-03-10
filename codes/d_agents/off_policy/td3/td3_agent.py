@@ -147,10 +147,14 @@ class AgentTD3(OffPolicyAgent):
 
         # print(next_target_q_v.size(), rewards_v.unsqueeze(dim=-1).size(), target_q_v.size())
 
+        # current_q_v_1, current_q_v_2: [128, 1]
         current_q_v_1, current_q_v_2 = self.model.base.forward_critic(states_v, actions_v)
 
+        # loss_critic_v: [128, 1]
         loss_critic_v = F.mse_loss(current_q_v_1, target_q_v.detach(), reduction='none') + \
                         F.mse_loss(current_q_v_2, target_q_v.detach(), reduction='none')
+
+        #print(current_q_v_1.size(), current_q_v_2.size(), target_q_v.size(), loss_critic_v.size())
 
         loss_critic_v = loss_critic_v.mean()
         loss_critic_v.backward()
