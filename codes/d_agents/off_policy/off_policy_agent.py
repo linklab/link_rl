@@ -1,6 +1,8 @@
 from abc import abstractmethod
+import numpy as np
+import torch
 
-from codes.d_agents.a0_base_agent import BaseAgent
+from codes.d_agents.a0_base_agent import BaseAgent, float32_preprocessor
 from codes.e_utils import replay_buffer
 
 
@@ -25,3 +27,24 @@ class OffPolicyAgent(BaseAgent):
             self.buffer = replay_buffer.ExperienceReplayBuffer(
                 experience_source=None, buffer_size=self.params.REPLAY_BUFFER_SIZE
             )
+
+    def unpack_batch(self, batch):
+        states, actions, rewards, dones, last_states = [], [], [], [], []
+
+        for exp in batch:
+            states.append(np.array(exp.state, copy=False))
+            actions.append(exp.action)
+            rewards.append(exp.reward)
+            dones.append(exp.last_state is None)
+            if exp.last_state is None:
+                last_states.append(exp.state)  # the result will be masked anyway
+            else:
+                last_states.append(np.array(exp.last_state, copy=False))
+
+        states_v = float32_preprocessor(states).to(self.device)
+        actions_v = float32_preprocessor(actions).to(self.device)
+        rewards_v = float32_preprocessor(rewards).to(self.device)
+        last_states_v = float32_preprocessor(last_states).to(self.device)
+        dones_t = torch.BoolTensor(dones).to(self.device)
+
+        return states_v, actions_v, rewards_v, dones_t, last_states_v

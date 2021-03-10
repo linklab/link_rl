@@ -1,6 +1,7 @@
 import numpy as np
 import torch
 import torch.nn.functional as F
+from icecream import ic
 
 from codes.c_models.continuous_action.deterministic_continuous_actor_critic_model import \
     DeterministicContinuousActorCriticModel
@@ -25,14 +26,12 @@ class AgentTD3(OffPolicyAgent):
         self.__name__ = "AgentTD3"
         self.action_min = action_min
         self.action_max = action_max
-        self.policy_noise = 0.2
-        self.noise_clip = 0.5
 
         self.train_action_selector = TD3ActionSelector(
-            epsilon=params.EPSILON_INIT, scale_factor=params.ACTION_SCALE
+            epsilon=params.EPSILON_INIT, act_noise=params.ACT_NOISE, noise_clip=params.NOISE_CLIP
         )
         self.test_and_play_action_selector = TD3ActionSelector(
-            epsilon=0.0, scale_factor=params.ACTION_SCALE
+            epsilon=0.0, act_noise=params.ACT_NOISE, noise_clip=params.NOISE_CLIP
         )
 
         self.epsilon_tracker = EpsilonTracker(
@@ -103,13 +102,18 @@ class AgentTD3(OffPolicyAgent):
             batch_indices, batch_weights = None, None
 
         # print(batch)
-        states_v, actions_v, rewards_v, dones_mask, last_states_v = self.unpack_batch_for_ddpg(batch)
+        states_v, actions_v, rewards_v, dones_mask, last_states_v = self.unpack_batch(batch)
 
         with torch.no_grad():
-            noise = (torch.randn_like(actions_v) * self.policy_noise).clamp(-self.noise_clip, self.noise_clip)
-            current_actions_v = (self.target_agent.target_model.forward_actor(states_v) + noise)
+            noise = (
+                    torch.randn_like(actions_v) * self.params.TARGET_NOISE
+            ).clamp(-self.params.NOISE_CLIP, self.params.NOISE_CLIP)
 
-            target_q_v_1, target_q_v_2 = self.target_agent.target_model.forward_critic(states_v, current_actions_v)
+            last_actions_v = (
+                    self.target_agent.target_model.forward_actor(last_states_v) + noise
+            ).clamp(-self.action_min, self.action_max)
+
+            target_q_v_1, target_q_v_2 = self.target_agent.target_model.forward_critic(last_states_v, last_actions_v)
             target_q_v = torch.min(target_q_v_1, target_q_v_2)
             next_target_q_v = self.params.GAMMA * target_q_v
             next_target_q_v[dones_mask] = 0.0
@@ -121,45 +125,24 @@ class AgentTD3(OffPolicyAgent):
 
         current_q_v_1, current_q_v_2 = self.model.base.forward_critic(last_states_v, actions_v)
 
-        critic_loss_v = F.mse_loss(current_q_v_1, target_q_v) + F.mse_loss(current_q_v_2, target_q_v)
+        loss_critic_v = F.mse_loss(current_q_v_1, target_q_v) + F.mse_loss(current_q_v_2, target_q_v)
 
         self.critic_optimizer.zero_grad()
-        critic_loss_v.backward()
+        loss_critic_v.backward()
         self.critic_optimizer.step()
 
-        actions_for_actor_v = self.model.base.forward_actor(last_states_v)
-        critic_for_actor_v = self.model.base.forward_only_critic_1(last_states_v, actions_for_actor_v)
-        actor_loss_v = -1.0 * critic_for_actor_v.mean()
+        current_actions_v = self.model.base.forward_actor(states_v)
+        loss_actor_v = self.model.base.forward_only_critic_1(states_v, current_actions_v)
+        loss_actor_v = -1.0 * loss_actor_v.mean()
 
         self.actor_optimizer.zero_grad()
-        actor_loss_v.backward()
+        loss_actor_v.backward()
         self.actor_optimizer.step()
 
         self.target_agent.alpha_sync(alpha=1 - 0.0001)  # (1 - 0.001)
 
         gradients = self.model.get_gradients_for_current_parameters()
 
-        # self.model.check_gradient_nan(gradients)
+        self.model.check_gradient_nan(gradients)
 
-        return gradients, critic_loss_v.item(), actor_loss_v.item() * -1.0
-
-    def unpack_batch_for_ddpg(self, batch):
-        states, actions, rewards, dones, last_states = [], [], [], [], []
-
-        for exp in batch:
-            states.append(np.array(exp.state, copy=False))
-            actions.append(exp.action)
-            rewards.append(exp.reward)
-            dones.append(exp.last_state is None)
-            if exp.last_state is None:
-                last_states.append(exp.state)  # the result will be masked anyway
-            else:
-                last_states.append(np.array(exp.last_state, copy=False))
-
-        states_v = float32_preprocessor(states).to(self.device)
-        actions_v = float32_preprocessor(actions).to(self.device)
-        rewards_v = float32_preprocessor(rewards).to(self.device)
-        last_states_v = float32_preprocessor(last_states).to(self.device)
-        dones_t = torch.BoolTensor(dones).to(self.device)
-
-        return states_v, actions_v, rewards_v, dones_t, last_states_v
+        return gradients, loss_critic_v.item(), loss_actor_v.item() * -1.0

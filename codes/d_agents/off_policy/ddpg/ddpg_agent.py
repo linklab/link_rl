@@ -110,7 +110,7 @@ class AgentDDPG(OffPolicyAgent):
             batch_indices, batch_weights = None, None
 
         # print(batch)
-        states_v, actions_v, rewards_v, dones_mask, last_states_v = self.unpack_batch_for_ddpg(batch)
+        states_v, actions_v, rewards_v, dones_mask, last_states_v = self.unpack_batch(batch)
         self.actor_optimizer.zero_grad()
 
         current_actions_v = self.model.base.forward_actor(states_v)
@@ -172,24 +172,3 @@ class AgentDDPG(OffPolicyAgent):
         self.model.check_gradient_nan(gradients)
 
         return gradients, loss_critic_v.item(), loss_actor_v.item() * -1.0
-
-    def unpack_batch_for_ddpg(self, batch):
-        states, actions, rewards, dones, last_states = [], [], [], [], []
-
-        for exp in batch:
-            states.append(np.array(exp.state, copy=False))
-            actions.append(exp.action)
-            rewards.append(exp.reward)
-            dones.append(exp.last_state is None)
-            if exp.last_state is None:
-                last_states.append(exp.state)   # the result will be masked anyway
-            else:
-                last_states.append(np.array(exp.last_state, copy=False))
-
-        states_v = float32_preprocessor(states).to(self.device)
-        actions_v = float32_preprocessor(actions).to(self.device)
-        rewards_v = float32_preprocessor(rewards).to(self.device)
-        last_states_v = float32_preprocessor(last_states).to(self.device)
-        dones_t = torch.BoolTensor(dones).to(self.device)
-
-        return states_v, actions_v, rewards_v, dones_t, last_states_v
