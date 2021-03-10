@@ -179,8 +179,6 @@ class EpsilonGreedyDDPGActionSelector:
             # ))
 
             actions = actions + self.epsilon * agent_states
-
-
         return actions, agent_states
 
 
@@ -223,6 +221,28 @@ class ContinuousNormalActionSelector(ContinuousActionSelector):
         actions = dist.sample().data.cpu().numpy()
         actions = np.clip(actions, action_min, action_max)
         return actions
+
+class TD3ActionSelector:
+    def __init__(self, epsilon, scale_factor):
+        self.scale_factor = scale_factor
+        self.epsilon = epsilon
+    def __call__(self, mu, agent_states = None, expl_noise = 0.1):
+        assert isinstance(mu, np.ndarray)
+        actions = np.copy(mu)
+        agent_states = np.random.normal(0, self.scale_factor * expl_noise)
+        agent_states = np.asarray(agent_states)
+
+        actions = actions + self.epsilon * agent_states
+        if isinstance(agent_states, list):
+            agent_states = np.asarray(agent_states)
+
+        #ic(agent_states)
+
+
+        agent_states = np.expand_dims(agent_states, axis=-1)
+        agent_states = np.expand_dims(agent_states, axis=-1)
+
+        return actions, agent_states
 
 
 class EpsilonTracker:

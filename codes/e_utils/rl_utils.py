@@ -16,8 +16,10 @@ from codes.a_config.parameters import PARAMETERS as params
 from codes.b_environments.trade.trade_data import get_data
 from codes.c_models.continuous_action.soft_actor_critic_model import SoftActorCriticModel
 from codes.d_agents.black_box.cma_es.cma_es_agent import AgentEMAES
-from codes.d_agents.black_box.ga.ga_agent import AgentGA
-from codes.d_agents.black_box.ga.multi_ga_agent import AgentMultiGA
+
+from codes.d_agents.black_box.cma_es.ga_agent import AgentGA
+from codes.d_agents.black_box.cma_es.multi_ga_agent import AgentMultiGA
+from codes.d_agents.off_policy.TD3.TD3_agent import AgentTD3
 from codes.d_agents.on_policy.sac.continuous_sac_agent import AgentSAC
 from codes.d_agents.on_policy.ppo.discrete_ppo_agent import AgentDiscretePPO
 from codes.e_utils.reward_changer import RewardChanger
@@ -280,6 +282,11 @@ def get_rl_model(worker_id, input_shape=None, num_outputs=None, params=None, dev
 def get_rl_agent(input_shape, num_outputs, action_min, action_max, worker_id, params, device="cpu"):
     if params.RL_ALGORITHM == RLAlgorithmName.DDPG_V0:
         agent = AgentDDPG(
+            worker_id=worker_id, input_shape=input_shape, num_outputs=num_outputs,
+            action_min=action_min, action_max=action_max, params=params, device=device
+        )
+    elif params.RL_ALGORITHM == RLAlgorithmName.TD3_V0:
+        agent = AgentTD3(
             worker_id=worker_id, input_shape=input_shape, num_outputs=num_outputs,
             action_min=action_min, action_max=action_max, params=params, device=device
         )
