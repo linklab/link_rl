@@ -118,7 +118,6 @@ class AgentDDPG(OffPolicyAgent):
         loss_actor_v = -1.0 * q_v_for_actor.mean()
 
         loss_actor_v.backward()
-
         self.actor_optimizer.step()
 
         # train critic

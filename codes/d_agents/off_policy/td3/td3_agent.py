@@ -112,8 +112,8 @@ class AgentTD3(OffPolicyAgent):
             self.actor_optimizer.zero_grad()
 
             current_actions_v = self.model.base.forward_actor(states_v)
-            loss_actor_v = self.model.base.forward_only_critic_1(states_v, current_actions_v)
-            loss_actor_v = -1.0 * loss_actor_v.mean()
+            q_v_for_actor = self.model.base.forward_only_critic_1(states_v, current_actions_v)
+            loss_actor_v = -1.0 * q_v_for_actor.mean()
             self.cache_loss_actor_v = loss_actor_v
 
             loss_actor_v.backward()
@@ -125,23 +125,27 @@ class AgentTD3(OffPolicyAgent):
 
         # train critic
         self.critic_optimizer.zero_grad()
+
+        # noise: [128, 1]
         noise = (
-                torch.randn_like(actions_v) * self.params.ACT_NOISE
+            torch.randn_like(actions_v) * self.params.ACT_NOISE
         ).clamp(-self.params.NOISE_CLIP, self.params.NOISE_CLIP)
 
+        # last_actions_v: [128, 1]
         last_actions_v = (
-                self.target_agent.target_model.forward_actor(last_states_v) + noise
+            self.target_agent.target_model.forward_actor(last_states_v) + noise
         ).clamp(self.action_min, self.action_max)
 
+        # target_q_v_1, target_q_v_2: [128, 1]
         target_q_v_1, target_q_v_2 = self.target_agent.target_model.forward_critic(last_states_v, last_actions_v)
+
+        # target_min_q_v_1, next_target_q_v, target_q_v: [128, 1]
         target_min_q_v = torch.min(target_q_v_1, target_q_v_2)
         next_target_q_v = (self.params.GAMMA ** self.params.N_STEP) * target_min_q_v
         next_target_q_v[dones_mask] = 0.0
-        target_q_v = rewards_v + next_target_q_v
+        target_q_v = rewards_v.unsqueeze(dim=-1) + next_target_q_v
 
-        # for i in range(len(dones_mask)):
-        #     if not dones_mask[i]:
-        #         target_q_v = rewards_v + (self.params.GAMMA * target_q_v)
+        # print(next_target_q_v.size(), rewards_v.unsqueeze(dim=-1).size(), target_q_v.size())
 
         current_q_v_1, current_q_v_2 = self.model.base.forward_critic(states_v, actions_v)
 
