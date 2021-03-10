@@ -1,7 +1,6 @@
 import numpy as np
 import torch
 import torch.nn.functional as F
-from icecream import ic
 
 from codes.c_models.continuous_action.deterministic_continuous_actor_critic_model import \
     DeterministicContinuousActorCriticModel

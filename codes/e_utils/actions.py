@@ -222,11 +222,13 @@ class ContinuousNormalActionSelector(ContinuousActionSelector):
         actions = np.clip(actions, action_min, action_max)
         return actions
 
+
 class TD3ActionSelector:
     def __init__(self, epsilon, scale_factor):
-        self.scale_factor = scale_factor
         self.epsilon = epsilon
-    def __call__(self, mu, agent_states = None, expl_noise = 0.1):
+        self.scale_factor = scale_factor
+
+    def __call__(self, mu, agent_states=None, expl_noise=0.1):
         assert isinstance(mu, np.ndarray)
         actions = np.copy(mu)
         agent_states = np.random.normal(0, self.scale_factor * expl_noise)
