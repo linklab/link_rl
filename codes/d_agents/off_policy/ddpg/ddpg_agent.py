@@ -77,8 +77,10 @@ class AgentDDPG(OffPolicyAgent):
             params=params
         )
 
-    def __call__(self, states, agent_states=None):
-        if not agent_states:
+        self.last_noise = 0.0
+
+    def __call__(self, states, noises=None):
+        if not noises:
             agent_states = [None] * len(states)
 
         if not isinstance(states, torch.FloatTensor):
@@ -93,14 +95,19 @@ class AgentDDPG(OffPolicyAgent):
         mu = mu_v.detach().cpu().numpy()
 
         if self.agent_mode == AgentMode.TRAIN:
-            actions, new_agent_states = self.train_action_selector(mu, agent_states)
+            actions, new_noises = self.train_action_selector(mu, noises)
         else:
-            actions, new_agent_states = self.test_and_play_action_selector(mu, agent_states)
+            actions, new_noises = self.test_and_play_action_selector(mu, noises)
 
+        self.last_noise = new_noises[0][0]
         actions = np.clip(actions, self.action_min, self.action_max)
         #####################################
 
-        return actions, new_agent_states
+        # print("actions: {0:7.4f}, noises: {1:7.4f}".format(
+        #     actions[0][0], self.last_noise
+        # ))
+
+        return actions, new_noises
 
     def train(self, step_idx):
         if self.params.PER_PROPORTIONAL or self.params.PER_RANK_BASED:
@@ -155,8 +162,6 @@ class AgentDDPG(OffPolicyAgent):
         # critic_parameters = self.model.base.critic.parameters()
         # for p in critic_parameters:
         #     p.requires_grad = False
-
-
 
         # self.base_optimizer.zero_grad()
         # loss_actor_v.backward(retain_graph=True)

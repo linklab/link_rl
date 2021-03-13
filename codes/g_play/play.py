@@ -47,7 +47,7 @@ def play_main(params, env):
         done = False
         episode_reward = 0
 
-        env.render()
+        # env.render()
         state = env.reset()
 
         num_episode += 1

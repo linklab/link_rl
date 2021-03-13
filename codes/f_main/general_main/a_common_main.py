@@ -190,10 +190,14 @@ def process_episode(
         "episode": episode,
         'last_actions': exp.action,
         "elapsed_time": elapsed_time,
-        "last_info": exp.info
+        "last_info": exp.info,
     }
+
     if epsilon:
         train_info_dict["epsilon"] = epsilon
+
+    if hasattr(agent, "last_noise"):
+        train_info_dict["last_noise"] = agent.last_noise
 
     return solved, train_info_dict
 

@@ -159,27 +159,29 @@ class EpsilonGreedyDDPGActionSelector:
         self.ou_enabled = ou_enabled
         self.scale_factor = scale_factor
 
-    def __call__(self, mu, agent_states, ou_theta=0.15, ou_mu=0.0, ou_sigma=0.6): #default ou_sigma = 0.2
+    def __call__(self, mu, noises, ou_theta=0.15, ou_mu=0.0, ou_sigma=0.6): #default ou_sigma = 0.2
         assert isinstance(mu, np.ndarray)
         actions = np.copy(mu)
-        if isinstance(agent_states, list):
-            agent_states = np.asarray(agent_states)
 
-        #ic(agent_states)
+        if isinstance(noises, list):
+            noises = np.asarray(noises)
 
-        if agent_states.ndim == 1:
-            agent_states = np.expand_dims(agent_states, axis=-1)
+        #ic(noises)
+
+        if noises.ndim == 1:
+            noises = np.expand_dims(noises, axis=-1)
 
         if self.ou_enabled and self.epsilon > 0.0:
-            # agent_states = 1.0       +    0.15 * (0.0 - 1.0)            + new_normal_random
-            agent_states = agent_states + ou_theta * (ou_mu - agent_states) + ou_sigma * np.random.normal(size=agent_states.shape)
+            # noises = 1.0       +    0.15 * (0.0 - 1.0)            + new_normal_random
+            noises = noises + ou_theta * (ou_mu - noises) + ou_sigma * np.random.normal(size=noises.shape)
+            noises = self.epsilon * noises
+            actions = actions + noises
 
-            # print("actions: {0:7.4f}, epsilon: {1:7.4f}, noises: {2:7.4f}, final action: {3:7.4f}".format(
-            #     actions[0][0], self.epsilon, (self.epsilon * agent_states)[0][0], (actions + self.epsilon * agent_states)[0][0]
+            # print("actions: {0:7.4f}, epsilon: {1:7.4f}, noises: {2:7.4f}".format(
+            #     actions[0][0], self.epsilon, noises[0][0]
             # ))
 
-            actions = actions + self.epsilon * agent_states
-        return actions, agent_states
+        return actions, noises
 
 
 class EpsilonGreedyD4PGActionSelector(ActionSelector):

@@ -124,8 +124,7 @@ def main():
                 train_info_dict = exp
 
                 mean_loss = np.mean(loss_dequeue) if len(loss_dequeue) > 0 else 0.0
-                mean_actor_objective = np.mean(actor_objective_dequeue) \
-                    if len(actor_objective_dequeue) > 0 else 0.0
+                mean_actor_objective = np.mean(actor_objective_dequeue) if len(actor_objective_dequeue) > 0 else 0.0
 
                 print_performance(
                     params=params,
@@ -164,8 +163,10 @@ def main():
             if len(agent.buffer) < params.MIN_REPLAY_SIZE_FOR_TRAIN:
                 continue
 
-            _, last_loss, actor_objective = agent.train(step_idx=step_idx)
-            loss_dequeue.append(last_loss)
+            _, critic_loss, actor_objective = agent.train(step_idx=step_idx)
+
+            loss_dequeue.append(critic_loss)
+
             if actor_objective:
                 actor_objective_dequeue.append(actor_objective)
 
