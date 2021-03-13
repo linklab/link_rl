@@ -85,7 +85,7 @@ class DeterministicActorCriticMLPBase(nn.Module):
         actions = self.actor(inputs)
         actions = torch.tanh(actions)
 
-        return actions * self.params.ACTION_SCALE
+        return actions
 
     def forward_critic(self, inputs, actions):
         critic_value = self.critic(torch.cat([inputs, actions], dim=-1))
@@ -176,7 +176,7 @@ class DeterministicActorCriticTD3MLPBase(nn.Module):
         actions = self.actor(inputs)
         actions = torch.tanh(actions)
 
-        return actions * self.params.ACTION_SCALE
+        return actions
 
     def forward_critic(self, inputs, actions):
         critic_1_value = self.critic_1(torch.cat([inputs, actions], dim=-1))

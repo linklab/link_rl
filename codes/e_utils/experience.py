@@ -128,7 +128,12 @@ class ExperienceSource:
 
             global_ofs = 0
             for env_idx, (env, action_n) in enumerate(zip(self.pool, grouped_actions)):
-                next_state_n, r_n, is_done_n, info_n = env.step(action_n)
+                if hasattr(self.agent.params, "ACTION_SCALE"):
+                    action_scale = self.agent.params.ACTION_SCALE
+                    next_state_n, r_n, is_done_n, info_n = env.step(action_scale * np.asarray(action_n))
+                else:
+                    next_state_n, r_n, is_done_n, info_n = env.step(action_n)
+
                 #ic(env_idx, env, len(action_n), len(next_state_n), len(r_n), len(is_done_n), len(info_n))
 
                 for ofs, (action, next_state, r, is_done, info) in enumerate(zip(action_n, next_state_n, r_n, is_done_n, info_n)):

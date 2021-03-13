@@ -8,5 +8,5 @@ class PARAMETERS_DDPG:
     EPSILON_MIN_STEP = None
 
     REPLAY_BUFFER_SIZE = None
-
+    ACTION_SCALE = 1.0
     TAU = 0.001

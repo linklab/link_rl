@@ -81,7 +81,7 @@ class AgentDDPG(OffPolicyAgent):
 
     def __call__(self, states, noises=None):
         if not noises:
-            agent_states = [None] * len(states)
+            noises = [None] * len(states)
 
         if not isinstance(states, torch.FloatTensor):
             states = float32_preprocessor(states).to(self.device)
@@ -100,7 +100,8 @@ class AgentDDPG(OffPolicyAgent):
             actions, new_noises = self.test_and_play_action_selector(mu, noises)
 
         self.last_noise = new_noises[0][0]
-        actions = np.clip(actions, self.action_min, self.action_max)
+        #print(actions, self.action_min, self.action_max, "!!!!!!!!!!!!!!!!")
+        #actions = np.clip(actions, self.action_min, self.action_max)
         #####################################
 
         # print("actions: {0:7.4f}, noises: {1:7.4f}".format(
