@@ -113,7 +113,7 @@ class EpsilonGreedySomeTimesBlowDDPGActionSelector:
         self.time_steps = 0
         self.next_time_steps_of_random_blowing_action = int(random.expovariate(self.blowing_action_rate))
 
-    def __call__(self, mu, noises, ou_theta=0.15, ou_mu=0.0, ou_sigma=1.0): #default ou_sigma = 0.2
+    def __call__(self, mu, noises, ou_theta=0.15, ou_dt=0.01, ou_sigma=1.0): #default ou_sigma = 0.2
         assert isinstance(mu, np.ndarray)
         if self.time_steps == 0:
             print("next_time_steps_of_random_blowing_action: {0}".format(
@@ -140,8 +140,8 @@ class EpsilonGreedySomeTimesBlowDDPGActionSelector:
             noises = np.zeros_like(actions)
         else:
             if self.ou_enabled:
-                # noises = 1.0        +    0.15 * (0.0 - 1.0)           + new_random
-                noises = noises + ou_theta * (ou_mu - noises) + ou_sigma * np.random.normal(size=noises.shape)
+                noises = noises + ou_theta * (actions - noises) * ou_dt + \
+                         ou_sigma * np.sqrt(ou_dt) * np.random.normal(size=noises.shape)
                 noises = self.epsilon * noises
                 actions = actions + noises
             else:
@@ -156,21 +156,19 @@ class EpsilonGreedyDDPGActionSelector:
         self.ou_enabled = ou_enabled
         self.scale_factor = scale_factor
 
-    def __call__(self, mu, noises, ou_theta=0.15, ou_mu=0.0, ou_sigma=1.0): #default ou_sigma = 0.2
+    def __call__(self, mu, noises, ou_theta=0.15, ou_dt=0.01, ou_sigma=0.2): #default ou_sigma = 0.2
         assert isinstance(mu, np.ndarray)
         actions = np.copy(mu)
 
         if isinstance(noises, list):
             noises = np.asarray(noises)
 
-        #ic(noises)
-
         if noises.ndim == 1:
             noises = np.expand_dims(noises, axis=-1)
 
         if self.ou_enabled and self.epsilon > 0.0:
-            # noises = 1.0       +    0.15 * (0.0 - 1.0)            + new_normal_random
-            noises = noises + ou_theta * (ou_mu - noises) + ou_sigma * np.random.normal(size=noises.shape)
+            noises = noises + ou_theta * (actions - noises) * ou_dt + \
+                     ou_sigma * np.sqrt(ou_dt) * np.random.normal(size=noises.shape)
             noises = self.epsilon * noises
             actions = actions + noises
 
