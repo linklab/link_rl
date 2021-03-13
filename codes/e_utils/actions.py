@@ -113,7 +113,7 @@ class EpsilonGreedySomeTimesBlowDDPGActionSelector:
         self.time_steps = 0
         self.next_time_steps_of_random_blowing_action = int(random.expovariate(self.blowing_action_rate))
 
-    def __call__(self, mu, agent_states, ou_rho=0.15, ou_mu=0.0, ou_dt=0.1, ou_sigma=0.2): #default ou_sigma = 0.2
+    def __call__(self, mu, noises, ou_theta=0.15, ou_mu=0.0, ou_sigma=0.6): #default ou_sigma = 0.2
         assert isinstance(mu, np.ndarray)
         if self.time_steps == 0:
             print("next_time_steps_of_random_blowing_action: {0}".format(
@@ -123,8 +123,8 @@ class EpsilonGreedySomeTimesBlowDDPGActionSelector:
         self.time_steps += 1
         actions = np.copy(mu)
 
-        if isinstance(agent_states, list):
-            agent_states = np.asarray(agent_states)
+        if isinstance(noises, list):
+            noises = np.asarray(noises)
 
         if self.time_steps >= self.next_time_steps_of_random_blowing_action:
             actions += np.random.uniform(
@@ -140,17 +140,14 @@ class EpsilonGreedySomeTimesBlowDDPGActionSelector:
             noises = np.zeros_like(actions)
         else:
             if self.ou_enabled:
-                # agent_states = 1.0        +    0.15 * (0.0 - 1.0)           + new_random
-                agent_states = agent_states + ou_rho * (ou_mu - agent_states) + ou_sigma * np.sqrt(ou_dt) * np.random.normal(size=actions.shape)
-
-                noises = self.epsilon * agent_states
+                # noises = 1.0        +    0.15 * (0.0 - 1.0)           + new_random
+                noises = noises + ou_theta * (ou_mu - noises) + ou_sigma * np.random.normal(size=noises.shape)
+                noises = self.epsilon * noises
                 actions = actions + noises
             else:
                 noises = np.zeros_like(actions)
 
-        new_agent_states = noises
-
-        return actions, new_agent_states
+        return actions, noises
 
 
 class EpsilonGreedyDDPGActionSelector:
@@ -180,6 +177,8 @@ class EpsilonGreedyDDPGActionSelector:
             # print("actions: {0:7.4f}, epsilon: {1:7.4f}, noises: {2:7.4f}".format(
             #     actions[0][0], self.epsilon, noises[0][0]
             # ))
+        else:
+            noises = np.zeros_like(actions)
 
         return actions, noises
 
@@ -231,15 +230,15 @@ class TD3ActionSelector:
         self.act_noise = 0.1
         self.noise_clip = 0.5
 
-    def __call__(self, mu, agent_states=None):
+    def __call__(self, mu, noises=None):
         assert isinstance(mu, np.ndarray)
         actions = np.copy(mu)
-        agent_states = np.random.normal(size=mu.shape, loc=0, scale=self.act_noise)
-        actions = actions + self.epsilon * agent_states
+        noises = np.random.normal(size=mu.shape, loc=0, scale=self.act_noise)
+        actions = actions + self.epsilon * noises
 
-        #ic(agent_states)
+        #ic(noises)
 
-        return actions, agent_states
+        return actions, noises
 
 
 class EpsilonTracker:
