@@ -113,7 +113,7 @@ class EpsilonGreedySomeTimesBlowDDPGActionSelector:
         self.time_steps = 0
         self.next_time_steps_of_random_blowing_action = int(random.expovariate(self.blowing_action_rate))
 
-    def __call__(self, mu, noises, ou_theta=0.15, ou_mu=0.0, ou_sigma=0.6): #default ou_sigma = 0.2
+    def __call__(self, mu, noises, ou_theta=0.15, ou_mu=0.0, ou_sigma=1.0): #default ou_sigma = 0.2
         assert isinstance(mu, np.ndarray)
         if self.time_steps == 0:
             print("next_time_steps_of_random_blowing_action: {0}".format(
@@ -156,7 +156,7 @@ class EpsilonGreedyDDPGActionSelector:
         self.ou_enabled = ou_enabled
         self.scale_factor = scale_factor
 
-    def __call__(self, mu, noises, ou_theta=0.15, ou_mu=0.0, ou_sigma=0.6): #default ou_sigma = 0.2
+    def __call__(self, mu, noises, ou_theta=0.15, ou_mu=0.0, ou_sigma=1.0): #default ou_sigma = 0.2
         assert isinstance(mu, np.ndarray)
         actions = np.copy(mu)
 
