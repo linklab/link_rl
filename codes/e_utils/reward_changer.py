@@ -39,7 +39,10 @@ class RewardChanger(RewardWrapper):
 def counts_hash(obs):
     if type(obs) not in (tuple, list):
         obs = obs.tolist()
-    return tuple(map(lambda v: round(v, 1), obs))
+
+    # (0.2, 1.0, -19.3, 1.0, -0.2, -27.1, 0.5, 0.9, 12.6)
+    hashed_obs = tuple(map(lambda v: round(v, 1), obs))
+    return hashed_obs
 
 
 class PseudoCountRewardWrapper(gym.Wrapper):
