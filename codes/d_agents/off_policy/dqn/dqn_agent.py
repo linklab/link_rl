@@ -100,6 +100,9 @@ class AgentDQN(OffPolicyAgent):
             batch = self.buffer.sample(self.params.BATCH_SIZE)
             batch_indices, batch_weights = None, None
 
+        if self.params.NOISY_NET:
+            self.model.base.sample_noise()  # Pick a new noise vector (until next optimisation step)
+
         self.optimizer.zero_grad()
 
         if self.params.OMEGA:
@@ -126,6 +129,9 @@ class AgentDQN(OffPolicyAgent):
             self.target_agent.sync()
 
         gradients = self.model.get_gradients_for_current_parameters()
+
+        self.model.check_gradient_nan_or_zero(gradients)
+
         return gradients, loss_v.detach().item(), None
 
     def unpack_batch(self, batch):

@@ -51,9 +51,10 @@ from codes.a_config.f_trade_parameters.parameters_trade_moc_one_hour_dqn import 
 from codes.a_config.federated_parameters.parameters_federated_matlab_rip_ddpg   import PARAMETERS_FEDERATED_MATLAB_RIP_DDPG
 from codes.a_config.federated_parameters.parameters_federated_pendulum_ddpg     import PARAMETERS_FEDERATED_PENDULUM_DDPG
 
-from codes.e_utils.names import OSName, EnvironmentName, RLAlgorithmName
-
 from codes.a_config.or_parameters.parameters_fast_rl_knapsack_dqn import PARAMETERS_KNAPSACK_DQN
 from codes.a_config.or_parameters.parameters_fast_rl_tsp_dqn import PARAMETERS_TSP_DQN
 
 from codes.a_config.federated_parameters.parameters_federated_cartpole_ppo_mlp import PARAMETERS_FEDERATED_CARTPOLE_PPO_MLP
+
+from codes.e_utils.names import OSName, EnvironmentName, RLAlgorithmName
+from codes.e_utils.names import ModelSaveMode

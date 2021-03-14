@@ -101,7 +101,9 @@ class AgentDDPG(OffPolicyAgent):
 
         self.last_noise = new_noises[0][0]
         #print(actions, self.action_min, self.action_max, "!!!!!!!!!!!!!!!!")
-        #actions = np.clip(actions, self.action_min, self.action_max)
+
+        if np.any(new_noises):
+            actions = np.clip(actions, -1.0, 1.0)
         #####################################
 
         # print("actions: {0:7.4f}, noises: {1:7.4f}".format(
@@ -174,6 +176,6 @@ class AgentDDPG(OffPolicyAgent):
 
         gradients = self.model.get_gradients_for_current_parameters()
 
-        self.model.check_gradient_nan(gradients)
+        self.model.check_gradient_nan_or_zero(gradients)
 
         return gradients, loss_critic_v.item(), loss_actor_v.item() * -1.0
