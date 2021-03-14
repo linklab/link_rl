@@ -147,7 +147,7 @@ class ExperienceSource:
                     #     cur_rewards[idx] += r
 
                     if isinstance(self.env.envs[0], PseudoCountRewardWrapper):
-                        cur_rewards[idx] += r - r * params.COUNT_BASED_REWARD_SCALE * info["count_observation"]
+                        cur_rewards[idx] += r - r * params.COUNT_BASED_REWARD_SCALE * info["observation_uncertainty"]
                     else:
                         cur_rewards[idx] += r
 

@@ -50,12 +50,12 @@ class PseudoCountRewardWrapper(gym.Wrapper):
 
     def step(self, action):
         obs, reward, done, info = self.env.step(action)
-        count_observation = self.get_count_observation(obs)
-        intrinsic_reward = reward * self.count_based_reward_scale * count_observation
-        info["count_observation"] = count_observation
+        observation_uncertainty = self.get_observation_uncertainty(obs)
+        intrinsic_reward = reward * self.count_based_reward_scale * observation_uncertainty
+        info["observation_uncertainty"] = observation_uncertainty
         return obs, reward + intrinsic_reward, done, info
 
-    def get_count_observation(self, obs) -> float:
+    def get_observation_uncertainty(self, obs) -> float:
         """
         Increments observation counter and returns pseudo-count reward
         :param obs: observation
