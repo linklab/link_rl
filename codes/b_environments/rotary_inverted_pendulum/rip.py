@@ -18,11 +18,13 @@ from codes.b_environments.rotary_inverted_pendulum.matlabcode import SimulinkPla
 
 from codes.e_utils.names import RLAlgorithmName, EnvironmentName
 
+from gym.envs.classic_control.acrobot import wrap
+
 np.set_printoptions(formatter={'float_kind': lambda x: '{0:0.6f}'.format(x)})
 
 BLOWING_ACTION_RATE = 0.0002  # 5000 스텝에 1번 정도(지수 분포)의 주가로 외력이 가해짐 --> Stochastic Env.
 
-RIP_SERVER = '192.168.1.20'
+RIP_SERVER = '10.0.0.2'
 
 class RotaryInvertedPendulumEnv(gym.Env):
     def __init__(
@@ -45,8 +47,9 @@ class RotaryInvertedPendulumEnv(gym.Env):
         self.motor_velocity = 0
 
         self.last_time = 0.0
-        self.unit_time = 0.007
+        self.unit_time = 0.008
         self.over_unit_time = 0
+        self.step_idx = 0
         current_path = os.path.dirname(os.path.realpath(__file__))
         MATLAB_ENGINE_DIR = os.path.abspath(os.path.join(current_path, "engine"))
         os.chdir(MATLAB_ENGINE_DIR) # change working directory
@@ -181,10 +184,10 @@ class RotaryInvertedPendulumEnv(gym.Env):
             if self.env_reset or self.num_episodes % self.episode_period_env_reset_forced == 0:
                 print("ENV RESET")
                 self.plant.connectStart()
-        else:
-            if self.env_reset or self.num_episodes % self.episode_period_env_reset_forced == 0:
-                print("ENV RESET")
-                #TODO : 리셋할때 뭐 할지 코
+        # else:
+        #     if self.env_reset or self.num_episodes % self.episode_period_env_reset_forced == 0:
+        #         print("ENV RESET")
+        #         #TODO : 리셋할때 뭐 할지 코
 
         self.episode_position_reward_list.clear()
         self.episode_pendulum_velocity_reward_list.clear()
@@ -222,11 +225,11 @@ class RotaryInvertedPendulumEnv(gym.Env):
             else:
                 rip_response = self.server_obj.reset(RipRequest(value=None))
 
-                self.motor_position = rip_response.arm_angle
+                self.motor_position = math.radians(rip_response.arm_angle)
                 self.motor_velocity = rip_response.arm_velocity
-                self.pendulum_1_position = rip_response.link_1_angle
+                self.pendulum_1_position = math.radians(rip_response.link_1_angle)
                 self.pendulum_1_velocity = rip_response.link_1_velocity
-                self.pendulum_2_position = rip_response.link_2_angle
+                self.pendulum_2_position = math.radians(rip_response.link_2_angle)
                 self.pendulum_2_velocity = rip_response.link_2_velocity
                 self.simulation_time = None
 
@@ -283,10 +286,16 @@ class RotaryInvertedPendulumEnv(gym.Env):
             self.is_upright = False
 
     def update_current_state_for_double_rip(self, adjusted_pendulum_1_radian, adjusted_pendulum_2_radian):
-        upright_conditions = [
-            math.pi - math.radians(12) < adjusted_pendulum_1_radian <= math.pi,
-            #math.pi - math.radians(12) < adjusted_pendulum_2_radian <= math.pi
-        ]
+        if self.pendulum_type in [EnvironmentName.PENDULUM_MATLAB_DOUBLE_RIP_V0, EnvironmentName.REAL_DEVICE_DOUBLE_RIP]:
+            upright_conditions = [
+                math.pi - math.radians(12) < adjusted_pendulum_1_radian <= math.pi,
+                math.pi - math.radians(12) < adjusted_pendulum_2_radian <= math.pi
+            ]
+        else:
+            upright_conditions = [
+                math.pi - math.radians(12) < adjusted_pendulum_1_radian <= math.pi,
+                #math.pi - math.radians(12) < adjusted_pendulum_2_radian <= math.pi
+            ]
 
         if all(upright_conditions):
             self.count_continuous_uprights += 1
@@ -299,23 +308,22 @@ class RotaryInvertedPendulumEnv(gym.Env):
             self.is_upright = False
 
     def step(self, action):
-        # ############# time check #############################
-        # if self.pendulum_type in [EnvironmentName.REAL_DEVICE_RIP,EnvironmentName.REAL_DEVICE_DOUBLE_RIP]:
-        #     current_time = time.perf_counter()
-        #     step_time = current_time - self.last_time
-        #     if step_time > self.unit_time:
-        #         self.over_unit_time += 1
-        #     while True:
-        #         current_time = time.perf_counter()
-        #         if current_time - self.last_time\
-        #                 >= self.unit_time:
-        #
-        #             break
-        #         time.sleep(0.0001)
-        #
-        # self.last_time = time.perf_counter()
-        # ######################################################
+        ############# time check #############################
+        if self.pendulum_type in [EnvironmentName.REAL_DEVICE_RIP,EnvironmentName.REAL_DEVICE_DOUBLE_RIP]:
+            current_time = time.perf_counter()
+            step_time = current_time - self.last_time
+            if step_time > self.unit_time:
+                self.over_unit_time += 1
+            while True:
+                current_time = time.perf_counter()
+                if current_time - self.last_time >= self.unit_time:
+                    break
+                time.sleep(0.0001)
 
+        if self.step_idx % 100000 == 0:
+            print("OVER UNIT TIME STEP NUMBER :", self.over_unit_time)
+
+        self.last_time = time.perf_counter()
         self.episode_steps += 1
 
         self.total_steps += 1
@@ -375,16 +383,17 @@ class RotaryInvertedPendulumEnv(gym.Env):
         elif self.pendulum_type == EnvironmentName.REAL_DEVICE_DOUBLE_RIP:
             rip_response = self.server_obj.step(RipRequest(value=action))
 
-            self.motor_position = rip_response.arm_angle
+            # print(action, rip_response.arm_angle, rip_response.link_1_angle, "!!!!")
+
+            self.motor_position = math.radians(rip_response.arm_angle)
             self.motor_velocity = rip_response.arm_velocity
-            self.pendulum_1_position = rip_response.link_1_angle
+            self.pendulum_1_position = math.radians(rip_response.link_1_angle)
             self.pendulum_1_velocity = rip_response.link_1_velocity
-            self.pendulum_2_position = rip_response.link_2_angle
+            self.pendulum_2_position = math.radians(rip_response.link_2_angle)
             self.pendulum_2_velocity = rip_response.link_2_velocity
             self.simulation_time = None
         else:
             raise ValueError()
-
         #print(self.motor_position, math.cos(self.motor_position), math.sin(self.motor_position))
 
         if abs(self.initial_motor_position - self.motor_position) > math.pi * 2:
@@ -392,13 +401,13 @@ class RotaryInvertedPendulumEnv(gym.Env):
 
         done_conditions = [
             self.episode_steps >= 10000,
-            self.episode_steps >= 500 and not self.is_upright,
+            # self.episode_steps >= 500 and not self.is_upright,
             self.too_much_rotate and not self.is_upright
         ]
 
         adjusted_pendulum_1_radian = self.pendulum_position_to_adjusted_radian(self.pendulum_1_position)
         adjusted_pendulum_2_radian = self.pendulum_position_to_adjusted_radian(self.pendulum_2_position)
-
+        # print("pendulum 1 angle :", adjusted_pendulum_1_radian, "pendulum 2 angle :", adjusted_pendulum_2_radian)
         # print("action: {0}, q: {1:7.4}, w: {2:7.4f}, adjusted_radian: {3:7.4f}, reward: {4:10.4f}, time: {5}".format(
         #     action, self.pendulum_1_position, self.pendulum_1_velocity, adjusted_radian, reward, self.simulation_time
         # ))
@@ -412,7 +421,8 @@ class RotaryInvertedPendulumEnv(gym.Env):
             EnvironmentName.PENDULUM_MATLAB_DOUBLE_RIP_V0, EnvironmentName.REAL_DEVICE_DOUBLE_RIP
         ]:
             self.update_current_state_for_double_rip(adjusted_pendulum_1_radian, adjusted_pendulum_2_radian)
-            reward = self.get_reward_for_double_rip(adjusted_pendulum_1_radian, adjusted_pendulum_2_radian)
+            reward = self.get_reward_for_double_rip()
+            # print("REWARD :", reward)
         else:
             raise ValueError()
 
@@ -463,6 +473,9 @@ class RotaryInvertedPendulumEnv(gym.Env):
             )
         else:
             raise ValueError()
+
+        self.step_idx += 1
+        # print(self.episode_steps, done, "!!!!!!")
         return state, reward, done, info
 
     def get_reward(self, adjusted_pendulum_1_radian):
@@ -477,7 +490,7 @@ class RotaryInvertedPendulumEnv(gym.Env):
         self.episode_pendulum_velocity_reward_list.append(energy_penalty)
         self.episode_action_reward_list.append(0.0)
 
-        reward = position_reward + energy_penalty
+        reward = position_reward + 10* energy_penalty
 
         reward = max(0.0, reward)
 
@@ -485,74 +498,157 @@ class RotaryInvertedPendulumEnv(gym.Env):
 
         return reward
 
-    # def get_reward_for_double_rip(self, adjusted_pendulum_1_radian, adjusted_pendulum_2_radian):
-    #     combined_radian = adjusted_pendulum_1_radian + (math.pi - adjusted_pendulum_2_radian) / 2.0
-    #
-    #     if self.is_upright:
-    #         position_reward = combined_radian / math.pi  # math.pi - math.radians(12) ~ math.pi
-    #     else:
-    #         position_reward = combined_radian / math.pi * 2.0
-    #
-    #     energy_penalty = -1.0 * (abs(self.pendulum_1_velocity) + abs(self.pendulum_2_velocity) + abs(self.motor_velocity)) / 150
-    #
-    #     self.episode_position_reward_list.append(position_reward)
-    #     self.episode_pendulum_velocity_reward_list.append(energy_penalty)
-    #     self.episode_action_reward_list.append(0.0)
-    #     reward = position_reward + energy_penalty
-    #     reward = max(0.0, reward)
-    #     # print(position_reward, energy_penalty, reward)
-    #
-    #     return reward
+    def get_reward_for_double_rip(self):
+        # #adjusted 1
+        # if pendulum_1_position < 0:
+        #     if (abs(pendulum_1_position) % (2.0 * math.pi)) > math.pi:
+        #         #plus
+        #         # (pendulum_1_position % (-2.0 * math.pi)): -2PI ~ -PI
+        #         adjusted_pendulum_1_position = 2.0 * math.pi + (pendulum_1_position % (-2.0 * math.pi))
+        #         assert 0 <= adjusted_pendulum_1_position < math.pi
+        #     else:
+        #         #minus
+        #         adjusted_pendulum_1_position = pendulum_1_position % (-2.0 * math.pi)
+        #         assert -math.pi <= adjusted_pendulum_1_position < 0
+        # else:
+        #     if (abs(pendulum_1_position) % (2.0 * math.pi)) > math.pi:
+        #         #minus
+        #         adjusted_pendulum_1_position = -2.0 * math.pi + (pendulum_1_position % (2.0 * math.pi))
+        #         assert -math.pi <= adjusted_pendulum_1_position < 0
+        #     else:
+        #         #plus
+        #         adjusted_pendulum_1_position = pendulum_1_position % (2.0 * math.pi)
+        #         assert 0 <= adjusted_pendulum_1_position < math.pi
+        #
+        # #adjusted 2
+        # if pendulum_2_position < 0:
+        #     if (abs(pendulum_2_position) % (2.0 * math.pi)) > math.pi:
+        #         # plus
+        #         adjusted_pendulum_2_position = 2.0 * math.pi + (pendulum_2_position % (-2.0 * math.pi))
+        #     else:
+        #         # minus
+        #         adjusted_pendulum_2_position = pendulum_2_position % (-2.0 * math.pi)
+        # else:
+        #     if (abs(pendulum_2_position) % (2.0 * math.pi)) > math.pi:
+        #         # minus
+        #         adjusted_pendulum_2_position = -2.0 * math.pi + (pendulum_2_position % (2.0 * math.pi))
+        #     else:
+        #         # plus
+        #         adjusted_pendulum_2_position = pendulum_2_position % (2.0 * math.pi)
+        #
+        # #create reward 2 pendulum
+        # if pendulum_1_position < 0:
+        #     if abs(pendulum_1_position % (2.0 * math.pi)) > math.pi:
+        #         if pendulum_2_position < 0:
+        #             if abs(pendulum_2_position % (2.0 * math.pi)) > math.pi:
+        #                 reward_pendulum_2 = abs(adjusted_pendulum_1_position + adjusted_pendulum_2_position)
+        #                 #plus
+        #             else:
+        #                 reward_pendulum_2 = abs(adjusted_pendulum_2_position + adjusted_pendulum_1_position)
+        #                 #minus
+        #         else:
+        #             if abs(pendulum_2_position % (2.0 * math.pi)) > math.pi:
+        #                 reward_pendulum_2 = abs(adjusted_pendulum_2_position + adjusted_pendulum_1_position)
+        #                 #minus
+        #             else:
+        #                 reward_pendulum_2 = abs(adjusted_pendulum_1_position + adjusted_pendulum_2_position)
+        #                 #plus
+        #         # plus
+        #     else:
+        #         if pendulum_2_position < 0:
+        #             if abs(pendulum_2_position % (2.0 * math.pi)) > math.pi:
+        #                 reward_pendulum_2 = abs(adjusted_pendulum_2_position + adjusted_pendulum_1_position)
+        #             else:
+        #                 reward_pendulum_2 = abs(adjusted_pendulum_1_position + adjusted_pendulum_2_position)
+        #         else:
+        #             if abs(pendulum_2_position % (2.0 * math.pi)) > math.pi:
+        #                 reward_pendulum_2 = abs(adjusted_pendulum_1_position + adjusted_pendulum_2_position)
+        #             else:
+        #                 reward_pendulum_2 = abs(adjusted_pendulum_2_position + adjusted_pendulum_1_position)
+        #         # minus
+        # else:
+        #     if abs(pendulum_1_position % (2.0 * math.pi)) > math.pi:
+        #         if pendulum_2_position < 0:
+        #             if abs(pendulum_2_position % (2.0 * math.pi)) > math.pi:
+        #                 reward_pendulum_2 = abs(adjusted_pendulum_2_position + adjusted_pendulum_1_position)
+        #             else:
+        #                 reward_pendulum_2 = abs(adjusted_pendulum_1_position + adjusted_pendulum_2_position)
+        #         else:
+        #             if abs(pendulum_2_position % (2.0 * math.pi)) > math.pi:
+        #                 reward_pendulum_2 = abs(adjusted_pendulum_1_position + adjusted_pendulum_2_position)
+        #             else:
+        #                 reward_pendulum_2 = abs(adjusted_pendulum_2_position + adjusted_pendulum_1_position)
+        #         # minus
+        #     else:
+        #         if pendulum_2_position < 0:
+        #             if abs(pendulum_2_position % (2.0 * math.pi)) > math.pi:
+        #                 reward_pendulum_2 = abs(adjusted_pendulum_1_position + adjusted_pendulum_2_position)
+        #                 # plus
+        #
+        #             else:
+        #                 reward_pendulum_2 = abs(adjusted_pendulum_2_position + adjusted_pendulum_1_position)
+        #                 # minus
+        #         else:
+        #             if abs(pendulum_2_position % (2.0 * math.pi)) > math.pi:
+        #                 reward_pendulum_2 = abs(adjusted_pendulum_2_position + adjusted_pendulum_1_position)
+        #                 # minus
+        #             else:
+        #                 reward_pendulum_2 = abs(adjusted_pendulum_1_position + adjusted_pendulum_2_position)
+        #
+        # if reward_pendulum_2 > math.pi:
+        #     reward_pendulum_2 = (2.0 * math.pi) - reward_pendulum_2
+        #
+        # energy_penalty = -1.0 * (abs(self.pendulum_1_velocity) + abs(self.pendulum_2_velocity) + 1.5 * abs(self.motor_velocity)) / 150
+        #
+        # if abs(adjusted_pendulum_1_position) < math.pi * 0.5:
+        #     position_reward = 0
+        # else:
+        #     if abs(reward_pendulum_2) > abs(adjusted_pendulum_1_position):
+        #         position_reward = abs(reward_pendulum_2) + abs(adjusted_pendulum_1_position)
+        #     else:
+        #         position_reward = 0
 
-    def get_reward_for_double_rip(self, pendulum_1_position, pendulum_2_position):
-        if pendulum_1_position > 0.0:
-            pendulum_1_position = pendulum_1_position % (2.0 * math.pi)
-            if pendulum_1_position > math.pi:
-                adjusted_pendulum_1_position = pendulum_1_position - (2.0 * math.pi)
-                best_pendulum_2_position = math.pi + adjusted_pendulum_1_position
-            else:
-                adjusted_pendulum_1_position = pendulum_1_position
-                best_pendulum_2_position = adjusted_pendulum_1_position - math.pi
-        else:
-            pendulum_1_position = -pendulum_1_position
-            pendulum_1_position = pendulum_1_position % (2.0 * math.pi)
-            pendulum_1_position = -pendulum_1_position
-            if pendulum_1_position < -math.pi:
-                adjusted_pendulum_1_position = pendulum_1_position + (2.0 * math.pi)
-                best_pendulum_2_position = adjusted_pendulum_1_position - math.pi
-            else:
-                adjusted_pendulum_1_position = pendulum_1_position
-                best_pendulum_2_position = math.pi + adjusted_pendulum_1_position
+        terminal, position_score = self._terminal()
+        # position_reward = 0. if not terminal else position_score
+        position_reward = position_score
 
-        if pendulum_2_position > 0.0:
-            pendulum_2_position = pendulum_2_position % (2.0 * math.pi)
-            if pendulum_2_position > math.pi:
-                adjusted_pendulum_2_position = pendulum_2_position - (2 * math.pi)
-            else:
-                adjusted_pendulum_2_position = pendulum_2_position
-        else:
-            pendulum_2_position = -pendulum_2_position
-            pendulum_2_position = pendulum_2_position % (2.0 * math.pi)
-            pendulum_2_position = -pendulum_2_position
-            if pendulum_2_position < -math.pi:
-                adjusted_pendulum_2_position = pendulum_2_position + (2.0 * math.pi)
-            else:
-                adjusted_pendulum_2_position = pendulum_2_position
+        alpha_pendulum_1_velocity = 0.3
+        alpha_pendulum_2_velocity = 0.3
+        alpha_motor_velocity = 0.5
+        energy_penalty_denominator = 60
 
-        reward_pendulum_2 = math.pi - abs(best_pendulum_2_position - adjusted_pendulum_2_position)
-        position_reward = abs(reward_pendulum_2) + abs(adjusted_pendulum_1_position)
-
-        energy_penalty = -1.0 * (abs(self.pendulum_1_velocity) + abs(self.pendulum_2_velocity) + 1.5 * abs(self.motor_velocity)) / 150
+        energy_penalty = -1.0 * (
+            alpha_pendulum_1_velocity * abs(self.pendulum_1_velocity) +
+            alpha_pendulum_2_velocity * abs(self.pendulum_2_velocity) +
+            alpha_motor_velocity * abs(self.motor_velocity)
+        ) / energy_penalty_denominator
 
         self.episode_position_reward_list.append(position_reward)
         self.episode_pendulum_velocity_reward_list.append(energy_penalty)
         self.episode_action_reward_list.append(0.0)
 
         reward = position_reward + energy_penalty
-
+        # print("position_reward: {0:3.4f}".format(position_reward) + "energy_penalty: {0:3.4f}".format(energy_penalty))
         reward = max(0.0, reward)
 
         return reward
+
+    def _terminal(self):
+        # ns[0] = wrap(ns[0], -pi, pi)
+        # ns[1] = wrap(ns[1], -pi, pi)
+        pendulum_1_position = wrap(self.pendulum_1_position, -math.pi, math.pi)
+        pendulum_2_position = wrap(self.pendulum_2_position, -math.pi, math.pi)
+        is_terminal = bool(-math.cos(pendulum_1_position) - math.cos(pendulum_2_position + pendulum_1_position) > 1.)
+        position_score = -math.cos(pendulum_1_position) - math.cos(pendulum_2_position + pendulum_1_position)
+        position_score = 2 + position_score
+        # print(
+        #     "{0:2.4f}".format(math.degrees(pendulum_1_position)),
+        #     "{0:2.4f}".format(math.degrees(pendulum_2_position)),
+        #     "is_terminal", is_terminal,
+        #     "{0:2.4f}".format(position_score)
+        # )
+
+        return is_terminal, position_score
 
     def render(self, mode='human'):
         pass

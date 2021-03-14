@@ -1,3 +1,4 @@
+import math
 import os
 import sys
 import gym
@@ -5,7 +6,7 @@ import torch
 import numpy as np
 from collections import namedtuple, deque
 
-from gym.vector import SyncVectorEnv, VectorEnv
+from gym.vector import VectorEnv
 from icecream import ic
 
 from codes.e_utils.reward_changer import PseudoCountRewardWrapper
@@ -238,7 +239,7 @@ class ExperienceSourceFirstLast(ExperienceSource):
 
     If we have partial trajectory at the end of episode, last_state will be None
     """
-    def __init__(self, env, agent, gamma, n_step=1, steps_delta=1):
+    def __init__(self, env, agent, gamma, n_step=1, steps_delta=1, vectorized=True):
         assert isinstance(gamma, float)
         super(ExperienceSourceFirstLast, self).__init__(env, agent, n_step + 1, steps_delta)
         self.gamma = gamma

@@ -3,7 +3,7 @@ import random
 
 from gym import Env
 from gym.spaces import Box, Discrete
-from gym.vector import SyncVectorEnv, VectorEnv
+from gym.vector import VectorEnv
 from numpy import random
 import numpy as np
 
@@ -15,6 +15,7 @@ import os, sys
 from codes.a_config.f_trade_parameters.parameters_trade_dqn import PARAMETERS_GENERAL_TRADE_DQN
 from codes.a_config.parameters import PARAMETERS as params
 
+from codes.b_environments.custom_sync_vector_env import CustomSyncVectorEnv
 from codes.b_environments.trade.trade_data import get_data
 from codes.c_models.continuous_action.soft_actor_critic_model import SoftActorCriticModel
 from codes.d_agents.black_box.cma_es.cma_es_agent import AgentEMAES
@@ -68,7 +69,7 @@ def get_environment(params):
 
     # 매 타임 스텝마다 모든 env들로 부터 transition을 가져옴.
     # 각 env에 대한 통신은 parallel 하지 않음.
-    env = SyncVectorEnv(env_fns)
+    env = CustomSyncVectorEnv(env_fns)
     assert env.num_envs == params.NUM_ENVIRONMENTS
     return env
 

@@ -1,7 +1,7 @@
 from codes.a_config._rl_parameters.off_policy.parameter_ddpg import PARAMETERS_DDPG
 from codes.a_config.parameters_general import PARAMETERS_GENERAL
 from codes.e_utils.names import OptimizerName, RLAlgorithmName, EnvironmentName, DeepLearningModelName, ModelSaveMode
-
+from codes.a_config.parameters_general import PARAMETERS_GENERAL
 
 class PARAMETERS_DOUBLE_RIP(PARAMETERS_GENERAL, PARAMETERS_DDPG):
     # [GENERAL]
@@ -39,6 +39,7 @@ class PARAMETERS_DOUBLE_RIP(PARAMETERS_GENERAL, PARAMETERS_DDPG):
 
     # [OPTIMIZATION]
     GAMMA = 0.98 # discount factor
+    TAU = 0.0001
 
     # [Policy Gradient]
     ENTROPY_LOSS_WEIGHT = 0.0001
@@ -46,20 +47,20 @@ class PARAMETERS_DOUBLE_RIP(PARAMETERS_GENERAL, PARAMETERS_DDPG):
     ACTOR_LEARNING_RATE = 0.0001
 
     # [TRAINING]
-    EPSILON_INIT = 0.9
-    EPSILON_MIN = 0.001
+    EPSILON_INIT = 1.0  # 0.9
+    EPSILON_MIN = 1.0   # 0.001
     EPSILON_MIN_STEP = 1000000
 
     PER_PROPORTIONAL = False
     PER_RANK_BASED = False
     PPO_GAE_LAMBDA = 0.95
     LEARNING_RATE = 0.001
-    ACTION_SCALE = 200
+    ACTION_SCALE = 400
     BALANCING_SCALE_FACTOR = 0.01
     ENV_RESET = False
 
     # [DQN]
-    BATCH_SIZE = 32
+    BATCH_SIZE = 128    # 32
 
     # [CUDA]
     CUDA_VISIBLE_DEVICES_NUMBER_LIST = '1, 2'
@@ -77,3 +78,7 @@ class PARAMETERS_DOUBLE_RIP(PARAMETERS_GENERAL, PARAMETERS_DDPG):
     OPTIMIZER = OptimizerName.ADAM
 
     MODEL_SAVE_MODE = ModelSaveMode.TRAIN
+
+    OU_NOISE_ENABLED = True
+    COUNT_BASED_EXPLORATION = False
+    COUNT_BASED_REWARD_SCALE = 0.1

@@ -27,11 +27,11 @@ class OSName(enum.Enum):
 
 
 class EnvironmentName(enum.Enum):
+    ACROBOT_V1 = "Acrobot-v1"
     CARTPOLE_V0 = "CartPole-v0"
     CARTPOLE_V1 = "CartPole-v1"
     MOUNTAINCAR_V0 = "MountainCar-v0"
     MOUNTAINCARCONTINUOUS_V0 = "MountainCarContinuous-v0"
-    ACROBOT_V1 = "Acrobot-v1"
     BLACKJACK_V0 = "Blackjack-v0"
     QUANSER_SERVO_2 = "Quanser_Servo_2"
     CHASER_V1_MAC = os.path.join(PROJECT_HOME, "rl_main", "environments", "unity", "unity_envs", "Chaser_v1")
