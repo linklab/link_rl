@@ -29,6 +29,7 @@ class OSName(enum.Enum):
 class EnvironmentName(enum.Enum):
     CARTPOLE_V0 = "CartPole-v0"
     CARTPOLE_V1 = "CartPole-v1"
+    MOUNTAINCAR_V0 = "MountainCar-v0"
     MOUNTAINCARCONTINUOUS_V0 = "MountainCarContinuous-v0"
     ACROBOT_V1 = "Acrobot-v1"
     BLACKJACK_V0 = "Blackjack-v0"

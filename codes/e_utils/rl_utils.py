@@ -97,7 +97,8 @@ def get_single_environment(params=None, mode=AgentMode.TRAIN):
         )
     elif params.ENVIRONMENT_ID in [
         EnvironmentName.CARTPOLE_V0, EnvironmentName.CARTPOLE_V1,
-        EnvironmentName.ACROBOT_V1, EnvironmentName.BLACKJACK_V0, EnvironmentName.MOUNTAINCARCONTINUOUS_V0,
+        EnvironmentName.MOUNTAINCAR_V0, EnvironmentName.MOUNTAINCARCONTINUOUS_V0,
+        EnvironmentName.ACROBOT_V1, EnvironmentName.BLACKJACK_V0,
         EnvironmentName.INVERTED_DOUBLE_PENDULUM_V2, EnvironmentName.HOPPER_V2, EnvironmentName.SWIMMER_V2,
         EnvironmentName.REACHER_V2, EnvironmentName.HUMANOID_V2, EnvironmentName.HUMANOID_STAND_UP_V2,
         EnvironmentName.INVERTED_PENDULUM_V2, EnvironmentName.WALKER_2D_V2, EnvironmentName.LUNAR_LANDER_V2,

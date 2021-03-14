@@ -27,20 +27,16 @@ class AgentDDPG(OffPolicyAgent):
 
         if params.ENVIRONMENT_ID in [EnvironmentName.PENDULUM_MATLAB_V0, EnvironmentName.PENDULUM_MATLAB_DOUBLE_RIP_V0]:
             self.train_action_selector = EpsilonGreedySomeTimesBlowDDPGActionSelector(
-                epsilon=params.EPSILON_INIT, ou_enabled=True, scale_factor=params.ACTION_SCALE,
+                epsilon=params.EPSILON_INIT, ou_enabled=True,
                 min_blowing_action=-10.0 * params.ACTION_SCALE, max_blowing_action=10.0 * params.ACTION_SCALE
             )
             self.test_and_play_action_selector = EpsilonGreedySomeTimesBlowDDPGActionSelector(
-                epsilon=0.0, ou_enabled=False, scale_factor=params.ACTION_SCALE,
+                epsilon=0.0, ou_enabled=False,
                 min_blowing_action=-10.0 * params.ACTION_SCALE, max_blowing_action=10.0 * params.ACTION_SCALE
             )
         else:
-            self.train_action_selector = EpsilonGreedyDDPGActionSelector(
-                epsilon=params.EPSILON_INIT, ou_enabled=True, scale_factor=params.ACTION_SCALE
-            )
-            self.test_and_play_action_selector = EpsilonGreedyDDPGActionSelector(
-                epsilon=0.0, ou_enabled=False, scale_factor=params.ACTION_SCALE
-            )
+            self.train_action_selector = EpsilonGreedyDDPGActionSelector(epsilon=params.EPSILON_INIT, ou_enabled=True)
+            self.test_and_play_action_selector = EpsilonGreedyDDPGActionSelector(epsilon=0.0, ou_enabled=False)
 
         self.epsilon_tracker = EpsilonTracker(
             action_selector=self.train_action_selector,
