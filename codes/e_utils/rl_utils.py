@@ -1,9 +1,11 @@
+import collections
 import random
 
 from gym import Env
 from gym.spaces import Box, Discrete
 from gym.vector import SyncVectorEnv, VectorEnv
 from numpy import random
+import numpy as np
 
 import gym
 import torch
@@ -22,7 +24,7 @@ from codes.d_agents.black_box.ga.multi_ga_agent import AgentMultiGA
 from codes.d_agents.off_policy.td3.td3_agent import AgentTD3
 from codes.d_agents.on_policy.sac.continuous_sac_agent import AgentSAC
 from codes.d_agents.on_policy.ppo.discrete_ppo_agent import AgentDiscretePPO
-from codes.e_utils.reward_changer import RewardChanger
+from codes.e_utils.reward_changer import PseudoCountRewardWrapper
 
 current_path = os.path.dirname(os.path.realpath(__file__))
 PROJECT_HOME = os.path.abspath(os.path.join(current_path, os.pardir, os.pardir))
@@ -57,6 +59,8 @@ def get_environment(params):
     def make_environment(params):
         def _make():
             env = get_single_environment(params=params, mode=AgentMode.TRAIN)
+            if params.COUNT_BASED_EXPLORATION:
+                env = PseudoCountRewardWrapper(env)
             return env
 
         return _make
@@ -107,7 +111,7 @@ def get_single_environment(params=None, mode=AgentMode.TRAIN):
         env = gym.make(params.ENVIRONMENT_ID.value)
     elif params.ENVIRONMENT_ID in [EnvironmentName.PENDULUM_V0]:
         env = gym.make(params.ENVIRONMENT_ID.value)
-        env = RewardChanger(env, lambda r: (r + 8.0) / 8.0, lambda r: 8.0 * r - 8.0)
+        #env = RewardChanger(env, lambda r: (r + 8.0) / 8.0, lambda r: 8.0 * r - 8.0)
     elif params.ENVIRONMENT_ID == EnvironmentName.FROZENLAKE_V0:
         env = gym.make(EnvironmentName.FROZENLAKE_V0.value, is_slippery=False)
     elif params.ENVIRONMENT_ID == EnvironmentName.CHASER_V1_MAC or params.ENVIRONMENT_ID == EnvironmentName.CHASER_V1_WINDOWS:
@@ -353,4 +357,3 @@ def get_optimizer(parameters, learning_rate, params):
         optimizer = None
 
     return optimizer
-

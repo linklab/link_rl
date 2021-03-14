@@ -9,8 +9,16 @@ import torch.optim as optim
 from types import SimpleNamespace
 
 from ignite.engine import Engine
+import os, sys
 
-from lib import common, dqn_extra
+current_path = os.path.dirname(os.path.realpath(__file__))
+PROJECT_HOME = os.path.abspath(os.path.join(current_path, os.pardir, os.pardir, os.pardir))
+if PROJECT_HOME not in sys.path:
+    sys.path.append(PROJECT_HOME)
+
+os.environ['KMP_DUPLICATE_LIB_OK'] = 'True'
+
+from z_externals.handson_second_edition.Chapter21.lib import common, dqn_extra
 
 
 HYPERPARAMS = {
@@ -87,8 +95,8 @@ if __name__ == "__main__":
     random.seed(common.SEED)
     torch.manual_seed(common.SEED)
     parser = argparse.ArgumentParser()
-    parser.add_argument("-n", "--name", required=True, help="Run name")
-    parser.add_argument("-p", "--params", default='egreedy', choices=list(HYPERPARAMS.keys()),
+    parser.add_argument("-n", "--name", help="Run name", default="MountainCar-v0")
+    parser.add_argument("-p", "--params", default='noisynet', choices=list(HYPERPARAMS.keys()),
                         help="Parameters, default=egreedy")
     args = parser.parse_args()
 
@@ -107,7 +115,7 @@ if __name__ == "__main__":
     print(net)
 
     if args.params.startswith('egreedy'):
-        selector = ptan.actions.EpsilonGreedyDQNActionSelector(epsilon=params.epsilon_start)
+        selector = ptan.actions.EpsilonGreedyActionSelector(epsilon=params.epsilon_start)
         epsilon_tracker = common.EpsilonTracker(selector, params)
         training_enabled = not params.eps_decay_trigger
         epsilon_tracker_frame = 0
@@ -166,7 +174,7 @@ if __name__ == "__main__":
             print("Epsilon decay triggered!")
 
     @engine.on(ptan_ignite.PeriodEvents.ITERS_1000_COMPLETED)
-    def test_network(engine):
+    def testing_network(engine):
         net.train(False)
         obs = test_env.reset()
         reward = 0.0

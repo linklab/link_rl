@@ -8,7 +8,7 @@ from collections import namedtuple, deque
 from gym.vector import SyncVectorEnv, VectorEnv
 from icecream import ic
 
-from codes.e_utils.reward_changer import RewardChanger
+from codes.e_utils.reward_changer import PseudoCountRewardWrapper
 
 current_path = os.path.dirname(os.path.realpath(__file__))
 PROJECT_HOME = os.path.abspath(os.path.join(current_path, os.pardir, os.pardir))
@@ -141,8 +141,13 @@ class ExperienceSource:
                     state = states[idx]
                     history = histories[idx]
 
-                    if isinstance(self.env.envs[0], RewardChanger):
-                        cur_rewards[idx] += self.env.envs[0].reverse_reward(r)
+                    # if isinstance(self.env.envs[0], RewardChanger):
+                    #     cur_rewards[idx] += self.env.envs[0].reverse_reward(r)
+                    # else:
+                    #     cur_rewards[idx] += r
+
+                    if isinstance(self.env.envs[0], PseudoCountRewardWrapper):
+                        cur_rewards[idx] += r - r * params.COUNT_BASED_REWARD_SCALE * info["count_observation"]
                     else:
                         cur_rewards[idx] += r
 

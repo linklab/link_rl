@@ -7,7 +7,7 @@ import os, sys
 import numpy as np
 
 from codes.e_utils.actions import EpsilonGreedySomeTimesBlowDQNActionSelector, \
-    EpsilonGreedySomeTimesBlowDDPGActionSelector, ArgmaxActionSelector, EpsilonGreedyDDPGActionSelector, \
+    SomeTimesBlowDDPGActionSelector, ArgmaxActionSelector, DDPGActionSelector, \
     ContinuousNormalActionSelector, DiscreteCategoricalActionSelector
 from codes.e_utils.rl_utils import get_environment_input_output_info, MODEL_ZOO_SAVE_DIR, MODEL_SAVE_FILE_PREFIX
 
@@ -90,7 +90,7 @@ if __name__ == "__main__":
     from codes.a_config.parameters import PARAMETERS as parameters
     params = parameters
 
-    env = rl_utils.get_single_environment(params=params)
+    env = rl_utils.get_single_environment(params=params, mode=AgentMode.PLAY)
     print("env:", params.ENVIRONMENT_ID)
     print("observation_space:", env.observation_space)
     print("action_space:", env.action_space)

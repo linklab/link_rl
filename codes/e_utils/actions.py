@@ -98,14 +98,11 @@ class EpsilonGreedySomeTimesBlowDQNActionSelector(ActionSelector):
         return actions
 
 
-class EpsilonGreedySomeTimesBlowDDPGActionSelector:
+class SomeTimesBlowDDPGActionSelector:
     def __init__(
-            self, epsilon, ou_enabled,
-            blowing_action_rate=0.0002, min_blowing_action=-1.0, max_blowing_action=1.0
+            self, ou_enabled, blowing_action_rate=0.0002, min_blowing_action=-1.0, max_blowing_action=1.0
     ):
-        self.epsilon = epsilon
         self.ou_enabled = ou_enabled
-
         self.blowing_action_rate = blowing_action_rate
         self.min_blowing_action = min_blowing_action
         self.max_blowing_action = max_blowing_action
@@ -141,7 +138,6 @@ class EpsilonGreedySomeTimesBlowDDPGActionSelector:
             if self.ou_enabled:
                 noises = noises + ou_theta * (actions - noises) * ou_dt + \
                          ou_sigma * np.sqrt(ou_dt) * np.random.normal(size=noises.shape)
-                noises = self.epsilon * noises
                 actions = actions + noises
             else:
                 noises = np.zeros_like(actions)
@@ -149,9 +145,8 @@ class EpsilonGreedySomeTimesBlowDDPGActionSelector:
         return actions, noises
 
 
-class EpsilonGreedyDDPGActionSelector:
-    def __init__(self, epsilon, ou_enabled):
-        self.epsilon = epsilon
+class DDPGActionSelector:
+    def __init__(self, ou_enabled):
         self.ou_enabled = ou_enabled
 
     def __call__(self, mu, noises, ou_theta=0.15, ou_dt=0.01, ou_sigma=0.2): #default ou_sigma = 0.2
@@ -164,10 +159,10 @@ class EpsilonGreedyDDPGActionSelector:
         if noises.ndim == 1:
             noises = np.expand_dims(noises, axis=-1)
 
-        if self.ou_enabled and self.epsilon > 0.0:
+        if self.ou_enabled > 0.0:
             noises = noises + ou_theta * (actions - noises) * ou_dt + \
                      ou_sigma * np.sqrt(ou_dt) * np.random.normal(size=noises.shape)
-            noises = self.epsilon * noises
+
             actions = actions + noises
 
             # print("actions: {0:7.4f}, epsilon: {1:7.4f}, noises: {2:7.4f}".format(
@@ -221,16 +216,19 @@ class ContinuousNormalActionSelector(ContinuousActionSelector):
 
 
 class TD3ActionSelector:
-    def __init__(self, epsilon, act_noise, noise_clip):
-        self.epsilon = epsilon
-        self.act_noise = 0.1
-        self.noise_clip = 0.5
+    def __init__(self, act_noise=0.0, noise_clip=0.0):
+        self.act_noise = act_noise
+        self.noise_clip = noise_clip
 
     def __call__(self, mu, noises=None):
         assert isinstance(mu, np.ndarray)
         actions = np.copy(mu)
-        noises = np.random.normal(size=mu.shape, loc=0, scale=self.act_noise)
-        actions = actions + self.epsilon * noises
+        if self.act_noise == 0.0:
+            noises = np.zeros_like(shape=actions.shape)
+        else:
+            noises = np.random.normal(size=mu.shape, loc=0, scale=self.act_noise)
+
+        actions = actions + noises
 
         #ic(noises)
 

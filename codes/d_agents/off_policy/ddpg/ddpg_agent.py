@@ -3,12 +3,12 @@ import torch
 import torch.nn.functional as F
 from icecream import ic
 
+from codes.a_config._rl_parameters.off_policy.parameter_ddpg import PARAMETERS_DDPG
 from codes.c_models.continuous_action.deterministic_continuous_actor_critic_model import DeterministicContinuousActorCriticModel
 from codes.d_agents.a0_base_agent import TargetNet, float32_preprocessor
 from codes.d_agents.off_policy.off_policy_agent import OffPolicyAgent
-from codes.e_utils import rl_utils, replay_buffer
-from codes.e_utils.actions import EpsilonGreedySomeTimesBlowDDPGActionSelector, EpsilonGreedyDDPGActionSelector, \
-    EpsilonTracker
+from codes.e_utils import rl_utils
+from codes.e_utils.actions import SomeTimesBlowDDPGActionSelector, DDPGActionSelector
 from codes.e_utils.names import DeepLearningModelName, AgentMode, EnvironmentName
 
 
@@ -18,6 +18,7 @@ class AgentDDPG(OffPolicyAgent):
     """
     def __init__(self, worker_id, input_shape, num_outputs, action_min, action_max, params, device):
         assert params.DEEP_LEARNING_MODEL == DeepLearningModelName.DETERMINISTIC_CONTINUOUS_ACTOR_CRITIC_MLP
+        assert issubclass(params, PARAMETERS_DDPG)
 
         super(AgentDDPG, self).__init__(worker_id=worker_id, params=params, device=device)
 
@@ -26,24 +27,17 @@ class AgentDDPG(OffPolicyAgent):
         self.action_max = action_max
 
         if params.ENVIRONMENT_ID in [EnvironmentName.PENDULUM_MATLAB_V0, EnvironmentName.PENDULUM_MATLAB_DOUBLE_RIP_V0]:
-            self.train_action_selector = EpsilonGreedySomeTimesBlowDDPGActionSelector(
-                epsilon=params.EPSILON_INIT, ou_enabled=True,
+            self.train_action_selector = SomeTimesBlowDDPGActionSelector(
+                ou_enabled=params.OU_NOISE_ENABLED,
                 min_blowing_action=-10.0 * params.ACTION_SCALE, max_blowing_action=10.0 * params.ACTION_SCALE
             )
-            self.test_and_play_action_selector = EpsilonGreedySomeTimesBlowDDPGActionSelector(
-                epsilon=0.0, ou_enabled=False,
+            self.test_and_play_action_selector = SomeTimesBlowDDPGActionSelector(
+                ou_enabled=params.OU_NOISE_ENABLED,
                 min_blowing_action=-10.0 * params.ACTION_SCALE, max_blowing_action=10.0 * params.ACTION_SCALE
             )
         else:
-            self.train_action_selector = EpsilonGreedyDDPGActionSelector(epsilon=params.EPSILON_INIT, ou_enabled=True)
-            self.test_and_play_action_selector = EpsilonGreedyDDPGActionSelector(epsilon=0.0, ou_enabled=False)
-
-        self.epsilon_tracker = EpsilonTracker(
-            action_selector=self.train_action_selector,
-            eps_start=params.EPSILON_INIT,
-            eps_final=params.EPSILON_MIN,
-            eps_frames=params.EPSILON_MIN_STEP
-        )
+            self.train_action_selector = DDPGActionSelector(ou_enabled=params.OU_NOISE_ENABLED)
+            self.test_and_play_action_selector = DDPGActionSelector(ou_enabled=params.OU_NOISE_ENABLED)
 
         self.model = DeterministicContinuousActorCriticModel(
             worker_id=worker_id,

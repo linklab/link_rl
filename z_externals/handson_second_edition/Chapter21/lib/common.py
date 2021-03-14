@@ -82,7 +82,7 @@ def calc_loss_double_dqn(batch, net, tgt_net, gamma, device="cpu"):
 
 
 class EpsilonTracker:
-    def __init__(self, selector: ptan.actions.EpsilonGreedyDQNActionSelector,
+    def __init__(self, selector: ptan.actions.EpsilonGreedyActionSelector,
                  params: SimpleNamespace):
         self.selector = selector
         self.params = params

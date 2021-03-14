@@ -1,3 +1,6 @@
+import collections
+import numpy as np
+import gym
 from gym import RewardWrapper
 
 
@@ -31,3 +34,33 @@ class RewardChanger(RewardWrapper):
 
     def reverse_reward(self, changed_reward):
         return self.reverse_f(changed_reward)
+
+
+def counts_hash(obs):
+    obs_list = obs.tolist()
+    return tuple(map(lambda v: round(v, 1), obs_list))
+
+
+class PseudoCountRewardWrapper(gym.Wrapper):
+    def __init__(self, env, hash_function=counts_hash, count_based_reward_scale=0.1):
+        super(PseudoCountRewardWrapper, self).__init__(env)
+        self.hash_function = hash_function
+        self.count_based_reward_scale = count_based_reward_scale
+        self.counts = collections.Counter()
+
+    def step(self, action):
+        obs, reward, done, info = self.env.step(action)
+        count_observation = self.get_count_observation(obs)
+        intrinsic_reward = reward * self.count_based_reward_scale * count_observation
+        info["count_observation"] = count_observation
+        return obs, reward + intrinsic_reward, done, info
+
+    def get_count_observation(self, obs) -> float:
+        """
+        Increments observation counter and returns pseudo-count reward
+        :param obs: observation
+        :return: extra reward
+        """
+        h = self.hash_function(obs)
+        self.counts[h] += 1
+        return np.sqrt(1.0 / self.counts[h])

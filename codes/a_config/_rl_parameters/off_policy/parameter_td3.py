@@ -9,10 +9,6 @@ class PARAMETERS_TD3:
     PER_RANK_BASED = False
     DOUBLE = True
 
-    EPSILON_INIT = None
-    EPSILON_MIN = None
-    EPSILON_MIN_STEP = None
-
     REPLAY_BUFFER_SIZE = None
 
     ACT_NOISE = 0.1
@@ -22,3 +18,5 @@ class PARAMETERS_TD3:
     POLICY_UPDATE_FREQUENCY = 2
 
     TAU = 0.001
+
+    COUNT_BASED_EXPLORATION = False
