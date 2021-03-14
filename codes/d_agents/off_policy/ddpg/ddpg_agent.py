@@ -26,18 +26,21 @@ class AgentDDPG(OffPolicyAgent):
         self.action_min = action_min
         self.action_max = action_max
 
-        if params.ENVIRONMENT_ID in [EnvironmentName.PENDULUM_MATLAB_V0, EnvironmentName.PENDULUM_MATLAB_DOUBLE_RIP_V0]:
-            self.train_action_selector = SomeTimesBlowDDPGActionSelector(
-                ou_enabled=params.OU_NOISE_ENABLED,
-                min_blowing_action=-10.0 * params.ACTION_SCALE, max_blowing_action=10.0 * params.ACTION_SCALE
-            )
-            self.test_and_play_action_selector = SomeTimesBlowDDPGActionSelector(
-                ou_enabled=params.OU_NOISE_ENABLED,
-                min_blowing_action=-10.0 * params.ACTION_SCALE, max_blowing_action=10.0 * params.ACTION_SCALE
-            )
-        else:
-            self.train_action_selector = DDPGActionSelector(ou_enabled=params.OU_NOISE_ENABLED)
-            self.test_and_play_action_selector = DDPGActionSelector(ou_enabled=params.OU_NOISE_ENABLED)
+        # if params.ENVIRONMENT_ID in [EnvironmentName.PENDULUM_MATLAB_V0, EnvironmentName.PENDULUM_MATLAB_DOUBLE_RIP_V0]:
+        #     self.train_action_selector = SomeTimesBlowDDPGActionSelector(
+        #         ou_enabled=params.OU_NOISE_ENABLED,
+        #         min_blowing_action=-10.0 * params.ACTION_SCALE, max_blowing_action=10.0 * params.ACTION_SCALE
+        #     )
+        #     self.test_and_play_action_selector = SomeTimesBlowDDPGActionSelector(
+        #         ou_enabled=params.OU_NOISE_ENABLED,
+        #         min_blowing_action=-10.0 * params.ACTION_SCALE, max_blowing_action=10.0 * params.ACTION_SCALE
+        #     )
+        # else:
+        #     self.train_action_selector = DDPGActionSelector(ou_enabled=params.OU_NOISE_ENABLED)
+        #     self.test_and_play_action_selector = DDPGActionSelector(ou_enabled=params.OU_NOISE_ENABLED)
+
+        self.train_action_selector = DDPGActionSelector(ou_enabled=params.OU_NOISE_ENABLED)
+        self.test_and_play_action_selector = DDPGActionSelector(ou_enabled=params.OU_NOISE_ENABLED)
 
         self.model = DeterministicContinuousActorCriticModel(
             worker_id=worker_id,
