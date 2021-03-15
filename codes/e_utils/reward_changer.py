@@ -43,6 +43,9 @@ def counts_hash(obs):
     # round(v, 1): (0.2, 1.0, -19.3, 1.0, -0.2, -27.1, 0.5, 0.9, 12.6)
     # round(v, 0): (0, 1, -19, 1, 0, -27, 1, 1, 12)
     hashed_obs = tuple(map(lambda v: round(v, 0), obs))
+
+    # print(hashed_obs)
+
     return hashed_obs
 
 

@@ -323,12 +323,13 @@ class RotaryInvertedPendulumEnv(gym.Env):
 
         if self.step_idx % 100000 == 0:
             print("OVER UNIT TIME STEP NUMBER :", self.over_unit_time)
+        #######################################################
 
         self.last_time = time.perf_counter()
         self.episode_steps += 1
-
         self.total_steps += 1
-        print("action", action, "total steps", self.total_steps, "episode steps", self.episode_steps)
+        # print("action", action, "total steps", self.total_steps, "episode steps", self.episode_steps)
+
         if self.total_steps >= self.next_time_step_of_external_blow:
             if self.params.RL_ALGORITHM in [RLAlgorithmName.DQN_V0]:
                 action = random.uniform(
@@ -365,7 +366,6 @@ class RotaryInvertedPendulumEnv(gym.Env):
             self.pendulum_1_position, self.motor_position, self.pendulum_1_velocity, self.motor_velocity, \
             self.simulation_time = self.plant.getHistory()
         elif self.pendulum_type == EnvironmentName.REAL_DEVICE_RIP:
-
             # GRPC CALL
             rip_response = self.server_obj.step(RipRequest(value=action))
 
@@ -617,7 +617,7 @@ class RotaryInvertedPendulumEnv(gym.Env):
         alpha_pendulum_1_velocity = 0.3
         alpha_pendulum_2_velocity = 0.3
         alpha_motor_velocity = 0.5
-        energy_penalty_denominator = 30
+        energy_penalty_denominator = 150
 
         energy_penalty = -1.0 * (
             alpha_pendulum_1_velocity * abs(self.pendulum_1_velocity) +
@@ -630,7 +630,11 @@ class RotaryInvertedPendulumEnv(gym.Env):
         self.episode_action_reward_list.append(0.0)
 
         reward = position_reward + energy_penalty
-        # print("position_reward: {0:3.4f}".format(position_reward) + "energy_penalty: {0:3.4f}".format(energy_penalty))
+        # print(
+        #     "position_reward: {0:3.4f}".format(position_reward),
+        #     "energy_penalty: {0:3.4f}".format(energy_penalty),
+        #     "reward : {0:3.4f}".format(reward)
+        # )
         reward = max(0.0, reward)
 
         return reward

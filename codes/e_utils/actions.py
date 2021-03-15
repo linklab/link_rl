@@ -170,7 +170,7 @@ class DDPGActionSelector:
             # ))
         else:
             noises = np.zeros_like(actions)
-        print("mu : {0:2.4f}, action : {1:2.4f}".format(mu[0][0], actions[0][0]))
+        # print("mu : {0:2.4f}, action : {1:2.4f}".format(mu[0][0], actions[0][0]))
         return actions, noises
 
 
