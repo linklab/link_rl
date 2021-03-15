@@ -132,6 +132,7 @@ class ExperienceSource:
                 if hasattr(self.agent.params, "ACTION_SCALE"):
                     action_scale = self.agent.params.ACTION_SCALE
                     next_state_n, r_n, is_done_n, info_n = env.step(action_scale * np.asarray(action_n))
+                    print("iter_idx", iter_idx, "--->", action_n[0][0])
                 else:
                     next_state_n, r_n, is_done_n, info_n = env.step(action_n)
 

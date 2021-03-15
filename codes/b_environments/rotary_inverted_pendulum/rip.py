@@ -310,7 +310,7 @@ class RotaryInvertedPendulumEnv(gym.Env):
 
     def step(self, action):
         ############# time check #############################
-        if self.pendulum_type in [EnvironmentName.REAL_DEVICE_RIP,EnvironmentName.REAL_DEVICE_DOUBLE_RIP]:
+        if self.pendulum_type in [EnvironmentName.REAL_DEVICE_RIP, EnvironmentName.REAL_DEVICE_DOUBLE_RIP]:
             current_time = time.perf_counter()
             step_time = current_time - self.last_time
             if step_time > self.unit_time:
