@@ -47,7 +47,7 @@ def counts_hash(obs):
 
 
 class PseudoCountRewardWrapper(gym.Wrapper):
-    def __init__(self, env, hash_function=counts_hash, count_based_reward_scale=0.1):
+    def __init__(self, env, hash_function=counts_hash, count_based_reward_scale=0.2):
         super(PseudoCountRewardWrapper, self).__init__(env)
         self.hash_function = hash_function
         self.count_based_reward_scale = count_based_reward_scale
