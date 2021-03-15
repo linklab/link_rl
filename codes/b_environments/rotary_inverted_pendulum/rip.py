@@ -56,6 +56,7 @@ class RotaryInvertedPendulumEnv(gym.Env):
         os.chdir(MATLAB_ENGINE_DIR) # change working directory
 
         if self.pendulum_type == EnvironmentName.PENDULUM_MATLAB_V0:
+            print("333333333333333333333")
             self.plant = SimulinkPlant(modelName="single_RIP")
         elif self.pendulum_type == EnvironmentName.PENDULUM_MATLAB_DOUBLE_RIP_V0:
             self.plant = SimulinkPlant(modelName="double_RIP")
@@ -197,8 +198,8 @@ class RotaryInvertedPendulumEnv(gym.Env):
         if self.pendulum_type in [EnvironmentName.PENDULUM_MATLAB_V0, EnvironmentName.REAL_DEVICE_RIP]:
             # self.update_current_state(adjusted_pendulum_1_radian=0.0)
             if self.pendulum_type == EnvironmentName.PENDULUM_MATLAB_V0:
-                self.pendulum_1_position, self.motor_position, self.pendulum_1_velocity, self.motor_velocity \
-                 = self.plant.getHistory
+                self.pendulum_1_position, self.motor_position, self.pendulum_1_velocity, self.motor_velocity, _  \
+                    = self.plant.getHistory
             else:
                 rip_response = self.server_obj.reset(RipRequest(value=None))
 

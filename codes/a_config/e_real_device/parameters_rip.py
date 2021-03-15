@@ -1,7 +1,8 @@
+from codes.a_config._rl_parameters.off_policy.parameter_ddpg import PARAMETERS_DDPG
 from codes.e_utils.names import OptimizerName, RLAlgorithmName, EnvironmentName, DeepLearningModelName, ModelSaveMode
 from codes.a_config.parameters_general import PARAMETERS_GENERAL
 
-class PARAMETERS_RIP(PARAMETERS_GENERAL):
+class PARAMETERS_RIP(PARAMETERS_GENERAL, PARAMETERS_DDPG):
     # [GENERAL]
     SEED = 1
     MY_PLATFORM = None
