@@ -9,6 +9,7 @@ from collections import namedtuple, deque
 from gym.vector import VectorEnv
 from icecream import ic
 
+from codes.e_utils.names import EnvironmentName
 from codes.e_utils.reward_changer import PseudoCountRewardWrapper
 
 current_path = os.path.dirname(os.path.realpath(__file__))
@@ -103,27 +104,15 @@ class ExperienceSource:
                     #ic(agent_states_input, "@@")
 
             #ic(states_input, agent_states_input)
-            random_action_flag = False
-            if 'START_STEPS' in dir(self.agent.params):
-                if self.agent.params.START_STEPS >= iter_idx:
-                    random_action_flag = True
 
-            if random_action_flag:
-                if states_input:
-                    _, new_agent_states = self.agent(states_input, agent_states_input)
-
-                    for idx, new_agent_state in enumerate(new_agent_states):
-                        g_idx = states_indices[idx]
-                        actions[g_idx] = self.pool[0].single_action_space.sample()
-                        agent_states[g_idx] = new_agent_state
+            if states_input:
+                new_actions, new_agent_states = self.agent(states_input, agent_states_input)
+                for idx, action in enumerate(new_actions):
+                    g_idx = states_indices[idx]
+                    actions[g_idx] = action
+                    agent_states[g_idx] = new_agent_states[idx]
             else:
-                if states_input:
-                    new_actions, new_agent_states = self.agent(states_input, agent_states_input)
-
-                    for idx, action in enumerate(new_actions):
-                        g_idx = states_indices[idx]
-                        actions[g_idx] = action
-                        agent_states[g_idx] = new_agent_states[idx]
+                pass
 
             grouped_actions = _group_list(actions, env_lens)
 
@@ -179,7 +168,13 @@ class ExperienceSource:
                             cur_steps[idx] = 0
 
                         # vectorized envs are reset automatically
-                        states[idx] = None
+                        if params.NUM_ENVIRONMENTS == 1:
+                            states[idx] = env.envs[0].reset()
+                        else:
+                            states[idx] = None
+
+                        # states[idx] = env.reset()
+
                         agent_states[idx] = self.agent.initial_agent_state()
                         history.clear()
 

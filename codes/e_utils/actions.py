@@ -109,7 +109,7 @@ class SomeTimesBlowDDPGActionSelector:
         self.time_steps = 0
         self.next_time_steps_of_random_blowing_action = int(random.expovariate(self.blowing_action_rate))
 
-    def __call__(self, mu, noises, ou_theta=0.15, ou_dt=0.01, ou_sigma=0.2): #default ou_sigma = 0.2
+    def __call__(self, mu, noises, ou_theta=0.15, ou_dt=0.01, ou_sigma=None): #default ou_sigma = 0.2
         assert isinstance(mu, np.ndarray)
         if self.time_steps == 0:
             print("next_time_steps_of_random_blowing_action: {0}".format(
@@ -149,7 +149,7 @@ class DDPGActionSelector:
     def __init__(self, ou_enabled):
         self.ou_enabled = ou_enabled
 
-    def __call__(self, mu, noises, ou_theta=0.15, ou_dt=0.01, ou_sigma=0.2): #default ou_sigma = 0.2
+    def __call__(self, mu, noises, ou_theta=0.15, ou_dt=0.01, ou_sigma=None): #default ou_sigma = 0.2
         assert isinstance(mu, np.ndarray)
         actions = np.copy(mu)
 
@@ -170,7 +170,7 @@ class DDPGActionSelector:
             # ))
         else:
             noises = np.zeros_like(actions)
-
+        # print("mu : {0:2.4f}, action : {1:2.4f}".format(mu[0][0], actions[0][0]))
         return actions, noises
 
 

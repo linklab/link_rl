@@ -26,18 +26,21 @@ class AgentDDPG(OffPolicyAgent):
         self.action_min = action_min
         self.action_max = action_max
 
-        if params.ENVIRONMENT_ID in [EnvironmentName.PENDULUM_MATLAB_V0, EnvironmentName.PENDULUM_MATLAB_DOUBLE_RIP_V0]:
-            self.train_action_selector = SomeTimesBlowDDPGActionSelector(
-                ou_enabled=params.OU_NOISE_ENABLED,
-                min_blowing_action=-10.0 * params.ACTION_SCALE, max_blowing_action=10.0 * params.ACTION_SCALE
-            )
-            self.test_and_play_action_selector = SomeTimesBlowDDPGActionSelector(
-                ou_enabled=params.OU_NOISE_ENABLED,
-                min_blowing_action=-10.0 * params.ACTION_SCALE, max_blowing_action=10.0 * params.ACTION_SCALE
-            )
-        else:
-            self.train_action_selector = DDPGActionSelector(ou_enabled=params.OU_NOISE_ENABLED)
-            self.test_and_play_action_selector = DDPGActionSelector(ou_enabled=params.OU_NOISE_ENABLED)
+        # if params.ENVIRONMENT_ID in [EnvironmentName.PENDULUM_MATLAB_V0, EnvironmentName.PENDULUM_MATLAB_DOUBLE_RIP_V0]:
+        #     self.train_action_selector = SomeTimesBlowDDPGActionSelector(
+        #         ou_enabled=params.OU_NOISE_ENABLED,
+        #         min_blowing_action=-10.0 * params.ACTION_SCALE, max_blowing_action=10.0 * params.ACTION_SCALE,
+        #     )
+        #     self.test_and_play_action_selector = SomeTimesBlowDDPGActionSelector(
+        #         ou_enabled=False,
+        #         min_blowing_action=-10.0 * params.ACTION_SCALE, max_blowing_action=10.0 * params.ACTION_SCALE
+        #     )
+        # else:
+        #     self.train_action_selector = DDPGActionSelector(ou_enabled=params.OU_NOISE_ENABLED)
+        #     self.test_and_play_action_selector = DDPGActionSelector(ou_enabled=False)
+
+        self.train_action_selector = DDPGActionSelector(ou_enabled=params.OU_NOISE_ENABLED)
+        self.test_and_play_action_selector = DDPGActionSelector(ou_enabled=False)
 
         self.model = DeterministicContinuousActorCriticModel(
             worker_id=worker_id,
@@ -85,14 +88,14 @@ class AgentDDPG(OffPolicyAgent):
         mu = mu_v.detach().cpu().numpy()
 
         if self.agent_mode == AgentMode.TRAIN:
-            actions, new_noises = self.train_action_selector(mu, noises)
+            actions, new_noises = self.train_action_selector(mu, noises, ou_sigma=self.params.OU_SIGMA)
         else:
             actions, new_noises = self.test_and_play_action_selector(mu, noises)
 
         self.last_noise = new_noises[0][0]
         #print(actions, self.action_min, self.action_max, "!!!!!!!!!!!!!!!!")
 
-        if np.any(new_noises):
+        if not (isinstance(self.train_action_selector, SomeTimesBlowDDPGActionSelector) and np.any(new_noises)):
             actions = np.clip(actions, -1.0, 1.0)
         #####################################
 
