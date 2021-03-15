@@ -325,6 +325,7 @@ class RotaryInvertedPendulumEnv(gym.Env):
 
         self.last_time = time.perf_counter()
         self.episode_steps += 1
+        print("action", action)
 
         self.total_steps += 1
         if self.total_steps >= self.next_time_step_of_external_blow:
