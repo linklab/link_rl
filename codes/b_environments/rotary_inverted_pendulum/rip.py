@@ -615,7 +615,7 @@ class RotaryInvertedPendulumEnv(gym.Env):
         alpha_pendulum_1_velocity = 0.3
         alpha_pendulum_2_velocity = 0.3
         alpha_motor_velocity = 0.5
-        energy_penalty_denominator = 60
+        energy_penalty_denominator = 30
 
         energy_penalty = -1.0 * (
             alpha_pendulum_1_velocity * abs(self.pendulum_1_velocity) +
