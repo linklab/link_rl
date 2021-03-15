@@ -69,11 +69,11 @@ class PseudoCountRewardWrapper(gym.Wrapper):
         info["global_uncertainty"] = self.global_uncertainty
         self.step_idx += 1
 
-        if self.step_idx % 10000 == 0:
-            print("*global_uncertainty = {0:0.5}".format(self.global_uncertainty))
-            self.global_uncertainty_list.append(self.global_uncertainty)
-            with open('global_uncertainty_list.pickle', 'wb') as f:
-                pickle.dump(self.global_uncertainty_list, f)
+        # if self.step_idx % 10000 == 0:
+        #     print("*global_uncertainty = {0:0.5}".format(self.global_uncertainty))
+        #     self.global_uncertainty_list.append(self.global_uncertainty)
+        #     with open('global_uncertainty_list.pickle', 'wb') as f:
+        #         pickle.dump(self.global_uncertainty_list, f)
 
         return obs, reward + intrinsic_reward, done, info
 
