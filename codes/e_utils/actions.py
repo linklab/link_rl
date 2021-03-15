@@ -100,16 +100,21 @@ class EpsilonGreedySomeTimesBlowDQNActionSelector(ActionSelector):
 
 class SomeTimesBlowDDPGActionSelector:
     def __init__(
-            self, ou_enabled, blowing_action_rate=0.0002, min_blowing_action=-1.0, max_blowing_action=1.0
+            self, ou_enabled, ou_theta=0.15, ou_dt=0.01, ou_sigma=0.2,
+            blowing_action_rate=0.0002, min_blowing_action=-1.0, max_blowing_action=1.0
     ):
         self.ou_enabled = ou_enabled
+        self.ou_theta = ou_theta
+        self.ou_dt = ou_dt
+        self.ou_sigma = ou_sigma
+
         self.blowing_action_rate = blowing_action_rate
         self.min_blowing_action = min_blowing_action
         self.max_blowing_action = max_blowing_action
         self.time_steps = 0
         self.next_time_steps_of_random_blowing_action = int(random.expovariate(self.blowing_action_rate))
 
-    def __call__(self, mu, noises, ou_theta=0.15, ou_dt=0.01, ou_sigma=None): #default ou_sigma = 0.2
+    def __call__(self, mu, noises): #default ou_sigma = 0.2
         assert isinstance(mu, np.ndarray)
         if self.time_steps == 0:
             print("next_time_steps_of_random_blowing_action: {0}".format(
@@ -136,8 +141,8 @@ class SomeTimesBlowDDPGActionSelector:
             noises = np.zeros_like(actions)
         else:
             if self.ou_enabled:
-                noises = noises + ou_theta * (actions - noises) * ou_dt + \
-                         ou_sigma * np.sqrt(ou_dt) * np.random.normal(size=noises.shape)
+                noises = noises + self.ou_theta * (actions - noises) * self.ou_dt + \
+                         self.ou_sigma * np.sqrt(self.ou_dt) * np.random.normal(size=noises.shape)
                 actions = actions + noises
             else:
                 noises = np.zeros_like(actions)
@@ -146,10 +151,13 @@ class SomeTimesBlowDDPGActionSelector:
 
 
 class DDPGActionSelector:
-    def __init__(self, ou_enabled):
+    def __init__(self, ou_enabled, ou_theta=0.15, ou_dt=0.01, ou_sigma=0.2):
         self.ou_enabled = ou_enabled
+        self.ou_theta = ou_theta
+        self.ou_dt = ou_dt
+        self.ou_sigma = ou_sigma
 
-    def __call__(self, mu, noises, ou_theta=0.15, ou_dt=0.01, ou_sigma=None): #default ou_sigma = 0.2
+    def __call__(self, mu, noises):
         assert isinstance(mu, np.ndarray)
         actions = np.copy(mu)
 
@@ -160,18 +168,16 @@ class DDPGActionSelector:
             noises = np.expand_dims(noises, axis=-1)
 
         if self.ou_enabled > 0.0:
-            noises = noises + ou_theta * (0 - noises) * ou_dt + \
-                     ou_sigma * np.sqrt(ou_dt) * np.random.normal(size=noises.shape)
+            noises = noises + self.ou_theta * (actions - noises) * self.ou_dt + \
+                     self.ou_sigma * np.sqrt(self.ou_dt) * np.random.normal(size=noises.shape)
 
             actions = actions + noises
-        else:
-            noises = noises = noises + ou_theta * (actions - noises) * ou_dt + \
-                     ou_sigma * np.sqrt(ou_dt) * np.random.normal(size=noises.shape)
-
-
             # print("actions: {0:7.4f}, epsilon: {1:7.4f}, noises: {2:7.4f}".format(
             #     actions[0][0], self.epsilon, noises[0][0]
             # ))
+        else:
+            noises = np.zeros_like(actions)
+
         # print("mu : {0:2.4f}, action : {1:2.4f}".format(mu[0][0], actions[0][0]))
         return actions, noises
 
