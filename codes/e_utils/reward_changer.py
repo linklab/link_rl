@@ -40,8 +40,9 @@ def counts_hash(obs):
     if type(obs) not in (tuple, list):
         obs = obs.tolist()
 
-    # (0.2, 1.0, -19.3, 1.0, -0.2, -27.1, 0.5, 0.9, 12.6)
-    hashed_obs = tuple(map(lambda v: round(v, 1), obs))
+    # round(v, 1): (0.2, 1.0, -19.3, 1.0, -0.2, -27.1, 0.5, 0.9, 12.6)
+    # round(v, 0): (0, 1, -19, 1, 0, -27, 1, 1, 12)
+    hashed_obs = tuple(map(lambda v: round(v, 0), obs))
     return hashed_obs
 
 
