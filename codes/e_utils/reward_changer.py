@@ -2,7 +2,7 @@ import collections
 import numpy as np
 import gym
 from gym import RewardWrapper
-
+import pickle
 
 class RewardChanger(RewardWrapper):
     r"""Change the reward via an arbitrary function.
@@ -55,12 +55,24 @@ class PseudoCountRewardWrapper(gym.Wrapper):
         self.hash_function = hash_function
         self.count_based_reward_scale = count_based_reward_scale
         self.counts = collections.Counter()
+        self.uncertainty_mean = 0
+        self.uncertainty_mean_list = []
+        self.step_idx = 0
 
     def step(self, action):
         obs, reward, done, info = self.env.step(action)
         observation_uncertainty = self.get_observation_uncertainty(obs)
+        self.uncertainty_mean = ((self.uncertainty_mean * self.step_idx) + observation_uncertainty) / (self.step_idx + 1)
         intrinsic_reward = reward * self.count_based_reward_scale * observation_uncertainty
         info["observation_uncertainty"] = observation_uncertainty
+        self.step_idx += 1
+
+        if self.step_idx % 10000 == 0:
+            print("*UNCERTAINTY_MEAN = {0:0.5}".format(self.uncertainty_mean))
+            self.uncertainty_mean_list.append(self.uncertainty_mean)
+            with open('uncertainty_mean_list.pickle', 'wb') as f:
+                pickle.dump(self.uncertainty_mean_list, f)
+
         return obs, reward + intrinsic_reward, done, info
 
     def get_observation_uncertainty(self, obs) -> float:

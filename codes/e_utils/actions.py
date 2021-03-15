@@ -160,16 +160,18 @@ class DDPGActionSelector:
             noises = np.expand_dims(noises, axis=-1)
 
         if self.ou_enabled > 0.0:
-            noises = noises + ou_theta * (actions - noises) * ou_dt + \
+            noises = noises + ou_theta * (0 - noises) * ou_dt + \
                      ou_sigma * np.sqrt(ou_dt) * np.random.normal(size=noises.shape)
 
             actions = actions + noises
+        else:
+            noises = noises = noises + ou_theta * (actions - noises) * ou_dt + \
+                     ou_sigma * np.sqrt(ou_dt) * np.random.normal(size=noises.shape)
+
 
             # print("actions: {0:7.4f}, epsilon: {1:7.4f}, noises: {2:7.4f}".format(
             #     actions[0][0], self.epsilon, noises[0][0]
             # ))
-        else:
-            noises = np.zeros_like(actions)
         # print("mu : {0:2.4f}, action : {1:2.4f}".format(mu[0][0], actions[0][0]))
         return actions, noises
 
