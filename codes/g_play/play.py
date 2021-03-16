@@ -47,7 +47,11 @@ def play_main(params, env):
         done = False
         episode_reward = 0
 
-        # env.render()
+        if params.ENVIRONMENT_ID in [
+            EnvironmentName.PYBULLET_ANT_V0, EnvironmentName.PYBULLET_HALF_CHEETAH_V0,
+            EnvironmentName.PYBULLET_INVERTED_DOUBLE_PENDULUM_V0
+        ]:
+            env.render()
         state = env.reset()
 
         num_episode += 1

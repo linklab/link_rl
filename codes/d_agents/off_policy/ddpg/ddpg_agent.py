@@ -28,7 +28,7 @@ class AgentDDPG(OffPolicyAgent):
 
         # if params.ENVIRONMENT_ID in [EnvironmentName.PENDULUM_MATLAB_V0, EnvironmentName.PENDULUM_MATLAB_DOUBLE_RIP_V0]:
         #     self.train_action_selector = SomeTimesBlowDDPGActionSelector(
-        #         ou_enabled=params.OU_NOISE_ENABLED,
+        #         ou_enabled=params.OU_NOISE_ENABLED, ou_sigma=self.params.OU_SIGMA
         #         min_blowing_action=-10.0 * params.ACTION_SCALE, max_blowing_action=10.0 * params.ACTION_SCALE,
         #     )
         #     self.test_and_play_action_selector = SomeTimesBlowDDPGActionSelector(
@@ -36,10 +36,10 @@ class AgentDDPG(OffPolicyAgent):
         #         min_blowing_action=-10.0 * params.ACTION_SCALE, max_blowing_action=10.0 * params.ACTION_SCALE
         #     )
         # else:
-        #     self.train_action_selector = DDPGActionSelector(ou_enabled=params.OU_NOISE_ENABLED)
+        #     self.train_action_selector = DDPGActionSelector(ou_enabled=params.OU_NOISE_ENABLED, ou_sigma=self.params.OU_SIGMA)
         #     self.test_and_play_action_selector = DDPGActionSelector(ou_enabled=False)
 
-        self.train_action_selector = DDPGActionSelector(ou_enabled=params.OU_NOISE_ENABLED)
+        self.train_action_selector = DDPGActionSelector(ou_enabled=params.OU_NOISE_ENABLED, ou_sigma=self.params.OU_SIGMA)
         self.test_and_play_action_selector = DDPGActionSelector(ou_enabled=False)
 
         self.model = DeterministicContinuousActorCriticModel(
@@ -71,6 +71,7 @@ class AgentDDPG(OffPolicyAgent):
         )
 
         self.last_noise = 0.0
+        self.global_uncertainty = 1.0
 
     def __call__(self, states, noises=None):
         if not noises:
@@ -88,11 +89,11 @@ class AgentDDPG(OffPolicyAgent):
         mu = mu_v.detach().cpu().numpy()
 
         if self.agent_mode == AgentMode.TRAIN:
-            actions, new_noises = self.train_action_selector(mu, noises, ou_sigma=self.params.OU_SIGMA)
+            actions, new_noises = self.train_action_selector(mu, noises, self.global_uncertainty)
+            self.last_noise = new_noises[0][0]
         else:
             actions, new_noises = self.test_and_play_action_selector(mu, noises)
 
-        self.last_noise = new_noises[0][0]
         #print(actions, self.action_min, self.action_max, "!!!!!!!!!!!!!!!!")
 
         if not (isinstance(self.train_action_selector, SomeTimesBlowDDPGActionSelector) and np.any(new_noises)):
