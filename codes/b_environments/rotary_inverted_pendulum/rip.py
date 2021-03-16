@@ -385,7 +385,6 @@ class RotaryInvertedPendulumEnv(gym.Env):
             self.motor_velocity, self.pendulum_2_velocity, self.simulation_time = self.plant.getHistory()
         elif self.pendulum_type == EnvironmentName.REAL_DEVICE_DOUBLE_RIP:
             rip_response = self.server_obj.step(RipRequest(value=action))
-
             # print(action, rip_response.arm_angle, rip_response.link_1_angle, "!!!!")
 
             self.motor_position = math.radians(rip_response.arm_angle)
@@ -403,7 +402,8 @@ class RotaryInvertedPendulumEnv(gym.Env):
             self.too_much_rotate = True
 
         done_conditions = [
-            self.episode_steps >= 10000,
+            # self.episode_steps >= 10000,
+            self.episode_steps >= 10,
             # self.episode_steps >= 500 and not self.is_upright,
             self.too_much_rotate and not self.is_upright
         ]
