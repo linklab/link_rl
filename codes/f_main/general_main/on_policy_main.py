@@ -74,12 +74,15 @@ def train_main(params, train_env, test_env):
                             speed=train_info_dict["speed"],
                             mean_loss=mean_loss,
                             mean_actor_objective=mean_actor_objective,
-                            last_action=train_info_dict["last_actions"]
+                            last_action=train_info_dict["last_actions"],
+                            evaluation_msg=train_info_dict["evaluation_msg"]
                         )
 
                         if params.WANDB:
                             train_info_dict["train mean (critic) loss"] = mean_loss
                             train_info_dict["train mean actor objective"] = mean_actor_objective
+                            del train_info_dict["evaluation_msg"]
+                            del train_info_dict["solved"]
                             wandb.log(train_info_dict)
 
                 if solved:
@@ -111,7 +114,7 @@ def train_main(params, train_env, test_env):
 
 
 if __name__ == "__main__":
-    assert params.RL_ALGORITHM in ON_POLICY_RL_ALGORITHMS
+    #assert params.RL_ALGORITHM in ON_POLICY_RL_ALGORITHMS
 
     train_env, test_env = get_train_and_test_envs()
 

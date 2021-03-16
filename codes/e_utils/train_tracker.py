@@ -49,8 +49,10 @@ class SpeedTracker:
 
 class EarlyStopping:
     """Early stops the training if validation loss doesn't improve after a given patience."""
-    def __init__(self, patience=7, evaluation_min_threshold=0.0, evaluation_min_step_idx=0,
-                 verbose=False, delta=0.0, model_save_dir=".", model_save_file_prefix=None, agent=None, params=None):
+    def __init__(
+            self, patience=7, evaluation_value_min_threshold=0.0, evaluation_std_max_threshold=0.0,
+            delta=0.0, model_save_dir=".", model_save_file_prefix=None, agent=None, params=None
+    ):
         """
         Args:
             patience (int): How long to wait after last time validation loss improved.
@@ -61,9 +63,9 @@ class EarlyStopping:
                             Default: 0
         """
         self.patience = patience
-        self.evaluation_min_threshold = evaluation_min_threshold
-        self.evaluation_min_step_idx = evaluation_min_step_idx
-        self.verbose = verbose
+        self.evaluation_value_min_threshold = evaluation_value_min_threshold
+        self.evaluation_std_max_threshold = evaluation_std_max_threshold
+        self.evaluation_min_step_idx = 0
         self.counter = 0
         self.best_evaluation_value = -1.0e10
         self.early_stop = False
@@ -73,30 +75,35 @@ class EarlyStopping:
         self.agent = agent
         self.params = params
 
-    def evaluate(self, evaluation_value, episode_done_step):
+    def evaluate(self, evaluation_value, evaluation_value_std, episode_done_step):
         solved = False
 
         if episode_done_step < self.evaluation_min_step_idx and self.best_evaluation_value == -1.0e10:
-            if self.verbose:
-                evaluation_str = colored(
-                    f'Current step {episode_done_step} is less than {self.evaluation_min_step_idx}',
-                    "magenta"
-                )
-                print(f"---> {evaluation_str}. No early stopping (and no saving) processed")
-        elif evaluation_value < self.evaluation_min_threshold and self.best_evaluation_value == -1.0e10:
-            if self.verbose:
-                evaluation_str = colored(
-                    f'Current episode reward {evaluation_value:.2f} is less than {self.evaluation_min_threshold}',
-                    'blue'
-                )
-                print(f"---> {evaluation_str}. No early stopping (and no saving) processed")
+            evaluation_str = colored(
+                f'Current step {episode_done_step} is less than {self.evaluation_min_step_idx}',
+                "magenta"
+            )
+            msg = f"{evaluation_str}. No early stopping (and no saving) processed"
+        elif evaluation_value < self.evaluation_value_min_threshold and self.best_evaluation_value == -1.0e10:
+            evaluation_str = colored(
+                f'Current episode reward {evaluation_value:.2f} is less than {self.evaluation_value_min_threshold}',
+                'blue'
+            )
+            msg = f"{evaluation_str}. No early stopping (and no saving) processed"
+        elif evaluation_value >= self.evaluation_value_min_threshold and evaluation_value_std > self.evaluation_std_max_threshold and self.best_evaluation_value == -1.0e10:
+            evaluation_str = colored(
+                f'Current episode reward {evaluation_value:.2f} is more than {self.evaluation_value_min_threshold}. '
+                f'But, std {evaluation_value_std:.1f} is more than {self.evaluation_std_max_threshold}',
+                'blue'
+            )
+            msg = f"{evaluation_str}. No early stopping (and no saving) processed"
         else:
-            if evaluation_value < self.best_evaluation_value + self.delta:
+            if evaluation_value < self.best_evaluation_value + self.delta or evaluation_value_std > self.evaluation_std_max_threshold:
                 self.counter += 1
-                if self.verbose:
-                    counter_str = colored(f'{self.counter} out of {self.patience}', 'red')
-                    best_str = colored(f'{self.best_evaluation_value:.2f}', 'green')
-                    print(f'---> EarlyStopping counter: {counter_str}. Best evaluation value is still {best_str}')
+                counter_str = colored(f'{self.counter} out of {self.patience}', 'red')
+                best_str = colored(f'{self.best_evaluation_value:.2f}', 'green')
+                msg = f'EarlyStopping counter: {counter_str}. Best evaluation value is still {best_str}'
+
                 if self.counter >= self.patience:
                     solved = True
                     load_model(
@@ -104,24 +111,22 @@ class EarlyStopping:
                         self.model_save_file_prefix,
                         self.agent
                     )
-            elif evaluation_value >= self.best_evaluation_value + self.delta:
-                if self.verbose:
-                    saving_str = colored(f"Saving model ...", 'green')
-                    if self.best_evaluation_value == -1.0e10:
-                        evaluation_str = colored(f'{evaluation_value:.2f} recorded first.', 'green')
-                        print(f'---> *** Evaluation value {evaluation_str}', saving_str)
-                    else:
-                        evaluation_str = colored(
-                            f'{self.best_evaluation_value:.2f} is increased into {evaluation_value:.2f}', 'green'
-                        )
-                        print(f'---> *** Evaluation value {evaluation_str}.', saving_str)
+            else:
+                saving_str = colored(f"Saving model ...", 'green')
+                if self.best_evaluation_value == -1.0e10:
+                    evaluation_str = colored(f'{evaluation_value:.2f} recorded first.', 'green')
+                else:
+                    evaluation_str = colored(
+                        f'{self.best_evaluation_value:.2f} is increased into {evaluation_value:.2f}', 'green'
+                    )
+
+                msg = f'*** Evaluation value {evaluation_str}. {saving_str}'
+
                 self.save_checkpoint(evaluation_value, episode_done_step)
                 self.best_evaluation_value = evaluation_value
                 self.counter = 0
-            else:
-                raise ValueError()
 
-        return solved
+        return solved, msg
 
     def save_checkpoint(self, evaluation_value, episode_done_step):
         '''Saves model when validation loss decrease.'''
