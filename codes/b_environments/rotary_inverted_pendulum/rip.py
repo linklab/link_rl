@@ -402,8 +402,7 @@ class RotaryInvertedPendulumEnv(gym.Env):
             self.too_much_rotate = True
 
         done_conditions = [
-            # self.episode_steps >= 10000,
-            self.episode_steps >= 10,
+            self.episode_steps >= 10000,
             # self.episode_steps >= 500 and not self.is_upright,
             self.too_much_rotate and not self.is_upright
         ]

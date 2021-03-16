@@ -46,7 +46,7 @@ def counts_hash(obs):
 
     # print(hashed_obs)
 
-    return hashed_obs
+    return hashed_obs[:6]
 
 
 class PseudoCountRewardWrapper(gym.Wrapper):

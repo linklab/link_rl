@@ -174,8 +174,7 @@ class DDPGActionSelector:
             if noises.ndim == 1:
                 noises = np.expand_dims(noises, axis=-1)
 
-            alpha_global_uncertainty = 1.0
-            noises = noises + alpha_global_uncertainty * global_uncertainty * (
+            noises = noises + global_uncertainty * (
                     self.ou_theta * (actions - noises) * self.ou_dt +
                     self.ou_sigma * np.sqrt(self.ou_dt) * np.random.normal(size=noises.shape)
             )
