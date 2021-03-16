@@ -36,13 +36,14 @@ class RewardChanger(RewardWrapper):
         return self.reverse_f(changed_reward)
 
 
-def counts_hash(obs):
+def counts_hash(obs, precision):
     if type(obs) not in (tuple, list):
         obs = obs.tolist()
 
     # round(v, 1): (0.2, 1.0, -19.3, 1.0, -0.2, -27.1, 0.5, 0.9, 12.6)
     # round(v, 0): (0, 1, -19, 1, 0, -27, 1, 1, 12)
-    hashed_obs = tuple(map(lambda v: round(v, 1), obs))
+
+    hashed_obs = tuple(map(lambda v: round(v, precision), obs))
 
     # print(hashed_obs[:6])
 
@@ -50,7 +51,7 @@ def counts_hash(obs):
 
 
 class PseudoCountRewardWrapper(gym.Wrapper):
-    def __init__(self, env, hash_function=counts_hash, count_based_reward_scale=0.5):
+    def __init__(self, env, hash_function=counts_hash, count_based_reward_scale=0.5, precision=0):
         super(PseudoCountRewardWrapper, self).__init__(env)
         self.hash_function = hash_function
         self.count_based_reward_scale = count_based_reward_scale
@@ -58,6 +59,7 @@ class PseudoCountRewardWrapper(gym.Wrapper):
         self.global_uncertainty = 1.0
         self.global_uncertainty_list = []
         self.step_idx = 0
+        self.precision = precision
 
     def step(self, action):
         obs, reward, done, info = self.env.step(action)
@@ -87,6 +89,6 @@ class PseudoCountRewardWrapper(gym.Wrapper):
         :param obs: observation
         :return: extra reward
         """
-        h = self.hash_function(obs)
+        h = self.hash_function(obs, self.precision)
         self.counts[h] += 1
         return np.sqrt(1.0 / self.counts[h])
