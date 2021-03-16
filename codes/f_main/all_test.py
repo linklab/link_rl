@@ -3,7 +3,7 @@ from codes.a_config.a_basic_parameters.parameters_cartpole_a2c import PARAMETERS
 from codes.a_config.a_basic_parameters.parameters_cartpole_dqn import PARAMETERS_CARTPOLE_DQN
 from codes.a_config.a_basic_parameters.parameters_pendulum_ddpg import PARAMETERS_PENDULUM_DDPG
 
-from codes.f_main.general_main.on_policy_main import main
+from codes.f_main.general_main.main import main
 
 if __name__ == "__main__":
     print("\n################## {0} ##################".format(PARAMETERS_CARTPOLE_DQN.__name__))

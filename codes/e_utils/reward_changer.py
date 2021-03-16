@@ -46,7 +46,7 @@ def counts_hash(obs, precision):
 
     # print(hashed_obs)
 
-    return hashed_obs
+    return hashed_obs[:6]
 
 
 class PseudoCountRewardWrapper(gym.Wrapper):
@@ -66,7 +66,11 @@ class PseudoCountRewardWrapper(gym.Wrapper):
         intrinsic_reward = self.count_based_reward_scale * observation_uncertainty
         info["intrinsic_reward"] = intrinsic_reward
 
-        self.global_uncertainty = ((self.global_uncertainty * self.step_idx) + observation_uncertainty) / (self.step_idx + 1.0)
+        # self.global_uncertainty = ((self.global_uncertainty * self.step_idx) + observation_uncertainty) / (self.step_idx + 1.0)
+        self.global_uncertainty = np.sqrt(len(self.counts) / sum(self.counts.values()))
+
+        #print(len(self.counts), sum(self.counts.values()), self.global_uncertainty)
+
         info["global_uncertainty"] = self.global_uncertainty
         self.step_idx += 1
 

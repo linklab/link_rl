@@ -144,7 +144,7 @@ class SomeTimesBlowDDPGActionSelector:
                 if noises.ndim == 1:
                     noises = np.expand_dims(noises, axis=-1)
 
-                noises = noises + 10.0 * global_uncertainty * (
+                noises = noises + global_uncertainty * (
                         self.ou_theta * (actions - noises) * self.ou_dt +
                         self.ou_sigma * np.sqrt(self.ou_dt) * np.random.normal(size=noises.shape)
                 )
@@ -157,7 +157,7 @@ class SomeTimesBlowDDPGActionSelector:
 
 
 class DDPGActionSelector:
-    def __init__(self, ou_enabled, ou_theta=0.15, ou_dt=0.01, ou_sigma=0.2):
+    def __init__(self, ou_enabled, ou_theta=0.15, ou_dt=0.01, ou_sigma=2.0):
         self.ou_enabled = ou_enabled
         self.ou_theta = ou_theta
         self.ou_dt = ou_dt
@@ -174,7 +174,7 @@ class DDPGActionSelector:
             if noises.ndim == 1:
                 noises = np.expand_dims(noises, axis=-1)
 
-            noises = noises + 10.0 * global_uncertainty * (
+            noises = noises + global_uncertainty * (
                     self.ou_theta * (actions - noises) * self.ou_dt +
                     self.ou_sigma * np.sqrt(self.ou_dt) * np.random.normal(size=noises.shape)
             )

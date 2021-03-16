@@ -1,15 +1,11 @@
-import torch
+import collections
 
-a = torch.randn(2, 3)
-print(a)
-b = torch.diag_embed(a)
-print(b.size())
-print(b)
+counter = collections.Counter()
+counter['a'] += 1
+counter['a'] += 1
+counter['a'] += 1
+counter['a'] += 1
+counter['a'] += 1
+counter['a'] += 1
 
-a = torch.ones(4, 3)
-b = torch.ones(2, 4, 3) * 2
-print('a:', a)
-print('b:', b)
-
-c = a.expand_as(b)
-print('c:', c)
+print(len(counter), sum(counter.values()), len(counter) / sum(counter.values()))

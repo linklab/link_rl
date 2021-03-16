@@ -12,7 +12,7 @@ class PARAMETERS_RIP(PARAMETERS_GENERAL, PARAMETERS_DDPG):
     MODEL_SAVE = False
     ########################################
     ########################################
-    STOP_MEAN_EPISODE_REWARD = 1000
+    TRAIN_STOP_EPISODE_REWARD = 1000
     STOP_PATIENCE_COUNT = 10
 
     REPLAY_BUFFER_SIZE = 100000
