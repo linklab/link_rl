@@ -33,7 +33,7 @@ def train_main(params, train_env, test_env):
         try:
             while step_idx < params.MAX_GLOBAL_STEP:
                 step_idx += params.TRAIN_STEP_FREQ
-                last_experience = agent.buffer.populate(params.TRAIN_STEP_FREQ)
+                exp = agent.buffer.populate(params.TRAIN_STEP_FREQ)
 
                 episode_rewards, episode_steps = experience_source.pop_episode_reward_and_done_step_lst()
 
@@ -53,7 +53,7 @@ def train_main(params, train_env, test_env):
                             num_tests,
                             early_stopping,
                             current_episode_step,
-                            last_experience
+                            exp
                         )
 
                         mean_loss = np.mean(loss_dequeue) if len(loss_dequeue) > 0 else 0.0

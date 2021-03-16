@@ -199,6 +199,9 @@ def process_episode(
     if hasattr(agent, "last_noise"):
         train_info_dict["last_noise"] = agent.last_noise
 
+    if "global_uncertainty" in exp.info and hasattr(agent, "global_uncertainty"):
+        agent.global_uncertainty = exp.info["global_uncertainty"]
+
     return solved, train_info_dict
 
 

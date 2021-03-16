@@ -50,7 +50,7 @@ def counts_hash(obs):
 
 
 class PseudoCountRewardWrapper(gym.Wrapper):
-    def __init__(self, env, hash_function=counts_hash, count_based_reward_scale=0.2):
+    def __init__(self, env, hash_function=counts_hash, count_based_reward_scale=0.5):
         super(PseudoCountRewardWrapper, self).__init__(env)
         self.hash_function = hash_function
         self.count_based_reward_scale = count_based_reward_scale
@@ -65,7 +65,7 @@ class PseudoCountRewardWrapper(gym.Wrapper):
         intrinsic_reward = self.count_based_reward_scale * observation_uncertainty
         info["intrinsic_reward"] = intrinsic_reward
 
-        self.global_uncertainty = ((self.global_uncertainty * self.step_idx) + observation_uncertainty) / (self.step_idx + 1)
+        self.global_uncertainty = ((self.global_uncertainty * self.step_idx) + observation_uncertainty) / (self.step_idx + 1.0)
         info["global_uncertainty"] = self.global_uncertainty
         self.step_idx += 1
 

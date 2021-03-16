@@ -114,7 +114,7 @@ class SomeTimesBlowDDPGActionSelector:
         self.time_steps = 0
         self.next_time_steps_of_random_blowing_action = int(random.expovariate(self.blowing_action_rate))
 
-    def __call__(self, mu, noises): #default ou_sigma = 0.2
+    def __call__(self, mu, noises, global_uncertainty=1.0): #default ou_sigma = 0.2
         assert isinstance(mu, np.ndarray)
         if self.time_steps == 0:
             print("next_time_steps_of_random_blowing_action: {0}".format(
@@ -123,9 +123,6 @@ class SomeTimesBlowDDPGActionSelector:
 
         self.time_steps += 1
         actions = np.copy(mu)
-
-        if isinstance(noises, list):
-            noises = np.asarray(noises)
 
         if self.time_steps >= self.next_time_steps_of_random_blowing_action:
             actions += np.random.uniform(
@@ -141,8 +138,17 @@ class SomeTimesBlowDDPGActionSelector:
             noises = np.zeros_like(actions)
         else:
             if self.ou_enabled:
-                noises = noises + self.ou_theta * (actions - noises) * self.ou_dt + \
-                         self.ou_sigma * np.sqrt(self.ou_dt) * np.random.normal(size=noises.shape)
+                if isinstance(noises, list):
+                    noises = np.asarray(noises)
+
+                if noises.ndim == 1:
+                    noises = np.expand_dims(noises, axis=-1)
+
+                noises = noises + 10.0 * global_uncertainty * (
+                        self.ou_theta * (actions - noises) * self.ou_dt +
+                        self.ou_sigma * np.sqrt(self.ou_dt) * np.random.normal(size=noises.shape)
+                )
+
                 actions = actions + noises
             else:
                 noises = np.zeros_like(actions)
@@ -157,19 +163,21 @@ class DDPGActionSelector:
         self.ou_dt = ou_dt
         self.ou_sigma = ou_sigma
 
-    def __call__(self, mu, noises):
+    def __call__(self, mu, noises, global_uncertainty=1.0):
         assert isinstance(mu, np.ndarray)
         actions = np.copy(mu)
 
-        if isinstance(noises, list):
-            noises = np.asarray(noises)
+        if self.ou_enabled:
+            if isinstance(noises, list):
+                noises = np.asarray(noises)
 
-        if noises.ndim == 1:
-            noises = np.expand_dims(noises, axis=-1)
+            if noises.ndim == 1:
+                noises = np.expand_dims(noises, axis=-1)
 
-        if self.ou_enabled > 0.0:
-            noises = noises + self.ou_theta * (actions - noises) * self.ou_dt + \
-                     self.ou_sigma * np.sqrt(self.ou_dt) * np.random.normal(size=noises.shape)
+            noises = noises + 10.0 * global_uncertainty * (
+                    self.ou_theta * (actions - noises) * self.ou_dt +
+                    self.ou_sigma * np.sqrt(self.ou_dt) * np.random.normal(size=noises.shape)
+            )
 
             actions = actions + noises
             # print("actions: {0:7.4f}, epsilon: {1:7.4f}, noises: {2:7.4f}".format(

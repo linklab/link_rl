@@ -71,6 +71,7 @@ class AgentDDPG(OffPolicyAgent):
         )
 
         self.last_noise = 0.0
+        self.global_uncertainty = 1.0
 
     def __call__(self, states, noises=None):
         if not noises:
@@ -88,11 +89,11 @@ class AgentDDPG(OffPolicyAgent):
         mu = mu_v.detach().cpu().numpy()
 
         if self.agent_mode == AgentMode.TRAIN:
-            actions, new_noises = self.train_action_selector(mu, noises)
+            actions, new_noises = self.train_action_selector(mu, noises, self.global_uncertainty)
+            self.last_noise = new_noises[0][0]
         else:
             actions, new_noises = self.test_and_play_action_selector(mu, noises)
 
-        self.last_noise = new_noises[0][0]
         #print(actions, self.action_min, self.action_max, "!!!!!!!!!!!!!!!!")
 
         if not (isinstance(self.train_action_selector, SomeTimesBlowDDPGActionSelector) and np.any(new_noises)):
