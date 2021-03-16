@@ -99,8 +99,8 @@ def get_train_and_test_envs():
 def get_early_stopping(agent):
     early_stopping = EarlyStopping(
         patience=params.STOP_PATIENCE_COUNT,
-        evaluation_min_threshold=params.STOP_MEAN_EPISODE_REWARD,
-        verbose=True,
+        evaluation_value_min_threshold=params.TRAIN_STOP_EPISODE_REWARD,
+        evaluation_std_max_threshold=params.TRAIN_STOP_EPISODE_REWARD_STD,
         delta=0.001,
         model_save_dir=MODEL_SAVE_DIR,
         model_save_file_prefix=params.ENVIRONMENT_ID.value,
@@ -150,12 +150,12 @@ def process_episode(
     solved = False
     test_mean_episode_reward = False
 
+    evaluation_msg = None
     if episode % params.EARLY_STOPPING_TEST_EPISODE_PERIOD == 0:
         if params.MODEL_SAVE_MODE in [ModelSaveMode.TRAIN, ModelSaveMode.TEST]:
             if params.MODEL_SAVE_MODE == ModelSaveMode.TRAIN:
                 test_mean_episode_reward = np.mean(train_episode_reward_lst_for_test).item()
                 test_std = np.std(train_episode_reward_lst_for_test).item()
-                train_episode_reward_lst_for_test.clear()
                 test_env_str = colored("TRAIN ENV", "yellow")
             else:
                 test_mean_episode_reward, test_std = agent_model_test(params, test_env, agent)
@@ -165,14 +165,17 @@ def process_episode(
                 "{0:7.2f}\u00B1{1:.2f}".format(test_mean_episode_reward, test_std), "yellow"
             )
 
-            print("* MODEL SAVE & TRAIN STOP TEST for {0} *, EPISODE REWARD ({1} EPISODES): {2}".format(
+            model_save_msg = "* MODEL SAVE & TRAIN STOP TEST for {0} *, EPISODE REWARD ({1} EPISODES): {2}".format(
                 test_env_str, num_tests, mean_std_str
-            ), end="")
+            )
 
-            solved = early_stopping.evaluate(
+            solved, early_stopping_evaluation_msg = early_stopping.evaluate(
                 evaluation_value=test_mean_episode_reward,
+                evaluation_value_std=test_std,
                 episode_done_step=step_idx
             )
+
+            evaluation_msg = model_save_msg + " ---> " + early_stopping_evaluation_msg
         elif params.MODEL_SAVE_MODE == ModelSaveMode.FINAL_ONLY:
             test_mean_episode_reward = None
             solved = False
@@ -191,6 +194,8 @@ def process_episode(
         'last_actions': exp.action,
         "elapsed_time": elapsed_time,
         "last_info": exp.info,
+        "evaluation_msg": evaluation_msg,
+        "solved": solved
     }
 
     if epsilon:
@@ -214,8 +219,11 @@ def last_model_save(agent, step_idx, train_episode_reward_lst_for_stat):
     )
 
 
-def print_performance(params, episode_done_step, done_episode, episode_reward, mean_episode_reward, epsilon,
-                      elapsed_time, last_info, speed, mean_loss, mean_actor_objective, worker_id=None, last_action=None):
+def print_performance(
+        params, episode_done_step, done_episode, episode_reward, mean_episode_reward, epsilon,
+        elapsed_time, last_info, speed, mean_loss, mean_actor_objective, worker_id=None, last_action=None,
+        evaluation_msg=None
+):
 
     if worker_id is not None:
         prefix = "[Worker ID: {0}]".format(worker_id)
@@ -268,4 +276,7 @@ def print_performance(params, episode_done_step, done_episode, episode_reward, m
     if last_action is not None:
         print(", last action {0}".format(last_action), end="")
 
-    print("", flush=True)
+    if evaluation_msg:
+        print("\n", evaluation_msg, flush=True)
+    else:
+        print("", flush=True)

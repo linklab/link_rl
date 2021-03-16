@@ -41,7 +41,7 @@ def play_func(exp_queue, agent):
     solved = False
 
     train_episode_reward_lst_for_stat = deque(maxlen=params.AVG_STEP_SIZE_FOR_TRAIN_LOSS)
-    train_episode_reward_lst_for_test = []
+    train_episode_reward_lst_for_test = deque(maxlen=params.EARLY_STOPPING_TEST_EPISODE_PERIOD)
 
     num_tests = get_num_tests()
 
@@ -140,14 +140,19 @@ def main():
                     speed=train_info_dict["speed"],
                     mean_loss=mean_loss,
                     mean_actor_objective=mean_actor_objective,
-                    last_action=train_info_dict["last_actions"]
+                    last_action=train_info_dict["last_actions"],
+                    evaluation_msg=train_info_dict["evaluation_msg"]
                 )
+
+                if train_info_dict["solved"]:
+                    solved = True
 
                 if params.WANDB:
                     train_info_dict["train mean (critic) loss"] = mean_loss
                     train_info_dict["train mean actor objective"] = mean_actor_objective
+                    del train_info_dict["evaluation_msg"]
+                    del train_info_dict["solved"]
                     wandb.log(train_info_dict)
-
             else:
                 if exp is None:
                     solved = True

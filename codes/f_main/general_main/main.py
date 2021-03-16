@@ -22,7 +22,7 @@ def train_main(params, train_env, test_env):
     solved = False
 
     train_episode_reward_lst_for_stat = deque(maxlen=params.AVG_STEP_SIZE_FOR_TRAIN_LOSS)
-    train_episode_reward_lst_for_test = []
+    train_episode_reward_lst_for_test = deque(maxlen=params.EARLY_STOPPING_TEST_EPISODE_PERIOD)
 
     num_tests = get_num_tests()
 
@@ -74,33 +74,51 @@ def train_main(params, train_env, test_env):
                             speed=train_info_dict["speed"],
                             mean_loss=mean_loss,
                             mean_actor_objective=mean_actor_objective,
-                            last_action=train_info_dict["last_actions"]
+                            last_action=train_info_dict["last_actions"],
+                            evaluation_msg=train_info_dict["evaluation_msg"]
                         )
 
                         if params.WANDB:
                             train_info_dict["train mean (critic) loss"] = mean_loss
                             train_info_dict["train mean actor objective"] = mean_actor_objective
+                            del train_info_dict["evaluation_msg"]
+                            del train_info_dict["solved"]
                             wandb.log(train_info_dict)
 
                 if solved:
                     print("Solved in {0} steps and {1} episodes!".format(step_idx, episode))
                     break
                 else:
-                    if params.RL_ALGORITHM in [RLAlgorithmName.CONTINUOUS_PPO_V0, RLAlgorithmName.DISCRETE_PPO_V0]:
-                        if len(agent.buffer) < params.PPO_TRAJECTORY_SIZE:
-                            continue
+                    if params.RL_ALGORITHM in ON_POLICY_RL_ALGORITHMS:
+                        if params.RL_ALGORITHM in [RLAlgorithmName.CONTINUOUS_PPO_V0, RLAlgorithmName.DISCRETE_PPO_V0]:
+                            if len(agent.buffer) < params.PPO_TRAJECTORY_SIZE:
+                                continue
+                        else:
+                            if len(agent.buffer) < params.BATCH_SIZE:
+                                continue
+
+                        _, last_loss, actor_objective = agent.train(step_idx=step_idx)
+                        loss_dequeue.append(last_loss)
+                        if actor_objective:
+                            actor_objective_dequeue.append(actor_objective)
+
+                        # On-policy는 현재의 정책을 통해 산출된 경험정보만을 활용하여 NN을 업데이트해야 함.
+                        # 따라서, 현재 학습에 사용된 Buffer는 깨끗하게 지워야 함.
+                        agent.buffer.clear()
                     else:
-                        if len(agent.buffer) < params.BATCH_SIZE:
+                        if len(agent.buffer) < params.MIN_REPLAY_SIZE_FOR_TRAIN:
                             continue
 
-                    _, last_loss, actor_objective = agent.train(step_idx=step_idx)
-                    loss_dequeue.append(last_loss)
-                    if actor_objective:
-                        actor_objective_dequeue.append(actor_objective)
+                        _, critic_loss, actor_objective = agent.train(step_idx=step_idx)
 
-                    # On-policy는 현재의 정책을 통해 산출된 경험정보만을 활용하여 NN을 업데이트해야 함.
-                    # 따라서, 현재 학습에 사용된 Buffer는 깨끗하게 지워야 함.
-                    agent.buffer.clear()
+                        loss_dequeue.append(critic_loss)
+
+                        if actor_objective:
+                            actor_objective_dequeue.append(actor_objective)
+
+                        if hasattr(params, "PER_RANK_BASED") and getattr(params, "PER_RANK_BASED"):
+                            if step_idx % 100 < params.TRAIN_STEP_FREQ:
+                                agent.buffer.rebalance()
 
             if params.MODEL_SAVE_MODE == ModelSaveMode.FINAL_ONLY:
                 last_model_save(agent, step_idx, train_episode_reward_lst_for_stat)
@@ -111,7 +129,7 @@ def train_main(params, train_env, test_env):
 
 
 if __name__ == "__main__":
-    assert params.RL_ALGORITHM in ON_POLICY_RL_ALGORITHMS
+    #assert params.RL_ALGORITHM in ON_POLICY_RL_ALGORITHMS
 
     train_env, test_env = get_train_and_test_envs()
 
