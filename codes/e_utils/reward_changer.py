@@ -42,9 +42,9 @@ def counts_hash(obs):
 
     # round(v, 1): (0.2, 1.0, -19.3, 1.0, -0.2, -27.1, 0.5, 0.9, 12.6)
     # round(v, 0): (0, 1, -19, 1, 0, -27, 1, 1, 12)
-    hashed_obs = tuple(map(lambda v: round(v, 0), obs))
+    hashed_obs = tuple(map(lambda v: round(v, 1), obs))
 
-    # print(hashed_obs)
+    # print(hashed_obs[:6])
 
     return hashed_obs[:6]
 
@@ -68,7 +68,7 @@ class PseudoCountRewardWrapper(gym.Wrapper):
         # self.global_uncertainty = ((self.global_uncertainty * self.step_idx) + observation_uncertainty) / (self.step_idx + 1.0)
         self.global_uncertainty = np.sqrt(len(self.counts) / sum(self.counts.values()))
 
-        #print(len(self.counts), sum(self.counts.values()), self.global_uncertainty)
+        # print(len(self.counts), sum(self.counts.values()), self.global_uncertainty)
 
         info["global_uncertainty"] = self.global_uncertainty
         self.step_idx += 1
