@@ -77,23 +77,23 @@ class EarlyStopping:
 
     def evaluate(self, evaluation_value, evaluation_value_std, episode_done_step):
         solved = False
-
+        std_msg = f'{evaluation_value_std} is less than {self.evaluation_std_max_threshold}' if evaluation_value_std < self.evaluation_std_max_threshold else f'{evaluation_value_std} is more than {self.evaluation_std_max_threshold}'
         if episode_done_step < self.evaluation_min_step_idx and self.best_evaluation_value == -1.0e10:
             evaluation_str = colored(
-                f'Current step {episode_done_step} is less than {self.evaluation_min_step_idx}',
+                f'{episode_done_step} is less than {self.evaluation_min_step_idx}', std_msg,
                 "magenta"
             )
             msg = f"{evaluation_str}. No early stopping (and no saving) processed"
         elif evaluation_value < self.evaluation_value_min_threshold and self.best_evaluation_value == -1.0e10:
             evaluation_str = colored(
-                f'Current episode reward {evaluation_value:.2f} is less than {self.evaluation_value_min_threshold}',
+                f'{evaluation_value:.2f} is less than {self.evaluation_value_min_threshold}', std_msg,
                 'blue'
             )
             msg = f"{evaluation_str}. No early stopping (and no saving) processed"
         elif evaluation_value >= self.evaluation_value_min_threshold and evaluation_value_std > self.evaluation_std_max_threshold and self.best_evaluation_value == -1.0e10:
             evaluation_str = colored(
-                f'Current episode reward {evaluation_value:.2f} is more than {self.evaluation_value_min_threshold}. '
-                f'But, std {evaluation_value_std:.1f} is more than {self.evaluation_std_max_threshold}',
+                f'{evaluation_value:.2f} is more than {self.evaluation_value_min_threshold}. '
+                f'But, std {evaluation_value_std:.2f} is more than {self.evaluation_std_max_threshold}',
                 'blue'
             )
             msg = f"{evaluation_str}. No early stopping (and no saving) processed"
