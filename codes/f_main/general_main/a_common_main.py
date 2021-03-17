@@ -115,9 +115,7 @@ def get_early_stopping(agent):
 
 
 def get_num_tests():
-    if params.MODEL_SAVE_MODE == ModelSaveMode.TRAIN:
-        num_tests = params.EARLY_STOPPING_TEST_EPISODE_PERIOD
-    elif params.MODEL_SAVE_MODE == ModelSaveMode.TEST:
+    if params.MODEL_SAVE_MODE in [ModelSaveMode.TRAIN, ModelSaveMode.TEST]:
         num_tests = params.TEST_NUM_EPISODES
     else:
         num_tests = 0
@@ -148,21 +146,23 @@ def process_episode(
     )
 
     solved = False
-    test_mean_episode_reward = False
 
+    test_mean_episode_reward = None
+    test_std_episode_reward = None
     evaluation_msg = None
-    if episode % params.EARLY_STOPPING_TEST_EPISODE_PERIOD == 0:
+
+    if episode % params.TEST_NUM_EPISODES == 0:
         if params.MODEL_SAVE_MODE in [ModelSaveMode.TRAIN, ModelSaveMode.TEST]:
             if params.MODEL_SAVE_MODE == ModelSaveMode.TRAIN:
                 test_mean_episode_reward = np.mean(train_episode_reward_lst_for_test).item()
-                test_std = np.std(train_episode_reward_lst_for_test).item()
+                test_std_episode_reward = np.std(train_episode_reward_lst_for_test).item()
                 test_env_str = colored("TRAIN ENV", "yellow")
             else:
                 test_mean_episode_reward, test_std = agent_model_test(params, test_env, agent)
                 test_env_str = colored("TEST ENV", "yellow")
 
             mean_std_str = colored(
-                "{0:7.2f}\u00B1{1:.2f}".format(test_mean_episode_reward, test_std), "yellow"
+                "{0:7.2f}\u00B1{1:.2f}".format(test_mean_episode_reward, test_std_episode_reward), "yellow"
             )
 
             model_save_msg = "* MODEL SAVE & TRAIN STOP TEST for {0} *, EPISODE REWARD ({1} EPISODES): {2}".format(
@@ -171,7 +171,7 @@ def process_episode(
 
             solved, early_stopping_evaluation_msg = early_stopping.evaluate(
                 evaluation_value=test_mean_episode_reward,
-                evaluation_value_std=test_std,
+                evaluation_value_std=test_std_episode_reward,
                 episode_done_step=step_idx
             )
 
@@ -183,10 +183,11 @@ def process_episode(
             raise ValueError()
 
     train_info_dict = {
-        "train episode reward": current_episode_reward,
-        "train mean_{0} episode reward".format(params.AVG_EPISODE_SIZE_FOR_STAT):
+        "every train episode reward": current_episode_reward,
+        "train mean ({0} episode rewards)".format(params.AVG_EPISODE_SIZE_FOR_STAT):
             np.mean(train_episode_reward_lst_for_stat),
-        'test mean_{0} episode reward'.format(num_tests): test_mean_episode_reward,
+        '** TEST MEAN ({0} episode rewards) **'.format(num_tests): test_mean_episode_reward,
+        '** TEST STD ({0} episode rewards) **'.format(num_tests): test_std_episode_reward,
         "steps/episode": current_episode_step,
         "speed": speed,
         "step_idx": step_idx,
