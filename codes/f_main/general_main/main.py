@@ -29,6 +29,7 @@ def train_main(params, train_env, test_env):
     loss_dequeue = deque(maxlen=params.AVG_STEP_SIZE_FOR_TRAIN_LOSS)
     actor_objective_dequeue = deque(maxlen=params.AVG_STEP_SIZE_FOR_TRAIN_LOSS)
 
+    last_train_step_idx = 0
     with SpeedTracker(params=params) as reward_tracker:
         try:
             while step_idx < params.MAX_GLOBAL_STEP:
@@ -85,40 +86,20 @@ def train_main(params, train_env, test_env):
                             del train_info_dict["solved"]
                             wandb.log(train_info_dict)
 
+                    if params.TRAIN_ONLY_AFTER_EPISODE:
+                        num_trains = int((step_idx - last_train_step_idx)/(2 * params.TRAIN_STEP_FREQ))
+                        # print(step_idx, last_train_step_idx, num_trains)
+                        for _ in range(num_trains):
+                            train(agent, step_idx, loss_dequeue, actor_objective_dequeue)
+                        last_train_step_idx = step_idx
+
                 if solved:
                     print("Solved in {0} steps and {1} episodes!".format(step_idx, episode))
                     break
-                else:
-                    if params.RL_ALGORITHM in ON_POLICY_RL_ALGORITHMS:
-                        if params.RL_ALGORITHM in [RLAlgorithmName.CONTINUOUS_PPO_V0, RLAlgorithmName.DISCRETE_PPO_V0]:
-                            if len(agent.buffer) < params.PPO_TRAJECTORY_SIZE:
-                                continue
-                        else:
-                            if len(agent.buffer) < params.BATCH_SIZE:
-                                continue
 
-                        _, last_loss, actor_objective = agent.train(step_idx=step_idx)
-                        loss_dequeue.append(last_loss)
-                        if actor_objective:
-                            actor_objective_dequeue.append(actor_objective)
-
-                        # On-policy는 현재의 정책을 통해 산출된 경험정보만을 활용하여 NN을 업데이트해야 함.
-                        # 따라서, 현재 학습에 사용된 Buffer는 깨끗하게 지워야 함.
-                        agent.buffer.clear()
-                    else:
-                        if len(agent.buffer) < params.MIN_REPLAY_SIZE_FOR_TRAIN:
-                            continue
-
-                        _, critic_loss, actor_objective = agent.train(step_idx=step_idx)
-
-                        loss_dequeue.append(critic_loss)
-
-                        if actor_objective:
-                            actor_objective_dequeue.append(actor_objective)
-
-                        if hasattr(params, "PER_RANK_BASED") and getattr(params, "PER_RANK_BASED"):
-                            if step_idx % 100 < params.TRAIN_STEP_FREQ:
-                                agent.buffer.rebalance()
+                if not params.TRAIN_ONLY_AFTER_EPISODE:
+                    train(agent, step_idx, loss_dequeue, actor_objective_dequeue)
+                    last_train_step_idx = step_idx
 
             if params.MODEL_SAVE_MODE == ModelSaveMode.FINAL_ONLY:
                 last_model_save(agent, step_idx, train_episode_reward_lst_for_stat)
@@ -128,8 +109,46 @@ def train_main(params, train_env, test_env):
                 train_env.stop()
 
 
+def train(agent, step_idx, loss_dequeue, actor_objective_dequeue):
+    if params.RL_ALGORITHM in ON_POLICY_RL_ALGORITHMS:
+        if params.RL_ALGORITHM in [RLAlgorithmName.CONTINUOUS_PPO_V0, RLAlgorithmName.DISCRETE_PPO_V0]:
+            if len(agent.buffer) < params.PPO_TRAJECTORY_SIZE:
+                return
+        else:
+            if len(agent.buffer) < params.BATCH_SIZE:
+                return
+
+        _, last_loss, actor_objective = agent.train(step_idx=step_idx)
+
+        loss_dequeue.append(last_loss)
+
+        if actor_objective:
+            actor_objective_dequeue.append(actor_objective)
+
+        # On-policy는 현재의 정책을 통해 산출된 경험정보만을 활용하여 NN을 업데이트해야 함.
+        # 따라서, 현재 학습에 사용된 Buffer는 깨끗하게 지워야 함.
+        agent.buffer.clear()
+    else:
+        if len(agent.buffer) < params.MIN_REPLAY_SIZE_FOR_TRAIN:
+            return
+
+        _, last_loss, actor_objective = agent.train(step_idx=step_idx)
+
+        loss_dequeue.append(last_loss)
+
+        if actor_objective:
+            actor_objective_dequeue.append(actor_objective)
+
+        if hasattr(params, "PER_RANK_BASED") and getattr(params, "PER_RANK_BASED"):
+            if step_idx % 100 < params.TRAIN_STEP_FREQ:
+                agent.buffer.rebalance()
+
+
 if __name__ == "__main__":
     #assert params.RL_ALGORITHM in ON_POLICY_RL_ALGORITHMS
+
+    if params.TRAIN_ONLY_AFTER_EPISODE:
+        assert params.NUM_ENVIRONMENTS == 1
 
     train_env, test_env = get_train_and_test_envs()
 
