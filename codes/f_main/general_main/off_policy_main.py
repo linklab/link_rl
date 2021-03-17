@@ -41,7 +41,7 @@ def play_func(exp_queue, agent):
     solved = False
 
     train_episode_reward_lst_for_stat = deque(maxlen=params.AVG_STEP_SIZE_FOR_TRAIN_LOSS)
-    train_episode_reward_lst_for_test = deque(maxlen=params.EARLY_STOPPING_TEST_EPISODE_PERIOD)
+    train_episode_reward_lst_for_test = deque(maxlen=params.TEST_NUM_EPISODES)
 
     num_tests = get_num_tests()
 

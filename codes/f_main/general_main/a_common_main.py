@@ -115,9 +115,7 @@ def get_early_stopping(agent):
 
 
 def get_num_tests():
-    if params.MODEL_SAVE_MODE == ModelSaveMode.TRAIN:
-        num_tests = params.EARLY_STOPPING_TEST_EPISODE_PERIOD
-    elif params.MODEL_SAVE_MODE == ModelSaveMode.TEST:
+    if params.MODEL_SAVE_MODE in [ModelSaveMode.TRAIN, ModelSaveMode.TEST]:
         num_tests = params.TEST_NUM_EPISODES
     else:
         num_tests = 0
@@ -148,10 +146,12 @@ def process_episode(
     )
 
     solved = False
-    test_mean_episode_reward = False
 
+    test_mean_episode_reward = None
+    test_std_episode_reward = None
     evaluation_msg = None
-    if episode % params.EARLY_STOPPING_TEST_EPISODE_PERIOD == 0:
+
+    if episode % params.TEST_NUM_EPISODES == 0:
         if params.MODEL_SAVE_MODE in [ModelSaveMode.TRAIN, ModelSaveMode.TEST]:
             if params.MODEL_SAVE_MODE == ModelSaveMode.TRAIN:
                 test_mean_episode_reward = np.mean(train_episode_reward_lst_for_test).item()
