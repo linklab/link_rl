@@ -87,8 +87,10 @@ def train_main(params, train_env, test_env):
                             wandb.log(train_info_dict)
 
                     if params.TRAIN_ONLY_AFTER_EPISODE:
-                        num_trains = int((step_idx - last_train_step_idx)/(2 * params.TRAIN_STEP_FREQ))
+                        # num_trains = int((step_idx - last_train_step_idx)/(2 * params.TRAIN_STEP_FREQ))
                         # print(step_idx, last_train_step_idx, num_trains)
+                        num_trains = 100
+
                         for _ in range(num_trains):
                             train(agent, step_idx, loss_dequeue, actor_objective_dequeue)
                         last_train_step_idx = step_idx
@@ -153,4 +155,3 @@ if __name__ == "__main__":
     train_env, test_env = get_train_and_test_envs()
 
     train_main(params, train_env, test_env)
-
