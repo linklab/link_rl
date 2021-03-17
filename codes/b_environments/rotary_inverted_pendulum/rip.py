@@ -251,6 +251,9 @@ class RotaryInvertedPendulumEnv(gym.Env):
         else:
             raise ValueError()
 
+        # print("ENV RESET")
+        # print(state)
+
         self.too_much_rotate = False
 
         self.count_continuous_uprights = 0
@@ -314,6 +317,7 @@ class RotaryInvertedPendulumEnv(gym.Env):
         if self.pendulum_type in [EnvironmentName.REAL_DEVICE_RIP, EnvironmentName.REAL_DEVICE_DOUBLE_RIP]:
             current_time = time.perf_counter()
             step_time = current_time - self.last_time
+            # print(step_time)
             if step_time > self.unit_time:
                 self.over_unit_time += 1
             while True:
@@ -629,7 +633,7 @@ class RotaryInvertedPendulumEnv(gym.Env):
         self.episode_pendulum_velocity_reward_list.append(energy_penalty)
         self.episode_action_reward_list.append(0.0)
 
-        reward = 1.5 * position_reward + energy_penalty
+        reward = position_reward + energy_penalty
         # print(
         #     "position_reward: {0:3.4f}".format(position_reward),
         #     "energy_penalty: {0:3.4f}".format(energy_penalty),
