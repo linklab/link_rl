@@ -183,11 +183,11 @@ def process_episode(
             raise ValueError()
 
     train_info_dict = {
-        "train episode reward": current_episode_reward,
-        "train mean_{0} episode reward".format(params.AVG_EPISODE_SIZE_FOR_STAT):
+        "every train episode reward": current_episode_reward,
+        "train mean ({0} episode rewards)".format(params.AVG_EPISODE_SIZE_FOR_STAT):
             np.mean(train_episode_reward_lst_for_stat),
-        'test mean_{0} episode reward'.format(num_tests): test_mean_episode_reward,
-        'test std_{0} episode reward'.format(num_tests): test_std_episode_reward,
+        '** TEST MEAN ({0} episode rewards) **'.format(num_tests): test_mean_episode_reward,
+        '** TEST STD ({0} episode rewards) **'.format(num_tests): test_std_episode_reward,
         "steps/episode": current_episode_step,
         "speed": speed,
         "step_idx": step_idx,
