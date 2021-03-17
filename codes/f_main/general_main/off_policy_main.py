@@ -130,9 +130,9 @@ def main():
                     params=params,
                     episode_done_step=train_info_dict["step_idx"],
                     done_episode=train_info_dict["episode"],
-                    episode_reward=train_info_dict["train episode reward"],
+                    episode_reward=train_info_dict["every train episode reward"],
                     mean_episode_reward=train_info_dict[
-                        "train mean_{0} episode reward".format(params.AVG_EPISODE_SIZE_FOR_STAT)
+                        "train mean ({0} episode rewards)".format(params.AVG_EPISODE_SIZE_FOR_STAT)
                     ],
                     epsilon=train_info_dict["epsilon"] if "epsilon" in train_info_dict else None,
                     elapsed_time=train_info_dict["elapsed_time"],
