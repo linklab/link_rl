@@ -427,8 +427,13 @@ class RotaryInvertedPendulumEnv(gym.Env):
             EnvironmentName.PENDULUM_MATLAB_DOUBLE_RIP_V0, EnvironmentName.REAL_DEVICE_DOUBLE_RIP
         ]:
             self.update_current_state_for_double_rip(adjusted_pendulum_1_radian, adjusted_pendulum_2_radian)
-            reward = self.get_reward_for_double_rip_1()
-            # reward = self.get_reward_for_double_rip_2()
+
+            if self.params.TYPE_OF_REWARD == "current_version":
+                reward = self.get_reward_for_double_rip_1()
+            elif self.params.TYPE_OF_REWARD == "old_version":
+                reward = self.get_reward_for_double_rip_2()
+            else:
+                raise ValueError()
             # print("REWARD :", reward)
         else:
             raise ValueError()
