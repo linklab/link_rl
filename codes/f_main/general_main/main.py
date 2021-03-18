@@ -29,7 +29,6 @@ def train_main(params, train_env, test_env):
     loss_dequeue = deque(maxlen=params.AVG_STEP_SIZE_FOR_TRAIN_LOSS)
     actor_objective_dequeue = deque(maxlen=params.AVG_STEP_SIZE_FOR_TRAIN_LOSS)
 
-    last_train_step_idx = 0
     with SpeedTracker(params=params) as reward_tracker:
         try:
             while step_idx < params.MAX_GLOBAL_STEP:
@@ -89,11 +88,10 @@ def train_main(params, train_env, test_env):
                     if params.TRAIN_ONLY_AFTER_EPISODE:
                         # num_trains = int((step_idx - last_train_step_idx)/(2 * params.TRAIN_STEP_FREQ))
                         # print(step_idx, last_train_step_idx, num_trains)
-                        num_trains = 100
-
-                        for _ in range(num_trains):
+                        for _ in range(params.NUM_TRAIN_ONLY_AFTER_EPISODE):
                             train(agent, step_idx, loss_dequeue, actor_objective_dequeue)
-                        last_train_step_idx = step_idx
+                        if params.RL_ALGORITHM in [RLAlgorithmName.DDPG_V0]:
+                            agent.target_agent.alpha_sync(alpha=0.5) #(1 - 0.001)
 
                 if solved:
                     print("Solved in {0} steps and {1} episodes!".format(step_idx, episode))
@@ -101,7 +99,6 @@ def train_main(params, train_env, test_env):
 
                 if not params.TRAIN_ONLY_AFTER_EPISODE:
                     train(agent, step_idx, loss_dequeue, actor_objective_dequeue)
-                    last_train_step_idx = step_idx
 
             if params.MODEL_SAVE_MODE == ModelSaveMode.FINAL_ONLY:
                 last_model_save(agent, step_idx, train_episode_reward_lst_for_stat)
