@@ -165,8 +165,8 @@ class AgentDDPG(OffPolicyAgent):
         # loss_critic_v.backward()
         # self.base_optimizer.step()
 
-
-        self.target_agent.alpha_sync(alpha=1 - self.params.TAU) #(1 - 0.001)
+        if not self.params.TRAIN_ONLY_AFTER_EPISODE:
+            self.target_agent.alpha_sync(alpha=1 - self.params.TAU) #(1 - 0.001)
 
         gradients = self.model.get_gradients_for_current_parameters()
 
