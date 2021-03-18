@@ -427,7 +427,13 @@ class RotaryInvertedPendulumEnv(gym.Env):
             EnvironmentName.PENDULUM_MATLAB_DOUBLE_RIP_V0, EnvironmentName.REAL_DEVICE_DOUBLE_RIP
         ]:
             self.update_current_state_for_double_rip(adjusted_pendulum_1_radian, adjusted_pendulum_2_radian)
-            reward = self.get_reward_for_double_rip()
+
+            if self.params.TYPE_OF_REWARD == "current_version":
+                reward = self.get_reward_for_double_rip_1()
+            elif self.params.TYPE_OF_REWARD == "old_version":
+                reward = self.get_reward_for_double_rip_2()
+            else:
+                raise ValueError()
             # print("REWARD :", reward)
         else:
             raise ValueError()
@@ -504,115 +510,7 @@ class RotaryInvertedPendulumEnv(gym.Env):
 
         return reward
 
-    def get_reward_for_double_rip(self):
-        # #adjusted 1
-        # if pendulum_1_position < 0:
-        #     if (abs(pendulum_1_position) % (2.0 * math.pi)) > math.pi:
-        #         #plus
-        #         # (pendulum_1_position % (-2.0 * math.pi)): -2PI ~ -PI
-        #         adjusted_pendulum_1_position = 2.0 * math.pi + (pendulum_1_position % (-2.0 * math.pi))
-        #         assert 0 <= adjusted_pendulum_1_position < math.pi
-        #     else:
-        #         #minus
-        #         adjusted_pendulum_1_position = pendulum_1_position % (-2.0 * math.pi)
-        #         assert -math.pi <= adjusted_pendulum_1_position < 0
-        # else:
-        #     if (abs(pendulum_1_position) % (2.0 * math.pi)) > math.pi:
-        #         #minus
-        #         adjusted_pendulum_1_position = -2.0 * math.pi + (pendulum_1_position % (2.0 * math.pi))
-        #         assert -math.pi <= adjusted_pendulum_1_position < 0
-        #     else:
-        #         #plus
-        #         adjusted_pendulum_1_position = pendulum_1_position % (2.0 * math.pi)
-        #         assert 0 <= adjusted_pendulum_1_position < math.pi
-        #
-        # #adjusted 2
-        # if pendulum_2_position < 0:
-        #     if (abs(pendulum_2_position) % (2.0 * math.pi)) > math.pi:
-        #         # plus
-        #         adjusted_pendulum_2_position = 2.0 * math.pi + (pendulum_2_position % (-2.0 * math.pi))
-        #     else:
-        #         # minus
-        #         adjusted_pendulum_2_position = pendulum_2_position % (-2.0 * math.pi)
-        # else:
-        #     if (abs(pendulum_2_position) % (2.0 * math.pi)) > math.pi:
-        #         # minus
-        #         adjusted_pendulum_2_position = -2.0 * math.pi + (pendulum_2_position % (2.0 * math.pi))
-        #     else:
-        #         # plus
-        #         adjusted_pendulum_2_position = pendulum_2_position % (2.0 * math.pi)
-        #
-        # #create reward 2 pendulum
-        # if pendulum_1_position < 0:
-        #     if abs(pendulum_1_position % (2.0 * math.pi)) > math.pi:
-        #         if pendulum_2_position < 0:
-        #             if abs(pendulum_2_position % (2.0 * math.pi)) > math.pi:
-        #                 reward_pendulum_2 = abs(adjusted_pendulum_1_position + adjusted_pendulum_2_position)
-        #                 #plus
-        #             else:
-        #                 reward_pendulum_2 = abs(adjusted_pendulum_2_position + adjusted_pendulum_1_position)
-        #                 #minus
-        #         else:
-        #             if abs(pendulum_2_position % (2.0 * math.pi)) > math.pi:
-        #                 reward_pendulum_2 = abs(adjusted_pendulum_2_position + adjusted_pendulum_1_position)
-        #                 #minus
-        #             else:
-        #                 reward_pendulum_2 = abs(adjusted_pendulum_1_position + adjusted_pendulum_2_position)
-        #                 #plus
-        #         # plus
-        #     else:
-        #         if pendulum_2_position < 0:
-        #             if abs(pendulum_2_position % (2.0 * math.pi)) > math.pi:
-        #                 reward_pendulum_2 = abs(adjusted_pendulum_2_position + adjusted_pendulum_1_position)
-        #             else:
-        #                 reward_pendulum_2 = abs(adjusted_pendulum_1_position + adjusted_pendulum_2_position)
-        #         else:
-        #             if abs(pendulum_2_position % (2.0 * math.pi)) > math.pi:
-        #                 reward_pendulum_2 = abs(adjusted_pendulum_1_position + adjusted_pendulum_2_position)
-        #             else:
-        #                 reward_pendulum_2 = abs(adjusted_pendulum_2_position + adjusted_pendulum_1_position)
-        #         # minus
-        # else:
-        #     if abs(pendulum_1_position % (2.0 * math.pi)) > math.pi:
-        #         if pendulum_2_position < 0:
-        #             if abs(pendulum_2_position % (2.0 * math.pi)) > math.pi:
-        #                 reward_pendulum_2 = abs(adjusted_pendulum_2_position + adjusted_pendulum_1_position)
-        #             else:
-        #                 reward_pendulum_2 = abs(adjusted_pendulum_1_position + adjusted_pendulum_2_position)
-        #         else:
-        #             if abs(pendulum_2_position % (2.0 * math.pi)) > math.pi:
-        #                 reward_pendulum_2 = abs(adjusted_pendulum_1_position + adjusted_pendulum_2_position)
-        #             else:
-        #                 reward_pendulum_2 = abs(adjusted_pendulum_2_position + adjusted_pendulum_1_position)
-        #         # minus
-        #     else:
-        #         if pendulum_2_position < 0:
-        #             if abs(pendulum_2_position % (2.0 * math.pi)) > math.pi:
-        #                 reward_pendulum_2 = abs(adjusted_pendulum_1_position + adjusted_pendulum_2_position)
-        #                 # plus
-        #
-        #             else:
-        #                 reward_pendulum_2 = abs(adjusted_pendulum_2_position + adjusted_pendulum_1_position)
-        #                 # minus
-        #         else:
-        #             if abs(pendulum_2_position % (2.0 * math.pi)) > math.pi:
-        #                 reward_pendulum_2 = abs(adjusted_pendulum_2_position + adjusted_pendulum_1_position)
-        #                 # minus
-        #             else:
-        #                 reward_pendulum_2 = abs(adjusted_pendulum_1_position + adjusted_pendulum_2_position)
-        #
-        # if reward_pendulum_2 > math.pi:
-        #     reward_pendulum_2 = (2.0 * math.pi) - reward_pendulum_2
-        #
-        # energy_penalty = -1.0 * (abs(self.pendulum_1_velocity) + abs(self.pendulum_2_velocity) + 1.5 * abs(self.motor_velocity)) / 150
-        #
-        # if abs(adjusted_pendulum_1_position) < math.pi * 0.5:
-        #     position_reward = 0
-        # else:
-        #     if abs(reward_pendulum_2) > abs(adjusted_pendulum_1_position):
-        #         position_reward = abs(reward_pendulum_2) + abs(adjusted_pendulum_1_position)
-        #     else:
-        #         position_reward = 0
+    def get_reward_for_double_rip_1(self):
 
         terminal, position_score = self._terminal()
         # position_reward = 0. if not terminal else position_score
@@ -627,6 +525,141 @@ class RotaryInvertedPendulumEnv(gym.Env):
             alpha_pendulum_1_velocity * abs(self.pendulum_1_velocity) +
             alpha_pendulum_2_velocity * abs(self.pendulum_2_velocity) +
             alpha_motor_velocity * abs(self.motor_velocity)
+        ) / energy_penalty_denominator
+
+        self.episode_position_reward_list.append(position_reward)
+        self.episode_pendulum_velocity_reward_list.append(energy_penalty)
+        self.episode_action_reward_list.append(0.0)
+
+        reward = position_reward + energy_penalty
+        # print(
+        #     "position_reward: {0:3.4f}".format(position_reward),
+        #     "energy_penalty: {0:3.4f}".format(energy_penalty),
+        #     "reward : {0:3.4f}".format(reward)
+        # )
+        reward = max(0.0, reward)
+
+        return reward
+
+    def get_reward_for_double_rip_2(self):
+        #adjusted 1
+        if self.pendulum_1_position < 0:
+            if (abs(self.pendulum_1_position) % (2.0 * math.pi)) > math.pi:
+                #plus
+                # (pendulum_1_position % (-2.0 * math.pi)): -2PI ~ -PI
+                adjusted_pendulum_1_position = 2.0 * math.pi + (self.pendulum_1_position % (-2.0 * math.pi))
+                assert 0 <= adjusted_pendulum_1_position < math.pi
+            else:
+                #minus
+                adjusted_pendulum_1_position = self.pendulum_1_position % (-2.0 * math.pi)
+                assert -math.pi <= adjusted_pendulum_1_position < 0
+        else:
+            if (abs(self.pendulum_1_position) % (2.0 * math.pi)) > math.pi:
+                #minus
+                adjusted_pendulum_1_position = -2.0 * math.pi + (self.pendulum_1_position % (2.0 * math.pi))
+                assert -math.pi <= adjusted_pendulum_1_position < 0
+            else:
+                #plus
+                adjusted_pendulum_1_position = self.pendulum_1_position % (2.0 * math.pi)
+                assert 0 <= adjusted_pendulum_1_position < math.pi
+
+        #adjusted 2
+        if self.pendulum_2_position < 0:
+            if (abs(self.pendulum_2_position) % (2.0 * math.pi)) > math.pi:
+                # plus
+                adjusted_pendulum_2_position = 2.0 * math.pi + (self.pendulum_2_position % (-2.0 * math.pi))
+            else:
+                # minus
+                adjusted_pendulum_2_position = self.pendulum_2_position % (-2.0 * math.pi)
+        else:
+            if (abs(self.pendulum_2_position) % (2.0 * math.pi)) > math.pi:
+                # minus
+                adjusted_pendulum_2_position = -2.0 * math.pi + (self.pendulum_2_position % (2.0 * math.pi))
+            else:
+                # plus
+                adjusted_pendulum_2_position = self.pendulum_2_position % (2.0 * math.pi)
+
+        #create reward 2 pendulum
+        if self.pendulum_1_position < 0:
+            if abs(self.pendulum_1_position % (2.0 * math.pi)) > math.pi:
+                if self.pendulum_2_position < 0:
+                    if abs(self.pendulum_2_position % (2.0 * math.pi)) > math.pi:
+                        reward_pendulum_2 = abs(adjusted_pendulum_1_position + adjusted_pendulum_2_position)
+                        #plus
+                    else:
+                        reward_pendulum_2 = abs(adjusted_pendulum_2_position + adjusted_pendulum_1_position)
+                        #minus
+                else:
+                    if abs(self.pendulum_2_position % (2.0 * math.pi)) > math.pi:
+                        reward_pendulum_2 = abs(adjusted_pendulum_2_position + adjusted_pendulum_1_position)
+                        #minus
+                    else:
+                        reward_pendulum_2 = abs(adjusted_pendulum_1_position + adjusted_pendulum_2_position)
+                        #plus
+                # plus
+            else:
+                if self.pendulum_2_position < 0:
+                    if abs(self.pendulum_2_position % (2.0 * math.pi)) > math.pi:
+                        reward_pendulum_2 = abs(adjusted_pendulum_2_position + adjusted_pendulum_1_position)
+                    else:
+                        reward_pendulum_2 = abs(adjusted_pendulum_1_position + adjusted_pendulum_2_position)
+                else:
+                    if abs(self.pendulum_2_position % (2.0 * math.pi)) > math.pi:
+                        reward_pendulum_2 = abs(adjusted_pendulum_1_position + adjusted_pendulum_2_position)
+                    else:
+                        reward_pendulum_2 = abs(adjusted_pendulum_2_position + adjusted_pendulum_1_position)
+                # minus
+        else:
+            if abs(self.pendulum_1_position % (2.0 * math.pi)) > math.pi:
+                if self.pendulum_2_position < 0:
+                    if abs(self.pendulum_2_position % (2.0 * math.pi)) > math.pi:
+                        reward_pendulum_2 = abs(adjusted_pendulum_2_position + adjusted_pendulum_1_position)
+                    else:
+                        reward_pendulum_2 = abs(adjusted_pendulum_1_position + adjusted_pendulum_2_position)
+                else:
+                    if abs(self.pendulum_2_position % (2.0 * math.pi)) > math.pi:
+                        reward_pendulum_2 = abs(adjusted_pendulum_1_position + adjusted_pendulum_2_position)
+                    else:
+                        reward_pendulum_2 = abs(adjusted_pendulum_2_position + adjusted_pendulum_1_position)
+                # minus
+            else:
+                if self.pendulum_2_position < 0:
+                    if abs(self.pendulum_2_position % (2.0 * math.pi)) > math.pi:
+                        reward_pendulum_2 = abs(adjusted_pendulum_1_position + adjusted_pendulum_2_position)
+                        # plus
+
+                    else:
+                        reward_pendulum_2 = abs(adjusted_pendulum_2_position + adjusted_pendulum_1_position)
+                        # minus
+                else:
+                    if abs(self.pendulum_2_position % (2.0 * math.pi)) > math.pi:
+                        reward_pendulum_2 = abs(adjusted_pendulum_2_position + adjusted_pendulum_1_position)
+                        # minus
+                    else:
+                        reward_pendulum_2 = abs(adjusted_pendulum_1_position + adjusted_pendulum_2_position)
+
+        if reward_pendulum_2 > math.pi:
+            reward_pendulum_2 = (2.0 * math.pi) - reward_pendulum_2
+
+        # if abs(adjusted_pendulum_1_position) < math.pi * 0.5:
+        #     position_reward = 0
+        # else:
+        #     if abs(reward_pendulum_2) > abs(adjusted_pendulum_1_position):
+        #         position_reward = abs(reward_pendulum_2) + abs(adjusted_pendulum_1_position)
+        #     else:
+        #         position_reward = 0
+
+        position_reward = abs(reward_pendulum_2) + abs(adjusted_pendulum_1_position)
+
+        alpha_pendulum_1_velocity = 0.3
+        alpha_pendulum_2_velocity = 0.3
+        alpha_motor_velocity = 0.5
+        energy_penalty_denominator = 150
+
+        energy_penalty = -1.0 * (
+                alpha_pendulum_1_velocity * abs(self.pendulum_1_velocity) +
+                alpha_pendulum_2_velocity * abs(self.pendulum_2_velocity) +
+                alpha_motor_velocity * abs(self.motor_velocity)
         ) / energy_penalty_denominator
 
         self.episode_position_reward_list.append(position_reward)
