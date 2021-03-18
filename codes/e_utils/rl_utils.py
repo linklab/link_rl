@@ -61,10 +61,12 @@ def get_environment(params):
         def _make():
             env = get_single_environment(params=params, mode=AgentMode.TRAIN)
             if params.COUNT_BASED_EXPLORATION:
+                assert params.COUNT_BASED_FILTER and len(params.COUNT_BASED_FILTER) == env.observation_space.shape[0]
                 env = PseudoCountRewardWrapper(
                     env=env,
                     count_based_reward_scale=params.COUNT_BASED_REWARD_SCALE,
-                    precision=params.COUNT_BASED_PRECISION
+                    precision=params.COUNT_BASED_PRECISION,
+                    params=params
                 )
             return env
 
