@@ -61,7 +61,8 @@ def get_environment(params):
         def _make():
             env = get_single_environment(params=params, mode=AgentMode.TRAIN)
             if params.COUNT_BASED_EXPLORATION:
-                assert params.COUNT_BASED_FILTER and len(params.COUNT_BASED_FILTER) == env.observation_space.shape[0]
+                assert params.COUNT_BASED_FILTER and len(params.COUNT_BASED_FILTER) == env.observation_space.shape[0], \
+                    (len(params.COUNT_BASED_FILTER), env.observation_space.shape[0])
                 env = PseudoCountRewardWrapper(
                     env=env,
                     count_based_reward_scale=params.COUNT_BASED_REWARD_SCALE,
@@ -206,6 +207,7 @@ def get_single_environment(params=None, mode=AgentMode.TRAIN):
 def get_environment_input_output_info(env):
     if isinstance(env, VectorEnv):
         input_shape = env.single_observation_space.shape
+        action_shape = env.single_action_space.shape
         if isinstance(env.single_action_space, Discrete):
             num_outputs = env.single_action_space.n
             action_min, action_max = None, None
@@ -214,9 +216,10 @@ def get_environment_input_output_info(env):
             action_min = env.single_action_space.low[0]
             action_max = env.single_action_space.high[0]
         else:
-            num_outputs, action_min, action_max = None, None, None
+            num_outputs, action_shape, action_min, action_max = None, None, None, None
     elif isinstance(env, Env):
         input_shape = env.observation_space.shape
+        action_shape = env.action_space.shape
         if isinstance(env.action_space, Discrete):
             num_outputs = env.action_space.n
             action_min, action_max = None, None
@@ -225,16 +228,17 @@ def get_environment_input_output_info(env):
             action_min = env.action_space.low[0]
             action_max = env.action_space.high[0]
         else:
-            num_outputs, action_min, action_max = None, None, None
+            num_outputs, action_shape, action_min, action_max = None, None, None, None
     else:
         raise ValueError()
 
     if action_min and action_max:
-        print(f"input_shape: {input_shape}, num_outputs: {num_outputs}, action_min: {action_min}, action_max: {action_max}")
+        print(f"input_shape: {input_shape}, action_shape: {action_shape}, "
+              f"num_outputs: {num_outputs}, action_min: {action_min}, action_max: {action_max}")
     else:
-        print(f"input_shape: {input_shape}, num_outputs: {num_outputs}")
+        print(f"input_shape: {input_shape}, action_shape: {action_shape}, num_outputs: {num_outputs}")
 
-    return input_shape, num_outputs, action_min, action_max
+    return input_shape, action_shape, num_outputs, action_min, action_max
 
 
 def get_rl_model(worker_id, input_shape=None, num_outputs=None, params=None, device=None):
@@ -292,60 +296,60 @@ def get_rl_model(worker_id, input_shape=None, num_outputs=None, params=None, dev
     return model
 
 
-def get_rl_agent(input_shape, num_outputs, action_min, action_max, worker_id, params, device="cpu"):
+def get_rl_agent(input_shape, action_shape, num_outputs, action_min, action_max, worker_id, params, device="cpu"):
     if params.RL_ALGORITHM == RLAlgorithmName.DDPG_V0:
         agent = AgentDDPG(
-            worker_id=worker_id, input_shape=input_shape, num_outputs=num_outputs,
+            worker_id=worker_id, input_shape=input_shape, action_shape=action_shape, num_outputs=num_outputs,
             action_min=action_min, action_max=action_max, params=params, device=device
         )
     elif params.RL_ALGORITHM == RLAlgorithmName.TD3_V0:
         agent = AgentTD3(
-            worker_id=worker_id, input_shape=input_shape, num_outputs=num_outputs,
+            worker_id=worker_id, input_shape=input_shape, action_shape=action_shape, num_outputs=num_outputs,
             action_min=action_min, action_max=action_max, params=params, device=device
         )
     elif params.RL_ALGORITHM == RLAlgorithmName.DQN_V0:
         agent = AgentDQN(
-            worker_id=worker_id, input_shape=input_shape, num_outputs=num_outputs,
+            worker_id=worker_id, input_shape=input_shape, action_shape=action_shape, num_outputs=num_outputs,
             params=params, device=device
         )
     elif params.RL_ALGORITHM == RLAlgorithmName.SAC_V0:
         agent = AgentSAC(
-            input_shape=input_shape, num_outputs=num_outputs, worker_id=worker_id,
+            input_shape=input_shape, action_shape=action_shape, num_outputs=num_outputs, worker_id=worker_id,
             action_min=action_min, action_max=action_max, params=params, device=device
         )
     elif params.RL_ALGORITHM == RLAlgorithmName.CONTINUOUS_A2C_V0:
         agent = AgentContinuousA2C(
-            worker_id=worker_id, input_shape=input_shape, num_outputs=num_outputs,
+            worker_id=worker_id, input_shape=input_shape, action_shape=action_shape, num_outputs=num_outputs,
             action_min=action_min, action_max=action_max, params=params, device=device
         )
     elif params.RL_ALGORITHM == RLAlgorithmName.DISCRETE_A2C_V0:
         agent = AgentDiscreteA2C(
-            worker_id=worker_id, input_shape=input_shape, num_outputs=num_outputs,
+            worker_id=worker_id, input_shape=input_shape, action_shape=action_shape, num_outputs=num_outputs,
             params=params, device=device
         )
     elif params.RL_ALGORITHM == RLAlgorithmName.CONTINUOUS_PPO_V0:
         agent = AgentContinuousPPO(
-            worker_id=worker_id, input_shape=input_shape, num_outputs=num_outputs,
+            worker_id=worker_id, input_shape=input_shape, action_shape=action_shape, num_outputs=num_outputs,
             action_min=action_min, action_max=action_max, params=params, device=device
         )
     elif params.RL_ALGORITHM == RLAlgorithmName.DISCRETE_PPO_V0:
         agent = AgentDiscretePPO(
-            worker_id=worker_id, input_shape=input_shape, num_outputs=num_outputs,
+            worker_id=worker_id, input_shape=input_shape, action_shape=action_shape, num_outputs=num_outputs,
             params=params, device=device
         )
     elif params.RL_ALGORITHM == RLAlgorithmName.EVOLUTION_STRATEGY:
         agent = AgentEMAES(
-            worker_id=worker_id, input_shape=input_shape, num_outputs=num_outputs,
+            worker_id=worker_id, input_shape=input_shape, action_shape=action_shape, num_outputs=num_outputs,
             params=params, device=device
         )
     elif params.RL_ALGORITHM == RLAlgorithmName.GENETIC_ALGORITHM:
         agent = AgentGA(
-            worker_id=worker_id, input_shape=input_shape, num_outputs=num_outputs,
+            worker_id=worker_id, input_shape=input_shape, action_shape=action_shape, num_outputs=num_outputs,
             params=params, device=device
         )
     elif params.RL_ALGORITHM == RLAlgorithmName.MULTI_GENETIC_ALGORITHM:
         agent = AgentMultiGA(
-            worker_id=worker_id, input_shape=input_shape, num_outputs=num_outputs,
+            worker_id=worker_id, input_shape=input_shape, action_shape=action_shape, num_outputs=num_outputs,
             params=params, device=device
         )
     else:

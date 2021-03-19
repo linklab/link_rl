@@ -33,7 +33,7 @@ my_logger = get_logger("openai_pendulum_ddpg")
 
 
 def play_main(params, env):
-    input_shape, num_outputs, action_min, action_max = get_environment_input_output_info(env)
+    input_shape, action_shape, num_outputs, action_min, action_max = get_environment_input_output_info(env)
     agent = rl_utils.get_rl_agent(
         input_shape, num_outputs, action_min, action_max, worker_id=-1, params=params, device=device
     )

@@ -171,8 +171,9 @@ class DDPGActionSelector:
             if isinstance(noises, list):
                 noises = np.asarray(noises)
 
-            if noises.ndim == 1:
-                noises = np.expand_dims(noises, axis=-1)
+            # print(noises.shape, "#####")
+            # if noises.ndim == 1:
+            #     noises = np.expand_dims(noises, axis=-1)
 
             noises = noises + global_uncertainty * (
                     self.ou_theta * (actions - noises) * self.ou_dt +

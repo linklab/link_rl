@@ -12,8 +12,8 @@ class OnPolicyAgent(BaseAgent):
     """
     Abstract Agent interface
     """
-    def __init__(self, worker_id, params, device):
-        super(OnPolicyAgent, self).__init__(worker_id, params, device)
+    def __init__(self, worker_id, params, action_shape, device):
+        super(OnPolicyAgent, self).__init__(worker_id, params, action_shape, device)
         self.model = None
         self.train_action_selector = None
         self.test_and_play_action_selector = None

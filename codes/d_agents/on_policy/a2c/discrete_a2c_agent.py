@@ -12,9 +12,9 @@ class AgentDiscreteA2C(AgentA2C):
     """
     """
     def __init__(
-            self, worker_id, input_shape, num_outputs, params, device
+            self, worker_id, input_shape, action_shape, num_outputs, params, device
     ):
-        super(AgentDiscreteA2C, self).__init__(worker_id, input_shape, num_outputs, params, device)
+        super(AgentDiscreteA2C, self).__init__(worker_id, input_shape, action_shape, num_outputs, params, device)
 
         self.__name__ = "AgentDiscreteA2C"
         self.train_action_selector = DiscreteCategoricalActionSelector()

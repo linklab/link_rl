@@ -13,12 +13,10 @@ from codes.e_utils.names import DeepLearningModelName, AgentMode
 class AgentPPO(OnPolicyAgent):
     """
     """
-    def __init__(
-            self, worker_id, params, device
-    ):
+    def __init__(self, worker_id, params, action_shape, device):
         assert params.N_STEP == 1  # GAE will consider various N_STEPs
 
-        super(AgentPPO, self).__init__(worker_id=worker_id, params=params, device=device)
+        super(AgentPPO, self).__init__(worker_id=worker_id, params=params, action_shape=action_shape, device=device)
 
         self.train_action_selector = None
         self.test_and_play_action_selector = None

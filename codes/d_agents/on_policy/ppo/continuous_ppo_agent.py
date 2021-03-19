@@ -17,14 +17,16 @@ class AgentContinuousPPO(AgentPPO):
     """
     """
     def __init__(
-            self, worker_id, input_shape, num_outputs, action_min, action_max, params, device
+            self, worker_id, input_shape, action_shape, num_outputs, action_min, action_max, params, device
     ):
         assert params.DEEP_LEARNING_MODEL in [
             DeepLearningModelName.STOCHASTIC_CONTINUOUS_ACTOR_CRITIC_MLP,
             DeepLearningModelName.STOCHASTIC_CONTINUOUS_ACTOR_CRITIC_CNN
         ]
 
-        super(AgentContinuousPPO, self).__init__(worker_id=worker_id, params=params, device=device)
+        super(AgentContinuousPPO, self).__init__(
+            worker_id=worker_id, params=params, action_shape=action_shape, device=device
+        )
         self.__name__ = "AgentContinuousPPO"
 
         self.train_action_selector = ContinuousNormalActionSelector()

@@ -15,10 +15,8 @@ from codes.e_utils.names import DeepLearningModelName, AgentMode
 class AgentA2C(OnPolicyAgent):
     """
     """
-    def __init__(
-            self, worker_id, input_shape, num_outputs, params, device="cpu"
-    ):
-        super(AgentA2C, self).__init__(worker_id, params, device)
+    def __init__(self, worker_id, input_shape, action_shape, num_outputs, params, device):
+        super(AgentA2C, self).__init__(worker_id, params, action_shape, device)
         self.train_action_selector = None
         self.test_and_play_action_selector = None
         self.model = None

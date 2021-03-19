@@ -15,14 +15,16 @@ class AgentDiscretePPO(AgentPPO):
     """
     """
     def __init__(
-            self, worker_id, input_shape, num_outputs, params, device
+            self, worker_id, input_shape, action_shape, num_outputs, params, device
     ):
         assert params.DEEP_LEARNING_MODEL in [
             DeepLearningModelName.STOCHASTIC_DISCRETE_ACTOR_CRITIC_MLP,
             DeepLearningModelName.STOCHASTIC_DISCRETE_ACTOR_CRITIC_CNN,
         ]
 
-        super(AgentDiscretePPO, self).__init__(worker_id=worker_id, params=params, device=device)
+        super(AgentDiscretePPO, self).__init__(
+            worker_id=worker_id, params=params, action_shape=action_shape, device=device
+        )
         self.__name__ = "AgentDiscretePPO"
 
         self.train_action_selector = DiscreteCategoricalActionSelector()

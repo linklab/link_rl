@@ -432,6 +432,8 @@ class RotaryInvertedPendulumEnv(gym.Env):
                 reward = self.get_reward_for_double_rip_1()
             elif self.params.TYPE_OF_REWARD == "old_version":
                 reward = self.get_reward_for_double_rip_2()
+            elif self.params.TYPE_OF_REWARD == "use_terminal_condition_version":
+                reward = self.get_reward_for_double_rip_3()
             else:
                 raise ValueError()
             # print("REWARD :", reward)
@@ -678,12 +680,42 @@ class RotaryInvertedPendulumEnv(gym.Env):
         time.sleep(0.5)
         return reward
 
+    def get_reward_for_double_rip_3(self):
+        terminal, position_score = self._terminal()
+        position_reward = 0. if not terminal else position_score
+        # position_reward = position_score
+
+        alpha_pendulum_1_velocity = 0.3
+        alpha_pendulum_2_velocity = 0.3
+        alpha_motor_velocity = 0.5
+        energy_penalty_denominator = 150
+
+        energy_penalty = -1.0 * (
+                alpha_pendulum_1_velocity * abs(self.pendulum_1_velocity) +
+                alpha_pendulum_2_velocity * abs(self.pendulum_2_velocity) +
+                alpha_motor_velocity * abs(self.motor_velocity)
+        ) / energy_penalty_denominator
+
+        self.episode_position_reward_list.append(position_reward)
+        self.episode_pendulum_velocity_reward_list.append(energy_penalty)
+        self.episode_action_reward_list.append(0.0)
+
+        reward = position_reward + energy_penalty
+        # print(
+        #     "position_reward: {0:3.4f}".format(position_reward),
+        #     "energy_penalty: {0:3.4f}".format(energy_penalty),
+        #     "reward : {0:3.4f}".format(reward)
+        # )
+        reward = max(0.0, reward)
+
+        return reward
+
     def _terminal(self):
         # ns[0] = wrap(ns[0], -pi, pi)
         # ns[1] = wrap(ns[1], -pi, pi)
         pendulum_1_position = wrap(self.pendulum_1_position, -math.pi, math.pi)
         pendulum_2_position = wrap(self.pendulum_2_position, -math.pi, math.pi)
-        is_terminal = bool(-math.cos(pendulum_1_position) - math.cos(pendulum_2_position + pendulum_1_position) > 1.)
+        is_terminal = bool(-math.cos(pendulum_1_position) - math.cos(pendulum_2_position + pendulum_1_position) > 1.5)
         position_score = -math.cos(pendulum_1_position) - math.cos(pendulum_2_position + pendulum_1_position)
         position_score = 2 + position_score
         # print(
