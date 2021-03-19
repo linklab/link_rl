@@ -388,7 +388,7 @@ class RotaryInvertedPendulumEnv(gym.Env):
             self.pendulum_1_position, self.motor_position, self.pendulum_2_position, self.pendulum_1_velocity, \
             self.motor_velocity, self.pendulum_2_velocity, self.simulation_time = self.plant.getHistory()
         elif self.pendulum_type == EnvironmentName.REAL_DEVICE_DOUBLE_RIP:
-            rip_response = self.server_obj.step(RipRequest(value=action))
+            rip_response = self.server_obj.step(RipRequest(value=0))
             # print(action, rip_response.arm_angle, rip_response.link_1_angle, "!!!!")
 
             self.motor_position = math.radians(rip_response.arm_angle)
@@ -483,6 +483,7 @@ class RotaryInvertedPendulumEnv(gym.Env):
                 math.sin(self.initial_motor_position - self.motor_position),
                 self.motor_velocity,
             )
+            print("pendulum_2 :", self.pendulum_2_position)
         else:
             raise ValueError()
 
@@ -548,21 +549,22 @@ class RotaryInvertedPendulumEnv(gym.Env):
                 #plus
                 # (pendulum_1_position % (-2.0 * math.pi)): -2PI ~ -PI
                 adjusted_pendulum_1_position = 2.0 * math.pi + (self.pendulum_1_position % (-2.0 * math.pi))
-                assert 0 <= adjusted_pendulum_1_position < math.pi
+                assert 0 <= adjusted_pendulum_1_position <= math.pi
             else:
                 #minus
                 adjusted_pendulum_1_position = self.pendulum_1_position % (-2.0 * math.pi)
-                assert -math.pi <= adjusted_pendulum_1_position < 0
+                assert -math.pi <= adjusted_pendulum_1_position <= 0
         else:
             if (abs(self.pendulum_1_position) % (2.0 * math.pi)) > math.pi:
                 #minus
                 adjusted_pendulum_1_position = -2.0 * math.pi + (self.pendulum_1_position % (2.0 * math.pi))
-                assert -math.pi <= adjusted_pendulum_1_position < 0
+                assert -math.pi <= adjusted_pendulum_1_position <= 0
             else:
                 #plus
                 adjusted_pendulum_1_position = self.pendulum_1_position % (2.0 * math.pi)
-                assert 0 <= adjusted_pendulum_1_position < math.pi
-
+                assert 0 <= adjusted_pendulum_1_position <= math.pi
+        print("===============================================")
+        print("Adjusted 1 : ", adjusted_pendulum_1_position)
         #adjusted 2
         if self.pendulum_2_position < 0:
             if (abs(self.pendulum_2_position) % (2.0 * math.pi)) > math.pi:
@@ -578,7 +580,7 @@ class RotaryInvertedPendulumEnv(gym.Env):
             else:
                 # plus
                 adjusted_pendulum_2_position = self.pendulum_2_position % (2.0 * math.pi)
-
+        print("adjusted 2 : ", adjusted_pendulum_2_position)
         #create reward 2 pendulum
         if self.pendulum_1_position < 0:
             if abs(self.pendulum_1_position % (2.0 * math.pi)) > math.pi:
@@ -641,6 +643,7 @@ class RotaryInvertedPendulumEnv(gym.Env):
         if reward_pendulum_2 > math.pi:
             reward_pendulum_2 = (2.0 * math.pi) - reward_pendulum_2
 
+        print("reward_pendulum_2 :", reward_pendulum_2)
         # if abs(adjusted_pendulum_1_position) < math.pi * 0.5:
         #     position_reward = 0
         # else:
@@ -650,7 +653,6 @@ class RotaryInvertedPendulumEnv(gym.Env):
         #         position_reward = 0
 
         position_reward = abs(reward_pendulum_2) + abs(adjusted_pendulum_1_position)
-
         alpha_pendulum_1_velocity = 0.3
         alpha_pendulum_2_velocity = 0.3
         alpha_motor_velocity = 0.5
@@ -673,7 +675,7 @@ class RotaryInvertedPendulumEnv(gym.Env):
         #     "reward : {0:3.4f}".format(reward)
         # )
         reward = max(0.0, reward)
-
+        time.sleep(0.5)
         return reward
 
     def _terminal(self):

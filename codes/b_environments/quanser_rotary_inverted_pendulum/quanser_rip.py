@@ -17,7 +17,7 @@ STATE_SIZE = 6
 
 balance_motor_power_list = [-60., 0., 60.]
 
-RIP_SERVER = '192.168.0.13'
+RIP_SERVER = '10.0.0.5'
 
 
 class EnvironmentQuanserRIP(gym.Env):
@@ -142,8 +142,8 @@ class EnvironmentQuanserRIP(gym.Env):
         return np.asarray(self.state)
 
     def step(self, action):
-        # current_time = time.perf_counter()
-        # print("current_time - self.previous_time", current_time - self.previous_time)
+        current_time = time.perf_counter()
+        print("current_time - self.previous_time", current_time - self.previous_time)
         while True:
             current_time = time.perf_counter()
             if current_time - self.previous_time >= 7 / 1000:
@@ -153,7 +153,7 @@ class EnvironmentQuanserRIP(gym.Env):
         if type(action) is np.ndarray:
             action = action[0]
 
-        motor_power = action * 200
+        motor_power = float(action)
 
         self.previous_time = time.perf_counter()
         #==================== Grpc and use sample time========================================

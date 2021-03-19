@@ -90,8 +90,9 @@ def train_main(params, train_env, test_env):
                         # print(step_idx, last_train_step_idx, num_trains)
                         for _ in range(params.NUM_TRAIN_ONLY_AFTER_EPISODE):
                             train(agent, step_idx, loss_dequeue, actor_objective_dequeue)
+
                         if params.RL_ALGORITHM in [RLAlgorithmName.DDPG_V0]:
-                            agent.target_agent.alpha_sync(alpha=0.5) #(1 - 0.001)
+                            agent.target_agent.alpha_sync(alpha=0.5) #alpha=0.0 --> full update!
 
                 if solved:
                     print("Solved in {0} steps and {1} episodes!".format(step_idx, episode))
