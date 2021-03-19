@@ -16,14 +16,14 @@ from codes.e_utils.names import DeepLearningModelName, AgentMode, EnvironmentNam
 class AgentDQN(OffPolicyAgent):
     """
     """
-    def __init__(self, worker_id, input_shape, num_outputs, params, device):
+    def __init__(self, worker_id, input_shape, action_shape, num_outputs, params, device):
         assert params.DEEP_LEARNING_MODEL in [
             DeepLearningModelName.DUELING_DQN_MLP,
             DeepLearningModelName.DUELING_DQN_CNN,
             DeepLearningModelName.DUELING_DQN_SMALL_CNN
         ]
 
-        super(AgentDQN, self).__init__(worker_id=worker_id, params=params, device=device)
+        super(AgentDQN, self).__init__(worker_id=worker_id, params=params, action_shape=action_shape, device=device)
         if params.ENVIRONMENT_ID in [EnvironmentName.PENDULUM_MATLAB_V0, EnvironmentName.PENDULUM_MATLAB_DOUBLE_RIP_V0]:
             self.train_action_selector = EpsilonGreedySomeTimesBlowDQNActionSelector(
                 epsilon=params.EPSILON_INIT, blowing_action_rate=0.0002,

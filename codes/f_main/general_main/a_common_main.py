@@ -56,10 +56,10 @@ print_params(params)
 
 
 def get_agent(env):
-    input_shape, num_outputs, action_min, action_max = get_environment_input_output_info(env)
+    input_shape, action_shape, num_outputs, action_min, action_max = get_environment_input_output_info(env)
 
     agent = rl_utils.get_rl_agent(
-        input_shape, num_outputs, action_min, action_max, worker_id=0, params=params, device=device
+        input_shape, action_shape, num_outputs, action_min, action_max, worker_id=0, params=params, device=device
     )
 
     load_model(MODEL_ZOO_SAVE_DIR, MODEL_SAVE_FILE_PREFIX, agent, inquery=True)

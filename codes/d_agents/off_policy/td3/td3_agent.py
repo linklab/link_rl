@@ -19,10 +19,10 @@ class AgentTD3(OffPolicyAgent):
     Agent implementing Orstein-Uhlenbeck exploration process
     """
 
-    def __init__(self, worker_id, input_shape, num_outputs, action_min, action_max, params, device):
+    def __init__(self, worker_id, input_shape, action_shape, num_outputs, action_min, action_max, params, device):
         assert params.DEEP_LEARNING_MODEL == DeepLearningModelName.TD3_MLP
 
-        super(AgentTD3, self).__init__(worker_id=worker_id, params=params, device=device)
+        super(AgentTD3, self).__init__(worker_id=worker_id, params=params, action_shape=action_shape, device=device)
 
         self.__name__ = "AgentTD3"
         self.action_min = action_min
