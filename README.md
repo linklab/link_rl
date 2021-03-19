@@ -127,7 +127,7 @@
     
 ### 15. database
 - pip install sqlalchemy
-- pip install mysql-connector-python
+- pip install mysql-connector
 
 ### 16. matlab
 - cd "matlabroot/extern/engines/python"

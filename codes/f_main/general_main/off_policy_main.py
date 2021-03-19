@@ -130,7 +130,7 @@ def main():
                     params=params,
                     episode_done_step=train_info_dict["step_idx"],
                     done_episode=train_info_dict["episode"],
-                    episode_reward=train_info_dict["every train episode reward"],
+                    episode_reward=train_info_dict["### EVERY TRAIN EPISODE REWARDS ###"],
                     mean_episode_reward=train_info_dict[
                         "train mean ({0} episode rewards)".format(params.AVG_EPISODE_SIZE_FOR_STAT)
                     ],

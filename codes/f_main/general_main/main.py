@@ -64,7 +64,7 @@ def train_main(params, train_env, test_env):
                             params=params,
                             episode_done_step=train_info_dict["step_idx"],
                             done_episode=train_info_dict["episode"],
-                            episode_reward=train_info_dict["every train episode reward"],
+                            episode_reward=train_info_dict["### EVERY TRAIN EPISODE REWARDS ###"],
                             mean_episode_reward=train_info_dict[
                                 "train mean ({0} episode rewards)".format(params.AVG_EPISODE_SIZE_FOR_STAT)
                             ],
@@ -91,7 +91,13 @@ def train_main(params, train_env, test_env):
                         for _ in range(params.NUM_TRAIN_ONLY_AFTER_EPISODE):
                             train(agent, step_idx, loss_dequeue, actor_objective_dequeue)
                         if params.RL_ALGORITHM in [RLAlgorithmName.DDPG_V0]:
-                            agent.target_agent.alpha_sync(alpha=0.5) #(1 - 0.001)
+                            if params.TYPE_OF_TARGET_UPDATE == "hard_update":
+                                if step_idx % params.TARGET_NET_SYNC_STEP_PERIOD < params.TRAIN_STEP_FREQ:
+                                    agent.target_agent = agent.target_agent.sync()
+                            elif params.TYPE_OF_TARGET_UPDATE == "soft_update":
+                                agent.target_agent.alpha_sync(alpha=0.5) #(1 - 0.001)
+                            else:
+                                raise ValueError()
 
                 if solved:
                     print("Solved in {0} steps and {1} episodes!".format(step_idx, episode))
