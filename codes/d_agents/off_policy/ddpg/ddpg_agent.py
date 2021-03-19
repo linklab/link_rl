@@ -97,6 +97,7 @@ class AgentDDPG(OffPolicyAgent):
         #print(actions, self.action_min, self.action_max, "!!!!!!!!!!!!!!!!")
 
         if not (isinstance(self.train_action_selector, SomeTimesBlowDDPGActionSelector) and np.any(new_noises)):
+            print(actions)
             actions = np.clip(actions, -1.0, 1.0)
         #####################################
 
