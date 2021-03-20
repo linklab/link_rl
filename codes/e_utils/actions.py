@@ -176,11 +176,10 @@ class DDPGActionSelector:
             # if noises.ndim == 1:
             #     noises = np.expand_dims(noises, axis=-1)
 
-            noises = noises + global_uncertainty * (
-                    self.ou_theta * (self.ou_mu - noises) * self.ou_dt +
-                    self.ou_sigma * np.sqrt(self.ou_dt) * np.random.normal(size=noises.shape)
-            )
-            actions = actions + noises
+            noises = noises + self.ou_theta * (self.ou_mu - noises) * self.ou_dt + \
+                     self.ou_sigma * np.sqrt(self.ou_dt) * np.random.normal(size=noises.shape)
+
+            actions = actions + global_uncertainty * noises
             # print("actions: {0:7.4f}, epsilon: {1:7.4f}, noises: {2:7.4f}".format(
             #     actions[0][0], self.epsilon, noises[0][0]
             # ))

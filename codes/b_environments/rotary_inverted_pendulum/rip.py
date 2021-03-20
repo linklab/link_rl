@@ -645,7 +645,8 @@ class RotaryInvertedPendulumEnv(gym.Env):
         if reward_pendulum_2 > math.pi:
             reward_pendulum_2 = (2.0 * math.pi) - reward_pendulum_2
 
-        print("reward_pendulum_2 :", reward_pendulum_2)
+        # print("reward_pendulum_2 :", reward_pendulum_2)
+
         # if abs(adjusted_pendulum_1_position) < math.pi * 0.5:
         #     position_reward = 0
         # else:
