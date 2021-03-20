@@ -93,8 +93,7 @@ def train_main(params, train_env, test_env):
 
                         if params.RL_ALGORITHM in [RLAlgorithmName.DDPG_V0]:
                             if params.TYPE_OF_TARGET_UPDATE == "hard_update":
-                                if step_idx % params.TARGET_NET_SYNC_STEP_PERIOD < params.TRAIN_STEP_FREQ:
-                                    agent.target_agent = agent.target_agent.sync()
+                                agent.target_agent.alpha_sync(alpha=0.0)
                             elif params.TYPE_OF_TARGET_UPDATE == "soft_update":
                                 agent.target_agent.alpha_sync(alpha=0.5) #(1 - 0.001)
                             else:
