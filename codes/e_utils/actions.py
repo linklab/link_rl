@@ -145,11 +145,9 @@ class SomeTimesBlowDDPGActionSelector:
                 if noises.ndim == 1:
                     noises = np.expand_dims(noises, axis=-1)
 
-                noises = noises + global_uncertainty * (
-                        self.ou_theta * (self.ou_mu - noises) * self.ou_dt +
-                        self.ou_sigma * np.sqrt(self.ou_dt) * np.random.normal(size=noises.shape)
-                )
-                actions = actions + noises
+                noises = noises + self.ou_theta * (self.ou_mu - noises) * self.ou_dt + \
+                         self.ou_sigma * np.sqrt(self.ou_dt) * np.random.normal(size=noises.shape)
+                actions = actions + global_uncertainty * noises
             else:
                 noises = np.zeros_like(actions)
 
