@@ -147,7 +147,10 @@ class SomeTimesBlowDDPGActionSelector:
 
                 noises = noises + self.ou_theta * (self.ou_mu - noises) * self.ou_dt + \
                          self.ou_sigma * np.sqrt(self.ou_dt) * np.random.normal(size=noises.shape)
-                actions = actions + global_uncertainty * noises
+
+                noises = global_uncertainty * noises
+
+                actions = actions + noises
             else:
                 noises = np.zeros_like(actions)
 
@@ -177,7 +180,9 @@ class DDPGActionSelector:
             noises = noises + self.ou_theta * (self.ou_mu - noises) * self.ou_dt + \
                      self.ou_sigma * np.sqrt(self.ou_dt) * np.random.normal(size=noises.shape)
 
-            actions = actions + global_uncertainty * noises
+            noises = global_uncertainty * noises
+
+            actions = actions + noises
             # print("actions: {0:7.4f}, epsilon: {1:7.4f}, noises: {2:7.4f}".format(
             #     actions[0][0], self.epsilon, noises[0][0]
             # ))
