@@ -100,13 +100,14 @@ class EpsilonGreedySomeTimesBlowDQNActionSelector(ActionSelector):
 
 class SomeTimesBlowDDPGActionSelector:
     def __init__(
-            self, ou_enabled, ou_theta=0.15, ou_dt=0.01, ou_sigma=0.2,
+            self, ou_enabled, ou_mu, ou_theta=0.15, ou_dt=0.01, ou_sigma=0.2,
             blowing_action_rate=0.0002, min_blowing_action=-1.0, max_blowing_action=1.0
     ):
         self.ou_enabled = ou_enabled
         self.ou_theta = ou_theta
         self.ou_dt = ou_dt
         self.ou_sigma = ou_sigma
+        self.ou_mu = ou_mu
 
         self.blowing_action_rate = blowing_action_rate
         self.min_blowing_action = min_blowing_action
@@ -145,10 +146,9 @@ class SomeTimesBlowDDPGActionSelector:
                     noises = np.expand_dims(noises, axis=-1)
 
                 noises = noises + global_uncertainty * (
-                        self.ou_theta * (actions - noises) * self.ou_dt +
+                        self.ou_theta * (self.ou_mu - noises) * self.ou_dt +
                         self.ou_sigma * np.sqrt(self.ou_dt) * np.random.normal(size=noises.shape)
                 )
-
                 actions = actions + noises
             else:
                 noises = np.zeros_like(actions)
@@ -157,8 +157,9 @@ class SomeTimesBlowDDPGActionSelector:
 
 
 class DDPGActionSelector:
-    def __init__(self, ou_enabled, ou_theta=0.15, ou_dt=0.01, ou_sigma=2.0):
+    def __init__(self, ou_enabled, ou_mu=None, ou_theta=0.15, ou_dt=0.01, ou_sigma=2.0):
         self.ou_enabled = ou_enabled
+        self.ou_mu = ou_mu
         self.ou_theta = ou_theta
         self.ou_dt = ou_dt
         self.ou_sigma = ou_sigma
@@ -176,10 +177,9 @@ class DDPGActionSelector:
             #     noises = np.expand_dims(noises, axis=-1)
 
             noises = noises + global_uncertainty * (
-                    self.ou_theta * (actions - noises) * self.ou_dt +
+                    self.ou_theta * (self.ou_mu - noises) * self.ou_dt +
                     self.ou_sigma * np.sqrt(self.ou_dt) * np.random.normal(size=noises.shape)
             )
-
             actions = actions + noises
             # print("actions: {0:7.4f}, epsilon: {1:7.4f}, noises: {2:7.4f}".format(
             #     actions[0][0], self.epsilon, noises[0][0]
