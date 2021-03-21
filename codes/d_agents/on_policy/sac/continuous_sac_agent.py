@@ -16,11 +16,11 @@ class AgentSAC(OnPolicyAgent):
     """
     """
     def __init__(
-            self, worker_id, input_shape, num_outputs, action_min, action_max, params, device
+            self, worker_id, input_shape, action_shape, num_outputs, action_min, action_max, params, device
     ):
         assert params.DEEP_LEARNING_MODEL == DeepLearningModelName.SOFT_ACTOR_CRITIC_MLP
 
-        super(AgentSAC, self).__init__(worker_id, params, device)
+        super(AgentSAC, self).__init__(worker_id, params, action_shape, device)
         self.__name__ = "AgentSAC"
         self.action_min = action_min
         self.action_max = action_max

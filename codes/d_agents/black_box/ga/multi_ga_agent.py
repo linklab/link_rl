@@ -22,8 +22,8 @@ MessageFromMaster = collections.namedtuple(
 
 
 class AgentMultiGA(BaseAgent):
-    def __init__(self, worker_id, input_shape, num_outputs, params, device):
-        super(AgentMultiGA, self).__init__(worker_id, params, device)
+    def __init__(self, worker_id, input_shape, action_shape, num_outputs, params, device):
+        super(AgentMultiGA, self).__init__(worker_id, params, action_shape, device)
         self.__name__ = "AgentMultiGA"
 
         self.model = SimpleModel(
@@ -142,7 +142,7 @@ class AgentMultiGA(BaseAgent):
     @staticmethod
     def worker_func(ga_worker_id, master_to_worker_queue, worker_to_master_queue, params, device):
         env = rl_utils.get_single_environment(params=params)
-        input_shape, num_outputs, action_min, action_max = rl_utils.get_environment_input_output_info(env)
+        input_shape, action_shape, num_outputs, action_min, action_max = rl_utils.get_environment_input_output_info(env)
 
         ga_operator = GAOperator(
             env=env, input_shape=input_shape, num_outputs=num_outputs, params=params, device=device

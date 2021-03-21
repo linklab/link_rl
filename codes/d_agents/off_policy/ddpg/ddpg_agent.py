@@ -16,11 +16,11 @@ class AgentDDPG(OffPolicyAgent):
     """
     Agent implementing Orstein-Uhlenbeck exploration process
     """
-    def __init__(self, worker_id, input_shape, num_outputs, action_min, action_max, params, device):
+    def __init__(self, worker_id, input_shape, action_shape, num_outputs, action_min, action_max, params, device):
         assert params.DEEP_LEARNING_MODEL == DeepLearningModelName.DETERMINISTIC_CONTINUOUS_ACTOR_CRITIC_MLP
         assert issubclass(params, PARAMETERS_DDPG)
 
-        super(AgentDDPG, self).__init__(worker_id=worker_id, params=params, device=device)
+        super(AgentDDPG, self).__init__(worker_id=worker_id, params=params, action_shape=action_shape, device=device)
 
         self.__name__ = "AgentDDPG"
         self.action_min = action_min
@@ -28,7 +28,7 @@ class AgentDDPG(OffPolicyAgent):
 
         # if params.ENVIRONMENT_ID in [EnvironmentName.PENDULUM_MATLAB_V0, EnvironmentName.PENDULUM_MATLAB_DOUBLE_RIP_V0]:
         #     self.train_action_selector = SomeTimesBlowDDPGActionSelector(
-        #         ou_enabled=params.OU_NOISE_ENABLED, ou_sigma=self.params.OU_SIGMA
+        #         ou_enabled=params.OU_NOISE_ENABLED, ou_mu=np.zeros(self.action_shape), ou_sigma=self.params.OU_SIGMA
         #         min_blowing_action=-10.0 * params.ACTION_SCALE, max_blowing_action=10.0 * params.ACTION_SCALE,
         #     )
         #     self.test_and_play_action_selector = SomeTimesBlowDDPGActionSelector(
@@ -39,7 +39,9 @@ class AgentDDPG(OffPolicyAgent):
         #     self.train_action_selector = DDPGActionSelector(ou_enabled=params.OU_NOISE_ENABLED, ou_sigma=self.params.OU_SIGMA)
         #     self.test_and_play_action_selector = DDPGActionSelector(ou_enabled=False)
 
-        self.train_action_selector = DDPGActionSelector(ou_enabled=params.OU_NOISE_ENABLED, ou_sigma=self.params.OU_SIGMA)
+        self.train_action_selector = DDPGActionSelector(
+            ou_enabled=params.OU_NOISE_ENABLED, ou_mu=np.zeros(self.action_shape), ou_sigma=self.params.OU_SIGMA
+        )
         self.test_and_play_action_selector = DDPGActionSelector(ou_enabled=False)
 
         self.model = DeterministicContinuousActorCriticModel(

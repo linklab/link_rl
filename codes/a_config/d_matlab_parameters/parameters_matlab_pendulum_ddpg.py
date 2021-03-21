@@ -35,14 +35,13 @@ class PARAMETERS_PENDULUM_MATLAB_DDPG(PARAMETERS_GENERAL, PARAMETERS_DDPG):
     OU_SIGMA = 2.0
 
     COUNT_BASED_EXPLORATION = True
-    COUNT_BASED_FILTER = [1, 1, 0, 1, 1, 0, 1, 1, 0]
+    COUNT_BASED_FILTER = [1, 1, 1, 1, 1, 0, 1, 1, 0]
     COUNT_BASED_REWARD_SCALE = 0.4
     COUNT_BASED_PRECISION = 0
 
     TRAIN_ONLY_AFTER_EPISODE = False
     NUM_TRAIN_ONLY_AFTER_EPISODE = None
 
-    TYPE_OF_REWARD = "old_version" # "current_version"
-
+    TYPE_OF_REWARD = "old_version"  # "current_version"
     TYPE_OF_TARGET_UPDATE = "soft_update" # "hard_update"
-    TARGET_NET_SYNC_STEP_PERIOD = 10000
+
