@@ -678,7 +678,7 @@ class RotaryInvertedPendulumEnv(gym.Env):
         #     "reward : {0:3.4f}".format(reward)
         # )
         reward = max(0.0, reward)
-        time.sleep(0.5)
+        # time.sleep(0.5)
         return reward
 
     def get_reward_for_double_rip_3(self):
