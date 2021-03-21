@@ -678,7 +678,7 @@ class RotaryInvertedPendulumEnv(gym.Env):
         #     "reward : {0:3.4f}".format(reward)
         # )
         reward = max(0.0, reward)
-        time.sleep(0.5)
+        # time.sleep(0.5)
         return reward
 
     def get_reward_for_double_rip_3(self):
@@ -716,7 +716,7 @@ class RotaryInvertedPendulumEnv(gym.Env):
         # ns[1] = wrap(ns[1], -pi, pi)
         pendulum_1_position = wrap(self.pendulum_1_position, -math.pi, math.pi)
         pendulum_2_position = wrap(self.pendulum_2_position, -math.pi, math.pi)
-        is_terminal = bool(-math.cos(pendulum_1_position) - math.cos(pendulum_2_position + pendulum_1_position) > 1.5)
+        is_terminal = bool(-math.cos(pendulum_1_position) - math.cos(pendulum_2_position + pendulum_1_position) > 1.)
         position_score = -math.cos(pendulum_1_position) - math.cos(pendulum_2_position + pendulum_1_position)
         position_score = 2 + position_score
         # print(
