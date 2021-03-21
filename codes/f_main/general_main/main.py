@@ -1,6 +1,13 @@
 # https://github.com/openai/gym/blob/master/gym/envs/classic_control/pendulum.py
 # https://mspries.github.io/jimmy_pendulum.html
 #!/usr/bin/env python3
+import os, sys
+
+current_path = os.path.dirname(os.path.realpath(__file__))
+PROJECT_HOME = os.path.abspath(os.path.join(current_path, os.pardir, os.pardir, os.pardir))
+if PROJECT_HOME not in sys.path:
+    sys.path.append(PROJECT_HOME)
+
 from codes.f_main.general_main.a_common_main import *
 
 
@@ -93,8 +100,7 @@ def train_main(params, train_env, test_env):
 
                         if params.RL_ALGORITHM in [RLAlgorithmName.DDPG_V0]:
                             if params.TYPE_OF_TARGET_UPDATE == "hard_update":
-                                if step_idx % params.TARGET_NET_SYNC_STEP_PERIOD < params.TRAIN_STEP_FREQ:
-                                    agent.target_agent = agent.target_agent.sync()
+                                agent.target_agent.alpha_sync(alpha=0.0)
                             elif params.TYPE_OF_TARGET_UPDATE == "soft_update":
                                 agent.target_agent.alpha_sync(alpha=0.5) #(1 - 0.001)
                             else:

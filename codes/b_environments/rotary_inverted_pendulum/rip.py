@@ -485,7 +485,7 @@ class RotaryInvertedPendulumEnv(gym.Env):
                 math.sin(self.initial_motor_position - self.motor_position),
                 self.motor_velocity,
             )
-            print("pendulum_2 :", self.pendulum_2_position)
+            # print("pendulum_2 :", self.pendulum_2_position)
         else:
             raise ValueError()
 
@@ -565,8 +565,8 @@ class RotaryInvertedPendulumEnv(gym.Env):
                 #plus
                 adjusted_pendulum_1_position = self.pendulum_1_position % (2.0 * math.pi)
                 assert 0 <= adjusted_pendulum_1_position <= math.pi
-        print("===============================================")
-        print("Adjusted 1 : ", adjusted_pendulum_1_position)
+        # print("===============================================")
+        # print("Adjusted 1 : ", adjusted_pendulum_1_position)
         #adjusted 2
         if self.pendulum_2_position < 0:
             if (abs(self.pendulum_2_position) % (2.0 * math.pi)) > math.pi:
@@ -582,7 +582,7 @@ class RotaryInvertedPendulumEnv(gym.Env):
             else:
                 # plus
                 adjusted_pendulum_2_position = self.pendulum_2_position % (2.0 * math.pi)
-        print("adjusted 2 : ", adjusted_pendulum_2_position)
+        # print("adjusted 2 : ", adjusted_pendulum_2_position)
         #create reward 2 pendulum
         if self.pendulum_1_position < 0:
             if abs(self.pendulum_1_position % (2.0 * math.pi)) > math.pi:
@@ -645,7 +645,8 @@ class RotaryInvertedPendulumEnv(gym.Env):
         if reward_pendulum_2 > math.pi:
             reward_pendulum_2 = (2.0 * math.pi) - reward_pendulum_2
 
-        print("reward_pendulum_2 :", reward_pendulum_2)
+        # print("reward_pendulum_2 :", reward_pendulum_2)
+
         # if abs(adjusted_pendulum_1_position) < math.pi * 0.5:
         #     position_reward = 0
         # else:
@@ -677,7 +678,7 @@ class RotaryInvertedPendulumEnv(gym.Env):
         #     "reward : {0:3.4f}".format(reward)
         # )
         reward = max(0.0, reward)
-        time.sleep(0.5)
+        # time.sleep(0.5)
         return reward
 
     def get_reward_for_double_rip_3(self):
