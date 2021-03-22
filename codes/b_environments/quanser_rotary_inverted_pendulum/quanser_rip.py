@@ -143,7 +143,7 @@ class EnvironmentQuanserRIP(gym.Env):
 
     def step(self, action):
         current_time = time.perf_counter()
-        print("current_time - self.previous_time", current_time - self.previous_time)
+        # print("current_time - self.previous_time", current_time - self.previous_time)
         while True:
             current_time = time.perf_counter()
             if current_time - self.previous_time >= 7 / 1000:
@@ -158,8 +158,8 @@ class EnvironmentQuanserRIP(gym.Env):
         self.previous_time = time.perf_counter()
         #==================== Grpc and use sample time========================================
         # previous_time = time.perf_counter()
-
-        quanser_response = self.server_obj.step(QuanserRequest(value=float(motor_power)))
+        quanser_response = self.server_obj.step(QuanserRequest(value=motor_power))
+        # print(motor_power)
         # if quanser_response.message != "STEP":
         #     raise ValueError()
         # while True:
@@ -267,7 +267,8 @@ class EnvironmentQuanserRIP(gym.Env):
             if self.is_motor_limit:
                 position_reward = 0.0
             else:
-                position_reward = (math.pi - abs(self.pendulum_radian)) / 2
+                # position_reward = (math.pi - abs(self.pendulum_radian)) / 2
+                position_reward = 1 + math.cos(self.pendulum_radian)
 
         energy_penalty = 1.0 * -1.0 * (abs(self.pendulum_velocity) + abs(self.motor_velocity)) / 2000
 
