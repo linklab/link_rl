@@ -102,7 +102,7 @@ def train_main(params, train_env, test_env):
                             if params.TYPE_OF_TARGET_UPDATE == "hard_update":
                                 agent.target_agent.alpha_sync(alpha=0.0)
                             elif params.TYPE_OF_TARGET_UPDATE == "soft_update":
-                                agent.target_agent.alpha_sync(alpha=0.5) #(1 - 0.001)
+                                agent.target_agent.alpha_sync(alpha=0.75) # 0.75: 새로운 파라미터는 0.25만 반영
                             else:
                                 raise ValueError()
 
