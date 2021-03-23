@@ -327,7 +327,7 @@ class RotaryInvertedPendulumEnv(gym.Env):
                 time.sleep(0.0001)
 
         if self.step_idx % 100000 == 0:
-            print("OVER UNIT TIME STEP NUMBER :", self.over_unit_time)
+            print("*OVER UNIT TIME STEP NUMBER :", self.over_unit_time)
         #######################################################
 
         self.last_time = time.perf_counter()
@@ -388,7 +388,7 @@ class RotaryInvertedPendulumEnv(gym.Env):
             self.pendulum_1_position, self.motor_position, self.pendulum_2_position, self.pendulum_1_velocity, \
             self.motor_velocity, self.pendulum_2_velocity, self.simulation_time = self.plant.getHistory()
         elif self.pendulum_type == EnvironmentName.REAL_DEVICE_DOUBLE_RIP:
-            rip_response = self.server_obj.step(RipRequest(value=0))
+            rip_response = self.server_obj.step(RipRequest(value=action))
             # print(action, rip_response.arm_angle, rip_response.link_1_angle, "!!!!")
 
             self.motor_position = math.radians(rip_response.arm_angle)
@@ -401,6 +401,7 @@ class RotaryInvertedPendulumEnv(gym.Env):
         else:
             raise ValueError()
         #print(self.motor_position, math.cos(self.motor_position), math.sin(self.motor_position))
+        # print("!!!!!!!!!", self.pendulum_2_position)
 
         if abs(self.initial_motor_position - self.motor_position) > math.pi * 2:
             self.too_much_rotate = True
@@ -432,7 +433,7 @@ class RotaryInvertedPendulumEnv(gym.Env):
                 reward = self.get_reward_for_double_rip_1()
             elif self.params.TYPE_OF_REWARD == "old_version":
                 reward = self.get_reward_for_double_rip_2()
-            elif self.params.TYPE_OF_REWARD == "use_terminal_condition_version":
+            elif self.params.TYPE_OF_REWARD == "terminal_condition_version":
                 reward = self.get_reward_for_double_rip_3()
             else:
                 raise ValueError()
@@ -674,6 +675,7 @@ class RotaryInvertedPendulumEnv(gym.Env):
         reward = position_reward + energy_penalty
         # print(
         #     "position_reward: {0:3.4f}".format(position_reward),
+        #     "position_Reward_2 : {0:3.4f}".format(reward_pendulum_2),
         #     "energy_penalty: {0:3.4f}".format(energy_penalty),
         #     "reward : {0:3.4f}".format(reward)
         # )

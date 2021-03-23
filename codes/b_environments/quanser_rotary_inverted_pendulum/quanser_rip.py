@@ -146,7 +146,7 @@ class EnvironmentQuanserRIP(gym.Env):
         # print("current_time - self.previous_time", current_time - self.previous_time)
         while True:
             current_time = time.perf_counter()
-            if current_time - self.previous_time >= 7 / 1000:
+            if current_time - self.previous_time >= 8 / 1000:
                 break
             time.sleep(0.0001)
         #
@@ -200,6 +200,7 @@ class EnvironmentQuanserRIP(gym.Env):
 
         #=======================reward================================================================
         self.reward = self.get_reward(action)
+        # print(self.reward, self.pendulum_radian)
         #=============================================================================================
         self.steps += 1
 
@@ -262,7 +263,7 @@ class EnvironmentQuanserRIP(gym.Env):
 
     def get_reward(self, action):
         if self.is_upright:
-            position_reward = math.pi - abs(self.pendulum_radian)  # math.pi - math.radians(12) ~ math.pi
+            position_reward = math.pi - abs(self.pendulum_radian)# math.pi - math.radians(12) ~ math.pi
         else:
             if self.is_motor_limit:
                 position_reward = 0.0
