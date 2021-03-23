@@ -81,8 +81,9 @@ def set_wandb(agent):
 
     run_name = wandb.run.name
     run_number = run_name.split("-")[-1]
-    wandb.run.name = "{0}_{1}_{2}_{3}".format(
-        run_number, params.ENVIRONMENT_ID.value, agent.__name__, agent.model.__name__
+    wandb.run.name = "{0}_{1}_{2}_{3}_{4}".format(
+        run_number, params.ENVIRONMENT_ID.value, agent.__name__, agent.model.__name__,
+        params.MY_PLATFORM if params.MY_PLATFORM is not None else "COMMON"
     )
     wandb.run.save()
     wandb.watch(agent.model.base, log="all")
