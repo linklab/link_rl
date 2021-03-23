@@ -4,7 +4,7 @@ from codes.e_utils.names import EnvironmentName, RLAlgorithmName, DeepLearningMo
 class PARAMETERS_GENERAL:
     # [GENERAL]
     SEED = 1
-    MY_PLATFORM = None
+    MY_PLATFORM = "COMMON"
     PYTHON_PATH = None
     EMA_WINDOW = 10
     VERBOSE = True

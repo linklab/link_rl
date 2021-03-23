@@ -213,7 +213,7 @@ class QubeServo2:
     def limit_check(self, motor_velocity):
         motor_radian, _ = self.__set_motor_command(int(self.motor_command))
         # print("motor: ", motor_radian)
-        if not self.motor_limit and abs(motor_radian) >= 90 * PI / 180.0:
+        if not self.motor_limit and abs(motor_radian) >= 80 * PI / 180.0:
             self.color = "red"
             for i in range(50):
                 if motor_radian >= 0:
