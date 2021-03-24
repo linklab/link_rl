@@ -45,7 +45,7 @@ from codes.a_config.d_matlab_parameters.parameters_matlab_pendulum_dqn import PA
 from codes.a_config.d_matlab_parameters.parameters_matlab_pendulum_ddpg import PARAMETERS_PENDULUM_MATLAB_DDPG
 
 from codes.a_config.e_real_device.parameters_rip import PARAMETERS_RIP
-from codes.a_config.e_real_device.parameters_double_rip import PARAMETERS_DOUBLE_RIP
+from codes.a_config.e_real_device.parameters_double_rip_ddpg import PARAMETERS_DOUBLE_RIP
 from codes.a_config.e_real_device.parameters_quanser_rip_ddpg import PARAMETERS_QUANSER_RIP_DDPG
 
 from codes.a_config.f_trade_parameters.parameters_trade_moc_one_hour_dqn import PARAMETERS_TRADE_MOC_ONE_HOUR_DQN

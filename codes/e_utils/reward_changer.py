@@ -51,16 +51,22 @@ def counts_hash(obs, precision, filter):
 
 
 class PseudoCountRewardWrapper(gym.Wrapper):
-    def __init__(self, env, hash_function=counts_hash, count_based_reward_scale=0.5, precision=0, params=None):
+    def __init__(self, env, hash_function=counts_hash, params=None):
         super(PseudoCountRewardWrapper, self).__init__(env)
         self.hash_function = hash_function
-        self.count_based_reward_scale = count_based_reward_scale
+        self.params = params
+        self.count_based_reward_scale = params.COUNT_BASED_REWARD_SCALE
+        self.precision = params.COUNT_BASED_PRECISION
+
         self.counts = collections.Counter()
         self.global_uncertainty = 1.0
         self.global_uncertainty_list = []
         self.step_idx = 0
-        self.precision = precision
-        self.params = params
+
+        if self.params.COUNT_BASED_FILTER:
+            self.filter = self.params.COUNT_BASED_FILTER
+        else:
+            pass
 
     def step(self, action):
         obs, reward, done, info = self.env.step(action)
