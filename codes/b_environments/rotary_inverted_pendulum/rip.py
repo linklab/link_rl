@@ -518,7 +518,7 @@ class RotaryInvertedPendulumEnv(gym.Env):
 
         terminal, position_score = self._terminal()
         # position_reward = 0. if not terminal else position_score
-        position_reward = position_score
+        position_reward = position_score + 2
 
         alpha_pendulum_1_velocity = 0.3
         alpha_pendulum_2_velocity = 0.3
@@ -720,7 +720,6 @@ class RotaryInvertedPendulumEnv(gym.Env):
         pendulum_2_position = wrap(self.pendulum_2_position, -math.pi, math.pi)
         is_terminal = bool(-math.cos(pendulum_1_position) - math.cos(pendulum_2_position + pendulum_1_position) > 1.)
         position_score = -math.cos(pendulum_1_position) - math.cos(pendulum_2_position + pendulum_1_position)
-        position_score = 2 + position_score
         # print(
         #     "{0:2.4f}".format(math.degrees(pendulum_1_position)),
         #     "{0:2.4f}".format(math.degrees(pendulum_2_position)),

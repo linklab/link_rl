@@ -6,11 +6,6 @@ import torch
 import os, sys
 import numpy as np
 
-from codes.e_utils.actions import EpsilonGreedySomeTimesBlowDQNActionSelector, \
-    SomeTimesBlowDDPGActionSelector, ArgmaxActionSelector, DDPGActionSelector, \
-    ContinuousNormalActionSelector, DiscreteCategoricalActionSelector
-from codes.e_utils.rl_utils import get_environment_input_output_info, MODEL_ZOO_SAVE_DIR, MODEL_SAVE_FILE_PREFIX
-
 print("PyTorch Version", torch.__version__)
 
 current_path = os.path.dirname(os.path.realpath(__file__))
@@ -18,6 +13,10 @@ PROJECT_HOME = os.path.abspath(os.path.join(current_path, os.pardir, os.pardir))
 if PROJECT_HOME not in sys.path:
     sys.path.append(PROJECT_HOME)
 
+from codes.e_utils.actions import EpsilonGreedySomeTimesBlowDQNActionSelector, \
+    SomeTimesBlowDDPGActionSelector, ArgmaxActionSelector, DDPGActionSelector, \
+    ContinuousNormalActionSelector, DiscreteCategoricalActionSelector
+from codes.e_utils.rl_utils import get_environment_input_output_info, MODEL_ZOO_SAVE_DIR, MODEL_SAVE_FILE_PREFIX
 from codes.e_utils import rl_utils
 from codes.e_utils.common_utils import load_model
 from codes.e_utils.logger import get_logger
@@ -66,7 +65,12 @@ def play_main(params, env):
 
             action, _, = agent(state)
 
-            next_state, reward, done, info = env.step(action[0])
+            if params.ACTION_SCALE:
+                action = params.ACTION_SCALE * action[0]
+            else:
+                action = action[0]
+
+            next_state, reward, done, info = env.step(action)
             state = next_state
             episode_reward += reward
 

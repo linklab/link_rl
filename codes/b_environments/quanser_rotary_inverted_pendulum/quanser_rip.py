@@ -37,6 +37,7 @@ class EnvironmentQuanserRIP(gym.Env):
 
         self.steps = 0
         self.state = []
+        self.episode_steps = 0
 
         self.count_continuous_uprights = 0
         self.is_upright = False
@@ -115,6 +116,9 @@ class EnvironmentQuanserRIP(gym.Env):
         self.pendulum_radian = quanser_response.pendulum_radian
         self.pendulum_velocity = quanser_response.pendulum_velocity
 
+        if self.episode % 5 == 0:
+            print("*RESET PENDULUM RADIAN : {0:1.3f}".format(self.pendulum_radian))
+
         self.state = [
             math.cos(self.pendulum_radian),
             math.sin(self.pendulum_radian),
@@ -149,11 +153,13 @@ class EnvironmentQuanserRIP(gym.Env):
             if current_time - self.previous_time >= 8 / 1000:
                 break
             time.sleep(0.0001)
-        #
+
         if type(action) is np.ndarray:
             action = action[0]
 
         motor_power = float(action)
+        # if self.steps % 100 == 0:
+        #     print(action)
 
         self.previous_time = time.perf_counter()
         #==================== Grpc and use sample time========================================
@@ -230,8 +236,8 @@ class EnvironmentQuanserRIP(gym.Env):
             insert_to_info("")
             return False, info
 
-    def update_current_state(self, ):
-        if abs(self.motor_radian) < math.radians(12):
+    def update_current_state(self):
+        if abs(self.pendulum_radian) < math.radians(90):
             self.count_continuous_uprights += 1
         else:
             self.count_continuous_uprights = 0
@@ -262,14 +268,16 @@ class EnvironmentQuanserRIP(gym.Env):
     #     return reward
 
     def get_reward(self, action):
+        # print(self.is_upright, self.pendulum_radian, math.radians(90), action)
         if self.is_upright:
             position_reward = math.pi - abs(self.pendulum_radian)# math.pi - math.radians(12) ~ math.pi
         else:
             if self.is_motor_limit:
                 position_reward = 0.0
             else:
-                # position_reward = (math.pi - abs(self.pendulum_radian)) / 2
-                position_reward = 1 + math.cos(self.pendulum_radian)
+                position_reward = (math.pi - abs(self.pendulum_radian)) / 2
+                # position_reward = 1 + math.cos(self.pendulum_radian)
+
 
         energy_penalty = 1.0 * -1.0 * (abs(self.pendulum_velocity) + abs(self.motor_velocity)) / 2000
 
