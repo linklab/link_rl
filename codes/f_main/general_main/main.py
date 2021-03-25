@@ -165,3 +165,5 @@ if __name__ == "__main__":
     train_env, test_env = get_train_and_test_envs()
 
     train_main(params, train_env, test_env)
+
+    pass
