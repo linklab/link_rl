@@ -93,7 +93,16 @@ def get_train_and_test_envs():
     train_env = rl_utils.get_environment(params=params)
     print_environment_info(train_env, params)
     if params.MODEL_SAVE_MODE == ModelSaveMode.TEST:
-        test_env = rl_utils.get_single_environment(params=params, mode=AgentMode.TEST)
+        if params.ENVIRONMENT_ID in [
+            EnvironmentName.PENDULUM_MATLAB_V0,
+            EnvironmentName.PENDULUM_MATLAB_DOUBLE_RIP_V0,
+            EnvironmentName.REAL_DEVICE_RIP,
+            EnvironmentName.REAL_DEVICE_DOUBLE_RIP,
+            EnvironmentName.QUANSER_SERVO_2
+        ]:
+            test_env = train_env
+        else:
+            test_env = rl_utils.get_single_environment(params=params, mode=AgentMode.TEST)
     else:
         test_env = None
 
