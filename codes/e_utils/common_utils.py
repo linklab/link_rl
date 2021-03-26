@@ -255,6 +255,7 @@ def agent_model_test(num_tests, test_env, agent):
         tests_done += 1
         #print("TEST {0}: EPISODE REWARD: {1:7.2f}".format(tests_done, float(np.mean(episode_reward).item())))
 
+    agent.agent_mode = AgentMode.TRAIN
     return np.mean(episode_rewards), np.std(episode_rewards)
 
 

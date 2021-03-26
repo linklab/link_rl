@@ -183,12 +183,12 @@ class DDPGActionSelector:
             noises = global_uncertainty * noises
 
             actions = actions + noises
-            print("actions: {0:7.4f}, global_uncertainty: {1:7.4f}, noises: {2:7.4f}".format(
-                actions[0][0], global_uncertainty, noises[0][0]
-            ))
+            # print("actions: {0:7.4f}, global_uncertainty: {1:7.4f}, noises: {2:7.4f}".format(
+            #     actions[0][0], global_uncertainty, noises[0][0]
+            # ))
         else:
             noises = np.zeros_like(actions)
-            print("actions: {0:7.4f} - ou_enabled: False".format(actions[0][0]))
+            # print("actions: {0:7.4f} - ou_enabled: False".format(actions[0][0]))
 
         # print("mu : {0:2.4f}, action : {1:2.4f}".format(mu[0][0], actions[0][0]))
         return actions, noises
