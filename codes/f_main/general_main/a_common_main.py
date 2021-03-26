@@ -164,7 +164,7 @@ def process_episode(
     test_std_episode_reward = None
     evaluation_msg = None
 
-    if episode % params.TEST_NUM_EPISODES == 0:
+    if episode % params.TEST_PERIOD_EPISODES == 0:
         if params.MODEL_SAVE_MODE in [ModelSaveMode.TRAIN, ModelSaveMode.TEST]:
             if params.MODEL_SAVE_MODE == ModelSaveMode.TRAIN:
                 test_mean_episode_reward = np.mean(train_episode_reward_lst_for_test).item()
@@ -191,6 +191,7 @@ def process_episode(
             evaluation_msg = model_save_msg + " ---> " + early_stopping_evaluation_msg
         elif params.MODEL_SAVE_MODE == ModelSaveMode.FINAL_ONLY:
             test_mean_episode_reward = None
+            test_std_episode_reward = None
             solved = False
         else:
             raise ValueError()
