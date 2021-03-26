@@ -114,6 +114,7 @@ class ExperienceReplayBuffer:
         Populates samples into the buffer
         :param samples: how many samples to populate
         """
+        entry = None
         for _ in range(num_samples):
             entry = next(self.experience_source_iter)
             self._add(entry)
