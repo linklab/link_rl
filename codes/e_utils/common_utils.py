@@ -231,6 +231,7 @@ def agent_model_test(params, test_env, agent):
 
     episode_rewards = np.zeros(params.TEST_NUM_EPISODES)
 
+    num_tests = 0
     for test_episode in range(params.TEST_NUM_EPISODES):
         done = False
         episode_reward = 0
@@ -251,6 +252,8 @@ def agent_model_test(params, test_env, agent):
             episode_reward += reward
 
         episode_rewards[test_episode] = episode_reward
+        num_tests += 1
+        print("TEST {0}: EPISODE REWARD: {1:7.2f}".format(num_tests, episode_reward))
 
     return np.mean(episode_rewards), np.std(episode_rewards)
 
