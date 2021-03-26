@@ -171,7 +171,7 @@ def process_episode(
                 test_std_episode_reward = np.std(train_episode_reward_lst_for_test).item()
                 test_env_str = colored("TRAIN ENV", "yellow")
             else:
-                test_mean_episode_reward, test_std_episode_reward = agent_model_test(params, test_env, agent)
+                test_mean_episode_reward, test_std_episode_reward = agent_model_test(num_tests, test_env, agent)
                 test_env_str = colored("TEST ENV", "yellow")
 
             mean_std_str = colored(

@@ -224,15 +224,15 @@ def load_model(model_save_dir, model_save_file_prefix, agent, step=None, inquery
     print()
 
 
-def agent_model_test(params, test_env, agent):
+def agent_model_test(num_tests, test_env, agent):
     agent.agent_mode = AgentMode.TEST
 
     num_step = 0
 
-    episode_rewards = np.zeros(params.TEST_NUM_EPISODES)
+    episode_rewards = np.zeros(num_tests)
 
-    num_tests = 0
-    for test_episode in range(params.TEST_NUM_EPISODES):
+    tests_done = 0
+    for test_episode in range(num_tests):
         done = False
         episode_reward = 0
 
@@ -252,8 +252,8 @@ def agent_model_test(params, test_env, agent):
             episode_reward += reward
 
         episode_rewards[test_episode] = episode_reward
-        num_tests += 1
-        print("TEST {0}: EPISODE REWARD: {1:7.2f}".format(num_tests, float(np.mean(episode_reward).item())))
+        tests_done += 1
+        #print("TEST {0}: EPISODE REWARD: {1:7.2f}".format(tests_done, float(np.mean(episode_reward).item())))
 
     return np.mean(episode_rewards), np.std(episode_rewards)
 
