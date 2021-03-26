@@ -253,7 +253,7 @@ def agent_model_test(params, test_env, agent):
 
         episode_rewards[test_episode] = episode_reward
         num_tests += 1
-        print("TEST {0}: EPISODE REWARD: {1:7.2f}".format(num_tests, episode_reward))
+        print("TEST {0}: EPISODE REWARD: {1:7.2f}".format(num_tests, float(np.mean(episode_reward).item())))
 
     return np.mean(episode_rewards), np.std(episode_rewards)
 
