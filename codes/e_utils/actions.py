@@ -170,27 +170,56 @@ class DDPGActionSelector:
         actions = np.copy(mu)
 
         if self.ou_enabled:
-            if isinstance(noises, list):
-                noises = np.asarray(noises)
+            if random.random() < global_uncertainty:
+                if isinstance(noises, list):
+                    noises = np.asarray(noises)
 
-            # print(noises.shape, "#####")
-            # if noises.ndim == 1:
-            #     noises = np.expand_dims(noises, axis=-1)
-
-            noises = noises + self.ou_theta * (self.ou_mu - noises) * self.ou_dt + \
-                     self.ou_sigma * np.sqrt(self.ou_dt) * np.random.normal(size=noises.shape)
-
-            noises = global_uncertainty * noises
+                noises = noises + self.ou_theta * (self.ou_mu - noises) * self.ou_dt + \
+                         self.ou_sigma * np.sqrt(self.ou_dt) * np.random.normal(size=noises.shape)
+            else:
+                noises = np.zeros_like(actions)
 
             actions = actions + noises
-            # print("actions: {0:7.4f}, epsilon: {1:7.4f}, noises: {2:7.4f}".format(
-            #     actions[0][0], self.epsilon, noises[0][0]
-            # ))
         else:
             noises = np.zeros_like(actions)
 
-        # print("mu : {0:2.4f}, action : {1:2.4f}".format(mu[0][0], actions[0][0]))
         return actions, noises
+
+# class DDPGActionSelector:
+#     def __init__(self, ou_enabled, ou_mu=None, ou_theta=0.15, ou_dt=0.01, ou_sigma=2.0):
+#         self.ou_enabled = ou_enabled
+#         self.ou_mu = ou_mu
+#         self.ou_theta = ou_theta
+#         self.ou_dt = ou_dt
+#         self.ou_sigma = ou_sigma
+#
+#     def __call__(self, mu, noises, global_uncertainty=1.0):
+#         assert isinstance(mu, np.ndarray)
+#         actions = np.copy(mu)
+#
+#         if self.ou_enabled:
+#             if isinstance(noises, list):
+#                 noises = np.asarray(noises)
+#
+#             # print(noises.shape, "#####")
+#             # if noises.ndim == 1:
+#             #     noises = np.expand_dims(noises, axis=-1)
+#
+#             noises = noises + self.ou_theta * (self.ou_mu - noises) * self.ou_dt + \
+#                      self.ou_sigma * np.sqrt(self.ou_dt) * np.random.normal(size=noises.shape)
+#
+#             noises = global_uncertainty * noises
+#
+#             actions = actions + noises
+#             # print("actions: {0:7.4f}, global_uncertainty: {1:7.4f}, noises: {2:7.4f}".format(
+#             #     actions[0][0], global_uncertainty, noises[0][0]
+#             # ))
+#         else:
+#             noises = np.zeros_like(actions)
+#             # print("actions: {0:7.4f} - ou_enabled: False".format(actions[0][0]))
+#
+#         # print("mu : {0:2.4f}, action : {1:2.4f}".format(mu[0][0], actions[0][0]))
+#         return actions, noises
 
 
 class EpsilonGreedyD4PGActionSelector(ActionSelector):

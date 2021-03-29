@@ -93,7 +93,16 @@ def get_train_and_test_envs():
     train_env = rl_utils.get_environment(params=params)
     print_environment_info(train_env, params)
     if params.MODEL_SAVE_MODE == ModelSaveMode.TEST:
-        test_env = rl_utils.get_single_environment(params=params, mode=AgentMode.TEST)
+        if params.ENVIRONMENT_ID in [
+            EnvironmentName.PENDULUM_MATLAB_V0,
+            EnvironmentName.PENDULUM_MATLAB_DOUBLE_RIP_V0,
+            EnvironmentName.REAL_DEVICE_RIP,
+            EnvironmentName.REAL_DEVICE_DOUBLE_RIP,
+            EnvironmentName.QUANSER_SERVO_2
+        ]:
+            test_env = train_env
+        else:
+            test_env = rl_utils.get_single_environment(params=params, mode=AgentMode.TEST)
     else:
         test_env = None
 
@@ -155,14 +164,14 @@ def process_episode(
     test_std_episode_reward = None
     evaluation_msg = None
 
-    if episode % params.TEST_NUM_EPISODES == 0:
+    if episode % params.TEST_PERIOD_EPISODES == 0:
         if params.MODEL_SAVE_MODE in [ModelSaveMode.TRAIN, ModelSaveMode.TEST]:
             if params.MODEL_SAVE_MODE == ModelSaveMode.TRAIN:
                 test_mean_episode_reward = np.mean(train_episode_reward_lst_for_test).item()
                 test_std_episode_reward = np.std(train_episode_reward_lst_for_test).item()
                 test_env_str = colored("TRAIN ENV", "yellow")
             else:
-                test_mean_episode_reward, test_std = agent_model_test(params, test_env, agent)
+                test_mean_episode_reward, test_std_episode_reward = agent_model_test(num_tests, test_env, agent)
                 test_env_str = colored("TEST ENV", "yellow")
 
             mean_std_str = colored(
@@ -182,6 +191,7 @@ def process_episode(
             evaluation_msg = model_save_msg + " ---> " + early_stopping_evaluation_msg
         elif params.MODEL_SAVE_MODE == ModelSaveMode.FINAL_ONLY:
             test_mean_episode_reward = None
+            test_std_episode_reward = None
             solved = False
         else:
             raise ValueError()
