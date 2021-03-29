@@ -382,6 +382,7 @@ class RotaryInvertedPendulumEnv(gym.Env):
             self.pendulum_1_position = rip_response.link_1_angle
             self.pendulum_1_velocity = rip_response.link_1_velocity
             self.simulation_time = None
+            print(self.pendulum_1_position, self.pendulum_1_velocity)
         elif self.pendulum_type == EnvironmentName.PENDULUM_MATLAB_DOUBLE_RIP_V0:
             self.plant.simulate(action)
 
