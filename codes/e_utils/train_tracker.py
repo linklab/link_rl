@@ -82,39 +82,41 @@ class EarlyStopping:
         std_msg = f'{evaluation_value_std:.2f} is less than {self.evaluation_std_max_threshold}.' if evaluation_value_std < self.evaluation_std_max_threshold else f'{evaluation_value_std:.2f} is more than {self.evaluation_std_max_threshold}.'
 
         if self.best_evaluation_value == -1.0e10:
+            if episode_done_step >= self.next_periodic_save_step_idx:
+                evaluation_str = colored(
+                    f'{episode_done_step} is more than {self.next_periodic_save_step_idx}.',
+                    "magenta"
+                )
+                msg = f"Periodic Save!!! - {evaluation_str}. \m"
+                self.save_checkpoint(evaluation_value, episode_done_step)
+                self.periodic_save_count = self.periodic_save_count + 1
+                self.next_periodic_save_step_idx = int(self.params.MAX_GLOBAL_STEP * self.periodic_save_count / 10)
+            else:
+                msg = ""
+
             if episode_done_step < self.evaluation_min_step_idx:
-                if episode_done_step > self.next_periodic_save_step_idx:
-                    evaluation_str = colored(
-                        f'{episode_done_step} is more than {self.next_periodic_save_step_idx}.',
-                        "magenta"
-                    )
-                    msg = f"Periodic Save!!! - {evaluation_str}. "
-                    self.save_checkpoint(evaluation_value, episode_done_step)
-                    self.periodic_save_count = self.periodic_save_count + 1
-                    self.next_periodic_save_step_idx = int(self.params.MAX_GLOBAL_STEP * self.periodic_save_count / 10)
-                else:
-                    evaluation_str = colored(
-                        f'{episode_done_step} is less than {self.evaluation_min_step_idx}. {std_msg}',
-                        "magenta"
-                    )
-                    msg = f"{evaluation_str}. No early stopping (and no saving) processed"
+                evaluation_str = colored(
+                    f'{episode_done_step} is less than {self.evaluation_min_step_idx}. {std_msg}',
+                    "magenta"
+                )
+                msg += f"{evaluation_str}. No early stopping (and no saving) processed"
             elif evaluation_value < self.evaluation_value_min_threshold:
                 evaluation_str = colored(
                     f'{evaluation_value:.2f} is less than {self.evaluation_value_min_threshold}. {std_msg}',
                     'blue'
                 )
-                msg = f"{evaluation_str}. No early stopping (and no saving) processed"
+                msg += f"{evaluation_str}. No early stopping (and no saving) processed"
             elif evaluation_value >= self.evaluation_value_min_threshold and evaluation_value_std > self.evaluation_std_max_threshold:
                 evaluation_str = colored(
                     f'{evaluation_value:.2f} is more than {self.evaluation_value_min_threshold}. '
                     f'But, std {evaluation_value_std:.2f} is more than {self.evaluation_std_max_threshold}',
                     'blue'
                 )
-                msg = f"{evaluation_str}. No early stopping (and no saving) processed"
+                msg += f"{evaluation_str}. No early stopping (and no saving) processed"
             else:
-                saving_str = colored(f"INITIALLY Saving model ...", 'green')
+                saving_str = colored(f"Evaluation value is good!!! Saving model ...", 'green')
                 evaluation_str = colored(f'{evaluation_value:.2f} recorded first.', 'green')
-                msg = f'*** Evaluation value {evaluation_str}. {saving_str}'
+                msg += f'*** Evaluation value {evaluation_str}. {saving_str}'
 
                 self.save_checkpoint(evaluation_value, episode_done_step)
                 self.best_evaluation_value = evaluation_value
