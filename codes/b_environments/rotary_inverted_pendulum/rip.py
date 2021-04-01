@@ -203,9 +203,9 @@ class RotaryInvertedPendulumEnv(gym.Env):
             else:
                 rip_response = self.server_obj.reset(RipRequest(value=None))
 
-                self.motor_position = rip_response.arm_angle
+                self.motor_position = math.radians(rip_response.arm_angle)
                 self.motor_velocity = rip_response.arm_velocity
-                self.pendulum_1_position = rip_response.link_1_angle
+                self.pendulum_1_position = math.radians(rip_response.link_1_angle)
                 self.pendulum_1_velocity = rip_response.link_1_velocity
                 self.simulation_time = None
 
@@ -377,12 +377,11 @@ class RotaryInvertedPendulumEnv(gym.Env):
             # current_time = time.perf_counter()
             # print("point 2 - elapsed time: {0:10.8f}".format(current_time - self.last_time))
 
-            self.motor_position = rip_response.arm_angle
+            self.motor_position = math.radians(rip_response.arm_angle)
             self.motor_velocity = rip_response.arm_velocity
-            self.pendulum_1_position = rip_response.link_1_angle
+            self.pendulum_1_position = math.radians(rip_response.link_1_angle)
             self.pendulum_1_velocity = rip_response.link_1_velocity
             self.simulation_time = None
-            print(self.pendulum_1_position, self.pendulum_1_velocity)
         elif self.pendulum_type == EnvironmentName.PENDULUM_MATLAB_DOUBLE_RIP_V0:
             self.plant.simulate(action)
 
@@ -406,7 +405,7 @@ class RotaryInvertedPendulumEnv(gym.Env):
 
         if abs(self.initial_motor_position - self.motor_position) > math.pi * 2:
             self.too_much_rotate = True
-
+        # print(self.initial_motor_position, self.motor_position)
         done_conditions = [
             self.episode_steps >= 10000,
             # self.episode_steps >= 500 and not self.is_upright,
@@ -441,7 +440,7 @@ class RotaryInvertedPendulumEnv(gym.Env):
             # print("REWARD :", reward)
         else:
             raise ValueError()
-
+        # print(done_conditions)
         if any(done_conditions):
             done = True
 
@@ -490,7 +489,8 @@ class RotaryInvertedPendulumEnv(gym.Env):
             # print("pendulum_2 :", self.pendulum_2_position)
         else:
             raise ValueError()
-
+        # print(adjusted_pendulum_1_radian, reward)
+        # time.sleep(0.5)
         self.step_idx += 1
         # print(self.episode_steps, done, "!!!!!!")
         return state, reward, done, info
