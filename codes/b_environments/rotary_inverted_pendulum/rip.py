@@ -536,11 +536,11 @@ class RotaryInvertedPendulumEnv(gym.Env):
         self.episode_action_reward_list.append(0.0)
 
         reward = position_reward + energy_penalty
-        print(
-            "position_reward: {0:3.4f}".format(position_reward),
-            "energy_penalty: {0:3.4f}".format(energy_penalty),
-            "reward : {0:3.4f}".format(reward)
-        )
+        # print(
+        #     "position_reward: {0:3.4f}".format(position_reward),
+        #     "energy_penalty: {0:3.4f}".format(energy_penalty),
+        #     "reward : {0:3.4f}".format(reward)
+        # )
         reward = max(0.0, reward)
 
         return reward
