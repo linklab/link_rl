@@ -507,7 +507,7 @@ class RotaryInvertedPendulumEnv(gym.Env):
         self.episode_pendulum_velocity_reward_list.append(energy_penalty)
         self.episode_action_reward_list.append(0.0)
 
-        reward = position_reward + 10* energy_penalty
+        reward = position_reward + 10 * energy_penalty
 
         reward = max(0.0, reward)
 
@@ -516,7 +516,6 @@ class RotaryInvertedPendulumEnv(gym.Env):
         return reward
 
     def get_reward_for_double_rip_1(self):
-
         terminal, position_score = self._terminal()
         # position_reward = 0. if not terminal else position_score
         position_reward = position_score + 2
@@ -526,7 +525,7 @@ class RotaryInvertedPendulumEnv(gym.Env):
         alpha_motor_velocity = 0.5
         energy_penalty_denominator = 150
 
-        energy_penalty = -1.0 * (
+        energy_penalty = -5.0 * (
             alpha_pendulum_1_velocity * abs(self.pendulum_1_velocity) +
             alpha_pendulum_2_velocity * abs(self.pendulum_2_velocity) +
             alpha_motor_velocity * abs(self.motor_velocity)
