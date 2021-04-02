@@ -520,12 +520,12 @@ class RotaryInvertedPendulumEnv(gym.Env):
         # position_reward = 0. if not terminal else position_score
         position_reward = position_score + 2
 
-        alpha_pendulum_1_velocity = 0.3
-        alpha_pendulum_2_velocity = 0.3
+        alpha_pendulum_1_velocity = 0.5
+        alpha_pendulum_2_velocity = 0.5
         alpha_motor_velocity = 0.5
-        energy_penalty_denominator = 150
+        energy_penalty_denominator = 100
 
-        energy_penalty = -5.0 * (
+        energy_penalty = -1.0 * (
             alpha_pendulum_1_velocity * abs(self.pendulum_1_velocity) +
             alpha_pendulum_2_velocity * abs(self.pendulum_2_velocity) +
             alpha_motor_velocity * abs(self.motor_velocity)
@@ -536,11 +536,11 @@ class RotaryInvertedPendulumEnv(gym.Env):
         self.episode_action_reward_list.append(0.0)
 
         reward = position_reward + energy_penalty
-        # print(
-        #     "position_reward: {0:3.4f}".format(position_reward),
-        #     "energy_penalty: {0:3.4f}".format(energy_penalty),
-        #     "reward : {0:3.4f}".format(reward)
-        # )
+        print(
+            "position_reward: {0:3.4f}".format(position_reward),
+            "energy_penalty: {0:3.4f}".format(energy_penalty),
+            "reward : {0:3.4f}".format(reward)
+        )
         reward = max(0.0, reward)
 
         return reward
@@ -719,7 +719,7 @@ class RotaryInvertedPendulumEnv(gym.Env):
         pendulum_1_position = wrap(self.pendulum_1_position, -math.pi, math.pi)
         pendulum_2_position = wrap(self.pendulum_2_position, -math.pi, math.pi)
         is_terminal = bool(-math.cos(pendulum_1_position) - math.cos(pendulum_2_position + pendulum_1_position) > 1.)
-        position_score = -math.cos(pendulum_1_position) - math.cos(pendulum_2_position + pendulum_1_position)
+        position_score = -2.0 * math.cos(pendulum_1_position) - math.cos(pendulum_2_position + pendulum_1_position)
         # print(
         #     "{0:2.4f}".format(math.degrees(pendulum_1_position)),
         #     "{0:2.4f}".format(math.degrees(pendulum_2_position)),
