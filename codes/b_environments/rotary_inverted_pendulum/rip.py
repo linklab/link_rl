@@ -294,7 +294,7 @@ class RotaryInvertedPendulumEnv(gym.Env):
         if self.pendulum_type in [EnvironmentName.PENDULUM_MATLAB_DOUBLE_RIP_V0, EnvironmentName.REAL_DEVICE_DOUBLE_RIP]:
             upright_conditions = [
                 math.pi - math.radians(12) < adjusted_pendulum_1_radian <= math.pi,
-                math.pi - math.radians(12) < adjusted_pendulum_2_radian <= math.pi
+                adjusted_pendulum_2_radian < math.radians(12)
             ]
         else:
             upright_conditions = [
@@ -518,10 +518,12 @@ class RotaryInvertedPendulumEnv(gym.Env):
 
     def get_reward_for_double_rip_1(self):
         terminal, position_score = self._terminal()
-        # position_reward = 0. if not terminal else position_score
-        position_reward = position_score + 2
 
-        alpha_pendulum_1_velocity = 0.5
+        position_reward = position_score + 4 if terminal else position_score + 2
+        if self.is_upright:
+            position_reward += 2
+
+        alpha_pendulum_1_velocity = 5.0
         alpha_pendulum_2_velocity = 0.5
         alpha_motor_velocity = 0.5
         energy_penalty_denominator = 100
@@ -537,11 +539,14 @@ class RotaryInvertedPendulumEnv(gym.Env):
         self.episode_action_reward_list.append(0.0)
 
         reward = position_reward + energy_penalty
-        # print(
-        #     "position_reward: {0:3.4f}".format(position_reward),
-        #     "energy_penalty: {0:3.4f}".format(energy_penalty),
-        #     "reward : {0:3.4f}".format(reward)
-        # )
+        if self.is_upright:
+            print(
+                "position_reward: {0:3.4f}".format(position_reward),
+                "energy_penalty: {0:3.4f}".format(energy_penalty),
+                "reward : {0:3.4f}".format(reward),
+                "terminal" if terminal else "",
+                "upright" if self.is_upright else ""
+            )
         reward = max(0.0, reward)
 
         return reward
