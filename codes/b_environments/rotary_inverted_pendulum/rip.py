@@ -491,7 +491,7 @@ class RotaryInvertedPendulumEnv(gym.Env):
         else:
             raise ValueError()
         # print(adjusted_pendulum_1_radian, reward)
-        time.sleep(0.5)
+        # time.sleep(0.5)
         self.step_idx += 1
         # print(self.episode_steps, done, "!!!!!!")
         return state, reward, done, info
@@ -521,7 +521,7 @@ class RotaryInvertedPendulumEnv(gym.Env):
         # position_reward = 0. if not terminal else position_score
         position_reward = position_score + 2
 
-        alpha_pendulum_1_velocity = 0.5
+        alpha_pendulum_1_velocity = 1.0
         alpha_pendulum_2_velocity = 0.5
         alpha_motor_velocity = 0.5
         energy_penalty_denominator = 100
