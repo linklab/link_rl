@@ -25,7 +25,7 @@ np.set_printoptions(formatter={'float_kind': lambda x: '{0:0.6f}'.format(x)})
 # BLOWING_ACTION_RATE = 0.0002  # 5000 스텝에 1번 정도(지수 분포)의 주가로 외력이 가해짐 --> Stochastic Env.
 BLOWING_ACTION_RATE = 0.000000000002
 
-RIP_SERVER = '10.0.0.2'
+RIP_SERVER = '10.0.0.5'
 
 class RotaryInvertedPendulumEnv(gym.Env):
     def __init__(
@@ -382,6 +382,7 @@ class RotaryInvertedPendulumEnv(gym.Env):
             self.pendulum_1_position = math.radians(rip_response.link_1_angle)
             self.pendulum_1_velocity = rip_response.link_1_velocity
             self.simulation_time = None
+            print(rip_response.link_1_angle)
         elif self.pendulum_type == EnvironmentName.PENDULUM_MATLAB_DOUBLE_RIP_V0:
             self.plant.simulate(action)
 
@@ -490,7 +491,7 @@ class RotaryInvertedPendulumEnv(gym.Env):
         else:
             raise ValueError()
         # print(adjusted_pendulum_1_radian, reward)
-        # time.sleep(0.5)
+        time.sleep(0.5)
         self.step_idx += 1
         # print(self.episode_steps, done, "!!!!!!")
         return state, reward, done, info
