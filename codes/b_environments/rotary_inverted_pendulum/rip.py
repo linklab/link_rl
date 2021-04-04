@@ -294,7 +294,7 @@ class RotaryInvertedPendulumEnv(gym.Env):
         if self.pendulum_type in [EnvironmentName.PENDULUM_MATLAB_DOUBLE_RIP_V0, EnvironmentName.REAL_DEVICE_DOUBLE_RIP]:
             upright_conditions = [
                 math.pi - math.radians(12) < adjusted_pendulum_1_radian <= math.pi,
-                adjusted_pendulum_2_radian < math.radians(12)
+                #adjusted_pendulum_2_radian < math.radians(12)
             ]
         else:
             upright_conditions = [
@@ -539,14 +539,14 @@ class RotaryInvertedPendulumEnv(gym.Env):
         self.episode_action_reward_list.append(0.0)
 
         reward = position_reward + energy_penalty
-        if self.is_upright:
-            print(
-                "position_reward: {0:3.4f}".format(position_reward),
-                "energy_penalty: {0:3.4f}".format(energy_penalty),
-                "reward : {0:3.4f}".format(reward),
-                "terminal" if terminal else "",
-                "upright" if self.is_upright else ""
-            )
+        # if self.is_upright:
+        #     print(
+        #         "position_reward: {0:3.4f}".format(position_reward),
+        #         "energy_penalty: {0:3.4f}".format(energy_penalty),
+        #         "reward : {0:3.4f}".format(reward),
+        #         "terminal" if terminal else "",
+        #         "upright" if self.is_upright else ""
+        #     )
         reward = max(0.0, reward)
 
         return reward
