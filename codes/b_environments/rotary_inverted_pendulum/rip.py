@@ -404,7 +404,7 @@ class RotaryInvertedPendulumEnv(gym.Env):
         #print(self.motor_position, math.cos(self.motor_position), math.sin(self.motor_position))
         # print("!!!!!!!!!", self.pendulum_2_position)
 
-        if abs(self.initial_motor_position - self.motor_position) > math.pi * 4:
+        if abs(self.initial_motor_position - self.motor_position) > math.pi * 3:
             self.too_much_rotate = True
         # print(self.initial_motor_position, self.motor_position)
         done_conditions = [
