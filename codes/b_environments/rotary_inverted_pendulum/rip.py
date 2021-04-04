@@ -294,7 +294,7 @@ class RotaryInvertedPendulumEnv(gym.Env):
         if self.pendulum_type in [EnvironmentName.PENDULUM_MATLAB_DOUBLE_RIP_V0, EnvironmentName.REAL_DEVICE_DOUBLE_RIP]:
             upright_conditions = [
                 math.pi - math.radians(12) < adjusted_pendulum_1_radian <= math.pi,
-                #adjusted_pendulum_2_radian < math.radians(12)
+                adjusted_pendulum_2_radian < math.radians(8)
             ]
         else:
             upright_conditions = [
@@ -528,7 +528,7 @@ class RotaryInvertedPendulumEnv(gym.Env):
         alpha_motor_velocity = 0.5
         energy_penalty_denominator = 100
 
-        energy_penalty = -1.0 * (
+        energy_penalty = -2.0 * (
             alpha_pendulum_1_velocity * abs(self.pendulum_1_velocity) +
             alpha_pendulum_2_velocity * abs(self.pendulum_2_velocity) +
             alpha_motor_velocity * abs(self.motor_velocity)
