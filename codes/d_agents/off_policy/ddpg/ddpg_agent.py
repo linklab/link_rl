@@ -8,7 +8,7 @@ from codes.c_models.continuous_action.deterministic_continuous_actor_critic_mode
 from codes.d_agents.a0_base_agent import TargetNet, float32_preprocessor
 from codes.d_agents.off_policy.off_policy_agent import OffPolicyAgent
 from codes.e_utils import rl_utils
-from codes.e_utils.actions import SomeTimesBlowDDPGActionSelector, DDPGActionSelector
+from codes.e_utils.actions import SomeTimesBlowDDPGActionSelector, DDPGActionSelector, EpsilonTracker
 from codes.e_utils.names import DeepLearningModelName, AgentMode, EnvironmentName
 
 
@@ -40,12 +40,13 @@ class AgentDDPG(OffPolicyAgent):
         #     self.test_and_play_action_selector = DDPGActionSelector(ou_enabled=False)
         if params.TYPE_OF_ACTION_SELECTOR == "DDPGActionSelector":
             self.train_action_selector = DDPGActionSelector(
-                ou_enabled=params.OU_NOISE_ENABLED, ou_mu=np.zeros(self.action_shape), ou_sigma=self.params.OU_SIGMA
+                ou_enabled=params.OU_NOISE_ENABLED, ou_mu=np.zeros(self.action_shape), ou_sigma=self.params.OU_SIGMA,
+                epsilon=params.EPSILON_INIT
             )
         elif params.TYPE_OF_ACTION_SELECTOR == "SomeTimesBlowDDPGActionSelector":
             self.train_action_selector = SomeTimesBlowDDPGActionSelector(
                 ou_enabled=params.OU_NOISE_ENABLED, ou_mu=np.zeros(self.action_shape), ou_sigma=self.params.OU_SIGMA,
-                min_blowing_action=-10.0 * params.ACTION_SCALE, max_blowing_action=10.0 * params.ACTION_SCALE,
+                min_blowing_action=-10.0 * params.ACTION_SCALE, max_blowing_action=10.0 * params.ACTION_SCALE, epsilon=params.EPSILON_INIT
             )
 
         self.test_and_play_action_selector = DDPGActionSelector(ou_enabled=False)
@@ -80,6 +81,13 @@ class AgentDDPG(OffPolicyAgent):
 
         self.last_noise = 0.0
         self.global_uncertainty = 1.0
+
+        self.epsilon_tracker = EpsilonTracker(
+            action_selector=self.train_action_selector,
+            eps_start=params.EPSILON_INIT,
+            eps_final=params.EPSILON_MIN,
+            eps_frames=params.EPSILON_MIN_STEP
+        )
 
     def __call__(self, states, noises=None):
         if not noises:
@@ -179,5 +187,62 @@ class AgentDDPG(OffPolicyAgent):
         gradients = self.model.get_gradients_for_current_parameters()
 
         self.model.check_gradient_nan_or_zero(gradients)
+
+        return gradients, loss_critic_v.item(), loss_actor_v.item() * -1.0
+
+    def train_old(self, step_idx):
+        if self.params.PER_PROPORTIONAL or self.params.PER_RANK_BASED:
+            batch, batch_indices, batch_weights = self.buffer.sample(self.params.BATCH_SIZE)
+        else:
+            batch = self.buffer.sample(self.params.BATCH_SIZE)
+            batch_indices, batch_weights = None, None
+
+        # print(batch)
+        states_v, actions_v, rewards_v, dones_mask, last_states_v = self.unpack_batch(batch)
+
+        # train critic
+        self.critic_optimizer.zero_grad()
+        # critic_parameters = self.model.base.critic.parameters()
+        # for p in critic_parameters:
+        #     p.requires_grad = True
+
+        q_v = self.model.base.forward_critic(states_v, actions_v)
+        last_act_v = self.target_agent.target_model.forward_actor(last_states_v)
+        q_last_v = self.target_agent.target_model.forward_critic(last_states_v, last_act_v)
+        q_last_v[dones_mask] = 0.0
+        target_q_v = rewards_v.unsqueeze(dim=-1) + q_last_v * self.params.GAMMA ** self.params.N_STEP
+
+        if self.params.PER_PROPORTIONAL or self.params.PER_RANK_BASED:
+            batch_l1_loss = F.smooth_l1_loss(q_v, target_q_v.detach(), reduction='none')  # for PER
+            batch_weights_v = torch.tensor(batch_weights)
+            critic_loss_v = batch_weights_v * batch_l1_loss
+
+            self.buffer.update_priorities(batch_indices, batch_l1_loss.detach().cpu().numpy() + 1e-5)
+            self.buffer.update_beta(step_idx)
+        else:
+            critic_loss_v = F.smooth_l1_loss(q_v, target_q_v.detach(), reduction='none')
+
+        loss_critic_v = critic_loss_v.mean()
+
+        loss_critic_v.backward()
+        self.critic_optimizer.step()
+
+        # train actor
+        self.actor_optimizer.zero_grad()
+        # critic_parameters = self.model.base.critic.parameters()
+        # for p in critic_parameters:
+        #     p.requires_grad = False
+
+        current_actions_v = self.model.base.forward_actor(states_v)
+        q_v_for_actor = self.model.base.forward_critic(states_v, current_actions_v)
+        loss_actor_v = -1.0 * q_v_for_actor.mean()
+
+        loss_actor_v.backward()
+
+        self.actor_optimizer.step()
+
+        self.target_agent.alpha_sync(alpha=1 - 0.00005) #(1 - 0.001)
+
+        gradients = self.model.get_gradients_for_current_parameters()
 
         return gradients, loss_critic_v.item(), loss_actor_v.item() * -1.0
