@@ -25,6 +25,8 @@ np.set_printoptions(formatter={'float_kind': lambda x: '{0:0.6f}'.format(x)})
 # BLOWING_ACTION_RATE = 0.0002  # 5000 스텝에 1번 정도(지수 분포)의 주가로 외력이 가해짐 --> Stochastic Env.
 BLOWING_ACTION_RATE = 0.000000000002
 
+VELOCITY_STATE_DENOMINATOR = 100.0
+
 RIP_SERVER = '10.0.0.5'
 
 class RotaryInvertedPendulumEnv(gym.Env):
@@ -239,19 +241,19 @@ class RotaryInvertedPendulumEnv(gym.Env):
                 self.pendulum_2_velocity = rip_response.link_2_velocity
                 self.simulation_time = None
 
+            self.set_max_three_velocity()
+
             state = (
                 math.cos(self.pendulum_1_position),
                 math.sin(self.pendulum_1_position),
-                self.pendulum_1_velocity,
+                self.pendulum_1_velocity / VELOCITY_STATE_DENOMINATOR,
                 math.cos(self.pendulum_2_position),
                 math.sin(self.pendulum_2_position),
-                self.pendulum_2_velocity,
+                self.pendulum_2_velocity / VELOCITY_STATE_DENOMINATOR,
                 math.cos(0.0),  # 1.0
                 math.sin(0.0),  # 0.0
-                self.motor_velocity,
+                self.motor_velocity / VELOCITY_STATE_DENOMINATOR,
             )
-
-            self.set_max_three_velocity()
 
             self.update_current_state_for_double_rip(adjusted_pendulum_1_radian=0.0, adjusted_pendulum_2_radian=0.0)
         else:
@@ -494,23 +496,23 @@ class RotaryInvertedPendulumEnv(gym.Env):
                 self.motor_velocity,
             )
         elif self.pendulum_type in [EnvironmentName.PENDULUM_MATLAB_DOUBLE_RIP_V0, EnvironmentName.REAL_DEVICE_DOUBLE_RIP]:
-            state = (
-                math.cos(self.pendulum_1_position),
-                math.sin(self.pendulum_1_position),
-                self.pendulum_1_velocity,
-                math.cos(self.pendulum_2_position),
-                math.sin(self.pendulum_2_position),
-                self.pendulum_2_velocity,
-                math.cos(self.initial_motor_position - self.motor_position),
-                math.sin(self.initial_motor_position - self.motor_position),
-                self.motor_velocity,
-            )
-
             self.set_max_three_velocity()
 
             info["max_pendulum_1_velocity"] = self.max_pendulum_1_velocity
             info["max_pendulum_2_velocity"] = self.max_pendulum_2_velocity
             info["max_motor_velocity"] = self.max_motor_velocity
+
+            state = (
+                math.cos(self.pendulum_1_position),
+                math.sin(self.pendulum_1_position),
+                self.pendulum_1_velocity / VELOCITY_STATE_DENOMINATOR,
+                math.cos(self.pendulum_2_position),
+                math.sin(self.pendulum_2_position),
+                self.pendulum_2_velocity / VELOCITY_STATE_DENOMINATOR,
+                math.cos(self.initial_motor_position - self.motor_position),
+                math.sin(self.initial_motor_position - self.motor_position),
+                self.motor_velocity / VELOCITY_STATE_DENOMINATOR,
+            )
 
             # print("pendulum_2 :", self.pendulum_2_position)
         else:
