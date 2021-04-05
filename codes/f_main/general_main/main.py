@@ -90,6 +90,10 @@ def train_main(params, train_env, test_env):
                             train_info_dict["train mean actor objective"] = mean_actor_objective
                             del train_info_dict["evaluation_msg"]
                             del train_info_dict["solved"]
+                            if params.ENVIRONMENT_ID in [EnvironmentName.PENDULUM_MATLAB_DOUBLE_RIP_V0, EnvironmentName.REAL_DEVICE_DOUBLE_RIP]:
+                                del train_info_dict["max_pendulum_1_velocity"]
+                                del train_info_dict["max_pendulum_2_velocity"]
+                                del train_info_dict["max_motor_velocity"]
                             wandb.log(train_info_dict)
 
                     if params.TRAIN_ONLY_AFTER_EPISODE:
