@@ -312,7 +312,7 @@ class RotaryInvertedPendulumEnv(gym.Env):
         if self.pendulum_type in [EnvironmentName.PENDULUM_MATLAB_DOUBLE_RIP_V0, EnvironmentName.REAL_DEVICE_DOUBLE_RIP]:
             upright_conditions = [
                 math.pi - math.radians(12) < adjusted_pendulum_1_radian <= math.pi,
-                adjusted_pendulum_2_radian < math.radians(8)
+                adjusted_pendulum_2_radian < math.radians(12)
             ]
         else:
             upright_conditions = [
