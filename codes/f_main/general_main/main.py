@@ -95,6 +95,9 @@ def train_main(params, train_env, test_env):
                                     del train_info_dict["max_pendulum_1_velocity"]
                                     del train_info_dict["max_pendulum_2_velocity"]
                                     del train_info_dict["max_motor_velocity"]
+                                    del train_info_dict["last_info"]["max_pendulum_1_velocity"]
+                                    del train_info_dict["last_info"]["max_pendulum_2_velocity"]
+                                    del train_info_dict["last_info"]["max_motor_velocity"]
                             wandb.log(train_info_dict)
 
                     if params.TRAIN_ONLY_AFTER_EPISODE:
