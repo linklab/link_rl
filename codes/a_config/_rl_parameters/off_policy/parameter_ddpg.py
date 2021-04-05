@@ -16,8 +16,16 @@ class PARAMETERS_DDPG:
     COUNT_BASED_REWARD_SCALE = 0.1
     COUNT_BASED_PRECISION = 0
 
+    EPSILON_INIT = 1.0
+    EPSILON_MIN = 0.01
+    EPSILON_MIN_STEP = 1000000
+
     TRAIN_ONLY_AFTER_EPISODE = False
     NUM_TRAIN_ONLY_AFTER_EPISODE = None
+
+    TYPE_OF_ACTION = 'current'  # current
+    TYPE_OF_TRAIN = 'current'  # current
+    TYPE_OF_MODEL = 'current'  # current
 
     TYPE_OF_TARGET_UPDATE = "soft_update"
 
