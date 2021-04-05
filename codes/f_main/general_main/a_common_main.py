@@ -123,6 +123,10 @@ def get_early_stopping(agent):
 
     if hasattr(agent, 'train_action_selector') and hasattr(agent.train_action_selector, 'epsilon') and hasattr(params, "EPSILON_MIN_STEP"):
         early_stopping.evaluation_min_step_idx = params.EPSILON_MIN_STEP
+        if early_stopping.evaluation_min_step_idx is None:
+            early_stopping.evaluation_min_step_idx = 0
+    else:
+        early_stopping.evaluation_min_step_idx = 0
 
     return early_stopping
 
