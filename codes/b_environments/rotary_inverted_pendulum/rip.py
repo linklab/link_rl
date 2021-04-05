@@ -498,9 +498,9 @@ class RotaryInvertedPendulumEnv(gym.Env):
         elif self.pendulum_type in [EnvironmentName.PENDULUM_MATLAB_DOUBLE_RIP_V0, EnvironmentName.REAL_DEVICE_DOUBLE_RIP]:
             self.set_max_three_velocity()
 
-            info["max_pendulum_1_velocity"] = self.max_pendulum_1_velocity
-            info["max_pendulum_2_velocity"] = self.max_pendulum_2_velocity
-            info["max_motor_velocity"] = self.max_motor_velocity
+            # info["max_pendulum_1_velocity"] = self.max_pendulum_1_velocity
+            # info["max_pendulum_2_velocity"] = self.max_pendulum_2_velocity
+            # info["max_motor_velocity"] = self.max_motor_velocity
 
             state = (
                 math.cos(self.pendulum_1_position),
