@@ -291,6 +291,13 @@ def print_performance(
     if last_action is not None:
         print(", last action {0}".format(last_action), end="")
 
+    if params.ENVIRONMENT_ID in [EnvironmentName.PENDULUM_MATLAB_DOUBLE_RIP_V0, EnvironmentName.REAL_DEVICE_DOUBLE_RIP]:
+        print(", [{0:7.4f} {1:7.4f} {2:7.4f}]".format(
+            last_info["max_pendulum_1_velocity"],
+            last_info["max_pendulum_2_velocity"],
+            last_info["max_motor_velocity"],
+        ), end="")
+
     if evaluation_msg:
         print("\n", evaluation_msg, flush=True)
     else:

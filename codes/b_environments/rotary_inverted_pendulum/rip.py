@@ -147,6 +147,10 @@ class RotaryInvertedPendulumEnv(gym.Env):
         else:
             self.server_obj = None
 
+        self.max_pendulum_1_velocity = 0.0
+        self.max_pendulum_2_velocity = 0.0
+        self.max_motor_velocity = 0.0
+
     def get_n_states(self):
         n_states = self.observation_space.shape[0]
         return n_states
@@ -247,6 +251,8 @@ class RotaryInvertedPendulumEnv(gym.Env):
                 self.motor_velocity,
             )
 
+            self.set_max_three_velocity()
+
             self.update_current_state_for_double_rip(adjusted_pendulum_1_radian=0.0, adjusted_pendulum_2_radian=0.0)
         else:
             raise ValueError()
@@ -262,6 +268,16 @@ class RotaryInvertedPendulumEnv(gym.Env):
         self.initial_motor_position = self.motor_position
 
         return state
+
+    def set_max_three_velocity(self):
+        if self.pendulum_1_velocity > self.max_pendulum_1_velocity:
+            self.max_pendulum_1_velocity = self.pendulum_1_velocity
+
+        if self.pendulum_2_velocity > self.max_pendulum_2_velocity:
+            self.max_pendulum_2_velocity = self.pendulum_2_velocity
+
+        if self.motor_velocity > self.max_motor_velocity:
+            self.max_motor_velocity = self.motor_velocity
 
     @staticmethod
     def pendulum_position_to_adjusted_radian(position):
@@ -487,6 +503,13 @@ class RotaryInvertedPendulumEnv(gym.Env):
                 math.sin(self.initial_motor_position - self.motor_position),
                 self.motor_velocity,
             )
+
+            self.set_max_three_velocity()
+
+            info["max_pendulum_1_velocity"] = self.max_pendulum_1_velocity
+            info["max_pendulum_2_velocity"] = self.max_pendulum_2_velocity
+            info["max_motor_velocity"] = self.max_motor_velocity
+
             # print("pendulum_2 :", self.pendulum_2_position)
         else:
             raise ValueError()
@@ -494,6 +517,7 @@ class RotaryInvertedPendulumEnv(gym.Env):
         # time.sleep(0.5)
         self.step_idx += 1
         # print(self.episode_steps, done, "!!!!!!")
+
         return state, reward, done, info
 
     def get_reward(self, adjusted_pendulum_1_radian):
