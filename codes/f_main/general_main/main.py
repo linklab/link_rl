@@ -143,8 +143,15 @@ def train(agent, step_idx, loss_dequeue, actor_objective_dequeue):
     else:
         if len(agent.buffer) < params.MIN_REPLAY_SIZE_FOR_TRAIN:
             return
-
-        _, last_loss, actor_objective = agent.train(step_idx=step_idx)
+        if params.RL_ALGORITHM == RLAlgorithmName.DDPG_V0:
+            if params.TYPE_OF_TRAIN == "current":
+                _, last_loss, actor_objective = agent.train(step_idx=step_idx)
+            elif params.TYPE_OF_TRAIN == "old":
+                _, last_loss, actor_objective = agent.train_old(step_idx=step_idx)
+            else:
+                raise ValueError()
+        else:
+            _, last_loss, actor_objective = agent.train(step_idx=step_idx)
 
         loss_dequeue.append(last_loss)
 
