@@ -27,6 +27,4 @@ class PARAMETERS_DDPG:
     TYPE_OF_TRAIN = 'current'  # current
     TYPE_OF_MODEL = 'current'  # current
 
-    TYPE_OF_TARGET_UPDATE = "soft_update"
-
-    TYPE_OF_ACTION_SELECTOR = "DDPGActionSelector"
+    TYPE_OF_TARGET_UPDATE = "soft_update"  # "hard_update"
