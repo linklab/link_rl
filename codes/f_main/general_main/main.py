@@ -122,6 +122,9 @@ def train_main(params, train_env, test_env):
 
 
 def train(agent, step_idx, loss_dequeue, actor_objective_dequeue):
+    if hasattr(agent, 'epsilon_tracker'):
+        agent.epsilon_tracker.udpate(step_idx)
+
     if params.RL_ALGORITHM in ON_POLICY_RL_ALGORITHMS:
         if params.RL_ALGORITHM in [RLAlgorithmName.CONTINUOUS_PPO_V0, RLAlgorithmName.DISCRETE_PPO_V0]:
             if len(agent.buffer) < params.PPO_TRAJECTORY_SIZE:
