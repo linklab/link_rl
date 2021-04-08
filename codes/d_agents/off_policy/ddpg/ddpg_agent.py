@@ -82,12 +82,13 @@ class AgentDDPG(OffPolicyAgent):
         self.last_noise = 0.0
         self.global_uncertainty = 1.0
 
-        self.epsilon_tracker = EpsilonTracker(
-            action_selector=self.train_action_selector,
-            eps_start=params.EPSILON_INIT,
-            eps_final=params.EPSILON_MIN,
-            eps_frames=params.EPSILON_MIN_STEP
-        )
+        if self.params.TYPE_OF_ACTION == "old":
+            self.epsilon_tracker = EpsilonTracker(
+                action_selector=self.train_action_selector,
+                eps_start=params.EPSILON_INIT,
+                eps_final=params.EPSILON_MIN,
+                eps_frames=params.EPSILON_MIN_STEP
+            )
 
     def __call__(self, states, noises=None):
         if not noises:

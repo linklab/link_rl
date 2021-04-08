@@ -391,6 +391,7 @@ class EpsilonGreedyDDPGActionSelector:
 
         return actions, agent_states
 
+
 class EpsilonTracker:
     """
     Updates epsilon according to linear schedule
