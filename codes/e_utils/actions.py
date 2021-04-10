@@ -99,78 +99,6 @@ class EpsilonGreedySomeTimesBlowDQNActionSelector(ActionSelector):
         return actions
 
 
-class SomeTimesBlowDDPGActionSelector:
-    def __init__(
-            self, ou_enabled, ou_mu, ou_theta=0.15, ou_dt=0.01, ou_sigma=0.2,
-            blowing_action_rate=0.0002, min_blowing_action=-1.0, max_blowing_action=1.0, epsilon=0.0
-    ):
-        self.ou_enabled = ou_enabled
-        self.ou_theta = ou_theta
-        self.ou_dt = ou_dt
-        self.ou_sigma = ou_sigma
-        self.ou_mu = ou_mu
-
-        self.blowing_action_rate = blowing_action_rate
-        self.min_blowing_action = min_blowing_action
-        self.max_blowing_action = max_blowing_action
-        self.time_steps = 0
-        self.next_time_steps_of_random_blowing_action = int(random.expovariate(self.blowing_action_rate))
-
-        self.epsilon = epsilon
-    def __call__(self, mu, noises, global_uncertainty=1.0): #default ou_sigma = 0.2
-        assert isinstance(mu, np.ndarray)
-        if self.time_steps == 0:
-            print("next_time_steps_of_random_blowing_action: {0}".format(
-                self.next_time_steps_of_random_blowing_action
-            ))
-
-        self.time_steps += 1
-        actions = np.copy(mu)
-
-        if isinstance(noises, list):
-            noises = np.asarray(noises)
-
-        if noises.ndim == 1:
-            noises = np.expand_dims(noises, axis=-1)
-
-        if self.time_steps >= self.next_time_steps_of_random_blowing_action:
-            actions += np.random.uniform(
-                low=self.min_blowing_action, high=self.max_blowing_action, size=actions.shape
-            )
-
-            self.next_time_steps_of_random_blowing_action = self.time_steps + int(random.expovariate(self.blowing_action_rate))
-            print("Internal Blowing Action: {0}, next_time_steps_of_random_blowing_action: {1}".format(
-                actions,
-                self.next_time_steps_of_random_blowing_action
-            ))
-
-            noises = np.zeros_like(actions)
-        else:
-            if params.TYPE_OF_ACTION == "current":
-                if self.ou_enabled:
-                    noises = noises + self.ou_theta * (self.ou_mu - noises) * self.ou_dt + \
-                             self.ou_sigma * np.sqrt(self.ou_dt) * np.random.normal(size=noises.shape)
-
-                    noises = global_uncertainty * noises
-
-                    actions = actions + noises
-                else:
-                    noises = np.zeros_like(actions)
-            elif params.TYPE_OF_ACTION == "old":
-                if self.ou_enabled:
-                    # agent_states = 1.0       +    0.15 * (0.0 - 1.0)            + new_random
-                    noises = noises + self.ou_theta * (self.ou_mu - noises) + self.ou_sigma * np.sqrt(
-                        self.ou_dt) * np.random.normal(size=actions.shape)
-
-                    noises = self.epsilon * noises
-
-                    actions = actions + noises
-                else:
-                    noises = np.zeros_like(actions)
-
-        return actions, noises
-
-
 class DDPGActionSelector:
     def __init__(self, ou_enabled, ou_mu=None, ou_theta=0.15, ou_dt=0.01, ou_sigma=2.0, epsilon=0.0):
         self.ou_enabled = ou_enabled
@@ -179,10 +107,8 @@ class DDPGActionSelector:
         self.ou_dt = ou_dt
         self.ou_sigma = ou_sigma
         self.epsilon = epsilon
-    def __call__(self, mu, noises, global_uncertainty=1.0):
-        assert isinstance(mu, np.ndarray)
-        actions = np.copy(mu)
 
+    def action_select(self, actions, noises, global_uncertainty):
         if isinstance(noises, list):
             noises = np.asarray(noises)
 
@@ -213,7 +139,53 @@ class DDPGActionSelector:
 
         return actions, noises
 
+    def __call__(self, mu, noises, global_uncertainty=1.0):
+        assert isinstance(mu, np.ndarray)
+        actions = np.copy(mu)
 
+        actions, noises = self.action_select(actions, noises, global_uncertainty)
+
+        return actions, noises
+
+
+class SomeTimesBlowDDPGActionSelector(DDPGActionSelector):
+    def __init__(
+            self, ou_enabled, ou_mu, ou_theta=0.15, ou_dt=0.01, ou_sigma=0.2,
+            blowing_action_rate=0.0002, min_blowing_action=-1.0, max_blowing_action=1.0, epsilon=0.0
+    ):
+        super(SomeTimesBlowDDPGActionSelector, self).__init__(ou_enabled, ou_mu, ou_theta, ou_dt, ou_sigma, epsilon)
+        self.blowing_action_rate = blowing_action_rate
+        self.min_blowing_action = min_blowing_action
+        self.max_blowing_action = max_blowing_action
+        self.time_steps = 0
+        self.next_time_steps_of_random_blowing_action = int(random.expovariate(self.blowing_action_rate))
+
+    def __call__(self, mu, noises, global_uncertainty=1.0): #default ou_sigma = 0.2
+        assert isinstance(mu, np.ndarray)
+        if self.time_steps == 0:
+            print("next_time_steps_of_random_blowing_action: {0}".format(
+                self.next_time_steps_of_random_blowing_action
+            ))
+
+        self.time_steps += 1
+        actions = np.copy(mu)
+
+        if self.time_steps >= self.next_time_steps_of_random_blowing_action:
+            actions += np.random.uniform(
+                low=self.min_blowing_action, high=self.max_blowing_action, size=actions.shape
+            )
+
+            self.next_time_steps_of_random_blowing_action = self.time_steps + int(random.expovariate(self.blowing_action_rate))
+            print("Internal Blowing Action: {0}, next_time_steps_of_random_blowing_action: {1}".format(
+                actions,
+                self.next_time_steps_of_random_blowing_action
+            ))
+
+            noises = np.zeros_like(actions)
+        else:
+            actions, noises = self.action_select(actions, noises, global_uncertainty)
+
+        return actions, noises
 
 # class DDPGActionSelector:
 #     def __init__(self, ou_enabled, ou_mu=None, ou_theta=0.15, ou_dt=0.01, ou_sigma=2.0):
