@@ -32,9 +32,19 @@ class ArgmaxActionSelector(ActionSelector):
     """
     Selects actions using argmax
     """
-    def __call__(self, scores):
-        assert isinstance(scores, np.ndarray)
-        return np.argmax(scores, axis=1)
+    def __init__(self, supports=None):
+        super(ArgmaxActionSelector).__init__()
+        self.supports = supports
+
+    def __call__(self, q_values):
+        assert isinstance(q_values, np.ndarray)
+
+        if params.DISTRIBUTIONAL:
+            dist = q_values * self.supports
+            action = dist.sum(2).max(1)[1].numpy()[0]
+        else:
+            action = np.argmax(q_values, axis=1)
+        return action
 
 
 class EpsilonGreedyDQNActionSelector(ActionSelector):
@@ -42,10 +52,10 @@ class EpsilonGreedyDQNActionSelector(ActionSelector):
         self.epsilon = epsilon
         self.default_action_selector = default_action_selector if default_action_selector is not None else ArgmaxActionSelector()
 
-    def __call__(self, scores):
-        assert isinstance(scores, np.ndarray)
-        batch_size, n_actions = scores.shape
-        actions = self.default_action_selector(scores)
+    def __call__(self, q_values):
+        assert isinstance(q_values, np.ndarray)
+        batch_size, n_actions = q_values.shape
+        actions = self.default_action_selector(q_values)
         mask = np.random.random(size=batch_size) < self.epsilon
         rand_actions = np.random.choice(n_actions, sum(mask))
         actions[mask] = rand_actions

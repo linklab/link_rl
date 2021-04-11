@@ -14,4 +14,8 @@ class PARAMETERS_DQN:
 
     NOISY_NET = False
     TRAIN_ONLY_AFTER_EPISODE = False
+
     DISTRIBUTIONAL = False
+    NUM_SUPPORTS = 51
+    REWARD_MIN = -1
+    REWARD_MAX = 1

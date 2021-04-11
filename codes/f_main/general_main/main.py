@@ -172,6 +172,10 @@ if __name__ == "__main__":
     if params.TRAIN_ONLY_AFTER_EPISODE:
         assert params.NUM_ENVIRONMENTS == 1
 
+    if params.DISTRIBUTIONAL:
+        assert params.NOISY_NET
+        assert hasattr(params, "NUM_SUPPORTS")
+
     train_env, test_env = get_train_and_test_envs()
 
     train_main(params, train_env, test_env)
