@@ -137,7 +137,7 @@ class AgentDQN(OffPolicyAgent):
 
         if self.params.NOISY_NET:
             self.model.base.reset_noise()  # Pick a new noise vector (until next optimisation step)
-            self.target_agent.target_model.reset_model()
+            self.target_agent.target_model.base.reset_noise()
 
         return gradients, loss_v.detach().item(), None
 
