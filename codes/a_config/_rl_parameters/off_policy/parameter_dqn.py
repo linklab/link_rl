@@ -14,3 +14,4 @@ class PARAMETERS_DQN:
 
     NOISY_NET = False
     TRAIN_ONLY_AFTER_EPISODE = False
+    DISTRIBUTIONAL = False

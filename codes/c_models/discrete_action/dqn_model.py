@@ -56,12 +56,13 @@ class DuelingDQN_MLP_Base(nn.Module):
             nn.LeakyReLU()
         )
 
-        self.noisy_net_list = [
-            NoisyLinear(self.hidden_2_size, self.hidden_3_size),
-            NoisyLinear(self.hidden_3_size, num_outputs),
-            NoisyLinear(self.hidden_2_size, self.hidden_3_size),
-            NoisyLinear(self.hidden_3_size, 1)
-        ]
+        if self.params.NOISY_NET:
+            self.noisy_net_list = [
+                NoisyLinear(self.hidden_2_size, self.hidden_3_size),
+                NoisyLinear(self.hidden_3_size, num_outputs),
+                NoisyLinear(self.hidden_2_size, self.hidden_3_size),
+                NoisyLinear(self.hidden_3_size, 1)
+            ]
 
         self.fc_adv = nn.Sequential(
             self.noisy_net_list[0] if self.params.NOISY_NET else nn.Linear(self.hidden_2_size, self.hidden_3_size),
@@ -94,9 +95,14 @@ class DuelingDQN_MLP_Base(nn.Module):
         adv = self.fc_adv(net_out)
         return val + adv - adv.mean()
 
-    def sample_noise(self):
-        for noisy_net in self.noisy_net_list:
-            noisy_net.sample_noise()
+    def reset_noise(self):
+        for noisy_linear in self.noisy_net_list:
+            noisy_linear.reset_noise()
+
+    # def sample_noise(self):
+    #     assert self.params.NOISY_NET
+    #     for noisy_net in self.noisy_net_list:
+    #         noisy_net.sample_noise()
 
 
 class DuelingDQN_CNN_Base(nn.Module):
@@ -162,9 +168,14 @@ class DuelingDQN_CNN_Base(nn.Module):
         adv = self.fc_adv(conv_out)
         return val + adv - adv.mean()
 
-    def sample_noise(self):
-        for noisy_net in self.noisy_net_list:
-            noisy_net.sample_noise()
+    def reset_noise(self):
+        for noisy_linear in self.noisy_net_list:
+            noisy_linear.reset_noise()
+
+    # def sample_noise(self):
+    #     assert self.params.NOISY_NET
+    #     for noisy_net in self.noisy_net_list:
+    #         noisy_net.sample_noise()
 
 
 class DuelingDQN_SmallCNN_Base(nn.Module):
@@ -230,6 +241,11 @@ class DuelingDQN_SmallCNN_Base(nn.Module):
         adv = self.fc_adv(conv_out)
         return val + adv - adv.mean()
 
-    def sample_noise(self):
-        for noisy_net in self.noisy_net_list:
-            noisy_net.sample_noise()
+    def reset_noise(self):
+        for noisy_linear in self.noisy_net_list:
+            noisy_linear.reset_noise()
+
+    # def sample_noise(self):
+    #     assert self.params.NOISY_NET
+    #     for noisy_net in self.noisy_net_list:
+    #         noisy_net.sample_noise()

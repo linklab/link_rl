@@ -55,13 +55,16 @@ class AgentDQN(OffPolicyAgent):
 
         self.__name__ = "AgentDQN"
 
-        self.model = DuelingDQNModel(
-            worker_id=worker_id,
-            input_shape=input_shape,
-            num_outputs=num_outputs,
-            params=params,
-            device=device
-        ).to(device)
+        if self.params.DISTRIBUTIONAL:
+            pass
+        else:
+            self.model = DuelingDQNModel(
+                worker_id=worker_id,
+                input_shape=input_shape,
+                num_outputs=num_outputs,
+                params=params,
+                device=device
+            ).to(device)
 
         self.target_agent = TargetNet(self.model.base)
 
@@ -83,13 +86,16 @@ class AgentDQN(OffPolicyAgent):
         else:
             self.model.train()
 
-        q_v = self.model(states)
-        q = q_v.detach().cpu().numpy()
-
-        if self.agent_mode == AgentMode.TRAIN:
-            actions = self.train_action_selector(q)
+        if self.params.DISTRIBUTIONAL:
+            actions = None
         else:
-            actions = self.test_and_play_action_selector(q)
+            q_v = self.model(states)
+            q = q_v.detach().cpu().numpy()
+
+            if self.agent_mode == AgentMode.TRAIN:
+                actions = self.train_action_selector(q)
+            else:
+                actions = self.test_and_play_action_selector(q)
 
         return actions, agent_states
 
@@ -99,9 +105,6 @@ class AgentDQN(OffPolicyAgent):
         else:
             batch = self.buffer.sample(self.params.BATCH_SIZE)
             batch_indices, batch_weights = None, None
-
-        if self.params.NOISY_NET:
-            self.model.base.sample_noise()  # Pick a new noise vector (until next optimisation step)
 
         self.optimizer.zero_grad()
 
@@ -131,6 +134,10 @@ class AgentDQN(OffPolicyAgent):
         gradients = self.model.get_gradients_for_current_parameters()
 
         self.model.check_gradient_nan_or_zero(gradients)
+
+        if self.params.NOISY_NET:
+            self.model.base.reset_noise()  # Pick a new noise vector (until next optimisation step)
+            self.target_agent.target_model.reset_model()
 
         return gradients, loss_v.detach().item(), None
 
