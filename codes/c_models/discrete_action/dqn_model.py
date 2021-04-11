@@ -175,7 +175,7 @@ class DuelingDQN_CNN_Base(nn.Module):
         # self.fc_val.apply(self.init_weights)
 
         self.layers_info = {
-            "net": self.net,
+            "conv": self.conv,
             "fc_advantage": self.fc_advantage,
             "fc_value": self.fc_value
         }
@@ -277,7 +277,7 @@ class DuelingDQN_SmallCNN_Base(nn.Module):
         # self.fc_val.apply(self.init_weights)
 
         self.layers_info = {
-            "net": self.net,
+            "conv": self.conv,
             "fc_advantage": self.fc_advantage,
             "fc_value": self.fc_value
         }
