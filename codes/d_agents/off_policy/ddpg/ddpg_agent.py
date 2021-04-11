@@ -46,7 +46,8 @@ class AgentDDPG(OffPolicyAgent):
         elif params.TYPE_OF_ACTION_SELECTOR == "SomeTimesBlowDDPGActionSelector":
             self.train_action_selector = SomeTimesBlowDDPGActionSelector(
                 ou_enabled=params.OU_NOISE_ENABLED, ou_mu=np.zeros(self.action_shape), ou_sigma=self.params.OU_SIGMA,
-                min_blowing_action=-10.0 * params.ACTION_SCALE, max_blowing_action=10.0 * params.ACTION_SCALE, epsilon=params.EPSILON_INIT
+                min_blowing_action=-5.0 * params.ACTION_SCALE, max_blowing_action=5.0 * params.ACTION_SCALE,
+                epsilon=params.EPSILON_INIT
             )
 
         self.test_and_play_action_selector = DDPGActionSelector(ou_enabled=False)
@@ -82,12 +83,13 @@ class AgentDDPG(OffPolicyAgent):
         self.last_noise = 0.0
         self.global_uncertainty = 1.0
 
-        self.epsilon_tracker = EpsilonTracker(
-            action_selector=self.train_action_selector,
-            eps_start=params.EPSILON_INIT,
-            eps_final=params.EPSILON_MIN,
-            eps_frames=params.EPSILON_MIN_STEP
-        )
+        if self.params.TYPE_OF_ACTION == "old":
+            self.epsilon_tracker = EpsilonTracker(
+                action_selector=self.train_action_selector,
+                eps_start=params.EPSILON_INIT,
+                eps_final=params.EPSILON_MIN,
+                eps_frames=params.EPSILON_MIN_STEP
+            )
 
     def __call__(self, states, noises=None):
         if not noises:
