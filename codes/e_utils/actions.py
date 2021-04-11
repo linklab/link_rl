@@ -276,9 +276,10 @@ class ContinuousNormalActionSelector(ContinuousActionSelector):
 
 
 class TD3ActionSelector:
-    def __init__(self, act_noise=0.0, noise_clip=0.0):
+    def __init__(self, epsilon, act_noise=0.0, noise_clip=0.0):
         self.act_noise = act_noise
         self.noise_clip = noise_clip
+        self.epsilon = epsilon
 
     def __call__(self, mu, noises=None):
         assert isinstance(mu, np.ndarray)
@@ -288,7 +289,10 @@ class TD3ActionSelector:
         else:
             noises = np.random.normal(size=mu.shape, loc=0, scale=self.act_noise)
 
-        actions = actions + noises
+        if params.TYPE_OF_ACTION == "old":
+            actions = actions + self.epsilon*noises
+        else:
+            actions = actions + noises
 
         #ic(noises)
 

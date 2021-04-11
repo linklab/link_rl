@@ -29,10 +29,10 @@ class AgentTD3(OffPolicyAgent):
         self.action_max = action_max
 
         self.train_action_selector = TD3ActionSelector(
-            act_noise=params.ACT_NOISE, noise_clip=params.NOISE_CLIP
+            epsilon=params.EPSILON_INIT, act_noise=params.ACT_NOISE, noise_clip=params.NOISE_CLIP
         )
         self.test_and_play_action_selector = TD3ActionSelector(
-            act_noise=params.ACT_NOISE, noise_clip=params.NOISE_CLIP
+            epsilon=params.EPSILON_INIT, act_noise=params.ACT_NOISE, noise_clip=params.NOISE_CLIP
         )
 
         self.model = DeterministicContinuousActorCriticModel(
@@ -62,6 +62,14 @@ class AgentTD3(OffPolicyAgent):
             learning_rate=self.params.LEARNING_RATE,
             params=params
         )
+
+        if self.params.TYPE_OF_ACTION == "old":
+            self.epsilon_tracker = EpsilonTracker(
+                action_selector=self.train_action_selector,
+                eps_start=params.EPSILON_INIT,
+                eps_final=params.EPSILON_MIN,
+                eps_frames=params.EPSILON_MIN_STEP
+            )
 
         self.cache_loss_actor_v = 0.0
         self.last_noise = 0.0
