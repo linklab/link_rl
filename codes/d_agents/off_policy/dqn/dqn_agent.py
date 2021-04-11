@@ -1,3 +1,4 @@
+# https://github.com/higgsfield/RL-Adventure
 import numpy as np
 import torch
 import torch.nn.functional as F
@@ -55,16 +56,13 @@ class AgentDQN(OffPolicyAgent):
 
         self.__name__ = "AgentDQN"
 
-        if self.params.DISTRIBUTIONAL:
-            pass
-        else:
-            self.model = DuelingDQNModel(
-                worker_id=worker_id,
-                input_shape=input_shape,
-                num_outputs=num_outputs,
-                params=params,
-                device=device
-            ).to(device)
+        self.model = DuelingDQNModel(
+            worker_id=worker_id,
+            input_shape=input_shape,
+            num_outputs=num_outputs,
+            params=params,
+            device=device
+        ).to(device)
 
         self.target_agent = TargetNet(self.model.base)
 
@@ -86,16 +84,13 @@ class AgentDQN(OffPolicyAgent):
         else:
             self.model.train()
 
-        if self.params.DISTRIBUTIONAL:
-            actions = None
-        else:
-            q_v = self.model(states)
-            q = q_v.detach().cpu().numpy()
+        q_v = self.model(states)
+        q = q_v.detach().cpu().numpy()
 
-            if self.agent_mode == AgentMode.TRAIN:
-                actions = self.train_action_selector(q)
-            else:
-                actions = self.test_and_play_action_selector(q)
+        if self.agent_mode == AgentMode.TRAIN:
+            actions = self.train_action_selector(q)
+        else:
+            actions = self.test_and_play_action_selector(q)
 
         return actions, agent_states
 

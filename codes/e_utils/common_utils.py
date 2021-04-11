@@ -227,7 +227,7 @@ def load_model(model_save_dir, model_save_file_prefix, agent, step=None, inquery
 def agent_model_test(num_tests, test_env, agent):
     agent.agent_mode = AgentMode.TEST
     agent.model.eval()
-    
+
     num_step = 0
 
     episode_rewards = np.zeros(num_tests)
