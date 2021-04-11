@@ -208,12 +208,12 @@ class DuelingDQN_CNN_Base(nn.Module):
         conv_out = self.conv(fx).view(fx.size()[0], -1)
 
         if self.params.NOISY_NET:
-            net_out_value = self.noisy_value_1(conv_out)
-            value = self.fc_value(net_out_value)
+            conv_out_value = self.noisy_value_1(conv_out)
+            value = self.fc_value(conv_out_value)
             value = self.noisy_value_2(value)
 
-            net_out_advantage = self.noisy_advantage_1(conv_out)
-            advantage = self.fc_advantage(net_out_advantage)
+            conv_out_advantage = self.noisy_advantage_1(conv_out)
+            advantage = self.fc_advantage(conv_out_advantage)
             advantage = self.noisy_advantage_2(advantage)
         else:
             value = self.fc_value(conv_out)
@@ -291,7 +291,6 @@ class DuelingDQN_SmallCNN_Base(nn.Module):
             self.layers_info["last_linear_advantage"] = self.last_linear_advantage
             self.layers_info["last_linear_value"] = self.last_linear_value
 
-
         self.train()
 
     def init_weights(self, m):
@@ -311,12 +310,12 @@ class DuelingDQN_SmallCNN_Base(nn.Module):
         conv_out = self.conv(fx).view(fx.size()[0], -1)
 
         if self.params.NOISY_NET:
-            net_out_value = self.noisy_value_1(conv_out)
-            value = self.fc_value(net_out_value)
+            conv_out_value = self.noisy_value_1(conv_out)
+            value = self.fc_value(conv_out_value)
             value = self.noisy_value_2(value)
 
-            net_out_advantage = self.noisy_advantage_1(conv_out)
-            advantage = self.fc_advantage(net_out_advantage)
+            conv_out_advantage = self.noisy_advantage_1(conv_out)
+            advantage = self.fc_advantage(conv_out_advantage)
             advantage = self.noisy_advantage_2(advantage)
         else:
             value = self.fc_value(conv_out)
