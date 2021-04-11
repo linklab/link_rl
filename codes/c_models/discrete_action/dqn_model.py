@@ -153,9 +153,9 @@ class DuelingDQN_CNN_Base(nn.Module):
         conv_out_size = self._get_conv_out(input_shape)
 
         if self.params.NOISY_NET:
-            self.noisy_value_1 = NoisyLinear(conv_out_size, 512)
+            self.noisy_value_1 = NoisyLinear(conv_out_size, conv_out_size)
             self.noisy_value_2 = NoisyLinear(512, 1)
-            self.noisy_advantage_1 = NoisyLinear(conv_out_size, 512)
+            self.noisy_advantage_1 = NoisyLinear(conv_out_size, conv_out_size)
             self.noisy_advantage_2 = NoisyLinear(512, num_outputs)
         else:
             self.last_linear_value = nn.Linear(512, 1)
@@ -255,9 +255,9 @@ class DuelingDQN_SmallCNN_Base(nn.Module):
         conv_out_size = self._get_conv_out(input_shape)
 
         if self.params.NOISY_NET:
-            self.noisy_value_1 = NoisyLinear(conv_out_size, 128)
+            self.noisy_value_1 = NoisyLinear(conv_out_size, conv_out_size)
             self.noisy_value_2 = NoisyLinear(128, 1)
-            self.noisy_advantage_1 = NoisyLinear(conv_out_size, 128)
+            self.noisy_advantage_1 = NoisyLinear(conv_out_size, conv_out_size)
             self.noisy_advantage_2 = NoisyLinear(128, num_outputs)
         else:
             self.last_linear_value = nn.Linear(128, 1)
