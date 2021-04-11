@@ -188,10 +188,11 @@ class RotaryInvertedPendulumEnv(gym.Env):
             print("next_time_step_of_external_blow: {0}".format(
                 self.next_time_step_of_external_blow
             ))
+
         if self.pendulum_type in [EnvironmentName.PENDULUM_MATLAB_V0,EnvironmentName.PENDULUM_MATLAB_DOUBLE_RIP_V0]:
             if self.env_reset or self.num_episodes % self.episode_period_env_reset_forced == 0:
                 print("ENV RESET")
-                self.plant.connectStart()
+                #self.plant.connectStart()
         # else:
         #     if self.env_reset or self.num_episodes % self.episode_period_env_reset_forced == 0:
         #         print("ENV RESET")
