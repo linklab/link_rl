@@ -29,7 +29,7 @@ class AgentTD3(OffPolicyAgent):
         self.action_max = action_max
 
         self.train_action_selector = TD3ActionSelector(
-            act_noise=params.ACT_NOISE, noise_clip=params.NOISE_CLIP
+            epsilon=params.EPSILON_INIT, act_noise=params.ACT_NOISE, noise_clip=params.NOISE_CLIP
         )
         self.test_and_play_action_selector = TD3ActionSelector(
             act_noise=params.ACT_NOISE, noise_clip=params.NOISE_CLIP
