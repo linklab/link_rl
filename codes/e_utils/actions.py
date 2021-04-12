@@ -290,7 +290,7 @@ class TD3ActionSelector:
     def select_action(self, mu):
         actions = np.copy(mu)
         if self.act_noise == 0.0:
-            noises = np.zeros_like(shape=actions.shape)
+            noises = np.zeros(shape=actions.shape)
         else:
             noises = np.random.normal(size=mu.shape, loc=0, scale=self.act_noise)
 
