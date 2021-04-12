@@ -45,5 +45,5 @@ class PARAMETERS_PENDULUM_MATLAB_DDPG(PARAMETERS_GENERAL, PARAMETERS_DDPG):
     NUM_TRAIN_ONLY_AFTER_EPISODE = 100
 
     TYPE_OF_REWARD = "old_version"  # "current_version"
-    TYPE_OF_TARGET_UPDATE = "soft_update" # "hard_update"
+    TYPE_OF_DDPG_TARGET_UPDATE = "soft_update" # "hard_update"
 

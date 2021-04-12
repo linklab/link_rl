@@ -32,7 +32,7 @@ class AgentTD3(OffPolicyAgent):
             epsilon=params.EPSILON_INIT, act_noise=params.ACT_NOISE, noise_clip=params.NOISE_CLIP
         )
         self.test_and_play_action_selector = TD3ActionSelector(
-            epsilon=params.EPSILON_INIT, act_noise=params.ACT_NOISE, noise_clip=params.NOISE_CLIP
+            epsilon=0.0, act_noise=0.0, noise_clip=params.NOISE_CLIP
         )
 
         self.model = DeterministicContinuousActorCriticModel(

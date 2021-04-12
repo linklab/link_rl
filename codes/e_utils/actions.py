@@ -296,13 +296,18 @@ class TD3ActionSelector:
             noises = np.random.normal(size=mu.shape, loc=0, scale=self.act_noise)
 
         if params.TYPE_OF_ACTION == "old":
-            actions = actions + self.epsilon*noises
+            actions = actions + self.epsilon * noises
         else:
             actions = actions + noises
 
         #ic(noises)
 
         return actions, noises
+
+
+class SomeTimesBlowTD3ActionSelector(TD3ActionSelector):
+    pass
+
 
 class EpsilonGreedySomeTimesBlowDDPGActionSelector:
     def __init__(
