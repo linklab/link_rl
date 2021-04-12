@@ -3,6 +3,7 @@ import torch
 import torch.nn as nn
 from torch.autograd import Variable
 import numpy as np
+import torch.nn.functional as F
 
 from codes.c_models.advanced_exploration.noisy_net import NoisyLinear
 from codes.c_models.base_model import BaseModel
@@ -45,6 +46,8 @@ class DuelingDQN_MLP_Base(nn.Module):
         self.__name__ = "DuelingDQN_MLP_Base"
         self.params = params
 
+        self.num_outputs = num_outputs
+
         self.hidden_1_size = params.HIDDEN_1_SIZE
         self.hidden_2_size = params.HIDDEN_2_SIZE
         self.hidden_3_size = params.HIDDEN_3_SIZE
@@ -58,9 +61,15 @@ class DuelingDQN_MLP_Base(nn.Module):
 
         if self.params.NOISY_NET:
             self.noisy_value_1 = NoisyLinear(self.hidden_2_size, self.hidden_2_size)
-            self.noisy_value_2 = NoisyLinear(self.hidden_3_size, 1)
+            if self.params.DISTRIBUTIONAL:
+                self.noisy_value_2 = NoisyLinear(self.hidden_3_size, self.params.NUM_SUPPORTS)
+            else:
+                self.noisy_value_2 = NoisyLinear(self.hidden_3_size, 1)
             self.noisy_advantage_1 = NoisyLinear(self.hidden_2_size, self.hidden_2_size)
-            self.noisy_advantage_2 = NoisyLinear(self.hidden_3_size, num_outputs)
+            if self.params.DISTRIBUTIONAL:
+                self.noisy_advantage_2 = NoisyLinear(self.hidden_3_size, num_outputs * self.params.NUM_SUPPORTS)
+            else:
+                self.noisy_advantage_2 = NoisyLinear(self.hidden_3_size, num_outputs)
         else:
             self.last_linear_value = nn.Linear(self.hidden_3_size, 1)
             self.last_linear_advantage = nn.Linear(self.hidden_3_size, num_outputs)
@@ -98,6 +107,8 @@ class DuelingDQN_MLP_Base(nn.Module):
             torch.nn.init.kaiming_normal_(m.weight)
 
     def forward(self, x):
+        batch_size = x.size(0)
+
         if torch.is_tensor(x):
             x = x.to(torch.float32)
         else:
@@ -109,10 +120,14 @@ class DuelingDQN_MLP_Base(nn.Module):
             net_out_value = self.noisy_value_1(net_out)
             value = self.fc_value(net_out_value)
             value = self.noisy_value_2(value)
+            if self.params.DISTRIBUTIONAL:
+                value = value.view(batch_size, 1, self.params.NUM_SUPPORTS)
 
             net_out_advantage = self.noisy_advantage_1(net_out)
             advantage = self.fc_advantage(net_out_advantage)
             advantage = self.noisy_advantage_2(advantage)
+            if self.params.DISTRIBUTIONAL:
+                advantage = advantage.view(batch_size, self.num_outputs, self.params.NUM_SUPPORTS)
         else:
             value = self.fc_value(net_out)
             value = self.last_linear_value(value)
@@ -120,7 +135,14 @@ class DuelingDQN_MLP_Base(nn.Module):
             advantage = self.fc_advantage(net_out)
             advantage = self.last_linear_advantage(advantage)
 
-        return value + advantage - advantage.mean()
+        if self.params.DISTRIBUTIONAL:
+            q_value = value + advantage - advantage.mean(1, keepdim=True)
+            q_value = F.softmax(
+                q_value.view(-1, self.params.NUM_SUPPORTS)
+            ).view(-1, self.num_outputs, self.params.NUM_SUPPORTS)
+        else:
+            q_value = value + advantage - advantage.mean()
+        return q_value
 
     def reset_noise(self):
         self.noisy_value_1.reset_noise()
@@ -137,10 +159,11 @@ class DuelingDQN_MLP_Base(nn.Module):
 class DuelingDQN_CNN_Base(nn.Module):
     def __init__(self, input_shape, num_outputs, params):
         super(DuelingDQN_CNN_Base, self).__init__()
-
         self.__name__ = "DuelingDQN_CNN_Base"
 
         self.params = params
+        self.num_outputs = num_outputs
+
         self.conv = nn.Sequential(
             nn.Conv2d(in_channels=input_shape[0], out_channels=32, kernel_size=8, stride=4),
             nn.LeakyReLU(),
@@ -154,9 +177,17 @@ class DuelingDQN_CNN_Base(nn.Module):
 
         if self.params.NOISY_NET:
             self.noisy_value_1 = NoisyLinear(conv_out_size, conv_out_size)
-            self.noisy_value_2 = NoisyLinear(512, 1)
+
+            if self.params.DISTRIBUTIONAL:
+                self.noisy_value_2 = NoisyLinear(512, self.params.NUM_SUPPORTS)
+            else:
+                self.noisy_value_2 = NoisyLinear(512, 1)
+
             self.noisy_advantage_1 = NoisyLinear(conv_out_size, conv_out_size)
-            self.noisy_advantage_2 = NoisyLinear(512, num_outputs)
+            if self.params.DISTRIBUTIONAL:
+                self.noisy_advantage_2 = NoisyLinear(512, num_outputs * self.params.NUM_SUPPORTS)
+            else:
+                self.noisy_advantage_2 = NoisyLinear(512, num_outputs)
         else:
             self.last_linear_value = nn.Linear(512, 1)
             self.last_linear_advantage = nn.Linear(512, num_outputs)
@@ -200,6 +231,8 @@ class DuelingDQN_CNN_Base(nn.Module):
         return int(np.prod(o.size()))
 
     def forward(self, x):
+        batch_size = x.size(0)
+
         if torch.is_tensor(x):
             fx = x.to(torch.float32)
         else:
@@ -211,10 +244,14 @@ class DuelingDQN_CNN_Base(nn.Module):
             conv_out_value = self.noisy_value_1(conv_out)
             value = self.fc_value(conv_out_value)
             value = self.noisy_value_2(value)
+            if self.params.DISTRIBUTIONAL:
+                value = value.view(batch_size, 1, self.params.NUM_SUPPORTS)
 
             conv_out_advantage = self.noisy_advantage_1(conv_out)
             advantage = self.fc_advantage(conv_out_advantage)
             advantage = self.noisy_advantage_2(advantage)
+            if self.params.DISTRIBUTIONAL:
+                advantage = advantage.view(batch_size, self.num_outputs, self.params.NUM_SUPPORTS)
         else:
             value = self.fc_value(conv_out)
             value = self.last_linear_value(value)
@@ -243,6 +280,8 @@ class DuelingDQN_SmallCNN_Base(nn.Module):
         self.__name__ = "DuelingDQN_SmallCNN_Base"
 
         self.params = params
+        self.num_outputs = num_outputs
+
         self.conv = nn.Sequential(
             nn.Conv2d(input_shape[0], 24, kernel_size=3, stride=1, padding=1),
             nn.LeakyReLU(),
@@ -256,9 +295,16 @@ class DuelingDQN_SmallCNN_Base(nn.Module):
 
         if self.params.NOISY_NET:
             self.noisy_value_1 = NoisyLinear(conv_out_size, conv_out_size)
-            self.noisy_value_2 = NoisyLinear(128, 1)
+            if self.params.DISTRIBUTIONAL:
+                self.noisy_value_2 = NoisyLinear(128, self.params.NUM_SUPPORTS)
+            else:
+                self.noisy_value_2 = NoisyLinear(128, 1)
+
             self.noisy_advantage_1 = NoisyLinear(conv_out_size, conv_out_size)
-            self.noisy_advantage_2 = NoisyLinear(128, num_outputs)
+            if self.params.DISTRIBUTIONAL:
+                self.noisy_advantage_2 = NoisyLinear(128, num_outputs * self.params.NUM_SUPPORTS)
+            else:
+                self.noisy_advantage_2 = NoisyLinear(128, num_outputs)
         else:
             self.last_linear_value = nn.Linear(128, 1)
             self.last_linear_advantage = nn.Linear(128, num_outputs)
@@ -302,6 +348,8 @@ class DuelingDQN_SmallCNN_Base(nn.Module):
         return int(np.prod(o.size()))
 
     def forward(self, x):
+        batch_size = x.size(0)
+
         if torch.is_tensor(x):
             fx = x.to(torch.float32)
         else:
@@ -313,10 +361,14 @@ class DuelingDQN_SmallCNN_Base(nn.Module):
             conv_out_value = self.noisy_value_1(conv_out)
             value = self.fc_value(conv_out_value)
             value = self.noisy_value_2(value)
+            if self.params.DISTRIBUTIONAL:
+                value = value.view(batch_size, 1, self.params.NUM_SUPPORTS)
 
             conv_out_advantage = self.noisy_advantage_1(conv_out)
             advantage = self.fc_advantage(conv_out_advantage)
             advantage = self.noisy_advantage_2(advantage)
+            if self.params.DISTRIBUTIONAL:
+                advantage = advantage.view(batch_size, self.num_outputs, self.params.NUM_SUPPORTS)
         else:
             value = self.fc_value(conv_out)
             value = self.last_linear_value(value)
