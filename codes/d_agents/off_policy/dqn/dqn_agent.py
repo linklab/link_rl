@@ -416,10 +416,10 @@ class AgentDQN(OffPolicyAgent):
 
         # self.target_model(next_states).size(): [32, 2, 51]
         # next_dist.size(): [32, 2, 51]
-        next_dist = self.target_model(next_states).data.cpu() * self.supports
+        next_dist = self.target_model(next_states) * self.supports
         print(next_dist.size(), "@@@@@@@@@@@@@@@@")
 
-        next_action = np.argmax(next_dist.sum(2), axis=1)
+        #next_action = np.argmax(next_dist.sum(2), axis=1)
 
         next_action = next_dist.sum(2).max(1)[1]
         next_action = next_action.unsqueeze(1).unsqueeze(1).expand(next_dist.size(0), 1, next_dist.size(2))
