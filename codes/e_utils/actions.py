@@ -134,6 +134,10 @@ class DDPGActionSelector:
                 actions = actions + noises
             else:
                 noises = np.zeros_like(actions)
+        elif params.TYPE_OF_ACTION == "original":
+            noises = noises + self.ou_theta * (self.ou_mu - noises) + self.ou_sigma * np.random.normal(
+                size=noises.shape)
+            actions = actions + noises
         else:
             raise ValueError()
 
