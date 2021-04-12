@@ -38,12 +38,12 @@ class AgentDDPG(OffPolicyAgent):
         # else:
         #     self.train_action_selector = DDPGActionSelector(ou_enabled=params.OU_NOISE_ENABLED, ou_sigma=self.params.OU_SIGMA)
         #     self.test_and_play_action_selector = DDPGActionSelector(ou_enabled=False)
-        if params.TYPE_OF_ACTION_SELECTOR == "DDPGActionSelector":
+        if params.TYPE_OF_DDPG_ACTION_SELECTOR == "DDPGActionSelector":
             self.train_action_selector = DDPGActionSelector(
                 ou_enabled=params.OU_NOISE_ENABLED, ou_mu=np.zeros(self.action_shape), ou_sigma=self.params.OU_SIGMA,
                 epsilon=params.EPSILON_INIT
             )
-        elif params.TYPE_OF_ACTION_SELECTOR == "SomeTimesBlowDDPGActionSelector":
+        elif params.TYPE_OF_DDPG_ACTION_SELECTOR == "SomeTimesBlowDDPGActionSelector":
             self.train_action_selector = SomeTimesBlowDDPGActionSelector(
                 ou_enabled=params.OU_NOISE_ENABLED, ou_mu=np.zeros(self.action_shape), ou_sigma=self.params.OU_SIGMA,
                 min_blowing_action=-5.0 * params.ACTION_SCALE, max_blowing_action=5.0 * params.ACTION_SCALE,

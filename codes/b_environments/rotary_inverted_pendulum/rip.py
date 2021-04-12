@@ -363,7 +363,8 @@ class RotaryInvertedPendulumEnv(gym.Env):
             elif self.params.RL_ALGORITHM in [
                 RLAlgorithmName.DDPG_V0,
                 RLAlgorithmName.CONTINUOUS_A2C_V0,
-                RLAlgorithmName.CONTINUOUS_PPO_V0
+                RLAlgorithmName.CONTINUOUS_PPO_V0,
+                RLAlgorithmName.TD3_V0
             ]:
                 action = random.uniform(
                     a=self.action_min * 10.0,

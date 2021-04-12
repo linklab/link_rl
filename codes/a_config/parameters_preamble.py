@@ -44,6 +44,7 @@ from codes.a_config.d_matlab_parameters.parameters_matlab_pendulum_ppo import \
     PARAMETERS_PENDULUM_MATLAB_PPO
 from codes.a_config.d_matlab_parameters.parameters_matlab_pendulum_dqn import PARAMETERS_PENDULUM_MATLAB_DQN
 from codes.a_config.d_matlab_parameters.parameters_matlab_pendulum_ddpg import PARAMETERS_PENDULUM_MATLAB_DDPG
+from .d_matlab_parameters.parameters_matlab_pendulum_td3 import PARAMETERS_PENDULUM_MATLAB_TD3
 
 from codes.a_config.e_real_device.parameters_rip import PARAMETERS_RIP
 from codes.a_config.e_real_device.parameters_double_rip_ddpg import PARAMETERS_DOUBLE_RIP

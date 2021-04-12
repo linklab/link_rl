@@ -85,11 +85,6 @@ class DeterministicActorCriticMLPBase(nn.Module):
         actions = self.actor(inputs)
         actions = torch.tanh(actions)
 
-        if self.params.TYPE_OF_MODEL == 'current':
-            actions = actions
-        elif self.params.TYPE_OF_MODEL == 'old':
-            actions = actions * self.params.ACTION_SCALE
-
         return actions
 
     def forward_critic(self, inputs, actions):

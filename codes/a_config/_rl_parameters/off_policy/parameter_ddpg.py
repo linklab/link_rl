@@ -24,9 +24,8 @@ class PARAMETERS_DDPG:
     NUM_TRAIN_ONLY_AFTER_EPISODE = None
 
     TYPE_OF_ACTION = 'current'  # current
-    TYPE_OF_TRAIN = 'current'  # current
-    TYPE_OF_MODEL = 'current'  # current
+    TYPE_OF_DDPG_TRAIN = 'current'  # current
+    TYPE_OF_DDPG_ACTION_SELECTOR = "DDPGActionSelector"
+    TYPE_OF_DDPG_TARGET_UPDATE = "soft_update"  # "hard_update"
 
-    TYPE_OF_ACTION_SELECTOR = "DDPGActionSelector"
-
-    TYPE_OF_TARGET_UPDATE = "soft_update"  # "hard_update"
+    N_STEP = 2
