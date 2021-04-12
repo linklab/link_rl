@@ -1,3 +1,4 @@
+# https://github.com/higgsfield/RL-Adventure
 import numpy as np
 import torch
 import torch.nn.functional as F
@@ -5,7 +6,7 @@ import torch.nn.functional as F
 from codes.b_environments.trade.trade_action_selector import EpsilonGreedyTradeDQNActionSelector, \
     ArgmaxTradeActionSelector
 from codes.c_models.discrete_action.dqn_model import DuelingDQNModel
-from codes.d_agents.a0_base_agent import TargetNet, float32_preprocessor
+from codes.d_agents.a0_base_agent import float32_preprocessor
 from codes.d_agents.off_policy.off_policy_agent import OffPolicyAgent
 from codes.e_utils import rl_utils
 from codes.e_utils.actions import EpsilonGreedyDQNActionSelector, ArgmaxActionSelector, EpsilonTracker, \
@@ -24,6 +25,15 @@ class AgentDQN(OffPolicyAgent):
         ]
 
         super(AgentDQN, self).__init__(worker_id=worker_id, params=params, action_shape=action_shape, device=device)
+
+        if self.params.DISTRIBUTIONAL:
+            self.delta_z = float(self.params.REWARD_MAX - self.params.REWARD_MIN) / (self.params.NUM_SUPPORTS - 1)
+            # self.supports.size(): (51,)
+            self.supports = torch.linspace(self.params.REWARD_MIN, self.params.REWARD_MAX, self.params.NUM_SUPPORTS)
+        else:
+            self.delta_z = None
+            self.supports = None
+
         if params.ENVIRONMENT_ID in [EnvironmentName.PENDULUM_MATLAB_V0, EnvironmentName.PENDULUM_MATLAB_DOUBLE_RIP_V0]:
             self.train_action_selector = EpsilonGreedySomeTimesBlowDQNActionSelector(
                 epsilon=params.EPSILON_INIT, blowing_action_rate=0.0002,
@@ -38,10 +48,17 @@ class AgentDQN(OffPolicyAgent):
             self.test_and_play_action_selector = None
         else:
             if self.params.NOISY_NET:
-                self.train_action_selector = ArgmaxActionSelector()
+                if self.params.DISTRIBUTIONAL:
+                    self.train_action_selector = ArgmaxActionSelector(supports_numpy=self.supports.numpy())
+                else:
+                    self.train_action_selector = ArgmaxActionSelector()
             else:
                 self.train_action_selector = EpsilonGreedyDQNActionSelector(epsilon=params.EPSILON_INIT)
-            self.test_and_play_action_selector = ArgmaxActionSelector()
+
+            if self.params.DISTRIBUTIONAL:
+                self.test_and_play_action_selector = ArgmaxActionSelector(supports_numpy=self.supports.numpy())
+            else:
+                self.test_and_play_action_selector = ArgmaxActionSelector()
 
         if self.params.NOISY_NET:
             self.epsilon_tracker = None
@@ -63,7 +80,13 @@ class AgentDQN(OffPolicyAgent):
             device=device
         ).to(device)
 
-        self.target_agent = TargetNet(self.model.base)
+        self.target_model = DuelingDQNModel(
+            worker_id=worker_id,
+            input_shape=input_shape,
+            num_outputs=num_outputs,
+            params=params,
+            device=device
+        ).to(device)
 
         self.optimizer = rl_utils.get_optimizer(
             parameters=self.model.base.parameters(),
@@ -100,9 +123,6 @@ class AgentDQN(OffPolicyAgent):
             batch = self.buffer.sample(self.params.BATCH_SIZE)
             batch_indices, batch_weights = None, None
 
-        if self.params.NOISY_NET:
-            self.model.base.sample_noise()  # Pick a new noise vector (until next optimisation step)
-
         self.optimizer.zero_grad()
 
         if self.params.OMEGA:
@@ -126,11 +146,15 @@ class AgentDQN(OffPolicyAgent):
         self.optimizer.step()
 
         if step_idx % self.params.TARGET_NET_SYNC_STEP_PERIOD < self.params.TRAIN_STEP_FREQ:
-            self.target_agent.sync()
+            self.target_model.sync(self.model)
 
         gradients = self.model.get_gradients_for_current_parameters()
 
         self.model.check_gradient_nan_or_zero(gradients)
+
+        if self.params.NOISY_NET:
+            self.model.base.reset_noise()  # Pick a new noise vector (until next optimisation step)
+            self.target_model.base.reset_noise()
 
         return gradients, loss_v.detach().item(), None
 
@@ -241,7 +265,7 @@ class AgentDQN(OffPolicyAgent):
         action_values = self.model(states_v).gather(dim=1, index=actions_v.unsqueeze(-1)).squeeze(-1)
 
         with torch.no_grad():
-            next_state_values = self.target_agent.target_model(next_states_v).max(1)[0]
+            next_state_values = self.target_model(next_states_v).max(1)[0]
             next_state_values[done_mask] = 0.0
 
         target_action_values = next_state_values.detach() * (self.params.GAMMA ** last_steps_v) + rewards_v
@@ -256,7 +280,7 @@ class AgentDQN(OffPolicyAgent):
         next_states_v = torch.tensor(next_states)
         actions_v = torch.tensor(actions)
         rewards_v = torch.tensor(rewards)
-        done_mask = torch.BoolTensor(dones)
+        done_masks_v = torch.BoolTensor(dones)
         last_steps_v = torch.tensor(last_steps)
 
         if self.device == torch.device("cuda"):
@@ -264,24 +288,27 @@ class AgentDQN(OffPolicyAgent):
             next_states_v = next_states_v.cuda(non_blocking=True)
             actions_v = actions_v.cuda(non_blocking=True)
             rewards_v = rewards_v.cuda(non_blocking=True)
-            done_mask = done_mask.cuda(non_blocking=True)
+            done_masks_v = done_masks_v.cuda(non_blocking=True)
             last_steps_v = last_steps_v.cuda(non_blocking=True)
 
-        actions_v = actions_v.unsqueeze(-1)
-        action_values = self.model(states_v).gather(1, actions_v)
-        action_values = action_values.squeeze(-1)
-        with torch.no_grad():
-            next_state_acts = self.model(next_states_v).max(1)[1]
-            next_state_acts = next_state_acts.unsqueeze(-1)
-            next_state_vals = self.target_agent.target_model(next_states_v).gather(1, next_state_acts).squeeze(-1)
-            next_state_vals[done_mask] = 0.0
+        if self.params.DISTRIBUTIONAL:
+            proj_dist = self.projection_distribution_for_next_state(next_states_v, rewards_v, done_masks_v)
+            print(proj_dist.size(), "!!!!!!!!!!!!!1")
+            loss = 0.0
+        else:
+            actions_v = actions_v.unsqueeze(-1)
+            action_values = self.model(states_v).gather(1, actions_v)
+            action_values = action_values.squeeze(-1)
+            with torch.no_grad():
+                next_state_acts = self.model(next_states_v).max(1)[1]
+                next_state_acts = next_state_acts.unsqueeze(-1)
+                next_state_vals = self.target_model(next_states_v).gather(1, next_state_acts).squeeze(-1)
+                next_state_vals[done_masks_v] = 0.0
 
-        exp_sa_vals = next_state_vals.detach() * (self.params.GAMMA ** last_steps_v) + rewards_v
+            exp_sa_vals = next_state_vals.detach() * (self.params.GAMMA ** last_steps_v) + rewards_v
+            loss = F.smooth_l1_loss(action_values, exp_sa_vals)
 
-        # print(action_values, exp_sa_vals, "#####")
-
-        # return nn.MSELoss()(action_values, exp_sa_vals)
-        return F.smooth_l1_loss(action_values, exp_sa_vals)
+        return loss
 
     def calc_loss_per_double_dqn(self, batch, batch_indices, batch_weights):
         if self.params.NEXT_STATE_IN_TRAJECTORY:
@@ -312,7 +339,7 @@ class AgentDQN(OffPolicyAgent):
         with torch.no_grad():
             next_state_actions = self.model(next_states_v).max(1)[1]
             next_state_actions = next_state_actions.unsqueeze(-1)
-            next_state_values = self.target_agent.target_model(next_states_v).gather(1, next_state_actions).squeeze(-1)
+            next_state_values = self.target_model(next_states_v).gather(1, next_state_actions).squeeze(-1)
             next_state_values[done_mask] = 0.0
 
             target_action_values = next_state_values.detach() * (self.params.GAMMA ** last_steps_v) + rewards_v
@@ -343,7 +370,7 @@ class AgentDQN(OffPolicyAgent):
             # for double DQN
             next_state_actions = self.model(next_states_v).max(1)[1]
             next_state_actions = next_state_actions.unsqueeze(-1)
-            next_state_values = self.target_agent.target_model(next_states_v).gather(1, next_state_actions).squeeze(-1)
+            next_state_values = self.target_model(next_states_v).gather(1, next_state_actions).squeeze(-1)
 
             target_action_values = self.calc_omega_return(
                 rewards, done_mask, next_state_values.detach().cpu().numpy()
@@ -383,3 +410,41 @@ class AgentDQN(OffPolicyAgent):
             target_q_values.append((1 - beta) * avg + beta * max_n_step_target)
 
         return target_q_values
+
+    def projection_distribution_for_next_state(self, next_states, rewards, done_masks):
+        batch_size = next_states.size(0)
+
+        # self.target_model(next_states).size(): [32, 2, 51]
+        # next_dist.size(): [32, 2, 51]
+        next_dist = self.target_model(next_states).data.cpu() * self.supports
+        print(next_dist.size(), "@@@@@@@@@@@@@@@@")
+
+        next_action = np.argmax(next_dist.sum(2), axis=1)
+
+        next_action = next_dist.sum(2).max(1)[1]
+        next_action = next_action.unsqueeze(1).unsqueeze(1).expand(next_dist.size(0), 1, next_dist.size(2))
+        next_dist = next_dist.gather(1, next_action).squeeze(1)
+
+        rewards = rewards.unsqueeze(1).expand_as(next_dist)
+        done_masks = done_masks.unsqueeze(1).expand_as(next_dist)
+        supports = self.supports.unsqueeze(0).expand_as(next_dist)
+
+        next_states_vals = self.params.GAMMA * supports
+        next_states_vals[done_masks] = 0.0
+        Tz = rewards + next_states_vals
+        Tz = Tz.clamp(min=self.params.REWARD_MIN, max=self.params.REWARD_MAX)
+        b = (Tz - self.params.REWARD_MIN) / self.delta_z
+        l = b.floor().long()
+        u = b.ceil().long()
+
+        offset = torch.linspace(
+            0,
+            (batch_size - 1) * self.params.NUM_SUPPORTS,
+            batch_size
+        ).long().unsqueeze(1).expand(batch_size, self.params.NUM_SUPPORTS)
+
+        proj_dist = torch.zeros(next_dist.size())
+        proj_dist.view(-1).index_add_(0, (l + offset).view(-1), (next_dist * (u.float() - b)).view(-1))
+        proj_dist.view(-1).index_add_(0, (u + offset).view(-1), (next_dist * (b - l.float())).view(-1))
+
+        return proj_dist

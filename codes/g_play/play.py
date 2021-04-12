@@ -38,6 +38,7 @@ def play_main(params, env):
     )
     load_model(MODEL_ZOO_SAVE_DIR, MODEL_SAVE_FILE_PREFIX, agent, inquery=False)
     agent.agent_mode = AgentMode.PLAY
+    agent.model.eval()
 
     num_step = 0
     num_episode = 0
@@ -65,7 +66,7 @@ def play_main(params, env):
 
             action, _, = agent(state)
 
-            if params.ACTION_SCALE:
+            if hasattr(params, "ACTION_SCALE") and params.ACTION_SCALE:
                 action = params.ACTION_SCALE * action[0]
             else:
                 action = action[0]

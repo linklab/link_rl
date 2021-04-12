@@ -150,3 +150,5 @@ wandb
 
 /temp/*.pth
 *.sh
+
+/codes/g_play/model_zoo/Freeway*

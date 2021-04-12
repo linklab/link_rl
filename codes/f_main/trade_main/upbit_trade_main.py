@@ -141,7 +141,10 @@ def train(coin_name, time_unit, train_env, evaluate_env):
     print(net)
     print("ACTION MEANING: {0}".format(train_env.get_action_meanings()))
 
-    tgt_net = rl_agent.TargetNet(net)
+    tgt_net = value_based_model.DuelingDQNSmallCNN(
+        input_shape=train_env.observation_space.shape,
+        n_actions=train_env.action_space.n
+    ).to(device)
 
     action_selector = EpsilonGreedyTradeDQNActionSelector(epsilon=params.EPSILON_INIT, env=train_env)
     epsilon_tracker = actions.EpsilonTracker(
@@ -245,7 +248,7 @@ def train(coin_name, time_unit, train_env, evaluate_env):
             last_loss = loss_v.detach().item()
 
             if step_idx % params.TARGET_NET_SYNC_STEP_PERIOD < params.TRAIN_STEP_FREQ:
-                tgt_net.sync()
+                tgt_net.sync(net)
 
     return net
 
