@@ -135,11 +135,11 @@ class AgentTD3(OffPolicyAgent):
 
         # last_actions_v: [128, 1]
         last_actions_v = (
-            self.target_model.forward_actor(last_states_v) + noise
+            self.target_model.base.forward_actor(last_states_v) + noise
         ).clamp(self.action_min, self.action_max)
 
         # target_q_v_1, target_q_v_2: [128, 1]
-        target_q_v_1, target_q_v_2 = self.target_model.forward_critic(last_states_v, last_actions_v)
+        target_q_v_1, target_q_v_2 = self.target_model.base.forward_critic(last_states_v, last_actions_v)
 
         # target_min_q_v_1, next_target_q_v, target_q_v: [128, 1]
         target_min_q_v = torch.min(target_q_v_1, target_q_v_2)
