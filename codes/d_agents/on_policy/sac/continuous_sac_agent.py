@@ -36,7 +36,13 @@ class AgentSAC(OnPolicyAgent):
             device=device
         ).to(device)
 
-        self.target_agent = TargetNet(self.model.base)
+        self.target_model = SoftActorCriticModel(
+            worker_id=worker_id,
+            input_shape=input_shape,
+            num_outputs=num_outputs,
+            params=params,
+            device=device
+        ).to(device)
 
         self.actor_optimizer = rl_utils.get_optimizer(
             parameters=self.model.base.actor.parameters(),
@@ -129,7 +135,7 @@ class AgentSAC(OnPolicyAgent):
         nn_utils.clip_grad_norm_(self.model.base.actor.parameters(), self.params.CLIP_GRAD)
         self.actor_optimizer.step()
 
-        self.target_agent.alpha_sync(alpha=1 - 0.001)
+        self.target_model.alpha_sync(alpha=1 - 0.001)
 
         gradients = self.model.get_gradients_for_current_parameters()
 

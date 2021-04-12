@@ -60,7 +60,13 @@ class AgentDDPG(OffPolicyAgent):
             device=device
         ).to(device)
 
-        self.target_agent = TargetNet(self.model.base)
+        self.target_model = DeterministicContinuousActorCriticModel(
+            worker_id=worker_id,
+            input_shape=input_shape,
+            num_outputs=num_outputs,
+            params=params,
+            device=device
+        ).to(device)
 
         # self.base_optimizer = rl_utils.get_optimizer(
         #     parameters=self.model.base.parameters(),
@@ -149,8 +155,8 @@ class AgentDDPG(OffPolicyAgent):
         #     p.requires_grad = True
 
         q_v = self.model.base.forward_critic(states_v, actions_v)
-        last_act_v = self.target_agent.target_model.forward_actor(last_states_v)
-        q_last_v = self.target_agent.target_model.forward_critic(last_states_v, last_act_v)
+        last_act_v = self.target_model.forward_actor(last_states_v)
+        q_last_v = self.target_model.forward_critic(last_states_v, last_act_v)
         q_last_v[dones_mask] = 0.0
         target_q_v = rewards_v.unsqueeze(dim=-1) + q_last_v * self.params.GAMMA ** self.params.N_STEP
 
@@ -184,7 +190,7 @@ class AgentDDPG(OffPolicyAgent):
         # self.base_optimizer.step()
 
         if not self.params.TRAIN_ONLY_AFTER_EPISODE:
-            self.target_agent.alpha_sync(alpha=1 - self.params.TAU) #(1 - 0.001)
+            self.target_model.alpha_sync(alpha=1 - self.params.TAU) #(1 - 0.001)
 
         gradients = self.model.get_gradients_for_current_parameters()
 
@@ -209,8 +215,8 @@ class AgentDDPG(OffPolicyAgent):
         #     p.requires_grad = True
 
         q_v = self.model.base.forward_critic(states_v, actions_v)
-        last_act_v = self.target_agent.target_model.forward_actor(last_states_v)
-        q_last_v = self.target_agent.target_model.forward_critic(last_states_v, last_act_v)
+        last_act_v = self.target_model.forward_actor(last_states_v)
+        q_last_v = self.target_model.forward_critic(last_states_v, last_act_v)
         q_last_v[dones_mask] = 0.0
         target_q_v = rewards_v.unsqueeze(dim=-1) + q_last_v * self.params.GAMMA ** self.params.N_STEP
 
@@ -243,7 +249,7 @@ class AgentDDPG(OffPolicyAgent):
 
         self.actor_optimizer.step()
 
-        self.target_agent.alpha_sync(alpha=1 - 0.00005) #(1 - 0.001)
+        self.target_model.alpha_sync(alpha=1 - 0.00005) #(1 - 0.001)
 
         gradients = self.model.get_gradients_for_current_parameters()
 

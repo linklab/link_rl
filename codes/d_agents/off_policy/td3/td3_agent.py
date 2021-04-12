@@ -43,7 +43,13 @@ class AgentTD3(OffPolicyAgent):
             device=device
         ).to(device)
 
-        self.target_agent = TargetNet(self.model.base)
+        self.target_model = DeterministicContinuousActorCriticModel(
+            worker_id=worker_id,
+            input_shape=input_shape,
+            num_outputs=num_outputs,
+            params=params,
+            device=device
+        ).to(device)
 
         # self.base_optimizer = rl_utils.get_optimizer(
         #     parameters=self.model.base.parameters(),
@@ -120,11 +126,11 @@ class AgentTD3(OffPolicyAgent):
 
         # last_actions_v: [128, 1]
         last_actions_v = (
-            self.target_agent.target_model.forward_actor(last_states_v) + noise
+            self.target_model.forward_actor(last_states_v) + noise
         ).clamp(self.action_min, self.action_max)
 
         # target_q_v_1, target_q_v_2: [128, 1]
-        target_q_v_1, target_q_v_2 = self.target_agent.target_model.forward_critic(last_states_v, last_actions_v)
+        target_q_v_1, target_q_v_2 = self.target_model.forward_critic(last_states_v, last_actions_v)
 
         # target_min_q_v_1, next_target_q_v, target_q_v: [128, 1]
         target_min_q_v = torch.min(target_q_v_1, target_q_v_2)
@@ -160,7 +166,7 @@ class AgentTD3(OffPolicyAgent):
             loss_actor_v.backward()
             self.actor_optimizer.step()
 
-            self.target_agent.alpha_sync(alpha=1 - self.params.TAU)  # (1 - 0.001)
+            self.target_model.alpha_sync(alpha=1 - self.params.TAU)  # (1 - 0.001)
         else:
             loss_actor_v = self.cache_loss_actor_v
 
