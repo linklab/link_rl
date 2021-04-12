@@ -1,0 +1,49 @@
+from codes.a_config._rl_parameters.off_policy.parameter_ddpg import PARAMETERS_DDPG
+from codes.e_utils.names import *
+from codes.a_config.parameters_general import PARAMETERS_GENERAL
+
+
+class PARAMETERS_PENDULUM_MATLAB_DDPG(PARAMETERS_GENERAL, PARAMETERS_DDPG):
+    ENV_RESET = True
+
+    ENVIRONMENT_ID = EnvironmentName.PENDULUM_MATLAB_V0
+    RL_ALGORITHM = RLAlgorithmName.DDPG_V0
+    DEEP_LEARNING_MODEL = DeepLearningModelName.DETERMINISTIC_CONTINUOUS_ACTOR_CRITIC_MLP
+    #DEEP_LEARNING_MODEL = DeepLearningModelName.DETERMINISTIC_CONTINUOUS_ACTOR_CRITIC_GRU
+
+    TRAIN_STOP_EPISODE_REWARD = 75000  # MAX: 6.28 * 10000 = 62800 (Old), 4 * 10000 = 40000 (New)
+    TRAIN_STOP_EPISODE_REWARD_STD = 1000
+
+    STOP_PATIENCE_COUNT = 10
+    REPLAY_BUFFER_SIZE = 300000
+    MAX_GLOBAL_STEP = 5000000
+    LEARNING_RATE = 0.001
+    ACTOR_LEARNING_RATE = 0.0002
+    TRAIN_STEP_FREQ = 4
+    GAMMA = 0.999
+    BATCH_SIZE = 128
+    AVG_EPISODE_SIZE_FOR_STAT = 50
+
+    N_STEP = 1
+    OMEGA = False
+
+    CLIP_GRAD = 0.1
+
+    ACTION_SCALE = 3.0
+
+    MODEL_SAVE_MODE = ModelSaveMode.TEST
+
+    OU_NOISE_ENABLED = True
+    OU_SIGMA = 2.0
+
+    COUNT_BASED_EXPLORATION = True
+    COUNT_BASED_FILTER = [1, 1, 1, 1, 1, 0, 1, 1, 0]
+    COUNT_BASED_REWARD_SCALE = 0.4
+    COUNT_BASED_PRECISION = 0
+
+    TRAIN_ONLY_AFTER_EPISODE = True
+    NUM_TRAIN_ONLY_AFTER_EPISODE = 100
+
+    TYPE_OF_REWARD = "old_version"  # "current_version"
+    TYPE_OF_TARGET_UPDATE = "soft_update" # "hard_update"
+
