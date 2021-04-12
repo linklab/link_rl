@@ -287,7 +287,7 @@ class TD3ActionSelector:
         self.noise_clip = noise_clip
         self.epsilon = epsilon
 
-    def action_selector(self, mu):
+    def select_action(self, mu):
         actions = np.copy(mu)
         if self.act_noise == 0.0:
             noises = np.zeros_like(shape=actions.shape)
@@ -304,7 +304,7 @@ class TD3ActionSelector:
     def __call__(self, mu, noises=None):
         assert isinstance(mu, np.ndarray)
         actions = np.copy(mu)
-        actions, noises = self.action_selector(actions)
+        actions, noises = self.select_action(actions)
         #ic(noises)
 
         return actions, noises
@@ -347,7 +347,7 @@ class SomeTimesBlowTD3ActionSelector(TD3ActionSelector):
 
             noises = np.zeros_like(actions)
         else:
-            actions, noises = self.action_selector(actions)
+            actions, noises = self.select_action(actions)
 
         return actions, noises
 
