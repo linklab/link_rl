@@ -35,3 +35,4 @@ class PARAMETERS_TD3:
     TYPE_OF_TD3_ACTION_SELECTOR = "TD3ActionSelector"
 
     DISTRIBUTIONAL = False
+    NOISY_NET = False
