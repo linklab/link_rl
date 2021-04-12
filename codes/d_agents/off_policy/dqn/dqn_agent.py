@@ -1,3 +1,4 @@
+# https://github.com/higgsfield/RL-Adventure
 import numpy as np
 import torch
 import torch.nn.functional as F
@@ -5,7 +6,7 @@ import torch.nn.functional as F
 from codes.b_environments.trade.trade_action_selector import EpsilonGreedyTradeDQNActionSelector, \
     ArgmaxTradeActionSelector
 from codes.c_models.discrete_action.dqn_model import DuelingDQNModel
-from codes.d_agents.a0_base_agent import TargetNet, float32_preprocessor
+from codes.d_agents.a0_base_agent import float32_preprocessor
 from codes.d_agents.off_policy.off_policy_agent import OffPolicyAgent
 from codes.e_utils import rl_utils
 from codes.e_utils.actions import EpsilonGreedyDQNActionSelector, ArgmaxActionSelector, EpsilonTracker, \
@@ -38,10 +39,21 @@ class AgentDQN(OffPolicyAgent):
             self.test_and_play_action_selector = None
         else:
             if self.params.NOISY_NET:
-                self.train_action_selector = ArgmaxActionSelector()
+                if self.params.DISTRIBUTIONAL:
+                    self.train_action_selector = ArgmaxActionSelector(
+                        supports=torch.linspace(params.REWARD_MIN, params.REWARD_MAX, params.NUM_SUPPORTS)
+                    )
+                else:
+                    self.train_action_selector = ArgmaxActionSelector()
             else:
                 self.train_action_selector = EpsilonGreedyDQNActionSelector(epsilon=params.EPSILON_INIT)
-            self.test_and_play_action_selector = ArgmaxActionSelector()
+
+            if self.params.DISTRIBUTIONAL:
+                self.test_and_play_action_selector = ArgmaxActionSelector(
+                    supports=torch.linspace(params.REWARD_MIN, params.REWARD_MAX, params.NUM_SUPPORTS)
+                )
+            else:
+                self.test_and_play_action_selector = ArgmaxActionSelector()
 
         if self.params.NOISY_NET:
             self.epsilon_tracker = None
@@ -55,18 +67,21 @@ class AgentDQN(OffPolicyAgent):
 
         self.__name__ = "AgentDQN"
 
-        if self.params.DISTRIBUTIONAL:
-            pass
-        else:
-            self.model = DuelingDQNModel(
-                worker_id=worker_id,
-                input_shape=input_shape,
-                num_outputs=num_outputs,
-                params=params,
-                device=device
-            ).to(device)
+        self.model = DuelingDQNModel(
+            worker_id=worker_id,
+            input_shape=input_shape,
+            num_outputs=num_outputs,
+            params=params,
+            device=device
+        ).to(device)
 
-        self.target_agent = TargetNet(self.model.base)
+        self.target_model = DuelingDQNModel(
+            worker_id=worker_id,
+            input_shape=input_shape,
+            num_outputs=num_outputs,
+            params=params,
+            device=device
+        ).to(device)
 
         self.optimizer = rl_utils.get_optimizer(
             parameters=self.model.base.parameters(),
@@ -86,16 +101,13 @@ class AgentDQN(OffPolicyAgent):
         else:
             self.model.train()
 
-        if self.params.DISTRIBUTIONAL:
-            actions = None
-        else:
-            q_v = self.model(states)
-            q = q_v.detach().cpu().numpy()
+        q_v = self.model(states)
+        q = q_v.detach().cpu().numpy()
 
-            if self.agent_mode == AgentMode.TRAIN:
-                actions = self.train_action_selector(q)
-            else:
-                actions = self.test_and_play_action_selector(q)
+        if self.agent_mode == AgentMode.TRAIN:
+            actions = self.train_action_selector(q)
+        else:
+            actions = self.test_and_play_action_selector(q)
 
         return actions, agent_states
 
@@ -129,7 +141,7 @@ class AgentDQN(OffPolicyAgent):
         self.optimizer.step()
 
         if step_idx % self.params.TARGET_NET_SYNC_STEP_PERIOD < self.params.TRAIN_STEP_FREQ:
-            self.target_agent.sync()
+            self.target_model.sync(self.model)
 
         gradients = self.model.get_gradients_for_current_parameters()
 
@@ -137,7 +149,7 @@ class AgentDQN(OffPolicyAgent):
 
         if self.params.NOISY_NET:
             self.model.base.reset_noise()  # Pick a new noise vector (until next optimisation step)
-            self.target_agent.target_model.reset_noise()
+            self.target_model.base.reset_noise()
 
         return gradients, loss_v.detach().item(), None
 
@@ -248,7 +260,7 @@ class AgentDQN(OffPolicyAgent):
         action_values = self.model(states_v).gather(dim=1, index=actions_v.unsqueeze(-1)).squeeze(-1)
 
         with torch.no_grad():
-            next_state_values = self.target_agent.target_model(next_states_v).max(1)[0]
+            next_state_values = self.target_model(next_states_v).max(1)[0]
             next_state_values[done_mask] = 0.0
 
         target_action_values = next_state_values.detach() * (self.params.GAMMA ** last_steps_v) + rewards_v
@@ -280,7 +292,7 @@ class AgentDQN(OffPolicyAgent):
         with torch.no_grad():
             next_state_acts = self.model(next_states_v).max(1)[1]
             next_state_acts = next_state_acts.unsqueeze(-1)
-            next_state_vals = self.target_agent.target_model(next_states_v).gather(1, next_state_acts).squeeze(-1)
+            next_state_vals = self.target_model(next_states_v).gather(1, next_state_acts).squeeze(-1)
             next_state_vals[done_mask] = 0.0
 
         exp_sa_vals = next_state_vals.detach() * (self.params.GAMMA ** last_steps_v) + rewards_v
@@ -319,7 +331,7 @@ class AgentDQN(OffPolicyAgent):
         with torch.no_grad():
             next_state_actions = self.model(next_states_v).max(1)[1]
             next_state_actions = next_state_actions.unsqueeze(-1)
-            next_state_values = self.target_agent.target_model(next_states_v).gather(1, next_state_actions).squeeze(-1)
+            next_state_values = self.target_model(next_states_v).gather(1, next_state_actions).squeeze(-1)
             next_state_values[done_mask] = 0.0
 
             target_action_values = next_state_values.detach() * (self.params.GAMMA ** last_steps_v) + rewards_v
@@ -350,7 +362,7 @@ class AgentDQN(OffPolicyAgent):
             # for double DQN
             next_state_actions = self.model(next_states_v).max(1)[1]
             next_state_actions = next_state_actions.unsqueeze(-1)
-            next_state_values = self.target_agent.target_model(next_states_v).gather(1, next_state_actions).squeeze(-1)
+            next_state_values = self.target_model(next_states_v).gather(1, next_state_actions).squeeze(-1)
 
             target_action_values = self.calc_omega_return(
                 rewards, done_mask, next_state_values.detach().cpu().numpy()
@@ -390,3 +402,33 @@ class AgentDQN(OffPolicyAgent):
             target_q_values.append((1 - beta) * avg + beta * max_n_step_target)
 
         return target_q_values
+
+    def projection_distribution(self, state, rewards, dones):
+        batch_size  = state.size(0)
+
+        delta_z = float(self.params.REWARD_MAX - self.params.REWARD_MIN) / (self.params.NUM_SUPPORTS - 1)
+        support = torch.linspace(self.params.REWARD_MIN, self.params.REWARD_MAX, self.params.NUM_SUPPORTS)
+
+        next_dist   = self.target_model(state).data.cpu() * support
+        next_action = next_dist.sum(2).max(1)[1]
+        next_action = next_action.unsqueeze(1).unsqueeze(1).expand(next_dist.size(0), 1, next_dist.size(2))
+        next_dist   = next_dist.gather(1, next_action).squeeze(1)
+
+        rewards = rewards.unsqueeze(1).expand_as(next_dist)
+        dones   = dones.unsqueeze(1).expand_as(next_dist)
+        support = support.unsqueeze(0).expand_as(next_dist)
+
+        Tz = rewards + (1 - dones) * 0.99 * support
+        Tz = Tz.clamp(min=Vmin, max=Vmax)
+        b  = (Tz - Vmin) / delta_z
+        l  = b.floor().long()
+        u  = b.ceil().long()
+
+        offset = torch.linspace(0, (batch_size - 1) * num_atoms, batch_size).long() \
+            .unsqueeze(1).expand(batch_size, num_atoms)
+
+        proj_dist = torch.zeros(next_dist.size())
+        proj_dist.view(-1).index_add_(0, (l + offset).view(-1), (next_dist * (u.float() - b)).view(-1))
+        proj_dist.view(-1).index_add_(0, (u + offset).view(-1), (next_dist * (b - l.float())).view(-1))
+
+        return proj_dist

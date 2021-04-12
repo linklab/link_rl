@@ -30,6 +30,16 @@ class NoisyLinear(nn.Module):
         self.reset_parameters()
         self.reset_noise()
 
+    def forward(self, input):
+        if self.training:
+            weight = self.weight_mu + self.weight_sigma.mul(Variable(self.weight_epsilon))
+            bias = self.bias_mu + self.bias_sigma.mul(Variable(self.bias_epsilon))
+        else:
+            weight = self.weight_mu
+            bias = self.bias_mu
+
+        return F.linear(input, weight, bias)
+
     def reset_parameters(self):
         mu_range = 1 / math.sqrt(self.weight_mu.size(1))
 
@@ -50,16 +60,6 @@ class NoisyLinear(nn.Module):
         x = torch.randn(size)
         x = x.sign().mul(x.abs().sqrt())
         return x
-
-    def forward(self, input):
-        if self.training:
-            weight = self.weight_mu + self.weight_sigma.mul(Variable(self.weight_epsilon))
-            bias = self.bias_mu + self.bias_sigma.mul(Variable(self.bias_epsilon))
-        else:
-            weight = self.weight_mu
-            bias = self.bias_mu
-
-        return F.linear(input, weight, bias)
 
     # def sample_noise(self):
     #     self.epsilon_weight = torch.randn(self.out_features, self.in_features)

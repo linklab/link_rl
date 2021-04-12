@@ -152,3 +152,19 @@ class BaseModel(nn.Module):
                     if torch.isnan(gradients).any():
                         print(layer_name, name, "nan gradients")
                         raise ValueError()
+
+    def sync(self, other_model):
+        self.base.load_state_dict(other_model.base.state_dict())
+
+    def alpha_sync(self, other_model, alpha):
+        """
+        Blend params of target net with params from the model
+        :param alpha:
+        """
+        assert isinstance(alpha, float)
+        assert 0.0 <= alpha <= 1.0
+        state = other_model.base.state_dict()
+        tgt_state = self.base.state_dict()
+        for k, v in state.items():
+            tgt_state[k] = tgt_state[k] * alpha + (1.0 - alpha) * v
+        self.base.load_state_dict(tgt_state)
