@@ -46,6 +46,7 @@ class PARAMETERS_PENDULUM_MATLAB_TD3(PARAMETERS_GENERAL, PARAMETERS_TD3):
 
     TYPE_OF_ACTION = "old"
     TYPE_OF_REWARD = "current_version"  # "old_version"
+    TYPE_OF_TD3_ACTION_SELECTOR = "SomeTimesBlowTD3ActionSelector"
 
     EPSILON_INIT = 1.0
     EPSILON_MIN = 0.01

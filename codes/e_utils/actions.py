@@ -287,8 +287,7 @@ class TD3ActionSelector:
         self.noise_clip = noise_clip
         self.epsilon = epsilon
 
-    def __call__(self, mu, noises=None):
-        assert isinstance(mu, np.ndarray)
+    def action_selector(self, mu):
         actions = np.copy(mu)
         if self.act_noise == 0.0:
             noises = np.zeros_like(shape=actions.shape)
@@ -300,13 +299,57 @@ class TD3ActionSelector:
         else:
             actions = actions + noises
 
+        return actions, noises
+
+    def __call__(self, mu, noises=None):
+        assert isinstance(mu, np.ndarray)
+        actions = np.copy(mu)
+        actions, noises = self.action_selector(actions)
         #ic(noises)
 
         return actions, noises
 
 
 class SomeTimesBlowTD3ActionSelector(TD3ActionSelector):
-    pass
+    def __init__(
+            self, act_noise=0.0, noise_clip=0.0,
+            blowing_action_rate=0.0002, min_blowing_action=-1.0, max_blowing_action=1.0, epsilon=0.0
+    ):
+        super(SomeTimesBlowTD3ActionSelector, self).__init__(epsilon, act_noise=0.0, noise_clip=0.0)
+        self.blowing_action_rate = blowing_action_rate
+        self.min_blowing_action = min_blowing_action
+        self.max_blowing_action = max_blowing_action
+        self.time_steps = 0
+        self.next_time_steps_of_random_blowing_action = int(random.expovariate(self.blowing_action_rate))
+        self.act_noise = act_noise
+        self.noise_clip = noise_clip
+
+    def __call__(self,  mu, noises=None): #default ou_sigma = 0.2
+        assert isinstance(mu, np.ndarray)
+        if self.time_steps == 0:
+            print("next_time_steps_of_random_blowing_action: {0}".format(
+                self.next_time_steps_of_random_blowing_action
+            ))
+
+        self.time_steps += 1
+        actions = np.copy(mu)
+
+        if self.time_steps >= self.next_time_steps_of_random_blowing_action:
+            actions += np.random.uniform(
+                low=self.min_blowing_action, high=self.max_blowing_action, size=actions.shape
+            )
+
+            self.next_time_steps_of_random_blowing_action = self.time_steps + int(random.expovariate(self.blowing_action_rate))
+            print("Internal Blowing Action: {0}, next_time_steps_of_random_blowing_action: {1}".format(
+                actions,
+                self.next_time_steps_of_random_blowing_action
+            ))
+
+            noises = np.zeros_like(actions)
+        else:
+            actions, noises = self.action_selector(actions)
+
+        return actions, noises
 
 
 class EpsilonGreedySomeTimesBlowDDPGActionSelector:
