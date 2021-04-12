@@ -9,14 +9,16 @@ class PARAMETERS_TD3:
     PER_RANK_BASED = False
     DOUBLE = True
 
+    ACTION_SCALE = 1.0
+
     REPLAY_BUFFER_SIZE = None
 
-    ACT_NOISE = 0.1
-    NOISE_CLIP = 0.5
-    TARGET_NOISE = 0.2
+    ACT_NOISE = 1.0
+    NOISE_CLIP = 1.0
 
     POLICY_UPDATE_FREQUENCY = 2
 
     TAU = 0.001
 
     COUNT_BASED_EXPLORATION = False
+    N_STEP = 2

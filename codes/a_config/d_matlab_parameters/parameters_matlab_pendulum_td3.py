@@ -1,9 +1,10 @@
 from codes.a_config._rl_parameters.off_policy.parameter_ddpg import PARAMETERS_DDPG
+from codes.a_config._rl_parameters.off_policy.parameter_td3 import PARAMETERS_TD3
 from codes.e_utils.names import *
 from codes.a_config.parameters_general import PARAMETERS_GENERAL
 
 
-class PARAMETERS_PENDULUM_MATLAB_DDPG(PARAMETERS_GENERAL, PARAMETERS_DDPG):
+class PARAMETERS_PENDULUM_MATLAB_TD3(PARAMETERS_GENERAL, PARAMETERS_TD3):
     ENV_RESET = True
 
     ENVIRONMENT_ID = EnvironmentName.PENDULUM_MATLAB_V0
