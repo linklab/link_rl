@@ -5,7 +5,7 @@ from icecream import ic
 
 from codes.a_config._rl_parameters.off_policy.parameter_ddpg import PARAMETERS_DDPG
 from codes.c_models.continuous_action.deterministic_continuous_actor_critic_model import DeterministicContinuousActorCriticModel
-from codes.d_agents.a0_base_agent import TargetNet, float32_preprocessor
+from codes.d_agents.a0_base_agent import float32_preprocessor
 from codes.d_agents.off_policy.off_policy_agent import OffPolicyAgent
 from codes.e_utils import rl_utils
 from codes.e_utils.actions import SomeTimesBlowDDPGActionSelector, DDPGActionSelector, EpsilonTracker
@@ -46,7 +46,8 @@ class AgentDDPG(OffPolicyAgent):
         elif params.TYPE_OF_ACTION_SELECTOR == "SomeTimesBlowDDPGActionSelector":
             self.train_action_selector = SomeTimesBlowDDPGActionSelector(
                 ou_enabled=params.OU_NOISE_ENABLED, ou_mu=np.zeros(self.action_shape), ou_sigma=self.params.OU_SIGMA,
-                min_blowing_action=-10.0 * params.ACTION_SCALE, max_blowing_action=10.0 * params.ACTION_SCALE, epsilon=params.EPSILON_INIT
+                min_blowing_action=-5.0 * params.ACTION_SCALE, max_blowing_action=5.0 * params.ACTION_SCALE,
+                epsilon=params.EPSILON_INIT
             )
 
         self.test_and_play_action_selector = DDPGActionSelector(ou_enabled=False)
@@ -59,7 +60,13 @@ class AgentDDPG(OffPolicyAgent):
             device=device
         ).to(device)
 
-        self.target_agent = TargetNet(self.model.base)
+        self.target_model = DeterministicContinuousActorCriticModel(
+            worker_id=worker_id,
+            input_shape=input_shape,
+            num_outputs=num_outputs,
+            params=params,
+            device=device
+        ).to(device)
 
         # self.base_optimizer = rl_utils.get_optimizer(
         #     parameters=self.model.base.parameters(),
@@ -148,8 +155,8 @@ class AgentDDPG(OffPolicyAgent):
         #     p.requires_grad = True
 
         q_v = self.model.base.forward_critic(states_v, actions_v)
-        last_act_v = self.target_agent.target_model.forward_actor(last_states_v)
-        q_last_v = self.target_agent.target_model.forward_critic(last_states_v, last_act_v)
+        last_act_v = self.target_model.forward_actor(last_states_v)
+        q_last_v = self.target_model.forward_critic(last_states_v, last_act_v)
         q_last_v[dones_mask] = 0.0
         target_q_v = rewards_v.unsqueeze(dim=-1) + q_last_v * self.params.GAMMA ** self.params.N_STEP
 
@@ -183,7 +190,7 @@ class AgentDDPG(OffPolicyAgent):
         # self.base_optimizer.step()
 
         if not self.params.TRAIN_ONLY_AFTER_EPISODE:
-            self.target_agent.alpha_sync(alpha=1 - self.params.TAU) #(1 - 0.001)
+            self.target_model.alpha_sync(self.model, alpha=1 - self.params.TAU) #(1 - 0.001)
 
         gradients = self.model.get_gradients_for_current_parameters()
 
@@ -208,8 +215,8 @@ class AgentDDPG(OffPolicyAgent):
         #     p.requires_grad = True
 
         q_v = self.model.base.forward_critic(states_v, actions_v)
-        last_act_v = self.target_agent.target_model.forward_actor(last_states_v)
-        q_last_v = self.target_agent.target_model.forward_critic(last_states_v, last_act_v)
+        last_act_v = self.target_model.forward_actor(last_states_v)
+        q_last_v = self.target_model.forward_critic(last_states_v, last_act_v)
         q_last_v[dones_mask] = 0.0
         target_q_v = rewards_v.unsqueeze(dim=-1) + q_last_v * self.params.GAMMA ** self.params.N_STEP
 
@@ -242,7 +249,7 @@ class AgentDDPG(OffPolicyAgent):
 
         self.actor_optimizer.step()
 
-        self.target_agent.alpha_sync(alpha=1 - 0.00005) #(1 - 0.001)
+        self.target_model.alpha_sync(self.model, alpha=1 - 0.00005) #(1 - 0.001)
 
         gradients = self.model.get_gradients_for_current_parameters()
 

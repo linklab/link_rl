@@ -3,6 +3,7 @@ import torch
 import torch.nn as nn
 from torch.autograd import Variable
 import numpy as np
+import torch.nn.functional as F
 
 from codes.c_models.advanced_exploration.noisy_net import NoisyLinear
 from codes.c_models.base_model import BaseModel
@@ -45,6 +46,8 @@ class DuelingDQN_MLP_Base(nn.Module):
         self.__name__ = "DuelingDQN_MLP_Base"
         self.params = params
 
+        self.num_outputs = num_outputs
+
         self.hidden_1_size = params.HIDDEN_1_SIZE
         self.hidden_2_size = params.HIDDEN_2_SIZE
         self.hidden_3_size = params.HIDDEN_3_SIZE
@@ -56,25 +59,45 @@ class DuelingDQN_MLP_Base(nn.Module):
             nn.LeakyReLU()
         )
 
-        self.noisy_net_list = [
-            NoisyLinear(self.hidden_2_size, self.hidden_3_size),
-            NoisyLinear(self.hidden_3_size, num_outputs),
-            NoisyLinear(self.hidden_2_size, self.hidden_3_size),
-            NoisyLinear(self.hidden_3_size, 1)
-        ]
+        if self.params.NOISY_NET:
+            self.noisy_value_1 = NoisyLinear(self.hidden_2_size, self.hidden_2_size)
+            if self.params.DISTRIBUTIONAL:
+                self.noisy_value_2 = NoisyLinear(self.hidden_3_size, self.params.NUM_SUPPORTS)
+            else:
+                self.noisy_value_2 = NoisyLinear(self.hidden_3_size, 1)
+            self.noisy_advantage_1 = NoisyLinear(self.hidden_2_size, self.hidden_2_size)
+            if self.params.DISTRIBUTIONAL:
+                self.noisy_advantage_2 = NoisyLinear(self.hidden_3_size, num_outputs * self.params.NUM_SUPPORTS)
+            else:
+                self.noisy_advantage_2 = NoisyLinear(self.hidden_3_size, num_outputs)
+        else:
+            self.last_linear_value = nn.Linear(self.hidden_3_size, 1)
+            self.last_linear_advantage = nn.Linear(self.hidden_3_size, num_outputs)
 
-        self.fc_adv = nn.Sequential(
-            self.noisy_net_list[0] if self.params.NOISY_NET else nn.Linear(self.hidden_2_size, self.hidden_3_size),
-            nn.LeakyReLU(),
-            self.noisy_net_list[1] if self.params.NOISY_NET else nn.Linear(self.hidden_3_size, num_outputs)
-        )
-        self.fc_val = nn.Sequential(
-            self.noisy_net_list[2] if self.params.NOISY_NET else nn.Linear(self.hidden_2_size, self.hidden_3_size),
-            nn.LeakyReLU(),
-            self.noisy_net_list[3] if self.params.NOISY_NET else nn.Linear(self.hidden_3_size, 1)
+        self.fc_value = nn.Sequential(
+            nn.Linear(self.hidden_2_size, self.hidden_3_size),
+            nn.LeakyReLU()
         )
 
-        self.layers_info = {"net": self.net, "fc_adv": self.fc_adv, "fc_val": self.fc_val}
+        self.fc_advantage = nn.Sequential(
+            nn.Linear(self.hidden_2_size, self.hidden_3_size),
+            nn.LeakyReLU()
+        )
+
+        self.layers_info = {
+            "net": self.net,
+            "fc_advantage": self.fc_advantage,
+            "fc_value": self.fc_value
+        }
+
+        if self.params.NOISY_NET:
+            self.layers_info["noisy_value_1"] = self.noisy_value_1
+            self.layers_info["noisy_value_2"] = self.noisy_value_2
+            self.layers_info["noisy_advantage_1"] = self.noisy_advantage_1
+            self.layers_info["noisy_advantage_2"] = self.noisy_advantage_2
+        else:
+            self.layers_info["last_linear_advantage"] = self.last_linear_advantage
+            self.layers_info["last_linear_value"] = self.last_linear_value
 
         self.train()
 
@@ -84,28 +107,63 @@ class DuelingDQN_MLP_Base(nn.Module):
             torch.nn.init.kaiming_normal_(m.weight)
 
     def forward(self, x):
+        batch_size = x.size(0)
+
         if torch.is_tensor(x):
             x = x.to(torch.float32)
         else:
             x = torch.tensor(x, dtype=torch.float32)
 
         net_out = self.net(x)
-        val = self.fc_val(net_out)
-        adv = self.fc_adv(net_out)
-        return val + adv - adv.mean()
 
-    def sample_noise(self):
-        for noisy_net in self.noisy_net_list:
-            noisy_net.sample_noise()
+        if self.params.NOISY_NET:
+            net_out_value = self.noisy_value_1(net_out)
+            value = self.fc_value(net_out_value)
+            value = self.noisy_value_2(value)
+            if self.params.DISTRIBUTIONAL:
+                value = value.view(batch_size, 1, self.params.NUM_SUPPORTS)
+
+            net_out_advantage = self.noisy_advantage_1(net_out)
+            advantage = self.fc_advantage(net_out_advantage)
+            advantage = self.noisy_advantage_2(advantage)
+            if self.params.DISTRIBUTIONAL:
+                advantage = advantage.view(batch_size, self.num_outputs, self.params.NUM_SUPPORTS)
+        else:
+            value = self.fc_value(net_out)
+            value = self.last_linear_value(value)
+
+            advantage = self.fc_advantage(net_out)
+            advantage = self.last_linear_advantage(advantage)
+
+        if self.params.DISTRIBUTIONAL:
+            q_value = value + advantage - advantage.mean(1, keepdim=True)
+            q_value = F.softmax(
+                q_value.view(-1, self.params.NUM_SUPPORTS)
+            ).view(-1, self.num_outputs, self.params.NUM_SUPPORTS)
+        else:
+            q_value = value + advantage - advantage.mean()
+        return q_value
+
+    def reset_noise(self):
+        self.noisy_value_1.reset_noise()
+        self.noisy_value_2.reset_noise()
+        self.noisy_advantage_1.reset_noise()
+        self.noisy_advantage_2.reset_noise()
+
+    # def sample_noise(self):
+    #     assert self.params.NOISY_NET
+    #     for noisy_net in self.noisy_net_list:
+    #         noisy_net.sample_noise()
 
 
 class DuelingDQN_CNN_Base(nn.Module):
     def __init__(self, input_shape, num_outputs, params):
         super(DuelingDQN_CNN_Base, self).__init__()
-
         self.__name__ = "DuelingDQN_CNN_Base"
 
         self.params = params
+        self.num_outputs = num_outputs
+
         self.conv = nn.Sequential(
             nn.Conv2d(in_channels=input_shape[0], out_channels=32, kernel_size=8, stride=4),
             nn.LeakyReLU(),
@@ -117,29 +175,50 @@ class DuelingDQN_CNN_Base(nn.Module):
 
         conv_out_size = self._get_conv_out(input_shape)
 
-        self.noisy_net_list = [
-            NoisyLinear(conv_out_size, 512),
-            NoisyLinear(512, num_outputs),
-            NoisyLinear(conv_out_size, 512),
-            NoisyLinear(512, 1)
-        ]
+        if self.params.NOISY_NET:
+            self.noisy_value_1 = NoisyLinear(conv_out_size, conv_out_size)
 
-        self.fc_adv = nn.Sequential(
-            self.noisy_net_list[0] if self.params.NOISY_NET else nn.Linear(conv_out_size, 512),
-            nn.LeakyReLU(),
-            self.noisy_net_list[1] if self.params.NOISY_NET else nn.Linear(512, num_outputs),
+            if self.params.DISTRIBUTIONAL:
+                self.noisy_value_2 = NoisyLinear(512, self.params.NUM_SUPPORTS)
+            else:
+                self.noisy_value_2 = NoisyLinear(512, 1)
+
+            self.noisy_advantage_1 = NoisyLinear(conv_out_size, conv_out_size)
+            if self.params.DISTRIBUTIONAL:
+                self.noisy_advantage_2 = NoisyLinear(512, num_outputs * self.params.NUM_SUPPORTS)
+            else:
+                self.noisy_advantage_2 = NoisyLinear(512, num_outputs)
+        else:
+            self.last_linear_value = nn.Linear(512, 1)
+            self.last_linear_advantage = nn.Linear(512, num_outputs)
+
+        self.fc_advantage = nn.Sequential(
+            nn.Linear(conv_out_size, 512),
+            nn.LeakyReLU()
         )
-        self.fc_val = nn.Sequential(
-            self.noisy_net_list[2] if self.params.NOISY_NET else nn.Linear(conv_out_size, 512),
-            nn.LeakyReLU(),
-            self.noisy_net_list[3] if self.params.NOISY_NET else nn.Linear(512, 1),
+        self.fc_value = nn.Sequential(
+            nn.Linear(conv_out_size, 512),
+            nn.LeakyReLU()
         )
 
-        self.conv.apply(self.init_weights)
-        self.fc_adv.apply(self.init_weights)
-        self.fc_val.apply(self.init_weights)
+        # self.conv.apply(self.init_weights)
+        # self.fc_adv.apply(self.init_weights)
+        # self.fc_val.apply(self.init_weights)
 
-        self.layers_info = {"conv": self.conv, "fc_adv": self.fc_adv, "fc_val": self.fc_val}
+        self.layers_info = {
+            "conv": self.conv,
+            "fc_advantage": self.fc_advantage,
+            "fc_value": self.fc_value
+        }
+
+        if self.params.NOISY_NET:
+            self.layers_info["noisy_value_1"] = self.noisy_value_1
+            self.layers_info["noisy_value_2"] = self.noisy_value_2
+            self.layers_info["noisy_advantage_1"] = self.noisy_advantage_1
+            self.layers_info["noisy_advantage_2"] = self.noisy_advantage_2
+        else:
+            self.layers_info["last_linear_advantage"] = self.last_linear_advantage
+            self.layers_info["last_linear_value"] = self.last_linear_value
 
         self.train()
 
@@ -152,19 +231,46 @@ class DuelingDQN_CNN_Base(nn.Module):
         return int(np.prod(o.size()))
 
     def forward(self, x):
+        batch_size = x.size(0)
+
         if torch.is_tensor(x):
             fx = x.to(torch.float32)
         else:
             fx = torch.tensor(x, dtype=torch.float32)
 
         conv_out = self.conv(fx).view(fx.size()[0], -1)
-        val = self.fc_val(conv_out)
-        adv = self.fc_adv(conv_out)
-        return val + adv - adv.mean()
 
-    def sample_noise(self):
-        for noisy_net in self.noisy_net_list:
-            noisy_net.sample_noise()
+        if self.params.NOISY_NET:
+            conv_out_value = self.noisy_value_1(conv_out)
+            value = self.fc_value(conv_out_value)
+            value = self.noisy_value_2(value)
+            if self.params.DISTRIBUTIONAL:
+                value = value.view(batch_size, 1, self.params.NUM_SUPPORTS)
+
+            conv_out_advantage = self.noisy_advantage_1(conv_out)
+            advantage = self.fc_advantage(conv_out_advantage)
+            advantage = self.noisy_advantage_2(advantage)
+            if self.params.DISTRIBUTIONAL:
+                advantage = advantage.view(batch_size, self.num_outputs, self.params.NUM_SUPPORTS)
+        else:
+            value = self.fc_value(conv_out)
+            value = self.last_linear_value(value)
+
+            advantage = self.fc_advantage(conv_out)
+            advantage = self.last_linear_advantage(advantage)
+
+        return value + advantage - advantage.mean()
+
+    def reset_noise(self):
+        self.noisy_value_1.reset_noise()
+        self.noisy_value_2.reset_noise()
+        self.noisy_advantage_1.reset_noise()
+        self.noisy_advantage_2.reset_noise()
+
+    # def sample_noise(self):
+    #     assert self.params.NOISY_NET
+    #     for noisy_net in self.noisy_net_list:
+    #         noisy_net.sample_noise()
 
 
 class DuelingDQN_SmallCNN_Base(nn.Module):
@@ -174,6 +280,8 @@ class DuelingDQN_SmallCNN_Base(nn.Module):
         self.__name__ = "DuelingDQN_SmallCNN_Base"
 
         self.params = params
+        self.num_outputs = num_outputs
+
         self.conv = nn.Sequential(
             nn.Conv2d(input_shape[0], 24, kernel_size=3, stride=1, padding=1),
             nn.LeakyReLU(),
@@ -185,29 +293,49 @@ class DuelingDQN_SmallCNN_Base(nn.Module):
 
         conv_out_size = self._get_conv_out(input_shape)
 
-        self.noisy_net_list = [
-            NoisyLinear(conv_out_size, 128),
-            NoisyLinear(128, num_outputs),
-            NoisyLinear(conv_out_size, 128),
-            NoisyLinear(128, 1)
-        ]
+        if self.params.NOISY_NET:
+            self.noisy_value_1 = NoisyLinear(conv_out_size, conv_out_size)
+            if self.params.DISTRIBUTIONAL:
+                self.noisy_value_2 = NoisyLinear(128, self.params.NUM_SUPPORTS)
+            else:
+                self.noisy_value_2 = NoisyLinear(128, 1)
 
-        self.fc_adv = nn.Sequential(
-            self.noisy_net_list[0] if self.params.NOISY_NET else nn.Linear(conv_out_size, 128),
-            nn.LeakyReLU(),
-            self.noisy_net_list[1] if self.params.NOISY_NET else nn.Linear(128, num_outputs),
+            self.noisy_advantage_1 = NoisyLinear(conv_out_size, conv_out_size)
+            if self.params.DISTRIBUTIONAL:
+                self.noisy_advantage_2 = NoisyLinear(128, num_outputs * self.params.NUM_SUPPORTS)
+            else:
+                self.noisy_advantage_2 = NoisyLinear(128, num_outputs)
+        else:
+            self.last_linear_value = nn.Linear(128, 1)
+            self.last_linear_advantage = nn.Linear(128, num_outputs)
+
+        self.fc_advantage = nn.Sequential(
+            nn.Linear(conv_out_size, 128),
+            nn.LeakyReLU()
         )
-        self.fc_val = nn.Sequential(
-            self.noisy_net_list[2] if self.params.NOISY_NET else nn.Linear(conv_out_size, 128),
-            nn.LeakyReLU(),
-            self.noisy_net_list[3] if self.params.NOISY_NET else nn.Linear(128, 1),
+        self.fc_value = nn.Sequential(
+            nn.Linear(conv_out_size, 128),
+            nn.LeakyReLU()
         )
 
-        self.conv.apply(self.init_weights)
-        self.fc_adv.apply(self.init_weights)
-        self.fc_val.apply(self.init_weights)
+        # self.conv.apply(self.init_weights)
+        # self.fc_adv.apply(self.init_weights)
+        # self.fc_val.apply(self.init_weights)
 
-        self.layers_info = {"conv": self.conv, "fc_adv": self.fc_adv, "fc_val": self.fc_val}
+        self.layers_info = {
+            "conv": self.conv,
+            "fc_advantage": self.fc_advantage,
+            "fc_value": self.fc_value
+        }
+
+        if self.params.NOISY_NET:
+            self.layers_info["noisy_value_1"] = self.noisy_value_1
+            self.layers_info["noisy_value_2"] = self.noisy_value_2
+            self.layers_info["noisy_advantage_1"] = self.noisy_advantage_1
+            self.layers_info["noisy_advantage_2"] = self.noisy_advantage_2
+        else:
+            self.layers_info["last_linear_advantage"] = self.last_linear_advantage
+            self.layers_info["last_linear_value"] = self.last_linear_value
 
         self.train()
 
@@ -220,16 +348,43 @@ class DuelingDQN_SmallCNN_Base(nn.Module):
         return int(np.prod(o.size()))
 
     def forward(self, x):
+        batch_size = x.size(0)
+
         if torch.is_tensor(x):
             fx = x.to(torch.float32)
         else:
             fx = torch.tensor(x, dtype=torch.float32)
 
         conv_out = self.conv(fx).view(fx.size()[0], -1)
-        val = self.fc_val(conv_out)
-        adv = self.fc_adv(conv_out)
-        return val + adv - adv.mean()
 
-    def sample_noise(self):
-        for noisy_net in self.noisy_net_list:
-            noisy_net.sample_noise()
+        if self.params.NOISY_NET:
+            conv_out_value = self.noisy_value_1(conv_out)
+            value = self.fc_value(conv_out_value)
+            value = self.noisy_value_2(value)
+            if self.params.DISTRIBUTIONAL:
+                value = value.view(batch_size, 1, self.params.NUM_SUPPORTS)
+
+            conv_out_advantage = self.noisy_advantage_1(conv_out)
+            advantage = self.fc_advantage(conv_out_advantage)
+            advantage = self.noisy_advantage_2(advantage)
+            if self.params.DISTRIBUTIONAL:
+                advantage = advantage.view(batch_size, self.num_outputs, self.params.NUM_SUPPORTS)
+        else:
+            value = self.fc_value(conv_out)
+            value = self.last_linear_value(value)
+
+            advantage = self.fc_advantage(conv_out)
+            advantage = self.last_linear_advantage(advantage)
+
+        return value + advantage - advantage.mean()
+
+    def reset_noise(self):
+        self.noisy_value_1.reset_noise()
+        self.noisy_value_2.reset_noise()
+        self.noisy_advantage_1.reset_noise()
+        self.noisy_advantage_2.reset_noise()
+
+    # def sample_noise(self):
+    #     assert self.params.NOISY_NET
+    #     for noisy_net in self.noisy_net_list:
+    #         noisy_net.sample_noise()

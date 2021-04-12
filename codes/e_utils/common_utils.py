@@ -226,6 +226,7 @@ def load_model(model_save_dir, model_save_file_prefix, agent, step=None, inquery
 
 def agent_model_test(num_tests, test_env, agent):
     agent.agent_mode = AgentMode.TEST
+    agent.model.eval()
 
     num_step = 0
 
@@ -256,6 +257,7 @@ def agent_model_test(num_tests, test_env, agent):
         #print("TEST {0}: EPISODE REWARD: {1:7.2f}".format(tests_done, float(np.mean(episode_reward).item())))
 
     agent.agent_mode = AgentMode.TRAIN
+    agent.model.train()
     return np.mean(episode_rewards), np.std(episode_rewards)
 
 

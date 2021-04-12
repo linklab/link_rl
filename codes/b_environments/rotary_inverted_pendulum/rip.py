@@ -22,8 +22,8 @@ from gym.envs.classic_control.acrobot import wrap
 
 np.set_printoptions(formatter={'float_kind': lambda x: '{0:0.6f}'.format(x)})
 
-# BLOWING_ACTION_RATE = 0.0002  # 5000 스텝에 1번 정도(지수 분포)의 주가로 외력이 가해짐 --> Stochastic Env.
-BLOWING_ACTION_RATE = 0.000000000002
+BLOWING_ACTION_RATE = 0.0002  # 5000 스텝에 1번 정도(지수 분포)의 주가로 외력이 가해짐 --> Stochastic Env.
+# BLOWING_ACTION_RATE = 0.000000000002
 
 VELOCITY_STATE_DENOMINATOR = 100.0
 
@@ -188,6 +188,7 @@ class RotaryInvertedPendulumEnv(gym.Env):
             print("next_time_step_of_external_blow: {0}".format(
                 self.next_time_step_of_external_blow
             ))
+
         if self.pendulum_type in [EnvironmentName.PENDULUM_MATLAB_V0,EnvironmentName.PENDULUM_MATLAB_DOUBLE_RIP_V0]:
             if self.env_reset or self.num_episodes % self.episode_period_env_reset_forced == 0:
                 print("ENV RESET")

@@ -28,6 +28,7 @@ from codes.a_config.b_atari_parameters.parameters_atari_pong_ppo        import P
 from codes.a_config.b_atari_parameters.parameters_atari_pong_a2c import PARAMETERS_PONG_A2C
 from codes.a_config.b_atari_parameters.parameters_atari_pong_emaes import PARAMETERS_PONG_EMAES
 from codes.a_config.b_atari_parameters.parameters_atari_pong_multi_ga import PARAMETERS_PONG_MULTI_GA
+from codes.a_config.b_atari_parameters.parameters_atari_freeway_dqn import PARAMETERS_FREEWAY_DQN
 
 from codes.a_config.c_pybullet_parameters.parameters_half_cheetah_ppo import PARAMETERS_HALF_CHEETAH_PPO
 from codes.a_config.c_pybullet_parameters.parameters_ant_sac import PARAMETERS_ANT_SAC
