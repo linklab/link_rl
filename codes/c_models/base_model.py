@@ -163,6 +163,7 @@ class BaseModel(nn.Module):
         """
         assert isinstance(alpha, float)
         assert 0.0 <= alpha <= 1.0
+
         state = other_model.base.state_dict()
         tgt_state = self.base.state_dict()
         for k, v in state.items():

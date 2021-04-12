@@ -32,16 +32,18 @@ class ArgmaxActionSelector(ActionSelector):
     """
     Selects actions using argmax
     """
-    def __init__(self, supports=None):
+    def __init__(self, supports_numpy=None):
         super(ArgmaxActionSelector).__init__()
-        self.supports = supports
+        self.supports_numpy = supports_numpy
 
     def __call__(self, q_values):
         assert isinstance(q_values, np.ndarray)
 
         if params.DISTRIBUTIONAL:
-            dist = q_values * self.supports
-            action = dist.sum(2).max(1)[1].numpy()[0]
+            # q_values.shape: (batch, 2, 51)
+            # self.supports: (51,)
+            dist = q_values * self.supports_numpy
+            action = np.argmax(dist.sum(2), axis=1)
         else:
             action = np.argmax(q_values, axis=1)
         return action
