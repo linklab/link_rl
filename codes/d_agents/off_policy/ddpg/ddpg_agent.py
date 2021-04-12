@@ -5,7 +5,7 @@ from icecream import ic
 
 from codes.a_config._rl_parameters.off_policy.parameter_ddpg import PARAMETERS_DDPG
 from codes.c_models.continuous_action.deterministic_continuous_actor_critic_model import DeterministicContinuousActorCriticModel
-from codes.d_agents.a0_base_agent import TargetNet, float32_preprocessor
+from codes.d_agents.a0_base_agent import float32_preprocessor
 from codes.d_agents.off_policy.off_policy_agent import OffPolicyAgent
 from codes.e_utils import rl_utils
 from codes.e_utils.actions import SomeTimesBlowDDPGActionSelector, DDPGActionSelector, EpsilonTracker
@@ -190,7 +190,7 @@ class AgentDDPG(OffPolicyAgent):
         # self.base_optimizer.step()
 
         if not self.params.TRAIN_ONLY_AFTER_EPISODE:
-            self.target_model.alpha_sync(alpha=1 - self.params.TAU) #(1 - 0.001)
+            self.target_model.alpha_sync(self.model, alpha=1 - self.params.TAU) #(1 - 0.001)
 
         gradients = self.model.get_gradients_for_current_parameters()
 
@@ -249,7 +249,7 @@ class AgentDDPG(OffPolicyAgent):
 
         self.actor_optimizer.step()
 
-        self.target_model.alpha_sync(alpha=1 - 0.00005) #(1 - 0.001)
+        self.target_model.alpha_sync(self.model, alpha=1 - 0.00005) #(1 - 0.001)
 
         gradients = self.model.get_gradients_for_current_parameters()
 

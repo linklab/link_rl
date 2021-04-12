@@ -100,9 +100,9 @@ def train_main(params, train_env, test_env):
 
                         if params.RL_ALGORITHM in [RLAlgorithmName.DDPG_V0]:
                             if params.TYPE_OF_TARGET_UPDATE == "hard_update":
-                                agent.target_model.alpha_sync(alpha=0.0)
+                                agent.target_model.alpha_sync(agent.model, alpha=0.0)
                             elif params.TYPE_OF_TARGET_UPDATE == "soft_update":
-                                agent.target_model.alpha_sync(alpha=0.75)  # 0.75: 새로운 파라미터는 0.25만 반영
+                                agent.target_model.alpha_sync(agent.model, alpha=0.75)  # 0.75: 새로운 파라미터는 0.25만 반영
                             else:
                                 raise ValueError()
 

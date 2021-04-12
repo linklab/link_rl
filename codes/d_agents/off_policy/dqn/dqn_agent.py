@@ -6,7 +6,7 @@ import torch.nn.functional as F
 from codes.b_environments.trade.trade_action_selector import EpsilonGreedyTradeDQNActionSelector, \
     ArgmaxTradeActionSelector
 from codes.c_models.discrete_action.dqn_model import DuelingDQNModel
-from codes.d_agents.a0_base_agent import TargetNet, float32_preprocessor
+from codes.d_agents.a0_base_agent import float32_preprocessor
 from codes.d_agents.off_policy.off_policy_agent import OffPolicyAgent
 from codes.e_utils import rl_utils
 from codes.e_utils.actions import EpsilonGreedyDQNActionSelector, ArgmaxActionSelector, EpsilonTracker, \
@@ -141,7 +141,7 @@ class AgentDQN(OffPolicyAgent):
         self.optimizer.step()
 
         if step_idx % self.params.TARGET_NET_SYNC_STEP_PERIOD < self.params.TRAIN_STEP_FREQ:
-            self.target_model.sync(self.model.base)
+            self.target_model.sync(self.model)
 
         gradients = self.model.get_gradients_for_current_parameters()
 
@@ -149,7 +149,7 @@ class AgentDQN(OffPolicyAgent):
 
         if self.params.NOISY_NET:
             self.model.base.reset_noise()  # Pick a new noise vector (until next optimisation step)
-            self.target_model.reset_noise()
+            self.target_model.base.reset_noise()
 
         return gradients, loss_v.detach().item(), None
 

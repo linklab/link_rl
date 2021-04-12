@@ -5,7 +5,7 @@ from icecream import ic
 
 from codes.c_models.continuous_action.deterministic_continuous_actor_critic_model import \
     DeterministicContinuousActorCriticModel
-from codes.d_agents.a0_base_agent import TargetNet, float32_preprocessor
+from codes.d_agents.a0_base_agent import float32_preprocessor
 from codes.d_agents.off_policy.off_policy_agent import OffPolicyAgent
 from codes.e_utils import rl_utils, replay_buffer
 from codes.e_utils.actions import TD3ActionSelector, EpsilonTracker
@@ -166,7 +166,7 @@ class AgentTD3(OffPolicyAgent):
             loss_actor_v.backward()
             self.actor_optimizer.step()
 
-            self.target_model.alpha_sync(alpha=1 - self.params.TAU)  # (1 - 0.001)
+            self.target_model.alpha_sync(self.model, alpha=1 - self.params.TAU)  # (1 - 0.001)
         else:
             loss_actor_v = self.cache_loss_actor_v
 

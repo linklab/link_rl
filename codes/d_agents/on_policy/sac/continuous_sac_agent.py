@@ -5,7 +5,7 @@ from torch.distributions import Normal
 import torch.nn.utils as nn_utils
 
 from codes.c_models.continuous_action.soft_actor_critic_model import SoftActorCriticModel
-from codes.d_agents.a0_base_agent import BaseAgent, float32_preprocessor, TargetNet
+from codes.d_agents.a0_base_agent import BaseAgent, float32_preprocessor
 from codes.d_agents.on_policy.on_policy_agent import OnPolicyAgent
 from codes.e_utils import rl_utils, replay_buffer
 from codes.e_utils.actions import ContinuousNormalActionSelector
@@ -135,7 +135,7 @@ class AgentSAC(OnPolicyAgent):
         nn_utils.clip_grad_norm_(self.model.base.actor.parameters(), self.params.CLIP_GRAD)
         self.actor_optimizer.step()
 
-        self.target_model.alpha_sync(alpha=1 - 0.001)
+        self.target_model.alpha_sync(self.model, alpha=1 - 0.001)
 
         gradients = self.model.get_gradients_for_current_parameters()
 
