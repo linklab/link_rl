@@ -29,7 +29,7 @@ class AgentDQN(OffPolicyAgent):
         if self.params.DISTRIBUTIONAL:
             self.delta_z = float(self.params.VALUE_MAX - self.params.VALUE_MIN) / (self.params.NUM_SUPPORTS - 1)
             # self.supports.size(): (51,)
-            self.supports = torch.linspace(self.params.VALUE_MIN, self.params.VALUE_MAX, self.params.NUM_SUPPORTS)
+            self.supports = torch.linspace(self.params.VALUE_MIN, self.params.VALUE_MAX, self.params.NUM_SUPPORTS).to(device)
         else:
             self.delta_z = None
             self.supports = None
