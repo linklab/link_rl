@@ -470,7 +470,7 @@ class AgentDQN(OffPolicyAgent):
             0,
             (batch_size - 1) * self.params.NUM_SUPPORTS,
             batch_size
-        ).long().unsqueeze(1).expand(batch_size, self.params.NUM_SUPPORTS)
+        ).long().unsqueeze(1).expand(batch_size, self.params.NUM_SUPPORTS).to(self.device)
 
         proj_dist = torch.zeros(next_dist.size()).to(self.device)
         proj_dist.view(-1).index_add_(0, (l + offset).view(-1), (next_dist * (u.float() - b)).view(-1))
