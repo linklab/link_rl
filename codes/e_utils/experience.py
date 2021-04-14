@@ -9,7 +9,7 @@ from collections import namedtuple, deque
 from gym.vector import VectorEnv
 from icecream import ic
 
-from codes.e_utils.names import EnvironmentName
+from codes.e_utils.names import EnvironmentName, RLAlgorithmName
 from codes.e_utils.reward_changer import PseudoCountRewardWrapper
 
 current_path = os.path.dirname(os.path.realpath(__file__))
@@ -118,12 +118,15 @@ class ExperienceSource:
 
             global_ofs = 0
             for env_idx, (env, action_n) in enumerate(zip(self.pool, grouped_actions)):
-                if hasattr(self.agent.params, "ACTION_SCALE"):
-                    action_scale = self.agent.params.ACTION_SCALE
-                else:
-                    action_scale = 1.0
+                if params.RL_ALGORITHM in [RLAlgorithmName.DDPG_V0]:
+                    if hasattr(self.agent.params, "ACTION_SCALE"):
+                        action_scale = self.agent.params.ACTION_SCALE
+                    else:
+                        action_scale = 1.0
 
-                next_state_n, r_n, is_done_n, info_n = env.step(action_scale * np.asarray(action_n))
+                    next_state_n, r_n, is_done_n, info_n = env.step(action_scale * np.asarray(action_n))
+                else:
+                    next_state_n, r_n, is_done_n, info_n = env.step(np.asarray(action_n))
 
                 #ic(env_idx, env, len(action_n), len(next_state_n), len(r_n), len(is_done_n), len(info_n))
 

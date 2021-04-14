@@ -17,5 +17,5 @@ class PARAMETERS_DQN:
 
     DISTRIBUTIONAL = False
     NUM_SUPPORTS = 51
-    REWARD_MIN = -1
-    REWARD_MAX = 1
+    VALUE_MIN = -10
+    VALUE_MAX = 10
