@@ -49,14 +49,14 @@ class AgentDQN(OffPolicyAgent):
         else:
             if self.params.NOISY_NET:
                 if self.params.DISTRIBUTIONAL:
-                    self.train_action_selector = ArgmaxActionSelector(supports_numpy=self.supports.numpy())
+                    self.train_action_selector = ArgmaxActionSelector(supports_numpy=self.supports.cpu().numpy())
                 else:
                     self.train_action_selector = ArgmaxActionSelector()
             else:
                 self.train_action_selector = EpsilonGreedyDQNActionSelector(epsilon=params.EPSILON_INIT)
 
             if self.params.DISTRIBUTIONAL:
-                self.test_and_play_action_selector = ArgmaxActionSelector(supports_numpy=self.supports.numpy())
+                self.test_and_play_action_selector = ArgmaxActionSelector(supports_numpy=self.supports.cpu().numpy())
             else:
                 self.test_and_play_action_selector = ArgmaxActionSelector()
 
