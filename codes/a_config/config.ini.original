@@ -3,21 +3,18 @@ source=b
 verbose=True
 
 [UPBIT]
-access_key=0KwxA06tR32LRvVCceexQckAFDSNmnjvKZcNXVx6
-secret_key=6jIAmgMxpQYmKzZ6QDjcxB41aixDXr8cxuQAUnp4
-; 주문하기까지 가능한 조합
-;access_key=hBoTKBbxR7qR5qXNQC0dhU6KOmKsrPAw9xRG1kAx
-;secret_key=OEuwVqN4ZkWSUKxJHnZ9tpzLQeTXLB1jEKGPohSm
+access_key=
+secret_key=
 
 [MYSQL_NAVER]
-mysql_id=root
-mysql_password=btc100m$!
-mysql_host=106.10.58.179
+mysql_id=
+mysql_password=
+
 
 [SLACK]
-webhook_url_1=https://hooks.slack.com/services/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
-webhook_url_2=https://hooks.slack.com/services/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
-SLACK_API_TOKEN=xoxp-45022904695-44974281363-1604825019396-cd4dd3bb5eeadecb3864dfcaf73df541
+webhook_url_1=
+webhook_url_2=
+SLACK_API_TOKEN=
 
 [TRADE]
 initial_krw=4745409
