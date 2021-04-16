@@ -27,9 +27,9 @@ class AgentDQN(OffPolicyAgent):
         super(AgentDQN, self).__init__(worker_id=worker_id, params=params, action_shape=action_shape, device=device)
 
         if self.params.DISTRIBUTIONAL:
-            self.delta_z = float(self.params.REWARD_MAX - self.params.REWARD_MIN) / (self.params.NUM_SUPPORTS - 1)
+            self.delta_z = float(self.params.VALUE_MAX - self.params.VALUE_MIN) / (self.params.NUM_SUPPORTS - 1)
             # self.supports.size(): (51,)
-            self.supports = torch.linspace(self.params.REWARD_MIN, self.params.REWARD_MAX, self.params.NUM_SUPPORTS)
+            self.supports = torch.linspace(self.params.VALUE_MIN, self.params.VALUE_MAX, self.params.NUM_SUPPORTS).to(device)
         else:
             self.delta_z = None
             self.supports = None
@@ -49,14 +49,14 @@ class AgentDQN(OffPolicyAgent):
         else:
             if self.params.NOISY_NET:
                 if self.params.DISTRIBUTIONAL:
-                    self.train_action_selector = ArgmaxActionSelector(supports_numpy=self.supports.numpy())
+                    self.train_action_selector = ArgmaxActionSelector(supports_numpy=self.supports.cpu().numpy())
                 else:
                     self.train_action_selector = ArgmaxActionSelector()
             else:
                 self.train_action_selector = EpsilonGreedyDQNActionSelector(epsilon=params.EPSILON_INIT)
 
             if self.params.DISTRIBUTIONAL:
-                self.test_and_play_action_selector = ArgmaxActionSelector(supports_numpy=self.supports.numpy())
+                self.test_and_play_action_selector = ArgmaxActionSelector(supports_numpy=self.supports.cpu().numpy())
             else:
                 self.test_and_play_action_selector = ArgmaxActionSelector()
 
@@ -136,10 +136,13 @@ class AgentDQN(OffPolicyAgent):
                 self.buffer.update_priorities(batch_indices, sample_prios.detach().cpu().numpy())
                 self.buffer.update_beta(step_idx)
             else:
-                if self.params.DOUBLE:
-                    loss_v = self.calc_loss_double_dqn(batch)
+                if self.params.DISTRIBUTIONAL:
+                    loss_v = self.calc_loss_distributional_dqn(batch)
                 else:
-                    loss_v = self.calc_loss_dqn(batch)
+                    if self.params.DOUBLE:
+                        loss_v = self.calc_loss_double_dqn(batch)
+                    else:
+                        loss_v = self.calc_loss_dqn(batch)
 
         loss_v.backward()
 
@@ -150,7 +153,7 @@ class AgentDQN(OffPolicyAgent):
 
         gradients = self.model.get_gradients_for_current_parameters()
 
-        self.model.check_gradient_nan_or_zero(gradients)
+        #self.model.check_gradient_nan_or_zero(gradients)
 
         if self.params.NOISY_NET:
             self.model.base.reset_noise()  # Pick a new noise vector (until next optimisation step)
@@ -273,6 +276,41 @@ class AgentDQN(OffPolicyAgent):
         # return nn.MSELoss()(action_values, target_action_values)
         return F.smooth_l1_loss(action_values, target_action_values)
 
+    def calc_loss_distributional_dqn(self, batch):
+        states, actions, rewards, dones, next_states, last_steps = self.unpack_batch(batch)
+
+        states_v = torch.tensor(states)
+        next_states_v = torch.tensor(next_states)
+        actions_v = torch.tensor(actions)
+        rewards_v = torch.tensor(rewards)
+        done_masks_v = torch.BoolTensor(dones)
+
+        if self.device == torch.device("cuda"):
+            states_v = states_v.cuda(non_blocking=True)
+            next_states_v = next_states_v.cuda(non_blocking=True)
+            actions_v = actions_v.cuda(non_blocking=True)
+            rewards_v = rewards_v.cuda(non_blocking=True)
+            done_masks_v = done_masks_v.cuda(non_blocking=True)
+
+        # proj_dist.size(): (32, 51)
+        proj_dist = self.projection_distribution_for_next_state(next_states_v, rewards_v, done_masks_v)
+
+        # dist.size(): (32, 2, 51)
+        dist = self.model(states_v)
+
+        # actions_v.unsqueeze(1).unsqueeze(1).size(): (32, 1, 1)
+        # actions: (32, 1, 51)
+        actions = actions_v.unsqueeze(1).unsqueeze(1).expand(self.params.BATCH_SIZE, 1, self.params.NUM_SUPPORTS)
+
+        # dist.size(): (32, 51)
+        dist = dist.gather(1, actions).squeeze(1)
+
+        dist.data.clamp_(0.01, 0.99)
+        # print((proj_dist * dist.log()).sum(1), "!!!!!!!!!!!!1")
+        loss = -1.0 * (proj_dist * dist.log()).sum(1).mean()
+
+        return loss
+
     def calc_loss_double_dqn(self, batch):
         states, actions, rewards, dones, next_states, last_steps = self.unpack_batch(batch)
 
@@ -291,22 +329,17 @@ class AgentDQN(OffPolicyAgent):
             done_masks_v = done_masks_v.cuda(non_blocking=True)
             last_steps_v = last_steps_v.cuda(non_blocking=True)
 
-        if self.params.DISTRIBUTIONAL:
-            proj_dist = self.projection_distribution_for_next_state(next_states_v, rewards_v, done_masks_v)
-            print(proj_dist.size(), "!!!!!!!!!!!!!1")
-            loss = 0.0
-        else:
-            actions_v = actions_v.unsqueeze(-1)
-            action_values = self.model(states_v).gather(1, actions_v)
-            action_values = action_values.squeeze(-1)
-            with torch.no_grad():
-                next_state_acts = self.model(next_states_v).max(1)[1]
-                next_state_acts = next_state_acts.unsqueeze(-1)
-                next_state_vals = self.target_model(next_states_v).gather(1, next_state_acts).squeeze(-1)
-                next_state_vals[done_masks_v] = 0.0
+        actions_v = actions_v.unsqueeze(-1)
+        action_values = self.model(states_v).gather(1, actions_v)
+        action_values = action_values.squeeze(-1)
+        with torch.no_grad():
+            next_state_acts = self.model(next_states_v).max(1)[1]
+            next_state_acts = next_state_acts.unsqueeze(-1)
+            next_state_vals = self.target_model(next_states_v).gather(1, next_state_acts).squeeze(-1)
+            next_state_vals[done_masks_v] = 0.0
 
-            exp_sa_vals = next_state_vals.detach() * (self.params.GAMMA ** last_steps_v) + rewards_v
-            loss = F.smooth_l1_loss(action_values, exp_sa_vals)
+        exp_sa_vals = next_state_vals.detach() * (self.params.GAMMA ** last_steps_v) + rewards_v
+        loss = F.smooth_l1_loss(action_values, exp_sa_vals)
 
         return loss
 
@@ -323,6 +356,7 @@ class AgentDQN(OffPolicyAgent):
         done_mask = torch.BoolTensor(dones)
         last_steps_v = torch.tensor(last_steps, dtype=torch.float32)
         batch_weights_v = torch.tensor(batch_weights)
+
         if self.device == torch.device("cuda"):
             states_v = states_v.cuda(non_blocking=True)
             next_states_v = next_states_v.cuda(non_blocking=True)
@@ -356,6 +390,7 @@ class AgentDQN(OffPolicyAgent):
         next_states_v = torch.tensor(next_states)
         actions_v = torch.tensor(actions)
         batch_weights_v = torch.tensor(batch_weights)
+
         if self.device == torch.device("cuda"):
             states_v = states_v.cuda(non_blocking=True)
             next_states_v = next_states_v.cuda(non_blocking=True)
@@ -417,23 +452,17 @@ class AgentDQN(OffPolicyAgent):
         # self.target_model(next_states).size(): [32, 2, 51]
         # next_dist.size(): [32, 2, 51]
         next_dist = self.target_model(next_states) * self.supports
-        print(next_dist.size(), "@@@@@@@@@@@@@@@@")
-
-        #next_action = np.argmax(next_dist.sum(2), axis=1)
-
         next_action = next_dist.sum(2).max(1)[1]
         next_action = next_action.unsqueeze(1).unsqueeze(1).expand(next_dist.size(0), 1, next_dist.size(2))
+
+        # next_dist.size(): [32, 51]
         next_dist = next_dist.gather(1, next_action).squeeze(1)
-
         rewards = rewards.unsqueeze(1).expand_as(next_dist)
-        done_masks = done_masks.unsqueeze(1).expand_as(next_dist)
-        supports = self.supports.unsqueeze(0).expand_as(next_dist)
+        done_masks = torch.tensor(done_masks, dtype=torch.uint8).unsqueeze(1).expand_as(next_dist)
+        Tz = rewards + (1 - done_masks) * 0.99 * self.supports
 
-        next_states_vals = self.params.GAMMA * supports
-        next_states_vals[done_masks] = 0.0
-        Tz = rewards + next_states_vals
-        Tz = Tz.clamp(min=self.params.REWARD_MIN, max=self.params.REWARD_MAX)
-        b = (Tz - self.params.REWARD_MIN) / self.delta_z
+        Tz = Tz.clamp(min=self.params.VALUE_MIN, max=self.params.VALUE_MAX)
+        b = (Tz - self.params.VALUE_MIN) / self.delta_z
         l = b.floor().long()
         u = b.ceil().long()
 
@@ -441,9 +470,9 @@ class AgentDQN(OffPolicyAgent):
             0,
             (batch_size - 1) * self.params.NUM_SUPPORTS,
             batch_size
-        ).long().unsqueeze(1).expand(batch_size, self.params.NUM_SUPPORTS)
+        ).long().unsqueeze(1).expand(batch_size, self.params.NUM_SUPPORTS).to(self.device)
 
-        proj_dist = torch.zeros(next_dist.size())
+        proj_dist = torch.zeros(next_dist.size()).to(self.device)
         proj_dist.view(-1).index_add_(0, (l + offset).view(-1), (next_dist * (u.float() - b)).view(-1))
         proj_dist.view(-1).index_add_(0, (u + offset).view(-1), (next_dist * (b - l.float())).view(-1))
 
