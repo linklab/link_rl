@@ -146,7 +146,6 @@ class EnvironmentQuanserRIP(gym.Env):
         return np.asarray(self.state)
 
     def step(self, action):
-
         current_time = time.perf_counter()
         # print("current_time - self.previous_time", current_time - self.previous_time)
         while True:
