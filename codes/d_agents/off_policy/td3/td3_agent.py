@@ -182,5 +182,5 @@ class AgentTD3(OffPolicyAgent):
         gradients = self.model.get_gradients_for_current_parameters()
 
         self.model.check_gradient_nan_or_zero(gradients)
-
+        # print("@@@@@@@@@@@@@", loss_critic_v, loss_actor_v)
         return gradients, loss_critic_v.item(), loss_actor_v.item() * -1.0
