@@ -86,7 +86,7 @@ class AgentTD3(OffPolicyAgent):
                 eps_frames=params.EPSILON_MIN_STEP
             )
 
-        self.cache_loss_actor_v = 0.0
+        self.cache_loss_actor_v = torch.tensor(0.0)
         self.last_noise = 0.0
 
     def __call__(self, states, noises=None):
