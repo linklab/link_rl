@@ -27,7 +27,7 @@ BLOWING_ACTION_RATE = 0.0002  # 5000 스텝에 1번 정도(지수 분포)의 주
 
 VELOCITY_STATE_DENOMINATOR = 100.0
 
-RIP_SERVER = '10.0.0.5'
+RIP_SERVER = '10.0.0.2'
 
 class RotaryInvertedPendulumEnv(gym.Env):
     def __init__(
@@ -460,7 +460,7 @@ class RotaryInvertedPendulumEnv(gym.Env):
                 reward = self.get_reward_for_double_rip_4(self.pendulum_1_position, self.pendulum_2_position)
             else:
                 raise ValueError()
-            # print("REWARD :", reward)
+                # print("REWARD :", reward)
         else:
             raise ValueError()
         # print(done_conditions)
