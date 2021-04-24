@@ -52,11 +52,11 @@ class AgentDDPG(OffPolicyAgent):
                 epsilon=params.EPSILON_INIT, params=params
             )
         elif params.TYPE_OF_DDPG_ACTION_SELECTOR == DDPGActionSelectorType.NOISY_NET_ACTION_SELECTOR:
-            self.train_action_selector = None
+            self.train_action_selector = DDPGActionSelector(noise_enabled=False, params=params)
         else:
             raise ValueError()
 
-        self.test_and_play_action_selector = DDPGActionSelector(noise_enabled=False)
+        self.test_and_play_action_selector = DDPGActionSelector(noise_enabled=False, params=params)
 
         self.model = DeterministicContinuousActorCriticModel(
             worker_id=worker_id,

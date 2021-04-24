@@ -3,6 +3,7 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 
+from codes.a_config._rl_parameters.off_policy.parameter_ddpg import DDPGActionSelectorType
 from codes.c_models.advanced_exploration.noisy_net import NoisyLinear
 from codes.c_models.base_model import BaseModel
 from codes.e_utils.names import RLAlgorithmName
@@ -58,7 +59,7 @@ class DeterministicActorCriticMLPBase(nn.Module):
             nn.LeakyReLU()
         )
 
-        if self.params.NOISY_NET:
+        if self.params.TYPE_OF_DDPG_ACTION_SELECTOR == DDPGActionSelectorType.NOISY_NET_ACTION_SELECTOR:
             self.last_actor = nn.Sequential(
                 NoisyLinear(self.hidden_3_size, self.hidden_3_size),
                 nn.Linear(self.hidden_3_size, num_outputs)
@@ -77,7 +78,7 @@ class DeterministicActorCriticMLPBase(nn.Module):
             nn.LeakyReLU()
         )
 
-        if self.params.NOISY_NET:
+        if self.params.TYPE_OF_DDPG_ACTION_SELECTOR == DDPGActionSelectorType.NOISY_NET_ACTION_SELECTOR:
             self.last_critic = nn.Sequential(
                 NoisyLinear(self.hidden_3_size, self.hidden_3_size),
                 nn.Linear(self.hidden_3_size, 1)

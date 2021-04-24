@@ -127,7 +127,7 @@ def train_main(params, train_env, test_env):
 
 
 def train(agent, step_idx, loss_dequeue, actor_objective_dequeue):
-    if not params.NOISY_NET and hasattr(agent, 'epsilon_tracker'):
+    if hasattr(agent, 'epsilon_tracker') and agent.epsilon_tracker:
         agent.epsilon_tracker.udpate(step_idx)
 
     if params.RL_ALGORITHM in ON_POLICY_RL_ALGORITHMS:
