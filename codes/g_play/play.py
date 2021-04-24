@@ -13,14 +13,11 @@ PROJECT_HOME = os.path.abspath(os.path.join(current_path, os.pardir, os.pardir))
 if PROJECT_HOME not in sys.path:
     sys.path.append(PROJECT_HOME)
 
-from codes.e_utils.actions import EpsilonGreedySomeTimesBlowDQNActionSelector, \
-    SomeTimesBlowDDPGActionSelector, ArgmaxActionSelector, DDPGActionSelector, \
-    ContinuousNormalActionSelector, DiscreteCategoricalActionSelector
-from codes.e_utils.rl_utils import get_environment_input_output_info, MODEL_ZOO_SAVE_DIR, MODEL_SAVE_FILE_PREFIX
+from codes.e_utils.rl_utils import MODEL_ZOO_SAVE_DIR, MODEL_SAVE_FILE_PREFIX
 from codes.e_utils import rl_utils
 from codes.e_utils.common_utils import load_model
 from codes.e_utils.logger import get_logger
-from codes.e_utils.names import RLAlgorithmName, EnvironmentName, AgentMode
+from codes.e_utils.names import EnvironmentName, AgentMode
 from codes.e_utils.rl_utils import get_environment_input_output_info
 
 

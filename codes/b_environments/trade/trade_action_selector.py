@@ -1,8 +1,8 @@
 import numpy as np
 import random
 
-from .trade_constant import Action, TimeUnit
-from codes.e_utils.actions import ActionSelector
+from .trade_constant import Action
+from codes.d_agents.actions import ActionSelector
 
 
 class TradeActionSelector(ActionSelector):

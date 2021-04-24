@@ -3,6 +3,7 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 
+from codes.c_models.advanced_exploration.noisy_net import NoisyLinear
 from codes.c_models.base_model import BaseModel
 from codes.e_utils.names import RLAlgorithmName
 
@@ -31,6 +32,12 @@ class DeterministicContinuousActorCriticModel(BaseModel):
 
         self.reset_average_gradients()
 
+    def forward_actor(self, inputs):
+        return self.base.forward_actor(inputs)
+
+    def forward_critic(self, inputs, actions):
+        return self.base.forward_critic(inputs, actions)
+
 
 class DeterministicActorCriticMLPBase(nn.Module):
     def __init__(self, num_inputs, num_outputs, params):
@@ -48,9 +55,16 @@ class DeterministicActorCriticMLPBase(nn.Module):
             nn.Linear(self.hidden_1_size, self.hidden_2_size),
             nn.LeakyReLU(),
             nn.Linear(self.hidden_2_size, self.hidden_3_size),
-            nn.LeakyReLU(),
-            nn.Linear(self.hidden_3_size, num_outputs)
+            nn.LeakyReLU()
         )
+
+        if self.params.NOISY_NET:
+            self.last_actor = nn.Sequential(
+                NoisyLinear(self.hidden_3_size, self.hidden_3_size),
+                nn.Linear(self.hidden_3_size, num_outputs)
+            )
+        else:
+            self.last_actor = nn.Linear(self.hidden_3_size, num_outputs)
 
         # self.actor.apply(self.init_weights)
 
@@ -60,9 +74,16 @@ class DeterministicActorCriticMLPBase(nn.Module):
             nn.Linear(self.hidden_1_size, self.hidden_2_size),
             nn.LeakyReLU(),
             nn.Linear(self.hidden_2_size, self.hidden_3_size),
-            nn.LeakyReLU(),
-            nn.Linear(self.hidden_3_size, 1)
+            nn.LeakyReLU()
         )
+
+        if self.params.NOISY_NET:
+            self.last_critic = nn.Sequential(
+                NoisyLinear(self.hidden_3_size, self.hidden_3_size),
+                nn.Linear(self.hidden_3_size, 1)
+            )
+        else:
+            self.last_critic = nn.Linear(self.hidden_3_size, 1)
 
         # self.critic.apply(self.init_weights)
 
@@ -82,14 +103,14 @@ class DeterministicActorCriticMLPBase(nn.Module):
         return self.forward_actor(inputs)
 
     def forward_actor(self, inputs):
-        actions = self.actor(inputs)
+        outs = self.actor(inputs)
+        actions = self.last_actor(outs)
         actions = torch.tanh(actions)
-
         return actions
 
     def forward_critic(self, inputs, actions):
-        critic_value = self.critic(torch.cat([inputs, actions], dim=-1))
-
+        outs = self.critic(torch.cat([inputs, actions], dim=-1))
+        critic_value = self.last_critic(outs)
         return critic_value
 
 

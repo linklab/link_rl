@@ -8,6 +8,7 @@ from collections import deque
 import numpy as np
 import torch
 
+from codes.d_agents.off_policy.ddpg.ddpg_action_selector import SomeTimesBlowDDPGActionSelector
 from codes.e_utils.train_tracker import SpeedTracker
 
 current_path = os.path.dirname(os.path.realpath(__file__))
@@ -18,8 +19,7 @@ if PROJECT_HOME not in sys.path:
 from codes.a_config.parameters import PARAMETERS as params
 
 from codes.e_utils import rl_utils
-from codes.e_utils.actions import EpsilonGreedySomeTimesBlowDQNActionSelector, \
-    SomeTimesBlowDDPGActionSelector
+from codes.d_agents.actions import EpsilonGreedySomeTimesBlowDQNActionSelector
 from codes.e_utils.common_utils import save_model
 from codes.e_utils.experience_single import ExperienceSourceSingleEnvFirstLast
 from codes.e_utils.names import EnvironmentName, RLAlgorithmName, ModelSaveMode
@@ -113,7 +113,7 @@ class WorkerFastRL:
         elif params.RL_ALGORITHM in (RLAlgorithmName.DDPG_V0, RLAlgorithmName.D4PG_V0):
             if params.ENVIRONMENT_ID in [EnvironmentName.PENDULUM_MATLAB_V0]:
                 action_selector = SomeTimesBlowDDPGActionSelector(
-                    epsilon=params.EPSILON_INIT, ou_enabled=True, scale_factor=self.params.ACTION_SCALE,
+                    epsilon=params.EPSILON_INIT, noise_enabled=True, scale_factor=self.params.ACTION_SCALE,
                     blowing_action_rate=0.0002,  # 5000 스텝에 1번 정도(지수 분포)의 주기로 Blowing Action 가해짐
                     min_blowing_action=-10.0 * self.params.ACTION_SCALE,
                     max_blowing_action=10.0 * self.params.ACTION_SCALE,

@@ -1,6 +1,6 @@
-from codes.a_config._rl_parameters.off_policy.parameter_ddpg import PARAMETERS_DDPG
+from codes.a_config._rl_parameters.off_policy.parameter_ddpg import PARAMETERS_DDPG, DDPGTargetUpdateOnlyAfterEpisode
 from codes.e_utils.names import *
-from codes.a_config.parameters_general import PARAMETERS_GENERAL
+from codes.a_config.parameters_general import PARAMETERS_GENERAL, RIPEnvRewardType
 
 
 class PARAMETERS_PENDULUM_MATLAB_DDPG(PARAMETERS_GENERAL, PARAMETERS_DDPG):
@@ -33,7 +33,7 @@ class PARAMETERS_PENDULUM_MATLAB_DDPG(PARAMETERS_GENERAL, PARAMETERS_DDPG):
 
     MODEL_SAVE_MODE = ModelSaveMode.TEST
 
-    OU_NOISE_ENABLED = True
+    NOISE_ENABLED = True
     OU_SIGMA = 2.0
 
     COUNT_BASED_EXPLORATION = True
@@ -44,6 +44,6 @@ class PARAMETERS_PENDULUM_MATLAB_DDPG(PARAMETERS_GENERAL, PARAMETERS_DDPG):
     TRAIN_ONLY_AFTER_EPISODE = False
     NUM_TRAIN_ONLY_AFTER_EPISODE = 100
 
-    TYPE_OF_REWARD = "old_version"  # "current_version"
-    TYPE_OF_DDPG_TARGET_UPDATE = "soft_update" # "hard_update"
+    TYPE_OF_REWARD = RIPEnvRewardType.NEW  # "current_version"
+    TYPE_OF_DDPG_TARGET_UPDATE = DDPGTargetUpdateOnlyAfterEpisode.SOFT_UPDATE # "hard_update"
 

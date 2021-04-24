@@ -1,4 +1,13 @@
+import enum
+
 from codes.e_utils.names import EnvironmentName, RLAlgorithmName, DeepLearningModelName, OptimizerName, ModelSaveMode
+
+
+class RIPEnvRewardType(enum.Enum):
+    ORIGINAL = 0
+    OLD = 1
+    NEW = 2
+    UNTIL_TERMINAL_ZERO = 3
 
 
 class PARAMETERS_GENERAL:

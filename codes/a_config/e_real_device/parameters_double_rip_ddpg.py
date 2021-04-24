@@ -1,5 +1,5 @@
 from codes.a_config._rl_parameters.off_policy.parameter_ddpg import PARAMETERS_DDPG
-from codes.a_config.parameters_general import PARAMETERS_GENERAL
+from codes.a_config.parameters_general import PARAMETERS_GENERAL, RIPEnvRewardType
 from codes.e_utils.names import OptimizerName, RLAlgorithmName, EnvironmentName, DeepLearningModelName, ModelSaveMode
 from codes.a_config.parameters_general import PARAMETERS_GENERAL
 
@@ -79,7 +79,7 @@ class PARAMETERS_DOUBLE_RIP(PARAMETERS_GENERAL, PARAMETERS_DDPG):
 
     MODEL_SAVE_MODE = ModelSaveMode.TRAIN
 
-    OU_NOISE_ENABLED = True
+    NOISE_ENABLED = True
     OU_SIGMA = 2.5
 
     COUNT_BASED_EXPLORATION = True
@@ -90,4 +90,4 @@ class PARAMETERS_DOUBLE_RIP(PARAMETERS_GENERAL, PARAMETERS_DDPG):
     TRAIN_ONLY_AFTER_EPISODE = True
     NUM_TRAIN_ONLY_AFTER_EPISODE = 100
 
-    TYPE_OF_REWARD = "current_version"  # "old_version"
+    TYPE_OF_REWARD = RIPEnvRewardType.NEW  # "old_version"

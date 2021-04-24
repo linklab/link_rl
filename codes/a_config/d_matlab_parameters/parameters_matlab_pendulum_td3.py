@@ -1,7 +1,6 @@
-from codes.a_config._rl_parameters.off_policy.parameter_ddpg import PARAMETERS_DDPG
-from codes.a_config._rl_parameters.off_policy.parameter_td3 import PARAMETERS_TD3
+from codes.a_config._rl_parameters.off_policy.parameter_td3 import PARAMETERS_TD3, TD3ActionType, TD3ActionSelectorType
 from codes.e_utils.names import *
-from codes.a_config.parameters_general import PARAMETERS_GENERAL
+from codes.a_config.parameters_general import PARAMETERS_GENERAL, RIPEnvRewardType
 
 
 class PARAMETERS_PENDULUM_MATLAB_TD3(PARAMETERS_GENERAL, PARAMETERS_TD3):
@@ -33,7 +32,7 @@ class PARAMETERS_PENDULUM_MATLAB_TD3(PARAMETERS_GENERAL, PARAMETERS_TD3):
 
     MODEL_SAVE_MODE = ModelSaveMode.TEST
 
-    OU_NOISE_ENABLED = True
+    NOISE_ENABLED = True
     OU_SIGMA = 2.0
 
     COUNT_BASED_EXPLORATION = False
@@ -44,9 +43,10 @@ class PARAMETERS_PENDULUM_MATLAB_TD3(PARAMETERS_GENERAL, PARAMETERS_TD3):
     TRAIN_ONLY_AFTER_EPISODE = False
     NUM_TRAIN_ONLY_AFTER_EPISODE = 100
 
-    TYPE_OF_ACTION = "old"
-    TYPE_OF_REWARD = "current_version"  # "old_version"
-    TYPE_OF_TD3_ACTION_SELECTOR = "SomeTimesBlowTD3ActionSelector"
+    TYPE_OF_REWARD = RIPEnvRewardType.NEW  # "old_version"
+
+    TYPE_OF_ACTION = TD3ActionType.NORMAL_NOISE_WITH_EPSILON
+    TYPE_OF_TD3_ACTION_SELECTOR = TD3ActionSelectorType.SOMETIMES_BLOW_ACTION_SELECTOR
 
     EPSILON_INIT = 1.0
     EPSILON_MIN = 0.01

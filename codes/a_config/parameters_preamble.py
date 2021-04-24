@@ -63,3 +63,5 @@ from codes.a_config.federated_parameters.parameters_federated_cartpole_ppo_mlp i
 
 from codes.e_utils.names import OSName, EnvironmentName, RLAlgorithmName
 from codes.e_utils.names import ModelSaveMode
+
+from ._rl_parameters.off_policy.parameter_ddpg import DDPGActionType, DDPGTrainType, DDPGActionSelectorType

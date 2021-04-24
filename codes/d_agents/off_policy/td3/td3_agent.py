@@ -1,16 +1,17 @@
 import numpy as np
 import torch
 import torch.nn.functional as F
-from icecream import ic
 
+from codes.a_config._rl_parameters.off_policy.parameter_td3 import TD3ActionType, TD3ActionSelectorType
 from codes.c_models.continuous_action.deterministic_continuous_actor_critic_model import \
     DeterministicContinuousActorCriticModel
 from codes.d_agents.a0_base_agent import float32_preprocessor
 from codes.d_agents.off_policy.off_policy_agent import OffPolicyAgent
-from codes.e_utils import rl_utils, replay_buffer
-from codes.e_utils.actions import TD3ActionSelector, EpsilonTracker, SomeTimesBlowTD3ActionSelector
-from codes.e_utils.names import DeepLearningModelName, AgentMode, EnvironmentName
-import copy
+from codes.d_agents.off_policy.td3.td3_action_selector import SomeTimesBlowTD3ActionSelector, TD3ActionSelector
+from codes.e_utils import rl_utils
+from codes.d_agents.actions import EpsilonTracker
+from codes.e_utils.names import DeepLearningModelName, AgentMode
+
 
 # https://github.com/sfujim/TD3
 # https://spinningup.openai.com/en/latest/algorithms/td3.html
@@ -28,20 +29,20 @@ class AgentTD3(OffPolicyAgent):
         self.action_min = action_min
         self.action_max = action_max
 
-        if params.TYPE_OF_TD3_ACTION_SELECTOR == "TD3ActionSelector":
+        if params.TYPE_OF_TD3_ACTION_SELECTOR == TD3ActionSelectorType.BASIC_ACTION_SELECTOR:
             self.train_action_selector = TD3ActionSelector(
-                epsilon=params.EPSILON_INIT, act_noise=params.ACT_NOISE, noise_clip=params.NOISE_CLIP
+                epsilon=params.EPSILON_INIT, act_noise=params.ACT_NOISE, noise_clip=params.NOISE_CLIP, params=self.params
             )
-        elif params.TYPE_OF_TD3_ACTION_SELECTOR == "SomeTimesBlowTD3ActionSelector":
+        elif params.TYPE_OF_TD3_ACTION_SELECTOR == TD3ActionSelectorType.SOMETIMES_BLOW_ACTION_SELECTOR:
             self.train_action_selector = SomeTimesBlowTD3ActionSelector(
                 epsilon=params.EPSILON_INIT, act_noise=params.ACT_NOISE, noise_clip=params.NOISE_CLIP,
-                min_blowing_action=-5.0 * params.ACTION_SCALE, max_blowing_action=5.0 * params.ACTION_SCALE
+                min_blowing_action=-5.0 * params.ACTION_SCALE, max_blowing_action=5.0 * params.ACTION_SCALE, params=self.params
             )
         else:
             raise ValueError()
 
         self.test_and_play_action_selector = TD3ActionSelector(
-            epsilon=0.0, act_noise=0.0, noise_clip=params.NOISE_CLIP
+            epsilon=0.0, act_noise=0.0, noise_clip=params.NOISE_CLIP, params=self.params
         )
 
         self.model = DeterministicContinuousActorCriticModel(
@@ -78,13 +79,15 @@ class AgentTD3(OffPolicyAgent):
             params=params
         )
 
-        if self.params.TYPE_OF_ACTION == "old":
+        if self.params.TYPE_OF_ACTION == TD3ActionType.NORMAL_NOISE_WITH_EPSILON:
             self.epsilon_tracker = EpsilonTracker(
                 action_selector=self.train_action_selector,
                 eps_start=params.EPSILON_INIT,
                 eps_final=params.EPSILON_MIN,
                 eps_frames=params.EPSILON_MIN_STEP
             )
+        else:
+            self.epsilon_tracker = None
 
         self.cache_loss_actor_v = torch.tensor(0.0)
         self.last_noise = 0.0

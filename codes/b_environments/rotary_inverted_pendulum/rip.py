@@ -7,6 +7,8 @@ import numpy as np
 import time
 import sys,os
 
+from codes.a_config.a_basic_parameters.parameters_pendulum_ddpg import RIPRewardType
+
 current_path = os.path.dirname(os.path.realpath(__file__))
 PROJECT_HOME = os.path.abspath(os.path.join(current_path, os.pardir, os.pardir, os.pardir))
 if PROJECT_HOME not in sys.path:
@@ -331,7 +333,6 @@ class RotaryInvertedPendulumEnv(gym.Env):
         else:
             self.is_upright = False
 
-    @profile
     def step(self, action):
         ############# time check #############################
         if self.pendulum_type in [EnvironmentName.REAL_DEVICE_RIP, EnvironmentName.REAL_DEVICE_DOUBLE_RIP]:
@@ -451,13 +452,13 @@ class RotaryInvertedPendulumEnv(gym.Env):
         ]:
             self.update_current_state_for_double_rip(adjusted_pendulum_1_radian, adjusted_pendulum_2_radian)
 
-            if self.params.TYPE_OF_REWARD == "current_version":
+            if self.params.TYPE_OF_REWARD == RIPRewardType.NEW:
                 reward = self.get_reward_for_double_rip_1()
-            elif self.params.TYPE_OF_REWARD == "old_version":
+            elif self.params.TYPE_OF_REWARD == RIPRewardType.OLD:
                 reward = self.get_reward_for_double_rip_2()
-            elif self.params.TYPE_OF_REWARD == "terminal_condition_version":
+            elif self.params.TYPE_OF_REWARD == RIPRewardType.UNTIL_TERMINAL_ZERO:
                 reward = self.get_reward_for_double_rip_3()
-            elif self.params.TYPE_OF_REWARD == "original_version":
+            elif self.params.TYPE_OF_REWARD == RIPRewardType.ORIGINAL:
                 reward = self.get_reward_for_double_rip_4(self.pendulum_1_position, self.pendulum_2_position)
             else:
                 raise ValueError()

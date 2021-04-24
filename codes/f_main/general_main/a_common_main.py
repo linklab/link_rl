@@ -2,7 +2,6 @@
 # https://mspries.github.io/jimmy_pendulum.html
 #!/usr/bin/env python3
 import time
-from collections import deque
 
 import torch
 import os, sys
@@ -10,13 +9,7 @@ import numpy as np
 import wandb
 from termcolor import colored
 
-from codes.a_config.f_trade_parameters.parameters_trade_dqn import PARAMETERS_GENERAL_TRADE_DQN
-from codes.b_environments.trade.trade_action_selector import EpsilonGreedyTradeDQNActionSelector, \
-    ArgmaxTradeActionSelector
-from codes.d_agents.off_policy.off_policy_agent import OffPolicyAgent
-from codes.d_agents.on_policy.on_policy_agent import OnPolicyAgent
 from codes.e_utils.rl_utils import get_environment_input_output_info, MODEL_SAVE_FILE_PREFIX, MODEL_ZOO_SAVE_DIR
-from codes.e_utils.actions import EpsilonTracker
 
 print("PyTorch Version", torch.__version__)
 
@@ -30,11 +23,9 @@ from codes.a_config.parameters import PARAMETERS as params
 from codes.e_utils import rl_utils
 from codes.e_utils.common_utils import save_model, print_environment_info, remove_models, agent_model_test, \
     print_agent_info, load_model, print_params
-from codes.e_utils.train_tracker import SpeedTracker, EarlyStopping
+from codes.e_utils.train_tracker import EarlyStopping
 from codes.e_utils.logger import get_logger
-from codes.e_utils.names import DeepLearningModelName, RLAlgorithmName, EnvironmentName, ModelSaveMode, AgentMode
-from codes.e_utils.experience import ExperienceSourceFirstLast
-from codes.e_utils.names import OFF_POLICY_RL_ALGORITHMS, ON_POLICY_RL_ALGORITHMS
+from codes.e_utils.names import EnvironmentName, ModelSaveMode, AgentMode
 
 WANDB_DIR = os.path.join(PROJECT_HOME, "out", "wandb")
 if not os.path.exists(WANDB_DIR):
