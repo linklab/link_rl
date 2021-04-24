@@ -9,8 +9,6 @@ import numpy as np
 import wandb
 from termcolor import colored
 
-from codes.e_utils.rl_utils import get_environment_input_output_info, MODEL_SAVE_FILE_PREFIX, MODEL_ZOO_SAVE_DIR
-
 print("PyTorch Version", torch.__version__)
 
 current_path = os.path.dirname(os.path.realpath(__file__))
@@ -19,7 +17,7 @@ if PROJECT_HOME not in sys.path:
     sys.path.append(PROJECT_HOME)
 
 from codes.a_config.parameters import PARAMETERS as params
-
+from codes.e_utils.rl_utils import get_environment_input_output_info, MODEL_SAVE_FILE_PREFIX, MODEL_ZOO_SAVE_DIR
 from codes.e_utils import rl_utils
 from codes.e_utils.common_utils import save_model, print_environment_info, remove_models, agent_model_test, \
     print_agent_info, load_model, print_params
