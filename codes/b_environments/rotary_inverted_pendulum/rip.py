@@ -7,7 +7,7 @@ import numpy as np
 import time
 import sys,os
 
-from codes.a_config.a_basic_parameters.parameters_pendulum_ddpg import RIPRewardType
+from codes.a_config.parameters_general import RIPEnvRewardType
 
 current_path = os.path.dirname(os.path.realpath(__file__))
 PROJECT_HOME = os.path.abspath(os.path.join(current_path, os.pardir, os.pardir, os.pardir))
@@ -452,13 +452,13 @@ class RotaryInvertedPendulumEnv(gym.Env):
         ]:
             self.update_current_state_for_double_rip(adjusted_pendulum_1_radian, adjusted_pendulum_2_radian)
 
-            if self.params.TYPE_OF_REWARD == RIPRewardType.NEW:
+            if self.params.TYPE_OF_REWARD == RIPEnvRewardType.NEW:
                 reward = self.get_reward_for_double_rip_1()
-            elif self.params.TYPE_OF_REWARD == RIPRewardType.OLD:
+            elif self.params.TYPE_OF_REWARD == RIPEnvRewardType.OLD:
                 reward = self.get_reward_for_double_rip_2()
-            elif self.params.TYPE_OF_REWARD == RIPRewardType.UNTIL_TERMINAL_ZERO:
+            elif self.params.TYPE_OF_REWARD == RIPEnvRewardType.UNTIL_TERMINAL_ZERO:
                 reward = self.get_reward_for_double_rip_3()
-            elif self.params.TYPE_OF_REWARD == RIPRewardType.ORIGINAL:
+            elif self.params.TYPE_OF_REWARD == RIPEnvRewardType.ORIGINAL:
                 reward = self.get_reward_for_double_rip_4(self.pendulum_1_position, self.pendulum_2_position)
             else:
                 raise ValueError()
