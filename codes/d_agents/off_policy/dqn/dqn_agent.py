@@ -29,7 +29,7 @@ class AgentDQN(OffPolicyAgent):
         if self.params.DISTRIBUTIONAL:
             self.delta_z = float(self.params.VALUE_MAX - self.params.VALUE_MIN) / (self.params.NUM_SUPPORTS - 1)
             # self.supports.size(): (51,)
-            self.supports = torch.linspace(self.params.VALUE_MIN, self.params.VALUE_MAX, self.params.NUM_SUPPORTS)
+            self.supports = torch.linspace(self.params.VALUE_MIN, self.params.VALUE_MAX, self.params.NUM_SUPPORTS).to(device)
         else:
             self.delta_z = None
             self.supports = None
@@ -49,14 +49,14 @@ class AgentDQN(OffPolicyAgent):
         else:
             if self.params.NOISY_NET:
                 if self.params.DISTRIBUTIONAL:
-                    self.train_action_selector = ArgmaxActionSelector(supports_numpy=self.supports.numpy())
+                    self.train_action_selector = ArgmaxActionSelector(supports_numpy=self.supports.cpu().numpy())
                 else:
                     self.train_action_selector = ArgmaxActionSelector()
             else:
                 self.train_action_selector = EpsilonGreedyDQNActionSelector(epsilon=params.EPSILON_INIT)
 
             if self.params.DISTRIBUTIONAL:
-                self.test_and_play_action_selector = ArgmaxActionSelector(supports_numpy=self.supports.numpy())
+                self.test_and_play_action_selector = ArgmaxActionSelector(supports_numpy=self.supports.cpu().numpy())
             else:
                 self.test_and_play_action_selector = ArgmaxActionSelector()
 
@@ -470,9 +470,9 @@ class AgentDQN(OffPolicyAgent):
             0,
             (batch_size - 1) * self.params.NUM_SUPPORTS,
             batch_size
-        ).long().unsqueeze(1).expand(batch_size, self.params.NUM_SUPPORTS)
+        ).long().unsqueeze(1).expand(batch_size, self.params.NUM_SUPPORTS).to(self.device)
 
-        proj_dist = torch.zeros(next_dist.size())
+        proj_dist = torch.zeros(next_dist.size()).to(self.device)
         proj_dist.view(-1).index_add_(0, (l + offset).view(-1), (next_dist * (u.float() - b)).view(-1))
         proj_dist.view(-1).index_add_(0, (u + offset).view(-1), (next_dist * (b - l.float())).view(-1))
 
