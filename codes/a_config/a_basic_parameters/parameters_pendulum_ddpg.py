@@ -1,4 +1,5 @@
-from codes.a_config._rl_parameters.off_policy.parameter_ddpg import PARAMETERS_DDPG
+from codes.a_config._rl_parameters.off_policy.parameter_ddpg import PARAMETERS_DDPG, DDPGActionType, \
+    DDPGActionSelectorType
 from codes.a_config.parameters_general import PARAMETERS_GENERAL
 from codes.e_utils.names import EnvironmentName, DeepLearningModelName, RLAlgorithmName, OptimizerName
 
@@ -49,3 +50,7 @@ class PARAMETERS_PENDULUM_DDPG(PARAMETERS_GENERAL, PARAMETERS_DDPG):
 
     TRAIN_ONLY_AFTER_EPISODE = True
     NUM_TRAIN_ONLY_AFTER_EPISODE = 100
+
+    TYPE_OF_ACTION = DDPGActionType.EPSILON
+    TYPE_OF_DDPG_ACTION_SELECTOR = DDPGActionSelectorType.BASIC_ACTION_SELECTOR
+
