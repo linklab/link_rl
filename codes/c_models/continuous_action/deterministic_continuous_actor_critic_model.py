@@ -3,6 +3,9 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 
+from codes.a_config._rl_parameters.off_policy.parameter_ddpg import DDPGActionSelectorType
+from codes.a_config._rl_parameters.off_policy.parameter_td3 import TD3ActionSelectorType
+from codes.c_models.advanced_exploration.noisy_net import NoisyLinear
 from codes.c_models.base_model import BaseModel
 from codes.e_utils.names import RLAlgorithmName
 
@@ -31,6 +34,12 @@ class DeterministicContinuousActorCriticModel(BaseModel):
 
         self.reset_average_gradients()
 
+    def forward_actor(self, inputs):
+        return self.base.forward_actor(inputs)
+
+    def forward_critic(self, inputs, actions):
+        return self.base.forward_critic(inputs, actions)
+
 
 class DeterministicActorCriticMLPBase(nn.Module):
     def __init__(self, num_inputs, num_outputs, params):
@@ -48,9 +57,13 @@ class DeterministicActorCriticMLPBase(nn.Module):
             nn.Linear(self.hidden_1_size, self.hidden_2_size),
             nn.LeakyReLU(),
             nn.Linear(self.hidden_2_size, self.hidden_3_size),
-            nn.LeakyReLU(),
-            nn.Linear(self.hidden_3_size, num_outputs)
+            nn.LeakyReLU()
         )
+
+        if self.params.TYPE_OF_DDPG_ACTION_SELECTOR == DDPGActionSelectorType.NOISY_NET_ACTION_SELECTOR:
+            self.noisy_actor = NoisyLinear(self.hidden_3_size, self.hidden_3_size)
+
+        self.last_actor = nn.Linear(self.hidden_3_size, num_outputs)
 
         # self.actor.apply(self.init_weights)
 
@@ -60,16 +73,31 @@ class DeterministicActorCriticMLPBase(nn.Module):
             nn.Linear(self.hidden_1_size, self.hidden_2_size),
             nn.LeakyReLU(),
             nn.Linear(self.hidden_2_size, self.hidden_3_size),
-            nn.LeakyReLU(),
-            nn.Linear(self.hidden_3_size, 1)
+            nn.LeakyReLU()
         )
+
+        if self.params.TYPE_OF_DDPG_ACTION_SELECTOR == DDPGActionSelectorType.NOISY_NET_ACTION_SELECTOR:
+            self.noisy_critic = NoisyLinear(self.hidden_3_size, self.hidden_3_size)
+
+        self.last_critic = nn.Linear(self.hidden_3_size, 1)
 
         # self.critic.apply(self.init_weights)
 
-        self.actor_params = list(self.actor.parameters())
-        self.critic_params = list(self.critic.parameters())
+        if self.params.TYPE_OF_DDPG_ACTION_SELECTOR == DDPGActionSelectorType.NOISY_NET_ACTION_SELECTOR:
+            self.actor_params = list(self.actor.parameters()) + list(self.noisy_actor.parameters()) + list(self.last_actor.parameters())
+            self.critic_params = list(self.critic.parameters()) + list(self.noisy_critic.parameters()) + list(self.last_critic.parameters())
+        else:
+            self.actor_params = list(self.actor.parameters()) + list(self.last_actor.parameters())
+            self.critic_params = list(self.critic.parameters()) + list(self.last_critic.parameters())
 
         self.layers_info = {'actor': self.actor, 'critic': self.critic}
+
+        if self.params.TYPE_OF_DDPG_ACTION_SELECTOR == DDPGActionSelectorType.NOISY_NET_ACTION_SELECTOR:
+            self.layers_info["noisy_actor"] = self.noisy_actor
+            self.layers_info["noisy_critic"] = self.noisy_critic
+
+        self.layers_info["last_actor"] = self.last_actor
+        self.layers_info["last_critic"] = self.last_critic
 
         self.train()
 
@@ -82,15 +110,23 @@ class DeterministicActorCriticMLPBase(nn.Module):
         return self.forward_actor(inputs)
 
     def forward_actor(self, inputs):
-        actions = self.actor(inputs)
+        outs = self.actor(inputs)
+        if self.params.TYPE_OF_DDPG_ACTION_SELECTOR == DDPGActionSelectorType.NOISY_NET_ACTION_SELECTOR:
+            outs = self.noisy_actor(outs)
+        actions = self.last_actor(outs)
         actions = torch.tanh(actions)
-
         return actions
 
     def forward_critic(self, inputs, actions):
-        critic_value = self.critic(torch.cat([inputs, actions], dim=-1))
-
+        outs = self.critic(torch.cat([inputs, actions], dim=-1))
+        if self.params.TYPE_OF_DDPG_ACTION_SELECTOR == DDPGActionSelectorType.NOISY_NET_ACTION_SELECTOR:
+            outs = self.noisy_critic(outs)
+        critic_value = self.last_critic(outs)
         return critic_value
+
+    def reset_noise(self):
+        self.noisy_actor.reset_noise()
+        self.noisy_critic.reset_noise()
 
 
 class DistributionalActorCriticMLPBase(DeterministicActorCriticMLPBase):
@@ -128,9 +164,13 @@ class DeterministicActorCriticTD3MLPBase(nn.Module):
             nn.Linear(self.hidden_1_size, self.hidden_2_size),
             nn.LeakyReLU(),
             nn.Linear(self.hidden_2_size, self.hidden_3_size),
-            nn.LeakyReLU(),
-            nn.Linear(self.hidden_3_size, num_outputs)
+            nn.LeakyReLU()
         )
+
+        if self.params.TYPE_OF_TD3_ACTION_SELECTOR == TD3ActionSelectorType.NOISY_NET_ACTION_SELECTOR:
+            self.noisy_actor = NoisyLinear(self.hidden_3_size, self.hidden_3_size)
+
+        self.last_actor = nn.Linear(self.hidden_3_size, num_outputs)
 
         # self.actor.apply(self.init_weights)
 
@@ -140,9 +180,13 @@ class DeterministicActorCriticTD3MLPBase(nn.Module):
             nn.Linear(self.hidden_1_size, self.hidden_2_size),
             nn.LeakyReLU(),
             nn.Linear(self.hidden_2_size, self.hidden_3_size),
-            nn.LeakyReLU(),
-            nn.Linear(self.hidden_3_size, 1)
+            nn.LeakyReLU()
         )
+
+        if self.params.TYPE_OF_TD3_ACTION_SELECTOR == TD3ActionSelectorType.NOISY_NET_ACTION_SELECTOR:
+            self.noisy_critic_1 = NoisyLinear(self.hidden_3_size, self.hidden_3_size)
+
+        self.last_critic_1 = nn.Linear(self.hidden_3_size, 1)
 
         self.critic_2 = nn.Sequential(
             nn.Linear(num_inputs + num_outputs, self.hidden_1_size),
@@ -150,17 +194,37 @@ class DeterministicActorCriticTD3MLPBase(nn.Module):
             nn.Linear(self.hidden_1_size, self.hidden_2_size),
             nn.LeakyReLU(),
             nn.Linear(self.hidden_2_size, self.hidden_3_size),
-            nn.LeakyReLU(),
-            nn.Linear(self.hidden_3_size, 1)
+            nn.LeakyReLU()
         )
+
+        if self.params.TYPE_OF_TD3_ACTION_SELECTOR == TD3ActionSelectorType.NOISY_NET_ACTION_SELECTOR:
+            self.noisy_critic_2 = NoisyLinear(self.hidden_3_size, self.hidden_3_size)
+
+        self.last_critic_2 = nn.Linear(self.hidden_3_size, 1)
 
         # self.critic.apply(self.init_weights)
 
-        self.critic_params = list(self.critic_1.parameters()) + list(self.critic_2.parameters())
-        # self.critic_1_params = list(self.critic_1.parameters())
-        # self.critic_2_params = list(self.critic_2.parameters())
+        if self.params.TYPE_OF_TD3_ACTION_SELECTOR == TD3ActionSelectorType.NOISY_NET_ACTION_SELECTOR:
+            self.actor_params = list(self.actor.parameters()) + list(self.noisy_actor.parameters()) + list(self.last_actor.parameters())
+            self.critic_params_1 = list(self.critic_1.parameters()) + list(self.noisy_critic_1.parameters()) + list(self.last_critic_1.parameters())
+            self.critic_params_2 = list(self.critic_2.parameters()) + list(self.noisy_critic_2.parameters()) + list(self.last_critic_2.parameters())
+            self.critic_params = self.critic_params_1 + self.critic_params_2
+        else:
+            self.actor_params = list(self.actor.parameters()) + list(self.last_actor.parameters())
+            self.critic_params_1 = list(self.critic_1.parameters()) + list(self.last_critic_1.parameters())
+            self.critic_params_2 = list(self.critic_2.parameters()) + list(self.last_critic_2.parameters())
+            self.critic_params = self.critic_params_1 + self.critic_params_2
 
         self.layers_info = {'actor': self.actor, 'critic_1': self.critic_1, 'critic_2': self.critic_2}
+
+        if self.params.TYPE_OF_TD3_ACTION_SELECTOR == TD3ActionSelectorType.NOISY_NET_ACTION_SELECTOR:
+            self.layers_info["noisy_actor"] = self.noisy_actor
+            self.layers_info["noisy_critic_1"] = self.noisy_critic_1
+            self.layers_info["noisy_critic_2"] = self.noisy_critic_2
+
+        self.layers_info["last_actor"] = self.last_actor
+        self.layers_info["last_critic_1"] = self.last_critic_1
+        self.layers_info["last_critic_2"] = self.last_critic_2
 
         self.train()
 
@@ -173,18 +237,35 @@ class DeterministicActorCriticTD3MLPBase(nn.Module):
         return self.forward_actor(inputs)
 
     def forward_actor(self, inputs):
-        actions = self.actor(inputs)
+        outs = self.actor(inputs)
+        if self.params.TYPE_OF_TD3_ACTION_SELECTOR == TD3ActionSelectorType.NOISY_NET_ACTION_SELECTOR:
+            outs = self.noisy_actor(outs)
+        actions = self.last_actor(outs)
         actions = torch.tanh(actions)
-
         return actions
 
     def forward_critic(self, inputs, actions):
-        critic_1_value = self.critic_1(torch.cat([inputs, actions], dim=-1))
-        critic_2_value = self.critic_2(torch.cat([inputs, actions], dim=-1))
+        outs_1 = self.critic_1(torch.cat([inputs, actions], dim=-1))
+        if self.params.TYPE_OF_TD3_ACTION_SELECTOR == TD3ActionSelectorType.NOISY_NET_ACTION_SELECTOR:
+            outs_1 = self.noisy_critic_1(outs_1)
+        critic_value_1 = self.last_critic_1(outs_1)
 
-        return critic_1_value, critic_2_value
+        outs_2 = self.critic_2(torch.cat([inputs, actions], dim=-1))
+        if self.params.TYPE_OF_TD3_ACTION_SELECTOR == TD3ActionSelectorType.NOISY_NET_ACTION_SELECTOR:
+            outs_2 = self.noisy_critic_2(outs_2)
+        critic_value_2 = self.last_critic_2(outs_2)
+
+        return critic_value_1, critic_value_2
 
     def forward_only_critic_1(self, inputs, actions):
-        critic_1_value = self.critic_1(torch.cat([inputs, actions], dim=-1))
+        outs_1 = self.critic_1(torch.cat([inputs, actions], dim=-1))
+        if self.params.TYPE_OF_TD3_ACTION_SELECTOR == TD3ActionSelectorType.NOISY_NET_ACTION_SELECTOR:
+            outs_1 = self.noisy_critic_1(outs_1)
+        critic_value_1 = self.last_critic_1(outs_1)
 
-        return critic_1_value
+        return critic_value_1
+
+    def reset_noise(self):
+        self.noisy_actor.reset_noise()
+        self.noisy_critic_1.reset_noise()
+        self.noisy_critic_2.reset_noise()

@@ -1,8 +1,7 @@
-from codes.a_config._rl_parameters.off_policy.parameter_ddpg import PARAMETERS_DDPG
-from codes.a_config._rl_parameters.off_policy.parameter_td3 import PARAMETERS_TD3
-from codes.a_config.parameters_general import PARAMETERS_GENERAL
+from codes.a_config._rl_parameters.off_policy.parameter_td3 import PARAMETERS_TD3, TD3ActionType, TD3ActionSelectorType
+from codes.a_config.parameters_general import PARAMETERS_GENERAL, RIPEnvRewardType
 from codes.e_utils.names import OptimizerName, RLAlgorithmName, EnvironmentName, DeepLearningModelName, ModelSaveMode
-from codes.a_config.parameters_general import PARAMETERS_GENERAL
+
 
 class PARAMETERS_DOUBLE_RIP_TD3(PARAMETERS_GENERAL, PARAMETERS_TD3):
     # [GENERAL]
@@ -74,7 +73,7 @@ class PARAMETERS_DOUBLE_RIP_TD3(PARAMETERS_GENERAL, PARAMETERS_TD3):
 
     MODEL_SAVE_MODE = ModelSaveMode.TRAIN
 
-    OU_NOISE_ENABLED = True
+    NOISE_ENABLED = True
     OU_SIGMA = 2.5
 
     COUNT_BASED_EXPLORATION = True
@@ -85,7 +84,9 @@ class PARAMETERS_DOUBLE_RIP_TD3(PARAMETERS_GENERAL, PARAMETERS_TD3):
     TRAIN_ONLY_AFTER_EPISODE = False
     NUM_TRAIN_ONLY_AFTER_EPISODE = 100
 
-    TYPE_OF_REWARD = "current_version"  # "old_version"
+    TYPE_OF_REWARD = RIPEnvRewardType.NEW  # "old_version"
+    TYPE_OF_TD3_ACTION = TD3ActionType.NORMAL_NOISE_WITH_EPSILON
+    TYPE_OF_TD3_ACTION_SELECTOR = TD3ActionSelectorType.BASIC_ACTION_SELECTOR
 
     DEEP_LEARNING_MODEL = DeepLearningModelName.TD3_MLP
     RL_ALGORITHM = RLAlgorithmName.TD3_V0

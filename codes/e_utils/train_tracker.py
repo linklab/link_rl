@@ -87,14 +87,14 @@ class EarlyStopping:
                     f'{episode_done_step} is more than {self.next_periodic_save_step_idx}.',
                     "magenta"
                 )
-                msg = f"Periodic Save!!! - {evaluation_str}. \m"
+                msg = f"Periodic Save!!! - {evaluation_str}."
                 self.save_checkpoint(evaluation_value, episode_done_step)
                 self.periodic_save_count = self.periodic_save_count + 1
                 self.next_periodic_save_step_idx = int(self.params.MAX_GLOBAL_STEP * self.periodic_save_count / 10)
             else:
                 msg = ""
 
-            if episode_done_step < self.evaluation_min_step_idx:
+            if episode_done_step < self.evaluation_min_step_idx and hasattr(self.agent, 'epsilon_tracker') and self.agent.epsilon_tracker:
                 evaluation_str = colored(
                     f'{episode_done_step} is less than {self.evaluation_min_step_idx}. {std_msg}',
                     "magenta"

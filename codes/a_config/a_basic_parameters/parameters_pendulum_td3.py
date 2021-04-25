@@ -1,5 +1,5 @@
 from codes.a_config._rl_parameters.off_policy.parameter_ddpg import PARAMETERS_DDPG
-from codes.a_config._rl_parameters.off_policy.parameter_td3 import PARAMETERS_TD3
+from codes.a_config._rl_parameters.off_policy.parameter_td3 import PARAMETERS_TD3, TD3ActionType, TD3ActionSelectorType
 from codes.a_config.parameters_general import PARAMETERS_GENERAL
 from codes.e_utils.names import EnvironmentName, DeepLearningModelName, RLAlgorithmName, OptimizerName
 
@@ -31,3 +31,6 @@ class PARAMETERS_PENDULUM_TD3(PARAMETERS_GENERAL, PARAMETERS_TD3):
 
     ACT_NOISE = 0.1
     NOISE_CLIP = 0.5
+
+    TYPE_OF_TD3_ACTION = TD3ActionType.NORMAL_NOISE_WITH_EPSILON
+    TYPE_OF_TD3_ACTION_SELECTOR = TD3ActionSelectorType.BASIC_ACTION_SELECTOR

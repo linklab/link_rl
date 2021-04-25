@@ -1,4 +1,18 @@
+import enum
+
 from codes.e_utils.names import DeepLearningModelName, RLAlgorithmName
+
+
+class TD3ActionSelectorType(enum.Enum):
+    BASIC_ACTION_SELECTOR = 0
+    SOMETIMES_BLOW_ACTION_SELECTOR = 1
+    NOISY_NET_ACTION_SELECTOR = 2
+
+
+class TD3ActionType(enum.Enum):
+    NORMAL_NOISE = 0
+    NORMAL_NOISE_WITH_EPSILON = 1
+    ONLY_GREEDY = 2
 
 
 class PARAMETERS_TD3:
@@ -27,12 +41,11 @@ class PARAMETERS_TD3:
     EPSILON_MIN = 0.01
     EPSILON_MIN_STEP = 1500000
 
-    TRAIN_ONLY_AFTER_EPISODE = True
+    TRAIN_ONLY_AFTER_EPISODE = False
     NUM_TRAIN_ONLY_AFTER_EPISODE = 100
 
-    TYPE_OF_ACTION = "old"
-
-    TYPE_OF_TD3_ACTION_SELECTOR = "TD3ActionSelector"
+    TYPE_OF_TD3_ACTION = TD3ActionType.NORMAL_NOISE
+    TYPE_OF_TD3_ACTION_SELECTOR = TD3ActionSelectorType.BASIC_ACTION_SELECTOR
 
     DISTRIBUTIONAL = False
     NOISY_NET = False

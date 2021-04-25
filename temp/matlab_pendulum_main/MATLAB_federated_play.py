@@ -13,10 +13,10 @@ from codes.a_config.parameters import PARAMETERS as params
 
 from codes.e_utils.common_utils import load_model
 from codes.e_utils import rl_utils
-from codes.e_utils.actions import EpsilonGreedySomeTimesBlowDQNActionSelector, \
+from codes.d_agents.actions import EpsilonGreedySomeTimesBlowDQNActionSelector, \
     EpsilonGreedySomeTimesBlowDDPGActionSelector
 from codes.e_utils.logger import get_logger
-from codes.e_utils.names import EnvironmentName, RLAlgorithmName
+from codes.e_utils.names import RLAlgorithmName
 
 MODEL_SAVE_DIR = os.path.join(PROJECT_HOME, "out", "model_save_files")
 if not os.path.exists(MODEL_SAVE_DIR):
