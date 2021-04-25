@@ -201,8 +201,11 @@ class AgentDDPG(OffPolicyAgent):
             self.target_model.alpha_sync(self.model, alpha=1 - self.params.TAU) #(1 - 0.001)
 
         gradients = self.model.get_gradients_for_current_parameters()
-
         self.model.check_gradient_nan_or_zero(gradients)
+
+        if self.params.TYPE_OF_DDPG_ACTION_SELECTOR == DDPGActionSelectorType.NOISY_NET_ACTION_SELECTOR:
+            self.model.base.reset_noise()  # Pick a new noise vector (until next optimisation step)
+            self.target_model.base.reset_noise()
 
         return gradients, loss_critic_v.item(), loss_actor_v.item() * -1.0
 

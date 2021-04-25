@@ -60,12 +60,9 @@ class DeterministicActorCriticMLPBase(nn.Module):
         )
 
         if self.params.TYPE_OF_DDPG_ACTION_SELECTOR == DDPGActionSelectorType.NOISY_NET_ACTION_SELECTOR:
-            self.last_actor = nn.Sequential(
-                NoisyLinear(self.hidden_3_size, self.hidden_3_size),
-                nn.Linear(self.hidden_3_size, num_outputs)
-            )
-        else:
-            self.last_actor = nn.Linear(self.hidden_3_size, num_outputs)
+            self.noisy_actor = NoisyLinear(self.hidden_3_size, self.hidden_3_size)
+
+        self.last_actor = nn.Linear(self.hidden_3_size, num_outputs)
 
         # self.actor.apply(self.init_weights)
 
@@ -79,12 +76,9 @@ class DeterministicActorCriticMLPBase(nn.Module):
         )
 
         if self.params.TYPE_OF_DDPG_ACTION_SELECTOR == DDPGActionSelectorType.NOISY_NET_ACTION_SELECTOR:
-            self.last_critic = nn.Sequential(
-                NoisyLinear(self.hidden_3_size, self.hidden_3_size),
-                nn.Linear(self.hidden_3_size, 1)
-            )
-        else:
-            self.last_critic = nn.Linear(self.hidden_3_size, 1)
+            self.noisy_critic = NoisyLinear(self.hidden_3_size, self.hidden_3_size)
+
+        self.last_critic = nn.Linear(self.hidden_3_size, 1)
 
         # self.critic.apply(self.init_weights)
 
@@ -92,6 +86,13 @@ class DeterministicActorCriticMLPBase(nn.Module):
         self.critic_params = list(self.critic.parameters())
 
         self.layers_info = {'actor': self.actor, 'critic': self.critic}
+
+        if self.params.TYPE_OF_DDPG_ACTION_SELECTOR == DDPGActionSelectorType.NOISY_NET_ACTION_SELECTOR:
+            self.layers_info["noisy_actor"] = self.noisy_actor
+            self.layers_info["noisy_critic"] = self.noisy_critic
+
+        self.layers_info["last_actor"] = self.last_actor
+        self.layers_info["last_critic"] = self.last_critic
 
         self.train()
 
@@ -105,14 +106,22 @@ class DeterministicActorCriticMLPBase(nn.Module):
 
     def forward_actor(self, inputs):
         outs = self.actor(inputs)
+        if self.params.TYPE_OF_DDPG_ACTION_SELECTOR == DDPGActionSelectorType.NOISY_NET_ACTION_SELECTOR:
+            outs = self.noisy_actor(outs)
         actions = self.last_actor(outs)
         actions = torch.tanh(actions)
         return actions
 
     def forward_critic(self, inputs, actions):
         outs = self.critic(torch.cat([inputs, actions], dim=-1))
+        if self.params.TYPE_OF_DDPG_ACTION_SELECTOR == DDPGActionSelectorType.NOISY_NET_ACTION_SELECTOR:
+            outs = self.noisy_critic(outs)
         critic_value = self.last_critic(outs)
         return critic_value
+
+    def reset_noise(self):
+        self.noisy_actor.reset_noise()
+        self.noisy_critic.reset_noise()
 
 
 class DistributionalActorCriticMLPBase(DeterministicActorCriticMLPBase):
