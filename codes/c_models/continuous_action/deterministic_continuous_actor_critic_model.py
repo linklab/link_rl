@@ -4,6 +4,7 @@ import torch.nn as nn
 import torch.nn.functional as F
 
 from codes.a_config._rl_parameters.off_policy.parameter_ddpg import DDPGActionSelectorType
+from codes.a_config._rl_parameters.off_policy.parameter_td3 import TD3ActionSelectorType
 from codes.c_models.advanced_exploration.noisy_net import NoisyLinear
 from codes.c_models.base_model import BaseModel
 from codes.e_utils.names import RLAlgorithmName
@@ -82,8 +83,8 @@ class DeterministicActorCriticMLPBase(nn.Module):
 
         # self.critic.apply(self.init_weights)
 
-        self.actor_params = list(self.actor.parameters())
-        self.critic_params = list(self.critic.parameters())
+        self.actor_params = list(self.actor.parameters()) + list(self.noisy_actor.parameters()) + list(self.last_actor.parameters())
+        self.critic_params = list(self.critic.parameters()) + list(self.noisy_critic.parameters()) + list(self.last_critic.parameters())
 
         self.layers_info = {'actor': self.actor, 'critic': self.critic}
 
@@ -159,9 +160,13 @@ class DeterministicActorCriticTD3MLPBase(nn.Module):
             nn.Linear(self.hidden_1_size, self.hidden_2_size),
             nn.LeakyReLU(),
             nn.Linear(self.hidden_2_size, self.hidden_3_size),
-            nn.LeakyReLU(),
-            nn.Linear(self.hidden_3_size, num_outputs)
+            nn.LeakyReLU()
         )
+
+        if self.params.TYPE_OF_DDPG_ACTION_SELECTOR == TD3ActionSelectorType.NOISY_NET_ACTION_SELECTOR:
+            self.noisy_actor = NoisyLinear(self.hidden_3_size, self.hidden_3_size)
+
+        self.last_actor = nn.Linear(self.hidden_3_size, num_outputs)
 
         # self.actor.apply(self.init_weights)
 
@@ -171,9 +176,13 @@ class DeterministicActorCriticTD3MLPBase(nn.Module):
             nn.Linear(self.hidden_1_size, self.hidden_2_size),
             nn.LeakyReLU(),
             nn.Linear(self.hidden_2_size, self.hidden_3_size),
-            nn.LeakyReLU(),
-            nn.Linear(self.hidden_3_size, 1)
+            nn.LeakyReLU()
         )
+
+        if self.params.TYPE_OF_DDPG_ACTION_SELECTOR == TD3ActionSelectorType.NOISY_NET_ACTION_SELECTOR:
+            self.noisy_critic_1 = NoisyLinear(self.hidden_3_size, self.hidden_3_size)
+
+        self.last_critic_1 = nn.Linear(self.hidden_3_size, 1)
 
         self.critic_2 = nn.Sequential(
             nn.Linear(num_inputs + num_outputs, self.hidden_1_size),
@@ -181,9 +190,13 @@ class DeterministicActorCriticTD3MLPBase(nn.Module):
             nn.Linear(self.hidden_1_size, self.hidden_2_size),
             nn.LeakyReLU(),
             nn.Linear(self.hidden_2_size, self.hidden_3_size),
-            nn.LeakyReLU(),
-            nn.Linear(self.hidden_3_size, 1)
+            nn.LeakyReLU()
         )
+
+        if self.params.TYPE_OF_DDPG_ACTION_SELECTOR == TD3ActionSelectorType.NOISY_NET_ACTION_SELECTOR:
+            self.noisy_critic_2 = NoisyLinear(self.hidden_3_size, self.hidden_3_size)
+
+        self.last_critic_2 = nn.Linear(self.hidden_3_size, 1)
 
         # self.critic.apply(self.init_weights)
 

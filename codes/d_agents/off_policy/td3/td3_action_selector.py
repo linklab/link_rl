@@ -6,9 +6,8 @@ from codes.a_config._rl_parameters.off_policy.parameter_td3 import TD3ActionType
 
 
 class TD3ActionSelector:
-    def __init__(self, epsilon, act_noise=0.0, noise_clip=0.0, params=None):
+    def __init__(self, epsilon, act_noise=0.0, params=None):
         self.act_noise = act_noise
-        self.noise_clip = noise_clip
         self.epsilon = epsilon
         self.params = params
 
@@ -39,17 +38,16 @@ class TD3ActionSelector:
 
 class SomeTimesBlowTD3ActionSelector(TD3ActionSelector):
     def __init__(
-            self, act_noise=0.0, noise_clip=0.0,
+            self, act_noise=0.0,
             blowing_action_rate=0.0002, min_blowing_action=-1.0, max_blowing_action=1.0, epsilon=0.0, params=None
     ):
-        super(SomeTimesBlowTD3ActionSelector, self).__init__(epsilon, act_noise=0.0, noise_clip=0.0, params=params)
+        super(SomeTimesBlowTD3ActionSelector, self).__init__(epsilon, act_noise=0.0, params=params)
         self.blowing_action_rate = blowing_action_rate
         self.min_blowing_action = min_blowing_action
         self.max_blowing_action = max_blowing_action
         self.time_steps = 0
         self.next_time_steps_of_random_blowing_action = int(random.expovariate(self.blowing_action_rate))
         self.act_noise = act_noise
-        self.noise_clip = noise_clip
 
     def __call__(self,  mu, noises=None): #default ou_sigma = 0.2
         assert isinstance(mu, np.ndarray)
