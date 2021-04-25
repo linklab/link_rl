@@ -68,7 +68,7 @@ class AgentTD3(OffPolicyAgent):
         # )
 
         self.actor_optimizer = rl_utils.get_optimizer(
-            parameters=self.model.base.actor.parameters(),
+            parameters=self.model.base.actor_params,
             learning_rate=self.params.ACTOR_LEARNING_RATE,
             params=params
         )
@@ -79,7 +79,7 @@ class AgentTD3(OffPolicyAgent):
             params=params
         )
 
-        if self.params.TYPE_OF_ACTION == TD3ActionType.NORMAL_NOISE_WITH_EPSILON:
+        if self.params.TYPE_OF_TD3_ACTION == TD3ActionType.NORMAL_NOISE_WITH_EPSILON:
             self.epsilon_tracker = EpsilonTracker(
                 action_selector=self.train_action_selector,
                 eps_start=params.EPSILON_INIT,
@@ -183,6 +183,10 @@ class AgentTD3(OffPolicyAgent):
             loss_actor_v = self.cache_loss_actor_v
 
         gradients = self.model.get_gradients_for_current_parameters()
-
         self.model.check_gradient_nan_or_zero(gradients)
+
+        if self.params.TYPE_OF_TD3_ACTION_SELECTOR == TD3ActionSelectorType.NOISY_NET_ACTION_SELECTOR:
+            self.model.base.reset_noise()  # Pick a new noise vector (until next optimisation step)
+            self.target_model.base.reset_noise()
+
         return gradients, loss_critic_v.item(), loss_actor_v.item() * -1.0

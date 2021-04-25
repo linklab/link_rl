@@ -18,10 +18,12 @@ class TD3ActionSelector:
         else:
             noises = np.random.normal(size=mu.shape, loc=0, scale=self.act_noise)
 
-        if self.params.TYPE_OF_ACTION == TD3ActionType.NORMAL_NOISE_WITH_EPSILON:
+        if self.params.TYPE_OF_TD3_ACTION == TD3ActionType.NORMAL_NOISE_WITH_EPSILON:
             actions = actions + self.epsilon * noises
-        elif self.params.TYPE_OF_ACTION == TD3ActionType.NORMAL_NOISE:
+        elif self.params.TYPE_OF_TD3_ACTION == TD3ActionType.NORMAL_NOISE:
             actions = actions + noises
+        elif self.params.TYPE_OF_TD3_ACTION == TD3ActionType.ONLY_GREEDY:
+            actions = actions
         else:
             raise ValueError()
 

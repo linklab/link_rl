@@ -95,7 +95,7 @@ class AgentDDPG(OffPolicyAgent):
         self.last_noise = 0.0
         self.global_uncertainty = 1.0
 
-        if self.params.TYPE_OF_ACTION == DDPGActionType.EPSILON:
+        if self.params.TYPE_OF_DDPG_ACTION == DDPGActionType.EPSILON:
             self.epsilon_tracker = EpsilonTracker(
                 action_selector=self.train_action_selector,
                 eps_start=params.EPSILON_INIT,
