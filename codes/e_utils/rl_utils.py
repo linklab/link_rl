@@ -1,11 +1,9 @@
-import collections
 import random
 
 from gym import Env
 from gym.spaces import Box, Discrete
 from gym.vector import VectorEnv
 from numpy import random
-import numpy as np
 
 import gym
 import torch
@@ -23,7 +21,7 @@ from codes.d_agents.black_box.cma_es.cma_es_agent import AgentEMAES
 from codes.d_agents.black_box.ga.ga_agent import AgentGA
 from codes.d_agents.black_box.ga.multi_ga_agent import AgentMultiGA
 from codes.d_agents.off_policy.td3.td3_agent import AgentTD3
-from codes.d_agents.on_policy.sac.continuous_sac_agent import AgentSAC
+from codes.d_agents.off_policy.sac.continuous_sac_agent import AgentSAC
 from codes.d_agents.on_policy.ppo.discrete_ppo_agent import AgentDiscretePPO
 from codes.e_utils.reward_changer import PseudoCountRewardWrapper
 
@@ -144,7 +142,6 @@ def get_single_environment(params=None, mode=AgentMode.TRAIN):
         EnvironmentName.PYBULLET_ANT_V0, EnvironmentName.PYBULLET_HALF_CHEETAH_V0,
         EnvironmentName.PYBULLET_INVERTED_DOUBLE_PENDULUM_V0
     ]:
-        import pybulletgym
         env = gym.make(params.ENVIRONMENT_ID.value)
     elif params.ENVIRONMENT_ID == EnvironmentName.PENDULUM_MATLAB_V0:
         from codes.b_environments.rotary_inverted_pendulum.rip import RotaryInvertedPendulumEnv

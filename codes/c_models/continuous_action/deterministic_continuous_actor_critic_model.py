@@ -246,13 +246,13 @@ class DeterministicActorCriticTD3MLPBase(nn.Module):
 
     def forward_critic(self, inputs, actions):
         outs_1 = self.critic_1(torch.cat([inputs, actions], dim=-1))
+        outs_2 = self.critic_2(torch.cat([inputs, actions], dim=-1))
+
         if self.params.TYPE_OF_TD3_ACTION_SELECTOR == TD3ActionSelectorType.NOISY_NET_ACTION_SELECTOR:
             outs_1 = self.noisy_critic_1(outs_1)
-        critic_value_1 = self.last_critic_1(outs_1)
-
-        outs_2 = self.critic_2(torch.cat([inputs, actions], dim=-1))
-        if self.params.TYPE_OF_TD3_ACTION_SELECTOR == TD3ActionSelectorType.NOISY_NET_ACTION_SELECTOR:
             outs_2 = self.noisy_critic_2(outs_2)
+
+        critic_value_1 = self.last_critic_1(outs_1)
         critic_value_2 = self.last_critic_2(outs_2)
 
         return critic_value_1, critic_value_2

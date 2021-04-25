@@ -11,15 +11,11 @@ from codes.d_agents.off_policy.td3.td3_action_selector import SomeTimesBlowTD3Ac
 from codes.e_utils import rl_utils
 from codes.d_agents.actions import EpsilonTracker
 from codes.e_utils.names import DeepLearningModelName, AgentMode
-
+from torch.distributions import normal
 
 # https://github.com/sfujim/TD3
 # https://spinningup.openai.com/en/latest/algorithms/td3.html
 class AgentTD3(OffPolicyAgent):
-    """
-    Agent implementing Orstein-Uhlenbeck exploration process
-    """
-
     def __init__(self, worker_id, input_shape, action_shape, num_outputs, action_min, action_max, params, device):
         assert params.DEEP_LEARNING_MODEL == DeepLearningModelName.TD3_MLP
 
@@ -31,19 +27,19 @@ class AgentTD3(OffPolicyAgent):
 
         if params.TYPE_OF_TD3_ACTION_SELECTOR == TD3ActionSelectorType.BASIC_ACTION_SELECTOR:
             self.train_action_selector = TD3ActionSelector(
-                epsilon=params.EPSILON_INIT, act_noise=params.ACT_NOISE, params=self.params
+                epsilon=params.EPSILON_INIT, noise_std=params.NOISE_STD, params=self.params
             )
         elif params.TYPE_OF_TD3_ACTION_SELECTOR == TD3ActionSelectorType.SOMETIMES_BLOW_ACTION_SELECTOR:
             self.train_action_selector = SomeTimesBlowTD3ActionSelector(
-                epsilon=params.EPSILON_INIT, act_noise=params.ACT_NOISE,
+                epsilon=params.EPSILON_INIT, noise_std=params.NOISE_STD,
                 min_blowing_action=-5.0 * params.ACTION_SCALE, max_blowing_action=5.0 * params.ACTION_SCALE, params=self.params
             )
         elif params.TYPE_OF_TD3_ACTION_SELECTOR == TD3ActionSelectorType.NOISY_NET_ACTION_SELECTOR:
-            self.train_action_selector = TD3ActionSelector(epsilon=0.0, act_noise=0.0, params=self.params)
+            self.train_action_selector = TD3ActionSelector(epsilon=0.0, noise_std=0.0, params=self.params)
         else:
             raise ValueError()
 
-        self.test_and_play_action_selector = TD3ActionSelector(epsilon=0.0, act_noise=0.0, params=self.params)
+        self.test_and_play_action_selector = TD3ActionSelector(epsilon=0.0, noise_std=0.0, params=self.params)
 
         self.model = DeterministicContinuousActorCriticModel(
             worker_id=worker_id,
@@ -132,9 +128,10 @@ class AgentTD3(OffPolicyAgent):
         self.critic_optimizer.zero_grad()
 
         # noise: [128, 1]
-        noise = (
-            torch.randn_like(actions_v) * self.params.ACT_NOISE
-        ).clamp(-self.params.NOISE_CLIP, self.params.NOISE_CLIP)
+        m = normal.Normal(loc=0.0, scale=self.params.NOISE_STD)
+        noise = m.sample(actions_v.size()).clamp(-self.params.NOISE_CLIP, self.params.NOISE_CLIP)
+
+        # print(actions_v.size(), noise.size(), "!!!!")
 
         # last_actions_v: [128, 1]
         last_actions_v = (
@@ -182,8 +179,10 @@ class AgentTD3(OffPolicyAgent):
         else:
             loss_actor_v = self.cache_loss_actor_v
 
-        gradients = self.model.get_gradients_for_current_parameters()
-        self.model.check_gradient_nan_or_zero(gradients)
+        # gradients = self.model.get_gradients_for_current_parameters()
+        # self.model.check_gradient_nan_or_zero(gradients)
+
+        gradients = None
 
         if self.params.TYPE_OF_TD3_ACTION_SELECTOR == TD3ActionSelectorType.NOISY_NET_ACTION_SELECTOR:
             self.model.base.reset_noise()  # Pick a new noise vector (until next optimisation step)
