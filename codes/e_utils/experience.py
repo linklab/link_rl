@@ -123,7 +123,6 @@ class ExperienceSource:
                         action_scale = self.agent.params.ACTION_SCALE
                     else:
                         action_scale = 1.0
-
                     next_state_n, r_n, is_done_n, info_n = env.step(action_scale * np.asarray(action_n))
                 else:
                     next_state_n, r_n, is_done_n, info_n = env.step(np.asarray(action_n))

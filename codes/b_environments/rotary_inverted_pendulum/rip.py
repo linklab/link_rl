@@ -55,6 +55,7 @@ class RotaryInvertedPendulumEnv(gym.Env):
         self.unit_time = 0.008
         self.over_unit_time = 0
         self.step_idx = 0
+        self.episode_idx = 0
         current_path = os.path.dirname(os.path.realpath(__file__))
         MATLAB_ENGINE_DIR = os.path.abspath(os.path.join(current_path, "engine"))
         os.chdir(MATLAB_ENGINE_DIR) # change working directory
@@ -185,6 +186,7 @@ class RotaryInvertedPendulumEnv(gym.Env):
 
     def reset(self):
         self.episode_steps = 0
+        self.episode_idx += 1
 
         if self.total_steps == 0:
             print("next_time_step_of_external_blow: {0}".format(
@@ -411,6 +413,18 @@ class RotaryInvertedPendulumEnv(gym.Env):
             self.pendulum_1_position, self.motor_position, self.pendulum_2_position, self.pendulum_1_velocity, \
             self.motor_velocity, self.pendulum_2_velocity, self.simulation_time = self.plant.getHistory()
         elif self.pendulum_type == EnvironmentName.REAL_DEVICE_DOUBLE_RIP:
+            # t= 0
+            # while True:
+            #     self.server_obj.step(RipRequest(value=200))
+            #     time.sleep(0.05)
+            #     self.server_obj.step(RipRequest(value=-200))
+            #     time.sleep(0.05)
+                # action = 200*math.sin(2*0.1*math.pi*t)
+                # self.server_obj.step(RipRequest(value=action))
+                # print(t, action)
+                # t += 0.008
+                # time.sleep(0.05)
+
             rip_response = self.server_obj.step(RipRequest(value=action))
             # print(action, rip_response.arm_angle, rip_response.link_1_angle, "!!!!")
 
@@ -525,6 +539,10 @@ class RotaryInvertedPendulumEnv(gym.Env):
         # time.sleep(0.5)
         self.step_idx += 1
         # print(self.episode_steps, done, "!!!!!!")
+
+        if self.num_episodes % 3 == 0 and self.episode_steps == 1:
+            print("PENDULUM 1 : {0:7.4f}, PENDULUM 2 : {1:7.4f}".format(adjusted_pendulum_1_radian, adjusted_pendulum_2_radian))
+
 
         return state, reward, done, info
 

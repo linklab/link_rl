@@ -95,7 +95,7 @@ class AgentDDPG(OffPolicyAgent):
         self.last_noise = 0.0
         self.global_uncertainty = 1.0
 
-        if self.params.TYPE_OF_ACTION == DDPGActionType.EPSILON:
+        if self.params.TYPE_OF_DDPG_ACTION == DDPGActionType.EPSILON:
             self.epsilon_tracker = EpsilonTracker(
                 action_selector=self.train_action_selector,
                 eps_start=params.EPSILON_INIT,
@@ -200,8 +200,10 @@ class AgentDDPG(OffPolicyAgent):
         if not self.params.TRAIN_ONLY_AFTER_EPISODE:
             self.target_model.alpha_sync(self.model, alpha=1 - self.params.TAU) #(1 - 0.001)
 
-        gradients = self.model.get_gradients_for_current_parameters()
-        self.model.check_gradient_nan_or_zero(gradients)
+        # gradients = self.model.get_gradients_for_current_parameters()
+        # self.model.check_gradient_nan_or_zero(gradients)
+
+        gradients = None
 
         if self.params.TYPE_OF_DDPG_ACTION_SELECTOR == DDPGActionSelectorType.NOISY_NET_ACTION_SELECTOR:
             self.model.base.reset_noise()  # Pick a new noise vector (until next optimisation step)
@@ -262,6 +264,7 @@ class AgentDDPG(OffPolicyAgent):
 
         self.target_model.alpha_sync(self.model, alpha=1 - 0.00005) #(1 - 0.001)
 
-        gradients = self.model.get_gradients_for_current_parameters()
+        #gradients = self.model.get_gradients_for_current_parameters()
+        gradients = None
 
         return gradients, loss_critic_v.item(), loss_actor_v.item() * -1.0
