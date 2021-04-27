@@ -133,7 +133,7 @@ def process_episode(
         train_episode_reward_lst_for_stat,
         current_episode_reward,
         agent,
-        reward_tracker,
+        speed_tracker,
         step_idx,
         episode,
         test_env,
@@ -147,7 +147,7 @@ def process_episode(
 
     epsilon = agent.train_action_selector.epsilon if hasattr(agent.train_action_selector, 'epsilon') else None
 
-    speed, elapsed_time = reward_tracker.set_episode_reward(
+    speed, elapsed_time = speed_tracker.set_episode_reward(
         episode_done_step=step_idx
     )
 
@@ -295,3 +295,12 @@ def print_performance(
         print("\n", evaluation_msg, flush=True)
     else:
         print("", flush=True)
+
+
+def advance_check():
+    if params.TRAIN_ONLY_AFTER_EPISODE:
+        assert params.NUM_ENVIRONMENTS == 1
+
+    if hasattr(params, "DISTRIBUTIONAL") and params.DISTRIBUTIONAL:
+        assert params.NOISY_NET
+        assert hasattr(params, "NUM_SUPPORTS")

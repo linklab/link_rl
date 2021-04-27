@@ -75,7 +75,7 @@ class AgentTD3(OffPolicyAgent):
             params=params
         )
 
-        if self.params.TYPE_OF_TD3_ACTION == TD3ActionType.NORMAL_NOISE_WITH_EPSILON:
+        if self.params.TYPE_OF_TD3_ACTION == TD3ActionType.GAUSSIAN_NOISE_WITH_EPSILON:
             self.epsilon_tracker = EpsilonTracker(
                 action_selector=self.train_action_selector,
                 eps_start=params.EPSILON_INIT,

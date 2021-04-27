@@ -16,7 +16,7 @@ from codes.e_utils.train_tracker import SpeedTracker
 from codes.f_main.general_main.a_common_main import *
 
 
-def train_main(params, train_env, test_env):
+def train_main(train_env, test_env):
     agent = get_agent(train_env)
     if params.WANDB:
         set_wandb(agent)
@@ -41,7 +41,7 @@ def train_main(params, train_env, test_env):
     loss_dequeue = deque(maxlen=params.AVG_STEP_SIZE_FOR_TRAIN_LOSS)
     actor_objective_dequeue = deque(maxlen=params.AVG_STEP_SIZE_FOR_TRAIN_LOSS)
 
-    with SpeedTracker(params=params) as reward_tracker:
+    with SpeedTracker(params=params) as speed_tracker:
         try:
             while step_idx < params.MAX_GLOBAL_STEP:
                 step_idx += params.TRAIN_STEP_FREQ
@@ -58,7 +58,7 @@ def train_main(params, train_env, test_env):
                             train_episode_reward_lst_for_stat,
                             current_episode_reward,
                             agent,
-                            reward_tracker,
+                            speed_tracker,
                             step_idx,
                             episode,
                             test_env,
@@ -89,6 +89,9 @@ def train_main(params, train_env, test_env):
                             last_action=train_info_dict["last_actions"],
                             evaluation_msg=train_info_dict["evaluation_msg"]
                         )
+
+                        if train_info_dict["solved"]:
+                            solved = True
 
                         if params.WANDB:
                             train_info_dict["train mean (critic) loss"] = mean_loss
@@ -172,17 +175,7 @@ def train(agent, step_idx, loss_dequeue, actor_objective_dequeue):
 
 
 if __name__ == "__main__":
-    #assert params.RL_ALGORITHM in ON_POLICY_RL_ALGORITHMS
-
-    if params.TRAIN_ONLY_AFTER_EPISODE:
-        assert params.NUM_ENVIRONMENTS == 1
-
-    if hasattr(params, "DISTRIBUTIONAL") and params.DISTRIBUTIONAL:
-        assert params.NOISY_NET
-        assert hasattr(params, "NUM_SUPPORTS")
+    advance_check()
 
     train_env, test_env = get_train_and_test_envs()
-
-    train_main(params, train_env, test_env)
-
-    pass
+    train_main(train_env, test_env)
