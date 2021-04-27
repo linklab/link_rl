@@ -129,7 +129,7 @@ class AgentTD3(OffPolicyAgent):
 
         # noise: [128, 1]
         m = normal.Normal(loc=0.0, scale=self.params.NOISE_STD)
-        noise = m.sample(actions_v.size()).clamp(-self.params.NOISE_CLIP, self.params.NOISE_CLIP)
+        noise = m.sample(actions_v.size()).clamp(-self.params.NOISE_CLIP, self.params.NOISE_CLIP).to(self.device)
 
         # print(actions_v.size(), noise.size(), "!!!!")
 
