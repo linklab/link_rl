@@ -159,6 +159,7 @@ class AgentTD3(OffPolicyAgent):
         loss_critic_v = loss_critic_v.mean()
         loss_critic_v.backward()
         self.critic_optimizer.step()
+        #print(step_idx, "CRITIC")
 
         # train actor
         # Delayed policy updates
@@ -172,6 +173,7 @@ class AgentTD3(OffPolicyAgent):
 
             loss_actor_v.backward()
             self.actor_optimizer.step()
+            #print(step_idx, "ACTOR")
 
             self.target_model.alpha_sync(self.model, alpha=1 - self.params.TAU)  # (1 - 0.001)
         else:

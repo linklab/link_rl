@@ -7,12 +7,15 @@ import rip_service_pb2_grpc
 from rip_service_pb2 import RipResponse
 import math
 spi = spidev.SpiDev()
-spi.open(0,0)
+spi.open(0, 0)
 spi.max_speed_hz = 1000000 # NOTE
 
 
 class RotaryDoubleInvertedPendulum:
     def __init__(self):
+        self.step_idx = 0
+        self.last_step_call = 0.0
+
         spi.xfer2([
             0x40, 0x00, 0x00
         ])
@@ -108,6 +111,8 @@ class RotaryDoubleInvertedPendulum:
 
         # self.print_state(arm_angle, arm_velocity, link_angle, link_velocity)
 
+        self.last_step_call = time.time()
+
         return RipResponse(
             message='OK',
             arm_angle=arm_angle, arm_velocity=arm_velocity,
@@ -116,14 +121,20 @@ class RotaryDoubleInvertedPendulum:
         )
 
     def step(self, rip_request, context):
-
         motor_power = int(rip_request.value)
+
+        # current_step_call = time.time()
+        # elapsed_time = current_step_call - self.last_step_call
+        # print(self.step_idx, elapsed_time, motor_power)
+        # self.last_step_call = time.time()
 
         self.apply_action(motor_power)
 
         arm_angle, arm_velocity, link_1_angle, link_1_velocity, link_2_angle, link_2_velocity = self.calculate_state()
 
         # self.print_state(arm_angle, arm_velocity, link_1_angle, link_1_velocity, link_2_angle, link_2_velocity)
+
+        self.step_idx += 1
 
         return RipResponse(
             message='STEP',
