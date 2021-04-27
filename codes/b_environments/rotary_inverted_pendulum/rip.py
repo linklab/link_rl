@@ -52,7 +52,7 @@ class RotaryInvertedPendulumEnv(gym.Env):
         self.motor_velocity = 0
 
         self.last_time = 0.0
-        self.unit_time = 0.008
+        self.unit_time = 0.03
         self.over_unit_time = 0
         self.step_idx = 0
         self.episode_idx = 0
@@ -61,7 +61,7 @@ class RotaryInvertedPendulumEnv(gym.Env):
         os.chdir(MATLAB_ENGINE_DIR) # change working directory
 
         if self.pendulum_type == EnvironmentName.PENDULUM_MATLAB_V0:
-            print("333333333333333333333")
+            # print("333333333333333333333")
             self.plant = SimulinkPlant(modelName="single_RIP")
         elif self.pendulum_type == EnvironmentName.PENDULUM_MATLAB_DOUBLE_RIP_V0:
             self.plant = SimulinkPlant(modelName="double_RIP")
@@ -340,7 +340,7 @@ class RotaryInvertedPendulumEnv(gym.Env):
         if self.pendulum_type in [EnvironmentName.REAL_DEVICE_RIP, EnvironmentName.REAL_DEVICE_DOUBLE_RIP]:
             current_time = time.perf_counter()
             step_time = current_time - self.last_time
-            # print(step_time)
+            # print(self.step_idx, step_time)
             if step_time > self.unit_time:
                 self.over_unit_time += 1
             while True:
@@ -424,7 +424,7 @@ class RotaryInvertedPendulumEnv(gym.Env):
                 # print(t, action)
                 # t += 0.008
                 # time.sleep(0.05)
-
+            # print(action)
             rip_response = self.server_obj.step(RipRequest(value=action))
             # print(action, rip_response.arm_angle, rip_response.link_1_angle, "!!!!")
 

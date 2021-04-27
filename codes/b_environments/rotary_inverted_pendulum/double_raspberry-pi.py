@@ -75,6 +75,7 @@ class RotaryDoubleInvertedPendulum:
         return arm_angle, arm_vel, link_1_angle, link_1_vel, link_2_angle, link_2_vel
 
     def calculate_action(self, motor_power):
+
         motor_power_hex = hex(motor_power)
         motor_power_str = str(motor_power_hex)
         if len(motor_power_str) < 5:
@@ -92,15 +93,13 @@ class RotaryDoubleInvertedPendulum:
 
         if motor_power > 0:
             action_1, action_2 = self.calculate_action(motor_power)
-            # print("!!!!!!!!!!!!!!!!!!", action_1, action_2)
             spi.xfer2([0x40, 0x00, 0x02, action_1, action_2])
-            # print("DONE")
         else:
             motor_power = -motor_power
             action_1, action_2 = self.calculate_action(motor_power)
-            # print("!!!!!!!!!!!!!!!!!!", action_1, action_2)
             spi.xfer2([0x40, 0x00, 0x03, action_1, action_2])
-            # print("DONE")
+
+
         # print("spi write elapsed time : {0:10.8f} \n\n".format(time.time() - last_time))
 
 
@@ -117,6 +116,7 @@ class RotaryDoubleInvertedPendulum:
         )
 
     def step(self, rip_request, context):
+
         motor_power = int(rip_request.value)
 
         self.apply_action(motor_power)
