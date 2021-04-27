@@ -13,7 +13,7 @@ class AgentContinuousA2C(AgentA2C):
     """
     """
     def __init__(
-            self, worker_id, input_shape, action_shape, num_outputs, action_min, action_max, params, device
+            self, worker_id, input_shape, action_shape, num_outputs, params, device
     ):
         assert params.DEEP_LEARNING_MODEL in [
             DeepLearningModelName.STOCHASTIC_CONTINUOUS_ACTOR_CRITIC_MLP
@@ -23,9 +23,6 @@ class AgentContinuousA2C(AgentA2C):
         self.__name__ = "AgentContinuousA2C"
         self.train_action_selector = ContinuousNormalActionSelector()
         self.test_and_play_action_selector = ContinuousNormalActionSelector()
-
-        self.action_min = action_min
-        self.action_max = action_max
 
         self.model = StochasticContinuousActorCriticModel(
             worker_id=worker_id,

@@ -8,10 +8,10 @@ import grpc
 
 # MQTT Topic for RIP
 from codes.b_environments.quanser_rotary_inverted_pendulum import quanser_service_pb2_grpc
+from codes.e_utils.names import RLAlgorithmName
 from common.environments.environment import Environment
 
 from codes.b_environments.quanser_rotary_inverted_pendulum.quanser_service_pb2 import QuanserRequest
-from codes.a_config.parameters import PARAMETERS as params
 
 STATE_SIZE = 6
 
@@ -20,17 +20,42 @@ balance_motor_power_list = [-60., 0., 60.]
 RIP_SERVER = '10.0.0.5'
 
 
+def get_quanser_rip_observation_space():
+    low = np.array([0, 0, 0, 0, 0, 0], dtype=np.float32)
+    high = np.array([1., 1., 500., 1., 1., 500,], dtype=np.float32)
+
+    observation_space = gym.spaces.Box(
+        low=low, high=high, dtype=np.float32
+    )
+    n_states = observation_space.shape[0]
+    return observation_space, n_states
+
+
+def get_quanser_rip_action_space(params, action_index_to_voltage=None):
+    if params.RL_ALGORITHM in [RLAlgorithmName.DQN_V0]:
+        action_space = gym.spaces.Discrete(len(action_index_to_voltage))
+        n_actions = action_space.n
+    else:
+        action_space = gym.spaces.Box(
+            low=-1.0, high=1.0, shape=(1,),
+            dtype=np.float32
+        )
+        n_actions = action_space.shape[0]
+
+    return action_space, n_actions
+
+
 class EnvironmentQuanserRIP(gym.Env):
-    def __init__(self, action_min, action_max):
+    def __init__(self, params=None):
         super(EnvironmentQuanserRIP, self).__init__()
         self.episode = 0
+
+        self.params = params
 
         self.previous_time = time.perf_counter()
         self.state_space_shape = (STATE_SIZE,)
         self.action_space_shape = (len(balance_motor_power_list),)
 
-        self.action_min = action_min
-        self.action_max = action_max
         self.env_reset = False
 
         self.reward = 0
@@ -51,21 +76,11 @@ class EnvironmentQuanserRIP(gym.Env):
 
         self.initial_motor_radian = 0.0
         #==================observation==========================================================
-        low = np.array([0, 0, 0, 0, 0, 0], dtype=np.float32)
-        high = np.array([1., 1., 500., 1., 1., 500,], dtype=np.float32)
-        self.observation_space = gym.spaces.Box(
-            low=low, high=high, dtype=np.float32
-        )
-        self.n_states = self.observation_space.shape[0]
+        self.observation_space, self.n_states = get_quanser_rip_observation_space()
         #=======================================================================================
 
-
         #==================action===============================================================
-        self.action_space = gym.spaces.Box(
-            low=self.action_min, high=self.action_max, shape=(1,),
-            dtype=np.float32
-        )
-        self.n_actions = self.action_space.shape[0]
+        self.action_space, self.n_actions = get_quanser_rip_action_space(self.params, None)
         #=======================================================================================
 
         channel = grpc.insecure_channel('{0}:50051'.format(RIP_SERVER))

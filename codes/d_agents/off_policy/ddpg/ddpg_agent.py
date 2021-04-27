@@ -17,15 +17,13 @@ class AgentDDPG(OffPolicyAgent):
     """
     Agent implementing Orstein-Uhlenbeck exploration process
     """
-    def __init__(self, worker_id, input_shape, action_shape, num_outputs, action_min, action_max, params, device):
+    def __init__(self, worker_id, input_shape, action_shape, num_outputs, params, device):
         assert params.DEEP_LEARNING_MODEL == DeepLearningModelName.DETERMINISTIC_CONTINUOUS_ACTOR_CRITIC_MLP
         assert issubclass(params, PARAMETERS_DDPG)
 
         super(AgentDDPG, self).__init__(worker_id=worker_id, params=params, action_shape=action_shape, device=device)
 
         self.__name__ = "AgentDDPG"
-        self.action_min = action_min
-        self.action_max = action_max
 
         # if params.ENVIRONMENT_ID in [EnvironmentName.PENDULUM_MATLAB_V0, EnvironmentName.PENDULUM_MATLAB_DOUBLE_RIP_V0]:
         #     self.train_action_selector = SomeTimesBlowDDPGActionSelector(
@@ -125,8 +123,6 @@ class AgentDDPG(OffPolicyAgent):
             self.last_noise = new_noises[0][0]
         else:
             actions, new_noises = self.test_and_play_action_selector(mu, noises)
-
-        #print(actions, self.action_min, self.action_max, "!!!!!!!!!!!!!!!!")
 
         if not (isinstance(self.train_action_selector, SomeTimesBlowDDPGActionSelector) and np.any(new_noises)):
             actions = np.clip(actions, -1.0, 1.0)

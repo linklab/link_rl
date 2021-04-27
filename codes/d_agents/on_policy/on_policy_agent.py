@@ -17,8 +17,6 @@ class OnPolicyAgent(BaseAgent):
         self.model = None
         self.train_action_selector = None
         self.test_and_play_action_selector = None
-        self.action_min = None
-        self.action_max = None
 
     @abstractmethod
     def __call__(self, states, agent_states):
@@ -55,9 +53,9 @@ class OnPolicyAgent(BaseAgent):
             mu_v, var_v = self.model.base.actor(states)
 
         if self.agent_mode == AgentMode.TRAIN:
-            actions = self.train_action_selector(mu_v, var_v, self.action_min, self.action_max)
+            actions = self.train_action_selector(mu_v, var_v)
         else:
-            actions = self.test_and_play_action_selector(mu_v, var_v, self.action_min, self.action_max)
+            actions = self.test_and_play_action_selector(mu_v, var_v)
 
         critics = torch.zeros(size=mu_v.size())
 
