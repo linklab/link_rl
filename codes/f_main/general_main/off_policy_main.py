@@ -1,11 +1,18 @@
+import os, sys
 from collections import deque
 
+current_path = os.path.dirname(os.path.realpath(__file__))
+PROJECT_HOME = os.path.abspath(os.path.join(current_path, os.pardir, os.pardir, os.pardir))
+if PROJECT_HOME not in sys.path:
+    sys.path.append(PROJECT_HOME)
+
+from codes.f_main.general_main.a_common_main import *
 from codes.b_environments.trade.trade_action_selector import EpsilonGreedyTradeDQNActionSelector, \
     ArgmaxTradeActionSelector
+from codes.e_utils.common_utils import print_params
 from codes.e_utils.experience import ExperienceSourceFirstLast
 from codes.e_utils.names import OFF_POLICY_RL_ALGORITHMS
 from codes.e_utils.train_tracker import SpeedTracker
-from codes.f_main.general_main.a_common_main import *
 import torch.multiprocessing as mp
 
 
@@ -103,8 +110,18 @@ def main():
     mp.set_start_method('spawn')
     os.environ['OMP_NUM_THREADS'] = "1"
 
-    tentative_env = rl_utils.get_environment(params=params)
+    if params.ENVIRONMENT_ID in [
+        EnvironmentName.PENDULUM_MATLAB_V0,
+        EnvironmentName.PENDULUM_MATLAB_DOUBLE_RIP_V0,
+        EnvironmentName.REAL_DEVICE_RIP,
+        EnvironmentName.REAL_DEVICE_DOUBLE_RIP,
+        EnvironmentName.QUANSER_SERVO_2
+    ]:
+        tentative_env = None
+    else:
+        tentative_env = rl_utils.get_single_environment(params=params)
     agent = get_agent(tentative_env)
+
     agent.model.share_memory()
 
     exp_queue = mp.Queue(maxsize=params.TRAIN_STEP_FREQ * 2) #params.TRAIN_STEP_FREQ * 2
@@ -190,7 +207,9 @@ def main():
 
 if __name__ == "__main__":
     advance_check()
+    print_params(params)
 
     assert params.RL_ALGORITHM in OFF_POLICY_RL_ALGORITHMS
 
     main()
+

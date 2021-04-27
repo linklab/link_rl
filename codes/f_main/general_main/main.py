@@ -9,11 +9,12 @@ PROJECT_HOME = os.path.abspath(os.path.join(current_path, os.pardir, os.pardir, 
 if PROJECT_HOME not in sys.path:
     sys.path.append(PROJECT_HOME)
 
+from codes.f_main.general_main.a_common_main import *
 from codes.a_config._rl_parameters.off_policy.parameter_ddpg import DDPGTrainType, DDPGTargetUpdateOnlyAfterEpisode
 from codes.e_utils.experience import ExperienceSourceFirstLast
 from codes.e_utils.names import RLAlgorithmName, ON_POLICY_RL_ALGORITHMS
 from codes.e_utils.train_tracker import SpeedTracker
-from codes.f_main.general_main.a_common_main import *
+from codes.e_utils.common_utils import print_params
 
 
 def train_main(train_env, test_env):
@@ -176,6 +177,7 @@ def train(agent, step_idx, loss_dequeue, actor_objective_dequeue):
 
 if __name__ == "__main__":
     advance_check()
+    print_params(params)
 
     train_env, test_env = get_train_and_test_envs()
     train_main(train_env, test_env)

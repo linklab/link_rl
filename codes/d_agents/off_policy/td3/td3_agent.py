@@ -16,14 +16,12 @@ from torch.distributions import normal
 # https://github.com/sfujim/TD3
 # https://spinningup.openai.com/en/latest/algorithms/td3.html
 class AgentTD3(OffPolicyAgent):
-    def __init__(self, worker_id, input_shape, action_shape, num_outputs, action_min, action_max, params, device):
+    def __init__(self, worker_id, input_shape, action_shape, num_outputs, params, device):
         assert params.DEEP_LEARNING_MODEL == DeepLearningModelName.TD3_MLP
 
         super(AgentTD3, self).__init__(worker_id=worker_id, params=params, action_shape=action_shape, device=device)
 
         self.__name__ = "AgentTD3"
-        self.action_min = action_min
-        self.action_max = action_max
 
         if params.TYPE_OF_TD3_ACTION_SELECTOR == TD3ActionSelectorType.BASIC_ACTION_SELECTOR:
             self.train_action_selector = TD3ActionSelector(
@@ -109,7 +107,7 @@ class AgentTD3(OffPolicyAgent):
             actions, new_noises = self.test_and_play_action_selector(mu, noises)
 
         self.last_noise = new_noises[0][0]
-        actions = np.clip(actions, self.action_min, self.action_max)
+        actions = np.clip(actions, -1.0, 1.0)
         #####################################
 
         return actions, new_noises
@@ -136,7 +134,7 @@ class AgentTD3(OffPolicyAgent):
         # last_actions_v: [128, 1]
         last_actions_v = (
             self.target_model.base.forward_actor(last_states_v) + noise
-        ).clamp(self.action_min, self.action_max)
+        ).clamp(-1.0, 1.0)
 
         # target_q_v_1, target_q_v_2: [128, 1]
         target_q_v_1, target_q_v_2 = self.target_model.base.forward_critic(last_states_v, last_actions_v)

@@ -293,7 +293,7 @@ def get_rl_agent(env, worker_id, params, device="cpu"):
 
         agent = AgentDDPG(
             input_shape=input_shape, num_outputs=num_outputs, worker_id=worker_id, action_selector=action_selector,
-            action_min=action_min, action_max=action_max, params=params, device=device
+            params=params, device=device
         )
 
         return agent, epsilon_tracker

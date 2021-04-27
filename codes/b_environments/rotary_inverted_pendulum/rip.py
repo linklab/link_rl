@@ -31,6 +31,66 @@ VELOCITY_STATE_DENOMINATOR = 100.0
 
 RIP_SERVER = '10.0.0.2'
 
+
+def get_rip_observation_space(pendulum_type):
+    max_velocity = 100.0
+
+    if pendulum_type in [
+        EnvironmentName.PENDULUM_MATLAB_V0, EnvironmentName.REAL_DEVICE_RIP
+    ]:
+        high = np.array(
+            [1., 1., max_velocity, 1., 1., max_velocity],
+            dtype=np.float32
+        )
+    elif pendulum_type in [
+        EnvironmentName.PENDULUM_MATLAB_DOUBLE_RIP_V0, EnvironmentName.REAL_DEVICE_DOUBLE_RIP
+    ]:
+        high = np.array(
+            [1., 1., max_velocity, 1., 1., max_velocity, 1., 1., max_velocity],
+            dtype=np.float32
+        )
+    else:
+        raise ValueError()
+
+    low = high * -1.0
+
+    observation_space = gym.spaces.Box(
+        low=low, high=high, dtype=np.float32
+    )
+
+    n_states = observation_space.shape[0]
+
+    return observation_space, n_states
+
+
+def get_rip_action_space(params, pendulum_type):
+    if pendulum_type == EnvironmentName.PENDULUM_MATLAB_V0:
+        action_index_to_voltage = [
+            -0.08, -0.05, -0.025, -0.0125, -0.008, -0.002, 0.0, 0.002, 0.008, 0.0125, 0.025, 0.05, 0.08
+        ]
+    elif pendulum_type == EnvironmentName.PENDULUM_MATLAB_DOUBLE_RIP_V0:
+        action_index_to_voltage = [
+            -3.5, -2.75, -2.0, -1.5, -0.75, -0.35, -0.10, -0.05, -0.025, -0.016, 0.0,
+            0.016, 0.025, 0.05, 0.10, 0.35, 0.75, 1.5, 2.0, 2.75, 3.5
+        ]
+    elif pendulum_type in [EnvironmentName.REAL_DEVICE_RIP, EnvironmentName.REAL_DEVICE_DOUBLE_RIP]:
+        action_index_to_voltage = None
+    else:
+        raise ValueError()
+
+    if params.RL_ALGORITHM in [RLAlgorithmName.DQN_V0]:
+        action_space = gym.spaces.Discrete(len(action_index_to_voltage))
+        n_actions = action_space.n
+    else:
+        action_space = gym.spaces.Box(
+            low=-1.0, high=1.0, shape=(1,),
+            dtype=np.float32
+        )
+        n_actions = action_space.shape[0]
+
+    return action_space, n_actions, action_index_to_voltage
+
+
 class RotaryInvertedPendulumEnv(gym.Env):
     def __init__(
             self, action_min, action_max, env_reset=True,
@@ -61,7 +121,6 @@ class RotaryInvertedPendulumEnv(gym.Env):
         os.chdir(MATLAB_ENGINE_DIR) # change working directory
 
         if self.pendulum_type == EnvironmentName.PENDULUM_MATLAB_V0:
-            print("333333333333333333333")
             self.plant = SimulinkPlant(modelName="single_RIP")
         elif self.pendulum_type == EnvironmentName.PENDULUM_MATLAB_DOUBLE_RIP_V0:
             self.plant = SimulinkPlant(modelName="double_RIP")
@@ -76,60 +135,11 @@ class RotaryInvertedPendulumEnv(gym.Env):
 
         self.too_much_rotate = False
 
-        self.max_velocity = 100.0
-
-        # self.action_index_to_voltage = [-0.05, -0.025, -0.008, 0, 0.008, 0.025, 0.05]
-
-        if self.pendulum_type == EnvironmentName.PENDULUM_MATLAB_V0:
-            self.action_index_to_voltage = [
-                -0.08, -0.05, -0.025, -0.0125, -0.008, -0.002, 0.0, 0.002, 0.008, 0.0125, 0.025, 0.05, 0.08
-            ]
-        elif self.pendulum_type == EnvironmentName.PENDULUM_MATLAB_DOUBLE_RIP_V0:
-            self.action_index_to_voltage = [
-                -3.5, -2.75, -2.0, -1.5, -0.75, -0.35, -0.10, -0.05, -0.025, -0.016, 0.0,
-                0.016, 0.025, 0.05, 0.10, 0.35, 0.75, 1.5, 2.0, 2.75, 3.5
-            ]
-        elif self.pendulum_type in [EnvironmentName.REAL_DEVICE_RIP, EnvironmentName.REAL_DEVICE_DOUBLE_RIP]:
-            self.action_index_to_voltage = None
-        else:
-            raise ValueError()
-
-        if self.params.RL_ALGORITHM in [RLAlgorithmName.DQN_V0]:
-            self.action_space = gym.spaces.Discrete(len(self.action_index_to_voltage))
-            self.n_actions = self.action_space.n
-        else:
-            self.action_space = gym.spaces.Box(
-                low=self.action_min, high=self.action_max, shape=(1,),
-                dtype=np.float32
-            )
-            self.n_actions = self.action_space.shape[0]
-
-        #high = np.array([1., 1., self.max_velocity, 1., 1., action_max, 1.0], dtype=np.float32)
-
-        if self.pendulum_type in [
-            EnvironmentName.PENDULUM_MATLAB_V0, EnvironmentName.REAL_DEVICE_RIP
-        ]:
-            high = np.array(
-                [1., 1., self.max_velocity, 1., 1., self.max_velocity],
-                dtype=np.float32
-            )
-        elif self.pendulum_type in [
-            EnvironmentName.PENDULUM_MATLAB_DOUBLE_RIP_V0, EnvironmentName.REAL_DEVICE_DOUBLE_RIP
-        ]:
-            high = np.array(
-                [1., 1., self.max_velocity, 1., 1., self.max_velocity, 1., 1., self.max_velocity],
-                dtype=np.float32
-            )
-        else:
-            raise ValueError()
-
-        low = high * -1.0
-
-        self.observation_space = gym.spaces.Box(
-            low=low, high=high, dtype=np.float32
+        self.action_space, self.n_actions, self.action_index_to_voltage = get_rip_action_space(
+            params, self.pendulum_type
         )
 
-        self.n_states = self.observation_space.shape[0]
+        self.observation_space, self.n_states = get_rip_observation_space(self.pendulum_type)
 
         self.current_status = None
 
