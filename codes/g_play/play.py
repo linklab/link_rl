@@ -6,6 +6,8 @@ import torch
 import os, sys
 import numpy as np
 
+from codes.a_config.f_trade_parameters.parameters_trade_dqn import PARAMETERS_GENERAL_TRADE_DQN
+
 print("PyTorch Version", torch.__version__)
 
 current_path = os.path.dirname(os.path.realpath(__file__))
@@ -13,16 +15,11 @@ PROJECT_HOME = os.path.abspath(os.path.join(current_path, os.pardir, os.pardir))
 if PROJECT_HOME not in sys.path:
     sys.path.append(PROJECT_HOME)
 
-from codes.e_utils.actions import EpsilonGreedySomeTimesBlowDQNActionSelector, \
-    SomeTimesBlowDDPGActionSelector, ArgmaxActionSelector, DDPGActionSelector, \
-    ContinuousNormalActionSelector, DiscreteCategoricalActionSelector
-from codes.e_utils.rl_utils import get_environment_input_output_info, MODEL_ZOO_SAVE_DIR, MODEL_SAVE_FILE_PREFIX
 from codes.e_utils import rl_utils
 from codes.e_utils.common_utils import load_model
 from codes.e_utils.logger import get_logger
-from codes.e_utils.names import RLAlgorithmName, EnvironmentName, AgentMode
-from codes.e_utils.rl_utils import get_environment_input_output_info
-
+from codes.e_utils.names import EnvironmentName, AgentMode
+from codes.e_utils.rl_utils import get_environment_input_output_info, MODEL_ZOO_SAVE_DIR, MODEL_SAVE_FILE_PREFIX
 
 os.environ['KMP_DUPLICATE_LIB_OK'] = 'True'
 
@@ -30,11 +27,10 @@ device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 
 my_logger = get_logger("openai_pendulum_ddpg")
 
-
 def play_main(params, env):
-    input_shape, action_shape, num_outputs, action_min, action_max = get_environment_input_output_info(env)
+    input_shape, action_shape, num_outputs = get_environment_input_output_info(env)
     agent = rl_utils.get_rl_agent(
-        input_shape, action_shape, num_outputs, action_min, action_max, worker_id=-1, params=params, device=device
+        input_shape, action_shape, num_outputs, worker_id=-1, params=params, device=device
     )
     load_model(MODEL_ZOO_SAVE_DIR, MODEL_SAVE_FILE_PREFIX, agent, inquery=False)
     agent.agent_mode = AgentMode.PLAY

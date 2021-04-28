@@ -1,14 +1,14 @@
-import numpy as np
+# https://spinningup.openai.com/en/latest/algorithms/sac.html
 import torch
 import torch.nn.functional as F
 from torch.distributions import Normal
 import torch.nn.utils as nn_utils
 
 from codes.c_models.continuous_action.soft_actor_critic_model import SoftActorCriticModel
-from codes.d_agents.a0_base_agent import BaseAgent, float32_preprocessor
+from codes.d_agents.a0_base_agent import float32_preprocessor
 from codes.d_agents.on_policy.on_policy_agent import OnPolicyAgent
 from codes.e_utils import rl_utils, replay_buffer
-from codes.e_utils.actions import ContinuousNormalActionSelector
+from codes.d_agents.actions import ContinuousNormalActionSelector
 from codes.e_utils.names import DeepLearningModelName, AgentMode
 
 
@@ -16,14 +16,12 @@ class AgentSAC(OnPolicyAgent):
     """
     """
     def __init__(
-            self, worker_id, input_shape, action_shape, num_outputs, action_min, action_max, params, device
+            self, worker_id, input_shape, action_shape, num_outputs, params, device
     ):
         assert params.DEEP_LEARNING_MODEL == DeepLearningModelName.SOFT_ACTOR_CRITIC_MLP
 
         super(AgentSAC, self).__init__(worker_id, params, action_shape, device)
         self.__name__ = "AgentSAC"
-        self.action_min = action_min
-        self.action_max = action_max
 
         self.train_action_selector = ContinuousNormalActionSelector()
         self.test_and_play_action_selector = ContinuousNormalActionSelector()
@@ -76,11 +74,9 @@ class AgentSAC(OnPolicyAgent):
         mu_v, values_v = self.model(states)
 
         if self.agent_mode == AgentMode.TRAIN:
-            actions = self.train_action_selector(mu_v, self.model.base.actor.logstd, self.action_min, self.action_max)
+            actions = self.train_action_selector(mu_v, self.model.base.actor.logstd)
         else:
-            actions = self.test_and_play_action_selector(
-                mu_v, self.model.base.actor.logstd, self.action_min, self.action_max
-            )
+            actions = self.test_and_play_action_selector(mu_v, self.model.base.actor.logstd)
 
         critics = values_v.data.cpu().numpy()
 

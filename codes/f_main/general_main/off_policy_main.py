@@ -1,10 +1,22 @@
+import os, sys
+from collections import deque
+
+current_path = os.path.dirname(os.path.realpath(__file__))
+PROJECT_HOME = os.path.abspath(os.path.join(current_path, os.pardir, os.pardir, os.pardir))
+if PROJECT_HOME not in sys.path:
+    sys.path.append(PROJECT_HOME)
+
 from codes.f_main.general_main.a_common_main import *
+from codes.b_environments.trade.trade_action_selector import EpsilonGreedyTradeDQNActionSelector, \
+    ArgmaxTradeActionSelector
+from codes.e_utils.common_utils import print_params
+from codes.e_utils.experience import ExperienceSourceFirstLast
+from codes.e_utils.names import OFF_POLICY_RL_ALGORITHMS
+from codes.e_utils.train_tracker import SpeedTracker
 import torch.multiprocessing as mp
 
 
 def play_func(exp_queue, agent):
-    train_env = rl_utils.get_environment(params=params)
-    print_environment_info(train_env, params)
     train_env, test_env = get_train_and_test_envs()
 
     if params.ENVIRONMENT_ID in [EnvironmentName.TRADE_V0]:
@@ -12,6 +24,7 @@ def play_func(exp_queue, agent):
         agent.train_action_selector = EpsilonGreedyTradeDQNActionSelector(
             epsilon=params.EPSILON_INIT, env=train_env.envs[0]
         )
+        from codes.d_agents.actions import EpsilonTracker
         agent.epsilon_tracker = EpsilonTracker(
             action_selector=agent.train_action_selector,
             eps_start=params.EPSILON_INIT,
@@ -45,7 +58,7 @@ def play_func(exp_queue, agent):
 
     num_tests = get_num_tests()
 
-    with SpeedTracker(params=params) as reward_tracker:
+    with SpeedTracker(params=params) as speed_tracker:
         try:
             while step_idx < params.MAX_GLOBAL_STEP:
                 # 1 스텝 진행하고 exp를 exp_queue에 넣음
@@ -61,12 +74,13 @@ def play_func(exp_queue, agent):
                 if episode_rewards and episode_steps:
                     for current_episode_reward, current_episode_step in zip(episode_rewards, episode_steps):
                         episode += 1
+
                         solved, train_info_dict = process_episode(
                             train_episode_reward_lst_for_test,
                             train_episode_reward_lst_for_stat,
                             current_episode_reward,
                             agent,
-                            reward_tracker,
+                            speed_tracker,
                             step_idx,
                             episode,
                             test_env,
@@ -93,14 +107,24 @@ def play_func(exp_queue, agent):
 
 
 def main():
-    mp.set_start_method('spawn')
+    mp.set_start_method('spawn', force=True)
     os.environ['OMP_NUM_THREADS'] = "1"
 
-    env = rl_utils.get_single_environment(params=params)
-    agent = get_agent(env)
+    if params.ENVIRONMENT_ID in [
+        EnvironmentName.PENDULUM_MATLAB_V0,
+        EnvironmentName.PENDULUM_MATLAB_DOUBLE_RIP_V0,
+        EnvironmentName.REAL_DEVICE_RIP,
+        EnvironmentName.REAL_DEVICE_DOUBLE_RIP,
+        EnvironmentName.QUANSER_SERVO_2
+    ]:
+        tentative_env = None
+    else:
+        tentative_env = rl_utils.get_single_environment(params=params)
+    agent = get_agent(tentative_env)
+
     agent.model.share_memory()
 
-    exp_queue = mp.Queue(maxsize=params.TRAIN_STEP_FREQ * 2) #params.TRAIN_STEP_FREQ * 2
+    exp_queue = mp.Queue(maxsize=params.TRAIN_STEP_FREQ * 100) #params.TRAIN_STEP_FREQ * 2
     play_proc = mp.Process(target=play_func, args=(exp_queue, agent))
     play_proc.start()
 
@@ -124,7 +148,8 @@ def main():
                 train_info_dict = exp
 
                 mean_loss = np.mean(loss_dequeue) if len(loss_dequeue) > 0 else 0.0
-                mean_actor_objective = np.mean(actor_objective_dequeue) if len(actor_objective_dequeue) > 0 else 0.0
+                mean_actor_objective = np.mean(actor_objective_dequeue) \
+                    if len(actor_objective_dequeue) > 0 else 0.0
 
                 print_performance(
                     params=params,
@@ -181,5 +206,10 @@ def main():
 
 
 if __name__ == "__main__":
+    advance_check()
+    print_params(params)
+
     assert params.RL_ALGORITHM in OFF_POLICY_RL_ALGORITHMS
+
     main()
+

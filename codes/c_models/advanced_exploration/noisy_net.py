@@ -9,6 +9,10 @@ from torch.autograd import Variable
 # The register_buffer method creates a tensor in the network that won't be updated during backpropagation,
 # but will be handled by the nn.Module machinery.
 # For example, it will be copied to GPU with the cuda() call
+# 1. optimizer가 업데이트하지 않는다.
+# 2. 그러나 값은 존재한다
+# 3. state_dict()로 확인이 가능하다.
+# 4. GPU연산이 가능하다.
 
 
 class NoisyLinear(nn.Module):
@@ -19,6 +23,7 @@ class NoisyLinear(nn.Module):
         self.out_features = out_features
         self.std_init = std_init
 
+        # https://stackoverflow.com/questions/48869836/why-unintialized-tensor-in-pytorch-have-initial-values
         self.weight_mu = nn.Parameter(torch.FloatTensor(out_features, in_features))
         self.weight_sigma = nn.Parameter(torch.FloatTensor(out_features, in_features))
         self.register_buffer('weight_epsilon', torch.FloatTensor(out_features, in_features))
@@ -41,19 +46,22 @@ class NoisyLinear(nn.Module):
         return F.linear(input, weight, bias)
 
     def reset_parameters(self):
-        mu_range = 1 / math.sqrt(self.weight_mu.size(1))
+        mu_range = 1 / math.sqrt(self.weight_mu.size(dim=1))
 
         self.weight_mu.data.uniform_(-mu_range, mu_range)
-        self.weight_sigma.data.fill_(self.std_init / math.sqrt(self.weight_sigma.size(1)))
+        self.weight_sigma.data.fill_(self.std_init / math.sqrt(self.weight_sigma.size(dim=1)))
 
         self.bias_mu.data.uniform_(-mu_range, mu_range)
-        self.bias_sigma.data.fill_(self.std_init / math.sqrt(self.bias_sigma.size(0)))
+        self.bias_sigma.data.fill_(self.std_init / math.sqrt(self.bias_sigma.size(dim=0)))
 
     def reset_noise(self):
         epsilon_in = self._scale_noise(self.in_features)
         epsilon_out = self._scale_noise(self.out_features)
 
-        self.weight_epsilon.copy_(epsilon_out.ger(epsilon_in))
+        # self.weight_epsilon.size(): [2, 128] or [128, 128]
+        self.weight_epsilon.copy_(epsilon_out.outer(epsilon_in))  # outer product
+
+        # self.bias_epsilon.size(): [2] or [128]
         self.bias_epsilon.copy_(self._scale_noise(self.out_features))
 
     def _scale_noise(self, size):

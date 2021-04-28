@@ -3,14 +3,13 @@ import numpy as np
 import torch
 import torch.nn.functional as F
 
-from codes.b_environments.trade.trade_action_selector import EpsilonGreedyTradeDQNActionSelector, \
-    ArgmaxTradeActionSelector
 from codes.c_models.discrete_action.dqn_model import DuelingDQNModel
 from codes.d_agents.a0_base_agent import float32_preprocessor
+from codes.d_agents.off_policy.dqn.dqn_action_selector import EpsilonGreedySomeTimesBlowDQNActionSelector, \
+    EpsilonGreedyDQNActionSelector
 from codes.d_agents.off_policy.off_policy_agent import OffPolicyAgent
 from codes.e_utils import rl_utils
-from codes.e_utils.actions import EpsilonGreedyDQNActionSelector, ArgmaxActionSelector, EpsilonTracker, \
-    EpsilonGreedySomeTimesBlowDQNActionSelector
+from codes.d_agents.actions import ArgmaxActionSelector, EpsilonTracker
 from codes.e_utils.names import DeepLearningModelName, AgentMode, EnvironmentName
 
 

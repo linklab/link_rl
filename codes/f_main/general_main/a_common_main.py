@@ -2,21 +2,12 @@
 # https://mspries.github.io/jimmy_pendulum.html
 #!/usr/bin/env python3
 import time
-from collections import deque
 
 import torch
 import os, sys
 import numpy as np
 import wandb
 from termcolor import colored
-
-from codes.a_config.f_trade_parameters.parameters_trade_dqn import PARAMETERS_GENERAL_TRADE_DQN
-from codes.b_environments.trade.trade_action_selector import EpsilonGreedyTradeDQNActionSelector, \
-    ArgmaxTradeActionSelector
-from codes.d_agents.off_policy.off_policy_agent import OffPolicyAgent
-from codes.d_agents.on_policy.on_policy_agent import OnPolicyAgent
-from codes.e_utils.rl_utils import get_environment_input_output_info, MODEL_SAVE_FILE_PREFIX, MODEL_ZOO_SAVE_DIR
-from codes.e_utils.actions import EpsilonTracker
 
 print("PyTorch Version", torch.__version__)
 
@@ -26,15 +17,16 @@ if PROJECT_HOME not in sys.path:
     sys.path.append(PROJECT_HOME)
 
 from codes.a_config.parameters import PARAMETERS as params
-
+from codes.e_utils.rl_utils import get_environment_input_output_info, MODEL_ZOO_SAVE_DIR, MODEL_SAVE_FILE_PREFIX
 from codes.e_utils import rl_utils
 from codes.e_utils.common_utils import save_model, print_environment_info, remove_models, agent_model_test, \
-    print_agent_info, load_model, print_params
-from codes.e_utils.train_tracker import SpeedTracker, EarlyStopping
+    print_agent_info, load_model
+from codes.e_utils.train_tracker import EarlyStopping
 from codes.e_utils.logger import get_logger
-from codes.e_utils.names import DeepLearningModelName, RLAlgorithmName, EnvironmentName, ModelSaveMode, AgentMode
-from codes.e_utils.experience import ExperienceSourceFirstLast
-from codes.e_utils.names import OFF_POLICY_RL_ALGORITHMS, ON_POLICY_RL_ALGORITHMS
+from codes.e_utils.names import EnvironmentName, ModelSaveMode, AgentMode
+from codes.b_environments.quanser_rotary_inverted_pendulum.quanser_rip import get_quanser_rip_observation_space, \
+    get_quanser_rip_action_space
+from codes.b_environments.rotary_inverted_pendulum.rip import get_rip_observation_space, get_rip_action_space
 
 WANDB_DIR = os.path.join(PROJECT_HOME, "out", "wandb")
 if not os.path.exists(WANDB_DIR):
@@ -44,6 +36,7 @@ MODEL_SAVE_DIR = os.path.join(PROJECT_HOME, "out", "model_save_files")
 if not os.path.exists(MODEL_SAVE_DIR):
     os.makedirs(MODEL_SAVE_DIR)
 
+
 os.environ['KMP_DUPLICATE_LIB_OK'] = 'True'
 
 device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
@@ -52,14 +45,32 @@ print("DEVICE: {0}".format(device))
 
 my_logger = get_logger("main")
 
-print_params(params)
-
-
 def get_agent(env):
-    input_shape, action_shape, num_outputs, action_min, action_max = get_environment_input_output_info(env)
+    if env is None:
+        if params.ENVIRONMENT_ID in [
+            EnvironmentName.PENDULUM_MATLAB_V0,
+            EnvironmentName.PENDULUM_MATLAB_DOUBLE_RIP_V0,
+            EnvironmentName.REAL_DEVICE_RIP,
+            EnvironmentName.REAL_DEVICE_DOUBLE_RIP,
+        ]:
+            observation_space, _ = get_rip_observation_space(params.ENVIRONMENT_ID)
+            action_space, num_outputs, _ = get_rip_action_space(params, pendulum_type=params.ENVIRONMENT_ID)
+
+            input_shape = observation_space.shape
+            action_shape = action_space.shape
+        elif params.ENVIRONMENT_ID == EnvironmentName.QUANSER_SERVO_2:
+            observation_space, _ = get_quanser_rip_observation_space()
+            action_space, num_outputs = get_quanser_rip_action_space(params, None)
+
+            input_shape = observation_space.shape
+            action_shape = action_space.shape
+        else:
+            raise ValueError()
+    else:
+        input_shape, action_shape, num_outputs = get_environment_input_output_info(env)
 
     agent = rl_utils.get_rl_agent(
-        input_shape, action_shape, num_outputs, action_min, action_max, worker_id=0, params=params, device=device
+        input_shape, action_shape, num_outputs, worker_id=0, params=params, device=device
     )
 
     load_model(MODEL_ZOO_SAVE_DIR, MODEL_SAVE_FILE_PREFIX, agent, inquery=True)
@@ -144,7 +155,7 @@ def process_episode(
         train_episode_reward_lst_for_stat,
         current_episode_reward,
         agent,
-        reward_tracker,
+        speed_tracker,
         step_idx,
         episode,
         test_env,
@@ -158,7 +169,7 @@ def process_episode(
 
     epsilon = agent.train_action_selector.epsilon if hasattr(agent.train_action_selector, 'epsilon') else None
 
-    speed, elapsed_time = reward_tracker.set_episode_reward(
+    speed, elapsed_time = speed_tracker.set_episode_reward(
         episode_done_step=step_idx
     )
 
@@ -306,3 +317,12 @@ def print_performance(
         print("\n", evaluation_msg, flush=True)
     else:
         print("", flush=True)
+
+
+def advance_check():
+    if params.TRAIN_ONLY_AFTER_EPISODE:
+        assert params.NUM_ENVIRONMENTS == 1
+
+    if hasattr(params, "DISTRIBUTIONAL") and params.DISTRIBUTIONAL:
+        assert params.NOISY_NET
+        assert hasattr(params, "NUM_SUPPORTS")

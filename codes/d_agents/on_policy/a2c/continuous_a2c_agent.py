@@ -5,15 +5,15 @@ from torch.distributions import Normal
 from codes.c_models.continuous_action.stochastic_continuous_actor_critic_model import StochasticContinuousActorCriticModel
 from codes.d_agents.on_policy.a2c.a2c_agent import AgentA2C
 from codes.e_utils import rl_utils
-from codes.e_utils.actions import ContinuousNormalActionSelector
-from codes.e_utils.names import DeepLearningModelName, AgentMode
+from codes.d_agents.actions import ContinuousNormalActionSelector
+from codes.e_utils.names import DeepLearningModelName
 
 
 class AgentContinuousA2C(AgentA2C):
     """
     """
     def __init__(
-            self, worker_id, input_shape, action_shape, num_outputs, action_min, action_max, params, device
+            self, worker_id, input_shape, action_shape, num_outputs, params, device
     ):
         assert params.DEEP_LEARNING_MODEL in [
             DeepLearningModelName.STOCHASTIC_CONTINUOUS_ACTOR_CRITIC_MLP
@@ -23,9 +23,6 @@ class AgentContinuousA2C(AgentA2C):
         self.__name__ = "AgentContinuousA2C"
         self.train_action_selector = ContinuousNormalActionSelector()
         self.test_and_play_action_selector = ContinuousNormalActionSelector()
-
-        self.action_min = action_min
-        self.action_max = action_max
 
         self.model = StochasticContinuousActorCriticModel(
             worker_id=worker_id,
