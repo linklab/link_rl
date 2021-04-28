@@ -112,7 +112,7 @@ class RotaryInvertedPendulumEnv(gym.Env):
         self.motor_velocity = 0
 
         self.last_time = 0.0
-        self.unit_time = 0.008
+        self.unit_time = 0.009
         self.over_unit_time = 0
         self.step_idx = 0
         self.episode_idx = 0
@@ -348,22 +348,25 @@ class RotaryInvertedPendulumEnv(gym.Env):
     def step(self, action):
         ############# time check #############################
         if self.pendulum_type in [EnvironmentName.REAL_DEVICE_RIP, EnvironmentName.REAL_DEVICE_DOUBLE_RIP]:
-            current_time = time.perf_counter()
-            step_time = current_time - self.last_time
-            # print(step_time)
-            if step_time > self.unit_time:
-                self.over_unit_time += 1
             while True:
                 current_time = time.perf_counter()
                 if current_time - self.last_time >= self.unit_time:
                     break
                 time.sleep(0.0001)
 
+            current_time = time.perf_counter()
+            step_time = current_time - self.last_time
+
+            if step_time > self.unit_time:
+                self.over_unit_time += 1
+
+            #print(self.step_idx, step_time)
+            self.last_time = time.perf_counter()
+
         if self.step_idx % 100000 == 0:
             print("*OVER UNIT TIME STEP NUMBER :", self.over_unit_time)
         #######################################################
 
-        self.last_time = time.perf_counter()
         self.episode_steps += 1
         self.total_steps += 1
         # print("action", action, "total steps", self.total_steps, "episode steps", self.episode_steps)
@@ -380,10 +383,7 @@ class RotaryInvertedPendulumEnv(gym.Env):
                 RLAlgorithmName.CONTINUOUS_PPO_V0,
                 RLAlgorithmName.TD3_V0
             ]:
-                action = random.uniform(
-                    a=self.action_min * 10.0,
-                    b=self.action_max * 10.0
-                )
+                action = random.uniform(a=-1.0, b=1.0) * self.params.ACTION_SCALE * 2
             else:
                 raise ValueError()
 
@@ -426,15 +426,15 @@ class RotaryInvertedPendulumEnv(gym.Env):
             # t= 0
             # while True:
             #     self.server_obj.step(RipRequest(value=200))
-            #     time.sleep(0.05)
-            #     self.server_obj.step(RipRequest(value=-200))
-            #     time.sleep(0.05)
+            #     time.sleep(0.01)
+            #     self.server_obj.step(RipRequest(value=-10))
+            #     time.sleep(0.01)
                 # action = 200*math.sin(2*0.1*math.pi*t)
                 # self.server_obj.step(RipRequest(value=action))
                 # print(t, action)
                 # t += 0.008
                 # time.sleep(0.05)
-
+            # print(action)
             rip_response = self.server_obj.step(RipRequest(value=action))
             # print(action, rip_response.arm_angle, rip_response.link_1_angle, "!!!!")
 

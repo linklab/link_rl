@@ -15,6 +15,7 @@ from torch.distributions import normal
 
 # https://github.com/sfujim/TD3
 # https://spinningup.openai.com/en/latest/algorithms/td3.html
+
 class AgentTD3(OffPolicyAgent):
     def __init__(self, worker_id, input_shape, action_shape, num_outputs, params, device):
         assert params.DEEP_LEARNING_MODEL == DeepLearningModelName.TD3_MLP
@@ -112,6 +113,7 @@ class AgentTD3(OffPolicyAgent):
 
         return actions, new_noises
 
+    # @profile
     def train(self, step_idx):
         if self.params.PER_PROPORTIONAL or self.params.PER_RANK_BASED:
             batch, batch_indices, batch_weights = self.buffer.sample(self.params.BATCH_SIZE)
@@ -159,6 +161,7 @@ class AgentTD3(OffPolicyAgent):
         loss_critic_v = loss_critic_v.mean()
         loss_critic_v.backward()
         self.critic_optimizer.step()
+        #print(step_idx, "CRITIC")
 
         # train actor
         # Delayed policy updates
@@ -172,12 +175,19 @@ class AgentTD3(OffPolicyAgent):
 
             loss_actor_v.backward()
             self.actor_optimizer.step()
+            #print(step_idx, "ACTOR")
 
             self.target_model.alpha_sync(self.model, alpha=1 - self.params.TAU)  # (1 - 0.001)
         else:
             loss_actor_v = self.cache_loss_actor_v
 
         # gradients = self.model.get_gradients_for_current_parameters()
+<<<<<<< HEAD
+        #
+        # self.model.check_gradient_nan_or_zero(gradients)
+
+        gradients = None
+=======
         # self.model.check_gradient_nan_or_zero(gradients)
 
         gradients = None
@@ -185,5 +195,6 @@ class AgentTD3(OffPolicyAgent):
         if self.params.TYPE_OF_TD3_ACTION_SELECTOR == TD3ActionSelectorType.NOISY_NET_ACTION_SELECTOR:
             self.model.base.reset_noise()  # Pick a new noise vector (until next optimisation step)
             self.target_model.base.reset_noise()
+>>>>>>> 87b25fafd5251e592ba6f82beea3db04fdbaba73
 
         return gradients, loss_critic_v.item(), loss_actor_v.item() * -1.0
