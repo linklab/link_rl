@@ -10,7 +10,6 @@ if PROJECT_HOME not in sys.path:
 
 from codes.f_main.general_main.a_common_main import *
 
-
 def train_main(params, train_env, test_env):
     agent = get_agent(train_env)
     if params.WANDB:

@@ -14,6 +14,7 @@ import copy
 
 # https://github.com/sfujim/TD3
 # https://spinningup.openai.com/en/latest/algorithms/td3.html
+
 class AgentTD3(OffPolicyAgent):
     """
     Agent implementing Orstein-Uhlenbeck exploration process
@@ -115,6 +116,7 @@ class AgentTD3(OffPolicyAgent):
 
         return actions, new_noises
 
+    # @profile
     def train(self, step_idx):
         if self.params.PER_PROPORTIONAL or self.params.PER_RANK_BASED:
             batch, batch_indices, batch_weights = self.buffer.sample(self.params.BATCH_SIZE)
@@ -179,8 +181,10 @@ class AgentTD3(OffPolicyAgent):
         else:
             loss_actor_v = self.cache_loss_actor_v
 
-        gradients = self.model.get_gradients_for_current_parameters()
+        # gradients = self.model.get_gradients_for_current_parameters()
+        #
+        # self.model.check_gradient_nan_or_zero(gradients)
 
-        self.model.check_gradient_nan_or_zero(gradients)
+        gradients = None
 
         return gradients, loss_critic_v.item(), loss_actor_v.item() * -1.0
