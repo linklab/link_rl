@@ -107,7 +107,7 @@ def play_func(exp_queue, agent):
 
 
 def main():
-    mp.set_start_method('spawn')
+    mp.set_start_method('spawn', force=True)
     os.environ['OMP_NUM_THREADS'] = "1"
 
     if params.ENVIRONMENT_ID in [
