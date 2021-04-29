@@ -142,7 +142,7 @@ class AgentMultiGA(BaseAgent):
     @staticmethod
     def worker_func(ga_worker_id, master_to_worker_queue, worker_to_master_queue, params, device):
         env = rl_utils.get_single_environment(params=params)
-        input_shape, action_shape, num_outputs, action_min, action_max = rl_utils.get_environment_input_output_info(env)
+        input_shape, action_shape, num_outputs = rl_utils.get_environment_input_output_info(env)
 
         ga_operator = GAOperator(
             env=env, input_shape=input_shape, num_outputs=num_outputs, params=params, device=device

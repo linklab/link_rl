@@ -11,39 +11,34 @@ from codes.d_agents.off_policy.td3.td3_action_selector import SomeTimesBlowTD3Ac
 from codes.e_utils import rl_utils
 from codes.d_agents.actions import EpsilonTracker
 from codes.e_utils.names import DeepLearningModelName, AgentMode
-
+from torch.distributions import normal
 
 # https://github.com/sfujim/TD3
 # https://spinningup.openai.com/en/latest/algorithms/td3.html
-class AgentTD3(OffPolicyAgent):
-    """
-    Agent implementing Orstein-Uhlenbeck exploration process
-    """
 
-    def __init__(self, worker_id, input_shape, action_shape, num_outputs, action_min, action_max, params, device):
+class AgentTD3(OffPolicyAgent):
+    def __init__(self, worker_id, input_shape, action_shape, num_outputs, params, device):
         assert params.DEEP_LEARNING_MODEL == DeepLearningModelName.TD3_MLP
 
         super(AgentTD3, self).__init__(worker_id=worker_id, params=params, action_shape=action_shape, device=device)
 
         self.__name__ = "AgentTD3"
-        self.action_min = action_min
-        self.action_max = action_max
 
         if params.TYPE_OF_TD3_ACTION_SELECTOR == TD3ActionSelectorType.BASIC_ACTION_SELECTOR:
             self.train_action_selector = TD3ActionSelector(
-                epsilon=params.EPSILON_INIT, act_noise=params.ACT_NOISE, params=self.params
+                epsilon=params.EPSILON_INIT, noise_std=params.NOISE_STD, params=self.params
             )
         elif params.TYPE_OF_TD3_ACTION_SELECTOR == TD3ActionSelectorType.SOMETIMES_BLOW_ACTION_SELECTOR:
             self.train_action_selector = SomeTimesBlowTD3ActionSelector(
-                epsilon=params.EPSILON_INIT, act_noise=params.ACT_NOISE,
+                epsilon=params.EPSILON_INIT, noise_std=params.NOISE_STD,
                 min_blowing_action=-5.0 * params.ACTION_SCALE, max_blowing_action=5.0 * params.ACTION_SCALE, params=self.params
             )
         elif params.TYPE_OF_TD3_ACTION_SELECTOR == TD3ActionSelectorType.NOISY_NET_ACTION_SELECTOR:
-            self.train_action_selector = TD3ActionSelector(epsilon=0.0, act_noise=0.0, params=self.params)
+            self.train_action_selector = TD3ActionSelector(epsilon=0.0, noise_std=0.0, params=self.params)
         else:
             raise ValueError()
 
-        self.test_and_play_action_selector = TD3ActionSelector(epsilon=0.0, act_noise=0.0, params=self.params)
+        self.test_and_play_action_selector = TD3ActionSelector(epsilon=0.0, noise_std=0.0, params=self.params)
 
         self.model = DeterministicContinuousActorCriticModel(
             worker_id=worker_id,
@@ -68,7 +63,7 @@ class AgentTD3(OffPolicyAgent):
         # )
 
         self.actor_optimizer = rl_utils.get_optimizer(
-            parameters=self.model.base.actor.parameters(),
+            parameters=self.model.base.actor_params,
             learning_rate=self.params.ACTOR_LEARNING_RATE,
             params=params
         )
@@ -79,7 +74,7 @@ class AgentTD3(OffPolicyAgent):
             params=params
         )
 
-        if self.params.TYPE_OF_ACTION == TD3ActionType.NORMAL_NOISE_WITH_EPSILON:
+        if self.params.TYPE_OF_TD3_ACTION == TD3ActionType.GAUSSIAN_NOISE_WITH_EPSILON:
             self.epsilon_tracker = EpsilonTracker(
                 action_selector=self.train_action_selector,
                 eps_start=params.EPSILON_INIT,
@@ -113,11 +108,12 @@ class AgentTD3(OffPolicyAgent):
             actions, new_noises = self.test_and_play_action_selector(mu, noises)
 
         self.last_noise = new_noises[0][0]
-        actions = np.clip(actions, self.action_min, self.action_max)
+        actions = np.clip(actions, -1.0, 1.0)
         #####################################
 
         return actions, new_noises
 
+    # @profile
     def train(self, step_idx):
         if self.params.PER_PROPORTIONAL or self.params.PER_RANK_BASED:
             batch, batch_indices, batch_weights = self.buffer.sample(self.params.BATCH_SIZE)
@@ -132,14 +128,15 @@ class AgentTD3(OffPolicyAgent):
         self.critic_optimizer.zero_grad()
 
         # noise: [128, 1]
-        noise = (
-            torch.randn_like(actions_v) * self.params.ACT_NOISE
-        ).clamp(-self.params.NOISE_CLIP, self.params.NOISE_CLIP)
+        m = normal.Normal(loc=0.0, scale=self.params.NOISE_STD)
+        noise = m.sample(actions_v.size()).clamp(-self.params.NOISE_CLIP, self.params.NOISE_CLIP).to(self.device)
+
+        # print(actions_v.size(), noise.size(), "!!!!")
 
         # last_actions_v: [128, 1]
         last_actions_v = (
             self.target_model.base.forward_actor(last_states_v) + noise
-        ).clamp(self.action_min, self.action_max)
+        ).clamp(-1.0, 1.0)
 
         # target_q_v_1, target_q_v_2: [128, 1]
         target_q_v_1, target_q_v_2 = self.target_model.base.forward_critic(last_states_v, last_actions_v)
@@ -164,6 +161,7 @@ class AgentTD3(OffPolicyAgent):
         loss_critic_v = loss_critic_v.mean()
         loss_critic_v.backward()
         self.critic_optimizer.step()
+        #print(step_idx, "CRITIC")
 
         # train actor
         # Delayed policy updates
@@ -177,12 +175,26 @@ class AgentTD3(OffPolicyAgent):
 
             loss_actor_v.backward()
             self.actor_optimizer.step()
+            #print(step_idx, "ACTOR")
 
             self.target_model.alpha_sync(self.model, alpha=1 - self.params.TAU)  # (1 - 0.001)
         else:
             loss_actor_v = self.cache_loss_actor_v
 
-        gradients = self.model.get_gradients_for_current_parameters()
+        # gradients = self.model.get_gradients_for_current_parameters()
+<<<<<<< HEAD
+        #
+        # self.model.check_gradient_nan_or_zero(gradients)
 
-        self.model.check_gradient_nan_or_zero(gradients)
+        gradients = None
+=======
+        # self.model.check_gradient_nan_or_zero(gradients)
+
+        gradients = None
+
+        if self.params.TYPE_OF_TD3_ACTION_SELECTOR == TD3ActionSelectorType.NOISY_NET_ACTION_SELECTOR:
+            self.model.base.reset_noise()  # Pick a new noise vector (until next optimisation step)
+            self.target_model.base.reset_noise()
+>>>>>>> 87b25fafd5251e592ba6f82beea3db04fdbaba73
+
         return gradients, loss_critic_v.item(), loss_actor_v.item() * -1.0

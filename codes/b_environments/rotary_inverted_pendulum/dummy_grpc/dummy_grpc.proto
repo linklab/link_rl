@@ -1,0 +1,19 @@
+syntax="proto3";
+
+service DUMMY {
+  rpc test(Request) returns (Response) {}
+}
+
+message Request {
+  string message = 1;
+}
+
+message Response {
+  string message = 1;
+  float arm_angle = 2;
+  float arm_velocity = 3;
+  float link_1_angle = 4;
+  float link_1_velocity = 5;
+  float link_2_angle = 6;
+  float link_2_velocity = 7;
+}

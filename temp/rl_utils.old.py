@@ -12,7 +12,7 @@ from torch import optim
 import os, sys
 
 from codes.c_models.continuous_action.soft_actor_critic_model import SoftActorCriticModel
-from codes.d_agents.on_policy.sac.continuous_sac_agent import AgentSAC
+from codes.d_agents.off_policy.sac.continuous_sac_agent import AgentSAC
 
 current_path = os.path.dirname(os.path.realpath(__file__))
 PROJECT_HOME = os.path.abspath(os.path.join(current_path, os.pardir, os.pardir))
@@ -293,7 +293,7 @@ def get_rl_agent(env, worker_id, params, device="cpu"):
 
         agent = AgentDDPG(
             input_shape=input_shape, num_outputs=num_outputs, worker_id=worker_id, action_selector=action_selector,
-            action_min=action_min, action_max=action_max, params=params, device=device
+            params=params, device=device
         )
 
         return agent, epsilon_tracker

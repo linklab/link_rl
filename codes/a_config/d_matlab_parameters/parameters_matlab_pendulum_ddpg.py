@@ -44,6 +44,6 @@ class PARAMETERS_PENDULUM_MATLAB_DDPG(PARAMETERS_GENERAL, PARAMETERS_DDPG):
     TRAIN_ONLY_AFTER_EPISODE = False
     NUM_TRAIN_ONLY_AFTER_EPISODE = 100
 
-    TYPE_OF_REWARD = RIPEnvRewardType.NEW  # "current_version"
+    TYPE_OF_RIP_REWARD = RIPEnvRewardType.NEW  # "current_version"
     TYPE_OF_DDPG_TARGET_UPDATE = DDPGTargetUpdateOnlyAfterEpisode.SOFT_UPDATE # "hard_update"
 
