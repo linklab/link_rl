@@ -182,12 +182,6 @@ class AgentTD3(OffPolicyAgent):
             loss_actor_v = self.cache_loss_actor_v
 
         # gradients = self.model.get_gradients_for_current_parameters()
-<<<<<<< HEAD
-        #
-        # self.model.check_gradient_nan_or_zero(gradients)
-
-        gradients = None
-=======
         # self.model.check_gradient_nan_or_zero(gradients)
 
         gradients = None
@@ -195,6 +189,5 @@ class AgentTD3(OffPolicyAgent):
         if self.params.TYPE_OF_TD3_ACTION_SELECTOR == TD3ActionSelectorType.NOISY_NET_ACTION_SELECTOR:
             self.model.base.reset_noise()  # Pick a new noise vector (until next optimisation step)
             self.target_model.base.reset_noise()
->>>>>>> 87b25fafd5251e592ba6f82beea3db04fdbaba73
 
         return gradients, loss_critic_v.item(), loss_actor_v.item() * -1.0

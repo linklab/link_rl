@@ -1,5 +1,7 @@
 import os, sys
+from queue import Queue
 from collections import deque
+import threading
 
 current_path = os.path.dirname(os.path.realpath(__file__))
 PROJECT_HOME = os.path.abspath(os.path.join(current_path, os.pardir, os.pardir, os.pardir))
@@ -13,102 +15,109 @@ from codes.e_utils.common_utils import print_params
 from codes.e_utils.experience import ExperienceSourceFirstLast
 from codes.e_utils.names import OFF_POLICY_RL_ALGORITHMS
 from codes.e_utils.train_tracker import SpeedTracker
-import torch.multiprocessing as mp
 
 
-def play_func(exp_queue, agent):
-    train_env, test_env = get_train_and_test_envs()
+class Actor(threading.Thread):
+    def __init__(self, agent, exp_queue):
+        threading.Thread.__init__(self, name='Actor')
+        self.agent = agent
+        self.exp_queue = exp_queue
 
-    if params.ENVIRONMENT_ID in [EnvironmentName.TRADE_V0]:
-        assert params.NUM_ENVIRONMENTS == 1
-        agent.train_action_selector = EpsilonGreedyTradeDQNActionSelector(
-            epsilon=params.EPSILON_INIT, env=train_env.envs[0]
+        self.train_env, self.test_env = get_train_and_test_envs()
+
+        if params.ENVIRONMENT_ID in [EnvironmentName.TRADE_V0]:
+            assert params.NUM_ENVIRONMENTS == 1
+            agent.train_action_selector = EpsilonGreedyTradeDQNActionSelector(
+                epsilon=params.EPSILON_INIT, env=self.train_env.envs[0]
+            )
+            from codes.d_agents.actions import EpsilonTracker
+            agent.epsilon_tracker = EpsilonTracker(
+                action_selector=agent.train_action_selector,
+                eps_start=params.EPSILON_INIT,
+                eps_final=params.EPSILON_MIN,
+                eps_frames=params.EPSILON_MIN_STEP
+            )
+            agent.test_and_play_action_selector = ArgmaxTradeActionSelector(env=self.test_env)
+
+        # if params.DEEP_LEARNING_MODEL in [
+        #     DeepLearningModelName.DETERMINISTIC_CONTINUOUS_ACTOR_CRITIC_GRU,
+        #     DeepLearningModelName.DETERMINISTIC_CONTINUOUS_ACTOR_CRITIC_GRU_ATTENTION
+        # ]:
+        #     step_length = params.RNN_STEP_LENGTH
+        # else:
+        #     step_length = -1
+
+        self.experience_source = ExperienceSourceFirstLast(
+            env=self.train_env, agent=agent, gamma=params.GAMMA, n_step=params.N_STEP
         )
-        from codes.d_agents.actions import EpsilonTracker
-        agent.epsilon_tracker = EpsilonTracker(
-            action_selector=agent.train_action_selector,
-            eps_start=params.EPSILON_INIT,
-            eps_final=params.EPSILON_MIN,
-            eps_frames=params.EPSILON_MIN_STEP
-        )
-        agent.test_and_play_action_selector = ArgmaxTradeActionSelector(env=test_env)
 
-    # if params.DEEP_LEARNING_MODEL in [
-    #     DeepLearningModelName.DETERMINISTIC_CONTINUOUS_ACTOR_CRITIC_GRU,
-    #     DeepLearningModelName.DETERMINISTIC_CONTINUOUS_ACTOR_CRITIC_GRU_ATTENTION
-    # ]:
-    #     step_length = params.RNN_STEP_LENGTH
-    # else:
-    #     step_length = -1
+        self.exp_source_iter = iter(self.experience_source)
 
-    experience_source = ExperienceSourceFirstLast(
-        env=train_env, agent=agent, gamma=params.GAMMA, n_step=params.N_STEP
-    )
+        self.step_idx = 0
 
-    exp_source_iter = iter(experience_source)
-    step_idx = 0
+        self.early_stopping = get_early_stopping(agent)
 
-    early_stopping = get_early_stopping(agent)
+        self.episode = 0
+        self.solved = False
 
-    episode = 0
-    solved = False
+        self.train_episode_reward_lst_for_stat = deque(maxlen=params.AVG_STEP_SIZE_FOR_TRAIN_LOSS)
+        self.train_episode_reward_lst_for_test = deque(maxlen=params.TEST_NUM_EPISODES)
 
-    train_episode_reward_lst_for_stat = deque(maxlen=params.AVG_STEP_SIZE_FOR_TRAIN_LOSS)
-    train_episode_reward_lst_for_test = deque(maxlen=params.TEST_NUM_EPISODES)
+        self.num_tests = get_num_tests()
 
-    num_tests = get_num_tests()
+    def run(self):
+        with SpeedTracker(params=params) as speed_tracker:
+            try:
+                while self.step_idx < params.MAX_GLOBAL_STEP:
+                    # 1 스텝 진행하고 exp를 exp_queue에 넣음
+                    self.step_idx += 1
+                    exp = next(self.exp_source_iter)
+                    self.agent.buffer._add(exp)
 
-    with SpeedTracker(params=params) as speed_tracker:
-        try:
-            while step_idx < params.MAX_GLOBAL_STEP:
-                # 1 스텝 진행하고 exp를 exp_queue에 넣음
-                step_idx += 1
-                exp = next(exp_source_iter)
-                exp_queue.put(exp)
+                    # self.exp_queue.put(exp)
 
-                if hasattr(agent, "epsilon_tracker") and agent.epsilon_tracker:
-                    agent.epsilon_tracker.udpate(step_idx)
+                    if hasattr(self.agent, "epsilon_tracker") and self.agent.epsilon_tracker:
+                        self.agent.epsilon_tracker.udpate(self.step_idx)
 
-                episode_rewards, episode_steps = experience_source.pop_episode_reward_and_done_step_lst()
+                    episode_rewards, episode_steps = self.experience_source.pop_episode_reward_and_done_step_lst()
 
-                if episode_rewards and episode_steps:
-                    for current_episode_reward, current_episode_step in zip(episode_rewards, episode_steps):
-                        episode += 1
+                    if episode_rewards and episode_steps:
+                        for current_episode_reward, current_episode_step in zip(episode_rewards, episode_steps):
+                            self.episode += 1
 
-                        solved, train_info_dict = process_episode(
-                            train_episode_reward_lst_for_test,
-                            train_episode_reward_lst_for_stat,
-                            current_episode_reward,
-                            agent,
-                            speed_tracker,
-                            step_idx,
-                            episode,
-                            test_env,
-                            num_tests,
-                            early_stopping,
-                            current_episode_step,
-                            exp
-                        )
+                            self.solved, train_info_dict = process_episode(
+                                self.train_episode_reward_lst_for_test,
+                                self.train_episode_reward_lst_for_stat,
+                                current_episode_reward,
+                                self.agent,
+                                speed_tracker,
+                                self.step_idx,
+                                self.episode,
+                                self.test_env,
+                                self.num_tests,
+                                self.early_stopping,
+                                current_episode_step,
+                                exp
+                            )
 
-                        exp_queue.put(train_info_dict)
+                            self.exp_queue.put(train_info_dict)
 
-                if solved:
-                    print("Solved in {0} steps and {1} episodes!".format(step_idx, episode))
-                    break
+                    if self.solved:
+                        print("Solved in {0} steps and {1} episodes!".format(self.step_idx, self.episode))
+                        break
 
-            if params.MODEL_SAVE_MODE == ModelSaveMode.FINAL_ONLY:
-                last_model_save(agent, step_idx, train_episode_reward_lst_for_stat)
-        finally:
-            if params.ENVIRONMENT_ID in [EnvironmentName.REAL_DEVICE_RIP, EnvironmentName.REAL_DEVICE_DOUBLE_RIP]:
-                print("send 'stop' message into train_env!")
-                train_env.stop()
+                if params.MODEL_SAVE_MODE == ModelSaveMode.FINAL_ONLY:
+                    last_model_save(self.agent, self.step_idx, self.train_episode_reward_lst_for_stat)
+            finally:
+                if params.ENVIRONMENT_ID in [EnvironmentName.REAL_DEVICE_RIP, EnvironmentName.REAL_DEVICE_DOUBLE_RIP]:
+                    print("send 'stop' message into train_env!")
+                    self.train_env.stop()
 
-    exp_queue.put(None)
+            self.exp_queue.put(None)
 
 
 def main():
-    mp.set_start_method('spawn', force=True)
-    os.environ['OMP_NUM_THREADS'] = "1"
+    # os.environ['OMP_NUM_THREADS'] = "1"
 
     if params.ENVIRONMENT_ID in [
         EnvironmentName.PENDULUM_MATLAB_V0,
@@ -120,15 +129,12 @@ def main():
         tentative_env = None
     else:
         tentative_env = rl_utils.get_single_environment(params=params)
+
     agent = get_agent(tentative_env)
 
-    agent.model.share_memory()
-
-    exp_queue = mp.Queue(maxsize=params.TRAIN_STEP_FREQ * 100) #params.TRAIN_STEP_FREQ * 2
-    play_proc = mp.Process(target=play_func, args=(exp_queue, agent))
-    play_proc.start()
-
-    time.sleep(0.5)
+    exp_queue = Queue(maxsize=params.TRAIN_STEP_FREQ * 100) #params.TRAIN_STEP_FREQ * 2
+    actor = Actor(agent, exp_queue)
+    actor.start()
 
     if params.WANDB:
         set_wandb(agent)
@@ -138,11 +144,12 @@ def main():
     step_idx = 0
     episode = 0
 
-    while play_proc.is_alive():
+    while actor.is_alive():
         step_idx += params.TRAIN_STEP_FREQ
         solved = False
         for _ in range(params.TRAIN_STEP_FREQ):
             exp = exp_queue.get()
+
             if isinstance(exp, dict):
                 episode += 1
                 train_info_dict = exp
@@ -181,10 +188,10 @@ def main():
             else:
                 if exp is None:
                     solved = True
-                    play_proc.join()
+                    actor.join()
                     break
-                else:
-                    agent.buffer._add(exp)
+                # else:
+                #     agent.buffer._add(exp)
 
         if solved:
             print("Solved in {0} steps and {1} episodes!".format(step_idx, episode))
