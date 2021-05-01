@@ -52,6 +52,7 @@ if isinstance(params, PARAMETERS_GENERAL_TRADE_DQN):
 else:
     MODEL_SAVE_FILE_PREFIX = params.ENVIRONMENT_ID.value
 
+
 def _make():
     env = get_single_environment(params=params, mode=AgentMode.TRAIN)
     if params.COUNT_BASED_EXPLORATION:
