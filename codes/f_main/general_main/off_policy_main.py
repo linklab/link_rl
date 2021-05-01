@@ -5,6 +5,9 @@ import threading
 from sys import platform as _platform
 import torch.multiprocessing as mp
 
+mp.set_start_method('spawn', force=True)
+os.environ['OMP_NUM_THREADS'] = "1"
+
 current_path = os.path.dirname(os.path.realpath(__file__))
 PROJECT_HOME = os.path.abspath(os.path.join(current_path, os.pardir, os.pardir, os.pardir))
 if PROJECT_HOME not in sys.path:
@@ -57,10 +60,9 @@ class Actor(parent):
         #     step_length = -1
 
         self.experience_source = ExperienceSourceFirstLast(
-            env=self.train_env, agent=agent, gamma=params.GAMMA, n_step=params.N_STEP
+            env=self.train_env, agent=self.agent, gamma=params.GAMMA, n_step=params.N_STEP
         )
 
-        self.exp_source_iter = iter(self.experience_source)
         self.step_idx = 0
 
         self.early_stopping = get_early_stopping(agent)
@@ -74,12 +76,14 @@ class Actor(parent):
         self.num_tests = get_num_tests()
 
     def run(self):
+        exp_source_iter = iter(self.experience_source)
+
         with SpeedTracker(params=params) as speed_tracker:
             try:
                 while self.step_idx < params.MAX_GLOBAL_STEP:
                     # 1 스텝 진행하고 exp를 exp_queue에 넣음
                     self.step_idx += 1
-                    exp = next(self.exp_source_iter)
+                    exp = next(exp_source_iter)
 
                     if parent is mp.Process:
                         self.exp_queue.put(exp)
