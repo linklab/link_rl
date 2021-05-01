@@ -4,8 +4,8 @@ from torch.distributions import Normal
 
 from codes.c_models.continuous_action.stochastic_continuous_actor_critic_model import StochasticContinuousActorCriticModel
 from codes.d_agents.on_policy.a2c.a2c_agent import AgentA2C
+from codes.d_agents.on_policy.on_policy_action_selector import ContinuousNormalActionSelector
 from codes.e_utils import rl_utils
-from codes.d_agents.actions import ContinuousNormalActionSelector
 from codes.e_utils.names import DeepLearningModelName
 
 

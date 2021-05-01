@@ -1,9 +1,9 @@
 import torch
 
 from codes.c_models.discrete_action.discrete_actor_critic_model import DiscreteActorCriticModel
+from codes.d_agents.on_policy.on_policy_action_selector import DiscreteCategoricalActionSelector
 from codes.d_agents.on_policy.ppo.ppo_agent import AgentPPO
 from codes.e_utils import rl_utils
-from codes.d_agents.actions import DiscreteCategoricalActionSelector
 from codes.e_utils.names import DeepLearningModelName
 
 

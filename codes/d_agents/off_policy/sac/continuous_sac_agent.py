@@ -6,9 +6,9 @@ import torch.nn.utils as nn_utils
 
 from codes.c_models.continuous_action.soft_actor_critic_model import SoftActorCriticModel
 from codes.d_agents.a0_base_agent import float32_preprocessor
+from codes.d_agents.on_policy.on_policy_action_selector import ContinuousNormalActionSelector
 from codes.d_agents.on_policy.on_policy_agent import OnPolicyAgent
 from codes.e_utils import rl_utils, replay_buffer
-from codes.d_agents.actions import ContinuousNormalActionSelector
 from codes.e_utils.names import DeepLearningModelName, AgentMode
 
 
