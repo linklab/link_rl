@@ -3,6 +3,7 @@ import os, sys
 from collections import deque
 import threading
 from sys import platform as _platform
+import torch.multiprocessing as mp
 
 current_path = os.path.dirname(os.path.realpath(__file__))
 PROJECT_HOME = os.path.abspath(os.path.join(current_path, os.pardir, os.pardir, os.pardir))
@@ -21,7 +22,7 @@ if "win32" in _platform or "win64" in _platform:
     parent = threading.Thread
     print("PLATFORM: WINDOWS")
 else:
-    parent = multiprocessing.Process
+    parent = mp.Process
     print("PLATFORM: MAC or LINUX")
 
 
@@ -80,7 +81,7 @@ class Actor(parent):
                     self.step_idx += 1
                     exp = next(self.exp_source_iter)
 
-                    if parent is multiprocessing.Process:
+                    if parent is mp.Process:
                         self.exp_queue.put(exp)
                     else:
                         self.agent.buffer._add(exp)
@@ -139,10 +140,7 @@ def main():
 
     agent = get_agent(tentative_env)
 
-    if parent is multiprocessing.Process:
-        # import torch.multiprocessing as mp
-        # mp.set_start_method('spawn')
-        # os.environ['OMP_NUM_THREADS'] = "1"
+    if parent is mp.Process:
         agent.model.share_memory()
         from torch.multiprocessing import Queue
     else:
