@@ -39,7 +39,7 @@ class SpeedTracker:
         elapsed_time = current_ts - self.start_ts
         ts_diff = current_ts - self.ts
 
-        speed = (episode_done_step - self.ts_frame) / ts_diff
+        speed = (episode_done_step - self.ts_frame) / (ts_diff + 1.0e-8)
 
         self.ts_frame = episode_done_step
         self.ts = current_ts
