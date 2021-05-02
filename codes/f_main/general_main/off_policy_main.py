@@ -1,5 +1,8 @@
 import os, sys
 from collections import deque
+import threading
+from sys import platform as _platform
+import torch.multiprocessing as mp
 
 current_path = os.path.dirname(os.path.realpath(__file__))
 PROJECT_HOME = os.path.abspath(os.path.join(current_path, os.pardir, os.pardir, os.pardir))
@@ -13,7 +16,11 @@ from codes.e_utils.common_utils import print_params
 from codes.e_utils.experience import ExperienceSourceFirstLast
 from codes.e_utils.names import OFF_POLICY_RL_ALGORITHMS
 from codes.e_utils.train_tracker import SpeedTracker
-import torch.multiprocessing as mp
+
+if "win32" in _platform or "win64" in _platform:
+    print("PLATFORM: WINDOWS")
+else:
+    print("PLATFORM: MAC or LINUX")
 
 
 def actor_func(exp_queue, agent):
@@ -64,7 +71,11 @@ def actor_func(exp_queue, agent):
                 # 1 스텝 진행하고 exp를 exp_queue에 넣음
                 step_idx += 1
                 exp = next(exp_source_iter)
-                exp_queue.put(exp)
+
+                if "win32" in _platform or "win64" in _platform:
+                    agent.buffer._add(exp)
+                else:
+                    exp_queue.put(exp)
 
                 if hasattr(agent, "epsilon_tracker") and agent.epsilon_tracker:
                     agent.epsilon_tracker.udpate(step_idx)
@@ -108,7 +119,7 @@ def actor_func(exp_queue, agent):
 
 def main():
     mp.set_start_method('spawn', force=True)
-    os.environ['OMP_NUM_THREADS'] = "1"
+    os.environ['OMP_NUM_THREADS'] = "10"
 
     if params.ENVIRONMENT_ID in [
         EnvironmentName.PENDULUM_MATLAB_V0,
@@ -122,12 +133,16 @@ def main():
         tentative_env = rl_utils.get_single_environment(params=params)
     agent = get_agent(tentative_env)
 
-    agent.model.share_memory()
+    if "win32" in _platform or "win64" in _platform:
+        from queue import Queue
+        exp_queue = Queue(maxsize=params.TRAIN_STEP_FREQ * 100) #params.TRAIN_STEP_FREQ * 2
+        actor = threading.Thread(target=actor_func, args=(exp_queue, agent))
+    else:
+        agent.model.share_memory()
+        exp_queue = mp.Queue(maxsize=params.TRAIN_STEP_FREQ * 100) #params.TRAIN_STEP_FREQ * 2
+        actor = mp.Process(target=actor_func, args=(exp_queue, agent))
 
-    exp_queue = mp.Queue(maxsize=params.TRAIN_STEP_FREQ * 100) #params.TRAIN_STEP_FREQ * 2
-    play_proc = mp.Process(target=actor_func, args=(exp_queue, agent))
-    play_proc.start()
-
+    actor.start()
     time.sleep(0.5)
 
     if params.WANDB:
@@ -138,7 +153,7 @@ def main():
     step_idx = 0
     episode = 0
 
-    while play_proc.is_alive():
+    while actor.is_alive():
         step_idx += params.TRAIN_STEP_FREQ
         solved = False
         for _ in range(params.TRAIN_STEP_FREQ):
@@ -181,10 +196,13 @@ def main():
             else:
                 if exp is None:
                     solved = True
-                    play_proc.join()
+                    actor.join()
                     break
                 else:
-                    agent.buffer._add(exp)
+                    if "win32" in _platform or "win64" in _platform:
+                        pass
+                    else:
+                        agent.buffer._add(exp)
 
         if solved:
             print("Solved in {0} steps and {1} episodes!".format(step_idx, episode))
@@ -212,4 +230,3 @@ if __name__ == "__main__":
     assert params.RL_ALGORITHM in OFF_POLICY_RL_ALGORITHMS
 
     main()
-
