@@ -93,7 +93,10 @@ class AgentDDPG(OffPolicyAgent):
         self.last_noise = 0.0
         self.global_uncertainty = 1.0
 
-        if self.params.TYPE_OF_DDPG_ACTION == DDPGActionType.EPSILON:
+        if self.params.TYPE_OF_DDPG_ACTION in [
+            DDPGActionType.OU_NOISE_WITH_EPSILON,
+            DDPGActionType.GAUSSIAN_NOISE_WITH_EPSILON
+        ]:
             self.epsilon_tracker = EpsilonTracker(
                 action_selector=self.train_action_selector,
                 eps_start=params.EPSILON_INIT,
@@ -123,10 +126,6 @@ class AgentDDPG(OffPolicyAgent):
             self.last_noise = new_noises[0][0]
         else:
             actions, new_noises = self.test_and_play_action_selector(mu, noises)
-
-        if not (isinstance(self.train_action_selector, SomeTimesBlowDDPGActionSelector) and np.any(new_noises)):
-            actions = np.clip(actions, -1.0, 1.0)
-        #####################################
 
         # print("actions: {0:7.4f}, noises: {1:7.4f}".format(
         #     actions[0][0], self.last_noise

@@ -9,9 +9,10 @@ class DDPGActionSelectorType(enum.Enum):
 
 class DDPGActionType(enum.Enum):
     ONLY_OU_NOISE = 0
-    EPSILON = 1
-    UNCERTAINTY = 2
-    ONLY_GREEDY = 3
+    OU_NOISE_WITH_EPSILON = 1
+    GAUSSIAN_NOISE_WITH_EPSILON = 2
+    UNCERTAINTY = 3
+    ONLY_GREEDY = 4
 
 
 class DDPGTrainType(enum.Enum):
