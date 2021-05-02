@@ -1,6 +1,7 @@
 import os, sys
 from collections import deque
 import threading
+from multiprocessing import Pipe
 from sys import platform as _platform
 import torch.multiprocessing as mp
 
@@ -18,12 +19,14 @@ from codes.e_utils.names import OFF_POLICY_RL_ALGORITHMS
 from codes.e_utils.train_tracker import SpeedTracker
 
 if "win32" in _platform or "win64" in _platform:
+    thread = True
     print("PLATFORM: WINDOWS")
 else:
+    thread = False
     print("PLATFORM: MAC or LINUX")
 
 
-def actor_func(exp_queue, agent):
+def actor_func(agent, exp_queue, child_pipe_conn):
     train_env, test_env = get_train_and_test_envs()
 
     if params.ENVIRONMENT_ID in [EnvironmentName.TRADE_V0]:
@@ -72,10 +75,10 @@ def actor_func(exp_queue, agent):
                 step_idx += 1
                 exp = next(exp_source_iter)
 
-                if "win32" in _platform or "win64" in _platform:
+                if thread:
                     agent.buffer._add(exp)
                 else:
-                    exp_queue.put(exp)
+                    child_pipe_conn.send(exp)
 
                 if hasattr(agent, "epsilon_tracker") and agent.epsilon_tracker:
                     agent.epsilon_tracker.udpate(step_idx)
@@ -101,7 +104,10 @@ def actor_func(exp_queue, agent):
                             exp
                         )
 
-                        exp_queue.put(train_info_dict)
+                        if thread:
+                            exp_queue.put(train_info_dict)
+                        else:
+                            child_pipe_conn.send(train_info_dict)
 
                 if solved:
                     print("Solved in {0} steps and {1} episodes!".format(step_idx, episode))
@@ -114,7 +120,10 @@ def actor_func(exp_queue, agent):
                 print("send 'stop' message into train_env!")
                 train_env.stop()
 
-    exp_queue.put(None)
+    if thread:
+        exp_queue.put(None)
+    else:
+        child_pipe_conn.send(None)
 
 
 def main():
@@ -133,14 +142,17 @@ def main():
         tentative_env = rl_utils.get_single_environment(params=params)
     agent = get_agent(tentative_env)
 
-    if "win32" in _platform or "win64" in _platform:
+
+    if thread:
         from queue import Queue
         exp_queue = Queue(maxsize=params.TRAIN_STEP_FREQ * 100) #params.TRAIN_STEP_FREQ * 2
-        actor = threading.Thread(target=actor_func, args=(exp_queue, agent))
+        parent_pipe_conn = None
+        actor = threading.Thread(target=actor_func, args=(agent, exp_queue, None))
     else:
         agent.model.share_memory()
-        exp_queue = mp.Queue(maxsize=params.TRAIN_STEP_FREQ * 100) #params.TRAIN_STEP_FREQ * 2
-        actor = mp.Process(target=actor_func, args=(exp_queue, agent))
+        parent_pipe_conn, child_pipe_conn = Pipe()
+        exp_queue = None
+        actor = mp.Process(target=actor_func, args=(agent, None, child_pipe_conn))
 
     actor.start()
     time.sleep(0.5)
@@ -157,7 +169,11 @@ def main():
         step_idx += params.TRAIN_STEP_FREQ
         solved = False
         for _ in range(params.TRAIN_STEP_FREQ):
-            exp = exp_queue.get()
+            if thread:
+                exp = exp_queue.get()
+            else:
+                exp = parent_pipe_conn.recv()
+
             if isinstance(exp, dict):
                 episode += 1
                 train_info_dict = exp
@@ -199,8 +215,8 @@ def main():
                     actor.join()
                     break
                 else:
-                    if "win32" in _platform or "win64" in _platform:
-                        pass
+                    if thread:
+                        pass  # Actor가 이미 직접 buffer에 add하고 있음
                     else:
                         agent.buffer._add(exp)
 
