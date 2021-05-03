@@ -3,9 +3,9 @@ import torch.nn.functional as F
 
 from codes.c_models.discrete_action.discrete_actor_critic_model import DiscreteActorCriticModel
 from codes.d_agents.on_policy.a2c.a2c_agent import AgentA2C
+from codes.d_agents.on_policy.on_policy_action_selector import DiscreteCategoricalActionSelector
 from codes.e_utils import rl_utils
-from codes.e_utils.actions import DiscreteCategoricalActionSelector
-from codes.e_utils.names import DeepLearningModelName, AgentMode
+from codes.e_utils.names import DeepLearningModelName
 
 
 class AgentDiscreteA2C(AgentA2C):

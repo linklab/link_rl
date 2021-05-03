@@ -1,56 +1,60 @@
 import numpy as np
 import torch
 import torch.nn.functional as F
-from icecream import ic
 
-from codes.a_config._rl_parameters.off_policy.parameter_ddpg import PARAMETERS_DDPG
+from codes.a_config._rl_parameters.off_policy.parameter_ddpg import PARAMETERS_DDPG, DDPGActionSelectorType, \
+    DDPGActionType
 from codes.c_models.continuous_action.deterministic_continuous_actor_critic_model import DeterministicContinuousActorCriticModel
 from codes.d_agents.a0_base_agent import float32_preprocessor
+from codes.d_agents.off_policy.ddpg.ddpg_action_selector import DDPGActionSelector, SomeTimesBlowDDPGActionSelector
 from codes.d_agents.off_policy.off_policy_agent import OffPolicyAgent
 from codes.e_utils import rl_utils
-from codes.e_utils.actions import SomeTimesBlowDDPGActionSelector, DDPGActionSelector, EpsilonTracker
-from codes.e_utils.names import DeepLearningModelName, AgentMode, EnvironmentName
+from codes.d_agents.actions import EpsilonTracker
+from codes.e_utils.names import DeepLearningModelName, AgentMode
 
 
 class AgentDDPG(OffPolicyAgent):
     """
     Agent implementing Orstein-Uhlenbeck exploration process
     """
-    def __init__(self, worker_id, input_shape, action_shape, num_outputs, action_min, action_max, params, device):
+    def __init__(self, worker_id, input_shape, action_shape, num_outputs, params, device):
         assert params.DEEP_LEARNING_MODEL == DeepLearningModelName.DETERMINISTIC_CONTINUOUS_ACTOR_CRITIC_MLP
         assert issubclass(params, PARAMETERS_DDPG)
 
         super(AgentDDPG, self).__init__(worker_id=worker_id, params=params, action_shape=action_shape, device=device)
 
         self.__name__ = "AgentDDPG"
-        self.action_min = action_min
-        self.action_max = action_max
 
         # if params.ENVIRONMENT_ID in [EnvironmentName.PENDULUM_MATLAB_V0, EnvironmentName.PENDULUM_MATLAB_DOUBLE_RIP_V0]:
         #     self.train_action_selector = SomeTimesBlowDDPGActionSelector(
-        #         ou_enabled=params.OU_NOISE_ENABLED, ou_mu=np.zeros(self.action_shape), ou_sigma=self.params.OU_SIGMA
+        #         noise_enabled=params.NOISE_ENABLED, ou_mu=np.zeros(self.action_shape), ou_sigma=self.params.OU_SIGMA
         #         min_blowing_action=-10.0 * params.ACTION_SCALE, max_blowing_action=10.0 * params.ACTION_SCALE,
         #     )
         #     self.test_and_play_action_selector = SomeTimesBlowDDPGActionSelector(
-        #         ou_enabled=False,
+        #         noise_enabled=False,
         #         min_blowing_action=-10.0 * params.ACTION_SCALE, max_blowing_action=10.0 * params.ACTION_SCALE
         #     )
         # else:
-        #     self.train_action_selector = DDPGActionSelector(ou_enabled=params.OU_NOISE_ENABLED, ou_sigma=self.params.OU_SIGMA)
-        #     self.test_and_play_action_selector = DDPGActionSelector(ou_enabled=False)
-        if params.TYPE_OF_DDPG_ACTION_SELECTOR == "DDPGActionSelector":
-            self.train_action_selector = DDPGActionSelector(
-                ou_enabled=params.OU_NOISE_ENABLED, ou_mu=np.zeros(self.action_shape), ou_sigma=self.params.OU_SIGMA,
-                epsilon=params.EPSILON_INIT
-            )
-        elif params.TYPE_OF_DDPG_ACTION_SELECTOR == "SomeTimesBlowDDPGActionSelector":
-            self.train_action_selector = SomeTimesBlowDDPGActionSelector(
-                ou_enabled=params.OU_NOISE_ENABLED, ou_mu=np.zeros(self.action_shape), ou_sigma=self.params.OU_SIGMA,
-                min_blowing_action=-5.0 * params.ACTION_SCALE, max_blowing_action=5.0 * params.ACTION_SCALE,
-                epsilon=params.EPSILON_INIT
-            )
+        #     self.train_action_selector = DDPGActionSelector(noise_enabled=params.NOISE_ENABLED, ou_sigma=self.params.OU_SIGMA)
+        #     self.test_and_play_action_selector = DDPGActionSelector(noise_enabled=False)
 
-        self.test_and_play_action_selector = DDPGActionSelector(ou_enabled=False)
+        if params.TYPE_OF_DDPG_ACTION_SELECTOR == DDPGActionSelectorType.BASIC_ACTION_SELECTOR:
+            self.train_action_selector = DDPGActionSelector(
+                noise_enabled=params.NOISE_ENABLED, ou_mu=np.zeros(self.action_shape), ou_sigma=self.params.OU_SIGMA,
+                epsilon=params.EPSILON_INIT, params=params
+            )
+        elif params.TYPE_OF_DDPG_ACTION_SELECTOR == DDPGActionSelectorType.SOMETIMES_BLOW_ACTION_SELECTOR:
+            self.train_action_selector = SomeTimesBlowDDPGActionSelector(
+                noise_enabled=params.NOISE_ENABLED, ou_mu=np.zeros(self.action_shape), ou_sigma=self.params.OU_SIGMA,
+                min_blowing_action=-5.0 * params.ACTION_SCALE, max_blowing_action=5.0 * params.ACTION_SCALE,
+                epsilon=params.EPSILON_INIT, params=params
+            )
+        elif params.TYPE_OF_DDPG_ACTION_SELECTOR == DDPGActionSelectorType.NOISY_NET_ACTION_SELECTOR:
+            self.train_action_selector = DDPGActionSelector(noise_enabled=False, params=params)
+        else:
+            raise ValueError()
+
+        self.test_and_play_action_selector = DDPGActionSelector(noise_enabled=False, params=params)
 
         self.model = DeterministicContinuousActorCriticModel(
             worker_id=worker_id,
@@ -75,13 +79,13 @@ class AgentDDPG(OffPolicyAgent):
         # )
 
         self.actor_optimizer = rl_utils.get_optimizer(
-            parameters=self.model.base.actor.parameters(),
+            parameters=self.model.base.actor_params,
             learning_rate=self.params.ACTOR_LEARNING_RATE,
             params=params
         )
 
         self.critic_optimizer = rl_utils.get_optimizer(
-            parameters=self.model.base.critic.parameters(),
+            parameters=self.model.base.critic_params,
             learning_rate=self.params.LEARNING_RATE,
             params=params
         )
@@ -89,13 +93,20 @@ class AgentDDPG(OffPolicyAgent):
         self.last_noise = 0.0
         self.global_uncertainty = 1.0
 
-        if self.params.TYPE_OF_ACTION == "old":
+        if self.params.TYPE_OF_DDPG_ACTION in [
+            DDPGActionType.OU_NOISE_WITH_EPSILON,
+            DDPGActionType.GAUSSIAN_NOISE_WITH_EPSILON
+        ]:
             self.epsilon_tracker = EpsilonTracker(
                 action_selector=self.train_action_selector,
                 eps_start=params.EPSILON_INIT,
                 eps_final=params.EPSILON_MIN,
                 eps_frames=params.EPSILON_MIN_STEP
             )
+        else:
+            self.epsilon_tracker = None
+
+        self.num_trains = 0
 
     def __call__(self, states, noises=None):
         if not noises:
@@ -118,12 +129,6 @@ class AgentDDPG(OffPolicyAgent):
         else:
             actions, new_noises = self.test_and_play_action_selector(mu, noises)
 
-        #print(actions, self.action_min, self.action_max, "!!!!!!!!!!!!!!!!")
-
-        if not (isinstance(self.train_action_selector, SomeTimesBlowDDPGActionSelector) and np.any(new_noises)):
-            actions = np.clip(actions, -1.0, 1.0)
-        #####################################
-
         # print("actions: {0:7.4f}, noises: {1:7.4f}".format(
         #     actions[0][0], self.last_noise
         # ))
@@ -131,6 +136,7 @@ class AgentDDPG(OffPolicyAgent):
         return actions, new_noises
 
     def train(self, step_idx):
+        self.num_trains += 1
         if self.params.PER_PROPORTIONAL or self.params.PER_RANK_BASED:
             batch, batch_indices, batch_weights = self.buffer.sample(self.params.BATCH_SIZE)
         else:
@@ -192,9 +198,14 @@ class AgentDDPG(OffPolicyAgent):
         if not self.params.TRAIN_ONLY_AFTER_EPISODE:
             self.target_model.alpha_sync(self.model, alpha=1 - self.params.TAU) #(1 - 0.001)
 
-        gradients = self.model.get_gradients_for_current_parameters()
+        # gradients = self.model.get_gradients_for_current_parameters()
+        # self.model.check_gradient_nan_or_zero(gradients)
 
-        self.model.check_gradient_nan_or_zero(gradients)
+        gradients = None
+
+        if self.params.TYPE_OF_DDPG_ACTION_SELECTOR == DDPGActionSelectorType.NOISY_NET_ACTION_SELECTOR:
+            self.model.base.reset_noise()  # Pick a new noise vector (until next optimisation step)
+            self.target_model.base.reset_noise()
 
         return gradients, loss_critic_v.item(), loss_actor_v.item() * -1.0
 
@@ -251,6 +262,7 @@ class AgentDDPG(OffPolicyAgent):
 
         self.target_model.alpha_sync(self.model, alpha=1 - 0.00005) #(1 - 0.001)
 
-        gradients = self.model.get_gradients_for_current_parameters()
+        #gradients = self.model.get_gradients_for_current_parameters()
+        gradients = None
 
         return gradients, loss_critic_v.item(), loss_actor_v.item() * -1.0

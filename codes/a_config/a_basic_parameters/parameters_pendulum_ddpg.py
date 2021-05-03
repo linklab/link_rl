@@ -1,4 +1,5 @@
-from codes.a_config._rl_parameters.off_policy.parameter_ddpg import PARAMETERS_DDPG
+from codes.a_config._rl_parameters.off_policy.parameter_ddpg import PARAMETERS_DDPG, DDPGActionType, \
+    DDPGActionSelectorType
 from codes.a_config.parameters_general import PARAMETERS_GENERAL
 from codes.e_utils.names import EnvironmentName, DeepLearningModelName, RLAlgorithmName, OptimizerName
 
@@ -17,7 +18,6 @@ class PARAMETERS_PENDULUM_DDPG(PARAMETERS_GENERAL, PARAMETERS_DDPG):
     STOP_PATIENCE_COUNT = 10
 
     REPLAY_BUFFER_SIZE = 100000
-    MAX_GLOBAL_STEP = 250000
     LEARNING_RATE = 0.001
     ACTOR_LEARNING_RATE = 0.001
     TRAIN_STEP_FREQ = 1
@@ -35,15 +35,22 @@ class PARAMETERS_PENDULUM_DDPG(PARAMETERS_GENERAL, PARAMETERS_DDPG):
 
     ACTION_SCALE = 2.0
 
-    OU_NOISE_ENABLED = True
+    NOISE_ENABLED = True
     OU_SIGMA = 2.0
 
-    COUNT_BASED_EXPLORATION = True
+    COUNT_BASED_EXPLORATION = False
     COUNT_BASED_FILTER = [1, 1, 0]
     COUNT_BASED_REWARD_SCALE = 0.4
     COUNT_BASED_PRECISION = 0
 
-    TRAIN_ONLY_AFTER_EPISODE = True
+    EPSILON_INIT = 1.0
+    EPSILON_MIN = 0.01
+    EPSILON_MIN_STEP = 15000
+    MAX_GLOBAL_STEP = 50000
+
+    TRAIN_ONLY_AFTER_EPISODE = False
     NUM_TRAIN_ONLY_AFTER_EPISODE = 100
 
-    TYPE_OF_REWARD = "old_version"  # "current_version"
+    TYPE_OF_DDPG_ACTION = DDPGActionType.GAUSSIAN_NOISE_WITH_EPSILON
+    TYPE_OF_DDPG_ACTION_SELECTOR = DDPGActionSelectorType.BASIC_ACTION_SELECTOR
+

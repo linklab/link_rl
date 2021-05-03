@@ -1,9 +1,5 @@
 import os, sys
-import threading
 from collections import deque
-from multiprocessing import Pipe
-from sys import platform as _platform
-import torch.multiprocessing as mp
 
 current_path = os.path.dirname(os.path.realpath(__file__))
 PROJECT_HOME = os.path.abspath(os.path.join(current_path, os.pardir, os.pardir, os.pardir))
@@ -17,16 +13,10 @@ from codes.e_utils.common_utils import print_params
 from codes.e_utils.experience import ExperienceSourceFirstLast
 from codes.e_utils.names import OFF_POLICY_RL_ALGORITHMS
 from codes.e_utils.train_tracker import SpeedTracker
-
-if "win32" in _platform or "win64" in _platform:
-    thread = True
-    print("PLATFORM: WINDOWS")
-else:
-    thread = False
-    print("PLATFORM: MAC or LINUX")
+import torch.multiprocessing as mp
 
 
-def actor_func(agent, exp_queue, child_pipe_conn):
+def actor_func(exp_queue, agent):
     train_env, test_env = get_train_and_test_envs()
 
     if params.ENVIRONMENT_ID in [EnvironmentName.TRADE_V0]:
@@ -74,11 +64,7 @@ def actor_func(agent, exp_queue, child_pipe_conn):
                 # 1 스텝 진행하고 exp를 exp_queue에 넣음
                 step_idx += 1
                 exp = next(exp_source_iter)
-
-                if thread:
-                    exp_queue.put(exp)
-                else:
-                    child_pipe_conn.send(exp)
+                exp_queue.put(exp)
 
                 if hasattr(agent, "epsilon_tracker") and agent.epsilon_tracker:
                     agent.epsilon_tracker.udpate(step_idx)
@@ -104,10 +90,7 @@ def actor_func(agent, exp_queue, child_pipe_conn):
                             exp
                         )
 
-                        if thread:
-                            exp_queue.put(train_info_dict)
-                        else:
-                            child_pipe_conn.send(train_info_dict)
+                        exp_queue.put(train_info_dict)
 
                 if solved:
                     print("Solved in {0} steps and {1} episodes!".format(step_idx, episode))
@@ -120,15 +103,12 @@ def actor_func(agent, exp_queue, child_pipe_conn):
                 print("send 'stop' message into train_env!")
                 train_env.stop()
 
-    if thread:
-        exp_queue.put(None)
-    else:
-        child_pipe_conn.send(None)
+    exp_queue.put(None)
 
 
 def main():
     mp.set_start_method('spawn', force=True)
-    os.environ['OMP_NUM_THREADS'] = "10"
+    os.environ['OMP_NUM_THREADS'] = "1"
 
     if params.ENVIRONMENT_ID in [
         EnvironmentName.PENDULUM_MATLAB_V0,
@@ -140,21 +120,14 @@ def main():
         tentative_env = None
     else:
         tentative_env = rl_utils.get_single_environment(params=params)
-
     agent = get_agent(tentative_env)
 
-    if thread:
-        from queue import Queue
-        exp_queue = Queue(maxsize=params.TRAIN_STEP_FREQ * 100) #params.TRAIN_STEP_FREQ * 2
-        parent_pipe_conn = None
-        actor = threading.Thread(target=actor_func, args=(agent, exp_queue, None))
-    else:
-        agent.model.share_memory()
-        parent_pipe_conn, child_pipe_conn = Pipe()
-        exp_queue = None
-        actor = mp.Process(target=actor_func, args=(agent, None, child_pipe_conn))
+    agent.model.share_memory()
 
-    actor.start()
+    exp_queue = mp.Queue(maxsize=params.TRAIN_STEP_FREQ * 100) #params.TRAIN_STEP_FREQ * 2
+    play_proc = mp.Process(target=actor_func, args=(exp_queue, agent))
+    play_proc.start()
+
     time.sleep(0.5)
 
     if params.WANDB:
@@ -165,15 +138,11 @@ def main():
     step_idx = 0
     episode = 0
 
-    while actor.is_alive():
+    while play_proc.is_alive():
         step_idx += params.TRAIN_STEP_FREQ
         solved = False
         for _ in range(params.TRAIN_STEP_FREQ):
-            if thread:
-                exp = exp_queue.get()
-            else:
-                exp = parent_pipe_conn.recv()
-
+            exp = exp_queue.get()
             if isinstance(exp, dict):
                 episode += 1
                 train_info_dict = exp
@@ -212,7 +181,7 @@ def main():
             else:
                 if exp is None:
                     solved = True
-                    actor.join()
+                    play_proc.join()
                     break
                 else:
                     agent.buffer._add(exp)
@@ -243,3 +212,4 @@ if __name__ == "__main__":
     assert params.RL_ALGORITHM in OFF_POLICY_RL_ALGORITHMS
 
     main()
+

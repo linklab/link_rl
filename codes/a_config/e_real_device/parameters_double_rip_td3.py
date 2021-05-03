@@ -1,9 +1,9 @@
-from codes.a_config._rl_parameters.off_policy.parameter_ddpg import PARAMETERS_DDPG
+from codes.a_config._rl_parameters.off_policy.parameter_td3 import PARAMETERS_TD3, TD3ActionType, TD3ActionSelectorType
 from codes.a_config.parameters_general import PARAMETERS_GENERAL, RIPEnvRewardType
 from codes.e_utils.names import OptimizerName, RLAlgorithmName, EnvironmentName, DeepLearningModelName, ModelSaveMode
-from codes.a_config.parameters_general import PARAMETERS_GENERAL
 
-class PARAMETERS_DOUBLE_RIP(PARAMETERS_GENERAL, PARAMETERS_DDPG):
+
+class PARAMETERS_DOUBLE_RIP_TD3(PARAMETERS_GENERAL, PARAMETERS_TD3):
     # [GENERAL]
     SEED = 1
     MY_PLATFORM = None
@@ -68,12 +68,6 @@ class PARAMETERS_DOUBLE_RIP(PARAMETERS_GENERAL, PARAMETERS_DDPG):
     # [1. ENVIRONMENTS]
     ENVIRONMENT_ID = EnvironmentName.REAL_DEVICE_DOUBLE_RIP
 
-    # [2. DEEP_LEARNING_MODELS]
-    DEEP_LEARNING_MODEL = DeepLearningModelName.DETERMINISTIC_CONTINUOUS_ACTOR_CRITIC_MLP
-
-    # [3. ALGORITHMS]
-    RL_ALGORITHM = RLAlgorithmName.DDPG_V0
-
     # [4. OPTIMIZER]
     OPTIMIZER = OptimizerName.ADAM
 
@@ -87,7 +81,12 @@ class PARAMETERS_DOUBLE_RIP(PARAMETERS_GENERAL, PARAMETERS_DDPG):
     COUNT_BASED_REWARD_SCALE = 0.4
     COUNT_BASED_PRECISION = 1
 
-    TRAIN_ONLY_AFTER_EPISODE = True
+    TRAIN_ONLY_AFTER_EPISODE = False
     NUM_TRAIN_ONLY_AFTER_EPISODE = 100
 
     TYPE_OF_RIP_REWARD = RIPEnvRewardType.NEW  # "old_version"
+    TYPE_OF_TD3_ACTION = TD3ActionType.GAUSSIAN_NOISE_WITH_EPSILON
+    TYPE_OF_TD3_ACTION_SELECTOR = TD3ActionSelectorType.BASIC_ACTION_SELECTOR
+
+    DEEP_LEARNING_MODEL = DeepLearningModelName.TD3_MLP
+    RL_ALGORITHM = RLAlgorithmName.TD3_V0

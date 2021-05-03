@@ -1,3 +1,30 @@
+import enum
+
+
+class DDPGActionSelectorType(enum.Enum):
+    BASIC_ACTION_SELECTOR = 0
+    SOMETIMES_BLOW_ACTION_SELECTOR = 1
+    NOISY_NET_ACTION_SELECTOR = 2
+
+
+class DDPGActionType(enum.Enum):
+    ONLY_OU_NOISE = 0
+    OU_NOISE_WITH_EPSILON = 1
+    GAUSSIAN_NOISE_WITH_EPSILON = 2
+    UNCERTAINTY = 3
+    ONLY_GREEDY = 4
+
+
+class DDPGTrainType(enum.Enum):
+    OLD = 0
+    NEW = 1
+
+
+class DDPGTargetUpdateOnlyAfterEpisode(enum.Enum):
+    SOFT_UPDATE = 0
+    HARD_UPDATE = 1
+
+
 class PARAMETERS_DDPG:
     ENVIRONMENT_ID = None
     PER_PROPORTIONAL = False
@@ -8,10 +35,10 @@ class PARAMETERS_DDPG:
     ACTION_SCALE = 1.0
     TAU = 0.001
 
-    OU_NOISE_ENABLED = True
+    NOISE_ENABLED = True
     OU_SIGMA = 0.2
 
-    COUNT_BASED_EXPLORATION = True
+    COUNT_BASED_EXPLORATION = False
     COUNT_BASED_FILTER = None
     COUNT_BASED_REWARD_SCALE = 0.1
     COUNT_BASED_PRECISION = 0
@@ -23,9 +50,11 @@ class PARAMETERS_DDPG:
     TRAIN_ONLY_AFTER_EPISODE = False
     NUM_TRAIN_ONLY_AFTER_EPISODE = None
 
-    TYPE_OF_ACTION = 'current'  # current
-    TYPE_OF_DDPG_TRAIN = 'current'  # current
-    TYPE_OF_DDPG_ACTION_SELECTOR = "DDPGActionSelector"
-    TYPE_OF_DDPG_TARGET_UPDATE = "soft_update"  # "hard_update"
+    TYPE_OF_DDPG_ACTION = DDPGActionType.GAUSSIAN_NOISE_WITH_EPSILON  # current
+    TYPE_OF_DDPG_TRAIN = DDPGTrainType.NEW  # current
+    TYPE_OF_DDPG_ACTION_SELECTOR = DDPGActionSelectorType.BASIC_ACTION_SELECTOR
+    TYPE_OF_DDPG_TARGET_UPDATE = DDPGTargetUpdateOnlyAfterEpisode.SOFT_UPDATE
 
     N_STEP = 2
+
+    NOISY_NET = False

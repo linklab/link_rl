@@ -65,6 +65,7 @@ class DuelingDQN_MLP_Base(nn.Module):
                 self.noisy_value_2 = NoisyLinear(self.hidden_3_size, self.params.NUM_SUPPORTS)
             else:
                 self.noisy_value_2 = NoisyLinear(self.hidden_3_size, 1)
+
             self.noisy_advantage_1 = NoisyLinear(self.hidden_2_size, self.hidden_2_size)
             if self.params.DISTRIBUTIONAL:
                 self.noisy_advantage_2 = NoisyLinear(self.hidden_3_size, num_outputs * self.params.NUM_SUPPORTS)

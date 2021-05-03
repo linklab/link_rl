@@ -48,6 +48,7 @@ from .d_matlab_parameters.parameters_matlab_pendulum_td3 import PARAMETERS_PENDU
 
 from codes.a_config.e_real_device.parameters_rip import PARAMETERS_RIP
 from codes.a_config.e_real_device.parameters_double_rip_ddpg import PARAMETERS_DOUBLE_RIP
+from codes.a_config.e_real_device.parameters_double_rip_td3 import PARAMETERS_DOUBLE_RIP_TD3
 from codes.a_config.e_real_device.parameters_quanser_rip_ddpg import PARAMETERS_QUANSER_RIP_DDPG
 
 from codes.a_config.f_trade_parameters.parameters_trade_moc_one_hour_dqn import PARAMETERS_TRADE_MOC_ONE_HOUR_DQN
@@ -62,3 +63,8 @@ from codes.a_config.federated_parameters.parameters_federated_cartpole_ppo_mlp i
 
 from codes.e_utils.names import OSName, EnvironmentName, RLAlgorithmName
 from codes.e_utils.names import ModelSaveMode
+
+from codes.a_config._rl_parameters.off_policy.parameter_ddpg import DDPGActionType, DDPGTrainType, DDPGActionSelectorType
+
+from codes.a_config._rl_parameters.off_policy.parameter_td3 import TD3ActionSelectorType, TD3ActionType
+from codes.a_config.parameters_general import RIPEnvRewardType

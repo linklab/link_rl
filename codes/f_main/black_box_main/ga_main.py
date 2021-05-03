@@ -3,10 +3,10 @@ from codes.f_main.general_main.a_common_main import *
 
 def train_main():
     env = rl_utils.get_single_environment(params=params)
-    input_shape, action_shape, num_outputs, action_min, action_max = get_environment_input_output_info(env)
+    input_shape, action_shape, num_outputs = get_environment_input_output_info(env)
 
     agent = rl_utils.get_rl_agent(
-        input_shape, num_outputs, action_min, action_max, worker_id=-1, params=params, device=device
+        input_shape, num_outputs, worker_id=-1, params=params, device=device
     )
 
     agent.initialize(env)

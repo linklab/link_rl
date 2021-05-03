@@ -35,22 +35,22 @@ class BaseModel(nn.Module):
 
         self.steps_done = 0
 
-        files = glob.glob(os.path.join(PROJECT_HOME, "out", "model_save_files", "{0}_{1}_{2}_*".format(
-            self.worker_id,
-            self.params.ENVIRONMENT_ID.name,
-            self.params.DEEP_LEARNING_MODEL.value,
-        )))
-
-        if self.worker_id >= 0:
-            if len(files) > 1:
-                print("Worker ID - {0}: Problem occurs since there are two or more save files".format(self.worker_id))
-            elif len(files) == 1:
-                filename = files[0]
-                self.load_state_dict(torch.load(filename))
-                self.eval()
-                print("Worker ID - {0}: Successful Model Load From {1}".format(self.worker_id, filename))
-            else:
-                print("Worker ID - {0}: There is no saved model".format(self.worker_id))
+        # files = glob.glob(os.path.join(PROJECT_HOME, "out", "model_save_files", "{0}_{1}_{2}_*".format(
+        #     self.worker_id,
+        #     self.params.ENVIRONMENT_ID.name,
+        #     self.params.DEEP_LEARNING_MODEL.value,
+        # )))
+        #
+        # if self.worker_id >= 0:
+        #     if len(files) > 1:
+        #         print("Worker ID - {0}: Problem occurs since there are two or more save files".format(self.worker_id))
+        #     elif len(files) == 1:
+        #         filename = files[0]
+        #         self.load_state_dict(torch.load(filename))
+        #         self.eval()
+        #         print("Worker ID - {0}: Successful Model Load From {1}".format(self.worker_id, filename))
+        #     else:
+        #         print("Worker ID - {0}: There is no saved model".format(self.worker_id))
 
     def forward(self, inputs):
         if not (type(inputs) is torch.Tensor):

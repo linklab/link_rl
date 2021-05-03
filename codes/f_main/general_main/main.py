@@ -2,6 +2,7 @@
 # https://mspries.github.io/jimmy_pendulum.html
 #!/usr/bin/env python3
 import os, sys
+from collections import deque
 
 current_path = os.path.dirname(os.path.realpath(__file__))
 PROJECT_HOME = os.path.abspath(os.path.join(current_path, os.pardir, os.pardir, os.pardir))
@@ -9,9 +10,14 @@ if PROJECT_HOME not in sys.path:
     sys.path.append(PROJECT_HOME)
 
 from codes.f_main.general_main.a_common_main import *
+from codes.a_config._rl_parameters.off_policy.parameter_ddpg import DDPGTrainType, DDPGTargetUpdateOnlyAfterEpisode
+from codes.e_utils.experience import ExperienceSourceFirstLast
+from codes.e_utils.names import RLAlgorithmName, ON_POLICY_RL_ALGORITHMS
+from codes.e_utils.train_tracker import SpeedTracker
+from codes.e_utils.common_utils import print_params
 
 
-def train_main(params, train_env, test_env):
+def train_main(train_env, test_env):
     agent = get_agent(train_env)
     if params.WANDB:
         set_wandb(agent)
@@ -36,7 +42,7 @@ def train_main(params, train_env, test_env):
     loss_dequeue = deque(maxlen=params.AVG_STEP_SIZE_FOR_TRAIN_LOSS)
     actor_objective_dequeue = deque(maxlen=params.AVG_STEP_SIZE_FOR_TRAIN_LOSS)
 
-    with SpeedTracker(params=params) as reward_tracker:
+    with SpeedTracker(params=params) as speed_tracker:
         try:
             while step_idx < params.MAX_GLOBAL_STEP:
                 step_idx += params.TRAIN_STEP_FREQ
@@ -53,7 +59,7 @@ def train_main(params, train_env, test_env):
                             train_episode_reward_lst_for_stat,
                             current_episode_reward,
                             agent,
-                            reward_tracker,
+                            speed_tracker,
                             step_idx,
                             episode,
                             test_env,
@@ -85,6 +91,9 @@ def train_main(params, train_env, test_env):
                             evaluation_msg=train_info_dict["evaluation_msg"]
                         )
 
+                        if train_info_dict["solved"]:
+                            solved = True
+
                         if params.WANDB:
                             train_info_dict["train mean (critic) loss"] = mean_loss
                             train_info_dict["train mean actor objective"] = mean_actor_objective
@@ -99,9 +108,9 @@ def train_main(params, train_env, test_env):
                             train(agent, step_idx, loss_dequeue, actor_objective_dequeue)
 
                         if params.RL_ALGORITHM in [RLAlgorithmName.DDPG_V0]:
-                            if params.TYPE_OF_DDPG_TARGET_UPDATE == "hard_update":
+                            if params.TYPE_OF_DDPG_TARGET_UPDATE == DDPGTargetUpdateOnlyAfterEpisode.HARD_UPDATE:
                                 agent.target_model.alpha_sync(agent.model, alpha=0.0)
-                            elif params.TYPE_OF_DDPG_TARGET_UPDATE == "soft_update":
+                            elif params.TYPE_OF_DDPG_TARGET_UPDATE == DDPGTargetUpdateOnlyAfterEpisode.SOFT_UPDATE:
                                 agent.target_model.alpha_sync(agent.model, alpha=0.75)  # 0.75: 새로운 파라미터는 0.25만 반영
                             else:
                                 raise ValueError()
@@ -122,7 +131,7 @@ def train_main(params, train_env, test_env):
 
 
 def train(agent, step_idx, loss_dequeue, actor_objective_dequeue):
-    if not params.NOISY_NET and hasattr(agent, 'epsilon_tracker'):
+    if hasattr(agent, 'epsilon_tracker') and agent.epsilon_tracker:
         agent.epsilon_tracker.udpate(step_idx)
 
     if params.RL_ALGORITHM in ON_POLICY_RL_ALGORITHMS:
@@ -147,9 +156,9 @@ def train(agent, step_idx, loss_dequeue, actor_objective_dequeue):
         if len(agent.buffer) < params.MIN_REPLAY_SIZE_FOR_TRAIN:
             return
         if params.RL_ALGORITHM == RLAlgorithmName.DDPG_V0:
-            if params.TYPE_OF_DDPG_TRAIN == "current":
+            if params.TYPE_OF_DDPG_TRAIN == DDPGTrainType.NEW:
                 _, last_loss, actor_objective = agent.train(step_idx=step_idx)
-            elif params.TYPE_OF_DDPG_TRAIN == "old":
+            elif params.TYPE_OF_DDPG_TRAIN == DDPGTrainType.OLD:
                 _, last_loss, actor_objective = agent.train_old(step_idx=step_idx)
             else:
                 raise ValueError()
@@ -167,17 +176,8 @@ def train(agent, step_idx, loss_dequeue, actor_objective_dequeue):
 
 
 if __name__ == "__main__":
-    #assert params.RL_ALGORITHM in ON_POLICY_RL_ALGORITHMS
-
-    if params.TRAIN_ONLY_AFTER_EPISODE:
-        assert params.NUM_ENVIRONMENTS == 1
-
-    if params.DISTRIBUTIONAL:
-        assert params.NOISY_NET
-        assert hasattr(params, "NUM_SUPPORTS")
+    advance_check()
+    print_params(params)
 
     train_env, test_env = get_train_and_test_envs()
-
-    train_main(params, train_env, test_env)
-
-    pass
+    train_main(train_env, test_env)

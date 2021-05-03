@@ -118,12 +118,11 @@ class ExperienceSource:
 
             global_ofs = 0
             for env_idx, (env, action_n) in enumerate(zip(self.pool, grouped_actions)):
-                if params.RL_ALGORITHM in [RLAlgorithmName.DDPG_V0]:
+                if params.RL_ALGORITHM in [RLAlgorithmName.DDPG_V0, RLAlgorithmName.TD3_V0]:
                     if hasattr(self.agent.params, "ACTION_SCALE"):
                         action_scale = self.agent.params.ACTION_SCALE
                     else:
                         action_scale = 1.0
-
                     next_state_n, r_n, is_done_n, info_n = env.step(action_scale * np.asarray(action_n))
                 else:
                     next_state_n, r_n, is_done_n, info_n = env.step(np.asarray(action_n))

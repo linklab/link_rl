@@ -1,12 +1,11 @@
 import numpy as np
 import torch
 import torch.nn.functional as F
-import torch.nn.utils as nn_utils
 
-from codes.d_agents.a0_base_agent import BaseAgent, float32_preprocessor
+from codes.d_agents.a0_base_agent import float32_preprocessor
 from codes.d_agents.on_policy.on_policy_agent import OnPolicyAgent
 from codes.e_utils import rl_utils, replay_buffer
-from codes.e_utils.actions import ProbabilityActionSelector
+from codes.d_agents.actions import ProbabilityActionSelector
 from codes.e_utils.names import DeepLearningModelName, AgentMode
 
 
