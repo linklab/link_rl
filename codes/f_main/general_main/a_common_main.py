@@ -39,8 +39,8 @@ if not os.path.exists(MODEL_SAVE_DIR):
 
 os.environ['KMP_DUPLICATE_LIB_OK'] = 'True'
 
-#device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
-device = torch.device('cpu')
+device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+# device = torch.device('cpu')
 
 print("DEVICE: {0}".format(device))
 
