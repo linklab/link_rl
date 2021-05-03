@@ -215,10 +215,7 @@ def main():
                     actor.join()
                     break
                 else:
-                    if thread:
-                        pass  # Actor가 이미 직접 buffer에 add하고 있음
-                    else:
-                        agent.buffer._add(exp)
+                    agent.buffer._add(exp)
 
         if solved:
             print("Solved in {0} steps and {1} episodes!".format(step_idx, episode))
