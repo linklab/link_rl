@@ -108,7 +108,6 @@ class AgentTD3(OffPolicyAgent):
             actions, new_noises = self.test_and_play_action_selector(mu, noises)
 
         self.last_noise = new_noises[0][0]
-        actions = np.clip(actions, -1.0, 1.0)
         #####################################
 
         return actions, new_noises
