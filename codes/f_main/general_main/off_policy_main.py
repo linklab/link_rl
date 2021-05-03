@@ -76,7 +76,7 @@ def actor_func(agent, exp_queue, child_pipe_conn):
                 exp = next(exp_source_iter)
 
                 if thread:
-                    agent.buffer._add(exp)
+                    exp_queue.put(exp)
                 else:
                     child_pipe_conn.send(exp)
 
@@ -219,8 +219,6 @@ def main():
                         pass  # Actor가 이미 직접 buffer에 add하고 있음
                     else:
                         agent.buffer._add(exp)
-
-        print("step_idx", step_idx)
 
         if solved:
             print("Solved in {0} steps and {1} episodes!".format(step_idx, episode))
