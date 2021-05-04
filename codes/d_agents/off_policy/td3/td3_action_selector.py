@@ -28,7 +28,7 @@ class TD3ActionSelector:
             raise ValueError()
 
         actions = np.clip(actions, -1.0, 1.0)
-        
+
         return actions, noises
 
     def __call__(self, mu, noises=None):
