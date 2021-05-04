@@ -69,6 +69,18 @@ def set_global_seeds(seed):
     random.seed(myseed)
 
 
+def set_seed(seed, envs=None, cuda=False):
+    random.seed(seed)
+    np.random.seed(seed)
+    torch.manual_seed(seed)
+    if cuda:
+        torch.cuda.manual_seed(seed)
+
+    if envs:
+        for idx, env in enumerate(envs):
+            env.seed(seed + idx)
+
+
 def make_atari_env(env_id, seed=0):
     """
     Utility function for multiprocessed env.
