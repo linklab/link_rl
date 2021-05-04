@@ -106,6 +106,8 @@ class AgentDDPG(OffPolicyAgent):
         else:
             self.epsilon_tracker = None
 
+        self.num_trains = 0
+
     def __call__(self, states, noises=None):
         if not noises:
             noises = [None] * len(states)
@@ -134,6 +136,7 @@ class AgentDDPG(OffPolicyAgent):
         return actions, new_noises
 
     def train(self, step_idx):
+        self.num_trains += 1
         if self.params.PER_PROPORTIONAL or self.params.PER_RANK_BASED:
             batch, batch_indices, batch_weights = self.buffer.sample(self.params.BATCH_SIZE)
         else:

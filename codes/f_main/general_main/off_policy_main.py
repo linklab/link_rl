@@ -1,6 +1,6 @@
 import os, sys
-from collections import deque
 import threading
+from collections import deque
 from multiprocessing import Pipe
 from sys import platform as _platform
 import torch.multiprocessing as mp
@@ -76,7 +76,7 @@ def actor_func(agent, exp_queue, child_pipe_conn):
                 exp = next(exp_source_iter)
 
                 if thread:
-                    agent.buffer._add(exp)
+                    exp_queue.put(exp)
                 else:
                     child_pipe_conn.send(exp)
 
@@ -140,8 +140,8 @@ def main():
         tentative_env = None
     else:
         tentative_env = rl_utils.get_single_environment(params=params)
-    agent = get_agent(tentative_env)
 
+    agent = get_agent(tentative_env)
 
     if thread:
         from queue import Queue
@@ -215,10 +215,7 @@ def main():
                     actor.join()
                     break
                 else:
-                    if thread:
-                        pass  # Actor가 이미 직접 buffer에 add하고 있음
-                    else:
-                        agent.buffer._add(exp)
+                    agent.buffer._add(exp)
 
         if solved:
             print("Solved in {0} steps and {1} episodes!".format(step_idx, episode))
