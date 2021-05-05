@@ -1,3 +1,4 @@
+import copy
 import glob
 import os
 import random
@@ -195,7 +196,9 @@ def save_model(model_save_dir, model_save_file_prefix, agent, step, episode_rewa
         )
     )
 
-    torch.save(agent.model.state_dict(), model_save_filename)
+    assert agent.test_model is not None
+
+    torch.save(agent.test_model.state_dict(), model_save_filename)
     return model_save_filename
 
 
@@ -234,43 +237,6 @@ def load_model(model_save_dir, model_save_file_prefix, agent, step=None, inquery
     else:
         print("※※※※※※※※※※ There is no saved model for !!!: {0} ※※※※※※※※※※".format(model_path))
     print()
-
-
-def agent_model_test(num_tests, test_env, agent):
-    agent.agent_mode = AgentMode.TEST
-    agent.model.eval()
-
-    num_step = 0
-
-    episode_rewards = np.zeros(num_tests)
-
-    tests_done = 0
-    for test_episode in range(num_tests):
-        done = False
-        episode_reward = 0
-
-        state = test_env.reset()
-
-        num_episode_step = 0
-        while not done:
-            num_step += 1
-            num_episode_step += 1
-
-            state = np.expand_dims(state, axis=0)
-
-            action, _, = agent(state)
-
-            next_state, reward, done, info = test_env.step(action[0])
-            state = next_state
-            episode_reward += reward
-
-        episode_rewards[test_episode] = episode_reward
-        tests_done += 1
-        #print("TEST {0}: EPISODE REWARD: {1:7.2f}".format(tests_done, float(np.mean(episode_reward).item())))
-
-    agent.agent_mode = AgentMode.TRAIN
-    agent.model.train()
-    return np.mean(episode_rewards), np.std(episode_rewards)
 
 
 # def print_environment_info(env, params):

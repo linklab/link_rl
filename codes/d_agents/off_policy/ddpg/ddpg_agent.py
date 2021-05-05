@@ -120,13 +120,14 @@ class AgentDDPG(OffPolicyAgent):
         else:
             self.model.train()
 
-        mu_v = self.model(states)
-        mu = mu_v.detach().cpu().numpy()
-
         if self.agent_mode == AgentMode.TRAIN:
+            mu_v = self.model(states)
+            mu = mu_v.detach().cpu().numpy()
             actions, new_noises = self.train_action_selector(mu, noises, self.global_uncertainty)
             self.last_noise = new_noises[0][0]
         else:
+            mu_v = self.test_model(states)
+            mu = mu_v.detach().cpu().numpy()
             actions, new_noises = self.test_and_play_action_selector(mu, noises)
 
         # print("actions: {0:7.4f}, noises: {1:7.4f}".format(

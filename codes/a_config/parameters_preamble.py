@@ -62,7 +62,6 @@ from codes.a_config.or_parameters.parameters_fast_rl_tsp_dqn import PARAMETERS_T
 from codes.a_config.federated_parameters.parameters_federated_cartpole_ppo_mlp import PARAMETERS_FEDERATED_CARTPOLE_PPO_MLP
 
 from codes.e_utils.names import OSName, EnvironmentName, RLAlgorithmName
-from codes.e_utils.names import ModelSaveMode
 
 from codes.a_config._rl_parameters.off_policy.parameter_ddpg import DDPGActionType, DDPGTrainType, DDPGActionSelectorType
 

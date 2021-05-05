@@ -1,5 +1,5 @@
 from codes.a_config._rl_parameters.off_policy.parameter_ddpg import PARAMETERS_DDPG
-from codes.e_utils.names import OptimizerName, RLAlgorithmName, EnvironmentName, DeepLearningModelName, ModelSaveMode
+from codes.e_utils.names import OptimizerName, RLAlgorithmName, EnvironmentName, DeepLearningModelName
 from codes.a_config.parameters_general import PARAMETERS_GENERAL
 
 class PARAMETERS_RIP(PARAMETERS_GENERAL, PARAMETERS_DDPG):
@@ -71,5 +71,3 @@ class PARAMETERS_RIP(PARAMETERS_GENERAL, PARAMETERS_DDPG):
 
     # [4. OPTIMIZER]
     OPTIMIZER = OptimizerName.ADAM
-
-    MODEL_SAVE_MODE = ModelSaveMode.TRAIN

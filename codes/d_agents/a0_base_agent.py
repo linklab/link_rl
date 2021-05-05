@@ -22,6 +22,13 @@ class BaseAgent:
     """
     def __init__(self, worker_id, params, action_shape, device):
         self.worker_id = worker_id
+
+        self.model = None
+        self.test_model = None
+
+        self.train_action_selector = None
+        self.test_and_play_action_selector = None
+
         self.params = params
         self.action_shape = action_shape
         self.device = device

@@ -1,3 +1,4 @@
+import copy
 import os, sys
 import threading
 from collections import deque
@@ -62,11 +63,10 @@ def actor_func(agent, exp_queue, child_pipe_conn):
 
     episode = 0
     solved = False
+    good_model_saved = False
 
     train_episode_reward_lst_for_stat = deque(maxlen=params.AVG_STEP_SIZE_FOR_TRAIN_LOSS)
     train_episode_reward_lst_for_test = deque(maxlen=params.TEST_NUM_EPISODES)
-
-    num_tests = get_num_tests()
 
     with SpeedTracker(params=params) as speed_tracker:
         try:
@@ -89,7 +89,7 @@ def actor_func(agent, exp_queue, child_pipe_conn):
                     for current_episode_reward, current_episode_step in zip(episode_rewards, episode_steps):
                         episode += 1
 
-                        solved, train_info_dict = process_episode(
+                        solved, good_model_saved, train_info_dict = process_episode(
                             train_episode_reward_lst_for_test,
                             train_episode_reward_lst_for_stat,
                             current_episode_reward,
@@ -98,7 +98,6 @@ def actor_func(agent, exp_queue, child_pipe_conn):
                             step_idx,
                             episode,
                             test_env,
-                            num_tests,
                             early_stopping,
                             current_episode_step,
                             exp
@@ -113,7 +112,8 @@ def actor_func(agent, exp_queue, child_pipe_conn):
                     print("Solved in {0} steps and {1} episodes!".format(step_idx, episode))
                     break
 
-            if params.MODEL_SAVE_MODE == ModelSaveMode.FINAL_ONLY:
+            if not good_model_saved:
+                agent.test_model = copy.deepcopy(agent.model)
                 last_model_save(agent, step_idx, train_episode_reward_lst_for_stat)
         finally:
             if params.ENVIRONMENT_ID in [EnvironmentName.REAL_DEVICE_RIP, EnvironmentName.REAL_DEVICE_DOUBLE_RIP]:

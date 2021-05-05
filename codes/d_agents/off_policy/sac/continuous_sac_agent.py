@@ -71,11 +71,11 @@ class AgentSAC(OnPolicyAgent):
         else:
             self.model.train()
 
-        mu_v, values_v = self.model(states)
-
         if self.agent_mode == AgentMode.TRAIN:
+            mu_v, values_v = self.model(states)
             actions = self.train_action_selector(mu_v, self.model.base.actor.logstd)
         else:
+            mu_v, values_v = self.test_model(states)
             actions = self.test_and_play_action_selector(mu_v, self.model.base.actor.logstd)
 
         critics = values_v.data.cpu().numpy()

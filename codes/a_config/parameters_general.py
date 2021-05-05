@@ -1,6 +1,6 @@
 import enum
 
-from codes.e_utils.names import EnvironmentName, RLAlgorithmName, DeepLearningModelName, OptimizerName, ModelSaveMode
+from codes.e_utils.names import EnvironmentName, RLAlgorithmName, DeepLearningModelName, OptimizerName
 
 
 class RIPEnvRewardType(enum.Enum):
@@ -121,7 +121,6 @@ class PARAMETERS_GENERAL:
 
     TEST_PERIOD_EPISODES = 25
     TEST_NUM_EPISODES = 3
-    MODEL_SAVE_MODE = ModelSaveMode.TRAIN
     AVG_STEP_SIZE_FOR_TRAIN_LOSS = 50
 
     COUNT_BASED_EXPLORATION = False

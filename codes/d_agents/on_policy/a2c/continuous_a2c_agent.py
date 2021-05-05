@@ -35,9 +35,6 @@ class AgentContinuousA2C(AgentA2C):
             device=device
         ).to(device)
 
-        for name, param in self.model.base.named_parameters():
-            print(name, param.shape, "!!!!!!!!!!!!!!!!!!!!!!!!")
-
         self.optimizer = rl_utils.get_optimizer(
             parameters=self.model.base.parameters(),
             learning_rate=self.params.LEARNING_RATE,

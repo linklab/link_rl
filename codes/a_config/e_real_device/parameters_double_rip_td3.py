@@ -1,6 +1,6 @@
 from codes.a_config._rl_parameters.off_policy.parameter_td3 import PARAMETERS_TD3, TD3ActionType, TD3ActionSelectorType
 from codes.a_config.parameters_general import PARAMETERS_GENERAL, RIPEnvRewardType
-from codes.e_utils.names import OptimizerName, RLAlgorithmName, EnvironmentName, DeepLearningModelName, ModelSaveMode
+from codes.e_utils.names import OptimizerName, RLAlgorithmName, EnvironmentName, DeepLearningModelName
 
 
 class PARAMETERS_DOUBLE_RIP_TD3(PARAMETERS_GENERAL, PARAMETERS_TD3):
@@ -70,8 +70,6 @@ class PARAMETERS_DOUBLE_RIP_TD3(PARAMETERS_GENERAL, PARAMETERS_TD3):
 
     # [4. OPTIMIZER]
     OPTIMIZER = OptimizerName.ADAM
-
-    MODEL_SAVE_MODE = ModelSaveMode.TRAIN
 
     NOISE_ENABLED = True
     OU_SIGMA = 2.5
