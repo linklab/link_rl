@@ -1,6 +1,7 @@
 import torch
 import torch.nn.functional as F
 from torch.distributions import Normal
+import numpy as np
 
 from codes.c_models.continuous_action.stochastic_continuous_actor_critic_model import StochasticContinuousActorCriticModel
 from codes.d_agents.on_policy.a2c.a2c_agent import AgentA2C
@@ -68,14 +69,18 @@ class AgentContinuousA2C(AgentA2C):
         # covariance_matrix = torch.diag_embed(var_v).to(self.device)
         # dist = MultivariateNormal(loc=mu_v, covariance_matrix=covariance_matrix)
         # log_pi_action_v = advantage_v * dist.log_prob(actions_v).unsqueeze(-1)
-        dist = Normal(loc=mu_v, scale=logstd_v)
+        # dist = Normal(loc=mu_v, scale=logstd_v)
+        # reinforced_log_pi_action_v = dist.log_prob(actions_v) * advantage_v.unsqueeze(dim=-1)
+        # print(reinforced_log_pi_action_v.shape, "########## - 1")
+        # loss_actor_v = -1.0 * reinforced_log_pi_action_v.mean()
+        # loss_entropy_v = -1.0 * dist.entropy().mean()
 
-        reinforced_log_pi_action_v = dist.log_prob(actions_v) * advantage_v.unsqueeze(dim=-1).detach()
-
-        #print(reinforced_log_pi_action_v.shape, reinforced_log_pi_action_v.mean().shape, dist.entropy().shape, dist.entropy().mean().shape)
+        var = logstd_v ** 2
+        reinforced_log_pi_action_v = -0.5 * (((actions_v - mu_v) ** 2 / var) + (torch.log(var * 2 * np.pi)))  # 가우시안 분포
+        entropy_v = ((torch.log(2 * np.pi * torch.exp(logstd_v)) + 1.0) / 2).mean()
 
         loss_actor_v = -1.0 * reinforced_log_pi_action_v.mean()
-        loss_entropy_v = -1.0 * dist.entropy().mean()
+        loss_entropy_v = -1.0 * entropy_v.mean()
         # loss_actor_v를 작아지도록 만듦 --> reinforced_log_pi_action_v.mean()가 커지도록 만듦
         # loss_entropy_v를 작아지도록 만듦 --> entropy_v가 커지도록 만듦
 

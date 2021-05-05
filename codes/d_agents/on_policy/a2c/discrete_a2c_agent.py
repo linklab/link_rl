@@ -56,6 +56,7 @@ class AgentDiscreteA2C(AgentA2C):
 
         # advantage_v.shape: (32,)
         advantage_v = target_action_values_v - value_v.squeeze(-1)
+        #print(target_action_values_v, value_v.squeeze(-1), advantage_v)
 
         log_pi_action_v = torch.log(probs_v.gather(dim=1, index=actions_v.unsqueeze(-1)) + 1e-5).squeeze(-1)
         reinforced_log_pi_action_v = advantage_v.detach() * log_pi_action_v
