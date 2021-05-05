@@ -34,7 +34,7 @@ def train_main(train_env, test_env):
 
     episode = 0
     solved = False
-    good_model_saved = False
+    is_good_model_saved = False
 
     train_episode_reward_lst_for_stat = deque(maxlen=params.AVG_STEP_SIZE_FOR_TRAIN_LOSS)
     train_episode_reward_lst_for_test = deque(maxlen=params.TEST_NUM_EPISODES)
@@ -67,6 +67,9 @@ def train_main(train_env, test_env):
                             current_episode_step,
                             exp
                         )
+
+                        if good_model_saved:
+                            is_good_model_saved = True
 
                         mean_loss = np.mean(loss_dequeue) if len(loss_dequeue) > 0 else 0.0
                         mean_actor_objective = np.mean(actor_objective_dequeue) \
@@ -121,7 +124,7 @@ def train_main(train_env, test_env):
                 if not params.TRAIN_ONLY_AFTER_EPISODE:
                     train(agent, step_idx, loss_dequeue, actor_objective_dequeue)
 
-            if not good_model_saved:
+            if not is_good_model_saved:
                 agent.test_model = copy.deepcopy(agent.model)
                 last_model_save(agent, step_idx, train_episode_reward_lst_for_stat)
         finally:

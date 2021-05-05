@@ -63,7 +63,7 @@ def actor_func(agent, exp_queue, child_pipe_conn):
 
     episode = 0
     solved = False
-    good_model_saved = False
+    is_good_model_saved = False
 
     train_episode_reward_lst_for_stat = deque(maxlen=params.AVG_STEP_SIZE_FOR_TRAIN_LOSS)
     train_episode_reward_lst_for_test = deque(maxlen=params.TEST_NUM_EPISODES)
@@ -103,6 +103,9 @@ def actor_func(agent, exp_queue, child_pipe_conn):
                             exp
                         )
 
+                        if good_model_saved:
+                            is_good_model_saved = True
+
                         if thread:
                             exp_queue.put(train_info_dict)
                         else:
@@ -112,7 +115,7 @@ def actor_func(agent, exp_queue, child_pipe_conn):
                     print("Solved in {0} steps and {1} episodes!".format(step_idx, episode))
                     break
 
-            if not good_model_saved:
+            if not is_good_model_saved:
                 agent.test_model = copy.deepcopy(agent.model)
                 last_model_save(agent, step_idx, train_episode_reward_lst_for_stat)
         finally:
