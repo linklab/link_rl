@@ -79,5 +79,5 @@ class AgentContinuousA2C(AgentA2C):
         # loss_actor_v를 작아지도록 만듦 --> reinforced_log_pi_action_v.mean()가 커지도록 만듦
         # loss_entropy_v를 작아지도록 만듦 --> entropy_v가 커지도록 만듦
 
-        return self.backward_and_step(loss_critic_v, loss_entropy_v, loss_actor_v)
+        return self.backward_and_step(loss_critic_v, loss_entropy_v, loss_actor_v, logstd_v)
 
