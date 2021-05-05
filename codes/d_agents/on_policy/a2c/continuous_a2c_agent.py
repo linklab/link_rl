@@ -68,18 +68,10 @@ class AgentContinuousA2C(AgentA2C):
         # advantage_v.shape: (32,)
         advantage_v = target_action_values_v - value_v.squeeze(-1)
 
-        # covariance_matrix = torch.diag_embed(var_v).to(self.device)
-        # dist = MultivariateNormal(loc=mu_v, covariance_matrix=covariance_matrix)
-        # log_pi_action_v = advantage_v * dist.log_prob(actions_v).unsqueeze(-1)
-        # dist = Normal(loc=mu_v, scale=logstd_v)
-        # reinforced_log_pi_action_v = dist.log_prob(actions_v) * advantage_v.unsqueeze(dim=-1)
-        # print(reinforced_log_pi_action_v.shape, "########## - 1")
-        # loss_actor_v = -1.0 * reinforced_log_pi_action_v.mean()
-        # loss_entropy_v = -1.0 * dist.entropy().mean()
-
         reinforced_log_pi_action_v = self.calc_logprob(
             mu_v=mu_v, logstd_v=logstd_v, actions_v=actions_v
         ) * advantage_v.unsqueeze(dim=-1).detach()
+
         entropy_v = self.calc_entropy(logstd_v=logstd_v)
 
         loss_actor_v = -1.0 * reinforced_log_pi_action_v.mean()
@@ -90,7 +82,6 @@ class AgentContinuousA2C(AgentA2C):
         return self.backward_and_step(loss_critic_v, loss_entropy_v, loss_actor_v)
 
     def calc_logprob(self, mu_v, logstd_v, actions_v):
-        # print(mu_v.shape, logstd_v.shape, actions_v.shape, "!!!!!!!!!!11")
         p1 = -1.0 * ((mu_v - actions_v) ** 2) / (2 * torch.exp(logstd_v).clamp(min=1e-3, max=1e3) ** 2)
         p2 = -1.0 * torch.log(torch.sqrt(2 * np.pi * torch.exp(logstd_v).clamp(min=1e-3, max=1e3) ** 2))
 
