@@ -81,7 +81,14 @@ class EarlyStopping:
         solved = False
         good_model_saved = False
 
-        std_msg = f'{evaluation_value_std:.2f} is less than {self.evaluation_std_max_threshold}.' if evaluation_value_std < self.evaluation_std_max_threshold else f'{evaluation_value_std:.2f} is more than {self.evaluation_std_max_threshold}.'
+        if evaluation_value_std < self.evaluation_std_max_threshold:
+            std_msg = colored(
+                f'STD {evaluation_value_std:.2f} is less than {self.evaluation_std_max_threshold}.', "yellow"
+            )
+        else:
+            std_msg = colored(
+                f'STD {evaluation_value_std:.2f} is more than {self.evaluation_std_max_threshold}.', "yellow"
+            )
 
         if self.best_evaluation_value == -1.0e10:
             if episode_done_step >= self.next_periodic_save_step_idx:
@@ -98,7 +105,7 @@ class EarlyStopping:
 
             if episode_done_step < self.evaluation_min_step_idx and hasattr(self.agent, 'epsilon_tracker') and self.agent.epsilon_tracker:
                 evaluation_str = colored(
-                    f'{episode_done_step} is less than {self.evaluation_min_step_idx}. {std_msg}',
+                    f'STEP {episode_done_step} is less than {self.evaluation_min_step_idx}. {std_msg}',
                     "magenta"
                 )
                 msg += f"{evaluation_str}. No early stopping (and no saving) processed"
