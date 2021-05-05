@@ -1,3 +1,5 @@
+import math
+
 import torch
 import torch.nn.functional as F
 from torch.distributions import Normal
@@ -75,8 +77,10 @@ class AgentContinuousA2C(AgentA2C):
         # loss_actor_v = -1.0 * reinforced_log_pi_action_v.mean()
         # loss_entropy_v = -1.0 * dist.entropy().mean()
 
-        reinforced_log_pi_action_v = self.calc_logprob(mu_v=mu_v, logstd_v=logstd_v, actions_v=actions_v) * advantage_v.unsqueeze(dim=-1)
-        entropy_v = (torch.log(2 * np.pi * torch.exp(logstd_v)) + 1.0) / 2.0
+        reinforced_log_pi_action_v = self.calc_logprob(
+            mu_v=mu_v, logstd_v=logstd_v, actions_v=actions_v
+        ) * advantage_v.unsqueeze(dim=-1).detach()
+        entropy_v = self.calc_entropy(logstd_v=logstd_v)
 
         loss_actor_v = -1.0 * reinforced_log_pi_action_v.mean()
         loss_entropy_v = -1.0 * entropy_v.mean()
@@ -86,6 +90,11 @@ class AgentContinuousA2C(AgentA2C):
         return self.backward_and_step(loss_critic_v, loss_entropy_v, loss_actor_v)
 
     def calc_logprob(self, mu_v, logstd_v, actions_v):
-        p1 = -1.0 * ((mu_v - actions_v) ** 2) / (2 * torch.exp(logstd_v).clamp(min=1e-3))
-        p2 = -1.0 * torch.log(torch.sqrt(2 * np.pi * torch.exp(logstd_v)))
+        # print(mu_v.shape, logstd_v.shape, actions_v.shape, "!!!!!!!!!!11")
+        p1 = -1.0 * ((mu_v - actions_v) ** 2) / (2 * torch.exp(logstd_v).clamp(min=1e-3) ** 2)
+        p2 = -1.0 * torch.log(torch.sqrt(2 * np.pi * torch.exp(logstd_v) ** 2))
         return p1 + p2
+
+    # https://proofwiki.org/wiki/Differential_Entropy_of_Gaussian_Distribution
+    def calc_entropy(self, logstd_v):
+        return torch.log(logstd_v * math.sqrt(2 * np.pi)) + 1.0 / 2.0
