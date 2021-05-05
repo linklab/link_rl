@@ -21,9 +21,9 @@ class StochasticContinuousActorCriticModel(BaseModel):
         if not (type(inputs) is torch.Tensor):
             inputs = torch.tensor([inputs], dtype=torch.float).to(self.device)
 
-        mu, var, value = self.base.forward(inputs)
+        mu, logstd, value = self.base.forward(inputs)
 
-        return mu, var, value
+        return mu, logstd, value
 
 
 class StochasticActorCriticMLPBase(nn.Module):
@@ -53,9 +53,9 @@ class StochasticActorCriticMLPBase(nn.Module):
         self.train()
 
     def forward(self, inputs):
-        mu, var = self.actor(inputs)
+        mu, logstd = self.actor(inputs)
         value = self.critic(inputs)
-        return mu, var, value
+        return mu, logstd, value
 
     def forward_critic(self, inputs):
         return self.critic(inputs)
@@ -71,25 +71,21 @@ class ActorMLPBase(nn.Module):
         self.hidden_2_size = params.HIDDEN_2_SIZE
         self.hidden_3_size = params.HIDDEN_3_SIZE
 
-        self.net = nn.Sequential(
+        self.mu = nn.Sequential(
             nn.Linear(num_inputs, self.hidden_1_size),
             nn.LeakyReLU(),
             nn.Linear(self.hidden_1_size, self.hidden_2_size),
             nn.LeakyReLU(),
             nn.Linear(self.hidden_2_size, self.hidden_3_size),
             nn.LeakyReLU(),
-        )
-
-        self.mu = nn.Sequential(
             nn.Linear(self.hidden_3_size, num_outputs),
             nn.Tanh()
         )
 
-        self.var = nn.Sequential(
-            nn.Linear(self.hidden_3_size, num_outputs),
-            # SoftPlus is a smooth approximation to the ReLU function
-            # and can be used to constrain the output of a machine to always be positive.
-            # https://pytorch.org/docs/stable/generated/torch.nn.Softplus.html
+        self.logstd = nn.Sequential(
+            nn.Linear(num_inputs, self.hidden_1_size),
+            nn.LeakyReLU(),
+            nn.Linear(self.hidden_1_size, num_outputs),
             nn.Softplus()
         )
 
@@ -99,7 +95,6 @@ class ActorMLPBase(nn.Module):
             torch.nn.init.kaiming_normal_(m.weight)
 
     def forward(self, inputs):
-        net_out = self.net(inputs)
-        mu = self.mu(net_out)
-        var = self.var(net_out) + 1e-5
-        return mu, var
+        mu_v = self.mu(inputs)
+        logstd_v = self.logstd(inputs)
+        return mu_v, logstd_v

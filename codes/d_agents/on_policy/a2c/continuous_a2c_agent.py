@@ -32,6 +32,9 @@ class AgentContinuousA2C(AgentA2C):
             device=device
         ).to(device)
 
+        for name, param in self.model.base.named_parameters():
+            print(name, param.shape, "!!!!!!!!!!!!!!!!!!!!!!!!")
+
         self.optimizer = rl_utils.get_optimizer(
             parameters=self.model.base.parameters(),
             learning_rate=self.params.LEARNING_RATE,
@@ -52,7 +55,8 @@ class AgentContinuousA2C(AgentA2C):
         # mu_v.shape: (32, 1)
         # var_v.shape: (32, 1)
         # value_v.shape; (32, 1)
-        mu_v, var_v, value_v = self.model(states_v)
+        mu_v, logstd_v, value_v = self.model(states_v)
+        # print(mu_v.shape, logstd_v.shape, value_v.shape, "##############")
 
         # Critic Optimization
         loss_critic_v = F.mse_loss(input=value_v.squeeze(-1), target=target_action_values_v.detach())
@@ -64,7 +68,7 @@ class AgentContinuousA2C(AgentA2C):
         # covariance_matrix = torch.diag_embed(var_v).to(self.device)
         # dist = MultivariateNormal(loc=mu_v, covariance_matrix=covariance_matrix)
         # log_pi_action_v = advantage_v * dist.log_prob(actions_v).unsqueeze(-1)
-        dist = Normal(loc=mu_v, scale=torch.sqrt(var_v))
+        dist = Normal(loc=mu_v, scale=logstd_v)
 
         reinforced_log_pi_action_v = advantage_v.unsqueeze(dim=-1).detach() * dist.log_prob(actions_v)
 

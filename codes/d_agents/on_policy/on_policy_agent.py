@@ -50,12 +50,12 @@ class OnPolicyAgent(BaseAgent):
         states = self.preprocess(states)
 
         with torch.no_grad():
-            mu_v, var_v = self.model.base.actor(states)
+            mu_v, logstd_v = self.model.base.actor(states)
 
         if self.agent_mode == AgentMode.TRAIN:
-            actions = self.train_action_selector(mu_v, var_v)
+            actions = self.train_action_selector(mu_v, logstd_v)
         else:
-            actions = self.test_and_play_action_selector(mu_v, var_v)
+            actions = self.test_and_play_action_selector(mu_v, logstd_v)
 
         critics = torch.zeros(size=mu_v.size())
 
