@@ -10,7 +10,7 @@ from gym.vector import VectorEnv
 from icecream import ic
 
 from codes.e_utils.names import EnvironmentName, RLAlgorithmName
-from codes.e_utils.reward_changer import PseudoCountRewardWrapper
+from codes.e_utils.reward_changer import PseudoCountRewardWrapper, RewardChanger
 
 current_path = os.path.dirname(os.path.realpath(__file__))
 PROJECT_HOME = os.path.abspath(os.path.join(current_path, os.pardir, os.pardir))
@@ -134,10 +134,10 @@ class ExperienceSource:
                     state = states[idx]
                     history = histories[idx]
 
-                    # if isinstance(self.env.envs[0], RewardChanger):
-                    #     cur_rewards[idx] += self.env.envs[0].reverse_reward(r)
-                    # else:
-                    #     cur_rewards[idx] += r
+                    if isinstance(self.env.envs[0], RewardChanger):
+                        cur_rewards[idx] += self.env.envs[0].reverse_reward(r)
+                    else:
+                        cur_rewards[idx] += r
 
                     if isinstance(self.env.envs[0], PseudoCountRewardWrapper):
                         cur_rewards[idx] += r - info["intrinsic_reward"]
