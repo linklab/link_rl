@@ -70,13 +70,13 @@ class AgentContinuousA2C(AgentA2C):
         # log_pi_action_v = advantage_v * dist.log_prob(actions_v).unsqueeze(-1)
         dist = Normal(loc=mu_v, scale=logstd_v)
 
-        reinforced_log_pi_action_v = advantage_v.unsqueeze(dim=-1).detach() * dist.log_prob(actions_v)
+        reinforced_log_pi_action_v = dist.log_prob(actions_v) * advantage_v.unsqueeze(dim=-1).detach()
 
         #print(reinforced_log_pi_action_v.shape, reinforced_log_pi_action_v.mean().shape, dist.entropy().shape, dist.entropy().mean().shape)
 
         loss_actor_v = -1.0 * reinforced_log_pi_action_v.mean()
         loss_entropy_v = -1.0 * dist.entropy().mean()
-        # loss_actor_v를 작아지도록 만듦 --> log_pi_v.mean()가 커지도록 만듦
+        # loss_actor_v를 작아지도록 만듦 --> reinforced_log_pi_action_v.mean()가 커지도록 만듦
         # loss_entropy_v를 작아지도록 만듦 --> entropy_v가 커지도록 만듦
 
         return self.backward_and_step(loss_critic_v, loss_entropy_v, loss_actor_v)
