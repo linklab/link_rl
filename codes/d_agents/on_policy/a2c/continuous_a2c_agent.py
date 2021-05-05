@@ -79,7 +79,7 @@ class AgentContinuousA2C(AgentA2C):
 
         reinforced_log_pi_action_v = self.calc_logprob(
             mu_v=mu_v, logstd_v=logstd_v, actions_v=actions_v
-        ) * advantage_v.unsqueeze(dim=-1)
+        ) * advantage_v.unsqueeze(dim=-1).detach()
         entropy_v = self.calc_entropy(logstd_v=logstd_v)
 
         loss_actor_v = -1.0 * reinforced_log_pi_action_v.mean()
