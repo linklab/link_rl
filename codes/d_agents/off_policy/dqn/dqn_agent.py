@@ -87,6 +87,15 @@ class AgentDQN(OffPolicyAgent):
             device=device
         ).to(device)
 
+        self.test_model = DuelingDQNModel(
+            worker_id=worker_id,
+            input_shape=input_shape,
+            num_outputs=num_outputs,
+            params=params,
+            device=device
+        ).to(torch.device('cpu'))
+
+
         self.optimizer = rl_utils.get_optimizer(
             parameters=self.model.base.parameters(),
             learning_rate=self.params.LEARNING_RATE,

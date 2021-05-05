@@ -223,13 +223,10 @@ def process_episode(
 
 
 def agent_model_test(num_tests, test_env, agent):
+    agent.test_model.load_state_dict(agent.model.state_dict())
+
     agent.agent_mode = AgentMode.TEST
     agent.model.eval()
-
-    agent.test_model = copy.deepcopy(agent.model)
-    cpu_device = torch.device('cpu')
-    agent.test_model.load_state_dict(agent.model.state_dict())
-    agent.test_model.to(cpu_device)
 
     num_step = 0
 

@@ -42,6 +42,14 @@ class AgentSAC(OnPolicyAgent):
             device=device
         ).to(device)
 
+        self.test_model = SoftActorCriticModel(
+            worker_id=worker_id,
+            input_shape=input_shape,
+            num_outputs=num_outputs,
+            params=params,
+            device=device
+        ).to(torch.device('cpu'))
+
         self.actor_optimizer = rl_utils.get_optimizer(
             parameters=self.model.base.actor.parameters(),
             learning_rate=self.params.ACTOR_LEARNING_RATE,
