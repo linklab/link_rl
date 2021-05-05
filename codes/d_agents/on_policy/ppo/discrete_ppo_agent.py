@@ -17,12 +17,11 @@ class AgentDiscretePPO(AgentPPO):
             DeepLearningModelName.STOCHASTIC_DISCRETE_ACTOR_CRITIC_MLP,
             DeepLearningModelName.STOCHASTIC_DISCRETE_ACTOR_CRITIC_CNN,
         ]
-
         super(AgentDiscretePPO, self).__init__(
             worker_id=worker_id, params=params, action_shape=action_shape, device=device
         )
-        self.__name__ = "AgentDiscretePPO"
 
+        self.__name__ = "AgentDiscretePPO"
         self.train_action_selector = DiscreteCategoricalActionSelector()
         self.test_and_play_action_selector = DiscreteCategoricalActionSelector()
 

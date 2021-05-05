@@ -70,14 +70,18 @@ class AgentContinuousPPO(AgentPPO):
 
         # trajectory_probs_v: (2049, 2)
         # trajectory_values_v: (2849, 1)
-        trajectory_mu_v, trajectory_var_v, trajectory_values_v = self.model.base.forward(trajectory_states_v)
+        trajectory_mu_v, trajectory_logstd_v, trajectory_values_v = self.model.base.forward(trajectory_states_v)
 
         # trajectory_var_v = self.model.base.actor.var.expand_as(trajectory_mu_v)
         # trajectory_covariance_matrix = torch.diag_embed(trajectory_var_v).to(self.device)
         # trajectory_dist = MultivariateNormal(loc=trajectory_mu_v, covariance_matrix=trajectory_covariance_matrix)
 
-        trajectory_dist = Normal(loc=trajectory_mu_v, scale=torch.sqrt(trajectory_var_v))
-        trajectory_old_log_pi_action_v = trajectory_dist.log_prob(trajectory_actions_v)
+        # trajectory_dist = Normal(loc=trajectory_mu_v, scale=torch.sqrt(trajectory_var_v))
+        # trajectory_old_log_pi_action_v = trajectory_dist.log_prob(trajectory_actions_v)
+
+        trajectory_old_log_pi_action_v = self.calc_logprob(
+            mu_v=trajectory_mu_v, logstd_v=trajectory_logstd_v, actions_v=trajectory_actions_v
+        )
 
         # 아래 변수는 전체 trajectory의 원소보다 1 적음
         with torch.no_grad():
@@ -111,17 +115,22 @@ class AgentContinuousPPO(AgentPPO):
                 # batch_mu_v: (64, 1)
                 # batch_var_v: (64, 1)
                 # batch_values_v: (64, 1)
-                batch_mu_v, batch_var_v, batch_values_v = self.model(batch_states_v)
+                batch_mu_v, batch_logstd_v, batch_values_v = self.model(batch_states_v)
 
                 batch_loss_critic_v = self.backward_and_step_for_critic(batch_values_v, batch_target_action_value_v)
 
-                # actor training
-                batch_dist = Normal(loc=batch_mu_v, scale=torch.sqrt(batch_var_v))
+                # batch_dist = Normal(loc=batch_mu_v, scale=torch.sqrt(batch_var_v))
+                # batch_log_pi_action_v = batch_dist.log_prob(batch_actions_v)
 
+                # actor training
                 # batch_actions_v: (64, 1)
                 # batch_log_pi_action_v: (64, 1)
-                batch_log_pi_action_v = batch_dist.log_prob(batch_actions_v)
-                batch_dist_entropy_v = batch_dist.entropy()
+                batch_log_pi_action_v = self.calc_logprob(
+                    mu_v=batch_mu_v, logstd_v=batch_logstd_v, actions_v=batch_actions_v
+                )
+
+                batch_dist_entropy_v = self.calc_entropy(logstd_v=batch_logstd_v)
+
                 batch_loss_entropy_v = -1.0 * batch_dist_entropy_v.mean()
 
                 batch_loss_actor_v = self.backward_and_step_for_actor(

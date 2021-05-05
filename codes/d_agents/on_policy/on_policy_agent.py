@@ -1,3 +1,4 @@
+import math
 from abc import abstractmethod
 
 import numpy as np
@@ -130,3 +131,13 @@ class OnPolicyAgent(BaseAgent):
         advantage_v = float32_preprocessor(list(reversed(result_advantages)))
         target_action_value_v = float32_preprocessor(list(reversed(result_target_action_values)))
         return advantage_v.to(device), target_action_value_v.to(device)
+
+    def calc_logprob(self, mu_v, logstd_v, actions_v):
+        p1 = -1.0 * ((mu_v - actions_v) ** 2) / (2 * torch.exp(logstd_v).clamp(min=1e-3, max=1e3) ** 2)
+        p2 = -1.0 * torch.log(torch.sqrt(2 * np.pi * torch.exp(logstd_v).clamp(min=1e-3, max=1e3) ** 2))
+
+        return p1 + p2
+
+    # https://proofwiki.org/wiki/Differential_Entropy_of_Gaussian_Distribution
+    def calc_entropy(self, logstd_v):
+        return torch.log(logstd_v * math.sqrt(2 * np.pi)) + 1.0 / 2.0

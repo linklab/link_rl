@@ -18,7 +18,9 @@ class AgentDiscreteA2C(AgentA2C):
             DeepLearningModelName.STOCHASTIC_DISCRETE_ACTOR_CRITIC_MLP,
             DeepLearningModelName.STOCHASTIC_DISCRETE_ACTOR_CRITIC_CNN
         ]
-        super(AgentDiscreteA2C, self).__init__(worker_id, input_shape, action_shape, num_outputs, params, device)
+        super(AgentDiscreteA2C, self).__init__(
+            worker_id, input_shape, action_shape, num_outputs, params, device
+        )
 
         self.__name__ = "AgentDiscreteA2C"
         self.train_action_selector = DiscreteCategoricalActionSelector()
