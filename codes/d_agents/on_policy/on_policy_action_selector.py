@@ -20,13 +20,13 @@ class ContinuousNormalActionSelector(ContinuousActionSelector):
         # covariance_matrix = torch.diag_embed(var_v)
         # dist = MultivariateNormal(loc=mu_v, covariance_matrix=covariance_matrix)
 
-        mu = mu_v.data.cpu().numpy()
-        logstd = logstd_v.data.cpu().numpy()
-        rnd = np.random.normal(size=logstd.shape)
-        actions = mu + np.exp(logstd) * rnd
+        # mu = mu_v.data.cpu().numpy()
+        # logstd = logstd_v.data.cpu().numpy()
+        # rnd = np.random.normal(size=logstd.shape)
+        # actions = mu + np.exp(logstd) * rnd
 
-        # dist = Normal(loc=mu_v, scale=logstd_v)
-        # actions = dist.sample().data.cpu().numpy()
+        dist = Normal(loc=mu_v, scale=logstd_v)
+        actions = dist.sample().data.cpu().numpy()
 
         actions = np.clip(actions, -1.0, 1.0)
         return actions
