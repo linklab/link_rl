@@ -1,0 +1,38 @@
+import enum
+
+
+class SACActionSelectorType(enum.Enum):
+    BASIC_ACTION_SELECTOR = 0
+    SOMETIMES_BLOW_ACTION_SELECTOR = 1
+
+
+class SACActionType(enum.Enum):
+    GAUSSIAN_NOISE_WITH_EPSILON = 0
+    ONLY_GREEDY = 1
+
+
+class PARAMETERS_SAC:
+    ENVIRONMENT_ID = None
+    PER_PROPORTIONAL = False
+    PER_RANK_BASED = False
+    DOUBLE = True
+
+    REPLAY_BUFFER_SIZE = None
+    ACTION_SCALE = 1.0
+    TAU = 0.001
+
+    NOISE_ENABLED = True
+
+    EPSILON_INIT = 1.0
+    EPSILON_MIN = 0.01
+    EPSILON_MIN_STEP = 1000000
+
+    TRAIN_ONLY_AFTER_EPISODE = False
+    NUM_TRAIN_ONLY_AFTER_EPISODE = None
+
+    TYPE_OF_SAC_ACTION = SACActionType.GAUSSIAN_NOISE_WITH_EPSILON  # current
+    TYPE_OF_SAC_ACTION_SELECTOR = SACActionSelectorType.BASIC_ACTION_SELECTOR
+
+    N_STEP = 2
+
+    NOISY_NET = False

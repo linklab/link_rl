@@ -130,7 +130,8 @@ OFF_POLICY_RL_ALGORITHMS = [
     RLAlgorithmName.DDPG_V0,
     RLAlgorithmName.D4PG_V0,
     RLAlgorithmName.RAINBOW_V0,
-    RLAlgorithmName.TD3_V0
+    RLAlgorithmName.TD3_V0,
+    RLAlgorithmName.SAC_V0,
 ]
 
 ON_POLICY_RL_ALGORITHMS = [
@@ -138,5 +139,4 @@ ON_POLICY_RL_ALGORITHMS = [
     RLAlgorithmName.CONTINUOUS_A2C_V0,
     RLAlgorithmName.DISCRETE_PPO_V0,
     RLAlgorithmName.CONTINUOUS_PPO_V0,
-    RLAlgorithmName.SAC_V0,
 ]

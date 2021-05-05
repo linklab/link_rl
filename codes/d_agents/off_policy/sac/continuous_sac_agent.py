@@ -6,7 +6,7 @@ import torch.nn.utils as nn_utils
 
 from codes.c_models.continuous_action.soft_actor_critic_model import SoftActorCriticModel
 from codes.d_agents.a0_base_agent import float32_preprocessor
-from codes.d_agents.on_policy.on_policy_action_selector import ContinuousNormalActionSelector
+from codes.d_agents.off_policy.sac.sac_action_selector import ContinuousNormalSACActionSelector
 from codes.d_agents.on_policy.on_policy_agent import OnPolicyAgent
 from codes.e_utils import rl_utils, replay_buffer
 from codes.e_utils.names import DeepLearningModelName, AgentMode
@@ -23,8 +23,8 @@ class AgentSAC(OnPolicyAgent):
         super(AgentSAC, self).__init__(worker_id, params, action_shape, device)
         self.__name__ = "AgentSAC"
 
-        self.train_action_selector = ContinuousNormalActionSelector()
-        self.test_and_play_action_selector = ContinuousNormalActionSelector()
+        self.train_action_selector = ContinuousNormalSACActionSelector()
+        self.test_and_play_action_selector = ContinuousNormalSACActionSelector()
 
         self.model = SoftActorCriticModel(
             worker_id=worker_id,
@@ -146,9 +146,7 @@ class AgentSAC(OnPolicyAgent):
         return gradients, loss_critic_v.item(), loss_actor_v.item() * -1.0
 
     def unpack_batch_for_sac(self, batch):
-        states_v, actions_v, target_action_values_v = self.unpack_batch_for_actor_critic(
-            batch, self.model, self.params, device=self.device
-        )
+        states_v, actions_v, target_action_values_v = self.unpack_batch_for_actor_critic(batch, self.model, self.params)
 
         # references for the critic network
         mu_v = self.model.base.actor(states_v)
