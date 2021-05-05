@@ -87,6 +87,9 @@ class ActorMLPBase(nn.Module):
 
         self.var = nn.Sequential(
             nn.Linear(self.hidden_3_size, num_outputs),
+            # SoftPlus is a smooth approximation to the ReLU function
+            # and can be used to constrain the output of a machine to always be positive.
+            # https://pytorch.org/docs/stable/generated/torch.nn.Softplus.html
             nn.Softplus()
         )
 
@@ -97,6 +100,6 @@ class ActorMLPBase(nn.Module):
 
     def forward(self, inputs):
         net_out = self.net(inputs)
-        mu = 2 * self.mu(net_out)
+        mu = self.mu(net_out)
         var = self.var(net_out) + 1e-5
         return mu, var
