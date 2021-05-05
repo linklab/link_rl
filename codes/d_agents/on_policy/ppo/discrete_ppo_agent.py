@@ -39,7 +39,7 @@ class AgentDiscretePPO(AgentPPO):
             num_outputs=num_outputs,
             params=params,
             device=device
-        ).to(torch.device('cpu'))
+        ).to(device)
 
         # self.optimizer = rl_utils.get_optimizer(
         #     parameters=self.model.base.parameters(),

@@ -78,7 +78,7 @@ class AgentDDPG(OffPolicyAgent):
             num_outputs=num_outputs,
             params=params,
             device=device
-        ).to(torch.device('cpu'))
+        ).to(device)
 
         # self.base_optimizer = rl_utils.get_optimizer(
         #     parameters=self.model.base.parameters(),

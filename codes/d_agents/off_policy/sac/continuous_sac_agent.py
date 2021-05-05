@@ -48,7 +48,7 @@ class AgentSAC(OnPolicyAgent):
             num_outputs=num_outputs,
             params=params,
             device=device
-        ).to(torch.device('cpu'))
+        ).to(device)
 
         self.actor_optimizer = rl_utils.get_optimizer(
             parameters=self.model.base.actor.parameters(),
