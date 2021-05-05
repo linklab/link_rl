@@ -75,9 +75,8 @@ class AgentContinuousA2C(AgentA2C):
         # loss_actor_v = -1.0 * reinforced_log_pi_action_v.mean()
         # loss_entropy_v = -1.0 * dist.entropy().mean()
 
-        var = logstd_v ** 2
-        reinforced_log_pi_action_v = -0.5 * (((actions_v - mu_v) ** 2 / var) + (torch.log(var * 2 * np.pi)))  # 가우시안 분포
-        entropy_v = ((torch.log(2 * np.pi * torch.exp(logstd_v)) + 1.0) / 2).mean()
+        reinforced_log_pi_action_v = self.calc_logprob(mu_v=mu_v, logstd_v=logstd_v, actions_v=actions_v) * advantage_v.unsqueeze(dim=-1)
+        entropy_v = (torch.log(2 * np.pi * torch.exp(logstd_v)) + 1.0) / 2.0
 
         loss_actor_v = -1.0 * reinforced_log_pi_action_v.mean()
         loss_entropy_v = -1.0 * entropy_v.mean()
@@ -85,3 +84,8 @@ class AgentContinuousA2C(AgentA2C):
         # loss_entropy_v를 작아지도록 만듦 --> entropy_v가 커지도록 만듦
 
         return self.backward_and_step(loss_critic_v, loss_entropy_v, loss_actor_v)
+
+    def calc_logprob(self, mu_v, logstd_v, actions_v):
+        p1 = -1.0 * ((mu_v - actions_v) ** 2) / (2 * torch.exp(logstd_v).clamp(min=1e-3))
+        p2 = -1.0 * torch.log(torch.sqrt(2 * np.pi * torch.exp(logstd_v)))
+        return p1 + p2
