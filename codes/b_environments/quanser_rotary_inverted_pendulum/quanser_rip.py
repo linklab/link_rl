@@ -60,7 +60,7 @@ class EnvironmentQuanserRIP(gym.Env):
 
         self.reward = 0
 
-        self.steps = 0
+        self.step_idx = 0
         self.state = []
         self.episode_steps = 0
 
@@ -73,6 +73,10 @@ class EnvironmentQuanserRIP(gym.Env):
         self.pendulum_velocity = 0
 
         self.is_motor_limit = False
+
+        self.unit_time = 0.006
+        self.over_unit_time = 0
+        self.step_idx = 0
 
         self.initial_motor_radian = 0.0
         #==================observation==========================================================
@@ -118,7 +122,7 @@ class EnvironmentQuanserRIP(gym.Env):
     #         raise ValueError()
 
     def reset(self):
-        self.steps = 0
+        self.step_idx = 0
         self.reward = 0
         self.is_motor_limit = False
 
@@ -161,22 +165,33 @@ class EnvironmentQuanserRIP(gym.Env):
         return np.asarray(self.state)
 
     def step(self, action):
-        current_time = time.perf_counter()
         # print("current_time - self.previous_time", current_time - self.previous_time)
         while True:
             current_time = time.perf_counter()
-            if current_time - self.previous_time >= 8 / 1000:
+            if current_time - self.previous_time >= self.unit_time:
                 break
             time.sleep(0.0001)
+
+        current_time = time.perf_counter()
+        step_time = current_time - self.previous_time
+
+        if step_time > self.unit_time:
+            self.over_unit_time += 1
+
+        print(self.step_idx, action, step_time)
+        self.previous_time = time.perf_counter()
+
+        if self.step_idx % 100000 == 0:
+            print("*OVER UNIT TIME STEP NUMBER :", self.over_unit_time)
+        #######################################################
 
         if type(action) is np.ndarray:
             action = action[0]
 
-        motor_power = float(action)
-        # if self.steps % 100 == 0:
+        #motor_power = float(action)
+        # if self.step_idx % 100 == 0:
         #     print(action)
 
-        self.previous_time = time.perf_counter()
         #==================== Grpc and use sample time========================================
         # previous_time = time.perf_counter()
         # print(action)
@@ -224,7 +239,7 @@ class EnvironmentQuanserRIP(gym.Env):
         self.reward = self.get_reward(action)
         # print(self.reward, self.pendulum_radian)
         #=============================================================================================
-        self.steps += 1
+        self.step_idx += 1
 
         # print("pendulum radian : {0}, motor radian: {1}, reward: {2}, pendulum_velocity : {3} \n\n".format(
         #     self.pendulum_radian, self.motor_radian, self.is_motor_limit, self.pendulum_velocity
@@ -238,7 +253,7 @@ class EnvironmentQuanserRIP(gym.Env):
         def insert_to_info(s):
             info["result"] = s
 
-        if self.steps >= 5000: # 5000 * 25ms (0.025sec.) = 125 sec.
+        if self.step_idx >= 5000: # 5000 * 25ms (0.025sec.) = 125 sec.
             insert_to_info("*** Success ***")
             return True, info
         # elif self.is_motor_limit:
