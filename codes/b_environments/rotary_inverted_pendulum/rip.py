@@ -609,8 +609,13 @@ class RotaryInvertedPendulumEnv(gym.Env):
         #         "terminal" if terminal else "",
         #         "upright" if self.is_upright else ""
         #     )
-        reward = max(0.0, reward)
-        # print(reward)
+
+        if self.too_much_rotate and not self.is_upright:
+            reward = -1.0
+        else:
+            reward = max(0.0, reward)
+
+        #print(position_reward, energy_penalty, reward)
 
         return reward
 
