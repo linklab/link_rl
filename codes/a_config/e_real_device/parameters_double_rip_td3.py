@@ -1,6 +1,6 @@
 from codes.a_config._rl_parameters.off_policy.parameter_td3 import PARAMETERS_TD3, TD3ActionType, TD3ActionSelectorType
 from codes.a_config.parameters_general import PARAMETERS_GENERAL, RIPEnvRewardType
-from codes.e_utils.names import OptimizerName, RLAlgorithmName, EnvironmentName, DeepLearningModelName, ModelSaveMode
+from codes.e_utils.names import OptimizerName, RLAlgorithmName, EnvironmentName, DeepLearningModelName
 
 
 class PARAMETERS_DOUBLE_RIP_TD3(PARAMETERS_GENERAL, PARAMETERS_TD3):
@@ -48,7 +48,7 @@ class PARAMETERS_DOUBLE_RIP_TD3(PARAMETERS_GENERAL, PARAMETERS_TD3):
 
     # [TRAINING]
     EPSILON_INIT = 1.0  # 0.9
-    EPSILON_MIN = 1.0   # 0.001
+    EPSILON_MIN = 0.01   # 0.001
     EPSILON_MIN_STEP = 1000000
 
     PER_PROPORTIONAL = False
@@ -71,8 +71,6 @@ class PARAMETERS_DOUBLE_RIP_TD3(PARAMETERS_GENERAL, PARAMETERS_TD3):
     # [4. OPTIMIZER]
     OPTIMIZER = OptimizerName.ADAM
 
-    MODEL_SAVE_MODE = ModelSaveMode.TRAIN
-
     NOISE_ENABLED = True
     OU_SIGMA = 2.5
 
@@ -83,6 +81,8 @@ class PARAMETERS_DOUBLE_RIP_TD3(PARAMETERS_GENERAL, PARAMETERS_TD3):
 
     TRAIN_ONLY_AFTER_EPISODE = False
     NUM_TRAIN_ONLY_AFTER_EPISODE = 100
+
+    DISTRIBUTIONAL = False
 
     TYPE_OF_RIP_REWARD = RIPEnvRewardType.NEW  # "old_version"
     TYPE_OF_TD3_ACTION = TD3ActionType.GAUSSIAN_NOISE_WITH_EPSILON

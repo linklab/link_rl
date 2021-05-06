@@ -19,6 +19,7 @@ from codes.a_config.a_basic_parameters.parameters_cartpole_emaes    import PARAM
 from codes.a_config.a_basic_parameters.parameters_cartpole_ga       import PARAMETERS_CARTPOLE_GA
 from codes.a_config.a_basic_parameters.parameters_acrobot_dqn import PARAMETERS_ACROBOT_DQN
 from codes.a_config.a_basic_parameters.parameters_mountain_car_dqn import PARAMETERS_MOUNTAIN_CAR_DQN
+from codes.a_config.a_basic_parameters.parameters_pendulum_sac import PARAMETERS_PENDULUM_SAC
 
 from codes.a_config.b_atari_parameters.parameters_atari_pong_a2c        import PARAMETERS_PONG_A2C
 from codes.a_config.b_atari_parameters.parameters_atari_pong_dqn        import PARAMETERS_PONG_DQN
@@ -47,7 +48,7 @@ from codes.a_config.d_matlab_parameters.parameters_matlab_pendulum_ddpg import P
 from .d_matlab_parameters.parameters_matlab_pendulum_td3 import PARAMETERS_PENDULUM_MATLAB_TD3
 
 from codes.a_config.e_real_device.parameters_rip import PARAMETERS_RIP
-from codes.a_config.e_real_device.parameters_double_rip_ddpg import PARAMETERS_DOUBLE_RIP
+from codes.a_config.e_real_device.parameters_double_rip_ddpg import PARAMETERS_DOUBLE_RIP_DDPG
 from codes.a_config.e_real_device.parameters_double_rip_td3 import PARAMETERS_DOUBLE_RIP_TD3
 from codes.a_config.e_real_device.parameters_quanser_rip_ddpg import PARAMETERS_QUANSER_RIP_DDPG
 
@@ -62,7 +63,6 @@ from codes.a_config.or_parameters.parameters_fast_rl_tsp_dqn import PARAMETERS_T
 from codes.a_config.federated_parameters.parameters_federated_cartpole_ppo_mlp import PARAMETERS_FEDERATED_CARTPOLE_PPO_MLP
 
 from codes.e_utils.names import OSName, EnvironmentName, RLAlgorithmName
-from codes.e_utils.names import ModelSaveMode
 
 from codes.a_config._rl_parameters.off_policy.parameter_ddpg import DDPGActionType, DDPGTrainType, DDPGActionSelectorType
 

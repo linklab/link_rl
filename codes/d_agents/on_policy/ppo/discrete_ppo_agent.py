@@ -1,9 +1,9 @@
 import torch
 
 from codes.c_models.discrete_action.discrete_actor_critic_model import DiscreteActorCriticModel
+from codes.d_agents.on_policy.on_policy_action_selector import DiscreteCategoricalActionSelector
 from codes.d_agents.on_policy.ppo.ppo_agent import AgentPPO
 from codes.e_utils import rl_utils
-from codes.d_agents.actions import DiscreteCategoricalActionSelector
 from codes.e_utils.names import DeepLearningModelName
 
 
@@ -17,16 +17,23 @@ class AgentDiscretePPO(AgentPPO):
             DeepLearningModelName.STOCHASTIC_DISCRETE_ACTOR_CRITIC_MLP,
             DeepLearningModelName.STOCHASTIC_DISCRETE_ACTOR_CRITIC_CNN,
         ]
-
         super(AgentDiscretePPO, self).__init__(
             worker_id=worker_id, params=params, action_shape=action_shape, device=device
         )
-        self.__name__ = "AgentDiscretePPO"
 
+        self.__name__ = "AgentDiscretePPO"
         self.train_action_selector = DiscreteCategoricalActionSelector()
         self.test_and_play_action_selector = DiscreteCategoricalActionSelector()
 
         self.model = DiscreteActorCriticModel(
+            worker_id=worker_id,
+            input_shape=input_shape,
+            num_outputs=num_outputs,
+            params=params,
+            device=device
+        ).to(device)
+
+        self.test_model = DiscreteActorCriticModel(
             worker_id=worker_id,
             input_shape=input_shape,
             num_outputs=num_outputs,

@@ -1,9 +1,9 @@
 from codes.a_config._rl_parameters.off_policy.parameter_ddpg import PARAMETERS_DDPG
-from codes.a_config.parameters_general import PARAMETERS_GENERAL, RIPEnvRewardType
-from codes.e_utils.names import OptimizerName, RLAlgorithmName, EnvironmentName, DeepLearningModelName, ModelSaveMode
+from codes.a_config.parameters_general import RIPEnvRewardType
+from codes.e_utils.names import OptimizerName, RLAlgorithmName, EnvironmentName, DeepLearningModelName
 from codes.a_config.parameters_general import PARAMETERS_GENERAL
 
-class PARAMETERS_DOUBLE_RIP(PARAMETERS_GENERAL, PARAMETERS_DDPG):
+class PARAMETERS_DOUBLE_RIP_DDPG(PARAMETERS_GENERAL, PARAMETERS_DDPG):
     # [GENERAL]
     SEED = 1
     MY_PLATFORM = None
@@ -76,8 +76,6 @@ class PARAMETERS_DOUBLE_RIP(PARAMETERS_GENERAL, PARAMETERS_DDPG):
 
     # [4. OPTIMIZER]
     OPTIMIZER = OptimizerName.ADAM
-
-    MODEL_SAVE_MODE = ModelSaveMode.TRAIN
 
     NOISE_ENABLED = True
     OU_SIGMA = 2.5

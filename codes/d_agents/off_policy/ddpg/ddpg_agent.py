@@ -72,6 +72,14 @@ class AgentDDPG(OffPolicyAgent):
             device=device
         ).to(device)
 
+        self.test_model = DeterministicContinuousActorCriticModel(
+            worker_id=worker_id,
+            input_shape=input_shape,
+            num_outputs=num_outputs,
+            params=params,
+            device=device
+        ).to(device)
+
         # self.base_optimizer = rl_utils.get_optimizer(
         #     parameters=self.model.base.parameters(),
         #     learning_rate=self.params.LEARNING_RATE,
@@ -93,7 +101,10 @@ class AgentDDPG(OffPolicyAgent):
         self.last_noise = 0.0
         self.global_uncertainty = 1.0
 
-        if self.params.TYPE_OF_DDPG_ACTION == DDPGActionType.EPSILON:
+        if self.params.TYPE_OF_DDPG_ACTION in [
+            DDPGActionType.OU_NOISE_WITH_EPSILON,
+            DDPGActionType.GAUSSIAN_NOISE_WITH_EPSILON
+        ]:
             self.epsilon_tracker = EpsilonTracker(
                 action_selector=self.train_action_selector,
                 eps_start=params.EPSILON_INIT,
@@ -102,6 +113,8 @@ class AgentDDPG(OffPolicyAgent):
             )
         else:
             self.epsilon_tracker = None
+
+        self.num_trains = 0
 
     def __call__(self, states, noises=None):
         if not noises:
@@ -115,18 +128,15 @@ class AgentDDPG(OffPolicyAgent):
         else:
             self.model.train()
 
-        mu_v = self.model(states)
-        mu = mu_v.detach().cpu().numpy()
-
         if self.agent_mode == AgentMode.TRAIN:
+            mu_v = self.model(states)
+            mu = mu_v.detach().cpu().numpy()
             actions, new_noises = self.train_action_selector(mu, noises, self.global_uncertainty)
             self.last_noise = new_noises[0][0]
         else:
+            mu_v = self.test_model(states)
+            mu = mu_v.detach().cpu().numpy()
             actions, new_noises = self.test_and_play_action_selector(mu, noises)
-
-        if not (isinstance(self.train_action_selector, SomeTimesBlowDDPGActionSelector) and np.any(new_noises)):
-            actions = np.clip(actions, -1.0, 1.0)
-        #####################################
 
         # print("actions: {0:7.4f}, noises: {1:7.4f}".format(
         #     actions[0][0], self.last_noise
@@ -135,6 +145,7 @@ class AgentDDPG(OffPolicyAgent):
         return actions, new_noises
 
     def train(self, step_idx):
+        self.num_trains += 1
         if self.params.PER_PROPORTIONAL or self.params.PER_RANK_BASED:
             batch, batch_indices, batch_weights = self.buffer.sample(self.params.BATCH_SIZE)
         else:

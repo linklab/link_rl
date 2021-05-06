@@ -3,8 +3,8 @@ import torch.nn.functional as F
 
 from codes.c_models.discrete_action.discrete_actor_critic_model import DiscreteActorCriticModel
 from codes.d_agents.on_policy.a2c.a2c_agent import AgentA2C
+from codes.d_agents.on_policy.on_policy_action_selector import DiscreteCategoricalActionSelector
 from codes.e_utils import rl_utils
-from codes.d_agents.actions import DiscreteCategoricalActionSelector
 from codes.e_utils.names import DeepLearningModelName
 
 
@@ -14,18 +14,27 @@ class AgentDiscreteA2C(AgentA2C):
     def __init__(
             self, worker_id, input_shape, action_shape, num_outputs, params, device
     ):
-        super(AgentDiscreteA2C, self).__init__(worker_id, input_shape, action_shape, num_outputs, params, device)
+        assert params.DEEP_LEARNING_MODEL in [
+            DeepLearningModelName.STOCHASTIC_DISCRETE_ACTOR_CRITIC_MLP,
+            DeepLearningModelName.STOCHASTIC_DISCRETE_ACTOR_CRITIC_CNN
+        ]
+        super(AgentDiscreteA2C, self).__init__(
+            worker_id, input_shape, action_shape, num_outputs, params, device
+        )
 
         self.__name__ = "AgentDiscreteA2C"
         self.train_action_selector = DiscreteCategoricalActionSelector()
         self.test_and_play_action_selector = DiscreteCategoricalActionSelector()
 
-        assert params.DEEP_LEARNING_MODEL in [
-            DeepLearningModelName.STOCHASTIC_DISCRETE_ACTOR_CRITIC_MLP,
-            DeepLearningModelName.STOCHASTIC_DISCRETE_ACTOR_CRITIC_CNN
-        ]
-
         self.model = DiscreteActorCriticModel(
+            worker_id=worker_id,
+            input_shape=input_shape,
+            num_outputs=num_outputs,
+            params=params,
+            device=device
+        ).to(device)
+
+        self.test_model = DiscreteActorCriticModel(
             worker_id=worker_id,
             input_shape=input_shape,
             num_outputs=num_outputs,
@@ -57,6 +66,7 @@ class AgentDiscreteA2C(AgentA2C):
 
         # advantage_v.shape: (32,)
         advantage_v = target_action_values_v - value_v.squeeze(-1)
+        #print(target_action_values_v, value_v.squeeze(-1), advantage_v)
 
         log_pi_action_v = torch.log(probs_v.gather(dim=1, index=actions_v.unsqueeze(-1)) + 1e-5).squeeze(-1)
         reinforced_log_pi_action_v = advantage_v.detach() * log_pi_action_v

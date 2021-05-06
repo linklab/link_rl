@@ -22,7 +22,7 @@ from codes.d_agents.black_box.ga.multi_ga_agent import AgentMultiGA
 from codes.d_agents.off_policy.td3.td3_agent import AgentTD3
 from codes.d_agents.off_policy.sac.continuous_sac_agent import AgentSAC
 from codes.d_agents.on_policy.ppo.discrete_ppo_agent import AgentDiscretePPO
-from codes.e_utils.reward_changer import PseudoCountRewardWrapper
+from codes.e_utils.reward_changer import PseudoCountRewardWrapper, RewardChanger
 
 current_path = os.path.dirname(os.path.realpath(__file__))
 PROJECT_HOME = os.path.abspath(os.path.join(current_path, os.pardir, os.pardir))
@@ -51,6 +51,7 @@ if isinstance(params, PARAMETERS_GENERAL_TRADE_DQN):
     MODEL_SAVE_FILE_PREFIX = "_".join([params.ENVIRONMENT_ID.value, params.COIN_NAME, params.TIME_UNIT])
 else:
     MODEL_SAVE_FILE_PREFIX = params.ENVIRONMENT_ID.value
+
 
 def _make():
     env = get_single_environment(params=params, mode=AgentMode.TRAIN)
