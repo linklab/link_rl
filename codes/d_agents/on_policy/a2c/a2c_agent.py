@@ -25,7 +25,7 @@ class AgentA2C(OnPolicyAgent):
     def train(self, step_idx):
         raise NotImplementedError
 
-    def backward_and_step(self, loss_critic_v, loss_entropy_v, loss_actor_v):
+    def backward_and_step(self, loss_critic_v, loss_entropy_v, loss_actor_v, logstd_v):
         self.optimizer.zero_grad()
         loss_actor_v.backward(retain_graph=True)
         (loss_critic_v + self.params.ENTROPY_LOSS_WEIGHT * loss_entropy_v).backward()
@@ -33,7 +33,13 @@ class AgentA2C(OnPolicyAgent):
         self.optimizer.step()
 
         gradients = self.model.get_gradients_for_current_parameters()
-        self.model.check_gradient_nan_or_zero(gradients)
+
+        try:
+            self.model.check_gradient_nan_or_zero(gradients)
+        except ValueError as e:
+            print(loss_critic_v, loss_entropy_v, loss_actor_v, logstd_v)
+            exit(-1)
+
         self.buffer.clear()
 
         return gradients, loss_critic_v.item(), loss_actor_v.item() * -1.0

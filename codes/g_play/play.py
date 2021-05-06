@@ -35,6 +35,8 @@ def play_main(params, env):
     load_model(MODEL_ZOO_SAVE_DIR, MODEL_SAVE_FILE_PREFIX, agent, inquery=False)
     agent.agent_mode = AgentMode.PLAY
     agent.model.eval()
+    agent.test_model.load_state_dict(agent.model.state_dict())
+    agent.test_model.eval()
 
     num_step = 0
     num_episode = 0

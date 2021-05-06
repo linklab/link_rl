@@ -1,6 +1,7 @@
 # https://github.com/openai/gym/blob/master/gym/envs/classic_control/pendulum.py
 # https://mspries.github.io/jimmy_pendulum.html
 #!/usr/bin/env python3
+import copy
 import os, sys
 from collections import deque
 
@@ -33,11 +34,10 @@ def train_main(train_env, test_env):
 
     episode = 0
     solved = False
+    is_good_model_saved = False
 
     train_episode_reward_lst_for_stat = deque(maxlen=params.AVG_STEP_SIZE_FOR_TRAIN_LOSS)
     train_episode_reward_lst_for_test = deque(maxlen=params.TEST_NUM_EPISODES)
-
-    num_tests = get_num_tests()
 
     loss_dequeue = deque(maxlen=params.AVG_STEP_SIZE_FOR_TRAIN_LOSS)
     actor_objective_dequeue = deque(maxlen=params.AVG_STEP_SIZE_FOR_TRAIN_LOSS)
@@ -54,7 +54,7 @@ def train_main(train_env, test_env):
                     for current_episode_reward, current_episode_step in zip(episode_rewards, episode_steps):
                         episode += 1
 
-                        solved, train_info_dict = process_episode(
+                        solved, good_model_saved, train_info_dict = process_episode(
                             train_episode_reward_lst_for_test,
                             train_episode_reward_lst_for_stat,
                             current_episode_reward,
@@ -63,11 +63,13 @@ def train_main(train_env, test_env):
                             step_idx,
                             episode,
                             test_env,
-                            num_tests,
                             early_stopping,
                             current_episode_step,
                             exp
                         )
+
+                        if good_model_saved:
+                            is_good_model_saved = True
 
                         mean_loss = np.mean(loss_dequeue) if len(loss_dequeue) > 0 else 0.0
                         mean_actor_objective = np.mean(actor_objective_dequeue) \
@@ -122,7 +124,8 @@ def train_main(train_env, test_env):
                 if not params.TRAIN_ONLY_AFTER_EPISODE:
                     train(agent, step_idx, loss_dequeue, actor_objective_dequeue)
 
-            if params.MODEL_SAVE_MODE == ModelSaveMode.FINAL_ONLY:
+            if not is_good_model_saved:
+                agent.test_model = copy.deepcopy(agent.model)
                 last_model_save(agent, step_idx, train_episode_reward_lst_for_stat)
         finally:
             if params.ENVIRONMENT_ID in [EnvironmentName.REAL_DEVICE_RIP, EnvironmentName.REAL_DEVICE_DOUBLE_RIP]:

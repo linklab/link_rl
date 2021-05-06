@@ -22,7 +22,13 @@ class DDPGActionSelector:
         if noises.ndim == 1:
             noises = np.expand_dims(noises, axis=-1)
 
-        if self.params.TYPE_OF_DDPG_ACTION == DDPGActionType.EPSILON:
+        if self.params.TYPE_OF_DDPG_ACTION == DDPGActionType.GAUSSIAN_NOISE_WITH_EPSILON:
+            if self.noise_enabled and self.epsilon > 0.0:
+                noises = np.random.normal(size=actions.shape, loc=0, scale=1.0)
+                noises = self.epsilon * noises
+            else:
+                noises = np.zeros_like(actions)
+        elif self.params.TYPE_OF_DDPG_ACTION == DDPGActionType.OU_NOISE_WITH_EPSILON:
             if self.noise_enabled and self.epsilon > 0.0:
                 # agent_states = 1.0       +    0.15 * (0.0 - 1.0)            + new_normal_random
                 noises = noises + self.ou_theta * (self.ou_mu - noises) + self.ou_sigma * np.random.normal(size=noises.shape)
@@ -38,20 +44,19 @@ class DDPGActionSelector:
                     noises = np.zeros_like(actions)
             else:
                 noises = np.zeros_like(actions)
-
         elif self.params.TYPE_OF_DDPG_ACTION == DDPGActionType.ONLY_OU_NOISE:
             if self.noise_enabled:
                 noises = noises + self.ou_theta * (self.ou_mu - noises) + self.ou_sigma * np.random.normal(
                     size=noises.shape)
             else:
                 noises = np.zeros_like(actions)
-
         elif self.params.TYPE_OF_DDPG_ACTION == DDPGActionType.ONLY_GREEDY:
             noises = np.zeros_like(actions)
         else:
             raise ValueError()
 
         actions = actions + noises
+        actions = np.clip(actions, -1.0, 1.0)
 
         actions = np.clip(actions, -1, 1)
 

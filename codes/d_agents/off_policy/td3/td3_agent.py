@@ -15,6 +15,7 @@ from torch.distributions import normal
 
 # https://github.com/sfujim/TD3
 # https://spinningup.openai.com/en/latest/algorithms/td3.html
+
 class AgentTD3(OffPolicyAgent):
     def __init__(self, worker_id, input_shape, action_shape, num_outputs, params, device):
         assert params.DEEP_LEARNING_MODEL == DeepLearningModelName.TD3_MLP
@@ -48,6 +49,14 @@ class AgentTD3(OffPolicyAgent):
         ).to(device)
 
         self.target_model = DeterministicContinuousActorCriticModel(
+            worker_id=worker_id,
+            input_shape=input_shape,
+            num_outputs=num_outputs,
+            params=params,
+            device=device
+        ).to(device)
+
+        self.test_model = DeterministicContinuousActorCriticModel(
             worker_id=worker_id,
             input_shape=input_shape,
             num_outputs=num_outputs,
@@ -98,20 +107,21 @@ class AgentTD3(OffPolicyAgent):
         else:
             self.model.train()
 
-        mu_v = self.model(states)
-        mu = mu_v.detach().cpu().numpy()
-
         if self.agent_mode == AgentMode.TRAIN:
+            mu_v = self.model(states)
+            mu = mu_v.detach().cpu().numpy()
             actions, new_noises = self.train_action_selector(mu, noises)
         else:
+            mu_v = self.test_model(states)
+            mu = mu_v.detach().cpu().numpy()
             actions, new_noises = self.test_and_play_action_selector(mu, noises)
 
         self.last_noise = new_noises[0][0]
-        actions = np.clip(actions, -1.0, 1.0)
         #####################################
 
         return actions, new_noises
 
+    # @profile
     def train(self, step_idx):
         if self.params.PER_PROPORTIONAL or self.params.PER_RANK_BASED:
             batch, batch_indices, batch_weights = self.buffer.sample(self.params.BATCH_SIZE)

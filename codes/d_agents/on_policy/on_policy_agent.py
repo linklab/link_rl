@@ -1,10 +1,9 @@
+import math
 from abc import abstractmethod
-
 import numpy as np
 import torch
 
 from codes.d_agents.a0_base_agent import BaseAgent, float32_preprocessor, long64_preprocessor
-from codes.e_utils import replay_buffer
 from codes.e_utils.names import RLAlgorithmName, AgentMode
 
 
@@ -14,9 +13,6 @@ class OnPolicyAgent(BaseAgent):
     """
     def __init__(self, worker_id, params, action_shape, device):
         super(OnPolicyAgent, self).__init__(worker_id, params, action_shape, device)
-        self.model = None
-        self.train_action_selector = None
-        self.test_and_play_action_selector = None
 
     @abstractmethod
     def __call__(self, states, agent_states):
@@ -49,13 +45,19 @@ class OnPolicyAgent(BaseAgent):
     def continuous_call(self, states, critics):
         states = self.preprocess(states)
 
-        with torch.no_grad():
-            mu_v, var_v = self.model.base.actor(states)
+        if len(states) == 1:
+            self.model.eval()
+        else:
+            self.model.train()
 
         if self.agent_mode == AgentMode.TRAIN:
-            actions = self.train_action_selector(mu_v, var_v)
+            with torch.no_grad():
+                mu_v, logstd_v = self.model.base.actor(states)
+            actions = self.train_action_selector(mu_v, logstd_v)
         else:
-            actions = self.test_and_play_action_selector(mu_v, var_v)
+            with torch.no_grad():
+                mu_v, logstd_v = self.test_model.base.actor(states)
+            actions = self.test_and_play_action_selector(mu_v, logstd_v)
 
         critics = torch.zeros(size=mu_v.size())
 
@@ -130,3 +132,13 @@ class OnPolicyAgent(BaseAgent):
         advantage_v = float32_preprocessor(list(reversed(result_advantages)))
         target_action_value_v = float32_preprocessor(list(reversed(result_target_action_values)))
         return advantage_v.to(device), target_action_value_v.to(device)
+
+    def calc_logprob(self, mu_v, logstd_v, actions_v):
+        p1 = -1.0 * ((mu_v - actions_v) ** 2) / (2 * torch.exp(logstd_v).clamp(min=1e-3, max=1e3) ** 2)
+        p2 = -1.0 * torch.log(torch.sqrt(2 * np.pi * torch.exp(logstd_v).clamp(min=1e-3, max=1e3) ** 2))
+
+        return p1 + p2
+
+    # https://proofwiki.org/wiki/Differential_Entropy_of_Gaussian_Distribution
+    def calc_entropy(self, logstd_v):
+        return torch.log(logstd_v * math.sqrt(2 * np.pi)) + 1.0 / 2.0

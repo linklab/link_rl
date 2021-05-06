@@ -1,6 +1,7 @@
 # https://github.com/openai/gym/blob/master/gym/envs/classic_control/pendulum.py
 # https://mspries.github.io/jimmy_pendulum.html
 #!/usr/bin/env python3
+import copy
 import time
 
 import torch
@@ -8,6 +9,8 @@ import os, sys
 import numpy as np
 import wandb
 from termcolor import colored
+
+from codes.e_utils.reward_changer import RewardChanger
 
 print("PyTorch Version", torch.__version__)
 
@@ -19,11 +22,11 @@ if PROJECT_HOME not in sys.path:
 from codes.a_config.parameters import PARAMETERS as params
 from codes.e_utils.rl_utils import get_environment_input_output_info, MODEL_ZOO_SAVE_DIR, MODEL_SAVE_FILE_PREFIX
 from codes.e_utils import rl_utils
-from codes.e_utils.common_utils import save_model, print_environment_info, remove_models, agent_model_test, \
+from codes.e_utils.common_utils import save_model, print_environment_info, remove_models, \
     print_agent_info, load_model
 from codes.e_utils.train_tracker import EarlyStopping
 from codes.e_utils.logger import get_logger
-from codes.e_utils.names import EnvironmentName, ModelSaveMode, AgentMode
+from codes.e_utils.names import EnvironmentName, AgentMode
 from codes.b_environments.quanser_rotary_inverted_pendulum.quanser_rip import get_quanser_rip_observation_space, \
     get_quanser_rip_action_space
 from codes.b_environments.rotary_inverted_pendulum.rip import get_rip_observation_space, get_rip_action_space
@@ -40,6 +43,7 @@ if not os.path.exists(MODEL_SAVE_DIR):
 os.environ['KMP_DUPLICATE_LIB_OK'] = 'True'
 
 device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+# device = torch.device('cpu')
 
 print("DEVICE: {0}".format(device))
 
@@ -103,19 +107,17 @@ def set_wandb(agent):
 def get_train_and_test_envs():
     train_env = rl_utils.get_environment(params=params)
     print_environment_info(train_env, params)
-    if params.MODEL_SAVE_MODE == ModelSaveMode.TEST:
-        if params.ENVIRONMENT_ID in [
-            EnvironmentName.PENDULUM_MATLAB_V0,
-            EnvironmentName.PENDULUM_MATLAB_DOUBLE_RIP_V0,
-            EnvironmentName.REAL_DEVICE_RIP,
-            EnvironmentName.REAL_DEVICE_DOUBLE_RIP,
-            EnvironmentName.QUANSER_SERVO_2
-        ]:
-            test_env = train_env
-        else:
-            test_env = rl_utils.get_single_environment(params=params, mode=AgentMode.TEST)
+
+    if params.ENVIRONMENT_ID in [
+        EnvironmentName.PENDULUM_MATLAB_V0,
+        EnvironmentName.PENDULUM_MATLAB_DOUBLE_RIP_V0,
+        EnvironmentName.REAL_DEVICE_RIP,
+        EnvironmentName.REAL_DEVICE_DOUBLE_RIP,
+        EnvironmentName.QUANSER_SERVO_2
+    ]:
+        test_env = train_env
     else:
-        test_env = None
+        test_env = rl_utils.get_single_environment(params=params, mode=AgentMode.TEST)
 
     return train_env, test_env
 
@@ -142,14 +144,6 @@ def get_early_stopping(agent):
     return early_stopping
 
 
-def get_num_tests():
-    if params.MODEL_SAVE_MODE in [ModelSaveMode.TRAIN, ModelSaveMode.TEST]:
-        num_tests = params.TEST_NUM_EPISODES
-    else:
-        num_tests = 0
-    return num_tests
-
-
 def process_episode(
         train_episode_reward_lst_for_test,
         train_episode_reward_lst_for_stat,
@@ -159,7 +153,6 @@ def process_episode(
         step_idx,
         episode,
         test_env,
-        num_tests,
         early_stopping,
         current_episode_step,
         exp
@@ -174,49 +167,38 @@ def process_episode(
     )
 
     solved = False
-
-    test_mean_episode_reward = None
-    test_std_episode_reward = None
-    evaluation_msg = None
+    good_model_saved = False
 
     if episode % params.TEST_PERIOD_EPISODES == 0:
-        if params.MODEL_SAVE_MODE in [ModelSaveMode.TRAIN, ModelSaveMode.TEST]:
-            if params.MODEL_SAVE_MODE == ModelSaveMode.TRAIN:
-                test_mean_episode_reward = np.mean(train_episode_reward_lst_for_test).item()
-                test_std_episode_reward = np.std(train_episode_reward_lst_for_test).item()
-                test_env_str = colored("TRAIN ENV", "yellow")
-            else:
-                test_mean_episode_reward, test_std_episode_reward = agent_model_test(num_tests, test_env, agent)
-                test_env_str = colored("TEST ENV", "yellow")
+        test_mean_episode_reward, test_std_episode_reward = agent_model_test(params.TEST_NUM_EPISODES, test_env, agent)
+        test_env_str = colored("TEST ENV", "yellow")
 
-            mean_std_str = colored(
-                "{0:7.2f}\u00B1{1:.2f}".format(test_mean_episode_reward, test_std_episode_reward), "yellow"
-            )
+        mean_std_str = colored(
+            "{0:7.2f}\u00B1{1:.2f}".format(test_mean_episode_reward, test_std_episode_reward), "yellow"
+        )
 
-            model_save_msg = "* MODEL SAVE & TRAIN STOP TEST for {0} *, EPISODE REWARD ({1} EPISODES): {2}".format(
-                test_env_str, num_tests, mean_std_str
-            )
+        model_save_msg = "* MODEL SAVE & TRAIN STOP TEST for {0} *, EPISODE REWARD ({1} EPISODES): {2}".format(
+            test_env_str, params.TEST_NUM_EPISODES, mean_std_str
+        )
 
-            solved, early_stopping_evaluation_msg = early_stopping.evaluate(
-                evaluation_value=test_mean_episode_reward,
-                evaluation_value_std=test_std_episode_reward,
-                episode_done_step=step_idx
-            )
+        solved, good_model_saved, early_stopping_evaluation_msg = early_stopping.evaluate(
+            evaluation_value=test_mean_episode_reward,
+            evaluation_value_std=test_std_episode_reward,
+            episode_done_step=step_idx
+        )
 
-            evaluation_msg = model_save_msg + " ---> " + early_stopping_evaluation_msg
-        elif params.MODEL_SAVE_MODE == ModelSaveMode.FINAL_ONLY:
-            test_mean_episode_reward = None
-            test_std_episode_reward = None
-            solved = False
-        else:
-            raise ValueError()
+        evaluation_msg = model_save_msg + " ---> " + early_stopping_evaluation_msg
+    else:
+        test_mean_episode_reward = None
+        test_std_episode_reward = None
+        evaluation_msg = None
 
     train_info_dict = {
         "### EVERY TRAIN EPISODE REWARDS ###": current_episode_reward,
         "train mean ({0} episode rewards)".format(params.AVG_EPISODE_SIZE_FOR_STAT):
             np.mean(train_episode_reward_lst_for_stat),
-        '*** TEST MEAN ({0} episode rewards) ***'.format(num_tests): test_mean_episode_reward,
-        '*** TEST STD ({0} episode rewards) ***'.format(num_tests): test_std_episode_reward,
+        '*** TEST MEAN ({0} episode rewards) ***'.format(params.TEST_NUM_EPISODES): test_mean_episode_reward,
+        '*** TEST STD ({0} episode rewards) ***'.format(params.TEST_NUM_EPISODES): test_std_episode_reward,
         "steps/episode": current_episode_step,
         "speed": speed,
         "step_idx": step_idx,
@@ -237,16 +219,61 @@ def process_episode(
     if "global_uncertainty" in exp.info and hasattr(agent, "global_uncertainty"):
         agent.global_uncertainty = exp.info["global_uncertainty"]
 
-    return solved, train_info_dict
+    return solved, good_model_saved, train_info_dict
+
+
+def agent_model_test(num_tests, test_env, agent):
+    agent.test_model.load_state_dict(agent.model.state_dict())
+
+    agent.agent_mode = AgentMode.TEST
+    agent.model.eval()
+
+    num_step = 0
+
+    episode_rewards = np.zeros(num_tests)
+
+    tests_done = 0
+    for test_episode in range(num_tests):
+        done = False
+        episode_reward = 0
+
+        state = test_env.reset()
+
+        num_episode_step = 0
+        while not done:
+            num_step += 1
+            num_episode_step += 1
+
+            state = np.expand_dims(state, axis=0)
+
+            action, _, = agent(state)
+
+            next_state, reward, done, info = test_env.step(action[0])
+
+            if isinstance(test_env, RewardChanger):
+                reward = test_env.reverse_reward(reward)
+
+            state = next_state
+            episode_reward += reward
+
+        episode_rewards[test_episode] = episode_reward
+        tests_done += 1
+        #print("TEST {0}: EPISODE REWARD: {1:7.2f}".format(tests_done, float(np.mean(episode_reward).item())))
+
+    agent.agent_mode = AgentMode.TRAIN
+    agent.model.train()
+
+    return np.mean(episode_rewards), np.std(episode_rewards)
 
 
 def last_model_save(agent, step_idx, train_episode_reward_lst_for_stat):
     remove_models(
         MODEL_SAVE_DIR, params.ENVIRONMENT_ID.value, agent
     )
-    save_model(
+    model_save_filename = save_model(
         MODEL_SAVE_DIR, params.ENVIRONMENT_ID.value, agent, step_idx, np.mean(train_episode_reward_lst_for_stat)
     )
+    print("MODEL SAVE @ LAST STEP {0} - {1}".format(step_idx, model_save_filename))
 
 
 def print_performance(
@@ -254,7 +281,6 @@ def print_performance(
         elapsed_time, last_info, speed, mean_loss, mean_actor_objective, worker_id=None, last_action=None,
         evaluation_msg=None
 ):
-
     if worker_id is not None:
         prefix = "[Worker ID: {0}]".format(worker_id)
     else:

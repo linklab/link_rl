@@ -87,6 +87,15 @@ class AgentDQN(OffPolicyAgent):
             device=device
         ).to(device)
 
+        self.test_model = DuelingDQNModel(
+            worker_id=worker_id,
+            input_shape=input_shape,
+            num_outputs=num_outputs,
+            params=params,
+            device=device
+        ).to(device)
+
+
         self.optimizer = rl_utils.get_optimizer(
             parameters=self.model.base.parameters(),
             learning_rate=self.params.LEARNING_RATE,
@@ -105,12 +114,13 @@ class AgentDQN(OffPolicyAgent):
         else:
             self.model.train()
 
-        q_v = self.model(states)
-        q = q_v.detach().cpu().numpy()
-
         if self.agent_mode == AgentMode.TRAIN:
+            q_v = self.model(states)
+            q = q_v.detach().cpu().numpy()
             actions = self.train_action_selector(q)
         else:
+            q_v = self.test_model(states)
+            q = q_v.detach().cpu().numpy()
             actions = self.test_and_play_action_selector(q)
 
         return actions, agent_states

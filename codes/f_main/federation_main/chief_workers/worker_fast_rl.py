@@ -19,10 +19,9 @@ if PROJECT_HOME not in sys.path:
 from codes.a_config.parameters import PARAMETERS as params
 
 from codes.e_utils import rl_utils
-from codes.d_agents.actions import EpsilonGreedySomeTimesBlowDQNActionSelector
 from codes.e_utils.common_utils import save_model
 from codes.e_utils.experience_single import ExperienceSourceSingleEnvFirstLast
-from codes.e_utils.names import EnvironmentName, RLAlgorithmName, ModelSaveMode
+from codes.e_utils.names import EnvironmentName, RLAlgorithmName
 from codes.f_main.federation_main.utils import exp_moving_average
 
 MODEL_SAVE_DIR = os.path.join(PROJECT_HOME, "out", "model_save_files")
@@ -185,11 +184,6 @@ class WorkerFastRL:
             if not solved:
                 self.interact_with_chief(
                     gradients, current_episode_reward, episode, step_idx, solved, loss, actor_objective
-                )
-
-            if params.MODEL_SAVE_MODE == ModelSaveMode.FINAL_ONLY:
-                save_model(
-                    MODEL_SAVE_DIR, params.ENVIRONMENT_ID.value, self.agent, step_idx, mean_episode_reward
                 )
 
     def train_at_episode_end(self, step_idx):

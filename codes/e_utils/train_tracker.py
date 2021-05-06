@@ -39,7 +39,7 @@ class SpeedTracker:
         elapsed_time = current_ts - self.start_ts
         ts_diff = current_ts - self.ts
 
-        speed = (episode_done_step - self.ts_frame) / ts_diff
+        speed = (episode_done_step - self.ts_frame) / (ts_diff + 1.0e-8)
 
         self.ts_frame = episode_done_step
         self.ts = current_ts
@@ -79,12 +79,21 @@ class EarlyStopping:
 
     def evaluate(self, evaluation_value, evaluation_value_std, episode_done_step):
         solved = False
-        std_msg = f'{evaluation_value_std:.2f} is less than {self.evaluation_std_max_threshold}.' if evaluation_value_std < self.evaluation_std_max_threshold else f'{evaluation_value_std:.2f} is more than {self.evaluation_std_max_threshold}.'
+        good_model_saved = False
+
+        if evaluation_value_std < self.evaluation_std_max_threshold:
+            std_msg = colored(
+                f'STD {evaluation_value_std:.2f} is less than {self.evaluation_std_max_threshold}.', "yellow"
+            )
+        else:
+            std_msg = colored(
+                f'STD {evaluation_value_std:.2f} is more than {self.evaluation_std_max_threshold}.', "yellow"
+            )
 
         if self.best_evaluation_value == -1.0e10:
             if episode_done_step >= self.next_periodic_save_step_idx:
                 evaluation_str = colored(
-                    f'{episode_done_step} is more than {self.next_periodic_save_step_idx}.',
+                    f'STEP {episode_done_step} is more than {self.next_periodic_save_step_idx}.',
                     "magenta"
                 )
                 msg = f"Periodic Save!!! - {evaluation_str}."
@@ -96,7 +105,7 @@ class EarlyStopping:
 
             if episode_done_step < self.evaluation_min_step_idx and hasattr(self.agent, 'epsilon_tracker') and self.agent.epsilon_tracker:
                 evaluation_str = colored(
-                    f'{episode_done_step} is less than {self.evaluation_min_step_idx}. {std_msg}',
+                    f'STEP {episode_done_step} is less than {self.evaluation_min_step_idx}. {std_msg}',
                     "magenta"
                 )
                 msg += f"{evaluation_str}. No early stopping (and no saving) processed"
@@ -119,6 +128,7 @@ class EarlyStopping:
                 msg += f'*** Evaluation value {evaluation_str}. {saving_str}'
 
                 self.save_checkpoint(evaluation_value, episode_done_step)
+                good_model_saved = True
                 self.best_evaluation_value = evaluation_value
                 self.counter = 0
         else:
@@ -144,10 +154,11 @@ class EarlyStopping:
                 msg = f'*** Evaluation value {evaluation_str}. {saving_str}'
 
                 self.save_checkpoint(evaluation_value, episode_done_step)
+                good_model_saved = True
                 self.best_evaluation_value = evaluation_value
                 self.counter = 0
 
-        return solved, msg
+        return solved, good_model_saved, msg
 
     def save_checkpoint(self, evaluation_value, episode_done_step):
         '''Saves model when validation loss decrease.'''
