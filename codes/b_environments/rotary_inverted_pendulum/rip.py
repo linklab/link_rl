@@ -112,7 +112,7 @@ class RotaryInvertedPendulumEnv(gym.Env):
         self.motor_velocity = 0
 
         self.last_time = 0.0
-        self.unit_time = 0.009
+        self.unit_time = 0.008
         self.over_unit_time = 0
         self.step_idx = 0
         self.episode_idx = 0
@@ -553,6 +553,7 @@ class RotaryInvertedPendulumEnv(gym.Env):
         if self.num_episodes % 3 == 0 and self.episode_steps == 1:
             print("PENDULUM 1 : {0:7.4f}, PENDULUM 2 : {1:7.4f}".format(adjusted_pendulum_1_radian, adjusted_pendulum_2_radian))
 
+        # print(action)
 
         return state, reward, done, info
 
@@ -594,6 +595,7 @@ class RotaryInvertedPendulumEnv(gym.Env):
             alpha_motor_velocity * abs(self.motor_velocity)
         ) / energy_penalty_denominator
 
+        # print(self.pendulum_1_velocity, self.pendulum_2_velocity, self.motor_velocity, energy_penalty)
         # self.episode_position_reward_list.append(position_reward)
         # self.episode_pendulum_velocity_reward_list.append(energy_penalty)
         # self.episode_action_reward_list.append(0.0)
@@ -608,6 +610,7 @@ class RotaryInvertedPendulumEnv(gym.Env):
         #         "upright" if self.is_upright else ""
         #     )
         reward = max(0.0, reward)
+        # print(reward)
 
         return reward
 

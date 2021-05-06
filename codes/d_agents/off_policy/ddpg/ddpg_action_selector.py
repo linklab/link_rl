@@ -53,6 +53,8 @@ class DDPGActionSelector:
 
         actions = actions + noises
 
+        actions = np.clip(actions, -1, 1)
+
         return actions, noises
 
     def __call__(self, mu, noises, global_uncertainty=1.0):
