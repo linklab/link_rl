@@ -23,7 +23,7 @@ class EpsilonGreedySomeTimesBlowDQNActionSelector(ActionSelector):
     #TODO: max_blowing_action_idx
     def __init__(
             self, epsilon=0.05, blowing_action_rate=0.0002,
-            min_blowing_action_idx=0, max_blowing_action_idx=-1, default_action_selector=None
+            min_blowing_action_idx=0, max_blowing_action_idx=-1, default_action_selector=None, params=None
     ):
         self.epsilon = epsilon
         self.default_action_selector = default_action_selector if default_action_selector is not None else ArgmaxActionSelector()
@@ -33,6 +33,7 @@ class EpsilonGreedySomeTimesBlowDQNActionSelector(ActionSelector):
         self.max_blowing_action_idx = max_blowing_action_idx
         self.time_steps = 0
         self.next_time_steps_of_random_blowing_action = int(random.expovariate(self.blowing_action_rate))
+        self.params = params
 
     def __call__(self, scores):
         assert isinstance(scores, np.ndarray)
@@ -55,7 +56,9 @@ class EpsilonGreedySomeTimesBlowDQNActionSelector(ActionSelector):
             # )
 
             self.next_time_steps_of_random_blowing_action = self.time_steps + int(random.expovariate(self.blowing_action_rate))
-            print("Internal Blowing Action: {0}, next_time_steps_of_random_blowing_action: {1}".format(
+            print("[{0:6}/{1}] Internal Blowing Action: {2}, next_time_steps_of_random_blowing_action: {3}".format(
+                self.time_steps,
+                self.params.MAX_GLOBAL_STEP,
                 actions,
                 self.next_time_steps_of_random_blowing_action
             ))
