@@ -101,7 +101,9 @@ class SomeTimesBlowDDPGActionSelector(DDPGActionSelector):
             )
 
             self.next_time_steps_of_random_blowing_action = self.time_steps + int(random.expovariate(self.blowing_action_rate))
-            print("Internal Blowing Action: {0}, next_time_steps_of_random_blowing_action: {1}".format(
+            print("[{0:6}/{1}] Internal Blowing Action: {2}, next_time_steps_of_random_blowing_action: {3}".format(
+                self.time_steps,
+                self.params.MAX_GLOBAL_STEP,
                 actions,
                 self.next_time_steps_of_random_blowing_action
             ))

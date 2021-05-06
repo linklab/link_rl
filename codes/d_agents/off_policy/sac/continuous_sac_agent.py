@@ -23,8 +23,8 @@ class AgentSAC(OnPolicyAgent):
         super(AgentSAC, self).__init__(worker_id, params, action_shape, device)
         self.__name__ = "AgentSAC"
 
-        self.train_action_selector = ContinuousNormalSACActionSelector()
-        self.test_and_play_action_selector = ContinuousNormalSACActionSelector()
+        self.train_action_selector = ContinuousNormalSACActionSelector(params=params)
+        self.test_and_play_action_selector = ContinuousNormalSACActionSelector(params=params)
 
         self.model = SoftActorCriticModel(
             worker_id=worker_id,

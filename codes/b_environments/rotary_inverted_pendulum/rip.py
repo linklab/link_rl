@@ -388,7 +388,9 @@ class RotaryInvertedPendulumEnv(gym.Env):
                 raise ValueError()
 
             self.next_time_step_of_external_blow = self.total_steps + int(random.expovariate(BLOWING_ACTION_RATE))
-            print("External Blow: {0:7.5f}, next_time_step_of_external_blow: {1}".format(
+            print("[{0:6}/{1}] External Blow: {2:7.5f}, next_time_step_of_external_blow: {3}".format(
+                self.step_idx,
+                self.params.MAX_GLOBAL_STEP,
                 action,
                 self.next_time_step_of_external_blow
             ))

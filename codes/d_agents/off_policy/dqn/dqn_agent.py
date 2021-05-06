@@ -36,10 +36,11 @@ class AgentDQN(OffPolicyAgent):
         if params.ENVIRONMENT_ID in [EnvironmentName.PENDULUM_MATLAB_V0, EnvironmentName.PENDULUM_MATLAB_DOUBLE_RIP_V0]:
             self.train_action_selector = EpsilonGreedySomeTimesBlowDQNActionSelector(
                 epsilon=params.EPSILON_INIT, blowing_action_rate=0.0002,
-                min_blowing_action_idx=0, max_blowing_action_idx=-1
+                min_blowing_action_idx=0, max_blowing_action_idx=-1, params=params
             )
             self.test_and_play_action_selector = EpsilonGreedySomeTimesBlowDQNActionSelector(
-                epsilon=0.0, blowing_action_rate=0.0002, min_blowing_action_idx=0, max_blowing_action_idx=-1
+                epsilon=0.0, blowing_action_rate=0.0002,
+                min_blowing_action_idx=0, max_blowing_action_idx=-1, params=params
             )
         elif params.ENVIRONMENT_ID in [EnvironmentName.TRADE_V0]:
             # main 에서 action_selector 할당
