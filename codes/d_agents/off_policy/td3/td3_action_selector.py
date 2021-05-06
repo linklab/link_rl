@@ -17,7 +17,7 @@ class TD3ActionSelector:
         if self.noise_std == 0.0:
             noises = np.zeros(shape=actions.shape)
         else:
-            noises = np.random.normal(size=mu.shape, loc=-1.0 * actions, scale=self.noise_std)
+            noises = np.random.normal(size=mu.shape, loc=0, scale=self.noise_std)
 
         if self.params.TYPE_OF_TD3_ACTION == TD3ActionType.GAUSSIAN_NOISE_WITH_EPSILON:
             #print(actions, self.epsilon, noises, "!!!!!!!!!!!!!!11", self.mode)

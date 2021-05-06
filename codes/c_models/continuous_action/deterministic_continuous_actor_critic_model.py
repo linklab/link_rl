@@ -53,11 +53,11 @@ class DeterministicActorCriticMLPBase(nn.Module):
 
         self.actor = nn.Sequential(
             nn.Linear(num_inputs, self.hidden_1_size),
-            nn.LeakyReLU(),
+            nn.Tanh(),
             nn.Linear(self.hidden_1_size, self.hidden_2_size),
-            nn.LeakyReLU(),
+            nn.Tanh(),
             nn.Linear(self.hidden_2_size, self.hidden_3_size),
-            nn.LeakyReLU()
+            nn.Tanh()
         )
 
         if self.params.TYPE_OF_DDPG_ACTION_SELECTOR == DDPGActionSelectorType.NOISY_NET_ACTION_SELECTOR:
@@ -160,11 +160,11 @@ class DeterministicActorCriticTD3MLPBase(nn.Module):
 
         self.actor = nn.Sequential(
             nn.Linear(num_inputs, self.hidden_1_size),
-            nn.LeakyReLU(),
+            nn.Tanh(),
             nn.Linear(self.hidden_1_size, self.hidden_2_size),
-            nn.LeakyReLU(),
+            nn.Tanh(),
             nn.Linear(self.hidden_2_size, self.hidden_3_size),
-            nn.LeakyReLU()
+            nn.Tanh()
         )
 
         if self.params.TYPE_OF_TD3_ACTION_SELECTOR == TD3ActionSelectorType.NOISY_NET_ACTION_SELECTOR:
