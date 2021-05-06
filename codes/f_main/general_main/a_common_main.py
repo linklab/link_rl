@@ -169,7 +169,12 @@ def process_episode(
     solved = False
     good_model_saved = False
 
-    if episode % params.TEST_PERIOD_EPISODES == 0:
+    test_over_epsilon_min_step = True
+    if hasattr(params, "EPSILON_MIN_STEP") and params.EPSILON_MIN_STEP > 0:
+        if step_idx < params.EPSILON_MIN_STEP:
+            test_over_epsilon_min_step = False
+
+    if test_over_epsilon_min_step and episode % params.TEST_PERIOD_EPISODES == 0:
         test_mean_episode_reward, test_std_episode_reward = agent_model_test(params.TEST_NUM_EPISODES, test_env, agent)
         test_env_str = colored("TEST ENV", "yellow")
 

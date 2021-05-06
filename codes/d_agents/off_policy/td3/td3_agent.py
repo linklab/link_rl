@@ -26,19 +26,24 @@ class AgentTD3(OffPolicyAgent):
 
         if params.TYPE_OF_TD3_ACTION_SELECTOR == TD3ActionSelectorType.BASIC_ACTION_SELECTOR:
             self.train_action_selector = TD3ActionSelector(
-                epsilon=params.EPSILON_INIT, noise_std=params.NOISE_STD, params=self.params
+                epsilon=params.EPSILON_INIT, noise_std=params.NOISE_STD, params=self.params, mode="TRAIN"
             )
         elif params.TYPE_OF_TD3_ACTION_SELECTOR == TD3ActionSelectorType.SOMETIMES_BLOW_ACTION_SELECTOR:
             self.train_action_selector = SomeTimesBlowTD3ActionSelector(
                 epsilon=params.EPSILON_INIT, noise_std=params.NOISE_STD,
-                min_blowing_action=-5.0 * params.ACTION_SCALE, max_blowing_action=5.0 * params.ACTION_SCALE, params=self.params
+                min_blowing_action=-5.0 * params.ACTION_SCALE, max_blowing_action=5.0 * params.ACTION_SCALE, params=self.params,
+                mode="TRAIN"
             )
         elif params.TYPE_OF_TD3_ACTION_SELECTOR == TD3ActionSelectorType.NOISY_NET_ACTION_SELECTOR:
-            self.train_action_selector = TD3ActionSelector(epsilon=0.0, noise_std=0.0, params=self.params)
+            self.train_action_selector = TD3ActionSelector(
+                epsilon=0.0, noise_std=0.0, params=self.params, mode="TRAIN"
+            )
         else:
             raise ValueError()
 
-        self.test_and_play_action_selector = TD3ActionSelector(epsilon=0.0, noise_std=0.0, params=self.params)
+        self.test_and_play_action_selector = TD3ActionSelector(
+            epsilon=0.0, noise_std=0.0, params=self.params, mode="TEST"
+        )
 
         self.model = DeterministicContinuousActorCriticModel(
             worker_id=worker_id,

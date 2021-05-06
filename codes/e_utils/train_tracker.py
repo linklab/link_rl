@@ -74,8 +74,8 @@ class EarlyStopping:
         self.model_save_file_prefix = model_save_file_prefix
         self.agent = agent
         self.params = params
-        self.periodic_save_count = 1
-        self.next_periodic_save_step_idx = int(self.params.MAX_GLOBAL_STEP * self.periodic_save_count / 10)
+        # self.periodic_save_count = 1
+        # self.next_periodic_save_step_idx = int(self.params.MAX_GLOBAL_STEP * self.periodic_save_count / 10)
 
     def evaluate(self, evaluation_value, evaluation_value_std, episode_done_step):
         solved = False
@@ -91,17 +91,17 @@ class EarlyStopping:
             )
 
         if self.best_evaluation_value == -1.0e10:
-            if episode_done_step >= self.next_periodic_save_step_idx:
-                evaluation_str = colored(
-                    f'STEP {episode_done_step} is more than {self.next_periodic_save_step_idx}.',
-                    "magenta"
-                )
-                msg = f"Periodic Save!!! - {evaluation_str}."
-                self.save_checkpoint(evaluation_value, episode_done_step)
-                self.periodic_save_count = self.periodic_save_count + 1
-                self.next_periodic_save_step_idx = int(self.params.MAX_GLOBAL_STEP * self.periodic_save_count / 10)
-            else:
-                msg = ""
+            # if episode_done_step >= self.next_periodic_save_step_idx:
+            #     evaluation_str = colored(
+            #         f'STEP {episode_done_step} is more than {self.next_periodic_save_step_idx}.',
+            #         "magenta"
+            #     )
+            #     msg = f"Periodic Save!!! - {evaluation_str}."
+            #     self.save_checkpoint(evaluation_value, episode_done_step)
+            #     self.periodic_save_count = self.periodic_save_count + 1
+            #     self.next_periodic_save_step_idx = int(self.params.MAX_GLOBAL_STEP * self.periodic_save_count / 10)
+            # else:
+            #     msg = ""
 
             if episode_done_step < self.evaluation_min_step_idx and hasattr(self.agent, 'epsilon_tracker') and self.agent.epsilon_tracker:
                 evaluation_str = colored(

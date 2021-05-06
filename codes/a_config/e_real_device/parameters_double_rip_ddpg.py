@@ -3,7 +3,7 @@ from codes.a_config.parameters_general import RIPEnvRewardType
 from codes.e_utils.names import OptimizerName, RLAlgorithmName, EnvironmentName, DeepLearningModelName
 from codes.a_config.parameters_general import PARAMETERS_GENERAL
 
-class PARAMETERS_DOUBLE_RIP(PARAMETERS_GENERAL, PARAMETERS_DDPG):
+class PARAMETERS_DOUBLE_RIP_DDPG(PARAMETERS_GENERAL, PARAMETERS_DDPG):
     # [GENERAL]
     SEED = 1
     MY_PLATFORM = None
