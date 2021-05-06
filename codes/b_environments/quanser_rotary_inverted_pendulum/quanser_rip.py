@@ -10,7 +10,7 @@ import grpc
 from codes.b_environments.quanser_rotary_inverted_pendulum import quanser_service_pb2_grpc
 from codes.e_utils.names import RLAlgorithmName
 from common.environments.environment import Environment
-
+from codes.a_config.parameters import PARAMETERS as params
 from codes.b_environments.quanser_rotary_inverted_pendulum.quanser_service_pb2 import QuanserRequest
 
 STATE_SIZE = 6
@@ -46,7 +46,7 @@ def get_quanser_rip_action_space(params, action_index_to_voltage=None):
 
 
 class EnvironmentQuanserRIP(gym.Env):
-    def __init__(self, params=None):
+    def __init__(self):
         super(EnvironmentQuanserRIP, self).__init__()
         self.episode = 0
 
