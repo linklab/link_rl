@@ -121,7 +121,7 @@ class EnvironmentQuanserRIP(gym.Env):
     #         raise ValueError()
 
     def reset(self):
-        self.step_idx = 0
+        self.episode_steps = 0
         self.reward = 0
         self.is_motor_limit = False
 
@@ -240,6 +240,7 @@ class EnvironmentQuanserRIP(gym.Env):
         # print(self.reward, self.pendulum_radian)
         #=============================================================================================
         self.step_idx += 1
+        self.episode_steps += 1
 
         # print("pendulum radian : {0}, motor radian: {1}, reward: {2}, pendulum_velocity : {3} \n\n".format(
         #     self.pendulum_radian, self.motor_radian, self.is_motor_limit, self.pendulum_velocity
@@ -253,7 +254,7 @@ class EnvironmentQuanserRIP(gym.Env):
         def insert_to_info(s):
             info["result"] = s
 
-        if self.step_idx >= 5000: # 5000 * 25ms (0.025sec.) = 125 sec.
+        if self.episode_steps >= 5000: # 5000 * 25ms (0.025sec.) = 125 sec.
             insert_to_info("*** Success ***")
             return True, info
         # elif self.is_motor_limit:
