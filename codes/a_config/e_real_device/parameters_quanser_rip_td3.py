@@ -1,13 +1,15 @@
 from codes.a_config._rl_parameters.off_policy.parameter_ddpg import PARAMETERS_DDPG
+from codes.a_config._rl_parameters.off_policy.parameter_td3 import PARAMETERS_TD3, TD3ActionType, TD3ActionSelectorType
 from codes.e_utils.names import *
 from codes.a_config.parameters_general import PARAMETERS_GENERAL
 
 
-class PARAMETERS_QUANSER_RIP_DDPG(PARAMETERS_GENERAL, PARAMETERS_DDPG):
+class PARAMETERS_QUANSER_RIP_TD3(PARAMETERS_GENERAL, PARAMETERS_TD3):
     ENVIRONMENT_ID = EnvironmentName.QUANSER_SERVO_2
-    RL_ALGORITHM = RLAlgorithmName.DDPG_V0
-    DEEP_LEARNING_MODEL = DeepLearningModelName.DETERMINISTIC_CONTINUOUS_ACTOR_CRITIC_MLP
-
+    RL_ALGORITHM = RLAlgorithmName.TD3_V0
+    DEEP_LEARNING_MODEL = DeepLearningModelName.TD3_MLP
+    TYPE_OF_ACTION = TD3ActionType.GAUSSIAN_NOISE_WITH_EPSILON
+    TYPE_OF_TD3_ACTION_SELECTOR = TD3ActionSelectorType.SOMETIMES_BLOW_ACTION_SELECTOR
 
     TRAIN_STOP_EPISODE_REWARD = 15300   # MAX: 3.14 * 5000 = 15000
     TRAIN_STOP_EPISODE_REWARD_STD = 100.0
