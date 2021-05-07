@@ -266,7 +266,7 @@ def agent_model_test(num_tests, test_env, agent):
 
     agent.agent_mode = AgentMode.TRAIN
     agent.model.train()
-    
+
     return np.mean(episode_rewards), np.std(episode_rewards)
 
 
