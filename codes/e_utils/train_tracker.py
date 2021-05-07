@@ -80,6 +80,7 @@ class EarlyStopping:
     def evaluate(self, evaluation_value, evaluation_value_std, episode_done_step):
         solved = False
         good_model_saved = False
+        msg = ""
 
         if evaluation_value_std < self.evaluation_std_max_threshold:
             std_msg = colored(
