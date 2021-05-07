@@ -21,7 +21,8 @@ class TD3ActionSelector:
 
         if self.params.TYPE_OF_TD3_ACTION == TD3ActionType.GAUSSIAN_NOISE_WITH_EPSILON:
             #print(actions, self.epsilon, noises, "!!!!!!!!!!!!!!11", self.mode)
-            actions = actions + self.epsilon * noises
+            noises = self.epsilon * noises
+            actions = actions + noises
         elif self.params.TYPE_OF_TD3_ACTION == TD3ActionType.GAUSSIAN_NOISE:
             actions = actions + noises
         elif self.params.TYPE_OF_TD3_ACTION == TD3ActionType.ONLY_GREEDY:
