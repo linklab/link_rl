@@ -3,8 +3,7 @@ import requests
 from slack import WebClient
 from slack.errors import SlackApiError
 
-from common.environments import SLACK_WEBHOOK_URL_1, SLACK_WEBHOOK_URL_2, SLACK_API_TOKEN
-
+from codes.b_environments.trade.trade_constant import SLACK_API_TOKEN, SLACK_WEBHOOK_URL_1, SLACK_WEBHOOK_URL_2
 
 class PushSlack:
     def __init__(self):

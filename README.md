@@ -22,6 +22,7 @@
 - pip freeze > requirements.txt
 - conda install swig
 - pip install box2d-py
+- pip install slackclient
 
 ### 4. mosquitto
 - 모스키토 설치

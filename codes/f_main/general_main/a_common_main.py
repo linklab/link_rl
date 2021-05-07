@@ -49,6 +49,7 @@ print("DEVICE: {0}".format(device))
 
 my_logger = get_logger("main")
 
+
 def get_agent(env):
     if env is None:
         if params.ENVIRONMENT_ID in [
