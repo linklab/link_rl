@@ -170,9 +170,8 @@ def process_episode(
     good_model_saved = False
 
     test_over_epsilon_min_step = True
-    if hasattr(params, "EPSILON_MIN_STEP") and params.EPSILON_MIN_STEP > 0:
-        if step_idx < params.EPSILON_MIN_STEP:
-            test_over_epsilon_min_step = False
+    if hasattr(params, "EPSILON_MIN_STEP") and params.EPSILON_MIN_STEP > 0 and step_idx < params.EPSILON_MIN_STEP:
+        test_over_epsilon_min_step = False
 
     if test_over_epsilon_min_step and episode % params.TEST_PERIOD_EPISODES == 0:
         test_mean_episode_reward, test_std_episode_reward = agent_model_test(params.TEST_NUM_EPISODES, test_env, agent)
@@ -267,7 +266,7 @@ def agent_model_test(num_tests, test_env, agent):
 
     agent.agent_mode = AgentMode.TRAIN
     agent.model.train()
-
+    
     return np.mean(episode_rewards), np.std(episode_rewards)
 
 
