@@ -88,9 +88,7 @@ class AgentSAC(OffPolicyAgent):
         q1_loss_v = F.mse_loss(q1_v.squeeze(), target_action_values_v.detach())
         q2_loss_v = F.mse_loss(q2_v.squeeze(), target_action_values_v.detach())
         q_loss_v = q1_loss_v + q2_loss_v
-
-        print(q_loss_v.shape, "!!!!!!!!")
-        #q_loss_v = q_loss_v.mean()
+        q_loss_v = q_loss_v.mean()
         q_loss_v.backward()
         nn_utils.clip_grad_norm_(self.model.base.twinq.parameters(), self.params.CLIP_GRAD)
         self.twinq_optimizer.step()
