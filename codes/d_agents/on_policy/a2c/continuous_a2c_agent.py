@@ -73,9 +73,12 @@ class AgentContinuousA2C(AgentA2C):
         # advantage_v.shape: (32,)
         advantage_v = target_action_values_v - value_v.squeeze(-1)
 
-        reinforced_log_pi_action_v = self.calc_logprob(
-            mu_v=mu_v, logstd_v=logstd_v, actions_v=actions_v
-        ) * advantage_v.unsqueeze(dim=-1).detach()
+        dist = Normal(loc=mu_v, scale=logstd_v)
+        reinforced_log_pi_action_v = dist.log_prob(value=actions_v) * advantage_v.unsqueeze(dim=-1).detach()
+
+        # reinforced_log_pi_action_v = self.calc_logprob(
+        #     mu_v=mu_v, logstd_v=logstd_v, actions_v=actions_v
+        # ) * advantage_v.unsqueeze(dim=-1).detach()
 
         entropy_v = self.calc_entropy(logstd_v=logstd_v)
 

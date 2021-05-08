@@ -7,8 +7,10 @@ import numpy as np
 from collections import deque
 import random
 import torch.nn.functional as F
+from tensorboardX import SummaryWriter
+import os
 
-
+os.environ['KMP_DUPLICATE_LIB_OK'] = 'True'
 device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 
 
@@ -84,6 +86,7 @@ value = ValueNetwork().to(device)
 optim = torch.optim.Adam(policy.parameters(), lr=1e-5)
 value_optim = torch.optim.Adam(value.parameters(), lr=3e-5)
 gamma = 0.99
+writer = SummaryWriter('a2c_logs_pen')
 memory = Memory(32)
 batch_size = 32
 is_learn = False
@@ -128,16 +131,19 @@ for epoch in count():
             optim.zero_grad()
             loss.backward()
             optim.step()
+            writer.add_scalar('action loss', loss.item(), steps)
 
             value_loss = F.mse_loss(value_target, value(batch_state))
             value_optim.zero_grad()
             value_loss.backward()
             value_optim.step()
-            #print('[steps:{0}], action loss: {1}, value loss: {2}'.format(steps, loss.item(), value_loss.item()))
+            writer.add_scalar('value loss', value_loss.item(), steps)
 
             memory.clear()
         if done:
             break
         state = next_state
-    if epoch % 1 == 0:
+    writer.add_scalar('episode reward', episode_reward, epoch)
+    if epoch % 10 == 0:
         print('Epoch:{}, episode reward is {}'.format(epoch, episode_reward))
+        torch.save(policy.state_dict(), 'a2c-pen-policy.para')

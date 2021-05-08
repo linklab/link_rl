@@ -71,18 +71,24 @@ class ActorMLPBase(nn.Module):
         self.hidden_2_size = params.HIDDEN_2_SIZE
         self.hidden_3_size = params.HIDDEN_3_SIZE
 
-        self.mu = nn.Sequential(
+        self.common = nn.Sequential(
             nn.Linear(num_inputs, self.hidden_1_size),
-            nn.Tanh(),
+            nn.GELU(),
             nn.Linear(self.hidden_1_size, self.hidden_2_size),
-            nn.Tanh(),
-            # nn.Linear(self.hidden_2_size, self.hidden_3_size),
-            # nn.Tanh(),
-            nn.Linear(self.hidden_2_size, num_outputs),
+            nn.GELU(),
+            nn.Linear(self.hidden_2_size, self.hidden_3_size),
+            nn.GELU()
+        )
+
+        self.mu = nn.Sequential(
+            nn.Linear(self.hidden_3_size, num_outputs),
             nn.Tanh()
         )
 
-        self.logstd = nn.Parameter(torch.ones(1, num_outputs))
+        self.logstd = nn.Sequential(
+            nn.Linear(self.hidden_3_size, num_outputs),
+            nn.Softplus()
+        )
 
     @staticmethod
     def init_weights(m):
@@ -90,6 +96,6 @@ class ActorMLPBase(nn.Module):
             torch.nn.init.kaiming_normal_(m.weight)
 
     def forward(self, inputs):
-        mu_v = self.mu(inputs)
-        logstd_v = self.logstd.expand_as(mu_v)
+        mu_v = self.mu(self.common(inputs))
+        logstd_v = self.logstd(self.common(inputs))
         return mu_v, logstd_v
