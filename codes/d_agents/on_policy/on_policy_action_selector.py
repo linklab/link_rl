@@ -26,7 +26,7 @@ class ContinuousNormalActionSelector(ContinuousActionSelector):
         # # actions = mu + np.exp(logstd) * rnd
         # actions = mu + rnd
 
-        dist = Normal(loc=mu_v, scale=logstd_v)
+        dist = Normal(loc=mu_v, scale=torch.exp(logstd_v))
         actions = dist.sample().data.cpu().numpy()
 
         actions = np.clip(actions, -1.0, 1.0)

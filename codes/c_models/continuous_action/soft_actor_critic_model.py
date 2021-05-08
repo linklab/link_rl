@@ -41,17 +41,21 @@ class SoftActorCriticMLPBase(nn.Module):
 
         self.critic = nn.Sequential(
             nn.Linear(num_inputs, self.hidden_1_size),
-            nn.ReLU(),
+            nn.LeakyReLU(),
             nn.Linear(self.hidden_1_size, self.hidden_2_size),
-            nn.ReLU(),
+            nn.LeakyReLU(),
             nn.Linear(self.hidden_2_size, self.hidden_3_size),
-            nn.ReLU(),
+            nn.LeakyReLU(),
             nn.Linear(self.hidden_3_size, 1),
         )
 
         self.twinq = TwinMLPBase(num_inputs, num_outputs, params)
 
         self.layers_info = {'actor': self.actor, 'critic': self.critic, 'twinq': self.twinq}
+
+        self.actor_params = list(self.actor.parameters())
+        self.critic_params = list(self.critic.parameters())
+        self.twinq_params = list(self.twinq.parameters())
 
         self.train()
 
@@ -74,18 +78,24 @@ class ActorMLPBase(nn.Module):
         self.hidden_2_size = params.HIDDEN_2_SIZE
         self.hidden_3_size = params.HIDDEN_3_SIZE
 
-        self.mu = nn.Sequential(
+        self.common = nn.Sequential(
             nn.Linear(num_inputs, self.hidden_1_size),
-            nn.LeakyReLU(),
+            nn.GELU(),
             nn.Linear(self.hidden_1_size, self.hidden_2_size),
-            nn.LeakyReLU(),
+            nn.GELU(),
             nn.Linear(self.hidden_2_size, self.hidden_3_size),
-            nn.LeakyReLU(),
+            nn.GELU()
+        )
+
+        self.mu = nn.Sequential(
             nn.Linear(self.hidden_3_size, num_outputs),
             nn.Tanh()
         )
 
-        self.logstd = nn.Parameter(torch.zeros(num_outputs))
+        self.logstd = nn.Sequential(
+            nn.Linear(self.hidden_3_size, num_outputs),
+            nn.Softplus()
+        )
 
     @staticmethod
     def init_weights(m):
@@ -93,7 +103,9 @@ class ActorMLPBase(nn.Module):
             torch.nn.init.kaiming_normal_(m.weight)
 
     def forward(self, inputs):
-        return self.mu(inputs)
+        mu_v = self.mu(self.common(inputs))
+        logstd_v = self.logstd(self.common(inputs))
+        return mu_v, logstd_v
 
 
 class TwinMLPBase(nn.Module):
@@ -107,21 +119,21 @@ class TwinMLPBase(nn.Module):
 
         self.q1 = nn.Sequential(
             nn.Linear(num_inputs + num_outputs, self.hidden_1_size),
-            nn.ReLU(),
+            nn.LeakyReLU(),
             nn.Linear(self.hidden_1_size, self.hidden_2_size),
-            nn.ReLU(),
+            nn.LeakyReLU(),
             nn.Linear(self.hidden_2_size, self.hidden_3_size),
-            nn.ReLU(),
+            nn.LeakyReLU(),
             nn.Linear(self.hidden_3_size, 1),
         )
 
         self.q2 = nn.Sequential(
             nn.Linear(num_inputs + num_outputs, self.hidden_1_size),
-            nn.ReLU(),
+            nn.LeakyReLU(),
             nn.Linear(self.hidden_1_size, self.hidden_2_size),
-            nn.ReLU(),
+            nn.LeakyReLU(),
             nn.Linear(self.hidden_2_size, self.hidden_3_size),
-            nn.ReLU(),
+            nn.LeakyReLU(),
             nn.Linear(self.hidden_3_size, 1),
         )
 

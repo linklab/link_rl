@@ -51,19 +51,19 @@ class AgentSAC(OnPolicyAgent):
         ).to(device)
 
         self.actor_optimizer = rl_utils.get_optimizer(
-            parameters=self.model.base.actor.parameters(),
+            parameters=self.model.base.actor_params,
             learning_rate=self.params.ACTOR_LEARNING_RATE,
             params=params
         )
 
         self.critic_optimizer = rl_utils.get_optimizer(
-            parameters=self.model.base.critic.parameters(),
+            parameters=self.model.base.critic_params,
             learning_rate=self.params.LEARNING_RATE,
             params=params
         )
 
         self.twinq_optimizer = rl_utils.get_optimizer(
-            parameters=self.model.base.twinq.parameters(),
+            parameters=self.model.base.twinq_params,
             learning_rate=self.params.LEARNING_RATE,
             params=params
         )
