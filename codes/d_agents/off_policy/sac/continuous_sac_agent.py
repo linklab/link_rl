@@ -1,4 +1,6 @@
 # https://spinningup.openai.com/en/latest/algorithms/sac.html
+# https://github.com/pranz24/pytorch-soft-actor-critic
+import numpy as np
 import torch
 import torch.nn.functional as F
 from torch.distributions import Normal
@@ -57,12 +59,6 @@ class AgentSAC(OffPolicyAgent):
             params=params
         )
 
-        self.critic_optimizer = rl_utils.get_optimizer(
-            parameters=self.model.base.critic_params,
-            learning_rate=self.params.LEARNING_RATE,
-            params=params
-        )
-
         self.twinq_optimizer = rl_utils.get_optimizer(
             parameters=self.model.base.twinq_params,
             learning_rate=self.params.LEARNING_RATE,
@@ -80,7 +76,7 @@ class AgentSAC(OffPolicyAgent):
             batch_indices, batch_weights = None, None
 
         # print(batch)
-        states_v, actions_v, target_values_v, target_action_values_v = self.unpack_batch_for_sac(batch)
+        states_v, actions_v, target_action_values_v = self.unpack_batch_for_sac(batch)
 
         # train twinq
         self.twinq_optimizer.zero_grad()
@@ -92,33 +88,33 @@ class AgentSAC(OffPolicyAgent):
         nn_utils.clip_grad_norm_(self.model.base.twinq.parameters(), self.params.CLIP_GRAD)
         self.twinq_optimizer.step()
 
-        # train critic
-        self.critic_optimizer.zero_grad()
-        val_v = self.model.base.critic(states_v)
-
-        if self.params.PER:
-            batch_l1_loss = F.smooth_l1_loss(val_v.squeeze(), target_values_v.detach(), reduction="none")
-            batch_weights_v = torch.tensor(batch_weights)
-            critic_loss_v = batch_weights_v * batch_l1_loss
-
-            self.buffer.update_priorities(batch_indices, batch_l1_loss.detach().cpu().numpy() + 1e-5)
-            self.buffer.update_beta(step_idx)
-        else:
-            # val_v.squeeze().shape: [128]
-            # target_values_v.shape: [128]
-            # critic_loss_v.shape: [128]
-            critic_loss_v = F.mse_loss(val_v.squeeze(), target_values_v.detach(), reduction="none")
-
-        loss_critic_v = critic_loss_v.mean()
-        loss_critic_v.backward()
-        nn_utils.clip_grad_norm_(self.model.base.critic.parameters(), self.params.CLIP_GRAD)
-        self.critic_optimizer.step()
+        # # train critic
+        # self.critic_optimizer.zero_grad()
+        # val_v = self.model.base.critic(states_v)
+        #
+        # if self.params.PER:
+        #     batch_l1_loss = F.smooth_l1_loss(val_v.squeeze(), target_values_v.detach(), reduction="none")
+        #     batch_weights_v = torch.tensor(batch_weights)
+        #     critic_loss_v = batch_weights_v * batch_l1_loss
+        #
+        #     self.buffer.update_priorities(batch_indices, batch_l1_loss.detach().cpu().numpy() + 1e-5)
+        #     self.buffer.update_beta(step_idx)
+        # else:
+        #     # val_v.squeeze().shape: [128]
+        #     # target_values_v.shape: [128]
+        #     # critic_loss_v.shape: [128]
+        #     critic_loss_v = F.mse_loss(val_v.squeeze(), target_values_v.detach(), reduction="none")
+        #
+        # loss_critic_v = critic_loss_v.mean()
+        # loss_critic_v.backward()
+        # nn_utils.clip_grad_norm_(self.model.base.critic.parameters(), self.params.CLIP_GRAD)
+        # self.critic_optimizer.step()
 
         # train actor
         self.actor_optimizer.zero_grad()
         mu_v, logstd_v = self.model.base.actor(states_v)
-        act_dist = Normal(mu_v, torch.exp(logstd_v))
-        acts_v = act_dist.sample()
+        act_dist = Normal(loc=mu_v, scale=torch.exp(logstd_v))
+        acts_v = act_dist.rsample()
         q1_v, q2_v = self.model.base.twinq(states_v, acts_v)
 
         # q1_v.shape: [128, 1]
@@ -132,20 +128,43 @@ class AgentSAC(OffPolicyAgent):
 
         gradients = self.model.get_gradients_for_current_parameters()
 
-        return gradients, loss_critic_v.item(), loss_actor_v.item() * -1.0
+        return gradients, q_loss_v.item(), loss_actor_v.item() * -1.0
 
     def unpack_batch_for_sac(self, batch):
-        # states_v.shape: [128, 3]
-        # actions_v.shape: [128]
-        # target_action_values_v.shape: [128]
-        states_v, actions_v, target_action_values_v = self.unpack_batch_for_actor_critic(batch, self.target_model, self.params)
+        states, actions, rewards, not_done_idx, last_states = [], [], [], [], []
 
-        mu_v, logstd_v = self.model.base.actor(states_v)
-        act_dist = Normal(mu_v, torch.exp(logstd_v))
-        acts_v = act_dist.sample()
-        q1_v, q2_v = self.model.base.twinq(states_v, acts_v)
+        for idx, exp in enumerate(batch):
+            states.append(np.array(exp.state, copy=False))
+            actions.append(exp.action)
+            rewards.append(exp.reward)
+            if exp.last_state is not None:
+                not_done_idx.append(idx)
+                last_states.append(np.array(exp.last_state, copy=False))
 
-        # torch.min(q1_v, q2_v).squeeze().shape: [128]
-        # self.calc_entropy(logstd_v=logstd_v).sum(dim=1).shape: [128]
-        target_values_v = torch.min(q1_v, q2_v).squeeze() - self.params.ENTROPY_LOSS_WEIGHT * self.calc_entropy(logstd_v=logstd_v).sum(dim=1)
-        return states_v, actions_v, target_values_v, target_action_values_v
+        states_v = float32_preprocessor(states).to(self.device)
+        actions_v = float32_preprocessor(actions).to(self.device)
+        target_action_values_np = np.array(rewards, dtype=np.float32)
+
+        last_states_v = torch.FloatTensor(np.array(last_states, copy=False)).to(self.device)
+        last_action_v, last_log_prob = self.model.sample(last_states_v)
+
+        if not_done_idx:
+            last_q_values_v_1, last_q_values_v_2 = self.target_model.base.twinq.forward(last_states_v, last_action_v)
+            last_min_q_values_v = torch.min(last_q_values_v_1, last_q_values_v_2)
+            last_values_np = last_min_q_values_v.data.cpu().numpy()[:, 0] * (self.params.GAMMA ** self.params.N_STEP)
+            target_action_values_np[not_done_idx] += last_values_np
+
+        target_action_values_v = float32_preprocessor(target_action_values_np).to(self.device) - self.params.ALPHA * last_log_prob
+
+        # mu_v, logstd_v = self.model.base.actor(states_v)
+        # act_dist = Normal(mu_v, torch.exp(logstd_v))
+        # acts_v = act_dist.sample()
+        # q1_v, q2_v = self.model.base.twinq(states_v, acts_v)
+        #
+        # # states_v.shape: [128, 3]
+        # # actions_v.shape: [128]
+        # # target_action_values_v.shape: [128]
+        # # torch.min(q1_v, q2_v).squeeze().shape: [128]
+        # # self.calc_entropy(logstd_v=logstd_v).sum(dim=1).shape: [128]
+        # target_values_v = torch.min(q1_v, q2_v).squeeze() - self.params.ENTROPY_LOSS_WEIGHT * self.calc_entropy(logstd_v=logstd_v).sum(dim=1)
+        return states_v, actions_v, target_action_values_v

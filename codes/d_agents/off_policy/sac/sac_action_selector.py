@@ -1,5 +1,6 @@
 import random
 import numpy as np
+import torch
 from icecream import ic
 from torch.distributions import Normal
 
@@ -11,12 +12,20 @@ class ContinuousNormalSACActionSelector(ContinuousActionSelector):
     def __init__(self, params):
         self.params = params
 
-    def __call__(self, mu_v, logstd_v):
-        dist = Normal(loc=mu_v, scale=logstd_v)
-        actions = dist.sample().data.cpu().numpy()
+    def select_action(self, mu_v, logstd_v):
+        if logstd_v is not None:
+            normal = Normal(loc=mu_v, scale=torch.exp(logstd_v))
+            actions_v = normal.rsample()  # for reparameterization trick (mean + std * N(0,1))
+            actions = actions_v.data.cpu().numpy()
+        else:
+            actions = mu_v.data.cpu().numpy()
 
         actions = np.clip(actions, -1.0, 1.0)
+
         return actions
+
+    def __call__(self, mu_v, logstd_v=None):
+        return self.select_action(mu_v, logstd_v)
 
 
 class SomeTimesBlowSACActionSelector(ContinuousNormalSACActionSelector):
@@ -31,7 +40,7 @@ class SomeTimesBlowSACActionSelector(ContinuousNormalSACActionSelector):
         self.time_steps = 0
         self.next_time_steps_of_random_blowing_action = int(random.expovariate(self.blowing_action_rate))
 
-    def __call__(self,  mu_v, logstd_v): #default ou_sigma = 0.2
+    def __call__(self,  mu_v, logstd_v=None):
         if self.time_steps == 0:
             print("next_time_steps_of_random_blowing_action: {0}".format(
                 self.next_time_steps_of_random_blowing_action
@@ -39,10 +48,11 @@ class SomeTimesBlowSACActionSelector(ContinuousNormalSACActionSelector):
 
         self.time_steps += 1
 
-        dist = Normal(loc=mu_v, scale=logstd_v)
-        actions = dist.sample().data.cpu().numpy()
-
         if self.time_steps >= self.next_time_steps_of_random_blowing_action:
+            normal = Normal(loc=mu_v, scale=torch.exp(logstd_v))
+            actions_v = normal.rsample()  # for reparameterization trick (mean + std * N(0,1))
+            actions = actions_v.data.cpu().numpy()
+
             actions += np.random.uniform(
                 low=self.min_blowing_action, high=self.max_blowing_action, size=actions.shape
             )
@@ -55,6 +65,6 @@ class SomeTimesBlowSACActionSelector(ContinuousNormalSACActionSelector):
                 self.next_time_steps_of_random_blowing_action
             ))
         else:
-            actions = np.clip(actions, -1.0, 1.0)
+            actions = self.select_action(self, mu_v, logstd_v)
 
         return actions

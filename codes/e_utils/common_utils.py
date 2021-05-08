@@ -5,7 +5,7 @@ import random
 from typing import Optional
 import numpy as np
 import math
-import time
+import torch.nn as nn
 
 from gym.spaces import Box
 from matplotlib import pyplot as plt
@@ -20,10 +20,16 @@ from codes.d_agents.a0_base_agent import float32_preprocessor
 
 #https://medium.com/analytics-vidhya/stretched-exponential-decay-function-for-epsilon-greedy-algorithm-98da6224c22f
 from codes.e_utils import wrappers
-from codes.e_utils.names import AgentMode, EnvironmentName
 from codes.e_utils.slack import PushSlack
 
 slack = PushSlack()
+
+
+# Initialize Policy weights
+def weights_init_(m):
+    if isinstance(m, nn.Linear):
+        torch.nn.init.xavier_uniform_(m.weight, gain=1)
+        torch.nn.init.constant_(m.bias, 0)
 
 
 def stretched_exponential_decay(epsilon_start, epsilon_minimum, epsilon_end_step, current_step):

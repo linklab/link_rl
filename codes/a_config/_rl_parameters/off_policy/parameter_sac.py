@@ -39,4 +39,6 @@ class PARAMETERS_SAC:
 
     PER = False
 
+    ALPHA = 0.2
+
 
