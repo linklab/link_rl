@@ -116,8 +116,10 @@ class AgentSAC(OffPolicyAgent):
 
         # train actor
         self.actor_optimizer.zero_grad()
-        current_mu_v, _ = self.model.base.actor(states_v)
-        q1_v, q2_v = self.model.base.twinq(states_v, current_mu_v)
+        mu_v, logstd_v = self.model.base.actor(states_v)
+        act_dist = Normal(mu_v, torch.exp(logstd_v))
+        acts_v = act_dist.sample()
+        q1_v, q2_v = self.model.base.twinq(states_v, acts_v)
 
         # q1_v.shape: [128, 1]
         # q2_v.shape: [128, 1]
