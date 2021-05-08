@@ -114,16 +114,17 @@ class AgentSAC(OffPolicyAgent):
 
         # train actor
         self.actor_optimizer.zero_grad()
-        current_actions_v, _ = self.model.base.actor(states_v)
-        q1_v, q2_v = self.model.base.twinq(states_v, current_actions_v)
+        current_mu_v, _ = self.model.base.actor(states_v)
+        q1_v, q2_v = self.model.base.twinq(states_v, current_mu_v)
+
+        # q1_v.shape: [128, 1]
+        # q2_v.shape: [128, 1]
         loss_actor_v = -1.0 * torch.min(q1_v, q2_v).squeeze().mean()
         loss_actor_v.backward()
-
         nn_utils.clip_grad_norm_(self.model.base.actor_params, self.params.CLIP_GRAD)
-
         self.actor_optimizer.step()
 
-        self.target_model.alpha_sync(self.model, alpha=1 - 0.001)
+        self.target_model.alpha_sync(self.model, alpha=1 - self.params.TAU)
 
         gradients = self.model.get_gradients_for_current_parameters()
 
@@ -133,7 +134,7 @@ class AgentSAC(OffPolicyAgent):
         # states_v.shape: [128, 3]
         # actions_v.shape: [128]
         # target_action_values_v.shape: [128]
-        states_v, actions_v, target_action_values_v = self.unpack_batch_for_actor_critic(batch, self.model, self.params)
+        states_v, actions_v, target_action_values_v = self.unpack_batch_for_actor_critic(batch, self.target_model, self.params)
 
         # references for the critic network
         mu_v, logstd_v = self.model.base.actor(states_v)
