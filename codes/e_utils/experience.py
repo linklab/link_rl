@@ -134,13 +134,11 @@ class ExperienceSource:
                     state = states[idx]
                     history = histories[idx]
 
-                    if isinstance(self.env.envs[0], RewardChanger):
-                        cur_rewards[idx] += self.env.envs[0].reverse_reward(r)
-                    else:
-                        cur_rewards[idx] += r
-
-                    if isinstance(self.env.envs[0], PseudoCountRewardWrapper):
-                        cur_rewards[idx] += r - info["intrinsic_reward"]
+                    if isinstance(self.env.envs[0], RewardChanger) or isinstance(self.env.envs[0], PseudoCountRewardWrapper):
+                        if isinstance(self.env.envs[0], RewardChanger):
+                            cur_rewards[idx] += self.env.envs[0].reverse_reward(r)
+                        else:
+                            cur_rewards[idx] += r - info["intrinsic_reward"]
                     else:
                         cur_rewards[idx] += r
 

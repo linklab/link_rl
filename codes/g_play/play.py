@@ -7,6 +7,7 @@ import os, sys
 import numpy as np
 
 from codes.a_config.f_trade_parameters.parameters_trade_dqn import PARAMETERS_GENERAL_TRADE_DQN
+from codes.e_utils.reward_changer import RewardChanger
 
 print("PyTorch Version", torch.__version__)
 
@@ -70,8 +71,13 @@ def play_main(params, env):
                 action = action[0]
 
             next_state, reward, done, info = env.step(action)
-            state = next_state
+
+            if isinstance(env, RewardChanger):
+                reward = env.reverse_reward(reward)
+
             episode_reward += reward
+
+            state = next_state
 
             # if num_step % 1000 == 0:
             #     print("EPISODE: {0}, EPISODE STEPS: {1}, TOTAL STEPS: {2}".format(

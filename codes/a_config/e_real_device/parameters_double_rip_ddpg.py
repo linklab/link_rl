@@ -14,7 +14,8 @@ class PARAMETERS_DOUBLE_RIP_DDPG(PARAMETERS_GENERAL, PARAMETERS_DDPG):
 
     ########################################
     ########################################
-    TRAIN_STOP_EPISODE_REWARD = 57000  # MAX: 6.28 * 10000 = 62800 (Old), 4 * 10000 = 40000 (New)
+    TRAIN_STOP_EPISODE_REWARD = 40000  # MAX: 6.28 * 5000 = 62800 (Old), 90000 (New)
+    TRAIN_STOP_EPISODE_REWARD_STD = 2000
     STOP_PATIENCE_COUNT = 10
 
     REPLAY_BUFFER_SIZE = 100000

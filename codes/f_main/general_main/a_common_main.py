@@ -228,10 +228,11 @@ def process_episode(
 
 
 def agent_model_test(num_tests, test_env, agent):
-    agent.test_model.load_state_dict(agent.model.state_dict())
-
     agent.agent_mode = AgentMode.TEST
     agent.model.eval()
+
+    agent.test_model.load_state_dict(agent.model.state_dict())
+    agent.test_model.eval()
 
     num_step = 0
 
@@ -253,7 +254,12 @@ def agent_model_test(num_tests, test_env, agent):
 
             action, _, = agent(state)
 
-            next_state, reward, done, info = test_env.step(action[0])
+            if hasattr(params, "ACTION_SCALE") and params.ACTION_SCALE:
+                action = params.ACTION_SCALE * action[0]
+            else:
+                action = action[0]
+
+            next_state, reward, done, info = test_env.step(action)
 
             if isinstance(test_env, RewardChanger):
                 reward = test_env.reverse_reward(reward)
@@ -263,7 +269,7 @@ def agent_model_test(num_tests, test_env, agent):
 
         episode_rewards[test_episode] = episode_reward
         tests_done += 1
-        #print("TEST {0}: EPISODE REWARD: {1:7.2f}".format(tests_done, float(np.mean(episode_reward).item())))
+        print("TEST {0}: EPISODE REWARD: {1:7.2f}".format(tests_done, float(np.mean(episode_reward).item())))
 
     agent.agent_mode = AgentMode.TRAIN
     agent.model.train()

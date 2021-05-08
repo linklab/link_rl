@@ -53,28 +53,25 @@ else:
     MODEL_SAVE_FILE_PREFIX = params.ENVIRONMENT_ID.value
 
 
-def _make():
-    env = get_single_environment(params=params, mode=AgentMode.TRAIN)
-    if params.COUNT_BASED_EXPLORATION:
-        assert len(env.observation_space.shape) == 1, "env.observation_space.shape should be one"
-
-        if not params.COUNT_BASED_FILTER:
-            params.COUNT_BASED_FILTER = [1] * env.observation_space.shape[0]
-        assert len(params.COUNT_BASED_FILTER) == env.observation_space.shape[0], \
-            "Current params.COUNT_BASED_FILTER: {0} and params.env.observation_space.shape: {1}".format(
-                params.COUNT_BASED_FILTER, env.observation_space.shape
-            )
-
-        env = PseudoCountRewardWrapper(env=env, params=params)
-    return env
-
-
-def get_make_environment_func():
-    return _make
-
-
 def get_environment(params):
-    env_fns = [get_make_environment_func() for _ in range(params.NUM_ENVIRONMENTS)]
+    def make_environment(params):
+        def _make():
+            env = get_single_environment(params=params, mode=AgentMode.TRAIN)
+            if params.COUNT_BASED_EXPLORATION:
+                assert len(env.observation_space.shape) == 1, "env.observation_space.shape should be one"
+
+                if not params.COUNT_BASED_FILTER:
+                    params.COUNT_BASED_FILTER = [1] * env.observation_space.shape[0]
+                assert len(params.COUNT_BASED_FILTER) == env.observation_space.shape[0], \
+                    "Current params.COUNT_BASED_FILTER: {0} and params.env.observation_space.shape: {1}".format(
+                        params.COUNT_BASED_FILTER, env.observation_space.shape
+                    )
+
+                env = PseudoCountRewardWrapper(env=env, params=params)
+            return env
+
+        return _make
+    env_fns = [make_environment(params=params) for _ in range(params.NUM_ENVIRONMENTS)]
 
     # 매 타임 스텝마다 모든 env들로 부터 transition을 가져옴.
     # 각 env에 대한 통신은 parallel 하지 않음.
