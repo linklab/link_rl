@@ -81,7 +81,7 @@ class BaseAgent:
         critics = torch.zeros(size=probs_v.size())
         return actions, critics
 
-    def continuous_call(self, states, critics):
+    def continuous_stochastic_call(self, states, critics):
         states = self.preprocess(states)
 
         if len(states) == 1:
@@ -102,11 +102,11 @@ class BaseAgent:
 
         return actions, critics
 
-    def unpack_batch_for_actor_critic(self, batch, net, params, discrete=False):
+    def unpack_batch_for_actor_critic(self, batch, model, params, discrete=False):
         """
         Convert batch into training tensors
         :param batch:
-        :param net:
+        :param model:
         :return: states variable, actions tensor, target values variable
         """
         states, actions, rewards, not_done_idx, last_states = [], [], [], [], []
@@ -133,7 +133,7 @@ class BaseAgent:
 
         if not_done_idx:
             last_states_v = torch.FloatTensor(np.array(last_states, copy=False)).to(self.device)
-            last_values_v = net.base.forward_critic(last_states_v)
+            last_values_v = model.base.forward_critic(last_states_v)
             last_values_np = last_values_v.data.cpu().numpy()[:, 0] * (params.GAMMA ** params.N_STEP)
             target_action_values_np[not_done_idx] += last_values_np
 

@@ -60,7 +60,7 @@ class SoftActorCriticMLPBase(nn.Module):
         self.train()
 
     def forward(self, inputs):
-        mu = self.actor(inputs)
+        mu, logstd = self.actor(inputs)
         value = self.critic(inputs)
         return mu, value
 

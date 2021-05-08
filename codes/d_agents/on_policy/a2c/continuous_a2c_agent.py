@@ -56,7 +56,7 @@ class AgentContinuousA2C(AgentA2C):
         )
 
     def __call__(self, states, critics=None):
-        return self.continuous_call(states, critics)
+        return self.continuous_stochastic_call(states, critics)
 
     def train(self, step_idx):
         batch = self.buffer.sample(batch_size=None)

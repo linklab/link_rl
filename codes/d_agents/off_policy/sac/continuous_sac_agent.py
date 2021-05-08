@@ -70,7 +70,7 @@ class AgentSAC(OffPolicyAgent):
         )
 
     def __call__(self, states, critics=None):
-        return self.continuous_call(states, critics)
+        return self.continuous_stochastic_call(states, critics)
 
     def train(self, step_idx):
         if self.params.PER:
@@ -85,9 +85,8 @@ class AgentSAC(OffPolicyAgent):
         # train twinq
         self.twinq_optimizer.zero_grad()
         q1_v, q2_v = self.model.base.twinq(states_v, actions_v)
-        q1_loss_v = F.mse_loss(q1_v.squeeze(), target_action_values_v.detach())
-        q2_loss_v = F.mse_loss(q2_v.squeeze(), target_action_values_v.detach())
-        q_loss_v = q1_loss_v + q2_loss_v
+        q_loss_v = F.mse_loss(q1_v.squeeze(), target_action_values_v.detach(), reduction="none") + \
+                   F.mse_loss(q2_v.squeeze(), target_action_values_v.detach(), reduction="none")
         q_loss_v = q_loss_v.mean()
         q_loss_v.backward()
         nn_utils.clip_grad_norm_(self.model.base.twinq.parameters(), self.params.CLIP_GRAD)
@@ -105,7 +104,10 @@ class AgentSAC(OffPolicyAgent):
             self.buffer.update_priorities(batch_indices, batch_l1_loss.detach().cpu().numpy() + 1e-5)
             self.buffer.update_beta(step_idx)
         else:
-            critic_loss_v = F.smooth_l1_loss(val_v.squeeze(), target_values_v.detach(), reduction="none")
+            # val_v.squeeze().shape: [128]
+            # target_values_v.shape: [128]
+            # critic_loss_v.shape: [128]
+            critic_loss_v = F.mse_loss(val_v.squeeze(), target_values_v.detach(), reduction="none")
 
         loss_critic_v = critic_loss_v.mean()
         loss_critic_v.backward()
@@ -136,12 +138,10 @@ class AgentSAC(OffPolicyAgent):
         # target_action_values_v.shape: [128]
         states_v, actions_v, target_action_values_v = self.unpack_batch_for_actor_critic(batch, self.target_model, self.params)
 
-        # references for the critic network
         mu_v, logstd_v = self.model.base.actor(states_v)
         act_dist = Normal(mu_v, torch.exp(logstd_v))
         acts_v = act_dist.sample()
         q1_v, q2_v = self.model.base.twinq(states_v, acts_v)
-        # element-wise minimum
 
         # torch.min(q1_v, q2_v).squeeze().shape: [128]
         # self.calc_entropy(logstd_v=logstd_v).sum(dim=1).shape: [128]
