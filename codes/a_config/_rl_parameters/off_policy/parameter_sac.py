@@ -17,7 +17,7 @@ class PARAMETERS_SAC:
     PER_RANK_BASED = False
     DOUBLE = True
 
-    REPLAY_BUFFER_SIZE = None
+    REPLAY_BUFFER_SIZE = 100000
     ACTION_SCALE = 1.0
     TAU = 0.001
 
@@ -36,3 +36,7 @@ class PARAMETERS_SAC:
     N_STEP = 2
 
     NOISY_NET = False
+
+    PER = False
+
+

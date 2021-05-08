@@ -6,13 +6,14 @@ import torch.nn.utils as nn_utils
 
 from codes.c_models.continuous_action.soft_actor_critic_model import SoftActorCriticModel
 from codes.d_agents.a0_base_agent import float32_preprocessor
+from codes.d_agents.off_policy.off_policy_agent import OffPolicyAgent
 from codes.d_agents.off_policy.sac.sac_action_selector import ContinuousNormalSACActionSelector
 from codes.d_agents.on_policy.on_policy_agent import OnPolicyAgent
 from codes.e_utils import rl_utils, replay_buffer
 from codes.e_utils.names import DeepLearningModelName, AgentMode
 
 
-class AgentSAC(OnPolicyAgent):
+class AgentSAC(OffPolicyAgent):
     """
     """
     def __init__(
@@ -68,27 +69,8 @@ class AgentSAC(OnPolicyAgent):
             params=params
         )
 
-        self.buffer = replay_buffer.ExperienceReplayBuffer(experience_source=None, buffer_size=self.params.BATCH_SIZE)
-
-    def __call__(self, states, agent_states=None):
-        if not isinstance(states, torch.FloatTensor):
-            states = float32_preprocessor(states).to(self.device)
-
-        if len(states) == 1:
-            self.model.eval()
-        else:
-            self.model.train()
-
-        if self.agent_mode == AgentMode.TRAIN:
-            mu_v, values_v = self.model(states)
-            actions = self.train_action_selector(mu_v, self.model.base.actor.logstd)
-        else:
-            mu_v, values_v = self.test_model(states)
-            actions = self.test_and_play_action_selector(mu_v, self.model.base.actor.logstd)
-
-        critics = values_v.data.cpu().numpy()
-
-        return actions, critics
+    def __call__(self, states, critics=None):
+        return self.continuous_call(states, critics)
 
     def train(self, step_idx):
         if self.params.PER:
@@ -106,6 +88,8 @@ class AgentSAC(OnPolicyAgent):
         q1_loss_v = F.mse_loss(q1_v.squeeze(), target_action_values_v.detach())
         q2_loss_v = F.mse_loss(q2_v.squeeze(), target_action_values_v.detach())
         q_loss_v = q1_loss_v + q2_loss_v
+
+        print(q_loss_v.shape, "!!!!!!!!")
         #q_loss_v = q_loss_v.mean()
         q_loss_v.backward()
         nn_utils.clip_grad_norm_(self.model.base.twinq.parameters(), self.params.CLIP_GRAD)
@@ -132,11 +116,13 @@ class AgentSAC(OnPolicyAgent):
 
         # train actor
         self.actor_optimizer.zero_grad()
-        current_actions_v = self.model.base.actor(states_v)
+        current_actions_v, _ = self.model.base.actor(states_v)
         q1_v, q2_v = self.model.base.twinq(states_v, current_actions_v)
         loss_actor_v = -1.0 * torch.min(q1_v, q2_v).squeeze().mean()
         loss_actor_v.backward()
-        nn_utils.clip_grad_norm_(self.model.base.actor.parameters(), self.params.CLIP_GRAD)
+
+        nn_utils.clip_grad_norm_(self.model.base.actor_params, self.params.CLIP_GRAD)
+
         self.actor_optimizer.step()
 
         self.target_model.alpha_sync(self.model, alpha=1 - 0.001)
@@ -146,13 +132,19 @@ class AgentSAC(OnPolicyAgent):
         return gradients, loss_critic_v.item(), loss_actor_v.item() * -1.0
 
     def unpack_batch_for_sac(self, batch):
+        # states_v.shape: [128, 3]
+        # actions_v.shape: [128]
+        # target_action_values_v.shape: [128]
         states_v, actions_v, target_action_values_v = self.unpack_batch_for_actor_critic(batch, self.model, self.params)
 
         # references for the critic network
-        mu_v = self.model.base.actor(states_v)
-        act_dist = Normal(mu_v, torch.exp(self.model.base.actor.logstd))
+        mu_v, logstd_v = self.model.base.actor(states_v)
+        act_dist = Normal(mu_v, torch.exp(logstd_v))
         acts_v = act_dist.sample()
         q1_v, q2_v = self.model.base.twinq(states_v, acts_v)
         # element-wise minimum
-        target_values_v = torch.min(q1_v, q2_v).squeeze() - self.params.ENTROPY_LOSS_WEIGHT * act_dist.log_prob(acts_v).sum(dim=1)
+
+        # torch.min(q1_v, q2_v).squeeze().shape: [128]
+        # self.calc_entropy(logstd_v=logstd_v).sum(dim=1).shape: [128]
+        target_values_v = torch.min(q1_v, q2_v).squeeze() - self.params.ENTROPY_LOSS_WEIGHT * self.calc_entropy(logstd_v=logstd_v).sum(dim=1)
         return states_v, actions_v, target_values_v, target_action_values_v

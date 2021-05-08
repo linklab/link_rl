@@ -1,4 +1,3 @@
-from abc import abstractmethod
 import numpy as np
 import torch
 
@@ -48,3 +47,4 @@ class OffPolicyAgent(BaseAgent):
         dones_t = torch.BoolTensor(dones).to(self.device)
 
         return states_v, actions_v, rewards_v, dones_t, last_states_v
+
