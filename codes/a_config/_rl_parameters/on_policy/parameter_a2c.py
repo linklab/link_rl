@@ -1,2 +1,3 @@
 class PARAMETERS_A2C:
-    pass
+    ACTOR_LEARNING_RATE = 0.0001
+    LEARNING_RATE = 0.001

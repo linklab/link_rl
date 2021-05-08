@@ -43,8 +43,14 @@ class AgentContinuousA2C(AgentA2C):
             device=device
         ).to(device)
 
-        self.optimizer = rl_utils.get_optimizer(
-            parameters=self.model.base.parameters(),
+        self.actor_optimizer = rl_utils.get_optimizer(
+            parameters=self.model.base.actor_params,
+            learning_rate=self.params.ACTOR_LEARNING_RATE,
+            params=params
+        )
+
+        self.critic_optimizer = rl_utils.get_optimizer(
+            parameters=self.model.base.critic_params,
             learning_rate=self.params.LEARNING_RATE,
             params=params
         )
@@ -69,6 +75,10 @@ class AgentContinuousA2C(AgentA2C):
         # Critic Optimization
         loss_critic_v = F.mse_loss(input=value_v.squeeze(-1), target=target_action_values_v.detach())
 
+        self.critic_optimizer.zero_grad()
+        loss_critic_v.backward(retain_graph=True)
+        self.critic_optimizer.step()
+
         # Actor Optimization
         # advantage_v.shape: (32,)
         advantage_v = target_action_values_v - value_v.squeeze(-1)
@@ -87,5 +97,13 @@ class AgentContinuousA2C(AgentA2C):
         # loss_actor_v를 작아지도록 만듦 --> reinforced_log_pi_action_v.mean()가 커지도록 만듦
         # loss_entropy_v를 작아지도록 만듦 --> entropy_v가 커지도록 만듦
 
-        return self.backward_and_step(loss_critic_v, loss_entropy_v, loss_actor_v)
+        self.actor_optimizer.zero_grad()
+        (loss_actor_v + self.params.ENTROPY_LOSS_WEIGHT * loss_entropy_v).backward()
+        self.actor_optimizer.step()
+
+        self.buffer.clear()
+
+        gradients = self.model.get_gradients_for_current_parameters()
+
+        return gradients, loss_critic_v.item(), loss_actor_v.item() * -1.0
 

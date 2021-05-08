@@ -13,6 +13,8 @@ class AgentA2C(OnPolicyAgent):
         self.test_and_play_action_selector = None
         self.model = None
         self.optimizer = None
+        self.actor_optimizer = None
+        self.critic_optimizer = None
         self.buffer = replay_buffer.ExperienceReplayBuffer(
             experience_source=None, buffer_size=self.params.BATCH_SIZE
         )
@@ -43,3 +45,22 @@ class AgentA2C(OnPolicyAgent):
         self.buffer.clear()
 
         return gradients, loss_critic_v.item(), loss_actor_v.item() * -1.0
+
+    # def backward_and_step(self, loss_critic_v, loss_entropy_v, loss_actor_v):
+    #     self.optimizer.zero_grad()
+    #     loss_actor_v.backward(retain_graph=True)
+    #     (loss_critic_v + self.params.ENTROPY_LOSS_WEIGHT * loss_entropy_v).backward()
+    #     nn_utils.clip_grad_norm_(self.model.base.parameters(), self.params.CLIP_GRAD)
+    #     self.optimizer.step()
+    #
+    #     gradients = self.model.get_gradients_for_current_parameters()
+    #
+    #     # try:
+    #     #     self.model.check_gradient_nan_or_zero(gradients)
+    #     # except ValueError as e:
+    #     #     print(loss_critic_v, loss_entropy_v, loss_actor_v)
+    #     #     exit(-1)
+    #
+    #     self.buffer.clear()
+    #
+    #     return gradients, loss_critic_v.item(), loss_actor_v.item() * -1.0

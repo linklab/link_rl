@@ -50,6 +50,9 @@ class StochasticActorCriticMLPBase(nn.Module):
 
         self.layers_info = {'actor': self.actor, 'critic': self.critic}
 
+        self.actor_params = list(self.actor.parameters())
+        self.critic_params = list(self.critic.parameters())
+
         self.train()
 
     def forward(self, inputs):
