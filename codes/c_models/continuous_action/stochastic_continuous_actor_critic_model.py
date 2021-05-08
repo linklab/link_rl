@@ -73,21 +73,16 @@ class ActorMLPBase(nn.Module):
 
         self.mu = nn.Sequential(
             nn.Linear(num_inputs, self.hidden_1_size),
-            nn.LeakyReLU(),
+            nn.Tanh(),
             nn.Linear(self.hidden_1_size, self.hidden_2_size),
-            nn.LeakyReLU(),
-            nn.Linear(self.hidden_2_size, self.hidden_3_size),
-            nn.LeakyReLU(),
-            nn.Linear(self.hidden_3_size, num_outputs),
+            nn.Tanh(),
+            # nn.Linear(self.hidden_2_size, self.hidden_3_size),
+            # nn.Tanh(),
+            nn.Linear(self.hidden_2_size, num_outputs),
             nn.Tanh()
         )
 
-        self.logstd = nn.Sequential(
-            nn.Linear(num_inputs, self.hidden_1_size),
-            nn.LeakyReLU(),
-            nn.Linear(self.hidden_1_size, num_outputs),
-            nn.Softplus()
-        )
+        self.logstd = nn.Parameter(torch.ones(1, num_outputs))
 
     @staticmethod
     def init_weights(m):
@@ -96,5 +91,5 @@ class ActorMLPBase(nn.Module):
 
     def forward(self, inputs):
         mu_v = self.mu(inputs)
-        logstd_v = self.logstd(inputs)
+        logstd_v = self.logstd.expand_as(mu_v)
         return mu_v, logstd_v

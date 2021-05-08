@@ -50,11 +50,11 @@ class ActorCriticMLPBase(nn.Module):
 
         self.actor = nn.Sequential(
             nn.Linear(num_inputs, self.hidden_1_size),
-            nn.LeakyReLU(),
+            nn.GELU(),
             nn.Linear(self.hidden_1_size, self.hidden_2_size),
-            nn.LeakyReLU(),
+            nn.GELU(),
             nn.Linear(self.hidden_2_size, self.hidden_3_size),
-            nn.LeakyReLU(),
+            nn.GELU(),
             nn.Linear(self.hidden_3_size, num_outputs)
         )
 
@@ -62,11 +62,11 @@ class ActorCriticMLPBase(nn.Module):
 
         self.critic = nn.Sequential(
             nn.Linear(num_inputs, self.hidden_1_size),
-            nn.LeakyReLU(),
+            nn.GELU(),
             nn.Linear(self.hidden_1_size, self.hidden_2_size),
-            nn.LeakyReLU(),
+            nn.GELU(),
             nn.Linear(self.hidden_2_size, self.hidden_3_size),
-            nn.LeakyReLU(),
+            nn.GELU(),
             nn.Linear(self.hidden_3_size, 1),
         )
 
