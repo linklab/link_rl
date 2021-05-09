@@ -13,12 +13,12 @@ class ContinuousNormalSACActionSelector(ContinuousActionSelector):
         self.params = params
 
     def select_action(self, mu_v, logstd_v):
-        if logstd_v is not None:
+        if logstd_v is None or logstd_v == 0.0:
+            actions = mu_v.data.cpu().numpy()
+        else:
             normal = Normal(loc=mu_v, scale=torch.exp(logstd_v))
             actions_v = normal.rsample()  # for reparameterization trick (mean + std * N(0,1))
             actions = actions_v.data.cpu().numpy()
-        else:
-            actions = mu_v.data.cpu().numpy()
 
         actions = np.clip(actions, -1.0, 1.0)
 
