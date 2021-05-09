@@ -68,6 +68,7 @@ class EarlyStopping:
         self.evaluation_min_step_idx = 0
         self.counter = 0
         self.best_evaluation_value = -1.0e10
+        self.std_at_best_evaluation_value = 0.0
         self.early_stop = False
         self.delta = delta
         self.model_save_dir = model_save_dir
@@ -131,12 +132,13 @@ class EarlyStopping:
                 self.save_checkpoint(evaluation_value, episode_done_step)
                 good_model_saved = True
                 self.best_evaluation_value = evaluation_value
+                self.std_at_best_evaluation_value = evaluation_value_std
                 self.counter = 0
         else:
             if evaluation_value < self.best_evaluation_value + self.delta or evaluation_value_std > self.evaluation_std_max_threshold:
                 self.counter += 1
                 counter_str = colored(f'{self.counter} out of {self.patience}', 'red')
-                best_str = colored(f'{self.best_evaluation_value:.2f}', 'green')
+                best_str = colored(f'{self.best_evaluation_value:.2f}\u00B1{self.std_at_best_evaluation_value:.2f}', 'green')
                 msg = f'EarlyStopping counter: {counter_str}. Best evaluation value is still {best_str}'
 
                 if self.counter >= self.patience:
@@ -149,7 +151,7 @@ class EarlyStopping:
             else:
                 saving_str = colored(f"Saving model ...", 'green')
                 evaluation_str = colored(
-                    f'{self.best_evaluation_value:.2f} is increased into {evaluation_value:.2f}', 'green'
+                    f'{self.best_evaluation_value:.2f}\u00B1{self.std_at_best_evaluation_value:.2f} is increased into {evaluation_value:.2f}\u00B1{evaluation_value_std:.2f}', 'green'
                 )
 
                 msg = f'*** Evaluation value {evaluation_str}. {saving_str}'
@@ -157,6 +159,7 @@ class EarlyStopping:
                 self.save_checkpoint(evaluation_value, episode_done_step)
                 good_model_saved = True
                 self.best_evaluation_value = evaluation_value
+                self.std_at_best_evaluation_value = evaluation_value_std
                 self.counter = 0
 
         return solved, good_model_saved, msg

@@ -37,9 +37,10 @@ class SoftActorCriticModel(BaseModel):
         action_v = torch.tanh(x_t)
 
         log_prob = dist.log_prob(x_t)
-        log_prob = log_prob.sum(1, keepdim=True)
 
-        return action_v, log_prob,
+        # action_v.shape: [128, 1]
+        # log_prob.shape: [128, 1]
+        return action_v, log_prob
 
 
 class SoftActorCriticMLPBase(nn.Module):
@@ -53,14 +54,31 @@ class SoftActorCriticMLPBase(nn.Module):
         self.hidden_3_size = params.HIDDEN_3_SIZE
 
         self.actor = GaussianActorMLPBase(num_inputs, num_outputs, params)
+
+        self.critic = nn.Sequential(
+            nn.Linear(num_inputs, self.hidden_1_size),
+            nn.LeakyReLU(),
+            nn.Linear(self.hidden_1_size, self.hidden_2_size),
+            nn.LeakyReLU(),
+            nn.Linear(self.hidden_2_size, self.hidden_3_size),
+            nn.LeakyReLU(),
+            nn.Linear(self.hidden_3_size, 1),
+        )
+
+        self.critic.apply(weights_init_)
+
         self.twinq = TwinMLPBase(num_inputs, num_outputs, params)
 
-        self.layers_info = {'actor': self.actor, 'twinq': self.twinq}
+        self.layers_info = {'actor': self.actor, 'critic': self.critic, 'twinq': self.twinq}
 
         self.actor_params = list(self.actor.parameters())
+        self.critic_params = list(self.critic.parameters())
         self.twinq_params = list(self.twinq.parameters())
 
         self.train()
+
+    def forward_critic(self, inputs):
+        return self.critic(inputs)
 
 
 class GaussianActorMLPBase(nn.Module):
