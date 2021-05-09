@@ -142,5 +142,7 @@ class AgentSAC(OffPolicyAgent):
 
         # torch.min(q1_v, q2_v).squeeze().shape: [128]
         # self.calc_entropy(logstd_v=logstd_v).sum(dim=1).shape: [128]
+        print(torch.min(q1_v, q2_v).squeeze().shape, "!!!! - 1")
+        print(sampled_log_prob.shape, "!!!!! - 2")
         target_values_v = torch.min(q1_v, q2_v).squeeze() - self.params.ALPHA * sampled_log_prob
         return states_v, actions_v, target_values_v, target_action_values_v
