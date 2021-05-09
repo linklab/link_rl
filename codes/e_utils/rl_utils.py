@@ -4,6 +4,7 @@ from gym import Env
 from gym.spaces import Box, Discrete
 from gym.vector import VectorEnv
 from numpy import random
+import pybulletgym
 
 import gym
 import torch
