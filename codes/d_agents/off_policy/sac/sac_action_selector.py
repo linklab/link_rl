@@ -13,7 +13,7 @@ class ContinuousNormalSACActionSelector(ContinuousActionSelector):
         self.params = params
 
     def select_action(self, mu_v, logstd_v):
-        if logstd_v is None or logstd_v == 0.0:
+        if logstd_v is None:
             actions = mu_v.data.cpu().numpy()
         else:
             normal = Normal(loc=mu_v, scale=torch.exp(logstd_v))
