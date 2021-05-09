@@ -96,7 +96,7 @@ class BaseAgent:
         else:
             with torch.no_grad():
                 mu_v, _ = self.test_model.base.actor(states)
-            actions = self.test_and_play_action_selector(mu_v, 0.0)
+            actions = self.test_and_play_action_selector(mu_v, None)
 
         critics = torch.zeros(size=mu_v.size())
 
