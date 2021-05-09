@@ -1,18 +1,14 @@
 # https://spinningup.openai.com/en/latest/algorithms/sac.html
 # https://github.com/pranz24/pytorch-soft-actor-critic
-import numpy as np
 import torch
 import torch.nn.functional as F
-from torch.distributions import Normal
 import torch.nn.utils as nn_utils
 
 from codes.c_models.continuous_action.soft_actor_critic_model import SoftActorCriticModel
-from codes.d_agents.a0_base_agent import float32_preprocessor
 from codes.d_agents.off_policy.off_policy_agent import OffPolicyAgent
 from codes.d_agents.off_policy.sac.sac_action_selector import ContinuousNormalSACActionSelector
-from codes.d_agents.on_policy.on_policy_agent import OnPolicyAgent
-from codes.e_utils import rl_utils, replay_buffer
-from codes.e_utils.names import DeepLearningModelName, AgentMode
+from codes.e_utils import rl_utils
+from codes.e_utils.names import DeepLearningModelName
 
 
 class AgentSAC(OffPolicyAgent):
@@ -128,7 +124,7 @@ class AgentSAC(OffPolicyAgent):
         nn_utils.clip_grad_norm_(self.model.base.actor_params, self.params.CLIP_GRAD)
         self.actor_optimizer.step()
 
-        self.target_model.alpha_sync(self.model, alpha=1 - self.params.TAU)
+        self.target_model.critic_alpha_sync(self.model, alpha=1 - self.params.TAU)
 
         gradients = self.model.get_gradients_for_current_parameters()
 
