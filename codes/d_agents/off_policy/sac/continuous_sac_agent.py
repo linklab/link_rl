@@ -119,7 +119,8 @@ class AgentSAC(OffPolicyAgent):
 
         # q1_v.shape: [128, 1]
         # q2_v.shape: [128, 1]
-        loss_actor_v = -1.0 * (torch.min(q1_v, q2_v).squeeze() - self.params.ALPHA * sampled_log_prob).mean()
+        # loss_actor_v = -1.0 * (torch.min(q1_v, q2_v).squeeze() - self.params.ALPHA * sampled_log_prob).mean()
+        loss_actor_v = -1.0 * torch.min(q1_v, q2_v).squeeze().mean()
         loss_actor_v.backward()
         nn_utils.clip_grad_norm_(self.model.base.actor_params, self.params.CLIP_GRAD)
         self.actor_optimizer.step()
