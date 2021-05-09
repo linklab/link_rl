@@ -157,15 +157,21 @@ class BaseModel(nn.Module):
         self.base.load_state_dict(other_model.base.state_dict())
 
     def alpha_sync(self, other_model, alpha):
-        """
-        Blend params of target net with params from the model
-        :param alpha:
-        """
         assert isinstance(alpha, float)
         assert 0.0 <= alpha <= 1.0
 
-        state = other_model.base.state_dict()
+        other_state = other_model.base.state_dict()
         tgt_state = self.base.state_dict()
-        for k, v in state.items():
+        for k, v in other_state.items():
             tgt_state[k] = tgt_state[k] * alpha + (1.0 - alpha) * v
         self.base.load_state_dict(tgt_state)
+
+    def critic_alpha_sync(self, other_model, alpha):
+        assert isinstance(alpha, float)
+        assert 0.0 <= alpha <= 1.0
+
+        other_critic_state = other_model.base.critic.state_dict()
+        tgt_critic_state = self.base.critic.state_dict()
+        for k, v in other_critic_state.items():
+            tgt_critic_state[k] = tgt_critic_state[k] * alpha + (1.0 - alpha) * v
+        self.base.critic.load_state_dict(tgt_critic_state)

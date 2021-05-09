@@ -139,6 +139,9 @@ class BaseAgent:
 
         target_action_values_v = float32_preprocessor(target_action_values_np).to(self.device)
 
+        # states_v.shape: [128, 3]
+        # actions_v.shape: [128, 1]
+        # target_action_values_v.shape: [128]
         return states_v, actions_v, target_action_values_v
 
     def get_advantage_and_target_action_values(self, trajectory, values_v, device):
