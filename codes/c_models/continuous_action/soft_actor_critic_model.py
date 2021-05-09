@@ -7,7 +7,8 @@ from codes.c_models.base_model import BaseModel
 from codes.e_utils.common_utils import weights_init_
 
 LOG_SIG_MAX = 2
-LOG_SIG_MIN = -20
+LOG_SIG_MIN = -2
+
 
 class SoftActorCriticModel(BaseModel):
     def __init__(self, worker_id, input_shape, num_outputs, params, device):
@@ -106,6 +107,8 @@ class GaussianActorMLPBase(nn.Module):
             nn.Tanh()
         )
 
+        # SoftPlus is a smooth approximation to the ReLU function and can be used
+        # to constrain the output of a machine to always be positive.
         self.logstd = nn.Sequential(
             nn.Linear(self.hidden_3_size, num_outputs),
             nn.Softplus()
@@ -119,46 +122,6 @@ class GaussianActorMLPBase(nn.Module):
         logstd_v = self.logstd(x)
         logstd_v = torch.clamp(logstd_v, min=LOG_SIG_MIN, max=LOG_SIG_MAX)
         return mu_v, logstd_v
-
-
-# class ActorMLPBase(nn.Module):
-#     def __init__(self, num_inputs, num_outputs, params):
-#         super(ActorMLPBase, self).__init__()
-#         self.__name__ = "ActorMLPBase"
-#         self.params = params
-#
-#         self.hidden_1_size = params.HIDDEN_1_SIZE
-#         self.hidden_2_size = params.HIDDEN_2_SIZE
-#         self.hidden_3_size = params.HIDDEN_3_SIZE
-#
-#         self.common = nn.Sequential(
-#             nn.Linear(num_inputs, self.hidden_1_size),
-#             nn.GELU(),
-#             nn.Linear(self.hidden_1_size, self.hidden_2_size),
-#             nn.GELU(),
-#             nn.Linear(self.hidden_2_size, self.hidden_3_size),
-#             nn.GELU()
-#         )
-#
-#         self.mu = nn.Sequential(
-#             nn.Linear(self.hidden_3_size, num_outputs),
-#             nn.Tanh()
-#         )
-#
-#         self.logstd = nn.Sequential(
-#             nn.Linear(self.hidden_3_size, num_outputs),
-#             nn.Softplus()
-#         )
-#
-#     @staticmethod
-#     def init_weights(m):
-#         if type(m) == nn.Linear:
-#             torch.nn.init.kaiming_normal_(m.weight)
-#
-#     def forward(self, inputs):
-#         mu_v = self.mu(self.common(inputs))
-#         logstd_v = self.logstd(self.common(inputs))
-#         return mu_v, logstd_v
 
 
 class TwinMLPBase(nn.Module):
