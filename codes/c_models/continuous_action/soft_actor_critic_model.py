@@ -37,7 +37,7 @@ class SoftActorCriticModel(BaseModel):
         action_v = torch.tanh(x_t)
 
         log_prob = dist.log_prob(x_t)
-
+        log_prob = log_prob.sum(1, keepdim=True)
         # action_v.shape: [128, 1]
         # log_prob.shape: [128, 1]
         return action_v, log_prob
