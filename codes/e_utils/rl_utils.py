@@ -4,7 +4,6 @@ from gym import Env
 from gym.spaces import Box, Discrete
 from gym.vector import VectorEnv
 from numpy import random
-import pybulletgym
 
 import gym
 import torch
@@ -139,6 +138,7 @@ def get_single_environment(params=None, mode=AgentMode.TRAIN):
         EnvironmentName.PYBULLET_ANT_V0, EnvironmentName.PYBULLET_HALF_CHEETAH_V0,
         EnvironmentName.PYBULLET_INVERTED_DOUBLE_PENDULUM_V0
     ]:
+        import pybulletgym
         env = gym.make(params.ENVIRONMENT_ID.value)
     elif params.ENVIRONMENT_ID == EnvironmentName.PENDULUM_MATLAB_V0:
         from codes.b_environments.rotary_inverted_pendulum.rip import RotaryInvertedPendulumEnv
