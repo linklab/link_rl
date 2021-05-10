@@ -8,6 +8,7 @@ from codes.a_config._rl_parameters.off_policy.parameter_td3 import TD3ActionSele
 from codes.c_models.advanced_exploration.noisy_net import NoisyLinear
 from codes.c_models.base_model import BaseModel
 from codes.e_utils.names import RLAlgorithmName
+from codes.e_utils.common_utils import weights_init_
 
 
 class DeterministicContinuousActorCriticModel(BaseModel):
@@ -214,6 +215,13 @@ class DeterministicActorCriticTD3MLPBase(nn.Module):
             self.critic_params_1 = list(self.critic_1.parameters()) + list(self.last_critic_1.parameters())
             self.critic_params_2 = list(self.critic_2.parameters()) + list(self.last_critic_2.parameters())
             self.critic_params = self.critic_params_1 + self.critic_params_2
+
+        self.critic_1.apply(weights_init_)
+        self.last_critic_1.apply(weights_init_)
+        self.critic_2.apply(weights_init_)
+        self.last_critic_2.apply(weights_init_)
+        self.actor.apply(weights_init_)
+        self.last_actor.apply(weights_init_)
 
         self.layers_info = {'actor': self.actor, 'critic_1': self.critic_1, 'critic_2': self.critic_2}
 
