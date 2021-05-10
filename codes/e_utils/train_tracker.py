@@ -32,7 +32,7 @@ class SpeedTracker:
     def __exit__(self, *args):
         pass
 
-    def set_episode_reward(self, episode_done_step):
+    def get_speed_and_elapsed_time(self, episode_done_step):
         self.done_episodes += 1
 
         current_ts = time.time()
