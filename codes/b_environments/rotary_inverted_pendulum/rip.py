@@ -425,17 +425,29 @@ class RotaryInvertedPendulumEnv(gym.Env):
             self.pendulum_1_position, self.motor_position, self.pendulum_2_position, self.pendulum_1_velocity, \
             self.motor_velocity, self.pendulum_2_velocity, self.simulation_time = self.plant.getHistory()
         elif self.pendulum_type == EnvironmentName.REAL_DEVICE_DOUBLE_RIP:
-            # t= 0
+            # t = 0
+            # num = 0
+            # # pwm = self.params.ACTION_SCALE / 2.0
+            # k = 0
             # while True:
-            #     self.server_obj.step(RipRequest(value=200))
-            #     time.sleep(0.01)
-            #     self.server_obj.step(RipRequest(value=-10))
-            #     time.sleep(0.01)
-                # action = 200*math.sin(2*0.1*math.pi*t)
-                # self.server_obj.step(RipRequest(value=action))
-                # print(t, action)
+                # pwm = random.random() * 700
+                #
+                # if k < 3:
+                #     pwm = -1.0 * pwm
+                #
+                # self.server_obj.step(RipRequest(value=pwm))
+                #
+                # # action = 200 * math.sin(2*0.1*math.pi*t)
+                # # self.server_obj.step(RipRequest(value=action))
+                # print("{0:4d} {1:>6.4f} {2:>5.1f}".format(num, t, pwm))
                 # t += 0.008
-                # time.sleep(0.05)
+                # time.sleep(0.08)
+                # num += 1
+                #
+                # k += 1
+                # if k % 6 == 0:
+                #     k = 0
+
             # print(action)
             rip_response = self.server_obj.step(RipRequest(value=action))
             # print(action, rip_response.arm_angle, rip_response.link_1_angle, "!!!!")
