@@ -449,6 +449,7 @@ class RotaryInvertedPendulumEnv(gym.Env):
             self.simulation_time = None
         else:
             raise ValueError()
+
         #print(self.motor_position, math.cos(self.motor_position), math.sin(self.motor_position))
         # print("!!!!!!!!!", self.pendulum_2_position)
 
