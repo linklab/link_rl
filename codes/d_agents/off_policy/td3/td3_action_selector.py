@@ -3,6 +3,7 @@ import numpy as np
 from icecream import ic
 
 from codes.a_config._rl_parameters.off_policy.parameter_td3 import TD3ActionType
+from codes.e_utils.names import EnvironmentName
 
 
 class TD3ActionSelector:
@@ -17,7 +18,7 @@ class TD3ActionSelector:
         if self.noise_std == 0.0:
             noises = np.zeros(shape=actions.shape)
         else:
-            noises = np.random.normal(size=mu.shape, loc=-1.0*actions, scale=self.noise_std)
+            noises = np.random.normal(size=mu.shape, loc=0, scale=self.noise_std)
 
         if self.params.TYPE_OF_TD3_ACTION == TD3ActionType.GAUSSIAN_NOISE_WITH_EPSILON:
             noises = self.epsilon * noises
@@ -49,6 +50,12 @@ class SomeTimesBlowTD3ActionSelector(TD3ActionSelector):
             mode=None
     ):
         super(SomeTimesBlowTD3ActionSelector, self).__init__(epsilon, noise_std=0.0, params=params, mode=mode)
+
+        if self.params.ENVIRONMENT_ID == EnvironmentName.REAL_DEVICE_DOUBLE_RIP:
+            self.blowing_action_rate = 0.002
+        else:
+            self.blowing_action_rate = 0.0002
+
         self.blowing_action_rate = blowing_action_rate
         self.min_blowing_action = min_blowing_action
         self.max_blowing_action = max_blowing_action

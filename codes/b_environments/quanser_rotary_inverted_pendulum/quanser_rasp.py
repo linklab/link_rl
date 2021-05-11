@@ -68,6 +68,8 @@ class QubeServo2:
         self.motor_limit = False
         self.motor_command = 0
         motor_radian, motor_velocity, pendulum_radian, pendulum_velocity, step_id = self_servo.read_and_pub()
+        self.protection()
+        time.sleep(5)
         return QuanserResponse(
             message="RESET",
             motor_radian=motor_radian, motor_velocity=motor_velocity,
