@@ -505,9 +505,6 @@ class RotaryInvertedPendulumEnv(gym.Env):
         if any(done_conditions):
             done = True
 
-            if self.too_much_rotate:
-                reward = -3.0
-
             info = {
                 "adjusted_pendulum_1_radian": adjusted_pendulum_1_radian,
                 "adjusted_pendulum_2_radian": adjusted_pendulum_2_radian if self.pendulum_type in [EnvironmentName.PENDULUM_MATLAB_DOUBLE_RIP_V0, EnvironmentName.REAL_DEVICE_DOUBLE_RIP] else None,
