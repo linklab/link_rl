@@ -28,6 +28,7 @@ device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 
 my_logger = get_logger("openai_pendulum_ddpg")
 
+
 def play_main(params, env):
     input_shape, action_shape, num_outputs = get_environment_input_output_info(env)
     agent = rl_utils.get_rl_agent(
