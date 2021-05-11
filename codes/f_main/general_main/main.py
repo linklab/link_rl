@@ -42,6 +42,8 @@ def train_main(train_env, test_env):
     loss_dequeue = deque(maxlen=params.AVG_STEP_SIZE_FOR_TRAIN_LOSS)
     actor_objective_dequeue = deque(maxlen=params.AVG_STEP_SIZE_FOR_TRAIN_LOSS)
 
+    episode_processor = EpisodeProcessor(test_env=test_env, agent=agent, params=params)
+
     with SpeedTracker(params=params) as speed_tracker:
         try:
             while step_idx < params.MAX_GLOBAL_STEP:
@@ -54,15 +56,13 @@ def train_main(train_env, test_env):
                     for current_episode_reward, current_episode_step in zip(episode_rewards, episode_steps):
                         episode += 1
 
-                        solved, good_model_saved, train_info_dict = process_episode(
+                        solved, good_model_saved, train_info_dict = episode_processor.process(
                             train_episode_reward_lst_for_test,
                             train_episode_reward_lst_for_stat,
                             current_episode_reward,
-                            agent,
                             speed_tracker,
                             step_idx,
                             episode,
-                            test_env,
                             early_stopping,
                             current_episode_step,
                             exp

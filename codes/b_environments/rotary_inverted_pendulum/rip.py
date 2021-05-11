@@ -112,7 +112,8 @@ class RotaryInvertedPendulumEnv(gym.Env):
         self.motor_velocity = 0
 
         self.last_time = 0.0
-        self.unit_time = 0.006
+        # self.unit_time = 0.006
+        self.unit_time = 0.06
         self.over_unit_time = 0
         self.step_idx = 0
         self.episode_idx = 0
@@ -426,17 +427,24 @@ class RotaryInvertedPendulumEnv(gym.Env):
             self.pendulum_1_position, self.motor_position, self.pendulum_2_position, self.pendulum_1_velocity, \
             self.motor_velocity, self.pendulum_2_velocity, self.simulation_time = self.plant.getHistory()
         elif self.pendulum_type == EnvironmentName.REAL_DEVICE_DOUBLE_RIP:
-            # t= 0
+            # t = 0
+            # num = 0
+            # k = 1.0
             # while True:
-            #     self.server_obj.step(RipRequest(value=200))
-            #     time.sleep(0.01)
-            #     self.server_obj.step(RipRequest(value=-10))
-            #     time.sleep(0.01)
-                # action = 200*math.sin(2*0.1*math.pi*t)
-                # self.server_obj.step(RipRequest(value=action))
-                # print(t, action)
-                # t += 0.008
-                # time.sleep(0.05)
+            #     pwm = k * self.params.ACTION_SCALE
+            #
+            #     if num % 30 == 0:
+            #         k = -1.0 * k
+            #
+            #     self.server_obj.step(RipRequest(value=pwm))
+            #
+            #     # action = 200 * math.sin(2*0.1*math.pi*t)
+            #     # self.server_obj.step(RipRequest(value=action))
+            #     print("{0:4d} {1:>6.4f} {2:>5.1f}".format(num, t, pwm))
+            #     t += 0.008
+            #     time.sleep(0.008)
+            #     num += 1
+
             # print(action)
             rip_response = self.server_obj.step(RipRequest(value=action))
             # print(action, rip_response.arm_angle, rip_response.link_1_angle, "!!!!")
@@ -450,6 +458,7 @@ class RotaryInvertedPendulumEnv(gym.Env):
             self.simulation_time = None
         else:
             raise ValueError()
+
         #print(self.motor_position, math.cos(self.motor_position), math.sin(self.motor_position))
         # print("!!!!!!!!!", self.pendulum_2_position)
 
@@ -457,7 +466,7 @@ class RotaryInvertedPendulumEnv(gym.Env):
             self.too_much_rotate = True
         # print(self.initial_motor_position, self.motor_position)
         done_conditions = [
-            self.episode_steps >= 5000,
+            self.episode_steps >= 500, #5000
             # self.episode_steps >= 500 and not self.is_upright,
             self.too_much_rotate and not self.is_upright
         ]
@@ -545,6 +554,11 @@ class RotaryInvertedPendulumEnv(gym.Env):
                 self.motor_velocity / VELOCITY_STATE_DENOMINATOR,
             )
 
+            # print("STEP: {0}, ACTION: {1:>6.2f}, pendulum_1_velocity: {2:>5.2f}, pendulum_2_velocity: {3:>5.2f}, "
+            #       "motor_velocity: {4:>5.2f} - reward: {5:>5.2f}".format(
+            #     self.step_idx, action, self.pendulum_1_velocity, self.pendulum_2_velocity, self.motor_velocity, reward
+            # ))
+
             # print("pendulum_2 :", self.pendulum_2_position)
         else:
             raise ValueError()
@@ -553,8 +567,8 @@ class RotaryInvertedPendulumEnv(gym.Env):
         self.step_idx += 1
         # print(self.episode_steps, done, "!!!!!!")
 
-        if self.num_episodes % 3 == 0 and self.episode_steps == 1:
-            print("PENDULUM 1 : {0:7.4f}, PENDULUM 2 : {1:7.4f}".format(adjusted_pendulum_1_radian, adjusted_pendulum_2_radian))
+        # if self.num_episodes % 3 == 0 and self.episode_steps == 1:
+        #     print("PENDULUM 1 : {0:7.4f}, PENDULUM 2 : {1:7.4f}".format(adjusted_pendulum_1_radian, adjusted_pendulum_2_radian))
 
         # print(action)
 
@@ -583,14 +597,14 @@ class RotaryInvertedPendulumEnv(gym.Env):
     def get_reward_for_double_rip_1(self):
         terminal, position_score = self._terminal()
 
-        position_reward = position_score + 4 if terminal else position_score + 2
+        position_reward = position_score + 4 if terminal else position_score + 3
         if self.is_upright:
             position_reward += 2
 
-        alpha_pendulum_1_velocity = 5.0
+        alpha_pendulum_1_velocity = 0.5
         alpha_pendulum_2_velocity = 0.5
-        alpha_motor_velocity = 0.5
-        energy_penalty_denominator = 100
+        alpha_motor_velocity = 2.0
+        energy_penalty_denominator = 500
 
         energy_penalty = -2.0 * (
             alpha_pendulum_1_velocity * abs(self.pendulum_1_velocity) +

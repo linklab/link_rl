@@ -145,143 +145,155 @@ def get_early_stopping(agent):
     return early_stopping
 
 
-def process_episode(
-        train_episode_reward_lst_for_test,
-        train_episode_reward_lst_for_stat,
-        current_episode_reward,
-        agent,
-        speed_tracker,
-        step_idx,
-        episode,
-        test_env,
-        early_stopping,
-        current_episode_step,
-        exp
-):
-    train_episode_reward_lst_for_test.append(current_episode_reward)
-    train_episode_reward_lst_for_stat.append(current_episode_reward)
+class EpisodeProcessor:
+    def __init__(self, test_env, agent, params):
+        self.test_env = test_env
+        self.agent = agent
+        self.params = params
+        self.test_mean_episode_reward = None
+        self.test_std_episode_reward = None
+        self.evaluation_msg = None
 
-    epsilon = agent.train_action_selector.epsilon if hasattr(agent.train_action_selector, 'epsilon') else None
+    def process(
+            self,
+            train_episode_reward_lst_for_test,
+            train_episode_reward_lst_for_stat,
+            current_episode_reward,
+            speed_tracker,
+            step_idx,
+            episode,
+            early_stopping,
+            current_episode_step,
+            exp
+    ):
+        train_episode_reward_lst_for_test.append(current_episode_reward)
+        train_episode_reward_lst_for_stat.append(current_episode_reward)
 
-    speed, elapsed_time = speed_tracker.set_episode_reward(
-        episode_done_step=step_idx
-    )
+        epsilon = self.agent.train_action_selector.epsilon if hasattr(self.agent.train_action_selector, 'epsilon') else None
 
-    solved = False
-    good_model_saved = False
-
-    test_over_epsilon_min_step = True
-
-    test_over_epsilon_min_step_conditions = [
-        hasattr(params, "EPSILON_MIN_STEP"),
-        params.EPSILON_MIN_STEP is not None,
-    ]
-
-    if all(test_over_epsilon_min_step_conditions):
-        if params.EPSILON_MIN_STEP > 0 and step_idx < params.EPSILON_MIN_STEP:
-            test_over_epsilon_min_step = False
-
-    if test_over_epsilon_min_step and episode % params.TEST_PERIOD_EPISODES == 0:
-        test_mean_episode_reward, test_std_episode_reward = agent_model_test(params.TEST_NUM_EPISODES, test_env, agent)
-        test_env_str = colored("TEST ENV", "yellow")
-
-        mean_std_str = colored(
-            "{0:7.2f}\u00B1{1:.2f}".format(test_mean_episode_reward, test_std_episode_reward), "yellow"
-        )
-
-        model_save_msg = "* MODEL SAVE & TRAIN STOP TEST for {0} *, EPISODE REWARD ({1} EPISODES): {2}".format(
-            test_env_str, params.TEST_NUM_EPISODES, mean_std_str
-        )
-
-        solved, good_model_saved, early_stopping_evaluation_msg = early_stopping.evaluate(
-            evaluation_value=test_mean_episode_reward,
-            evaluation_value_std=test_std_episode_reward,
+        speed, elapsed_time = speed_tracker.get_speed_and_elapsed_time(
             episode_done_step=step_idx
         )
 
-        evaluation_msg = model_save_msg + " ---> " + early_stopping_evaluation_msg
-    else:
-        test_mean_episode_reward = None
-        test_std_episode_reward = None
-        evaluation_msg = None
+        solved = False
+        good_model_saved = False
 
-    train_info_dict = {
-        "### EVERY TRAIN EPISODE REWARDS ###": current_episode_reward,
-        "train mean ({0} episode rewards)".format(params.AVG_EPISODE_SIZE_FOR_STAT):
-            np.mean(train_episode_reward_lst_for_stat),
-        '*** TEST MEAN ({0} episode rewards) ***'.format(params.TEST_NUM_EPISODES): test_mean_episode_reward,
-        '*** TEST STD ({0} episode rewards) ***'.format(params.TEST_NUM_EPISODES): test_std_episode_reward,
-        "steps/episode": current_episode_step,
-        "speed": speed,
-        "step_idx": step_idx,
-        "episode": episode,
-        'last_actions': exp.action,
-        "elapsed_time": elapsed_time,
-        "last_info": exp.info,
-        "evaluation_msg": evaluation_msg,
-        "solved": solved
-    }
+        if self.test_mean_episode_reward is None and self.test_std_episode_reward is None:
+            self.test_mean_episode_reward, self.test_std_episode_reward = self.agent_model_test(
+                num_tests=1
+            )
 
-    if epsilon:
-        train_info_dict["epsilon"] = epsilon
+        test_over_epsilon_min_step = True
 
-    if hasattr(agent, "last_noise"):
-        train_info_dict["last_noise"] = agent.last_noise
+        test_over_epsilon_min_step_conditions = [
+            hasattr(params, "EPSILON_MIN_STEP"),
+            params.EPSILON_MIN_STEP is not None,
+        ]
 
-    if "global_uncertainty" in exp.info and hasattr(agent, "global_uncertainty"):
-        agent.global_uncertainty = exp.info["global_uncertainty"]
+        if all(test_over_epsilon_min_step_conditions):
+            if params.EPSILON_MIN_STEP > 0 and step_idx < params.EPSILON_MIN_STEP:
+                test_over_epsilon_min_step = False
 
-    return solved, good_model_saved, train_info_dict
+        if test_over_epsilon_min_step and episode % params.TEST_PERIOD_EPISODES == 0:
+            self.test_mean_episode_reward, self.test_std_episode_reward = self.agent_model_test(
+                num_tests=params.TEST_NUM_EPISODES
+            )
+            test_env_str = colored("TEST ENV", "yellow")
 
+            mean_std_str = colored(
+                "{0:7.2f}\u00B1{1:.2f}".format(self.test_mean_episode_reward, self.test_std_episode_reward), "yellow"
+            )
 
-def agent_model_test(num_tests, test_env, agent):
-    agent.agent_mode = AgentMode.TEST
-    agent.model.eval()
+            model_save_msg = "* MODEL SAVE & TRAIN STOP TEST for {0} *, EPISODE REWARD ({1} EPISODES): {2}".format(
+                test_env_str, params.TEST_NUM_EPISODES, mean_std_str
+            )
 
-    agent.test_model.load_state_dict(agent.model.state_dict())
-    agent.test_model.eval()
+            solved, good_model_saved, early_stopping_evaluation_msg = early_stopping.evaluate(
+                evaluation_value=self.test_mean_episode_reward,
+                evaluation_value_std=self.test_std_episode_reward,
+                episode_done_step=step_idx
+            )
 
-    num_step = 0
+            evaluation_msg = model_save_msg + " ---> " + early_stopping_evaluation_msg
+        else:
+            evaluation_msg = None
 
-    episode_rewards = np.zeros(num_tests)
+        train_info_dict = {
+            "### EVERY TRAIN EPISODE REWARDS ###": current_episode_reward,
+            "train mean ({0} episode rewards)".format(params.AVG_EPISODE_SIZE_FOR_STAT):
+                np.mean(train_episode_reward_lst_for_stat),
+            '*** TEST MEAN ({0} episode rewards) ***'.format(params.TEST_NUM_EPISODES): self.test_mean_episode_reward,
+            '*** TEST STD ({0} episode rewards) ***'.format(params.TEST_NUM_EPISODES): self.test_std_episode_reward,
+            "steps/episode": current_episode_step,
+            "speed": speed,
+            "step_idx": step_idx,
+            "episode": episode,
+            'last_actions': exp.action,
+            "elapsed_time": elapsed_time,
+            "last_info": exp.info,
+            "evaluation_msg": evaluation_msg,
+            "solved": solved
+        }
 
-    tests_done = 0
-    for test_episode in range(num_tests):
-        done = False
-        episode_reward = 0
+        if epsilon:
+            train_info_dict["epsilon"] = epsilon
 
-        state = test_env.reset()
+        if hasattr(self.agent, "last_noise"):
+            train_info_dict["last_noise"] = self.agent.last_noise
 
-        num_episode_step = 0
-        while not done:
-            num_step += 1
-            num_episode_step += 1
+        if "global_uncertainty" in exp.info and hasattr(self.agent, "global_uncertainty"):
+            self.agent.global_uncertainty = exp.info["global_uncertainty"]
 
-            state = np.expand_dims(state, axis=0)
+        return solved, good_model_saved, train_info_dict
 
-            action, _, = agent(state)
+    def agent_model_test(self, num_tests):
+        self.agent.agent_mode = AgentMode.TEST
+        self.agent.model.eval()
 
-            if hasattr(params, "ACTION_SCALE") and params.ACTION_SCALE:
-                action = params.ACTION_SCALE * action[0]
-            else:
-                action = action[0]
+        self.agent.test_model.load_state_dict(self.agent.model.state_dict())
+        self.agent.test_model.eval()
 
-            next_state, reward, done, info = test_env.step(action)
+        num_step = 0
 
-            if isinstance(test_env, RewardChanger):
-                reward = test_env.reverse_reward(reward)
+        episode_rewards = np.zeros(num_tests)
 
-            state = next_state
-            episode_reward += reward
+        tests_done = 0
+        for test_episode in range(num_tests):
+            done = False
+            episode_reward = 0
 
-        episode_rewards[test_episode] = episode_reward
-        tests_done += 1
-        print("TEST {0}: EPISODE REWARD: {1:7.2f}".format(tests_done, float(np.mean(episode_reward).item())))
+            state = self.test_env.reset()
 
-    agent.agent_mode = AgentMode.TRAIN
-    agent.model.train()
+            num_episode_step = 0
+            while not done:
+                num_step += 1
+                num_episode_step += 1
 
-    return np.mean(episode_rewards), np.std(episode_rewards)
+                state = np.expand_dims(state, axis=0)
+
+                action, _, = self.agent(state)
+
+                if hasattr(params, "ACTION_SCALE") and params.ACTION_SCALE:
+                    action = params.ACTION_SCALE * action[0]
+                else:
+                    action = action[0]
+
+                next_state, reward, done, info = self.test_env.step(action)
+
+                if isinstance(self.test_env, RewardChanger):
+                    reward = self.test_env.reverse_reward(reward)
+
+                state = next_state
+                episode_reward += reward
+
+            episode_rewards[test_episode] = episode_reward
+            tests_done += 1
+            print("TEST {0}: EPISODE REWARD: {1:7.2f}".format(tests_done, float(np.mean(episode_reward).item())))
+
+        self.agent.agent_mode = AgentMode.TRAIN
+        self.agent.model.train()
+
+        return np.mean(episode_rewards), np.std(episode_rewards)
 
 
 def last_model_save(agent, step_idx, train_episode_reward_lst_for_stat):
