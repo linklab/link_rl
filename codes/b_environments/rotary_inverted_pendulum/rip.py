@@ -8,6 +8,7 @@ import time
 import sys,os
 
 from codes.a_config.parameters_general import RIPEnvRewardType
+from codes.e_utils.common_utils import sigmoid_2
 
 current_path = os.path.dirname(os.path.realpath(__file__))
 PROJECT_HOME = os.path.abspath(os.path.join(current_path, os.pardir, os.pardir, os.pardir))
@@ -364,9 +365,9 @@ class RotaryInvertedPendulumEnv(gym.Env):
             #print(self.step_idx, action, step_time)
             self.last_time = time.perf_counter()
 
-        if self.step_idx % 100000 == 0:
-            print("*OVER UNIT TIME STEP NUMBER :", self.over_unit_time)
-        #######################################################
+            if self.step_idx % 100000 == 0:
+                print("*OVER UNIT TIME STEP NUMBER :", self.over_unit_time)
+            #######################################################
 
         self.episode_steps += 1
         self.total_steps += 1
@@ -627,12 +628,16 @@ class RotaryInvertedPendulumEnv(gym.Env):
         #         "upright" if self.is_upright else ""
         #     )
 
+        reward = max(0.0, reward)
+
+        if self.pendulum_type in [EnvironmentName.REAL_DEVICE_RIP, EnvironmentName.REAL_DEVICE_DOUBLE_RIP]:
+            if reward == 0.0:
+                self.unit_time = 0.06
+            else:
+                self.unit_time = np.clip(0.06 / (sigmoid_2(0.01) * 10), 0.006, 0.06)
+
         if self.too_much_rotate and not self.is_upright:
             reward = -3.0
-        else:
-            reward = max(0.0, reward)
-
-        reward = max(0.0, reward)
 
         #print(position_reward, energy_penalty, reward)
 
