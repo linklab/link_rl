@@ -33,7 +33,7 @@ VELOCITY_STATE_DENOMINATOR = 100.0
 RIP_SERVER = '10.0.0.11'
 
 
-def get_rip_observation_space(pendulum_type):
+def get_rip_observation_space(pendulum_type, params):
     max_velocity = 100.0
 
     if pendulum_type in [
@@ -46,10 +46,16 @@ def get_rip_observation_space(pendulum_type):
     elif pendulum_type in [
         EnvironmentName.PENDULUM_MATLAB_DOUBLE_RIP_V0, EnvironmentName.REAL_DEVICE_DOUBLE_RIP
     ]:
-        high = np.array(
-            [1., 1., max_velocity, 1., 1., max_velocity, 1., 1., max_velocity],
-            dtype=np.float32
-        )
+        if hasattr(params, "IGNORE_ARM_INFO") and params.IGNORE_ARM_INFO is True:
+            high = np.array(
+                [1., 1., max_velocity, 1., 1., max_velocity],
+                dtype=np.float32
+            )
+        else:
+            high = np.array(
+                [1., 1., max_velocity, 1., 1., max_velocity, 1., 1., max_velocity],
+                dtype=np.float32
+            )
     else:
         raise ValueError()
 
@@ -141,7 +147,7 @@ class RotaryInvertedPendulumEnv(gym.Env):
             params, self.pendulum_type
         )
 
-        self.observation_space, self.n_states = get_rip_observation_space(self.pendulum_type)
+        self.observation_space, self.n_states = get_rip_observation_space(self.pendulum_type, self.params)
 
         self.current_status = None
 
@@ -260,17 +266,27 @@ class RotaryInvertedPendulumEnv(gym.Env):
 
             self.set_max_three_velocity()
 
-            state = (
-                math.cos(self.pendulum_1_position),
-                math.sin(self.pendulum_1_position),
-                self.pendulum_1_velocity / VELOCITY_STATE_DENOMINATOR,
-                math.cos(self.pendulum_2_position),
-                math.sin(self.pendulum_2_position),
-                self.pendulum_2_velocity / VELOCITY_STATE_DENOMINATOR,
-                math.cos(0.0),  # 1.0
-                math.sin(0.0),  # 0.0
-                self.motor_velocity / VELOCITY_STATE_DENOMINATOR,
-            )
+            if hasattr(self.params, "IGNORE_ARM_INFO") and self.params.IGNORE_ARM_INFO is True:
+                state = (
+                    math.cos(self.pendulum_1_position),
+                    math.sin(self.pendulum_1_position),
+                    self.pendulum_1_velocity / VELOCITY_STATE_DENOMINATOR,
+                    math.cos(self.pendulum_2_position),
+                    math.sin(self.pendulum_2_position),
+                    self.pendulum_2_velocity / VELOCITY_STATE_DENOMINATOR,
+                )
+            else:
+                state = (
+                    math.cos(self.pendulum_1_position),
+                    math.sin(self.pendulum_1_position),
+                    self.pendulum_1_velocity / VELOCITY_STATE_DENOMINATOR,
+                    math.cos(self.pendulum_2_position),
+                    math.sin(self.pendulum_2_position),
+                    self.pendulum_2_velocity / VELOCITY_STATE_DENOMINATOR,
+                    math.cos(0.0),  # 1.0
+                    math.sin(0.0),  # 0.0
+                    self.motor_velocity / VELOCITY_STATE_DENOMINATOR,
+                )
 
             self.update_current_state_for_double_rip(adjusted_pendulum_1_radian=0.0, adjusted_pendulum_2_radian=0.0)
         else:
@@ -542,18 +558,27 @@ class RotaryInvertedPendulumEnv(gym.Env):
             # info["max_pendulum_1_velocity"] = self.max_pendulum_1_velocity
             # info["max_pendulum_2_velocity"] = self.max_pendulum_2_velocity
             # info["max_motor_velocity"] = self.max_motor_velocity
-
-            state = (
-                math.cos(self.pendulum_1_position),
-                math.sin(self.pendulum_1_position),
-                self.pendulum_1_velocity / VELOCITY_STATE_DENOMINATOR,
-                math.cos(self.pendulum_2_position),
-                math.sin(self.pendulum_2_position),
-                self.pendulum_2_velocity / VELOCITY_STATE_DENOMINATOR,
-                math.cos(self.initial_motor_position - self.motor_position),
-                math.sin(self.initial_motor_position - self.motor_position),
-                self.motor_velocity / VELOCITY_STATE_DENOMINATOR,
-            )
+            if hasattr(self.params, "IGNORE_ARM_INFO") and self.params.IGNORE_ARM_INFO is True:
+                state = (
+                    math.cos(self.pendulum_1_position),
+                    math.sin(self.pendulum_1_position),
+                    self.pendulum_1_velocity / VELOCITY_STATE_DENOMINATOR,
+                    math.cos(self.pendulum_2_position),
+                    math.sin(self.pendulum_2_position),
+                    self.pendulum_2_velocity / VELOCITY_STATE_DENOMINATOR,
+                )
+            else:
+                state = (
+                    math.cos(self.pendulum_1_position),
+                    math.sin(self.pendulum_1_position),
+                    self.pendulum_1_velocity / VELOCITY_STATE_DENOMINATOR,
+                    math.cos(self.pendulum_2_position),
+                    math.sin(self.pendulum_2_position),
+                    self.pendulum_2_velocity / VELOCITY_STATE_DENOMINATOR,
+                    math.cos(self.initial_motor_position - self.motor_position),
+                    math.sin(self.initial_motor_position - self.motor_position),
+                    self.motor_velocity / VELOCITY_STATE_DENOMINATOR,
+                )
 
             # print("STEP: {0}, ACTION: {1:>6.2f}, pendulum_1_velocity: {2:>5.2f}, pendulum_2_velocity: {3:>5.2f}, "
             #       "motor_velocity: {4:>5.2f} - reward: {5:>5.2f}".format(
