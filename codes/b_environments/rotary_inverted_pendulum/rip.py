@@ -573,6 +573,9 @@ class RotaryInvertedPendulumEnv(gym.Env):
 
         # print(action)
 
+        if self.pendulum_type in [EnvironmentName.REAL_DEVICE_RIP, EnvironmentName.REAL_DEVICE_DOUBLE_RIP]:
+            info["unit_time"] = self.unit_time
+
         return state, reward, done, info
 
     def get_reward(self, adjusted_pendulum_1_radian):
