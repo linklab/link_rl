@@ -30,7 +30,7 @@ BLOWING_ACTION_RATE = 0.0002  # 5000 스텝에 1번 정도(지수 분포)의 주
 
 VELOCITY_STATE_DENOMINATOR = 100.0
 
-RIP_SERVER = '10.0.0.11'
+RIP_SERVER = '10.0.0.9'
 
 
 def get_rip_observation_space(pendulum_type, params):
@@ -378,7 +378,7 @@ class RotaryInvertedPendulumEnv(gym.Env):
             if step_time > self.unit_time:
                 self.over_unit_time += 1
 
-            #print(self.step_idx, action, step_time)
+            # print(self.step_idx, action, step_time)
             self.last_time = time.perf_counter()
 
             if self.step_idx % 100000 == 0:
@@ -446,9 +446,9 @@ class RotaryInvertedPendulumEnv(gym.Env):
         elif self.pendulum_type == EnvironmentName.REAL_DEVICE_DOUBLE_RIP:
             # t = 0
             # num = 0
-            # k = 1.0
+            # k = 1
             # while True:
-            #     pwm = k * self.params.ACTION_SCALE
+            #     pwm = k * 205
             #
             #     if num % 30 == 0:
             #         k = -1.0 * k
@@ -462,7 +462,7 @@ class RotaryInvertedPendulumEnv(gym.Env):
             #     time.sleep(0.008)
             #     num += 1
 
-            # print(action)
+            # print(action, self.step_idx)
             rip_response = self.server_obj.step(RipRequest(value=action))
             # print(action, rip_response.arm_angle, rip_response.link_1_angle, "!!!!")
 
@@ -491,9 +491,6 @@ class RotaryInvertedPendulumEnv(gym.Env):
         adjusted_pendulum_1_radian = self.pendulum_position_to_adjusted_radian(self.pendulum_1_position)
         adjusted_pendulum_2_radian = self.pendulum_position_to_adjusted_radian(self.pendulum_2_position)
         # print("pendulum 1 angle :", adjusted_pendulum_1_radian, "pendulum 2 angle :", adjusted_pendulum_2_radian)
-        # print("action: {0}, q: {1:7.4}, w: {2:7.4f}, adjusted_radian: {3:7.4f}, reward: {4:10.4f}, time: {5}".format(
-        #     action, self.pendulum_1_position, self.pendulum_1_velocity, adjusted_radian, reward, self.simulation_time
-        # ))
 
         if self.pendulum_type in [
             EnvironmentName.PENDULUM_MATLAB_V0, EnvironmentName.REAL_DEVICE_RIP

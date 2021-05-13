@@ -68,6 +68,7 @@ def play_main(params, env):
 
             if hasattr(params, "ACTION_SCALE") and params.ACTION_SCALE:
                 action = params.ACTION_SCALE * action[0]
+                # print("@@@@@@@@@@@@@@", action)
             else:
                 action = action[0]
 
