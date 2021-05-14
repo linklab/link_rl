@@ -254,7 +254,7 @@ class EnvironmentQuanserRIP(gym.Env):
         def insert_to_info(s):
             info["result"] = s
 
-        if self.episode_steps >= 5000: # 5000 * 25ms (0.025sec.) = 125 sec.
+        if self.episode_steps >= self.params.MAX_EPISODE_STEP: # 5000 * 25ms (0.025sec.) = 125 sec.
             insert_to_info("*** Success ***")
             return True, info
         # elif self.is_motor_limit:
