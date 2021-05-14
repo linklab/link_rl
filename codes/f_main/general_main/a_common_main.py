@@ -283,8 +283,9 @@ class EpisodeProcessor:
                 if isinstance(self.test_env, RewardChanger):
                     reward = self.test_env.reverse_reward(reward)
 
-                state = next_state
                 episode_reward += reward
+
+                state = next_state
 
             episode_rewards[test_episode] = episode_reward
             tests_done += 1
