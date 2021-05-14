@@ -1,6 +1,7 @@
 import numpy as np
 import torch
 import torch.nn.functional as F
+import torch.nn.utils as nn_utils
 
 from codes.a_config._rl_parameters.off_policy.parameter_td3 import TD3ActionType, TD3ActionSelectorType
 from codes.c_models.continuous_action.deterministic_continuous_actor_critic_model import \
@@ -174,6 +175,7 @@ class AgentTD3(OffPolicyAgent):
 
         loss_critic_v = loss_critic_v.mean()
         loss_critic_v.backward()
+        nn_utils.clip_grad_norm_(self.model.base.critic_params, self.params.CLIP_GRAD)
         self.critic_optimizer.step()
         #print(step_idx, "CRITIC")
 
@@ -188,6 +190,7 @@ class AgentTD3(OffPolicyAgent):
             self.cache_loss_actor_v = loss_actor_v
 
             loss_actor_v.backward()
+            nn_utils.clip_grad_norm_(self.model.base.actor_params, self.params.CLIP_GRAD)
             self.actor_optimizer.step()
             #print(step_idx, "ACTOR")
 
