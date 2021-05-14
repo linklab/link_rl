@@ -119,8 +119,8 @@ class RotaryInvertedPendulumEnv(gym.Env):
         self.motor_velocity = 0
 
         self.last_time = 0.0
-        # self.unit_time = 0.006
-        self.unit_time = 0.06
+        self.unit_time = 0.006
+        # self.unit_time = 0.06
         self.over_unit_time = 0
         self.step_idx = 0
         self.episode_idx = 0
@@ -483,8 +483,8 @@ class RotaryInvertedPendulumEnv(gym.Env):
             self.too_much_rotate = True
         # print(self.initial_motor_position, self.motor_position)
         done_conditions = [
-            self.episode_steps >= 500, #5000
-            # self.episode_steps >= 500 and not self.is_upright,
+            self.episode_steps >= self.params.MAX_EPISODE_STEP, #5000
+            # self.episode_steps >= self.params.MAX_EPISODE_STEP and not self.is_upright,
             self.too_much_rotate and not self.is_upright
         ]
 
@@ -655,14 +655,14 @@ class RotaryInvertedPendulumEnv(gym.Env):
 
         reward = max(0.0, reward)
 
-        if self.pendulum_type in [EnvironmentName.REAL_DEVICE_RIP, EnvironmentName.REAL_DEVICE_DOUBLE_RIP]:
-            if reward == 0.0:
-                self.unit_time = 0.06
-            else:
-                self.unit_time = np.clip(0.06 / (sigmoid_2(0.01) * 10), 0.006, 0.06)
-
-        if self.too_much_rotate and not self.is_upright:
-            reward = -3.0
+        # if self.pendulum_type in [EnvironmentName.REAL_DEVICE_RIP, EnvironmentName.REAL_DEVICE_DOUBLE_RIP]:
+        #     if reward == 0.0:
+        #         self.unit_time = 0.06
+        #     else:
+        #         self.unit_time = np.clip(0.06 / (sigmoid_2(0.01) * 10), 0.006, 0.06)
+        #
+        # if self.too_much_rotate and not self.is_upright:
+        #     reward = -3.0
 
         #print(position_reward, energy_penalty, reward)
 
