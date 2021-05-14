@@ -208,9 +208,6 @@ class RotaryInvertedPendulumEnv(gym.Env):
         self.episode_steps = 0
         self.episode_idx += 1
 
-        with open("data.pickle", "wb") as fw:
-            pickle.dump([self.pen_1, self.pen_2, self.motor, self.pen_1_vel, self.pen_2_vel, self.motor_vel], fw)
-
         if self.total_steps == 0:
             print("next_time_step_of_external_blow: {0}".format(
                 self.next_time_step_of_external_blow
