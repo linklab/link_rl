@@ -30,7 +30,7 @@ BLOWING_ACTION_RATE = 0.0002  # 5000 스텝에 1번 정도(지수 분포)의 주
 
 VELOCITY_STATE_DENOMINATOR = 100.0
 
-RIP_SERVER = '10.0.0.9'
+RIP_SERVER = '10.0.0.10'
 
 
 def get_rip_observation_space(pendulum_type, params):
@@ -119,7 +119,7 @@ class RotaryInvertedPendulumEnv(gym.Env):
         self.motor_velocity = 0
 
         self.last_time = 0.0
-        self.unit_time = 0.006
+        self.unit_time = 0.016
         # self.unit_time = 0.06
         self.over_unit_time = 0
         self.step_idx = 0
