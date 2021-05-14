@@ -72,3 +72,4 @@ from codes.a_config._rl_parameters.off_policy.parameter_ddpg import DDPGActionTy
 
 from codes.a_config._rl_parameters.off_policy.parameter_td3 import TD3ActionSelectorType, TD3ActionType
 from codes.a_config.parameters_general import RIPEnvRewardType
+from codes.a_config.e_real_device.parameters_rip_td3 import PARAMETERS_RIP_TD3

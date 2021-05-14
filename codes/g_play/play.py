@@ -68,7 +68,6 @@ def play_main(params, env):
 
             if hasattr(params, "ACTION_SCALE") and params.ACTION_SCALE:
                 action = params.ACTION_SCALE * action[0]
-                # print("@@@@@@@@@@@@@@", action)
             else:
                 action = action[0]
 
@@ -90,7 +89,8 @@ def play_main(params, env):
                 EnvironmentName.PENDULUM_MATLAB_V0,
                 EnvironmentName.PENDULUM_MATLAB_DOUBLE_RIP_V0,
                 EnvironmentName.REAL_DEVICE_RIP,
-                EnvironmentName.REAL_DEVICE_DOUBLE_RIP
+                EnvironmentName.REAL_DEVICE_DOUBLE_RIP,
+                EnvironmentName.QUANSER_SERVO_2
             ]:
                 time.sleep(0.01)
 
