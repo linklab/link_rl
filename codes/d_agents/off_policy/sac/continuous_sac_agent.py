@@ -5,9 +5,13 @@ import torch
 import torch.nn.functional as F
 import torch.nn.utils as nn_utils
 
+from codes.a_config._rl_parameters.off_policy.parameter_sac import SACActionSelectorType
+from codes.a_config._rl_parameters.off_policy.parameter_td3 import TD3ActionSelectorType
 from codes.c_models.continuous_action.soft_actor_critic_model import SoftActorCriticModel
 from codes.d_agents.off_policy.off_policy_agent import OffPolicyAgent
-from codes.d_agents.off_policy.sac.sac_action_selector import ContinuousNormalSACActionSelector
+from codes.d_agents.off_policy.sac.sac_action_selector import ContinuousNormalSACActionSelector, \
+    SomeTimesBlowSACActionSelector
+from codes.d_agents.off_policy.td3.td3_action_selector import TD3ActionSelector
 from codes.e_utils import rl_utils
 from codes.e_utils.common_utils import grad_false
 from codes.e_utils.names import DeepLearningModelName
@@ -24,7 +28,17 @@ class AgentSAC(OffPolicyAgent):
         super(AgentSAC, self).__init__(worker_id, params, action_shape, device)
         self.__name__ = "AgentSAC"
 
-        self.train_action_selector = ContinuousNormalSACActionSelector(params=params)
+        if params.TYPE_OF_SAC_ACTION_SELECTOR == SACActionSelectorType.BASIC_ACTION_SELECTOR:
+            self.train_action_selector = ContinuousNormalSACActionSelector(params=params)
+        elif params.TYPE_OF_SAC_ACTION_SELECTOR == SACActionSelectorType.SOMETIMES_BLOW_ACTION_SELECTOR:
+            self.train_action_selector = SomeTimesBlowSACActionSelector(
+                min_blowing_action=-5.0 * params.ACTION_SCALE,
+                max_blowing_action=5.0 * params.ACTION_SCALE,
+                params=self.params,
+            )
+        else:
+            raise ValueError()
+
         self.test_and_play_action_selector = ContinuousNormalSACActionSelector(params=params)
 
         self.model = SoftActorCriticModel(
