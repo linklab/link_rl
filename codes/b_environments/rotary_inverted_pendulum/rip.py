@@ -208,9 +208,6 @@ class RotaryInvertedPendulumEnv(gym.Env):
         self.episode_steps = 0
         self.episode_idx += 1
 
-        with open("data.pickle", "wb") as fw:
-            pickle.dump([self.pen_1, self.pen_2, self.motor, self.pen_1_vel, self.pen_2_vel, self.motor_vel], fw)
-
         if self.total_steps == 0:
             print("next_time_step_of_external_blow: {0}".format(
                 self.next_time_step_of_external_blow
@@ -449,23 +446,23 @@ class RotaryInvertedPendulumEnv(gym.Env):
             self.pendulum_1_position, self.motor_position, self.pendulum_2_position, self.pendulum_1_velocity, \
             self.motor_velocity, self.pendulum_2_velocity, self.simulation_time = self.plant.getHistory()
         elif self.pendulum_type == EnvironmentName.REAL_DEVICE_DOUBLE_RIP:
-            # t = 0
-            # num = 0
-            # k = 1
-            # while True:
-            #     pwm = 205
-            #
-            #     if num % 30 == 0:
-            #         pwm = -pwm
-            #
-            #     self.server_obj.step(RipRequest(value=pwm))
-            #
-            #     # action = 200 * math.sin(2*0.1*math.pi*t)
-            #     # self.server_obj.step(RipRequest(value=action))
-            #     print("{0:4d} {1:>6.4f} {2:>5.1f}".format(num, t, pwm))
-            #     t += 0.008
-            #     time.sleep(0.008)
-            #     num += 1
+            t = 0
+            num = 0
+            k = 1
+            while True:
+                pwm = 51
+
+                # if num % 300 == 0:
+                #     pwm += 1
+
+                self.server_obj.step(RipRequest(value=pwm))
+
+                # action = 200 * math.sin(2*0.1*math.pi*t)
+                # self.server_obj.step(RipRequest(value=action))
+                print("{0:4d} {1:>6.4f} {2:>5.1f}".format(num, t, pwm))
+                t += 0.008
+                time.sleep(0.008)
+                num += 1
 
             # print(action, self.step_idx)
             rip_response = self.server_obj.step(RipRequest(value=action))
