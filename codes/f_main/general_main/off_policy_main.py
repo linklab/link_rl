@@ -16,7 +16,7 @@ from codes.b_environments.trade.trade_action_selector import EpsilonGreedyTradeD
     ArgmaxTradeActionSelector
 from codes.e_utils.common_utils import print_params
 from codes.e_utils.experience import ExperienceSourceFirstLast
-from codes.e_utils.names import OFF_POLICY_RL_ALGORITHMS
+from codes.e_utils.names import OFF_POLICY_RL_ALGORITHMS, RLAlgorithmName
 from codes.e_utils.train_tracker import SpeedTracker
 
 if "win32" in _platform or "win64" in _platform:

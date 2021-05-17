@@ -30,8 +30,7 @@ class ContinuousNormalSACActionSelector(ContinuousActionSelector):
 
 class SomeTimesBlowSACActionSelector(ContinuousNormalSACActionSelector):
     def __init__(
-            self, mu_v, logstd_v,
-            blowing_action_rate=0.0002, min_blowing_action=-1.0, max_blowing_action=1.0, params=None
+            self, blowing_action_rate=0.0002, min_blowing_action=-1.0, max_blowing_action=1.0, params=None
     ):
         super(SomeTimesBlowSACActionSelector, self).__init__(params=params)
         self.blowing_action_rate = blowing_action_rate
@@ -65,6 +64,6 @@ class SomeTimesBlowSACActionSelector(ContinuousNormalSACActionSelector):
                 self.next_time_steps_of_random_blowing_action
             ))
         else:
-            actions = self.select_action(self, mu_v, logstd_v)
+            actions = self.select_action(mu_v, logstd_v)
 
         return actions

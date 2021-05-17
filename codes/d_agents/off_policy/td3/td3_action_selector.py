@@ -7,11 +7,10 @@ from codes.e_utils.names import EnvironmentName
 
 
 class TD3ActionSelector:
-    def __init__(self, epsilon, noise_std=0.0, params=None, mode=None):
+    def __init__(self, epsilon, noise_std=0.0, params=None):
         self.noise_std = noise_std
         self.epsilon = epsilon
         self.params = params
-        self.mode = mode
 
     def select_action(self, mu):
         actions = np.copy(mu)
@@ -46,10 +45,9 @@ class TD3ActionSelector:
 class SomeTimesBlowTD3ActionSelector(TD3ActionSelector):
     def __init__(
             self, noise_std=0.0,
-            blowing_action_rate=0.0002, min_blowing_action=-1.0, max_blowing_action=1.0, epsilon=0.0, params=None,
-            mode=None
+            blowing_action_rate=0.0002, min_blowing_action=-1.0, max_blowing_action=1.0, epsilon=0.0, params=None
     ):
-        super(SomeTimesBlowTD3ActionSelector, self).__init__(epsilon, noise_std=0.0, params=params, mode=mode)
+        super(SomeTimesBlowTD3ActionSelector, self).__init__(epsilon, noise_std=0.0, params=params)
 
         if self.params.ENVIRONMENT_ID == EnvironmentName.REAL_DEVICE_DOUBLE_RIP:
             self.blowing_action_rate = 0.002
@@ -62,7 +60,6 @@ class SomeTimesBlowTD3ActionSelector(TD3ActionSelector):
         self.time_steps = 0
         self.next_time_steps_of_random_blowing_action = int(random.expovariate(self.blowing_action_rate))
         self.noise_std = noise_std
-        self.mode = mode
 
     def __call__(self,  mu, noises=None): #default ou_sigma = 0.2
         assert isinstance(mu, np.ndarray)

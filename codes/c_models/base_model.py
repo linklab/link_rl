@@ -166,12 +166,12 @@ class BaseModel(nn.Module):
             tgt_state[k] = tgt_state[k] * alpha + (1.0 - alpha) * v
         self.base.load_state_dict(tgt_state)
 
-    def critic_alpha_sync(self, other_model, alpha):
+    def twinq_alpha_sync(self, other_model, alpha):
         assert isinstance(alpha, float)
         assert 0.0 <= alpha <= 1.0
 
-        other_critic_state = other_model.base.critic.state_dict()
-        tgt_critic_state = self.base.critic.state_dict()
-        for k, v in other_critic_state.items():
-            tgt_critic_state[k] = tgt_critic_state[k] * alpha + (1.0 - alpha) * v
-        self.base.critic.load_state_dict(tgt_critic_state)
+        other_twinq_state = other_model.base.twinq.state_dict()
+        tgt_twinq_state = self.base.twinq.state_dict()
+        for k, v in other_twinq_state.items():
+            tgt_twinq_state[k] = tgt_twinq_state[k] * alpha + (1.0 - alpha) * v
+        self.base.twinq.load_state_dict(tgt_twinq_state)
