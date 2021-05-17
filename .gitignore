@@ -152,3 +152,7 @@ wandb
 *.sh
 
 /codes/g_play/model_zoo/Freeway*
+
+codes/b_environments/trade/raw_data/*.csv
+z_externals/handson_second_edition/*/*/*.csv
+z_externals/handson_second_edition/*/*/*/*.csv
