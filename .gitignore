@@ -136,7 +136,7 @@ simulink_cache.xml
 
 slprj
 
-*.csv
+# *.csv
 
 config.ini
 
