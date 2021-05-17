@@ -19,6 +19,7 @@ class PARAMETERS_SAC:
 
     REPLAY_BUFFER_SIZE = 100000
     ACTION_SCALE = 1.0
+
     TAU = 0.001
 
     NOISE_ENABLED = True
@@ -41,4 +42,5 @@ class PARAMETERS_SAC:
 
     ALPHA = 0.2
 
+    ENTROPY_TUNING = True
 
