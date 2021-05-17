@@ -28,6 +28,7 @@ device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 
 my_logger = get_logger("openai_pendulum_ddpg")
 
+
 def play_main(params, env):
     input_shape, action_shape, num_outputs = get_environment_input_output_info(env)
     agent = rl_utils.get_rl_agent(
@@ -88,7 +89,8 @@ def play_main(params, env):
                 EnvironmentName.PENDULUM_MATLAB_V0,
                 EnvironmentName.PENDULUM_MATLAB_DOUBLE_RIP_V0,
                 EnvironmentName.REAL_DEVICE_RIP,
-                EnvironmentName.REAL_DEVICE_DOUBLE_RIP
+                EnvironmentName.REAL_DEVICE_DOUBLE_RIP,
+                EnvironmentName.QUANSER_SERVO_2
             ]:
                 time.sleep(0.01)
 

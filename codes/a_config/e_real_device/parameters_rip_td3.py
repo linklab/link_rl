@@ -1,9 +1,9 @@
-from codes.a_config._rl_parameters.off_policy.parameter_ddpg import PARAMETERS_DDPG
-from codes.a_config.parameters_general import RIPEnvRewardType
+from codes.a_config._rl_parameters.off_policy.parameter_td3 import PARAMETERS_TD3, TD3ActionType, TD3ActionSelectorType
+from codes.a_config.parameters_general import PARAMETERS_GENERAL, RIPEnvRewardType
 from codes.e_utils.names import OptimizerName, RLAlgorithmName, EnvironmentName, DeepLearningModelName
-from codes.a_config.parameters_general import PARAMETERS_GENERAL
 
-class PARAMETERS_DOUBLE_RIP_DDPG(PARAMETERS_GENERAL, PARAMETERS_DDPG):
+
+class PARAMETERS_RIP_TD3(PARAMETERS_GENERAL, PARAMETERS_TD3):
     # [GENERAL]
     SEED = 1
     MY_PLATFORM = None
@@ -11,23 +11,18 @@ class PARAMETERS_DOUBLE_RIP_DDPG(PARAMETERS_GENERAL, PARAMETERS_DDPG):
     EMA_WINDOW = 10
     VERBOSE = True
     MODEL_SAVE = False
+    NUM_ENVIRONMENTS = 1
 
     ########################################
     ########################################
-    TRAIN_STOP_EPISODE_REWARD = 40000  # MAX: 6.28 * 5000 = 62800 (Old), 90000 (New)
+    TRAIN_STOP_EPISODE_REWARD = 15000  # MAX: 6.28 * 10000 = 62800 (Old), 4 * 10000 = 40000 (New)
     TRAIN_STOP_EPISODE_REWARD_STD = 2000
     STOP_PATIENCE_COUNT = 10
 
     REPLAY_BUFFER_SIZE = 100000
-    TARGET_NET_SYNC_STEP_PERIOD = 1000
-
-    TRAIN_STEP_FREQ = 1
     AVG_EPISODE_SIZE_FOR_STAT = 10
-    N_STEP = 4
-    OMEGA = False
-    OMEGA_WINDOW_SIZE = 6
+    N_STEP = 2
     NEXT_STATE_IN_TRAJECTORY = True
-    DATA_SAVE_STEP_PERIOD = 1000
 
     #########################################
     #########################################
@@ -39,23 +34,20 @@ class PARAMETERS_DOUBLE_RIP_DDPG(PARAMETERS_GENERAL, PARAMETERS_DDPG):
     # HIDDEN_SIZE_LIST = [128, 128, 128, 256]
 
     # [OPTIMIZATION]
-    GAMMA = 0.98 # discount factor
+    GAMMA = 0.99 # discount factor
     TAU = 0.0001
 
     # [Policy Gradient]
     ENTROPY_LOSS_WEIGHT = 0.0001
     CLIP_GRAD = 0.1
-    ACTOR_LEARNING_RATE = 0.0002
+    ACTOR_LEARNING_RATE = 0.0001
 
     # [TRAINING]
     EPSILON_INIT = 1.0  # 0.9
-    EPSILON_MIN = 1.0   # 0.001
+    EPSILON_MIN = 0.01   # 0.001
 
-    PER_PROPORTIONAL = False
-    PER_RANK_BASED = False
-    PPO_GAE_LAMBDA = 0.95
     LEARNING_RATE = 0.001
-    ACTION_SCALE = 400
+    ACTION_SCALE = 500
     BALANCING_SCALE_FACTOR = 0.01
     ENV_RESET = False
 
@@ -66,13 +58,7 @@ class PARAMETERS_DOUBLE_RIP_DDPG(PARAMETERS_GENERAL, PARAMETERS_DDPG):
     CUDA_VISIBLE_DEVICES_NUMBER_LIST = '1, 2'
 
     # [1. ENVIRONMENTS]
-    ENVIRONMENT_ID = EnvironmentName.REAL_DEVICE_DOUBLE_RIP
-
-    # [2. DEEP_LEARNING_MODELS]
-    DEEP_LEARNING_MODEL = DeepLearningModelName.DETERMINISTIC_CONTINUOUS_ACTOR_CRITIC_MLP
-
-    # [3. ALGORITHMS]
-    RL_ALGORITHM = RLAlgorithmName.DDPG_V0
+    ENVIRONMENT_ID = EnvironmentName.REAL_DEVICE_RIP
 
     # [4. OPTIMIZER]
     OPTIMIZER = OptimizerName.ADAM
@@ -80,17 +66,27 @@ class PARAMETERS_DOUBLE_RIP_DDPG(PARAMETERS_GENERAL, PARAMETERS_DDPG):
     NOISE_ENABLED = True
     OU_SIGMA = 2.5
 
-    COUNT_BASED_EXPLORATION = True
+    COUNT_BASED_EXPLORATION = False
     COUNT_BASED_FILTER = [1, 1, 0, 1, 1, 0, 1, 1, 0]
     COUNT_BASED_REWARD_SCALE = 0.4
     COUNT_BASED_PRECISION = 1
 
-    TRAIN_ONLY_AFTER_EPISODE = True
+    TRAIN_ONLY_AFTER_EPISODE = False
     NUM_TRAIN_ONLY_AFTER_EPISODE = 100
 
-    TYPE_OF_RIP_REWARD = RIPEnvRewardType.NEW  # "old_version"
+    DISTRIBUTIONAL = False
 
-    MAX_EPISODE_STEP = 10000
+    TYPE_OF_TD3_ACTION = TD3ActionType.GAUSSIAN_NOISE_WITH_EPSILON
+    TYPE_OF_TD3_ACTION_SELECTOR = TD3ActionSelectorType.SOMETIMES_BLOW_ACTION_SELECTOR
+
+
+    DEEP_LEARNING_MODEL = DeepLearningModelName.TD3_MLP
+    RL_ALGORITHM = RLAlgorithmName.TD3_V0
+
+    TRAIN_STEP_FREQ = 4
+    POLICY_UPDATE_FREQUENCY = 2 * TRAIN_STEP_FREQ
+
+    MAX_EPISODE_STEP = 5000
     MAX_GLOBAL_STEP = 2000000
     EPSILON_MIN_STEP = 500000
     MIN_REPLAY_SIZE_FOR_TRAIN = 500

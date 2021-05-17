@@ -6,8 +6,10 @@ import gym
 import numpy as np
 import time
 import sys,os
-
+import matplotlib.pyplot as plt
+import pickle
 from codes.a_config.parameters_general import RIPEnvRewardType
+from codes.e_utils.common_utils import sigmoid_2
 
 current_path = os.path.dirname(os.path.realpath(__file__))
 PROJECT_HOME = os.path.abspath(os.path.join(current_path, os.pardir, os.pardir, os.pardir))
@@ -32,7 +34,7 @@ VELOCITY_STATE_DENOMINATOR = 100.0
 RIP_SERVER = '10.0.0.10'
 
 
-def get_rip_observation_space(pendulum_type):
+def get_rip_observation_space(pendulum_type, params):
     max_velocity = 100.0
 
     if pendulum_type in [
@@ -45,10 +47,16 @@ def get_rip_observation_space(pendulum_type):
     elif pendulum_type in [
         EnvironmentName.PENDULUM_MATLAB_DOUBLE_RIP_V0, EnvironmentName.REAL_DEVICE_DOUBLE_RIP
     ]:
-        high = np.array(
-            [1., 1., max_velocity, 1., 1., max_velocity, 1., 1., max_velocity],
-            dtype=np.float32
-        )
+        if hasattr(params, "IGNORE_ARM_INFO") and params.IGNORE_ARM_INFO is True:
+            high = np.array(
+                [1., 1., max_velocity, 1., 1., max_velocity],
+                dtype=np.float32
+            )
+        else:
+            high = np.array(
+                [1., 1., max_velocity, 1., 1., max_velocity, 1., 1., max_velocity],
+                dtype=np.float32
+            )
     else:
         raise ValueError()
 
@@ -112,11 +120,12 @@ class RotaryInvertedPendulumEnv(gym.Env):
         self.motor_velocity = 0
 
         self.last_time = 0.0
-        # self.unit_time = 0.006
-        self.unit_time = 0.06
+        self.unit_time = 0.016
+        # self.unit_time = 0.06
         self.over_unit_time = 0
         self.step_idx = 0
         self.episode_idx = 0
+
         current_path = os.path.dirname(os.path.realpath(__file__))
         MATLAB_ENGINE_DIR = os.path.abspath(os.path.join(current_path, "engine"))
         os.chdir(MATLAB_ENGINE_DIR) # change working directory
@@ -140,7 +149,7 @@ class RotaryInvertedPendulumEnv(gym.Env):
             params, self.pendulum_type
         )
 
-        self.observation_space, self.n_states = get_rip_observation_space(self.pendulum_type)
+        self.observation_space, self.n_states = get_rip_observation_space(self.pendulum_type, self.params)
 
         self.current_status = None
 
@@ -259,17 +268,27 @@ class RotaryInvertedPendulumEnv(gym.Env):
 
             self.set_max_three_velocity()
 
-            state = (
-                math.cos(self.pendulum_1_position),
-                math.sin(self.pendulum_1_position),
-                self.pendulum_1_velocity / VELOCITY_STATE_DENOMINATOR,
-                math.cos(self.pendulum_2_position),
-                math.sin(self.pendulum_2_position),
-                self.pendulum_2_velocity / VELOCITY_STATE_DENOMINATOR,
-                math.cos(0.0),  # 1.0
-                math.sin(0.0),  # 0.0
-                self.motor_velocity / VELOCITY_STATE_DENOMINATOR,
-            )
+            if hasattr(self.params, "IGNORE_ARM_INFO") and self.params.IGNORE_ARM_INFO is True:
+                state = (
+                    math.cos(self.pendulum_1_position),
+                    math.sin(self.pendulum_1_position),
+                    self.pendulum_1_velocity / VELOCITY_STATE_DENOMINATOR,
+                    math.cos(self.pendulum_2_position),
+                    math.sin(self.pendulum_2_position),
+                    self.pendulum_2_velocity / VELOCITY_STATE_DENOMINATOR,
+                )
+            else:
+                state = (
+                    math.cos(self.pendulum_1_position),
+                    math.sin(self.pendulum_1_position),
+                    self.pendulum_1_velocity / VELOCITY_STATE_DENOMINATOR,
+                    math.cos(self.pendulum_2_position),
+                    math.sin(self.pendulum_2_position),
+                    self.pendulum_2_velocity / VELOCITY_STATE_DENOMINATOR,
+                    math.cos(0.0),  # 1.0
+                    math.sin(0.0),  # 0.0
+                    self.motor_velocity / VELOCITY_STATE_DENOMINATOR,
+                )
 
             self.update_current_state_for_double_rip(adjusted_pendulum_1_radian=0.0, adjusted_pendulum_2_radian=0.0)
         else:
@@ -361,12 +380,12 @@ class RotaryInvertedPendulumEnv(gym.Env):
             if step_time > self.unit_time:
                 self.over_unit_time += 1
 
-            #print(self.step_idx, action, step_time)
+            # print(self.step_idx, action, step_time)
             self.last_time = time.perf_counter()
 
-        if self.step_idx % 100000 == 0:
-            print("*OVER UNIT TIME STEP NUMBER :", self.over_unit_time)
-        #######################################################
+            if self.step_idx % 100000 == 0:
+                print("*OVER UNIT TIME STEP NUMBER :", self.over_unit_time)
+            #######################################################
 
         self.episode_steps += 1
         self.total_steps += 1
@@ -382,7 +401,8 @@ class RotaryInvertedPendulumEnv(gym.Env):
                 RLAlgorithmName.DDPG_V0,
                 RLAlgorithmName.CONTINUOUS_A2C_V0,
                 RLAlgorithmName.CONTINUOUS_PPO_V0,
-                RLAlgorithmName.TD3_V0
+                RLAlgorithmName.TD3_V0,
+                RLAlgorithmName.SAC_V0
             ]:
                 action = random.uniform(a=-1.0, b=1.0) * self.params.ACTION_SCALE * 2
             else:
@@ -419,7 +439,7 @@ class RotaryInvertedPendulumEnv(gym.Env):
             self.pendulum_1_position = math.radians(rip_response.link_1_angle)
             self.pendulum_1_velocity = rip_response.link_1_velocity
             self.simulation_time = None
-            print(rip_response.link_1_angle)
+            # print(rip_response.link_1_angle)
         elif self.pendulum_type == EnvironmentName.PENDULUM_MATLAB_DOUBLE_RIP_V0:
             self.plant.simulate(action)
 
@@ -428,12 +448,12 @@ class RotaryInvertedPendulumEnv(gym.Env):
         elif self.pendulum_type == EnvironmentName.REAL_DEVICE_DOUBLE_RIP:
             # t = 0
             # num = 0
-            # k = 1.0
+            # k = 1
             # while True:
-            #     pwm = k * self.params.ACTION_SCALE
+            #     pwm = 205
             #
             #     if num % 30 == 0:
-            #         k = -1.0 * k
+            #         pwm = -pwm
             #
             #     self.server_obj.step(RipRequest(value=pwm))
             #
@@ -444,7 +464,7 @@ class RotaryInvertedPendulumEnv(gym.Env):
             #     time.sleep(0.008)
             #     num += 1
 
-            # print(action)
+            # print(action, self.step_idx)
             rip_response = self.server_obj.step(RipRequest(value=action))
             # print(action, rip_response.arm_angle, rip_response.link_1_angle, "!!!!")
 
@@ -455,6 +475,7 @@ class RotaryInvertedPendulumEnv(gym.Env):
             self.pendulum_2_position = math.radians(rip_response.link_2_angle)
             self.pendulum_2_velocity = rip_response.link_2_velocity
             self.simulation_time = None
+
         else:
             raise ValueError()
 
@@ -465,17 +486,14 @@ class RotaryInvertedPendulumEnv(gym.Env):
             self.too_much_rotate = True
         # print(self.initial_motor_position, self.motor_position)
         done_conditions = [
-            self.episode_steps >= 500, #5000
-            # self.episode_steps >= 500 and not self.is_upright,
+            self.episode_steps >= self.params.MAX_EPISODE_STEP, #5000
+            # self.episode_steps >= self.params.MAX_EPISODE_STEP and not self.is_upright,
             self.too_much_rotate and not self.is_upright
         ]
 
         adjusted_pendulum_1_radian = self.pendulum_position_to_adjusted_radian(self.pendulum_1_position)
         adjusted_pendulum_2_radian = self.pendulum_position_to_adjusted_radian(self.pendulum_2_position)
         # print("pendulum 1 angle :", adjusted_pendulum_1_radian, "pendulum 2 angle :", adjusted_pendulum_2_radian)
-        # print("action: {0}, q: {1:7.4}, w: {2:7.4f}, adjusted_radian: {3:7.4f}, reward: {4:10.4f}, time: {5}".format(
-        #     action, self.pendulum_1_position, self.pendulum_1_velocity, adjusted_radian, reward, self.simulation_time
-        # ))
 
         if self.pendulum_type in [
             EnvironmentName.PENDULUM_MATLAB_V0, EnvironmentName.REAL_DEVICE_RIP
@@ -540,22 +558,32 @@ class RotaryInvertedPendulumEnv(gym.Env):
             # info["max_pendulum_1_velocity"] = self.max_pendulum_1_velocity
             # info["max_pendulum_2_velocity"] = self.max_pendulum_2_velocity
             # info["max_motor_velocity"] = self.max_motor_velocity
-
-            state = (
-                math.cos(self.pendulum_1_position),
-                math.sin(self.pendulum_1_position),
-                self.pendulum_1_velocity / VELOCITY_STATE_DENOMINATOR,
-                math.cos(self.pendulum_2_position),
-                math.sin(self.pendulum_2_position),
-                self.pendulum_2_velocity / VELOCITY_STATE_DENOMINATOR,
-                math.cos(self.initial_motor_position - self.motor_position),
-                math.sin(self.initial_motor_position - self.motor_position),
-                self.motor_velocity / VELOCITY_STATE_DENOMINATOR,
-            )
+            if hasattr(self.params, "IGNORE_ARM_INFO") and self.params.IGNORE_ARM_INFO is True:
+                state = (
+                    math.cos(self.pendulum_1_position),
+                    math.sin(self.pendulum_1_position),
+                    self.pendulum_1_velocity / VELOCITY_STATE_DENOMINATOR,
+                    math.cos(self.pendulum_2_position),
+                    math.sin(self.pendulum_2_position),
+                    self.pendulum_2_velocity / VELOCITY_STATE_DENOMINATOR,
+                )
+            else:
+                state = (
+                    math.cos(self.pendulum_1_position),
+                    math.sin(self.pendulum_1_position),
+                    self.pendulum_1_velocity / VELOCITY_STATE_DENOMINATOR,
+                    math.cos(self.pendulum_2_position),
+                    math.sin(self.pendulum_2_position),
+                    self.pendulum_2_velocity / VELOCITY_STATE_DENOMINATOR,
+                    math.cos(self.initial_motor_position - self.motor_position),
+                    math.sin(self.initial_motor_position - self.motor_position),
+                    self.motor_velocity / VELOCITY_STATE_DENOMINATOR,
+                )
 
             # print("STEP: {0}, ACTION: {1:>6.2f}, pendulum_1_velocity: {2:>5.2f}, pendulum_2_velocity: {3:>5.2f}, "
-            #       "motor_velocity: {4:>5.2f} - reward: {5:>5.2f}".format(
-            #     self.step_idx, action, self.pendulum_1_velocity, self.pendulum_2_velocity, self.motor_velocity, reward
+            #       "motor_velocity: {4:>5.2f}, {5:>5.2f}, {6:>5.2f}, {7:>5.2f} - reward: {8:>5.2f}".format(
+            #     self.step_idx, action, self.pendulum_1_velocity, self.pendulum_2_velocity, self.motor_velocity,
+            #     self.pendulum_1_position, self.pendulum_2_position, self.motor_position, reward
             # ))
 
             # print("pendulum_2 :", self.pendulum_2_position)
@@ -571,13 +599,18 @@ class RotaryInvertedPendulumEnv(gym.Env):
 
         # print(action)
 
+        if self.pendulum_type in [EnvironmentName.REAL_DEVICE_RIP, EnvironmentName.REAL_DEVICE_DOUBLE_RIP]:
+            info["unit_time"] = self.unit_time
+
+
+
         return state, reward, done, info
 
     def get_reward(self, adjusted_pendulum_1_radian):
         if self.is_upright:
-            position_reward = adjusted_pendulum_1_radian / math.pi  # math.pi - math.radians(12) ~ math.pi
+            position_reward = adjusted_pendulum_1_radian # math.pi - math.radians(12) ~ math.pi
         else:
-            position_reward = adjusted_pendulum_1_radian / (math.pi * 2.0)
+            position_reward = adjusted_pendulum_1_radian/2.0
 
         energy_penalty = 2.0 * -1.0 * (abs(self.pendulum_1_velocity) + abs(self.motor_velocity)) / 100
 
@@ -626,12 +659,16 @@ class RotaryInvertedPendulumEnv(gym.Env):
         #         "upright" if self.is_upright else ""
         #     )
 
-        # if self.too_much_rotate and not self.is_upright:
-        #     reward = -100.0
-        # else:
-        #     reward = max(0.0, reward)
-
         reward = max(0.0, reward)
+
+        # if self.pendulum_type in [EnvironmentName.REAL_DEVICE_RIP, EnvironmentName.REAL_DEVICE_DOUBLE_RIP]:
+        #     if reward == 0.0:
+        #         self.unit_time = 0.06
+        #     else:
+        #         self.unit_time = np.clip(0.06 / (sigmoid_2(0.01) * 10), 0.006, 0.06)
+        #
+        # if self.too_much_rotate and not self.is_upright:
+        #     reward = -3.0
 
         #print(position_reward, energy_penalty, reward)
 

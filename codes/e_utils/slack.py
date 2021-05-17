@@ -1,7 +1,7 @@
 import json
 import requests
-from slack import WebClient
-from slack.errors import SlackApiError
+#from slack import WebClient
+#from slack.errors import SlackApiError
 
 from codes.b_environments.trade.trade_constant import SLACK_API_TOKEN, SLACK_WEBHOOK_URL_1, SLACK_WEBHOOK_URL_2
 
@@ -17,7 +17,7 @@ class PushSlack:
         else:
             self.webhook_url_2 = None
 
-        self.slack_client = WebClient(token=SLACK_API_TOKEN)
+        #self.slack_client = WebClient(token=SLACK_API_TOKEN)
 
     def send_message(self, username=None, message=None):
         slack_data = {'text': message}
@@ -46,15 +46,15 @@ class PushSlack:
                 headers={'Content-Type': 'application/json'}
             )
 
-    def send_file_to_slack(self, filepath):
-        try:
-            response = self.slack_client.files_upload(
-                channels='#bluebibi',
-                file=filepath
-            )
-            assert response["file"]  # the uploaded file
-        except SlackApiError as e:
-            # You will get a SlackApiError if "ok" is False
-            assert e.response["ok"] is False
-            assert e.response["error"]  # str like 'invalid_auth', 'channel_not_found'
-            print(f"Got an error: {e.response['error']}")
+    # def send_file_to_slack(self, filepath):
+    #     try:
+    #         response = self.slack_client.files_upload(
+    #             channels='#bluebibi',
+    #             file=filepath
+    #         )
+    #         assert response["file"]  # the uploaded file
+    #     except SlackApiError as e:
+    #         # You will get a SlackApiError if "ok" is False
+    #         assert e.response["ok"] is False
+    #         assert e.response["error"]  # str like 'invalid_auth', 'channel_not_found'
+    #         print(f"Got an error: {e.response['error']}")

@@ -48,6 +48,8 @@ from codes.a_config.d_matlab_parameters.parameters_matlab_pendulum_dqn import PA
 from codes.a_config.d_matlab_parameters.parameters_matlab_pendulum_ddpg import PARAMETERS_PENDULUM_MATLAB_DDPG
 from codes.a_config.d_matlab_parameters.parameters_matlab_pendulum_td3 import PARAMETERS_PENDULUM_MATLAB_TD3
 from codes.a_config.d_matlab_parameters.parameters_matlab_pendulum_sac import PARAMETERS_PENDULUM_MATLAB_SAC
+from codes.a_config.d_matlab_parameters.parameters_matlab_double_pendulum_ddpg import PARAMETERS_DOUBLE_PENDULUM_MATLAB_DDPG
+from codes.a_config.d_matlab_parameters.parameters_matlab_double_pendulum_td3 import PARAMETERS_DOUBLE_PENDULUM_MATLAB_TD3
 
 from codes.a_config.e_real_device.parameters_rip import PARAMETERS_RIP
 from codes.a_config.e_real_device.parameters_double_rip_ddpg import PARAMETERS_DOUBLE_RIP_DDPG
@@ -70,3 +72,4 @@ from codes.a_config._rl_parameters.off_policy.parameter_ddpg import DDPGActionTy
 
 from codes.a_config._rl_parameters.off_policy.parameter_td3 import TD3ActionSelectorType, TD3ActionType
 from codes.a_config.parameters_general import RIPEnvRewardType
+from codes.a_config.e_real_device.parameters_rip_td3 import PARAMETERS_RIP_TD3

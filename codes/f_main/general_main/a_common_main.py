@@ -58,7 +58,7 @@ def get_agent(env):
             EnvironmentName.REAL_DEVICE_RIP,
             EnvironmentName.REAL_DEVICE_DOUBLE_RIP,
         ]:
-            observation_space, _ = get_rip_observation_space(params.ENVIRONMENT_ID)
+            observation_space, _ = get_rip_observation_space(params.ENVIRONMENT_ID, params)
             action_space, num_outputs, _ = get_rip_action_space(params, pendulum_type=params.ENVIRONMENT_ID)
 
             input_shape = observation_space.shape
@@ -283,8 +283,9 @@ class EpisodeProcessor:
                 if isinstance(self.test_env, RewardChanger):
                     reward = self.test_env.reverse_reward(reward)
 
-                state = next_state
                 episode_reward += reward
+
+                state = next_state
 
             episode_rewards[test_episode] = episode_reward
             tests_done += 1

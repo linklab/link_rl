@@ -198,7 +198,7 @@ def remove_models(model_save_dir, model_save_file_prefix, agent):
         os.remove(f)
 
 
-def save_model(model_save_dir, model_save_file_prefix, agent, step, episode_reward):
+def save_model(model_save_dir, model_save_file_prefix, agent, step, episode_reward, is_last_step=False):
     model_save_filename = os.path.join(
         model_save_dir, "{0}_{1}_{2}_{3}_{4:.2f}.pth".format(
             model_save_file_prefix, agent.__name__, agent.model.__name__, step, float(episode_reward)
@@ -209,7 +209,10 @@ def save_model(model_save_dir, model_save_file_prefix, agent, step, episode_rewa
 
     torch.save(agent.test_model.state_dict(), model_save_filename)
 
-    slack.send_message(message="MODEL SAVED AT {0}".format(model_save_filename))
+    if is_last_step:
+        slack.send_message(message="LAST STEP - MODEL SAVED AT {0}".format(model_save_filename))
+    else:
+        slack.send_message(message="MODEL SAVED AT {0}".format(model_save_filename))
 
     return model_save_filename
 
@@ -322,14 +325,21 @@ class Cache(MutableMapping):
     def __len__(self):
         return len(self.d)
 
+
+def sigmoid_2(z):
+    return 2/(1 + np.exp(-z)) - 1.0
+
+
 if __name__=="__main__":
-    # max_episode = 20000000
-    max_episode = 200
-    initial_epsilon = 1.0
-    final_epsilon = 0.01
-    epsilon_list = []
-    plt.plot(
-        [x for x in range(max_episode)],
-        [epsilon_scheduled(x, max_episode, initial_epsilon, final_epsilon) for x in range(max_episode)]
-    )
-    plt.show()
+    # # max_episode = 20000000
+    # max_episode = 200
+    # initial_epsilon = 1.0
+    # final_epsilon = 0.01
+    # epsilon_list = []
+    # plt.plot(
+    #     [x for x in range(max_episode)],
+    #     [epsilon_scheduled(x, max_episode, initial_epsilon, final_epsilon) for x in range(max_episode)]
+    # )
+    # plt.show()
+
+    print(np.clip(0.06 / (sigmoid_2(0.01) * 10), 0.006, 0.06))
