@@ -29,7 +29,7 @@ BLOWING_ACTION_RATE = 0.0002  # 5000 스텝에 1번 정도(지수 분포)의 주
 
 VELOCITY_STATE_DENOMINATOR = 100.0
 
-RIP_SERVER = '10.0.0.11'
+RIP_SERVER = '10.0.0.10'
 
 
 def get_rip_observation_space(pendulum_type):
