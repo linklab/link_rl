@@ -366,6 +366,7 @@ class RotaryInvertedPendulumEnv(gym.Env):
             self.is_upright = False
 
     def step(self, action):
+        action = 100
         ############# time check #############################
         if self.pendulum_type in [EnvironmentName.REAL_DEVICE_RIP, EnvironmentName.REAL_DEVICE_DOUBLE_RIP]:
             while True:
