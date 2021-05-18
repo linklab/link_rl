@@ -430,7 +430,7 @@ class RotaryInvertedPendulumEnv(gym.Env):
             self.simulation_time = self.plant.getHistory()
         elif self.pendulum_type == EnvironmentName.REAL_DEVICE_RIP:
             # GRPC CALL
-            rip_response = self.server_obj.step(RipRequest(value=action))
+            rip_response = self.server_obj.step(RipRequest(value=0))
 
             # current_time = time.perf_counter()
             # print("point 2 - elapsed time: {0:10.8f}".format(current_time - self.last_time))
@@ -613,17 +613,17 @@ class RotaryInvertedPendulumEnv(gym.Env):
         else:
             position_reward = adjusted_pendulum_1_radian/2.0
 
-        energy_penalty = 2.0 * -1.0 * (abs(self.pendulum_1_velocity) + abs(self.motor_velocity)) / 100
+        energy_penalty = -1.0 * (abs(self.pendulum_1_velocity) + abs(self.motor_velocity)) / 1000
 
         # self.episode_position_reward_list.append(position_reward)
         # self.episode_pendulum_velocity_reward_list.append(energy_penalty)
         # self.episode_action_reward_list.append(0.0)
 
-        reward = position_reward + 10 * energy_penalty
+        reward = position_reward + energy_penalty
 
         reward = max(0.0, reward)
 
-        # print(position_reward, energy_penalty, reward)
+        print(position_reward, energy_penalty, reward)
 
         return reward
 

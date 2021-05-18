@@ -130,8 +130,8 @@ class RotaryDoubleInvertedPendulum:
     def step(self, rip_request, context):
         motor_power = int(rip_request.value)
 
-        # if motor_power % 2 == 1:
-        #     motor_power = motor_power+1
+        if motor_power % 2 == 1:
+            motor_power = motor_power+1
         # current_step_call = time.time()
         # elapsed_time = current_step_call - self.last_step_call
         # print(self.step_idx, elapsed_time, motor_power)
