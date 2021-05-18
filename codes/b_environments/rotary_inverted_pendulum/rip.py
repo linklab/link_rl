@@ -33,7 +33,6 @@ VELOCITY_STATE_DENOMINATOR = 100.0
 
 RIP_SERVER = '10.0.0.9'
 
-
 def get_rip_observation_space(pendulum_type, params):
     max_velocity = 100.0
 
@@ -366,6 +365,7 @@ class RotaryInvertedPendulumEnv(gym.Env):
             self.is_upright = False
 
     def step(self, action):
+        #action = 100
         ############# time check #############################
         if self.pendulum_type in [EnvironmentName.REAL_DEVICE_RIP, EnvironmentName.REAL_DEVICE_DOUBLE_RIP]:
             while True:
@@ -380,7 +380,7 @@ class RotaryInvertedPendulumEnv(gym.Env):
             if step_time > self.unit_time:
                 self.over_unit_time += 1
 
-            # print(self.step_idx, action, step_time)
+            print(self.step_idx, action, step_time)
             self.last_time = time.perf_counter()
 
             if self.step_idx % 100000 == 0:
