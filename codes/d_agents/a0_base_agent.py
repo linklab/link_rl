@@ -102,7 +102,7 @@ class BaseAgent:
 
         return actions, critics
 
-    def unpack_batch_for_actor_critic(self, batch, model, params, discrete=False):
+    def unpack_batch_for_actor_critic(self, batch, model, params, sac=False, alpha=None):
         """
         Convert batch into training tensors
         :param batch:
@@ -133,9 +133,17 @@ class BaseAgent:
 
         if not_done_idx:
             last_states_v = torch.FloatTensor(np.array(last_states, copy=False)).to(self.device)
-            last_values_v = model.base.forward_critic(last_states_v)
-            last_values_np = last_values_v.data.cpu().numpy()[:, 0] * (params.GAMMA ** params.N_STEP)
-            target_action_values_np[not_done_idx] += last_values_np
+            if sac:
+                last_actions_v, last_entropies_v = model.sample(last_states_v)
+                last_q_1_v, last_q_2_v = model.base.twinq(last_states_v, last_actions_v)
+                last_q_v = torch.min(last_q_1_v, last_q_2_v) * (params.GAMMA ** params.N_STEP)
+                last_q_v += alpha * last_entropies_v
+                last_q_v = last_q_v.squeeze(-1)
+                target_action_values_np[not_done_idx] += last_q_v.data.cpu().numpy()
+            else:
+                last_values_v = model.base.forward_critic(last_states_v)
+                last_values_np = last_values_v.data.cpu().numpy()[:, 0] * (params.GAMMA ** params.N_STEP)
+                target_action_values_np[not_done_idx] += last_values_np
 
         target_action_values_v = float32_preprocessor(target_action_values_np).to(self.device)
 

@@ -7,7 +7,7 @@ from codes.c_models.base_model import BaseModel
 from codes.e_utils.common_utils import weights_init_
 
 LOG_SIG_MAX = 2
-LOG_SIG_MIN = -2
+LOG_SIG_MIN = -20
 
 
 class SoftActorCriticModel(BaseModel):
@@ -37,11 +37,11 @@ class SoftActorCriticModel(BaseModel):
         x_t = dist.rsample()  # for reparameterization trick (mean + std * N(0,1))
         action_v = torch.tanh(x_t)
 
-        log_prob = dist.log_prob(x_t)
-        log_prob = log_prob.sum(1, keepdim=True)
+        log_probs = dist.log_prob(x_t) - torch.log(1.0 - action_v.pow(2) + 1.0e-6)
+        entropies = -log_probs.sum(dim=1, keepdim=True)
         # action_v.shape: [128, 1]
         # log_prob.shape: [128, 1]
-        return action_v, log_prob
+        return action_v, entropies
 
 
 class SoftActorCriticMLPBase(nn.Module):
@@ -56,30 +56,14 @@ class SoftActorCriticMLPBase(nn.Module):
 
         self.actor = GaussianActorMLPBase(num_inputs, num_outputs, params)
 
-        self.critic = nn.Sequential(
-            nn.Linear(num_inputs, self.hidden_1_size),
-            nn.LeakyReLU(),
-            nn.Linear(self.hidden_1_size, self.hidden_2_size),
-            nn.LeakyReLU(),
-            nn.Linear(self.hidden_2_size, self.hidden_3_size),
-            nn.LeakyReLU(),
-            nn.Linear(self.hidden_3_size, 1),
-        )
-
-        self.critic.apply(weights_init_)
-
         self.twinq = TwinMLPBase(num_inputs, num_outputs, params)
 
-        self.layers_info = {'actor': self.actor, 'critic': self.critic, 'twinq': self.twinq}
+        self.layers_info = {'actor': self.actor, 'twinq': self.twinq}
 
         self.actor_params = list(self.actor.parameters())
-        self.critic_params = list(self.critic.parameters())
         self.twinq_params = list(self.twinq.parameters())
 
         self.train()
-
-    def forward_critic(self, inputs):
-        return self.critic(inputs)
 
 
 class GaussianActorMLPBase(nn.Module):
@@ -93,33 +77,20 @@ class GaussianActorMLPBase(nn.Module):
         self.hidden_2_size = params.HIDDEN_2_SIZE
         self.hidden_3_size = params.HIDDEN_3_SIZE
 
-        self.common = nn.Sequential(
+        self.policy = nn.Sequential(
             nn.Linear(num_inputs, self.hidden_1_size),
             nn.GELU(),
             nn.Linear(self.hidden_1_size, self.hidden_2_size),
             nn.GELU(),
             nn.Linear(self.hidden_2_size, self.hidden_3_size),
-            nn.GELU()
-        )
-
-        self.mu = nn.Sequential(
-            nn.Linear(self.hidden_3_size, num_outputs),
-            nn.Tanh()
-        )
-
-        # SoftPlus is a smooth approximation to the ReLU function and can be used
-        # to constrain the output of a machine to always be positive.
-        self.logstd = nn.Sequential(
-            nn.Linear(self.hidden_3_size, num_outputs),
-            nn.Softplus()
+            nn.GELU(),
+            nn.Linear(self.hidden_3_size, num_outputs * 2)
         )
 
         self.apply(weights_init_)
 
     def forward(self, inputs):
-        x = self.common(inputs)
-        mu_v = self.mu(x)
-        logstd_v = self.logstd(x)
+        mu_v, logstd_v = torch.chunk(self.policy(inputs), 2, dim=-1)
         logstd_v = torch.clamp(logstd_v, min=LOG_SIG_MIN, max=LOG_SIG_MAX)
         return mu_v, logstd_v
 
