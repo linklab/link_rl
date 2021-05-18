@@ -31,7 +31,7 @@ BLOWING_ACTION_RATE = 0.0002  # 5000 스텝에 1번 정도(지수 분포)의 주
 
 VELOCITY_STATE_DENOMINATOR = 100.0
 
-RIP_SERVER = '10.0.0.10'
+RIP_SERVER = '10.0.0.11'
 
 
 def get_rip_observation_space(pendulum_type, params):
@@ -120,7 +120,7 @@ class RotaryInvertedPendulumEnv(gym.Env):
         self.motor_velocity = 0
 
         self.last_time = 0.0
-        self.unit_time = 0.016
+        self.unit_time = 0.005
         # self.unit_time = 0.06
         self.over_unit_time = 0
         self.step_idx = 0
@@ -381,7 +381,7 @@ class RotaryInvertedPendulumEnv(gym.Env):
             if step_time > self.unit_time:
                 self.over_unit_time += 1
 
-            # print(self.step_idx, action, step_time)
+            print(self.step_idx, action, step_time)
             self.last_time = time.perf_counter()
 
             if self.step_idx % 100000 == 0:
@@ -430,7 +430,7 @@ class RotaryInvertedPendulumEnv(gym.Env):
             self.simulation_time = self.plant.getHistory()
         elif self.pendulum_type == EnvironmentName.REAL_DEVICE_RIP:
             # GRPC CALL
-            rip_response = self.server_obj.step(RipRequest(value=action))
+            rip_response = self.server_obj.step(RipRequest(value=100))
 
             # current_time = time.perf_counter()
             # print("point 2 - elapsed time: {0:10.8f}".format(current_time - self.last_time))
