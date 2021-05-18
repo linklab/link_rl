@@ -330,6 +330,11 @@ def sigmoid_2(z):
     return 2/(1 + np.exp(-z)) - 1.0
 
 
+def grad_false(network):
+    for param in network.parameters():
+        param.requires_grad = False
+
+
 if __name__=="__main__":
     # # max_episode = 20000000
     # max_episode = 200

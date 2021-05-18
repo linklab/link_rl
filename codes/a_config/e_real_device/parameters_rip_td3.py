@@ -15,7 +15,7 @@ class PARAMETERS_RIP_TD3(PARAMETERS_GENERAL, PARAMETERS_TD3):
 
     ########################################
     ########################################
-    TRAIN_STOP_EPISODE_REWARD = 15000  # MAX: 6.28 * 10000 = 62800 (Old), 4 * 10000 = 40000 (New)
+    TRAIN_STOP_EPISODE_REWARD = 15000
     TRAIN_STOP_EPISODE_REWARD_STD = 2000
     STOP_PATIENCE_COUNT = 10
 

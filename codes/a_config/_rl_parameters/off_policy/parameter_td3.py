@@ -33,7 +33,6 @@ class PARAMETERS_TD3:
     CLIP_GRAD = 0.1
 
     POLICY_UPDATE_FREQUENCY = 2
-
     TAU = 0.001
 
     N_STEP = 2

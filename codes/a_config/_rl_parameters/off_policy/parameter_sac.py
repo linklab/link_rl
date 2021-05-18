@@ -7,7 +7,7 @@ class SACActionSelectorType(enum.Enum):
 
 
 class SACActionType(enum.Enum):
-    GAUSSIAN_NOISE = 0
+    SAMPLE = 0
     ONLY_GREEDY = 1
 
 
@@ -19,6 +19,7 @@ class PARAMETERS_SAC:
 
     REPLAY_BUFFER_SIZE = 100000
     ACTION_SCALE = 1.0
+
     TAU = 0.001
 
     NOISE_ENABLED = True
@@ -30,7 +31,7 @@ class PARAMETERS_SAC:
     TRAIN_ONLY_AFTER_EPISODE = False
     NUM_TRAIN_ONLY_AFTER_EPISODE = None
 
-    TYPE_OF_SAC_ACTION = SACActionType.GAUSSIAN_NOISE
+    TYPE_OF_SAC_ACTION = SACActionType.SAMPLE
     TYPE_OF_SAC_ACTION_SELECTOR = SACActionSelectorType.BASIC_ACTION_SELECTOR
 
     N_STEP = 2
@@ -41,4 +42,5 @@ class PARAMETERS_SAC:
 
     ALPHA = 0.2
 
+    ENTROPY_TUNING = True
 
