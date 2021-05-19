@@ -427,6 +427,11 @@ class RotaryInvertedPendulumEnv(gym.Env):
 
             self.pendulum_1_position, self.motor_position, self.pendulum_1_velocity, self.motor_velocity, \
             self.simulation_time = self.plant.getHistory()
+        elif self.pendulum_type == EnvironmentName.PENDULUM_MATLAB_DOUBLE_RIP_V0:
+            self.plant.simulate(action)
+
+            self.pendulum_1_position, self.motor_position, self.pendulum_2_position, self.pendulum_1_velocity, \
+            self.motor_velocity, self.pendulum_2_velocity, self.simulation_time = self.plant.getHistory()
         elif self.pendulum_type == EnvironmentName.REAL_DEVICE_RIP:
             # GRPC CALL
             rip_response = self.server_obj.step(RipRequest(value=0))
@@ -440,11 +445,6 @@ class RotaryInvertedPendulumEnv(gym.Env):
             self.pendulum_1_velocity = rip_response.link_1_velocity
             self.simulation_time = None
             # print(rip_response.link_1_angle)
-        elif self.pendulum_type == EnvironmentName.PENDULUM_MATLAB_DOUBLE_RIP_V0:
-            self.plant.simulate(action)
-
-            self.pendulum_1_position, self.motor_position, self.pendulum_2_position, self.pendulum_1_velocity, \
-            self.motor_velocity, self.pendulum_2_velocity, self.simulation_time = self.plant.getHistory()
         elif self.pendulum_type == EnvironmentName.REAL_DEVICE_DOUBLE_RIP:
             # t = 0
             # num = 0
@@ -608,7 +608,7 @@ class RotaryInvertedPendulumEnv(gym.Env):
         if self.is_upright:
             position_reward = adjusted_pendulum_1_radian # math.pi - math.radians(12) ~ math.pi
         else:
-            position_reward = adjusted_pendulum_1_radian/2.0
+            position_reward = adjusted_pendulum_1_radian / 2.0
 
         energy_penalty = -1.0 * (abs(self.pendulum_1_velocity) + abs(self.motor_velocity)) / 1000
 
@@ -620,7 +620,7 @@ class RotaryInvertedPendulumEnv(gym.Env):
 
         reward = max(0.0, reward)
 
-        print(position_reward, energy_penalty, reward)
+        #print(position_reward, energy_penalty, reward)
 
         return reward
 
