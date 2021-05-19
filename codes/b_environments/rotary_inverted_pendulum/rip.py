@@ -36,7 +36,7 @@ VELOCITY_STATE_DENOMINATOR = 100.0
 
 if params.SERVER_IDX == 0:
     RIP_SERVER = '10.0.0.9'
-elif params.SERVER_IDX ==1:
+elif params.SERVER_IDX == 1:
     RIP_SERVER = '10.0.0.11'
 
 def get_rip_observation_space(pendulum_type, params):
