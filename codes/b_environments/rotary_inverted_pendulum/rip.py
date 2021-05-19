@@ -24,6 +24,8 @@ from codes.e_utils.names import RLAlgorithmName, EnvironmentName
 
 from gym.envs.classic_control.acrobot import wrap
 
+from codes.a_config.parameters import PARAMETERS as params
+
 np.set_printoptions(formatter={'float_kind': lambda x: '{0:0.6f}'.format(x)})
 
 BLOWING_ACTION_RATE = 0.0002  # 5000 스텝에 1번 정도(지수 분포)의 주가로 외력이 가해짐 --> Stochastic Env.
@@ -31,7 +33,10 @@ BLOWING_ACTION_RATE = 0.0002  # 5000 스텝에 1번 정도(지수 분포)의 주
 
 VELOCITY_STATE_DENOMINATOR = 100.0
 
-RIP_SERVER = '10.0.0.9'
+if params.SERVER_IDX == 0:
+    RIP_SERVER = '10.0.0.9'
+elif params.SERVER_IDX ==1:
+    RIP_SERVER = '10.0.0.11'
 
 def get_rip_observation_space(pendulum_type, params):
     max_velocity = 100.0
