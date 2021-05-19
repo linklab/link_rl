@@ -31,8 +31,7 @@ BLOWING_ACTION_RATE = 0.0002  # 5000 스텝에 1번 정도(지수 분포)의 주
 
 VELOCITY_STATE_DENOMINATOR = 100.0
 
-RIP_SERVER = '10.0.0.10'
-
+RIP_SERVER = '10.0.0.9'
 
 def get_rip_observation_space(pendulum_type, params):
     max_velocity = 100.0
@@ -120,7 +119,7 @@ class RotaryInvertedPendulumEnv(gym.Env):
         self.motor_velocity = 0
 
         self.last_time = 0.0
-        self.unit_time = 0.016
+        self.unit_time = 0.006
         # self.unit_time = 0.06
         self.over_unit_time = 0
         self.step_idx = 0
@@ -366,6 +365,7 @@ class RotaryInvertedPendulumEnv(gym.Env):
             self.is_upright = False
 
     def step(self, action):
+        #action = 100
         ############# time check #############################
         if self.pendulum_type in [EnvironmentName.REAL_DEVICE_RIP, EnvironmentName.REAL_DEVICE_DOUBLE_RIP]:
             while True:
@@ -380,7 +380,7 @@ class RotaryInvertedPendulumEnv(gym.Env):
             if step_time > self.unit_time:
                 self.over_unit_time += 1
 
-            # print(self.step_idx, action, step_time)
+            print(self.step_idx, action, step_time)
             self.last_time = time.perf_counter()
 
             if self.step_idx % 100000 == 0:
@@ -429,7 +429,7 @@ class RotaryInvertedPendulumEnv(gym.Env):
             self.simulation_time = self.plant.getHistory()
         elif self.pendulum_type == EnvironmentName.REAL_DEVICE_RIP:
             # GRPC CALL
-            rip_response = self.server_obj.step(RipRequest(value=action))
+            rip_response = self.server_obj.step(RipRequest(value=0))
 
             # current_time = time.perf_counter()
             # print("point 2 - elapsed time: {0:10.8f}".format(current_time - self.last_time))
@@ -450,10 +450,9 @@ class RotaryInvertedPendulumEnv(gym.Env):
             # num = 0
             # k = 1
             # while True:
-            #     pwm = 205
-            #
-            #     if num % 30 == 0:
-            #         pwm = -pwm
+            #     pwm = 200
+            #     # if num % 300 == 0:
+            #     #     pwm += 1
             #
             #     self.server_obj.step(RipRequest(value=pwm))
             #
@@ -603,7 +602,6 @@ class RotaryInvertedPendulumEnv(gym.Env):
             info["unit_time"] = self.unit_time
 
 
-
         return state, reward, done, info
 
     def get_reward(self, adjusted_pendulum_1_radian):
@@ -612,17 +610,17 @@ class RotaryInvertedPendulumEnv(gym.Env):
         else:
             position_reward = adjusted_pendulum_1_radian/2.0
 
-        energy_penalty = 2.0 * -1.0 * (abs(self.pendulum_1_velocity) + abs(self.motor_velocity)) / 100
+        energy_penalty = -1.0 * (abs(self.pendulum_1_velocity) + abs(self.motor_velocity)) / 1000
 
         # self.episode_position_reward_list.append(position_reward)
         # self.episode_pendulum_velocity_reward_list.append(energy_penalty)
         # self.episode_action_reward_list.append(0.0)
 
-        reward = position_reward + 10 * energy_penalty
+        reward = position_reward + energy_penalty
 
         reward = max(0.0, reward)
 
-        # print(position_reward, energy_penalty, reward)
+        print(position_reward, energy_penalty, reward)
 
         return reward
 
