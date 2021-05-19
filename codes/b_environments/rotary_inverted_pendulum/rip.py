@@ -33,11 +33,11 @@ BLOWING_ACTION_RATE = 0.0002  # 5000 스텝에 1번 정도(지수 분포)의 주
 
 VELOCITY_STATE_DENOMINATOR = 100.0
 
-if
-if params.SERVER_IDX == 0:
-    RIP_SERVER = '10.0.0.9'
-elif params.SERVER_IDX == 1:
-    RIP_SERVER = '10.0.0.11'
+if params.ENVIRONMENT_ID in [EnvironmentName.REAL_DEVICE_RIP, EnvironmentName.REAL_DEVICE_DOUBLE_RIP]:
+    if params.SERVER_IDX == 0:
+        RIP_SERVER = '10.0.0.9'
+    elif params.SERVER_IDX == 1:
+        RIP_SERVER = '10.0.0.11'
 
 def get_rip_observation_space(pendulum_type, params):
     max_velocity = 100.0
