@@ -118,7 +118,7 @@ class ExperienceSource:
 
             global_ofs = 0
             for env_idx, (env, action_n) in enumerate(zip(self.pool, grouped_actions)):
-                if params.RL_ALGORITHM in [RLAlgorithmName.DDPG_V0, RLAlgorithmName.TD3_V0]:
+                if params.RL_ALGORITHM in [RLAlgorithmName.DDPG_V0, RLAlgorithmName.TD3_V0, RLAlgorithmName.SAC_V0]:
                     if hasattr(self.agent.params, "ACTION_SCALE"):
                         action_scale = self.agent.params.ACTION_SCALE
                     else:
