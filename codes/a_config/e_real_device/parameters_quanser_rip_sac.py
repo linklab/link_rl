@@ -1,0 +1,64 @@
+from codes.a_config._rl_parameters.off_policy.parameter_ddpg import PARAMETERS_DDPG
+from codes.a_config._rl_parameters.off_policy.parameter_sac import PARAMETERS_SAC, SACActionType, SACActionSelectorType
+from codes.a_config._rl_parameters.off_policy.parameter_td3 import PARAMETERS_TD3, TD3ActionType, TD3ActionSelectorType
+from codes.e_utils.names import *
+from codes.a_config.parameters_general import PARAMETERS_GENERAL
+
+
+class PARAMETERS_QUANSER_RIP_SAC(PARAMETERS_GENERAL, PARAMETERS_SAC):
+    ENVIRONMENT_ID = EnvironmentName.QUANSER_SERVO_2
+    RL_ALGORITHM = RLAlgorithmName.SAC_V0
+    DEEP_LEARNING_MODEL = DeepLearningModelName.SOFT_ACTOR_CRITIC_MLP
+
+    TRAIN_STOP_EPISODE_REWARD = 15000  # MAX: 3.14 * 10000 = 31400
+    TRAIN_STOP_EPISODE_REWARD_STD = 10.0
+    STOP_PATIENCE_COUNT = 10
+    REPLAY_BUFFER_SIZE = 100000
+
+    MAX_EPISODE_STEP = 5000
+    MAX_GLOBAL_STEP = 10000000
+    LEARNING_RATE = 0.001
+    ACTOR_LEARNING_RATE = 0.0002
+    GAMMA = 0.999
+
+    MIN_REPLAY_SIZE_FOR_TRAIN = 256
+    BATCH_SIZE = 128
+    AVG_EPISODE_SIZE_FOR_STAT = 50
+
+    N_STEP = 4
+    OMEGA = False
+    PER_PROPORTIONAL = False
+    PER_RANK_BASED = False
+
+    TEST_NUM_EPISODES = 3
+
+    DISTRIBUTIONAL = False
+    NOISY_NET = False
+
+    ACT_NOISE = 1
+    NOISE_CLIP = 1
+
+    NOISE_ENABLED = True
+    OU_SIGMA = 2.5
+
+    COUNT_BASED_EXPLORATION = False
+    COUNT_BASED_FILTER = [1, 1, 1, 1, 1, 0]
+    COUNT_BASED_REWARD_SCALE = 0.4
+    COUNT_BASED_PRECISION = 0
+
+    TRAIN_ONLY_AFTER_EPISODE = False
+    NUM_TRAIN_ONLY_AFTER_EPISODE = 100
+
+    TAU = 0.0005
+
+    ACTION_SCALE = 250.0
+
+    EPSILON_INIT = 1.0
+    EPSILON_MIN = 0.01
+    EPSILON_MIN_STEP = 1000000
+
+    TYPE_OF_SAC_ACTION = SACActionType.SAMPLE
+    TYPE_OF_SAC_ACTION_SELECTOR = SACActionSelectorType.SOMETIMES_BLOW_ACTION_SELECTOR
+
+    TRAIN_STEP_FREQ = 2
+    POLICY_UPDATE_FREQUENCY = 2 * TRAIN_STEP_FREQ
