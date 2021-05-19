@@ -211,6 +211,17 @@ def main():
                     train_info_dict["train mean actor objective"] = mean_actor_objective
                     del train_info_dict["evaluation_msg"]
                     del train_info_dict["solved"]
+
+                    if params.RL_ALGORITHM in [
+                        RLAlgorithmName.DDPG_V0,
+                        RLAlgorithmName.TD3_V0,
+                        RLAlgorithmName.SAC_V0,
+                        RLAlgorithmName.CONTINUOUS_PPO_V0,
+                        RLAlgorithmName.CONTINUOUS_A2C_V0
+                    ]:
+                        if train_info_dict["last_actions"] < -1.0 or train_info_dict["last_actions"] > 1.0:
+                            train_info_dict["last_actions"] = 0.0
+
                     wandb.log(train_info_dict)
             else:
                 if exp is None:

@@ -24,6 +24,8 @@ from codes.e_utils.names import RLAlgorithmName, EnvironmentName
 
 from gym.envs.classic_control.acrobot import wrap
 
+from codes.a_config.parameters import PARAMETERS as params
+
 np.set_printoptions(formatter={'float_kind': lambda x: '{0:0.6f}'.format(x)})
 
 BLOWING_ACTION_RATE = 0.0002  # 5000 스텝에 1번 정도(지수 분포)의 주가로 외력이 가해짐 --> Stochastic Env.
@@ -31,7 +33,11 @@ BLOWING_ACTION_RATE = 0.0002  # 5000 스텝에 1번 정도(지수 분포)의 주
 
 VELOCITY_STATE_DENOMINATOR = 100.0
 
-RIP_SERVER = '10.0.0.11'
+
+if params.SERVER_IDX == 0:
+    RIP_SERVER = '10.0.0.9'
+elif params.SERVER_IDX ==1:
+    RIP_SERVER = '10.0.0.11'
 
 def get_rip_observation_space(pendulum_type, params):
     max_velocity = 100.0
@@ -427,24 +433,22 @@ class RotaryInvertedPendulumEnv(gym.Env):
 
             self.pendulum_1_position, self.motor_position, self.pendulum_1_velocity, self.motor_velocity, \
             self.simulation_time = self.plant.getHistory()
+        elif self.pendulum_type == EnvironmentName.PENDULUM_MATLAB_DOUBLE_RIP_V0:
+            self.plant.simulate(action)
+
+            self.pendulum_1_position, self.motor_position, self.pendulum_2_position, self.pendulum_1_velocity, \
+            self.motor_velocity, self.pendulum_2_velocity, self.simulation_time = self.plant.getHistory()
         elif self.pendulum_type == EnvironmentName.REAL_DEVICE_RIP:
             # GRPC CALL
             rip_response = self.server_obj.step(RipRequest(value=action))
-
             # current_time = time.perf_counter()
             # print("point 2 - elapsed time: {0:10.8f}".format(current_time - self.last_time))
-
             self.motor_position = math.radians(rip_response.arm_angle)
             self.motor_velocity = rip_response.arm_velocity
             self.pendulum_1_position = math.radians(rip_response.link_1_angle)
             self.pendulum_1_velocity = rip_response.link_1_velocity
             self.simulation_time = None
             # print(rip_response.link_1_angle)
-        elif self.pendulum_type == EnvironmentName.PENDULUM_MATLAB_DOUBLE_RIP_V0:
-            self.plant.simulate(action)
-
-            self.pendulum_1_position, self.motor_position, self.pendulum_2_position, self.pendulum_1_velocity, \
-            self.motor_velocity, self.pendulum_2_velocity, self.simulation_time = self.plant.getHistory()
         elif self.pendulum_type == EnvironmentName.REAL_DEVICE_DOUBLE_RIP:
             # t = 0
             # num = 0
@@ -608,7 +612,7 @@ class RotaryInvertedPendulumEnv(gym.Env):
         if self.is_upright:
             position_reward = adjusted_pendulum_1_radian # math.pi - math.radians(12) ~ math.pi
         else:
-            position_reward = adjusted_pendulum_1_radian/2.0
+            position_reward = adjusted_pendulum_1_radian / 2.0
 
         energy_penalty = -1.0 * (abs(self.pendulum_1_velocity) + abs(self.motor_velocity)) / 1000
 
