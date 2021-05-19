@@ -35,7 +35,7 @@ VELOCITY_STATE_DENOMINATOR = 100.0
 
 if params.SERVER_IDX == 0:
     RIP_SERVER = '10.0.0.9'
-elif params.SERVER_IDX ==1:
+elif params.SERVER_IDX == 1:
     RIP_SERVER = '10.0.0.11'
 
 def get_rip_observation_space(pendulum_type, params):
@@ -439,7 +439,8 @@ class RotaryInvertedPendulumEnv(gym.Env):
             self.motor_velocity, self.pendulum_2_velocity, self.simulation_time = self.plant.getHistory()
         elif self.pendulum_type == EnvironmentName.REAL_DEVICE_RIP:
             # GRPC CALL
-            rip_response = self.server_obj.step(RipRequest(value=200))
+            # print(action)
+            rip_response = self.server_obj.step(RipRequest(value=action))
 
             # current_time = time.perf_counter()
             # print("point 2 - elapsed time: {0:10.8f}".format(current_time - self.last_time))
