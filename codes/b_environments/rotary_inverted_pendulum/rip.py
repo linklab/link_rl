@@ -33,7 +33,7 @@ BLOWING_ACTION_RATE = 0.0002  # 5000 스텝에 1번 정도(지수 분포)의 주
 
 VELOCITY_STATE_DENOMINATOR = 100.0
 
-
+if
 if params.SERVER_IDX == 0:
     RIP_SERVER = '10.0.0.9'
 elif params.SERVER_IDX ==1:

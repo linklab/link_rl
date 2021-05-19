@@ -76,3 +76,4 @@ from codes.a_config.parameters_general import RIPEnvRewardType
 from codes.a_config.e_real_device.parameters_rip_td3 import PARAMETERS_RIP_TD3
 from codes.a_config.e_real_device.parameters_rip_sac import PARAMETERS_RIP_SAC
 from codes.a_config.e_real_device.parameters_rip_ddpg import PARAMETERS_RIP_DDPG
+from codes.a_config.e_real_device.parameters_quanser_rip_sac import PARAMETERS_QUANSER_RIP_SAC
