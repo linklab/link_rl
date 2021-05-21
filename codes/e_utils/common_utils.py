@@ -91,6 +91,20 @@ def set_seed(seed, envs=None, cuda=False):
             env.seed(seed + idx)
 
 
+def make_super_mario_bros_env(seed=0):
+    set_global_seeds(seed)
+
+    from nes_py.wrappers import JoypadSpace
+    import gym_super_mario_bros
+    from gym_super_mario_bros.actions import COMPLEX_MOVEMENT
+
+    env = gym_super_mario_bros.make('SuperMarioBros-v0')
+    env = JoypadSpace(env, COMPLEX_MOVEMENT)
+    env = wrappers.wrap_super_mario_bros(env)
+
+    return env
+
+
 def make_atari_env(env_id, seed=0):
     """
     Utility function for multiprocessed env.
@@ -273,14 +287,15 @@ def print_environment_info(env, params):
     print(f"number of unique envs: {params.NUM_ENVIRONMENTS}")
     print(f"env.single_observation_space: {env.single_observation_space}")
     if isinstance(env.single_observation_space, Box):
-        print(f"single_observation low: {[min_value for min_value in env.single_observation_space.low]}")
-        print(f"single_observation high: {[max_value for max_value in env.single_observation_space.high]}")
+        #print(f"single_observation low: {[min_value for min_value in env.single_observation_space.low]}")
+        #print(f"single_observation high: {[max_value for max_value in env.single_observation_space.high]}")
+        pass
 
     print(f"env.single_action_space: {env.single_action_space}")
     if isinstance(env.single_action_space, Box):
-        print(f"single_action low: {[min_value for min_value in env.single_action_space.low]}")
-        print(f"single_action high: {[max_value for max_value in env.single_action_space.high]}")
-
+        #print(f"single_action low: {[min_value for min_value in env.single_action_space.low]}")
+        #print(f"single_action high: {[max_value for max_value in env.single_action_space.high]}")
+        pass
 
 def print_agent_info(agent, params):
     print(f"Model: {params.DEEP_LEARNING_MODEL}")

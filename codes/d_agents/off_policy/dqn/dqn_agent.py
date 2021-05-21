@@ -3,6 +3,8 @@ import numpy as np
 import torch
 import torch.nn.functional as F
 
+from codes.c_models.advanced_exploration.curiosity_driven import CuriosityMlpStateEncoder, CuriosityCnnStateEncoder, \
+    CuriosityForwardModel, CuriosityInverseModel
 from codes.c_models.discrete_action.dqn_model import DuelingDQNModel
 from codes.d_agents.a0_base_agent import float32_preprocessor
 from codes.d_agents.off_policy.dqn.dqn_action_selector import EpsilonGreedySomeTimesBlowDQNActionSelector, \
@@ -96,9 +98,34 @@ class AgentDQN(OffPolicyAgent):
             device=device
         ).to(device)
 
+        if params.CURIOSITY_DRIVEN:
+            if params.DEEP_LEARNING_MODEL == DeepLearningModelName.DUELING_DQN_MLP:
+                num_inputs = input_shape[0]
+                self.curiosity_state_encoder = CuriosityMlpStateEncoder(num_inputs=num_inputs)
+            elif params.DEEP_LEARNING_MODEL in [DeepLearningModelName.DUELING_DQN_CNN, DeepLearningModelName.DUELING_DQN_SMALL_CNN]:
+                self.curiosity_state_encoder = CuriosityCnnStateEncoder(input_shape=input_shape)
+            else:
+                raise ValueError()
+
+            self.curiosity_forward_model = CuriosityForwardModel(
+                self.curiosity_state_encoder.encoded_state_size, num_outputs
+            )
+            self.curiosity_inverse_model = CuriosityInverseModel(
+                self.curiosity_state_encoder.encoded_state_size, num_outputs
+            )
+
+            parameters = list(self.model.base.parameters())
+            parameters += list(self.curiosity_state_encoder.parameters())
+            parameters += list(self.curiosity_forward_model.parameters())
+            parameters += list(self.curiosity_inverse_model.parameters())
+        else:
+            self.curiosity_state_encoder = None
+            self.curiosity_forward_model = None
+            self.curiosity_inverse_model = None
+            parameters = self.model.base.parameters()
 
         self.optimizer = rl_utils.get_optimizer(
-            parameters=self.model.base.parameters(),
+            parameters=parameters,
             learning_rate=self.params.LEARNING_RATE,
             params=params
         )

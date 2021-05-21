@@ -20,6 +20,7 @@ from codes.a_config.a_basic_parameters.parameters_cartpole_ga       import PARAM
 from codes.a_config.a_basic_parameters.parameters_acrobot_dqn import PARAMETERS_ACROBOT_DQN
 from codes.a_config.a_basic_parameters.parameters_mountain_car_dqn import PARAMETERS_MOUNTAIN_CAR_DQN
 from codes.a_config.a_basic_parameters.parameters_pendulum_sac import PARAMETERS_PENDULUM_SAC
+from codes.a_config.a_basic_parameters.parameters_super_mario_bros_dqn import PARAMETERS_SUPER_MARIO_BROS_DQN
 
 from codes.a_config.b_atari_parameters.parameters_atari_pong_a2c        import PARAMETERS_PONG_A2C
 from codes.a_config.b_atari_parameters.parameters_atari_pong_dqn        import PARAMETERS_PONG_DQN
@@ -76,3 +77,4 @@ from codes.a_config.parameters_general import RIPEnvRewardType
 from codes.a_config.e_real_device.parameters_rip_td3 import PARAMETERS_RIP_TD3
 from codes.a_config.e_real_device.parameters_rip_sac import PARAMETERS_RIP_SAC
 from codes.a_config.e_real_device.parameters_rip_ddpg import PARAMETERS_RIP_DDPG
+from codes.a_config.e_real_device.parameters_quanser_rip_sac import PARAMETERS_QUANSER_RIP_SAC
