@@ -6,9 +6,9 @@ from torch.autograd import Variable
 import numpy as np
 
 
-class MlpEncoder(nn.Module): #A
-    def __init__(self, num_inputs, encoder_size=8):
-        super(MlpEncoder, self).__init__()
+class CuriosityMlpStateEncoder(nn.Module): #A
+    def __init__(self, num_inputs, encoded_state_size=8):
+        super(CuriosityMlpStateEncoder, self).__init__()
         self.encoder = nn.Sequential(
             nn.Linear(num_inputs, self.hidden_1_size),
             nn.GELU(),
@@ -16,18 +16,18 @@ class MlpEncoder(nn.Module): #A
             nn.GELU(),
             nn.Linear(self.hidden_2_size, self.hidden_3_size),
             nn.GELU(),
-            nn.Linear(self.hidden_3_size, encoder_size)
+            nn.Linear(self.hidden_3_size, encoded_state_size)
         )
-        self.encoder_size = encoder_size
+        self.encoded_state_size = encoded_state_size
 
     def forward(self, x):
         y = self.encoder(x)
         return y
 
 
-class CnnEncoder(nn.Module): #A
+class CuriosityCnnStateEncoder(nn.Module): #A
     def __init__(self, input_shape):
-        super(CnnEncoder, self).__init__()
+        super(CuriosityCnnStateEncoder, self).__init__()
         self.encoder = nn.Sequential(
             nn.Conv2d(input_shape[0], 32, kernel_size=(3, 3), stride=2, padding=1),
             nn.GELU(),
@@ -39,7 +39,7 @@ class CnnEncoder(nn.Module): #A
             nn.GELU(),
         )
 
-        self.encoder_size = self._get_conv_out(input_shape)
+        self.encoded_state_size = self._get_conv_out(input_shape)
 
     def _get_conv_out(self, shape):
         o = self.actor_conv(Variable(torch.zeros(1, *shape)))
@@ -52,25 +52,11 @@ class CnnEncoder(nn.Module): #A
         return y
 
 
-class ReverseNet(nn.Module): #B
-    def __init__(self, num_inputs, num_outputs):
-        super(ReverseNet, self).__init__()
-        self.linear1 = nn.Linear(num_inputs * 2, 256)
-        self.linear2 = nn.Linear(256, num_outputs)
-
-    def forward(self, state, next_state): # 상태와 다음 상태를 산출할 수 있는 행동 예측
-        x = torch.cat((state, next_state), dim=1)
-        y = F.relu(self.linear1(x))
-        y = self.linear2(y)
-        y = F.softmax(y, dim=1)
-        return y
-
-
-class ForwardNet(nn.Module): #C
-    def __init__(self, num_inputs, num_outputs):
-        super(ForwardNet, self).__init__()
-        self.linear1 = nn.Linear(num_inputs + num_outputs, 256)
-        self.linear2 = nn.Linear(256, num_inputs)
+class CuriosityForwardModel(nn.Module): #C
+    def __init__(self, encoder_state_size, num_outputs):
+        super(CuriosityForwardModel, self).__init__()
+        self.linear1 = nn.Linear(encoder_state_size + num_outputs, 256)
+        self.linear2 = nn.Linear(256, encoder_state_size)
         self.num_outputs = num_outputs
 
     def forward(self, state, action):  # 다음 상태 예측
@@ -82,3 +68,19 @@ class ForwardNet(nn.Module): #C
         y = F.relu(self.linear1(x))
         y = self.linear2(y)
         return y
+
+
+class CuriosityInverseModel(nn.Module): #B
+    def __init__(self, encoded_state_size, num_outputs):
+        super(CuriosityInverseModel, self).__init__()
+        self.linear1 = nn.Linear(encoded_state_size * 2, 256)
+        self.linear2 = nn.Linear(256, num_outputs)
+
+    def forward(self, encoded_state, encoded_next_state): # 상태와 다음 상태를 산출할 수 있는 행동 예측
+        x = torch.cat((encoded_state, encoded_next_state), dim=1)
+        y = F.relu(self.linear1(x))
+        y = self.linear2(y)
+        y = F.softmax(y, dim=1)
+        return y
+
+
