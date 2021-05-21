@@ -22,7 +22,7 @@ from codes.d_agents.black_box.ga.multi_ga_agent import AgentMultiGA
 from codes.d_agents.off_policy.td3.td3_agent import AgentTD3
 from codes.d_agents.off_policy.sac.continuous_sac_agent import AgentSAC
 from codes.d_agents.on_policy.ppo.discrete_ppo_agent import AgentDiscretePPO
-from codes.e_utils.reward_changer import PseudoCountRewardWrapper, RewardChanger
+from codes.e_utils.reward_changer import RewardChanger
 
 current_path = os.path.dirname(os.path.realpath(__file__))
 PROJECT_HOME = os.path.abspath(os.path.join(current_path, os.pardir, os.pardir))
@@ -41,7 +41,7 @@ from codes.c_models.discrete_action.dqn_model import DuelingDQNModel
 
 from codes.d_agents.off_policy.ddpg.ddpg_agent import AgentDDPG
 
-from codes.e_utils.common_utils import make_atari_env
+from codes.e_utils.common_utils import make_atari_env, make_super_mario_bros_env
 from codes.e_utils.names import EnvironmentName, DeepLearningModelName, RLAlgorithmName, OptimizerName, AgentMode
 from codes.a_config.parameters import PARAMETERS as params
 
@@ -57,17 +57,6 @@ def get_environment(params):
     def make_environment(params):
         def _make():
             env = get_single_environment(params=params, mode=AgentMode.TRAIN)
-            if params.COUNT_BASED_EXPLORATION:
-                assert len(env.observation_space.shape) == 1, "env.observation_space.shape should be one"
-
-                if not params.COUNT_BASED_FILTER:
-                    params.COUNT_BASED_FILTER = [1] * env.observation_space.shape[0]
-                assert len(params.COUNT_BASED_FILTER) == env.observation_space.shape[0], \
-                    "Current params.COUNT_BASED_FILTER: {0} and params.env.observation_space.shape: {1}".format(
-                        params.COUNT_BASED_FILTER, env.observation_space.shape
-                    )
-
-                env = PseudoCountRewardWrapper(env=env, params=params)
             return env
 
         return _make
@@ -90,6 +79,8 @@ def get_single_environment(params=None, mode=AgentMode.TRAIN):
             pendulum_type=EnvironmentName.REAL_DEVICE_RIP,
             params=params
         )
+    elif params.ENVIRONMENT_ID == EnvironmentName.SUPER_MARIO_BROS:
+        env = make_super_mario_bros_env()
     elif params.ENVIRONMENT_ID == EnvironmentName.REAL_DEVICE_DOUBLE_RIP:
         from codes.b_environments.rotary_inverted_pendulum.rip import RotaryInvertedPendulumEnv
         env = RotaryInvertedPendulumEnv(
@@ -99,7 +90,6 @@ def get_single_environment(params=None, mode=AgentMode.TRAIN):
             pendulum_type=EnvironmentName.REAL_DEVICE_DOUBLE_RIP,
             params=params
         )
-
     elif params.ENVIRONMENT_ID == EnvironmentName.QUANSER_SERVO_2:
         from codes.b_environments.quanser_rotary_inverted_pendulum.quanser_rip import EnvironmentQuanserRIP
         env = EnvironmentQuanserRIP()

@@ -67,6 +67,7 @@ class EnvironmentName(enum.Enum):
     REAL_DEVICE_RIP = "Real_Device_Rip"
     REAL_DEVICE_DOUBLE_RIP = "Real_Device_Double_Rip"
     TRADE_V0 = "Trade_v0"
+    SUPER_MARIO_BROS = "SuperMarioBros-v0"
 
 
 class DeepLearningModelName(enum.Enum):

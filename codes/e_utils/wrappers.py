@@ -326,3 +326,10 @@ def wrap_dqn(env, stack_frames=4, episodic_life=True, reward_clipping=True):
     if reward_clipping:
         env = ClippedRewardsWrapper(env)
     return env
+
+
+def wrap_super_mario_bros(env, stack_frames=3, reward_clipping=True):
+    env = ProcessFrame84(env)
+    env = ImageToPyTorch(env)
+    env = FrameStack(env, k=stack_frames)
+    return env
