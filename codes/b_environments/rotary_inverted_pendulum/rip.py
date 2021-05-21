@@ -125,7 +125,7 @@ class RotaryInvertedPendulumEnv(gym.Env):
         self.motor_velocity = 0
 
         self.last_time = 0.0
-        self.unit_time = 0.006
+        self.unit_time = 0.016
         # self.unit_time = 0.06
         self.over_unit_time = 0
         self.step_idx = 0
