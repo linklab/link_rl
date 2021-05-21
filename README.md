@@ -14,9 +14,10 @@
 - git clone https://github.com/openai/gym.git
 - cd gym
 - pip install -e '.[all]'
-  - mujoco 에러 무시 
-  
-  
+  - mujoco 에러 무시
+- pip install gym-super-mario-bros
+
+
 ### 3. 패키지 설치 후 requirements.txt 신규 구성 
 
 - pip freeze > requirements.txt
