@@ -58,7 +58,6 @@ def get_agent(env):
             EnvironmentName.REAL_DEVICE_RIP,
             EnvironmentName.REAL_DEVICE_DOUBLE_RIP,
         ]:
-            print("@@@@@@@@@@@@@@@@@@@@222")
             observation_space, _ = get_rip_observation_space(params.ENVIRONMENT_ID, params)
             action_space, num_outputs, _ = get_rip_action_space(params, pendulum_type=params.ENVIRONMENT_ID)
 
