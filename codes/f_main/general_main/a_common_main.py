@@ -86,14 +86,12 @@ def get_agent(env):
 
 def set_wandb(agent):
     configuration = {key: getattr(params, key) for key in dir(params) if not key.startswith("__")}
-    wandb_obj = wandb.init(
+    wandb.init(
         project=params.wandb_project,
         entity=params.wandb_entity,
         dir=WANDB_DIR,
         config=configuration
     )
-
-    # wandb_obj.notes = "HELLO"
 
     run_name = wandb.run.name
     run_number = run_name.split("-")[-1]
