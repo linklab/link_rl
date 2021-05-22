@@ -103,7 +103,7 @@ class AgentDQN(OffPolicyAgent):
                 num_inputs = input_shape[0]
                 self.curiosity_state_encoder = CuriosityMlpStateEncoder(num_inputs=num_inputs, params=params)
             elif params.DEEP_LEARNING_MODEL in [DeepLearningModelName.DUELING_DQN_CNN, DeepLearningModelName.DUELING_DQN_SMALL_CNN]:
-                self.curiosity_state_encoder = CuriosityCnnStateEncoder(input_shape=input_shape)
+                self.curiosity_state_encoder = CuriosityCnnStateEncoder(input_shape=input_shape, params=params)
             else:
                 raise ValueError()
 

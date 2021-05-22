@@ -52,7 +52,7 @@ class CuriosityCnnStateEncoder(nn.Module): #A
         self.encoded_state_size = self._get_conv_out(input_shape)
 
     def _get_conv_out(self, shape):
-        o = self.actor_conv(Variable(torch.zeros(1, *shape)))
+        o = self.encoder(Variable(torch.zeros(1, *shape)))
         return int(np.prod(o.size()))
 
     def forward(self, x):
