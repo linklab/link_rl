@@ -7,10 +7,11 @@ import numpy as np
 
 
 class CuriosityMlpStateEncoder(nn.Module): #A
-    def __init__(self, num_inputs, encoded_state_size=32, params=None):
+    def __init__(self, num_inputs, encoded_state_size=32, params=None, device=None):
         super(CuriosityMlpStateEncoder, self).__init__()
 
         self.params = params
+        self.device = device
 
         self.hidden_1_size = params.HIDDEN_1_SIZE
         self.hidden_2_size = params.HIDDEN_2_SIZE
@@ -33,10 +34,11 @@ class CuriosityMlpStateEncoder(nn.Module): #A
 
 
 class CuriosityCnnStateEncoder(nn.Module): #A
-    def __init__(self, input_shape, params):
+    def __init__(self, input_shape, params, device):
         super(CuriosityCnnStateEncoder, self).__init__()
 
         self.params = params
+        self.device = device
 
         self.encoder = nn.Sequential(
             nn.Conv2d(input_shape[0], 32, kernel_size=(3, 3), stride=2, padding=1),
@@ -56,9 +58,7 @@ class CuriosityCnnStateEncoder(nn.Module): #A
         return int(np.prod(o.size()))
 
     def forward(self, x):
-        print(x)
-        if not (type(x) is torch.FloatTensor):
-            x = torch.tensor(x, dtype=torch.float).to(self.device)
+        x = x.type(torch.FloatTensor)
         x = F.normalize(x)
         y = self.encoder(x)
         y = y.flatten(start_dim=1) #size N, 288

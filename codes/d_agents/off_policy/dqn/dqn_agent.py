@@ -101,9 +101,13 @@ class AgentDQN(OffPolicyAgent):
         if params.CURIOSITY_DRIVEN:
             if params.DEEP_LEARNING_MODEL == DeepLearningModelName.DUELING_DQN_MLP:
                 num_inputs = input_shape[0]
-                self.curiosity_state_encoder = CuriosityMlpStateEncoder(num_inputs=num_inputs, params=params)
+                self.curiosity_state_encoder = CuriosityMlpStateEncoder(
+                    num_inputs=num_inputs, params=params, device=device
+                )
             elif params.DEEP_LEARNING_MODEL in [DeepLearningModelName.DUELING_DQN_CNN, DeepLearningModelName.DUELING_DQN_SMALL_CNN]:
-                self.curiosity_state_encoder = CuriosityCnnStateEncoder(input_shape=input_shape, params=params)
+                self.curiosity_state_encoder = CuriosityCnnStateEncoder(
+                    input_shape=input_shape, params=params, device=device
+                )
             else:
                 raise ValueError()
 
