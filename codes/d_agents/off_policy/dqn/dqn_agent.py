@@ -112,10 +112,10 @@ class AgentDQN(OffPolicyAgent):
                 raise ValueError()
 
             self.curiosity_forward_model = CuriosityForwardModel(
-                self.curiosity_state_encoder.encoded_state_size, num_outputs
+                self.curiosity_state_encoder.encoded_state_size, num_outputs, device
             )
             self.curiosity_inverse_model = CuriosityInverseModel(
-                self.curiosity_state_encoder.encoded_state_size, num_outputs
+                self.curiosity_state_encoder.encoded_state_size, num_outputs, device
             )
 
             parameters = list(self.model.base.parameters())
