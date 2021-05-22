@@ -27,7 +27,6 @@ class PARAMETERS_RIP_DDPG(PARAMETERS_GENERAL, PARAMETERS_DDPG):
     N_STEP = 4
     OMEGA = False
     OMEGA_WINDOW_SIZE = 6
-    NEXT_STATE_IN_TRAJECTORY = True
     DATA_SAVE_STEP_PERIOD = 1000
 
     #########################################
