@@ -56,8 +56,9 @@ class CuriosityCnnStateEncoder(nn.Module): #A
         return int(np.prod(o.size()))
 
     def forward(self, x):
-        if not (type(x) is torch.Tensor):
-            x = torch.tensor([x], dtype=torch.float).to(self.device)
+        print(x)
+        if not (type(x) is torch.FloatTensor):
+            x = torch.tensor(x, dtype=torch.float).to(self.device)
         x = F.normalize(x)
         y = self.encoder(x)
         y = y.flatten(start_dim=1) #size N, 288
