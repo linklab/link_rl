@@ -183,14 +183,14 @@ class EpisodeProcessor:
 
         test_over_epsilon_min_step = True
 
-        test_over_epsilon_min_step_conditions = [
-            hasattr(params, "EPSILON_MIN_STEP"),
-            params.EPSILON_MIN_STEP is not None,
-        ]
-
-        if all(test_over_epsilon_min_step_conditions):
-            if params.EPSILON_MIN_STEP > 0 and step_idx < params.EPSILON_MIN_STEP:
-                test_over_epsilon_min_step = False
+        # test_over_epsilon_min_step_conditions = [
+        #     hasattr(params, "EPSILON_MIN_STEP"),
+        #     params.EPSILON_MIN_STEP is not None,
+        # ]
+        #
+        # if all(test_over_epsilon_min_step_conditions):
+        #     if params.EPSILON_MIN_STEP > 0 and step_idx < params.EPSILON_MIN_STEP:
+        #         test_over_epsilon_min_step = False
 
         if test_over_epsilon_min_step and episode % params.TEST_PERIOD_EPISODES == 0:
             self.test_mean_episode_reward, self.test_std_episode_reward = self.agent_model_test(
