@@ -28,20 +28,18 @@ ddpg3_step_list = ddpg3_step.to_list()
 ddpg4_step_list = ddpg4_step.to_list()
 ddpg5_step_list = ddpg5_step.to_list()
 
+
 ddpg1_reward_list = ddpg1_reward.to_list()
 ddpg2_reward_list = ddpg2_reward.to_list()
 ddpg3_reward_list = ddpg3_reward.to_list()
 ddpg4_reward_list = ddpg4_reward.to_list()
 ddpg5_reward_list = ddpg5_reward.to_list()
 
+ddpg1_reward_list_step = []
 for i in range(len(ddpg1_reward_list)):
-    ddpg1_reward_list_step = [0 for _ in range(int(ddpg1_step_list[-1]))]
-    # if i == 0:
-    #     ddpg1_reward_list_step[:int(ddpg1_step_list[i])] = [float(ddpg1_reward_list[i]) for _ in range(int(ddpg1_step_list[i]))]
-    # else:
-    #     ddpg1_reward_list_step[int(ddpg1_step_list[i-1]):int(ddpg1_step_list[i])] = [float(ddpg1_reward_list[i]) for _ in range(int(ddpg1_step_list[i]))]
-#
-# print(ddpg1_reward_list_step)
+    ddpg1_reward_list_step.extend([float(ddpg1_reward_list[i]) for _ in range(int(ddpg1_step_list[i]))])
+
+print(len(ddpg1_reward_list_step))
 
 td31 = pd.read_csv('matlab_td3_episode_reward_average_1.csv', names=['step_idx', 'epi_idx', 'epi_idx1', 'epi_idx2', 'reward', 'reward1', 'reward2'])
 td32 = pd.read_csv('matlab_td3_episode_reward_average_2.csv', names=['step_idx', 'epi_idx', 'epi_idx1', 'epi_idx2', 'reward', 'reward1', 'reward2'])
@@ -77,7 +75,7 @@ td35_reward_list = td35_reward.to_list()
 ddpg_mean_list = []
 ddpg_max_list = []
 ddpg_min_list = []
-for i in range(1,601):
+for i in range(600):
     ddpg = [float(ddpg1_reward_list[i]),float(ddpg2_reward_list[i]),float(ddpg3_reward_list[i]),float(ddpg4_reward_list[i]),float(ddpg5_reward_list[i])]
     ddpg_max = max(ddpg)
     ddpg_sorted = sorted(ddpg)
@@ -90,7 +88,7 @@ for i in range(1,601):
 td3_mean_list = []
 td3_max_list = []
 td3_min_list = []
-for i in range(1,601):
+for i in range(600):
     td3 = [float(td31_reward_list[i]),float(td32_reward_list[i]),float(td33_reward_list[i]),float(td34_reward_list[i]),float(td35_reward_list[i])]
     td3_max = max(td3)
     td3_sorted = sorted(td3)
