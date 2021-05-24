@@ -4,7 +4,7 @@ import torch
 import torch.nn.functional as F
 
 from codes.c_models.advanced_exploration.curiosity_driven import CuriosityMlpStateEncoder, CuriosityCnnStateEncoder, \
-    CuriosityForwardModel, CuriosityInverseModel
+    CuriosityForwardModel, CuriosityInverseModel, intrinsic_curiosity_module_errors
 from codes.c_models.discrete_action.dqn_model import DuelingDQNModel
 from codes.d_agents.a0_base_agent import float32_preprocessor
 from codes.d_agents.off_policy.dqn.dqn_action_selector import EpsilonGreedySomeTimesBlowDQNActionSelector, \
@@ -101,17 +101,21 @@ class AgentDQN(OffPolicyAgent):
         if params.CURIOSITY_DRIVEN:
             if params.DEEP_LEARNING_MODEL == DeepLearningModelName.DUELING_DQN_MLP:
                 num_inputs = input_shape[0]
-                self.curiosity_state_encoder = CuriosityMlpStateEncoder(num_inputs=num_inputs)
+                self.curiosity_state_encoder = CuriosityMlpStateEncoder(
+                    num_inputs=num_inputs, params=params, device=device
+                )
             elif params.DEEP_LEARNING_MODEL in [DeepLearningModelName.DUELING_DQN_CNN, DeepLearningModelName.DUELING_DQN_SMALL_CNN]:
-                self.curiosity_state_encoder = CuriosityCnnStateEncoder(input_shape=input_shape)
+                self.curiosity_state_encoder = CuriosityCnnStateEncoder(
+                    input_shape=input_shape, params=params, device=device
+                )
             else:
                 raise ValueError()
 
             self.curiosity_forward_model = CuriosityForwardModel(
-                self.curiosity_state_encoder.encoded_state_size, num_outputs
+                self.curiosity_state_encoder.encoded_state_size, num_outputs, device
             )
             self.curiosity_inverse_model = CuriosityInverseModel(
-                self.curiosity_state_encoder.encoded_state_size, num_outputs
+                self.curiosity_state_encoder.encoded_state_size, num_outputs, device
             )
 
             parameters = list(self.model.base.parameters())
@@ -215,38 +219,38 @@ class AgentDQN(OffPolicyAgent):
         return np.array(states, copy=False), np.array(actions), np.array(rewards, dtype=np.float32), \
                np.array(dones, dtype=np.uint8), np.array(last_states, copy=False), np.array(last_steps)
 
-    def unpack_batch_for_n_step(self, batch, batch_indices):
-        states, actions, rewards, dones, next_states, last_steps = [], [], [], [], [], []
-        for idx, exp in enumerate(batch):
-            state = np.array(exp.state, copy=False)
-            states.append(state)
-            actions.append(exp.action)
-
-            n_step_rewards = 0
-            gamma = 1
-            current_exp = exp
-            for i in range(self.params.N_STEP):
-                n_step_rewards += gamma * current_exp.reward
-                next_exp = self.buffer.buffer[(batch_indices[idx] + i + 1) % self.params.REPLAY_BUFFER_SIZE]
-
-                if current_exp.done:
-                    rewards.append(n_step_rewards)
-                    next_states.append(np.array(next_exp.state, copy=False))
-                    dones.append(True)
-                    last_steps.append(i + 1)
-                    break
-                else:
-                    if i == self.params.N_STEP - 1:
-                        rewards.append(n_step_rewards)
-                        next_states.append(np.array(next_exp.state, copy=False))
-                        dones.append(False)
-                        last_steps.append(i + 1)
-
-                current_exp = next_exp
-                gamma *= self.params.GAMMA
-
-        return np.array(states, copy=False), np.array(actions), np.array(rewards, dtype=np.float32), \
-               np.array(dones, dtype=np.uint8), np.array(next_states, copy=False), np.array(last_steps)
+    # def unpack_batch_for_n_step(self, batch, batch_indices):
+    #     states, actions, rewards, dones, next_states, last_steps = [], [], [], [], [], []
+    #     for idx, exp in enumerate(batch):
+    #         state = np.array(exp.state, copy=False)
+    #         states.append(state)
+    #         actions.append(exp.action)
+    #
+    #         n_step_rewards = 0
+    #         gamma = 1
+    #         current_exp = exp
+    #         for i in range(self.params.N_STEP):
+    #             n_step_rewards += gamma * current_exp.reward
+    #             next_exp = self.buffer.buffer[(batch_indices[idx] + i + 1) % self.params.REPLAY_BUFFER_SIZE]
+    #
+    #             if current_exp.done:
+    #                 rewards.append(n_step_rewards)
+    #                 next_states.append(np.array(next_exp.state, copy=False))
+    #                 dones.append(True)
+    #                 last_steps.append(i + 1)
+    #                 break
+    #             else:
+    #                 if i == self.params.N_STEP - 1:
+    #                     rewards.append(n_step_rewards)
+    #                     next_states.append(np.array(next_exp.state, copy=False))
+    #                     dones.append(False)
+    #                     last_steps.append(i + 1)
+    #
+    #             current_exp = next_exp
+    #             gamma *= self.params.GAMMA
+    #
+    #     return np.array(states, copy=False), np.array(actions), np.array(rewards, dtype=np.float32), \
+    #            np.array(dones, dtype=np.uint8), np.array(next_states, copy=False), np.array(last_steps)
 
     def unpack_batch_for_omega(self, batch, batch_indices):
         states, actions, rewards, done_mask, next_states = [], [], [], [], []
@@ -293,6 +297,14 @@ class AgentDQN(OffPolicyAgent):
             done_mask = done_mask.cuda(non_blocking=True)
             last_steps_v = last_steps_v.cuda(non_blocking=True)
 
+        if self.params.CURIOSITY_DRIVEN:
+            intrinsic_reward_v, intrinsic_loss_v = self.get_intrinsic_curiosity_module_info(
+                states_v, actions_v, next_states_v
+            )
+            rewards_v += intrinsic_reward_v
+        else:
+            intrinsic_reward_v, intrinsic_loss_v = None, None
+
         # https://subscription.packtpub.com/book/data/9781838826994/6/ch06lvl1sec45/dqn-on-pong
         # We pass observations to the first model and extract the specific Q - values for the taken actions using the gather() tensor operation.
         # The first argument to the gather() call is a dimension index that we want to perform gathering on.
@@ -305,13 +317,17 @@ class AgentDQN(OffPolicyAgent):
         action_values = self.model(states_v).gather(dim=1, index=actions_v.unsqueeze(-1)).squeeze(-1)
 
         with torch.no_grad():
-            next_state_values = self.target_model(next_states_v).max(1)[0]
-            next_state_values[done_mask] = 0.0
+            next_state_action_values = self.target_model(next_states_v).max(1)[0]
+            next_state_action_values[done_mask] = 0.0
 
-        target_action_values = next_state_values.detach() * (self.params.GAMMA ** last_steps_v) + rewards_v
+        target_action_values = rewards_v + next_state_action_values.detach() * (self.params.GAMMA ** last_steps_v)
 
-        # return nn.MSELoss()(action_values, target_action_values)
-        return F.smooth_l1_loss(action_values, target_action_values)
+        loss_v = F.smooth_l1_loss(action_values, target_action_values)
+
+        if self.params.CURIOSITY_DRIVEN:
+            loss_v = intrinsic_loss_v + self.params.CURIOSITY_DRIVEN_LAMBDA * loss_v
+
+        return loss_v
 
     def calc_loss_distributional_dqn(self, batch):
         states, actions, rewards, dones, next_states, last_steps = self.unpack_batch(batch)
@@ -329,6 +345,14 @@ class AgentDQN(OffPolicyAgent):
             rewards_v = rewards_v.cuda(non_blocking=True)
             done_masks_v = done_masks_v.cuda(non_blocking=True)
 
+        if self.params.CURIOSITY_DRIVEN:
+            intrinsic_reward_v, intrinsic_loss_v = self.get_intrinsic_curiosity_module_info(
+                states_v, actions_v, next_states_v
+            )
+            rewards_v += intrinsic_reward_v
+        else:
+            intrinsic_reward_v, intrinsic_loss_v = None, None
+
         # proj_dist.size(): (32, 51)
         proj_dist = self.projection_distribution_for_next_state(next_states_v, rewards_v, done_masks_v)
 
@@ -344,9 +368,12 @@ class AgentDQN(OffPolicyAgent):
 
         dist.data.clamp_(0.01, 0.99)
         # print((proj_dist * dist.log()).sum(1), "!!!!!!!!!!!!1")
-        loss = -1.0 * (proj_dist * dist.log()).sum(1).mean()
+        loss_v = -1.0 * (proj_dist * dist.log()).sum(1).mean()
 
-        return loss
+        if self.params.CURIOSITY_DRIVEN:
+            loss_v = intrinsic_loss_v + self.params.CURIOSITY_DRIVEN_LAMBDA * loss_v
+
+        return loss_v
 
     def calc_loss_double_dqn(self, batch):
         states, actions, rewards, dones, next_states, last_steps = self.unpack_batch(batch)
@@ -366,9 +393,18 @@ class AgentDQN(OffPolicyAgent):
             done_masks_v = done_masks_v.cuda(non_blocking=True)
             last_steps_v = last_steps_v.cuda(non_blocking=True)
 
+        if self.params.CURIOSITY_DRIVEN:
+            intrinsic_reward_v, intrinsic_loss_v = self.get_intrinsic_curiosity_module_info(
+                states_v, actions_v, next_states_v
+            )
+            rewards_v += intrinsic_reward_v
+        else:
+            intrinsic_reward_v, intrinsic_loss_v = None, None
+
         actions_v = actions_v.unsqueeze(-1)
         action_values = self.model(states_v).gather(1, actions_v)
         action_values = action_values.squeeze(-1)
+
         with torch.no_grad():
             next_state_acts = self.model(next_states_v).max(1)[1]
             next_state_acts = next_state_acts.unsqueeze(-1)
@@ -376,15 +412,20 @@ class AgentDQN(OffPolicyAgent):
             next_state_vals[done_masks_v] = 0.0
 
         exp_sa_vals = next_state_vals.detach() * (self.params.GAMMA ** last_steps_v) + rewards_v
-        loss = F.smooth_l1_loss(action_values, exp_sa_vals)
+        loss_v = F.smooth_l1_loss(action_values, exp_sa_vals)
 
-        return loss
+        if self.params.CURIOSITY_DRIVEN:
+            loss_v = intrinsic_loss_v + self.params.CURIOSITY_DRIVEN_LAMBDA * loss_v
+
+        return loss_v
 
     def calc_loss_per_double_dqn(self, batch, batch_indices, batch_weights):
-        if self.params.NEXT_STATE_IN_TRAJECTORY:
-            states, actions, rewards, dones, next_states, last_steps = self.unpack_batch(batch)
-        else:
-            states, actions, rewards, dones, next_states, last_steps = self.unpack_batch_for_n_step(batch, batch_indices)
+        # if self.params.NEXT_STATE_IN_TRAJECTORY:
+        #     states, actions, rewards, dones, next_states, last_steps = self.unpack_batch(batch)
+        # else:
+        #     states, actions, rewards, dones, next_states, last_steps = self.unpack_batch_for_n_step(batch, batch_indices)
+
+        states, actions, rewards, dones, next_states, last_steps = self.unpack_batch(batch)
 
         states_v = torch.tensor(states)
         next_states_v = torch.tensor(next_states)
@@ -403,6 +444,14 @@ class AgentDQN(OffPolicyAgent):
             last_steps_v = last_steps_v.cuda(non_blocking=True)
             batch_weights_v = batch_weights_v.cuda(non_blocking=True)
 
+        if self.params.CURIOSITY_DRIVEN:
+            intrinsic_reward_v, intrinsic_loss_v = self.get_intrinsic_curiosity_module_info(
+                states_v, actions_v, next_states_v
+            )
+            rewards_v += intrinsic_reward_v
+        else:
+            intrinsic_reward_v, intrinsic_loss_v = None, None
+
         actions_v = actions_v.unsqueeze(-1)
         action_values = self.model(states_v).gather(1, actions_v)
         action_values = action_values.squeeze(-1)
@@ -410,15 +459,18 @@ class AgentDQN(OffPolicyAgent):
         with torch.no_grad():
             next_state_actions = self.model(next_states_v).max(1)[1]
             next_state_actions = next_state_actions.unsqueeze(-1)
-            next_state_values = self.target_model(next_states_v).gather(1, next_state_actions).squeeze(-1)
-            next_state_values[done_mask] = 0.0
+            next_state_action_values = self.target_model(next_states_v).gather(1, next_state_actions).squeeze(-1)
+            next_state_action_values[done_mask] = 0.0
 
-            target_action_values = next_state_values.detach() * (self.params.GAMMA ** last_steps_v) + rewards_v
+            target_action_values = next_state_action_values.detach() * (self.params.GAMMA ** last_steps_v) + rewards_v
 
         losses_each = F.smooth_l1_loss(action_values, target_action_values.detach(), reduction='none')
-        weighted_losses_v = batch_weights_v.detach() * losses_each
+        loss_v = batch_weights_v.detach() * losses_each
 
-        return weighted_losses_v.mean(), losses_each + 1e-5
+        if self.params.CURIOSITY_DRIVEN:
+            loss_v = intrinsic_loss_v + self.params.CURIOSITY_DRIVEN_LAMBDA * loss_v
+
+        return loss_v.mean(), losses_each + 1e-5
 
     def calc_loss_per_double_dqn_for_omega(self, batch, batch_indices, batch_weights):
         states, actions, rewards, done_mask, next_states = self.unpack_batch_for_omega(batch, batch_indices)
@@ -434,6 +486,9 @@ class AgentDQN(OffPolicyAgent):
             actions_v = actions_v.cuda(non_blocking=True)
             batch_weights_v = batch_weights_v.cuda(non_blocking=True)
 
+        if self.params.CURIOSITY_DRIVEN:
+            raise ValueError()
+
         actions_v = actions_v.unsqueeze(-1)
         action_values = self.model(states_v).gather(1, actions_v)
         action_values = action_values.squeeze(-1)
@@ -442,10 +497,10 @@ class AgentDQN(OffPolicyAgent):
             # for double DQN
             next_state_actions = self.model(next_states_v).max(1)[1]
             next_state_actions = next_state_actions.unsqueeze(-1)
-            next_state_values = self.target_model(next_states_v).gather(1, next_state_actions).squeeze(-1)
+            next_state_action_values = self.target_model(next_states_v).gather(1, next_state_actions).squeeze(-1)
 
             target_action_values = self.calc_omega_return(
-                rewards, done_mask, next_state_values.detach().cpu().numpy()
+                rewards, done_mask, next_state_action_values.detach().cpu().numpy()
             )
         target_action_values = torch.tensor(target_action_values, dtype=torch.float32)
         if self.device == torch.device("cuda"):
@@ -456,7 +511,7 @@ class AgentDQN(OffPolicyAgent):
 
         return weighted_losses_v.mean(), losses_each + 1e-5
 
-    def calc_omega_return(self, rewards, done_mask, next_state_values):
+    def calc_omega_return(self, rewards, done_mask, next_state_action_values):
         idx_count = 0
         target_q_values = []
         for batch_idx in range(self.params.BATCH_SIZE):
@@ -470,7 +525,7 @@ class AgentDQN(OffPolicyAgent):
                 gamma *= self.params.GAMMA
             gamma = self.params.GAMMA
             for i in range(len(rewards[batch_idx])):
-                n_step_target_list.append(n_step_reward_sum_list[i] + gamma * next_state_values[idx_count] *
+                n_step_target_list.append(n_step_reward_sum_list[i] + gamma * next_state_action_values[idx_count] *
                                           (done_mask[batch_idx] if i == len(rewards[batch_idx]) - 1 else 1))
                 gamma *= self.params.GAMMA
                 idx_count += 1
@@ -514,3 +569,21 @@ class AgentDQN(OffPolicyAgent):
         proj_dist.view(-1).index_add_(0, (u + offset).view(-1), (next_dist * (b - l.float())).view(-1))
 
         return proj_dist
+
+    def get_intrinsic_curiosity_module_info(self, state_batch, action_batch, next_state_batch):
+        # forward_pred_loss.shape: [32, 1]
+        # inverse_pred_loss.shape: [32, 1]
+        forward_pred_loss, inverse_pred_loss = intrinsic_curiosity_module_errors(
+            self.curiosity_state_encoder, self.curiosity_forward_model, self.curiosity_inverse_model,
+            state_batch, action_batch, next_state_batch,
+        )
+
+        intrinsic_reward_v = (1. / self.params.CURIOSITY_DRIVEN_ETA) * forward_pred_loss.squeeze(dim=-1)
+
+        intrinsic_loss_v = (1 - self.params.CURIOSITY_DRIVEN_BETA) * inverse_pred_loss + \
+                           self.params.CURIOSITY_DRIVEN_BETA * forward_pred_loss
+        intrinsic_loss_v = intrinsic_loss_v.sum() / intrinsic_loss_v.flatten().shape[0]
+
+        # intrinsic_reward_v.shape: [32]
+        # intrinsic_loss_v.shape: []
+        return intrinsic_reward_v, intrinsic_loss_v

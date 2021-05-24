@@ -22,7 +22,6 @@ class PARAMETERS_RIP_TD3(PARAMETERS_GENERAL, PARAMETERS_TD3):
     REPLAY_BUFFER_SIZE = 100000
     AVG_EPISODE_SIZE_FOR_STAT = 10
     N_STEP = 2
-    NEXT_STATE_IN_TRAJECTORY = True
 
     #########################################
     #########################################
