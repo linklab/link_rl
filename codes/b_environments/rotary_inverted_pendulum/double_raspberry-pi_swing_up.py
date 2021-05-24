@@ -9,7 +9,8 @@ import math
 spi = spidev.SpiDev()
 spi.open(0, 0)
 spi.max_speed_hz = 1000000 # NOTE
-
+UNIT_TIME = 0.06
+PI = math.pi
 
 class RotaryDoubleInvertedPendulum:
     def __init__(self):
@@ -17,19 +18,19 @@ class RotaryDoubleInvertedPendulum:
         self.last_step_call = 0.0
 
         spi.xfer2([
-            0x40, 0x00, 0x00, 0x00, 0x00
+            0x40, 0x00, 0x00
         ])
         spi.xfer2([
             0x40, 0x00, 0x10, 0x00, 0x00
         ])
         spi.xfer2([
-            0x40, 0x00, 0x00, 0x00, 0x00
+            0x40, 0x00, 0x00
         ])
         spi.xfer2([
             0x40, 0x00, 0x10, 0x00, 0x00
         ])
         spi.xfer2([
-            0x40, 0x00, 0x00, 0x00, 0x00
+            0x40, 0x00, 0x00
         ])
         print("INITIATION!!!!")
         arm_angle, arm_velocity, link_1_angle, link_1_velocity, link_2_angle, link_2_velocity = self.calculate_state()
@@ -96,31 +97,17 @@ class RotaryDoubleInvertedPendulum:
 
         if motor_power > 0:
             action_1, action_2 = self.calculate_action(motor_power)
-            # action_1 = hex(action_1)
-            # action_2 = hex(action_2)
-            # print(action_1, action_2)
             spi.xfer2([0x40, 0x00, 0x02, action_1, action_2])
-
         else:
             motor_power = -motor_power
             action_1, action_2 = self.calculate_action(motor_power)
-            # action_1 = hex(action_1)
-            # action_2 = hex(action_2)
-            # print(action_1,action_2)
             spi.xfer2([0x40, 0x00, 0x03, action_1, action_2])
 
 
         # print("spi write elapsed time : {0:10.8f} \n\n".format(time.time() - last_time))
 
-
     def reset(self, rip_request, context):
         arm_angle, arm_velocity, link_1_angle, link_1_velocity, link_2_angle, link_2_velocity = self.calculate_state()
-
-        spi.xfer2([
-            0x40, 0x00, 0x10, 0x00, 0x00
-        ])
-
-        time.sleep(5)
 
         # self.print_state(arm_angle, arm_velocity, link_angle, link_velocity)
 
@@ -135,11 +122,12 @@ class RotaryDoubleInvertedPendulum:
 
     def step(self, rip_request, context):
         motor_power = int(rip_request.value)
+
         # current_step_call = time.time()
         # elapsed_time = current_step_call - self.last_step_call
         # print(self.step_idx, elapsed_time, motor_power)
         # self.last_step_call = time.time()
-        # print(self.step_idx, motor_power)
+
         self.apply_action(motor_power)
 
         arm_angle, arm_velocity, link_1_angle, link_1_velocity, link_2_angle, link_2_velocity = self.calculate_state()
@@ -169,6 +157,63 @@ class RotaryDoubleInvertedPendulum:
         print("link 2 angle :", link_2_angle)
         print("link 2 vel :", link_2_velocity)
 
+    def manual_swing_up(self):
+        print("\n***** Swing Up Start!!! *****")
+
+        previousTime = time.perf_counter()
+        last_pendulum_radian = 0
+        motorPWM = 0
+
+        while True:
+            # if the difference between the current time and the last time an SPI transaction
+            # occurred is greater than the sample time, start a new SPI transaction
+            currentTime = time.perf_counter()
+            if currentTime - previousTime >= UNIT_TIME:
+                # print("|| Time difference: {0} s ||".format(currentTime - previousTime))
+
+                previousTime = currentTime
+
+                arm_angle, arm_velocity, link_1_angle, link_1_velocity, link_2_angle, link_2_velocity = self.calculate_state()
+
+                if 0.0 <= abs(link_1_angle) <= PI * 11.0 / 180.0 and 0.0 <= abs(link_2_angle) <= PI * 11.0 / 180.0:
+                    break
+
+                # angular_variation = (pendulum_radian - last_pendulum_radian)
+                # # angular variation filtering
+                # if angular_variation > 2.5:
+                #     angular_variation -= math.pi * 2
+                # elif angular_variation < -2.5:
+                #     angular_variation += math.pi * 2
+                #
+                # pendulum_angular_velocity = angular_variation / UNIT_TIME
+
+                last_pendulum_radian_1 = link_1_angle
+                last_pendulum_radian_2 = link_2_angle
+
+                voltage = 80.0#48.65 # 49.215
+
+                if abs(pendulum_angular_velocity) > 25:
+                    voltage /= int(10 * np.log(abs(pendulum_angular_velocity)))
+
+                if PI >= abs(pendulum_radian) >= PI * 90.0 / 180.0:
+                    if pendulum_radian >= 0:
+                        pendulum_radian = math.pi - pendulum_radian
+                    else:
+                        pendulum_radian = - math.pi + abs(pendulum_radian)
+
+                    if pendulum_angular_velocity == 0:
+                        if random.random() < 0.5:
+                            motorPWM = int(-2 * math.cos(pendulum_radian) * voltage)
+                        else:
+                            motorPWM = int(2 * math.cos(pendulum_radian) * voltage)
+                    elif pendulum_angular_velocity < 0:
+                        motorPWM = int(-2 * math.cos(pendulum_radian) * voltage)
+                    else:
+                        motorPWM = int(2 * math.cos(pendulum_radian) * voltage)
+
+                self.__set_motor_command(motorPWM, "blue")
+
+        print("\n***** Swing Up complete!!! *****")
 
 if __name__ == "__main__":
     server = grpc.server(futures.ThreadPoolExecutor(max_workers=10))
