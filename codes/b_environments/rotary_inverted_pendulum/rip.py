@@ -18,13 +18,15 @@ if PROJECT_HOME not in sys.path:
 
 from codes.b_environments.rotary_inverted_pendulum import rip_service_pb2_grpc
 from codes.b_environments.rotary_inverted_pendulum.rip_service_pb2 import RipRequest
-from codes.b_environments.rotary_inverted_pendulum.matlabcode import SimulinkPlant
 
 from codes.e_utils.names import RLAlgorithmName, EnvironmentName
 
 from gym.envs.classic_control.acrobot import wrap
 
 from codes.a_config.parameters import PARAMETERS as params
+
+if params.ENVIRONMENT_ID in [EnvironmentName.PENDULUM_MATLAB_V0, EnvironmentName.PENDULUM_MATLAB_DOUBLE_RIP_V0]:
+    from codes.b_environments.rotary_inverted_pendulum.matlabcode import SimulinkPlant
 
 np.set_printoptions(formatter={'float_kind': lambda x: '{0:0.6f}'.format(x)})
 
@@ -38,6 +40,7 @@ if params.ENVIRONMENT_ID in [EnvironmentName.REAL_DEVICE_RIP, EnvironmentName.RE
         RIP_SERVER = '10.0.0.9'
     elif params.SERVER_IDX == 1:
         RIP_SERVER = '10.0.0.11'
+
 
 def get_rip_observation_space(pendulum_type, params):
     max_velocity = 100.0

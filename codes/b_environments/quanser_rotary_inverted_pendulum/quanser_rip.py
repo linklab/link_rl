@@ -74,7 +74,7 @@ class EnvironmentQuanserRIP(gym.Env):
 
         self.is_motor_limit = False
 
-        self.unit_time = 0.008
+        self.unit_time = 0.006
         self.over_unit_time = 0
 
         self.initial_motor_radian = 0.0
