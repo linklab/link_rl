@@ -120,7 +120,7 @@ class RotaryDoubleInvertedPendulum:
             0x40, 0x00, 0x10, 0x00, 0x00
         ])
 
-        time.sleep(3)
+        time.sleep(1.5)
 
         # self.print_state(arm_angle, arm_velocity, link_angle, link_velocity)
 
