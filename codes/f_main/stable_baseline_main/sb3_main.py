@@ -1,4 +1,5 @@
 # https://github.com/DLR-RM/stable-baselines3
+# pip install stable-baselines3
 import gym
 import os
 from stable_baselines3 import PPO
@@ -18,11 +19,11 @@ env = RotaryInvertedPendulumEnv(
 )
 env.start()
 
-model = PPO("MlpPolicy", env, verbose=1)
-model.learn(total_timesteps=10000)
+model = PPO("MlpPolicy", env, device='cuda', verbose=2)
+model.learn(total_timesteps=10000000)
 
 obs = env.reset()
-for i in range(1000):
+for i in range(100000):
     action, _states = model.predict(obs, deterministic=True)
     obs, reward, done, info = env.step(action)
     env.render()
