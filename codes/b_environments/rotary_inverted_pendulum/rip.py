@@ -128,8 +128,7 @@ class RotaryInvertedPendulumEnv(gym.Env):
         self.motor_velocity = 0
 
         self.last_time = 0.0
-        self.unit_time = 0.016
-        # self.unit_time = 0.06
+        self.unit_time = self.params.UNIT_TIME
         self.over_unit_time = 0
         self.step_idx = 0
         self.episode_idx = 0
@@ -673,7 +672,7 @@ class RotaryInvertedPendulumEnv(gym.Env):
 
         # if self.pendulum_type in [EnvironmentName.REAL_DEVICE_RIP, EnvironmentName.REAL_DEVICE_DOUBLE_RIP]:
         #     if reward == 0.0:
-        #         self.unit_time = 0.06
+        #         self.unit_time = self.param.UNIT_TIME
         #     else:
         #         self.unit_time = np.clip(0.06 / (sigmoid_2(0.01) * 10), 0.006, 0.06)
         #
