@@ -1,16 +1,16 @@
-from codes.a_config._rl_parameters.off_policy.parameter_ddpg import PARAMETERS_DDPG, DDPGTargetUpdateOnlyAfterEpisode, \
-    DDPGActionType, DDPGActionSelectorType
+from codes.a_config._rl_parameters.off_policy.parameter_td3 import TD3ActionType, TD3ActionSelectorType
+from codes.a_config._rl_parameters.on_policy.parameter_ppo import PARAMETERS_PPO
 from codes.e_utils.names import *
 from codes.a_config.parameters_general import PARAMETERS_GENERAL, RIPEnvRewardType
 
 
-class PARAMETERS_DOUBLE_PENDULUM_MATLAB_DDPG(PARAMETERS_GENERAL, PARAMETERS_DDPG):
+class PARAMETERS_DOUBLE_PENDULUM_MATLAB_PPO(PARAMETERS_GENERAL, PARAMETERS_PPO):
     ENV_RESET = False
     ENV_RENDER = False
 
     ENVIRONMENT_ID = EnvironmentName.PENDULUM_MATLAB_DOUBLE_RIP_V0
-    RL_ALGORITHM = RLAlgorithmName.DDPG_V0
-    DEEP_LEARNING_MODEL = DeepLearningModelName.DETERMINISTIC_CONTINUOUS_ACTOR_CRITIC_MLP
+    RL_ALGORITHM = RLAlgorithmName.CONTINUOUS_PPO_V0
+    DEEP_LEARNING_MODEL = DeepLearningModelName.STOCHASTIC_CONTINUOUS_ACTOR_CRITIC_MLP
 
     TRAIN_STOP_EPISODE_REWARD = 100000  # MAX: 6.28 * 10000 = 62800 (Old), 90000 (New)
     TRAIN_STOP_EPISODE_REWARD_STD = 2000
@@ -39,9 +39,7 @@ class PARAMETERS_DOUBLE_PENDULUM_MATLAB_DDPG(PARAMETERS_GENERAL, PARAMETERS_DDPG
     TRAIN_ONLY_AFTER_EPISODE = False
     NUM_TRAIN_ONLY_AFTER_EPISODE = 100
 
-    TYPE_OF_RIP_REWARD = RIPEnvRewardType.NEW  # "current_version"
-    TYPE_OF_DDPG_ACTION = DDPGActionType.GAUSSIAN_NOISE_WITH_EPSILON
-    TYPE_OF_DDPG_ACTION_SELECTOR = DDPGActionSelectorType.SOMETIMES_BLOW_ACTION_SELECTOR
+    TYPE_OF_RIP_REWARD = RIPEnvRewardType.NEW  # "old_version"
 
     MAX_EPISODE_STEP = 10000
     MAX_GLOBAL_STEP = 10000000
