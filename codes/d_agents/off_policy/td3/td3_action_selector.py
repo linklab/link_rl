@@ -50,7 +50,7 @@ class SomeTimesBlowTD3ActionSelector(TD3ActionSelector):
         super(SomeTimesBlowTD3ActionSelector, self).__init__(epsilon, noise_std=0.0, params=params)
 
         if self.params.ENVIRONMENT_ID == EnvironmentName.REAL_DEVICE_DOUBLE_RIP:
-            self.blowing_action_rate = 0.002
+            self.blowing_action_rate = 0.0002
         else:
             self.blowing_action_rate = 0.0002
 

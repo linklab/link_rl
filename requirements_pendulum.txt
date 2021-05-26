@@ -1,0 +1,10 @@
+icecream
+wandb
+pandas
+gym
+termcolor
+Flask-SQLAlchemy
+mysql-connector
+matplotlib
+scikit-image
+grpcio
