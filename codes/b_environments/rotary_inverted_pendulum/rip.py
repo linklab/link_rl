@@ -98,10 +98,16 @@ def get_rip_action_space(params, pendulum_type):
         action_space = gym.spaces.Discrete(len(action_index_to_voltage))
         n_actions = action_space.n
     else:
-        action_space = gym.spaces.Box(
-            low=-1.0, high=1.0, shape=(1,),
-            dtype=np.float32
-        )
+        if hasattr(params, "ACTION_SCALE_MODE") and params.ACTION_SCALE_MODE == "INTERNAL":
+            action_space = gym.spaces.Box(
+                low=-params.ACTION_SCALE, high=params.ACTION_SCALE, shape=(1,),
+                dtype=np.float32
+            )
+        else:
+            action_space = gym.spaces.Box(
+                low=-1.0, high=1.0, shape=(1,),
+                dtype=np.float32
+            )
         n_actions = action_space.shape[0]
 
     return action_space, n_actions, action_index_to_voltage
