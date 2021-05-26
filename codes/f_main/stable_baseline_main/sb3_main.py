@@ -2,7 +2,7 @@
 # pip install stable-baselines3
 import gym
 import os
-from stable_baselines3 import PPO
+from stable_baselines3 import PPO, TD3
 from stable_baselines3.common.callbacks import EvalCallback
 
 from codes.b_environments.rotary_inverted_pendulum.rip import RotaryInvertedPendulumEnv
@@ -24,7 +24,7 @@ env.start()
 
 # env = gym.make('LunarLander-v2')
 
-model = PPO("MlpPolicy", env, device='cuda', verbose=0)
+model = TD3("MlpPolicy", env, device='cuda', verbose=0)
 
 callback = Callback(model)
 eval_callback = EvalCallback(eval_env=env)
