@@ -74,7 +74,7 @@ class EnvironmentQuanserRIP(gym.Env):
 
         self.is_motor_limit = False
 
-        self.unit_time = 0.008
+        self.unit_time = 0.001
         self.over_unit_time = 0
 
         self.initial_motor_radian = 0.0
@@ -178,7 +178,7 @@ class EnvironmentQuanserRIP(gym.Env):
         if step_time > self.unit_time:
             self.over_unit_time += 1
 
-        # print(self.step_idx, action, step_time)
+        print(self.step_idx, action, step_time)
         self.previous_time = time.perf_counter()
 
         if self.step_idx % 100000 == 0:
