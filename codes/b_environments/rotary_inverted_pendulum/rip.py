@@ -18,13 +18,15 @@ if PROJECT_HOME not in sys.path:
 
 from codes.b_environments.rotary_inverted_pendulum import rip_service_pb2_grpc
 from codes.b_environments.rotary_inverted_pendulum.rip_service_pb2 import RipRequest
-from codes.b_environments.rotary_inverted_pendulum.matlabcode import SimulinkPlant
 
 from codes.e_utils.names import RLAlgorithmName, EnvironmentName
 
 from gym.envs.classic_control.acrobot import wrap
 
 from codes.a_config.parameters import PARAMETERS as params
+
+if params.ENVIRONMENT_ID in [EnvironmentName.PENDULUM_MATLAB_V0, EnvironmentName.PENDULUM_MATLAB_DOUBLE_RIP_V0]:
+    from codes.b_environments.rotary_inverted_pendulum.matlabcode import SimulinkPlant
 
 np.set_printoptions(formatter={'float_kind': lambda x: '{0:0.6f}'.format(x)})
 
@@ -38,6 +40,7 @@ if params.ENVIRONMENT_ID in [EnvironmentName.REAL_DEVICE_RIP, EnvironmentName.RE
         RIP_SERVER = '10.0.0.9'
     elif params.SERVER_IDX == 1:
         RIP_SERVER = '10.0.0.11'
+
 
 def get_rip_observation_space(pendulum_type, params):
     max_velocity = 100.0
@@ -95,10 +98,16 @@ def get_rip_action_space(params, pendulum_type):
         action_space = gym.spaces.Discrete(len(action_index_to_voltage))
         n_actions = action_space.n
     else:
-        action_space = gym.spaces.Box(
-            low=-1.0, high=1.0, shape=(1,),
-            dtype=np.float32
-        )
+        if hasattr(params, "ACTION_SCALE_MODE") and params.ACTION_SCALE_MODE == "INTERNAL":
+            action_space = gym.spaces.Box(
+                low=-params.ACTION_SCALE, high=params.ACTION_SCALE, shape=(1,),
+                dtype=np.float32
+            )
+        else:
+            action_space = gym.spaces.Box(
+                low=-1.0, high=1.0, shape=(1,),
+                dtype=np.float32
+            )
         n_actions = action_space.shape[0]
 
     return action_space, n_actions, action_index_to_voltage
@@ -125,8 +134,7 @@ class RotaryInvertedPendulumEnv(gym.Env):
         self.motor_velocity = 0
 
         self.last_time = 0.0
-        self.unit_time = 0.006
-        # self.unit_time = 0.06
+        self.unit_time = self.params.UNIT_TIME
         self.over_unit_time = 0
         self.step_idx = 0
         self.episode_idx = 0
@@ -409,7 +417,7 @@ class RotaryInvertedPendulumEnv(gym.Env):
                 RLAlgorithmName.CONTINUOUS_A2C_V0,
                 RLAlgorithmName.CONTINUOUS_PPO_V0,
                 RLAlgorithmName.TD3_V0,
-                RLAlgorithmName.SAC_V0
+                RLAlgorithmName.SAC_V0,
             ]:
                 action = random.uniform(a=-1.0, b=1.0) * self.params.ACTION_SCALE * 2
             else:
@@ -610,6 +618,7 @@ class RotaryInvertedPendulumEnv(gym.Env):
 
         # print(done, done_conditions[0], done_conditions[1], self.too_much_rotate)
 
+        self.set_unit_time()
 
         return state, reward, done, info
 
@@ -670,7 +679,7 @@ class RotaryInvertedPendulumEnv(gym.Env):
 
         # if self.pendulum_type in [EnvironmentName.REAL_DEVICE_RIP, EnvironmentName.REAL_DEVICE_DOUBLE_RIP]:
         #     if reward == 0.0:
-        #         self.unit_time = 0.06
+        #         self.unit_time = self.param.UNIT_TIME
         #     else:
         #         self.unit_time = np.clip(0.06 / (sigmoid_2(0.01) * 10), 0.006, 0.06)
         #
@@ -680,6 +689,14 @@ class RotaryInvertedPendulumEnv(gym.Env):
         #print(position_reward, energy_penalty, reward)
 
         return reward
+
+    def set_unit_time(self):
+        if self.is_upright:
+            self.unit_time = 0.006
+        else:
+            self.unit_time = self.params.UNIT_TIME
+
+    ###################################################################################
 
     def get_reward_for_double_rip_2(self):
         #adjusted 1
@@ -898,6 +915,8 @@ class RotaryInvertedPendulumEnv(gym.Env):
         reward = max(0.0, reward)
 
         return reward
+
+    ################################################################################################################
 
     def _terminal(self):
         # ns[0] = wrap(ns[0], -pi, pi)
