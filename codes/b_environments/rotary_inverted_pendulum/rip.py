@@ -618,6 +618,7 @@ class RotaryInvertedPendulumEnv(gym.Env):
 
         # print(done, done_conditions[0], done_conditions[1], self.too_much_rotate)
 
+        self.set_unit_time()
 
         return state, reward, done, info
 
@@ -688,6 +689,14 @@ class RotaryInvertedPendulumEnv(gym.Env):
         #print(position_reward, energy_penalty, reward)
 
         return reward
+
+    def set_unit_time(self):
+        if self.is_upright:
+            self.unit_time = 0.006
+        else:
+            self.unit_time = self.params.UNIT_TIME
+
+    ###################################################################################
 
     def get_reward_for_double_rip_2(self):
         #adjusted 1
@@ -906,6 +915,8 @@ class RotaryInvertedPendulumEnv(gym.Env):
         reward = max(0.0, reward)
 
         return reward
+
+    ################################################################################################################
 
     def _terminal(self):
         # ns[0] = wrap(ns[0], -pi, pi)
