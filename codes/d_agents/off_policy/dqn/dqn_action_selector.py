@@ -26,7 +26,7 @@ class EpsilonGreedySomeTimesBlowDQNActionSelector(EpsilonGreedyDQNActionSelector
     #TODO: max_blowing_action_idx
     def __init__(
             self, epsilon=0.05, blowing_action_rate=0.0002,
-            min_blowing_action_idx=0, max_blowing_action_idx=-1, params=None
+            min_blowing_action_idx=None, max_blowing_action_idx=None, params=None
     ):
         super(EpsilonGreedySomeTimesBlowDQNActionSelector, self).__init__(epsilon=epsilon)
 

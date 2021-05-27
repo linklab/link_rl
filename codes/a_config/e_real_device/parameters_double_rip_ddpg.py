@@ -26,7 +26,6 @@ class PARAMETERS_DOUBLE_RIP_DDPG(PARAMETERS_GENERAL, PARAMETERS_DDPG):
     N_STEP = 4
     OMEGA = False
     OMEGA_WINDOW_SIZE = 6
-    DATA_SAVE_STEP_PERIOD = 1000
 
     #########################################
     #########################################
