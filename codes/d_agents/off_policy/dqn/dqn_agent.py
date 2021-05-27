@@ -20,6 +20,8 @@ class AgentDQN(OffPolicyAgent):
     """
     """
     def __init__(self, worker_id, input_shape, action_shape, num_outputs, params, device):
+        self.__name__ = "AgentDQN"
+
         assert params.DEEP_LEARNING_MODEL in [
             DeepLearningModelName.DUELING_DQN_MLP,
             DeepLearningModelName.DUELING_DQN_CNN,
@@ -65,16 +67,15 @@ class AgentDQN(OffPolicyAgent):
 
          ################## END OF ACTION SELECTOR ####################
 
-        self.epsilon_tracker = None
         if params.TYPE_OF_DQN_ACTION_SELECTOR == DQNActionSelectorType.NOISY_NET_ACTION_SELECTOR:
+            self.epsilon_tracker = None
+        else:
             self.epsilon_tracker = EpsilonTracker(
                 action_selector=self.train_action_selector,
                 eps_start=params.EPSILON_INIT,
                 eps_final=params.EPSILON_MIN,
                 eps_frames=params.EPSILON_MIN_STEP
             )
-
-        self.__name__ = "AgentDQN"
 
         self.model = DuelingDQNModel(
             worker_id=worker_id,
