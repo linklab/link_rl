@@ -2,11 +2,14 @@
 # pip install stable-baselines3
 import gym
 import os
-from stable_baselines3 import PPO
+from stable_baselines3 import PPO, TD3
+from stable_baselines3.common.callbacks import EvalCallback
 
 from codes.b_environments.rotary_inverted_pendulum.rip import RotaryInvertedPendulumEnv
 from codes.a_config.parameters import PARAMETERS as params
 from codes.e_utils.names import EnvironmentName
+from codes.f_main.stable_baseline_main.sb_callback import Callback
+from stable_baselines3.common.env_util import make_vec_env
 
 os.environ['KMP_DUPLICATE_LIB_OK'] = 'True'
 
@@ -19,8 +22,13 @@ env = RotaryInvertedPendulumEnv(
 )
 env.start()
 
-model = PPO("MlpPolicy", env, device='cuda', verbose=2)
-model.learn(total_timesteps=10000000)
+# env = gym.make('LunarLander-v2')
+
+model = TD3("MlpPolicy", env, device='cuda', verbose=0)
+
+callback = Callback(model)
+eval_callback = EvalCallback(eval_env=env)
+model.learn(total_timesteps=10000000, callback=[callback, eval_callback])
 
 obs = env.reset()
 for i in range(100000):
