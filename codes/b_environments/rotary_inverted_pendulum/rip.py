@@ -366,7 +366,7 @@ class RotaryInvertedPendulumEnv(gym.Env):
         return adjusted_radian
 
     def update_current_state(self, adjusted_pendulum_1_radian):
-        if math.pi - math.radians(90) < adjusted_pendulum_1_radian <= math.pi:
+        if math.pi - math.radians(12) < adjusted_pendulum_1_radian <= math.pi:
             self.count_continuous_uprights += 1
         else:
             self.count_continuous_uprights = 0
