@@ -92,10 +92,12 @@ def get_rip_action_space(params, pendulum_type):
             0.016, 0.025, 0.05, 0.10, 0.35, 0.75, 1.5, 2.0, 2.75, 3.5
         ]
     elif pendulum_type == EnvironmentName.REAL_DEVICE_RIP:
+        action_index_to_voltage = [
+            -1.0, -0.75, -0.5, -0.3, -0.2, -0.1, 0.0, 0.1, 0.2, 0.3, 0.5, 0.75, 1.0
+        ]
         # action_index_to_voltage = [
-        #     -1.0, -0.75, -0.5, -0.3, -0.2, -0.1, -0.05, 0.0, 0.05, 0.1, 0.2, 0.3, 0.5, 0.75, 1.0
+        #     -0.2, 0.0, 0.2
         # ]
-        action_index_to_voltage = [-0.5, 0.0, 0.5]
     elif pendulum_type == EnvironmentName.REAL_DEVICE_DOUBLE_RIP:
         # TODO
         action_index_to_voltage = [
@@ -200,6 +202,9 @@ class RotaryInvertedPendulumEnv(gym.Env):
         self.max_pendulum_1_velocity = 0.0
         self.max_pendulum_2_velocity = 0.0
         self.max_motor_velocity = 0.0
+
+        self.server_obj.initialize(RipRequest(value=None))
+
 
     def get_n_states(self):
         n_states = self.observation_space.shape[0]
@@ -642,7 +647,7 @@ class RotaryInvertedPendulumEnv(gym.Env):
             self.episode_steps, action, reward, done, done_conditions[0], self.too_much_rotate, self.is_upright
         ))
 
-        self.set_unit_time()
+        # self.set_unit_time()
 
 
         return state, reward, done, info
@@ -665,8 +670,6 @@ class RotaryInvertedPendulumEnv(gym.Env):
 
         # if self.too_much_rotate or self.too_long_and_fast_pendulum_velocity:
         #     reward = -1.0
-
-        # print(position_reward, energy_penalty, reward, adjusted_pendulum_1_radian)
 
         return reward
 

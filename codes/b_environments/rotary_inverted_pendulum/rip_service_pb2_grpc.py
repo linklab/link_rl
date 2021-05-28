@@ -4,6 +4,7 @@ import grpc
 
 from codes.b_environments.rotary_inverted_pendulum import rip_service_pb2 as rip__service__pb2
 
+
 class RDIPStub(object):
     """Missing associated documentation comment in .proto file."""
 
@@ -25,6 +26,11 @@ class RDIPStub(object):
                 )
         self.terminate = channel.unary_unary(
                 '/RDIP/terminate',
+                request_serializer=rip__service__pb2.RipRequest.SerializeToString,
+                response_deserializer=rip__service__pb2.RipResponse.FromString,
+                )
+        self.initialize = channel.unary_unary(
+                '/RDIP/initialize',
                 request_serializer=rip__service__pb2.RipRequest.SerializeToString,
                 response_deserializer=rip__service__pb2.RipResponse.FromString,
                 )
@@ -51,6 +57,12 @@ class RDIPServicer(object):
         context.set_details('Method not implemented!')
         raise NotImplementedError('Method not implemented!')
 
+    def initialize(self, request, context):
+        """Missing associated documentation comment in .proto file."""
+        context.set_code(grpc.StatusCode.UNIMPLEMENTED)
+        context.set_details('Method not implemented!')
+        raise NotImplementedError('Method not implemented!')
+
 
 def add_RDIPServicer_to_server(servicer, server):
     rpc_method_handlers = {
@@ -66,6 +78,11 @@ def add_RDIPServicer_to_server(servicer, server):
             ),
             'terminate': grpc.unary_unary_rpc_method_handler(
                     servicer.terminate,
+                    request_deserializer=rip__service__pb2.RipRequest.FromString,
+                    response_serializer=rip__service__pb2.RipResponse.SerializeToString,
+            ),
+            'initialize': grpc.unary_unary_rpc_method_handler(
+                    servicer.initialize,
                     request_deserializer=rip__service__pb2.RipRequest.FromString,
                     response_serializer=rip__service__pb2.RipResponse.SerializeToString,
             ),
@@ -125,6 +142,23 @@ class RDIP(object):
             timeout=None,
             metadata=None):
         return grpc.experimental.unary_unary(request, target, '/RDIP/terminate',
+            rip__service__pb2.RipRequest.SerializeToString,
+            rip__service__pb2.RipResponse.FromString,
+            options, channel_credentials,
+            insecure, call_credentials, compression, wait_for_ready, timeout, metadata)
+
+    @staticmethod
+    def initialize(request,
+            target,
+            options=(),
+            channel_credentials=None,
+            call_credentials=None,
+            insecure=False,
+            compression=None,
+            wait_for_ready=None,
+            timeout=None,
+            metadata=None):
+        return grpc.experimental.unary_unary(request, target, '/RDIP/initialize',
             rip__service__pb2.RipRequest.SerializeToString,
             rip__service__pb2.RipResponse.FromString,
             options, channel_credentials,
