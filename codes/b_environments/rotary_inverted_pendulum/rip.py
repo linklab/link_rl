@@ -643,9 +643,9 @@ class RotaryInvertedPendulumEnv(gym.Env):
 
         self.too_much_rotate = False
 
-        print("{0:>3}, {1:>6.4f}, {2:>5.4f}, {3:>5}, {4:>5}, {5:>5}, {6:>5}".format(
-            self.episode_steps, action, reward, done, done_conditions[0], self.too_much_rotate, self.is_upright
-        ))
+        # print("{0:>3}, {1:>6.4f}, {2:>5.4f}, {3:>5}, {4:>5}, {5:>5}, {6:>5}".format(
+        #     self.episode_steps, action, reward, done, done_conditions[0], self.too_much_rotate, self.is_upright
+        # ))
 
         # self.set_unit_time()
 
