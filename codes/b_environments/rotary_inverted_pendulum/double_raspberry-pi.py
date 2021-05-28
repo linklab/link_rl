@@ -15,7 +15,18 @@ class RotaryDoubleInvertedPendulum:
     def __init__(self):
         self.step_idx = 0
         self.last_step_call = 0.0
+        self.initialize()
 
+        # t = 0
+        # while True:
+        #     action = 200 * math.sin(2 * 0.1 * math.pi * t)
+        #     self.apply_action(int(action))
+        #     t += 0.008
+        #     time.sleep(0.008)
+        #     print(t, int(action))
+        self.previous_action = 0
+
+    def initialize(self, rip_request=None, context=None):
         spi.xfer2([
             0x40, 0x00, 0x00, 0x00, 0x00
         ])
@@ -34,14 +45,8 @@ class RotaryDoubleInvertedPendulum:
         print("INITIATION!!!!")
         arm_angle, arm_velocity, link_1_angle, link_1_velocity, link_2_angle, link_2_velocity = self.calculate_state()
         self.print_state(arm_angle, arm_velocity, link_1_angle, link_1_velocity, link_2_angle, link_2_velocity)
-        #
-        # t = 0
-        # while True:
-        #     action = 200 * math.sin(2 * 0.1 * math.pi * t)
-        #     self.apply_action(int(action))
-        #     t += 0.008
-        #     time.sleep(0.008)
-        #     print(t, int(action))
+
+        return RipResponse(message='OK')
 
     def calculate_state(self):
         #data = spi.xfer2([128 if i == 0 else i for i in range(21)])
@@ -137,6 +142,9 @@ class RotaryDoubleInvertedPendulum:
         # print(self.step_idx, elapsed_time, motor_power)
         # self.last_step_call = time.time()
         # print(self.step_idx, motor_power)
+        if self.previous_action * motor_power < 0:
+            spi.xfer2([0x40, 0x00, 0x01, 0x00, 0x00])
+
         self.apply_action(motor_power)
 
         arm_angle, arm_velocity, link_1_angle, link_1_velocity, link_2_angle, link_2_velocity = self.calculate_state()
@@ -144,6 +152,7 @@ class RotaryDoubleInvertedPendulum:
         # self.print_state(arm_angle, arm_velocity, link_1_angle, link_1_velocity, link_2_angle, link_2_velocity)
 
         self.step_idx += 1
+        self.previous_action = motor_power
 
         return RipResponse(
             message='STEP',
@@ -152,11 +161,36 @@ class RotaryDoubleInvertedPendulum:
             link_2_angle=link_2_angle, link_2_velocity=link_2_velocity
         )
 
+    def step_test(self):
+        t = 0
+        action_3 = 0
+        while True:
+            # if self.step_idx % 2 == 0:
+            #     spi.xfer2([0x40, 0x00, 0x01, 0x00, 0x00])
+            #     self.action_2 = 200*math.sin(time.time())
+            #     self.apply_action(self.action_2)
+            # else:
+            #     self.apply_action(self.action_2)
+            self.action_2 = 200*math.sin(2*math.pi*1.0*t)
+
+            if self.action_2 * action_3 < 0:
+                spi.xfer2([0x40, 0x00, 0x01, 0x00, 0x00])
+
+            self.apply_action(int(self.action_2))
+            self.step_idx += 1
+            action_3 = self.action_2
+            t += 0.006
+            time.sleep(0.006)
+
     def terminate(self, rip_request, context):
         spi.xfer2([0x40, 0x00, 0x10, 0x00, 0x00])
         spi.xfer2([0x40, 0x00, 0x01])
 
         return RipResponse(message='OK')
+
+    def test_terminate(self):
+        spi.xfer2([0x40, 0x00, 0x01, 0x00, 0x00])
+        return None
 
     def print_state(self, arm_angle, arm_velocity, link_1_angle, link_1_velocity, link_2_angle, link_2_velocity):
         print("arm angle :", arm_angle)
@@ -166,10 +200,17 @@ class RotaryDoubleInvertedPendulum:
         print("link 2 angle :", link_2_angle)
         print("link 2 vel :", link_2_velocity)
 
-
-if __name__ == "__main__":
+def start_grpc():
     server = grpc.server(futures.ThreadPoolExecutor(max_workers=10))
     rip_service_pb2_grpc.add_RDIPServicer_to_server(RotaryDoubleInvertedPendulum(), server)
     server.add_insecure_port('[::]:50051')
     server.start()
     server.wait_for_termination()
+
+if __name__ == "__main__":
+    start_grpc()
+    # rasp_rip = RotaryDoubleInvertedPendulum()
+    # try:
+    #     rasp_rip.step_test()
+    # except KeyboardInterrupt as e:
+    #     rasp_rip.test_terminate()

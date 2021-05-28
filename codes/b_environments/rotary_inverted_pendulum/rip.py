@@ -93,8 +93,11 @@ def get_rip_action_space(params, pendulum_type):
         ]
     elif pendulum_type == EnvironmentName.REAL_DEVICE_RIP:
         action_index_to_voltage = [
-            -1.0, -0.75, -0.5, -0.3, -0.2, -0.1, -0.05, 0.0, 0.05, 0.1, 0.2, 0.3, 0.5, 0.75, 1.0
+            -1.0, -0.75, -0.5, -0.3, -0.2, -0.1, 0.0, 0.1, 0.2, 0.3, 0.5, 0.75, 1.0
         ]
+        # action_index_to_voltage = [
+        #     -0.2, 0.0, 0.2
+        # ]
     elif pendulum_type == EnvironmentName.REAL_DEVICE_DOUBLE_RIP:
         # TODO
         action_index_to_voltage = [
@@ -199,6 +202,9 @@ class RotaryInvertedPendulumEnv(gym.Env):
         self.max_pendulum_1_velocity = 0.0
         self.max_pendulum_2_velocity = 0.0
         self.max_motor_velocity = 0.0
+
+        self.server_obj.initialize(RipRequest(value=None))
+
 
     def get_n_states(self):
         n_states = self.observation_space.shape[0]
@@ -462,6 +468,21 @@ class RotaryInvertedPendulumEnv(gym.Env):
             self.motor_velocity, self.pendulum_2_velocity, self.simulation_time = self.plant.getHistory()
         elif self.pendulum_type == EnvironmentName.REAL_DEVICE_RIP:
             # GRPC CALL
+            k = 1
+            j = 100
+            f = 0.048
+            while True:
+                for i in range(k):
+                    action = j
+                    self.server_obj.step(RipRequest(value=action))
+                    time.sleep(f)
+                    print(action)
+                for i in range(k):
+                    action = -j
+                    self.server_obj.step(RipRequest(value=action))
+                    time.sleep(f)
+                    print(action)
+
             rip_response = self.server_obj.step(RipRequest(value=action))
             # current_time = time.perf_counter()
             # print("point 2 - elapsed time: {0:10.8f}".format(current_time - self.last_time))
@@ -639,7 +660,7 @@ class RotaryInvertedPendulumEnv(gym.Env):
 
         # print(done, done_conditions[0], done_conditions[1], self.too_much_rotate)
 
-        self.set_unit_time()
+        # self.set_unit_time()
 
         return state, reward, done, info
 
