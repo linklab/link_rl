@@ -468,21 +468,6 @@ class RotaryInvertedPendulumEnv(gym.Env):
             self.motor_velocity, self.pendulum_2_velocity, self.simulation_time = self.plant.getHistory()
         elif self.pendulum_type == EnvironmentName.REAL_DEVICE_RIP:
             # GRPC CALL
-            k = 1
-            j = 100
-            f = 0.048
-            while True:
-                for i in range(k):
-                    action = j
-                    self.server_obj.step(RipRequest(value=action))
-                    time.sleep(f)
-                    print(action)
-                for i in range(k):
-                    action = -j
-                    self.server_obj.step(RipRequest(value=action))
-                    time.sleep(f)
-                    print(action)
-
             rip_response = self.server_obj.step(RipRequest(value=action))
             # current_time = time.perf_counter()
             # print("point 2 - elapsed time: {0:10.8f}".format(current_time - self.last_time))
