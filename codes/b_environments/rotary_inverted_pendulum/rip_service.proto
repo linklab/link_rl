@@ -6,6 +6,8 @@ service RDIP {
   rpc step(RipRequest) returns (RipResponse) {}
 
   rpc terminate(RipRequest) returns (RipResponse) {}
+
+  rpc initialize(RipRequest) returns (RipResponse) {}
 }
 
 message RipRequest {

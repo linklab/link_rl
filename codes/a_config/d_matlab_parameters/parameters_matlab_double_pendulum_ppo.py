@@ -1,15 +1,16 @@
-from codes.a_config._rl_parameters.off_policy.parameter_td3 import PARAMETERS_TD3, TD3ActionType, TD3ActionSelectorType
+from codes.a_config._rl_parameters.off_policy.parameter_td3 import TD3ActionType, TD3ActionSelectorType
+from codes.a_config._rl_parameters.on_policy.parameter_ppo import PARAMETERS_PPO
 from codes.e_utils.names import *
 from codes.a_config.parameters_general import PARAMETERS_GENERAL, RIPEnvRewardType
 
 
-class PARAMETERS_DOUBLE_PENDULUM_MATLAB_TD3(PARAMETERS_GENERAL, PARAMETERS_TD3):
+class PARAMETERS_DOUBLE_PENDULUM_MATLAB_PPO(PARAMETERS_GENERAL, PARAMETERS_PPO):
     ENV_RESET = False
     ENV_RENDER = False
 
     ENVIRONMENT_ID = EnvironmentName.PENDULUM_MATLAB_DOUBLE_RIP_V0
-    RL_ALGORITHM = RLAlgorithmName.TD3_V0
-    DEEP_LEARNING_MODEL = DeepLearningModelName.TD3_MLP
+    RL_ALGORITHM = RLAlgorithmName.CONTINUOUS_PPO_V0
+    DEEP_LEARNING_MODEL = DeepLearningModelName.STOCHASTIC_CONTINUOUS_ACTOR_CRITIC_MLP
 
     TRAIN_STOP_EPISODE_REWARD = 100000  # MAX: 6.28 * 10000 = 62800 (Old), 90000 (New)
     TRAIN_STOP_EPISODE_REWARD_STD = 2000
@@ -29,7 +30,7 @@ class PARAMETERS_DOUBLE_PENDULUM_MATLAB_TD3(PARAMETERS_GENERAL, PARAMETERS_TD3):
 
     CLIP_GRAD = 0.1
     ACTION_SCALE = 2.5
-    ACTION_SCALE_MODE = "EXTERNAL"
+    ACTION_SCALE_MODE = "INTERNAL" # "EXTERNAL"
 
     NOISE_ENABLED = True
 
@@ -40,9 +41,6 @@ class PARAMETERS_DOUBLE_PENDULUM_MATLAB_TD3(PARAMETERS_GENERAL, PARAMETERS_TD3):
     NUM_TRAIN_ONLY_AFTER_EPISODE = 100
 
     TYPE_OF_RIP_REWARD = RIPEnvRewardType.NEW  # "old_version"
-
-    TYPE_OF_TD3_ACTION = TD3ActionType.GAUSSIAN_NOISE_WITH_EPSILON
-    TYPE_OF_TD3_ACTION_SELECTOR = TD3ActionSelectorType.SOMETIMES_BLOW_ACTION_SELECTOR
 
     MAX_EPISODE_STEP = 10000
     MAX_GLOBAL_STEP = 10000000

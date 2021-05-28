@@ -23,7 +23,6 @@ class PARAMETERS_RIP(PARAMETERS_GENERAL, PARAMETERS_DDPG):
     N_STEP = 4
     OMEGA = False
     OMEGA_WINDOW_SIZE = 6
-    DATA_SAVE_STEP_PERIOD = 1000
 
     #########################################
     #########################################
@@ -70,3 +69,6 @@ class PARAMETERS_RIP(PARAMETERS_GENERAL, PARAMETERS_DDPG):
 
     # [4. OPTIMIZER]
     OPTIMIZER = OptimizerName.ADAM
+
+    UNIT_TIME = 0.006
+

@@ -3,6 +3,7 @@ import numpy as np
 import torch
 import torch.nn.functional as F
 
+from codes.a_config._rl_parameters.off_policy.parameter_dqn import DQNActionSelectorType
 from codes.c_models.advanced_exploration.curiosity_driven import CuriosityMlpStateEncoder, CuriosityCnnStateEncoder, \
     CuriosityForwardModel, CuriosityInverseModel, intrinsic_curiosity_module_errors
 from codes.c_models.discrete_action.dqn_model import DuelingDQNModel
@@ -19,6 +20,8 @@ class AgentDQN(OffPolicyAgent):
     """
     """
     def __init__(self, worker_id, input_shape, action_shape, num_outputs, params, device):
+        self.__name__ = "AgentDQN"
+
         assert params.DEEP_LEARNING_MODEL in [
             DeepLearningModelName.DUELING_DQN_MLP,
             DeepLearningModelName.DUELING_DQN_CNN,
@@ -35,34 +38,36 @@ class AgentDQN(OffPolicyAgent):
             self.delta_z = None
             self.supports = None
 
-        if params.ENVIRONMENT_ID in [EnvironmentName.PENDULUM_MATLAB_V0, EnvironmentName.PENDULUM_MATLAB_DOUBLE_RIP_V0]:
+        ################## BEGIN OF ACTION SELECTOR ####################
+
+        if params.TYPE_OF_DQN_ACTION_SELECTOR == DQNActionSelectorType.BASIC_ACTION_SELECTOR:
+            self.train_action_selector = EpsilonGreedyDQNActionSelector(epsilon=params.EPSILON_INIT)
+        elif params.TYPE_OF_DQN_ACTION_SELECTOR == DQNActionSelectorType.SOMETIMES_BLOW_ACTION_SELECTOR:
             self.train_action_selector = EpsilonGreedySomeTimesBlowDQNActionSelector(
-                epsilon=params.EPSILON_INIT, blowing_action_rate=0.0002,
-                min_blowing_action_idx=0, max_blowing_action_idx=-1, params=params
+                epsilon=params.EPSILON_INIT, min_blowing_action_idx=0, max_blowing_action_idx=num_outputs - 1,
+                params=params
             )
-            self.test_and_play_action_selector = EpsilonGreedySomeTimesBlowDQNActionSelector(
-                epsilon=0.0, blowing_action_rate=0.0002,
-                min_blowing_action_idx=0, max_blowing_action_idx=-1, params=params
-            )
-        elif params.ENVIRONMENT_ID in [EnvironmentName.TRADE_V0]:
+        elif params.TYPE_OF_DQN_ACTION_SELECTOR == DQNActionSelectorType.NOISY_NET_ACTION_SELECTOR:
+            if self.params.DISTRIBUTIONAL:
+                self.train_action_selector = ArgmaxActionSelector(supports_numpy=self.supports.cpu().numpy())
+            else:
+                self.train_action_selector = ArgmaxActionSelector()
+        else:
+            raise ValueError()
+
+        if self.params.DISTRIBUTIONAL:
+            self.test_and_play_action_selector = ArgmaxActionSelector(supports_numpy=self.supports.cpu().numpy())
+        else:
+            self.test_and_play_action_selector = ArgmaxActionSelector()
+
+        if params.ENVIRONMENT_ID in [EnvironmentName.TRADE_V0]:
             # main 에서 action_selector 할당
             self.train_action_selector = None
             self.test_and_play_action_selector = None
-        else:
-            if self.params.NOISY_NET:
-                if self.params.DISTRIBUTIONAL:
-                    self.train_action_selector = ArgmaxActionSelector(supports_numpy=self.supports.cpu().numpy())
-                else:
-                    self.train_action_selector = ArgmaxActionSelector()
-            else:
-                self.train_action_selector = EpsilonGreedyDQNActionSelector(epsilon=params.EPSILON_INIT)
 
-            if self.params.DISTRIBUTIONAL:
-                self.test_and_play_action_selector = ArgmaxActionSelector(supports_numpy=self.supports.cpu().numpy())
-            else:
-                self.test_and_play_action_selector = ArgmaxActionSelector()
+         ################## END OF ACTION SELECTOR ####################
 
-        if self.params.NOISY_NET:
+        if params.TYPE_OF_DQN_ACTION_SELECTOR == DQNActionSelectorType.NOISY_NET_ACTION_SELECTOR:
             self.epsilon_tracker = None
         else:
             self.epsilon_tracker = EpsilonTracker(
@@ -71,8 +76,6 @@ class AgentDQN(OffPolicyAgent):
                 eps_final=params.EPSILON_MIN,
                 eps_frames=params.EPSILON_MIN_STEP
             )
-
-        self.__name__ = "AgentDQN"
 
         self.model = DuelingDQNModel(
             worker_id=worker_id,
@@ -196,7 +199,7 @@ class AgentDQN(OffPolicyAgent):
 
         #self.model.check_gradient_nan_or_zero(gradients)
 
-        if self.params.NOISY_NET:
+        if self.params.TYPE_OF_DQN_ACTION_SELECTOR == DQNActionSelectorType.NOISY_NET_ACTION_SELECTOR:
             self.model.base.reset_noise()  # Pick a new noise vector (until next optimisation step)
             self.target_model.base.reset_noise()
 

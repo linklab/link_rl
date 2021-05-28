@@ -26,7 +26,6 @@ class PARAMETERS_DOUBLE_RIP_DDPG(PARAMETERS_GENERAL, PARAMETERS_DDPG):
     N_STEP = 4
     OMEGA = False
     OMEGA_WINDOW_SIZE = 6
-    DATA_SAVE_STEP_PERIOD = 1000
 
     #########################################
     #########################################
@@ -90,3 +89,5 @@ class PARAMETERS_DOUBLE_RIP_DDPG(PARAMETERS_GENERAL, PARAMETERS_DDPG):
     MIN_REPLAY_SIZE_FOR_TRAIN = 500
 
     IGNORE_ARM_INFO = False
+    UNIT_TIME = 0.006
+

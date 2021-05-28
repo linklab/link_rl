@@ -66,7 +66,6 @@ class PARAMETERS_GENERAL:
 
     N_STEP = 1
 
-    DATA_SAVE_STEP_PERIOD = 1000
     BATCH_SIZE = 32
 
     #########################################

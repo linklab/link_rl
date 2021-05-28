@@ -1,3 +1,17 @@
+import enum
+
+
+class DQNActionSelectorType(enum.Enum):
+    BASIC_ACTION_SELECTOR = 0
+    SOMETIMES_BLOW_ACTION_SELECTOR = 1
+    NOISY_NET_ACTION_SELECTOR = 2
+
+
+class DQNActionType(enum.Enum):
+    EPSILON_GREEDY = 0
+    ONLY_GREEDY = 1
+
+
 class PARAMETERS_DQN:
     PER_PROPORTIONAL = False
     PER_RANK_BASED = False
@@ -21,3 +35,6 @@ class PARAMETERS_DQN:
     VALUE_MAX = 10
 
     TARGET_NET_SYNC_STEP_PERIOD = 200
+
+    TYPE_OF_DQN_ACTION = DQNActionType.EPSILON_GREEDY
+    TYPE_OF_DQN_ACTION_SELECTOR = DQNActionSelectorType.BASIC_ACTION_SELECTOR
