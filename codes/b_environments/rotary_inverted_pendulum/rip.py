@@ -81,15 +81,12 @@ def get_rip_observation_space(pendulum_type, params):
 
 def get_rip_action_space(params, pendulum_type):
     if pendulum_type == EnvironmentName.PENDULUM_MATLAB_V0:
-        # TODO
         action_index_to_voltage = [
-            -0.08, -0.05, -0.025, -0.0125, -0.008, -0.002, 0.0, 0.002, 0.008, 0.0125, 0.025, 0.05, 0.08
+            -1.0, -0.75, -0.5, -0.3, -0.2, -0.1, 0.0, 0.1, 0.2, 0.3, 0.5, 0.75, 1.0
         ]
     elif pendulum_type == EnvironmentName.PENDULUM_MATLAB_DOUBLE_RIP_V0:
-        # TODO
         action_index_to_voltage = [
-            -3.5, -2.75, -2.0, -1.5, -0.75, -0.35, -0.10, -0.05, -0.025, -0.016, 0.0,
-            0.016, 0.025, 0.05, 0.10, 0.35, 0.75, 1.5, 2.0, 2.75, 3.5
+            -1.0, -0.75, -0.5, -0.3, -0.2, -0.1, -0.05, 0.0, 0.05, 0.1, 0.2, 0.3, 0.5, 0.75, 1.0
         ]
     elif pendulum_type == EnvironmentName.REAL_DEVICE_RIP:
         action_index_to_voltage = [
@@ -99,9 +96,8 @@ def get_rip_action_space(params, pendulum_type):
         #     -0.2, 0.0, 0.2
         # ]
     elif pendulum_type == EnvironmentName.REAL_DEVICE_DOUBLE_RIP:
-        # TODO
         action_index_to_voltage = [
-            -0.08, -0.05, -0.025, -0.0125, -0.008, -0.002, 0.0, 0.002, 0.008, 0.0125, 0.025, 0.05, 0.08
+            -1.0, -0.75, -0.5, -0.3, -0.2, -0.1, 0.0, 0.1, 0.2, 0.3, 0.5, 0.75, 1.0
         ]
     else:
         raise ValueError()
@@ -196,15 +192,13 @@ class RotaryInvertedPendulumEnv(gym.Env):
         if self.pendulum_type in [EnvironmentName.REAL_DEVICE_RIP, EnvironmentName.REAL_DEVICE_DOUBLE_RIP]:
             channel = grpc.insecure_channel('{0}:50051'.format(RIP_SERVER))
             self.server_obj = rip_service_pb2_grpc.RDIPStub(channel)
+            self.server_obj.initialize(RipRequest(value=None))
         else:
             self.server_obj = None
 
         self.max_pendulum_1_velocity = 0.0
         self.max_pendulum_2_velocity = 0.0
         self.max_motor_velocity = 0.0
-
-        self.server_obj.initialize(RipRequest(value=None))
-
 
     def get_n_states(self):
         n_states = self.observation_space.shape[0]
@@ -260,7 +254,7 @@ class RotaryInvertedPendulumEnv(gym.Env):
             # self.update_current_state(adjusted_pendulum_1_radian=0.0)
             if self.pendulum_type == EnvironmentName.PENDULUM_MATLAB_V0:
                 self.pendulum_1_position, self.motor_position, self.pendulum_1_velocity, self.motor_velocity, _  \
-                    = self.plant.getHistory
+                    = self.plant.getHistory()
             else:
                 rip_response = self.server_obj.reset(RipRequest(value=None))
 
@@ -454,7 +448,7 @@ class RotaryInvertedPendulumEnv(gym.Env):
                 action = action[0]
 
             if self.params.RL_ALGORITHM in [RLAlgorithmName.DQN_V0]:
-                action = self.action_index_to_voltage[action] * self.params.ACTION_SCALE
+                action = self.action_index_to_voltage[int(action)] * self.params.ACTION_SCALE
 
         if self.pendulum_type == EnvironmentName.PENDULUM_MATLAB_V0:
             self.plant.simulate(action)
