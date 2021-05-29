@@ -66,7 +66,7 @@ def get_agent(env):
             action_shape = action_space.shape
         elif params.ENVIRONMENT_ID == EnvironmentName.QUANSER_SERVO_2:
             observation_space, _ = get_quanser_rip_observation_space()
-            action_space, num_outputs = get_quanser_rip_action_space(params, None)
+            action_space, num_outputs, _ = get_quanser_rip_action_space(params)
 
             input_shape = observation_space.shape
             action_shape = action_space.shape
