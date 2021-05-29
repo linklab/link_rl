@@ -277,8 +277,6 @@ class EpisodeProcessor:
                 if isinstance(self.agent.model, ContinuousActionModel):
                     if hasattr(params, "ACTION_SCALE") and params.ACTION_SCALE:
                         action = params.ACTION_SCALE * action
-                    else:
-                        action = 1.0 * action
 
                 next_state, reward, done, info = self.test_env.step(action)
 

@@ -1,0 +1,50 @@
+from codes.a_config._rl_parameters.off_policy.parameter_ddpg import PARAMETERS_DDPG
+from codes.a_config._rl_parameters.off_policy.parameter_dqn import PARAMETERS_DQN, DQNActionType, DQNActionSelectorType
+from codes.a_config._rl_parameters.off_policy.parameter_td3 import PARAMETERS_TD3, TD3ActionType, TD3ActionSelectorType
+from codes.e_utils.names import *
+from codes.a_config.parameters_general import PARAMETERS_GENERAL
+
+
+class PARAMETERS_QUANSER_RIP_DQN(PARAMETERS_GENERAL, PARAMETERS_DQN):
+    ENVIRONMENT_ID = EnvironmentName.QUANSER_SERVO_2
+    RL_ALGORITHM = RLAlgorithmName.DQN_V0
+    DEEP_LEARNING_MODEL = DeepLearningModelName.DUELING_DQN_MLP
+    OPTIMIZER = OptimizerName.ADAM
+
+    TRAIN_STOP_EPISODE_REWARD = 15200  # MAX: 3.14 * 10000 = 31400
+    TRAIN_STOP_EPISODE_REWARD_STD = 10.0
+    STOP_PATIENCE_COUNT = 10
+    REPLAY_BUFFER_SIZE = 100000
+
+    MAX_EPISODE_STEP = 10000
+    MAX_GLOBAL_STEP = 10000000
+    LEARNING_RATE = 0.001
+    ACTOR_LEARNING_RATE = 0.0002
+    GAMMA = 0.999
+
+    MIN_REPLAY_SIZE_FOR_TRAIN = 256
+    BATCH_SIZE = 128
+    AVG_EPISODE_SIZE_FOR_STAT = 50
+
+    N_STEP = 4
+    OMEGA = False
+    PER_PROPORTIONAL = False
+    PER_RANK_BASED = False
+
+    TEST_NUM_EPISODES = 3
+
+    DISTRIBUTIONAL = False
+    NOISY_NET = False
+
+    ACTION_SCALE = 250.0
+
+    EPSILON_INIT = 1.0
+    EPSILON_MIN = 0.01
+    EPSILON_MIN_STEP = 1000000
+
+    TYPE_OF_DQN_ACTION = DQNActionType.EPSILON_GREEDY
+    TYPE_OF_DQN_ACTION_SELECTOR = DQNActionSelectorType.SOMETIMES_BLOW_ACTION_SELECTOR
+
+    TRAIN_STEP_FREQ = 2
+
+    UNIT_TIME = 0.006
