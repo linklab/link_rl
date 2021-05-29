@@ -9,6 +9,7 @@ from collections import namedtuple, deque
 from gym.vector import VectorEnv
 from icecream import ic
 
+from codes.c_models.continuous_action.continuous_action_model import ContinuousActionModel
 from codes.e_utils.names import EnvironmentName, RLAlgorithmName
 from codes.e_utils.reward_changer import RewardChanger
 
@@ -120,7 +121,7 @@ class ExperienceSource:
             for env_idx, (env, action_n) in enumerate(zip(self.pool, grouped_actions)):
                 action = np.asarray(action_n)
 
-                if params.RL_ALGORITHM in [RLAlgorithmName.DDPG_V0, RLAlgorithmName.TD3_V0, RLAlgorithmName.SAC_V0]:
+                if isinstance(self.agent.model, ContinuousActionModel):
                     if hasattr(self.agent.params, "ACTION_SCALE") and self.agent.params.ACTION_SCALE:
                         action = self.agent.params.ACTION_SCALE * action
 
