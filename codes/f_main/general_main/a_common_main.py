@@ -10,6 +10,7 @@ import numpy as np
 import wandb
 from termcolor import colored
 
+from codes.c_models.continuous_action.continuous_action_model import ContinuousActionModel
 from codes.e_utils.reward_changer import RewardChanger
 
 print("PyTorch Version", torch.__version__)
@@ -26,7 +27,7 @@ from codes.e_utils.common_utils import save_model, print_environment_info, remov
     print_agent_info, load_model
 from codes.e_utils.train_tracker import EarlyStopping
 from codes.e_utils.logger import get_logger
-from codes.e_utils.names import EnvironmentName, AgentMode
+from codes.e_utils.names import EnvironmentName, AgentMode, RLAlgorithmName
 from codes.b_environments.quanser_rotary_inverted_pendulum.quanser_rip import get_quanser_rip_observation_space, \
     get_quanser_rip_action_space
 from codes.b_environments.rotary_inverted_pendulum.rip import get_rip_observation_space, get_rip_action_space
@@ -271,10 +272,13 @@ class EpisodeProcessor:
 
                 action, _, = self.agent(state)
 
-                if hasattr(params, "ACTION_SCALE") and params.ACTION_SCALE:
-                    action = params.ACTION_SCALE * action[0]
-                else:
-                    action = action[0]
+                action = action[0]
+
+                if isinstance(self.agent.model, ContinuousActionModel):
+                    if hasattr(params, "ACTION_SCALE") and params.ACTION_SCALE:
+                        action = params.ACTION_SCALE * action
+                    else:
+                        action = 1.0 * action
 
                 next_state, reward, done, info = self.test_env.step(action)
 

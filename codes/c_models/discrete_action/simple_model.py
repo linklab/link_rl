@@ -4,11 +4,11 @@ import torch.nn as nn
 from torch.autograd import Variable
 import numpy as np
 
-from codes.c_models.base_model import BaseModel
+from codes.c_models.discrete_action.discrete_action_model import DiscreteActionModel
 from codes.e_utils.names import DeepLearningModelName
 
 
-class SimpleModel(BaseModel):
+class SimpleModel(DiscreteActionModel):
     def __init__(self, worker_id, input_shape=None, num_outputs=None, params=None, device=None):
         super(SimpleModel, self).__init__(worker_id, params, device)
         self.__name__ = "SimpleMlpModel"

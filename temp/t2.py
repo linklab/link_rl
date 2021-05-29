@@ -1,11 +1,5 @@
-import collections
+import numpy as np
 
-counter = collections.Counter()
-counter['a'] += 1
-counter['a'] += 1
-counter['a'] += 1
-counter['a'] += 1
-counter['a'] += 1
-counter['a'] += 1
+l = list(np.array([1, 2, 3]) * 10)
 
-print(len(counter), sum(counter.values()), len(counter) / sum(counter.values()))
+print(l)

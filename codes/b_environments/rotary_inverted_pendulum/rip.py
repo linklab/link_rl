@@ -80,32 +80,32 @@ def get_rip_observation_space(pendulum_type, params):
 
 
 def get_rip_action_space(params, pendulum_type):
-    if pendulum_type == EnvironmentName.PENDULUM_MATLAB_V0:
-        action_index_to_voltage = [
-            -1.0, -0.75, -0.5, -0.3, -0.2, -0.1, 0.0, 0.1, 0.2, 0.3, 0.5, 0.75, 1.0
-        ]
-    elif pendulum_type == EnvironmentName.PENDULUM_MATLAB_DOUBLE_RIP_V0:
-        action_index_to_voltage = [
-            -1.0, -0.75, -0.5, -0.3, -0.2, -0.1, -0.05, 0.0, 0.05, 0.1, 0.2, 0.3, 0.5, 0.75, 1.0
-        ]
-    elif pendulum_type == EnvironmentName.REAL_DEVICE_RIP:
-        action_index_to_voltage = [
-            -1.0, -0.75, -0.5, -0.3, -0.2, -0.1, 0.0, 0.1, 0.2, 0.3, 0.5, 0.75, 1.0
-        ]
-        # action_index_to_voltage = [
-        #     -0.2, 0.0, 0.2
-        # ]
-    elif pendulum_type == EnvironmentName.REAL_DEVICE_DOUBLE_RIP:
-        action_index_to_voltage = [
-            -1.0, -0.75, -0.5, -0.3, -0.2, -0.1, 0.0, 0.1, 0.2, 0.3, 0.5, 0.75, 1.0
-        ]
-    else:
-        raise ValueError()
-
     if params.RL_ALGORITHM in [RLAlgorithmName.DQN_V0]:
+        if pendulum_type == EnvironmentName.PENDULUM_MATLAB_V0:
+            action_index_to_voltage = list(np.array([
+                -1.0, -0.75, -0.5, -0.3, -0.2, -0.1, 0.0, 0.1, 0.2, 0.3, 0.5, 0.75, 1.0
+            ]) * params.ACTION_SCALE)
+        elif pendulum_type == EnvironmentName.PENDULUM_MATLAB_DOUBLE_RIP_V0:
+            action_index_to_voltage = list(np.array([
+                -1.0, -0.75, -0.5, -0.3, -0.2, -0.1, -0.05, 0.0, 0.05, 0.1, 0.2, 0.3, 0.5, 0.75, 1.0
+            ]) * params.ACTION_SCALE)
+        elif pendulum_type == EnvironmentName.REAL_DEVICE_RIP:
+            action_index_to_voltage = list(np.array([
+                -1.0, -0.75, -0.5, -0.3, -0.2, -0.1, 0.0, 0.1, 0.2, 0.3, 0.5, 0.75, 1.0
+            ]) * params.ACTION_SCALE)
+            # action_index_to_voltage = list(np.array([
+            #     -0.2, 0.0, 0.2
+            # ]) * params.ACTION_SCALE)
+        elif pendulum_type == EnvironmentName.REAL_DEVICE_DOUBLE_RIP:
+            action_index_to_voltage = list(np.array([
+                -1.0, -0.75, -0.5, -0.3, -0.2, -0.1, 0.0, 0.1, 0.2, 0.3, 0.5, 0.75, 1.0
+            ]) * params.ACTION_SCALE)
+        else:
+            raise ValueError()
         action_space = gym.spaces.Discrete(len(action_index_to_voltage))
         n_actions = action_space.n
     else:
+        action_index_to_voltage = None
         if hasattr(params, "ACTION_SCALE_MODE") and params.ACTION_SCALE_MODE == "INTERNAL":
             action_space = gym.spaces.Box(
                 low=-params.ACTION_SCALE, high=params.ACTION_SCALE, shape=(1,),
@@ -422,8 +422,8 @@ class RotaryInvertedPendulumEnv(gym.Env):
         if self.total_steps >= self.next_time_step_of_external_blow:
             if self.params.RL_ALGORITHM in [RLAlgorithmName.DQN_V0]:
                 action = random.uniform(
-                    a=self.action_index_to_voltage[0] * self.params.ACTION_SCALE * 2.0,
-                    b=self.action_index_to_voltage[-1] * self.params.ACTION_SCALE * 2.0
+                    a=self.action_index_to_voltage[0] * 2.0,
+                    b=self.action_index_to_voltage[-1] * 2.0
                 )
             elif self.params.RL_ALGORITHM in [
                 RLAlgorithmName.DDPG_V0,
@@ -448,7 +448,7 @@ class RotaryInvertedPendulumEnv(gym.Env):
                 action = action[0]
 
             if self.params.RL_ALGORITHM in [RLAlgorithmName.DQN_V0]:
-                action = self.action_index_to_voltage[int(action)] * self.params.ACTION_SCALE
+                action = self.action_index_to_voltage[int(action)]
 
         if self.pendulum_type == EnvironmentName.PENDULUM_MATLAB_V0:
             self.plant.simulate(action)
