@@ -115,7 +115,7 @@ def get_train_and_test_envs():
         EnvironmentName.REAL_DEVICE_DOUBLE_RIP,
         EnvironmentName.QUANSER_SERVO_2
     ]:
-        test_env = train_env
+        test_env = train_env.envs[0]
     else:
         test_env = rl_utils.get_single_environment(params=params, mode=AgentMode.TEST)
 
