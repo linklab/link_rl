@@ -278,7 +278,7 @@ class EpisodeProcessor:
                     if hasattr(params, "ACTION_SCALE") and params.ACTION_SCALE:
                         action = params.ACTION_SCALE * action
 
-                next_state, reward, done, info = self.test_env.step(action)
+                next_state, reward, done, info = self.test_env.step(action, True)
 
                 if isinstance(self.test_env, RewardChanger):
                     reward = self.test_env.reverse_reward(reward)
