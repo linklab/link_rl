@@ -93,7 +93,7 @@ def get_rip_action_space(params, pendulum_type):
     if params.RL_ALGORITHM in [RLAlgorithmName.DQN_V0]:
         if pendulum_type == EnvironmentName.PENDULUM_MATLAB_V0:
             action_index_to_voltage = list(np.array([
-                -1.0, -0.75, -0.5, -0.3, -0.2, -0.1, 0.0, 0.1, 0.2, 0.3, 0.5, 0.75, 1.0
+                -1.0, -0.75, -0.5, -0.25, -0.1, -0.07, 0.0, 0.07, 0.1, 0.25, 0.5, 0.75, 1.0
             ]) * params.ACTION_SCALE)
         elif pendulum_type == EnvironmentName.PENDULUM_MATLAB_DOUBLE_RIP_V0:
             action_index_to_voltage = list(np.array([
@@ -101,7 +101,7 @@ def get_rip_action_space(params, pendulum_type):
             ]) * params.ACTION_SCALE)
         elif pendulum_type == EnvironmentName.REAL_DEVICE_RIP:
             action_index_to_voltage = list(np.array([
-                -1.0, -0.75, -0.5, -0.3, -0.2, -0.1, 0.0, 0.1, 0.2, 0.3, 0.5, 0.75, 1.0
+                -1.0, -0.75, -0.5, -0.25, -0.1, -0.07, 0.0, 0.07, 0.1, 0.25, 0.5, 0.75, 1.0
             ]) * params.ACTION_SCALE)
             # action_index_to_voltage = list(np.array([
             #     -0.2, 0.0, 0.2
@@ -286,7 +286,6 @@ class RotaryInvertedPendulumEnv(gym.Env):
                     self.pendulum_1_velocity,
                     self.motor_velocity,
                 )
-                print(state)
             else:
                 state = (
                     math.cos(self.pendulum_1_position),
@@ -626,7 +625,6 @@ class RotaryInvertedPendulumEnv(gym.Env):
                     self.pendulum_1_velocity,
                     self.motor_velocity,
                 )
-                print(state)
             else:
                 state = (
                     math.cos(self.pendulum_1_position),
