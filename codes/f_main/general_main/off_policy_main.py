@@ -91,20 +91,28 @@ def actor_func(agent, exp_queue, child_pipe_conn):
                     for current_episode_reward, current_episode_step in zip(episode_rewards, episode_steps):
                         episode += 1
 
-                        solved, good_model_saved, train_info_dict = episode_processor.process(
+                        train_info_dict = episode_processor.process(
                             train_episode_reward_lst_for_test,
                             train_episode_reward_lst_for_stat,
                             current_episode_reward,
                             speed_tracker,
                             step_idx,
                             episode,
-                            early_stopping,
                             current_episode_step,
                             exp
                         )
 
-                        if good_model_saved:
-                            is_good_model_saved = True
+                        if episode % params.TEST_PERIOD_EPISODES == 0:
+                            solved, good_model_saved, evaluation_msg = episode_processor.test(early_stopping, step_idx)
+
+                            if good_model_saved:
+                                is_good_model_saved = True
+
+                            train_info_dict["evaluation_msg"] = evaluation_msg
+                            train_info_dict["solved"] = solved
+                        else:
+                            train_info_dict["evaluation_msg"] = None
+                            train_info_dict["solved"] = None
 
                         if thread:
                             exp_queue.put(train_info_dict)
