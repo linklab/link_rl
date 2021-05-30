@@ -257,6 +257,7 @@ class EpisodeProcessor:
         episode_rewards = np.zeros(num_tests)
 
         tests_done = 0
+        print("########################################")
         for test_episode in range(num_tests):
             done = False
             episode_reward = 0
@@ -291,6 +292,7 @@ class EpisodeProcessor:
             tests_done += 1
             print("TEST {0}: EPISODE REWARD: {1:7.2f}".format(tests_done, float(np.mean(episode_reward).item())))
 
+        print("########################################")
         self.agent.agent_mode = AgentMode.TRAIN
         self.agent.model.train()
 
