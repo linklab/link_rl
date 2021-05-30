@@ -48,10 +48,18 @@ def get_rip_observation_space(pendulum_type, params):
     if pendulum_type in [
         EnvironmentName.PENDULUM_MATLAB_V0, EnvironmentName.REAL_DEVICE_RIP
     ]:
-        high = np.array(
-            [1., 1., max_velocity, 1., 1., max_velocity],
-            dtype=np.float32
-        )
+        if hasattr(params, "PENDULUM_STATE_INFO") and params.PENDULUM_STATE_INFO == 1:
+            high = np.array(
+                [1., 1., max_velocity], dtype=np.float32
+            )
+        elif hasattr(params, "PENDULUM_STATE_INFO") and params.PENDULUM_STATE_INFO == 2:
+            high = np.array(
+                [1., 1., max_velocity, max_velocity], dtype=np.float32
+            )
+        else:
+            high = np.array(
+                [1., 1., max_velocity, 1., 1., max_velocity], dtype=np.float32
+            )
     elif pendulum_type in [
         EnvironmentName.PENDULUM_MATLAB_DOUBLE_RIP_V0, EnvironmentName.REAL_DEVICE_DOUBLE_RIP
     ]:
@@ -596,7 +604,7 @@ class RotaryInvertedPendulumEnv(gym.Env):
                     math.sin(self.pendulum_1_position),
                     self.pendulum_1_velocity,
                 )
-            elif hasattr(self.params, "PENDULUM_STATE_INFO") and self.params.PENDULUM_STAETE_INFO == 2:
+            elif hasattr(self.params, "PENDULUM_STATE_INFO") and self.params.PENDULUM_STATE_INFO == 2:
                 state = (
                     math.cos(self.pendulum_1_position),
                     math.sin(self.pendulum_1_position),
