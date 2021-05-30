@@ -156,7 +156,7 @@ class AgentDQN(OffPolicyAgent):
         else:
             q_v = self.test_model(states)
             q = q_v.detach().cpu().numpy()
-            print(q, "!!!!!!!!!!!!")
+            print(q, np.argmax(q, axis=1), "!!!!!!!!!!!!")
             actions = self.test_and_play_action_selector(q)
 
         return actions, agent_states
