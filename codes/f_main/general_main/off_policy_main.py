@@ -191,6 +191,8 @@ def main():
                 mean_actor_objective = np.mean(actor_objective_dequeue) \
                     if len(actor_objective_dequeue) > 0 else 0.0
 
+                print(train_info_dict["last_info"], "!!!!!!!!!!!!!!")
+
                 print_performance(
                     params=params,
                     episode_done_step=train_info_dict["step_idx"],
