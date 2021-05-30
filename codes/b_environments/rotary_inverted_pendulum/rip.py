@@ -448,9 +448,7 @@ class RotaryInvertedPendulumEnv(gym.Env):
                 action = action[0]
 
             if self.params.RL_ALGORITHM in [RLAlgorithmName.DQN_V0]:
-                action_power = self.action_index_to_voltage[int(action)]
-                print(action, action_power, "||", end=" ")
-                action = action_power
+                action = self.action_index_to_voltage[int(action)]
 
         if self.pendulum_type == EnvironmentName.PENDULUM_MATLAB_V0:
             self.plant.simulate(action)
