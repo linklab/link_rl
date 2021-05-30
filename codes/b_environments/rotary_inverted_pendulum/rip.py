@@ -286,7 +286,6 @@ class RotaryInvertedPendulumEnv(gym.Env):
                     self.pendulum_1_velocity,
                     self.motor_velocity,
                 )
-                print(state)
             else:
                 state = (
                     math.cos(self.pendulum_1_position),
@@ -626,7 +625,6 @@ class RotaryInvertedPendulumEnv(gym.Env):
                     self.pendulum_1_velocity,
                     self.motor_velocity,
                 )
-                print(state)
             else:
                 state = (
                     math.cos(self.pendulum_1_position),
