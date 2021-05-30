@@ -273,14 +273,29 @@ class RotaryInvertedPendulumEnv(gym.Env):
                 self.pendulum_1_velocity = rip_response.link_1_velocity
                 self.simulation_time = None
 
-            state = (
-                math.cos(self.pendulum_1_position),
-                math.sin(self.pendulum_1_position),
-                self.pendulum_1_velocity,
-                math.cos(0.0),  # 1.0
-                math.sin(0.0),  # 0.0
-                self.motor_velocity,
-            )
+            if hasattr(self.params, "PENDULUM_STATE_INFO") and self.params.PENDULUM_STATE_INFO == 1:
+                state = (
+                    math.cos(self.pendulum_1_position),
+                    math.sin(self.pendulum_1_position),
+                    self.pendulum_1_velocity,
+                )
+            elif hasattr(self.params, "PENDULUM_STATE_INFO") and self.params.PENDULUM_STATE_INFO == 2:
+                state = (
+                    math.cos(self.pendulum_1_position),
+                    math.sin(self.pendulum_1_position),
+                    self.pendulum_1_velocity,
+                    self.motor_velocity,
+                )
+                print(state)
+            else:
+                state = (
+                    math.cos(self.pendulum_1_position),
+                    math.sin(self.pendulum_1_position),
+                    self.pendulum_1_velocity,
+                    math.cos(self.initial_motor_position - self.motor_position),
+                    math.sin(self.initial_motor_position - self.motor_position),
+                    self.motor_velocity,
+                )
 
             self.update_current_state_for_double_rip(adjusted_pendulum_1_radian=0.0, adjusted_pendulum_2_radian=0.0)
 
