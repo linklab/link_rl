@@ -78,6 +78,15 @@ def train_main(train_env, test_env):
                             train_info_dict["evaluation_msg"] = None
                             train_info_dict["solved"] = None
 
+                        if params.ENVIRONMENT_ID in [
+                            EnvironmentName.PENDULUM_MATLAB_V0,
+                            EnvironmentName.PENDULUM_MATLAB_DOUBLE_RIP_V0,
+                            EnvironmentName.REAL_DEVICE_RIP,
+                            EnvironmentName.REAL_DEVICE_DOUBLE_RIP,
+                            # EnvironmentName.QUANSER_SERVO_2
+                        ]:
+                            train_info_dict["last_done_reason"] = train_env.envs[0].last_done_reason.value
+
                         mean_loss = np.mean(loss_dequeue) if len(loss_dequeue) > 0 else 0.0
                         mean_actor_objective = np.mean(actor_objective_dequeue) \
                             if len(actor_objective_dequeue) > 0 else 0.0

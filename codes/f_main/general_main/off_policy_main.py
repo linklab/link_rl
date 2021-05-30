@@ -119,7 +119,7 @@ def actor_func(agent, exp_queue, child_pipe_conn):
                             EnvironmentName.REAL_DEVICE_DOUBLE_RIP,
                             # EnvironmentName.QUANSER_SERVO_2
                         ]:
-                            train_info_dict["last_done_reason"] = train_env.envs[0].last_done_reason
+                            train_info_dict["last_done_reason"] = train_env.envs[0].last_done_reason.value
 
                         if thread:
                             exp_queue.put(train_info_dict)
