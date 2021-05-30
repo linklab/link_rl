@@ -351,7 +351,10 @@ def print_performance(
         print(", profit {0:8.1f}".format(last_info['profit']), end="")
 
     if last_action is not None:
-        print(", last action {0}".format(last_action), flush=True)
+        print(", last action {0}".format(last_action), end="")
+
+    if "done_reason" in last_info:
+        print(", REASON: {0}".format(last_info["done_reason"]), flush=True)
     else:
         print("", flush=True)
 
