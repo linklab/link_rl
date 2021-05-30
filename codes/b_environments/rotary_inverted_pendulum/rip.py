@@ -392,7 +392,7 @@ class RotaryInvertedPendulumEnv(gym.Env):
         else:
             self.is_upright = False
 
-    def step(self, action, test_mode=False):
+    def step(self, action):
         #action = 100
         ############# time check #############################
         if self.pendulum_type in [EnvironmentName.REAL_DEVICE_RIP, EnvironmentName.REAL_DEVICE_DOUBLE_RIP]:
@@ -449,8 +449,7 @@ class RotaryInvertedPendulumEnv(gym.Env):
 
             if self.params.RL_ALGORITHM in [RLAlgorithmName.DQN_V0]:
                 action_power = self.action_index_to_voltage[int(action)]
-                if test_mode:
-                    print(action, action_power, "!!!!!!!!!!!!!!")
+                print(action, action_power, "||", end=" ")
                 action = action_power
 
         if self.pendulum_type == EnvironmentName.PENDULUM_MATLAB_V0:
