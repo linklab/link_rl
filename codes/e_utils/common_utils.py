@@ -297,6 +297,7 @@ def print_environment_info(env, params):
         #print(f"single_action high: {[max_value for max_value in env.single_action_space.high]}")
         pass
 
+
 def print_agent_info(agent, params):
     print("############## [AGENT INFO] ##############")
     print(f"Model: {params.DEEP_LEARNING_MODEL}")

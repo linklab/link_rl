@@ -152,6 +152,7 @@ class EpisodeProcessor:
         self.test_mean_episode_reward = None
         self.test_std_episode_reward = None
         self.evaluation_msg = None
+        self.early_stopping = get_early_stopping(agent)
 
         self.test_mean_episode_reward, self.test_std_episode_reward = self.agent_model_test(
             num_tests=1
@@ -206,7 +207,7 @@ class EpisodeProcessor:
 
         return train_info_dict
 
-    def test(self, early_stopping, step_idx):
+    def test(self, step_idx):
         self.test_mean_episode_reward, self.test_std_episode_reward = self.agent_model_test(
             num_tests=params.TEST_NUM_EPISODES
         )
@@ -220,7 +221,7 @@ class EpisodeProcessor:
             test_env_str, params.TEST_NUM_EPISODES, mean_std_str
         )
 
-        solved, good_model_saved, early_stopping_evaluation_msg = early_stopping.evaluate(
+        solved, good_model_saved, early_stopping_evaluation_msg = self.early_stopping.evaluate(
             evaluation_value=self.test_mean_episode_reward,
             evaluation_value_std=self.test_std_episode_reward,
             episode_done_step=step_idx

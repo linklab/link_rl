@@ -30,7 +30,6 @@ def train_main(train_env, test_env):
     agent.set_experience_source_to_buffer(experience_source=experience_source)
 
     step_idx = 0
-    early_stopping = get_early_stopping(agent)
 
     episode = 0
     solved = False
@@ -68,7 +67,7 @@ def train_main(train_env, test_env):
                         )
 
                         if episode % params.TEST_PERIOD_EPISODES == 0:
-                            solved, good_model_saved, evaluation_msg = episode_processor.test(early_stopping, step_idx)
+                            solved, good_model_saved, evaluation_msg = episode_processor.test(step_idx)
 
                             if good_model_saved:
                                 is_good_model_saved = True
