@@ -55,15 +55,17 @@ def get_rip_observation_space(pendulum_type, params):
     elif pendulum_type in [
         EnvironmentName.PENDULUM_MATLAB_DOUBLE_RIP_V0, EnvironmentName.REAL_DEVICE_DOUBLE_RIP
     ]:
-        if hasattr(params, "IGNORE_ARM_INFO") and params.IGNORE_ARM_INFO is True:
+        if hasattr(params, "DOUBLE_PENDULUM_STATE_INFO") and params.DOUBLE_PENDULUM_STATE_INFO == 1:
             high = np.array(
-                [1., 1., max_velocity, 1., 1., max_velocity],
-                dtype=np.float32
+                [1., 1., max_velocity, 1., 1., max_velocity], dtype=np.float32
+            )
+        elif hasattr(params, "DOUBLE_PENDULUM_STATE_INFO") and params.DOUBLE_PENDULUM_STATE_INFO == 2:
+            high = np.array(
+                [1., 1., max_velocity, 1., 1., max_velocity, max_velocity], dtype=np.float32
             )
         else:
             high = np.array(
-                [1., 1., max_velocity, 1., 1., max_velocity, 1., 1., max_velocity],
-                dtype=np.float32
+                [1., 1., max_velocity, 1., 1., max_velocity, 1., 1., max_velocity], dtype=np.float32
             )
     else:
         raise ValueError()
@@ -274,7 +276,9 @@ class RotaryInvertedPendulumEnv(gym.Env):
 
             self.update_current_state_for_double_rip(adjusted_pendulum_1_radian=0.0, adjusted_pendulum_2_radian=0.0)
 
-        elif self.pendulum_type in [EnvironmentName.PENDULUM_MATLAB_DOUBLE_RIP_V0, EnvironmentName.REAL_DEVICE_DOUBLE_RIP]:
+        elif self.pendulum_type in [
+            EnvironmentName.PENDULUM_MATLAB_DOUBLE_RIP_V0, EnvironmentName.REAL_DEVICE_DOUBLE_RIP
+        ]:
             if self.pendulum_type == EnvironmentName.PENDULUM_MATLAB_DOUBLE_RIP_V0:
                 self.pendulum_1_position, self.motor_position, self.pendulum_2_position, self.pendulum_1_velocity, \
                 self.motor_velocity, self.pendulum_2_velocity, self.simulation_time = self.plant.getHistory()
@@ -291,7 +295,7 @@ class RotaryInvertedPendulumEnv(gym.Env):
 
             self.set_max_three_velocity()
 
-            if hasattr(self.params, "IGNORE_ARM_INFO") and self.params.IGNORE_ARM_INFO is True:
+            if hasattr(self.params, "DOUBLE_PENDULUM_STATE_INFO") and self.params.DOUBLE_PENDULUM_STATE_INFO == 1:
                 state = (
                     math.cos(self.pendulum_1_position),
                     math.sin(self.pendulum_1_position),
@@ -299,6 +303,16 @@ class RotaryInvertedPendulumEnv(gym.Env):
                     math.cos(self.pendulum_2_position),
                     math.sin(self.pendulum_2_position),
                     self.pendulum_2_velocity / VELOCITY_STATE_DENOMINATOR,
+                )
+            elif hasattr(self.params, "DOUBLE_PENDULUM_STATE_INFO") and self.params.DOUBLE_PENDULUM_STATE_INFO == 2:
+                state = (
+                    math.cos(self.pendulum_1_position),
+                    math.sin(self.pendulum_1_position),
+                    self.pendulum_1_velocity / VELOCITY_STATE_DENOMINATOR,
+                    math.cos(self.pendulum_2_position),
+                    math.sin(self.pendulum_2_position),
+                    self.pendulum_2_velocity / VELOCITY_STATE_DENOMINATOR,
+                    self.motor_velocity / VELOCITY_STATE_DENOMINATOR,
                 )
             else:
                 state = (
@@ -584,13 +598,15 @@ class RotaryInvertedPendulumEnv(gym.Env):
                 math.sin(self.initial_motor_position - self.motor_position),
                 self.motor_velocity,
             )
-        elif self.pendulum_type in [EnvironmentName.PENDULUM_MATLAB_DOUBLE_RIP_V0, EnvironmentName.REAL_DEVICE_DOUBLE_RIP]:
+        elif self.pendulum_type in [
+            EnvironmentName.PENDULUM_MATLAB_DOUBLE_RIP_V0, EnvironmentName.REAL_DEVICE_DOUBLE_RIP
+        ]:
             self.set_max_three_velocity()
 
             # info["max_pendulum_1_velocity"] = self.max_pendulum_1_velocity
             # info["max_pendulum_2_velocity"] = self.max_pendulum_2_velocity
             # info["max_motor_velocity"] = self.max_motor_velocity
-            if hasattr(self.params, "IGNORE_ARM_INFO") and self.params.IGNORE_ARM_INFO is True:
+            if hasattr(self.params, "DOUBLE_PENDULUM_STATE_INFO") and self.params.DOUBLE_PENDULUM_STATE_INFO == 1:
                 state = (
                     math.cos(self.pendulum_1_position),
                     math.sin(self.pendulum_1_position),
@@ -598,6 +614,16 @@ class RotaryInvertedPendulumEnv(gym.Env):
                     math.cos(self.pendulum_2_position),
                     math.sin(self.pendulum_2_position),
                     self.pendulum_2_velocity / VELOCITY_STATE_DENOMINATOR,
+                )
+            elif hasattr(self.params, "DOUBLE_PENDULUM_STATE_INFO") and self.params.DOUBLE_PENDULUM_STATE_INFO == 2:
+                state = (
+                    math.cos(self.pendulum_1_position),
+                    math.sin(self.pendulum_1_position),
+                    self.pendulum_1_velocity / VELOCITY_STATE_DENOMINATOR,
+                    math.cos(self.pendulum_2_position),
+                    math.sin(self.pendulum_2_position),
+                    self.pendulum_2_velocity / VELOCITY_STATE_DENOMINATOR,
+                    self.motor_velocity / VELOCITY_STATE_DENOMINATOR,
                 )
             else:
                 state = (
