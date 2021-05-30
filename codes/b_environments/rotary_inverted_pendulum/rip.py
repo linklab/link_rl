@@ -590,14 +590,29 @@ class RotaryInvertedPendulumEnv(gym.Env):
             }
 
         if self.pendulum_type in [EnvironmentName.PENDULUM_MATLAB_V0, EnvironmentName.REAL_DEVICE_RIP]:
-            state = (
-                math.cos(self.pendulum_1_position),
-                math.sin(self.pendulum_1_position),
-                self.pendulum_1_velocity,
-                math.cos(self.initial_motor_position - self.motor_position),
-                math.sin(self.initial_motor_position - self.motor_position),
-                self.motor_velocity,
-            )
+            if hasattr(self.params, "PENDULUM_STATE_INFO") and self.params.PENDULUM_STATE_INFO == 1:
+                state = (
+                    math.cos(self.pendulum_1_position),
+                    math.sin(self.pendulum_1_position),
+                    self.pendulum_1_velocity,
+                )
+            elif hasattr(self.params, "PENDULUM_STATE_INFO") and self.params.PENDULUM_STAETE_INFO == 2:
+                state = (
+                    math.cos(self.pendulum_1_position),
+                    math.sin(self.pendulum_1_position),
+                    self.pendulum_1_velocity,
+                    self.motor_velocity,
+                )
+                print(state)
+            else:
+                state = (
+                    math.cos(self.pendulum_1_position),
+                    math.sin(self.pendulum_1_position),
+                    self.pendulum_1_velocity,
+                    math.cos(self.initial_motor_position - self.motor_position),
+                    math.sin(self.initial_motor_position - self.motor_position),
+                    self.motor_velocity,
+                )
         elif self.pendulum_type in [
             EnvironmentName.PENDULUM_MATLAB_DOUBLE_RIP_V0, EnvironmentName.REAL_DEVICE_DOUBLE_RIP
         ]:
