@@ -217,6 +217,8 @@ class RotaryInvertedPendulumEnv(gym.Env):
         self.max_pendulum_2_velocity = 0.0
         self.max_motor_velocity = 0.0
 
+        self.last_done_reason = None
+
     def get_n_states(self):
         n_states = self.observation_space.shape[0]
         return n_states
@@ -560,13 +562,6 @@ class RotaryInvertedPendulumEnv(gym.Env):
         if self.count_continuous_fast_pendulum_velocity > 100:
             self.too_long_and_fast_pendulum_velocity = True
 
-        # print(self.initial_motor_position, self.motor_position)
-        done_conditions = [
-            self.episode_steps >= self.params.MAX_EPISODE_STEP,
-            self.too_much_rotate and not self.is_upright,
-            self.too_long_and_fast_pendulum_velocity
-        ]
-
         adjusted_pendulum_1_radian = self.pendulum_position_to_adjusted_radian(self.pendulum_1_position)
         adjusted_pendulum_2_radian = self.pendulum_position_to_adjusted_radian(self.pendulum_2_position)
         # print("pendulum 1 angle :", adjusted_pendulum_1_radian, "pendulum 2 angle :", adjusted_pendulum_2_radian)
@@ -600,15 +595,21 @@ class RotaryInvertedPendulumEnv(gym.Env):
             "adjusted_pendulum_2_radian": adjusted_pendulum_2_radian if self.pendulum_type in [EnvironmentName.PENDULUM_MATLAB_DOUBLE_RIP_V0, EnvironmentName.REAL_DEVICE_DOUBLE_RIP] else None
         }
 
+        done_conditions = [
+            self.episode_steps >= self.params.MAX_EPISODE_STEP,
+            self.too_much_rotate and not self.is_upright,
+            self.too_long_and_fast_pendulum_velocity
+        ]
+
         if any(done_conditions):
             done = True
 
             if self.episode_steps >= self.params.MAX_EPISODE_STEP:
-                info["done_reason"] = DoneReason.MAX_EPISODE_STEP
+                self.last_done_reason = DoneReason.MAX_EPISODE_STEP
             elif self.too_much_rotate and not self.is_upright:
-                info["done_reason"] = DoneReason.TOO_MUCH_ROTATE
+                self.last_done_reason = DoneReason.TOO_MUCH_ROTATE
             elif self.too_long_and_fast_pendulum_velocity:
-                info["done_reason"] = DoneReason.TOO_LASTING_FAST
+                self.last_done_reason = DoneReason.TOO_LASTING_FAST
             else:
                 raise ValueError()
 

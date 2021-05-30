@@ -112,6 +112,15 @@ def actor_func(agent, exp_queue, child_pipe_conn):
                             train_info_dict["evaluation_msg"] = None
                             train_info_dict["solved"] = None
 
+                        if params.ENVIRONMENT_ID in [
+                            EnvironmentName.PENDULUM_MATLAB_V0,
+                            EnvironmentName.PENDULUM_MATLAB_DOUBLE_RIP_V0,
+                            EnvironmentName.REAL_DEVICE_RIP,
+                            EnvironmentName.REAL_DEVICE_DOUBLE_RIP,
+                            # EnvironmentName.QUANSER_SERVO_2
+                        ]:
+                            train_info_dict["last_done_reason"] = train_env.envs[0].last_done_reason
+
                         if thread:
                             exp_queue.put(train_info_dict)
                         else:
@@ -191,8 +200,6 @@ def main():
                 mean_actor_objective = np.mean(actor_objective_dequeue) \
                     if len(actor_objective_dequeue) > 0 else 0.0
 
-                print(train_info_dict["last_info"], "!!!!!!!!!!!!!!")
-
                 print_performance(
                     params=params,
                     episode_done_step=train_info_dict["step_idx"],
@@ -208,7 +215,8 @@ def main():
                     mean_loss=mean_loss,
                     mean_actor_objective=mean_actor_objective,
                     last_action=train_info_dict["last_actions"],
-                    evaluation_msg=train_info_dict["evaluation_msg"]
+                    evaluation_msg=train_info_dict["evaluation_msg"],
+                    last_done_reason=train_info_dict["last_done_reason"]
                 )
 
                 if train_info_dict["solved"]:

@@ -296,7 +296,7 @@ def last_model_save(agent, step_idx, train_episode_reward_lst_for_stat):
 def print_performance(
         params, episode_done_step, done_episode, episode_reward, mean_episode_reward, epsilon,
         elapsed_time, last_info, speed, mean_loss, mean_actor_objective, worker_id=None, last_action=None,
-        evaluation_msg=None
+        evaluation_msg=None, last_done_reason=None
 ):
     if worker_id is not None:
         prefix = "[Worker ID: {0}]".format(worker_id)
@@ -353,8 +353,8 @@ def print_performance(
     if last_action is not None:
         print(", last action {0}".format(last_action), end="")
 
-    if "done_reason" in last_info:
-        print(", REASON: {0}".format(last_info["done_reason"]), flush=True)
+    if last_done_reason is not None:
+        print(", REASON: {0}".format(last_done_reason), flush=True)
     else:
         print("", flush=True)
 
