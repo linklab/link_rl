@@ -1,4 +1,3 @@
-from codes.a_config._rl_parameters.off_policy.parameter_td3 import TD3ActionType, TD3ActionSelectorType
 from codes.a_config._rl_parameters.on_policy.parameter_ppo import PARAMETERS_PPO
 from codes.e_utils.names import *
 from codes.a_config.parameters_general import PARAMETERS_GENERAL, RIPEnvRewardType
