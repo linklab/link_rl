@@ -114,9 +114,7 @@ class RotaryDoubleInvertedPendulum:
             # print(action_1,action_2)
             spi.xfer2([0x40, 0x00, 0x03, action_1, action_2])
 
-
         # print("spi write elapsed time : {0:10.8f} \n\n".format(time.time() - last_time))
-
 
     def reset(self, rip_request, context):
         arm_angle, arm_velocity, link_1_angle, link_1_velocity, link_2_angle, link_2_velocity = self.calculate_state()
