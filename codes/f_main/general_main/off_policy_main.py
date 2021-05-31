@@ -120,6 +120,8 @@ def actor_func(agent, exp_queue, child_pipe_conn):
                             # EnvironmentName.QUANSER_SERVO_2
                         ]:
                             train_info_dict["last_done_reason"] = train_env.envs[0].last_done_reason.value
+                        else:
+                            train_info_dict["last_done_reason"] = None
 
                         if thread:
                             exp_queue.put(train_info_dict)
@@ -227,6 +229,7 @@ def main():
                     train_info_dict["train mean actor objective"] = mean_actor_objective
                     del train_info_dict["evaluation_msg"]
                     del train_info_dict["solved"]
+                    del train_info_dict["last_done_reason"]
 
                     if params.RL_ALGORITHM in [
                         RLAlgorithmName.DDPG_V0,
