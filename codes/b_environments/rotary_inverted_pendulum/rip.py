@@ -556,7 +556,7 @@ class RotaryInvertedPendulumEnv(gym.Env):
         else:
             self.count_continuous_fast_pendulum_velocity = 0
 
-        if abs(self.initial_motor_position - self.motor_position) > math.pi * 3:
+        if abs(self.initial_motor_position - self.motor_position) > math.pi * 4:
             self.too_much_rotate = True
 
         if self.count_continuous_fast_pendulum_velocity > 100:
@@ -737,8 +737,8 @@ class RotaryInvertedPendulumEnv(gym.Env):
 
         reward = max(0.0, reward)
 
-        # if self.too_much_rotate or self.too_long_and_fast_pendulum_velocity:
-        #     reward = -1.0
+        if self.too_much_rotate or self.too_long_and_fast_pendulum_velocity:
+            reward = 0.0
 
         return reward
 
