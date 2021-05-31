@@ -531,7 +531,7 @@ class RotaryInvertedPendulumEnv(gym.Env):
             self.motor_velocity, self.pendulum_2_velocity, self.simulation_time = self.plant.getHistory()
         elif self.pendulum_type == EnvironmentName.REAL_DEVICE_RIP:
             # GRPC CALL
-            rip_response = self.server_obj.step(RipRequest(value=0))
+            rip_response = self.server_obj.step(RipRequest(value=action))
             # current_time = time.perf_counter()
             # print("point 2 - elapsed time: {0:10.8f}".format(current_time - self.last_time))
             self.motor_position = math.radians(rip_response.arm_angle)
@@ -776,7 +776,7 @@ class RotaryInvertedPendulumEnv(gym.Env):
         if self.too_much_rotate or self.too_long_and_fast_pendulum_velocity:
             reward = 0.0
 
-        print(adjusted_pendulum_1_radian, energy_penalty, reward)
+        # print(adjusted_pendulum_1_radian, energy_penalty, reward)
 
         return reward
 
