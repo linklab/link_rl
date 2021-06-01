@@ -182,7 +182,7 @@ class EnvironmentQuanserRIP(gym.Env):
         if step_time > self.unit_time:
             self.over_unit_time += 1
 
-        print(self.step_idx, action, step_time)
+        # print(self.step_idx, action, step_time)
         self.previous_time = time.perf_counter()
 
         if self.step_idx % 100000 == 0:
@@ -191,7 +191,8 @@ class EnvironmentQuanserRIP(gym.Env):
 
         if type(action) is np.ndarray:
             action = action[0]
-            action = action * params.ACTION_SCALE
+
+        action = action * params.ACTION_SCALE
 
         if self.params.RL_ALGORITHM in [RLAlgorithmName.DQN_V0]:
             action = self.action_index_to_voltage[int(action)]
