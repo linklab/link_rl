@@ -292,10 +292,10 @@ class RotaryInvertedPendulumEnv(gym.Env):
                 state = (
                     math.cos(self.pendulum_1_position),
                     math.sin(self.pendulum_1_position),
-                    self.pendulum_1_velocity,
+                    self.pendulum_1_velocity / VELOCITY_STATE_DENOMINATOR,
                     math.cos(self.initial_motor_position - self.motor_position),
                     math.sin(self.initial_motor_position - self.motor_position),
-                    self.motor_velocity,
+                    self.motor_velocity / VELOCITY_STATE_DENOMINATOR,
                     self.previous_actions[0],
                     self.previous_actions[1]
                 )
@@ -303,7 +303,7 @@ class RotaryInvertedPendulumEnv(gym.Env):
                 state = (
                     math.cos(self.pendulum_1_position),
                     math.sin(self.pendulum_1_position),
-                    self.pendulum_1_velocity,
+                    self.pendulum_1_velocity / VELOCITY_STATE_DENOMINATOR,
                     self.previous_actions[0],
                     self.previous_actions[1]
                 )
@@ -311,8 +311,8 @@ class RotaryInvertedPendulumEnv(gym.Env):
                 state = (
                     math.cos(self.pendulum_1_position),
                     math.sin(self.pendulum_1_position),
-                    self.pendulum_1_velocity,
-                    self.motor_velocity,
+                    self.pendulum_1_velocity / VELOCITY_STATE_DENOMINATOR,
+                    self.motor_velocity / VELOCITY_STATE_DENOMINATOR,
                     self.previous_actions[0],
                     self.previous_actions[1]
                 )
@@ -577,7 +577,7 @@ class RotaryInvertedPendulumEnv(gym.Env):
         #print(self.motor_position, math.cos(self.motor_position), math.sin(self.motor_position))
         # print("!!!!!!!!!", self.pendulum_2_position)
 
-        if self.pendulum_1_velocity > 1500:
+        if self.pendulum_1_velocity > 1400:
             self.count_continuous_fast_pendulum_velocity += 1
         else:
             self.count_continuous_fast_pendulum_velocity = 0
@@ -652,10 +652,10 @@ class RotaryInvertedPendulumEnv(gym.Env):
                 state = (
                     math.cos(self.pendulum_1_position),
                     math.sin(self.pendulum_1_position),
-                    self.pendulum_1_velocity,
+                    self.pendulum_1_velocity / VELOCITY_STATE_DENOMINATOR,
                     math.cos(self.initial_motor_position - self.motor_position),
                     math.sin(self.initial_motor_position - self.motor_position),
-                    self.motor_velocity,
+                    self.motor_velocity / VELOCITY_STATE_DENOMINATOR,
                     self.previous_actions[0],
                     self.previous_actions[1]
                 )
@@ -663,7 +663,7 @@ class RotaryInvertedPendulumEnv(gym.Env):
                 state = (
                     math.cos(self.pendulum_1_position),
                     math.sin(self.pendulum_1_position),
-                    self.pendulum_1_velocity,
+                    self.pendulum_1_velocity / VELOCITY_STATE_DENOMINATOR,
                     self.previous_actions[0],
                     self.previous_actions[1]
                 )
@@ -671,8 +671,8 @@ class RotaryInvertedPendulumEnv(gym.Env):
                 state = (
                     math.cos(self.pendulum_1_position),
                     math.sin(self.pendulum_1_position),
-                    self.pendulum_1_velocity,
-                    self.motor_velocity,
+                    self.pendulum_1_velocity / VELOCITY_STATE_DENOMINATOR,
+                    self.motor_velocity / VELOCITY_STATE_DENOMINATOR,
                     self.previous_actions[0],
                     self.previous_actions[1]
                 )
@@ -755,6 +755,8 @@ class RotaryInvertedPendulumEnv(gym.Env):
         # ))
 
         # self.set_unit_time()
+
+        # print(state, reward)
 
         return state, reward, done, info
 
