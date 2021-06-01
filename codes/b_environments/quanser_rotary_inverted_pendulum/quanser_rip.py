@@ -191,7 +191,8 @@ class EnvironmentQuanserRIP(gym.Env):
 
         if type(action) is np.ndarray:
             action = action[0]
-            action = action * params.ACTION_SCALE
+
+        action = action * params.ACTION_SCALE
 
         if self.params.RL_ALGORITHM in [RLAlgorithmName.DQN_V0]:
             action = self.action_index_to_voltage[int(action)]
