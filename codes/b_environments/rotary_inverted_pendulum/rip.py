@@ -425,6 +425,17 @@ class RotaryInvertedPendulumEnv(gym.Env):
 
         return adjusted_radian
 
+    def update_current_state(self, adjusted_pendulum_1_radian):
+        if math.pi - math.radians(12) < adjusted_pendulum_1_radian <= math.pi:
+            self.count_continuous_uprights += 1
+        else:
+            self.count_continuous_uprights = 0
+
+        if self.count_continuous_uprights >= 1:
+            self.is_upright = True
+        else:
+            self.is_upright = False
+
     def update_current_state_for_double_rip(self, adjusted_pendulum_1_radian, adjusted_pendulum_2_radian):
         if self.pendulum_type in [EnvironmentName.PENDULUM_MATLAB_DOUBLE_RIP_V0, EnvironmentName.REAL_DEVICE_DOUBLE_RIP]:
             upright_conditions = [
@@ -584,7 +595,7 @@ class RotaryInvertedPendulumEnv(gym.Env):
         if self.pendulum_type in [
             EnvironmentName.PENDULUM_MATLAB_V0, EnvironmentName.REAL_DEVICE_RIP
         ]:
-            self.update_current_state_for_double_rip(adjusted_pendulum_1_radian)
+            self.update_current_state(adjusted_pendulum_1_radian)
             reward = self.get_reward(adjusted_pendulum_1_radian)
         elif self.pendulum_type in [
             EnvironmentName.PENDULUM_MATLAB_DOUBLE_RIP_V0, EnvironmentName.REAL_DEVICE_DOUBLE_RIP
@@ -765,6 +776,8 @@ class RotaryInvertedPendulumEnv(gym.Env):
 
         if self.too_much_rotate or self.too_long_and_fast_pendulum_velocity:
             reward = 0.0
+
+        # print(adjusted_pendulum_1_radian, energy_penalty, reward)
 
         return reward
 
