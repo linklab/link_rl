@@ -93,6 +93,9 @@ def get_single_environment(params=None, mode=AgentMode.TRAIN):
     elif params.ENVIRONMENT_ID == EnvironmentName.QUANSER_SERVO_2:
         from codes.b_environments.quanser_rotary_inverted_pendulum.quanser_rip import EnvironmentQuanserRIP
         env = EnvironmentQuanserRIP()
+    elif params.ENVIRONMENT_ID == EnvironmentName.SYNCRONIZE_V0:
+        from codes.b_environments.quanser_rotary_inverted_pendulum.sync_env import SyncronizeEnv
+        env = SyncronizeEnv()
     elif params.ENVIRONMENT_ID in [
         EnvironmentName.CARTPOLE_V0, EnvironmentName.CARTPOLE_V1,
         EnvironmentName.MOUNTAINCAR_V0, EnvironmentName.MOUNTAINCARCONTINUOUS_V0,
