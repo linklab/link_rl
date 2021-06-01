@@ -503,6 +503,7 @@ class RotaryInvertedPendulumEnv(gym.Env):
             if type(action) is np.ndarray:
                 action = action[0]
                 self.previous_actions.append(float(action))
+                action = action * self.params.ACTION_SCALE
 
             if self.params.RL_ALGORITHM in [RLAlgorithmName.DQN_V0]:
                 self.previous_actions.append(float(action))

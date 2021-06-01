@@ -121,7 +121,13 @@ class ExperienceSource:
             for env_idx, (env, action_n) in enumerate(zip(self.pool, grouped_actions)):
                 action = np.asarray(action_n)
 
-                if isinstance(self.agent.model, ContinuousActionModel):
+                if isinstance(self.agent.model, ContinuousActionModel) and params.ENVIRONMENT_ID not in [
+                    EnvironmentName.PENDULUM_MATLAB_V0,
+                    EnvironmentName.PENDULUM_MATLAB_DOUBLE_RIP_V0,
+                    EnvironmentName.REAL_DEVICE_RIP,
+                    EnvironmentName.REAL_DEVICE_DOUBLE_RIP,
+                    EnvironmentName.QUANSER_SERVO_2
+                ]:
                     if hasattr(self.agent.params, "ACTION_SCALE") and self.agent.params.ACTION_SCALE:
                         action = self.agent.params.ACTION_SCALE * action
 
