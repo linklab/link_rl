@@ -2,7 +2,7 @@
 """Client and server classes corresponding to protobuf-defined services."""
 import grpc
 
-import quanser_service_pb2 as quanser__service__pb2
+from . import quanser_service_pb2 as quanser__service__pb2
 
 
 class QuanserRIPStub(object):
