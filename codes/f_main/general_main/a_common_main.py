@@ -10,6 +10,7 @@ import numpy as np
 import wandb
 from termcolor import colored
 
+from codes.c_models.continuous_action.continuous_action_model import ContinuousActionModel
 from codes.e_utils.reward_changer import RewardChanger
 
 print("PyTorch Version", torch.__version__)
@@ -26,7 +27,7 @@ from codes.e_utils.common_utils import save_model, print_environment_info, remov
     print_agent_info, load_model
 from codes.e_utils.train_tracker import EarlyStopping
 from codes.e_utils.logger import get_logger
-from codes.e_utils.names import EnvironmentName, AgentMode
+from codes.e_utils.names import EnvironmentName, AgentMode, RLAlgorithmName
 from codes.b_environments.quanser_rotary_inverted_pendulum.quanser_rip import get_quanser_rip_observation_space, \
     get_quanser_rip_action_space
 from codes.b_environments.rotary_inverted_pendulum.rip import get_rip_observation_space, get_rip_action_space
@@ -65,7 +66,7 @@ def get_agent(env):
             action_shape = action_space.shape
         elif params.ENVIRONMENT_ID == EnvironmentName.QUANSER_SERVO_2:
             observation_space, _ = get_quanser_rip_observation_space()
-            action_space, num_outputs = get_quanser_rip_action_space(params, None)
+            action_space, num_outputs, _ = get_quanser_rip_action_space(params)
 
             input_shape = observation_space.shape
             action_shape = action_space.shape
@@ -114,7 +115,7 @@ def get_train_and_test_envs():
         EnvironmentName.REAL_DEVICE_DOUBLE_RIP,
         EnvironmentName.QUANSER_SERVO_2
     ]:
-        test_env = train_env
+        test_env = train_env.envs[0]
     else:
         test_env = rl_utils.get_single_environment(params=params, mode=AgentMode.TEST)
 
@@ -151,6 +152,11 @@ class EpisodeProcessor:
         self.test_mean_episode_reward = None
         self.test_std_episode_reward = None
         self.evaluation_msg = None
+        self.early_stopping = get_early_stopping(agent)
+
+        self.test_mean_episode_reward, self.test_std_episode_reward = self.agent_model_test(
+            num_tests=1
+        )
 
     def process(
             self,
@@ -160,7 +166,6 @@ class EpisodeProcessor:
             speed_tracker,
             step_idx,
             episode,
-            early_stopping,
             current_episode_step,
             exp
     ):
@@ -173,48 +178,7 @@ class EpisodeProcessor:
             episode_done_step=step_idx
         )
 
-        solved = False
-        good_model_saved = False
-
-        if self.test_mean_episode_reward is None and self.test_std_episode_reward is None:
-            self.test_mean_episode_reward, self.test_std_episode_reward = self.agent_model_test(
-                num_tests=1
-            )
-
-        test_over_epsilon_min_step = True
-
-        # test_over_epsilon_min_step_conditions = [
-        #     hasattr(params, "EPSILON_MIN_STEP"),
-        #     params.EPSILON_MIN_STEP is not None,
-        # ]
-        #
-        # if all(test_over_epsilon_min_step_conditions):
-        #     if params.EPSILON_MIN_STEP > 0 and step_idx < params.EPSILON_MIN_STEP:
-        #         test_over_epsilon_min_step = False
-
-        if test_over_epsilon_min_step and episode % params.TEST_PERIOD_EPISODES == 0:
-            self.test_mean_episode_reward, self.test_std_episode_reward = self.agent_model_test(
-                num_tests=params.TEST_NUM_EPISODES
-            )
-            test_env_str = colored("TEST ENV", "yellow")
-
-            mean_std_str = colored(
-                "{0:7.2f}\u00B1{1:.2f}".format(self.test_mean_episode_reward, self.test_std_episode_reward), "yellow"
-            )
-
-            model_save_msg = "* MODEL SAVE & TRAIN STOP TEST for {0} *, EPISODE REWARD ({1} EPISODES): {2}".format(
-                test_env_str, params.TEST_NUM_EPISODES, mean_std_str
-            )
-
-            solved, good_model_saved, early_stopping_evaluation_msg = early_stopping.evaluate(
-                evaluation_value=self.test_mean_episode_reward,
-                evaluation_value_std=self.test_std_episode_reward,
-                episode_done_step=step_idx
-            )
-
-            evaluation_msg = model_save_msg + " ---> " + early_stopping_evaluation_msg
-        else:
-            evaluation_msg = None
+        evaluation_msg = None
 
         train_info_dict = {
             "### EVERY TRAIN EPISODE REWARDS ###": current_episode_reward,
@@ -230,7 +194,6 @@ class EpisodeProcessor:
             "elapsed_time": elapsed_time,
             "last_info": exp.info,
             "evaluation_msg": evaluation_msg,
-            "solved": solved
         }
 
         if epsilon:
@@ -242,7 +205,31 @@ class EpisodeProcessor:
         if "global_uncertainty" in exp.info and hasattr(self.agent, "global_uncertainty"):
             self.agent.global_uncertainty = exp.info["global_uncertainty"]
 
-        return solved, good_model_saved, train_info_dict
+        return train_info_dict
+
+    def test(self, step_idx):
+        self.test_mean_episode_reward, self.test_std_episode_reward = self.agent_model_test(
+            num_tests=params.TEST_NUM_EPISODES
+        )
+        test_env_str = colored("TEST ENV", "yellow")
+
+        mean_std_str = colored(
+            "{0:7.2f}\u00B1{1:.2f}".format(self.test_mean_episode_reward, self.test_std_episode_reward), "yellow"
+        )
+
+        model_save_msg = "* MODEL SAVE & TRAIN STOP TEST for {0} *, EPISODE REWARD ({1} EPISODES): {2}".format(
+            test_env_str, params.TEST_NUM_EPISODES, mean_std_str
+        )
+
+        solved, good_model_saved, early_stopping_evaluation_msg = self.early_stopping.evaluate(
+            evaluation_value=self.test_mean_episode_reward,
+            evaluation_value_std=self.test_std_episode_reward,
+            episode_done_step=step_idx
+        )
+
+        evaluation_msg = model_save_msg + " ---> " + early_stopping_evaluation_msg
+
+        return solved, good_model_saved, evaluation_msg
 
     def agent_model_test(self, num_tests):
         self.agent.agent_mode = AgentMode.TEST
@@ -256,6 +243,7 @@ class EpisodeProcessor:
         episode_rewards = np.zeros(num_tests)
 
         tests_done = 0
+        print("#######################################################################################################")
         for test_episode in range(num_tests):
             done = False
             episode_reward = 0
@@ -271,10 +259,17 @@ class EpisodeProcessor:
 
                 action, _, = self.agent(state)
 
-                if hasattr(params, "ACTION_SCALE") and params.ACTION_SCALE:
-                    action = params.ACTION_SCALE * action[0]
-                else:
-                    action = action[0]
+                action = action[0]
+
+                if isinstance(self.agent.model, ContinuousActionModel) and params.ENVIRONMENT_ID not in [
+                    EnvironmentName.PENDULUM_MATLAB_V0,
+                    EnvironmentName.PENDULUM_MATLAB_DOUBLE_RIP_V0,
+                    EnvironmentName.REAL_DEVICE_RIP,
+                    EnvironmentName.REAL_DEVICE_DOUBLE_RIP,
+                    EnvironmentName.QUANSER_SERVO_2
+                ]:
+                    if hasattr(params, "ACTION_SCALE") and params.ACTION_SCALE:
+                        action = params.ACTION_SCALE * action
 
                 next_state, reward, done, info = self.test_env.step(action)
 
@@ -288,7 +283,6 @@ class EpisodeProcessor:
             episode_rewards[test_episode] = episode_reward
             tests_done += 1
             print("TEST {0}: EPISODE REWARD: {1:7.2f}".format(tests_done, float(np.mean(episode_reward).item())))
-
         self.agent.agent_mode = AgentMode.TRAIN
         self.agent.model.train()
 
@@ -308,7 +302,7 @@ def last_model_save(agent, step_idx, train_episode_reward_lst_for_stat):
 def print_performance(
         params, episode_done_step, done_episode, episode_reward, mean_episode_reward, epsilon,
         elapsed_time, last_info, speed, mean_loss, mean_actor_objective, worker_id=None, last_action=None,
-        evaluation_msg=None
+        evaluation_msg=None, last_done_reason=None
 ):
     if worker_id is not None:
         prefix = "[Worker ID: {0}]".format(worker_id)
@@ -331,6 +325,10 @@ def print_performance(
 
     if isinstance(episode_reward, np.ndarray):
         episode_reward = episode_reward[0]
+
+    if evaluation_msg:
+        print(evaluation_msg)
+        print("#######################################################################################################")
 
     print(
         "{0}[{1:6}/{2}] Ep. {3}, EPISODE REWARD: {4:9.3f}, MEAN_{5} EPSIODE REWARD: {6},{7} SPEED: {8:7.2f}steps/sec., {9}".format(
@@ -361,15 +359,8 @@ def print_performance(
     if last_action is not None:
         print(", last action {0}".format(last_action), end="")
 
-    # if params.ENVIRONMENT_ID in [EnvironmentName.PENDULUM_MATLAB_DOUBLE_RIP_V0, EnvironmentName.REAL_DEVICE_DOUBLE_RIP]:
-    #     print(", [{0:7.4f} {1:7.4f} {2:7.4f}]".format(
-    #         last_info["max_pendulum_1_velocity"],
-    #         last_info["max_pendulum_2_velocity"],
-    #         last_info["max_motor_velocity"],
-    #     ), end="")
-
-    if evaluation_msg:
-        print("\n", evaluation_msg, flush=True)
+    if last_done_reason is not None:
+        print(", REASON: {0}".format(last_done_reason), flush=True)
     else:
         print("", flush=True)
 

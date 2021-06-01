@@ -1,4 +1,4 @@
-from codes.a_config._rl_parameters.off_policy.parameter_ddpg import PARAMETERS_DDPG, DDPGTargetUpdateOnlyAfterEpisode, \
+from codes.a_config._rl_parameters.off_policy.parameter_ddpg import PARAMETERS_DDPG, \
     DDPGActionType, DDPGActionSelectorType
 from codes.e_utils.names import *
 from codes.a_config.parameters_general import PARAMETERS_GENERAL, RIPEnvRewardType
@@ -11,7 +11,7 @@ class PARAMETERS_PENDULUM_MATLAB_DDPG(PARAMETERS_GENERAL, PARAMETERS_DDPG):
     RL_ALGORITHM = RLAlgorithmName.DDPG_V0
     DEEP_LEARNING_MODEL = DeepLearningModelName.DETERMINISTIC_CONTINUOUS_ACTOR_CRITIC_MLP
 
-    TRAIN_STOP_EPISODE_REWARD = 40000  # MAX: 6.28 * 10000 = 62800 (Old), 90000 (New)
+    TRAIN_STOP_EPISODE_REWARD = 29000  # MAX: 6.28 * 10000 = 62800 (Old), 90000 (New)
     TRAIN_STOP_EPISODE_REWARD_STD = 2000
 
     STOP_PATIENCE_COUNT = 10
@@ -43,3 +43,5 @@ class PARAMETERS_PENDULUM_MATLAB_DDPG(PARAMETERS_GENERAL, PARAMETERS_DDPG):
     TYPE_OF_RIP_REWARD = RIPEnvRewardType.NEW  # "current_version"
     TYPE_OF_DDPG_ACTION = DDPGActionType.GAUSSIAN_NOISE_WITH_EPSILON
     TYPE_OF_DDPG_ACTION_SELECTOR = DDPGActionSelectorType.SOMETIMES_BLOW_ACTION_SELECTOR
+
+    PENDULUM_STATE_INFO = 0  # 1: ALL ARM INFO IGNORED, 2: ARM ANGLE INFO IGNORED (VELOCITY IS INCLUDED)

@@ -1,10 +1,10 @@
 import torch
 import torch.nn as nn
 
-from codes.c_models.base_model import BaseModel
+from codes.c_models.continuous_action.continuous_action_model import ContinuousActionModel
 
 
-class StochasticContinuousActorCriticModel(BaseModel):
+class StochasticContinuousActorCriticModel(ContinuousActionModel):
     def __init__(self, worker_id, input_shape, num_outputs, params, device):
         super(StochasticContinuousActorCriticModel, self).__init__(worker_id, params, device)
         self.__name__ = "StochasticContinuousActorCriticModel"

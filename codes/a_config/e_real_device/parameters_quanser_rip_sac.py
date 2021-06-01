@@ -1,6 +1,4 @@
-from codes.a_config._rl_parameters.off_policy.parameter_ddpg import PARAMETERS_DDPG
 from codes.a_config._rl_parameters.off_policy.parameter_sac import PARAMETERS_SAC, SACActionType, SACActionSelectorType
-from codes.a_config._rl_parameters.off_policy.parameter_td3 import PARAMETERS_TD3, TD3ActionType, TD3ActionSelectorType
 from codes.e_utils.names import *
 from codes.a_config.parameters_general import PARAMETERS_GENERAL
 
@@ -13,7 +11,7 @@ class PARAMETERS_QUANSER_RIP_SAC(PARAMETERS_GENERAL, PARAMETERS_SAC):
     TRAIN_STOP_EPISODE_REWARD = 15000  # MAX: 3.14 * 10000 = 31400
     TRAIN_STOP_EPISODE_REWARD_STD = 10.0
     STOP_PATIENCE_COUNT = 10
-    REPLAY_BUFFER_SIZE = 100000
+    REPLAY_BUFFER_SIZE = 1000000
 
     MAX_EPISODE_STEP = 5000
     MAX_GLOBAL_STEP = 10000000
@@ -21,7 +19,6 @@ class PARAMETERS_QUANSER_RIP_SAC(PARAMETERS_GENERAL, PARAMETERS_SAC):
     ACTOR_LEARNING_RATE = 0.0002
     GAMMA = 0.999
 
-    MIN_REPLAY_SIZE_FOR_TRAIN = 256
     BATCH_SIZE = 128
     AVG_EPISODE_SIZE_FOR_STAT = 50
 

@@ -6,11 +6,11 @@ import numpy as np
 import torch.nn.functional as F
 
 from codes.c_models.advanced_exploration.noisy_net import NoisyLinear
-from codes.c_models.base_model import BaseModel
+from codes.c_models.discrete_action.discrete_action_model import DiscreteActionModel
 from codes.e_utils.names import DeepLearningModelName
 
 
-class DuelingDQNModel(BaseModel):
+class DuelingDQNModel(DiscreteActionModel):
     def __init__(self, worker_id, input_shape=None, num_outputs=None, params=None, device=None):
         super(DuelingDQNModel, self).__init__(worker_id, params, device)
         self.__name__ = "DuelingDQNModel"

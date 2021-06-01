@@ -5,11 +5,11 @@ import torch.nn.functional as F
 from torch.autograd import Variable
 import numpy as np
 
-from codes.c_models.base_model import BaseModel
+from codes.c_models.discrete_action.discrete_action_model import DiscreteActionModel
 from codes.e_utils.names import DeepLearningModelName
 
 
-class DiscreteActorCriticModel(BaseModel):
+class DiscreteActorCriticModel(DiscreteActionModel):
     def __init__(self, worker_id, input_shape, num_outputs, params, device):
         super(DiscreteActorCriticModel, self).__init__(worker_id, params, device)
         self.__name__ = "DiscreteActorCriticModel"

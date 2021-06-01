@@ -6,12 +6,12 @@ import torch.nn.functional as F
 from codes.a_config._rl_parameters.off_policy.parameter_ddpg import DDPGActionSelectorType
 from codes.a_config._rl_parameters.off_policy.parameter_td3 import TD3ActionSelectorType
 from codes.c_models.advanced_exploration.noisy_net import NoisyLinear
-from codes.c_models.base_model import BaseModel
+from codes.c_models.continuous_action.continuous_action_model import ContinuousActionModel
 from codes.e_utils.names import RLAlgorithmName
 from codes.e_utils.common_utils import weights_init_
 
 
-class DeterministicContinuousActorCriticModel(BaseModel):
+class DeterministicContinuousActorCriticModel(ContinuousActionModel):
     def __init__(self, worker_id, input_shape, num_outputs, params, device):
         super(DeterministicContinuousActorCriticModel, self).__init__(worker_id, params, device)
         self.__name__ = "DeterministicContinuousActorCriticModel"

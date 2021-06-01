@@ -7,6 +7,7 @@ import os, sys
 import numpy as np
 
 from codes.a_config.f_trade_parameters.parameters_trade_dqn import PARAMETERS_GENERAL_TRADE_DQN
+from codes.c_models.continuous_action.continuous_action_model import ContinuousActionModel
 from codes.e_utils.reward_changer import RewardChanger
 
 print("PyTorch Version", torch.__version__)
@@ -19,7 +20,7 @@ if PROJECT_HOME not in sys.path:
 from codes.e_utils import rl_utils
 from codes.e_utils.common_utils import load_model
 from codes.e_utils.logger import get_logger
-from codes.e_utils.names import EnvironmentName, AgentMode
+from codes.e_utils.names import EnvironmentName, AgentMode, RLAlgorithmName
 from codes.e_utils.rl_utils import get_environment_input_output_info, MODEL_ZOO_SAVE_DIR, MODEL_SAVE_FILE_PREFIX
 
 os.environ['KMP_DUPLICATE_LIB_OK'] = 'True'
@@ -66,10 +67,17 @@ def play_main(params, env):
 
             action, _, = agent(state)
 
-            if hasattr(params, "ACTION_SCALE") and params.ACTION_SCALE:
-                action = params.ACTION_SCALE * action[0]
-            else:
-                action = action[0]
+            action = action[0]
+
+            if isinstance(agent.model, ContinuousActionModel) and params.ENVIRONMENT_ID not in [
+                    EnvironmentName.PENDULUM_MATLAB_V0,
+                    EnvironmentName.PENDULUM_MATLAB_DOUBLE_RIP_V0,
+                    EnvironmentName.REAL_DEVICE_RIP,
+                    EnvironmentName.REAL_DEVICE_DOUBLE_RIP,
+                    EnvironmentName.QUANSER_SERVO_2
+                ]:
+                if hasattr(params, "ACTION_SCALE") and params.ACTION_SCALE:
+                    action = params.ACTION_SCALE * action[0]
 
             next_state, reward, done, info = env.step(action)
 

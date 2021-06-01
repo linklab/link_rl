@@ -1,5 +1,4 @@
 from codes.a_config._rl_parameters.off_policy.parameter_sac import PARAMETERS_SAC, SACActionType, SACActionSelectorType
-from codes.a_config._rl_parameters.off_policy.parameter_td3 import PARAMETERS_TD3, TD3ActionType, TD3ActionSelectorType
 from codes.e_utils.names import *
 from codes.a_config.parameters_general import PARAMETERS_GENERAL, RIPEnvRewardType
 
@@ -11,7 +10,7 @@ class PARAMETERS_PENDULUM_MATLAB_SAC(PARAMETERS_GENERAL, PARAMETERS_SAC):
     RL_ALGORITHM = RLAlgorithmName.SAC_V0
     DEEP_LEARNING_MODEL = DeepLearningModelName.SOFT_ACTOR_CRITIC_MLP
 
-    TRAIN_STOP_EPISODE_REWARD = 40000  # MAX: 6.28 * 10000 = 62800 (Old), 90000 (New)
+    TRAIN_STOP_EPISODE_REWARD = 29000  # MAX: 6.28 * 10000 = 62800 (Old), 90000 (New)
     TRAIN_STOP_EPISODE_REWARD_STD = 2000
 
     STOP_PATIENCE_COUNT = 10
@@ -38,3 +37,5 @@ class PARAMETERS_PENDULUM_MATLAB_SAC(PARAMETERS_GENERAL, PARAMETERS_SAC):
 
     TYPE_OF_SAC_ACTION = SACActionType.SAMPLE
     TYPE_OF_SAC_ACTION_SELECTOR = SACActionSelectorType.SOMETIMES_BLOW_ACTION_SELECTOR
+
+    PENDULUM_STATE_INFO = 0  # 1: ALL ARM INFO IGNORED, 2: ARM ANGLE INFO IGNORED (VELOCITY IS INCLUDED)

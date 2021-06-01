@@ -1,11 +1,16 @@
-import collections
+from collections import deque
 
-counter = collections.Counter()
-counter['a'] += 1
-counter['a'] += 1
-counter['a'] += 1
-counter['a'] += 1
-counter['a'] += 1
-counter['a'] += 1
+import numpy as np
 
-print(len(counter), sum(counter.values()), len(counter) / sum(counter.values()))
+l = deque(maxlen=2)
+
+l.append(10)
+l.append(20)
+
+print(l[0], l[1])
+print(l)
+
+l.append(30)
+
+print(l[0], l[1])
+print(l)

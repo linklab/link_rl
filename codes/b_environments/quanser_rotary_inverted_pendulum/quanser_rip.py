@@ -31,18 +31,22 @@ def get_quanser_rip_observation_space():
     return observation_space, n_states
 
 
-def get_quanser_rip_action_space(params, action_index_to_voltage=None):
+def get_quanser_rip_action_space(params):
     if params.RL_ALGORITHM in [RLAlgorithmName.DQN_V0]:
+        action_index_to_voltage = list(np.array([
+            -1.0, -0.75, -0.5, -0.3, -0.2, -0.1, 0.0, 0.1, 0.2, 0.3, 0.5, 0.75, 1.0
+        ]) * params.ACTION_SCALE)
         action_space = gym.spaces.Discrete(len(action_index_to_voltage))
         n_actions = action_space.n
     else:
+        action_index_to_voltage = None
         action_space = gym.spaces.Box(
             low=-1.0, high=1.0, shape=(1,),
             dtype=np.float32
         )
         n_actions = action_space.shape[0]
 
-    return action_space, n_actions
+    return action_space, n_actions, action_index_to_voltage
 
 
 class EnvironmentQuanserRIP(gym.Env):
@@ -83,7 +87,7 @@ class EnvironmentQuanserRIP(gym.Env):
         #=======================================================================================
 
         #==================action===============================================================
-        self.action_space, self.n_actions = get_quanser_rip_action_space(self.params, None)
+        self.action_space, self.n_actions, self.action_index_to_voltage = get_quanser_rip_action_space(self.params)
         #=======================================================================================
 
         channel = grpc.insecure_channel('{0}:50051'.format(RIP_SERVER))
@@ -187,6 +191,11 @@ class EnvironmentQuanserRIP(gym.Env):
 
         if type(action) is np.ndarray:
             action = action[0]
+
+        action = action * params.ACTION_SCALE
+
+        if self.params.RL_ALGORITHM in [RLAlgorithmName.DQN_V0]:
+            action = self.action_index_to_voltage[int(action)]
 
         #motor_power = float(action)
         # if self.step_idx % 100 == 0:

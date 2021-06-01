@@ -9,6 +9,7 @@ from collections import namedtuple, deque
 from gym.vector import VectorEnv
 from icecream import ic
 
+from codes.c_models.continuous_action.continuous_action_model import ContinuousActionModel
 from codes.e_utils.names import EnvironmentName, RLAlgorithmName
 from codes.e_utils.reward_changer import RewardChanger
 
@@ -118,14 +119,19 @@ class ExperienceSource:
 
             global_ofs = 0
             for env_idx, (env, action_n) in enumerate(zip(self.pool, grouped_actions)):
-                if params.RL_ALGORITHM in [RLAlgorithmName.DDPG_V0, RLAlgorithmName.TD3_V0, RLAlgorithmName.SAC_V0]:
-                    if hasattr(self.agent.params, "ACTION_SCALE"):
-                        action_scale = self.agent.params.ACTION_SCALE
-                    else:
-                        action_scale = 1.0
-                    next_state_n, r_n, is_done_n, info_n = env.step(action_scale * np.asarray(action_n))
-                else:
-                    next_state_n, r_n, is_done_n, info_n = env.step(np.asarray(action_n))
+                action = np.asarray(action_n)
+
+                if isinstance(self.agent.model, ContinuousActionModel) and params.ENVIRONMENT_ID not in [
+                    EnvironmentName.PENDULUM_MATLAB_V0,
+                    EnvironmentName.PENDULUM_MATLAB_DOUBLE_RIP_V0,
+                    EnvironmentName.REAL_DEVICE_RIP,
+                    EnvironmentName.REAL_DEVICE_DOUBLE_RIP,
+                    EnvironmentName.QUANSER_SERVO_2
+                ]:
+                    if hasattr(self.agent.params, "ACTION_SCALE") and self.agent.params.ACTION_SCALE:
+                        action = self.agent.params.ACTION_SCALE * action
+
+                next_state_n, r_n, is_done_n, info_n = env.step(action)
 
                 #ic(env_idx, env, len(action_n), len(next_state_n), len(r_n), len(is_done_n), len(info_n))
 

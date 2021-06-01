@@ -3,14 +3,14 @@ import torch
 import torch.nn as nn
 from torch.distributions import Normal
 
-from codes.c_models.base_model import BaseModel
+from codes.c_models.continuous_action.continuous_action_model import ContinuousActionModel
 from codes.e_utils.common_utils import weights_init_
 
 LOG_SIG_MAX = 2
 LOG_SIG_MIN = -20
 
 
-class SoftActorCriticModel(BaseModel):
+class SoftActorCriticModel(ContinuousActionModel):
     def __init__(self, worker_id, input_shape, num_outputs, params, device):
         super(SoftActorCriticModel, self).__init__(worker_id, params, device)
         self.__name__ = "SoftActorCriticModel"
