@@ -154,12 +154,12 @@ class RotaryDoubleInvertedPendulum:
         self.step_idx += 1
         self.previous_action = motor_power
 
-        if link_1_velocity > 1400:
+        if link_1_velocity > 3000:
             self.count_continuous_fast_pendulum_velocity += 1
         else:
             self.count_continuous_fast_pendulum_velocity = 0
 
-        if self.count_continuous_fast_pendulum_velocity > 150:
+        if self.count_continuous_fast_pendulum_velocity > 3000:
             self.force_terminate()
 
             return RipResponse(
@@ -205,11 +205,12 @@ class RotaryDoubleInvertedPendulum:
 
     def terminate(self, rip_request, context):
         spi.xfer2([0x40, 0x00, 0x10, 0x00, 0x00])
-        spi.xfer2([0x40, 0x00, 0x01])
+        spi.xfer2([0x40, 0x00, 0x01, 0x00, 0x00])
 
         return RipResponse(message='OK')
 
     def test_terminate(self):
+        spi.xfer2([0x40, 0x00, 0x10, 0x00, 0x00])
         spi.xfer2([0x40, 0x00, 0x01, 0x00, 0x00])
         return None
 
