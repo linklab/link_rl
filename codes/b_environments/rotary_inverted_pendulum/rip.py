@@ -168,13 +168,13 @@ class RotaryInvertedPendulumEnv(gym.Env):
         self.episode_idx = 0
 
         if mode == AgentMode.PLAY:
-            self.max_episode_step = 100000000
+            self.max_episode_step = self.params.MAX_EPISODE_STEP_AT_PLAY
         else:
             self.max_episode_step = self.params.MAX_EPISODE_STEP
 
         current_path = os.path.dirname(os.path.realpath(__file__))
         MATLAB_ENGINE_DIR = os.path.abspath(os.path.join(current_path, "engine"))
-        os.chdir(MATLAB_ENGINE_DIR) # change working directory
+        os.chdir(MATLAB_ENGINE_DIR)  # change working directory
 
         if self.pendulum_type == EnvironmentName.PENDULUM_MATLAB_V0:
             self.plant = SimulinkPlant(modelName="single_RIP")
