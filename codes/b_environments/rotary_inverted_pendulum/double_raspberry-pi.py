@@ -177,8 +177,7 @@ class RotaryDoubleInvertedPendulum:
             )
 
     def force_terminate(self):
-        spi.xfer2([0x40, 0x00, 0x10, 0x00, 0x00])
-        spi.xfer2([0x40, 0x00, 0x01])
+        spi.xfer2([0x40, 0x00, 0x01, 0x00, 0x00])
         print("FORCE TERMINATE !!!!!!!!!!!!!!!!!! - count_continuous_fast_pendulum_velocity: {0}".format(
             self.count_continuous_fast_pendulum_velocity
         ))
