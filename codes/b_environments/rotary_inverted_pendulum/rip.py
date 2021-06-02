@@ -18,7 +18,7 @@ if PROJECT_HOME not in sys.path:
 from codes.b_environments.rotary_inverted_pendulum import rip_service_pb2_grpc
 from codes.b_environments.rotary_inverted_pendulum.rip_service_pb2 import RipRequest
 
-from codes.e_utils.names import RLAlgorithmName, EnvironmentName
+from codes.e_utils.names import RLAlgorithmName, EnvironmentName, AgentMode
 
 from gym.envs.classic_control.acrobot import wrap
 
@@ -144,7 +144,7 @@ def get_rip_action_space(params, pendulum_type):
 class RotaryInvertedPendulumEnv(gym.Env):
     def __init__(
             self, action_min, action_max, env_reset=True,
-            pendulum_type=EnvironmentName.PENDULUM_MATLAB_V0, params=None
+            pendulum_type=EnvironmentName.PENDULUM_MATLAB_V0, params=None, mode=AgentMode.TRAIN
     ):
         self.episode_steps = 0
         self.total_steps = 0
@@ -166,6 +166,11 @@ class RotaryInvertedPendulumEnv(gym.Env):
         self.over_unit_time = 0
         self.step_idx = 0
         self.episode_idx = 0
+
+        if mode == AgentMode.PLAY:
+            self.max_episode_step = 100000000
+        else:
+            self.max_episode_step = self.params.MAX_EPISODE_STEP
 
         current_path = os.path.dirname(os.path.realpath(__file__))
         MATLAB_ENGINE_DIR = os.path.abspath(os.path.join(current_path, "engine"))
@@ -623,7 +628,7 @@ class RotaryInvertedPendulumEnv(gym.Env):
         }
 
         done_conditions = [
-            self.episode_steps >= self.params.MAX_EPISODE_STEP,
+            self.episode_steps >= self.max_episode_step,
             self.too_much_rotate and not self.is_upright,
             self.too_long_and_fast_pendulum_velocity
         ]
@@ -631,7 +636,7 @@ class RotaryInvertedPendulumEnv(gym.Env):
         if any(done_conditions):
             done = True
 
-            if self.episode_steps >= self.params.MAX_EPISODE_STEP:
+            if self.episode_steps >= self.max_episode_step:
                 self.last_done_reason = DoneReason.MAX_EPISODE_STEP
             elif self.too_much_rotate and not self.is_upright:
                 self.last_done_reason = DoneReason.TOO_MUCH_ROTATE
