@@ -8,6 +8,9 @@ service QuanserRIP {
 
   rpc pendulum_reset(QuanserRequest) returns (QuanserResponse) {}
 
+  rpc step_sync(QuanserRequest) returns (QuanserResponse) {}
+
+  rpc reset_sync(QuanserRequest) returns (QuanserResponse) {}
 }
 
 message QuanserRequest {

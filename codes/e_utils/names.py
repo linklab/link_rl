@@ -28,6 +28,7 @@ class EnvironmentName(enum.Enum):
     MOUNTAINCARCONTINUOUS_V0 = "MountainCarContinuous-v0"
     BLACKJACK_V0 = "Blackjack-v0"
     QUANSER_SERVO_2 = "Quanser_Servo_2"
+    SYNCRONIZE_V0 = "Syncronize_V0"
     CHASER_V1_MAC = os.path.join(PROJECT_HOME, "rl_main", "environments", "unity", "unity_envs", "Chaser_v1")
     CHASER_V1_WINDOWS = os.path.join(PROJECT_HOME, "rl_main", "environments", "unity", "unity_envs", "Chaser_v1.exe")
     BREAKOUT_DETERMINISTIC_V4 = "BreakoutDeterministic-v4"

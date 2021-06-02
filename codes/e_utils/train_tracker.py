@@ -105,13 +105,13 @@ class EarlyStopping:
             # else:
             #     msg = ""
 
-            if episode_done_step < self.evaluation_min_step_idx and hasattr(self.agent, 'epsilon_tracker') and self.agent.epsilon_tracker:
-                evaluation_str = colored(
-                    f'STEP {episode_done_step} is less than {self.evaluation_min_step_idx}. {std_msg}',
-                    "magenta"
-                )
-                msg += f"{evaluation_str}. No early stopping (and no saving) processed"
-            elif evaluation_value < self.evaluation_value_min_threshold:
+            # if episode_done_step < self.evaluation_min_step_idx and hasattr(self.agent, 'epsilon_tracker') and self.agent.epsilon_tracker:
+            #     evaluation_str = colored(
+            #         f'STEP {episode_done_step} is less than {self.evaluation_min_step_idx}. {std_msg}',
+            #         "magenta"
+            #     )
+            #     msg += f"{evaluation_str}. No early stopping (and no saving) processed"
+            if evaluation_value < self.evaluation_value_min_threshold:
                 evaluation_str = colored(
                     f'{evaluation_value:.2f} is less than {self.evaluation_value_min_threshold}. {std_msg}',
                     'blue'

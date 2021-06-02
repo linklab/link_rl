@@ -8,7 +8,7 @@ import grpc
 
 # MQTT Topic for RIP
 from codes.b_environments.quanser_rotary_inverted_pendulum import quanser_service_pb2_grpc
-from codes.e_utils.names import RLAlgorithmName
+from codes.e_utils.names import RLAlgorithmName, AgentMode
 from common.environments.environment import Environment
 from codes.a_config.parameters import PARAMETERS as params
 from codes.b_environments.quanser_rotary_inverted_pendulum.quanser_service_pb2 import QuanserRequest
@@ -50,7 +50,7 @@ def get_quanser_rip_action_space(params):
 
 
 class EnvironmentQuanserRIP(gym.Env):
-    def __init__(self):
+    def __init__(self, mode=AgentMode.TRAIN):
         super(EnvironmentQuanserRIP, self).__init__()
         self.episode = 0
 
@@ -80,6 +80,11 @@ class EnvironmentQuanserRIP(gym.Env):
 
         self.unit_time = self.params.UNIT_TIME
         self.over_unit_time = 0
+
+        if mode == AgentMode.PLAY:
+            self.max_episode_step = 100000000
+        else:
+            self.max_episode_step = self.params.MAX_EPISODE_STEP
 
         self.initial_motor_radian = 0.0
         #==================observation==========================================================
@@ -182,7 +187,7 @@ class EnvironmentQuanserRIP(gym.Env):
         if step_time > self.unit_time:
             self.over_unit_time += 1
 
-        print(self.step_idx, action, step_time)
+        # print(self.step_idx, action, step_time)
         self.previous_time = time.perf_counter()
 
         if self.step_idx % 100000 == 0:
@@ -263,7 +268,7 @@ class EnvironmentQuanserRIP(gym.Env):
         def insert_to_info(s):
             info["result"] = s
 
-        if self.episode_steps >= self.params.MAX_EPISODE_STEP: # 5000 * 25ms (0.025sec.) = 125 sec.
+        if self.episode_steps >= self.max_episode_step: # 5000 * 25ms (0.025sec.) = 125 sec.
             insert_to_info("*** Success ***")
             return True, info
         # elif self.is_motor_limit:
