@@ -61,6 +61,8 @@ from codes.a_config.e_real_device.parameters_quanser_rip_ddpg import PARAMETERS_
 from codes.a_config.e_real_device.parameters_quanser_rip_td3 import PARAMETERS_QUANSER_RIP_TD3
 from codes.a_config.e_real_device.parameters_rip_dqn import PARAMETERS_RIP_DQN
 
+from codes.a_config.e_real_device.parameters_syncronize import PARAMETERS_SYNCRONIZE_TD3
+
 from codes.a_config.f_trade_parameters.parameters_trade_moc_one_hour_dqn import PARAMETERS_TRADE_MOC_ONE_HOUR_DQN
 
 from codes.a_config.federated_parameters.parameters_federated_matlab_rip_ddpg   import PARAMETERS_FEDERATED_MATLAB_RIP_DDPG

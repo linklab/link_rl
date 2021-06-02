@@ -54,6 +54,8 @@ class SyncronizeEnv(gym.Env):
         super(SyncronizeEnv, self).__init__()
         self.params = params
 
+        self.previous_time = 0
+
         self.episode = 0
 
         self.state_space_shape = (STATE_SIZE,)
@@ -107,7 +109,7 @@ class SyncronizeEnv(gym.Env):
         quanser_response_1 = self.server_obj_1.reset_sync(QuanserRequest(value=0.0))
         quanser_response_2 = self.server_obj_2.reset_sync(QuanserRequest(value=0.0))
 
-        if quanser_response_1.message != "RESET" or quanser_response_2.message != "RESET":
+        if quanser_response_1.message != "RESET_SYNC" or quanser_response_2.message != "RESET_SYNC":
             raise ValueError()
 
         self.motor_radian_1 = quanser_response_1.motor_radian
@@ -121,7 +123,7 @@ class SyncronizeEnv(gym.Env):
         self.pendulum_velocity_2 = quanser_response_2.pendulum_velocity
 
         if self.episode % 5 == 0:
-            print("*RESET PENDULUM RADIAN : {0:1.3f}".format(self.pendulum_radian))
+            print("*RESET PENDULUM RADIAN : {0:1.3f}, {1:1.3f}".format(self.pendulum_radian_1, self.pendulum_radian_2))
 
         print("Quanser_1's info {0:<5.3f}, {1:<5.3f}, {2:<5.3f}, {3:<5.3f}".format(
             self.motor_radian_1, self.motor_velocity_1, self.pendulum_radian_1, self.pendulum_velocity_1
