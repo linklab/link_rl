@@ -29,6 +29,9 @@ class RotaryDoubleInvertedPendulum:
             0x40, 0x00, 0x00
         ])
         print("INITIATION!!!!")
+
+        self.count_continuous_fast_pendulum_velocity = 0
+
         arm_angle, arm_velocity, link_angle, link_velocity = self.calculate_state()
         self.print_state(arm_angle, arm_velocity, link_angle, link_velocity)
 
@@ -105,10 +108,30 @@ class RotaryDoubleInvertedPendulum:
 
         #self.print_state(arm_angle, arm_velocity, link_angle, link_velocity)
 
-        return RipResponse(
-            message='OK',
-            arm_angle=arm_angle, arm_velocity=arm_velocity, link_1_angle=link_angle, link_1_velocity=link_velocity
-        )
+        if link_velocity > 1400:
+            self.count_continuous_fast_pendulum_velocity += 1
+        else:
+            self.count_continuous_fast_pendulum_velocity = 0
+
+        if self.count_continuous_fast_pendulum_velocity > 150:
+            self.force_terminate()
+
+            return RipResponse(
+                message='FORCE_TERMINATE',
+                arm_angle=arm_angle, arm_velocity=arm_velocity, link_1_angle=link_angle, link_1_velocity=link_velocity
+            )
+        else:
+            return RipResponse(
+                message='OK',
+                arm_angle=arm_angle, arm_velocity=arm_velocity, link_1_angle=link_angle, link_1_velocity=link_velocity
+            )
+
+    def force_terminate(self):
+        spi.xfer2([0x40, 0x00, 0x10, 0x00, 0x00])
+        spi.xfer2([0x40, 0x00, 0x01])
+        print("FORCE TERMINATE !!!!!!!!!!!!!!!!!! - count_continuous_fast_pendulum_velocity: {0}".format(
+            self.count_continuous_fast_pendulum_velocity
+        ))
 
     def terminate(self, rip_request, context):
         spi.xfer2([0x40, 0x00, 0x10, 0x00, 0x00])
