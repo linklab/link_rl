@@ -122,28 +122,6 @@ def get_train_and_test_envs():
     return train_env, test_env
 
 
-def get_early_stopping(agent):
-    early_stopping = EarlyStopping(
-        patience=params.STOP_PATIENCE_COUNT,
-        evaluation_value_min_threshold=params.TRAIN_STOP_EPISODE_REWARD,
-        evaluation_std_max_threshold=params.TRAIN_STOP_EPISODE_REWARD_STD,
-        delta=0.001,
-        model_save_dir=MODEL_SAVE_DIR,
-        model_save_file_prefix=params.ENVIRONMENT_ID.value,
-        agent=agent,
-        params=params
-    )
-
-    if hasattr(agent, 'train_action_selector') and hasattr(agent.train_action_selector, 'epsilon') and hasattr(params, "EPSILON_MIN_STEP"):
-        early_stopping.evaluation_min_step_idx = params.EPSILON_MIN_STEP
-        if early_stopping.evaluation_min_step_idx is None:
-            early_stopping.evaluation_min_step_idx = 0
-    else:
-        early_stopping.evaluation_min_step_idx = 0
-
-    return early_stopping
-
-
 class EpisodeProcessor:
     def __init__(self, test_env, agent, params):
         self.test_env = test_env
@@ -152,7 +130,17 @@ class EpisodeProcessor:
         self.test_mean_episode_reward = None
         self.test_std_episode_reward = None
         self.evaluation_msg = None
-        self.early_stopping = get_early_stopping(agent)
+
+        self.early_stopping = EarlyStopping(
+            patience=params.STOP_PATIENCE_COUNT,
+            evaluation_value_min_threshold=params.TRAIN_STOP_EPISODE_REWARD,
+            evaluation_std_max_threshold=params.TRAIN_STOP_EPISODE_REWARD_STD,
+            delta=0.001,
+            model_save_dir=MODEL_SAVE_DIR,
+            model_save_file_prefix=params.ENVIRONMENT_ID.value,
+            agent=agent,
+            params=params
+        )
 
         self.test_mean_episode_reward, self.test_std_episode_reward = self.agent_model_test(
             num_tests=1
