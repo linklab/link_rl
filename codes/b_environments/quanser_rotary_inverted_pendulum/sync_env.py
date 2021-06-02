@@ -8,7 +8,7 @@ import grpc
 
 # MQTT Topic for RIP
 from codes.b_environments.quanser_rotary_inverted_pendulum import quanser_service_pb2_grpc
-from codes.e_utils.names import RLAlgorithmName
+from codes.e_utils.names import RLAlgorithmName, AgentMode
 from common.environments.environment import Environment
 from codes.a_config.parameters import PARAMETERS as params
 from codes.b_environments.quanser_rotary_inverted_pendulum.quanser_service_pb2 import QuanserRequest
@@ -50,7 +50,7 @@ def get_quanser_rip_action_space(params):
 
 
 class SyncronizeEnv(gym.Env):
-    def __init__(self):
+    def __init__(self, mode=AgentMode.TRAIN):
         super(SyncronizeEnv, self).__init__()
         self.params = params
 
@@ -84,6 +84,11 @@ class SyncronizeEnv(gym.Env):
 
         self.unit_time = self.params.UNIT_TIME
         self.over_unit_time = 0
+
+        if mode == AgentMode.PLAY:
+            self.max_episode_step = 100000000
+        else:
+            self.max_episode_step = self.params.MAX_EPISODE_STEP
 
         self.initial_motor_radian = 0.0
         #==================observation==========================================================

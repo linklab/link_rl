@@ -77,7 +77,8 @@ def get_single_environment(params=None, mode=AgentMode.TRAIN):
             action_max=params.ACTION_SCALE,
             env_reset=params.ENV_RESET,
             pendulum_type=EnvironmentName.REAL_DEVICE_RIP,
-            params=params
+            params=params,
+            mode=mode
         )
     elif params.ENVIRONMENT_ID == EnvironmentName.SUPER_MARIO_BROS:
         env = make_super_mario_bros_env()
@@ -88,14 +89,15 @@ def get_single_environment(params=None, mode=AgentMode.TRAIN):
             action_max=params.ACTION_SCALE,
             env_reset=params.ENV_RESET,
             pendulum_type=EnvironmentName.REAL_DEVICE_DOUBLE_RIP,
-            params=params
+            params=params,
+            mode=mode
         )
     elif params.ENVIRONMENT_ID == EnvironmentName.QUANSER_SERVO_2:
         from codes.b_environments.quanser_rotary_inverted_pendulum.quanser_rip import EnvironmentQuanserRIP
-        env = EnvironmentQuanserRIP()
+        env = EnvironmentQuanserRIP(mode=mode)
     elif params.ENVIRONMENT_ID == EnvironmentName.SYNCRONIZE_V0:
         from codes.b_environments.quanser_rotary_inverted_pendulum.sync_env import SyncronizeEnv
-        env = SyncronizeEnv()
+        env = SyncronizeEnv(mode=mode)
     elif params.ENVIRONMENT_ID in [
         EnvironmentName.CARTPOLE_V0, EnvironmentName.CARTPOLE_V1,
         EnvironmentName.MOUNTAINCAR_V0, EnvironmentName.MOUNTAINCARCONTINUOUS_V0,
@@ -140,7 +142,8 @@ def get_single_environment(params=None, mode=AgentMode.TRAIN):
             action_max=params.ACTION_SCALE,
             env_reset=params.ENV_RESET,
             pendulum_type=EnvironmentName.PENDULUM_MATLAB_V0,
-            params=params
+            params=params,
+            mode=mode
         )
         env.start()
     elif params.ENVIRONMENT_ID == EnvironmentName.PENDULUM_MATLAB_DOUBLE_RIP_V0:
@@ -150,7 +153,8 @@ def get_single_environment(params=None, mode=AgentMode.TRAIN):
             action_max=params.ACTION_SCALE,
             env_reset=params.ENV_RESET,
             pendulum_type=EnvironmentName.PENDULUM_MATLAB_DOUBLE_RIP_V0,
-            params=params
+            params=params,
+            mode=mode
         )
         env.start()
     elif params.ENVIRONMENT_ID == EnvironmentName.TRADE_V0:
