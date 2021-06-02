@@ -82,7 +82,7 @@ class EnvironmentQuanserRIP(gym.Env):
         self.over_unit_time = 0
 
         if mode == AgentMode.PLAY:
-            self.max_episode_step = 100000000
+            self.max_episode_step = self.params.MAX_EPISODE_STEP_AT_PLAY
         else:
             self.max_episode_step = self.params.MAX_EPISODE_STEP
 

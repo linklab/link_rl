@@ -7,7 +7,7 @@ import grpc
 import gym
 import numpy as np
 import time
-import sys,os
+import sys, os
 from codes.a_config.parameters_general import RIPEnvRewardType
 
 current_path = os.path.dirname(os.path.realpath(__file__))
@@ -168,13 +168,13 @@ class RotaryInvertedPendulumEnv(gym.Env):
         self.episode_idx = 0
 
         if mode == AgentMode.PLAY:
-            self.max_episode_step = 100000000
+            self.max_episode_step = self.params.MAX_EPISODE_STEP_AT_PLAY
         else:
             self.max_episode_step = self.params.MAX_EPISODE_STEP
 
         current_path = os.path.dirname(os.path.realpath(__file__))
         MATLAB_ENGINE_DIR = os.path.abspath(os.path.join(current_path, "engine"))
-        os.chdir(MATLAB_ENGINE_DIR) # change working directory
+        os.chdir(MATLAB_ENGINE_DIR)  # change working directory
 
         if self.pendulum_type == EnvironmentName.PENDULUM_MATLAB_V0:
             self.plant = SimulinkPlant(modelName="single_RIP")
@@ -539,13 +539,18 @@ class RotaryInvertedPendulumEnv(gym.Env):
         elif self.pendulum_type == EnvironmentName.REAL_DEVICE_RIP:
             # GRPC CALL
             rip_response = self.server_obj.step(RipRequest(value=action))
-            # current_time = time.perf_counter()
-            # print("point 2 - elapsed time: {0:10.8f}".format(current_time - self.last_time))
-            self.motor_position = math.radians(rip_response.arm_angle)
-            self.motor_velocity = rip_response.arm_velocity
-            self.pendulum_1_position = math.radians(rip_response.link_1_angle)
-            self.pendulum_1_velocity = rip_response.link_1_velocity
-            self.simulation_time = None
+
+            if rip_response.message == "FORCE_TERMINATE":
+                print("FORCE TERMINATE !!!!!!!!!!!!!!!!!!")
+                exit(-1)
+            else:
+                # current_time = time.perf_counter()
+                # print("point 2 - elapsed time: {0:10.8f}".format(current_time - self.last_time))
+                self.motor_position = math.radians(rip_response.arm_angle)
+                self.motor_velocity = rip_response.arm_velocity
+                self.pendulum_1_position = math.radians(rip_response.link_1_angle)
+                self.pendulum_1_velocity = rip_response.link_1_velocity
+                self.simulation_time = None
 
         elif self.pendulum_type == EnvironmentName.REAL_DEVICE_DOUBLE_RIP:
             # t = 0
@@ -569,13 +574,17 @@ class RotaryInvertedPendulumEnv(gym.Env):
             rip_response = self.server_obj.step(RipRequest(value=action))
             # print(action, rip_response.arm_angle, rip_response.link_1_angle, "!!!!")
 
-            self.motor_position = math.radians(rip_response.arm_angle)
-            self.motor_velocity = rip_response.arm_velocity
-            self.pendulum_1_position = math.radians(rip_response.link_1_angle)
-            self.pendulum_1_velocity = rip_response.link_1_velocity
-            self.pendulum_2_position = math.radians(rip_response.link_2_angle)
-            self.pendulum_2_velocity = rip_response.link_2_velocity
-            self.simulation_time = None
+            if rip_response.message == "FORCE_TERMINATE":
+                print("FORCE TERMINATE !!!!!!!!!!!!!!!!!!")
+                exit(-1)
+            else:
+                self.motor_position = math.radians(rip_response.arm_angle)
+                self.motor_velocity = rip_response.arm_velocity
+                self.pendulum_1_position = math.radians(rip_response.link_1_angle)
+                self.pendulum_1_velocity = rip_response.link_1_velocity
+                self.pendulum_2_position = math.radians(rip_response.link_2_angle)
+                self.pendulum_2_velocity = rip_response.link_2_velocity
+                self.simulation_time = None
 
         else:
             raise ValueError()
@@ -588,11 +597,11 @@ class RotaryInvertedPendulumEnv(gym.Env):
         else:
             self.count_continuous_fast_pendulum_velocity = 0
 
-        if abs(self.initial_motor_position - self.motor_position) > math.pi * 4:
-            self.too_much_rotate = True
-
         if self.count_continuous_fast_pendulum_velocity > 100:
             self.too_long_and_fast_pendulum_velocity = True
+
+        if abs(self.initial_motor_position - self.motor_position) > math.pi * 4:
+            self.too_much_rotate = True
 
         adjusted_pendulum_1_radian = self.pendulum_position_to_adjusted_radian(self.pendulum_1_position)
         adjusted_pendulum_2_radian = self.pendulum_position_to_adjusted_radian(self.pendulum_2_position)
