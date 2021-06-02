@@ -597,11 +597,11 @@ class RotaryInvertedPendulumEnv(gym.Env):
         else:
             self.count_continuous_fast_pendulum_velocity = 0
 
-        if abs(self.initial_motor_position - self.motor_position) > math.pi * 4:
-            self.too_much_rotate = True
-
         if self.count_continuous_fast_pendulum_velocity > 100:
             self.too_long_and_fast_pendulum_velocity = True
+
+        if abs(self.initial_motor_position - self.motor_position) > math.pi * 4:
+            self.too_much_rotate = True
 
         adjusted_pendulum_1_radian = self.pendulum_position_to_adjusted_radian(self.pendulum_1_position)
         adjusted_pendulum_2_radian = self.pendulum_position_to_adjusted_radian(self.pendulum_2_position)

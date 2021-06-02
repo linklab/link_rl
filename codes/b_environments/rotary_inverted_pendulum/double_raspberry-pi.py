@@ -154,7 +154,7 @@ class RotaryDoubleInvertedPendulum:
         self.step_idx += 1
         self.previous_action = motor_power
 
-        if link_1_velocity > 1400 or link_2_velocity > 1400:
+        if link_1_velocity > 1400:
             self.count_continuous_fast_pendulum_velocity += 1
         else:
             self.count_continuous_fast_pendulum_velocity = 0
