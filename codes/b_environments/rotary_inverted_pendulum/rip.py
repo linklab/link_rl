@@ -354,7 +354,7 @@ class RotaryInvertedPendulumEnv(gym.Env):
                     self.previous_actions[0],
                     self.previous_actions[1]
                 )
-            if hasattr(self.params, "DOUBLE_PENDULUM_STATE_INFO") and self.params.DOUBLE_PENDULUM_STATE_INFO == 1:
+            elif hasattr(self.params, "DOUBLE_PENDULUM_STATE_INFO") and self.params.DOUBLE_PENDULUM_STATE_INFO == 1:
                 state = (
                     math.cos(self.pendulum_1_position),
                     math.sin(self.pendulum_1_position),
@@ -560,7 +560,6 @@ class RotaryInvertedPendulumEnv(gym.Env):
             #     time.sleep(0.008)
             #     num += 1
 
-            # print(action, self.step_idx)
             rip_response = self.server_obj.step(RipRequest(value=action))
             # print(action, rip_response.arm_angle, rip_response.link_1_angle, "!!!!")
 
@@ -828,7 +827,7 @@ class RotaryInvertedPendulumEnv(gym.Env):
         # if self.too_much_rotate and not self.is_upright:
         #     reward = -3.0
 
-        #print(position_reward, energy_penalty, reward)
+        # print(position_reward, energy_penalty, reward)
 
         return reward
 
@@ -966,6 +965,8 @@ class RotaryInvertedPendulumEnv(gym.Env):
         # self.episode_position_reward_list.append(position_reward)
         # self.episode_pendulum_velocity_reward_list.append(energy_penalty)
         # self.episode_action_reward_list.append(0.0)
+        if not self.is_upright:
+            position_reward = position_reward / 2.0
 
         reward = position_reward + energy_penalty
         # print(
@@ -974,6 +975,7 @@ class RotaryInvertedPendulumEnv(gym.Env):
         #     "energy_penalty: {0:3.4f}".format(energy_penalty),
         #     "reward : {0:3.4f}".format(reward)
         # )
+
         reward = max(0.0, reward)
         # time.sleep(0.5)
         return reward
