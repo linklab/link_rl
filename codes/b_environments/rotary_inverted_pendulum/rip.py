@@ -36,7 +36,7 @@ VELOCITY_STATE_DENOMINATOR = 100.0
 
 if params.ENVIRONMENT_ID in [EnvironmentName.REAL_DEVICE_RIP, EnvironmentName.REAL_DEVICE_DOUBLE_RIP]:
     if params.SERVER_IDX == 0:
-        RIP_SERVER = '10.0.0.9'
+        RIP_SERVER = '10.0.0.10'
     elif params.SERVER_IDX == 1:
         RIP_SERVER = '10.0.0.11'
 
@@ -217,7 +217,7 @@ class RotaryInvertedPendulumEnv(gym.Env):
         if self.pendulum_type in [EnvironmentName.REAL_DEVICE_RIP, EnvironmentName.REAL_DEVICE_DOUBLE_RIP]:
             channel = grpc.insecure_channel('{0}:50051'.format(RIP_SERVER))
             self.server_obj = rip_service_pb2_grpc.RDIPStub(channel)
-            self.server_obj.initialize(RipRequest(value=None))
+            # self.server_obj.initialize(RipRequest(value=None))
         else:
             self.server_obj = None
 
@@ -539,18 +539,23 @@ class RotaryInvertedPendulumEnv(gym.Env):
         elif self.pendulum_type == EnvironmentName.REAL_DEVICE_RIP:
             # GRPC CALL
             rip_response = self.server_obj.step(RipRequest(value=action))
-
-            if rip_response.message == "FORCE_TERMINATE":
-                print("FORCE TERMINATE !!!!!!!!!!!!!!!!!!")
-                exit(-1)
-            else:
-                # current_time = time.perf_counter()
-                # print("point 2 - elapsed time: {0:10.8f}".format(current_time - self.last_time))
-                self.motor_position = math.radians(rip_response.arm_angle)
-                self.motor_velocity = rip_response.arm_velocity
-                self.pendulum_1_position = math.radians(rip_response.link_1_angle)
-                self.pendulum_1_velocity = rip_response.link_1_velocity
-                self.simulation_time = None
+            self.motor_position = math.radians(rip_response.arm_angle)
+            self.motor_velocity = rip_response.arm_velocity
+            self.pendulum_1_position = math.radians(rip_response.link_1_angle)
+            self.pendulum_1_velocity = rip_response.link_1_velocity
+            self.simulation_time = None
+            #
+            # if rip_response.message == "FORCE_TERMINATE":
+            #     print("FORCE TERMINATE !!!!!!!!!!!!!!!!!!")
+            #     exit(-1)
+            # else:
+            #     # current_time = time.perf_counter()
+            #     # print("point 2 - elapsed time: {0:10.8f}".format(current_time - self.last_time))
+            #     self.motor_position = math.radians(rip_response.arm_angle)
+            #     self.motor_velocity = rip_response.arm_velocity
+            #     self.pendulum_1_position = math.radians(rip_response.link_1_angle)
+            #     self.pendulum_1_velocity = rip_response.link_1_velocity
+            #     self.simulation_time = None
 
         elif self.pendulum_type == EnvironmentName.REAL_DEVICE_DOUBLE_RIP:
             # t = 0
@@ -572,20 +577,27 @@ class RotaryInvertedPendulumEnv(gym.Env):
 
             # print(action, self.step_idx)
             rip_response = self.server_obj.step(RipRequest(value=action))
-            # print(action, rip_response.arm_angle, rip_response.link_1_angle, "!!!!")
-
-            if rip_response.message == "FORCE_TERMINATE":
-                print("FORCE TERMINATE !!!!!!!!!!!!!!!!!!")
-                exit(-1)
-            else:
-                self.motor_position = math.radians(rip_response.arm_angle)
-                self.motor_velocity = rip_response.arm_velocity
-                self.pendulum_1_position = math.radians(rip_response.link_1_angle)
-                self.pendulum_1_velocity = rip_response.link_1_velocity
-                self.pendulum_2_position = math.radians(rip_response.link_2_angle)
-                self.pendulum_2_velocity = rip_response.link_2_velocity
-                self.simulation_time = None
-
+            self.motor_position = math.radians(rip_response.arm_angle)
+            self.motor_velocity = rip_response.arm_velocity
+            self.pendulum_1_position = math.radians(rip_response.link_1_angle)
+            self.pendulum_1_velocity = rip_response.link_1_velocity
+            self.pendulum_2_position = math.radians(rip_response.link_2_angle)
+            self.pendulum_2_velocity = rip_response.link_2_velocity
+            self.simulation_time = None
+            # if rip_response.message == "FORCE_TERMINATE":
+            #     print("FORCE TERMINATE !!!!!!!!!!!!!!!!!!")
+            #     exit(-1)
+            # else:
+            #     self.motor_position = math.radians(rip_response.arm_angle)
+            #     self.motor_velocity = rip_response.arm_velocity
+            #     self.pendulum_1_position = math.radians(rip_response.link_1_angle)
+            #     self.pendulum_1_velocity = rip_response.link_1_velocity
+            #     self.pendulum_2_position = math.radians(rip_response.link_2_angle)
+            #     self.pendulum_2_velocity = rip_response.link_2_velocity
+            #     self.simulation_time = None
+            #     # print("motor vel :{0:5.3f}, pen1_Vel : {1:5.3f}, pen2_vel : {2:5.3f}".format(
+            #     #     self.motor_velocity, self.pendulum_1_velocity, self.pendulum_2_velocity
+            #     # ))
         else:
             raise ValueError()
 
@@ -983,13 +995,13 @@ class RotaryInvertedPendulumEnv(gym.Env):
 
         reward = position_reward + energy_penalty
         # print(
-        #     "position_reward: {0:3.4f}".format(position_reward),
+        #     "position_reward_1: {0:3.4f}".format(adjusted_pendulum_1_position),
         #     "position_Reward_2 : {0:3.4f}".format(reward_pendulum_2),
+        #     "position_reward: {0:3.4f}".format(position_reward),
         #     "energy_penalty: {0:3.4f}".format(energy_penalty),
         #     "reward : {0:3.4f}".format(reward)
         # )
         reward = max(0.0, reward)
-        # time.sleep(0.5)
         return reward
 
     def get_reward_for_double_rip_3(self):
