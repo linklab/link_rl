@@ -62,6 +62,16 @@ class QubeServo2:
             pendulum_radian=pendulum_radian, pendulum_velocity=pendulum_velocity,
             is_motor_limit=self.motor_limit
         )
+
+    def step_sync(self, QuanserRequest, context):
+        motor_radian, motor_velocity, pendulum_radian, pendulum_velocity, step_id = self_servo.read_and_pub()
+
+        return QuanserResponse(
+            message="STEP_SYNC",
+            motor_radian=motor_radian, motor_velocity=motor_velocity,
+            pendulum_radian=pendulum_radian, pendulum_velocity=pendulum_velocity,
+            is_motor_limit=self.motor_limit
+        )
     
     def reset(self, QuanserRequest, context):
         # self.limit_check()
@@ -72,6 +82,14 @@ class QubeServo2:
         time.sleep(5)
         return QuanserResponse(
             message="RESET",
+            motor_radian=motor_radian, motor_velocity=motor_velocity,
+            pendulum_radian=pendulum_radian, pendulum_velocity=pendulum_velocity
+        )
+
+    def reset_sync(self, QuanserRequest, context):
+        motor_radian, motor_velocity, pendulum_radian, pendulum_velocity, step_id = self_servo.read_and_pub()
+        return QuanserResponse(
+            message="RESET_SYNC",
             motor_radian=motor_radian, motor_velocity=motor_velocity,
             pendulum_radian=pendulum_radian, pendulum_velocity=pendulum_velocity
         )

@@ -5,7 +5,7 @@ import time
 import torch
 import os, sys
 import numpy as np
-
+sys.path.append(os.path.dirname(os.path.abspath(os.path.dirname(os.path.abspath(os.path.dirname(__file__))))))
 from codes.a_config.f_trade_parameters.parameters_trade_dqn import PARAMETERS_GENERAL_TRADE_DQN
 from codes.c_models.continuous_action.continuous_action_model import ContinuousActionModel
 from codes.e_utils.reward_changer import RewardChanger

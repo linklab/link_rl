@@ -464,7 +464,7 @@ class RewardTracker:
 
 class EarlyStopping:
     """Early stops the training if validation loss doesn't improve after a given patience."""
-    def __init__(self, patience=7, evaluation_min_threshold=0.0, evaluation_min_step_idx=0,
+    def __init__(self, patience=7, evaluation_min_threshold=0.0,
                  verbose=False, delta=0.0, model_save_dir=".", model_save_file_prefix=None, agent=None):
         """
         Args:
@@ -477,7 +477,6 @@ class EarlyStopping:
         """
         self.patience = patience
         self.evaluation_min_threshold = evaluation_min_threshold
-        self.evaluation_min_step_idx = evaluation_min_step_idx
         self.verbose = verbose
         self.counter = 0
         self.best_evaluation_value = -1.0e10
@@ -490,30 +489,26 @@ class EarlyStopping:
     def __call__(self, evaluation_value, step_idx):
         solved = False
 
-        if step_idx < self.evaluation_min_step_idx:
-            print(f"Current step {step_idx} is less than {self.evaluation_min_step_idx}. "
-                  f"No early stopping (and no saving) processed")
-        else:
-            if self.best_evaluation_value == -1.0e10:
-                self.best_evaluation_value = evaluation_value
+        if self.best_evaluation_value == -1.0e10:
+            self.best_evaluation_value = evaluation_value
 
-            if evaluation_value < self.evaluation_min_threshold or evaluation_value < self.best_evaluation_value + self.delta:
-                self.counter += 1
-                print(f'EarlyStopping counter: {self.counter} out of {self.patience}. '
-                      f'Best evaluation value is still {self.best_evaluation_value:.2f}')
-                if self.counter >= self.patience:
-                    solved = True
-                    rl_agent.load_model(
-                        self.model_save_dir,
-                        self.model_save_file_prefix,
-                        self.agent
-                    )
-            elif evaluation_value >= self.best_evaluation_value + self.delta:
-                self.save_checkpoint(evaluation_value, step_idx)
-                self.best_evaluation_value = evaluation_value
-                self.counter = 0
-            else:
-                raise ValueError()
+        if evaluation_value < self.evaluation_min_threshold or evaluation_value < self.best_evaluation_value + self.delta:
+            self.counter += 1
+            print(f'EarlyStopping counter: {self.counter} out of {self.patience}. '
+                  f'Best evaluation value is still {self.best_evaluation_value:.2f}')
+            if self.counter >= self.patience:
+                solved = True
+                rl_agent.load_model(
+                    self.model_save_dir,
+                    self.model_save_file_prefix,
+                    self.agent
+                )
+        elif evaluation_value >= self.best_evaluation_value + self.delta:
+            self.save_checkpoint(evaluation_value, step_idx)
+            self.best_evaluation_value = evaluation_value
+            self.counter = 0
+        else:
+            raise ValueError()
 
         return solved
 
