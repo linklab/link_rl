@@ -65,7 +65,6 @@ class EarlyStopping:
         self.patience = patience
         self.evaluation_value_min_threshold = evaluation_value_min_threshold
         self.evaluation_std_max_threshold = evaluation_std_max_threshold
-        self.evaluation_min_step_idx = 0
         self.counter = 0
         self.best_evaluation_value = -1.0e10
         self.std_at_best_evaluation_value = 0.0
@@ -75,8 +74,8 @@ class EarlyStopping:
         self.model_save_file_prefix = model_save_file_prefix
         self.agent = agent
         self.params = params
-        # self.periodic_save_count = 1
-        # self.next_periodic_save_step_idx = int(self.params.MAX_GLOBAL_STEP * self.periodic_save_count / 10)
+        self.periodic_save_count = 1
+        self.next_periodic_save_step_idx = int(self.params.MAX_GLOBAL_STEP * self.periodic_save_count / 10)
 
     def evaluate(self, evaluation_value, evaluation_value_std, episode_done_step):
         solved = False
@@ -93,25 +92,18 @@ class EarlyStopping:
             )
 
         if self.best_evaluation_value == -1.0e10:
-            # if episode_done_step >= self.next_periodic_save_step_idx:
-            #     evaluation_str = colored(
-            #         f'STEP {episode_done_step} is more than {self.next_periodic_save_step_idx}.',
-            #         "magenta"
-            #     )
-            #     msg = f"Periodic Save!!! - {evaluation_str}."
-            #     self.save_checkpoint(evaluation_value, episode_done_step)
-            #     self.periodic_save_count = self.periodic_save_count + 1
-            #     self.next_periodic_save_step_idx = int(self.params.MAX_GLOBAL_STEP * self.periodic_save_count / 10)
-            # else:
-            #     msg = ""
-
-            if episode_done_step < self.evaluation_min_step_idx and hasattr(self.agent, 'epsilon_tracker') and self.agent.epsilon_tracker:
+            # self.best_evaluation_value 가 설정되기 이전까지는 주기적 모델 저장
+            if self.params.PERIODIC_MODEL_SAVE and episode_done_step >= self.next_periodic_save_step_idx:
                 evaluation_str = colored(
-                    f'STEP {episode_done_step} is less than {self.evaluation_min_step_idx}. {std_msg}',
+                    f'STEP {episode_done_step} is more than {self.next_periodic_save_step_idx}.',
                     "magenta"
                 )
-                msg += f"{evaluation_str}. No early stopping (and no saving) processed"
-            elif evaluation_value < self.evaluation_value_min_threshold:
+                msg = f"Periodic Save!!! - {evaluation_str}."
+                self.save_checkpoint(evaluation_value, episode_done_step)
+                self.periodic_save_count = self.periodic_save_count + 1
+                self.next_periodic_save_step_idx = int(self.params.MAX_GLOBAL_STEP * self.periodic_save_count / 10)
+
+            if evaluation_value < self.evaluation_value_min_threshold:
                 evaluation_str = colored(
                     f'{evaluation_value:.2f} is less than {self.evaluation_value_min_threshold}. {std_msg}',
                     'blue'

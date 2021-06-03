@@ -19,7 +19,7 @@ DESCRIPTOR = _descriptor.FileDescriptor(
   syntax='proto3',
   serialized_options=None,
   create_key=_descriptor._internal_create_key,
-  serialized_pb=b'\n\x15quanser_service.proto\"\x1f\n\x0eQuanserRequest\x12\r\n\x05value\x18\x01 \x01(\x02\"\x9c\x01\n\x0fQuanserResponse\x12\x0f\n\x07message\x18\x01 \x01(\t\x12\x14\n\x0cmotor_radian\x18\x02 \x01(\x02\x12\x16\n\x0emotor_velocity\x18\x03 \x01(\x02\x12\x17\n\x0fpendulum_radian\x18\x04 \x01(\x02\x12\x19\n\x11pendulum_velocity\x18\x05 \x01(\x02\x12\x16\n\x0eis_motor_limit\x18\x06 \x01(\x08\x32\x9e\x01\n\nQuanserRIP\x12,\n\x05reset\x12\x0f.QuanserRequest\x1a\x10.QuanserResponse\"\x00\x12+\n\x04step\x12\x0f.QuanserRequest\x1a\x10.QuanserResponse\"\x00\x12\x35\n\x0ependulum_reset\x12\x0f.QuanserRequest\x1a\x10.QuanserResponse\"\x00\x62\x06proto3'
+  serialized_pb=b'\n\x15quanser_service.proto\"\x1f\n\x0eQuanserRequest\x12\r\n\x05value\x18\x01 \x01(\x02\"\x9c\x01\n\x0fQuanserResponse\x12\x0f\n\x07message\x18\x01 \x01(\t\x12\x14\n\x0cmotor_radian\x18\x02 \x01(\x02\x12\x16\n\x0emotor_velocity\x18\x03 \x01(\x02\x12\x17\n\x0fpendulum_radian\x18\x04 \x01(\x02\x12\x19\n\x11pendulum_velocity\x18\x05 \x01(\x02\x12\x16\n\x0eis_motor_limit\x18\x06 \x01(\x08\x32\x83\x02\n\nQuanserRIP\x12,\n\x05reset\x12\x0f.QuanserRequest\x1a\x10.QuanserResponse\"\x00\x12+\n\x04step\x12\x0f.QuanserRequest\x1a\x10.QuanserResponse\"\x00\x12\x35\n\x0ependulum_reset\x12\x0f.QuanserRequest\x1a\x10.QuanserResponse\"\x00\x12\x30\n\tstep_sync\x12\x0f.QuanserRequest\x1a\x10.QuanserResponse\"\x00\x12\x31\n\nreset_sync\x12\x0f.QuanserRequest\x1a\x10.QuanserResponse\"\x00\x62\x06proto3'
 )
 
 
@@ -151,7 +151,7 @@ _QUANSERRIP = _descriptor.ServiceDescriptor(
   serialized_options=None,
   create_key=_descriptor._internal_create_key,
   serialized_start=218,
-  serialized_end=376,
+  serialized_end=477,
   methods=[
   _descriptor.MethodDescriptor(
     name='reset',
@@ -177,6 +177,26 @@ _QUANSERRIP = _descriptor.ServiceDescriptor(
     name='pendulum_reset',
     full_name='QuanserRIP.pendulum_reset',
     index=2,
+    containing_service=None,
+    input_type=_QUANSERREQUEST,
+    output_type=_QUANSERRESPONSE,
+    serialized_options=None,
+    create_key=_descriptor._internal_create_key,
+  ),
+  _descriptor.MethodDescriptor(
+    name='step_sync',
+    full_name='QuanserRIP.step_sync',
+    index=3,
+    containing_service=None,
+    input_type=_QUANSERREQUEST,
+    output_type=_QUANSERRESPONSE,
+    serialized_options=None,
+    create_key=_descriptor._internal_create_key,
+  ),
+  _descriptor.MethodDescriptor(
+    name='reset_sync',
+    full_name='QuanserRIP.reset_sync',
+    index=4,
     containing_service=None,
     input_type=_QUANSERREQUEST,
     output_type=_QUANSERRESPONSE,
