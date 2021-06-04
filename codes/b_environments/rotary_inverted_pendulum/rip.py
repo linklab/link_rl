@@ -36,15 +36,14 @@ VELOCITY_STATE_DENOMINATOR = 100.0
 
 if params.ENVIRONMENT_ID in [EnvironmentName.REAL_DEVICE_RIP, EnvironmentName.REAL_DEVICE_DOUBLE_RIP]:
     if params.SERVER_IDX == 0:
-        RIP_SERVER = '10.0.0.10'
+        pass
     elif params.SERVER_IDX == 1:
         RIP_SERVER = '10.0.0.9'
     elif params.SERVER_IDX == 2:
         RIP_SERVER = '10.0.0.10'
     elif params.SERVER_IDX == 3:
         RIP_SERVER = '10.0.0.11'
-    elif params.SERVER_IDX == 2:
-        RIP_SERVER = '10.0.0.9'
+
 
 
 class DoneReason(enum.Enum):
@@ -581,7 +580,7 @@ class RotaryInvertedPendulumEnv(gym.Env):
             #     time.sleep(0.008)
             #     num += 1
 
-            rip_response = self.server_obj.step(RipRequest(value=0))
+            rip_response = self.server_obj.step(RipRequest(value=action))
             self.motor_position = math.radians(rip_response.arm_angle)
             self.motor_velocity = rip_response.arm_velocity
             self.pendulum_1_position = math.radians(rip_response.link_1_angle)
@@ -1005,13 +1004,13 @@ class RotaryInvertedPendulumEnv(gym.Env):
             position_reward = position_reward / 2.0
 
         reward = position_reward + energy_penalty
-        print(
-            "position_reward_1: {0:3.4f}".format(adjusted_pendulum_1_position),
-            "position_Reward_2 : {0:3.4f}".format(reward_pendulum_2),
-            "position_reward: {0:3.4f}".format(position_reward),
-            "energy_penalty: {0:3.4f}".format(energy_penalty),
-            "reward : {0:3.4f}".format(reward)
-        )
+        # print(
+        #     "position_reward_1: {0:3.4f}".format(adjusted_pendulum_1_position),
+        #     "position_Reward_2 : {0:3.4f}".format(reward_pendulum_2),
+        #     "position_reward: {0:3.4f}".format(position_reward),
+        #     "energy_penalty: {0:3.4f}".format(energy_penalty),
+        #     "reward : {0:3.4f}".format(reward)
+        # )
 
         reward = max(0.0, reward)
         return reward
