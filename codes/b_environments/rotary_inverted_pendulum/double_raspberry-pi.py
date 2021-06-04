@@ -236,15 +236,15 @@ def start_grpc(rip, server):
 def velocity_check(rip, server):
     arm_velocity_num = 0
     link_1_velocity_num = 0
-    arm_vel_deque = deque(maxlen=60)
-    link_vel_deque = deque(maxlen=60)
+    arm_vel_deque = deque(maxlen=100)
+    link_vel_deque = deque(maxlen=100)
     while True:
         arm_angle, arm_velocity, link_1_angle, link_1_velocity, link_2_angle, link_2_velocity = rip.calculate_state()
         arm_vel_deque.append(abs(arm_velocity))
         link_vel_deque.append(abs(link_1_velocity))
-        arm_vel_deque_mean = sum(arm_vel_deque)/60.0
-        link_vel_deque_mean = sum(link_vel_deque)/60.0
-        if arm_vel_deque_mean > 1400 or link_vel_deque_mean > 1400: #3SECOND
+        arm_vel_deque_mean = sum(arm_vel_deque)/100.0
+        link_vel_deque_mean = sum(link_vel_deque)/100.0
+        if arm_vel_deque_mean > 1400 or link_vel_deque_mean > 1400: #5SECOND
             server.stop(grace=None)
             for _ in range(3):
                 rip.test_terminate()
