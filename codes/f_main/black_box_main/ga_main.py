@@ -15,7 +15,16 @@ def train_main():
     if params.WANDB:
         set_wandb(agent)
 
-    early_stopping = get_early_stopping(agent)
+    early_stopping = EarlyStopping(
+        patience=params.STOP_PATIENCE_COUNT,
+        evaluation_value_min_threshold=params.TRAIN_STOP_EPISODE_REWARD,
+        evaluation_std_max_threshold=params.TRAIN_STOP_EPISODE_REWARD_STD,
+        delta=0.001,
+        model_save_dir=MODEL_SAVE_DIR,
+        model_save_file_prefix=params.ENVIRONMENT_ID.value,
+        agent=agent,
+        params=params
+    )
 
     generation_idx = 0
 

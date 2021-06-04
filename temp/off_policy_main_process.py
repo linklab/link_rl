@@ -48,7 +48,16 @@ def actor_func(exp_queue, agent):
     exp_source_iter = iter(experience_source)
     step_idx = 0
 
-    early_stopping = get_early_stopping(agent)
+    early_stopping = EarlyStopping(
+        patience=params.STOP_PATIENCE_COUNT,
+        evaluation_value_min_threshold=params.TRAIN_STOP_EPISODE_REWARD,
+        evaluation_std_max_threshold=params.TRAIN_STOP_EPISODE_REWARD_STD,
+        delta=0.001,
+        model_save_dir=MODEL_SAVE_DIR,
+        model_save_file_prefix=params.ENVIRONMENT_ID.value,
+        agent=agent,
+        params=params
+    )
 
     episode = 0
     solved = False
