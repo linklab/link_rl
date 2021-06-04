@@ -36,9 +36,14 @@ VELOCITY_STATE_DENOMINATOR = 100.0
 
 if params.ENVIRONMENT_ID in [EnvironmentName.REAL_DEVICE_RIP, EnvironmentName.REAL_DEVICE_DOUBLE_RIP]:
     if params.SERVER_IDX == 0:
-        RIP_SERVER = '10.0.0.10 '
+        pass
     elif params.SERVER_IDX == 1:
+        RIP_SERVER = '10.0.0.9'
+    elif params.SERVER_IDX == 2:
+        RIP_SERVER = '10.0.0.10'
+    elif params.SERVER_IDX == 3:
         RIP_SERVER = '10.0.0.11'
+
 
 
 class DoneReason(enum.Enum):
@@ -575,7 +580,7 @@ class RotaryInvertedPendulumEnv(gym.Env):
             #     time.sleep(0.008)
             #     num += 1
 
-            rip_response = self.server_obj.step(RipRequest(value=action))
+            rip_response = self.server_obj.step(RipRequest(value=500))
             self.motor_position = math.radians(rip_response.arm_angle)
             self.motor_velocity = rip_response.arm_velocity
             self.pendulum_1_position = math.radians(rip_response.link_1_angle)
@@ -583,6 +588,10 @@ class RotaryInvertedPendulumEnv(gym.Env):
             self.pendulum_2_position = math.radians(rip_response.link_2_angle)
             self.pendulum_2_velocity = rip_response.link_2_velocity
             self.simulation_time = None
+            print("motor vel :{0:5.3f}, pen1_Vel : {1:5.3f}, pen2_vel : {2:5.3f}, motor posi :{3:5.3f}, pen1 posi :{4:5.3f}, pen2 posi :{4:5.3f}".format(
+                self.motor_velocity, self.pendulum_1_velocity, self.pendulum_2_velocity, self.motor_velocity, self.pendulum_1_position, self.pendulum_2_position
+            ))
+            # time.sleep(0.5)
             # if rip_response.message == "FORCE_TERMINATE":
             #     print("FORCE TERMINATE !!!!!!!!!!!!!!!!!!")
             #     exit(-1)
@@ -603,7 +612,7 @@ class RotaryInvertedPendulumEnv(gym.Env):
         #print(self.motor_position, math.cos(self.motor_position), math.sin(self.motor_position))
         # print("!!!!!!!!!", self.pendulum_2_position)
 
-        if self.pendulum_1_velocity > 1400:
+        if abs(self.pendulum_1_velocity) > 1400:
             self.count_continuous_fast_pendulum_velocity += 1
         else:
             self.count_continuous_fast_pendulum_velocity = 0
@@ -649,7 +658,7 @@ class RotaryInvertedPendulumEnv(gym.Env):
 
         done_conditions = [
             self.episode_steps >= self.max_episode_step,
-            self.too_much_rotate and not self.is_upright,
+            # self.too_much_rotate and not self.is_upright,
             self.too_long_and_fast_pendulum_velocity
         ]
 
@@ -804,7 +813,7 @@ class RotaryInvertedPendulumEnv(gym.Env):
 
         if self.too_much_rotate or self.too_long_and_fast_pendulum_velocity:
             reward = 0.0
-
+        # print(self.motor_velocity, self.pendulum_1_velocity)
         # print(adjusted_pendulum_1_radian, energy_penalty, reward)
 
         return reward

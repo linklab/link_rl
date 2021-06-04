@@ -1,4 +1,5 @@
 import time
+from collections import deque
 from concurrent import futures
 import grpc
 import spidev
@@ -210,13 +211,11 @@ class RotaryDoubleInvertedPendulum:
             time.sleep(0.006)
 
     def terminate(self, rip_request, context):
-        spi.xfer2([0x40, 0x00, 0x10, 0x00, 0x00])
         spi.xfer2([0x40, 0x00, 0x01, 0x00, 0x00])
 
         return RipResponse(message='OK')
 
     def test_terminate(self):
-        spi.xfer2([0x40, 0x00, 0x10, 0x00, 0x00])
         spi.xfer2([0x40, 0x00, 0x01, 0x00, 0x00])
         return None
 
@@ -237,23 +236,19 @@ def start_grpc(rip, server):
 def velocity_check(rip, server):
     arm_velocity_num = 0
     link_1_velocity_num = 0
+    arm_vel_deque = deque(maxlen=60)
+    link_vel_deque = deque(maxlen=60)
     while True:
         arm_angle, arm_velocity, link_1_angle, link_1_velocity, link_2_angle, link_2_velocity = rip.calculate_state()
-        if arm_velocity > 1300:
-            arm_velocity_num += 1
-        else:
-            arm_velocity_num = 0
-        if link_1_velocity > 1300:
-            link_1_velocity_num += 1
-        else:
-            link_1_velocity_num = 0
-
-        if arm_velocity_num > 60 or link_1_velocity_num > 60: #3SECOND
+        arm_vel_deque.append(abs(arm_velocity))
+        link_vel_deque.append(abs(link_1_velocity))
+        arm_vel_deque_mean = sum(arm_vel_deque)/60.0
+        link_vel_deque_mean = sum(link_vel_deque)/60.0
+        if arm_vel_deque_mean > 1400 or link_vel_deque_mean > 1400: #3SECOND
             server.stop(grace=None)
             for _ in range(3):
                 rip.test_terminate()
             raise Exception("EXCEED VELOCITY!!!")
-
         time.sleep(0.05)
 
 if __name__ == "__main__":
