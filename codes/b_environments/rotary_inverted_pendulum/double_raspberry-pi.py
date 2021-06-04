@@ -239,11 +239,11 @@ def velocity_check(rip, server):
     link_1_velocity_num = 0
     while True:
         arm_angle, arm_velocity, link_1_angle, link_1_velocity, link_2_angle, link_2_velocity = rip.calculate_state()
-        if arm_velocity > 1300:
+        if abs(arm_velocity) > 1300:
             arm_velocity_num += 1
         else:
             arm_velocity_num = 0
-        if link_1_velocity > 1300:
+        if abs(link_1_velocity) > 1300:
             link_1_velocity_num += 1
         else:
             link_1_velocity_num = 0
