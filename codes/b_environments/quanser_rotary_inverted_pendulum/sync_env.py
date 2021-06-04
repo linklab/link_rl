@@ -18,7 +18,7 @@ STATE_SIZE = 6
 balance_motor_power_list = [-60., 0., 60.]
 
 RIP_SERVER_1 = '10.0.0.5'
-RIP_SERVER_2 = '10.0.0.5'
+RIP_SERVER_2 = '10.0.0.4'
 
 def get_quanser_rip_observation_space():
     low = np.array([0, 0, 0, 0, 0, 0], dtype=np.float32)
