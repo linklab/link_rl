@@ -222,7 +222,7 @@ class RotaryInvertedPendulumEnv(gym.Env):
         if self.pendulum_type in [EnvironmentName.REAL_DEVICE_RIP, EnvironmentName.REAL_DEVICE_DOUBLE_RIP]:
             channel = grpc.insecure_channel('{0}:50051'.format(RIP_SERVER))
             self.server_obj = rip_service_pb2_grpc.RDIPStub(channel)
-            # self.server_obj.initialize(RipRequest(value=None))
+            self.server_obj.initialize(RipRequest(value=None))
         else:
             self.server_obj = None
 
@@ -814,7 +814,7 @@ class RotaryInvertedPendulumEnv(gym.Env):
         if self.too_much_rotate or self.too_long_and_fast_pendulum_velocity:
             reward = 0.0
 
-        # print(adjusted_pendulum_1_radian, energy_penalty, reward)
+        print(adjusted_pendulum_1_radian, energy_penalty, reward)
 
         return reward
 

@@ -210,13 +210,11 @@ class RotaryDoubleInvertedPendulum:
             time.sleep(0.006)
 
     def terminate(self, rip_request, context):
-        spi.xfer2([0x40, 0x00, 0x10, 0x00, 0x00])
         spi.xfer2([0x40, 0x00, 0x01, 0x00, 0x00])
 
         return RipResponse(message='OK')
 
     def test_terminate(self):
-        spi.xfer2([0x40, 0x00, 0x10, 0x00, 0x00])
         spi.xfer2([0x40, 0x00, 0x01, 0x00, 0x00])
         return None
 
