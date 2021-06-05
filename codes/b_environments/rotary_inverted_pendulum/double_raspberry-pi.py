@@ -123,7 +123,8 @@ class RotaryDoubleInvertedPendulum:
         arm_angle, arm_velocity, link_1_angle, link_1_velocity, link_2_angle, link_2_velocity = self.calculate_state()
 
         spi.xfer2([0x40, 0x00, 0x01, 0x00, 0x00])
-        time.sleep(1.5)
+        time.sleep(5)
+        spi.xfer2([0x40, 0x00, 0x10, 0x00, 0x00])
 
         # self.print_state(arm_angle, arm_velocity, link_angle, link_velocity)
 

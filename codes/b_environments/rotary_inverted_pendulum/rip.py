@@ -814,7 +814,8 @@ class RotaryInvertedPendulumEnv(gym.Env):
         if self.too_much_rotate or self.too_long_and_fast_pendulum_velocity:
             reward = 0.0
         # print(self.motor_velocity, self.pendulum_1_velocity)
-        # print(adjusted_pendulum_1_radian, energy_penalty, reward)
+
+        # print("{0:5.3f}".format(adjusted_pendulum_1_radian))
 
         return reward
 
