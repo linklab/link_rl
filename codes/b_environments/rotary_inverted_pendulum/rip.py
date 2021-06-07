@@ -543,12 +543,13 @@ class RotaryInvertedPendulumEnv(gym.Env):
             self.motor_velocity, self.pendulum_2_velocity, self.simulation_time = self.plant.getHistory()
         elif self.pendulum_type == EnvironmentName.REAL_DEVICE_RIP:
             # GRPC CALL
-            rip_response = self.server_obj.step(RipRequest(value=action))
+            rip_response = self.server_obj.step(RipRequest(value=200))
             self.motor_position = math.radians(rip_response.arm_angle)
             self.motor_velocity = rip_response.arm_velocity
             self.pendulum_1_position = math.radians(rip_response.link_1_angle)
             self.pendulum_1_velocity = rip_response.link_1_velocity
             self.simulation_time = None
+            print("!!!!!!!!!!!!!!!", rip_response.link_1_angle)
             #
             # if rip_response.message == "FORCE_TERMINATE":
             #     print("FORCE TERMINATE !!!!!!!!!!!!!!!!!!")
@@ -815,7 +816,7 @@ class RotaryInvertedPendulumEnv(gym.Env):
             reward = 0.0
         # print(self.motor_velocity, self.pendulum_1_velocity)
 
-        # print("{0:5.3f}".format(adjusted_pendulum_1_radian))
+        print("{0:5.3f}".format(adjusted_pendulum_1_radian))
 
         return reward
 
