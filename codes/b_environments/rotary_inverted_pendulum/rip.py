@@ -549,7 +549,7 @@ class RotaryInvertedPendulumEnv(gym.Env):
             self.pendulum_1_position = math.radians(rip_response.link_1_angle)
             self.pendulum_1_velocity = rip_response.link_1_velocity
             self.simulation_time = None
-            print("!!!!!!!!!!!!!!!", rip_response.link_1_angle)
+            print("spi link_1 angle : {0:5.3f}".format(rip_response.link_1_angle))
             #
             # if rip_response.message == "FORCE_TERMINATE":
             #     print("FORCE TERMINATE !!!!!!!!!!!!!!!!!!")
