@@ -581,7 +581,7 @@ class RotaryInvertedPendulumEnv(gym.Env):
             #     time.sleep(0.008)
             #     num += 1
 
-            rip_response = self.server_obj.step(RipRequest(value=action))
+            rip_response = self.server_obj.step(RipRequest(value=200))
             self.motor_position = math.radians(rip_response.arm_angle)
             self.motor_velocity = rip_response.arm_velocity
             self.pendulum_1_position = math.radians(rip_response.link_1_angle)
@@ -589,6 +589,7 @@ class RotaryInvertedPendulumEnv(gym.Env):
             self.pendulum_2_position = math.radians(rip_response.link_2_angle)
             self.pendulum_2_velocity = rip_response.link_2_velocity
             self.simulation_time = None
+            print("spi link_1 angle : {0:5.3f}".format(rip_response.link_1_angle))
             # print("motor vel :{0:5.3f}, pen1_Vel : {1:5.3f}, pen2_vel : {2:5.3f}, motor posi :{3:5.3f}, pen1 posi :{4:5.3f}, pen2 posi :{4:5.3f}".format(
             #     self.motor_velocity, self.pendulum_1_velocity, self.pendulum_2_velocity, self.motor_velocity, self.pendulum_1_position, self.pendulum_2_position
             # ))
@@ -1006,6 +1007,9 @@ class RotaryInvertedPendulumEnv(gym.Env):
             position_reward = position_reward / 2.0
 
         reward = position_reward + energy_penalty
+        print(
+            "position_reward_1: {0:5.3f}".format(adjusted_pendulum_1_position),
+        )
         # print(
         #     "position_reward_1: {0:3.4f}".format(adjusted_pendulum_1_position),
         #     "position_Reward_2 : {0:3.4f}".format(reward_pendulum_2),
