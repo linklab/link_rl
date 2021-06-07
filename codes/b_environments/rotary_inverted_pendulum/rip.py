@@ -550,7 +550,7 @@ class RotaryInvertedPendulumEnv(gym.Env):
             self.pendulum_1_velocity = rip_response.link_1_velocity
             self.simulation_time = None
 
-            print("spi link_1 angle : {0:5.3f}".format(rip_response.link_1_angle))
+            # print("spi link_1 angle : {0:5.3f}".format(rip_response.link_1_angle))
 
             # print("spi link_1 angle : {0:5.3f}".format(rip_response.link_1_angle))
 
