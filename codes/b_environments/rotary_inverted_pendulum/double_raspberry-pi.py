@@ -256,8 +256,8 @@ if __name__ == "__main__":
     rip = RotaryDoubleInvertedPendulum()
     server = grpc.server(futures.ThreadPoolExecutor(max_workers=10))
 
-    # vel_check = threading.Thread(target=velocity_check, args=(rip, server))
-    # vel_check.start()
+    vel_check = threading.Thread(target=velocity_check, args=(rip, server))
+    vel_check.start()
     start_grpc(rip, server)
     # rasp_rip = RotaryDoubleInvertedPendulum()
     # try:
