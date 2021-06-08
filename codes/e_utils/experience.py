@@ -171,13 +171,14 @@ class ExperienceSource:
                             cur_rewards[idx] = 0.0
                             cur_steps[idx] = 0
 
-                        # vectorized envs are reset automatically
                         if params.NUM_ENVIRONMENTS == 1:
                             states[idx] = env.envs[0].reset()
                         else:
                             states[idx] = None
 
-                        # states[idx] = env.reset()
+                        # vectorized envs are reset automatically
+                        # states[idx] = None
+                        # print(self.episode_reward_lst, "@@@@@")
 
                         agent_states[idx] = self.agent.initial_agent_state()
                         history.clear()
