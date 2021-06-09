@@ -36,7 +36,7 @@ VELOCITY_STATE_DENOMINATOR = 100.0
 
 if params.ENVIRONMENT_ID in [EnvironmentName.REAL_DEVICE_RIP, EnvironmentName.REAL_DEVICE_DOUBLE_RIP]:
     if params.SERVER_IDX == 0:
-        pass
+        RIP_SERVER = '10.0.0.9'
     elif params.SERVER_IDX == 1:
         RIP_SERVER = '10.0.0.9'
     elif params.SERVER_IDX == 2:
