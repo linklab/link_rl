@@ -68,12 +68,14 @@ class ExperienceSource:
         self.steps_delta = steps_delta
         self.episode_reward_lst = []
         self.episode_done_step_lst = []
+        self.episode_idx = 0
 
     def __iter__(self):
         states, agent_states, histories, cur_rewards, cur_steps = [], [], [], [], []
         env_lens = []
         for env in self.pool:
             obs = env.reset()
+            self.episode_idx += 1
             # if the environment is vectorized, all it's output is lists of results.
             # Details are here: https://github.com/openai/universe/blob/master/doc/env_semantics.rst
             obs_len = len(obs)
@@ -171,13 +173,17 @@ class ExperienceSource:
                             cur_rewards[idx] = 0.0
                             cur_steps[idx] = 0
 
-                        # vectorized envs are reset automatically
                         if params.NUM_ENVIRONMENTS == 1:
                             states[idx] = env.envs[0].reset()
                         else:
                             states[idx] = None
 
-                        # states[idx] = env.reset()
+                        # print("{0}, {1}, @@@@@".format(self.episode_idx, self.episode_reward_lst))
+                        self.episode_idx += 1
+
+                        # vectorized envs are reset automatically
+                        # states[idx] = None
+                        # print(self.episode_reward_lst, "@@@@@")
 
                         agent_states[idx] = self.agent.initial_agent_state()
                         history.clear()

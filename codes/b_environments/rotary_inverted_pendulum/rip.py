@@ -36,7 +36,7 @@ VELOCITY_STATE_DENOMINATOR = 100.0
 
 if params.ENVIRONMENT_ID in [EnvironmentName.REAL_DEVICE_RIP, EnvironmentName.REAL_DEVICE_DOUBLE_RIP]:
     if params.SERVER_IDX == 0:
-        pass
+        RIP_SERVER = '10.0.0.9'
     elif params.SERVER_IDX == 1:
         RIP_SERVER = '10.0.0.9'
     elif params.SERVER_IDX == 2:
@@ -418,6 +418,7 @@ class RotaryInvertedPendulumEnv(gym.Env):
 
         if self.motor_velocity > self.max_motor_velocity:
             self.max_motor_velocity = self.motor_velocity
+            self.max_motor_velocity = self.motor_velocity
 
     @staticmethod
     def pendulum_position_to_adjusted_radian(position):
@@ -543,6 +544,10 @@ class RotaryInvertedPendulumEnv(gym.Env):
             self.motor_velocity, self.pendulum_2_velocity, self.simulation_time = self.plant.getHistory()
         elif self.pendulum_type == EnvironmentName.REAL_DEVICE_RIP:
             # GRPC CALL
+            # if self.episode_idx % 2 == 0:
+            #     action_ = 400
+            # else:
+            #     action_ = -400
             rip_response = self.server_obj.step(RipRequest(value=action))
             self.motor_position = math.radians(rip_response.arm_angle)
             self.motor_velocity = rip_response.arm_velocity
@@ -550,7 +555,9 @@ class RotaryInvertedPendulumEnv(gym.Env):
             self.pendulum_1_velocity = rip_response.link_1_velocity
             self.simulation_time = None
 
-            # print("spi link_1 angle : {0:5.3f}".format(rip_response.link_1_angle))
+            # print("spi link_1 angle : {0:5.3f}, episode_steps : {1}, action {2}, episode idx : {3}".format(
+            #     rip_response.link_1_angle, self.episode_steps, action_, self.episode_idx
+            # ))
 
 
             # if rip_response.message == "FORCE_TERMINATE":
@@ -819,7 +826,9 @@ class RotaryInvertedPendulumEnv(gym.Env):
             reward = 0.0
         # print(self.motor_velocity, self.pendulum_1_velocity)
 
-        # print("adjusted_pendulum : {0:5.3f}".format(adjusted_pendulum_1_radian))
+        # if adjusted_pendulum_1_radian > 2.0:
+        #     print("adjusted_pendulum : {0:5.3f}".format(adjusted_pendulum_1_radian))
+        #     print("!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!")
 
         return reward
 
