@@ -87,8 +87,6 @@ def actor_func(agent, exp_queue, child_pipe_conn):
 
                 if episode_rewards and episode_steps:
                     for current_episode_reward, current_episode_step in zip(episode_rewards, episode_steps):
-                        episode += 1
-
                         train_info_dict = episode_processor.process(
                             train_episode_reward_lst_for_test,
                             train_episode_reward_lst_for_stat,
@@ -127,6 +125,8 @@ def actor_func(agent, exp_queue, child_pipe_conn):
                             exp_queue.put(train_info_dict)
                         else:
                             child_pipe_conn.send(train_info_dict)
+
+                        episode += 1
 
                 if solved:
                     print("Solved in {0} steps and {1} episodes!".format(step_idx, episode))
@@ -195,7 +195,6 @@ def main():
                 exp = parent_pipe_conn.recv()
 
             if isinstance(exp, dict):
-                episode += 1
                 train_info_dict = exp
 
                 mean_loss = np.mean(loss_dequeue) if len(loss_dequeue) > 0 else 0.0
@@ -220,6 +219,8 @@ def main():
                     evaluation_msg=train_info_dict["evaluation_msg"],
                     last_done_reason=train_info_dict["last_done_reason"]
                 )
+
+                episode += 1
 
                 if train_info_dict["solved"]:
                     solved = True
