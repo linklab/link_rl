@@ -27,7 +27,7 @@ class AgentTD3(OffPolicyAgent):
 
         if params.TYPE_OF_TD3_ACTION_SELECTOR == TD3ActionSelectorType.BASIC_ACTION_SELECTOR:
             self.train_action_selector = TD3ActionSelector(
-                epsilon=params.EPSILON_INIT, noise_std=params.NOISE_STD, params=self.params, mode="TRAIN"
+                epsilon=params.EPSILON_INIT, noise_std=params.NOISE_STD, params=self.params
             )
         elif params.TYPE_OF_TD3_ACTION_SELECTOR == TD3ActionSelectorType.SOMETIMES_BLOW_ACTION_SELECTOR:
             self.train_action_selector = SomeTimesBlowTD3ActionSelector(
