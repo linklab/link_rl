@@ -600,7 +600,7 @@ class RotaryInvertedPendulumEnv(gym.Env):
             self.simulation_time = None
             # print("spi link_1 angle : {0:5.3f}".format(rip_response.link_1_angle))
             # print("motor vel :{0:5.3f}, pen1_Vel : {1:5.3f}, pen2_vel : {2:5.3f}, motor posi :{3:5.3f}, pen1 posi :{4:5.3f}, pen2 posi :{4:5.3f}".format(
-            #     self.motor_velocity, self.pendulum_1_velocity, self.pendulum_2_velocity, self.motor_velocity, self.pendulum_1_position, self.pendulum_2_position
+            #     self.motor_velocity, self.pendulum_1_velocity, self.pendulum_2_velocity, self.motor_velocity, rip_response.link_1_angle, rip_response.link_2_angle
             # ))
             # time.sleep(0.5)
             # if rip_response.message == "FORCE_TERMINATE":
