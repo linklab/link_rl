@@ -9,7 +9,7 @@ class AgentPPO(OnPolicyAgent):
     """
     """
     def __init__(self, worker_id, params, action_shape, device):
-        #assert params.N_STEP == 1  # GAE will consider various N_STEPs
+        assert params.N_STEP == 1  # GAE will consider various N_STEPs
 
         super(AgentPPO, self).__init__(worker_id=worker_id, params=params, action_shape=action_shape, device=device)
 
