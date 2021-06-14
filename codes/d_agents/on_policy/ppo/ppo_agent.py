@@ -1,5 +1,6 @@
 import torch
 import torch.nn.functional as F
+import torch.nn.utils as nn_utils
 
 from codes.d_agents.on_policy.on_policy_agent import OnPolicyAgent
 from codes.e_utils import replay_buffer
@@ -35,6 +36,7 @@ class AgentPPO(OnPolicyAgent):
         self.critic_optimizer.zero_grad()
         batch_loss_critic_v = F.mse_loss(batch_values_v.squeeze(-1), batch_target_action_value_v.detach())
         batch_loss_critic_v.backward()
+        nn_utils.clip_grad_norm_(self.model.base.critic_params, self.params.CLIP_GRAD)
         self.critic_optimizer.step()
         return batch_loss_critic_v
 
@@ -55,6 +57,6 @@ class AgentPPO(OnPolicyAgent):
         batch_loss_actor_v = -1.0 * torch.min(batch_surrogate_1_v, batch_surrogate_2_v).mean()
 
         (batch_loss_actor_v + self.params.ENTROPY_LOSS_WEIGHT * batch_loss_entropy_v).backward()
-        #nn_utils.clip_grad_norm_(self.model.base.parameters(), self.params.CLIP_GRAD)
+        nn_utils.clip_grad_norm_(self.model.base.actor_params, self.params.CLIP_GRAD)
         self.actor_optimizer.step()
         return batch_loss_actor_v
