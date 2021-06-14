@@ -19,7 +19,6 @@ from codes.e_utils.names import RLAlgorithmName, ON_POLICY_RL_ALGORITHMS
 from codes.e_utils.train_tracker import SpeedTracker
 from codes.e_utils.common_utils import print_params
 
-torch.autograd.detect_anomaly(True)
 
 def train_main(train_env, test_env):
     agent = get_agent(train_env)
@@ -152,7 +151,8 @@ def train_main(train_env, test_env):
                     break
 
                 if not params.TRAIN_ONLY_AFTER_EPISODE:
-                    train(agent, step_idx, loss_dequeue, actor_objective_dequeue)
+                    with torch.autograd.detect_anomaly():
+                        train(agent, step_idx, loss_dequeue, actor_objective_dequeue)
 
             if not is_good_model_saved:
                 agent.test_model = copy.deepcopy(agent.model)
