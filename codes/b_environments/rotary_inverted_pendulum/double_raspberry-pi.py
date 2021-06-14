@@ -151,7 +151,7 @@ class RotaryDoubleInvertedPendulum:
 
         arm_angle, arm_velocity, link_1_angle, link_1_velocity, link_2_angle, link_2_velocity = self.calculate_state()
 
-        self.print_state(arm_angle, arm_velocity, link_1_angle, link_1_velocity, link_2_angle, link_2_velocity)
+        # self.print_state(arm_angle, arm_velocity, link_1_angle, link_1_velocity, link_2_angle, link_2_velocity)
 
         self.step_idx += 1
         self.previous_action = motor_power
