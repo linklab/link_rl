@@ -154,7 +154,8 @@ def train_main(train_env, test_env):
                     break
 
                 if not params.TRAIN_ONLY_AFTER_EPISODE:
-                    train(agent, step_idx, loss_dequeue, actor_objective_dequeue)
+                    with torch.autograd.detect_anomaly():
+                        train(agent, step_idx, loss_dequeue, actor_objective_dequeue)
 
             if not is_good_model_saved:
                 agent.test_model = copy.deepcopy(agent.model)
