@@ -51,6 +51,9 @@ def train_main(train_env, test_env):
                 step_idx += params.TRAIN_STEP_FREQ
                 exp = agent.buffer.populate(params.TRAIN_STEP_FREQ)
 
+                if hasattr(agent, 'epsilon_tracker') and agent.epsilon_tracker:
+                    agent.epsilon_tracker.udpate(step_idx)
+
                 episode_rewards, episode_steps = experience_source.pop_episode_reward_and_done_step_lst()
 
                 if episode_rewards and episode_steps:
@@ -163,9 +166,6 @@ def train_main(train_env, test_env):
 
 
 def train(agent, step_idx, loss_dequeue, actor_objective_dequeue):
-    if hasattr(agent, 'epsilon_tracker') and agent.epsilon_tracker:
-        agent.epsilon_tracker.udpate(step_idx)
-
     if params.RL_ALGORITHM in ON_POLICY_RL_ALGORITHMS:
         if isinstance(agent, AgentPPO):
             if len(agent.buffer) < params.PPO_TRAJECTORY_SIZE:
