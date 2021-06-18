@@ -34,7 +34,7 @@ class OnPolicyAgent(BaseAgent):
 
     # https://proofwiki.org/wiki/Differential_Entropy_of_Gaussian_Distribution
     def calc_entropy(self, logstd_v):
-        return torch.log(logstd_v * math.sqrt(2 * np.pi)) + 1.0 / 2.0
+        return torch.log(logstd_v * math.sqrt(2 * np.pi)) + 0.5
 
     # def calc_logprob(self, mu_v, logstd_v, actions_v):
     #     p1 = -1.0 * ((mu_v - actions_v) ** 2) / (2 * torch.exp(logstd_v).clamp(min=1e-3, max=1e3) ** 2)
