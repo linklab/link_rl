@@ -6,6 +6,9 @@ from multiprocessing import Pipe
 from sys import platform as _platform
 import torch.multiprocessing as mp
 
+from codes.a_config._rl_parameters.off_policy.parameter_ddpg import DDPGTrainType
+from codes.d_agents.on_policy.ppo.ppo_agent import AgentPPO
+
 current_path = os.path.dirname(os.path.realpath(__file__))
 PROJECT_HOME = os.path.abspath(os.path.join(current_path, os.pardir, os.pardir, os.pardir))
 if PROJECT_HOME not in sys.path:
@@ -16,7 +19,7 @@ from codes.b_environments.trade.trade_action_selector import EpsilonGreedyTradeD
     ArgmaxTradeActionSelector
 from codes.e_utils.common_utils import print_params
 from codes.e_utils.experience import ExperienceSourceFirstLast
-from codes.e_utils.names import OFF_POLICY_RL_ALGORITHMS, RLAlgorithmName
+from codes.e_utils.names import OFF_POLICY_RL_ALGORITHMS, RLAlgorithmName, ON_POLICY_RL_ALGORITHMS
 from codes.e_utils.train_tracker import SpeedTracker
 
 if "win32" in _platform or "win64" in _platform:
@@ -192,6 +195,7 @@ def main():
             if thread:
                 exp = exp_queue.get()
             else:
+                #print("!!!!!!! ", step_idx)
                 exp = parent_pipe_conn.recv()
 
             if isinstance(exp, dict):
@@ -255,25 +259,46 @@ def main():
             print("Solved in {0} steps and {1} episodes!".format(step_idx, episode))
             break
         else:
-            if len(agent.buffer) < params.MIN_REPLAY_SIZE_FOR_TRAIN:
-                continue
+            train(agent, step_idx, loss_dequeue, actor_objective_dequeue)
 
-            _, critic_loss, actor_objective = agent.train(step_idx=step_idx)
 
-            loss_dequeue.append(critic_loss)
+def train(agent, step_idx, loss_dequeue, actor_objective_dequeue):
+    if params.RL_ALGORITHM in ON_POLICY_RL_ALGORITHMS:
+        if isinstance(agent, AgentPPO):
+            if len(agent.buffer) < params.PPO_TRAJECTORY_SIZE:
+                return
+        else:
+            if len(agent.buffer) < params.BATCH_SIZE:
+                return
 
-            if actor_objective:
-                actor_objective_dequeue.append(actor_objective)
+        _, last_loss, actor_objective = agent.train(step_idx=step_idx)
 
-            if hasattr(params, "PER_RANK_BASED") and getattr(params, "PER_RANK_BASED"):
-                if step_idx % 100 < params.TRAIN_STEP_FREQ:
-                    agent.buffer.rebalance()
+        # On-policy는 현재의 정책을 통해 산출된 경험정보만을 활용하여 NN을 업데이트해야 함.
+        # 따라서, 현재 학습에 사용된 Buffer는 깨끗하게 지워야 함.
+        agent.buffer.clear()
+    else:
+        if len(agent.buffer) < params.MIN_REPLAY_SIZE_FOR_TRAIN:
+            return
+
+        if params.RL_ALGORITHM == RLAlgorithmName.DDPG_V0 and params.TYPE_OF_DDPG_TRAIN == DDPGTrainType.OLD:
+            _, last_loss, actor_objective = agent.train_old(step_idx=step_idx)
+        else:
+            _, last_loss, actor_objective = agent.train(step_idx=step_idx)
+
+        if hasattr(params, "PER_RANK_BASED") and getattr(params, "PER_RANK_BASED"):
+            if step_idx % 100 < params.TRAIN_STEP_FREQ:
+                agent.buffer.rebalance()
+
+    loss_dequeue.append(last_loss)
+
+    if actor_objective:
+        actor_objective_dequeue.append(actor_objective)
 
 
 if __name__ == "__main__":
     advance_check()
     print_params(params)
 
-    assert params.RL_ALGORITHM in OFF_POLICY_RL_ALGORITHMS
+    #assert params.RL_ALGORITHM in OFF_POLICY_RL_ALGORITHMS
 
     main()

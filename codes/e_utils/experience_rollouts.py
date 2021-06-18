@@ -116,7 +116,6 @@ class ExperienceSourceRollouts:
                     reward=mb_rewards.flatten(),
                     value=mb_values.flatten()
                     # last_state=last_state,
-                    # last_step=len(elems),
                     # info=exp[0].info,
                     # done=exp[0].done
                 )

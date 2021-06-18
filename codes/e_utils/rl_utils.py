@@ -13,6 +13,7 @@ import os, sys
 from codes.a_config.f_trade_parameters.parameters_trade_dqn import PARAMETERS_GENERAL_TRADE_DQN
 
 from codes.b_environments.custom_sync_vector_env import CustomSyncVectorEnv
+from codes.b_environments.toy.toy_env import ToyEnv
 from codes.b_environments.trade.trade_data import get_data
 from codes.c_models.continuous_action.soft_actor_critic_model import SoftActorCriticModel
 from codes.d_agents.black_box.cma_es.cma_es_agent import AgentEMAES
@@ -186,6 +187,8 @@ def get_single_environment(params=None, mode=AgentMode.TRAIN):
             )
         else:
             raise ValueError()
+    elif params.ENVIRONMENT_ID == EnvironmentName.TOY_V0:
+        env = ToyEnv()
     else:
         env = None
 

@@ -1,5 +1,6 @@
 import torch
 import torch.nn.functional as F
+import torch.nn.utils as nn_utils
 
 from codes.d_agents.on_policy.on_policy_agent import OnPolicyAgent
 from codes.e_utils import replay_buffer
@@ -35,6 +36,7 @@ class AgentPPO(OnPolicyAgent):
         self.critic_optimizer.zero_grad()
         batch_loss_critic_v = F.mse_loss(batch_values_v.squeeze(-1), batch_target_action_value_v.detach())
         batch_loss_critic_v.backward()
+        nn_utils.clip_grad_norm_(self.model.base.critic_params, self.params.CLIP_GRAD)
         self.critic_optimizer.step()
         return batch_loss_critic_v
 
@@ -45,7 +47,7 @@ class AgentPPO(OnPolicyAgent):
 
         # batch_old_log_pi_action_v: (64, 1)
         # batch_ratio_v: (64, 1)
-        batch_ratio_v = torch.exp(batch_log_pi_action_v - batch_old_log_pi_action_v)
+        batch_ratio_v = torch.exp(batch_log_pi_action_v - batch_old_log_pi_action_v.detach())
 
         # batch_advantage_v: (64, 1)
         batch_surrogate_1_v = batch_advantage_v * batch_ratio_v
@@ -54,7 +56,28 @@ class AgentPPO(OnPolicyAgent):
         )
         batch_loss_actor_v = -1.0 * torch.min(batch_surrogate_1_v, batch_surrogate_2_v).mean()
 
+        # batch_loss_actor_v = -1.0 * batch_surrogate_2_v.mean()
+
+        # if batch_advantage_v[0].item() < 0 and batch_ratio_v[0].item() > 1.0:
+        #     print("ratio: {0:5.3f}, adv: {1:5.3f}, "
+        #           "batch_surrogate_1_v: {2:5.3f}, batch_surrogate_2_v: {3:5.3f}, min: {4:5.3f}".format(
+        #             batch_ratio_v[0].item(), batch_advantage_v[0].item(),
+        #             batch_surrogate_1_v[0].item(), batch_surrogate_2_v[0].item(),
+        #             min(batch_surrogate_1_v[0], batch_surrogate_2_v[0]).item()
+        #         ), "*" if batch_surrogate_1_v[0].item() < batch_surrogate_2_v[0].item() else ""
+        #     )
+        #
+        # if batch_advantage_v[1].item() < 0 and batch_ratio_v[1].item() > 1.0:
+        #     print("ratio: {0:5.3f}, adv: {1:5.3f}, "
+        #           "batch_surrogate_1_v: {2:5.3f}, batch_surrogate_2_v: {3:5.3f}, min: {4:5.3f}".format(
+        #             batch_ratio_v[1].item(), batch_advantage_v[1].item(),
+        #             batch_surrogate_1_v[1].item(), batch_surrogate_2_v[1].item(),
+        #             min(batch_surrogate_1_v[1], batch_surrogate_2_v[1]).item()
+        #         ), "*" if batch_surrogate_1_v[1].item() < batch_surrogate_2_v[1].item() else ""
+        #     )
+
         (batch_loss_actor_v + self.params.ENTROPY_LOSS_WEIGHT * batch_loss_entropy_v).backward()
-        #nn_utils.clip_grad_norm_(self.model.base.parameters(), self.params.CLIP_GRAD)
+        nn_utils.clip_grad_norm_(self.model.base.actor_params, self.params.CLIP_GRAD)
         self.actor_optimizer.step()
+
         return batch_loss_actor_v
