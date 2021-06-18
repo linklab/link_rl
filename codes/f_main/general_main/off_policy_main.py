@@ -192,6 +192,7 @@ def main():
             if thread:
                 exp = exp_queue.get()
             else:
+                #print("!!!!!!! ", step_idx)
                 exp = parent_pipe_conn.recv()
 
             if isinstance(exp, dict):
@@ -274,6 +275,6 @@ if __name__ == "__main__":
     advance_check()
     print_params(params)
 
-    assert params.RL_ALGORITHM in OFF_POLICY_RL_ALGORITHMS
+    #assert params.RL_ALGORITHM in OFF_POLICY_RL_ALGORITHMS
 
     main()
