@@ -176,11 +176,11 @@ class EnvironmentQuanserRIP(gym.Env):
     def step(self, action):
         # current_time = time.perf_counter()
         # print("current_time - self.previous_time", current_time - self.previous_time)
-        while True:
-            current_time = time.perf_counter()
-            if current_time - self.previous_time >= self.unit_time:
-                break
-            time.sleep(0.0001)
+        # while True:
+        #     current_time = time.perf_counter()
+        #     if current_time - self.previous_time >= self.unit_time:
+        #         break
+        #     time.sleep(0.0001)
 
         current_time = time.perf_counter()
         step_time = current_time - self.previous_time
@@ -188,7 +188,7 @@ class EnvironmentQuanserRIP(gym.Env):
         if step_time > self.unit_time:
             self.over_unit_time += 1
 
-        # print(self.step_idx, action, step_time)
+        print(self.step_idx, action, step_time)
         self.previous_time = time.perf_counter()
 
         if self.step_idx % 100000 == 0:
