@@ -158,14 +158,14 @@ class EnvironmentQuanserRIP(gym.Env):
             self.motor_velocity
         ]
         # wait_time = 1 if self.episode == 0 else 15  # if self.episode % 10 == 0 else 3
-        wait_time = 1
-        previousTime = time.perf_counter()
-        time_done = False
-        while not time_done:
-            currentTime = time.perf_counter()
-            if currentTime - previousTime >= wait_time:
-                time_done = True
-            time.sleep(0.001)
+        # wait_time = 1
+        # previousTime = time.perf_counter()
+        # time_done = False
+        # while not time_done:
+        #     currentTime = time.perf_counter()
+        #     if currentTime - previousTime >= wait_time:
+        #         time_done = True
+        #     time.sleep(0.001)
 
         self.initial_motor_radian = self.motor_radian
         self.is_motor_limit = False
@@ -176,11 +176,11 @@ class EnvironmentQuanserRIP(gym.Env):
     def step(self, action):
         # current_time = time.perf_counter()
         # print("current_time - self.previous_time", current_time - self.previous_time)
-        # while True:
-        #     current_time = time.perf_counter()
-        #     if current_time - self.previous_time >= self.unit_time:
-        #         break
-        #     time.sleep(0.0001)
+        while True:
+            current_time = time.perf_counter()
+            if current_time - self.previous_time >= self.unit_time:
+                break
+            time.sleep(0.0001)
 
         current_time = time.perf_counter()
         step_time = current_time - self.previous_time
@@ -188,7 +188,7 @@ class EnvironmentQuanserRIP(gym.Env):
         if step_time > self.unit_time:
             self.over_unit_time += 1
 
-        print(self.step_idx, action, step_time)
+        # print(self.step_idx, action, step_time)
         self.previous_time = time.perf_counter()
 
         if self.step_idx % 100000 == 0:
