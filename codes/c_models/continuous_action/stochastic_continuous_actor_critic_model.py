@@ -101,4 +101,11 @@ class ActorMLPBase(nn.Module):
     def forward(self, inputs):
         mu_v = self.mu(self.common(inputs))
         logstd_v = self.logstd(self.common(inputs))
+
+        if torch.isnan(mu_v[0][0]):
+            print("mu_v:", mu_v, "!!!!!!!!")
+            print("logstd_v:", logstd_v, "!!!!!!!!")
+            print("inputs:", inputs, "!!!!!!!!")
+            print("self.common(inputs)", self.common(inputs), "!!!!!!!!!!!!!!!!")
+
         return mu_v, logstd_v

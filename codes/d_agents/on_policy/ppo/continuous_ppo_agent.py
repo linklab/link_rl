@@ -51,13 +51,13 @@ class AgentContinuousPPO(AgentPPO):
         # )
 
         self.actor_optimizer = rl_utils.get_optimizer(
-            parameters=self.model.base.actor.parameters(),
+            parameters=self.model.base.actor_params,
             learning_rate=self.params.ACTOR_LEARNING_RATE,
             params=params
         )
 
         self.critic_optimizer = rl_utils.get_optimizer(
-            parameters=self.model.base.critic.parameters(),
+            parameters=self.model.base.critic_params,
             learning_rate=self.params.LEARNING_RATE,
             params=params
         )
@@ -76,7 +76,8 @@ class AgentContinuousPPO(AgentPPO):
         trajectory_actions = [experience.action for experience in trajectory]
         trajectory_actions_v = torch.FloatTensor(trajectory_actions).to(self.device)
 
-        # trajectory_probs_v: (2049, 2)
+        # trajectory_mu_v: (2049, 1)
+        # trajectory_logstd_v: (2049, 1)
         # trajectory_values_v: (2849, 1)
         trajectory_mu_v, trajectory_logstd_v, trajectory_values_v = self.model.base.forward(trajectory_states_v)
 
@@ -137,9 +138,8 @@ class AgentContinuousPPO(AgentPPO):
                     mu_v=batch_mu_v, logstd_v=batch_logstd_v, actions_v=batch_actions_v
                 )
 
-                batch_dist_entropy_v = self.calc_entropy(logstd_v=batch_logstd_v)
-
-                batch_loss_entropy_v = -1.0 * batch_dist_entropy_v.mean()
+                entropy_v = self.calc_entropy(logstd_v=batch_logstd_v)
+                batch_loss_entropy_v = -1.0 * entropy_v.mean()
 
                 batch_loss_actor_v = self.backward_and_step_for_actor(
                     batch_log_pi_action_v, batch_old_log_pi_action_v, batch_advantage_v, batch_loss_entropy_v

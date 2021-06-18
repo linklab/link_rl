@@ -1,8 +1,9 @@
 import time
+from collections import deque
 from concurrent import futures
 import grpc
 import spidev
-
+import threading
 import rip_service_pb2_grpc
 from rip_service_pb2 import RipResponse
 import math
@@ -123,6 +124,7 @@ class RotaryDoubleInvertedPendulum:
 
         spi.xfer2([0x40, 0x00, 0x01, 0x00, 0x00])
         time.sleep(1.5)
+        # spi.xfer2([0x40, 0x00, 0x10, 0x00, 0x00])
 
         # self.print_state(arm_angle, arm_velocity, link_angle, link_velocity)
 
@@ -153,28 +155,34 @@ class RotaryDoubleInvertedPendulum:
 
         self.step_idx += 1
         self.previous_action = motor_power
-
-        if link_1_velocity > 3000:
-            self.count_continuous_fast_pendulum_velocity += 1
-        else:
-            self.count_continuous_fast_pendulum_velocity = 0
-
-        if self.count_continuous_fast_pendulum_velocity > 3000:
-            self.force_terminate()
-
-            return RipResponse(
-                message='FORCE_TERMINATE',
-                arm_angle=None, arm_velocity=None,
-                link_1_angle=None, link_1_velocity=None,
-                link_2_angle=None, link_2_velocity=None
-            )
-        else:
-            return RipResponse(
-                message='OK',
-                arm_angle=arm_angle, arm_velocity=arm_velocity,
-                link_1_angle=link_1_angle, link_1_velocity=link_1_velocity,
-                link_2_angle=link_2_angle, link_2_velocity=link_2_velocity
-            )
+        #
+        # if link_1_velocity > 3300:
+        #     self.count_continuous_fast_pendulum_velocity += 1
+        # else:
+        #     self.count_continuous_fast_pendulum_velocity = 0
+        #
+        # if self.count_continuous_fast_pendulum_velocity > 300:
+        #     self.force_terminate()
+        #
+        #     return RipResponse(
+        #         message='FORCE_TERMINATE',
+        #         arm_angle=None, arm_velocity=None,
+        #         link_1_angle=None, link_1_velocity=None,
+        #         link_2_angle=None, link_2_velocity=None
+        #     )
+        # else:
+        #     return RipResponse(
+        #         message='OK',
+        #         arm_angle=arm_angle, arm_velocity=arm_velocity,
+        #         link_1_angle=link_1_angle, link_1_velocity=link_1_velocity,
+        #         link_2_angle=link_2_angle, link_2_velocity=link_2_velocity
+        #     )
+        return RipResponse(
+            message='OK',
+            arm_angle=arm_angle, arm_velocity=arm_velocity,
+            link_1_angle=link_1_angle, link_1_velocity=link_1_velocity,
+            link_2_angle=link_2_angle, link_2_velocity=link_2_velocity
+        )
 
     def force_terminate(self):
         spi.xfer2([0x40, 0x00, 0x01, 0x00, 0x00])
@@ -204,13 +212,11 @@ class RotaryDoubleInvertedPendulum:
             time.sleep(0.006)
 
     def terminate(self, rip_request, context):
-        spi.xfer2([0x40, 0x00, 0x10, 0x00, 0x00])
         spi.xfer2([0x40, 0x00, 0x01, 0x00, 0x00])
 
         return RipResponse(message='OK')
 
     def test_terminate(self):
-        spi.xfer2([0x40, 0x00, 0x10, 0x00, 0x00])
         spi.xfer2([0x40, 0x00, 0x01, 0x00, 0x00])
         return None
 
@@ -222,15 +228,37 @@ class RotaryDoubleInvertedPendulum:
         print("link 2 angle :", link_2_angle)
         print("link 2 vel :", link_2_velocity)
 
-def start_grpc():
-    server = grpc.server(futures.ThreadPoolExecutor(max_workers=10))
-    rip_service_pb2_grpc.add_RDIPServicer_to_server(RotaryDoubleInvertedPendulum(), server)
+def start_grpc(rip, server):
+    rip_service_pb2_grpc.add_RDIPServicer_to_server(rip, server)
     server.add_insecure_port('[::]:50051')
     server.start()
     server.wait_for_termination()
 
+def velocity_check(rip, server):
+    arm_velocity_num = 0
+    link_1_velocity_num = 0
+    arm_vel_deque = deque(maxlen=100)
+    link_vel_deque = deque(maxlen=100)
+    while True:
+        arm_angle, arm_velocity, link_1_angle, link_1_velocity, link_2_angle, link_2_velocity = rip.calculate_state()
+        arm_vel_deque.append(abs(arm_velocity))
+        link_vel_deque.append(abs(link_1_velocity))
+        arm_vel_deque_mean = sum(arm_vel_deque)/100.0
+        link_vel_deque_mean = sum(link_vel_deque)/100.0
+        if arm_vel_deque_mean > 1400 or link_vel_deque_mean > 1400: #5SECOND
+            server.stop(grace=None)
+            for _ in range(3):
+                rip.test_terminate()
+            raise Exception("EXCEED VELOCITY!!!")
+        time.sleep(0.05)
+
 if __name__ == "__main__":
-    start_grpc()
+    rip = RotaryDoubleInvertedPendulum()
+    server = grpc.server(futures.ThreadPoolExecutor(max_workers=10))
+
+    vel_check = threading.Thread(target=velocity_check, args=(rip, server))
+    vel_check.start()
+    start_grpc(rip, server)
     # rasp_rip = RotaryDoubleInvertedPendulum()
     # try:
     #     rasp_rip.step_test()
