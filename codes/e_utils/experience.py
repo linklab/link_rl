@@ -29,11 +29,11 @@ ExperienceWithNoise = namedtuple(
 
 ExperienceFirstLast = namedtuple(
     'ExperienceFirstLast',
-    ('state', 'action', 'reward', 'last_state', 'last_step', 'done', 'info')
+    ('state', 'action', 'reward', 'last_state', 'done', 'info')
 )
 ExperienceFirstLastWithNoise = namedtuple(
     'ExperienceFirstLastWithNoise',
-    ('state', 'action', 'noise', 'reward', 'last_state', 'last_step', 'done', 'info')
+    ('state', 'action', 'noise', 'reward', 'last_state', 'done', 'info')
 )
 
 
@@ -244,7 +244,7 @@ class ExperienceSourceFirstLast(ExperienceSource):
 
     If we have partial trajectory at the end of episode, last_state will be None
     """
-    def __init__(self, env, agent, gamma, n_step=1, steps_delta=1, vectorized=True):
+    def __init__(self, env, agent, gamma, n_step=1, steps_delta=1):
         assert isinstance(gamma, float)
         super(ExperienceSourceFirstLast, self).__init__(env, agent, n_step + 1, steps_delta)
         self.gamma = gamma
@@ -268,7 +268,7 @@ class ExperienceSourceFirstLast(ExperienceSource):
 
             e = ExperienceFirstLast(
                 state=exp[0].state, action=exp[0].action, reward=total_reward, last_state=last_state,
-                last_step=len(elems), info=exp[0].info, done=exp[0].done
+                info=exp[0].info, done=exp[0].done
             )
 
             #print(e)
