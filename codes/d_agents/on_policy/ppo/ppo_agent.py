@@ -54,9 +54,9 @@ class AgentPPO(OnPolicyAgent):
         batch_surrogate_2_v = batch_advantage_v * torch.clamp(
             batch_ratio_v, min=1.0 - self.params.PPO_EPSILON_CLIP, max=1.0 + self.params.PPO_EPSILON_CLIP
         )
-        # batch_loss_actor_v = -1.0 * torch.min(batch_surrogate_1_v, batch_surrogate_2_v).mean()
+        batch_loss_actor_v = -1.0 * torch.min(batch_surrogate_1_v, batch_surrogate_2_v).mean()
 
-        batch_loss_actor_v = -1.0 * batch_surrogate_2_v.mean()
+        # batch_loss_actor_v = -1.0 * batch_surrogate_2_v.mean()
 
         # if batch_advantage_v[0].item() < 0 and batch_ratio_v[0].item() > 1.0:
         #     print("ratio: {0:5.3f}, adv: {1:5.3f}, "
@@ -79,4 +79,5 @@ class AgentPPO(OnPolicyAgent):
         (batch_loss_actor_v + self.params.ENTROPY_LOSS_WEIGHT * batch_loss_entropy_v).backward()
         nn_utils.clip_grad_norm_(self.model.base.actor_params, self.params.CLIP_GRAD)
         self.actor_optimizer.step()
+
         return batch_loss_actor_v

@@ -214,7 +214,6 @@ class AgentDQN(OffPolicyAgent):
             actions.append(exp.action)
             rewards.append(exp.reward)
             dones.append(exp.last_state is None)
-            last_steps.append(exp.last_step)
             if exp.last_state is None:
                 last_states.append(state)  # the result will be masked anyway
             else:

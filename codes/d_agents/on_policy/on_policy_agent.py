@@ -32,4 +32,11 @@ class OnPolicyAgent(BaseAgent):
     def train(self, step_idx):
         raise NotImplementedError
 
+    # https://proofwiki.org/wiki/Differential_Entropy_of_Gaussian_Distribution
+    def calc_entropy(self, logstd_v):
+        return torch.log(logstd_v * math.sqrt(2 * np.pi)) + 0.5
 
+    # def calc_logprob(self, mu_v, logstd_v, actions_v):
+    #     p1 = -1.0 * ((mu_v - actions_v) ** 2) / (2 * torch.exp(logstd_v).clamp(min=1e-3, max=1e3) ** 2)
+    #     p2 = -1.0 * torch.log(torch.sqrt(2 * np.pi * torch.exp(logstd_v).clamp(min=1e-3, max=1e3) ** 2))
+    #     return p1 + p2

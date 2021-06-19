@@ -158,14 +158,14 @@ class EnvironmentQuanserRIP(gym.Env):
             self.motor_velocity
         ]
         # wait_time = 1 if self.episode == 0 else 15  # if self.episode % 10 == 0 else 3
-        wait_time = 1
-        previousTime = time.perf_counter()
-        time_done = False
-        while not time_done:
-            currentTime = time.perf_counter()
-            if currentTime - previousTime >= wait_time:
-                time_done = True
-            time.sleep(0.001)
+        # wait_time = 1
+        # previousTime = time.perf_counter()
+        # time_done = False
+        # while not time_done:
+        #     currentTime = time.perf_counter()
+        #     if currentTime - previousTime >= wait_time:
+        #         time_done = True
+        #     time.sleep(0.001)
 
         self.initial_motor_radian = self.motor_radian
         self.is_motor_limit = False
