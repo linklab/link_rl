@@ -139,7 +139,8 @@ class AgentContinuousPPO(AgentPPO):
                 #     mu_v=batch_mu_v, logstd_v=batch_logstd_v, actions_v=batch_actions_v
                 # )
 
-                entropy_v = self.calc_entropy(logstd_v=batch_logstd_v)
+                #entropy_v_0 = self.calc_entropy(logstd_v=batch_logstd_v)
+                entropy_v = batch_dist.entropy()
                 batch_loss_entropy_v = -1.0 * entropy_v.mean()
 
                 batch_loss_actor_v = self.backward_and_step_for_actor(
