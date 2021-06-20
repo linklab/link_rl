@@ -60,7 +60,7 @@ class AgentPPO(OnPolicyAgent):
         elif self.params.ACTOR_SURROGATE_OBJECTIVE_TYPE == 1: # NEW
             min_surrogate_v = torch.min(batch_surrogate_1_v, batch_surrogate_2_v)
             batch_loss_actor_v_temp = torch.where(
-                batch_advantage_v > 0.0,
+                torch.ge(batch_advantage_v, 0.0),
                 batch_surrogate_2_v, min_surrogate_v
             )
             batch_loss_actor_v = -1.0 * batch_loss_actor_v_temp.mean()
