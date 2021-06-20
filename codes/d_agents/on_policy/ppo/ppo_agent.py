@@ -50,25 +50,23 @@ class AgentPPO(OnPolicyAgent):
         batch_ratio_v = torch.exp(batch_log_pi_action_v - batch_old_log_pi_action_v.detach())
 
         # batch_advantage_v: (64, 1)
-        ############################### ORIGINAL ##########################################################
         batch_surrogate_1_v = batch_advantage_v * batch_ratio_v
         batch_surrogate_2_v = batch_advantage_v * torch.clamp(
             batch_ratio_v, min=1.0 - self.params.PPO_EPSILON_CLIP, max=1.0 + self.params.PPO_EPSILON_CLIP
         )
-        #batch_loss_actor_v = -1.0 * torch.min(batch_surrogate_1_v, batch_surrogate_2_v).mean()
-        ############################### ORIGINAL ##########################################################
+        if self.params.ACTOR_SURROGATE_OBJECTIVE_TYPE == 0: # ORIGIANL
+            batch_loss_actor_v = -1.0 * torch.min(batch_surrogate_1_v, batch_surrogate_2_v).mean()
 
-        ############################### NEW ###############################################################
-        batch_loss_actor_sum_v = 0.0
-        squeezed_batch_surrogate_1_v = batch_surrogate_1_v.squeeze(1)
-        squeezed_batch_surrogate_2_v = batch_surrogate_2_v.squeeze(1)
-        for idx, advantage_v in enumerate(batch_advantage_v.squeeze(1)):
-            if advantage_v > 0.0:
-                batch_loss_actor_sum_v += squeezed_batch_surrogate_2_v[idx]
-            else:
-                batch_loss_actor_sum_v += torch.min(squeezed_batch_surrogate_1_v[idx], squeezed_batch_surrogate_2_v[idx])
-        batch_loss_actor_v = -1.0 * batch_loss_actor_sum_v / len(batch_advantage_v)
-        ############################### NEW ###############################################################
+        elif self.params.ACTOR_SURROGATE_OBJECTIVE_TYPE == 1: # NEW
+            min_surrogate_v = torch.min(batch_surrogate_1_v, batch_surrogate_2_v)
+            batch_loss_actor_v_temp = torch.where(
+                batch_advantage_v > 0.0,
+                batch_surrogate_2_v, min_surrogate_v
+            )
+            batch_loss_actor_v = -1.0 * batch_loss_actor_v_temp.mean()
+
+        else:
+            raise ValueError()
 
         # if batch_advantage_v[0].item() < 0 and batch_ratio_v[0].item() > 1.0:
         #     print("ratio: {0:5.3f}, adv: {1:5.3f}, "
