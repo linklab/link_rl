@@ -242,6 +242,12 @@ def main():
                         RLAlgorithmName.SAC_V0,
                         RLAlgorithmName.CONTINUOUS_PPO_V0,
                         RLAlgorithmName.CONTINUOUS_A2C_V0
+                    ] and params.ENVIRONMENT_ID in [
+                        EnvironmentName.QUANSER_SERVO_2,
+                        EnvironmentName.REAL_DEVICE_RIP,
+                        EnvironmentName.REAL_DEVICE_DOUBLE_RIP,
+                        EnvironmentName.PENDULUM_MATLAB_V0,
+                        EnvironmentName.PENDULUM_MATLAB_DOUBLE_RIP_V0
                     ]:
                         if train_info_dict["last_actions"] < -1.0 or train_info_dict["last_actions"] > 1.0:
                             train_info_dict["last_actions"] = 0.0
