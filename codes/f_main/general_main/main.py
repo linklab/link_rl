@@ -5,6 +5,8 @@ import copy
 import os, sys
 from collections import deque
 
+from codes.d_agents.on_policy.ppo.ppo_agent import AgentPPO
+
 current_path = os.path.dirname(os.path.realpath(__file__))
 PROJECT_HOME = os.path.abspath(os.path.join(current_path, os.pardir, os.pardir, os.pardir))
 if PROJECT_HOME not in sys.path:
@@ -48,6 +50,9 @@ def train_main(train_env, test_env):
             while step_idx < params.MAX_GLOBAL_STEP:
                 step_idx += params.TRAIN_STEP_FREQ
                 exp = agent.buffer.populate(params.TRAIN_STEP_FREQ)
+
+                if hasattr(agent, 'epsilon_tracker') and agent.epsilon_tracker:
+                    agent.epsilon_tracker.udpate(step_idx)
 
                 episode_rewards, episode_steps = experience_source.pop_episode_reward_and_done_step_lst()
 
@@ -149,7 +154,8 @@ def train_main(train_env, test_env):
                     break
 
                 if not params.TRAIN_ONLY_AFTER_EPISODE:
-                    train(agent, step_idx, loss_dequeue, actor_objective_dequeue)
+                    with torch.autograd.detect_anomaly():
+                        train(agent, step_idx, loss_dequeue, actor_objective_dequeue)
 
             if not is_good_model_saved:
                 agent.test_model = copy.deepcopy(agent.model)
@@ -161,11 +167,8 @@ def train_main(train_env, test_env):
 
 
 def train(agent, step_idx, loss_dequeue, actor_objective_dequeue):
-    if hasattr(agent, 'epsilon_tracker') and agent.epsilon_tracker:
-        agent.epsilon_tracker.udpate(step_idx)
-
     if params.RL_ALGORITHM in ON_POLICY_RL_ALGORITHMS:
-        if params.RL_ALGORITHM in [RLAlgorithmName.CONTINUOUS_PPO_V0, RLAlgorithmName.DISCRETE_PPO_V0]:
+        if isinstance(agent, AgentPPO):
             if len(agent.buffer) < params.PPO_TRAJECTORY_SIZE:
                 return
         else:
@@ -174,35 +177,26 @@ def train(agent, step_idx, loss_dequeue, actor_objective_dequeue):
 
         _, last_loss, actor_objective = agent.train(step_idx=step_idx)
 
-        loss_dequeue.append(last_loss)
-
-        if actor_objective:
-            actor_objective_dequeue.append(actor_objective)
-
         # On-policy는 현재의 정책을 통해 산출된 경험정보만을 활용하여 NN을 업데이트해야 함.
         # 따라서, 현재 학습에 사용된 Buffer는 깨끗하게 지워야 함.
         agent.buffer.clear()
     else:
         if len(agent.buffer) < params.MIN_REPLAY_SIZE_FOR_TRAIN:
             return
-        if params.RL_ALGORITHM == RLAlgorithmName.DDPG_V0:
-            if params.TYPE_OF_DDPG_TRAIN == DDPGTrainType.NEW:
-                _, last_loss, actor_objective = agent.train(step_idx=step_idx)
-            elif params.TYPE_OF_DDPG_TRAIN == DDPGTrainType.OLD:
-                _, last_loss, actor_objective = agent.train_old(step_idx=step_idx)
-            else:
-                raise ValueError()
+
+        if params.RL_ALGORITHM == RLAlgorithmName.DDPG_V0 and params.TYPE_OF_DDPG_TRAIN == DDPGTrainType.OLD:
+            _, last_loss, actor_objective = agent.train_old(step_idx=step_idx)
         else:
             _, last_loss, actor_objective = agent.train(step_idx=step_idx)
-
-        loss_dequeue.append(last_loss)
-
-        if actor_objective:
-            actor_objective_dequeue.append(actor_objective)
 
         if hasattr(params, "PER_RANK_BASED") and getattr(params, "PER_RANK_BASED"):
             if step_idx % 100 < params.TRAIN_STEP_FREQ:
                 agent.buffer.rebalance()
+
+    loss_dequeue.append(last_loss)
+
+    if actor_objective:
+        actor_objective_dequeue.append(actor_objective)
 
 
 if __name__ == "__main__":

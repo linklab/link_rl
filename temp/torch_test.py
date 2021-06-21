@@ -1,16 +1,23 @@
 import torch
-import numpy as np
-import os
-import sys
+from torchviz import make_dot
 
-current_path = os.path.dirname(os.path.realpath(__file__))
-PROJECT_HOME = os.path.abspath(os.path.join(current_path, os.pardir))
+x = torch.ones(5)  # input tensor
+y = torch.zeros(3)  # expected output
+print(x.shape, y.shape)
 
-if PROJECT_HOME not in sys.path:
-    sys.path.append(PROJECT_HOME)
+w = torch.randn(5, 3, requires_grad=True)
+b = torch.randn(3, requires_grad=True)
+z = torch.matmul(x, w) + b
 
-# a = torch.tensor(np.arange(12).reshape(3, 4), dtype=torch.float32)
-# b = a[:, :2]
-# print(b)
-# c = a[:, :2].contiguous()
-# print(c)
+print('Gradient function for z =', z.grad_fn)
+
+loss = torch.mean(z - y) + 10000000000
+
+print('Gradient function for loss =', loss.grad_fn)
+
+dot = make_dot(loss, params={"w": w, "b": b})
+dot.render()
+
+loss.backward()
+print(w.grad)
+print(b.grad)

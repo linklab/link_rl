@@ -156,6 +156,6 @@ class ExperienceSourceSingleEnvFirstLast(ExperienceSourceSingleEnv):
 
             exp = ExperienceFirstLast(
                 state=history[0].state, action=history[0].action, reward=total_reward, last_state=last_state,
-                last_step=len(elems), done=history[-1].done, info=history[-1].info
+                done=history[-1].done, info=history[-1].info
             )
             yield exp
