@@ -81,7 +81,7 @@ def actor_func(agent, exp_queue, child_pipe_conn):
                     EnvironmentName.REAL_DEVICE_DOUBLE_RIP,
                     EnvironmentName.PENDULUM_MATLAB_DOUBLE_RIP_V0
                 ] and hasattr(agent, "train_action_selector") and hasattr(agent.train_action_selector, "noise_std"):
-                    if train_env.is_upright:
+                    if train_env.envs[0].is_upright:
                         agent.train_action_selector.noise_std = 0.25
                     else:
                         agent.train_action_selector.noise_std = 1.0

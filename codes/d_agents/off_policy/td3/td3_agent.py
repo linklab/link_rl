@@ -114,13 +114,6 @@ class AgentTD3(OffPolicyAgent):
         if self.agent_mode == AgentMode.TRAIN:
             mu_v = self.model(states)
             mu = mu_v.detach().cpu().numpy()
-
-            if self.is_rip_upright:
-                self.train_action_selector.noise_std = self.train_action_selector.original_noise_std / 4.0
-                print(self.train_action_selector.noise_std, "!!!!!!")
-            else:
-                self.train_action_selector.noise_std = self.train_action_selector.original_noise_std
-
             actions, new_noises = self.train_action_selector(mu, noises)
         else:
             mu_v = self.test_model(states)
