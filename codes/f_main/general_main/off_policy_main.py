@@ -76,6 +76,16 @@ def actor_func(agent, exp_queue, child_pipe_conn):
             while step_idx < params.MAX_GLOBAL_STEP:
                 # 1 스텝 진행하고 exp를 exp_queue에 넣음
                 step_idx += 1
+
+                if params.ENVIRONMENT_ID in [
+                    EnvironmentName.REAL_DEVICE_DOUBLE_RIP,
+                    EnvironmentName.PENDULUM_MATLAB_DOUBLE_RIP_V0
+                ] and hasattr(agent, "train_action_selector") and hasattr(agent.train_action_selector, "noise_std"):
+                    if train_env.envs[0].is_upright:
+                        agent.train_action_selector.noise_std = 0.25
+                    else:
+                        agent.train_action_selector.noise_std = 1.0
+
                 exp = next(exp_source_iter)
 
                 if thread:
