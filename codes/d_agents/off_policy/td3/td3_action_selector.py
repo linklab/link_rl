@@ -8,7 +8,7 @@ from codes.e_utils.names import EnvironmentName
 
 class TD3ActionSelector:
     def __init__(self, epsilon, noise_std=0.0, params=None):
-        self.noise_std = noise_std
+        self.noise_std = self.original_noise_std = noise_std
         self.epsilon = epsilon
         self.params = params
 
