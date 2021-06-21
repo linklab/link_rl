@@ -347,7 +347,18 @@ class RotaryInvertedPendulumEnv(gym.Env):
                 self.pendulum_2_position = math.radians(rip_response.link_2_angle)
                 self.pendulum_2_velocity = rip_response.link_2_velocity
                 self.simulation_time = None
-
+                if self.episode_idx % 20 == 0:
+                    last_time = time.perf_counter()
+                    while True:
+                        current_time = time.perf_counter()
+                        print(
+                            "motor vel :{0:5.3f}, pen1_Vel : {1:5.3f}, pen2_vel : {2:5.3f}, motor posi :{3:5.3f}, pen1 posi :{4:5.3f}, pen2 posi :{5:5.3f}".format(
+                                self.motor_velocity, self.pendulum_1_velocity, self.pendulum_2_velocity,
+                                self.motor_velocity, rip_response.link_1_angle, rip_response.link_2_angle
+                            ))
+                        if current_time - last_time >= 15:
+                            break
+                        time.sleep(0.0001)
             #self.set_max_three_velocity()
 
             if hasattr(self.params, "DOUBLE_PENDULUM_STATE_INFO") and self.params.DOUBLE_PENDULUM_STATE_INFO == 0:
