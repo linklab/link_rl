@@ -7,6 +7,7 @@ from sys import platform as _platform
 import torch.multiprocessing as mp
 
 from codes.a_config._rl_parameters.off_policy.parameter_ddpg import DDPGTrainType
+from codes.d_agents.off_policy.td3.td3_agent import AgentTD3
 from codes.d_agents.on_policy.ppo.ppo_agent import AgentPPO
 
 current_path = os.path.dirname(os.path.realpath(__file__))
@@ -76,6 +77,16 @@ def actor_func(agent, exp_queue, child_pipe_conn):
             while step_idx < params.MAX_GLOBAL_STEP:
                 # 1 스텝 진행하고 exp를 exp_queue에 넣음
                 step_idx += 1
+
+                if params.ENVIRONMENT_ID in [
+                    EnvironmentName.REAL_DEVICE_DOUBLE_RIP,
+                    EnvironmentName.PENDULUM_MATLAB_DOUBLE_RIP_V0
+                ] and isinstance(agent, AgentTD3):
+                    if train_env.is_upright:
+                        agent.is_rip_upright = True
+                    else:
+                        agent.is_rip_upright = False
+
                 exp = next(exp_source_iter)
 
                 if thread:
