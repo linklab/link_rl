@@ -9,7 +9,7 @@ from codes.c_models.continuous_action.deterministic_continuous_actor_critic_mode
 from codes.d_agents.a0_base_agent import float32_preprocessor
 from codes.d_agents.off_policy.off_policy_agent import OffPolicyAgent
 from codes.d_agents.off_policy.td3.td3_action_selector import SomeTimesBlowTD3ActionSelector, TD3ActionSelector
-from codes.e_utils.rl_utils import get_optimizer
+from codes.e_utils import rl_utils
 from codes.d_agents.actions import EpsilonTracker
 from codes.e_utils.names import DeepLearningModelName, AgentMode
 from torch.distributions import normal
@@ -74,13 +74,13 @@ class AgentTD3(OffPolicyAgent):
         #     params=params
         # )
 
-        self.actor_optimizer = get_optimizer(
+        self.actor_optimizer = rl_utils.get_optimizer(
             parameters=self.model.base.actor_params,
             learning_rate=self.params.ACTOR_LEARNING_RATE,
             params=params
         )
 
-        self.critic_optimizer = get_optimizer(
+        self.critic_optimizer = rl_utils.get_optimizer(
             parameters=self.model.base.critic_params,
             learning_rate=self.params.LEARNING_RATE,
             params=params
@@ -98,8 +98,6 @@ class AgentTD3(OffPolicyAgent):
 
         self.cache_loss_actor_v = torch.tensor(0.0)
         self.last_noise = 0.0
-
-        self.is_rip_upright = False
 
     def __call__(self, states, noises=None):
         if not noises:
