@@ -144,18 +144,24 @@ class EnvironmentQuanserRIP(gym.Env):
         self.pendulum_radian = quanser_response.pendulum_radian
         self.pendulum_velocity = quanser_response.pendulum_velocity
 
-        if self.episode % 5 == 0:
-            print("*RESET PENDULUM RADIAN : {0:1.3f}".format(self.pendulum_radian))
+        # if self.episode % 5 == 0:
+        #     print("** [EPISODE: {0}] RESET PENDULUM RADIAN : {1:6.3f}, "
+        #           "math.cos(self.pendulum_radian): {2:6.3f}, math.sin(self.pendulum_radian): {3:6.3f}".format(
+        #         self.episode,
+        #         self.pendulum_radian,
+        #         math.cos(self.pendulum_radian),
+        #         math.sin(self.pendulum_radian),
+        #     ))
 
         self.state = [
             math.cos(self.pendulum_radian),
             math.sin(self.pendulum_radian),
-            self.pendulum_velocity,
+            self.pendulum_velocity / params.VELOCITY_STATE_DENOMINATOR,
             # math.cos(0.0),
             # math.sin(0.0),
             math.cos(quanser_response.motor_radian),
             math.sin(quanser_response.motor_radian),
-            self.motor_velocity
+            self.motor_velocity / params.VELOCITY_STATE_DENOMINATOR
         ]
         # wait_time = 1 if self.episode == 0 else 15  # if self.episode % 10 == 0 else 3
         # wait_time = 1
@@ -237,12 +243,12 @@ class EnvironmentQuanserRIP(gym.Env):
         self.state = [
             math.cos(self.pendulum_radian),
             math.sin(self.pendulum_radian),
-            self.pendulum_velocity,
+            self.pendulum_velocity / params.VELOCITY_STATE_DENOMINATOR,
             # math.cos(self.initial_motor_radian - self.motor_radian),
             # math.sin(self.initial_motor_radian - self.motor_radian),
             math.cos(quanser_response.motor_radian),
             math.sin(quanser_response.motor_radian),
-            self.motor_velocity
+            self.motor_velocity / params.VELOCITY_STATE_DENOMINATOR
         ]
         next_state = np.asarray(self.state)
 
@@ -325,12 +331,11 @@ class EnvironmentQuanserRIP(gym.Env):
                 position_reward = (math.pi - abs(self.pendulum_radian)) / 2
                 # position_reward = 1 + math.cos(self.pendulum_radian)
 
-
-        energy_penalty = 1.0 * -1.0 * (abs(self.pendulum_velocity) + abs(self.motor_velocity)) / 2000
+        energy_penalty = -1.0 * (abs(self.pendulum_velocity) + abs(self.motor_velocity)) / 2000
 
         reward = position_reward + energy_penalty
 
-        reward = max(0.0, reward)
+        reward = max(0.000001, reward) / params.REWARD_DENOMINATOR
 
         # open ai pendulum reward = -(theta^2 + 0.1theta_dt^2 + 0.001action^2)
         # reward = -((self.pendulum_radian**2) + 0.1*((self.pendulum_velocity/100)**2) + 0.001*(((2*action)/params.ACTION_SCALE)**2))

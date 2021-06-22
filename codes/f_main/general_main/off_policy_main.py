@@ -111,7 +111,7 @@ def actor_func(agent, exp_queue, child_pipe_conn):
                             exp
                         )
 
-                        if episode % params.TEST_PERIOD_EPISODES == 0:
+                        if episode != 0 and episode % params.TEST_PERIOD_EPISODES == 0:
                             solved, good_model_saved, evaluation_msg = episode_processor.test(step_idx)
 
                             if good_model_saved:

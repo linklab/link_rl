@@ -43,6 +43,7 @@ class QubeServo2:
         self.last_time = 0.0
         
         self.pendulum_reset(0,None)
+
     def step(self, QuanserRequest, context):
         previous_time = time.time()
 
@@ -79,7 +80,7 @@ class QubeServo2:
         self.motor_command = 0
         motor_radian, motor_velocity, pendulum_radian, pendulum_velocity, step_id = self_servo.read_and_pub()
         self.protection()
-        time.sleep(5)
+        time.sleep(1)
         return QuanserResponse(
             message="RESET",
             motor_radian=motor_radian, motor_velocity=motor_velocity,

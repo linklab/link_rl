@@ -1,3 +1,5 @@
+import math
+
 from codes.a_config._rl_parameters.off_policy.parameter_dqn import PARAMETERS_DQN, DQNActionType, DQNActionSelectorType
 from codes.e_utils.names import *
 from codes.a_config.parameters_general import PARAMETERS_GENERAL
@@ -9,8 +11,11 @@ class PARAMETERS_QUANSER_RIP_DQN(PARAMETERS_GENERAL, PARAMETERS_DQN):
     DEEP_LEARNING_MODEL = DeepLearningModelName.DUELING_DQN_MLP
     OPTIMIZER = OptimizerName.ADAM
 
-    TRAIN_STOP_EPISODE_REWARD = 15200  # MAX: 3.14 * 10000 = 31400
-    TRAIN_STOP_EPISODE_REWARD_STD = 10.0
+    VELOCITY_STATE_DENOMINATOR = 100.0
+    REWARD_DENOMINATOR = math.pi
+
+    TRAIN_STOP_EPISODE_REWARD = 7000  # MAX: 3.14 * 10000 = 31400
+    TRAIN_STOP_EPISODE_REWARD_STD = 50.0
     STOP_PATIENCE_COUNT = 10
     REPLAY_BUFFER_SIZE = 1000000
 

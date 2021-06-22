@@ -1,3 +1,5 @@
+import math
+
 from codes.a_config._rl_parameters.off_policy.parameter_td3 import PARAMETERS_TD3, TD3ActionType, TD3ActionSelectorType
 from codes.e_utils.names import *
 from codes.a_config.parameters_general import PARAMETERS_GENERAL
@@ -8,8 +10,11 @@ class PARAMETERS_QUANSER_RIP_TD3(PARAMETERS_GENERAL, PARAMETERS_TD3):
     RL_ALGORITHM = RLAlgorithmName.TD3_V0
     DEEP_LEARNING_MODEL = DeepLearningModelName.TD3_MLP
 
-    TRAIN_STOP_EPISODE_REWARD = 15200  # MAX: 3.14 * 10000 = 31400
-    TRAIN_STOP_EPISODE_REWARD_STD = 10.0
+    VELOCITY_STATE_DENOMINATOR = 100.0
+    REWARD_DENOMINATOR = math.pi
+
+    TRAIN_STOP_EPISODE_REWARD = 7000  # MAX: 3.14 * 10000 = 31400
+    TRAIN_STOP_EPISODE_REWARD_STD = 50.0
     STOP_PATIENCE_COUNT = 10
     REPLAY_BUFFER_SIZE = 1000000
 

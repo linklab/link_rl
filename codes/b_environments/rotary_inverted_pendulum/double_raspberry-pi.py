@@ -14,9 +14,11 @@ spi.max_speed_hz = 1000000 # NOTE
 
 class RotaryDoubleInvertedPendulum:
     def __init__(self):
-        self.step_idx = 0
         self.last_step_call = 0.0
         self.initialize()
+        self.step_idx = 0
+        self.check_angle_period_steps = 1000000
+        self.next_check_angle_step = 0
 
         # t = 0
         # while True:
@@ -120,10 +122,20 @@ class RotaryDoubleInvertedPendulum:
         # print("spi write elapsed time : {0:10.8f} \n\n".format(time.time() - last_time))
 
     def reset(self, rip_request, context):
-        arm_angle, arm_velocity, link_1_angle, link_1_velocity, link_2_angle, link_2_velocity = self.calculate_state()
 
-        spi.xfer2([0x40, 0x00, 0x01, 0x00, 0x00])
-        time.sleep(1.5)
+        spi.xfer2([0x40, 0x00, 0x01, 0x00, 0x00]) # stop
+
+        if self.step_idx >= self.next_check_angle_step:
+            time.sleep(15)
+            arm_angle, arm_velocity, link_1_angle, link_1_velocity, link_2_angle, link_2_velocity = self.calculate_state()
+            print("[STEP INDEX: {0}] link_1_angle : {1:5.3f}, link_2_angle : {2:5.3f}".format(
+                self.step_idx,
+                link_1_angle % 360, link_2_angle % 360
+            ))
+            self.next_check_angle_step += self.check_angle_period_steps
+        else:
+            time.sleep(1.5)
+            arm_angle, arm_velocity, link_1_angle, link_1_velocity, link_2_angle, link_2_velocity = self.calculate_state()
         # spi.xfer2([0x40, 0x00, 0x10, 0x00, 0x00])
 
         # self.print_state(arm_angle, arm_velocity, link_angle, link_velocity)
@@ -138,6 +150,8 @@ class RotaryDoubleInvertedPendulum:
         )
 
     def step(self, rip_request, context):
+        self.step_idx += 1
+
         motor_power = int(rip_request.value)
         # current_step_call = time.time()
         # elapsed_time = current_step_call - self.last_step_call
@@ -152,8 +166,6 @@ class RotaryDoubleInvertedPendulum:
         arm_angle, arm_velocity, link_1_angle, link_1_velocity, link_2_angle, link_2_velocity = self.calculate_state()
 
         # self.print_state(arm_angle, arm_velocity, link_1_angle, link_1_velocity, link_2_angle, link_2_velocity)
-
-        self.step_idx += 1
         self.previous_action = motor_power
         #
         # if link_1_velocity > 3300:

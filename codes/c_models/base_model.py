@@ -1,5 +1,7 @@
 # https://github.com/ikostrikov/pytorch-a2c-ppo-acktr-gail
 import glob
+
+import numpy as np
 import torch
 import torch.nn as nn
 import sys, os
@@ -82,6 +84,17 @@ class BaseModel(nn.Module):
 
         return gradients
 
+    def get_flatten_gradients_for_current_parameters(self):
+        gradients = []
+
+        for layer_name, layer in self.base.layers_info.items():
+            named_parameters = layer.to(self.device).named_parameters()
+            gradients[layer_name] = {}
+            for name, param in named_parameters:
+                gradients.append(param.grad)
+
+        return np.asarray(gradients)
+
     def set_gradients_to_current_parameters(self, gradients):
         for layer_name, layer in self.base.layers_info.items():
             named_parameters = layer.to(self.device).named_parameters()
@@ -125,14 +138,15 @@ class BaseModel(nn.Module):
 
     def get_parameters(self):
         parameters = {}
-
+        flatten_parameters = []
         for layer_name, layer in self.base.layers_info.items():
             named_parameters = layer.to(self.device).named_parameters()
             parameters[layer_name] = {}
             for name, param in named_parameters:
                 parameters[layer_name][name] = param.data
+                flatten_parameters.append(param.data)
 
-        return parameters
+        return parameters, flatten_parameters
 
     def transfer_process(self, parameters, soft_transfer, soft_transfer_tau):
         for layer_name, layer in self.base.layers_info.items():
