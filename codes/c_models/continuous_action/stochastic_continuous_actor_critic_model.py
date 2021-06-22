@@ -77,11 +77,11 @@ class ActorMLPBase(nn.Module):
 
         self.common = nn.Sequential(
             nn.Linear(num_inputs, self.hidden_1_size),
-            nn.GELU(),
+            nn.LeakyReLU(),
             nn.Linear(self.hidden_1_size, self.hidden_2_size),
-            nn.GELU(),
+            nn.LeakyReLU(),
             nn.Linear(self.hidden_2_size, self.hidden_3_size),
-            nn.GELU()
+            nn.LeakyReLU()
         )
 
         self.mu = nn.Sequential(
