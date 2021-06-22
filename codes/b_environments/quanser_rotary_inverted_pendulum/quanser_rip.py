@@ -14,7 +14,6 @@ from codes.a_config.parameters import PARAMETERS as params
 from codes.b_environments.quanser_rotary_inverted_pendulum.quanser_service_pb2 import QuanserRequest
 
 STATE_SIZE = 6
-VELOCITY_STATE_DENOMINATOR = 100.0
 
 balance_motor_power_list = [-60., 0., 60.]
 
@@ -157,12 +156,12 @@ class EnvironmentQuanserRIP(gym.Env):
         self.state = [
             math.cos(self.pendulum_radian),
             math.sin(self.pendulum_radian),
-            self.pendulum_velocity / VELOCITY_STATE_DENOMINATOR,
+            self.pendulum_velocity / params.VELOCITY_STATE_DENOMINATOR,
             # math.cos(0.0),
             # math.sin(0.0),
             math.cos(quanser_response.motor_radian),
             math.sin(quanser_response.motor_radian),
-            self.motor_velocity / VELOCITY_STATE_DENOMINATOR
+            self.motor_velocity / params.VELOCITY_STATE_DENOMINATOR
         ]
         # wait_time = 1 if self.episode == 0 else 15  # if self.episode % 10 == 0 else 3
         # wait_time = 1
@@ -244,12 +243,12 @@ class EnvironmentQuanserRIP(gym.Env):
         self.state = [
             math.cos(self.pendulum_radian),
             math.sin(self.pendulum_radian),
-            self.pendulum_velocity / VELOCITY_STATE_DENOMINATOR,
+            self.pendulum_velocity / params.VELOCITY_STATE_DENOMINATOR,
             # math.cos(self.initial_motor_radian - self.motor_radian),
             # math.sin(self.initial_motor_radian - self.motor_radian),
             math.cos(quanser_response.motor_radian),
             math.sin(quanser_response.motor_radian),
-            self.motor_velocity / VELOCITY_STATE_DENOMINATOR
+            self.motor_velocity / params.VELOCITY_STATE_DENOMINATOR
         ]
         next_state = np.asarray(self.state)
 
@@ -336,7 +335,7 @@ class EnvironmentQuanserRIP(gym.Env):
 
         reward = position_reward + energy_penalty
 
-        reward = max(0.000001, reward)
+        reward = max(0.000001, reward) / params.REWARD_DENOMINATOR
 
         # open ai pendulum reward = -(theta^2 + 0.1theta_dt^2 + 0.001action^2)
         # reward = -((self.pendulum_radian**2) + 0.1*((self.pendulum_velocity/100)**2) + 0.001*(((2*action)/params.ACTION_SCALE)**2))

@@ -1,3 +1,5 @@
+import math
+
 from codes.a_config._rl_parameters.off_policy.parameter_td3 import PARAMETERS_TD3, TD3ActionType, TD3ActionSelectorType
 from codes.a_config._rl_parameters.on_policy.parameter_ppo import PARAMETERS_PPO
 from codes.e_utils.names import *
@@ -9,7 +11,10 @@ class PARAMETERS_QUANSER_RIP_PPO(PARAMETERS_GENERAL, PARAMETERS_PPO):
     RL_ALGORITHM = RLAlgorithmName.CONTINUOUS_PPO_V0
     DEEP_LEARNING_MODEL = DeepLearningModelName.STOCHASTIC_CONTINUOUS_ACTOR_CRITIC_MLP
 
-    TRAIN_STOP_EPISODE_REWARD = 15200  # MAX: 3.14 * 10000 = 31400
+    VELOCITY_STATE_DENOMINATOR = 100.0
+    REWARD_DENOMINATOR = math.pi
+
+    TRAIN_STOP_EPISODE_REWARD = 7000  # MAX: 3.14 * 10000 = 31400
     TRAIN_STOP_EPISODE_REWARD_STD = 50.0
     STOP_PATIENCE_COUNT = 10
 

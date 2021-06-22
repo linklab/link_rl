@@ -1,3 +1,5 @@
+import math
+
 from codes.a_config._rl_parameters.off_policy.parameter_sac import PARAMETERS_SAC, SACActionType, SACActionSelectorType
 from codes.e_utils.names import *
 from codes.a_config.parameters_general import PARAMETERS_GENERAL
@@ -8,8 +10,11 @@ class PARAMETERS_QUANSER_RIP_SAC(PARAMETERS_GENERAL, PARAMETERS_SAC):
     RL_ALGORITHM = RLAlgorithmName.SAC_V0
     DEEP_LEARNING_MODEL = DeepLearningModelName.SOFT_ACTOR_CRITIC_MLP
 
-    TRAIN_STOP_EPISODE_REWARD = 15000  # MAX: 3.14 * 10000 = 31400
-    TRAIN_STOP_EPISODE_REWARD_STD = 10.0
+    VELOCITY_STATE_DENOMINATOR = 100.0
+    REWARD_DENOMINATOR = math.pi
+
+    TRAIN_STOP_EPISODE_REWARD = 7000  # MAX: 3.14 * 10000 = 31400
+    TRAIN_STOP_EPISODE_REWARD_STD = 50.0
     STOP_PATIENCE_COUNT = 10
     REPLAY_BUFFER_SIZE = 1000000
 
