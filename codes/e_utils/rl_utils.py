@@ -346,11 +346,11 @@ def get_rl_agent(input_shape, action_shape, num_outputs, worker_id, params, devi
 
 def get_optimizer(parameters, learning_rate, params):
     if params.OPTIMIZER == OptimizerName.ADAM:
-        optimizer = optim.Adam(params=parameters, lr=learning_rate, eps=1e-3)
+        optimizer = optim.Adam(params=parameters, lr=learning_rate)
     elif params.OPTIMIZER == OptimizerName.NESTEROV:
-        optimizer = optim.SGD(params=parameters, lr=learning_rate, nesterov=True, momentum=0.9, weight_decay=1e-4)
+        optimizer = optim.SGD(params=parameters, lr=learning_rate, nesterov=True)
     elif params.OPTIMIZER == OptimizerName.RMSProp:
-        optimizer = torch.optim.RMSprop(params=parameters, lr=learning_rate, alpha=0.99, eps=1e-5)
+        optimizer = torch.optim.RMSprop(params=parameters, lr=learning_rate)
     else:
         optimizer = None
 
