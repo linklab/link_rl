@@ -32,7 +32,7 @@ np.set_printoptions(formatter={'float_kind': lambda x: '{0:0.6f}'.format(x)})
 BLOWING_ACTION_RATE = 0.0002  # 5000 스텝에 1번 정도(지수 분포)의 주가로 외력이 가해짐 --> Stochastic Env.
 # BLOWING_ACTION_RATE = 0.000000000002
 
-VELOCITY_STATE_DENOMINATOR = 100.0
+VELOCITY_STATE_DENOMINATOR = 2500.0
 
 if params.ENVIRONMENT_ID in [EnvironmentName.REAL_DEVICE_RIP, EnvironmentName.REAL_DEVICE_DOUBLE_RIP]:
     if params.SERVER_IDX == 0:

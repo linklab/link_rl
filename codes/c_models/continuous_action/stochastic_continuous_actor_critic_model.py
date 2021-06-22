@@ -101,7 +101,7 @@ class ActorMLPBase(nn.Module):
 
     def forward(self, inputs):
         # if inputs.size()[0] == 1:
-        #     print(inputs[0][2], inputs[0][5], "!!!!!!!!!!!!!!!!1")
+        #     print(inputs[0][2], inputs[0][5], inputs[0][5], "!!!!!!!!!!!!!!!!1")
         #self.check_nan_parameters()
 
         mu_v = self.mu(self.common(inputs))
