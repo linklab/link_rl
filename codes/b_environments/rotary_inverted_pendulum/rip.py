@@ -38,7 +38,7 @@ if params.ENVIRONMENT_ID in [EnvironmentName.REAL_DEVICE_RIP, EnvironmentName.RE
     if params.SERVER_IDX == 0:
         RIP_SERVER = '10.0.0.9'
     elif params.SERVER_IDX == 1:
-        RIP_SERVER = '10.0.0.9'
+        pass
     elif params.SERVER_IDX == 2:
         RIP_SERVER = '10.0.0.10'
     elif params.SERVER_IDX == 3:
@@ -860,10 +860,10 @@ class RotaryInvertedPendulumEnv(gym.Env):
 
         reward = position_reward + energy_penalty
 
-        reward = max(0.0, reward)
+        reward = max(0.000001, reward)
 
         if self.too_much_rotate or self.too_long_and_fast_pendulum_velocity:
-            reward = 0.0
+            reward = 0.000001
         # print(self.motor_velocity, self.pendulum_1_velocity)
 
         # if adjusted_pendulum_1_radian > 2.0:
@@ -905,7 +905,7 @@ class RotaryInvertedPendulumEnv(gym.Env):
         #         "upright" if self.is_upright else ""
         #     )
 
-        reward = max(0.0, reward)
+        reward = max(0.000001, reward)
 
         # if self.pendulum_type in [EnvironmentName.REAL_DEVICE_RIP, EnvironmentName.REAL_DEVICE_DOUBLE_RIP]:
         #     if reward == 0.0:
@@ -1069,7 +1069,7 @@ class RotaryInvertedPendulumEnv(gym.Env):
         #     "reward : {0:3.4f}".format(reward)
         # )
 
-        reward = max(0.0, reward)
+        reward = max(0.000001, reward)
         return reward
 
     def get_reward_for_double_rip_3(self):
@@ -1098,7 +1098,7 @@ class RotaryInvertedPendulumEnv(gym.Env):
         #     "energy_penalty: {0:3.4f}".format(energy_penalty),
         #     "reward : {0:3.4f}".format(reward)
         # )
-        reward = max(0.0, reward)
+        reward = max(0.000001, reward)
 
         return reward
 
@@ -1148,7 +1148,7 @@ class RotaryInvertedPendulumEnv(gym.Env):
 
         reward = position_reward + energy_penalty
 
-        reward = max(0.0, reward)
+        reward = max(0.000001, reward)
 
         return reward
 

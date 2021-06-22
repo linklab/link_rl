@@ -1,3 +1,4 @@
+import numpy as np
 import torch
 import torch.nn as nn
 
@@ -99,13 +100,32 @@ class ActorMLPBase(nn.Module):
             torch.nn.init.kaiming_normal_(m.weight)
 
     def forward(self, inputs):
+        # if inputs.size()[0] == 1:
+        #     print(inputs[0][2], inputs[0][5], "!!!!!!!!!!!!!!!!1")
+        #self.check_nan_parameters()
+
         mu_v = self.mu(self.common(inputs))
         logstd_v = self.logstd(self.common(inputs))
 
         if torch.isnan(mu_v[0][0]):
-            print("mu_v:", mu_v, "!!!!!!!!")
-            print("logstd_v:", logstd_v, "!!!!!!!!")
-            print("inputs:", inputs, "!!!!!!!!")
-            print("self.common(inputs)", self.common(inputs), "!!!!!!!!!!!!!!!!")
+            print("inputs:", inputs, "!!! - 1")
+            print("self.common(inputs)", self.common(inputs), "!!! - 2")
+            print("mu_v:", mu_v, "!!! - 3")
+            print("logstd_v:", logstd_v, "!!! - 4")
 
         return mu_v, logstd_v
+
+    def check_nan_parameters(self):
+        for param in self.mu.parameters():
+            print(param.data[0])
+        #     if (param.data != param.data).any():
+        #         print(param.data)
+        #
+        # for param in self.mu.parameters():
+        #     if (param.data != param.data).any():
+        #         print(param.data)
+        #
+        # for param in self.logstd.parameters():
+        #     if (param.data != param.data).any():
+        #         print(param.data)
+

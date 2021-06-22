@@ -151,6 +151,6 @@ class AgentContinuousPPO(AgentPPO):
                 sum_loss_actor += batch_loss_actor_v.item()
                 count_steps += 1
 
-        gradients = self.model.get_gradients_for_current_parameters()
+        #gradients = self.model.get_gradients_for_current_parameters()
 
-        return gradients, sum_loss_critic / count_steps, (sum_loss_actor / count_steps) * -1.0
+        return None, sum_loss_critic / count_steps, (sum_loss_actor / count_steps) * -1.0
