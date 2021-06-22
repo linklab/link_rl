@@ -170,6 +170,7 @@ class RotaryInvertedPendulumEnv(gym.Env):
 
         self.last_time = 0.0
         self.unit_time = self.params.UNIT_TIME
+        # self.unit_time = 0.001
         self.over_unit_time = 0
         self.step_idx = 0
         self.episode_idx = 0
@@ -350,8 +351,8 @@ class RotaryInvertedPendulumEnv(gym.Env):
                 self.pendulum_2_velocity = rip_response.link_2_velocity
                 self.simulation_time = None
 
-                # ******************************ANGLE TEST****************************
-                # if self.episode_idx == 1 or self.episode_idx % 5 == 0:
+                # #******************************ANGLE TEST****************************
+                # if self.episode_idx == 1 or self.episode_idx % 2 == 0:
                 #     last_time = time.perf_counter()
                 #     print("episode index : ",self.episode_idx)
                 #     while True:
@@ -624,8 +625,8 @@ class RotaryInvertedPendulumEnv(gym.Env):
             #     time.sleep(0.008)
             #     num += 1
 
-            # if self.step_idx % 100 == 0:
-            #     self.action_ = -self.action_
+            if self.step_idx % 100 == 0:
+                self.action_ = -self.action_
 
             rip_response = self.server_obj.step(RipRequest(value=action))
             self.motor_position = math.radians(rip_response.arm_angle)
