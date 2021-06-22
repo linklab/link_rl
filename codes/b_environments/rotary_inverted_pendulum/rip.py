@@ -45,7 +45,6 @@ if params.ENVIRONMENT_ID in [EnvironmentName.REAL_DEVICE_RIP, EnvironmentName.RE
         RIP_SERVER = '10.0.0.11'
 
 
-
 class DoneReason(enum.Enum):
     MAX_EPISODE_STEP = "max episode steps"
     TOO_MUCH_ROTATE = "too much rotate"

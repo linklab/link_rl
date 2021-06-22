@@ -79,6 +79,9 @@ def play_main(params, env):
                 if hasattr(params, "ACTION_SCALE") and params.ACTION_SCALE:
                     action = params.ACTION_SCALE * action[0]
 
+            if type(action) != type([]):
+                action = [action]
+
             next_state, reward, done, info = env.step(action)
 
             if isinstance(env, RewardChanger):
