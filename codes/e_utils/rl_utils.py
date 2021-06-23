@@ -344,6 +344,20 @@ def get_rl_agent(input_shape, action_shape, num_outputs, worker_id, params, devi
     return agent
 
 
+def get_actor_critic_optimizer(actor_parameters, actor_learning_rate, critic_parameters, critic_learning_rate, params):
+    if params.OPTIMIZER == OptimizerName.ADAM:
+        optimizer = optim.Adam(
+            [
+                {'params': actor_parameters, 'lr': actor_learning_rate},
+                {'params': critic_parameters, 'lr': critic_learning_rate}
+            ]
+        )
+    else:
+        optimizer = None
+
+    return optimizer
+
+
 def get_optimizer(parameters, learning_rate, params):
     if params.OPTIMIZER == OptimizerName.ADAM:
         optimizer = optim.Adam(params=parameters, lr=learning_rate)

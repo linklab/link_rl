@@ -19,6 +19,7 @@ class AgentPPO(OnPolicyAgent):
         self.model = None
         self.critic_optimizer = None
         self.actor_optimizer = None
+        self.optimizer = None
         self.buffer = replay_buffer.ExperienceReplayBuffer(
             experience_source=None, buffer_size=self.params.PPO_TRAJECTORY_SIZE
         )
@@ -29,21 +30,23 @@ class AgentPPO(OnPolicyAgent):
     def train(self, step_idx):
         raise NotImplementedError
 
-    def backward_and_step_for_critic(self, batch_values_v, batch_target_action_value_v):
-        # critic training
-        # batch_values_v.squeeze(-1) : (64,)
-        # batch_target_action_value_v : (64,)
-        self.critic_optimizer.zero_grad()
-        batch_loss_critic_v = F.mse_loss(batch_values_v.squeeze(-1), batch_target_action_value_v.detach())
-        batch_loss_critic_v.backward()
-        #nn_utils.clip_grad_norm_(self.model.base.critic_params, self.params.CLIP_GRAD)
-        self.critic_optimizer.step()
-        return batch_loss_critic_v
+    # def backward_and_step_for_critic(self, batch_values_v, batch_target_action_value_v):
+    #     # critic training
+    #     # batch_values_v.squeeze(-1) : (64,)
+    #     # batch_target_action_value_v : (64,)
+    #     self.critic_optimizer.zero_grad()
+    #     batch_loss_critic_v = F.mse_loss(batch_values_v.squeeze(-1), batch_target_action_value_v.detach())
+    #     batch_loss_critic_v.backward(retain_graph=True)
+    #     #nn_utils.clip_grad_norm_(self.model.base.critic_params, self.params.CLIP_GRAD)
+    #     self.critic_optimizer.step()
+    #     return batch_loss_critic_v
 
-    def backward_and_step_for_actor(
-            self, batch_log_pi_action_v, batch_old_log_pi_action_v, batch_advantage_v, batch_loss_entropy_v
+    def backward_and_step(
+            self, batch_log_pi_action_v, batch_old_log_pi_action_v, batch_advantage_v,
+            batch_loss_entropy_v,
+            batch_loss_critic_v
     ):
-        self.actor_optimizer.zero_grad()
+        self.optimizer.zero_grad()
 
         # batch_old_log_pi_action_v: (64, 1)
         # batch_ratio_v: (64, 1)
@@ -57,10 +60,10 @@ class AgentPPO(OnPolicyAgent):
 
         batch_loss_actor_v = -1.0 * torch.min(batch_surrogate_1_v, batch_surrogate_2_v).mean()
 
-        (batch_loss_actor_v + self.params.ENTROPY_LOSS_WEIGHT * batch_loss_entropy_v).backward()
+        (batch_loss_actor_v + 0.5 * batch_loss_critic_v + self.params.ENTROPY_LOSS_WEIGHT * batch_loss_entropy_v).backward()
+        nn_utils.clip_grad_norm_(self.model.base.actor_params, self.params.CLIP_GRAD)
 
-        #nn_utils.clip_grad_norm_(self.model.base.actor_params, self.params.CLIP_GRAD)
-        self.actor_optimizer.step()
+        self.optimizer.step()
 
         # if batch_advantage_v[0].item() < 0 and batch_ratio_v[0].item() > 1.0:
         #     print("ratio: {0:5.3f}, adv: {1:5.3f}, "
