@@ -112,6 +112,7 @@ class ActorMLPBase(nn.Module):
             print("self.common(inputs)", self.common(inputs), "!!! - 2")
             print("mu_v:", mu_v, "!!! - 3")
             print("logstd_v:", logstd_v, "!!! - 4")
+            exit(-1)
 
         return mu_v, logstd_v
 
