@@ -15,7 +15,7 @@ class PARAMETERS_DOUBLE_RIP_TD3(PARAMETERS_GENERAL, PARAMETERS_TD3):
 
     ########################################
     ########################################
-    VELOCITY_STATE_DENOMINATOR = 2500.0
+    VELOCITY_STATE_DENOMINATOR = 500.0
     REWARD_DENOMINATOR = 9.0
 
     TRAIN_STOP_EPISODE_REWARD = 7000  # MAX: 6.28 * 5000 = 62800 (Old), 90000 (New)
