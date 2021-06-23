@@ -27,7 +27,7 @@ class AgentPPO(OnPolicyAgent):
     def __call__(self, states, critics=None):
         raise NotImplementedError
 
-    def train(self, step_idx):
+    def on_train(self, step_idx, expected_model_version):
         raise NotImplementedError
 
     # def backward_and_step_for_critic(self, batch_values_v, batch_target_action_value_v):

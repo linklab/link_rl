@@ -75,8 +75,8 @@ class AgentContinuousPPO(AgentPPO):
     def __call__(self, states, critics=None):
         return self.continuous_stochastic_call(states, critics)
 
-    def train(self, step_idx):
-        trajectory = self.buffer.sample(batch_size=None)
+    def on_train(self, step_idx, expected_model_version):
+        trajectory = self.buffer.sample_all_for_on_policy(expected_model_version)
 
         # trajectory_states_v: (2049, 4)
         trajectory_states = [experience.state for experience in trajectory]

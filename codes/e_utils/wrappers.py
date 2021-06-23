@@ -306,7 +306,7 @@ def process_experience(exp, buffer):
     if exp.last_state is not None:
         history[4, :, :] = exp.last_state.__array__()[3, :, :]
 
-    buffer._add((history, exp.action, exp.reward, exp.last_state is None))
+    buffer.add_sample((history, exp.action, exp.reward, exp.last_state is None))
 
 
 def wrap_dqn(env, stack_frames=4, episodic_life=True, reward_clipping=True):

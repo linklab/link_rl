@@ -2,6 +2,7 @@ import math
 from abc import abstractmethod
 import numpy as np
 import torch
+from joblib._multiprocessing_helpers import mp
 
 from codes.d_agents.a0_base_agent import BaseAgent, float32_preprocessor, long64_preprocessor
 from codes.e_utils.names import RLAlgorithmName, AgentMode
@@ -13,6 +14,8 @@ class OnPolicyAgent(BaseAgent):
     """
     def __init__(self, worker_id, params, action_shape, device):
         super(OnPolicyAgent, self).__init__(worker_id, params, action_shape, device)
+        self.model_version = 0
+        self.buffer = None
 
     @abstractmethod
     def __call__(self, states, agent_states):
@@ -28,8 +31,13 @@ class OnPolicyAgent(BaseAgent):
 
         raise NotImplementedError
 
+    def train_on_policy(self, step_idx, current_model_version):
+        train_results = self.on_train(step_idx=step_idx, expected_model_version=current_model_version.value)
+        current_model_version.value += 1
+        return train_results
+
     @abstractmethod
-    def train(self, step_idx):
+    def on_train(self, step_idx, expected_model_version):
         raise NotImplementedError
 
     # https://proofwiki.org/wiki/Differential_Entropy_of_Gaussian_Distribution

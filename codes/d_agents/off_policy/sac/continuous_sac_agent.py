@@ -104,7 +104,7 @@ class AgentSAC(OffPolicyAgent):
             self.reset_alpha()
         return self.continuous_stochastic_call(states, critics)
 
-    def train(self, step_idx):
+    def on_train(self, step_idx):
         if self.alpha is None:
             self.reset_alpha()
 

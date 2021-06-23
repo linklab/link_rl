@@ -24,7 +24,7 @@ class AgentA2C(OnPolicyAgent):
 
     # Lucky Episode에서 얻어낸 batch를 통해 학습할 때와, Unlucky Episode에서 얻어낸 batch를 통해 학습할 때마다 NN의 파라미터들이
     # 서로 다른 방향으로 반복적으로 휩쓸려가듯이 학습이 됨 --> Gradients의 Variance가 매우 큼
-    def train(self, step_idx):
+    def on_train(self, step_idx, expected_model_version):
         raise NotImplementedError
 
     def backward_and_step(self, loss_critic_v, loss_entropy_v, loss_actor_v):
