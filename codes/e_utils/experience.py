@@ -173,10 +173,12 @@ class ExperienceSource:
                             cur_rewards[idx] = 0.0
                             cur_steps[idx] = 0
 
-                        if params.NUM_ENVIRONMENTS == 1:
-                            states[idx] = env.envs[0].reset()
-                        else:
-                            states[idx] = None
+                        # if params.NUM_ENVIRONMENTS == 1:
+                        #     states[idx] = env.envs[0].reset()
+                        # else:
+                        #     states[idx] = None
+
+                        states[idx] = None
 
                         # print("{0}, {1}, @@@@@".format(self.episode_idx, self.episode_reward_lst))
                         self.episode_idx += 1
