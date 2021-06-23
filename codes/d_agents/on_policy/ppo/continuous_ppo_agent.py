@@ -1,5 +1,7 @@
 import torch
 from torch.distributions import Normal
+import torch.nn.functional as F
+import torch.nn.utils as nn_utils
 
 from codes.c_models.continuous_action.stochastic_continuous_actor_critic_model import \
     StochasticContinuousActorCriticModel
@@ -50,15 +52,23 @@ class AgentContinuousPPO(AgentPPO):
         #     params=params
         # )
 
-        self.actor_optimizer = rl_utils.get_optimizer(
-            parameters=self.model.base.actor_params,
-            learning_rate=self.params.ACTOR_LEARNING_RATE,
-            params=params
-        )
+        # self.actor_optimizer = rl_utils.get_optimizer(
+        #     parameters=self.model.base.actor_params,
+        #     learning_rate=self.params.ACTOR_LEARNING_RATE,
+        #     params=params
+        # )
+        #
+        # self.critic_optimizer = rl_utils.get_optimizer(
+        #     parameters=self.model.base.critic_params,
+        #     learning_rate=self.params.LEARNING_RATE,
+        #     params=params
+        # )
 
-        self.critic_optimizer = rl_utils.get_optimizer(
-            parameters=self.model.base.critic_params,
-            learning_rate=self.params.LEARNING_RATE,
+        self.optimizer = rl_utils.get_actor_critic_optimizer(
+            actor_parameters=self.model.base.actor_params,
+            actor_learning_rate=self.params.ACTOR_LEARNING_RATE,
+            critic_parameters=self.model.base.critic_params,
+            critic_learning_rate=self.params.LEARNING_RATE,
             params=params
         )
 
@@ -127,7 +137,9 @@ class AgentContinuousPPO(AgentPPO):
                 # batch_values_v: (64, 1)
                 batch_mu_v, batch_logstd_v, batch_values_v = self.model(batch_states_v)
 
-                batch_loss_critic_v = self.backward_and_step_for_critic(batch_values_v, batch_target_action_value_v)
+                batch_loss_critic_v = F.mse_loss(batch_values_v.squeeze(-1), batch_target_action_value_v.detach())
+
+                #batch_loss_critic_v = self.backward_and_step_for_critic(batch_values_v, batch_target_action_value_v)
 
                 # actor training
                 # batch_actions_v: (64, 1)
@@ -143,8 +155,10 @@ class AgentContinuousPPO(AgentPPO):
                 entropy_v = batch_dist.entropy()
                 batch_loss_entropy_v = -1.0 * entropy_v.mean()
 
-                batch_loss_actor_v = self.backward_and_step_for_actor(
-                    batch_log_pi_action_v, batch_old_log_pi_action_v, batch_advantage_v, batch_loss_entropy_v
+                batch_loss_actor_v = self.backward_and_step(
+                    batch_log_pi_action_v, batch_old_log_pi_action_v, batch_advantage_v,
+                    batch_loss_entropy_v,
+                    batch_loss_critic_v
                 )
 
                 sum_loss_critic += batch_loss_critic_v.item()
