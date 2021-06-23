@@ -36,7 +36,7 @@ class AgentPPO(OnPolicyAgent):
         self.critic_optimizer.zero_grad()
         batch_loss_critic_v = F.mse_loss(batch_values_v.squeeze(-1), batch_target_action_value_v.detach())
         batch_loss_critic_v.backward()
-        nn_utils.clip_grad_norm_(self.model.base.critic_params, self.params.CLIP_GRAD)
+        #nn_utils.clip_grad_norm_(self.model.base.critic_params, self.params.CLIP_GRAD)
         self.critic_optimizer.step()
         return batch_loss_critic_v
 
@@ -59,7 +59,7 @@ class AgentPPO(OnPolicyAgent):
 
         (batch_loss_actor_v + self.params.ENTROPY_LOSS_WEIGHT * batch_loss_entropy_v).backward()
 
-        nn_utils.clip_grad_norm_(self.model.base.actor_params, self.params.CLIP_GRAD)
+        #nn_utils.clip_grad_norm_(self.model.base.actor_params, self.params.CLIP_GRAD)
         self.actor_optimizer.step()
 
         # if batch_advantage_v[0].item() < 0 and batch_ratio_v[0].item() > 1.0:
