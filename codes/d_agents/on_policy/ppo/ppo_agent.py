@@ -50,7 +50,7 @@ class AgentPPO(OnPolicyAgent):
 
         # batch_old_log_pi_action_v: (64, 1)
         # batch_ratio_v: (64, 1)
-        batch_ratio_v = torch.exp(batch_log_pi_action_v - batch_old_log_pi_action_v.detach())
+        batch_ratio_v = torch.exp(batch_log_pi_action_v - torch.maximum(batch_old_log_pi_action_v.detach(), torch.ones_like(batch_old_log_pi_action_v) * 1.0e-6))
 
         # batch_advantage_v: (64, 1)
         batch_surrogate_1_v = batch_advantage_v * batch_ratio_v
