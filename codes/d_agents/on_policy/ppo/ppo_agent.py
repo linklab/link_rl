@@ -61,7 +61,8 @@ class AgentPPO(OnPolicyAgent):
         batch_loss_actor_v = -1.0 * torch.min(batch_surrogate_1_v, batch_surrogate_2_v).mean()
 
         (batch_loss_actor_v + 0.5 * batch_loss_critic_v + self.params.ENTROPY_LOSS_WEIGHT * batch_loss_entropy_v).backward()
-        nn_utils.clip_grad_norm_(self.model.base.actor_params + self.model.base.critic_params, self.params.CLIP_GRAD)
+        nn_utils.clip_grad_norm(self.model.base.actor_params + self.model.base.critic_params, max_norm=2.0)
+        #nn_utils.clip_grad_norm_(self.model.base.actor_params + self.model.base.critic_params, self.params.CLIP_GRAD)
 
         self.optimizer.step()
 
