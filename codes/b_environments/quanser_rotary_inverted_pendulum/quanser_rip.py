@@ -201,13 +201,10 @@ class EnvironmentQuanserRIP(gym.Env):
             print("*OVER UNIT TIME STEP NUMBER :", self.over_unit_time)
         #######################################################
 
-        if type(action) is np.ndarray:
-            action = action[0]
-
-        action = action * params.ACTION_SCALE
-
         if self.params.RL_ALGORITHM in [RLAlgorithmName.DQN_V0]:
             action = self.action_index_to_voltage[int(action)]
+        else:
+            action = action[0] * params.ACTION_SCALE
 
         #motor_power = float(action)
         # if self.step_idx % 100 == 0:
