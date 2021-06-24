@@ -87,7 +87,7 @@ class PARAMETERS_GENERAL:
     # [Policy Gradient]
     CRITIC_LOSS_WEIGHT = 0.1
     ENTROPY_LOSS_WEIGHT = 0.005
-    CLIP_GRAD = 0.5
+    CLIP_GRAD = 3.0
     ACTOR_LEARNING_RATE = 0.0001
 
     # [MODE]
