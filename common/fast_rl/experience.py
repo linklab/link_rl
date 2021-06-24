@@ -8,18 +8,14 @@ from collections import namedtuple, deque
 from .rl_agent import BaseAgent, AgentDDPG, AgentD4PG
 
 # one single experience step
-Experience = namedtuple('Experience', ['state', 'action', 'reward', 'done', 'info'])
-ExperienceWithNoise = namedtuple(
-    'ExperienceWithNoise', ['state', 'action', 'noise', 'reward', 'done', 'info']
+Experience = namedtuple(
+    'Experience',
+    ['state', 'action', 'reward', 'done', 'info', 'model_version']
 )
 
 ExperienceFirstLast = namedtuple(
     'ExperienceFirstLast',
-    ('state', 'action', 'reward', 'last_state', 'last_step', 'done', 'info')
-)
-ExperienceFirstLastWithNoise = namedtuple(
-    'ExperienceFirstLastWithNoise',
-    ('state', 'action', 'noise', 'reward', 'last_state', 'last_step', 'done', 'info')
+    ('state', 'action', 'reward', 'last_state', 'last_step', 'done', 'info', 'model_version')
 )
 
 
@@ -126,7 +122,10 @@ class ExperienceSource:
                     cur_steps[idx] += 1
 
                     if state is not None:
-                        history.append(Experience(state=state, action=action, reward=r, done=is_done, info=info))
+                        history.append(Experience(
+                            state=state, action=action, reward=r, done=is_done, info=info,
+                            model_version=self.agent.model_version if hasattr(self.agent, "model_version") else None
+                        ))
 
                     if len(history) == self.steps_count and iter_idx % self.steps_delta == 0:
                         yield tuple(history)
@@ -189,21 +188,6 @@ def _group_list(items, lens):
     return res
 
 
-class ExperienceSourceNamedTuple(ExperienceSource):
-    """
-    convert tuple to namedtuple
-    """
-
-    def __init__(self, env, agent, steps_count=2, steps_delta=1, vectorized=False):
-        super(ExperienceSourceNamedTuple, self).__init__(env, agent, steps_count, steps_delta, vectorized=vectorized)
-
-    def __iter__(self):
-        for exp in super(ExperienceSourceNamedTuple, self).__iter__():
-            yield Experience(
-                state=exp[0].state, action=exp[0].action, reward=exp[0].reward, done=exp[0].done
-            )
-
-
 class ExperienceSourceFirstLast(ExperienceSource):
     """
     This is a wrapper around ExperienceSource to prevent storing full trajectory in replay buffer when we need
@@ -233,7 +217,8 @@ class ExperienceSourceFirstLast(ExperienceSource):
                 total_reward += e.reward
             yield ExperienceFirstLast(
                 state=exp[0].state, action=exp[0].action, reward=total_reward, last_state=last_state,
-                last_step=len(elems), info=exp[0].info, done=exp[0].done
+                last_step=len(elems), info=exp[0].info, done=exp[0].done,
+                model_version=self.agent.model_version if hasattr(self.agent, "model_version") else None
             )
 
 

@@ -1,3 +1,5 @@
+from abc import abstractmethod
+
 import numpy as np
 import torch
 
@@ -26,6 +28,14 @@ class OffPolicyAgent(BaseAgent):
             self.buffer = replay_buffer.ExperienceReplayBuffer(
                 experience_source=None, buffer_size=self.params.REPLAY_BUFFER_SIZE
             )
+
+    def train_off_policy(self, step_idx):
+        train_results = self.on_train(step_idx)
+        return train_results
+
+    @abstractmethod
+    def on_train(self, step_idx):
+        raise NotImplementedError
 
     def unpack_batch(self, batch):
         states, actions, rewards, dones, last_states = [], [], [], [], []

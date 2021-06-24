@@ -64,7 +64,11 @@ class BaseAgent:
         raise NotImplementedError
 
     @abstractmethod
-    def train(self, step_idx):
+    def train_off_policy(self, step_idx):
+        raise NotImplementedError
+
+    @abstractmethod
+    def train_on_policy(self, step_idx, expected_model_version):
         raise NotImplementedError
 
     def discrete_call(self, states, critics):
