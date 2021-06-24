@@ -860,7 +860,7 @@ class RotaryInvertedPendulumEnv(gym.Env):
 
         reward = position_reward + energy_penalty
 
-        reward = max(0.000001, reward) / math.pi
+        reward = max(0.000001, reward) / params.REWARD_DENOMINATOR
 
         if self.too_much_rotate or self.too_long_and_fast_pendulum_velocity:
             reward = 0.000001
