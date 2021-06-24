@@ -30,7 +30,7 @@ class PARAMETERS_TD3:
     NOISE_STD = 1.0
     NOISE_CLIP = 1.0
 
-    CLIP_GRAD = 0.1
+    CLIP_GRAD = 3.0
 
     POLICY_UPDATE_FREQUENCY = 2
     TAU = 0.001
