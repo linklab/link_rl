@@ -145,7 +145,7 @@ class AgentDDPG(OffPolicyAgent):
 
         return actions, new_noises
 
-    def train(self, step_idx):
+    def on_train(self, step_idx):
         self.num_trains += 1
         if self.params.PER_PROPORTIONAL or self.params.PER_RANK_BASED:
             batch, batch_indices, batch_weights = self.buffer.sample(self.params.BATCH_SIZE)
@@ -221,7 +221,7 @@ class AgentDDPG(OffPolicyAgent):
 
         return gradients, loss_critic_v.item(), loss_actor_v.item() * -1.0
 
-    def train_old(self, step_idx):
+    def on_train_old(self, step_idx):
         if self.params.PER_PROPORTIONAL or self.params.PER_RANK_BASED:
             batch, batch_indices, batch_weights = self.buffer.sample(self.params.BATCH_SIZE)
         else:

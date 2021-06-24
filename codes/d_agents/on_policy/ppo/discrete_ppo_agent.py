@@ -1,5 +1,6 @@
 import torch
 import torch.nn.functional as F
+from torch.distributions import Categorical
 
 from codes.c_models.discrete_action.discrete_actor_critic_model import DiscreteActorCriticModel
 from codes.d_agents.on_policy.on_policy_action_selector import DiscreteCategoricalActionSelector
@@ -42,36 +43,30 @@ class AgentDiscretePPO(AgentPPO):
             device=device
         ).to(device)
 
-        # self.optimizer = rl_utils.get_optimizer(
-        #     parameters=self.model.base.parameters(),
-        #     learning_rate=self.params.LEARNING_RATE,
-        #     params=params
-        # )
-
-        # self.actor_optimizer = rl_utils.get_optimizer(
-        #     parameters=self.model.base.actor_params,
-        #     learning_rate=self.params.ACTOR_LEARNING_RATE,
-        #     params=params
-        # )
-        #
-        # self.critic_optimizer = rl_utils.get_optimizer(
-        #     parameters=self.model.base.critic_params,
-        #     learning_rate=self.params.LEARNING_RATE,
-        #     params=params
-        # )
-
-        self.optimizer = rl_utils.get_actor_critic_optimizer(
-            actor_parameters=self.model.base.actor_params,
-            actor_learning_rate=self.params.ACTOR_LEARNING_RATE,
-            critic_parameters=self.model.base.critic_params,
-            critic_learning_rate=self.params.LEARNING_RATE,
+        self.actor_optimizer = rl_utils.get_optimizer(
+            parameters=self.model.base.actor_params,
+            learning_rate=self.params.ACTOR_LEARNING_RATE,
             params=params
         )
+
+        self.critic_optimizer = rl_utils.get_optimizer(
+            parameters=self.model.base.critic_params,
+            learning_rate=self.params.LEARNING_RATE,
+            params=params
+        )
+
+        # self.optimizer = rl_utils.get_actor_critic_optimizer(
+        #     actor_parameters=self.model.base.actor_params,
+        #     actor_learning_rate=self.params.ACTOR_LEARNING_RATE,
+        #     critic_parameters=self.model.base.critic_params,
+        #     critic_learning_rate=self.params.LEARNING_RATE,
+        #     params=params
+        # )
 
     def __call__(self, states, critics=None):
         return self.discrete_call(states, critics)
 
-    def train(self, step_idx):
+    def on_train(self, step_idx, expected_model_version):
         trajectory = self.buffer.sample(batch_size=None)
 
         # trajectory_states_v: (2049, 4)
@@ -87,9 +82,12 @@ class AgentDiscretePPO(AgentPPO):
         trajectory_probs_v, trajectory_values_v = self.model.base.forward(trajectory_states_v)
 
         # trajectory_old_log_pi_action_v: (2849, 1)
-        trajectory_old_log_pi_action_v = torch.log(
-            trajectory_probs_v.gather(dim=1, index=trajectory_actions_v.unsqueeze(-1)) + 1e-5
-        )
+        batch_dist = Categorical(probs=trajectory_probs_v)
+        trajectory_old_log_pi_action_v = batch_dist.log_prob(trajectory_actions_v).detach() + 1e-6
+
+        # trajectory_old_log_pi_action_v = torch.log(
+        #     trajectory_probs_v.gather(dim=1, index=trajectory_actions_v.unsqueeze(-1)) + 1e-6
+        # )
 
         # trajectory_logits_v, trajectory_values_v = self.model(trajectory_states_v)
         # trajectory_log_pi_v = F.log_softmax(trajectory_logits_v, dim=1)
@@ -106,13 +104,13 @@ class AgentDiscretePPO(AgentPPO):
             )
             # normalize advantages
             trajectory_advantage_v = trajectory_advantage_v - torch.mean(trajectory_advantage_v)
-            trajectory_advantage_v /= torch.std(trajectory_advantage_v) + 1e-5
+            trajectory_advantage_v /= torch.std(trajectory_advantage_v) + 1e-6
 
         # drop last entry from the trajectory, an our adv and target action value calculated without it
         trajectory = trajectory[:-1]
         trajectory_states_v = trajectory_states_v[:-1]
         trajectory_actions_v = trajectory_actions_v[:-1]
-        trajectory_old_log_pi_action_v = trajectory_old_log_pi_action_v[:-1].detach()
+        trajectory_old_log_pi_action_v = trajectory_old_log_pi_action_v[:-1]
 
         sum_loss_critic = 0.0
         sum_loss_actor = 0.0
@@ -132,33 +130,32 @@ class AgentDiscretePPO(AgentPPO):
                 # batch_values_v: (64, 1)
                 batch_probs_v, batch_values_v = self.model.base.forward(batch_states_v)
 
-                batch_loss_critic_v = F.mse_loss(batch_values_v.squeeze(-1), batch_target_action_value_v.detach())
-                #batch_loss_critic_v = self.backward_and_step_for_critic(batch_values_v, batch_target_action_value_v)
+                batch_loss_critic_v = self.backward_and_step_for_critic(batch_values_v, batch_target_action_value_v)
 
-                # batch_log_pi_v = F.log_softmax(batch_logits_v, dim=1)
-                # print(batch_logits_v.size())
-                # batch_log_pi_action_v = batch_log_pi_v.gather(dim=1, index=batch_actions_v.unsqueeze(-1)).squeeze(-1)
-
+                # actor training
                 # batch_log_pi_action_v: (64,)
-                batch_log_pi_action_v = torch.log(
-                    batch_probs_v.gather(dim=1, index=batch_actions_v.unsqueeze(-1)) + 1e-5
-                )
+                batch_dist = Categorical(probs=batch_probs_v)
+                batch_log_pi_action_v = batch_dist.log_prob(batch_actions_v) + 1e-6
+                batch_entropy_v = batch_dist.entropy()
+                mean_batch_loss_entropy_v = -1.0 * batch_entropy_v.mean()
+
+                # batch_log_pi_action_v = torch.log(
+                #     batch_probs_v.gather(dim=1, index=batch_actions_v.unsqueeze(-1)) + 1e-6
+                # )
 
                 # batch_probs_v: (64, 2)
                 # batch_log_pi_v: (64, 2)
-                batch_log_pi_v = torch.log(batch_probs_v + 1e-5)
-                batch_loss_entropy_v = -1.0 * (batch_probs_v * batch_log_pi_v).sum(dim=1).mean()
+                # batch_log_pi_v = torch.log(batch_probs_v + 1e-5)
+                # batch_loss_entropy_v = -1.0 * (batch_probs_v * batch_log_pi_v).sum(dim=1).mean()
 
-                batch_loss_actor_v = self.backward_and_step(
-                    batch_log_pi_action_v, batch_old_log_pi_action_v, batch_advantage_v,
-                    batch_loss_entropy_v,
-                    batch_loss_critic_v
+                batch_loss_actor_v = self.backward_and_step_for_actor(
+                    batch_log_pi_action_v, batch_old_log_pi_action_v, batch_advantage_v, mean_batch_loss_entropy_v,
                 )
 
                 sum_loss_critic += batch_loss_critic_v.item()
                 sum_loss_actor += batch_loss_actor_v.item()
                 count_steps += 1
 
-        gradients = self.model.get_gradients_for_current_parameters()
+        #gradients = self.model.get_gradients_for_current_parameters()
 
-        return gradients, sum_loss_critic / count_steps, (sum_loss_actor / count_steps) * -1.0
+        return None, sum_loss_critic / count_steps, (sum_loss_actor / count_steps) * -1.0

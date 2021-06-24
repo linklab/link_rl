@@ -1,5 +1,5 @@
 import torch
-from torch.distributions import Normal
+from torch.distributions import Normal, MultivariateNormal
 import torch.nn.functional as F
 import torch.nn.utils as nn_utils
 
@@ -46,37 +46,31 @@ class AgentContinuousPPO(AgentPPO):
             device=device
         ).to(device)
 
-        # self.optimizer = rl_utils.get_optimizer(
-        #     parameters=self.model.base.parameters(),
-        #     learning_rate=self.params.LEARNING_RATE,
-        #     params=params
-        # )
-
-        # self.actor_optimizer = rl_utils.get_optimizer(
-        #     parameters=self.model.base.actor_params,
-        #     learning_rate=self.params.ACTOR_LEARNING_RATE,
-        #     params=params
-        # )
-        #
-        # self.critic_optimizer = rl_utils.get_optimizer(
-        #     parameters=self.model.base.critic_params,
-        #     learning_rate=self.params.LEARNING_RATE,
-        #     params=params
-        # )
-
-        self.optimizer = rl_utils.get_actor_critic_optimizer(
-            actor_parameters=self.model.base.actor_params,
-            actor_learning_rate=self.params.ACTOR_LEARNING_RATE,
-            critic_parameters=self.model.base.critic_params,
-            critic_learning_rate=self.params.LEARNING_RATE,
+        self.actor_optimizer = rl_utils.get_optimizer(
+            parameters=self.model.base.actor_params,
+            learning_rate=self.params.ACTOR_LEARNING_RATE,
             params=params
         )
+
+        self.critic_optimizer = rl_utils.get_optimizer(
+            parameters=self.model.base.critic_params,
+            learning_rate=self.params.LEARNING_RATE,
+            params=params
+        )
+
+        # self.optimizer = rl_utils.get_actor_critic_optimizer(
+        #     actor_parameters=self.model.base.actor_params,
+        #     actor_learning_rate=self.params.ACTOR_LEARNING_RATE,
+        #     critic_parameters=self.model.base.critic_params,
+        #     critic_learning_rate=self.params.LEARNING_RATE,
+        #     params=params
+        # )
 
     def __call__(self, states, critics=None):
         return self.continuous_stochastic_call(states, critics)
 
-    def train(self, step_idx):
-        trajectory = self.buffer.sample(batch_size=None)
+    def on_train(self, step_idx, expected_model_version):
+        trajectory = self.buffer.sample_all_for_on_policy(expected_model_version)
 
         # trajectory_states_v: (2049, 4)
         trajectory_states = [experience.state for experience in trajectory]
@@ -91,17 +85,18 @@ class AgentContinuousPPO(AgentPPO):
         # trajectory_values_v: (2849, 1)
         trajectory_mu_v, trajectory_logstd_v, trajectory_values_v = self.model.base.forward(trajectory_states_v)
 
-        # trajectory_var_v = self.model.base.actor.var.expand_as(trajectory_mu_v)
+        # trajectory_var_v = torch.square(torch.exp(trajectory_logstd_v))
         # trajectory_covariance_matrix = torch.diag_embed(trajectory_var_v).to(self.device)
         # trajectory_dist = MultivariateNormal(loc=trajectory_mu_v, covariance_matrix=trajectory_covariance_matrix)
+        # trajectory_old_log_pi_action_v = trajectory_dist.log_prob(value=trajectory_actions_v).detach() + 1e-6
 
         # trajectory_old_log_pi_action_v = self.calc_logprob(
         #     mu_v=trajectory_mu_v, logstd_v=trajectory_logstd_v, actions_v=trajectory_actions_v
         # )
-
         # trajectory_old_log_pi_action_v.shape: (2049, 1)
+
         trajectory_dist = Normal(loc=trajectory_mu_v, scale=torch.exp(trajectory_logstd_v))
-        trajectory_old_log_pi_action_v = trajectory_dist.log_prob(value=trajectory_actions_v)
+        trajectory_old_log_pi_action_v = trajectory_dist.log_prob(value=trajectory_actions_v).detach()
 
         # 아래 변수는 전체 trajectory의 원소보다 1 적음
         with torch.no_grad():
@@ -110,13 +105,13 @@ class AgentContinuousPPO(AgentPPO):
             )
             # normalize advantages
             trajectory_advantage_v = trajectory_advantage_v - torch.mean(trajectory_advantage_v)
-            trajectory_advantage_v /= torch.std(trajectory_advantage_v) + 1e-5
+            trajectory_advantage_v /= torch.std(trajectory_advantage_v) + 1e-6
 
         # drop last entry from the trajectory, an our adv and target action value calculated without it
         trajectory = trajectory[:-1]
         trajectory_states_v = trajectory_states_v[:-1]
         trajectory_actions_v = trajectory_actions_v[:-1]
-        trajectory_old_log_pi_action_v = trajectory_old_log_pi_action_v[:-1].detach()
+        trajectory_old_log_pi_action_v = trajectory_old_log_pi_action_v[:-1]
 
         sum_loss_critic = 0.0
         sum_loss_actor = 0.0
@@ -137,28 +132,24 @@ class AgentContinuousPPO(AgentPPO):
                 # batch_values_v: (64, 1)
                 batch_mu_v, batch_logstd_v, batch_values_v = self.model(batch_states_v)
 
-                batch_loss_critic_v = F.mse_loss(batch_values_v.squeeze(-1), batch_target_action_value_v.detach())
-
-                #batch_loss_critic_v = self.backward_and_step_for_critic(batch_values_v, batch_target_action_value_v)
+                batch_loss_critic_v = self.backward_and_step_for_critic(batch_values_v, batch_target_action_value_v)
 
                 # actor training
                 # batch_actions_v: (64, 1)
                 # batch_log_pi_action_v: (64, 1)
                 batch_dist = Normal(loc=batch_mu_v, scale=torch.exp(batch_logstd_v))
                 batch_log_pi_action_v = batch_dist.log_prob(batch_actions_v)
+                batch_entropy_v = batch_dist.entropy()
 
                 # batch_log_pi_action_v = self.calc_logprob(
                 #     mu_v=batch_mu_v, logstd_v=batch_logstd_v, actions_v=batch_actions_v
                 # )
+                # entropy_v = self.calc_entropy(logstd_v=batch_logstd_v)
 
-                #entropy_v = self.calc_entropy(logstd_v=batch_logstd_v)
-                entropy_v = batch_dist.entropy()
-                batch_loss_entropy_v = -1.0 * entropy_v.mean()
+                mean_batch_loss_entropy_v = -1.0 * batch_entropy_v.mean()
 
-                batch_loss_actor_v = self.backward_and_step(
-                    batch_log_pi_action_v, batch_old_log_pi_action_v, batch_advantage_v,
-                    batch_loss_entropy_v,
-                    batch_loss_critic_v
+                batch_loss_actor_v = self.backward_and_step_for_actor(
+                    batch_log_pi_action_v, batch_old_log_pi_action_v, batch_advantage_v, mean_batch_loss_entropy_v,
                 )
 
                 sum_loss_critic += batch_loss_critic_v.item()

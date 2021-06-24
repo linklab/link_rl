@@ -7,6 +7,7 @@ from sys import platform as _platform
 import torch.multiprocessing as mp
 
 from codes.a_config._rl_parameters.off_policy.parameter_ddpg import DDPGTrainType
+from codes.d_agents.on_policy.on_policy_agent import OnPolicyAgent
 from codes.d_agents.on_policy.ppo.ppo_agent import AgentPPO
 
 current_path = os.path.dirname(os.path.realpath(__file__))
@@ -30,7 +31,7 @@ else:
     print("PLATFORM: MAC or LINUX")
 
 
-def actor_func(agent, exp_queue, child_pipe_conn):
+def actor_func(agent, current_model_version, exp_queue, child_pipe_conn):
     train_env, test_env = get_train_and_test_envs()
 
     if params.ENVIRONMENT_ID in [EnvironmentName.TRADE_V0]:
@@ -76,6 +77,9 @@ def actor_func(agent, exp_queue, child_pipe_conn):
             while step_idx < params.MAX_GLOBAL_STEP:
                 # 1 스텝 진행하고 exp를 exp_queue에 넣음
                 step_idx += 1
+
+                if isinstance(agent, OnPolicyAgent):
+                    agent.model_version = current_model_version.value
 
                 if params.ENVIRONMENT_ID in [
                     EnvironmentName.REAL_DEVICE_DOUBLE_RIP,
@@ -175,17 +179,18 @@ def main():
         tentative_env = rl_utils.get_single_environment(params=params)
 
     agent = get_agent(tentative_env)
+    current_model_version = mp.Value("i", 0)
 
     if thread:
         from queue import Queue
         exp_queue = Queue(maxsize=params.TRAIN_STEP_FREQ * 100) #params.TRAIN_STEP_FREQ * 2
         parent_pipe_conn = None
-        actor = threading.Thread(target=actor_func, args=(agent, exp_queue, None))
+        actor = threading.Thread(target=actor_func, args=(agent, current_model_version, exp_queue, None))
     else:
         agent.model.share_memory()
         parent_pipe_conn, child_pipe_conn = Pipe()
         exp_queue = None
-        actor = mp.Process(target=actor_func, args=(agent, None, child_pipe_conn))
+        actor = mp.Process(target=actor_func, args=(agent, current_model_version, None, child_pipe_conn))
 
     actor.start()
     time.sleep(0.5)
@@ -269,16 +274,16 @@ def main():
                     actor.join()
                     break
                 else:
-                    agent.buffer._add(exp)
+                    agent.buffer.add_sample(exp)
 
         if solved:
             print("Solved in {0} steps and {1} episodes!".format(step_idx, episode))
             break
         else:
-            train(agent, step_idx, loss_dequeue, actor_objective_dequeue)
+            train(agent, step_idx, loss_dequeue, actor_objective_dequeue, current_model_version)
 
 
-def train(agent, step_idx, loss_dequeue, actor_objective_dequeue):
+def train(agent, step_idx, loss_dequeue, actor_objective_dequeue, current_model_version):
     if params.RL_ALGORITHM in ON_POLICY_RL_ALGORITHMS:
         if isinstance(agent, AgentPPO):
             if len(agent.buffer) < params.PPO_TRAJECTORY_SIZE:
@@ -287,7 +292,9 @@ def train(agent, step_idx, loss_dequeue, actor_objective_dequeue):
             if len(agent.buffer) < params.BATCH_SIZE:
                 return
 
-        _, last_loss, actor_objective = agent.train(step_idx=step_idx)
+        _, last_loss, actor_objective = agent.train_on_policy(
+            step_idx=step_idx, current_model_version=current_model_version
+        )
 
         # On-policy는 현재의 정책을 통해 산출된 경험정보만을 활용하여 NN을 업데이트해야 함.
         # 따라서, 현재 학습에 사용된 Buffer는 깨끗하게 지워야 함.
@@ -296,10 +303,7 @@ def train(agent, step_idx, loss_dequeue, actor_objective_dequeue):
         if len(agent.buffer) < params.MIN_REPLAY_SIZE_FOR_TRAIN:
             return
 
-        if params.RL_ALGORITHM == RLAlgorithmName.DDPG_V0 and params.TYPE_OF_DDPG_TRAIN == DDPGTrainType.OLD:
-            _, last_loss, actor_objective = agent.train_old(step_idx=step_idx)
-        else:
-            _, last_loss, actor_objective = agent.train(step_idx=step_idx)
+        _, last_loss, actor_objective = agent.train_off_policy(step_idx=step_idx)
 
         if hasattr(params, "PER_RANK_BASED") and getattr(params, "PER_RANK_BASED"):
             if step_idx % 100 < params.TRAIN_STEP_FREQ:

@@ -268,6 +268,8 @@ class RotaryInvertedPendulumEnv(gym.Env):
         self.episode_steps = 0
         self.episode_idx += 1
 
+        #print(self.episode_idx, self.step_idx, "######")
+
         if self.total_steps == 0:
             print("next_time_step_of_external_blow: {0}".format(
                 self.next_time_step_of_external_blow

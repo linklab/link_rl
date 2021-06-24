@@ -126,7 +126,7 @@ class AgentTD3(OffPolicyAgent):
         return actions, new_noises
 
     # @profile
-    def train(self, step_idx):
+    def on_train(self, step_idx):
         if self.params.PER_PROPORTIONAL or self.params.PER_RANK_BASED:
             batch, batch_indices, batch_weights = self.buffer.sample(self.params.BATCH_SIZE)
         else:
