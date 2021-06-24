@@ -58,8 +58,8 @@ class AgentContinuousA2C(AgentA2C):
     def __call__(self, states, critics=None):
         return self.continuous_stochastic_call(states, critics)
 
-    def train(self, step_idx):
-        batch = self.buffer.sample(batch_size=None)
+    def on_train(self, step_idx, expected_model_version):
+        batch = self.buffer.sample_all_for_on_policy(expected_model_version)
 
         # states_v.shape: (32, 3)
         # actions_v.shape: (32, 1)
@@ -101,8 +101,6 @@ class AgentContinuousA2C(AgentA2C):
         self.actor_optimizer.zero_grad()
         (loss_actor_v + self.params.ENTROPY_LOSS_WEIGHT * loss_entropy_v).backward()
         self.actor_optimizer.step()
-
-        self.buffer.clear()
 
         gradients = self.model.get_gradients_for_current_parameters()
 

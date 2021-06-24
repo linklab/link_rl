@@ -27,9 +27,9 @@ class ContinuousNormalActionSelector(ContinuousActionSelector):
         # actions = mu + rnd
         if logstd_v is not None:
             dist = Normal(loc=mu_v, scale=torch.exp(logstd_v))
-            actions = dist.sample().data.cpu().numpy()
+            actions = dist.sample().data.cpu().detach().numpy()
         else:
-            actions = mu_v.data.cpu().numpy()
+            actions = mu_v.data.cpu().detach().numpy()
 
         actions = np.clip(actions, -1.0, 1.0)
         return actions

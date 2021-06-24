@@ -88,6 +88,9 @@ class ExperienceReplayBuffer:
         self.experience_source = experience_source
         self.experience_source_iter = None if experience_source is None else iter(experience_source)
 
+    def sample_all_for_on_policy(self, expected_model_version):
+        return [sample for sample in self.buffer if sample.model_version == expected_model_version]
+
     def sample(self, batch_size):
         """
         Get one random batch from experience replay
@@ -102,7 +105,7 @@ class ExperienceReplayBuffer:
         keys = np.random.choice(len(self.buffer), batch_size, replace=True)
         return [self.buffer[key] for key in keys]
 
-    def _add(self, sample):
+    def add_sample(self, sample):
         if len(self.buffer) < self.capacity:
             self.buffer.append(sample)
         else:
@@ -117,7 +120,7 @@ class ExperienceReplayBuffer:
         entry = None
         for _ in range(num_samples):
             entry = next(self.experience_source_iter)
-            self._add(entry)
+            self.add_sample(entry)
 
         return entry
 
@@ -129,7 +132,7 @@ class ExperienceReplayBuffer:
         for _ in range(num_samples):
             entry = next(self.experience_source_iter)
             action_count[entry.action] += 1
-            self._add(entry)
+            self.add_sample(entry)
 
     def update_priorities(self, batch_indices, batch_priorities):
         raise NotImplementedError()
@@ -231,9 +234,9 @@ class PrioritizedReplayBuffer(ExperienceReplayBuffer):
         self.beta = min(1.0, v)
         return self.beta
 
-    def _add(self, *args, **kwargs):
+    def add_sample(self, *args, **kwargs):
         idx = self.pos
-        super()._add(*args, **kwargs)
+        super().add_sample(*args, **kwargs)
         self._it_sum[idx] = self._max_priority ** self.alpha
         self._it_min[idx] = self._max_priority ** self.alpha
 
@@ -578,7 +581,7 @@ class RankBasedPrioritizedReplayBuffer(ExperienceReplayBuffer):
         self.beta = min(1.0, v)
         return self.beta
 
-    def _add(self, sample):
+    def add_sample(self, sample):
         self.store(sample)
 
     def sample(self, _):
