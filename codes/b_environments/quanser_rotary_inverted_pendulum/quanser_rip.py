@@ -328,7 +328,7 @@ class EnvironmentQuanserRIP(gym.Env):
                 position_reward = (math.pi - abs(self.pendulum_radian)) / 2
                 # position_reward = 1 + math.cos(self.pendulum_radian)
 
-        energy_penalty = -1.0 * (abs(self.pendulum_velocity) + abs(self.motor_velocity)) / 1000
+        energy_penalty = -1.0 * (abs(self.pendulum_velocity) + abs(self.motor_velocity)) / 200
 
         reward = position_reward + energy_penalty
 
