@@ -257,7 +257,7 @@ def velocity_check(rip, server):
         link_vel_deque.append(abs(link_1_velocity))
         arm_vel_deque_mean = sum(arm_vel_deque)/100.0
         link_vel_deque_mean = sum(link_vel_deque)/100.0
-        if arm_vel_deque_mean > 1400 or link_vel_deque_mean > 1400: #5SECOND
+        if arm_vel_deque_mean > 1600 or link_vel_deque_mean > 1600: #5SECOND
             server.stop(grace=None)
             for _ in range(3):
                 rip.test_terminate()
