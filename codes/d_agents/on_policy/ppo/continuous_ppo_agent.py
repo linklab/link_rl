@@ -70,7 +70,7 @@ class AgentContinuousPPO(AgentPPO):
         self.set_action_std_tracker()
 
     def __call__(self, states, critics=None):
-        return self.continuous_stochastic_call(states, critics)
+        return self.continuous_stochastic_call(states)
 
     def on_train(self, step_idx, expected_model_version):
         trajectory = self.buffer.sample_all_for_on_policy(expected_model_version)
@@ -83,16 +83,23 @@ class AgentContinuousPPO(AgentPPO):
         trajectory_actions = [experience.action for experience in trajectory]
         trajectory_actions_v = torch.FloatTensor(trajectory_actions).to(self.device)
 
-        # trajectory_mu_v: (2049, 1)
-        # trajectory_logstd_v: (2049, 1)
-        # trajectory_values_v: (2849, 1)
-        trajectory_mu_v, trajectory_logstd_v, trajectory_values_v = self.model.base.forward(trajectory_states_v)
+        # trajectory_mu_v.shape: (2049, 1)
+        # trajectory_values_v.shape: (2849, 1)
+        trajectory_mu_v, trajectory_values_v = self.model.base.forward(trajectory_states_v)
 
         # METHOD 1
-        trajectory_var_v = torch.square(torch.exp(trajectory_logstd_v))
-        trajectory_covariance_matrix = torch.diag_embed(trajectory_var_v).to(self.device)
+        # trajectory_action_variance.shape: (2049, 1)
+        # trajectory_covariance_matrix.shape: (2049, 1, 1)
+        # trajectory_old_log_pi_action_v.shape: (2049, 1)
+        trajectory_action_variance = self.model.base.actor.action_variance.expand_as(trajectory_mu_v)
+        trajectory_covariance_matrix = torch.diag_embed(trajectory_action_variance).to(self.device)
         trajectory_dist = MultivariateNormal(loc=trajectory_mu_v, covariance_matrix=trajectory_covariance_matrix)
-        trajectory_old_log_pi_action_v = trajectory_dist.log_prob(value=trajectory_actions_v).detach()
+        trajectory_old_log_pi_action_v = trajectory_dist.log_prob(value=trajectory_actions_v).unsqueeze(dim=-1).detach()
+
+        # trajectory_var_v = torch.square(torch.exp(trajectory_logstd_v))
+        # trajectory_covariance_matrix = torch.diag_embed(trajectory_var_v).to(self.device)
+        # trajectory_dist = MultivariateNormal(loc=trajectory_mu_v, covariance_matrix=trajectory_covariance_matrix)
+        # trajectory_old_log_pi_action_v = trajectory_dist.log_prob(value=trajectory_actions_v).detach()
 
         # METHOD 2
         # trajectory_dist = Normal(loc=trajectory_mu_v, scale=torch.exp(trajectory_logstd_v))
@@ -130,34 +137,46 @@ class AgentContinuousPPO(AgentPPO):
                 # batch_mu_v: (64, 1)
                 # batch_var_v: (64, 1)
                 # batch_values_v: (64, 1)
-                batch_mu_v, batch_logstd_v, batch_values_v = self.model(batch_states_v)
+                batch_mu_v, batch_values_v = self.model(batch_states_v)
 
-                batch_loss_critic_v = self.backward_and_step_for_critic(batch_values_v, batch_target_action_value_v)
+                mean_batch_loss_critic_v = self.backward_and_step_for_critic(batch_values_v, batch_target_action_value_v)
 
                 # actor training
-                # batch_actions_v: (64, 1)
-                # batch_log_pi_action_v: (64, 1)
 
                 # METHOD 1
-                batch_var_v = torch.square(torch.exp(batch_logstd_v))
-                batch_covariance_matrix = torch.diag_embed(batch_var_v).to(self.device)
+                # batch_action_variance.shape: (64, 1)
+                # batch_covariance_matrix.shape: (64, 1, 1)
+                # batch_log_pi_action_v.shape: (64, 1)
+                # batch_entropy.shape: (64, 1)
+                batch_action_variance = self.model.base.actor.action_variance.expand_as(batch_mu_v)
+                batch_covariance_matrix = torch.diag_embed(batch_action_variance).to(self.device)
                 batch_dist = MultivariateNormal(loc=batch_mu_v, covariance_matrix=batch_covariance_matrix)
-                batch_log_pi_action_v = batch_dist.log_prob(value=batch_actions_v)
-                batch_entropy_v = batch_dist.entropy()
+                batch_log_pi_action_v = batch_dist.log_prob(value=batch_actions_v).unsqueeze(dim=-1)
+                batch_entropy_v = batch_dist.entropy().unsqueeze(dim=-1)
+
+                # print(batch_action_variance.size(), "!!!!!!!!! - 1")
+                # print(batch_covariance_matrix.size(), "!!!!!!!!! - 2")
+                # print(batch_log_pi_action_v.size(), "!!!!!!!!! - 3")
+                # print(batch_entropy_v.size(), "!!!!!!!!! - 4")
+
+                # batch_var_v = torch.square(torch.exp(batch_logstd_v))
+                # batch_covariance_matrix = torch.diag_embed(batch_var_v).to(self.device)
+                # batch_dist = MultivariateNormal(loc=batch_mu_v, covariance_matrix=batch_covariance_matrix)
+                # batch_log_pi_action_v = batch_dist.log_prob(value=batch_actions_v)
+                # batch_entropy_v = batch_dist.entropy()
 
                 # METHOD 2
-                # batch_dist = Normal(loc=batch_mu_v, scale=torch.exp(batch_logstd_v))
+                # batch_dist = Normal(loc=batch_mu_v, scale=torch.sqrt(self.model.base.actor.action_variance.expand_as(batch_mu_v)))
                 # batch_log_pi_action_v = batch_dist.log_prob(batch_actions_v)
                 # batch_entropy_v = batch_dist.entropy()
 
-                mean_batch_loss_entropy_v = -1.0 * batch_entropy_v.mean()
-
-                batch_loss_actor_v = self.backward_and_step_for_actor(
-                    batch_log_pi_action_v, batch_old_log_pi_action_v, batch_advantage_v, mean_batch_loss_entropy_v,
+                # batch_advantage_v.shape: (64, 1)
+                mean_batch_loss_actor_v = self.backward_and_step_for_actor(
+                    batch_log_pi_action_v, batch_old_log_pi_action_v, batch_advantage_v, batch_entropy_v,
                 )
 
-                sum_loss_critic += batch_loss_critic_v.item()
-                sum_loss_actor += batch_loss_actor_v.item()
+                sum_loss_critic += mean_batch_loss_critic_v.item()
+                sum_loss_actor += mean_batch_loss_actor_v.item()
                 count_steps += 1
 
         #gradients = self.model.get_gradients_for_current_parameters()

@@ -130,14 +130,13 @@ class AgentDiscretePPO(AgentPPO):
                 # batch_values_v: (64, 1)
                 batch_probs_v, batch_values_v = self.model.base.forward(batch_states_v)
 
-                batch_loss_critic_v = self.backward_and_step_for_critic(batch_values_v, batch_target_action_value_v)
+                mean_batch_loss_critic_v = self.backward_and_step_for_critic(batch_values_v, batch_target_action_value_v)
 
                 # actor training
                 # batch_log_pi_action_v: (64,)
                 batch_dist = Categorical(probs=batch_probs_v)
                 batch_log_pi_action_v = batch_dist.log_prob(batch_actions_v) + 1e-6
                 batch_entropy_v = batch_dist.entropy()
-                mean_batch_loss_entropy_v = -1.0 * batch_entropy_v.mean()
 
                 # batch_log_pi_action_v = torch.log(
                 #     batch_probs_v.gather(dim=1, index=batch_actions_v.unsqueeze(-1)) + 1e-6
@@ -148,12 +147,12 @@ class AgentDiscretePPO(AgentPPO):
                 # batch_log_pi_v = torch.log(batch_probs_v + 1e-5)
                 # batch_loss_entropy_v = -1.0 * (batch_probs_v * batch_log_pi_v).sum(dim=1).mean()
 
-                batch_loss_actor_v = self.backward_and_step_for_actor(
-                    batch_log_pi_action_v, batch_old_log_pi_action_v, batch_advantage_v, mean_batch_loss_entropy_v,
+                mean_batch_loss_actor_v = self.backward_and_step_for_actor(
+                    batch_log_pi_action_v, batch_old_log_pi_action_v, batch_advantage_v, batch_entropy_v
                 )
 
-                sum_loss_critic += batch_loss_critic_v.item()
-                sum_loss_actor += batch_loss_actor_v.item()
+                sum_loss_critic += mean_batch_loss_critic_v.item()
+                sum_loss_actor += mean_batch_loss_actor_v.item()
                 count_steps += 1
 
         #gradients = self.model.get_gradients_for_current_parameters()

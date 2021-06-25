@@ -90,17 +90,16 @@ class AgentContinuousA2C(AgentA2C):
         batch_advantage_v = target_action_values_v - value_v.squeeze(-1)
 
         # reinforced_log_pi_action_v.shape: (32,)
-        batch_action_variance = self.model.base.actor.action_variance.expand_as(mu_v).squeeze(dim=-1)
+        # batch_action_variance.shape: (32, 1)
+        # batch_covariance_matrix.shape: (32, 1, 1)
+        # batch_dist.log_prob(value=actions_v).shape: (32,)
+        # batch_advantage_v.detach().shape: (32,)
+        # batch_reinforced_log_pi_action_v.shape: (32,)
+        batch_action_variance = self.model.base.actor.action_variance.expand_as(mu_v)
         batch_covariance_matrix = torch.diag_embed(batch_action_variance).to(self.device)
-        dist = MultivariateNormal(loc=mu_v, covariance_matrix=batch_covariance_matrix)
-        batch_reinforced_log_pi_action_v = dist.log_prob(value=actions_v) * batch_advantage_v.detach()
-        batch_entropy_v = dist.entropy()
-
-        # print(action_var.size(), "!!!!!! - 0")
-        # print(covariance_matrix.size(), "!!!!!! - 1")
-        # print(dist.log_prob(value=actions_v).size(), "!!!!!! - 2")
-        # print(advantage_v.detach().size(), "!!!!!! - 3")
-        # print(reinforced_log_pi_action_v.size(), "!!!!!! - 4")
+        batch_dist = MultivariateNormal(loc=mu_v, covariance_matrix=batch_covariance_matrix)
+        batch_reinforced_log_pi_action_v = batch_dist.log_prob(value=actions_v) * batch_advantage_v.detach()
+        batch_entropy_v = batch_dist.entropy()
 
         # dist = Normal(loc=mu_v, scale=torch.exp(logstd_v))
         # reinforced_log_pi_action_v = dist.log_prob(value=actions_v) * advantage_v.unsqueeze(dim=-1).detach()
@@ -123,4 +122,3 @@ class AgentContinuousA2C(AgentA2C):
         gradients = self.model.get_gradients_for_current_parameters()
 
         return gradients, loss_critic_v.item(), loss_actor_v.item() * -1.0
-

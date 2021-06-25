@@ -8,4 +8,5 @@ class OnPolicyActionType(enum.Enum):
 
 class PARAMETERS_ON_POLICY:
     TYPE_OF_ON_POLICY_ACTION = OnPolicyActionType.ACTION_STD_DECAY
-
+    ACTION_STD_INIT = 1.0
+    ACTION_STD_MIN = 0.01

@@ -42,27 +42,37 @@ class AgentPPO(OnPolicyAgent):
         return batch_loss_critic_v
 
     def backward_and_step_for_actor(
-            self, batch_log_pi_action_v, batch_old_log_pi_action_v, batch_advantage_v, mean_batch_loss_entropy_v,
+            self, batch_log_pi_action_v, batch_old_log_pi_action_v, batch_advantage_v, batch_entropy_v
     ):
+        """
+            # batch_log_pi_action_v.shape: (64, 1)
+            # batch_old_log_pi_action_v.shape: (64, 1)
+            # batch_advantage_v.shape: (64, 1)
+            # batch_entropy_v.shape: (64, 1)
+        """
         self.actor_optimizer.zero_grad()
 
         # batch_old_log_pi_action_v: (64, 1)
         # batch_ratio_v: (64, 1)
         batch_ratio_v = torch.exp(
             batch_log_pi_action_v - torch.maximum(
-                batch_old_log_pi_action_v.detach(), torch.ones_like(batch_old_log_pi_action_v) * 1.0e-6
+                batch_old_log_pi_action_v, torch.ones_like(batch_old_log_pi_action_v) * 1.0e-7
             )
         )
 
-        # batch_advantage_v: (64, 1)
+        # batch_advantage_1_v.shape: (64, 1)
+        # batch_surrogate_2_v.shape: (64, 1)
         batch_surrogate_1_v = batch_advantage_v * batch_ratio_v
         batch_surrogate_2_v = batch_advantage_v * torch.clamp(
             batch_ratio_v, min=1.0 - self.params.PPO_EPSILON_CLIP, max=1.0 + self.params.PPO_EPSILON_CLIP
         )
 
-        batch_loss_actor_v = -1.0 * torch.min(batch_surrogate_1_v, batch_surrogate_2_v).mean()
+        # mean_batch_loss_actor_v.shape: (1,)
+        # mean_batch_loss_entropy_v.shape: (1,)
+        mean_batch_loss_actor_v = -1.0 * torch.min(batch_surrogate_1_v, batch_surrogate_2_v).mean()
+        mean_batch_loss_entropy_v = -1.0 * batch_entropy_v.mean()
 
-        (batch_loss_actor_v + self.params.ENTROPY_LOSS_WEIGHT * mean_batch_loss_entropy_v).backward()
+        (mean_batch_loss_actor_v + self.params.ENTROPY_LOSS_WEIGHT * mean_batch_loss_entropy_v).backward()
         #nn_utils.clip_grad_norm(self.model.base.actor_params + self.model.base.critic_params, max_norm=2.0)
         nn_utils.clip_grad_norm_(self.model.base.actor_params, self.params.CLIP_GRAD)
 
@@ -86,4 +96,4 @@ class AgentPPO(OnPolicyAgent):
         #         ), "*" if batch_surrogate_1_v[1].item() < batch_surrogate_2_v[1].item() else ""
         #     )
 
-        return batch_loss_actor_v
+        return mean_batch_loss_actor_v
