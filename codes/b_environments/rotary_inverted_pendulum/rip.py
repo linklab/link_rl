@@ -556,8 +556,8 @@ class RotaryInvertedPendulumEnv(gym.Env):
                 self.next_time_step_of_external_blow
             ))
         else:
-            if type(action) is np.ndarray:
-                action = action[0]
+
+            action = action[0]
 
             self.previous_actions.append(float(action))
 
