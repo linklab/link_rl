@@ -67,6 +67,10 @@ class QubeServo2:
     def step_sync(self, QuanserRequest, context):
         motor_radian, motor_velocity, pendulum_radian, pendulum_velocity, step_id = self_servo.read_and_pub()
 
+        self_servo.motor_command = int(QuanserRequest.value)
+
+        self_servo.set_motor_command()
+
         return QuanserResponse(
             message="STEP_SYNC",
             motor_radian=motor_radian, motor_velocity=motor_velocity,

@@ -54,6 +54,8 @@ class SyncronizeEnv(gym.Env):
         super(SyncronizeEnv, self).__init__()
         self.params = params
 
+        self.action_ = 50
+
         self.previous_time = 0
 
         self.episode = 0
@@ -189,8 +191,11 @@ class SyncronizeEnv(gym.Env):
         # previous_time = time.perf_counter()
         # print(action)
 
-        quanser_response_1 = self.server_obj_1.step_sync(QuanserRequest(value=0.0))
-        quanser_response_2 = self.server_obj_2.step_sync(QuanserRequest(value=0.0))
+        if self.step_idx % 50 == 0:
+            self.action_ = -self.action_
+
+        quanser_response_1 = self.server_obj_1.step_sync(QuanserRequest(value=self.action_))
+        quanser_response_2 = self.server_obj_2.step_sync(QuanserRequest(value=self.action_))
 
         self.motor_radian_1 = quanser_response_1.motor_radian
         self.motor_velocity_1 = quanser_response_1.motor_velocity
