@@ -67,8 +67,6 @@ def play_main(params, env):
 
             action, _, = agent(state)
 
-            action = action[0]
-
             if isinstance(agent.model, ContinuousActionModel) and params.ENVIRONMENT_ID not in [
                     EnvironmentName.PENDULUM_MATLAB_V0,
                     EnvironmentName.PENDULUM_MATLAB_DOUBLE_RIP_V0,
@@ -78,9 +76,8 @@ def play_main(params, env):
                 ]:
                 if hasattr(params, "ACTION_SCALE") and params.ACTION_SCALE:
                     action = params.ACTION_SCALE * action[0]
-
-            if type(action) != type([]):
-                action = [action]
+            else:
+                action = action[0]
 
             next_state, reward, done, info = env.step(action)
 
