@@ -96,14 +96,35 @@ class BaseAgent:
         if self.agent_mode == AgentMode.TRAIN:
             with torch.no_grad():
                 mu_v = self.model.base.actor(states)
-            actions = self.train_action_selector(
-                mu_v=mu_v,
-                action_variance=self.model.base.actor.action_variance
-            )
+                actions = self.train_action_selector(
+                    mu_v=mu_v,
+                    action_variance=self.model.base.actor.action_variance
+                )
         else:
             with torch.no_grad():
                 mu_v = self.test_model.base.actor(states)
-            actions = self.test_and_play_action_selector(mu_v, action_variance=None)
+                actions = self.test_and_play_action_selector(mu_v, action_variance=None)
+
+        critics = torch.zeros(size=mu_v.size())
+
+        return actions, critics
+
+    def continuous_sac_call(self, states):
+        states = self.preprocess(states)
+
+        if len(states) == 1:
+            self.model.eval()
+        else:
+            self.model.train()
+
+        if self.agent_mode == AgentMode.TRAIN:
+            with torch.no_grad():
+                mu_v, logstd_v = self.model.base.actor(states)
+                actions = self.train_action_selector(mu_v=mu_v, logstd_v=logstd_v)
+        else:
+            with torch.no_grad():
+                mu_v, _ = self.test_model.base.actor(states)
+                actions = self.test_and_play_action_selector(mu_v=mu_v, logstd_v=None)
 
         critics = torch.zeros(size=mu_v.size())
 

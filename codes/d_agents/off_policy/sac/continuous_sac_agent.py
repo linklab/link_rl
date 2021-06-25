@@ -20,9 +20,7 @@ from codes.e_utils.names import DeepLearningModelName
 class AgentSAC(OffPolicyAgent):
     """
     """
-    def __init__(
-            self, worker_id, input_shape, action_shape, num_outputs, params, device
-    ):
+    def __init__(self, worker_id, input_shape, action_shape, num_outputs, params, device):
         assert params.DEEP_LEARNING_MODEL == DeepLearningModelName.SOFT_ACTOR_CRITIC_MLP
 
         super(AgentSAC, self).__init__(worker_id, params, action_shape, device)
@@ -86,7 +84,8 @@ class AgentSAC(OffPolicyAgent):
             # Target entropy is -|A|.
             self.target_entropy = -torch.prod(torch.Tensor(self.action_shape).to(self.device)).item()
 
-            print(self.target_entropy, "!")
+            #print(self.target_entropy, "!")
+
             # We optimize log(alpha), instead of alpha.
             self.log_alpha = torch.zeros(1, requires_grad=True, device=self.device)
             self.alpha = self.log_alpha.exp()
@@ -102,7 +101,7 @@ class AgentSAC(OffPolicyAgent):
     def __call__(self, states, critics=None):
         if self.alpha is None:
             self.reset_alpha()
-        return self.continuous_stochastic_call(states, critics)
+        return self.continuous_sac_call(states)
 
     def on_train(self, step_idx):
         if self.alpha is None:
