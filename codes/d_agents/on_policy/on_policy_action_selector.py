@@ -12,7 +12,7 @@ class DiscreteCategoricalActionSelector(ActionSelector):
     def __call__(self, probs):
         with torch.no_grad():
             dist = Categorical(probs=probs)
-            actions = dist.rsample().cpu().detach().numpy()
+            actions = dist.sample().cpu().detach().numpy()
         return np.array(actions)
 
 
