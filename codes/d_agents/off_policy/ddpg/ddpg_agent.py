@@ -110,7 +110,7 @@ class AgentDDPG(OffPolicyAgent):
                 action_selector=self.train_action_selector,
                 eps_start=params.EPSILON_INIT,
                 eps_final=params.EPSILON_MIN,
-                eps_frames=params.EPSILON_MIN_STEP
+                eps_last_frames=params.EPSILON_MIN_STEP
             )
         else:
             self.epsilon_tracker = None

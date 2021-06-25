@@ -160,7 +160,11 @@ class EpisodeProcessor:
         train_episode_reward_lst_for_test.append(current_episode_reward)
         train_episode_reward_lst_for_stat.append(current_episode_reward)
 
-        epsilon = self.agent.train_action_selector.epsilon if hasattr(self.agent.train_action_selector, 'epsilon') else None
+        epsilon = self.agent.train_action_selector.epsilon \
+            if hasattr(self.agent.train_action_selector, 'epsilon') else None
+
+        action_variance = self.agent.model.base.actor.action_variance.item() \
+            if hasattr(self.agent.model.base, 'actor') and hasattr(self.agent.model.base.actor, 'action_variance') else None
 
         speed, elapsed_time = speed_tracker.get_speed_and_elapsed_time(
             episode_done_step=step_idx
@@ -186,6 +190,9 @@ class EpisodeProcessor:
 
         if epsilon:
             train_info_dict["epsilon"] = epsilon
+
+        if action_variance:
+            train_info_dict["action_variance"] = action_variance
 
         if hasattr(self.agent, "last_noise"):
             train_info_dict["last_noise"] = self.agent.last_noise
@@ -288,7 +295,7 @@ def last_model_save(agent, step_idx, train_episode_reward_lst_for_stat):
 
 
 def print_performance(
-        params, episode_done_step, done_episode, episode_reward, mean_episode_reward, epsilon,
+        params, episode_done_step, done_episode, episode_reward, mean_episode_reward, epsilon, action_variance,
         elapsed_time, last_info, speed, mean_loss, mean_actor_objective, worker_id=None, last_action=None,
         evaluation_msg=None, last_done_reason=None
 ):
@@ -298,16 +305,23 @@ def print_performance(
         prefix = ""
 
     if isinstance(epsilon, tuple) or isinstance(epsilon, list):
-        epsilon_str = " eps.: {0:5.3f}, {1:5.3f},".format(
+        epsilon_str = ", eps.: {0:5.3f}, {1:5.3f},".format(
             epsilon[0] if epsilon[0] else 0.0,
             epsilon[1] if epsilon[1] else 0.0
         )
     elif isinstance(epsilon, float):
-        epsilon_str = " eps.: {0:5.3f},".format(
+        epsilon_str = ", EPSILON: {0:5.3f},".format(
             epsilon if epsilon else 0.0,
         )
     else:
         epsilon_str = ""
+
+    if action_variance:
+        action_variance_str = ", ACTION VARIANCE: {0:5.3f},".format(
+            action_variance if action_variance else 0.0,
+        )
+    else:
+        action_variance_str = ""
 
     mean_episode_reward_str = "{0:9.3f}".format(mean_episode_reward)
 
@@ -319,7 +333,7 @@ def print_performance(
         print("#######################################################################################################")
 
     print(
-        "{0}[{1:6}/{2}] Ep. {3}, EPISODE REWARD: {4:9.3f}, MEAN_{5} EPSIODE REWARD: {6},{7} SPEED: {8:7.2f}steps/sec., {9}".format(
+        "{0}[{1:6}/{2}] Ep. {3}, EPISODE REWARD: {4:9.3f}, MEAN_{5} EPSIODE REWARD: {6}{7}{8} SPEED: {9:7.2f}steps/sec., {10}".format(
             prefix,
             episode_done_step,
             params.MAX_GLOBAL_STEP,
@@ -328,6 +342,7 @@ def print_performance(
             params.AVG_EPISODE_SIZE_FOR_STAT,
             mean_episode_reward_str,
             epsilon_str,
+            action_variance_str,
             speed,
             time.strftime("%Hh %Mm %Ss", time.gmtime(elapsed_time)),
     ), end="")

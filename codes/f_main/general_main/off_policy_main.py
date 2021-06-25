@@ -18,10 +18,13 @@ if PROJECT_HOME not in sys.path:
 from codes.f_main.general_main.a_common_main import *
 from codes.b_environments.trade.trade_action_selector import EpsilonGreedyTradeDQNActionSelector, \
     ArgmaxTradeActionSelector
+from codes.d_agents.actions import EpsilonTracker, ActionStdTracker
+
 from codes.e_utils.common_utils import print_params
 from codes.e_utils.experience import ExperienceSourceFirstLast
 from codes.e_utils.names import OFF_POLICY_RL_ALGORITHMS, RLAlgorithmName, ON_POLICY_RL_ALGORITHMS
 from codes.e_utils.train_tracker import SpeedTracker
+
 
 if "win32" in _platform or "win64" in _platform:
     thread = True
@@ -38,13 +41,6 @@ def actor_func(agent, current_model_version, exp_queue, child_pipe_conn):
         assert params.NUM_ENVIRONMENTS == 1
         agent.train_action_selector = EpsilonGreedyTradeDQNActionSelector(
             epsilon=params.EPSILON_INIT, env=train_env.envs[0]
-        )
-        from codes.d_agents.actions import EpsilonTracker
-        agent.epsilon_tracker = EpsilonTracker(
-            action_selector=agent.train_action_selector,
-            eps_start=params.EPSILON_INIT,
-            eps_final=params.EPSILON_MIN,
-            eps_frames=params.EPSILON_MIN_STEP
         )
         agent.test_and_play_action_selector = ArgmaxTradeActionSelector(env=test_env)
 
@@ -99,6 +95,9 @@ def actor_func(agent, current_model_version, exp_queue, child_pipe_conn):
 
                 if hasattr(agent, "epsilon_tracker") and agent.epsilon_tracker:
                     agent.epsilon_tracker.udpate(step_idx)
+
+                if hasattr(agent, "action_std_tracker") and agent.action_std_tracker:
+                    agent.action_std_tracker.udpate(step_idx)
 
                 episode_rewards, episode_steps = experience_source.pop_episode_reward_and_done_step_lst()
 
@@ -229,6 +228,7 @@ def main():
                         "train mean ({0} episode rewards)".format(params.AVG_EPISODE_SIZE_FOR_STAT)
                     ],
                     epsilon=train_info_dict["epsilon"] if "epsilon" in train_info_dict else None,
+                    action_variance=train_info_dict["action_variance"] if "action_variance" in train_info_dict else None,
                     elapsed_time=train_info_dict["elapsed_time"],
                     last_info=train_info_dict["last_info"],
                     speed=train_info_dict["speed"],

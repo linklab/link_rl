@@ -1,11 +1,14 @@
+# https://awesomeopensource.com/project/nikhilbarhate99/PPO-PyTorch
 import math
 
 import torch
 import torch.nn.functional as F
-from torch.distributions import Normal
+from torch.distributions import Normal, MultivariateNormal
 import numpy as np
 
+from codes.a_config._rl_parameters.on_policy.parameter_on_policy import OnPolicyActionType
 from codes.c_models.continuous_action.stochastic_continuous_actor_critic_model import StochasticContinuousActorCriticModel
+from codes.d_agents.actions import ActionStdTracker
 from codes.d_agents.on_policy.a2c.a2c_agent import AgentA2C
 from codes.d_agents.on_policy.on_policy_action_selector import ContinuousNormalActionSelector
 from codes.e_utils import rl_utils
@@ -55,8 +58,11 @@ class AgentContinuousA2C(AgentA2C):
             params=params
         )
 
+        # IMPORTANT!!!
+        self.set_action_std_tracker()
+
     def __call__(self, states, critics=None):
-        return self.continuous_stochastic_call(states, critics)
+        return self.continuous_stochastic_call(states)
 
     def on_train(self, step_idx, expected_model_version):
         batch = self.buffer.sample_all_for_on_policy(expected_model_version)
@@ -69,8 +75,8 @@ class AgentContinuousA2C(AgentA2C):
         # mu_v.shape: (32, 1)
         # var_v.shape: (32, 1)
         # value_v.shape; (32, 1)
-        mu_v, logstd_v, value_v = self.model(states_v)
-        # print(mu_v.shape, logstd_v.shape, value_v.shape, "##############")
+        mu_v, value_v = self.model(states_v)
+        # print(mu_v.shape, value_v.shape, "##############")
 
         # Critic Optimization
         loss_critic_v = F.mse_loss(input=value_v.squeeze(-1), target=target_action_values_v.detach())
@@ -81,20 +87,32 @@ class AgentContinuousA2C(AgentA2C):
 
         # Actor Optimization
         # advantage_v.shape: (32,)
-        advantage_v = target_action_values_v - value_v.squeeze(-1)
+        batch_advantage_v = target_action_values_v - value_v.squeeze(-1)
 
-        dist = Normal(loc=mu_v, scale=torch.exp(logstd_v))
-        reinforced_log_pi_action_v = dist.log_prob(value=actions_v) * advantage_v.unsqueeze(dim=-1).detach()
+        # reinforced_log_pi_action_v.shape: (32,)
+        batch_action_variance = self.model.base.actor.action_variance.expand_as(mu_v).squeeze(dim=-1)
+        batch_covariance_matrix = torch.diag_embed(batch_action_variance).to(self.device)
+        dist = MultivariateNormal(loc=mu_v, covariance_matrix=batch_covariance_matrix)
+        batch_reinforced_log_pi_action_v = dist.log_prob(value=actions_v) * batch_advantage_v.detach()
+        batch_entropy_v = dist.entropy()
+
+        # print(action_var.size(), "!!!!!! - 0")
+        # print(covariance_matrix.size(), "!!!!!! - 1")
+        # print(dist.log_prob(value=actions_v).size(), "!!!!!! - 2")
+        # print(advantage_v.detach().size(), "!!!!!! - 3")
+        # print(reinforced_log_pi_action_v.size(), "!!!!!! - 4")
+
+        # dist = Normal(loc=mu_v, scale=torch.exp(logstd_v))
+        # reinforced_log_pi_action_v = dist.log_prob(value=actions_v) * advantage_v.unsqueeze(dim=-1).detach()
+        # entropy_v = dist.entropy()
 
         # reinforced_log_pi_action_v = self.calc_logprob(
         #     mu_v=mu_v, logstd_v=logstd_v, actions_v=actions_v
         # ) * advantage_v.unsqueeze(dim=-1).detach()
-
         #entropy_v = self.calc_entropy(logstd_v=logstd_v)
-        entropy_v = dist.entropy()
 
-        loss_actor_v = -1.0 * reinforced_log_pi_action_v.mean()
-        loss_entropy_v = -1.0 * entropy_v.mean()
+        loss_actor_v = -1.0 * batch_reinforced_log_pi_action_v.mean()
+        loss_entropy_v = -1.0 * batch_entropy_v.mean()
         # loss_actor_v를 작아지도록 만듦 --> reinforced_log_pi_action_v.mean()가 커지도록 만듦
         # loss_entropy_v를 작아지도록 만듦 --> entropy_v가 커지도록 만듦
 

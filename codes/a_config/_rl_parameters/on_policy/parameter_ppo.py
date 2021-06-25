@@ -1,4 +1,7 @@
-class PARAMETERS_PPO:
+from codes.a_config._rl_parameters.on_policy.parameter_on_policy import PARAMETERS_ON_POLICY
+
+
+class PARAMETERS_PPO(PARAMETERS_ON_POLICY):
     PPO_EPSILON_CLIP: 0.2
     PPO_GAE_LAMBDA: 0.70
     PPO_K_EPOCHS: 10

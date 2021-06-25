@@ -66,6 +66,9 @@ class AgentContinuousPPO(AgentPPO):
         #     params=params
         # )
 
+        # IMPORTANT!!!
+        self.set_action_std_tracker()
+
     def __call__(self, states, critics=None):
         return self.continuous_stochastic_call(states, critics)
 

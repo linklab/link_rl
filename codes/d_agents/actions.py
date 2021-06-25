@@ -51,14 +51,33 @@ class EpsilonTracker:
     Updates epsilon according to linear schedule
     """
     def __init__(
-        self, action_selector, eps_start: Union[int, float], eps_final: Union[int, float], eps_frames: int
+        self, action_selector, eps_start: Union[int, float], eps_final: Union[int, float], eps_last_frames: int
     ):
         self.action_selector = action_selector
         self.eps_start = eps_start
         self.eps_final = eps_final
-        self.eps_frames = eps_frames
+        self.eps_last_frames = eps_last_frames
         #self.udpate(0)
 
     def udpate(self, frame: int):
-        eps = self.eps_start - (frame / self.eps_frames)
+        eps = self.eps_start - (frame / self.eps_last_frames)
         self.action_selector.epsilon = max(self.eps_final, eps)
+
+
+class ActionStdTracker:
+    """
+    Updates action standard deviation according to linear schedule
+    """
+    def __init__(
+            self, actor_model,
+            action_std_start: Union[int, float], action_std_final: Union[int, float], action_std_last_frames: int
+    ):
+        self.actor_model = actor_model
+        self.action_std_start = action_std_start
+        self.action_std_final = action_std_final
+        self.action_std_last_frames = action_std_last_frames
+        #self.udpate(0)
+
+    def udpate(self, frame: int):
+        action_std = self.action_std_start - (frame / self.action_std_last_frames)
+        self.actor_model.set_action_variance(action_std=max(self.action_std_final, action_std))
