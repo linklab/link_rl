@@ -83,7 +83,7 @@ class AgentDiscretePPO(AgentPPO):
 
         # trajectory_old_log_pi_action_v: (2849, 1)
         batch_dist = Categorical(probs=trajectory_probs_v)
-        trajectory_old_log_pi_action_v = batch_dist.log_prob(trajectory_actions_v).detach() + 1e-6
+        trajectory_old_log_pi_action_v = batch_dist.log_prob(trajectory_actions_v).unsqueeze(dim=-1).detach() + 1e-7
 
         # trajectory_old_log_pi_action_v = torch.log(
         #     trajectory_probs_v.gather(dim=1, index=trajectory_actions_v.unsqueeze(-1)) + 1e-6
@@ -133,10 +133,10 @@ class AgentDiscretePPO(AgentPPO):
                 mean_batch_loss_critic_v = self.backward_and_step_for_critic(batch_values_v, batch_target_action_value_v)
 
                 # actor training
-                # batch_log_pi_action_v: (64,)
+                # batch_log_pi_action_v: (64,1)
                 batch_dist = Categorical(probs=batch_probs_v)
-                batch_log_pi_action_v = batch_dist.log_prob(batch_actions_v) + 1e-6
-                batch_entropy_v = batch_dist.entropy()
+                batch_log_pi_action_v = batch_dist.log_prob(batch_actions_v).unsqueeze(dim=-1) + 1e-6
+                batch_entropy_v = batch_dist.entropy().unsqueeze(dim=-1)
 
                 # batch_log_pi_action_v = torch.log(
                 #     batch_probs_v.gather(dim=1, index=batch_actions_v.unsqueeze(-1)) + 1e-6

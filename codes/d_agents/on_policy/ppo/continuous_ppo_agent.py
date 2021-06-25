@@ -1,7 +1,5 @@
 import torch
 from torch.distributions import Normal, MultivariateNormal
-import torch.nn.functional as F
-import torch.nn.utils as nn_utils
 
 from codes.c_models.continuous_action.stochastic_continuous_actor_critic_model import \
     StochasticContinuousActorCriticModel

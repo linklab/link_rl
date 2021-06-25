@@ -1,14 +1,9 @@
-import copy
 import os, sys
 import threading
 from collections import deque
 from multiprocessing import Pipe
 from sys import platform as _platform
 import torch.multiprocessing as mp
-
-from codes.a_config._rl_parameters.off_policy.parameter_ddpg import DDPGTrainType
-from codes.d_agents.on_policy.on_policy_agent import OnPolicyAgent
-from codes.d_agents.on_policy.ppo.ppo_agent import AgentPPO
 
 current_path = os.path.dirname(os.path.realpath(__file__))
 PROJECT_HOME = os.path.abspath(os.path.join(current_path, os.pardir, os.pardir, os.pardir))
@@ -18,7 +13,8 @@ if PROJECT_HOME not in sys.path:
 from codes.f_main.general_main.a_common_main import *
 from codes.b_environments.trade.trade_action_selector import EpsilonGreedyTradeDQNActionSelector, \
     ArgmaxTradeActionSelector
-from codes.d_agents.actions import EpsilonTracker, ActionStdTracker
+from codes.d_agents.on_policy.on_policy_agent import OnPolicyAgent
+from codes.d_agents.on_policy.ppo.ppo_agent import AgentPPO
 
 from codes.e_utils.common_utils import print_params
 from codes.e_utils.experience import ExperienceSourceFirstLast
