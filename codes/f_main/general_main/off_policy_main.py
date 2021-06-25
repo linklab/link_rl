@@ -228,7 +228,7 @@ def main():
                         "train mean ({0} episode rewards)".format(params.AVG_EPISODE_SIZE_FOR_STAT)
                     ],
                     epsilon=train_info_dict["epsilon"] if "epsilon" in train_info_dict else None,
-                    action_variance=train_info_dict["action_variance"] if "action_variance" in train_info_dict else None,
+                    action_std=train_info_dict["action_std"] if "action_std" in train_info_dict else None,
                     elapsed_time=train_info_dict["elapsed_time"],
                     last_info=train_info_dict["last_info"],
                     speed=train_info_dict["speed"],

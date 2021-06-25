@@ -89,9 +89,10 @@ class ActorMLPBase(nn.Module):
             nn.Tanh()
         )
 
+        self.action_std = 0.1
         self.action_variance = None
 
-        self.set_action_variance(action_std=0.1)
+        self.set_action_variance(action_std=self.action_std)
 
     @staticmethod
     def init_weights(m):
@@ -99,6 +100,7 @@ class ActorMLPBase(nn.Module):
             torch.nn.init.kaiming_normal_(m.weight)
 
     def set_action_variance(self, action_std):
+        self.action_std = action_std
         self.action_variance = torch.full(size=(self.num_outputs,), fill_value=action_std * action_std).to(self.device)
 
     def forward(self, inputs):
