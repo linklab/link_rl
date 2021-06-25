@@ -22,7 +22,7 @@ class ContinuousNormalActionSelector(ContinuousActionSelector):
             if action_variance is not None:
                 covariance_matrix = torch.diag(action_variance).unsqueeze(dim=0)
                 dist = MultivariateNormal(loc=mu_v, covariance_matrix=covariance_matrix)
-                actions = dist.rsample().data.cpu().detach().numpy()
+                actions = dist.sample().data.cpu().detach().numpy()
             else:
                 actions = mu_v.data.cpu().detach().numpy()
 
