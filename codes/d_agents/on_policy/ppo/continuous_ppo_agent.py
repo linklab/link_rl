@@ -85,18 +85,15 @@ class AgentContinuousPPO(AgentPPO):
         # trajectory_values_v: (2849, 1)
         trajectory_mu_v, trajectory_logstd_v, trajectory_values_v = self.model.base.forward(trajectory_states_v)
 
-        # trajectory_var_v = torch.square(torch.exp(trajectory_logstd_v))
-        # trajectory_covariance_matrix = torch.diag_embed(trajectory_var_v).to(self.device)
-        # trajectory_dist = MultivariateNormal(loc=trajectory_mu_v, covariance_matrix=trajectory_covariance_matrix)
-        # trajectory_old_log_pi_action_v = trajectory_dist.log_prob(value=trajectory_actions_v).detach() + 1e-6
-
-        # trajectory_old_log_pi_action_v = self.calc_logprob(
-        #     mu_v=trajectory_mu_v, logstd_v=trajectory_logstd_v, actions_v=trajectory_actions_v
-        # )
-        # trajectory_old_log_pi_action_v.shape: (2049, 1)
-
-        trajectory_dist = Normal(loc=trajectory_mu_v, scale=torch.exp(trajectory_logstd_v))
+        # METHOD 1
+        trajectory_var_v = torch.square(torch.exp(trajectory_logstd_v))
+        trajectory_covariance_matrix = torch.diag_embed(trajectory_var_v).to(self.device)
+        trajectory_dist = MultivariateNormal(loc=trajectory_mu_v, covariance_matrix=trajectory_covariance_matrix)
         trajectory_old_log_pi_action_v = trajectory_dist.log_prob(value=trajectory_actions_v).detach()
+
+        # METHOD 2
+        # trajectory_dist = Normal(loc=trajectory_mu_v, scale=torch.exp(trajectory_logstd_v))
+        # trajectory_old_log_pi_action_v = trajectory_dist.log_prob(value=trajectory_actions_v).detach()
 
         # 아래 변수는 전체 trajectory의 원소보다 1 적음
         with torch.no_grad():
@@ -137,14 +134,18 @@ class AgentContinuousPPO(AgentPPO):
                 # actor training
                 # batch_actions_v: (64, 1)
                 # batch_log_pi_action_v: (64, 1)
-                batch_dist = Normal(loc=batch_mu_v, scale=torch.exp(batch_logstd_v))
-                batch_log_pi_action_v = batch_dist.log_prob(batch_actions_v)
+
+                # METHOD 1
+                batch_var_v = torch.square(torch.exp(batch_logstd_v))
+                batch_covariance_matrix = torch.diag_embed(batch_var_v).to(self.device)
+                batch_dist = MultivariateNormal(loc=batch_mu_v, covariance_matrix=batch_covariance_matrix)
+                batch_log_pi_action_v = batch_dist.log_prob(value=batch_actions_v)
                 batch_entropy_v = batch_dist.entropy()
 
-                # batch_log_pi_action_v = self.calc_logprob(
-                #     mu_v=batch_mu_v, logstd_v=batch_logstd_v, actions_v=batch_actions_v
-                # )
-                # entropy_v = self.calc_entropy(logstd_v=batch_logstd_v)
+                # METHOD 2
+                # batch_dist = Normal(loc=batch_mu_v, scale=torch.exp(batch_logstd_v))
+                # batch_log_pi_action_v = batch_dist.log_prob(batch_actions_v)
+                # batch_entropy_v = batch_dist.entropy()
 
                 mean_batch_loss_entropy_v = -1.0 * batch_entropy_v.mean()
 

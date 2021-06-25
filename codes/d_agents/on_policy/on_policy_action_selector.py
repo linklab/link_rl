@@ -1,5 +1,5 @@
 import torch
-from torch.distributions import Categorical, Normal
+from torch.distributions import Categorical, Normal, MultivariateNormal
 import numpy as np
 
 from codes.d_agents.actions import ActionSelector, ContinuousActionSelector
@@ -26,8 +26,15 @@ class ContinuousNormalActionSelector(ContinuousActionSelector):
         # # actions = mu + np.exp(logstd) * rnd
         # actions = mu + rnd
         if logstd_v is not None:
-            dist = Normal(loc=mu_v, scale=torch.exp(logstd_v))
+            # METHOD 1
+            var_v = torch.square(torch.exp(logstd_v))
+            covariance_matrix = torch.diag_embed(var_v)
+            dist = MultivariateNormal(loc=mu_v, covariance_matrix=covariance_matrix)
             actions = dist.sample().data.cpu().detach().numpy()
+
+            # METHOD 2
+            # dist = Normal(loc=mu_v, scale=torch.exp(logstd_v))
+            # actions = dist.sample().data.cpu().detach().numpy()
         else:
             actions = mu_v.data.cpu().detach().numpy()
 
