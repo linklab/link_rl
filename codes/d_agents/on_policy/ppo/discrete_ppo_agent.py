@@ -83,7 +83,7 @@ class AgentDiscretePPO(AgentPPO):
 
         # trajectory_old_log_pi_action_v: (2849, 1)
         batch_dist = Categorical(probs=trajectory_probs_v)
-        trajectory_old_log_pi_action_v = batch_dist.log_prob(trajectory_actions_v).unsqueeze(dim=-1).detach() + 1e-7
+        trajectory_old_log_pi_action_v = batch_dist.log_prob(value=trajectory_actions_v).unsqueeze(dim=-1).detach()
 
         # trajectory_old_log_pi_action_v = torch.log(
         #     trajectory_probs_v.gather(dim=1, index=trajectory_actions_v.unsqueeze(-1)) + 1e-6

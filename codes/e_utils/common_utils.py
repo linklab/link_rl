@@ -360,7 +360,7 @@ def map_range(x, in_min, in_max, out_min, out_max):
     return (x - in_min) * (out_max - out_min) / (in_max - in_min) + out_min
 
 
-def show_tensor_info(*tensors):
+def show_info(*tensors):
     this_function_name = inspect.currentframe().f_code.co_name
     lcls = inspect.stack()
 
