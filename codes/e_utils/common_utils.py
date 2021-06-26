@@ -353,6 +353,10 @@ def grad_false(network):
         param.requires_grad = False
 
 
+def map_range(x, in_min, in_max, out_min, out_max):
+    return (x - in_min) * (out_max - out_min) / (in_max - in_min) + out_min
+
+
 if __name__=="__main__":
     # # max_episode = 20000000
     # max_episode = 200

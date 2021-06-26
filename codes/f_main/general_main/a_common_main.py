@@ -24,7 +24,7 @@ from codes.a_config.parameters import PARAMETERS as params
 from codes.e_utils.rl_utils import get_environment_input_output_info, MODEL_ZOO_SAVE_DIR, MODEL_SAVE_FILE_PREFIX
 from codes.e_utils import rl_utils
 from codes.e_utils.common_utils import save_model, print_environment_info, remove_models, \
-    print_agent_info, load_model
+    print_agent_info, load_model, map_range
 from codes.e_utils.train_tracker import EarlyStopping
 from codes.e_utils.logger import get_logger
 from codes.e_utils.names import EnvironmentName, AgentMode, RLAlgorithmName
@@ -258,7 +258,11 @@ class EpisodeProcessor:
                 action = action[0]
 
                 if isinstance(self.agent.model, ContinuousActionModel):
-                    action = np.interp(action, [-1.0, 1.0], [self.agent.action_min, self.agent.action_max])
+                    action = map_range(
+                        np.asarray(action),
+                        np.ones_like(self.agent.action_min) * -1.0, np.ones_like(self.agent.action_max),
+                        self.agent.action_min, self.agent.action_max
+                    )
 
                 next_state, reward, done, info = self.test_env.step(action)
 

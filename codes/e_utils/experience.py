@@ -7,6 +7,7 @@ from gym.vector import VectorEnv
 from icecream import ic
 
 from codes.c_models.continuous_action.continuous_action_model import ContinuousActionModel
+from codes.e_utils.common_utils import map_range
 from codes.e_utils.reward_changer import RewardChanger
 
 current_path = os.path.dirname(os.path.realpath(__file__))
@@ -115,7 +116,11 @@ class ExperienceSource:
                 action = np.asarray(action_n)
 
                 if isinstance(self.agent.model, ContinuousActionModel):
-                    action = np.interp(action, [-1.0, 1.0], [self.agent.action_min, self.agent.action_max])
+                    action = map_range(
+                        np.asarray(action),
+                        np.ones_like(self.agent.action_min) * -1.0, np.ones_like(self.agent.action_max),
+                        self.agent.action_min, self.agent.action_max
+                    )
 
                 next_state_n, r_n, is_done_n, info_n = env.step(action)
 
