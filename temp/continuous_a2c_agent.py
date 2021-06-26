@@ -78,16 +78,32 @@ class AgentContinuousA2C(AgentA2C):
         self.critic_optimizer.step()
 
         # Actor Optimization
-        # batch_advantage_v.shape: (32,)
+        # advantage_v.shape: (32,)
         batch_advantage_v = batch_target_action_values_v - batch_values_v.squeeze(-1)
+
+        # reinforced_log_pi_action_v.shape: (32,)
+        # batch_action_variance.shape: (32, 1)
+        # batch_covariance_matrix.shape: (32, 1, 1)
+        # batch_dist.log_prob(value=actions_v).shape: (32,)
+        # batch_advantage_v.detach().shape: (32,)
+        # batch_reinforced_log_pi_action_v.shape: (32,)
+        # batch_action_variance = self.model.base.actor.action_variance.expand_as(mu_v)
+        # batch_covariance_matrix = torch.diag_embed(batch_action_variance).to(self.device)
+        # batch_dist = MultivariateNormal(loc=mu_v, covariance_matrix=batch_covariance_matrix)
+        # batch_reinforced_log_pi_action_v = batch_dist.log_prob(value=actions_v) * batch_advantage_v.detach()
+        # batch_entropy_v = batch_dist.entropy()
 
         dist = Normal(loc=batch_mu_v, scale=batch_logstd_v)
 
         # dist.log_prob(value=batch_actions_v).shape: (32, 1)
-        # batch_reinforced_log_pi_action_v.shape: (32, 1)
         # batch_entropy_v.shape: (32, 1)
         batch_reinforced_log_pi_action_v = dist.log_prob(value=batch_actions_v) * batch_advantage_v.unsqueeze(dim=-1).detach()
         batch_entropy_v = dist.entropy()
+
+        # reinforced_log_pi_action_v = self.calc_logprob(
+        #     mu_v=mu_v, logstd_v=logstd_v, actions_v=actions_v
+        # ) * advantage_v.unsqueeze(dim=-1).detach()
+        #entropy_v = self.calc_entropy(logstd_v=logstd_v)
 
         loss_actor_v = -1.0 * batch_reinforced_log_pi_action_v.mean()
         loss_entropy_v = -1.0 * batch_entropy_v.mean()

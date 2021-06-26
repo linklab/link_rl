@@ -8,7 +8,9 @@ import math
 import torch.nn as nn
 
 from gym.spaces import Box
-from matplotlib import pyplot as plt
+import inspect
+import re
+
 import gym
 import torch
 from termcolor import colored
@@ -16,10 +18,11 @@ from termcolor import colored
 from codes.b_environments.or_gym.envs.classic_or.knapsack import BoundedKnapsackEnv
 from codes.b_environments.or_gym.envs.classic_or.tsp import TSPEnv, TSPDistCost
 
-from codes.d_agents.a0_base_agent import float32_preprocessor
+from codes.d_agents.a0_base_agent import float32_preprocessor, long64_preprocessor
 
 #https://medium.com/analytics-vidhya/stretched-exponential-decay-function-for-epsilon-greedy-algorithm-98da6224c22f
 from codes.e_utils import wrappers
+from codes.e_utils.names import RLAlgorithmName
 from codes.e_utils.slack import PushSlack
 
 slack = PushSlack()
@@ -355,6 +358,22 @@ def grad_false(network):
 
 def map_range(x, in_min, in_max, out_min, out_max):
     return (x - in_min) * (out_max - out_min) / (in_max - in_min) + out_min
+
+
+def show_tensor_info(*tensors):
+    this_function_name = inspect.currentframe().f_code.co_name
+    lcls = inspect.stack()
+
+    outer = re.compile("\((.+)\)")
+
+    arg_names = None
+    for lcl in lcls:
+        if lcl.code_context[0].strip().startswith(this_function_name):
+            w = outer.search(lcl.code_context[0].split(this_function_name)[1])
+            arg_names = w.group(1).split(", ")
+
+    for idx, arg_name in enumerate(arg_names):
+        print("# {0}.shape: {1}".format(arg_name, tensors[idx].shape))
 
 
 if __name__=="__main__":

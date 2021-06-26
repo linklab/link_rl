@@ -4,6 +4,7 @@ import numpy as np
 import torch
 
 from codes.d_agents.a0_base_agent import BaseAgent
+from codes.e_utils.names import AgentMode
 
 
 class OnPolicyAgent(BaseAgent):
@@ -39,6 +40,43 @@ class OnPolicyAgent(BaseAgent):
     @abstractmethod
     def on_train(self, step_idx, expected_model_version):
         raise NotImplementedError
+
+    def discrete_call(self, states, agent_states):
+        states = self.preprocess(states)
+
+        if len(states) == 1:
+            self.model.eval()
+        else:
+            self.model.train()
+
+        if self.agent_mode == AgentMode.TRAIN:
+            probs_v, value_v = self.model.base.forward(states)
+            actions = self.train_action_selector(probs_v)
+
+            return actions, agent_states
+        else:
+            probs_v = self.model.base.forward_actor(states)
+            actions = self.test_and_play_action_selector(probs_v)
+            return actions, None
+
+    def continuous_stochastic_call(self, states, agent_states):
+        states = self.preprocess(states)
+
+        if len(states) == 1:
+            self.model.eval()
+        else:
+            self.model.train()
+
+        if self.agent_mode == AgentMode.TRAIN:
+            mu_v, logstd_v, value_v = self.model.base(states)
+            actions = self.train_action_selector(mu_v=mu_v, logstd_v=logstd_v)
+
+            return actions, agent_states
+        else:
+            mu_v, _ = self.test_model.base.actor(states)
+            actions = self.test_and_play_action_selector(mu_v, logstd_v=None)
+
+            return actions, None
 
     # https://proofwiki.org/wiki/Differential_Entropy_of_Gaussian_Distribution
     def calc_entropy(self, logstd_v):

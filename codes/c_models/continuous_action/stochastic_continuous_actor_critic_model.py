@@ -1,4 +1,3 @@
-import numpy as np
 import torch
 import torch.nn as nn
 
@@ -13,7 +12,7 @@ class StochasticContinuousActorCriticModel(ContinuousActionModel):
         num_inputs = input_shape[0]
 
         self.base = StochasticActorCriticMLPBase(
-            num_inputs=num_inputs, num_outputs=num_outputs, params=self.params, device=self.device
+            num_inputs=num_inputs, num_outputs=num_outputs, params=self.params
         )
 
         self.reset_average_gradients()
@@ -22,23 +21,22 @@ class StochasticContinuousActorCriticModel(ContinuousActionModel):
         if not (type(inputs) is torch.Tensor):
             inputs = torch.tensor([inputs], dtype=torch.float).to(self.device)
 
-        mu, value = self.base.forward(inputs)
+        mu, logstd, value = self.base.forward(inputs)
 
-        return mu, value
+        return mu, logstd, value
 
 
 class StochasticActorCriticMLPBase(nn.Module):
-    def __init__(self, num_inputs, num_outputs, params, device):
+    def __init__(self, num_inputs, num_outputs, params):
         super(StochasticActorCriticMLPBase, self).__init__()
         self.__name__ = "StochasticActorCriticMLPBase"
         self.params = params
-        self.device = device
 
         self.hidden_1_size = params.HIDDEN_1_SIZE
         self.hidden_2_size = params.HIDDEN_2_SIZE
         self.hidden_3_size = params.HIDDEN_3_SIZE
 
-        self.actor = ActorMLPBase(num_inputs, num_outputs, params, device)
+        self.actor = ActorMLPBase(num_inputs, num_outputs, params)
 
         self.critic = nn.Sequential(
             nn.Linear(num_inputs, self.hidden_1_size),
@@ -58,38 +56,42 @@ class StochasticActorCriticMLPBase(nn.Module):
         self.train()
 
     def forward(self, inputs):
-        mu = self.actor(inputs)
+        mu, logstd = self.actor(inputs)
         value = self.critic(inputs)
-        return mu, value
+        return mu, logstd, value
 
     def forward_critic(self, inputs):
         return self.critic(inputs)
 
 
 class ActorMLPBase(nn.Module):
-    def __init__(self, num_inputs, num_outputs, params, device):
+    def __init__(self, num_inputs, num_outputs, params):
         super(ActorMLPBase, self).__init__()
         self.__name__ = "ActorMLPBase"
         self.params = params
-        self.device = device
-        self.num_outputs = num_outputs
 
         self.hidden_1_size = params.HIDDEN_1_SIZE
         self.hidden_2_size = params.HIDDEN_2_SIZE
         self.hidden_3_size = params.HIDDEN_3_SIZE
 
-        self.mu = nn.Sequential(
+        self.common = nn.Sequential(
             nn.Linear(num_inputs, self.hidden_1_size),
             nn.LeakyReLU(),
             nn.Linear(self.hidden_1_size, self.hidden_2_size),
             nn.LeakyReLU(),
             nn.Linear(self.hidden_2_size, self.hidden_3_size),
-            nn.LeakyReLU(),
-            nn.Linear(self.hidden_3_size, self.num_outputs),
+            nn.LeakyReLU()
+        )
+
+        self.mu = nn.Sequential(
+            nn.Linear(self.hidden_3_size, num_outputs),
             nn.Tanh()
         )
 
-        self.action_std = nn.Parameter(torch.ones(num_outputs,))
+        self.logstd = nn.Sequential(
+            nn.Linear(self.hidden_3_size, num_outputs),
+            nn.Softplus()
+        )
 
     @staticmethod
     def init_weights(m):
@@ -101,15 +103,17 @@ class ActorMLPBase(nn.Module):
         #     print(inputs[0][2], inputs[0][5], inputs[0][5], "!!!!!!!!!!!!!!!!1")
         #self.check_nan_parameters()
 
-        mu_v = self.mu(inputs)
+        mu_v = self.mu(self.common(inputs))
+        logstd_v = self.logstd(self.common(inputs))
 
         if torch.isnan(mu_v[0][0]):
             print("inputs:", inputs, "!!! - 1")
-            print("self.common(inputs)", self.mu(inputs), "!!! - 2")
+            print("self.common(inputs)", self.common(inputs), "!!! - 2")
             print("mu_v:", mu_v, "!!! - 3")
+            print("logstd_v:", logstd_v, "!!! - 4")
             exit(-1)
 
-        return mu_v
+        return mu_v, logstd_v
 
     def check_nan_parameters(self):
         for param in self.mu.parameters():
@@ -124,4 +128,3 @@ class ActorMLPBase(nn.Module):
         # for param in self.logstd.parameters():
         #     if (param.data != param.data).any():
         #         print(param.data)
-

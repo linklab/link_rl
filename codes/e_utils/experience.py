@@ -7,6 +7,7 @@ from gym.vector import VectorEnv
 from icecream import ic
 
 from codes.c_models.continuous_action.continuous_action_model import ContinuousActionModel
+from codes.d_agents.on_policy.on_policy_agent import OnPolicyAgent
 from codes.e_utils.common_utils import map_range
 from codes.e_utils.reward_changer import RewardChanger
 
@@ -27,7 +28,6 @@ ExperienceFirstLast = namedtuple(
     'ExperienceFirstLast',
     ('state', 'action', 'reward', 'last_state', 'last_step', 'done', 'info', 'model_version')
 )
-
 
 class ExperienceSource:
     """
@@ -86,6 +86,7 @@ class ExperienceSource:
         iter_idx = 0
         while True:
             actions = [None] * len(states)
+
             states_input = []
             states_indices = []
             agent_states_input = []
@@ -109,7 +110,7 @@ class ExperienceSource:
             else:
                 pass
 
-            grouped_actions = _group_list(actions, env_lens)
+            grouped_actions = group_list(actions, env_lens)
 
             global_ofs = 0
             for env_idx, (env, action_n) in enumerate(zip(self.pool, grouped_actions)):
@@ -202,19 +203,19 @@ class ExperienceSource:
         return res
 
 
-def _group_list(actions, env_lens):
+def group_list(actions, env_lens):
     """
     Unflat the list of items by lens
     :param items: list of items
     :param lens: list of integers
     :return: list of list of items grouped by lengths
     """
-    res = []
+    grouped_actions = []
     cur_ofs = 0
     for g_len in env_lens:
-        res.append(actions[cur_ofs: cur_ofs + g_len])
+        grouped_actions.append(actions[cur_ofs: cur_ofs + g_len])
         cur_ofs += g_len
-    return res
+    return grouped_actions
 
 
 class ExperienceSourceFirstLast(ExperienceSource):

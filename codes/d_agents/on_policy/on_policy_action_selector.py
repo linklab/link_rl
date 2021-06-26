@@ -13,20 +13,21 @@ class DiscreteCategoricalActionSelector(ActionSelector):
         with torch.no_grad():
             dist = Categorical(probs=probs)
             actions = dist.sample().cpu().detach().numpy()
+
         return np.array(actions)
 
 
 class ContinuousNormalActionSelector(ContinuousActionSelector):
-    def __call__(self, mu_v, action_variance):
+    def __call__(self, mu_v, logstd_v=None):
         with torch.no_grad():
-            if action_variance is not None:
-                covariance_matrix = torch.diag(action_variance).unsqueeze(dim=0)
-                dist = MultivariateNormal(loc=mu_v, covariance_matrix=covariance_matrix)
-                actions = dist.sample().data.cpu().detach().numpy()
+            if logstd_v is not None:
+                dist = Normal(loc=mu_v, scale=logstd_v)
+                actions = dist.sample().data.cpu().numpy()
             else:
-                actions = mu_v.data.cpu().detach().numpy()
+                actions = mu_v.data.cpu().numpy()
 
         actions = np.clip(actions, -1.0, 1.0)
+
         return actions
 
 # class ContinuousNormalActionSelector(ContinuousActionSelector):

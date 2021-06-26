@@ -1,10 +1,10 @@
-import copy
-import math
 from abc import abstractmethod
 
 import numpy as np
 import torch
 
+from codes.c_models.continuous_action.continuous_action_model import ContinuousActionModel
+from codes.c_models.discrete_action.discrete_action_model import DiscreteActionModel
 from codes.e_utils.names import AgentMode, RLAlgorithmName
 
 
@@ -73,44 +73,6 @@ class BaseAgent:
     def train_on_policy(self, step_idx, expected_model_version):
         raise NotImplementedError
 
-    def discrete_call(self, states, critics):
-        states = self.preprocess(states)
-
-        with torch.no_grad():
-            probs_v = self.model.base.forward_actor(states)
-
-        if self.agent_mode == AgentMode.TRAIN:
-            actions = self.train_action_selector(probs_v)
-        else:
-            actions = self.test_and_play_action_selector(probs_v)
-
-        critics = torch.zeros(size=probs_v.size())
-        return actions, critics
-
-    def continuous_stochastic_call(self, states):
-        states = self.preprocess(states)
-
-        if len(states) == 1:
-            self.model.eval()
-        else:
-            self.model.train()
-
-        if self.agent_mode == AgentMode.TRAIN:
-            with torch.no_grad():
-                mu_v = self.model.base.actor(states)
-                actions = self.train_action_selector(
-                    mu_v=mu_v,
-                    action_variance=self.model.base.actor.action_variance
-                )
-        else:
-            with torch.no_grad():
-                mu_v = self.test_model.base.actor(states)
-                actions = self.test_and_play_action_selector(mu_v, action_variance=None)
-
-        critics = torch.zeros(size=mu_v.size())
-
-        return actions, critics
-
     def continuous_sac_call(self, states):
         states = self.preprocess(states)
 
@@ -139,24 +101,22 @@ class BaseAgent:
         :param model:
         :return: states variable, actions tensor, target values variable
         """
-        states, actions, rewards, not_done_idx, last_states = [], [], [], [], []
+        states, actions, rewards, not_done_idx, last_states, last_steps = [], [], [], [], [], []
 
         for idx, exp in enumerate(batch):
             states.append(np.array(exp.state, copy=False))
             actions.append(exp.action)
             rewards.append(exp.reward)
+
             if exp.last_state is not None:
                 not_done_idx.append(idx)
                 last_states.append(np.array(exp.last_state, copy=False))
+                last_steps.append(exp.last_step)
 
         states_v = float32_preprocessor(states).to(self.device)
+        actions_v = self.convert_action_to_torch_tensor(actions, self.device)
 
-        if params.RL_ALGORITHM in [RLAlgorithmName.DISCRETE_A2C_V0, RLAlgorithmName.DISCRETE_PPO_V0]:
-            actions_v = long64_preprocessor(actions).to(self.device)
-        elif params.RL_ALGORITHM in [RLAlgorithmName.CONTINUOUS_A2C_V0, RLAlgorithmName.CONTINUOUS_PPO_V0, RLAlgorithmName.SAC_V0]:
-            actions_v = float32_preprocessor(actions).to(self.device)
-        else:
-            raise ValueError()
+        last_steps_v = np.asarray(last_steps)
 
         # handle rewards
         target_action_values_np = np.array(rewards, dtype=np.float32)
@@ -166,13 +126,13 @@ class BaseAgent:
             if sac:
                 last_actions_v, last_entropies_v = model.sample(last_states_v)
                 last_q_1_v, last_q_2_v = model.base.twinq(last_states_v, last_actions_v)
-                last_q_v = torch.min(last_q_1_v, last_q_2_v) * (params.GAMMA ** params.N_STEP)
+                last_q_v = torch.min(last_q_1_v, last_q_2_v) * (params.GAMMA ** last_steps_v)
                 last_q_v += alpha * last_entropies_v
                 last_q_v = last_q_v.squeeze(-1)
                 target_action_values_np[not_done_idx] += last_q_v.data.cpu().numpy()
             else:
                 last_values_v = model.base.forward_critic(last_states_v)
-                last_values_np = last_values_v.data.cpu().numpy()[:, 0] * (params.GAMMA ** params.N_STEP)
+                last_values_np = last_values_v.data.cpu().numpy()[:, 0] * (params.GAMMA ** last_steps_v)
                 target_action_values_np[not_done_idx] += last_values_np
 
         target_action_values_v = float32_preprocessor(target_action_values_np).to(self.device)
@@ -208,3 +168,13 @@ class BaseAgent:
         advantage_v = float32_preprocessor(list(reversed(result_advantages)))
         target_action_value_v = float32_preprocessor(list(reversed(result_target_action_values)))
         return advantage_v.to(device), target_action_value_v.to(device)
+
+    def convert_action_to_torch_tensor(self, values, device):
+        if isinstance(self.model, DiscreteActionModel):
+            actions_v = long64_preprocessor(values).to(device)
+        elif isinstance(self.model, ContinuousActionModel):
+            actions_v = float32_preprocessor(values).to(device)
+        else:
+            raise ValueError()
+
+        return actions_v

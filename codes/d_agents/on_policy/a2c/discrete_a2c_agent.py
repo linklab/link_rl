@@ -1,10 +1,12 @@
 import torch
 import torch.nn.functional as F
+from torch.distributions import Normal, Categorical
 
 from codes.c_models.discrete_action.discrete_actor_critic_model import DiscreteActorCriticModel
 from codes.d_agents.on_policy.a2c.a2c_agent import AgentA2C
 from codes.d_agents.on_policy.on_policy_action_selector import DiscreteCategoricalActionSelector
 from codes.e_utils import rl_utils
+from codes.e_utils.common_utils import show_tensor_info
 from codes.e_utils.names import DeepLearningModelName
 
 
@@ -40,11 +42,23 @@ class AgentDiscreteA2C(AgentA2C):
             device=device
         ).to(device)
 
-        self.optimizer = rl_utils.get_optimizer(
-            parameters=self.model.base.parameters(),
+        self.actor_optimizer = rl_utils.get_optimizer(
+            parameters=self.model.base.actor_params,
+            learning_rate=self.params.ACTOR_LEARNING_RATE,
+            params=params
+        )
+
+        self.critic_optimizer = rl_utils.get_optimizer(
+            parameters=self.model.base.critic_params,
             learning_rate=self.params.LEARNING_RATE,
             params=params
         )
+
+        # self.optimizer = rl_utils.get_optimizer(
+        #     parameters=self.model.base.parameters(),
+        #     learning_rate=self.params.LEARNING_RATE,
+        #     params=params
+        # )
 
     def __call__(self, states, critics=None):
         return self.discrete_call(states, critics)
@@ -52,28 +66,36 @@ class AgentDiscreteA2C(AgentA2C):
     def on_train(self, step_idx, expected_model_version):
         batch = self.buffer.sample_all_for_on_policy(expected_model_version)
 
-        # states_v.shape: (32, 3)
-        # actions_v.shape: (32, 1)
-        # target_action_values_v.shape: (32,)
-        states_v, actions_v, target_action_values_v = self.unpack_batch_for_actor_critic(batch, self.model, self.params)
+        # batch_states_v.shape: (32, 3)
+        # batch_actions_v.shape: (32, 1)
+        # batch_target_action_values_v.shape: (32,)
+        batch_states_v, batch_actions_v, batch_target_action_values_v = self.unpack_batch_for_actor_critic(batch, self.model, self.params)
 
-        probs_v, value_v = self.model.base.forward(states_v)
+        # batch_probs_v.shape: torch.Size([32, 2])
+        # batch_value_v.shape: torch.Size([32, 1])
+        batch_probs_v, batch_value_v = self.model.base.forward(batch_states_v)
 
         # Critic Optimization
-        loss_critic_v = F.mse_loss(input=value_v.squeeze(-1), target=target_action_values_v.detach())
+        loss_critic_v = F.mse_loss(input=batch_value_v.squeeze(-1), target=batch_target_action_values_v.detach())
+
+        self.critic_optimizer.zero_grad()
+        loss_critic_v.backward(retain_graph=True)
+        self.critic_optimizer.step()
 
         # advantage_v.shape: (32,)
-        advantage_v = target_action_values_v - value_v.squeeze(-1)
-        #print(target_action_values_v, value_v.squeeze(-1), advantage_v)
+        batch_advantage_v = batch_target_action_values_v - batch_value_v.squeeze(-1)
 
-        log_pi_action_v = torch.log(probs_v.gather(dim=1, index=actions_v.unsqueeze(-1)) + 1e-5).squeeze(-1)
-        reinforced_log_pi_action_v = advantage_v.detach() * log_pi_action_v
+        dist = Categorical(probs=batch_probs_v)
+        batch_reinforced_log_pi_action_v = dist.log_prob(value=batch_actions_v) * batch_advantage_v.unsqueeze(dim=-1).detach()
+        batch_entropy_v = dist.entropy()
 
-        loss_actor_v = -1.0 * reinforced_log_pi_action_v.mean()
-
-        log_pi_v = torch.log(probs_v + 1e-5)
-        loss_entropy_v = (probs_v * log_pi_v).sum(dim=1).mean()
+        loss_actor_v = -1.0 * batch_reinforced_log_pi_action_v.mean()
+        loss_entropy_v = -1.0 * batch_entropy_v.mean()
         # loss_actor_v를 작아지도록 만듦 --> log_pi_v.mean()가 커지도록 만듦
         # loss_entropy_v를 작아지도록 만듦 --> entropy_v가 커지도록 만듦
 
-        return self.backward_and_step(loss_critic_v, loss_entropy_v, loss_actor_v)
+        self.actor_optimizer.zero_grad()
+        (loss_actor_v + self.params.ENTROPY_LOSS_WEIGHT * loss_entropy_v).backward()
+        self.actor_optimizer.step()
+
+        return None, loss_critic_v.item(), loss_actor_v.item() * -1.0

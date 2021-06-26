@@ -164,9 +164,6 @@ class EpisodeProcessor:
         epsilon = self.agent.train_action_selector.epsilon \
             if hasattr(self.agent.train_action_selector, 'epsilon') else None
 
-        action_std = self.agent.model.base.actor.action_std \
-            if hasattr(self.agent.model.base, 'actor') and hasattr(self.agent.model.base.actor, 'action_std') else None
-
         speed, elapsed_time = speed_tracker.get_speed_and_elapsed_time(
             episode_done_step=step_idx
         )
@@ -191,9 +188,6 @@ class EpisodeProcessor:
 
         if epsilon:
             train_info_dict["epsilon"] = epsilon
-
-        if action_std:
-            train_info_dict["action_std"] = action_std
 
         if hasattr(self.agent, "last_noise"):
             train_info_dict["last_noise"] = self.agent.last_noise
@@ -293,7 +287,7 @@ def last_model_save(agent, step_idx, train_episode_reward_lst_for_stat):
 
 
 def print_performance(
-        params, episode_done_step, done_episode, episode_reward, mean_episode_reward, epsilon, action_std,
+        params, episode_done_step, done_episode, episode_reward, mean_episode_reward, epsilon,
         elapsed_time, last_info, speed, mean_loss, mean_actor_objective, worker_id=None, last_action=None,
         evaluation_msg=None, last_done_reason=None
 ):
@@ -314,11 +308,6 @@ def print_performance(
     else:
         epsilon_str = ""
 
-    if action_std:
-        action_std_str = ", ACTION STD.: {0:5.3f},".format(action_std)
-    else:
-        action_std_str = ""
-
     mean_episode_reward_str = "{0:9.3f}".format(mean_episode_reward)
 
     if isinstance(episode_reward, np.ndarray):
@@ -328,8 +317,7 @@ def print_performance(
         print(evaluation_msg)
         print("#######################################################################################################")
 
-    print(
-        "{0}[{1:6}/{2}] Ep. {3}, EPISODE REWARD: {4:9.3f}, MEAN_{5} EPSIODE REWARD: {6}{7}{8} SPEED: {9:7.2f}steps/sec., {10}".format(
+    print("{0}[{1:6}/{2}] Ep. {3}, EPISODE REWARD: {4:9.3f}, MEAN_{5} EPSIODE REWARD: {6}{7} SPEED: {8:7.2f}steps/sec., {9}".format(
             prefix,
             episode_done_step,
             params.MAX_GLOBAL_STEP,
@@ -338,7 +326,6 @@ def print_performance(
             params.AVG_EPISODE_SIZE_FOR_STAT,
             mean_episode_reward_str,
             epsilon_str,
-            action_std_str,
             speed,
             time.strftime("%Hh %Mm %Ss", time.gmtime(elapsed_time)),
     ), end="")
