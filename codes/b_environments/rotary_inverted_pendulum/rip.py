@@ -101,8 +101,8 @@ def get_rip_observation_space(pendulum_type, params):
     return observation_space, n_states
 
 
-def get_rip_action_space(params, pendulum_type):
-    if params.RL_ALGORITHM in [RLAlgorithmName.DQN_V0]:
+def get_rip_action_info(params, pendulum_type):
+    if params.RL_ALGORITHM in [RLAlgorithmName.DQN_V0, RLAlgorithmName.DISCRETE_A2C_V0, RLAlgorithmName.DISCRETE_A2C_V0]:
         if pendulum_type == EnvironmentName.PENDULUM_MATLAB_V0:
             action_index_to_voltage = list(np.array([
                 -1.0, -0.75, -0.5, -0.25, -0.1, -0.07, 0.0, 0.07, 0.1, 0.25, 0.5, 0.75, 1.0
@@ -126,27 +126,24 @@ def get_rip_action_space(params, pendulum_type):
             raise ValueError()
         action_space = gym.spaces.Discrete(len(action_index_to_voltage))
         n_actions = action_space.n
+        action_min = 0
+        action_max = n_actions - 1
     else:
         action_index_to_voltage = None
-        if hasattr(params, "ACTION_SCALE_MODE") and params.ACTION_SCALE_MODE == "INTERNAL":
-            action_space = gym.spaces.Box(
-                low=-params.ACTION_SCALE, high=params.ACTION_SCALE, shape=(1,),
-                dtype=np.float32
-            )
-        else:
-            action_space = gym.spaces.Box(
-                low=-1.0, high=1.0, shape=(1,),
-                dtype=np.float32
-            )
+        action_space = gym.spaces.Box(
+            low=-params.ACTION_SCALE, high=params.ACTION_SCALE, shape=(1,),
+            dtype=np.float32
+        )
         n_actions = action_space.shape[0]
+        action_min = action_space.low
+        action_max = action_space.high
 
-    return action_space, n_actions, action_index_to_voltage
+    return action_space, n_actions, action_min, action_max, action_index_to_voltage
 
 
 class RotaryInvertedPendulumEnv(gym.Env):
     def __init__(
-            self, action_min, action_max, env_reset=True,
-            pendulum_type=EnvironmentName.PENDULUM_MATLAB_V0, params=None, mode=AgentMode.TRAIN
+            self, env_reset=True, pendulum_type=EnvironmentName.PENDULUM_MATLAB_V0, params=None, mode=AgentMode.TRAIN
     ):
         self.action_ = 600
 
@@ -154,8 +151,6 @@ class RotaryInvertedPendulumEnv(gym.Env):
         self.total_steps = 0
         self.env_reset = env_reset
         self.pendulum_type = pendulum_type
-        self.action_min = action_min
-        self.action_max = action_max
         self.params = params
 
         self.pendulum_1_position = 0
@@ -198,7 +193,7 @@ class RotaryInvertedPendulumEnv(gym.Env):
         self.too_long_and_fast_pendulum_velocity = False
         self.count_continuous_fast_pendulum_velocity = 0
 
-        self.action_space, self.n_actions, self.action_index_to_voltage = get_rip_action_space(
+        self.action_space, self.n_actions, self.action_min, self.action_max, self.action_index_to_voltage = get_rip_action_info(
             params, self.pendulum_type
         )
 
@@ -531,7 +526,9 @@ class RotaryInvertedPendulumEnv(gym.Env):
         # print("action", action, "total steps", self.total_steps, "episode steps", self.episode_steps)
 
         if self.total_steps >= self.next_time_step_of_external_blow:
-            if self.params.RL_ALGORITHM in [RLAlgorithmName.DQN_V0]:
+            if self.params.RL_ALGORITHM in [
+                RLAlgorithmName.DQN_V0, RLAlgorithmName.DISCRETE_A2C_V0, RLAlgorithmName.DISCRETE_PPO_V0
+            ]:
                 action = random.randint(a=0, b=len(self.action_index_to_voltage)-1)
                 self.previous_actions.append(float(action))
                 action = action * self.action_index_to_voltage[action] * 2.0
@@ -556,15 +553,12 @@ class RotaryInvertedPendulumEnv(gym.Env):
                 self.next_time_step_of_external_blow
             ))
         else:
-
             action = action[0]
 
             self.previous_actions.append(float(action))
 
             if self.params.RL_ALGORITHM in [RLAlgorithmName.DQN_V0]:
                 action = self.action_index_to_voltage[int(action)]
-            else:
-                action = action * self.params.ACTION_SCALE
 
         if self.pendulum_type == EnvironmentName.PENDULUM_MATLAB_V0:
             self.plant.simulate(action)

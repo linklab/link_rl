@@ -31,9 +31,9 @@ my_logger = get_logger("openai_pendulum_ddpg")
 
 
 def play_main(params, env):
-    input_shape, action_shape, num_outputs = get_environment_input_output_info(env)
+    input_shape, action_shape, num_outputs, action_min, action_max = get_environment_input_output_info(env)
     agent = rl_utils.get_rl_agent(
-        input_shape, action_shape, num_outputs, worker_id=-1, params=params, device=device
+        input_shape, action_shape, num_outputs, action_min, action_max, worker_id=-1, params=params, device=device
     )
     load_model(MODEL_ZOO_SAVE_DIR, MODEL_SAVE_FILE_PREFIX, agent, inquery=False)
     agent.agent_mode = AgentMode.PLAY
@@ -67,15 +67,8 @@ def play_main(params, env):
 
             action, _, = agent(state)
 
-            if isinstance(agent.model, ContinuousActionModel) and params.ENVIRONMENT_ID not in [
-                    EnvironmentName.PENDULUM_MATLAB_V0,
-                    EnvironmentName.PENDULUM_MATLAB_DOUBLE_RIP_V0,
-                    EnvironmentName.REAL_DEVICE_RIP,
-                    EnvironmentName.REAL_DEVICE_DOUBLE_RIP,
-                    EnvironmentName.QUANSER_SERVO_2
-                ]:
-                if hasattr(params, "ACTION_SCALE") and params.ACTION_SCALE:
-                    action = params.ACTION_SCALE * action[0]
+            if isinstance(agent.model, ContinuousActionModel):
+                action = np.interp(action, [-1.0, 1.0], [agent.action_min, agent.action_max])
             else:
                 action = action[0]
 

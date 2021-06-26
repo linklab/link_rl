@@ -19,7 +19,7 @@ from codes.e_utils.names import DeepLearningModelName, AgentMode, EnvironmentNam
 class AgentDQN(OffPolicyAgent):
     """
     """
-    def __init__(self, worker_id, input_shape, action_shape, num_outputs, params, device):
+    def __init__(self, worker_id, input_shape, action_shape, num_outputs, action_min, action_max, params, device):
         self.__name__ = "AgentDQN"
 
         assert params.DEEP_LEARNING_MODEL in [
@@ -28,7 +28,10 @@ class AgentDQN(OffPolicyAgent):
             DeepLearningModelName.DUELING_DQN_SMALL_CNN
         ]
 
-        super(AgentDQN, self).__init__(worker_id=worker_id, params=params, action_shape=action_shape, device=device)
+        super(AgentDQN, self).__init__(
+            worker_id=worker_id, params=params, action_shape=action_shape,
+            action_min=action_min, action_max=action_max, device=device
+        )
 
         if self.params.DISTRIBUTIONAL:
             self.delta_z = float(self.params.VALUE_MAX - self.params.VALUE_MIN) / (self.params.NUM_SUPPORTS - 1)
@@ -218,6 +221,7 @@ class AgentDQN(OffPolicyAgent):
                 last_states.append(state)  # the result will be masked anyway
             else:
                 last_states.append(np.array(exp.last_state, copy=False))
+            last_steps.append(exp.last_step)
         return np.array(states, copy=False), np.array(actions), np.array(rewards, dtype=np.float32), \
                np.array(dones, dtype=np.uint8), np.array(last_states, copy=False), np.array(last_steps)
 
@@ -386,6 +390,8 @@ class AgentDQN(OffPolicyAgent):
         rewards_v = torch.tensor(rewards)
         done_masks_v = torch.BoolTensor(dones)
         last_steps_v = torch.tensor(last_steps)
+
+        # print(states_v.size(), next_states_v.size(), actions_v.size(), rewards_v.size(), done_masks_v.size(), last_steps_v.size(), "!!!!")
 
         if self.device == torch.device("cuda"):
             states_v = states_v.cuda(non_blocking=True)

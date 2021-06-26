@@ -18,10 +18,13 @@ from torch.distributions import normal
 # https://spinningup.openai.com/en/latest/algorithms/td3.html
 
 class AgentTD3(OffPolicyAgent):
-    def __init__(self, worker_id, input_shape, action_shape, num_outputs, params, device):
+    def __init__(self, worker_id, input_shape, action_shape, num_outputs, action_min, action_max, params, device):
         assert params.DEEP_LEARNING_MODEL == DeepLearningModelName.TD3_MLP
 
-        super(AgentTD3, self).__init__(worker_id=worker_id, params=params, action_shape=action_shape, device=device)
+        super(AgentTD3, self).__init__(
+            worker_id=worker_id, params=params, action_shape=action_shape,
+            action_min=action_min, action_max=action_max, device=device
+        )
 
         self.__name__ = "AgentTD3"
 

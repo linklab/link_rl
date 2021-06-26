@@ -21,7 +21,7 @@ class BaseAgent:
     """
     Abstract Agent interface
     """
-    def __init__(self, worker_id, params, action_shape, device):
+    def __init__(self, worker_id, params, action_shape, action_min, action_max, device):
         self.worker_id = worker_id
 
         self.model = None
@@ -32,6 +32,8 @@ class BaseAgent:
 
         self.params = params
         self.action_shape = action_shape
+        self.action_min = action_min
+        self.action_max = action_max
         self.device = device
         self.buffer = None
         self.agent_mode = AgentMode.TRAIN

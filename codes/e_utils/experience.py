@@ -1,8 +1,5 @@
-import math
 import os
 import sys
-import gym
-import torch
 import numpy as np
 from collections import namedtuple, deque
 
@@ -10,7 +7,6 @@ from gym.vector import VectorEnv
 from icecream import ic
 
 from codes.c_models.continuous_action.continuous_action_model import ContinuousActionModel
-from codes.e_utils.names import EnvironmentName, RLAlgorithmName
 from codes.e_utils.reward_changer import RewardChanger
 
 current_path = os.path.dirname(os.path.realpath(__file__))
@@ -20,7 +16,6 @@ if PROJECT_HOME not in sys.path:
 
 # one single experience step
 from codes.d_agents.a0_base_agent import BaseAgent
-from codes.a_config.parameters import PARAMETERS as params
 
 Experience = namedtuple(
     'Experience',
@@ -29,7 +24,7 @@ Experience = namedtuple(
 
 ExperienceFirstLast = namedtuple(
     'ExperienceFirstLast',
-    ('state', 'action', 'reward', 'last_state', 'done', 'info', 'model_version')
+    ('state', 'action', 'reward', 'last_state', 'last_step', 'done', 'info', 'model_version')
 )
 
 
@@ -119,21 +114,16 @@ class ExperienceSource:
             for env_idx, (env, action_n) in enumerate(zip(self.pool, grouped_actions)):
                 action = np.asarray(action_n)
 
-                if isinstance(self.agent.model, ContinuousActionModel) and params.ENVIRONMENT_ID not in [
-                    EnvironmentName.PENDULUM_MATLAB_V0,
-                    EnvironmentName.PENDULUM_MATLAB_DOUBLE_RIP_V0,
-                    EnvironmentName.REAL_DEVICE_RIP,
-                    EnvironmentName.REAL_DEVICE_DOUBLE_RIP,
-                    EnvironmentName.QUANSER_SERVO_2
-                ]:
-                    if hasattr(self.agent.params, "ACTION_SCALE") and self.agent.params.ACTION_SCALE:
-                        action = self.agent.params.ACTION_SCALE * action
+                if isinstance(self.agent.model, ContinuousActionModel):
+                    action = np.interp(action, [-1.0, 1.0], [self.agent.action_min, self.agent.action_max])
 
                 next_state_n, r_n, is_done_n, info_n = env.step(action)
 
                 #ic(env_idx, env, len(action_n), len(next_state_n), len(r_n), len(is_done_n), len(info_n))
 
-                for ofs, (action, next_state, r, is_done, info) in enumerate(zip(action_n, next_state_n, r_n, is_done_n, info_n)):
+                for ofs, (action, next_state, r, is_done, info) in enumerate(
+                        zip(action_n, next_state_n, r_n, is_done_n, info_n)
+                ):
                     idx = global_ofs + ofs
                     state = states[idx]
                     history = histories[idx]
@@ -254,7 +244,7 @@ class ExperienceSourceFirstLast(ExperienceSource):
 
             e = ExperienceFirstLast(
                 state=exp[0].state, action=exp[0].action, reward=total_reward, last_state=last_state,
-                done=exp[0].done, info=exp[0].info,
+                done=exp[0].done, info=exp[0].info, last_step=len(elems),
                 model_version=self.agent.model_version if hasattr(self.agent, "model_version") else None
             )
 

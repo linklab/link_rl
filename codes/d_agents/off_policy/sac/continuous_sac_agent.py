@@ -20,19 +20,17 @@ from codes.e_utils.names import DeepLearningModelName
 class AgentSAC(OffPolicyAgent):
     """
     """
-    def __init__(self, worker_id, input_shape, action_shape, num_outputs, params, device):
+    def __init__(self, worker_id, input_shape, action_shape, num_outputs, action_min, action_max, params, device):
         assert params.DEEP_LEARNING_MODEL == DeepLearningModelName.SOFT_ACTOR_CRITIC_MLP
 
-        super(AgentSAC, self).__init__(worker_id, params, action_shape, device)
+        super(AgentSAC, self).__init__(worker_id, params, action_shape, action_min, action_max, device)
         self.__name__ = "AgentSAC"
 
         if params.TYPE_OF_SAC_ACTION_SELECTOR == SACActionSelectorType.BASIC_ACTION_SELECTOR:
             self.train_action_selector = ContinuousNormalSACActionSelector(params=params)
         elif params.TYPE_OF_SAC_ACTION_SELECTOR == SACActionSelectorType.SOMETIMES_BLOW_ACTION_SELECTOR:
             self.train_action_selector = SomeTimesBlowSACActionSelector(
-                min_blowing_action=-5.0 * params.ACTION_SCALE,
-                max_blowing_action=5.0 * params.ACTION_SCALE,
-                params=self.params,
+                min_blowing_action=-5.0, max_blowing_action=5.0, params=self.params,
             )
         else:
             raise ValueError()

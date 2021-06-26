@@ -18,11 +18,14 @@ class AgentDDPG(OffPolicyAgent):
     """
     Agent implementing Orstein-Uhlenbeck exploration process
     """
-    def __init__(self, worker_id, input_shape, action_shape, num_outputs, params, device):
+    def __init__(self, worker_id, input_shape, action_shape, num_outputs, action_min, action_max, params, device):
         assert params.DEEP_LEARNING_MODEL == DeepLearningModelName.DETERMINISTIC_CONTINUOUS_ACTOR_CRITIC_MLP
         assert issubclass(params, PARAMETERS_DDPG)
 
-        super(AgentDDPG, self).__init__(worker_id=worker_id, params=params, action_shape=action_shape, device=device)
+        super(AgentDDPG, self).__init__(
+            worker_id=worker_id, params=params, action_shape=action_shape,
+            action_min=action_min, action_max=action_max, device=device
+        )
 
         self.__name__ = "AgentDDPG"
 
@@ -47,7 +50,7 @@ class AgentDDPG(OffPolicyAgent):
         elif params.TYPE_OF_DDPG_ACTION_SELECTOR == DDPGActionSelectorType.SOMETIMES_BLOW_ACTION_SELECTOR:
             self.train_action_selector = SomeTimesBlowDDPGActionSelector(
                 noise_enabled=params.NOISE_ENABLED, ou_mu=np.zeros(self.action_shape), ou_sigma=self.params.OU_SIGMA,
-                min_blowing_action=-5.0 * params.ACTION_SCALE, max_blowing_action=5.0 * params.ACTION_SCALE,
+                min_blowing_action=-5.0, max_blowing_action=5.0,
                 epsilon=params.EPSILON_INIT, params=params
             )
         elif params.TYPE_OF_DDPG_ACTION_SELECTOR == DDPGActionSelectorType.NOISY_NET_ACTION_SELECTOR:

@@ -3,32 +3,19 @@ from abc import abstractmethod
 import numpy as np
 import torch
 
-from codes.a_config._rl_parameters.on_policy.parameter_on_policy import OnPolicyActionType
-from codes.d_agents.a0_base_agent import BaseAgent, float32_preprocessor, long64_preprocessor
-from codes.d_agents.actions import ActionStdTracker
-from codes.e_utils.names import RLAlgorithmName, AgentMode
+from codes.d_agents.a0_base_agent import BaseAgent
 
 
 class OnPolicyAgent(BaseAgent):
     """
     Abstract Agent interface
     """
-    def __init__(self, worker_id, params, action_shape, device):
-        super(OnPolicyAgent, self).__init__(worker_id, params, action_shape, device)
+    def __init__(self, worker_id, params, action_shape, action_min, action_max, device):
+        super(OnPolicyAgent, self).__init__(worker_id, params, action_shape, action_min, action_max, device)
         self.model_version = 0
         self.buffer = None
         self.model = None
         self.train_action_selector = None
-        self.action_std_tracker = None
-
-    def set_action_std_tracker(self):
-        if self.params.TYPE_OF_ON_POLICY_ACTION == OnPolicyActionType.ACTION_STD_DECAY:
-            self.action_std_tracker = ActionStdTracker(
-                actor_model=self.model.base.actor,
-                action_std_start=self.params.ACTION_STD_INIT,
-                action_std_final=self.params.ACTION_STD_MIN,
-                action_std_last_frames=self.params.ACTION_STD_MIN_STEP
-            )
 
     @abstractmethod
     def __call__(self, states, agent_states):

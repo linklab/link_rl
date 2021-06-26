@@ -32,7 +32,6 @@ class PARAMETERS_DDPG:
     DOUBLE = True
 
     REPLAY_BUFFER_SIZE = None
-    ACTION_SCALE = 1.0
     TAU = 0.001
 
     NOISE_ENABLED = True

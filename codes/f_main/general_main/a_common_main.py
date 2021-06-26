@@ -29,8 +29,8 @@ from codes.e_utils.train_tracker import EarlyStopping
 from codes.e_utils.logger import get_logger
 from codes.e_utils.names import EnvironmentName, AgentMode, RLAlgorithmName
 from codes.b_environments.quanser_rotary_inverted_pendulum.quanser_rip import get_quanser_rip_observation_space, \
-    get_quanser_rip_action_space
-from codes.b_environments.rotary_inverted_pendulum.rip import get_rip_observation_space, get_rip_action_space
+    get_quanser_rip_action_info
+from codes.b_environments.rotary_inverted_pendulum.rip import get_rip_observation_space, get_rip_action_info
 
 WANDB_DIR = os.path.join(PROJECT_HOME, "out", "wandb")
 if not os.path.exists(WANDB_DIR):
@@ -60,23 +60,24 @@ def get_agent(env):
             EnvironmentName.REAL_DEVICE_DOUBLE_RIP,
         ]:
             observation_space, _ = get_rip_observation_space(params.ENVIRONMENT_ID, params)
-            action_space, num_outputs, _ = get_rip_action_space(params, pendulum_type=params.ENVIRONMENT_ID)
+            action_space, num_outputs, action_min, action_max, _ = get_rip_action_info(params, pendulum_type=params.ENVIRONMENT_ID)
 
             input_shape = observation_space.shape
             action_shape = action_space.shape
         elif params.ENVIRONMENT_ID == EnvironmentName.QUANSER_SERVO_2:
             observation_space, _ = get_quanser_rip_observation_space()
-            action_space, num_outputs, _ = get_quanser_rip_action_space(params)
+            action_space, num_outputs, action_min, action_max, _ = get_quanser_rip_action_info(params)
 
             input_shape = observation_space.shape
             action_shape = action_space.shape
         else:
             raise ValueError()
     else:
-        input_shape, action_shape, num_outputs = get_environment_input_output_info(env)
+        input_shape, action_shape, num_outputs, action_min, action_max = get_environment_input_output_info(env)
 
     agent = rl_utils.get_rl_agent(
-        input_shape, action_shape, num_outputs, worker_id=0, params=params, device=device
+        input_shape, action_shape, num_outputs,
+        action_min=action_min, action_max=action_max, worker_id=0, params=params, device=device
     )
 
     load_model(MODEL_ZOO_SAVE_DIR, MODEL_SAVE_FILE_PREFIX, agent, inquery=True)
@@ -256,15 +257,8 @@ class EpisodeProcessor:
 
                 action = action[0]
 
-                if isinstance(self.agent.model, ContinuousActionModel) and params.ENVIRONMENT_ID not in [
-                    EnvironmentName.PENDULUM_MATLAB_V0,
-                    EnvironmentName.PENDULUM_MATLAB_DOUBLE_RIP_V0,
-                    EnvironmentName.REAL_DEVICE_RIP,
-                    EnvironmentName.REAL_DEVICE_DOUBLE_RIP,
-                    EnvironmentName.QUANSER_SERVO_2
-                ]:
-                    if hasattr(params, "ACTION_SCALE") and params.ACTION_SCALE:
-                        action = params.ACTION_SCALE * action
+                if isinstance(self.agent.model, ContinuousActionModel):
+                    action = np.interp(action, [-1.0, 1.0], [self.agent.action_min, self.agent.action_max])
 
                 next_state, reward, done, info = self.test_env.step(action)
 

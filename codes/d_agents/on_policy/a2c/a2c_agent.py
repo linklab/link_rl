@@ -7,8 +7,8 @@ from codes.e_utils import replay_buffer
 class AgentA2C(OnPolicyAgent):
     """
     """
-    def __init__(self, worker_id, input_shape, action_shape, num_outputs, params, device):
-        super(AgentA2C, self).__init__(worker_id, params, action_shape, device)
+    def __init__(self, worker_id, action_shape, action_min, action_max, params, device):
+        super(AgentA2C, self).__init__(worker_id, params, action_shape, action_min, action_max, device)
         self.train_action_selector = None
         self.test_and_play_action_selector = None
         self.model = None

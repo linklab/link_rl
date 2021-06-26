@@ -92,9 +92,6 @@ def actor_func(agent, current_model_version, exp_queue, child_pipe_conn):
                 if hasattr(agent, "epsilon_tracker") and agent.epsilon_tracker:
                     agent.epsilon_tracker.udpate(step_idx)
 
-                if hasattr(agent, "action_std_tracker") and agent.action_std_tracker:
-                    agent.action_std_tracker.udpate(step_idx)
-
                 episode_rewards, episode_steps = experience_source.pop_episode_reward_and_done_step_lst()
 
                 if episode_rewards and episode_steps:

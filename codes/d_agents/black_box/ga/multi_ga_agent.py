@@ -22,8 +22,8 @@ MessageFromMaster = collections.namedtuple(
 
 
 class AgentMultiGA(BaseAgent):
-    def __init__(self, worker_id, input_shape, action_shape, num_outputs, params, device):
-        super(AgentMultiGA, self).__init__(worker_id, params, action_shape, device)
+    def __init__(self, worker_id, input_shape, action_shape, num_outputs, action_min, action_max, params, device):
+        super(AgentMultiGA, self).__init__(worker_id, params, action_shape, action_min, action_max, device)
         self.__name__ = "AgentMultiGA"
 
         self.model = SimpleModel(
