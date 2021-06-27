@@ -65,8 +65,8 @@ class AgentContinuousPPO(AgentPPO):
         #     params=params
         # )
 
-    def __call__(self, states, agent_states=None):
-        return self.continuous_stochastic_call(states, agent_states)
+    def __call__(self, state, agent_state=None):
+        return self.continuous_stochastic_call(state, agent_state)
 
     def on_train(self, step_idx, expected_model_version):
         trajectory = self.buffer.sample_all_for_on_policy(expected_model_version)

@@ -3,12 +3,13 @@ import torch
 import torch.nn.functional as F
 from torch.distributions import Normal, MultivariateNormal
 
+from codes.c_models.base_model import RNNModel
 from codes.c_models.continuous_action.stochastic_continuous_actor_critic_model import StochasticContinuousActorCriticModel
 from codes.d_agents.on_policy.a2c.a2c_agent import AgentA2C
 from codes.d_agents.on_policy.on_policy_action_selector import ContinuousNormalActionSelector
 from codes.e_utils import rl_utils
 from codes.e_utils.common_utils import show_info
-from codes.e_utils.names import DeepLearningModelName, AgentMode
+from codes.e_utils.names import DeepLearningModelName, AgentMode, RLAlgorithmName
 
 
 class AgentContinuousA2C(AgentA2C):
@@ -54,8 +55,8 @@ class AgentContinuousA2C(AgentA2C):
             params=params
         )
 
-    def __call__(self, states, agent_states=None):
-        return self.continuous_stochastic_call(states, agent_states)
+    def __call__(self, state, agent_state=None):
+        return self.continuous_stochastic_call(state, agent_state)
 
     def on_train(self, step_idx, expected_model_version):
         batch = self.buffer.sample_all_for_on_policy(expected_model_version)
@@ -63,12 +64,27 @@ class AgentContinuousA2C(AgentA2C):
         # states_v.shape: (32, 3)
         # actions_v.shape: (32, 1)
         # target_action_values_v.shape: (32,)
-        batch_states_v, batch_actions_v, batch_target_action_values_v = self.unpack_batch_for_actor_critic(batch, self.model, self.params)
+        if isinstance(self.model, RNNModel):
+            batch_states_v, batch_actions_v, batch_target_action_values_v, batch_actor_hidden_states_v, \
+            batch_critic_hidden_states_v = self.unpack_batch_for_actor_critic(
+                batch, self.model, self.params
+            )
+        else:
+            batch_states_v, batch_actions_v, batch_target_action_values_v = self.unpack_batch_for_actor_critic(
+                batch, self.model, self.params
+            )
+            batch_actor_hidden_states_v = batch_critic_hidden_states_v = None
 
         # mu_v.shape: (32, 1)
         # var_v.shape: (32, 1)
         # value_v.shape; (32, 1)
-        batch_mu_v, batch_logstd_v, batch_values_v = self.model.base(batch_states_v)
+        batch_mu_v, batch_logstd_v, new_batch_actor_hidden_states = self.model.forward_actor(
+            batch_states_v, batch_actor_hidden_states_v
+        )
+
+        batch_values_v, new_batch_critic_hidden_states = self.model.forward_critic(
+            batch_states_v, batch_critic_hidden_states_v
+        )
 
         # Critic Optimization
         loss_critic_v = F.mse_loss(input=batch_values_v.squeeze(-1), target=batch_target_action_values_v.detach())

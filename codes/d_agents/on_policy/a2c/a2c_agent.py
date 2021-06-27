@@ -19,7 +19,7 @@ class AgentA2C(OnPolicyAgent):
             experience_source=None, buffer_size=self.params.BATCH_SIZE
         )
 
-    def __call__(self, states, critics=None):
+    def __call__(self, state, critics=None):
         raise NotImplementedError
 
     # Lucky Episode에서 얻어낸 batch를 통해 학습할 때와, Unlucky Episode에서 얻어낸 batch를 통해 학습할 때마다 NN의 파라미터들이

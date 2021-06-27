@@ -1,7 +1,10 @@
 import torch
 import torch.nn as nn
 
+from codes.c_models.base_model import RNNModel
 from codes.c_models.continuous_action.continuous_action_model import ContinuousActionModel
+from codes.d_agents.a0_base_agent import float32_preprocessor
+from codes.e_utils import rl_utils
 
 
 class StochasticContinuousActorCriticModel(ContinuousActionModel):
@@ -15,15 +18,44 @@ class StochasticContinuousActorCriticModel(ContinuousActionModel):
             num_inputs=num_inputs, num_outputs=num_outputs, params=self.params
         )
 
-        self.reset_average_gradients()
+    def forward(self, inputs, agent_state):
+        if isinstance(self.base, RNNModel):
+            if isinstance(agent_state, list):
+                actor_hidden_states, critic_hidden_states = [], []
+                for each_agent_state in agent_state:
+                    actor_hidden_states.append(each_agent_state.actor_hidden_state)
+                    critic_hidden_states.append(each_agent_state.critic_hidden_state)
+                actor_hidden_states_v = float32_preprocessor(actor_hidden_states).to(self.device)
+                critic_hidden_states_v = float32_preprocessor(critic_hidden_states).to(self.device)
+            else:
+                actor_hidden_states_v = agent_state.actor_hidden_state
+                critic_hidden_states_v = agent_state.critic_hidden_state
 
-    def forward(self, inputs):
-        if not (type(inputs) is torch.Tensor):
-            inputs = torch.tensor([inputs], dtype=torch.float).to(self.device)
+            mu, logstd, new_actor_hidden_state = self.base.forward_actor(inputs, actor_hidden_states_v)
+            value, new_critic_hidden_state = self.base.forward_critic(inputs, critic_hidden_states_v)
 
-        mu, logstd, value = self.base.forward(inputs)
+            agent_state = rl_utils.initial_agent_state(
+                actor_hidden_state=new_actor_hidden_state, critic_hidden_state=new_critic_hidden_state
+            )
+        else:
+            mu, logstd = self.base.forward_actor(inputs)
+            value = self.base.forward_critic(inputs)
 
-        return mu, logstd, value
+        return mu, logstd, value, agent_state
+
+    def forward_actor(self, inputs, actor_hidden_state):
+        if isinstance(self.base, RNNModel):
+            mu, logstd = self.base.forward_actor(inputs)
+        else:
+            mu, logstd = self.base.forward_actor(inputs)
+        return mu, logstd, actor_hidden_state
+
+    def forward_critic(self, inputs, critic_hidden_state):
+        if isinstance(self.base, RNNModel):
+            values = self.base.forward_citic(inputs)
+        else:
+            values = self.base.forward_critic(inputs)
+        return values, critic_hidden_state
 
 
 class StochasticActorCriticMLPBase(nn.Module):
@@ -56,9 +88,13 @@ class StochasticActorCriticMLPBase(nn.Module):
         self.train()
 
     def forward(self, inputs):
-        mu, logstd = self.actor(inputs)
-        value = self.critic(inputs)
+        mu, logstd = self.forward_actor(inputs)
+        value = self.forward_critic(inputs)
         return mu, logstd, value
+
+    def forward_actor(self, inputs):
+        mu, logstd = self.actor(inputs)
+        return mu, logstd
 
     def forward_critic(self, inputs):
         return self.critic(inputs)

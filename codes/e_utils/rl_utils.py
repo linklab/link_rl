@@ -1,4 +1,5 @@
 import random
+from collections import namedtuple
 
 from gym import Env
 from gym.spaces import Box, Discrete
@@ -337,6 +338,55 @@ def get_rl_agent(input_shape, action_shape, num_outputs, action_min, action_max,
         raise ValueError()
 
     return agent
+
+DQNAgentState = namedtuple(
+    'DQNAgentState', ('hidden_state',)
+)
+
+ActorCriticAgentState = namedtuple(
+    'ActorCriticAgentState', ('actor_hidden_state', 'critic_hidden_state')
+)
+
+ActorCriticTD3AgentState = namedtuple(
+    'ActorCriticTD3AgentState', ('actor_hidden_state', 'critic_1_hidden_state', 'critic_2_hidden_state')
+)
+
+
+def initial_agent_state(
+        hidden_state=None, actor_hidden_state=None,
+        critic_hidden_state=None, critic_1_hidden_state=None, critic_2_hidden_state=None
+):
+    num_directions = 2 if params.RNN_BIDIRECTIONAL else 1
+
+    if params.RL_ALGORITHM in [RLAlgorithmName.DQN_V0]:
+        agent_state = DQNAgentState(
+            hidden_state=torch.zeros(
+                params.RNN_NUM_LAYER * num_directions * 2, 1, params.RNN_HIDDEN_SIZE
+            ) if hidden_state is None else hidden_state
+        )
+    elif params.RL_ALGORITHM in [RLAlgorithmName.TD3_V0]:
+        agent_state = ActorCriticTD3AgentState(
+            actor_hidden_state=torch.zeros(
+                params.RNN_NUM_LAYER * num_directions * 2, 1, params.RNN_HIDDEN_SIZE
+            ) if actor_hidden_state is None else actor_hidden_state,
+            critic_1_hidden_state=torch.zeros(
+                params.RNN_NUM_LAYER * num_directions * 2, 1, params.RNN_HIDDEN_SIZE
+            ) if critic_1_hidden_state is None else critic_1_hidden_state,
+            critic_2_hidden_state=torch.zeros(
+                params.RNN_NUM_LAYER * num_directions * 2, 1, params.RNN_HIDDEN_SIZE
+            ) if critic_2_hidden_state is None else critic_2_hidden_state
+        )
+    else:
+        agent_state = ActorCriticAgentState(
+            actor_hidden_state=torch.zeros(
+                params.RNN_NUM_LAYER * num_directions * 2, 1, params.RNN_HIDDEN_SIZE
+            ) if actor_hidden_state is None else actor_hidden_state,
+            critic_hidden_state=torch.zeros(
+                params.RNN_NUM_LAYER * num_directions * 2, 1, params.RNN_HIDDEN_SIZE
+            ) if critic_hidden_state is None else critic_hidden_state
+        )
+
+    return agent_state
 
 
 def get_actor_critic_optimizer(actor_parameters, actor_learning_rate, critic_parameters, critic_learning_rate, params):

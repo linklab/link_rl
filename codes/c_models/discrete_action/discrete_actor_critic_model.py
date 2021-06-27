@@ -5,6 +5,7 @@ import torch.nn.functional as F
 from torch.autograd import Variable
 import numpy as np
 
+from codes.c_models.base_model import RNNModel
 from codes.c_models.discrete_action.discrete_action_model import DiscreteActionModel
 from codes.e_utils.names import DeepLearningModelName
 
@@ -12,32 +13,36 @@ from codes.e_utils.names import DeepLearningModelName
 class DiscreteActorCriticModel(DiscreteActionModel):
     def __init__(self, worker_id, input_shape, num_outputs, params, device):
         super(DiscreteActorCriticModel, self).__init__(worker_id, params, device)
-        self.__name__ = "DiscreteActorCriticModel"
 
-        num_inputs = input_shape[0]
+        num_input = input_shape[0]
 
         if params.DEEP_LEARNING_MODEL == DeepLearningModelName.STOCHASTIC_DISCRETE_ACTOR_CRITIC_MLP:
             self.base = ActorCriticMLPBase(
-                num_inputs=num_inputs, num_outputs=num_outputs, params=self.params
+                num_input=num_input, num_outputs=num_outputs, params=self.params
             )
+            self.__name__ = "DiscreteActorCriticMLPModel"
         elif params.DEEP_LEARNING_MODEL == DeepLearningModelName.STOCHASTIC_DISCRETE_ACTOR_CRITIC_CNN:
             self.base = ActorCriticCNNBase(
                 input_shape=input_shape, num_outputs=num_outputs
             )
+            self.__name__ = "DiscreteActorCriticCNNModel"
+        elif params.DEEP_LEARNING_MODEL == DeepLearningModelName.STOCHASTIC_DISCRETE_ACTOR_CRITIC_RNN:
+            self.base = ActorCriticRNNBase(
+                num_input=num_input, num_outputs=num_outputs, params=self.params
+            )
+            self.__name__ = "DiscreteActorCriticRNNModel"
         else:
             raise ValueError()
 
-        self.reset_average_gradients()
+    def forward(self, input, agent_state=None):
+        if not (type(input) is torch.Tensor):
+            input = torch.tensor([input], dtype=torch.float).to(self.device)
 
-    def forward(self, inputs):
-        if not (type(inputs) is torch.Tensor):
-            inputs = torch.tensor([inputs], dtype=torch.float).to(self.device)
-
-        return self.base.forward(inputs)
+        return self.base.forward(input, agent_state)
 
 
 class ActorCriticMLPBase(nn.Module):
-    def __init__(self, num_inputs, num_outputs, params):
+    def __init__(self, num_input, num_outputs, params):
         super(ActorCriticMLPBase, self).__init__()
         self.__name__ = "ActorCriticMLPBase"
         self.params = params
@@ -49,7 +54,7 @@ class ActorCriticMLPBase(nn.Module):
         #self.common.apply(self.init_weights)
 
         self.actor = nn.Sequential(
-            nn.Linear(num_inputs, self.hidden_1_size),
+            nn.Linear(num_input, self.hidden_1_size),
             nn.GELU(),
             nn.Linear(self.hidden_1_size, self.hidden_2_size),
             nn.GELU(),
@@ -61,7 +66,7 @@ class ActorCriticMLPBase(nn.Module):
         # self.actor.apply(self.init_weights)
 
         self.critic = nn.Sequential(
-            nn.Linear(num_inputs, self.hidden_1_size),
+            nn.Linear(num_input, self.hidden_1_size),
             nn.GELU(),
             nn.Linear(self.hidden_1_size, self.hidden_2_size),
             nn.GELU(),
@@ -84,19 +89,85 @@ class ActorCriticMLPBase(nn.Module):
     #     if type(m) == nn.Linear:
     #         torch.nn.init.kaiming_normal_(m.weight)
 
-    def forward(self, inputs):
-        probs = self.forward_actor(inputs)
-        critic_values = self.forward_critic(inputs)
-        return probs, critic_values
+    def forward(self, input, agent_state):
+        probs, _ = self.forward_actor(input)
+        critic_values, _ = self.forward_critic(input)
+        return probs, critic_values, agent_state
 
-    def forward_actor(self, inputs):
-        x = self.actor(inputs)
+    def forward_actor(self, input, actor_hidden_state):
+        x = self.actor(input)
         probs = F.softmax(x, dim=-1)
-        return probs
+        return probs, actor_hidden_state
 
-    def forward_critic(self, inputs):
-        critic_values = self.critic(inputs)
-        return critic_values
+    def forward_critic(self, input, critic_hidden_state):
+        critic_values = self.critic(input)
+        return critic_values, critic_hidden_state
+
+
+class ActorCriticRNNBase(RNNModel):
+    def __init__(self, num_input, num_outputs, params):
+        super(ActorCriticRNNBase, self).__init__()
+        self.__name__ = "ActorCriticRNNBase"
+        self.params = params
+
+        self.num_directions = 2 if params.RNN_BIDIRECTIONAL else 1
+
+        self.actor_rnn = nn.GRU(
+            input_size=num_input,
+            hidden_size=params.RNN_HIDDEN_SIZE,
+            num_layers=params.RNN_NUM_LAYER,
+            bias=True, batch_first=True,
+            bidirectional=params.RNN_BIDIRECTIONAL
+        )
+        self.actor_linear = nn.Linear(
+            in_features=params.RNN_HIDDEN_SIZE * self.num_directions, out_features=num_outputs
+        )
+
+        self.critic_rnn = nn.LSTM(
+            input_size=num_input,
+            hidden_size=params.RNN_HIDDEN_SIZE,
+            num_layers=params.RNN_NUM_LAYER,
+            bias=True, batch_first=True,
+            bidirectional=params.RNN_BIDIRECTIONAL
+        )
+        self.critic_linear = nn.Linear(
+            in_features=params.RNN_HIDDEN_SIZE * self.num_directions, out_features=1
+        )
+
+        self.actor_params = list(self.actor_rnn.parameters()) + list(self.actor_linear.parameters())
+        self.critic_params = list(self.critic_rnn.parameters()) + list(self.critic_linear.parameters())
+
+        self.layers_info = {
+            'actor_rnn': self.actor_rnn, 'actor_linear': self.actor_linear,
+            'critic_rnn': self.critic_rnn, 'critic_linear': self.critic_linear
+        }
+
+        self.train()
+
+    # @staticmethod
+    # def init_weights(m):
+    #     if type(m) == nn.Linear:
+    #         torch.nn.init.kaiming_normal_(m.weight)
+
+    def forward(self, input, agent_state):
+        probs, new_actor_hidden_state = self.forward_actor(input, agent_state.actor_hidden_state)
+        critic_values, new_critic_hidden_state = self.forward_critic(input, agent_state.critic_hidden_state)
+
+        new_agent_state = [new_actor_hidden_state, new_critic_hidden_state]
+
+        return probs, critic_values, new_agent_state
+
+    def forward_actor(self, input, actor_hidden_state):
+        actor_output, new_actor_hidden_state = self.actor_rnn(input, actor_hidden_state)
+        probs = self.actor_linear(actor_output)
+
+        return probs, new_actor_hidden_state
+
+    def forward_critic(self, input, critic_hidden_state):
+        critic_output, new_critic_hidden_state = self.critic_rnn(input, critic_hidden_state)
+        critic_values = self.critic_linear(critic_output)
+
+        return critic_values, new_critic_hidden_state
 
 
 class ActorCriticCNNBase(nn.Module):
@@ -162,19 +233,19 @@ class ActorCriticCNNBase(nn.Module):
     #         torch.nn.init.kaiming_normal_(m.weight)
     #         # torch.nn.init.orthogonal(m.weight, gain=np.sqrt(2))
 
-    def forward(self, inputs):
-        probs = self.forward_actor(inputs)
-        critic_values = self.forward_critic(inputs)
-        return probs, critic_values
+    def forward(self, input, agent_state):
+        probs, _ = self.forward_actor(input, agent_state.actor_hidden_state)
+        critic_values, _ = self.forward_critic(input, agent_state.critic_hidden_state)
+        return probs, critic_values, agent_state
 
-    def forward_actor(self, inputs):
-        fx = inputs.float() / 256
+    def forward_actor(self, input, actor_hidden_state):
+        fx = input.float() / 256
         actor_conv_out = self.actor_conv(fx).view(fx.size()[0], -1)
         probs = F.softmax(self.actor_fc(actor_conv_out), dim=-1)
-        return probs
+        return probs, actor_hidden_state
 
-    def forward_critic(self, inputs):
-        fx = inputs.float() / 256
+    def forward_critic(self, input, critic_hidden_state):
+        fx = input.float() / 256
         critic_conv_out = self.critic_conv(fx).view(fx.size()[0], -1)
         critic_values = self.critic_fc(critic_conv_out)
-        return critic_values
+        return critic_values, critic_hidden_state

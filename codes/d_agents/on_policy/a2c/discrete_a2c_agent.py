@@ -18,7 +18,8 @@ class AgentDiscreteA2C(AgentA2C):
     ):
         assert params.DEEP_LEARNING_MODEL in [
             DeepLearningModelName.STOCHASTIC_DISCRETE_ACTOR_CRITIC_MLP,
-            DeepLearningModelName.STOCHASTIC_DISCRETE_ACTOR_CRITIC_CNN
+            DeepLearningModelName.STOCHASTIC_DISCRETE_ACTOR_CRITIC_CNN,
+            DeepLearningModelName.STOCHASTIC_DISCRETE_ACTOR_CRITIC_RNN,
         ]
         super(AgentDiscreteA2C, self).__init__(worker_id, action_shape, action_min, action_max, params, device)
 
@@ -60,8 +61,8 @@ class AgentDiscreteA2C(AgentA2C):
         #     params=params
         # )
 
-    def __call__(self, states, critics=None):
-        return self.discrete_call(states, critics)
+    def __call__(self, state, agent_state=None):
+        return self.discrete_call(state, agent_state)
 
     def on_train(self, step_idx, expected_model_version):
         batch = self.buffer.sample_all_for_on_policy(expected_model_version)

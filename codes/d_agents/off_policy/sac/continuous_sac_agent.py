@@ -96,10 +96,10 @@ class AgentSAC(OffPolicyAgent):
             # fixed alpha
             self.alpha = torch.tensor(self.params.ALPHA).to(self.device)
 
-    def __call__(self, states, critics=None):
+    def __call__(self, state, critics=None):
         if self.alpha is None:
             self.reset_alpha()
-        return self.continuous_sac_call(states)
+        return self.continuous_sac_call(state)
 
     def on_train(self, step_idx):
         if self.alpha is None:
@@ -162,7 +162,7 @@ class AgentSAC(OffPolicyAgent):
         # actions_v.shape: [128]
         # target_action_values_v.shape: [128]
         states_v, actions_v, target_action_values_v = self.unpack_batch_for_actor_critic(
-            batch, self.target_model, self.params, sac=True, alpha=self.alpha
+            batch, self.target_model, self.params, alpha=self.alpha
         )
 
         sampled_action_v, sampled_entropies_v = self.model.sample(states_v)

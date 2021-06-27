@@ -41,8 +41,8 @@ def actor_func(agent, current_model_version, exp_queue, child_pipe_conn):
         agent.test_and_play_action_selector = ArgmaxTradeActionSelector(env=test_env)
 
     # if params.DEEP_LEARNING_MODEL in [
-    #     DeepLearningModelName.DETERMINISTIC_CONTINUOUS_ACTOR_CRITIC_GRU,
-    #     DeepLearningModelName.DETERMINISTIC_CONTINUOUS_ACTOR_CRITIC_GRU_ATTENTION
+    #     DeepLearningModelName.DETERMINISTIC_CONTINUOUS_ACTOR_CRITIC_RNN,
+    #     DeepLearningModelName.DETERMINISTIC_CONTINUOUS_ACTOR_CRITIC_RNN_ATTENTION
     # ]:
     #     step_length = params.RNN_STEP_LENGTH
     # else:

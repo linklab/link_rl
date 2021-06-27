@@ -4,6 +4,7 @@ import numpy as np
 import torch
 
 from codes.d_agents.a0_base_agent import BaseAgent
+from codes.e_utils import rl_utils
 from codes.e_utils.names import AgentMode
 
 
@@ -19,16 +20,16 @@ class OnPolicyAgent(BaseAgent):
         self.train_action_selector = None
 
     @abstractmethod
-    def __call__(self, states, agent_states):
+    def __call__(self, state, agent_state):
         """
-        Convert observations and states into actions to take
-        :param states: list of environment states to process
-        :param agent_states: list of states with the same length as observations
-        :return: tuple of actions, states
+        Convert observations and state into actions to take
+        :param state: list of environment state to process
+        :param agent_state: list of state with the same length as observations
+        :return: tuple of actions, state
         """
-        assert isinstance(states, list)
-        assert isinstance(agent_states, list)
-        assert len(agent_states) == len(states)
+        assert isinstance(state, list)
+        assert isinstance(agent_state, list)
+        assert len(agent_state) == len(state)
 
         raise NotImplementedError
 
@@ -41,42 +42,42 @@ class OnPolicyAgent(BaseAgent):
     def on_train(self, step_idx, expected_model_version):
         raise NotImplementedError
 
-    def discrete_call(self, states, agent_states):
-        states = self.preprocess(states)
+    def discrete_call(self, state, agent_state):
+        state = self.preprocess(state)
 
-        if len(states) == 1:
+        if len(state) == 1:
             self.model.eval()
         else:
             self.model.train()
 
         if self.agent_mode == AgentMode.TRAIN:
-            probs_v, value_v = self.model.base.forward(states)
+            probs_v, value_v = self.model.base.forward(state)
             actions = self.train_action_selector(probs_v)
 
-            return actions, agent_states
+            return actions, agent_state
         else:
-            probs_v = self.model.base.forward_actor(states)
+            probs_v, actor_state = self.model.base.forward_actor(state, agent_state)
             actions = self.test_and_play_action_selector(probs_v)
             return actions, None
 
-    def continuous_stochastic_call(self, states, agent_states):
-        states = self.preprocess(states)
+    def continuous_stochastic_call(self, state, agent_state):
+        state = self.preprocess(state)
 
-        if len(states) == 1:
+        if len(state) == 1:
             self.model.eval()
         else:
             self.model.train()
 
         if self.agent_mode == AgentMode.TRAIN:
-            mu_v, logstd_v, value_v = self.model.base(states)
+            mu_v, logstd_v, value_v, agent_state = self.model(state, agent_state)
             actions = self.train_action_selector(mu_v=mu_v, logstd_v=logstd_v)
 
-            return actions, agent_states
+            return actions, agent_state
         else:
-            mu_v, _ = self.test_model.base.actor(states)
+            mu_v, _, new_actor_hidden_state = self.test_model.forward_actor(state, agent_state.actor_hidden_state)
             actions = self.test_and_play_action_selector(mu_v, logstd_v=None)
-
-            return actions, None
+            agent_state = rl_utils.initial_agent_state(actor_hidden_state=new_actor_hidden_state)
+            return actions, agent_state
 
     # https://proofwiki.org/wiki/Differential_Entropy_of_Gaussian_Distribution
     def calc_entropy(self, logstd_v):

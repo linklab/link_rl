@@ -178,19 +178,19 @@ def unpack_batch_for_a2c(batch, net, params, device='cpu'):
     Convert batch into training tensors
     :param batch:
     :param net:
-    :return: states variable, actions tensor, target values variable
+    :return: state variable, actions tensor, target values variable
     """
-    states, actions, rewards, not_done_idx, last_states = [], [], [], [], []
+    state, actions, rewards, not_done_idx, last_states = [], [], [], [], []
 
     for idx, exp in enumerate(batch):
-        states.append(np.array(exp.state, copy=False))
+        state.append(np.array(exp.state, copy=False))
         actions.append(int(exp.action))
         rewards.append(exp.reward)
         if exp.last_state is not None:
             not_done_idx.append(idx)
             last_states.append(np.array(exp.last_state, copy=False))
 
-    states_v = float32_preprocessor(states).to(device)
+    states_v = float32_preprocessor(state).to(device)
     actions_v = float32_preprocessor(actions).to(device)
 
     # handle rewards

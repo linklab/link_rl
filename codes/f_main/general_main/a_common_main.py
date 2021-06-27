@@ -1,7 +1,6 @@
 # https://github.com/openai/gym/blob/master/gym/envs/classic_control/pendulum.py
 # https://mspries.github.io/jimmy_pendulum.html
 #!/usr/bin/env python3
-import copy
 import time
 
 import torch
@@ -9,9 +8,6 @@ import os, sys
 import numpy as np
 import wandb
 from termcolor import colored
-
-from codes.c_models.continuous_action.continuous_action_model import ContinuousActionModel
-from codes.e_utils.reward_changer import RewardChanger
 
 print("PyTorch Version", torch.__version__)
 
@@ -21,6 +17,11 @@ if PROJECT_HOME not in sys.path:
     sys.path.append(PROJECT_HOME)
 
 from codes.a_config.parameters import PARAMETERS as params
+from codes.b_environments.quanser_rotary_inverted_pendulum.quanser_rip import get_quanser_rip_observation_space, \
+    get_quanser_rip_action_info
+from codes.b_environments.rotary_inverted_pendulum.rip import get_rip_observation_space, get_rip_action_info
+from codes.c_models.continuous_action.continuous_action_model import ContinuousActionModel
+from codes.e_utils.reward_changer import RewardChanger
 from codes.e_utils.rl_utils import get_environment_input_output_info, MODEL_ZOO_SAVE_DIR, MODEL_SAVE_FILE_PREFIX
 from codes.e_utils import rl_utils
 from codes.e_utils.common_utils import save_model, print_environment_info, remove_models, \
@@ -28,9 +29,6 @@ from codes.e_utils.common_utils import save_model, print_environment_info, remov
 from codes.e_utils.train_tracker import EarlyStopping
 from codes.e_utils.logger import get_logger
 from codes.e_utils.names import EnvironmentName, AgentMode, RLAlgorithmName
-from codes.b_environments.quanser_rotary_inverted_pendulum.quanser_rip import get_quanser_rip_observation_space, \
-    get_quanser_rip_action_info
-from codes.b_environments.rotary_inverted_pendulum.rip import get_rip_observation_space, get_rip_action_info
 
 WANDB_DIR = os.path.join(PROJECT_HOME, "out", "wandb")
 if not os.path.exists(WANDB_DIR):
@@ -241,13 +239,16 @@ class EpisodeProcessor:
             state = self.test_env.reset()
 
             num_episode_step = 0
+
+            agent_state = rl_utils.initial_agent_state()
+
             while not done:
                 num_step += 1
                 num_episode_step += 1
 
                 state = np.expand_dims(state, axis=0)
 
-                action, _, = self.agent(state)
+                action, _, = self.agent(state, agent_state)
 
                 action = action[0]
 

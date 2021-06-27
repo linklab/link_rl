@@ -27,7 +27,7 @@ class AgentPPO(OnPolicyAgent):
             experience_source=None, buffer_size=self.params.PPO_TRAJECTORY_SIZE
         )
 
-    def __call__(self, states, critics=None):
+    def __call__(self, state, critics=None):
         raise NotImplementedError
 
     def on_train(self, step_idx, expected_model_version):

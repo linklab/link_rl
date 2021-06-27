@@ -63,8 +63,8 @@ class AgentDiscretePPO(AgentPPO):
         #     params=params
         # )
 
-    def __call__(self, states, critics=None):
-        return self.discrete_call(states, critics)
+    def __call__(self, state, critics=None):
+        return self.discrete_call(state, critics)
 
     def on_train(self, step_idx, expected_model_version):
         trajectory = self.buffer.sample_all_for_on_policy(expected_model_version=expected_model_version)

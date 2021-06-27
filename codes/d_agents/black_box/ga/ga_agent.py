@@ -101,9 +101,9 @@ class AgentGA(BaseAgent):
         self.elite = self.population[0]
         self.model.load_state_dict(self.elite[0].state_dict())
 
-    def __call__(self, states, agent_states=None):
-        states = states[0]
-        action_prob = self.model(states)
+    def __call__(self, state, agent_state=None):
+        state = state[0]
+        action_prob = self.model(state)
         acts = action_prob.max(dim=1)[1]
 
         return acts.data.cpu().numpy(), None

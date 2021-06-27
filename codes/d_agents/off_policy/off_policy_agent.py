@@ -3,8 +3,10 @@ from abc import abstractmethod
 import numpy as np
 import torch
 
+from codes.c_models.base_model import RNNModel
 from codes.d_agents.a0_base_agent import BaseAgent, float32_preprocessor
 from codes.e_utils import replay_buffer
+from codes.e_utils.names import RLAlgorithmName
 
 
 class OffPolicyAgent(BaseAgent):
@@ -38,10 +40,25 @@ class OffPolicyAgent(BaseAgent):
         raise NotImplementedError
 
     def unpack_batch(self, batch):
-        states, actions, rewards, dones, last_states = [], [], [], [], []
+        state, actions, rewards, dones, last_states, agent_states = [], [], [], [], [], []
+
+        if isinstance(self.model, RNNModel):
+            actor_hidden_states = []
+            if self.params.RL_ALGORITHM in [RLAlgorithmName.DDPG_V0]:
+                critic_hidden_states = []
+                critic_1_hidden_states = None
+                critic_2_hidden_states = None
+            elif self.params.RL_ALGORITHM in [RLAlgorithmName.TD3_V0]:
+                critic_hidden_states = None
+                critic_1_hidden_states = []
+                critic_2_hidden_states = []
+            else:
+                raise ValueError()
+        else:
+            actor_hidden_states = critic_hidden_states = critic_1_hidden_states = critic_2_hidden_states = None
 
         for exp in batch:
-            states.append(np.array(exp.state, copy=False))
+            state.append(np.array(exp.state, copy=False))
             actions.append(exp.action)
             rewards.append(exp.reward)
             dones.append(exp.last_state is None)
@@ -50,11 +67,37 @@ class OffPolicyAgent(BaseAgent):
             else:
                 last_states.append(np.array(exp.last_state, copy=False))
 
-        states_v = float32_preprocessor(states).to(self.device)
+            if isinstance(self.model, RNNModel):
+                actor_hidden_states.append(exp.agent_state.actor_hidden_state)
+                if self.params.RL_ALGORITHM in [RLAlgorithmName.DDPG_V0]:
+                    critic_hidden_states.append(exp.agent_state.critic_hidden_state)
+                elif self.params.RL_ALGORITHM in [RLAlgorithmName.TD3_V0]:
+                    critic_1_hidden_states.append(exp.agent_state.critic_1_hidden_state)
+                    critic_2_hidden_states.append(exp.agent_state.critic_2_hidden_state)
+
+        states_v = float32_preprocessor(state).to(self.device)
         actions_v = float32_preprocessor(actions).to(self.device)
         rewards_v = float32_preprocessor(rewards).to(self.device)
         last_states_v = float32_preprocessor(last_states).to(self.device)
         dones_t = torch.BoolTensor(dones).to(self.device)
 
-        return states_v, actions_v, rewards_v, dones_t, last_states_v
+        if isinstance(self.model, RNNModel):
+            actor_hidden_states_v = float32_preprocessor(actor_hidden_states).to(self.device)
+            if self.params.RL_ALGORITHM in [RLAlgorithmName.DDPG_V0]:
+                critic_hidden_states_v = float32_preprocessor(critic_hidden_states).to(self.device)
+                return states_v, actions_v, rewards_v, dones_t, last_states_v, agent_states, actor_hidden_states_v, \
+                       critic_hidden_states_v
+
+            elif self.params.RL_ALGORITHM in [RLAlgorithmName.TD3_V0]:
+                critic_1_hidden_states_v = float32_preprocessor(critic_1_hidden_states).to(self.device)
+                critic_2_hidden_states_v = float32_preprocessor(critic_2_hidden_states).to(self.device)
+                return states_v, actions_v, rewards_v, dones_t, last_states_v, agent_states, actor_hidden_states_v, \
+                       critic_1_hidden_states_v, critic_2_hidden_states_v
+
+            else:
+                pass
+        else:
+            return states_v, actions_v, rewards_v, dones_t, last_states_v, agent_states
+
+
 
