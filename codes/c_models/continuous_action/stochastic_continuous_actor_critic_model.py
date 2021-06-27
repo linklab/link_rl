@@ -5,18 +5,28 @@ from codes.c_models.base_model import RNNModel
 from codes.c_models.continuous_action.continuous_action_model import ContinuousActionModel
 from codes.d_agents.a0_base_agent import float32_preprocessor
 from codes.e_utils import rl_utils
+from codes.e_utils.names import DeepLearningModelName
 
 
 class StochasticContinuousActorCriticModel(ContinuousActionModel):
     def __init__(self, worker_id, input_shape, num_outputs, params, device):
         super(StochasticContinuousActorCriticModel, self).__init__(worker_id, params, device)
-        self.__name__ = "StochasticContinuousActorCriticModel"
 
         num_inputs = input_shape[0]
 
-        self.base = StochasticActorCriticMLPBase(
-            num_inputs=num_inputs, num_outputs=num_outputs, params=self.params
-        )
+        if params.DEEP_LEARNING_MODEL == DeepLearningModelName.STOCHASTIC_CONTINUOUS_ACTOR_CRITIC_MLP:
+            self.base = StochasticActorCriticMLPBase(
+                num_inputs=num_inputs, num_outputs=num_outputs, params=self.params
+            )
+            self.__name__ = "StochasticContinuousActorCriticMLPModel"
+        elif params.DEEP_LEARNING_MODEL == DeepLearningModelName.STOCHASTIC_CONTINUOUS_ACTOR_CRITIC_CNN:
+            self.base = None
+            self.__name__ = "StochasticContinuousActorCriticCNNModel"
+        elif params.DEEP_LEARNING_MODEL == DeepLearningModelName.STOCHASTIC_CONTINUOUS_ACTOR_CRITIC_RNN:
+            self.base = None
+            self.__name__ = "StochasticContinuousActorCriticRNNModel"
+        else:
+            raise ValueError()
 
     def forward(self, inputs, agent_state):
         if isinstance(self.base, RNNModel):

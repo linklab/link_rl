@@ -51,14 +51,15 @@ class OnPolicyAgent(BaseAgent):
             self.model.train()
 
         if self.agent_mode == AgentMode.TRAIN:
-            probs_v, value_v = self.model.base.forward(state)
+            probs_v, value_v, agent_state = self.model(state, agent_state)
             actions = self.train_action_selector(probs_v)
 
             return actions, agent_state
         else:
-            probs_v, actor_state = self.model.base.forward_actor(state, agent_state)
+            probs_v, new_actor_hidden_state = self.model.forward_actor(state, agent_state.actor_hidden_state)
             actions = self.test_and_play_action_selector(probs_v)
-            return actions, None
+            agent_state = rl_utils.initial_agent_state(actor_hidden_state=new_actor_hidden_state)
+            return actions, agent_state
 
     def continuous_stochastic_call(self, state, agent_state):
         state = self.preprocess(state)
