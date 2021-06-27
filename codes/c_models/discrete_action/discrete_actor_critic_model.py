@@ -193,6 +193,7 @@ class ActorCriticRNNBase(RNNModel):
         return probs, critic_values, new_agent_state
 
     def forward_actor(self, input, actor_hidden_state):
+        input = torch.unsqueeze(input, dim=1)
         actor_output, new_actor_hidden_state = self.actor_rnn(input, actor_hidden_state)
         probs = self.actor_linear(actor_output)
 
