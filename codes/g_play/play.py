@@ -71,7 +71,8 @@ def play_main(params, env):
                     np.ones_like(agent.action_min) * -1.0, np.ones_like(agent.action_max),
                     agent.action_min, agent.action_max
                 )
-            else:
+
+            if action.ndim == 2:
                 action = action[0]
 
             next_state, reward, done, info = env.step(action)
