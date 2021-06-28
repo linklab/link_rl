@@ -1,14 +1,9 @@
-import copy
 import os, sys
 import threading
 from collections import deque
 from multiprocessing import Pipe
 from sys import platform as _platform
 import torch.multiprocessing as mp
-
-from codes.a_config._rl_parameters.off_policy.parameter_ddpg import DDPGTrainType
-from codes.d_agents.on_policy.on_policy_agent import OnPolicyAgent
-from codes.d_agents.on_policy.ppo.ppo_agent import AgentPPO
 
 current_path = os.path.dirname(os.path.realpath(__file__))
 PROJECT_HOME = os.path.abspath(os.path.join(current_path, os.pardir, os.pardir, os.pardir))
@@ -18,10 +13,14 @@ if PROJECT_HOME not in sys.path:
 from codes.f_main.general_main.a_common_main import *
 from codes.b_environments.trade.trade_action_selector import EpsilonGreedyTradeDQNActionSelector, \
     ArgmaxTradeActionSelector
+from codes.d_agents.on_policy.on_policy_agent import OnPolicyAgent
+from codes.d_agents.on_policy.ppo.ppo_agent import AgentPPO
+
 from codes.e_utils.common_utils import print_params
 from codes.e_utils.experience import ExperienceSourceFirstLast
 from codes.e_utils.names import OFF_POLICY_RL_ALGORITHMS, RLAlgorithmName, ON_POLICY_RL_ALGORITHMS
 from codes.e_utils.train_tracker import SpeedTracker
+
 
 if "win32" in _platform or "win64" in _platform:
     thread = True
@@ -39,18 +38,11 @@ def actor_func(agent, current_model_version, exp_queue, child_pipe_conn):
         agent.train_action_selector = EpsilonGreedyTradeDQNActionSelector(
             epsilon=params.EPSILON_INIT, env=train_env.envs[0]
         )
-        from codes.d_agents.actions import EpsilonTracker
-        agent.epsilon_tracker = EpsilonTracker(
-            action_selector=agent.train_action_selector,
-            eps_start=params.EPSILON_INIT,
-            eps_final=params.EPSILON_MIN,
-            eps_frames=params.EPSILON_MIN_STEP
-        )
         agent.test_and_play_action_selector = ArgmaxTradeActionSelector(env=test_env)
 
     # if params.DEEP_LEARNING_MODEL in [
-    #     DeepLearningModelName.DETERMINISTIC_CONTINUOUS_ACTOR_CRITIC_GRU,
-    #     DeepLearningModelName.DETERMINISTIC_CONTINUOUS_ACTOR_CRITIC_GRU_ATTENTION
+    #     DeepLearningModelName.DETERMINISTIC_CONTINUOUS_ACTOR_CRITIC_RNN,
+    #     DeepLearningModelName.DETERMINISTIC_CONTINUOUS_ACTOR_CRITIC_RNN_ATTENTION
     # ]:
     #     step_length = params.RNN_STEP_LENGTH
     # else:

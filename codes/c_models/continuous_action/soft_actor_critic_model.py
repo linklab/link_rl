@@ -21,8 +21,6 @@ class SoftActorCriticModel(ContinuousActionModel):
             num_inputs=num_inputs, num_outputs=num_outputs, params=self.params
         )
 
-        self.reset_average_gradients()
-
     def forward(self, inputs):
         if not (type(inputs) is torch.Tensor):
             inputs = torch.tensor([inputs], dtype=torch.float).to(self.device)

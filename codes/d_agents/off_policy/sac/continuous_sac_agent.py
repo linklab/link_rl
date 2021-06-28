@@ -20,21 +20,17 @@ from codes.e_utils.names import DeepLearningModelName
 class AgentSAC(OffPolicyAgent):
     """
     """
-    def __init__(
-            self, worker_id, input_shape, action_shape, num_outputs, params, device
-    ):
+    def __init__(self, worker_id, input_shape, action_shape, num_outputs, action_min, action_max, params, device):
         assert params.DEEP_LEARNING_MODEL == DeepLearningModelName.SOFT_ACTOR_CRITIC_MLP
 
-        super(AgentSAC, self).__init__(worker_id, params, action_shape, device)
+        super(AgentSAC, self).__init__(worker_id, params, action_shape, action_min, action_max, device)
         self.__name__ = "AgentSAC"
 
         if params.TYPE_OF_SAC_ACTION_SELECTOR == SACActionSelectorType.BASIC_ACTION_SELECTOR:
             self.train_action_selector = ContinuousNormalSACActionSelector(params=params)
         elif params.TYPE_OF_SAC_ACTION_SELECTOR == SACActionSelectorType.SOMETIMES_BLOW_ACTION_SELECTOR:
             self.train_action_selector = SomeTimesBlowSACActionSelector(
-                min_blowing_action=-5.0 * params.ACTION_SCALE,
-                max_blowing_action=5.0 * params.ACTION_SCALE,
-                params=self.params,
+                min_blowing_action=-5.0, max_blowing_action=5.0, params=self.params,
             )
         else:
             raise ValueError()
@@ -86,7 +82,8 @@ class AgentSAC(OffPolicyAgent):
             # Target entropy is -|A|.
             self.target_entropy = -torch.prod(torch.Tensor(self.action_shape).to(self.device)).item()
 
-            print(self.target_entropy, "!")
+            #print(self.target_entropy, "!")
+
             # We optimize log(alpha), instead of alpha.
             self.log_alpha = torch.zeros(1, requires_grad=True, device=self.device)
             self.alpha = self.log_alpha.exp()
@@ -99,10 +96,10 @@ class AgentSAC(OffPolicyAgent):
             # fixed alpha
             self.alpha = torch.tensor(self.params.ALPHA).to(self.device)
 
-    def __call__(self, states, critics=None):
+    def __call__(self, state, critics=None):
         if self.alpha is None:
             self.reset_alpha()
-        return self.continuous_stochastic_call(states, critics)
+        return self.continuous_sac_call(state)
 
     def on_train(self, step_idx):
         if self.alpha is None:
@@ -165,7 +162,7 @@ class AgentSAC(OffPolicyAgent):
         # actions_v.shape: [128]
         # target_action_values_v.shape: [128]
         states_v, actions_v, target_action_values_v = self.unpack_batch_for_actor_critic(
-            batch, self.target_model, self.params, sac=True, alpha=self.alpha
+            batch, self.target_model, self.params, alpha=self.alpha
         )
 
         sampled_action_v, sampled_entropies_v = self.model.sample(states_v)

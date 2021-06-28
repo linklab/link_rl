@@ -12,7 +12,7 @@ from skimage.color import rgb2gray
 
 class NoopResetEnv(gym.Wrapper):
     def __init__(self, env=None, noop_max=30):
-        """Sample initial states by taking random number of no-ops on reset.
+        """Sample initial state by taking random number of no-ops on reset.
         No-op is assumed to be action 0.
         """
         super(NoopResetEnv, self).__init__(env)
@@ -86,7 +86,7 @@ class EpisodicLifeEnv(gym.Wrapper):
 
     def reset(self):
         """Reset only when lives are exhausted.
-        This way all states are still reachable even though lives are episodic,
+        This way all state are still reachable even though lives are episodic,
         and the learner need not know about any of this behind-the-scenes.
         """
         if self.was_real_done:

@@ -1,18 +1,18 @@
-class A:
-    def __init__(self):
-        self.f()
-
-    def f(self):
-        print("AAAA")
+import inspect
+import re
 
 
-class B(A):
-    def __init__(self):
-        super(B, self).__init__()
+def show_tensor_info(*tensors):
+    this_function_name = inspect.currentframe().f_code.co_name
+    lcls = inspect.stack()
 
-    def f(self):
-        print("BBBB")
+    outer = re.compile("\((.+)\)")
 
+    arg_names = None
+    for lcl in lcls:
+        if lcl.code_context[0].startswith(this_function_name):
+            w = outer.search(lcl.code_context[0].split(this_function_name)[1])
+            arg_names = w.group(1).split(", ")
 
-if __name__ == "__main__":
-    b = B()
+    for idx, arg_name in enumerate(arg_names):
+        print("# {0}.shape: {1}".format(arg_name, tensors[idx].shape))

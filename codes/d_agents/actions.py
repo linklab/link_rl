@@ -51,14 +51,15 @@ class EpsilonTracker:
     Updates epsilon according to linear schedule
     """
     def __init__(
-        self, action_selector, eps_start: Union[int, float], eps_final: Union[int, float], eps_frames: int
+        self, action_selector, eps_start: Union[int, float], eps_final: Union[int, float], eps_last_frames: int
     ):
         self.action_selector = action_selector
         self.eps_start = eps_start
         self.eps_final = eps_final
-        self.eps_frames = eps_frames
+        self.eps_last_frames = eps_last_frames
         #self.udpate(0)
 
     def udpate(self, frame: int):
-        eps = self.eps_start - (frame / self.eps_frames)
+        eps = self.eps_start - (frame / self.eps_last_frames)
         self.action_selector.epsilon = max(self.eps_final, eps)
+

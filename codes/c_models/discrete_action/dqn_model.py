@@ -32,8 +32,6 @@ class DuelingDQNModel(DiscreteActionModel):
         else:
             raise ValueError()
 
-        self.reset_average_gradients()
-
     def forward(self, inputs):
         if not (type(inputs) is torch.Tensor):
             inputs = torch.tensor([inputs], dtype=torch.float).to(self.device)

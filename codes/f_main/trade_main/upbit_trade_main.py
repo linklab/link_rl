@@ -147,12 +147,6 @@ def train(coin_name, time_unit, train_env, evaluate_env):
     ).to(device)
 
     action_selector = EpsilonGreedyTradeDQNActionSelector(epsilon=params.EPSILON_INIT, env=train_env)
-    epsilon_tracker = actions.EpsilonTracker(
-        action_selector=action_selector,
-        eps_start=params.EPSILON_INIT,
-        eps_final=params.EPSILON_MIN,
-        eps_frames=params.EPSILON_MIN_STEP
-    )
     agent = rl_agent.DQNAgent(dqn_model=net, action_selector=action_selector, device=device)
 
     argmax_action_selector = ArgmaxTradeActionSelector(env=evaluate_env)
