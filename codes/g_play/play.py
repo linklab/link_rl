@@ -63,7 +63,7 @@ def play_main(params, env):
 
             state = np.expand_dims(state, axis=0)
 
-            action, _, = agent(state)
+            action, _, = agent(state, None)
 
             if isinstance(agent.model, ContinuousActionModel):
                 action = map_range(
