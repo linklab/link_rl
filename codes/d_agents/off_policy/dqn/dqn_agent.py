@@ -19,7 +19,7 @@ from codes.e_utils.names import DeepLearningModelName, AgentMode, EnvironmentNam
 class AgentDQN(OffPolicyAgent):
     """
     """
-    def __init__(self, worker_id, input_shape, action_shape, num_outputs, params, device):
+    def __init__(self, worker_id, input_shape, action_shape, num_outputs, action_min, action_max, params, device):
         self.__name__ = "AgentDQN"
 
         assert params.DEEP_LEARNING_MODEL in [
@@ -28,7 +28,10 @@ class AgentDQN(OffPolicyAgent):
             DeepLearningModelName.DUELING_DQN_SMALL_CNN
         ]
 
-        super(AgentDQN, self).__init__(worker_id=worker_id, params=params, action_shape=action_shape, device=device)
+        super(AgentDQN, self).__init__(
+            worker_id=worker_id, params=params, action_shape=action_shape,
+            action_min=action_min, action_max=action_max, device=device
+        )
 
         if self.params.DISTRIBUTIONAL:
             self.delta_z = float(self.params.VALUE_MAX - self.params.VALUE_MIN) / (self.params.NUM_SUPPORTS - 1)
@@ -74,7 +77,7 @@ class AgentDQN(OffPolicyAgent):
                 action_selector=self.train_action_selector,
                 eps_start=params.EPSILON_INIT,
                 eps_final=params.EPSILON_MIN,
-                eps_frames=params.EPSILON_MIN_STEP
+                eps_last_frames=params.EPSILON_MIN_STEP
             )
 
         self.model = DuelingDQNModel(
@@ -137,28 +140,28 @@ class AgentDQN(OffPolicyAgent):
             params=params
         )
 
-    def __call__(self, states, agent_states=None):
-        if not agent_states:
-            agent_states = [None] * len(states)
+    def __call__(self, state, agent_state=None):
+        if not agent_state:
+            agent_state = [None] * len(state)
 
-        if not isinstance(states, torch.FloatTensor):
-            states = float32_preprocessor(states).to(self.device)
+        if not isinstance(state, torch.FloatTensor):
+            state = float32_preprocessor(state).to(self.device)
 
-        if len(states) == 1:
+        if len(state) == 1:
             self.model.eval()
         else:
             self.model.train()
 
         if self.agent_mode == AgentMode.TRAIN:
-            q_v = self.model(states)
+            q_v = self.model(state)
             q = q_v.detach().cpu().numpy()
             actions = self.train_action_selector(q)
         else:
-            q_v = self.test_model(states)
+            q_v = self.test_model(state)
             q = q_v.detach().cpu().numpy()
             actions = self.test_and_play_action_selector(q)
 
-        return actions, agent_states
+        return actions, agent_state
 
     def on_train(self, step_idx):
         if self.params.PER_PROPORTIONAL or self.params.PER_RANK_BASED:
@@ -206,11 +209,11 @@ class AgentDQN(OffPolicyAgent):
         return gradients, loss_v.detach().item(), None
 
     def unpack_batch(self, batch):
-        states, actions, rewards, dones, last_states, last_steps = [], [], [], [], [], []
+        state, actions, rewards, dones, last_states, last_steps = [], [], [], [], [], []
 
         for exp in batch:
             state = np.array(exp.state, copy=False)
-            states.append(state)
+            state.append(state)
             actions.append(exp.action)
             rewards.append(exp.reward)
             dones.append(exp.last_state is None)
@@ -218,14 +221,15 @@ class AgentDQN(OffPolicyAgent):
                 last_states.append(state)  # the result will be masked anyway
             else:
                 last_states.append(np.array(exp.last_state, copy=False))
-        return np.array(states, copy=False), np.array(actions), np.array(rewards, dtype=np.float32), \
+            last_steps.append(exp.last_step)
+        return np.array(state, copy=False), np.array(actions), np.array(rewards, dtype=np.float32), \
                np.array(dones, dtype=np.uint8), np.array(last_states, copy=False), np.array(last_steps)
 
     # def unpack_batch_for_n_step(self, batch, batch_indices):
-    #     states, actions, rewards, dones, next_states, last_steps = [], [], [], [], [], []
+    #     state, actions, rewards, dones, next_states, last_steps = [], [], [], [], [], []
     #     for idx, exp in enumerate(batch):
     #         state = np.array(exp.state, copy=False)
-    #         states.append(state)
+    #         state.append(state)
     #         actions.append(exp.action)
     #
     #         n_step_rewards = 0
@@ -251,14 +255,14 @@ class AgentDQN(OffPolicyAgent):
     #             current_exp = next_exp
     #             gamma *= self.params.GAMMA
     #
-    #     return np.array(states, copy=False), np.array(actions), np.array(rewards, dtype=np.float32), \
+    #     return np.array(state, copy=False), np.array(actions), np.array(rewards, dtype=np.float32), \
     #            np.array(dones, dtype=np.uint8), np.array(next_states, copy=False), np.array(last_steps)
 
     def unpack_batch_for_omega(self, batch, batch_indices):
-        states, actions, rewards, done_mask, next_states = [], [], [], [], []
+        state, actions, rewards, done_mask, next_states = [], [], [], [], []
         for idx, exp in enumerate(batch):
             state = np.array(exp.state, copy=False)
-            states.append(state)
+            state.append(state)
             actions.append(exp.action)
 
             n_step_rewards = []
@@ -279,13 +283,13 @@ class AgentDQN(OffPolicyAgent):
 
             rewards.append(n_step_rewards)
 
-        return np.array(states, copy=False), np.array(actions), np.array(rewards), np.array(done_mask), np.array(
+        return np.array(state, copy=False), np.array(actions), np.array(rewards), np.array(done_mask), np.array(
             next_states, copy=False)
 
     def calc_loss_dqn(self, batch):
-        states, actions, rewards, dones, next_states, last_steps = self.unpack_batch(batch)
+        state, actions, rewards, dones, next_states, last_steps = self.unpack_batch(batch)
 
-        states_v = torch.tensor(states)
+        states_v = torch.tensor(state)
         next_states_v = torch.tensor(next_states)
         actions_v = torch.tensor(actions)
         rewards_v = torch.tensor(rewards)
@@ -332,9 +336,9 @@ class AgentDQN(OffPolicyAgent):
         return loss_v
 
     def calc_loss_distributional_dqn(self, batch):
-        states, actions, rewards, dones, next_states, last_steps = self.unpack_batch(batch)
+        state, actions, rewards, dones, next_states, last_steps = self.unpack_batch(batch)
 
-        states_v = torch.tensor(states)
+        states_v = torch.tensor(state)
         next_states_v = torch.tensor(next_states)
         actions_v = torch.tensor(actions)
         rewards_v = torch.tensor(rewards)
@@ -378,14 +382,16 @@ class AgentDQN(OffPolicyAgent):
         return loss_v
 
     def calc_loss_double_dqn(self, batch):
-        states, actions, rewards, dones, next_states, last_steps = self.unpack_batch(batch)
+        state, actions, rewards, dones, next_states, last_steps = self.unpack_batch(batch)
 
-        states_v = torch.tensor(states)
+        states_v = torch.tensor(state)
         next_states_v = torch.tensor(next_states)
         actions_v = torch.tensor(actions)
         rewards_v = torch.tensor(rewards)
         done_masks_v = torch.BoolTensor(dones)
         last_steps_v = torch.tensor(last_steps)
+
+        # print(states_v.size(), next_states_v.size(), actions_v.size(), rewards_v.size(), done_masks_v.size(), last_steps_v.size(), "!!!!")
 
         if self.device == torch.device("cuda"):
             states_v = states_v.cuda(non_blocking=True)
@@ -423,13 +429,13 @@ class AgentDQN(OffPolicyAgent):
 
     def calc_loss_per_double_dqn(self, batch, batch_indices, batch_weights):
         # if self.params.NEXT_STATE_IN_TRAJECTORY:
-        #     states, actions, rewards, dones, next_states, last_steps = self.unpack_batch(batch)
+        #     state, actions, rewards, dones, next_states, last_steps = self.unpack_batch(batch)
         # else:
-        #     states, actions, rewards, dones, next_states, last_steps = self.unpack_batch_for_n_step(batch, batch_indices)
+        #     state, actions, rewards, dones, next_states, last_steps = self.unpack_batch_for_n_step(batch, batch_indices)
 
-        states, actions, rewards, dones, next_states, last_steps = self.unpack_batch(batch)
+        state, actions, rewards, dones, next_states, last_steps = self.unpack_batch(batch)
 
-        states_v = torch.tensor(states)
+        states_v = torch.tensor(state)
         next_states_v = torch.tensor(next_states)
         actions_v = torch.tensor(actions)
         rewards_v = torch.tensor(rewards)
@@ -475,9 +481,9 @@ class AgentDQN(OffPolicyAgent):
         return loss_v.mean(), losses_each + 1e-5
 
     def calc_loss_per_double_dqn_for_omega(self, batch, batch_indices, batch_weights):
-        states, actions, rewards, done_mask, next_states = self.unpack_batch_for_omega(batch, batch_indices)
+        state, actions, rewards, done_mask, next_states = self.unpack_batch_for_omega(batch, batch_indices)
 
-        states_v = torch.tensor(states)
+        states_v = torch.tensor(state)
         next_states_v = torch.tensor(next_states)
         actions_v = torch.tensor(actions)
         batch_weights_v = torch.tensor(batch_weights)

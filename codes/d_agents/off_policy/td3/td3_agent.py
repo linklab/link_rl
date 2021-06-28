@@ -18,10 +18,13 @@ from torch.distributions import normal
 # https://spinningup.openai.com/en/latest/algorithms/td3.html
 
 class AgentTD3(OffPolicyAgent):
-    def __init__(self, worker_id, input_shape, action_shape, num_outputs, params, device):
+    def __init__(self, worker_id, input_shape, action_shape, num_outputs, action_min, action_max, params, device):
         assert params.DEEP_LEARNING_MODEL == DeepLearningModelName.TD3_MLP
 
-        super(AgentTD3, self).__init__(worker_id=worker_id, params=params, action_shape=action_shape, device=device)
+        super(AgentTD3, self).__init__(
+            worker_id=worker_id, params=params, action_shape=action_shape,
+            action_min=action_min, action_max=action_max, device=device
+        )
 
         self.__name__ = "AgentTD3"
 
@@ -91,7 +94,7 @@ class AgentTD3(OffPolicyAgent):
                 action_selector=self.train_action_selector,
                 eps_start=params.EPSILON_INIT,
                 eps_final=params.EPSILON_MIN,
-                eps_frames=params.EPSILON_MIN_STEP
+                eps_last_frames=params.EPSILON_MIN_STEP
             )
         else:
             self.epsilon_tracker = None
@@ -99,31 +102,28 @@ class AgentTD3(OffPolicyAgent):
         self.cache_loss_actor_v = torch.tensor(0.0)
         self.last_noise = 0.0
 
-    def __call__(self, states, noises=None):
-        if not noises:
-            noises = [None] * len(states)
+    def __call__(self, state, agent_state):
+        if not isinstance(state, torch.FloatTensor):
+            state = float32_preprocessor(state).to(self.device)
 
-        if not isinstance(states, torch.FloatTensor):
-            states = float32_preprocessor(states).to(self.device)
-
-        if len(states) == 1:
+        if len(state) == 1:
             self.model.eval()
         else:
             self.model.train()
 
         if self.agent_mode == AgentMode.TRAIN:
-            mu_v = self.model(states)
+            mu_v, agent_state = self.model(state, agent_state)
             mu = mu_v.detach().cpu().numpy()
-            actions, new_noises = self.train_action_selector(mu, noises)
+            actions, new_noises = self.train_action_selector(mu)
         else:
-            mu_v = self.test_model(states)
+            mu_v, agent_state = self.test_model(state, agent_state)
             mu = mu_v.detach().cpu().numpy()
-            actions, new_noises = self.test_and_play_action_selector(mu, noises)
+            actions, new_noises = self.test_and_play_action_selector(mu)
 
         self.last_noise = new_noises[0][0]
         #####################################
 
-        return actions, new_noises
+        return actions, agent_state
 
     # @profile
     def on_train(self, step_idx):
@@ -134,7 +134,7 @@ class AgentTD3(OffPolicyAgent):
             batch_indices, batch_weights = None, None
 
         # print(batch)
-        states_v, actions_v, rewards_v, dones_mask, last_states_v = self.unpack_batch(batch)
+        states_v, actions_v, rewards_v, dones_mask, last_states_v, agent_states = self.unpack_batch(batch)
 
         # train critic
         self.critic_optimizer.zero_grad()
@@ -147,11 +147,11 @@ class AgentTD3(OffPolicyAgent):
 
         # last_actions_v: [128, 1]
         last_actions_v = (
-            self.target_model.base.forward_actor(last_states_v) + noise
+            self.target_model.base.forward_actor(last_states_v, agent_states)[0] + noise
         ).clamp(-1.0, 1.0)
 
         # target_q_v_1, target_q_v_2: [128, 1]
-        target_q_v_1, target_q_v_2 = self.target_model.base.forward_critic(last_states_v, last_actions_v)
+        target_q_v_1, target_q_v_2, _ = self.target_model.base.forward_critic(last_states_v, last_actions_v, agent_states)
 
         # target_min_q_v_1, next_target_q_v, target_q_v: [128, 1]
         target_min_q_v = torch.min(target_q_v_1, target_q_v_2)
@@ -162,7 +162,7 @@ class AgentTD3(OffPolicyAgent):
         # print(next_target_q_v.size(), rewards_v.unsqueeze(dim=-1).size(), target_q_v.size())
 
         # current_q_v_1, current_q_v_2: [128, 1]
-        current_q_v_1, current_q_v_2 = self.model.base.forward_critic(states_v, actions_v)
+        current_q_v_1, current_q_v_2, _ = self.model.base.forward_critic(states_v, actions_v, agent_states)
 
         # loss_critic_v: [128, 1]
         loss_critic_v = F.mse_loss(current_q_v_1, target_q_v.detach(), reduction='none') + \
@@ -181,8 +181,8 @@ class AgentTD3(OffPolicyAgent):
         if step_idx % self.params.POLICY_UPDATE_FREQUENCY == 0:
             self.actor_optimizer.zero_grad()
 
-            current_actions_v = self.model.base.forward_actor(states_v)
-            q_v_for_actor = self.model.base.forward_only_critic_1(states_v, current_actions_v)
+            current_actions_v, _ = self.model.base.forward_actor(states_v, agent_states)
+            q_v_for_actor, _ = self.model.base.forward_only_critic_1(states_v, current_actions_v, agent_states)
             loss_actor_v = -1.0 * q_v_for_actor.mean()
             self.cache_loss_actor_v = loss_actor_v
 

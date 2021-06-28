@@ -47,7 +47,7 @@ def load_model(model_save_dir, env_name, agent, step=None):
     device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
     model_params = torch.load(saved_model, map_location=device)
 
-    model.load_state_dict(model_params)
+    agent.model.load_state_dict(model_params)
 
 
 def save_actor_critic_model(

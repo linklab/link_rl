@@ -14,8 +14,6 @@ from stable_baselines3.common.env_util import make_vec_env
 os.environ['KMP_DUPLICATE_LIB_OK'] = 'True'
 
 env = RotaryInvertedPendulumEnv(
-    action_min=params.ACTION_SCALE * -1.0,
-    action_max=params.ACTION_SCALE,
     env_reset=params.ENV_RESET,
     pendulum_type=EnvironmentName.PENDULUM_MATLAB_DOUBLE_RIP_V0,
     params=params
