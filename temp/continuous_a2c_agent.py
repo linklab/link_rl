@@ -3,13 +3,12 @@ import torch
 import torch.nn.functional as F
 from torch.distributions import Normal, MultivariateNormal
 
-from codes.c_models.base_model import RNNModel
 from codes.c_models.continuous_action.stochastic_continuous_actor_critic_model import StochasticContinuousActorCriticModel
 from codes.d_agents.on_policy.a2c.a2c_agent import AgentA2C
 from codes.d_agents.on_policy.on_policy_action_selector import ContinuousNormalActionSelector
 from codes.e_utils import rl_utils
-from codes.e_utils.common_utils import show_info
-from codes.e_utils.names import DeepLearningModelName, AgentMode, RLAlgorithmName
+from codes.e_utils.common_utils import show_tensor_info
+from codes.e_utils.names import DeepLearningModelName, AgentMode
 
 
 class AgentContinuousA2C(AgentA2C):
@@ -55,8 +54,8 @@ class AgentContinuousA2C(AgentA2C):
             params=params
         )
 
-    def __call__(self, state, agent_state=None):
-        return self.continuous_stochastic_call(state, agent_state)
+    def __call__(self, states, agent_states=None):
+        return self.continuous_stochastic_call(states, agent_states)
 
     def on_train(self, step_idx, expected_model_version):
         batch = self.buffer.sample_all_for_on_policy(expected_model_version)
@@ -64,27 +63,12 @@ class AgentContinuousA2C(AgentA2C):
         # states_v.shape: (32, 3)
         # actions_v.shape: (32, 1)
         # target_action_values_v.shape: (32,)
-        if isinstance(self.model, RNNModel):
-            batch_states_v, batch_actions_v, batch_target_action_values_v, batch_actor_hidden_states_v, \
-            batch_critic_hidden_states_v = self.unpack_batch_for_actor_critic(
-                batch, self.model, self.params
-            )
-        else:
-            batch_states_v, batch_actions_v, batch_target_action_values_v = self.unpack_batch_for_actor_critic(
-                batch, self.model, self.params
-            )
-            batch_actor_hidden_states_v = batch_critic_hidden_states_v = None
+        batch_states_v, batch_actions_v, batch_target_action_values_v = self.unpack_batch_for_actor_critic(batch, self.model, self.params)
 
         # mu_v.shape: (32, 1)
         # var_v.shape: (32, 1)
         # value_v.shape; (32, 1)
-        batch_mu_v, batch_logstd_v, new_batch_actor_hidden_states = self.model.forward_actor(
-            batch_states_v, batch_actor_hidden_states_v
-        )
-
-        batch_values_v, new_batch_critic_hidden_states = self.model.forward_critic(
-            batch_states_v, batch_critic_hidden_states_v
-        )
+        batch_mu_v, batch_logstd_v, batch_values_v = self.model.base(batch_states_v)
 
         # Critic Optimization
         loss_critic_v = F.mse_loss(input=batch_values_v.squeeze(-1), target=batch_target_action_values_v.detach())
@@ -94,16 +78,32 @@ class AgentContinuousA2C(AgentA2C):
         self.critic_optimizer.step()
 
         # Actor Optimization
-        # batch_advantage_v.shape: (32,)
+        # advantage_v.shape: (32,)
         batch_advantage_v = batch_target_action_values_v - batch_values_v.squeeze(-1)
+
+        # reinforced_log_pi_action_v.shape: (32,)
+        # batch_action_variance.shape: (32, 1)
+        # batch_covariance_matrix.shape: (32, 1, 1)
+        # batch_dist.log_prob(value=actions_v).shape: (32,)
+        # batch_advantage_v.detach().shape: (32,)
+        # batch_reinforced_log_pi_action_v.shape: (32,)
+        # batch_action_variance = self.model.base.actor.action_variance.expand_as(mu_v)
+        # batch_covariance_matrix = torch.diag_embed(batch_action_variance).to(self.device)
+        # batch_dist = MultivariateNormal(loc=mu_v, covariance_matrix=batch_covariance_matrix)
+        # batch_reinforced_log_pi_action_v = batch_dist.log_prob(value=actions_v) * batch_advantage_v.detach()
+        # batch_entropy_v = batch_dist.entropy()
 
         dist = Normal(loc=batch_mu_v, scale=batch_logstd_v)
 
         # dist.log_prob(value=batch_actions_v).shape: (32, 1)
-        # batch_reinforced_log_pi_action_v.shape: (32, 1)
         # batch_entropy_v.shape: (32, 1)
         batch_reinforced_log_pi_action_v = dist.log_prob(value=batch_actions_v) * batch_advantage_v.unsqueeze(dim=-1).detach()
         batch_entropy_v = dist.entropy()
+
+        # reinforced_log_pi_action_v = self.calc_logprob(
+        #     mu_v=mu_v, logstd_v=logstd_v, actions_v=actions_v
+        # ) * advantage_v.unsqueeze(dim=-1).detach()
+        #entropy_v = self.calc_entropy(logstd_v=logstd_v)
 
         loss_actor_v = -1.0 * batch_reinforced_log_pi_action_v.mean()
         loss_entropy_v = -1.0 * batch_entropy_v.mean()

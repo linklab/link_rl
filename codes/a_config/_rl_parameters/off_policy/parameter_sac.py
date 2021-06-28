@@ -18,7 +18,6 @@ class PARAMETERS_SAC:
     DOUBLE = True
 
     REPLAY_BUFFER_SIZE = 100000
-    ACTION_SCALE = 1.0
 
     TAU = 0.001
 

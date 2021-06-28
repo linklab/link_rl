@@ -31,7 +31,7 @@ def get_quanser_rip_observation_space():
     return observation_space, n_states
 
 
-def get_quanser_rip_action_space(params):
+def get_quanser_rip_action_info(params):
     if params.RL_ALGORITHM in [RLAlgorithmName.DQN_V0]:
         action_index_to_voltage = list(np.array([
             -1.0, -0.75, -0.5, -0.3, -0.2, -0.1, 0.0, 0.1, 0.2, 0.3, 0.5, 0.75, 1.0
@@ -53,6 +53,8 @@ class SyncronizeEnv(gym.Env):
     def __init__(self, mode=AgentMode.TRAIN):
         super(SyncronizeEnv, self).__init__()
         self.params = params
+
+        self.action_ = 50
 
         self.previous_time = 0
 
@@ -98,7 +100,7 @@ class SyncronizeEnv(gym.Env):
         #=======================================================================================
 
         #==================action===============================================================
-        self.action_space, self.n_actions, self.action_index_to_voltage = get_quanser_rip_action_space(self.params)
+        self.action_space, self.n_actions, self.action_index_to_voltage = get_quanser_rip_action_info(self.params)
         #=======================================================================================
 
         channel_1 = grpc.insecure_channel('{0}:50051'.format(RIP_SERVER_1))
@@ -189,8 +191,11 @@ class SyncronizeEnv(gym.Env):
         # previous_time = time.perf_counter()
         # print(action)
 
-        quanser_response_1 = self.server_obj_1.step_sync(QuanserRequest(value=0.0))
-        quanser_response_2 = self.server_obj_2.step_sync(QuanserRequest(value=0.0))
+        if self.step_idx % 50 == 0:
+            self.action_ = -self.action_
+
+        quanser_response_1 = self.server_obj_1.step_sync(QuanserRequest(value=self.action_))
+        quanser_response_2 = self.server_obj_2.step_sync(QuanserRequest(value=self.action_))
 
         self.motor_radian_1 = quanser_response_1.motor_radian
         self.motor_velocity_1 = quanser_response_1.motor_velocity

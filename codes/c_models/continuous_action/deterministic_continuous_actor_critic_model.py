@@ -33,13 +33,17 @@ class DeterministicContinuousActorCriticModel(ContinuousActionModel):
         else:
             raise ValueError()
 
-        self.reset_average_gradients()
+    def forward(self, inputs, agent_state):
+        if not (type(inputs) is torch.Tensor):
+            inputs = torch.tensor([inputs], dtype=torch.float).to(self.device)
 
-    def forward_actor(self, inputs):
-        return self.base.forward_actor(inputs)
+        return self.base.forward(inputs, agent_state)
 
-    def forward_critic(self, inputs, actions):
-        return self.base.forward_critic(inputs, actions)
+    # def forward_actor(self, inputs, actor_hidden_state):
+    #     return self.base.forward_actor(inputs, actor_hidden_state),
+    #
+    # def forward_critic(self, inputs, actions, critic_hidden_state):
+    #     return self.base.forward_critic(inputs, actions, critic_hidden_state)
 
 
 class DeterministicActorCriticMLPBase(nn.Module):
@@ -107,23 +111,23 @@ class DeterministicActorCriticMLPBase(nn.Module):
         if type(m) == nn.Linear:
             torch.nn.init.kaiming_normal_(m.weight)
 
-    def forward(self, inputs):
-        return self.forward_actor(inputs)
+    def forward(self, inputs, agent_state):
+        return self.forward_actor(inputs, agent_state.actor_hidden_state)
 
-    def forward_actor(self, inputs):
+    def forward_actor(self, inputs, actor_hidden_state):
         outs = self.actor(inputs)
         if self.params.TYPE_OF_DDPG_ACTION_SELECTOR == DDPGActionSelectorType.NOISY_NET_ACTION_SELECTOR:
             outs = self.noisy_actor(outs)
         actions = self.last_actor(outs)
         actions = torch.tanh(actions)
-        return actions
+        return actions, actor_hidden_state
 
-    def forward_critic(self, inputs, actions):
+    def forward_critic(self, inputs, actions, critic_hidden_state):
         outs = self.critic(torch.cat([inputs, actions], dim=-1))
         if self.params.TYPE_OF_DDPG_ACTION_SELECTOR == DDPGActionSelectorType.NOISY_NET_ACTION_SELECTOR:
             outs = self.noisy_critic(outs)
         critic_value = self.last_critic(outs)
-        return critic_value
+        return critic_value, critic_hidden_state
 
     def reset_noise(self):
         self.noisy_actor.reset_noise()
@@ -241,18 +245,18 @@ class DeterministicActorCriticTD3MLPBase(nn.Module):
         if type(m) == nn.Linear:
             torch.nn.init.kaiming_normal_(m.weight)
 
-    def forward(self, inputs):
-        return self.forward_actor(inputs)
+    def forward(self, inputs, agent_state):
+        return self.forward_actor(inputs, agent_state)
 
-    def forward_actor(self, inputs):
+    def forward_actor(self, inputs, actor_hidden_state):
         outs = self.actor(inputs)
         if self.params.TYPE_OF_TD3_ACTION_SELECTOR == TD3ActionSelectorType.NOISY_NET_ACTION_SELECTOR:
             outs = self.noisy_actor(outs)
         actions = self.last_actor(outs)
         actions = torch.tanh(actions)
-        return actions
+        return actions, actor_hidden_state
 
-    def forward_critic(self, inputs, actions):
+    def forward_critic(self, inputs, actions, critic_hidden_state):
         outs_1 = self.critic_1(torch.cat([inputs, actions], dim=-1))
         outs_2 = self.critic_2(torch.cat([inputs, actions], dim=-1))
 
@@ -263,15 +267,15 @@ class DeterministicActorCriticTD3MLPBase(nn.Module):
         critic_value_1 = self.last_critic_1(outs_1)
         critic_value_2 = self.last_critic_2(outs_2)
 
-        return critic_value_1, critic_value_2
+        return critic_value_1, critic_value_2, critic_hidden_state
 
-    def forward_only_critic_1(self, inputs, actions):
+    def forward_only_critic_1(self, inputs, actions, critic_hidden_state):
         outs_1 = self.critic_1(torch.cat([inputs, actions], dim=-1))
         if self.params.TYPE_OF_TD3_ACTION_SELECTOR == TD3ActionSelectorType.NOISY_NET_ACTION_SELECTOR:
             outs_1 = self.noisy_critic_1(outs_1)
         critic_value_1 = self.last_critic_1(outs_1)
 
-        return critic_value_1
+        return critic_value_1, critic_hidden_state
 
     def reset_noise(self):
         self.noisy_actor.reset_noise()

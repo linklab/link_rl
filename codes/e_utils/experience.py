@@ -1,8 +1,5 @@
-import math
 import os
 import sys
-import gym
-import torch
 import numpy as np
 from collections import namedtuple, deque
 
@@ -10,8 +7,9 @@ from gym.vector import VectorEnv
 from icecream import ic
 
 from codes.c_models.continuous_action.continuous_action_model import ContinuousActionModel
-from codes.e_utils.names import EnvironmentName, RLAlgorithmName
+from codes.e_utils.common_utils import map_range
 from codes.e_utils.reward_changer import RewardChanger
+from codes.e_utils import rl_utils
 
 current_path = os.path.dirname(os.path.realpath(__file__))
 PROJECT_HOME = os.path.abspath(os.path.join(current_path, os.pardir, os.pardir))
@@ -20,18 +18,16 @@ if PROJECT_HOME not in sys.path:
 
 # one single experience step
 from codes.d_agents.a0_base_agent import BaseAgent
-from codes.a_config.parameters import PARAMETERS as params
 
 Experience = namedtuple(
     'Experience',
-    ('state', 'action', 'reward', 'done', 'info', 'model_version')
+    ('state', 'action', 'reward', 'done', 'info', 'agent_state', 'model_version')
 )
 
 ExperienceFirstLast = namedtuple(
     'ExperienceFirstLast',
-    ('state', 'action', 'reward', 'last_state', 'done', 'info', 'model_version')
+    ('state', 'action', 'reward', 'last_state', 'last_step', 'done', 'info', 'agent_state', 'model_version')
 )
-
 
 class ExperienceSource:
     """
@@ -83,57 +79,54 @@ class ExperienceSource:
                 histories.append(deque(maxlen=self.n_step))
                 cur_rewards.append(0.0)
                 cur_steps.append(0)
-                agent_states.append(self.agent.initial_agent_state())
+                agent_states.append(rl_utils.initial_agent_state())
 
-        ic(states, agent_states, histories, cur_rewards, cur_steps, env_lens)
+        #ic(states, agent_states, histories, cur_rewards, cur_steps, env_lens)
 
         iter_idx = 0
         while True:
             actions = [None] * len(states)
+
             states_input = []
             states_indices = []
-            agent_states_input = []
-            for idx, (state, agent_state) in enumerate(zip(states, agent_states)):
+            for idx, state in enumerate(states):
                 if state is None:
                     actions[idx] = self.pool[0].single_action_space.sample()  # assume that all envs are from the same family
                 else:
                     states_input.append(state)
-                    agent_states_input.append(agent_state)
                     states_indices.append(idx)
-                    #ic(agent_states_input, "@@")
-
-            #ic(states_input, agent_states_input)
 
             if states_input:
-                new_actions, new_agent_states = self.agent(states_input, agent_states_input)
+                new_actions, new_agent_states = self.agent(states_input, agent_states)
                 for idx, action in enumerate(new_actions):
                     g_idx = states_indices[idx]
                     actions[g_idx] = action
                     agent_states[g_idx] = new_agent_states[idx]
-            else:
-                pass
 
-            grouped_actions = _group_list(actions, env_lens)
+            grouped_actions, grouped_agent_states = group_list(actions, agent_states, env_lens)
+
+           #print(grouped_actions, grouped_agent_states, "!!!!!!")
 
             global_ofs = 0
-            for env_idx, (env, action_n) in enumerate(zip(self.pool, grouped_actions)):
+            for env_idx, (env, action_n, agent_state) in enumerate(
+                    zip(self.pool, grouped_actions, grouped_agent_states)
+            ):
                 action = np.asarray(action_n)
 
-                if isinstance(self.agent.model, ContinuousActionModel) and params.ENVIRONMENT_ID not in [
-                    EnvironmentName.PENDULUM_MATLAB_V0,
-                    EnvironmentName.PENDULUM_MATLAB_DOUBLE_RIP_V0,
-                    EnvironmentName.REAL_DEVICE_RIP,
-                    EnvironmentName.REAL_DEVICE_DOUBLE_RIP,
-                    EnvironmentName.QUANSER_SERVO_2
-                ]:
-                    if hasattr(self.agent.params, "ACTION_SCALE") and self.agent.params.ACTION_SCALE:
-                        action = self.agent.params.ACTION_SCALE * action
+                if isinstance(self.agent.model, ContinuousActionModel):
+                    action = map_range(
+                        np.asarray(action),
+                        np.ones_like(self.agent.action_min) * -1.0, np.ones_like(self.agent.action_max),
+                        self.agent.action_min, self.agent.action_max
+                    )
 
                 next_state_n, r_n, is_done_n, info_n = env.step(action)
 
                 #ic(env_idx, env, len(action_n), len(next_state_n), len(r_n), len(is_done_n), len(info_n))
 
-                for ofs, (action, next_state, r, is_done, info) in enumerate(zip(action_n, next_state_n, r_n, is_done_n, info_n)):
+                for ofs, (action, next_state, r, is_done, info) in enumerate(
+                        zip(action_n, next_state_n, r_n, is_done_n, info_n)
+                ):
                     idx = global_ofs + ofs
                     state = states[idx]
                     history = histories[idx]
@@ -148,6 +141,7 @@ class ExperienceSource:
                     if state is not None:
                         history.append(Experience(
                             state=state, action=action, reward=r, done=is_done, info=info,
+                            agent_state=agent_state,
                             model_version=self.agent.model_version if hasattr(self.agent, "model_version") else None
                         ))
 
@@ -186,7 +180,7 @@ class ExperienceSource:
                         # states[idx] = None
                         # print(self.episode_reward_lst, "@@@@@")
 
-                        agent_states[idx] = self.agent.initial_agent_state()
+                        agent_states[idx] = rl_utils.initial_agent_state()
                         history.clear()
 
                 global_ofs += len(action_n)
@@ -207,19 +201,21 @@ class ExperienceSource:
         return res
 
 
-def _group_list(actions, env_lens):
+def group_list(actions, agent_states, env_lens):
     """
     Unflat the list of items by lens
     :param items: list of items
     :param lens: list of integers
     :return: list of list of items grouped by lengths
     """
-    res = []
+    grouped_actions = []
+    grouped_agent_states = []
     cur_ofs = 0
     for g_len in env_lens:
-        res.append(actions[cur_ofs: cur_ofs + g_len])
+        grouped_actions.append(actions[cur_ofs: cur_ofs + g_len])
+        grouped_agent_states.append(agent_states[cur_ofs: cur_ofs + g_len])
         cur_ofs += g_len
-    return res
+    return grouped_actions, grouped_agent_states
 
 
 class ExperienceSourceFirstLast(ExperienceSource):
@@ -254,7 +250,8 @@ class ExperienceSourceFirstLast(ExperienceSource):
 
             e = ExperienceFirstLast(
                 state=exp[0].state, action=exp[0].action, reward=total_reward, last_state=last_state,
-                done=exp[0].done, info=exp[0].info,
+                done=exp[0].done, info=exp[0].info, last_step=len(elems),
+                agent_state=exp[0].agent_state,
                 model_version=self.agent.model_version if hasattr(self.agent, "model_version") else None
             )
 

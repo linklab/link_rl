@@ -22,8 +22,8 @@ MessageFromMaster = collections.namedtuple(
 
 
 class AgentMultiGA(BaseAgent):
-    def __init__(self, worker_id, input_shape, action_shape, num_outputs, params, device):
-        super(AgentMultiGA, self).__init__(worker_id, params, action_shape, device)
+    def __init__(self, worker_id, input_shape, action_shape, num_outputs, action_min, action_max, params, device):
+        super(AgentMultiGA, self).__init__(worker_id, params, action_shape, action_min, action_max, device)
         self.__name__ = "AgentMultiGA"
 
         self.model = SimpleModel(
@@ -132,9 +132,9 @@ class AgentMultiGA(BaseAgent):
 
         self._get_population()
 
-    def __call__(self, states, agent_states=None):
-        states = states[0]
-        action_prob = self.model(states)
+    def __call__(self, state, agent_state=None):
+        state = state[0]
+        action_prob = self.model(state)
         acts = action_prob.max(dim=1)[1]
 
         return acts.data.cpu().numpy(), None

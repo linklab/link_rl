@@ -11,8 +11,8 @@ from codes.d_agents.a0_base_agent import BaseAgent
 # Deep Neuroevolution: Genetic Algorithms are a Competitive
 # Alternative for Training Deep Neural Networks for Reinforcement Learning
 class AgentGA(BaseAgent):
-    def __init__(self, worker_id, input_shape, action_shape, num_outputs, params, device):
-        super(AgentGA, self).__init__(worker_id, params, action_shape, device)
+    def __init__(self, worker_id, input_shape, action_shape, num_outputs, action_min, action_max, params, device):
+        super(AgentGA, self).__init__(worker_id, params, action_shape, action_min, action_max, device)
         self.__name__ = "AgentGA"
 
         self.model = SimpleModel(
@@ -101,9 +101,9 @@ class AgentGA(BaseAgent):
         self.elite = self.population[0]
         self.model.load_state_dict(self.elite[0].state_dict())
 
-    def __call__(self, states, agent_states=None):
-        states = states[0]
-        action_prob = self.model(states)
+    def __call__(self, state, agent_state=None):
+        state = state[0]
+        action_prob = self.model(state)
         acts = action_prob.max(dim=1)[1]
 
         return acts.data.cpu().numpy(), None

@@ -18,11 +18,14 @@ class AgentDDPG(OffPolicyAgent):
     """
     Agent implementing Orstein-Uhlenbeck exploration process
     """
-    def __init__(self, worker_id, input_shape, action_shape, num_outputs, params, device):
+    def __init__(self, worker_id, input_shape, action_shape, num_outputs, action_min, action_max, params, device):
         assert params.DEEP_LEARNING_MODEL == DeepLearningModelName.DETERMINISTIC_CONTINUOUS_ACTOR_CRITIC_MLP
         assert issubclass(params, PARAMETERS_DDPG)
 
-        super(AgentDDPG, self).__init__(worker_id=worker_id, params=params, action_shape=action_shape, device=device)
+        super(AgentDDPG, self).__init__(
+            worker_id=worker_id, params=params, action_shape=action_shape,
+            action_min=action_min, action_max=action_max, device=device
+        )
 
         self.__name__ = "AgentDDPG"
 
@@ -47,7 +50,7 @@ class AgentDDPG(OffPolicyAgent):
         elif params.TYPE_OF_DDPG_ACTION_SELECTOR == DDPGActionSelectorType.SOMETIMES_BLOW_ACTION_SELECTOR:
             self.train_action_selector = SomeTimesBlowDDPGActionSelector(
                 noise_enabled=params.NOISE_ENABLED, ou_mu=np.zeros(self.action_shape), ou_sigma=self.params.OU_SIGMA,
-                min_blowing_action=-5.0 * params.ACTION_SCALE, max_blowing_action=5.0 * params.ACTION_SCALE,
+                min_blowing_action=-5.0, max_blowing_action=5.0,
                 epsilon=params.EPSILON_INIT, params=params
             )
         elif params.TYPE_OF_DDPG_ACTION_SELECTOR == DDPGActionSelectorType.NOISY_NET_ACTION_SELECTOR:
@@ -110,32 +113,31 @@ class AgentDDPG(OffPolicyAgent):
                 action_selector=self.train_action_selector,
                 eps_start=params.EPSILON_INIT,
                 eps_final=params.EPSILON_MIN,
-                eps_frames=params.EPSILON_MIN_STEP
+                eps_last_frames=params.EPSILON_MIN_STEP
             )
         else:
             self.epsilon_tracker = None
 
         self.num_trains = 0
 
-    def __call__(self, states, noises=None):
-        if not noises:
-            noises = [None] * len(states)
+    def __call__(self, state, agent_state=None):
+        noises = [None] * len(state)
 
-        if not isinstance(states, torch.FloatTensor):
-            states = float32_preprocessor(states).to(self.device)
+        if not isinstance(state, torch.FloatTensor):
+            state = float32_preprocessor(state).to(self.device)
 
-        if len(states) == 1:
+        if len(state) == 1:
             self.model.eval()
         else:
             self.model.train()
 
         if self.agent_mode == AgentMode.TRAIN:
-            mu_v = self.model(states)
+            mu_v = self.model(state)
             mu = mu_v.detach().cpu().numpy()
             actions, new_noises = self.train_action_selector(mu, noises, self.global_uncertainty)
             self.last_noise = new_noises[0][0]
         else:
-            mu_v = self.test_model(states)
+            mu_v = self.test_model(state)
             mu = mu_v.detach().cpu().numpy()
             actions, new_noises = self.test_and_play_action_selector(mu, noises)
 
@@ -154,7 +156,7 @@ class AgentDDPG(OffPolicyAgent):
             batch_indices, batch_weights = None, None
 
         # print(batch)
-        states_v, actions_v, rewards_v, dones_mask, last_states_v = self.unpack_batch(batch)
+        states_v, actions_v, rewards_v, dones_mask, last_states_v, agent_states = self.unpack_batch(batch)
         self.actor_optimizer.zero_grad()
 
         current_actions_v = self.model.base.forward_actor(states_v)
@@ -221,61 +223,61 @@ class AgentDDPG(OffPolicyAgent):
 
         return gradients, loss_critic_v.item(), loss_actor_v.item() * -1.0
 
-    def on_train_old(self, step_idx):
-        if self.params.PER_PROPORTIONAL or self.params.PER_RANK_BASED:
-            batch, batch_indices, batch_weights = self.buffer.sample(self.params.BATCH_SIZE)
-        else:
-            batch = self.buffer.sample(self.params.BATCH_SIZE)
-            batch_indices, batch_weights = None, None
-
-        # print(batch)
-        states_v, actions_v, rewards_v, dones_mask, last_states_v = self.unpack_batch(batch)
-
-        # train critic
-        self.critic_optimizer.zero_grad()
-        # critic_parameters = self.model.base.critic.parameters()
-        # for p in critic_parameters:
-        #     p.requires_grad = True
-
-        q_v = self.model.base.forward_critic(states_v, actions_v)
-        last_act_v = self.target_model.forward_actor(last_states_v)
-        q_last_v = self.target_model.forward_critic(last_states_v, last_act_v)
-        q_last_v[dones_mask] = 0.0
-        target_q_v = rewards_v.unsqueeze(dim=-1) + q_last_v * self.params.GAMMA ** self.params.N_STEP
-
-        if self.params.PER_PROPORTIONAL or self.params.PER_RANK_BASED:
-            batch_l1_loss = F.smooth_l1_loss(q_v, target_q_v.detach(), reduction='none')  # for PER
-            batch_weights_v = torch.tensor(batch_weights)
-            critic_loss_v = batch_weights_v * batch_l1_loss
-
-            self.buffer.update_priorities(batch_indices, batch_l1_loss.detach().cpu().numpy() + 1e-5)
-            self.buffer.update_beta(step_idx)
-        else:
-            critic_loss_v = F.smooth_l1_loss(q_v, target_q_v.detach(), reduction='none')
-
-        loss_critic_v = critic_loss_v.mean()
-
-        loss_critic_v.backward()
-        nn_utils.clip_grad_norm_(self.model.base.critic_params, self.params.CLIP_GRAD)
-        self.critic_optimizer.step()
-
-        # train actor
-        self.actor_optimizer.zero_grad()
-        # critic_parameters = self.model.base.critic.parameters()
-        # for p in critic_parameters:
-        #     p.requires_grad = False
-
-        current_actions_v = self.model.base.forward_actor(states_v)
-        q_v_for_actor = self.model.base.forward_critic(states_v, current_actions_v)
-        loss_actor_v = -1.0 * q_v_for_actor.mean()
-
-        loss_actor_v.backward()
-        nn_utils.clip_grad_norm_(self.model.base.actor_params, self.params.CLIP_GRAD)
-        self.actor_optimizer.step()
-
-        self.target_model.alpha_sync(self.model, alpha=1 - 0.00005) #(1 - 0.001)
-
-        #gradients = self.model.get_gradients_for_current_parameters()
-        gradients = None
-
-        return gradients, loss_critic_v.item(), loss_actor_v.item() * -1.0
+    # def on_train_old(self, step_idx):
+    #     if self.params.PER_PROPORTIONAL or self.params.PER_RANK_BASED:
+    #         batch, batch_indices, batch_weights = self.buffer.sample(self.params.BATCH_SIZE)
+    #     else:
+    #         batch = self.buffer.sample(self.params.BATCH_SIZE)
+    #         batch_indices, batch_weights = None, None
+    #
+    #     # print(batch)
+    #     states_v, actions_v, rewards_v, dones_mask, last_states_v, agent_states = self.unpack_batch(batch)
+    #
+    #     # train critic
+    #     self.critic_optimizer.zero_grad()
+    #     # critic_parameters = self.model.base.critic.parameters()
+    #     # for p in critic_parameters:
+    #     #     p.requires_grad = True
+    #
+    #     q_v = self.model.base.forward_critic(states_v, actions_v)
+    #     last_act_v = self.target_model.forward_actor(last_states_v)
+    #     q_last_v = self.target_model.forward_critic(last_states_v, last_act_v)
+    #     q_last_v[dones_mask] = 0.0
+    #     target_q_v = rewards_v.unsqueeze(dim=-1) + q_last_v * self.params.GAMMA ** self.params.N_STEP
+    #
+    #     if self.params.PER_PROPORTIONAL or self.params.PER_RANK_BASED:
+    #         batch_l1_loss = F.smooth_l1_loss(q_v, target_q_v.detach(), reduction='none')  # for PER
+    #         batch_weights_v = torch.tensor(batch_weights)
+    #         critic_loss_v = batch_weights_v * batch_l1_loss
+    #
+    #         self.buffer.update_priorities(batch_indices, batch_l1_loss.detach().cpu().numpy() + 1e-5)
+    #         self.buffer.update_beta(step_idx)
+    #     else:
+    #         critic_loss_v = F.smooth_l1_loss(q_v, target_q_v.detach(), reduction='none')
+    #
+    #     loss_critic_v = critic_loss_v.mean()
+    #
+    #     loss_critic_v.backward()
+    #     nn_utils.clip_grad_norm_(self.model.base.critic_params, self.params.CLIP_GRAD)
+    #     self.critic_optimizer.step()
+    #
+    #     # train actor
+    #     self.actor_optimizer.zero_grad()
+    #     # critic_parameters = self.model.base.critic.parameters()
+    #     # for p in critic_parameters:
+    #     #     p.requires_grad = False
+    #
+    #     current_actions_v = self.model.base.forward_actor(states_v)
+    #     q_v_for_actor = self.model.base.forward_critic(states_v, current_actions_v)
+    #     loss_actor_v = -1.0 * q_v_for_actor.mean()
+    #
+    #     loss_actor_v.backward()
+    #     nn_utils.clip_grad_norm_(self.model.base.actor_params, self.params.CLIP_GRAD)
+    #     self.actor_optimizer.step()
+    #
+    #     self.target_model.alpha_sync(self.model, alpha=1 - 0.00005) #(1 - 0.001)
+    #
+    #     #gradients = self.model.get_gradients_for_current_parameters()
+    #     gradients = None
+    #
+    #     return gradients, loss_critic_v.item(), loss_actor_v.item() * -1.0

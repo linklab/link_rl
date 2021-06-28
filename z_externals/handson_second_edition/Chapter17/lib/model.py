@@ -129,9 +129,6 @@ class AgentDDPG(BaseAgent):
         self.ou_sigma = ou_sigma
         self.ou_epsilon = ou_epsilon
 
-    def initial_agent_state(self):
-        return None
-
     def __call__(self, states, agent_states):
         states_v = float32_preprocessor(states)
         states_v = states_v.to(self.device)
