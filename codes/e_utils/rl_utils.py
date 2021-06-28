@@ -1,4 +1,5 @@
 import random
+from collections import namedtuple
 
 from gym import Env
 from gym.spaces import Box, Discrete
@@ -74,8 +75,6 @@ def get_single_environment(params=None, mode=AgentMode.TRAIN):
     if params.ENVIRONMENT_ID == EnvironmentName.REAL_DEVICE_RIP:
         from codes.b_environments.rotary_inverted_pendulum.rip import RotaryInvertedPendulumEnv
         env = RotaryInvertedPendulumEnv(
-            action_min=params.ACTION_SCALE * -1.0,
-            action_max=params.ACTION_SCALE,
             env_reset=params.ENV_RESET,
             pendulum_type=EnvironmentName.REAL_DEVICE_RIP,
             params=params,
@@ -86,8 +85,6 @@ def get_single_environment(params=None, mode=AgentMode.TRAIN):
     elif params.ENVIRONMENT_ID == EnvironmentName.REAL_DEVICE_DOUBLE_RIP:
         from codes.b_environments.rotary_inverted_pendulum.rip import RotaryInvertedPendulumEnv
         env = RotaryInvertedPendulumEnv(
-            action_min=params.ACTION_SCALE * -1.0,
-            action_max=params.ACTION_SCALE,
             env_reset=params.ENV_RESET,
             pendulum_type=EnvironmentName.REAL_DEVICE_DOUBLE_RIP,
             params=params,
@@ -139,8 +136,6 @@ def get_single_environment(params=None, mode=AgentMode.TRAIN):
     elif params.ENVIRONMENT_ID == EnvironmentName.PENDULUM_MATLAB_V0:
         from codes.b_environments.rotary_inverted_pendulum.rip import RotaryInvertedPendulumEnv
         env = RotaryInvertedPendulumEnv(
-            action_min=params.ACTION_SCALE * -1.0,
-            action_max=params.ACTION_SCALE,
             env_reset=params.ENV_RESET,
             pendulum_type=EnvironmentName.PENDULUM_MATLAB_V0,
             params=params,
@@ -150,8 +145,6 @@ def get_single_environment(params=None, mode=AgentMode.TRAIN):
     elif params.ENVIRONMENT_ID == EnvironmentName.PENDULUM_MATLAB_DOUBLE_RIP_V0:
         from codes.b_environments.rotary_inverted_pendulum.rip import RotaryInvertedPendulumEnv
         env = RotaryInvertedPendulumEnv(
-            action_min=params.ACTION_SCALE * -1.0,
-            action_max=params.ACTION_SCALE,
             env_reset=params.ENV_RESET,
             pendulum_type=EnvironmentName.PENDULUM_MATLAB_DOUBLE_RIP_V0,
             params=params,
@@ -202,29 +195,32 @@ def get_single_environment(params=None, mode=AgentMode.TRAIN):
 
 def get_environment_input_output_info(env):
     if isinstance(env, VectorEnv):
-        input_shape = env.single_observation_space.shape
-        action_shape = env.single_action_space.shape
-        if isinstance(env.single_action_space, Discrete):
-            num_outputs = env.single_action_space.n
-        elif isinstance(env.single_action_space, Box):
-            num_outputs = env.single_action_space.shape[0]
-        else:
-            num_outputs, action_shape = None, None
+        observation_space = env.single_observation_space
+        action_space = env.single_action_space
     elif isinstance(env, Env):
-        input_shape = env.observation_space.shape
-        action_shape = env.action_space.shape
-        if isinstance(env.action_space, Discrete):
-            num_outputs = env.action_space.n
-        elif isinstance(env.action_space, Box):
-            num_outputs = env.action_space.shape[0]
-        else:
-            num_outputs, action_shape = None, None
+        observation_space = env.observation_space
+        action_space = env.action_space
     else:
         raise ValueError()
 
-    print(f"input_shape: {input_shape}, action_shape: {action_shape}, num_outputs: {num_outputs}")
+    input_shape = observation_space.shape
+    action_shape = action_space.shape
 
-    return input_shape, action_shape, num_outputs
+    if isinstance(action_space, Discrete):
+        num_outputs = action_space.n
+        action_min = 0
+        action_max = action_space.n-1
+    elif isinstance(action_space, Box):
+        num_outputs = action_space.shape[0]
+        action_min = action_space.low
+        action_max = action_space.high
+    else:
+        num_outputs, action_shape, action_min, action_max = None, None, None, None
+
+    print(f"input_shape: {input_shape}, action_shape: {action_shape}, num_outputs: {num_outputs}, "
+          f"action_min: {action_min}, action_max: {action_max}")
+
+    return input_shape, action_shape, num_outputs, action_min, action_max
 
 
 def get_rl_model(worker_id, input_shape=None, num_outputs=None, params=None, device=None):
@@ -282,66 +278,115 @@ def get_rl_model(worker_id, input_shape=None, num_outputs=None, params=None, dev
     return model
 
 
-def get_rl_agent(input_shape, action_shape, num_outputs, worker_id, params, device="cpu"):
+def get_rl_agent(input_shape, action_shape, num_outputs, action_min, action_max, worker_id, params, device="cpu"):
     if params.RL_ALGORITHM == RLAlgorithmName.DDPG_V0:
         agent = AgentDDPG(
             worker_id=worker_id, input_shape=input_shape, action_shape=action_shape, num_outputs=num_outputs,
-            params=params, device=device
+            action_min=action_min, action_max=action_max, params=params, device=device
         )
     elif params.RL_ALGORITHM == RLAlgorithmName.TD3_V0:
         agent = AgentTD3(
             worker_id=worker_id, input_shape=input_shape, action_shape=action_shape, num_outputs=num_outputs,
-            params=params, device=device
+            action_min=action_min, action_max=action_max, params=params, device=device
         )
     elif params.RL_ALGORITHM == RLAlgorithmName.DQN_V0:
         agent = AgentDQN(
             worker_id=worker_id, input_shape=input_shape, action_shape=action_shape, num_outputs=num_outputs,
-            params=params, device=device
+            action_min=action_min, action_max=action_max,params=params, device=device
         )
     elif params.RL_ALGORITHM == RLAlgorithmName.SAC_V0:
         agent = AgentSAC(
             input_shape=input_shape, action_shape=action_shape, num_outputs=num_outputs, worker_id=worker_id,
-            params=params, device=device
+            action_min=action_min, action_max=action_max, params=params, device=device
         )
     elif params.RL_ALGORITHM == RLAlgorithmName.CONTINUOUS_A2C_V0:
         agent = AgentContinuousA2C(
             worker_id=worker_id, input_shape=input_shape, action_shape=action_shape, num_outputs=num_outputs,
-            params=params, device=device
+            action_min=action_min, action_max=action_max, params=params, device=device
         )
     elif params.RL_ALGORITHM == RLAlgorithmName.DISCRETE_A2C_V0:
         agent = AgentDiscreteA2C(
             worker_id=worker_id, input_shape=input_shape, action_shape=action_shape, num_outputs=num_outputs,
-            params=params, device=device
+            action_min=action_min, action_max=action_max, params=params, device=device
         )
     elif params.RL_ALGORITHM == RLAlgorithmName.CONTINUOUS_PPO_V0:
         agent = AgentContinuousPPO(
             worker_id=worker_id, input_shape=input_shape, action_shape=action_shape, num_outputs=num_outputs,
-            params=params, device=device
+            action_min=action_min, action_max=action_max, params=params, device=device
         )
     elif params.RL_ALGORITHM == RLAlgorithmName.DISCRETE_PPO_V0:
         agent = AgentDiscretePPO(
             worker_id=worker_id, input_shape=input_shape, action_shape=action_shape, num_outputs=num_outputs,
-            params=params, device=device
+            action_min=action_min, action_max=action_max, params=params, device=device
         )
     elif params.RL_ALGORITHM == RLAlgorithmName.EVOLUTION_STRATEGY:
         agent = AgentEMAES(
             worker_id=worker_id, input_shape=input_shape, action_shape=action_shape, num_outputs=num_outputs,
-            params=params, device=device
+            action_min=action_min, action_max=action_max, params=params, device=device
         )
     elif params.RL_ALGORITHM == RLAlgorithmName.GENETIC_ALGORITHM:
         agent = AgentGA(
             worker_id=worker_id, input_shape=input_shape, action_shape=action_shape, num_outputs=num_outputs,
-            params=params, device=device
+            action_min=action_min, action_max=action_max, params=params, device=device
         )
     elif params.RL_ALGORITHM == RLAlgorithmName.MULTI_GENETIC_ALGORITHM:
         agent = AgentMultiGA(
             worker_id=worker_id, input_shape=input_shape, action_shape=action_shape, num_outputs=num_outputs,
-            params=params, device=device
+            action_min=action_min, action_max=action_max, params=params, device=device
         )
     else:
         raise ValueError()
 
     return agent
+
+DQNAgentState = namedtuple(
+    'DQNAgentState', ('hidden_state',)
+)
+
+ActorCriticAgentState = namedtuple(
+    'ActorCriticAgentState', ('actor_hidden_state', 'critic_hidden_state')
+)
+
+ActorCriticTD3AgentState = namedtuple(
+    'ActorCriticTD3AgentState', ('actor_hidden_state', 'critic_1_hidden_state', 'critic_2_hidden_state')
+)
+
+
+def initial_agent_state(
+        hidden_state=None, actor_hidden_state=None,
+        critic_hidden_state=None, critic_1_hidden_state=None, critic_2_hidden_state=None
+):
+    num_directions = 2 if params.RNN_BIDIRECTIONAL else 1
+
+    if params.RL_ALGORITHM in [RLAlgorithmName.DQN_V0]:
+        agent_state = DQNAgentState(
+            hidden_state=torch.zeros(
+                params.RNN_NUM_LAYER * num_directions, 1, params.RNN_HIDDEN_SIZE
+            ) if hidden_state is None else hidden_state
+        )
+    elif params.RL_ALGORITHM in [RLAlgorithmName.TD3_V0]:
+        agent_state = ActorCriticTD3AgentState(
+            actor_hidden_state=torch.zeros(
+                params.RNN_NUM_LAYER * num_directions, 1, params.RNN_HIDDEN_SIZE
+            ) if actor_hidden_state is None else actor_hidden_state,
+            critic_1_hidden_state=torch.zeros(
+                params.RNN_NUM_LAYER * num_directions, 1, params.RNN_HIDDEN_SIZE
+            ) if critic_1_hidden_state is None else critic_1_hidden_state,
+            critic_2_hidden_state=torch.zeros(
+                params.RNN_NUM_LAYER * num_directions, 1, params.RNN_HIDDEN_SIZE
+            ) if critic_2_hidden_state is None else critic_2_hidden_state
+        )
+    else:
+        agent_state = ActorCriticAgentState(
+            actor_hidden_state=torch.zeros(
+                params.RNN_NUM_LAYER * num_directions, 1, params.RNN_HIDDEN_SIZE
+            ) if actor_hidden_state is None else actor_hidden_state,
+            critic_hidden_state=torch.zeros(
+                params.RNN_NUM_LAYER * num_directions, 1, params.RNN_HIDDEN_SIZE
+            ) if critic_hidden_state is None else critic_hidden_state
+        )
+
+    return agent_state
 
 
 def get_actor_critic_optimizer(actor_parameters, actor_learning_rate, critic_parameters, critic_learning_rate, params):

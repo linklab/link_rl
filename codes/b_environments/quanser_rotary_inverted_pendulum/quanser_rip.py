@@ -17,12 +17,15 @@ STATE_SIZE = 6
 
 balance_motor_power_list = [-60., 0., 60.]
 
-RIP_SERVER = '10.0.0.5'
+RIP_SERVER = '10.0.0.4'
 
 
 def get_quanser_rip_observation_space():
-    low = np.array([0, 0, 0, 0, 0, 0], dtype=np.float32)
-    high = np.array([1., 1., 500., 1., 1., 500,], dtype=np.float32)
+    # low = np.array([0, 0, 0, 0, 0, 0], dtype=np.float32)
+    # high = np.array([1., 1., 500., 1., 1., 500,], dtype=np.float32)
+
+    low = np.array([0, 0, 0, 0], dtype=np.float32)
+    high = np.array([1., 1., 500., 500,], dtype=np.float32)
 
     observation_space = gym.spaces.Box(
         low=low, high=high, dtype=np.float32
@@ -31,13 +34,15 @@ def get_quanser_rip_observation_space():
     return observation_space, n_states
 
 
-def get_quanser_rip_action_space(params):
+def get_quanser_rip_action_info(params):
     if params.RL_ALGORITHM in [RLAlgorithmName.DQN_V0]:
         action_index_to_voltage = list(np.array([
             -1.0, -0.75, -0.5, -0.3, -0.2, -0.1, 0.0, 0.1, 0.2, 0.3, 0.5, 0.75, 1.0
         ]) * params.ACTION_SCALE)
         action_space = gym.spaces.Discrete(len(action_index_to_voltage))
         n_actions = action_space.n
+        action_min = 0
+        action_max = n_actions - 1
     else:
         action_index_to_voltage = None
         action_space = gym.spaces.Box(
@@ -45,8 +50,10 @@ def get_quanser_rip_action_space(params):
             dtype=np.float32
         )
         n_actions = action_space.shape[0]
+        action_min = action_space.low
+        action_max = action_space.high
 
-    return action_space, n_actions, action_index_to_voltage
+    return action_space, n_actions, action_min, action_max, action_index_to_voltage
 
 
 class EnvironmentQuanserRIP(gym.Env):
@@ -92,7 +99,7 @@ class EnvironmentQuanserRIP(gym.Env):
         #=======================================================================================
 
         #==================action===============================================================
-        self.action_space, self.n_actions, self.action_index_to_voltage = get_quanser_rip_action_space(self.params)
+        self.action_space, self.n_actions, self.action_min, self.action_max, self.action_index_to_voltage = get_quanser_rip_action_info(self.params)
         #=======================================================================================
 
         channel = grpc.insecure_channel('{0}:50051'.format(RIP_SERVER))
@@ -100,7 +107,8 @@ class EnvironmentQuanserRIP(gym.Env):
 
         print(self.max_episode_step)
     def get_n_states(self):
-        n_states = 6
+        # n_states = 6
+        n_states = 4
         return n_states
     #
     # def get_n_actions(self):
@@ -159,8 +167,8 @@ class EnvironmentQuanserRIP(gym.Env):
             self.pendulum_velocity / params.VELOCITY_STATE_DENOMINATOR,
             # math.cos(0.0),
             # math.sin(0.0),
-            math.cos(quanser_response.motor_radian),
-            math.sin(quanser_response.motor_radian),
+            # math.cos(quanser_response.motor_radian),
+            # math.sin(quanser_response.motor_radian),
             self.motor_velocity / params.VELOCITY_STATE_DENOMINATOR
         ]
         # wait_time = 1 if self.episode == 0 else 15  # if self.episode % 10 == 0 else 3
@@ -203,8 +211,6 @@ class EnvironmentQuanserRIP(gym.Env):
 
         if self.params.RL_ALGORITHM in [RLAlgorithmName.DQN_V0]:
             action = self.action_index_to_voltage[int(action)]
-        else:
-            action = action[0] * params.ACTION_SCALE
 
         #motor_power = float(action)
         # if self.step_idx % 100 == 0:
@@ -243,8 +249,8 @@ class EnvironmentQuanserRIP(gym.Env):
             self.pendulum_velocity / params.VELOCITY_STATE_DENOMINATOR,
             # math.cos(self.initial_motor_radian - self.motor_radian),
             # math.sin(self.initial_motor_radian - self.motor_radian),
-            math.cos(quanser_response.motor_radian),
-            math.sin(quanser_response.motor_radian),
+            # math.cos(quanser_response.motor_radian),
+            # math.sin(quanser_response.motor_radian),
             self.motor_velocity / params.VELOCITY_STATE_DENOMINATOR
         ]
         next_state = np.asarray(self.state)

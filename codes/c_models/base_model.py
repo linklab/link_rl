@@ -1,5 +1,7 @@
 # https://github.com/ikostrikov/pytorch-a2c-ppo-acktr-gail
 import glob
+from abc import abstractmethod
+from collections import namedtuple
 
 import numpy as np
 import torch
@@ -10,6 +12,10 @@ current_path = os.path.dirname(os.path.realpath(__file__))
 PROJECT_HOME = os.path.abspath(os.path.join(current_path, os.pardir, os.pardir))
 if PROJECT_HOME not in sys.path:
     sys.path.append(PROJECT_HOME)
+
+
+class RNNModel(nn.Module):
+    pass
 
 
 class BaseModel(nn.Module):
@@ -54,10 +60,9 @@ class BaseModel(nn.Module):
         #     else:
         #         print("Worker ID - {0}: There is no saved model".format(self.worker_id))
 
-    def forward(self, inputs):
-        if not (type(inputs) is torch.Tensor):
-            inputs = torch.tensor([inputs], dtype=torch.float).to(self.device)
-        return self.base.forward(inputs)
+    @abstractmethod
+    def forward(self, input, agent_state):
+        raise NotImplementedError
 
     def reset_average_gradients(self):
         for layer_name, layer in self.base.layers_info.items():

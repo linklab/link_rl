@@ -23,8 +23,6 @@ class PARAMETERS_TD3:
     PER_RANK_BASED = False
     DOUBLE = True
 
-    ACTION_SCALE = 1.0
-
     REPLAY_BUFFER_SIZE = None
 
     NOISE_STD = 1.0

@@ -1,7 +1,6 @@
 # https://github.com/openai/gym/blob/master/gym/envs/classic_control/pendulum.py
 # https://mspries.github.io/jimmy_pendulum.html
 #!/usr/bin/env python3
-import copy
 import time
 
 import torch
@@ -9,9 +8,6 @@ import os, sys
 import numpy as np
 import wandb
 from termcolor import colored
-
-from codes.c_models.continuous_action.continuous_action_model import ContinuousActionModel
-from codes.e_utils.reward_changer import RewardChanger
 
 print("PyTorch Version", torch.__version__)
 
@@ -21,16 +17,18 @@ if PROJECT_HOME not in sys.path:
     sys.path.append(PROJECT_HOME)
 
 from codes.a_config.parameters import PARAMETERS as params
+from codes.b_environments.quanser_rotary_inverted_pendulum.quanser_rip import get_quanser_rip_observation_space, \
+    get_quanser_rip_action_info
+from codes.b_environments.rotary_inverted_pendulum.rip import get_rip_observation_space, get_rip_action_info
+from codes.c_models.continuous_action.continuous_action_model import ContinuousActionModel
+from codes.e_utils.reward_changer import RewardChanger
 from codes.e_utils.rl_utils import get_environment_input_output_info, MODEL_ZOO_SAVE_DIR, MODEL_SAVE_FILE_PREFIX
 from codes.e_utils import rl_utils
 from codes.e_utils.common_utils import save_model, print_environment_info, remove_models, \
-    print_agent_info, load_model
+    print_agent_info, load_model, map_range
 from codes.e_utils.train_tracker import EarlyStopping
 from codes.e_utils.logger import get_logger
 from codes.e_utils.names import EnvironmentName, AgentMode, RLAlgorithmName
-from codes.b_environments.quanser_rotary_inverted_pendulum.quanser_rip import get_quanser_rip_observation_space, \
-    get_quanser_rip_action_space
-from codes.b_environments.rotary_inverted_pendulum.rip import get_rip_observation_space, get_rip_action_space
 
 WANDB_DIR = os.path.join(PROJECT_HOME, "out", "wandb")
 if not os.path.exists(WANDB_DIR):
@@ -60,23 +58,24 @@ def get_agent(env):
             EnvironmentName.REAL_DEVICE_DOUBLE_RIP,
         ]:
             observation_space, _ = get_rip_observation_space(params.ENVIRONMENT_ID, params)
-            action_space, num_outputs, _ = get_rip_action_space(params, pendulum_type=params.ENVIRONMENT_ID)
+            action_space, num_outputs, action_min, action_max, _ = get_rip_action_info(params, pendulum_type=params.ENVIRONMENT_ID)
 
             input_shape = observation_space.shape
             action_shape = action_space.shape
         elif params.ENVIRONMENT_ID == EnvironmentName.QUANSER_SERVO_2:
             observation_space, _ = get_quanser_rip_observation_space()
-            action_space, num_outputs, _ = get_quanser_rip_action_space(params)
+            action_space, num_outputs, action_min, action_max, _ = get_quanser_rip_action_info(params)
 
             input_shape = observation_space.shape
             action_shape = action_space.shape
         else:
             raise ValueError()
     else:
-        input_shape, action_shape, num_outputs = get_environment_input_output_info(env)
+        input_shape, action_shape, num_outputs, action_min, action_max = get_environment_input_output_info(env)
 
     agent = rl_utils.get_rl_agent(
-        input_shape, action_shape, num_outputs, worker_id=0, params=params, device=device
+        input_shape, action_shape, num_outputs,
+        action_min=action_min, action_max=action_max, worker_id=0, params=params, device=device
     )
 
     load_model(MODEL_ZOO_SAVE_DIR, MODEL_SAVE_FILE_PREFIX, agent, inquery=True)
@@ -160,7 +159,8 @@ class EpisodeProcessor:
         train_episode_reward_lst_for_test.append(current_episode_reward)
         train_episode_reward_lst_for_stat.append(current_episode_reward)
 
-        epsilon = self.agent.train_action_selector.epsilon if hasattr(self.agent.train_action_selector, 'epsilon') else None
+        epsilon = self.agent.train_action_selector.epsilon \
+            if hasattr(self.agent.train_action_selector, 'epsilon') else None
 
         speed, elapsed_time = speed_tracker.get_speed_and_elapsed_time(
             episode_done_step=step_idx
@@ -239,25 +239,25 @@ class EpisodeProcessor:
             state = self.test_env.reset()
 
             num_episode_step = 0
+
+            agent_state = rl_utils.initial_agent_state()
+
             while not done:
                 num_step += 1
                 num_episode_step += 1
 
                 state = np.expand_dims(state, axis=0)
 
-                action, _, = self.agent(state)
+                action, _, = self.agent(state, agent_state)
 
                 action = action[0]
 
-                if isinstance(self.agent.model, ContinuousActionModel) and params.ENVIRONMENT_ID not in [
-                    EnvironmentName.PENDULUM_MATLAB_V0,
-                    EnvironmentName.PENDULUM_MATLAB_DOUBLE_RIP_V0,
-                    EnvironmentName.REAL_DEVICE_RIP,
-                    EnvironmentName.REAL_DEVICE_DOUBLE_RIP,
-                    EnvironmentName.QUANSER_SERVO_2
-                ]:
-                    if hasattr(params, "ACTION_SCALE") and params.ACTION_SCALE:
-                        action = params.ACTION_SCALE * action
+                if isinstance(self.agent.model, ContinuousActionModel):
+                    action = map_range(
+                        np.asarray(action),
+                        np.ones_like(self.agent.action_min) * -1.0, np.ones_like(self.agent.action_max),
+                        self.agent.action_min, self.agent.action_max
+                    )
 
                 next_state, reward, done, info = self.test_env.step(action)
 
@@ -298,12 +298,12 @@ def print_performance(
         prefix = ""
 
     if isinstance(epsilon, tuple) or isinstance(epsilon, list):
-        epsilon_str = " eps.: {0:5.3f}, {1:5.3f},".format(
+        epsilon_str = ", eps.: {0:5.3f}, {1:5.3f},".format(
             epsilon[0] if epsilon[0] else 0.0,
             epsilon[1] if epsilon[1] else 0.0
         )
     elif isinstance(epsilon, float):
-        epsilon_str = " eps.: {0:5.3f},".format(
+        epsilon_str = ", EPSILON: {0:5.3f},".format(
             epsilon if epsilon else 0.0,
         )
     else:
@@ -318,8 +318,7 @@ def print_performance(
         print(evaluation_msg)
         print("#######################################################################################################")
 
-    print(
-        "{0}[{1:6}/{2}] Ep. {3}, EPISODE REWARD: {4:9.3f}, MEAN_{5} EPSIODE REWARD: {6},{7} SPEED: {8:7.2f}steps/sec., {9}".format(
+    print("{0}[{1:6}/{2}] Ep. {3}, EPISODE REWARD: {4:9.3f}, MEAN_{5} EPSIODE REWARD: {6}{7} SPEED: {8:7.2f}steps/sec., {9}".format(
             prefix,
             episode_done_step,
             params.MAX_GLOBAL_STEP,
