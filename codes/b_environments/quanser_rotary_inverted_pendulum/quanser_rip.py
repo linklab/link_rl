@@ -17,7 +17,7 @@ STATE_SIZE = 6
 
 balance_motor_power_list = [-60., 0., 60.]
 
-RIP_SERVER = '10.0.0.4'
+RIP_SERVER = '10.0.0.5'
 
 
 def get_quanser_rip_observation_space():
@@ -211,6 +211,8 @@ class EnvironmentQuanserRIP(gym.Env):
 
         if self.params.RL_ALGORITHM in [RLAlgorithmName.DQN_V0]:
             action = self.action_index_to_voltage[int(action)]
+        else:
+            action = action[0] * params.ACTION_SCALE
 
         #motor_power = float(action)
         # if self.step_idx % 100 == 0:
@@ -218,7 +220,7 @@ class EnvironmentQuanserRIP(gym.Env):
 
         #==================== Grpc and use sample time========================================
         # previous_time = time.perf_counter()
-        # print(action)
+        print(action)
         quanser_response = self.server_obj.step(QuanserRequest(value=action))
         # print(motor_power)
         # if quanser_response.message != "STEP":
