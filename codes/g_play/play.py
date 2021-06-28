@@ -55,6 +55,9 @@ def play_main(params, env):
 
         num_episode += 1
         num_episode_step = 0
+
+        agent_state = rl_utils.initial_agent_state()
+
         while not done:
             env.render()
 
@@ -63,7 +66,7 @@ def play_main(params, env):
 
             state = np.expand_dims(state, axis=0)
 
-            action, _, = agent(state, None)
+            action, agent_state, = agent(state, agent_state)
 
             if isinstance(agent.model, ContinuousActionModel):
                 action = map_range(
