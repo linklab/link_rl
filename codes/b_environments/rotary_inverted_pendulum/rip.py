@@ -501,6 +501,7 @@ class RotaryInvertedPendulumEnv(gym.Env):
     def step(self, action):
         #action = 100
         ############# time check #############################
+
         if self.pendulum_type in [EnvironmentName.REAL_DEVICE_RIP, EnvironmentName.REAL_DEVICE_DOUBLE_RIP]:
             while True:
                 current_time = time.perf_counter()
@@ -618,8 +619,8 @@ class RotaryInvertedPendulumEnv(gym.Env):
             #     time.sleep(0.008)
             #     num += 1
 
-            if self.step_idx % 100 == 0:
-                self.action_ = -self.action_
+            # if self.step_idx % 100 == 0:
+            #     self.action_ = -self.action_
 
             rip_response = self.server_obj.step(RipRequest(value=action))
             self.motor_position = math.radians(rip_response.arm_angle)
