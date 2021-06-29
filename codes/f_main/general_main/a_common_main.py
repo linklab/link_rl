@@ -248,7 +248,7 @@ class EpisodeProcessor:
 
                 state = np.expand_dims(state, axis=0)
 
-                action, _, = self.agent(state, agent_state)
+                action, agent_state, = self.agent(state, agent_state)
 
                 action = action[0]
 

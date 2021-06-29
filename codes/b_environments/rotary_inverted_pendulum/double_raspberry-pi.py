@@ -134,7 +134,7 @@ class RotaryDoubleInvertedPendulum:
             ))
             self.next_check_angle_step += self.check_angle_period_steps
         else:
-            time.sleep(1.5)
+            time.sleep(3)
             arm_angle, arm_velocity, link_1_angle, link_1_velocity, link_2_angle, link_2_velocity = self.calculate_state()
         # spi.xfer2([0x40, 0x00, 0x10, 0x00, 0x00])
 
@@ -257,7 +257,12 @@ def velocity_check(rip, server):
         link_vel_deque.append(abs(link_1_velocity))
         arm_vel_deque_mean = sum(arm_vel_deque)/100.0
         link_vel_deque_mean = sum(link_vel_deque)/100.0
-        if arm_vel_deque_mean > 1600 or link_vel_deque_mean > 1600: #5SECOND
+        if arm_vel_deque_mean > 1500 or link_vel_deque_mean > 1500: #5SECOND
+            arm_angle, arm_velocity, link_1_angle, link_1_velocity, link_2_angle, link_2_velocity = rip.calculate_state()
+            print("[STEP INDEX: {0}] link_1_angle : {1:5.3f}, link_2_angle : {2:5.3f}".format(
+                rip.step_idx,
+                link_1_angle % 360, link_2_angle % 360
+            ))
             server.stop(grace=None)
             for _ in range(3):
                 rip.test_terminate()
