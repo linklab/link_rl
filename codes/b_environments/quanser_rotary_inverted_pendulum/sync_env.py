@@ -54,7 +54,7 @@ class SyncronizeEnv(gym.Env):
         super(SyncronizeEnv, self).__init__()
         self.params = params
 
-        self.action_ = 1000
+        self.action_ = 200
 
         self.previous_time = 0
 
@@ -191,11 +191,11 @@ class SyncronizeEnv(gym.Env):
         # previous_time = time.perf_counter()
         # print(action)
 
-        if self.step_idx % 50 == 0:
-            self.action_ = -self.action_
+        # if self.step_idx % 50 == 0:
+        #     self.action_ = -self.action_
 
         quanser_response_1 = self.server_obj_1.step_sync(QuanserRequest(value=self.action_))
-        quanser_response_2 = self.server_obj_2.step_sync(QuanserRequest(value=self.action_))
+        quanser_response_2 = self.server_obj_2.step_sync(QuanserRequest(value=0))
 
         self.motor_radian_1 = quanser_response_1.motor_radian
         self.motor_velocity_1 = quanser_response_1.motor_velocity
@@ -208,6 +208,17 @@ class SyncronizeEnv(gym.Env):
         self.pendulum_velocity_2 = quanser_response_2.pendulum_velocity
 
         self.state = [0, 0, 0, 0, 0, 0]
+
+        # self.state = [
+        #     math.cos(self.pendulum_radian),
+        #     math.sin(self.pendulum_radian),
+        #     self.pendulum_velocity / params.VELOCITY_STATE_DENOMINATOR,
+        #     # math.cos(self.initial_motor_radian - self.motor_radian),
+        #     # math.sin(self.initial_motor_radian - self.motor_radian),
+        #     # math.cos(quanser_response.motor_radian),
+        #     # math.sin(quanser_response.motor_radian),
+        #     self.motor_velocity / params.VELOCITY_STATE_DENOMINATOR
+        # ]
 
         next_state = np.asarray(self.state)
 
@@ -222,18 +233,62 @@ class SyncronizeEnv(gym.Env):
         # print("pendulum radian : {0}, motor radian: {1}, reward: {2}, pendulum_velocity : {3} \n\n".format(
         #     self.pendulum_radian, self.motor_radian, self.is_motor_limit, self.pendulum_velocity
         # ))
+        #
+        # print("Quanser_1's info {0:<5.3f}, {1:<5.3f}, {2:<5.3f}, {3:<5.3f}".format(
+        #     self.motor_radian_1, self.motor_velocity_1, self.pendulum_radian_1, self.pendulum_velocity_1
+        # ))
+        # print("Quanser_2's info {0:<5.3f}, {1:<5.3f}, {2:<5.3f}, {3:<5.3f}".format(
+        #     self.motor_radian_2, self.motor_velocity_2, self.pendulum_radian_2, self.pendulum_velocity_2
+        # ))
+        next_state = np.asarray(self.state)
 
-        print("Quanser_1's info {0:<5.3f}, {1:<5.3f}, {2:<5.3f}, {3:<5.3f}".format(
-            self.motor_radian_1, self.motor_velocity_1, self.pendulum_radian_1, self.pendulum_velocity_1
-        ))
-        print("Quanser_2's info {0:<5.3f}, {1:<5.3f}, {2:<5.3f}, {3:<5.3f}".format(
-            self.motor_radian_2, self.motor_velocity_2, self.pendulum_radian_2, self.pendulum_velocity_2
-        ))
+        # self.update_current_state()
+
+        done, info = self.__isDone()
+
+        # =======================reward================================================================
+        self.reward = self.get_reward(action)
+        # print(self.reward, self.pendulum_radian)
+        # =============================================================================================
+        self.step_idx += 1
+        self.episode_steps += 1
+
+        # print("pendulum radian : {0}, motor radian: {1}, reward: {2}, pendulum_velocity : {3} \n\n".format(
+        #     self.pendulum_radian, self.motor_radian, self.is_motor_limit, self.pendulum_velocity
+        # ))
 
         return next_state, self.reward, done, info
 
     def __isDone(self):
-        return False, None
+        info = {}
+
+        def insert_to_info(s):
+            info["result"] = s
+
+        if self.episode_steps >= self.max_episode_step:  # 5000 * 25ms (0.025sec.) = 125 sec.
+            insert_to_info("*** Success ***")
+            return True, info
+        # elif self.is_motor_limit:
+        #     print(self.motor_radian, " !!!!!!!")
+        #     insert_to_info("*** Limit position ***")
+        #     return True, info
+        elif self.is_motor_limit:  # abs(self.motor_radian) > math.radians(90) or self.is_motor_limit:
+            insert_to_info("***motor_radian exceed 90***")
+            return True, info
+        else:
+            insert_to_info("")
+            return False, info
+
+    def update_current_state(self):
+        if abs(self.pendulum_radian) < math.radians(90):
+            self.count_continuous_uprights += 1
+        else:
+            self.count_continuous_uprights = 0
+
+        if self.count_continuous_uprights >= 1:
+            self.is_upright = True
+        else:
+            self.is_upright = False
 
     def get_reward(self, action):
         reward = 0

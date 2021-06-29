@@ -17,15 +17,20 @@ STATE_SIZE = 6
 
 balance_motor_power_list = [-60., 0., 60.]
 
-RIP_SERVER = '10.0.0.4'
-
+if params.SERVER_IDX == 1:
+    RIP_SERVER = '10.0.0.4'
+elif params.SERVER_IDX == 3:
+    RIP_SERVER = '10.0.0.5'
 
 def get_quanser_rip_observation_space():
-    # low = np.array([0, 0, 0, 0, 0, 0], dtype=np.float32)
-    # high = np.array([1., 1., 500., 1., 1., 500,], dtype=np.float32)
-
-    low = np.array([0, 0, 0, 0], dtype=np.float32)
-    high = np.array([1., 1., 500., 500,], dtype=np.float32)
+    if params.QUANSER_STATE_INFO == 0:
+        low = np.array([0, 0, 0, 0, 0, 0], dtype=np.float32)
+        high = np.array([1., 1., 500., 1., 1., 500,], dtype=np.float32)
+    elif params.QUANSER_STATE_INFO == 1:
+        low = np.array([0, 0, 0, 0], dtype=np.float32)
+        high = np.array([1., 1., 500., 500,], dtype=np.float32)
+    else:
+        raise ValueError()
 
     observation_space = gym.spaces.Box(
         low=low, high=high, dtype=np.float32
@@ -107,8 +112,13 @@ class EnvironmentQuanserRIP(gym.Env):
 
         print(self.max_episode_step)
     def get_n_states(self):
-        # n_states = 6
-        n_states = 4
+        if params.QUANSER_STATE_INFO == 0:
+            n_states = 6
+        elif params.QUANSER_STATE_INFO == 1:
+            n_states = 4
+        else:
+            raise ValueError()
+
         return n_states
     #
     # def get_n_actions(self):
@@ -160,17 +170,30 @@ class EnvironmentQuanserRIP(gym.Env):
         #         math.cos(self.pendulum_radian),
         #         math.sin(self.pendulum_radian),
         #     ))
-
-        self.state = [
-            math.cos(self.pendulum_radian),
-            math.sin(self.pendulum_radian),
-            self.pendulum_velocity / params.VELOCITY_STATE_DENOMINATOR,
-            # math.cos(0.0),
-            # math.sin(0.0),
-            # math.cos(quanser_response.motor_radian),
-            # math.sin(quanser_response.motor_radian),
-            self.motor_velocity / params.VELOCITY_STATE_DENOMINATOR
-        ]
+        if self.params.QUANSER_STATE_INFO == 0:
+            self.state = [
+                math.cos(self.pendulum_radian),
+                math.sin(self.pendulum_radian),
+                self.pendulum_velocity / params.VELOCITY_STATE_DENOMINATOR,
+                # math.cos(0.0),
+                # math.sin(0.0),
+                math.cos(quanser_response.motor_radian),
+                math.sin(quanser_response.motor_radian),
+                self.motor_velocity / params.VELOCITY_STATE_DENOMINATOR
+            ]
+        elif self.params.QUANSER_STATE_INFO == 1:
+            self.state = [
+                math.cos(self.pendulum_radian),
+                math.sin(self.pendulum_radian),
+                self.pendulum_velocity / params.VELOCITY_STATE_DENOMINATOR,
+                # math.cos(0.0),
+                # math.sin(0.0),
+                # math.cos(quanser_response.motor_radian),
+                # math.sin(quanser_response.motor_radian),
+                self.motor_velocity / params.VELOCITY_STATE_DENOMINATOR
+            ]
+        else:
+            raise ValueError()
         # wait_time = 1 if self.episode == 0 else 15  # if self.episode % 10 == 0 else 3
         # wait_time = 1
         # previousTime = time.perf_counter()
@@ -211,6 +234,8 @@ class EnvironmentQuanserRIP(gym.Env):
 
         if self.params.RL_ALGORITHM in [RLAlgorithmName.DQN_V0]:
             action = self.action_index_to_voltage[int(action)]
+        else:
+            action = action[0] * params.ACTION_SCALE
 
         #motor_power = float(action)
         # if self.step_idx % 100 == 0:
@@ -218,7 +243,6 @@ class EnvironmentQuanserRIP(gym.Env):
 
         #==================== Grpc and use sample time========================================
         # previous_time = time.perf_counter()
-        # print(action)
         quanser_response = self.server_obj.step(QuanserRequest(value=action))
         # print(motor_power)
         # if quanser_response.message != "STEP":
@@ -243,16 +267,31 @@ class EnvironmentQuanserRIP(gym.Env):
         #     ))
         # print("is motor limit", self.is_motor_limit)
 
-        self.state = [
-            math.cos(self.pendulum_radian),
-            math.sin(self.pendulum_radian),
-            self.pendulum_velocity / params.VELOCITY_STATE_DENOMINATOR,
-            # math.cos(self.initial_motor_radian - self.motor_radian),
-            # math.sin(self.initial_motor_radian - self.motor_radian),
-            # math.cos(quanser_response.motor_radian),
-            # math.sin(quanser_response.motor_radian),
-            self.motor_velocity / params.VELOCITY_STATE_DENOMINATOR
-        ]
+        if self.params.QUANSER_STATE_INFO == 0:
+            self.state = [
+                math.cos(self.pendulum_radian),
+                math.sin(self.pendulum_radian),
+                self.pendulum_velocity / params.VELOCITY_STATE_DENOMINATOR,
+                # math.cos(0.0),
+                # math.sin(0.0),
+                math.cos(quanser_response.motor_radian),
+                math.sin(quanser_response.motor_radian),
+                self.motor_velocity / params.VELOCITY_STATE_DENOMINATOR
+            ]
+        elif self.params.QUANSER_STATE_INFO == 1:
+            self.state = [
+                math.cos(self.pendulum_radian),
+                math.sin(self.pendulum_radian),
+                self.pendulum_velocity / params.VELOCITY_STATE_DENOMINATOR,
+                # math.cos(0.0),
+                # math.sin(0.0),
+                # math.cos(quanser_response.motor_radian),
+                # math.sin(quanser_response.motor_radian),
+                self.motor_velocity / params.VELOCITY_STATE_DENOMINATOR
+            ]
+        else:
+            raise ValueError()
+
         next_state = np.asarray(self.state)
 
         self.update_current_state()
