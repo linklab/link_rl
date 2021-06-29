@@ -621,7 +621,7 @@ class RotaryInvertedPendulumEnv(gym.Env):
 
             # if self.step_idx % 100 == 0:
             #     self.action_ = -self.action_
-
+            # print(action)
             rip_response = self.server_obj.step(RipRequest(value=action))
             self.motor_position = math.radians(rip_response.arm_angle)
             self.motor_velocity = rip_response.arm_velocity
