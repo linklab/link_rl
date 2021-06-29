@@ -17,8 +17,10 @@ STATE_SIZE = 6
 
 balance_motor_power_list = [-60., 0., 60.]
 
-RIP_SERVER = '10.0.0.4'
-
+if params.SERVER_IDX == 1:
+    RIP_SERVER = '10.0.0.4'
+elif params.SERVER_IDX == 3:
+    RIP_SERVER = '10.0.0.5'
 
 def get_quanser_rip_observation_space():
     if params.QUANSER_STATE_INFO == 0:
