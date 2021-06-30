@@ -1,4 +1,6 @@
-a = None
+import pybullet_envs
 
-with a:
-    print("!!!!")
+envs = pybullet_envs.getList()
+
+for env in envs:
+    print(env)
