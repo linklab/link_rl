@@ -129,9 +129,9 @@ def get_single_environment(params=None, mode=AgentMode.TRAIN):
         env = Drone_Racing(params.MY_PLATFORM)
     elif params.ENVIRONMENT_ID in [
         EnvironmentName.PYBULLET_ANT_V0, EnvironmentName.PYBULLET_HALF_CHEETAH_V0,
-        EnvironmentName.PYBULLET_INVERTED_DOUBLE_PENDULUM_V0
+        EnvironmentName.PYBULLET_INVERTED_DOUBLE_PENDULUM_V0, EnvironmentName.PYBULLET_HUMANOID_V0
     ]:
-        import pybulletgym
+        import pybullet_envs
         env = gym.make(params.ENVIRONMENT_ID.value)
     elif params.ENVIRONMENT_ID == EnvironmentName.PENDULUM_MATLAB_V0:
         from codes.b_environments.rotary_inverted_pendulum.rip import RotaryInvertedPendulumEnv
