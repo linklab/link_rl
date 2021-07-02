@@ -27,7 +27,10 @@ class DullAgent(BaseAgent):
     Agent always returns the fixed action
     """
     def __init__(self, action_space):
-        super(DullAgent, self).__init__(worker_id=0, params=None, action_shape=action_space, device="cpu")
+        super(DullAgent, self).__init__(
+            worker_id=0, params=None, action_shape=action_space, device="cpu",
+            action_min=0, action_max=1
+        )
         self.action_ = 0
 
     def __call__(self, observations: List[Any], agent_state=None):
@@ -54,24 +57,24 @@ def basic_single_env_test(params):
 
 
 def agent_experience_source_test(params):
-    params = TOY_PARAMETERS()
     env = rl_utils.get_environment(params=params)
     agent = DullAgent(action_space=env.action_space.shape)
     print("agent:", agent([1, 2])[0])
 
-    experience_source = ExperienceSource(env=env, agent=agent, n_step=3)
+    experience_source = ExperienceSource(env=env, agent=agent, n_step=2)
     for idx, exp in enumerate(experience_source):
         if idx >= 20:
             break
         print(exp)
 
 
-def agent_experience_source_first_last_test(params, num_exps=20):
+def agent_experience_source_first_last_test(params, num_exps=200):
     env = rl_utils.get_environment(params=params)
     agent = DullAgent(action_space=env.action_space.shape)
     print("agent:", agent([1, 2])[0])
 
-    experience_source = ExperienceSourceFirstLast(env=env, agent=agent, gamma=0.99, n_step=3)
+    experience_source = ExperienceSourceFirstLast(env=env, agent=agent, gamma=0.99, n_step=5)
+
     for idx, exp in enumerate(experience_source):
         if idx >= num_exps:
             break
@@ -83,17 +86,17 @@ if __name__ == "__main__":
     basic_single_env_test(params=params)
     print("!!!!!!!!!!!")
 
-    params = TOY_PARAMETERS()
-    agent_experience_source_test(params=params)
-    print("!!!!!!!!!!!")
-
+    # params = TOY_PARAMETERS()
+    # agent_experience_source_test(params=params)
+    # print("!!!!!!!!!!!")
+    #
     params = TOY_PARAMETERS()
     agent_experience_source_first_last_test(params=params)
     print("!!!!!!!!!!!")
-
-    params = TOY_PARAMETERS()
-    params.NUM_ENVIRONMENTS = 10
-    agent_experience_source_first_last_test(params=params, num_exps=100)
+    #
+    # params = TOY_PARAMETERS()
+    # params.NUM_ENVIRONMENTS = 10
+    # agent_experience_source_first_last_test(params=params, num_exps=100)
 
 
     # env_fns = [make_env('CartPole-v0', i) for i in range(3)]

@@ -70,12 +70,9 @@
 - cp Downloads/mjkey.txt ~/.mujoco/
 - pip install -U 'mujoco-py<2.1,>=2.0'
 
-### 9. pybullet-gym 설치
+### 9. pybullet 설치
 
-- [참고] https://github.com/benelot/pybullet-gym
-- git clone https://github.com/benelot/pybullet-gym.git
-- cd pybullet-gym
-- pip install -e .
+- pip install pybullet
 
 ### 10. Linux에 NFS 설치하고 MAC에서 원격 파일 시스템으로 MOUNT하기
 - 참고
