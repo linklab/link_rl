@@ -19,7 +19,7 @@ class TOY_PARAMETERS(PARAMETERS_GENERAL):
     wandb_project = "rl"
     wandb_entity = "bluebibi"
     WANDB = False
-    NUM_ENVIRONMENTS = 1
+    NUM_ENVIRONMENTS = 2
 
 
 class DullAgent(BaseAgent):
@@ -82,17 +82,17 @@ def agent_experience_source_first_last_test(params, num_exps=200):
 
 
 if __name__ == "__main__":
-    params = TOY_PARAMETERS()
-    basic_single_env_test(params=params)
-    print("!!!!!!!!!!!")
+    # params = TOY_PARAMETERS()
+    # basic_single_env_test(params=params)
+    # print("!!!!!!!!!!!")
 
     # params = TOY_PARAMETERS()
     # agent_experience_source_test(params=params)
     # print("!!!!!!!!!!!")
-    #
+
     params = TOY_PARAMETERS()
     agent_experience_source_first_last_test(params=params)
-    print("!!!!!!!!!!!")
+    #print("!!!!!!!!!!!")
     #
     # params = TOY_PARAMETERS()
     # params.NUM_ENVIRONMENTS = 10

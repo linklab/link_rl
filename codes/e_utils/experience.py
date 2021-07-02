@@ -183,7 +183,8 @@ class ExperienceSource:
                         # else:
                         #     states[idx] = None
 
-                        states[idx] = None
+                        history.clear()
+                        states[idx] = env.reset()[0]
 
                         # print("{0}, {1}, @@@@@".format(self.episode_idx, self.episode_reward_lst))
                         self.episode_idx += 1
@@ -193,7 +194,7 @@ class ExperienceSource:
                         # print(self.episode_reward_lst, "@@@@@")
 
                         agent_states[idx] = rl_utils.initial_agent_state()
-                        history.clear()
+
 
                 global_ofs += len(action_n)
             iter_idx += 1

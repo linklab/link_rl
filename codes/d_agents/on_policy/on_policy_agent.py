@@ -75,7 +75,10 @@ class OnPolicyAgent(BaseAgent):
 
             return actions, agent_state
         else:
-            mu_v, _, new_actor_hidden_state = self.test_model.forward_actor(state, agent_state.actor_hidden_state)
+            if agent_state:
+                mu_v, _, new_actor_hidden_state = self.test_model.forward_actor(state, agent_state.actor_hidden_state)
+            else:
+                mu_v, _, new_actor_hidden_state = self.test_model.forward_actor(state, None)
             actions = self.test_and_play_action_selector(mu_v, logstd_v=None)
             agent_state = rl_utils.initial_agent_state(actor_hidden_state=new_actor_hidden_state)
             return actions, agent_state
