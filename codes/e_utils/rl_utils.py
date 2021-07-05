@@ -129,9 +129,9 @@ def get_single_environment(params=None, mode=AgentMode.TRAIN):
         env = Drone_Racing(params.MY_PLATFORM)
     elif params.ENVIRONMENT_ID in [
         EnvironmentName.PYBULLET_ANT_V0, EnvironmentName.PYBULLET_HALF_CHEETAH_V0,
-        EnvironmentName.PYBULLET_INVERTED_DOUBLE_PENDULUM_V0
+        EnvironmentName.PYBULLET_INVERTED_DOUBLE_PENDULUM_V0, EnvironmentName.PYBULLET_HUMANOID_V0
     ]:
-        import pybulletgym
+        import pybullet_envs
         env = gym.make(params.ENVIRONMENT_ID.value)
     elif params.ENVIRONMENT_ID == EnvironmentName.PENDULUM_MATLAB_V0:
         from codes.b_environments.rotary_inverted_pendulum.rip import RotaryInvertedPendulumEnv
@@ -356,35 +356,43 @@ def initial_agent_state(
         hidden_state=None, actor_hidden_state=None,
         critic_hidden_state=None, critic_1_hidden_state=None, critic_2_hidden_state=None
 ):
-    num_directions = 2 if params.RNN_BIDIRECTIONAL else 1
+    if params.DEEP_LEARNING_MODEL in [
+        DeepLearningModelName.STOCHASTIC_CONTINUOUS_ACTOR_CRITIC_RNN,
+        DeepLearningModelName.DETERMINISTIC_CONTINUOUS_ACTOR_CRITIC_RNN,
+        DeepLearningModelName.STOCHASTIC_DISCRETE_ACTOR_CRITIC_RNN,
+        DeepLearningModelName.DETERMINISTIC_CONTINUOUS_ACTOR_CRITIC_RNN_ATTENTION
+    ]:
+        num_directions = 2 if params.RNN_BIDIRECTIONAL else 1
 
-    if params.RL_ALGORITHM in [RLAlgorithmName.DQN_V0]:
-        agent_state = DQNAgentState(
-            hidden_state=torch.zeros(
-                params.RNN_NUM_LAYER * num_directions, 1, params.RNN_HIDDEN_SIZE
-            ) if hidden_state is None else hidden_state
-        )
-    elif params.RL_ALGORITHM in [RLAlgorithmName.TD3_V0]:
-        agent_state = ActorCriticTD3AgentState(
-            actor_hidden_state=torch.zeros(
-                params.RNN_NUM_LAYER * num_directions, 1, params.RNN_HIDDEN_SIZE
-            ) if actor_hidden_state is None else actor_hidden_state,
-            critic_1_hidden_state=torch.zeros(
-                params.RNN_NUM_LAYER * num_directions, 1, params.RNN_HIDDEN_SIZE
-            ) if critic_1_hidden_state is None else critic_1_hidden_state,
-            critic_2_hidden_state=torch.zeros(
-                params.RNN_NUM_LAYER * num_directions, 1, params.RNN_HIDDEN_SIZE
-            ) if critic_2_hidden_state is None else critic_2_hidden_state
-        )
+        if params.RL_ALGORITHM in [RLAlgorithmName.DQN_V0]:
+            agent_state = DQNAgentState(
+                hidden_state=torch.zeros(
+                    params.RNN_NUM_LAYER * num_directions, 1, params.RNN_HIDDEN_SIZE
+                ) if hidden_state is None else hidden_state
+            )
+        elif params.RL_ALGORITHM in [RLAlgorithmName.TD3_V0]:
+            agent_state = ActorCriticTD3AgentState(
+                actor_hidden_state=torch.zeros(
+                    params.RNN_NUM_LAYER * num_directions, 1, params.RNN_HIDDEN_SIZE
+                ) if actor_hidden_state is None else actor_hidden_state,
+                critic_1_hidden_state=torch.zeros(
+                    params.RNN_NUM_LAYER * num_directions, 1, params.RNN_HIDDEN_SIZE
+                ) if critic_1_hidden_state is None else critic_1_hidden_state,
+                critic_2_hidden_state=torch.zeros(
+                    params.RNN_NUM_LAYER * num_directions, 1, params.RNN_HIDDEN_SIZE
+                ) if critic_2_hidden_state is None else critic_2_hidden_state
+            )
+        else:
+            agent_state = ActorCriticAgentState(
+                actor_hidden_state=torch.zeros(
+                    params.RNN_NUM_LAYER * num_directions, 1, params.RNN_HIDDEN_SIZE
+                ) if actor_hidden_state is None else actor_hidden_state,
+                critic_hidden_state=torch.zeros(
+                    params.RNN_NUM_LAYER * num_directions, 1, params.RNN_HIDDEN_SIZE
+                ) if critic_hidden_state is None else critic_hidden_state
+            )
     else:
-        agent_state = ActorCriticAgentState(
-            actor_hidden_state=torch.zeros(
-                params.RNN_NUM_LAYER * num_directions, 1, params.RNN_HIDDEN_SIZE
-            ) if actor_hidden_state is None else actor_hidden_state,
-            critic_hidden_state=torch.zeros(
-                params.RNN_NUM_LAYER * num_directions, 1, params.RNN_HIDDEN_SIZE
-            ) if critic_hidden_state is None else critic_hidden_state
-        )
+        agent_state = None
 
     return agent_state
 

@@ -29,6 +29,17 @@ ExperienceFirstLast = namedtuple(
     ('state', 'action', 'reward', 'last_state', 'last_step', 'done', 'info', 'agent_state', 'model_version')
 )
 
+
+def print_exp_first_last(self):
+    return f"ExperienceFirstLast(state={self.state:>1}, " \
+           f"action={self.action:1}, reward={self.reward:7.4f}, last_state={str(self.last_state):>4}, " \
+           f"last_step={self.last_step}, done={str(self.done):>5}, " \
+           f"info={self.info}, agent_state={self.agent_state}, model_version={self.model_version}"
+
+
+ExperienceFirstLast.__str__ = print_exp_first_last
+
+
 class ExperienceSource:
     """
     Simple n-step experience source using single or multiple environments
@@ -73,7 +84,7 @@ class ExperienceSource:
             obs_len = len(obs)
             states.extend(obs)
 
-            env_lens.append(obs_len)   # vectorized env는 self.pool 자체가 env이며 env_lens는 그 내부의 env 개수를 지니고 있음.
+            env_lens.append(obs_len)  # vectorized env는 self.pool 자체가 env이며 env_lens는 그 내부의 env 개수를 지니고 있음.
 
             for _ in range(obs_len):
                 histories.append(deque(maxlen=self.n_step))
@@ -81,7 +92,7 @@ class ExperienceSource:
                 cur_steps.append(0)
                 agent_states.append(rl_utils.initial_agent_state())
 
-        #ic(states, agent_states, histories, cur_rewards, cur_steps, env_lens)
+        # ic(states, agent_states, histories, cur_rewards, cur_steps, env_lens)
 
         iter_idx = 0
         while True:
@@ -91,7 +102,8 @@ class ExperienceSource:
             states_indices = []
             for idx, state in enumerate(states):
                 if state is None:
-                    actions[idx] = self.pool[0].single_action_space.sample()  # assume that all envs are from the same family
+                    actions[idx] = self.pool[
+                        0].single_action_space.sample()  # assume that all envs are from the same family
                 else:
                     states_input.append(state)
                     states_indices.append(idx)
@@ -105,7 +117,7 @@ class ExperienceSource:
 
             grouped_actions, grouped_agent_states = group_list(actions, agent_states, env_lens)
 
-           #print(grouped_actions, grouped_agent_states, "!!!!!!")
+            # print(grouped_actions, grouped_agent_states, "!!!!!!")
 
             global_ofs = 0
             for env_idx, (env, action_n, agent_state) in enumerate(
@@ -122,7 +134,7 @@ class ExperienceSource:
 
                 next_state_n, r_n, is_done_n, info_n = env.step(action)
 
-                #ic(env_idx, env, len(action_n), len(next_state_n), len(r_n), len(is_done_n), len(info_n))
+                # ic(env_idx, env, len(action_n), len(next_state_n), len(r_n), len(is_done_n), len(info_n))
 
                 for ofs, (action, next_state, r, is_done, info) in enumerate(
                         zip(action_n, next_state_n, r_n, is_done_n, info_n)
@@ -171,7 +183,8 @@ class ExperienceSource:
                         # else:
                         #     states[idx] = None
 
-                        states[idx] = None
+                        history.clear()
+                        states[idx] = env.reset()[0]
 
                         # print("{0}, {1}, @@@@@".format(self.episode_idx, self.episode_reward_lst))
                         self.episode_idx += 1
@@ -181,7 +194,7 @@ class ExperienceSource:
                         # print(self.episode_reward_lst, "@@@@@")
 
                         agent_states[idx] = rl_utils.initial_agent_state()
-                        history.clear()
+
 
                 global_ofs += len(action_n)
             iter_idx += 1
@@ -226,6 +239,7 @@ class ExperienceSourceFirstLast(ExperienceSource):
 
     If we have partial trajectory at the end of episode, last_state will be None
     """
+
     def __init__(self, env, agent, gamma, n_step=1, steps_delta=1):
         assert isinstance(gamma, float)
         super(ExperienceSourceFirstLast, self).__init__(env, agent, n_step + 1, steps_delta)
@@ -235,7 +249,7 @@ class ExperienceSourceFirstLast(ExperienceSource):
     def __iter__(self):
         for exp in super(ExperienceSourceFirstLast, self).__iter__():
 
-            #print(exp)
+            # print(exp)
 
             if exp[-1].done and len(exp) <= self.n_step_:
                 last_state = None
@@ -250,11 +264,11 @@ class ExperienceSourceFirstLast(ExperienceSource):
 
             e = ExperienceFirstLast(
                 state=exp[0].state, action=exp[0].action, reward=total_reward, last_state=last_state,
-                done=exp[0].done, info=exp[0].info, last_step=len(elems),
+                done=exp[-1].done, info=exp[0].info, last_step=len(elems),
                 agent_state=exp[0].agent_state,
                 model_version=self.agent.model_version if hasattr(self.agent, "model_version") else None
             )
 
-            #print(e)
+            # print(e)
 
             yield e
