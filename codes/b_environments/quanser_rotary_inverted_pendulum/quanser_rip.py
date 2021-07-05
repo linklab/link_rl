@@ -21,11 +21,11 @@ RIP_SERVER = '10.0.0.5'
 
 
 def get_quanser_rip_observation_space():
-    # low = np.array([0, 0, 0, 0, 0, 0], dtype=np.float32)
-    # high = np.array([1., 1., 500., 1., 1., 500,], dtype=np.float32)
+    low = np.array([0, 0, 0, 0, 0, 0], dtype=np.float32)
+    high = np.array([1., 1., 500., 1., 1., 500,], dtype=np.float32)
 
-    low = np.array([0, 0, 0, 0], dtype=np.float32)
-    high = np.array([1., 1., 500., 500,], dtype=np.float32)
+    # low = np.array([0, 0, 0, 0], dtype=np.float32)
+    # high = np.array([1., 1., 500., 500,], dtype=np.float32)
 
     observation_space = gym.spaces.Box(
         low=low, high=high, dtype=np.float32
@@ -107,8 +107,8 @@ class EnvironmentQuanserRIP(gym.Env):
 
         print(self.max_episode_step)
     def get_n_states(self):
-        # n_states = 6
-        n_states = 4
+        n_states = 6
+        # n_states = 4
         return n_states
     #
     # def get_n_actions(self):
@@ -167,8 +167,8 @@ class EnvironmentQuanserRIP(gym.Env):
             self.pendulum_velocity / params.VELOCITY_STATE_DENOMINATOR,
             # math.cos(0.0),
             # math.sin(0.0),
-            # math.cos(quanser_response.motor_radian),
-            # math.sin(quanser_response.motor_radian),
+            math.cos(quanser_response.motor_radian),
+            math.sin(quanser_response.motor_radian),
             self.motor_velocity / params.VELOCITY_STATE_DENOMINATOR
         ]
         # wait_time = 1 if self.episode == 0 else 15  # if self.episode % 10 == 0 else 3
@@ -251,8 +251,8 @@ class EnvironmentQuanserRIP(gym.Env):
             self.pendulum_velocity / params.VELOCITY_STATE_DENOMINATOR,
             # math.cos(self.initial_motor_radian - self.motor_radian),
             # math.sin(self.initial_motor_radian - self.motor_radian),
-            # math.cos(quanser_response.motor_radian),
-            # math.sin(quanser_response.motor_radian),
+            math.cos(quanser_response.motor_radian),
+            math.sin(quanser_response.motor_radian),
             self.motor_velocity / params.VELOCITY_STATE_DENOMINATOR
         ]
         next_state = np.asarray(self.state)
