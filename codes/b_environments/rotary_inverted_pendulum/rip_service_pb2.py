@@ -19,7 +19,7 @@ DESCRIPTOR = _descriptor.FileDescriptor(
   syntax='proto3',
   serialized_options=None,
   create_key=_descriptor._internal_create_key,
-  serialized_pb=b'\n\x11rip_service.proto\"\x1b\n\nRipRequest\x12\r\n\x05value\x18\x01 \x01(\x02\"\xa5\x01\n\x0bRipResponse\x12\x0f\n\x07message\x18\x01 \x01(\t\x12\x11\n\tarm_angle\x18\x02 \x01(\x02\x12\x14\n\x0c\x61rm_velocity\x18\x03 \x01(\x02\x12\x14\n\x0clink_1_angle\x18\x04 \x01(\x02\x12\x17\n\x0flink_1_velocity\x18\x05 \x01(\x02\x12\x14\n\x0clink_2_angle\x18\x06 \x01(\x02\x12\x17\n\x0flink_2_velocity\x18\x07 \x01(\x02\x32\xa6\x01\n\x04RDIP\x12$\n\x05reset\x12\x0b.RipRequest\x1a\x0c.RipResponse\"\x00\x12#\n\x04step\x12\x0b.RipRequest\x1a\x0c.RipResponse\"\x00\x12(\n\tterminate\x12\x0b.RipRequest\x1a\x0c.RipResponse\"\x00\x12)\n\ninitialize\x12\x0b.RipRequest\x1a\x0c.RipResponse\"\x00\x62\x06proto3'
+  serialized_pb=b'\n\x11rip_service.proto\"\x1b\n\nRipRequest\x12\r\n\x05value\x18\x01 \x01(\x02\"\xa5\x01\n\x0bRipResponse\x12\x0f\n\x07message\x18\x01 \x01(\t\x12\x11\n\tarm_angle\x18\x02 \x01(\x02\x12\x14\n\x0c\x61rm_velocity\x18\x03 \x01(\x02\x12\x14\n\x0clink_1_angle\x18\x04 \x01(\x02\x12\x17\n\x0flink_1_velocity\x18\x05 \x01(\x02\x12\x14\n\x0clink_2_angle\x18\x06 \x01(\x02\x12\x17\n\x0flink_2_velocity\x18\x07 \x01(\x02\x32\xfb\x01\n\x04RDIP\x12$\n\x05reset\x12\x0b.RipRequest\x1a\x0c.RipResponse\"\x00\x12#\n\x04step\x12\x0b.RipRequest\x1a\x0c.RipResponse\"\x00\x12(\n\tterminate\x12\x0b.RipRequest\x1a\x0c.RipResponse\"\x00\x12)\n\ninitialize\x12\x0b.RipRequest\x1a\x0c.RipResponse\"\x00\x12(\n\tstep_sync\x12\x0b.RipRequest\x1a\x0c.RipResponse\"\x00\x12)\n\nreset_sync\x12\x0b.RipRequest\x1a\x0c.RipResponse\"\x00\x62\x06proto3'
 )
 
 
@@ -158,7 +158,7 @@ _RDIP = _descriptor.ServiceDescriptor(
   serialized_options=None,
   create_key=_descriptor._internal_create_key,
   serialized_start=219,
-  serialized_end=385,
+  serialized_end=470,
   methods=[
   _descriptor.MethodDescriptor(
     name='reset',
@@ -194,6 +194,26 @@ _RDIP = _descriptor.ServiceDescriptor(
     name='initialize',
     full_name='RDIP.initialize',
     index=3,
+    containing_service=None,
+    input_type=_RIPREQUEST,
+    output_type=_RIPRESPONSE,
+    serialized_options=None,
+    create_key=_descriptor._internal_create_key,
+  ),
+  _descriptor.MethodDescriptor(
+    name='step_sync',
+    full_name='RDIP.step_sync',
+    index=4,
+    containing_service=None,
+    input_type=_RIPREQUEST,
+    output_type=_RIPRESPONSE,
+    serialized_options=None,
+    create_key=_descriptor._internal_create_key,
+  ),
+  _descriptor.MethodDescriptor(
+    name='reset_sync',
+    full_name='RDIP.reset_sync',
+    index=5,
     containing_service=None,
     input_type=_RIPREQUEST,
     output_type=_RIPRESPONSE,

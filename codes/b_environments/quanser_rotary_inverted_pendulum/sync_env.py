@@ -17,8 +17,8 @@ STATE_SIZE = 6
 
 balance_motor_power_list = [-60., 0., 60.]
 
-RIP_SERVER_1 = '10.0.0.5'
-RIP_SERVER_2 = '10.0.0.4'
+RIP_SERVER_1 = '10.0.0.9'
+RIP_SERVER_2 = '10.0.0.10'
 
 def get_quanser_rip_observation_space():
     low = np.array([0, 0, 0, 0, 0, 0], dtype=np.float32)
@@ -195,7 +195,7 @@ class SyncronizeEnv(gym.Env):
         #     self.action_ = -self.action_
 
         quanser_response_1 = self.server_obj_1.step_sync(QuanserRequest(value=self.action_))
-        quanser_response_2 = self.server_obj_2.step_sync(QuanserRequest(value=0))
+        quanser_response_2 = self.server_obj_2.step_sync(QuanserRequest(value=self.action_))
 
         self.motor_radian_1 = quanser_response_1.motor_radian
         self.motor_velocity_1 = quanser_response_1.motor_velocity

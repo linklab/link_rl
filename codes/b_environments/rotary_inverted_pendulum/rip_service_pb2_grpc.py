@@ -2,7 +2,7 @@
 """Client and server classes corresponding to protobuf-defined services."""
 import grpc
 
-from codes.b_environments.rotary_inverted_pendulum import rip_service_pb2 as rip__service__pb2
+import rip_service_pb2 as rip__service__pb2
 
 
 class RDIPStub(object):
@@ -31,6 +31,16 @@ class RDIPStub(object):
                 )
         self.initialize = channel.unary_unary(
                 '/RDIP/initialize',
+                request_serializer=rip__service__pb2.RipRequest.SerializeToString,
+                response_deserializer=rip__service__pb2.RipResponse.FromString,
+                )
+        self.step_sync = channel.unary_unary(
+                '/RDIP/step_sync',
+                request_serializer=rip__service__pb2.RipRequest.SerializeToString,
+                response_deserializer=rip__service__pb2.RipResponse.FromString,
+                )
+        self.reset_sync = channel.unary_unary(
+                '/RDIP/reset_sync',
                 request_serializer=rip__service__pb2.RipRequest.SerializeToString,
                 response_deserializer=rip__service__pb2.RipResponse.FromString,
                 )
@@ -63,6 +73,18 @@ class RDIPServicer(object):
         context.set_details('Method not implemented!')
         raise NotImplementedError('Method not implemented!')
 
+    def step_sync(self, request, context):
+        """Missing associated documentation comment in .proto file."""
+        context.set_code(grpc.StatusCode.UNIMPLEMENTED)
+        context.set_details('Method not implemented!')
+        raise NotImplementedError('Method not implemented!')
+
+    def reset_sync(self, request, context):
+        """Missing associated documentation comment in .proto file."""
+        context.set_code(grpc.StatusCode.UNIMPLEMENTED)
+        context.set_details('Method not implemented!')
+        raise NotImplementedError('Method not implemented!')
+
 
 def add_RDIPServicer_to_server(servicer, server):
     rpc_method_handlers = {
@@ -83,6 +105,16 @@ def add_RDIPServicer_to_server(servicer, server):
             ),
             'initialize': grpc.unary_unary_rpc_method_handler(
                     servicer.initialize,
+                    request_deserializer=rip__service__pb2.RipRequest.FromString,
+                    response_serializer=rip__service__pb2.RipResponse.SerializeToString,
+            ),
+            'step_sync': grpc.unary_unary_rpc_method_handler(
+                    servicer.step_sync,
+                    request_deserializer=rip__service__pb2.RipRequest.FromString,
+                    response_serializer=rip__service__pb2.RipResponse.SerializeToString,
+            ),
+            'reset_sync': grpc.unary_unary_rpc_method_handler(
+                    servicer.reset_sync,
                     request_deserializer=rip__service__pb2.RipRequest.FromString,
                     response_serializer=rip__service__pb2.RipResponse.SerializeToString,
             ),
@@ -159,6 +191,40 @@ class RDIP(object):
             timeout=None,
             metadata=None):
         return grpc.experimental.unary_unary(request, target, '/RDIP/initialize',
+            rip__service__pb2.RipRequest.SerializeToString,
+            rip__service__pb2.RipResponse.FromString,
+            options, channel_credentials,
+            insecure, call_credentials, compression, wait_for_ready, timeout, metadata)
+
+    @staticmethod
+    def step_sync(request,
+            target,
+            options=(),
+            channel_credentials=None,
+            call_credentials=None,
+            insecure=False,
+            compression=None,
+            wait_for_ready=None,
+            timeout=None,
+            metadata=None):
+        return grpc.experimental.unary_unary(request, target, '/RDIP/step_sync',
+            rip__service__pb2.RipRequest.SerializeToString,
+            rip__service__pb2.RipResponse.FromString,
+            options, channel_credentials,
+            insecure, call_credentials, compression, wait_for_ready, timeout, metadata)
+
+    @staticmethod
+    def reset_sync(request,
+            target,
+            options=(),
+            channel_credentials=None,
+            call_credentials=None,
+            insecure=False,
+            compression=None,
+            wait_for_ready=None,
+            timeout=None,
+            metadata=None):
+        return grpc.experimental.unary_unary(request, target, '/RDIP/reset_sync',
             rip__service__pb2.RipRequest.SerializeToString,
             rip__service__pb2.RipResponse.FromString,
             options, channel_credentials,
