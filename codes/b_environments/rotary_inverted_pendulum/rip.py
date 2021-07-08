@@ -9,6 +9,7 @@ import numpy as np
 import time
 import sys, os
 from codes.a_config.parameters_general import RIPEnvRewardType
+import matplotlib.pyplot as plt
 
 current_path = os.path.dirname(os.path.realpath(__file__))
 PROJECT_HOME = os.path.abspath(os.path.join(current_path, os.pardir, os.pardir, os.pardir))
@@ -577,12 +578,34 @@ class RotaryInvertedPendulumEnv(gym.Env):
             #     action_ = 400
             # else:
             #     action_ = -400
-            rip_response = self.server_obj.step(RipRequest(value=action))
+            rip_response = self.server_obj.step(RipRequest(value=0))
             self.motor_position = math.radians(rip_response.arm_angle)
             self.motor_velocity = rip_response.arm_velocity
             self.pendulum_1_position = math.radians(rip_response.link_1_angle)
             self.pendulum_1_velocity = rip_response.link_1_velocity
             self.simulation_time = None
+
+
+            first_time = time.perf_counter()
+
+            while True:
+                rip_response = self.server_obj.step(RipRequest(value=0))
+                self.motor_position = rip_response.arm_angle
+                self.motor_velocity = rip_response.arm_velocity
+                self.pendulum_1_position = rip_response.link_1_angle
+                self.pendulum_1_velocity = rip_response.link_1_velocity
+                self.simulation_time = None
+
+                x = time.perf_counter()
+                y = self.motor_position
+
+                plt.scatter(x, y)
+                plt.pause()
+                if x- first_time > 10:
+                    break
+            plt.show()
+
+
 
             # print("spi link_1 angle : {0:5.3f}, episode_steps : {1}, action {2}, episode idx : {3}".format(
             #     rip_response.link_1_angle, self.episode_steps, action_, self.episode_idx

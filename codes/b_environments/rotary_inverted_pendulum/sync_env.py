@@ -8,17 +8,19 @@ import grpc
 
 # MQTT Topic for RIP
 from codes.b_environments.quanser_rotary_inverted_pendulum import quanser_service_pb2_grpc
+from codes.b_environments.rotary_inverted_pendulum import rip_service_pb2_grpc
 from codes.e_utils.names import RLAlgorithmName, AgentMode
 from common.environments.environment import Environment
 from codes.a_config.parameters import PARAMETERS as params
 from codes.b_environments.quanser_rotary_inverted_pendulum.quanser_service_pb2 import QuanserRequest
+from codes.b_environments.rotary_inverted_pendulum.rip_service_pb2 import RipRequest
 
 STATE_SIZE = 6
 
 balance_motor_power_list = [-60., 0., 60.]
 
-RIP_SERVER_1 = '10.0.0.5'
-RIP_SERVER_2 = '10.0.0.4'
+RIP_SERVER_1 = '10.0.0.9'
+RIP_SERVER_2 = '10.0.0.10'
 
 def get_quanser_rip_observation_space():
     low = np.array([0, 0, 0, 0, 0, 0], dtype=np.float32)
@@ -105,29 +107,40 @@ class SyncronizeEnv(gym.Env):
 
         channel_1 = grpc.insecure_channel('{0}:50051'.format(RIP_SERVER_1))
         channel_2 = grpc.insecure_channel('{0}:50051'.format(RIP_SERVER_2))
-        self.server_obj_1 = quanser_service_pb2_grpc.QuanserRIPStub(channel_1)
-        self.server_obj_2 = quanser_service_pb2_grpc.QuanserRIPStub(channel_2)
+        self.server_obj_1 = rip_service_pb2_grpc.RDIPStub(channel_1)
+        self.server_obj_2 = rip_service_pb2_grpc.RDIPStub(channel_2)
+
+    def get_n_states(self):
+        n_states = self.observation_space.shape[0]
+        return n_states
+
+    def get_n_actions(self):
+        if self.params.RL_ALGORITHM in [RLAlgorithmName.DQN_V0]:
+            n_actions = self.action_space.n
+        else:
+            n_actions = self.action_space.shape[0]
+        return n_actions
 
     def reset(self):
         self.episode_steps = 0
         self.reward = 0
         self.is_motor_limit = False
 
-        quanser_response_1 = self.server_obj_1.reset_sync(QuanserRequest(value=0.0))
-        quanser_response_2 = self.server_obj_2.reset_sync(QuanserRequest(value=0.0))
+        rip_response_1 = self.server_obj_1.reset_sync(RipRequest(value=0.0))
+        rip_response_2 = self.server_obj_2.reset_sync(RipRequest(value=0.0))
 
-        if quanser_response_1.message != "RESET_SYNC" or quanser_response_2.message != "RESET_SYNC":
+        if rip_response_1.message != "RESET_SYNC" or rip_response_2.message != "RESET_SYNC":
             raise ValueError()
 
-        self.motor_radian_1 = quanser_response_1.motor_radian
-        self.motor_velocity_1 = quanser_response_1.motor_velocity
-        self.pendulum_radian_1 = quanser_response_1.pendulum_radian
-        self.pendulum_velocity_1 = quanser_response_1.pendulum_velocity
-
-        self.motor_radian_2 = quanser_response_2.motor_radian
-        self.motor_velocity_2 = quanser_response_2.motor_velocity
-        self.pendulum_radian_2 = quanser_response_2.pendulum_radian
-        self.pendulum_velocity_2 = quanser_response_2.pendulum_velocity
+        # self.motor_radian_1 = rip_response_1.motor_radian
+        # self.motor_velocity_1 = rip_response_1.motor_velocity
+        # self.pendulum_radian_1 = rip_response_1.pendulum_radian
+        # self.pendulum_velocity_1 = rip_response_1.pendulum_velocity
+        #
+        # self.motor_radian_2 = rip_response_2.motor_radian
+        # self.motor_velocity_2 = rip_response_2.motor_velocity
+        # self.pendulum_radian_2 = rip_response_2.pendulum_radian
+        # self.pendulum_velocity_2 = rip_response_2.pendulum_velocity
 
         if self.episode % 5 == 0:
             print("*RESET PENDULUM RADIAN : {0:1.3f}, {1:1.3f}".format(self.pendulum_radian_1, self.pendulum_radian_2))
@@ -194,18 +207,18 @@ class SyncronizeEnv(gym.Env):
         # if self.step_idx % 50 == 0:
         #     self.action_ = -self.action_
 
-        quanser_response_1 = self.server_obj_1.step_sync(QuanserRequest(value=self.action_))
-        quanser_response_2 = self.server_obj_2.step_sync(QuanserRequest(value=0))
+        rip_response_1 = self.server_obj_1.step_sync(RipRequest(value=self.action_))
+        rip_response_2 = self.server_obj_2.step_sync(RipRequest(value=self.action_))
 
-        self.motor_radian_1 = quanser_response_1.motor_radian
-        self.motor_velocity_1 = quanser_response_1.motor_velocity
-        self.pendulum_radian_1 = quanser_response_1.pendulum_radian
-        self.pendulum_velocity_1 = quanser_response_1.pendulum_velocity
-
-        self.motor_radian_2 = quanser_response_2.motor_radian
-        self.motor_velocity_2 = quanser_response_2.motor_velocity
-        self.pendulum_radian_2 = quanser_response_2.pendulum_radian
-        self.pendulum_velocity_2 = quanser_response_2.pendulum_velocity
+        # self.motor_radian_1 = rip_response_1.motor_radian
+        # self.motor_velocity_1 = rip_response_1.motor_velocity
+        # self.pendulum_radian_1 = rip_response_1.pendulum_radian
+        # self.pendulum_velocity_1 = rip_response_1.pendulum_velocity
+        #
+        # self.motor_radian_2 = rip_response_2.motor_radian
+        # self.motor_velocity_2 = rip_response_2.motor_velocity
+        # self.pendulum_radian_2 = rip_response_2.pendulum_radian
+        # self.pendulum_velocity_2 = rip_response_2.pendulum_velocity
 
         self.state = [0, 0, 0, 0, 0, 0]
 
@@ -279,16 +292,16 @@ class SyncronizeEnv(gym.Env):
             insert_to_info("")
             return False, info
 
-    def update_current_state(self):
-        if abs(self.pendulum_radian) < math.radians(90):
-            self.count_continuous_uprights += 1
-        else:
-            self.count_continuous_uprights = 0
-
-        if self.count_continuous_uprights >= 1:
-            self.is_upright = True
-        else:
-            self.is_upright = False
+    # def update_current_state(self):
+    #     if abs(self.pendulum_radian) < math.radians(90):
+    #         self.count_continuous_uprights += 1
+    #     else:
+    #         self.count_continuous_uprights = 0
+    #
+    #     if self.count_continuous_uprights >= 1:
+    #         self.is_upright = True
+    #     else:
+    #         self.is_upright = False
 
     def get_reward(self, action):
         reward = 0

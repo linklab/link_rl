@@ -18,7 +18,6 @@ STATE_SIZE = 6
 balance_motor_power_list = [-60., 0., 60.]
 
 RIP_SERVER_1 = '10.0.0.5'
-RIP_SERVER_2 = '10.0.0.4'
 
 def get_quanser_rip_observation_space():
     low = np.array([0, 0, 0, 0, 0, 0], dtype=np.float32)
@@ -53,8 +52,6 @@ class SyncronizeEnv(gym.Env):
     def __init__(self, mode=AgentMode.TRAIN):
         super(SyncronizeEnv, self).__init__()
         self.params = params
-
-        self.action_ = 200
 
         self.previous_time = 0
 
@@ -104,9 +101,7 @@ class SyncronizeEnv(gym.Env):
         #=======================================================================================
 
         channel_1 = grpc.insecure_channel('{0}:50051'.format(RIP_SERVER_1))
-        channel_2 = grpc.insecure_channel('{0}:50051'.format(RIP_SERVER_2))
         self.server_obj_1 = quanser_service_pb2_grpc.QuanserRIPStub(channel_1)
-        self.server_obj_2 = quanser_service_pb2_grpc.QuanserRIPStub(channel_2)
 
     def reset(self):
         self.episode_steps = 0
@@ -114,20 +109,14 @@ class SyncronizeEnv(gym.Env):
         self.is_motor_limit = False
 
         quanser_response_1 = self.server_obj_1.reset_sync(QuanserRequest(value=0.0))
-        quanser_response_2 = self.server_obj_2.reset_sync(QuanserRequest(value=0.0))
 
-        if quanser_response_1.message != "RESET_SYNC" or quanser_response_2.message != "RESET_SYNC":
+        if quanser_response_1.message != "RESET_SYNC":
             raise ValueError()
 
         self.motor_radian_1 = quanser_response_1.motor_radian
         self.motor_velocity_1 = quanser_response_1.motor_velocity
         self.pendulum_radian_1 = quanser_response_1.pendulum_radian
         self.pendulum_velocity_1 = quanser_response_1.pendulum_velocity
-
-        self.motor_radian_2 = quanser_response_2.motor_radian
-        self.motor_velocity_2 = quanser_response_2.motor_velocity
-        self.pendulum_radian_2 = quanser_response_2.pendulum_radian
-        self.pendulum_velocity_2 = quanser_response_2.pendulum_velocity
 
         if self.episode % 5 == 0:
             print("*RESET PENDULUM RADIAN : {0:1.3f}, {1:1.3f}".format(self.pendulum_radian_1, self.pendulum_radian_2))
@@ -195,30 +184,23 @@ class SyncronizeEnv(gym.Env):
         #     self.action_ = -self.action_
 
         quanser_response_1 = self.server_obj_1.step_sync(QuanserRequest(value=self.action_))
-        quanser_response_2 = self.server_obj_2.step_sync(QuanserRequest(value=0))
 
         self.motor_radian_1 = quanser_response_1.motor_radian
         self.motor_velocity_1 = quanser_response_1.motor_velocity
         self.pendulum_radian_1 = quanser_response_1.pendulum_radian
         self.pendulum_velocity_1 = quanser_response_1.pendulum_velocity
-
-        self.motor_radian_2 = quanser_response_2.motor_radian
-        self.motor_velocity_2 = quanser_response_2.motor_velocity
-        self.pendulum_radian_2 = quanser_response_2.pendulum_radian
-        self.pendulum_velocity_2 = quanser_response_2.pendulum_velocity
-
         self.state = [0, 0, 0, 0, 0, 0]
 
-        # self.state = [
-        #     math.cos(self.pendulum_radian),
-        #     math.sin(self.pendulum_radian),
-        #     self.pendulum_velocity / params.VELOCITY_STATE_DENOMINATOR,
-        #     # math.cos(self.initial_motor_radian - self.motor_radian),
-        #     # math.sin(self.initial_motor_radian - self.motor_radian),
-        #     # math.cos(quanser_response.motor_radian),
-        #     # math.sin(quanser_response.motor_radian),
-        #     self.motor_velocity / params.VELOCITY_STATE_DENOMINATOR
-        # ]
+        self.state = [
+            math.cos(self.pendulum_radian),
+            math.sin(self.pendulum_radian),
+            self.pendulum_velocity / params.VELOCITY_STATE_DENOMINATOR,
+            # math.cos(self.initial_motor_radian - self.motor_radian),
+            # math.sin(self.initial_motor_radian - self.motor_radian),
+            # math.cos(quanser_response.motor_radian),
+            # math.sin(quanser_response.motor_radian),
+            self.motor_velocity / params.VELOCITY_STATE_DENOMINATOR
+        ]
 
         next_state = np.asarray(self.state)
 
