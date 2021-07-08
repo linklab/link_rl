@@ -587,7 +587,7 @@ class RotaryInvertedPendulumEnv(gym.Env):
 
 
             first_time = time.perf_counter()
-            
+
             while True:
                 rip_response = self.server_obj.step(RipRequest(value=0))
                 self.motor_position = rip_response.arm_angle
@@ -601,7 +601,7 @@ class RotaryInvertedPendulumEnv(gym.Env):
 
                 plt.scatter(x, y)
                 plt.pause()
-                if x- first_time > 15:
+                if x- first_time > 10:
                     break
             plt.show()
 
