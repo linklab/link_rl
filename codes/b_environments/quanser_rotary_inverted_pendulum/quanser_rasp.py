@@ -44,7 +44,11 @@ class QubeServo2:
         
         self.pendulum_reset(0,None)
 
+        self.step_start = False
+
     def step(self, QuanserRequest, context):
+        self.step_start = True
+
         previous_time = time.time()
 
         self.color = "green"
@@ -65,6 +69,12 @@ class QubeServo2:
         )
 
     def step_sync(self, QuanserRequest, context):
+        if not self.step_start:
+            while True:
+                time.sleep(0.01)
+                if self.step_start:
+                    break
+
         self_servo.motor_command = int(QuanserRequest.value)
 
         self_servo.set_motor_command()
@@ -239,6 +249,7 @@ class QubeServo2:
         motor_radian, _ = self.__set_motor_command(int(self.motor_command))
         # print("motor: ", motor_radian)
         if not self.motor_limit and abs(motor_radian) >= 80 * PI / 180.0:
+            self.step_start = False
             self.color = "red"
             for i in range(50):
                 if motor_radian >= 0:
