@@ -30,7 +30,7 @@ def get_quanser_rip_observation_space():
 def get_quanser_rip_action_info(params):
     if params.RL_ALGORITHM in [RLAlgorithmName.DQN_V0]:
         action_index_to_voltage = list(np.array([
-            -500, -300, 0, 300, 500
+            -250, -100, 0, 100, 250
         ]))
         action_space = gym.spaces.Discrete(len(action_index_to_voltage))
         n_actions = action_space.n
@@ -237,11 +237,10 @@ class AbjustAngleEnv(gym.Env):
         position_reward = math.pi - abs(self.pendulum_radian)  # math.pi - math.radians(12) ~ math.pi
         energy_penalty = -1.0 * (abs(self.pendulum_velocity) + abs(self.motor_velocity)) / 100
 
-        inverted_reward = (position_reward + energy_penalty)/params.REWARD_DENOMINATOR
+        inverted_reward = (position_reward - energy_penalty)/params.REWARD_DENOMINATOR
         angle_reward = 1 - abs(GOAL_ANGLE - math.degrees(self.motor_radian))/(abs(GOAL_ANGLE)+90.0)
 
-        reward = (inverted_reward + angle_reward)/2.0
-        reward = max(0.000001, reward)
+        reward = (inverted_reward/2 + angle_reward)/1.5
 
         # print(inverted_reward, angle_reward, reward)
 
