@@ -600,10 +600,8 @@ class RotaryInvertedPendulumEnv(gym.Env):
                 y = self.motor_position
 
                 plt.scatter(x, y)
-                plt.pause()
-                if x- first_time > 10:
-                    break
-            plt.show()
+                plt.pause(0.5)
+                plt.show()
 
 
 
