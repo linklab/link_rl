@@ -261,10 +261,10 @@ class EnvironmentQuanserRIP(gym.Env):
         self.is_motor_limit = quanser_response.is_motor_limit
         # print("motor: ", self.motor_radian)
         # print("===========transfer time : {0:1.6f} action : {1:3.2f}".format(previous_time - time.perf_counter(), action))
-        print("motor radian : {0:1.3f}, motor velocity : {1:1.3f}, pendulum radian : {2:1.3f}, pendulum velocity : {3:1.3f}".format(
-            math.degrees(self.motor_radian), self.motor_velocity,
-              self.pendulum_radian, self.pendulum_velocity
-            ))
+        # print("motor radian : {0:1.3f}, motor velocity : {1:1.3f}, pendulum radian : {2:1.3f}, pendulum velocity : {3:1.3f}".format(
+        #     math.degrees(self.motor_radian), self.motor_velocity,
+        #       self.pendulum_radian, self.pendulum_velocity
+        #     ))
         # print("is motor limit", self.is_motor_limit)
 
         if self.params.QUANSER_STATE_INFO == 0:

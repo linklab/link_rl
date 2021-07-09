@@ -97,7 +97,7 @@ class AbjustAngleEnv(gym.Env):
         self.reward = 0
         self.is_motor_limit = False
 
-        quanser_response = self.server_obj_1.reset_sync(QuanserRequest(value=0.0))
+        quanser_response = self.server_obj.reset_sync(QuanserRequest(value=0.0))
 
         if quanser_response.message != "RESET_SYNC":
             raise ValueError()
@@ -108,7 +108,7 @@ class AbjustAngleEnv(gym.Env):
         self.pendulum_velocity = quanser_response.pendulum_velocity
 
         if self.episode % 5 == 0:
-            print("*RESET PENDULUM RADIAN : {0:1.3f}}".format(self.pendulum_radian))
+            print("*RESET PENDULUM RADIAN : {0:1.3f}".format(self.pendulum_radian))
 
         self.state = [
             math.cos(self.pendulum_radian),
@@ -133,7 +133,7 @@ class AbjustAngleEnv(gym.Env):
 
         self.episode += 1
 
-        return np.asarray(self.state)
+        return self.state
 
     def step(self, action):
         # current_time = time.perf_counter()
@@ -175,13 +175,13 @@ class AbjustAngleEnv(gym.Env):
         # if self.step_idx % 50 == 0:
         #     self.action_ = -self.action_
 
-        quanser_response = self.server_obj_1.step_sync(QuanserRequest(value=action))
+        quanser_response = self.server_obj.step_sync(QuanserRequest(value=action))
 
         self.motor_radian = quanser_response.motor_radian
         self.motor_velocity = quanser_response.motor_velocity
         self.pendulum_radian = quanser_response.pendulum_radian
         self.pendulum_velocity = quanser_response.pendulum_velocity
-        self.state = [0, 0, 0, 0, 0, 0]
+        self.step_syncronize = quanser_response.is_motor_limit
 
         self.state = [
             math.cos(self.pendulum_radian),
@@ -194,10 +194,10 @@ class AbjustAngleEnv(gym.Env):
             self.motor_velocity / params.VELOCITY_STATE_DENOMINATOR
         ]
 
-        next_state = np.asarray(self.state)
+        next_state = self.state
 
         #=======================reward================================================================
-        self.reward = self.get_reward(action)
+        self.reward = self.get_reward()
         #=============================================================================================
         self.step_idx += 1
         self.episode_steps += 1
@@ -226,6 +226,9 @@ class AbjustAngleEnv(gym.Env):
         elif self.is_motor_limit:#abs(self.motor_radian) > math.radians(90) or self.is_motor_limit:
             insert_to_info("***motor_radian exceed 90***")
             return True, info
+        elif not self.step_syncronize:
+            insert_to_info("**not_sync_step**")
+            return True, info
         else:
             insert_to_info("")
             return False, info
@@ -240,6 +243,7 @@ class AbjustAngleEnv(gym.Env):
         reward = (inverted_reward + angle_reward)/2.0
         reward = max(0.000001, reward)
 
+        print(inverted_reward, angle_reward, reward)
 
         return reward
 
