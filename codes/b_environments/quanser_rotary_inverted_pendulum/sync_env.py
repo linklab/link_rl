@@ -56,7 +56,7 @@ class SyncronizeEnv(gym.Env):
         super(SyncronizeEnv, self).__init__()
         self.params = params
 
-        self.action_ = 200
+        self.action_ = 10
 
         self.previous_time = 0
 
@@ -118,8 +118,8 @@ class SyncronizeEnv(gym.Env):
         rip_response_1 = self.server_obj_1.reset_sync(RipRequest(value=0.0))
         rip_response_2 = self.server_obj_2.reset_sync(RipRequest(value=0.0))
 
-        if rip_response_1.message != "RESET_SYNC" or rip_response_2.message != "RESET_SYNC":
-            raise ValueError()
+        # if rip_response_1.message != "RESET_SYNC" or rip_response_2.message != "RESET_SYNC":
+        #     raise ValueError()
 
         # self.motor_radian_1 = rip_response_1.motor_radian
         # self.motor_velocity_1 = rip_response_1.motor_velocity
