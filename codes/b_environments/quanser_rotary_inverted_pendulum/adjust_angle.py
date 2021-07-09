@@ -30,7 +30,7 @@ def get_quanser_rip_observation_space():
 def get_quanser_rip_action_info(params):
     if params.RL_ALGORITHM in [RLAlgorithmName.DQN_V0]:
         action_index_to_voltage = list(np.array([
-            -900, -500, 0, 500, 900
+            -500, -300, 0, 300, 500
         ]))
         action_space = gym.spaces.Discrete(len(action_index_to_voltage))
         n_actions = action_space.n
