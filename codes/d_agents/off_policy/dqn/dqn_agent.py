@@ -212,13 +212,12 @@ class AgentDQN(OffPolicyAgent):
         state, actions, rewards, dones, last_states, last_steps = [], [], [], [], [], []
 
         for exp in batch:
-            state = np.array(exp.state, copy=False)
-            state.append(state)
+            state.append(np.array(exp.state, copy=False))
             actions.append(exp.action)
             rewards.append(exp.reward)
             dones.append(exp.last_state is None)
             if exp.last_state is None:
-                last_states.append(state)  # the result will be masked anyway
+                last_states.append(exp.state)  # the result will be masked anyway
             else:
                 last_states.append(np.array(exp.last_state, copy=False))
             last_steps.append(exp.last_step)

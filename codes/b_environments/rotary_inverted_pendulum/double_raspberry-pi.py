@@ -150,13 +150,15 @@ class RotaryDoubleInvertedPendulum:
         )
 
     def reset_sync(self, rip_request, context):
-        arm_angle, arm_velocity, link_angle, link_velocity = self.calculate_state()
+        arm_angle, arm_velocity, link_1_angle, link_1_velocity, link_2_angle, link_2_velocity = self.calculate_state()
 
         # self.print_state(arm_angle, arm_velocity, link_angle, link_velocity)
 
         return RipResponse(
             message='OK',
-            arm_angle=arm_angle, arm_velocity=arm_velocity, link_1_angle=link_angle, link_1_velocity=link_velocity
+            arm_angle=arm_angle, arm_velocity=arm_velocity,
+            link_1_angle=link_1_angle, link_1_velocity=link_1_velocity,
+            link_2_angle=link_2_angle, link_2_velocity=link_2_velocity
         )
 
     def step(self, rip_request, context):

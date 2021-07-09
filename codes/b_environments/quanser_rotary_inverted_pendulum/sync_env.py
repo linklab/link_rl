@@ -54,7 +54,7 @@ class SyncronizeEnv(gym.Env):
         super(SyncronizeEnv, self).__init__()
         self.params = params
 
-        self.action_ = 200
+        self.action_ = 10
 
         self.previous_time = 0
 
