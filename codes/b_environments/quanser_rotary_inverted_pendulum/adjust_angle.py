@@ -243,7 +243,7 @@ class AbjustAngleEnv(gym.Env):
         reward = (inverted_reward + angle_reward)/2.0
         reward = max(0.000001, reward)
 
-        print(inverted_reward, angle_reward, reward)
+        # print(inverted_reward, angle_reward, reward)
 
         return reward
 
