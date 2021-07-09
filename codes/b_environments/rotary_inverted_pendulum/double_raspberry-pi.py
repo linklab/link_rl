@@ -9,7 +9,7 @@ from rip_service_pb2 import RipResponse
 import math
 spi = spidev.SpiDev()
 spi.open(0, 0)
-spi.max_speed_hz = 1000000 # NOTE
+spi.max_speed_hz = 5000000 # NOTE
 
 
 class RotaryDoubleInvertedPendulum:
@@ -210,7 +210,9 @@ class RotaryDoubleInvertedPendulum:
 
     def step_sync(self,rip_request, context):
         motor_power = int(rip_request.value)
-        # print("motor_power :", motor_power)
+
+        if self.previous_action * motor_power < 0:
+            spi.xfer2([0x40, 0x00, 0x01, 0x00, 0x00])
 
         self.apply_action(motor_power)
 
