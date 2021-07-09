@@ -9,6 +9,7 @@ import numpy as np
 import time
 import sys, os
 from codes.a_config.parameters_general import RIPEnvRewardType
+import matplotlib.pyplot as plt
 
 current_path = os.path.dirname(os.path.realpath(__file__))
 PROJECT_HOME = os.path.abspath(os.path.join(current_path, os.pardir, os.pardir, os.pardir))
@@ -634,9 +635,11 @@ class RotaryInvertedPendulumEnv(gym.Env):
             # print(
             #     "motor vel :{0:5.3f}, pen1_Vel : {1:5.3f}, pen2_vel : {2:5.3f}, motor posi :{3:5.3f}, pen1 posi :{4:5.3f} --> {5:5.3f}, pen2 posi :{6:5.3f} --> {7:5.3f}".format(
             #         self.motor_velocity, self.pendulum_1_velocity, self.pendulum_2_velocity,
-            #         self.motor_velocity, rip_response.link_1_angle, rip_response.link_1_angle % 360,
+            #         rip_response.arm_angle, rip_response.link_1_angle, rip_response.link_1_angle % 360,
             #         rip_response.link_2_angle, rip_response.link_2_angle % 360
             #     ))
+
+
             # time.sleep(0.5)
             # if rip_response.message == "FORCE_TERMINATE":
             #     print("FORCE TERMINATE !!!!!!!!!!!!!!!!!!")
@@ -705,7 +708,7 @@ class RotaryInvertedPendulumEnv(gym.Env):
         done_conditions = [
             self.episode_steps >= self.max_episode_step,
             # self.too_much_rotate and not self.is_upright,
-            self.too_much_rotate,
+            # self.too_much_rotate,
             self.too_long_and_fast_pendulum_velocity
         ]
 
