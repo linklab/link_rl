@@ -5,7 +5,7 @@ from codes.e_utils.names import *
 from codes.a_config.parameters_general import PARAMETERS_GENERAL
 import math
 
-class PARAMETERS_ABJUST_ANGLE_TD3(PARAMETERS_GENERAL, PARAMETERS_DQN):
+class PARAMETERS_ABJUST_ANGLE_DQN(PARAMETERS_GENERAL, PARAMETERS_DQN):
     ENVIRONMENT_ID = EnvironmentName.ADJUST_ANGLE_V0
     RL_ALGORITHM = RLAlgorithmName.DQN_V0
     DEEP_LEARNING_MODEL = DeepLearningModelName.DUELING_DQN_MLP
