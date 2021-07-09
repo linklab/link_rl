@@ -243,7 +243,7 @@ class EnvironmentQuanserRIP(gym.Env):
 
         #==================== Grpc and use sample time========================================
         # previous_time = time.perf_counter()
-        quanser_response = self.server_obj.step(QuanserRequest(value=0))
+        quanser_response = self.server_obj.step(QuanserRequest(value=action))
         # print(motor_power)
         # if quanser_response.message != "STEP":
         #     raise ValueError()
