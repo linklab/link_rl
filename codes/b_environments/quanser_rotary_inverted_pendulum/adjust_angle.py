@@ -13,7 +13,7 @@ from common.environments.environment import Environment
 from codes.a_config.parameters import PARAMETERS as params
 from codes.b_environments.quanser_rotary_inverted_pendulum.quanser_service_pb2 import QuanserRequest
 
-RIP_SERVER = '10.0.0.5'
+RIP_SERVER = '10.0.0.4'
 GOAL_ANGLE = params.GOAL_ANGLE
 
 def get_quanser_rip_observation_space():
@@ -235,7 +235,7 @@ class AbjustAngleEnv(gym.Env):
         energy_penalty = -1.0 * (abs(self.pendulum_velocity) + abs(self.motor_velocity)) / 100
 
         inverted_reward = (position_reward + energy_penalty)/params.REWARD_DENOMINATOR
-        angle_reward = 1 - abs(GOAL_ANGLE - self.motor_radian)/(abs(GOAL_ANGLE)+90.0)
+        angle_reward = 1 - abs(GOAL_ANGLE - math.degrees(self.motor_radian))/(abs(GOAL_ANGLE)+90.0)
 
         reward = (inverted_reward + angle_reward)/2.0
         reward = max(0.000001, reward)
