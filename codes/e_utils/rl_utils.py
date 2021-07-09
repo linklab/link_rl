@@ -96,6 +96,9 @@ def get_single_environment(params=None, mode=AgentMode.TRAIN):
     elif params.ENVIRONMENT_ID == EnvironmentName.SYNCRONIZE_V0:
         from codes.b_environments.quanser_rotary_inverted_pendulum.sync_env import SyncronizeEnv
         env = SyncronizeEnv(mode=mode)
+    elif params.ENVIRONMENT_ID == EnvironmentName.ADJUST_ANGLE_V0:
+        from codes.b_environments.quanser_rotary_inverted_pendulum.adjust_angle import AbjustAngleEnv
+        env = AbjustAngleEnv(mode=mode)
     elif params.ENVIRONMENT_ID in [
         EnvironmentName.CARTPOLE_V0, EnvironmentName.CARTPOLE_V1,
         EnvironmentName.MOUNTAINCAR_V0, EnvironmentName.MOUNTAINCARCONTINUOUS_V0,
