@@ -284,9 +284,18 @@ def velocity_check(rip, server):
         arm_angle, arm_velocity, link_1_angle, link_1_velocity, link_2_angle, link_2_velocity = rip.calculate_state()
         arm_vel_deque.append(abs(arm_velocity))
         link_vel_deque.append(abs(link_1_velocity))
-        arm_vel_deque_mean = sum(arm_vel_deque)/100.0
-        link_vel_deque_mean = sum(link_vel_deque)/100.0
-        if arm_vel_deque_mean > 1500 or link_vel_deque_mean > 1500: #5SECOND
+        if arm_velocity > 1600:
+            arm_velocity_num += 1
+        else:
+            arm_velocity_num = 0
+        if link_1_velocity > 1500:
+            link_1_velocity_num += 1
+        else:
+            link_1_velocity_num = 0
+        # arm_vel_deque_mean = sum(arm_vel_deque)/100.0
+        # link_vel_deque_mean = sum(link_vel_deque)/100.0
+        # if arm_vel_deque_mean > 100 or link_vel_deque_mean > 1800: #5SECOND
+        if arm_velocity_num > 1000 or link_1_velocity_num > 1000:
             arm_angle, arm_velocity, link_1_angle, link_1_velocity, link_2_angle, link_2_velocity = rip.calculate_state()
             print("[STEP INDEX: {0}] link_1_angle : {1:5.3f}, link_2_angle : {2:5.3f}".format(
                 rip.step_idx,
@@ -296,7 +305,7 @@ def velocity_check(rip, server):
             for _ in range(3):
                 rip.test_terminate()
             raise Exception("EXCEED VELOCITY!!!")
-        time.sleep(0.05)
+        time.sleep(0.005)
 
 if __name__ == "__main__":
     rip = RotaryDoubleInvertedPendulum()
