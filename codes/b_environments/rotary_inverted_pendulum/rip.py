@@ -146,7 +146,7 @@ class RotaryInvertedPendulumEnv(gym.Env):
     def __init__(
             self, env_reset=True, pendulum_type=EnvironmentName.PENDULUM_MATLAB_V0, params=None, mode=AgentMode.TRAIN
     ):
-        self.action_ = 600
+        self.test_action = 300
 
         self.episode_steps = 0
         self.total_steps = 0
@@ -579,6 +579,11 @@ class RotaryInvertedPendulumEnv(gym.Env):
             # else:
             #     action_ = -400
             # print(action)
+
+            # if self.step_idx % 50 == 0:
+            #     self.test_action = -self.test_action
+            # print(self.test_action)
+
             rip_response = self.server_obj.step(RipRequest(value=action))
             self.motor_position = math.radians(rip_response.arm_angle)
             self.motor_velocity = rip_response.arm_velocity
