@@ -1,3 +1,4 @@
+import copy
 import os, sys
 import threading
 from collections import deque
@@ -242,6 +243,8 @@ def main():
                     del train_info_dict["evaluation_msg"]
                     del train_info_dict["solved"]
                     del train_info_dict["last_done_reason"]
+                    del train_info_dict["episode"]
+                    del train_info_dict["elapsed_time"]
 
                     if params.RL_ALGORITHM in [
                         RLAlgorithmName.DDPG_V0,

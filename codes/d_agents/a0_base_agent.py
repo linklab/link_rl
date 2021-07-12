@@ -3,6 +3,7 @@ from collections import namedtuple
 
 import numpy as np
 import torch
+from torch.distributions import Normal
 
 from codes.c_models.base_model import RNNModel
 from codes.c_models.continuous_action.continuous_action_model import ContinuousActionModel
@@ -70,27 +71,6 @@ class BaseAgent:
     @abstractmethod
     def train_on_policy(self, step_idx, expected_model_version):
         raise NotImplementedError
-
-    def continuous_sac_call(self, state):
-        state = self.preprocess(state)
-
-        if len(state) == 1:
-            self.model.eval()
-        else:
-            self.model.train()
-
-        if self.agent_mode == AgentMode.TRAIN:
-            with torch.no_grad():
-                mu_v, logstd_v = self.model.base.actor(state)
-                actions = self.train_action_selector(mu_v=mu_v, logstd_v=logstd_v)
-        else:
-            with torch.no_grad():
-                mu_v, _ = self.test_model.base.actor(state)
-                actions = self.test_and_play_action_selector(mu_v=mu_v, logstd_v=None)
-
-        critics = torch.zeros(size=mu_v.size())
-
-        return actions, critics
 
     def unpack_batch_for_actor_critic(self, batch, model, params, alpha=None):
         """
@@ -160,15 +140,25 @@ class BaseAgent:
             last_states_v = torch.FloatTensor(np.array(last_states, copy=False)).to(self.device)
             if self.params.RL_ALGORITHM in [RLAlgorithmName.DISCRETE_A2C_V0, RLAlgorithmName.CONTINUOUS_A2C_V0]:
                 last_values_v, _ = model.forward_critic(last_states_v, critic_hidden_states_v)
-                last_values_np = last_values_v.data.cpu().numpy()[:, 0] * (params.GAMMA ** last_steps_v)
+                last_values_np = last_values_v.detach().numpy()[:, 0] * (params.GAMMA ** last_steps_v)
                 target_action_values_np[not_done_idx] += last_values_np
+
             elif self.params.RL_ALGORITHM in [RLAlgorithmName.SAC_V0]:
-                last_actions_v, last_entropies_v = model.sample(last_states_v)
+                last_mu_v, last_logstd_v, _ = model.base.forward_actor(last_states_v)
+                dist = Normal(loc=last_mu_v, scale=torch.exp(last_logstd_v))
+                last_actions_v = dist.sample()
+                last_entropies_v = dist.entropy()
+
                 last_q_1_v, last_q_2_v = model.base.twinq(last_states_v, last_actions_v)
-                last_q_v = torch.min(last_q_1_v, last_q_2_v) * (params.GAMMA ** last_steps_v)
-                last_q_v += alpha * last_entropies_v
-                last_q_v = last_q_v.squeeze(-1)
-                target_action_values_np[not_done_idx] += last_q_v.data.cpu().numpy()
+                last_q_np = torch.min(last_q_1_v, last_q_2_v).detach().numpy()[:, 0] * (params.GAMMA ** last_steps_v)
+                entropy_v = alpha * last_entropies_v
+
+                # last_q_np.shape: (128,)
+                # entropy_v.squeeze(-1).detach().numpy().shape: (128,)
+                last_q_np += entropy_v.squeeze(-1).detach().numpy()
+
+                target_action_values_np[not_done_idx] += last_q_np
+
             else:
                 raise ValueError()
 
@@ -179,13 +169,11 @@ class BaseAgent:
         # target_action_values_v.shape: [128]
 
         if isinstance(self.model, RNNModel):
-            if self.params.RL_ALGORITHM in [RLAlgorithmName.DISCRETE_A2C_V0, RLAlgorithmName.CONTINUOUS_A2C_V0]:
-                return states_v, actions_v, target_action_values_v, actor_hidden_states_v, critic_hidden_states_v
-            elif self.params.RL_ALGORITHM in [RLAlgorithmName.SAC_V0]:
+            if self.params.RL_ALGORITHM in [RLAlgorithmName.SAC_V0]:
                 return states_v, actions_v, target_action_values_v, actor_hidden_states_v, \
                        critic_1_hidden_states_v, critic_2_hidden_states_v
             else:
-                raise ValueError()
+                return states_v, actions_v, target_action_values_v, actor_hidden_states_v, critic_hidden_states_v
         else:
             return states_v, actions_v, target_action_values_v
 
