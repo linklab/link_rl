@@ -45,9 +45,9 @@ def get_quanser_rip_action_info(params):
     return action_space, n_actions, action_index_to_voltage
 
 
-class AbjustAngleEnv(gym.Env):
+class ADJUSTAngleEnv(gym.Env):
     def __init__(self, mode=AgentMode.TRAIN):
-        super(AbjustAngleEnv, self).__init__()
+        super(ADJUSTAngleEnv, self).__init__()
         self.params = params
 
         self.previous_time = 0
@@ -159,7 +159,6 @@ class AbjustAngleEnv(gym.Env):
 
         if type(action) is np.ndarray:
             action = action[0]
-            action = action * params.ACTION_SCALE
 
         if self.params.RL_ALGORITHM in [RLAlgorithmName.DQN_V0]:
             action = self.action_index_to_voltage[int(action)]
@@ -195,6 +194,7 @@ class AbjustAngleEnv(gym.Env):
         ]
 
         next_state = self.state
+        self.update_current_state()
 
         #=======================reward================================================================
         self.reward = self.get_reward()
@@ -209,6 +209,17 @@ class AbjustAngleEnv(gym.Env):
         # ))
 
         return next_state, self.reward, done, info
+
+    def update_current_state(self):
+        if abs(self.pendulum_radian) < math.radians(90):
+            self.count_continuous_uprights += 1
+        else:
+            self.count_continuous_uprights = 0
+
+        if self.count_continuous_uprights >= 1:
+            self.is_upright = True
+        else:
+            self.is_upright = False
 
     def __isDone(self):
         info = {}
@@ -240,7 +251,10 @@ class AbjustAngleEnv(gym.Env):
         inverted_reward = (position_reward - energy_penalty)/params.REWARD_DENOMINATOR
         angle_reward = 1 - abs(GOAL_ANGLE - math.degrees(self.motor_radian))/(abs(GOAL_ANGLE)+90.0)
 
-        reward = (inverted_reward/2 + angle_reward)/1.5
+        if self.is_upright:
+            reward = (inverted_reward + angle_reward)/2.0
+        else:
+            reward = angle_reward
 
         # print(inverted_reward, angle_reward, reward)
 
