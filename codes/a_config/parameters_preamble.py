@@ -63,6 +63,7 @@ from codes.a_config.e_real_device.parameters_double_rip_ddpg import PARAMETERS_D
 from codes.a_config.e_real_device.parameters_double_rip_td3 import PARAMETERS_DOUBLE_RIP_TD3
 from codes.a_config.e_real_device.parameters_quanser_rip_ddpg import PARAMETERS_QUANSER_RIP_DDPG
 from codes.a_config.e_real_device.parameters_quanser_rip_td3 import PARAMETERS_QUANSER_RIP_TD3
+from codes.a_config.e_real_device.parameters_adjust_angle import PARAMETERS_ADJUST_ANGLE_DQN
 from codes.a_config.e_real_device.parameters_rip_dqn import PARAMETERS_RIP_DQN
 
 from codes.a_config.e_real_device.parameters_syncronize import PARAMETERS_SYNCRONIZE_TD3

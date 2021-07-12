@@ -8,6 +8,10 @@ service RDIP {
   rpc terminate(RipRequest) returns (RipResponse) {}
 
   rpc initialize(RipRequest) returns (RipResponse) {}
+
+  rpc step_sync(RipRequest) returns (RipResponse) {}
+
+  rpc reset_sync(RipRequest) returns (RipResponse) {}
 }
 
 message RipRequest {

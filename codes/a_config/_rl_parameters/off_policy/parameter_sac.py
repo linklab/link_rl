@@ -41,5 +41,5 @@ class PARAMETERS_SAC:
 
     ALPHA = 0.2
 
-    ENTROPY_TUNING = True
+    ENTROPY_TUNING = False
 

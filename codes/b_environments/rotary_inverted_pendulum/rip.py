@@ -9,6 +9,7 @@ import numpy as np
 import time
 import sys, os
 from codes.a_config.parameters_general import RIPEnvRewardType
+import matplotlib.pyplot as plt
 
 current_path = os.path.dirname(os.path.realpath(__file__))
 PROJECT_HOME = os.path.abspath(os.path.join(current_path, os.pardir, os.pardir, os.pardir))
@@ -36,7 +37,7 @@ if params.ENVIRONMENT_ID in [EnvironmentName.REAL_DEVICE_RIP, EnvironmentName.RE
     if params.SERVER_IDX == 0:
         RIP_SERVER = '10.0.0.9'
     elif params.SERVER_IDX == 1:
-        pass
+        RIP_SERVER = '10.0.0.9'
     elif params.SERVER_IDX == 2:
         RIP_SERVER = '10.0.0.10'
     elif params.SERVER_IDX == 3:
@@ -145,7 +146,7 @@ class RotaryInvertedPendulumEnv(gym.Env):
     def __init__(
             self, env_reset=True, pendulum_type=EnvironmentName.PENDULUM_MATLAB_V0, params=None, mode=AgentMode.TRAIN
     ):
-        self.action_ = 600
+        self.test_action = 300
 
         self.episode_steps = 0
         self.total_steps = 0
@@ -577,13 +578,19 @@ class RotaryInvertedPendulumEnv(gym.Env):
             #     action_ = 400
             # else:
             #     action_ = -400
+            # print(action)
+
+            # if self.step_idx % 50 == 0:
+            #     self.test_action = -self.test_action
+            # print(self.test_action)
+
             rip_response = self.server_obj.step(RipRequest(value=action))
             self.motor_position = math.radians(rip_response.arm_angle)
             self.motor_velocity = rip_response.arm_velocity
             self.pendulum_1_position = math.radians(rip_response.link_1_angle)
             self.pendulum_1_velocity = rip_response.link_1_velocity
             self.simulation_time = None
-
+            # print("motor vel : {0:5.3f}, motor pos : {1:5.3f}".format(self.motor_velocity, self.motor_position))
             # print("spi link_1 angle : {0:5.3f}, episode_steps : {1}, action {2}, episode idx : {3}".format(
             #     rip_response.link_1_angle, self.episode_steps, action_, self.episode_idx
             # ))
@@ -621,7 +628,6 @@ class RotaryInvertedPendulumEnv(gym.Env):
 
             # if self.step_idx % 100 == 0:
             #     self.action_ = -self.action_
-            # print(action)
             rip_response = self.server_obj.step(RipRequest(value=action))
             self.motor_position = math.radians(rip_response.arm_angle)
             self.motor_velocity = rip_response.arm_velocity
@@ -634,9 +640,11 @@ class RotaryInvertedPendulumEnv(gym.Env):
             # print(
             #     "motor vel :{0:5.3f}, pen1_Vel : {1:5.3f}, pen2_vel : {2:5.3f}, motor posi :{3:5.3f}, pen1 posi :{4:5.3f} --> {5:5.3f}, pen2 posi :{6:5.3f} --> {7:5.3f}".format(
             #         self.motor_velocity, self.pendulum_1_velocity, self.pendulum_2_velocity,
-            #         self.motor_velocity, rip_response.link_1_angle, rip_response.link_1_angle % 360,
+            #         rip_response.arm_angle, rip_response.link_1_angle, rip_response.link_1_angle % 360,
             #         rip_response.link_2_angle, rip_response.link_2_angle % 360
             #     ))
+
+
             # time.sleep(0.5)
             # if rip_response.message == "FORCE_TERMINATE":
             #     print("FORCE TERMINATE !!!!!!!!!!!!!!!!!!")
@@ -704,7 +712,8 @@ class RotaryInvertedPendulumEnv(gym.Env):
 
         done_conditions = [
             self.episode_steps >= self.max_episode_step,
-            self.too_much_rotate and not self.is_upright,
+            # self.too_much_rotate and not self.is_upright,
+            self.too_much_rotate,
             self.too_long_and_fast_pendulum_velocity
         ]
 
@@ -713,7 +722,8 @@ class RotaryInvertedPendulumEnv(gym.Env):
 
             if self.episode_steps >= self.max_episode_step:
                 self.last_done_reason = DoneReason.MAX_EPISODE_STEP
-            elif self.too_much_rotate and not self.is_upright:
+            # elif self.too_much_rotate and not self.is_upright:
+            elif self.too_much_rotate:
                 self.last_done_reason = DoneReason.TOO_MUCH_ROTATE
             elif self.too_long_and_fast_pendulum_velocity:
                 self.last_done_reason = DoneReason.TOO_LASTING_FAST

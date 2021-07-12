@@ -97,7 +97,7 @@ class AgentContinuousA2C(AgentA2C):
         # batch_advantage_v.shape: (32,)
         batch_advantage_v = batch_target_action_values_v - batch_values_v.squeeze(-1)
 
-        dist = Normal(loc=batch_mu_v, scale=batch_logstd_v)
+        dist = Normal(loc=batch_mu_v, scale=torch.exp(batch_logstd_v))
 
         # dist.log_prob(value=batch_actions_v).shape: (32, 1)
         # batch_reinforced_log_pi_action_v.shape: (32, 1)

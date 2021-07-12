@@ -1,3 +1,4 @@
+import random
 import time
 from collections import deque
 from concurrent import futures
@@ -9,7 +10,7 @@ from rip_service_pb2 import RipResponse
 import math
 spi = spidev.SpiDev()
 spi.open(0, 0)
-spi.max_speed_hz = 1000000 # NOTE
+spi.max_speed_hz = 5000000 # NOTE
 
 
 class RotaryDoubleInvertedPendulum:
@@ -134,13 +135,26 @@ class RotaryDoubleInvertedPendulum:
             ))
             self.next_check_angle_step += self.check_angle_period_steps
         else:
-            time.sleep(3)
+            sleep_time = random.randrange(2, 6)
+            time.sleep(sleep_time)
             arm_angle, arm_velocity, link_1_angle, link_1_velocity, link_2_angle, link_2_velocity = self.calculate_state()
         # spi.xfer2([0x40, 0x00, 0x10, 0x00, 0x00])
 
         # self.print_state(arm_angle, arm_velocity, link_angle, link_velocity)
 
         self.last_step_call = time.time()
+
+        return RipResponse(
+            message='OK',
+            arm_angle=arm_angle, arm_velocity=arm_velocity,
+            link_1_angle=link_1_angle, link_1_velocity=link_1_velocity,
+            link_2_angle=link_2_angle, link_2_velocity=link_2_velocity
+        )
+
+    def reset_sync(self, rip_request, context):
+        arm_angle, arm_velocity, link_1_angle, link_1_velocity, link_2_angle, link_2_velocity = self.calculate_state()
+
+        # self.print_state(arm_angle, arm_velocity, link_angle, link_velocity)
 
         return RipResponse(
             message='OK',
@@ -189,6 +203,23 @@ class RotaryDoubleInvertedPendulum:
         #         link_1_angle=link_1_angle, link_1_velocity=link_1_velocity,
         #         link_2_angle=link_2_angle, link_2_velocity=link_2_velocity
         #     )
+        return RipResponse(
+            message='OK',
+            arm_angle=arm_angle, arm_velocity=arm_velocity,
+            link_1_angle=link_1_angle, link_1_velocity=link_1_velocity,
+            link_2_angle=link_2_angle, link_2_velocity=link_2_velocity
+        )
+
+    def step_sync(self,rip_request, context):
+        motor_power = int(rip_request.value)
+
+        if self.previous_action * motor_power < 0:
+            spi.xfer2([0x40, 0x00, 0x01, 0x00, 0x00])
+
+        self.apply_action(motor_power)
+
+        arm_angle, arm_velocity, link_1_angle, link_1_velocity, link_2_angle, link_2_velocity = self.calculate_state()
+
         return RipResponse(
             message='OK',
             arm_angle=arm_angle, arm_velocity=arm_velocity,
@@ -255,9 +286,18 @@ def velocity_check(rip, server):
         arm_angle, arm_velocity, link_1_angle, link_1_velocity, link_2_angle, link_2_velocity = rip.calculate_state()
         arm_vel_deque.append(abs(arm_velocity))
         link_vel_deque.append(abs(link_1_velocity))
-        arm_vel_deque_mean = sum(arm_vel_deque)/100.0
-        link_vel_deque_mean = sum(link_vel_deque)/100.0
-        if arm_vel_deque_mean > 1500 or link_vel_deque_mean > 1500: #5SECOND
+        if arm_velocity > 1600:
+            arm_velocity_num += 1
+        else:
+            arm_velocity_num = 0
+        if link_1_velocity > 1500:
+            link_1_velocity_num += 1
+        else:
+            link_1_velocity_num = 0
+        # arm_vel_deque_mean = sum(arm_vel_deque)/100.0
+        # link_vel_deque_mean = sum(link_vel_deque)/100.0
+        # if arm_vel_deque_mean > 100 or link_vel_deque_mean > 1800: #5SECOND
+        if arm_velocity_num > 1000 or link_1_velocity_num > 1000:
             arm_angle, arm_velocity, link_1_angle, link_1_velocity, link_2_angle, link_2_velocity = rip.calculate_state()
             print("[STEP INDEX: {0}] link_1_angle : {1:5.3f}, link_2_angle : {2:5.3f}".format(
                 rip.step_idx,
@@ -267,7 +307,7 @@ def velocity_check(rip, server):
             for _ in range(3):
                 rip.test_terminate()
             raise Exception("EXCEED VELOCITY!!!")
-        time.sleep(0.05)
+        time.sleep(0.005)
 
 if __name__ == "__main__":
     rip = RotaryDoubleInvertedPendulum()

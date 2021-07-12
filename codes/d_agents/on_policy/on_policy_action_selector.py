@@ -21,7 +21,7 @@ class ContinuousNormalActionSelector(ContinuousActionSelector):
     def __call__(self, mu_v, logstd_v=None):
         with torch.no_grad():
             if logstd_v is not None:
-                dist = Normal(loc=mu_v, scale=logstd_v)
+                dist = Normal(loc=mu_v, scale=torch.exp(logstd_v))
                 actions = dist.sample().data.cpu().numpy()
             else:
                 actions = mu_v.data.cpu().numpy()

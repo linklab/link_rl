@@ -85,7 +85,7 @@ class AgentContinuousPPO(AgentPPO):
         trajectory_mu_v, trajectory_logstd_v, trajectory_values_v = self.model.base(trajectory_states_v)
 
         # trajectory_old_log_pi_action_v.shape: (2049, 1)
-        trajectory_dist = Normal(loc=trajectory_mu_v, scale=trajectory_logstd_v)
+        trajectory_dist = Normal(loc=trajectory_mu_v, scale=torch.exp(trajectory_logstd_v))
         trajectory_old_log_pi_action_v = trajectory_dist.log_prob(value=trajectory_actions_v).detach()
 
         # 아래 변수는 전체 trajectory의 원소보다 1 적음
@@ -131,7 +131,7 @@ class AgentContinuousPPO(AgentPPO):
                 # batch_covariance_matrix.shape: (64, 1, 1)
                 # batch_log_pi_action_v.shape: (64, 1)
                 # batch_entropy.shape: (64, 1)
-                batch_dist = Normal(loc=batch_mu_v, scale=batch_logstd_v)
+                batch_dist = Normal(loc=batch_mu_v, scale=torch.exp(batch_logstd_v))
                 batch_log_pi_action_v = batch_dist.log_prob(batch_actions_v)
                 batch_entropy_v = batch_dist.entropy()
 

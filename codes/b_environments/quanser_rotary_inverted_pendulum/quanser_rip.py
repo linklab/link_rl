@@ -1,6 +1,6 @@
 import time
 import math
-
+import random
 import gym
 from gym import spaces
 import numpy as np
@@ -16,10 +16,11 @@ from codes.b_environments.quanser_rotary_inverted_pendulum.quanser_service_pb2 i
 STATE_SIZE = 6
 
 balance_motor_power_list = [-60., 0., 60.]
+BLOWING_ACTION_RATE = 0.0004
 
 if params.SERVER_IDX == 1:
     RIP_SERVER = '10.0.0.4'
-elif params.SERVER_IDX == 3:
+elif params.SERVER_IDX == 2:
     RIP_SERVER = '10.0.0.5'
 
 def get_quanser_rip_observation_space():
@@ -64,6 +65,8 @@ def get_quanser_rip_action_info(params):
 class EnvironmentQuanserRIP(gym.Env):
     def __init__(self, mode=AgentMode.TRAIN):
         super(EnvironmentQuanserRIP, self).__init__()
+        self.next_time_step_of_external_blow = int(random.expovariate(BLOWING_ACTION_RATE))
+
         self.episode = 0
 
         self.params = params
@@ -118,7 +121,6 @@ class EnvironmentQuanserRIP(gym.Env):
             n_states = 4
         else:
             raise ValueError()
-
         return n_states
     #
     # def get_n_actions(self):
@@ -157,6 +159,11 @@ class EnvironmentQuanserRIP(gym.Env):
         if quanser_response.message != "RESET":
             raise ValueError()
 
+        if self.step_idx == 0:
+            print("next_time_step_of_external_blow: {0}".format(
+                self.next_time_step_of_external_blow
+            ))
+
         self.motor_radian = quanser_response.motor_radian
         self.motor_velocity = quanser_response.motor_velocity
         self.pendulum_radian = quanser_response.pendulum_radian
@@ -170,6 +177,7 @@ class EnvironmentQuanserRIP(gym.Env):
         #         math.cos(self.pendulum_radian),
         #         math.sin(self.pendulum_radian),
         #     ))
+
         if self.params.QUANSER_STATE_INFO == 0:
             self.state = [
                 math.cos(self.pendulum_radian),
@@ -232,10 +240,44 @@ class EnvironmentQuanserRIP(gym.Env):
             print("*OVER UNIT TIME STEP NUMBER :", self.over_unit_time)
         #######################################################
 
-        if self.params.RL_ALGORITHM in [RLAlgorithmName.DQN_V0]:
-            action = self.action_index_to_voltage[int(action)]
+
+        if self.step_idx >= self.next_time_step_of_external_blow:
+            if self.params.RL_ALGORITHM in [
+                RLAlgorithmName.DQN_V0, RLAlgorithmName.DISCRETE_A2C_V0, RLAlgorithmName.DISCRETE_PPO_V0
+            ]:
+                action = random.randint(a=0, b=len(self.action_index_to_voltage)-1)
+                action = action * self.action_index_to_voltage[action] * 2.0
+            elif self.params.RL_ALGORITHM in [
+                RLAlgorithmName.DDPG_V0,
+                RLAlgorithmName.CONTINUOUS_A2C_V0,
+                RLAlgorithmName.CONTINUOUS_PPO_V0,
+                RLAlgorithmName.TD3_V0,
+                RLAlgorithmName.SAC_V0,
+            ]:
+                action = random.uniform(a=-1.0, b=1.0)
+                action = action * self.params.ACTION_SCALE * 2.0
+            else:
+                raise ValueError()
+
+            self.next_time_step_of_external_blow = self.step_idx + int(random.expovariate(BLOWING_ACTION_RATE))
+            print("[{0:6}/{1}] External Blow: {2:7.5f}, next_time_step_of_external_blow: {3}".format(
+                self.step_idx + 1,
+                self.params.MAX_GLOBAL_STEP,
+                action,
+                self.next_time_step_of_external_blow
+            ))
         else:
-            action = action[0] * params.ACTION_SCALE
+            action = action[0]
+            if self.params.RL_ALGORITHM in [RLAlgorithmName.DQN_V0]:
+                action = self.action_index_to_voltage[int(action)]
+            elif self.params.RL_ALGORITHM in [
+                RLAlgorithmName.DDPG_V0,
+                RLAlgorithmName.CONTINUOUS_A2C_V0,
+                RLAlgorithmName.CONTINUOUS_PPO_V0,
+                RLAlgorithmName.TD3_V0,
+                RLAlgorithmName.SAC_V0,
+            ]:
+                action = action * self.params.ACTION_SCALE
 
         #motor_power = float(action)
         # if self.step_idx % 100 == 0:
@@ -262,7 +304,7 @@ class EnvironmentQuanserRIP(gym.Env):
         # print("motor: ", self.motor_radian)
         # print("===========transfer time : {0:1.6f} action : {1:3.2f}".format(previous_time - time.perf_counter(), action))
         # print("motor radian : {0:1.3f}, motor velocity : {1:1.3f}, pendulum radian : {2:1.3f}, pendulum velocity : {3:1.3f}".format(
-        #     self.motor_radian, self.motor_velocity,
+        #     math.degrees(self.motor_radian), self.motor_velocity,
         #       self.pendulum_radian, self.pendulum_velocity
         #     ))
         # print("is motor limit", self.is_motor_limit)
@@ -291,7 +333,6 @@ class EnvironmentQuanserRIP(gym.Env):
             ]
         else:
             raise ValueError()
-
         next_state = np.asarray(self.state)
 
         self.update_current_state()
