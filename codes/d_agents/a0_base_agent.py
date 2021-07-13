@@ -145,12 +145,12 @@ class BaseAgent:
                     last_log_prob_v = dist.log_prob(last_actions_v).sum(dim=-1, keepdim=True)
 
                     last_q_1_v, last_q_2_v = target_model.base.twinq(last_states_v, last_actions_v)
-                    last_q_np = torch.min(last_q_1_v, last_q_2_v).detach().numpy()[:, 0] * (params.GAMMA ** last_steps_v)
+                    last_q_np = torch.min(last_q_1_v, last_q_2_v).detach().cpu().numpy()[:, 0] * (params.GAMMA ** last_steps_v)
                     last_log_prob_v = alpha * last_log_prob_v
 
                     # last_q_np.shape: (128,)
                     # entropy_v.squeeze(-1).detach().numpy().shape: (128,)
-                    last_q_np -= last_log_prob_v.squeeze(-1).detach().numpy()
+                    last_q_np -= last_log_prob_v.squeeze(-1).detach().cpu().numpy()
 
                 else:
                     # probs.shape: torch.Size([32, 2])
