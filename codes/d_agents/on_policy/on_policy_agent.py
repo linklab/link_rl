@@ -12,8 +12,8 @@ class OnPolicyAgent(BaseAgent):
     """
     Abstract Agent interface
     """
-    def __init__(self, worker_id, params, action_shape, action_min, action_max, device):
-        super(OnPolicyAgent, self).__init__(worker_id, params, action_shape, action_min, action_max, device)
+    def __init__(self, worker_id, action_shape, params, device):
+        super(OnPolicyAgent, self).__init__(worker_id, action_shape, params, device)
         self.model_version = 0
         self.buffer = None
         self.model = None
@@ -56,7 +56,7 @@ class OnPolicyAgent(BaseAgent):
 
             return actions, agent_state
         else:
-            probs_v, new_actor_hidden_state = self.model.forward_actor(state, agent_state.actor_hidden_state)
+            probs_v, new_actor_hidden_state = self.model.forward_actor(state, agent_state)
             actions = self.test_and_play_action_selector(probs_v)
             agent_state = rl_utils.initial_agent_state(actor_hidden_state=new_actor_hidden_state)
             return actions, agent_state
@@ -75,7 +75,10 @@ class OnPolicyAgent(BaseAgent):
 
             return actions, agent_state
         else:
-            mu_v, _, new_actor_hidden_state = self.test_model.forward_actor(state, agent_state.actor_hidden_state)
+            if agent_state:
+                mu_v, _, new_actor_hidden_state = self.test_model.forward_actor(state, agent_state.actor_hidden_state)
+            else:
+                mu_v, _, new_actor_hidden_state = self.test_model.forward_actor(state, None)
             actions = self.test_and_play_action_selector(mu_v, logstd_v=None)
             agent_state = rl_utils.initial_agent_state(actor_hidden_state=new_actor_hidden_state)
             return actions, agent_state
@@ -84,7 +87,7 @@ class OnPolicyAgent(BaseAgent):
     def calc_entropy(self, logstd_v):
         return torch.log(logstd_v * math.sqrt(2 * np.pi)) + 0.5
 
-    # def calc_logprob(self, mu_v, logstd_v, actions_v):
+    # def calc_log_prob(self, mu_v, logstd_v, actions_v):
     #     p1 = -1.0 * ((mu_v - actions_v) ** 2) / (2 * torch.exp(logstd_v).clamp(min=1e-3, max=1e3) ** 2)
     #     p2 = -1.0 * torch.log(torch.sqrt(2 * np.pi * torch.exp(logstd_v).clamp(min=1e-3, max=1e3) ** 2))
     #     return p1 + p2

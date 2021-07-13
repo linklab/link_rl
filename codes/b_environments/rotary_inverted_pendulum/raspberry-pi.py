@@ -98,6 +98,16 @@ class RotaryDoubleInvertedPendulum:
             arm_angle=arm_angle, arm_velocity=arm_velocity, link_1_angle=link_angle, link_1_velocity=link_velocity
         )
 
+    def reset_sync(self, rip_request, context):
+        arm_angle, arm_velocity, link_angle, link_velocity = self.calculate_state()
+
+        # self.print_state(arm_angle, arm_velocity, link_angle, link_velocity)
+
+        return RipResponse(
+            message='OK',
+            arm_angle=arm_angle, arm_velocity=arm_velocity, link_1_angle=link_angle, link_1_velocity=link_velocity
+        )
+
     def step(self, rip_request, context):
         motor_power = int(rip_request.value)
         #print("motor_power :", motor_power)
@@ -125,7 +135,18 @@ class RotaryDoubleInvertedPendulum:
                 message='OK',
                 arm_angle=arm_angle, arm_velocity=arm_velocity, link_1_angle=link_angle, link_1_velocity=link_velocity
             )
+    def step_sync(self,rip_request, context):
+        motor_power = int(rip_request.value)
+        # print("motor_power :", motor_power)
 
+        self.apply_action(motor_power)
+
+        arm_angle, arm_velocity, link_angle, link_velocity = self.calculate_state()
+
+        return RipResponse(
+            message='OK',
+            arm_angle=arm_angle, arm_velocity=arm_velocity, link_1_angle=link_angle, link_1_velocity=link_velocity
+        )
     def force_terminate(self):
         spi.xfer2([0x40, 0x00, 0x10, 0x00, 0x00])
         spi.xfer2([0x40, 0x00, 0x01])

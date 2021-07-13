@@ -30,13 +30,13 @@ else:
 try:
     print("cheif")
     env = rl_utils.get_environment(params=params)
-    input_shape = env.observation_space.shape
+    observation_shape = env.observation_space.shape
     num_outputs = env.action_space.shape[0]
     action_min = env.action_space.low[0]
     action_max = env.action_space.high[0]
 
     rl_model = rl_utils.get_rl_model(
-        worker_id=-1, input_shape=input_shape, num_outputs=num_outputs, params=params, device=device
+        worker_id=-1, observation_shape=observation_shape, num_outputs=num_outputs, params=params, device=device
     )
     chief = Chief(logger=logger, rl_model=rl_model, params=params)
 except:

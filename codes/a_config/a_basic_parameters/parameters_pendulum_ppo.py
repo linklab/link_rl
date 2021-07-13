@@ -6,7 +6,7 @@ from codes.a_config.parameters_general import PARAMETERS_GENERAL
 # https://github.com/bulletphysics/bullet3/blob/master/examples/pybullet/gym/pybullet_envs/minitaur/envs/minitaur_gym_env.py
 class PARAMETERS_PENDULUM_PPO(PARAMETERS_GENERAL, PARAMETERS_PPO):
     ENVIRONMENT_ID = EnvironmentName.PENDULUM_V0
-    DEEP_LEARNING_MODEL = DeepLearningModelName.STOCHASTIC_CONTINUOUS_ACTOR_CRITIC_MLP
+    DEEP_LEARNING_MODEL = DeepLearningModelName.CONTINUOUS_STOCHASTIC_ACTOR_CRITIC_MLP
     RL_ALGORITHM = RLAlgorithmName.CONTINUOUS_PPO_V0
     OPTIMIZER = OptimizerName.ADAM
 

@@ -1,7 +1,7 @@
 import torch
 from torch.distributions import Normal, MultivariateNormal
 
-from codes.c_models.continuous_action.stochastic_continuous_actor_critic_model import \
+from codes.c_models.continuous_action.continuous_stochastic_actor_critic_model import \
     StochasticContinuousActorCriticModel
 from codes.d_agents.on_policy.on_policy_action_selector import ContinuousNormalActionSelector
 from codes.d_agents.on_policy.ppo.ppo_agent import AgentPPO
@@ -16,8 +16,8 @@ class AgentContinuousPPO(AgentPPO):
             self, worker_id, input_shape, action_shape, num_outputs, action_min, action_max, params, device
     ):
         assert params.DEEP_LEARNING_MODEL in [
-            DeepLearningModelName.STOCHASTIC_CONTINUOUS_ACTOR_CRITIC_MLP,
-            DeepLearningModelName.STOCHASTIC_CONTINUOUS_ACTOR_CRITIC_CNN
+            DeepLearningModelName.CONTINUOUS_STOCHASTIC_ACTOR_CRITIC_MLP,
+            DeepLearningModelName.CONTINUOUS_STOCHASTIC_ACTOR_CRITIC_CNN
         ]
 
         super(AgentContinuousPPO, self).__init__(

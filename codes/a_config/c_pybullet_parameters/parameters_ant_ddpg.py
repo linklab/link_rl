@@ -5,7 +5,7 @@ from codes.a_config.parameters_general import PARAMETERS_GENERAL
 # https://github.com/bulletphysics/bullet3/blob/master/examples/pybullet/gym/pybullet_envs/minitaur/envs/minitaur_gym_env.py
 class PARAMETERS_ANT_DDPG(PARAMETERS_GENERAL, PARAMETERS_DDPG):
     ENVIRONMENT_ID = EnvironmentName.PYBULLET_ANT_V0
-    DEEP_LEARNING_MODEL = DeepLearningModelName.DETERMINISTIC_CONTINUOUS_ACTOR_CRITIC_MLP
+    DEEP_LEARNING_MODEL = DeepLearningModelName.CONTINUOUS_DETERMINISTIC_ACTOR_CRITIC_MLP
     RL_ALGORITHM = RLAlgorithmName.DDPG_V0
     OPTIMIZER = OptimizerName.ADAM
 

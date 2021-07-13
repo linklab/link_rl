@@ -17,6 +17,7 @@ class ToyEnv(gym.Env):
 
     def reset(self):
         self.current_state = 0
+        print("RESET!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!")
         return self.current_state
 
     def step(self, action):

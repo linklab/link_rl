@@ -4,13 +4,13 @@ import torch.nn.functional as F
 import torch.nn.utils as nn_utils
 
 from codes.a_config._rl_parameters.off_policy.parameter_td3 import TD3ActionType, TD3ActionSelectorType
-from codes.c_models.continuous_action.deterministic_continuous_actor_critic_model import \
+from codes.c_models.continuous_action.continuous_deterministic_actor_critic_model import \
     DeterministicContinuousActorCriticModel
-from codes.d_agents.a0_base_agent import float32_preprocessor
 from codes.d_agents.off_policy.off_policy_agent import OffPolicyAgent
 from codes.d_agents.off_policy.td3.td3_action_selector import SomeTimesBlowTD3ActionSelector, TD3ActionSelector
 from codes.e_utils import rl_utils
 from codes.d_agents.actions import EpsilonTracker
+from codes.e_utils.common_utils import float32_preprocessor
 from codes.e_utils.names import DeepLearningModelName, AgentMode
 from torch.distributions import normal
 
@@ -18,15 +18,14 @@ from torch.distributions import normal
 # https://spinningup.openai.com/en/latest/algorithms/td3.html
 
 class AgentTD3(OffPolicyAgent):
-    def __init__(self, worker_id, input_shape, action_shape, num_outputs, action_min, action_max, params, device):
+    def __init__(self, worker_id, observation_shape, action_shape, num_outputs, action_min, action_max, params, device):
         assert params.DEEP_LEARNING_MODEL == DeepLearningModelName.TD3_MLP
 
-        super(AgentTD3, self).__init__(
-            worker_id=worker_id, params=params, action_shape=action_shape,
-            action_min=action_min, action_max=action_max, device=device
-        )
-
+        super(AgentTD3, self).__init__(worker_id=worker_id, action_shape=action_shape, params=params, device=device)
         self.__name__ = "AgentTD3"
+        self.num_outputs = num_outputs
+        self.action_min = action_min
+        self.action_max = action_max
 
         if params.TYPE_OF_TD3_ACTION_SELECTOR == TD3ActionSelectorType.BASIC_ACTION_SELECTOR:
             self.train_action_selector = TD3ActionSelector(
@@ -49,7 +48,7 @@ class AgentTD3(OffPolicyAgent):
 
         self.model = DeterministicContinuousActorCriticModel(
             worker_id=worker_id,
-            input_shape=input_shape,
+            observation_shape=observation_shape,
             num_outputs=num_outputs,
             params=params,
             device=device
@@ -57,7 +56,7 @@ class AgentTD3(OffPolicyAgent):
 
         self.target_model = DeterministicContinuousActorCriticModel(
             worker_id=worker_id,
-            input_shape=input_shape,
+            observation_shape=observation_shape,
             num_outputs=num_outputs,
             params=params,
             device=device
@@ -65,7 +64,7 @@ class AgentTD3(OffPolicyAgent):
 
         self.test_model = DeterministicContinuousActorCriticModel(
             worker_id=worker_id,
-            input_shape=input_shape,
+            observation_shape=observation_shape,
             num_outputs=num_outputs,
             params=params,
             device=device

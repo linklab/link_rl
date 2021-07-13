@@ -135,14 +135,14 @@ def train(coin_name, time_unit, train_env, evaluate_env):
     params.BATCH_SIZE *= params.TRAIN_STEP_FREQ
 
     net = value_based_model.DuelingDQNSmallCNN(
-        input_shape=train_env.observation_space.shape,
+        observation_shape=train_env.observation_space.shape,
         n_actions=train_env.action_space.n
     ).to(device)
     print(net)
     print("ACTION MEANING: {0}".format(train_env.get_action_meanings()))
 
     tgt_net = value_based_model.DuelingDQNSmallCNN(
-        input_shape=train_env.observation_space.shape,
+        observation_shape=train_env.observation_space.shape,
         n_actions=train_env.action_space.n
     ).to(device)
 
