@@ -35,24 +35,24 @@ class CuriosityMlpStateEncoder(nn.Module): #A
 
 
 class CuriosityCnnStateEncoder(nn.Module): #A
-    def __init__(self, input_shape, params, device):
+    def __init__(self, observation_shape, params, device):
         super(CuriosityCnnStateEncoder, self).__init__()
 
         self.params = params
         self.device = device
 
         self.encoder = nn.Sequential(
-            nn.Conv2d(input_shape[0], 32, kernel_size=(3, 3), stride=2, padding=1),
+            nn.Conv2d(observation_shape[0], 32, kernel_size=(3, 3), stride=(2, 2), padding=1),
             nn.GELU(),
-            nn.Conv2d(32, 32, kernel_size=(3, 3), stride=2, padding=1),
+            nn.Conv2d(32, 32, kernel_size=(3, 3), stride=(2, 2), padding=1),
             nn.GELU(),
-            nn.Conv2d(32, 32, kernel_size=(3, 3), stride=2, padding=1),
+            nn.Conv2d(32, 32, kernel_size=(3, 3), stride=(2, 2), padding=1),
             nn.GELU(),
-            nn.Conv2d(32, 32, kernel_size=(3, 3), stride=2, padding=1),
+            nn.Conv2d(32, 32, kernel_size=(3, 3), stride=(2, 2), padding=1),
             nn.GELU(),
         ).to(self.device)
 
-        self.encoded_state_size = self._get_conv_out(input_shape)
+        self.encoded_state_size = self._get_conv_out(observation_shape)
 
     def _get_conv_out(self, shape):
         o = self.encoder(Variable(torch.zeros(1, *shape)).to(self.device))
@@ -67,16 +67,16 @@ class CuriosityCnnStateEncoder(nn.Module): #A
 
 
 class CuriosityForwardModel(nn.Module): #C
-    def __init__(self, encoder_state_size, num_outputs, device):
+    def __init__(self, encoder_state_size, action_n, device):
         super(CuriosityForwardModel, self).__init__()
         self.device = device
-        self.linear1 = nn.Linear(encoder_state_size + num_outputs, 256).to(self.device)
+        self.linear1 = nn.Linear(encoder_state_size + action_n, 256).to(self.device)
         self.linear2 = nn.Linear(256, encoder_state_size).to(self.device)
-        self.num_outputs = num_outputs
+        self.action_n = action_n
 
     def forward(self, state, action):  # 다음 상태 예측
         action = action.to(self.device)
-        action_ = torch.zeros(action.shape[0], self.num_outputs).to(self.device) #D
+        action_ = torch.zeros(action.shape[0], self.action_n).to(self.device) #D
         indices = torch.stack((torch.arange(action.shape[0]).to(self.device), action.squeeze()), dim=0)
         indices = indices.tolist()
         action_[indices] = 1.
@@ -87,11 +87,11 @@ class CuriosityForwardModel(nn.Module): #C
 
 
 class CuriosityInverseModel(nn.Module): #B
-    def __init__(self, encoded_state_size, num_outputs, device):
+    def __init__(self, encoded_state_size, action_n, device):
         super(CuriosityInverseModel, self).__init__()
         self.device = device
         self.linear1 = nn.Linear(encoded_state_size * 2, 256).to(self.device)
-        self.linear2 = nn.Linear(256, num_outputs).to(self.device)
+        self.linear2 = nn.Linear(256, action_n).to(self.device)
 
     def forward(self, encoded_state, encoded_next_state): # 상태와 다음 상태를 산출할 수 있는 행동 예측
         x = torch.cat((encoded_state, encoded_next_state), dim=1).to(self.device)

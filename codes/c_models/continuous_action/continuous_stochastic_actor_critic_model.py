@@ -3,26 +3,26 @@ import torch.nn as nn
 
 from codes.c_models.base_model import RNNModel
 from codes.c_models.continuous_action.continuous_action_model import ContinuousActionModel
-from codes.d_agents.a0_base_agent import float32_preprocessor
 from codes.e_utils import rl_utils
+from codes.e_utils.common_utils import float32_preprocessor
 from codes.e_utils.names import DeepLearningModelName
 
 
 class StochasticContinuousActorCriticModel(ContinuousActionModel):
-    def __init__(self, worker_id, input_shape, num_outputs, params, device):
+    def __init__(self, worker_id, observation_shape, num_outputs, params, device):
         super(StochasticContinuousActorCriticModel, self).__init__(worker_id, params, device)
 
-        num_inputs = input_shape[0]
+        num_inputs = observation_shape[0]
 
-        if params.DEEP_LEARNING_MODEL == DeepLearningModelName.STOCHASTIC_CONTINUOUS_ACTOR_CRITIC_MLP:
+        if params.DEEP_LEARNING_MODEL == DeepLearningModelName.CONTINUOUS_STOCHASTIC_ACTOR_CRITIC_MLP:
             self.base = StochasticActorCriticMLPBase(
                 num_inputs=num_inputs, num_outputs=num_outputs, params=self.params
             )
             self.__name__ = "StochasticContinuousActorCriticMLPModel"
-        elif params.DEEP_LEARNING_MODEL == DeepLearningModelName.STOCHASTIC_CONTINUOUS_ACTOR_CRITIC_CNN:
+        elif params.DEEP_LEARNING_MODEL == DeepLearningModelName.CONTINUOUS_STOCHASTIC_ACTOR_CRITIC_CNN:
             self.base = None
             self.__name__ = "StochasticContinuousActorCriticCNNModel"
-        elif params.DEEP_LEARNING_MODEL == DeepLearningModelName.STOCHASTIC_CONTINUOUS_ACTOR_CRITIC_RNN:
+        elif params.DEEP_LEARNING_MODEL == DeepLearningModelName.CONTINUOUS_STOCHASTIC_ACTOR_CRITIC_RNN:
             self.base = None
             self.__name__ = "StochasticContinuousActorCriticRNNModel"
         else:

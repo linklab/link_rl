@@ -7,31 +7,29 @@ from codes.a_config._rl_parameters.off_policy.parameter_dqn import DQNActionSele
 from codes.c_models.advanced_exploration.curiosity_driven import CuriosityMlpStateEncoder, CuriosityCnnStateEncoder, \
     CuriosityForwardModel, CuriosityInverseModel, intrinsic_curiosity_module_errors
 from codes.c_models.discrete_action.dqn_model import DuelingDQNModel
-from codes.d_agents.a0_base_agent import float32_preprocessor
 from codes.d_agents.off_policy.dqn.dqn_action_selector import EpsilonGreedySomeTimesBlowDQNActionSelector, \
     EpsilonGreedyDQNActionSelector
 from codes.d_agents.off_policy.off_policy_agent import OffPolicyAgent
 from codes.e_utils import rl_utils
 from codes.d_agents.actions import ArgmaxActionSelector, EpsilonTracker
+from codes.e_utils.common_utils import float32_preprocessor
 from codes.e_utils.names import DeepLearningModelName, AgentMode, EnvironmentName
 
 
 class AgentDQN(OffPolicyAgent):
     """
     """
-    def __init__(self, worker_id, input_shape, action_shape, num_outputs, action_min, action_max, params, device):
-        self.__name__ = "AgentDQN"
-
+    def __init__(self, worker_id, observation_shape, action_shape, action_n, params, device):
         assert params.DEEP_LEARNING_MODEL in [
             DeepLearningModelName.DUELING_DQN_MLP,
             DeepLearningModelName.DUELING_DQN_CNN,
             DeepLearningModelName.DUELING_DQN_SMALL_CNN
         ]
 
-        super(AgentDQN, self).__init__(
-            worker_id=worker_id, params=params, action_shape=action_shape,
-            action_min=action_min, action_max=action_max, device=device
-        )
+        super(AgentDQN, self).__init__(worker_id=worker_id, action_shape=action_shape, params=params, device=device)
+        self.__name__ = "AgentDQN"
+
+        self.action_n = action_n
 
         if self.params.DISTRIBUTIONAL:
             self.delta_z = float(self.params.VALUE_MAX - self.params.VALUE_MIN) / (self.params.NUM_SUPPORTS - 1)
@@ -47,7 +45,7 @@ class AgentDQN(OffPolicyAgent):
             self.train_action_selector = EpsilonGreedyDQNActionSelector(epsilon=params.EPSILON_INIT)
         elif params.TYPE_OF_DQN_ACTION_SELECTOR == DQNActionSelectorType.SOMETIMES_BLOW_ACTION_SELECTOR:
             self.train_action_selector = EpsilonGreedySomeTimesBlowDQNActionSelector(
-                epsilon=params.EPSILON_INIT, min_blowing_action_idx=0, max_blowing_action_idx=num_outputs - 1,
+                epsilon=params.EPSILON_INIT, min_blowing_action_idx=0, max_blowing_action_idx=action_n - 1,
                 params=params
             )
         elif params.TYPE_OF_DQN_ACTION_SELECTOR == DQNActionSelectorType.NOISY_NET_ACTION_SELECTOR:
@@ -82,46 +80,46 @@ class AgentDQN(OffPolicyAgent):
 
         self.model = DuelingDQNModel(
             worker_id=worker_id,
-            input_shape=input_shape,
-            num_outputs=num_outputs,
+            observation_shape=observation_shape,
+            action_n=action_n,
             params=params,
             device=device
         ).to(device)
 
         self.target_model = DuelingDQNModel(
             worker_id=worker_id,
-            input_shape=input_shape,
-            num_outputs=num_outputs,
+            observation_shape=observation_shape,
+            action_n=action_n,
             params=params,
             device=device
         ).to(device)
 
         self.test_model = DuelingDQNModel(
             worker_id=worker_id,
-            input_shape=input_shape,
-            num_outputs=num_outputs,
+            observation_shape=observation_shape,
+            action_n=action_n,
             params=params,
             device=device
         ).to(device)
 
         if params.CURIOSITY_DRIVEN:
             if params.DEEP_LEARNING_MODEL == DeepLearningModelName.DUELING_DQN_MLP:
-                num_inputs = input_shape[0]
+                num_inputs = observation_shape[0]
                 self.curiosity_state_encoder = CuriosityMlpStateEncoder(
                     num_inputs=num_inputs, params=params, device=device
                 )
             elif params.DEEP_LEARNING_MODEL in [DeepLearningModelName.DUELING_DQN_CNN, DeepLearningModelName.DUELING_DQN_SMALL_CNN]:
                 self.curiosity_state_encoder = CuriosityCnnStateEncoder(
-                    input_shape=input_shape, params=params, device=device
+                    observation_shape=observation_shape, params=params, device=device
                 )
             else:
                 raise ValueError()
 
             self.curiosity_forward_model = CuriosityForwardModel(
-                self.curiosity_state_encoder.encoded_state_size, num_outputs, device
+                self.curiosity_state_encoder.encoded_state_size, action_n, device
             )
             self.curiosity_inverse_model = CuriosityInverseModel(
-                self.curiosity_state_encoder.encoded_state_size, num_outputs, device
+                self.curiosity_state_encoder.encoded_state_size, action_n, device
             )
 
             parameters = list(self.model.base.parameters())

@@ -1,7 +1,7 @@
 import torch
 from torch.distributions import Normal, MultivariateNormal
 
-from codes.c_models.continuous_action.stochastic_continuous_actor_critic_model import \
+from codes.c_models.continuous_action.continuous_stochastic_actor_critic_model import \
     StochasticContinuousActorCriticModel
 from codes.d_agents.on_policy.on_policy_action_selector import ContinuousNormalActionSelector
 from codes.d_agents.on_policy.ppo.ppo_agent import AgentPPO
@@ -14,16 +14,20 @@ class AgentContinuousPPO(AgentPPO):
     """
     """
     def __init__(
-            self, worker_id, input_shape, action_shape, num_outputs, action_min, action_max, params, device
+            self, worker_id, observation_shape, action_shape, num_outputs, action_min, action_max, params, device
     ):
         assert params.DEEP_LEARNING_MODEL in [
-            DeepLearningModelName.STOCHASTIC_CONTINUOUS_ACTOR_CRITIC_MLP,
-            DeepLearningModelName.STOCHASTIC_CONTINUOUS_ACTOR_CRITIC_CNN
+            DeepLearningModelName.CONTINUOUS_STOCHASTIC_ACTOR_CRITIC_MLP,
+            DeepLearningModelName.CONTINUOUS_STOCHASTIC_ACTOR_CRITIC_CNN
         ]
 
         super(AgentContinuousPPO, self).__init__(
-            worker_id=worker_id, params=params, action_shape=action_shape, action_min=action_min, action_max=action_max, device=device
+            worker_id=worker_id, action_shape=action_shape, params=params, device=device
         )
+        self.num_outputs = num_outputs
+        self.action_min = action_min
+        self.action_max = action_max
+
         self.__name__ = "AgentContinuousPPO"
 
         self.train_action_selector = ContinuousNormalActionSelector()
@@ -31,7 +35,7 @@ class AgentContinuousPPO(AgentPPO):
 
         self.model = StochasticContinuousActorCriticModel(
             worker_id=worker_id,
-            input_shape=input_shape,
+            observation_shape=observation_shape,
             num_outputs=num_outputs,
             params=params,
             device=device
@@ -39,7 +43,7 @@ class AgentContinuousPPO(AgentPPO):
 
         self.test_model = StochasticContinuousActorCriticModel(
             worker_id=worker_id,
-            input_shape=input_shape,
+            observation_shape=observation_shape,
             num_outputs=num_outputs,
             params=params,
             device=device
@@ -85,7 +89,7 @@ class AgentContinuousPPO(AgentPPO):
         trajectory_mu_v, trajectory_logstd_v, trajectory_values_v = self.model.base(trajectory_states_v)
 
         # trajectory_old_log_pi_action_v.shape: (2049, 1)
-        trajectory_dist = Normal(loc=trajectory_mu_v, scale=trajectory_logstd_v)
+        trajectory_dist = Normal(loc=trajectory_mu_v, scale=torch.exp(trajectory_logstd_v))
         trajectory_old_log_pi_action_v = trajectory_dist.log_prob(value=trajectory_actions_v).detach()
 
         # 아래 변수는 전체 trajectory의 원소보다 1 적음
@@ -131,7 +135,7 @@ class AgentContinuousPPO(AgentPPO):
                 # batch_covariance_matrix.shape: (64, 1, 1)
                 # batch_log_pi_action_v.shape: (64, 1)
                 # batch_entropy.shape: (64, 1)
-                batch_dist = Normal(loc=batch_mu_v, scale=batch_logstd_v)
+                batch_dist = Normal(loc=batch_mu_v, scale=torch.exp(batch_logstd_v))
                 batch_log_pi_action_v = batch_dist.log_prob(batch_actions_v)
                 batch_entropy_v = batch_dist.entropy()
 

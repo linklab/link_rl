@@ -18,8 +18,6 @@ from termcolor import colored
 from codes.b_environments.or_gym.envs.classic_or.knapsack import BoundedKnapsackEnv
 from codes.b_environments.or_gym.envs.classic_or.tsp import TSPEnv, TSPDistCost
 
-from codes.d_agents.a0_base_agent import float32_preprocessor, long64_preprocessor
-
 #https://medium.com/analytics-vidhya/stretched-exponential-decay-function-for-epsilon-greedy-algorithm-98da6224c22f
 from codes.e_utils import wrappers
 from codes.e_utils.names import RLAlgorithmName
@@ -374,6 +372,16 @@ def show_info(*tensors):
 
     for idx, arg_name in enumerate(arg_names):
         print("# {0}.shape: {1}".format(arg_name, tensors[idx].shape))
+
+
+def float32_preprocessor(values):
+    np_values = np.array(values, dtype=np.float32)
+    return torch.tensor(np_values)
+
+
+def long64_preprocessor(values):
+    np_values = np.array(values, dtype=np.int64)
+    return torch.tensor(np_values)
 
 
 if __name__=="__main__":

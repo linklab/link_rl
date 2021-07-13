@@ -7,38 +7,40 @@ from codes.d_agents.on_policy.a2c.a2c_agent import AgentA2C
 from codes.d_agents.on_policy.on_policy_action_selector import DiscreteCategoricalActionSelector
 from codes.e_utils import rl_utils
 from codes.e_utils.common_utils import show_info
-from codes.e_utils.names import DeepLearningModelName
+from codes.e_utils.names import DeepLearningModelName, AgentMode
 
 
 class AgentDiscreteA2C(AgentA2C):
     """
     """
     def __init__(
-            self, worker_id, input_shape, action_shape, num_outputs, action_min, action_max, params, device
+            self, worker_id, observation_shape, action_shape, action_n, params, device
     ):
         assert params.DEEP_LEARNING_MODEL in [
-            DeepLearningModelName.STOCHASTIC_DISCRETE_ACTOR_CRITIC_MLP,
-            DeepLearningModelName.STOCHASTIC_DISCRETE_ACTOR_CRITIC_CNN,
-            DeepLearningModelName.STOCHASTIC_DISCRETE_ACTOR_CRITIC_RNN,
+            DeepLearningModelName.DISCRETE_STOCHASTIC_ACTOR_CRITIC_MLP,
+            DeepLearningModelName.DISCRETE_STOCHASTIC_ACTOR_CRITIC_CNN,
+            DeepLearningModelName.DISCRETE_STOCHASTIC_ACTOR_CRITIC_RNN,
         ]
-        super(AgentDiscreteA2C, self).__init__(worker_id, action_shape, action_min, action_max, params, device)
+        super(AgentDiscreteA2C, self).__init__(worker_id, action_shape, params, device)
 
         self.__name__ = "AgentDiscreteA2C"
-        self.train_action_selector = DiscreteCategoricalActionSelector()
-        self.test_and_play_action_selector = DiscreteCategoricalActionSelector()
+        self.action_n = action_n
+
+        self.train_action_selector = DiscreteCategoricalActionSelector(agent_mode=AgentMode.TRAIN)
+        self.test_and_play_action_selector = DiscreteCategoricalActionSelector(agent_mode=AgentMode.TEST)
 
         self.model = DiscreteActorCriticModel(
             worker_id=worker_id,
-            input_shape=input_shape,
-            num_outputs=num_outputs,
+            observation_shape=observation_shape,
+            action_n=action_n,
             params=params,
             device=device
         ).to(device)
 
         self.test_model = DiscreteActorCriticModel(
             worker_id=worker_id,
-            input_shape=input_shape,
-            num_outputs=num_outputs,
+            observation_shape=observation_shape,
+            action_n=action_n,
             params=params,
             device=device
         ).to(device)
@@ -70,7 +72,9 @@ class AgentDiscreteA2C(AgentA2C):
         # batch_states_v.shape: (32, 3)
         # batch_actions_v.shape: (32, 1)
         # batch_target_action_values_v.shape: (32,)
-        batch_states_v, batch_actions_v, batch_target_action_values_v = self.unpack_batch_for_actor_critic(batch, self.model, self.params)
+        batch_states_v, batch_actions_v, batch_target_action_values_v = self.unpack_batch_for_actor_critic(
+            batch=batch, target_model=self.model, params=self.params
+        )
 
         # batch_probs_v.shape: torch.Size([32, 2])
         # batch_value_v.shape: torch.Size([32, 1])

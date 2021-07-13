@@ -12,8 +12,8 @@ class OnPolicyAgent(BaseAgent):
     """
     Abstract Agent interface
     """
-    def __init__(self, worker_id, params, action_shape, action_min, action_max, device):
-        super(OnPolicyAgent, self).__init__(worker_id, params, action_shape, action_min, action_max, device)
+    def __init__(self, worker_id, action_shape, params, device):
+        super(OnPolicyAgent, self).__init__(worker_id, action_shape, params, device)
         self.model_version = 0
         self.buffer = None
         self.model = None
@@ -56,7 +56,7 @@ class OnPolicyAgent(BaseAgent):
 
             return actions, agent_state
         else:
-            probs_v, new_actor_hidden_state = self.model.forward_actor(state, agent_state.actor_hidden_state)
+            probs_v, new_actor_hidden_state = self.model.forward_actor(state, agent_state)
             actions = self.test_and_play_action_selector(probs_v)
             agent_state = rl_utils.initial_agent_state(actor_hidden_state=new_actor_hidden_state)
             return actions, agent_state
