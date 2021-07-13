@@ -126,7 +126,7 @@ def train_main(train_env, test_env):
                             if params.RL_ALGORITHM in [
                                 RLAlgorithmName.DDPG_V0,
                                 RLAlgorithmName.TD3_V0,
-                                RLAlgorithmName.SAC_V0,
+                                RLAlgorithmName.CONTINUOUS_SAC_V0,
                                 RLAlgorithmName.CONTINUOUS_PPO_V0,
                                 RLAlgorithmName.CONTINUOUS_A2C_V0
                             ]:

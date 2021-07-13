@@ -19,8 +19,8 @@ class AgentDiscreteA2C(OnPolicyAgent):
         assert isinstance(train_action_selector, ProbabilityActionSelector)
         assert isinstance(test_and_play_action_selector, ProbabilityActionSelector)
         assert params.DEEP_LEARNING_MODEL in [
-            DeepLearningModelName.STOCHASTIC_DISCRETE_ACTOR_CRITIC_MLP,
-            DeepLearningModelName.STOCHASTIC_DISCRETE_ACTOR_CRITIC_CNN
+            DeepLearningModelName.DISCRETE_STOCHASTIC_ACTOR_CRITIC_MLP,
+            DeepLearningModelName.DISCRETE_STOCHASTIC_ACTOR_CRITIC_CNN
         ]
 
         super(AgentDiscreteA2C, self).__init__(train_action_selector, test_and_play_action_selector, params, device)
@@ -32,7 +32,7 @@ class AgentDiscreteA2C(OnPolicyAgent):
             worker_id=worker_id, input_shape=input_shape, num_outputs=num_outputs, params=params, device=self.device
         )
 
-        if self.params.DEEP_LEARNING_MODEL == DeepLearningModelName.STOCHASTIC_DISCRETE_ACTOR_CRITIC_MLP:
+        if self.params.DEEP_LEARNING_MODEL == DeepLearningModelName.DISCRETE_STOCHASTIC_ACTOR_CRITIC_MLP:
             self.actor_optimizer = rl_utils.get_optimizer(
                 parameters=self.model.base.actor.parameters(),
                 learning_rate=self.params.ACTOR_LEARNING_RATE,
@@ -44,7 +44,7 @@ class AgentDiscreteA2C(OnPolicyAgent):
                 learning_rate=self.params.LEARNING_RATE,
                 params=params
             )
-        elif self.params.DEEP_LEARNING_MODEL == DeepLearningModelName.STOCHASTIC_DISCRETE_ACTOR_CRITIC_CNN:
+        elif self.params.DEEP_LEARNING_MODEL == DeepLearningModelName.DISCRETE_STOCHASTIC_ACTOR_CRITIC_CNN:
             self.optimizer = rl_utils.get_optimizer(
                 parameters=list(self.model.base.common_conv.parameters()) + list(self.model.base.critic_fc.parameters()),
                 learning_rate=self.params.LEARNING_RATE,

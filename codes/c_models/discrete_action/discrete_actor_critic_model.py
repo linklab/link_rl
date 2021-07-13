@@ -18,13 +18,13 @@ class DiscreteActorCriticModel(DiscreteActionModel):
 
         num_input = input_shape[0]
 
-        if params.DEEP_LEARNING_MODEL == DeepLearningModelName.STOCHASTIC_DISCRETE_ACTOR_CRITIC_MLP:
+        if params.DEEP_LEARNING_MODEL == DeepLearningModelName.DISCRETE_STOCHASTIC_ACTOR_CRITIC_MLP:
             self.base = ActorCriticMLPBase(num_input=num_input, num_outputs=num_outputs, params=self.params)
             self.__name__ = "DiscreteActorCriticMLPModel"
-        elif params.DEEP_LEARNING_MODEL == DeepLearningModelName.STOCHASTIC_DISCRETE_ACTOR_CRITIC_CNN:
+        elif params.DEEP_LEARNING_MODEL == DeepLearningModelName.DISCRETE_STOCHASTIC_ACTOR_CRITIC_CNN:
             self.base = ActorCriticCNNBase(input_shape=input_shape, num_outputs=num_outputs)
             self.__name__ = "DiscreteActorCriticCNNModel"
-        elif params.DEEP_LEARNING_MODEL == DeepLearningModelName.STOCHASTIC_DISCRETE_ACTOR_CRITIC_RNN:
+        elif params.DEEP_LEARNING_MODEL == DeepLearningModelName.DISCRETE_STOCHASTIC_ACTOR_CRITIC_RNN:
             self.base = ActorCriticRNNBase(num_input=num_input, num_outputs=num_outputs, params=self.params)
             self.__name__ = "DiscreteActorCriticRNNModel"
         else:

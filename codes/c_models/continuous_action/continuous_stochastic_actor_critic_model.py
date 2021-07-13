@@ -14,15 +14,15 @@ class StochasticContinuousActorCriticModel(ContinuousActionModel):
 
         num_inputs = input_shape[0]
 
-        if params.DEEP_LEARNING_MODEL == DeepLearningModelName.STOCHASTIC_CONTINUOUS_ACTOR_CRITIC_MLP:
+        if params.DEEP_LEARNING_MODEL == DeepLearningModelName.CONTINUOUS_STOCHASTIC_ACTOR_CRITIC_MLP:
             self.base = StochasticActorCriticMLPBase(
                 num_inputs=num_inputs, num_outputs=num_outputs, params=self.params
             )
             self.__name__ = "StochasticContinuousActorCriticMLPModel"
-        elif params.DEEP_LEARNING_MODEL == DeepLearningModelName.STOCHASTIC_CONTINUOUS_ACTOR_CRITIC_CNN:
+        elif params.DEEP_LEARNING_MODEL == DeepLearningModelName.CONTINUOUS_STOCHASTIC_ACTOR_CRITIC_CNN:
             self.base = None
             self.__name__ = "StochasticContinuousActorCriticCNNModel"
-        elif params.DEEP_LEARNING_MODEL == DeepLearningModelName.STOCHASTIC_CONTINUOUS_ACTOR_CRITIC_RNN:
+        elif params.DEEP_LEARNING_MODEL == DeepLearningModelName.CONTINUOUS_STOCHASTIC_ACTOR_CRITIC_RNN:
             self.base = None
             self.__name__ = "StochasticContinuousActorCriticRNNModel"
         else:

@@ -41,14 +41,6 @@ def actor_func(agent, current_model_version, exp_queue, child_pipe_conn):
         )
         agent.test_and_play_action_selector = ArgmaxTradeActionSelector(env=test_env)
 
-    # if params.DEEP_LEARNING_MODEL in [
-    #     DeepLearningModelName.DETERMINISTIC_CONTINUOUS_ACTOR_CRITIC_RNN,
-    #     DeepLearningModelName.DETERMINISTIC_CONTINUOUS_ACTOR_CRITIC_RNN_ATTENTION
-    # ]:
-    #     step_length = params.RNN_STEP_LENGTH
-    # else:
-    #     step_length = -1
-
     experience_source = ExperienceSourceFirstLast(
         env=train_env, agent=agent, gamma=params.GAMMA, n_step=params.N_STEP
     )
@@ -249,7 +241,7 @@ def main():
                     if params.RL_ALGORITHM in [
                         RLAlgorithmName.DDPG_V0,
                         RLAlgorithmName.TD3_V0,
-                        RLAlgorithmName.SAC_V0,
+                        RLAlgorithmName.CONTINUOUS_SAC_V0,
                         RLAlgorithmName.CONTINUOUS_PPO_V0,
                         RLAlgorithmName.CONTINUOUS_A2C_V0
                     ] and params.ENVIRONMENT_ID in [

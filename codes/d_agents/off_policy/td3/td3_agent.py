@@ -4,7 +4,7 @@ import torch.nn.functional as F
 import torch.nn.utils as nn_utils
 
 from codes.a_config._rl_parameters.off_policy.parameter_td3 import TD3ActionType, TD3ActionSelectorType
-from codes.c_models.continuous_action.deterministic_continuous_actor_critic_model import \
+from codes.c_models.continuous_action.continuous_deterministic_actor_critic_model import \
     DeterministicContinuousActorCriticModel
 from codes.d_agents.a0_base_agent import float32_preprocessor
 from codes.d_agents.off_policy.off_policy_agent import OffPolicyAgent

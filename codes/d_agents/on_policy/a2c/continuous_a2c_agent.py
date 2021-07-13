@@ -4,7 +4,7 @@ import torch.nn.functional as F
 from torch.distributions import Normal, MultivariateNormal
 
 from codes.c_models.base_model import RNNModel
-from codes.c_models.continuous_action.stochastic_continuous_actor_critic_model import StochasticContinuousActorCriticModel
+from codes.c_models.continuous_action.continuous_stochastic_actor_critic_model import StochasticContinuousActorCriticModel
 from codes.d_agents.on_policy.a2c.a2c_agent import AgentA2C
 from codes.d_agents.on_policy.on_policy_action_selector import ContinuousNormalActionSelector
 from codes.e_utils import rl_utils
@@ -19,7 +19,7 @@ class AgentContinuousA2C(AgentA2C):
             self, worker_id, input_shape, action_shape, num_outputs, action_min, action_max, params, device
     ):
         assert params.DEEP_LEARNING_MODEL in [
-            DeepLearningModelName.STOCHASTIC_CONTINUOUS_ACTOR_CRITIC_MLP
+            DeepLearningModelName.CONTINUOUS_STOCHASTIC_ACTOR_CRITIC_MLP
         ]
         super(AgentContinuousA2C, self).__init__(worker_id, action_shape, action_min, action_max, params, device)
 

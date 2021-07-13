@@ -12,75 +12,22 @@ from codes.c_models.continuous_action.continuous_soft_actor_critic_model import 
 from codes.d_agents.off_policy.off_policy_agent import OffPolicyAgent
 from codes.d_agents.off_policy.sac.sac_action_selector import ContinuousNormalSACActionSelector, \
     SomeTimesBlowSACActionSelector
-from codes.d_agents.off_policy.sac.sac_agent import AgentSAC
 from codes.d_agents.off_policy.td3.td3_action_selector import TD3ActionSelector
 from codes.e_utils import rl_utils
 from codes.e_utils.common_utils import grad_false, show_info
 from codes.e_utils.names import DeepLearningModelName, AgentMode
 
 
-class AgentContinuousSAC(AgentSAC):
+class AgentSAC(OffPolicyAgent):
     """
     """
     def __init__(self, worker_id, input_shape, action_shape, num_outputs, action_min, action_max, params, device):
-        assert params.DEEP_LEARNING_MODEL == DeepLearningModelName.CONTINUOUS_SOFT_ACTOR_CRITIC_MLP
-
-        super(AgentContinuousSAC, self).__init__(
-            worker_id=worker_id, input_shape=input_shape, action_shape=action_shape,
-            num_outputs=num_outputs, action_min=action_min, action_max=action_max,
-            params=params, device=device
+        super(AgentSAC, self).__init__(
+            worker_id=worker_id, params=params, action_shape=action_shape,
+            action_min=action_min, action_max=action_max, device=device
         )
 
-        self.__name__ = "AgentContinuousSAC"
-
-        if params.TYPE_OF_SAC_ACTION_SELECTOR == SACActionSelectorType.BASIC_ACTION_SELECTOR:
-            self.train_action_selector = ContinuousNormalSACActionSelector(params=params)
-        elif params.TYPE_OF_SAC_ACTION_SELECTOR == SACActionSelectorType.SOMETIMES_BLOW_ACTION_SELECTOR:
-            self.train_action_selector = SomeTimesBlowSACActionSelector(
-                min_blowing_action=-5.0, max_blowing_action=5.0, params=self.params,
-            )
-        else:
-            raise ValueError()
-
-        self.test_and_play_action_selector = ContinuousNormalSACActionSelector(params=params)
-
-        self.model = SoftActorCriticModel(
-            worker_id=worker_id,
-            input_shape=input_shape,
-            num_outputs=num_outputs,
-            params=params,
-            device=device
-        ).to(device)
-
-        self.target_model = SoftActorCriticModel(
-            worker_id=worker_id,
-            input_shape=input_shape,
-            num_outputs=num_outputs,
-            params=params,
-            device=device
-        ).to(device)
-
-        # grad_false(self.target_model)
-
-        self.test_model = SoftActorCriticModel(
-            worker_id=worker_id,
-            input_shape=input_shape,
-            num_outputs=num_outputs,
-            params=params,
-            device=device
-        ).to(device)
-
-        self.actor_optimizer = rl_utils.get_optimizer(
-            parameters=self.model.base.actor_params,
-            learning_rate=self.params.ACTOR_LEARNING_RATE,
-            params=params
-        )
-
-        self.twinq_optimizer = rl_utils.get_optimizer(
-            parameters=self.model.base.twinq_params,
-            learning_rate=self.params.LEARNING_RATE,
-            params=params
-        )
+        self.alpha = torch.tensor(self.params.ALPHA).to(self.device)
 
     def reset_alpha(self):
         # if self.params.ENTROPY_TUNING:

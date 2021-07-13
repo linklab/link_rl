@@ -87,7 +87,7 @@ class BaseAgent:
                 critic_hidden_states = []
                 critic_1_hidden_states = None
                 critic_2_hidden_states = None
-            elif self.params.RL_ALGORITHM in [RLAlgorithmName.SAC_V0]:
+            elif self.params.RL_ALGORITHM in [RLAlgorithmName.CONTINUOUS_SAC_V0]:
                 critic_hidden_states = None
                 critic_1_hidden_states = []
                 critic_2_hidden_states = []
@@ -110,7 +110,7 @@ class BaseAgent:
                 actor_hidden_states.append(exp.agent_state.actor_hidden_state)
                 if self.params.RL_ALGORITHM in [RLAlgorithmName.DISCRETE_A2C_V0, RLAlgorithmName.CONTINUOUS_A2C_V0]:
                     critic_hidden_states.append(exp.agent_state.critic_hidden_state)
-                elif self.params.RL_ALGORITHM in [RLAlgorithmName.SAC_V0]:
+                elif self.params.RL_ALGORITHM in [RLAlgorithmName.CONTINUOUS_SAC_V0]:
                     critic_1_hidden_states.append(exp.agent_state.critic_1_hidden_state)
                     critic_2_hidden_states.append(exp.agent_state.critic_2_hidden_state)
 
@@ -124,7 +124,7 @@ class BaseAgent:
                 critic_hidden_states_v = float32_preprocessor(critic_hidden_states).to(self.device)
                 critic_1_hidden_states_v = None
                 critic_2_hidden_states_v = None
-            elif self.params.RL_ALGORITHM in [RLAlgorithmName.SAC_V0]:
+            elif self.params.RL_ALGORITHM in [RLAlgorithmName.CONTINUOUS_SAC_V0]:
                 critic_hidden_states_v = None
                 critic_1_hidden_states_v = float32_preprocessor(critic_1_hidden_states).to(self.device)
                 critic_2_hidden_states_v = float32_preprocessor(critic_2_hidden_states).to(self.device)
@@ -143,19 +143,19 @@ class BaseAgent:
                 last_values_np = last_values_v.detach().numpy()[:, 0] * (params.GAMMA ** last_steps_v)
                 target_action_values_np[not_done_idx] += last_values_np
 
-            elif self.params.RL_ALGORITHM in [RLAlgorithmName.SAC_V0]:
+            elif self.params.RL_ALGORITHM in [RLAlgorithmName.CONTINUOUS_SAC_V0]:
                 last_mu_v, last_logstd_v, _ = model.base.forward_actor(last_states_v)
                 dist = Normal(loc=last_mu_v, scale=torch.exp(last_logstd_v))
                 last_actions_v = dist.sample()
-                last_entropies_v = dist.entropy()
+                last_logprob_v = dist.log_prob(last_actions_v).sum(dim=-1, keepdim=True)
 
                 last_q_1_v, last_q_2_v = model.base.twinq(last_states_v, last_actions_v)
                 last_q_np = torch.min(last_q_1_v, last_q_2_v).detach().numpy()[:, 0] * (params.GAMMA ** last_steps_v)
-                entropy_v = alpha * last_entropies_v
+                last_logprob_v = alpha * last_logprob_v
 
                 # last_q_np.shape: (128,)
                 # entropy_v.squeeze(-1).detach().numpy().shape: (128,)
-                last_q_np += entropy_v.squeeze(-1).detach().numpy()
+                last_q_np -= last_logprob_v.squeeze(-1).detach().numpy()
 
                 target_action_values_np[not_done_idx] += last_q_np
 
@@ -169,7 +169,7 @@ class BaseAgent:
         # target_action_values_v.shape: [128]
 
         if isinstance(self.model, RNNModel):
-            if self.params.RL_ALGORITHM in [RLAlgorithmName.SAC_V0]:
+            if self.params.RL_ALGORITHM in [RLAlgorithmName.CONTINUOUS_SAC_V0]:
                 return states_v, actions_v, target_action_values_v, actor_hidden_states_v, \
                        critic_1_hidden_states_v, critic_2_hidden_states_v
             else:

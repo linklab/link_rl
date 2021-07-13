@@ -5,7 +5,7 @@ import torch.nn.utils as nn_utils
 
 from codes.a_config._rl_parameters.off_policy.parameter_ddpg import PARAMETERS_DDPG, DDPGActionSelectorType, \
     DDPGActionType
-from codes.c_models.continuous_action.deterministic_continuous_actor_critic_model import DeterministicContinuousActorCriticModel
+from codes.c_models.continuous_action.continuous_deterministic_actor_critic_model import DeterministicContinuousActorCriticModel
 from codes.d_agents.a0_base_agent import float32_preprocessor
 from codes.d_agents.off_policy.ddpg.ddpg_action_selector import DDPGActionSelector, SomeTimesBlowDDPGActionSelector
 from codes.d_agents.off_policy.off_policy_agent import OffPolicyAgent
@@ -19,7 +19,7 @@ class AgentDDPG(OffPolicyAgent):
     Agent implementing Orstein-Uhlenbeck exploration process
     """
     def __init__(self, worker_id, input_shape, action_shape, num_outputs, action_min, action_max, params, device):
-        assert params.DEEP_LEARNING_MODEL == DeepLearningModelName.DETERMINISTIC_CONTINUOUS_ACTOR_CRITIC_MLP
+        assert params.DEEP_LEARNING_MODEL == DeepLearningModelName.CONTINUOUS_DETERMINISTIC_ACTOR_CRITIC_MLP
         assert issubclass(params, PARAMETERS_DDPG)
 
         super(AgentDDPG, self).__init__(

@@ -25,17 +25,6 @@ class ContinuousNormalSACActionSelector(ContinuousActionSelector):
 
         return actions
 
-    def select_reparameterization_trick_action(self, mu_v, logstd_v):
-        assert logstd_v is not None
-
-        dist = Normal(loc=mu_v, scale=torch.exp(logstd_v))
-        actions_v = dist.rsample()  # for reparameterization trick (mean + std * N(0,1))
-        actions = F.tanh(actions_v)
-
-        entropy_v = dist.entropy()
-
-        return actions, entropy_v
-
     def __call__(self, mu_v, logstd_v=None):
         return self.select_action(mu_v, logstd_v)
 

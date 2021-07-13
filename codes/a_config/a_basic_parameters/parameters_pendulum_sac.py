@@ -7,8 +7,8 @@ from codes.e_utils.names import EnvironmentName, DeepLearningModelName, RLAlgori
 
 class PARAMETERS_PENDULUM_SAC(PARAMETERS_GENERAL, PARAMETERS_SAC):
     ENVIRONMENT_ID = EnvironmentName.PENDULUM_V0
-    DEEP_LEARNING_MODEL = DeepLearningModelName.SOFT_ACTOR_CRITIC_MLP
-    RL_ALGORITHM = RLAlgorithmName.SAC_V0
+    DEEP_LEARNING_MODEL = DeepLearningModelName.CONTINUOUS_SOFT_ACTOR_CRITIC_MLP
+    RL_ALGORITHM = RLAlgorithmName.CONTINUOUS_SAC_V0
     OPTIMIZER = OptimizerName.ADAM
 
     TRAIN_STOP_EPISODE_REWARD = -140

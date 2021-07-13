@@ -19,19 +19,19 @@ from codes.e_utils.common_utils import grad_false, show_info
 from codes.e_utils.names import DeepLearningModelName, AgentMode
 
 
-class AgentContinuousSAC(AgentSAC):
+class AgentDiscreteSAC(AgentSAC):
     """
     """
     def __init__(self, worker_id, input_shape, action_shape, num_outputs, action_min, action_max, params, device):
         assert params.DEEP_LEARNING_MODEL == DeepLearningModelName.CONTINUOUS_SOFT_ACTOR_CRITIC_MLP
 
-        super(AgentContinuousSAC, self).__init__(
+        super(AgentDiscreteSAC, self).__init__(
             worker_id=worker_id, input_shape=input_shape, action_shape=action_shape,
             num_outputs=num_outputs, action_min=action_min, action_max=action_max,
             params=params, device=device
         )
 
-        self.__name__ = "AgentContinuousSAC"
+        self.__name__ = "AgentDiscreteSAC"
 
         if params.TYPE_OF_SAC_ACTION_SELECTOR == SACActionSelectorType.BASIC_ACTION_SELECTOR:
             self.train_action_selector = ContinuousNormalSACActionSelector(params=params)
@@ -81,6 +81,8 @@ class AgentContinuousSAC(AgentSAC):
             learning_rate=self.params.LEARNING_RATE,
             params=params
         )
+
+        self.alpha = torch.tensor(self.params.ALPHA).to(self.device)
 
     def reset_alpha(self):
         # if self.params.ENTROPY_TUNING:

@@ -252,7 +252,7 @@ class EnvironmentQuanserRIP(gym.Env):
                 RLAlgorithmName.CONTINUOUS_A2C_V0,
                 RLAlgorithmName.CONTINUOUS_PPO_V0,
                 RLAlgorithmName.TD3_V0,
-                RLAlgorithmName.SAC_V0,
+                RLAlgorithmName.CONTINUOUS_SAC_V0,
             ]:
                 action = random.uniform(a=-1.0, b=1.0)
                 action = action * self.params.ACTION_SCALE * 2.0
@@ -275,7 +275,7 @@ class EnvironmentQuanserRIP(gym.Env):
                 RLAlgorithmName.CONTINUOUS_A2C_V0,
                 RLAlgorithmName.CONTINUOUS_PPO_V0,
                 RLAlgorithmName.TD3_V0,
-                RLAlgorithmName.SAC_V0,
+                RLAlgorithmName.CONTINUOUS_SAC_V0,
             ]:
                 action = action * self.params.ACTION_SCALE
 

@@ -11,7 +11,7 @@ import paho.mqtt.client as mqtt
 from torch import optim
 import os, sys
 
-from codes.c_models.continuous_action.soft_actor_critic_model import SoftActorCriticModel
+from codes.c_models.continuous_action.continuous_soft_actor_critic_model import SoftActorCriticModel
 from codes.d_agents.off_policy.sac.continuous_sac_agent import AgentSAC
 
 current_path = os.path.dirname(os.path.realpath(__file__))
@@ -24,8 +24,8 @@ from codes.d_agents.on_policy.ppo.continuous_ppo_agent import AgentContinuousPPO
 from codes.d_agents.on_policy.a2c.discrete_a2c_agent import AgentDiscreteA2C
 from codes.d_agents.off_policy.dqn.dqn_agent import AgentDQN
 
-from codes.c_models.continuous_action.deterministic_continuous_actor_critic_model import DeterministicActorCriticModel
-from codes.c_models.continuous_action.stochastic_continuous_actor_critic_model import StochasticActorCriticModel
+from codes.c_models.continuous_action.continuous_deterministic_actor_critic_model import DeterministicActorCriticModel
+from codes.c_models.continuous_action.continuous_stochastic_actor_critic_model import StochasticActorCriticModel
 from codes.c_models.discrete_action.discrete_actor_critic_model import DiscreteActorCriticModel
 from codes.c_models.discrete_action.dqn_model import DuelingDQNModel
 
@@ -219,7 +219,7 @@ def get_environment_input_output_info(env):
 
 
 def get_rl_model(worker_id, input_shape=None, num_outputs=None, params=None, device=None):
-    if params.DEEP_LEARNING_MODEL == DeepLearningModelName.SOFT_ACTOR_CRITIC_MLP:
+    if params.DEEP_LEARNING_MODEL == DeepLearningModelName.CONTINUOUS_SOFT_ACTOR_CRITIC_MLP:
         model = SoftActorCriticModel(
             worker_id=worker_id,
             input_shape=input_shape,
@@ -227,7 +227,7 @@ def get_rl_model(worker_id, input_shape=None, num_outputs=None, params=None, dev
             params=params,
             device=device
         ).to(device)
-    elif params.DEEP_LEARNING_MODEL == DeepLearningModelName.STOCHASTIC_CONTINUOUS_ACTOR_CRITIC_MLP:
+    elif params.DEEP_LEARNING_MODEL == DeepLearningModelName.CONTINUOUS_STOCHASTIC_ACTOR_CRITIC_MLP:
         model = StochasticActorCriticModel(
             worker_id=worker_id,
             input_shape=input_shape,
@@ -235,7 +235,7 @@ def get_rl_model(worker_id, input_shape=None, num_outputs=None, params=None, dev
             params=params,
             device=device
         ).to(device)
-    elif params.DEEP_LEARNING_MODEL == DeepLearningModelName.STOCHASTIC_DISCRETE_ACTOR_CRITIC_MLP:
+    elif params.DEEP_LEARNING_MODEL == DeepLearningModelName.DISCRETE_STOCHASTIC_ACTOR_CRITIC_MLP:
         model = DiscreteActorCriticModel(
             worker_id=worker_id,
             input_shape=input_shape,
@@ -243,7 +243,7 @@ def get_rl_model(worker_id, input_shape=None, num_outputs=None, params=None, dev
             params=params,
             device=device
         ).to(device)
-    elif params.DEEP_LEARNING_MODEL == DeepLearningModelName.DETERMINISTIC_CONTINUOUS_ACTOR_CRITIC_MLP:
+    elif params.DEEP_LEARNING_MODEL == DeepLearningModelName.CONTINUOUS_DETERMINISTIC_ACTOR_CRITIC_MLP:
         model = DeterministicActorCriticModel(
             worker_id=worker_id,
             input_shape=input_shape,
@@ -297,7 +297,7 @@ def get_rl_agent(env, worker_id, params, device="cpu"):
         )
 
         return agent, epsilon_tracker
-    elif params.RL_ALGORITHM == RLAlgorithmName.SAC_V0:
+    elif params.RL_ALGORITHM == RLAlgorithmName.CONTINUOUS_SAC_V0:
         action_selector = ContinuousNormalActionSelector()
 
         agent = AgentSAC(

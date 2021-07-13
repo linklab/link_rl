@@ -17,9 +17,9 @@ class AgentDiscreteA2C(AgentA2C):
             self, worker_id, input_shape, action_shape, num_outputs, action_min, action_max, params, device
     ):
         assert params.DEEP_LEARNING_MODEL in [
-            DeepLearningModelName.STOCHASTIC_DISCRETE_ACTOR_CRITIC_MLP,
-            DeepLearningModelName.STOCHASTIC_DISCRETE_ACTOR_CRITIC_CNN,
-            DeepLearningModelName.STOCHASTIC_DISCRETE_ACTOR_CRITIC_RNN,
+            DeepLearningModelName.DISCRETE_STOCHASTIC_ACTOR_CRITIC_MLP,
+            DeepLearningModelName.DISCRETE_STOCHASTIC_ACTOR_CRITIC_CNN,
+            DeepLearningModelName.DISCRETE_STOCHASTIC_ACTOR_CRITIC_RNN,
         ]
         super(AgentDiscreteA2C, self).__init__(worker_id, action_shape, action_min, action_max, params, device)
 

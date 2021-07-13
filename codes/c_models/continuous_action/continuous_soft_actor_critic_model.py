@@ -1,7 +1,7 @@
 # https://github.com/ikostrikov/pytorch-a2c-ppo-acktr-gail
 import torch
 import torch.nn as nn
-from torch.distributions import Normal
+from torch.distributions import Normal, TanhTransform, TransformedDistribution
 
 from codes.c_models.continuous_action.continuous_action_model import ContinuousActionModel
 from codes.e_utils.common_utils import weights_init_
@@ -22,20 +22,23 @@ class SoftActorCriticModel(ContinuousActionModel):
         )
 
     def forward(self, inputs, agent_state):
-        mu_v, logstd_v = self.base.forward(inputs, agent_state)
+        mu_v, logstd_v, _ = self.base.forward_actor(inputs, agent_state)
         return mu_v, logstd_v
 
-    def sample(self, state):
-        mu_v, logstd_v = self.base.actor.forward(state)
+    def re_parameterization_trick_sample(self, state):
+        mu_v, logstd_v, _ = self.base.forward_actor(state)
         dist = Normal(loc=mu_v, scale=torch.exp(logstd_v))
+        transforms = [TanhTransform(cache_size=1)]
+        dist = TransformedDistribution(dist, transforms)
         x_t = dist.rsample()  # for reparameterization trick (mean + std * N(0,1))
         action_v = torch.tanh(x_t)
 
         log_probs = dist.log_prob(x_t) - torch.log(1.0 - action_v.pow(2) + 1.0e-6)
-        entropies = -log_probs.sum(dim=1, keepdim=True)
+        log_probs = log_probs.sum(dim=1, keepdim=True)
+
         # action_v.shape: [128, 1]
         # log_prob.shape: [128, 1]
-        return action_v, entropies
+        return action_v, log_probs
 
 
 class SoftActorCriticMLPBase(nn.Module):
