@@ -6,7 +6,7 @@ PROJECT_HOME = os.path.abspath(os.path.join(current_path, os.pardir, os.pardir, 
 if PROJECT_HOME not in sys.path:
     sys.path.append(PROJECT_HOME)
 
-from codes.f_main.general_main.a_common_main import *
+from codes.f_main.general_main.main_utils import *
 from codes.b_environments.trade.trade_action_selector import EpsilonGreedyTradeDQNActionSelector, \
     ArgmaxTradeActionSelector
 from codes.e_utils.common_utils import print_params

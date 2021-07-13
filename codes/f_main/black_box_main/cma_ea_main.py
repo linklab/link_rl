@@ -1,5 +1,5 @@
 from codes.d_agents.black_box.cma_es.cma_es_agent import AgentEMAES
-from codes.f_main.general_main.a_common_main import *
+from codes.f_main.general_main.main_utils import *
 
 
 def evaluate(env, model):

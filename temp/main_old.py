@@ -12,7 +12,7 @@ PROJECT_HOME = os.path.abspath(os.path.join(current_path, os.pardir, os.pardir, 
 if PROJECT_HOME not in sys.path:
     sys.path.append(PROJECT_HOME)
 
-from codes.f_main.general_main.a_common_main import *
+from codes.f_main.general_main.main_utils import *
 from codes.a_config._rl_parameters.off_policy.parameter_ddpg import DDPGTrainType, DDPGTargetUpdateOnlyAfterEpisode
 from codes.e_utils.experience import ExperienceSourceFirstLast
 from codes.e_utils.names import RLAlgorithmName, ON_POLICY_RL_ALGORITHMS
