@@ -29,10 +29,10 @@ def evaluate_with_noise(env, model, noise):
 
 def train_main():
     env = rl_utils.get_single_environment(params=params)
-    input_shape, action_shape, num_outputs = get_environment_input_output_info(env)
+    observation_shape, action_shape, num_outputs = get_environment_input_output_info(env)
 
     agent = rl_utils.get_rl_agent(
-        input_shape, num_outputs, worker_id=-1, params=params, device=device
+        observation_shape, num_outputs, worker_id=-1, params=params, device=device
     )
 
     evaluation_idx = 0

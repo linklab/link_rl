@@ -9,10 +9,10 @@ from codes.e_utils.names import DeepLearningModelName
 
 
 class StochasticContinuousActorCriticModel(ContinuousActionModel):
-    def __init__(self, worker_id, input_shape, num_outputs, params, device):
+    def __init__(self, worker_id, observation_shape, num_outputs, params, device):
         super(StochasticContinuousActorCriticModel, self).__init__(worker_id, params, device)
 
-        num_inputs = input_shape[0]
+        num_inputs = observation_shape[0]
 
         if params.DEEP_LEARNING_MODEL == DeepLearningModelName.CONTINUOUS_STOCHASTIC_ACTOR_CRITIC_MLP:
             self.base = StochasticActorCriticMLPBase(

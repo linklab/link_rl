@@ -9,27 +9,31 @@ from codes.d_agents.on_policy.a2c.a2c_agent import AgentA2C
 from codes.d_agents.on_policy.on_policy_action_selector import ContinuousNormalActionSelector
 from codes.e_utils import rl_utils
 from codes.e_utils.common_utils import show_info
-from codes.e_utils.names import DeepLearningModelName, AgentMode, RLAlgorithmName
+from codes.e_utils.names import DeepLearningModelName
 
 
 class AgentContinuousA2C(AgentA2C):
     """
     """
     def __init__(
-            self, worker_id, input_shape, action_shape, num_outputs, action_min, action_max, params, device
+            self, worker_id, observation_shape, action_shape, num_outputs, action_min, action_max, params, device
     ):
         assert params.DEEP_LEARNING_MODEL in [
             DeepLearningModelName.CONTINUOUS_STOCHASTIC_ACTOR_CRITIC_MLP
         ]
-        super(AgentContinuousA2C, self).__init__(worker_id, action_shape, action_min, action_max, params, device)
-
+        super(AgentContinuousA2C, self).__init__(worker_id, action_shape, params, device)
         self.__name__ = "AgentContinuousA2C"
+
+        self.num_outputs = num_outputs
+        self.action_min = action_min
+        self.action_max = action_max
+
         self.train_action_selector = ContinuousNormalActionSelector()
         self.test_and_play_action_selector = ContinuousNormalActionSelector()
 
         self.model = StochasticContinuousActorCriticModel(
             worker_id=worker_id,
-            input_shape=input_shape,
+            observation_shape=observation_shape,
             num_outputs=num_outputs,
             params=params,
             device=device
@@ -37,7 +41,7 @@ class AgentContinuousA2C(AgentA2C):
 
         self.test_model = StochasticContinuousActorCriticModel(
             worker_id=worker_id,
-            input_shape=input_shape,
+            observation_shape=observation_shape,
             num_outputs=num_outputs,
             params=params,
             device=device

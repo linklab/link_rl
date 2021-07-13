@@ -11,40 +11,40 @@ from codes.e_utils.names import DeepLearningModelName
 
 
 class DuelingDQNModel(DiscreteActionModel):
-    def __init__(self, worker_id, input_shape=None, num_outputs=None, params=None, device=None):
+    def __init__(self, worker_id, observation_shape=None, action_n=None, params=None, device=None):
         super(DuelingDQNModel, self).__init__(worker_id, params, device)
         self.__name__ = "DuelingDQNModel"
         self.params = params
 
         if params.DEEP_LEARNING_MODEL == DeepLearningModelName.DUELING_DQN_MLP:
-            num_inputs = input_shape[0]
+            num_inputs = observation_shape[0]
             self.base = DuelingDQN_MLP_Base(
-                num_inputs=num_inputs, num_outputs=num_outputs, params=self.params
+                num_inputs=num_inputs, action_n=action_n, params=self.params
             )
         elif params.DEEP_LEARNING_MODEL == DeepLearningModelName.DUELING_DQN_CNN:
             self.base = DuelingDQN_CNN_Base(
-                input_shape=input_shape, num_outputs=num_outputs, params=self.params
+                observation_shape=observation_shape, action_n=action_n, params=self.params
             )
         elif params.DEEP_LEARNING_MODEL == DeepLearningModelName.DUELING_DQN_SMALL_CNN:
             self.base = DuelingDQN_SmallCNN_Base(
-                input_shape=input_shape, num_outputs=num_outputs, params=self.params
+                observation_shape=observation_shape, action_n=action_n, params=self.params
             )
         else:
             raise ValueError()
 
-    def forward(self, inputs):
+    def forward(self, inputs, agent_states=None):
         if not (type(inputs) is torch.Tensor):
             inputs = torch.tensor([inputs], dtype=torch.float).to(self.device)
         return self.base.forward(inputs)
 
 
 class DuelingDQN_MLP_Base(nn.Module):
-    def __init__(self, num_inputs, num_outputs, params):
+    def __init__(self, num_inputs, action_n, params):
         super(DuelingDQN_MLP_Base, self).__init__()
         self.__name__ = "DuelingDQN_MLP_Base"
         self.params = params
 
-        self.num_outputs = num_outputs
+        self.action_n = action_n
 
         self.hidden_1_size = params.HIDDEN_1_SIZE
         self.hidden_2_size = params.HIDDEN_2_SIZE
@@ -66,12 +66,12 @@ class DuelingDQN_MLP_Base(nn.Module):
 
             self.noisy_advantage_1 = NoisyLinear(self.hidden_2_size, self.hidden_2_size)
             if self.params.DISTRIBUTIONAL:
-                self.noisy_advantage_2 = NoisyLinear(self.hidden_3_size, num_outputs * self.params.NUM_SUPPORTS)
+                self.noisy_advantage_2 = NoisyLinear(self.hidden_3_size, action_n * self.params.NUM_SUPPORTS)
             else:
-                self.noisy_advantage_2 = NoisyLinear(self.hidden_3_size, num_outputs)
+                self.noisy_advantage_2 = NoisyLinear(self.hidden_3_size, action_n)
         else:
             self.last_linear_value = nn.Linear(self.hidden_3_size, 1)
-            self.last_linear_advantage = nn.Linear(self.hidden_3_size, num_outputs)
+            self.last_linear_advantage = nn.Linear(self.hidden_3_size, action_n)
 
         self.fc_value = nn.Sequential(
             nn.Linear(self.hidden_2_size, self.hidden_3_size),
@@ -126,7 +126,7 @@ class DuelingDQN_MLP_Base(nn.Module):
             advantage = self.fc_advantage(net_out_advantage)
             advantage = self.noisy_advantage_2(advantage)
             if self.params.DISTRIBUTIONAL:
-                advantage = advantage.view(batch_size, self.num_outputs, self.params.NUM_SUPPORTS)
+                advantage = advantage.view(batch_size, self.action_n, self.params.NUM_SUPPORTS)
         else:
             value = self.fc_value(net_out)
             value = self.last_linear_value(value)
@@ -138,7 +138,7 @@ class DuelingDQN_MLP_Base(nn.Module):
             q_value = value + advantage - advantage.mean(1, keepdim=True)
             q_value = F.softmax(
                 q_value.view(-1, self.params.NUM_SUPPORTS)
-            ).view(-1, self.num_outputs, self.params.NUM_SUPPORTS)
+            ).view(-1, self.action_n, self.params.NUM_SUPPORTS)
         else:
             q_value = value + advantage - advantage.mean()
         return q_value
@@ -156,15 +156,15 @@ class DuelingDQN_MLP_Base(nn.Module):
 
 
 class DuelingDQN_CNN_Base(nn.Module):
-    def __init__(self, input_shape, num_outputs, params):
+    def __init__(self, observation_shape, action_n, params):
         super(DuelingDQN_CNN_Base, self).__init__()
         self.__name__ = "DuelingDQN_CNN_Base"
 
         self.params = params
-        self.num_outputs = num_outputs
+        self.action_n = action_n
 
         self.conv = nn.Sequential(
-            nn.Conv2d(in_channels=input_shape[0], out_channels=32, kernel_size=8, stride=4),
+            nn.Conv2d(in_channels=observation_shape[0], out_channels=32, kernel_size=8, stride=4),
             nn.LeakyReLU(),
             nn.Conv2d(in_channels=32, out_channels=64, kernel_size=4, stride=2),
             nn.LeakyReLU(),
@@ -172,7 +172,7 @@ class DuelingDQN_CNN_Base(nn.Module):
             nn.LeakyReLU()
         )
 
-        conv_out_size = self._get_conv_out(input_shape)
+        conv_out_size = self._get_conv_out(observation_shape)
 
         if self.params.NOISY_NET:
             self.noisy_value_1 = NoisyLinear(conv_out_size, conv_out_size)
@@ -184,12 +184,12 @@ class DuelingDQN_CNN_Base(nn.Module):
 
             self.noisy_advantage_1 = NoisyLinear(conv_out_size, conv_out_size)
             if self.params.DISTRIBUTIONAL:
-                self.noisy_advantage_2 = NoisyLinear(512, num_outputs * self.params.NUM_SUPPORTS)
+                self.noisy_advantage_2 = NoisyLinear(512, action_n * self.params.NUM_SUPPORTS)
             else:
-                self.noisy_advantage_2 = NoisyLinear(512, num_outputs)
+                self.noisy_advantage_2 = NoisyLinear(512, action_n)
         else:
             self.last_linear_value = nn.Linear(512, 1)
-            self.last_linear_advantage = nn.Linear(512, num_outputs)
+            self.last_linear_advantage = nn.Linear(512, action_n)
 
         self.fc_advantage = nn.Sequential(
             nn.Linear(conv_out_size, 512),
@@ -250,7 +250,7 @@ class DuelingDQN_CNN_Base(nn.Module):
             advantage = self.fc_advantage(conv_out_advantage)
             advantage = self.noisy_advantage_2(advantage)
             if self.params.DISTRIBUTIONAL:
-                advantage = advantage.view(batch_size, self.num_outputs, self.params.NUM_SUPPORTS)
+                advantage = advantage.view(batch_size, self.action_n, self.params.NUM_SUPPORTS)
         else:
             value = self.fc_value(conv_out)
             value = self.last_linear_value(value)
@@ -273,16 +273,16 @@ class DuelingDQN_CNN_Base(nn.Module):
 
 
 class DuelingDQN_SmallCNN_Base(nn.Module):
-    def __init__(self, input_shape, num_outputs, params):
+    def __init__(self, observation_shape, action_n, params):
         super(DuelingDQN_SmallCNN_Base, self).__init__()
 
         self.__name__ = "DuelingDQN_SmallCNN_Base"
 
         self.params = params
-        self.num_outputs = num_outputs
+        self.action_n = action_n
 
         self.conv = nn.Sequential(
-            nn.Conv2d(input_shape[0], 24, kernel_size=3, stride=1, padding=1),
+            nn.Conv2d(observation_shape[0], 24, kernel_size=3, stride=1, padding=1),
             nn.LeakyReLU(),
             nn.Conv2d(24, 32, kernel_size=2, stride=1, padding=1),
             nn.LeakyReLU(),
@@ -290,7 +290,7 @@ class DuelingDQN_SmallCNN_Base(nn.Module):
             nn.LeakyReLU()
         )
 
-        conv_out_size = self._get_conv_out(input_shape)
+        conv_out_size = self._get_conv_out(observation_shape)
 
         if self.params.NOISY_NET:
             self.noisy_value_1 = NoisyLinear(conv_out_size, conv_out_size)
@@ -301,12 +301,12 @@ class DuelingDQN_SmallCNN_Base(nn.Module):
 
             self.noisy_advantage_1 = NoisyLinear(conv_out_size, conv_out_size)
             if self.params.DISTRIBUTIONAL:
-                self.noisy_advantage_2 = NoisyLinear(128, num_outputs * self.params.NUM_SUPPORTS)
+                self.noisy_advantage_2 = NoisyLinear(128, action_n * self.params.NUM_SUPPORTS)
             else:
-                self.noisy_advantage_2 = NoisyLinear(128, num_outputs)
+                self.noisy_advantage_2 = NoisyLinear(128, action_n)
         else:
             self.last_linear_value = nn.Linear(128, 1)
-            self.last_linear_advantage = nn.Linear(128, num_outputs)
+            self.last_linear_advantage = nn.Linear(128, action_n)
 
         self.fc_advantage = nn.Sequential(
             nn.Linear(conv_out_size, 128),
@@ -367,7 +367,7 @@ class DuelingDQN_SmallCNN_Base(nn.Module):
             advantage = self.fc_advantage(conv_out_advantage)
             advantage = self.noisy_advantage_2(advantage)
             if self.params.DISTRIBUTIONAL:
-                advantage = advantage.view(batch_size, self.num_outputs, self.params.NUM_SUPPORTS)
+                advantage = advantage.view(batch_size, self.action_n, self.params.NUM_SUPPORTS)
         else:
             value = self.fc_value(conv_out)
             value = self.last_linear_value(value)

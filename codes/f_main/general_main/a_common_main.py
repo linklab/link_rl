@@ -58,23 +58,25 @@ def get_agent(env):
             EnvironmentName.REAL_DEVICE_DOUBLE_RIP,
         ]:
             observation_space, _ = get_rip_observation_space(params.ENVIRONMENT_ID, params)
-            action_space, num_outputs, action_min, action_max, _ = get_rip_action_info(params, pendulum_type=params.ENVIRONMENT_ID)
+            action_space, num_outputs, action_n, action_min, action_max, _ = get_rip_action_info(
+                params, pendulum_type=params.ENVIRONMENT_ID
+            )
 
-            input_shape = observation_space.shape
+            observation_shape = observation_space.shape
             action_shape = action_space.shape
         elif params.ENVIRONMENT_ID == EnvironmentName.QUANSER_SERVO_2:
             observation_space, _ = get_quanser_rip_observation_space()
-            action_space, num_outputs, action_min, action_max, _ = get_quanser_rip_action_info(params)
+            action_space, num_outputs, action_n, action_min, action_max, _ = get_quanser_rip_action_info(params)
 
-            input_shape = observation_space.shape
+            observation_shape = observation_space.shape
             action_shape = action_space.shape
         else:
             raise ValueError()
     else:
-        input_shape, action_shape, num_outputs, action_min, action_max = get_environment_input_output_info(env)
+        observation_shape, action_shape, num_outputs, action_n, action_min, action_max = get_environment_input_output_info(env)
 
     agent = rl_utils.get_rl_agent(
-        input_shape, action_shape, num_outputs,
+        observation_shape, action_shape, num_outputs, action_n=action_n,
         action_min=action_min, action_max=action_max, worker_id=0, params=params, device=device
     )
 

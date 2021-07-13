@@ -8,7 +8,7 @@ from torch.distributions import Normal
 
 from codes.a_config._rl_parameters.off_policy.parameter_sac import SACActionSelectorType
 from codes.a_config._rl_parameters.off_policy.parameter_td3 import TD3ActionSelectorType
-from codes.c_models.continuous_action.continuous_soft_actor_critic_model import SoftActorCriticModel
+from codes.c_models.continuous_action.continuous_sac_model import ContinuousSACModel
 from codes.d_agents.off_policy.off_policy_agent import OffPolicyAgent
 from codes.d_agents.off_policy.sac.sac_action_selector import ContinuousNormalSACActionSelector, \
     SomeTimesBlowSACActionSelector
@@ -22,16 +22,14 @@ from codes.e_utils.names import DeepLearningModelName, AgentMode
 class AgentContinuousSAC(AgentSAC):
     """
     """
-    def __init__(self, worker_id, input_shape, action_shape, num_outputs, action_min, action_max, params, device):
-        assert params.DEEP_LEARNING_MODEL == DeepLearningModelName.CONTINUOUS_SOFT_ACTOR_CRITIC_MLP
+    def __init__(self, worker_id, observation_shape, action_shape, num_outputs, action_min, action_max, params, device):
+        assert params.DEEP_LEARNING_MODEL == DeepLearningModelName.CONTINUOUS_SAC_MLP
 
-        super(AgentContinuousSAC, self).__init__(
-            worker_id=worker_id, input_shape=input_shape, action_shape=action_shape,
-            num_outputs=num_outputs, action_min=action_min, action_max=action_max,
-            params=params, device=device
-        )
-
+        super(AgentContinuousSAC, self).__init__(worker_id=worker_id, action_shape=action_shape, params=params, device=device)
         self.__name__ = "AgentContinuousSAC"
+        self.num_outputs = num_outputs
+        self.action_min = action_min
+        self.action_max = action_max
 
         if params.TYPE_OF_SAC_ACTION_SELECTOR == SACActionSelectorType.BASIC_ACTION_SELECTOR:
             self.train_action_selector = ContinuousNormalSACActionSelector(params=params)
@@ -44,17 +42,17 @@ class AgentContinuousSAC(AgentSAC):
 
         self.test_and_play_action_selector = ContinuousNormalSACActionSelector(params=params)
 
-        self.model = SoftActorCriticModel(
+        self.model = ContinuousSACModel(
             worker_id=worker_id,
-            input_shape=input_shape,
+            observation_shape=observation_shape,
             num_outputs=num_outputs,
             params=params,
             device=device
         ).to(device)
 
-        self.target_model = SoftActorCriticModel(
+        self.target_model = ContinuousSACModel(
             worker_id=worker_id,
-            input_shape=input_shape,
+            observation_shape=observation_shape,
             num_outputs=num_outputs,
             params=params,
             device=device
@@ -62,9 +60,9 @@ class AgentContinuousSAC(AgentSAC):
 
         # grad_false(self.target_model)
 
-        self.test_model = SoftActorCriticModel(
+        self.test_model = ContinuousSACModel(
             worker_id=worker_id,
-            input_shape=input_shape,
+            observation_shape=observation_shape,
             num_outputs=num_outputs,
             params=params,
             device=device
@@ -80,22 +78,6 @@ class AgentContinuousSAC(AgentSAC):
             parameters=self.model.base.twinq_params,
             learning_rate=self.params.LEARNING_RATE,
             params=params
-        )
-
-    def reset_alpha(self):
-        # if self.params.ENTROPY_TUNING:
-        # Target entropy is -|A|.
-        self.target_entropy = -torch.prod(torch.Tensor(self.action_shape).to(self.device)).item()
-
-        #print(self.target_entropy, "!")
-
-        # We optimize log(alpha), instead of alpha.
-        self.log_alpha = torch.zeros(1, requires_grad=True, device=self.device)
-        self.alpha = self.log_alpha.exp()
-        self.alpha_optimizer = rl_utils.get_optimizer(
-            parameters=[self.log_alpha],
-            learning_rate=self.params.LEARNING_RATE,
-            params=self.params
         )
 
     def __call__(self, state, agent_states=None):
@@ -173,13 +155,7 @@ class AgentContinuousSAC(AgentSAC):
         self.target_model.twinq_alpha_sync(self.model, alpha=1 - self.params.TAU)
 
         if self.params.ENTROPY_TUNING:
-            self.alpha_optimizer.zero_grad()
-            # Intuitively, we increase alpha when entropy is less than target entropy, vice versa.
-            entropy_loss = -1.0 * self.log_alpha * (self.target_entropy - sampled_entropies_v).mean().detach()
-            entropy_loss.backward()
-            nn_utils.clip_grad_norm_([self.log_alpha], self.params.CLIP_GRAD)
-            self.alpha_optimizer.step()
-            self.alpha = self.log_alpha.exp()
+            self.adjust_alpha()
 
         # gradients = self.model.get_gradients_for_current_parameters()
         gradients = None

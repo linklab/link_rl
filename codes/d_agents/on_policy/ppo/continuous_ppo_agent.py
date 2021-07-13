@@ -14,7 +14,7 @@ class AgentContinuousPPO(AgentPPO):
     """
     """
     def __init__(
-            self, worker_id, input_shape, action_shape, num_outputs, action_min, action_max, params, device
+            self, worker_id, observation_shape, action_shape, num_outputs, action_min, action_max, params, device
     ):
         assert params.DEEP_LEARNING_MODEL in [
             DeepLearningModelName.CONTINUOUS_STOCHASTIC_ACTOR_CRITIC_MLP,
@@ -22,8 +22,12 @@ class AgentContinuousPPO(AgentPPO):
         ]
 
         super(AgentContinuousPPO, self).__init__(
-            worker_id=worker_id, params=params, action_shape=action_shape, action_min=action_min, action_max=action_max, device=device
+            worker_id=worker_id, action_shape=action_shape, params=params, device=device
         )
+        self.num_outputs = num_outputs
+        self.action_min = action_min
+        self.action_max = action_max
+
         self.__name__ = "AgentContinuousPPO"
 
         self.train_action_selector = ContinuousNormalActionSelector()
@@ -31,7 +35,7 @@ class AgentContinuousPPO(AgentPPO):
 
         self.model = StochasticContinuousActorCriticModel(
             worker_id=worker_id,
-            input_shape=input_shape,
+            observation_shape=observation_shape,
             num_outputs=num_outputs,
             params=params,
             device=device
@@ -39,7 +43,7 @@ class AgentContinuousPPO(AgentPPO):
 
         self.test_model = StochasticContinuousActorCriticModel(
             worker_id=worker_id,
-            input_shape=input_shape,
+            observation_shape=observation_shape,
             num_outputs=num_outputs,
             params=params,
             device=device

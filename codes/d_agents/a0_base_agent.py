@@ -3,7 +3,7 @@ from collections import namedtuple
 
 import numpy as np
 import torch
-from torch.distributions import Normal
+from torch.distributions import Normal, Categorical
 
 from codes.c_models.base_model import RNNModel
 from codes.c_models.continuous_action.continuous_action_model import ContinuousActionModel
@@ -24,7 +24,7 @@ class BaseAgent:
     """
     Abstract Agent interface
     """
-    def __init__(self, worker_id, params, action_shape, action_min, action_max, device):
+    def __init__(self, worker_id, action_shape, params, device):
         self.worker_id = worker_id
 
         self.model = None
@@ -35,8 +35,6 @@ class BaseAgent:
 
         self.params = params
         self.action_shape = action_shape
-        self.action_min = action_min
-        self.action_max = action_max
         self.device = device
         self.buffer = None
         self.agent_mode = AgentMode.TRAIN
@@ -143,9 +141,14 @@ class BaseAgent:
                 last_values_np = last_values_v.detach().numpy()[:, 0] * (params.GAMMA ** last_steps_v)
                 target_action_values_np[not_done_idx] += last_values_np
 
-            elif self.params.RL_ALGORITHM in [RLAlgorithmName.CONTINUOUS_SAC_V0]:
-                last_mu_v, last_logstd_v, _ = model.base.forward_actor(last_states_v)
-                dist = Normal(loc=last_mu_v, scale=torch.exp(last_logstd_v))
+            elif self.params.RL_ALGORITHM in [RLAlgorithmName.DISCRETE_SAC_V0, RLAlgorithmName.CONTINUOUS_SAC_V0]:
+                if self.params.RL_ALGORITHM in [RLAlgorithmName.CONTINUOUS_SAC_V0]:
+                    last_mu_v, last_logstd_v, _ = model.base.forward_actor(last_states_v)
+                    dist = Normal(loc=last_mu_v, scale=torch.exp(last_logstd_v))
+                else:
+                    probs, _ = model.base.forward_actor(last_states_v)
+                    dist = Categorical(probs=probs)
+
                 last_actions_v = dist.sample()
                 last_logprob_v = dist.log_prob(last_actions_v).sum(dim=-1, keepdim=True)
 
@@ -158,7 +161,6 @@ class BaseAgent:
                 last_q_np -= last_logprob_v.squeeze(-1).detach().numpy()
 
                 target_action_values_np[not_done_idx] += last_q_np
-
             else:
                 raise ValueError()
 

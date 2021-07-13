@@ -126,20 +126,22 @@ def get_rip_action_info(params, pendulum_type):
         else:
             raise ValueError()
         action_space = gym.spaces.Discrete(len(action_index_to_voltage))
-        n_actions = action_space.n
+        num_outputs = 1
+        action_n = action_space.n
         action_min = 0
-        action_max = n_actions - 1
+        action_max = action_space.n - 1
     else:
         action_index_to_voltage = None
         action_space = gym.spaces.Box(
             low=-params.ACTION_SCALE, high=params.ACTION_SCALE, shape=(1,),
             dtype=np.float32
         )
-        n_actions = action_space.shape[0]
+        num_outputs = action_space.shape[0]
+        action_n = None
         action_min = action_space.low
         action_max = action_space.high
 
-    return action_space, n_actions, action_min, action_max, action_index_to_voltage
+    return action_space, num_outputs, action_n, action_min, action_max, action_index_to_voltage
 
 
 class RotaryInvertedPendulumEnv(gym.Env):
@@ -194,9 +196,8 @@ class RotaryInvertedPendulumEnv(gym.Env):
         self.too_long_and_fast_pendulum_velocity = False
         self.count_continuous_fast_pendulum_velocity = 0
 
-        self.action_space, self.n_actions, self.action_min, self.action_max, self.action_index_to_voltage = get_rip_action_info(
-            params, self.pendulum_type
-        )
+        self.action_space, self.num_outputs, self.action_n, self.action_min, self.action_max, \
+        self.action_index_to_voltage = get_rip_action_info(params, self.pendulum_type)
 
         self.observation_space, self.n_states = get_rip_observation_space(self.pendulum_type, self.params)
 

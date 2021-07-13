@@ -14,31 +14,33 @@ class AgentDiscreteA2C(AgentA2C):
     """
     """
     def __init__(
-            self, worker_id, input_shape, action_shape, num_outputs, action_min, action_max, params, device
+            self, worker_id, observation_shape, action_shape, action_n, params, device
     ):
         assert params.DEEP_LEARNING_MODEL in [
             DeepLearningModelName.DISCRETE_STOCHASTIC_ACTOR_CRITIC_MLP,
             DeepLearningModelName.DISCRETE_STOCHASTIC_ACTOR_CRITIC_CNN,
             DeepLearningModelName.DISCRETE_STOCHASTIC_ACTOR_CRITIC_RNN,
         ]
-        super(AgentDiscreteA2C, self).__init__(worker_id, action_shape, action_min, action_max, params, device)
+        super(AgentDiscreteA2C, self).__init__(worker_id, action_shape, params, device)
 
         self.__name__ = "AgentDiscreteA2C"
+        self.action_n = action_n
+
         self.train_action_selector = DiscreteCategoricalActionSelector()
         self.test_and_play_action_selector = DiscreteCategoricalActionSelector()
 
         self.model = DiscreteActorCriticModel(
             worker_id=worker_id,
-            input_shape=input_shape,
-            num_outputs=num_outputs,
+            observation_shape=observation_shape,
+            action_n=action_n,
             params=params,
             device=device
         ).to(device)
 
         self.test_model = DiscreteActorCriticModel(
             worker_id=worker_id,
-            input_shape=input_shape,
-            num_outputs=num_outputs,
+            observation_shape=observation_shape,
+            action_n=action_n,
             params=params,
             device=device
         ).to(device)

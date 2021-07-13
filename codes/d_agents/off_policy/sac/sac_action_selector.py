@@ -1,12 +1,9 @@
 import random
 import numpy as np
 import torch
-from icecream import ic
-from torch.distributions import Normal
-import torch.nn.functional as F
+from torch.distributions import Normal, Categorical
 
-from codes.a_config._rl_parameters.off_policy.parameter_td3 import TD3ActionType
-from codes.d_agents.actions import ContinuousActionSelector
+from codes.d_agents.actions import ContinuousActionSelector, ActionSelector
 
 
 class ContinuousNormalSACActionSelector(ContinuousActionSelector):
@@ -64,3 +61,15 @@ class SomeTimesBlowSACActionSelector(ContinuousNormalSACActionSelector):
             ))
 
         return actions
+
+
+class DiscreteCategoricalSACActionSelector(ActionSelector):
+    """
+    Converts probabilities of actions into action by sampling them
+    """
+    def __call__(self, probs):
+        with torch.no_grad():
+            dist = Categorical(probs=probs)
+            actions = dist.sample().cpu().detach().numpy()
+
+        return np.array(actions)

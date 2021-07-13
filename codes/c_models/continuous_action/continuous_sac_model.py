@@ -6,16 +6,13 @@ from torch.distributions import Normal, TanhTransform, TransformedDistribution
 from codes.c_models.continuous_action.continuous_action_model import ContinuousActionModel
 from codes.e_utils.common_utils import weights_init_
 
-LOG_SIG_MAX = 2
-LOG_SIG_MIN = -20
 
+class ContinuousSACModel(ContinuousActionModel):
+    def __init__(self, worker_id, observation_shape, num_outputs, params, device):
+        super(ContinuousSACModel, self).__init__(worker_id, params, device)
+        self.__name__ = "ContinuousSACModel"
 
-class SoftActorCriticModel(ContinuousActionModel):
-    def __init__(self, worker_id, input_shape, num_outputs, params, device):
-        super(SoftActorCriticModel, self).__init__(worker_id, params, device)
-        self.__name__ = "SoftActorCriticModel"
-
-        num_inputs = input_shape[0]
+        num_inputs = observation_shape[0]
 
         self.base = SoftActorCriticMLPBase(
             num_inputs=num_inputs, num_outputs=num_outputs, params=params
@@ -25,16 +22,27 @@ class SoftActorCriticModel(ContinuousActionModel):
         mu_v, logstd_v, _ = self.base.forward_actor(inputs, agent_state)
         return mu_v, logstd_v
 
+    def re_parameterization_trick_sample_old(self, state):
+        mu_v, logstd_v, _ = self.base.forward_actor(state)
+        dist = Normal(loc=mu_v, scale=torch.exp(logstd_v))
+        x_t = dist.rsample()  # for reparameterization trick (mean + std * N(0,1))
+        action_v = torch.tanh(x_t)
+
+        log_probs = dist.log_prob(x_t) - torch.log(1.0 - action_v.pow(2) + 1.0e-6)
+        log_probs = log_probs.sum(dim=-1, keepdim=True)
+
+        # action_v.shape: [128, 1]
+        # log_prob.shape: [128, 1]
+        return action_v, log_probs
+
     def re_parameterization_trick_sample(self, state):
         mu_v, logstd_v, _ = self.base.forward_actor(state)
         dist = Normal(loc=mu_v, scale=torch.exp(logstd_v))
         transforms = [TanhTransform(cache_size=1)]
         dist = TransformedDistribution(dist, transforms)
-        x_t = dist.rsample()  # for reparameterization trick (mean + std * N(0,1))
-        action_v = torch.tanh(x_t)
+        action_v = dist.rsample()  # for reparameterization trick (mean + std * N(0,1))
 
-        log_probs = dist.log_prob(x_t) - torch.log(1.0 - action_v.pow(2) + 1.0e-6)
-        log_probs = log_probs.sum(dim=1, keepdim=True)
+        log_probs = dist.log_prob(action_v).sum(dim=-1, keepdim=True)
 
         # action_v.shape: [128, 1]
         # log_prob.shape: [128, 1]
@@ -79,17 +87,15 @@ class GaussianActorMLPBase(nn.Module):
     def __init__(self, num_inputs, num_outputs, params):
         super(GaussianActorMLPBase, self).__init__()
 
-        self.__name__ = "ActorMLPBase"
-
         self.hidden_1_size = params.HIDDEN_1_SIZE
         self.hidden_2_size = params.HIDDEN_2_SIZE
         self.hidden_3_size = params.HIDDEN_3_SIZE
 
         self.common = nn.Sequential(
             nn.Linear(num_inputs, self.hidden_1_size),
-            nn.LeakyReLU(),
+            nn.GELU(),
             nn.Linear(self.hidden_1_size, self.hidden_2_size),
-            nn.LeakyReLU(),
+            nn.GELU(),
             nn.Linear(self.hidden_2_size, self.hidden_3_size),
         )
 
@@ -108,9 +114,6 @@ class GaussianActorMLPBase(nn.Module):
     def forward(self, inputs):
         mu_v = self.mu(self.common(inputs))
         logstd_v = self.logstd(self.common(inputs))
-
-        # mu_v, logstd_v = torch.chunk(self.policy(inputs), chunks=2, dim=-1)
-        # logstd_v = torch.clamp(logstd_v, min=LOG_SIG_MIN, max=LOG_SIG_MAX)
 
         if torch.isnan(mu_v[0][0]):
             print("inputs:", inputs, "!!! - 1")
@@ -132,21 +135,21 @@ class TwinQMLPBase(nn.Module):
 
         self.q1 = nn.Sequential(
             nn.Linear(num_inputs + num_outputs, self.hidden_1_size),
-            nn.LeakyReLU(),
+            nn.GELU(),
             nn.Linear(self.hidden_1_size, self.hidden_2_size),
-            nn.LeakyReLU(),
+            nn.GELU(),
             nn.Linear(self.hidden_2_size, self.hidden_3_size),
-            nn.LeakyReLU(),
+            nn.GELU(),
             nn.Linear(self.hidden_3_size, 1),
         )
 
         self.q2 = nn.Sequential(
             nn.Linear(num_inputs + num_outputs, self.hidden_1_size),
-            nn.LeakyReLU(),
+            nn.GELU(),
             nn.Linear(self.hidden_1_size, self.hidden_2_size),
-            nn.LeakyReLU(),
+            nn.GELU(),
             nn.Linear(self.hidden_2_size, self.hidden_3_size),
-            nn.LeakyReLU(),
+            nn.GELU(),
             nn.Linear(self.hidden_3_size, 1),
         )
 
