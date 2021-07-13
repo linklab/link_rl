@@ -104,7 +104,8 @@ class AgentDiscreteSAC(AgentSAC):
 
         # print(batch)
         states_v, actions_v, target_action_values_v = self.unpack_batch_for_actor_critic(
-            batch, self.target_model, self.params, alpha=self.alpha
+            batch=batch, target_model=self.target_model, sac_base_model=self.model.base,
+            alpha=self.alpha, params=self.params
         )
 
         # train twinq
@@ -126,19 +127,19 @@ class AgentDiscreteSAC(AgentSAC):
         # train actor
         self.actor_optimizer.zero_grad()
 
-        re_parameterization_trick_action_v, logprob_v = self.model.re_parameterization_trick_sample(states_v)
+        probs, action_v, logprob_v = self.model.sample(states_v)
 
         # states_v.shape: torch.Size([128, 3])
         # re_parameterization_trick_action_v.shape: torch.Size([128, 1])
 
-        q1_v, q2_v = self.model.base.twinq(states_v, re_parameterization_trick_action_v)
+        q1_v, q2_v = self.model.base.twinq(states_v)
 
         # q1_v.shape: torch.Size([128, 1])
         # q2_v.shape: torch.Size([128, 1])
         # torch.min(q1_v, q2_v).shape: torch.Size([128, 1])
         # logprob_v.shape: torch.Size([128, 1])
-        logprob_v = self.alpha * logprob_v
-        objectives_v = torch.min(q1_v, q2_v) - logprob_v
+
+        objectives_v = probs * (torch.min(q1_v, q2_v) - self.alpha * logprob_v)
 
         loss_actor_v = -1.0 * objectives_v.mean()
         loss_actor_v.backward()

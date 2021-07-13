@@ -71,11 +71,11 @@ class AgentContinuousA2C(AgentA2C):
         if isinstance(self.model, RNNModel):
             batch_states_v, batch_actions_v, batch_target_action_values_v, batch_actor_hidden_states_v, \
             batch_critic_hidden_states_v = self.unpack_batch_for_actor_critic(
-                batch, self.model, self.params
+                batch=batch, target_model=self.model, params=self.params
             )
         else:
             batch_states_v, batch_actions_v, batch_target_action_values_v = self.unpack_batch_for_actor_critic(
-                batch, self.model, self.params
+                batch=batch, target_model=self.model, params=self.params
             )
             batch_actor_hidden_states_v = batch_critic_hidden_states_v = None
 

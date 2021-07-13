@@ -63,7 +63,9 @@ class AgentContinuousA2C(AgentA2C):
         # states_v.shape: (32, 3)
         # actions_v.shape: (32, 1)
         # target_action_values_v.shape: (32,)
-        batch_states_v, batch_actions_v, batch_target_action_values_v = self.unpack_batch_for_actor_critic(batch, self.model, self.params)
+        batch_states_v, batch_actions_v, batch_target_action_values_v = self.unpack_batch_for_actor_critic(
+            batch=batch, target_model=self.model, params=self.params
+        )
 
         # mu_v.shape: (32, 1)
         # var_v.shape: (32, 1)

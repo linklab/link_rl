@@ -22,15 +22,17 @@ class DiscreteSACModel(DiscreteActionModel):
         probs, _ = self.base.forward_actor(inputs, agent_state)
         return probs
 
-    def re_parameterization_trick_sample(self, state):
+    def sample(self, state):
         probs, _ = self.base.forward_actor(state)
         dist = Categorical(probs=probs)
         action_v = dist.sample()  # for reparameterization trick (mean + std * N(0,1))
-        log_probs = dist.log_prob(action_v).sum(dim=-1, keepdim=True)
+        z = (probs == 0.0).float() * 1e-8
+        # log_probs = torch.log(probs + z).sum(dim=-1, keepdim=True)
+        log_probs = torch.log(probs + z).sum(dim=-1, keepdim=True)
 
         # action_v.shape: [128, 1]
         # log_prob.shape: [128, 1]
-        return action_v, log_probs
+        return probs, action_v, log_probs
 
 
 class DiscreteSoftActorCriticMLPBase(nn.Module):
@@ -67,8 +69,8 @@ class DiscreteSoftActorCriticMLPBase(nn.Module):
 
         return probs, agent_states
 
-    def forward_critic(self, states, action, agent_states=None):
-        q1_v, q2_v = self.twinq.forward(states, action)
+    def forward_critic(self, states, agent_states=None):
+        q1_v, q2_v = self.twinq.forward(states)
 
         return q1_v, q2_v, agent_states
 
@@ -82,28 +84,26 @@ class TwinQMLPBase(nn.Module):
         self.hidden_3_size = params.HIDDEN_3_SIZE
 
         self.q1 = nn.Sequential(
-            nn.Linear(num_inputs + 1, self.hidden_1_size),
+            nn.Linear(num_inputs, self.hidden_1_size),
             nn.GELU(),
             nn.Linear(self.hidden_1_size, self.hidden_2_size),
             nn.GELU(),
             nn.Linear(self.hidden_2_size, self.hidden_3_size),
             nn.GELU(),
-            nn.Linear(self.hidden_3_size, 1),
+            nn.Linear(self.hidden_3_size, action_n),
         )
 
         self.q2 = nn.Sequential(
-            nn.Linear(num_inputs + 1, self.hidden_1_size),
+            nn.Linear(num_inputs, self.hidden_1_size),
             nn.GELU(),
             nn.Linear(self.hidden_1_size, self.hidden_2_size),
             nn.GELU(),
             nn.Linear(self.hidden_2_size, self.hidden_3_size),
             nn.GELU(),
-            nn.Linear(self.hidden_3_size, 1),
+            nn.Linear(self.hidden_3_size, action_n),
         )
 
         self.apply(weights_init_)
 
-    def forward(self, obs, act):
-        act = act.unsqueeze(dim=-1)
-        x = torch.cat([obs, act], dim=-1)
-        return self.q1(x), self.q2(x)
+    def forward(self, obs):
+        return self.q1(obs), self.q2(obs)

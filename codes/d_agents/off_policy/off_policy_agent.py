@@ -4,8 +4,9 @@ import numpy as np
 import torch
 
 from codes.c_models.base_model import RNNModel
-from codes.d_agents.a0_base_agent import BaseAgent, float32_preprocessor
+from codes.d_agents.a0_base_agent import BaseAgent
 from codes.e_utils import replay_buffer
+from codes.e_utils.common_utils import float32_preprocessor
 from codes.e_utils.names import RLAlgorithmName
 
 

@@ -7,12 +7,12 @@ from codes.a_config._rl_parameters.off_policy.parameter_dqn import DQNActionSele
 from codes.c_models.advanced_exploration.curiosity_driven import CuriosityMlpStateEncoder, CuriosityCnnStateEncoder, \
     CuriosityForwardModel, CuriosityInverseModel, intrinsic_curiosity_module_errors
 from codes.c_models.discrete_action.dqn_model import DuelingDQNModel
-from codes.d_agents.a0_base_agent import float32_preprocessor
 from codes.d_agents.off_policy.dqn.dqn_action_selector import EpsilonGreedySomeTimesBlowDQNActionSelector, \
     EpsilonGreedyDQNActionSelector
 from codes.d_agents.off_policy.off_policy_agent import OffPolicyAgent
 from codes.e_utils import rl_utils
 from codes.d_agents.actions import ArgmaxActionSelector, EpsilonTracker
+from codes.e_utils.common_utils import float32_preprocessor
 from codes.e_utils.names import DeepLearningModelName, AgentMode, EnvironmentName
 
 

@@ -106,7 +106,7 @@ class AgentContinuousSAC(AgentSAC):
 
         # print(batch)
         states_v, actions_v, target_action_values_v = self.unpack_batch_for_actor_critic(
-            batch, self.target_model, self.params, alpha=self.alpha
+            batch=batch, target_model=self.target_model, sac_base_model=self.model.base, alpha=self.alpha, params=self.params
         )
 
         # train twinq

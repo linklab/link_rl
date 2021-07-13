@@ -8,16 +8,8 @@ from torch.distributions import Normal, Categorical
 from codes.c_models.base_model import RNNModel
 from codes.c_models.continuous_action.continuous_action_model import ContinuousActionModel
 from codes.c_models.discrete_action.discrete_action_model import DiscreteActionModel
+from codes.e_utils.common_utils import show_info, float32_preprocessor, long64_preprocessor
 from codes.e_utils.names import AgentMode, RLAlgorithmName
-
-
-def float32_preprocessor(values):
-    np_values = np.array(values, dtype=np.float32)
-    return torch.tensor(np_values)
-
-def long64_preprocessor(values):
-    np_values = np.array(values, dtype=np.int64)
-    return torch.tensor(np_values)
 
 
 class BaseAgent:
@@ -70,7 +62,9 @@ class BaseAgent:
     def train_on_policy(self, step_idx, expected_model_version):
         raise NotImplementedError
 
-    def unpack_batch_for_actor_critic(self, batch, model, params, alpha=None):
+    def unpack_batch_for_actor_critic(
+            self, batch, target_model=None, sac_base_model=None, alpha=None, params=None
+    ):
         """
         Convert batch into training tensors
         :param batch:
@@ -137,28 +131,38 @@ class BaseAgent:
         if not_done_idx:
             last_states_v = torch.FloatTensor(np.array(last_states, copy=False)).to(self.device)
             if self.params.RL_ALGORITHM in [RLAlgorithmName.DISCRETE_A2C_V0, RLAlgorithmName.CONTINUOUS_A2C_V0]:
-                last_values_v, _ = model.forward_critic(last_states_v, critic_hidden_states_v)
+                last_values_v, _ = target_model.forward_critic(last_states_v, critic_hidden_states_v)
                 last_values_np = last_values_v.detach().numpy()[:, 0] * (params.GAMMA ** last_steps_v)
                 target_action_values_np[not_done_idx] += last_values_np
 
             elif self.params.RL_ALGORITHM in [RLAlgorithmName.DISCRETE_SAC_V0, RLAlgorithmName.CONTINUOUS_SAC_V0]:
                 if self.params.RL_ALGORITHM in [RLAlgorithmName.CONTINUOUS_SAC_V0]:
-                    last_mu_v, last_logstd_v, _ = model.base.forward_actor(last_states_v)
+                    last_mu_v, last_logstd_v, _ = sac_base_model.forward_actor(last_states_v)
                     dist = Normal(loc=last_mu_v, scale=torch.exp(last_logstd_v))
+
+                    last_actions_v = dist.sample()
+                    last_logprob_v = dist.log_prob(last_actions_v).sum(dim=-1, keepdim=True)
+
+                    last_q_1_v, last_q_2_v = target_model.base.twinq(last_states_v, last_actions_v)
+                    last_q_np = torch.min(last_q_1_v, last_q_2_v).detach().numpy()[:, 0] * (params.GAMMA ** last_steps_v)
+                    last_logprob_v = alpha * last_logprob_v
+
+                    # last_q_np.shape: (128,)
+                    # entropy_v.squeeze(-1).detach().numpy().shape: (128,)
+                    last_q_np -= last_logprob_v.squeeze(-1).detach().numpy()
+
                 else:
-                    probs, _ = model.base.forward_actor(last_states_v)
-                    dist = Categorical(probs=probs)
+                    # probs.shape: torch.Size([32, 2])
+                    probs, _ = sac_base_model.forward_actor(last_states_v)
+                    z = (probs == 0.0).float() * 1e-8
 
-                last_actions_v = dist.sample()
-                last_logprob_v = dist.log_prob(last_actions_v).sum(dim=-1, keepdim=True)
+                    last_logprob_v = torch.log(probs + z)
 
-                last_q_1_v, last_q_2_v = model.base.twinq(last_states_v, last_actions_v)
-                last_q_np = torch.min(last_q_1_v, last_q_2_v).detach().numpy()[:, 0] * (params.GAMMA ** last_steps_v)
-                last_logprob_v = alpha * last_logprob_v
-
-                # last_q_np.shape: (128,)
-                # entropy_v.squeeze(-1).detach().numpy().shape: (128,)
-                last_q_np -= last_logprob_v.squeeze(-1).detach().numpy()
+                    last_q_1_v, last_q_2_v = target_model.base.twinq(last_states_v)
+                    last_q_np = torch.min(last_q_1_v, last_q_2_v).detach().numpy() * np.expand_dims(params.GAMMA ** last_steps_v, axis=-1)
+                    last_logprob_v = alpha * last_logprob_v
+                    last_q_np = probs * (last_q_np - last_logprob_v)
+                    last_q_np = last_q_np.squeeze(-1).detach().numpy()
 
                 target_action_values_np[not_done_idx] += last_q_np
             else:

@@ -43,3 +43,5 @@ class PARAMETERS_SAC:
 
     ENTROPY_TUNING = False
 
+    TRAIN_STEP_FREQ = 4
+

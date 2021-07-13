@@ -3,8 +3,8 @@ import torch.nn as nn
 
 from codes.c_models.base_model import RNNModel
 from codes.c_models.continuous_action.continuous_action_model import ContinuousActionModel
-from codes.d_agents.a0_base_agent import float32_preprocessor
 from codes.e_utils import rl_utils
+from codes.e_utils.common_utils import float32_preprocessor
 from codes.e_utils.names import DeepLearningModelName
 
 

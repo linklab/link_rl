@@ -83,7 +83,9 @@ class AgentDiscreteA2C(OnPolicyAgent):
         # states_v.shape: (32, 3)
         # actions_v.shape: (32, 1)
         # target_action_values_v.shape: (32,)
-        states_v, actions_v, target_action_values_v = self.unpack_batch_for_actor_critic(batch, self.model, self.params)
+        states_v, actions_v, target_action_values_v = self.unpack_batch_for_actor_critic(
+            batch=batch, target_model=self.model, params=self.params
+        )
 
         logits_v, value_v = self.model(states_v)
 
