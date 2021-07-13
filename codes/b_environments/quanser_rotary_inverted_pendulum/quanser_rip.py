@@ -26,10 +26,13 @@ elif params.SERVER_IDX == 2:
 def get_quanser_rip_observation_space():
     if params.QUANSER_STATE_INFO == 0:
         low = np.array([0, 0, 0, 0, 0, 0], dtype=np.float32)
-        high = np.array([1., 1., 500., 1., 1., 500,], dtype=np.float32)
+        high = np.array([1., 1., 500., 1., 1., 500.], dtype=np.float32)
     elif params.QUANSER_STATE_INFO == 1:
+        low = np.array([0, 0, 0], dtype=np.float32)
+        high = np.array([1., 1., 500.], dtype=np.float32)
+    elif params.QUANSER_STATE_INFO == 2:
         low = np.array([0, 0, 0, 0], dtype=np.float32)
-        high = np.array([1., 1., 500., 500,], dtype=np.float32)
+        high = np.array([1., 1., 500., 500.], dtype=np.float32)
     else:
         raise ValueError()
 
@@ -118,6 +121,8 @@ class EnvironmentQuanserRIP(gym.Env):
         if params.QUANSER_STATE_INFO == 0:
             n_states = 6
         elif params.QUANSER_STATE_INFO == 1:
+            n_states = 3
+        elif params.QUANSER_STATE_INFO == 2:
             n_states = 4
         else:
             raise ValueError()
@@ -190,6 +195,17 @@ class EnvironmentQuanserRIP(gym.Env):
                 self.motor_velocity / params.VELOCITY_STATE_DENOMINATOR
             ]
         elif self.params.QUANSER_STATE_INFO == 1:
+            self.state = [
+                math.cos(self.pendulum_radian),
+                math.sin(self.pendulum_radian),
+                self.pendulum_velocity / params.VELOCITY_STATE_DENOMINATOR,
+                # math.cos(0.0),
+                # math.sin(0.0),
+                # math.cos(quanser_response.motor_radian),
+                # math.sin(quanser_response.motor_radian),
+                # self.motor_velocity / params.VELOCITY_STATE_DENOMINATOR
+            ]
+        elif self.params.QUANSER_STATE_INFO == 2:
             self.state = [
                 math.cos(self.pendulum_radian),
                 math.sin(self.pendulum_radian),
@@ -321,6 +337,17 @@ class EnvironmentQuanserRIP(gym.Env):
                 self.motor_velocity / params.VELOCITY_STATE_DENOMINATOR
             ]
         elif self.params.QUANSER_STATE_INFO == 1:
+            self.state = [
+                math.cos(self.pendulum_radian),
+                math.sin(self.pendulum_radian),
+                self.pendulum_velocity / params.VELOCITY_STATE_DENOMINATOR,
+                # math.cos(0.0),
+                # math.sin(0.0),
+                # math.cos(quanser_response.motor_radian),
+                # math.sin(quanser_response.motor_radian),
+                # self.motor_velocity / params.VELOCITY_STATE_DENOMINATOR
+            ]
+        elif self.params.QUANSER_STATE_INFO == 2:
             self.state = [
                 math.cos(self.pendulum_radian),
                 math.sin(self.pendulum_radian),
