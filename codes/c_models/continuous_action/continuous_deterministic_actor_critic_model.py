@@ -12,11 +12,11 @@ from codes.e_utils.common_utils import weights_init_
 
 
 class DeterministicContinuousActorCriticModel(ContinuousActionModel):
-    def __init__(self, worker_id, input_shape, num_outputs, params, device):
+    def __init__(self, worker_id, observation_shape, num_outputs, params, device):
         super(DeterministicContinuousActorCriticModel, self).__init__(worker_id, params, device)
         self.__name__ = "DeterministicContinuousActorCriticModel"
 
-        num_inputs = input_shape[0]
+        num_inputs = observation_shape[0]
 
         if self.params.RL_ALGORITHM == RLAlgorithmName.DDPG_V0:
             self.base = DeterministicActorCriticMLPBase(

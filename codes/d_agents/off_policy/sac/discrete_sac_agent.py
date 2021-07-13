@@ -1,64 +1,60 @@
 # https://spinningup.openai.com/en/latest/algorithms/sac.html
 # https://github.com/pranz24/pytorch-soft-actor-critic
-# https://github.com/ku2482/soft-actor-critic.pytorch/blob/master/code/agent.py
+#https://github.com/ku2482/soft-actor-critic.pytorch/blob/master/code/agent.py
 import torch
 import torch.nn.functional as F
 import torch.nn.utils as nn_utils
+from torch.distributions import Normal
 
 from codes.a_config._rl_parameters.off_policy.parameter_sac import SACActionSelectorType
+from codes.a_config._rl_parameters.off_policy.parameter_td3 import TD3ActionSelectorType
 from codes.c_models.continuous_action.continuous_sac_model import ContinuousSACModel
+from codes.c_models.discrete_action.discrete_sac_model import DiscreteSACModel
+from codes.d_agents.off_policy.off_policy_agent import OffPolicyAgent
 from codes.d_agents.off_policy.sac.sac_action_selector import ContinuousNormalSACActionSelector, \
-    SomeTimesBlowSACActionSelector
+    SomeTimesBlowSACActionSelector, DiscreteCategoricalSACActionSelector
 from codes.d_agents.off_policy.sac.sac_agent import AgentSAC
+from codes.d_agents.off_policy.td3.td3_action_selector import TD3ActionSelector
 from codes.e_utils import rl_utils
+from codes.e_utils.common_utils import grad_false, show_info
 from codes.e_utils.names import DeepLearningModelName, AgentMode
 
 
-class AgentContinuousSAC(AgentSAC):
+class AgentDiscreteSAC(AgentSAC):
     """
     """
-    def __init__(self, worker_id, observation_shape, action_shape, num_outputs, action_min, action_max, params, device):
-        assert params.DEEP_LEARNING_MODEL == DeepLearningModelName.CONTINUOUS_SAC_MLP
+    def __init__(self, worker_id, observation_shape, action_shape, action_n, params, device):
+        assert params.DEEP_LEARNING_MODEL == DeepLearningModelName.DISCRETE_SAC_MLP
 
-        super(AgentContinuousSAC, self).__init__(worker_id=worker_id, action_shape=action_shape, params=params, device=device)
-        self.__name__ = "AgentContinuousSAC"
-        self.num_outputs = num_outputs
-        self.action_min = action_min
-        self.action_max = action_max
+        super(AgentDiscreteSAC, self).__init__(worker_id=worker_id, action_shape=action_shape, params=params, device=device)
 
-        if params.TYPE_OF_SAC_ACTION_SELECTOR == SACActionSelectorType.BASIC_ACTION_SELECTOR:
-            self.train_action_selector = ContinuousNormalSACActionSelector(params=params)
-        elif params.TYPE_OF_SAC_ACTION_SELECTOR == SACActionSelectorType.SOMETIMES_BLOW_ACTION_SELECTOR:
-            self.train_action_selector = SomeTimesBlowSACActionSelector(
-                min_blowing_action=-5.0, max_blowing_action=5.0, params=self.params,
-            )
-        else:
-            raise ValueError()
+        self.__name__ = "AgentDiscreteSAC"
 
-        self.test_and_play_action_selector = ContinuousNormalSACActionSelector(params=params)
+        self.train_action_selector = DiscreteCategoricalSACActionSelector(agent_mode=AgentMode.TRAIN)
+        self.test_and_play_action_selector = DiscreteCategoricalSACActionSelector(agent_mode=AgentMode.TEST)
 
-        self.model = ContinuousSACModel(
+        self.model = DiscreteSACModel(
             worker_id=worker_id,
             observation_shape=observation_shape,
-            num_outputs=num_outputs,
+            action_n=action_n,
             params=params,
             device=device
         ).to(device)
 
-        self.target_model = ContinuousSACModel(
+        self.target_model = DiscreteSACModel(
             worker_id=worker_id,
             observation_shape=observation_shape,
-            num_outputs=num_outputs,
+            action_n=action_n,
             params=params,
             device=device
         ).to(device)
 
         # grad_false(self.target_model)
 
-        self.test_model = ContinuousSACModel(
+        self.test_model = DiscreteSACModel(
             worker_id=worker_id,
             observation_shape=observation_shape,
-            num_outputs=num_outputs,
+            action_n=action_n,
             params=params,
             device=device
         ).to(device)
@@ -75,10 +71,12 @@ class AgentContinuousSAC(AgentSAC):
             params=params
         )
 
-    def __call__(self, state, agent_states=None):
-        return self.continuous_sac_call(state, agent_states)
+        self.alpha = torch.tensor(self.params.ALPHA).to(self.device)
 
-    def continuous_sac_call(self, state, agent_states=None):
+    def __call__(self, state, agent_states=None):
+        return self.discrete_sac_call(state, agent_states)
+
+    def discrete_sac_call(self, state, agent_states=None):
         state = self.preprocess(state)
 
         if len(state) == 1:
@@ -88,12 +86,12 @@ class AgentContinuousSAC(AgentSAC):
 
         if self.agent_mode == AgentMode.TRAIN:
             with torch.no_grad():
-                mu_v, logstd_v = self.model.base.actor(state)
-                actions = self.train_action_selector(mu_v=mu_v, logstd_v=logstd_v)
+                probs, _ = self.model.base.forward_actor(state)
+                actions = self.train_action_selector(probs=probs)
         else:
             with torch.no_grad():
-                mu_v, _ = self.test_model.base.actor(state)
-                actions = self.test_and_play_action_selector(mu_v=mu_v, logstd_v=None)
+                probs, _ = self.test_model.base.forward_actor(state)
+                actions = self.test_and_play_action_selector(probs=probs)
 
         return actions, agent_states
 
@@ -106,7 +104,8 @@ class AgentContinuousSAC(AgentSAC):
 
         # print(batch)
         states_v, actions_v, target_action_values_v = self.unpack_batch_for_actor_critic(
-            batch=batch, target_model=self.target_model, sac_base_model=self.model.base, alpha=self.alpha, params=self.params
+            batch=batch, target_model=self.target_model, sac_base_model=self.model.base,
+            alpha=self.alpha, params=self.params
         )
 
         # train twinq
@@ -128,19 +127,19 @@ class AgentContinuousSAC(AgentSAC):
         # train actor
         self.actor_optimizer.zero_grad()
 
-        re_parameterization_trick_action_v, logprob_v = self.model.re_parameterization_trick_sample(states_v)
+        probs, action_v, logprob_v = self.model.sample(states_v)
 
         # states_v.shape: torch.Size([128, 3])
         # re_parameterization_trick_action_v.shape: torch.Size([128, 1])
 
-        q1_v, q2_v = self.model.base.twinq(states_v, re_parameterization_trick_action_v)
+        q1_v, q2_v = self.model.base.twinq(states_v)
 
         # q1_v.shape: torch.Size([128, 1])
         # q2_v.shape: torch.Size([128, 1])
         # torch.min(q1_v, q2_v).shape: torch.Size([128, 1])
         # logprob_v.shape: torch.Size([128, 1])
-        logprob_v = self.alpha * logprob_v
-        objectives_v = torch.min(q1_v, q2_v) - logprob_v
+
+        objectives_v = probs * (torch.min(q1_v, q2_v) - self.alpha * logprob_v)
 
         loss_actor_v = -1.0 * objectives_v.mean()
         loss_actor_v.backward()

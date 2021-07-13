@@ -4,32 +4,36 @@ import torch.nn.functional as F
 from torch.distributions import Normal, MultivariateNormal
 
 from codes.c_models.base_model import RNNModel
-from codes.c_models.continuous_action.stochastic_continuous_actor_critic_model import StochasticContinuousActorCriticModel
+from codes.c_models.continuous_action.continuous_stochastic_actor_critic_model import StochasticContinuousActorCriticModel
 from codes.d_agents.on_policy.a2c.a2c_agent import AgentA2C
 from codes.d_agents.on_policy.on_policy_action_selector import ContinuousNormalActionSelector
 from codes.e_utils import rl_utils
 from codes.e_utils.common_utils import show_info
-from codes.e_utils.names import DeepLearningModelName, AgentMode, RLAlgorithmName
+from codes.e_utils.names import DeepLearningModelName
 
 
 class AgentContinuousA2C(AgentA2C):
     """
     """
     def __init__(
-            self, worker_id, input_shape, action_shape, num_outputs, action_min, action_max, params, device
+            self, worker_id, observation_shape, action_shape, num_outputs, action_min, action_max, params, device
     ):
         assert params.DEEP_LEARNING_MODEL in [
-            DeepLearningModelName.STOCHASTIC_CONTINUOUS_ACTOR_CRITIC_MLP
+            DeepLearningModelName.CONTINUOUS_STOCHASTIC_ACTOR_CRITIC_MLP
         ]
-        super(AgentContinuousA2C, self).__init__(worker_id, action_shape, action_min, action_max, params, device)
-
+        super(AgentContinuousA2C, self).__init__(worker_id, action_shape, params, device)
         self.__name__ = "AgentContinuousA2C"
+
+        self.num_outputs = num_outputs
+        self.action_min = action_min
+        self.action_max = action_max
+
         self.train_action_selector = ContinuousNormalActionSelector()
         self.test_and_play_action_selector = ContinuousNormalActionSelector()
 
         self.model = StochasticContinuousActorCriticModel(
             worker_id=worker_id,
-            input_shape=input_shape,
+            observation_shape=observation_shape,
             num_outputs=num_outputs,
             params=params,
             device=device
@@ -37,7 +41,7 @@ class AgentContinuousA2C(AgentA2C):
 
         self.test_model = StochasticContinuousActorCriticModel(
             worker_id=worker_id,
-            input_shape=input_shape,
+            observation_shape=observation_shape,
             num_outputs=num_outputs,
             params=params,
             device=device
@@ -67,11 +71,11 @@ class AgentContinuousA2C(AgentA2C):
         if isinstance(self.model, RNNModel):
             batch_states_v, batch_actions_v, batch_target_action_values_v, batch_actor_hidden_states_v, \
             batch_critic_hidden_states_v = self.unpack_batch_for_actor_critic(
-                batch, self.model, self.params
+                batch=batch, target_model=self.model, params=self.params
             )
         else:
             batch_states_v, batch_actions_v, batch_target_action_values_v = self.unpack_batch_for_actor_critic(
-                batch, self.model, self.params
+                batch=batch, target_model=self.model, params=self.params
             )
             batch_actor_hidden_states_v = batch_critic_hidden_states_v = None
 
@@ -97,7 +101,7 @@ class AgentContinuousA2C(AgentA2C):
         # batch_advantage_v.shape: (32,)
         batch_advantage_v = batch_target_action_values_v - batch_values_v.squeeze(-1)
 
-        dist = Normal(loc=batch_mu_v, scale=batch_logstd_v)
+        dist = Normal(loc=batch_mu_v, scale=torch.exp(batch_logstd_v))
 
         # dist.log_prob(value=batch_actions_v).shape: (32, 1)
         # batch_reinforced_log_pi_action_v.shape: (32, 1)

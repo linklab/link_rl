@@ -5,12 +5,12 @@ import torch.nn.utils as nn_utils
 
 from codes.a_config._rl_parameters.off_policy.parameter_ddpg import PARAMETERS_DDPG, DDPGActionSelectorType, \
     DDPGActionType
-from codes.c_models.continuous_action.deterministic_continuous_actor_critic_model import DeterministicContinuousActorCriticModel
-from codes.d_agents.a0_base_agent import float32_preprocessor
+from codes.c_models.continuous_action.continuous_deterministic_actor_critic_model import DeterministicContinuousActorCriticModel
 from codes.d_agents.off_policy.ddpg.ddpg_action_selector import DDPGActionSelector, SomeTimesBlowDDPGActionSelector
 from codes.d_agents.off_policy.off_policy_agent import OffPolicyAgent
 from codes.e_utils import rl_utils
 from codes.d_agents.actions import EpsilonTracker
+from codes.e_utils.common_utils import float32_preprocessor
 from codes.e_utils.names import DeepLearningModelName, AgentMode
 
 
@@ -18,16 +18,18 @@ class AgentDDPG(OffPolicyAgent):
     """
     Agent implementing Orstein-Uhlenbeck exploration process
     """
-    def __init__(self, worker_id, input_shape, action_shape, num_outputs, action_min, action_max, params, device):
-        assert params.DEEP_LEARNING_MODEL == DeepLearningModelName.DETERMINISTIC_CONTINUOUS_ACTOR_CRITIC_MLP
+    def __init__(self, worker_id, observation_shape, action_shape, num_outputs, action_min, action_max, params, device):
+        assert params.DEEP_LEARNING_MODEL == DeepLearningModelName.CONTINUOUS_DETERMINISTIC_ACTOR_CRITIC_MLP
         assert issubclass(params, PARAMETERS_DDPG)
 
         super(AgentDDPG, self).__init__(
-            worker_id=worker_id, params=params, action_shape=action_shape,
-            action_min=action_min, action_max=action_max, device=device
+            worker_id=worker_id, action_shape=action_shape, params=params, device=device
         )
-
         self.__name__ = "AgentDDPG"
+
+        self.num_outputs = num_outputs
+        self.action_min = action_min
+        self.action_max = action_max
 
         # if params.ENVIRONMENT_ID in [EnvironmentName.PENDULUM_MATLAB_V0, EnvironmentName.PENDULUM_MATLAB_DOUBLE_RIP_V0]:
         #     self.train_action_selector = SomeTimesBlowDDPGActionSelector(
@@ -62,7 +64,7 @@ class AgentDDPG(OffPolicyAgent):
 
         self.model = DeterministicContinuousActorCriticModel(
             worker_id=worker_id,
-            input_shape=input_shape,
+            observation_shape=observation_shape,
             num_outputs=num_outputs,
             params=params,
             device=device
@@ -70,7 +72,7 @@ class AgentDDPG(OffPolicyAgent):
 
         self.target_model = DeterministicContinuousActorCriticModel(
             worker_id=worker_id,
-            input_shape=input_shape,
+            observation_shape=observation_shape,
             num_outputs=num_outputs,
             params=params,
             device=device
@@ -78,7 +80,7 @@ class AgentDDPG(OffPolicyAgent):
 
         self.test_model = DeterministicContinuousActorCriticModel(
             worker_id=worker_id,
-            input_shape=input_shape,
+            observation_shape=observation_shape,
             num_outputs=num_outputs,
             params=params,
             device=device

@@ -22,13 +22,13 @@ MessageFromMaster = collections.namedtuple(
 
 
 class AgentMultiGA(BaseAgent):
-    def __init__(self, worker_id, input_shape, action_shape, num_outputs, action_min, action_max, params, device):
+    def __init__(self, worker_id, observation_shape, action_shape, num_outputs, action_min, action_max, params, device):
         super(AgentMultiGA, self).__init__(worker_id, params, action_shape, action_min, action_max, device)
         self.__name__ = "AgentMultiGA"
 
         self.model = SimpleModel(
             worker_id=worker_id,
-            input_shape=input_shape,
+            observation_shape=observation_shape,
             num_outputs=num_outputs,
             params=params,
             device=device
@@ -39,7 +39,7 @@ class AgentMultiGA(BaseAgent):
         self.elite = None
         self.ga_operator = None
         self.global_steps = 0
-        self.input_shape = input_shape
+        self.observation_shape = observation_shape
         self.num_outputs = num_outputs
 
         mp.set_start_method('spawn')
@@ -52,7 +52,7 @@ class AgentMultiGA(BaseAgent):
         self.env = env
         self.ga_operator = GAOperator(
             env=self.env,
-            input_shape=self.input_shape, num_outputs=self.num_outputs, params=self.params, device=self.device
+            observation_shape=self.observation_shape, num_outputs=self.num_outputs, params=self.params, device=self.device
         )
 
         for ga_worker_idx in range(self.params.WORKERS_COUNT):
@@ -142,10 +142,10 @@ class AgentMultiGA(BaseAgent):
     @staticmethod
     def worker_func(ga_worker_id, master_to_worker_queue, worker_to_master_queue, params, device):
         env = rl_utils.get_single_environment(params=params)
-        input_shape, action_shape, num_outputs = rl_utils.get_environment_input_output_info(env)
+        observation_shape, action_shape, num_outputs = rl_utils.get_environment_input_output_info(env)
 
         ga_operator = GAOperator(
-            env=env, input_shape=input_shape, num_outputs=num_outputs, params=params, device=device
+            env=env, observation_shape=observation_shape, num_outputs=num_outputs, params=params, device=device
         )
 
         # Pool of models (chromosomes): minimize the amount of time spent recreating the parameters from the same seeds.
@@ -203,9 +203,9 @@ class AgentMultiGA(BaseAgent):
 
 
 class GAOperator:
-    def __init__(self, env, input_shape, num_outputs, params, device):
+    def __init__(self, env, observation_shape, num_outputs, params, device):
         self.env = env
-        self.input_shape = input_shape
+        self.observation_shape = observation_shape
         self.num_outputs = num_outputs
         self.params = params
         self.device = device
@@ -240,7 +240,7 @@ class GAOperator:
         torch.manual_seed(seeds[0])
         chromosome = SimpleModel(
             worker_id=-1,
-            input_shape=self.input_shape,
+            observation_shape=self.observation_shape,
             num_outputs=self.num_outputs,
             params=self.params,
             device=self.device
