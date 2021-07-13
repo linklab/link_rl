@@ -7,7 +7,7 @@ from codes.d_agents.on_policy.a2c.a2c_agent import AgentA2C
 from codes.d_agents.on_policy.on_policy_action_selector import DiscreteCategoricalActionSelector
 from codes.e_utils import rl_utils
 from codes.e_utils.common_utils import show_info
-from codes.e_utils.names import DeepLearningModelName
+from codes.e_utils.names import DeepLearningModelName, AgentMode
 
 
 class AgentDiscreteA2C(AgentA2C):
@@ -26,8 +26,8 @@ class AgentDiscreteA2C(AgentA2C):
         self.__name__ = "AgentDiscreteA2C"
         self.action_n = action_n
 
-        self.train_action_selector = DiscreteCategoricalActionSelector()
-        self.test_and_play_action_selector = DiscreteCategoricalActionSelector()
+        self.train_action_selector = DiscreteCategoricalActionSelector(agent_mode=AgentMode.TRAIN)
+        self.test_and_play_action_selector = DiscreteCategoricalActionSelector(agent_mode=AgentMode.TEST)
 
         self.model = DiscreteActorCriticModel(
             worker_id=worker_id,

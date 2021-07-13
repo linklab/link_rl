@@ -30,8 +30,8 @@ class AgentDiscreteSAC(AgentSAC):
 
         self.__name__ = "AgentDiscreteSAC"
 
-        self.train_action_selector = DiscreteCategoricalSACActionSelector()
-        self.test_and_play_action_selector = DiscreteCategoricalSACActionSelector()
+        self.train_action_selector = DiscreteCategoricalSACActionSelector(agent_mode=AgentMode.TRAIN)
+        self.test_and_play_action_selector = DiscreteCategoricalSACActionSelector(agent_mode=AgentMode.TEST)
 
         self.model = DiscreteSACModel(
             worker_id=worker_id,
