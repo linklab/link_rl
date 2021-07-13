@@ -7,13 +7,13 @@ from codes.d_agents.a0_base_agent import BaseAgent
 
 # Covariance Matrix Adaptation Evolution Strategy (CMA-ES)
 class AgentEMAES(BaseAgent):
-    def __init__(self, worker_id, input_shape, action_shape, num_outputs, action_min, action_max, params, device):
+    def __init__(self, worker_id, observation_shape, action_shape, num_outputs, action_min, action_max, params, device):
         super(AgentEMAES, self).__init__(worker_id, params, action_shape, action_min, action_max, device)
         self.__name__ = "AgentEMAES"
 
         self.model = SimpleModel(
             worker_id=worker_id,
-            input_shape=input_shape,
+            observation_shape=observation_shape,
             num_outputs=num_outputs,
             params=params,
             device=device

@@ -34,8 +34,8 @@ def get_quanser_rip_observation_space():
 def get_quanser_rip_action_info(params):
     if params.RL_ALGORITHM in [RLAlgorithmName.DQN_V0]:
         action_index_to_voltage = list(np.array([
-            -1.0, -0.75, -0.5, -0.3, -0.2, -0.1, 0.0, 0.1, 0.2, 0.3, 0.5, 0.75, 1.0
-        ]) * params.ACTION_SCALE)
+            -900, -500, 0, 500, 900
+        ]))
         action_space = gym.spaces.Discrete(len(action_index_to_voltage))
         n_actions = action_space.n
     else:
@@ -54,7 +54,7 @@ class SyncronizeEnv(gym.Env):
         super(SyncronizeEnv, self).__init__()
         self.params = params
 
-        self.action_ = 200
+        self.action_ = 10
 
         self.previous_time = 0
 

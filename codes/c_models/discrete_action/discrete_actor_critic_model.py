@@ -7,25 +7,25 @@ import numpy as np
 
 from codes.c_models.base_model import RNNModel
 from codes.c_models.discrete_action.discrete_action_model import DiscreteActionModel
-from codes.d_agents.a0_base_agent import float32_preprocessor
 from codes.e_utils import rl_utils
+from codes.e_utils.common_utils import float32_preprocessor
 from codes.e_utils.names import DeepLearningModelName
 
 
 class DiscreteActorCriticModel(DiscreteActionModel):
-    def __init__(self, worker_id, input_shape, num_outputs, params, device):
+    def __init__(self, worker_id, observation_shape, action_n, params, device):
         super(DiscreteActorCriticModel, self).__init__(worker_id, params, device)
 
-        num_input = input_shape[0]
+        num_inputs = observation_shape[0]
 
-        if params.DEEP_LEARNING_MODEL == DeepLearningModelName.STOCHASTIC_DISCRETE_ACTOR_CRITIC_MLP:
-            self.base = ActorCriticMLPBase(num_input=num_input, num_outputs=num_outputs, params=self.params)
+        if params.DEEP_LEARNING_MODEL == DeepLearningModelName.DISCRETE_STOCHASTIC_ACTOR_CRITIC_MLP:
+            self.base = ActorCriticMLPBase(num_inputs=num_inputs, action_n=action_n, params=self.params)
             self.__name__ = "DiscreteActorCriticMLPModel"
-        elif params.DEEP_LEARNING_MODEL == DeepLearningModelName.STOCHASTIC_DISCRETE_ACTOR_CRITIC_CNN:
-            self.base = ActorCriticCNNBase(input_shape=input_shape, num_outputs=num_outputs)
+        elif params.DEEP_LEARNING_MODEL == DeepLearningModelName.DISCRETE_STOCHASTIC_ACTOR_CRITIC_CNN:
+            self.base = ActorCriticCNNBase(observation_shape=observation_shape, action_n=action_n)
             self.__name__ = "DiscreteActorCriticCNNModel"
-        elif params.DEEP_LEARNING_MODEL == DeepLearningModelName.STOCHASTIC_DISCRETE_ACTOR_CRITIC_RNN:
-            self.base = ActorCriticRNNBase(num_input=num_input, num_outputs=num_outputs, params=self.params)
+        elif params.DEEP_LEARNING_MODEL == DeepLearningModelName.DISCRETE_STOCHASTIC_ACTOR_CRITIC_RNN:
+            self.base = ActorCriticRNNBase(num_inputs=num_inputs, action_n=action_n, params=self.params)
             self.__name__ = "DiscreteActorCriticRNNModel"
         else:
             raise ValueError()
@@ -77,7 +77,7 @@ class DiscreteActorCriticModel(DiscreteActionModel):
 
 
 class ActorCriticMLPBase(nn.Module):
-    def __init__(self, num_input, num_outputs, params):
+    def __init__(self, num_inputs, action_n, params):
         super(ActorCriticMLPBase, self).__init__()
         self.__name__ = "ActorCriticMLPBase"
         self.params = params
@@ -89,19 +89,19 @@ class ActorCriticMLPBase(nn.Module):
         #self.common.apply(self.init_weights)
 
         self.actor = nn.Sequential(
-            nn.Linear(num_input, self.hidden_1_size),
+            nn.Linear(num_inputs, self.hidden_1_size),
             nn.GELU(),
             nn.Linear(self.hidden_1_size, self.hidden_2_size),
             nn.GELU(),
             nn.Linear(self.hidden_2_size, self.hidden_3_size),
             nn.GELU(),
-            nn.Linear(self.hidden_3_size, num_outputs)
+            nn.Linear(self.hidden_3_size, action_n)
         )
 
         # self.actor.apply(self.init_weights)
 
         self.critic = nn.Sequential(
-            nn.Linear(num_input, self.hidden_1_size),
+            nn.Linear(num_inputs, self.hidden_1_size),
             nn.GELU(),
             nn.Linear(self.hidden_1_size, self.hidden_2_size),
             nn.GELU(),
@@ -140,7 +140,7 @@ class ActorCriticMLPBase(nn.Module):
 
 
 class ActorCriticRNNBase(RNNModel):
-    def __init__(self, num_input, num_outputs, params):
+    def __init__(self, num_inputs, action_n, params):
         super(ActorCriticRNNBase, self).__init__()
         self.__name__ = "ActorCriticRNNBase"
         self.params = params
@@ -148,18 +148,18 @@ class ActorCriticRNNBase(RNNModel):
         self.num_directions = 2 if params.RNN_BIDIRECTIONAL else 1
 
         self.actor_rnn = nn.GRU(
-            input_size=num_input,
+            input_size=num_inputs,
             hidden_size=params.RNN_HIDDEN_SIZE,
             num_layers=params.RNN_NUM_LAYER,
             bias=True, batch_first=True,
             bidirectional=params.RNN_BIDIRECTIONAL
         )
         self.actor_linear = nn.Linear(
-            in_features=params.RNN_HIDDEN_SIZE * self.num_directions, out_features=num_outputs
+            in_features=params.RNN_HIDDEN_SIZE * self.num_directions, out_features=action_n
         )
 
         self.critic_rnn = nn.LSTM(
-            input_size=num_input,
+            input_size=num_inputs,
             hidden_size=params.RNN_HIDDEN_SIZE,
             num_layers=params.RNN_NUM_LAYER,
             bias=True, batch_first=True,
@@ -207,35 +207,35 @@ class ActorCriticRNNBase(RNNModel):
 
 
 class ActorCriticCNNBase(nn.Module):
-    def __init__(self, input_shape, num_outputs):
+    def __init__(self, observation_shape, action_n):
         super(ActorCriticCNNBase, self).__init__()
         self.__name__ = "ActorCriticCNNBase"
 
         self.actor_conv = nn.Sequential(
-            nn.Conv2d(in_channels=input_shape[0], out_channels=32, kernel_size=8, stride=4),
+            nn.Conv2d(in_channels=observation_shape[0], out_channels=32, kernel_size=(8, 8), stride=(4, 4)),
             nn.GELU(),
-            nn.Conv2d(in_channels=32, out_channels=64, kernel_size=4, stride=2),
+            nn.Conv2d(in_channels=32, out_channels=64, kernel_size=(4, 4), stride=(2, 2)),
             nn.GELU(),
-            nn.Conv2d(in_channels=64, out_channels=64, kernel_size=3, stride=1),
+            nn.Conv2d(in_channels=64, out_channels=64, kernel_size=(3, 3), stride=(1, 1)),
             nn.GELU()
         )
 
         self.critic_conv = nn.Sequential(
-            nn.Conv2d(in_channels=input_shape[0], out_channels=32, kernel_size=8, stride=4),
+            nn.Conv2d(in_channels=observation_shape[0], out_channels=32, kernel_size=(8, 8), stride=(4, 4)),
             nn.GELU(),
-            nn.Conv2d(in_channels=32, out_channels=64, kernel_size=4, stride=2),
+            nn.Conv2d(in_channels=32, out_channels=64, kernel_size=(4, 4), stride=(2, 2)),
             nn.GELU(),
-            nn.Conv2d(in_channels=64, out_channels=64, kernel_size=3, stride=1),
+            nn.Conv2d(in_channels=64, out_channels=64, kernel_size=(3, 3), stride=(1, 1)),
             nn.GELU()
         )
 
-        actor_conv_out_size = self._get_actor_conv_out(input_shape)
-        critic_conv_out_size = self._get_critic_conv_out(input_shape)
+        actor_conv_out_size = self._get_actor_conv_out(observation_shape)
+        critic_conv_out_size = self._get_critic_conv_out(observation_shape)
 
         self.actor_fc = nn.Sequential(
             nn.Linear(actor_conv_out_size, 512),
             nn.LeakyReLU(),
-            nn.Linear(512, num_outputs)
+            nn.Linear(512, action_n)
         )
 
         self.critic_fc = nn.Sequential(
