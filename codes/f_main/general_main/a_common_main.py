@@ -89,8 +89,8 @@ def get_agent(env):
 def set_wandb(agent):
     configuration = {key: getattr(params, key) for key in dir(params) if not key.startswith("__")}
     wandb.init(
-        project=params.wandb_project,
-        entity=params.wandb_entity,
+        project=params.WANDB_PROJECT,
+        entity=params.WANDB_ENTITY,
         dir=WANDB_DIR,
         config=configuration
     )
