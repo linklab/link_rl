@@ -47,7 +47,7 @@ class AgentSAC(OffPolicyAgent):
         self.alpha_optimizer.zero_grad()
         # Intuitively, we increase alpha when entropy is less than target entropy, vice versa.
 
-        entropy_loss = -1.0 * (self.log_alpha * (self.target_entropy - log_prob_v).detach()).mean()
+        entropy_loss = -1.0 * (self.log_alpha * (self.target_entropy + log_prob_v).detach()).mean()
         entropy_loss.backward()
         nn_utils.clip_grad_norm_([self.log_alpha], self.params.CLIP_GRAD)
         self.alpha_optimizer.step()
