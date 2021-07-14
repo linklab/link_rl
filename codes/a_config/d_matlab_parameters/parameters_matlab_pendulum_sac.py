@@ -1,4 +1,5 @@
-from codes.a_config._rl_parameters.off_policy.parameter_sac import PARAMETERS_SAC, SACActionType, SACActionSelectorType
+from codes.a_config._rl_parameters.off_policy.parameter_sac import PARAMETERS_SAC, StochasticActionType, \
+    StochasticActionSelectorType
 from codes.e_utils.names import *
 from codes.a_config.parameters_general import PARAMETERS_GENERAL, RIPEnvRewardType
 
@@ -37,7 +38,7 @@ class PARAMETERS_PENDULUM_MATLAB_SAC(PARAMETERS_GENERAL, PARAMETERS_SAC):
 
     TYPE_OF_RIP_REWARD = RIPEnvRewardType.NEW  # "old_version"
 
-    TYPE_OF_SAC_ACTION = SACActionType.SAMPLE
-    TYPE_OF_SAC_ACTION_SELECTOR = SACActionSelectorType.SOMETIMES_BLOW_ACTION_SELECTOR
+    TYPE_OF_STOCHASTIC_ACTION = StochasticActionType.SAMPLE
+    TYPE_OF_STOCHASTIC_ACTION_SELECTOR = StochasticActionSelectorType.SOMETIMES_BLOW_ACTION_SELECTOR
 
     PENDULUM_STATE_INFO = 0  # 1: ALL ARM INFO IGNORED, 2: ARM ANGLE INFO IGNORED (VELOCITY IS INCLUDED)

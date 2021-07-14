@@ -4,19 +4,10 @@
 import torch
 import torch.nn.functional as F
 import torch.nn.utils as nn_utils
-from torch.distributions import Normal
-
-from codes.a_config._rl_parameters.off_policy.parameter_sac import SACActionSelectorType
-from codes.a_config._rl_parameters.off_policy.parameter_td3 import TD3ActionSelectorType
-from codes.c_models.continuous_action.continuous_sac_model import ContinuousSACModel
 from codes.c_models.discrete_action.discrete_sac_model import DiscreteSACModel
-from codes.d_agents.off_policy.off_policy_agent import OffPolicyAgent
-from codes.d_agents.off_policy.sac.sac_action_selector import ContinuousNormalSACActionSelector, \
-    SomeTimesBlowSACActionSelector, DiscreteCategoricalSACActionSelector
 from codes.d_agents.off_policy.sac.sac_agent import AgentSAC
-from codes.d_agents.off_policy.td3.td3_action_selector import TD3ActionSelector
+from codes.d_agents.on_policy.stochastic_policy_action_selector import DiscreteCategoricalActionSelector
 from codes.e_utils import rl_utils
-from codes.e_utils.common_utils import grad_false, show_info
 from codes.e_utils.names import DeepLearningModelName, AgentMode
 
 
@@ -30,8 +21,8 @@ class AgentDiscreteSAC(AgentSAC):
 
         self.__name__ = "AgentDiscreteSAC"
 
-        self.train_action_selector = DiscreteCategoricalSACActionSelector(agent_mode=AgentMode.TRAIN)
-        self.test_and_play_action_selector = DiscreteCategoricalSACActionSelector(agent_mode=AgentMode.TEST)
+        self.train_action_selector = DiscreteCategoricalActionSelector(params=params)
+        self.test_and_play_action_selector = DiscreteCategoricalActionSelector(params=params)
 
         self.model = DiscreteSACModel(
             worker_id=worker_id,
@@ -87,11 +78,11 @@ class AgentDiscreteSAC(AgentSAC):
         if self.agent_mode == AgentMode.TRAIN:
             with torch.no_grad():
                 probs, _ = self.model.base.forward_actor(state)
-                actions = self.train_action_selector(probs=probs)
+                actions = self.train_action_selector(probs=probs, agent_mode=AgentMode.TRAIN)
         else:
             with torch.no_grad():
                 probs, _ = self.test_model.base.forward_actor(state)
-                actions = self.test_and_play_action_selector(probs=probs)
+                actions = self.test_and_play_action_selector(probs=probs, agent_mode=AgentMode.TEST)
 
         return actions, agent_states
 

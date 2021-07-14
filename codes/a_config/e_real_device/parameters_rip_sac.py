@@ -1,6 +1,6 @@
-from codes.a_config._rl_parameters.off_policy.parameter_sac import PARAMETERS_SAC, SACActionType, SACActionSelectorType
+from codes.a_config._rl_parameters.off_policy.parameter_sac import PARAMETERS_SAC
 from codes.e_utils.names import *
-from codes.a_config.parameters_general import PARAMETERS_GENERAL, RIPEnvRewardType, StochasticActionSelectorType, \
+from codes.a_config.parameters_general import PARAMETERS_GENERAL, StochasticActionSelectorType, \
     StochasticActionType
 
 

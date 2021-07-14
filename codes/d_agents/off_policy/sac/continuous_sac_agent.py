@@ -5,10 +5,8 @@ import torch
 import torch.nn.functional as F
 import torch.nn.utils as nn_utils
 
-from codes.a_config._rl_parameters.off_policy.parameter_sac import SACActionSelectorType
+from codes.a_config._rl_parameters.off_policy.parameter_sac import StochasticActionSelectorType
 from codes.c_models.continuous_action.continuous_sac_model import ContinuousSACModel
-from codes.d_agents.off_policy.sac.sac_action_selector import ContinuousNormalSACActionSelector, \
-    SomeTimesBlowSACActionSelector
 from codes.d_agents.off_policy.sac.sac_agent import AgentSAC
 from codes.d_agents.on_policy.stochastic_policy_action_selector import ContinuousNormalActionSelector, \
     SomeTimesBlowContinuousNormalActionSelector
@@ -28,16 +26,16 @@ class AgentContinuousSAC(AgentSAC):
         self.action_min = action_min
         self.action_max = action_max
 
-        if params.TYPE_OF_SAC_ACTION_SELECTOR == SACActionSelectorType.BASIC_ACTION_SELECTOR:
+        if params.TYPE_OF_STOCHASTIC_ACTION_SELECTOR == StochasticActionSelectorType.BASIC_ACTION_SELECTOR:
             self.train_action_selector = ContinuousNormalActionSelector(params=params)
-        elif params.TYPE_OF_SAC_ACTION_SELECTOR == SACActionSelectorType.SOMETIMES_BLOW_ACTION_SELECTOR:
+        elif params.TYPE_OF_STOCHASTIC_ACTION_SELECTOR == StochasticActionSelectorType.SOMETIMES_BLOW_ACTION_SELECTOR:
             self.train_action_selector = SomeTimesBlowContinuousNormalActionSelector(
                 min_blowing_action=-5.0, max_blowing_action=5.0, params=self.params,
             )
         else:
             raise ValueError()
 
-        self.test_and_play_action_selector = ContinuousNormalSACActionSelector(params=params)
+        self.test_and_play_action_selector = ContinuousNormalActionSelector(params=params)
 
         self.model = ContinuousSACModel(
             worker_id=worker_id,

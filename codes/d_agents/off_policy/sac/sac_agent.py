@@ -2,20 +2,10 @@
 # https://github.com/pranz24/pytorch-soft-actor-critic
 #https://github.com/ku2482/soft-actor-critic.pytorch/blob/master/code/agent.py
 import torch
-import torch.nn.functional as F
 import torch.nn.utils as nn_utils
-from torch.distributions import Normal
 
-from codes.a_config._rl_parameters.off_policy.parameter_sac import SACActionSelectorType
-from codes.a_config._rl_parameters.off_policy.parameter_td3 import TD3ActionSelectorType
-from codes.c_models.continuous_action.continuous_sac_model import ContinuousSACModel
 from codes.d_agents.off_policy.off_policy_agent import OffPolicyAgent
-from codes.d_agents.off_policy.sac.sac_action_selector import ContinuousNormalSACActionSelector, \
-    SomeTimesBlowSACActionSelector
-from codes.d_agents.off_policy.td3.td3_action_selector import TD3ActionSelector
 from codes.e_utils import rl_utils
-from codes.e_utils.common_utils import grad_false, show_info
-from codes.e_utils.names import DeepLearningModelName, AgentMode
 
 
 class AgentSAC(OffPolicyAgent):
