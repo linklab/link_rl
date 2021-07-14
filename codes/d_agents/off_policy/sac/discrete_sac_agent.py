@@ -62,7 +62,8 @@ class AgentDiscreteSAC(AgentSAC):
             params=params
         )
 
-        self.alpha = torch.tensor(self.params.ALPHA).to(self.device)
+        self.cache_loss_actor_v = torch.tensor(0.0)
+
 
     def __call__(self, state, agent_states=None):
         return self.discrete_sac_call(state, agent_states)
@@ -87,6 +88,9 @@ class AgentDiscreteSAC(AgentSAC):
         return actions, agent_states
 
     def on_train(self, step_idx):
+        if self.params.ENTROPY_TUNING and self.target_entropy is None:
+            self.reset_alpha()
+
         if self.params.PER:
             batch, batch_indices, batch_weights = self.buffer.sample(self.params.BATCH_SIZE)
         else:
@@ -120,31 +124,35 @@ class AgentDiscreteSAC(AgentSAC):
             self.buffer.update_beta(step_idx)
 
         # train actor
-        self.actor_optimizer.zero_grad()
-
         probs, action_v, log_prob_v = self.model.sample(states_v)
+        # Delayed policy updates
+        if step_idx % self.params.POLICY_UPDATE_FREQUENCY == 0:
+            self.actor_optimizer.zero_grad()
 
-        # states_v.shape: torch.Size([128, 3])
-        # re_parameterization_trick_action_v.shape: torch.Size([128, 1])
+            # states_v.shape: torch.Size([128, 3])
+            # re_parameterization_trick_action_v.shape: torch.Size([128, 1])
 
-        q1_v, q2_v = self.model.base.twinq(states_v)
+            q1_v, q2_v = self.model.base.twinq(states_v)
 
-        # q1_v.shape: torch.Size([128, 1])
-        # q2_v.shape: torch.Size([128, 1])
-        # torch.min(q1_v, q2_v).shape: torch.Size([128, 1])
-        # log_prob_v.shape: torch.Size([128, 1])
+            # q1_v.shape: torch.Size([128, 1])
+            # q2_v.shape: torch.Size([128, 1])
+            # torch.min(q1_v, q2_v).shape: torch.Size([128, 1])
+            # log_prob_v.shape: torch.Size([128, 1])
 
-        objectives_v = probs * (torch.min(q1_v, q2_v) - self.alpha * log_prob_v)
+            objectives_v = probs * (torch.min(q1_v, q2_v) - self.alpha * log_prob_v)
+            loss_actor_v = -1.0 * objectives_v.mean()
+            self.cache_loss_actor_v = loss_actor_v
 
-        loss_actor_v = -1.0 * objectives_v.mean()
-        loss_actor_v.backward()
-        nn_utils.clip_grad_norm_(self.model.base.actor_params, self.params.CLIP_GRAD)
-        self.actor_optimizer.step()
+            loss_actor_v.backward()
+            nn_utils.clip_grad_norm_(self.model.base.actor_params, self.params.CLIP_GRAD)
+            self.actor_optimizer.step()
 
-        self.target_model.twinq_alpha_sync(self.model, alpha=1 - self.params.TAU)
+            self.target_model.twinq_alpha_sync(self.model, alpha=1 - self.params.TAU)
+        else:
+            loss_actor_v = self.cache_loss_actor_v
 
         if self.params.ENTROPY_TUNING:
-            self.adjust_alpha()
+            self.adjust_alpha(log_prob_v)
 
         # gradients = self.model.get_gradients_for_current_parameters()
         gradients = None

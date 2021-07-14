@@ -1,5 +1,7 @@
 import enum
 
+from codes.a_config._rl_parameters.off_policy.parameter_off_policy import PARAMETERS_OFF_POLICY
+
 
 class DQNActionSelectorType(enum.Enum):
     BASIC_ACTION_SELECTOR = 0

@@ -1,11 +1,13 @@
 # https://spinningup.openai.com/en/latest/algorithms/sac.html
 # https://github.com/pranz24/pytorch-soft-actor-critic
-#https://github.com/ku2482/soft-actor-critic.pytorch/blob/master/code/agent.py
+# https://github.com/ku2482/soft-actor-critic.pytorch/blob/master/code/agent.py
+# https://github.com/cyoon1729/Policy-Gradient-Methods/blob/master/sac/sac2019.py
 import torch
 import torch.nn.utils as nn_utils
 
 from codes.d_agents.off_policy.off_policy_agent import OffPolicyAgent
 from codes.e_utils import rl_utils
+from codes.e_utils.common_utils import show_info
 
 
 class AgentSAC(OffPolicyAgent):
@@ -18,11 +20,9 @@ class AgentSAC(OffPolicyAgent):
 
         self.alpha = torch.tensor(self.params.ALPHA).to(self.device)
 
-        if self.params.ENTROPY_TUNING:
-            self.reset_alpha()
-            self.target_entropy = None
-            self.log_alpha = None
-            self.alpha_optimizer = None
+        self.target_entropy = None
+        self.log_alpha = None
+        self.alpha_optimizer = None
 
     def reset_alpha(self):
         # if self.params.ENTROPY_TUNING:
@@ -36,17 +36,18 @@ class AgentSAC(OffPolicyAgent):
         self.alpha = self.log_alpha.exp()
         self.alpha_optimizer = rl_utils.get_optimizer(
             parameters=[self.log_alpha],
-            learning_rate=self.params.ALPHALEARNING_RATE,
+            learning_rate=self.params.ALPHA_LEARNING_RATE,
             params=self.params
         )
 
     def __call__(self, state, agent_states=None):
         raise NotImplementedError()
 
-    def adjust_alpha(self):
+    def adjust_alpha(self, log_prob_v):
         self.alpha_optimizer.zero_grad()
         # Intuitively, we increase alpha when entropy is less than target entropy, vice versa.
-        entropy_loss = -1.0 * self.log_alpha * (self.target_entropy - sampled_entropies_v).mean().detach()
+
+        entropy_loss = -1.0 * self.log_alpha * (self.target_entropy - log_prob_v).mean().detach()
         entropy_loss.backward()
         nn_utils.clip_grad_norm_([self.log_alpha], self.params.CLIP_GRAD)
         self.alpha_optimizer.step()
