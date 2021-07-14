@@ -27,7 +27,8 @@ class AgentSAC(OffPolicyAgent):
     def reset_alpha(self):
         # if self.params.ENTROPY_TUNING:
         # Target entropy is -|A|.
-        self.target_entropy = -torch.prod(torch.Tensor(self.action_shape))
+        # self.target_entropy = -torch.prod(torch.Tensor(self.action_shape))
+        self.target_entropy = -torch.zeros(self.action_shape).detach()
 
         #print(self.target_entropy, "!")
 
@@ -47,11 +48,15 @@ class AgentSAC(OffPolicyAgent):
         self.alpha_optimizer.zero_grad()
         # Intuitively, we increase alpha when entropy is less than target entropy, vice versa.
 
-        entropy_loss = -1.0 * (self.log_alpha * (self.target_entropy + log_prob_v).detach()).mean()
+        # print(self.target_entropy)
+        # print(log_prob_v, "!!!!!!!!!!!1")
+
+        entropy_loss = (self.log_alpha * (-self.target_entropy - log_prob_v).detach()).mean()
         entropy_loss.backward()
         nn_utils.clip_grad_norm_([self.log_alpha], self.params.CLIP_GRAD)
         self.alpha_optimizer.step()
         self.alpha = torch.exp(self.log_alpha)
+        #print(self.alpha, "!!!!!!!!!")
 
     def adjust_alpha_for_discrete_action(self, probs, log_prob_v):
         self.alpha_optimizer.zero_grad()
