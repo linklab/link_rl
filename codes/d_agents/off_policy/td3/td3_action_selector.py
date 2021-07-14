@@ -1,8 +1,11 @@
 import random
+from collections import deque
+
 import numpy as np
 from icecream import ic
 
 from codes.a_config._rl_parameters.off_policy.parameter_td3 import TD3ActionType
+from codes.e_utils.common_utils import ema
 from codes.e_utils.names import EnvironmentName
 
 
@@ -11,6 +14,7 @@ class TD3ActionSelector:
         self.noise_std = self.original_noise_std = noise_std
         self.epsilon = epsilon
         self.params = params
+        self.action_list = deque(maxlen=11)
 
     def select_action(self, mu):
         actions = np.copy(mu)
@@ -26,6 +30,17 @@ class TD3ActionSelector:
             actions = actions + noises
         elif self.params.TYPE_OF_TD3_ACTION == TD3ActionType.ONLY_GREEDY:
             actions = actions
+        elif self.params.TYPE_OF_TD3_ACTION == TD3ActionType.AVERAGE_WITH_GAUSSIAN_NOISE:
+            actions = actions + noises
+            self.action_list.append(actions[0][0])
+
+            actions = np.expand_dims(
+                np.expand_dims(
+                    np.asarray(ema(list(self.action_list), len(self.action_list) - 1)[-1]),
+                    axis=-1
+                ),
+                axis=-1
+            )
         else:
             raise ValueError()
 

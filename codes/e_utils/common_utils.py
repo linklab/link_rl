@@ -310,7 +310,8 @@ def print_agent_info(agent, params):
     print("##########################################")
 
 
-from collections import OrderedDict, MutableMapping
+from collections import OrderedDict, MutableMapping, deque
+
 
 class Cache(MutableMapping):
     def __init__(self, maxlen, items=None):
@@ -384,6 +385,42 @@ def long64_preprocessor(values):
     return torch.tensor(np_values)
 
 
+def ema(s, n):
+    """
+    returns an n period exponential moving average for
+    the time series s
+
+    s is a list ordered from oldest (index 0) to most
+    recent (index -1)
+    n is an integer
+
+    returns a numeric array of the exponential
+    moving average
+    """
+
+    if len(s) <= 2:
+        return s
+
+    ema = []
+    j = 1
+
+    #get n sma first and calculate the next n period ema
+    sma = sum(s[:n]) / n
+    multiplier = 2 / float(1 + n)
+    ema.append(sma)
+
+    #EMA(current) = ( (Price(current) - EMA(prev) ) x Multiplier) + EMA(prev)
+    ema.append(( (s[n] - sma) * multiplier) + sma)
+
+    #now calculate the rest of the values
+    for i in s[n+1:]:
+        tmp = ( (i - ema[j]) * multiplier) + ema[j]
+        j = j + 1
+        ema.append(tmp)
+
+    return ema
+
+
 if __name__=="__main__":
     # # max_episode = 20000000
     # max_episode = 200
@@ -396,4 +433,14 @@ if __name__=="__main__":
     # )
     # plt.show()
 
-    print(np.clip(0.06 / (sigmoid_2(0.01) * 10), 0.006, 0.06))
+    # print(np.clip(0.06 / (sigmoid_2(0.01) * 10), 0.006, 0.06))
+
+    s = deque(maxlen=5)
+    s.append(1.0)
+    s.append(2.0)
+    s.append(3.0)
+    s.append(4.0)
+    s.append(5.0)
+
+    ema = ema(list(s), 4)[-1]
+    print(ema)
