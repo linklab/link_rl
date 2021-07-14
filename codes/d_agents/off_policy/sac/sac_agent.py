@@ -52,3 +52,13 @@ class AgentSAC(OffPolicyAgent):
         nn_utils.clip_grad_norm_([self.log_alpha], self.params.CLIP_GRAD)
         self.alpha_optimizer.step()
         self.alpha = self.log_alpha.exp()
+
+    def adjust_alpha_for_discrete_action(self, probs, log_prob_v):
+        self.alpha_optimizer.zero_grad()
+        # Intuitively, we increase alpha when entropy is less than target entropy, vice versa.
+
+        entropy_loss = -1.0 * (probs * self.log_alpha * (self.target_entropy - log_prob_v)).mean().detach()
+        entropy_loss.backward()
+        nn_utils.clip_grad_norm_([self.log_alpha], self.params.CLIP_GRAD)
+        self.alpha_optimizer.step()
+        self.alpha = self.log_alpha.exp()

@@ -152,7 +152,7 @@ class AgentDiscreteSAC(AgentSAC):
             loss_actor_v = self.cache_loss_actor_v
 
         if self.params.ENTROPY_TUNING:
-            self.adjust_alpha(log_prob_v)
+            self.adjust_alpha_for_discrete_action(probs, log_prob_v)
 
         # gradients = self.model.get_gradients_for_current_parameters()
         gradients = None

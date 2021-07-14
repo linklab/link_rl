@@ -28,16 +28,9 @@ class PARAMETERS_RIP_TD3(PARAMETERS_GENERAL, PARAMETERS_TD3):
 
     #########################################
     #########################################
-
-    # [MLP_DEEP_LEARNING_MODEL]
-    HIDDEN_1_SIZE = 128
-    HIDDEN_2_SIZE = 128
-    HIDDEN_3_SIZE = 128
-    # HIDDEN_SIZE_LIST = [128, 128, 128, 256]
-
     # [OPTIMIZATION]
     GAMMA = 0.999 # discount factor
-    TAU = 0.0001
+    TAU = 0.0005
 
     # [Policy Gradient]
     CLIP_GRAD = 3.0
@@ -57,6 +50,9 @@ class PARAMETERS_RIP_TD3(PARAMETERS_GENERAL, PARAMETERS_TD3):
 
     # [CUDA]
     CUDA_VISIBLE_DEVICES_NUMBER_LIST = '1, 2'
+
+    TRAIN_STEP_FREQ = 2
+    POLICY_UPDATE_FREQUENCY = 2 * TRAIN_STEP_FREQ
 
     # [1. ENVIRONMENTS]
     ENVIRONMENT_ID = EnvironmentName.REAL_DEVICE_RIP
