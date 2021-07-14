@@ -1,12 +1,14 @@
+from codes.a_config._rl_parameters.off_policy.parameter_sac import PARAMETERS_SAC
 from codes.a_config._rl_parameters.off_policy.parameter_td3 import PARAMETERS_TD3, TD3ActionType, TD3ActionSelectorType
-from codes.a_config.parameters_general import PARAMETERS_GENERAL, RIPEnvRewardType
+from codes.a_config.parameters_general import PARAMETERS_GENERAL, RIPEnvRewardType, StochasticActionType, \
+    StochasticActionSelectorType
 from codes.e_utils.names import OptimizerName, RLAlgorithmName, EnvironmentName, DeepLearningModelName
 
 
-class PARAMETERS_DOUBLE_RIP_TD3(PARAMETERS_GENERAL, PARAMETERS_TD3):
+class PARAMETERS_DOUBLE_RIP_SAC(PARAMETERS_GENERAL, PARAMETERS_SAC):
     ENVIRONMENT_ID = EnvironmentName.REAL_DEVICE_DOUBLE_RIP
-    DEEP_LEARNING_MODEL = DeepLearningModelName.TD3_MLP
-    RL_ALGORITHM = RLAlgorithmName.TD3_V0
+    RL_ALGORITHM = RLAlgorithmName.CONTINUOUS_SAC_V0
+    DEEP_LEARNING_MODEL = DeepLearningModelName.CONTINUOUS_SAC_MLP
     OPTIMIZER = OptimizerName.ADAM
 
     ########################################
@@ -34,9 +36,6 @@ class PARAMETERS_DOUBLE_RIP_TD3(PARAMETERS_GENERAL, PARAMETERS_TD3):
     ACTOR_LEARNING_RATE = 0.0003
 
     # [TRAINING]
-    EPSILON_INIT = 1.0  # 0.9
-    EPSILON_MIN = 0.01   # 0.001
-
     LEARNING_RATE = 0.002
     ACTION_SCALE = 500
     BALANCING_SCALE_FACTOR = 0.01
@@ -55,8 +54,9 @@ class PARAMETERS_DOUBLE_RIP_TD3(PARAMETERS_GENERAL, PARAMETERS_TD3):
     DISTRIBUTIONAL = False
 
     TYPE_OF_RIP_REWARD = RIPEnvRewardType.NEW  # "old_version"
-    TYPE_OF_TD3_ACTION = TD3ActionType.GAUSSIAN_NOISE
-    TYPE_OF_TD3_ACTION_SELECTOR = TD3ActionSelectorType.SOMETIMES_BLOW_ACTION_SELECTOR
+
+    TYPE_OF_STOCHASTIC_ACTION = StochasticActionType.SAMPLE
+    TYPE_OF_STOCHASTIC_ACTION_SELECTOR = StochasticActionSelectorType.SOMETIMES_BLOW_ACTION_SELECTOR
 
     TRAIN_STEP_FREQ = 4
     POLICY_UPDATE_FREQUENCY = 2 * TRAIN_STEP_FREQ

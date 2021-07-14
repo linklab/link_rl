@@ -3,7 +3,7 @@ from torch.distributions import Normal, MultivariateNormal
 
 from codes.c_models.continuous_action.continuous_stochastic_actor_critic_model import \
     StochasticContinuousActorCriticModel
-from codes.d_agents.on_policy.on_policy_action_selector import ContinuousNormalActionSelector
+from codes.d_agents.on_policy.stochastic_policy_action_selector import ContinuousNormalActionSelector
 from codes.d_agents.on_policy.ppo.ppo_agent import AgentPPO
 from codes.e_utils import rl_utils
 from codes.e_utils.common_utils import show_info
@@ -30,8 +30,8 @@ class AgentContinuousPPO(AgentPPO):
 
         self.__name__ = "AgentContinuousPPO"
 
-        self.train_action_selector = ContinuousNormalActionSelector()
-        self.test_and_play_action_selector = ContinuousNormalActionSelector()
+        self.train_action_selector = ContinuousNormalActionSelector(params=params)
+        self.test_and_play_action_selector = ContinuousNormalActionSelector(params=params)
 
         self.model = StochasticContinuousActorCriticModel(
             worker_id=worker_id,

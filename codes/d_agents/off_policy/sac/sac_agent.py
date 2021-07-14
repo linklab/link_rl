@@ -28,6 +28,12 @@ class AgentSAC(OffPolicyAgent):
 
         self.alpha = torch.tensor(self.params.ALPHA).to(self.device)
 
+        if self.params.ENTROPY_TUNING:
+            self.reset_alpha()
+            self.target_entropy = None
+            self.log_alpha = None
+            self.alpha_optimizer = None
+
     def reset_alpha(self):
         # if self.params.ENTROPY_TUNING:
         # Target entropy is -|A|.
@@ -40,7 +46,7 @@ class AgentSAC(OffPolicyAgent):
         self.alpha = self.log_alpha.exp()
         self.alpha_optimizer = rl_utils.get_optimizer(
             parameters=[self.log_alpha],
-            learning_rate=self.params.LEARNING_RATE,
+            learning_rate=self.params.ALPHALEARNING_RATE,
             params=self.params
         )
 

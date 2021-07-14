@@ -1,17 +1,16 @@
 from codes.a_config._rl_parameters.off_policy.parameter_sac import PARAMETERS_SAC, SACActionType, SACActionSelectorType
 from codes.e_utils.names import *
-from codes.a_config.parameters_general import PARAMETERS_GENERAL, RIPEnvRewardType
+from codes.a_config.parameters_general import PARAMETERS_GENERAL, RIPEnvRewardType, StochasticActionSelectorType, \
+    StochasticActionType
 
 
 class PARAMETERS_RIP_SAC(PARAMETERS_GENERAL, PARAMETERS_SAC):
-    ENV_RESET = True
-
-    # [1. ENVIRONMENTS]
     ENVIRONMENT_ID = EnvironmentName.REAL_DEVICE_RIP
-
     RL_ALGORITHM = RLAlgorithmName.CONTINUOUS_SAC_V0
     DEEP_LEARNING_MODEL = DeepLearningModelName.CONTINUOUS_SAC_MLP
+    OPTIMIZER = OptimizerName.ADAM
 
+    ENV_RESET = True
     TRAIN_STOP_EPISODE_REWARD = 7000  # MAX: 6.28 * 5000 = 62800 (Old), 90000 (New)
     TRAIN_STOP_EPISODE_REWARD_STD = 50
 
@@ -34,9 +33,6 @@ class PARAMETERS_RIP_SAC(PARAMETERS_GENERAL, PARAMETERS_SAC):
     TRAIN_ONLY_AFTER_EPISODE = False
     NUM_TRAIN_ONLY_AFTER_EPISODE = 100
 
-    TYPE_OF_SAC_ACTION = SACActionType.SAMPLE
-    TYPE_OF_SAC_ACTION_SELECTOR = SACActionSelectorType.SOMETIMES_BLOW_ACTION_SELECTOR
-
     MAX_EPISODE_STEP_AT_PLAY = 10000000000
     MAX_EPISODE_STEP = 10000
     MAX_GLOBAL_STEP = 30000000
@@ -47,3 +43,6 @@ class PARAMETERS_RIP_SAC(PARAMETERS_GENERAL, PARAMETERS_SAC):
     PENDULUM_STATE_INFO = 0  # 1: ALL ARM INFO IGNORED, 2: ARM ANGLE INFO IGNORED (VELOCITY IS INCLUDED)
 
     PERIODIC_MODEL_SAVE = True
+
+    TYPE_OF_STOCHASTIC_ACTION = StochasticActionType.SAMPLE
+    TYPE_OF_STOCHASTIC_ACTION_SELECTOR = StochasticActionSelectorType.SOMETIMES_BLOW_ACTION_SELECTOR

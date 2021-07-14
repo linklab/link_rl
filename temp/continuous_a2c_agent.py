@@ -5,7 +5,7 @@ from torch.distributions import Normal, MultivariateNormal
 
 from codes.c_models.continuous_action.continuous_stochastic_actor_critic_model import StochasticContinuousActorCriticModel
 from codes.d_agents.on_policy.a2c.a2c_agent import AgentA2C
-from codes.d_agents.on_policy.on_policy_action_selector import ContinuousNormalActionSelector
+from codes.d_agents.on_policy.stochastic_policy_action_selector import ContinuousNormalActionSelector
 from codes.e_utils import rl_utils
 from codes.e_utils.common_utils import show_tensor_info
 from codes.e_utils.names import DeepLearningModelName, AgentMode

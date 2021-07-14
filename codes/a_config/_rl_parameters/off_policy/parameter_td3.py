@@ -1,5 +1,6 @@
 import enum
 
+from codes.a_config._rl_parameters.off_policy.parameter_off_policy import PARAMETERS_OFF_POLICY
 from codes.e_utils.names import DeepLearningModelName, RLAlgorithmName
 
 
@@ -16,7 +17,7 @@ class TD3ActionType(enum.Enum):
     AVERAGE_WITH_GAUSSIAN_NOISE = 3
 
 
-class PARAMETERS_TD3:
+class PARAMETERS_TD3(PARAMETERS_OFF_POLICY):
     DEEP_LEARNING_MODEL = DeepLearningModelName.TD3_MLP
     RL_ALGORITHM = RLAlgorithmName.TD3_V0
 

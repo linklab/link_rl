@@ -12,7 +12,7 @@ class DQNActionType(enum.Enum):
     ONLY_GREEDY = 1
 
 
-class PARAMETERS_DQN:
+class PARAMETERS_DQN(PARAMETERS_OFF_POLICY):
     PER_PROPORTIONAL = False
     PER_RANK_BASED = False
     DOUBLE = True

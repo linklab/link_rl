@@ -3,7 +3,7 @@ import torch.nn.functional as F
 from torch.distributions import Categorical
 
 from codes.c_models.discrete_action.discrete_actor_critic_model import DiscreteActorCriticModel
-from codes.d_agents.on_policy.on_policy_action_selector import DiscreteCategoricalActionSelector
+from codes.d_agents.on_policy.stochastic_policy_action_selector import DiscreteCategoricalActionSelector
 from codes.d_agents.on_policy.ppo.ppo_agent import AgentPPO
 from codes.e_utils import rl_utils
 from codes.e_utils.names import DeepLearningModelName, AgentMode
@@ -25,8 +25,8 @@ class AgentDiscretePPO(AgentPPO):
         self.__name__ = "AgentDiscretePPO"
         self.action_n = action_n
 
-        self.train_action_selector = DiscreteCategoricalActionSelector(agent_mode=AgentMode.TRAIN)
-        self.test_and_play_action_selector = DiscreteCategoricalActionSelector(agent_mode=AgentMode.TEST)
+        self.train_action_selector = DiscreteCategoricalActionSelector(params=params)
+        self.test_and_play_action_selector = DiscreteCategoricalActionSelector(params=params)
 
         self.model = DiscreteActorCriticModel(
             worker_id=worker_id,

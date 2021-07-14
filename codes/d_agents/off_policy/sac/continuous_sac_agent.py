@@ -10,6 +10,8 @@ from codes.c_models.continuous_action.continuous_sac_model import ContinuousSACM
 from codes.d_agents.off_policy.sac.sac_action_selector import ContinuousNormalSACActionSelector, \
     SomeTimesBlowSACActionSelector
 from codes.d_agents.off_policy.sac.sac_agent import AgentSAC
+from codes.d_agents.on_policy.stochastic_policy_action_selector import ContinuousNormalActionSelector, \
+    SomeTimesBlowContinuousNormalActionSelector
 from codes.e_utils import rl_utils
 from codes.e_utils.names import DeepLearningModelName, AgentMode
 
@@ -27,9 +29,9 @@ class AgentContinuousSAC(AgentSAC):
         self.action_max = action_max
 
         if params.TYPE_OF_SAC_ACTION_SELECTOR == SACActionSelectorType.BASIC_ACTION_SELECTOR:
-            self.train_action_selector = ContinuousNormalSACActionSelector(params=params)
+            self.train_action_selector = ContinuousNormalActionSelector(params=params)
         elif params.TYPE_OF_SAC_ACTION_SELECTOR == SACActionSelectorType.SOMETIMES_BLOW_ACTION_SELECTOR:
-            self.train_action_selector = SomeTimesBlowSACActionSelector(
+            self.train_action_selector = SomeTimesBlowContinuousNormalActionSelector(
                 min_blowing_action=-5.0, max_blowing_action=5.0, params=self.params,
             )
         else:

@@ -3,7 +3,7 @@ import math
 from codes.a_config._rl_parameters.off_policy.parameter_td3 import PARAMETERS_TD3, TD3ActionType, TD3ActionSelectorType
 from codes.a_config._rl_parameters.on_policy.parameter_ppo import PARAMETERS_PPO
 from codes.e_utils.names import *
-from codes.a_config.parameters_general import PARAMETERS_GENERAL
+from codes.a_config.parameters_general import PARAMETERS_GENERAL, StochasticActionType, StochasticActionSelectorType
 
 
 class PARAMETERS_QUANSER_RIP_PPO(PARAMETERS_GENERAL, PARAMETERS_PPO):
@@ -43,3 +43,5 @@ class PARAMETERS_QUANSER_RIP_PPO(PARAMETERS_GENERAL, PARAMETERS_PPO):
 
     UNIT_TIME = 0.005
 
+    TYPE_OF_STOCHASTIC_ACTION = StochasticActionType.SAMPLE
+    TYPE_OF_STOCHASTIC_ACTION_SELECTOR = StochasticActionSelectorType.SOMETIMES_BLOW_ACTION_SELECTOR

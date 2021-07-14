@@ -1,7 +1,7 @@
-from codes.a_config._rl_parameters.off_policy.parameter_td3 import PARAMETERS_TD3, TD3ActionType, TD3ActionSelectorType
 from codes.a_config._rl_parameters.on_policy.parameter_ppo import PARAMETERS_PPO
 from codes.e_utils.names import *
-from codes.a_config.parameters_general import PARAMETERS_GENERAL, RIPEnvRewardType
+from codes.a_config.parameters_general import PARAMETERS_GENERAL, RIPEnvRewardType, StochasticActionType, \
+    StochasticActionSelectorType
 
 
 class PARAMETERS_DOUBLE_RIP_PPO(PARAMETERS_GENERAL, PARAMETERS_PPO):
@@ -24,7 +24,7 @@ class PARAMETERS_DOUBLE_RIP_PPO(PARAMETERS_GENERAL, PARAMETERS_PPO):
     GAMMA = 0.999
 
     BATCH_SIZE = 128
-    AVG_EPISODE_SIZE_FOR_STAT = 10
+    AVG_EPISODE_SIZE_FOR_STAT = 50
 
     ## PPO
     PPO_GAE_LAMBDA = 0.70
@@ -48,4 +48,5 @@ class PARAMETERS_DOUBLE_RIP_PPO(PARAMETERS_GENERAL, PARAMETERS_PPO):
     UNIT_TIME = 0.006
     PERIODIC_MODEL_SAVE = True
 
-
+    TYPE_OF_STOCHASTIC_ACTION = StochasticActionType.SAMPLE
+    TYPE_OF_STOCHASTIC_ACTION_SELECTOR = StochasticActionSelectorType.SOMETIMES_BLOW_ACTION_SELECTOR
