@@ -1,5 +1,7 @@
 import enum
 
+from codes.a_config._rl_parameters.off_policy.parameter_off_policy import PARAMETERS_OFF_POLICY
+
 
 class DQNActionSelectorType(enum.Enum):
     BASIC_ACTION_SELECTOR = 0
@@ -12,7 +14,7 @@ class DQNActionType(enum.Enum):
     ONLY_GREEDY = 1
 
 
-class PARAMETERS_DQN:
+class PARAMETERS_DQN(PARAMETERS_OFF_POLICY):
     PER_PROPORTIONAL = False
     PER_RANK_BASED = False
     DOUBLE = True

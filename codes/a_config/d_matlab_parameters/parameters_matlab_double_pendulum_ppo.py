@@ -1,6 +1,7 @@
 from codes.a_config._rl_parameters.on_policy.parameter_ppo import PARAMETERS_PPO
 from codes.e_utils.names import *
-from codes.a_config.parameters_general import PARAMETERS_GENERAL, RIPEnvRewardType
+from codes.a_config.parameters_general import PARAMETERS_GENERAL, RIPEnvRewardType, StochasticActionType, \
+    StochasticActionSelectorType
 
 
 class PARAMETERS_DOUBLE_PENDULUM_MATLAB_PPO(PARAMETERS_GENERAL, PARAMETERS_PPO):
@@ -55,3 +56,6 @@ class PARAMETERS_DOUBLE_PENDULUM_MATLAB_PPO(PARAMETERS_GENERAL, PARAMETERS_PPO):
     PPO_TRAJECTORY_BATCH_SIZE = 128
     PPO_K_EPOCHS = 10
     PPO_EPSILON_CLIP = 0.2
+
+    TYPE_OF_STOCHASTIC_ACTION = StochasticActionType.SAMPLE
+    TYPE_OF_STOCHASTIC_ACTION_SELECTOR = StochasticActionSelectorType.SOMETIMES_BLOW_ACTION_SELECTOR

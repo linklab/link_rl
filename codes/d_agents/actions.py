@@ -21,7 +21,15 @@ class ContinuousActionSelector:
     """
     Abstract class which converts scores to the actions
     """
-    def __call__(self, mu_v, var_v):
+    def __call__(self, mu_v, logstd_v):
+        raise NotImplementedError
+
+
+class DiscreteActionSelector:
+    """
+    Abstract class which converts scores to the actions
+    """
+    def __call__(self, probs, agent_mode):
         raise NotImplementedError
 
 

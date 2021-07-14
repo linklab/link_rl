@@ -4,19 +4,10 @@
 import torch
 import torch.nn.functional as F
 import torch.nn.utils as nn_utils
-from torch.distributions import Normal
-
-from codes.a_config._rl_parameters.off_policy.parameter_sac import SACActionSelectorType
-from codes.a_config._rl_parameters.off_policy.parameter_td3 import TD3ActionSelectorType
-from codes.c_models.continuous_action.continuous_sac_model import ContinuousSACModel
 from codes.c_models.discrete_action.discrete_sac_model import DiscreteSACModel
-from codes.d_agents.off_policy.off_policy_agent import OffPolicyAgent
-from codes.d_agents.off_policy.sac.sac_action_selector import ContinuousNormalSACActionSelector, \
-    SomeTimesBlowSACActionSelector, DiscreteCategoricalSACActionSelector
 from codes.d_agents.off_policy.sac.sac_agent import AgentSAC
-from codes.d_agents.off_policy.td3.td3_action_selector import TD3ActionSelector
+from codes.d_agents.on_policy.stochastic_policy_action_selector import DiscreteCategoricalActionSelector
 from codes.e_utils import rl_utils
-from codes.e_utils.common_utils import grad_false, show_info
 from codes.e_utils.names import DeepLearningModelName, AgentMode
 
 
@@ -30,8 +21,8 @@ class AgentDiscreteSAC(AgentSAC):
 
         self.__name__ = "AgentDiscreteSAC"
 
-        self.train_action_selector = DiscreteCategoricalSACActionSelector(agent_mode=AgentMode.TRAIN)
-        self.test_and_play_action_selector = DiscreteCategoricalSACActionSelector(agent_mode=AgentMode.TEST)
+        self.train_action_selector = DiscreteCategoricalActionSelector(params=params)
+        self.test_and_play_action_selector = DiscreteCategoricalActionSelector(params=params)
 
         self.model = DiscreteSACModel(
             worker_id=worker_id,
@@ -71,7 +62,8 @@ class AgentDiscreteSAC(AgentSAC):
             params=params
         )
 
-        self.alpha = torch.tensor(self.params.ALPHA).to(self.device)
+        self.cache_loss_actor_v = torch.tensor(0.0)
+
 
     def __call__(self, state, agent_states=None):
         return self.discrete_sac_call(state, agent_states)
@@ -87,15 +79,18 @@ class AgentDiscreteSAC(AgentSAC):
         if self.agent_mode == AgentMode.TRAIN:
             with torch.no_grad():
                 probs, _ = self.model.base.forward_actor(state)
-                actions = self.train_action_selector(probs=probs)
+                actions = self.train_action_selector(probs=probs, agent_mode=AgentMode.TRAIN)
         else:
             with torch.no_grad():
                 probs, _ = self.test_model.base.forward_actor(state)
-                actions = self.test_and_play_action_selector(probs=probs)
+                actions = self.test_and_play_action_selector(probs=probs, agent_mode=AgentMode.TEST)
 
         return actions, agent_states
 
     def on_train(self, step_idx):
+        if self.params.ENTROPY_TUNING and self.target_entropy is None:
+            self.reset_alpha()
+
         if self.params.PER:
             batch, batch_indices, batch_weights = self.buffer.sample(self.params.BATCH_SIZE)
         else:
@@ -129,31 +124,35 @@ class AgentDiscreteSAC(AgentSAC):
             self.buffer.update_beta(step_idx)
 
         # train actor
-        self.actor_optimizer.zero_grad()
-
         probs, action_v, log_prob_v = self.model.sample(states_v)
+        # Delayed policy updates
+        if step_idx % self.params.POLICY_UPDATE_FREQUENCY == 0:
+            self.actor_optimizer.zero_grad()
 
-        # states_v.shape: torch.Size([128, 3])
-        # re_parameterization_trick_action_v.shape: torch.Size([128, 1])
+            # states_v.shape: torch.Size([128, 3])
+            # re_parameterization_trick_action_v.shape: torch.Size([128, 1])
 
-        q1_v, q2_v = self.model.base.twinq(states_v)
+            q1_v, q2_v = self.model.base.twinq(states_v)
 
-        # q1_v.shape: torch.Size([128, 1])
-        # q2_v.shape: torch.Size([128, 1])
-        # torch.min(q1_v, q2_v).shape: torch.Size([128, 1])
-        # log_prob_v.shape: torch.Size([128, 1])
+            # q1_v.shape: torch.Size([128, 1])
+            # q2_v.shape: torch.Size([128, 1])
+            # torch.min(q1_v, q2_v).shape: torch.Size([128, 1])
+            # log_prob_v.shape: torch.Size([128, 1])
 
-        objectives_v = probs * (torch.min(q1_v, q2_v) - self.alpha * log_prob_v)
+            objectives_v = probs * (torch.min(q1_v, q2_v) - self.alpha * log_prob_v)
+            loss_actor_v = -1.0 * objectives_v.mean()
+            self.cache_loss_actor_v = loss_actor_v
 
-        loss_actor_v = -1.0 * objectives_v.mean()
-        loss_actor_v.backward()
-        nn_utils.clip_grad_norm_(self.model.base.actor_params, self.params.CLIP_GRAD)
-        self.actor_optimizer.step()
+            loss_actor_v.backward()
+            nn_utils.clip_grad_norm_(self.model.base.actor_params, self.params.CLIP_GRAD)
+            self.actor_optimizer.step()
 
-        self.target_model.twinq_alpha_sync(self.model, alpha=1 - self.params.TAU)
+            self.target_model.twinq_alpha_sync(self.model, alpha=1 - self.params.TAU)
+        else:
+            loss_actor_v = self.cache_loss_actor_v
 
         if self.params.ENTROPY_TUNING:
-            self.adjust_alpha()
+            self.adjust_alpha_for_discrete_action(probs, log_prob_v)
 
         # gradients = self.model.get_gradients_for_current_parameters()
         gradients = None

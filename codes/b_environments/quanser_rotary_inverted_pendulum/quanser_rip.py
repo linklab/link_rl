@@ -450,7 +450,7 @@ class EnvironmentQuanserRIP(gym.Env):
         # open ai pendulum reward = -(theta^2 + 0.1theta_dt^2 + 0.001action^2)
         # reward = -((self.pendulum_radian**2) + 0.1*((self.pendulum_velocity/100)**2) + 0.001*(((2*action)/params.ACTION_SCALE)**2))
 
-        #print(position_reward, energy_penalty, reward)
+        # print(position_reward, energy_penalty, reward)
 
         return reward
 

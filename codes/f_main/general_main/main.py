@@ -232,6 +232,10 @@ def main():
                 if params.WANDB:
                     train_info_dict["train mean (critic) loss"] = mean_loss
                     train_info_dict["train mean actor objective"] = mean_actor_objective
+
+                    if params.RL_ALGORITHM in [RLAlgorithmName.CONTINUOUS_SAC_V0, RLAlgorithmName.DISCRETE_SAC_V0]:
+                        train_info_dict["alpha"] = agent.alpha.item()
+
                     del train_info_dict["evaluation_msg"]
                     del train_info_dict["solved"]
                     del train_info_dict["last_done_reason"]

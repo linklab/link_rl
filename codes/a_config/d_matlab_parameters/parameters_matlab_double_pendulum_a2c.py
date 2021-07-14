@@ -1,7 +1,8 @@
 from codes.a_config._rl_parameters.on_policy.parameter_a2c import PARAMETERS_A2C
 from codes.a_config._rl_parameters.on_policy.parameter_ppo import PARAMETERS_PPO
 from codes.e_utils.names import *
-from codes.a_config.parameters_general import PARAMETERS_GENERAL, RIPEnvRewardType
+from codes.a_config.parameters_general import PARAMETERS_GENERAL, RIPEnvRewardType, StochasticActionType, \
+    StochasticActionSelectorType
 
 
 class PARAMETERS_DOUBLE_PENDULUM_MATLAB_A2C(PARAMETERS_GENERAL, PARAMETERS_A2C):
@@ -45,3 +46,6 @@ class PARAMETERS_DOUBLE_PENDULUM_MATLAB_A2C(PARAMETERS_GENERAL, PARAMETERS_A2C):
     DOUBLE_PENDULUM_STATE_INFO = 2  # 1: ALL ARM INFO IGNORED, 2: ARM ANGLE INFO IGNORED (VELOCITY IS INCLUDED)
 
     UNIT_TIME = 0.005
+
+    TYPE_OF_STOCHASTIC_ACTION = StochasticActionType.SAMPLE
+    TYPE_OF_STOCHASTIC_ACTION_SELECTOR = StochasticActionSelectorType.SOMETIMES_BLOW_ACTION_SELECTOR

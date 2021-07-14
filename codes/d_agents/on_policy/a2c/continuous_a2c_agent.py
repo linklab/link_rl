@@ -3,10 +3,12 @@ import torch
 import torch.nn.functional as F
 from torch.distributions import Normal, MultivariateNormal
 
+from codes.a_config.parameters_general import StochasticActionSelectorType
 from codes.c_models.base_model import RNNModel
 from codes.c_models.continuous_action.continuous_stochastic_actor_critic_model import StochasticContinuousActorCriticModel
 from codes.d_agents.on_policy.a2c.a2c_agent import AgentA2C
-from codes.d_agents.on_policy.on_policy_action_selector import ContinuousNormalActionSelector
+from codes.d_agents.on_policy.stochastic_policy_action_selector import ContinuousNormalActionSelector, \
+    SomeTimesBlowContinuousNormalActionSelector
 from codes.e_utils import rl_utils
 from codes.e_utils.common_utils import show_info
 from codes.e_utils.names import DeepLearningModelName
@@ -28,8 +30,16 @@ class AgentContinuousA2C(AgentA2C):
         self.action_min = action_min
         self.action_max = action_max
 
-        self.train_action_selector = ContinuousNormalActionSelector()
-        self.test_and_play_action_selector = ContinuousNormalActionSelector()
+        if params.TYPE_OF_STOCHASTIC_ACTION_SELECTOR == StochasticActionSelectorType.BASIC_ACTION_SELECTOR:
+            self.train_action_selector = ContinuousNormalActionSelector(params=params)
+        elif params.TYPE_OF_STOCHASTIC_ACTION_SELECTOR == StochasticActionSelectorType.SOMETIMES_BLOW_ACTION_SELECTOR:
+            self.train_action_selector = SomeTimesBlowContinuousNormalActionSelector(
+                min_blowing_action=-5.0, max_blowing_action=5.0, params=self.params,
+            )
+        else:
+            raise ValueError()
+
+        self.test_and_play_action_selector = ContinuousNormalActionSelector(params=params)
 
         self.model = StochasticContinuousActorCriticModel(
             worker_id=worker_id,

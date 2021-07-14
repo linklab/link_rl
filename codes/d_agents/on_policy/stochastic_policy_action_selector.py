@@ -1,13 +1,32 @@
 import random
-import numpy as np
-import torch
-from torch.distributions import Normal, Categorical
 
-from codes.d_agents.actions import ContinuousActionSelector, ActionSelector
+import torch
+from torch.distributions import Categorical, Normal, MultivariateNormal
+import numpy as np
+
+from codes.d_agents.actions import ActionSelector, ContinuousActionSelector, DiscreteActionSelector
 from codes.e_utils.names import AgentMode
 
 
-class ContinuousNormalSACActionSelector(ContinuousActionSelector):
+class DiscreteCategoricalActionSelector(DiscreteActionSelector):
+    """
+    Converts probabilities of actions into action by sampling them
+    """
+    def __init__(self, params):
+        self.params = params
+
+    def __call__(self, probs, agent_mode):
+        with torch.no_grad():
+            if agent_mode == AgentMode.TRAIN:
+                dist = Categorical(probs=probs)
+                actions = dist.sample().cpu().detach().numpy()
+            else:
+                actions = torch.argmax(probs, dim=-1, keepdim=True).squeeze(dim=-1).cpu().detach().numpy()
+
+        return np.array(actions)
+
+
+class ContinuousNormalActionSelector(ContinuousActionSelector):
     def __init__(self, params):
         self.params = params
 
@@ -27,11 +46,11 @@ class ContinuousNormalSACActionSelector(ContinuousActionSelector):
         return self.select_action(mu_v, logstd_v)
 
 
-class SomeTimesBlowSACActionSelector(ContinuousNormalSACActionSelector):
+class SomeTimesBlowContinuousNormalActionSelector(ContinuousNormalActionSelector):
     def __init__(
             self, blowing_action_rate=0.0002, min_blowing_action=-1.0, max_blowing_action=1.0, params=None
     ):
-        super(SomeTimesBlowSACActionSelector, self).__init__(params=params)
+        super(SomeTimesBlowContinuousNormalActionSelector, self).__init__(params=params)
         self.blowing_action_rate = blowing_action_rate
         self.min_blowing_action = min_blowing_action
         self.max_blowing_action = max_blowing_action
@@ -62,21 +81,3 @@ class SomeTimesBlowSACActionSelector(ContinuousNormalSACActionSelector):
             ))
 
         return actions
-
-
-class DiscreteCategoricalSACActionSelector(ActionSelector):
-    """
-    Converts probabilities of actions into action by sampling them
-    """
-    def __init__(self, agent_mode):
-        self.agent_mode = agent_mode
-
-    def __call__(self, probs):
-        with torch.no_grad():
-            if self.agent_mode == AgentMode.TRAIN:
-                dist = Categorical(probs=probs)
-                actions = dist.sample().cpu().detach().numpy()
-            else:
-                actions = torch.argmax(probs, dim=-1, keepdim=True).squeeze(dim=-1).cpu().detach().numpy()
-
-        return np.array(actions)
