@@ -108,7 +108,6 @@ class BaseAgent:
 
         states_v = float32_preprocessor(states).to(self.device)
         actions_v = self.convert_action_to_torch_tensor(actions, self.device)
-        last_steps_v = np.asarray(last_steps)
 
         if isinstance(self.model, RNNModel):
             actor_hidden_states_v = float32_preprocessor(actor_hidden_states).to(self.device)
@@ -131,38 +130,43 @@ class BaseAgent:
         if not_done_idx:
             last_states_v = torch.FloatTensor(np.array(last_states, copy=False)).to(self.device)
             if self.params.RL_ALGORITHM in [RLAlgorithmName.DISCRETE_A2C_V0, RLAlgorithmName.CONTINUOUS_A2C_V0]:
+                last_steps_v = np.asarray(last_steps)
                 last_values_v, _ = target_model.forward_critic(last_states_v, critic_hidden_states_v)
                 last_values_np = last_values_v.detach().numpy()[:, 0] * (params.GAMMA ** last_steps_v)
                 target_action_values_np[not_done_idx] += last_values_np
 
             elif self.params.RL_ALGORITHM in [RLAlgorithmName.DISCRETE_SAC_V0, RLAlgorithmName.CONTINUOUS_SAC_V0]:
                 if self.params.RL_ALGORITHM in [RLAlgorithmName.CONTINUOUS_SAC_V0]:
+                    last_steps_v = np.asarray(last_steps)
                     last_mu_v, last_logstd_v, _ = sac_base_model.forward_actor(last_states_v)
                     dist = Normal(loc=last_mu_v, scale=torch.exp(last_logstd_v))
 
                     last_actions_v = dist.sample()
-                    last_logprob_v = dist.log_prob(last_actions_v).sum(dim=-1, keepdim=True)
+                    last_log_prob_v = dist.log_prob(last_actions_v).sum(dim=-1, keepdim=True)
 
                     last_q_1_v, last_q_2_v = target_model.base.twinq(last_states_v, last_actions_v)
-                    last_q_np = torch.min(last_q_1_v, last_q_2_v).detach().numpy()[:, 0] * (params.GAMMA ** last_steps_v)
-                    last_logprob_v = alpha * last_logprob_v
+                    last_q_np = torch.min(last_q_1_v, last_q_2_v).detach().cpu().numpy()[:, 0] * (params.GAMMA ** last_steps_v)
+                    last_log_prob_v = alpha * last_log_prob_v
 
                     # last_q_np.shape: (128,)
                     # entropy_v.squeeze(-1).detach().numpy().shape: (128,)
-                    last_q_np -= last_logprob_v.squeeze(-1).detach().numpy()
+                    last_q_np -= last_log_prob_v.squeeze(-1).detach().cpu().numpy()
 
                 else:
                     # probs.shape: torch.Size([32, 2])
                     probs, _ = sac_base_model.forward_actor(last_states_v)
                     z = (probs == 0.0).float() * 1e-8
-
-                    last_logprob_v = torch.log(probs + z)
+                    last_log_prob_v = torch.log(probs + z)
 
                     last_q_1_v, last_q_2_v = target_model.base.twinq(last_states_v)
-                    last_q_np = torch.min(last_q_1_v, last_q_2_v).detach().numpy() * np.expand_dims(params.GAMMA ** last_steps_v, axis=-1)
-                    last_logprob_v = alpha * last_logprob_v
-                    last_q_np = probs * (last_q_np - last_logprob_v)
-                    last_q_np = last_q_np.squeeze(-1).detach().numpy()
+
+                    # torch.min(last_q_1_v, last_q_2_v).shape: (32, 2)
+                    # torch.unsqueeze(params.GAMMA ** torch.as_tensor(last_steps), dim=1).shape: (32, 1)
+                    last_q_np = torch.min(last_q_1_v, last_q_2_v) * torch.unsqueeze(params.GAMMA ** torch.as_tensor(last_steps), dim=1)
+                    last_log_prob_v = alpha * last_log_prob_v
+
+                    last_q_np = probs * (last_q_np - last_log_prob_v)
+                    last_q_np = last_q_np.sum(dim=-1).detach().numpy()
 
                 target_action_values_np[not_done_idx] += last_q_np
             else:

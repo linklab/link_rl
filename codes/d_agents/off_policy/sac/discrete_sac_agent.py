@@ -110,10 +110,14 @@ class AgentDiscreteSAC(AgentSAC):
 
         # train twinq
         self.twinq_optimizer.zero_grad()
-        q1_v, q2_v = self.model.base.twinq(states_v, actions_v)
+        q1_v, q2_v = self.model.base.twinq(states_v)
 
-        q_loss_v = F.mse_loss(q1_v.squeeze(dim=-1), target_action_values_v.detach(), reduction="none") + \
-                   F.mse_loss(q2_v.squeeze(dim=-1), target_action_values_v.detach(), reduction="none")
+        curr_q1 = q1_v.gather(-1, index=actions_v.unsqueeze(1))
+        curr_q2 = q2_v.gather(-1, index=actions_v.unsqueeze(1))
+
+        # target_action_values_v.shape: torch.Size([32])
+        q_loss_v = F.mse_loss(curr_q1.squeeze(-1), target_action_values_v.detach(), reduction="none") + \
+                   F.mse_loss(curr_q2.squeeze(-1), target_action_values_v.detach(), reduction="none")
         q_loss_v = q_loss_v.mean()
 
         q_loss_v.backward(retain_graph=True)
@@ -127,7 +131,7 @@ class AgentDiscreteSAC(AgentSAC):
         # train actor
         self.actor_optimizer.zero_grad()
 
-        probs, action_v, logprob_v = self.model.sample(states_v)
+        probs, action_v, log_prob_v = self.model.sample(states_v)
 
         # states_v.shape: torch.Size([128, 3])
         # re_parameterization_trick_action_v.shape: torch.Size([128, 1])
@@ -137,9 +141,9 @@ class AgentDiscreteSAC(AgentSAC):
         # q1_v.shape: torch.Size([128, 1])
         # q2_v.shape: torch.Size([128, 1])
         # torch.min(q1_v, q2_v).shape: torch.Size([128, 1])
-        # logprob_v.shape: torch.Size([128, 1])
+        # log_prob_v.shape: torch.Size([128, 1])
 
-        objectives_v = probs * (torch.min(q1_v, q2_v) - self.alpha * logprob_v)
+        objectives_v = probs * (torch.min(q1_v, q2_v) - self.alpha * log_prob_v)
 
         loss_actor_v = -1.0 * objectives_v.mean()
         loss_actor_v.backward()

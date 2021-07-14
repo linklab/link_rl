@@ -128,7 +128,7 @@ class AgentContinuousSAC(AgentSAC):
         # train actor
         self.actor_optimizer.zero_grad()
 
-        re_parameterization_trick_action_v, logprob_v = self.model.re_parameterization_trick_sample(states_v)
+        re_parameterization_trick_action_v, log_prob_v = self.model.re_parameterization_trick_sample(states_v)
 
         # states_v.shape: torch.Size([128, 3])
         # re_parameterization_trick_action_v.shape: torch.Size([128, 1])
@@ -138,9 +138,9 @@ class AgentContinuousSAC(AgentSAC):
         # q1_v.shape: torch.Size([128, 1])
         # q2_v.shape: torch.Size([128, 1])
         # torch.min(q1_v, q2_v).shape: torch.Size([128, 1])
-        # logprob_v.shape: torch.Size([128, 1])
-        logprob_v = self.alpha * logprob_v
-        objectives_v = torch.min(q1_v, q2_v) - logprob_v
+        # log_prob_v.shape: torch.Size([128, 1])
+        log_prob_v = self.alpha * log_prob_v
+        objectives_v = torch.min(q1_v, q2_v) - log_prob_v
 
         loss_actor_v = -1.0 * objectives_v.mean()
         loss_actor_v.backward()

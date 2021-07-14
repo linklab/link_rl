@@ -28,7 +28,7 @@ class DiscreteSACModel(DiscreteActionModel):
         action_v = dist.sample()  # for reparameterization trick (mean + std * N(0,1))
         z = (probs == 0.0).float() * 1e-8
         # log_probs = torch.log(probs + z).sum(dim=-1, keepdim=True)
-        log_probs = torch.log(probs + z).sum(dim=-1, keepdim=True)
+        log_probs = torch.log(probs + z)
 
         # action_v.shape: [128, 1]
         # log_prob.shape: [128, 1]
