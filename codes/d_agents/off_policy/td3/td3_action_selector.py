@@ -18,6 +18,17 @@ class TD3ActionSelector:
 
     def select_action(self, mu):
         actions = np.copy(mu)
+
+        self.action_list.append(actions[0][0])
+
+        actions = np.expand_dims(
+            np.expand_dims(
+                np.asarray(ema(list(self.action_list), len(self.action_list) - 1)[-1]),
+                axis=-1
+            ),
+            axis=-1
+        )
+
         if self.noise_std == 0.0:
             noises = np.zeros(shape=actions.shape)
         else:
@@ -30,17 +41,6 @@ class TD3ActionSelector:
             actions = actions + noises
         elif self.params.TYPE_OF_TD3_ACTION == TD3ActionType.ONLY_GREEDY:
             actions = actions
-        elif self.params.TYPE_OF_TD3_ACTION == TD3ActionType.AVERAGE_WITH_GAUSSIAN_NOISE:
-            actions = actions + noises
-            self.action_list.append(actions[0][0])
-
-            actions = np.expand_dims(
-                np.expand_dims(
-                    np.asarray(ema(list(self.action_list), len(self.action_list) - 1)[-1]),
-                    axis=-1
-                ),
-                axis=-1
-            )
         else:
             raise ValueError()
 
