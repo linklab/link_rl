@@ -28,7 +28,7 @@ class AgentSAC(OffPolicyAgent):
         # if self.params.ENTROPY_TUNING:
         # Target entropy is -|A|.
         # self.target_entropy = -torch.prod(torch.Tensor(self.action_shape))
-        self.target_entropy = -torch.zeros(self.action_shape).detach()
+        self.target_entropy = -torch.zeros(self.action_shape, device=self.device).detach()
 
         #print(self.target_entropy, "!")
 
