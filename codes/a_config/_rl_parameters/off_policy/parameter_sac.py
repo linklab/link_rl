@@ -32,3 +32,10 @@ class PARAMETERS_SAC(PARAMETERS_OFF_POLICY):
 
     TRAIN_STEP_FREQ = 2
     POLICY_UPDATE_FREQUENCY = 2 * TRAIN_STEP_FREQ
+
+
+if __name__ == "__main__":
+    params = PARAMETERS_SAC()
+    for param in dir(params):
+        if not param.startswith("__"):
+            print(param, "=", getattr(params, param))
