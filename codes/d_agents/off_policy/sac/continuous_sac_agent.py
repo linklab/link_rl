@@ -160,7 +160,7 @@ class AgentContinuousSAC(AgentSAC):
             nn_utils.clip_grad_norm_(self.model.base.actor_params, self.params.CLIP_GRAD)
             self.actor_optimizer.step()
 
-            self.target_model.twinq_alpha_sync(self.model, alpha=1 - self.params.TAU)
+            self.target_model.twinq_soft_update(self.model, tau=self.params.TAU)
         else:
             loss_actor_v = self.cache_loss_actor_v
 
