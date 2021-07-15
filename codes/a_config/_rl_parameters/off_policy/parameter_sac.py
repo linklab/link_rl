@@ -12,8 +12,6 @@ class PARAMETERS_SAC(PARAMETERS_OFF_POLICY):
 
     TAU = 0.001
 
-    NOISE_ENABLED = True
-
     TRAIN_ONLY_AFTER_EPISODE = False
     NUM_TRAIN_ONLY_AFTER_EPISODE = None
 
@@ -21,8 +19,6 @@ class PARAMETERS_SAC(PARAMETERS_OFF_POLICY):
     TYPE_OF_STOCHASTIC_ACTION_SELECTOR = StochasticActionSelectorType.BASIC_ACTION_SELECTOR
 
     N_STEP = 2
-
-    NOISY_NET = False
 
     PER = False
 
@@ -36,3 +32,10 @@ class PARAMETERS_SAC(PARAMETERS_OFF_POLICY):
 
     TRAIN_STEP_FREQ = 2
     POLICY_UPDATE_FREQUENCY = 2 * TRAIN_STEP_FREQ
+
+
+if __name__ == "__main__":
+    params = PARAMETERS_SAC()
+    for param in dir(params):
+        if not param.startswith("__"):
+            print(param, "=", getattr(params, param))
