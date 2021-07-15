@@ -192,5 +192,5 @@ class BaseModel(nn.Module):
         original_twinq_state = original_model.base.twinq.state_dict()
         tgt_twinq_state = self.base.twinq.state_dict()
         for k, v in original_twinq_state.items():
-            tgt_twinq_state[k] = tau * tgt_twinq_state[k] + tau * v
+            tgt_twinq_state[k] = (1.0 - tau) * tgt_twinq_state[k] + tau * v
         self.base.twinq.load_state_dict(tgt_twinq_state)
