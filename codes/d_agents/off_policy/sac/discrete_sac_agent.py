@@ -91,7 +91,7 @@ class AgentDiscreteSAC(AgentSAC):
         if self.params.ENTROPY_TUNING and self.target_entropy is None:
             self.reset_alpha()
 
-        if self.params.PER:
+        if self.params.PER_PROPORTIONAL or self.params.PER_RANK_BASED:
             batch, batch_indices, batch_weights = self.buffer.sample(self.params.BATCH_SIZE)
         else:
             batch = self.buffer.sample(self.params.BATCH_SIZE)

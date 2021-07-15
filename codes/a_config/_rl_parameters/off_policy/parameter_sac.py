@@ -20,8 +20,6 @@ class PARAMETERS_SAC(PARAMETERS_OFF_POLICY):
 
     N_STEP = 2
 
-    PER = False
-
     ALPHA = 0.2
 
     ENTROPY_TUNING = False

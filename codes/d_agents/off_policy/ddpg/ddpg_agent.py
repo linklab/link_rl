@@ -182,8 +182,8 @@ class AgentDDPG(OffPolicyAgent):
         target_q_v = rewards_v.unsqueeze(dim=-1) + q_last_v * self.params.GAMMA ** self.params.N_STEP
 
         if self.params.PER_PROPORTIONAL or self.params.PER_RANK_BASED:
-            batch_l1_loss = F.smooth_l1_loss(q_v, target_q_v.detach(), reduction='none')  # for PER
-            batch_mse1_loss = F.mse_loss(q_v, target_q_v.detach(), reduction='none')  # for PER
+            batch_l1_loss = F.smooth_l1_loss(q_v, target_q_v.detach(), reduction='none')
+            batch_mse1_loss = F.mse_loss(q_v, target_q_v.detach(), reduction='none')
             batch_weights_v = torch.tensor(batch_weights)
             # critic_loss_v = batch_weights_v * batch_l1_loss
             critic_loss_v = batch_weights_v * batch_mse1_loss
@@ -248,7 +248,7 @@ class AgentDDPG(OffPolicyAgent):
     #     target_q_v = rewards_v.unsqueeze(dim=-1) + q_last_v * self.params.GAMMA ** self.params.N_STEP
     #
     #     if self.params.PER_PROPORTIONAL or self.params.PER_RANK_BASED:
-    #         batch_l1_loss = F.smooth_l1_loss(q_v, target_q_v.detach(), reduction='none')  # for PER
+    #         batch_l1_loss = F.smooth_l1_loss(q_v, target_q_v.detach(), reduction='none')
     #         batch_weights_v = torch.tensor(batch_weights)
     #         critic_loss_v = batch_weights_v * batch_l1_loss
     #
