@@ -77,6 +77,7 @@ class AgentDDPG(OffPolicyAgent):
             params=params,
             device=device
         ).to(device)
+        self.target_model.sync(self.model)
 
         self.test_model = DeterministicContinuousActorCriticModel(
             worker_id=worker_id,
@@ -85,6 +86,7 @@ class AgentDDPG(OffPolicyAgent):
             params=params,
             device=device
         ).to(device)
+        self.test_model.sync(self.model)
 
         # self.base_optimizer = rl_utils.get_optimizer(
         #     parameters=self.model.base.parameters(),

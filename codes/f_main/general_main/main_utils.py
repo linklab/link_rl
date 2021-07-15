@@ -225,7 +225,7 @@ class EpisodeProcessor:
         self.agent.agent_mode = AgentMode.TEST
         self.agent.model.eval()
 
-        self.agent.test_model.load_state_dict(self.agent.model.state_dict())
+        self.agent.test_model.sync(self.agent.model)
         self.agent.test_model.eval()
 
         num_step = 0

@@ -55,6 +55,7 @@ class AgentContinuousSAC(AgentSAC):
             params=params,
             device=device
         ).to(device)
+        self.target_model.sync(self.model)
 
         # grad_false(self.target_model)
 
@@ -65,6 +66,7 @@ class AgentContinuousSAC(AgentSAC):
             params=params,
             device=device
         ).to(device)
+        self.test_model.sync(self.model)
 
         self.actor_optimizer = rl_utils.get_optimizer(
             parameters=self.model.base.actor_params,
