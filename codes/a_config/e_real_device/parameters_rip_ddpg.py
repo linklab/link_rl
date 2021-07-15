@@ -39,7 +39,7 @@ class PARAMETERS_RIP_DDPG(PARAMETERS_GENERAL, PARAMETERS_DDPG):
     # HIDDEN_SIZE_LIST = [128, 128, 128, 256]
 
     # [OPTIMIZATION]
-    GAMMA = 0.999 # discount factor
+    GAMMA = 0.99 # discount factor
     TAU = 0.0001
 
     # [Policy Gradient]

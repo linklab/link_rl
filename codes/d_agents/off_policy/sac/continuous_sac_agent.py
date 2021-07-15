@@ -11,6 +11,7 @@ from codes.d_agents.off_policy.sac.sac_agent import AgentSAC
 from codes.d_agents.on_policy.stochastic_policy_action_selector import ContinuousNormalActionSelector, \
     SomeTimesBlowContinuousNormalActionSelector
 from codes.e_utils import rl_utils
+from codes.e_utils.common_utils import show_info
 from codes.e_utils.names import DeepLearningModelName, AgentMode
 
 
@@ -54,6 +55,7 @@ class AgentContinuousSAC(AgentSAC):
             params=params,
             device=device
         ).to(device)
+        self.target_model.sync(self.model)
 
         # grad_false(self.target_model)
 
@@ -64,6 +66,7 @@ class AgentContinuousSAC(AgentSAC):
             params=params,
             device=device
         ).to(device)
+        self.test_model.sync(self.model)
 
         self.actor_optimizer = rl_utils.get_optimizer(
             parameters=self.model.base.actor_params,
@@ -105,7 +108,7 @@ class AgentContinuousSAC(AgentSAC):
         if self.params.ENTROPY_TUNING and self.target_entropy is None:
             self.reset_alpha()
 
-        if self.params.PER:
+        if self.params.PER_PROPORTIONAL or self.params.PER_RANK_BASED:
             batch, batch_indices, batch_weights = self.buffer.sample(self.params.BATCH_SIZE)
         else:
             batch = self.buffer.sample(self.params.BATCH_SIZE)
@@ -120,16 +123,18 @@ class AgentContinuousSAC(AgentSAC):
         self.twinq_optimizer.zero_grad()
         q1_v, q2_v = self.model.base.twinq(states_v, actions_v)
 
-        q_loss_v = F.mse_loss(q1_v.squeeze(dim=-1), target_action_values_v.detach(), reduction="none") + \
+        q_loss_v_batch = F.mse_loss(q1_v.squeeze(dim=-1), target_action_values_v.detach(), reduction="none") + \
                    F.mse_loss(q2_v.squeeze(dim=-1), target_action_values_v.detach(), reduction="none")
-        q_loss_v = q_loss_v.mean()
+        q_loss_v = q_loss_v_batch.mean()
 
         q_loss_v.backward(retain_graph=True)
         nn_utils.clip_grad_norm_(self.model.base.twinq_params, self.params.CLIP_GRAD)
         self.twinq_optimizer.step()
 
         if self.params.PER_PROPORTIONAL or self.params.PER_RANK_BASED:
-            self.buffer.update_priorities(batch_indices, q_loss_v.abs().detach().cpu().numpy())
+            batch_weights_v = torch.tensor(batch_weights)
+            critic_loss_v = batch_weights_v * q_loss_v_batch
+            self.buffer.update_priorities(batch_indices, critic_loss_v.detach().cpu().numpy() + 1e-5)
             self.buffer.update_beta(step_idx)
 
         # train actor
@@ -157,7 +162,7 @@ class AgentContinuousSAC(AgentSAC):
             nn_utils.clip_grad_norm_(self.model.base.actor_params, self.params.CLIP_GRAD)
             self.actor_optimizer.step()
 
-            self.target_model.twinq_alpha_sync(self.model, alpha=1 - self.params.TAU)
+            self.target_model.twinq_soft_update(self.model, tau=self.params.TAU)
         else:
             loss_actor_v = self.cache_loss_actor_v
 

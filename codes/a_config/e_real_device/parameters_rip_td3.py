@@ -29,7 +29,7 @@ class PARAMETERS_RIP_TD3(PARAMETERS_GENERAL, PARAMETERS_TD3):
     #########################################
     #########################################
     # [OPTIMIZATION]
-    GAMMA = 0.999 # discount factor
+    GAMMA = 0.99 # discount factor
     TAU = 0.0005
 
     # [Policy Gradient]

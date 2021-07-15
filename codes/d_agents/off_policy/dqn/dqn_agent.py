@@ -93,6 +93,7 @@ class AgentDQN(OffPolicyAgent):
             params=params,
             device=device
         ).to(device)
+        self.target_model.sync(self.model)
 
         self.test_model = DuelingDQNModel(
             worker_id=worker_id,
@@ -101,6 +102,7 @@ class AgentDQN(OffPolicyAgent):
             params=params,
             device=device
         ).to(device)
+        self.test_model.sync(self.model)
 
         if params.CURIOSITY_DRIVEN:
             if params.DEEP_LEARNING_MODEL == DeepLearningModelName.DUELING_DQN_MLP:

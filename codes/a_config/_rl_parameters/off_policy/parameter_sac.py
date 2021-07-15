@@ -6,13 +6,10 @@ class PARAMETERS_SAC(PARAMETERS_OFF_POLICY):
     ENVIRONMENT_ID = None
     PER_PROPORTIONAL = False
     PER_RANK_BASED = False
-    DOUBLE = True
 
     REPLAY_BUFFER_SIZE = 100000
 
     TAU = 0.001
-
-    NOISE_ENABLED = True
 
     TRAIN_ONLY_AFTER_EPISODE = False
     NUM_TRAIN_ONLY_AFTER_EPISODE = None
@@ -22,17 +19,20 @@ class PARAMETERS_SAC(PARAMETERS_OFF_POLICY):
 
     N_STEP = 2
 
-    NOISY_NET = False
-
-    PER = False
-
     ALPHA = 0.2
 
     ENTROPY_TUNING = False
 
     LEARNING_RATE = 0.002
     ACTOR_LEARNING_RATE = 0.0002
-    ALPHA_LEARNING_RATE = 0.002
+    ALPHA_LEARNING_RATE = 0.0001
 
     TRAIN_STEP_FREQ = 2
     POLICY_UPDATE_FREQUENCY = 2 * TRAIN_STEP_FREQ
+
+
+if __name__ == "__main__":
+    params = PARAMETERS_SAC()
+    for param in dir(params):
+        if not param.startswith("__"):
+            print(param, "=", getattr(params, param))
