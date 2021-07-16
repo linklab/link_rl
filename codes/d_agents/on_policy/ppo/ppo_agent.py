@@ -5,6 +5,7 @@ import torch.nn.utils as nn_utils
 
 from codes.d_agents.on_policy.on_policy_agent import OnPolicyAgent
 from codes.e_utils import replay_buffer
+from codes.e_utils.common_utils import float32_preprocessor
 
 
 class AgentPPO(OnPolicyAgent):
@@ -30,6 +31,33 @@ class AgentPPO(OnPolicyAgent):
 
     def on_train(self, step_idx, expected_model_version):
         raise NotImplementedError
+
+    def get_advantage_and_target_action_values(self, trajectory, values_v, device):
+        """
+        By trajectory calculate advantage and 1-step target action value
+        :param trajectory: trajectory list
+        :return: tuple with advantage numpy array and reference values
+        """
+        values = values_v.squeeze().data.cpu().numpy()
+
+        # generalized advantage estimator: smoothed version of the advantage
+        last_gae = 0.0
+        result_advantages = []
+        result_target_action_values = []
+        for value, next_value, exp in zip(reversed(values[:-1]), reversed(values[1:]), reversed(trajectory[:-1])):
+            if exp.done:
+                delta = exp.reward - value
+                last_gae = delta
+            else:
+                delta = exp.reward + self.params.GAMMA * next_value - value
+                last_gae = delta + self.params.GAMMA * self.params.PPO_GAE_LAMBDA * last_gae
+
+            result_advantages.append(last_gae)
+            result_target_action_values.append(last_gae + value)
+
+        advantage_v = float32_preprocessor(list(reversed(result_advantages)))
+        target_action_value_v = float32_preprocessor(list(reversed(result_target_action_values)))
+        return advantage_v.to(device), target_action_value_v.to(device)
 
     def backward_and_step_for_critic(self, batch_values_v, batch_target_action_value_v):
         # critic training

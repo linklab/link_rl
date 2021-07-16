@@ -188,6 +188,9 @@ def main():
     step_idx = 0
     episode = 0
 
+    last_mean_loss = None
+    last_mean_actor_objective = None
+
     while actor.is_alive():
         step_idx += params.TRAIN_STEP_FREQ
         solved = False
@@ -230,8 +233,19 @@ def main():
                     solved = True
 
                 if params.WANDB:
-                    train_info_dict["train mean (critic) loss"] = mean_loss
-                    train_info_dict["train mean actor objective"] = mean_actor_objective
+                    if last_mean_loss is None and last_mean_actor_objective is None:
+                        last_mean_loss = mean_loss
+                        last_mean_actor_objective - mean_actor_objective
+                    else:
+                        if abs(mean_loss - last_mean_loss) > 10.0:
+                            mean_loss = last_mean_loss
+
+                        if abs(mean_actor_objective - last_mean_actor_objective) > 10.0:
+                            mean_loss = last_mean_loss
+
+                        train_info_dict["train mean (critic) loss"] = mean_loss
+                        train_info_dict["train mean actor objective"] = mean_actor_objective
+
 
                     if params.RL_ALGORITHM in [RLAlgorithmName.CONTINUOUS_SAC_V0, RLAlgorithmName.DISCRETE_SAC_V0]:
                         train_info_dict["alpha"] = agent.alpha.item()

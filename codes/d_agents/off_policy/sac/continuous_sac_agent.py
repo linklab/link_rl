@@ -25,6 +25,7 @@ class AgentContinuousSAC(AgentSAC):
             worker_id=worker_id, action_shape=action_shape, params=params, device=device
         )
         self.__name__ = "AgentContinuousSAC"
+        self.observation_shape = observation_shape
         self.num_outputs = num_outputs
         self.action_min = action_min
         self.action_max = action_max
@@ -105,8 +106,9 @@ class AgentContinuousSAC(AgentSAC):
         return actions, agent_states
 
     def on_train(self, step_idx):
-        if self.params.ENTROPY_TUNING and self.target_entropy is None:
-            self.reset_alpha()
+        # TODO
+        # if (self.params.ENTROPY_TUNING or self.params.META_TUNING) and self.target_entropy is None:
+        #     self.reset_alpha()
 
         if self.params.PER_PROPORTIONAL or self.params.PER_RANK_BASED:
             batch, batch_indices, batch_weights = self.buffer.sample(self.params.BATCH_SIZE)
@@ -114,10 +116,13 @@ class AgentContinuousSAC(AgentSAC):
             batch = self.buffer.sample(self.params.BATCH_SIZE)
             batch_indices, batch_weights = None, None
 
-        # print(batch)
-        states_v, actions_v, target_action_values_v = self.unpack_batch_for_actor_critic(
+        states_v, actions_v, target_action_values_v = self.unpack_batch_for_sac(
             batch=batch, target_model=self.target_model, sac_base_model=self.model.base, alpha=self.alpha, params=self.params
         )
+
+        # TODO
+        # if self.params.META_TUNING:
+        #     self.meta_learning_alpha()
 
         # train twinq
         self.twinq_optimizer.zero_grad()
@@ -165,8 +170,9 @@ class AgentContinuousSAC(AgentSAC):
         else:
             loss_actor_v = self.cache_loss_actor_v
 
-        if self.params.ENTROPY_TUNING:
-            self.adjust_alpha(log_prob_v)
+        # TODO
+        # if self.params.ENTROPY_TUNING:
+        #     self.adjust_alpha(log_prob_v)
 
         # gradients = self.model.get_gradients_for_current_parameters()
         gradients = None

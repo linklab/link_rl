@@ -1,3 +1,4 @@
+import copy
 import os
 import sys
 import numpy as np
@@ -6,11 +7,6 @@ from collections import namedtuple, deque
 from gym.vector import VectorEnv
 from icecream import ic
 
-from codes.c_models.continuous_action.continuous_action_model import ContinuousActionModel
-from codes.e_utils.common_utils import map_range
-from codes.e_utils.reward_changer import RewardChanger
-from codes.e_utils import rl_utils
-
 current_path = os.path.dirname(os.path.realpath(__file__))
 PROJECT_HOME = os.path.abspath(os.path.join(current_path, os.pardir, os.pardir))
 if PROJECT_HOME not in sys.path:
@@ -18,15 +14,21 @@ if PROJECT_HOME not in sys.path:
 
 # one single experience step
 from codes.d_agents.a0_base_agent import BaseAgent
+from codes.c_models.continuous_action.continuous_action_model import ContinuousActionModel
+from codes.e_utils.common_utils import map_range
+from codes.e_utils.reward_changer import RewardChanger
+from codes.e_utils import rl_utils
+from codes.e_utils.names import RLAlgorithmName
+
 
 Experience = namedtuple(
     'Experience',
-    ('state', 'action', 'reward', 'done', 'info', 'agent_state', 'model_version')
+    ('state', 'action', 'reward', 'done', 'info', 'agent_state', 'model_version', 'is_reset')
 )
 
 ExperienceFirstLast = namedtuple(
     'ExperienceFirstLast',
-    ('state', 'action', 'reward', 'last_state', 'last_step', 'done', 'info', 'agent_state', 'model_version')
+    ('state', 'action', 'reward', 'last_state', 'last_step', 'done', 'info', 'agent_state', 'model_version', 'is_reset')
 )
 
 
@@ -72,17 +74,20 @@ class ExperienceSource:
         self.episode_reward_lst = []
         self.episode_done_step_lst = []
         self.episode_idx = 0
+        self.is_reset = False
 
     def __iter__(self):
-        states, agent_states, histories, cur_rewards, cur_steps = [], [], [], [], []
+        states, agent_states, histories, cur_rewards, cur_steps, is_resets = [], [], [], [], [], []
         env_lens = []
         for env in self.pool:
             obs = env.reset()
+
             self.episode_idx += 1
             # if the environment is vectorized, all it's output is lists of results.
             # Details are here: https://github.com/openai/universe/blob/master/doc/env_semantics.rst
             obs_len = len(obs)
             states.extend(obs)
+            is_resets.extend([True] * len(obs))
 
             env_lens.append(obs_len)  # vectorized env는 self.pool 자체가 env이며 env_lens는 그 내부의 env 개수를 지니고 있음.
 
@@ -141,6 +146,7 @@ class ExperienceSource:
                 ):
                     idx = global_ofs + ofs
                     state = states[idx]
+                    is_reset = is_resets[idx]
                     history = histories[idx]
 
                     if isinstance(self.env.envs[0], RewardChanger):
@@ -154,13 +160,15 @@ class ExperienceSource:
                         history.append(Experience(
                             state=state, action=action, reward=r, done=is_done, info=info,
                             agent_state=agent_state,
-                            model_version=self.agent.model_version if hasattr(self.agent, "model_version") else None
+                            model_version=self.agent.model_version if hasattr(self.agent, "model_version") else None,
+                            is_reset=is_reset
                         ))
 
                     if len(history) == self.n_step and iter_idx % self.steps_delta == 0:
                         yield tuple(history)
 
                     states[idx] = next_state
+                    is_resets[idx] = False
 
                     if is_done:
                         # in case of very short episode (shorter than our steps count), send gathered history
@@ -185,6 +193,7 @@ class ExperienceSource:
 
                         history.clear()
                         states[idx] = env.reset()[0]
+                        is_resets[idx] = True
 
                         # print("{0}, {1}, @@@@@".format(self.episode_idx, self.episode_reward_lst))
                         self.episode_idx += 1
@@ -194,7 +203,6 @@ class ExperienceSource:
                         # print(self.episode_reward_lst, "@@@@@")
 
                         agent_states[idx] = rl_utils.initial_agent_state()
-
 
                 global_ofs += len(action_n)
             iter_idx += 1
@@ -266,7 +274,8 @@ class ExperienceSourceFirstLast(ExperienceSource):
                 state=exp[0].state, action=exp[0].action, reward=total_reward, last_state=last_state,
                 done=exp[-1].done, info=exp[0].info, last_step=len(elems),
                 agent_state=exp[0].agent_state,
-                model_version=self.agent.model_version if hasattr(self.agent, "model_version") else None
+                model_version=self.agent.model_version if hasattr(self.agent, "model_version") else None,
+                is_reset=exp[0].is_reset
             )
 
             # print(e)

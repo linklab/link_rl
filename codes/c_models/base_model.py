@@ -141,6 +141,18 @@ class BaseModel(nn.Module):
             self.sum = 0
             self.id_list = []
 
+    def freeze_parameters(self):
+        for layer_name, layer in self.base.layers_info.items():
+            parameters = layer.to(self.device).parameters()
+            for param in parameters:
+                param.requires_grad = False
+
+    def unfreeze_parameters(self):
+        for layer_name, layer in self.base.layers_info.items():
+            parameters = layer.to(self.device).parameters()
+            for param in parameters:
+                param.requires_grad = True
+
     def get_parameters(self):
         parameters = {}
         flatten_parameters = []

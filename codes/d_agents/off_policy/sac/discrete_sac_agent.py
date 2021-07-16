@@ -100,7 +100,7 @@ class AgentDiscreteSAC(AgentSAC):
             batch_indices, batch_weights = None, None
 
         # print(batch)
-        states_v, actions_v, target_action_values_v = self.unpack_batch_for_actor_critic(
+        states_v, actions_v, target_action_values_v = self.unpack_batch_for_sac(
             batch=batch, target_model=self.target_model, sac_base_model=self.model.base,
             alpha=self.alpha, params=self.params
         )
