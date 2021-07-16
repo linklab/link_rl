@@ -1,67 +1,72 @@
 # https://spinningup.openai.com/en/latest/algorithms/sac.html
 # https://github.com/pranz24/pytorch-soft-actor-critic
-#https://github.com/ku2482/soft-actor-critic.pytorch/blob/master/code/agent.py
+# https://github.com/ku2482/soft-actor-critic.pytorch/blob/master/code/agent.py
 import torch
 import torch.nn.functional as F
 import torch.nn.utils as nn_utils
 
-from codes.a_config._rl_parameters.off_policy.parameter_sac import SACActionSelectorType
-from codes.a_config._rl_parameters.off_policy.parameter_td3 import TD3ActionSelectorType
-from codes.c_models.continuous_action.soft_actor_critic_model import SoftActorCriticModel
-from codes.d_agents.off_policy.off_policy_agent import OffPolicyAgent
-from codes.d_agents.off_policy.sac.sac_action_selector import ContinuousNormalSACActionSelector, \
-    SomeTimesBlowSACActionSelector
-from codes.d_agents.off_policy.td3.td3_action_selector import TD3ActionSelector
+from codes.a_config._rl_parameters.off_policy.parameter_sac import StochasticActionSelectorType
+from codes.c_models.continuous_action.continuous_sac_model import ContinuousSACModel
+from codes.d_agents.off_policy.sac.sac_agent import AgentSAC
+from codes.d_agents.on_policy.stochastic_policy_action_selector import ContinuousNormalActionSelector, \
+    SomeTimesBlowContinuousNormalActionSelector
 from codes.e_utils import rl_utils
-from codes.e_utils.common_utils import grad_false
-from codes.e_utils.names import DeepLearningModelName
+from codes.e_utils.common_utils import show_info
+from codes.e_utils.names import DeepLearningModelName, AgentMode
 
 
-class AgentSAC(OffPolicyAgent):
+class AgentContinuousSAC(AgentSAC):
     """
     """
-    def __init__(self, worker_id, input_shape, action_shape, num_outputs, action_min, action_max, params, device):
-        assert params.DEEP_LEARNING_MODEL == DeepLearningModelName.SOFT_ACTOR_CRITIC_MLP
+    def __init__(self, worker_id, observation_shape, action_shape, num_outputs, action_min, action_max, params, device):
+        assert params.DEEP_LEARNING_MODEL == DeepLearningModelName.CONTINUOUS_SAC_MLP
 
-        super(AgentSAC, self).__init__(worker_id, params, action_shape, action_min, action_max, device)
-        self.__name__ = "AgentSAC"
+        super(AgentContinuousSAC, self).__init__(
+            worker_id=worker_id, action_shape=action_shape, params=params, device=device
+        )
+        self.__name__ = "AgentContinuousSAC"
+        self.num_outputs = num_outputs
+        self.action_min = action_min
+        self.action_max = action_max
 
-        if params.TYPE_OF_SAC_ACTION_SELECTOR == SACActionSelectorType.BASIC_ACTION_SELECTOR:
-            self.train_action_selector = ContinuousNormalSACActionSelector(params=params)
-        elif params.TYPE_OF_SAC_ACTION_SELECTOR == SACActionSelectorType.SOMETIMES_BLOW_ACTION_SELECTOR:
-            self.train_action_selector = SomeTimesBlowSACActionSelector(
+        if params.TYPE_OF_STOCHASTIC_ACTION_SELECTOR == StochasticActionSelectorType.BASIC_ACTION_SELECTOR:
+            self.train_action_selector = ContinuousNormalActionSelector(params=params)
+        elif params.TYPE_OF_STOCHASTIC_ACTION_SELECTOR == StochasticActionSelectorType.SOMETIMES_BLOW_ACTION_SELECTOR:
+            self.train_action_selector = SomeTimesBlowContinuousNormalActionSelector(
                 min_blowing_action=-5.0, max_blowing_action=5.0, params=self.params,
             )
         else:
             raise ValueError()
 
-        self.test_and_play_action_selector = ContinuousNormalSACActionSelector(params=params)
+        self.test_and_play_action_selector = ContinuousNormalActionSelector(params=params)
 
-        self.model = SoftActorCriticModel(
+        self.model = ContinuousSACModel(
             worker_id=worker_id,
-            input_shape=input_shape,
+            observation_shape=observation_shape,
             num_outputs=num_outputs,
             params=params,
             device=device
         ).to(device)
 
-        self.target_model = SoftActorCriticModel(
+        self.target_model = ContinuousSACModel(
             worker_id=worker_id,
-            input_shape=input_shape,
+            observation_shape=observation_shape,
             num_outputs=num_outputs,
             params=params,
             device=device
         ).to(device)
+        self.target_model.sync(self.model)
 
-        grad_false(self.target_model)
+        # grad_false(self.target_model)
 
-        self.test_model = SoftActorCriticModel(
+        self.test_model = ContinuousSACModel(
             worker_id=worker_id,
-            input_shape=input_shape,
+            observation_shape=observation_shape,
             num_outputs=num_outputs,
             params=params,
             device=device
         ).to(device)
+        self.test_model.sync(self.model)
 
         self.actor_optimizer = rl_utils.get_optimizer(
             parameters=self.model.base.actor_params,
@@ -75,100 +80,95 @@ class AgentSAC(OffPolicyAgent):
             params=params
         )
 
-        self.alpha = None
+        self.cache_loss_actor_v = torch.tensor(0.0)
 
-    def reset_alpha(self):
-        if self.params.ENTROPY_TUNING:
-            # Target entropy is -|A|.
-            self.target_entropy = -torch.prod(torch.Tensor(self.action_shape).to(self.device)).item()
+    def __call__(self, state, agent_states=None):
+        return self.continuous_sac_call(state, agent_states)
 
-            #print(self.target_entropy, "!")
+    def continuous_sac_call(self, state, agent_states=None):
+        state = self.preprocess(state)
 
-            # We optimize log(alpha), instead of alpha.
-            self.log_alpha = torch.zeros(1, requires_grad=True, device=self.device)
-            self.alpha = self.log_alpha.exp()
-            self.alpha_optimizer = rl_utils.get_optimizer(
-                parameters=[self.log_alpha],
-                learning_rate=self.params.LEARNING_RATE,
-                params=self.params
-            )
+        if len(state) == 1:
+            self.model.eval()
         else:
-            # fixed alpha
-            self.alpha = torch.tensor(self.params.ALPHA).to(self.device)
+            self.model.train()
 
-    def __call__(self, state, critics=None):
-        if self.alpha is None:
-            self.reset_alpha()
-        return self.continuous_sac_call(state)
+        if self.agent_mode == AgentMode.TRAIN:
+            with torch.no_grad():
+                mu_v, logstd_v = self.model.base.actor(state)
+                actions = self.train_action_selector(mu_v=mu_v, logstd_v=logstd_v)
+        else:
+            with torch.no_grad():
+                mu_v, _ = self.test_model.base.actor(state)
+                actions = self.test_and_play_action_selector(mu_v=mu_v, logstd_v=None)
+
+        return actions, agent_states
 
     def on_train(self, step_idx):
-        if self.alpha is None:
+        if self.params.ENTROPY_TUNING and self.target_entropy is None:
             self.reset_alpha()
 
-        if self.params.PER:
+        if self.params.PER_PROPORTIONAL or self.params.PER_RANK_BASED:
             batch, batch_indices, batch_weights = self.buffer.sample(self.params.BATCH_SIZE)
         else:
             batch = self.buffer.sample(self.params.BATCH_SIZE)
             batch_indices, batch_weights = None, None
 
         # print(batch)
-        states_v, actions_v, target_values_v, target_action_values_v = self.unpack_batch_for_sac(batch)
+        states_v, actions_v, target_action_values_v = self.unpack_batch_for_actor_critic(
+            batch=batch, target_model=self.target_model, sac_base_model=self.model.base, alpha=self.alpha, params=self.params
+        )
 
         # train twinq
         self.twinq_optimizer.zero_grad()
         q1_v, q2_v = self.model.base.twinq(states_v, actions_v)
-        q_loss_v = F.mse_loss(q1_v.squeeze(), target_action_values_v.detach(), reduction="none") + \
-                   F.mse_loss(q2_v.squeeze(), target_action_values_v.detach(), reduction="none")
-        q_loss_v = q_loss_v.mean()
+
+        q_loss_v_batch = F.mse_loss(q1_v.squeeze(dim=-1), target_action_values_v.detach(), reduction="none") + \
+                   F.mse_loss(q2_v.squeeze(dim=-1), target_action_values_v.detach(), reduction="none")
+        q_loss_v = q_loss_v_batch.mean()
+
         q_loss_v.backward(retain_graph=True)
-        nn_utils.clip_grad_norm_(self.model.base.twinq.parameters(), self.params.CLIP_GRAD)
+        nn_utils.clip_grad_norm_(self.model.base.twinq_params, self.params.CLIP_GRAD)
         self.twinq_optimizer.step()
 
         if self.params.PER_PROPORTIONAL or self.params.PER_RANK_BASED:
-            self.buffer.update_priorities(batch_indices, q_loss_v.abs().detach().cpu().numpy())
+            batch_weights_v = torch.tensor(batch_weights)
+            critic_loss_v = batch_weights_v * q_loss_v_batch
+            self.buffer.update_priorities(batch_indices, critic_loss_v.detach().cpu().numpy() + 1e-5)
             self.buffer.update_beta(step_idx)
 
         # train actor
-        self.actor_optimizer.zero_grad()
-        sampled_action_v, sampled_entropies_v = self.model.sample(states_v)
-        q1_v, q2_v = self.model.base.twinq(states_v, sampled_action_v)
+        re_parameterization_trick_action_v, log_prob_v = self.model.re_parameterization_trick_sample(states_v)
+        # Delayed policy updates
+        if step_idx % self.params.POLICY_UPDATE_FREQUENCY == 0:
+            self.actor_optimizer.zero_grad()
 
-        # q1_v.shape: [128, 1]
-        # q2_v.shape: [128, 1]
-        # loss_actor_v = -1.0 * (torch.min(q1_v, q2_v).squeeze() - self.params.ALPHA * sampled_log_prob).mean()
-        loss_actor_v = -1.0 * (torch.min(q1_v, q2_v).squeeze() + self.alpha * sampled_entropies_v).mean()
-        loss_actor_v.backward(retain_graph=True)
-        nn_utils.clip_grad_norm_(self.model.base.actor_params, self.params.CLIP_GRAD)
-        self.actor_optimizer.step()
+            # states_v.shape: torch.Size([128, 3])
+            # re_parameterization_trick_action_v.shape: torch.Size([128, 1])
 
-        self.target_model.twinq_alpha_sync(self.model, alpha=1 - self.params.TAU)
+            q1_v, q2_v = self.model.base.twinq(states_v, re_parameterization_trick_action_v)
+
+            # q1_v.shape: torch.Size([128, 1])
+            # q2_v.shape: torch.Size([128, 1])
+            # torch.min(q1_v, q2_v).shape: torch.Size([128, 1])
+            # log_prob_v.shape: torch.Size([128, 1])
+            objectives_v = torch.div(torch.add(q1_v, q2_v), 2.0) - self.alpha * log_prob_v
+
+            loss_actor_v = -1.0 * objectives_v.mean()
+            self.cache_loss_actor_v = loss_actor_v
+
+            loss_actor_v.backward()
+            nn_utils.clip_grad_norm_(self.model.base.actor_params, self.params.CLIP_GRAD)
+            self.actor_optimizer.step()
+
+            self.target_model.twinq_soft_update(self.model, tau=self.params.TAU)
+        else:
+            loss_actor_v = self.cache_loss_actor_v
 
         if self.params.ENTROPY_TUNING:
-            self.alpha_optimizer.zero_grad()
-            # Intuitively, we increase alpha when entropy is less than target entropy, vice versa.
-            entropy_loss = -1.0 * self.log_alpha * (self.target_entropy - sampled_entropies_v).mean().detach()
-            entropy_loss.backward()
-            nn_utils.clip_grad_norm_([self.log_alpha], self.params.CLIP_GRAD)
-            self.alpha_optimizer.step()
-            self.alpha = self.log_alpha.exp()
+            self.adjust_alpha(log_prob_v)
 
         # gradients = self.model.get_gradients_for_current_parameters()
         gradients = None
 
         return gradients, q_loss_v.item(), loss_actor_v.item() * -1.0
-
-    def unpack_batch_for_sac(self, batch):
-        # states_v.shape: [128, 3]
-        # actions_v.shape: [128]
-        # target_action_values_v.shape: [128]
-        states_v, actions_v, target_action_values_v = self.unpack_batch_for_actor_critic(
-            batch, self.target_model, self.params, alpha=self.alpha
-        )
-
-        sampled_action_v, sampled_entropies_v = self.model.sample(states_v)
-        q1_v, q2_v = self.model.base.twinq(states_v, sampled_action_v)
-
-        # torch.min(q1_v, q2_v).squeeze().shape: [128]
-        # sampled_log_prob.shape: [128]
-        target_values_v = torch.min(q1_v, q2_v).squeeze() + self.alpha * sampled_entropies_v
-        return states_v, actions_v, target_values_v, target_action_values_v

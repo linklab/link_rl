@@ -1,24 +1,42 @@
 import random
-import numpy as np
+
 import torch
-from icecream import ic
-from torch.distributions import Normal
+from torch.distributions import Categorical, Normal, MultivariateNormal
+import numpy as np
 
-from codes.a_config._rl_parameters.off_policy.parameter_td3 import TD3ActionType
-from codes.d_agents.actions import ContinuousActionSelector
+from codes.d_agents.actions import ActionSelector, ContinuousActionSelector, DiscreteActionSelector
+from codes.e_utils.names import AgentMode
 
 
-class ContinuousNormalSACActionSelector(ContinuousActionSelector):
+class DiscreteCategoricalActionSelector(DiscreteActionSelector):
+    """
+    Converts probabilities of actions into action by sampling them
+    """
+    def __init__(self, params):
+        self.params = params
+
+    def __call__(self, probs, agent_mode):
+        with torch.no_grad():
+            if agent_mode == AgentMode.TRAIN:
+                dist = Categorical(probs=probs)
+                actions = dist.sample().cpu().detach().numpy()
+            else:
+                actions = torch.argmax(probs, dim=-1, keepdim=True).squeeze(dim=-1).cpu().detach().numpy()
+
+        return np.array(actions)
+
+
+class ContinuousNormalActionSelector(ContinuousActionSelector):
     def __init__(self, params):
         self.params = params
 
     def select_action(self, mu_v, logstd_v):
-        if logstd_v is None:
-            actions = mu_v.data.cpu().numpy()
-        else:
-            normal = Normal(loc=mu_v, scale=torch.exp(logstd_v))
-            actions_v = normal.rsample()  # for reparameterization trick (mean + std * N(0,1))
-            actions = actions_v.data.cpu().numpy()
+        with torch.no_grad():
+            if logstd_v is not None:
+                dist = Normal(loc=mu_v, scale=torch.exp(logstd_v))
+                actions = dist.sample().data.cpu().numpy()
+            else:
+                actions = mu_v.data.cpu().numpy()
 
         actions = np.clip(actions, -1.0, 1.0)
 
@@ -28,11 +46,11 @@ class ContinuousNormalSACActionSelector(ContinuousActionSelector):
         return self.select_action(mu_v, logstd_v)
 
 
-class SomeTimesBlowSACActionSelector(ContinuousNormalSACActionSelector):
+class SomeTimesBlowContinuousNormalActionSelector(ContinuousNormalActionSelector):
     def __init__(
             self, blowing_action_rate=0.0002, min_blowing_action=-1.0, max_blowing_action=1.0, params=None
     ):
-        super(SomeTimesBlowSACActionSelector, self).__init__(params=params)
+        super(SomeTimesBlowContinuousNormalActionSelector, self).__init__(params=params)
         self.blowing_action_rate = blowing_action_rate
         self.min_blowing_action = min_blowing_action
         self.max_blowing_action = max_blowing_action
@@ -47,11 +65,9 @@ class SomeTimesBlowSACActionSelector(ContinuousNormalSACActionSelector):
 
         self.time_steps += 1
 
-        if self.time_steps >= self.next_time_steps_of_random_blowing_action:
-            normal = Normal(loc=mu_v, scale=torch.exp(logstd_v))
-            actions_v = normal.rsample()  # for reparameterization trick (mean + std * N(0,1))
-            actions = actions_v.data.cpu().numpy()
+        actions = self.select_action(mu_v, logstd_v)
 
+        if self.time_steps >= self.next_time_steps_of_random_blowing_action:
             actions += np.random.uniform(
                 low=self.min_blowing_action, high=self.max_blowing_action, size=actions.shape
             )
@@ -63,7 +79,5 @@ class SomeTimesBlowSACActionSelector(ContinuousNormalSACActionSelector):
                 actions,
                 self.next_time_steps_of_random_blowing_action
             ))
-        else:
-            actions = self.select_action(mu_v, logstd_v)
 
         return actions

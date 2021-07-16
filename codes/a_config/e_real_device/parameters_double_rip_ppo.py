@@ -1,13 +1,13 @@
-from codes.a_config._rl_parameters.off_policy.parameter_td3 import PARAMETERS_TD3, TD3ActionType, TD3ActionSelectorType
 from codes.a_config._rl_parameters.on_policy.parameter_ppo import PARAMETERS_PPO
 from codes.e_utils.names import *
-from codes.a_config.parameters_general import PARAMETERS_GENERAL, RIPEnvRewardType
+from codes.a_config.parameters_general import PARAMETERS_GENERAL, RIPEnvRewardType, StochasticActionType, \
+    StochasticActionSelectorType
 
 
 class PARAMETERS_DOUBLE_RIP_PPO(PARAMETERS_GENERAL, PARAMETERS_PPO):
     ENVIRONMENT_ID = EnvironmentName.REAL_DEVICE_DOUBLE_RIP
     RL_ALGORITHM = RLAlgorithmName.CONTINUOUS_PPO_V0
-    DEEP_LEARNING_MODEL = DeepLearningModelName.STOCHASTIC_CONTINUOUS_ACTOR_CRITIC_MLP
+    DEEP_LEARNING_MODEL = DeepLearningModelName.CONTINUOUS_STOCHASTIC_ACTOR_CRITIC_MLP
     OPTIMIZER = OptimizerName.ADAM
 
     VELOCITY_STATE_DENOMINATOR = 500.0
@@ -21,10 +21,10 @@ class PARAMETERS_DOUBLE_RIP_PPO(PARAMETERS_GENERAL, PARAMETERS_PPO):
     MAX_EPISODE_STEP = 10000
     MAX_GLOBAL_STEP = 40000000
 
-    GAMMA = 0.999
+    GAMMA = 0.99
 
     BATCH_SIZE = 128
-    AVG_EPISODE_SIZE_FOR_STAT = 10
+    AVG_EPISODE_SIZE_FOR_STAT = 50
 
     ## PPO
     PPO_GAE_LAMBDA = 0.70
@@ -48,4 +48,5 @@ class PARAMETERS_DOUBLE_RIP_PPO(PARAMETERS_GENERAL, PARAMETERS_PPO):
     UNIT_TIME = 0.006
     PERIODIC_MODEL_SAVE = True
 
-
+    TYPE_OF_STOCHASTIC_ACTION = StochasticActionType.SAMPLE
+    TYPE_OF_STOCHASTIC_ACTION_SELECTOR = StochasticActionSelectorType.SOMETIMES_BLOW_ACTION_SELECTOR

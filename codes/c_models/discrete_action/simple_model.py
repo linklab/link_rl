@@ -9,23 +9,23 @@ from codes.e_utils.names import DeepLearningModelName
 
 
 class SimpleModel(DiscreteActionModel):
-    def __init__(self, worker_id, input_shape=None, num_outputs=None, params=None, device=None):
+    def __init__(self, worker_id, observation_shape=None, num_outputs=None, params=None, device=None):
         super(SimpleModel, self).__init__(worker_id, params, device)
         self.__name__ = "SimpleMlpModel"
         self.params = params
 
-        num_inputs = input_shape[0]
+        num_inputs = observation_shape[0]
         if params.DEEP_LEARNING_MODEL == DeepLearningModelName.SIMPLE_MLP:
             self.base = Simple_MLP_Base(
                 num_inputs=num_inputs, num_outputs=num_outputs, params=self.params
             )
         elif params.DEEP_LEARNING_MODEL == DeepLearningModelName.SIMPLE_CNN:
             self.base = Simple_CNN_Base(
-                input_shape=input_shape, num_outputs=num_outputs
+                observation_shape=observation_shape, num_outputs=num_outputs
             )
         elif params.DEEP_LEARNING_MODEL == DeepLearningModelName.SIMPLE_SMALL_CNN:
             self.base = Simple_SmallCNN_Base(
-                input_shape=input_shape, num_outputs=num_outputs
+                observation_shape=observation_shape, num_outputs=num_outputs
             )
         else:
             raise ValueError()
@@ -72,13 +72,13 @@ class Simple_MLP_Base(nn.Module):
 
 
 class Simple_CNN_Base(nn.Module):
-    def __init__(self, input_shape, num_outputs):
+    def __init__(self, observation_shape, num_outputs):
         super(Simple_CNN_Base, self).__init__()
 
         self.__name__ = "Simple_CNN_Base"
 
         self.conv = nn.Sequential(
-            nn.Conv2d(in_channels=input_shape[0], out_channels=32, kernel_size=8, stride=4),
+            nn.Conv2d(in_channels=observation_shape[0], out_channels=32, kernel_size=8, stride=4),
             nn.ReLU(),
             nn.Conv2d(in_channels=32, out_channels=64, kernel_size=4, stride=2),
             nn.ReLU(),
@@ -86,7 +86,7 @@ class Simple_CNN_Base(nn.Module):
             nn.ReLU()
         )
 
-        conv_out_size = self._get_conv_out(input_shape)
+        conv_out_size = self._get_conv_out(observation_shape)
         self.fc = nn.Sequential(
             nn.Linear(conv_out_size, 512),
             nn.ReLU(),
@@ -120,13 +120,13 @@ class Simple_CNN_Base(nn.Module):
 
 
 class Simple_SmallCNN_Base(nn.Module):
-    def __init__(self, input_shape, num_outputs):
+    def __init__(self, observation_shape, num_outputs):
         super(Simple_SmallCNN_Base, self).__init__()
 
         self.__name__ = "Simple_SmallCNN_Base"
 
         self.conv = nn.Sequential(
-            nn.Conv2d(input_shape[0], 24, kernel_size=3, stride=1, padding=1),
+            nn.Conv2d(observation_shape[0], 24, kernel_size=3, stride=1, padding=1),
             nn.ReLU(),
             nn.Conv2d(24, 32, kernel_size=2, stride=1, padding=1),
             nn.ReLU(),
@@ -134,7 +134,7 @@ class Simple_SmallCNN_Base(nn.Module):
             nn.ReLU()
         )
 
-        conv_out_size = self._get_conv_out(input_shape)
+        conv_out_size = self._get_conv_out(observation_shape)
         self.fc = nn.Sequential(
             nn.Linear(conv_out_size, 128),
             nn.ReLU(),

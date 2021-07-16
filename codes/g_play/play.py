@@ -29,9 +29,9 @@ my_logger = get_logger("openai_pendulum_ddpg")
 
 
 def play_main(params, env):
-    input_shape, action_shape, num_outputs, action_min, action_max = get_environment_input_output_info(env)
+    observation_shape, action_shape, num_outputs, action_n, action_min, action_max = get_environment_input_output_info(env)
     agent = rl_utils.get_rl_agent(
-        input_shape, action_shape, num_outputs, action_min, action_max, worker_id=-1, params=params, device=device
+        observation_shape, action_shape, num_outputs, action_n, action_min, action_max, worker_id=-1, params=params, device=device
     )
     load_model(MODEL_ZOO_SAVE_DIR, MODEL_SAVE_FILE_PREFIX, agent, inquery=False)
     agent.agent_mode = AgentMode.PLAY

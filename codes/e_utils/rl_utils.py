@@ -16,13 +16,14 @@ from codes.a_config.f_trade_parameters.parameters_trade_dqn import PARAMETERS_GE
 from codes.b_environments.custom_sync_vector_env import CustomSyncVectorEnv
 from codes.b_environments.toy.toy_env import ToyEnv
 from codes.b_environments.trade.trade_data import get_data
-from codes.c_models.continuous_action.soft_actor_critic_model import SoftActorCriticModel
+from codes.c_models.continuous_action.continuous_sac_model import ContinuousSACModel
 from codes.d_agents.black_box.cma_es.cma_es_agent import AgentEMAES
 
 from codes.d_agents.black_box.ga.ga_agent import AgentGA
 from codes.d_agents.black_box.ga.multi_ga_agent import AgentMultiGA
+from codes.d_agents.off_policy.sac.discrete_sac_agent import AgentDiscreteSAC
 from codes.d_agents.off_policy.td3.td3_agent import AgentTD3
-from codes.d_agents.off_policy.sac.continuous_sac_agent import AgentSAC
+from codes.d_agents.off_policy.sac.continuous_sac_agent import AgentSAC, AgentContinuousSAC
 from codes.d_agents.on_policy.ppo.discrete_ppo_agent import AgentDiscretePPO
 from codes.e_utils.reward_changer import RewardChanger
 
@@ -36,8 +37,8 @@ from codes.d_agents.on_policy.ppo.continuous_ppo_agent import AgentContinuousPPO
 from codes.d_agents.on_policy.a2c.discrete_a2c_agent import AgentDiscreteA2C
 from codes.d_agents.off_policy.dqn.dqn_agent import AgentDQN
 
-from codes.c_models.continuous_action.deterministic_continuous_actor_critic_model import DeterministicContinuousActorCriticModel
-from codes.c_models.continuous_action.stochastic_continuous_actor_critic_model import StochasticContinuousActorCriticModel
+from codes.c_models.continuous_action.continuous_deterministic_actor_critic_model import DeterministicContinuousActorCriticModel
+from codes.c_models.continuous_action.continuous_stochastic_actor_critic_model import StochasticContinuousActorCriticModel
 from codes.c_models.discrete_action.discrete_actor_critic_model import DiscreteActorCriticModel
 from codes.c_models.discrete_action.dqn_model import DuelingDQNModel
 
@@ -206,58 +207,60 @@ def get_environment_input_output_info(env):
     else:
         raise ValueError()
 
-    input_shape = observation_space.shape
+    observation_shape = observation_space.shape
     action_shape = action_space.shape
 
     if isinstance(action_space, Discrete):
-        num_outputs = action_space.n
+        num_outputs = 1
+        action_n = action_space.n
         action_min = 0
         action_max = action_space.n-1
     elif isinstance(action_space, Box):
         num_outputs = action_space.shape[0]
+        action_n = None
         action_min = action_space.low
         action_max = action_space.high
     else:
-        num_outputs, action_shape, action_min, action_max = None, None, None, None
+        num_outputs, action_shape, action_n, action_min, action_max = None, None, None, None, None
 
-    print(f"input_shape: {input_shape}, action_shape: {action_shape}, num_outputs: {num_outputs}, "
-          f"action_min: {action_min}, action_max: {action_max}")
+    print(f"observation_shape: {observation_shape}, action_shape: {action_shape}, num_outputs: {num_outputs}, "
+          f"action_n: {action_n}, action_min: {action_min}, action_max: {action_max}")
 
-    return input_shape, action_shape, num_outputs, action_min, action_max
+    return observation_shape, action_shape, num_outputs, action_n, action_min, action_max
 
 
-def get_rl_model(worker_id, input_shape=None, num_outputs=None, params=None, device=None):
-    if params.DEEP_LEARNING_MODEL == DeepLearningModelName.SOFT_ACTOR_CRITIC_MLP:
-        model = SoftActorCriticModel(
+def get_rl_model(worker_id, observation_shape=None, num_outputs=None, params=None, device=None):
+    if params.DEEP_LEARNING_MODEL == DeepLearningModelName.CONTINUOUS_SAC_MLP:
+        model = ContinuousSACModel(
             worker_id=worker_id,
-            input_shape=input_shape,
+            observation_shape=observation_shape,
             num_outputs=num_outputs,
             params=params,
             device=device
         ).to(device)
-    elif params.DEEP_LEARNING_MODEL == DeepLearningModelName.STOCHASTIC_CONTINUOUS_ACTOR_CRITIC_MLP:
+    elif params.DEEP_LEARNING_MODEL == DeepLearningModelName.CONTINUOUS_STOCHASTIC_ACTOR_CRITIC_MLP:
         model = StochasticContinuousActorCriticModel(
             worker_id=worker_id,
-            input_shape=input_shape,
+            observation_shape=observation_shape,
             num_outputs=num_outputs,
             params=params,
             device=device
         ).to(device)
     elif params.DEEP_LEARNING_MODEL in [
-        DeepLearningModelName.STOCHASTIC_DISCRETE_ACTOR_CRITIC_MLP,
-        DeepLearningModelName.STOCHASTIC_DISCRETE_ACTOR_CRITIC_CNN
+        DeepLearningModelName.DISCRETE_STOCHASTIC_ACTOR_CRITIC_MLP,
+        DeepLearningModelName.DISCRETE_STOCHASTIC_ACTOR_CRITIC_CNN
     ]:
         model = DiscreteActorCriticModel(
             worker_id=worker_id,
-            input_shape=input_shape,
+            observation_shape=observation_shape,
             num_outputs=num_outputs,
             params=params,
             device=device
         ).to(device)
-    elif params.DEEP_LEARNING_MODEL == DeepLearningModelName.DETERMINISTIC_CONTINUOUS_ACTOR_CRITIC_MLP:
+    elif params.DEEP_LEARNING_MODEL == DeepLearningModelName.CONTINUOUS_DETERMINISTIC_ACTOR_CRITIC_MLP:
         model = DeterministicContinuousActorCriticModel(
             worker_id=worker_id,
-            input_shape=input_shape,
+            observation_shape=observation_shape,
             num_outputs=num_outputs,
             params=params,
             device=device
@@ -269,7 +272,7 @@ def get_rl_model(worker_id, input_shape=None, num_outputs=None, params=None, dev
     ]:
         model = DuelingDQNModel(
             worker_id=worker_id,
-            input_shape=input_shape,
+            observation_shape=observation_shape,
             num_outputs=num_outputs,
             params=params,
             device=device
@@ -281,60 +284,65 @@ def get_rl_model(worker_id, input_shape=None, num_outputs=None, params=None, dev
     return model
 
 
-def get_rl_agent(input_shape, action_shape, num_outputs, action_min, action_max, worker_id, params, device="cpu"):
+def get_rl_agent(observation_shape, action_shape, num_outputs, action_n, action_min, action_max, worker_id, params, device="cpu"):
     if params.RL_ALGORITHM == RLAlgorithmName.DDPG_V0:
         agent = AgentDDPG(
-            worker_id=worker_id, input_shape=input_shape, action_shape=action_shape, num_outputs=num_outputs,
+            worker_id=worker_id, observation_shape=observation_shape, action_shape=action_shape, num_outputs=num_outputs,
             action_min=action_min, action_max=action_max, params=params, device=device
         )
     elif params.RL_ALGORITHM == RLAlgorithmName.TD3_V0:
         agent = AgentTD3(
-            worker_id=worker_id, input_shape=input_shape, action_shape=action_shape, num_outputs=num_outputs,
+            worker_id=worker_id, observation_shape=observation_shape, action_shape=action_shape, num_outputs=num_outputs,
             action_min=action_min, action_max=action_max, params=params, device=device
         )
     elif params.RL_ALGORITHM == RLAlgorithmName.DQN_V0:
         agent = AgentDQN(
-            worker_id=worker_id, input_shape=input_shape, action_shape=action_shape, num_outputs=num_outputs,
-            action_min=action_min, action_max=action_max,params=params, device=device
+            worker_id=worker_id, observation_shape=observation_shape, action_shape=action_shape, action_n=action_n,
+            params=params, device=device
         )
-    elif params.RL_ALGORITHM == RLAlgorithmName.SAC_V0:
-        agent = AgentSAC(
-            input_shape=input_shape, action_shape=action_shape, num_outputs=num_outputs, worker_id=worker_id,
+    elif params.RL_ALGORITHM == RLAlgorithmName.CONTINUOUS_SAC_V0:
+        agent = AgentContinuousSAC(
+            worker_id=worker_id, observation_shape=observation_shape, action_shape=action_shape, num_outputs=num_outputs,
             action_min=action_min, action_max=action_max, params=params, device=device
+        )
+    elif params.RL_ALGORITHM == RLAlgorithmName.DISCRETE_SAC_V0:
+        agent = AgentDiscreteSAC(
+            worker_id=worker_id, observation_shape=observation_shape, action_shape=action_shape, action_n=action_n,
+            params=params, device=device
         )
     elif params.RL_ALGORITHM == RLAlgorithmName.CONTINUOUS_A2C_V0:
         agent = AgentContinuousA2C(
-            worker_id=worker_id, input_shape=input_shape, action_shape=action_shape, num_outputs=num_outputs,
+            worker_id=worker_id, observation_shape=observation_shape, action_shape=action_shape, num_outputs=num_outputs,
             action_min=action_min, action_max=action_max, params=params, device=device
         )
     elif params.RL_ALGORITHM == RLAlgorithmName.DISCRETE_A2C_V0:
         agent = AgentDiscreteA2C(
-            worker_id=worker_id, input_shape=input_shape, action_shape=action_shape, num_outputs=num_outputs,
-            action_min=action_min, action_max=action_max, params=params, device=device
+            worker_id=worker_id, observation_shape=observation_shape, action_shape=action_shape, action_n=action_n,
+            params=params, device=device
         )
     elif params.RL_ALGORITHM == RLAlgorithmName.CONTINUOUS_PPO_V0:
         agent = AgentContinuousPPO(
-            worker_id=worker_id, input_shape=input_shape, action_shape=action_shape, num_outputs=num_outputs,
+            worker_id=worker_id, observation_shape=observation_shape, action_shape=action_shape, num_outputs=num_outputs,
             action_min=action_min, action_max=action_max, params=params, device=device
         )
     elif params.RL_ALGORITHM == RLAlgorithmName.DISCRETE_PPO_V0:
         agent = AgentDiscretePPO(
-            worker_id=worker_id, input_shape=input_shape, action_shape=action_shape, num_outputs=num_outputs,
-            action_min=action_min, action_max=action_max, params=params, device=device
+            worker_id=worker_id, observation_shape=observation_shape, action_shape=action_shape, action_n=action_n,
+            params=params, device=device
         )
     elif params.RL_ALGORITHM == RLAlgorithmName.EVOLUTION_STRATEGY:
         agent = AgentEMAES(
-            worker_id=worker_id, input_shape=input_shape, action_shape=action_shape, num_outputs=num_outputs,
+            worker_id=worker_id, observation_shape=observation_shape, action_shape=action_shape, num_outputs=num_outputs,
             action_min=action_min, action_max=action_max, params=params, device=device
         )
     elif params.RL_ALGORITHM == RLAlgorithmName.GENETIC_ALGORITHM:
         agent = AgentGA(
-            worker_id=worker_id, input_shape=input_shape, action_shape=action_shape, num_outputs=num_outputs,
+            worker_id=worker_id, observation_shape=observation_shape, action_shape=action_shape, num_outputs=num_outputs,
             action_min=action_min, action_max=action_max, params=params, device=device
         )
     elif params.RL_ALGORITHM == RLAlgorithmName.MULTI_GENETIC_ALGORITHM:
         agent = AgentMultiGA(
-            worker_id=worker_id, input_shape=input_shape, action_shape=action_shape, num_outputs=num_outputs,
+            worker_id=worker_id, observation_shape=observation_shape, action_shape=action_shape, num_outputs=num_outputs,
             action_min=action_min, action_max=action_max, params=params, device=device
         )
     else:
@@ -360,10 +368,9 @@ def initial_agent_state(
         critic_hidden_state=None, critic_1_hidden_state=None, critic_2_hidden_state=None
 ):
     if params.DEEP_LEARNING_MODEL in [
-        DeepLearningModelName.STOCHASTIC_CONTINUOUS_ACTOR_CRITIC_RNN,
-        DeepLearningModelName.DETERMINISTIC_CONTINUOUS_ACTOR_CRITIC_RNN,
-        DeepLearningModelName.STOCHASTIC_DISCRETE_ACTOR_CRITIC_RNN,
-        DeepLearningModelName.DETERMINISTIC_CONTINUOUS_ACTOR_CRITIC_RNN_ATTENTION
+        DeepLearningModelName.CONTINUOUS_STOCHASTIC_ACTOR_CRITIC_RNN,
+        DeepLearningModelName.CONTINUOUS_DETERMINISTIC_ACTOR_CRITIC_RNN,
+        DeepLearningModelName.DISCRETE_STOCHASTIC_ACTOR_CRITIC_RNN
     ]:
         num_directions = 2 if params.RNN_BIDIRECTIONAL else 1
 

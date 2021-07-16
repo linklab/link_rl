@@ -3,9 +3,9 @@ import torch
 import torch.nn.functional as F
 from torch.distributions import Normal, MultivariateNormal
 
-from codes.c_models.continuous_action.stochastic_continuous_actor_critic_model import StochasticContinuousActorCriticModel
+from codes.c_models.continuous_action.continuous_stochastic_actor_critic_model import StochasticContinuousActorCriticModel
 from codes.d_agents.on_policy.a2c.a2c_agent import AgentA2C
-from codes.d_agents.on_policy.on_policy_action_selector import ContinuousNormalActionSelector
+from codes.d_agents.on_policy.stochastic_policy_action_selector import ContinuousNormalActionSelector
 from codes.e_utils import rl_utils
 from codes.e_utils.common_utils import show_tensor_info
 from codes.e_utils.names import DeepLearningModelName, AgentMode
@@ -18,7 +18,7 @@ class AgentContinuousA2C(AgentA2C):
             self, worker_id, input_shape, action_shape, num_outputs, action_min, action_max, params, device
     ):
         assert params.DEEP_LEARNING_MODEL in [
-            DeepLearningModelName.STOCHASTIC_CONTINUOUS_ACTOR_CRITIC_MLP
+            DeepLearningModelName.CONTINUOUS_STOCHASTIC_ACTOR_CRITIC_MLP
         ]
         super(AgentContinuousA2C, self).__init__(worker_id, action_shape, action_min, action_max, params, device)
 
@@ -63,7 +63,9 @@ class AgentContinuousA2C(AgentA2C):
         # states_v.shape: (32, 3)
         # actions_v.shape: (32, 1)
         # target_action_values_v.shape: (32,)
-        batch_states_v, batch_actions_v, batch_target_action_values_v = self.unpack_batch_for_actor_critic(batch, self.model, self.params)
+        batch_states_v, batch_actions_v, batch_target_action_values_v = self.unpack_batch_for_actor_critic(
+            batch=batch, target_model=self.model, params=self.params
+        )
 
         # mu_v.shape: (32, 1)
         # var_v.shape: (32, 1)

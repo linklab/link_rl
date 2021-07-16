@@ -10,12 +10,10 @@ from codes.e_utils import replay_buffer
 class AgentPPO(OnPolicyAgent):
     """
     """
-    def __init__(self, worker_id, params, action_shape, action_min, action_max, device):
+    def __init__(self, worker_id, action_shape, params, device):
         assert params.N_STEP == 1  # GAE will consider various N_STEPs
 
-        super(AgentPPO, self).__init__(
-            worker_id=worker_id, params=params, action_shape=action_shape, action_min=action_min, action_max=action_max, device=device
-        )
+        super(AgentPPO, self).__init__(worker_id=worker_id, action_shape=action_shape, params=params, device=device)
 
         self.train_action_selector = None
         self.test_and_play_action_selector = None

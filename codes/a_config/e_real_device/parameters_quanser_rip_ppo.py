@@ -3,13 +3,13 @@ import math
 from codes.a_config._rl_parameters.off_policy.parameter_td3 import PARAMETERS_TD3, TD3ActionType, TD3ActionSelectorType
 from codes.a_config._rl_parameters.on_policy.parameter_ppo import PARAMETERS_PPO
 from codes.e_utils.names import *
-from codes.a_config.parameters_general import PARAMETERS_GENERAL
+from codes.a_config.parameters_general import PARAMETERS_GENERAL, StochasticActionType, StochasticActionSelectorType
 
 
 class PARAMETERS_QUANSER_RIP_PPO(PARAMETERS_GENERAL, PARAMETERS_PPO):
     ENVIRONMENT_ID = EnvironmentName.QUANSER_SERVO_2
     RL_ALGORITHM = RLAlgorithmName.CONTINUOUS_PPO_V0
-    DEEP_LEARNING_MODEL = DeepLearningModelName.STOCHASTIC_CONTINUOUS_ACTOR_CRITIC_MLP
+    DEEP_LEARNING_MODEL = DeepLearningModelName.CONTINUOUS_STOCHASTIC_ACTOR_CRITIC_MLP
 
     VELOCITY_STATE_DENOMINATOR = 100.0
     REWARD_DENOMINATOR = math.pi
@@ -21,7 +21,7 @@ class PARAMETERS_QUANSER_RIP_PPO(PARAMETERS_GENERAL, PARAMETERS_PPO):
     MAX_EPISODE_STEP_AT_PLAY = 10000000000
     MAX_EPISODE_STEP = 10000
     MAX_GLOBAL_STEP = 10000000
-    GAMMA = 0.999
+    GAMMA = 0.99
 
     BATCH_SIZE = 128
     AVG_EPISODE_SIZE_FOR_STAT = 50
@@ -43,3 +43,5 @@ class PARAMETERS_QUANSER_RIP_PPO(PARAMETERS_GENERAL, PARAMETERS_PPO):
 
     UNIT_TIME = 0.005
 
+    TYPE_OF_STOCHASTIC_ACTION = StochasticActionType.SAMPLE
+    TYPE_OF_STOCHASTIC_ACTION_SELECTOR = StochasticActionSelectorType.SOMETIMES_BLOW_ACTION_SELECTOR

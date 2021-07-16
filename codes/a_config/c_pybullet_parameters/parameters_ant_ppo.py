@@ -5,7 +5,7 @@ from codes.a_config.parameters_general import PARAMETERS_GENERAL
 # https://github.com/bulletphysics/bullet3/blob/master/examples/pybullet/gym/pybullet_envs/minitaur/envs/minitaur_gym_env.py
 class PARAMETERS_ANT_PPO(PARAMETERS_GENERAL, PARAMETERS_PPO):
     ENVIRONMENT_ID = EnvironmentName.PYBULLET_ANT_V0
-    DEEP_LEARNING_MODEL = DeepLearningModelName.STOCHASTIC_CONTINUOUS_ACTOR_CRITIC_MLP
+    DEEP_LEARNING_MODEL = DeepLearningModelName.CONTINUOUS_STOCHASTIC_ACTOR_CRITIC_MLP
     RL_ALGORITHM = RLAlgorithmName.CONTINUOUS_PPO_V0
     OPTIMIZER = OptimizerName.ADAM
 
@@ -19,10 +19,10 @@ class PARAMETERS_ANT_PPO(PARAMETERS_GENERAL, PARAMETERS_PPO):
     AVG_EPISODE_SIZE_FOR_STAT = 50
 
     ## PPO
-    PPO_GAE_LAMBDA = 0.75
+    PPO_GAE_LAMBDA = 0.95
     PPO_TRAJECTORY_SIZE = 2049
     PPO_TRAJECTORY_BATCH_SIZE = 128
-    ACTOR_LEARNING_RATE = 0.0002
+    ACTOR_LEARNING_RATE = 0.00015
     LEARNING_RATE = 0.001
     PPO_K_EPOCHS = 10
     PPO_EPSILON_CLIP = 0.2

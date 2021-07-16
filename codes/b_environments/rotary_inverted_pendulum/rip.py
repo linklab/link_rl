@@ -126,27 +126,29 @@ def get_rip_action_info(params, pendulum_type):
         else:
             raise ValueError()
         action_space = gym.spaces.Discrete(len(action_index_to_voltage))
-        n_actions = action_space.n
+        num_outputs = 1
+        action_n = action_space.n
         action_min = 0
-        action_max = n_actions - 1
+        action_max = action_space.n - 1
     else:
         action_index_to_voltage = None
         action_space = gym.spaces.Box(
             low=-params.ACTION_SCALE, high=params.ACTION_SCALE, shape=(1,),
             dtype=np.float32
         )
-        n_actions = action_space.shape[0]
+        num_outputs = action_space.shape[0]
+        action_n = None
         action_min = action_space.low
         action_max = action_space.high
 
-    return action_space, n_actions, action_min, action_max, action_index_to_voltage
+    return action_space, num_outputs, action_n, action_min, action_max, action_index_to_voltage
 
 
 class RotaryInvertedPendulumEnv(gym.Env):
     def __init__(
             self, env_reset=True, pendulum_type=EnvironmentName.PENDULUM_MATLAB_V0, params=None, mode=AgentMode.TRAIN
     ):
-        self.action_ = 600
+        self.test_action = 300
 
         self.episode_steps = 0
         self.total_steps = 0
@@ -194,9 +196,8 @@ class RotaryInvertedPendulumEnv(gym.Env):
         self.too_long_and_fast_pendulum_velocity = False
         self.count_continuous_fast_pendulum_velocity = 0
 
-        self.action_space, self.n_actions, self.action_min, self.action_max, self.action_index_to_voltage = get_rip_action_info(
-            params, self.pendulum_type
-        )
+        self.action_space, self.num_outputs, self.action_n, self.action_min, self.action_max, \
+        self.action_index_to_voltage = get_rip_action_info(params, self.pendulum_type)
 
         self.observation_space, self.n_states = get_rip_observation_space(self.pendulum_type, self.params)
 
@@ -539,7 +540,7 @@ class RotaryInvertedPendulumEnv(gym.Env):
                 RLAlgorithmName.CONTINUOUS_A2C_V0,
                 RLAlgorithmName.CONTINUOUS_PPO_V0,
                 RLAlgorithmName.TD3_V0,
-                RLAlgorithmName.SAC_V0,
+                RLAlgorithmName.CONTINUOUS_SAC_V0,
             ]:
                 action = random.uniform(a=-1.0, b=1.0)
                 self.previous_actions.append(float(action))
@@ -579,6 +580,11 @@ class RotaryInvertedPendulumEnv(gym.Env):
             # else:
             #     action_ = -400
             # print(action)
+
+            # if self.step_idx % 50 == 0:
+            #     self.test_action = -self.test_action
+            # print(self.test_action)
+
             rip_response = self.server_obj.step(RipRequest(value=action))
             self.motor_position = math.radians(rip_response.arm_angle)
             self.motor_velocity = rip_response.arm_velocity
@@ -890,12 +896,14 @@ class RotaryInvertedPendulumEnv(gym.Env):
             alpha_motor_velocity * abs(self.motor_velocity)
         ) / energy_penalty_denominator
 
-        # print(self.pendulum_1_velocity, self.pendulum_2_velocity, self.motor_velocity, energy_penalty)
         # self.episode_position_reward_list.append(position_reward)
         # self.episode_pendulum_velocity_reward_list.append(energy_penalty)
         # self.episode_action_reward_list.append(0.0)
 
         reward = position_reward + energy_penalty
+
+        # print(position_reward, ":", self.pendulum_1_velocity, self.pendulum_2_velocity, self.motor_velocity, energy_penalty)
+
         # if self.is_upright:
         #     print(
         #         "position_reward: {0:3.4f}".format(position_reward),

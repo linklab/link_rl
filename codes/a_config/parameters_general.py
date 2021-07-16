@@ -10,6 +10,16 @@ class RIPEnvRewardType(enum.Enum):
     UNTIL_TERMINAL_ZERO = 3
 
 
+class StochasticActionSelectorType(enum.Enum):
+    BASIC_ACTION_SELECTOR = 0
+    SOMETIMES_BLOW_ACTION_SELECTOR = 1
+
+
+class StochasticActionType(enum.Enum):
+    SAMPLE = 0
+    ONLY_GREEDY = 1
+
+
 class PARAMETERS_GENERAL:
     # [GENERAL]
     SEED = 1
@@ -130,7 +140,7 @@ class PARAMETERS_GENERAL:
     CURIOSITY_DRIVEN_BETA = 0.2
     CURIOSITY_DRIVEN_LAMBDA = 0.1
 
-    PERIODIC_MODEL_SAVE = False
+    PERIODIC_MODEL_SAVE = True
 
     UNIT_TIME = 0.5
 

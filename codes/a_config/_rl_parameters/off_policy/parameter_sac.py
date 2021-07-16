@@ -1,45 +1,38 @@
-import enum
+from codes.a_config._rl_parameters.off_policy.parameter_off_policy import PARAMETERS_OFF_POLICY
+from codes.a_config.parameters_general import StochasticActionType, StochasticActionSelectorType
 
 
-class SACActionSelectorType(enum.Enum):
-    BASIC_ACTION_SELECTOR = 0
-    SOMETIMES_BLOW_ACTION_SELECTOR = 1
-
-
-class SACActionType(enum.Enum):
-    SAMPLE = 0
-    ONLY_GREEDY = 1
-
-
-class PARAMETERS_SAC:
+class PARAMETERS_SAC(PARAMETERS_OFF_POLICY):
     ENVIRONMENT_ID = None
     PER_PROPORTIONAL = False
     PER_RANK_BASED = False
-    DOUBLE = True
 
     REPLAY_BUFFER_SIZE = 100000
 
     TAU = 0.001
 
-    NOISE_ENABLED = True
-
-    EPSILON_INIT = 1.0
-    EPSILON_MIN = 0.01
-    EPSILON_MIN_STEP = 1000000
-
     TRAIN_ONLY_AFTER_EPISODE = False
     NUM_TRAIN_ONLY_AFTER_EPISODE = None
 
-    TYPE_OF_SAC_ACTION = SACActionType.SAMPLE
-    TYPE_OF_SAC_ACTION_SELECTOR = SACActionSelectorType.BASIC_ACTION_SELECTOR
+    TYPE_OF_STOCHASTIC_ACTION = StochasticActionType.SAMPLE
+    TYPE_OF_STOCHASTIC_ACTION_SELECTOR = StochasticActionSelectorType.BASIC_ACTION_SELECTOR
 
     N_STEP = 2
 
-    NOISY_NET = False
-
-    PER = False
-
     ALPHA = 0.2
 
-    ENTROPY_TUNING = True
+    ENTROPY_TUNING = False
 
+    LEARNING_RATE = 0.002
+    ACTOR_LEARNING_RATE = 0.0002
+    ALPHA_LEARNING_RATE = 0.0001
+
+    TRAIN_STEP_FREQ = 2
+    POLICY_UPDATE_FREQUENCY = 2 * TRAIN_STEP_FREQ
+
+
+if __name__ == "__main__":
+    params = PARAMETERS_SAC()
+    for param in dir(params):
+        if not param.startswith("__"):
+            print(param, "=", getattr(params, param))

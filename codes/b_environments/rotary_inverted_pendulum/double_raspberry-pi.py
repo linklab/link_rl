@@ -1,3 +1,4 @@
+import random
 import time
 from collections import deque
 from concurrent import futures
@@ -134,7 +135,8 @@ class RotaryDoubleInvertedPendulum:
             ))
             self.next_check_angle_step += self.check_angle_period_steps
         else:
-            time.sleep(3)
+            sleep_time = random.randrange(2, 6)
+            time.sleep(sleep_time)
             arm_angle, arm_velocity, link_1_angle, link_1_velocity, link_2_angle, link_2_velocity = self.calculate_state()
         # spi.xfer2([0x40, 0x00, 0x10, 0x00, 0x00])
 

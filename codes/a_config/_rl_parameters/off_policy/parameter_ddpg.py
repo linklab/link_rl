@@ -1,5 +1,7 @@
 import enum
 
+from codes.a_config._rl_parameters.off_policy.parameter_off_policy import PARAMETERS_OFF_POLICY
+
 
 class DDPGActionSelectorType(enum.Enum):
     BASIC_ACTION_SELECTOR = 0
@@ -25,7 +27,7 @@ class DDPGTargetUpdateOnlyAfterEpisode(enum.Enum):
     HARD_UPDATE = 1
 
 
-class PARAMETERS_DDPG:
+class PARAMETERS_DDPG(PARAMETERS_OFF_POLICY):
     ENVIRONMENT_ID = None
     PER_PROPORTIONAL = False
     PER_RANK_BASED = False

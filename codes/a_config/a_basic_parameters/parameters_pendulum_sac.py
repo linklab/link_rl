@@ -1,14 +1,13 @@
-from codes.a_config._rl_parameters.off_policy.parameter_ddpg import PARAMETERS_DDPG, DDPGActionType, \
-    DDPGActionSelectorType
-from codes.a_config._rl_parameters.off_policy.parameter_sac import PARAMETERS_SAC, SACActionType, SACActionSelectorType
+from codes.a_config._rl_parameters.off_policy.parameter_sac import PARAMETERS_SAC, StochasticActionType, \
+    StochasticActionSelectorType
 from codes.a_config.parameters_general import PARAMETERS_GENERAL
 from codes.e_utils.names import EnvironmentName, DeepLearningModelName, RLAlgorithmName, OptimizerName
 
 
 class PARAMETERS_PENDULUM_SAC(PARAMETERS_GENERAL, PARAMETERS_SAC):
     ENVIRONMENT_ID = EnvironmentName.PENDULUM_V0
-    DEEP_LEARNING_MODEL = DeepLearningModelName.SOFT_ACTOR_CRITIC_MLP
-    RL_ALGORITHM = RLAlgorithmName.SAC_V0
+    DEEP_LEARNING_MODEL = DeepLearningModelName.CONTINUOUS_SAC_MLP
+    RL_ALGORITHM = RLAlgorithmName.CONTINUOUS_SAC_V0
     OPTIMIZER = OptimizerName.ADAM
 
     TRAIN_STOP_EPISODE_REWARD = -140
@@ -18,8 +17,7 @@ class PARAMETERS_PENDULUM_SAC(PARAMETERS_GENERAL, PARAMETERS_SAC):
 
     REPLAY_BUFFER_SIZE = 100000
     LEARNING_RATE = 0.001
-    ACTOR_LEARNING_RATE = 0.001
-    TRAIN_STEP_FREQ = 1
+    ACTOR_LEARNING_RATE = 0.0001
     GAMMA = 0.99
     BATCH_SIZE = 128
 
@@ -30,11 +28,11 @@ class PARAMETERS_PENDULUM_SAC(PARAMETERS_GENERAL, PARAMETERS_SAC):
 
     CLIP_GRAD = 3.0
 
-    NOISE_ENABLED = True
-
     TRAIN_ONLY_AFTER_EPISODE = False
     NUM_TRAIN_ONLY_AFTER_EPISODE = 100
 
-    TYPE_OF_SAC_ACTION = SACActionType.SAMPLE
-    TYPE_OF_SAC_ACTION_SELECTOR = SACActionSelectorType.BASIC_ACTION_SELECTOR
+    TYPE_OF_STOCHASTIC_ACTION = StochasticActionType.SAMPLE
+    TYPE_OF_STOCHASTIC_ACTION_SELECTOR = StochasticActionSelectorType.BASIC_ACTION_SELECTOR
 
+    TRAIN_STEP_FREQ = 2
+    POLICY_UPDATE_FREQUENCY = 2 * TRAIN_STEP_FREQ

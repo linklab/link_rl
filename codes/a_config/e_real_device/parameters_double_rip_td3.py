@@ -4,14 +4,10 @@ from codes.e_utils.names import OptimizerName, RLAlgorithmName, EnvironmentName,
 
 
 class PARAMETERS_DOUBLE_RIP_TD3(PARAMETERS_GENERAL, PARAMETERS_TD3):
-    # [GENERAL]
-    SEED = 1
-    MY_PLATFORM = None
-    PYTHON_PATH = None
-    EMA_WINDOW = 10
-    VERBOSE = True
-    MODEL_SAVE = False
-    NUM_ENVIRONMENTS = 1
+    ENVIRONMENT_ID = EnvironmentName.REAL_DEVICE_DOUBLE_RIP
+    DEEP_LEARNING_MODEL = DeepLearningModelName.TD3_MLP
+    RL_ALGORITHM = RLAlgorithmName.TD3_V0
+    OPTIMIZER = OptimizerName.ADAM
 
     ########################################
     ########################################
@@ -23,17 +19,11 @@ class PARAMETERS_DOUBLE_RIP_TD3(PARAMETERS_GENERAL, PARAMETERS_TD3):
     STOP_PATIENCE_COUNT = 10
 
     REPLAY_BUFFER_SIZE = 5000000
-    AVG_EPISODE_SIZE_FOR_STAT = 10
+    AVG_EPISODE_SIZE_FOR_STAT = 50
     N_STEP = 2
 
     #########################################
     #########################################
-
-    # [MLP_DEEP_LEARNING_MODEL]
-    HIDDEN_1_SIZE = 128
-    HIDDEN_2_SIZE = 128
-    HIDDEN_3_SIZE = 128
-    # HIDDEN_SIZE_LIST = [128, 128, 128, 256]
 
     # [OPTIMIZATION]
     GAMMA = 0.99 # discount factor
@@ -50,6 +40,7 @@ class PARAMETERS_DOUBLE_RIP_TD3(PARAMETERS_GENERAL, PARAMETERS_TD3):
     LEARNING_RATE = 0.002
     ACTION_SCALE = 500
     BALANCING_SCALE_FACTOR = 0.01
+
     ENV_RESET = False
 
     # [DQN]
@@ -57,12 +48,6 @@ class PARAMETERS_DOUBLE_RIP_TD3(PARAMETERS_GENERAL, PARAMETERS_TD3):
 
     # [CUDA]
     CUDA_VISIBLE_DEVICES_NUMBER_LIST = '1, 2'
-
-    # [1. ENVIRONMENTS]
-    ENVIRONMENT_ID = EnvironmentName.REAL_DEVICE_DOUBLE_RIP
-
-    # [4. OPTIMIZER]
-    OPTIMIZER = OptimizerName.ADAM
 
     TRAIN_ONLY_AFTER_EPISODE = False
     NUM_TRAIN_ONLY_AFTER_EPISODE = 100
@@ -72,9 +57,6 @@ class PARAMETERS_DOUBLE_RIP_TD3(PARAMETERS_GENERAL, PARAMETERS_TD3):
     TYPE_OF_RIP_REWARD = RIPEnvRewardType.NEW  # "old_version"
     TYPE_OF_TD3_ACTION = TD3ActionType.GAUSSIAN_NOISE
     TYPE_OF_TD3_ACTION_SELECTOR = TD3ActionSelectorType.SOMETIMES_BLOW_ACTION_SELECTOR
-
-    DEEP_LEARNING_MODEL = DeepLearningModelName.TD3_MLP
-    RL_ALGORITHM = RLAlgorithmName.TD3_V0
 
     TRAIN_STEP_FREQ = 4
     POLICY_UPDATE_FREQUENCY = 2 * TRAIN_STEP_FREQ
