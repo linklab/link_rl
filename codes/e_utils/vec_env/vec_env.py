@@ -175,6 +175,7 @@ class VecEnvWrapper(VecEnv):
             raise AttributeError("attempted to get missing private attribute '{}'".format(name))
         return getattr(self.venv, name)
 
+
 class VecEnvObservationWrapper(VecEnvWrapper):
     @abstractmethod
     def process(self, obs):

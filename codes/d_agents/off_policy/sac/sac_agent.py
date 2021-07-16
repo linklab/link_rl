@@ -41,8 +41,8 @@ class AgentSAC(OffPolicyAgent):
     def reset_alpha(self):
         # if self.params.ENTROPY_TUNING:
         # Target entropy is -|A|.
-        # self.target_entropy = -torch.prod(torch.Tensor(self.action_shape))
-        self.target_entropy = -torch.zeros(self.action_shape, device=self.device).detach()
+        self.target_entropy = -torch.tensor(self.params.ENTROPY_TUNING_TARGET_ENTROPY)
+        # self.target_entropy = -torch.zeros(self.action_shape, device=self.device).detach()
 
         #print(self.target_entropy, "!")
 
@@ -72,7 +72,7 @@ class AgentSAC(OffPolicyAgent):
             q1_v, q2_v = self.model.base.twinq(initial_obs_batch, mu_v)
 
             meta_objective = torch.div(torch.add(q1_v, q2_v), 2.0) - self.alpha * log_probs_v
-            meta_loss = -1.0 * meta_objective.mean()
+            meta_loss = meta_objective.mean()
             meta_loss.backward()
             nn_utils.clip_grad_norm_([self.log_alpha], self.params.CLIP_GRAD)
             self.alpha_optimizer.step()

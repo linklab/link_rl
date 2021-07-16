@@ -1,3 +1,4 @@
+from abc import abstractmethod
 from copy import deepcopy
 
 from gym.vector import SyncVectorEnv
