@@ -87,3 +87,10 @@ class PARAMETERS_RIP_TD3(PARAMETERS_GENERAL, PARAMETERS_TD3):
     PENDULUM_STATE_INFO = 2  #0:ALL INFO, 1: ALL ARM INFO IGNORED, 2: ARM ANGLE INFO IGNORED (VELOCITY IS INCLUDED)
 
     PERIODIC_MODEL_SAVE = True
+
+
+if __name__ == "__main__":
+    params = PARAMETERS_RIP_TD3()
+    for param in dir(params):
+        if not param.startswith("__"):
+            print(param, "=", getattr(params, param))
