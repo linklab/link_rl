@@ -896,12 +896,14 @@ class RotaryInvertedPendulumEnv(gym.Env):
             alpha_motor_velocity * abs(self.motor_velocity)
         ) / energy_penalty_denominator
 
-        # print(self.pendulum_1_velocity, self.pendulum_2_velocity, self.motor_velocity, energy_penalty)
         # self.episode_position_reward_list.append(position_reward)
         # self.episode_pendulum_velocity_reward_list.append(energy_penalty)
         # self.episode_action_reward_list.append(0.0)
 
         reward = position_reward + energy_penalty
+
+        # print(position_reward, ":", self.pendulum_1_velocity, self.pendulum_2_velocity, self.motor_velocity, energy_penalty)
+
         # if self.is_upright:
         #     print(
         #         "position_reward: {0:3.4f}".format(position_reward),

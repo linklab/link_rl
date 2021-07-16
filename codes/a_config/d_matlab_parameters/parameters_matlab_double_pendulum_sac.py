@@ -53,3 +53,10 @@ class PARAMETERS_DOUBLE_PENDULUM_MATLAB_SAC(PARAMETERS_GENERAL, PARAMETERS_SAC):
     UNIT_TIME = 0.006
 
     PERIODIC_MODEL_SAVE = True
+
+
+if __name__ == "__main__":
+    params = PARAMETERS_DOUBLE_PENDULUM_MATLAB_SAC()
+    for param in dir(params):
+        if not param.startswith("__"):
+            print(param, "=", getattr(params, param))
