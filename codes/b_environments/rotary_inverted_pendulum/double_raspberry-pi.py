@@ -172,8 +172,8 @@ class RotaryDoubleInvertedPendulum:
         # print(self.step_idx, elapsed_time, motor_power)
         # self.last_step_call = time.time()
         # print(self.step_idx, motor_power)
-        if self.previous_action * motor_power < 0:
-            spi.xfer2([0x40, 0x00, 0x01, 0x00, 0x00])
+        # if self.previous_action * motor_power < 0:
+        #     spi.xfer2([0x40, 0x00, 0x01, 0x00, 0x00])
 
         self.apply_action(motor_power)
 
