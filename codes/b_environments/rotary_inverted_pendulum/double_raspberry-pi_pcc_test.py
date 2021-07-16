@@ -182,8 +182,8 @@ class RotaryDoubleInvertedPendulum:
             link_2_angle=link_2_angle, link_2_velocity=link_2_velocity
         )
 
-    def run(self):
-        motor_power = int(50)
+    def run(self, action):
+        motor_power = int(action)
         motor_radian_list = []
         pendulum_radian_list = []
         motor_radian_vel_list = []
@@ -201,8 +201,8 @@ class RotaryDoubleInvertedPendulum:
             pendulum_radian_list.append(link_1_angle)
             motor_radian_vel_list.append(arm_velocity)
             pendulum_radian_vel_list.append(link_1_velocity)
-            print("motor_radian:", arm_angle)
-            print("pendulum_radian: ", link_1_angle)
+            # print("motor_radian:", arm_angle)
+            # print("pendulum_radian: ", link_1_angle)
             time.sleep(0.1)
         spi.xfer2([0x40, 0x00, 0x01, 0x00, 0x00])
         return motor_radian_list, pendulum_radian_list, motor_radian_vel_list, pendulum_radian_vel_list
@@ -372,53 +372,60 @@ def velocity_check(rip, server):
 
 if __name__ == "__main__":
     rip = RotaryDoubleInvertedPendulum()
+    for j in range(3):
+        if j == 0:
+            action = 30
+        elif j == 1:
+            action = 40
+        else:
+            action = 50
+        for i in range(3):
+            filename_1 = '[{0}]_arm_angle.pickle'.format(i)
+            filename_2 = '[{0}]_link_angle.pickle'.format(i)
+            filename_3 = '[{0}]_arm_vel.pickle'.format(i)
+            filename_4 = '[{0}]_link_vel.pickle'.format(i)
+            rip.reset()
+            time.sleep(0.1)
 
-    for i in range(3):
-        filename_1 = '[{0}]_arm_angle.pickle'.format(i)
-        filename_2 = '[{0}]_link_angle.pickle'.format(i)
-        filename_3 = '[{0}]_arm_vel.pickle'.format(i)
-        filename_4 = '[{0}]_link_vel.pickle'.format(i)
-        rip.reset()
-        time.sleep(0.1)
+            # measure state
+            motor_radian_list, pendulum_radian_list, motor_radian_vel_list, pendulum_radian_vel_list = rip.run(action)
 
-        # measure state
-        motor_radian_list, pendulum_radian_list, motor_radian_vel_list, pendulum_radian_vel_list = rip.run()
+            # save using pickle
+            rip.savePickle(filename_1, motor_radian_list)
+            rip.savePickle(filename_2, pendulum_radian_list)
+            rip.savePickle(filename_3, motor_radian_vel_list)
+            rip.savePickle(filename_4, pendulum_radian_vel_list)
 
-        # save using pickle
-        rip.savePickle(filename_1, motor_radian_list)
-        rip.savePickle(filename_2, pendulum_radian_list)
-        rip.savePickle(filename_3, motor_radian_vel_list)
-        rip.savePickle(filename_4, pendulum_radian_vel_list)
+            time.sleep(1)
+            rip.reset()
+            if i != 2:
+                rip.initialize()
+            time.sleep(10)
 
-        time.sleep(1)
-        rip.reset()
-        if i != 2:
-            rip.initialize()
-        time.sleep(10)
-
-    filename_1_motor = '[0]_arm_angle.pickle'
-    filename_2_motor = '[1]_arm_angle.pickle'
-    filename_3_motor = '[2]_arm_angle.pickle'
-    filename_1_pendulum = '[0]_link_angle.pickle'
-    filename_2_pendulum = '[1]_link_angle.pickle'
-    filename_3_pendulum = '[2]_link_angle.pickle'
-    filename_1_motor_vel = '[0]_arm_vel.pickle'
-    filename_2_motor_vel = '[1]_arm_vel.pickle'
-    filename_3_motor_vel = '[2]_arm_vel.pickle'
-    filename_1_pendulum_vel = '[0]_link_vel.pickle'
-    filename_2_pendulum_vel = '[1]_link_vel.pickle'
-    filename_3_pendulum_vel = '[2]_link_vel.pickle'
-    print("corr of arm_angle")
-    rip.get_pcc(filename_1_motor, filename_2_motor, filename_3_motor)
-    print()
-    print("corr of link_angle")
-    rip.get_pcc(filename_1_pendulum, filename_2_pendulum, filename_3_pendulum)
-    print()
-    print("corr of arm_vel")
-    rip.get_pcc(filename_1_motor_vel, filename_2_motor_vel, filename_3_motor_vel)
-    print()
-    print("corr of link_vel")
-    rip.get_pcc(filename_1_pendulum_vel, filename_2_pendulum_vel, filename_3_pendulum_vel)
+        filename_1_motor = '[0]_arm_angle.pickle'
+        filename_2_motor = '[1]_arm_angle.pickle'
+        filename_3_motor = '[2]_arm_angle.pickle'
+        filename_1_pendulum = '[0]_link_angle.pickle'
+        filename_2_pendulum = '[1]_link_angle.pickle'
+        filename_3_pendulum = '[2]_link_angle.pickle'
+        filename_1_motor_vel = '[0]_arm_vel.pickle'
+        filename_2_motor_vel = '[1]_arm_vel.pickle'
+        filename_3_motor_vel = '[2]_arm_vel.pickle'
+        filename_1_pendulum_vel = '[0]_link_vel.pickle'
+        filename_2_pendulum_vel = '[1]_link_vel.pickle'
+        filename_3_pendulum_vel = '[2]_link_vel.pickle'
+        print("action :", action)
+        print("corr of arm_angle")
+        rip.get_pcc(filename_1_motor, filename_2_motor, filename_3_motor)
+        print()
+        print("corr of link_angle")
+        rip.get_pcc(filename_1_pendulum, filename_2_pendulum, filename_3_pendulum)
+        print()
+        print("corr of arm_vel")
+        rip.get_pcc(filename_1_motor_vel, filename_2_motor_vel, filename_3_motor_vel)
+        print()
+        print("corr of link_vel")
+        rip.get_pcc(filename_1_pendulum_vel, filename_2_pendulum_vel, filename_3_pendulum_vel)
 
 
 
