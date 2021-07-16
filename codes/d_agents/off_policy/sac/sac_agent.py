@@ -2,6 +2,8 @@
 # https://github.com/pranz24/pytorch-soft-actor-critic
 # https://github.com/ku2482/soft-actor-critic.pytorch/blob/master/code/agent.py
 # https://github.com/cyoon1729/Policy-Gradient-Methods/blob/master/sac/sac2019.py
+# https://github.com/twni2016/Meta-SAC/blob/d60c0fc8c4446bb416ed2da168acef1ce2636f92/meta_sac/mainmeta.py
+# https://github.com/twni2016/Meta-SAC/blob/d60c0fc8c4446bb416ed2da168acef1ce2636f92/meta_sac/sacmeta.py
 from collections import deque
 
 import torch
@@ -59,30 +61,25 @@ class AgentSAC(OffPolicyAgent):
 
     def meta_learning_alpha(self):
         if len(self.initial_obs_deque) >= self.params.BATCH_SIZE:
-            # self.temp_model = ContinuousSACModel(
-            #     worker_id=-1,
-            #     observation_shape=self.observation_shape,
-            #     num_outputs=self.num_outputs,
-            #     params=self.params,
-            #     device=self.device
-            # ).to(self.device)
-            # self.temp_model.sync(self.model)
-
             self.alpha_optimizer.zero_grad()
+            self.model.eval()
 
             initial_obs_batch = torch.FloatTensor(list(self.initial_obs_deque)).to(self.device)
 
-            mu_v, _ = self.model.base.actor(initial_obs_batch)
+            mu_v, logstd_v = self.model.base.actor(initial_obs_batch)
+            dist = Normal(loc=mu_v, scale=torch.exp(logstd_v))
+            log_probs_v = dist.log_prob(mu_v).sum(dim=-1, keepdim=True)
             q1_v, q2_v = self.model.base.twinq(initial_obs_batch, mu_v)
 
-            meta_objective = torch.min(q1_v, q2_v).mean()
-            meta_loss = -1.0 * meta_objective
-            meta_loss.backward(retain_graph=True)
+            meta_objective = torch.div(torch.add(q1_v, q2_v), 2.0) - self.alpha * log_probs_v
+            meta_loss = -1.0 * meta_objective.mean()
+            meta_loss.backward()
             nn_utils.clip_grad_norm_([self.log_alpha], self.params.CLIP_GRAD)
             self.alpha_optimizer.step()
             self.alpha = torch.exp(self.log_alpha)
+            self.model.train()
 
-            print(meta_objective, self.log_alpha, self.alpha, "!!!!!!!!! - 1")
+            #print(meta_objective.mean(), self.log_alpha, self.alpha, "!!!!!!!!! - 1")
 
     def adjust_alpha(self, log_prob_v):
         self.alpha_optimizer.zero_grad()

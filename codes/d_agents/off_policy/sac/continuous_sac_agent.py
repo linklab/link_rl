@@ -4,6 +4,7 @@
 import torch
 import torch.nn.functional as F
 import torch.nn.utils as nn_utils
+from torchviz import make_dot
 
 from codes.a_config._rl_parameters.off_policy.parameter_sac import StochasticActionSelectorType
 from codes.c_models.continuous_action.continuous_sac_model import ContinuousSACModel
@@ -106,9 +107,8 @@ class AgentContinuousSAC(AgentSAC):
         return actions, agent_states
 
     def on_train(self, step_idx):
-        # TODO
-        # if (self.params.ENTROPY_TUNING or self.params.META_TUNING) and self.target_entropy is None:
-        #     self.reset_alpha()
+        if (self.params.ENTROPY_TUNING or self.params.META_TUNING) and self.target_entropy is None:
+            self.reset_alpha()
 
         if self.params.PER_PROPORTIONAL or self.params.PER_RANK_BASED:
             batch, batch_indices, batch_weights = self.buffer.sample(self.params.BATCH_SIZE)
@@ -121,8 +121,8 @@ class AgentContinuousSAC(AgentSAC):
         )
 
         # TODO
-        # if self.params.META_TUNING:
-        #     self.meta_learning_alpha()
+        if self.params.META_TUNING:
+            self.meta_learning_alpha()
 
         # train twinq
         self.twinq_optimizer.zero_grad()
@@ -160,9 +160,10 @@ class AgentContinuousSAC(AgentSAC):
             objectives_v = torch.div(torch.add(q1_v, q2_v), 2.0) - self.alpha * log_prob_v
 
             loss_actor_v = -1.0 * objectives_v.mean()
+
             self.cache_loss_actor_v = loss_actor_v
 
-            loss_actor_v.backward()
+            loss_actor_v.backward(retain_graph=True)
             nn_utils.clip_grad_norm_(self.model.base.actor_params, self.params.CLIP_GRAD)
             self.actor_optimizer.step()
 
