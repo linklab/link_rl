@@ -37,11 +37,11 @@ if params.ENVIRONMENT_ID in [EnvironmentName.REAL_DEVICE_RIP, EnvironmentName.RE
     if params.SERVER_IDX == 0:
         RIP_SERVER = '10.0.0.9'
     elif params.SERVER_IDX == 1:
-        RIP_SERVER = '10.0.0.9'
-    elif params.SERVER_IDX == 2:
         RIP_SERVER = '10.0.0.10'
-    elif params.SERVER_IDX == 3:
+    elif params.SERVER_IDX == 2:
         RIP_SERVER = '10.0.0.11'
+    elif params.SERVER_IDX == 3:
+        RIP_SERVER = None
 
 
 class DoneReason(enum.Enum):
