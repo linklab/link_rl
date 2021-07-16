@@ -152,7 +152,7 @@ class AgentContinuousSAC(AgentSAC):
             # q2_v.shape: torch.Size([128, 1])
             # torch.min(q1_v, q2_v).shape: torch.Size([128, 1])
             # log_prob_v.shape: torch.Size([128, 1])
-            objectives_v = ((q1_v + q2_v) / 2) - self.alpha * log_prob_v
+            objectives_v = torch.div(torch.add(q1_v, q2_v), 2.0) - self.alpha * log_prob_v
 
             loss_actor_v = -1.0 * objectives_v.mean()
             self.cache_loss_actor_v = loss_actor_v
