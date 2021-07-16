@@ -1,4 +1,4 @@
-import random
+import pickle
 import time
 from collections import deque
 from concurrent import futures
@@ -8,6 +8,7 @@ import threading
 import rip_service_pb2_grpc
 from rip_service_pb2 import RipResponse
 import math
+import numpy as np
 spi = spidev.SpiDev()
 spi.open(0, 0)
 spi.max_speed_hz = 5000000 # NOTE
@@ -122,7 +123,7 @@ class RotaryDoubleInvertedPendulum:
 
         # print("spi write elapsed time : {0:10.8f} \n\n".format(time.time() - last_time))
 
-    def reset(self, rip_request, context):
+    def reset(self):
 
         spi.xfer2([0x40, 0x00, 0x01, 0x00, 0x00]) # stop
 
@@ -135,21 +136,13 @@ class RotaryDoubleInvertedPendulum:
             ))
             self.next_check_angle_step += self.check_angle_period_steps
         else:
-            sleep_time = random.randrange(2, 6)
-            time.sleep(sleep_time)
+            time.sleep(3)
             arm_angle, arm_velocity, link_1_angle, link_1_velocity, link_2_angle, link_2_velocity = self.calculate_state()
         # spi.xfer2([0x40, 0x00, 0x10, 0x00, 0x00])
 
         # self.print_state(arm_angle, arm_velocity, link_angle, link_velocity)
 
         self.last_step_call = time.time()
-
-        return RipResponse(
-            message='OK',
-            arm_angle=arm_angle, arm_velocity=arm_velocity,
-            link_1_angle=link_1_angle, link_1_velocity=link_1_velocity,
-            link_2_angle=link_2_angle, link_2_velocity=link_2_velocity
-        )
 
     def reset_sync(self, rip_request, context):
         arm_angle, arm_velocity, link_1_angle, link_1_velocity, link_2_angle, link_2_velocity = self.calculate_state()
@@ -172,8 +165,8 @@ class RotaryDoubleInvertedPendulum:
         # print(self.step_idx, elapsed_time, motor_power)
         # self.last_step_call = time.time()
         # print(self.step_idx, motor_power)
-        # if self.previous_action * motor_power < 0:
-        #     spi.xfer2([0x40, 0x00, 0x01, 0x00, 0x00])
+        if self.previous_action * motor_power < 0:
+            spi.xfer2([0x40, 0x00, 0x01, 0x00, 0x00])
 
         self.apply_action(motor_power)
 
@@ -181,34 +174,38 @@ class RotaryDoubleInvertedPendulum:
 
         # self.print_state(arm_angle, arm_velocity, link_1_angle, link_1_velocity, link_2_angle, link_2_velocity)
         self.previous_action = motor_power
-        #
-        # if link_1_velocity > 3300:
-        #     self.count_continuous_fast_pendulum_velocity += 1
-        # else:
-        #     self.count_continuous_fast_pendulum_velocity = 0
-        #
-        # if self.count_continuous_fast_pendulum_velocity > 300:
-        #     self.force_terminate()
-        #
-        #     return RipResponse(
-        #         message='FORCE_TERMINATE',
-        #         arm_angle=None, arm_velocity=None,
-        #         link_1_angle=None, link_1_velocity=None,
-        #         link_2_angle=None, link_2_velocity=None
-        #     )
-        # else:
-        #     return RipResponse(
-        #         message='OK',
-        #         arm_angle=arm_angle, arm_velocity=arm_velocity,
-        #         link_1_angle=link_1_angle, link_1_velocity=link_1_velocity,
-        #         link_2_angle=link_2_angle, link_2_velocity=link_2_velocity
-        #     )
+
         return RipResponse(
             message='OK',
             arm_angle=arm_angle, arm_velocity=arm_velocity,
             link_1_angle=link_1_angle, link_1_velocity=link_1_velocity,
             link_2_angle=link_2_angle, link_2_velocity=link_2_velocity
         )
+
+    def run(self, action):
+        motor_power = int(action)
+        motor_radian_list = []
+        pendulum_radian_list = []
+        motor_radian_vel_list = []
+        pendulum_radian_vel_list = []
+
+        for i in range(100):
+            if i % 2 == 0:
+                # motor_power = -motor_power
+                self.apply_action(motor_power)
+                arm_angle, arm_velocity, link_1_angle, link_1_velocity, link_2_angle, link_2_velocity = self.calculate_state()
+            else:
+                self.apply_action(-motor_power)
+                arm_angle, arm_velocity, link_1_angle, link_1_velocity, link_2_angle, link_2_velocity = self.calculate_state()
+            motor_radian_list.append(arm_angle)
+            pendulum_radian_list.append(link_1_angle)
+            motor_radian_vel_list.append(arm_velocity)
+            pendulum_radian_vel_list.append(link_1_velocity)
+            # print("motor_radian:", arm_angle)
+            # print("pendulum_radian: ", link_1_angle)
+            time.sleep(0.1)
+        spi.xfer2([0x40, 0x00, 0x01, 0x00, 0x00])
+        return motor_radian_list, pendulum_radian_list, motor_radian_vel_list, pendulum_radian_vel_list
 
     def step_sync(self,rip_request, context):
         motor_power = int(rip_request.value)
@@ -271,6 +268,57 @@ class RotaryDoubleInvertedPendulum:
         print("link 2 angle :", link_2_angle)
         print("link 2 vel :", link_2_velocity)
 
+    def savePickle(self, filename, state_list):
+        with open(filename, 'wb') as f:
+            pickle.dump(state_list, f, pickle.HIGHEST_PROTOCOL)
+
+    def loadPickle(self, filename):
+        with open(filename, 'rb') as f:
+            data = pickle.load(f)
+        return data
+
+    def get_pcc(self, filename_1, filename_2, filename_3):
+        data_1 = self.loadPickle(filename_1)
+        data_2 = self.loadPickle(filename_2)
+        data_3 = self.loadPickle(filename_3)
+
+        len_data_pen_1 = len(data_1)
+        len_data_pen_2 = len(data_2)
+        len_data_pen_3 = len(data_3)
+        # print(len_data_pen_1)
+        # print(len_data_pen_2)
+
+        if len_data_pen_1 != len_data_pen_2:
+            min_len = min(len_data_pen_1, len_data_pen_2)
+            data_pen_1 = data_1[:min_len]
+            data_pen_2 = data_2[:min_len]
+        # print(len(data_pen_1))
+        # print(len(data_pen_2))
+
+        np_data_pen_1 = np.array(data_1)
+        np_data_pen_2 = np.array(data_2)
+        np_data_pen_3 = np.array(data_3)
+
+        # corr = np.corrcoef(np_data_pen_1, np_data_pen_2)
+
+        corr_1_2 = np.corrcoef(np_data_pen_1, np_data_pen_2)
+        corr_1_3 = np.corrcoef(np_data_pen_1, np_data_pen_3)
+        corr_2_3 = np.corrcoef(np_data_pen_2, np_data_pen_3)
+
+        corr = np.zeros((3, 3))
+        for i in range(3):
+            for j in range(3):
+                if i == j:
+                    corr[i][j] = 1
+                elif i == 0 and j == 1:
+                    corr[i][j] = corr_1_2[0][1]
+                elif i == 0 and j == 2:
+                    corr[i][j] = corr_1_3[0][1]
+                elif i == 1 and j == 2:
+                    corr[i][j] = corr_2_3[0][1]
+        print(corr)
+
+
 def start_grpc(rip, server):
     rip_service_pb2_grpc.add_RDIPServicer_to_server(rip, server)
     server.add_insecure_port('[::]:50051')
@@ -309,15 +357,79 @@ def velocity_check(rip, server):
             raise Exception("EXCEED VELOCITY!!!")
         time.sleep(0.005)
 
+# if __name__ == "__main__":
+#     rip = RotaryDoubleInvertedPendulum()
+#     server = grpc.server(futures.ThreadPoolExecutor(max_workers=10))
+#
+#     vel_check = threading.Thread(target=velocity_check, args=(rip, server))
+#     vel_check.start()
+#     start_grpc(rip, server)
+#     # rasp_rip = RotaryDoubleInvertedPendulum()
+#     # try:
+#     #     rasp_rip.step_test()
+#     # except KeyboardInterrupt as e:
+#     #     rasp_rip.test_terminate()
+
 if __name__ == "__main__":
     rip = RotaryDoubleInvertedPendulum()
-    server = grpc.server(futures.ThreadPoolExecutor(max_workers=10))
+    for j in range(3):
+        if j == 0:
+            action = 30
+        elif j == 1:
+            action = 40
+        else:
+            action = 50
+        for i in range(3):
+            filename_1 = '[{0}]_arm_angle.pickle'.format(i)
+            filename_2 = '[{0}]_link_angle.pickle'.format(i)
+            filename_3 = '[{0}]_arm_vel.pickle'.format(i)
+            filename_4 = '[{0}]_link_vel.pickle'.format(i)
+            rip.reset()
+            time.sleep(0.1)
 
-    vel_check = threading.Thread(target=velocity_check, args=(rip, server))
-    vel_check.start()
-    start_grpc(rip, server)
-    # rasp_rip = RotaryDoubleInvertedPendulum()
-    # try:
-    #     rasp_rip.step_test()
-    # except KeyboardInterrupt as e:
-    #     rasp_rip.test_terminate()
+            # measure state
+            motor_radian_list, pendulum_radian_list, motor_radian_vel_list, pendulum_radian_vel_list = rip.run(action)
+
+            # save using pickle
+            rip.savePickle(filename_1, motor_radian_list)
+            rip.savePickle(filename_2, pendulum_radian_list)
+            rip.savePickle(filename_3, motor_radian_vel_list)
+            rip.savePickle(filename_4, pendulum_radian_vel_list)
+
+            time.sleep(1)
+            rip.reset()
+            if i != 2:
+                rip.initialize()
+            time.sleep(10)
+
+        filename_1_motor = '[0]_arm_angle.pickle'
+        filename_2_motor = '[1]_arm_angle.pickle'
+        filename_3_motor = '[2]_arm_angle.pickle'
+        filename_1_pendulum = '[0]_link_angle.pickle'
+        filename_2_pendulum = '[1]_link_angle.pickle'
+        filename_3_pendulum = '[2]_link_angle.pickle'
+        filename_1_motor_vel = '[0]_arm_vel.pickle'
+        filename_2_motor_vel = '[1]_arm_vel.pickle'
+        filename_3_motor_vel = '[2]_arm_vel.pickle'
+        filename_1_pendulum_vel = '[0]_link_vel.pickle'
+        filename_2_pendulum_vel = '[1]_link_vel.pickle'
+        filename_3_pendulum_vel = '[2]_link_vel.pickle'
+        print("action :", action)
+        print("corr of arm_angle")
+        rip.get_pcc(filename_1_motor, filename_2_motor, filename_3_motor)
+        print()
+        print("corr of link_angle")
+        rip.get_pcc(filename_1_pendulum, filename_2_pendulum, filename_3_pendulum)
+        print()
+        print("corr of arm_vel")
+        rip.get_pcc(filename_1_motor_vel, filename_2_motor_vel, filename_3_motor_vel)
+        print()
+        print("corr of link_vel")
+        rip.get_pcc(filename_1_pendulum_vel, filename_2_pendulum_vel, filename_3_pendulum_vel)
+
+
+
+
+
+
+

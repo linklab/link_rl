@@ -211,7 +211,7 @@ class ADJUSTAngleEnv(gym.Env):
         return next_state, self.reward, done, info
 
     def update_current_state(self):
-        if abs(self.pendulum_radian) < math.radians(90):
+        if abs(self.pendulum_radian) < math.radians(12):
             self.count_continuous_uprights += 1
         else:
             self.count_continuous_uprights = 0
