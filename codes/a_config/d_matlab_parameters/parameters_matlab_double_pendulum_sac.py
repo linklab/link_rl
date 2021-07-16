@@ -24,8 +24,10 @@ class PARAMETERS_DOUBLE_PENDULUM_MATLAB_SAC(PARAMETERS_GENERAL, PARAMETERS_SAC):
     LEARNING_RATE = 0.002
     ACTOR_LEARNING_RATE = 0.0002
 
-    TRAIN_STEP_FREQ = 4
-    GAMMA = 0.999
+    TRAIN_STEP_FREQ = 2
+    POLICY_UPDATE_FREQUENCY = 2 * TRAIN_STEP_FREQ
+
+    GAMMA = 0.99
     BATCH_SIZE = 128
     AVG_EPISODE_SIZE_FOR_STAT = 50
 
@@ -51,3 +53,10 @@ class PARAMETERS_DOUBLE_PENDULUM_MATLAB_SAC(PARAMETERS_GENERAL, PARAMETERS_SAC):
     UNIT_TIME = 0.006
 
     PERIODIC_MODEL_SAVE = True
+
+
+if __name__ == "__main__":
+    params = PARAMETERS_DOUBLE_PENDULUM_MATLAB_SAC()
+    for param in dir(params):
+        if not param.startswith("__"):
+            print(param, "=", getattr(params, param))

@@ -28,7 +28,7 @@ class PARAMETERS_DOUBLE_RIP_SAC(PARAMETERS_GENERAL, PARAMETERS_SAC):
     #########################################
 
     # [OPTIMIZATION]
-    GAMMA = 0.999 # discount factor
+    GAMMA = 0.99 # discount factor
     TAU = 0.0001
 
     # [Policy Gradient]

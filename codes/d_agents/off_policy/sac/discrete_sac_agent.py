@@ -39,6 +39,7 @@ class AgentDiscreteSAC(AgentSAC):
             params=params,
             device=device
         ).to(device)
+        self.target_model.sync(self.model)
 
         # grad_false(self.target_model)
 
@@ -49,6 +50,7 @@ class AgentDiscreteSAC(AgentSAC):
             params=params,
             device=device
         ).to(device)
+        self.test_model.sync(self.model)
 
         self.actor_optimizer = rl_utils.get_optimizer(
             parameters=self.model.base.actor_params,
@@ -147,7 +149,7 @@ class AgentDiscreteSAC(AgentSAC):
             nn_utils.clip_grad_norm_(self.model.base.actor_params, self.params.CLIP_GRAD)
             self.actor_optimizer.step()
 
-            self.target_model.twinq_alpha_sync(self.model, alpha=1 - self.params.TAU)
+            self.target_model.twinq_soft_update(self.model, tau=self.params.TAU)
         else:
             loss_actor_v = self.cache_loss_actor_v
 

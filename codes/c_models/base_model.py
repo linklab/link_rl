@@ -172,25 +172,25 @@ class BaseModel(nn.Module):
                         print(layer_name, name, "nan gradients")
                         raise ValueError()
 
-    def sync(self, other_model):
-        self.base.load_state_dict(other_model.base.state_dict())
+    def sync(self, original_model):
+        self.base.load_state_dict(original_model.base.state_dict())
 
-    def alpha_sync(self, other_model, alpha):
-        assert isinstance(alpha, float)
-        assert 0.0 <= alpha <= 1.0
+    def soft_update(self, original_model, tau):
+        assert isinstance(tau, float)
+        assert 0.0 <= tau <= 1.0
 
-        other_state = other_model.base.state_dict()
+        original_state = original_model.base.state_dict()
         tgt_state = self.base.state_dict()
-        for k, v in other_state.items():
-            tgt_state[k] = tgt_state[k] * alpha + (1.0 - alpha) * v
+        for k, v in original_state.items():
+            tgt_state[k] = (1.0 - tau) * tgt_state[k] + tau * v
         self.base.load_state_dict(tgt_state)
 
-    def twinq_alpha_sync(self, other_model, alpha):
-        assert isinstance(alpha, float)
-        assert 0.0 <= alpha <= 1.0
+    def twinq_soft_update(self, original_model, tau):
+        assert isinstance(tau, float)
+        assert 0.0 <= tau <= 1.0
 
-        other_twinq_state = other_model.base.twinq.state_dict()
+        original_twinq_state = original_model.base.twinq.state_dict()
         tgt_twinq_state = self.base.twinq.state_dict()
-        for k, v in other_twinq_state.items():
-            tgt_twinq_state[k] = tgt_twinq_state[k] * alpha + (1.0 - alpha) * v
+        for k, v in original_twinq_state.items():
+            tgt_twinq_state[k] = (1.0 - tau) * tgt_twinq_state[k] + tau * v
         self.base.twinq.load_state_dict(tgt_twinq_state)
