@@ -438,8 +438,6 @@ class RotaryInvertedPendulumEnv(gym.Env):
         self.initial_motor_position = self.motor_position
         # print("reset", self.too_much_rotate)
 
-        state = np.interp(state, [0, 1000], [-1, 1])
-
         return state
 
     def set_max_three_velocity(self):
