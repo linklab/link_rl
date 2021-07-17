@@ -169,7 +169,7 @@ class Worker:
                 )
 
                 self.logger.info(log_msg)
-                if self.params.VERBOSE: print(log_msg)
+                #if self.params.VERBOSE: print(log_msg)
 
                 if self.params.MODE_GRADIENTS_UPDATE:
                     episode_msg["gradients"] = gradients

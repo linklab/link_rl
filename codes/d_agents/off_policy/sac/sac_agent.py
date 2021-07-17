@@ -28,6 +28,7 @@ class AgentSAC(OffPolicyAgent):
         )
 
         self.alpha = torch.tensor(self.params.ALPHA).to(self.device)
+        self.min_alpha = torch.tensor(self.params.MIN_ALPHA).to(self.device)
 
         self.observation_shape = None
         self.num_outputs = None
@@ -76,7 +77,9 @@ class AgentSAC(OffPolicyAgent):
             meta_loss.backward()
             nn_utils.clip_grad_norm_([self.log_alpha], self.params.CLIP_GRAD)
             self.alpha_optimizer.step()
-            self.alpha = torch.exp(self.log_alpha)
+
+            self.alpha = torch.max(torch.exp(self.log_alpha), torch.exp(self.min_alpha))
+
             self.model.train()
 
             #print(meta_objective.mean(), self.log_alpha, self.alpha, "!!!!!!!!! - 1")
@@ -92,7 +95,8 @@ class AgentSAC(OffPolicyAgent):
         entropy_loss.backward()
         nn_utils.clip_grad_norm_([self.log_alpha], self.params.CLIP_GRAD)
         self.alpha_optimizer.step()
-        self.alpha = torch.exp(self.log_alpha)
+
+        self.alpha = torch.max(torch.exp(self.log_alpha), torch.exp(self.min_alpha))
         #print(self.alpha, "!!!!!!!!!")
 
     def adjust_alpha_for_discrete_action(self, probs, log_prob_v):

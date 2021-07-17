@@ -7,6 +7,8 @@ from collections import namedtuple, deque
 from gym.vector import VectorEnv
 from icecream import ic
 
+from codes.e_utils.logger import get_logger
+
 current_path = os.path.dirname(os.path.realpath(__file__))
 PROJECT_HOME = os.path.abspath(os.path.join(current_path, os.pardir, os.pardir))
 if PROJECT_HOME not in sys.path:
@@ -18,7 +20,8 @@ from codes.c_models.continuous_action.continuous_action_model import ContinuousA
 from codes.e_utils.common_utils import map_range
 from codes.e_utils.reward_changer import RewardChanger
 from codes.e_utils import rl_utils
-from codes.e_utils.names import RLAlgorithmName
+
+exp_logger = get_logger("experience")
 
 
 Experience = namedtuple(
@@ -148,6 +151,11 @@ class ExperienceSource:
                     state = states[idx]
                     is_reset = is_resets[idx]
                     history = histories[idx]
+
+                    if env_idx == 0:
+                        log_str = f'[ENV_IDX:: {env_idx} {iter_idx}] STATE: {state}, ACTION: {action}, ' \
+                                  f'REWARD: {r:>7.4f}, DONE: {is_done}'
+                        exp_logger.info(log_str)
 
                     if isinstance(self.env.envs[0], RewardChanger):
                         cur_rewards[idx] += self.env.envs[0].reverse_reward(r)

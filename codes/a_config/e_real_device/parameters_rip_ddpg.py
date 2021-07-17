@@ -11,7 +11,6 @@ class PARAMETERS_RIP_DDPG(PARAMETERS_GENERAL, PARAMETERS_DDPG):
     MY_PLATFORM = None
     PYTHON_PATH = None
     EMA_WINDOW = 10
-    VERBOSE = True
     MODEL_SAVE = False
 
     ########################################

@@ -2,7 +2,7 @@
 # https://mspries.github.io/jimmy_pendulum.html
 #!/usr/bin/env python3
 import time
-
+import glob
 import torch
 import os, sys
 import numpy as np
@@ -17,6 +17,11 @@ if PROJECT_HOME not in sys.path:
     sys.path.append(PROJECT_HOME)
 
 from codes.a_config.parameters import PARAMETERS as params
+if params.VERBOSE_TO_LOG:
+    files = glob.glob(os.path.join(PROJECT_HOME, "out", "logs", "*.log*"))
+    for f in files:
+        os.remove(f)
+
 from codes.b_environments.quanser_rotary_inverted_pendulum.quanser_rip import get_quanser_rip_observation_space, \
     get_quanser_rip_action_info
 from codes.b_environments.rotary_inverted_pendulum.rip import get_rip_observation_space, get_rip_action_info

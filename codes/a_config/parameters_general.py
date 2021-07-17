@@ -26,7 +26,7 @@ class PARAMETERS_GENERAL:
     MY_PLATFORM = "COMMON"
     PYTHON_PATH = None
     EMA_WINDOW = 10
-    VERBOSE = True
+    VERBOSE_TO_LOG = False
     MODEL_SAVE = False
 
     # [MQTT]
