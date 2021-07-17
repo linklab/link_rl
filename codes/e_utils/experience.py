@@ -20,6 +20,7 @@ from codes.c_models.continuous_action.continuous_action_model import ContinuousA
 from codes.e_utils.common_utils import map_range
 from codes.e_utils.reward_changer import RewardChanger
 from codes.e_utils import rl_utils
+from codes.a_config.parameters import PARAMETERS as params
 
 exp_logger = get_logger("experience")
 
@@ -152,7 +153,7 @@ class ExperienceSource:
                     is_reset = is_resets[idx]
                     history = histories[idx]
 
-                    if env_idx == 0:
+                    if env_idx == 0 and params.VERBOSE_TO_LOG:
                         log_str = f'[ENV_IDX:: {env_idx} {iter_idx}] STATE: {state}, ACTION: {action}, ' \
                                   f'REWARD: {r:>7.4f}, DONE: {is_done}'
                         exp_logger.info(log_str)
