@@ -328,7 +328,7 @@ class RotaryInvertedPendulumEnv(gym.Env):
             else:
                 raise ValueError()
 
-            self.update_current_state_for_double_rip(adjusted_pendulum_1_radian=0.0, adjusted_pendulum_2_radian=0.0)
+            self.update_current_system_state(adjusted_pendulum_1_radian=0.0, adjusted_pendulum_2_radian=0.0)
 
         elif self.pendulum_type in [
             EnvironmentName.PENDULUM_MATLAB_DOUBLE_RIP_V0, EnvironmentName.REAL_DEVICE_DOUBLE_RIP
@@ -421,7 +421,7 @@ class RotaryInvertedPendulumEnv(gym.Env):
             else:
                 raise ValueError()
 
-            self.update_current_state_for_double_rip(adjusted_pendulum_1_radian=0.0, adjusted_pendulum_2_radian=0.0)
+            self.update_current_system_state(adjusted_pendulum_1_radian=0.0, adjusted_pendulum_2_radian=0.0)
         else:
             raise ValueError()
 
@@ -437,6 +437,8 @@ class RotaryInvertedPendulumEnv(gym.Env):
 
         self.initial_motor_position = self.motor_position
         # print("reset", self.too_much_rotate)
+
+        state = np.interp(state, [0, 1000], [-1, 1])
 
         return state
 
@@ -478,7 +480,7 @@ class RotaryInvertedPendulumEnv(gym.Env):
         else:
             self.is_upright = False
 
-    def update_current_state_for_double_rip(self, adjusted_pendulum_1_radian, adjusted_pendulum_2_radian):
+    def update_current_system_state(self, adjusted_pendulum_1_radian, adjusted_pendulum_2_radian):
         if self.pendulum_type in [EnvironmentName.PENDULUM_MATLAB_DOUBLE_RIP_V0, EnvironmentName.REAL_DEVICE_DOUBLE_RIP]:
             upright_conditions = [
                 math.pi - math.radians(12) < adjusted_pendulum_1_radian <= math.pi,
@@ -711,7 +713,7 @@ class RotaryInvertedPendulumEnv(gym.Env):
         elif self.pendulum_type in [
             EnvironmentName.PENDULUM_MATLAB_DOUBLE_RIP_V0, EnvironmentName.REAL_DEVICE_DOUBLE_RIP
         ]:
-            self.update_current_state_for_double_rip(adjusted_pendulum_1_radian, adjusted_pendulum_2_radian)
+            self.update_current_system_state(adjusted_pendulum_1_radian, adjusted_pendulum_2_radian)
 
             if self.params.TYPE_OF_RIP_REWARD == RIPEnvRewardType.NEW:
                 reward = self.get_reward_for_double_rip_1()
