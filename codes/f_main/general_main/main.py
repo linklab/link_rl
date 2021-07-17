@@ -243,10 +243,11 @@ def main():
                         if abs(mean_actor_objective - last_mean_actor_objective) > 10.0:
                             mean_loss = last_mean_loss
 
-                        train_info_dict["train mean (critic) loss"] = mean_loss
-                        train_info_dict["train mean actor objective"] = mean_actor_objective
                         last_mean_loss = mean_loss
                         last_mean_actor_objective = mean_actor_objective
+
+                    train_info_dict["train mean (critic) loss"] = mean_loss
+                    train_info_dict["train mean actor objective"] = mean_actor_objective
 
                     if params.RL_ALGORITHM in [RLAlgorithmName.CONTINUOUS_SAC_V0, RLAlgorithmName.DISCRETE_SAC_V0]:
                         train_info_dict["alpha"] = agent.alpha.item()
