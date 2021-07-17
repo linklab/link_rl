@@ -584,9 +584,9 @@ class RotaryInvertedPendulumEnv(gym.Env):
             # if self.step_idx % 50 == 0:
             #     self.test_action = -self.test_action
             # print(self.test_action)
-            if self.step_idx % 100 == 0:
-                self.test_action = -self.test_action
-            rip_response = self.server_obj.step(RipRequest(value=self.test_action))
+            # if self.step_idx % 100 == 0:
+            #     self.test_action = -self.test_action
+            rip_response = self.server_obj.step(RipRequest(value=action))
             self.motor_position = math.radians(rip_response.arm_angle)
             self.motor_velocity = rip_response.arm_velocity
             self.pendulum_1_position = math.radians(rip_response.link_1_angle)
@@ -766,8 +766,8 @@ class RotaryInvertedPendulumEnv(gym.Env):
                     math.sin(self.pendulum_1_position),
                     self.pendulum_1_velocity / params.VELOCITY_STATE_DENOMINATOR,
                     self.motor_velocity / params.VELOCITY_STATE_DENOMINATOR,
-                    self.previous_actions[0] / params.ACTION_SCALE,
-                    self.previous_actions[1] / params.ACTION_SCALE
+                    self.previous_actions[0]/ params.ACTION_SCALE,
+                    self.previous_actions[1]/ params.ACTION_SCALE
                 )
             else:
                 raise ValueError()
