@@ -40,7 +40,7 @@ class PARAMETERS_DOUBLE_RIP_DDPG(PARAMETERS_GENERAL, PARAMETERS_DDPG):
 
     # [OPTIMIZATION]
     GAMMA = 0.98 # discount factor
-    TAU = 0.0001
+    TAU = 0.001
 
     # [Policy Gradient]
     CLIP_GRAD = 3.0
