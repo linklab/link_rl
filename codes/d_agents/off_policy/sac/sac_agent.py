@@ -78,7 +78,7 @@ class AgentSAC(OffPolicyAgent):
             nn_utils.clip_grad_norm_([self.log_alpha], self.params.CLIP_GRAD)
             self.alpha_optimizer.step()
 
-            self.alpha = torch.max(torch.exp(self.log_alpha), torch.exp(self.min_alpha))
+            self.alpha = torch.max(torch.exp(self.log_alpha), self.min_alpha)
 
             self.model.train()
 
