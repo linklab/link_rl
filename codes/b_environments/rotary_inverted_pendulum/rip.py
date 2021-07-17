@@ -902,7 +902,7 @@ class RotaryInvertedPendulumEnv(gym.Env):
         # if adjusted_pendulum_1_radian > 2.0:
         #     print("adjusted_pendulum : {0:5.3f}".format(adjusted_pendulum_1_radian))
         #     print("!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!")
-        print("reward : ", reward)
+        # print("reward : ", reward)
         return reward
 
     def get_reward_for_double_rip_1(self):
