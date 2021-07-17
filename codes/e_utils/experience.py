@@ -175,7 +175,7 @@ class ExperienceSource:
                             self.continuous_positive_actions = 0
 
                         if env_idx == 0 and params.VERBOSE_TO_LOG:
-                            action_details_str = f"(POS: {self.continuous_negative_actions}, NEG: {self.continuous_negative_actions})"
+                            action_details_str = f"(POS: {self.continuous_positive_actions}, NEG: {self.continuous_negative_actions})"
 
                     if env_idx == 0 and params.VERBOSE_TO_LOG:
                         log_str = f"[ENV_IDX:: {env_idx} {iter_idx}] STATE: {state}, ACTION: {action} {action_details_str}, " \
