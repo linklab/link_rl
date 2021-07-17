@@ -93,10 +93,14 @@ class GaussianActorMLPBase(nn.Module):
 
         self.common = nn.Sequential(
             nn.Linear(num_inputs, self.hidden_1_size),
+            nn.LayerNorm(self.hidden_1_size),
             nn.GELU(),
             nn.Linear(self.hidden_1_size, self.hidden_2_size),
+            nn.LayerNorm(self.hidden_2_size),
             nn.GELU(),
             nn.Linear(self.hidden_2_size, self.hidden_3_size),
+            nn.LayerNorm(self.hidden_3_size),
+            nn.GELU(),
         )
 
         self.mu = nn.Sequential(
@@ -136,20 +140,26 @@ class TwinQMLPBase(nn.Module):
 
         self.q1 = nn.Sequential(
             nn.Linear(num_inputs + num_outputs, self.hidden_1_size),
+            nn.LayerNorm(self.hidden_1_size),
             nn.GELU(),
             nn.Linear(self.hidden_1_size, self.hidden_2_size),
+            nn.LayerNorm(self.hidden_2_size),
             nn.GELU(),
             nn.Linear(self.hidden_2_size, self.hidden_3_size),
+            nn.LayerNorm(self.hidden_3_size),
             nn.GELU(),
             nn.Linear(self.hidden_3_size, 1),
         )
 
         self.q2 = nn.Sequential(
             nn.Linear(num_inputs + num_outputs, self.hidden_1_size),
+            nn.LayerNorm(self.hidden_1_size),
             nn.GELU(),
             nn.Linear(self.hidden_1_size, self.hidden_2_size),
+            nn.LayerNorm(self.hidden_2_size),
             nn.GELU(),
             nn.Linear(self.hidden_2_size, self.hidden_3_size),
+            nn.LayerNorm(self.hidden_3_size),
             nn.GELU(),
             nn.Linear(self.hidden_3_size, 1),
         )
