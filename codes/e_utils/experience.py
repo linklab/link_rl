@@ -8,6 +8,7 @@ from gym.vector import VectorEnv
 from icecream import ic
 
 from codes.e_utils.logger import get_logger
+from codes.e_utils.names import EnvironmentName
 
 current_path = os.path.dirname(os.path.realpath(__file__))
 PROJECT_HOME = os.path.abspath(os.path.join(current_path, os.pardir, os.pardir))
@@ -79,6 +80,9 @@ class ExperienceSource:
         self.episode_done_step_lst = []
         self.episode_idx = 0
         self.is_reset = False
+
+        self.continuous_positive_actions = 0
+        self.continuous_negative_actions = 0
 
     def __iter__(self):
         states, agent_states, histories, cur_rewards, cur_steps, is_resets = [], [], [], [], [], []
@@ -153,9 +157,28 @@ class ExperienceSource:
                     is_reset = is_resets[idx]
                     history = histories[idx]
 
+                    action_details_str = ""
+                    if params.ENVIRONMENT_ID in [
+                        EnvironmentName.QUANSER_SERVO_2,
+                        EnvironmentName.REAL_DEVICE_RIP, EnvironmentName.REAL_DEVICE_DOUBLE_RIP
+                    ]:
+                        action_scalar = action[0]
+                        if action_scalar > 0.0:
+                            self.continuous_positive_actions += 1
+                            self.continuous_negative_actions = 0
+                        elif action_scalar < 0.0:
+                            self.continuous_negative_actions += 1
+                            self.continuous_positive_actions = 0
+                        else:
+                            self.continuous_negative_actions = 0
+                            self.continuous_positive_actions = 0
+
+                        if env_idx == 0 and params.VERBOSE_TO_LOG:
+                            action_details_str = f"(POS: {self.continuous_negative_actions}, NEG: {self.continuous_negative_actions})"
+
                     if env_idx == 0 and params.VERBOSE_TO_LOG:
-                        log_str = f'[ENV_IDX:: {env_idx} {iter_idx}] STATE: {state}, ACTION: {action}, ' \
-                                  f'REWARD: {r:>7.4f}, DONE: {is_done}'
+                        log_str = f"[ENV_IDX:: {env_idx} {iter_idx}] STATE: {state}, ACTION: {action} {action_details_str}, " \
+                                  f"REWARD: {r:>7.4f}, DONE: {is_done}"
                         exp_logger.info(log_str)
 
                     if isinstance(self.env.envs[0], RewardChanger):
