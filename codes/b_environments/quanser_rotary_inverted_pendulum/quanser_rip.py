@@ -18,7 +18,7 @@ STATE_SIZE = 6
 balance_motor_power_list = [-60., 0., 60.]
 BLOWING_ACTION_RATE = 0.0004
 
-if params.SERVER_IDX == 1:
+if params.SERVER_IDX == 3:
     RIP_SERVER = '10.0.0.4'
 elif params.SERVER_IDX == 2:
     RIP_SERVER = '10.0.0.5'
