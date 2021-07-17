@@ -893,10 +893,11 @@ class RotaryInvertedPendulumEnv(gym.Env):
         #
         # reward = position_reward + energy_penalty
 
-        reward = max(0.000001, reward) / params.REWARD_DENOMINATOR
+        reward = max(0.000001, reward / params.REWARD_DENOMINATOR)
 
         if self.too_much_rotate or self.too_long_and_fast_pendulum_velocity:
             reward = 0.000001
+
         # print(self.motor_velocity, self.pendulum_1_velocity)
 
         # if adjusted_pendulum_1_radian > 2.0:
@@ -940,7 +941,7 @@ class RotaryInvertedPendulumEnv(gym.Env):
         #         "upright" if self.is_upright else ""
         #     )
 
-        reward = max(0.000001, reward) / params.REWARD_DENOMINATOR
+        reward = max(0.000001, reward / params.REWARD_DENOMINATOR)
 
         # if self.pendulum_type in [EnvironmentName.REAL_DEVICE_RIP, EnvironmentName.REAL_DEVICE_DOUBLE_RIP]:
         #     if reward == 0.0:
