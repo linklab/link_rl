@@ -890,8 +890,8 @@ class RotaryInvertedPendulumEnv(gym.Env):
             reward = position_reward + energy_penalty
         else:
             reward = position_reward
-
-        reward = position_reward + energy_penalty
+        #
+        # reward = position_reward + energy_penalty
 
         reward = max(0.000001, reward) / params.REWARD_DENOMINATOR
 
