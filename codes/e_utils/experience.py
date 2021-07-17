@@ -160,7 +160,8 @@ class ExperienceSource:
                     action_details_str = ""
                     if params.ENVIRONMENT_ID in [
                         EnvironmentName.QUANSER_SERVO_2,
-                        EnvironmentName.REAL_DEVICE_RIP, EnvironmentName.REAL_DEVICE_DOUBLE_RIP
+                        EnvironmentName.REAL_DEVICE_RIP, EnvironmentName.REAL_DEVICE_DOUBLE_RIP,
+                        EnvironmentName.PENDULUM_MATLAB_V0, EnvironmentName.PENDULUM_MATLAB_DOUBLE_RIP_V0
                     ]:
                         action_scalar = action[0]
                         if action_scalar > 0.0:
