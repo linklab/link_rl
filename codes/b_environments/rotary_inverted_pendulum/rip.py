@@ -586,6 +586,26 @@ class RotaryInvertedPendulumEnv(gym.Env):
             # print(self.test_action)
             # if self.step_idx % 100 == 0:
             #     self.test_action = -self.test_action
+
+            # while True:
+            #     for j in range(5):
+            #         j = j + 1
+            #         for i in range(10):
+            #             for i in range(100):
+            #                 rip_response = self.server_obj.step(RipRequest(value=50))
+            #                 time.sleep(0.007)
+            #             for i in range(j*20):
+            #                 rip_response = self.server_obj.step(RipRequest(value=-50))
+            #                 time.sleep(0.007)
+            #         rip_response = self.server_obj.step(RipRequest(value=0))
+            #         time.sleep(5)
+            #         print(j)
+            #         print("***************************************")
+            #         print("#################DONE##################")
+            #         print("#######################################")
+
+            # if self.step_idx % 3 == 0:
+            #     self.test_action = -self.test_action
             rip_response = self.server_obj.step(RipRequest(value=action))
             self.motor_position = math.radians(rip_response.arm_angle)
             self.motor_velocity = rip_response.arm_velocity
@@ -854,16 +874,22 @@ class RotaryInvertedPendulumEnv(gym.Env):
         return state, reward, done, info
 
     def get_reward(self, adjusted_pendulum_1_radian):
-        if self.is_upright:
-            position_reward = adjusted_pendulum_1_radian # math.pi - math.radians(12) ~ math.pi
-        else:
-            position_reward = adjusted_pendulum_1_radian / 2.0
+        # if self.is_upright:
+        #     position_reward = adjusted_pendulum_1_radian # math.pi - math.radians(12) ~ math.pi
+        # else:
+        #     position_reward = adjusted_pendulum_1_radian / 2.0
 
+        position_reward = adjusted_pendulum_1_radian
         energy_penalty = -1.0 * (abs(self.pendulum_1_velocity) + abs(self.motor_velocity)) / 1000
 
         # self.episode_position_reward_list.append(position_reward)
         # self.episode_pendulum_velocity_reward_list.append(energy_penalty)
         # self.episode_action_reward_list.append(0.0)
+
+        if self.is_upright:
+            reward = position_reward + energy_penalty
+        else:
+            reward = position_reward
 
         reward = position_reward + energy_penalty
 
@@ -876,7 +902,7 @@ class RotaryInvertedPendulumEnv(gym.Env):
         # if adjusted_pendulum_1_radian > 2.0:
         #     print("adjusted_pendulum : {0:5.3f}".format(adjusted_pendulum_1_radian))
         #     print("!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!")
-
+        print("reward : ", reward)
         return reward
 
     def get_reward_for_double_rip_1(self):
