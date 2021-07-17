@@ -8,6 +8,8 @@ import torch
 import torch.nn as nn
 import sys, os
 
+from codes.e_utils.common_utils import slack
+
 current_path = os.path.dirname(os.path.realpath(__file__))
 PROJECT_HOME = os.path.abspath(os.path.join(current_path, os.pardir, os.pardir))
 if PROJECT_HOME not in sys.path:
@@ -93,12 +95,17 @@ class BaseModel(nn.Module):
         gradients = []
 
         for layer_name, layer in self.base.layers_info.items():
-            named_parameters = layer.to(self.device).named_parameters()
-            gradients[layer_name] = {}
-            for name, param in named_parameters:
+            for param in layer.parameters():
                 gradients.append(param.grad)
 
         return np.asarray(gradients)
+
+    def inquiry_flatten_current_parameters(self):
+        for layer_name, layer in self.base.layers_info.items():
+            for param in layer.parameters():
+                if torch.any(torch.isnan(param.flatten())):
+                    slack.send_message(message="Model parameters contain 'Nan' from {0}".format(self.__class__))
+                    exit(-1)
 
     def set_gradients_to_current_parameters(self, gradients):
         for layer_name, layer in self.base.layers_info.items():

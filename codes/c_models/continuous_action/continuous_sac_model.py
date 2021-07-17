@@ -4,7 +4,7 @@ import torch.nn as nn
 from torch.distributions import Normal, TanhTransform, TransformedDistribution
 
 from codes.c_models.continuous_action.continuous_action_model import ContinuousActionModel
-from codes.e_utils.common_utils import weights_init_
+from codes.e_utils.common_utils import weights_init_, slack
 
 
 class ContinuousSACModel(ContinuousActionModel):
@@ -115,7 +115,8 @@ class GaussianActorMLPBase(nn.Module):
         mu_v = self.mu(self.common(inputs))
         logstd_v = self.logstd(self.common(inputs))
 
-        if torch.isnan(mu_v[0][0]):
+        if torch.any(torch.isnan(mu_v)):
+            slack.send_message(message="mu_v contains 'Nan' from {0}".format(self.__class__))
             print("inputs:", inputs, "!!! - 1")
             print("self.common(inputs)", self.common(inputs), "!!! - 2")
             print("mu_v:", mu_v, "!!! - 3")

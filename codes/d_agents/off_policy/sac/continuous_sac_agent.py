@@ -1,6 +1,7 @@
 # https://spinningup.openai.com/en/latest/algorithms/sac.html
 # https://github.com/pranz24/pytorch-soft-actor-critic
 # https://github.com/ku2482/soft-actor-critic.pytorch/blob/master/code/agent.py
+import numpy as np
 import torch
 import torch.nn.functional as F
 import torch.nn.utils as nn_utils
@@ -11,7 +12,7 @@ from codes.d_agents.off_policy.sac.sac_agent import AgentSAC
 from codes.d_agents.on_policy.stochastic_policy_action_selector import ContinuousNormalActionSelector, \
     SomeTimesBlowContinuousNormalActionSelector
 from codes.e_utils import rl_utils
-from codes.e_utils.common_utils import show_info
+from codes.e_utils.common_utils import show_info, slack
 from codes.e_utils.names import DeepLearningModelName, AgentMode
 
 
@@ -123,7 +124,9 @@ class AgentContinuousSAC(AgentSAC):
         if self.params.META_TUNING:
             self.meta_learning_alpha()
 
-        # train twinq
+        ########################
+        # train critic - start #
+        ########################
         self.twinq_optimizer.zero_grad()
         q1_v, q2_v = self.model.base.twinq(states_v, actions_v)
 
@@ -140,8 +143,13 @@ class AgentContinuousSAC(AgentSAC):
             critic_loss_v = batch_weights_v * q_loss_v_batch
             self.buffer.update_priorities(batch_indices, critic_loss_v.detach().cpu().numpy() + 1e-5)
             self.buffer.update_beta(step_idx)
+        ######################
+        # train critic - end #
+        ######################
 
-        # train actor
+        #######################
+        # train actor - start #
+        #######################
         re_parameterization_trick_action_v, log_prob_v = self.model.re_parameterization_trick_sample(states_v)
         # Delayed policy updates
         if step_idx % self.params.POLICY_UPDATE_FREQUENCY == 0:
@@ -169,12 +177,16 @@ class AgentContinuousSAC(AgentSAC):
             self.target_model.twinq_soft_update(self.model, tau=self.params.TAU)
         else:
             loss_actor_v = self.cache_loss_actor_v
+        #####################
+        # train actor - end #
+        #####################
 
         # TODO
         # if self.params.ENTROPY_TUNING:
         #     self.adjust_alpha(log_prob_v)
 
-        # gradients = self.model.get_gradients_for_current_parameters()
+        # self.model.inquiry_flatten_current_parameters()
+
         gradients = None
 
         return gradients, q_loss_v.item(), loss_actor_v.item() * -1.0

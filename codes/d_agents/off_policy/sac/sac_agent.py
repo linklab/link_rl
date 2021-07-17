@@ -68,7 +68,7 @@ class AgentSAC(OffPolicyAgent):
             initial_obs_batch = torch.FloatTensor(list(self.initial_obs_deque)).to(self.device)
 
             mu_v, logstd_v = self.model.base.actor(initial_obs_batch)
-            dist = Normal(loc=mu_v, scale=torch.exp(logstd_v))
+            dist = Normal(loc=mu_v, scale=torch.exp(logstd_v) + 1.0e-7)
             log_probs_v = dist.log_prob(mu_v).sum(dim=-1, keepdim=True)
             q1_v, q2_v = self.model.base.twinq(initial_obs_batch, mu_v)
 
@@ -141,7 +141,7 @@ class AgentSAC(OffPolicyAgent):
             if self.params.RL_ALGORITHM in [RLAlgorithmName.CONTINUOUS_SAC_V0]:
                 last_steps_v = np.asarray(last_steps)
                 last_mu_v, last_logstd_v, _ = sac_base_model.forward_actor(last_states_v)
-                dist = Normal(loc=last_mu_v, scale=torch.exp(last_logstd_v))
+                dist = Normal(loc=last_mu_v, scale=torch.exp(last_logstd_v) + 1.0e-7)
 
                 last_actions_v = dist.sample()
                 last_log_prob_v = dist.log_prob(last_actions_v).sum(dim=-1, keepdim=True)
