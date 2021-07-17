@@ -84,6 +84,8 @@ class PARAMETERS_RIP_TD3(PARAMETERS_GENERAL, PARAMETERS_TD3):
 
     PERIODIC_MODEL_SAVE = True
 
+    VERBOSE_TO_LOG = True
+
 
 if __name__ == "__main__":
     params = PARAMETERS_RIP_TD3()
