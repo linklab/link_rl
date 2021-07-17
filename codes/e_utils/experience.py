@@ -160,7 +160,8 @@ class ExperienceSource:
                     action_details_str = ""
                     if params.ENVIRONMENT_ID in [
                         EnvironmentName.QUANSER_SERVO_2,
-                        EnvironmentName.REAL_DEVICE_RIP, EnvironmentName.REAL_DEVICE_DOUBLE_RIP
+                        EnvironmentName.REAL_DEVICE_RIP, EnvironmentName.REAL_DEVICE_DOUBLE_RIP,
+                        EnvironmentName.PENDULUM_MATLAB_V0, EnvironmentName.PENDULUM_MATLAB_DOUBLE_RIP_V0
                     ]:
                         action_scalar = action[0]
                         if action_scalar > 0.0:
@@ -174,7 +175,7 @@ class ExperienceSource:
                             self.continuous_positive_actions = 0
 
                         if env_idx == 0 and params.VERBOSE_TO_LOG:
-                            action_details_str = f"(POS: {self.continuous_negative_actions}, NEG: {self.continuous_negative_actions})"
+                            action_details_str = f"(POS: {self.continuous_positive_actions}, NEG: {self.continuous_negative_actions})"
 
                     if env_idx == 0 and params.VERBOSE_TO_LOG:
                         log_str = f"[ENV_IDX:: {env_idx} {iter_idx}] STATE: {state}, ACTION: {action} {action_details_str}, " \

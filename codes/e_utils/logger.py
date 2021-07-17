@@ -29,9 +29,13 @@ def get_logger(name):
         1024 * 1024 * 5,
         5
     )
+    # formatter = logging.Formatter(
+    #     '[%(levelname)s]-%(asctime)s-%(filename)s:%(lineno)s:%(message)s',
+    #     datefmt="%Y-%m-%d %H:%M:%S"
+    # )
     formatter = logging.Formatter(
-        '[%(levelname)s]-%(asctime)s-%(filename)s:%(lineno)s:%(message)s',
-        datefmt="%Y-%m-%d %H:%M:%S"
+        '[%(levelname)s]-%(asctime)s.%(msecs)03d:%(message)s',
+        datefmt="%m-%d %H:%M:%S"
     )
     rotate_handler.setFormatter(formatter)
     logger.addHandler(rotate_handler)
