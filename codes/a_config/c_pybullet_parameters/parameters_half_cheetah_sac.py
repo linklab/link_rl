@@ -4,7 +4,7 @@ from codes.e_utils.names import *
 from codes.a_config.parameters_general import PARAMETERS_GENERAL
 
 # https://github.com/bulletphysics/bullet3/blob/master/examples/pybullet/gym/pybullet_envs/minitaur/envs/minitaur_gym_env.py
-class PARAMETERS_HALF_CHEETAH_PPO(PARAMETERS_GENERAL, PARAMETERS_SAC):
+class PARAMETERS_HALF_CHEETAH_SAC(PARAMETERS_GENERAL, PARAMETERS_SAC):
     ENVIRONMENT_ID      = EnvironmentName.PYBULLET_HALF_CHEETAH_V0
     DEEP_LEARNING_MODEL = DeepLearningModelName.CONTINUOUS_SAC_MLP
     RL_ALGORITHM        = RLAlgorithmName.CONTINUOUS_SAC_V0

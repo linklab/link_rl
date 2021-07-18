@@ -48,7 +48,7 @@ from codes.a_config.c_pybullet_parameters.parameters_ant_td3 import PARAMETERS_A
 from codes.a_config.c_pybullet_parameters.parameters_humanoid_td3 import PARAMETERS_HUMANOID_TD3
 from codes.a_config.c_pybullet_parameters.parameters_inverted_double_pendulum_bullet_sac import \
     PARAMETERS_INVERTED_DOUBLE_PENDULUM_BULLET_SAC
-
+from codes.a_config.c_pybullet_parameters.parameters_half_cheetah_sac import PARAMETERS_HALF_CHEETAH_SAC
 
 from codes.a_config.d_matlab_parameters.parameters_matlab_pendulum_ppo import \
     PARAMETERS_PENDULUM_MATLAB_PPO
