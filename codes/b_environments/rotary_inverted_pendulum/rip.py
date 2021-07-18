@@ -11,6 +11,8 @@ import sys, os
 from codes.a_config.parameters_general import RIPEnvRewardType
 import matplotlib.pyplot as plt
 
+from codes.e_utils.common_utils import slack
+
 current_path = os.path.dirname(os.path.realpath(__file__))
 PROJECT_HOME = os.path.abspath(os.path.join(current_path, os.pardir, os.pardir, os.pardir))
 if PROJECT_HOME not in sys.path:
@@ -437,6 +439,9 @@ class RotaryInvertedPendulumEnv(gym.Env):
 
         self.initial_motor_position = self.motor_position
         # print("reset", self.too_much_rotate)
+
+        if np.any(np.isnan(state)):
+            slack.send_message(message="state contains 'Nan': state {0}".format(state))
 
         return state
 
@@ -870,6 +875,9 @@ class RotaryInvertedPendulumEnv(gym.Env):
         # self.set_unit_time()
 
         # print(state, reward)
+
+        if np.any(np.isnan(state)):
+            slack.send_message(message="state contains 'Nan': state {0}".format(state))
 
         return state, reward, done, info
 
