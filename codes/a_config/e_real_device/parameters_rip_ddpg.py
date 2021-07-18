@@ -39,7 +39,7 @@ class PARAMETERS_RIP_DDPG(PARAMETERS_GENERAL, PARAMETERS_DDPG):
 
     # [OPTIMIZATION]
     GAMMA = 0.99 # discount factor
-    TAU = 0.001
+    TAU = 0.005
 
     # [Policy Gradient]
     CLIP_GRAD = 3.0

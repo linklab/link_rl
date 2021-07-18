@@ -34,7 +34,7 @@ class PARAMETERS_DDPG(PARAMETERS_OFF_POLICY):
     DOUBLE = True
 
     REPLAY_BUFFER_SIZE = None
-    TAU = 0.001
+    TAU = 0.005
 
     NOISE_ENABLED = True
     OU_SIGMA = 0.2
