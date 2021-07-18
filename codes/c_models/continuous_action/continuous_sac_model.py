@@ -121,6 +121,7 @@ class GaussianActorMLPBase(nn.Module):
 
         if torch.any(torch.isnan(mu_v)):
             slack.send_message(message="mu_v contains 'Nan': inputs {0}".format(inputs))
+            slack.send_message(message="{0}".format(self.common.parameters()))
             print("inputs:", inputs, "!!! - 1")
             print("self.common(inputs)", self.common(inputs), "!!! - 2")
             print("mu_v:", mu_v, "!!! - 3")
