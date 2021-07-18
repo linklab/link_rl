@@ -307,16 +307,16 @@ class RotaryInvertedPendulumEnv(gym.Env):
                     math.cos(self.initial_motor_position - self.motor_position),
                     math.sin(self.initial_motor_position - self.motor_position),
                     self.motor_velocity / params.VELOCITY_STATE_DENOMINATOR,
-                    self.previous_actions[0],
-                    self.previous_actions[1]
+                    self.previous_actions[0] / params.ACTION_SCALE,
+                    self.previous_actions[1] / params.ACTION_SCALE
                 )
             elif hasattr(self.params, "PENDULUM_STATE_INFO") and self.params.PENDULUM_STATE_INFO == 1:
                 state = (
                     math.cos(self.pendulum_1_position),
                     math.sin(self.pendulum_1_position),
                     self.pendulum_1_velocity / params.VELOCITY_STATE_DENOMINATOR,
-                    self.previous_actions[0],
-                    self.previous_actions[1]
+                    self.previous_actions[0] / params.ACTION_SCALE,
+                    self.previous_actions[1] / params.ACTION_SCALE
                 )
             elif hasattr(self.params, "PENDULUM_STATE_INFO") and self.params.PENDULUM_STATE_INFO == 2:
                 state = (
@@ -324,8 +324,8 @@ class RotaryInvertedPendulumEnv(gym.Env):
                     math.sin(self.pendulum_1_position),
                     self.pendulum_1_velocity / params.VELOCITY_STATE_DENOMINATOR,
                     self.motor_velocity / params.VELOCITY_STATE_DENOMINATOR,
-                    self.previous_actions[0],
-                    self.previous_actions[1]
+                    self.previous_actions[0] / params.ACTION_SCALE,
+                    self.previous_actions[1] / params.ACTION_SCALE
                 )
             else:
                 raise ValueError()
@@ -394,8 +394,8 @@ class RotaryInvertedPendulumEnv(gym.Env):
                     math.cos(0.0),  # 1.0
                     math.sin(0.0),  # 0.0
                     self.motor_velocity / params.VELOCITY_STATE_DENOMINATOR,
-                    self.previous_actions[0],
-                    self.previous_actions[1]
+                    self.previous_actions[0] / params.ACTION_SCALE,
+                    self.previous_actions[1] / params.ACTION_SCALE
                 )
             elif hasattr(self.params, "DOUBLE_PENDULUM_STATE_INFO") and self.params.DOUBLE_PENDULUM_STATE_INFO == 1:
                 state = (
@@ -405,8 +405,8 @@ class RotaryInvertedPendulumEnv(gym.Env):
                     math.cos(self.pendulum_2_position),
                     math.sin(self.pendulum_2_position),
                     self.pendulum_2_velocity / params.VELOCITY_STATE_DENOMINATOR,
-                    self.previous_actions[0],
-                    self.previous_actions[1]
+                    self.previous_actions[0] / params.ACTION_SCALE,
+                    self.previous_actions[1] / params.ACTION_SCALE
                 )
             elif hasattr(self.params, "DOUBLE_PENDULUM_STATE_INFO") and self.params.DOUBLE_PENDULUM_STATE_INFO == 2:
                 state = (
@@ -417,8 +417,8 @@ class RotaryInvertedPendulumEnv(gym.Env):
                     math.sin(self.pendulum_2_position),
                     self.pendulum_2_velocity / params.VELOCITY_STATE_DENOMINATOR,
                     self.motor_velocity / params.VELOCITY_STATE_DENOMINATOR,
-                    self.previous_actions[0],
-                    self.previous_actions[1]
+                    self.previous_actions[0] / params.ACTION_SCALE,
+                    self.previous_actions[1] / params.ACTION_SCALE
                 )
             else:
                 raise ValueError()
