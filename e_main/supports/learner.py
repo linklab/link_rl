@@ -1,0 +1,196 @@
+import torch.multiprocessing as mp
+import numpy as np
+import time
+
+from g_utils.commons import model_save, console_log
+from g_utils.buffers import Buffer
+from g_utils.types import AgentType, AgentMode
+
+
+class Learner(mp.Process):
+    def __init__(self, test_env, agent, queue, device, params):
+        super(Learner, self).__init__()
+
+        self.test_env = test_env
+        self.agent = agent
+        self.queue = queue
+        self.device = device
+        self.params = params
+
+        self.n_actors = self.params.N_ACTORS
+        self.n_vectorized_envs = self.params.N_VECTORIZED_ENVS
+        self.n_actor_terminations = 0
+
+        self.episode_rewards = np.zeros((self.n_actors * self.n_vectorized_envs,))
+        self.episode_reward_lst = []
+
+        self.total_time_steps = mp.Value('i', 0)
+        self.total_episodes = mp.Value('i', 0)
+        self.training_steps = mp.Value('i', 0)
+
+        self.buffer = Buffer(
+            capacity=params.BUFFER_CAPACITY, device=self.device
+        )
+
+        self.buffer_size = mp.Value('i', 0)
+
+        self.total_train_start_time = None
+        self.last_mean_episode_reward = mp.Value('d', 0.0)
+
+        self.is_terminated = mp.Value('i', False)
+
+        self.test_episode_reward_avg = mp.Value('d', 0.0)
+        self.test_episode_reward_std = mp.Value('d', 0.0)
+
+        self.next_train_time_step = params.TRAIN_INTERVAL_TIME_STEPS
+        self.next_test_time_step = params.TEST_INTERVAL_TIME_STEPS
+        self.next_console_log = params.CONSOLE_LOG_INTERVAL_TIME_STEPS
+
+    def run(self):
+        self.total_train_start_time = time.time()
+
+        while True:
+            transition = self.queue.get()
+
+            if transition is None:
+                self.n_actor_terminations += 1
+                if self.n_actor_terminations >= self.n_actors:
+                    self.is_terminated.value = True
+                    break
+                else:
+                    continue
+            else:
+                if self.is_terminated.value:
+                    continue
+                else:
+                    self.total_time_steps.value += 1
+
+            self.buffer.append(transition)
+            self.buffer_size.value = self.buffer.size()
+
+            actor_id = transition.info["actor_id"]
+            env_id = transition.info["env_id"]
+            self.episode_rewards[actor_id * env_id] += transition.reward
+
+            if self.total_time_steps.value >= self.next_train_time_step:
+                if self.params.AGENT_TYPE != AgentType.Reinforce:
+                    self.agent.train(
+                        buffer=self.buffer,
+                        total_time_steps_v=self.total_time_steps.value,
+                        training_steps=self.training_steps
+                    )
+                self.next_train_time_step += self.params.TRAIN_INTERVAL_TIME_STEPS
+
+            if transition.done:
+                self.total_episodes.value += 1
+
+                self.episode_reward_lst.append(self.episode_rewards[actor_id * env_id])
+                self.last_mean_episode_reward.value = np.mean(
+                    self.episode_reward_lst[-1 * self.params.NUM_EPISODES_FOR_MEAN_CALCULATION:]
+                )
+
+                self.episode_rewards[actor_id * env_id] = 0.0
+
+                if self.params.AGENT_TYPE == AgentType.Reinforce:
+                    self.agent.train_per_episode(
+                        buffer=self.buffer,
+                        training_steps=self.training_steps
+                    )
+
+            if self.total_time_steps.value >= self.next_console_log:
+                console_log(
+                    self.total_train_start_time, self.total_episodes.value,
+                    self.total_time_steps.value,
+                    self.last_mean_episode_reward.value,
+                    self.buffer_size.value, self.training_steps.value,
+                    self.agent, self.params
+                )
+                self.next_console_log += self.params.CONSOLE_LOG_INTERVAL_TIME_STEPS
+
+            test_conditions = [
+                self.total_time_steps.value > 0,
+                self.total_time_steps.value >= self.next_test_time_step
+            ]
+            if all(test_conditions):
+                self.testing()
+
+            if self.training_steps.value >= self.params.MAX_TRAINING_STEPS:
+                print("[TRAIN TERMINATION] MAX_TRAINING_STEPS ({0}) REACHES!!!".format(
+                    self.params.MAX_TRAINING_STEPS
+                ))
+                self.is_terminated.value = True
+
+        total_training_time = time.time() - self.total_train_start_time
+        formatted_total_training_time = time.strftime(
+            '%H:%M:%S', time.gmtime(total_training_time)
+        )
+        print("Total Training End : {}".format(formatted_total_training_time))
+        print("Rate of Buffer Increase: {0:.3f}/1sec.".format(
+            self.buffer.size() / total_training_time
+        ))
+        print("Rate of Training Steps: {0:.3f}/1sec.".format(
+            self.training_steps.value / total_training_time
+        ))
+
+    def testing(self):
+        print("*" * 80)
+        self.test_episode_reward_avg.value, \
+        self.test_episode_reward_std.value = \
+            self.play_for_testing(self.params.NUM_TEST_EPISODES)
+
+        print("[Test Episode Reward] Average: {0:.3f}, Standard Dev.: {1:.3f}".format(
+            self.test_episode_reward_avg.value,
+            self.test_episode_reward_std.value
+        ))
+
+        termination_conditions = [
+            self.test_episode_reward_avg.value > self.params.EPISODE_REWARD_AVG_SOLVED,
+            self.test_episode_reward_std.value < self.params.EPISODE_REWARD_STD_SOLVED
+        ]
+
+        if all(termination_conditions):
+            # Console 및 Wandb 로그를 위한 사항
+            self.training_steps.value += 1
+
+            print("Solved in {0:,} steps ({1:,} training steps)!".format(
+                self.total_time_steps.value,
+                self.training_steps.value
+            ))
+            model_save(
+                model=self.agent.model,
+                env_name=self.params.ENV_NAME,
+                agent_type_name=self.params.AGENT_TYPE.name,
+                test_episode_reward_avg=self.test_episode_reward_avg.value,
+                test_episode_reward_std=self.test_episode_reward_std.value
+            )
+            print("[TRAIN TERMINATION] TERMINATION CONDITION REACHES!!!")
+            self.is_terminated.value = True
+
+        self.next_test_time_step += self.params.TEST_INTERVAL_TIME_STEPS
+
+        print("*" * 80)
+
+    def play_for_testing(self, num_test_episodes):
+        episode_reward_lst = []
+
+        for i in range(num_test_episodes):
+            episode_reward = 0  # cumulative_reward
+
+            # Environment 초기화와 변수 초기화
+            observation = self.test_env.reset()
+
+            while True:
+                action = self.agent.get_action(observation, mode=AgentMode.TEST)
+
+                # action을 통해서 next_state, reward, done, info를 받아온다
+                next_observation, reward, done, _ = self.test_env.step(action)
+
+                episode_reward += reward  # episode_reward 를 산출하는 방법은 감가률 고려하지 않는 이 라인이 더 올바름.
+                observation = next_observation
+
+                if done:
+                    break
+
+            episode_reward_lst.append(episode_reward)
+
+        return np.average(episode_reward_lst), np.std(episode_reward_lst)
