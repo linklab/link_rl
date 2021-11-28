@@ -18,26 +18,29 @@ class Agent:
     def get_action(self, obs, mode=AgentMode.TRAIN):
         pass
 
-    def train(self, buffer, total_time_steps_v=None, training_steps=None):
+    def train(self, buffer, training_steps=None):
         loss = 0.0
+        is_train_done = False
         if self.params.AGENT_TYPE == AgentType.Dqn:
             if len(buffer) > self.params.MIN_BUFFER_SIZE_FOR_TRAIN:
                 loss = self.train_dqn(
                     buffer=buffer, training_steps=training_steps
                 )
-                training_steps.value += 1
+                is_train_done = True
         elif self.params.AGENT_TYPE == AgentType.A2c:
             if len(buffer) > self.params.BATCH_SIZE:
                 loss = self.train_a2c(buffer=buffer)
-                training_steps.value += 1
+                is_train_done = True
         elif self.params.AGENT_TYPE == AgentType.Reinforce:
             if len(buffer) > 0:
                 loss = self.train_reinforce(buffer=buffer)
-                training_steps.value += 1
+                is_train_done = True
 
         # NOTE !!!
-        if self.params.AGENT_TYPE in OnPolicyAgentTypes:
-            buffer.clear()
+        if is_train_done:
+            training_steps.value += 1
+            if self.params.AGENT_TYPE in OnPolicyAgentTypes:
+                buffer.clear()
 
         return loss
 

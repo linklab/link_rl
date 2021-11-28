@@ -127,6 +127,7 @@ class Learner(mp.Process):
                     self.total_time_steps.value += 1
 
             self.buffer.append(n_step_transition)
+
             self.buffer_size.value = self.buffer.size()
 
             actor_id = n_step_transition.info["actor_id"]
@@ -137,7 +138,6 @@ class Learner(mp.Process):
                 if self.params.AGENT_TYPE != AgentType.Reinforce:
                     self.agent.train(
                         buffer=self.buffer,
-                        total_time_steps_v=self.total_time_steps.value,
                         training_steps=self.training_steps
                     )
                 self.next_train_time_step += self.params.TRAIN_INTERVAL_TOTAL_TIME_STEPS
