@@ -1,8 +1,6 @@
 import os
 import sys
 
-from g_utils.commons import get_wandb_obj
-
 sys.path.append(os.path.abspath(
     os.path.join(os.path.dirname(os.path.realpath(__file__)), os.pardir)
 ))
@@ -15,6 +13,8 @@ def main():
 
     mp.set_start_method('spawn', force=True)
     queue = mp.Queue()
+
+    agent = get_agent(n_features, n_actions, device, params)
 
     learner = Learner(
         test_env=test_env,

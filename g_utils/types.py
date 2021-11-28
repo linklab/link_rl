@@ -20,6 +20,18 @@ Transitions = namedtuple(
 )
 
 
+class AgentMode(enum.Enum):
+    TRAIN = 0
+    TEST = 1
+    PLAY = 2
+
+
+class ModelType(enum.Enum):
+    LINEAR = 0
+    CNN = 1
+    RNN = 2
+
+
 class AgentType(enum.Enum):
     Dqn = 0
     Reinforce = 1
@@ -27,26 +39,4 @@ class AgentType(enum.Enum):
 
 
 OnPolicyAgentTypes = [AgentType.Reinforce, AgentType.A2c]
-
-
 OffPolicyAgentTypes = [AgentType.Dqn]
-
-
-class AgentMode(enum.Enum):
-    TRAIN = 0
-    TEST = 1
-    PLAY = 2
-
-
-class EpsilonTracker:
-    def __init__(self, epsilon_init, epsilon_final, epsilon_final_time_step_percent, max_training_steps):
-        self.epsilon_init = epsilon_init
-        self.epsilon_final = epsilon_final
-        self.epsilon_final_time_step = max_training_steps * epsilon_final_time_step_percent
-
-    def epsilon(self, training_step):
-        epsilon = max(
-            self.epsilon_init - training_step / self.epsilon_final_time_step,
-            self.epsilon_final
-        )
-        return epsilon

@@ -20,6 +20,8 @@ def main():
         ]
     )
 
+    agent = get_agent(n_features, n_actions, device, params)
+
     learner = Learner(
         test_env=test_env,
         agent=agent,

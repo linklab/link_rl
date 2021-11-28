@@ -1,5 +1,5 @@
-from a_configuration.base.agents.agents_off_policy import ParameterDqn
-from a_configuration.base.environments.open_ai_gym.gym_atari import ParameterPong
+from a_configuration.base.b_agents.agents_off_policy import ParameterDqn
+from a_configuration.base.a_environments.open_ai_gym.gym_atari import ParameterPong
 from a_configuration.base.parameter_base import ParameterBase
 
 

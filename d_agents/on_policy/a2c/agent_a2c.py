@@ -17,7 +17,7 @@ class AgentA2c(Agent):
         )
 
         self.actor_critic_model = ActorCritic(
-            n_features=n_features, n_actions=n_actions, device=device
+            n_features=n_features, n_actions=n_actions, device=device, params=params
         ).to(device)
         self.actor_critic_model.share_memory()
 

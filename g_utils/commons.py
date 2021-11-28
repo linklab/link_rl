@@ -7,9 +7,6 @@ import torch.multiprocessing as mp
 import wandb
 
 from a_configuration.config.config import Config
-from d_agents.off_policy.dqn.agent_dqn import AgentDqn
-from d_agents.on_policy.a2c.agent_a2c import AgentA2c
-from d_agents.on_policy.reinforce.agent_reinforce import AgentReinforce
 from g_utils.types import AgentType
 
 if torch.cuda.is_available():
@@ -173,56 +170,15 @@ def wandb_log(learner, wandb_obj, params):
     wandb_obj.log(log_dict)
 
 
-def get_agent(n_features, n_actions, device, params):
-    if params.AGENT_TYPE == AgentType.Dqn:
-        agent = AgentDqn(
-            n_features=n_features, n_actions=n_actions, device=device, params=params
+class EpsilonTracker:
+    def __init__(self, epsilon_init, epsilon_final, epsilon_final_time_step_percent, max_training_steps):
+        self.epsilon_init = epsilon_init
+        self.epsilon_final = epsilon_final
+        self.epsilon_final_time_step = max_training_steps * epsilon_final_time_step_percent
+
+    def epsilon(self, training_step):
+        epsilon = max(
+            self.epsilon_init - training_step / self.epsilon_final_time_step,
+            self.epsilon_final
         )
-    elif params.AGENT_TYPE == AgentType.Reinforce:
-        assert params.N_ACTORS * params.N_VECTORIZED_ENVS == 1, \
-            "TOTAL NUMBERS OF ENVS should be one"
-
-        agent = AgentReinforce(
-            n_features=n_features, n_actions=n_actions, device=device, params=params
-        )
-    elif params.AGENT_TYPE == AgentType.A2c:
-        agent = AgentA2c(
-            n_features=n_features, n_actions=n_actions, device=device, params=params
-        )
-    else:
-        raise ValueError()
-
-    return agent
-
-
-def get_agents(n_features, n_actions, device, params_c):
-    agents = []
-    for idx, agent_type in enumerate(params_c.AGENTS):
-        agent_params = params_c.PARAMS_AGENTS[idx]
-        if agent_type == AgentType.Dqn:
-            agents.append(
-                AgentDqn(
-                    n_features=n_features, n_actions=n_actions, device=device,
-                    params=agent_params
-                )
-            )
-        elif agent_type == AgentType.Reinforce:
-            assert agent_params.N_ACTORS * agent_params.N_VECTORIZED_ENVS == 1, \
-                "AGENT_REINFORCE: TOTAL NUMBERS OF ENVS should be one"
-            agents.append(
-                AgentReinforce(
-                    n_features=n_features, n_actions=n_actions, device=device,
-                    params=agent_params
-                )
-            )
-        elif agent_type == AgentType.A2c:
-            agents.append(
-                AgentA2c(
-                    n_features=n_features, n_actions=n_actions, device=device,
-                    params=agent_params
-                )
-            )
-        else:
-            raise ValueError()
-
-    return agents
+        return epsilon

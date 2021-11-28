@@ -7,26 +7,27 @@ import torch.multiprocessing as mp
 
 from c_models.models import QNet
 from d_agents.agent import Agent
-from g_utils.types import AgentMode, EpsilonTracker
+from g_utils.commons import EpsilonTracker
+from g_utils.types import AgentMode, ModelType
 
 
 class AgentDqn(Agent):
     def __init__(self, n_features, n_actions, device, params):
         super(AgentDqn, self).__init__(n_features, n_actions, device, params)
 
-        self.q_net = QNet(
-            n_features=n_features,
-            n_actions=n_actions,
-            device=device,
-            params=params
-        ).to(device)
-        self.q_net.share_memory()
+        if self.params.MODEL_TYPE == ModelType.LINEAR:
+            assert self.params.NEURONS_PER_LAYER
+            self.q_net = QNet(
+                n_features=n_features, n_actions=n_actions, device=device, params=params
+            ).to(device)
 
-        self.target_q_net = QNet(
-            n_features=self.q_net.n_features,
-            n_actions=self.q_net.n_actions,
-            device=device
-        ).to(device)
+            self.target_q_net = QNet(
+                n_features=self.q_net.n_features, n_actions=self.q_net.n_actions, device=device, params=params
+            ).to(device)
+        else:
+            raise ValueError()
+
+        self.q_net.share_memory()
         self.target_q_net.load_state_dict(self.q_net.state_dict())
 
         self.optimizer = optim.Adam(

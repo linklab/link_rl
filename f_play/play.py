@@ -5,14 +5,16 @@ import gym
 import torch
 import os
 
+from e_main.supports.main_preamble import get_agent
+from g_utils.types import AgentMode
+
 CURRENT_PATH = os.path.dirname(os.path.realpath(__file__))
 PROJECT_HOME = os.path.abspath(os.path.join(CURRENT_PATH, os.pardir))
 if PROJECT_HOME not in sys.path:
     sys.path.append(PROJECT_HOME)
 
 from a_configuration.parameter import Parameter as params
-from d_agents.off_policy.dqn.agent_dqn import AgentDqn
-from g_utils.commons import AgentType, AgentMode, model_load
+from g_utils.commons import model_load
 
 
 def play(env, agent, n_episodes):
@@ -50,21 +52,13 @@ def main_q_play(n_episodes):
     n_features = env.observation_space.shape[0]
     n_actions = env.action_space.n
 
-    if params.AGENT_TYPE == AgentType.Dqn:
-        agent = AgentDqn(
-            n_features=n_features,
-            n_actions=n_actions,
-            device=torch.device("cpu"),
-            params=params
-        )
-    else:
-        raise ValueError()
+    agent = get_agent(n_features, n_actions, device=torch.device("cpu"), params=params)
 
     model_load(
         model=agent.q_net,
         env_name=params.ENV_NAME,
         agent_type_name=params.AGENT_TYPE.name,
-        file_name="500.0_0.0.pth"
+        file_name="479.0_29.7_2021_11_28.pth"
     )
     play(env, agent, n_episodes=n_episodes)
 
