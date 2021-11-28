@@ -8,7 +8,7 @@ import time
 from e_main.supports.actor import Actor
 from g_utils.commons import model_save, console_log, wandb_log, get_wandb_obj, get_train_env
 from g_utils.buffers import Buffer
-from g_utils.types import AgentType, AgentMode, OffPolicyAgentTypes, OnPolicyAgentTypes, Transition
+from g_utils.types import AgentType, AgentMode, Transition
 
 
 class Learner(mp.Process):
@@ -98,7 +98,8 @@ class Learner(mp.Process):
         yield None
 
     def train_loop(self, sync=True):
-        self.train_env = get_train_env(self.params)
+        if sync:
+            self.train_env = get_train_env(self.params)
 
         if self.params.USE_WANDB:
             wandb_obj = get_wandb_obj(self.params)
