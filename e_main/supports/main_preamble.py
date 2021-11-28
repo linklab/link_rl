@@ -20,29 +20,26 @@ from e_main.supports.actor import Actor
 from e_main.supports.learner import Learner
 from g_utils.commons import AgentType, wandb_log, print_basic_info
 from g_utils.types import OnPolicyAgentTypes, OffPolicyAgentTypes
-
-test_env = gym.make(params.ENV_NAME)
-n_features = test_env.observation_space.shape[0]
-n_actions = test_env.action_space.n
+from g_utils.commons import get_test_env
 
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
 
-def get_agent(n_features, n_actions, device=torch.device("cpu"), params=None):
+def get_agent(obs_shape, n_actions, device=torch.device("cpu"), params=None):
     if params.AGENT_TYPE == AgentType.Dqn:
         agent = AgentDqn(
-            n_features=n_features, n_actions=n_actions, device=device, params=params
+            obs_shape=obs_shape, n_actions=n_actions, device=device, params=params
         )
     elif params.AGENT_TYPE == AgentType.Reinforce:
         assert params.N_ACTORS * params.N_VECTORIZED_ENVS == 1, \
             "TOTAL NUMBERS OF ENVS should be one"
 
         agent = AgentReinforce(
-            n_features=n_features, n_actions=n_actions, device=device, params=params
+            obs_shape=obs_shape, n_actions=n_actions, device=device, params=params
         )
     elif params.AGENT_TYPE == AgentType.A2c:
         agent = AgentA2c(
-            n_features=n_features, n_actions=n_actions, device=device, params=params
+            obs_shape=obs_shape, n_actions=n_actions, device=device, params=params
         )
     else:
         raise ValueError()
@@ -82,7 +79,10 @@ def get_agents(n_features, n_actions, device, params_c):
 
     return agents
 
+
+
 # 이름을 한번 언급
+params
 time
 gym
 torch
@@ -98,3 +98,4 @@ wandb_log
 OnPolicyAgentTypes
 OffPolicyAgentTypes
 print_basic_info
+get_test_env

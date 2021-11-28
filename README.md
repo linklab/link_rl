@@ -8,10 +8,10 @@
   - conda install -c conda-forge gym-all
 - lz4
   - pip install lz4
-- nvidia-ml-py3
-  - pip install nvidia-ml-py3
 - wandb
   - pip install wandb
+- nvidia-ml-py3
+  - pip install nvidia-ml-py3
   
 ### 2. gitignore 적용
 

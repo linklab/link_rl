@@ -1,9 +1,7 @@
 from collections import deque
-
-from gym.vector import AsyncVectorEnv
 import torch.multiprocessing as mp
 
-from b_environments.make_envs import make_gym_env
+from g_utils.commons import get_train_env
 from g_utils.types import Transition
 
 
@@ -24,11 +22,7 @@ class Actor(mp.Process):
         self.histories = None
 
     def run(self):
-        self.train_env = AsyncVectorEnv(
-            env_fns=[
-                make_gym_env(self.env_name) for _ in range(self.params.N_VECTORIZED_ENVS)
-            ]
-        )
+        self.train_env = get_train_env(self.params)
 
         self.is_vectorized_env_created.value = True
 

@@ -5,8 +5,8 @@ from g_utils.types import AgentMode, AgentType, OnPolicyAgentTypes
 
 
 class Agent:
-    def __init__(self, n_features, n_actions, device, params):
-        self.n_features = n_features
+    def __init__(self, obs_shape, n_actions, device, params):
+        self.obs_shape = obs_shape
         self.n_actions = n_actions
         self.device = device
         self.params = params

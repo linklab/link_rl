@@ -12,7 +12,7 @@ from g_utils.types import AgentMode
 
 class QNet(nn.Module):
     def __init__(
-            self, n_features=4, n_actions=2, device=torch.device("cpu"), params=None
+            self, n_features: int, n_actions: int, device=torch.device("cpu"), params=None
     ):
         super(QNet, self).__init__()
         self.n_features = n_features
@@ -45,77 +45,100 @@ class QNet(nn.Module):
         return x
 
 
-class AtariCNN(nn.Module):
+class CnnQNet(nn.Module):
     def __init__(
-            self, obs_shape: Tuple[int], n_actions: int, hidden_size: int = 256,
-            device=torch.device("cpu"), params=None
+            self, obs_shape: Tuple[int], n_actions: int, device=torch.device("cpu"), params=None
     ):
-        super(AtariCNN, self).__init__()
-
-        input_channel = obs_shape[0]
-
-        self.conv = nn.Sequential(
-            nn.Conv2d(input_channel, 32, kernel_size=8, stride=4),
-            nn.ReLU(),
-            nn.Conv2d(32, 64, kernel_size=4, stride=2),
-            nn.ReLU(),
-            nn.Conv2d(64, 64, kernel_size=3, stride=1),
-            nn.ReLU()
-        )
-
-        conv_out_size = self._get_conv_out(obs_shape)
-
-        self.fc = nn.Sequential(
-            nn.Linear(conv_out_size, hidden_size),
-            nn.ReLU(),
-            nn.Linear(hidden_size, n_actions)
-        )
-
+        super(CnnQNet, self).__init__()
+        self.obs_shape = obs_shape
+        self.n_actions = n_actions
         self.device = device
         self.params = params
 
+        input_channel = obs_shape[0]
+
+        conv_layers_dict = OrderedDict()
+        conv_layers_dict["conv_0"] = nn.Conv2d(
+            in_channels=input_channel,
+            out_channels=self.params.OUT_CHANNELS_PER_LAYER[0],
+            kernel_size=self.params.KERNEL_SIZE_PER_LAYER[0],
+            stride=self.params.STRIDE_PER_LAYER[0]
+        )
+        conv_layers_dict["conv_0_activation"] = nn.LeakyReLU()
+
+        for idx in range(1, len(self.params.OUT_CHANNELS_PER_LAYER)):
+            conv_layers_dict["conv_{0}".format(idx)] = nn.Conv2d(
+                in_channels=self.params.OUT_CHANNELS_PER_LAYER[idx-1],
+                out_channels=self.params.OUT_CHANNELS_PER_LAYER[idx],
+                kernel_size=self.params.KERNEL_SIZE_PER_LAYER[idx],
+                stride=self.params.STRIDE_PER_LAYER[idx]
+            )
+            conv_layers_dict["conv_{0}_activation".format(idx)] = nn.LeakyReLU()
+
+        self.conv_layers = nn.Sequential(conv_layers_dict)
+        conv_out_flat_size = self._get_conv_out(obs_shape)
+
+        fc_layers_dict = OrderedDict()
+        fc_layers_dict["fc_0"] = nn.Linear(
+            conv_out_flat_size, self.params.NEURONS_PER_FULLY_CONNECTED_LAYER[0]
+        )
+        fc_layers_dict["fc_0_activation"] = nn.LeakyReLU()
+
+        if len(self.params.NEURONS_PER_FULLY_CONNECTED_LAYER) >= 2:
+            for idx in range(1, len(self.params.NEURONS_PER_FULLY_CONNECTED_LAYER) - 1):
+                fc_layers_dict["fc_{0}".format(idx)] = nn.Linear(
+                    self.params.NEURONS_PER_FULLY_CONNECTED_LAYER[idx],
+                    self.params.NEURONS_PER_FULLY_CONNECTED_LAYER[idx + 1]
+                )
+                fc_layers_dict["fc_{0}_activation".format(idx)] = nn.LeakyReLU()
+
+        self.fc_layers = nn.Sequential(fc_layers_dict)
+        self.fc_last = nn.Linear(
+            self.params.NEURONS_PER_FULLY_CONNECTED_LAYER[-1], n_actions
+        )
+
     def _get_conv_out(self, shape):
-        cont_out = self.conv(torch.zeros(1, *shape))
+        cont_out = self.conv_layers(torch.zeros(1, *shape))
         return int(np.prod(cont_out.size()))
 
     def forward(self, x):
         if isinstance(x, np.ndarray):
             x = torch.tensor(x, dtype=torch.float32, device=self.device)
 
-        conv_out = self.conv(x)
-
+        conv_out = self.conv_layers(x)
         conv_out = torch.flatten(conv_out, start_dim=1)
-        out = self.fc(conv_out)
+        out = self.fc_layers(conv_out)
+        out = self.fc_last(out)
         return out
 
-    def get_action(self, observation, epsilon):
-        if random.random() < epsilon:
-            action = random.randint(0, 2)
-            return action
-        else:
-            # Convert to Tensor
-            observation = np.array(observation, copy=False)
-            observation = torch.tensor(observation, device=self.device)
-
-            # Add batch-dim
-            if len(observation.shape) == 3:
-                observation = observation.unsqueeze(dim=0)
-
-            q_values = self.forward(observation)
-            action = torch.argmax(q_values, dim=1)
-            return action.cpu().numpy()
+    # def get_action(self, observation, epsilon):
+    #     if random.random() < epsilon:
+    #         action = random.randint(0, 2)
+    #         return action
+    #     else:
+    #         # Convert to Tensor
+    #         observation = np.array(observation, copy=False)
+    #         observation = torch.tensor(observation, device=self.device)
+    #
+    #         # Add batch-dim
+    #         if len(observation.shape) == 3:
+    #             observation = observation.unsqueeze(dim=0)
+    #
+    #         q_values = self.forward(observation)
+    #         action = torch.argmax(q_values, dim=1)
+    #         return action.cpu().numpy()
 
 
 class Policy(nn.Module):
     def __init__(
-            self, n_features=4, n_actions=2, device=torch.device("cpu"), params=None
+            self, obs_shape: Tuple[int], n_actions: int, device=torch.device("cpu"), params=None
     ):
         super(Policy, self).__init__()
         self.device = device
         self.params = params
 
         fc_layers_dict = OrderedDict()
-        fc_layers_dict["fc_0"] = nn.Linear(n_features, self.params.NEURONS_PER_LAYER[0])
+        fc_layers_dict["fc_0"] = nn.Linear(obs_shape[0], self.params.NEURONS_PER_LAYER[0])
         fc_layers_dict["fc_0_activation"] = nn.LeakyReLU()
 
         for idx in range(1, len(self.params.NEURONS_PER_LAYER) - 1):
@@ -175,14 +198,14 @@ class Policy(nn.Module):
 
 class ActorCritic(nn.Module):
     def __init__(
-            self, n_features=4, n_actions=2, device=torch.device("cpu"), params=None
+            self, obs_shape: Tuple[int], n_actions: int, device=torch.device("cpu"), params=None
     ):
         super(ActorCritic, self).__init__()
         self.device = device
         self.params = params
 
         fc_layers_dict = OrderedDict()
-        fc_layers_dict["fc_0"] = nn.Linear(n_features, self.params.NEURONS_PER_LAYER[0])
+        fc_layers_dict["fc_0"] = nn.Linear(obs_shape[0], self.params.NEURONS_PER_LAYER[0])
         fc_layers_dict["fc_0_activation"] = nn.LeakyReLU()
 
         for idx in range(1, len(self.params.NEURONS_PER_LAYER) - 1):

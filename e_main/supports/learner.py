@@ -5,13 +5,13 @@ import numpy as np
 import time
 
 from e_main.supports.actor import Actor
-from g_utils.commons import model_save, console_log, wandb_log, get_wandb_obj
+from g_utils.commons import model_save, console_log, wandb_log, get_wandb_obj, get_train_env
 from g_utils.buffers import Buffer
 from g_utils.types import AgentType, AgentMode, OffPolicyAgentTypes, OnPolicyAgentTypes, Transition
 
 
 class Learner(mp.Process):
-    def __init__(self, test_env, agent, queue, device, params, train_env=None):
+    def __init__(self, test_env, agent, queue, device, params):
         super(Learner, self).__init__()
 
         self.test_env = test_env
@@ -19,7 +19,7 @@ class Learner(mp.Process):
         self.queue = queue
         self.device = device
         self.params = params
-        self.train_env = train_env
+        self.train_env = None
 
         self.n_actors = self.params.N_ACTORS
         self.n_vectorized_envs = self.params.N_VECTORIZED_ENVS
@@ -47,7 +47,7 @@ class Learner(mp.Process):
         self.test_episode_reward_std = mp.Value('d', 0.0)
 
         self.next_train_time_step = params.TRAIN_INTERVAL_TOTAL_TIME_STEPS
-        self.next_test_time_step = params.TEST_INTERVAL_TOTAL_TIME_STEPS
+        self.next_test_training_step = params.TEST_INTERVAL_TRAINING_STEPS
         self.next_console_log = params.CONSOLE_LOG_INTERVAL_TOTAL_TIME_STEPS
 
         if self.params.AGENT_TYPE in OnPolicyAgentTypes:
@@ -97,7 +97,11 @@ class Learner(mp.Process):
         yield None
 
     def train_loop(self):
-        wandb_obj = get_wandb_obj(self.params)
+        self.train_env = get_train_env(self.params)
+        if self.params.USE_WANDB:
+            wandb_obj = get_wandb_obj(self.params)
+        else:
+            wandb_obj = None
 
         self.total_train_start_time = time.time()
 
@@ -165,12 +169,9 @@ class Learner(mp.Process):
                 )
                 self.next_console_log += self.params.CONSOLE_LOG_INTERVAL_TOTAL_TIME_STEPS
 
-            test_conditions = [
-                self.total_time_steps.value > 0,
-                self.total_time_steps.value >= self.next_test_time_step
-            ]
-            if all(test_conditions):
+            if self.training_steps.value >= self.next_test_training_step:
                 self.testing()
+                self.next_test_training_step += self.params.TEST_INTERVAL_TRAINING_STEPS
                 if self.params.USE_WANDB:
                     wandb_log(self, wandb_obj, self.params)
 
@@ -191,8 +192,8 @@ class Learner(mp.Process):
         print("Training Rate: {0:.3f}/sec.".format(
             self.training_steps.value / total_training_time
         ))
-
-        wandb_obj.join()
+        if self.params.USE_WANDB:
+            wandb_obj.join()
 
     def run(self):
         self.train_loop()
@@ -231,13 +232,10 @@ class Learner(mp.Process):
             print("[TRAIN TERMINATION] TERMINATION CONDITION REACHES!!!")
             self.is_terminated.value = True
 
-        self.next_test_time_step += self.params.TEST_INTERVAL_TOTAL_TIME_STEPS
-
         print("*" * 80)
 
     def play_for_testing(self, n_test_episodes):
         episode_reward_lst = []
-
         for i in range(n_test_episodes):
             episode_reward = 0  # cumulative_reward
 

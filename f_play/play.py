@@ -14,7 +14,7 @@ if PROJECT_HOME not in sys.path:
     sys.path.append(PROJECT_HOME)
 
 from a_configuration.parameter import Parameter as params
-from g_utils.commons import model_load
+from g_utils.commons import model_load, get_test_env
 
 
 def play(env, agent, n_episodes):
@@ -48,11 +48,9 @@ def play(env, agent, n_episodes):
 
 
 def main_q_play(n_episodes):
-    env = gym.make(params.ENV_NAME)
-    n_features = env.observation_space.shape[0]
-    n_actions = env.action_space.n
+    env, obs_shape, n_actions = get_test_env(params)
 
-    agent = get_agent(n_features, n_actions, device=torch.device("cpu"), params=params)
+    agent = get_agent(obs_shape, n_actions, device=torch.device("cpu"), params=params)
 
     model_load(
         model=agent.q_net,

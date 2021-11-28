@@ -11,13 +11,11 @@ from g_utils.types import AgentMode
 
 
 class AgentA2c(Agent):
-    def __init__(self, n_features, n_actions, device, params):
-        super(AgentA2c, self).__init__(
-            n_features, n_actions, device, params
-        )
+    def __init__(self, obs_shape, n_actions, device, params):
+        super(AgentA2c, self).__init__(obs_shape, n_actions, device, params)
 
         self.actor_critic_model = ActorCritic(
-            n_features=n_features, n_actions=n_actions, device=device, params=params
+            obs_shape=obs_shape, n_actions=n_actions, device=device, params=params
         ).to(device)
         self.actor_critic_model.share_memory()
 

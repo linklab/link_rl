@@ -1,4 +1,6 @@
 import os
+os.environ['KMP_DUPLICATE_LIB_OK'] = 'True'
+
 import sys
 
 sys.path.append(os.path.abspath(
@@ -14,23 +16,19 @@ def main():
     mp.set_start_method('spawn', force=True)
     queue = mp.Queue()
 
-    agent = get_agent(n_features, n_actions, device, params)
+    test_env, obs_shape, n_actions = get_test_env(params)
+
+    agent = get_agent(obs_shape, n_actions, device, params)
 
     learner = Learner(
-        test_env=test_env,
-        agent=agent,
-        queue=queue,
-        device=device,
-        params=params,
+        test_env=test_env, agent=agent,
+        queue=queue, device=device, params=params,
     )
 
     actors = [
         Actor(
-            env_name=params.ENV_NAME,
-            actor_id=actor_id,
-            agent=agent,
-            queue=queue,
-            params=params
+            env_name=params.ENV_NAME, actor_id=actor_id, agent=agent,
+            queue=queue, params=params
         ) for actor_id in range(params.N_ACTORS)
     ]
 

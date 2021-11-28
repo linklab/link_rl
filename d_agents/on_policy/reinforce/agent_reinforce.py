@@ -10,10 +10,8 @@ from g_utils.types import AgentMode
 
 
 class AgentReinforce(Agent):
-    def __init__(self, n_features, n_actions, device, params):
-        super(AgentReinforce, self).__init__(
-            n_features, n_actions, device, params
-        )
+    def __init__(self, obs_shape, n_actions, device, params):
+        super(AgentReinforce, self).__init__(obs_shape, n_actions, device, params)
 
         self.policy = Policy(
             n_features=n_features, n_actions=n_actions, device=device

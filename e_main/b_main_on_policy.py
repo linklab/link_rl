@@ -1,8 +1,7 @@
 import os
-import sys
-from gym.vector import AsyncVectorEnv
+os.environ['KMP_DUPLICATE_LIB_OK'] = 'True'
 
-from b_environments.make_envs import make_gym_env
+import sys
 
 sys.path.append(os.path.abspath(
     os.path.join(os.path.dirname(os.path.realpath(__file__)), os.pardir)
@@ -14,21 +13,13 @@ from e_main.supports.main_preamble import *
 def main():
     print_basic_info(device, params)
 
-    train_env = AsyncVectorEnv(
-        env_fns=[
-            make_gym_env(params.ENV_NAME) for _ in range(params.N_VECTORIZED_ENVS)
-        ]
-    )
+    test_env, obs_shape, n_actions = get_test_env(params)
 
-    agent = get_agent(n_features, n_actions, device, params)
+    agent = get_agent(obs_shape, n_actions, device, params)
 
     learner = Learner(
-        test_env=test_env,
-        agent=agent,
-        queue=None,
-        device=device,
-        params=params,
-        train_env=train_env
+        test_env=test_env, agent=agent,
+        queue=None, device=device, params=params
     )
 
     print("########## LEARNING STARTED !!! ##########")

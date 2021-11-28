@@ -5,24 +5,38 @@ import torch
 import torch.nn.functional as F
 import torch.multiprocessing as mp
 
-from c_models.models import QNet
+from c_models.models import QNet, CnnQNet
 from d_agents.agent import Agent
 from g_utils.commons import EpsilonTracker
 from g_utils.types import AgentMode, ModelType
 
 
 class AgentDqn(Agent):
-    def __init__(self, n_features, n_actions, device, params):
-        super(AgentDqn, self).__init__(n_features, n_actions, device, params)
+    def __init__(self, obs_shape, n_actions, device, params):
+        super(AgentDqn, self).__init__(obs_shape, n_actions, device, params)
 
         if self.params.MODEL_TYPE == ModelType.LINEAR:
             assert self.params.NEURONS_PER_LAYER
             self.q_net = QNet(
-                n_features=n_features, n_actions=n_actions, device=device, params=params
+                n_features=obs_shape[0], n_actions=n_actions, device=device, params=params
             ).to(device)
 
             self.target_q_net = QNet(
                 n_features=self.q_net.n_features, n_actions=self.q_net.n_actions, device=device, params=params
+            ).to(device)
+        elif self.params.MODEL_TYPE == ModelType.CONVOLUTIONAL:
+            assert self.params.OUT_CHANNELS_PER_LAYER
+            assert self.params.KERNEL_SIZE_PER_LAYER
+            assert self.params.STRIDE_PER_LAYER
+            assert self.params.NEURONS_PER_FULLY_CONNECTED_LAYER
+
+            assert len(obs_shape) == 3
+            self.q_net = CnnQNet(
+                obs_shape=obs_shape, n_actions=n_actions, device=device, params=params
+            ).to(device)
+
+            self.target_q_net = CnnQNet(
+                obs_shape=self.q_net.obs_shape, n_actions=self.q_net.n_actions, device=device, params=params
             ).to(device)
         else:
             raise ValueError()

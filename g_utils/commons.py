@@ -1,10 +1,12 @@
 import time
 from datetime import date
 
+import gym
 import torch
 import os
 import torch.multiprocessing as mp
 import wandb
+from gym.vector import AsyncVectorEnv
 
 from a_configuration.config.config import Config
 from g_utils.types import AgentType
@@ -71,7 +73,7 @@ def print_basic_info(device, params):
                 "BATCH_SIZE", "BUFFER_CAPACITY", "CONSOLE_LOG_INTERVAL_TOTAL_TIME_STEPS",
                 "EPISODE_REWARD_AVG_SOLVED", "MAX_TRAINING_STEPS",
                 "MIN_BUFFER_SIZE_FOR_TRAIN", "N_EPISODES_FOR_MEAN_CALCULATION",
-                "TEST_INTERVAL_TOTAL_TIME_STEPS"
+                "TEST_INTERVAL_TRAINING_STEPS"
             ]:
                 item = "{0}: {1:,}".format(param, getattr(params, param))
             else:
@@ -170,6 +172,45 @@ def wandb_log(learner, wandb_obj, params):
         pass
 
     wandb_obj.log(log_dict)
+
+
+def get_train_env(params):
+    def make_gym_env(env_name):
+        def _make():
+            env = gym.make(env_name)
+            if env_name in ["PongNoFrameskip-v4"]:
+                env = gym.wrappers.AtariPreprocessing(
+                    env, grayscale_obs=True, scale_obs=True
+                )
+                env = gym.wrappers.FrameStack(env, num_stack=4, lz4_compress=True)
+            return env
+
+        return _make
+
+    if params.ENV_NAME in ["CartPole-v1", "PongNoFrameskip-v4"]:
+        train_env = AsyncVectorEnv(
+            env_fns=[
+                make_gym_env(params.ENV_NAME) for _ in range(params.N_VECTORIZED_ENVS)
+            ]
+        )
+    else:
+        raise ValueError()
+
+    return train_env
+
+
+def get_test_env(params):
+    test_env = gym.make(params.ENV_NAME)
+    if params.ENV_NAME in ["PongNoFrameskip-v4"]:
+        test_env = gym.wrappers.AtariPreprocessing(
+            test_env, grayscale_obs=True, scale_obs=True
+        )
+        test_env = gym.wrappers.FrameStack(test_env, num_stack=4, lz4_compress=True)
+
+    obs_shape = test_env.observation_space.shape
+    n_actions = test_env.action_space.n
+
+    return test_env, obs_shape, n_actions
 
 
 class EpsilonTracker:
