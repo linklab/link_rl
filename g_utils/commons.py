@@ -2,6 +2,7 @@ import time
 import torch
 import os
 import torch.multiprocessing as mp
+import wandb
 
 from a_configuration.config.config import Config
 from d_agents.off_policy.dqn.agent_dqn import AgentDqn
@@ -43,21 +44,23 @@ def model_load(model, agent_type_name, file_name):
 
 
 def print_basic_info(device, params):
-    n_cpu_cores = mp.cpu_count()
-    print('\n' + '#' * 72 + " Base Parameters " + '#' * 73)
-    print("{0:55} {1:55} {2:55}".format(
-        "DEVICE: {0}".format(device),
-        "CPU CORES: {0}".format(n_cpu_cores),
-        "MAX TOTAL TIME STEPS: {0:,}".format(params.MAX_TRAINING_STEPS)
-    ), end="\n")
-    print("{0:55} {1:55} {2:55}".format(
-        "ACTORS: {0}".format(params.N_ACTORS),
-        "ENVS PER ACTOR: {0}".format(params.N_VECTORIZED_ENVS),
-        "TOTAL NUMBERS OF ENVS: {0}".format(
-            params.N_ACTORS * params.N_VECTORIZED_ENVS
-        )
-    ), end="\n")
-    print('\n' + '-' * 75 + " Parameters " + '-' * 75)
+    if device:
+        n_cpu_cores = mp.cpu_count()
+        print('\n' + '#' * 72 + " Base Parameters " + '#' * 73)
+        print("{0:55} {1:55} {2:55}".format(
+            "DEVICE: {0}".format(device),
+            "CPU CORES: {0}".format(n_cpu_cores),
+            "MAX TOTAL TIME STEPS: {0:,}".format(params.MAX_TRAINING_STEPS)
+        ), end="\n")
+        print("{0:55} {1:55} {2:55}".format(
+            "N_ACTORS: {0}".format(params.N_ACTORS),
+            "ENVS PER ACTOR: {0}".format(params.N_VECTORIZED_ENVS),
+            "TOTAL NUMBERS OF ENVS: {0}".format(
+                params.N_ACTORS * params.N_VECTORIZED_ENVS
+            )
+        ))
+
+    print('-' * 75 + " Parameters " + '-' * 75)
     items = []
     for param in dir(params):
         if not param.startswith("__"):
@@ -128,7 +131,18 @@ def console_log(
     print(console_log)
 
 
-def wandb_log(agent, learner, wandb_obj, params):
+def get_wandb_obj(params):
+    wandb_obj = wandb.init(
+        entity=params.WANDB_ENTITY,
+        project="{0}_{1}".format(params.ENV_NAME, params.AGENT_TYPE.name),
+        config={
+            key: getattr(params, key) for key in dir(params) if not key.startswith("__")
+        }
+    )
+    return wandb_obj
+
+
+def wandb_log(learner, wandb_obj, params):
     log_dict = {
         "[TEST] Average Episode Reward": learner.test_episode_reward_avg.value,
         "[TEST] Std. Episode Reward": learner.test_episode_reward_std.value,
@@ -140,13 +154,13 @@ def wandb_log(agent, learner, wandb_obj, params):
     }
 
     if params.AGENT_TYPE == AgentType.Dqn:
-        log_dict["Q_net_loss"] = agent.last_q_net_loss.value
-        log_dict["Epsilon"] = agent.epsilon.value
+        log_dict["Q_net_loss"] = learner.agent.last_q_net_loss.value
+        log_dict["Epsilon"] = learner.agent.epsilon.value
     elif params.AGENT_TYPE == AgentType.Reinforce:
-        log_dict["log_policy_objective"] = agent.last_log_policy_objective.value
+        log_dict["log_policy_objective"] = learner.agent.last_log_policy_objective.value
     elif params.AGENT_TYPE == AgentType.A2c:
-        log_dict["critic_loss"] = agent.last_critic_loss.value
-        log_dict["log_actor_objective"] = agent.last_log_actor_objective.value
+        log_dict["critic_loss"] = learner.agent.last_critic_loss.value
+        log_dict["log_actor_objective"] = learner.agent.last_log_actor_objective.value
     else:
         pass
 

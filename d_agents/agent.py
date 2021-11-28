@@ -1,7 +1,7 @@
 from abc import abstractmethod
 import torch.multiprocessing as mp
 
-from g_utils.types import AgentMode, AgentType
+from g_utils.types import AgentMode, AgentType, OnPolicyAgentTypes
 
 
 class Agent:
@@ -13,58 +13,42 @@ class Agent:
 
         self.model = None
         self.models_dir = None
-        self.model_version = mp.Value('i', 0)
 
     @abstractmethod
     def get_action(self, obs, mode=AgentMode.TRAIN):
         pass
 
-    def train(self, buffer, total_time_steps_v, training_steps):
+    def train(self, buffer, total_time_steps_v=None, training_steps=None):
         loss = 0.0
         if self.params.AGENT_TYPE == AgentType.Dqn:
             if len(buffer) > self.params.MIN_BUFFER_SIZE_FOR_TRAIN:
-                # TRAIN POLICY
                 loss = self.train_dqn(
-                    buffer=buffer,
-                    total_time_steps_v=total_time_steps_v,
-                    training_steps=training_steps
+                    buffer=buffer, training_steps=training_steps
                 )
                 training_steps.value += 1
-                self.model_version.value += 1
         elif self.params.AGENT_TYPE == AgentType.A2c:
-            filtered_buffer = buffer.get_filtered_buffer(
-                model_version_v=self.model_version.value
-            )
-            if len(filtered_buffer) > 0:
-                loss = self.train_a2c(
-                    filtered_buffer=filtered_buffer, device=self.device
-                )
+            if len(buffer) > self.params.BATCH_SIZE:
+                loss = self.train_a2c(buffer=buffer)
                 training_steps.value += 1
-                self.model_version.value += 1
-        return loss
+        elif self.params.AGENT_TYPE == AgentType.Reinforce:
+            if len(buffer) > 0:
+                loss = self.train_reinforce(buffer=buffer)
+                training_steps.value += 1
 
-    def train_per_episode(self, buffer, training_steps):
-        loss = None
-        if self.params.AGENT_TYPE == AgentType.Reinforce:
-            filtered_buffer = buffer.get_filtered_buffer(
-                model_version_v=self.model_version.value
-            )
-            if len(filtered_buffer) > 0:
-                loss = self.train_reinforce(
-                    filtered_buffer=filtered_buffer, device=self.device
-                )
-                training_steps.value += 1
-                self.model_version.value += 1
+        # NOTE !!!
+        if self.params.AGENT_TYPE in OnPolicyAgentTypes:
+            buffer.clear()
+
         return loss
 
     @abstractmethod
-    def train_dqn(self, buffer, total_time_steps_v, training_steps):
+    def train_dqn(self, buffer, training_steps):
         return 0.0
 
     @abstractmethod
-    def train_reinforce(self, filtered_buffer, device):
+    def train_reinforce(self, buffer):
         return 0.0
 
     @abstractmethod
-    def train_a2c(self, filtered_buffer, device):
+    def train_a2c(self, buffer):
         return 0.0

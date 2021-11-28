@@ -47,56 +47,17 @@ class Buffer:
             )
             self.internal_buffer.append(transition)
 
-    def sample(self, batch_size):
-        return Buffer.sample_with_given_buffer(
-            self.internal_buffer, batch_size, device=self.device
-        )
-
-    def sample_all_for_reinforce(self):
-        _, _, _, observations, actions, _, rewards, _, _ = zip(*self.internal_buffer)
-
-        # Convert to ndarray for speed up cuda
-        observations = np.array(observations)
-        # observations.shape: (64, 4)
-        actions = np.array(actions)
-        actions = np.expand_dims(actions, axis=-1) if actions.ndim == 1 else actions
-
-        rewards = np.array(rewards)
-        rewards = np.expand_dims(rewards, axis=-1) if rewards.ndim == 1 else rewards
-
-        # Convert to tensor
-        observations = torch.tensor(
-            observations, dtype=torch.float32, device=self.device
-        )
-
-        actions = torch.tensor(actions, dtype=torch.int64, device=self.device)
-
-        return observations, actions, rewards
-
-    def get_filtered_buffer(self, model_version_v):
-        filtered_buffer = [
-            transition for transition in self.internal_buffer
-            if transition.info["model_version_v"] == model_version_v
-        ]
-
-        # print(model_version_v, len(filtered_buffer), "!!!!!!")
-
-        return filtered_buffer
-
-    @staticmethod
-    def sample_with_given_buffer(
-            buffer, batch_size=None, device=torch.device("cpu")
-    ):
+    def sample(self, batch_size, device):
         if batch_size:
             # Get index
-            indices = np.random.choice(len(buffer), size=batch_size, replace=False)
+            indices = np.random.choice(len(self.internal_buffer), size=batch_size, replace=False)
 
             # Sample
             observations, actions, next_observations, rewards, dones, infos = \
-                zip(*[buffer[idx] for idx in indices])
+                zip(*[self.internal_buffer[idx] for idx in indices])
         else:
             observations, actions, next_observations, rewards, dones, infos = \
-                zip(*buffer)
+                zip(*self.internal_buffer)
 
         # Convert to ndarray for speed up cuda
         observations = np.array(observations)

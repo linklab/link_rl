@@ -38,9 +38,9 @@ class AgentReinforce(Agent):
             action = torch.argmax(m.probs, dim=-1)
         return action.cpu().numpy()
 
-    def train_reinforce(self, filtered_buffer, device):
-        observations, actions, _, rewards, _ = Buffer.sample_with_given_buffer(
-            buffer=filtered_buffer, device=device
+    def train_reinforce(self, buffer):
+        observations, actions, _, rewards, _ = buffer.sample(
+            batch_size=None, device=self.device
         )
 
         G = 0

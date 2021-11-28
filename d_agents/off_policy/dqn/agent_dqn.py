@@ -60,8 +60,8 @@ class AgentDqn(Agent):
             action = out.argmax(dim=0)
             return action.cpu().numpy()
 
-    def train_dqn(self, buffer, total_time_steps_v, training_steps):
-        batch = buffer.sample(self.params.BATCH_SIZE)
+    def train_dqn(self, buffer, training_steps):
+        batch = buffer.sample(self.params.BATCH_SIZE, device=self.device)
 
         # observations.shape: torch.Size([32, 4]),
         # actions.shape: torch.Size([32, 1]),
@@ -106,7 +106,7 @@ class AgentDqn(Agent):
         self.optimizer.step()
 
         # sync
-        if total_time_steps_v % self.params.TARGET_SYNC_INTERVAL_TIME_STEPS == 0:
+        if training_steps.value % self.params.TARGET_SYNC_INTERVAL_TRAINING_STEPS == 0:
             self.target_q_net.load_state_dict(self.q_net.state_dict())
 
         self.epsilon.value = self.epsilon_tracker.epsilon(training_steps.value)

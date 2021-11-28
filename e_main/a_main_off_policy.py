@@ -1,39 +1,28 @@
 import os
 import sys
 
+from g_utils.commons import get_wandb_obj
+
 sys.path.append(os.path.abspath(
     os.path.join(os.path.dirname(os.path.realpath(__file__)), os.pardir)
 ))
 
-from a_configuration.parameter import Parameter as params
 from e_main.supports.main_preamble import *
-from g_utils.commons import print_basic_info, get_agent
 
 
 def main():
-    wandb_configuration = {
-        key: getattr(params, key) for key in dir(params) if not key.startswith("__")
-    }
-    if params.USE_WANDB:
-        wandb_obj = wandb.init(
-            entity=params.WANDB_ENTITY,
-            project="{0}_{1}".format(params.ENV_NAME, params.AGENT_TYPE.name),
-            config=wandb_configuration
-        )
-    else:
-        wandb_obj = None
-
-    test_env = gym.make(params.ENV_NAME)
-    n_features = test_env.observation_space.shape[0]
-    n_actions = test_env.action_space.n
-
-    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-
-    queue = mp.Queue()
-
     print_basic_info(device, params)
 
-    agent = get_agent(n_features, n_actions, device, params)
+    mp.set_start_method('spawn', force=True)
+    queue = mp.Queue()
+
+    learner = Learner(
+        test_env=test_env,
+        agent=agent,
+        queue=queue,
+        device=device,
+        params=params,
+    )
 
     actors = [
         Actor(
@@ -44,14 +33,6 @@ def main():
             params=params
         ) for actor_id in range(params.N_ACTORS)
     ]
-
-    learner = Learner(
-        test_env=test_env,
-        agent=agent,
-        queue=queue,
-        device=device,
-        params=params
-    )
 
     for actor in actors:
         actor.start()
@@ -66,32 +47,26 @@ def main():
     learner.start()
 
     while True:
-        if params.USE_WANDB:
-            wandb_log(agent, learner, wandb_obj, params)
-
         # Busy Wait: learner에서 학습 완료될 때까지 대기
         if learner.is_terminated.value:
             # learner가 학습 완료하면 각 actor들의 rollout 종료
             for actor in actors:
                 actor.is_terminated.value = True
-
             break
-
         time.sleep(0.5)
 
     # Busy Wait: 모든 actor가 조인할 때까지 대기
-    for actor in actors:
-        while actor.is_alive():
+    while any([actor.is_alive() for actor in actors]):
+        for actor in actors:
             actor.join(timeout=1)
 
     # Busy Wait: learner가 조인할 때까지 대기
     while learner.is_alive():
-        if params.USE_WANDB:
-            wandb_log(agent, learner, wandb_obj, params)
         learner.join(timeout=1)
 
     print_basic_info(device, params)
 
 
 if __name__ == "__main__":
+    assert params.AGENT_TYPE in OffPolicyAgentTypes
     main()

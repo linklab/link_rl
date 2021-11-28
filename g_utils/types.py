@@ -26,6 +26,12 @@ class AgentType(enum.Enum):
     A2c = 2
 
 
+OnPolicyAgentTypes = [AgentType.Reinforce, AgentType.A2c]
+
+
+OffPolicyAgentTypes = [AgentType.Dqn]
+
+
 class AgentMode(enum.Enum):
     TRAIN = 0
     TEST = 1

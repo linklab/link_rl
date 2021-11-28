@@ -1,14 +1,19 @@
+from collections import deque
+
 import torch.multiprocessing as mp
 import numpy as np
 import time
 
-from g_utils.commons import model_save, console_log
+import wandb
+
+from e_main.supports.actor import Actor
+from g_utils.commons import model_save, console_log, wandb_log, get_wandb_obj
 from g_utils.buffers import Buffer
-from g_utils.types import AgentType, AgentMode
+from g_utils.types import AgentType, AgentMode, OffPolicyAgentTypes, OnPolicyAgentTypes, Transition
 
 
 class Learner(mp.Process):
-    def __init__(self, test_env, agent, queue, device, params):
+    def __init__(self, test_env, agent, queue, device, params, train_env=None):
         super(Learner, self).__init__()
 
         self.test_env = test_env
@@ -16,6 +21,7 @@ class Learner(mp.Process):
         self.queue = queue
         self.device = device
         self.params = params
+        self.train_env = train_env
 
         self.n_actors = self.params.N_ACTORS
         self.n_vectorized_envs = self.params.N_VECTORIZED_ENVS
@@ -42,17 +48,72 @@ class Learner(mp.Process):
         self.test_episode_reward_avg = mp.Value('d', 0.0)
         self.test_episode_reward_std = mp.Value('d', 0.0)
 
-        self.next_train_time_step = params.TRAIN_INTERVAL_TIME_STEPS
+        self.next_train_time_step = params.TRAIN_INTERVAL_TOTAL_TIME_STEPS
         self.next_test_time_step = params.TEST_INTERVAL_TOTAL_TIME_STEPS
         self.next_console_log = params.CONSOLE_LOG_INTERVAL_TOTAL_TIME_STEPS
 
-    def run(self):
+        if self.params.AGENT_TYPE in OnPolicyAgentTypes:
+            self.transition_generator = self.generator_on_policy_transition()
+
+            self.histories = []
+            for _ in range(self.params.N_VECTORIZED_ENVS):
+                self.histories.append(deque(maxlen=self.params.N_STEP))
+
+    def generator_on_policy_transition(self):
+        observations = self.train_env.reset()
+
+        actor_time_step = 0
+
+        while True:
+            actor_time_step += 1
+            actions = self.agent.get_action(observations)
+            next_observations, rewards, dones, infos = self.train_env.step(actions)
+
+            for env_id, (observation, action, next_observation, reward, done, info) in enumerate(
+                    zip(observations, actions, next_observations, rewards, dones, infos)
+            ):
+                info["actor_id"] = 0
+                info["env_id"] = env_id
+                info["actor_time_step"] = actor_time_step
+                self.histories[env_id].append(Transition(
+                    observation=observation,
+                    action=action,
+                    next_observation=next_observation,
+                    reward=reward,
+                    done=done,
+                    info=info
+                ))
+
+                if len(self.histories[env_id]) == self.params.N_STEP or done:
+                    n_step_transition = Actor.get_n_step_transition(
+                        history=self.histories[env_id], env_id=env_id,
+                        actor_id=0, info=info, done=done, params=self.params
+                    )
+                    yield n_step_transition
+
+            observations = next_observations
+
+            if self.is_terminated.value:
+                break
+
+        yield None
+
+    def train_loop(self):
+        wandb_obj = get_wandb_obj(self.params)
+
         self.total_train_start_time = time.time()
 
         while True:
-            transition = self.queue.get()
+            if self.params.AGENT_TYPE in OffPolicyAgentTypes:
+                n_step_transition = self.queue.get()
+            elif self.params.AGENT_TYPE in OnPolicyAgentTypes:
+                n_step_transition = next(self.transition_generator)
+            else:
+                raise ValueError()
 
-            if transition is None:
+            # print(n_step_transition.info["training_step_v"], "&", end=' ')
+
+            if n_step_transition is None:
                 self.n_actor_terminations += 1
                 if self.n_actor_terminations >= self.n_actors:
                     self.is_terminated.value = True
@@ -65,12 +126,12 @@ class Learner(mp.Process):
                 else:
                     self.total_time_steps.value += 1
 
-            self.buffer.append(transition)
+            self.buffer.append(n_step_transition)
             self.buffer_size.value = self.buffer.size()
 
-            actor_id = transition.info["actor_id"]
-            env_id = transition.info["env_id"]
-            self.episode_rewards[actor_id * env_id] += transition.reward
+            actor_id = n_step_transition.info["actor_id"]
+            env_id = n_step_transition.info["env_id"]
+            self.episode_rewards[actor_id * env_id] += n_step_transition.reward
 
             if self.total_time_steps.value >= self.next_train_time_step:
                 if self.params.AGENT_TYPE != AgentType.Reinforce:
@@ -79,9 +140,9 @@ class Learner(mp.Process):
                         total_time_steps_v=self.total_time_steps.value,
                         training_steps=self.training_steps
                     )
-                self.next_train_time_step += self.params.TRAIN_INTERVAL_TIME_STEPS
+                self.next_train_time_step += self.params.TRAIN_INTERVAL_TOTAL_TIME_STEPS
 
-            if transition.done:
+            if n_step_transition.done:
                 self.total_episodes.value += 1
 
                 self.episode_reward_lst.append(self.episode_rewards[actor_id * env_id])
@@ -92,7 +153,7 @@ class Learner(mp.Process):
                 self.episode_rewards[actor_id * env_id] = 0.0
 
                 if self.params.AGENT_TYPE == AgentType.Reinforce:
-                    self.agent.train_per_episode(
+                    self.agent.train(
                         buffer=self.buffer,
                         training_steps=self.training_steps
                     )
@@ -113,6 +174,8 @@ class Learner(mp.Process):
             ]
             if all(test_conditions):
                 self.testing()
+                if self.params.USE_WANDB:
+                    wandb_log(self, wandb_obj, self.params)
 
             if self.training_steps.value >= self.params.MAX_TRAINING_STEPS:
                 print("[TRAIN TERMINATION] MAX_TRAINING_STEPS ({0}) REACHES!!!".format(
@@ -124,13 +187,18 @@ class Learner(mp.Process):
         formatted_total_training_time = time.strftime(
             '%H:%M:%S', time.gmtime(total_training_time)
         )
-        print("Total Training End : {}".format(formatted_total_training_time))
+        print("Total Training Terminated : {}".format(formatted_total_training_time))
         print("Rate of Buffer Increase: {0:.3f}/1sec.".format(
             self.buffer.size() / total_training_time
         ))
         print("Rate of Training Steps: {0:.3f}/1sec.".format(
             self.training_steps.value / total_training_time
         ))
+
+        wandb_obj.join()
+
+    def run(self):
+        self.train_loop()
 
     def testing(self):
         print("*" * 80)

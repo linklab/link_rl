@@ -19,8 +19,12 @@ class Actor(mp.Process):
         self.is_vectorized_env_created = mp.Value('i', False)
         self.is_terminated = mp.Value('i', False)
 
+        self.train_env = None
+
+        self.histories = None
+
     def run(self):
-        train_env = AsyncVectorEnv(
+        self.train_env = AsyncVectorEnv(
             env_fns=[
                 make_gym_env(self.env_name) for _ in range(self.params.N_VECTORIZED_ENVS)
             ]
@@ -28,27 +32,29 @@ class Actor(mp.Process):
 
         self.is_vectorized_env_created.value = True
 
-        histories = []
+        self.histories = []
         for _ in range(self.params.N_VECTORIZED_ENVS):
-            histories.append(deque(maxlen=self.params.N_STEP))
+            self.histories.append(deque(maxlen=self.params.N_STEP))
 
-        observations = train_env.reset()
+        self.roll_out()
+
+    def roll_out(self):
+        observations = self.train_env.reset()
 
         actor_time_step = 0
 
         while True:
             actor_time_step += 1
             actions = self.agent.get_action(observations)
-            next_observations, rewards, dones, infos = train_env.step(actions)
+            next_observations, rewards, dones, infos = self.train_env.step(actions)
 
             for env_id, (observation, action, next_observation, reward, done, info) in enumerate(
                     zip(observations, actions, next_observations, rewards, dones, infos)
             ):
                 info["actor_id"] = self.actor_id
                 info["env_id"] = env_id
-                info["model_version_v"] = self.agent.model_version.value
                 info["actor_time_step"] = actor_time_step
-                histories[env_id].append(Transition(
+                self.histories[env_id].append(Transition(
                     observation=observation,
                     action=action,
                     next_observation=next_observation,
@@ -57,35 +63,13 @@ class Actor(mp.Process):
                     info=info
                 ))
 
-                if len(histories[env_id]) == self.params.N_STEP or done:
-                    n_step_transitions = tuple(histories[env_id])
-                    next_observation = n_step_transitions[-1].next_observation
-
-                    n_step_reward = 0.0
-                    for n_step_transition in reversed(n_step_transitions):
-                        n_step_reward = n_step_transition.reward + \
-                                        self.params.GAMMA * n_step_reward * \
-                                        (0.0 if n_step_transition.done else 1.0)
-                        if n_step_transition.done:
-                            break
-
-                    info["actor_id"] = self.actor_id
-                    info["env_id"] = env_id
-                    # NOTE: TODO 모든 스텝에 대하여 동일한 model_version_v 인지 체크
-                    info["model_version_v"] = n_step_transitions[0].info["model_version_v"]
-                    info["actor_time_step"] = n_step_transitions[0].info["actor_time_step"]
-                    info["real_n_steps"] = len(n_step_transitions)
-                    n_step_transition = Transition(
-                        observation=n_step_transitions[0].observation,
-                        action=n_step_transitions[0].action,
-                        next_observation=next_observation,
-                        reward=n_step_reward,
-                        done=done,
-                        info=info
+                if len(self.histories[env_id]) == self.params.N_STEP or done:
+                    n_step_transition = Actor.get_n_step_transition(
+                        history=self.histories[env_id], env_id=env_id,
+                        actor_id=self.actor_id, info=info, done=done,
+                        params=self.params
                     )
                     self.queue.put(n_step_transition)
-
-                    histories[env_id].clear()
 
             observations = next_observations
 
@@ -93,3 +77,40 @@ class Actor(mp.Process):
                 break
 
         self.queue.put(None)
+        #
+        # if self.params.AGENT_TYPE in OffPolicyAgentTypes:
+        #     self.queue.put(None)
+        # elif self.params.AGENT_TYPE in OnPolicyAgentTypes:
+        #     yield None
+        # else:
+        #     raise ValueError()
+
+    @staticmethod
+    def get_n_step_transition(history, env_id, actor_id, info, done, params):
+        n_step_transitions = tuple(history)
+        next_observation = n_step_transitions[-1].next_observation
+
+        n_step_reward = 0.0
+        for n_step_transition in reversed(n_step_transitions):
+            n_step_reward = n_step_transition.reward + \
+                            params.GAMMA * n_step_reward * \
+                            (0.0 if n_step_transition.done else 1.0)
+            if n_step_transition.done:
+                break
+
+        info["actor_id"] = actor_id
+        info["env_id"] = env_id
+        info["actor_time_step"] = n_step_transitions[0].info["actor_time_step"]
+        info["real_n_steps"] = len(n_step_transitions)
+        n_step_transition = Transition(
+            observation=n_step_transitions[0].observation,
+            action=n_step_transitions[0].action,
+            next_observation=next_observation,
+            reward=n_step_reward,
+            done=done,
+            info=info
+        )
+
+        history.clear()
+
+        return n_step_transition
