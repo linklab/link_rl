@@ -62,8 +62,9 @@ def main_q_play(n_episodes):
 
     model_load(
         model=agent.q_net,
+        env_name=params.ENV_NAME,
         agent_type_name=params.AGENT_TYPE.name,
-        file_name="CartPole-v1_Dqn_500.0_0.0.pth"
+        file_name="500.0_0.0.pth"
     )
     play(env, agent, n_episodes=n_episodes)
 

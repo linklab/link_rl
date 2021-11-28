@@ -1,4 +1,6 @@
 import time
+from datetime import date
+
 import torch
 import os
 import torch.multiprocessing as mp
@@ -23,22 +25,26 @@ else:
 
 
 def model_save(model, env_name, agent_type_name, test_episode_reward_avg, test_episode_reward_std):
-    agent_model_home = os.path.join(Config.MODEL_HOME, agent_type_name)
+    env_model_home = os.path.join(Config.MODEL_HOME, env_name)
+    if not os.path.exists(env_model_home):
+        os.mkdir(env_model_home)
+
+    agent_model_home = os.path.join(Config.MODEL_HOME, env_name, agent_type_name)
     if not os.path.exists(agent_model_home):
         os.mkdir(agent_model_home)
 
-    file_name = "{0}_{1}_{2:4.1f}_{3:3.1f}.pth".format(
-        env_name, agent_type_name, test_episode_reward_avg, test_episode_reward_std
+    today_date = date.today()
+
+    file_name = "{0:4.1f}_{1:3.1f}_{2}_{3}_{4}.pth".format(
+        test_episode_reward_avg, test_episode_reward_std,
+        today_date.year, today_date.month, today_date.day
     )
 
     torch.save(model.state_dict(), os.path.join(agent_model_home, file_name))
 
 
-def model_load(model, agent_type_name, file_name):
-    agent_model_home = os.path.join(Config.MODEL_HOME, agent_type_name)
-    if not os.path.exists(agent_model_home):
-        os.mkdir(agent_model_home)
-
+def model_load(model, env_name, agent_type_name, file_name):
+    agent_model_home = os.path.join(Config.MODEL_HOME, env_name, agent_type_name)
     model_params = torch.load(os.path.join(agent_model_home, file_name))
     model.load_state_dict(model_params)
 

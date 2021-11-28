@@ -4,8 +4,6 @@ import torch.multiprocessing as mp
 import numpy as np
 import time
 
-import wandb
-
 from e_main.supports.actor import Actor
 from g_utils.commons import model_save, console_log, wandb_log, get_wandb_obj
 from g_utils.buffers import Buffer
@@ -127,7 +125,6 @@ class Learner(mp.Process):
                     self.total_time_steps.value += 1
 
             self.buffer.append(n_step_transition)
-
             self.buffer_size.value = self.buffer.size()
 
             actor_id = n_step_transition.info["actor_id"]
