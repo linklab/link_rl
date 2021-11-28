@@ -90,19 +90,21 @@ def console_log(
         agent, params
 ):
     total_training_time = time.time() - total_train_start_time
-    total_training_time = time.strftime(
+    formatted_total_training_time = time.strftime(
         '%H:%M:%S', time.gmtime(total_training_time)
     )
 
     console_log = "[Total Episodes: {0:5,}, Total Time Steps {1:7,}] " \
-                  "Mean Episode Reward: {2:5.1f}, Rolling Transitions: {3:6,}, " \
-                  "Training Steps: {4:5,}, " \
+                  "Mean Episode Reward: {2:5.1f}, Rolling Transitions: {3:6,} ({4:.3f}/sec.), " \
+                  "Training Steps: {5:5,} ({6:.3f}/sec.), " \
         .format(
             total_episodes_v,
             total_time_steps_v,
             last_mean_episode_reward_v,
             n_rollout_transitions_v,
-            train_steps_v
+            n_rollout_transitions_v / total_training_time,
+            train_steps_v,
+            train_steps_v / total_training_time
         )
 
     if params.AGENT_TYPE == AgentType.Dqn:
@@ -129,7 +131,7 @@ def console_log(
         # gpu = GPUtil.getGPUs()[0]
         # console_log += f'gpu: {0}%, gpu-mem: {1}%, '.format(gpu.load * 100, gpu.memoryUtil * 100)
 
-    console_log += "Total Elapsed Time {}".format(total_training_time)
+    console_log += "Total Elapsed Time {}".format(formatted_total_training_time)
 
     print(console_log)
 

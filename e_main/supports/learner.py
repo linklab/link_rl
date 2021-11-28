@@ -185,10 +185,10 @@ class Learner(mp.Process):
             '%H:%M:%S', time.gmtime(total_training_time)
         )
         print("Total Training Terminated : {}".format(formatted_total_training_time))
-        print("Transition Rolling Rate: {0:.3f}/1sec.".format(
+        print("Transition Rolling Rate: {0:.3f}/sec.".format(
             self.n_rollout_transitions.value / total_training_time
         ))
-        print("Training Rate: {0:.3f}/1sec.".format(
+        print("Training Rate: {0:.3f}/sec.".format(
             self.training_steps.value / total_training_time
         ))
 
