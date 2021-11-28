@@ -6,21 +6,21 @@ import numpy as np
 import time
 
 from e_main.supports.actor import Actor
-from g_utils.commons import model_save, console_log, wandb_log, get_wandb_obj, get_train_env
+from g_utils.commons import model_save, console_log, wandb_log, get_wandb_obj, get_train_env, get_single_env
 from g_utils.buffers import Buffer
 from g_utils.types import AgentType, AgentMode, Transition
 
 
 class Learner(mp.Process):
-    def __init__(self, test_env, agent, queue, device=torch.device("cpu"), params=None):
+    def __init__(self, agent, queue, device=torch.device("cpu"), params=None):
         super(Learner, self).__init__()
-
-        self.test_env = test_env
         self.agent = agent
         self.queue = queue
         self.device = device
         self.params = params
+
         self.train_env = None
+        self.test_env = None
 
         self.n_actors = self.params.N_ACTORS
         self.n_vectorized_envs = self.params.N_VECTORIZED_ENVS
@@ -100,6 +100,8 @@ class Learner(mp.Process):
     def train_loop(self, sync=True):
         if sync:
             self.train_env = get_train_env(self.params)
+
+        self.test_env = get_single_env(self.params)
 
         if self.params.USE_WANDB:
             wandb_obj = get_wandb_obj(self.params)

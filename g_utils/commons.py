@@ -199,18 +199,25 @@ def get_train_env(params):
     return train_env
 
 
-def get_test_env(params):
-    test_env = gym.make(params.ENV_NAME)
+def get_single_env(params):
+    single_env = gym.make(params.ENV_NAME)
     if params.ENV_NAME in ["PongNoFrameskip-v4"]:
-        test_env = gym.wrappers.AtariPreprocessing(
-            test_env, grayscale_obs=True, scale_obs=True
+        single_env = gym.wrappers.AtariPreprocessing(
+            single_env, grayscale_obs=True, scale_obs=True
         )
-        test_env = gym.wrappers.FrameStack(test_env, num_stack=4, lz4_compress=True)
+        single_env = gym.wrappers.FrameStack(single_env, num_stack=4, lz4_compress=True)
 
-    obs_shape = test_env.observation_space.shape
-    n_actions = test_env.action_space.n
+    return single_env
 
-    return test_env, obs_shape, n_actions
+
+def get_env_info(params):
+    single_env = get_single_env(params)
+
+    obs_shape = single_env.observation_space.shape
+    n_actions = single_env.action_space.n
+
+    single_env.close()
+    return obs_shape, n_actions
 
 
 class EpsilonTracker:

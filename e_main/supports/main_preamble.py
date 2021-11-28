@@ -20,7 +20,7 @@ from e_main.supports.actor import Actor
 from e_main.supports.learner import Learner
 from g_utils.commons import AgentType, wandb_log, print_basic_info
 from g_utils.types import OnPolicyAgentTypes, OffPolicyAgentTypes
-from g_utils.commons import get_test_env
+from g_utils.commons import get_env_info
 
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
@@ -98,4 +98,4 @@ wandb_log
 OnPolicyAgentTypes
 OffPolicyAgentTypes
 print_basic_info
-get_test_env
+get_env_info

@@ -16,13 +16,12 @@ def main():
     mp.set_start_method('spawn', force=True)
     queue = mp.Queue()
 
-    test_env, obs_shape, n_actions = get_test_env(params)
+    obs_shape, n_actions = get_env_info(params)
 
     agent = get_agent(obs_shape, n_actions, device, params)
 
     learner = Learner(
-        test_env=test_env, agent=agent,
-        queue=queue, device=device, params=params,
+        agent=agent, queue=queue, device=device, params=params,
     )
 
     actors = [

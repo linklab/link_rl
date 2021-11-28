@@ -13,13 +13,12 @@ from e_main.supports.main_preamble import *
 def main():
     print_basic_info(device, params)
 
-    test_env, obs_shape, n_actions = get_test_env(params)
+    obs_shape, n_actions = get_env_info(params)
 
     agent = get_agent(obs_shape, n_actions, device, params)
 
     learner = Learner(
-        test_env=test_env, agent=agent,
-        queue=None, device=device, params=params
+        agent=agent, queue=None, device=device, params=params
     )
 
     print("########## LEARNING STARTED !!! ##########")
