@@ -13,7 +13,7 @@ class ParameterCartPoleDqn(
     N_VECTORIZED_ENVS = 1
     N_ACTORS = 1
     MAX_TRAINING_STEPS = 100_000
-
+    CONSOLE_LOG_INTERVAL_TOTAL_TIME_STEPS = 200
 
 ###############
 ## ON_POLICY ##
@@ -25,12 +25,14 @@ class ParameterCartPoleReinforce(
     N_ACTORS = 1
     BUFFER_CAPACITY = 1_000
     MAX_TRAINING_STEPS = 10_000
-
+    CONSOLE_LOG_INTERVAL_TOTAL_TIME_STEPS = 200
 
 class ParameterCartPoleA2c(
     ParameterBase, ParameterCartPole, ParameterA2c
 ):
-    N_VECTORIZED_ENVS = 2
-    N_ACTORS = 2
+    N_VECTORIZED_ENVS = 1
+    N_ACTORS = 1
     MAX_TRAINING_STEPS = 100_000
     BUFFER_CAPACITY = 100_000
+    CONSOLE_LOG_INTERVAL_TOTAL_TIME_STEPS = 200
+    
