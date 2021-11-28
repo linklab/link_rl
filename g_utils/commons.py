@@ -86,7 +86,7 @@ def print_basic_info(device, params):
 
 def console_log(
         total_train_start_time, total_episodes_v, total_time_steps_v,
-        last_mean_episode_reward_v, buffer_size_v, train_steps_v,
+        last_mean_episode_reward_v, n_rollout_transitions_v, train_steps_v,
         agent, params
 ):
     total_training_time = time.time() - total_train_start_time
@@ -95,13 +95,13 @@ def console_log(
     )
 
     console_log = "[Total Episodes: {0:5,}, Total Time Steps {1:7,}] " \
-                  "Mean Episode Reward: {2:5.1f}, Replay Buffer: {3:6,}, " \
+                  "Mean Episode Reward: {2:5.1f}, Rolling Transitions: {3:6,}, " \
                   "Training Steps: {4:5,}, " \
         .format(
             total_episodes_v,
             total_time_steps_v,
             last_mean_episode_reward_v,
-            buffer_size_v,
+            n_rollout_transitions_v,
             train_steps_v
         )
 
@@ -151,7 +151,7 @@ def wandb_log(learner, wandb_obj, params):
         "[TEST] Std. Episode Reward": learner.test_episode_reward_std.value,
         "Mean Episode Reward": learner.last_mean_episode_reward.value,
         "Episode": learner.total_episodes.value,
-        "Buffer Size": learner.buffer_size.value,
+        "Buffer Size": learner.n_rollout_transitions.value,
         "Training Steps": learner.training_steps.value,
         "Total Time Steps": learner.total_time_steps.value
     }

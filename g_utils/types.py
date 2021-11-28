@@ -28,8 +28,8 @@ class AgentMode(enum.Enum):
 
 class ModelType(enum.Enum):
     LINEAR = 0
-    CNN = 1
-    RNN = 2
+    CONVOLUTIONAL = 1
+    RECURRENT = 2
 
 
 class AgentType(enum.Enum):

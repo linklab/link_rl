@@ -36,7 +36,7 @@ class Learner(mp.Process):
             capacity=params.BUFFER_CAPACITY, device=self.device
         )
 
-        self.buffer_size = mp.Value('i', 0)
+        self.n_rollout_transitions = mp.Value('i', 0)
 
         self.total_train_start_time = None
         self.last_mean_episode_reward = mp.Value('d', 0.0)
@@ -125,7 +125,7 @@ class Learner(mp.Process):
                     self.total_time_steps.value += 1
 
             self.buffer.append(n_step_transition)
-            self.buffer_size.value = self.buffer.size()
+            self.n_rollout_transitions.value += 1
 
             actor_id = n_step_transition.info["actor_id"]
             env_id = n_step_transition.info["env_id"]
@@ -160,7 +160,7 @@ class Learner(mp.Process):
                     self.total_train_start_time, self.total_episodes.value,
                     self.total_time_steps.value,
                     self.last_mean_episode_reward.value,
-                    self.buffer_size.value, self.training_steps.value,
+                    self.n_rollout_transitions.value, self.training_steps.value,
                     self.agent, self.params
                 )
                 self.next_console_log += self.params.CONSOLE_LOG_INTERVAL_TOTAL_TIME_STEPS
@@ -185,10 +185,10 @@ class Learner(mp.Process):
             '%H:%M:%S', time.gmtime(total_training_time)
         )
         print("Total Training Terminated : {}".format(formatted_total_training_time))
-        print("Rate of Buffer Increase: {0:.3f}/1sec.".format(
-            self.buffer.size() / total_training_time
+        print("Transition Rolling Rate: {0:.3f}/1sec.".format(
+            self.n_rollout_transitions.value / total_training_time
         ))
-        print("Rate of Training Steps: {0:.3f}/1sec.".format(
+        print("Training Rate: {0:.3f}/1sec.".format(
             self.training_steps.value / total_training_time
         ))
 
