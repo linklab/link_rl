@@ -1,5 +1,6 @@
 from collections import deque
 
+import torch
 import torch.multiprocessing as mp
 import numpy as np
 import time
@@ -11,7 +12,7 @@ from g_utils.types import AgentType, AgentMode, OffPolicyAgentTypes, OnPolicyAge
 
 
 class Learner(mp.Process):
-    def __init__(self, test_env, agent, queue, device, params):
+    def __init__(self, test_env, agent, queue, device=torch.device("cpu"), params=None):
         super(Learner, self).__init__()
 
         self.test_env = test_env
@@ -50,7 +51,7 @@ class Learner(mp.Process):
         self.next_test_training_step = params.TEST_INTERVAL_TRAINING_STEPS
         self.next_console_log = params.CONSOLE_LOG_INTERVAL_TOTAL_TIME_STEPS
 
-        if self.params.AGENT_TYPE in OnPolicyAgentTypes:
+        if queue is None: # SYNC
             self.transition_generator = self.generator_on_policy_transition()
 
             self.histories = []
@@ -96,8 +97,9 @@ class Learner(mp.Process):
 
         yield None
 
-    def train_loop(self):
+    def train_loop(self, sync=True):
         self.train_env = get_train_env(self.params)
+
         if self.params.USE_WANDB:
             wandb_obj = get_wandb_obj(self.params)
         else:
@@ -106,12 +108,10 @@ class Learner(mp.Process):
         self.total_train_start_time = time.time()
 
         while True:
-            if self.params.AGENT_TYPE in OffPolicyAgentTypes:
-                n_step_transition = self.queue.get()
-            elif self.params.AGENT_TYPE in OnPolicyAgentTypes:
+            if sync:
                 n_step_transition = next(self.transition_generator)
             else:
-                raise ValueError()
+                n_step_transition = self.queue.get()
 
             # print(n_step_transition.info["training_step_v"], "&", end=' ')
 
@@ -196,7 +196,7 @@ class Learner(mp.Process):
             wandb_obj.join()
 
     def run(self):
-        self.train_loop()
+        self.train_loop(sync=False)
 
     def testing(self):
         print("*" * 80)
@@ -241,12 +241,14 @@ class Learner(mp.Process):
 
             # Environment 초기화와 변수 초기화
             observation = self.test_env.reset()
+            observation = np.expand_dims(observation, axis=0)
 
             while True:
                 action = self.agent.get_action(observation, mode=AgentMode.TEST)
 
                 # action을 통해서 next_state, reward, done, info를 받아온다
-                next_observation, reward, done, _ = self.test_env.step(action)
+                next_observation, reward, done, _ = self.test_env.step(action[0])
+                next_observation = np.expand_dims(next_observation, axis=0)
 
                 episode_reward += reward  # episode_reward 를 산출하는 방법은 감가률 고려하지 않는 이 라인이 더 올바름.
                 observation = next_observation

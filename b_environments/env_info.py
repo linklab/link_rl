@@ -3,15 +3,24 @@ import os
 import sys
 import gym
 
+from g_utils.commons import get_train_env
+
 CURRENT_PATH = os.path.dirname(os.path.realpath(__file__))
 PROJECT_HOME = os.path.abspath(os.path.join(CURRENT_PATH, os.pardir))
 if PROJECT_HOME not in sys.path:
     sys.path.append(PROJECT_HOME)
 
 ENV_NAME = "PongNoFrameskip-v4"
+class A:
+    pass
+
+params = A()
+params.ENV_NAME = ENV_NAME
+params.N_VECTORIZED_ENVS = 1
 
 
 def main_env_info():
+    # env = get_train_env(params)
     env = gym.make(ENV_NAME)
     env = gym.wrappers.AtariPreprocessing(env, grayscale_obs=True, scale_obs=True)
     env = gym.wrappers.FrameStack(env, num_stack=4, lz4_compress=True)

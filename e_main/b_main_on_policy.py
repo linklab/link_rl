@@ -23,12 +23,12 @@ def main():
     )
 
     print("########## LEARNING STARTED !!! ##########")
-    learner.train_loop()
+    learner.train_loop(sync=True)
 
     print_basic_info(device, params)
 
 
 if __name__ == "__main__":
-    assert params.AGENT_TYPE in OnPolicyAgentTypes
+    # assert params.AGENT_TYPE in OnPolicyAgentTypes
     assert params.N_ACTORS == 1
     main()

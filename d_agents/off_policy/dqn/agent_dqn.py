@@ -72,7 +72,7 @@ class AgentDqn(Agent):
                 action = out.argmax(dim=-1)
                 return action.cpu().numpy()  # argmax: 가장 큰 값에 대응되는 인덱스 반환
         else:
-            action = out.argmax(dim=0)
+            action = out.argmax(dim=-1)
             return action.cpu().numpy()
 
     def train_dqn(self, buffer, training_steps):
