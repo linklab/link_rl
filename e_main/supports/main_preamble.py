@@ -18,7 +18,7 @@ from d_agents.on_policy.a2c.agent_a2c import AgentA2c
 from d_agents.on_policy.reinforce.agent_reinforce import AgentReinforce
 from e_main.supports.actor import Actor
 from e_main.supports.learner import Learner
-from g_utils.commons import print_params, AgentType, wandb_log
+from g_utils.commons import AgentType, wandb_log
 
 time
 gym
@@ -30,7 +30,6 @@ AgentA2c
 AgentReinforce
 Actor
 Learner
-print_params,
 AgentType,
 wandb_log
 

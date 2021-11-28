@@ -32,7 +32,6 @@ def main():
     queue = mp.Queue()
 
     print_basic_info(device, params)
-    print_params(params)
 
     agent = get_agent(n_features, n_actions, device, params)
 
@@ -92,7 +91,6 @@ def main():
         learner.join(timeout=1)
 
     print_basic_info(device, params)
-    print_params(params)
 
 
 if __name__ == "__main__":

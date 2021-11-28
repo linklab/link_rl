@@ -26,9 +26,9 @@ def main():
     else:
         wandb_obj = None
 
-    num_agents = len(params_c.AGENTS)
+    n_agents = len(params_c.AGENTS)
 
-    test_envs = [gym.make(params_c.ENV_NAME) for _ in range(num_agents)]
+    test_envs = [gym.make(params_c.ENV_NAME) for _ in range(n_agents)]
     n_features = test_envs[0].observation_space.shape[0]
     n_actions = test_envs[0].action_space.n
 
@@ -37,7 +37,6 @@ def main():
     queue = mp.Queue()
 
     print_basic_info(device, params_c)
-    print_params(params_c)
 
     agents = get_agents(n_features, n_actions, device, params_c)
 

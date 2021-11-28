@@ -74,7 +74,7 @@ class Actor(mp.Process):
                     # NOTE: TODO 모든 스텝에 대하여 동일한 model_version_v 인지 체크
                     info["model_version_v"] = n_step_transitions[0].info["model_version_v"]
                     info["actor_time_step"] = n_step_transitions[0].info["actor_time_step"]
-                    info["real_num_steps"] = len(n_step_transitions)
+                    info["real_n_steps"] = len(n_step_transitions)
                     n_step_transition = Transition(
                         observation=n_step_transitions[0].observation,
                         action=n_step_transitions[0].action,

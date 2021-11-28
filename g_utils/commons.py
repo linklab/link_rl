@@ -57,23 +57,19 @@ def print_basic_info(device, params):
             params.N_ACTORS * params.N_VECTORIZED_ENVS
         )
     ), end="\n")
-    print('#' * 162)
-
-
-def print_params(params_class):
-    print('\n' + '#' * 75 + " Parameters " + '#' * 75)
+    print('\n' + '-' * 75 + " Parameters " + '-' * 75)
     items = []
-    for param in dir(params_class):
+    for param in dir(params):
         if not param.startswith("__"):
             if param in [
-                "BATCH_SIZE", "BUFFER_CAPACITY", "CONSOLE_LOG_INTERVAL_TIME_STEPS",
+                "BATCH_SIZE", "BUFFER_CAPACITY", "CONSOLE_LOG_INTERVAL_TOTAL_TIME_STEPS",
                 "EPISODE_REWARD_AVG_SOLVED", "MAX_TRAINING_STEPS",
-                "MIN_BUFFER_SIZE_FOR_TRAIN", "NUM_EPISODES_FOR_MEAN_CALCULATION",
-                "TEST_INTERVAL_TIME_STEPS"
+                "MIN_BUFFER_SIZE_FOR_TRAIN", "N_EPISODES_FOR_MEAN_CALCULATION",
+                "TEST_INTERVAL_TOTAL_TIME_STEPS"
             ]:
-                item = "{0}: {1:,}".format(param, getattr(params_class, param))
+                item = "{0}: {1:,}".format(param, getattr(params, param))
             else:
-                item = "{0}: {1:}".format(param, getattr(params_class, param))
+                item = "{0}: {1:}".format(param, getattr(params, param))
             items.append(item)
         if len(items) == 3:
             print("{0:55} {1:55} {2:55}".format(items[0], items[1], items[2]), end="\n")

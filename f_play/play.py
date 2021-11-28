@@ -15,8 +15,8 @@ from d_agents.off_policy.dqn.agent_dqn import AgentDqn
 from g_utils.commons import AgentType, AgentMode, model_load
 
 
-def play(env, agent, num_episodes):
-    for i in range(num_episodes):
+def play(env, agent, n_episodes):
+    for i in range(n_episodes):
         episode_reward = 0  # cumulative_reward
 
         # Environment 초기화와 변수 초기화
@@ -45,7 +45,7 @@ def play(env, agent, num_episodes):
         ))
 
 
-def main_q_play(num_episodes):
+def main_q_play(n_episodes):
     env = gym.make(params.ENV_NAME)
     n_features = env.observation_space.shape[0]
     n_actions = env.action_space.n
@@ -65,11 +65,11 @@ def main_q_play(num_episodes):
         agent_type_name=params.AGENT_TYPE.name,
         file_name="CartPole-v1_Dqn_500.0_0.0.pth"
     )
-    play(env, agent, num_episodes=num_episodes)
+    play(env, agent, n_episodes=n_episodes)
 
     env.close()
 
 
 if __name__ == "__main__":
-    NUM_EPISODES = 5
-    main_q_play(num_episodes=NUM_EPISODES)
+    N_EPISODES = 5
+    main_q_play(n_episodes=N_EPISODES)

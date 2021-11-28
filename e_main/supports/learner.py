@@ -43,8 +43,8 @@ class Learner(mp.Process):
         self.test_episode_reward_std = mp.Value('d', 0.0)
 
         self.next_train_time_step = params.TRAIN_INTERVAL_TIME_STEPS
-        self.next_test_time_step = params.TEST_INTERVAL_TIME_STEPS
-        self.next_console_log = params.CONSOLE_LOG_INTERVAL_TIME_STEPS
+        self.next_test_time_step = params.TEST_INTERVAL_TOTAL_TIME_STEPS
+        self.next_console_log = params.CONSOLE_LOG_INTERVAL_TOTAL_TIME_STEPS
 
     def run(self):
         self.total_train_start_time = time.time()
@@ -86,7 +86,7 @@ class Learner(mp.Process):
 
                 self.episode_reward_lst.append(self.episode_rewards[actor_id * env_id])
                 self.last_mean_episode_reward.value = np.mean(
-                    self.episode_reward_lst[-1 * self.params.NUM_EPISODES_FOR_MEAN_CALCULATION:]
+                    self.episode_reward_lst[-1 * self.params.N_EPISODES_FOR_MEAN_CALCULATION:]
                 )
 
                 self.episode_rewards[actor_id * env_id] = 0.0
@@ -105,7 +105,7 @@ class Learner(mp.Process):
                     self.buffer_size.value, self.training_steps.value,
                     self.agent, self.params
                 )
-                self.next_console_log += self.params.CONSOLE_LOG_INTERVAL_TIME_STEPS
+                self.next_console_log += self.params.CONSOLE_LOG_INTERVAL_TOTAL_TIME_STEPS
 
             test_conditions = [
                 self.total_time_steps.value > 0,
@@ -136,7 +136,7 @@ class Learner(mp.Process):
         print("*" * 80)
         self.test_episode_reward_avg.value, \
         self.test_episode_reward_std.value = \
-            self.play_for_testing(self.params.NUM_TEST_EPISODES)
+            self.play_for_testing(self.params.N_TEST_EPISODES)
 
         print("[Test Episode Reward] Average: {0:.3f}, Standard Dev.: {1:.3f}".format(
             self.test_episode_reward_avg.value,
@@ -166,14 +166,14 @@ class Learner(mp.Process):
             print("[TRAIN TERMINATION] TERMINATION CONDITION REACHES!!!")
             self.is_terminated.value = True
 
-        self.next_test_time_step += self.params.TEST_INTERVAL_TIME_STEPS
+        self.next_test_time_step += self.params.TEST_INTERVAL_TOTAL_TIME_STEPS
 
         print("*" * 80)
 
-    def play_for_testing(self, num_test_episodes):
+    def play_for_testing(self, n_test_episodes):
         episode_reward_lst = []
 
-        for i in range(num_test_episodes):
+        for i in range(n_test_episodes):
             episode_reward = 0  # cumulative_reward
 
             # Environment 초기화와 변수 초기화
