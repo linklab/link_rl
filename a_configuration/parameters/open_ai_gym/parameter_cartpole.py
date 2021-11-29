@@ -8,10 +8,16 @@ from a_configuration.base.a_environments.open_ai_gym.gym_classic_control import 
 class ParameterCartPoleDqn(
     ParameterBase, ParameterCartPole, ParameterDqn, ParameterSmallLinearLayer
 ):
-    N_VECTORIZED_ENVS = 1
-    N_ACTORS = 1
-    MAX_TRAINING_STEPS = 100_000
-    CONSOLE_LOG_INTERVAL_TOTAL_TIME_STEPS = 200
+    def __init__(self):
+        ParameterBase.__init__(self)
+        ParameterCartPole.__init__(self)
+        ParameterDqn.__init__(self)
+        ParameterSmallLinearLayer.__init__(self)
+
+        self.N_VECTORIZED_ENVS = 1
+        self.N_ACTORS = 1
+        self.MAX_TRAINING_STEPS = 100_000
+        self.CONSOLE_LOG_INTERVAL_TOTAL_TIME_STEPS = 200
 
 
 # OnPolicy
@@ -19,19 +25,31 @@ class ParameterCartPoleDqn(
 class ParameterCartPoleReinforce(
     ParameterBase, ParameterCartPole, ParameterReinforce, ParameterSmallLinearLayer
 ):
-    N_VECTORIZED_ENVS = 1
-    N_ACTORS = 1
-    BUFFER_CAPACITY = 1_000
-    MAX_TRAINING_STEPS = 10_000
-    CONSOLE_LOG_INTERVAL_TOTAL_TIME_STEPS = 200
+    def __init__(self):
+        ParameterBase.__init__(self)
+        ParameterCartPole.__init__(self)
+        ParameterReinforce.__init__(self)
+        ParameterSmallLinearLayer.__init__(self)
+
+        self.N_VECTORIZED_ENVS = 1
+        self.N_ACTORS = 1
+        self.BUFFER_CAPACITY = 1_000
+        self.MAX_TRAINING_STEPS = 10_000
+        self.CONSOLE_LOG_INTERVAL_TOTAL_TIME_STEPS = 200
 
 
 class ParameterCartPoleA2c(
     ParameterBase, ParameterCartPole, ParameterA2c, ParameterSmallLinearLayer
 ):
-    N_VECTORIZED_ENVS = 1
-    N_ACTORS = 1
-    MAX_TRAINING_STEPS = 100_000
-    BUFFER_CAPACITY = 100_000
-    BATCH_SIZE = 32
-    CONSOLE_LOG_INTERVAL_TOTAL_TIME_STEPS = 200
+    def __init__(self):
+        ParameterBase.__init__(self)
+        ParameterCartPole.__init__(self)
+        ParameterA2c.__init__(self)
+        ParameterSmallLinearLayer.__init__(self)
+
+        self.N_VECTORIZED_ENVS = 1
+        self.N_ACTORS = 1
+        self.MAX_TRAINING_STEPS = 100_000
+        self.BUFFER_CAPACITY = 100_000
+        self.BATCH_SIZE = 32
+        self.CONSOLE_LOG_INTERVAL_TOTAL_TIME_STEPS = 200
