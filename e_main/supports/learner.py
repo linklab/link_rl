@@ -98,7 +98,7 @@ class Learner(mp.Process):
         yield None
 
     def train_loop(self, sync=True):
-        if sync:
+        if sync:  # off policy인 경우 (즉, async인 경우 actor에서 train_env 생성/관리)
             self.train_env = get_train_env(self.params)
 
         self.test_env = get_single_env(self.params)
