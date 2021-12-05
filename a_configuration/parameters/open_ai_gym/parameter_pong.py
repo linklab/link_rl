@@ -7,7 +7,13 @@ from a_configuration.base.parameter_base import ParameterBase
 class ParameterPongDqn(
     ParameterBase, ParameterPong, ParameterDqn, ParameterMediumConvolutionalLayer
 ):
-    N_VECTORIZED_ENVS = 1
-    N_ACTORS = 1
-    MAX_TRAINING_STEPS = 1_000_000
-    CONSOLE_LOG_INTERVAL_TOTAL_TIME_STEPS = 200
+    def __init__(self):
+        ParameterBase.__init__(self)
+        ParameterPong.__init__(self)
+        ParameterDqn.__init__(self)
+        ParameterMediumConvolutionalLayer.__init__(self)
+
+        self.N_VECTORIZED_ENVS = 1
+        self.N_ACTORS = 1
+        self.MAX_TRAINING_STEPS = 1_000_000
+        self.CONSOLE_LOG_INTERVAL_TOTAL_TIME_STEPS = 200

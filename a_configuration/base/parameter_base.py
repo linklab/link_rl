@@ -3,33 +3,34 @@ import sys
 
 
 class ParameterBase:
-    PROJECT_HOME = os.path.abspath(
-        os.path.join(os.path.dirname(os.path.realpath(__file__)), os.pardir, os.pardir)
-    )
-    if PROJECT_HOME not in sys.path:
-        sys.path.append(PROJECT_HOME)
+    def __init__(self):
+        self.PROJECT_HOME = os.path.abspath(
+            os.path.join(os.path.dirname(os.path.realpath(__file__)), os.pardir, os.pardir)
+        )
+        if self.PROJECT_HOME not in sys.path:
+            sys.path.append(self.PROJECT_HOME)
 
-    MODEL_HOME = os.path.join(PROJECT_HOME, "f_play", "models")
-    if not os.path.exists(MODEL_HOME):
-        os.mkdir(MODEL_HOME)
+        self.MODEL_HOME = os.path.join(self.PROJECT_HOME, "f_play", "models")
+        if not os.path.exists(self.MODEL_HOME):
+            os.mkdir(self.MODEL_HOME)
 
-    N_VECTORIZED_ENVS = 1
-    N_ACTORS = 1
-    MAX_TRAINING_STEPS = 100_000
-    N_STEP = 1
+        self.N_VECTORIZED_ENVS = 1
+        self.N_ACTORS = 1
+        self.MAX_TRAINING_STEPS = 100_000
+        self.N_STEP = 1
 
-    TRAIN_INTERVAL_TOTAL_TIME_STEPS = 4
-    assert TRAIN_INTERVAL_TOTAL_TIME_STEPS >= N_VECTORIZED_ENVS * N_ACTORS, \
-        "TRAIN_INTERVAL_TOTAL_TIME_STEPS should be greater than N_VECTORIZED_ENVS * N_ACTORS"
+        self.TRAIN_INTERVAL_TOTAL_TIME_STEPS = 4
+        assert self.TRAIN_INTERVAL_TOTAL_TIME_STEPS >= self.N_VECTORIZED_ENVS * self.N_ACTORS, \
+            "TRAIN_INTERVAL_TOTAL_TIME_STEPS should be greater than N_VECTORIZED_ENVS * N_ACTORS"
 
-    CONSOLE_LOG_INTERVAL_TOTAL_TIME_STEPS = 100
+        self.CONSOLE_LOG_INTERVAL_TOTAL_TIME_STEPS = 100
 
-    TEST_INTERVAL_TRAINING_STEPS = 256
+        self.TEST_INTERVAL_TRAINING_STEPS = 256
 
-    N_EPISODES_FOR_MEAN_CALCULATION = 100
+        self.N_EPISODES_FOR_MEAN_CALCULATION = 100
 
-    N_TEST_EPISODES = 3
+        self.N_TEST_EPISODES = 3
 
-    USE_WANDB = False
-    WANDB_ENTITY = "link-koreatech"
+        self.USE_WANDB = False
+        self.WANDB_ENTITY = "link-koreatech"
 

@@ -12,7 +12,7 @@ np.set_printoptions(precision=3)
 np.set_printoptions(suppress=True)
 np.set_printoptions(formatter={'float': '{: 0.3f}'.format})
 
-from a_configuration.parameter import Parameter as params
+from a_configuration.parameter import Parameter
 from d_agents.off_policy.dqn.agent_dqn import AgentDqn
 from d_agents.on_policy.a2c.agent_a2c import AgentA2c
 from d_agents.on_policy.reinforce.agent_reinforce import AgentReinforce
@@ -23,6 +23,8 @@ from g_utils.types import OnPolicyAgentTypes, OffPolicyAgentTypes
 from g_utils.commons import get_env_info
 
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+
+params = Parameter()
 
 
 def get_agent(obs_shape, n_actions, device=torch.device("cpu"), params=None):
