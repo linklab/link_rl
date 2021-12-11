@@ -11,16 +11,16 @@ from g_utils.types import AgentMode
 
 
 class AgentA2c(Agent):
-    def __init__(self, obs_shape, n_actions, device, params):
-        super(AgentA2c, self).__init__(obs_shape, n_actions, device, params)
+    def __init__(self, obs_shape, n_actions, device, parameter):
+        super(AgentA2c, self).__init__(obs_shape, n_actions, device, parameter)
 
         self.actor_critic_model = ActorCritic(
-            obs_shape=obs_shape, n_actions=n_actions, device=device, params=params
+            obs_shape=obs_shape, n_actions=n_actions, device=device, parameter=parameter
         ).to(device)
         self.actor_critic_model.share_memory()
 
         self.optimizer = optim.Adam(
-            self.actor_critic_model.parameters(), lr=self.params.LEARNING_RATE
+            self.actor_critic_model.parameters(), lr=self.parameter.LEARNING_RATE
         )
 
         self.model = self.actor_critic_model
@@ -45,7 +45,7 @@ class AgentA2c(Agent):
         # dones.shape: torch.Size([32])
 
         observations, actions, next_observations, rewards, dones = \
-            buffer.sample(batch_size=self.params.BATCH_SIZE, device=self.device)
+            buffer.sample(batch_size=self.parameter.BATCH_SIZE, device=self.device)
 
         self.optimizer.zero_grad()
 
@@ -57,7 +57,7 @@ class AgentA2c(Agent):
         td_target_value_lst = []
 
         for reward, next_value, done in zip(rewards, next_values, dones):
-            td_target = reward + self.params.GAMMA * next_value * (0.0 if done else 1.0)
+            td_target = reward + self.parameter.GAMMA * next_value * (0.0 if done else 1.0)
             td_target_value_lst.append(td_target)
 
         # td_target_values.shape: (32, 1)

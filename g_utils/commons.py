@@ -48,26 +48,26 @@ def model_load(model, env_name, agent_type_name, file_name):
     model.load_state_dict(model_params)
 
 
-def print_basic_info(device, params):
+def print_basic_info(device, parameter):
     if device:
         n_cpu_cores = mp.cpu_count()
         print('\n' + '#' * 72 + " Base Parameters " + '#' * 73)
         print("{0:55} {1:55} {2:55}".format(
             "DEVICE: {0}".format(device),
             "CPU CORES: {0}".format(n_cpu_cores),
-            "MAX TOTAL TIME STEPS: {0:,}".format(params.MAX_TRAINING_STEPS)
+            "MAX TOTAL TIME STEPS: {0:,}".format(parameter.MAX_TRAINING_STEPS)
         ), end="\n")
         print("{0:55} {1:55} {2:55}".format(
-            "N_ACTORS: {0}".format(params.N_ACTORS),
-            "ENVS PER ACTOR: {0}".format(params.N_VECTORIZED_ENVS),
+            "N_ACTORS: {0}".format(parameter.N_ACTORS),
+            "ENVS PER ACTOR: {0}".format(parameter.N_VECTORIZED_ENVS),
             "TOTAL NUMBERS OF ENVS: {0}".format(
-                params.N_ACTORS * params.N_VECTORIZED_ENVS
+                parameter.N_ACTORS * parameter.N_VECTORIZED_ENVS
             )
         ))
 
     print('-' * 75 + " Parameters " + '-' * 75)
     items = []
-    for param in dir(params):
+    for param in dir(parameter):
         if not param.startswith("__"):
             if param in [
                 "BATCH_SIZE", "BUFFER_CAPACITY", "CONSOLE_LOG_INTERVAL_TOTAL_TIME_STEPS",
@@ -75,9 +75,9 @@ def print_basic_info(device, params):
                 "MIN_BUFFER_SIZE_FOR_TRAIN", "N_EPISODES_FOR_MEAN_CALCULATION",
                 "TEST_INTERVAL_TRAINING_STEPS"
             ]:
-                item = "{0}: {1:,}".format(param, getattr(params, param))
+                item = "{0}: {1:,}".format(param, getattr(parameter, param))
             else:
-                item = "{0}: {1:}".format(param, getattr(params, param))
+                item = "{0}: {1:}".format(param, getattr(parameter, param))
             items.append(item)
         if len(items) == 3:
             print("{0:55} {1:55} {2:55}".format(items[0], items[1], items[2]), end="\n")
@@ -89,7 +89,7 @@ def print_basic_info(device, params):
 def console_log(
         total_train_start_time, total_episodes_v, total_time_steps_v,
         last_mean_episode_reward_v, n_rollout_transitions_v, train_steps_v,
-        agent, params
+        agent, parameter
 ):
     total_training_time = time.time() - total_train_start_time
     formatted_total_training_time = time.strftime(
@@ -109,15 +109,15 @@ def console_log(
             train_steps_v / total_training_time
         )
 
-    if params.AGENT_TYPE == AgentType.Dqn:
+    if parameter.AGENT_TYPE == AgentType.Dqn:
         console_log += "Q_net_loss: {0:5.1f}, Epsilon: {0:4.2f}, ".format(
             agent.last_q_net_loss.value, agent.epsilon.value
         )
-    elif params.AGENT_TYPE == AgentType.Reinforce:
+    elif parameter.AGENT_TYPE == AgentType.Reinforce:
         console_log += "log_policy_objective: {0:5.1f}, ".format(
             agent.last_log_policy_objective.value
         )
-    elif params.AGENT_TYPE == AgentType.A2c:
+    elif parameter.AGENT_TYPE == AgentType.A2c:
         console_log += "critic_loss: {0:5.1f}, log_actor_objective: {1:5.1f}, ".format(
             agent.last_critic_loss.value, agent.last_log_actor_objective.value
         )
@@ -138,18 +138,52 @@ def console_log(
     print(console_log)
 
 
-def get_wandb_obj(params):
+def console_log_comparison(
+        total_episodes_v, total_time_steps_v,
+        last_mean_episode_reward_v, n_rollout_transitions_v, train_steps_v,
+        agent, parameter
+):
+    console_log = "[Total Episodes: {0:5,}, Total Time Steps {1:7,}] " \
+                  "Mean Episode Reward: {2:5.1f}, Rolling Transitions: {3:6,}, " \
+                  "Training Steps: {4:5,}, " \
+        .format(
+            total_episodes_v,
+            total_time_steps_v,
+            last_mean_episode_reward_v,
+            n_rollout_transitions_v,
+            train_steps_v
+        )
+
+    if parameter.AGENT_TYPE == AgentType.Dqn:
+        console_log += "Q_net_loss: {0:5.1f}, Epsilon: {0:4.2f}, ".format(
+            agent.last_q_net_loss.value, agent.epsilon.value
+        )
+    elif parameter.AGENT_TYPE == AgentType.Reinforce:
+        console_log += "log_policy_objective: {0:5.1f}, ".format(
+            agent.last_log_policy_objective.value
+        )
+    elif parameter.AGENT_TYPE == AgentType.A2c:
+        console_log += "critic_loss: {0:5.1f}, log_actor_objective: {1:5.1f}, ".format(
+            agent.last_critic_loss.value, agent.last_log_actor_objective.value
+        )
+    else:
+        pass
+
+    print(console_log)
+
+
+def get_wandb_obj(parameter):
     wandb_obj = wandb.init(
-        entity=params.WANDB_ENTITY,
-        project="{0}_{1}".format(params.ENV_NAME, params.AGENT_TYPE.name),
+        entity=parameter.WANDB_ENTITY,
+        project="{0}_{1}".format(parameter.ENV_NAME, parameter.AGENT_TYPE.name),
         config={
-            key: getattr(params, key) for key in dir(params) if not key.startswith("__")
+            key: getattr(parameter, key) for key in dir(parameter) if not key.startswith("__")
         }
     )
     return wandb_obj
 
 
-def wandb_log(learner, wandb_obj, params):
+def wandb_log(learner, wandb_obj, parameter):
     log_dict = {
         "[TEST] Average Episode Reward": learner.test_episode_reward_avg.value,
         "[TEST] Std. Episode Reward": learner.test_episode_reward_std.value,
@@ -160,12 +194,12 @@ def wandb_log(learner, wandb_obj, params):
         "Total Time Steps": learner.total_time_steps.value
     }
 
-    if params.AGENT_TYPE == AgentType.Dqn:
+    if parameter.AGENT_TYPE == AgentType.Dqn:
         log_dict["Q_net_loss"] = learner.agent.last_q_net_loss.value
         log_dict["Epsilon"] = learner.agent.epsilon.value
-    elif params.AGENT_TYPE == AgentType.Reinforce:
+    elif parameter.AGENT_TYPE == AgentType.Reinforce:
         log_dict["log_policy_objective"] = learner.agent.last_log_policy_objective.value
-    elif params.AGENT_TYPE == AgentType.A2c:
+    elif parameter.AGENT_TYPE == AgentType.A2c:
         log_dict["critic_loss"] = learner.agent.last_critic_loss.value
         log_dict["log_actor_objective"] = learner.agent.last_log_actor_objective.value
     else:
@@ -174,7 +208,20 @@ def wandb_log(learner, wandb_obj, params):
     wandb_obj.log(log_dict)
 
 
-def get_train_env(params):
+def wandb_log_comparison(learner, wandb_obj):
+    log_dict = {
+        "[TEST] Average Episode Reward": learner.test_episode_reward_avg.value,
+        "[TEST] Std. Episode Reward": learner.test_episode_reward_std.value,
+        "Mean Episode Reward": learner.last_mean_episode_reward.value,
+        "Episode": learner.total_episodes.value,
+        "Buffer Size": learner.n_rollout_transitions.value,
+        "Training Steps": learner.training_steps.value,
+        "Total Time Steps": learner.total_time_steps.value
+    }
+    wandb_obj.log(log_dict)
+
+
+def get_train_env(parameter):
     def make_gym_env(env_name):
         def _make():
             env = gym.make(env_name)
@@ -187,10 +234,10 @@ def get_train_env(params):
 
         return _make
 
-    if params.ENV_NAME in ["CartPole-v1", "PongNoFrameskip-v4"]:
+    if parameter.ENV_NAME in ["CartPole-v1", "PongNoFrameskip-v4"]:
         train_env = AsyncVectorEnv(
             env_fns=[
-                make_gym_env(params.ENV_NAME) for _ in range(params.N_VECTORIZED_ENVS)
+                make_gym_env(parameter.ENV_NAME) for _ in range(parameter.N_VECTORIZED_ENVS)
             ]
         )
     else:
@@ -199,9 +246,9 @@ def get_train_env(params):
     return train_env
 
 
-def get_single_env(params):
-    single_env = gym.make(params.ENV_NAME)
-    if params.ENV_NAME in ["PongNoFrameskip-v4"]:
+def get_single_env(parameter):
+    single_env = gym.make(parameter.ENV_NAME)
+    if parameter.ENV_NAME in ["PongNoFrameskip-v4"]:
         single_env = gym.wrappers.AtariPreprocessing(
             single_env, grayscale_obs=True, scale_obs=True
         )
@@ -210,8 +257,8 @@ def get_single_env(params):
     return single_env
 
 
-def get_env_info(params):
-    single_env = get_single_env(params)
+def get_env_info(parameter):
+    single_env = get_single_env(parameter)
 
     obs_shape = single_env.observation_space.shape
     n_actions = single_env.action_space.n

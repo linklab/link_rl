@@ -9,26 +9,29 @@ sys.path.append(os.path.abspath(
 
 from e_main.supports.main_preamble import *
 
+device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+parameter = Parameter()
+
 
 def main():
-    print_basic_info(device, params)
+    print_basic_info(device, parameter)
 
     mp.set_start_method('spawn', force=True)
     queue = mp.Queue()
 
-    obs_shape, n_actions = get_env_info(params)
+    obs_shape, n_actions = get_env_info(parameter)
 
-    agent = get_agent(obs_shape, n_actions, device, params)
+    agent = get_agent(obs_shape, n_actions, device, parameter)
 
     learner = Learner(
-        agent=agent, queue=queue, device=device, params=params,
+        agent=agent, queue=queue, device=device, parameter=parameter,
     )
 
     actors = [
         Actor(
-            env_name=params.ENV_NAME, actor_id=actor_id, agent=agent,
-            queue=queue, params=params
-        ) for actor_id in range(params.N_ACTORS)
+            env_name=parameter.ENV_NAME, actor_id=actor_id, agent=agent,
+            queue=queue, parameter=parameter
+        ) for actor_id in range(parameter.N_ACTORS)
     ]
 
     for actor in actors:
@@ -61,9 +64,9 @@ def main():
     while learner.is_alive():
         learner.join(timeout=1)
 
-    print_basic_info(device, params)
+    print_basic_info(device, parameter)
 
 
 if __name__ == "__main__":
-    assert params.AGENT_TYPE in OffPolicyAgentTypes
+    assert parameter.AGENT_TYPE in OffPolicyAgentTypes
     main()

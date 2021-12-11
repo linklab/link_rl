@@ -12,31 +12,31 @@ from g_utils.types import AgentMode, ModelType
 
 
 class AgentDqn(Agent):
-    def __init__(self, obs_shape, n_actions, device, params):
-        super(AgentDqn, self).__init__(obs_shape, n_actions, device, params)
+    def __init__(self, obs_shape, n_actions, device, parameter):
+        super(AgentDqn, self).__init__(obs_shape, n_actions, device, parameter)
 
-        if self.params.MODEL_TYPE == ModelType.LINEAR:
-            assert self.params.NEURONS_PER_LAYER
+        if self.parameter.MODEL_TYPE == ModelType.LINEAR:
+            assert self.parameter.NEURONS_PER_LAYER
             self.q_net = QNet(
-                n_features=obs_shape[0], n_actions=n_actions, device=device, params=params
+                n_features=obs_shape[0], n_actions=n_actions, device=device, parameter=parameter
             ).to(device)
 
             self.target_q_net = QNet(
-                n_features=self.q_net.n_features, n_actions=self.q_net.n_actions, device=device, params=params
+                n_features=self.q_net.n_features, n_actions=self.q_net.n_actions, device=device, parameter=parameter
             ).to(device)
-        elif self.params.MODEL_TYPE == ModelType.CONVOLUTIONAL:
-            assert self.params.OUT_CHANNELS_PER_LAYER
-            assert self.params.KERNEL_SIZE_PER_LAYER
-            assert self.params.STRIDE_PER_LAYER
-            assert self.params.NEURONS_PER_FULLY_CONNECTED_LAYER
+        elif self.parameter.MODEL_TYPE == ModelType.CONVOLUTIONAL:
+            assert self.parameter.OUT_CHANNELS_PER_LAYER
+            assert self.parameter.KERNEL_SIZE_PER_LAYER
+            assert self.parameter.STRIDE_PER_LAYER
+            assert self.parameter.NEURONS_PER_FULLY_CONNECTED_LAYER
 
             assert len(obs_shape) == 3
             self.q_net = CnnQNet(
-                obs_shape=obs_shape, n_actions=n_actions, device=device, params=params
+                obs_shape=obs_shape, n_actions=n_actions, device=device, parameter=parameter
             ).to(device)
 
             self.target_q_net = CnnQNet(
-                obs_shape=self.q_net.obs_shape, n_actions=self.q_net.n_actions, device=device, params=params
+                obs_shape=self.q_net.obs_shape, n_actions=self.q_net.n_actions, device=device, parameter=parameter
             ).to(device)
         else:
             raise ValueError()
@@ -45,16 +45,16 @@ class AgentDqn(Agent):
         self.target_q_net.load_state_dict(self.q_net.state_dict())
 
         self.optimizer = optim.Adam(
-            self.q_net.parameters(), lr=self.params.LEARNING_RATE
+            self.q_net.parameters(), lr=self.parameter.LEARNING_RATE
         )
 
         self.epsilon_tracker = EpsilonTracker(
-            epsilon_init=self.params.EPSILON_INIT,
-            epsilon_final=self.params.EPSILON_FINAL,
-            epsilon_final_time_step_percent=self.params.EPSILON_FINAL_TIME_STEP_PERCENT,
-            max_training_steps=self.params.MAX_TRAINING_STEPS
+            epsilon_init=self.parameter.EPSILON_INIT,
+            epsilon_final=self.parameter.EPSILON_FINAL,
+            epsilon_final_time_step_percent=self.parameter.EPSILON_FINAL_TIME_STEP_PERCENT,
+            max_training_steps=self.parameter.MAX_TRAINING_STEPS
         )
-        self.epsilon = mp.Value('d', self.params.EPSILON_INIT)  # d: float
+        self.epsilon = mp.Value('d', self.parameter.EPSILON_INIT)  # d: float
 
         self.model = self.q_net
         self.training_steps = 0
@@ -76,7 +76,7 @@ class AgentDqn(Agent):
             return action.cpu().numpy()
 
     def train_dqn(self, buffer, training_steps):
-        batch = buffer.sample(self.params.BATCH_SIZE, device=self.device)
+        batch = buffer.sample(self.parameter.BATCH_SIZE, device=self.device)
 
         # observations.shape: torch.Size([32, 4]),
         # actions.shape: torch.Size([32, 1]),
@@ -99,7 +99,7 @@ class AgentDqn(Agent):
             next_state_values = next_state_values.detach()
 
             # target_state_action_values.shape: torch.Size([32, 1])
-            target_state_action_values = rewards + self.params.GAMMA * next_state_values
+            target_state_action_values = rewards + self.parameter.GAMMA * next_state_values
 
         # loss is just scalar torch value
         q_net_loss = F.mse_loss(state_action_values, target_state_action_values)
@@ -121,7 +121,7 @@ class AgentDqn(Agent):
         self.optimizer.step()
 
         # sync
-        if training_steps.value % self.params.TARGET_SYNC_INTERVAL_TRAINING_STEPS == 0:
+        if training_steps.value % self.parameter.TARGET_SYNC_INTERVAL_TRAINING_STEPS == 0:
             self.target_q_net.load_state_dict(self.q_net.state_dict())
 
         self.epsilon.value = self.epsilon_tracker.epsilon(training_steps.value)

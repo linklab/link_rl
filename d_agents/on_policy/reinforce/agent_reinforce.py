@@ -10,8 +10,8 @@ from g_utils.types import AgentMode
 
 
 class AgentReinforce(Agent):
-    def __init__(self, obs_shape, n_actions, device, params):
-        super(AgentReinforce, self).__init__(obs_shape, n_actions, device, params)
+    def __init__(self, obs_shape, n_actions, device, parameter):
+        super(AgentReinforce, self).__init__(obs_shape, n_actions, device, parameter)
 
         self.policy = Policy(
             n_features=n_features, n_actions=n_actions, device=device
@@ -19,7 +19,7 @@ class AgentReinforce(Agent):
         self.policy.share_memory()
 
         self.optimizer = optim.Adam(
-            self.policy.parameters(), lr=self.params.LEARNING_RATE
+            self.policy.parameters(), lr=self.parameter.LEARNING_RATE
         )
 
         self.model = self.policy
@@ -44,7 +44,7 @@ class AgentReinforce(Agent):
         G = 0
         return_lst = []
         for reward in reversed(rewards):
-            G = reward + self.params.GAMMA * G
+            G = reward + self.parameter.GAMMA * G
             return_lst.append(G)
         return_lst = torch.tensor(
             return_lst[::-1], dtype=torch.float32, device=self.device

@@ -9,25 +9,26 @@ sys.path.append(os.path.abspath(
 
 from e_main.supports.main_preamble import *
 
+device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+parameter = Parameter()
 
 def main():
-    print_basic_info(device, params)
+    print_basic_info(device, parameter)
 
-    obs_shape, n_actions = get_env_info(params)
+    obs_shape, n_actions = get_env_info(parameter)
 
-    agent = get_agent(obs_shape, n_actions, device, params)
+    agent = get_agent(obs_shape, n_actions, device, parameter)
 
     learner = Learner(
-        agent=agent, queue=None, device=device, params=params
+        agent=agent, queue=None, device=device, parameter=parameter
     )
 
     print("########## LEARNING STARTED !!! ##########")
     learner.train_loop(sync=True)
 
-    print_basic_info(device, params)
+    print_basic_info(device, parameter)
 
 
 if __name__ == "__main__":
-    # assert params.AGENT_TYPE in OnPolicyAgentTypes
-    assert params.N_ACTORS == 1
+    assert parameter.N_ACTORS == 1
     main()

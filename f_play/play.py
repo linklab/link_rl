@@ -13,7 +13,7 @@ PROJECT_HOME = os.path.abspath(os.path.join(CURRENT_PATH, os.pardir))
 if PROJECT_HOME not in sys.path:
     sys.path.append(PROJECT_HOME)
 
-from a_configuration.parameter import Parameter as params
+from a_configuration.parameter import Parameter as parameter
 from g_utils.commons import model_load, get_test_env
 
 
@@ -48,14 +48,14 @@ def play(env, agent, n_episodes):
 
 
 def main_q_play(n_episodes):
-    env, obs_shape, n_actions = get_test_env(params)
+    env, obs_shape, n_actions = get_test_env(parameter)
 
-    agent = get_agent(obs_shape, n_actions, device=torch.device("cpu"), params=params)
+    agent = get_agent(obs_shape, n_actions, device=torch.device("cpu"), parameter=parameter)
 
     model_load(
         model=agent.q_net,
-        env_name=params.ENV_NAME,
-        agent_type_name=params.AGENT_TYPE.name,
+        env_name=parameter.ENV_NAME,
+        agent_type_name=parameter.AGENT_TYPE.name,
         file_name="479.0_29.7_2021_11_28.pth"
     )
     play(env, agent, n_episodes=n_episodes)

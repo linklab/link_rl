@@ -12,21 +12,21 @@ from g_utils.types import AgentType, AgentMode, Transition
 
 
 class Learner(mp.Process):
-    def __init__(self, agent, queue, device=torch.device("cpu"), params=None):
+    def __init__(self, agent, queue, device=torch.device("cpu"), parameter=None):
         super(Learner, self).__init__()
         self.agent = agent
         self.queue = queue
         self.device = device
-        self.params = params
+        self.parameter = parameter
 
         self.train_env = None
         self.test_env = None
 
-        self.n_actors = self.params.N_ACTORS
-        self.n_vectorized_envs = self.params.N_VECTORIZED_ENVS
+        self.n_actors = self.parameter.N_ACTORS
+        self.n_vectorized_envs = self.parameter.N_VECTORIZED_ENVS
         self.n_actor_terminations = 0
 
-        self.episode_rewards = np.zeros((self.n_actors * self.n_vectorized_envs,))
+        self.episode_rewards = np.zeros(shape=(self.n_actors, self.n_vectorized_envs))
         self.episode_reward_lst = []
 
         self.total_time_steps = mp.Value('i', 0)
@@ -34,7 +34,7 @@ class Learner(mp.Process):
         self.training_steps = mp.Value('i', 0)
 
         self.buffer = Buffer(
-            capacity=params.BUFFER_CAPACITY, device=self.device
+            capacity=parameter.BUFFER_CAPACITY, device=self.device
         )
 
         self.n_rollout_transitions = mp.Value('i', 0)
@@ -47,16 +47,16 @@ class Learner(mp.Process):
         self.test_episode_reward_avg = mp.Value('d', 0.0)
         self.test_episode_reward_std = mp.Value('d', 0.0)
 
-        self.next_train_time_step = params.TRAIN_INTERVAL_TOTAL_TIME_STEPS
-        self.next_test_training_step = params.TEST_INTERVAL_TRAINING_STEPS
-        self.next_console_log = params.CONSOLE_LOG_INTERVAL_TOTAL_TIME_STEPS
+        self.next_train_time_step = parameter.TRAIN_INTERVAL_TOTAL_TIME_STEPS
+        self.next_test_training_step = parameter.TEST_INTERVAL_TRAINING_STEPS
+        self.next_console_log = parameter.CONSOLE_LOG_INTERVAL_TOTAL_TIME_STEPS
 
-        if queue is None: # SYNC
+        if queue is None: # Sequential
             self.transition_generator = self.generator_on_policy_transition()
 
             self.histories = []
-            for _ in range(self.params.N_VECTORIZED_ENVS):
-                self.histories.append(deque(maxlen=self.params.N_STEP))
+            for _ in range(self.parameter.N_VECTORIZED_ENVS):
+                self.histories.append(deque(maxlen=self.parameter.N_STEP))
 
     def generator_on_policy_transition(self):
         observations = self.train_env.reset()
@@ -83,10 +83,10 @@ class Learner(mp.Process):
                     info=info
                 ))
 
-                if len(self.histories[env_id]) == self.params.N_STEP or done:
+                if len(self.histories[env_id]) == self.parameter.N_STEP or done:
                     n_step_transition = Actor.get_n_step_transition(
                         history=self.histories[env_id], env_id=env_id,
-                        actor_id=0, info=info, done=done, params=self.params
+                        actor_id=0, info=info, done=done, parameter=self.parameter
                     )
                     yield n_step_transition
 
@@ -99,12 +99,12 @@ class Learner(mp.Process):
 
     def train_loop(self, sync=True):
         if sync:
-            self.train_env = get_train_env(self.params)
+            self.train_env = get_train_env(self.parameter)
 
-        self.test_env = get_single_env(self.params)
+        self.test_env = get_single_env(self.parameter)
 
-        if self.params.USE_WANDB:
-            wandb_obj = get_wandb_obj(self.params)
+        if self.parameter.USE_WANDB:
+            wandb_obj = get_wandb_obj(self.parameter)
         else:
             wandb_obj = None
 
@@ -136,27 +136,27 @@ class Learner(mp.Process):
 
             actor_id = n_step_transition.info["actor_id"]
             env_id = n_step_transition.info["env_id"]
-            self.episode_rewards[actor_id * env_id] += n_step_transition.reward
+            self.episode_rewards[actor_id][env_id] += n_step_transition.reward
 
             if self.total_time_steps.value >= self.next_train_time_step:
-                if self.params.AGENT_TYPE != AgentType.Reinforce:
+                if self.parameter.AGENT_TYPE != AgentType.Reinforce:
                     self.agent.train(
                         buffer=self.buffer,
                         training_steps=self.training_steps
                     )
-                self.next_train_time_step += self.params.TRAIN_INTERVAL_TOTAL_TIME_STEPS
+                self.next_train_time_step += self.parameter.TRAIN_INTERVAL_TOTAL_TIME_STEPS
 
             if n_step_transition.done:
                 self.total_episodes.value += 1
 
-                self.episode_reward_lst.append(self.episode_rewards[actor_id * env_id])
+                self.episode_reward_lst.append(self.episode_rewards[actor_id][env_id])
                 self.last_mean_episode_reward.value = np.mean(
-                    self.episode_reward_lst[-1 * self.params.N_EPISODES_FOR_MEAN_CALCULATION:]
+                    self.episode_reward_lst[-1 * self.parameter.N_EPISODES_FOR_MEAN_CALCULATION:]
                 )
 
-                self.episode_rewards[actor_id * env_id] = 0.0
+                self.episode_rewards[actor_id][env_id] = 0.0
 
-                if self.params.AGENT_TYPE == AgentType.Reinforce:
+                if self.parameter.AGENT_TYPE == AgentType.Reinforce:
                     self.agent.train(
                         buffer=self.buffer,
                         training_steps=self.training_steps
@@ -168,19 +168,19 @@ class Learner(mp.Process):
                     self.total_time_steps.value,
                     self.last_mean_episode_reward.value,
                     self.n_rollout_transitions.value, self.training_steps.value,
-                    self.agent, self.params
+                    self.agent, self.parameter
                 )
-                self.next_console_log += self.params.CONSOLE_LOG_INTERVAL_TOTAL_TIME_STEPS
+                self.next_console_log += self.parameter.CONSOLE_LOG_INTERVAL_TOTAL_TIME_STEPS
 
             if self.training_steps.value >= self.next_test_training_step:
                 self.testing()
-                self.next_test_training_step += self.params.TEST_INTERVAL_TRAINING_STEPS
-                if self.params.USE_WANDB:
-                    wandb_log(self, wandb_obj, self.params)
+                self.next_test_training_step += self.parameter.TEST_INTERVAL_TRAINING_STEPS
+                if self.parameter.USE_WANDB:
+                    wandb_log(self, wandb_obj, self.parameter)
 
-            if self.training_steps.value >= self.params.MAX_TRAINING_STEPS:
+            if self.training_steps.value >= self.parameter.MAX_TRAINING_STEPS:
                 print("[TRAIN TERMINATION] MAX_TRAINING_STEPS ({0}) REACHES!!!".format(
-                    self.params.MAX_TRAINING_STEPS
+                    self.parameter.MAX_TRAINING_STEPS
                 ))
                 self.is_terminated.value = True
 
@@ -195,7 +195,7 @@ class Learner(mp.Process):
         print("Training Rate: {0:.3f}/sec.".format(
             self.training_steps.value / total_training_time
         ))
-        if self.params.USE_WANDB:
+        if self.parameter.USE_WANDB:
             wandb_obj.join()
 
     def run(self):
@@ -205,7 +205,7 @@ class Learner(mp.Process):
         print("*" * 80)
         self.test_episode_reward_avg.value, \
         self.test_episode_reward_std.value = \
-            self.play_for_testing(self.params.N_TEST_EPISODES)
+            self.play_for_testing(self.parameter.N_TEST_EPISODES)
 
         print("[Test Episode Reward] Average: {0:.3f}, Standard Dev.: {1:.3f}".format(
             self.test_episode_reward_avg.value,
@@ -213,8 +213,8 @@ class Learner(mp.Process):
         ))
 
         termination_conditions = [
-            self.test_episode_reward_avg.value > self.params.EPISODE_REWARD_AVG_SOLVED,
-            self.test_episode_reward_std.value < self.params.EPISODE_REWARD_STD_SOLVED
+            self.test_episode_reward_avg.value > self.parameter.EPISODE_REWARD_AVG_SOLVED,
+            self.test_episode_reward_std.value < self.parameter.EPISODE_REWARD_STD_SOLVED
         ]
 
         if all(termination_conditions):
@@ -227,8 +227,8 @@ class Learner(mp.Process):
             ))
             model_save(
                 model=self.agent.model,
-                env_name=self.params.ENV_NAME,
-                agent_type_name=self.params.AGENT_TYPE.name,
+                env_name=self.parameter.ENV_NAME,
+                agent_type_name=self.parameter.AGENT_TYPE.name,
                 test_episode_reward_avg=self.test_episode_reward_avg.value,
                 test_episode_reward_std=self.test_episode_reward_std.value
             )

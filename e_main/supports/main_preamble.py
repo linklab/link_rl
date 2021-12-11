@@ -22,26 +22,22 @@ from g_utils.commons import AgentType, wandb_log, print_basic_info
 from g_utils.types import OnPolicyAgentTypes, OffPolicyAgentTypes
 from g_utils.commons import get_env_info
 
-device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
-params = Parameter()
-
-
-def get_agent(obs_shape, n_actions, device=torch.device("cpu"), params=None):
-    if params.AGENT_TYPE == AgentType.Dqn:
+def get_agent(obs_shape, n_actions, device=torch.device("cpu"), parameter=None):
+    if parameter.AGENT_TYPE == AgentType.Dqn:
         agent = AgentDqn(
-            obs_shape=obs_shape, n_actions=n_actions, device=device, params=params
+            obs_shape=obs_shape, n_actions=n_actions, device=device, parameter=parameter
         )
-    elif params.AGENT_TYPE == AgentType.Reinforce:
-        assert params.N_ACTORS * params.N_VECTORIZED_ENVS == 1, \
+    elif parameter.AGENT_TYPE == AgentType.Reinforce:
+        assert parameter.N_ACTORS * parameter.N_VECTORIZED_ENVS == 1, \
             "TOTAL NUMBERS OF ENVS should be one"
 
         agent = AgentReinforce(
-            obs_shape=obs_shape, n_actions=n_actions, device=device, params=params
+            obs_shape=obs_shape, n_actions=n_actions, device=device, parameter=parameter
         )
-    elif params.AGENT_TYPE == AgentType.A2c:
+    elif parameter.AGENT_TYPE == AgentType.A2c:
         agent = AgentA2c(
-            obs_shape=obs_shape, n_actions=n_actions, device=device, params=params
+            obs_shape=obs_shape, n_actions=n_actions, device=device, parameter=parameter
         )
     else:
         raise ValueError()
@@ -57,7 +53,7 @@ def get_agents(n_features, n_actions, device, params_c):
             agents.append(
                 AgentDqn(
                     n_features=n_features, n_actions=n_actions, device=device,
-                    params=agent_params
+                    parameter=agent_params
                 )
             )
         elif agent_type == AgentType.Reinforce:
@@ -66,14 +62,14 @@ def get_agents(n_features, n_actions, device, params_c):
             agents.append(
                 AgentReinforce(
                     n_features=n_features, n_actions=n_actions, device=device,
-                    params=agent_params
+                    parameter=agent_params
                 )
             )
         elif agent_type == AgentType.A2c:
             agents.append(
                 AgentA2c(
                     n_features=n_features, n_actions=n_actions, device=device,
-                    params=agent_params
+                    parameter=agent_params
                 )
             )
         else:
@@ -84,7 +80,7 @@ def get_agents(n_features, n_actions, device, params_c):
 
 
 # 이름을 한번 언급
-params
+parameter
 time
 gym
 torch
