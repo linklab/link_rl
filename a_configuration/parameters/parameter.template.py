@@ -4,24 +4,32 @@ from a_configuration.parameters.parameter_preamble import *
 ## CART_POLE ##
 ###############
 # class Parameter(ParameterCartPoleDqn):
-#     USE_WANDB = False
-#     WANDB_ENTITY = "link-koreatech"
+#     def __init__(self):
+#         super(Parameter, self).__init__()
+#         self.USE_WANDB = False
+#         self.WANDB_ENTITY = "link-koreatech"
 
 # class Parameter(ParameterCartPoleReinforce):
-#     USE_WANDB = False
-#     WANDB_ENTITY = "link-koreatech"
-
-# class Parameter(ParameterCartPoleA2c):
-#     USE_WANDB = False
-#     WANDB_ENTITY = "link-koreatech"
+#     def __init__(self):
+#         super(Parameter, self).__init__()
+#         self.USE_WANDB = False
+#         self.WANDB_ENTITY = "link-koreatech"
+#
+class Parameter(ParameterCartPoleA2c):
+    def __init__(self):
+        super(Parameter, self).__init__()
+        self.USE_WANDB = False
+        self.WANDB_ENTITY = "link-koreatech"
 
 
 ##########
 ## PONG ##
 ##########
-class Parameter(ParameterPongDqn):
-    USE_WANDB = False
-    WANDB_ENTITY = "link-koreatech"
+# class Parameter(ParameterPongDqn):
+#     def __init__(self):
+#         super(Parameter, self).__init__()
+#         self.USE_WANDB = False
+#         self.WANDB_ENTITY = "link-koreatech"
 
 
 if __name__ == "__main__":
