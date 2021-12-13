@@ -80,7 +80,6 @@ def get_agents(n_features, n_actions, device, params_c):
 
 
 # 이름을 한번 언급
-parameter
 time
 gym
 torch
