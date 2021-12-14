@@ -1,7 +1,6 @@
 import os
-os.environ['KMP_DUPLICATE_LIB_OK'] = 'True'
-
 import sys
+os.environ['KMP_DUPLICATE_LIB_OK'] = 'True'
 
 sys.path.append(os.path.abspath(
     os.path.join(os.path.dirname(os.path.realpath(__file__)), os.pardir)
@@ -11,6 +10,7 @@ from e_main.supports.main_preamble import *
 
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 parameter = Parameter()
+
 
 def main():
     print_basic_info(device, parameter)

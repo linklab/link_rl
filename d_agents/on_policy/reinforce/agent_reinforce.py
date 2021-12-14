@@ -13,14 +13,10 @@ class AgentReinforce(Agent):
     def __init__(self, obs_shape, n_actions, device, parameter):
         super(AgentReinforce, self).__init__(obs_shape, n_actions, device, parameter)
 
-        self.policy = Policy(
-            n_features=n_features, n_actions=n_actions, device=device
-        ).to(device)
+        self.policy = Policy(obs_shape=obs_shape, n_actions=n_actions, device=device).to(device)
         self.policy.share_memory()
 
-        self.optimizer = optim.Adam(
-            self.policy.parameters(), lr=self.parameter.LEARNING_RATE
-        )
+        self.optimizer = optim.Adam(self.policy.parameters(), lr=self.parameter.LEARNING_RATE)
 
         self.model = self.policy
 

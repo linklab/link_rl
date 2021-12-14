@@ -139,37 +139,39 @@ def console_log(
 
 
 def console_log_comparison(
-        total_episodes_v, total_time_steps_v,
-        last_mean_episode_reward_v, n_rollout_transitions_v, train_steps_v,
-        agent, parameter
+        total_episodes_per_agent, total_time_steps_per_agent,
+        last_mean_episode_reward_per_agent, n_rollout_transitions_per_agent, training_steps_per_agent,
+        agents, parameter_c
 ):
-    console_log = "[Total Episodes: {0:5,}, Total Time Steps {1:7,}] " \
-                  "Mean Episode Reward: {2:5.1f}, Rolling Transitions: {3:6,}, " \
-                  "Training Steps: {4:5,}, " \
-        .format(
-            total_episodes_v,
-            total_time_steps_v,
-            last_mean_episode_reward_v,
-            n_rollout_transitions_v,
-            train_steps_v
-        )
+    for agent_idx, agent in enumerate(agents):
+        agent_prefix = "[Agent: {0}]".format(agent_idx)
+        console_log = agent_prefix + "[Total Episodes: {0:5,}, Total Time Steps {1:7,}] " \
+                      "Mean Episode Reward: {2:5.1f}, Rolling Transitions: {3:6,}, " \
+                      "Training Steps: {4:5,}, " \
+            .format(
+                total_episodes_per_agent[agent_idx],
+                total_time_steps_per_agent[agent_idx],
+                last_mean_episode_reward_per_agent[agent_idx],
+                n_rollout_transitions_per_agent[agent_idx],
+                training_steps_per_agent[agent_idx]
+            )
 
-    if parameter.AGENT_TYPE == AgentType.Dqn:
-        console_log += "Q_net_loss: {0:5.1f}, Epsilon: {0:4.2f}, ".format(
-            agent.last_q_net_loss.value, agent.epsilon.value
-        )
-    elif parameter.AGENT_TYPE == AgentType.Reinforce:
-        console_log += "log_policy_objective: {0:5.1f}, ".format(
-            agent.last_log_policy_objective.value
-        )
-    elif parameter.AGENT_TYPE == AgentType.A2c:
-        console_log += "critic_loss: {0:5.1f}, log_actor_objective: {1:5.1f}, ".format(
-            agent.last_critic_loss.value, agent.last_log_actor_objective.value
-        )
-    else:
-        pass
+        if parameter_c.parameters[agent_idx].AGENT_TYPE == AgentType.Dqn:
+            console_log += "Q_net_loss: {0:5.1f}, Epsilon: {0:4.2f}, ".format(
+                agent.last_q_net_loss.value, agent.epsilon.value
+            )
+        elif parameter_c.parameters[agent_idx].AGENT_TYPE == AgentType.Reinforce:
+            console_log += "log_policy_objective: {0:5.1f}, ".format(
+                agent.last_log_policy_objective.value
+            )
+        elif parameter_c.parameters[agent_idx].AGENT_TYPE == AgentType.A2c:
+            console_log += "critic_loss: {0:5.1f}, log_actor_objective: {1:5.1f}, ".format(
+                agent.last_critic_loss.value, agent.last_log_actor_objective.value
+            )
+        else:
+            pass
 
-    print(console_log)
+        print(console_log)
 
 
 def get_wandb_obj(parameter):
@@ -220,6 +222,109 @@ def wandb_log_comparison(learner, wandb_obj):
     }
     wandb_obj.log(log_dict)
 
+
+def wandb_log_comparison(learner, wandb_obj):
+    training_steps = learner.training_steps_per_agent[0]
+    assert all(
+        learner.training_steps_per_agent[agent_idx] == training_steps for agent_idx in range(learner.n_agents)
+    )
+
+    xs = [training_step_idx for training_step_idx in range(training_steps)]
+
+    test_average_episode_reward = [
+        [
+            _performance_revenue[agent_idx][step_idx]
+            for step_idx in range(config.DRAW_START_TIME_STEP, time_step, config.DRAW_PERIOD_STEP)
+        ]
+        for agent_idx, _ in enumerate(agents)
+    ]
+    cost_data = [
+        [
+            _performance_cost[agent_idx][step_idx]
+            for step_idx in range(config.DRAW_START_TIME_STEP, time_step, config.DRAW_PERIOD_STEP)
+        ]
+        for agent_idx, _ in enumerate(agents)
+    ]
+    rc_ratio_data = [
+        [
+            _performance_rc_ratio[agent_idx][step_idx]
+            for step_idx in range(config.DRAW_START_TIME_STEP, time_step, config.DRAW_PERIOD_STEP)
+        ]
+        for agent_idx, _ in enumerate(agents)
+    ]
+    acceptance_ratio_data = [
+        [
+            _performance_acceptance_ratio[agent_idx][step_idx]
+            for step_idx in range(config.DRAW_START_TIME_STEP, time_step, config.DRAW_PERIOD_STEP)
+        ]
+        for agent_idx, _ in enumerate(agents)
+    ]
+    num_node_embedding_fails_data = [
+        [
+            _performance_num_node_embedding_fails[agent_idx][step_idx]
+            for step_idx in range(config.DRAW_START_TIME_STEP, time_step, config.DRAW_PERIOD_STEP)
+        ]
+        for agent_idx, _ in enumerate(agents)
+    ]
+    num_link_embedding_fails_data = [
+        [
+            _performance_num_link_embedding_fails[agent_idx][step_idx]
+            for step_idx in range(config.DRAW_START_TIME_STEP, time_step, config.DRAW_PERIOD_STEP)
+        ]
+        for agent_idx, _ in enumerate(agents)
+    ]
+    link_fail_ratio_data = [
+        [
+            _performance_link_fail_ratio[agent_idx][step_idx]
+            for step_idx in range(config.DRAW_START_TIME_STEP, time_step, config.DRAW_PERIOD_STEP)
+        ]
+        for agent_idx, _ in enumerate(agents)
+    ]
+    sn_cpu_remains = [
+        [
+            _performance_sn_cpu_remains[agent_idx][step_idx]
+            for step_idx in range(config.DRAW_START_TIME_STEP, time_step, config.DRAW_PERIOD_STEP)
+        ]
+        for agent_idx, _ in enumerate(agents)
+    ]
+
+    sn_bandwidth_remains = [
+        [
+            _performance_sn_bandwidth_remains[agent_idx][step_idx]
+            for step_idx in range(config.DRAW_START_TIME_STEP, time_step, config.DRAW_PERIOD_STEP)
+        ]
+        for agent_idx, _ in enumerate(agents)
+    ]
+
+    wandb.log({
+        "revenue": wandb.plot.line_series(
+            xs=xs, ys=revenue_data, keys=agent_labels, title="REVENUE", xname="time step"
+        ),
+        "cost": wandb.plot.line_series(
+            xs=xs, ys=cost_data, keys=agent_labels, title="COST", xname="time step"
+        ),
+        "rc_ratio": wandb.plot.line_series(
+            xs=xs, ys=rc_ratio_data, keys=agent_labels, title="REVENUE-TO-COST RATIO (0.0 ~ 1.0)", xname="time step"
+        ),
+        "acceptance_ratio": wandb.plot.line_series(
+            xs=xs, ys=acceptance_ratio_data, keys=agent_labels, title="ACCEPTANCE RATIO (0.0 ~ 1.0)", xname="time step"
+        ),
+        "num_link_embedding_fails": wandb.plot.line_series(
+            xs=xs, ys=num_link_embedding_fails_data, keys=agent_labels, title="num link embedding fails", xname="time step"
+        ),
+        "num_node_embedding_fails": wandb.plot.line_series(
+            xs=xs, ys=num_node_embedding_fails_data, keys=agent_labels, title="num node embedding fails", xname="time step"
+        ),
+        "link_fail_ratio": wandb.plot.line_series(
+            xs=xs, ys=link_fail_ratio_data, keys=agent_labels, title="link fail ratio (0.0 ~ 1.0)", xname="time step"
+        ),
+        "sn_cpu_remains": wandb.plot.line_series(
+            xs=xs, ys=sn_cpu_remains, keys=agent_labels, title="sn cpu remains rate (%)", xname="time step"
+        ),
+        "sn_bandwidth_remains": wandb.plot.line_series(
+            xs=xs, ys=sn_bandwidth_remains, keys=agent_labels, title="sn bandwidth remains rate (%)", xname="time step"
+        )
+    })
 
 def get_train_env(parameter):
     def make_gym_env(env_name):

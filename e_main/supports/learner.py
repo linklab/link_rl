@@ -20,7 +20,7 @@ class Learner(mp.Process):
         self.parameter = parameter
 
         self.train_env = None
-        self.test_env = None
+        self.test_env = get_single_env(self.parameter)
 
         self.n_actors = self.parameter.N_ACTORS
         self.n_vectorized_envs = self.parameter.N_VECTORIZED_ENVS
@@ -99,9 +99,7 @@ class Learner(mp.Process):
 
     def train_loop(self, sync=True):
         if sync:  # async인 경우 actor에서 train_env 생성/관리
-            self.train_env = get_train_env(self.params)
-
-        self.test_env = get_single_env(self.parameter)
+            self.train_env = get_train_env(self.parameter)
 
         if self.parameter.USE_WANDB:
             wandb_obj = get_wandb_obj(self.parameter)
@@ -140,10 +138,13 @@ class Learner(mp.Process):
 
             if self.total_time_steps.value >= self.next_train_time_step:
                 if self.parameter.AGENT_TYPE != AgentType.Reinforce:
-                    self.agent.train(
+                    is_train_done = self.agent.train(
                         buffer=self.buffer,
-                        training_steps=self.training_steps
+                        training_steps_v=self.training_steps.value
                     )
+                    if is_train_done:
+                        self.training_steps.value += 1
+
                 self.next_train_time_step += self.parameter.TRAIN_INTERVAL_TOTAL_TIME_STEPS
 
             if n_step_transition.done:
@@ -157,10 +158,12 @@ class Learner(mp.Process):
                 self.episode_rewards[actor_id][env_id] = 0.0
 
                 if self.parameter.AGENT_TYPE == AgentType.Reinforce:
-                    self.agent.train(
+                    is_train_done = self.agent.train(
                         buffer=self.buffer,
-                        training_steps=self.training_steps
+                        training_steps_v=self.training_steps.value
                     )
+                    if is_train_done:
+                        self.training_steps.value += 1
 
             if self.total_time_steps.value >= self.next_console_log:
                 console_log(
@@ -185,16 +188,10 @@ class Learner(mp.Process):
                 self.is_terminated.value = True
 
         total_training_time = time.time() - self.total_train_start_time
-        formatted_total_training_time = time.strftime(
-            '%H:%M:%S', time.gmtime(total_training_time)
-        )
-        print("Total Training Terminated : {}".format(formatted_total_training_time))
-        print("Transition Rolling Rate: {0:.3f}/sec.".format(
-            self.n_rollout_transitions.value / total_training_time
-        ))
-        print("Training Rate: {0:.3f}/sec.".format(
-            self.training_steps.value / total_training_time
-        ))
+        formatted_total_training_time = time.strftime('%H:%M:%S', time.gmtime(total_training_time))
+        print("Total Training Terminated: {}".format(formatted_total_training_time))
+        print("Transition Rolling Rate: {0:.3f}/sec.".format(self.n_rollout_transitions.value / total_training_time))
+        print("Training Rate: {0:.3f}/sec.".format(self.training_steps.value / total_training_time))
         if self.parameter.USE_WANDB:
             wandb_obj.join()
 
