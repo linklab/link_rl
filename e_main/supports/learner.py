@@ -20,7 +20,7 @@ class Learner(mp.Process):
         self.parameter = parameter
 
         self.train_env = None
-        self.test_env = get_single_env(self.parameter)
+        self.test_env = None
 
         self.n_actors = self.parameter.N_ACTORS
         self.n_vectorized_envs = self.parameter.N_VECTORIZED_ENVS
@@ -97,9 +97,11 @@ class Learner(mp.Process):
 
         yield None
 
-    def train_loop(self, sync=True):
-        if sync:  # async인 경우 actor에서 train_env 생성/관리
+    def train_loop(self, parallel=False):
+        if not parallel:  # parallel인 경우 actor에서 train_env 생성/관리
             self.train_env = get_train_env(self.parameter)
+
+        self.test_env = get_single_env(self.parameter)
 
         if self.parameter.USE_WANDB:
             wandb_obj = get_wandb_obj(self.parameter)
@@ -109,12 +111,12 @@ class Learner(mp.Process):
         self.total_train_start_time = time.time()
 
         while True:
-            if sync:
-                n_step_transition = next(self.transition_generator)
-            else:
+            if parallel:
                 n_step_transition = self.queue.get()
+            else:
+                n_step_transition = next(self.transition_generator)
 
-            # print(n_step_transition.info["training_step_v"], "&", end=' ')
+            self.total_time_steps.value += 1
 
             if n_step_transition is None:
                 self.n_actor_terminations += 1
@@ -126,8 +128,6 @@ class Learner(mp.Process):
             else:
                 if self.is_terminated.value:
                     continue
-                else:
-                    self.total_time_steps.value += 1
 
             self.buffer.append(n_step_transition)
             self.n_rollout_transitions.value += 1
@@ -138,11 +138,11 @@ class Learner(mp.Process):
 
             if self.total_time_steps.value >= self.next_train_time_step:
                 if self.parameter.AGENT_TYPE != AgentType.Reinforce:
-                    is_train_done = self.agent.train(
+                    is_train_success_done = self.agent.train(
                         buffer=self.buffer,
                         training_steps_v=self.training_steps.value
                     )
-                    if is_train_done:
+                    if is_train_success_done:
                         self.training_steps.value += 1
 
                 self.next_train_time_step += self.parameter.TRAIN_INTERVAL_TOTAL_TIME_STEPS
@@ -158,11 +158,11 @@ class Learner(mp.Process):
                 self.episode_rewards[actor_id][env_id] = 0.0
 
                 if self.parameter.AGENT_TYPE == AgentType.Reinforce:
-                    is_train_done = self.agent.train(
+                    is_train_success_done = self.agent.train(
                         buffer=self.buffer,
                         training_steps_v=self.training_steps.value
                     )
-                    if is_train_done:
+                    if is_train_success_done:
                         self.training_steps.value += 1
 
             if self.total_time_steps.value >= self.next_console_log:
@@ -196,7 +196,7 @@ class Learner(mp.Process):
             wandb_obj.join()
 
     def run(self):
-        self.train_loop(sync=False)
+        self.train_loop(parallel=True)
 
     def testing(self):
         print("*" * 80)

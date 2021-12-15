@@ -6,7 +6,6 @@ sys.path.append(os.path.abspath(
 ))
 
 from a_configuration.parameter_comparison import ParameterComparison
-from g_utils.commons import get_wandb_obj
 from e_main.supports.main_preamble import *
 from e_main.supports.learner_comparison import LearnerComparison
 

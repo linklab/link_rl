@@ -19,28 +19,28 @@ class Agent:
         pass
 
     def train(self, buffer, training_steps_v=None):
-        is_train_done = False
+        is_train_success_done = False
         if self.parameter.AGENT_TYPE == AgentType.Dqn:
             if len(buffer) > self.parameter.MIN_BUFFER_SIZE_FOR_TRAIN:
                 self.train_dqn(
                     buffer=buffer, training_steps_v=training_steps_v
                 )
-                is_train_done = True
+                is_train_success_done = True
         elif self.parameter.AGENT_TYPE == AgentType.A2c:
             if len(buffer) > self.parameter.BATCH_SIZE:
                 self.train_a2c(buffer=buffer)
-                is_train_done = True
+                is_train_success_done = True
         elif self.parameter.AGENT_TYPE == AgentType.Reinforce:
             if len(buffer) > 0:
                 self.train_reinforce(buffer=buffer)
-                is_train_done = True
+                is_train_success_done = True
 
         # NOTE !!!
-        if is_train_done:
+        if is_train_success_done:
             if self.parameter.AGENT_TYPE in OnPolicyAgentTypes:
                 buffer.clear()
 
-        return is_train_done
+        return is_train_success_done
 
     @abstractmethod
     def train_dqn(self, buffer, training_steps_v):

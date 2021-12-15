@@ -24,7 +24,7 @@ def main():
     )
 
     print("########## LEARNING STARTED !!! ##########")
-    learner.train_loop(sync=True)
+    learner.train_loop(parallel=False)
 
     print_basic_info(device, parameter)
 

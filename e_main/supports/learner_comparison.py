@@ -52,7 +52,7 @@ class LearnerComparison:
 
         self.n_actor_terminations_per_agent = [0] * self.n_agents
 
-        self.total_time_steps_per_agent = [0] * self.n_agents
+        self.total_time_steps = 0
         self.total_episodes_per_agent = [0] * self.n_agents
         self.training_steps_per_agent = [0] * self.n_agents
         self.n_rollout_transitions_per_agent = [0] * self.n_agents
@@ -110,12 +110,12 @@ class LearnerComparison:
         else:
             wandb_obj = None
 
-        global_time_steps = 0
         while True:
             if all(self.is_terminated_per_agent):
                 break
 
-            global_time_steps += 1
+            self.total_time_steps += 1
+
             for agent_idx in range(self.n_agents):
                 n_step_transition = next(self.transition_generators_per_agent[agent_idx])
 
@@ -128,8 +128,6 @@ class LearnerComparison:
                 else:
                     if self.is_terminated_per_agent[agent_idx]:
                         continue
-                    else:
-                        self.total_time_steps_per_agent[agent_idx] += 1
 
                 self.buffers_per_agent[agent_idx].append(n_step_transition)
                 self.n_rollout_transitions_per_agent[agent_idx] += 1
@@ -137,17 +135,6 @@ class LearnerComparison:
                 actor_id = n_step_transition.info["actor_id"]   # SHOULD BE 1
                 env_id = n_step_transition.info["env_id"]
                 self.episode_rewards_per_agent[agent_idx][actor_id][env_id] += n_step_transition.reward
-
-                if self.total_time_steps_per_agent[agent_idx] >= self.next_train_time_step:
-                    if self.parameter_c.parameters[agent_idx].AGENT_TYPE != AgentType.Reinforce:
-                        is_train_done = self.agents[agent_idx].train(
-                            buffer=self.buffers_per_agent[agent_idx],
-                            training_steps_v=self.training_steps_per_agent[agent_idx]
-                        )
-                        if is_train_done:
-                            self.training_steps_per_agent[agent_idx] += 1
-
-                    self.next_train_time_step += self.parameter_c.TRAIN_INTERVAL_TOTAL_TIME_STEPS
 
                 if n_step_transition.done:
                     self.total_episodes_per_agent[agent_idx] += 1
@@ -162,17 +149,29 @@ class LearnerComparison:
                     self.episode_rewards_per_agent[agent_idx][actor_id][env_id] = 0.0
 
                     if self.parameter_c.parameters[agent_idx].AGENT_TYPE == AgentType.Reinforce:
-                        is_train_done = self.agents[agent_idx].train(
+                        is_train_success_done = self.agents[agent_idx].train(
                             buffer=self.buffers_per_agent[agent_idx],
                             training_steps_v=self.training_steps_per_agent[agent_idx]
                         )
-                        if is_train_done:
+                        if is_train_success_done:
                             self.training_steps_per_agent[agent_idx] += 1
 
-            if global_time_steps >= self.next_console_log:
+            if self.total_time_steps >= self.next_train_time_step:
+                for agent_idx in range(self.n_agents):
+                    if self.parameter_c.parameters[agent_idx].AGENT_TYPE != AgentType.Reinforce:
+                        is_train_success_done = self.agents[agent_idx].train(
+                            buffer=self.buffers_per_agent[agent_idx],
+                            training_steps_v=self.training_steps_per_agent[agent_idx]
+                        )
+                        if is_train_success_done:
+                            self.training_steps_per_agent[agent_idx] += 1
+
+                self.next_train_time_step += self.parameter_c.TRAIN_INTERVAL_TOTAL_TIME_STEPS
+
+            if self.total_time_steps >= self.next_console_log:
                 console_log_comparison(
+                    self.total_time_steps,
                     self.total_episodes_per_agent,
-                    self.total_time_steps_per_agent,
                     self.last_mean_episode_reward_per_agent,
                     self.n_rollout_transitions_per_agent,
                     self.training_steps_per_agent,
@@ -181,7 +180,7 @@ class LearnerComparison:
                 )
                 self.next_console_log += self.parameter_c.CONSOLE_LOG_INTERVAL_TOTAL_TIME_STEPS
 
-            if global_time_steps >= self.next_test_training_step:
+            if self.total_time_steps >= self.next_test_training_step:
                 for agent_idx in range(self.n_agents):
                     self.testing(agent_idx)
 
@@ -189,7 +188,7 @@ class LearnerComparison:
                 if self.parameter_c.USE_WANDB:
                     wandb_log_comparison(self, wandb_obj)
 
-            if global_time_steps >= self.parameter_c.MAX_TRAINING_STEPS:
+            if self.total_time_steps >= self.parameter_c.MAX_TRAINING_STEPS:
                 for agent_idx in range(self.n_agents):
                     print("[TRAIN TERMINATION: AGENT {0}] MAX_TRAINING_STEPS ({1}) REACHES!!!".format(
                         agent_idx,  self.parameter_c.MAX_TRAINING_STEPS

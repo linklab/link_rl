@@ -97,7 +97,7 @@ def console_log(
     )
 
     console_log = "[Total Episodes: {0:5,}, Total Time Steps {1:7,}] " \
-                  "Mean Episode Reward: {2:5.1f}, Rolling Transitions: {3:6,} ({4:.3f}/sec.), " \
+                  "Mean Episode Reward: {2:5.1f}, Rolling Transitions: {3:6,} ({4:7.3f}/sec.), " \
                   "Training Steps: {5:5,} ({6:.3f}/sec.), " \
         .format(
             total_episodes_v,
@@ -139,7 +139,7 @@ def console_log(
 
 
 def console_log_comparison(
-        total_episodes_per_agent, total_time_steps_per_agent,
+        total_time_steps, total_episodes_per_agent,
         last_mean_episode_reward_per_agent, n_rollout_transitions_per_agent, training_steps_per_agent,
         agents, parameter_c
 ):
@@ -150,7 +150,7 @@ def console_log_comparison(
                       "Training Steps: {4:5,}, " \
             .format(
                 total_episodes_per_agent[agent_idx],
-                total_time_steps_per_agent[agent_idx],
+                total_time_steps,
                 last_mean_episode_reward_per_agent[agent_idx],
                 n_rollout_transitions_per_agent[agent_idx],
                 training_steps_per_agent[agent_idx]
