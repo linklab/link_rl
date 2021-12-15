@@ -29,6 +29,8 @@ class ParameterComparisonBase:
         self.MAX_TRAINING_STEPS = 100_000
         self.N_TEST_EPISODES = 3
 
+        self.N_RUNS = 5
+
 
         # N_ACTORS = self.AGENT_PARAMETERS[0].N_ACTORS
         # assert all(

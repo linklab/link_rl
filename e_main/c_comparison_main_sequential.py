@@ -8,7 +8,7 @@ sys.path.append(os.path.abspath(
 from a_configuration.parameter_comparison import ParameterComparison
 from e_main.supports.main_preamble import *
 from e_main.supports.learner_comparison import LearnerComparison
-from g_utils.commons import print_comparison_basic_info
+from g_utils.commons import print_comparison_basic_info, get_wandb_obj
 
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 parameter_c = ParameterComparison()
@@ -17,6 +17,11 @@ n_agents = len(parameter_c.AGENT_PARAMETERS)
 
 
 def main():
+    if parameter_c.USE_WANDB:
+        wandb_obj = get_wandb_obj(parameter_c, comparison=True)
+    else:
+        wandb_obj = None
+
     print_comparison_basic_info(device, parameter_c)
 
     obs_shape, n_actions = get_env_info(parameter_c)
@@ -28,17 +33,21 @@ def main():
         )
         agents.append(agent)
 
-    learner_comparison = LearnerComparison(
-        n_agents=n_agents, agents=agents, device=device, parameter_c=parameter_c
-    )
-
     print("########## LEARNING STARTED !!! ##########")
-    learner_comparison.train_loop()
+    for run in range(0, parameter_c.N_RUNS):
+        print(">" * 30 + " RUN: {0} ".format(run + 1) + "<" * 30)
+        learner_comparison = LearnerComparison(
+            run=run, agents=agents, device=device, wandb_obj=wandb_obj, parameter_c=parameter_c
+        )
+        learner_comparison.train_loop()
 
-    print_basic_info(device, parameter_c)
+    if parameter_c.USE_WANDB:
+        wandb_obj.join()
+
+    print_comparison_basic_info(device, parameter_c)
 
 
 if __name__ == "__main__":
     # assert parameter.AGENT_TYPE in OnPolicyAgentTypes
-    assert parameter_c.N_ACTORS == 1
+    assert parameter_c.N_ACTORS == 1 and parameter_c.N_VECTORIZED_ENVS == 1
     main()

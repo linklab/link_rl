@@ -6,7 +6,6 @@ import torch.multiprocessing as mp
 
 from c_models.models import ActorCritic
 from d_agents.agent import Agent
-from g_utils.buffers import Buffer
 from g_utils.types import AgentMode
 
 

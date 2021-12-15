@@ -289,13 +289,13 @@ def wandb_log(learner, wandb_obj, parameter):
     }
 
     if parameter.AGENT_TYPE == AgentType.Dqn:
-        log_dict["Q_net_loss"] = learner.agent.last_q_net_loss.value
+        log_dict["QNet Loss"] = learner.agent.last_q_net_loss.value
         log_dict["Epsilon"] = learner.agent.epsilon.value
     elif parameter.AGENT_TYPE == AgentType.Reinforce:
-        log_dict["log_policy_objective"] = learner.agent.last_log_policy_objective.value
+        log_dict["Log Policy Objective"] = learner.agent.last_log_policy_objective.value
     elif parameter.AGENT_TYPE == AgentType.A2c:
-        log_dict["critic_loss"] = learner.agent.last_critic_loss.value
-        log_dict["log_actor_objective"] = learner.agent.last_log_actor_objective.value
+        log_dict["Critic Loss"] = learner.agent.last_critic_loss.value
+        log_dict["Log Actor Objective"] = learner.agent.last_log_actor_objective.value
     else:
         pass
 
@@ -342,7 +342,11 @@ plotly_layout = go.Layout(
 )
 
 
-def wandb_log_comparison(learner, wandb_obj):
+def wandb_log_comparison(learner, wandb_obj, test_idx):
+    print("$$$$$$$$")
+    print(learner.MEAN_test_episode_reward_avg_per_agent[0, :test_idx + 1])
+    print(learner.MEAN_test_episode_reward_avg_per_agent[:, :test_idx + 1])
+    print("$$$$$$$$")
     ###############################################################################
     plotly_layout.yaxis.title = "[TEST] Average Episode Reward"
     test_episode_reward_avg = go.Figure(
@@ -350,7 +354,7 @@ def wandb_log_comparison(learner, wandb_obj):
             go.Scatter(
                 name=learner.parameter_c.AGENT_LABELS[agent_idx],
                 x=learner.test_training_steps_lst,
-                y=learner.lst_test_episode_reward_avg_per_agent[agent_idx],
+                y=learner.MEAN_test_episode_reward_avg_per_agent[agent_idx, :test_idx + 1],
                 mode="lines",
                 showlegend=True
             ) for agent_idx, _ in enumerate(learner.agents)
@@ -360,7 +364,8 @@ def wandb_log_comparison(learner, wandb_obj):
 
     test_episode_reward_avg_2 = wandb.plot.line_series(
         xs=learner.test_training_steps_lst,
-        ys=learner.lst_test_episode_reward_avg_per_agent, keys=learner.parameter_c.AGENT_LABELS,
+        ys=learner.MEAN_test_episode_reward_avg_per_agent[:, :test_idx + 1],
+        keys=learner.parameter_c.AGENT_LABELS,
         title="[TEST] Average Episode Reward", xname="Training_Steps"
     )
 
@@ -371,7 +376,7 @@ def wandb_log_comparison(learner, wandb_obj):
             go.Scatter(
                 name=learner.parameter_c.AGENT_LABELS[agent_idx],
                 x=learner.test_training_steps_lst,
-                y=learner.lst_test_episode_reward_std_per_agent[agent_idx],
+                y=learner.MEAN_test_episode_reward_std_per_agent[agent_idx, :test_idx + 1],
                 mode="lines",
                 showlegend=True
             ) for agent_idx, _ in enumerate(learner.agents)
@@ -381,7 +386,8 @@ def wandb_log_comparison(learner, wandb_obj):
 
     test_episode_reward_std_2 = wandb.plot.line_series(
         xs=learner.test_training_steps_lst,
-        ys=learner.lst_test_episode_reward_std_per_agent, keys=learner.parameter_c.AGENT_LABELS,
+        ys=learner.MEAN_test_episode_reward_std_per_agent[:, :test_idx + 1],
+        keys=learner.parameter_c.AGENT_LABELS,
         title="[TEST] Std. Episode Reward", xname="Training_Steps"
     )
 
@@ -392,7 +398,7 @@ def wandb_log_comparison(learner, wandb_obj):
             go.Scatter(
                 name=learner.parameter_c.AGENT_LABELS[agent_idx],
                 x=learner.test_training_steps_lst,
-                y=learner.lst_last_mean_episode_reward_per_agent[agent_idx],
+                y=learner.MEAN_mean_episode_reward_per_agent[agent_idx, :test_idx + 1],
                 mode="lines",
                 showlegend=True
             ) for agent_idx, _ in enumerate(learner.agents)
@@ -402,7 +408,8 @@ def wandb_log_comparison(learner, wandb_obj):
 
     train_last_mean_episode_reward_2 = wandb.plot.line_series(
         xs=learner.test_training_steps_lst,
-        ys=learner.lst_last_mean_episode_reward_per_agent, keys=learner.parameter_c.AGENT_LABELS,
+        ys=learner.MEAN_mean_episode_reward_per_agent[:, :test_idx + 1],
+        keys=learner.parameter_c.AGENT_LABELS,
         title="Last Mean Episode Reward", xname="Training_Steps"
     )
 
