@@ -23,10 +23,11 @@ from g_utils.types import OnPolicyAgentTypes, OffPolicyAgentTypes
 from g_utils.commons import get_env_info
 
 
-def get_agent(obs_shape, n_actions, device=torch.device("cpu"), parameter=None):
+def get_agent(obs_shape, n_actions, device=torch.device("cpu"), parameter=None, max_training_steps=None):
     if parameter.AGENT_TYPE == AgentType.Dqn:
         agent = AgentDqn(
-            obs_shape=obs_shape, n_actions=n_actions, device=device, parameter=parameter
+            obs_shape=obs_shape, n_actions=n_actions, device=device, parameter=parameter,
+            max_training_steps=max_training_steps
         )
     elif parameter.AGENT_TYPE == AgentType.Reinforce:
         assert parameter.N_ACTORS * parameter.N_VECTORIZED_ENVS == 1, \

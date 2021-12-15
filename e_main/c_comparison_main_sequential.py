@@ -8,22 +8,23 @@ sys.path.append(os.path.abspath(
 from a_configuration.parameter_comparison import ParameterComparison
 from e_main.supports.main_preamble import *
 from e_main.supports.learner_comparison import LearnerComparison
+from g_utils.commons import print_comparison_basic_info
 
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 parameter_c = ParameterComparison()
 
-n_agents = len(parameter_c.parameters)
+n_agents = len(parameter_c.AGENT_PARAMETERS)
 
 
 def main():
-    print_basic_info(device, parameter_c)
+    print_comparison_basic_info(device, parameter_c)
 
     obs_shape, n_actions = get_env_info(parameter_c)
 
     agents = []
-    for idx in range(n_agents):
+    for agent_idx, _ in enumerate(parameter_c.AGENT_PARAMETERS):
         agent = get_agent(
-            obs_shape, n_actions, device, parameter_c.parameters[idx]
+            obs_shape, n_actions, device, parameter_c.AGENT_PARAMETERS[agent_idx], parameter_c.MAX_TRAINING_STEPS
         )
         agents.append(agent)
 

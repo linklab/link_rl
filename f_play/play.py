@@ -50,7 +50,10 @@ def play(env, agent, n_episodes):
 def main_q_play(n_episodes):
     env, obs_shape, n_actions = get_test_env(parameter)
 
-    agent = get_agent(obs_shape, n_actions, device=torch.device("cpu"), parameter=parameter)
+    agent = get_agent(
+        obs_shape, n_actions, device=torch.device("cpu"), parameter=parameter,
+        max_training_steps=parameter.MAX_TRAINING_STEPS
+    )
 
     model_load(
         model=agent.q_net,

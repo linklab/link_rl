@@ -12,7 +12,7 @@ from g_utils.types import AgentMode, ModelType
 
 
 class AgentDqn(Agent):
-    def __init__(self, obs_shape, n_actions, device, parameter):
+    def __init__(self, obs_shape, n_actions, device, parameter, max_training_steps=None):
         super(AgentDqn, self).__init__(obs_shape, n_actions, device, parameter)
 
         if self.parameter.MODEL_TYPE == ModelType.LINEAR:
@@ -51,8 +51,7 @@ class AgentDqn(Agent):
         self.epsilon_tracker = EpsilonTracker(
             epsilon_init=self.parameter.EPSILON_INIT,
             epsilon_final=self.parameter.EPSILON_FINAL,
-            epsilon_final_time_step_percent=self.parameter.EPSILON_FINAL_TIME_STEP_PERCENT,
-            max_training_steps=self.parameter.MAX_TRAINING_STEPS
+            epsilon_final_time_step=self.parameter.EPSILON_FINAL_TIME_STEP_PERCENT * max_training_steps
         )
         self.epsilon = mp.Value('d', self.parameter.EPSILON_INIT)  # d: float
 

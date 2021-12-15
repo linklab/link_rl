@@ -136,17 +136,6 @@ class Learner(mp.Process):
             env_id = n_step_transition.info["env_id"]
             self.episode_rewards[actor_id][env_id] += n_step_transition.reward
 
-            if self.total_time_steps.value >= self.next_train_time_step:
-                if self.parameter.AGENT_TYPE != AgentType.Reinforce:
-                    is_train_success_done = self.agent.train(
-                        buffer=self.buffer,
-                        training_steps_v=self.training_steps.value
-                    )
-                    if is_train_success_done:
-                        self.training_steps.value += 1
-
-                self.next_train_time_step += self.parameter.TRAIN_INTERVAL_TOTAL_TIME_STEPS
-
             if n_step_transition.done:
                 self.total_episodes.value += 1
 
@@ -164,6 +153,17 @@ class Learner(mp.Process):
                     )
                     if is_train_success_done:
                         self.training_steps.value += 1
+
+            if self.total_time_steps.value >= self.next_train_time_step:
+                if self.parameter.AGENT_TYPE != AgentType.Reinforce:
+                    is_train_success_done = self.agent.train(
+                        buffer=self.buffer,
+                        training_steps_v=self.training_steps.value
+                    )
+                    if is_train_success_done:
+                        self.training_steps.value += 1
+
+                self.next_train_time_step += self.parameter.TRAIN_INTERVAL_TOTAL_TIME_STEPS
 
             if self.total_time_steps.value >= self.next_console_log:
                 console_log(

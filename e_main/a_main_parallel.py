@@ -21,7 +21,7 @@ def main():
 
     obs_shape, n_actions = get_env_info(parameter)
 
-    agent = get_agent(obs_shape, n_actions, device, parameter)
+    agent = get_agent(obs_shape, n_actions, device, parameter, parameter.MAX_TRAINING_STEPS)
 
     learner = Learner(
         agent=agent, queue=queue, device=device, parameter=parameter,

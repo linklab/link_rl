@@ -1,4 +1,4 @@
-from a_configuration.parameters.parameter_preamble import *
+from a_configuration.parameter_preamble import *
 
 
 class ParameterComparison(ParameterCartPoleDqn):

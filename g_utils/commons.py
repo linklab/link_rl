@@ -48,25 +48,30 @@ def model_load(model, env_name, agent_type_name, file_name):
     model.load_state_dict(model_params)
 
 
-def print_basic_info(device, parameter):
-    if device:
-        n_cpu_cores = mp.cpu_count()
-        print('\n' + '#' * 72 + " Base Parameters " + '#' * 73)
-        print("{0:55} {1:55} {2:55}".format(
-            "DEVICE: {0}".format(device),
-            "CPU CORES: {0}".format(n_cpu_cores),
-            "MAX TOTAL TIME STEPS: {0:,}".format(parameter.MAX_TRAINING_STEPS)
-        ), end="\n")
-        print("{0:55} {1:55} {2:55}".format(
-            "N_ACTORS: {0}".format(parameter.N_ACTORS),
-            "ENVS PER ACTOR: {0}".format(parameter.N_VECTORIZED_ENVS),
-            "TOTAL NUMBERS OF ENVS: {0}".format(
-                parameter.N_ACTORS * parameter.N_VECTORIZED_ENVS
-            )
-        ))
+def print_device_related_info(device, parameter):
+    n_cpu_cores = mp.cpu_count()
+    print("{0:55} {1:55}".format(
+        "DEVICE: {0}".format(device),
+        "CPU CORES: {0}".format(n_cpu_cores),
+    ), end="\n")
+    print("{0:55} {1:55} {2:55}".format(
+        "N_ACTORS: {0}".format(parameter.N_ACTORS),
+        "ENVS PER ACTOR: {0}".format(parameter.N_VECTORIZED_ENVS),
+        "TOTAL NUMBERS OF ENVS: {0}".format(
+            parameter.N_ACTORS * parameter.N_VECTORIZED_ENVS
+        )
+    ))
 
-    print('-' * 75 + " Parameters " + '-' * 75)
+
+def print_basic_info(device, parameter):
+    print('\n' + '#' * 72 + " Base Parameters " + '#' * 73)
+
+    if device:
+        print_device_related_info(device, parameter)
+        print('-' * 75 + " Parameters " + '-' * 75)
+
     items = []
+
     for param in dir(parameter):
         if not param.startswith("__"):
             if param in [
@@ -79,9 +84,93 @@ def print_basic_info(device, parameter):
             else:
                 item = "{0}: {1:}".format(param, getattr(parameter, param))
             items.append(item)
+
         if len(items) == 3:
             print("{0:55} {1:55} {2:55}".format(items[0], items[1], items[2]), end="\n")
             items.clear()
+
+    if len(items) > 0:
+        if len(items) == 2:
+            print("{0:55} {1:55}".format(items[0], items[1]), end="\n")
+            items.clear()
+        else:
+            print("{0:55}".format(items[0]), end="\n")
+            items.clear()
+
+    print('#' * 162)
+    print()
+
+
+def print_comparison_basic_info(device, parameter):
+    print('\n' + '#' * 72 + " Base Parameters " + '#' * 73)
+
+    if device:
+        print_device_related_info(device, parameter)
+        print('-' * 75 + " Parameters " + '-' * 75)
+
+    items = []
+
+    for param in dir(parameter):
+        if param == "AGENT_LABELS":
+            item1 = "{0}: {1:}".format("N_AGENTS", len(getattr(parameter, param)))
+            item2 = "{0}: {1:}".format(param, getattr(parameter, param))
+            print("{0:55} {1:55}".format(item1, item2))
+            continue
+
+        if param == "AGENT_PARAMETERS":
+            continue
+
+        if not param.startswith("__"):
+            if param in [
+                "BATCH_SIZE", "BUFFER_CAPACITY", "CONSOLE_LOG_INTERVAL_TOTAL_TIME_STEPS",
+                "EPISODE_REWARD_AVG_SOLVED", "MAX_TRAINING_STEPS",
+                "MIN_BUFFER_SIZE_FOR_TRAIN", "N_EPISODES_FOR_MEAN_CALCULATION",
+                "TEST_INTERVAL_TRAINING_STEPS"
+            ]:
+                item = "{0}: {1:,}".format(param, getattr(parameter, param))
+            else:
+                item = "{0}: {1:}".format(param, getattr(parameter, param))
+            items.append(item)
+
+        if len(items) == 3:
+            print("{0:55} {1:55} {2:55}".format(items[0], items[1], items[2]), end="\n")
+            items.clear()
+
+    if len(items) > 0:
+        if len(items) == 2:
+            print("{0:55} {1:55}".format(items[0], items[1]), end="\n")
+            items.clear()
+        else:
+            print("{0:55}".format(items[0]), end="\n")
+            items.clear()
+
+    for agent_idx, agent_parameter in enumerate(parameter.AGENT_PARAMETERS):
+        print('-' * 75 + " Agent {0} ".format(agent_idx) + '-' * 75)
+        for param in dir(agent_parameter):
+            if not param.startswith("__"):
+                if param in [
+                    "BATCH_SIZE", "BUFFER_CAPACITY", "CONSOLE_LOG_INTERVAL_TOTAL_TIME_STEPS",
+                    "EPISODE_REWARD_AVG_SOLVED", "MAX_TRAINING_STEPS",
+                    "MIN_BUFFER_SIZE_FOR_TRAIN", "N_EPISODES_FOR_MEAN_CALCULATION",
+                    "TEST_INTERVAL_TRAINING_STEPS"
+                ]:
+                    item = "{0}: {1:,}".format(param, getattr(agent_parameter, param))
+                else:
+                    item = "{0}: {1:}".format(param, getattr(agent_parameter, param))
+                items.append(item)
+
+            if len(items) == 3:
+                print("{0:55} {1:55} {2:55}".format(items[0], items[1], items[2]), end="\n")
+                items.clear()
+
+        if len(items) > 0:
+            if len(items) == 2:
+                print("{0:55} {1:55}".format(items[0], items[1]), end="\n")
+                items.clear()
+            else:
+                print("{0:55}".format(items[0]), end="\n")
+                items.clear()
+
     print('#' * 162)
     print()
 
@@ -156,15 +245,15 @@ def console_log_comparison(
                 training_steps_per_agent[agent_idx]
             )
 
-        if parameter_c.parameters[agent_idx].AGENT_TYPE == AgentType.Dqn:
+        if parameter_c.AGENT_PARAMETERS[agent_idx].AGENT_TYPE == AgentType.Dqn:
             console_log += "Q_net_loss: {0:5.1f}, Epsilon: {0:4.2f}, ".format(
                 agent.last_q_net_loss.value, agent.epsilon.value
             )
-        elif parameter_c.parameters[agent_idx].AGENT_TYPE == AgentType.Reinforce:
+        elif parameter_c.AGENT_PARAMETERS[agent_idx].AGENT_TYPE == AgentType.Reinforce:
             console_log += "log_policy_objective: {0:5.1f}, ".format(
                 agent.last_log_policy_objective.value
             )
-        elif parameter_c.parameters[agent_idx].AGENT_TYPE == AgentType.A2c:
+        elif parameter_c.AGENT_PARAMETERS[agent_idx].AGENT_TYPE == AgentType.A2c:
             console_log += "critic_loss: {0:5.1f}, log_actor_objective: {1:5.1f}, ".format(
                 agent.last_critic_loss.value, agent.last_log_actor_objective.value
             )
@@ -174,10 +263,13 @@ def console_log_comparison(
         print(console_log)
 
 
-def get_wandb_obj(parameter):
+def get_wandb_obj(parameter, comparison=False):
+    project = "{0}_{1}".format(parameter.ENV_NAME, "Comparison") \
+        if comparison else "{0}_{1}".format(parameter.ENV_NAME, parameter.AGENT_TYPE.name)
+
     wandb_obj = wandb.init(
         entity=parameter.WANDB_ENTITY,
-        project="{0}_{1}".format(parameter.ENV_NAME, parameter.AGENT_TYPE.name),
+        project=project,
         config={
             key: getattr(parameter, key) for key in dir(parameter) if not key.startswith("__")
         }
@@ -210,121 +302,135 @@ def wandb_log(learner, wandb_obj, parameter):
     wandb_obj.log(log_dict)
 
 
-def wandb_log_comparison(learner, wandb_obj):
-    log_dict = {
-        "[TEST] Average Episode Reward": learner.test_episode_reward_avg.value,
-        "[TEST] Std. Episode Reward": learner.test_episode_reward_std.value,
-        "Mean Episode Reward": learner.last_mean_episode_reward.value,
-        "Episode": learner.total_episodes.value,
-        "Buffer Size": learner.n_rollout_transitions.value,
-        "Training Steps": learner.training_steps.value,
-        "Total Time Steps": learner.total_time_steps.value
-    }
-    wandb_obj.log(log_dict)
+# def wandb_log_comparison(learner, wandb_obj):
+#     log_dict = {
+#         "[TEST] Average Episode Reward": learner.test_episode_reward_avg.value,
+#         "[TEST] Std. Episode Reward": learner.test_episode_reward_std.value,
+#         "Mean Episode Reward": learner.last_mean_episode_reward.value,
+#         "Episode": learner.total_episodes.value,
+#         "Buffer Size": learner.n_rollout_transitions.value,
+#         "Training Steps": learner.training_steps.value,
+#         "Total Time Steps": learner.total_time_steps.value
+#     }
+#     wandb_obj.log(log_dict)
+
+import plotly.graph_objects as go
+
+plotly_layout = go.Layout(
+    plot_bgcolor="#FFF",  # Sets background color to white
+    hovermode="x",
+    hoverdistance=100, # Distance to show hover label of data point
+    spikedistance=1000, # Distance to show spike
+    xaxis=dict(
+        title="Training Steps",
+        linecolor="#BCCCDC",  # Sets color of X-axis line
+        showgrid=True,
+        showspikes=True, # Show spike line for X-axis
+        # Format spike
+        spikethickness=2,
+        spikedash="dot",
+        spikecolor="#999999",
+        spikemode="across",
+    ),
+    yaxis=dict(
+        # title="revenue",
+        linecolor="#BCCCDC",  # Sets color of Y-axis line
+        showgrid=True,
+    ),
+    legend=dict(orientation="h", yanchor="bottom", y=0.99, xanchor="right", x=1),
+    margin=dict(l=0.1, r=0.1, b=0.1, t=0.1)
+)
 
 
 def wandb_log_comparison(learner, wandb_obj):
-    training_steps = learner.training_steps_per_agent[0]
-    assert all(
-        learner.training_steps_per_agent[agent_idx] == training_steps for agent_idx in range(learner.n_agents)
+    ###############################################################################
+    plotly_layout.yaxis.title = "[TEST] Average Episode Reward"
+    test_episode_reward_avg = go.Figure(
+        data=[
+            go.Scatter(
+                name=learner.parameter_c.AGENT_LABELS[agent_idx],
+                x=learner.test_training_steps_lst,
+                y=learner.lst_test_episode_reward_avg_per_agent[agent_idx],
+                mode="lines",
+                showlegend=True
+            ) for agent_idx, _ in enumerate(learner.agents)
+        ],
+        layout=plotly_layout
     )
 
-    xs = [training_step_idx for training_step_idx in range(training_steps)]
+    test_episode_reward_avg_2 = wandb.plot.line_series(
+        xs=learner.test_training_steps_lst,
+        ys=learner.lst_test_episode_reward_avg_per_agent, keys=learner.parameter_c.AGENT_LABELS,
+        title="[TEST] Average Episode Reward", xname="Training_Steps"
+    )
 
-    test_average_episode_reward = [
-        [
-            _performance_revenue[agent_idx][step_idx]
-            for step_idx in range(config.DRAW_START_TIME_STEP, time_step, config.DRAW_PERIOD_STEP)
-        ]
-        for agent_idx, _ in enumerate(agents)
-    ]
-    cost_data = [
-        [
-            _performance_cost[agent_idx][step_idx]
-            for step_idx in range(config.DRAW_START_TIME_STEP, time_step, config.DRAW_PERIOD_STEP)
-        ]
-        for agent_idx, _ in enumerate(agents)
-    ]
-    rc_ratio_data = [
-        [
-            _performance_rc_ratio[agent_idx][step_idx]
-            for step_idx in range(config.DRAW_START_TIME_STEP, time_step, config.DRAW_PERIOD_STEP)
-        ]
-        for agent_idx, _ in enumerate(agents)
-    ]
-    acceptance_ratio_data = [
-        [
-            _performance_acceptance_ratio[agent_idx][step_idx]
-            for step_idx in range(config.DRAW_START_TIME_STEP, time_step, config.DRAW_PERIOD_STEP)
-        ]
-        for agent_idx, _ in enumerate(agents)
-    ]
-    num_node_embedding_fails_data = [
-        [
-            _performance_num_node_embedding_fails[agent_idx][step_idx]
-            for step_idx in range(config.DRAW_START_TIME_STEP, time_step, config.DRAW_PERIOD_STEP)
-        ]
-        for agent_idx, _ in enumerate(agents)
-    ]
-    num_link_embedding_fails_data = [
-        [
-            _performance_num_link_embedding_fails[agent_idx][step_idx]
-            for step_idx in range(config.DRAW_START_TIME_STEP, time_step, config.DRAW_PERIOD_STEP)
-        ]
-        for agent_idx, _ in enumerate(agents)
-    ]
-    link_fail_ratio_data = [
-        [
-            _performance_link_fail_ratio[agent_idx][step_idx]
-            for step_idx in range(config.DRAW_START_TIME_STEP, time_step, config.DRAW_PERIOD_STEP)
-        ]
-        for agent_idx, _ in enumerate(agents)
-    ]
-    sn_cpu_remains = [
-        [
-            _performance_sn_cpu_remains[agent_idx][step_idx]
-            for step_idx in range(config.DRAW_START_TIME_STEP, time_step, config.DRAW_PERIOD_STEP)
-        ]
-        for agent_idx, _ in enumerate(agents)
-    ]
+    ###############################################################################
+    plotly_layout.yaxis.title = "[TEST] Std. Episode Reward"
+    test_episode_reward_std = go.Figure(
+        data=[
+            go.Scatter(
+                name=learner.parameter_c.AGENT_LABELS[agent_idx],
+                x=learner.test_training_steps_lst,
+                y=learner.lst_test_episode_reward_std_per_agent[agent_idx],
+                mode="lines",
+                showlegend=True
+            ) for agent_idx, _ in enumerate(learner.agents)
+        ],
+        layout=plotly_layout
+    )
 
-    sn_bandwidth_remains = [
-        [
-            _performance_sn_bandwidth_remains[agent_idx][step_idx]
-            for step_idx in range(config.DRAW_START_TIME_STEP, time_step, config.DRAW_PERIOD_STEP)
-        ]
-        for agent_idx, _ in enumerate(agents)
-    ]
+    test_episode_reward_std_2 = wandb.plot.line_series(
+        xs=learner.test_training_steps_lst,
+        ys=learner.lst_test_episode_reward_std_per_agent, keys=learner.parameter_c.AGENT_LABELS,
+        title="[TEST] Std. Episode Reward", xname="Training_Steps"
+    )
 
-    wandb.log({
-        "revenue": wandb.plot.line_series(
-            xs=xs, ys=revenue_data, keys=agent_labels, title="REVENUE", xname="time step"
-        ),
-        "cost": wandb.plot.line_series(
-            xs=xs, ys=cost_data, keys=agent_labels, title="COST", xname="time step"
-        ),
-        "rc_ratio": wandb.plot.line_series(
-            xs=xs, ys=rc_ratio_data, keys=agent_labels, title="REVENUE-TO-COST RATIO (0.0 ~ 1.0)", xname="time step"
-        ),
-        "acceptance_ratio": wandb.plot.line_series(
-            xs=xs, ys=acceptance_ratio_data, keys=agent_labels, title="ACCEPTANCE RATIO (0.0 ~ 1.0)", xname="time step"
-        ),
-        "num_link_embedding_fails": wandb.plot.line_series(
-            xs=xs, ys=num_link_embedding_fails_data, keys=agent_labels, title="num link embedding fails", xname="time step"
-        ),
-        "num_node_embedding_fails": wandb.plot.line_series(
-            xs=xs, ys=num_node_embedding_fails_data, keys=agent_labels, title="num node embedding fails", xname="time step"
-        ),
-        "link_fail_ratio": wandb.plot.line_series(
-            xs=xs, ys=link_fail_ratio_data, keys=agent_labels, title="link fail ratio (0.0 ~ 1.0)", xname="time step"
-        ),
-        "sn_cpu_remains": wandb.plot.line_series(
-            xs=xs, ys=sn_cpu_remains, keys=agent_labels, title="sn cpu remains rate (%)", xname="time step"
-        ),
-        "sn_bandwidth_remains": wandb.plot.line_series(
-            xs=xs, ys=sn_bandwidth_remains, keys=agent_labels, title="sn bandwidth remains rate (%)", xname="time step"
-        )
-    })
+    ###############################################################################
+    plotly_layout.yaxis.title = "Last Mean Episode Reward"
+    train_last_mean_episode_reward = go.Figure(
+        data=[
+            go.Scatter(
+                name=learner.parameter_c.AGENT_LABELS[agent_idx],
+                x=learner.test_training_steps_lst,
+                y=learner.lst_last_mean_episode_reward_per_agent[agent_idx],
+                mode="lines",
+                showlegend=True
+            ) for agent_idx, _ in enumerate(learner.agents)
+        ],
+        layout=plotly_layout
+    )
+
+    train_last_mean_episode_reward_2 = wandb.plot.line_series(
+        xs=learner.test_training_steps_lst,
+        ys=learner.lst_last_mean_episode_reward_per_agent, keys=learner.parameter_c.AGENT_LABELS,
+        title="Last Mean Episode Reward", xname="Training_Steps"
+    )
+
+    log_dict = {
+        "episode_reward_avg": test_episode_reward_avg,
+        "episode_reward_std": test_episode_reward_std,
+        "train_last_mean_episode_reward": train_last_mean_episode_reward,
+        "episode_reward_avg_2": test_episode_reward_avg_2,
+        "episode_reward_std_2": test_episode_reward_std_2,
+        "train_last_mean_episode_reward_2": train_last_mean_episode_reward_2
+    }
+
+    wandb_obj.log(log_dict)
+
+    # log_dict = {
+    #     "episode_reward_avg": wandb.plot.line_series(
+    #         xs=learner.test_training_steps_lst,
+    #         ys=learner.test_episode_reward_avg_per_agent, keys=learner.parameter_c.AGENT_LABELS,
+    #         title="[TEST] Average Episode Reward", xname="Training Steps"
+    #     ),
+    #     "episode_reward_std": wandb.plot.line_series(
+    #         xs=learner.test_training_steps_lst,
+    #         ys=learner.test_episode_reward_std_per_agent, keys=learner.parameter_c.AGENT_LABELS,
+    #         title="[TEST] Std. Episode Reward", xname="Training Steps"
+    #     ),
+    # }
+    # wandb_obj.log(log_dict)
+
 
 def get_train_env(parameter):
     def make_gym_env(env_name):
@@ -373,10 +479,10 @@ def get_env_info(parameter):
 
 
 class EpsilonTracker:
-    def __init__(self, epsilon_init, epsilon_final, epsilon_final_time_step_percent, max_training_steps):
+    def __init__(self, epsilon_init, epsilon_final, epsilon_final_time_step):
         self.epsilon_init = epsilon_init
         self.epsilon_final = epsilon_final
-        self.epsilon_final_time_step = max_training_steps * epsilon_final_time_step_percent
+        self.epsilon_final_time_step = epsilon_final_time_step
 
     def epsilon(self, training_step):
         epsilon = max(
