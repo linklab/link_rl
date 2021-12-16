@@ -46,55 +46,21 @@ def get_agent(obs_shape, n_actions, device=torch.device("cpu"), parameter=None, 
     return agent
 
 
-def get_agents(n_features, n_actions, device, params_c):
-    agents = []
-    for idx, agent_type in enumerate(params_c.AGENTS):
-        agent_params = params_c.PARAMS_AGENTS[idx]
-        if agent_type == AgentType.Dqn:
-            agents.append(
-                AgentDqn(
-                    n_features=n_features, n_actions=n_actions, device=device,
-                    parameter=agent_params
-                )
-            )
-        elif agent_type == AgentType.Reinforce:
-            assert agent_params.N_ACTORS * agent_params.N_VECTORIZED_ENVS == 1, \
-                "AGENT_REINFORCE: TOTAL NUMBERS OF ENVS should be one"
-            agents.append(
-                AgentReinforce(
-                    n_features=n_features, n_actions=n_actions, device=device,
-                    parameter=agent_params
-                )
-            )
-        elif agent_type == AgentType.A2c:
-            agents.append(
-                AgentA2c(
-                    n_features=n_features, n_actions=n_actions, device=device,
-                    parameter=agent_params
-                )
-            )
-        else:
-            raise ValueError()
-
-    return agents
-
-
-
 # 이름을 한번 언급
-time
-gym
-torch
-mp
-wandb
-AgentDqn
-AgentA2c
-AgentReinforce
-Actor
-Learner
-AgentType,
-wandb_log
-OnPolicyAgentTypes
-OffPolicyAgentTypes
-print_basic_info
-get_env_info
-Parameter
+# time
+# gym
+# torch
+# mp
+# wandb
+# AgentDqn
+# AgentA2c
+# AgentReinforce
+# Actor
+# Learner
+# AgentType,
+# wandb_log
+# OnPolicyAgentTypes
+# OffPolicyAgentTypes
+# print_basic_info
+# get_env_info
+# Parameter

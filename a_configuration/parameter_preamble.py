@@ -10,17 +10,20 @@ from a_configuration.parameters.open_ai_gym.parameter_pong import \
     ParameterPongDqn
 from a_configuration.parameters_comparison.open_ai_gym.parameter_comparison_cartpole import \
     ParameterComparisonCartPoleDqn
+from a_configuration.parameters_comparison.open_ai_gym.parameter_comparison_pong import \
+    ParameterComparisonPongDqn
 
 from g_utils.commons import print_basic_info
 
 
-print_basic_info
-
-AgentType
-
-ParameterCartPoleDqn
-ParameterCartPoleReinforce
-ParameterCartPoleA2c
-ParameterPongDqn
-
-ParameterComparisonCartPoleDqn
+# print_basic_info
+#
+# AgentType
+#
+# ParameterCartPoleDqn
+# ParameterCartPoleReinforce
+# ParameterCartPoleA2c
+# ParameterPongDqn
+#
+# ParameterComparisonCartPoleDqn
+# ParameterComparisonPongDqn
