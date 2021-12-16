@@ -17,4 +17,4 @@ class ParameterComparison(ParameterComparisonCartPoleDqn):
             "DQN (N_STEP=3)",
         ]
 
-        self.MAX_TRAINING_STEPS = 200_000
+
