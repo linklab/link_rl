@@ -338,104 +338,216 @@ plotly_layout = go.Layout(
         showgrid=True,
     ),
     legend=dict(orientation="h", yanchor="bottom", y=0.99, xanchor="right", x=1),
-    margin=dict(l=0.1, r=0.1, b=0.1, t=0.1)
+    margin=dict(l=0.1, r=0.1, b=0.1, t=0.1),
+    font=dict(size=10, color="Black")
 )
 
 
-def wandb_log_comparison(learner, wandb_obj, test_idx):
-    print("$$$$$$$$")
-    print(learner.MEAN_test_episode_reward_avg_per_agent[0, :test_idx + 1])
-    print(learner.MEAN_test_episode_reward_avg_per_agent[:, :test_idx + 1])
-    print("$$$$$$$$")
-    ###############################################################################
-    plotly_layout.yaxis.title = "[TEST] Average Episode Reward"
-    test_episode_reward_avg = go.Figure(
-        data=[
-            go.Scatter(
-                name=learner.parameter_c.AGENT_LABELS[agent_idx],
-                x=learner.test_training_steps_lst,
-                y=learner.MEAN_test_episode_reward_avg_per_agent[agent_idx, :test_idx + 1],
-                mode="lines",
-                showlegend=True
-            ) for agent_idx, _ in enumerate(learner.agents)
-        ],
-        layout=plotly_layout
-    )
+# line_color_lst = ['green', 'red', 'blue', 'indigo', 'magenta']
 
-    test_episode_reward_avg_2 = wandb.plot.line_series(
-        xs=learner.test_training_steps_lst,
-        ys=learner.MEAN_test_episode_reward_avg_per_agent[:, :test_idx + 1],
-        keys=learner.parameter_c.AGENT_LABELS,
-        title="[TEST] Average Episode Reward", xname="Training_Steps"
-    )
+
+def wandb_log_comparison(
+        run, agents, agent_labels, n_episodes_for_mean_calculation, comparison_stat, wandb_obj
+):
+    plotly_layout.yaxis.title = "[TEST] Average Episode Reward (runs={0})".format(run + 1)
+    data = []
+    for agent_idx, _ in enumerate(agents):
+        data.append(
+            go.Scatter(
+                name=agent_labels[agent_idx],
+                x=comparison_stat.test_training_steps_lst,
+                y=comparison_stat.MEAN_test_episode_reward_avg_per_agent[agent_idx, :],
+                # line_color=line_color_lst[agent_idx],
+                showlegend=True
+            )
+        )
+    test_episode_reward_avg = go.Figure(data=data, layout=plotly_layout)
 
     ###############################################################################
-    plotly_layout.yaxis.title = "[TEST] Std. Episode Reward"
-    test_episode_reward_std = go.Figure(
-        data=[
+    plotly_layout.yaxis.title = "[TEST] Std. Episode Reward (runs={0})".format(run + 1)
+    data = []
+    for agent_idx, _ in enumerate(agents):
+        data.append(
             go.Scatter(
-                name=learner.parameter_c.AGENT_LABELS[agent_idx],
-                x=learner.test_training_steps_lst,
-                y=learner.MEAN_test_episode_reward_std_per_agent[agent_idx, :test_idx + 1],
-                mode="lines",
+                name=agent_labels[agent_idx],
+                x=comparison_stat.test_training_steps_lst,
+                y=comparison_stat.MEAN_test_episode_reward_std_per_agent[agent_idx, :],
+                # line_color=line_color_lst[agent_idx],
                 showlegend=True
-            ) for agent_idx, _ in enumerate(learner.agents)
-        ],
-        layout=plotly_layout
-    )
-
-    test_episode_reward_std_2 = wandb.plot.line_series(
-        xs=learner.test_training_steps_lst,
-        ys=learner.MEAN_test_episode_reward_std_per_agent[:, :test_idx + 1],
-        keys=learner.parameter_c.AGENT_LABELS,
-        title="[TEST] Std. Episode Reward", xname="Training_Steps"
-    )
+            )
+        )
+    test_episode_reward_std = go.Figure(data=data, layout=plotly_layout)
 
     ###############################################################################
-    plotly_layout.yaxis.title = "Last Mean Episode Reward"
-    train_last_mean_episode_reward = go.Figure(
-        data=[
+    plotly_layout.yaxis.title = "[TRAIN] Average Mean Episode Reward ({0} Episodes, runs={1})".format(
+        n_episodes_for_mean_calculation, run + 1
+    )
+    data = []
+    for agent_idx, _ in enumerate(agents):
+        data.append(
             go.Scatter(
-                name=learner.parameter_c.AGENT_LABELS[agent_idx],
-                x=learner.test_training_steps_lst,
-                y=learner.MEAN_mean_episode_reward_per_agent[agent_idx, :test_idx + 1],
-                mode="lines",
+                name=agent_labels[agent_idx],
+                x=comparison_stat.test_training_steps_lst,
+                y=comparison_stat.MEAN_mean_episode_reward_per_agent[agent_idx, :],
+                # line_color=line_color_lst[agent_idx],
                 showlegend=True
-            ) for agent_idx, _ in enumerate(learner.agents)
-        ],
-        layout=plotly_layout
-    )
-
-    train_last_mean_episode_reward_2 = wandb.plot.line_series(
-        xs=learner.test_training_steps_lst,
-        ys=learner.MEAN_mean_episode_reward_per_agent[:, :test_idx + 1],
-        keys=learner.parameter_c.AGENT_LABELS,
-        title="Last Mean Episode Reward", xname="Training_Steps"
-    )
+            )
+        )
+    train_last_mean_episode_reward = go.Figure(data=data, layout=plotly_layout)
 
     log_dict = {
         "episode_reward_avg": test_episode_reward_avg,
         "episode_reward_std": test_episode_reward_std,
-        "train_last_mean_episode_reward": train_last_mean_episode_reward,
-        "episode_reward_avg_2": test_episode_reward_avg_2,
-        "episode_reward_std_2": test_episode_reward_std_2,
-        "train_last_mean_episode_reward_2": train_last_mean_episode_reward_2
+        "train_last_mean_episode_reward": train_last_mean_episode_reward
     }
 
     wandb_obj.log(log_dict)
 
+# def wandb_log_comparison(agents, agent_labels, comparison_stat, wandb_obj):
+#     plotly_layout.yaxis.title = "[TEST] Average Episode Reward"
+#
+#     test_episode_reward_avg = go.Figure(layout=plotly_layout)
+#
+#     test_episode_reward_avg.add_traces(
+#         go.Scatter(
+#             x=comparison_stat.test_training_steps_lst,
+#             y=comparison_stat.MAX_test_episode_reward_avg_per_agent[0, :],
+#             fill=None,
+#             line_color=line_color_lst[0],
+#         )
+#     )
+#
+#     test_episode_reward_avg.add_traces(
+#         go.Scatter(
+#             x=comparison_stat.test_training_steps_lst,
+#             y=comparison_stat.MIN_test_episode_reward_avg_per_agent[0, :],
+#             fill="tonexty",
+#             fillcolor="rgba(250, 0, 0, 0.4)",
+#             line_color=line_color_lst[0],
+#         )
+#     )
+
+    # data = []
+    # for agent_idx, _ in enumerate(agents):
+    #     data.append(
+    #         go.Scatter(
+    #             name=agent_labels[agent_idx],
+    #             x=comparison_stat.test_training_steps_lst,
+    #             y=comparison_stat.MAX_test_episode_reward_avg_per_agent[agent_idx, :],
+    #             fill=None,
+    #             mode="lines",
+    #             line_color=line_color_lst[agent_idx],
+    #             showlegend=False
+    #         )
+    #     )
+    #     data.append(
+    #         go.Scatter(
+    #             name=agent_labels[agent_idx],
+    #             x=comparison_stat.test_training_steps_lst,
+    #             y=comparison_stat.MIN_test_episode_reward_avg_per_agent[agent_idx, :],
+    #             fill="tonexty",
+    #             mode="lines",
+    #             line_color=line_color_lst[agent_idx],
+    #             showlegend=False
+    #         )
+    #     )
+    #     # data.append(
+    #     #     go.Scatter(
+    #     #         name=agent_labels[agent_idx],
+    #     #         x=comparison_stat.test_training_steps_lst,
+    #     #         y=comparison_stat.MEAN_test_episode_reward_avg_per_agent[agent_idx, :],
+    #     #         mode="lines",
+    #     #         line_color=line_color_lst[agent_idx],
+    #     #         showlegend=True
+    #     #     )
+    #     # )
+    #     if agent_idx == 0:
+    #         break
+    #
+    # test_episode_reward_avg = go.Figure(data=data, layout=plotly_layout)
+
+    ###############################################################################
+    # plotly_layout.yaxis.title = "[TEST] Std. Episode Reward"
+    # data = []
+    # for agent_idx, _ in enumerate(agents):
+    #     data.append(
+    #         go.Scatter(
+    #             name=agent_labels[agent_idx],
+    #             x=comparison_stat.test_training_steps_lst,
+    #             y=comparison_stat.MAX_test_episode_reward_std_per_agent[agent_idx, :],
+    #             fill=None,
+    #             mode="lines",
+    #             line_color=line_color_lst[agent_idx],
+    #             showlegend=False
+    #         )
+    #     )
+    #     data.append(
+    #         go.Scatter(
+    #             name=agent_labels[agent_idx],
+    #             x=comparison_stat.test_training_steps_lst,
+    #             y=comparison_stat.MIN_test_episode_reward_std_per_agent[agent_idx, :],
+    #             fill="tonexty",
+    #             mode="lines",
+    #             line_color=line_color_lst[agent_idx],
+    #             showlegend=False
+    #         )
+    #     )
+    #     data.append(
+    #         go.Scatter(
+    #             name=agent_labels[agent_idx],
+    #             x=comparison_stat.test_training_steps_lst,
+    #             y=comparison_stat.MEAN_test_episode_reward_std_per_agent[agent_idx, :],
+    #             mode="lines",
+    #             line_color=line_color_lst[agent_idx],
+    #             showlegend=True
+    #         )
+    #     )
+    # test_episode_reward_std = go.Figure(data=data, layout=plotly_layout)
+    #
+    # ###############################################################################
+    # plotly_layout.yaxis.title = "Last Mean Episode Reward"
+    # data = []
+    # for agent_idx, _ in enumerate(agents):
+    #     data.append(
+    #         go.Scatter(
+    #             name=agent_labels[agent_idx],
+    #             x=comparison_stat.test_training_steps_lst,
+    #             y=comparison_stat.MAX_mean_episode_reward_per_agent[agent_idx, :],
+    #             fill=None,
+    #             mode="lines",
+    #             line_color=line_color_lst[agent_idx],
+    #             showlegend=False
+    #         )
+    #     )
+    #     data.append(
+    #         go.Scatter(
+    #             name=agent_labels[agent_idx],
+    #             x=comparison_stat.test_training_steps_lst,
+    #             y=comparison_stat.MIN_mean_episode_reward_per_agent[agent_idx, :],
+    #             fill="tonexty",
+    #             mode="lines",
+    #             line_color=line_color_lst[agent_idx],
+    #             showlegend=False
+    #         )
+    #     )
+    #     data.append(
+    #         go.Scatter(
+    #             name=agent_labels[agent_idx],
+    #             x=comparison_stat.test_training_steps_lst,
+    #             y=comparison_stat.MEAN_mean_episode_reward_per_agent[agent_idx, :],
+    #             mode="lines",
+    #             line_color=line_color_lst[agent_idx],
+    #             showlegend=True
+    #         )
+    #     )
+    # train_last_mean_episode_reward = go.Figure(data=data, layout=plotly_layout)
+    #
     # log_dict = {
-    #     "episode_reward_avg": wandb.plot.line_series(
-    #         xs=learner.test_training_steps_lst,
-    #         ys=learner.test_episode_reward_avg_per_agent, keys=learner.parameter_c.AGENT_LABELS,
-    #         title="[TEST] Average Episode Reward", xname="Training Steps"
-    #     ),
-    #     "episode_reward_std": wandb.plot.line_series(
-    #         xs=learner.test_training_steps_lst,
-    #         ys=learner.test_episode_reward_std_per_agent, keys=learner.parameter_c.AGENT_LABELS,
-    #         title="[TEST] Std. Episode Reward", xname="Training Steps"
-    #     ),
+    #     "episode_reward_avg": test_episode_reward_avg,
+    #     "episode_reward_std": test_episode_reward_std,
+    #     "train_last_mean_episode_reward": train_last_mean_episode_reward
     # }
+    #
     # wandb_obj.log(log_dict)
 
 

@@ -16,6 +16,81 @@ parameter_c = ParameterComparison()
 n_agents = len(parameter_c.AGENT_PARAMETERS)
 
 
+class ComparisonStat:
+    def __init__(self, agents):
+        ###########################################
+        ##### START: FOR WANDB GRAPHS LOGGING #####
+        ###########################################
+        self.test_training_steps_lst = []
+
+        for step in range(
+                parameter_c.TEST_INTERVAL_TRAINING_STEPS,
+                parameter_c.MAX_TRAINING_STEPS,
+                parameter_c.TEST_INTERVAL_TRAINING_STEPS,
+        ):
+            self.test_training_steps_lst.append(step)
+
+        # 1
+        self.test_episode_reward_avg_per_agent = np.zeros((
+            parameter_c.N_RUNS,
+            len(agents),
+            int(parameter_c.MAX_TRAINING_STEPS // parameter_c.TEST_INTERVAL_TRAINING_STEPS)
+        ))
+        self.MIN_test_episode_reward_avg_per_agent = np.zeros((
+            len(agents),
+            int(parameter_c.MAX_TRAINING_STEPS // parameter_c.TEST_INTERVAL_TRAINING_STEPS)
+        ))
+        self.MEAN_test_episode_reward_avg_per_agent = np.zeros((
+            len(agents),
+            int(parameter_c.MAX_TRAINING_STEPS // parameter_c.TEST_INTERVAL_TRAINING_STEPS)
+        ))
+        self.MAX_test_episode_reward_avg_per_agent = np.zeros((
+            len(agents),
+            int(parameter_c.MAX_TRAINING_STEPS // parameter_c.TEST_INTERVAL_TRAINING_STEPS)
+        ))
+    
+        # 2
+        self.test_episode_reward_std_per_agent = np.zeros((
+            parameter_c.N_RUNS,
+            len(agents),
+            int(parameter_c.MAX_TRAINING_STEPS // parameter_c.TEST_INTERVAL_TRAINING_STEPS)
+        ))
+        self.MIN_test_episode_reward_std_per_agent = np.zeros((
+            len(agents),
+            int(parameter_c.MAX_TRAINING_STEPS // parameter_c.TEST_INTERVAL_TRAINING_STEPS)
+        ))
+        self.MEAN_test_episode_reward_std_per_agent = np.zeros((
+            len(agents),
+            int(parameter_c.MAX_TRAINING_STEPS // parameter_c.TEST_INTERVAL_TRAINING_STEPS)
+        ))
+        self.MAX_test_episode_reward_std_per_agent = np.zeros((
+            len(agents),
+            int(parameter_c.MAX_TRAINING_STEPS // parameter_c.TEST_INTERVAL_TRAINING_STEPS)
+        ))
+    
+        # 3
+        self.mean_episode_reward_per_agent = np.zeros((
+            parameter_c.N_RUNS,
+            len(agents),
+            int(parameter_c.MAX_TRAINING_STEPS // parameter_c.TEST_INTERVAL_TRAINING_STEPS)
+        ))
+        self.MIN_mean_episode_reward_per_agent = np.zeros((
+            len(agents),
+            int(parameter_c.MAX_TRAINING_STEPS // parameter_c.TEST_INTERVAL_TRAINING_STEPS)
+        ))
+        self.MEAN_mean_episode_reward_per_agent = np.zeros((
+            len(agents),
+            int(parameter_c.MAX_TRAINING_STEPS // parameter_c.TEST_INTERVAL_TRAINING_STEPS)
+        ))
+        self.MAX_mean_episode_reward_per_agent = np.zeros((
+            len(agents),
+            int(parameter_c.MAX_TRAINING_STEPS // parameter_c.TEST_INTERVAL_TRAINING_STEPS)
+        ))
+        #########################################
+        ##### END: FOR WANDB GRAPHS LOGGING #####
+        #########################################
+
+
 def main():
     if parameter_c.USE_WANDB:
         wandb_obj = get_wandb_obj(parameter_c, comparison=True)
@@ -33,11 +108,13 @@ def main():
         )
         agents.append(agent)
 
+    comparison_stat = ComparisonStat(agents)
+        
     print("########## LEARNING STARTED !!! ##########")
     for run in range(0, parameter_c.N_RUNS):
         print(">" * 30 + " RUN: {0} ".format(run + 1) + "<" * 30)
         learner_comparison = LearnerComparison(
-            run=run, agents=agents, device=device, wandb_obj=wandb_obj, parameter_c=parameter_c
+            run=run, agents=agents, device=device, wandb_obj=wandb_obj, parameter_c=parameter_c, comparison_stat=comparison_stat
         )
         learner_comparison.train_loop()
 

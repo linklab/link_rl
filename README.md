@@ -12,6 +12,8 @@
   - pip install wandb
 - nvidia-ml-py3
   - pip install nvidia-ml-py3
+- plotly
+  - pip install plotly
   
 ### 2. gitignore 적용
 
