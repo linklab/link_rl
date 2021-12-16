@@ -199,7 +199,7 @@ def console_log(
         )
 
     if parameter.AGENT_TYPE == AgentType.Dqn:
-        console_log += "Q_net_loss: {0:5.1f}, Epsilon: {0:4.2f}, ".format(
+        console_log += "Q_net_loss: {0:5.1f}, Epsilon: {1:4.2f}, ".format(
             agent.last_q_net_loss.value, agent.epsilon.value
         )
     elif parameter.AGENT_TYPE == AgentType.Reinforce:
@@ -246,7 +246,7 @@ def console_log_comparison(
             )
 
         if parameter_c.AGENT_PARAMETERS[agent_idx].AGENT_TYPE == AgentType.Dqn:
-            console_log += "Q_net_loss: {0:5.1f}, Epsilon: {0:4.2f}, ".format(
+            console_log += "Q_net_loss: {0:5.1f}, Epsilon: {1:4.2f}, ".format(
                 agent.last_q_net_loss.value, agent.epsilon.value
             )
         elif parameter_c.AGENT_PARAMETERS[agent_idx].AGENT_TYPE == AgentType.Reinforce:
@@ -598,14 +598,14 @@ def get_env_info(parameter):
 
 
 class EpsilonTracker:
-    def __init__(self, epsilon_init, epsilon_final, epsilon_final_time_step):
+    def __init__(self, epsilon_init, epsilon_final, epsilon_final_training_step):
         self.epsilon_init = epsilon_init
         self.epsilon_final = epsilon_final
-        self.epsilon_final_time_step = epsilon_final_time_step
+        self.epsilon_final_training_step = epsilon_final_training_step
 
     def epsilon(self, training_step):
         epsilon = max(
-            self.epsilon_init - training_step / self.epsilon_final_time_step,
+            self.epsilon_init - training_step / self.epsilon_final_training_step,
             self.epsilon_final
         )
         return epsilon

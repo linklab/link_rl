@@ -17,7 +17,7 @@ n_agents = len(parameter_c.AGENT_PARAMETERS)
 
 
 class ComparisonStat:
-    def __init__(self, agents):
+    def __init__(self, n_agents):
         ###########################################
         ##### START: FOR WANDB GRAPHS LOGGING #####
         ###########################################
@@ -33,57 +33,57 @@ class ComparisonStat:
         # 1
         self.test_episode_reward_avg_per_agent = np.zeros((
             parameter_c.N_RUNS,
-            len(agents),
+            n_agents,
             int(parameter_c.MAX_TRAINING_STEPS // parameter_c.TEST_INTERVAL_TRAINING_STEPS)
         ))
         self.MIN_test_episode_reward_avg_per_agent = np.zeros((
-            len(agents),
+            n_agents,
             int(parameter_c.MAX_TRAINING_STEPS // parameter_c.TEST_INTERVAL_TRAINING_STEPS)
         ))
         self.MEAN_test_episode_reward_avg_per_agent = np.zeros((
-            len(agents),
+            n_agents,
             int(parameter_c.MAX_TRAINING_STEPS // parameter_c.TEST_INTERVAL_TRAINING_STEPS)
         ))
         self.MAX_test_episode_reward_avg_per_agent = np.zeros((
-            len(agents),
+            n_agents,
             int(parameter_c.MAX_TRAINING_STEPS // parameter_c.TEST_INTERVAL_TRAINING_STEPS)
         ))
     
         # 2
         self.test_episode_reward_std_per_agent = np.zeros((
             parameter_c.N_RUNS,
-            len(agents),
+            n_agents,
             int(parameter_c.MAX_TRAINING_STEPS // parameter_c.TEST_INTERVAL_TRAINING_STEPS)
         ))
         self.MIN_test_episode_reward_std_per_agent = np.zeros((
-            len(agents),
+            n_agents,
             int(parameter_c.MAX_TRAINING_STEPS // parameter_c.TEST_INTERVAL_TRAINING_STEPS)
         ))
         self.MEAN_test_episode_reward_std_per_agent = np.zeros((
-            len(agents),
+            n_agents,
             int(parameter_c.MAX_TRAINING_STEPS // parameter_c.TEST_INTERVAL_TRAINING_STEPS)
         ))
         self.MAX_test_episode_reward_std_per_agent = np.zeros((
-            len(agents),
+            n_agents,
             int(parameter_c.MAX_TRAINING_STEPS // parameter_c.TEST_INTERVAL_TRAINING_STEPS)
         ))
     
         # 3
         self.mean_episode_reward_per_agent = np.zeros((
             parameter_c.N_RUNS,
-            len(agents),
+            n_agents,
             int(parameter_c.MAX_TRAINING_STEPS // parameter_c.TEST_INTERVAL_TRAINING_STEPS)
         ))
         self.MIN_mean_episode_reward_per_agent = np.zeros((
-            len(agents),
+            n_agents,
             int(parameter_c.MAX_TRAINING_STEPS // parameter_c.TEST_INTERVAL_TRAINING_STEPS)
         ))
         self.MEAN_mean_episode_reward_per_agent = np.zeros((
-            len(agents),
+            n_agents,
             int(parameter_c.MAX_TRAINING_STEPS // parameter_c.TEST_INTERVAL_TRAINING_STEPS)
         ))
         self.MAX_mean_episode_reward_per_agent = np.zeros((
-            len(agents),
+            n_agents,
             int(parameter_c.MAX_TRAINING_STEPS // parameter_c.TEST_INTERVAL_TRAINING_STEPS)
         ))
         #########################################
@@ -101,20 +101,23 @@ def main():
 
     obs_shape, n_actions = get_env_info(parameter_c)
 
-    agents = []
-    for agent_idx, _ in enumerate(parameter_c.AGENT_PARAMETERS):
-        agent = get_agent(
-            obs_shape, n_actions, device, parameter_c.AGENT_PARAMETERS[agent_idx], parameter_c.MAX_TRAINING_STEPS
-        )
-        agents.append(agent)
-
-    comparison_stat = ComparisonStat(agents)
+    comparison_stat = ComparisonStat(len(parameter_c.AGENT_PARAMETERS))
         
     print("########## LEARNING STARTED !!! ##########")
     for run in range(0, parameter_c.N_RUNS):
         print(">" * 30 + " RUN: {0} ".format(run + 1) + "<" * 30)
+        agents = []
+        for agent_idx, _ in enumerate(parameter_c.AGENT_PARAMETERS):
+            agent = get_agent(
+                obs_shape=obs_shape, n_actions=n_actions, device=device,
+                parameter=parameter_c.AGENT_PARAMETERS[agent_idx],
+                max_training_steps=parameter_c.MAX_TRAINING_STEPS
+            )
+            agents.append(agent)
+
         learner_comparison = LearnerComparison(
-            run=run, agents=agents, device=device, wandb_obj=wandb_obj, parameter_c=parameter_c, comparison_stat=comparison_stat
+            run=run, agents=agents, device=device, wandb_obj=wandb_obj,
+            parameter_c=parameter_c, comparison_stat=comparison_stat
         )
         learner_comparison.train_loop()
 

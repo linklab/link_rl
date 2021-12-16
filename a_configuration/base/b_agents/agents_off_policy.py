@@ -9,7 +9,7 @@ class ParameterDqn:
 
         self.EPSILON_INIT = 1.0
         self.EPSILON_FINAL = 0.1
-        self.EPSILON_FINAL_TIME_STEP_PERCENT = 0.35
+        self.EPSILON_FINAL_TRAINING_STEP_PERCENT = 0.35
 
         self.BUFFER_CAPACITY = 10_000
         self.BATCH_SIZE = 64

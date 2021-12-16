@@ -51,7 +51,7 @@ class AgentDqn(Agent):
         self.epsilon_tracker = EpsilonTracker(
             epsilon_init=self.parameter.EPSILON_INIT,
             epsilon_final=self.parameter.EPSILON_FINAL,
-            epsilon_final_time_step=self.parameter.EPSILON_FINAL_TIME_STEP_PERCENT * max_training_steps
+            epsilon_final_training_step=self.parameter.EPSILON_FINAL_TRAINING_STEP_PERCENT * max_training_steps
         )
         self.epsilon = mp.Value('d', self.parameter.EPSILON_INIT)  # d: float
 
