@@ -24,9 +24,9 @@ class LearnerComparison:
         #######################################
         self.n_actors = self.parameter_c.N_ACTORS  # SHOULD BE 1
         self.n_vectorized_envs = self.parameter_c.N_VECTORIZED_ENVS
-        self.next_train_time_step = self.parameter_c.TRAIN_INTERVAL_TOTAL_TIME_STEPS
+        self.next_train_time_step = self.parameter_c.TRAIN_INTERVAL_GLOBAL_TIME_STEPS
         self.next_test_training_step = self.parameter_c.TEST_INTERVAL_TRAINING_STEPS
-        self.next_console_log = self.parameter_c.CONSOLE_LOG_INTERVAL_TOTAL_TIME_STEPS
+        self.next_console_log = self.parameter_c.CONSOLE_LOG_INTERVAL_GLOBAL_TIME_STEPS
         #######################################
 
         self.train_envs_per_agent = []
@@ -119,9 +119,9 @@ class LearnerComparison:
             self.transition_generators_per_agent.append(self.generator_on_policy_transition(agent_idx))
 
         self.total_time_steps = 0
-        self.next_train_time_step = self.parameter_c.TRAIN_INTERVAL_TOTAL_TIME_STEPS
+        self.next_train_time_step = self.parameter_c.TRAIN_INTERVAL_GLOBAL_TIME_STEPS
         self.next_test_training_step = self.parameter_c.TEST_INTERVAL_TRAINING_STEPS
-        self.next_console_log = self.parameter_c.CONSOLE_LOG_INTERVAL_TOTAL_TIME_STEPS
+        self.next_console_log = self.parameter_c.CONSOLE_LOG_INTERVAL_GLOBAL_TIME_STEPS
         self.training_steps = 0
         self.test_idx = 0
 
@@ -168,7 +168,7 @@ class LearnerComparison:
                         if is_train_success_done:
                             self.training_steps_per_agent[agent_idx] += 1
 
-                self.next_train_time_step += self.parameter_c.TRAIN_INTERVAL_TOTAL_TIME_STEPS
+                self.next_train_time_step += self.parameter_c.TRAIN_INTERVAL_GLOBAL_TIME_STEPS
 
                 if all(v == self.training_steps_per_agent[0] for v in self.training_steps_per_agent):
                     self.training_steps += 1
@@ -185,7 +185,7 @@ class LearnerComparison:
                     self.agents,
                     self.parameter_c
                 )
-                self.next_console_log += self.parameter_c.CONSOLE_LOG_INTERVAL_TOTAL_TIME_STEPS
+                self.next_console_log += self.parameter_c.CONSOLE_LOG_INTERVAL_GLOBAL_TIME_STEPS
 
             if self.training_steps >= self.next_test_training_step:
                 for agent_idx, _ in enumerate(self.agents):

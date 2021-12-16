@@ -23,7 +23,7 @@ class ParameterComparisonCartPoleDqn(ParameterComparisonBase):
             del agent_parameter.N_VECTORIZED_ENVS
             del agent_parameter.PROJECT_HOME
             del agent_parameter.TEST_INTERVAL_TRAINING_STEPS
-            del agent_parameter.TRAIN_INTERVAL_TOTAL_TIME_STEPS
+            del agent_parameter.TRAIN_INTERVAL_GLOBAL_TIME_STEPS
             del agent_parameter.USE_WANDB
             del agent_parameter.WANDB_ENTITY
 

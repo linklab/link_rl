@@ -9,9 +9,10 @@ from a_configuration.parameters.open_ai_gym.parameter_pong import ParameterPongD
 class ParameterComparisonPongDqn(ParameterComparisonBase):
     def __init__(self):
         ParameterComparisonBase.__init__(self)
-
-        self.MAX_TRAINING_STEPS = 200_000
         self.ENV_NAME = "PongNoFrameskip-v4"
+
+        self.TEST_INTERVAL_TRAINING_STEPS = 1024
+        self.MAX_TRAINING_STEPS = 200_000
 
         self.AGENT_PARAMETERS = [
             ParameterPongDqn(),
@@ -27,6 +28,6 @@ class ParameterComparisonPongDqn(ParameterComparisonBase):
             del agent_parameter.N_VECTORIZED_ENVS
             del agent_parameter.PROJECT_HOME
             del agent_parameter.TEST_INTERVAL_TRAINING_STEPS
-            del agent_parameter.TRAIN_INTERVAL_TOTAL_TIME_STEPS
+            del agent_parameter.TRAIN_INTERVAL_GLOBAL_TIME_STEPS
             del agent_parameter.USE_WANDB
             del agent_parameter.WANDB_ENTITY

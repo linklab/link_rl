@@ -75,7 +75,7 @@ def print_basic_info(device, parameter):
     for param in dir(parameter):
         if not param.startswith("__"):
             if param in [
-                "BATCH_SIZE", "BUFFER_CAPACITY", "CONSOLE_LOG_INTERVAL_TOTAL_TIME_STEPS",
+                "BATCH_SIZE", "BUFFER_CAPACITY", "CONSOLE_LOG_INTERVAL_GLOBAL_TIME_STEPS",
                 "EPISODE_REWARD_AVG_SOLVED", "MAX_TRAINING_STEPS",
                 "MIN_BUFFER_SIZE_FOR_TRAIN", "N_EPISODES_FOR_MEAN_CALCULATION",
                 "TEST_INTERVAL_TRAINING_STEPS"
@@ -122,7 +122,7 @@ def print_comparison_basic_info(device, parameter):
 
         if not param.startswith("__"):
             if param in [
-                "BATCH_SIZE", "BUFFER_CAPACITY", "CONSOLE_LOG_INTERVAL_TOTAL_TIME_STEPS",
+                "BATCH_SIZE", "BUFFER_CAPACITY", "CONSOLE_LOG_INTERVAL_GLOBAL_TIME_STEPS",
                 "EPISODE_REWARD_AVG_SOLVED", "MAX_TRAINING_STEPS",
                 "MIN_BUFFER_SIZE_FOR_TRAIN", "N_EPISODES_FOR_MEAN_CALCULATION",
                 "TEST_INTERVAL_TRAINING_STEPS"
@@ -149,7 +149,7 @@ def print_comparison_basic_info(device, parameter):
         for param in dir(agent_parameter):
             if not param.startswith("__"):
                 if param in [
-                    "BATCH_SIZE", "BUFFER_CAPACITY", "CONSOLE_LOG_INTERVAL_TOTAL_TIME_STEPS",
+                    "BATCH_SIZE", "BUFFER_CAPACITY", "CONSOLE_LOG_INTERVAL_GLOBAL_TIME_STEPS",
                     "EPISODE_REWARD_AVG_SOLVED", "MAX_TRAINING_STEPS",
                     "MIN_BUFFER_SIZE_FOR_TRAIN", "N_EPISODES_FOR_MEAN_CALCULATION",
                     "TEST_INTERVAL_TRAINING_STEPS"
@@ -279,8 +279,8 @@ def get_wandb_obj(parameter, comparison=False):
 
 def wandb_log(learner, wandb_obj, parameter):
     log_dict = {
-        "[TEST] Average Episode Reward": learner.test_episode_reward_avg.value,
-        "[TEST] Std. Episode Reward": learner.test_episode_reward_std.value,
+        "[TEST] Episode Reward": learner.test_episode_reward_avg.value,
+        "[TEST] Std. of Episode Reward": learner.test_episode_reward_std.value,
         "Mean Episode Reward": learner.last_mean_episode_reward.value,
         "Episode": learner.total_episodes.value,
         "Buffer Size": learner.n_rollout_transitions.value,
@@ -304,8 +304,8 @@ def wandb_log(learner, wandb_obj, parameter):
 
 # def wandb_log_comparison(learner, wandb_obj):
 #     log_dict = {
-#         "[TEST] Average Episode Reward": learner.test_episode_reward_avg.value,
-#         "[TEST] Std. Episode Reward": learner.test_episode_reward_std.value,
+#         "[TEST] Episode Reward": learner.test_episode_reward_avg.value,
+#         "[TEST] Std. of Episode Reward": learner.test_episode_reward_std.value,
 #         "Mean Episode Reward": learner.last_mean_episode_reward.value,
 #         "Episode": learner.total_episodes.value,
 #         "Buffer Size": learner.n_rollout_transitions.value,
@@ -349,7 +349,7 @@ plotly_layout = go.Layout(
 def wandb_log_comparison(
         run, agents, agent_labels, n_episodes_for_mean_calculation, comparison_stat, wandb_obj
 ):
-    plotly_layout.yaxis.title = "[TEST] Average Episode Reward (runs={0})".format(run + 1)
+    plotly_layout.yaxis.title = "[TEST] Episode Reward (runs={0})".format(run + 1)
     data = []
     for agent_idx, _ in enumerate(agents):
         data.append(
@@ -364,7 +364,7 @@ def wandb_log_comparison(
     test_episode_reward_avg = go.Figure(data=data, layout=plotly_layout)
 
     ###############################################################################
-    plotly_layout.yaxis.title = "[TEST] Std. Episode Reward (runs={0})".format(run + 1)
+    plotly_layout.yaxis.title = "[TEST] Std. of Episode Reward (runs={0})".format(run + 1)
     data = []
     for agent_idx, _ in enumerate(agents):
         data.append(
@@ -379,7 +379,7 @@ def wandb_log_comparison(
     test_episode_reward_std = go.Figure(data=data, layout=plotly_layout)
 
     ###############################################################################
-    plotly_layout.yaxis.title = "[TRAIN] Average Mean Episode Reward ({0} Episodes, runs={1})".format(
+    plotly_layout.yaxis.title = "[TRAIN] Mean Episode Reward ({0} Episodes, runs={1})".format(
         n_episodes_for_mean_calculation, run + 1
     )
     data = []
@@ -404,7 +404,7 @@ def wandb_log_comparison(
     wandb_obj.log(log_dict)
 
 # def wandb_log_comparison(agents, agent_labels, comparison_stat, wandb_obj):
-#     plotly_layout.yaxis.title = "[TEST] Average Episode Reward"
+#     plotly_layout.yaxis.title = "[TEST] Episode Reward"
 #
 #     test_episode_reward_avg = go.Figure(layout=plotly_layout)
 #
@@ -467,7 +467,7 @@ def wandb_log_comparison(
     # test_episode_reward_avg = go.Figure(data=data, layout=plotly_layout)
 
     ###############################################################################
-    # plotly_layout.yaxis.title = "[TEST] Std. Episode Reward"
+    # plotly_layout.yaxis.title = "[TEST] Std. of Episode Reward"
     # data = []
     # for agent_idx, _ in enumerate(agents):
     #     data.append(
