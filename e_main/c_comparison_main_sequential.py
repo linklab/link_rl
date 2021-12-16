@@ -92,12 +92,13 @@ class ComparisonStat:
 
 
 def main():
+    print_comparison_basic_info(device, parameter_c)
+    input("Press Enter to continue...")
+
     if parameter_c.USE_WANDB:
         wandb_obj = get_wandb_obj(parameter_c, comparison=True)
     else:
         wandb_obj = None
-
-    print_comparison_basic_info(device, parameter_c)
 
     obs_shape, n_actions = get_env_info(parameter_c)
 
