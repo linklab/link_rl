@@ -588,6 +588,19 @@ def get_single_env(parameter):
     return single_env
 
 
+def get_test_env(params):
+    test_env = gym.make(params.ENV_NAME)
+    if params.ENV_NAME in ["PongNoFrameskip-v4"]:
+        test_env = gym.wrappers.AtariPreprocessing(
+            test_env, grayscale_obs=True, scale_obs=True
+        )
+        test_env = gym.wrappers.FrameStack(test_env, num_stack=4, lz4_compress=True)
+
+    obs_shape = test_env.observation_space.shape
+    n_actions = test_env.action_space.n
+
+    return test_env, obs_shape, n_actions
+
 def get_env_info(parameter):
     single_env = get_single_env(parameter)
 
@@ -610,3 +623,4 @@ class EpsilonTracker:
             self.epsilon_final
         )
         return epsilon
+

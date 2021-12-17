@@ -243,8 +243,9 @@ def main():
 
     print_comparison_basic_info(device, parameter_c)
 
-    comparison_stat.save_fig()
     comparison_stat.save_csv()
+    comparison_stat.save_fig()
+
 
 
 if __name__ == "__main__":

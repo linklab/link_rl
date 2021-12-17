@@ -13,8 +13,11 @@ PROJECT_HOME = os.path.abspath(os.path.join(CURRENT_PATH, os.pardir))
 if PROJECT_HOME not in sys.path:
     sys.path.append(PROJECT_HOME)
 
-from a_configuration.parameter import Parameter as parameter
+from a_configuration.parameter import Parameter
 from g_utils.commons import model_load, get_test_env
+
+
+parameter = Parameter()
 
 
 def play(env, agent, n_episodes):
@@ -59,7 +62,7 @@ def main_q_play(n_episodes):
         model=agent.q_net,
         env_name=parameter.ENV_NAME,
         agent_type_name=parameter.AGENT_TYPE.name,
-        file_name="479.0_29.7_2021_11_28.pth"
+        file_name="500.0_0.0_2021_12_17.pth"
     )
     play(env, agent, n_episodes=n_episodes)
 
