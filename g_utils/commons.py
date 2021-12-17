@@ -350,7 +350,8 @@ plotly_layout = go.Layout(
 def wandb_log_comparison(
         run, agents, agent_labels, n_episodes_for_mean_calculation, comparison_stat, wandb_obj
 ):
-    plotly_layout.yaxis.title = "[TEST] Episode Reward (runs={0})".format(run + 1)
+    plotly_layout.yaxis.title = "[TEST] Episode Reward"
+    plotly_layout.xaxis.title = "Training Steps (runs={0})".format(run + 1)
     data = []
     for agent_idx, _ in enumerate(agents):
         data.append(
@@ -364,7 +365,8 @@ def wandb_log_comparison(
     test_episode_reward_avg = go.Figure(data=data, layout=plotly_layout)
 
     ###############################################################################
-    plotly_layout.yaxis.title = "[TEST] Std. of Episode Reward (runs={0})".format(run + 1)
+    plotly_layout.yaxis.title = "[TEST] Std. of Episode Reward"
+    plotly_layout.xaxis.title = "Training Steps (runs={0})".format(run + 1)
     data = []
     for agent_idx, _ in enumerate(agents):
         data.append(
@@ -378,7 +380,8 @@ def wandb_log_comparison(
     test_episode_reward_std = go.Figure(data=data, layout=plotly_layout)
 
     ###############################################################################
-    plotly_layout.yaxis.title = "[TRAIN] Mean Episode Reward ({0} Episodes, runs={1})".format(
+    plotly_layout.yaxis.title = "[TRAIN] Mean Episode Reward"
+    plotly_layout.xaxis.title = "Training Steps (Recent {0} Episodes, runs={1})".format(
         n_episodes_for_mean_calculation, run + 1
     )
     data = []
