@@ -9,6 +9,6 @@ class Config:
     if PROJECT_HOME not in sys.path:
         sys.path.append(PROJECT_HOME)
 
-    MODEL_HOME = os.path.join(PROJECT_HOME, "f_play", "models")
-    if not os.path.exists(MODEL_HOME):
-        os.mkdir(MODEL_HOME)
+    MODEL_SAVE_DIR = os.path.join(PROJECT_HOME, "f_play", "models")
+    if not os.path.exists(MODEL_SAVE_DIR):
+        os.mkdir(MODEL_SAVE_DIR)

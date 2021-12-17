@@ -7,6 +7,7 @@ import os
 import torch.multiprocessing as mp
 import wandb
 from gym.vector import AsyncVectorEnv
+import plotly.graph_objects as go
 
 from a_configuration.config.config import Config
 from g_utils.types import AgentType
@@ -22,13 +23,12 @@ else:
     pynvml = None
 
 
-
 def model_save(model, env_name, agent_type_name, test_episode_reward_avg, test_episode_reward_std):
-    env_model_home = os.path.join(Config.MODEL_HOME, env_name)
+    env_model_home = os.path.join(Config.MODEL_SAVE_DIR, env_name)
     if not os.path.exists(env_model_home):
         os.mkdir(env_model_home)
 
-    agent_model_home = os.path.join(Config.MODEL_HOME, env_name, agent_type_name)
+    agent_model_home = os.path.join(Config.MODEL_SAVE_DIR, env_name, agent_type_name)
     if not os.path.exists(agent_model_home):
         os.mkdir(agent_model_home)
 
@@ -43,7 +43,7 @@ def model_save(model, env_name, agent_type_name, test_episode_reward_avg, test_e
 
 
 def model_load(model, env_name, agent_type_name, file_name):
-    agent_model_home = os.path.join(Config.MODEL_HOME, env_name, agent_type_name)
+    agent_model_home = os.path.join(Config.MODEL_SAVE_DIR, env_name, agent_type_name)
     model_params = torch.load(os.path.join(agent_model_home, file_name))
     model.load_state_dict(model_params)
 
@@ -101,20 +101,25 @@ def print_basic_info(device, parameter):
     print()
 
 
-def print_comparison_basic_info(device, parameter):
+def print_comparison_basic_info(device, parameter_c):
     print('\n' + '#' * 72 + " Base Parameters " + '#' * 73)
 
     if device:
-        print_device_related_info(device, parameter)
-        print('-' * 75 + " Parameters " + '-' * 75)
+        print_device_related_info(device, parameter_c)
+        print('-' * 71 + " Common Parameters " + '-' * 71)
 
     items = []
 
-    for param in dir(parameter):
+    for param in dir(parameter_c):
         if param == "AGENT_LABELS":
-            item1 = "{0}: {1:}".format("N_AGENTS", len(getattr(parameter, param)))
-            item2 = "{0}: {1:}".format(param, getattr(parameter, param))
+            item1 = "{0}: {1:}".format("N_AGENTS", len(getattr(parameter_c, param)))
+            item2 = "{0}: {1:}".format(param, getattr(parameter_c, param))
             print("{0:55} {1:55}".format(item1, item2))
+            continue
+
+        if param == "COMPARISON_RESULTS_SAVE_DIR":
+            item = "{0}: {1:}".format(param, getattr(parameter_c, param))
+            print("{0:55}".format(item))
             continue
 
         if param == "AGENT_PARAMETERS":
@@ -127,9 +132,9 @@ def print_comparison_basic_info(device, parameter):
                 "MIN_BUFFER_SIZE_FOR_TRAIN", "N_EPISODES_FOR_MEAN_CALCULATION",
                 "TEST_INTERVAL_TRAINING_STEPS"
             ]:
-                item = "{0}: {1:,}".format(param, getattr(parameter, param))
+                item = "{0}: {1:,}".format(param, getattr(parameter_c, param))
             else:
-                item = "{0}: {1:}".format(param, getattr(parameter, param))
+                item = "{0}: {1:}".format(param, getattr(parameter_c, param))
             items.append(item)
 
         if len(items) == 3:
@@ -144,8 +149,8 @@ def print_comparison_basic_info(device, parameter):
             print("{0:55}".format(items[0]), end="\n")
             items.clear()
 
-    for agent_idx, agent_parameter in enumerate(parameter.AGENT_PARAMETERS):
-        print('-' * 75 + " Agent {0} ".format(agent_idx) + '-' * 75)
+    for agent_idx, agent_parameter in enumerate(parameter_c.AGENT_PARAMETERS):
+        print('-' * 76 + " Agent {0} ".format(agent_idx) + '-' * 76)
         for param in dir(agent_parameter):
             if not param.startswith("__"):
                 if param in [
@@ -181,9 +186,7 @@ def console_log(
         agent, parameter
 ):
     total_training_time = time.time() - total_train_start_time
-    formatted_total_training_time = time.strftime(
-        '%H:%M:%S', time.gmtime(total_training_time)
-    )
+    formatted_total_training_time = time.strftime('%H:%M:%S', time.gmtime(total_training_time))
 
     console_log = "[Total Episodes: {0:5,}, Total Time Steps {1:7,}] " \
                   "Mean Episode Reward: {2:5.1f}, Rolling Transitions: {3:6,} ({4:7.3f}/sec.), " \
@@ -314,8 +317,6 @@ def wandb_log(learner, wandb_obj, parameter):
 #     }
 #     wandb_obj.log(log_dict)
 
-import plotly.graph_objects as go
-
 plotly_layout = go.Layout(
     plot_bgcolor="#FFF",  # Sets background color to white
     hovermode="x",
@@ -357,7 +358,6 @@ def wandb_log_comparison(
                 name=agent_labels[agent_idx],
                 x=comparison_stat.test_training_steps_lst,
                 y=comparison_stat.MEAN_test_episode_reward_avg_per_agent[agent_idx, :],
-                # line_color=line_color_lst[agent_idx],
                 showlegend=True
             )
         )
@@ -372,7 +372,6 @@ def wandb_log_comparison(
                 name=agent_labels[agent_idx],
                 x=comparison_stat.test_training_steps_lst,
                 y=comparison_stat.MEAN_test_episode_reward_std_per_agent[agent_idx, :],
-                # line_color=line_color_lst[agent_idx],
                 showlegend=True
             )
         )
@@ -389,7 +388,6 @@ def wandb_log_comparison(
                 name=agent_labels[agent_idx],
                 x=comparison_stat.test_training_steps_lst,
                 y=comparison_stat.MEAN_mean_episode_reward_per_agent[agent_idx, :],
-                # line_color=line_color_lst[agent_idx],
                 showlegend=True
             )
         )

@@ -10,9 +10,9 @@ class ParameterBase:
         if self.PROJECT_HOME not in sys.path:
             sys.path.append(self.PROJECT_HOME)
 
-        self.MODEL_HOME = os.path.join(self.PROJECT_HOME, "f_play", "models")
-        if not os.path.exists(self.MODEL_HOME):
-            os.mkdir(self.MODEL_HOME)
+        self.MODEL_SAVE_DIR = os.path.join(self.PROJECT_HOME, "f_play", "models")
+        if not os.path.exists(self.MODEL_SAVE_DIR):
+            os.mkdir(self.MODEL_SAVE_DIR)
 
         self.N_VECTORIZED_ENVS = 1
         self.N_ACTORS = 1
@@ -27,7 +27,7 @@ class ParameterBase:
 
         self.TEST_INTERVAL_TRAINING_STEPS = 256
 
-        self.N_EPISODES_FOR_MEAN_CALCULATION = 100
+        self.N_EPISODES_FOR_MEAN_CALCULATION = 32
 
         self.N_TEST_EPISODES = 3
 

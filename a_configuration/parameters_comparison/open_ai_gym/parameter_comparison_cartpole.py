@@ -15,19 +15,6 @@ class ParameterComparisonCartPoleDqn(ParameterComparisonBase):
             ParameterCartPoleDqn()
         ]
 
-        for agent_parameter in self.AGENT_PARAMETERS:
-            del agent_parameter.MAX_TRAINING_STEPS
-            del agent_parameter.N_ACTORS
-            del agent_parameter.N_EPISODES_FOR_MEAN_CALCULATION
-            del agent_parameter.N_TEST_EPISODES
-            del agent_parameter.N_VECTORIZED_ENVS
-            del agent_parameter.PROJECT_HOME
-            del agent_parameter.TEST_INTERVAL_TRAINING_STEPS
-            del agent_parameter.TRAIN_INTERVAL_GLOBAL_TIME_STEPS
-            del agent_parameter.USE_WANDB
-            del agent_parameter.WANDB_ENTITY
-
-
 
 # OnPolicy
 class ParameterComparisonCartPoleReinforce(ParameterComparisonBase):

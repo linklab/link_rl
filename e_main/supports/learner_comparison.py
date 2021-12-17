@@ -1,3 +1,4 @@
+import time
 from collections import deque
 
 import torch
@@ -73,6 +74,8 @@ class LearnerComparison:
         self.training_steps = 0
         self.test_idx = 0
 
+        self.train_comparison_start_time = None
+
     def generator_on_policy_transition(self, agent_idx):
         observations = self.train_envs_per_agent[agent_idx].reset()
 
@@ -113,17 +116,8 @@ class LearnerComparison:
 
         yield None
 
-    def train_loop(self):
-        self.transition_generators_per_agent.clear()
-        for agent_idx, _ in enumerate(self.agents):
-            self.transition_generators_per_agent.append(self.generator_on_policy_transition(agent_idx))
-
-        self.total_time_steps = 0
-        self.next_train_time_step = self.parameter_c.TRAIN_INTERVAL_GLOBAL_TIME_STEPS
-        self.next_test_training_step = self.parameter_c.TEST_INTERVAL_TRAINING_STEPS
-        self.next_console_log = self.parameter_c.CONSOLE_LOG_INTERVAL_GLOBAL_TIME_STEPS
-        self.training_steps = 0
-        self.test_idx = 0
+    def train_comparison_loop(self):
+        self.train_comparison_start_time = time.time()
 
         while True:
             self.total_time_steps += 1
@@ -216,7 +210,7 @@ class LearnerComparison:
                 break
 
     def testing(self, run, agent_idx, test_training_steps):
-        print("*" * 80)
+        print("*" * 160)
 
         avg, std = self.play_for_testing(self.parameter_c.N_TEST_EPISODES, agent_idx)
 
@@ -225,10 +219,14 @@ class LearnerComparison:
         self.comparison_stat.mean_episode_reward_per_agent[run, agent_idx, self.test_idx] = \
             self.last_mean_episode_reward_per_agent[agent_idx]
 
-        print("[Test: {0}, Agent: {1}, Training Step: {2:6,}] Episode Reward - Average: {3:.3f}, Standard Dev.: {4:.3f}".format(
-            self.test_idx + 1, agent_idx, test_training_steps, avg, std
+        elapsed_time = time.time() - self.train_comparison_start_time
+        formatted_elapsed_time = time.strftime('%H:%M:%S', time.gmtime(elapsed_time))
+        print("[Test: {0}, Agent: {1}, Training Step: {2:6,}] "
+              "Episode Reward - Average: {3:.3f}, Standard Dev.: {4:.3f}, Elapsed Time: {5} ".format(
+            self.test_idx + 1, agent_idx, test_training_steps, avg, std,
+            formatted_elapsed_time
         ))
-        print("*" * 80)
+        print("*" * 160)
 
     def play_for_testing(self, n_test_episodes, agent_idx):
         episode_reward_lst = []
@@ -258,75 +256,56 @@ class LearnerComparison:
 
     def update_stat(self, run, agent_idx, test_idx):
         # 1
+        min_value = np.finfo(np.float64).max
+        max_value = np.finfo(np.float64).min
         sum_value = 0.0
+
         for i in range(run + 1):
+            if self.comparison_stat.test_episode_reward_avg_per_agent[i, agent_idx, test_idx] < min_value:
+                min_value = self.comparison_stat.test_episode_reward_avg_per_agent[i, agent_idx, test_idx]
+
+            if self.comparison_stat.test_episode_reward_avg_per_agent[i, agent_idx, test_idx] > max_value:
+                max_value = self.comparison_stat.test_episode_reward_avg_per_agent[i, agent_idx, test_idx]
+
             sum_value += self.comparison_stat.test_episode_reward_avg_per_agent[i, agent_idx, test_idx]
+
+        self.comparison_stat.MIN_test_episode_reward_avg_per_agent[agent_idx, test_idx] = min_value
+        self.comparison_stat.MAX_test_episode_reward_avg_per_agent[agent_idx, test_idx] = max_value
         self.comparison_stat.MEAN_test_episode_reward_avg_per_agent[agent_idx, test_idx] = sum_value / (run + 1)
 
         # 2
+        min_value = np.finfo(np.float64).max
+        max_value = np.finfo(np.float64).min
         sum_value = 0.0
+
         for i in range(run + 1):
+            if self.comparison_stat.test_episode_reward_std_per_agent[i, agent_idx, test_idx] < min_value:
+                min_value = self.comparison_stat.test_episode_reward_std_per_agent[i, agent_idx, test_idx]
+
+            if self.comparison_stat.test_episode_reward_std_per_agent[i, agent_idx, test_idx] > max_value:
+                max_value = self.comparison_stat.test_episode_reward_std_per_agent[i, agent_idx, test_idx]
+
             sum_value += self.comparison_stat.test_episode_reward_std_per_agent[i, agent_idx, test_idx]
+
+        self.comparison_stat.MIN_test_episode_reward_std_per_agent[agent_idx, test_idx] = min_value
+        self.comparison_stat.MAX_test_episode_reward_std_per_agent[agent_idx, test_idx] = max_value
         self.comparison_stat.MEAN_test_episode_reward_std_per_agent[agent_idx, test_idx] = sum_value / (run + 1)
 
         # 3
+        min_value = np.finfo(np.float64).max
+        max_value = np.finfo(np.float64).min
         sum_value = 0.0
-        for i in range(run + 1):
-            sum_value += self.comparison_stat.mean_episode_reward_per_agent[i, agent_idx, test_idx]
-        self.comparison_stat.MEAN_mean_episode_reward_per_agent[agent_idx, test_idx] = sum_value / (run + 1)
 
-    # def update_stat(self, run, agent_idx, test_idx):
-    #     # 1
-    #     min_value = np.finfo(np.float64).max
-    #     max_value = np.finfo(np.float64).min
-    #     sum_value = 0.0
-    #
-    #     for i in range(run + 1):
-    #         if self.comparison_stat.test_episode_reward_avg_per_agent[i, agent_idx, test_idx] < min_value:
-    #             min_value = self.comparison_stat.test_episode_reward_avg_per_agent[i, agent_idx, test_idx]
-    #
-    #         if self.comparison_stat.test_episode_reward_avg_per_agent[i, agent_idx, test_idx] > max_value:
-    #             max_value = self.comparison_stat.test_episode_reward_avg_per_agent[i, agent_idx, test_idx]
-    #
-    #         sum_value += self.comparison_stat.test_episode_reward_avg_per_agent[i, agent_idx, test_idx]
-    #
-    #     self.comparison_stat.MIN_test_episode_reward_avg_per_agent[agent_idx, test_idx] = min_value
-    #     self.comparison_stat.MAX_test_episode_reward_avg_per_agent[agent_idx, test_idx] = max_value
-    #     self.comparison_stat.MEAN_test_episode_reward_avg_per_agent[agent_idx, test_idx] = sum_value / (run + 1)
-    #
-    #     # 2
-    #     min_value = np.finfo(np.float64).max
-    #     max_value = np.finfo(np.float64).min
-    #     sum_value = 0.0
-    #
-    #     for i in range(run + 1):
-    #         if self.comparison_stat.test_episode_reward_std_per_agent[i, agent_idx, test_idx] < min_value:
-    #             min_value = self.comparison_stat.test_episode_reward_std_per_agent[i, agent_idx, test_idx]
-    #
-    #         if self.comparison_stat.test_episode_reward_std_per_agent[i, agent_idx, test_idx] > max_value:
-    #             max_value = self.comparison_stat.test_episode_reward_std_per_agent[i, agent_idx, test_idx]
-    #
-    #         sum_value += self.comparison_stat.test_episode_reward_std_per_agent[i, agent_idx, test_idx]
-    #
-    #     self.comparison_stat.MIN_test_episode_reward_std_per_agent[agent_idx, test_idx] = min_value
-    #     self.comparison_stat.MAX_test_episode_reward_std_per_agent[agent_idx, test_idx] = max_value
-    #     self.comparison_stat.MEAN_test_episode_reward_std_per_agent[agent_idx, test_idx] = sum_value / (run + 1)
-    #
-    #     # 3
-    #     min_value = np.finfo(np.float64).max
-    #     max_value = np.finfo(np.float64).min
-    #     sum_value = 0.0
-    #
-    #     for i in range(run + 1):
-    #         if self.comparison_stat.mean_episode_reward_per_agent[i, agent_idx, test_idx] < min_value:
-    #             min_value = self.comparison_stat.mean_episode_reward_per_agent[i, agent_idx, test_idx]
-    #
-    #         if self.comparison_stat.mean_episode_reward_per_agent[i, agent_idx, test_idx] > max_value:
-    #             max_value = self.comparison_stat.mean_episode_reward_per_agent[i, agent_idx, test_idx]
-    #
-    #         sum_value += self.comparison_stat.mean_episode_reward_per_agent[i, agent_idx, test_idx]
-    #
-    #     self.comparison_stat.MIN_mean_episode_reward_per_agent[agent_idx, test_idx] = min_value
-    #     self.comparison_stat.MAX_mean_episode_reward_per_agent[agent_idx, test_idx] = max_value
-    #     self.comparison_stat.MEAN_mean_episode_reward_per_agent[agent_idx, test_idx] = sum_value / (run + 1)
+        for i in range(run + 1):
+            if self.comparison_stat.mean_episode_reward_per_agent[i, agent_idx, test_idx] < min_value:
+                min_value = self.comparison_stat.mean_episode_reward_per_agent[i, agent_idx, test_idx]
+
+            if self.comparison_stat.mean_episode_reward_per_agent[i, agent_idx, test_idx] > max_value:
+                max_value = self.comparison_stat.mean_episode_reward_per_agent[i, agent_idx, test_idx]
+
+            sum_value += self.comparison_stat.mean_episode_reward_per_agent[i, agent_idx, test_idx]
+
+        self.comparison_stat.MIN_mean_episode_reward_per_agent[agent_idx, test_idx] = min_value
+        self.comparison_stat.MAX_mean_episode_reward_per_agent[agent_idx, test_idx] = max_value
+        self.comparison_stat.MEAN_mean_episode_reward_per_agent[agent_idx, test_idx] = sum_value / (run + 1)
 

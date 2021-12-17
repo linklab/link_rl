@@ -14,6 +14,8 @@
   - pip install nvidia-ml-py3
 - plotly
   - pip install plotly
+- pandas
+  - conda install pandas
   
 ### 2. gitignore 적용
 
