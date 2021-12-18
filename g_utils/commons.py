@@ -204,6 +204,7 @@ def print_space(observation_space, action_space):
         action_space_str += ", N: {0}".format(action_space.n)
     print(action_space_str)
 
+
 def console_log(
         total_train_start_time, total_episodes_v, total_time_steps_v,
         last_mean_episode_reward_v, n_rollout_transitions_v, train_steps_v,
@@ -225,7 +226,7 @@ def console_log(
         )
 
     if parameter.AGENT_TYPE == AgentType.Dqn:
-        console_log += "Q_net_loss: {0:5.3f}, Epsilon: {1:4.2f}, ".format(
+        console_log += "Q_net_loss: {0:>5.3f}, Epsilon: {1:>4.2f}, ".format(
             agent.last_q_net_loss.value, agent.epsilon.value
         )
     elif parameter.AGENT_TYPE == AgentType.Reinforce:
@@ -270,7 +271,7 @@ def console_log_comparison(
             )
 
         if parameter_c.AGENT_PARAMETERS[agent_idx].AGENT_TYPE == AgentType.Dqn:
-            console_log += "Q_net_loss: {0:5.3f}, Epsilon: {1:4.2f}, ".format(
+            console_log += "Q_net_loss: {0:>5.3f}, Epsilon: {1:>4.2f}, ".format(
                 agent.last_q_net_loss.value, agent.epsilon.value
             )
         elif parameter_c.AGENT_PARAMETERS[agent_idx].AGENT_TYPE == AgentType.Reinforce:

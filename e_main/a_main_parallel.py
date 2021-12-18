@@ -67,7 +67,7 @@ def main():
     while learner.is_alive():
         learner.join(timeout=1)
 
-    print_basic_info(device, parameter)
+    print_basic_info(observation_space, action_space, device, parameter)
 
 
 if __name__ == "__main__":

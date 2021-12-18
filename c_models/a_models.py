@@ -2,6 +2,7 @@ import torch
 from torch import nn
 from typing import Tuple
 from collections import OrderedDict
+import numpy as np
 
 
 class Model(nn.Module):
@@ -57,3 +58,7 @@ class Model(nn.Module):
 
         conv_layers = nn.Sequential(conv_layers_dict)
         return conv_layers
+
+    def _get_conv_out(self, shape):
+        cont_out = self.conv_layers(torch.zeros(1, *shape))
+        return int(np.prod(cont_out.size()))

@@ -241,7 +241,7 @@ def main():
     if parameter_c.USE_WANDB:
         wandb_obj.join()
 
-    print_comparison_basic_info(device, parameter_c)
+    print_comparison_basic_info(observation_space, action_space, device, parameter_c)
 
     comparison_stat.save_csv()
     comparison_stat.save_fig()

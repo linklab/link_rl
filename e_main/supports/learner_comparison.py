@@ -1,3 +1,7 @@
+import warnings
+warnings.filterwarnings('ignore')
+warnings.simplefilter("ignore")
+
 import time
 from collections import deque
 

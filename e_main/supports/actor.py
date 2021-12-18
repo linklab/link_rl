@@ -1,3 +1,7 @@
+import warnings
+warnings.filterwarnings('ignore')
+warnings.simplefilter("ignore")
+
 from collections import deque
 import torch.multiprocessing as mp
 

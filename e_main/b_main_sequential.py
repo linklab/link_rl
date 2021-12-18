@@ -29,7 +29,7 @@ def main():
     print("########## LEARNING STARTED !!! ##########")
     learner.train_loop(parallel=False)
 
-    print_basic_info(device, parameter)
+    print_basic_info(observation_space, action_space, device, parameter)
 
 
 if __name__ == "__main__":

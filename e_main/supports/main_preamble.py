@@ -4,9 +4,6 @@ from gym.spaces import Discrete, Box
 import warnings
 warnings.filterwarnings('ignore')
 warnings.simplefilter("ignore")
-warnings.warn('DelftStack')
-warnings.warn('Do not show this message')
-print("No Warning Shown")
 
 os.environ['KMP_DUPLICATE_LIB_OK'] = 'True'
 

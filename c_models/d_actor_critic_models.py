@@ -16,17 +16,16 @@ class ActorCritic(Model):
     ):
         super(ActorCritic, self).__init__(observation_shape, n_out_actions, device, parameter)
 
-        fc_layers_dict = OrderedDict()
-        fc_layers_dict["fc_0"] = nn.Linear(observation_shape[0], self.parameter.NEURONS_PER_FULLY_CONNECTED_LAYER[0])
-        fc_layers_dict["fc_0_activation"] = nn.LeakyReLU()
-
-        for idx in range(1, len(self.parameter.NEURONS_PER_FULLY_CONNECTED_LAYER) - 1):
-            fc_layers_dict["fc_{0}".format(idx)] = nn.Linear(
-                self.parameter.NEURONS_PER_FULLY_CONNECTED_LAYER[idx], self.parameter.NEURONS_PER_FULLY_CONNECTED_LAYER[idx + 1]
-            )
-            fc_layers_dict["fc_{0}_activation".format(idx)] = nn.LeakyReLU()
-
-        self.fc_layers = nn.Sequential(fc_layers_dict)
+        if self.parameter.MODEL_TYPE == ModelType.LINEAR:
+            input_n_features = self.observation_shape[0]
+            self.fc_layers = self.get_linear_layers(input_n_features=input_n_features)
+        elif self.parameter.MODEL_TYPE == ModelType.CONVOLUTIONAL:
+            input_n_channels = self.observation_shape[0]
+            self.conv_layers = self.get_conv_layers(input_n_channels=input_n_channels)
+            conv_out_flat_size = self._get_conv_out(observation_shape)
+            self.fc_layers = self.get_linear_layers(input_n_features=conv_out_flat_size)
+        else:
+            raise ValueError()
 
         self.fc_pi = nn.Linear(self.parameter.NEURONS_PER_FULLY_CONNECTED_LAYER[-1], self.n_out_actions)
         self.fc_v = nn.Linear(self.parameter.NEURONS_PER_FULLY_CONNECTED_LAYER[-1], 1)
