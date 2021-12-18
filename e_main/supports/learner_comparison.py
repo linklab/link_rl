@@ -169,7 +169,7 @@ class LearnerComparison:
                 else:
                     raise ValueError("Training of an agent is failed!")
 
-            if self.total_time_steps >= self.next_console_log:
+            if self.training_steps >= self.next_console_log:
                 console_log_comparison(
                     self.total_time_steps,
                     self.total_episodes_per_agent,
