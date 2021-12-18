@@ -24,10 +24,7 @@
     - python -m pybullet_envs.examples.enjoy_TF_HumanoidBulletEnv_v0_2017may
     - python -m pybullet_envs.examples.kukaGymEnvTest
   - 주의: pybullet-gym 설치하지 말것
-- mujoco
-  - pip install mujoco-py
-  - 참고: https://github.com/openai/mujoco-py
-  
+
 ### 3. gitignore 적용
 
 - git rm -r --cached .

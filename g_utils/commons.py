@@ -99,18 +99,9 @@ def print_basic_info(observation_space=None, action_space=None, device=None, par
             items.clear()
 
     if observation_space and action_space:
-        print('-' * 75 + " Parameters " + '-' * 75)
-        observation_space_str = "OBSERVATION_SPACE: {0}, SHAPE: {1}".format(
-            type(observation_space), observation_space.shape
-        )
-        print(observation_space_str)
-
-        action_space_str = "ACTION_SPACE: {0}, SHAPE: {1}".format(
-            type(action_space), action_space.shape
-        )
-        if isinstance(action_space, Discrete):
-            action_space_str += ", N: {0}".format(action_space.n)
-        print(action_space_str)
+        if observation_space and action_space:
+            print('-' * 76 + " SPACE " + '-' * 76)
+        print_space(observation_space, action_space)
 
     print('#' * 162)
     print()
@@ -192,14 +183,26 @@ def print_comparison_basic_info(observation_space, action_space, device, paramet
                 items.clear()
 
     if observation_space and action_space:
-        print('-' * 75 + " Parameters " + '-' * 75)
-        observation_space_str = "OBSERVATION_SPACE: {0}".format(str(observation_space))
-        action_space_str = "ACTION_SPACE: {0}".format(str(action_space))
-        print("{0:55} {1:55}".format(observation_space_str, action_space_str), end="\n")
+        if observation_space and action_space:
+            print('-' * 76 + " SPACE " + '-' * 76)
+        print_space(observation_space, action_space)
 
     print('#' * 162)
     print()
 
+
+def print_space(observation_space, action_space):
+    observation_space_str = "OBSERVATION_SPACE: {0}, SHAPE: {1}".format(
+        type(observation_space), observation_space.shape
+    )
+    print(observation_space_str)
+
+    action_space_str = "ACTION_SPACE: {0}, SHAPE: {1}".format(
+        type(action_space), action_space.shape
+    )
+    if isinstance(action_space, Discrete):
+        action_space_str += ", N: {0}".format(action_space.n)
+    print(action_space_str)
 
 def console_log(
         total_train_start_time, total_episodes_v, total_time_steps_v,
