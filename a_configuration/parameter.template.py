@@ -36,11 +36,11 @@ from a_configuration.parameter_preamble import *
 ######################
 ## ANT_BULLET ##
 ######################
-# class Parameter(ParameterAntBulletA2c):
-#     def __init__(self):
-#         super(Parameter, self).__init__()
-#         self.USE_WANDB = False
-#         self.WANDB_ENTITY = "link-koreatech"
+class Parameter(ParameterAntBulletA2c):
+    def __init__(self):
+        super(Parameter, self).__init__()
+        self.USE_WANDB = False
+        self.WANDB_ENTITY = "link-koreatech"
 
 
 ##########
@@ -53,11 +53,11 @@ from a_configuration.parameter_preamble import *
 #         self.WANDB_ENTITY = "link-koreatech"
 
 
-class Parameter(ParameterPongA2c):
-    def __init__(self):
-        super(Parameter, self).__init__()
-        self.USE_WANDB = False
-        self.WANDB_ENTITY = "link-koreatech"
+# class Parameter(ParameterPongA2c):
+#     def __init__(self):
+#         super(Parameter, self).__init__()
+#         self.USE_WANDB = False
+#         self.WANDB_ENTITY = "link-koreatech"
 
 
 if __name__ == "__main__":

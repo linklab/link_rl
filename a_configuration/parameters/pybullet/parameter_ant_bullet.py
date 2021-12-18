@@ -18,6 +18,8 @@ class ParameterAntBulletA2c(
         self.N_ACTORS = 1
         self.MAX_TRAINING_STEPS = 100_000
         self.CONSOLE_LOG_INTERVAL_TRAINING_STEPS = 100
+        self.TEST_INTERVAL_TRAINING_STEPS = 1_024
+        self.BUFFER_CAPACITY = self.BATCH_SIZE
 
 
 class ParameterAntBulletDdpg(
@@ -33,6 +35,7 @@ class ParameterAntBulletDdpg(
         self.N_ACTORS = 1
         self.MAX_TRAINING_STEPS = 100_000
         self.CONSOLE_LOG_INTERVAL_TRAINING_STEPS = 100
+        self.TEST_INTERVAL_TRAINING_STEPS = 1_024
 
 
 # OnPolicy

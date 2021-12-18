@@ -61,57 +61,23 @@ class ContinuousActorCritic(ActorCritic):
     ):
         super(ContinuousActorCritic, self).__init__(observation_shape, n_out_actions, device, parameter)
 
-        num_inputs = observation_shape[0]
+        self.mu = nn.Sequential(
+            nn.Linear(self.parameter.NEURONS_PER_FULLY_CONNECTED_LAYER[-1], self.n_out_actions),
+            nn.Tanh()
+        )
 
-        if params.DEEP_LEARNING_MODEL == DeepLearningModelName.CONTINUOUS_STOCHASTIC_ACTOR_CRITIC_MLP:
-            self.base = StochasticActorCriticMLPBase(
-                num_inputs=num_inputs, num_outputs=num_outputs, params=self.params
-            )
-            self.__name__ = "StochasticContinuousActorCriticMLPModel"
-        elif params.DEEP_LEARNING_MODEL == DeepLearningModelName.CONTINUOUS_STOCHASTIC_ACTOR_CRITIC_CNN:
-            self.base = None
-            self.__name__ = "StochasticContinuousActorCriticCNNModel"
-        elif params.DEEP_LEARNING_MODEL == DeepLearningModelName.CONTINUOUS_STOCHASTIC_ACTOR_CRITIC_RNN:
-            self.base = None
-            self.__name__ = "StochasticContinuousActorCriticRNNModel"
-        else:
-            raise ValueError()
+        self.logstd = nn.Sequential(
+            nn.Linear(self.parameter.NEURONS_PER_FULLY_CONNECTED_LAYER[-1], self.n_out_actions),
+            nn.Softplus()
+        )
 
-    def forward(self, inputs, agent_state):
-        if isinstance(self.base, RNNModel):
-            if isinstance(agent_state, list):
-                actor_hidden_states, critic_hidden_states = [], []
-                for each_agent_state in agent_state:
-                    actor_hidden_states.append(each_agent_state.actor_hidden_state)
-                    critic_hidden_states.append(each_agent_state.critic_hidden_state)
-                actor_hidden_states_v = float32_preprocessor(actor_hidden_states).to(self.device)
-                critic_hidden_states_v = float32_preprocessor(critic_hidden_states).to(self.device)
-            else:
-                actor_hidden_states_v = agent_state.actor_hidden_state
-                critic_hidden_states_v = agent_state.critic_hidden_state
+    def pi(self, x):
+        x = self.forward(x)
+        mu_v = self.mu(x)
+        logstd_v = self.mu(x)
+        return mu_v, logstd_v
 
-            mu, logstd, new_actor_hidden_state = self.base.forward_actor(inputs, actor_hidden_states_v)
-            value, new_critic_hidden_state = self.base.forward_critic(inputs, critic_hidden_states_v)
-
-            agent_state = rl_utils.initial_agent_state(
-                actor_hidden_state=new_actor_hidden_state, critic_hidden_state=new_critic_hidden_state
-            )
-        else:
-            mu, logstd = self.base.forward_actor(inputs)
-            value = self.base.forward_critic(inputs)
-
-        return mu, logstd, value, agent_state
-
-    def forward_actor(self, inputs, actor_hidden_state):
-        if isinstance(self.base, RNNModel):
-            mu, logstd = self.base.forward_actor(inputs)
-        else:
-            mu, logstd = self.base.forward_actor(inputs)
-        return mu, logstd, actor_hidden_state
-
-    def forward_critic(self, inputs, critic_hidden_state):
-        if isinstance(self.base, RNNModel):
-            values = self.base.forward_citic(inputs)
-        else:
-            values = self.base.forward_critic(inputs)
-        return values, critic_hidden_state
+    def v(self, x):
+        x = self.forward(x)
+        v = self.fc_v(x)
+        return v

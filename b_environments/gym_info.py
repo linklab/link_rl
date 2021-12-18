@@ -1,7 +1,7 @@
 import gym
 from gym import envs
 import pybullet_envs
-from gym.spaces import Discrete
+from gym.spaces import Discrete, Box
 
 for idx, env_spec in enumerate(pybullet_envs.registry.all()):
     # if idx in range(0, 967): # GYM
@@ -12,9 +12,14 @@ for idx, env_spec in enumerate(pybullet_envs.registry.all()):
 
     # 1057 ~ : pybullet
 
+
     env = gym.make(env_spec.id)
     observation_space = env.observation_space
     action_space = env.action_space
+
+    if isinstance(action_space, Discrete):
+        env.close()
+        continue
 
     observation_space_str = "OBS_SPACE: {0}, SHAPE: {1}".format(
         type(observation_space), observation_space.shape
@@ -25,6 +30,8 @@ for idx, env_spec in enumerate(pybullet_envs.registry.all()):
     )
     if isinstance(action_space, Discrete):
         action_space_str += ", N: {0}".format(action_space.n)
+    elif isinstance(action_space, Box):
+        action_space_str += ", RANGE: {0}".format(action_space)
 
     print("{0:>4}: {1:35} | reward_threshold: {2} | {3:65} {4}".format(
         idx, env_spec.id, env_spec.reward_threshold,
@@ -989,45 +996,65 @@ for idx, env_spec in enumerate(pybullet_envs.registry.all()):
 # 952: CartPole-v0                         | reward_threshold: 195.0 | OBS_SPACE: <class 'gym.spaces.box.Box'>, SHAPE: (4,)              ACTION_SPACE: <class 'gym.spaces.discrete.Discrete'>, SHAPE: (), N: 2
 # 953: CartPole-v1                         | reward_threshold: 475.0 | OBS_SPACE: <class 'gym.spaces.box.Box'>, SHAPE: (4,)              ACTION_SPACE: <class 'gym.spaces.discrete.Discrete'>, SHAPE: (), N: 2
 # 954: MountainCar-v0                      | reward_threshold: -110.0 | OBS_SPACE: <class 'gym.spaces.box.Box'>, SHAPE: (2,)              ACTION_SPACE: <class 'gym.spaces.discrete.Discrete'>, SHAPE: (), N: 3
-# 955: MountainCarContinuous-v0            | reward_threshold: 90.0 | OBS_SPACE: <class 'gym.spaces.box.Box'>, SHAPE: (2,)              ACTION_SPACE: <class 'gym.spaces.box.Box'>, SHAPE: (1,)
-# 956: Pendulum-v1                         | reward_threshold: None | OBS_SPACE: <class 'gym.spaces.box.Box'>, SHAPE: (3,)              ACTION_SPACE: <class 'gym.spaces.box.Box'>, SHAPE: (1,)
-# 957: Acrobot-v1                          | reward_threshold: -100.0 | OBS_SPACE: <class 'gym.spaces.box.Box'>, SHAPE: (6,)              ACTION_SPACE: <class 'gym.spaces.discrete.Discrete'>, SHAPE: (), N: 3
-# 958: LunarLander-v2                      | reward_threshold: 200 | OBS_SPACE: <class 'gym.spaces.box.Box'>, SHAPE: (8,)              ACTION_SPACE: <class 'gym.spaces.discrete.Discrete'>, SHAPE: (), N: 4
-# 959: LunarLanderContinuous-v2            | reward_threshold: 200 | OBS_SPACE: <class 'gym.spaces.box.Box'>, SHAPE: (8,)              ACTION_SPACE: <class 'gym.spaces.box.Box'>, SHAPE: (2,)
-# 960: BipedalWalker-v3                    | reward_threshold: 300 | OBS_SPACE: <class 'gym.spaces.box.Box'>, SHAPE: (24,)             ACTION_SPACE: <class 'gym.spaces.box.Box'>, SHAPE: (4,)
-# 961: BipedalWalkerHardcore-v3            | reward_threshold: 300 | OBS_SPACE: <class 'gym.spaces.box.Box'>, SHAPE: (24,)             ACTION_SPACE: <class 'gym.spaces.box.Box'>, SHAPE: (4,)
-# 962: CarRacing-v0                        | reward_threshold: 900 | OBS_SPACE: <class 'gym.spaces.box.Box'>, SHAPE: (96, 96, 3)       ACTION_SPACE: <class 'gym.spaces.box.Box'>, SHAPE: (3,)
+
+# 955: MountainCarContinuous-v0            | reward_threshold: 90.0 | OBS_SPACE: <class 'gym.spaces.box.Box'>, SHAPE: (2,)              ACTION_SPACE: <class 'gym.spaces.box.Box'>, SHAPE: (1,), RANGE: Box([-1.], [1.], (1,), float32)
+
+# 956: Pendulum-v1                         | reward_threshold: None | OBS_SPACE: <class 'gym.spaces.box.Box'>, SHAPE: (3,)              ACTION_SPACE: <class 'gym.spaces.box.Box'>, SHAPE: (1,), RANGE: Box([-2.], [2.], (1,), float32)
+
+# 959: LunarLanderContinuous-v2            | reward_threshold: 200 | OBS_SPACE: <class 'gym.spaces.box.Box'>, SHAPE: (8,)              ACTION_SPACE: <class 'gym.spaces.box.Box'>, SHAPE: (2,), RANGE: Box([-1. -1.], [1. 1.], (2,), float32)
+
+# 960: BipedalWalker-v3                    | reward_threshold: 300 | OBS_SPACE: <class 'gym.spaces.box.Box'>, SHAPE: (24,)             ACTION_SPACE: <class 'gym.spaces.box.Box'>, SHAPE: (4,), RANGE: Box([-1. -1. -1. -1.], [1. 1. 1. 1.], (4,), float32)
+
+# 961: BipedalWalkerHardcore-v3            | reward_threshold: 300 | OBS_SPACE: <class 'gym.spaces.box.Box'>, SHAPE: (24,)             ACTION_SPACE: <class 'gym.spaces.box.Box'>, SHAPE: (4,), RANGE: Box([-1. -1. -1. -1.], [1. 1. 1. 1.], (4,), float32)
+
+# 962: CarRacing-v0                        | reward_threshold: 900 | OBS_SPACE: <class 'gym.spaces.box.Box'>, SHAPE: (96, 96, 3)       ACTION_SPACE: <class 'gym.spaces.box.Box'>, SHAPE: (3,), RANGE: Box([-1.  0.  0.], [1. 1. 1.], (3,), float32)
+
 # 963: Blackjack-v1                        | reward_threshold: None | OBS_SPACE: <class 'gym.spaces.tuple.Tuple'>, SHAPE: None          ACTION_SPACE: <class 'gym.spaces.discrete.Discrete'>, SHAPE: (), N: 2
 # 964: FrozenLake-v1                       | reward_threshold: 0.7 | OBS_SPACE: <class 'gym.spaces.discrete.Discrete'>, SHAPE: ()      ACTION_SPACE: <class 'gym.spaces.discrete.Discrete'>, SHAPE: (), N: 4
 # 965: FrozenLake8x8-v1                    | reward_threshold: 0.85 | OBS_SPACE: <class 'gym.spaces.discrete.Discrete'>, SHAPE: ()      ACTION_SPACE: <class 'gym.spaces.discrete.Discrete'>, SHAPE: (), N: 4
 # 966: CliffWalking-v0                     | reward_threshold: None | OBS_SPACE: <class 'gym.spaces.discrete.Discrete'>, SHAPE: ()      ACTION_SPACE: <class 'gym.spaces.discrete.Discrete'>, SHAPE: (), N: 4
 # 967: Taxi-v3                             | reward_threshold: 8 | OBS_SPACE: <class 'gym.spaces.discrete.Discrete'>, SHAPE: ()      ACTION_SPACE: <class 'gym.spaces.discrete.Discrete'>, SHAPE: (), N: 6
 # 1057: CartPoleBulletEnv-v1                | reward_threshold: 190.0 | OBS_SPACE: <class 'gym.spaces.box.Box'>, SHAPE: (4,)              ACTION_SPACE: <class 'gym.spaces.discrete.Discrete'>, SHAPE: (), N: 2
-# 1058: CartPoleContinuousBulletEnv-v0      | reward_threshold: 190.0 | OBS_SPACE: <class 'gym.spaces.box.Box'>, SHAPE: (4,)              ACTION_SPACE: <class 'gym.spaces.box.Box'>, SHAPE: (1,)
-# 1059: MinitaurBulletEnv-v0                | reward_threshold: 15.0 | OBS_SPACE: <class 'gym.spaces.box.Box'>, SHAPE: (28,)             ACTION_SPACE: <class 'gym.spaces.box.Box'>, SHAPE: (8,)
-# 1060: MinitaurBulletDuckEnv-v0            | reward_threshold: 5.0 | OBS_SPACE: <class 'gym.spaces.box.Box'>, SHAPE: (28,)             ACTION_SPACE: <class 'gym.spaces.box.Box'>, SHAPE: (8,)
-# 1061: MinitaurExtendedEnv-v0              | reward_threshold: 5.0 | OBS_SPACE: <class 'gym.spaces.box.Box'>, SHAPE: (20,)             ACTION_SPACE: <class 'gym.spaces.box.Box'>, SHAPE: (8,)
-# 1062: MinitaurReactiveEnv-v0              | reward_threshold: 5.0 | OBS_SPACE: <class 'gym.spaces.box.Box'>, SHAPE: (12,)             ACTION_SPACE: <class 'gym.spaces.box.Box'>, SHAPE: (8,)
-# 1063: MinitaurBallGymEnv-v0               | reward_threshold: 5.0 | OBS_SPACE: <class 'gym.spaces.box.Box'>, SHAPE: (2,)              ACTION_SPACE: <class 'gym.spaces.box.Box'>, SHAPE: (1,)
-# 1064: MinitaurTrottingEnv-v0              | reward_threshold: 5.0 | OBS_SPACE: <class 'gym.spaces.box.Box'>, SHAPE: (4,)              ACTION_SPACE: <class 'gym.spaces.box.Box'>, SHAPE: (8,)
-# 1065: MinitaurStandGymEnv-v0              | reward_threshold: 5.0 | OBS_SPACE: <class 'gym.spaces.box.Box'>, SHAPE: (28,)             ACTION_SPACE: <class 'gym.spaces.box.Box'>, SHAPE: (1,)
-# 1066: MinitaurAlternatingLegsEnv-v0       | reward_threshold: 5.0 | OBS_SPACE: <class 'gym.spaces.box.Box'>, SHAPE: (4,)              ACTION_SPACE: <class 'gym.spaces.box.Box'>, SHAPE: (8,)
-# 1067: MinitaurFourLegStandEnv-v0          | reward_threshold: 5.0 | OBS_SPACE: <class 'gym.spaces.box.Box'>, SHAPE: (2,)              ACTION_SPACE: <class 'gym.spaces.box.Box'>, SHAPE: (4,)
-# 1068: RacecarBulletEnv-v0                 | reward_threshold: 5.0 | OBS_SPACE: <class 'gym.spaces.box.Box'>, SHAPE: (2,)              ACTION_SPACE: <class 'gym.spaces.box.Box'>, SHAPE: (2,)
-# 1069: RacecarZedBulletEnv-v0              | reward_threshold: 5.0 | OBS_SPACE: <class 'gym.spaces.box.Box'>, SHAPE: (10, 100, 4)      ACTION_SPACE: <class 'gym.spaces.box.Box'>, SHAPE: (2,)
-# 1070: KukaBulletEnv-v0                    | reward_threshold: 5.0 | OBS_SPACE: <class 'gym.spaces.box.Box'>, SHAPE: (9,)              ACTION_SPACE: <class 'gym.spaces.box.Box'>, SHAPE: (3,)
-# 1071: KukaCamBulletEnv-v0                 | reward_threshold: 5.0 | OBS_SPACE: <class 'gym.spaces.box.Box'>, SHAPE: (256, 341, 4)     ACTION_SPACE: <class 'gym.spaces.box.Box'>, SHAPE: (3,)
-# 1072: KukaDiverseObjectGrasping-v0        | reward_threshold: 5.0 | OBS_SPACE: <class 'gym.spaces.box.Box'>, SHAPE: (48, 48, 3)       ACTION_SPACE: <class 'gym.spaces.box.Box'>, SHAPE: (3,)
-# 1073: InvertedPendulumBulletEnv-v0        | reward_threshold: 950.0 | OBS_SPACE: <class 'gym.spaces.box.Box'>, SHAPE: (5,)              ACTION_SPACE: <class 'gym.spaces.box.Box'>, SHAPE: (1,)
-# 1074: InvertedDoublePendulumBulletEnv-v0  | reward_threshold: 9100.0 | OBS_SPACE: <class 'gym.spaces.box.Box'>, SHAPE: (9,)              ACTION_SPACE: <class 'gym.spaces.box.Box'>, SHAPE: (1,)
-# 1075: InvertedPendulumSwingupBulletEnv-v0 | reward_threshold: 800.0 | OBS_SPACE: <class 'gym.spaces.box.Box'>, SHAPE: (5,)              ACTION_SPACE: <class 'gym.spaces.box.Box'>, SHAPE: (1,)
-# 1076: ReacherBulletEnv-v0                 | reward_threshold: 18.0 | OBS_SPACE: <class 'gym.spaces.box.Box'>, SHAPE: (9,)              ACTION_SPACE: <class 'gym.spaces.box.Box'>, SHAPE: (2,)
-# 1077: PusherBulletEnv-v0                  | reward_threshold: 18.0 | OBS_SPACE: <class 'gym.spaces.box.Box'>, SHAPE: (55,)             ACTION_SPACE: <class 'gym.spaces.box.Box'>, SHAPE: (7,)
-# 1078: ThrowerBulletEnv-v0                 | reward_threshold: 18.0 | OBS_SPACE: <class 'gym.spaces.box.Box'>, SHAPE: (48,)             ACTION_SPACE: <class 'gym.spaces.box.Box'>, SHAPE: (7,)
-# 1079: Walker2DBulletEnv-v0                | reward_threshold: 2500.0 | OBS_SPACE: <class 'gym.spaces.box.Box'>, SHAPE: (22,)             ACTION_SPACE: <class 'gym.spaces.box.Box'>, SHAPE: (6,)
-# 1080: HalfCheetahBulletEnv-v0             | reward_threshold: 3000.0 | OBS_SPACE: <class 'gym.spaces.box.Box'>, SHAPE: (26,)             ACTION_SPACE: <class 'gym.spaces.box.Box'>, SHAPE: (6,)
-# 1081: AntBulletEnv-v0                     | reward_threshold: 2500.0 | OBS_SPACE: <class 'gym.spaces.box.Box'>, SHAPE: (28,)             ACTION_SPACE: <class 'gym.spaces.box.Box'>, SHAPE: (8,)
-# 1082: HopperBulletEnv-v0                  | reward_threshold: 2500.0 | OBS_SPACE: <class 'gym.spaces.box.Box'>, SHAPE: (15,)             ACTION_SPACE: <class 'gym.spaces.box.Box'>, SHAPE: (3,)
-# 1083: HumanoidBulletEnv-v0                | reward_threshold: None | OBS_SPACE: <class 'gym.spaces.box.Box'>, SHAPE: (44,)             ACTION_SPACE: <class 'gym.spaces.box.Box'>, SHAPE: (17,)
-# 1084: HumanoidFlagrunBulletEnv-v0         | reward_threshold: 2000.0 | OBS_SPACE: <class 'gym.spaces.box.Box'>, SHAPE: (44,)             ACTION_SPACE: <class 'gym.spaces.box.Box'>, SHAPE: (17,)
-# 1085: HumanoidFlagrunHarderBulletEnv-v0   | reward_threshold: None | OBS_SPACE: <class 'gym.spaces.box.Box'>, SHAPE: (44,)             ACTION_SPACE: <class 'gym.spaces.box.Box'>, SHAPE: (17,)
+
+# 1058: CartPoleContinuousBulletEnv-v0      | reward_threshold: 190.0 | OBS_SPACE: <class 'gym.spaces.box.Box'>, SHAPE: (4,)              ACTION_SPACE: <class 'gym.spaces.box.Box'>, SHAPE: (1,), RANGE: Box([-10.], [10.], (1,), float32)
+
+
+# 1059: MinitaurBulletEnv-v0                | reward_threshold: 15.0 | OBS_SPACE: <class 'gym.spaces.box.Box'>, SHAPE: (28,)             ACTION_SPACE: <class 'gym.spaces.box.Box'>, SHAPE: (8,), RANGE: Box([-1. -1. -1. -1. -1. -1. -1. -1.], [1. 1. 1. 1. 1. 1. 1. 1.], (8,), float32)
+
+# 1060: MinitaurBulletDuckEnv-v0            | reward_threshold: 5.0 | OBS_SPACE: <class 'gym.spaces.box.Box'>, SHAPE: (28,)             ACTION_SPACE: <class 'gym.spaces.box.Box'>, SHAPE: (8,), RANGE: Box([-1. -1. -1. -1. -1. -1. -1. -1.], [1. 1. 1. 1. 1. 1. 1. 1.], (8,), float32)
+
+# 1061: MinitaurExtendedEnv-v0              | reward_threshold: 5.0 | OBS_SPACE: <class 'gym.spaces.box.Box'>, SHAPE: (20,)             ACTION_SPACE: <class 'gym.spaces.box.Box'>, SHAPE: (8,), RANGE: Box([-1. -1. -1. -1. -1. -1. -1. -1.], [1. 1. 1. 1. 1. 1. 1. 1.], (8,), float32)
+
+# 1062: MinitaurReactiveEnv-v0              | reward_threshold: 5.0 | OBS_SPACE: <class 'gym.spaces.box.Box'>, SHAPE: (12,)             ACTION_SPACE: <class 'gym.spaces.box.Box'>, SHAPE: (8,), RANGE: Box([-0.5 -0.5 -0.5 -0.5 -0.5 -0.5 -0.5 -0.5], [0.5 0.5 0.5 0.5 0.5 0.5 0.5 0.5], (8,), float32)
+
+# 1063: MinitaurBallGymEnv-v0               | reward_threshold: 5.0 | OBS_SPACE: <class 'gym.spaces.box.Box'>, SHAPE: (2,)              ACTION_SPACE: <class 'gym.spaces.box.Box'>, SHAPE: (1,), RANGE: Box([-1.], [1.], (1,), float32)
+
+# 1064: MinitaurTrottingEnv-v0              | reward_threshold: 5.0 | OBS_SPACE: <class 'gym.spaces.box.Box'>, SHAPE: (4,)              ACTION_SPACE: <class 'gym.spaces.box.Box'>, SHAPE: (8,), RANGE: Box([-0.25 -0.25 -0.25 -0.25 -0.25 -0.25 -0.25 -0.25], [0.25 0.25 0.25 0.25 0.25 0.25 0.25 0.25], (8,), float32)
+
+# 1065: MinitaurStandGymEnv-v0              | reward_threshold: 5.0 | OBS_SPACE: <class 'gym.spaces.box.Box'>, SHAPE: (28,)             ACTION_SPACE: <class 'gym.spaces.box.Box'>, SHAPE: (1,), RANGE: Box([-1.], [1.], (1,), float32)
+
+# 1066: MinitaurAlternatingLegsEnv-v0       | reward_threshold: 5.0 | OBS_SPACE: <class 'gym.spaces.box.Box'>, SHAPE: (4,)              ACTION_SPACE: <class 'gym.spaces.box.Box'>, SHAPE: (8,), RANGE: Box([-0.1 -0.1 -0.1 -0.1 -0.1 -0.1 -0.1 -0.1], [0.1 0.1 0.1 0.1 0.1 0.1 0.1 0.1], (8,), float32)
+
+# 1067: MinitaurFourLegStandEnv-v0          | reward_threshold: 5.0 | OBS_SPACE: <class 'gym.spaces.box.Box'>, SHAPE: (2,)              ACTION_SPACE: <class 'gym.spaces.box.Box'>, SHAPE: (4,), RANGE: Box([-1. -1. -1. -1.], [1. 1. 1. 1.], (4,), float32)
+
+# 1068: RacecarBulletEnv-v0                 | reward_threshold: 5.0 | OBS_SPACE: <class 'gym.spaces.box.Box'>, SHAPE: (2,)              ACTION_SPACE: <class 'gym.spaces.box.Box'>, SHAPE: (2,), RANGE: Box([-1. -1.], [1. 1.], (2,), float32)
+
+# 1069: RacecarZedBulletEnv-v0              | reward_threshold: 5.0 | OBS_SPACE: <class 'gym.spaces.box.Box'>, SHAPE: (10, 100, 4)      ACTION_SPACE: <class 'gym.spaces.box.Box'>, SHAPE: (2,), RANGE: Box([-1. -1.], [1. 1.], (2,), float32)
+
+# 1070: KukaBulletEnv-v0                    | reward_threshold: 5.0 | OBS_SPACE: <class 'gym.spaces.box.Box'>, SHAPE: (9,)              ACTION_SPACE: <class 'gym.spaces.box.Box'>, SHAPE: (3,), RANGE: Box([-1. -1. -1.], [1. 1. 1.], (3,), float32)
+# 1071: KukaCamBulletEnv-v0                 | reward_threshold: 5.0 | OBS_SPACE: <class 'gym.spaces.box.Box'>, SHAPE: (256, 341, 4)     ACTION_SPACE: <class 'gym.spaces.box.Box'>, SHAPE: (3,), RANGE: Box([-1. -1. -1.], [1. 1. 1.], (3,), float32)
+# 1072: KukaDiverseObjectGrasping-v0        | reward_threshold: 5.0 | OBS_SPACE: <class 'gym.spaces.box.Box'>, SHAPE: (48, 48, 3)       ACTION_SPACE: <class 'gym.spaces.box.Box'>, SHAPE: (3,), RANGE: Box([-1. -1. -1.], [1. 1. 1.], (3,), float32)
+# 1073: InvertedPendulumBulletEnv-v0        | reward_threshold: 950.0 | OBS_SPACE: <class 'gym.spaces.box.Box'>, SHAPE: (5,)              ACTION_SPACE: <class 'gym.spaces.box.Box'>, SHAPE: (1,), RANGE: Box([-1.], [1.], (1,), float32)
+# 1074: InvertedDoublePendulumBulletEnv-v0  | reward_threshold: 9100.0 | OBS_SPACE: <class 'gym.spaces.box.Box'>, SHAPE: (9,)              ACTION_SPACE: <class 'gym.spaces.box.Box'>, SHAPE: (1,), RANGE: Box([-1.], [1.], (1,), float32)
+# 1075: InvertedPendulumSwingupBulletEnv-v0 | reward_threshold: 800.0 | OBS_SPACE: <class 'gym.spaces.box.Box'>, SHAPE: (5,)              ACTION_SPACE: <class 'gym.spaces.box.Box'>, SHAPE: (1,), RANGE: Box([-1.], [1.], (1,), float32)
+# 1076: ReacherBulletEnv-v0                 | reward_threshold: 18.0 | OBS_SPACE: <class 'gym.spaces.box.Box'>, SHAPE: (9,)              ACTION_SPACE: <class 'gym.spaces.box.Box'>, SHAPE: (2,), RANGE: Box([-1. -1.], [1. 1.], (2,), float32)
+# 1077: PusherBulletEnv-v0                  | reward_threshold: 18.0 | OBS_SPACE: <class 'gym.spaces.box.Box'>, SHAPE: (55,)             ACTION_SPACE: <class 'gym.spaces.box.Box'>, SHAPE: (7,), RANGE: Box([-1. -1. -1. -1. -1. -1. -1.], [1. 1. 1. 1. 1. 1. 1.], (7,), float32)
+# 1078: ThrowerBulletEnv-v0                 | reward_threshold: 18.0 | OBS_SPACE: <class 'gym.spaces.box.Box'>, SHAPE: (48,)             ACTION_SPACE: <class 'gym.spaces.box.Box'>, SHAPE: (7,), RANGE: Box([-1. -1. -1. -1. -1. -1. -1.], [1. 1. 1. 1. 1. 1. 1.], (7,), float32)
+
+# 1079: Walker2DBulletEnv-v0                | reward_threshold: 2500.0 | OBS_SPACE: <class 'gym.spaces.box.Box'>, SHAPE: (22,)             ACTION_SPACE: <class 'gym.spaces.box.Box'>, SHAPE: (6,), RANGE: Box([-1. -1. -1. -1. -1. -1.], [1. 1. 1. 1. 1. 1.], (6,), float32)
+# 1080: HalfCheetahBulletEnv-v0             | reward_threshold: 3000.0 | OBS_SPACE: <class 'gym.spaces.box.Box'>, SHAPE: (26,)             ACTION_SPACE: <class 'gym.spaces.box.Box'>, SHAPE: (6,), RANGE: Box([-1. -1. -1. -1. -1. -1.], [1. 1. 1. 1. 1. 1.], (6,), float32)
+# 1081: AntBulletEnv-v0                     | reward_threshold: 2500.0 | OBS_SPACE: <class 'gym.spaces.box.Box'>, SHAPE: (28,)             ACTION_SPACE: <class 'gym.spaces.box.Box'>, SHAPE: (8,), RANGE: Box([-1. -1. -1. -1. -1. -1. -1. -1.], [1. 1. 1. 1. 1. 1. 1. 1.], (8,), float32)
+# 1082: HopperBulletEnv-v0                  | reward_threshold: 2500.0 | OBS_SPACE: <class 'gym.spaces.box.Box'>, SHAPE: (15,)             ACTION_SPACE: <class 'gym.spaces.box.Box'>, SHAPE: (3,), RANGE: Box([-1. -1. -1.], [1. 1. 1.], (3,), float32)
+# 1083: HumanoidBulletEnv-v0                | reward_threshold: None | OBS_SPACE: <class 'gym.spaces.box.Box'>, SHAPE: (44,)             ACTION_SPACE: <class 'gym.spaces.box.Box'>, SHAPE: (17,), RANGE: Box([-1. -1. -1. -1. -1. -1. -1. -1. -1. -1. -1. -1. -1. -1. -1. -1. -1.], [1. 1. 1. 1. 1. 1. 1. 1. 1. 1. 1. 1. 1. 1. 1. 1. 1.], (17,), float32)
+# 1084: HumanoidFlagrunBulletEnv-v0         | reward_threshold: 2000.0 | OBS_SPACE: <class 'gym.spaces.box.Box'>, SHAPE: (44,)             ACTION_SPACE: <class 'gym.spaces.box.Box'>, SHAPE: (17,), RANGE: Box([-1. -1. -1. -1. -1. -1. -1. -1. -1. -1. -1. -1. -1. -1. -1. -1. -1.], [1. 1. 1. 1. 1. 1. 1. 1. 1. 1. 1. 1. 1. 1. 1. 1. 1.], (17,), float32)
+# 1085: HumanoidFlagrunHarderBulletEnv-v0   | reward_threshold: None | OBS_SPACE: <class 'gym.spaces.box.Box'>, SHAPE: (44,)             ACTION_SPACE: <class 'gym.spaces.box.Box'>, SHAPE: (17,), RANGE: Box([-1. -1. -1. -1. -1. -1. -1. -1. -1. -1. -1. -1. -1. -1. -1. -1. -1.], [1. 1. 1. 1. 1. 1. 1. 1. 1. 1. 1. 1. 1. 1. 1. 1. 1.], (17,), float32)
