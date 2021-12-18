@@ -226,7 +226,7 @@ def main():
         agents = []
         for agent_idx, _ in enumerate(parameter_c.AGENT_PARAMETERS):
             agent = get_agent(
-                observation_shape=observation_shape, n_actions=n_actions, device=device,
+                observation_space=observation_space, action_space=action_space, device=device,
                 parameter=parameter_c.AGENT_PARAMETERS[agent_idx],
                 max_training_steps=parameter_c.MAX_TRAINING_STEPS
             )
@@ -245,7 +245,6 @@ def main():
 
     comparison_stat.save_csv()
     comparison_stat.save_fig()
-
 
 
 if __name__ == "__main__":
