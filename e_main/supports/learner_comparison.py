@@ -27,7 +27,7 @@ class LearnerComparison:
         self.n_vectorized_envs = self.parameter_c.N_VECTORIZED_ENVS
         self.next_train_time_step = self.parameter_c.TRAIN_INTERVAL_GLOBAL_TIME_STEPS
         self.next_test_training_step = self.parameter_c.TEST_INTERVAL_TRAINING_STEPS
-        self.next_console_log = self.parameter_c.CONSOLE_LOG_INTERVAL_GLOBAL_TIME_STEPS
+        self.next_console_log = self.parameter_c.CONSOLE_LOG_INTERVAL_TRAINING_STEPS
         #######################################
 
         self.train_envs_per_agent = []
@@ -179,7 +179,7 @@ class LearnerComparison:
                     self.agents,
                     self.parameter_c
                 )
-                self.next_console_log += self.parameter_c.CONSOLE_LOG_INTERVAL_GLOBAL_TIME_STEPS
+                self.next_console_log += self.parameter_c.CONSOLE_LOG_INTERVAL_TRAINING_STEPS
 
             if self.training_steps >= self.next_test_training_step:
                 for agent_idx, _ in enumerate(self.agents):
@@ -209,7 +209,7 @@ class LearnerComparison:
                     self.is_terminated_per_agent[agent_idx] = True
                 break
 
-    def testing(self, run, agent_idx, test_training_steps):
+    def testing(self, run, agent_idx, training_steps):
         print("*" * 160)
 
         avg, std = self.play_for_testing(self.parameter_c.N_TEST_EPISODES, agent_idx)
@@ -223,7 +223,7 @@ class LearnerComparison:
         formatted_elapsed_time = time.strftime('%H:%M:%S', time.gmtime(elapsed_time))
         print("[Test: {0}, Agent: {1}, Training Step: {2:6,}] "
               "Episode Reward - Average: {3:.3f}, Standard Dev.: {4:.3f}, Elapsed Time: {5} ".format(
-            self.test_idx + 1, agent_idx, test_training_steps, avg, std,
+            self.test_idx + 1, agent_idx, training_steps, avg, std,
             formatted_elapsed_time
         ))
         print("*" * 160)

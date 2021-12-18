@@ -6,6 +6,7 @@ import torch
 import os
 import torch.multiprocessing as mp
 import wandb
+from gym.spaces import Discrete, Box
 from gym.vector import AsyncVectorEnv
 import plotly.graph_objects as go
 
@@ -63,7 +64,7 @@ def print_device_related_info(device, parameter):
     ))
 
 
-def print_basic_info(device, parameter):
+def print_basic_info(observation_space=None, action_space=None, device=None, parameter=None):
     print('\n' + '#' * 72 + " Base Parameters " + '#' * 73)
 
     if device:
@@ -75,7 +76,7 @@ def print_basic_info(device, parameter):
     for param in dir(parameter):
         if not param.startswith("__"):
             if param in [
-                "BATCH_SIZE", "BUFFER_CAPACITY", "CONSOLE_LOG_INTERVAL_GLOBAL_TIME_STEPS",
+                "BATCH_SIZE", "BUFFER_CAPACITY", "CONSOLE_LOG_INTERVAL_TRAINING_STEPS",
                 "EPISODE_REWARD_AVG_SOLVED", "MAX_TRAINING_STEPS",
                 "MIN_BUFFER_SIZE_FOR_TRAIN", "N_EPISODES_FOR_MEAN_CALCULATION",
                 "TEST_INTERVAL_TRAINING_STEPS"
@@ -97,11 +98,25 @@ def print_basic_info(device, parameter):
             print("{0:55}".format(items[0]), end="\n")
             items.clear()
 
+    if observation_space and action_space:
+        print('-' * 75 + " Parameters " + '-' * 75)
+        observation_space_str = "OBSERVATION_SPACE: {0}, SHAPE: {1}".format(
+            type(observation_space), observation_space.shape
+        )
+        print(observation_space_str)
+
+        action_space_str = "ACTION_SPACE: {0}, SHAPE: {1}".format(
+            type(action_space), action_space.shape
+        )
+        if isinstance(action_space, Discrete):
+            action_space_str += ", N: {0}".format(action_space.n)
+        print(action_space_str)
+
     print('#' * 162)
     print()
 
 
-def print_comparison_basic_info(device, parameter_c):
+def print_comparison_basic_info(observation_space, action_space, device, parameter_c):
     print('\n' + '#' * 72 + " Base Parameters " + '#' * 73)
 
     if device:
@@ -127,7 +142,7 @@ def print_comparison_basic_info(device, parameter_c):
 
         if not param.startswith("__"):
             if param in [
-                "BATCH_SIZE", "BUFFER_CAPACITY", "CONSOLE_LOG_INTERVAL_GLOBAL_TIME_STEPS",
+                "BATCH_SIZE", "BUFFER_CAPACITY", "CONSOLE_LOG_INTERVAL_TRAINING_STEPS",
                 "EPISODE_REWARD_AVG_SOLVED", "MAX_TRAINING_STEPS",
                 "MIN_BUFFER_SIZE_FOR_TRAIN", "N_EPISODES_FOR_MEAN_CALCULATION",
                 "TEST_INTERVAL_TRAINING_STEPS"
@@ -154,7 +169,7 @@ def print_comparison_basic_info(device, parameter_c):
         for param in dir(agent_parameter):
             if not param.startswith("__"):
                 if param in [
-                    "BATCH_SIZE", "BUFFER_CAPACITY", "CONSOLE_LOG_INTERVAL_GLOBAL_TIME_STEPS",
+                    "BATCH_SIZE", "BUFFER_CAPACITY", "CONSOLE_LOG_INTERVAL_TRAINING_STEPS",
                     "EPISODE_REWARD_AVG_SOLVED", "MAX_TRAINING_STEPS",
                     "MIN_BUFFER_SIZE_FOR_TRAIN", "N_EPISODES_FOR_MEAN_CALCULATION",
                     "TEST_INTERVAL_TRAINING_STEPS"
@@ -176,6 +191,12 @@ def print_comparison_basic_info(device, parameter_c):
                 print("{0:55}".format(items[0]), end="\n")
                 items.clear()
 
+    if observation_space and action_space:
+        print('-' * 75 + " Parameters " + '-' * 75)
+        observation_space_str = "OBSERVATION_SPACE: {0}".format(str(observation_space))
+        action_space_str = "ACTION_SPACE: {0}".format(str(action_space))
+        print("{0:55} {1:55}".format(observation_space_str, action_space_str), end="\n")
+
     print('#' * 162)
     print()
 
@@ -186,7 +207,6 @@ def console_log(
         agent, parameter
 ):
     total_training_time = time.time() - total_train_start_time
-    formatted_total_training_time = time.strftime('%H:%M:%S', time.gmtime(total_training_time))
 
     console_log = "[Total Episodes: {0:5,}, Total Time Steps {1:7,}] " \
                   "Mean Episode Reward: {2:5.1f}, Rolling Transitions: {3:6,} ({4:7.3f}/sec.), " \
@@ -202,7 +222,7 @@ def console_log(
         )
 
     if parameter.AGENT_TYPE == AgentType.Dqn:
-        console_log += "Q_net_loss: {0:5.1f}, Epsilon: {1:4.2f}, ".format(
+        console_log += "Q_net_loss: {0:5.3f}, Epsilon: {1:4.2f}, ".format(
             agent.last_q_net_loss.value, agent.epsilon.value
         )
     elif parameter.AGENT_TYPE == AgentType.Reinforce:
@@ -224,8 +244,6 @@ def console_log(
         # import GPUtil
         # gpu = GPUtil.getGPUs()[0]
         # console_log += f'gpu: {0}%, gpu-mem: {1}%, '.format(gpu.load * 100, gpu.memoryUtil * 100)
-
-    console_log += "Total Elapsed Time {}".format(formatted_total_training_time)
 
     print(console_log)
 
@@ -596,19 +614,40 @@ def get_test_env(params):
         )
         test_env = gym.wrappers.FrameStack(test_env, num_stack=4, lz4_compress=True)
 
-    obs_shape = test_env.observation_space.shape
+    observation_shape = test_env.observation_space.shape
     n_actions = test_env.action_space.n
 
-    return test_env, obs_shape, n_actions
+    return test_env, observation_shape, n_actions
 
+
+# Box
+# Dict
+# Discrete
+# MultiBinary
+# MultiDiscrete
 def get_env_info(parameter):
     single_env = get_single_env(parameter)
 
-    obs_shape = single_env.observation_space.shape
-    n_actions = single_env.action_space.n
+    observation_space = single_env.observation_space
+    action_space = single_env.action_space
 
     single_env.close()
-    return obs_shape, n_actions
+
+    return observation_space, action_space
+
+
+def get_action_shape(action_space):
+    n_discrete_actions = None
+    action_shape = None
+
+    if isinstance(action_space, Discrete):
+        n_discrete_actions = (action_space.n,)
+    elif isinstance(action_space, Box):
+        action_shape = action_space.shape
+    else:
+        raise ValueError()
+
+    return n_discrete_actions, action_shape
 
 
 class EpsilonTracker:

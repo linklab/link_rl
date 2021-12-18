@@ -51,10 +51,10 @@ def play(env, agent, n_episodes):
 
 
 def main_play(n_episodes):
-    env, obs_shape, n_actions = get_test_env(parameter)
+    env, observation_shape, n_actions = get_test_env(parameter)
 
     agent = get_agent(
-        obs_shape, n_actions, device=torch.device("cpu"), parameter=parameter,
+        observation_shape, n_actions, device=torch.device("cpu"), parameter=parameter,
         max_training_steps=parameter.MAX_TRAINING_STEPS
     )
 

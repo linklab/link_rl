@@ -36,6 +36,7 @@ class AgentType(enum.Enum):
     Dqn = 0
     Reinforce = 1
     A2c = 2
+    Ddpg = 3
 
 
 OnPolicyAgentTypes = [AgentType.Reinforce, AgentType.A2c]

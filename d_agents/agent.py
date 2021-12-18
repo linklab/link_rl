@@ -1,13 +1,30 @@
-from abc import abstractmethod
+from abc import abstractmethod, ABC
 import torch.multiprocessing as mp
+from gym.spaces import Discrete, Box
 
 from g_utils.types import AgentMode, AgentType, OnPolicyAgentTypes
 
 
 class Agent:
-    def __init__(self, obs_shape, n_actions, device, parameter):
-        self.obs_shape = obs_shape
-        self.n_actions = n_actions
+    def __init__(self, observation_space, action_space, device, parameter):
+        self.observation_space = observation_space
+        self.action_space = action_space
+
+        # Box
+        # Dict
+        # Discrete
+        # MultiBinary
+        # MultiDiscrete
+        self.observation_shape = observation_space.shape
+        self.action_shape = action_space.shape
+
+        if isinstance(action_space, Discrete):
+            self.n_out_actions = action_space.n
+        elif isinstance(action_space, Box):
+            self.n_out_actions = action_space.shape[0]
+        else:
+            raise ValueError()
+
         self.device = device
         self.parameter = parameter
 
@@ -53,3 +70,16 @@ class Agent:
     @abstractmethod
     def train_a2c(self, buffer):
         return 0.0
+
+
+class DiscreteActionAgent(Agent, ABC):
+    def __init__(self, observation_shape, n_discrete_actions, device, parameter):
+        super(DiscreteActionAgent, self).__init__(observation_shape, device, parameter)
+        self.n_discrete_actions = n_discrete_actions
+
+
+class ContinuousActionAgent(Agent, ABC):
+    def __init__(self, observation_shape, action_shape, device, parameter):
+        super(ContinuousActionAgent, self).__init__(observation_shape, device, parameter)
+        self.action_shape = action_shape
+        self.n_out_actions = self.action_shape[0]

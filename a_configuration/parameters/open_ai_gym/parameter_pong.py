@@ -16,4 +16,5 @@ class ParameterPongDqn(
         self.N_VECTORIZED_ENVS = 1
         self.N_ACTORS = 1
         self.MAX_TRAINING_STEPS = 1_000_000
-        self.CONSOLE_LOG_INTERVAL_GLOBAL_TIME_STEPS = 200
+        self.CONSOLE_LOG_INTERVAL_TRAINING_STEPS = 100
+        self.TEST_INTERVAL_TRAINING_STEPS = 1024

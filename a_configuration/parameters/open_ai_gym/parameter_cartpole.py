@@ -17,8 +17,7 @@ class ParameterCartPoleDqn(
         self.N_VECTORIZED_ENVS = 1
         self.N_ACTORS = 1
         self.MAX_TRAINING_STEPS = 100_000
-        self.CONSOLE_LOG_INTERVAL_GLOBAL_TIME_STEPS = 200
-
+        self.CONSOLE_LOG_INTERVAL_TRAINING_STEPS = 100
 
 # OnPolicy
 
@@ -35,7 +34,7 @@ class ParameterCartPoleReinforce(
         self.N_ACTORS = 1
         self.BUFFER_CAPACITY = 1_000
         self.MAX_TRAINING_STEPS = 10_000
-        self.CONSOLE_LOG_INTERVAL_GLOBAL_TIME_STEPS = 200
+        self.CONSOLE_LOG_INTERVAL_TRAINING_STEPS = 100
 
 
 class ParameterCartPoleA2c(
@@ -52,4 +51,4 @@ class ParameterCartPoleA2c(
         self.MAX_TRAINING_STEPS = 100_000
         self.BUFFER_CAPACITY = 100_000
         self.BATCH_SIZE = 32
-        self.CONSOLE_LOG_INTERVAL_GLOBAL_TIME_STEPS = 200
+        self.CONSOLE_LOG_INTERVAL_TRAINING_STEPS = 100

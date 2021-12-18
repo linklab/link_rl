@@ -28,7 +28,7 @@ for agent_parameter in parameter_c.AGENT_PARAMETERS:
     del agent_parameter.USE_WANDB
     del agent_parameter.WANDB_ENTITY
     del agent_parameter.MODEL_SAVE_DIR
-    del agent_parameter.CONSOLE_LOG_INTERVAL_GLOBAL_TIME_STEPS
+    del agent_parameter.CONSOLE_LOG_INTERVAL_TRAINING_STEPS
 
 
 class ComparisonStat:
@@ -208,15 +208,15 @@ class ComparisonStat:
 
 
 def main():
-    print_comparison_basic_info(device, parameter_c)
+    observation_space, action_space = get_env_info(parameter_c)
+    print_comparison_basic_info(observation_space, action_space, device, parameter_c)
+
     input("Press Enter to continue...")
 
     if parameter_c.USE_WANDB:
         wandb_obj = get_wandb_obj(parameter_c, comparison=True)
     else:
         wandb_obj = None
-
-    obs_shape, n_actions = get_env_info(parameter_c)
 
     comparison_stat = ComparisonStat()
 
@@ -226,7 +226,7 @@ def main():
         agents = []
         for agent_idx, _ in enumerate(parameter_c.AGENT_PARAMETERS):
             agent = get_agent(
-                obs_shape=obs_shape, n_actions=n_actions, device=device,
+                observation_shape=observation_shape, n_actions=n_actions, device=device,
                 parameter=parameter_c.AGENT_PARAMETERS[agent_idx],
                 max_training_steps=parameter_c.MAX_TRAINING_STEPS
             )

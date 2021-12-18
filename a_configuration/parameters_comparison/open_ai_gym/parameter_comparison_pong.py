@@ -7,8 +7,8 @@ class ParameterComparisonPongDqn(ParameterComparisonBase):
         ParameterComparisonBase.__init__(self)
         self.ENV_NAME = "PongNoFrameskip-v4"
 
-        self.TEST_INTERVAL_TRAINING_STEPS = 1024
-        self.MAX_TRAINING_STEPS = 200_000
+        self.TEST_INTERVAL_TRAINING_STEPS = 1_024
+        self.MAX_TRAINING_STEPS = 300_000
 
         self.AGENT_PARAMETERS = [
             ParameterPongDqn(),

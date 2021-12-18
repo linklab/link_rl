@@ -3,17 +3,19 @@ import torch
 from torch.distributions import Categorical
 import torch.multiprocessing as mp
 
-from c_models.models import Policy
+from c_models.policy_models import Policy
 from d_agents.agent import Agent
 from g_utils.buffers import Buffer
 from g_utils.types import AgentMode
 
 
 class AgentReinforce(Agent):
-    def __init__(self, obs_shape, n_actions, device, parameter):
-        super(AgentReinforce, self).__init__(obs_shape, n_actions, device, parameter)
+    def __init__(self, observation_space, action_space, device, parameter):
+        super(AgentReinforce, self).__init__(observation_space, action_space, device, parameter)
 
-        self.policy = Policy(obs_shape=obs_shape, n_actions=n_actions, device=device).to(device)
+        self.policy = Policy(
+            observation_shape=self.observation_shape, n_out_actions=self.n_out_actions, device=device
+        ).to(device)
         self.policy.share_memory()
 
         self.optimizer = optim.Adam(self.policy.parameters(), lr=self.parameter.LEARNING_RATE)

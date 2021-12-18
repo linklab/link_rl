@@ -1,5 +1,13 @@
 import numpy as np
 import os
+from gym.spaces import Discrete, Box
+import warnings
+warnings.filterwarnings('ignore')
+warnings.simplefilter("ignore")
+warnings.warn('DelftStack')
+warnings.warn('Do not show this message')
+print("No Warning Shown")
+
 os.environ['KMP_DUPLICATE_LIB_OK'] = 'True'
 
 import time
@@ -25,10 +33,14 @@ from g_utils.types import OnPolicyAgentTypes, OffPolicyAgentTypes
 from g_utils.commons import get_env_info
 
 
-def get_agent(obs_shape, n_actions, device=torch.device("cpu"), parameter=None, max_training_steps=None):
+def get_agent(observation_space, action_space, device=torch.device("cpu"), parameter=None, max_training_steps=None):
+    assert isinstance(observation_space, Box)
+    observation_shape = observation_space.shape
+
     if parameter.AGENT_TYPE == AgentType.Dqn:
+        assert isinstance(action_space, Discrete)
         agent = AgentDqn(
-            obs_shape=obs_shape, n_actions=n_actions, device=device, parameter=parameter,
+            observation_space=observation_space, action_space=action_space, device=device, parameter=parameter,
             max_training_steps=max_training_steps
         )
     elif parameter.AGENT_TYPE == AgentType.Reinforce:
@@ -36,11 +48,11 @@ def get_agent(obs_shape, n_actions, device=torch.device("cpu"), parameter=None, 
             "TOTAL NUMBERS OF ENVS should be one"
 
         agent = AgentReinforce(
-            obs_shape=obs_shape, n_actions=n_actions, device=device, parameter=parameter
+            observation_space=observation_space, action_space=action_space, device=device, parameter=parameter
         )
     elif parameter.AGENT_TYPE == AgentType.A2c:
         agent = AgentA2c(
-            obs_shape=obs_shape, n_actions=n_actions, device=device, parameter=parameter
+            observation_space=observation_space, action_space=action_space, device=device, parameter=parameter
         )
     else:
         raise ValueError()

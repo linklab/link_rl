@@ -39,7 +39,7 @@ class Learner(mp.Process):
 
         self.n_rollout_transitions = mp.Value('i', 0)
 
-        self.total_train_start_time = None
+        self.train_start_time = None
         self.last_mean_episode_reward = mp.Value('d', 0.0)
 
         self.is_terminated = mp.Value('i', False)
@@ -49,7 +49,9 @@ class Learner(mp.Process):
 
         self.next_train_time_step = parameter.TRAIN_INTERVAL_GLOBAL_TIME_STEPS
         self.next_test_training_step = parameter.TEST_INTERVAL_TRAINING_STEPS
-        self.next_console_log = parameter.CONSOLE_LOG_INTERVAL_GLOBAL_TIME_STEPS
+        self.next_console_log = parameter.CONSOLE_LOG_INTERVAL_TRAINING_STEPS
+
+        self.test_idx = mp.Value('i', 0)
 
         if queue is None: # Sequential
             self.transition_generator = self.generator_on_policy_transition()
@@ -108,7 +110,7 @@ class Learner(mp.Process):
         else:
             wandb_obj = None
 
-        self.total_train_start_time = time.time()
+        self.train_start_time = time.time()
 
         while True:
             if parallel:
@@ -165,21 +167,22 @@ class Learner(mp.Process):
 
                 self.next_train_time_step += self.parameter.TRAIN_INTERVAL_GLOBAL_TIME_STEPS
 
-            if self.total_time_steps.value >= self.next_console_log:
+            if self.training_steps.value >= self.next_console_log:
                 console_log(
-                    self.total_train_start_time, self.total_episodes.value,
+                    self.train_start_time, self.total_episodes.value,
                     self.total_time_steps.value,
                     self.last_mean_episode_reward.value,
                     self.n_rollout_transitions.value, self.training_steps.value,
                     self.agent, self.parameter
                 )
-                self.next_console_log += self.parameter.CONSOLE_LOG_INTERVAL_GLOBAL_TIME_STEPS
+                self.next_console_log += self.parameter.CONSOLE_LOG_INTERVAL_TRAINING_STEPS
 
             if self.training_steps.value >= self.next_test_training_step:
                 self.testing()
                 self.next_test_training_step += self.parameter.TEST_INTERVAL_TRAINING_STEPS
                 if self.parameter.USE_WANDB:
                     wandb_log(self, wandb_obj, self.parameter)
+                self.test_idx.value += 1
 
             if self.training_steps.value >= self.parameter.MAX_TRAINING_STEPS:
                 print("[TRAIN TERMINATION] MAX_TRAINING_STEPS ({0}) REACHES!!!".format(
@@ -187,7 +190,7 @@ class Learner(mp.Process):
                 ))
                 self.is_terminated.value = True
 
-        total_training_time = time.time() - self.total_train_start_time
+        total_training_time = time.time() - self.train_start_time
         formatted_total_training_time = time.strftime('%H:%M:%S', time.gmtime(total_training_time))
         print("Total Training Terminated: {}".format(formatted_total_training_time))
         print("Transition Rolling Rate: {0:.3f}/sec.".format(self.n_rollout_transitions.value / total_training_time))
@@ -199,14 +202,19 @@ class Learner(mp.Process):
         self.train_loop(parallel=True)
 
     def testing(self):
-        print("*" * 80)
+        print("*" * 120)
         self.test_episode_reward_avg.value, \
         self.test_episode_reward_std.value = \
             self.play_for_testing(self.parameter.N_TEST_EPISODES)
 
-        print("[Test Episode Reward] Average: {0:.3f}, Standard Dev.: {1:.3f}".format(
-            self.test_episode_reward_avg.value,
-            self.test_episode_reward_std.value
+        elapsed_time = time.time() - self.train_start_time
+        formatted_elapsed_time = time.strftime('%H:%M:%S', time.gmtime(elapsed_time))
+
+        print("[Test: {0}, Training Step: {1:6,}] "
+              "Episode Reward - Average: {2:.3f}, Standard Dev.: {3:.3f}, Elapsed Time: {4} ".format(
+            self.test_idx.value + 1, self.training_steps.value,
+            self.test_episode_reward_avg.value, self.test_episode_reward_std.value,
+            formatted_elapsed_time
         ))
 
         termination_conditions = [
@@ -232,7 +240,7 @@ class Learner(mp.Process):
             print("[TRAIN TERMINATION] TERMINATION CONDITION REACHES!!!")
             self.is_terminated.value = True
 
-        print("*" * 80)
+        print("*" * 120)
 
     def play_for_testing(self, n_test_episodes):
         episode_reward_lst = []

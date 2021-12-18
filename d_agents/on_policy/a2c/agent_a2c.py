@@ -1,21 +1,32 @@
 import torch.optim as optim
 import torch
+from gym.spaces import Discrete, Box
 from torch.distributions import Categorical
 import torch.nn.functional as F
 import torch.multiprocessing as mp
 
-from c_models.models import ActorCritic
+from c_models.actor_critic_models import ActorCritic, ContinuousActorCritic
 from d_agents.agent import Agent
 from g_utils.types import AgentMode
 
 
 class AgentA2c(Agent):
-    def __init__(self, obs_shape, n_actions, device, parameter):
-        super(AgentA2c, self).__init__(obs_shape, n_actions, device, parameter)
+    def __init__(self, observation_space, action_space, device, parameter):
+        super(AgentA2c, self).__init__(observation_space, action_space, device, parameter)
 
-        self.actor_critic_model = ActorCritic(
-            obs_shape=obs_shape, n_actions=n_actions, device=device, parameter=parameter
-        ).to(device)
+        if isinstance(action_space, Discrete):
+            self.actor_critic_model = ActorCritic(
+                observation_shape=self.observation_shape, n_out_actions=self.n_out_actions,
+                device=device, parameter=parameter
+            ).to(device)
+        elif isinstance(action_space, Box):
+            self.actor_critic_model = ContinuousActorCritic(
+                observation_shape=self.observation_shape, n_out_actions=self.n_out_actions,
+                device=device, parameter=parameter
+            ).to(device)
+        else:
+            raise ValueError()
+
         self.actor_critic_model.share_memory()
 
         self.optimizer = optim.Adam(

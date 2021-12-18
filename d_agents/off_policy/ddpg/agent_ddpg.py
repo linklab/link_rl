@@ -5,25 +5,41 @@ import torch
 import torch.nn.functional as F
 import torch.multiprocessing as mp
 
-from c_models.qnet_models import QNet
+from c_models.policy_models import QNet, CnnQNet
 from d_agents.agent import Agent
 from g_utils.commons import EpsilonTracker
 from g_utils.types import AgentMode, ModelType
 
 
-class AgentDqn(Agent):
-    def __init__(self, observation_space, action_space, device, parameter, max_training_steps=None):
-        super(AgentDqn, self).__init__(observation_space, action_space, device, parameter)
+class AgentDdpg(Agent):
+    def __init__(self, observation_shape, n_actions, device, parameter, max_training_steps=None):
+        super(AgentDdpg, self).__init__(observation_shape, n_actions, device, parameter)
 
-        self.q_net = QNet(
-            observation_shape=self.observation_shape, n_out_actions=self.n_out_actions,
-            device=device, parameter=parameter
-        ).to(device)
+        if self.parameter.MODEL_TYPE == ModelType.LINEAR:
+            assert self.parameter.NEURONS_PER_LAYER
+            self.q_net = QNet(
+                n_features=observation_shape[0], n_actions=n_actions, device=device, parameter=parameter
+            ).to(device)
 
-        self.target_q_net = QNet(
-            observation_shape=self.observation_shape, n_out_actions=self.n_out_actions,
-            device=device, parameter=parameter
-        ).to(device)
+            self.target_q_net = QNet(
+                n_features=self.q_net.n_features, n_actions=self.q_net.n_actions, device=device, parameter=parameter
+            ).to(device)
+        elif self.parameter.MODEL_TYPE == ModelType.CONVOLUTIONAL:
+            assert self.parameter.OUT_CHANNELS_PER_LAYER
+            assert self.parameter.KERNEL_SIZE_PER_LAYER
+            assert self.parameter.STRIDE_PER_LAYER
+            assert self.parameter.NEURONS_PER_FULLY_CONNECTED_LAYER
+
+            assert len(observation_shape) == 3
+            self.q_net = CnnQNet(
+                observation_shape=observation_shape, n_actions=n_actions, device=device, parameter=parameter
+            ).to(device)
+
+            self.target_q_net = CnnQNet(
+                observation_shape=self.q_net.observation_shape, n_actions=self.q_net.n_actions, device=device, parameter=parameter
+            ).to(device)
+        else:
+            raise ValueError()
 
         self.q_net.share_memory()
         self.target_q_net.load_state_dict(self.q_net.state_dict())
@@ -45,20 +61,18 @@ class AgentDqn(Agent):
         self.last_q_net_loss = mp.Value('d', 0.0)
 
     def get_action(self, obs, mode=AgentMode.TRAIN):
+        out = self.q_net.forward(obs)
+
         if mode == AgentMode.TRAIN:
             coin = np.random.random()    # 0.0과 1.0사이의 임의의 값을 반환
             if coin < self.epsilon.value:
-                action = np.random.randint(low=0, high=self.n_out_actions, size=len(obs))
+                return np.random.randint(low=0, high=self.n_actions, size=len(obs))
             else:
-                out = self.q_net.forward(obs)
                 action = out.argmax(dim=-1)
-                action = action.cpu().numpy()  # argmax: 가장 큰 값에 대응되는 인덱스 반환
+                return action.cpu().numpy()  # argmax: 가장 큰 값에 대응되는 인덱스 반환
         else:
-            out = self.q_net.forward(obs)
             action = out.argmax(dim=-1)
-            action = action.cpu().numpy()
-
-        return action
+            return action.cpu().numpy()
 
     def train_dqn(self, buffer, training_steps_v):
         batch = buffer.sample(self.parameter.BATCH_SIZE, device=self.device)
