@@ -4,7 +4,7 @@ from a_configuration.parameter_preamble import *
 class ParameterComparison(ParameterComparisonCartPoleDqn):
     def __init__(self):
         super(ParameterComparison, self).__init__()
-        self.USE_WANDB = True
+        self.USE_WANDB = False
         self.WANDB_ENTITY = "link-koreatech"
 
         self.AGENT_PARAMETERS[0].N_STEP = 1
@@ -17,4 +17,5 @@ class ParameterComparison(ParameterComparisonCartPoleDqn):
             "DQN (N_STEP=3)",
         ]
 
-
+        self.MAX_TRAINING_STEPS = 1_000
+        self.N_RUNS = 3

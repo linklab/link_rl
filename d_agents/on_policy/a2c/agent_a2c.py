@@ -47,7 +47,7 @@ class AgentA2c(Agent):
             action = torch.argmax(m.probs, dim=-1)
         return action.cpu().numpy()
 
-    def train_a2c(self, buffer):
+    def train_a2c(self):
         # observations.shape: torch.Size([32, 4, 84, 84]),
         # actions.shape: torch.Size([32, 1]),
         # next_observations.shape: torch.Size([32, 4, 84, 84]),
@@ -55,7 +55,7 @@ class AgentA2c(Agent):
         # dones.shape: torch.Size([32])
 
         observations, actions, next_observations, rewards, dones = \
-            buffer.sample(batch_size=self.parameter.BATCH_SIZE, device=self.device)
+            self.buffer.sample(batch_size=self.parameter.BATCH_SIZE, device=self.device)
 
         self.optimizer.zero_grad()
 

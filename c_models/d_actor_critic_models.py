@@ -1,13 +1,11 @@
-from collections import OrderedDict
 from typing import Tuple
 import numpy as np
 import torch
 from torch import nn
 import torch.nn.functional as F
-from torch.distributions import Categorical
 
 from c_models.a_models import Model
-from g_utils.types import AgentMode
+from g_utils.types import ModelType
 
 
 class ActorCritic(Model):
@@ -33,7 +31,16 @@ class ActorCritic(Model):
     def forward(self, x):
         if isinstance(x, np.ndarray):
             x = torch.tensor(x, dtype=torch.float32, device=self.device)
-        x = self.fc_layers(x)
+
+        if self.parameter.MODEL_TYPE == ModelType.LINEAR:
+            x = self.fc_layers(x)
+        elif self.parameter.MODEL_TYPE == ModelType.CONVOLUTIONAL:
+            conv_out = self.conv_layers(x)
+            conv_out = torch.flatten(conv_out, start_dim=1)
+            x = self.fc_layers(conv_out)
+        else:
+            raise ValueError()
+
         return x
 
     def pi(self, x):
@@ -46,15 +53,6 @@ class ActorCritic(Model):
         x = self.forward(x)
         v = self.fc_v(x)
         return v
-
-    def get_action(self, x, mode=AgentMode.TRAIN):
-        action_prob = self.pi(x)
-        m = Categorical(probs=action_prob)
-        if mode == AgentMode.TRAIN:
-            action = m.sample()
-        else:
-            action = torch.argmax(m.probs, dim=1 if action_prob.dim() == 2 else 0)
-        return action.cpu().numpy()
 
 
 class ContinuousActorCritic(ActorCritic):

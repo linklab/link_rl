@@ -37,10 +37,6 @@ class Learner(mp.Process):
         self.total_episodes = mp.Value('i', 0)
         self.training_steps = mp.Value('i', 0)
 
-        self.buffer = Buffer(
-            capacity=parameter.BUFFER_CAPACITY, device=self.device
-        )
-
         self.n_rollout_transitions = mp.Value('i', 0)
 
         self.train_start_time = None
@@ -135,7 +131,7 @@ class Learner(mp.Process):
                 if self.is_terminated.value:
                     continue
 
-            self.buffer.append(n_step_transition)
+            self.agent.add_transition_to_buffer(n_step_transition)
             self.n_rollout_transitions.value += 1
 
             actor_id = n_step_transition.info["actor_id"]
@@ -154,20 +150,21 @@ class Learner(mp.Process):
 
                 if self.parameter.AGENT_TYPE == AgentType.Reinforce:
                     is_train_success_done = self.agent.train(
-                        buffer=self.buffer,
                         training_steps_v=self.training_steps.value
                     )
                     if is_train_success_done:
                         self.training_steps.value += 1
 
-            if self.total_time_steps.value >= self.next_train_time_step:
-                if self.parameter.AGENT_TYPE != AgentType.Reinforce:
-                    is_train_success_done = self.agent.train(
-                        buffer=self.buffer,
-                        training_steps_v=self.training_steps.value
-                    )
-                    if is_train_success_done:
-                        self.training_steps.value += 1
+            train_conditions = [
+                self.total_time_steps.value >= self.next_train_time_step,
+                self.parameter.AGENT_TYPE != AgentType.Reinforce
+            ]
+            if all(train_conditions):
+                is_train_success_done = self.agent.train(
+                    training_steps_v=self.training_steps.value
+                )
+                if is_train_success_done:
+                    self.training_steps.value += 1
 
                 self.next_train_time_step += self.parameter.TRAIN_INTERVAL_GLOBAL_TIME_STEPS
 

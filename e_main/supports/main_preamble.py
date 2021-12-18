@@ -29,6 +29,9 @@ from g_utils.commons import AgentType, wandb_log, print_basic_info
 from g_utils.types import OnPolicyAgentTypes, OffPolicyAgentTypes
 from g_utils.commons import get_env_info
 
+from gym import logger
+logger.set_level(level=40)
+
 
 def get_agent(observation_space, action_space, device=torch.device("cpu"), parameter=None, max_training_steps=None):
     assert isinstance(observation_space, Box)

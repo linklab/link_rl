@@ -60,8 +60,8 @@ class AgentDqn(Agent):
 
         return action
 
-    def train_dqn(self, buffer, training_steps_v):
-        batch = buffer.sample(self.parameter.BATCH_SIZE, device=self.device)
+    def train_dqn(self, training_steps_v):
+        batch = self.buffer.sample(self.parameter.BATCH_SIZE, device=self.device)
 
         # observations.shape: torch.Size([32, 4]),
         # actions.shape: torch.Size([32, 1]),

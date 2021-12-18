@@ -5,7 +5,6 @@ import torch.multiprocessing as mp
 
 from c_models.c_policy_models import Policy
 from d_agents.agent import Agent
-from g_utils.buffers import Buffer
 from g_utils.types import AgentMode
 
 
@@ -34,8 +33,8 @@ class AgentReinforce(Agent):
             action = torch.argmax(m.probs, dim=-1)
         return action.cpu().numpy()
 
-    def train_reinforce(self, buffer):
-        observations, actions, _, rewards, _ = buffer.sample(
+    def train_reinforce(self):
+        observations, actions, _, rewards, _ = self.buffer.sample(
             batch_size=None, device=self.device
         )
 
