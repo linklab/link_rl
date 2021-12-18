@@ -25,8 +25,8 @@ def play(env, agent, n_episodes):
         episode_reward = 0  # cumulative_reward
 
         # Environment 초기화와 변수 초기화
-        observation = env.reset()
         env.render()
+        observation = env.reset()
 
         episode_steps = 0
 
@@ -50,7 +50,7 @@ def play(env, agent, n_episodes):
         ))
 
 
-def main_q_play(n_episodes):
+def main_play(n_episodes):
     env, obs_shape, n_actions = get_test_env(parameter)
 
     agent = get_agent(
@@ -62,7 +62,7 @@ def main_q_play(n_episodes):
         model=agent.q_net,
         env_name=parameter.ENV_NAME,
         agent_type_name=parameter.AGENT_TYPE.name,
-        file_name="500.0_0.0_2021_12_17.pth"
+        file_name="200.0_0.0_2021_12_18.pth"
     )
     play(env, agent, n_episodes=n_episodes)
 
@@ -71,4 +71,4 @@ def main_q_play(n_episodes):
 
 if __name__ == "__main__":
     N_EPISODES = 5
-    main_q_play(n_episodes=N_EPISODES)
+    main_play(n_episodes=N_EPISODES)

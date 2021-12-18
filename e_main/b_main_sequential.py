@@ -14,6 +14,7 @@ parameter = Parameter()
 
 def main():
     print_basic_info(device, parameter)
+    input("Press Enter to continue...")
 
     obs_shape, n_actions = get_env_info(parameter)
 

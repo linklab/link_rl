@@ -1,12 +1,14 @@
 import numpy as np
 import os
+os.environ['KMP_DUPLICATE_LIB_OK'] = 'True'
+
 import time
 import gym
 import torch
 import torch.multiprocessing as mp
 import wandb
 
-os.environ['KMP_DUPLICATE_LIB_OK'] = 'True'
+import sys
 
 np.set_printoptions(precision=3)
 np.set_printoptions(suppress=True)

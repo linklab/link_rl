@@ -565,7 +565,7 @@ def get_train_env(parameter):
 
         return _make
 
-    if parameter.ENV_NAME in ["CartPole-v1", "PongNoFrameskip-v4"]:
+    if parameter.ENV_NAME in ["CartPole-v1", "PongNoFrameskip-v4", "CartPoleBulletEnv-v1"]:
         train_env = AsyncVectorEnv(
             env_fns=[
                 make_gym_env(parameter.ENV_NAME) for _ in range(parameter.N_VECTORIZED_ENVS)

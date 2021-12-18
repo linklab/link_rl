@@ -15,6 +15,7 @@ parameter = Parameter()
 
 def main():
     print_basic_info(device, parameter)
+    input("Press Enter to continue...")
 
     mp.set_start_method('spawn', force=True)
     queue = mp.Queue()

@@ -2,6 +2,8 @@
 
 - conda create -n link_rl python=3.8
 - conda activate link_rl
+
+### 2. 주요 패키지/모듈
 - pytorch 설치
   - https://pytorch.org/ 참고
 - OpenAI GYM
@@ -16,16 +18,19 @@
   - pip install plotly
 - pandas
   - conda install pandas
+- pybullet
+  - conda install -c conda-forge pybullet
+  - 설치 후 테스트
+    - python -m pybullet_envs.examples.enjoy_TF_HumanoidBulletEnv_v0_2017may
+    - python -m pybullet_envs.examples.kukaGymEnvTest
+  - 주의: pybullet-gym 설치하지 말것
   
-### 2. gitignore 적용
+### 3. gitignore 적용
 
 - git rm -r --cached .
 - git add .
 - git commit -m "Apply .gitignore"  
 
-### 3. 새로운 패키지 설치 후 requirements.txt 새로 만들기
-
-- pip freeze > requirements.txt
 
 ### 4. Linux에 NFS 설치하고 MAC에서 원격 파일 시스템으로 MOUNT하기
 - 참고
