@@ -74,7 +74,7 @@ numpy @ file:///opt/concourse/worker/volumes/live/6acd2784-8443-45a5-42ec-e10d2d
 olefile==0.46
 opencv-python==4.5.2.54
 packaging @ file:///tmp/build/80754af9/packaging_1625611678980/work
-pandas==1.3.3
+pandas
 pandocfilters @ file:///opt/concourse/worker/volumes/live/c330e404-216d-466b-5327-8ce8fe854d3a/volume/pandocfilters_1605120442288/work
 parso @ file:///tmp/build/80754af9/parso_1617223946239/work
 pathtools==0.1.2
@@ -128,8 +128,12 @@ tornado @ file:///opt/concourse/worker/volumes/live/05341796-4198-4ded-4a9a-332f
 traitlets @ file:///tmp/build/80754af9/traitlets_1632522747050/work
 typing-extensions @ file:///home/ktietz/src/ci_mi/typing_extensions_1612808209620/work
 urllib3==1.26.6
-wandb==0.12.0
+wandb
 wcwidth @ file:///Users/ktietz/demo/mc3/conda-bld/wcwidth_1629357192024/work
 webencodings==0.5.1
 widgetsnbextension==3.5.1
 zipp @ file:///tmp/build/80754af9/zipp_1625570634446/work
+
+numpy
+gym
+plotly

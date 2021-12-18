@@ -5,7 +5,7 @@ import torch
 import torch.nn.functional as F
 import torch.multiprocessing as mp
 
-from c_models.policy_models import QNet, CnnQNet
+from c_models.c_policy_models import QNet, CnnQNet
 from d_agents.agent import Agent
 from g_utils.commons import EpsilonTracker
 from g_utils.types import AgentMode, ModelType
@@ -16,7 +16,7 @@ class AgentDdpg(Agent):
         super(AgentDdpg, self).__init__(observation_shape, n_actions, device, parameter)
 
         if self.parameter.MODEL_TYPE == ModelType.LINEAR:
-            assert self.parameter.NEURONS_PER_LAYER
+            assert self.parameter.NEURONS_PER_FULLY_CONNECTED_LAYER
             self.q_net = QNet(
                 n_features=observation_shape[0], n_actions=n_actions, device=device, parameter=parameter
             ).to(device)

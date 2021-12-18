@@ -1,4 +1,3 @@
-import random
 from collections import OrderedDict
 from typing import Tuple
 import numpy as np
@@ -7,31 +6,30 @@ from torch import nn
 import torch.nn.functional as F
 from torch.distributions import Categorical
 
+from c_models.a_models import Model
 from g_utils.types import AgentMode
 
 
-class ActorCritic(nn.Module):
+class ActorCritic(Model):
     def __init__(
             self, observation_shape: Tuple[int], n_out_actions: int, device=torch.device("cpu"), parameter=None
     ):
-        super(ActorCritic, self).__init__()
-        self.device = device
-        self.parameter = parameter
+        super(ActorCritic, self).__init__(observation_shape, n_out_actions, device, parameter)
 
         fc_layers_dict = OrderedDict()
-        fc_layers_dict["fc_0"] = nn.Linear(observation_shape[0], self.parameter.NEURONS_PER_LAYER[0])
+        fc_layers_dict["fc_0"] = nn.Linear(observation_shape[0], self.parameter.NEURONS_PER_FULLY_CONNECTED_LAYER[0])
         fc_layers_dict["fc_0_activation"] = nn.LeakyReLU()
 
-        for idx in range(1, len(self.parameter.NEURONS_PER_LAYER) - 1):
+        for idx in range(1, len(self.parameter.NEURONS_PER_FULLY_CONNECTED_LAYER) - 1):
             fc_layers_dict["fc_{0}".format(idx)] = nn.Linear(
-                self.parameter.NEURONS_PER_LAYER[idx], self.parameter.NEURONS_PER_LAYER[idx + 1]
+                self.parameter.NEURONS_PER_FULLY_CONNECTED_LAYER[idx], self.parameter.NEURONS_PER_FULLY_CONNECTED_LAYER[idx + 1]
             )
             fc_layers_dict["fc_{0}_activation".format(idx)] = nn.LeakyReLU()
 
         self.fc_layers = nn.Sequential(fc_layers_dict)
 
-        self.fc_pi = nn.Linear(self.parameter.NEURONS_PER_LAYER[-1], n_actions)
-        self.fc_v = nn.Linear(self.parameter.NEURONS_PER_LAYER[-1], 1)
+        self.fc_pi = nn.Linear(self.parameter.NEURONS_PER_FULLY_CONNECTED_LAYER[-1], self.n_out_actions)
+        self.fc_v = nn.Linear(self.parameter.NEURONS_PER_FULLY_CONNECTED_LAYER[-1], 1)
 
     def forward(self, x):
         if isinstance(x, np.ndarray):

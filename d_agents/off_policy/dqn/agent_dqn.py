@@ -5,7 +5,7 @@ import torch
 import torch.nn.functional as F
 import torch.multiprocessing as mp
 
-from c_models.qnet_models import QNet
+from c_models.b_qnet_models import QNet
 from d_agents.agent import Agent
 from g_utils.commons import EpsilonTracker
 from g_utils.types import AgentMode, ModelType

@@ -3,7 +3,7 @@ import torch
 from torch.distributions import Categorical
 import torch.multiprocessing as mp
 
-from c_models.policy_models import Policy
+from c_models.c_policy_models import Policy
 from d_agents.agent import Agent
 from g_utils.buffers import Buffer
 from g_utils.types import AgentMode

@@ -1,35 +1,31 @@
-import random
 from collections import OrderedDict
 from typing import Tuple
 import numpy as np
 import torch
 from torch import nn
 import torch.nn.functional as F
-from torch.distributions import Categorical
 
-from g_utils.types import AgentMode
+from c_models.a_models import Model
 
 
-class Policy(nn.Module):
+class Policy(Model):
     def __init__(
             self, observation_shape: Tuple[int], n_out_actions: int, device=torch.device("cpu"), parameter=None
     ):
-        super(Policy, self).__init__()
-        self.device = device
-        self.parameter = parameter
+        super(Policy, self).__init__(observation_shape, n_out_actions, device, parameter)
 
         fc_layers_dict = OrderedDict()
-        fc_layers_dict["fc_0"] = nn.Linear(observation_shape[0], self.parameter.NEURONS_PER_LAYER[0])
+        fc_layers_dict["fc_0"] = nn.Linear(observation_shape[0], self.parameter.NEURONS_PER_FULLY_CONNECTED_LAYER[0])
         fc_layers_dict["fc_0_activation"] = nn.LeakyReLU()
 
-        for idx in range(1, len(self.parameter.NEURONS_PER_LAYER) - 1):
+        for idx in range(1, len(self.parameter.NEURONS_PER_FULLY_CONNECTED_LAYER) - 1):
             fc_layers_dict["fc_{0}".format(idx)] = nn.Linear(
-                self.parameter.NEURONS_PER_LAYER[idx], self.parameter.NEURONS_PER_LAYER[idx + 1]
+                self.parameter.NEURONS_PER_FULLY_CONNECTED_LAYER[idx], self.parameter.NEURONS_PER_FULLY_CONNECTED_LAYER[idx + 1]
             )
             fc_layers_dict["fc_{0}_activation".format(idx)] = nn.LeakyReLU()
 
         self.fc_layers = nn.Sequential(fc_layers_dict)
-        self.fc_last = nn.Linear(self.parameter.NEURONS_PER_LAYER[-1], n_out_actions)
+        self.fc_last = nn.Linear(self.parameter.NEURONS_PER_FULLY_CONNECTED_LAYER[-1], n_out_actions)
 
         # self.fc1 = nn.Linear(n_features, 128)
         # self.fc2 = nn.Linear(128, 128)
