@@ -19,7 +19,6 @@ np.set_printoptions(precision=3)
 np.set_printoptions(suppress=True)
 np.set_printoptions(formatter={'float': '{: 0.3f}'.format})
 
-from a_configuration.parameter import Parameter
 from d_agents.off_policy.dqn.agent_dqn import AgentDqn
 from d_agents.on_policy.a2c.agent_a2c import AgentA2c
 from d_agents.on_policy.reinforce.agent_reinforce import AgentReinforce

@@ -6,13 +6,12 @@ sys.path.append(os.path.abspath(
     os.path.join(os.path.dirname(os.path.realpath(__file__)), os.pardir)
 ))
 
-from a_configuration.parameter_comparison import ParameterComparison
+from a_configuration.parameter_comparison import parameter_c
 from e_main.supports.main_preamble import *
 from e_main.supports.learner_comparison import LearnerComparison
 from g_utils.commons import print_comparison_basic_info, get_wandb_obj
 
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-parameter_c = ParameterComparison()
 
 n_agents = len(parameter_c.AGENT_PARAMETERS)
 
