@@ -1,14 +1,15 @@
 import os
-import sys
+import configparser
 
+PROJECT_HOME = os.path.abspath(
+    os.path.join(os.path.dirname(os.path.realpath(__file__)), os.pardir, os.pardir)
+)
 
-class Config:
-    PROJECT_HOME = os.path.abspath(
-        os.path.join(os.path.dirname(os.path.realpath(__file__)), os.pardir, os.pardir)
-    )
-    if PROJECT_HOME not in sys.path:
-        sys.path.append(PROJECT_HOME)
+config = configparser.ConfigParser()
+read_ok = config.read(os.path.join(PROJECT_HOME, "a_configuration", "config", "config.ini"))
 
-    MODEL_SAVE_DIR = os.path.join(PROJECT_HOME, "f_play", "models")
-    if not os.path.exists(MODEL_SAVE_DIR):
-        os.mkdir(MODEL_SAVE_DIR)
+SYSTEM_USER_NAME = config.get('SYSTEM', 'user_name', fallback="anonymous")
+SYSTEM_COMPUTER_NAME = config.get('SYSTEM', 'computer_name', fallback="any_com")
+
+SLACK_WEBHOOK_URL = config.get('SLACK', 'webhook_url', fallback='')
+SLACK_API_TOKEN = config.get('SLACK', 'api_token', fallback='')

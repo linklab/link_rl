@@ -1,5 +1,5 @@
 import time
-from datetime import date
+import datetime
 
 import gym
 import torch
@@ -10,7 +10,7 @@ from gym.spaces import Discrete, Box
 from gym.vector import AsyncVectorEnv
 import plotly.graph_objects as go
 
-from a_configuration.config.config import Config
+from a_configuration.config.config import SYSTEM_USER_NAME
 from g_utils.types import AgentType
 
 if torch.cuda.is_available():
@@ -24,27 +24,26 @@ else:
     pynvml = None
 
 
-def model_save(model, env_name, agent_type_name, test_episode_reward_avg, test_episode_reward_std):
-    env_model_home = os.path.join(Config.MODEL_SAVE_DIR, env_name)
+def model_save(model, env_name, agent_type_name, test_episode_reward_avg, test_episode_reward_std, parameter):
+    env_model_home = os.path.join(parameter.MODEL_SAVE_DIR, env_name)
     if not os.path.exists(env_model_home):
         os.mkdir(env_model_home)
 
-    agent_model_home = os.path.join(Config.MODEL_SAVE_DIR, env_name, agent_type_name)
+    agent_model_home = os.path.join(parameter.MODEL_SAVE_DIR, env_name, agent_type_name)
     if not os.path.exists(agent_model_home):
         os.mkdir(agent_model_home)
 
-    today_date = date.today()
-
+    now = datetime.datetime.now()
+    local_now = now.astimezone()
     file_name = "{0:4.1f}_{1:3.1f}_{2}_{3}_{4}.pth".format(
-        test_episode_reward_avg, test_episode_reward_std,
-        today_date.year, today_date.month, today_date.day
+        test_episode_reward_avg, test_episode_reward_std, local_now.year, local_now.month, local_now.day
     )
 
     torch.save(model.state_dict(), os.path.join(agent_model_home, file_name))
 
 
-def model_load(model, env_name, agent_type_name, file_name):
-    agent_model_home = os.path.join(Config.MODEL_SAVE_DIR, env_name, agent_type_name)
+def model_load(model, env_name, agent_type_name, file_name, parameter):
+    agent_model_home = os.path.join(parameter.MODEL_SAVE_DIR, env_name, agent_type_name)
     model_params = torch.load(os.path.join(agent_model_home, file_name))
     model.load_state_dict(model_params)
 
@@ -212,8 +211,8 @@ def console_log(
 ):
     total_training_time = time.time() - total_train_start_time
 
-    console_log = "[Total Episodes: {0:5,}, Total Time Steps {1:7,}] " \
-                  "Mean Episode Reward: {2:5.1f}, Rolling Transitions: {3:6,} ({4:7.3f}/sec.), " \
+    console_log = "[Total Episodes: {0:6,}, Total Time Steps {1:7,}] " \
+                  "Mean Episode Reward: {2:5.1f}, Rolling Transitions: {3:7,} ({4:7.3f}/sec.), " \
                   "Training Steps: {5:5,} ({6:.3f}/sec.), " \
         .format(
             total_episodes_v,
@@ -259,8 +258,8 @@ def console_log_comparison(
 ):
     for agent_idx, agent in enumerate(agents):
         agent_prefix = "[Agent: {0}]".format(agent_idx)
-        console_log = agent_prefix + "[Total Episodes: {0:5,}, Total Time Steps {1:7,}] " \
-                      "Mean Episode Reward: {2:5.1f}, Rolling Transitions: {3:6,}, " \
+        console_log = agent_prefix + "[Total Episodes: {0:6,}, Total Time Steps {1:7,}] " \
+                      "Mean Episode Reward: {2:5.1f}, Rolling Transitions: {3:7,}, " \
                       "Training Steps: {4:5,}, " \
             .format(
                 total_episodes_per_agent[agent_idx],
@@ -288,9 +287,11 @@ def console_log_comparison(
         print(console_log)
 
 
-def get_wandb_obj(parameter, comparison=False):
-    project = "{0}_{1}".format(parameter.ENV_NAME, "Comparison") \
-        if comparison else "{0}_{1}".format(parameter.ENV_NAME, parameter.AGENT_TYPE.name)
+def get_wandb_obj(parameter, agent=None, comparison=False):
+    if comparison:
+        project = "{0}_{1}_{2}".format(parameter.ENV_NAME, "Comparison", SYSTEM_USER_NAME)
+    else:
+        project = "{0}_{1}_{2}".format(parameter.ENV_NAME, parameter.AGENT_TYPE.name, SYSTEM_USER_NAME)
 
     wandb_obj = wandb.init(
         entity=parameter.WANDB_ENTITY,
@@ -299,6 +300,13 @@ def get_wandb_obj(parameter, comparison=False):
             key: getattr(parameter, key) for key in dir(parameter) if not key.startswith("__")
         }
     )
+
+    now = datetime.datetime.now()
+    local_now = now.astimezone()
+    wandb.run.name = local_now.strftime('%Y-%m-%d_%H:%M:%S')
+    wandb.run.save()
+    wandb.watch(agent.model, log="all")
+
     return wandb_obj
 
 
@@ -308,7 +316,7 @@ def wandb_log(learner, wandb_obj, parameter):
         "[TEST] Std. of Episode Reward": learner.test_episode_reward_std.value,
         "Mean Episode Reward": learner.last_mean_episode_reward.value,
         "Episode": learner.total_episodes.value,
-        "Buffer Size": learner.n_rollout_transitions.value,
+        "Buffer Size": learner.agent.buffer.size(),
         "Training Steps": learner.training_steps.value,
         "Total Time Steps": learner.total_time_steps.value
     }

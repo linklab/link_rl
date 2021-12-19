@@ -106,7 +106,7 @@ class Learner(mp.Process):
         self.test_env = get_single_env(self.parameter)
 
         if self.parameter.USE_WANDB:
-            wandb_obj = get_wandb_obj(self.parameter)
+            wandb_obj = get_wandb_obj(self.parameter, self.agent)
         else:
             wandb_obj = None
 
@@ -236,7 +236,8 @@ class Learner(mp.Process):
                 env_name=self.parameter.ENV_NAME,
                 agent_type_name=self.parameter.AGENT_TYPE.name,
                 test_episode_reward_avg=self.test_episode_reward_avg.value,
-                test_episode_reward_std=self.test_episode_reward_std.value
+                test_episode_reward_std=self.test_episode_reward_std.value,
+                parameter=self.parameter
             )
             print("[TRAIN TERMINATION] TERMINATION CONDITION REACHES!!!")
             self.is_terminated.value = True

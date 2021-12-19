@@ -34,7 +34,7 @@ class AgentA2c(Agent):
             self.actor_critic_model.parameters(), lr=self.parameter.LEARNING_RATE
         )
 
-        self.model = self.actor_critic_model
+        self.model = self.actor_critic_model  # 에이전트 밖에서는 model이라는 이름으로 제어 모델 접근
 
         self.last_critic_loss = mp.Value('d', 0.0)
         self.last_log_actor_objective = mp.Value('d', 0.0)
@@ -85,9 +85,7 @@ class AgentA2c(Agent):
             td_target_value_lst.append(td_target)
 
         # td_target_values.shape: (32, 1)
-        td_target_values = torch.tensor(
-            td_target_value_lst, dtype=torch.float32, device=self.device
-        ).unsqueeze(dim=-1)
+        td_target_values = torch.tensor(td_target_value_lst, dtype=torch.float32, device=self.device).unsqueeze(dim=-1)
 
         # values.shape: (32, 1)
         values = self.actor_critic_model.v(observations)
@@ -106,12 +104,12 @@ class AgentA2c(Agent):
         if isinstance(self.action_space, Discrete):
             action_probs = self.actor_critic_model.pi(observations)
             dist = Categorical(probs=action_probs)
+
             # actions.shape: (32, 1)
             # advantage.shape: (32, 1)
-            # reinforced_log_pi_action_v.shape: (32,)
-            reinforced_log_pi_action_v = torch.multiply(
-                dist.log_prob(value=actions.squeeze(-1)), advantages.squeeze(-1)
-            )
+            # dist.log_prob(value=actions.squeeze(-1)).shape: (32,)
+            # criticized_log_pi_action_v.shape: (32,)
+            criticized_log_pi_action_v = torch.multiply(dist.log_prob(value=actions.squeeze(-1)), advantages.squeeze(-1))
         elif isinstance(self.action_space, Box):
             mu_v, logstd_v = self.actor_critic_model.pi(observations)
             dist = Normal(loc=mu_v, scale=torch.exp(logstd_v))
@@ -119,20 +117,18 @@ class AgentA2c(Agent):
             # actions.shape: (32, 8)
             # dist.log_prob(value=actions).shape: (32, 8)
             # advantages.shape: (32, 1)
-            # reinforced_log_pi_action_v.shape: (32, 8)
-            reinforced_log_pi_action_v = torch.multiply(
-                dist.log_prob(value=actions), advantages
-            )
-            #print(dist.log_prob(value=actions).shape, advantages.shape, reinforced_log_pi_action_v.shape, "!!!!!!!!!!!")
+            # criticized_log_pi_action_v.shape: (32, 8)
+            criticized_log_pi_action_v = torch.multiply(dist.log_prob(value=actions), advantages)
         else:
             raise ValueError()
+
+        # actor_objective.shape: (,) <--  값 1개
+        log_actor_objective = torch.sum(criticized_log_pi_action_v)
+        actor_loss = torch.multiply(log_actor_objective, -1.0)
         ##############################
         #  Actor Objective 산출 - END #
         ##############################
 
-        # actor_objective.shape: (,) <--  값 1개
-        log_actor_objective = torch.sum(reinforced_log_pi_action_v)
-        actor_loss = torch.multiply(log_actor_objective, -1.0)
         entropy_v = dist.entropy()
         entropy_loss = -1.0 * entropy_v.mean()
 

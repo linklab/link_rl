@@ -39,7 +39,8 @@ class AgentDqn(Agent):
         )
         self.epsilon = mp.Value('d', self.parameter.EPSILON_INIT)  # d: float
 
-        self.model = self.q_net
+        self.model = self.q_net  # 에이전트 밖에서는 model이라는 이름으로 제어 모델 접근
+
         self.training_steps = 0
 
         self.last_q_net_loss = mp.Value('d', 0.0)
