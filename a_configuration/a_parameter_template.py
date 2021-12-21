@@ -1,12 +1,13 @@
-from a_configuration.parameters.open_ai_gym.parameter_cartpole import ParameterCartPoleDqn
-from a_configuration.parameters.open_ai_gym.parameter_cartpole import ParameterCartPoleReinforce
-from a_configuration.parameters.open_ai_gym.parameter_cartpole import ParameterCartPoleA2c
-from a_configuration.parameters.open_ai_gym.parameter_pong import ParameterPongDqn
-from a_configuration.parameters.open_ai_gym.parameter_pong import ParameterPongA2c
+from a_configuration.c_parameters.open_ai_gym.parameter_cartpole import ParameterCartPoleDqn
+from a_configuration.c_parameters.open_ai_gym.parameter_cartpole import ParameterCartPoleReinforce
+from a_configuration.c_parameters.open_ai_gym.parameter_cartpole import ParameterCartPoleA2c
+from a_configuration.c_parameters.open_ai_gym.parameter_pong import ParameterPongDqn
+from a_configuration.c_parameters.open_ai_gym.parameter_pong import ParameterPongA2c
 
-from a_configuration.parameters.pybullet.parameter_cartpole_bullet import ParameterCartPoleBulletDqn
-from a_configuration.parameters.pybullet.parameter_ant_bullet import ParameterAntBulletA2c
-from a_configuration.parameters.pybullet.parameter_ant_bullet import ParameterAntBulletDdpg
+from a_configuration.c_parameters.pybullet.parameter_cartpole_bullet import ParameterCartPoleBulletDqn, \
+    ParameterCartPoleContinuousBulletA2c
+from a_configuration.c_parameters.pybullet.parameter_ant_bullet import ParameterAntBulletA2c
+from a_configuration.c_parameters.pybullet.parameter_ant_bullet import ParameterAntBulletDdpg
 from g_utils.commons import print_basic_info
 
 parameter_list = []
@@ -30,9 +31,12 @@ parameter_list.append(parameter_cart_pole_a2c)
 parameter_cart_pole_bullet_dqn = ParameterCartPoleBulletDqn()
 parameter_list.append(parameter_cart_pole_bullet_dqn)
 
+parameter_cart_pole_continuous_bullet_a2c = ParameterCartPoleContinuousBulletA2c()
+parameter_list.append(parameter_cart_pole_continuous_bullet_a2c)
+
 
 ######################
-## ANT_BULLET ##
+##    ANT_BULLET    ##
 ######################
 parameter_ant_bullet_a2c = ParameterAntBulletA2c()
 parameter_list.append(parameter_ant_bullet_a2c)

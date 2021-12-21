@@ -132,7 +132,7 @@ slprj
 
 # *.csv
 
-a_configuration/config/config.ini
+a_configuration/a_config/config.ini
 a_configuration/parameter.py
 a_configuration/parameter_comparison.py
 
@@ -148,3 +148,5 @@ wandb
 f_play/models/**
 
 /e_main/comparison_results/
+
+*/*/wandb/

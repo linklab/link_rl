@@ -1,8 +1,8 @@
-from a_configuration.base.a_environments.pybullet.gym_pybullet import ParameterAntBullet
-from a_configuration.base.b_agents.agents_off_policy import ParameterDqn, ParameterDdpg
-from a_configuration.base.b_agents.agents_on_policy import ParameterA2c, ParameterReinforce
-from a_configuration.base.c_models.linear_layers import ParameterMediumLinearLayer
-from a_configuration.base.parameter_base import ParameterBase
+from a_configuration.b_base.a_environments.pybullet.gym_pybullet import ParameterAntBullet
+from a_configuration.b_base.b_agents.agents_off_policy import ParameterDqn, ParameterDdpg
+from a_configuration.b_base.b_agents.agents_on_policy import ParameterA2c, ParameterReinforce
+from a_configuration.b_base.c_models.linear_layers import ParameterMediumLinearLayer
+from a_configuration.b_base.parameter_base import ParameterBase
 
 
 class ParameterAntBulletA2c(

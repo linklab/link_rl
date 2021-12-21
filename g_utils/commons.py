@@ -10,7 +10,7 @@ from gym.spaces import Discrete, Box
 from gym.vector import AsyncVectorEnv
 import plotly.graph_objects as go
 
-from a_configuration.config.config import SYSTEM_USER_NAME
+from a_configuration.a_config.config import SYSTEM_USER_NAME
 from g_utils.types import AgentType
 
 if torch.cuda.is_available():

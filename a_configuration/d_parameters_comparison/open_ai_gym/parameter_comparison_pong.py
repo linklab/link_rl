@@ -1,5 +1,5 @@
-from a_configuration.base.parameter_base_comparison import ParameterComparisonBase
-from a_configuration.parameters.open_ai_gym.parameter_pong import ParameterPongDqn
+from a_configuration.b_base.parameter_base_comparison import ParameterComparisonBase
+from a_configuration.c_parameters.open_ai_gym.parameter_pong import ParameterPongDqn
 
 
 class ParameterComparisonPongDqn(ParameterComparisonBase):

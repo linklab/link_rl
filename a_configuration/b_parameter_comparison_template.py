@@ -1,5 +1,5 @@
-from a_configuration.parameters_comparison.open_ai_gym.parameter_comparison_cartpole import ParameterComparisonCartPoleDqn
-from a_configuration.parameters_comparison.open_ai_gym.parameter_comparison_pong import ParameterComparisonPongDqn
+from a_configuration.d_parameters_comparison.open_ai_gym.parameter_comparison_cartpole import ParameterComparisonCartPoleDqn
+from a_configuration.d_parameters_comparison.open_ai_gym.parameter_comparison_pong import ParameterComparisonPongDqn
 
 parameter_comparison_list = []
 
