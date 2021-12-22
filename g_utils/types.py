@@ -27,16 +27,23 @@ class AgentMode(enum.Enum):
 
 
 class ModelType(enum.Enum):
-    LINEAR = 0
-    CONVOLUTIONAL = 1
+    SMALL_LINEAR = 0
+    MEDIUM_LINEAR = 1
+    LARGE_LINEAR = 2
+    SMALL_CONVOLUTIONAL = 3
+    MEDIUM_CONVOLUTIONAL = 4
+    LARGE_CONVOLUTIONAL = 5
     RECURRENT = 2
 
 
 class AgentType(enum.Enum):
     Dqn = 0
-    Reinforce = 1
-    A2c = 2
-    Ddpg = 3
+    DOUBLE_DQN = 1
+    DUELING_DQN = 2
+    DOUBLE_DUELING_DQN = 3
+    Reinforce = 4
+    A2c = 5
+    Ddpg = 6
 
 
 OnPolicyAgentTypes = [AgentType.Reinforce, AgentType.A2c]

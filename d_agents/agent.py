@@ -15,6 +15,7 @@ class Agent:
 
         # Box
         # Dict
+        # Tuple
         # Discrete
         # MultiBinary
         # MultiDiscrete
@@ -31,10 +32,6 @@ class Agent:
         self.buffer = Buffer(capacity=parameter.BUFFER_CAPACITY, device=self.device)
 
         self.model = None
-        self.models_dir = None
-
-    def add_transition_to_buffer(self, n_step_transition):
-        self.buffer.append(n_step_transition)
 
     @abstractmethod
     def get_action(self, obs, mode=AgentMode.TRAIN):
@@ -75,14 +72,14 @@ class Agent:
         return 0.0
 
 
-class DiscreteActionAgent(Agent, ABC):
-    def __init__(self, observation_shape, n_discrete_actions, device, parameter):
-        super(DiscreteActionAgent, self).__init__(observation_shape, device, parameter)
-        self.n_discrete_actions = n_discrete_actions
-
-
-class ContinuousActionAgent(Agent, ABC):
-    def __init__(self, observation_shape, action_shape, device, parameter):
-        super(ContinuousActionAgent, self).__init__(observation_shape, device, parameter)
-        self.action_shape = action_shape
-        self.n_out_actions = self.action_shape[0]
+# class DiscreteActionAgent(Agent, ABC):
+#     def __init__(self, observation_shape, n_discrete_actions, device, parameter):
+#         super(DiscreteActionAgent, self).__init__(observation_shape, device, parameter)
+#         self.n_discrete_actions = n_discrete_actions
+#
+#
+# class ContinuousActionAgent(Agent, ABC):
+#     def __init__(self, observation_shape, action_shape, device, parameter):
+#         super(ContinuousActionAgent, self).__init__(observation_shape, device, parameter)
+#         self.action_shape = action_shape
+#         self.n_out_actions = self.action_shape[0]

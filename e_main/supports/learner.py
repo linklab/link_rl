@@ -131,7 +131,7 @@ class Learner(mp.Process):
                 if self.is_terminated.value:
                     continue
 
-            self.agent.add_transition_to_buffer(n_step_transition)
+            self.agent.buffer.append(n_step_transition)
             self.n_rollout_transitions.value += 1
 
             actor_id = n_step_transition.info["actor_id"]

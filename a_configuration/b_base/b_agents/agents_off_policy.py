@@ -1,8 +1,10 @@
+from a_configuration.b_base.b_agents.agents import ParameterAgent
 from g_utils.commons import AgentType
 
 
-class ParameterDqn:
+class ParameterDqn(ParameterAgent):
     def __init__(self):
+        ParameterAgent.__init__(self)
         self.AGENT_TYPE = AgentType.Dqn
 
         self.LEARNING_RATE = 0.0001
@@ -18,8 +20,9 @@ class ParameterDqn:
         self.TARGET_SYNC_INTERVAL_TRAINING_STEPS = 50
 
 
-class ParameterDdpg:
+class ParameterDdpg(ParameterAgent):
     def __init__(self):
+        ParameterAgent.__init__(self)
         self.AGENT_TYPE = AgentType.Ddpg
 
         self.LEARNING_RATE = 0.0001

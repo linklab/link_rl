@@ -12,6 +12,7 @@
   - pip install lz4
 - wandb
   - pip install wandb
+  - wandb login --relogin
 - nvidia-ml-py3
   - pip install nvidia-ml-py3
 - plotly
@@ -74,3 +75,5 @@
 ### 9. swap 설치 및 에러 수정 
 - https://kibua20.tistory.com/40
 - http://aodis.egloos.com/5964233
+
+### 10. Unity ML-Agent 설치 및 활용법

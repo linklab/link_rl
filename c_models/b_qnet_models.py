@@ -3,6 +3,8 @@ import numpy as np
 import torch
 from torch import nn
 
+from a_configuration.b_base.c_models.convolutional_models import ParameterConvolutionalModel
+from a_configuration.b_base.c_models.linear_models import ParameterLinearModel
 from c_models.a_models import Model
 from g_utils.types import ModelType
 
@@ -13,10 +15,10 @@ class QNet(Model):
     ):
         super(QNet, self).__init__(observation_shape, n_out_actions, device, parameter)
 
-        if self.parameter.MODEL_TYPE == ModelType.LINEAR:
+        if isinstance(self.parameter.MODEL, ParameterLinearModel):
             input_n_features = self.observation_shape[0]
             self.fc_layers = self.get_linear_layers(input_n_features=input_n_features)
-        elif self.parameter.MODEL_TYPE == ModelType.CONVOLUTIONAL:
+        elif isinstance(self.parameter.MODEL, ParameterConvolutionalModel):
             input_n_channels = self.observation_shape[0]
             self.conv_layers = self.get_conv_layers(input_n_channels=input_n_channels)
             conv_out_flat_size = self._get_conv_out(observation_shape)
@@ -25,7 +27,7 @@ class QNet(Model):
             raise ValueError()
 
         self.fc_last = nn.Linear(
-            self.parameter.NEURONS_PER_FULLY_CONNECTED_LAYER[-1], self.n_out_actions
+            self.parameter.MODEL.NEURONS_PER_FULLY_CONNECTED_LAYER[-1], self.n_out_actions
         )
 
         self.version = 0
@@ -34,9 +36,9 @@ class QNet(Model):
         if isinstance(x, np.ndarray):
             x = torch.tensor(x, dtype=torch.float32, device=self.device)
 
-        if self.parameter.MODEL_TYPE == ModelType.LINEAR:
+        if isinstance(self.parameter.MODEL, ParameterLinearModel):
             x = self.fc_layers(x)
-        elif self.parameter.MODEL_TYPE == ModelType.CONVOLUTIONAL:
+        elif isinstance(self.parameter.MODEL, ParameterConvolutionalModel):
             conv_out = self.conv_layers(x)
             conv_out = torch.flatten(conv_out, start_dim=1)
             x = self.fc_layers(conv_out)

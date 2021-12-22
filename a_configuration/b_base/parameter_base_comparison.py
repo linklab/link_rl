@@ -18,7 +18,7 @@ class ParameterComparisonBase:
         
         self.N_VECTORIZED_ENVS = 1
         self.N_ACTORS = 1
-        self.MAX_TRAINING_STEPS = 100_000
+        self.MAX_TRAINING_STEPS = None
 
         self.USE_WANDB = False
         self.WANDB_ENTITY = None
@@ -27,6 +27,7 @@ class ParameterComparisonBase:
         assert self.TRAIN_INTERVAL_GLOBAL_TIME_STEPS >= self.N_VECTORIZED_ENVS * self.N_ACTORS, \
             "TRAIN_INTERVAL_GLOBAL_TIME_STEPS should be greater than N_VECTORIZED_ENVS * N_ACTORS"
 
+        # [NOTE]
         self.TEST_INTERVAL_TRAINING_STEPS = 256
         self.CONSOLE_LOG_INTERVAL_TRAINING_STEPS = 100
         self.N_EPISODES_FOR_MEAN_CALCULATION = 32

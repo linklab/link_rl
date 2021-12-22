@@ -133,8 +133,8 @@ slprj
 # *.csv
 
 a_configuration/a_config/config.ini
-a_configuration/parameter.py
-a_configuration/parameter_comparison.py
+e_main/parameter.py
+e_main/parameter_comparison.py
 
 *.para
 *.local

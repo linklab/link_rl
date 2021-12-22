@@ -17,9 +17,9 @@ for idx, env_spec in enumerate(pybullet_envs.registry.all()):
     observation_space = env.observation_space
     action_space = env.action_space
 
-    if isinstance(action_space, Discrete):
-        env.close()
-        continue
+    # if isinstance(action_space, Discrete):
+    #     env.close()
+    #     continue
 
     observation_space_str = "OBS_SPACE: {0}, SHAPE: {1}".format(
         type(observation_space), observation_space.shape
