@@ -146,7 +146,7 @@ class ComparisonStat:
         )
 
         plt.ylabel("Test average episode reward")
-        plt.xlabel("Time steps")
+        plt.xlabel("Training steps")
         plt.legend(loc="best", fancybox=True, framealpha=0.3)
 
         now = time.time()
@@ -199,7 +199,7 @@ class ComparisonStat:
         )
 
         plt.ylabel("Episode reward standard deviation")
-        plt.xlabel("Time steps")
+        plt.xlabel("Training steps")
         plt.legend(loc="best", fancybox=True, framealpha=0.3)
 
         now = time.time()
@@ -252,7 +252,7 @@ class ComparisonStat:
         )
 
         plt.ylabel("Training average episode reward")
-        plt.xlabel("Time steps")
+        plt.xlabel("Training steps")
         plt.legend(loc="best", fancybox=True, framealpha=0.3)
 
         now = time.time()
@@ -264,8 +264,6 @@ class ComparisonStat:
                 )
             )
         )
-
-
 
     def save_csv(self):
         # 1
