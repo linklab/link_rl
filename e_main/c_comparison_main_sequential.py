@@ -1,6 +1,7 @@
 import os
 import sys
 import pandas as pd
+import matplotlib.pyplot as plt
 
 sys.path.append(os.path.abspath(
     os.path.join(os.path.dirname(os.path.realpath(__file__)), os.pardir)
@@ -105,7 +106,166 @@ class ComparisonStat:
         #########################################
 
     def save_fig(self):
-        pass
+        # Test Average Episode Reward
+        plt.figure(figsize=(12, 5))
+        plt.plot(
+            self.test_training_steps_lst,
+            self.MEAN_test_episode_reward_avg_per_agent[0],
+            label="Agent 0"
+        )
+        plt.plot(
+            self.test_training_steps_lst,
+            self.MEAN_test_episode_reward_avg_per_agent[1],
+            label="Agent 1"
+        )
+        plt.plot(
+            self.test_training_steps_lst,
+            self.MEAN_test_episode_reward_avg_per_agent[2],
+            label="Agent 2"
+        )
+
+        plt.fill_between(
+            self.test_training_steps_lst,
+            y1=self.MIN_test_episode_reward_avg_per_agent[0],
+            y2=self.MAX_test_episode_reward_avg_per_agent[0],
+            alpha=0.2
+        )
+
+        plt.fill_between(
+            self.test_training_steps_lst,
+            y1=self.MIN_test_episode_reward_avg_per_agent[1],
+            y2=self.MAX_test_episode_reward_avg_per_agent[1],
+            alpha=0.2
+        )
+
+        plt.fill_between(
+            self.test_training_steps_lst,
+            y1=self.MIN_test_episode_reward_avg_per_agent[2],
+            y2=self.MAX_test_episode_reward_avg_per_agent[2],
+            alpha=0.2
+        )
+
+        plt.ylabel("Test average episode reward")
+        plt.xlabel("Time steps")
+        plt.legend(loc="best", fancybox=True, framealpha=0.3)
+
+        now = time.time()
+        formatted_now = time.strftime('%H_%M_%S', time.gmtime(now))
+        plt.savefig(
+            os.path.join(
+                parameter_c.COMPARISON_RESULTS_SAVE_DIR, "{0}_runs_{1}_{2}_avg.png".format(
+                    parameter_c.ENV_NAME, parameter_c.N_RUNS, formatted_now
+                )
+            )
+        )
+
+        # Test Episode Reward Standard Deviation
+        plt.figure(figsize=(12, 5))
+        plt.plot(
+            self.test_training_steps_lst,
+            self.MEAN_test_episode_reward_std_per_agent[0],
+            label="Agent 0"
+        )
+        plt.plot(
+            self.test_training_steps_lst,
+            self.MEAN_test_episode_reward_std_per_agent[1],
+            label="Agent 1"
+        )
+        plt.plot(
+            self.test_training_steps_lst,
+            self.MEAN_test_episode_reward_std_per_agent[2],
+            label="Agent 2"
+        )
+
+        plt.fill_between(
+            self.test_training_steps_lst,
+            y1=self.MIN_test_episode_reward_std_per_agent[0],
+            y2=self.MAX_test_episode_reward_std_per_agent[0],
+            alpha=0.2
+        )
+
+        plt.fill_between(
+            self.test_training_steps_lst,
+            y1=self.MIN_test_episode_reward_std_per_agent[1],
+            y2=self.MAX_test_episode_reward_std_per_agent[1],
+            alpha=0.2
+        )
+
+        plt.fill_between(
+            self.test_training_steps_lst,
+            y1=self.MIN_test_episode_reward_std_per_agent[2],
+            y2=self.MAX_test_episode_reward_std_per_agent[2],
+            alpha=0.2
+        )
+
+        plt.ylabel("Episode reward standard deviation")
+        plt.xlabel("Time steps")
+        plt.legend(loc="best", fancybox=True, framealpha=0.3)
+
+        now = time.time()
+        formatted_now = time.strftime('%H_%M_%S', time.gmtime(now))
+        plt.savefig(
+            os.path.join(
+                parameter_c.COMPARISON_RESULTS_SAVE_DIR, "{0}_runs_{1}_{2}_std.png".format(
+                    parameter_c.ENV_NAME, parameter_c.N_RUNS, formatted_now
+                )
+            )
+        )
+
+        # Training Average Episode Reward
+        plt.figure(figsize=(12, 5))
+        plt.plot(
+            self.test_training_steps_lst,
+            self.MEAN_mean_episode_reward_per_agent[0],
+            label="Agent 0"
+        )
+        plt.plot(
+            self.test_training_steps_lst,
+            self.MEAN_mean_episode_reward_per_agent[1],
+            label="Agent 1"
+        )
+        plt.plot(
+            self.test_training_steps_lst,
+            self.MEAN_mean_episode_reward_per_agent[2],
+            label="Agent 2"
+        )
+
+        plt.fill_between(
+            self.test_training_steps_lst,
+            y1=self.MIN_mean_episode_reward_per_agent[0],
+            y2=self.MAX_mean_episode_reward_per_agent[0],
+            alpha=0.2
+        )
+
+        plt.fill_between(
+            self.test_training_steps_lst,
+            y1=self.MIN_mean_episode_reward_per_agent[1],
+            y2=self.MAX_mean_episode_reward_per_agent[1],
+            alpha=0.2
+        )
+
+        plt.fill_between(
+            self.test_training_steps_lst,
+            y1=self.MIN_mean_episode_reward_per_agent[2],
+            y2=self.MAX_mean_episode_reward_per_agent[2],
+            alpha=0.2
+        )
+
+        plt.ylabel("Training average episode reward")
+        plt.xlabel("Time steps")
+        plt.legend(loc="best", fancybox=True, framealpha=0.3)
+
+        now = time.time()
+        formatted_now = time.strftime('%H_%M_%S', time.gmtime(now))
+        plt.savefig(
+            os.path.join(
+                parameter_c.COMPARISON_RESULTS_SAVE_DIR, "{0}_runs_{1}_{2}_train_avg.png".format(
+                    parameter_c.ENV_NAME, parameter_c.N_RUNS, formatted_now
+                )
+            )
+        )
+
+
 
     def save_csv(self):
         # 1
