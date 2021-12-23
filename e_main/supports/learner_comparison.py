@@ -150,7 +150,6 @@ class LearnerComparison:
 
                     if self.parameter_c.AGENT_PARAMETERS[agent_idx].AGENT_TYPE == AgentType.Reinforce:
                         is_train_success_done = self.agents[agent_idx].train(
-                            buffer=self.buffers_per_agent[agent_idx],
                             training_steps_v=self.training_steps_per_agent[agent_idx]
                         )
                         if is_train_success_done:
@@ -160,7 +159,6 @@ class LearnerComparison:
                 for agent_idx, _ in enumerate(self.agents):
                     if self.parameter_c.AGENT_PARAMETERS[agent_idx].AGENT_TYPE != AgentType.Reinforce:
                         is_train_success_done = self.agents[agent_idx].train(
-                            buffer=self.buffers_per_agent[agent_idx],
                             training_steps_v=self.training_steps_per_agent[agent_idx]
                         )
                         if is_train_success_done:
