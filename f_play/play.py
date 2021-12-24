@@ -1,7 +1,6 @@
 import sys
 import time
 
-import gym
 import torch
 import os
 
@@ -13,7 +12,7 @@ PROJECT_HOME = os.path.abspath(os.path.join(CURRENT_PATH, os.pardir))
 if PROJECT_HOME not in sys.path:
     sys.path.append(PROJECT_HOME)
 
-from a_configuration.parameter import Parameter
+from e_main.parameter import Parameter
 from g_utils.commons import model_load, get_test_env
 
 
