@@ -19,6 +19,8 @@
   - pip install plotly
 - pandas
   - conda install pandas
+- matplotlib
+  - conda install matplotlib
 - pybullet
   - conda install -c conda-forge pybullet
   - 설치 후 테스트

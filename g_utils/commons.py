@@ -306,7 +306,8 @@ def get_wandb_obj(parameter, agent=None, comparison=False):
     local_now = now.astimezone()
     wandb.run.name = local_now.strftime('%Y-%m-%d_%H:%M:%S')
     wandb.run.save()
-    wandb.watch(agent.model, log="all")
+    if agent:
+        wandb.watch(agent.model, log="all")
 
     return wandb_obj
 

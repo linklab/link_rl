@@ -41,7 +41,7 @@ class AgentReinforce(Agent):
         G = 0
         return_lst = []
         for reward in reversed(rewards):
-            G = reward + self.parameter.GAMMA * G
+            G = reward + self.parameter.GAMMA ** self.parameter.N_STEP * G
             return_lst.append(G)
         return_lst = torch.tensor(
             return_lst[::-1], dtype=torch.float32, device=self.device

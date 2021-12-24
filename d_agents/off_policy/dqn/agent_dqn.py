@@ -85,7 +85,7 @@ class AgentDqn(Agent):
             next_state_values = next_state_values.detach()
 
             # target_state_action_values.shape: torch.Size([32, 1])
-            target_state_action_values = rewards + self.parameter.GAMMA * next_state_values
+            target_state_action_values = rewards + self.parameter.GAMMA ** self.parameter.N_STEP * next_state_values
 
         # loss is just scalar torch value
         q_net_loss = F.mse_loss(state_action_values, target_state_action_values)

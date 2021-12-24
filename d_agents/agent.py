@@ -70,7 +70,9 @@ class Agent:
         return is_train_success_done
 
     def after_train(self):
-        grads = np.concatenate([p.grad.data.numpy().flatten() for p in self.model.parameters() if p.grad is not None])
+        grads = np.concatenate(
+            [p.grad.data.cpu().numpy().flatten() for p in self.model.parameters() if p.grad is not None]
+        )
         self.last_model_grad_l2.value = np.sqrt(np.mean(np.square(grads)))
         self.last_model_grad_max.value = np.max(np.abs(grads))
 
