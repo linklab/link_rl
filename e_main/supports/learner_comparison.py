@@ -9,7 +9,8 @@ import torch
 import numpy as np
 
 from e_main.supports.actor import Actor
-from g_utils.commons import get_wandb_obj, get_train_env, get_single_env, console_log_comparison, wandb_log_comparison
+from g_utils.commons import get_wandb_obj, get_train_env, get_single_env, console_log_comparison, wandb_log_comparison, \
+    MeanBuffer
 from g_utils.buffers import Buffer
 from g_utils.types import AgentType, AgentMode, Transition
 
@@ -37,7 +38,7 @@ class LearnerComparison:
         self.train_envs_per_agent = []
         self.test_envs_per_agent = []
         self.episode_rewards_per_agent = []
-        self.episode_reward_lst_per_agent = []
+        self.episode_reward_buffer_per_agent = []
         self.transition_generators_per_agent = []
         self.buffers_per_agent = []
         self.histories_per_agent = []
@@ -56,7 +57,7 @@ class LearnerComparison:
             self.train_envs_per_agent.append(get_train_env(self.parameter_c))
             self.test_envs_per_agent.append(get_single_env(self.parameter_c.AGENT_PARAMETERS[agent_idx]))
             self.episode_rewards_per_agent.append(np.zeros(shape=(self.n_actors, self.n_vectorized_envs)))
-            self.episode_reward_lst_per_agent.append([])
+            self.episode_reward_buffer_per_agent.append(MeanBuffer(self.parameter_c.N_EPISODES_FOR_MEAN_CALCULATION))
 
             self.transition_generators_per_agent.append(self.generator_on_policy_transition(agent_idx))
 
@@ -139,12 +140,11 @@ class LearnerComparison:
                 if n_step_transition.done:
                     self.total_episodes_per_agent[agent_idx] += 1
 
-                    self.episode_reward_lst_per_agent[agent_idx].append(
+                    self.episode_reward_buffer_per_agent[agent_idx].add(
                         self.episode_rewards_per_agent[agent_idx][actor_id][env_id]
                     )
-                    self.last_mean_episode_reward_per_agent[agent_idx] = float(np.mean(
-                        self.episode_reward_lst_per_agent[agent_idx][-1 * self.parameter_c.N_EPISODES_FOR_MEAN_CALCULATION:]
-                    ))
+                    self.last_mean_episode_reward_per_agent[agent_idx] = \
+                        self.episode_reward_buffer_per_agent[agent_idx].mean()
 
                     self.episode_rewards_per_agent[agent_idx][actor_id][env_id] = 0.0
 

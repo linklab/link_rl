@@ -1,3 +1,4 @@
+import collections
 import time
 import datetime
 
@@ -332,6 +333,9 @@ def wandb_log(learner, wandb_obj, parameter):
     else:
         pass
 
+    log_dict["grad_max"] = learner.agent.last_model_grad_max.value
+    log_dict["grad_l2"] = learner.agent.last_model_grad_l2.value
+
     wandb_obj.log(log_dict)
 
 
@@ -434,153 +438,6 @@ def wandb_log_comparison(
 
     wandb_obj.log(log_dict)
 
-# def wandb_log_comparison(agents, agent_labels, comparison_stat, wandb_obj):
-#     plotly_layout.yaxis.title = "[TEST] Episode Reward"
-#
-#     test_episode_reward_avg = go.Figure(layout=plotly_layout)
-#
-#     test_episode_reward_avg.add_traces(
-#         go.Scatter(
-#             x=comparison_stat.test_training_steps_lst,
-#             y=comparison_stat.MAX_test_episode_reward_avg_per_agent[0, :],
-#             fill=None,
-#             line_color=line_color_lst[0],
-#         )
-#     )
-#
-#     test_episode_reward_avg.add_traces(
-#         go.Scatter(
-#             x=comparison_stat.test_training_steps_lst,
-#             y=comparison_stat.MIN_test_episode_reward_avg_per_agent[0, :],
-#             fill="tonexty",
-#             fillcolor="rgba(250, 0, 0, 0.4)",
-#             line_color=line_color_lst[0],
-#         )
-#     )
-
-    # data = []
-    # for agent_idx, _ in enumerate(agents):
-    #     data.append(
-    #         go.Scatter(
-    #             name=agent_labels[agent_idx],
-    #             x=comparison_stat.test_training_steps_lst,
-    #             y=comparison_stat.MAX_test_episode_reward_avg_per_agent[agent_idx, :],
-    #             fill=None,
-    #             mode="lines",
-    #             line_color=line_color_lst[agent_idx],
-    #             showlegend=False
-    #         )
-    #     )
-    #     data.append(
-    #         go.Scatter(
-    #             name=agent_labels[agent_idx],
-    #             x=comparison_stat.test_training_steps_lst,
-    #             y=comparison_stat.MIN_test_episode_reward_avg_per_agent[agent_idx, :],
-    #             fill="tonexty",
-    #             mode="lines",
-    #             line_color=line_color_lst[agent_idx],
-    #             showlegend=False
-    #         )
-    #     )
-    #     # data.append(
-    #     #     go.Scatter(
-    #     #         name=agent_labels[agent_idx],
-    #     #         x=comparison_stat.test_training_steps_lst,
-    #     #         y=comparison_stat.MEAN_test_episode_reward_avg_per_agent[agent_idx, :],
-    #     #         mode="lines",
-    #     #         line_color=line_color_lst[agent_idx],
-    #     #         showlegend=True
-    #     #     )
-    #     # )
-    #     if agent_idx == 0:
-    #         break
-    #
-    # test_episode_reward_avg = go.Figure(data=data, layout=plotly_layout)
-
-    ###############################################################################
-    # plotly_layout.yaxis.title = "[TEST] Std. of Episode Reward"
-    # data = []
-    # for agent_idx, _ in enumerate(agents):
-    #     data.append(
-    #         go.Scatter(
-    #             name=agent_labels[agent_idx],
-    #             x=comparison_stat.test_training_steps_lst,
-    #             y=comparison_stat.MAX_test_episode_reward_std_per_agent[agent_idx, :],
-    #             fill=None,
-    #             mode="lines",
-    #             line_color=line_color_lst[agent_idx],
-    #             showlegend=False
-    #         )
-    #     )
-    #     data.append(
-    #         go.Scatter(
-    #             name=agent_labels[agent_idx],
-    #             x=comparison_stat.test_training_steps_lst,
-    #             y=comparison_stat.MIN_test_episode_reward_std_per_agent[agent_idx, :],
-    #             fill="tonexty",
-    #             mode="lines",
-    #             line_color=line_color_lst[agent_idx],
-    #             showlegend=False
-    #         )
-    #     )
-    #     data.append(
-    #         go.Scatter(
-    #             name=agent_labels[agent_idx],
-    #             x=comparison_stat.test_training_steps_lst,
-    #             y=comparison_stat.MEAN_test_episode_reward_std_per_agent[agent_idx, :],
-    #             mode="lines",
-    #             line_color=line_color_lst[agent_idx],
-    #             showlegend=True
-    #         )
-    #     )
-    # test_episode_reward_std = go.Figure(data=data, layout=plotly_layout)
-    #
-    # ###############################################################################
-    # plotly_layout.yaxis.title = "Last Mean Episode Reward"
-    # data = []
-    # for agent_idx, _ in enumerate(agents):
-    #     data.append(
-    #         go.Scatter(
-    #             name=agent_labels[agent_idx],
-    #             x=comparison_stat.test_training_steps_lst,
-    #             y=comparison_stat.MAX_mean_episode_reward_per_agent[agent_idx, :],
-    #             fill=None,
-    #             mode="lines",
-    #             line_color=line_color_lst[agent_idx],
-    #             showlegend=False
-    #         )
-    #     )
-    #     data.append(
-    #         go.Scatter(
-    #             name=agent_labels[agent_idx],
-    #             x=comparison_stat.test_training_steps_lst,
-    #             y=comparison_stat.MIN_mean_episode_reward_per_agent[agent_idx, :],
-    #             fill="tonexty",
-    #             mode="lines",
-    #             line_color=line_color_lst[agent_idx],
-    #             showlegend=False
-    #         )
-    #     )
-    #     data.append(
-    #         go.Scatter(
-    #             name=agent_labels[agent_idx],
-    #             x=comparison_stat.test_training_steps_lst,
-    #             y=comparison_stat.MEAN_mean_episode_reward_per_agent[agent_idx, :],
-    #             mode="lines",
-    #             line_color=line_color_lst[agent_idx],
-    #             showlegend=True
-    #         )
-    #     )
-    # train_last_mean_episode_reward = go.Figure(data=data, layout=plotly_layout)
-    #
-    # log_dict = {
-    #     "episode_reward_avg": test_episode_reward_avg,
-    #     "episode_reward_std": test_episode_reward_std,
-    #     "train_last_mean_episode_reward": train_last_mean_episode_reward
-    # }
-    #
-    # wandb_obj.log(log_dict)
-
 
 def get_train_env(parameter):
     def make_gym_env(env_name):
@@ -672,3 +529,20 @@ class EpsilonTracker:
         )
         return epsilon
 
+
+class MeanBuffer:
+    def __init__(self, capacity):
+        self.capacity = capacity
+        self.deque = collections.deque(maxlen=capacity)
+        self.sum = 0.0
+
+    def add(self, val):
+        if len(self.deque) == self.capacity:
+            self.sum -= self.deque[0]
+        self.deque.append(val)
+        self.sum += val
+
+    def mean(self):
+        if not self.deque:
+            return 0.0
+        return self.sum / len(self.deque)
