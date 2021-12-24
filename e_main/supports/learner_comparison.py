@@ -40,7 +40,6 @@ class LearnerComparison:
         self.episode_rewards_per_agent = []
         self.episode_reward_buffer_per_agent = []
         self.transition_generators_per_agent = []
-        self.buffers_per_agent = []
         self.histories_per_agent = []
 
         self.total_episodes_per_agent = []
@@ -61,9 +60,6 @@ class LearnerComparison:
 
             self.transition_generators_per_agent.append(self.generator_on_policy_transition(agent_idx))
 
-            self.buffers_per_agent.append(
-                Buffer(capacity=parameter_c.AGENT_PARAMETERS[agent_idx].BUFFER_CAPACITY, device=self.device)
-            )
             self.histories_per_agent.append(
                 [deque(maxlen=parameter_c.AGENT_PARAMETERS[agent_idx].N_STEP) for _ in range(self.n_vectorized_envs)]
             )
@@ -130,7 +126,7 @@ class LearnerComparison:
             for agent_idx, _ in enumerate(self.agents):
                 n_step_transition = next(self.transition_generators_per_agent[agent_idx])
 
-                self.buffers_per_agent[agent_idx].append(n_step_transition)
+                self.agents[agent_idx].buffer.append(n_step_transition)
                 self.n_rollout_transitions_per_agent[agent_idx] += 1
 
                 actor_id = n_step_transition.info["actor_id"]   # SHOULD BE 1

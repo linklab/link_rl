@@ -6,11 +6,11 @@ parameter_comparison_list = []
 parameter_comparison_cart_pole_dqn = ParameterComparisonCartPoleDqn()
 parameter_comparison_cart_pole_dqn.AGENT_PARAMETERS[0].N_STEP = 1
 parameter_comparison_cart_pole_dqn.AGENT_PARAMETERS[1].N_STEP = 2
-parameter_comparison_cart_pole_dqn.AGENT_PARAMETERS[2].N_STEP = 3
+parameter_comparison_cart_pole_dqn.AGENT_PARAMETERS[2].N_STEP = 4
 parameter_comparison_cart_pole_dqn.AGENT_LABELS = [
     "DQN (N_STEP=1)",
     "DQN (N_STEP=2)",
-    "DQN (N_STEP=3)",
+    "DQN (N_STEP=4)",
 ]
 parameter_comparison_cart_pole_dqn.MAX_TRAINING_STEPS = 50_000
 parameter_comparison_cart_pole_dqn.N_RUNS = 5
