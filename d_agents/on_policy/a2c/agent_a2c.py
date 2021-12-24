@@ -68,8 +68,9 @@ class AgentA2c(Agent):
         # rewards.shape: torch.Size([32, 1]),
         # dones.shape: torch.Size([32])
 
-        observations, actions, next_observations, rewards, dones = \
-            self.buffer.sample(batch_size=self.parameter.BATCH_SIZE, device=self.device)
+        observations, actions, next_observations, rewards, dones = self.buffer.sample(
+            batch_size=self.parameter.BATCH_SIZE, device=self.device
+        )
 
         self.optimizer.zero_grad()
 
@@ -132,7 +133,7 @@ class AgentA2c(Agent):
         entropy_v = dist.entropy()
         entropy_loss = -1.0 * entropy_v.mean()
 
-        loss = actor_loss + critic_loss * 0.5 + entropy_loss * 0.005
+        loss = actor_loss + critic_loss * 0.5 + entropy_loss * 0.01
 
         loss.backward()
         self.optimizer.step()
