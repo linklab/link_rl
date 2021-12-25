@@ -34,7 +34,6 @@ logger.set_level(level=40)
 
 def get_agent(observation_space, action_space, device=torch.device("cpu"), parameter=None, max_training_steps=None):
     assert isinstance(observation_space, Box)
-    observation_shape = observation_space.shape
 
     if parameter.AGENT_TYPE == AgentType.Dqn:
         assert isinstance(action_space, Discrete)

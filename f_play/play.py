@@ -1,8 +1,8 @@
 import sys
 import time
+import os
 
 import torch
-import os
 
 from e_main.supports.main_preamble import get_agent
 from g_utils.types import AgentMode
@@ -12,11 +12,11 @@ PROJECT_HOME = os.path.abspath(os.path.join(CURRENT_PATH, os.pardir))
 if PROJECT_HOME not in sys.path:
     sys.path.append(PROJECT_HOME)
 
-from e_main.parameter import Parameter
-from g_utils.commons import model_load, get_test_env
+from e_main.parameter import parameter
+from g_utils.commons import model_load, get_single_env, get_env_info
 
 
-parameter = Parameter()
+device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
 
 def play(env, agent, n_episodes):
@@ -50,18 +50,16 @@ def play(env, agent, n_episodes):
 
 
 def main_play(n_episodes):
-    env, observation_shape, n_actions = get_test_env(parameter)
+    observation_space, action_space = get_env_info(parameter)
+    env = get_single_env(parameter)
 
-    agent = get_agent(
-        observation_shape, n_actions, device=torch.device("cpu"), parameter=parameter,
-        max_training_steps=parameter.MAX_TRAINING_STEPS
-    )
+    agent = get_agent(observation_space, action_space, device, parameter)
 
     model_load(
-        model=agent.q_net,
+        model=agent.model,
         env_name=parameter.ENV_NAME,
         agent_type_name=parameter.AGENT_TYPE.name,
-        file_name="200.0_0.0_2021_12_18.pth",
+        file_name="200.0_0.0_2021_12_25.pth",
         parameter=parameter
     )
     play(env, agent, n_episodes=n_episodes)

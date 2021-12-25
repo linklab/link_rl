@@ -2,6 +2,8 @@ import os
 import sys
 import pandas as pd
 import matplotlib.pyplot as plt
+import warnings
+warnings.filterwarnings("ignore")
 
 sys.path.append(os.path.abspath(
     os.path.join(os.path.dirname(os.path.realpath(__file__)), os.pardir)

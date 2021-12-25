@@ -79,3 +79,7 @@
 - http://aodis.egloos.com/5964233
 
 ### 10. Unity ML-Agent 설치 및 활용법
+
+
+### 11. Reference
+- https://github.com/PacktPublishing/Deep-Reinforcement-Learning-Hands-On-Second-Edition

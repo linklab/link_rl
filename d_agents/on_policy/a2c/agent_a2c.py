@@ -25,6 +25,8 @@ class AgentA2c(Agent):
                 observation_shape=self.observation_shape, n_out_actions=self.n_out_actions,
                 device=device, parameter=parameter
             ).to(device)
+            self.action_bound_low = np.expand_dims(self.action_space.low, axis=-1)
+            self.action_bound_high = np.expand_dims(self.action_space.high, axis=-1)
         else:
             raise ValueError()
 
@@ -49,14 +51,14 @@ class AgentA2c(Agent):
                 action = torch.argmax(m.probs, dim=-1)
             return action.cpu().numpy()
         elif isinstance(self.action_space, Box):
-            mu_v, logstd_v = self.actor_critic_model.pi(obs)
+            mu_v, std_v = self.actor_critic_model.pi(obs)
             if mode == AgentMode.TRAIN:
-                dist = Normal(loc=mu_v, scale=torch.exp(logstd_v) + 1.0e-7)
+                dist = Normal(loc=mu_v, scale=std_v)
                 actions = dist.sample()
             else:
                 actions = mu_v.detach()
 
-            actions = np.clip(actions.cpu().numpy(), -1.0, 1.0)
+            actions = np.clip(actions.cpu().numpy(), self.action_bound_low, self.action_bound_high)
             return actions
         else:
             raise ValueError()
@@ -110,22 +112,23 @@ class AgentA2c(Agent):
             # advantage.shape: (32, 1)
             # dist.log_prob(value=actions.squeeze(-1)).shape: (32,)
             # criticized_log_pi_action_v.shape: (32,)
-            criticized_log_pi_action_v = torch.multiply(dist.log_prob(value=actions.squeeze(-1)), advantages.squeeze(-1))
+            criticized_log_pi_action_v = dist.log_prob(value=actions.squeeze(-1)) * advantages.squeeze(-1)
         elif isinstance(self.action_space, Box):
-            mu_v, logstd_v = self.actor_critic_model.pi(observations)
-            dist = Normal(loc=mu_v, scale=torch.exp(logstd_v))
+            mu_v, std_v = self.actor_critic_model.pi(observations)
+            dist = Normal(loc=mu_v, scale=std_v)
 
             # actions.shape: (32, 8)
             # dist.log_prob(value=actions).shape: (32, 8)
             # advantages.shape: (32, 1)
             # criticized_log_pi_action_v.shape: (32, 8)
-            criticized_log_pi_action_v = torch.multiply(dist.log_prob(value=actions), advantages)
+            # print(dist.log_prob(value=actions).shape, advantages.shape, "!!!!!!")
+            criticized_log_pi_action_v = dist.log_prob(value=actions) * advantages
         else:
             raise ValueError()
 
         # actor_objective.shape: (,) <--  값 1개
-        log_actor_objective = torch.sum(criticized_log_pi_action_v)
-        actor_loss = torch.multiply(log_actor_objective, -1.0)
+        log_actor_objective = torch.mean(criticized_log_pi_action_v)
+        actor_loss = -1.0 * log_actor_objective
         ##############################
         #  Actor Objective 산출 - END #
         ##############################
@@ -133,9 +136,10 @@ class AgentA2c(Agent):
         entropy_v = dist.entropy()
         entropy_loss = -1.0 * entropy_v.mean()
 
-        loss = actor_loss + critic_loss * 0.5 + entropy_loss * 0.01
+        loss = actor_loss + critic_loss + entropy_loss * self.parameter.ENTROPY_BETA
 
         loss.backward()
+        torch.nn.utils.clip_grad_value_(self.actor_critic_model.parameters(), 3.0)
         self.optimizer.step()
 
         self.last_critic_loss.value = critic_loss.item()

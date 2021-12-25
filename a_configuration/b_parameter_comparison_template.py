@@ -44,7 +44,7 @@ parameter_comparison_cart_pole_bullet_a2c.AGENT_PARAMETERS[2].LEARNING_RATE = 0.
 parameter_comparison_cart_pole_bullet_a2c.AGENT_LABELS = [
     "DQN (LEARNING_RATE = 0.001)",
     "DQN (LEARNING_RATE = 0.0001)",
-    "DQN (LEARNING_RATE = 0.0001)",
+    "DQN (LEARNING_RATE = 0.00001)",
 ]
 parameter_comparison_cart_pole_dqn.MAX_TRAINING_STEPS = 50_000
 parameter_comparison_cart_pole_dqn.N_RUNS = 5
