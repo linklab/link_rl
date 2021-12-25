@@ -59,6 +59,6 @@ class Model(nn.Module):
         conv_layers = nn.Sequential(conv_layers_dict)
         return conv_layers
 
-    def _get_conv_out(self, shape):
-        cont_out = self.conv_layers(torch.zeros(1, *shape))
+    def _get_conv_out(self, conv_layers, shape):
+        cont_out = conv_layers(torch.zeros(1, *shape))
         return int(np.prod(cont_out.size()))

@@ -21,7 +21,7 @@ class QNet(Model):
         elif isinstance(self.parameter.MODEL, ParameterConvolutionalModel):
             input_n_channels = self.observation_shape[0]
             self.conv_layers = self.get_conv_layers(input_n_channels=input_n_channels)
-            conv_out_flat_size = self._get_conv_out(observation_shape)
+            conv_out_flat_size = self._get_conv_out(self.conv_layers, observation_shape)
             self.fc_layers = self.get_linear_layers(input_n_features=conv_out_flat_size)
         else:
             raise ValueError()

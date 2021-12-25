@@ -26,11 +26,11 @@ class ActorCritic(Model):
         elif isinstance(self.parameter.MODEL, ParameterConvolutionalModel):
             input_n_channels = self.observation_shape[0]
             self.actor_conv_layers = self.get_conv_layers(input_n_channels=input_n_channels)
-            conv_out_flat_size = self._get_conv_out(observation_shape)
+            conv_out_flat_size = self._get_conv_out(self.actor_conv_layers, observation_shape)
             self.actor_fc_layers = self.get_linear_layers(input_n_features=conv_out_flat_size)
 
             self.critic_conv_layers = self.get_conv_layers(input_n_channels=input_n_channels)
-            conv_out_flat_size = self._get_conv_out(observation_shape)
+            conv_out_flat_size = self._get_conv_out(self.critic_conv_layers, observation_shape)
             self.critic_fc_layers = self.get_linear_layers(input_n_features=conv_out_flat_size)
 
             self.actor_params = list(self.actor_conv_layers.parameters()) + list(self.actor_fc_layers.parameters())
