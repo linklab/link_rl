@@ -79,6 +79,6 @@ class ContinuousActorCritic(ActorCritic):
     def pi(self, x):
         x = self.forward(x)
         mu_v = self.mu(x)
-        std_v = F.softplus(self.logstds).exp()
+        std_v = F.softplus(self.logstds.exp())
         # std_v = self.logstd(x).exp()
         return mu_v, std_v

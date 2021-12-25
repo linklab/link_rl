@@ -256,7 +256,6 @@ class Learner(mp.Process):
 
             while True:
                 action = self.agent.get_action(observation, mode=AgentMode.TEST)
-
                 # action을 통해서 next_state, reward, done, info를 받아온다
                 next_observation, reward, done, _ = self.test_env.step(action[0])
                 next_observation = np.expand_dims(next_observation, axis=0)

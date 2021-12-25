@@ -21,8 +21,8 @@ class AgentA2c(Agent):
                 device=device, parameter=parameter
             ).to(device)
         elif isinstance(self.action_space, Box):
-            self.action_bound_low = np.expand_dims(self.action_space.low, axis=-1)
-            self.action_bound_high = np.expand_dims(self.action_space.high, axis=-1)
+            self.action_bound_low = np.expand_dims(self.action_space.low, axis=0)
+            self.action_bound_high = np.expand_dims(self.action_space.high, axis=0)
 
             self.action_scale_factor = np.max(np.maximum(
                 np.absolute(self.action_bound_low), np.absolute(self.action_bound_high)
