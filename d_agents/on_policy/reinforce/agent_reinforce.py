@@ -59,6 +59,7 @@ class AgentReinforce(Agent):
         loss = torch.multiply(log_policy_objective, -1.0)
 
         loss.backward()
+        torch.nn.utils.clip_grad_value_(self.policy.parameters(), self.parameter.CLIP_GRADIENT_VALUE)
         self.optimizer.step()
 
         self.last_log_policy_objective.value = log_policy_objective.item()

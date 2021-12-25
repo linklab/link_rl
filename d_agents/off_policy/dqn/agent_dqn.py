@@ -104,6 +104,7 @@ class AgentDqn(Agent):
 
         self.optimizer.zero_grad()
         q_net_loss.backward()
+        torch.nn.utils.clip_grad_value_(self.q_net.parameters(), self.parameter.CLIP_GRADIENT_VALUE)
         self.optimizer.step()
 
         # sync

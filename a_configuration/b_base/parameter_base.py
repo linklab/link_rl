@@ -29,6 +29,8 @@ class ParameterBase:
 
         self.N_TEST_EPISODES = 3
 
+        self.CLIP_GRADIENT_VALUE = 3.0
+
         self.USE_WANDB = False
         self.WANDB_ENTITY = "link-koreatech"
 

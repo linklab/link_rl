@@ -146,7 +146,7 @@ class AgentA2c(Agent):
         loss = actor_loss + critic_loss + entropy_loss * self.parameter.ENTROPY_BETA
 
         loss.backward()
-        torch.nn.utils.clip_grad_value_(self.actor_critic_model.parameters(), 3.0)
+        torch.nn.utils.clip_grad_value_(self.actor_critic_model.parameters(), self.parameter.CLIP_GRADIENT_VALUE)
         self.optimizer.step()
 
         self.last_critic_loss.value = critic_loss.item()

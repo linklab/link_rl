@@ -68,17 +68,17 @@ class ContinuousActorCritic(ActorCritic):
             nn.Tanh()
         )
 
-        # logstds_param = nn.Parameter(torch.full((self.n_out_actions,), 0.1))
-        # self.register_parameter("logstds", logstds_param)
+        logstds_param = nn.Parameter(torch.full((self.n_out_actions,), 0.1))
+        self.register_parameter("logstds", logstds_param)
 
-        self.logstd = nn.Sequential(
-            nn.Linear(self.parameter.MODEL.NEURONS_PER_FULLY_CONNECTED_LAYER[-1], self.n_out_actions),
-            nn.Softplus()
-        )
+        # self.logstd = nn.Sequential(
+        #     nn.Linear(self.parameter.MODEL.NEURONS_PER_FULLY_CONNECTED_LAYER[-1], self.n_out_actions),
+        #     nn.Softplus()
+        # )
 
     def pi(self, x):
         x = self.forward(x)
         mu_v = self.mu(x)
-        #std_v = F.softplus(self.logstds).exp()
-        std_v = self.logstd(x).exp()
+        std_v = F.softplus(self.logstds).exp()
+        # std_v = self.logstd(x).exp()
         return mu_v, std_v

@@ -13,7 +13,6 @@ class ParameterCartPoleDqn(
         ParameterBase.__init__(self)
         ParameterCartPole.__init__(self)
         ParameterDqn.__init__(self)
-        ParameterLinearModel.__init__(self, ModelType.SMALL_LINEAR)
 
         self.N_VECTORIZED_ENVS = 1
         self.N_ACTORS = 1
