@@ -12,6 +12,9 @@ from gym.vector import AsyncVectorEnv
 import plotly.graph_objects as go
 
 from a_configuration.a_config.config import SYSTEM_USER_NAME
+from a_configuration.b_base.c_models.convolutional_models import ParameterConvolutionalModel
+from a_configuration.b_base.c_models.linear_models import ParameterLinearModel
+from a_configuration.b_base.c_models.recurrent_models import ParameterRecurrentModel
 from g_utils.types import AgentType
 
 if torch.cuda.is_available():
@@ -74,7 +77,7 @@ def print_basic_info(observation_space=None, action_space=None, device=None, par
     items = []
 
     for param in dir(parameter):
-        if not param.startswith("__"):
+        if not param.startswith("__") and param != "MODEL":
             if param in [
                 "BATCH_SIZE", "BUFFER_CAPACITY", "CONSOLE_LOG_INTERVAL_TRAINING_STEPS",
                 "EPISODE_REWARD_AVG_SOLVED", "MAX_TRAINING_STEPS",
@@ -97,6 +100,8 @@ def print_basic_info(observation_space=None, action_space=None, device=None, par
         else:
             print("{0:55}".format(items[0]), end="\n")
             items.clear()
+
+    print_model_info(getattr(parameter, "MODEL"))
 
     if observation_space and action_space:
         if observation_space and action_space:
@@ -158,7 +163,7 @@ def print_comparison_basic_info(observation_space, action_space, device, paramet
     for agent_idx, agent_parameter in enumerate(parameter_c.AGENT_PARAMETERS):
         print('-' * 76 + " Agent {0} ".format(agent_idx) + '-' * 76)
         for param in dir(agent_parameter):
-            if not param.startswith("__"):
+            if not param.startswith("__") and param != "MODEL":
                 if param in [
                     "BATCH_SIZE", "BUFFER_CAPACITY", "CONSOLE_LOG_INTERVAL_TRAINING_STEPS",
                     "EPISODE_REWARD_AVG_SOLVED", "MAX_TRAINING_STEPS",
@@ -182,6 +187,8 @@ def print_comparison_basic_info(observation_space, action_space, device, paramet
                 print("{0:55}".format(items[0]), end="\n")
                 items.clear()
 
+        print_model_info(getattr(agent_parameter, "MODEL"))
+
     if observation_space and action_space:
         if observation_space and action_space:
             print('-' * 76 + " SPACE " + '-' * 76)
@@ -189,6 +196,27 @@ def print_comparison_basic_info(observation_space, action_space, device, paramet
 
     print('#' * 162)
     print()
+
+
+def print_model_info(model):
+    if isinstance(model, ParameterLinearModel):
+        item1 = "{0}: {1:}".format("MODEL", "LINEAR_MODEL")
+        item2 = "{0}: {1:}".format("NEURONS_PER_FULLY_CONNECTED_LAYER", model.NEURONS_PER_FULLY_CONNECTED_LAYER)
+        print("{0:55} {1:55}".format(item1, item2), end="\n")
+    elif isinstance(model, ParameterConvolutionalModel):
+        item1 = "{0}: {1:}".format("MODEL", "CONVOLUTIONAL_MODEL")
+        item2 = "{0}: {1:}".format("OUT_CHANNELS_PER_LAYER", model.OUT_CHANNELS_PER_LAYER)
+        item3 = "{0}: {1:}".format("KERNEL_SIZE_PER_LAYER", model.KERNEL_SIZE_PER_LAYER)
+        print("{0:55} {1:55} {2:55}".format(item1, item2, item3, end="\n"))
+        item1 = "{0}: {1:}".format("STRIDE_PER_LAYER", model.STRIDE_PER_LAYER)
+        item2 = "{0}: {1:}".format("NEURONS_PER_FULLY_CONNECTED_LAYER", model.NEURONS_PER_FULLY_CONNECTED_LAYER)
+        print("{0:55} {1:55}".format(item1, item2), end="\n")
+    elif isinstance(model, ParameterRecurrentModel):
+        item1 = "{0}: {1:}".format("MODEL", "RECURRENT_MODEL")
+        item2 = "{0}: {1:}".format("---", "")
+        print("{0:55} {1:55}".format(item1, item2), end="\n")
+    else:
+        raise ValueError()
 
 
 def print_space(observation_space, action_space):

@@ -23,6 +23,21 @@ class ParameterCartPoleBulletDqn(
 
 
 # OnPolicy
+class ParameterCartPoleBulletA2c(
+    ParameterBase, ParameterCartPoleBullet, ParameterA2c
+):
+    def __init__(self):
+        ParameterBase.__init__(self)
+        ParameterCartPoleBullet.__init__(self)
+        ParameterA2c.__init__(self)
+
+        self.N_VECTORIZED_ENVS = 1
+        self.N_ACTORS = 1
+        self.MAX_TRAINING_STEPS = 100_000
+        self.CONSOLE_LOG_INTERVAL_TRAINING_STEPS = 100
+        self.MODEL = ParameterLinearModel(ModelType.SMALL_LINEAR)
+
+
 class ParameterCartPoleContinuousBulletA2c(
     ParameterBase, ParameterCartPoleContinuousBullet, ParameterA2c
 ):

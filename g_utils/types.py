@@ -30,10 +30,14 @@ class ModelType(enum.Enum):
     SMALL_LINEAR = 0
     MEDIUM_LINEAR = 1
     LARGE_LINEAR = 2
+
     SMALL_CONVOLUTIONAL = 3
     MEDIUM_CONVOLUTIONAL = 4
     LARGE_CONVOLUTIONAL = 5
-    RECURRENT = 2
+
+    SMALL_RECURRENT = 6
+    MEDIUM_RECURRENT = 7
+    LARGE_RECURRENT = 8
 
 
 class AgentType(enum.Enum):
