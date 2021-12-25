@@ -46,6 +46,7 @@ class ParameterCartPoleContinuousBulletA2c(
         ParameterCartPoleContinuousBullet.__init__(self)
         ParameterA2c.__init__(self)
 
+        self.LEARNING_RATE = 0.001
         self.N_VECTORIZED_ENVS = 1
         self.N_ACTORS = 1
         self.MAX_TRAINING_STEPS = 100_000

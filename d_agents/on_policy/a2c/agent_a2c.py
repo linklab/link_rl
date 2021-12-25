@@ -21,12 +21,17 @@ class AgentA2c(Agent):
                 device=device, parameter=parameter
             ).to(device)
         elif isinstance(self.action_space, Box):
+            self.action_bound_low = np.expand_dims(self.action_space.low, axis=-1)
+            self.action_bound_high = np.expand_dims(self.action_space.high, axis=-1)
+
+            self.action_scale_factor = np.max(np.maximum(
+                np.absolute(self.action_bound_low), np.absolute(self.action_bound_high)
+            ), axis=-1)[0]
+
             self.actor_critic_model = ContinuousActorCritic(
                 observation_shape=self.observation_shape, n_out_actions=self.n_out_actions,
                 device=device, parameter=parameter
             ).to(device)
-            self.action_bound_low = np.expand_dims(self.action_space.low, axis=-1)
-            self.action_bound_high = np.expand_dims(self.action_space.high, axis=-1)
         else:
             raise ValueError()
 
@@ -52,6 +57,8 @@ class AgentA2c(Agent):
             return action.cpu().numpy()
         elif isinstance(self.action_space, Box):
             mu_v, std_v = self.actor_critic_model.pi(obs)
+            mu_v = mu_v * self.action_scale_factor
+
             if mode == AgentMode.TRAIN:
                 dist = Normal(loc=mu_v, scale=std_v)
                 actions = dist.sample()

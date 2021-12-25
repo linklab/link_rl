@@ -65,6 +65,7 @@ class ContinuousActorCritic(ActorCritic):
 
         self.mu = nn.Sequential(
             nn.Linear(self.parameter.MODEL.NEURONS_PER_FULLY_CONNECTED_LAYER[-1], self.n_out_actions),
+            nn.Tanh()
         )
 
         # logstds_param = nn.Parameter(torch.full((self.n_out_actions,), 0.1))
