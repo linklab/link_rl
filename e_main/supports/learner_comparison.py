@@ -9,9 +9,7 @@ import torch
 import numpy as np
 
 from e_main.supports.actor import Actor
-from g_utils.commons import get_wandb_obj, get_train_env, get_single_env, console_log_comparison, wandb_log_comparison, \
-    MeanBuffer
-from g_utils.buffers import Buffer
+from g_utils.commons import get_train_env, get_single_env, console_log_comparison, wandb_log_comparison, MeanBuffer
 from g_utils.types import AgentType, AgentMode, Transition
 
 
@@ -47,8 +45,8 @@ class LearnerComparison:
         self.n_rollout_transitions_per_agent = []
         self.last_mean_episode_reward_per_agent = []
         self.last_loss_train_per_agent = []
-
         self.is_terminated_per_agent = []
+        self.is_train_success_done_per_agent = []
 
         self.comparison_stat = comparison_stat
 
@@ -70,6 +68,7 @@ class LearnerComparison:
             self.last_mean_episode_reward_per_agent.append(0.0)
 
             self.is_terminated_per_agent.append(False)
+            self.is_train_success_done_per_agent.append(False)
 
         self.total_time_steps = 0
         self.training_steps = 0
@@ -150,6 +149,7 @@ class LearnerComparison:
                         )
                         if is_train_success_done:
                             self.training_steps_per_agent[agent_idx] += 1
+                        self.is_train_success_done_per_agent[agent_idx] = is_train_success_done
 
             if self.total_time_steps >= self.next_train_time_step:
                 for agent_idx, _ in enumerate(self.agents):
@@ -159,13 +159,12 @@ class LearnerComparison:
                         )
                         if is_train_success_done:
                             self.training_steps_per_agent[agent_idx] += 1
+                        self.is_train_success_done_per_agent[agent_idx] = is_train_success_done
 
                 self.next_train_time_step += self.parameter_c.TRAIN_INTERVAL_GLOBAL_TIME_STEPS
 
-                if all(v == self.training_steps_per_agent[0] for v in self.training_steps_per_agent):
+                if all(self.is_train_success_done_per_agent):
                     self.training_steps += 1
-                else:
-                    raise ValueError("Training of an agent is failed!")
 
             if self.training_steps >= self.next_console_log:
                 console_log_comparison(

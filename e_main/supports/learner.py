@@ -168,11 +168,14 @@ class Learner(mp.Process):
 
             if self.training_steps.value >= self.next_console_log:
                 console_log(
-                    self.train_start_time, self.total_episodes.value,
+                    self.train_start_time,
+                    self.total_episodes.value,
                     self.total_time_steps.value,
                     self.last_mean_episode_reward.value,
-                    self.n_rollout_transitions.value, self.training_steps.value,
-                    self.agent, self.parameter
+                    self.n_rollout_transitions.value,
+                    self.training_steps.value,
+                    self.agent,
+                    self.parameter
                 )
                 self.next_console_log += self.parameter.CONSOLE_LOG_INTERVAL_TRAINING_STEPS
 
