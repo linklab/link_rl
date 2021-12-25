@@ -254,15 +254,15 @@ def console_log(
         )
 
     if parameter.AGENT_TYPE == AgentType.Dqn:
-        console_log += "Q_net_loss: {0:>5.3f}, Epsilon: {1:>4.2f}, ".format(
+        console_log += "Q_net_loss: {0:>6.3f}, Epsilon: {1:>4.2f}, ".format(
             agent.last_q_net_loss.value, agent.epsilon.value
         )
     elif parameter.AGENT_TYPE == AgentType.Reinforce:
-        console_log += "log_policy_objective: {0:5.1f}, ".format(
+        console_log += "log_policy_objective: {0:6.3f}, ".format(
             agent.last_log_policy_objective.value
         )
     elif parameter.AGENT_TYPE == AgentType.A2c:
-        console_log += "critic_loss: {0:5.1f}, log_actor_objective: {1:5.1f}, ".format(
+        console_log += "critic_loss: {0:6.3f}, log_actor_objective: {1:6.3f}, ".format(
             agent.last_critic_loss.value, agent.last_log_actor_objective.value
         )
     else:

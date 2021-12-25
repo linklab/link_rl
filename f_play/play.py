@@ -59,7 +59,7 @@ def main_play(n_episodes):
         model=agent.model,
         env_name=parameter.ENV_NAME,
         agent_type_name=parameter.AGENT_TYPE.name,
-        file_name="200.0_0.0_2021_12_25.pth",
+        file_name="200.0_0.0_2021_12_26.pth",
         parameter=parameter
     )
     play(env, agent, n_episodes=n_episodes)

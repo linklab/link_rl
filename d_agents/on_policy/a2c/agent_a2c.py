@@ -6,7 +6,7 @@ import torch.nn.functional as F
 import torch.multiprocessing as mp
 import numpy as np
 
-from c_models.d_actor_critic_models import ActorCritic, ContinuousActorCritic
+from c_models.d_actor_critic_models import ContinuousActorCritic, DiscreteActorCritic
 from d_agents.agent import Agent
 from g_utils.types import AgentMode
 
@@ -16,7 +16,7 @@ class AgentA2c(Agent):
         super(AgentA2c, self).__init__(observation_space, action_space, device, parameter)
 
         if isinstance(self.action_space, Discrete):
-            self.actor_critic_model = ActorCritic(
+            self.actor_critic_model = DiscreteActorCritic(
                 observation_shape=self.observation_shape, n_out_actions=self.n_out_actions,
                 device=device, parameter=parameter
             ).to(device)
@@ -37,8 +37,11 @@ class AgentA2c(Agent):
 
         self.actor_critic_model.share_memory()
 
-        self.optimizer = optim.Adam(
-            self.actor_critic_model.parameters(), lr=self.parameter.LEARNING_RATE
+        self.actor_optimizer = optim.Adam(
+            self.actor_critic_model.actor_params, lr=self.parameter.LEARNING_RATE
+        )
+        self.critic_optimizer = optim.Adam(
+            self.actor_critic_model.critic_params, lr=self.parameter.LEARNING_RATE
         )
 
         self.model = self.actor_critic_model  # 에이전트 밖에서는 model이라는 이름으로 제어 모델 접근
@@ -81,8 +84,6 @@ class AgentA2c(Agent):
             batch_size=self.parameter.BATCH_SIZE, device=self.device
         )
 
-        self.optimizer.zero_grad()
-
         ###################################
         #  Critic (Value) 손실 산출 - BEGIN #
         ###################################
@@ -101,6 +102,11 @@ class AgentA2c(Agent):
         values = self.actor_critic_model.v(observations)
         # loss_critic.shape: (,) <--  값 1개
         critic_loss = F.mse_loss(td_target_values.detach(), values)
+
+        self.critic_optimizer.zero_grad()
+        critic_loss.backward()
+        torch.nn.utils.clip_grad_value_(self.actor_critic_model.critic_params, self.parameter.CLIP_GRADIENT_VALUE)
+        self.critic_optimizer.step()
         ###################################
         #  Critic (Value)  Loss 산출 - END #
         ###################################
@@ -136,18 +142,18 @@ class AgentA2c(Agent):
         # actor_objective.shape: (,) <--  값 1개
         log_actor_objective = torch.mean(criticized_log_pi_action_v)
         actor_loss = -1.0 * log_actor_objective
+
+        entropy_loss = -1.0 * torch.mean(dist.entropy())
+
+        actor_loss = actor_loss + entropy_loss * self.parameter.ENTROPY_BETA
+
+        self.actor_optimizer.zero_grad()
+        actor_loss.backward()
+        torch.nn.utils.clip_grad_value_(self.actor_critic_model.actor_params, self.parameter.CLIP_GRADIENT_VALUE)
+        self.actor_optimizer.step()
         ##############################
         #  Actor Objective 산출 - END #
         ##############################
-
-        entropy_v = dist.entropy()
-        entropy_loss = -1.0 * entropy_v.mean()
-
-        loss = actor_loss + critic_loss + entropy_loss * self.parameter.ENTROPY_BETA
-
-        loss.backward()
-        torch.nn.utils.clip_grad_value_(self.actor_critic_model.parameters(), self.parameter.CLIP_GRADIENT_VALUE)
-        self.optimizer.step()
 
         self.last_critic_loss.value = critic_loss.item()
         self.last_log_actor_objective.value = log_actor_objective.item()

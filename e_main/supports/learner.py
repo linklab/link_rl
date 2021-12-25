@@ -246,6 +246,8 @@ class Learner(mp.Process):
         print("*" * 120)
 
     def play_for_testing(self, n_test_episodes):
+        self.agent.model.eval()
+
         episode_reward_lst = []
         for i in range(n_test_episodes):
             episode_reward = 0  # cumulative_reward
@@ -256,6 +258,7 @@ class Learner(mp.Process):
 
             while True:
                 action = self.agent.get_action(observation, mode=AgentMode.TEST)
+
                 # action을 통해서 next_state, reward, done, info를 받아온다
                 next_observation, reward, done, _ = self.test_env.step(action[0])
                 next_observation = np.expand_dims(next_observation, axis=0)
@@ -267,5 +270,7 @@ class Learner(mp.Process):
                     break
 
             episode_reward_lst.append(episode_reward)
+
+        self.agent.model.train()
 
         return np.average(episode_reward_lst), np.std(episode_reward_lst)
