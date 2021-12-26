@@ -11,6 +11,7 @@ if PROJECT_HOME not in sys.path:
     sys.path.append(PROJECT_HOME)
 
 ENV_NAME = "PongNoFrameskip-v4"
+
 class A:
     pass
 

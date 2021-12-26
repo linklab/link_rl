@@ -8,7 +8,6 @@ sys.path.append(os.path.abspath(
     os.path.join(os.path.dirname(os.path.realpath(__file__)), os.pardir)
 ))
 
-
 from e_main.supports.main_preamble import *
 from e_main.parameter import parameter
 

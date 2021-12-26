@@ -7,7 +7,6 @@ import torch.nn.functional as F
 from a_configuration.b_base.c_models.convolutional_models import ParameterConvolutionalModel
 from a_configuration.b_base.c_models.linear_models import ParameterLinearModel
 from c_models.a_models import Model
-from g_utils.types import ModelType
 
 
 class ActorCritic(Model):
