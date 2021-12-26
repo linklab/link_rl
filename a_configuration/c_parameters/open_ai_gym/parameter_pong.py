@@ -30,14 +30,15 @@ class ParameterPongA2c(
         ParameterPong.__init__(self)
         ParameterA2c.__init__(self)
 
-        self.BATCH_SIZE = 64
-        self.LEARNING_RATE = 0.0001
+        self.BATCH_SIZE = 128
+        self.LEARNING_RATE = 0.00001
         self.N_STEP = 1
         self.N_VECTORIZED_ENVS = 2
         self.N_ACTORS = 1
         self.MAX_TRAINING_STEPS = 1_000_000
         self.CONSOLE_LOG_INTERVAL_TRAINING_STEPS = 100
         self.TEST_INTERVAL_TRAINING_STEPS = 1_024
+        self.ENTROPY_BETA = 0.0001
         self.BUFFER_CAPACITY = self.BATCH_SIZE
         self.MODEL = ParameterConvolutionalModel(ModelType.MEDIUM_CONVOLUTIONAL)
 
