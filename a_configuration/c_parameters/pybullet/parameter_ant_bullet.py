@@ -16,10 +16,10 @@ class ParameterAntBulletA2c(
 
         self.N_VECTORIZED_ENVS = 1
         self.N_ACTORS = 1
-        self.MAX_TRAINING_STEPS = 1_000_000
+        self.MAX_TRAINING_STEPS = 2_000_000
         self.CONSOLE_LOG_INTERVAL_TRAINING_STEPS = 100
         self.TEST_INTERVAL_TRAINING_STEPS = 1_024
-        self.LEARNING_RATE = 0.00001
+        self.LEARNING_RATE = 0.00005
         self.BUFFER_CAPACITY = self.BATCH_SIZE
         self.MODEL = ParameterLinearModel(ModelType.MEDIUM_LINEAR)
 
