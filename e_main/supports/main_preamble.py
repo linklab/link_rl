@@ -35,20 +35,20 @@ logger.set_level(level=40)
 def get_agent(observation_space, action_space, device=torch.device("cpu"), parameter=None, max_training_steps=None):
     assert isinstance(observation_space, Box)
 
-    if parameter.AGENT_TYPE == AgentType.Dqn:
+    if parameter.AGENT_TYPE == AgentType.DQN:
         assert isinstance(action_space, Discrete)
         agent = AgentDqn(
             observation_space=observation_space, action_space=action_space, device=device, parameter=parameter,
             max_training_steps=max_training_steps
         )
-    elif parameter.AGENT_TYPE == AgentType.Reinforce:
+    elif parameter.AGENT_TYPE == AgentType.REINFORCE:
         assert parameter.N_ACTORS * parameter.N_VECTORIZED_ENVS == 1, \
             "TOTAL NUMBERS OF ENVS should be one"
 
         agent = AgentReinforce(
             observation_space=observation_space, action_space=action_space, device=device, parameter=parameter
         )
-    elif parameter.AGENT_TYPE == AgentType.A2c:
+    elif parameter.AGENT_TYPE == AgentType.A2C:
         agent = AgentA2c(
             observation_space=observation_space, action_space=action_space, device=device, parameter=parameter
         )

@@ -5,7 +5,7 @@ from g_utils.commons import AgentType
 class ParameterDqn(ParameterAgent):
     def __init__(self):
         ParameterAgent.__init__(self)
-        self.AGENT_TYPE = AgentType.Dqn
+        self.AGENT_TYPE = AgentType.DQN
 
         self.LEARNING_RATE = 0.0001
 
@@ -23,7 +23,7 @@ class ParameterDqn(ParameterAgent):
 class ParameterDdpg(ParameterAgent):
     def __init__(self):
         ParameterAgent.__init__(self)
-        self.AGENT_TYPE = AgentType.Ddpg
+        self.AGENT_TYPE = AgentType.DDPG
 
         self.LEARNING_RATE = 0.0001
 
@@ -37,7 +37,7 @@ class ParameterDdpg(ParameterAgent):
 class ParameterSac(ParameterAgent):
     def __init__(self):
         ParameterAgent.__init__(self)
-        self.AGENT_TYPE = AgentType.Sac
+        self.AGENT_TYPE = AgentType.SAC
 
         self.LEARNING_RATE = 0.0001
 

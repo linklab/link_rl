@@ -146,7 +146,7 @@ class Learner(mp.Process):
 
                 self.episode_rewards[actor_id][env_id] = 0.0
 
-                if self.parameter.AGENT_TYPE == AgentType.Reinforce:
+                if self.parameter.AGENT_TYPE == AgentType.REINFORCE:
                     is_train_success_done = self.agent.train(
                         training_steps_v=self.training_steps.value
                     )
@@ -155,7 +155,7 @@ class Learner(mp.Process):
 
             train_conditions = [
                 self.total_time_steps.value >= self.next_train_time_step,
-                self.parameter.AGENT_TYPE != AgentType.Reinforce
+                self.parameter.AGENT_TYPE != AgentType.REINFORCE
             ]
             if all(train_conditions):
                 is_train_success_done = self.agent.train(

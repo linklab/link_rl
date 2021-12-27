@@ -143,7 +143,7 @@ class LearnerComparison:
 
                     self.episode_rewards_per_agent[agent_idx][actor_id][env_id] = 0.0
 
-                    if self.parameter_c.AGENT_PARAMETERS[agent_idx].AGENT_TYPE == AgentType.Reinforce:
+                    if self.parameter_c.AGENT_PARAMETERS[agent_idx].AGENT_TYPE == AgentType.REINFORCE:
                         is_train_success_done = self.agents[agent_idx].train(
                             training_steps_v=self.training_steps_per_agent[agent_idx]
                         )
@@ -153,7 +153,7 @@ class LearnerComparison:
 
             if self.total_time_steps >= self.next_train_time_step:
                 for agent_idx, _ in enumerate(self.agents):
-                    if self.parameter_c.AGENT_PARAMETERS[agent_idx].AGENT_TYPE != AgentType.Reinforce:
+                    if self.parameter_c.AGENT_PARAMETERS[agent_idx].AGENT_TYPE != AgentType.REINFORCE:
                         is_train_success_done = self.agents[agent_idx].train(
                             training_steps_v=self.training_steps_per_agent[agent_idx]
                         )
