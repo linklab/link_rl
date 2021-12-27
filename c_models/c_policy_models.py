@@ -75,7 +75,9 @@ class ContinuousPolicyModel(PolicyModel):
     def __init__(
             self, observation_shape: Tuple[int], n_out_actions: int, device=torch.device("cpu"), parameter=None
     ):
-        super(ContinuousPolicyModel, self).__init__(observation_shape, n_out_actions, device, parameter)
+        super(ContinuousPolicyModel, self).__init__(
+            observation_shape=observation_shape, n_out_actions=n_out_actions, device=device, parameter=parameter
+        )
 
         self.mu = nn.Sequential(
             nn.Linear(self.parameter.MODEL.NEURONS_PER_FULLY_CONNECTED_LAYER[-1], self.n_out_actions),
