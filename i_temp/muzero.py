@@ -15,7 +15,7 @@ def main():
     max_training_steps = 10000
     learner = Trainer(config)
     worker = SelfPlay(config, 0)
-
+    global_steps = 0
     while training_steps < max_training_steps:
         game_history = worker.play_game(
             config.visit_softmax_temperature_fn(training_steps),
@@ -25,7 +25,7 @@ def main():
         )
         replay_buffer.save_game(game_history)
 
-        if training_steps % 10 == 0:
+        if replay_buffer.num_played_games % 10 == 0:
             training_steps += 1
             batch = replay_buffer.get_batch()
             (
@@ -47,10 +47,3 @@ def main():
 
 if __name__ == "__main__":
     main()
-
-
-
-
-
-
-
