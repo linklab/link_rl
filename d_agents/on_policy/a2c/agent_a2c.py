@@ -18,7 +18,7 @@ class AgentA2c(Agent):
         if isinstance(self.action_space, Discrete):
             self.actor_critic_model = DiscreteActorCriticModel(
                 observation_shape=self.observation_shape, n_out_actions=self.n_out_actions,
-                device=device, parameter=parameter
+                n_discrete_actions=self.n_discrete_actions, device=device, parameter=parameter
             ).to(device)
         elif isinstance(self.action_space, Box):
             self.action_bound_low = np.expand_dims(self.action_space.low, axis=0)

@@ -10,10 +10,13 @@ from g_utils.types import ModelType
 
 
 class QNet(Model):
+    # self.n_out_actions: 1
+    # self.n_discrete_actions: 4 (for gridworld)
     def __init__(
-            self, observation_shape: Tuple[int], n_out_actions: int, device=torch.device("cpu"), parameter=None
+            self, observation_shape: Tuple[int], n_out_actions: int, n_discrete_actions=None,
+            device=torch.device("cpu"), parameter=None
     ):
-        super(QNet, self).__init__(observation_shape, n_out_actions, device, parameter)
+        super(QNet, self).__init__(observation_shape, n_out_actions, n_discrete_actions, device, parameter)
 
         if isinstance(self.parameter.MODEL, ParameterLinearModel):
             input_n_features = self.observation_shape[0]
@@ -27,7 +30,7 @@ class QNet(Model):
             raise ValueError()
 
         self.fc_last = nn.Linear(
-            self.parameter.MODEL.NEURONS_PER_FULLY_CONNECTED_LAYER[-1], self.n_out_actions
+            self.parameter.MODEL.NEURONS_PER_FULLY_CONNECTED_LAYER[-1], self.n_discrete_actions
         )
 
         self.version = 0

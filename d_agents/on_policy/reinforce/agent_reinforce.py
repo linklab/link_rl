@@ -19,7 +19,7 @@ class AgentReinforce(Agent):
 
         self.policy = DiscretePolicyModel(
             observation_shape=self.observation_shape, n_out_actions=self.n_out_actions,
-            device=device, parameter=parameter
+            n_discrete_actions=self.n_discrete_actions, device=device, parameter=parameter
         ).to(device)
 
         self.policy.share_memory()

@@ -48,7 +48,8 @@ class AgentType(enum.Enum):
     Reinforce = 4
     A2c = 5
     Ddpg = 6
-
+    Td3 = 7
+    Sac = 8
 
 OnPolicyAgentTypes = [AgentType.Reinforce, AgentType.A2c]
 OffPolicyAgentTypes = [AgentType.Dqn]

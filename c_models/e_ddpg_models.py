@@ -12,9 +12,10 @@ from c_models.c_policy_models import DiscreteActorModel, ContinuousActorModel
 
 class DdpgCriticModel(Model):
     def __init__(
-            self, observation_shape: Tuple[int], n_out_actions: int, device=torch.device("cpu"), parameter=None
+            self, observation_shape: Tuple[int], n_out_actions: int, n_discrete_actions=None,
+            device=torch.device("cpu"), parameter=None
     ):
-        super(DdpgCriticModel, self).__init__(observation_shape, n_out_actions, device, parameter)
+        super(DdpgCriticModel, self).__init__(observation_shape, n_out_actions, n_discrete_actions, device, parameter)
 
         #######################
         # CRITIC MODEL: BEGIN #
@@ -59,21 +60,24 @@ class DdpgCriticModel(Model):
             raise ValueError()
         return x
 
-    def v(self, x, a):
+    def q(self, x, a):
         x = self.forward_critic(x, a)
-        v = self.critic_fc_last(x)
-        return v
+        q_value = self.critic_fc_last(x)
+        return q_value
 
 
 class DiscreteDdpgModel(DiscreteActorModel, DdpgCriticModel):
     def __init__(
-            self, observation_shape: Tuple[int], n_out_actions: int, device=torch.device("cpu"), parameter=None
+            self, observation_shape: Tuple[int], n_out_actions: int, n_discrete_actions=None,
+            device=torch.device("cpu"), parameter=None
     ):
-        super(DiscreteDdpgModel, self).__init__(observation_shape, n_out_actions, device, parameter)
+        DiscreteActorModel.__init__(observation_shape, n_out_actions, n_discrete_actions, device, parameter)
+        DdpgCriticModel.__init__(observation_shape, n_out_actions, n_discrete_actions, device, parameter)
 
 
 class ContinuousDdpgModel(ContinuousActorModel, DdpgCriticModel):
     def __init__(
             self, observation_shape: Tuple[int], n_out_actions: int, device=torch.device("cpu"), parameter=None
     ):
-        super(ContinuousDdpgModel, self).__init__(observation_shape, n_out_actions, device, parameter)
+        ContinuousActorModel.__init__(observation_shape, n_out_actions, device, parameter)
+        DdpgCriticModel.__init__(observation_shape, n_out_actions, device, parameter)

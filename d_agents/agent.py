@@ -24,9 +24,12 @@ class Agent:
         self.action_shape = action_space.shape
 
         if isinstance(action_space, Discrete):
-            self.n_out_actions = action_space.n
+            # TODO: Multi Discrete Space
+            self.n_out_actions = 1
+            self.n_discrete_actions = action_space.n
         elif isinstance(action_space, Box):
             self.n_out_actions = action_space.shape[0]
+            self.n_discrete_actions = None
         else:
             raise ValueError()
 

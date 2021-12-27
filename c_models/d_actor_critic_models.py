@@ -12,9 +12,10 @@ from c_models.c_policy_models import DiscreteActorModel, ContinuousActorModel
 
 class CriticModel(Model):
     def __init__(
-            self, observation_shape: Tuple[int], n_out_actions: int, device=torch.device("cpu"), parameter=None
+            self, observation_shape: Tuple[int], n_out_actions: int, n_discrete_actions=None,
+            device=torch.device("cpu"), parameter=None
     ):
-        super(CriticModel, self).__init__(observation_shape, n_out_actions, device, parameter)
+        super(CriticModel, self).__init__(observation_shape, n_out_actions, n_discrete_actions, device, parameter)
 
         #######################
         # CRITIC MODEL: BEGIN #
@@ -63,9 +64,10 @@ class CriticModel(Model):
 
 class DiscreteActorCriticModel(DiscreteActorModel, CriticModel):
     def __init__(
-            self, observation_shape: Tuple[int], n_out_actions: int, device=torch.device("cpu"), parameter=None
+            self, observation_shape: Tuple[int], n_out_actions: int, n_discrete_actions=None,
+            device=torch.device("cpu"), parameter=None
     ):
-        super(DiscreteActorCriticModel, self).__init__(observation_shape, n_out_actions, device, parameter)
+        super(DiscreteActorCriticModel, self).__init__(observation_shape, n_out_actions, n_discrete_actions, device, parameter)
 
 
 class ContinuousActorCriticModel(ContinuousActorModel, CriticModel):
