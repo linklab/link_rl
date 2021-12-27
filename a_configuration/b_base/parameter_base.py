@@ -34,3 +34,5 @@ class ParameterBase:
         self.USE_WANDB = False
         self.WANDB_ENTITY = "link-koreatech"
 
+        self.PLAY_MODEL_FILE_NAME = ""
+

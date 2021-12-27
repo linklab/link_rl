@@ -70,6 +70,8 @@ for parameter in parameter_list:
     parameter.WANDB_ENTITY = "link-koreatech"
 
 
+parameter.PLAY_MODEL_FILE_NAME = ""
+
 if __name__ == "__main__":
     parameter = parameter_pong_a2c
     print_basic_info(device=None, parameter=parameter)
