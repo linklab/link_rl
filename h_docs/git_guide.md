@@ -1,14 +1,24 @@
 # Git Guide
 
 ## Commit
-- Add cancel (unstage)
+- Cancel add (unstage)
   ```commandline
   git reset HEAD
   ```
+  In detail, --mixed option is the default
+  ```commandline
+  git reset --mixed HEAD
+  ```
   
-- Add cancel a specific file
+
+- Cancel add a specific file
   ```commandline
   git reset HEAD <file_name>
+  ```
+
+- Return files to HEAD (Note: All changes are lost)
+  ```commandline
+  git reset --hard HEAD
   ```
 
 ## Branch

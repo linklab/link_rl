@@ -9,18 +9,18 @@
 - OpenAI GYM
   - conda install -c conda-forge gym-all
 - lz4
-  - pip install lz4
+  - conda install -c conda-forge lz4
 - wandb
-  - pip install wandb
+  - conda install -c conda-forge wandb
   - wandb login --relogin
 - nvidia-ml-py3
   - pip install nvidia-ml-py3
 - plotly
-  - pip install plotly
+  - conda install -c plotly plotly
 - pandas
-  - conda install pandas
+  - conda install -c conda-forge pandas
 - matplotlib
-  - conda install matplotlib
+  - conda install -c conda-forge matplotlib
 - pybullet
   - conda install -c conda-forge pybullet
   - 설치 후 테스트
@@ -30,7 +30,7 @@
 
 ### 3. gitignore 적용
 
-- git rm -r --cached .
+- git reset HEAD
 - git add .
 - git commit -m "Apply .gitignore"  
 
