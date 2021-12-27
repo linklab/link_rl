@@ -44,7 +44,6 @@ parameter_list.append(parameter_cart_pole_bullet_dqn)
 parameter_cart_pole_continuous_bullet_a2c = ParameterCartPoleContinuousBulletA2c()
 parameter_list.append(parameter_cart_pole_continuous_bullet_a2c)
 
-
 ######################
 ##    ANT_BULLET    ##
 ######################

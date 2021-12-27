@@ -187,7 +187,7 @@ class Learner(mp.Process):
                 self.test_idx.value += 1
 
             if self.training_steps.value >= self.parameter.MAX_TRAINING_STEPS:
-                print("[TRAIN TERMINATION] MAX_TRAINING_STEPS ({0}) REACHES!!!".format(
+                print("[TRAIN TERMINATION] MAX_TRAINING_STEPS ({0:,}) REACHES!!!".format(
                     self.parameter.MAX_TRAINING_STEPS
                 ))
                 self.is_terminated.value = True

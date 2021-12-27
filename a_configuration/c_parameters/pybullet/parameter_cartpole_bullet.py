@@ -38,6 +38,8 @@ class ParameterCartPoleBulletA2c(
         self.MODEL = ParameterLinearModel(ModelType.SMALL_LINEAR)
 
 
+#############################################################################################
+
 class ParameterCartPoleContinuousBulletA2c(
     ParameterBase, ParameterCartPoleContinuousBullet, ParameterA2c
 ):
@@ -52,3 +54,5 @@ class ParameterCartPoleContinuousBulletA2c(
         self.MAX_TRAINING_STEPS = 100_000
         self.CONSOLE_LOG_INTERVAL_TRAINING_STEPS = 100
         self.MODEL = ParameterLinearModel(ModelType.SMALL_LINEAR)
+
+

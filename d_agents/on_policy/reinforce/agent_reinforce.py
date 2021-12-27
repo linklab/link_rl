@@ -1,9 +1,11 @@
+import numpy as np
 import torch.optim as optim
 import torch
-from torch.distributions import Categorical
+from gym.spaces import Discrete, Box
+from torch.distributions import Categorical, Normal
 import torch.multiprocessing as mp
 
-from c_models.c_policy_models import Policy
+from c_models.c_policy_models import DiscretePolicyModel, ContinuousPolicyModel
 from d_agents.agent import Agent
 from g_utils.types import AgentMode
 
@@ -12,9 +14,14 @@ class AgentReinforce(Agent):
     def __init__(self, observation_space, action_space, device, parameter):
         super(AgentReinforce, self).__init__(observation_space, action_space, device, parameter)
 
-        self.policy = Policy(
-            observation_shape=self.observation_shape, n_out_actions=self.n_out_actions, device=device
+        assert self.parameter.N_STEP == 1
+        assert isinstance(self.action_space, Discrete)
+
+        self.policy = DiscretePolicyModel(
+            observation_shape=self.observation_shape, n_out_actions=self.n_out_actions,
+            device=device, parameter=parameter
         ).to(device)
+
         self.policy.share_memory()
 
         self.optimizer = optim.Adam(self.policy.parameters(), lr=self.parameter.LEARNING_RATE)
@@ -24,7 +31,7 @@ class AgentReinforce(Agent):
         self.last_log_policy_objective = mp.Value('d', 0.0)
 
     def get_action(self, obs, mode=AgentMode.TRAIN):
-        action_prob = self.policy.forward(obs)
+        action_prob = self.policy.pi(obs)
         m = Categorical(probs=action_prob)
 
         if mode == AgentMode.TRAIN:
@@ -41,22 +48,19 @@ class AgentReinforce(Agent):
         G = 0
         return_lst = []
         for reward in reversed(rewards):
-            G = reward + self.parameter.GAMMA ** self.parameter.N_STEP * G
+            G = reward + self.parameter.GAMMA * G
             return_lst.append(G)
-        return_lst = torch.tensor(
-            return_lst[::-1], dtype=torch.float32, device=self.device
-        )
+        return_lst = torch.tensor(return_lst[::-1], dtype=torch.float32, device=self.device)
 
-        action_probs = self.policy.forward(observations)
-        action_probs_selected = action_probs.gather(dim=-1, index=actions)
+        action_probs = self.policy.pi(observations)
+        action_probs_selected = action_probs.gather(dim=-1, index=actions).squeeze(dim=-1)
 
-        # action_probs_selected.shape: (32, 1)
-        # return_lst.shape: (32, 1)
-        log_pi_returns = torch.multiply(
-            torch.log(action_probs_selected), return_lst
-        )
+        # action_probs_selected.shape: (32,)
+        # return_lst.shape: (32,)
+        # print(action_probs_selected.shape, return_lst.shape, "!!!!!!1")
+        log_pi_returns = torch.log(action_probs_selected) * return_lst
         log_policy_objective = torch.sum(log_pi_returns)
-        loss = torch.multiply(log_policy_objective, -1.0)
+        loss = -1.0 * log_policy_objective
 
         loss.backward()
         torch.nn.utils.clip_grad_value_(self.policy.parameters(), self.parameter.CLIP_GRADIENT_VALUE)

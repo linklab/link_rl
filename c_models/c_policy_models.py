@@ -1,63 +1,104 @@
-from collections import OrderedDict
+from abc import abstractmethod
 from typing import Tuple
 import numpy as np
 import torch
 from torch import nn
 import torch.nn.functional as F
 
+from a_configuration.b_base.c_models.convolutional_models import ParameterConvolutionalModel
+from a_configuration.b_base.c_models.linear_models import ParameterLinearModel
+from a_configuration.b_base.c_models.recurrent_models import ParameterRecurrentModel
 from c_models.a_models import Model
 
 
-class Policy(Model):
+class PolicyModel(Model):
     def __init__(
             self, observation_shape: Tuple[int], n_out_actions: int, device=torch.device("cpu"), parameter=None
     ):
-        super(Policy, self).__init__(observation_shape, n_out_actions, device, parameter)
+        super(PolicyModel, self).__init__(observation_shape, n_out_actions, device, parameter)
 
-        fc_layers_dict = OrderedDict()
-        fc_layers_dict["fc_0"] = nn.Linear(observation_shape[0], self.parameter.NEURONS_PER_FULLY_CONNECTED_LAYER[0])
-        fc_layers_dict["fc_0_activation"] = nn.LeakyReLU()
+        self.actor_params = []
+        if isinstance(self.parameter.MODEL, ParameterLinearModel):
+            input_n_features = self.observation_shape[0]
+            self.actor_fc_layers = self.get_linear_layers(input_n_features=input_n_features)
+            self.actor_params += list(self.actor_fc_layers.parameters())
+        elif isinstance(self.parameter.MODEL, ParameterConvolutionalModel):
+            input_n_channels = self.observation_shape[0]
+            self.actor_conv_layers = self.get_conv_layers(input_n_channels=input_n_channels)
+            self.actor_params += list(self.actor_conv_layers.parameters())
+            conv_out_flat_size = self._get_conv_out(self.actor_conv_layers, observation_shape)
+            self.actor_fc_layers = self.get_linear_layers(input_n_features=conv_out_flat_size)
+            self.actor_params += list(self.actor_fc_layers.parameters())
+        elif isinstance(self.parameter.MODEL, ParameterRecurrentModel):
+            pass
+        else:
+            raise ValueError()
 
-        for idx in range(1, len(self.parameter.NEURONS_PER_FULLY_CONNECTED_LAYER) - 1):
-            fc_layers_dict["fc_{0}".format(idx)] = nn.Linear(
-                self.parameter.NEURONS_PER_FULLY_CONNECTED_LAYER[idx], self.parameter.NEURONS_PER_FULLY_CONNECTED_LAYER[idx + 1]
-            )
-            fc_layers_dict["fc_{0}_activation".format(idx)] = nn.LeakyReLU()
-
-        self.fc_layers = nn.Sequential(fc_layers_dict)
-        self.fc_last = nn.Linear(self.parameter.NEURONS_PER_FULLY_CONNECTED_LAYER[-1], n_out_actions)
-
-        # self.fc1 = nn.Linear(n_features, 128)
-        # self.fc2 = nn.Linear(128, 128)
-        # self.fc3 = nn.Linear(128, n_actions)
-
-    def forward(self, x):
-        # x = [1.0, 0.5, 0.8, 0.8]  --> [1.7, 2.3] --> [0.3, 0.7]
-        # x = [
-        #  [1.0, 0.5, 0.8, 0.8]
-        #  [1.0, 0.5, 0.8, 0.8]
-        #  [1.0, 0.5, 0.8, 0.8]
-        #  ...
-        #  [1.0, 0.5, 0.8, 0.8]
-        # ]
-
+    def forward_actor(self, x):
         if isinstance(x, np.ndarray):
             x = torch.tensor(x, dtype=torch.float32, device=self.device)
 
-        x = self.fc_layers(x)
-        x = self.fc_last(x)
-        x = F.softmax(x, dim=-1)
-
+        if isinstance(self.parameter.MODEL, ParameterLinearModel):
+            x = self.actor_fc_layers(x)
+        elif isinstance(self.parameter.MODEL, ParameterConvolutionalModel):
+            conv_out = self.actor_conv_layers(x)
+            conv_out = torch.flatten(conv_out, start_dim=1)
+            x = self.actor_fc_layers(conv_out)
+        else:
+            raise ValueError()
         return x
 
-    # def get_action_with_action_prob_selected(self, x, mode=AgentMode.TRAIN):
-    #     action_prob = self.forward(x)   # [0.3, 0.7]
-    #     m = Categorical(probs=action_prob)
-    #
-    #     if mode == AgentMode.TRAIN:
-    #         action = m.sample()
-    #         action_prob_selected = action_prob[action]
-    #     else:
-    #         action = torch.argmax(m.probs, dim=-1)
-    #         action_prob_selected = None
-    #     return action.cpu().numpy(), action_prob_selected
+    @abstractmethod
+    def pi(self, x):
+        pass
+
+
+class DiscretePolicyModel(PolicyModel):
+    def __init__(
+            self, observation_shape: Tuple[int], n_out_actions: int, device=torch.device("cpu"), parameter=None
+    ):
+        super(DiscretePolicyModel, self).__init__(observation_shape, n_out_actions, device, parameter)
+
+        self.actor_fc_pi = nn.Linear(self.parameter.MODEL.NEURONS_PER_FULLY_CONNECTED_LAYER[-1], self.n_out_actions)
+        self.actor_params += list(self.actor_fc_pi.parameters())
+
+    def pi(self, x):
+        x = self.forward_actor(x)
+        x = self.actor_fc_pi(x)
+        prob = F.softmax(x, dim=-1)
+        return prob
+
+
+class ContinuousPolicyModel(PolicyModel):
+    def __init__(
+            self, observation_shape: Tuple[int], n_out_actions: int, device=torch.device("cpu"), parameter=None
+    ):
+        super(ContinuousPolicyModel, self).__init__(observation_shape, n_out_actions, device, parameter)
+
+        self.mu = nn.Sequential(
+            nn.Linear(self.parameter.MODEL.NEURONS_PER_FULLY_CONNECTED_LAYER[-1], self.n_out_actions),
+            nn.Tanh()
+        )
+
+        logstds_param = nn.Parameter(torch.full((self.n_out_actions,), 0.1))
+        self.register_parameter("logstds", logstds_param)
+        self.actor_params += list(self.mu.parameters())
+        self.actor_params.append(self.logstds)
+
+        # self.logstd = nn.Sequential(
+        #     nn.Linear(self.parameter.MODEL.NEURONS_PER_FULLY_CONNECTED_LAYER[-1], self.n_out_actions),
+        #     nn.Softplus()
+        # )
+        # self.actor_params += list(self.mu.parameters())
+        # self.actor_params += list(self.logstd.parameters())
+
+    def pi(self, x):
+        x = self.forward_actor(x)
+        mu_v = self.mu(x)
+        std_v = F.softplus(self.logstds.exp())
+        #std_v = self.logstd(x).exp()
+        return mu_v, std_v
+
+
+DiscreteActorModel = DiscretePolicyModel
+ContinuousActorModel = ContinuousPolicyModel

@@ -6,7 +6,7 @@ import torch.nn.functional as F
 import torch.multiprocessing as mp
 import numpy as np
 
-from c_models.d_actor_critic_models import ContinuousActorCritic, DiscreteActorCritic
+from c_models.d_actor_critic_models import ContinuousActorCriticModel, DiscreteActorCriticModel
 from d_agents.agent import Agent
 from g_utils.types import AgentMode
 
@@ -16,7 +16,7 @@ class AgentA2c(Agent):
         super(AgentA2c, self).__init__(observation_space, action_space, device, parameter)
 
         if isinstance(self.action_space, Discrete):
-            self.actor_critic_model = DiscreteActorCritic(
+            self.actor_critic_model = DiscreteActorCriticModel(
                 observation_shape=self.observation_shape, n_out_actions=self.n_out_actions,
                 device=device, parameter=parameter
             ).to(device)
@@ -28,7 +28,7 @@ class AgentA2c(Agent):
                 np.absolute(self.action_bound_low), np.absolute(self.action_bound_high)
             ), axis=-1)[0]
 
-            self.actor_critic_model = ContinuousActorCritic(
+            self.actor_critic_model = ContinuousActorCriticModel(
                 observation_shape=self.observation_shape, n_out_actions=self.n_out_actions,
                 device=device, parameter=parameter
             ).to(device)
@@ -37,12 +37,8 @@ class AgentA2c(Agent):
 
         self.actor_critic_model.share_memory()
 
-        self.actor_optimizer = optim.Adam(
-            self.actor_critic_model.actor_params, lr=self.parameter.LEARNING_RATE
-        )
-        self.critic_optimizer = optim.Adam(
-            self.actor_critic_model.critic_params, lr=self.parameter.LEARNING_RATE
-        )
+        self.actor_optimizer = optim.Adam(self.actor_critic_model.actor_params, lr=self.parameter.LEARNING_RATE)
+        self.critic_optimizer = optim.Adam(self.actor_critic_model.critic_params, lr=self.parameter.LEARNING_RATE)
 
         self.model = self.actor_critic_model  # 에이전트 밖에서는 model이라는 이름으로 제어 모델 접근
 

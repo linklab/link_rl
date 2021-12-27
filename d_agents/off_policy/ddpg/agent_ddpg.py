@@ -1,11 +1,11 @@
-# https://www.deeplearningwizard.com/deep_learning/deep_reinforcement_learning_pytorch/dynamic_programming_frozenlake/
 import torch.optim as optim
 import numpy as np
 import torch
 import torch.nn.functional as F
 import torch.multiprocessing as mp
+from gym.spaces import Discrete, Box
 
-from c_models.c_policy_models import QNet, CnnQNet
+from c_models.e_ddpg_models import DiscreteDdpgModel, ContinuousDdpgModel
 from d_agents.agent import Agent
 from g_utils.commons import EpsilonTracker
 from g_utils.types import AgentMode, ModelType
@@ -15,50 +15,46 @@ class AgentDdpg(Agent):
     def __init__(self, observation_shape, n_actions, device, parameter, max_training_steps=None):
         super(AgentDdpg, self).__init__(observation_shape, n_actions, device, parameter)
 
-        if self.parameter.MODEL_TYPE == ModelType.LINEAR:
-            assert self.parameter.NEURONS_PER_FULLY_CONNECTED_LAYER
-            self.q_net = QNet(
-                n_features=observation_shape[0], n_actions=n_actions, device=device, parameter=parameter
+        if isinstance(self.action_space, Discrete):
+            self.ddpg_model = DiscreteDdpgModel(
+                observation_shape=self.observation_shape, n_out_actions=self.n_out_actions,
+                device=device, parameter=parameter
             ).to(device)
 
-            self.target_q_net = QNet(
-                n_features=self.q_net.n_features, n_actions=self.q_net.n_actions, device=device, parameter=parameter
+            self.target_ddpg_model = DiscreteDdpgModel(
+                observation_shape=self.observation_shape, n_out_actions=self.n_out_actions,
+                device=device, parameter=parameter
             ).to(device)
-        elif self.parameter.MODEL_TYPE == ModelType.CONVOLUTIONAL:
-            assert self.parameter.OUT_CHANNELS_PER_LAYER
-            assert self.parameter.KERNEL_SIZE_PER_LAYER
-            assert self.parameter.STRIDE_PER_LAYER
-            assert self.parameter.NEURONS_PER_FULLY_CONNECTED_LAYER
+        elif isinstance(self.action_space, Box):
+            self.action_bound_low = np.expand_dims(self.action_space.low, axis=0)
+            self.action_bound_high = np.expand_dims(self.action_space.high, axis=0)
 
-            assert len(observation_shape) == 3
-            self.q_net = CnnQNet(
-                observation_shape=observation_shape, n_actions=n_actions, device=device, parameter=parameter
+            self.action_scale_factor = np.max(np.maximum(
+                np.absolute(self.action_bound_low), np.absolute(self.action_bound_high)
+            ), axis=-1)[0]
+
+            self.ddpg_model = ContinuousDdpgModel(
+                observation_shape=self.observation_shape, n_out_actions=self.n_out_actions,
+                device=device, parameter=parameter
             ).to(device)
 
-            self.target_q_net = CnnQNet(
-                observation_shape=self.q_net.observation_shape, n_actions=self.q_net.n_actions, device=device, parameter=parameter
+            self.target_ddpg_model = ContinuousDdpgModel(
+                observation_shape=self.observation_shape, n_out_actions=self.n_out_actions,
+                device=device, parameter=parameter
             ).to(device)
         else:
             raise ValueError()
 
-        self.q_net.share_memory()
-        self.target_q_net.load_state_dict(self.q_net.state_dict())
+        self.ddpg_model.share_memory()
+        self.target_ddpg_model.load_state_dict(self.ddpg_model.state_dict())
 
-        self.optimizer = optim.Adam(
-            self.q_net.parameters(), lr=self.parameter.LEARNING_RATE
-        )
+        self.actor_optimizer = optim.Adam(self.ddpg_model.actor_params, lr=self.parameter.LEARNING_RATE)
+        self.critic_optimizer = optim.Adam(self.ddpg_model.critic_params, lr=self.parameter.LEARNING_RATE)
 
-        self.epsilon_tracker = EpsilonTracker(
-            epsilon_init=self.parameter.EPSILON_INIT,
-            epsilon_final=self.parameter.EPSILON_FINAL,
-            epsilon_final_training_step=self.parameter.EPSILON_FINAL_TRAINING_STEP_PERCENT * max_training_steps
-        )
-        self.epsilon = mp.Value('d', self.parameter.EPSILON_INIT)  # d: float
-
-        self.model = self.q_net
+        self.model = self.ddpg_model
         self.training_steps = 0
 
-        self.last_q_net_loss = mp.Value('d', 0.0)
+        self.last_critic_loss = mp.Value('d', 0.0)
 
     def get_action(self, obs, mode=AgentMode.TRAIN):
         out = self.q_net.forward(obs)
