@@ -78,8 +78,11 @@
 - https://kibua20.tistory.com/40
 - http://aodis.egloos.com/5964233
 
-### 10. Unity ML-Agent 설치 및 활용법
+### 10. Mujoco 설치 및 활용법
 
 
-### 11. Reference
+### 11. Unity ML-Agent 설치 및 활용법
+
+
+### 12. Reference
 - https://github.com/PacktPublishing/Deep-Reinforcement-Learning-Hands-On-Second-Edition

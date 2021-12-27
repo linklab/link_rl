@@ -13,9 +13,10 @@ from c_models.a_models import Model
 
 class PolicyModel(Model):
     def __init__(
-            self, observation_shape: Tuple[int], n_out_actions: int, device=torch.device("cpu"), parameter=None
+            self, observation_shape: Tuple[int], n_out_actions: int, n_discrete_actions=None,
+            device=torch.device("cpu"), parameter=None
     ):
-        super(PolicyModel, self).__init__(observation_shape, n_out_actions, device, parameter)
+        super(PolicyModel, self).__init__(observation_shape, n_out_actions, n_discrete_actions, device, parameter)
 
         self.actor_params = []
         if isinstance(self.parameter.MODEL, ParameterLinearModel):
@@ -55,18 +56,19 @@ class PolicyModel(Model):
 
 class DiscretePolicyModel(PolicyModel):
     def __init__(
-            self, observation_shape: Tuple[int], n_out_actions: int, device=torch.device("cpu"), parameter=None
+            self, observation_shape: Tuple[int], n_out_actions: int, n_discrete_actions=None,
+            device=torch.device("cpu"), parameter=None
     ):
-        super(DiscretePolicyModel, self).__init__(observation_shape, n_out_actions, device, parameter)
+        super(DiscretePolicyModel, self).__init__(observation_shape, n_out_actions, n_discrete_actions, device, parameter)
 
-        self.actor_fc_pi = nn.Linear(self.parameter.MODEL.NEURONS_PER_FULLY_CONNECTED_LAYER[-1], self.n_out_actions)
+        self.actor_fc_pi = nn.Linear(self.parameter.MODEL.NEURONS_PER_FULLY_CONNECTED_LAYER[-1], self.n_discrete_actions)
         self.actor_params += list(self.actor_fc_pi.parameters())
 
     def pi(self, x):
         x = self.forward_actor(x)
         x = self.actor_fc_pi(x)
-        prob = F.softmax(x, dim=-1)
-        return prob
+        action_prob = F.softmax(x, dim=-1)
+        return action_prob
 
 
 class ContinuousPolicyModel(PolicyModel):
@@ -82,6 +84,7 @@ class ContinuousPolicyModel(PolicyModel):
 
         logstds_param = nn.Parameter(torch.full((self.n_out_actions,), 0.1))
         self.register_parameter("logstds", logstds_param)
+
         self.actor_params += list(self.mu.parameters())
         self.actor_params.append(self.logstds)
 

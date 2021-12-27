@@ -7,11 +7,13 @@ import numpy as np
 
 class Model(nn.Module):
     def __init__(
-            self, observation_shape: Tuple[int], n_out_actions: int, device=torch.device("cpu"), parameter=None
+            self, observation_shape: Tuple[int], n_out_actions: int, n_discrete_actions=None,
+            device=torch.device("cpu"), parameter=None
     ):
         super(Model, self).__init__()
         self.observation_shape = observation_shape
         self.n_out_actions = n_out_actions
+        self.n_discrete_actions = n_discrete_actions
         self.device = device
         self.parameter = parameter
 
