@@ -50,15 +50,15 @@ class Agent:
         self.before_train()
 
         is_train_success_done = False
-        if self.parameter.AGENT_TYPE == AgentType.Dqn:
+        if self.parameter.AGENT_TYPE == AgentType.DQN:
             if len(self.buffer) >= self.parameter.MIN_BUFFER_SIZE_FOR_TRAIN:
                 self.train_dqn(training_steps_v=training_steps_v)
                 is_train_success_done = True
-        elif self.parameter.AGENT_TYPE == AgentType.A2c:
+        elif self.parameter.AGENT_TYPE == AgentType.A2C:
             if len(self.buffer) >= self.parameter.BATCH_SIZE:
                 self.train_a2c()
                 is_train_success_done = True
-        elif self.parameter.AGENT_TYPE == AgentType.Reinforce:
+        elif self.parameter.AGENT_TYPE == AgentType.REINFORCE:
             if len(self.buffer) > 0:
                 self.train_reinforce()
                 is_train_success_done = True

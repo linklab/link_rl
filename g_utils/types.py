@@ -41,15 +41,15 @@ class ModelType(enum.Enum):
 
 
 class AgentType(enum.Enum):
-    Dqn = 0
+    DQN = 0
     DOUBLE_DQN = 1
     DUELING_DQN = 2
     DOUBLE_DUELING_DQN = 3
-    Reinforce = 4
-    A2c = 5
-    Ddpg = 6
-    Td3 = 7
-    Sac = 8
+    REINFORCE = 4
+    A2C = 5
+    DDPG = 6
+    TD3 = 7
+    SAC = 8
 
-OnPolicyAgentTypes = [AgentType.Reinforce, AgentType.A2c]
-OffPolicyAgentTypes = [AgentType.Dqn]
+OnPolicyAgentTypes = [AgentType.REINFORCE, AgentType.A2C]
+OffPolicyAgentTypes = [AgentType.DQN]

@@ -253,15 +253,15 @@ def console_log(
             train_steps_v / total_training_time
         )
 
-    if parameter.AGENT_TYPE == AgentType.Dqn:
+    if parameter.AGENT_TYPE == AgentType.DQN:
         console_log += "Q_net_loss: {0:>6.3f}, Epsilon: {1:>4.2f}, ".format(
             agent.last_q_net_loss.value, agent.epsilon.value
         )
-    elif parameter.AGENT_TYPE == AgentType.Reinforce:
+    elif parameter.AGENT_TYPE == AgentType.REINFORCE:
         console_log += "log_policy_objective: {0:6.3f}, ".format(
             agent.last_log_policy_objective.value
         )
-    elif parameter.AGENT_TYPE == AgentType.A2c:
+    elif parameter.AGENT_TYPE == AgentType.A2C:
         console_log += "critic_loss: {0:6.3f}, log_actor_objective: {1:6.3f}, ".format(
             agent.last_critic_loss.value, agent.last_log_actor_objective.value
         )
@@ -298,15 +298,15 @@ def console_log_comparison(
                 training_steps_per_agent[agent_idx]
             )
 
-        if parameter_c.AGENT_PARAMETERS[agent_idx].AGENT_TYPE == AgentType.Dqn:
+        if parameter_c.AGENT_PARAMETERS[agent_idx].AGENT_TYPE == AgentType.DQN:
             console_log += "Q_net_loss: {0:>6.3f}, Epsilon: {1:>4.2f}, ".format(
                 agent.last_q_net_loss.value, agent.epsilon.value
             )
-        elif parameter_c.AGENT_PARAMETERS[agent_idx].AGENT_TYPE == AgentType.Reinforce:
+        elif parameter_c.AGENT_PARAMETERS[agent_idx].AGENT_TYPE == AgentType.REINFORCE:
             console_log += "log_policy_objective: {0:6.3f}, ".format(
                 agent.last_log_policy_objective.value
             )
-        elif parameter_c.AGENT_PARAMETERS[agent_idx].AGENT_TYPE == AgentType.A2c:
+        elif parameter_c.AGENT_PARAMETERS[agent_idx].AGENT_TYPE == AgentType.A2C:
             console_log += "critic_loss: {0:6.3f}, log_actor_objective: {1:5.3f}, ".format(
                 agent.last_critic_loss.value, agent.last_log_actor_objective.value
             )
@@ -351,12 +351,12 @@ def wandb_log(learner, wandb_obj, parameter):
         "Total Time Steps": learner.total_time_steps.value
     }
 
-    if parameter.AGENT_TYPE == AgentType.Dqn:
+    if parameter.AGENT_TYPE == AgentType.DQN:
         log_dict["QNet Loss"] = learner.agent.last_q_net_loss.value
         log_dict["Epsilon"] = learner.agent.epsilon.value
-    elif parameter.AGENT_TYPE == AgentType.Reinforce:
+    elif parameter.AGENT_TYPE == AgentType.REINFORCE:
         log_dict["Log Policy Objective"] = learner.agent.last_log_policy_objective.value
-    elif parameter.AGENT_TYPE == AgentType.A2c:
+    elif parameter.AGENT_TYPE == AgentType.A2C:
         log_dict["Critic Loss"] = learner.agent.last_critic_loss.value
         log_dict["Log Actor Objective"] = learner.agent.last_log_actor_objective.value
     else:
