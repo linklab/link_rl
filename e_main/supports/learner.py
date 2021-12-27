@@ -10,7 +10,7 @@ import numpy as np
 import time
 
 from e_main.supports.actor import Actor
-from g_utils.commons import model_save, console_log, wandb_log, get_wandb_obj, get_train_env, get_single_env
+from g_utils.commons import model_save, console_log, wandb_log, get_wandb_obj, get_train_env, get_single_env, MeanBuffer
 from g_utils.buffers import Buffer
 from g_utils.types import AgentType, AgentMode, Transition
 
@@ -31,7 +31,7 @@ class Learner(mp.Process):
         self.n_actor_terminations = 0
 
         self.episode_rewards = np.zeros(shape=(self.n_actors, self.n_vectorized_envs))
-        self.episode_reward_lst = []
+        self.episode_reward_buffer = MeanBuffer(self.parameter.N_EPISODES_FOR_MEAN_CALCULATION)
 
         self.total_time_steps = mp.Value('i', 0)
         self.total_episodes = mp.Value('i', 0)
@@ -141,14 +141,12 @@ class Learner(mp.Process):
             if n_step_transition.done:
                 self.total_episodes.value += 1
 
-                self.episode_reward_lst.append(self.episode_rewards[actor_id][env_id])
-                self.last_mean_episode_reward.value = np.mean(
-                    self.episode_reward_lst[-1 * self.parameter.N_EPISODES_FOR_MEAN_CALCULATION:]
-                )
+                self.episode_reward_buffer.add(self.episode_rewards[actor_id][env_id])
+                self.last_mean_episode_reward.value = self.episode_reward_buffer.mean()
 
                 self.episode_rewards[actor_id][env_id] = 0.0
 
-                if self.parameter.AGENT_TYPE == AgentType.Reinforce:
+                if self.parameter.AGENT_TYPE == AgentType.REINFORCE:
                     is_train_success_done = self.agent.train(
                         training_steps_v=self.training_steps.value
                     )
@@ -157,7 +155,7 @@ class Learner(mp.Process):
 
             train_conditions = [
                 self.total_time_steps.value >= self.next_train_time_step,
-                self.parameter.AGENT_TYPE != AgentType.Reinforce
+                self.parameter.AGENT_TYPE != AgentType.REINFORCE
             ]
             if all(train_conditions):
                 is_train_success_done = self.agent.train(
@@ -170,11 +168,14 @@ class Learner(mp.Process):
 
             if self.training_steps.value >= self.next_console_log:
                 console_log(
-                    self.train_start_time, self.total_episodes.value,
+                    self.train_start_time,
+                    self.total_episodes.value,
                     self.total_time_steps.value,
                     self.last_mean_episode_reward.value,
-                    self.n_rollout_transitions.value, self.training_steps.value,
-                    self.agent, self.parameter
+                    self.n_rollout_transitions.value,
+                    self.training_steps.value,
+                    self.agent,
+                    self.parameter
                 )
                 self.next_console_log += self.parameter.CONSOLE_LOG_INTERVAL_TRAINING_STEPS
 
@@ -186,7 +187,7 @@ class Learner(mp.Process):
                 self.test_idx.value += 1
 
             if self.training_steps.value >= self.parameter.MAX_TRAINING_STEPS:
-                print("[TRAIN TERMINATION] MAX_TRAINING_STEPS ({0}) REACHES!!!".format(
+                print("[TRAIN TERMINATION] MAX_TRAINING_STEPS ({0:,}) REACHES!!!".format(
                     self.parameter.MAX_TRAINING_STEPS
                 ))
                 self.is_terminated.value = True
@@ -245,6 +246,8 @@ class Learner(mp.Process):
         print("*" * 120)
 
     def play_for_testing(self, n_test_episodes):
+        self.agent.model.eval()
+
         episode_reward_lst = []
         for i in range(n_test_episodes):
             episode_reward = 0  # cumulative_reward
@@ -267,5 +270,7 @@ class Learner(mp.Process):
                     break
 
             episode_reward_lst.append(episode_reward)
+
+        self.agent.model.train()
 
         return np.average(episode_reward_lst), np.std(episode_reward_lst)

@@ -7,11 +7,13 @@ import numpy as np
 
 class Model(nn.Module):
     def __init__(
-            self, observation_shape: Tuple[int], n_out_actions: int, device=torch.device("cpu"), parameter=None
+            self, observation_shape: Tuple[int], n_out_actions: int, n_discrete_actions=None,
+            device=torch.device("cpu"), parameter=None
     ):
         super(Model, self).__init__()
         self.observation_shape = observation_shape
         self.n_out_actions = n_out_actions
+        self.n_discrete_actions = n_discrete_actions
         self.device = device
         self.parameter = parameter
 
@@ -59,6 +61,7 @@ class Model(nn.Module):
         conv_layers = nn.Sequential(conv_layers_dict)
         return conv_layers
 
-    def _get_conv_out(self, shape):
-        cont_out = self.conv_layers(torch.zeros(1, *shape))
+    def _get_conv_out(self, conv_layers, shape):
+        cont_out = conv_layers(torch.zeros(1, *shape))
         return int(np.prod(cont_out.size()))
+

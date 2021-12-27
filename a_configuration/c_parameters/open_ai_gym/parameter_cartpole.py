@@ -13,7 +13,6 @@ class ParameterCartPoleDqn(
         ParameterBase.__init__(self)
         ParameterCartPole.__init__(self)
         ParameterDqn.__init__(self)
-        ParameterLinearModel.__init__(self, ModelType.SMALL_LINEAR)
 
         self.N_VECTORIZED_ENVS = 1
         self.N_ACTORS = 1
@@ -35,7 +34,7 @@ class ParameterCartPoleReinforce(
         self.N_VECTORIZED_ENVS = 1
         self.N_ACTORS = 1
         self.BUFFER_CAPACITY = 1_000
-        self.MAX_TRAINING_STEPS = 10_000
+        self.MAX_TRAINING_STEPS = 100_000
         self.CONSOLE_LOG_INTERVAL_TRAINING_STEPS = 100
         self.MODEL = ParameterLinearModel(ModelType.SMALL_LINEAR)
 

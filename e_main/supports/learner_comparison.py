@@ -9,8 +9,7 @@ import torch
 import numpy as np
 
 from e_main.supports.actor import Actor
-from g_utils.commons import get_wandb_obj, get_train_env, get_single_env, console_log_comparison, wandb_log_comparison
-from g_utils.buffers import Buffer
+from g_utils.commons import get_train_env, get_single_env, console_log_comparison, wandb_log_comparison, MeanBuffer
 from g_utils.types import AgentType, AgentMode, Transition
 
 
@@ -37,9 +36,8 @@ class LearnerComparison:
         self.train_envs_per_agent = []
         self.test_envs_per_agent = []
         self.episode_rewards_per_agent = []
-        self.episode_reward_lst_per_agent = []
+        self.episode_reward_buffer_per_agent = []
         self.transition_generators_per_agent = []
-        self.buffers_per_agent = []
         self.histories_per_agent = []
 
         self.total_episodes_per_agent = []
@@ -47,8 +45,8 @@ class LearnerComparison:
         self.n_rollout_transitions_per_agent = []
         self.last_mean_episode_reward_per_agent = []
         self.last_loss_train_per_agent = []
-
         self.is_terminated_per_agent = []
+        self.is_train_success_done_per_agent = []
 
         self.comparison_stat = comparison_stat
 
@@ -56,13 +54,10 @@ class LearnerComparison:
             self.train_envs_per_agent.append(get_train_env(self.parameter_c))
             self.test_envs_per_agent.append(get_single_env(self.parameter_c.AGENT_PARAMETERS[agent_idx]))
             self.episode_rewards_per_agent.append(np.zeros(shape=(self.n_actors, self.n_vectorized_envs)))
-            self.episode_reward_lst_per_agent.append([])
+            self.episode_reward_buffer_per_agent.append(MeanBuffer(self.parameter_c.N_EPISODES_FOR_MEAN_CALCULATION))
 
             self.transition_generators_per_agent.append(self.generator_on_policy_transition(agent_idx))
 
-            self.buffers_per_agent.append(
-                Buffer(capacity=parameter_c.AGENT_PARAMETERS[agent_idx].BUFFER_CAPACITY, device=self.device)
-            )
             self.histories_per_agent.append(
                 [deque(maxlen=parameter_c.AGENT_PARAMETERS[agent_idx].N_STEP) for _ in range(self.n_vectorized_envs)]
             )
@@ -73,6 +68,7 @@ class LearnerComparison:
             self.last_mean_episode_reward_per_agent.append(0.0)
 
             self.is_terminated_per_agent.append(False)
+            self.is_train_success_done_per_agent.append(False)
 
         self.total_time_steps = 0
         self.training_steps = 0
@@ -129,7 +125,7 @@ class LearnerComparison:
             for agent_idx, _ in enumerate(self.agents):
                 n_step_transition = next(self.transition_generators_per_agent[agent_idx])
 
-                self.buffers_per_agent[agent_idx].append(n_step_transition)
+                self.agents[agent_idx].buffer.append(n_step_transition)
                 self.n_rollout_transitions_per_agent[agent_idx] += 1
 
                 actor_id = n_step_transition.info["actor_id"]   # SHOULD BE 1
@@ -139,39 +135,36 @@ class LearnerComparison:
                 if n_step_transition.done:
                     self.total_episodes_per_agent[agent_idx] += 1
 
-                    self.episode_reward_lst_per_agent[agent_idx].append(
+                    self.episode_reward_buffer_per_agent[agent_idx].add(
                         self.episode_rewards_per_agent[agent_idx][actor_id][env_id]
                     )
-                    self.last_mean_episode_reward_per_agent[agent_idx] = float(np.mean(
-                        self.episode_reward_lst_per_agent[agent_idx][-1 * self.parameter_c.N_EPISODES_FOR_MEAN_CALCULATION:]
-                    ))
+                    self.last_mean_episode_reward_per_agent[agent_idx] = \
+                        self.episode_reward_buffer_per_agent[agent_idx].mean()
 
                     self.episode_rewards_per_agent[agent_idx][actor_id][env_id] = 0.0
 
-                    if self.parameter_c.AGENT_PARAMETERS[agent_idx].AGENT_TYPE == AgentType.Reinforce:
+                    if self.parameter_c.AGENT_PARAMETERS[agent_idx].AGENT_TYPE == AgentType.REINFORCE:
                         is_train_success_done = self.agents[agent_idx].train(
-                            buffer=self.buffers_per_agent[agent_idx],
                             training_steps_v=self.training_steps_per_agent[agent_idx]
                         )
                         if is_train_success_done:
                             self.training_steps_per_agent[agent_idx] += 1
+                        self.is_train_success_done_per_agent[agent_idx] = is_train_success_done
 
             if self.total_time_steps >= self.next_train_time_step:
                 for agent_idx, _ in enumerate(self.agents):
-                    if self.parameter_c.AGENT_PARAMETERS[agent_idx].AGENT_TYPE != AgentType.Reinforce:
+                    if self.parameter_c.AGENT_PARAMETERS[agent_idx].AGENT_TYPE != AgentType.REINFORCE:
                         is_train_success_done = self.agents[agent_idx].train(
-                            buffer=self.buffers_per_agent[agent_idx],
                             training_steps_v=self.training_steps_per_agent[agent_idx]
                         )
                         if is_train_success_done:
                             self.training_steps_per_agent[agent_idx] += 1
+                        self.is_train_success_done_per_agent[agent_idx] = is_train_success_done
 
                 self.next_train_time_step += self.parameter_c.TRAIN_INTERVAL_GLOBAL_TIME_STEPS
 
-                if all(v == self.training_steps_per_agent[0] for v in self.training_steps_per_agent):
+                if all(self.is_train_success_done_per_agent):
                     self.training_steps += 1
-                else:
-                    raise ValueError("Training of an agent is failed!")
 
             if self.training_steps >= self.next_console_log:
                 console_log_comparison(

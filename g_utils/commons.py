@@ -1,3 +1,4 @@
+import collections
 import time
 import datetime
 
@@ -11,6 +12,9 @@ from gym.vector import AsyncVectorEnv
 import plotly.graph_objects as go
 
 from a_configuration.a_config.config import SYSTEM_USER_NAME
+from a_configuration.b_base.c_models.convolutional_models import ParameterConvolutionalModel
+from a_configuration.b_base.c_models.linear_models import ParameterLinearModel
+from a_configuration.b_base.c_models.recurrent_models import ParameterRecurrentModel
 from g_utils.types import AgentType
 
 if torch.cuda.is_available():
@@ -73,7 +77,7 @@ def print_basic_info(observation_space=None, action_space=None, device=None, par
     items = []
 
     for param in dir(parameter):
-        if not param.startswith("__"):
+        if not param.startswith("__") and param != "MODEL":
             if param in [
                 "BATCH_SIZE", "BUFFER_CAPACITY", "CONSOLE_LOG_INTERVAL_TRAINING_STEPS",
                 "EPISODE_REWARD_AVG_SOLVED", "MAX_TRAINING_STEPS",
@@ -96,6 +100,8 @@ def print_basic_info(observation_space=None, action_space=None, device=None, par
         else:
             print("{0:55}".format(items[0]), end="\n")
             items.clear()
+
+    print_model_info(getattr(parameter, "MODEL"))
 
     if observation_space and action_space:
         if observation_space and action_space:
@@ -157,7 +163,7 @@ def print_comparison_basic_info(observation_space, action_space, device, paramet
     for agent_idx, agent_parameter in enumerate(parameter_c.AGENT_PARAMETERS):
         print('-' * 76 + " Agent {0} ".format(agent_idx) + '-' * 76)
         for param in dir(agent_parameter):
-            if not param.startswith("__"):
+            if not param.startswith("__") and param != "MODEL":
                 if param in [
                     "BATCH_SIZE", "BUFFER_CAPACITY", "CONSOLE_LOG_INTERVAL_TRAINING_STEPS",
                     "EPISODE_REWARD_AVG_SOLVED", "MAX_TRAINING_STEPS",
@@ -181,6 +187,8 @@ def print_comparison_basic_info(observation_space, action_space, device, paramet
                 print("{0:55}".format(items[0]), end="\n")
                 items.clear()
 
+        print_model_info(getattr(agent_parameter, "MODEL"))
+
     if observation_space and action_space:
         if observation_space and action_space:
             print('-' * 76 + " SPACE " + '-' * 76)
@@ -188,6 +196,27 @@ def print_comparison_basic_info(observation_space, action_space, device, paramet
 
     print('#' * 162)
     print()
+
+
+def print_model_info(model):
+    if isinstance(model, ParameterLinearModel):
+        item1 = "{0}: {1:}".format("MODEL", "LINEAR_MODEL")
+        item2 = "{0}: {1:}".format("NEURONS_PER_FULLY_CONNECTED_LAYER", model.NEURONS_PER_FULLY_CONNECTED_LAYER)
+        print("{0:55} {1:55}".format(item1, item2), end="\n")
+    elif isinstance(model, ParameterConvolutionalModel):
+        item1 = "{0}: {1:}".format("MODEL", "CONVOLUTIONAL_MODEL")
+        item2 = "{0}: {1:}".format("OUT_CHANNELS_PER_LAYER", model.OUT_CHANNELS_PER_LAYER)
+        item3 = "{0}: {1:}".format("KERNEL_SIZE_PER_LAYER", model.KERNEL_SIZE_PER_LAYER)
+        print("{0:55} {1:55} {2:55}".format(item1, item2, item3, end="\n"))
+        item1 = "{0}: {1:}".format("STRIDE_PER_LAYER", model.STRIDE_PER_LAYER)
+        item2 = "{0}: {1:}".format("NEURONS_PER_FULLY_CONNECTED_LAYER", model.NEURONS_PER_FULLY_CONNECTED_LAYER)
+        print("{0:55} {1:55}".format(item1, item2), end="\n")
+    elif isinstance(model, ParameterRecurrentModel):
+        item1 = "{0}: {1:}".format("MODEL", "RECURRENT_MODEL")
+        item2 = "{0}: {1:}".format("---", "")
+        print("{0:55} {1:55}".format(item1, item2), end="\n")
+    else:
+        raise ValueError()
 
 
 def print_space(observation_space, action_space):
@@ -224,16 +253,16 @@ def console_log(
             train_steps_v / total_training_time
         )
 
-    if parameter.AGENT_TYPE == AgentType.Dqn:
-        console_log += "Q_net_loss: {0:>5.3f}, Epsilon: {1:>4.2f}, ".format(
+    if parameter.AGENT_TYPE == AgentType.DQN:
+        console_log += "Q_net_loss: {0:>6.3f}, Epsilon: {1:>4.2f}, ".format(
             agent.last_q_net_loss.value, agent.epsilon.value
         )
-    elif parameter.AGENT_TYPE == AgentType.Reinforce:
-        console_log += "log_policy_objective: {0:5.1f}, ".format(
+    elif parameter.AGENT_TYPE == AgentType.REINFORCE:
+        console_log += "log_policy_objective: {0:6.3f}, ".format(
             agent.last_log_policy_objective.value
         )
-    elif parameter.AGENT_TYPE == AgentType.A2c:
-        console_log += "critic_loss: {0:5.1f}, log_actor_objective: {1:5.1f}, ".format(
+    elif parameter.AGENT_TYPE == AgentType.A2C:
+        console_log += "critic_loss: {0:6.3f}, log_actor_objective: {1:6.3f}, ".format(
             agent.last_critic_loss.value, agent.last_log_actor_objective.value
         )
     else:
@@ -269,16 +298,16 @@ def console_log_comparison(
                 training_steps_per_agent[agent_idx]
             )
 
-        if parameter_c.AGENT_PARAMETERS[agent_idx].AGENT_TYPE == AgentType.Dqn:
-            console_log += "Q_net_loss: {0:>5.3f}, Epsilon: {1:>4.2f}, ".format(
+        if parameter_c.AGENT_PARAMETERS[agent_idx].AGENT_TYPE == AgentType.DQN:
+            console_log += "Q_net_loss: {0:>6.3f}, Epsilon: {1:>4.2f}, ".format(
                 agent.last_q_net_loss.value, agent.epsilon.value
             )
-        elif parameter_c.AGENT_PARAMETERS[agent_idx].AGENT_TYPE == AgentType.Reinforce:
-            console_log += "log_policy_objective: {0:5.3f}, ".format(
+        elif parameter_c.AGENT_PARAMETERS[agent_idx].AGENT_TYPE == AgentType.REINFORCE:
+            console_log += "log_policy_objective: {0:6.3f}, ".format(
                 agent.last_log_policy_objective.value
             )
-        elif parameter_c.AGENT_PARAMETERS[agent_idx].AGENT_TYPE == AgentType.A2c:
-            console_log += "critic_loss: {0:5.3f}, log_actor_objective: {1:5.3f}, ".format(
+        elif parameter_c.AGENT_PARAMETERS[agent_idx].AGENT_TYPE == AgentType.A2C:
+            console_log += "critic_loss: {0:6.3f}, log_actor_objective: {1:5.3f}, ".format(
                 agent.last_critic_loss.value, agent.last_log_actor_objective.value
             )
         else:
@@ -305,7 +334,8 @@ def get_wandb_obj(parameter, agent=None, comparison=False):
     local_now = now.astimezone()
     wandb.run.name = local_now.strftime('%Y-%m-%d_%H:%M:%S')
     wandb.run.save()
-    wandb.watch(agent.model, log="all")
+    if agent:
+        wandb.watch(agent.model, log="all")
 
     return wandb_obj
 
@@ -321,16 +351,19 @@ def wandb_log(learner, wandb_obj, parameter):
         "Total Time Steps": learner.total_time_steps.value
     }
 
-    if parameter.AGENT_TYPE == AgentType.Dqn:
+    if parameter.AGENT_TYPE == AgentType.DQN:
         log_dict["QNet Loss"] = learner.agent.last_q_net_loss.value
         log_dict["Epsilon"] = learner.agent.epsilon.value
-    elif parameter.AGENT_TYPE == AgentType.Reinforce:
+    elif parameter.AGENT_TYPE == AgentType.REINFORCE:
         log_dict["Log Policy Objective"] = learner.agent.last_log_policy_objective.value
-    elif parameter.AGENT_TYPE == AgentType.A2c:
+    elif parameter.AGENT_TYPE == AgentType.A2C:
         log_dict["Critic Loss"] = learner.agent.last_critic_loss.value
         log_dict["Log Actor Objective"] = learner.agent.last_log_actor_objective.value
     else:
         pass
+
+    log_dict["grad_max"] = learner.agent.last_model_grad_max.value
+    log_dict["grad_l2"] = learner.agent.last_model_grad_l2.value
 
     wandb_obj.log(log_dict)
 
@@ -434,153 +467,6 @@ def wandb_log_comparison(
 
     wandb_obj.log(log_dict)
 
-# def wandb_log_comparison(agents, agent_labels, comparison_stat, wandb_obj):
-#     plotly_layout.yaxis.title = "[TEST] Episode Reward"
-#
-#     test_episode_reward_avg = go.Figure(layout=plotly_layout)
-#
-#     test_episode_reward_avg.add_traces(
-#         go.Scatter(
-#             x=comparison_stat.test_training_steps_lst,
-#             y=comparison_stat.MAX_test_episode_reward_avg_per_agent[0, :],
-#             fill=None,
-#             line_color=line_color_lst[0],
-#         )
-#     )
-#
-#     test_episode_reward_avg.add_traces(
-#         go.Scatter(
-#             x=comparison_stat.test_training_steps_lst,
-#             y=comparison_stat.MIN_test_episode_reward_avg_per_agent[0, :],
-#             fill="tonexty",
-#             fillcolor="rgba(250, 0, 0, 0.4)",
-#             line_color=line_color_lst[0],
-#         )
-#     )
-
-    # data = []
-    # for agent_idx, _ in enumerate(agents):
-    #     data.append(
-    #         go.Scatter(
-    #             name=agent_labels[agent_idx],
-    #             x=comparison_stat.test_training_steps_lst,
-    #             y=comparison_stat.MAX_test_episode_reward_avg_per_agent[agent_idx, :],
-    #             fill=None,
-    #             mode="lines",
-    #             line_color=line_color_lst[agent_idx],
-    #             showlegend=False
-    #         )
-    #     )
-    #     data.append(
-    #         go.Scatter(
-    #             name=agent_labels[agent_idx],
-    #             x=comparison_stat.test_training_steps_lst,
-    #             y=comparison_stat.MIN_test_episode_reward_avg_per_agent[agent_idx, :],
-    #             fill="tonexty",
-    #             mode="lines",
-    #             line_color=line_color_lst[agent_idx],
-    #             showlegend=False
-    #         )
-    #     )
-    #     # data.append(
-    #     #     go.Scatter(
-    #     #         name=agent_labels[agent_idx],
-    #     #         x=comparison_stat.test_training_steps_lst,
-    #     #         y=comparison_stat.MEAN_test_episode_reward_avg_per_agent[agent_idx, :],
-    #     #         mode="lines",
-    #     #         line_color=line_color_lst[agent_idx],
-    #     #         showlegend=True
-    #     #     )
-    #     # )
-    #     if agent_idx == 0:
-    #         break
-    #
-    # test_episode_reward_avg = go.Figure(data=data, layout=plotly_layout)
-
-    ###############################################################################
-    # plotly_layout.yaxis.title = "[TEST] Std. of Episode Reward"
-    # data = []
-    # for agent_idx, _ in enumerate(agents):
-    #     data.append(
-    #         go.Scatter(
-    #             name=agent_labels[agent_idx],
-    #             x=comparison_stat.test_training_steps_lst,
-    #             y=comparison_stat.MAX_test_episode_reward_std_per_agent[agent_idx, :],
-    #             fill=None,
-    #             mode="lines",
-    #             line_color=line_color_lst[agent_idx],
-    #             showlegend=False
-    #         )
-    #     )
-    #     data.append(
-    #         go.Scatter(
-    #             name=agent_labels[agent_idx],
-    #             x=comparison_stat.test_training_steps_lst,
-    #             y=comparison_stat.MIN_test_episode_reward_std_per_agent[agent_idx, :],
-    #             fill="tonexty",
-    #             mode="lines",
-    #             line_color=line_color_lst[agent_idx],
-    #             showlegend=False
-    #         )
-    #     )
-    #     data.append(
-    #         go.Scatter(
-    #             name=agent_labels[agent_idx],
-    #             x=comparison_stat.test_training_steps_lst,
-    #             y=comparison_stat.MEAN_test_episode_reward_std_per_agent[agent_idx, :],
-    #             mode="lines",
-    #             line_color=line_color_lst[agent_idx],
-    #             showlegend=True
-    #         )
-    #     )
-    # test_episode_reward_std = go.Figure(data=data, layout=plotly_layout)
-    #
-    # ###############################################################################
-    # plotly_layout.yaxis.title = "Last Mean Episode Reward"
-    # data = []
-    # for agent_idx, _ in enumerate(agents):
-    #     data.append(
-    #         go.Scatter(
-    #             name=agent_labels[agent_idx],
-    #             x=comparison_stat.test_training_steps_lst,
-    #             y=comparison_stat.MAX_mean_episode_reward_per_agent[agent_idx, :],
-    #             fill=None,
-    #             mode="lines",
-    #             line_color=line_color_lst[agent_idx],
-    #             showlegend=False
-    #         )
-    #     )
-    #     data.append(
-    #         go.Scatter(
-    #             name=agent_labels[agent_idx],
-    #             x=comparison_stat.test_training_steps_lst,
-    #             y=comparison_stat.MIN_mean_episode_reward_per_agent[agent_idx, :],
-    #             fill="tonexty",
-    #             mode="lines",
-    #             line_color=line_color_lst[agent_idx],
-    #             showlegend=False
-    #         )
-    #     )
-    #     data.append(
-    #         go.Scatter(
-    #             name=agent_labels[agent_idx],
-    #             x=comparison_stat.test_training_steps_lst,
-    #             y=comparison_stat.MEAN_mean_episode_reward_per_agent[agent_idx, :],
-    #             mode="lines",
-    #             line_color=line_color_lst[agent_idx],
-    #             showlegend=True
-    #         )
-    #     )
-    # train_last_mean_episode_reward = go.Figure(data=data, layout=plotly_layout)
-    #
-    # log_dict = {
-    #     "episode_reward_avg": test_episode_reward_avg,
-    #     "episode_reward_std": test_episode_reward_std,
-    #     "train_last_mean_episode_reward": train_last_mean_episode_reward
-    # }
-    #
-    # wandb_obj.log(log_dict)
-
 
 def get_train_env(parameter):
     def make_gym_env(env_name):
@@ -613,20 +499,6 @@ def get_single_env(parameter):
         single_env = gym.wrappers.FrameStack(single_env, num_stack=4, lz4_compress=True)
 
     return single_env
-
-
-def get_test_env(params):
-    test_env = gym.make(params.ENV_NAME)
-    if params.ENV_NAME in ["PongNoFrameskip-v4"]:
-        test_env = gym.wrappers.AtariPreprocessing(
-            test_env, grayscale_obs=True, scale_obs=True
-        )
-        test_env = gym.wrappers.FrameStack(test_env, num_stack=4, lz4_compress=True)
-
-    observation_shape = test_env.observation_space.shape
-    n_actions = test_env.action_space.n
-
-    return test_env, observation_shape, n_actions
 
 
 # Box
@@ -672,3 +544,20 @@ class EpsilonTracker:
         )
         return epsilon
 
+
+class MeanBuffer:
+    def __init__(self, capacity):
+        self.capacity = capacity
+        self.deque = collections.deque(maxlen=capacity)
+        self.sum = 0.0
+
+    def add(self, val):
+        if len(self.deque) == self.capacity:
+            self.sum -= self.deque[0]
+        self.deque.append(val)
+        self.sum += val
+
+    def mean(self):
+        if not self.deque:
+            return 0.0
+        return self.sum / len(self.deque)
