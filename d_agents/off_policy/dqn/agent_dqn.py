@@ -50,7 +50,7 @@ class AgentDqn(Agent):
         if mode == AgentMode.TRAIN:
             coin = np.random.random()    # 0.0과 1.0사이의 임의의 값을 반환
             if coin < self.epsilon.value:
-                action = np.random.randint(low=0, high=self.n_out_actions, size=len(obs))
+                action = np.random.randint(low=0, high=self.n_discrete_actions, size=len(obs))
             else:
                 out = self.q_net.forward(obs)
                 action = out.argmax(dim=-1)
