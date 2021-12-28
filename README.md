@@ -1,38 +1,61 @@
 ### 1. 환경 만들기
-- conda create -n link_rl python=3.8
-- conda activate link_rl
+```commandline
+conda create -n link_rl python=3.8
+conda activate link_rl
+```
 
 
 ### 2. 주요 패키지/모듈
 - pytorch 설치
   - https://pytorch.org/ 참고
 - OpenAI GYM
-  - conda install -c conda-forge gym-all
+  ```commandline
+  conda install -c conda-forge gym-all
+  conda install -c conda-forge gym-atari
+  ```
 - lz4
-  - conda install -c conda-forge lz4
+  ```commandline
+  conda install -c conda-forge lz4
+  ```
 - wandb
-  - conda install -c conda-forge wandb
-  - wandb login --relogin
+  ```commandline
+  conda install -c conda-forge wandb
+  wandb login --relogin
+  ```
 - nvidia-ml-py3
-  - conda install -c fastai nvidia-ml-py3
+  ```commandline
+  conda install -c fastai nvidia-ml-py3
+  ```
 - plotly
-  - conda install -c plotly plotly
+  ```commandline
+  conda install -c plotly plotly
+  ```
 - pandas
-  - conda install -c conda-forge pandas
+  ```commandline
+  conda install -c conda-forge pandas
+  ```
 - matplotlib
-  - conda install -c conda-forge matplotlib
+  ```commandline
+  conda install -c conda-forge matplotlib
+  ```
 - pybullet
-  - conda install -c conda-forge pybullet
+  ```commandline
+  conda install -c conda-forge pybullet
+  ```
   - 설치 후 테스트
-    - python -m pybullet_envs.examples.enjoy_TF_HumanoidBulletEnv_v0_2017may
-    - python -m pybullet_envs.examples.kukaGymEnvTest
+    ```commandline
+    python -m pybullet_envs.examples.enjoy_TF_HumanoidBulletEnv_v0_2017may
+    python -m pybullet_envs.examples.kukaGymEnvTest
+    ```
   - 주의: pybullet-gym 설치하지 말것
 
 
 ### 3. gitignore 적용
-- git reset HEAD
-- git add .
-- git commit -m "Apply .gitignore"  
+```commandline
+git reset HEAD
+git add .
+git commit -m "Apply .gitignore"  
+```
 
 
 ### 4. Linux에 NFS 설치하고 MAC에서 원격 파일 시스템으로 MOUNT하기
