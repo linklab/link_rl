@@ -9,6 +9,7 @@ from a_configuration.b_base.c_models.convolutional_models import ParameterConvol
 from a_configuration.b_base.c_models.linear_models import ParameterLinearModel
 from a_configuration.b_base.c_models.recurrent_models import ParameterRecurrentModel
 from c_models.a_models import Model
+from g_utils.types import AgentType
 
 
 class PolicyModel(Model):
@@ -38,7 +39,6 @@ class PolicyModel(Model):
     def forward_actor(self, x):
         if isinstance(x, np.ndarray):
             x = torch.tensor(x, dtype=torch.float32, device=self.device)
-
         if isinstance(self.parameter.MODEL, ParameterLinearModel):
             x = self.actor_fc_layers(x)
         elif isinstance(self.parameter.MODEL, ParameterConvolutionalModel):
@@ -83,19 +83,18 @@ class ContinuousPolicyModel(PolicyModel):
             nn.Linear(self.parameter.MODEL.NEURONS_PER_FULLY_CONNECTED_LAYER[-1], self.n_out_actions),
             nn.Tanh()
         )
-
-        logstds_param = nn.Parameter(torch.full((self.n_out_actions,), 0.1))
-        self.register_parameter("logstds", logstds_param)
-
         self.actor_params += list(self.mu.parameters())
-        self.actor_params.append(self.logstds)
 
-        # self.logstd = nn.Sequential(
-        #     nn.Linear(self.parameter.MODEL.NEURONS_PER_FULLY_CONNECTED_LAYER[-1], self.n_out_actions),
-        #     nn.Softplus()
-        # )
-        # self.actor_params += list(self.mu.parameters())
-        # self.actor_params += list(self.logstd.parameters())
+        if parameter.AGENT_TYPE == AgentType.SAC:
+            self.logstd = nn.Sequential(
+                nn.Linear(self.parameter.MODEL.NEURONS_PER_FULLY_CONNECTED_LAYER[-1], self.n_out_actions),
+                nn.Softplus()
+            )
+            self.actor_params += list(self.logstd.parameters())
+        else:
+            logstds_param = nn.Parameter(torch.full((self.n_out_actions,), 0.1))
+            self.register_parameter("logstds", logstds_param)
+            self.actor_params.append(self.logstds)
 
     def pi(self, x):
         x = self.forward_actor(x)

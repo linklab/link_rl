@@ -4,6 +4,9 @@ from typing import Tuple
 from collections import OrderedDict
 import numpy as np
 
+from a_configuration.b_base.c_models.convolutional_models import ParameterConvolutionalModel
+from a_configuration.b_base.c_models.linear_models import ParameterLinearModel
+
 
 class Model(nn.Module):
     def __init__(
@@ -16,22 +19,28 @@ class Model(nn.Module):
         self.n_discrete_actions = n_discrete_actions
         self.device = device
         self.parameter = parameter
+        self.activation = parameter.LAYER_ACTIVATION
 
     def get_linear_layers(self, input_n_features):
         assert self.parameter.MODEL.NEURONS_PER_FULLY_CONNECTED_LAYER
 
         fc_layers_dict = OrderedDict()
         fc_layers_dict["fc_0"] = nn.Linear(input_n_features, self.parameter.MODEL.NEURONS_PER_FULLY_CONNECTED_LAYER[0])
-        fc_layers_dict["fc_0_activation"] = nn.LeakyReLU()
+        if self.parameter.LAYER_NORM:
+            self.get_layer_normalization(fc_layers_dict, 0)
+        fc_layers_dict["fc_0_activation"] = self.activation
 
         for idx in range(1, len(self.parameter.MODEL.NEURONS_PER_FULLY_CONNECTED_LAYER) - 1):
             fc_layers_dict["fc_{0}".format(idx)] = nn.Linear(
                 self.parameter.MODEL.NEURONS_PER_FULLY_CONNECTED_LAYER[idx],
                 self.parameter.MODEL.NEURONS_PER_FULLY_CONNECTED_LAYER[idx + 1]
             )
-            fc_layers_dict["fc_{0}_activation".format(idx)] = nn.LeakyReLU()
+            if self.parameter.LAYER_NORM:
+                self.get_layer_normalization(fc_layers_dict, idx)
+            fc_layers_dict["fc_{0}_activation".format(idx)] = self.activation
 
         fc_layers = nn.Sequential(fc_layers_dict)
+
         return fc_layers
 
     def get_conv_layers(self, input_n_channels):
@@ -65,3 +74,11 @@ class Model(nn.Module):
         cont_out = conv_layers(torch.zeros(1, *shape))
         return int(np.prod(cont_out.size()))
 
+    def get_layer_normalization(self, layer_dict, layer_idx):
+        if isinstance(self.parameter.MODEL, ParameterLinearModel):
+            fc_layers_dict = layer_dict
+            fc_layers_dict["fc_{0}_norm".format(layer_idx)] = nn.LayerNorm(
+                self.parameter.MODEL.NEURONS_PER_FULLY_CONNECTED_LAYER[layer_idx + 1]
+            )
+        elif isinstance(self.parameter.MODEL, ParameterConvolutionalModel):
+            pass

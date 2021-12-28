@@ -45,7 +45,6 @@ class CriticModel(Model):
     def forward_critic(self, x):
         if isinstance(x, np.ndarray):
             x = torch.tensor(x, dtype=torch.float32, device=self.device)
-
         if isinstance(self.parameter.MODEL, ParameterLinearModel):
             x = self.critic_fc_layers(x)
         elif isinstance(self.parameter.MODEL, ParameterConvolutionalModel):
