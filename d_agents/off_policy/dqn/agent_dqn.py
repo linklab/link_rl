@@ -32,12 +32,13 @@ class AgentDqn(Agent):
             self.q_net.parameters(), lr=self.parameter.LEARNING_RATE
         )
 
-        self.epsilon_tracker = EpsilonTracker(
-            epsilon_init=self.parameter.EPSILON_INIT,
-            epsilon_final=self.parameter.EPSILON_FINAL,
-            epsilon_final_training_step=self.parameter.EPSILON_FINAL_TRAINING_STEP_PERCENT * max_training_steps
-        )
-        self.epsilon = mp.Value('d', self.parameter.EPSILON_INIT)  # d: float
+        if max_training_steps is not None:
+            self.epsilon_tracker = EpsilonTracker(
+                epsilon_init=self.parameter.EPSILON_INIT,
+                epsilon_final=self.parameter.EPSILON_FINAL,
+                epsilon_final_training_step=self.parameter.EPSILON_FINAL_TRAINING_STEP_PERCENT * max_training_steps
+            )
+            self.epsilon = mp.Value('d', self.parameter.EPSILON_INIT)  # d: float
 
         self.model = self.q_net  # 에이전트 밖에서는 model이라는 이름으로 제어 모델 접근
 
