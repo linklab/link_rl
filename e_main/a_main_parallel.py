@@ -24,12 +24,10 @@ def main():
     queue = mp.Queue()
 
     agent = get_agent(
-        observation_space, action_space, device, parameter, parameter.MAX_TRAINING_STEPS
+        observation_space=observation_space, action_space=action_space, device=device, parameter=parameter
     )
 
-    learner = Learner(
-        agent=agent, queue=queue, device=device, parameter=parameter,
-    )
+    learner = Learner(agent=agent, queue=queue, device=device, parameter=parameter,)
 
     actors = [
         Actor(

@@ -54,8 +54,7 @@ def main():
         for agent_idx, _ in enumerate(parameter_c.AGENT_PARAMETERS):
             agent = get_agent(
                 observation_space=observation_space, action_space=action_space, device=device,
-                parameter=parameter_c.AGENT_PARAMETERS[agent_idx],
-                max_training_steps=parameter_c.MAX_TRAINING_STEPS
+                parameter=parameter_c.AGENT_PARAMETERS[agent_idx]
             )
             agents.append(agent)
 
