@@ -60,10 +60,16 @@ class Agent:
             if len(self.buffer) >= self.parameter.BATCH_SIZE:
                 self.train_a2c()
                 is_train_success_done = True
+        elif self.parameter.AGENT_TYPE == AgentType.DDPG:
+            if len(self.buffer) >= self.parameter.BATCH_SIZE:
+                self.train_ddpg()
+                is_train_success_done = True
         elif self.parameter.AGENT_TYPE == AgentType.REINFORCE:
             if len(self.buffer) > 0:
                 self.train_reinforce()
                 is_train_success_done = True
+        else:
+            raise ValueError()
 
         # NOTE !!!
         if is_train_success_done:
@@ -91,6 +97,10 @@ class Agent:
 
     @abstractmethod
     def train_a2c(self):
+        return 0.0
+
+    @abstractmethod
+    def train_ddpg(self):
         return 0.0
 
     def synchronize_models(self, source_model, target_model):

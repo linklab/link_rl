@@ -72,9 +72,7 @@ class AgentDqn(Agent):
         )
 
         # state_action_values.shape: torch.Size([32, 1])
-        state_action_values = self.q_net(observations).gather(
-            dim=1, index=actions
-        )
+        state_action_values = self.q_net(observations).gather(dim=1, index=actions)
 
         with torch.no_grad():
             # next_state_values.shape: torch.Size([32, 1])

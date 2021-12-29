@@ -55,6 +55,7 @@ class AgentDdpg(Agent):
         self.training_steps = 0
 
         self.last_critic_loss = mp.Value('d', 0.0)
+        self.last_actor_loss = mp.Value('d', 0.0)
 
     def get_action(self, obs, mode=AgentMode.TRAIN):
         mu = self.ddpg_model.mu(obs)
@@ -69,8 +70,8 @@ class AgentDdpg(Agent):
         action = np.clip(action.cpu().numpy(), self.action_bound_low, self.action_bound_high)
         return action
 
-    def train_dqn(self, buffer, training_steps_v):
-        batch = buffer.sample(self.parameter.BATCH_SIZE, device=self.device)
+    def train_ddpg(self):
+        batch = self.buffer.sample(self.parameter.BATCH_SIZE, device=self.device)
 
         # observations.shape: torch.Size([32, 4]),
         # actions.shape: torch.Size([32, 1]),
@@ -79,45 +80,43 @@ class AgentDdpg(Agent):
         # dones.shape: torch.Size([32])
         observations, actions, next_observations, rewards, dones = batch
 
-        # state_action_values.shape: torch.Size([32, 1])
-        state_action_values = self.q_net(observations).gather(
-            dim=1, index=actions
-        )
+        #######################
+        # train actor - BEGIN #
+        #######################
+        mu_v = self.ddpg_model.mu(observations)
+        q_v = self.ddpg_model.q(observations, mu_v)
+        actor_loss = -1.0 * q_v.mean()
 
-        with torch.no_grad():
-            # next_state_values.shape: torch.Size([32, 1])
-            next_state_values = self.target_q_net(next_observations).max(
-                dim=1, keepdim=True
-            ).values
-            next_state_values[dones] = 0.0
-            next_state_values = next_state_values.detach()
+        self.actor_optimizer.zero_grad()
+        actor_loss.backward()
+        torch.nn.utils.clip_grad_value_(self.ddpg_model.actor_params, self.parameter.CLIP_GRADIENT_VALUE)
+        self.actor_optimizer.step()
+        #####################
+        # train actor - END #
+        #####################
 
-            # target_state_action_values.shape: torch.Size([32, 1])
-            target_state_action_values = rewards + self.parameter.GAMMA ** self.parameter.N_STEP * next_state_values
+        ########################
+        # train critic - BEGIN #
+        ########################
+        next_mu_v = self.target_ddpg_model.mu(next_observations)
+        next_q_v = self.ddpg_model.q(next_observations, next_mu_v)
+        target_q_v = rewards + self.parameter.GAMMA ** self.parameter.N_STEP * next_q_v
 
-        # loss is just scalar torch value
-        q_net_loss = F.mse_loss(state_action_values, target_state_action_values)
+        critic_loss_v = F.mse_loss(q_v, target_q_v.detach(), reduction='none')
 
-        # print("observations.shape: {0}, actions.shape: {1}, "
-        #       "next_observations.shape: {2}, rewards.shape: {3}, dones.shape: {4}".format(
-        #     observations.shape, actions.shape,
-        #     next_observations.shape, rewards.shape, dones.shape
-        # ))
-        # print("state_action_values.shape: {0}".format(state_action_values.shape))
-        # print("next_state_values.shape: {0}".format(next_state_values.shape))
-        # print("target_state_action_values.shape: {0}".format(
-        #     target_state_action_values.shape
-        # ))
-        # print("loss.shape: {0}".format(loss.shape))
+        critic_loss = critic_loss_v.mean()
 
-        self.optimizer.zero_grad()
-        q_net_loss.backward()
-        self.optimizer.step()
+        self.critic_optimizer.zero_grad()
+        critic_loss.backward()
+        torch.nn.utils.clip_grad_value_(self.ddpg_model.critic_params, self.parameter.CLIP_GRADIENT_VALUE)
+        self.critic_optimizer.step()
+        ######################
+        # train critic - end #
+        ######################
 
-        # sync
-        if training_steps_v % self.parameter.TARGET_SYNC_INTERVAL_TRAINING_STEPS == 0:
-            self.target_q_net.load_state_dict(self.q_net.state_dict())
+        self.soft_synchronize_models(
+            source_model=self.ddpg_model, target_model=self.target_ddpg_model, tau=self.parameter.TAU
+        ) # TAU: 0.0001
 
-        self.epsilon.value = self.epsilon_tracker.epsilon(training_steps_v)
-
-        self.last_q_net_loss.value = q_net_loss.item()
+        self.last_critic_loss.value = critic_loss.item()
+        self.last_actor_loss.value = actor_loss.item()
