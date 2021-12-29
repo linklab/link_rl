@@ -51,35 +51,37 @@ class SacCriticModel(Model):
         x = torch.cat([obs, act], dim=-1)
         return self.q1(x), self.q2(x)
 
-class DiscreteSacModel(DiscreteActorModel, SacCriticModel):
+
+class DiscreteSacModel:
     def __init__(
             self, observation_shape: Tuple[int], n_out_actions: int, n_discrete_actions=None,
             device=torch.device("cpu"), parameter=None
     ):
-        DiscreteActorModel.__init__(
-            self, observation_shape=observation_shape, n_out_actions=n_out_actions, device=device, parameter=parameter
-        )
-        SacCriticModel.__init__(
-            self, observation_shape=observation_shape, n_out_actions=n_out_actions, n_discrete_actions=n_discrete_actions,
+        self.actor_model = DiscreteActorModel(
+            observation_shape=observation_shape, n_out_actions=n_out_actions, device=device, parameter=parameter
+        ).to(device)
+
+        self.critic_model = SacCriticModel(
+            observation_shape=observation_shape, n_out_actions=n_out_actions, n_discrete_actions=n_discrete_actions,
             device=device, parameter=parameter
-        )
+        ).to(device)
 
 
-class ContinuousSacModel(ContinuousActorModel, SacCriticModel):
+class ContinuousSacModel:
     def __init__(
             self, observation_shape: Tuple[int], n_out_actions: int, device=torch.device("cpu"), parameter=None
     ):
-        ContinuousActorModel.__init__(
-            self, observation_shape=observation_shape, n_out_actions=n_out_actions, device=device, parameter=parameter
-        )
-        SacCriticModel.__init__(
-            self, observation_shape=observation_shape, n_out_actions=n_out_actions, n_discrete_actions=None,
-            device=device, parameter=parameter
-        )
+        self.actor_model = ContinuousActorModel(
+            observation_shape=observation_shape, n_out_actions=n_out_actions, device=device, parameter=parameter
+        ).to(device)
 
+        self.critic_model = SacCriticModel(
+            observation_shape=observation_shape, n_out_actions=n_out_actions, n_discrete_actions=None,
+            device=device, parameter=parameter
+        ) .to(device)
 
     def re_parameterization_trick_sample(self, state):
-        mu_v, std_v = self.pi(state)
+        mu_v, std_v = self.actor_model.pi(state)
         dist = Normal(loc=mu_v, scale=std_v)
         transforms = [TanhTransform(cache_size=1)]
         dist = TransformedDistribution(dist, transforms)

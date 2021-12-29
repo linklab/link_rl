@@ -62,16 +62,17 @@ class CriticModel(Model):
         return v
 
 
-class DiscreteActorCriticModel(DiscreteActorModel, CriticModel):
+class DiscreteActorCriticModel:
     def __init__(
             self, observation_shape: Tuple[int], n_out_actions: int, n_discrete_actions=None,
             device=torch.device("cpu"), parameter=None
     ):
-        DiscreteActorModel.__init__(
-            self, observation_shape=observation_shape, n_out_actions=n_out_actions, device=device, parameter=parameter
+        self.actor_model = DiscreteActorModel(
+            observation_shape=observation_shape, n_out_actions=n_out_actions, device=device, parameter=parameter
         )
-        CriticModel.__init__(
-            self, observation_shape=observation_shape, n_out_actions=n_out_actions, n_discrete_actions=n_discrete_actions,
+
+        self.critic_model = CriticModel(
+            observation_shape=observation_shape, n_out_actions=n_out_actions, n_discrete_actions=n_discrete_actions,
             device=device, parameter=parameter
         )
 
