@@ -47,15 +47,21 @@ class AgentSac(Agent):
         else:
             raise ValueError()
 
-        self.sac_model.actor_model.share_memory()
-        self.sac_model.critic_model.share_memory()
+        self.actor_model = self.sac_model.actor_model
+        self.critic_model = self.sac_model.critic_model
 
-        self.synchronize_models(source_model=self.sac_model.critic_model, target_model=self.target_sac_model.critic_model)
+        self.model = self.actor_model
 
-        self.actor_optimizer = optim.Adam(self.sac_model.actor_model.actor_params, lr=self.parameter.LEARNING_RATE)
-        self.critic_optimizer = optim.Adam(self.sac_model.critic_model.critic_params, lr=self.parameter.LEARNING_RATE)
+        self.target_critic_model = self.target_sac_model.critic_model
 
-        self.model = self.sac_model.actor_model
+        self.actor_model.share_memory()
+        self.critic_model.share_memory()
+
+        self.synchronize_models(source_model=self.critic_model, target_model=self.target_critic_model)
+
+        self.actor_optimizer = optim.Adam(self.actor_model.actor_params, lr=self.parameter.LEARNING_RATE)
+        self.critic_optimizer = optim.Adam(self.critic_model.critic_params, lr=self.parameter.LEARNING_RATE)
+
         self.training_steps = 0
 
         self.last_critic_loss = mp.Value('d', 0.0)
@@ -64,7 +70,7 @@ class AgentSac(Agent):
 
     def get_action(self, obs, mode=AgentMode.TRAIN):
         if isinstance(self.action_space, Discrete):
-            action_prob = self.sac_model.actor_model.pi(obs)
+            action_prob = self.actor_model.pi(obs)
             m = Categorical(probs=action_prob)
             if mode == AgentMode.TRAIN:
                 action = m.sample()
@@ -72,7 +78,7 @@ class AgentSac(Agent):
                 action = torch.argmax(m.probs, dim=-1)
             return action.cpu().numpy()
         elif isinstance(self.action_space, Box):
-            mu_v, std_v = self.sac_model.actor_model.pi(obs)
+            mu_v, std_v = self.actor_model.pi(obs)
             mu_v = mu_v * self.action_scale_factor
 
             if mode == AgentMode.TRAIN:
@@ -103,12 +109,12 @@ class AgentSac(Agent):
         if isinstance(self.action_space, Discrete):
             pass
         elif isinstance(self.action_space, Box):
-            next_mu_v, std_v = self.sac_model.actor_model.pi(next_observations)
+            next_mu_v, std_v = self.actor_model.pi(next_observations)
             dist = Normal(loc=next_mu_v, scale=std_v + 1.0e-7)
             next_actions_v = dist.sample()
             next_log_prob_v = dist.log_prob(next_actions_v).sum(dim=-1, keepdim=True)
 
-        next_q1_v, next_q2_v = self.target_sac_model.critic_model.q(next_observations, next_actions_v)
+        next_q1_v, next_q2_v = self.target_critic_model.q(next_observations, next_actions_v)
         next_values = torch.min(next_q1_v, next_q2_v).detach().cpu().numpy()[:, 0]
         next_log_prob_v = self.alpha * next_log_prob_v
         next_values -= next_log_prob_v.squeeze(-1).detach().cpu().numpy()
@@ -123,7 +129,7 @@ class AgentSac(Agent):
         td_target_values = torch.tensor(td_target_value_lst, dtype=torch.float32, device=self.device).unsqueeze(dim=-1)
 
         # values.shape: (32, 1)
-        q1_v, q2_v = self.sac_model.critic_model.q(observations, actions)
+        q1_v, q2_v = self.critic_model.q(observations, actions)
 
         # critic_loss.shape: ()
         critic_loss = F.mse_loss(q1_v.squeeze(dim=-1), td_target_values) + \
@@ -131,7 +137,7 @@ class AgentSac(Agent):
 
         self.critic_optimizer.zero_grad()
         critic_loss.backward()
-        torch.nn.utils.clip_grad_value_(self.sac_model.critic_model.critic_params, self.parameter.CLIP_GRADIENT_VALUE)
+        torch.nn.utils.clip_grad_value_(self.critic_model.critic_params, self.parameter.CLIP_GRADIENT_VALUE)
         self.critic_optimizer.step()
         ###################################
         #  Critic (Value)  Loss 산출 - END #
@@ -141,14 +147,14 @@ class AgentSac(Agent):
         #  Actor Objective 산출 - BEGIN #
         ################################
         re_parameterization_trick_action_v, log_prob_v = self.sac_model.re_parameterization_trick_sample((observations))
-        q1_v, q2_v = self.sac_model.critic_model.q(observations, actions)
+        q1_v, q2_v = self.critic_model.q(observations, actions)
         objectives_v = torch.div(torch.add(q1_v, q2_v), 2.0) - self.alpha * log_prob_v
 
         loss_actor_v = -1.0 * objectives_v.mean()
 
         self.actor_optimizer.zero_grad()
         loss_actor_v.backward()
-        torch.nn.utils.clip_grad_value_(self.sac_model.actor_model.actor_params, self.parameter.CLIP_GRADIENT_VALUE)
+        torch.nn.utils.clip_grad_value_(self.actor_model.actor_params, self.parameter.CLIP_GRADIENT_VALUE)
         self.actor_optimizer.step()
         ##############################
         #  Actor Objective 산출 - END #
@@ -158,10 +164,9 @@ class AgentSac(Agent):
         # if training_steps_v % self.parameter.TARGET_SYNC_INTERVAL_TRAINING_STEPS == 0:
         #     self.synchronize_models(source_model=self.sac_model, target_model=self.target_sac_model)
         self.soft_synchronize_models(
-            source_model=self.sac_model.critic_model, target_model=self.target_sac_model.critic_model,
+            source_model=self.critic_model, target_model=self.target_critic_model,
             tau=self.parameter.TAU
         )  # TAU: 0.0001
-
 
         self.last_critic_loss.value = critic_loss.item()
         self.last_actor_objective.value = -loss_actor_v.item()

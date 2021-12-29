@@ -17,7 +17,6 @@ class CriticModel(Model):
     ):
         super(CriticModel, self).__init__(observation_shape, n_out_actions, n_discrete_actions, device, parameter)
 
-        print(observation_shape, n_out_actions, n_discrete_actions, device, parameter)
         #######################
         # CRITIC MODEL: BEGIN #
         #######################
