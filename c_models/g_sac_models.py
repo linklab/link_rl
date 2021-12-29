@@ -8,7 +8,7 @@ from a_configuration.b_base.c_models.recurrent_models import ParameterRecurrentM
 from c_models.a_models import Model
 from c_models.c_policy_models import DiscreteActorModel, ContinuousActorModel
 from torch.distributions import Normal, TanhTransform, TransformedDistribution
-
+from e_main.parameter import parameter
 class SacCriticModel(Model):
     def __init__(
             self, observation_shape: Tuple[int], n_out_actions: int, n_discrete_actions=None,
@@ -82,3 +82,6 @@ class ContinuousSacModel(ContinuousActorModel, SacCriticModel):
         # action_v.shape: [128, 1]
         # log_prob.shape: [128, 1]
         return action_v, log_probs
+
+if __name__ == "__main__":
+    a = SacCriticModel((4,), 1, 4, device=torch.device("cpu"), parameter=parameter)

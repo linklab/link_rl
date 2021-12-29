@@ -57,6 +57,7 @@ class AgentSac(Agent):
         self.training_steps = 0
 
         self.last_critic_loss = mp.Value('d', 0.0)
+        self.last_actor_loss = mp.Value('d', 0.0)
         self.alpha = 0
 
     def get_action(self, obs, mode=AgentMode.TRAIN):
@@ -106,7 +107,6 @@ class AgentSac(Agent):
             next_log_prob_v = dist.log_prob(next_actions_v).sum(dim=-1, keepdim=True)
 
         next_q1_v, next_q2_v = self.sac_model.v(next_observations, next_actions_v)
-        next_log_prob_v = dist.log_prob(next_actions_v).sum(dim=-1, keepdim=True)
         next_values = torch.min(next_q1_v, next_q2_v).detach().cpu().numpy()[:, 0]
         next_log_prob_v = self.alpha * next_log_prob_v
         next_values -= next_log_prob_v.squeeze(-1).detach().cpu().numpy()
@@ -121,13 +121,15 @@ class AgentSac(Agent):
         td_target_values = torch.tensor(td_target_value_lst, dtype=torch.float32, device=self.device).unsqueeze(dim=-1)
 
         # values.shape: (32, 1)
-        values = self.actor_critic_model.v(observations)
-        # loss_critic.shape: (,) <--  값 1개
-        critic_loss = F.mse_loss(td_target_values.detach(), values)
-
+        q1_v, q2_v = self.sac_model.v(observations, actions)
+        # critic_loss_batch.shape: (32)
+        critic_loss_batch = F.mse_loss(q1_v.squeeze(dim=-1), td_target_values, reduction="none") + \
+                            F.mse_loss(q2_v.squeeze(dim=-1), td_target_values, reduction="none")
+        # critic_loss.shape: (,) <--  값 1개
+        critic_loss = critic_loss_batch.mean()
         self.critic_optimizer.zero_grad()
         critic_loss.backward()
-        torch.nn.utils.clip_grad_value_(self.actor_critic_model.critic_params, self.parameter.CLIP_GRADIENT_VALUE)
+        torch.nn.utils.clip_grad_value_(self.sac_model.critic_params, self.parameter.CLIP_GRADIENT_VALUE)
         self.critic_optimizer.step()
         ###################################
         #  Critic (Value)  Loss 산출 - END #
@@ -136,46 +138,21 @@ class AgentSac(Agent):
         ################################
         #  Actor Objective 산출 - BEGIN #
         ################################
-        q_values = td_target_values
-        advantages = (q_values - values).detach()
+        re_parameterization_trick_action_v, log_prob_v = self.sac_model.re_parameterization_trick_sample((observations))
+        q1_v, q2_v = self.sac_model.v(observations, actions)
+        objectives_v = torch.div(torch.add(q1_v, q2_v), 2.0) - self.alpha * log_prob_v
 
-        if isinstance(self.action_space, Discrete):
-            action_probs = self.actor_critic_model.pi(observations)
-            dist = Categorical(probs=action_probs)
+        loss_actor_v = -1.0 * objectives_v.mean()
 
-            # actions.shape: (32, 1)
-            # advantage.shape: (32, 1)
-            # dist.log_prob(value=actions.squeeze(-1)).shape: (32,)
-            # criticized_log_pi_action_v.shape: (32,)
-            criticized_log_pi_action_v = dist.log_prob(value=actions.squeeze(-1)) * advantages.squeeze(-1)
-        elif isinstance(self.action_space, Box):
-            mu_v, std_v = self.actor_critic_model.pi(observations)
-            dist = Normal(loc=mu_v, scale=std_v)
-
-            # actions.shape: (32, 8)
-            # dist.log_prob(value=actions).shape: (32, 8)
-            # advantages.shape: (32, 1)
-            # criticized_log_pi_action_v.shape: (32, 8)
-            # print(dist.log_prob(value=actions).shape, advantages.shape, "!!!!!!")
-            criticized_log_pi_action_v = dist.log_prob(value=actions) * advantages
-        else:
-            raise ValueError()
-
-        # actor_objective.shape: (,) <--  값 1개
-        log_actor_objective = torch.mean(criticized_log_pi_action_v)
-        actor_loss = -1.0 * log_actor_objective
-
-        entropy_loss = -1.0 * torch.mean(dist.entropy())
-
-        actor_loss = actor_loss + entropy_loss * self.parameter.ENTROPY_BETA
+        loss_actor_v.backward(retain_graph=True)
 
         self.actor_optimizer.zero_grad()
-        actor_loss.backward()
-        torch.nn.utils.clip_grad_value_(self.actor_critic_model.actor_params, self.parameter.CLIP_GRADIENT_VALUE)
+        loss_actor_v.backward()
+        torch.nn.utils.clip_grad_value_(self.sac_model.actor_params, self.parameter.CLIP_GRADIENT_VALUE)
         self.actor_optimizer.step()
         ##############################
         #  Actor Objective 산출 - END #
         ##############################
 
         self.last_critic_loss.value = critic_loss.item()
-        self.last_log_actor_objective.value = log_actor_objective.item()
+        self.last_actor_loss.value = loss_actor_v.item()
