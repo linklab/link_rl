@@ -2,6 +2,9 @@ import numpy as np
 import os
 from gym.spaces import Discrete, Box
 import warnings
+
+from d_agents.off_policy.ddpg.agent_ddpg import AgentDdpg
+
 warnings.filterwarnings('ignore')
 warnings.simplefilter("ignore")
 
@@ -41,14 +44,16 @@ def get_agent(observation_space, action_space, device=torch.device("cpu"), param
             observation_space=observation_space, action_space=action_space, device=device, parameter=parameter
         )
     elif parameter.AGENT_TYPE == AgentType.REINFORCE:
-        assert parameter.N_ACTORS * parameter.N_VECTORIZED_ENVS == 1, \
-            "TOTAL NUMBERS OF ENVS should be one"
-
+        assert parameter.N_ACTORS * parameter.N_VECTORIZED_ENVS == 1, "TOTAL NUMBERS OF ENVS should be one"
         agent = AgentReinforce(
             observation_space=observation_space, action_space=action_space, device=device, parameter=parameter
         )
     elif parameter.AGENT_TYPE == AgentType.A2C:
         agent = AgentA2c(
+            observation_space=observation_space, action_space=action_space, device=device, parameter=parameter
+        )
+    elif parameter.AGENT_TYPE == AgentType.DDPG:
+        agent = AgentDdpg(
             observation_space=observation_space, action_space=action_space, device=device, parameter=parameter
         )
     else:

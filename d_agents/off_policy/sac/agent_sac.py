@@ -12,7 +12,7 @@ from g_utils.types import AgentMode, ModelType
 
 
 class AgentSac(Agent):
-    def __init__(self, observation_shape, n_actions, device, parameter, max_training_steps=None):
+    def __init__(self, observation_shape, n_actions, device, parameter):
         super(AgentSac, self).__init__(observation_shape, n_actions, device, parameter)
 
         if isinstance(self.action_space, Discrete):
@@ -46,7 +46,7 @@ class AgentSac(Agent):
             raise ValueError()
 
         self.ddpg_model.share_memory()
-        self.target_ddpg_model.load_state_dict(self.ddpg_model.state_dict())
+        self.synchronize_models(source_model=self.ddpg_model, target_model=self.target_ddpg_model)
 
         self.actor_optimizer = optim.Adam(self.ddpg_model.actor_params, lr=self.parameter.LEARNING_RATE)
         self.critic_optimizer = optim.Adam(self.ddpg_model.critic_params, lr=self.parameter.LEARNING_RATE)

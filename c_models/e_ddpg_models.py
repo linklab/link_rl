@@ -7,7 +7,27 @@ from a_configuration.b_base.c_models.convolutional_models import ParameterConvol
 from a_configuration.b_base.c_models.linear_models import ParameterLinearModel
 from a_configuration.b_base.c_models.recurrent_models import ParameterRecurrentModel
 from c_models.a_models import Model
-from c_models.c_policy_models import DiscreteActorModel, ContinuousActorModel
+from c_models.c_policy_models import DiscreteActorModel, ContinuousActorModel, PolicyModel
+
+
+class ContinuousDdpgActorModel(PolicyModel):
+    def __init__(
+            self, observation_shape: Tuple[int], n_out_actions: int, device=torch.device("cpu"), parameter=None
+    ):
+        super(ContinuousDdpgActorModel, self).__init__(
+            observation_shape=observation_shape, n_out_actions=n_out_actions, device=device, parameter=parameter
+        )
+
+        self.mu = nn.Sequential(
+            nn.Linear(self.parameter.MODEL.NEURONS_PER_FULLY_CONNECTED_LAYER[-1], self.n_out_actions),
+            nn.Tanh()
+        )
+        self.actor_params += list(self.mu.parameters())
+
+    def mu(self, x):
+        x = self.forward_actor(x)
+        mu_v = self.mu(x)
+        return mu_v
 
 
 class DdpgCriticModel(Model):
@@ -75,9 +95,9 @@ class DiscreteDdpgModel(DiscreteActorModel, DdpgCriticModel):
         DdpgCriticModel.__init__(observation_shape, n_out_actions, n_discrete_actions, device, parameter)
 
 
-class ContinuousDdpgModel(ContinuousActorModel, DdpgCriticModel):
+class ContinuousDdpgModel(ContinuousDdpgActorModel, DdpgCriticModel):
     def __init__(
             self, observation_shape: Tuple[int], n_out_actions: int, device=torch.device("cpu"), parameter=None
     ):
-        ContinuousActorModel.__init__(observation_shape, n_out_actions, device, parameter)
+        ContinuousDdpgActorModel.__init__(observation_shape, n_out_actions, device, parameter)
         DdpgCriticModel.__init__(observation_shape, n_out_actions, device, parameter)

@@ -26,7 +26,7 @@ class AgentDqn(Agent):
         ).to(device)
 
         self.q_net.share_memory()
-        self.target_q_net.load_state_dict(self.q_net.state_dict())
+        self.synchronize_models(source_model=self.q_net, target_model=self.target_q_net)
 
         self.optimizer = optim.Adam(
             self.q_net.parameters(), lr=self.parameter.LEARNING_RATE
@@ -109,7 +109,7 @@ class AgentDqn(Agent):
 
         # sync
         if training_steps_v % self.parameter.TARGET_SYNC_INTERVAL_TRAINING_STEPS == 0:
-            self.target_q_net.load_state_dict(self.q_net.state_dict())
+            self.synchronize_models(source_model=self.q_net, target_model=self.target_q_net)
 
         self.epsilon.value = self.epsilon_tracker.epsilon(training_steps_v)
 

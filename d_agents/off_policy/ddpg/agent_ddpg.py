@@ -12,18 +12,18 @@ from g_utils.types import AgentMode, ModelType
 
 
 class AgentDdpg(Agent):
-    def __init__(self, observation_shape, n_actions, device, parameter, max_training_steps=None):
-        super(AgentDdpg, self).__init__(observation_shape, n_actions, device, parameter)
+    def __init__(self, observation_space, action_space, device, parameter):
+        super(AgentDdpg, self).__init__(observation_space, action_space, device, parameter)
 
         if isinstance(self.action_space, Discrete):
             self.ddpg_model = DiscreteDdpgModel(
                 observation_shape=self.observation_shape, n_out_actions=self.n_out_actions,
-                device=device, parameter=parameter
+                n_discrete_actions=self.n_discrete_actions, device=device, parameter=parameter
             ).to(device)
 
             self.target_ddpg_model = DiscreteDdpgModel(
                 observation_shape=self.observation_shape, n_out_actions=self.n_out_actions,
-                device=device, parameter=parameter
+                n_discrete_actions=self.n_discrete_actions, device=device, parameter=parameter
             ).to(device)
         elif isinstance(self.action_space, Box):
             self.action_bound_low = np.expand_dims(self.action_space.low, axis=0)
@@ -46,7 +46,7 @@ class AgentDdpg(Agent):
             raise ValueError()
 
         self.ddpg_model.share_memory()
-        self.target_ddpg_model.load_state_dict(self.ddpg_model.state_dict())
+        self.synchronize_models(source_model=self.ddpg_model, target_model=self.target_ddpg_model)
 
         self.actor_optimizer = optim.Adam(self.ddpg_model.actor_params, lr=self.parameter.LEARNING_RATE)
         self.critic_optimizer = optim.Adam(self.ddpg_model.critic_params, lr=self.parameter.LEARNING_RATE)
@@ -57,18 +57,17 @@ class AgentDdpg(Agent):
         self.last_critic_loss = mp.Value('d', 0.0)
 
     def get_action(self, obs, mode=AgentMode.TRAIN):
-        out = self.q_net.forward(obs)
+        mu = self.ddpg_model.mu(obs)
 
         if mode == AgentMode.TRAIN:
-            coin = np.random.random()    # 0.0과 1.0사이의 임의의 값을 반환
-            if coin < self.epsilon.value:
-                return np.random.randint(low=0, high=self.n_actions, size=len(obs))
-            else:
-                action = out.argmax(dim=-1)
-                return action.cpu().numpy()  # argmax: 가장 큰 값에 대응되는 인덱스 반환
+            noises = np.random.normal(size=self.action_space, loc=0, scale=1.0)
+            action = mu + noises
+
         else:
-            action = out.argmax(dim=-1)
-            return action.cpu().numpy()
+            action = mu
+
+        action = np.clip(action.cpu().numpy(), self.action_bound_low, self.action_bound_high)
+        return action
 
     def train_dqn(self, buffer, training_steps_v):
         batch = buffer.sample(self.parameter.BATCH_SIZE, device=self.device)
