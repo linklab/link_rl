@@ -17,12 +17,6 @@ class SacCriticModel(Model):
             device=torch.device("cpu"), parameter=None
     ):
         super(SacCriticModel, self).__init__(observation_shape, n_out_actions, n_discrete_actions, device, parameter)
-        self.n_discrete_actions = n_discrete_actions
-
-        if self.n_discrete_actions is None:
-            self.n_actions = self.n_out_actions
-        else:
-            self.n_actions = self.n_discrete_actions
 
         self.critic_params = []
 
