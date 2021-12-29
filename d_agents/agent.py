@@ -62,7 +62,7 @@ class Agent:
                 is_train_success_done = True
         elif self.parameter.AGENT_TYPE == AgentType.DDPG:
             if len(self.buffer) >= self.parameter.BATCH_SIZE:
-                self.train_ddpg()
+                self.train_ddpg(training_steps_v=training_steps_v)
                 is_train_success_done = True
         elif self.parameter.AGENT_TYPE == AgentType.REINFORCE:
             if len(self.buffer) > 0:
@@ -70,7 +70,7 @@ class Agent:
                 is_train_success_done = True
         elif self.parameter.AGENT_TYPE == AgentType.SAC:
             if len(self.buffer) >= self.parameter.BATCH_SIZE:
-                self.train_sac()
+                self.train_sac(training_steps_v=training_steps_v)
                 is_train_success_done = True
         else:
             raise ValueError()
@@ -104,11 +104,11 @@ class Agent:
         return 0.0
 
     @abstractmethod
-    def train_ddpg(self):
+    def train_ddpg(self, training_steps_v):
         return 0.0
 
     @abstractmethod
-    def train_sac(self):
+    def train_sac(self, training_steps_v):
         return 0.0
 
     def synchronize_models(self, source_model, target_model):

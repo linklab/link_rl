@@ -19,7 +19,7 @@ class Model(nn.Module):
         self.n_discrete_actions = n_discrete_actions
         self.device = device
         self.parameter = parameter
-        self.activation = parameter.LAYER_ACTIVATION
+        self.activation = self.parameter.LAYER_ACTIVATION
 
     def get_linear_layers(self, input_n_features):
         assert self.parameter.MODEL.NEURONS_PER_FULLY_CONNECTED_LAYER

@@ -16,6 +16,7 @@ class AgentDdpg(Agent):
         super(AgentDdpg, self).__init__(observation_space, action_space, device, parameter)
 
         if isinstance(self.action_space, Discrete):
+            self.n_actions = self.n_discrete_actions
             self.ddpg_model = DiscreteDdpgModel(
                 observation_shape=self.observation_shape, n_out_actions=self.n_out_actions,
                 n_discrete_actions=self.n_discrete_actions, device=device, parameter=parameter
@@ -26,6 +27,7 @@ class AgentDdpg(Agent):
                 n_discrete_actions=self.n_discrete_actions, device=device, parameter=parameter
             ).to(device)
         elif isinstance(self.action_space, Box):
+            self.n_actions = self.n_out_actions
             self.action_bound_low = np.expand_dims(self.action_space.low, axis=0)
             self.action_bound_high = np.expand_dims(self.action_space.high, axis=0)
 
@@ -58,19 +60,18 @@ class AgentDdpg(Agent):
         self.last_actor_loss = mp.Value('d', 0.0)
 
     def get_action(self, obs, mode=AgentMode.TRAIN):
-        mu = self.ddpg_model.mu(obs)
-
+        mu = self.ddpg_model.pi(obs)
+        mu = mu.detach()
         if mode == AgentMode.TRAIN:
-            noises = np.random.normal(size=self.action_space, loc=0, scale=1.0)
+            noises = np.random.normal(size=self.n_actions, loc=0, scale=1.0)
             action = mu + noises
-
         else:
             action = mu
 
         action = np.clip(action.cpu().numpy(), self.action_bound_low, self.action_bound_high)
         return action
 
-    def train_ddpg(self):
+    def train_ddpg(self, training_steps_v):
         batch = self.buffer.sample(self.parameter.BATCH_SIZE, device=self.device)
 
         # observations.shape: torch.Size([32, 4]),
@@ -83,7 +84,7 @@ class AgentDdpg(Agent):
         #######################
         # train actor - BEGIN #
         #######################
-        mu_v = self.ddpg_model.mu(observations)
+        mu_v = self.ddpg_model.pi(observations)
         q_v = self.ddpg_model.q(observations, mu_v)
         actor_loss = -1.0 * q_v.mean()
 
@@ -98,9 +99,11 @@ class AgentDdpg(Agent):
         ########################
         # train critic - BEGIN #
         ########################
-        next_mu_v = self.target_ddpg_model.mu(next_observations)
-        next_q_v = self.ddpg_model.q(next_observations, next_mu_v)
+        next_mu_v = self.target_ddpg_model.pi(next_observations)
+        next_q_v = self.target_ddpg_model.q(next_observations, next_mu_v)
         target_q_v = rewards + self.parameter.GAMMA ** self.parameter.N_STEP * next_q_v
+
+        q_v = self.ddpg_model.q(observations, actions)
 
         critic_loss_v = F.mse_loss(q_v, target_q_v.detach(), reduction='none')
 

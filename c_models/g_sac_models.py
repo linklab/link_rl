@@ -69,7 +69,10 @@ class ContinuousSacModel(ContinuousActorModel, SacCriticModel):
     def __init__(
             self, observation_shape: Tuple[int], n_out_actions: int, device=torch.device("cpu"), parameter=None
     ):
-        super(ContinuousSacModel, self).__init__(observation_shape, n_out_actions, device, parameter)
+        super(ContinuousSacModel, self).__init__(
+            observation_shape=observation_shape, n_out_actions=n_out_actions, device=device, parameter=parameter
+        )
+
 
     def re_parameterization_trick_sample(self, state):
         mu_v, std_v = self.pi(state)

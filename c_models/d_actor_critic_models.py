@@ -17,6 +17,7 @@ class CriticModel(Model):
     ):
         super(CriticModel, self).__init__(observation_shape, n_out_actions, n_discrete_actions, device, parameter)
 
+        print(observation_shape, n_out_actions, n_discrete_actions, device, parameter)
         #######################
         # CRITIC MODEL: BEGIN #
         #######################
@@ -73,4 +74,6 @@ class ContinuousActorCriticModel(ContinuousActorModel, CriticModel):
     def __init__(
             self, observation_shape: Tuple[int], n_out_actions: int, device=torch.device("cpu"), parameter=None
     ):
-        super(ContinuousActorCriticModel, self).__init__(observation_shape, n_out_actions, device, parameter)
+        super(ContinuousActorCriticModel, self).__init__(
+            observation_shape, n_out_actions, device, parameter
+        )

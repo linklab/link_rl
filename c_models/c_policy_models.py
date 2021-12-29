@@ -18,7 +18,6 @@ class PolicyModel(Model):
             device=torch.device("cpu"), parameter=None
     ):
         super(PolicyModel, self).__init__(observation_shape, n_out_actions, n_discrete_actions, device, parameter)
-
         self.actor_params = []
         if isinstance(self.parameter.MODEL, ParameterLinearModel):
             input_n_features = self.observation_shape[0]

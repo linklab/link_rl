@@ -55,3 +55,5 @@ class ParameterSac(ParameterAgent):
         self.LAYER_NORM = True
 
         self.ALPHA = 0.2
+
+        self.TAU = 0.0001

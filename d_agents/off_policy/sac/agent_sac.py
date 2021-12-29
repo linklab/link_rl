@@ -84,7 +84,7 @@ class AgentSac(Agent):
         else:
             raise ValueError()
 
-    def train_sac(self):
+    def train_sac(self, training_steps_v):
         # observations.shape: torch.Size([32, 4, 84, 84]),
         # actions.shape: torch.Size([32, 1]),
         # next_observations.shape: torch.Size([32, 4, 84, 84]),
@@ -106,7 +106,7 @@ class AgentSac(Agent):
             next_actions_v = dist.sample()
             next_log_prob_v = dist.log_prob(next_actions_v).sum(dim=-1, keepdim=True)
 
-        next_q1_v, next_q2_v = self.sac_model.q(next_observations, next_actions_v)
+        next_q1_v, next_q2_v = self.target_sac_model.q(next_observations, next_actions_v)
         next_values = torch.min(next_q1_v, next_q2_v).detach().cpu().numpy()[:, 0]
         next_log_prob_v = self.alpha * next_log_prob_v
         next_values -= next_log_prob_v.squeeze(-1).detach().cpu().numpy()
@@ -115,7 +115,7 @@ class AgentSac(Agent):
 
         for reward, next_value, done in zip(rewards, next_values, dones):
             td_target = reward + self.parameter.GAMMA ** self.parameter.N_STEP * next_value * (0.0 if done else 1.0)
-            td_target_value_lst.append(td_target)
+            td_target_value_lst.append(td_target.detach())
 
         # td_target_values.shape: (32, 1)
         td_target_values = torch.tensor(td_target_value_lst, dtype=torch.float32, device=self.device).unsqueeze(dim=-1)
@@ -152,6 +152,14 @@ class AgentSac(Agent):
         ##############################
         #  Actor Objective 산출 - END #
         ##############################
+
+        # sync
+        # if training_steps_v % self.parameter.TARGET_SYNC_INTERVAL_TRAINING_STEPS == 0:
+        #     self.synchronize_models(source_model=self.sac_model, target_model=self.target_sac_model)
+        self.soft_synchronize_models(
+            source_model=self.sac_model, target_model=self.target_sac_model, tau=self.parameter.TAU
+        )  # TAU: 0.0001
+
 
         self.last_critic_loss.value = critic_loss.item()
         self.last_actor_objective.value = -loss_actor_v.item()
