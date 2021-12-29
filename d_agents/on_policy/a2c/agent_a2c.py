@@ -19,7 +19,7 @@ class AgentA2c(Agent):
             self.actor_critic_model = DiscreteActorCriticModel(
                 observation_shape=self.observation_shape, n_out_actions=self.n_out_actions,
                 n_discrete_actions=self.n_discrete_actions, device=device, parameter=parameter
-            ).to(device)
+            )
         elif isinstance(self.action_space, Box):
             self.action_bound_low = np.expand_dims(self.action_space.low, axis=0)
             self.action_bound_high = np.expand_dims(self.action_space.high, axis=0)
@@ -31,23 +31,24 @@ class AgentA2c(Agent):
             self.actor_critic_model = ContinuousActorCriticModel(
                 observation_shape=self.observation_shape, n_out_actions=self.n_out_actions,
                 device=device, parameter=parameter
-            ).to(device)
+            )
         else:
             raise ValueError()
 
-        self.actor_critic_model.share_memory()
+        self.actor_critic_model.actor_model.share_memory()
+        self.actor_critic_model.critic_model.share_memory()
 
-        self.actor_optimizer = optim.Adam(self.actor_critic_model.actor_params, lr=self.parameter.LEARNING_RATE)
-        self.critic_optimizer = optim.Adam(self.actor_critic_model.critic_params, lr=self.parameter.LEARNING_RATE)
+        self.actor_optimizer = optim.Adam(self.actor_critic_model.actor_model.actor_params, lr=self.parameter.LEARNING_RATE)
+        self.critic_optimizer = optim.Adam(self.actor_critic_model.critic_model.critic_params, lr=self.parameter.LEARNING_RATE)
 
-        self.model = self.actor_critic_model  # 에이전트 밖에서는 model이라는 이름으로 제어 모델 접근
-
+        self.model = self.actor_critic_model.actor_model  # 에이전트 밖에서는 model이라는 이름으로 제어 모델 접근
+                
         self.last_critic_loss = mp.Value('d', 0.0)
         self.last_log_actor_objective = mp.Value('d', 0.0)
 
     def get_action(self, obs, mode=AgentMode.TRAIN):
         if isinstance(self.action_space, Discrete):
-            action_prob = self.actor_critic_model.pi(obs)
+            action_prob = self.actor_critic_model.actor_model.pi(obs)
             m = Categorical(probs=action_prob)
             if mode == AgentMode.TRAIN:
                 action = m.sample()
@@ -55,7 +56,7 @@ class AgentA2c(Agent):
                 action = torch.argmax(m.probs, dim=-1)
             return action.cpu().numpy()
         elif isinstance(self.action_space, Box):
-            mu_v, std_v = self.actor_critic_model.pi(obs)
+            mu_v, std_v = self.actor_critic_model.actor_model.pi(obs)
             mu_v = mu_v * self.action_scale_factor
 
             if mode == AgentMode.TRAIN:
@@ -84,7 +85,7 @@ class AgentA2c(Agent):
         #  Critic (Value) 손실 산출 - BEGIN #
         ###################################
         # next_values.shape: (32, 1)
-        next_values = self.actor_critic_model.v(next_observations)
+        next_values = self.actor_critic_model.critic_model.v(next_observations)
         td_target_value_lst = []
 
         for reward, next_value, done in zip(rewards, next_values, dones):
@@ -95,13 +96,13 @@ class AgentA2c(Agent):
         td_target_values = torch.tensor(td_target_value_lst, dtype=torch.float32, device=self.device).unsqueeze(dim=-1)
 
         # values.shape: (32, 1)
-        values = self.actor_critic_model.v(observations)
+        values = self.actor_critic_model.critic_model.v(observations)
         # loss_critic.shape: (,) <--  값 1개
         critic_loss = F.mse_loss(td_target_values.detach(), values)
 
         self.critic_optimizer.zero_grad()
         critic_loss.backward()
-        torch.nn.utils.clip_grad_value_(self.actor_critic_model.critic_params, self.parameter.CLIP_GRADIENT_VALUE)
+        torch.nn.utils.clip_grad_value_(self.actor_critic_model.critic_model.critic_params, self.parameter.CLIP_GRADIENT_VALUE)
         self.critic_optimizer.step()
         ###################################
         #  Critic (Value)  Loss 산출 - END #
@@ -114,7 +115,7 @@ class AgentA2c(Agent):
         advantages = (q_values - values).detach()
 
         if isinstance(self.action_space, Discrete):
-            action_probs = self.actor_critic_model.pi(observations)
+            action_probs = self.actor_critic_model.actor_model.pi(observations)
             dist = Categorical(probs=action_probs)
 
             # actions.shape: (32, 1)
@@ -123,7 +124,7 @@ class AgentA2c(Agent):
             # criticized_log_pi_action_v.shape: (32,)
             criticized_log_pi_action_v = dist.log_prob(value=actions.squeeze(-1)) * advantages.squeeze(-1)
         elif isinstance(self.action_space, Box):
-            mu_v, std_v = self.actor_critic_model.pi(observations)
+            mu_v, std_v = self.actor_critic_model.actor_model.pi(observations)
             dist = Normal(loc=mu_v, scale=std_v)
 
             # actions.shape: (32, 8)
@@ -145,7 +146,7 @@ class AgentA2c(Agent):
 
         self.actor_optimizer.zero_grad()
         actor_loss.backward()
-        torch.nn.utils.clip_grad_value_(self.actor_critic_model.actor_params, self.parameter.CLIP_GRADIENT_VALUE)
+        torch.nn.utils.clip_grad_value_(self.actor_critic_model.actor_model.actor_params, self.parameter.CLIP_GRADIENT_VALUE)
         self.actor_optimizer.step()
         ##############################
         #  Actor Objective 산출 - END #
