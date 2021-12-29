@@ -265,6 +265,10 @@ def console_log(
         console_log += "critic_loss: {0:6.3f}, log_actor_objective: {1:6.3f}, ".format(
             agent.last_critic_loss.value, agent.last_log_actor_objective.value
         )
+    elif parameter.AGENT_TYPE == AgentType.DDPG:
+        console_log += "critic_loss: {0:6.3f}, actor_loss: {1:6.3f}, ".format(
+            agent.last_critic_loss.value, agent.last_actor_loss.value
+        )
     else:
         pass
 
