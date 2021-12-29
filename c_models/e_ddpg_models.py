@@ -85,28 +85,30 @@ class DdpgCriticModel(Model):
         return q_value
 
 
-class DiscreteDdpgModel(DiscreteActorModel, DdpgCriticModel):
+class DiscreteDdpgModel:
     def __init__(
             self, observation_shape: Tuple[int], n_out_actions: int, n_discrete_actions=None,
             device=torch.device("cpu"), parameter=None
     ):
-        DiscreteActorModel.__init__(
-            self, observation_shape=observation_shape, n_out_actions=n_out_actions, device=device, parameter=parameter
-        )
-        DdpgCriticModel.__init__(
-            self, observation_shape=observation_shape, n_out_actions=n_out_actions, n_discrete_actions=n_discrete_actions,
+        self.actor_model = DiscreteActorModel(
+            observation_shape=observation_shape, n_out_actions=n_out_actions, device=device, parameter=parameter
+        ).to(device)
+
+        self.critic_model = DdpgCriticModel(
+            observation_shape=observation_shape, n_out_actions=n_out_actions, n_discrete_actions=n_discrete_actions,
             device=device, parameter=parameter
-        )
+        ).to(device)
 
 
-class ContinuousDdpgModel(ContinuousDdpgActorModel, DdpgCriticModel):
+class ContinuousDdpgModel:
     def __init__(
             self, observation_shape: Tuple[int], n_out_actions: int, device=torch.device("cpu"), parameter=None
     ):
-        ContinuousDdpgActorModel.__init__(
-            self, observation_shape=observation_shape, n_out_actions=n_out_actions, device=device, parameter=parameter
-        )
-        DdpgCriticModel.__init__(
-            self, observation_shape=observation_shape, n_out_actions=n_out_actions, n_discrete_actions=None,
+        self.actor_model = ContinuousDdpgActorModel(
+            observation_shape=observation_shape, n_out_actions=n_out_actions, device=device, parameter=parameter
+        ).to(device)
+
+        self.critic_model = DdpgCriticModel(
+            observation_shape=observation_shape, n_out_actions=n_out_actions, n_discrete_actions=None,
             device=device, parameter=parameter
-        )
+        ).to(device)

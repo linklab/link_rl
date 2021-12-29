@@ -76,17 +76,14 @@ class AgentDqn(Agent):
 
         with torch.no_grad():
             # next_state_values.shape: torch.Size([32, 1])
-            next_state_values = self.target_q_net(next_observations).max(
-                dim=1, keepdim=True
-            ).values
-            next_state_values[dones] = 0.0
-            next_state_values = next_state_values.detach()
+            next_q_v = self.target_q_net(next_observations).max(dim=1, keepdim=True).values
+            next_q_v[dones] = 0.0
 
             # target_state_action_values.shape: torch.Size([32, 1])
-            target_state_action_values = rewards + self.parameter.GAMMA ** self.parameter.N_STEP * next_state_values
+            target_state_action_values = rewards + self.parameter.GAMMA ** self.parameter.N_STEP * next_q_v
 
         # loss is just scalar torch value
-        q_net_loss = F.mse_loss(state_action_values, target_state_action_values)
+        q_net_loss = F.mse_loss(state_action_values, target_state_action_values.detach())
 
         # print("observations.shape: {0}, actions.shape: {1}, "
         #       "next_observations.shape: {2}, rewards.shape: {3}, dones.shape: {4}".format(
