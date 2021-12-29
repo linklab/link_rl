@@ -99,9 +99,11 @@ class AgentDdpg(Agent):
         ########################
         # train critic - BEGIN #
         ########################
-        next_mu_v = self.target_ddpg_model.pi(next_observations)
-        next_q_v = self.target_ddpg_model.q(next_observations, next_mu_v)
-        target_q_v = rewards + self.parameter.GAMMA ** self.parameter.N_STEP * next_q_v
+        with torch.no_grad():
+            next_mu_v = self.target_ddpg_model.pi(next_observations)
+            next_q_v = self.target_ddpg_model.q(next_observations, next_mu_v)
+            next_q_v[dones] = 0.0
+            target_q_v = rewards + self.parameter.GAMMA ** self.parameter.N_STEP * next_q_v
 
         q_v = self.ddpg_model.q(observations, actions)
 
