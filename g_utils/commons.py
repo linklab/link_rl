@@ -361,7 +361,7 @@ def wandb_log(learner, wandb_obj, parameter):
         log_dict["Log Actor Objective"] = learner.agent.last_log_actor_objective.value
     elif parameter.AGENT_TYPE == AgentType.SAC:
         log_dict["Critic Loss"] = learner.agent.last_critic_loss.value
-        log_dict["Log Actor Objective"] = learner.agent.last_log_actor_objective.value
+        log_dict["Last Actor Objective"] = learner.agent.last_actor_objective.value
     else:
         pass
 

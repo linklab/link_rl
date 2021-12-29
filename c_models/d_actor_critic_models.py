@@ -74,4 +74,3 @@ class ContinuousActorCriticModel(ContinuousActorModel, CriticModel):
             self, observation_shape: Tuple[int], n_out_actions: int, device=torch.device("cpu"), parameter=None
     ):
         super(ContinuousActorCriticModel, self).__init__(observation_shape, n_out_actions, device, parameter)
-        print("$$$$$$$$$$$$", self.logstds)

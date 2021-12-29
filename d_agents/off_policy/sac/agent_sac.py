@@ -14,8 +14,8 @@ from g_utils.types import AgentMode, ModelType
 
 
 class AgentSac(Agent):
-    def __init__(self, observation_shape, n_actions, device, parameter):
-        super(AgentSac, self).__init__(observation_shape, n_actions, device, parameter)
+    def __init__(self, observation_space, action_space, device, parameter):
+        super(AgentSac, self).__init__(observation_space, action_space, device, parameter)
 
         if isinstance(self.action_space, Discrete):
             self.sac_model = DiscreteSacModel(
@@ -57,8 +57,8 @@ class AgentSac(Agent):
         self.training_steps = 0
 
         self.last_critic_loss = mp.Value('d', 0.0)
-        self.last_actor_loss = mp.Value('d', 0.0)
-        self.alpha = 0
+        self.last_actor_objective = mp.Value('d', 0.0)
+        self.alpha = self.parameter.ALPHA
 
     def get_action(self, obs, mode=AgentMode.TRAIN):
         if isinstance(self.action_space, Discrete):
@@ -70,11 +70,11 @@ class AgentSac(Agent):
                 action = torch.argmax(m.probs, dim=-1)
             return action.cpu().numpy()
         elif isinstance(self.action_space, Box):
-            mu_v, logstd_v = self.sac_model.pi(obs)
+            mu_v, std_v = self.sac_model.pi(obs)
             mu_v = mu_v * self.action_scale_factor
 
             if mode == AgentMode.TRAIN:
-                dist = Normal(loc=mu_v, scale=torch.exp(logstd_v) + 1.0e-7)
+                dist = Normal(loc=mu_v, scale=std_v + 1.0e-7)
                 actions = dist.sample()
             else:
                 actions = mu_v.detach()
@@ -101,12 +101,12 @@ class AgentSac(Agent):
         if isinstance(self.action_space, Discrete):
             pass
         elif isinstance(self.action_space, Box):
-            next_mu_v, next_logstd_v = self.sac_model.pi(next_observations)
-            dist = Normal(loc=next_mu_v, scale=torch.exp(next_logstd_v) + 1.0e-7)
+            next_mu_v, std_v = self.sac_model.pi(next_observations)
+            dist = Normal(loc=next_mu_v, scale=std_v + 1.0e-7)
             next_actions_v = dist.sample()
             next_log_prob_v = dist.log_prob(next_actions_v).sum(dim=-1, keepdim=True)
 
-        next_q1_v, next_q2_v = self.sac_model.v(next_observations, next_actions_v)
+        next_q1_v, next_q2_v = self.sac_model.q(next_observations, next_actions_v)
         next_values = torch.min(next_q1_v, next_q2_v).detach().cpu().numpy()[:, 0]
         next_log_prob_v = self.alpha * next_log_prob_v
         next_values -= next_log_prob_v.squeeze(-1).detach().cpu().numpy()
@@ -121,12 +121,13 @@ class AgentSac(Agent):
         td_target_values = torch.tensor(td_target_value_lst, dtype=torch.float32, device=self.device).unsqueeze(dim=-1)
 
         # values.shape: (32, 1)
-        q1_v, q2_v = self.sac_model.v(observations, actions)
+        q1_v, q2_v = self.sac_model.q(observations, actions)
         # critic_loss_batch.shape: (32)
         critic_loss_batch = F.mse_loss(q1_v.squeeze(dim=-1), td_target_values, reduction="none") + \
                             F.mse_loss(q2_v.squeeze(dim=-1), td_target_values, reduction="none")
         # critic_loss.shape: (,) <--  값 1개
         critic_loss = critic_loss_batch.mean()
+
         self.critic_optimizer.zero_grad()
         critic_loss.backward()
         torch.nn.utils.clip_grad_value_(self.sac_model.critic_params, self.parameter.CLIP_GRADIENT_VALUE)
@@ -139,12 +140,10 @@ class AgentSac(Agent):
         #  Actor Objective 산출 - BEGIN #
         ################################
         re_parameterization_trick_action_v, log_prob_v = self.sac_model.re_parameterization_trick_sample((observations))
-        q1_v, q2_v = self.sac_model.v(observations, actions)
+        q1_v, q2_v = self.sac_model.q(observations, actions)
         objectives_v = torch.div(torch.add(q1_v, q2_v), 2.0) - self.alpha * log_prob_v
 
         loss_actor_v = -1.0 * objectives_v.mean()
-
-        loss_actor_v.backward(retain_graph=True)
 
         self.actor_optimizer.zero_grad()
         loss_actor_v.backward()
@@ -155,4 +154,4 @@ class AgentSac(Agent):
         ##############################
 
         self.last_critic_loss.value = critic_loss.item()
-        self.last_actor_loss.value = loss_actor_v.item()
+        self.last_actor_objective.value = -loss_actor_v.item()

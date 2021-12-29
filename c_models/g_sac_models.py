@@ -9,6 +9,8 @@ from c_models.a_models import Model
 from c_models.c_policy_models import DiscreteActorModel, ContinuousActorModel
 from torch.distributions import Normal, TanhTransform, TransformedDistribution
 from e_main.parameter import parameter
+from gym.spaces import Discrete, Box
+
 class SacCriticModel(Model):
     def __init__(
             self, observation_shape: Tuple[int], n_out_actions: int, n_discrete_actions=None,
@@ -16,6 +18,12 @@ class SacCriticModel(Model):
     ):
         super(SacCriticModel, self).__init__(observation_shape, n_out_actions, n_discrete_actions, device, parameter)
         self.n_discrete_actions = n_discrete_actions
+
+        if self.n_discrete_actions is None:
+            self.n_actions = self.n_out_actions
+        else:
+            self.n_actions = self.n_discrete_actions
+
         self.critic_params = []
 
         self.q1 = self.get_critic_models()
@@ -23,10 +31,10 @@ class SacCriticModel(Model):
 
     def get_critic_models(self):
         if isinstance(self.parameter.MODEL, ParameterLinearModel):
-            input_n_features = self.observation_shape[0] + self.n_discrete_actions
+            input_n_features = self.observation_shape[0] + self.n_actions
             critic_layers = self.get_linear_layers(input_n_features=input_n_features)
         elif isinstance(self.parameter.MODEL, ParameterConvolutionalModel):
-            input_n_channels = self.observation_shape[0] + self.n_discrete_actions
+            input_n_channels = self.observation_shape[0] + self.n_actions
             critic_layers = self.get_conv_layers(input_n_channels=input_n_channels)
             conv_out_flat_size = self._get_conv_out(self.critic_conv_layers, self.observation_shape)
             critic_layers = nn.Sequential(
@@ -43,12 +51,11 @@ class SacCriticModel(Model):
         self.critic_params += list(critic_layers.parameters())
         return critic_layers
 
-    def v(self, obs, act):
+    def q(self, obs, act):
         if isinstance(obs, np.ndarray):
             obs = torch.tensor(obs, dtype=torch.float32, device=self.device)
         x = torch.cat([obs, act], dim=-1)
         return self.q1(x), self.q2(x)
-
 
 class DiscreteSacModel(DiscreteActorModel, SacCriticModel):
     def __init__(
@@ -64,15 +71,9 @@ class ContinuousSacModel(ContinuousActorModel, SacCriticModel):
     ):
         super(ContinuousSacModel, self).__init__(observation_shape, n_out_actions, device, parameter)
 
-    def pi(self, x):
-        x = self.forward_actor(x)
-        mu_v = self.mu(x)
-        logstd_v = self.logstd(x)
-        return mu_v, logstd_v
-
     def re_parameterization_trick_sample(self, state):
-        mu_v, logstd_v, _ = self.base.forward_actor(state)
-        dist = Normal(loc=mu_v, scale=torch.exp(logstd_v))
+        mu_v, std_v = self.pi(state)
+        dist = Normal(loc=mu_v, scale=std_v)
         transforms = [TanhTransform(cache_size=1)]
         dist = TransformedDistribution(dist, transforms)
         action_v = dist.rsample()  # for reparameterization trick (mean + std * N(0,1))
