@@ -69,22 +69,21 @@ class DiscreteActorCriticModel:
     ):
         self.actor_model = DiscreteActorModel(
             observation_shape=observation_shape, n_out_actions=n_out_actions, device=device, parameter=parameter
-        )
-
+        ).to(device)
         self.critic_model = CriticModel(
             observation_shape=observation_shape, n_out_actions=n_out_actions, n_discrete_actions=n_discrete_actions,
             device=device, parameter=parameter
-        )
+        ).to(device)
 
 
-class ContinuousActorCriticModel(ContinuousActorModel, CriticModel):
+class ContinuousActorCriticModel:
     def __init__(
             self, observation_shape: Tuple[int], n_out_actions: int, device=torch.device("cpu"), parameter=None
     ):
-        ContinuousActorModel.__init__(
-            self, observation_shape=observation_shape, n_out_actions=n_out_actions, device=device, parameter=parameter
-        )
-        CriticModel.__init__(
-            self, observation_shape=observation_shape, n_out_actions=n_out_actions, n_discrete_actions=None,
+        self.actor_model = ContinuousActorModel(
+            observation_shape=observation_shape, n_out_actions=n_out_actions, device=device, parameter=parameter
+        ).to(device)
+        self.critic_model = CriticModel(
+            observation_shape=observation_shape, n_out_actions=n_out_actions, n_discrete_actions=None,
             device=device, parameter=parameter
-        )
+        ).to(device)
