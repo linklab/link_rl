@@ -16,7 +16,7 @@ class QNet(Model):
             self, observation_shape: Tuple[int], n_out_actions: int, n_discrete_actions=None,
             device=torch.device("cpu"), parameter=None
     ):
-        super(QNet, self).__init__(observation_shape, n_out_actions, n_discrete_actions, device, parameter)
+        Model.__init__(self, observation_shape, n_out_actions, n_discrete_actions, device, parameter)
 
         if isinstance(self.parameter.MODEL, ParameterLinearModel):
             input_n_features = self.observation_shape[0]

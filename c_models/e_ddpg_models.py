@@ -90,8 +90,13 @@ class DiscreteDdpgModel(DiscreteActorModel, DdpgCriticModel):
             self, observation_shape: Tuple[int], n_out_actions: int, n_discrete_actions=None,
             device=torch.device("cpu"), parameter=None
     ):
-        super(DiscreteActorModel, self).__init__(observation_shape, n_out_actions, n_discrete_actions, device, parameter)
-        super(DdpgCriticModel, self).__init__(observation_shape, n_out_actions, n_discrete_actions, device, parameter)
+        DiscreteActorModel.__init__(
+            self, observation_shape=observation_shape, n_out_actions=n_out_actions, device=device, parameter=parameter
+        )
+        DdpgCriticModel.__init__(
+            self, observation_shape=observation_shape, n_out_actions=n_out_actions, n_discrete_actions=n_discrete_actions,
+            device=device, parameter=parameter
+        )
 
 
 class ContinuousDdpgModel(ContinuousDdpgActorModel, DdpgCriticModel):

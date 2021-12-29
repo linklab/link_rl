@@ -13,7 +13,7 @@ class Model(nn.Module):
             self, observation_shape: Tuple[int], n_out_actions: int, n_discrete_actions=None,
             device=torch.device("cpu"), parameter=None
     ):
-        super(Model, self).__init__()
+        nn.Module.__init__(self)
         self.observation_shape = observation_shape
         self.n_out_actions = n_out_actions
         self.n_discrete_actions = n_discrete_actions

@@ -25,10 +25,10 @@ class SacCriticModel(Model):
 
     def get_critic_models(self):
         if isinstance(self.parameter.MODEL, ParameterLinearModel):
-            input_n_features = self.observation_shape[0] + self.n_actions
+            input_n_features = self.observation_shape[0] + self.n_out_actions
             critic_layers = self.get_linear_layers(input_n_features=input_n_features)
         elif isinstance(self.parameter.MODEL, ParameterConvolutionalModel):
-            input_n_channels = self.observation_shape[0] + self.n_actions
+            input_n_channels = self.observation_shape[0] + self.n_out_actions
             critic_layers = self.get_conv_layers(input_n_channels=input_n_channels)
             conv_out_flat_size = self._get_conv_out(self.critic_conv_layers, self.observation_shape)
             critic_layers = nn.Sequential(
@@ -56,15 +56,25 @@ class DiscreteSacModel(DiscreteActorModel, SacCriticModel):
             self, observation_shape: Tuple[int], n_out_actions: int, n_discrete_actions=None,
             device=torch.device("cpu"), parameter=None
     ):
-        super(DiscreteSacModel, self).__init__(observation_shape, n_out_actions, n_discrete_actions, device, parameter)
+        DiscreteActorModel.__init__(
+            self, observation_shape=observation_shape, n_out_actions=n_out_actions, device=device, parameter=parameter
+        )
+        SacCriticModel.__init__(
+            self, observation_shape=observation_shape, n_out_actions=n_out_actions, n_discrete_actions=n_discrete_actions,
+            device=device, parameter=parameter
+        )
 
 
 class ContinuousSacModel(ContinuousActorModel, SacCriticModel):
     def __init__(
             self, observation_shape: Tuple[int], n_out_actions: int, device=torch.device("cpu"), parameter=None
     ):
-        super(ContinuousSacModel, self).__init__(
-            observation_shape=observation_shape, n_out_actions=n_out_actions, device=device, parameter=parameter
+        ContinuousActorModel.__init__(
+            self, observation_shape=observation_shape, n_out_actions=n_out_actions, device=device, parameter=parameter
+        )
+        SacCriticModel.__init__(
+            self, observation_shape=observation_shape, n_out_actions=n_out_actions, n_discrete_actions=None,
+            device=device, parameter=parameter
         )
 
 
