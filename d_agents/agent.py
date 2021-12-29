@@ -1,6 +1,6 @@
 from abc import abstractmethod, ABC
 import torch.multiprocessing as mp
-from gym.spaces import Discrete, Box
+from gym.spaces import Discrete, Box, MultiDiscrete
 
 import numpy as np
 from g_utils.buffers import Buffer
@@ -24,9 +24,11 @@ class Agent:
         self.action_shape = action_space.shape
 
         if isinstance(action_space, Discrete):
-            # TODO: Multi Discrete Space
             self.n_out_actions = 1
             self.n_discrete_actions = action_space.n
+        elif isinstance(action_space, MultiDiscrete):
+            # TODO: Multi Discrete Space
+            pass
         elif isinstance(action_space, Box):
             self.n_out_actions = action_space.shape[0]
             self.n_discrete_actions = None
@@ -58,10 +60,16 @@ class Agent:
             if len(self.buffer) >= self.parameter.BATCH_SIZE:
                 self.train_a2c()
                 is_train_success_done = True
+        elif self.parameter.AGENT_TYPE == AgentType.DDPG:
+            if len(self.buffer) >= self.parameter.BATCH_SIZE:
+                self.train_ddpg()
+                is_train_success_done = True
         elif self.parameter.AGENT_TYPE == AgentType.REINFORCE:
             if len(self.buffer) > 0:
                 self.train_reinforce()
                 is_train_success_done = True
+        else:
+            raise ValueError()
 
         # NOTE !!!
         if is_train_success_done:
@@ -91,6 +99,22 @@ class Agent:
     def train_a2c(self):
         return 0.0
 
+    @abstractmethod
+    def train_ddpg(self):
+        return 0.0
+
+    def synchronize_models(self, source_model, target_model):
+        target_model.load_state_dict(source_model.state_dict())
+
+    def soft_synchronize_models(self, source_model, target_model, tau):
+        assert isinstance(tau, float)
+        assert 0.0 < tau <= 1.0
+
+        source_model_state = source_model.state_dict()
+        target_model_state = target_model.state_dict()
+        for k, v in source_model_state.items():
+            target_model_state[k] = (1.0 - tau) * target_model_state[k] + tau * v
+        target_model.load_state_dict(target_model_state)
 
 # class DiscreteActionAgent(Agent, ABC):
 #     def __init__(self, observation_shape, n_discrete_actions, device, parameter):

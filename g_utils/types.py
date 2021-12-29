@@ -50,6 +50,14 @@ class AgentType(enum.Enum):
     DDPG = 6
     TD3 = 7
     SAC = 8
+    PPO = 9
 
-OnPolicyAgentTypes = [AgentType.REINFORCE, AgentType.A2C]
-OffPolicyAgentTypes = [AgentType.DQN]
+
+OnPolicyAgentTypes = [
+    AgentType.REINFORCE, AgentType.A2C, AgentType.PPO
+]
+
+OffPolicyAgentTypes = [
+    AgentType.DQN, AgentType.DOUBLE_DQN, AgentType.DUELING_DQN, AgentType.DOUBLE_DUELING_DQN,
+    AgentType.DDPG, AgentType.TD3, AgentType.SAC
+]

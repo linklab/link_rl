@@ -21,12 +21,10 @@ def main():
     input("Press Enter to continue...")
 
     agent = get_agent(
-        observation_space, action_space, device, parameter, parameter.MAX_TRAINING_STEPS
+        observation_space=observation_space, action_space=action_space, device=device, parameter=parameter
     )
 
-    learner = Learner(
-        agent=agent, queue=None, device=device, parameter=parameter
-    )
+    learner = Learner(agent=agent, queue=None, device=device, parameter=parameter)
 
     print("########## LEARNING STARTED !!! ##########")
     learner.train_loop(parallel=False)

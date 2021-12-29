@@ -12,7 +12,7 @@ from g_utils.types import AgentMode, ModelType
 
 
 class AgentDqn(Agent):
-    def __init__(self, observation_space, action_space, device, parameter, max_training_steps=None):
+    def __init__(self, observation_space, action_space, device, parameter):
         super(AgentDqn, self).__init__(observation_space, action_space, device, parameter)
 
         self.q_net = QNet(
@@ -26,7 +26,7 @@ class AgentDqn(Agent):
         ).to(device)
 
         self.q_net.share_memory()
-        self.target_q_net.load_state_dict(self.q_net.state_dict())
+        self.synchronize_models(source_model=self.q_net, target_model=self.target_q_net)
 
         self.optimizer = optim.Adam(
             self.q_net.parameters(), lr=self.parameter.LEARNING_RATE
@@ -35,7 +35,7 @@ class AgentDqn(Agent):
         self.epsilon_tracker = EpsilonTracker(
             epsilon_init=self.parameter.EPSILON_INIT,
             epsilon_final=self.parameter.EPSILON_FINAL,
-            epsilon_final_training_step=self.parameter.EPSILON_FINAL_TRAINING_STEP_PERCENT * max_training_steps
+            epsilon_final_training_step=self.parameter.EPSILON_FINAL_TRAINING_STEP_PERCENT * self.parameter.MAX_TRAINING_STEPS
         )
         self.epsilon = mp.Value('d', self.parameter.EPSILON_INIT)  # d: float
 
@@ -49,7 +49,7 @@ class AgentDqn(Agent):
         if mode == AgentMode.TRAIN:
             coin = np.random.random()    # 0.0과 1.0사이의 임의의 값을 반환
             if coin < self.epsilon.value:
-                action = np.random.randint(low=0, high=self.n_out_actions, size=len(obs))
+                action = np.random.randint(low=0, high=self.n_discrete_actions, size=len(obs))
             else:
                 out = self.q_net.forward(obs)
                 action = out.argmax(dim=-1)
@@ -72,9 +72,7 @@ class AgentDqn(Agent):
         )
 
         # state_action_values.shape: torch.Size([32, 1])
-        state_action_values = self.q_net(observations).gather(
-            dim=1, index=actions
-        )
+        state_action_values = self.q_net(observations).gather(dim=1, index=actions)
 
         with torch.no_grad():
             # next_state_values.shape: torch.Size([32, 1])
@@ -109,7 +107,7 @@ class AgentDqn(Agent):
 
         # sync
         if training_steps_v % self.parameter.TARGET_SYNC_INTERVAL_TRAINING_STEPS == 0:
-            self.target_q_net.load_state_dict(self.q_net.state_dict())
+            self.synchronize_models(source_model=self.q_net, target_model=self.target_q_net)
 
         self.epsilon.value = self.epsilon_tracker.epsilon(training_steps_v)
 

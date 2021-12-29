@@ -14,7 +14,7 @@ from g_utils.types import AgentMode, ModelType
 
 
 class AgentSac(Agent):
-    def __init__(self, observation_shape, n_actions, device, parameter, max_training_steps=None):
+    def __init__(self, observation_shape, n_actions, device, parameter):
         super(AgentSac, self).__init__(observation_shape, n_actions, device, parameter)
 
         if isinstance(self.action_space, Discrete):
@@ -48,7 +48,7 @@ class AgentSac(Agent):
             raise ValueError()
 
         self.sac_model.share_memory()
-        self.target_sac_model.load_state_dict(self.sac_model.state_dict())
+        self.synchronize_models(source_model=self.sac_model, target_model=self.target_sac_model)
 
         self.actor_optimizer = optim.Adam(self.sac_model.actor_params, lr=self.parameter.LEARNING_RATE)
         self.critic_optimizer = optim.Adam(self.sac_model.critic_params, lr=self.parameter.LEARNING_RATE)

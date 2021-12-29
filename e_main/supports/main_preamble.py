@@ -2,6 +2,9 @@ import numpy as np
 import os
 from gym.spaces import Discrete, Box
 import warnings
+
+from d_agents.off_policy.ddpg.agent_ddpg import AgentDdpg
+
 warnings.filterwarnings('ignore')
 warnings.simplefilter("ignore")
 
@@ -32,24 +35,25 @@ from gym import logger
 logger.set_level(level=40)
 
 
-def get_agent(observation_space, action_space, device=torch.device("cpu"), parameter=None, max_training_steps=None):
+def get_agent(observation_space, action_space, device=torch.device("cpu"), parameter=None):
     assert isinstance(observation_space, Box)
 
     if parameter.AGENT_TYPE == AgentType.DQN:
         assert isinstance(action_space, Discrete)
         agent = AgentDqn(
-            observation_space=observation_space, action_space=action_space, device=device, parameter=parameter,
-            max_training_steps=max_training_steps
+            observation_space=observation_space, action_space=action_space, device=device, parameter=parameter
         )
     elif parameter.AGENT_TYPE == AgentType.REINFORCE:
-        assert parameter.N_ACTORS * parameter.N_VECTORIZED_ENVS == 1, \
-            "TOTAL NUMBERS OF ENVS should be one"
-
+        assert parameter.N_ACTORS * parameter.N_VECTORIZED_ENVS == 1, "TOTAL NUMBERS OF ENVS should be one"
         agent = AgentReinforce(
             observation_space=observation_space, action_space=action_space, device=device, parameter=parameter
         )
     elif parameter.AGENT_TYPE == AgentType.A2C:
         agent = AgentA2c(
+            observation_space=observation_space, action_space=action_space, device=device, parameter=parameter
+        )
+    elif parameter.AGENT_TYPE == AgentType.DDPG:
+        agent = AgentDdpg(
             observation_space=observation_space, action_space=action_space, device=device, parameter=parameter
         )
     else:
