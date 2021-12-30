@@ -90,14 +90,14 @@ class Agent:
 
         # NOTE !!!
 
-        if self.parameter.AGENT_TYPE in OnPolicyAgentTypes:
-            if is_train_success_done:
+        if is_train_success_done:
+            if self.parameter.AGENT_TYPE in OnPolicyAgentTypes:
                 self.buffer.clear()
 
-        if self.parameter.AGENT_TYPE in ActorCriticAgentTypes:
-            pass
-        else:
-            self.after_train()
+            if self.parameter.AGENT_TYPE in ActorCriticAgentTypes:
+                self.after_actor_critic_train()
+            else:
+                self.after_train()
 
         return is_train_success_done
 

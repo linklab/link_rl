@@ -15,7 +15,7 @@ from a_configuration.a_config.config import SYSTEM_USER_NAME
 from a_configuration.b_base.c_models.convolutional_models import ParameterConvolutionalModel
 from a_configuration.b_base.c_models.linear_models import ParameterLinearModel
 from a_configuration.b_base.c_models.recurrent_models import ParameterRecurrentModel
-from g_utils.types import AgentType
+from g_utils.types import AgentType, ActorCriticAgentTypes
 
 if torch.cuda.is_available():
     import nvidia_smi
@@ -369,8 +369,14 @@ def wandb_log(learner, wandb_obj, parameter):
     else:
         pass
 
-    log_dict["grad_max"] = learner.agent.last_model_grad_max.value
-    log_dict["grad_l2"] = learner.agent.last_model_grad_l2.value
+    if parameter.AGENT_TYPE in ActorCriticAgentTypes:
+        log_dict["actor_grad_max"] = learner.agent.last_actor_model_grad_max.value
+        log_dict["actor_grad_l2"] = learner.agent.last_actor_model_grad_l2.value
+        log_dict["critic_grad_max"] = learner.agent.last_critic_model_grad_max.value
+        log_dict["critic_grad_l2"] = learner.agent.last_critic_model_grad_l2.value
+    else:
+        log_dict["grad_max"] = learner.agent.last_model_grad_max.value
+        log_dict["grad_l2"] = learner.agent.last_model_grad_l2.value
 
     wandb_obj.log(log_dict)
 
