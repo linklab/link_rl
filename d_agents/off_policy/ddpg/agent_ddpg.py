@@ -4,6 +4,7 @@ import torch
 import torch.nn.functional as F
 import torch.multiprocessing as mp
 from gym.spaces import Discrete, Box
+from torch.distributions import normal
 
 from c_models.e_ddpg_models import DiscreteDdpgModel, ContinuousDdpgModel
 from d_agents.agent import Agent
@@ -75,7 +76,8 @@ class AgentDdpg(Agent):
         mu = self.actor_model.pi(obs)
         mu = mu.detach()
         if mode == AgentMode.TRAIN:
-            noises = np.random.normal(size=self.n_actions, loc=0, scale=1.0)
+            noise_dist = normal.Normal(loc=0.0, scale=1.0)
+            noises = noise_dist.sample(sample_shape=mu.size())
             action = mu + noises
         else:
             action = mu
