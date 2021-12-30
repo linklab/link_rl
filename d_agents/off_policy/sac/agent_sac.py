@@ -82,10 +82,12 @@ class AgentSac(Agent):
             mu_v = mu_v * self.action_scale_factor
 
             if mode == AgentMode.TRAIN:
-                dist = Normal(loc=mu_v, scale=std_v + 1.0e-7)
-                actions = dist.sample()
+                with torch.no_grad():
+                    dist = Normal(loc=mu_v, scale=std_v + 1.0e-7)
+                    actions = dist.sample()
             else:
-                actions = mu_v.detach()
+                with torch.no_grad():
+                    actions = mu_v.detach()
 
             actions = np.clip(actions.cpu().numpy(), self.action_bound_low, self.action_bound_high)
             return actions
@@ -114,10 +116,11 @@ class AgentSac(Agent):
             next_actions_v = dist.sample()
             next_log_prob_v = dist.log_prob(next_actions_v).sum(dim=-1, keepdim=True)
 
-        next_q1_v, next_q2_v = self.target_critic_model.q(next_observations, next_actions_v)
-        next_values = torch.min(next_q1_v, next_q2_v).detach().cpu().numpy()[:, 0]
-        next_log_prob_v = self.alpha * next_log_prob_v
-        next_values -= next_log_prob_v.squeeze(-1).detach().cpu().numpy()
+        with torch.no_grad():
+            next_q1_v, next_q2_v = self.target_critic_model.q(next_observations, next_actions_v)
+            next_values = torch.min(next_q1_v, next_q2_v).detach().cpu().numpy()[:, 0]
+            next_log_prob_v = self.alpha * next_log_prob_v
+            next_values -= next_log_prob_v.squeeze(-1).detach().cpu().numpy()
 
         td_target_value_lst = []
 
@@ -127,7 +130,6 @@ class AgentSac(Agent):
 
         # td_target_values.shape: (32, 1)
         td_target_values = torch.tensor(td_target_value_lst, dtype=torch.float32, device=self.device).unsqueeze(dim=-1)
-
         # values.shape: (32, 1)
         q1_v, q2_v = self.critic_model.q(observations, actions)
 
@@ -147,7 +149,7 @@ class AgentSac(Agent):
         #  Actor Objective 산출 - BEGIN #
         ################################
         re_parameterization_trick_action_v, log_prob_v = self.sac_model.re_parameterization_trick_sample((observations))
-        q1_v, q2_v = self.critic_model.q(observations, actions)
+        q1_v, q2_v = self.critic_model.q(observations, re_parameterization_trick_action_v)
         objectives_v = torch.div(torch.add(q1_v, q2_v), 2.0) - self.alpha * log_prob_v
 
         loss_actor_v = -1.0 * objectives_v.mean()
