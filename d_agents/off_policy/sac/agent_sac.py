@@ -59,7 +59,7 @@ class AgentSac(Agent):
 
         self.synchronize_models(source_model=self.critic_model, target_model=self.target_critic_model)
 
-        self.actor_optimizer = optim.Adam(self.actor_model.actor_params, lr=self.parameter.LEARNING_RATE)
+        self.actor_optimizer = optim.Adam(self.actor_model.actor_params, lr=self.parameter.ACTOR_LEARNING_RATE)
         self.critic_optimizer = optim.Adam(self.critic_model.critic_params, lr=self.parameter.LEARNING_RATE)
 
         self.training_steps = 0
@@ -79,15 +79,17 @@ class AgentSac(Agent):
             return action.cpu().numpy()
         elif isinstance(self.action_space, Box):
             mu_v, std_v = self.actor_model.pi(obs)
-            mu_v = mu_v * self.action_scale_factor
 
             if mode == AgentMode.TRAIN:
-                dist = Normal(loc=mu_v, scale=std_v + 1.0e-7)
-                actions = dist.sample()
+                with torch.no_grad():
+                    dist = Normal(loc=mu_v, scale=std_v + 1.0e-7)
+                    actions = dist.sample()
             else:
-                actions = mu_v.detach()
+                with torch.no_grad():
+                    actions = mu_v.detach()
 
-            actions = np.clip(actions.cpu().numpy(), self.action_bound_low, self.action_bound_high)
+            actions = np.clip(actions.cpu().numpy(), -1.0, 1.0)
+            actions = actions * self.action_scale_factor
             return actions
         else:
             raise ValueError()
@@ -114,26 +116,28 @@ class AgentSac(Agent):
             next_actions_v = dist.sample()
             next_log_prob_v = dist.log_prob(next_actions_v).sum(dim=-1, keepdim=True)
 
-        next_q1_v, next_q2_v = self.target_critic_model.q(next_observations, next_actions_v)
-        next_values = torch.min(next_q1_v, next_q2_v).detach().cpu().numpy()[:, 0]
-        next_log_prob_v = self.alpha * next_log_prob_v
-        next_values -= next_log_prob_v.squeeze(-1).detach().cpu().numpy()
+        with torch.no_grad():
+            next_q1_v, next_q2_v = self.target_critic_model.q(next_observations, next_actions_v)
+            next_values = torch.min(next_q1_v, next_q2_v)
+            next_log_prob_v = self.alpha * next_log_prob_v
+            next_values -= next_log_prob_v
+            next_values[dones] = 0.0
 
-        td_target_value_lst = []
+        # td_target_value_lst = []
+        # for reward, next_value, done in zip(rewards, next_values, dones):
+        #     td_target = reward + self.parameter.GAMMA ** self.parameter.N_STEP * next_value * (0.0 if done else 1.0)
+        #     td_target_value_lst.append(td_target.detach())
 
-        for reward, next_value, done in zip(rewards, next_values, dones):
-            td_target = reward + self.parameter.GAMMA ** self.parameter.N_STEP * next_value * (0.0 if done else 1.0)
-            td_target_value_lst.append(td_target.detach())
+        td_target_values = rewards + self.parameter.GAMMA ** self.parameter.N_STEP * next_values
 
         # td_target_values.shape: (32, 1)
-        td_target_values = torch.tensor(td_target_value_lst, dtype=torch.float32, device=self.device).unsqueeze(dim=-1)
-
+        # td_target_values = torch.tensor(td_target_value_lst, dtype=torch.float32, device=self.device).unsqueeze(dim=-1)
         # values.shape: (32, 1)
         q1_v, q2_v = self.critic_model.q(observations, actions)
-
+        print(q1_v.squeeze(dim=-1).shape, td_target_values.shape, "@@@@@@@@@@@@@@@@@@@@@")
         # critic_loss.shape: ()
-        critic_loss = F.mse_loss(q1_v.squeeze(dim=-1), td_target_values) + \
-                      F.mse_loss(q2_v.squeeze(dim=-1), td_target_values)
+        critic_loss = F.mse_loss(q1_v.squeeze(dim=-1), td_target_values.detach()) + \
+                      F.mse_loss(q2_v.squeeze(dim=-1), td_target_values.detach())
 
         self.critic_optimizer.zero_grad()
         critic_loss.backward()
@@ -147,7 +151,7 @@ class AgentSac(Agent):
         #  Actor Objective 산출 - BEGIN #
         ################################
         re_parameterization_trick_action_v, log_prob_v = self.sac_model.re_parameterization_trick_sample((observations))
-        q1_v, q2_v = self.critic_model.q(observations, actions)
+        q1_v, q2_v = self.critic_model.q(observations, re_parameterization_trick_action_v)
         objectives_v = torch.div(torch.add(q1_v, q2_v), 2.0) - self.alpha * log_prob_v
 
         loss_actor_v = -1.0 * objectives_v.mean()
@@ -163,10 +167,11 @@ class AgentSac(Agent):
         # sync
         # if training_steps_v % self.parameter.TARGET_SYNC_INTERVAL_TRAINING_STEPS == 0:
         #     self.synchronize_models(source_model=self.sac_model, target_model=self.target_sac_model)
+
         self.soft_synchronize_models(
             source_model=self.critic_model, target_model=self.target_critic_model,
             tau=self.parameter.TAU
-        )  # TAU: 0.0001
+        )  # TAU: 0.005
 
         self.last_critic_loss.value = critic_loss.item()
         self.last_actor_objective.value = -loss_actor_v.item()

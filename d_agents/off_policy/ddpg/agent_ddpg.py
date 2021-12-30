@@ -73,14 +73,14 @@ class AgentDdpg(Agent):
 
     def get_action(self, obs, mode=AgentMode.TRAIN):
         mu = self.actor_model.pi(obs)
-        mu = mu.detach()
+        mu = mu.detach().cpu().numpy()
         if mode == AgentMode.TRAIN:
             noises = np.random.normal(size=self.n_actions, loc=0, scale=1.0)
             action = mu + noises
         else:
             action = mu
 
-        action = np.clip(action.cpu().numpy(), self.action_bound_low, self.action_bound_high)
+        action = np.clip(action, self.action_bound_low, self.action_bound_high)
         return action
 
     def train_ddpg(self, training_steps_v):
