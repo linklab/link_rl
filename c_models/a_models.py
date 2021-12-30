@@ -60,7 +60,7 @@ class Model(nn.Module):
 
         for idx in range(1, len(self.parameter.MODEL.OUT_CHANNELS_PER_LAYER)):
             conv_layers_dict["conv_{0}".format(idx)] = nn.Conv2d(
-                in_channels=self.parameter.MODEL.OUT_CHANNELS_PER_LAYER[idx-1],
+                in_channels=self.parameter.MODEL.OUT_CHANNELS_PER_LAYER[idx - 1],
                 out_channels=self.parameter.MODEL.OUT_CHANNELS_PER_LAYER[idx],
                 kernel_size=self.parameter.MODEL.KERNEL_SIZE_PER_LAYER[idx],
                 stride=self.parameter.MODEL.STRIDE_PER_LAYER[idx]
