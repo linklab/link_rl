@@ -30,10 +30,10 @@ class Model(nn.Module):
             self.get_layer_normalization(fc_layers_dict, 0)
         fc_layers_dict["fc_0_activation"] = self.activation
 
-        for idx in range(1, len(self.parameter.MODEL.NEURONS_PER_FULLY_CONNECTED_LAYER) - 1):
+        for idx in range(1, len(self.parameter.MODEL.NEURONS_PER_FULLY_CONNECTED_LAYER)):
             fc_layers_dict["fc_{0}".format(idx)] = nn.Linear(
-                self.parameter.MODEL.NEURONS_PER_FULLY_CONNECTED_LAYER[idx],
-                self.parameter.MODEL.NEURONS_PER_FULLY_CONNECTED_LAYER[idx + 1]
+                self.parameter.MODEL.NEURONS_PER_FULLY_CONNECTED_LAYER[idx - 1],
+                self.parameter.MODEL.NEURONS_PER_FULLY_CONNECTED_LAYER[idx]
             )
             if self.parameter.LAYER_NORM:
                 self.get_layer_normalization(fc_layers_dict, idx)
@@ -78,7 +78,7 @@ class Model(nn.Module):
         if isinstance(self.parameter.MODEL, ParameterLinearModel):
             fc_layers_dict = layer_dict
             fc_layers_dict["fc_{0}_norm".format(layer_idx)] = nn.LayerNorm(
-                self.parameter.MODEL.NEURONS_PER_FULLY_CONNECTED_LAYER[layer_idx + 1]
+                self.parameter.MODEL.NEURONS_PER_FULLY_CONNECTED_LAYER[layer_idx]
             )
         elif isinstance(self.parameter.MODEL, ParameterConvolutionalModel):
             pass

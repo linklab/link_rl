@@ -9,6 +9,7 @@ from a_configuration.b_base.c_models.convolutional_models import ParameterConvol
 from a_configuration.b_base.c_models.linear_models import ParameterLinearModel
 from a_configuration.b_base.c_models.recurrent_models import ParameterRecurrentModel
 from c_models.a_models import Model
+from g_utils.types import AgentType
 
 
 class PolicyModel(Model):
@@ -78,21 +79,30 @@ class ContinuousPolicyModel(PolicyModel):
         super(ContinuousPolicyModel, self).__init__(
             observation_shape=observation_shape, n_out_actions=n_out_actions, device=device, parameter=parameter
         )
-
         self.mu = nn.Sequential(
             nn.Linear(self.parameter.MODEL.NEURONS_PER_FULLY_CONNECTED_LAYER[-1], self.n_out_actions),
             nn.Tanh()
         )
         self.actor_params += list(self.mu.parameters())
 
-        logstds_param = nn.Parameter(torch.full((self.n_out_actions,), 0.1))
-        self.register_parameter("logstds", logstds_param)
-        self.actor_params.append(self.logstds)
+        if parameter.AGENT_TYPE == AgentType.SAC:
+            self.logstd = nn.Sequential(
+                nn.Linear(self.parameter.MODEL.NEURONS_PER_FULLY_CONNECTED_LAYER[-1], self.n_out_actions),
+                nn.Softplus()
+            )
+        else:
+            logstds_param = nn.Parameter(torch.full((self.n_out_actions,), 0.1))
+            self.register_parameter("logstds", logstds_param)
+            self.actor_params.append(self.logstds)
 
     def pi(self, x):
         x = self.forward_actor(x)
         mu_v = self.mu(x)
-        std_v = F.softplus(self.logstds.exp())
+        if self.parameter.AGENT_TYPE == AgentType.SAC:
+            logstd_v = self.logstd(x)
+            std_v = torch.exp(logstd_v)
+        else:
+            std_v = F.softplus(self.logstds.exp())
         #std_v = self.logstd(x).exp()
         return mu_v, std_v
 
