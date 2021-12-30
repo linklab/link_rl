@@ -79,7 +79,6 @@ class AgentSac(Agent):
             return action.cpu().numpy()
         elif isinstance(self.action_space, Box):
             mu_v, std_v = self.actor_model.pi(obs)
-            mu_v = mu_v * self.action_scale_factor
 
             if mode == AgentMode.TRAIN:
                 with torch.no_grad():
@@ -89,8 +88,8 @@ class AgentSac(Agent):
                 with torch.no_grad():
                     actions = mu_v.detach()
 
-            actions = np.clip(actions.cpu().numpy(), self.action_bound_low, self.action_bound_high)
-            print(actions, "!@#$!@#$!@#$!@#$!@#$!@#$!@#$!@#$!@#$!@#$!@#$!@#$!@#$!@#$!@#$")
+            actions = np.clip(actions.cpu().numpy(), -1.0, 1.0)
+            actions = actions * self.action_scale_factor
             return actions
         else:
             raise ValueError()
