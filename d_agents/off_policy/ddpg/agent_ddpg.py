@@ -29,12 +29,12 @@ class AgentDdpg(Agent):
             )
         elif isinstance(self.action_space, Box):
             self.n_actions = self.n_out_actions
-            self.action_bound_low = np.expand_dims(self.action_space.low, axis=0)
-            self.action_bound_high = np.expand_dims(self.action_space.high, axis=0)
+            self.action_bound_low = torch.tensor(np.expand_dims(self.action_space.low, axis=0), device=device)
+            self.action_bound_high = torch.tensor(np.expand_dims(self.action_space.high, axis=0), device=device)
 
-            self.action_scale_factor = np.max(np.maximum(
+            self.action_scale_factor = torch.max(torch.maximum(
                 np.absolute(self.action_bound_low), np.absolute(self.action_bound_high)
-            ), axis=-1)[0]
+            ), dim=-1)[0].item()
 
             self.ddpg_model = ContinuousDdpgModel(
                 observation_shape=self.observation_shape, n_out_actions=self.n_out_actions,
@@ -74,15 +74,14 @@ class AgentDdpg(Agent):
 
     def get_action(self, obs, mode=AgentMode.TRAIN):
         mu = self.actor_model.pi(obs)
-        mu = mu.detach()
         if mode == AgentMode.TRAIN:
             noise_dist = normal.Normal(loc=0.0, scale=1.0)
             noises = noise_dist.sample(sample_shape=mu.size())
-            action = mu + noises
+            action = (mu + noises) * self.action_scale_factor
         else:
-            action = mu
+            action = mu * self.action_scale_factor
 
-        action = np.clip(action.cpu().numpy(), self.action_bound_low, self.action_bound_high)
+        action = action.clamp(self.action_bound_low, self.action_bound_high).detach().numpy()
         return action
 
     def train_ddpg(self, training_steps_v):
