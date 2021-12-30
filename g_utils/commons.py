@@ -163,7 +163,10 @@ def print_comparison_basic_info(observation_space, action_space, device, paramet
     for agent_idx, agent_parameter in enumerate(parameter_c.AGENT_PARAMETERS):
         print('-' * 76 + " Agent {0} ".format(agent_idx) + '-' * 76)
         for param in dir(agent_parameter):
-            if not param.startswith("__") and param != "MODEL":
+            if not param.startswith("__") and param not in [
+                "MODEL", "NEURONS_PER_FULLY_CONNECTED_LAYER", "OUT_CHANNELS_PER_LAYER", "KERNEL_SIZE_PER_LAYER",
+                "STRIDE_PER_LAYER"
+            ]:
                 if param in [
                     "BATCH_SIZE", "BUFFER_CAPACITY", "CONSOLE_LOG_INTERVAL_TRAINING_STEPS",
                     "EPISODE_REWARD_AVG_SOLVED", "MAX_TRAINING_STEPS",
@@ -261,7 +264,7 @@ def console_log(
         console_log += "log_policy_objective: {0:6.3f}, ".format(
             agent.last_log_policy_objective.value
         )
-    elif parameter.AGENT_TYPE == AgentType.A2C:
+    elif parameter.AGENT_TYPE in [AgentType.A2C, AgentType.SAC]:
         console_log += "critic_loss: {0:6.3f}, log_actor_objective: {1:6.3f}, ".format(
             agent.last_critic_loss.value, agent.last_log_actor_objective.value
         )
@@ -360,7 +363,7 @@ def wandb_log(learner, wandb_obj, parameter):
         log_dict["Epsilon"] = learner.agent.epsilon.value
     elif parameter.AGENT_TYPE == AgentType.REINFORCE:
         log_dict["Log Policy Objective"] = learner.agent.last_log_policy_objective.value
-    elif parameter.AGENT_TYPE == AgentType.A2C:
+    elif parameter.AGENT_TYPE in [AgentType.A2C, AgentType.SAC]:
         log_dict["Critic Loss"] = learner.agent.last_critic_loss.value
         log_dict["Log Actor Objective"] = learner.agent.last_log_actor_objective.value
     elif parameter.AGENT_TYPE == AgentType.SAC:

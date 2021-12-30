@@ -118,24 +118,26 @@ class AgentSac(Agent):
 
         with torch.no_grad():
             next_q1_v, next_q2_v = self.target_critic_model.q(next_observations, next_actions_v)
-            next_values = torch.min(next_q1_v, next_q2_v).detach().cpu().numpy()[:, 0]
+            next_values = torch.min(next_q1_v, next_q2_v)
             next_log_prob_v = self.alpha * next_log_prob_v
-            next_values -= next_log_prob_v.squeeze(-1).detach().cpu().numpy()
+            next_values -= next_log_prob_v
+            next_values[dones] = 0.0
 
-        td_target_value_lst = []
+        # td_target_value_lst = []
+        # for reward, next_value, done in zip(rewards, next_values, dones):
+        #     td_target = reward + self.parameter.GAMMA ** self.parameter.N_STEP * next_value * (0.0 if done else 1.0)
+        #     td_target_value_lst.append(td_target.detach())
 
-        for reward, next_value, done in zip(rewards, next_values, dones):
-            td_target = reward + self.parameter.GAMMA ** self.parameter.N_STEP * next_value * (0.0 if done else 1.0)
-            td_target_value_lst.append(td_target.detach())
+        td_target_values = rewards + self.parameter.GAMMA ** self.parameter.N_STEP * next_values
 
         # td_target_values.shape: (32, 1)
-        td_target_values = torch.tensor(td_target_value_lst, dtype=torch.float32, device=self.device).unsqueeze(dim=-1)
+        # td_target_values = torch.tensor(td_target_value_lst, dtype=torch.float32, device=self.device).unsqueeze(dim=-1)
         # values.shape: (32, 1)
         q1_v, q2_v = self.critic_model.q(observations, actions)
-
+        print(q1_v.squeeze(dim=-1).shape, td_target_values.shape, "@@@@@@@@@@@@@@@@@@@@@")
         # critic_loss.shape: ()
-        critic_loss = F.mse_loss(q1_v.squeeze(dim=-1), td_target_values) + \
-                      F.mse_loss(q2_v.squeeze(dim=-1), td_target_values)
+        critic_loss = F.mse_loss(q1_v.squeeze(dim=-1), td_target_values.detach()) + \
+                      F.mse_loss(q2_v.squeeze(dim=-1), td_target_values.detach())
 
         self.critic_optimizer.zero_grad()
         critic_loss.backward()
@@ -165,10 +167,11 @@ class AgentSac(Agent):
         # sync
         # if training_steps_v % self.parameter.TARGET_SYNC_INTERVAL_TRAINING_STEPS == 0:
         #     self.synchronize_models(source_model=self.sac_model, target_model=self.target_sac_model)
+
         self.soft_synchronize_models(
             source_model=self.critic_model, target_model=self.target_critic_model,
             tau=self.parameter.TAU
-        )  # TAU: 0.0001
+        )  # TAU: 0.005
 
         self.last_critic_loss.value = critic_loss.item()
         self.last_actor_objective.value = -loss_actor_v.item()
