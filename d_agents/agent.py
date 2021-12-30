@@ -79,7 +79,7 @@ class Agent:
                 is_train_success_done = True
         elif self.parameter.AGENT_TYPE == AgentType.DDPG:
             if len(self.buffer) >= self.parameter.BATCH_SIZE:
-                self.train_ddpg(training_steps_v=training_steps_v)
+                self.train_ddpg()
                 is_train_success_done = True
         elif self.parameter.AGENT_TYPE == AgentType.SAC:
             if len(self.buffer) >= self.parameter.BATCH_SIZE:
@@ -134,7 +134,7 @@ class Agent:
         return 0.0
 
     @abstractmethod
-    def train_ddpg(self, training_steps_v):
+    def train_ddpg(self):
         return 0.0
 
     @abstractmethod
