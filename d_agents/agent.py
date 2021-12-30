@@ -56,6 +56,10 @@ class Agent:
             if len(self.buffer) >= self.parameter.MIN_BUFFER_SIZE_FOR_TRAIN:
                 self.train_dqn(training_steps_v=training_steps_v)
                 is_train_success_done = True
+        elif self.parameter.AGENT_TYPE == AgentType.DOUBLE_DQN:
+            if len(self.buffer) >= self.parameter.MIN_BUFFER_SIZE_FOR_TRAIN:
+                self.train_ddqn(training_steps_v=training_steps_v)
+                is_train_success_done = True
         elif self.parameter.AGENT_TYPE == AgentType.A2C:
             if len(self.buffer) >= self.parameter.BATCH_SIZE:
                 self.train_a2c()
@@ -89,6 +93,10 @@ class Agent:
 
     @abstractmethod
     def train_dqn(self, training_steps_v):
+        return 0.0
+
+    @abstractmethod
+    def train_ddqn(self, training_steps_v):
         return 0.0
 
     @abstractmethod

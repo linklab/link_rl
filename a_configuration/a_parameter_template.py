@@ -1,4 +1,4 @@
-from a_configuration.c_parameters.open_ai_gym.parameter_cartpole import ParameterCartPoleDqn
+from a_configuration.c_parameters.open_ai_gym.parameter_cartpole import ParameterCartPoleDqn, ParameterCartPoleDdqn
 from a_configuration.c_parameters.open_ai_gym.parameter_cartpole import ParameterCartPoleReinforce
 from a_configuration.c_parameters.open_ai_gym.parameter_cartpole import ParameterCartPoleA2c
 from a_configuration.c_parameters.open_ai_gym.parameter_lunar_lander import ParameterLunarLanderContinuousA2c, \
@@ -19,6 +19,9 @@ parameter_list = []
 ###############
 parameter_cart_pole_dqn = ParameterCartPoleDqn()
 parameter_list.append(parameter_cart_pole_dqn)
+
+parameter_cart_pole_ddqn = ParameterCartPoleDdqn()
+parameter_list.append(parameter_cart_pole_ddqn)
 
 parameter_cart_pole_reinforce = ParameterCartPoleReinforce()
 parameter_list.append(parameter_cart_pole_reinforce)
