@@ -33,7 +33,7 @@ class AgentDdpg(Agent):
 
             self.action_scale_factor = torch.max(torch.maximum(
                 torch.absolute(self.action_bound_low), torch.absolute(self.action_bound_high)
-            ), dim=-1)[0].item()
+            ), dim=-1)[0]
 
             self.ddpg_model = ContinuousDdpgModel(
                 observation_shape=self.observation_shape, n_out_actions=self.n_out_actions,
