@@ -8,8 +8,7 @@ from torch.distributions import normal
 
 from c_models.e_ddpg_models import DiscreteDdpgModel, ContinuousDdpgModel
 from d_agents.agent import Agent
-from g_utils.commons import EpsilonTracker
-from g_utils.types import AgentMode, ModelType
+from g_utils.types import AgentMode
 
 
 class AgentDdpg(Agent):
@@ -33,7 +32,7 @@ class AgentDdpg(Agent):
             self.action_bound_high = torch.tensor(np.expand_dims(self.action_space.high, axis=0), device=device)
 
             self.action_scale_factor = torch.max(torch.maximum(
-                np.absolute(self.action_bound_low), np.absolute(self.action_bound_high)
+                torch.absolute(self.action_bound_low), torch.absolute(self.action_bound_high)
             ), dim=-1)[0].item()
 
             self.ddpg_model = ContinuousDdpgModel(
