@@ -4,11 +4,11 @@ import torch
 import torch.nn.functional as F
 import torch.multiprocessing as mp
 from gym.spaces import Discrete, Box
-from torch.distributions import normal
 
 from c_models.e_ddpg_models import DiscreteDdpgModel, ContinuousDdpgModel
 from d_agents.agent import Agent
-from g_utils.types import AgentMode
+from g_utils.commons import EpsilonTracker
+from g_utils.types import AgentMode, ModelType
 
 
 class AgentDdpg(Agent):
@@ -28,12 +28,12 @@ class AgentDdpg(Agent):
             )
         elif isinstance(self.action_space, Box):
             self.n_actions = self.n_out_actions
-            self.action_bound_low = torch.tensor(np.expand_dims(self.action_space.low, axis=0), device=device)
-            self.action_bound_high = torch.tensor(np.expand_dims(self.action_space.high, axis=0), device=device)
+            self.action_bound_low = np.expand_dims(self.action_space.low, axis=0)
+            self.action_bound_high = np.expand_dims(self.action_space.high, axis=0)
 
-            self.action_scale_factor = torch.max(torch.maximum(
-                torch.absolute(self.action_bound_low), torch.absolute(self.action_bound_high)
-            ), dim=-1)[0]
+            self.action_scale_factor = np.max(np.maximum(
+                np.absolute(self.action_bound_low), np.absolute(self.action_bound_high)
+            ), axis=-1)[0]
 
             self.ddpg_model = ContinuousDdpgModel(
                 observation_shape=self.observation_shape, n_out_actions=self.n_out_actions,
@@ -73,14 +73,14 @@ class AgentDdpg(Agent):
 
     def get_action(self, obs, mode=AgentMode.TRAIN):
         mu = self.actor_model.pi(obs)
+        mu = mu.detach().cpu().numpy()
         if mode == AgentMode.TRAIN:
-            noise_dist = normal.Normal(loc=0.0, scale=1.0)
-            noises = noise_dist.sample(sample_shape=mu.size())
-            action = (mu + noises) * self.action_scale_factor
+            noises = np.random.normal(size=self.n_actions, loc=0, scale=1.0)
+            action = mu + noises
         else:
-            action = mu * self.action_scale_factor
+            action = mu
 
-        action = action.clamp(self.action_bound_low, self.action_bound_high).detach().numpy()
+        action = np.clip(action, self.action_bound_low, self.action_bound_high)
         return action
 
     def train_ddpg(self, training_steps_v):
