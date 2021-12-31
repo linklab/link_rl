@@ -81,8 +81,9 @@ class ParameterCartPoleContinuousBulletDdpg(
 
         self.LEARNING_RATE = 0.001
         self.N_VECTORIZED_ENVS = 1
+        self.BUFFER_CAPACITY = 200_000
         self.N_ACTORS = 1
-        self.MAX_TRAINING_STEPS = 100_000
+        self.MAX_TRAINING_STEPS = 200_000
         self.CONSOLE_LOG_INTERVAL_TRAINING_STEPS = 100
         self.MODEL = ParameterLinearModel(ModelType.SMALL_LINEAR)
 
