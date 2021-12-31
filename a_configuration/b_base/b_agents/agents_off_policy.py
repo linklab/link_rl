@@ -27,7 +27,7 @@ class ParameterDdqn(ParameterDqn):
         super(ParameterDdqn, self).__init__()
         self.AGENT_TYPE = AgentType.DOUBLE_DQN
 
-        self.TAU = 0.0001
+        self.TAU = 0.005
 
 
 class ParameterDdpg(ParameterAgent):
@@ -42,7 +42,7 @@ class ParameterDdpg(ParameterAgent):
         self.MIN_BUFFER_SIZE_FOR_TRAIN = self.BATCH_SIZE
         self.GAMMA = 0.99
         self.TARGET_SYNC_INTERVAL_TRAINING_STEPS = 50
-        self.TAU = 0.0001
+        self.TAU = 0.005
 
 
 class ParameterSac(ParameterAgent):

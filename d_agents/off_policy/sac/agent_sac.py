@@ -6,11 +6,9 @@ import torch.multiprocessing as mp
 from gym.spaces import Discrete, Box
 from torch.distributions import Categorical, Normal
 
-from c_models.e_ddpg_models import DiscreteDdpgModel, ContinuousDdpgModel
 from c_models.g_sac_models import ContinuousSacModel, DiscreteSacModel
 from d_agents.agent import Agent
-from g_utils.commons import EpsilonTracker
-from g_utils.types import AgentMode, ModelType
+from g_utils.types import AgentMode
 
 
 class AgentSac(Agent):
@@ -47,17 +45,16 @@ class AgentSac(Agent):
         else:
             raise ValueError()
 
+        self.model = self.sac_model.actor_model
+
         self.actor_model = self.sac_model.actor_model
         self.critic_model = self.sac_model.critic_model
 
-        self.model = self.actor_model
-
         self.target_critic_model = self.target_sac_model.critic_model
+        self.synchronize_models(source_model=self.critic_model, target_model=self.target_critic_model)
 
         self.actor_model.share_memory()
         self.critic_model.share_memory()
-
-        self.synchronize_models(source_model=self.critic_model, target_model=self.target_critic_model)
 
         self.actor_optimizer = optim.Adam(self.actor_model.actor_params, lr=self.parameter.ACTOR_LEARNING_RATE)
         self.critic_optimizer = optim.Adam(self.critic_model.critic_params, lr=self.parameter.LEARNING_RATE)
@@ -66,6 +63,7 @@ class AgentSac(Agent):
 
         self.last_critic_loss = mp.Value('d', 0.0)
         self.last_log_actor_objective = mp.Value('d', 0.0)
+
         self.alpha = self.parameter.ALPHA
 
     def get_action(self, obs, mode=AgentMode.TRAIN):

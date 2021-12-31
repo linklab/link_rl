@@ -46,20 +46,18 @@ class AgentDdpg(Agent):
             raise ValueError()
 
         self.model = self.ddpg_model.actor_model
+
         self.actor_model = self.ddpg_model.actor_model
         self.critic_model = self.ddpg_model.critic_model
+
         self.target_actor_model = self.target_ddpg_model.actor_model
         self.target_critic_model = self.target_ddpg_model.critic_model
 
+        self.synchronize_models(source_model=self.actor_model, target_model=self.target_actor_model)
+        self.synchronize_models(source_model=self.critic_model, target_model=self.target_critic_model)
+
         self.actor_model.share_memory()
         self.critic_model.share_memory()
-
-        self.synchronize_models(
-            source_model=self.actor_model, target_model=self.target_actor_model
-        )
-        self.synchronize_models(
-            source_model=self.critic_model, target_model=self.target_critic_model
-        )
 
         self.actor_optimizer = optim.Adam(self.actor_model.actor_params, lr=self.parameter.LEARNING_RATE)
         self.critic_optimizer = optim.Adam(self.critic_model.critic_params, lr=self.parameter.LEARNING_RATE)
