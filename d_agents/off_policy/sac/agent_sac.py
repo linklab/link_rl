@@ -65,7 +65,7 @@ class AgentSac(Agent):
         self.training_steps = 0
 
         self.last_critic_loss = mp.Value('d', 0.0)
-        self.last_actor_objective = mp.Value('d', 0.0)
+        self.last_log_actor_objective = mp.Value('d', 0.0)
         self.alpha = self.parameter.ALPHA
 
     def get_action(self, obs, mode=AgentMode.TRAIN):
@@ -134,10 +134,9 @@ class AgentSac(Agent):
         # td_target_values = torch.tensor(td_target_value_lst, dtype=torch.float32, device=self.device).unsqueeze(dim=-1)
         # values.shape: (32, 1)
         q1_v, q2_v = self.critic_model.q(observations, actions)
-        print(q1_v.squeeze(dim=-1).shape, td_target_values.shape, "@@@@@@@@@@@@@@@@@@@@@")
         # critic_loss.shape: ()
-        critic_loss = F.mse_loss(q1_v.squeeze(dim=-1), td_target_values.detach()) + \
-                      F.mse_loss(q2_v.squeeze(dim=-1), td_target_values.detach())
+        critic_loss = F.mse_loss(q1_v, td_target_values.detach()) + \
+                      F.mse_loss(q2_v, td_target_values.detach())
 
         self.critic_optimizer.zero_grad()
         critic_loss.backward()
@@ -153,7 +152,6 @@ class AgentSac(Agent):
         re_parameterization_trick_action_v, log_prob_v = self.sac_model.re_parameterization_trick_sample((observations))
         q1_v, q2_v = self.critic_model.q(observations, re_parameterization_trick_action_v)
         objectives_v = torch.div(torch.add(q1_v, q2_v), 2.0) - self.alpha * log_prob_v
-
         loss_actor_v = -1.0 * objectives_v.mean()
 
         self.actor_optimizer.zero_grad()
@@ -174,4 +172,4 @@ class AgentSac(Agent):
         )  # TAU: 0.005
 
         self.last_critic_loss.value = critic_loss.item()
-        self.last_actor_objective.value = -loss_actor_v.item()
+        self.last_log_actor_objective.value = -loss_actor_v.item()
