@@ -1,6 +1,7 @@
 import collections
 import time
 import datetime
+import numpy as np
 
 import gym
 import torch
@@ -231,8 +232,18 @@ def print_space(observation_space, action_space):
     action_space_str = "ACTION_SPACE: {0}, SHAPE: {1}".format(
         type(action_space), action_space.shape
     )
+
     if isinstance(action_space, Discrete):
         action_space_str += ", N: {0}".format(action_space.n)
+    elif isinstance(action_space, Box):
+        action_bound_low, action_bound_high, action_scale_factor = get_continuous_action_info(
+            action_space
+        )
+        action_space_str += ", LOW_BOUND: {0}, HIGH_BOUND: {1}, SCALE_FACTOR: {2}".format(
+            action_bound_low, action_bound_high, action_scale_factor
+        )
+    else:
+        raise ValueError()
     print(action_space_str)
 
 
@@ -545,6 +556,17 @@ def get_action_shape(action_space):
         raise ValueError()
 
     return n_discrete_actions, action_shape
+
+
+def get_continuous_action_info(action_space):
+    action_bound_low = np.expand_dims(action_space.low, axis=0)
+    action_bound_high = np.expand_dims(action_space.high, axis=0)
+
+    action_scale_factor = np.max(np.maximum(
+        np.absolute(action_bound_low), np.absolute(action_bound_high)
+    ), axis=-1)[0]
+
+    return action_bound_low, action_bound_high, action_scale_factor
 
 
 class EpsilonTracker:

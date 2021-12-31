@@ -7,7 +7,7 @@ from gym.spaces import Discrete, Box
 
 from c_models.e_ddpg_models import DiscreteDdpgModel, ContinuousDdpgModel
 from d_agents.agent import Agent
-from g_utils.commons import EpsilonTracker
+from g_utils.commons import EpsilonTracker, get_continuous_action_info
 from g_utils.types import AgentMode, ModelType
 
 
@@ -28,12 +28,10 @@ class AgentDdpg(Agent):
             )
         elif isinstance(self.action_space, Box):
             self.n_actions = self.n_out_actions
-            self.action_bound_low = np.expand_dims(self.action_space.low, axis=0)
-            self.action_bound_high = np.expand_dims(self.action_space.high, axis=0)
 
-            self.action_scale_factor = np.max(np.maximum(
-                np.absolute(self.action_bound_low), np.absolute(self.action_bound_high)
-            ), axis=-1)[0]
+            self.action_bound_low, self.action_bound_high, self.action_scale_factor = get_continuous_action_info(
+                action_space
+            )
 
             self.ddpg_model = ContinuousDdpgModel(
                 observation_shape=self.observation_shape, n_out_actions=self.n_out_actions,
@@ -76,14 +74,14 @@ class AgentDdpg(Agent):
         mu = mu.detach().cpu().numpy()
         if mode == AgentMode.TRAIN:
             noises = np.random.normal(size=self.n_actions, loc=0, scale=1.0)
-            action = mu + noises
+            action = (mu + noises) * self.action_scale_factor
         else:
-            action = mu
+            action = mu * self.action_scale_factor
 
         action = np.clip(action, self.action_bound_low, self.action_bound_high)
         return action
 
-    def train_ddpg(self, training_steps_v):
+    def train_ddpg(self):
         batch = self.buffer.sample(self.parameter.BATCH_SIZE, device=self.device)
 
         # observations.shape: torch.Size([32, 4]),

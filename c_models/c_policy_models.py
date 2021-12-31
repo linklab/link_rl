@@ -38,6 +38,7 @@ class PolicyModel(Model):
     def forward_actor(self, x):
         if isinstance(x, np.ndarray):
             x = torch.tensor(x, dtype=torch.float32, device=self.device)
+
         if isinstance(self.parameter.MODEL, ParameterLinearModel):
             x = self.actor_fc_layers(x)
         elif isinstance(self.parameter.MODEL, ParameterConvolutionalModel):
