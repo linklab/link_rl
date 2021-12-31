@@ -5,6 +5,7 @@ import warnings
 
 from d_agents.off_policy.ddpg.agent_ddpg import AgentDdpg
 from d_agents.off_policy.ddqn.agent_ddqn import AgentDdqn
+from d_agents.off_policy.duelingdqn.agent_duelingdqn import AgentDuelingdqn
 
 warnings.filterwarnings('ignore')
 warnings.simplefilter("ignore")
@@ -46,6 +47,10 @@ def get_agent(observation_space, action_space, device=torch.device("cpu"), param
         )
     elif parameter.AGENT_TYPE == AgentType.DOUBLE_DQN:
         agent = AgentDdqn(
+            observation_space=observation_space, action_space=action_space, device=device, parameter=parameter
+        )
+    elif parameter.AGENT_TYPE == AgentType.DUELING_DQN:
+        agent = AgentDuelingdqn(
             observation_space=observation_space, action_space=action_space, device=device, parameter=parameter
         )
     elif parameter.AGENT_TYPE == AgentType.REINFORCE:

@@ -28,6 +28,12 @@ class ParameterDdqn(ParameterDqn):
         self.TAU = 0.0001
 
 
+class ParameterDuelingDqn(ParameterDqn):
+    def __init__(self):
+        super(ParameterDuelingDqn, self).__init__()
+        self.AGENT_TYPE = AgentType.DUELING_DQN
+
+
 class ParameterDdpg(ParameterAgent):
     def __init__(self):
         ParameterAgent.__init__(self)

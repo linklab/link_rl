@@ -52,7 +52,7 @@ class Agent:
         self.before_train()
 
         is_train_success_done = False
-        if self.parameter.AGENT_TYPE == AgentType.DQN:
+        if self.parameter.AGENT_TYPE in [AgentType.DQN, AgentType.DUELING_DQN]:
             if len(self.buffer) >= self.parameter.MIN_BUFFER_SIZE_FOR_TRAIN:
                 self.train_dqn(training_steps_v=training_steps_v)
                 is_train_success_done = True
