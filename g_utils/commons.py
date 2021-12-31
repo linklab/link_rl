@@ -561,13 +561,14 @@ def get_action_shape(action_space):
 def get_continuous_action_info(action_space):
     action_bound_low = np.expand_dims(action_space.low, axis=0)
     action_bound_high = np.expand_dims(action_space.high, axis=0)
-
-    action_scale_factor = np.max(np.maximum(
-        np.absolute(action_bound_low), np.absolute(action_bound_high)
-    ), axis=-1)[0]
+    assert action_bound_high == -1.0 * action_bound_low
+    action_scale_factor = action_bound_high
 
     return action_bound_low, action_bound_high, action_scale_factor
 
+
+def get_scaled_action():
+    pass
 
 class EpsilonTracker:
     def __init__(self, epsilon_init, epsilon_final, epsilon_final_training_step):

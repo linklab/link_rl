@@ -4,6 +4,7 @@ from gym.spaces import Discrete, Box, MultiDiscrete
 
 import numpy as np
 from g_utils.buffers import Buffer
+from g_utils.commons import get_continuous_action_info
 from g_utils.types import AgentMode, AgentType, OnPolicyAgentTypes, ActorCriticAgentTypes
 
 
@@ -24,14 +25,17 @@ class Agent:
         self.action_shape = action_space.shape
 
         if isinstance(action_space, Discrete):
-            self.n_out_actions = 1
             self.n_discrete_actions = action_space.n
-        elif isinstance(action_space, MultiDiscrete):
-            # TODO: Multi Discrete Space
-            pass
+            self.n_out_actions = 1
+            self.action_scale_factor = None
+            self.np_minus_ones = None
+            self.np_plus_ones = None
         elif isinstance(action_space, Box):
-            self.n_out_actions = action_space.shape[0]
             self.n_discrete_actions = None
+            self.n_out_actions = action_space.shape[0]
+            _, _, self.action_scale_factor = get_continuous_action_info(action_space)
+            self.np_minus_ones = np.full(shape=action_space.shape, fill_value=-1.0)
+            self.np_plus_ones = np.full(shape=action_space.shape, fill_value=1.0)
         else:
             raise ValueError()
 
@@ -71,7 +75,7 @@ class Agent:
                 is_train_success_done = True
         elif self.parameter.AGENT_TYPE == AgentType.DOUBLE_DQN:
             if len(self.buffer) >= self.parameter.MIN_BUFFER_SIZE_FOR_TRAIN:
-                self.train_ddqn(training_steps_v=training_steps_v)
+                self.train_double_dqn(training_steps_v=training_steps_v)
         elif self.parameter.AGENT_TYPE == AgentType.REINFORCE:
             if len(self.buffer) > 0:
                 self.train_reinforce()
@@ -129,7 +133,7 @@ class Agent:
         return 0.0
 
     @abstractmethod
-    def train_ddqn(self, training_steps_v):
+    def train_double_dqn(self, training_steps_v):
         return 0.0
 
     @abstractmethod
@@ -160,15 +164,3 @@ class Agent:
         for k, v in source_model_state.items():
             target_model_state[k] = (1.0 - tau) * target_model_state[k] + tau * v
         target_model.load_state_dict(target_model_state)
-
-# class DiscreteActionAgent(Agent, ABC):
-#     def __init__(self, observation_shape, n_discrete_actions, device, parameter):
-#         super(DiscreteActionAgent, self).__init__(observation_shape, device, parameter)
-#         self.n_discrete_actions = n_discrete_actions
-#
-#
-# class ContinuousActionAgent(Agent, ABC):
-#     def __init__(self, observation_shape, action_shape, device, parameter):
-#         super(ContinuousActionAgent, self).__init__(observation_shape, device, parameter)
-#         self.action_shape = action_shape
-#         self.n_out_actions = self.action_shape[0]

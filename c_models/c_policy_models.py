@@ -47,6 +47,7 @@ class PolicyModel(Model):
             x = self.actor_fc_layers(conv_out)
         else:
             raise ValueError()
+
         return x
 
     @abstractmethod
@@ -66,8 +67,8 @@ class DiscretePolicyModel(PolicyModel):
         self.actor_fc_pi = nn.Linear(self.parameter.MODEL.NEURONS_PER_FULLY_CONNECTED_LAYER[-1], self.n_discrete_actions)
         self.actor_params += list(self.actor_fc_pi.parameters())
 
-    def pi(self, x):
-        x = self.forward_actor(x)
+    def pi(self, obs):
+        x = self.forward_actor(obs)
         x = self.actor_fc_pi(x)
         action_prob = F.softmax(x, dim=-1)
         return action_prob
@@ -86,26 +87,37 @@ class ContinuousPolicyModel(PolicyModel):
         )
         self.actor_params += list(self.mu.parameters())
 
-        if parameter.AGENT_TYPE == AgentType.SAC:
-            self.logstd = nn.Sequential(
-                nn.Linear(self.parameter.MODEL.NEURONS_PER_FULLY_CONNECTED_LAYER[-1], self.n_out_actions),
-                nn.Softplus()
-            )
-            self.actor_params += list(self.logstd.parameters())
-        else:
-            logstds_param = nn.Parameter(torch.full((self.n_out_actions,), 0.1))
-            self.register_parameter("logstds", logstds_param)
-            self.actor_params.append(self.logstds)
+        self.logstd = nn.Sequential(
+            nn.Linear(self.parameter.MODEL.NEURONS_PER_FULLY_CONNECTED_LAYER[-1], self.n_out_actions),
+            nn.Softplus()
+        )
+        self.actor_params += list(self.logstd.parameters())
 
-    def pi(self, x):
-        x = self.forward_actor(x)
+        # if parameter.AGENT_TYPE == AgentType.SAC:
+        #     self.logstd = nn.Sequential(
+        #         nn.Linear(self.parameter.MODEL.NEURONS_PER_FULLY_CONNECTED_LAYER[-1], self.n_out_actions),
+        #         nn.Softplus()
+        #     )
+        #     self.actor_params += list(self.logstd.parameters())
+        # else:
+        #     logstds_param = nn.Parameter(torch.full((self.n_out_actions,), 0.1))
+        #     self.register_parameter("logstds", logstds_param)
+        #     self.actor_params.append(self.logstds)
+
+    def pi(self, obs):
+        x = self.forward_actor(obs)
+
         mu_v = self.mu(x)
-        if self.parameter.AGENT_TYPE == AgentType.SAC:
-            logstd_v = self.logstd(x)
-            std_v = torch.exp(logstd_v)
-        else:
-            std_v = F.softplus(self.logstds.exp())
-        #std_v = self.logstd(x).exp()
+
+        logstd_v = self.logstd(x)
+        std_v = torch.exp(logstd_v)
+
+        # if self.parameter.AGENT_TYPE == AgentType.SAC:
+        #     logstd_v = self.logstd(x)
+        #     std_v = torch.exp(logstd_v)
+        # else:
+        #     std_v = F.softplus(self.logstds.exp())
+
         return mu_v, std_v
 
 

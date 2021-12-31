@@ -37,8 +37,21 @@ def play(env, agent, n_episodes):
             episode_steps += 1
             action = agent.get_action(observation, mode=AgentMode.PLAY)
 
+            if action.ndim == 1:
+                if agent.action_scale_factor:
+                    scaled_action = action * agent.action_scale_factor
+                else:
+                    scaled_action = action
+            elif action.ndim == 2:
+                if agent.action_scale_factor:
+                    scaled_action = action[0] * agent.action_scale_factor[0]
+                else:
+                    scaled_action = action[0]
+            else:
+                raise ValueError()
+
             # action을 통해서 next_state, reward, done, info를 받아온다
-            next_observation, reward, done, _ = env.step(action[0])
+            next_observation, reward, done, _ = env.step(scaled_action)
             env.render()
 
             episode_reward += reward  # episode_reward 를 산출하는 방법은 감가률 고려하지 않는 이 라인이 더 올바름.

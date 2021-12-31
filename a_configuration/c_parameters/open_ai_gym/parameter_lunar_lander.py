@@ -34,7 +34,7 @@ class ParameterLunarLanderContinuousA2c(ParameterBase, ParameterLunarLanderConti
         self.MAX_TRAINING_STEPS = 200_000
         self.BUFFER_CAPACITY = 200_000
         self.BATCH_SIZE = 64
-        self.LEARNING_RATE = 0.00075
+        self.LEARNING_RATE = 0.0001
         self.CONSOLE_LOG_INTERVAL_TRAINING_STEPS = 100
         self.MODEL = ParameterLinearModel(ModelType.MEDIUM_LINEAR)
 

@@ -11,7 +11,6 @@ import time
 
 from e_main.supports.actor import Actor
 from g_utils.commons import model_save, console_log, wandb_log, get_wandb_obj, get_train_env, get_single_env, MeanBuffer
-from g_utils.buffers import Buffer
 from g_utils.types import AgentType, AgentMode, Transition
 
 
@@ -68,7 +67,13 @@ class Learner(mp.Process):
         while True:
             actor_time_step += 1
             actions = self.agent.get_action(observations)
-            next_observations, rewards, dones, infos = self.train_env.step(actions)
+
+            if self.agent.action_scale_factor:
+                scaled_actions = actions * self.agent.action_scale_factor
+            else:
+                scaled_actions = actions
+
+            next_observations, rewards, dones, infos = self.train_env.step(scaled_actions)
 
             for env_id, (observation, action, next_observation, reward, done, info) in enumerate(
                     zip(observations, actions, next_observations, rewards, dones, infos)
@@ -259,8 +264,20 @@ class Learner(mp.Process):
             while True:
                 action = self.agent.get_action(observation, mode=AgentMode.TEST)
 
-                # action을 통해서 next_state, reward, done, info를 받아온다
-                next_observation, reward, done, _ = self.test_env.step(action[0])
+                if action.ndim == 1:
+                    if self.agent.action_scale_factor:
+                        scaled_action = action * self.agent.action_scale_factor
+                    else:
+                        scaled_action = action
+                elif action.ndim == 2:
+                    if self.agent.action_scale_factor:
+                        scaled_action = action[0] * self.agent.action_scale_factor[0]
+                    else:
+                        scaled_action = action[0]
+                else:
+                    raise ValueError()
+
+                next_observation, reward, done, _ = self.test_env.step(scaled_action)
                 next_observation = np.expand_dims(next_observation, axis=0)
 
                 episode_reward += reward  # episode_reward 를 산출하는 방법은 감가률 고려하지 않는 이 라인이 더 올바름.

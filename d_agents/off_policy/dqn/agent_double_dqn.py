@@ -3,11 +3,12 @@ import torch
 import torch.nn.functional as F
 from d_agents.off_policy.dqn.agent_dqn import AgentDqn
 
-class AgentDdqn(AgentDqn):
-    def __init__(self, observation_space, action_space, device, parameter):
-        super(AgentDdqn, self).__init__(observation_space, action_space, device, parameter)
 
-    def train_ddqn(self, training_steps_v):
+class AgentDoubleDqn(AgentDqn):
+    def __init__(self, observation_space, action_space, device, parameter):
+        super(AgentDoubleDqn, self).__init__(observation_space, action_space, device, parameter)
+
+    def train_double_dqn(self, training_steps_v):
         # observations.shape: torch.Size([32, 4]),
         # actions.shape: torch.Size([32, 1]),
         # next_observations.shape: torch.Size([32, 4]),

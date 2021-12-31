@@ -29,10 +29,6 @@ class AgentDdpg(Agent):
         elif isinstance(self.action_space, Box):
             self.n_actions = self.n_out_actions
 
-            self.action_bound_low, self.action_bound_high, self.action_scale_factor = get_continuous_action_info(
-                action_space
-            )
-
             self.ddpg_model = ContinuousDdpgModel(
                 observation_shape=self.observation_shape, n_out_actions=self.n_out_actions,
                 device=device, parameter=parameter
@@ -68,16 +64,22 @@ class AgentDdpg(Agent):
         self.last_actor_loss = mp.Value('d', 0.0)
 
     def get_action(self, obs, mode=AgentMode.TRAIN):
-        mu = self.actor_model.pi(obs)
-        mu = mu.detach().cpu().numpy()
-        if mode == AgentMode.TRAIN:
-            noises = np.random.normal(size=self.n_actions, loc=0, scale=1.0)
-            action = (mu + noises) * self.action_scale_factor
-        else:
-            action = mu * self.action_scale_factor
+        if isinstance(self.action_space, Discrete):
+            pass
+        elif isinstance(self.action_space, Box):
+            mu = self.actor_model.pi(obs)
+            mu = mu.detach().cpu().numpy()
 
-        action = np.clip(action, self.action_bound_low, self.action_bound_high)
-        return action
+            if mode == AgentMode.TRAIN:
+                noises = np.random.normal(size=self.n_actions, loc=0, scale=1.0)
+                action = mu + noises
+            else:
+                action = mu
+
+            action = np.clip(a=action, a_min=self.np_minus_ones, a_max=self.np_plus_ones)
+            return action
+        else:
+            raise ValueError()
 
     def train_ddpg(self):
         batch = self.buffer.sample(self.parameter.BATCH_SIZE, device=self.device)
