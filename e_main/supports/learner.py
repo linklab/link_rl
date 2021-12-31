@@ -68,7 +68,7 @@ class Learner(mp.Process):
             actor_time_step += 1
             actions = self.agent.get_action(observations)
 
-            if self.agent.action_scale_factor:
+            if self.agent.action_scale_factor is not None:
                 scaled_actions = actions * self.agent.action_scale_factor
             else:
                 scaled_actions = actions
@@ -265,12 +265,12 @@ class Learner(mp.Process):
                 action = self.agent.get_action(observation, mode=AgentMode.TEST)
 
                 if action.ndim == 1:
-                    if self.agent.action_scale_factor:
+                    if self.agent.action_scale_factor is not None:
                         scaled_action = action * self.agent.action_scale_factor
                     else:
                         scaled_action = action
                 elif action.ndim == 2:
-                    if self.agent.action_scale_factor:
+                    if self.agent.action_scale_factor is not None:
                         scaled_action = action[0] * self.agent.action_scale_factor[0]
                     else:
                         scaled_action = action[0]

@@ -84,7 +84,13 @@ class LearnerComparison:
         while True:
             actor_time_step += 1
             actions = self.agents[agent_idx].get_action(observations)
-            next_observations, rewards, dones, infos = self.train_envs_per_agent[agent_idx].step(actions)
+
+            if self.agents[agent_idx].action_scale_factor is not None:
+                scaled_actions = actions * self.agents[agent_idx].action_scale_factor
+            else:
+                scaled_actions = actions
+
+            next_observations, rewards, dones, infos = self.train_envs_per_agent[agent_idx].step(scaled_actions)
 
             for env_id, (observation, action, next_observation, reward, done, info) in enumerate(
                     zip(observations, actions, next_observations, rewards, dones, infos)
@@ -237,8 +243,20 @@ class LearnerComparison:
             while True:
                 action = self.agents[agent_idx].get_action(observation, mode=AgentMode.TEST)
 
-                # action을 통해서 next_state, reward, done, info를 받아온다
-                next_observation, reward, done, _ = self.test_envs_per_agent[agent_idx].step(action[0])
+                if action.ndim == 1:
+                    if self.agents[agent_idx].action_scale_factor is not None:
+                        scaled_action = action * self.agents[agent_idx].action_scale_factor
+                    else:
+                        scaled_action = action
+                elif action.ndim == 2:
+                    if self.agents[agent_idx].action_scale_factor is not None:
+                        scaled_action = action[0] * self.agents[agent_idx].action_scale_factor[0]
+                    else:
+                        scaled_action = action[0]
+                else:
+                    raise ValueError()
+
+                next_observation, reward, done, _ = self.test_envs_per_agent[agent_idx].step(scaled_action)
                 next_observation = np.expand_dims(next_observation, axis=0)
 
                 episode_reward += reward  # episode_reward 를 산출하는 방법은 감가률 고려하지 않는 이 라인이 더 올바름.
