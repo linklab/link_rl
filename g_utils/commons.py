@@ -240,7 +240,7 @@ def print_space(observation_space, action_space):
             action_space
         )
         action_space_str += ", LOW_BOUND: {0}, HIGH_BOUND: {1}, SCALE_FACTOR: {2}".format(
-            action_bound_low, action_bound_high, action_scale_factor
+            action_bound_low[0], action_bound_high[0], action_scale_factor[0]
         )
     else:
         raise ValueError()
