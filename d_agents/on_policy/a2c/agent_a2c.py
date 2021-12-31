@@ -82,14 +82,15 @@ class AgentA2c(Agent):
         ###################################
         # next_values.shape: (32, 1)
         next_values = self.critic_model.v(next_observations)
-        td_target_value_lst = []
-
-        for reward, next_value, done in zip(rewards, next_values, dones):
-            td_target = reward + self.parameter.GAMMA ** self.parameter.N_STEP * next_value * (0.0 if done else 1.0)
-            td_target_value_lst.append(td_target)
-
+        next_values[dones] = 0.0
         # td_target_values.shape: (32, 1)
-        td_target_values = torch.tensor(td_target_value_lst, dtype=torch.float32, device=self.device).unsqueeze(dim=-1)
+        td_target_values = rewards + self.parameter.GAMMA ** self.parameter.N_STEP * next_values
+
+        # td_target_value_lst = []
+        # for reward, next_value, done in zip(rewards, next_values, dones):
+        #     td_target = reward + self.parameter.GAMMA ** self.parameter.N_STEP * next_value * (0.0 if done else 1.0)
+        #     td_target_value_lst.append(td_target)
+        # td_target_values = torch.tensor(td_target_value_lst, dtype=torch.float32, device=self.device).unsqueeze(dim=-1)
 
         # values.shape: (32, 1)
         values = self.critic_model.v(observations)

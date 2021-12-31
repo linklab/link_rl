@@ -93,5 +93,6 @@ class ContinuousSacModel:
         # log_prob.shape: [128, 1]
         return action_v, log_probs
 
+
 if __name__ == "__main__":
     a = SacCriticModel((4,), 1, 4, device=torch.device("cpu"), parameter=parameter)
