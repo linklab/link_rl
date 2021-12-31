@@ -83,14 +83,9 @@ class AgentA2c(Agent):
         # next_values.shape: (32, 1)
         next_values = self.critic_model.v(next_observations)
         next_values[dones] = 0.0
+
         # td_target_values.shape: (32, 1)
         td_target_values = rewards + self.parameter.GAMMA ** self.parameter.N_STEP * next_values
-
-        # td_target_value_lst = []
-        # for reward, next_value, done in zip(rewards, next_values, dones):
-        #     td_target = reward + self.parameter.GAMMA ** self.parameter.N_STEP * next_value * (0.0 if done else 1.0)
-        #     td_target_value_lst.append(td_target)
-        # td_target_values = torch.tensor(td_target_value_lst, dtype=torch.float32, device=self.device).unsqueeze(dim=-1)
 
         # values.shape: (32, 1)
         values = self.critic_model.v(observations)
@@ -99,7 +94,8 @@ class AgentA2c(Agent):
 
         self.critic_optimizer.zero_grad()
         critic_loss.backward()
-        torch.nn.utils.clip_grad_norm_(self.critic_model.critic_params, self.parameter.CLIP_GRADIENT_VALUE)
+        torch.nn.utils.clip_grad_value_(self.critic_model.critic_params, self.parameter.CLIP_GRADIENT_VALUE)
+        #torch.nn.utils.clip_grad_norm_(self.critic_model.critic_params, self.parameter.CLIP_GRADIENT_VALUE)
         self.critic_optimizer.step()
         ###################################
         #  Critic (Value)  Loss 산출 - END #
@@ -143,7 +139,8 @@ class AgentA2c(Agent):
 
         self.actor_optimizer.zero_grad()
         actor_loss.backward()
-        torch.nn.utils.clip_grad_norm_(self.actor_model.actor_params, self.parameter.CLIP_GRADIENT_VALUE)
+        torch.nn.utils.clip_grad_value_(self.actor_model.actor_params, self.parameter.CLIP_GRADIENT_VALUE)
+        #torch.nn.utils.clip_grad_norm_(self.actor_model.actor_params, self.parameter.CLIP_GRADIENT_VALUE)
         self.actor_optimizer.step()
         ##############################
         #  Actor Objective 산출 - END #
