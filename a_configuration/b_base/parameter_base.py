@@ -1,6 +1,8 @@
 import os
 import sys
 
+from torch import nn
+
 
 class ParameterBase:
     def __init__(self):
@@ -35,4 +37,8 @@ class ParameterBase:
         self.WANDB_ENTITY = "link-koreatech"
 
         self.PLAY_MODEL_FILE_NAME = ""
+
+        self.LAYER_NORM = False
+
+        self.LAYER_ACTIVATION = nn.LeakyReLU()
 

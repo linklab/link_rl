@@ -2,12 +2,12 @@ from a_configuration.c_parameters.open_ai_gym.parameter_cartpole import Paramete
 from a_configuration.c_parameters.open_ai_gym.parameter_cartpole import ParameterCartPoleReinforce
 from a_configuration.c_parameters.open_ai_gym.parameter_cartpole import ParameterCartPoleA2c
 from a_configuration.c_parameters.open_ai_gym.parameter_lunar_lander import ParameterLunarLanderContinuousA2c, \
-    ParameterLunarLanderA2c
+    ParameterLunarLanderA2c, ParameterLunarLanderContinuousDdpg, ParameterLunarLanderContinuousSac
 from a_configuration.c_parameters.open_ai_gym.parameter_pong import ParameterPongDqn
 from a_configuration.c_parameters.open_ai_gym.parameter_pong import ParameterPongA2c
 
 from a_configuration.c_parameters.pybullet.parameter_cartpole_bullet import ParameterCartPoleBulletDqn, \
-    ParameterCartPoleContinuousBulletA2c, ParameterCartPoleContinuousBulletSac
+    ParameterCartPoleContinuousBulletA2c, ParameterCartPoleContinuousBulletSac, ParameterCartPoleContinuousBulletDdpg
 from a_configuration.c_parameters.pybullet.parameter_ant_bullet import ParameterAntBulletA2c
 from a_configuration.c_parameters.pybullet.parameter_ant_bullet import ParameterAntBulletDdpg
 from g_utils.commons import print_basic_info
@@ -38,6 +38,12 @@ parameter_list.append(parameter_lunar_lander_a2c)
 parameter_lunar_lander_continuous_a2c = ParameterLunarLanderContinuousA2c()
 parameter_list.append(parameter_lunar_lander_continuous_a2c)
 
+parameter_lunar_lander_continuous_ddpg = ParameterLunarLanderContinuousDdpg()
+parameter_list.append(parameter_lunar_lander_continuous_ddpg)
+
+parameter_lunar_lander_continuous_sac = ParameterLunarLanderContinuousSac()
+parameter_list.append(parameter_lunar_lander_continuous_sac)
+
 ######################
 ## CART_POLE_BULLET ##
 ######################
@@ -49,6 +55,9 @@ parameter_list.append(parameter_cart_pole_continuous_bullet_a2c)
 
 parameter_cart_pole_continuous_bullet_sac = ParameterCartPoleContinuousBulletSac()
 parameter_list.append(parameter_cart_pole_continuous_bullet_sac)
+
+parameter_cart_pole_continuous_bullet_ddpg = ParameterCartPoleContinuousBulletDdpg()
+parameter_list.append(parameter_cart_pole_continuous_bullet_ddpg)
 
 ######################
 ##    ANT_BULLET    ##

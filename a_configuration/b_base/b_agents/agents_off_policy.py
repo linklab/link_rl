@@ -1,3 +1,5 @@
+from torch import nn
+
 from a_configuration.b_base.b_agents.agents import ParameterAgent
 from g_utils.commons import AgentType
 
@@ -48,10 +50,19 @@ class ParameterSac(ParameterAgent):
         ParameterAgent.__init__(self)
         self.AGENT_TYPE = AgentType.SAC
 
-        self.LEARNING_RATE = 0.0001
+        self.LEARNING_RATE = 0.001
+        self.ACTOR_LEARNING_RATE = 0.0001
 
         self.BUFFER_CAPACITY = 10_000
-        self.BATCH_SIZE = 64
+        self.BATCH_SIZE = 128
         self.MIN_BUFFER_SIZE_FOR_TRAIN = 200_000
         self.GAMMA = 0.99
         self.TARGET_SYNC_INTERVAL_TRAINING_STEPS = 50
+
+        self.LAYER_ACTIVATION = nn.GELU()
+
+        self.LAYER_NORM = True
+
+        self.ALPHA = 0.2
+
+        self.TAU = 0.005
