@@ -9,7 +9,7 @@ from a_configuration.c_parameters.open_ai_gym.parameter_pong import ParameterPon
 
 from a_configuration.c_parameters.pybullet.parameter_cartpole_bullet import ParameterCartPoleBulletDqn, \
     ParameterCartPoleContinuousBulletA2c, ParameterCartPoleContinuousBulletSac, ParameterCartPoleContinuousBulletDdpg
-from a_configuration.c_parameters.pybullet.parameter_ant_bullet import ParameterAntBulletA2c
+from a_configuration.c_parameters.pybullet.parameter_ant_bullet import ParameterAntBulletA2c, ParameterAntBulletSac
 from a_configuration.c_parameters.pybullet.parameter_ant_bullet import ParameterAntBulletDdpg
 from g_utils.commons import print_basic_info
 
@@ -72,7 +72,8 @@ parameter_list.append(parameter_ant_bullet_a2c)
 parameter_ant_bullet_ddpg = ParameterAntBulletDdpg()
 parameter_list.append(parameter_ant_bullet_ddpg)
 
-
+parameter_ant_bullet_sac = ParameterAntBulletSac()
+parameter_list.append(parameter_ant_bullet_sac)
 ##########
 ## PONG ##
 ##########
