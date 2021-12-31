@@ -24,8 +24,12 @@ def play(env, agent, n_episodes):
         episode_reward = 0  # cumulative_reward
 
         # Environment 초기화와 변수 초기화
-        env.render()
-        observation = env.reset()
+        if parameter.ENV_NAME in ["AntBulletEnv-v0", "CartPoleContinuousBulletEnv-v0", "CartPoleBulletEnv-v1"]:
+            env.render()
+            observation = env.reset()
+        else:
+            observation = env.reset()
+            env.render()
 
         episode_steps = 0
 
@@ -34,7 +38,7 @@ def play(env, agent, n_episodes):
             action = agent.get_action(observation, mode=AgentMode.PLAY)
 
             # action을 통해서 next_state, reward, done, info를 받아온다
-            next_observation, reward, done, _ = env.step(action)
+            next_observation, reward, done, _ = env.step(action[0])
             env.render()
 
             episode_reward += reward  # episode_reward 를 산출하는 방법은 감가률 고려하지 않는 이 라인이 더 올바름.

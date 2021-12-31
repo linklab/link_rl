@@ -49,7 +49,7 @@ def model_save(model, env_name, agent_type_name, test_episode_reward_avg, test_e
 
 def model_load(model, env_name, agent_type_name, file_name, parameter):
     agent_model_home = os.path.join(parameter.MODEL_SAVE_DIR, env_name, agent_type_name)
-    model_params = torch.load(os.path.join(agent_model_home, file_name))
+    model_params = torch.load(os.path.join(agent_model_home, file_name), map_location=torch.device('cpu'))
     model.load_state_dict(model_params)
 
 
