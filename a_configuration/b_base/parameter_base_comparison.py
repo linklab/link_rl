@@ -1,6 +1,9 @@
 import os
 import sys
 
+from torch import nn
+
+
 class ParameterComparisonBase:
     def __init__(self):
         self.PROJECT_HOME = os.path.abspath(
@@ -35,3 +38,7 @@ class ParameterComparisonBase:
         self.N_TEST_EPISODES = 3
 
         self.N_RUNS = 5
+
+        self.LAYER_NORM = False
+
+        self.LAYER_ACTIVATION = nn.LeakyReLU()

@@ -24,7 +24,7 @@ class ContinuousDdpgActorModel(PolicyModel):
         )
         self.actor_params += list(self.mu.parameters())
 
-    def mu(self, x):
+    def pi(self, x):
         x = self.forward_actor(x)
         mu_v = self.mu(x)
         return mu_v
@@ -36,7 +36,6 @@ class DdpgCriticModel(Model):
             device=torch.device("cpu"), parameter=None
     ):
         super(DdpgCriticModel, self).__init__(observation_shape, n_out_actions, n_discrete_actions, device, parameter)
-
         #######################
         # CRITIC MODEL: BEGIN #
         #######################
@@ -58,7 +57,7 @@ class DdpgCriticModel(Model):
             raise ValueError()
 
         self.critic_fc_last = nn.Linear(self.parameter.MODEL.NEURONS_PER_FULLY_CONNECTED_LAYER[-1], 1)
-        self.critic_params += list(self.critic_fc_v.parameters())
+        self.critic_params += list(self.critic_fc_last.parameters())
         #####################
         # CRITIC MODEL: END #
         #####################
@@ -86,18 +85,30 @@ class DdpgCriticModel(Model):
         return q_value
 
 
-class DiscreteDdpgModel(DiscreteActorModel, DdpgCriticModel):
+class DiscreteDdpgModel:
     def __init__(
             self, observation_shape: Tuple[int], n_out_actions: int, n_discrete_actions=None,
             device=torch.device("cpu"), parameter=None
     ):
-        DiscreteActorModel.__init__(observation_shape, n_out_actions, n_discrete_actions, device, parameter)
-        DdpgCriticModel.__init__(observation_shape, n_out_actions, n_discrete_actions, device, parameter)
+        self.actor_model = DiscreteActorModel(
+            observation_shape=observation_shape, n_out_actions=n_out_actions, device=device, parameter=parameter
+        ).to(device)
+
+        self.critic_model = DdpgCriticModel(
+            observation_shape=observation_shape, n_out_actions=n_out_actions, n_discrete_actions=n_discrete_actions,
+            device=device, parameter=parameter
+        ).to(device)
 
 
-class ContinuousDdpgModel(ContinuousDdpgActorModel, DdpgCriticModel):
+class ContinuousDdpgModel:
     def __init__(
             self, observation_shape: Tuple[int], n_out_actions: int, device=torch.device("cpu"), parameter=None
     ):
-        ContinuousDdpgActorModel.__init__(observation_shape, n_out_actions, device, parameter)
-        DdpgCriticModel.__init__(observation_shape, n_out_actions, device, parameter)
+        self.actor_model = ContinuousDdpgActorModel(
+            observation_shape=observation_shape, n_out_actions=n_out_actions, device=device, parameter=parameter
+        ).to(device)
+
+        self.critic_model = DdpgCriticModel(
+            observation_shape=observation_shape, n_out_actions=n_out_actions, n_discrete_actions=None,
+            device=device, parameter=parameter
+        ).to(device)

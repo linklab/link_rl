@@ -6,7 +6,7 @@ PROJECT_HOME = os.path.abspath(
 )
 
 config = configparser.ConfigParser()
-read_ok = config.read(os.path.join(PROJECT_HOME, "a_configuration", "config", "config.ini"))
+read_ok = config.read(os.path.join(PROJECT_HOME, "a_configuration", "a_config", "config.ini"))
 
 SYSTEM_USER_NAME = config.get('SYSTEM', 'user_name', fallback="anonymous")
 SYSTEM_COMPUTER_NAME = config.get('SYSTEM', 'computer_name', fallback="any_com")

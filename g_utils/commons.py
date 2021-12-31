@@ -1,6 +1,7 @@
 import collections
 import time
 import datetime
+import numpy as np
 
 import gym
 import torch
@@ -15,7 +16,7 @@ from a_configuration.a_config.config import SYSTEM_USER_NAME
 from a_configuration.b_base.c_models.convolutional_models import ParameterConvolutionalModel
 from a_configuration.b_base.c_models.linear_models import ParameterLinearModel
 from a_configuration.b_base.c_models.recurrent_models import ParameterRecurrentModel
-from g_utils.types import AgentType
+from g_utils.types import AgentType, ActorCriticAgentTypes
 
 if torch.cuda.is_available():
     import nvidia_smi
@@ -48,7 +49,7 @@ def model_save(model, env_name, agent_type_name, test_episode_reward_avg, test_e
 
 def model_load(model, env_name, agent_type_name, file_name, parameter):
     agent_model_home = os.path.join(parameter.MODEL_SAVE_DIR, env_name, agent_type_name)
-    model_params = torch.load(os.path.join(agent_model_home, file_name))
+    model_params = torch.load(os.path.join(agent_model_home, file_name), map_location=torch.device('cpu'))
     model.load_state_dict(model_params)
 
 
@@ -163,7 +164,10 @@ def print_comparison_basic_info(observation_space, action_space, device, paramet
     for agent_idx, agent_parameter in enumerate(parameter_c.AGENT_PARAMETERS):
         print('-' * 76 + " Agent {0} ".format(agent_idx) + '-' * 76)
         for param in dir(agent_parameter):
-            if not param.startswith("__") and param != "MODEL":
+            if not param.startswith("__") and param not in [
+                "MODEL", "NEURONS_PER_FULLY_CONNECTED_LAYER", "OUT_CHANNELS_PER_LAYER", "KERNEL_SIZE_PER_LAYER",
+                "STRIDE_PER_LAYER"
+            ]:
                 if param in [
                     "BATCH_SIZE", "BUFFER_CAPACITY", "CONSOLE_LOG_INTERVAL_TRAINING_STEPS",
                     "EPISODE_REWARD_AVG_SOLVED", "MAX_TRAINING_STEPS",
@@ -228,8 +232,18 @@ def print_space(observation_space, action_space):
     action_space_str = "ACTION_SPACE: {0}, SHAPE: {1}".format(
         type(action_space), action_space.shape
     )
+
     if isinstance(action_space, Discrete):
         action_space_str += ", N: {0}".format(action_space.n)
+    elif isinstance(action_space, Box):
+        action_bound_low, action_bound_high, action_scale_factor = get_continuous_action_info(
+            action_space
+        )
+        action_space_str += ", LOW_BOUND: {0}, HIGH_BOUND: {1}, SCALE_FACTOR: {2}".format(
+            action_bound_low, action_bound_high, action_scale_factor
+        )
+    else:
+        raise ValueError()
     print(action_space_str)
 
 
@@ -261,9 +275,13 @@ def console_log(
         console_log += "log_policy_objective: {0:6.3f}, ".format(
             agent.last_log_policy_objective.value
         )
-    elif parameter.AGENT_TYPE == AgentType.A2C:
+    elif parameter.AGENT_TYPE in [AgentType.A2C, AgentType.SAC]:
         console_log += "critic_loss: {0:6.3f}, log_actor_objective: {1:6.3f}, ".format(
             agent.last_critic_loss.value, agent.last_log_actor_objective.value
+        )
+    elif parameter.AGENT_TYPE == AgentType.DDPG:
+        console_log += "critic_loss: {0:6.3f}, actor_loss: {1:6.3f}, ".format(
+            agent.last_critic_loss.value, agent.last_actor_loss.value
         )
     else:
         pass
@@ -356,14 +374,23 @@ def wandb_log(learner, wandb_obj, parameter):
         log_dict["Epsilon"] = learner.agent.epsilon.value
     elif parameter.AGENT_TYPE == AgentType.REINFORCE:
         log_dict["Log Policy Objective"] = learner.agent.last_log_policy_objective.value
-    elif parameter.AGENT_TYPE == AgentType.A2C:
+    elif parameter.AGENT_TYPE in [AgentType.A2C, AgentType.SAC]:
         log_dict["Critic Loss"] = learner.agent.last_critic_loss.value
         log_dict["Log Actor Objective"] = learner.agent.last_log_actor_objective.value
+    elif parameter.AGENT_TYPE == AgentType.SAC:
+        log_dict["Critic Loss"] = learner.agent.last_critic_loss.value
+        log_dict["Last Actor Objective"] = learner.agent.last_actor_objective.value
     else:
         pass
 
-    log_dict["grad_max"] = learner.agent.last_model_grad_max.value
-    log_dict["grad_l2"] = learner.agent.last_model_grad_l2.value
+    if parameter.AGENT_TYPE in ActorCriticAgentTypes:
+        log_dict["actor_grad_max"] = learner.agent.last_actor_model_grad_max.value
+        log_dict["actor_grad_l2"] = learner.agent.last_actor_model_grad_l2.value
+        log_dict["critic_grad_max"] = learner.agent.last_critic_model_grad_max.value
+        log_dict["critic_grad_l2"] = learner.agent.last_critic_model_grad_l2.value
+    else:
+        log_dict["grad_max"] = learner.agent.last_model_grad_max.value
+        log_dict["grad_l2"] = learner.agent.last_model_grad_l2.value
 
     wandb_obj.log(log_dict)
 
@@ -529,6 +556,17 @@ def get_action_shape(action_space):
         raise ValueError()
 
     return n_discrete_actions, action_shape
+
+
+def get_continuous_action_info(action_space):
+    action_bound_low = np.expand_dims(action_space.low, axis=0)
+    action_bound_high = np.expand_dims(action_space.high, axis=0)
+
+    action_scale_factor = np.max(np.maximum(
+        np.absolute(action_bound_low), np.absolute(action_bound_high)
+    ), axis=-1)[0]
+
+    return action_bound_low, action_bound_high, action_scale_factor
 
 
 class EpsilonTracker:

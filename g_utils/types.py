@@ -61,3 +61,7 @@ OffPolicyAgentTypes = [
     AgentType.DQN, AgentType.DOUBLE_DQN, AgentType.DUELING_DQN, AgentType.DOUBLE_DUELING_DQN,
     AgentType.DDPG, AgentType.TD3, AgentType.SAC
 ]
+
+ActorCriticAgentTypes = [
+    AgentType.A2C, AgentType.PPO, AgentType.DDPG, AgentType.TD3, AgentType.SAC
+]

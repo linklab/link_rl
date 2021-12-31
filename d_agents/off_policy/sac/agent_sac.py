@@ -4,27 +4,27 @@ import torch
 import torch.nn.functional as F
 import torch.multiprocessing as mp
 from gym.spaces import Discrete, Box
+from torch.distributions import Categorical, Normal
 
-from c_models.e_ddpg_models import DiscreteDdpgModel, ContinuousDdpgModel
+from c_models.g_sac_models import ContinuousSacModel, DiscreteSacModel
 from d_agents.agent import Agent
-from g_utils.commons import EpsilonTracker
-from g_utils.types import AgentMode, ModelType
+from g_utils.types import AgentMode
 
 
 class AgentSac(Agent):
-    def __init__(self, observation_shape, n_actions, device, parameter):
-        super(AgentSac, self).__init__(observation_shape, n_actions, device, parameter)
+    def __init__(self, observation_space, action_space, device, parameter):
+        super(AgentSac, self).__init__(observation_space, action_space, device, parameter)
 
         if isinstance(self.action_space, Discrete):
-            self.ddpg_model = DiscreteDdpgModel(
+            self.sac_model = DiscreteSacModel(
                 observation_shape=self.observation_shape, n_out_actions=self.n_out_actions,
                 n_discrete_actions=self.n_discrete_actions, device=device, parameter=parameter
-            ).to(device)
+            )
 
-            self.target_ddpg_model = DiscreteDdpgModel(
+            self.target_sac_model = DiscreteSacModel(
                 observation_shape=self.observation_shape, n_out_actions=self.n_out_actions,
                 n_discrete_actions=self.n_discrete_actions, device=device, parameter=parameter
-            ).to(device)
+            )
         elif isinstance(self.action_space, Box):
             self.action_bound_low = np.expand_dims(self.action_space.low, axis=0)
             self.action_bound_high = np.expand_dims(self.action_space.high, axis=0)
@@ -33,92 +33,141 @@ class AgentSac(Agent):
                 np.absolute(self.action_bound_low), np.absolute(self.action_bound_high)
             ), axis=-1)[0]
 
-            self.ddpg_model = ContinuousDdpgModel(
+            self.sac_model = ContinuousSacModel(
                 observation_shape=self.observation_shape, n_out_actions=self.n_out_actions,
                 device=device, parameter=parameter
-            ).to(device)
+            )
 
-            self.target_ddpg_model = ContinuousDdpgModel(
+            self.target_sac_model = ContinuousSacModel(
                 observation_shape=self.observation_shape, n_out_actions=self.n_out_actions,
                 device=device, parameter=parameter
-            ).to(device)
+            )
         else:
             raise ValueError()
 
-        self.ddpg_model.share_memory()
-        self.synchronize_models(source_model=self.ddpg_model, target_model=self.target_ddpg_model)
+        self.model = self.sac_model.actor_model
 
-        self.actor_optimizer = optim.Adam(self.ddpg_model.actor_params, lr=self.parameter.LEARNING_RATE)
-        self.critic_optimizer = optim.Adam(self.ddpg_model.critic_params, lr=self.parameter.LEARNING_RATE)
+        self.actor_model = self.sac_model.actor_model
+        self.critic_model = self.sac_model.critic_model
 
-        self.model = self.ddpg_model
+        self.target_critic_model = self.target_sac_model.critic_model
+        self.synchronize_models(source_model=self.critic_model, target_model=self.target_critic_model)
+
+        self.actor_model.share_memory()
+        self.critic_model.share_memory()
+
+        self.actor_optimizer = optim.Adam(self.actor_model.actor_params, lr=self.parameter.ACTOR_LEARNING_RATE)
+        self.critic_optimizer = optim.Adam(self.critic_model.critic_params, lr=self.parameter.LEARNING_RATE)
+
         self.training_steps = 0
 
         self.last_critic_loss = mp.Value('d', 0.0)
+        self.last_log_actor_objective = mp.Value('d', 0.0)
+
+        self.alpha = self.parameter.ALPHA
 
     def get_action(self, obs, mode=AgentMode.TRAIN):
-        out = self.q_net.forward(obs)
-
-        if mode == AgentMode.TRAIN:
-            coin = np.random.random()    # 0.0과 1.0사이의 임의의 값을 반환
-            if coin < self.epsilon.value:
-                return np.random.randint(low=0, high=self.n_actions, size=len(obs))
+        if isinstance(self.action_space, Discrete):
+            action_prob = self.actor_model.pi(obs)
+            m = Categorical(probs=action_prob)
+            if mode == AgentMode.TRAIN:
+                action = m.sample()
             else:
-                action = out.argmax(dim=-1)
-                return action.cpu().numpy()  # argmax: 가장 큰 값에 대응되는 인덱스 반환
-        else:
-            action = out.argmax(dim=-1)
+                action = torch.argmax(m.probs, dim=-1)
             return action.cpu().numpy()
+        elif isinstance(self.action_space, Box):
+            mu_v, std_v = self.actor_model.pi(obs)
 
-    def train_dqn(self, buffer, training_steps_v):
-        batch = buffer.sample(self.parameter.BATCH_SIZE, device=self.device)
+            if mode == AgentMode.TRAIN:
+                with torch.no_grad():
+                    dist = Normal(loc=mu_v, scale=std_v + 1.0e-7)
+                    actions = dist.sample()
+            else:
+                with torch.no_grad():
+                    actions = mu_v.detach()
 
-        # observations.shape: torch.Size([32, 4]),
+            actions = np.clip(actions.cpu().numpy(), -1.0, 1.0)
+            actions = actions * self.action_scale_factor
+            return actions
+        else:
+            raise ValueError()
+
+    def train_sac(self, training_steps_v):
+        # observations.shape: torch.Size([32, 4, 84, 84]),
         # actions.shape: torch.Size([32, 1]),
-        # next_observations.shape: torch.Size([32, 4]),
+        # next_observations.shape: torch.Size([32, 4, 84, 84]),
         # rewards.shape: torch.Size([32, 1]),
         # dones.shape: torch.Size([32])
-        observations, actions, next_observations, rewards, dones = batch
 
-        # state_action_values.shape: torch.Size([32, 1])
-        state_action_values = self.q_net(observations).gather(
-            dim=1, index=actions
+        observations, actions, next_observations, rewards, dones = self.buffer.sample(
+            batch_size=self.parameter.BATCH_SIZE, device=self.device
         )
 
+        ###################################
+        #  Critic (Value) 손실 산출 - BEGIN #
+        ###################################
+        if isinstance(self.action_space, Discrete):
+            pass
+        elif isinstance(self.action_space, Box):
+            next_mu_v, std_v = self.actor_model.pi(next_observations)
+            dist = Normal(loc=next_mu_v, scale=std_v + 1.0e-7)
+            next_actions_v = dist.sample()
+            next_log_prob_v = dist.log_prob(next_actions_v).sum(dim=-1, keepdim=True)
+
         with torch.no_grad():
-            # next_state_values.shape: torch.Size([32, 1])
-            next_state_values = self.target_q_net(next_observations).max(
-                dim=1, keepdim=True
-            ).values
-            next_state_values[dones] = 0.0
-            next_state_values = next_state_values.detach()
+            next_q1_v, next_q2_v = self.target_critic_model.q(next_observations, next_actions_v)
+            next_values = torch.min(next_q1_v, next_q2_v)
+            next_log_prob_v = self.alpha * next_log_prob_v
+            next_values -= next_log_prob_v
+            next_values[dones] = 0.0
 
-            # target_state_action_values.shape: torch.Size([32, 1])
-            target_state_action_values = rewards + self.parameter.GAMMA ** self.parameter.N_STEP * next_state_values
+        # td_target_value_lst = []
+        # for reward, next_value, done in zip(rewards, next_values, dones):
+        #     td_target = reward + self.parameter.GAMMA ** self.parameter.N_STEP * next_value * (0.0 if done else 1.0)
+        #     td_target_value_lst.append(td_target.detach())
 
-        # loss is just scalar torch value
-        q_net_loss = F.mse_loss(state_action_values, target_state_action_values)
+        td_target_values = rewards + self.parameter.GAMMA ** self.parameter.N_STEP * next_values
 
-        # print("observations.shape: {0}, actions.shape: {1}, "
-        #       "next_observations.shape: {2}, rewards.shape: {3}, dones.shape: {4}".format(
-        #     observations.shape, actions.shape,
-        #     next_observations.shape, rewards.shape, dones.shape
-        # ))
-        # print("state_action_values.shape: {0}".format(state_action_values.shape))
-        # print("next_state_values.shape: {0}".format(next_state_values.shape))
-        # print("target_state_action_values.shape: {0}".format(
-        #     target_state_action_values.shape
-        # ))
-        # print("loss.shape: {0}".format(loss.shape))
+        # td_target_values.shape: (32, 1)
+        # td_target_values = torch.tensor(td_target_value_lst, dtype=torch.float32, device=self.device).unsqueeze(dim=-1)
+        # values.shape: (32, 1)
+        q1_v, q2_v = self.critic_model.q(observations, actions)
+        # critic_loss.shape: ()
+        critic_loss = F.mse_loss(q1_v, td_target_values.detach()) + \
+                      F.mse_loss(q2_v, td_target_values.detach())
 
-        self.optimizer.zero_grad()
-        q_net_loss.backward()
-        self.optimizer.step()
+        self.critic_optimizer.zero_grad()
+        critic_loss.backward()
+        torch.nn.utils.clip_grad_norm_(self.critic_model.critic_params, self.parameter.CLIP_GRADIENT_VALUE)
+        self.critic_optimizer.step()
+        ###################################
+        #  Critic (Value)  Loss 산출 - END #
+        ###################################
+
+        ################################
+        #  Actor Objective 산출 - BEGIN #
+        ################################
+        re_parameterization_trick_action_v, log_prob_v = self.sac_model.re_parameterization_trick_sample((observations))
+        q1_v, q2_v = self.critic_model.q(observations, re_parameterization_trick_action_v)
+        objectives_v = torch.div(torch.add(q1_v, q2_v), 2.0) - self.alpha * log_prob_v
+        loss_actor_v = -1.0 * objectives_v.mean()
+
+        self.actor_optimizer.zero_grad()
+        loss_actor_v.backward()
+        torch.nn.utils.clip_grad_norm_(self.actor_model.actor_params, self.parameter.CLIP_GRADIENT_VALUE)
+        self.actor_optimizer.step()
+        ##############################
+        #  Actor Objective 산출 - END #
+        ##############################
 
         # sync
-        if training_steps_v % self.parameter.TARGET_SYNC_INTERVAL_TRAINING_STEPS == 0:
-            self.target_q_net.load_state_dict(self.q_net.state_dict())
+        # if training_steps_v % self.parameter.TARGET_SYNC_INTERVAL_TRAINING_STEPS == 0:
+        #     self.synchronize_models(source_model=self.sac_model, target_model=self.target_sac_model)
 
-        self.epsilon.value = self.epsilon_tracker.epsilon(training_steps_v)
+        self.soft_synchronize_models(
+            source_model=self.critic_model, target_model=self.target_critic_model,
+            tau=self.parameter.TAU
+        )  # TAU: 0.005
 
-        self.last_q_net_loss.value = q_net_loss.item()
+        self.last_critic_loss.value = critic_loss.item()
+        self.last_log_actor_objective.value = -loss_actor_v.item()
