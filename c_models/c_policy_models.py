@@ -91,6 +91,7 @@ class ContinuousPolicyModel(PolicyModel):
                 nn.Linear(self.parameter.MODEL.NEURONS_PER_FULLY_CONNECTED_LAYER[-1], self.n_out_actions),
                 nn.Softplus()
             )
+            self.actor_params += list(self.logstd.parameters())
         else:
             logstds_param = nn.Parameter(torch.full((self.n_out_actions,), 0.1))
             self.register_parameter("logstds", logstds_param)
