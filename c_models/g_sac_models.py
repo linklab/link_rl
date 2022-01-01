@@ -95,11 +95,11 @@ class ContinuousSacModel:
 
     def re_parameterization_trick_sample(self, obs):
         mu_v, std_v = self.actor_model.pi(obs)
+
         dist = Normal(loc=mu_v, scale=std_v)
-        transforms = [TanhTransform(cache_size=1)]
-        dist = TransformedDistribution(dist, transforms)
+        dist = TransformedDistribution(base_distribution=dist, transforms=TanhTransform(cache_size=1))
+
         action_v = dist.rsample()  # for reparameterization trick (mean + std * N(0,1))
-        #action_v = torch.tanh(action_v)
         log_probs = dist.log_prob(action_v).mean(dim=-1, keepdim=True)
 
         # action_v.shape: [128, 1]
