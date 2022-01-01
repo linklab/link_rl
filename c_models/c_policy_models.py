@@ -87,11 +87,15 @@ class ContinuousPolicyModel(PolicyModel):
         )
         self.actor_params += list(self.mu.parameters())
 
-        self.logstd = nn.Sequential(
-            nn.Linear(self.parameter.MODEL.NEURONS_PER_FULLY_CONNECTED_LAYER[-1], self.n_out_actions),
-            nn.Softplus()
-        )
-        self.actor_params += list(self.logstd.parameters())
+        # self.logstd = nn.Sequential(
+        #     nn.Linear(self.parameter.MODEL.NEURONS_PER_FULLY_CONNECTED_LAYER[-1], self.n_out_actions),
+        #     nn.Softplus()
+        # )
+        # self.actor_params += list(self.logstd.parameters())
+
+        logstds_param = nn.Parameter(torch.full((self.n_out_actions,), 0.1))
+        self.register_parameter("logstds", logstds_param)
+        self.actor_params.append(self.logstds)
 
         # if parameter.AGENT_TYPE == AgentType.SAC:
         #     self.logstd = nn.Sequential(
@@ -109,8 +113,10 @@ class ContinuousPolicyModel(PolicyModel):
 
         mu_v = self.mu(x)
 
-        logstd_v = self.logstd(x)
-        std_v = torch.exp(logstd_v)
+        std_v = torch.exp(F.softplus(self.logstds))
+
+        # logstd_v = self.logstd(x)
+        # std_v = torch.exp(logstd_v)
 
         # if self.parameter.AGENT_TYPE == AgentType.SAC:
         #     logstd_v = self.logstd(x)
