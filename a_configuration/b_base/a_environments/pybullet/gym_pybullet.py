@@ -7,7 +7,7 @@ class ParameterCartPoleBullet:
         self.ENV_NAME = "CartPoleBulletEnv-v1"
         self.EPISODE_REWARD_AVG_SOLVED = 190
         self.EPISODE_REWARD_STD_SOLVED = 20
-        self.TEST_INTERVAL_TRAINING_STEPS = 1024
+        self.TEST_INTERVAL_TRAINING_STEPS = 1_024
 
 
 class ParameterCartPoleContinuousBullet:
@@ -15,7 +15,7 @@ class ParameterCartPoleContinuousBullet:
         self.ENV_NAME = "CartPoleContinuousBulletEnv-v0"
         self.EPISODE_REWARD_AVG_SOLVED = 190
         self.EPISODE_REWARD_STD_SOLVED = 20
-        self.TEST_INTERVAL_TRAINING_STEPS = 1024
+        self.TEST_INTERVAL_TRAINING_STEPS = 1_024
 
 
 class ParameterAntBullet:
@@ -23,4 +23,4 @@ class ParameterAntBullet:
         self.ENV_NAME = "AntBulletEnv-v0"
         self.EPISODE_REWARD_AVG_SOLVED = 2_000
         self.EPISODE_REWARD_STD_SOLVED = 100
-        self.TEST_INTERVAL_TRAINING_STEPS = 512
+        self.TEST_INTERVAL_TRAINING_STEPS = 5_000

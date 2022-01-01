@@ -20,7 +20,7 @@ class ParameterBase:
         self.N_ACTORS = 1
         self.N_STEP = 1
 
-        self.TRAIN_INTERVAL_GLOBAL_TIME_STEPS = 4
+        self.TRAIN_INTERVAL_GLOBAL_TIME_STEPS = 2
         assert self.TRAIN_INTERVAL_GLOBAL_TIME_STEPS >= self.N_VECTORIZED_ENVS * self.N_ACTORS, \
             "TRAIN_INTERVAL_GLOBAL_TIME_STEPS should be greater than N_VECTORIZED_ENVS * N_ACTORS"
 

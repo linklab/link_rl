@@ -100,7 +100,7 @@ class AgentDdpg(Agent):
 
         self.actor_optimizer.zero_grad()
         actor_loss.backward()
-        torch.nn.utils.clip_grad_norm_(self.actor_model.actor_params, self.parameter.CLIP_GRADIENT_VALUE)
+        self.clip_actor_model_parameter_grad_value(self.actor_model.actor_params)
         self.actor_optimizer.step()
         #####################
         # train actor - END #
@@ -121,7 +121,7 @@ class AgentDdpg(Agent):
 
         self.critic_optimizer.zero_grad()
         critic_loss.backward()
-        torch.nn.utils.clip_grad_norm_(self.critic_model.critic_params, self.parameter.CLIP_GRADIENT_VALUE)
+        self.clip_critic_model_parameter_grad_value(self.critic_model.critic_params)
         self.critic_optimizer.step()
         ######################
         # train critic - end #

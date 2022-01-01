@@ -121,6 +121,8 @@ class AgentSac(Agent):
         critic_loss.backward()
         self.clip_critic_model_parameter_grad_value(self.critic_model.critic_params)
         self.critic_optimizer.step()
+
+        self.last_critic_loss.value = critic_loss.item()
         ###################################
         #  Critic (Value)  Loss 산출 - END #
         ###################################
@@ -128,30 +130,25 @@ class AgentSac(Agent):
         ################################
         #  Actor Objective 산출 - BEGIN #
         ################################
-        re_parameterized_action_v, re_parameterized_log_prob_v = self.sac_model.re_parameterization_trick_sample(
-            observations
-        )
-        q1_v, q2_v = self.critic_model.q(observations, re_parameterized_action_v)
-        objectives_v = torch.div(torch.add(q1_v, q2_v), 2.0) - self.parameter.ALPHA * re_parameterized_log_prob_v
-        objectives_v = objectives_v.mean()
-        loss_actor_v = -1.0 * objectives_v
+        if training_steps_v % self.parameter.POLICY_UPDATE_FREQUENCY_PER_TRAINING_STEP == 0:
+            re_parameterized_action_v, re_parameterized_log_prob_v = self.sac_model.re_parameterization_trick_sample(
+                observations
+            )
+            q1_v, q2_v = self.critic_model.q(observations, re_parameterized_action_v)
+            objectives_v = torch.div(torch.add(q1_v, q2_v), 2.0) - self.parameter.ALPHA * re_parameterized_log_prob_v
+            objectives_v = objectives_v.mean()
+            loss_actor_v = -1.0 * objectives_v
 
-        self.actor_optimizer.zero_grad()
-        loss_actor_v.backward()
-        self.clip_actor_model_parameter_grad_value(self.actor_model.actor_params)
-        self.actor_optimizer.step()
+            self.actor_optimizer.zero_grad()
+            loss_actor_v.backward()
+            self.clip_actor_model_parameter_grad_value(self.actor_model.actor_params)
+            self.actor_optimizer.step()
 
+            self.last_actor_objective.value = objectives_v.item()
         ##############################
         #  Actor Objective 산출 - END #
         ##############################
 
-        # sync
-        # if training_steps_v % self.parameter.TARGET_SYNC_INTERVAL_TRAINING_STEPS == 0:
-        #     self.synchronize_models(source_model=self.sac_model, target_model=self.target_sac_model)
-
         self.soft_synchronize_models(
             source_model=self.critic_model, target_model=self.target_critic_model, tau=self.parameter.TAU
         )  # TAU: 0.005
-
-        self.last_critic_loss.value = critic_loss.item()
-        self.last_actor_objective.value = objectives_v.item()

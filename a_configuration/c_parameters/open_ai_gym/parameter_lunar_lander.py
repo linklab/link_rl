@@ -20,7 +20,7 @@ class ParameterLunarLanderA2c(ParameterBase, ParameterLunarLander, ParameterA2c)
         self.BUFFER_CAPACITY = 100_000
         self.BATCH_SIZE = 64
         self.CONSOLE_LOG_INTERVAL_TRAINING_STEPS = 100
-        self.MODEL = ParameterLinearModel(ModelType.MEDIUM_LINEAR)
+        self.MODEL = ParameterLinearModel(ModelType.SMALL_LINEAR)
 
 
 class ParameterLunarLanderContinuousA2c(ParameterBase, ParameterLunarLanderContinuous, ParameterA2c):
@@ -34,9 +34,9 @@ class ParameterLunarLanderContinuousA2c(ParameterBase, ParameterLunarLanderConti
         self.MAX_TRAINING_STEPS = 200_000
         self.BUFFER_CAPACITY = 200_000
         self.BATCH_SIZE = 64
-        self.LEARNING_RATE = 0.0001
+        self.LEARNING_RATE = 0.0002
         self.CONSOLE_LOG_INTERVAL_TRAINING_STEPS = 100
-        self.MODEL = ParameterLinearModel(ModelType.MEDIUM_LINEAR)
+        self.MODEL = ParameterLinearModel(ModelType.SMALL_LINEAR)
 
 
 class ParameterLunarLanderContinuousDdpg(ParameterBase, ParameterLunarLanderContinuous, ParameterDdpg):
@@ -52,7 +52,7 @@ class ParameterLunarLanderContinuousDdpg(ParameterBase, ParameterLunarLanderCont
         self.BATCH_SIZE = 64
         self.LEARNING_RATE = 0.0001
         self.CONSOLE_LOG_INTERVAL_TRAINING_STEPS = 100
-        self.MODEL = ParameterLinearModel(ModelType.MEDIUM_LINEAR)
+        self.MODEL = ParameterLinearModel(ModelType.SMALL_LINEAR)
 
 
 class ParameterLunarLanderContinuousSac(ParameterBase, ParameterLunarLanderContinuous, ParameterSac):
@@ -66,6 +66,6 @@ class ParameterLunarLanderContinuousSac(ParameterBase, ParameterLunarLanderConti
         self.MAX_TRAINING_STEPS = 500_000
         self.BUFFER_CAPACITY = 200_000
         self.BATCH_SIZE = 64
-        self.LEARNING_RATE = 0.0001
+        self.LEARNING_RATE = 0.0002
         self.CONSOLE_LOG_INTERVAL_TRAINING_STEPS = 100
-        self.MODEL = ParameterLinearModel(ModelType.MEDIUM_LINEAR)
+        self.MODEL = ParameterLinearModel(ModelType.SMALL_LINEAR)
