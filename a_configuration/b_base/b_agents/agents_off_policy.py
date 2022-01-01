@@ -41,7 +41,8 @@ class ParameterDdpg(ParameterAgent):
         ParameterAgent.__init__(self)
         self.AGENT_TYPE = AgentType.DDPG
 
-        self.LEARNING_RATE = 0.0001
+        self.ACTOR_LEARNING_RATE = 0.0001
+        self.LEARNING_RATE = 0.001
 
         self.BUFFER_CAPACITY = 10_000
         self.BATCH_SIZE = 64

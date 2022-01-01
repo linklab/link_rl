@@ -55,7 +55,7 @@ class AgentDdpg(Agent):
         self.actor_model.share_memory()
         self.critic_model.share_memory()
 
-        self.actor_optimizer = optim.Adam(self.actor_model.actor_params, lr=self.parameter.LEARNING_RATE)
+        self.actor_optimizer = optim.Adam(self.actor_model.actor_params, lr=self.parameter.ACTOR_LEARNING_RATE)
         self.critic_optimizer = optim.Adam(self.critic_model.critic_params, lr=self.parameter.LEARNING_RATE)
 
         self.training_steps = 0

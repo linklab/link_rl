@@ -17,7 +17,8 @@ class ParameterA2c(ParameterAgent):
         ParameterAgent.__init__(self)
         self.AGENT_TYPE = AgentType.A2C
 
-        self.LEARNING_RATE = 0.0001
+        self.ACTOR_LEARNING_RATE = 0.0001
+        self.LEARNING_RATE = 0.001
         self.BUFFER_CAPACITY = 1_000
         self.GAMMA = 0.99
         self.BATCH_SIZE = 64
