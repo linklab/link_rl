@@ -109,7 +109,7 @@ class ContinuousPolicyModel(PolicyModel):
 
         mu_v = self.mu(x)
 
-        std_v = torch.sqrt(self.var(x))
+        var_v = self.var(x)
 #        std_v = torch.exp(F.softplus(self.logstds))
 
         # logstd_v = self.logstd(x)
@@ -121,7 +121,7 @@ class ContinuousPolicyModel(PolicyModel):
         # else:
         #     std_v = F.softplus(self.logstds.exp())
 
-        return mu_v, std_v
+        return mu_v, var_v
 
 
 DiscreteActorModel = DiscretePolicyModel

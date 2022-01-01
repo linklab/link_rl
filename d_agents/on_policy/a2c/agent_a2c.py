@@ -1,3 +1,5 @@
+import math
+
 import torch.optim as optim
 import torch
 from gym.spaces import Discrete, Box
@@ -52,11 +54,14 @@ class AgentA2c(Agent):
                 action = torch.argmax(m.probs, dim=-1)
             return action.cpu().numpy()
         elif isinstance(self.action_space, Box):
-            mu_v, std_v = self.actor_model.pi(obs)
+            mu_v, var_v = self.actor_model.pi(obs)
 
             if mode == AgentMode.TRAIN:
-                dist = Normal(loc=mu_v, scale=std_v)
-                actions = dist.sample().detach().cpu().numpy()
+                actions = np.random.normal(
+                    loc=mu_v.detach().cpu().numpy(), scale=torch.sqrt(var_v).detach().cpu().numpy()
+                )
+                # dist = Normal(loc=mu_v, scale=std_v)
+                # actions = dist.sample().detach().cpu().numpy()
             else:
                 actions = mu_v.detach().cpu().numpy()
 
@@ -115,16 +120,21 @@ class AgentA2c(Agent):
             # dist.log_prob(value=actions.squeeze(-1)).shape: (32,)
             # criticized_log_pi_action_v.shape: (32,)
             criticized_log_pi_action_v = dist.log_prob(value=actions.squeeze(-1)) * advantages.squeeze(-1)
+            entropy = None
         elif isinstance(self.action_space, Box):
-            mu_v, std_v = self.actor_model.pi(observations)
-            dist = Normal(loc=mu_v, scale=std_v)
+            mu_v, var_v = self.actor_model.pi(observations)
+
+            criticized_log_pi_action_v = self.calc_logprob(mu_v, var_v, actions) * advantages
+            entropy = (torch.log(2 * math.pi * var_v) + 1)/2
+            #dist = Normal(loc=mu_v, scale=std_v)
 
             # actions.shape: (32, 8)
             # dist.log_prob(value=actions).shape: (32, 8)
             # advantages.shape: (32, 1)
             # criticized_log_pi_action_v.shape: (32, 8)
             # print(dist.log_prob(value=actions).shape, advantages.shape, "!!!!!!")
-            criticized_log_pi_action_v = dist.log_prob(value=actions) * advantages
+
+            # criticized_log_pi_action_v = dist.log_prob(value=actions) * advantages
         else:
             raise ValueError()
 
@@ -132,7 +142,7 @@ class AgentA2c(Agent):
         log_actor_objective = torch.mean(criticized_log_pi_action_v)
         actor_loss = -1.0 * log_actor_objective
 
-        entropy_loss = -1.0 * torch.mean(dist.entropy())
+        entropy_loss = -1.0 * torch.mean(entropy)
 
         actor_loss = actor_loss + entropy_loss * self.parameter.ENTROPY_BETA
 
