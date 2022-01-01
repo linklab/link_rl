@@ -275,9 +275,13 @@ def console_log(
         console_log += "log_policy_objective: {0:6.3f}, ".format(
             agent.last_log_policy_objective.value
         )
-    elif parameter.AGENT_TYPE in [AgentType.A2C, AgentType.SAC]:
+    elif parameter.AGENT_TYPE == AgentType.A2C:
         console_log += "critic_loss: {0:6.3f}, log_actor_objective: {1:6.3f}, ".format(
             agent.last_critic_loss.value, agent.last_log_actor_objective.value
+        )
+    elif parameter.AGENT_TYPE == AgentType.SAC:
+        console_log += "critic_loss: {0:6.3f}, actor_objective: {1:6.3f}, ".format(
+            agent.last_critic_loss.value, agent.last_actor_objective.value
         )
     elif parameter.AGENT_TYPE == AgentType.DDPG:
         console_log += "critic_loss: {0:6.3f}, actor_loss: {1:6.3f}, ".format(
@@ -374,7 +378,7 @@ def wandb_log(learner, wandb_obj, parameter):
         log_dict["Epsilon"] = learner.agent.epsilon.value
     elif parameter.AGENT_TYPE == AgentType.REINFORCE:
         log_dict["Log Policy Objective"] = learner.agent.last_log_policy_objective.value
-    elif parameter.AGENT_TYPE in [AgentType.A2C, AgentType.SAC]:
+    elif parameter.AGENT_TYPE == AgentType.A2C:
         log_dict["Critic Loss"] = learner.agent.last_critic_loss.value
         log_dict["Log Actor Objective"] = learner.agent.last_log_actor_objective.value
     elif parameter.AGENT_TYPE == AgentType.SAC:

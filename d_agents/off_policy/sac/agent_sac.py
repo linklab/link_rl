@@ -23,7 +23,7 @@ class AgentSac(Agent):
 
             self.target_sac_model = DiscreteSacModel(
                 observation_shape=self.observation_shape, n_out_actions=self.n_out_actions,
-                n_discrete_actions=self.n_discrete_actions, device=device, parameter=parameter
+                n_discrete_actions=self.n_discrete_actions, device=device, parameter=parameter, is_target_model=True
             )
         elif isinstance(self.action_space, Box):
             self.sac_model = ContinuousSacModel(
@@ -33,7 +33,7 @@ class AgentSac(Agent):
 
             self.target_sac_model = ContinuousSacModel(
                 observation_shape=self.observation_shape, n_out_actions=self.n_out_actions,
-                device=device, parameter=parameter
+                device=device, parameter=parameter, is_target_model=True
             )
         else:
             raise ValueError()
@@ -55,9 +55,7 @@ class AgentSac(Agent):
         self.training_steps = 0
 
         self.last_critic_loss = mp.Value('d', 0.0)
-        self.last_log_actor_objective = mp.Value('d', 0.0)
-
-        self.alpha = self.parameter.ALPHA
+        self.last_actor_objective = mp.Value('d', 0.0)
 
     def get_action(self, obs, mode=AgentMode.TRAIN):
         if isinstance(self.action_space, Discrete):
@@ -89,7 +87,6 @@ class AgentSac(Agent):
         # next_observations.shape: torch.Size([32, 4, 84, 84]),
         # rewards.shape: torch.Size([32, 1]),
         # dones.shape: torch.Size([32])
-
         observations, actions, next_observations, rewards, dones = self.buffer.sample(
             batch_size=self.parameter.BATCH_SIZE, device=self.device
         )
@@ -98,38 +95,31 @@ class AgentSac(Agent):
         #  Critic (Value) 손실 산출 - BEGIN #
         ###################################
         if isinstance(self.action_space, Discrete):
-            pass
+            next_actions_v = None
+            next_log_prob_v = None
         elif isinstance(self.action_space, Box):
             next_mu_v, std_v = self.actor_model.pi(next_observations)
-            dist = Normal(loc=next_mu_v, scale=std_v + 1.0e-7)
+            dist = Normal(loc=next_mu_v, scale=std_v)
             next_actions_v = dist.sample()
-            next_log_prob_v = dist.log_prob(next_actions_v).sum(dim=-1, keepdim=True)
+            next_log_prob_v = dist.log_prob(next_actions_v)
+        else:
+            raise ValueError()
 
-        with torch.no_grad():
-            next_q1_v, next_q2_v = self.target_critic_model.q(next_observations, next_actions_v)
-            next_values = torch.min(next_q1_v, next_q2_v)
-            next_log_prob_v = self.alpha * next_log_prob_v
-            next_values -= next_log_prob_v
-            next_values[dones] = 0.0
-
-        # td_target_value_lst = []
-        # for reward, next_value, done in zip(rewards, next_values, dones):
-        #     td_target = reward + self.parameter.GAMMA ** self.parameter.N_STEP * next_value * (0.0 if done else 1.0)
-        #     td_target_value_lst.append(td_target.detach())
-
+        next_q1_v, next_q2_v = self.target_critic_model.q(next_observations, next_actions_v)
+        next_values = torch.min(next_q1_v, next_q2_v)
+        next_values = next_values - self.parameter.ALPHA * next_log_prob_v
+        next_values[dones] = 0.0
+        # td_target_values.shape: (32, 1)
         td_target_values = rewards + self.parameter.GAMMA ** self.parameter.N_STEP * next_values
 
-        # td_target_values.shape: (32, 1)
-        # td_target_values = torch.tensor(td_target_value_lst, dtype=torch.float32, device=self.device).unsqueeze(dim=-1)
         # values.shape: (32, 1)
         q1_v, q2_v = self.critic_model.q(observations, actions)
         # critic_loss.shape: ()
-        critic_loss = F.mse_loss(q1_v, td_target_values.detach()) + \
-                      F.mse_loss(q2_v, td_target_values.detach())
+        critic_loss = F.mse_loss(q1_v, td_target_values.detach()) + F.mse_loss(q2_v, td_target_values.detach())
 
         self.critic_optimizer.zero_grad()
         critic_loss.backward()
-        torch.nn.utils.clip_grad_norm_(self.critic_model.critic_params, self.parameter.CLIP_GRADIENT_VALUE)
+        torch.nn.utils.clip_grad_value_(self.critic_model.critic_params, self.parameter.CLIP_GRADIENT_VALUE)
         self.critic_optimizer.step()
         ###################################
         #  Critic (Value)  Loss 산출 - END #
@@ -138,14 +128,17 @@ class AgentSac(Agent):
         ################################
         #  Actor Objective 산출 - BEGIN #
         ################################
-        re_parameterization_trick_action_v, log_prob_v = self.sac_model.re_parameterization_trick_sample((observations))
-        q1_v, q2_v = self.critic_model.q(observations, re_parameterization_trick_action_v)
-        objectives_v = torch.div(torch.add(q1_v, q2_v), 2.0) - self.alpha * log_prob_v
-        loss_actor_v = -1.0 * objectives_v.mean()
+        re_parameterized_action_v, re_parameterized_log_prob_v = self.sac_model.re_parameterization_trick_sample(
+            observations
+        )
+        q1_v, q2_v = self.critic_model.q(observations, re_parameterized_action_v)
+        objectives_v = torch.div(torch.add(q1_v, q2_v), 2.0) - self.parameter.ALPHA * re_parameterized_log_prob_v
+        objectives_v = objectives_v.mean()
+        loss_actor_v = -1.0 * objectives_v
 
         self.actor_optimizer.zero_grad()
         loss_actor_v.backward()
-        torch.nn.utils.clip_grad_norm_(self.actor_model.actor_params, self.parameter.CLIP_GRADIENT_VALUE)
+        torch.nn.utils.clip_grad_value_(self.actor_model.actor_params, self.parameter.CLIP_GRADIENT_VALUE)
         self.actor_optimizer.step()
         ##############################
         #  Actor Objective 산출 - END #
@@ -156,9 +149,8 @@ class AgentSac(Agent):
         #     self.synchronize_models(source_model=self.sac_model, target_model=self.target_sac_model)
 
         self.soft_synchronize_models(
-            source_model=self.critic_model, target_model=self.target_critic_model,
-            tau=self.parameter.TAU
+            source_model=self.critic_model, target_model=self.target_critic_model, tau=self.parameter.TAU
         )  # TAU: 0.005
 
         self.last_critic_loss.value = critic_loss.item()
-        self.last_log_actor_objective.value = -loss_actor_v.item()
+        self.last_actor_objective.value = objectives_v.item()

@@ -110,23 +110,23 @@ class Agent:
 
     def after_actor_critic_train(self):
         actor_grads = np.concatenate(
-            [p.grad.data.cpu().numpy().flatten() for p in self.actor_model.parameters() if p.grad is not None]
+            [p.grad.data.cpu().numpy().flatten() for p in self.actor_model.actor_params if p.grad is not None]
         )
         self.last_actor_model_grad_l2.value = np.sqrt(np.mean(np.square(actor_grads)))
-        self.last_actor_model_grad_max.value = np.max(np.abs(actor_grads))
+        self.last_actor_model_grad_max.value = np.max(actor_grads)
 
         critic_grads = np.concatenate(
-            [p.grad.data.cpu().numpy().flatten() for p in self.critic_model.parameters() if p.grad is not None]
+            [p.grad.data.cpu().numpy().flatten() for p in self.critic_model.critic_params if p.grad is not None]
         )
         self.last_critic_model_grad_l2.value = np.sqrt(np.mean(np.square(critic_grads)))
-        self.last_critic_model_grad_max.value = np.max(np.abs(critic_grads))
+        self.last_critic_model_grad_max.value = np.max(critic_grads)
 
     def after_train(self):
         grads = np.concatenate(
             [p.grad.data.cpu().numpy().flatten() for p in self.model.parameters() if p.grad is not None]
         )
         self.last_model_grad_l2.value = np.sqrt(np.mean(np.square(grads)))
-        self.last_model_grad_max.value = np.max(np.abs(grads))
+        self.last_model_grad_max.value = np.max(grads)
 
     @abstractmethod
     def train_dqn(self, training_steps_v):
