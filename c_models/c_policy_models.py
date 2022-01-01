@@ -9,7 +9,6 @@ from a_configuration.b_base.c_models.convolutional_models import ParameterConvol
 from a_configuration.b_base.c_models.linear_models import ParameterLinearModel
 from a_configuration.b_base.c_models.recurrent_models import ParameterRecurrentModel
 from c_models.a_models import Model
-from g_utils.types import AgentType
 
 
 class PolicyModel(Model):
@@ -35,14 +34,14 @@ class PolicyModel(Model):
         else:
             raise ValueError()
 
-    def forward_actor(self, x):
-        if isinstance(x, np.ndarray):
-            x = torch.tensor(x, dtype=torch.float32, device=self.device)
+    def forward_actor(self, obs):
+        if isinstance(obs, np.ndarray):
+            obs = torch.tensor(obs, dtype=torch.float32, device=self.device)
 
         if isinstance(self.parameter.MODEL, ParameterLinearModel):
-            x = self.actor_fc_layers(x)
+            x = self.actor_fc_layers(obs)
         elif isinstance(self.parameter.MODEL, ParameterConvolutionalModel):
-            conv_out = self.actor_conv_layers(x)
+            conv_out = self.actor_conv_layers(obs)
             conv_out = torch.flatten(conv_out, start_dim=1)
             x = self.actor_fc_layers(conv_out)
         else:

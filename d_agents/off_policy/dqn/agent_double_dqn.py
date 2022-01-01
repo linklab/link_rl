@@ -23,15 +23,15 @@ class AgentDoubleDqn(AgentDqn):
 
         with torch.no_grad():
             target_argmax_action = torch.argmax(self.target_q_net(next_observations), dim=-1, keepdim=True)
-            next_state_action_values = self.q_net(next_observations).gather(dim=-1, index=target_argmax_action)
-            next_state_action_values[dones] = 0.0
-            next_state_action_values = next_state_action_values.detach()
+            next_q_values = self.q_net(next_observations).gather(dim=-1, index=target_argmax_action)
+            next_q_values[dones] = 0.0
+            next_q_values = next_q_values.detach()
 
             # target_state_action_values.shape: torch.Size([32, 1])
-            target_state_action_values = rewards + self.parameter.GAMMA ** self.parameter.N_STEP * next_state_action_values
+            target_q_values = rewards + self.parameter.GAMMA ** self.parameter.N_STEP * next_q_values
 
         # loss is just scalar torch value
-        q_net_loss = F.mse_loss(state_action_values, target_state_action_values)
+        q_net_loss = F.mse_loss(state_action_values, target_q_values)
 
         # print("observations.shape: {0}, actions.shape: {1}, "
         #       "next_observations.shape: {2}, rewards.shape: {3}, dones.shape: {4}".format(

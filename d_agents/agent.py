@@ -179,6 +179,7 @@ class Agent:
         target_model.load_state_dict(target_model_state)
 
     def calc_logprob(self, mu_v, var_v, actions_v):
-        p1 = - ((mu_v - actions_v) ** 2) / (2*var_v.clamp(min=1e-3))
-        p2 = - torch.log(torch.sqrt(2 * math.pi * var_v))
+        p1 = -0.5 * ((actions_v - mu_v) ** 2) / (var_v + 1e-05)
+        # p1 = -1.0 * ((mu_v - actions_v) ** 2) / (2.0 * var_v.clamp(min=1e-3))
+        p2 = -0.5 * torch.log(2 * np.pi * var_v)
         return p1 + p2
