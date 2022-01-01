@@ -21,6 +21,6 @@ class ParameterA2c(ParameterAgent):
         self.BUFFER_CAPACITY = 1_000
         self.GAMMA = 0.99
         self.BATCH_SIZE = 64
-        self.ENTROPY_BETA = 0.00001
+        self.ENTROPY_BETA = 0.02
         self.MIN_BUFFER_SIZE_FOR_TRAIN = self.BATCH_SIZE
 

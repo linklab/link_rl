@@ -38,7 +38,7 @@ class ParameterPongA2c(
         self.MAX_TRAINING_STEPS = 1_000_000
         self.CONSOLE_LOG_INTERVAL_TRAINING_STEPS = 100
         self.TEST_INTERVAL_TRAINING_STEPS = 1_024
-        self.ENTROPY_BETA = 0.0001
+        self.ENTROPY_BETA = 0.02
         self.BUFFER_CAPACITY = self.BATCH_SIZE
         self.MODEL = ParameterConvolutionalModel(ModelType.MEDIUM_CONVOLUTIONAL)
 
