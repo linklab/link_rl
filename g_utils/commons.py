@@ -69,7 +69,7 @@ def print_device_related_info(device, parameter):
 
 
 def print_basic_info(observation_space=None, action_space=None, device=None, parameter=None):
-    print('\n' + '#' * 72 + " Base Parameters " + '#' * 73)
+    print('\n' + '#' * 81 + " Base Parameters " + '#' * 82)
 
     if device:
         print_device_related_info(device, parameter)
@@ -109,12 +109,12 @@ def print_basic_info(observation_space=None, action_space=None, device=None, par
             print('-' * 76 + " SPACE " + '-' * 76)
         print_space(observation_space, action_space)
 
-    print('#' * 162)
+    print('#' * 182)
     print()
 
 
 def print_comparison_basic_info(observation_space, action_space, device, parameter_c):
-    print('\n' + '#' * 72 + " Base Parameters " + '#' * 73)
+    print('\n' + '#' * 81 + " Base Parameters " + '#' * 82)
 
     if device:
         print_device_related_info(device, parameter_c)
@@ -198,11 +198,12 @@ def print_comparison_basic_info(observation_space, action_space, device, paramet
             print('-' * 76 + " SPACE " + '-' * 76)
         print_space(observation_space, action_space)
 
-    print('#' * 162)
+    print('#' * 182)
     print()
 
 
 def print_model_info(model):
+    print('-' * 76 + " MODEL " + '-' * 76)
     if isinstance(model, ParameterLinearModel):
         item1 = "{0}: {1:}".format("MODEL", "LINEAR_MODEL")
         item2 = "{0}: {1:}".format("NEURONS_PER_FULLY_CONNECTED_LAYER", model.NEURONS_PER_FULLY_CONNECTED_LAYER)

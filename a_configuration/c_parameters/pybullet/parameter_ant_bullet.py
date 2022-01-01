@@ -3,6 +3,7 @@ from a_configuration.b_base.b_agents.agents_off_policy import ParameterDqn, Para
 from a_configuration.b_base.b_agents.agents_on_policy import ParameterA2c, ParameterReinforce
 from a_configuration.b_base.c_models.linear_models import ParameterLinearModel
 from a_configuration.b_base.parameter_base import ParameterBase
+from g_utils.commons import print_basic_info, get_env_info
 from g_utils.types import ModelType
 
 
@@ -61,4 +62,9 @@ class ParameterAntBulletSac(ParameterBase, ParameterAntBullet, ParameterSac):
         self.CONSOLE_LOG_INTERVAL_TRAINING_STEPS = 100
         self.TEST_INTERVAL_TRAINING_STEPS = 5_000
         self.MODEL = ParameterLinearModel(ModelType.SMALL_LINEAR)
-# OnPolicy
+
+
+if __name__ == "__main__":
+    parameter = ParameterAntBulletSac()
+    observation_space, action_space = get_env_info(parameter)
+    print_basic_info(observation_space=observation_space, action_space=action_space, device=None, parameter=parameter)
