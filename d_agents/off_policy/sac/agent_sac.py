@@ -119,7 +119,7 @@ class AgentSac(Agent):
 
         self.critic_optimizer.zero_grad()
         critic_loss.backward()
-        torch.nn.utils.clip_grad_value_(self.critic_model.critic_params, self.parameter.CLIP_GRADIENT_VALUE)
+        self.clip_critic_model_parameter_grad_value(self.critic_model.critic_params)
         self.critic_optimizer.step()
         ###################################
         #  Critic (Value)  Loss 산출 - END #
@@ -138,8 +138,9 @@ class AgentSac(Agent):
 
         self.actor_optimizer.zero_grad()
         loss_actor_v.backward()
-        torch.nn.utils.clip_grad_value_(self.actor_model.actor_params, self.parameter.CLIP_GRADIENT_VALUE)
+        self.clip_actor_model_parameter_grad_value(self.actor_model.actor_params)
         self.actor_optimizer.step()
+
         ##############################
         #  Actor Objective 산출 - END #
         ##############################

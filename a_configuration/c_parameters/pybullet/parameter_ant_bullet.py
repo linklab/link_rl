@@ -12,14 +12,17 @@ class ParameterAntBulletA2c(ParameterBase, ParameterAntBullet, ParameterA2c):
         ParameterAntBullet.__init__(self)
         ParameterA2c.__init__(self)
 
+        self.BATCH_SIZE = 128
+        self.LEARNING_RATE = 0.00002
+        self.N_STEP = 1
+        self.BUFFER_CAPACITY = self.BATCH_SIZE
+
         self.N_VECTORIZED_ENVS = 1
         self.N_ACTORS = 1
         self.MAX_TRAINING_STEPS = 2_000_000
         self.CONSOLE_LOG_INTERVAL_TRAINING_STEPS = 100
         self.TEST_INTERVAL_TRAINING_STEPS = 1_024
-        self.LEARNING_RATE = 0.00005
-        self.BUFFER_CAPACITY = self.BATCH_SIZE
-        self.MODEL = ParameterLinearModel(ModelType.MEDIUM_LINEAR)
+        self.MODEL = ParameterLinearModel(ModelType.SMALL_LINEAR)
 
 
 class ParameterAntBulletDdpg(ParameterBase, ParameterAntBullet, ParameterDdpg):
@@ -29,7 +32,7 @@ class ParameterAntBulletDdpg(ParameterBase, ParameterAntBullet, ParameterDdpg):
         ParameterDdpg.__init__(self)
 
         self.BATCH_SIZE = 128
-        self.LEARNING_RATE = 0.00001
+        self.LEARNING_RATE = 0.00002
         self.N_STEP = 1
         self.BUFFER_CAPACITY = self.BATCH_SIZE
 
@@ -38,7 +41,7 @@ class ParameterAntBulletDdpg(ParameterBase, ParameterAntBullet, ParameterDdpg):
         self.MAX_TRAINING_STEPS = 500_000
         self.CONSOLE_LOG_INTERVAL_TRAINING_STEPS = 100
         self.TEST_INTERVAL_TRAINING_STEPS = 2_048
-        self.MODEL = ParameterLinearModel(ModelType.MEDIUM_LINEAR)
+        self.MODEL = ParameterLinearModel(ModelType.SMALL_LINEAR)
 
 
 class ParameterAntBulletSac(ParameterBase, ParameterAntBullet, ParameterSac):
@@ -48,7 +51,7 @@ class ParameterAntBulletSac(ParameterBase, ParameterAntBullet, ParameterSac):
         ParameterSac.__init__(self)
 
         self.BATCH_SIZE = 128
-        self.LEARNING_RATE = 0.00001
+        self.LEARNING_RATE = 0.00002
         self.N_STEP = 1
         self.BUFFER_CAPACITY = self.BATCH_SIZE
 
@@ -57,5 +60,5 @@ class ParameterAntBulletSac(ParameterBase, ParameterAntBullet, ParameterSac):
         self.MAX_TRAINING_STEPS = 500_000
         self.CONSOLE_LOG_INTERVAL_TRAINING_STEPS = 100
         self.TEST_INTERVAL_TRAINING_STEPS = 2_048
-        self.MODEL = ParameterLinearModel(ModelType.MEDIUM_LINEAR)
+        self.MODEL = ParameterLinearModel(ModelType.SMALL_LINEAR)
 # OnPolicy

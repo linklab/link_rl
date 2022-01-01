@@ -21,13 +21,13 @@ class SacCriticModel(Model):
 
         self.critic_params = []
 
-        self.q1 = self.get_critic_models()
-        self.q2 = self.get_critic_models()
+        self.q1 = self.get_critic_models("q1")
+        self.q2 = self.get_critic_models("q2")
 
         self.critic_params += list(self.q1.parameters())
         self.critic_params += list(self.q2.parameters())
 
-    def get_critic_models(self):
+    def get_critic_models(self, name):
         if isinstance(self.parameter.MODEL, ParameterLinearModel):
             input_n_features = self.observation_shape[0] + self.n_out_actions
             critic_layers = self.get_linear_layers(input_n_features=input_n_features)
@@ -45,7 +45,7 @@ class SacCriticModel(Model):
             raise ValueError()
 
         critic_layers.add_module(
-            "critic_fc_last", nn.Linear(self.parameter.MODEL.NEURONS_PER_FULLY_CONNECTED_LAYER[-1], 1)
+            "critic_fc_last_{0}".format(name), nn.Linear(self.parameter.MODEL.NEURONS_PER_FULLY_CONNECTED_LAYER[-1], 1)
         )
 
         return critic_layers

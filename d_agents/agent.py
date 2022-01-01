@@ -1,4 +1,6 @@
 from abc import abstractmethod, ABC
+
+import torch
 import torch.multiprocessing as mp
 from gym.spaces import Discrete, Box, MultiDiscrete
 
@@ -109,24 +111,34 @@ class Agent:
         return is_train_success_done
 
     def after_actor_critic_train(self):
+        pass
+
+    def after_train(self):
+        pass
+
+    def clip_model_parameter_grad_value(self, model_parameters):
+        torch.nn.utils.clip_grad_value_(model_parameters, self.parameter.CLIP_GRADIENT_VALUE)
+        grads = np.concatenate(
+            [p.grad.data.cpu().numpy().flatten() for p in model_parameters if p.grad is not None]
+        )
+        self.last_model_grad_l2.value = np.sqrt(np.mean(np.square(grads)))
+        self.last_model_grad_max.value = np.max(grads)
+
+    def clip_actor_model_parameter_grad_value(self, actor_model_parameters):
+        torch.nn.utils.clip_grad_value_(actor_model_parameters, self.parameter.CLIP_GRADIENT_VALUE)
         actor_grads = np.concatenate(
-            [p.grad.data.cpu().numpy().flatten() for p in self.actor_model.actor_params if p.grad is not None]
+            [p.grad.data.cpu().numpy().flatten() for p in actor_model_parameters if p.grad is not None]
         )
         self.last_actor_model_grad_l2.value = np.sqrt(np.mean(np.square(actor_grads)))
         self.last_actor_model_grad_max.value = np.max(actor_grads)
 
+    def clip_critic_model_parameter_grad_value(self, critic_model_parameters):
+        torch.nn.utils.clip_grad_value_(critic_model_parameters, self.parameter.CLIP_GRADIENT_VALUE)
         critic_grads = np.concatenate(
-            [p.grad.data.cpu().numpy().flatten() for p in self.critic_model.critic_params if p.grad is not None]
+            [p.grad.data.cpu().numpy().flatten() for p in self.critic_model.parameters() if p.grad is not None]
         )
         self.last_critic_model_grad_l2.value = np.sqrt(np.mean(np.square(critic_grads)))
         self.last_critic_model_grad_max.value = np.max(critic_grads)
-
-    def after_train(self):
-        grads = np.concatenate(
-            [p.grad.data.cpu().numpy().flatten() for p in self.model.parameters() if p.grad is not None]
-        )
-        self.last_model_grad_l2.value = np.sqrt(np.mean(np.square(grads)))
-        self.last_model_grad_max.value = np.max(grads)
 
     @abstractmethod
     def train_dqn(self, training_steps_v):
