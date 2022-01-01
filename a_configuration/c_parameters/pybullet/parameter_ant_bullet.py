@@ -34,11 +34,11 @@ class ParameterAntBulletDdpg(ParameterBase, ParameterAntBullet, ParameterDdpg):
         self.BATCH_SIZE = 128
         self.LEARNING_RATE = 0.00002
         self.N_STEP = 1
-        self.BUFFER_CAPACITY = self.BATCH_SIZE
+        self.BUFFER_CAPACITY = 250_000
 
         self.N_VECTORIZED_ENVS = 1
         self.N_ACTORS = 1
-        self.MAX_TRAINING_STEPS = 500_000
+        self.MAX_TRAINING_STEPS = 2_000_000
         self.CONSOLE_LOG_INTERVAL_TRAINING_STEPS = 100
         self.TEST_INTERVAL_TRAINING_STEPS = 2_048
         self.MODEL = ParameterLinearModel(ModelType.SMALL_LINEAR)
@@ -53,7 +53,7 @@ class ParameterAntBulletSac(ParameterBase, ParameterAntBullet, ParameterSac):
         self.BATCH_SIZE = 128
         self.LEARNING_RATE = 0.00002
         self.N_STEP = 1
-        self.BUFFER_CAPACITY = self.BATCH_SIZE
+        self.BUFFER_CAPACITY = 250_000
 
         self.N_VECTORIZED_ENVS = 1
         self.N_ACTORS = 1
