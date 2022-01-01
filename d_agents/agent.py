@@ -118,7 +118,7 @@ class Agent:
         pass
 
     def clip_model_parameter_grad_value(self, model_parameters):
-        torch.nn.utils.clip_grad_value_(model_parameters, self.parameter.CLIP_GRADIENT_VALUE)
+        torch.nn.utils.clip_grad_norm_(model_parameters, self.parameter.CLIP_GRADIENT_VALUE)
         grads = np.concatenate(
             [p.grad.data.cpu().numpy().flatten() for p in model_parameters if p.grad is not None]
         )
@@ -126,7 +126,7 @@ class Agent:
         self.last_model_grad_max.value = np.max(grads)
 
     def clip_actor_model_parameter_grad_value(self, actor_model_parameters):
-        torch.nn.utils.clip_grad_value_(actor_model_parameters, self.parameter.CLIP_GRADIENT_VALUE)
+        torch.nn.utils.clip_grad_norm_(actor_model_parameters, self.parameter.CLIP_GRADIENT_VALUE)
         actor_grads = np.concatenate(
             [p.grad.data.cpu().numpy().flatten() for p in actor_model_parameters if p.grad is not None]
         )
@@ -134,7 +134,7 @@ class Agent:
         self.last_actor_model_grad_max.value = np.max(actor_grads)
 
     def clip_critic_model_parameter_grad_value(self, critic_model_parameters):
-        torch.nn.utils.clip_grad_value_(critic_model_parameters, self.parameter.CLIP_GRADIENT_VALUE)
+        torch.nn.utils.clip_grad_norm_(critic_model_parameters, self.parameter.CLIP_GRADIENT_VALUE)
         critic_grads = np.concatenate(
             [p.grad.data.cpu().numpy().flatten() for p in self.critic_model.parameters() if p.grad is not None]
         )
