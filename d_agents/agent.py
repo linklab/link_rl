@@ -178,8 +178,10 @@ class Agent:
             target_model_state[k] = (1.0 - tau) * target_model_state[k] + tau * v
         target_model.load_state_dict(target_model_state)
 
-    def calc_logprob(self, mu_v, var_v, actions_v):
-        p1 = -0.5 * ((actions_v - mu_v) ** 2) / (var_v + 1e-05)
+    def calc_log_prob(self, mu_v, var_v, actions_v):
+        p1 = -0.5 * ((actions_v - mu_v) ** 2) / (var_v + 1e-06)
         # p1 = -1.0 * ((mu_v - actions_v) ** 2) / (2.0 * var_v.clamp(min=1e-3))
         p2 = -0.5 * torch.log(2 * np.pi * var_v)
-        return p1 + p2
+
+        log_prob = (p1 + p2).mean(dim=-1, keepdim=True)
+        return log_prob

@@ -78,10 +78,12 @@ def print_basic_info(observation_space=None, action_space=None, device=None, par
     items = []
 
     for param in dir(parameter):
-        if not param.startswith("__") and param != "MODEL":
+        if not param.startswith("__") and param not in [
+            "MODEL", "NEURONS_PER_FULLY_CONNECTED_LAYER", "OUT_CHANNELS_PER_LAYER", "KERNEL_SIZE_PER_LAYER",
+            "STRIDE_PER_LAYER", "EPISODE_REWARD_AVG_SOLVED", "EPISODE_REWARD_STD_SOLVED"
+        ]:
             if param in [
-                "BATCH_SIZE", "BUFFER_CAPACITY", "CONSOLE_LOG_INTERVAL_TRAINING_STEPS",
-                "EPISODE_REWARD_AVG_SOLVED", "MAX_TRAINING_STEPS",
+                "BATCH_SIZE", "BUFFER_CAPACITY", "CONSOLE_LOG_INTERVAL_TRAINING_STEPS", "MAX_TRAINING_STEPS",
                 "MIN_BUFFER_SIZE_FOR_TRAIN", "N_EPISODES_FOR_MEAN_CALCULATION",
                 "TEST_INTERVAL_TRAINING_STEPS"
             ]:
@@ -106,8 +108,8 @@ def print_basic_info(observation_space=None, action_space=None, device=None, par
 
     if observation_space and action_space:
         if observation_space and action_space:
-            print('-' * 76 + " SPACE " + '-' * 76)
-        print_space(observation_space, action_space)
+            print('-' * 77 + " ENV " + '-' * 77)
+        print_space(observation_space, action_space, parameter)
 
     print('#' * 182)
     print()
@@ -139,8 +141,7 @@ def print_comparison_basic_info(observation_space, action_space, device, paramet
 
         if not param.startswith("__"):
             if param in [
-                "BATCH_SIZE", "BUFFER_CAPACITY", "CONSOLE_LOG_INTERVAL_TRAINING_STEPS",
-                "EPISODE_REWARD_AVG_SOLVED", "MAX_TRAINING_STEPS",
+                "BATCH_SIZE", "BUFFER_CAPACITY", "CONSOLE_LOG_INTERVAL_TRAINING_STEPS", "MAX_TRAINING_STEPS",
                 "MIN_BUFFER_SIZE_FOR_TRAIN", "N_EPISODES_FOR_MEAN_CALCULATION",
                 "TEST_INTERVAL_TRAINING_STEPS"
             ]:
@@ -166,11 +167,10 @@ def print_comparison_basic_info(observation_space, action_space, device, paramet
         for param in dir(agent_parameter):
             if not param.startswith("__") and param not in [
                 "MODEL", "NEURONS_PER_FULLY_CONNECTED_LAYER", "OUT_CHANNELS_PER_LAYER", "KERNEL_SIZE_PER_LAYER",
-                "STRIDE_PER_LAYER"
+                "STRIDE_PER_LAYER", "EPISODE_REWARD_AVG_SOLVED", "EPISODE_REWARD_STD_SOLVED"
             ]:
                 if param in [
-                    "BATCH_SIZE", "BUFFER_CAPACITY", "CONSOLE_LOG_INTERVAL_TRAINING_STEPS",
-                    "EPISODE_REWARD_AVG_SOLVED", "MAX_TRAINING_STEPS",
+                    "BATCH_SIZE", "BUFFER_CAPACITY", "CONSOLE_LOG_INTERVAL_TRAINING_STEPS", "MAX_TRAINING_STEPS",
                     "MIN_BUFFER_SIZE_FOR_TRAIN", "N_EPISODES_FOR_MEAN_CALCULATION",
                     "TEST_INTERVAL_TRAINING_STEPS"
                 ]:
@@ -195,8 +195,8 @@ def print_comparison_basic_info(observation_space, action_space, device, paramet
 
     if observation_space and action_space:
         if observation_space and action_space:
-            print('-' * 76 + " SPACE " + '-' * 76)
-        print_space(observation_space, action_space)
+            print('-' * 77 + " ENV " + '-' * 77)
+        print_space(observation_space, action_space, parameter_c)
 
     print('#' * 182)
     print()
@@ -224,7 +224,11 @@ def print_model_info(model):
         raise ValueError()
 
 
-def print_space(observation_space, action_space):
+def print_space(observation_space, action_space, parameter):
+    item1 = "{0}: {1:,}".format("EPISODE_REWARD_AVG_SOLVED", parameter.EPISODE_REWARD_AVG_SOLVED)
+    item2 = "{0}: {1:,}".format("EPISODE_REWARD_STD_SOLVED", parameter.EPISODE_REWARD_STD_SOLVED)
+    print("{0:55} {1:55}".format(item1, item2), end="\n")
+
     observation_space_str = "OBSERVATION_SPACE: {0}, SHAPE: {1}".format(
         type(observation_space), observation_space.shape
     )

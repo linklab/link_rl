@@ -58,7 +58,7 @@ class AgentA2c(Agent):
 
             if mode == AgentMode.TRAIN:
                 actions = np.random.normal(
-                    loc=mu_v.detach().cpu().numpy(), scale=torch.sqrt(var_v).detach().cpu().numpy()
+                    loc=mu_v.detach().cpu().numpy(), scale=torch.sqrt(var_v).detach().cpu().numpy() + 1e-06
                 )
                 # dist = Normal(loc=mu_v, scale=torch.sqrt(var_v))
                 # actions = dist.sample().detach().cpu().numpy()
@@ -124,7 +124,7 @@ class AgentA2c(Agent):
         elif isinstance(self.action_space, Box):
             mu_v, var_v = self.actor_model.pi(observations)
 
-            criticized_log_pi_action_v = self.calc_logprob(mu_v, var_v, actions) * advantages
+            criticized_log_pi_action_v = self.calc_log_prob(mu_v, var_v, actions) * advantages
             entropy = 0.5 * (torch.log(2.0 * np.pi * var_v) + 1.0)
 
             # print(criticized_log_pi_action_v.shape, entropy.shape, "!!")

@@ -71,7 +71,7 @@ class AgentSac(Agent):
 
             if mode == AgentMode.TRAIN:
                 actions = np.random.normal(
-                    loc=mu_v.detach().cpu().numpy(), scale=torch.sqrt(var_v).detach().cpu().numpy()
+                    loc=mu_v.detach().cpu().numpy(), scale=torch.sqrt(var_v).detach().cpu().numpy() + 1e-06
                 )
 
                 # dist = Normal(loc=mu_v, scale=std_v)
@@ -105,7 +105,7 @@ class AgentSac(Agent):
             next_mu_v, next_var_v = self.actor_model.pi(next_observations)
 
             next_actions_v = torch.normal(mean=next_mu_v, std=torch.sqrt(next_var_v))
-            next_log_prob_v = self.calc_logprob(next_mu_v, next_var_v, next_actions_v)
+            next_log_prob_v = self.calc_log_prob(next_mu_v, next_var_v, next_actions_v)
             # dist = Normal(loc=next_mu_v, scale=torch.sqrt(var_v))
             # next_actions_v = dist.sample()
             # next_log_prob_v = dist.log_prob(next_actions_v)
