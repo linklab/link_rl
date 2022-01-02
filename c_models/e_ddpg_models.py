@@ -12,10 +12,10 @@ from c_models.c_policy_models import DiscreteActorModel, ContinuousActorModel, P
 
 class ContinuousDdpgActorModel(PolicyModel):
     def __init__(
-            self, observation_shape: Tuple[int], n_out_actions: int, device=torch.device("cpu"), parameter=None
+            self, observation_shape: Tuple[int], n_out_actions: int, parameter=None
     ):
         super(ContinuousDdpgActorModel, self).__init__(
-            observation_shape=observation_shape, n_out_actions=n_out_actions, device=device, parameter=parameter
+            observation_shape=observation_shape, n_out_actions=n_out_actions, parameter=parameter
         )
 
         self.mu = nn.Sequential(
@@ -32,10 +32,9 @@ class ContinuousDdpgActorModel(PolicyModel):
 
 class DdpgCriticModel(Model):
     def __init__(
-            self, observation_shape: Tuple[int], n_out_actions: int, n_discrete_actions=None,
-            device=torch.device("cpu"), parameter=None
+            self, observation_shape: Tuple[int], n_out_actions: int, n_discrete_actions=None, parameter=None
     ):
-        super(DdpgCriticModel, self).__init__(observation_shape, n_out_actions, n_discrete_actions, device, parameter)
+        super(DdpgCriticModel, self).__init__(observation_shape, n_out_actions, n_discrete_actions, parameter)
         #######################
         # CRITIC MODEL: BEGIN #
         #######################
@@ -64,10 +63,10 @@ class DdpgCriticModel(Model):
 
     def forward_critic(self, x, a):
         if isinstance(x, np.ndarray):
-            x = torch.tensor(x, dtype=torch.float32, device=self.device)
+            x = torch.tensor(x, dtype=torch.float32, device=self.parameter.DEVICE)
 
         if isinstance(a, np.ndarray):
-            a = torch.tensor(a, dtype=torch.float32, device=self.device)
+            a = torch.tensor(a, dtype=torch.float32, device=self.parameter.DEVICE)
 
         if isinstance(self.parameter.MODEL, ParameterLinearModel):
             x = self.critic_fc_layers(torch.cat([x, a], dim=-1))
@@ -87,28 +86,31 @@ class DdpgCriticModel(Model):
 
 class DiscreteDdpgModel:
     def __init__(
-            self, observation_shape: Tuple[int], n_out_actions: int, n_discrete_actions=None,
-            device=torch.device("cpu"), parameter=None
+            self, observation_shape: Tuple[int], n_out_actions: int, n_discrete_actions=None, parameter=None
     ):
+        self.parameter = parameter
+
         self.actor_model = DiscreteActorModel(
-            observation_shape=observation_shape, n_out_actions=n_out_actions, device=device, parameter=parameter
-        ).to(device)
+            observation_shape=observation_shape, n_out_actions=n_out_actions, parameter=self.parameter
+        ).to(self.parameter.DEVICE)
 
         self.critic_model = DdpgCriticModel(
             observation_shape=observation_shape, n_out_actions=n_out_actions, n_discrete_actions=n_discrete_actions,
-            device=device, parameter=parameter
-        ).to(device)
+            parameter=self.parameter
+        ).to(self.parameter.DEVICE)
 
 
 class ContinuousDdpgModel:
     def __init__(
-            self, observation_shape: Tuple[int], n_out_actions: int, device=torch.device("cpu"), parameter=None
+            self, observation_shape: Tuple[int], n_out_actions: int, parameter=None
     ):
+        self.parameter = parameter
+
         self.actor_model = ContinuousDdpgActorModel(
-            observation_shape=observation_shape, n_out_actions=n_out_actions, device=device, parameter=parameter
-        ).to(device)
+            observation_shape=observation_shape, n_out_actions=n_out_actions, parameter=self.parameter
+        ).to(self.parameter.DEVICE)
 
         self.critic_model = DdpgCriticModel(
             observation_shape=observation_shape, n_out_actions=n_out_actions, n_discrete_actions=None,
-            device=device, parameter=parameter
-        ).to(device)
+            parameter=self.parameter
+        ).to(self.parameter.DEVICE)

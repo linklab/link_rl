@@ -1,8 +1,12 @@
 import sys
 import time
 import os
+import warnings
+
+warnings.filterwarnings("ignore")
 
 import torch
+from gym.spaces import Discrete, Box
 
 from e_main.supports.main_preamble import get_agent
 from g_utils.types import AgentMode
@@ -37,16 +41,21 @@ def play(env, agent, n_episodes):
             episode_steps += 1
             action = agent.get_action(observation, mode=AgentMode.PLAY)
 
-            if action.ndim == 1:
-                if agent.action_scale_factor is not None:
-                    scaled_action = action * agent.action_scale_factor
+            if isinstance(agent.action_space, Discrete):
+                scaled_action = action[0]
+            elif isinstance(agent.action_space, Box):
+                if action.ndim == 1:
+                    if agent.action_scale_factor is not None:
+                        scaled_action = action * agent.action_scale_factor
+                    else:
+                        scaled_action = action
+                elif action.ndim == 2:
+                    if agent.action_scale_factor is not None:
+                        scaled_action = action[0] * agent.action_scale_factor[0]
+                    else:
+                        scaled_action = action[0]
                 else:
-                    scaled_action = action
-            elif action.ndim == 2:
-                if agent.action_scale_factor is not None:
-                    scaled_action = action[0] * agent.action_scale_factor[0]
-                else:
-                    scaled_action = action[0]
+                    raise ValueError()
             else:
                 raise ValueError()
 

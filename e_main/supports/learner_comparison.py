@@ -1,4 +1,7 @@
 import warnings
+
+from gym.spaces import Discrete, Box
+
 warnings.filterwarnings('ignore')
 warnings.simplefilter("ignore")
 
@@ -14,12 +17,9 @@ from g_utils.types import AgentType, AgentMode, Transition
 
 
 class LearnerComparison:
-    def __init__(
-            self, run, agents, device=torch.device("cpu"), wandb_obj=None, parameter_c=None, comparison_stat=None
-    ):
+    def __init__(self, run, agents, wandb_obj=None, parameter_c=None, comparison_stat=None):
         self.run = run
         self.agents = agents
-        self.device = device
         self.wandb_obj = wandb_obj
         self.parameter_c = parameter_c
 
@@ -243,16 +243,21 @@ class LearnerComparison:
             while True:
                 action = self.agents[agent_idx].get_action(observation, mode=AgentMode.TEST)
 
-                if action.ndim == 1:
-                    if self.agents[agent_idx].action_scale_factor is not None:
-                        scaled_action = action * self.agents[agent_idx].action_scale_factor
+                if isinstance(self.agents[agent_idx].action_space, Discrete):
+                    scaled_action = action[0]
+                elif isinstance(self.agents[agent_idx].action_space, Box):
+                    if action.ndim == 1:
+                        if self.agents[agent_idx].action_scale_factor is not None:
+                            scaled_action = action * self.agents[agent_idx].action_scale_factor
+                        else:
+                            scaled_action = action
+                    elif action.ndim == 2:
+                        if self.agents[agent_idx].action_scale_factor is not None:
+                            scaled_action = action[0] * self.agents[agent_idx].action_scale_factor[0]
+                        else:
+                            scaled_action = action[0]
                     else:
-                        scaled_action = action
-                elif action.ndim == 2:
-                    if self.agents[agent_idx].action_scale_factor is not None:
-                        scaled_action = action[0] * self.agents[agent_idx].action_scale_factor[0]
-                    else:
-                        scaled_action = action[0]
+                        raise ValueError()
                 else:
                     raise ValueError()
 

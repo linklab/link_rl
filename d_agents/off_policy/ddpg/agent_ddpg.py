@@ -12,31 +12,29 @@ from g_utils.types import AgentMode, ModelType
 
 
 class AgentDdpg(Agent):
-    def __init__(self, observation_space, action_space, device, parameter):
-        super(AgentDdpg, self).__init__(observation_space, action_space, device, parameter)
+    def __init__(self, observation_space, action_space, parameter):
+        super(AgentDdpg, self).__init__(observation_space, action_space, parameter)
 
         if isinstance(self.action_space, Discrete):
             self.n_actions = self.n_discrete_actions
             self.ddpg_model = DiscreteDdpgModel(
                 observation_shape=self.observation_shape, n_out_actions=self.n_out_actions,
-                n_discrete_actions=self.n_discrete_actions, device=device, parameter=parameter
+                n_discrete_actions=self.n_discrete_actions, parameter=parameter
             )
 
             self.target_ddpg_model = DiscreteDdpgModel(
                 observation_shape=self.observation_shape, n_out_actions=self.n_out_actions,
-                n_discrete_actions=self.n_discrete_actions, device=device, parameter=parameter
+                n_discrete_actions=self.n_discrete_actions, parameter=parameter
             )
         elif isinstance(self.action_space, Box):
             self.n_actions = self.n_out_actions
 
             self.ddpg_model = ContinuousDdpgModel(
-                observation_shape=self.observation_shape, n_out_actions=self.n_out_actions,
-                device=device, parameter=parameter
+                observation_shape=self.observation_shape, n_out_actions=self.n_out_actions, parameter=parameter
             )
 
             self.target_ddpg_model = ContinuousDdpgModel(
-                observation_shape=self.observation_shape, n_out_actions=self.n_out_actions,
-                device=device, parameter=parameter
+                observation_shape=self.observation_shape, n_out_actions=self.n_out_actions, parameter=parameter
             )
         else:
             raise ValueError()
@@ -82,7 +80,7 @@ class AgentDdpg(Agent):
             raise ValueError()
 
     def train_ddpg(self):
-        batch = self.buffer.sample(self.parameter.BATCH_SIZE, device=self.device)
+        batch = self.buffer.sample(self.parameter.BATCH_SIZE)
 
         # observations.shape: torch.Size([32, 4]),
         # actions.shape: torch.Size([32, 1]),

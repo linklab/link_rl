@@ -1,6 +1,7 @@
 import os
 import sys
 
+import torch
 from torch import nn
 
 
@@ -41,4 +42,6 @@ class ParameterBase:
         self.LAYER_NORM = False
 
         self.LAYER_ACTIVATION = nn.LeakyReLU()
+
+        self.DEVICE = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 

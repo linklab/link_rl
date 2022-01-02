@@ -3,13 +3,12 @@ import sys
 import time
 import warnings
 import torch.multiprocessing as mp
+warnings.filterwarnings("ignore")
 
 from e_main.supports.actor import Actor
 from e_main.supports.learner import Learner
 from g_utils.commons import get_env_info, print_basic_info
 from g_utils.types import OffPolicyAgentTypes
-
-warnings.filterwarnings("ignore")
 
 os.environ['KMP_DUPLICATE_LIB_OK'] = 'True'
 sys.path.append(os.path.abspath(
@@ -24,7 +23,7 @@ device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
 def main():
     observation_space, action_space = get_env_info(parameter)
-    print_basic_info(observation_space, action_space, device, parameter)
+    print_basic_info(observation_space, action_space, parameter)
 
     input("Press Enter to continue...")
 
@@ -32,15 +31,14 @@ def main():
     queue = mp.Queue()
 
     agent = get_agent(
-        observation_space=observation_space, action_space=action_space, device=device, parameter=parameter
+        observation_space=observation_space, action_space=action_space, parameter=parameter
     )
 
-    learner = Learner(agent=agent, queue=queue, device=device, parameter=parameter,)
+    learner = Learner(agent=agent, queue=queue, parameter=parameter)
 
     actors = [
         Actor(
-            env_name=parameter.ENV_NAME, actor_id=actor_id, agent=agent,
-            queue=queue, parameter=parameter
+            env_name=parameter.ENV_NAME, actor_id=actor_id, agent=agent, queue=queue, parameter=parameter
         ) for actor_id in range(parameter.N_ACTORS)
     ]
 
@@ -74,7 +72,7 @@ def main():
     while learner.is_alive():
         learner.join(timeout=1)
 
-    print_basic_info(observation_space, action_space, device, parameter)
+    print_basic_info(observation_space, action_space, parameter)
 
 
 if __name__ == "__main__":

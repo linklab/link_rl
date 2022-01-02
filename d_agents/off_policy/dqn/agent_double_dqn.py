@@ -5,8 +5,8 @@ from d_agents.off_policy.dqn.agent_dqn import AgentDqn
 
 
 class AgentDoubleDqn(AgentDqn):
-    def __init__(self, observation_space, action_space, device, parameter):
-        super(AgentDoubleDqn, self).__init__(observation_space, action_space, device, parameter)
+    def __init__(self, observation_space, action_space, parameter):
+        super(AgentDoubleDqn, self).__init__(observation_space, action_space, parameter)
 
     def train_double_dqn(self, training_steps_v):
         # observations.shape: torch.Size([32, 4]),
@@ -15,7 +15,7 @@ class AgentDoubleDqn(AgentDqn):
         # rewards.shape: torch.Size([32, 1]),
         # dones.shape: torch.Size([32])
         observations, actions, next_observations, rewards, dones = self.buffer.sample(
-            batch_size=self.parameter.BATCH_SIZE, device=self.device
+            batch_size=self.parameter.BATCH_SIZE
         )
 
         # state_action_values.shape: torch.Size([32, 1])

@@ -13,10 +13,9 @@ from c_models.a_models import Model
 
 class PolicyModel(Model):
     def __init__(
-            self, observation_shape: Tuple[int], n_out_actions: int, n_discrete_actions=None,
-            device=torch.device("cpu"), parameter=None
+            self, observation_shape: Tuple[int], n_out_actions: int, n_discrete_actions=None, parameter=None
     ):
-        super(PolicyModel, self).__init__(observation_shape, n_out_actions, n_discrete_actions, device, parameter)
+        super(PolicyModel, self).__init__(observation_shape, n_out_actions, n_discrete_actions, parameter)
         self.actor_params = []
         if isinstance(self.parameter.MODEL, ParameterLinearModel):
             input_n_features = self.observation_shape[0]
@@ -36,7 +35,7 @@ class PolicyModel(Model):
 
     def forward_actor(self, obs):
         if isinstance(obs, np.ndarray):
-            obs = torch.tensor(obs, dtype=torch.float32, device=self.device)
+            obs = torch.tensor(obs, dtype=torch.float32, device=self.parameter.DEVICE)
 
         if isinstance(self.parameter.MODEL, ParameterLinearModel):
             x = self.actor_fc_layers(obs)
@@ -55,12 +54,9 @@ class PolicyModel(Model):
 
 
 class DiscretePolicyModel(PolicyModel):
-    def __init__(
-            self, observation_shape: Tuple[int], n_out_actions: int, n_discrete_actions=None,
-            device=torch.device("cpu"), parameter=None
-    ):
+    def __init__(self, observation_shape, n_out_actions, n_discrete_actions, parameter):
         super(DiscretePolicyModel, self).__init__(
-            observation_shape, n_out_actions, n_discrete_actions, device, parameter
+            observation_shape, n_out_actions, n_discrete_actions, parameter
         )
 
         self.actor_fc_pi = nn.Linear(self.parameter.MODEL.NEURONS_PER_FULLY_CONNECTED_LAYER[-1], self.n_discrete_actions)
@@ -74,11 +70,9 @@ class DiscretePolicyModel(PolicyModel):
 
 
 class ContinuousPolicyModel(PolicyModel):
-    def __init__(
-            self, observation_shape: Tuple[int], n_out_actions: int, device=torch.device("cpu"), parameter=None
-    ):
+    def __init__(self, observation_shape, n_out_actions, parameter=None):
         super(ContinuousPolicyModel, self).__init__(
-            observation_shape=observation_shape, n_out_actions=n_out_actions, device=device, parameter=parameter
+            observation_shape=observation_shape, n_out_actions=n_out_actions, parameter=parameter
         )
         self.mu = nn.Sequential(
             nn.Linear(self.parameter.MODEL.NEURONS_PER_FULLY_CONNECTED_LAYER[-1], self.n_out_actions),

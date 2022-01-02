@@ -13,10 +13,9 @@ class QNet(Model):
     # self.n_out_actions: 1
     # self.n_discrete_actions: 4 (for gridworld)
     def __init__(
-            self, observation_shape: Tuple[int], n_out_actions: int, n_discrete_actions=None,
-            device=torch.device("cpu"), parameter=None
+            self, observation_shape: Tuple[int], n_out_actions: int, n_discrete_actions=None, parameter=None
     ):
-        super(QNet, self).__init__(observation_shape, n_out_actions, n_discrete_actions, device, parameter)
+        super(QNet, self).__init__(observation_shape, n_out_actions, n_discrete_actions, parameter)
 
         if isinstance(self.parameter.MODEL, ParameterLinearModel):
             input_n_features = self.observation_shape[0]
@@ -37,7 +36,7 @@ class QNet(Model):
 
     def forward(self, x):
         if isinstance(x, np.ndarray):
-            x = torch.tensor(x, dtype=torch.float32, device=self.device)
+            x = torch.tensor(x, dtype=torch.float32, device=self.parameter.DEVICE)
 
         if isinstance(self.parameter.MODEL, ParameterLinearModel):
             x = self.fc_layers(x)
@@ -56,10 +55,9 @@ class DuelingQNet(Model):
     # self.n_out_actions: 1
     # self.n_discrete_actions: 4 (for gridworld)
     def __init__(
-            self, observation_shape: Tuple[int], n_out_actions: int, n_discrete_actions=None,
-            device=torch.device("cpu"), parameter=None
+            self, observation_shape: Tuple[int], n_out_actions: int, n_discrete_actions=None, parameter=None
     ):
-        super(DuelingQNet, self).__init__(observation_shape, n_out_actions, n_discrete_actions, device, parameter)
+        super(DuelingQNet, self).__init__(observation_shape, n_out_actions, n_discrete_actions, parameter)
 
         if isinstance(self.parameter.MODEL, ParameterLinearModel):
             input_n_features = self.observation_shape[0]
@@ -84,7 +82,7 @@ class DuelingQNet(Model):
 
     def forward(self, x):
         if isinstance(x, np.ndarray):
-            x = torch.tensor(x, dtype=torch.float32, device=self.device)
+            x = torch.tensor(x, dtype=torch.float32, device=self.paramter.DEVICE)
 
         if isinstance(self.parameter.MODEL, ParameterLinearModel):
             x = self.fc_layers(x)

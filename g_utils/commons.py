@@ -53,10 +53,10 @@ def model_load(model, env_name, agent_type_name, file_name, parameter):
     model.load_state_dict(model_params)
 
 
-def print_device_related_info(device, parameter):
+def print_device_related_info(parameter):
     n_cpu_cores = mp.cpu_count()
     print("{0:55} {1:55}".format(
-        "DEVICE: {0}".format(device),
+        "DEVICE: {0}".format(parameter.DEVICE),
         "CPU CORES: {0}".format(n_cpu_cores),
     ), end="\n")
     print("{0:55} {1:55} {2:55}".format(
@@ -68,12 +68,11 @@ def print_device_related_info(device, parameter):
     ))
 
 
-def print_basic_info(observation_space=None, action_space=None, device=None, parameter=None):
+def print_basic_info(observation_space=None, action_space=None, parameter=None):
     print('\n' + '#' * 81 + " Base Parameters " + '#' * 82)
 
-    if device:
-        print_device_related_info(device, parameter)
-        print('-' * 75 + " Parameters " + '-' * 75)
+    print_device_related_info(parameter)
+    print('-' * 75 + " Parameters " + '-' * 75)
 
     items = []
 
@@ -115,12 +114,11 @@ def print_basic_info(observation_space=None, action_space=None, device=None, par
     print()
 
 
-def print_comparison_basic_info(observation_space, action_space, device, parameter_c):
+def print_comparison_basic_info(observation_space, action_space, parameter_c):
     print('\n' + '#' * 81 + " Base Parameters " + '#' * 82)
 
-    if device:
-        print_device_related_info(device, parameter_c)
-        print('-' * 71 + " Common Parameters " + '-' * 71)
+    print_device_related_info(parameter_c)
+    print('-' * 71 + " Common Parameters " + '-' * 71)
 
     items = []
 

@@ -14,18 +14,17 @@ from g_utils.types import AgentMode
 
 
 class AgentA2c(Agent):
-    def __init__(self, observation_space, action_space, device, parameter):
-        super(AgentA2c, self).__init__(observation_space, action_space, device, parameter)
+    def __init__(self, observation_space, action_space, parameter):
+        super(AgentA2c, self).__init__(observation_space, action_space, parameter)
 
         if isinstance(self.action_space, Discrete):
             self.actor_critic_model = DiscreteActorCriticModel(
                 observation_shape=self.observation_shape, n_out_actions=self.n_out_actions,
-                n_discrete_actions=self.n_discrete_actions, device=device, parameter=parameter
+                n_discrete_actions=self.n_discrete_actions, parameter=parameter
             )
         elif isinstance(self.action_space, Box):
             self.actor_critic_model = ContinuousActorCriticModel(
-                observation_shape=self.observation_shape, n_out_actions=self.n_out_actions,
-                device=device, parameter=parameter
+                observation_shape=self.observation_shape, n_out_actions=self.n_out_actions, parameter=parameter
             )
         else:
             raise ValueError()
@@ -80,7 +79,7 @@ class AgentA2c(Agent):
         # dones.shape: torch.Size([32])
 
         observations, actions, next_observations, rewards, dones = self.buffer.sample(
-            batch_size=self.parameter.BATCH_SIZE, device=self.device
+            batch_size=self.parameter.BATCH_SIZE
         )
 
         ###################################

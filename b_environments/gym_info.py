@@ -4,14 +4,18 @@ import pybullet_envs
 from gym.spaces import Discrete, Box
 
 for idx, env_spec in enumerate(pybullet_envs.registry.all()):
-    # if idx in range(0, 967): # GYM
-    #     continue
+    #    0 ~  967   # gym
+    #  968 ~ 1057   # mujoco
+    # 1057 ~        # pybullet
+    if idx == 968:
+        print("[[[ MUJOCO ]]]")
 
-    if idx in range(968, 1057): # MUJOCO
+    if idx in [1055, 1056]:
+        print("{0:>4}: {1:35} SKIPPED!!!".format(idx, env_spec.id))
         continue
 
-    # 1057 ~ : pybullet
-
+    if idx == 1057:
+        print("[[[ PYBULLET ]]]")
 
     env = gym.make(env_spec.id)
     observation_space = env.observation_space
@@ -40,7 +44,8 @@ for idx, env_spec in enumerate(pybullet_envs.registry.all()):
     env.close()
 
 
-
+# A.L.E: Arcade Learning Environment (version +978d2ce)
+# [Powered by Stella]
 # 0: ALE/Tetris-v5                       | reward_threshold: None | OBS_SPACE: <class 'gym.spaces.box.Box'>, SHAPE: (210, 160, 3)     ACTION_SPACE: <class 'gym.spaces.discrete.Discrete'>, SHAPE: (), N: 18
 # 1: ALE/Tetris-ram-v5                   | reward_threshold: None | OBS_SPACE: <class 'gym.spaces.box.Box'>, SHAPE: (128,)            ACTION_SPACE: <class 'gym.spaces.discrete.Discrete'>, SHAPE: (), N: 18
 # 2: ALE/Asterix-v5                      | reward_threshold: None | OBS_SPACE: <class 'gym.spaces.box.Box'>, SHAPE: (210, 160, 3)     ACTION_SPACE: <class 'gym.spaces.discrete.Discrete'>, SHAPE: (), N: 18
@@ -996,51 +1001,230 @@ for idx, env_spec in enumerate(pybullet_envs.registry.all()):
 # 952: CartPole-v0                         | reward_threshold: 195.0 | OBS_SPACE: <class 'gym.spaces.box.Box'>, SHAPE: (4,)              ACTION_SPACE: <class 'gym.spaces.discrete.Discrete'>, SHAPE: (), N: 2
 # 953: CartPole-v1                         | reward_threshold: 475.0 | OBS_SPACE: <class 'gym.spaces.box.Box'>, SHAPE: (4,)              ACTION_SPACE: <class 'gym.spaces.discrete.Discrete'>, SHAPE: (), N: 2
 # 954: MountainCar-v0                      | reward_threshold: -110.0 | OBS_SPACE: <class 'gym.spaces.box.Box'>, SHAPE: (2,)              ACTION_SPACE: <class 'gym.spaces.discrete.Discrete'>, SHAPE: (), N: 3
-
 # 955: MountainCarContinuous-v0            | reward_threshold: 90.0 | OBS_SPACE: <class 'gym.spaces.box.Box'>, SHAPE: (2,)              ACTION_SPACE: <class 'gym.spaces.box.Box'>, SHAPE: (1,), RANGE: Box([-1.], [1.], (1,), float32)
-
 # 956: Pendulum-v1                         | reward_threshold: None | OBS_SPACE: <class 'gym.spaces.box.Box'>, SHAPE: (3,)              ACTION_SPACE: <class 'gym.spaces.box.Box'>, SHAPE: (1,), RANGE: Box([-2.], [2.], (1,), float32)
-
+# 957: Acrobot-v1                          | reward_threshold: -100.0 | OBS_SPACE: <class 'gym.spaces.box.Box'>, SHAPE: (6,)              ACTION_SPACE: <class 'gym.spaces.discrete.Discrete'>, SHAPE: (), N: 3
+# 958: LunarLander-v2                      | reward_threshold: 200 | OBS_SPACE: <class 'gym.spaces.box.Box'>, SHAPE: (8,)              ACTION_SPACE: <class 'gym.spaces.discrete.Discrete'>, SHAPE: (), N: 4
 # 959: LunarLanderContinuous-v2            | reward_threshold: 200 | OBS_SPACE: <class 'gym.spaces.box.Box'>, SHAPE: (8,)              ACTION_SPACE: <class 'gym.spaces.box.Box'>, SHAPE: (2,), RANGE: Box([-1. -1.], [1. 1.], (2,), float32)
-
 # 960: BipedalWalker-v3                    | reward_threshold: 300 | OBS_SPACE: <class 'gym.spaces.box.Box'>, SHAPE: (24,)             ACTION_SPACE: <class 'gym.spaces.box.Box'>, SHAPE: (4,), RANGE: Box([-1. -1. -1. -1.], [1. 1. 1. 1.], (4,), float32)
-
 # 961: BipedalWalkerHardcore-v3            | reward_threshold: 300 | OBS_SPACE: <class 'gym.spaces.box.Box'>, SHAPE: (24,)             ACTION_SPACE: <class 'gym.spaces.box.Box'>, SHAPE: (4,), RANGE: Box([-1. -1. -1. -1.], [1. 1. 1. 1.], (4,), float32)
-
 # 962: CarRacing-v0                        | reward_threshold: 900 | OBS_SPACE: <class 'gym.spaces.box.Box'>, SHAPE: (96, 96, 3)       ACTION_SPACE: <class 'gym.spaces.box.Box'>, SHAPE: (3,), RANGE: Box([-1.  0.  0.], [1. 1. 1.], (3,), float32)
-
 # 963: Blackjack-v1                        | reward_threshold: None | OBS_SPACE: <class 'gym.spaces.tuple.Tuple'>, SHAPE: None          ACTION_SPACE: <class 'gym.spaces.discrete.Discrete'>, SHAPE: (), N: 2
 # 964: FrozenLake-v1                       | reward_threshold: 0.7 | OBS_SPACE: <class 'gym.spaces.discrete.Discrete'>, SHAPE: ()      ACTION_SPACE: <class 'gym.spaces.discrete.Discrete'>, SHAPE: (), N: 4
 # 965: FrozenLake8x8-v1                    | reward_threshold: 0.85 | OBS_SPACE: <class 'gym.spaces.discrete.Discrete'>, SHAPE: ()      ACTION_SPACE: <class 'gym.spaces.discrete.Discrete'>, SHAPE: (), N: 4
 # 966: CliffWalking-v0                     | reward_threshold: None | OBS_SPACE: <class 'gym.spaces.discrete.Discrete'>, SHAPE: ()      ACTION_SPACE: <class 'gym.spaces.discrete.Discrete'>, SHAPE: (), N: 4
 # 967: Taxi-v3                             | reward_threshold: 8 | OBS_SPACE: <class 'gym.spaces.discrete.Discrete'>, SHAPE: ()      ACTION_SPACE: <class 'gym.spaces.discrete.Discrete'>, SHAPE: (), N: 6
+# [[[ MUJOCO ]]]
+# 968: Reacher-v2                          | reward_threshold: -3.75 | OBS_SPACE: <class 'gym.spaces.box.Box'>, SHAPE: (11,)             ACTION_SPACE: <class 'gym.spaces.box.Box'>, SHAPE: (2,), RANGE: Box([-1. -1.], [1. 1.], (2,), float32)
+# 969: Pusher-v2                           | reward_threshold: 0.0 | OBS_SPACE: <class 'gym.spaces.box.Box'>, SHAPE: (23,)             ACTION_SPACE: <class 'gym.spaces.box.Box'>, SHAPE: (7,), RANGE: Box([-2. -2. -2. -2. -2. -2. -2.], [2. 2. 2. 2. 2. 2. 2.], (7,), float32)
+# 970: Thrower-v2                          | reward_threshold: 0.0 | OBS_SPACE: <class 'gym.spaces.box.Box'>, SHAPE: (23,)             ACTION_SPACE: <class 'gym.spaces.box.Box'>, SHAPE: (7,), RANGE: Box([-10. -10. -10. -10. -15. -15. -15.], [10. 10. 10. 10. 15. 15. 15.], (7,), float32)
+# 971: Striker-v2                          | reward_threshold: 0.0 | OBS_SPACE: <class 'gym.spaces.box.Box'>, SHAPE: (23,)             ACTION_SPACE: <class 'gym.spaces.box.Box'>, SHAPE: (7,), RANGE: Box([-3. -3. -3. -3. -3. -3. -3.], [3. 3. 3. 3. 3. 3. 3.], (7,), float32)
+# 972: InvertedPendulum-v2                 | reward_threshold: 950.0 | OBS_SPACE: <class 'gym.spaces.box.Box'>, SHAPE: (4,)              ACTION_SPACE: <class 'gym.spaces.box.Box'>, SHAPE: (1,), RANGE: Box([-3.], [3.], (1,), float32)
+# 973: InvertedDoublePendulum-v2           | reward_threshold: 9100.0 | OBS_SPACE: <class 'gym.spaces.box.Box'>, SHAPE: (11,)             ACTION_SPACE: <class 'gym.spaces.box.Box'>, SHAPE: (1,), RANGE: Box([-1.], [1.], (1,), float32)
+# 974: HalfCheetah-v2                      | reward_threshold: 4800.0 | OBS_SPACE: <class 'gym.spaces.box.Box'>, SHAPE: (17,)             ACTION_SPACE: <class 'gym.spaces.box.Box'>, SHAPE: (6,), RANGE: Box([-1. -1. -1. -1. -1. -1.], [1. 1. 1. 1. 1. 1.], (6,), float32)
+# 975: HalfCheetah-v3                      | reward_threshold: 4800.0 | OBS_SPACE: <class 'gym.spaces.box.Box'>, SHAPE: (17,)             ACTION_SPACE: <class 'gym.spaces.box.Box'>, SHAPE: (6,), RANGE: Box([-1. -1. -1. -1. -1. -1.], [1. 1. 1. 1. 1. 1.], (6,), float32)
+# 976: Hopper-v2                           | reward_threshold: 3800.0 | OBS_SPACE: <class 'gym.spaces.box.Box'>, SHAPE: (11,)             ACTION_SPACE: <class 'gym.spaces.box.Box'>, SHAPE: (3,), RANGE: Box([-1. -1. -1.], [1. 1. 1.], (3,), float32)
+# 977: Hopper-v3                           | reward_threshold: 3800.0 | OBS_SPACE: <class 'gym.spaces.box.Box'>, SHAPE: (11,)             ACTION_SPACE: <class 'gym.spaces.box.Box'>, SHAPE: (3,), RANGE: Box([-1. -1. -1.], [1. 1. 1.], (3,), float32)
+# 978: Swimmer-v2                          | reward_threshold: 360.0 | OBS_SPACE: <class 'gym.spaces.box.Box'>, SHAPE: (8,)              ACTION_SPACE: <class 'gym.spaces.box.Box'>, SHAPE: (2,), RANGE: Box([-1. -1.], [1. 1.], (2,), float32)
+# 979: Swimmer-v3                          | reward_threshold: 360.0 | OBS_SPACE: <class 'gym.spaces.box.Box'>, SHAPE: (8,)              ACTION_SPACE: <class 'gym.spaces.box.Box'>, SHAPE: (2,), RANGE: Box([-1. -1.], [1. 1.], (2,), float32)
+# 980: Walker2d-v2                         | reward_threshold: None | OBS_SPACE: <class 'gym.spaces.box.Box'>, SHAPE: (17,)             ACTION_SPACE: <class 'gym.spaces.box.Box'>, SHAPE: (6,), RANGE: Box([-1. -1. -1. -1. -1. -1.], [1. 1. 1. 1. 1. 1.], (6,), float32)
+# 981: Walker2d-v3                         | reward_threshold: None | OBS_SPACE: <class 'gym.spaces.box.Box'>, SHAPE: (17,)             ACTION_SPACE: <class 'gym.spaces.box.Box'>, SHAPE: (6,), RANGE: Box([-1. -1. -1. -1. -1. -1.], [1. 1. 1. 1. 1. 1.], (6,), float32)
+# 982: Ant-v2                              | reward_threshold: 6000.0 | OBS_SPACE: <class 'gym.spaces.box.Box'>, SHAPE: (111,)            ACTION_SPACE: <class 'gym.spaces.box.Box'>, SHAPE: (8,), RANGE: Box([-1. -1. -1. -1. -1. -1. -1. -1.], [1. 1. 1. 1. 1. 1. 1. 1.], (8,), float32)
+# 983: Ant-v3                              | reward_threshold: 6000.0 | OBS_SPACE: <class 'gym.spaces.box.Box'>, SHAPE: (111,)            ACTION_SPACE: <class 'gym.spaces.box.Box'>, SHAPE: (8,), RANGE: Box([-1. -1. -1. -1. -1. -1. -1. -1.], [1. 1. 1. 1. 1. 1. 1. 1.], (8,), float32)
+# 984: Humanoid-v2                         | reward_threshold: None | OBS_SPACE: <class 'gym.spaces.box.Box'>, SHAPE: (376,)            ACTION_SPACE: <class 'gym.spaces.box.Box'>, SHAPE: (17,), RANGE: Box([-0.4 -0.4 -0.4 -0.4 -0.4 -0.4 -0.4 -0.4 -0.4 -0.4 -0.4 -0.4 -0.4 -0.4, -0.4 -0.4 -0.4], [0.4 0.4 0.4 0.4 0.4 0.4 0.4 0.4 0.4 0.4 0.4 0.4 0.4 0.4 0.4 0.4 0.4], (17,), float32)
+# 985: Humanoid-v3                         | reward_threshold: None | OBS_SPACE: <class 'gym.spaces.box.Box'>, SHAPE: (376,)            ACTION_SPACE: <class 'gym.spaces.box.Box'>, SHAPE: (17,), RANGE: Box([-0.4 -0.4 -0.4 -0.4 -0.4 -0.4 -0.4 -0.4 -0.4 -0.4 -0.4 -0.4 -0.4 -0.4, -0.4 -0.4 -0.4], [0.4 0.4 0.4 0.4 0.4 0.4 0.4 0.4 0.4 0.4 0.4 0.4 0.4 0.4 0.4 0.4 0.4], (17,), float32)
+# 986: HumanoidStandup-v2                  | reward_threshold: None | OBS_SPACE: <class 'gym.spaces.box.Box'>, SHAPE: (376,)            ACTION_SPACE: <class 'gym.spaces.box.Box'>, SHAPE: (17,), RANGE: Box([-0.4 -0.4 -0.4 -0.4 -0.4 -0.4 -0.4 -0.4 -0.4 -0.4 -0.4 -0.4 -0.4 -0.4, -0.4 -0.4 -0.4], [0.4 0.4 0.4 0.4 0.4 0.4 0.4 0.4 0.4 0.4 0.4 0.4 0.4 0.4 0.4 0.4 0.4], (17,), float32)
+# 987: FetchSlide-v1                       | reward_threshold: None | OBS_SPACE: <class 'gym.spaces.dict.Dict'>, SHAPE: None            ACTION_SPACE: <class 'gym.spaces.box.Box'>, SHAPE: (4,), RANGE: Box([-1. -1. -1. -1.], [1. 1. 1. 1.], (4,), float32)
+# 988: FetchPickAndPlace-v1                | reward_threshold: None | OBS_SPACE: <class 'gym.spaces.dict.Dict'>, SHAPE: None            ACTION_SPACE: <class 'gym.spaces.box.Box'>, SHAPE: (4,), RANGE: Box([-1. -1. -1. -1.], [1. 1. 1. 1.], (4,), float32)
+# 989: FetchReach-v1                       | reward_threshold: None | OBS_SPACE: <class 'gym.spaces.dict.Dict'>, SHAPE: None            ACTION_SPACE: <class 'gym.spaces.box.Box'>, SHAPE: (4,), RANGE: Box([-1. -1. -1. -1.], [1. 1. 1. 1.], (4,), float32)
+# 990: FetchPush-v1                        | reward_threshold: None | OBS_SPACE: <class 'gym.spaces.dict.Dict'>, SHAPE: None            ACTION_SPACE: <class 'gym.spaces.box.Box'>, SHAPE: (4,), RANGE: Box([-1. -1. -1. -1.], [1. 1. 1. 1.], (4,), float32)
+# 991: HandReach-v0                        | reward_threshold: None | OBS_SPACE: <class 'gym.spaces.dict.Dict'>, SHAPE: None            ACTION_SPACE: <class 'gym.spaces.box.Box'>, SHAPE: (20,), RANGE: Box([-1. -1. -1. -1. -1. -1. -1. -1. -1. -1. -1. -1. -1. -1. -1. -1. -1. -1. -1. -1.], [1. 1. 1. 1. 1. 1. 1. 1. 1. 1. 1. 1. 1. 1. 1. 1. 1. 1. 1. 1.], (20,), float32)
+# 992: HandManipulateBlockRotateZ-v0       | reward_threshold: None | OBS_SPACE: <class 'gym.spaces.dict.Dict'>, SHAPE: None            ACTION_SPACE: <class 'gym.spaces.box.Box'>, SHAPE: (20,), RANGE: Box([-1. -1. -1. -1. -1. -1. -1. -1. -1. -1. -1. -1. -1. -1. -1. -1. -1. -1. -1. -1.], [1. 1. 1. 1. 1. 1. 1. 1. 1. 1. 1. 1. 1. 1. 1. 1. 1. 1. 1. 1.], (20,), float32)
+# 993: HandManipulateBlockRotateZTouchSensors-v0 | reward_threshold: None | OBS_SPACE: <class 'gym.spaces.dict.Dict'>, SHAPE: None            ACTION_SPACE: <class 'gym.spaces.box.Box'>, SHAPE: (20,), RANGE: Box([-1. -1. -1. -1. -1. -1. -1. -1. -1. -1. -1. -1. -1. -1. -1. -1. -1. -1.
+#                                                                                                                                                                                                                   -1. -1.], [1. 1. 1. 1. 1. 1. 1. 1. 1. 1. 1. 1. 1. 1. 1. 1. 1. 1. 1. 1.], (20,), float32)
+# 994: HandManipulateBlockRotateZTouchSensors-v1 | reward_threshold: None | OBS_SPACE: <class 'gym.spaces.dict.Dict'>, SHAPE: None            ACTION_SPACE: <class 'gym.spaces.box.Box'>, SHAPE: (20,), RANGE: Box([-1. -1. -1. -1. -1. -1. -1. -1. -1. -1. -1. -1. -1. -1. -1. -1. -1. -1.
+#                                                                                                                                                                                                                   -1. -1.], [1. 1. 1. 1. 1. 1. 1. 1. 1. 1. 1. 1. 1. 1. 1. 1. 1. 1. 1. 1.], (20,), float32)
+# 995: HandManipulateBlockRotateParallel-v0 | reward_threshold: None | OBS_SPACE: <class 'gym.spaces.dict.Dict'>, SHAPE: None            ACTION_SPACE: <class 'gym.spaces.box.Box'>, SHAPE: (20,), RANGE: Box([-1. -1. -1. -1. -1. -1. -1. -1. -1. -1. -1. -1. -1. -1. -1. -1. -1. -1.
+#                                                                                                                                                                                                              -1. -1.], [1. 1. 1. 1. 1. 1. 1. 1. 1. 1. 1. 1. 1. 1. 1. 1. 1. 1. 1. 1.], (20,), float32)
+# 996: HandManipulateBlockRotateParallelTouchSensors-v0 | reward_threshold: None | OBS_SPACE: <class 'gym.spaces.dict.Dict'>, SHAPE: None            ACTION_SPACE: <class 'gym.spaces.box.Box'>, SHAPE: (20,), RANGE: Box([-1. -1. -1. -1. -1. -1. -1. -1. -1. -1. -1. -1. -1. -1. -1. -1. -1. -1.
+#                                                                                                                                                                                                                          -1. -1.], [1. 1. 1. 1. 1. 1. 1. 1. 1. 1. 1. 1. 1. 1. 1. 1. 1. 1. 1. 1.], (20,), float32)
+# 997: HandManipulateBlockRotateParallelTouchSensors-v1 | reward_threshold: None | OBS_SPACE: <class 'gym.spaces.dict.Dict'>, SHAPE: None            ACTION_SPACE: <class 'gym.spaces.box.Box'>, SHAPE: (20,), RANGE: Box([-1. -1. -1. -1. -1. -1. -1. -1. -1. -1. -1. -1. -1. -1. -1. -1. -1. -1.
+#                                                                                                                                                                                                                          -1. -1.], [1. 1. 1. 1. 1. 1. 1. 1. 1. 1. 1. 1. 1. 1. 1. 1. 1. 1. 1. 1.], (20,), float32)
+# 998: HandManipulateBlockRotateXYZ-v0     | reward_threshold: None | OBS_SPACE: <class 'gym.spaces.dict.Dict'>, SHAPE: None            ACTION_SPACE: <class 'gym.spaces.box.Box'>, SHAPE: (20,), RANGE: Box([-1. -1. -1. -1. -1. -1. -1. -1. -1. -1. -1. -1. -1. -1. -1. -1. -1. -1.
+#                                                                                                                                                                                                             -1. -1.], [1. 1. 1. 1. 1. 1. 1. 1. 1. 1. 1. 1. 1. 1. 1. 1. 1. 1. 1. 1.], (20,), float32)
+# 999: HandManipulateBlockRotateXYZTouchSensors-v0 | reward_threshold: None | OBS_SPACE: <class 'gym.spaces.dict.Dict'>, SHAPE: None            ACTION_SPACE: <class 'gym.spaces.box.Box'>, SHAPE: (20,), RANGE: Box([-1. -1. -1. -1. -1. -1. -1. -1. -1. -1. -1. -1. -1. -1. -1. -1. -1. -1.
+#                                                                                                                                                                                                                     -1. -1.], [1. 1. 1. 1. 1. 1. 1. 1. 1. 1. 1. 1. 1. 1. 1. 1. 1. 1. 1. 1.], (20,), float32)
+# 1000: HandManipulateBlockRotateXYZTouchSensors-v1 | reward_threshold: None | OBS_SPACE: <class 'gym.spaces.dict.Dict'>, SHAPE: None            ACTION_SPACE: <class 'gym.spaces.box.Box'>, SHAPE: (20,), RANGE: Box([-1. -1. -1. -1. -1. -1. -1. -1. -1. -1. -1. -1. -1. -1. -1. -1. -1. -1.
+#                                                                                                                                                                                                                      -1. -1.], [1. 1. 1. 1. 1. 1. 1. 1. 1. 1. 1. 1. 1. 1. 1. 1. 1. 1. 1. 1.], (20,), float32)
+# 1001: HandManipulateBlockFull-v0          | reward_threshold: None | OBS_SPACE: <class 'gym.spaces.dict.Dict'>, SHAPE: None            ACTION_SPACE: <class 'gym.spaces.box.Box'>, SHAPE: (20,), RANGE: Box([-1. -1. -1. -1. -1. -1. -1. -1. -1. -1. -1. -1. -1. -1. -1. -1. -1. -1.
+#                                                                                                                                                                                                              -1. -1.], [1. 1. 1. 1. 1. 1. 1. 1. 1. 1. 1. 1. 1. 1. 1. 1. 1. 1. 1. 1.], (20,), float32)
+# 1002: HandManipulateBlock-v0              | reward_threshold: None | OBS_SPACE: <class 'gym.spaces.dict.Dict'>, SHAPE: None            ACTION_SPACE: <class 'gym.spaces.box.Box'>, SHAPE: (20,), RANGE: Box([-1. -1. -1. -1. -1. -1. -1. -1. -1. -1. -1. -1. -1. -1. -1. -1. -1. -1.
+#                                                                                                                                                                                                              -1. -1.], [1. 1. 1. 1. 1. 1. 1. 1. 1. 1. 1. 1. 1. 1. 1. 1. 1. 1. 1. 1.], (20,), float32)
+# 1003: HandManipulateBlockTouchSensors-v0  | reward_threshold: None | OBS_SPACE: <class 'gym.spaces.dict.Dict'>, SHAPE: None            ACTION_SPACE: <class 'gym.spaces.box.Box'>, SHAPE: (20,), RANGE: Box([-1. -1. -1. -1. -1. -1. -1. -1. -1. -1. -1. -1. -1. -1. -1. -1. -1. -1.
+#                                                                                                                                                                                                              -1. -1.], [1. 1. 1. 1. 1. 1. 1. 1. 1. 1. 1. 1. 1. 1. 1. 1. 1. 1. 1. 1.], (20,), float32)
+# 1004: HandManipulateBlockTouchSensors-v1  | reward_threshold: None | OBS_SPACE: <class 'gym.spaces.dict.Dict'>, SHAPE: None            ACTION_SPACE: <class 'gym.spaces.box.Box'>, SHAPE: (20,), RANGE: Box([-1. -1. -1. -1. -1. -1. -1. -1. -1. -1. -1. -1. -1. -1. -1. -1. -1. -1.
+#                                                                                                                                                                                                              -1. -1.], [1. 1. 1. 1. 1. 1. 1. 1. 1. 1. 1. 1. 1. 1. 1. 1. 1. 1. 1. 1.], (20,), float32)
+# 1005: HandManipulateEggRotate-v0          | reward_threshold: None | OBS_SPACE: <class 'gym.spaces.dict.Dict'>, SHAPE: None            ACTION_SPACE: <class 'gym.spaces.box.Box'>, SHAPE: (20,), RANGE: Box([-1. -1. -1. -1. -1. -1. -1. -1. -1. -1. -1. -1. -1. -1. -1. -1. -1. -1.
+#                                                                                                                                                                                                              -1. -1.], [1. 1. 1. 1. 1. 1. 1. 1. 1. 1. 1. 1. 1. 1. 1. 1. 1. 1. 1. 1.], (20,), float32)
+# 1006: HandManipulateEggRotateTouchSensors-v0 | reward_threshold: None | OBS_SPACE: <class 'gym.spaces.dict.Dict'>, SHAPE: None            ACTION_SPACE: <class 'gym.spaces.box.Box'>, SHAPE: (20,), RANGE: Box([-1. -1. -1. -1. -1. -1. -1. -1. -1. -1. -1. -1. -1. -1. -1. -1. -1. -1.
+#                                                                                                                                                                                                                 -1. -1.], [1. 1. 1. 1. 1. 1. 1. 1. 1. 1. 1. 1. 1. 1. 1. 1. 1. 1. 1. 1.], (20,), float32)
+# 1007: HandManipulateEggRotateTouchSensors-v1 | reward_threshold: None | OBS_SPACE: <class 'gym.spaces.dict.Dict'>, SHAPE: None            ACTION_SPACE: <class 'gym.spaces.box.Box'>, SHAPE: (20,), RANGE: Box([-1. -1. -1. -1. -1. -1. -1. -1. -1. -1. -1. -1. -1. -1. -1. -1. -1. -1.
+#                                                                                                                                                                                                                 -1. -1.], [1. 1. 1. 1. 1. 1. 1. 1. 1. 1. 1. 1. 1. 1. 1. 1. 1. 1. 1. 1.], (20,), float32)
+# 1008: HandManipulateEggFull-v0            | reward_threshold: None | OBS_SPACE: <class 'gym.spaces.dict.Dict'>, SHAPE: None            ACTION_SPACE: <class 'gym.spaces.box.Box'>, SHAPE: (20,), RANGE: Box([-1. -1. -1. -1. -1. -1. -1. -1. -1. -1. -1. -1. -1. -1. -1. -1. -1. -1.
+#                                                                                                                                                                                                              -1. -1.], [1. 1. 1. 1. 1. 1. 1. 1. 1. 1. 1. 1. 1. 1. 1. 1. 1. 1. 1. 1.], (20,), float32)
+# 1009: HandManipulateEgg-v0                | reward_threshold: None | OBS_SPACE: <class 'gym.spaces.dict.Dict'>, SHAPE: None            ACTION_SPACE: <class 'gym.spaces.box.Box'>, SHAPE: (20,), RANGE: Box([-1. -1. -1. -1. -1. -1. -1. -1. -1. -1. -1. -1. -1. -1. -1. -1. -1. -1.
+#                                                                                                                                                                                                              -1. -1.], [1. 1. 1. 1. 1. 1. 1. 1. 1. 1. 1. 1. 1. 1. 1. 1. 1. 1. 1. 1.], (20,), float32)
+# 1010: HandManipulateEggTouchSensors-v0    | reward_threshold: None | OBS_SPACE: <class 'gym.spaces.dict.Dict'>, SHAPE: None            ACTION_SPACE: <class 'gym.spaces.box.Box'>, SHAPE: (20,), RANGE: Box([-1. -1. -1. -1. -1. -1. -1. -1. -1. -1. -1. -1. -1. -1. -1. -1. -1. -1.
+#                                                                                                                                                                                                              -1. -1.], [1. 1. 1. 1. 1. 1. 1. 1. 1. 1. 1. 1. 1. 1. 1. 1. 1. 1. 1. 1.], (20,), float32)
+# 1011: HandManipulateEggTouchSensors-v1    | reward_threshold: None | OBS_SPACE: <class 'gym.spaces.dict.Dict'>, SHAPE: None            ACTION_SPACE: <class 'gym.spaces.box.Box'>, SHAPE: (20,), RANGE: Box([-1. -1. -1. -1. -1. -1. -1. -1. -1. -1. -1. -1. -1. -1. -1. -1. -1. -1.
+#                                                                                                                                                                                                              -1. -1.], [1. 1. 1. 1. 1. 1. 1. 1. 1. 1. 1. 1. 1. 1. 1. 1. 1. 1. 1. 1.], (20,), float32)
+# 1012: HandManipulatePenRotate-v0          | reward_threshold: None | OBS_SPACE: <class 'gym.spaces.dict.Dict'>, SHAPE: None            ACTION_SPACE: <class 'gym.spaces.box.Box'>, SHAPE: (20,), RANGE: Box([-1. -1. -1. -1. -1. -1. -1. -1. -1. -1. -1. -1. -1. -1. -1. -1. -1. -1.
+#                                                                                                                                                                                                              -1. -1.], [1. 1. 1. 1. 1. 1. 1. 1. 1. 1. 1. 1. 1. 1. 1. 1. 1. 1. 1. 1.], (20,), float32)
+# 1013: HandManipulatePenRotateTouchSensors-v0 | reward_threshold: None | OBS_SPACE: <class 'gym.spaces.dict.Dict'>, SHAPE: None            ACTION_SPACE: <class 'gym.spaces.box.Box'>, SHAPE: (20,), RANGE: Box([-1. -1. -1. -1. -1. -1. -1. -1. -1. -1. -1. -1. -1. -1. -1. -1. -1. -1.
+#                                                                                                                                                                                                                 -1. -1.], [1. 1. 1. 1. 1. 1. 1. 1. 1. 1. 1. 1. 1. 1. 1. 1. 1. 1. 1. 1.], (20,), float32)
+# 1014: HandManipulatePenRotateTouchSensors-v1 | reward_threshold: None | OBS_SPACE: <class 'gym.spaces.dict.Dict'>, SHAPE: None            ACTION_SPACE: <class 'gym.spaces.box.Box'>, SHAPE: (20,), RANGE: Box([-1. -1. -1. -1. -1. -1. -1. -1. -1. -1. -1. -1. -1. -1. -1. -1. -1. -1.
+#                                                                                                                                                                                                                 -1. -1.], [1. 1. 1. 1. 1. 1. 1. 1. 1. 1. 1. 1. 1. 1. 1. 1. 1. 1. 1. 1.], (20,), float32)
+# 1015: HandManipulatePenFull-v0            | reward_threshold: None | OBS_SPACE: <class 'gym.spaces.dict.Dict'>, SHAPE: None            ACTION_SPACE: <class 'gym.spaces.box.Box'>, SHAPE: (20,), RANGE: Box([-1. -1. -1. -1. -1. -1. -1. -1. -1. -1. -1. -1. -1. -1. -1. -1. -1. -1.
+#                                                                                                                                                                                                              -1. -1.], [1. 1. 1. 1. 1. 1. 1. 1. 1. 1. 1. 1. 1. 1. 1. 1. 1. 1. 1. 1.], (20,), float32)
+# 1016: HandManipulatePen-v0                | reward_threshold: None | OBS_SPACE: <class 'gym.spaces.dict.Dict'>, SHAPE: None            ACTION_SPACE: <class 'gym.spaces.box.Box'>, SHAPE: (20,), RANGE: Box([-1. -1. -1. -1. -1. -1. -1. -1. -1. -1. -1. -1. -1. -1. -1. -1. -1. -1.
+#                                                                                                                                                                                                              -1. -1.], [1. 1. 1. 1. 1. 1. 1. 1. 1. 1. 1. 1. 1. 1. 1. 1. 1. 1. 1. 1.], (20,), float32)
+# 1017: HandManipulatePenTouchSensors-v0    | reward_threshold: None | OBS_SPACE: <class 'gym.spaces.dict.Dict'>, SHAPE: None            ACTION_SPACE: <class 'gym.spaces.box.Box'>, SHAPE: (20,), RANGE: Box([-1. -1. -1. -1. -1. -1. -1. -1. -1. -1. -1. -1. -1. -1. -1. -1. -1. -1.
+#                                                                                                                                                                                                              -1. -1.], [1. 1. 1. 1. 1. 1. 1. 1. 1. 1. 1. 1. 1. 1. 1. 1. 1. 1. 1. 1.], (20,), float32)
+# 1018: HandManipulatePenTouchSensors-v1    | reward_threshold: None | OBS_SPACE: <class 'gym.spaces.dict.Dict'>, SHAPE: None            ACTION_SPACE: <class 'gym.spaces.box.Box'>, SHAPE: (20,), RANGE: Box([-1. -1. -1. -1. -1. -1. -1. -1. -1. -1. -1. -1. -1. -1. -1. -1. -1. -1.
+#                                                                                                                                                                                                              -1. -1.], [1. 1. 1. 1. 1. 1. 1. 1. 1. 1. 1. 1. 1. 1. 1. 1. 1. 1. 1. 1.], (20,), float32)
+# 1019: FetchSlideDense-v1                  | reward_threshold: None | OBS_SPACE: <class 'gym.spaces.dict.Dict'>, SHAPE: None            ACTION_SPACE: <class 'gym.spaces.box.Box'>, SHAPE: (4,), RANGE: Box([-1. -1. -1. -1.], [1. 1. 1. 1.], (4,), float32)
+# 1020: FetchPickAndPlaceDense-v1           | reward_threshold: None | OBS_SPACE: <class 'gym.spaces.dict.Dict'>, SHAPE: None            ACTION_SPACE: <class 'gym.spaces.box.Box'>, SHAPE: (4,), RANGE: Box([-1. -1. -1. -1.], [1. 1. 1. 1.], (4,), float32)
+# 1021: FetchReachDense-v1                  | reward_threshold: None | OBS_SPACE: <class 'gym.spaces.dict.Dict'>, SHAPE: None            ACTION_SPACE: <class 'gym.spaces.box.Box'>, SHAPE: (4,), RANGE: Box([-1. -1. -1. -1.], [1. 1. 1. 1.], (4,), float32)
+# 1022: FetchPushDense-v1                   | reward_threshold: None | OBS_SPACE: <class 'gym.spaces.dict.Dict'>, SHAPE: None            ACTION_SPACE: <class 'gym.spaces.box.Box'>, SHAPE: (4,), RANGE: Box([-1. -1. -1. -1.], [1. 1. 1. 1.], (4,), float32)
+# 1023: HandReachDense-v0                   | reward_threshold: None | OBS_SPACE: <class 'gym.spaces.dict.Dict'>, SHAPE: None            ACTION_SPACE: <class 'gym.spaces.box.Box'>, SHAPE: (20,), RANGE: Box([-1. -1. -1. -1. -1. -1. -1. -1. -1. -1. -1. -1. -1. -1. -1. -1. -1. -1.
+#                                                                                                                                                                                                              -1. -1.], [1. 1. 1. 1. 1. 1. 1. 1. 1. 1. 1. 1. 1. 1. 1. 1. 1. 1. 1. 1.], (20,), float32)
+# 1024: HandManipulateBlockRotateZDense-v0  | reward_threshold: None | OBS_SPACE: <class 'gym.spaces.dict.Dict'>, SHAPE: None            ACTION_SPACE: <class 'gym.spaces.box.Box'>, SHAPE: (20,), RANGE: Box([-1. -1. -1. -1. -1. -1. -1. -1. -1. -1. -1. -1. -1. -1. -1. -1. -1. -1.
+#                                                                                                                                                                                                              -1. -1.], [1. 1. 1. 1. 1. 1. 1. 1. 1. 1. 1. 1. 1. 1. 1. 1. 1. 1. 1. 1.], (20,), float32)
+# 1025: HandManipulateBlockRotateZTouchSensorsDense-v0 | reward_threshold: None | OBS_SPACE: <class 'gym.spaces.dict.Dict'>, SHAPE: None            ACTION_SPACE: <class 'gym.spaces.box.Box'>, SHAPE: (20,), RANGE: Box([-1. -1. -1. -1. -1. -1. -1. -1. -1. -1. -1. -1. -1. -1. -1. -1. -1. -1.
+#                                                                                                                                                                                                                         -1. -1.], [1. 1. 1. 1. 1. 1. 1. 1. 1. 1. 1. 1. 1. 1. 1. 1. 1. 1. 1. 1.], (20,), float32)
+# 1026: HandManipulateBlockRotateZTouchSensorsDense-v1 | reward_threshold: None | OBS_SPACE: <class 'gym.spaces.dict.Dict'>, SHAPE: None            ACTION_SPACE: <class 'gym.spaces.box.Box'>, SHAPE: (20,), RANGE: Box([-1. -1. -1. -1. -1. -1. -1. -1. -1. -1. -1. -1. -1. -1. -1. -1. -1. -1.
+#                                                                                                                                                                                                                         -1. -1.], [1. 1. 1. 1. 1. 1. 1. 1. 1. 1. 1. 1. 1. 1. 1. 1. 1. 1. 1. 1.], (20,), float32)
+# 1027: HandManipulateBlockRotateParallelDense-v0 | reward_threshold: None | OBS_SPACE: <class 'gym.spaces.dict.Dict'>, SHAPE: None            ACTION_SPACE: <class 'gym.spaces.box.Box'>, SHAPE: (20,), RANGE: Box([-1. -1. -1. -1. -1. -1. -1. -1. -1. -1. -1. -1. -1. -1. -1. -1. -1. -1.
+#                                                                                                                                                                                                                    -1. -1.], [1. 1. 1. 1. 1. 1. 1. 1. 1. 1. 1. 1. 1. 1. 1. 1. 1. 1. 1. 1.], (20,), float32)
+# 1028: HandManipulateBlockRotateParallelTouchSensorsDense-v0 | reward_threshold: None | OBS_SPACE: <class 'gym.spaces.dict.Dict'>, SHAPE: None            ACTION_SPACE: <class 'gym.spaces.box.Box'>, SHAPE: (20,), RANGE: Box([-1. -1. -1. -1. -1. -1. -1. -1. -1. -1. -1. -1. -1. -1. -1. -1. -1. -1.
+#                                                                                                                                                                                                                                -1. -1.], [1. 1. 1. 1. 1. 1. 1. 1. 1. 1. 1. 1. 1. 1. 1. 1. 1. 1. 1. 1.], (20,), float32)
+# 1029: HandManipulateBlockRotateParallelTouchSensorsDense-v1 | reward_threshold: None | OBS_SPACE: <class 'gym.spaces.dict.Dict'>, SHAPE: None            ACTION_SPACE: <class 'gym.spaces.box.Box'>, SHAPE: (20,), RANGE: Box([-1. -1. -1. -1. -1. -1. -1. -1. -1. -1. -1. -1. -1. -1. -1. -1. -1. -1.
+#                                                                                                                                                                                                                                -1. -1.], [1. 1. 1. 1. 1. 1. 1. 1. 1. 1. 1. 1. 1. 1. 1. 1. 1. 1. 1. 1.], (20,), float32)
+# 1030: HandManipulateBlockRotateXYZDense-v0 | reward_threshold: None | OBS_SPACE: <class 'gym.spaces.dict.Dict'>, SHAPE: None            ACTION_SPACE: <class 'gym.spaces.box.Box'>, SHAPE: (20,), RANGE: Box([-1. -1. -1. -1. -1. -1. -1. -1. -1. -1. -1. -1. -1. -1. -1. -1. -1. -1.
+#                                                                                                                                                                                                               -1. -1.], [1. 1. 1. 1. 1. 1. 1. 1. 1. 1. 1. 1. 1. 1. 1. 1. 1. 1. 1. 1.], (20,), float32)
+# 1031: HandManipulateBlockRotateXYZTouchSensorsDense-v0 | reward_threshold: None | OBS_SPACE: <class 'gym.spaces.dict.Dict'>, SHAPE: None            ACTION_SPACE: <class 'gym.spaces.box.Box'>, SHAPE: (20,), RANGE: Box([-1. -1. -1. -1. -1. -1. -1. -1. -1. -1. -1. -1. -1. -1. -1. -1. -1. -1.
+#                                                                                                                                                                                                                           -1. -1.], [1. 1. 1. 1. 1. 1. 1. 1. 1. 1. 1. 1. 1. 1. 1. 1. 1. 1. 1. 1.], (20,), float32)
+# 1032: HandManipulateBlockRotateXYZTouchSensorsDense-v1 | reward_threshold: None | OBS_SPACE: <class 'gym.spaces.dict.Dict'>, SHAPE: None            ACTION_SPACE: <class 'gym.spaces.box.Box'>, SHAPE: (20,), RANGE: Box([-1. -1. -1. -1. -1. -1. -1. -1. -1. -1. -1. -1. -1. -1. -1. -1. -1. -1.
+#                                                                                                                                                                                                                           -1. -1.], [1. 1. 1. 1. 1. 1. 1. 1. 1. 1. 1. 1. 1. 1. 1. 1. 1. 1. 1. 1.], (20,), float32)
+# 1033: HandManipulateBlockFullDense-v0     | reward_threshold: None | OBS_SPACE: <class 'gym.spaces.dict.Dict'>, SHAPE: None            ACTION_SPACE: <class 'gym.spaces.box.Box'>, SHAPE: (20,), RANGE: Box([-1. -1. -1. -1. -1. -1. -1. -1. -1. -1. -1. -1. -1. -1. -1. -1. -1. -1.
+#                                                                                                                                                                                                              -1. -1.], [1. 1. 1. 1. 1. 1. 1. 1. 1. 1. 1. 1. 1. 1. 1. 1. 1. 1. 1. 1.], (20,), float32)
+# 1034: HandManipulateBlockDense-v0         | reward_threshold: None | OBS_SPACE: <class 'gym.spaces.dict.Dict'>, SHAPE: None            ACTION_SPACE: <class 'gym.spaces.box.Box'>, SHAPE: (20,), RANGE: Box([-1. -1. -1. -1. -1. -1. -1. -1. -1. -1. -1. -1. -1. -1. -1. -1. -1. -1.
+#                                                                                                                                                                                                              -1. -1.], [1. 1. 1. 1. 1. 1. 1. 1. 1. 1. 1. 1. 1. 1. 1. 1. 1. 1. 1. 1.], (20,), float32)
+# 1035: HandManipulateBlockTouchSensorsDense-v0 | reward_threshold: None | OBS_SPACE: <class 'gym.spaces.dict.Dict'>, SHAPE: None            ACTION_SPACE: <class 'gym.spaces.box.Box'>, SHAPE: (20,), RANGE: Box([-1. -1. -1. -1. -1. -1. -1. -1. -1. -1. -1. -1. -1. -1. -1. -1. -1. -1.
+#                                                                                                                                                                                                                  -1. -1.], [1. 1. 1. 1. 1. 1. 1. 1. 1. 1. 1. 1. 1. 1. 1. 1. 1. 1. 1. 1.], (20,), float32)
+# 1036: HandManipulateBlockTouchSensorsDense-v1 | reward_threshold: None | OBS_SPACE: <class 'gym.spaces.dict.Dict'>, SHAPE: None            ACTION_SPACE: <class 'gym.spaces.box.Box'>, SHAPE: (20,), RANGE: Box([-1. -1. -1. -1. -1. -1. -1. -1. -1. -1. -1. -1. -1. -1. -1. -1. -1. -1.
+#                                                                                                                                                                                                                  -1. -1.], [1. 1. 1. 1. 1. 1. 1. 1. 1. 1. 1. 1. 1. 1. 1. 1. 1. 1. 1. 1.], (20,), float32)
+# 1037: HandManipulateEggRotateDense-v0     | reward_threshold: None | OBS_SPACE: <class 'gym.spaces.dict.Dict'>, SHAPE: None            ACTION_SPACE: <class 'gym.spaces.box.Box'>, SHAPE: (20,), RANGE: Box([-1. -1. -1. -1. -1. -1. -1. -1. -1. -1. -1. -1. -1. -1. -1. -1. -1. -1.
+#                                                                                                                                                                                                              -1. -1.], [1. 1. 1. 1. 1. 1. 1. 1. 1. 1. 1. 1. 1. 1. 1. 1. 1. 1. 1. 1.], (20,), float32)
+# 1038: HandManipulateEggRotateTouchSensorsDense-v0 | reward_threshold: None | OBS_SPACE: <class 'gym.spaces.dict.Dict'>, SHAPE: None            ACTION_SPACE: <class 'gym.spaces.box.Box'>, SHAPE: (20,), RANGE: Box([-1. -1. -1. -1. -1. -1. -1. -1. -1. -1. -1. -1. -1. -1. -1. -1. -1. -1.
+#                                                                                                                                                                                                                      -1. -1.], [1. 1. 1. 1. 1. 1. 1. 1. 1. 1. 1. 1. 1. 1. 1. 1. 1. 1. 1. 1.], (20,), float32)
+# 1039: HandManipulateEggRotateTouchSensorsDense-v1 | reward_threshold: None | OBS_SPACE: <class 'gym.spaces.dict.Dict'>, SHAPE: None            ACTION_SPACE: <class 'gym.spaces.box.Box'>, SHAPE: (20,), RANGE: Box([-1. -1. -1. -1. -1. -1. -1. -1. -1. -1. -1. -1. -1. -1. -1. -1. -1. -1.
+#                                                                                                                                                                                                                      -1. -1.], [1. 1. 1. 1. 1. 1. 1. 1. 1. 1. 1. 1. 1. 1. 1. 1. 1. 1. 1. 1.], (20,), float32)
+# 1040: HandManipulateEggFullDense-v0       | reward_threshold: None | OBS_SPACE: <class 'gym.spaces.dict.Dict'>, SHAPE: None            ACTION_SPACE: <class 'gym.spaces.box.Box'>, SHAPE: (20,), RANGE: Box([-1. -1. -1. -1. -1. -1. -1. -1. -1. -1. -1. -1. -1. -1. -1. -1. -1. -1.
+#                                                                                                                                                                                                              -1. -1.], [1. 1. 1. 1. 1. 1. 1. 1. 1. 1. 1. 1. 1. 1. 1. 1. 1. 1. 1. 1.], (20,), float32)
+# 1041: HandManipulateEggDense-v0           | reward_threshold: None | OBS_SPACE: <class 'gym.spaces.dict.Dict'>, SHAPE: None            ACTION_SPACE: <class 'gym.spaces.box.Box'>, SHAPE: (20,), RANGE: Box([-1. -1. -1. -1. -1. -1. -1. -1. -1. -1. -1. -1. -1. -1. -1. -1. -1. -1.
+#                                                                                                                                                                                                              -1. -1.], [1. 1. 1. 1. 1. 1. 1. 1. 1. 1. 1. 1. 1. 1. 1. 1. 1. 1. 1. 1.], (20,), float32)
+# 1042: HandManipulateEggTouchSensorsDense-v0 | reward_threshold: None | OBS_SPACE: <class 'gym.spaces.dict.Dict'>, SHAPE: None            ACTION_SPACE: <class 'gym.spaces.box.Box'>, SHAPE: (20,), RANGE: Box([-1. -1. -1. -1. -1. -1. -1. -1. -1. -1. -1. -1. -1. -1. -1. -1. -1. -1.
+#                                                                                                                                                                                                                -1. -1.], [1. 1. 1. 1. 1. 1. 1. 1. 1. 1. 1. 1. 1. 1. 1. 1. 1. 1. 1. 1.], (20,), float32)
+# 1043: HandManipulateEggTouchSensorsDense-v1 | reward_threshold: None | OBS_SPACE: <class 'gym.spaces.dict.Dict'>, SHAPE: None            ACTION_SPACE: <class 'gym.spaces.box.Box'>, SHAPE: (20,), RANGE: Box([-1. -1. -1. -1. -1. -1. -1. -1. -1. -1. -1. -1. -1. -1. -1. -1. -1. -1.
+#                                                                                                                                                                                                                -1. -1.], [1. 1. 1. 1. 1. 1. 1. 1. 1. 1. 1. 1. 1. 1. 1. 1. 1. 1. 1. 1.], (20,), float32)
+# 1044: HandManipulatePenRotateDense-v0     | reward_threshold: None | OBS_SPACE: <class 'gym.spaces.dict.Dict'>, SHAPE: None            ACTION_SPACE: <class 'gym.spaces.box.Box'>, SHAPE: (20,), RANGE: Box([-1. -1. -1. -1. -1. -1. -1. -1. -1. -1. -1. -1. -1. -1. -1. -1. -1. -1.
+#                                                                                                                                                                                                              -1. -1.], [1. 1. 1. 1. 1. 1. 1. 1. 1. 1. 1. 1. 1. 1. 1. 1. 1. 1. 1. 1.], (20,), float32)
+# 1045: HandManipulatePenRotateTouchSensorsDense-v0 | reward_threshold: None | OBS_SPACE: <class 'gym.spaces.dict.Dict'>, SHAPE: None            ACTION_SPACE: <class 'gym.spaces.box.Box'>, SHAPE: (20,), RANGE: Box([-1. -1. -1. -1. -1. -1. -1. -1. -1. -1. -1. -1. -1. -1. -1. -1. -1. -1.
+#                                                                                                                                                                                                                      -1. -1.], [1. 1. 1. 1. 1. 1. 1. 1. 1. 1. 1. 1. 1. 1. 1. 1. 1. 1. 1. 1.], (20,), float32)
+# 1046: HandManipulatePenRotateTouchSensorsDense-v1 | reward_threshold: None | OBS_SPACE: <class 'gym.spaces.dict.Dict'>, SHAPE: None            ACTION_SPACE: <class 'gym.spaces.box.Box'>, SHAPE: (20,), RANGE: Box([-1. -1. -1. -1. -1. -1. -1. -1. -1. -1. -1. -1. -1. -1. -1. -1. -1. -1.
+#                                                                                                                                                                                                                      -1. -1.], [1. 1. 1. 1. 1. 1. 1. 1. 1. 1. 1. 1. 1. 1. 1. 1. 1. 1. 1. 1.], (20,), float32)
+# 1047: HandManipulatePenFullDense-v0       | reward_threshold: None | OBS_SPACE: <class 'gym.spaces.dict.Dict'>, SHAPE: None            ACTION_SPACE: <class 'gym.spaces.box.Box'>, SHAPE: (20,), RANGE: Box([-1. -1. -1. -1. -1. -1. -1. -1. -1. -1. -1. -1. -1. -1. -1. -1. -1. -1.
+#                                                                                                                                                                                                              -1. -1.], [1. 1. 1. 1. 1. 1. 1. 1. 1. 1. 1. 1. 1. 1. 1. 1. 1. 1. 1. 1.], (20,), float32)
+# 1048: HandManipulatePenDense-v0           | reward_threshold: None | OBS_SPACE: <class 'gym.spaces.dict.Dict'>, SHAPE: None            ACTION_SPACE: <class 'gym.spaces.box.Box'>, SHAPE: (20,), RANGE: Box([-1. -1. -1. -1. -1. -1. -1. -1. -1. -1. -1. -1. -1. -1. -1. -1. -1. -1.
+#                                                                                                                                                                                                              -1. -1.], [1. 1. 1. 1. 1. 1. 1. 1. 1. 1. 1. 1. 1. 1. 1. 1. 1. 1. 1. 1.], (20,), float32)
+# 1049: HandManipulatePenTouchSensorsDense-v0 | reward_threshold: None | OBS_SPACE: <class 'gym.spaces.dict.Dict'>, SHAPE: None            ACTION_SPACE: <class 'gym.spaces.box.Box'>, SHAPE: (20,), RANGE: Box([-1. -1. -1. -1. -1. -1. -1. -1. -1. -1. -1. -1. -1. -1. -1. -1. -1. -1.
+#                                                                                                                                                                                                                -1. -1.], [1. 1. 1. 1. 1. 1. 1. 1. 1. 1. 1. 1. 1. 1. 1. 1. 1. 1. 1. 1.], (20,), float32)
+# 1050: HandManipulatePenTouchSensorsDense-v1 | reward_threshold: None | OBS_SPACE: <class 'gym.spaces.dict.Dict'>, SHAPE: None            ACTION_SPACE: <class 'gym.spaces.box.Box'>, SHAPE: (20,), RANGE: Box([-1. -1. -1. -1. -1. -1. -1. -1. -1. -1. -1. -1. -1. -1. -1. -1. -1. -1.
+#                                                                                                                                                                                                                -1. -1.], [1. 1. 1. 1. 1. 1. 1. 1. 1. 1. 1. 1. 1. 1. 1. 1. 1. 1. 1. 1.], (20,), float32)
+# 1051: CubeCrash-v0                        | reward_threshold: 0.9 | OBS_SPACE: <class 'gym.spaces.box.Box'>, SHAPE: (40, 32, 3)       ACTION_SPACE: <class 'gym.spaces.discrete.Discrete'>, SHAPE: (), N: 3
+# 1052: CubeCrashSparse-v0                  | reward_threshold: 0.9 | OBS_SPACE: <class 'gym.spaces.box.Box'>, SHAPE: (40, 32, 3)       ACTION_SPACE: <class 'gym.spaces.discrete.Discrete'>, SHAPE: (), N: 3
+# 1053: CubeCrashScreenBecomesBlack-v0      | reward_threshold: 0.9 | OBS_SPACE: <class 'gym.spaces.box.Box'>, SHAPE: (40, 32, 3)       ACTION_SPACE: <class 'gym.spaces.discrete.Discrete'>, SHAPE: (), N: 3
+# 1054: MemorizeDigits-v0                   | reward_threshold: 20 | OBS_SPACE: <class 'gym.spaces.box.Box'>, SHAPE: (24, 32, 3)       ACTION_SPACE: <class 'gym.spaces.discrete.Discrete'>, SHAPE: (), N: 10
+# 1055: HumanoidDeepMimicBackflipBulletEnv-v1 SKIPPED!!!
+# 1056: HumanoidDeepMimicWalkBulletEnv-v1   SKIPPED!!!
+# [[[ PYBULLET ]]]
+# pybullet build time: Dec 10 2021 09:55:40
+# current_dir=/Users/yhhan/anaconda3/envs/link_rl/lib/python3.9/site-packages/pybullet_envs/bullet
 # 1057: CartPoleBulletEnv-v1                | reward_threshold: 190.0 | OBS_SPACE: <class 'gym.spaces.box.Box'>, SHAPE: (4,)              ACTION_SPACE: <class 'gym.spaces.discrete.Discrete'>, SHAPE: (), N: 2
-
 # 1058: CartPoleContinuousBulletEnv-v0      | reward_threshold: 190.0 | OBS_SPACE: <class 'gym.spaces.box.Box'>, SHAPE: (4,)              ACTION_SPACE: <class 'gym.spaces.box.Box'>, SHAPE: (1,), RANGE: Box([-10.], [10.], (1,), float32)
-
-
-# 1059: MinitaurBulletEnv-v0                | reward_threshold: 15.0 | OBS_SPACE: <class 'gym.spaces.box.Box'>, SHAPE: (28,)             ACTION_SPACE: <class 'gym.spaces.box.Box'>, SHAPE: (8,), RANGE: Box([-1. -1. -1. -1. -1. -1. -1. -1.], [1. 1. 1. 1. 1. 1. 1. 1.], (8,), float32)
-
+# urdf_root=/Users/yhhan/anaconda3/envs/link_rl/lib/python3.9/site-packages/pybullet_data
+# argv[0]=
+# argv[0]=
+# /Users/yhhan/anaconda3/envs/link_rl/lib/python3.9/site-packages/gym/spaces/box.py:73: UserWarning: WARN: Box bound precision lowered by casting to float32
+# logger.warn(
+#     1059: MinitaurBulletEnv-v0                | reward_threshold: 15.0 | OBS_SPACE: <class 'gym.spaces.box.Box'>, SHAPE: (28,)             ACTION_SPACE: <class 'gym.spaces.box.Box'>, SHAPE: (8,), RANGE: Box([-1. -1. -1. -1. -1. -1. -1. -1.], [1. 1. 1. 1. 1. 1. 1. 1.], (8,), float32)
+# urdf_root=/Users/yhhan/anaconda3/envs/link_rl/lib/python3.9/site-packages/pybullet_data
+# argv[0]=
+# argv[0]=
 # 1060: MinitaurBulletDuckEnv-v0            | reward_threshold: 5.0 | OBS_SPACE: <class 'gym.spaces.box.Box'>, SHAPE: (28,)             ACTION_SPACE: <class 'gym.spaces.box.Box'>, SHAPE: (8,), RANGE: Box([-1. -1. -1. -1. -1. -1. -1. -1.], [1. 1. 1. 1. 1. 1. 1. 1.], (8,), float32)
-
+# argv[0]=
+# argv[0]=
 # 1061: MinitaurExtendedEnv-v0              | reward_threshold: 5.0 | OBS_SPACE: <class 'gym.spaces.box.Box'>, SHAPE: (20,)             ACTION_SPACE: <class 'gym.spaces.box.Box'>, SHAPE: (8,), RANGE: Box([-1. -1. -1. -1. -1. -1. -1. -1.], [1. 1. 1. 1. 1. 1. 1. 1.], (8,), float32)
-
+# argv[0]=
+# argv[0]=
 # 1062: MinitaurReactiveEnv-v0              | reward_threshold: 5.0 | OBS_SPACE: <class 'gym.spaces.box.Box'>, SHAPE: (12,)             ACTION_SPACE: <class 'gym.spaces.box.Box'>, SHAPE: (8,), RANGE: Box([-0.5 -0.5 -0.5 -0.5 -0.5 -0.5 -0.5 -0.5], [0.5 0.5 0.5 0.5 0.5 0.5 0.5 0.5], (8,), float32)
-
+# argv[0]=
+# argv[0]=
 # 1063: MinitaurBallGymEnv-v0               | reward_threshold: 5.0 | OBS_SPACE: <class 'gym.spaces.box.Box'>, SHAPE: (2,)              ACTION_SPACE: <class 'gym.spaces.box.Box'>, SHAPE: (1,), RANGE: Box([-1.], [1.], (1,), float32)
-
+# argv[0]=
+# argv[0]=
 # 1064: MinitaurTrottingEnv-v0              | reward_threshold: 5.0 | OBS_SPACE: <class 'gym.spaces.box.Box'>, SHAPE: (4,)              ACTION_SPACE: <class 'gym.spaces.box.Box'>, SHAPE: (8,), RANGE: Box([-0.25 -0.25 -0.25 -0.25 -0.25 -0.25 -0.25 -0.25], [0.25 0.25 0.25 0.25 0.25 0.25 0.25 0.25], (8,), float32)
-
+# argv[0]=
+# argv[0]=
 # 1065: MinitaurStandGymEnv-v0              | reward_threshold: 5.0 | OBS_SPACE: <class 'gym.spaces.box.Box'>, SHAPE: (28,)             ACTION_SPACE: <class 'gym.spaces.box.Box'>, SHAPE: (1,), RANGE: Box([-1.], [1.], (1,), float32)
-
+# argv[0]=
+# argv[0]=
+# /Users/yhhan/anaconda3/envs/link_rl/lib/python3.9/site-packages/pybullet_envs/minitaur/envs/minitaur_alternating_legs_env.py:128: ComplexWarning: Casting complex values to real discards the imaginary part
+# motor_pose[2 * i] = leg_pose[NUM_LEGS + i] - (-1)**(i / 2) * leg_pose[i]
+# /Users/yhhan/anaconda3/envs/link_rl/lib/python3.9/site-packages/pybullet_envs/minitaur/envs/minitaur_alternating_legs_env.py:129: ComplexWarning: Casting complex values to real discards the imaginary part
+# motor_pose[2 * i + 1] = leg_pose[NUM_LEGS + i] + (-1)**(i / 2) * leg_pose[i]
 # 1066: MinitaurAlternatingLegsEnv-v0       | reward_threshold: 5.0 | OBS_SPACE: <class 'gym.spaces.box.Box'>, SHAPE: (4,)              ACTION_SPACE: <class 'gym.spaces.box.Box'>, SHAPE: (8,), RANGE: Box([-0.1 -0.1 -0.1 -0.1 -0.1 -0.1 -0.1 -0.1], [0.1 0.1 0.1 0.1 0.1 0.1 0.1 0.1], (8,), float32)
-
+# argv[0]=
+# argv[0]=
+# /Users/yhhan/anaconda3/envs/link_rl/lib/python3.9/site-packages/pybullet_envs/minitaur/envs/minitaur_four_leg_stand_env.py:222: ComplexWarning: Casting complex values to real discards the imaginary part
+# motor_pose[2 * i] = leg_pose[NUM_LEGS + i] - (-1)**(i / 2) * leg_pose[i]
+# /Users/yhhan/anaconda3/envs/link_rl/lib/python3.9/site-packages/pybullet_envs/minitaur/envs/minitaur_four_leg_stand_env.py:223: ComplexWarning: Casting complex values to real discards the imaginary part
+# motor_pose[2 * i + 1] = leg_pose[NUM_LEGS + i] + (-1)**(i / 2) * leg_pose[i]
 # 1067: MinitaurFourLegStandEnv-v0          | reward_threshold: 5.0 | OBS_SPACE: <class 'gym.spaces.box.Box'>, SHAPE: (2,)              ACTION_SPACE: <class 'gym.spaces.box.Box'>, SHAPE: (4,), RANGE: Box([-1. -1. -1. -1.], [1. 1. 1. 1.], (4,), float32)
-
+# init
+# argv[0]=
+# argv[0]=
 # 1068: RacecarBulletEnv-v0                 | reward_threshold: 5.0 | OBS_SPACE: <class 'gym.spaces.box.Box'>, SHAPE: (2,)              ACTION_SPACE: <class 'gym.spaces.box.Box'>, SHAPE: (2,), RANGE: Box([-1. -1.], [1. 1.], (2,), float32)
-
+# init
+# argv[0]=
+# Version = 4.1 ATI-4.7.29
+# Vendor = ATI Technologies Inc.
+# Renderer = AMD Radeon Pro 5500M OpenGL Engine
+# b3Printf: Selected demo: Physics Server
+# startThreads creating 1 threads.
+# starting thread 0
+# started thread 0
+# MotionThreadFunc thread started
 # 1069: RacecarZedBulletEnv-v0              | reward_threshold: 5.0 | OBS_SPACE: <class 'gym.spaces.box.Box'>, SHAPE: (10, 100, 4)      ACTION_SPACE: <class 'gym.spaces.box.Box'>, SHAPE: (2,), RANGE: Box([-1. -1.], [1. 1.], (2,), float32)
-
+# numActiveThreads = 0
+# stopping threads
+# destroy semaphore
+# Thread with taskId 0 exiting
+# Thread TERMINATED
+# semaphore destroyed
+# destroy main semaphore
+# main semaphore destroyed
 # 1070: KukaBulletEnv-v0                    | reward_threshold: 5.0 | OBS_SPACE: <class 'gym.spaces.box.Box'>, SHAPE: (9,)              ACTION_SPACE: <class 'gym.spaces.box.Box'>, SHAPE: (3,), RANGE: Box([-1. -1. -1.], [1. 1. 1.], (3,), float32)
 # 1071: KukaCamBulletEnv-v0                 | reward_threshold: 5.0 | OBS_SPACE: <class 'gym.spaces.box.Box'>, SHAPE: (256, 341, 4)     ACTION_SPACE: <class 'gym.spaces.box.Box'>, SHAPE: (3,), RANGE: Box([-1. -1. -1.], [1. 1. 1.], (3,), float32)
 # 1072: KukaDiverseObjectGrasping-v0        | reward_threshold: 5.0 | OBS_SPACE: <class 'gym.spaces.box.Box'>, SHAPE: (48, 48, 3)       ACTION_SPACE: <class 'gym.spaces.box.Box'>, SHAPE: (3,), RANGE: Box([-1. -1. -1.], [1. 1. 1.], (3,), float32)
@@ -1050,7 +1234,11 @@ for idx, env_spec in enumerate(pybullet_envs.registry.all()):
 # 1076: ReacherBulletEnv-v0                 | reward_threshold: 18.0 | OBS_SPACE: <class 'gym.spaces.box.Box'>, SHAPE: (9,)              ACTION_SPACE: <class 'gym.spaces.box.Box'>, SHAPE: (2,), RANGE: Box([-1. -1.], [1. 1.], (2,), float32)
 # 1077: PusherBulletEnv-v0                  | reward_threshold: 18.0 | OBS_SPACE: <class 'gym.spaces.box.Box'>, SHAPE: (55,)             ACTION_SPACE: <class 'gym.spaces.box.Box'>, SHAPE: (7,), RANGE: Box([-1. -1. -1. -1. -1. -1. -1.], [1. 1. 1. 1. 1. 1. 1.], (7,), float32)
 # 1078: ThrowerBulletEnv-v0                 | reward_threshold: 18.0 | OBS_SPACE: <class 'gym.spaces.box.Box'>, SHAPE: (48,)             ACTION_SPACE: <class 'gym.spaces.box.Box'>, SHAPE: (7,), RANGE: Box([-1. -1. -1. -1. -1. -1. -1.], [1. 1. 1. 1. 1. 1. 1.], (7,), float32)
-
+# Exception ignored in: <function KukaGymEnv.__del__ at 0x7fd3d9286f70>
+# Traceback (most recent call last):
+# File "/Users/yhhan/anaconda3/envs/link_rl/lib/python3.9/site-packages/pybullet_envs/bullet/kukaGymEnv.py", line 101, in __del__
+# p.disconnect()
+# pybullet.error: Not connected to physics server.
 # 1079: Walker2DBulletEnv-v0                | reward_threshold: 2500.0 | OBS_SPACE: <class 'gym.spaces.box.Box'>, SHAPE: (22,)             ACTION_SPACE: <class 'gym.spaces.box.Box'>, SHAPE: (6,), RANGE: Box([-1. -1. -1. -1. -1. -1.], [1. 1. 1. 1. 1. 1.], (6,), float32)
 # 1080: HalfCheetahBulletEnv-v0             | reward_threshold: 3000.0 | OBS_SPACE: <class 'gym.spaces.box.Box'>, SHAPE: (26,)             ACTION_SPACE: <class 'gym.spaces.box.Box'>, SHAPE: (6,), RANGE: Box([-1. -1. -1. -1. -1. -1.], [1. 1. 1. 1. 1. 1.], (6,), float32)
 # 1081: AntBulletEnv-v0                     | reward_threshold: 2500.0 | OBS_SPACE: <class 'gym.spaces.box.Box'>, SHAPE: (28,)             ACTION_SPACE: <class 'gym.spaces.box.Box'>, SHAPE: (8,), RANGE: Box([-1. -1. -1. -1. -1. -1. -1. -1.], [1. 1. 1. 1. 1. 1. 1. 1.], (8,), float32)
@@ -1058,3 +1246,4 @@ for idx, env_spec in enumerate(pybullet_envs.registry.all()):
 # 1083: HumanoidBulletEnv-v0                | reward_threshold: None | OBS_SPACE: <class 'gym.spaces.box.Box'>, SHAPE: (44,)             ACTION_SPACE: <class 'gym.spaces.box.Box'>, SHAPE: (17,), RANGE: Box([-1. -1. -1. -1. -1. -1. -1. -1. -1. -1. -1. -1. -1. -1. -1. -1. -1.], [1. 1. 1. 1. 1. 1. 1. 1. 1. 1. 1. 1. 1. 1. 1. 1. 1.], (17,), float32)
 # 1084: HumanoidFlagrunBulletEnv-v0         | reward_threshold: 2000.0 | OBS_SPACE: <class 'gym.spaces.box.Box'>, SHAPE: (44,)             ACTION_SPACE: <class 'gym.spaces.box.Box'>, SHAPE: (17,), RANGE: Box([-1. -1. -1. -1. -1. -1. -1. -1. -1. -1. -1. -1. -1. -1. -1. -1. -1.], [1. 1. 1. 1. 1. 1. 1. 1. 1. 1. 1. 1. 1. 1. 1. 1. 1.], (17,), float32)
 # 1085: HumanoidFlagrunHarderBulletEnv-v0   | reward_threshold: None | OBS_SPACE: <class 'gym.spaces.box.Box'>, SHAPE: (44,)             ACTION_SPACE: <class 'gym.spaces.box.Box'>, SHAPE: (17,), RANGE: Box([-1. -1. -1. -1. -1. -1. -1. -1. -1. -1. -1. -1. -1. -1. -1. -1. -1.], [1. 1. 1. 1. 1. 1. 1. 1. 1. 1. 1. 1. 1. 1. 1. 1. 1.], (17,), float32)
+

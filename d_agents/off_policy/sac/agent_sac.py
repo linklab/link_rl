@@ -12,28 +12,27 @@ from g_utils.types import AgentMode
 
 
 class AgentSac(Agent):
-    def __init__(self, observation_space, action_space, device, parameter):
-        super(AgentSac, self).__init__(observation_space, action_space, device, parameter)
+    def __init__(self, observation_space, action_space, parameter):
+        super(AgentSac, self).__init__(observation_space, action_space, parameter)
 
         if isinstance(self.action_space, Discrete):
             self.sac_model = DiscreteSacModel(
                 observation_shape=self.observation_shape, n_out_actions=self.n_out_actions,
-                n_discrete_actions=self.n_discrete_actions, device=device, parameter=parameter
+                n_discrete_actions=self.n_discrete_actions, parameter=parameter
             )
 
             self.target_sac_model = DiscreteSacModel(
                 observation_shape=self.observation_shape, n_out_actions=self.n_out_actions,
-                n_discrete_actions=self.n_discrete_actions, device=device, parameter=parameter, is_target_model=True
+                n_discrete_actions=self.n_discrete_actions, parameter=parameter, is_target_model=True
             )
         elif isinstance(self.action_space, Box):
             self.sac_model = ContinuousSacModel(
-                observation_shape=self.observation_shape, n_out_actions=self.n_out_actions,
-                device=device, parameter=parameter
+                observation_shape=self.observation_shape, n_out_actions=self.n_out_actions, parameter=parameter
             )
 
             self.target_sac_model = ContinuousSacModel(
-                observation_shape=self.observation_shape, n_out_actions=self.n_out_actions,
-                device=device, parameter=parameter, is_target_model=True
+                observation_shape=self.observation_shape, n_out_actions=self.n_out_actions, parameter=parameter,
+                is_target_model=True
             )
         else:
             raise ValueError()
@@ -92,7 +91,7 @@ class AgentSac(Agent):
         # rewards.shape: torch.Size([32, 1]),
         # dones.shape: torch.Size([32])
         observations, actions, next_observations, rewards, dones = self.buffer.sample(
-            batch_size=self.parameter.BATCH_SIZE, device=self.device
+            batch_size=self.parameter.BATCH_SIZE
         )
 
         ###################################

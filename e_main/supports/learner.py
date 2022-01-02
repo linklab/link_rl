@@ -1,4 +1,7 @@
 import warnings
+
+from gym.spaces import Box, Discrete
+
 warnings.filterwarnings('ignore')
 warnings.simplefilter("ignore")
 
@@ -15,11 +18,10 @@ from g_utils.types import AgentType, AgentMode, Transition
 
 
 class Learner(mp.Process):
-    def __init__(self, agent, queue, device=torch.device("cpu"), parameter=None):
+    def __init__(self, agent, queue, parameter=None):
         super(Learner, self).__init__()
         self.agent = agent
         self.queue = queue
-        self.device = device
         self.parameter = parameter
 
         self.train_env = None
@@ -260,18 +262,24 @@ class Learner(mp.Process):
             while True:
                 action = self.agent.get_action(observation, mode=AgentMode.TEST)
 
-                if action.ndim == 1:
-                    if self.agent.action_scale_factor is not None:
-                        scaled_action = action * self.agent.action_scale_factor
+                if isinstance(self.agent.action_space, Discrete):
+                    scaled_action = action[0]
+                elif isinstance(self.agent.action_space, Box):
+                    if action.ndim == 1:
+                        if self.agent.action_scale_factor is not None:
+                            scaled_action = action * self.agent.action_scale_factor[0]
+                        else:
+                            scaled_action = action
+                    elif action.ndim == 2:
+                        if self.agent.action_scale_factor is not None:
+                            scaled_action = action[0] * self.agent.action_scale_factor[0]
+                        else:
+                            scaled_action = action[0]
                     else:
-                        scaled_action = action
-                elif action.ndim == 2:
-                    if self.agent.action_scale_factor is not None:
-                        scaled_action = action[0] * self.agent.action_scale_factor[0]
-                    else:
-                        scaled_action = action[0]
+                        raise ValueError()
                 else:
                     raise ValueError()
+
 
                 next_observation, reward, done, _ = self.test_env.step(scaled_action)
                 next_observation = np.expand_dims(next_observation, axis=0)

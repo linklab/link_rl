@@ -28,38 +28,38 @@ from gym import logger
 logger.set_level(level=40)
 
 
-def get_agent(observation_space, action_space, device=torch.device("cpu"), parameter=None):
+def get_agent(observation_space, action_space, parameter=None):
     assert isinstance(observation_space, Box)
 
     if parameter.AGENT_TYPE == AgentType.DQN:
         assert isinstance(action_space, Discrete)
         agent = AgentDqn(
-            observation_space=observation_space, action_space=action_space, device=device, parameter=parameter
+            observation_space=observation_space, action_space=action_space, parameter=parameter
         )
     elif parameter.AGENT_TYPE == AgentType.DOUBLE_DQN:
         agent = AgentDoubleDqn(
-            observation_space=observation_space, action_space=action_space, device=device, parameter=parameter
+            observation_space=observation_space, action_space=action_space, parameter=parameter
         )
     elif parameter.AGENT_TYPE == AgentType.DUELING_DQN:
         agent = AgentDuelingDqn(
-            observation_space=observation_space, action_space=action_space, device=device, parameter=parameter
+            observation_space=observation_space, action_space=action_space, parameter=parameter
         )
     elif parameter.AGENT_TYPE == AgentType.REINFORCE:
         assert parameter.N_ACTORS * parameter.N_VECTORIZED_ENVS == 1, "TOTAL NUMBERS OF ENVS should be one"
         agent = AgentReinforce(
-            observation_space=observation_space, action_space=action_space, device=device, parameter=parameter
+            observation_space=observation_space, action_space=action_space, parameter=parameter
         )
     elif parameter.AGENT_TYPE == AgentType.A2C:
         agent = AgentA2c(
-            observation_space=observation_space, action_space=action_space, device=device, parameter=parameter
+            observation_space=observation_space, action_space=action_space, parameter=parameter
         )
     elif parameter.AGENT_TYPE == AgentType.DDPG:
         agent = AgentDdpg(
-            observation_space=observation_space, action_space=action_space, device=device, parameter=parameter
+            observation_space=observation_space, action_space=action_space, parameter=parameter
         )
     elif parameter.AGENT_TYPE == AgentType.SAC:
         agent = AgentSac(
-            observation_space=observation_space, action_space=action_space, device=device, parameter=parameter
+            observation_space=observation_space, action_space=action_space, parameter=parameter
         )
     else:
         raise ValueError()

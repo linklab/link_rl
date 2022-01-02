@@ -36,7 +36,7 @@ for agent_parameter in parameter_c.AGENT_PARAMETERS:
 
 def main():
     observation_space, action_space = get_env_info(parameter_c)
-    print_comparison_basic_info(observation_space, action_space, device, parameter_c)
+    print_comparison_basic_info(observation_space, action_space, parameter_c)
 
     input("Press Enter to continue...")
 
@@ -53,21 +53,20 @@ def main():
         agents = []
         for agent_idx, _ in enumerate(parameter_c.AGENT_PARAMETERS):
             agent = get_agent(
-                observation_space=observation_space, action_space=action_space, device=device,
+                observation_space=observation_space, action_space=action_space,
                 parameter=parameter_c.AGENT_PARAMETERS[agent_idx]
             )
             agents.append(agent)
 
         learner_comparison = LearnerComparison(
-            run=run, agents=agents, device=device, wandb_obj=wandb_obj,
-            parameter_c=parameter_c, comparison_stat=comparison_stat
+            run=run, agents=agents, wandb_obj=wandb_obj, parameter_c=parameter_c, comparison_stat=comparison_stat
         )
         learner_comparison.train_comparison_loop()
 
     if parameter_c.USE_WANDB:
         wandb_obj.join()
 
-    print_comparison_basic_info(observation_space, action_space, device, parameter_c)
+    print_comparison_basic_info(observation_space, action_space, parameter_c)
 
     comparison_stat.save_csv()
     comparison_stat.save_fig()

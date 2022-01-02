@@ -6,12 +6,9 @@ from g_utils.types import Transition
 
 
 class Buffer:
-    def __init__(self, capacity, device=None):
+    def __init__(self, capacity, device):
         self.internal_buffer = collections.deque(maxlen=capacity)
-        if device is None:
-            self.device = torch.device("cpu")
-        else:
-            self.device = device
+        self.device = device
 
     def __len__(self):
         return len(self.internal_buffer)
@@ -47,7 +44,7 @@ class Buffer:
             )
             self.internal_buffer.append(transition)
 
-    def sample(self, batch_size, device):
+    def sample(self, batch_size):
         if batch_size:
             # Get index
             indices = np.random.choice(len(self.internal_buffer), size=batch_size, replace=False)
@@ -74,16 +71,10 @@ class Buffer:
         # actions.shape, rewards.shape, dones.shape: (64, 1) (64, 1) (64,)
 
         # Convert to tensor
-        observations = torch.tensor(
-            observations, dtype=torch.float32, device=device
-        )
-        actions = torch.tensor(
-            actions, dtype=torch.int64, device=device
-        )
-        next_observations = torch.tensor(
-            next_observations, dtype=torch.float32, device=device
-        )
-        rewards = torch.tensor(rewards, dtype=torch.float32, device=device)
-        dones = torch.tensor(dones, dtype=torch.bool, device=device)
+        observations = torch.tensor(observations, dtype=torch.float32, device=self.device)
+        actions = torch.tensor(actions, dtype=torch.int64, device=self.device)
+        next_observations = torch.tensor(next_observations, dtype=torch.float32, device=self.device)
+        rewards = torch.tensor(rewards, dtype=torch.float32, device=self.device)
+        dones = torch.tensor(dones, dtype=torch.bool, device=self.device)
 
         return observations, actions, next_observations, rewards, dones

@@ -12,10 +12,9 @@ from c_models.c_policy_models import DiscreteActorModel, ContinuousActorModel
 
 class CriticModel(Model):
     def __init__(
-            self, observation_shape: Tuple[int], n_out_actions: int, n_discrete_actions=None,
-            device=torch.device("cpu"), parameter=None
+            self, observation_shape: Tuple[int], n_out_actions: int, n_discrete_actions=None, parameter=None
     ):
-        super(CriticModel, self).__init__(observation_shape, n_out_actions, n_discrete_actions, device, parameter)
+        super(CriticModel, self).__init__(observation_shape, n_out_actions, n_discrete_actions, parameter)
 
         #######################
         # CRITIC MODEL: BEGIN #
@@ -44,7 +43,8 @@ class CriticModel(Model):
 
     def forward_critic(self, x):
         if isinstance(x, np.ndarray):
-            x = torch.tensor(x, dtype=torch.float32, device=self.device)
+            x = torch.tensor(x, dtype=torch.float32, device=self.parameter.DEVICE)
+
         if isinstance(self.parameter.MODEL, ParameterLinearModel):
             x = self.critic_fc_layers(x)
         elif isinstance(self.parameter.MODEL, ParameterConvolutionalModel):
@@ -63,28 +63,32 @@ class CriticModel(Model):
 
 class DiscreteActorCriticModel:
     def __init__(
-            self, observation_shape: Tuple[int], n_out_actions: int, n_discrete_actions=None,
-            device=torch.device("cpu"), parameter=None
+            self, observation_shape: Tuple[int], n_out_actions: int, n_discrete_actions=None, parameter=None
     ):
+        self.parameter = parameter
+
         self.actor_model = DiscreteActorModel(
             observation_shape=observation_shape, n_out_actions=n_out_actions, n_discrete_actions=n_discrete_actions,
-            device=device, parameter=parameter
-        ).to(device)
+            parameter=self.parameter
+        ).to(self.parameter.DEVICE)
 
         self.critic_model = CriticModel(
             observation_shape=observation_shape, n_out_actions=n_out_actions, n_discrete_actions=n_discrete_actions,
-            device=device, parameter=parameter
-        ).to(device)
+            parameter=self.parameter
+        ).to(self.parameter.DEVICE)
 
 
 class ContinuousActorCriticModel:
     def __init__(
-            self, observation_shape: Tuple[int], n_out_actions: int, device=torch.device("cpu"), parameter=None
+            self, observation_shape: Tuple[int], n_out_actions: int, parameter=None
     ):
+        self.parameter = parameter
+
         self.actor_model = ContinuousActorModel(
-            observation_shape=observation_shape, n_out_actions=n_out_actions, device=device, parameter=parameter
-        ).to(device)
+            observation_shape=observation_shape, n_out_actions=n_out_actions, parameter=parameter
+        ).to(self.parameter.DEVICE)
+
         self.critic_model = CriticModel(
             observation_shape=observation_shape, n_out_actions=n_out_actions, n_discrete_actions=None,
-            device=device, parameter=parameter
-        ).to(device)
+            parameter=parameter
+        ).to(self.parameter.DEVICE)

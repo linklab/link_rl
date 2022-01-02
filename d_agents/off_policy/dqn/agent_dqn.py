@@ -12,18 +12,18 @@ from g_utils.types import AgentMode, ModelType
 
 
 class AgentDqn(Agent):
-    def __init__(self, observation_space, action_space, device, parameter):
-        super(AgentDqn, self).__init__(observation_space, action_space, device, parameter)
+    def __init__(self, observation_space, action_space, parameter):
+        super(AgentDqn, self).__init__(observation_space, action_space, parameter)
 
         self.q_net = QNet(
             observation_shape=self.observation_shape, n_out_actions=self.n_out_actions,
-            n_discrete_actions=self.n_discrete_actions, device=device, parameter=parameter
-        ).to(device)
+            n_discrete_actions=self.n_discrete_actions, parameter=parameter
+        ).to(self.parameter.DEVICE)
 
         self.target_q_net = QNet(
             observation_shape=self.observation_shape, n_out_actions=self.n_out_actions,
-            n_discrete_actions=self.n_discrete_actions, device=device, parameter=parameter
-        ).to(device)
+            n_discrete_actions=self.n_discrete_actions, parameter=parameter
+        ).to(self.parameter.DEVICE)
 
         self.q_net.share_memory()
         self.synchronize_models(source_model=self.q_net, target_model=self.target_q_net)
@@ -68,7 +68,7 @@ class AgentDqn(Agent):
         # rewards.shape: torch.Size([32, 1]),
         # dones.shape: torch.Size([32])
         observations, actions, next_observations, rewards, dones = self.buffer.sample(
-            batch_size=self.parameter.BATCH_SIZE, device=self.device
+            batch_size=self.parameter.BATCH_SIZE
         )
 
         # state_action_values.shape: torch.Size([32, 1])

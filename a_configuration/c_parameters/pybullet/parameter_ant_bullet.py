@@ -73,4 +73,4 @@ class ParameterAntBulletSac(ParameterBase, ParameterAntBullet, ParameterSac):
 if __name__ == "__main__":
     parameter = ParameterAntBulletSac()
     observation_space, action_space = get_env_info(parameter)
-    print_basic_info(observation_space=observation_space, action_space=action_space, device=None, parameter=parameter)
+    print_basic_info(observation_space=observation_space, action_space=action_space, parameter=parameter)

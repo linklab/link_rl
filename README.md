@@ -38,6 +38,15 @@ conda activate link_rl
   ```commandline
   conda install -c conda-forge matplotlib
   ```
+- mpi4py
+  ```commandline
+  conda install -c conda-forge mpi4py
+  ```
+  - mpi4py 관련 MAC 에러 대처법 (Library not loaded: /usr/local/lib/libmpi.12.dylib)
+    : https://stackoverflow.com/questions/35370396/mpi4py-library-not-loaded-usr-local-lib-libmpi-1-dylib
+    : ln -s /usr/local/opt/open-mpi/lib/libmpi.40.dylib /usr/local/lib/libpmpi.12.dylib
+
+
 - pybullet
   ```commandline
   conda install -c conda-forge pybullet

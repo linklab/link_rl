@@ -90,8 +90,6 @@ for parameter in parameter_list:
     parameter.WANDB_ENTITY = "link-koreatech"
 
 
-parameter.PLAY_MODEL_FILE_NAME = ""
-
 if __name__ == "__main__":
     parameter = parameter_cart_pole_duelingdqn
-    print_basic_info(device=None, parameter=parameter)
+    print_basic_info(parameter=parameter)

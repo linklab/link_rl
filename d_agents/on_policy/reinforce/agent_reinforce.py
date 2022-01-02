@@ -11,16 +11,16 @@ from g_utils.types import AgentMode
 
 
 class AgentReinforce(Agent):
-    def __init__(self, observation_space, action_space, device, parameter):
-        super(AgentReinforce, self).__init__(observation_space, action_space, device, parameter)
+    def __init__(self, observation_space, action_space, parameter):
+        super(AgentReinforce, self).__init__(observation_space, action_space, parameter)
 
         assert self.parameter.N_STEP == 1
         assert isinstance(self.action_space, Discrete)
 
         self.policy = DiscretePolicyModel(
             observation_shape=self.observation_shape, n_out_actions=self.n_out_actions,
-            n_discrete_actions=self.n_discrete_actions, device=device, parameter=parameter
-        ).to(device)
+            n_discrete_actions=self.n_discrete_actions, parameter=parameter
+        ).to(self.parameter.DEVICE)
 
         self.policy.share_memory()
 
@@ -41,16 +41,14 @@ class AgentReinforce(Agent):
         return action.cpu().numpy()
 
     def train_reinforce(self):
-        observations, actions, _, rewards, _ = self.buffer.sample(
-            batch_size=None, device=self.device
-        )
+        observations, actions, _, rewards, _ = self.buffer.sample(batch_size=None)
 
         G = 0
         return_lst = []
         for reward in reversed(rewards):
             G = reward + self.parameter.GAMMA * G
             return_lst.append(G)
-        return_lst = torch.tensor(return_lst[::-1], dtype=torch.float32, device=self.device)
+        return_lst = torch.tensor(return_lst[::-1], dtype=torch.float32, device=self.parameter.DEVICE)
 
         action_probs = self.policy.pi(observations)
         action_probs_selected = action_probs.gather(dim=-1, index=actions).squeeze(dim=-1)
