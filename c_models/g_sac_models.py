@@ -100,7 +100,7 @@ class ContinuousSacModel:
         dist = TransformedDistribution(base_distribution=dist, transforms=TanhTransform(cache_size=1))
 
         action_v = dist.rsample()  # for reparameterization trick (mean + std * N(0,1))
-        log_probs = dist.log_prob(action_v).mean(dim=-1, keepdim=True)
+        log_probs = dist.log_prob(action_v).sum(dim=-1, keepdim=True)
 
         # action_v.shape: [128, 1]
         # log_prob.shape: [128, 1]

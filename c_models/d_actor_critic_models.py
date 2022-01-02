@@ -67,8 +67,10 @@ class DiscreteActorCriticModel:
             device=torch.device("cpu"), parameter=None
     ):
         self.actor_model = DiscreteActorModel(
-            observation_shape=observation_shape, n_out_actions=n_out_actions, device=device, parameter=parameter
+            observation_shape=observation_shape, n_out_actions=n_out_actions, n_discrete_actions=n_discrete_actions,
+            device=device, parameter=parameter
         ).to(device)
+
         self.critic_model = CriticModel(
             observation_shape=observation_shape, n_out_actions=n_out_actions, n_discrete_actions=n_discrete_actions,
             device=device, parameter=parameter

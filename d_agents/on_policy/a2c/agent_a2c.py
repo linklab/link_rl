@@ -47,12 +47,13 @@ class AgentA2c(Agent):
     def get_action(self, obs, mode=AgentMode.TRAIN):
         if isinstance(self.action_space, Discrete):
             action_prob = self.actor_model.pi(obs)
-            m = Categorical(probs=action_prob)
+            # m = Categorical(probs=action_prob)
             if mode == AgentMode.TRAIN:
-                action = m.sample()
+                action = np.random.choice(a=self.n_discrete_actions, p=action_prob.detach().cpu().numpy())
+                # action = m.sample()
             else:
-                action = torch.argmax(m.probs, dim=-1)
-            return action.cpu().numpy()
+                action = np.argmax(input=action_prob.detach().cpu().numpy(), dim=-1)
+            return action
         elif isinstance(self.action_space, Box):
             mu_v, var_v = self.actor_model.pi(obs)
 
@@ -127,17 +128,12 @@ class AgentA2c(Agent):
             criticized_log_pi_action_v = self.calc_log_prob(mu_v, var_v, actions) * advantages
             entropy = 0.5 * (torch.log(2.0 * np.pi * var_v) + 1.0)
 
-            # print(criticized_log_pi_action_v.shape, entropy.shape, "!!")
-
-            # actions.shape: (32, 8)
-            # dist.log_prob(value=actions).shape: (32, 8)
-            # advantages.shape: (32, 1)
-            # criticized_log_pi_action_v.shape: (32, 8)
-            # print(dist.log_prob(value=actions).shape, advantages.shape, "!!!!!!")
-
             # dist = Normal(loc=mu_v, scale=torch.sqrt(var_v))
             # criticized_log_pi_action_v = dist.log_prob(value=actions) * advantages
             # entropy = dist.entropy()
+
+            # print(criticized_log_pi_action_v.shape, entropy.shape, "!!")
+            # print(dist.log_prob(value=actions).shape, advantages.shape, "!!!!!!")
         else:
             raise ValueError()
 
