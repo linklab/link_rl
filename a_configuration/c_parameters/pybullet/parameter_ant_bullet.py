@@ -17,6 +17,7 @@ class ParameterAntBulletA2c(ParameterBase, ParameterAntBullet, ParameterA2c):
         self.LEARNING_RATE = 0.001
         self.N_STEP = 1
         self.BUFFER_CAPACITY = self.BATCH_SIZE
+        self.MIN_BUFFER_SIZE_FOR_TRAIN = self.BATCH_SIZE * 10
 
         self.N_VECTORIZED_ENVS = 1
         self.N_ACTORS = 1
@@ -36,6 +37,7 @@ class ParameterAntBulletDdpg(ParameterBase, ParameterAntBullet, ParameterDdpg):
         self.LEARNING_RATE = 0.001
         self.N_STEP = 1
         self.BUFFER_CAPACITY = 250_000
+        self.MIN_BUFFER_SIZE_FOR_TRAIN = self.BATCH_SIZE * 10
 
         self.N_VECTORIZED_ENVS = 1
         self.N_ACTORS = 1
@@ -55,6 +57,7 @@ class ParameterAntBulletSac(ParameterBase, ParameterAntBullet, ParameterSac):
         self.LEARNING_RATE = 0.001
         self.N_STEP = 1
         self.BUFFER_CAPACITY = 250_000
+        self.MIN_BUFFER_SIZE_FOR_TRAIN = self.BATCH_SIZE * 10
 
         self.N_VECTORIZED_ENVS = 1
         self.N_ACTORS = 1
