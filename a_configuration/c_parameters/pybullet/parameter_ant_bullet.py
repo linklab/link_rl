@@ -14,6 +14,7 @@ class ParameterAntBulletA2c(ParameterBase, ParameterAntBullet, ParameterA2c):
         ParameterA2c.__init__(self)
 
         self.BATCH_SIZE = 64
+        self.ACTOR_LEARNING_RATE = 0.0002
         self.LEARNING_RATE = 0.001
         self.N_STEP = 1
         self.BUFFER_CAPACITY = self.BATCH_SIZE
@@ -34,6 +35,7 @@ class ParameterAntBulletDdpg(ParameterBase, ParameterAntBullet, ParameterDdpg):
         ParameterDdpg.__init__(self)
 
         self.BATCH_SIZE = 64
+        self.ACTOR_LEARNING_RATE = 0.0002
         self.LEARNING_RATE = 0.001
         self.N_STEP = 1
         self.BUFFER_CAPACITY = 250_000
@@ -54,6 +56,7 @@ class ParameterAntBulletSac(ParameterBase, ParameterAntBullet, ParameterSac):
         ParameterSac.__init__(self)
 
         self.BATCH_SIZE = 64
+        self.ACTOR_LEARNING_RATE = 0.0002
         self.LEARNING_RATE = 0.001
         self.N_STEP = 1
         self.BUFFER_CAPACITY = 250_000
