@@ -183,5 +183,7 @@ class Agent:
         # p1 = -1.0 * ((mu_v - actions_v) ** 2) / (2.0 * var_v.clamp(min=1e-3))
         p2 = -0.5 * torch.log(2 * np.pi * var_v)
 
-        log_prob = (p1 + p2).sum(dim=-1, keepdim=True)
-        return log_prob
+        # log_prob = (p1 + p2).sum(dim=-1, keepdim=True)
+        # return log_prob
+
+        return p1 + p2
