@@ -1,6 +1,7 @@
 from a_configuration.b_base.parameter_base_comparison import ParameterComparisonBase
-from a_configuration.c_parameters.open_ai_gym.parameter_cartpole import ParameterCartPoleDqn, ParameterCartPoleReinforce, \
-    ParameterCartPoleA2c
+from a_configuration.c_parameters.open_ai_gym.parameter_cartpole import ParameterCartPoleDqn, \
+    ParameterCartPoleReinforce, \
+    ParameterCartPoleA2c, ParameterCartPoleDoubleDqn, ParameterCartPoleDuelingDqn
 
 
 class ParameterComparisonCartPoleDqn(ParameterComparisonBase):
@@ -13,6 +14,19 @@ class ParameterComparisonCartPoleDqn(ParameterComparisonBase):
             ParameterCartPoleDqn(),
             ParameterCartPoleDqn(),
             ParameterCartPoleDqn()
+        ]
+
+
+class ParameterComparisonCartPoleDqnTypes(ParameterComparisonBase):
+    def __init__(self):
+        ParameterComparisonBase.__init__(self)
+
+        self.ENV_NAME = "CartPole-v1"
+
+        self.AGENT_PARAMETERS = [
+            ParameterCartPoleDqn(),
+            ParameterCartPoleDoubleDqn(),
+            ParameterCartPoleDuelingDqn()
         ]
 
 

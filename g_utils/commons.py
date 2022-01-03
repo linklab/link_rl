@@ -223,9 +223,9 @@ def print_model_info(model):
 
 
 def print_space(observation_space, action_space, parameter):
-    item1 = "{0}: {1:,}".format("EPISODE_REWARD_AVG_SOLVED", parameter.EPISODE_REWARD_AVG_SOLVED)
-    item2 = "{0}: {1:,}".format("EPISODE_REWARD_STD_SOLVED", parameter.EPISODE_REWARD_STD_SOLVED)
-    print("{0:55} {1:55}".format(item1, item2), end="\n")
+    # item1 = "{0}: {1:,}".format("EPISODE_REWARD_AVG_SOLVED", parameter.EPISODE_REWARD_AVG_SOLVED)
+    # item2 = "{0}: {1:,}".format("EPISODE_REWARD_STD_SOLVED", parameter.EPISODE_REWARD_STD_SOLVED)
+    # print("{0:55} {1:55}".format(item1, item2), end="\n")
 
     observation_space_str = "OBSERVATION_SPACE: {0}, SHAPE: {1}".format(
         type(observation_space), observation_space.shape

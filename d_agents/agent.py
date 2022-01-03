@@ -78,6 +78,7 @@ class Agent:
         elif self.parameter.AGENT_TYPE == AgentType.DOUBLE_DQN:
             if len(self.buffer) >= self.parameter.MIN_BUFFER_SIZE_FOR_TRAIN:
                 self.train_double_dqn(training_steps_v=training_steps_v)
+                is_train_success_done = True
         elif self.parameter.AGENT_TYPE == AgentType.REINFORCE:
             if len(self.buffer) > 0:
                 self.train_reinforce()

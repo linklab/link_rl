@@ -21,7 +21,7 @@ class ParameterCartPoleDqn(
         self.MODEL = ParameterLinearModel(ModelType.SMALL_LINEAR)
 
 
-class ParameterCartPoleDdqn(
+class ParameterCartPoleDoubleDqn(
     ParameterBase, ParameterCartPole, ParameterDdqn
 ):
     def __init__(self):

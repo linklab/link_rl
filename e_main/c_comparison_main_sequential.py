@@ -20,7 +20,7 @@ device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 n_agents = len(parameter_c.AGENT_PARAMETERS)
 
 for agent_parameter in parameter_c.AGENT_PARAMETERS:
-    del agent_parameter.MAX_TRAINING_STEPS
+    #del agent_parameter.MAX_TRAINING_STEPS
     del agent_parameter.N_ACTORS
     del agent_parameter.N_EPISODES_FOR_MEAN_CALCULATION
     del agent_parameter.N_TEST_EPISODES

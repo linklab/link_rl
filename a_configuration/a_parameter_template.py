@@ -1,4 +1,4 @@
-from a_configuration.c_parameters.open_ai_gym.parameter_cartpole import ParameterCartPoleDqn, ParameterCartPoleDdqn, \
+from a_configuration.c_parameters.open_ai_gym.parameter_cartpole import ParameterCartPoleDqn, ParameterCartPoleDoubleDqn, \
     ParameterCartPoleDuelingDqn
 from a_configuration.c_parameters.open_ai_gym.parameter_cartpole import ParameterCartPoleReinforce
 from a_configuration.c_parameters.open_ai_gym.parameter_cartpole import ParameterCartPoleA2c
@@ -21,7 +21,7 @@ parameter_list = []
 parameter_cart_pole_dqn = ParameterCartPoleDqn()
 parameter_list.append(parameter_cart_pole_dqn)
 
-parameter_cart_pole_ddqn = ParameterCartPoleDdqn()
+parameter_cart_pole_ddqn = ParameterCartPoleDoubleDqn()
 parameter_list.append(parameter_cart_pole_ddqn)
 
 parameter_cart_pole_duelingdqn = ParameterCartPoleDuelingDqn()

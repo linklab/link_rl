@@ -45,3 +45,4 @@ class ParameterBase:
 
         self.DEVICE = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
+        self.SEED = None
