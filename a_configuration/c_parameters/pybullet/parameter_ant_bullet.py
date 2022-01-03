@@ -55,9 +55,12 @@ class ParameterAntBulletSac(ParameterBase, ParameterAntBullet, ParameterSac):
         ParameterAntBullet.__init__(self)
         ParameterSac.__init__(self)
 
-        self.BATCH_SIZE = 64
+        self.ALPHA_LEARNING_RATE = 0.000001
         self.ACTOR_LEARNING_RATE = 0.0002
         self.LEARNING_RATE = 0.001
+
+        self.BATCH_SIZE = 64
+
         self.N_STEP = 1
         self.BUFFER_CAPACITY = 250_000
         self.MIN_BUFFER_SIZE_FOR_TRAIN = self.BATCH_SIZE * 10
