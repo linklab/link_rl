@@ -38,6 +38,8 @@ class Agent:
             _, _, self.action_scale_factor = get_continuous_action_info(action_space)
             self.np_minus_ones = np.full(shape=action_space.shape, fill_value=-1.0)
             self.np_plus_ones = np.full(shape=action_space.shape, fill_value=1.0)
+            self.torch_minus_ones = torch.full(size=action_space.shape, fill_value=-1.0)
+            self.torch_plus_ones = torch.full(size=action_space.shape, fill_value=1.0)
         else:
             raise ValueError()
 

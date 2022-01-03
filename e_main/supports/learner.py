@@ -70,10 +70,13 @@ class Learner(mp.Process):
             actor_time_step += 1
             actions = self.agent.get_action(observations)
 
-            if self.agent.action_scale_factor is not None:
+            if isinstance(self.agent.action_space, Discrete):
+                scaled_actions = actions
+            elif isinstance(self.agent.action_space, Box):
+                assert self.agent.action_scale_factor
                 scaled_actions = actions * self.agent.action_scale_factor
             else:
-                scaled_actions = actions
+                raise ValueError()
 
             next_observations, rewards, dones, infos = self.train_env.step(scaled_actions)
 
@@ -284,7 +287,6 @@ class Learner(mp.Process):
                         raise ValueError()
                 else:
                     raise ValueError()
-
 
                 next_observation, reward, done, _ = self.test_env.step(scaled_action)
                 next_observation = np.expand_dims(next_observation, axis=0)

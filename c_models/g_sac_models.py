@@ -111,4 +111,4 @@ class ContinuousSacModel:
 
 
 if __name__ == "__main__":
-    a = SacCriticModel((4,), 1, 4, device=torch.device("cpu"), parameter=parameter)
+    a = SacCriticModel((4,), 1, 4, parameter=parameter)

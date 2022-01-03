@@ -59,12 +59,12 @@ class AgentSac(Agent):
         self.alpha = mp.Value('d', 0.0)
 
         if self.parameter.AUTOMATIC_ENTROPY_TEMPERATURE_TUNING:
-            # self.target_entropy = -8 for ant_bullet env.
+            # self.minimum_expected_entropy = -8 for ant_bullet env.
             # it is the desired minimum expected entropy
-            self.target_entropy = -1.0 * torch.prod(torch.Tensor(action_space.shape).to(self.parameter.DEVICE)).item()
+            self.minimum_expected_entropy = -1.0 * torch.prod(torch.Tensor(action_space.shape).to(self.parameter.DEVICE)).item()
             self.log_alpha = torch.zeros(1, requires_grad=True, device=self.parameter.DEVICE)
             self.alpha_optimizer = optim.Adam([self.log_alpha], lr=self.parameter.LEARNING_RATE)
-            self.alpha.value = self.log_alpha.exp() # 초기에는 무조건 1.0으로 시작함.
+            self.alpha.value = self.log_alpha.exp()  # 초기에는 무조건 1.0으로 시작함.
         else:
             self.alpha.value = self.parameter.DEFAULT_ALPHA
 
@@ -119,6 +119,7 @@ class AgentSac(Agent):
             next_mu_v, next_var_v = self.actor_model.pi(next_observations)
 
             next_actions_v = torch.normal(mean=next_mu_v, std=torch.sqrt(next_var_v))
+            next_actions_v = torch.clamp(next_actions_v, min=self.torch_minus_ones, max=self.torch_plus_ones)
             next_log_prob_v = self.calc_log_prob(next_mu_v, next_var_v, next_actions_v)
             # dist = Normal(loc=next_mu_v, scale=torch.sqrt(var_v))
             # next_actions_v = dist.sample()
@@ -169,7 +170,7 @@ class AgentSac(Agent):
 
             #  Alpha Training - BEGIN
             if self.parameter.AUTOMATIC_ENTROPY_TEMPERATURE_TUNING:
-                alpha_loss = -1.0 * (self.log_alpha * (re_parameterized_log_prob_v + self.target_entropy).detach()).mean()
+                alpha_loss = -1.0 * (self.log_alpha.exp() * (re_parameterized_log_prob_v + self.minimum_expected_entropy).detach()).mean()
 
                 self.alpha_optimizer.zero_grad()
                 alpha_loss.backward()

@@ -85,10 +85,13 @@ class LearnerComparison:
             actor_time_step += 1
             actions = self.agents[agent_idx].get_action(observations)
 
-            if self.agents[agent_idx].action_scale_factor is not None:
+            if isinstance(self.agents[agent_idx].action_space, Discrete):
+                scaled_actions = actions
+            elif isinstance(self.agents[agent_idx].action_space, Box):
+                assert self.agents[agent_idx].action_scale_factor
                 scaled_actions = actions * self.agents[agent_idx].action_scale_factor
             else:
-                scaled_actions = actions
+                raise ValueError()
 
             next_observations, rewards, dones, infos = self.train_envs_per_agent[agent_idx].step(scaled_actions)
 

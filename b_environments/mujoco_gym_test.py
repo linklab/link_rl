@@ -50,5 +50,6 @@ def main():
     # env = gym.make("Humanoid-v2");play(env, n_episodes=5)
     env = gym.make("HumanoidStandup-v2");play(env, n_episodes=5)
 
+
 if __name__ == "__main__":
     main()

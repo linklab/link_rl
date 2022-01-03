@@ -69,7 +69,7 @@ class ParameterCartPoleContinuousBulletSac(
         self.N_ACTORS = 1
         self.MAX_TRAINING_STEPS = 100_000
         self.CONSOLE_LOG_INTERVAL_TRAINING_STEPS = 100
-        self.MODEL = ParameterLinearModel(ModelType.MEDIUM_LINEAR)
+        self.MODEL = ParameterLinearModel(ModelType.SMALL_LINEAR)
 
 
 class ParameterCartPoleContinuousBulletDdpg(
