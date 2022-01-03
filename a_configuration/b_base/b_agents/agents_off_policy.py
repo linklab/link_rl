@@ -70,6 +70,8 @@ class ParameterSac(ParameterAgent):
 
         self.LAYER_NORM = True
 
-        self.ALPHA = 0.2
+        self.DEFAULT_ALPHA = 0.2
         self.TAU = 0.005
         self.POLICY_UPDATE_FREQUENCY_PER_TRAINING_STEP = 2
+
+        self.AUTOMATIC_ENTROPY_TEMPERATURE_TUNING = True

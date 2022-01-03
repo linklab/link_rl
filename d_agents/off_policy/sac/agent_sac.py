@@ -1,3 +1,6 @@
+# https://github.com/pranz24/pytorch-soft-actor-critic/blob/master/sac.py
+# https://github.com/BY571/Soft-Actor-Critic-and-Extensions/blob/master/SAC.py
+# PAPER: https://arxiv.org/abs/1812.05905
 import torch.optim as optim
 import numpy as np
 import torch
@@ -53,6 +56,18 @@ class AgentSac(Agent):
 
         self.training_steps = 0
 
+        self.alpha = mp.Value('d', 0.0)
+
+        if self.parameter.AUTOMATIC_ENTROPY_TEMPERATURE_TUNING:
+            # self.target_entropy = -8 for ant_bullet env.
+            # it is the desired minimum expected entropy
+            self.target_entropy = -1.0 * torch.prod(torch.Tensor(action_space.shape).to(self.parameter.DEVICE)).item()
+            self.log_alpha = torch.zeros(1, requires_grad=True, device=self.parameter.DEVICE)
+            self.alpha_optimizer = optim.Adam([self.log_alpha], lr=self.parameter.LEARNING_RATE)
+            self.alpha.value = self.log_alpha.exp() # 초기에는 무조건 1.0으로 시작함.
+        else:
+            self.alpha.value = self.parameter.DEFAULT_ALPHA
+
         self.last_critic_loss = mp.Value('d', 0.0)
         self.last_actor_objective = mp.Value('d', 0.0)
 
@@ -94,9 +109,9 @@ class AgentSac(Agent):
             batch_size=self.parameter.BATCH_SIZE
         )
 
-        ###################################
-        #  Critic (Value) 손실 산출 - BEGIN #
-        ###################################
+        ############################
+        #  Critic Training - BEGIN #
+        ############################
         if isinstance(self.action_space, Discrete):
             next_actions_v = None
             next_log_prob_v = None
@@ -113,7 +128,7 @@ class AgentSac(Agent):
 
         next_q1_v, next_q2_v = self.target_critic_model.q(next_observations, next_actions_v)
         next_values = torch.min(next_q1_v, next_q2_v)
-        next_values = next_values - self.parameter.ALPHA * next_log_prob_v
+        next_values = next_values - self.alpha.value * next_log_prob_v  # ALPHA!!!
         next_values[dones] = 0.0
         # td_target_values.shape: (32, 1)
         td_target_values = rewards + self.parameter.GAMMA ** self.parameter.N_STEP * next_values
@@ -129,19 +144,19 @@ class AgentSac(Agent):
         self.critic_optimizer.step()
 
         self.last_critic_loss.value = critic_loss.item()
-        ###################################
-        #  Critic (Value)  Loss 산출 - END #
-        ###################################
+        ##########################
+        #  Critic Training - END #
+        ##########################
 
-        ################################
-        #  Actor Objective 산출 - BEGIN #
-        ################################
+        ###########################
+        #  Actor Training - BEGIN #
+        ###########################
         if training_steps_v % self.parameter.POLICY_UPDATE_FREQUENCY_PER_TRAINING_STEP == 0:
             re_parameterized_action_v, re_parameterized_log_prob_v = self.sac_model.re_parameterization_trick_sample(
                 observations
             )
             q1_v, q2_v = self.critic_model.q(observations, re_parameterized_action_v)
-            objectives_v = torch.div(torch.add(q1_v, q2_v), 2.0) - self.parameter.ALPHA * re_parameterized_log_prob_v
+            objectives_v = torch.div(torch.add(q1_v, q2_v), 2.0) - self.alpha.value * re_parameterized_log_prob_v
             objectives_v = objectives_v.mean()
             loss_actor_v = -1.0 * objectives_v
 
@@ -151,9 +166,20 @@ class AgentSac(Agent):
             self.actor_optimizer.step()
 
             self.last_actor_objective.value = objectives_v.item()
-        ##############################
-        #  Actor Objective 산출 - END #
-        ##############################
+
+            #  Alpha Training - BEGIN
+            if self.parameter.AUTOMATIC_ENTROPY_TEMPERATURE_TUNING:
+                alpha_loss = -1.0 * (self.log_alpha * (re_parameterized_log_prob_v + self.target_entropy).detach()).mean()
+
+                self.alpha_optimizer.zero_grad()
+                alpha_loss.backward()
+                self.alpha_optimizer.step()
+
+                self.alpha.value = self.log_alpha.exp()
+            # Alpha Training - END
+        #########################
+        #  Actor Training - END #
+        #########################
 
         self.soft_synchronize_models(
             source_model=self.critic_model, target_model=self.target_critic_model, tau=self.parameter.TAU

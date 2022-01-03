@@ -283,8 +283,8 @@ def console_log(
             agent.last_critic_loss.value, agent.last_log_actor_objective.value
         )
     elif parameter.AGENT_TYPE == AgentType.SAC:
-        console_log += "critic_loss: {0:6.3f}, actor_objective: {1:6.3f}, ".format(
-            agent.last_critic_loss.value, agent.last_actor_objective.value
+        console_log += "critic_loss: {0:6.3f}, actor_objective: {1:6.3f}, alpha: {2:5.3f}".format(
+            agent.last_critic_loss.value, agent.last_actor_objective.value, agent.alpha.value
         )
     elif parameter.AGENT_TYPE == AgentType.DDPG:
         console_log += "critic_loss: {0:6.3f}, actor_loss: {1:6.3f}, ".format(
@@ -387,6 +387,7 @@ def wandb_log(learner, wandb_obj, parameter):
     elif parameter.AGENT_TYPE == AgentType.SAC:
         log_dict["Critic Loss"] = learner.agent.last_critic_loss.value
         log_dict["Last Actor Objective"] = learner.agent.last_actor_objective.value
+        log_dict["Alpha"] = learner.agent.alpha.value
     else:
         pass
 
