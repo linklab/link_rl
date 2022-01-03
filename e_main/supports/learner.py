@@ -73,7 +73,7 @@ class Learner(mp.Process):
             if isinstance(self.agent.action_space, Discrete):
                 scaled_actions = actions
             elif isinstance(self.agent.action_space, Box):
-                assert self.agent.action_scale_factor
+                assert self.agent.action_scale_factor is not None
                 scaled_actions = actions * self.agent.action_scale_factor
             else:
                 raise ValueError()

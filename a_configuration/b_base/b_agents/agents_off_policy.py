@@ -59,6 +59,7 @@ class ParameterSac(ParameterAgent):
 
         self.LEARNING_RATE = 0.001
         self.ACTOR_LEARNING_RATE = 0.0001
+        self.ALPHA_LEARNING_RATE = 0.0003
 
         self.BUFFER_CAPACITY = 10_000
         self.BATCH_SIZE = 64
