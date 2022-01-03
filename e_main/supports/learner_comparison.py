@@ -244,7 +244,12 @@ class LearnerComparison:
                 action = self.agents[agent_idx].get_action(observation, mode=AgentMode.TEST)
 
                 if isinstance(self.agents[agent_idx].action_space, Discrete):
-                    scaled_action = action[0]
+                    if action.ndim == 0:
+                        scaled_action = action
+                    elif action.ndim == 1:
+                        scaled_action = action[0]
+                    else:
+                        raise ValueError()
                 elif isinstance(self.agents[agent_idx].action_space, Box):
                     if action.ndim == 1:
                         if self.agents[agent_idx].action_scale_factor is not None:

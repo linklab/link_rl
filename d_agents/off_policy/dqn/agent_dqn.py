@@ -29,7 +29,7 @@ class AgentDqn(Agent):
         self.synchronize_models(source_model=self.q_net, target_model=self.target_q_net)
 
         self.optimizer = optim.Adam(
-            self.q_net.parameters(), lr=self.parameter.LEARNING_RATE
+            self.q_net.qnet_params, lr=self.parameter.LEARNING_RATE
         )
 
         self.epsilon_tracker = EpsilonTracker(
@@ -99,7 +99,7 @@ class AgentDqn(Agent):
 
         self.optimizer.zero_grad()
         q_net_loss.backward()
-        self.clip_model_parameter_grad_value(self.q_net.parameters())
+        self.clip_model_parameter_grad_value(self.q_net.qnet_params)
         self.optimizer.step()
 
         # sync

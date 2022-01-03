@@ -120,7 +120,6 @@ class Agent:
         torch.nn.utils.clip_grad_norm_(model_parameters, self.parameter.CLIP_GRADIENT_VALUE)
 
         grads_list = [p.grad.data.cpu().numpy().flatten() for p in model_parameters if p.grad is not None]
-
         if grads_list:
             grads = np.concatenate(grads_list)
             self.last_model_grad_l2.value = np.sqrt(np.mean(np.square(grads)))

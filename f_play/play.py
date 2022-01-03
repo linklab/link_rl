@@ -42,7 +42,12 @@ def play(env, agent, n_episodes):
             action = agent.get_action(observation, mode=AgentMode.PLAY)
 
             if isinstance(agent.action_space, Discrete):
-                scaled_action = action[0]
+                if action.ndim == 0:
+                    scaled_action = action
+                elif action.ndim == 1:
+                    scaled_action = action[0]
+                else:
+                    raise ValueError()
             elif isinstance(agent.action_space, Box):
                 if action.ndim == 1:
                     if agent.action_scale_factor is not None:
@@ -79,7 +84,7 @@ def main_play(n_episodes):
     observation_space, action_space = get_env_info(parameter)
     env = get_single_env(parameter)
 
-    agent = get_agent(observation_space, action_space, device, parameter)
+    agent = get_agent(observation_space, action_space, parameter)
 
     model_load(
         model=agent.model,

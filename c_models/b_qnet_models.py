@@ -17,20 +17,25 @@ class QNet(Model):
     ):
         super(QNet, self).__init__(observation_shape, n_out_actions, n_discrete_actions, parameter)
 
+        self.qnet_params = []
         if isinstance(self.parameter.MODEL, ParameterLinearModel):
             input_n_features = self.observation_shape[0]
             self.fc_layers = self.get_linear_layers(input_n_features=input_n_features)
+            self.qnet_params += list(self.fc_layers.parameters())
         elif isinstance(self.parameter.MODEL, ParameterConvolutionalModel):
             input_n_channels = self.observation_shape[0]
             self.conv_layers = self.get_conv_layers(input_n_channels=input_n_channels)
+            self.qnet_params += list(self.conv_layers.parameters())
             conv_out_flat_size = self._get_conv_out(self.conv_layers, observation_shape)
             self.fc_layers = self.get_linear_layers(input_n_features=conv_out_flat_size)
+            self.qnet_params += list(self.fc_layers.parameters())
         else:
             raise ValueError()
 
         self.fc_last = nn.Linear(
             self.parameter.MODEL.NEURONS_PER_FULLY_CONNECTED_LAYER[-1], self.n_discrete_actions
         )
+        self.qnet_params += list(self.fc_last.parameters())
 
         self.version = 0
 
@@ -59,24 +64,30 @@ class DuelingQNet(Model):
     ):
         super(DuelingQNet, self).__init__(observation_shape, n_out_actions, n_discrete_actions, parameter)
 
+        self.dueling_qnet_params = []
         if isinstance(self.parameter.MODEL, ParameterLinearModel):
             input_n_features = self.observation_shape[0]
             self.fc_layers = self.get_linear_layers(input_n_features=input_n_features)
+            self.dueling_qnet_params += list(self.fc_layers.parameters())
         elif isinstance(self.parameter.MODEL, ParameterConvolutionalModel):
             input_n_channels = self.observation_shape[0]
             self.conv_layers = self.get_conv_layers(input_n_channels=input_n_channels)
+            self.dueling_qnet_params += list(self.conv_layers.parameters())
             conv_out_flat_size = self._get_conv_out(self.conv_layers, observation_shape)
             self.fc_layers = self.get_linear_layers(input_n_features=conv_out_flat_size)
+            self.dueling_qnet_params += list(self.fc_layers.parameters())
         else:
             raise ValueError()
 
         self.fc_last_adv = nn.Linear(
             self.parameter.MODEL.NEURONS_PER_FULLY_CONNECTED_LAYER[-1], self.n_discrete_actions
         )
+        self.dueling_qnet_params += list(self.fc_last_adv.parameters())
 
         self.fc_last_val = nn.Linear(
             self.parameter.MODEL.NEURONS_PER_FULLY_CONNECTED_LAYER[-1], 1
         )
+        self.dueling_qnet_params += list(self.fc_last_val.parameters())
 
         self.version = 0
 

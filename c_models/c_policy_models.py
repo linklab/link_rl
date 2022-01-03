@@ -16,6 +16,7 @@ class PolicyModel(Model):
             self, observation_shape: Tuple[int], n_out_actions: int, n_discrete_actions=None, parameter=None
     ):
         super(PolicyModel, self).__init__(observation_shape, n_out_actions, n_discrete_actions, parameter)
+
         self.actor_params = []
         if isinstance(self.parameter.MODEL, ParameterLinearModel):
             input_n_features = self.observation_shape[0]

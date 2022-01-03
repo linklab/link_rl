@@ -263,7 +263,12 @@ class Learner(mp.Process):
                 action = self.agent.get_action(observation, mode=AgentMode.TEST)
 
                 if isinstance(self.agent.action_space, Discrete):
-                    scaled_action = action[0]
+                    if action.ndim == 0:
+                        scaled_action = action
+                    elif action.ndim == 1:
+                        scaled_action = action[0]
+                    else:
+                        raise ValueError()
                 elif isinstance(self.agent.action_space, Box):
                     if action.ndim == 1:
                         if self.agent.action_scale_factor is not None:
