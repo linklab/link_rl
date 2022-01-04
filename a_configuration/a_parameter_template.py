@@ -1,3 +1,4 @@
+from a_configuration.c_parameters.mujoco.parameter_halfcheetah_mujoco import ParameterHalfCheetahMujocoSac
 from a_configuration.c_parameters.mujoco.parameter_hopper_mujoco import ParameterHopperMujocoSac
 from a_configuration.c_parameters.mujoco.parameter_walker2d_mujoco import ParameterWalker2dMujocoSac
 from a_configuration.c_parameters.open_ai_gym.parameter_cartpole import ParameterCartPoleDqn, ParameterCartPoleDoubleDqn, \
@@ -107,6 +108,13 @@ parameter_list.append(parameter_hopper_mujoco_sac)
 #######################
 parameter_walker2d_mujoco_sac = ParameterWalker2dMujocoSac()
 parameter_list.append(parameter_walker2d_mujoco_sac)
+
+
+##########################
+### HALFCHEETAH_MUJOCO ###
+##########################
+parameter_halfcheetah_mujoco_sac = ParameterHalfCheetahMujocoSac()
+parameter_list.append(parameter_halfcheetah_mujoco_sac)
 
 ###########################################################
 for parameter in parameter_list:
