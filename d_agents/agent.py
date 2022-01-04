@@ -32,6 +32,9 @@ class Agent:
             self.action_scale_factor = None
             self.np_minus_ones = None
             self.np_plus_ones = None
+
+            self.action_scale = None
+            self.action_bias = None
         elif isinstance(action_space, Box):
             self.n_discrete_actions = None
             self.n_out_actions = action_space.shape[0]
@@ -40,6 +43,9 @@ class Agent:
             self.np_plus_ones = np.full(shape=action_space.shape, fill_value=1.0)
             self.torch_minus_ones = torch.full(size=action_space.shape, fill_value=-1.0).to(self.parameter.DEVICE)
             self.torch_plus_ones = torch.full(size=action_space.shape, fill_value=1.0).to(self.parameter.DEVICE)
+
+            self.action_scale = torch.FloatTensor((action_space.high - action_space.low) / 2.)
+            self.action_bias = torch.FloatTensor((action_space.high + action_space.low) / 2.)
         else:
             raise ValueError()
 
@@ -182,7 +188,7 @@ class Agent:
         target_model.load_state_dict(target_model_state)
 
     def calc_log_prob(self, mu_v, var_v, actions_v):
-        p1 = -0.5 * ((actions_v - mu_v) ** 2) / (var_v + 1e-06)
+        p1 = -0.5 * ((actions_v - mu_v) ** 2) / (var_v.clamp(min=1e-03))
         # p1 = -1.0 * ((mu_v - actions_v) ** 2) / (2.0 * var_v.clamp(min=1e-3))
         p2 = -0.5 * torch.log(2 * np.pi * var_v)
 

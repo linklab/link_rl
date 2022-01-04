@@ -97,9 +97,9 @@ class ContinuousSacModel:
         ) .to(self.parameter.DEVICE)
 
     def re_parameterization_trick_sample(self, obs):
-        mu_v, std_v = self.actor_model.pi(obs)
+        mu_v, var_v = self.actor_model.pi(obs)
 
-        dist = Normal(loc=mu_v, scale=std_v)
+        dist = Normal(loc=mu_v, scale=torch.sqrt(var_v))
         dist = TransformedDistribution(base_distribution=dist, transforms=TanhTransform(cache_size=1))
 
         action_v = dist.rsample()  # for reparameterization trick (mean + std * N(0,1))

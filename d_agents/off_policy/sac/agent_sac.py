@@ -1,6 +1,7 @@
 # https://github.com/pranz24/pytorch-soft-actor-critic/blob/master/sac.py
 # https://github.com/BY571/Soft-Actor-Critic-and-Extensions/blob/master/SAC.py
 # PAPER: https://arxiv.org/abs/1812.05905
+# https://www.pair.toronto.edu/csc2621-w20/assets/slides/lec4_sac.pdf
 import torch.optim as optim
 import numpy as np
 import torch
