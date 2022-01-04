@@ -26,8 +26,8 @@ class ParameterAntMujocoSac(ParameterBase, ParameterAntMujoco, ParameterSac):
         self.TEST_INTERVAL_TRAINING_STEPS = 5_000
 
         self.MODEL = ParameterLinearModel(ModelType.SMALL_LINEAR)
-        self.MODEL.NEURONS_PER_FULLY_CONNECTED_LAYER = [256, 256]
+        # self.MODEL.NEURONS_PER_FULLY_CONNECTED_LAYER = [256, 256]
 
         self.LAYER_ACTIVATION = nn.ReLU()
 
-        self.ALPHA_LEARNING_RATE = 0.00003
+        self.ALPHA_LEARNING_RATE = 0.00001
