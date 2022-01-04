@@ -96,32 +96,32 @@ class ContinuousSacModel:
             parameter=self.parameter
         ) .to(self.parameter.DEVICE)
 
-    # def re_parameterization_trick_sample(self, obs):
-    #     mu_v, var_v = self.actor_model.pi(obs)
-    #
-    #     dist = Normal(loc=mu_v, scale=torch.sqrt(var_v))
-    #     dist = TransformedDistribution(base_distribution=dist, transforms=TanhTransform(cache_size=1))
-    #
-    #     action_v = dist.rsample()  # for reparameterization trick (mean + std * N(0,1))
-    #     #log_probs = dist.log_prob(action_v).sum(dim=-1, keepdim=True)
-    #     log_probs = dist.log_prob(action_v).sum(dim=-1, keepdim=True)
-    #     # action_v.shape: [128, 1]
-    #     # log_prob.shape: [128, 1]
-    #     return action_v, log_probs
-
-    # https://github.com/pranz24/pytorch-soft-actor-critic/blob/398595e0d9dca98b7db78c7f2f939c969431871a/model.py#L64
     def re_parameterization_trick_sample(self, obs):
         mu_v, var_v = self.actor_model.pi(obs)
-        normal = Normal(loc=mu_v, scale=torch.sqrt(var_v))
-        action_v = normal.rsample()  # for reparameterization trick (mean + std * N(0,1))
-        action_v = torch.tanh(action_v)
 
-        log_prob = normal.log_prob(action_v)
-        # Enforcing Action Bound
-        epsilon = 1e-06
-        log_prob = log_prob - torch.log(1.0 - action_v.pow(2) + epsilon)
-        log_prob = log_prob.sum(dim=-1, keepdim=True)
-        return action_v, log_prob
+        dist = Normal(loc=mu_v, scale=torch.sqrt(var_v))
+        dist = TransformedDistribution(base_distribution=dist, transforms=TanhTransform(cache_size=1))
+
+        action_v = dist.rsample()  # for reparameterization trick (mean + std * N(0,1))
+        #log_probs = dist.log_prob(action_v).sum(dim=-1, keepdim=True)
+        log_probs = dist.log_prob(action_v).sum(dim=-1, keepdim=True)
+        # action_v.shape: [128, 1]
+        # log_prob.shape: [128, 1]
+        return action_v, log_probs
+
+    # https://github.com/pranz24/pytorch-soft-actor-critic/blob/398595e0d9dca98b7db78c7f2f939c969431871a/model.py#L64
+    # def re_parameterization_trick_sample(self, obs):
+    #     mu_v, var_v = self.actor_model.pi(obs)
+    #     normal = Normal(loc=mu_v, scale=torch.sqrt(var_v))
+    #     action_v = normal.rsample()  # for reparameterization trick (mean + std * N(0,1))
+    #     action_v = torch.tanh(action_v)
+    #
+    #     log_prob = normal.log_prob(action_v)
+    #     # Enforcing Action Bound
+    #     epsilon = 1e-06
+    #     log_prob = log_prob - torch.log(1.0 - action_v.pow(2) + epsilon)
+    #     log_prob = log_prob.sum(dim=-1, keepdim=True)
+    #     return action_v, log_prob
 
 
 if __name__ == "__main__":
