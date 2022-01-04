@@ -76,3 +76,4 @@ class ParameterSac(ParameterAgent):
         self.POLICY_UPDATE_FREQUENCY_PER_TRAINING_STEP = 2
 
         self.AUTOMATIC_ENTROPY_TEMPERATURE_TUNING = True
+        self.MIN_ALPHA = 0.1

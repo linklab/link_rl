@@ -57,11 +57,14 @@ class AgentSac(Agent):
         self.training_steps = 0
 
         self.alpha = mp.Value('d', 0.0)
+        self.min_alpha = torch.tensor(self.parameter.MIN_ALPHA, device=self.parameter.DEVICE)
 
         if self.parameter.AUTOMATIC_ENTROPY_TEMPERATURE_TUNING:
             # self.minimum_expected_entropy = -8 for ant_bullet env.
             # it is the desired minimum expected entropy
-            self.minimum_expected_entropy = -1.0 * torch.prod(torch.Tensor(action_space.shape).to(self.parameter.DEVICE)).item()
+            self.minimum_expected_entropy = -1.0 * torch.prod(
+                torch.Tensor(action_space.shape, device=self.parameter.DEVICE)
+            ).item()
             self.log_alpha = torch.zeros(1, requires_grad=True, device=self.parameter.DEVICE)
             self.alpha_optimizer = optim.Adam([self.log_alpha], lr=self.parameter.ALPHA_LEARNING_RATE)
             self.alpha.value = self.log_alpha.exp()  # 초기에는 무조건 1.0으로 시작함.
@@ -175,8 +178,7 @@ class AgentSac(Agent):
                 self.alpha_optimizer.zero_grad()
                 alpha_loss.backward()
                 self.alpha_optimizer.step()
-
-                self.alpha.value = self.log_alpha.exp()
+                self.alpha.value = torch.max(self.log_alpha.exp(), self.min_alpha)
             # Alpha Training - END
         #########################
         #  Actor Training - END #
