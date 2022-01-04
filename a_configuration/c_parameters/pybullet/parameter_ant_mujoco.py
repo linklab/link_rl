@@ -29,6 +29,7 @@ class ParameterAntMujocoSac(ParameterBase, ParameterAntMujoco, ParameterSac):
         self.MODEL.NEURONS_PER_FULLY_CONNECTED_LAYER = [256, 256]
 
         self.LAYER_ACTIVATION = nn.ReLU()
+        self.LAYER_NORM = False
 
         self.ALPHA_LEARNING_RATE = 0.00001
 
