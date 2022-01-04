@@ -116,7 +116,18 @@ git commit -m "Apply .gitignore"
 - http://aodis.egloos.com/5964233
 
 
-### 10. Mujoco 설치 및 활용법
+### 10. Mujoco 설치 및 활용법기
+- ubuntu
+  - https://github.com/openai/mujoco-py에 접속하여 mujoco version 2.1 binaries를 다운받아 '~/.mujoco/mujoco210' 경로에 압축 해제
+  - pip3 install free-mujoco-py 
+  - sudo apt install libosmesa6-dev
+  - sudo apt install patchelf
+    **위의 두 패키지가 설치 안 될 경우**
+    - sudo nano /etc/apt/sources.list
+    - deb http://us.archive.ubuntu.com/ubuntu/ xenial main universe
+    - deb-src http://us.archive.ubuntu.com/ubuntu/ xenial main universe
+    - sources.list를 열어서 위의 두 라인 추가하여 다시 패키지 설치
+  - b_environment/mujoco_gym_test.py 실행하여서 잘 설치 됐는지 확인  
 
 
 ### 11. Unity ML-Agent 설치 및 활용법
