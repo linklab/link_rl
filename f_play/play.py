@@ -28,7 +28,9 @@ def play(env, agent, n_episodes):
         episode_reward = 0  # cumulative_reward
 
         # Environment 초기화와 변수 초기화
-        if parameter.ENV_NAME in ["AntBulletEnv-v0", "CartPoleContinuousBulletEnv-v0", "CartPoleBulletEnv-v1"]:
+        if parameter.ENV_NAME in [
+            "AntBulletEnv-v0", "CartPoleContinuousBulletEnv-v0", "CartPoleBulletEnv-v1", "Hopper-v2", "Ant-v2"
+        ]:
             env.render()
             observation = env.reset()
         else:
