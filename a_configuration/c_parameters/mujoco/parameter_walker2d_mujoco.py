@@ -7,7 +7,7 @@ from a_configuration.b_base.parameter_base import ParameterBase
 from g_utils.types import ModelType
 from torch import nn
 
-class ParameterHopperMujocoSac(ParameterBase, ParameterWalker2dMujoco, ParameterSac):
+class ParameterWalker2dMujocoSac(ParameterBase, ParameterWalker2dMujoco, ParameterSac):
     def __init__(self):
         ParameterBase.__init__(self)
         ParameterWalker2dMujoco.__init__(self)

@@ -1,4 +1,5 @@
 from a_configuration.c_parameters.mujoco.parameter_hopper_mujoco import ParameterHopperMujocoSac
+from a_configuration.c_parameters.mujoco.parameter_walker2d_mujoco import ParameterWalker2dMujocoSac
 from a_configuration.c_parameters.open_ai_gym.parameter_cartpole import ParameterCartPoleDqn, ParameterCartPoleDoubleDqn, \
     ParameterCartPoleDuelingDqn
 from a_configuration.c_parameters.open_ai_gym.parameter_cartpole import ParameterCartPoleReinforce
@@ -99,6 +100,13 @@ parameter_list.append(parameter_ant_mujoco_sac)
 #####################
 parameter_hopper_mujoco_sac = ParameterHopperMujocoSac()
 parameter_list.append(parameter_hopper_mujoco_sac)
+
+
+#######################
+### WALKER2d_MUJOCO ###
+#######################
+parameter_walker2d_mujoco_sac = ParameterWalker2dMujocoSac()
+parameter_list.append(parameter_walker2d_mujoco_sac)
 
 ###########################################################
 for parameter in parameter_list:
