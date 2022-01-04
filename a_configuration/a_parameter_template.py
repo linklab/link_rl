@@ -1,3 +1,4 @@
+from a_configuration.c_parameters.mujoco.parameter_hopper_mujoco import ParameterHopperMujocoSac
 from a_configuration.c_parameters.open_ai_gym.parameter_cartpole import ParameterCartPoleDqn, ParameterCartPoleDoubleDqn, \
     ParameterCartPoleDuelingDqn
 from a_configuration.c_parameters.open_ai_gym.parameter_cartpole import ParameterCartPoleReinforce
@@ -6,7 +7,7 @@ from a_configuration.c_parameters.open_ai_gym.parameter_lunar_lander import Para
     ParameterLunarLanderA2c, ParameterLunarLanderContinuousDdpg, ParameterLunarLanderContinuousSac
 from a_configuration.c_parameters.open_ai_gym.parameter_pong import ParameterPongDqn
 from a_configuration.c_parameters.open_ai_gym.parameter_pong import ParameterPongA2c
-from a_configuration.c_parameters.pybullet.parameter_ant_mujoco import ParameterAntMujocoSac
+from a_configuration.c_parameters.mujoco.parameter_ant_mujoco import ParameterAntMujocoSac
 
 from a_configuration.c_parameters.pybullet.parameter_cartpole_bullet import ParameterCartPoleBulletDqn, \
     ParameterCartPoleContinuousBulletA2c, ParameterCartPoleContinuousBulletSac, ParameterCartPoleContinuousBulletDdpg
@@ -90,7 +91,14 @@ parameter_list.append(parameter_pong_a2c)
 ### ANT_MUJOCO ###
 ##################
 parameter_ant_mujoco_sac = ParameterAntMujocoSac()
-parameter_list.append(parameter_pong_a2c)
+parameter_list.append(parameter_ant_mujoco_sac)
+
+
+#####################
+### HOPPER_MUJOCO ###
+#####################
+parameter_hopper_mujoco_sac = ParameterHopperMujocoSac()
+parameter_list.append(parameter_hopper_mujoco_sac)
 
 ###########################################################
 for parameter in parameter_list:
