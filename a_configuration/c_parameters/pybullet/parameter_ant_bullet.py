@@ -55,7 +55,7 @@ class ParameterAntBulletSac(ParameterBase, ParameterAntBullet, ParameterSac):
         ParameterAntBullet.__init__(self)
         ParameterSac.__init__(self)
 
-        self.ALPHA_LEARNING_RATE = 0.00001
+        self.ALPHA_LEARNING_RATE = 0.0003
         self.ACTOR_LEARNING_RATE = 0.0002
         self.LEARNING_RATE = 0.001
 
