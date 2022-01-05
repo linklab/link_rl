@@ -1,4 +1,5 @@
-from a_configuration.b_base.a_environments.pybullet.gym_mujoco import ParameterAntMujoco
+from a_configuration.b_base.a_environments.pybullet.gym_mujoco import ParameterAntMujoco, ParameterHopperMujoco, \
+    ParameterWalker2dMujoco, ParameterHalfCheetahMujoco
 from a_configuration.b_base.a_environments.pybullet.gym_pybullet import ParameterAntBullet
 from a_configuration.b_base.b_agents.agents_off_policy import ParameterSac
 from a_configuration.b_base.c_models.linear_models import ParameterLinearModel
@@ -6,10 +7,10 @@ from a_configuration.b_base.parameter_base import ParameterBase
 from g_utils.types import ModelType
 from torch import nn
 
-class ParameterAntMujocoSac(ParameterBase, ParameterAntMujoco, ParameterSac):
+class ParameterHalfCheetahMujocoSac(ParameterBase, ParameterHalfCheetahMujoco, ParameterSac):
     def __init__(self):
         ParameterBase.__init__(self)
-        ParameterAntMujoco.__init__(self)
+        ParameterHalfCheetahMujoco.__init__(self)
         ParameterSac.__init__(self)
 
         self.BATCH_SIZE = 256
@@ -29,6 +30,7 @@ class ParameterAntMujocoSac(ParameterBase, ParameterAntMujoco, ParameterSac):
         self.MODEL.NEURONS_PER_FULLY_CONNECTED_LAYER = [256, 256]
 
         self.LAYER_ACTIVATION = nn.ReLU()
+        self.LAYER_NORM = False
 
         self.ALPHA_LEARNING_RATE = 0.00001
 
