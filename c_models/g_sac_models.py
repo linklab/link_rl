@@ -9,7 +9,6 @@ from c_models.a_models import Model
 from c_models.c_policy_models import DiscreteActorModel, ContinuousActorModel
 from torch.distributions import Normal, TanhTransform, TransformedDistribution
 from e_main.parameter import parameter
-from gym.spaces import Discrete, Box
 
 
 class SacCriticModel(Model):
