@@ -15,6 +15,7 @@ from a_configuration.c_parameters.pybullet.parameter_cartpole_bullet import Para
     ParameterCartPoleContinuousBulletA2c, ParameterCartPoleContinuousBulletSac, ParameterCartPoleContinuousBulletDdpg
 from a_configuration.c_parameters.pybullet.parameter_ant_bullet import ParameterAntBulletA2c, ParameterAntBulletSac
 from a_configuration.c_parameters.pybullet.parameter_ant_bullet import ParameterAntBulletDdpg
+from a_configuration.c_parameters.pybullet.parameter_hopper_bullet import ParameterHopperBulletSac
 from g_utils.commons import print_basic_info
 
 parameter_list = []
@@ -78,6 +79,12 @@ parameter_list.append(parameter_ant_bullet_ddpg)
 
 parameter_ant_bullet_sac = ParameterAntBulletSac()
 parameter_list.append(parameter_ant_bullet_sac)
+
+#########################
+##    HOPPER_BULLET    ##
+#########################
+parameter_hopper_bullet_sac = ParameterHopperBulletSac()
+parameter_list.append(parameter_hopper_bullet_sac)
 
 ##########
 ## PONG ##

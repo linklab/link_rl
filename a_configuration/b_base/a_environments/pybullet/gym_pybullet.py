@@ -24,3 +24,11 @@ class ParameterAntBullet:
         self.EPISODE_REWARD_AVG_SOLVED = 2_000
         self.EPISODE_REWARD_STD_SOLVED = 100
         self.TEST_INTERVAL_TRAINING_STEPS = 5_000
+
+
+class ParameterHopperBullet:
+    def __init__(self):
+        self.ENV_NAME = "HopperBulletEnv-v0"
+        self.EPISODE_REWARD_AVG_SOLVED = 2_000
+        self.EPISODE_REWARD_STD_SOLVED = 100
+        self.TEST_INTERVAL_TRAINING_STEPS = 5_000
