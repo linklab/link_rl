@@ -62,25 +62,16 @@ class AgentDqn(Agent):
         return action
 
     def train_dqn(self, training_steps_v):
-        # observations.shape: torch.Size([32, 4]),
-        # actions.shape: torch.Size([32, 1]),
-        # next_observations.shape: torch.Size([32, 4]),
-        # rewards.shape: torch.Size([32, 1]),
-        # dones.shape: torch.Size([32])
-        observations, actions, next_observations, rewards, dones = self.buffer.sample(
-            batch_size=self.parameter.BATCH_SIZE
-        )
-
         # state_action_values.shape: torch.Size([32, 1])
-        state_action_values = self.q_net(observations).gather(dim=1, index=actions)
+        state_action_values = self.q_net(self.observations).gather(dim=1, index=self.actions)
 
         with torch.no_grad():
             # next_state_values.shape: torch.Size([32, 1])
-            next_q_v = self.target_q_net(next_observations).max(dim=1, keepdim=True).values
-            next_q_v[dones] = 0.0
+            next_q_v = self.target_q_net(self.next_observations).max(dim=1, keepdim=True).values
+            next_q_v[self.dones] = 0.0
 
             # target_state_action_values.shape: torch.Size([32, 1])
-            target_state_action_values = rewards + self.parameter.GAMMA ** self.parameter.N_STEP * next_q_v
+            target_state_action_values = self.rewards + self.parameter.GAMMA ** self.parameter.N_STEP * next_q_v
 
         # loss is just scalar torch value
         q_net_loss = F.mse_loss(state_action_values, target_state_action_values.detach())

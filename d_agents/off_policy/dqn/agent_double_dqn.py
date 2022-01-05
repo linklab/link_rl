@@ -9,26 +9,17 @@ class AgentDoubleDqn(AgentDqn):
         super(AgentDoubleDqn, self).__init__(observation_space, action_space, parameter)
 
     def train_double_dqn(self, training_steps_v):
-        # observations.shape: torch.Size([32, 4]),
-        # actions.shape: torch.Size([32, 1]),
-        # next_observations.shape: torch.Size([32, 4]),
-        # rewards.shape: torch.Size([32, 1]),
-        # dones.shape: torch.Size([32])
-        observations, actions, next_observations, rewards, dones = self.buffer.sample(
-            batch_size=self.parameter.BATCH_SIZE
-        )
-
         # state_action_values.shape: torch.Size([32, 1])
-        state_action_values = self.q_net(observations).gather(dim=-1, index=actions)
+        state_action_values = self.q_net(self.observations).gather(dim=-1, index=self.actions)
 
         with torch.no_grad():
-            target_argmax_action = torch.argmax(self.target_q_net(next_observations), dim=-1, keepdim=True)
-            next_q_values = self.q_net(next_observations).gather(dim=-1, index=target_argmax_action)
-            next_q_values[dones] = 0.0
+            target_argmax_action = torch.argmax(self.target_q_net(self.next_observations), dim=-1, keepdim=True)
+            next_q_values = self.q_net(self.next_observations).gather(dim=-1, index=target_argmax_action)
+            next_q_values[self.dones] = 0.0
             next_q_values = next_q_values.detach()
 
             # target_state_action_values.shape: torch.Size([32, 1])
-            target_q_values = rewards + self.parameter.GAMMA ** self.parameter.N_STEP * next_q_values
+            target_q_values = self.rewards + self.parameter.GAMMA ** self.parameter.N_STEP * next_q_values
 
         # loss is just scalar torch value
         q_net_loss = F.mse_loss(state_action_values, target_q_values)

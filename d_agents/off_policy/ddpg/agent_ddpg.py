@@ -80,20 +80,11 @@ class AgentDdpg(Agent):
             raise ValueError()
 
     def train_ddpg(self):
-        batch = self.buffer.sample(self.parameter.BATCH_SIZE)
-
-        # observations.shape: torch.Size([32, 4]),
-        # actions.shape: torch.Size([32, 1]),
-        # next_observations.shape: torch.Size([32, 4]),
-        # rewards.shape: torch.Size([32, 1]),
-        # dones.shape: torch.Size([32])
-        observations, actions, next_observations, rewards, dones = batch
-
         #######################
         # train actor - BEGIN #
         #######################
-        mu_v = self.actor_model.pi(observations)
-        q_v = self.critic_model.q(observations, mu_v)
+        mu_v = self.actor_model.pi(self.observations)
+        q_v = self.critic_model.q(self.observations, mu_v)
         actor_loss = -1.0 * q_v.mean()
 
         self.actor_optimizer.zero_grad()
@@ -108,12 +99,12 @@ class AgentDdpg(Agent):
         # train critic - BEGIN #
         ########################
         with torch.no_grad():
-            next_mu_v = self.target_actor_model.pi(next_observations)
-            next_q_v = self.target_critic_model.q(next_observations, next_mu_v)
-            next_q_v[dones] = 0.0
-            target_q_v = rewards + self.parameter.GAMMA ** self.parameter.N_STEP * next_q_v
+            next_mu_v = self.target_actor_model.pi(self.next_observations)
+            next_q_v = self.target_critic_model.q(self.next_observations, next_mu_v)
+            next_q_v[self.dones] = 0.0
+            target_q_v = self.rewards + self.parameter.GAMMA ** self.parameter.N_STEP * next_q_v
 
-        q_v = self.critic_model.q(observations, actions)
+        q_v = self.critic_model.q(self.observations, self.actions)
 
         critic_loss = F.mse_loss(q_v, target_q_v.detach())
 

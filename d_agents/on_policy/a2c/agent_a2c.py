@@ -72,28 +72,18 @@ class AgentA2c(Agent):
             raise ValueError()
 
     def train_a2c(self):
-        # observations.shape: torch.Size([32, 4, 84, 84]),
-        # actions.shape: torch.Size([32, 1]),
-        # next_observations.shape: torch.Size([32, 4, 84, 84]),
-        # rewards.shape: torch.Size([32, 1]),
-        # dones.shape: torch.Size([32])
-
-        observations, actions, next_observations, rewards, dones = self.buffer.sample(
-            batch_size=self.parameter.BATCH_SIZE
-        )
-
         ###################################
         #  Critic (Value) 손실 산출 - BEGIN #
         ###################################
         # next_values.shape: (32, 1)
-        next_values = self.critic_model.v(next_observations)
-        next_values[dones] = 0.0
+        next_values = self.critic_model.v(self.next_observations)
+        next_values[self.dones] = 0.0
 
         # td_target_values.shape: (32, 1)
-        td_target_values = rewards + self.parameter.GAMMA ** self.parameter.N_STEP * next_values
+        td_target_values = self.rewards + self.parameter.GAMMA ** self.parameter.N_STEP * next_values
 
         # values.shape: (32, 1)
-        values = self.critic_model.v(observations)
+        values = self.critic_model.v(self.observations)
         # loss_critic.shape: (,) <--  값 1개
         critic_loss = F.mse_loss(td_target_values.detach(), values)
 
@@ -112,19 +102,19 @@ class AgentA2c(Agent):
         advantages = (q_values - values).detach()
 
         if isinstance(self.action_space, Discrete):
-            action_probs = self.actor_model.pi(observations)
+            action_probs = self.actor_model.pi(self.observations)
             dist = Categorical(probs=action_probs)
 
             # actions.shape: (32, 1)
             # advantage.shape: (32, 1)
             # dist.log_prob(value=actions.squeeze(-1)).shape: (32,)
             # criticized_log_pi_action_v.shape: (32,)
-            criticized_log_pi_action_v = dist.log_prob(value=actions.squeeze(-1)) * advantages.squeeze(-1)
+            criticized_log_pi_action_v = dist.log_prob(value=self.actions.squeeze(-1)) * advantages.squeeze(-1)
             entropy = None
         elif isinstance(self.action_space, Box):
-            mu_v, var_v = self.actor_model.pi(observations)
+            mu_v, var_v = self.actor_model.pi(self.observations)
 
-            criticized_log_pi_action_v = self.calc_log_prob(mu_v, var_v, actions) * advantages
+            criticized_log_pi_action_v = self.calc_log_prob(mu_v, var_v, self.actions) * advantages
             entropy = 0.5 * (torch.log(2.0 * np.pi * var_v) + 1.0)
 
             # dist = Normal(loc=mu_v, scale=torch.sqrt(var_v))
