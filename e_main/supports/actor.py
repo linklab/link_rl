@@ -93,8 +93,8 @@ class Actor(mp.Process):
             n_step_reward = n_step_transition.reward + \
                             parameter.GAMMA * n_step_reward * \
                             (0.0 if n_step_transition.done else 1.0)
-            if n_step_transition.done:
-                break
+            # if n_step_transition.done:
+            #     break
 
         info["actor_id"] = actor_id
         info["env_id"] = env_id
