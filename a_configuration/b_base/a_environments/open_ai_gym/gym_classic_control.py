@@ -1,4 +1,8 @@
-class ParameterCartPole:
+class ParameterGymClassicControl:
+    pass
+
+
+class ParameterCartPole(ParameterGymClassicControl):
     def __init__(self):
         self.ENV_NAME = "CartPole-v1"
         self.EPISODE_REWARD_AVG_SOLVED = 450

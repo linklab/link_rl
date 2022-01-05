@@ -1,4 +1,8 @@
-class ParameterLunarLander:
+class ParameterGymBox2D:
+    pass
+
+
+class ParameterLunarLander(ParameterGymBox2D):
     def __init__(self):
         self.ENV_NAME = "LunarLander-v2"
         self.EPISODE_REWARD_AVG_SOLVED = 190
@@ -6,7 +10,7 @@ class ParameterLunarLander:
         self.TEST_INTERVAL_TRAINING_STEPS = 1024
 
 
-class ParameterLunarLanderContinuous:
+class ParameterLunarLanderContinuous(ParameterGymBox2D):
     def __init__(self):
         self.ENV_NAME = "LunarLanderContinuous-v2"
         self.EPISODE_REWARD_AVG_SOLVED = 190

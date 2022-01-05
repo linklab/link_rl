@@ -1,10 +1,10 @@
 from a_configuration.b_base.a_environments.pybullet.gym_mujoco import ParameterAntMujoco
-from a_configuration.b_base.a_environments.pybullet.gym_pybullet import ParameterAntBullet
 from a_configuration.b_base.b_agents.agents_off_policy import ParameterSac
 from a_configuration.b_base.c_models.linear_models import ParameterLinearModel
 from a_configuration.b_base.parameter_base import ParameterBase
 from g_utils.types import ModelType
 from torch import nn
+
 
 class ParameterAntMujocoSac(ParameterBase, ParameterAntMujoco, ParameterSac):
     def __init__(self):

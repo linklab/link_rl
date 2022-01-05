@@ -1,4 +1,8 @@
-class ParameterAntMujoco:
+class ParameterMujoco:
+    pass
+
+
+class ParameterAntMujoco(ParameterMujoco):
     def __init__(self):
         self.ENV_NAME = "Ant-v2"
         self.EPISODE_REWARD_AVG_SOLVED = 5000
@@ -6,7 +10,7 @@ class ParameterAntMujoco:
         self.TEST_INTERVAL_TRAINING_STEPS = 1_024
 
 
-class ParameterHopperMujoco:
+class ParameterHopperMujoco(ParameterMujoco):
     def __init__(self):
         self.ENV_NAME = "Hopper-v2"
         self.EPISODE_REWARD_AVG_SOLVED = 3000
@@ -14,7 +18,7 @@ class ParameterHopperMujoco:
         self.TEST_INTERVAL_TRAINING_STEPS = 1_024
 
 
-class ParameterWalker2dMujoco:
+class ParameterWalker2dMujoco(ParameterMujoco):
     def __init__(self):
         self.ENV_NAME = "Walker2d-v2"
         self.EPISODE_REWARD_AVG_SOLVED = 5000
@@ -22,7 +26,7 @@ class ParameterWalker2dMujoco:
         self.TEST_INTERVAL_TRAINING_STEPS = 1_024
 
 
-class ParameterHalfCheetahMujoco:
+class ParameterHalfCheetahMujoco(ParameterMujoco):
     def __init__(self):
         self.ENV_NAME = "HalfCheetah-v2"
         self.EPISODE_REWARD_AVG_SOLVED = 12500

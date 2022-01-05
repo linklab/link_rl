@@ -3,6 +3,9 @@ import time
 import os
 import warnings
 
+from a_configuration.b_base.a_environments.pybullet.gym_mujoco import ParameterMujoco
+from a_configuration.b_base.a_environments.pybullet.gym_pybullet import ParameterBullet
+
 warnings.filterwarnings("ignore")
 
 import torch
@@ -28,9 +31,7 @@ def play(env, agent, n_episodes):
         episode_reward = 0  # cumulative_reward
 
         # Environment 초기화와 변수 초기화
-        if parameter.ENV_NAME in [
-            "AntBulletEnv-v0", "CartPoleContinuousBulletEnv-v0", "CartPoleBulletEnv-v1", "Hopper-v2", "Ant-v2"
-        ]:
+        if isinstance(parameter, (ParameterMujoco, ParameterBullet)):
             env.render()
             observation = env.reset()
         else:
@@ -73,7 +74,7 @@ def play(env, agent, n_episodes):
             episode_reward += reward  # episode_reward 를 산출하는 방법은 감가률 고려하지 않는 이 라인이 더 올바름.
             observation = next_observation
 
-            time.sleep(0.05)
+            time.sleep(0.01)
             if done:
                 break
 

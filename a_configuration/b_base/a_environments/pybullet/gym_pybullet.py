@@ -2,7 +2,11 @@
 from pybullet_envs.bullet.cartpole_bullet import CartPoleBulletEnv
 
 
-class ParameterCartPoleBullet:
+class ParameterBullet:
+    pass
+
+
+class ParameterCartPoleBullet(ParameterBullet):
     def __init__(self):
         self.ENV_NAME = "CartPoleBulletEnv-v1"
         self.EPISODE_REWARD_AVG_SOLVED = 190
@@ -10,7 +14,7 @@ class ParameterCartPoleBullet:
         self.TEST_INTERVAL_TRAINING_STEPS = 1_024
 
 
-class ParameterCartPoleContinuousBullet:
+class ParameterCartPoleContinuousBullet(ParameterBullet):
     def __init__(self):
         self.ENV_NAME = "CartPoleContinuousBulletEnv-v0"
         self.EPISODE_REWARD_AVG_SOLVED = 190
@@ -18,7 +22,7 @@ class ParameterCartPoleContinuousBullet:
         self.TEST_INTERVAL_TRAINING_STEPS = 1_024
 
 
-class ParameterAntBullet:
+class ParameterAntBullet(ParameterBullet):
     def __init__(self):
         self.ENV_NAME = "AntBulletEnv-v0"
         self.EPISODE_REWARD_AVG_SOLVED = 2_000
@@ -26,7 +30,7 @@ class ParameterAntBullet:
         self.TEST_INTERVAL_TRAINING_STEPS = 5_000
 
 
-class ParameterHopperBullet:
+class ParameterHopperBullet(ParameterBullet):
     def __init__(self):
         self.ENV_NAME = "HopperBulletEnv-v0"
         self.EPISODE_REWARD_AVG_SOLVED = 2_000
