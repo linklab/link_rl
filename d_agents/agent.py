@@ -69,7 +69,7 @@ class Agent:
     def get_action(self, obs, mode=AgentMode.TRAIN):
         pass
 
-    def before_train(self):
+    def _before_train(self):
         if self.parameter.AGENT_TYPE in ActorCriticAgentTypes:
             assert self.actor_model
             assert self.critic_model
@@ -85,57 +85,65 @@ class Agent:
         )
 
     def train(self, training_steps_v=None):
-        self.before_train()
-
         is_train_success_done = False
         if self.parameter.AGENT_TYPE in [AgentType.DQN, AgentType.DUELING_DQN]:
             if len(self.buffer) >= self.parameter.MIN_BUFFER_SIZE_FOR_TRAIN:
+                self._before_train()
                 self.train_dqn(training_steps_v=training_steps_v)
+                self._after_train()
                 is_train_success_done = True
+
         elif self.parameter.AGENT_TYPE == AgentType.DOUBLE_DQN:
             if len(self.buffer) >= self.parameter.MIN_BUFFER_SIZE_FOR_TRAIN:
+                self._before_train()
                 self.train_double_dqn(training_steps_v=training_steps_v)
+                self._after_train()
                 is_train_success_done = True
+
         elif self.parameter.AGENT_TYPE == AgentType.REINFORCE:
             if len(self.buffer) > 0:
+                self._before_train()
                 self.train_reinforce()
+                self.buffer.clear()     # ON_POLICY!
+                self._after_train()
                 is_train_success_done = True
+
         elif self.parameter.AGENT_TYPE == AgentType.A2C:
             if len(self.buffer) >= self.parameter.BATCH_SIZE:
+                self._before_train()
                 self.train_a2c()
+                self.buffer.clear()                 # ON_POLICY!
+                self._after_actor_critic_train()     # ACTOR_CRITIC_TYPE
+                self._after_train()
                 is_train_success_done = True
+
         elif self.parameter.AGENT_TYPE == AgentType.DDPG:
             if len(self.buffer) >= self.parameter.BATCH_SIZE:
+                self._before_train()
                 self.train_ddpg()
+                self._after_actor_critic_train()     # ACTOR_CRITIC_TYPE
+                self._after_train()
                 is_train_success_done = True
+
         elif self.parameter.AGENT_TYPE == AgentType.SAC:
             if len(self.buffer) >= self.parameter.BATCH_SIZE:
+                self._before_train()
                 self.train_sac(training_steps_v=training_steps_v)
+                self._after_actor_critic_train()     # ACTOR_CRITIC_TYPE
+                self._after_train()
                 is_train_success_done = True
+
+        elif self.parameter.AGENT_TYPE == AgentType.PPO:
+            pass
         else:
             raise ValueError()
 
-        # NOTE !!!
-
-        if is_train_success_done:
-            if self.parameter.AGENT_TYPE in OnPolicyAgentTypes:
-                self.buffer.clear()
-
-        if self.parameter.AGENT_TYPE in ActorCriticAgentTypes:
-            self.after_actor_critic_train()
-        else:
-            self.after_train()
-
         return is_train_success_done
 
-    def after_actor_critic_train(self):
-        del self.observations
-        del self.actions
-        del self.next_observations
-        del self.rewards
-        del self.dones
+    def _after_actor_critic_train(self):
+        pass
 
-    def after_train(self):
+    def _after_train(self):
         del self.observations
         del self.actions
         del self.next_observations
