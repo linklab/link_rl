@@ -88,8 +88,7 @@ class LearnerComparison:
             if isinstance(self.agents[agent_idx].action_space, Discrete):
                 scaled_actions = actions
             elif isinstance(self.agents[agent_idx].action_space, Box):
-                assert self.agents[agent_idx].action_scale_factor
-                scaled_actions = actions * self.agents[agent_idx].action_scale_factor
+                scaled_actions = actions * self.agents[agent_idx].action_scale + self.agents[agent_idx].action_bias
             else:
                 raise ValueError()
 
@@ -255,13 +254,13 @@ class LearnerComparison:
                         raise ValueError()
                 elif isinstance(self.agents[agent_idx].action_space, Box):
                     if action.ndim == 1:
-                        if self.agents[agent_idx].action_scale_factor is not None:
-                            scaled_action = action * self.agents[agent_idx].action_scale_factor
+                        if self.agents[agent_idx].action_scale is not None:
+                            scaled_action = action * self.agents[agent_idx].action_scale[0] + self.agents[agent_idx].action_bias[0]
                         else:
                             scaled_action = action
                     elif action.ndim == 2:
-                        if self.agents[agent_idx].action_scale_factor is not None:
-                            scaled_action = action[0] * self.agents[agent_idx].action_scale_factor[0]
+                        if self.agents[agent_idx].action_scale is not None:
+                            scaled_action = action[0] * self.agents[agent_idx].action_scale[0] + self.agents[agent_idx].action_bias[0]
                         else:
                             scaled_action = action[0]
                     else:

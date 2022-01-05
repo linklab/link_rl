@@ -29,23 +29,24 @@ class Agent:
         if isinstance(action_space, Discrete):
             self.n_discrete_actions = action_space.n
             self.n_out_actions = 1
-            self.action_scale_factor = None
+
             self.np_minus_ones = None
             self.np_plus_ones = None
+            self.torch_minus_ones = None
+            self.torch_plus_ones = None
 
             self.action_scale = None
             self.action_bias = None
         elif isinstance(action_space, Box):
             self.n_discrete_actions = None
             self.n_out_actions = action_space.shape[0]
-            _, _, self.action_scale_factor = get_continuous_action_info(action_space)
+
             self.np_minus_ones = np.full(shape=action_space.shape, fill_value=-1.0)
             self.np_plus_ones = np.full(shape=action_space.shape, fill_value=1.0)
             self.torch_minus_ones = torch.full(size=action_space.shape, fill_value=-1.0).to(self.parameter.DEVICE)
             self.torch_plus_ones = torch.full(size=action_space.shape, fill_value=1.0).to(self.parameter.DEVICE)
 
-            self.action_scale = torch.FloatTensor((action_space.high - action_space.low) / 2.)
-            self.action_bias = torch.FloatTensor((action_space.high + action_space.low) / 2.)
+            _, _, self.action_scale, self.action_bias = get_continuous_action_info(action_space)
         else:
             raise ValueError()
 

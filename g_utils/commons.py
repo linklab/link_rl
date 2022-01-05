@@ -40,8 +40,9 @@ def model_save(model, env_name, agent_type_name, test_episode_reward_avg, test_e
 
     now = datetime.datetime.now()
     local_now = now.astimezone()
-    file_name = "{0:4.1f}_{1:3.1f}_{2}_{3}_{4}.pth".format(
-        test_episode_reward_avg, test_episode_reward_std, local_now.year, local_now.month, local_now.day
+    file_name = "{0:4.1f}_{1:3.1f}_{2}_{3}_{4}_{5}_{6}.pth".format(
+        test_episode_reward_avg, test_episode_reward_std, local_now.year, local_now.month, local_now.day,
+        env_name, agent_type_name
     )
 
     torch.save(model.state_dict(), os.path.join(agent_model_home, file_name))
@@ -239,11 +240,11 @@ def print_space(observation_space, action_space, parameter):
     if isinstance(action_space, Discrete):
         action_space_str += ", N: {0}".format(action_space.n)
     elif isinstance(action_space, Box):
-        action_bound_low, action_bound_high, action_scale_factor = get_continuous_action_info(
+        action_bound_low, action_bound_high, action_scale, action_bias = get_continuous_action_info(
             action_space
         )
-        action_space_str += ", LOW_BOUND: {0}, HIGH_BOUND: {1}, SCALE_FACTOR: {2}".format(
-            action_bound_low[0], action_bound_high[0], action_scale_factor[0]
+        action_space_str += ", LOW_BOUND: {0}, HIGH_BOUND: {1}, SCALE: {2}, BIAS: {3}".format(
+            action_bound_low[0], action_bound_high[0], action_scale, action_bias
         )
     else:
         raise ValueError()
@@ -569,10 +570,13 @@ def get_action_shape(action_space):
 def get_continuous_action_info(action_space):
     action_bound_low = np.expand_dims(action_space.low, axis=0)
     action_bound_high = np.expand_dims(action_space.high, axis=0)
-    assert np.equal(action_bound_high, -1.0 * action_bound_low).all()
-    action_scale_factor = action_bound_high
 
-    return action_bound_low, action_bound_high, action_scale_factor
+    assert np.equal(action_bound_high, -1.0 * action_bound_low).all()
+
+    action_scale = (action_space.high - action_space.low) / 2.
+    action_bias = (action_space.high + action_space.low) / 2.
+
+    return action_bound_low, action_bound_high, action_scale, action_bias
 
 
 def get_scaled_action():

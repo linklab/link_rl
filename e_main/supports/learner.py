@@ -73,8 +73,7 @@ class Learner(mp.Process):
             if isinstance(self.agent.action_space, Discrete):
                 scaled_actions = actions
             elif isinstance(self.agent.action_space, Box):
-                assert self.agent.action_scale_factor is not None
-                scaled_actions = actions * self.agent.action_scale_factor
+                scaled_actions = actions * self.agent.action_scale + self.agent.action_bias
             else:
                 raise ValueError()
 
@@ -274,13 +273,13 @@ class Learner(mp.Process):
                         raise ValueError()
                 elif isinstance(self.agent.action_space, Box):
                     if action.ndim == 1:
-                        if self.agent.action_scale_factor is not None:
-                            scaled_action = action * self.agent.action_scale_factor[0]
+                        if self.agent.action_scale is not None:
+                            scaled_action = action * self.agent.action_scale[0] + self.agent.action_bias[0]
                         else:
                             scaled_action = action
                     elif action.ndim == 2:
-                        if self.agent.action_scale_factor is not None:
-                            scaled_action = action[0] * self.agent.action_scale_factor[0]
+                        if self.agent.action_scale is not None:
+                            scaled_action = action[0] * self.agent.action_scale[0] + self.agent.action_bias[0]
                         else:
                             scaled_action = action[0]
                     else:
