@@ -10,6 +10,7 @@ class ParameterReinforce(ParameterAgent):
         self.LEARNING_RATE = 0.0001
         self.BUFFER_CAPACITY = 1_000
         self.GAMMA = 0.99
+        self.BATCH_SIZE = None
 
 
 class ParameterA2c(ParameterAgent):

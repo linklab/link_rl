@@ -71,10 +71,16 @@ class Buffer:
         # actions.shape, rewards.shape, dones.shape: (64, 1) (64, 1) (64,)
 
         # Convert to tensor
-        observations = torch.tensor(observations, dtype=torch.float32, device=self.device)
-        actions = torch.tensor(actions, dtype=torch.int64, device=self.device)
-        next_observations = torch.tensor(next_observations, dtype=torch.float32, device=self.device)
-        rewards = torch.tensor(rewards, dtype=torch.float32, device=self.device)
-        dones = torch.tensor(dones, dtype=torch.bool, device=self.device)
+        observations_v = torch.tensor(observations, dtype=torch.float32, device=self.device)
+        actions_v = torch.tensor(actions, dtype=torch.int64, device=self.device)
+        next_observations_v = torch.tensor(next_observations, dtype=torch.float32, device=self.device)
+        rewards_v = torch.tensor(rewards, dtype=torch.float32, device=self.device)
+        dones_v = torch.tensor(dones, dtype=torch.bool, device=self.device)
 
-        return observations, actions, next_observations, rewards, dones
+        del observations
+        del actions
+        del next_observations
+        del rewards
+        del dones
+
+        return observations_v, actions_v, next_observations_v, rewards_v, dones_v

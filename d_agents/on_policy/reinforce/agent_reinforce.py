@@ -41,17 +41,15 @@ class AgentReinforce(Agent):
         return action.cpu().numpy()
 
     def train_reinforce(self):
-        observations, actions, _, rewards, _ = self.buffer.sample(batch_size=None)
-
         G = 0
         return_lst = []
-        for reward in reversed(rewards):
+        for reward in reversed(self.rewards):
             G = reward + self.parameter.GAMMA * G
             return_lst.append(G)
         return_lst = torch.tensor(return_lst[::-1], dtype=torch.float32, device=self.parameter.DEVICE)
 
-        action_probs = self.policy.pi(observations)
-        action_probs_selected = action_probs.gather(dim=-1, index=actions).squeeze(dim=-1)
+        action_probs = self.policy.pi(self.observations)
+        action_probs_selected = action_probs.gather(dim=-1, index=self.actions).squeeze(dim=-1)
 
         # action_probs_selected.shape: (32,)
         # return_lst.shape: (32,)

@@ -75,6 +75,15 @@ class Agent:
             assert self.critic_model
             assert self.model is self.actor_model
 
+        # observations.shape: torch.Size([32, 4, 84, 84]),
+        # actions.shape: torch.Size([32, 1]),
+        # next_observations.shape: torch.Size([32, 4, 84, 84]),
+        # rewards.shape: torch.Size([32, 1]),
+        # dones.shape: torch.Size([32])
+        self.observations, self.actions, self.next_observations, self.rewards, self.dones = self.buffer.sample(
+            batch_size=self.parameter.BATCH_SIZE
+        )
+
     def train(self, training_steps_v=None):
         self.before_train()
 
@@ -112,18 +121,26 @@ class Agent:
             if self.parameter.AGENT_TYPE in OnPolicyAgentTypes:
                 self.buffer.clear()
 
-            if self.parameter.AGENT_TYPE in ActorCriticAgentTypes:
-                self.after_actor_critic_train()
-            else:
-                self.after_train()
+        if self.parameter.AGENT_TYPE in ActorCriticAgentTypes:
+            self.after_actor_critic_train()
+        else:
+            self.after_train()
 
         return is_train_success_done
 
     def after_actor_critic_train(self):
-        pass
+        del self.observations
+        del self.actions
+        del self.next_observations
+        del self.rewards
+        del self.dones
 
     def after_train(self):
-        pass
+        del self.observations
+        del self.actions
+        del self.next_observations
+        del self.rewards
+        del self.dones
 
     def clip_model_parameter_grad_value(self, model_parameters):
         torch.nn.utils.clip_grad_norm_(model_parameters, self.parameter.CLIP_GRADIENT_VALUE)
