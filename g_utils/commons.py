@@ -272,23 +272,23 @@ def console_log(
         )
 
     if parameter.AGENT_TYPE in [AgentType.DQN, AgentType.DUELING_DQN]:
-        console_log += "Q_net_loss: {0:>6.3f}, Epsilon: {1:>4.2f}, ".format(
+        console_log += "Q_net_loss: {0:>7.3f}, Epsilon: {1:>4.2f}, ".format(
             agent.last_q_net_loss.value, agent.epsilon.value
         )
     elif parameter.AGENT_TYPE == AgentType.REINFORCE:
-        console_log += "log_policy_objective: {0:6.3f}, ".format(
+        console_log += "log_policy_objective: {0:7.3f}, ".format(
             agent.last_log_policy_objective.value
         )
     elif parameter.AGENT_TYPE == AgentType.A2C:
-        console_log += "critic_loss: {0:6.3f}, log_actor_objective: {1:6.3f}, ".format(
+        console_log += "critic_loss: {0:7.3f}, log_actor_objective: {1:7.3f}, ".format(
             agent.last_critic_loss.value, agent.last_log_actor_objective.value
         )
     elif parameter.AGENT_TYPE == AgentType.SAC:
-        console_log += "critic_loss: {0:6.3f}, actor_objective: {1:6.3f}, alpha: {2:5.3f}".format(
+        console_log += "critic_loss: {0:7.3f}, actor_objective: {1:7.3f}, alpha: {2:5.3f}".format(
             agent.last_critic_loss.value, agent.last_actor_objective.value, agent.alpha.value
         )
     elif parameter.AGENT_TYPE == AgentType.DDPG:
-        console_log += "critic_loss: {0:6.3f}, actor_loss: {1:6.3f}, ".format(
+        console_log += "critic_loss: {0:7.3f}, actor_loss: {1:7.3f}, ".format(
             agent.last_critic_loss.value, agent.last_actor_loss.value
         )
     else:

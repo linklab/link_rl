@@ -58,7 +58,8 @@ class SacCriticModel(Model):
 
 class DiscreteSacModel:
     def __init__(
-            self, observation_shape: Tuple[int], n_out_actions: int, n_discrete_actions=None, parameter=None, is_target_model=False
+            self, observation_shape: Tuple[int], n_out_actions: int, n_discrete_actions=None, parameter=None,
+            is_target_model=False
     ):
         self.parameter = parameter
 

@@ -65,7 +65,6 @@ class AgentSac(Agent):
             # self.minimum_expected_entropy = -8 for ant_bullet env.
             # it is the desired minimum expected entropy
             self.minimum_expected_entropy = -1.0 * torch.prod(torch.Tensor(action_space.shape).to(self.parameter.DEVICE)).item()
-            self.minimum_expected_entropy = -1.0 * torch.prod(torch.Tensor(action_space.shape).to(self.parameter.DEVICE)).item()
             self.log_alpha = torch.zeros(1, requires_grad=True, device=self.parameter.DEVICE)
             self.alpha_optimizer = optim.Adam([self.log_alpha], lr=self.parameter.ALPHA_LEARNING_RATE)
             self.alpha.value = self.log_alpha.exp()  # 초기에는 무조건 1.0으로 시작함.
