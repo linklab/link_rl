@@ -31,6 +31,6 @@ class ParameterAntMujocoSac(ParameterBase, ParameterAntMujoco, ParameterSac):
         self.LAYER_ACTIVATION = nn.ReLU()
         self.LAYER_NORM = False
 
-        self.ALPHA_LEARNING_RATE = 0.00001
+        self.ALPHA_LEARNING_RATE = 0.000005
 
         self.POLICY_UPDATE_FREQUENCY_PER_TRAINING_STEP = 1
