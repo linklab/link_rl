@@ -119,7 +119,7 @@ parameter_comparison_halfcheetah_mujoco_alpha.AGENT_LABELS = [
     "alpha tuning (No Alpha Limit)",
     "alpha tuning (Min Alpha = 0.2)",
 ]
-parameter_comparison_halfcheetah_mujoco_alpha.MAX_TRAINING_STEPS = 700000
+parameter_comparison_halfcheetah_mujoco_alpha.MAX_TRAINING_STEPS = 500000
 parameter_comparison_halfcheetah_mujoco_alpha.N_RUNS = 5
 parameter_comparison_list.append(parameter_comparison_halfcheetah_mujoco_alpha)
 
@@ -140,7 +140,7 @@ parameter_comparison_ant_mujoco_alpha.AGENT_LABELS = [
     "alpha tuning (No Alpha Limit)",
     "alpha tuning (Min Alpha = 0.2)",
 ]
-parameter_comparison_ant_mujoco_alpha.MAX_TRAINING_STEPS = 700000
+parameter_comparison_ant_mujoco_alpha.MAX_TRAINING_STEPS = 500000
 parameter_comparison_ant_mujoco_alpha.N_RUNS = 5
 parameter_comparison_list.append(parameter_comparison_ant_mujoco_alpha)
 
