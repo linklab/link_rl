@@ -1,16 +1,18 @@
 from a_configuration.b_base.parameter_base_comparison import ParameterComparisonBase
+from a_configuration.c_parameters.mujoco.parameter_ant_mujoco import ParameterAntMujocoSac
 from a_configuration.c_parameters.mujoco.parameter_hopper_mujoco import ParameterHopperMujocoSac
 from a_configuration.c_parameters.mujoco.parameter_walker2d_mujoco import ParameterWalker2dMujocoSac
 
 
-class ParameterComparisonWalker2dMujocoSac(ParameterComparisonBase):
+class ParameterComparisonAntMujocoSac(ParameterComparisonBase):
     def __init__(self):
         ParameterComparisonBase.__init__(self)
 
-        self.ENV_NAME = "Walker2d-v2"
+        self.ENV_NAME = "Ant-v2"
 
         self.AGENT_PARAMETERS = [
-            ParameterWalker2dMujocoSac(),
-            ParameterWalker2dMujocoSac(),
-            ParameterWalker2dMujocoSac()
+            ParameterAntMujocoSac(),
+            ParameterAntMujocoSac(),
+            ParameterAntMujocoSac(),
+            ParameterAntMujocoSac()
         ]

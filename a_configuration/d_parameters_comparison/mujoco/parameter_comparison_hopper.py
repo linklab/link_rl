@@ -2,7 +2,7 @@ from a_configuration.b_base.parameter_base_comparison import ParameterComparison
 from a_configuration.c_parameters.mujoco.parameter_hopper_mujoco import ParameterHopperMujocoSac
 
 
-class ParameterComparisonMujocoHopperSac(ParameterComparisonBase):
+class ParameterComparisonHopperMujocoSac(ParameterComparisonBase):
     def __init__(self):
         ParameterComparisonBase.__init__(self)
 
