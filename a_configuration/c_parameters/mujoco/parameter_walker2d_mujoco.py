@@ -28,8 +28,7 @@ class ParameterWalker2dMujocoSac(ParameterBase, ParameterWalker2dMujoco, Paramet
         self.CONSOLE_LOG_INTERVAL_TRAINING_STEPS = 100
         self.TEST_INTERVAL_TRAINING_STEPS = 5_000
 
-        self.MODEL = ParameterLinearModel(ModelType.SMALL_LINEAR)
-        self.MODEL.NEURONS_PER_FULLY_CONNECTED_LAYER = [256, 256]
+        self.MODEL = ParameterLinearModel(ModelType.SMALL_LINEAR_2)
 
         self.LAYER_ACTIVATION = nn.ReLU()
         self.LAYER_NORM = False

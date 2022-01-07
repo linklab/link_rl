@@ -28,8 +28,9 @@ class AgentMode(enum.Enum):
 
 class ModelType(enum.Enum):
     SMALL_LINEAR = 0
-    MEDIUM_LINEAR = 1
-    LARGE_LINEAR = 2
+    SMALL_LINEAR_2 = 1
+    MEDIUM_LINEAR = 2
+    LARGE_LINEAR = 3
 
     SMALL_CONVOLUTIONAL = 3
     MEDIUM_CONVOLUTIONAL = 4
