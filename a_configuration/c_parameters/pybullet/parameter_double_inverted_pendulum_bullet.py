@@ -56,7 +56,7 @@ class ParameterDoubleInvertedPendulumBulletSac(ParameterBase, ParameterDoubleInv
         ParameterDoubleInvertedPendulumBullet.__init__(self)
         ParameterSac.__init__(self)
 
-        self.ALPHA_LEARNING_RATE = 0.0003
+        self.ALPHA_LEARNING_RATE = 0.000005
         self.ACTOR_LEARNING_RATE = 0.0002
         self.LEARNING_RATE = 0.001
 
