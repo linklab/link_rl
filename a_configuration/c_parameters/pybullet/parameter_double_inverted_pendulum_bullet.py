@@ -1,4 +1,5 @@
-from a_configuration.b_base.a_environments.pybullet.gym_pybullet import ParameterAntBullet
+from a_configuration.b_base.a_environments.pybullet.gym_pybullet import ParameterAntBullet, \
+    ParameterDoubleInvertedPendulumBullet
 from a_configuration.b_base.b_agents.agents_off_policy import ParameterDqn, ParameterDdpg, ParameterSac
 from a_configuration.b_base.b_agents.agents_on_policy import ParameterA2c, ParameterReinforce
 from a_configuration.b_base.c_models.linear_models import ParameterLinearModel
@@ -7,10 +8,10 @@ from g_utils.commons import print_basic_info, get_env_info
 from g_utils.types import ModelType
 
 
-class ParameterAntBulletA2c(ParameterBase, ParameterAntBullet, ParameterA2c):
+class ParameterDoubleInvertedPendulumBulletA2c(ParameterBase, ParameterDoubleInvertedPendulumBullet, ParameterA2c):
     def __init__(self):
         ParameterBase.__init__(self)
-        ParameterAntBullet.__init__(self)
+        ParameterDoubleInvertedPendulumBullet.__init__(self)
         ParameterA2c.__init__(self)
 
         self.BATCH_SIZE = 64
@@ -28,10 +29,10 @@ class ParameterAntBulletA2c(ParameterBase, ParameterAntBullet, ParameterA2c):
         self.MODEL = ParameterLinearModel(ModelType.SMALL_LINEAR)
 
 
-class ParameterAntBulletDdpg(ParameterBase, ParameterAntBullet, ParameterDdpg):
+class ParameterDoubleInvertedPendulumBulletDdpg(ParameterBase, ParameterDoubleInvertedPendulumBullet, ParameterDdpg):
     def __init__(self):
         ParameterBase.__init__(self)
-        ParameterAntBullet.__init__(self)
+        ParameterDoubleInvertedPendulumBullet.__init__(self)
         ParameterDdpg.__init__(self)
 
         self.BATCH_SIZE = 64
@@ -49,10 +50,10 @@ class ParameterAntBulletDdpg(ParameterBase, ParameterAntBullet, ParameterDdpg):
         self.MODEL = ParameterLinearModel(ModelType.SMALL_LINEAR)
 
 
-class ParameterAntBulletSac(ParameterBase, ParameterAntBullet, ParameterSac):
+class ParameterDoubleInvertedPendulumBulletSac(ParameterBase, ParameterDoubleInvertedPendulumBullet, ParameterSac):
     def __init__(self):
         ParameterBase.__init__(self)
-        ParameterAntBullet.__init__(self)
+        ParameterDoubleInvertedPendulumBullet.__init__(self)
         ParameterSac.__init__(self)
 
         self.ALPHA_LEARNING_RATE = 0.000005
@@ -74,6 +75,6 @@ class ParameterAntBulletSac(ParameterBase, ParameterAntBullet, ParameterSac):
 
 
 if __name__ == "__main__":
-    parameter = ParameterAntBulletSac()
+    parameter = ParameterDoubleInvertedPendulumBulletSac()
     observation_space, action_space = get_env_info(parameter)
     print_basic_info(observation_space=observation_space, action_space=action_space, parameter=parameter)

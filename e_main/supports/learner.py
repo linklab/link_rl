@@ -76,7 +76,6 @@ class Learner(mp.Process):
                 scaled_actions = actions * self.agent.action_scale + self.agent.action_bias
             else:
                 raise ValueError()
-
             next_observations, rewards, dones, infos = self.train_env.step(scaled_actions)
 
             for env_id, (observation, action, next_observation, reward, done, info) in enumerate(

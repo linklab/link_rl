@@ -13,8 +13,10 @@ class ParameterHopperMujocoSac(ParameterBase, ParameterHopperMujoco, ParameterSa
         ParameterSac.__init__(self)
 
         self.BATCH_SIZE = 256
-        self.ACTOR_LEARNING_RATE = 0.0003
-        self.LEARNING_RATE = 0.0003
+
+        self.ALPHA_LEARNING_RATE = 0.000005
+        self.ACTOR_LEARNING_RATE = 0.0002
+        self.LEARNING_RATE = 0.001
         self.N_STEP = 2
         self.BUFFER_CAPACITY = 1_000_000
         self.MIN_BUFFER_SIZE_FOR_TRAIN = self.BATCH_SIZE * 10
@@ -30,7 +32,3 @@ class ParameterHopperMujocoSac(ParameterBase, ParameterHopperMujoco, ParameterSa
 
         self.LAYER_ACTIVATION = nn.ReLU()
         self.LAYER_NORM = False
-
-        self.ALPHA_LEARNING_RATE = 0.00001
-
-        self.POLICY_UPDATE_FREQUENCY_PER_TRAINING_STEP = 1

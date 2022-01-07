@@ -12,5 +12,6 @@ class ParameterComparisonWalker2dMujocoSac(ParameterComparisonBase):
         self.AGENT_PARAMETERS = [
             ParameterWalker2dMujocoSac(),
             ParameterWalker2dMujocoSac(),
+            ParameterWalker2dMujocoSac(),
             ParameterWalker2dMujocoSac()
         ]
