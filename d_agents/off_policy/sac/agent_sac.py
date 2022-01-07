@@ -73,6 +73,7 @@ class AgentSac(Agent):
 
         self.last_critic_loss = mp.Value('d', 0.0)
         self.last_actor_objective = mp.Value('d', 0.0)
+        self.last_entropy = mp.Value('d', 0.0)
 
     def get_action(self, obs, mode=AgentMode.TRAIN):
         if isinstance(self.action_space, Discrete):
@@ -147,9 +148,10 @@ class AgentSac(Agent):
         #  Actor Training - BEGIN #
         ###########################
         if training_steps_v % self.parameter.POLICY_UPDATE_FREQUENCY_PER_TRAINING_STEP == 0:
-            re_parameterized_action_v, re_parameterized_log_prob_v = self.sac_model.re_parameterization_trick_sample(
-                self.observations
-            )
+            re_parameterized_action_v, re_parameterized_log_prob_v, entropy_v = \
+                self.sac_model.re_parameterization_trick_sample(
+                    self.observations
+                )
             q1_v, q2_v = self.critic_model.q(self.observations, re_parameterized_action_v)
             objectives_v = torch.div(torch.add(q1_v, q2_v), 2.0) - self.alpha.value * re_parameterized_log_prob_v
             objectives_v = objectives_v.mean()
@@ -171,6 +173,8 @@ class AgentSac(Agent):
                 self.alpha_optimizer.step()
                 self.alpha.value = torch.max(self.log_alpha.exp(), self.min_alpha)
             # Alpha Training - END
+
+            self.last_entropy.value = entropy_v.mean().item()
         #########################
         #  Actor Training - END #
         #########################

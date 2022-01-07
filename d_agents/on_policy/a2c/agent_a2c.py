@@ -42,6 +42,7 @@ class AgentA2c(Agent):
 
         self.last_critic_loss = mp.Value('d', 0.0)
         self.last_log_actor_objective = mp.Value('d', 0.0)
+        self.last_entropy = mp.Value('d', 0.0)
 
     def get_action(self, obs, mode=AgentMode.TRAIN):
         if isinstance(self.action_space, Discrete):
@@ -115,7 +116,7 @@ class AgentA2c(Agent):
             mu_v, var_v = self.actor_model.pi(self.observations)
 
             criticized_log_pi_action_v = self.calc_log_prob(mu_v, var_v, self.actions) * advantages
-            entropy = 0.5 * (torch.log(2.0 * np.pi * var_v) + 1.0)
+            entropy = 0.5 * (torch.log(2.0 * np.pi * var_v) + 1.0).sum(dim=-1)
 
             # dist = Normal(loc=mu_v, scale=torch.sqrt(var_v))
             # criticized_log_pi_action_v = dist.log_prob(value=actions) * advantages
@@ -144,3 +145,4 @@ class AgentA2c(Agent):
 
         self.last_critic_loss.value = critic_loss.item()
         self.last_log_actor_objective.value = log_actor_objective.item()
+        self.last_entropy.value = entropy.mean().item()

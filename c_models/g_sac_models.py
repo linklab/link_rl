@@ -107,7 +107,9 @@ class ContinuousSacModel:
         log_probs = dist.log_prob(action_v).sum(dim=-1, keepdim=True)
         # action_v.shape: [128, 1]
         # log_prob.shape: [128, 1]
-        return action_v, log_probs
+        entropy = 0.5 * (torch.log(2.0 * np.pi * var_v) + 1.0).sum(dim=-1)
+
+        return action_v, log_probs, entropy
 
     # https://github.com/pranz24/pytorch-soft-actor-critic/blob/398595e0d9dca98b7db78c7f2f939c969431871a/model.py#L64
     # def re_parameterization_trick_sample(self, obs):

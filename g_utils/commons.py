@@ -280,12 +280,12 @@ def console_log(
             agent.last_log_policy_objective.value
         )
     elif parameter.AGENT_TYPE == AgentType.A2C:
-        console_log += "critic_loss: {0:7.3f}, log_actor_objective: {1:7.3f}, ".format(
-            agent.last_critic_loss.value, agent.last_log_actor_objective.value
+        console_log += "critic_loss: {0:7.3f}, log_actor_objective: {1:7.3f}, entropy: {2:5.3f}".format(
+            agent.last_critic_loss.value, agent.last_log_actor_objective.value, agent.last_entropy.value
         )
     elif parameter.AGENT_TYPE == AgentType.SAC:
-        console_log += "critic_loss: {0:7.3f}, actor_objective: {1:7.3f}, alpha: {2:5.3f}".format(
-            agent.last_critic_loss.value, agent.last_actor_objective.value, agent.alpha.value
+        console_log += "critic_loss: {0:7.3f}, actor_objective: {1:7.3f}, alpha: {2:5.3f}, entropy: {3:5.3f}".format(
+            agent.last_critic_loss.value, agent.last_actor_objective.value, agent.alpha.value, agent.last_entropy.value
         )
     elif parameter.AGENT_TYPE == AgentType.DDPG:
         console_log += "critic_loss: {0:7.3f}, actor_loss: {1:7.3f}, ".format(
@@ -385,10 +385,12 @@ def wandb_log(learner, wandb_obj, parameter):
     elif parameter.AGENT_TYPE == AgentType.A2C:
         log_dict["Critic Loss"] = learner.agent.last_critic_loss.value
         log_dict["Log Actor Objective"] = learner.agent.last_log_actor_objective.value
+        log_dict["Entropy"] = learner.agent.last_entropy.value
     elif parameter.AGENT_TYPE == AgentType.SAC:
         log_dict["Critic Loss"] = learner.agent.last_critic_loss.value
         log_dict["Last Actor Objective"] = learner.agent.last_actor_objective.value
         log_dict["Alpha"] = learner.agent.alpha.value
+        log_dict["Entropy"] = learner.agent.last_entropy.value
     else:
         pass
 
