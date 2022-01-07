@@ -11,5 +11,6 @@ class ParameterComparisonHopperMujocoSac(ParameterComparisonBase):
         self.AGENT_PARAMETERS = [
             ParameterHopperMujocoSac(),
             ParameterHopperMujocoSac(),
+            ParameterHopperMujocoSac(),
             ParameterHopperMujocoSac()
         ]
