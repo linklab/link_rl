@@ -67,7 +67,7 @@ class ParameterSac(ParameterAgent):
         self.GAMMA = 0.99
         self.TARGET_SYNC_INTERVAL_TRAINING_STEPS = 50
 
-        self.LAYER_ACTIVATION = nn.GELU()
+        self.LAYER_ACTIVATION = nn.ReLU()
 
         self.LAYER_NORM = True
 
