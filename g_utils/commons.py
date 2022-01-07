@@ -259,7 +259,7 @@ def console_log(
     total_training_time = time.time() - total_train_start_time
 
     console_log = "[Total Episodes: {0:6,}, Total Time Steps {1:7,}] " \
-                  "Mean Episode Reward: {2:5.1f}, Rolling Transitions: {3:7,} ({4:7.3f}/sec.), " \
+                  "Mean Episode Reward: {2:6.1f}, Rolling Transitions: {3:7,} ({4:7.3f}/sec.), " \
                   "Training Steps: {5:5,} ({6:.3f}/sec.), " \
         .format(
             total_episodes_v,
@@ -314,7 +314,7 @@ def console_log_comparison(
     for agent_idx, agent in enumerate(agents):
         agent_prefix = "[Agent: {0}]".format(agent_idx)
         console_log = agent_prefix + "[Total Episodes: {0:6,}, Total Time Steps {1:7,}] " \
-                      "Mean Episode Reward: {2:5.1f}, Rolling Transitions: {3:7,}, " \
+                      "Mean Episode Reward: {2:6.1f}, Rolling Transitions: {3:7,}, " \
                       "Training Steps: {4:5,}, " \
             .format(
                 total_episodes_per_agent[agent_idx],
