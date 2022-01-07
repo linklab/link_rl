@@ -151,7 +151,10 @@ class AgentSac(Agent):
                 self.observations
             )
             q1_v, q2_v = self.critic_model.q(self.observations, re_parameterized_action_v)
-            objectives_v = torch.div(torch.add(q1_v, q2_v), 2.0) - self.alpha.value * re_parameterized_log_prob_v
+            if self.parameter.CH:
+                objectives_v = torch.min(q1_v, q2_v) - self.alpha.value * re_parameterized_log_prob_v
+            else:
+                objectives_v = torch.div(torch.add(q1_v, q2_v), 2.0) - self.alpha.value * re_parameterized_log_prob_v
             objectives_v = objectives_v.mean()
             loss_actor_v = -1.0 * objectives_v
 
