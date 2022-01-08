@@ -64,7 +64,7 @@ class ParameterCartPoleContinuousBulletSac(
         ParameterCartPoleContinuousBullet.__init__(self)
         ParameterSac.__init__(self)
 
-        self.ALPHA_LEARNING_RATE = 0.000005
+        self.ALPHA_LEARNING_RATE = 0.00001
         self.LEARNING_RATE = 0.001
         self.N_VECTORIZED_ENVS = 1
         self.N_ACTORS = 1
