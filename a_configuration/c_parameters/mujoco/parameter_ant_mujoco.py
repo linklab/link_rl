@@ -14,7 +14,7 @@ class ParameterAntMujocoSac(ParameterBase, ParameterAntMujoco, ParameterSac):
 
         self.BATCH_SIZE = 256
 
-        self.ALPHA_LEARNING_RATE = 0.000005
+        self.ALPHA_LEARNING_RATE = 0.00001
         self.ACTOR_LEARNING_RATE = 0.0002
         self.LEARNING_RATE = 0.001
         self.N_STEP = 2
