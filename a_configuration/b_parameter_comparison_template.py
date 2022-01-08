@@ -195,7 +195,7 @@ parameter_comparison_doubleinvertedpendulum_bullet_alpha.AGENT_LABELS = [
     "alpha tuning (No Alpha Limit)",
     "alpha tuning (Min Alpha = 0.2)",
 ]
-parameter_comparison_doubleinvertedpendulum_bullet_alpha.MAX_TRAINING_STEPS = 200000
+parameter_comparison_doubleinvertedpendulum_bullet_alpha.MAX_TRAINING_STEPS = 100000
 parameter_comparison_doubleinvertedpendulum_bullet_alpha.N_RUNS = 5
 parameter_comparison_list.append(parameter_comparison_doubleinvertedpendulum_bullet_alpha)
 
