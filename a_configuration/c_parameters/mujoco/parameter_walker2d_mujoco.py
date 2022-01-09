@@ -15,7 +15,7 @@ class ParameterWalker2dMujocoSac(ParameterBase, ParameterWalker2dMujoco, Paramet
 
         self.BATCH_SIZE = 256
 
-        self.ALPHA_LEARNING_RATE = 0.00001
+        self.ALPHA_LEARNING_RATE = 0.0001
         self.ACTOR_LEARNING_RATE = 0.0002
         self.LEARNING_RATE = 0.001
         self.N_STEP = 2
