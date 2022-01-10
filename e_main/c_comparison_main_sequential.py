@@ -2,13 +2,13 @@ import os
 import sys
 import warnings
 
-from g_utils.stats import ComparisonStat
-
-warnings.filterwarnings("ignore")
-
 sys.path.append(os.path.abspath(
     os.path.join(os.path.dirname(os.path.realpath(__file__)), os.pardir)
 ))
+
+from g_utils.stats import ComparisonStat
+
+warnings.filterwarnings("ignore")
 
 from e_main.parameter_comparison import parameter_c
 
