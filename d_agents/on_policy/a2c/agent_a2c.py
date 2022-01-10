@@ -86,7 +86,7 @@ class AgentA2c(Agent):
         # values.shape: (32, 1)
         values = self.critic_model.v(self.observations)
         # loss_critic.shape: (,) <--  값 1개
-        critic_loss = F.mse_loss(td_target_values.detach(), values)
+        critic_loss = F.huber_loss(td_target_values.detach(), values)
 
         self.critic_optimizer.zero_grad()
         critic_loss.backward()
