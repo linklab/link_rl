@@ -11,6 +11,11 @@ sys.path.append(os.path.abspath(
 ))
 
 from e_main.parameter_comparison import parameter_c
+
+from a_configuration.a_config.config import SYSTEM_USER_NAME, SYSTEM_COMPUTER_NAME
+parameter_c.SYSTEM_USER_NAME = SYSTEM_USER_NAME
+parameter_c.SYSTEM_COMPUTER_NAME = SYSTEM_COMPUTER_NAME
+
 from e_main.supports.main_preamble import *
 from e_main.supports.learner_comparison import LearnerComparison
 from g_utils.commons import print_comparison_basic_info, get_wandb_obj, get_env_info

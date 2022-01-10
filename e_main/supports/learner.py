@@ -54,6 +54,9 @@ class Learner(mp.Process):
 
         self.test_idx = mp.Value('i', 0)
 
+        self.transition_rolling_rate = mp.Value('d', 0.0)
+        self.train_step_rate = mp.Value('d', 0.0)
+
         if queue is None: # Sequential
             self.transition_generator = self.generator_on_policy_transition()
 
@@ -171,15 +174,20 @@ class Learner(mp.Process):
                 self.next_train_time_step += self.parameter.TRAIN_INTERVAL_GLOBAL_TIME_STEPS
 
             if self.training_steps.value >= self.next_console_log:
+                total_training_time = time.time() - self.train_start_time
+                self.transition_rolling_rate.value = self.n_rollout_transitions.value / total_training_time
+                self.train_step_rate.value = self.training_steps.value / total_training_time
+
                 console_log(
-                    self.train_start_time,
-                    self.total_episodes.value,
-                    self.total_time_steps.value,
-                    self.last_mean_episode_reward.value,
-                    self.n_rollout_transitions.value,
-                    self.training_steps.value,
-                    self.agent,
-                    self.parameter
+                    total_episodes_v=self.total_episodes.value,
+                    total_time_steps_v=self.total_time_steps.value,
+                    last_mean_episode_reward_v=self.last_mean_episode_reward.value,
+                    n_rollout_transitions_v=self.n_rollout_transitions.value,
+                    transition_rolling_rate_v=self.transition_rolling_rate.value,
+                    train_steps_v=self.training_steps.value,
+                    train_step_rate_v=self.train_step_rate.value,
+                    agent=self.agent,
+                    parameter=self.parameter
                 )
                 self.next_console_log += self.parameter.CONSOLE_LOG_INTERVAL_TRAINING_STEPS
 
