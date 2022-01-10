@@ -49,7 +49,8 @@ class Buffer:
     def sample(self, batch_size):
         if batch_size:
             # Get index
-            indices = np.random.choice(len(self.internal_buffer), size=batch_size, replace=False)
+            # indices = np.random.choice(len(self.internal_buffer), size=batch_size, replace=False)
+            indices = np.random.randint(len(self.internal_buffer), size=batch_size)
 
             # Sample
             observations, actions, next_observations, rewards, dones, infos = \
