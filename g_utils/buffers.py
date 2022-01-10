@@ -1,14 +1,16 @@
 import collections
 import numpy as np
 import torch
+from gym.spaces import Discrete, Box
 
 from g_utils.types import Transition
 
 
 class Buffer:
-    def __init__(self, capacity, device):
+    def __init__(self, capacity, action_space, parameter):
         self.internal_buffer = collections.deque(maxlen=capacity)
-        self.device = device
+        self.action_space = action_space
+        self.parameter = parameter
 
     def __len__(self):
         return len(self.internal_buffer)
@@ -47,6 +49,39 @@ class Buffer:
     def sample(self, batch_size):
         if batch_size:
             # Get index
+            # indices = np.random.choice(len(self.internal_buffer), size=batch_size, replace=False)
+            indices = np.random.randint(len(self.internal_buffer), size=batch_size)
+
+            # Sample
+            observations, actions, next_observations, rewards, dones, infos = \
+                zip(*[self.internal_buffer[idx] for idx in indices])
+        else:
+            observations, actions, next_observations, rewards, dones, infos = \
+                zip(*self.internal_buffer)
+
+        # Convert to tensor
+        observations_v = torch.tensor(observations, dtype=torch.float32, device=self.parameter.DEVICE)
+
+        if isinstance(self.action_space, Discrete):     # actions.shape = (64,)
+            actions_v = torch.tensor(actions, dtype=torch.int64, device=self.parameter.DEVICE)[:, None]
+        elif isinstance(self.action_space, Box):        # actions.shape = (64, 8)
+            actions_v = torch.tensor(actions, dtype=torch.int64, device=self.parameter.DEVICE)
+        else:
+            raise ValueError()
+
+        next_observations_v = torch.tensor(next_observations, dtype=torch.float32, device=self.parameter.DEVICE)
+        rewards_v = torch.tensor(rewards, dtype=torch.float32, device=self.parameter.DEVICE)[:, None]
+        dones_v = torch.tensor(dones, dtype=torch.bool, device=self.parameter.DEVICE)
+
+        # print(observations_v.shape, actions_v.shape, next_observations_v.shape, rewards_v.shape, dones_v.shape)
+        # observations.shape, next_observations.shape: (64, 4), (64, 4)
+        # actions.shape, rewards.shape, dones.shape: (64, 1) (64, 1) (64,)
+
+        return observations_v, actions_v, next_observations_v, rewards_v, dones_v
+
+    def sample_old(self, batch_size):
+        if batch_size:
+            # Get index
             indices = np.random.choice(len(self.internal_buffer), size=batch_size, replace=False)
 
             # Sample
@@ -71,11 +106,11 @@ class Buffer:
         # actions.shape, rewards.shape, dones.shape: (64, 1) (64, 1) (64,)
 
         # Convert to tensor
-        observations_v = torch.tensor(observations, dtype=torch.float32, device=self.device)
-        actions_v = torch.tensor(actions, dtype=torch.int64, device=self.device)
-        next_observations_v = torch.tensor(next_observations, dtype=torch.float32, device=self.device)
-        rewards_v = torch.tensor(rewards, dtype=torch.float32, device=self.device)
-        dones_v = torch.tensor(dones, dtype=torch.bool, device=self.device)
+        observations_v = torch.tensor(observations, dtype=torch.float32, device=self.parameter.DEVICE)
+        actions_v = torch.tensor(actions, dtype=torch.int64, device=self.parameter.DEVICE)
+        next_observations_v = torch.tensor(next_observations, dtype=torch.float32, device=self.parameter.DEVICE)
+        rewards_v = torch.tensor([rewards], dtype=torch.float32, device=self.parameter.DEVICE)
+        dones_v = torch.tensor(dones, dtype=torch.bool, device=self.parameter.DEVICE)
 
         del observations
         del actions
@@ -84,3 +119,4 @@ class Buffer:
         del dones
 
         return observations_v, actions_v, next_observations_v, rewards_v, dones_v
+

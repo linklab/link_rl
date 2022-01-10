@@ -50,7 +50,7 @@ class Agent:
         else:
             raise ValueError()
 
-        self.buffer = Buffer(capacity=parameter.BUFFER_CAPACITY, device=self.parameter.DEVICE)
+        self.buffer = Buffer(capacity=parameter.BUFFER_CAPACITY, action_space=action_space, parameter=self.parameter)
 
         self.model = None
         if self.parameter.AGENT_TYPE in ActorCriticAgentTypes:

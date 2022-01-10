@@ -74,7 +74,7 @@ class AgentDqn(Agent):
             target_state_action_values = self.rewards + self.parameter.GAMMA ** self.parameter.N_STEP * next_q_v
 
         # loss is just scalar torch value
-        q_net_loss = F.mse_loss(state_action_values, target_state_action_values.detach())
+        q_net_loss = F.huber_loss(state_action_values, target_state_action_values.detach())
 
         # print("observations.shape: {0}, actions.shape: {1}, "
         #       "next_observations.shape: {2}, rewards.shape: {3}, dones.shape: {4}".format(

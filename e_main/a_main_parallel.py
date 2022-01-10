@@ -16,6 +16,11 @@ sys.path.append(os.path.abspath(
 ))
 
 from e_main.parameter import parameter
+
+from a_configuration.a_config.config import SYSTEM_USER_NAME, SYSTEM_COMPUTER_NAME
+parameter.SYSTEM_USER_NAME = SYSTEM_USER_NAME
+parameter.SYSTEM_COMPUTER_NAME = SYSTEM_COMPUTER_NAME
+
 from e_main.supports.main_preamble import *
 
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")

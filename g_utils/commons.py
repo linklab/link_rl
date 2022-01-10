@@ -1,5 +1,4 @@
 import collections
-import time
 import datetime
 import numpy as np
 
@@ -252,23 +251,21 @@ def print_space(observation_space, action_space, parameter):
 
 
 def console_log(
-        total_train_start_time, total_episodes_v, total_time_steps_v,
-        last_mean_episode_reward_v, n_rollout_transitions_v, train_steps_v,
+        total_episodes_v, total_time_steps_v, last_mean_episode_reward_v,
+        n_rollout_transitions_v, transition_rolling_rate_v, train_steps_v, train_step_rate_v,
         agent, parameter
 ):
-    total_training_time = time.time() - total_train_start_time
-
     console_log = "[Total Episodes: {0:6,}, Total Time Steps {1:7,}] " \
-                  "Mean Episode Reward: {2:6.1f}, Rolling Transitions: {3:7,} ({4:7.3f}/sec.), " \
+                  "Mean Episode Reward: {2:6.1f}, Transitions Rolled: {3:7,} ({4:7.3f}/sec.), " \
                   "Training Steps: {5:5,} ({6:.3f}/sec.), " \
         .format(
             total_episodes_v,
             total_time_steps_v,
             last_mean_episode_reward_v,
             n_rollout_transitions_v,
-            n_rollout_transitions_v / total_training_time,
+            transition_rolling_rate_v,
             train_steps_v,
-            train_steps_v / total_training_time
+            train_step_rate_v
         )
 
     if parameter.AGENT_TYPE in [AgentType.DQN, AgentType.DUELING_DQN]:
@@ -294,15 +291,6 @@ def console_log(
     else:
         pass
 
-    # if torch.cuda.is_available():
-        # pynvml.nvmlInit()
-        # handle = pynvml.nvmlDeviceGetHandleByIndex(0)
-        # gpu_resource = pynvml.nvmlDeviceGetUtilizationRates(handle)
-        # console_log += f'gpu: {0}%, gpu-mem: {1}%, '.format(gpu_resource.gpu, gpu_resource.memory)
-        # import GPUtil
-        # gpu = GPUtil.getGPUs()[0]
-        # console_log += f'gpu: {0}%, gpu-mem: {1}%, '.format(gpu.load * 100, gpu.memoryUtil * 100)
-
     print(console_log)
 
 
@@ -314,7 +302,7 @@ def console_log_comparison(
     for agent_idx, agent in enumerate(agents):
         agent_prefix = "[Agent: {0}]".format(agent_idx)
         console_log = agent_prefix + "[Total Episodes: {0:6,}, Total Time Steps {1:7,}] " \
-                      "Mean Episode Reward: {2:6.1f}, Rolling Transitions: {3:7,}, " \
+                      "Mean Episode Reward: {2:6.1f}, Transitions Rolled: {3:7,}, " \
                       "Training Steps: {4:5,}, " \
             .format(
                 total_episodes_per_agent[agent_idx],
@@ -374,7 +362,9 @@ def wandb_log(learner, wandb_obj, parameter):
         "Episode": learner.total_episodes.value,
         "Buffer Size": learner.agent.buffer.size(),
         "Training Steps": learner.training_steps.value,
-        "Total Time Steps": learner.total_time_steps.value
+        "Total Time Steps": learner.total_time_steps.value,
+        "Transition Rolling Rate": learner.transition_rolling_rate.value,
+        "Train Step Rate": learner.train_step_rate.value
     }
 
     if parameter.AGENT_TYPE in [AgentType.DQN, AgentType.DUELING_DQN]:
