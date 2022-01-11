@@ -11,7 +11,7 @@ from g_utils.types import ModelType
 class ParameterHumanoidBulletSac(ParameterBase, ParameterHumanoidBullet, ParameterSac):
     def __init__(self):
         ParameterBase.__init__(self)
-        ParameterHopperBullet.__init__(self)
+        ParameterHumanoidBullet.__init__(self)
         ParameterSac.__init__(self)
 
         self.ALPHA_LEARNING_RATE = 0.0001
