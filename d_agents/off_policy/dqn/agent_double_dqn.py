@@ -13,8 +13,8 @@ class AgentDoubleDqn(AgentDqn):
         state_action_values = self.q_net(self.observations).gather(dim=-1, index=self.actions)
 
         with torch.no_grad():
-            target_argmax_action = torch.argmax(self.target_q_net(self.next_observations), dim=-1, keepdim=True)
-            next_q_values = self.q_net(self.next_observations).gather(dim=-1, index=target_argmax_action)
+            target_argmax_action = torch.argmax(self.q_net(self.next_observations), dim=-1, keepdim=True)
+            next_q_values = self.target_q_net(self.next_observations).gather(dim=-1, index=target_argmax_action)
             next_q_values[self.dones] = 0.0
             next_q_values = next_q_values.detach()
 
