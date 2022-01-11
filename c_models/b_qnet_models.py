@@ -108,6 +108,5 @@ class DuelingQNet(Model):
         else:
             raise ValueError()
 
-        q_values = val + adv - torch.mean(adv, dim=1, keepdim=True)
-        #print(adv.shape, val.shape, torch.mean(adv, dim=1, keepdim=True).shape, q_values.shape)
+        q_values = val + adv - torch.mean(adv, dim=-1, keepdim=True)
         return q_values
