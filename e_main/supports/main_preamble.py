@@ -5,6 +5,7 @@ import warnings
 
 from d_agents.off_policy.ddpg.agent_ddpg import AgentDdpg
 from d_agents.off_policy.dqn.agent_double_dqn import AgentDoubleDqn
+from d_agents.off_policy.dqn.agent_double_dueling_dqn import AgentDoubleDuelingDqn
 from d_agents.off_policy.dqn.agent_dueling_dqn import AgentDuelingDqn
 from d_agents.off_policy.sac.agent_sac import AgentSac
 
@@ -42,6 +43,10 @@ def get_agent(observation_space, action_space, parameter=None):
         )
     elif parameter.AGENT_TYPE == AgentType.DUELING_DQN:
         agent = AgentDuelingDqn(
+            observation_space=observation_space, action_space=action_space, parameter=parameter
+        )
+    elif parameter.AGENT_TYPE == AgentType.DOUBLE_DUELING_DQN:
+        agent = AgentDoubleDuelingDqn(
             observation_space=observation_space, action_space=action_space, parameter=parameter
         )
     elif parameter.AGENT_TYPE == AgentType.REINFORCE:

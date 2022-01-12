@@ -68,6 +68,7 @@ parameter_comparison_cart_pole_dqn_types.AGENT_LABELS = [
     "DQN",
     "Double DQN",
     "Dueling DQN",
+    "Double Dueling DQN",
 ]
 parameter_comparison_cart_pole_dqn_types.MAX_TRAINING_STEPS = 50_000
 parameter_comparison_cart_pole_dqn_types.N_RUNS = 5

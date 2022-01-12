@@ -1,8 +1,9 @@
 from a_configuration.c_parameters.mujoco.parameter_halfcheetah_mujoco import ParameterHalfCheetahMujocoSac
 from a_configuration.c_parameters.mujoco.parameter_hopper_mujoco import ParameterHopperMujocoSac
 from a_configuration.c_parameters.mujoco.parameter_walker2d_mujoco import ParameterWalker2dMujocoSac
-from a_configuration.c_parameters.open_ai_gym.parameter_cartpole import ParameterCartPoleDqn, ParameterCartPoleDoubleDqn, \
-    ParameterCartPoleDuelingDqn
+from a_configuration.c_parameters.open_ai_gym.parameter_cartpole import ParameterCartPoleDqn, \
+    ParameterCartPoleDoubleDqn, \
+    ParameterCartPoleDuelingDqn, ParameterCartPoleDoubleDuelingDqn
 from a_configuration.c_parameters.open_ai_gym.parameter_cartpole import ParameterCartPoleReinforce
 from a_configuration.c_parameters.open_ai_gym.parameter_cartpole import ParameterCartPoleA2c
 from a_configuration.c_parameters.open_ai_gym.parameter_lunar_lander import ParameterLunarLanderContinuousA2c, \
@@ -33,6 +34,9 @@ parameter_list.append(parameter_cart_pole_ddqn)
 
 parameter_cart_pole_duelingdqn = ParameterCartPoleDuelingDqn()
 parameter_list.append(parameter_cart_pole_duelingdqn)
+
+parameter_cart_pole_doubleduelingdqn = ParameterCartPoleDoubleDuelingDqn()
+parameter_list.append(parameter_cart_pole_doubleduelingdqn)
 
 parameter_cart_pole_reinforce = ParameterCartPoleReinforce()
 parameter_list.append(parameter_cart_pole_reinforce)
