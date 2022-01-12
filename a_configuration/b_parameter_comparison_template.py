@@ -11,7 +11,7 @@ from a_configuration.d_parameters_comparison.open_ai_gym.parameter_comparison_po
     ParameterComparisonPongDqnTypes
 from a_configuration.d_parameters_comparison.pybullet.parameter_comparison_ant import ParameterComparisonAntBulletSac
 from a_configuration.d_parameters_comparison.pybullet.parameter_comparison_cartpole_bullet import \
-    ParameterComparisonCartPoleBulletA2c
+    ParameterComparisonCartPoleBulletA2c, ParameterComparisonCartPoleBulletDqnTypes
 from a_configuration.d_parameters_comparison.pybullet.parameter_comparison_double_inverted_pendulum_bullet import \
     ParameterComparisonDoubleInvertedPendulumBulletSac
 
@@ -74,6 +74,19 @@ parameter_comparison_cart_pole_dqn_types.AGENT_LABELS = [
 parameter_comparison_cart_pole_dqn_types.MAX_TRAINING_STEPS = 50_000
 parameter_comparison_cart_pole_dqn_types.N_RUNS = 5
 parameter_comparison_list.append(parameter_comparison_cart_pole_dqn_types)
+
+######################################################################
+
+parameter_comparison_cart_pole_bullet_dqn_types = ParameterComparisonCartPoleBulletDqnTypes()
+parameter_comparison_cart_pole_bullet_dqn_types.AGENT_LABELS = [
+    "DQN",
+    "Double DQN",
+    "Dueling DQN",
+    "Double Dueling DQN",
+]
+parameter_comparison_cart_pole_bullet_dqn_types.MAX_TRAINING_STEPS = 50_000
+parameter_comparison_cart_pole_bullet_dqn_types.N_RUNS = 5
+parameter_comparison_list.append(parameter_comparison_cart_pole_bullet_dqn_types)
 
 ######################################################################
 
