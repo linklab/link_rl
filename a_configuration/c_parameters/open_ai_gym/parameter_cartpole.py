@@ -1,4 +1,4 @@
-from a_configuration.b_base.b_agents.agents_off_policy import ParameterDqn, ParameterDdqn, ParameterDuelingDqn, \
+from a_configuration.b_base.b_agents.agents_off_policy import ParameterDqn, ParameterDoubleDqn, ParameterDuelingDqn, \
     ParameterDoubleDuelingDqn
 from a_configuration.b_base.b_agents.agents_on_policy import ParameterA2c, ParameterReinforce
 from a_configuration.b_base.c_models.linear_models import ParameterLinearModel
@@ -23,12 +23,12 @@ class ParameterCartPoleDqn(
 
 
 class ParameterCartPoleDoubleDqn(
-    ParameterBase, ParameterCartPole, ParameterDdqn
+    ParameterBase, ParameterCartPole, ParameterDoubleDqn
 ):
     def __init__(self):
         ParameterBase.__init__(self)
         ParameterCartPole.__init__(self)
-        ParameterDdqn.__init__(self)
+        ParameterDoubleDqn.__init__(self)
 
         self.N_VECTORIZED_ENVS = 1
         self.N_ACTORS = 1

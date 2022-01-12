@@ -22,9 +22,9 @@ class ParameterDqn(ParameterAgent):
         self.TARGET_SYNC_INTERVAL_TRAINING_STEPS = 50
 
 
-class ParameterDdqn(ParameterDqn):
+class ParameterDoubleDqn(ParameterDqn):
     def __init__(self):
-        super(ParameterDdqn, self).__init__()
+        super(ParameterDoubleDqn, self).__init__()
         self.AGENT_TYPE = AgentType.DOUBLE_DQN
 
         self.TAU = 0.005

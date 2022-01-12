@@ -7,7 +7,8 @@ from a_configuration.d_parameters_comparison.mujoco.parameter_comparison_walker2
     ParameterComparisonWalker2dMujocoSac
 from a_configuration.d_parameters_comparison.open_ai_gym.parameter_comparison_cartpole import \
     ParameterComparisonCartPoleDqn, ParameterComparisonCartPoleDqnTypes
-from a_configuration.d_parameters_comparison.open_ai_gym.parameter_comparison_pong import ParameterComparisonPongDqn
+from a_configuration.d_parameters_comparison.open_ai_gym.parameter_comparison_pong import ParameterComparisonPongDqn, \
+    ParameterComparisonPongDqnTypes
 from a_configuration.d_parameters_comparison.pybullet.parameter_comparison_ant import ParameterComparisonAntBulletSac
 from a_configuration.d_parameters_comparison.pybullet.parameter_comparison_cartpole_bullet import \
     ParameterComparisonCartPoleBulletA2c
@@ -73,6 +74,19 @@ parameter_comparison_cart_pole_dqn_types.AGENT_LABELS = [
 parameter_comparison_cart_pole_dqn_types.MAX_TRAINING_STEPS = 50_000
 parameter_comparison_cart_pole_dqn_types.N_RUNS = 5
 parameter_comparison_list.append(parameter_comparison_cart_pole_dqn_types)
+
+######################################################################
+
+parameter_comparison_pong_dqn_types = ParameterComparisonPongDqnTypes()
+parameter_comparison_pong_dqn_types.AGENT_LABELS = [
+    "DQN",
+    "Double DQN",
+    "Dueling DQN",
+    "Double Dueling DQN",
+]
+parameter_comparison_pong_dqn_types.MAX_TRAINING_STEPS = 1_000_000
+parameter_comparison_pong_dqn_types.N_RUNS = 3
+parameter_comparison_list.append(parameter_comparison_pong_dqn_types)
 
 ######################################################################
 
