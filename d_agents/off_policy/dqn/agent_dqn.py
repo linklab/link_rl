@@ -46,16 +46,16 @@ class AgentDqn(Agent):
         self.last_q_net_loss = mp.Value('d', 0.0)
 
     def get_action(self, obs, mode=AgentMode.TRAIN):
+        out = self.q_net.forward(obs)
+
         if mode == AgentMode.TRAIN:
             coin = np.random.random()    # 0.0과 1.0사이의 임의의 값을 반환
             if coin < self.epsilon.value:
                 action = np.random.randint(low=0, high=self.n_discrete_actions, size=len(obs))
             else:
-                out = self.q_net.forward(obs)
                 action = out.argmax(dim=-1)
                 action = action.cpu().numpy()  # argmax: 가장 큰 값에 대응되는 인덱스 반환
         else:
-            out = self.q_net.forward(obs)
             action = out.argmax(dim=-1)
             action = action.cpu().numpy()
 

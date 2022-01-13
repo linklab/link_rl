@@ -2,6 +2,8 @@ import warnings
 
 from gym.spaces import Discrete, Box
 
+from a_configuration.b_base.c_models.recurrent_linear_models import ParameterRecurrentLinearModel
+
 warnings.filterwarnings('ignore')
 warnings.simplefilter("ignore")
 
@@ -78,6 +80,9 @@ class LearnerComparison:
 
     def generator_on_policy_transition(self, agent_idx):
         observations = self.train_envs_per_agent[agent_idx].reset()
+        if isinstance(self.parameter_c.AGENT_PARAMETERS[agent_idx].MODEL, ParameterRecurrentLinearModel):
+            self.agents[agent_idx].model.init_recurrent_hidden()
+            observations = [(observations, self.agents[agent_idx].model.recurrent_hidden)]
 
         actor_time_step = 0
 
@@ -93,6 +98,8 @@ class LearnerComparison:
                 raise ValueError()
 
             next_observations, rewards, dones, infos = self.train_envs_per_agent[agent_idx].step(scaled_actions)
+            if isinstance(self.parameter_c.AGENT_PARAMETERS[agent_idx].MODEL, ParameterRecurrentLinearModel):
+                next_observations = [(next_observations, self.agents[agent_idx].model.recurrent_hidden)]
 
             for env_id, (observation, action, next_observation, reward, done, info) in enumerate(
                     zip(observations, actions, next_observations, rewards, dones, infos)
@@ -241,6 +248,9 @@ class LearnerComparison:
             # Environment 초기화와 변수 초기화
             observation = self.test_envs_per_agent[agent_idx].reset()
             observation = np.expand_dims(observation, axis=0)
+            if isinstance(self.parameter_c.AGENT_PARAMETERS[agent_idx].MODEL, ParameterRecurrentLinearModel):
+                self.agents[agent_idx].model.init_recurrent_hidden()
+                observation = [(observation, self.agents[agent_idx].model.recurrent_hidden)]
 
             while True:
                 action = self.agents[agent_idx].get_action(observation, mode=AgentMode.TEST)
@@ -270,6 +280,8 @@ class LearnerComparison:
 
                 next_observation, reward, done, _ = self.test_envs_per_agent[agent_idx].step(scaled_action)
                 next_observation = np.expand_dims(next_observation, axis=0)
+                if isinstance(self.parameter_c.AGENT_PARAMETERS[agent_idx].MODEL, ParameterRecurrentLinearModel):
+                    next_observation = [(next_observation, self.agents[agent_idx].model.recurrent_hidden)]
 
                 episode_reward += reward  # episode_reward 를 산출하는 방법은 감가률 고려하지 않는 이 라인이 더 올바름.
                 observation = next_observation

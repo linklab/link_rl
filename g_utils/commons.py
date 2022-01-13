@@ -14,6 +14,8 @@ import plotly.graph_objects as go
 from a_configuration.a_config.config import SYSTEM_USER_NAME
 from a_configuration.b_base.c_models.convolutional_models import ParameterConvolutionalModel
 from a_configuration.b_base.c_models.linear_models import ParameterLinearModel
+from a_configuration.b_base.c_models.recurrent_convolutional_models import ParameterRecurrentConvolutionalModel
+from a_configuration.b_base.c_models.recurrent_linear_models import ParameterRecurrentLinearModel
 from a_configuration.b_base.c_models.recurrent_models import ParameterRecurrentModel
 from g_utils.types import AgentType, ActorCriticAgentTypes
 
@@ -218,6 +220,24 @@ def print_model_info(model):
         item1 = "{0}: {1:}".format("MODEL", "RECURRENT_MODEL")
         item2 = "{0}: {1:}".format("---", "")
         print("{0:55} {1:55}".format(item1, item2), end="\n")
+    elif isinstance(model, ParameterRecurrentLinearModel):
+        item1 = "{0}: {1:}".format("MODEL", "RECURRENT_LINEAR_MODEL")
+        print("{0:55}".format(item1), end="\n")
+        item1 = "{0}: {1:}".format("HIDDEN_SIZE", model.HIDDEN_SIZE)
+        item2 = "{0}: {1:}".format("NUM_LAYERS", model.NUM_LAYERS)
+        item3 = "{0}: {1:}".format("NEURONS_PER_FULLY_CONNECTED_LAYER", model.NEURONS_PER_FULLY_CONNECTED_LAYER)
+        print("{0:55} {1:55} {2:55}".format(item1, item2, item3, end="\n"))
+    elif isinstance(model, ParameterRecurrentConvolutionalModel):
+        item1 = "{0}: {1:}".format("MODEL", "RECURRENT_CONVOLUTIONAL_MODEL")
+        print("{0:55}".format(item1), end="\n")
+        item1 = "{0}: {1:}".format("OUT_CHANNELS_PER_LAYER", model.OUT_CHANNELS_PER_LAYER)
+        item2 = "{0}: {1:}".format("KERNEL_SIZE_PER_LAYER", model.KERNEL_SIZE_PER_LAYER)
+        item3 = "{0}: {1:}".format("STRIDE_PER_LAYER", model.STRIDE_PER_LAYER)
+        print("{0:55} {1:55} {2:55}".format(item1, item2, item3, end="\n"))
+        item1 = "{0}: {1:}".format("HIDDEN_SIZE", model.HIDDEN_SIZE)
+        item2 = "{0}: {1:}".format("NUM_LAYERS", model.NUM_LAYERS)
+        item3 = "{0}: {1:}".format("NEURONS_PER_FULLY_CONNECTED_LAYER", model.NEURONS_PER_FULLY_CONNECTED_LAYER)
+        print("{0:55} {1:55} {2:55}".format(item1, item2, item3, end="\n"))
     else:
         raise ValueError()
 

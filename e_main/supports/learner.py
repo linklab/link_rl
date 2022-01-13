@@ -2,6 +2,9 @@ import warnings
 
 from gym.spaces import Box, Discrete
 
+from a_configuration.b_base.c_models.recurrent_convolutional_models import ParameterRecurrentConvolutionalModel
+from a_configuration.b_base.c_models.recurrent_linear_models import ParameterRecurrentLinearModel
+
 warnings.filterwarnings('ignore')
 warnings.simplefilter("ignore")
 
@@ -57,15 +60,25 @@ class Learner(mp.Process):
         self.transition_rolling_rate = mp.Value('d', 0.0)
         self.train_step_rate = mp.Value('d', 0.0)
 
-        if queue is None: # Sequential
+        if queue is None:  # Sequential
             self.transition_generator = self.generator_on_policy_transition()
 
             self.histories = []
             for _ in range(self.parameter.N_VECTORIZED_ENVS):
                 self.histories.append(deque(maxlen=self.parameter.N_STEP))
 
+        self.model_is_recurrent = any([
+            isinstance(self.parameter.MODEL, ParameterRecurrentLinearModel),
+            isinstance(self.parameter.MODEL, ParameterRecurrentConvolutionalModel)
+        ])
+
+
     def generator_on_policy_transition(self):
         observations = self.train_env.reset()
+
+        if self.model_is_recurrent:
+            self.agent.model.init_recurrent_hidden()
+            observations = [(observations, self.agent.model.recurrent_hidden)]
 
         actor_time_step = 0
 
@@ -79,7 +92,10 @@ class Learner(mp.Process):
                 scaled_actions = actions * self.agent.action_scale + self.agent.action_bias
             else:
                 raise ValueError()
+
             next_observations, rewards, dones, infos = self.train_env.step(scaled_actions)
+            if self.model_is_recurrent:
+                next_observations = [(next_observations, self.agent.model.recurrent_hidden)]
 
             for env_id, (observation, action, next_observation, reward, done, info) in enumerate(
                     zip(observations, actions, next_observations, rewards, dones, infos)
@@ -267,6 +283,9 @@ class Learner(mp.Process):
             # Environment 초기화와 변수 초기화
             observation = self.test_env.reset()
             observation = np.expand_dims(observation, axis=0)
+            if self.model_is_recurrent:
+                self.agent.model.init_recurrent_hidden()
+                observation = [(observation, self.agent.model.recurrent_hidden)]
 
             while True:
                 action = self.agent.get_action(observation, mode=AgentMode.TEST)
@@ -296,6 +315,8 @@ class Learner(mp.Process):
 
                 next_observation, reward, done, _ = self.test_env.step(scaled_action)
                 next_observation = np.expand_dims(next_observation, axis=0)
+                if self.model_is_recurrent:
+                    next_observation = [(next_observation, self.agent.model.recurrent_hidden)]
 
                 episode_reward += reward  # episode_reward 를 산출하는 방법은 감가률 고려하지 않는 이 라인이 더 올바름.
                 observation = next_observation
