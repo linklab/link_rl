@@ -8,7 +8,8 @@ from a_configuration.c_parameters.open_ai_gym.parameter_cartpole import Paramete
 from a_configuration.c_parameters.open_ai_gym.parameter_cartpole import ParameterCartPoleA2c
 from a_configuration.c_parameters.open_ai_gym.parameter_lunar_lander import ParameterLunarLanderContinuousA2c, \
     ParameterLunarLanderA2c, ParameterLunarLanderContinuousDdpg, ParameterLunarLanderContinuousSac
-from a_configuration.c_parameters.open_ai_gym.parameter_pong import ParameterPongDqn
+from a_configuration.c_parameters.open_ai_gym.parameter_pong import ParameterPongDqn, ParameterPongDoubleDqn, \
+    ParameterPongDuelingDqn, ParameterPongDoubleDuelingDqn
 from a_configuration.c_parameters.open_ai_gym.parameter_pong import ParameterPongA2c
 from a_configuration.c_parameters.mujoco.parameter_ant_mujoco import ParameterAntMujocoSac
 
@@ -105,6 +106,15 @@ parameter_list.append(parameter_doubleinvertedpendulum_bullet_sac)
 ##########
 parameter_pong_dqn = ParameterPongDqn()
 parameter_list.append(parameter_pong_dqn)
+
+parameter_pong_double_dqn = ParameterPongDoubleDqn()
+parameter_list.append(parameter_pong_double_dqn)
+
+parameter_pong_dueling_dqn = ParameterPongDuelingDqn()
+parameter_list.append(parameter_pong_dueling_dqn)
+
+parameter_pong_double_dueling_dqn = ParameterPongDoubleDuelingDqn()
+parameter_list.append(parameter_pong_double_dueling_dqn)
 
 parameter_pong_a2c = ParameterPongA2c()
 parameter_list.append(parameter_pong_a2c)
