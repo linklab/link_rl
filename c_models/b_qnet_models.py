@@ -78,7 +78,7 @@ class QNet(Model):
         if isinstance(self.parameter.MODEL, ParameterLinearModel):
             x = self.fc_layers(x)
         elif isinstance(self.parameter.MODEL, ParameterConvolutionalModel):
-            print("x.shape:", x.shape)
+            #print("x.shape:", x.shape)
             conv_out = self.conv_layers(x)
             conv_out = torch.flatten(conv_out, start_dim=1)
             x = self.fc_layers(conv_out)
