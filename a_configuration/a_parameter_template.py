@@ -97,8 +97,8 @@ parameter_list.append(parameter_hopper_bullet_sac)
 #########################################
 ##    DoubleInvertedPendulum_BULLET    ##
 #########################################
-parameter_doubleinvertedpendulum_bullet_sac = ParameterDoubleInvertedPendulumBulletSac()
-parameter_list.append(parameter_doubleinvertedpendulum_bullet_sac)
+parameter_double_inverted_pendulum_bullet_sac = ParameterDoubleInvertedPendulumBulletSac()
+parameter_list.append(parameter_double_inverted_pendulum_bullet_sac)
 
 
 ##########

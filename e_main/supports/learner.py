@@ -314,7 +314,9 @@ class Learner(mp.Process):
                     raise ValueError()
 
                 next_observation, reward, done, _ = self.test_env.step(scaled_action)
-                next_observation = np.expand_dims(next_observation, axis=0)
+
+                #next_observation = np.expand_dims(next_observation, axis=0)
+
                 if self.model_is_recurrent:
                     next_observation = [(next_observation, self.agent.model.recurrent_hidden)]
 
