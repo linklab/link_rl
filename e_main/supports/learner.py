@@ -243,8 +243,7 @@ class Learner(mp.Process):
         print("[Test: {0}, Training Step: {1:6,}] "
               "Episode Reward - Average: {2:.3f}, Standard Dev.: {3:.3f}, Elapsed Time: {4} ".format(
             self.test_idx.value + 1, self.training_steps.value,
-            self.test_episode_reward_avg.value, self.test_episode_reward_std.value,
-            formatted_elapsed_time
+            self.test_episode_reward_avg.value, self.test_episode_reward_std.value, formatted_elapsed_time
         ))
 
         termination_conditions = [
@@ -277,12 +276,13 @@ class Learner(mp.Process):
         self.agent.model.eval()
 
         episode_reward_lst = []
+
         for i in range(n_test_episodes):
             episode_reward = 0  # cumulative_reward
 
             # Environment 초기화와 변수 초기화
             observation = self.test_env.reset()
-            observation = np.expand_dims(observation, axis=0)
+            #observation = np.expand_dims(observation, axis=0)
             if self.model_is_recurrent:
                 self.agent.model.init_recurrent_hidden()
                 observation = [(observation, self.agent.model.recurrent_hidden)]
@@ -314,7 +314,6 @@ class Learner(mp.Process):
                     raise ValueError()
 
                 next_observation, reward, done, _ = self.test_env.step(scaled_action)
-
                 #next_observation = np.expand_dims(next_observation, axis=0)
 
                 if self.model_is_recurrent:

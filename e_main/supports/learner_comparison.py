@@ -1,18 +1,13 @@
 import warnings
-
-from gym.spaces import Discrete, Box
-
-from a_configuration.b_base.c_models.recurrent_linear_models import ParameterRecurrentLinearModel
-
 warnings.filterwarnings('ignore')
 warnings.simplefilter("ignore")
 
 import time
 from collections import deque
-
-import torch
 import numpy as np
+from gym.spaces import Discrete, Box
 
+from a_configuration.b_base.c_models.recurrent_linear_models import ParameterRecurrentLinearModel
 from e_main.supports.actor import Actor
 from g_utils.commons import get_train_env, get_single_env, console_log_comparison, wandb_log_comparison, MeanBuffer
 from g_utils.types import AgentType, AgentMode, Transition
@@ -233,21 +228,24 @@ class LearnerComparison:
 
         elapsed_time = time.time() - self.train_comparison_start_time
         formatted_elapsed_time = time.strftime('%H:%M:%S', time.gmtime(elapsed_time))
+
         print("[Test: {0}, Agent: {1}, Training Step: {2:6,}] "
               "Episode Reward - Average: {3:.3f}, Standard Dev.: {4:.3f}, Elapsed Time: {5} ".format(
-            self.test_idx + 1, agent_idx, training_steps, avg, std,
-            formatted_elapsed_time
+            self.test_idx + 1, agent_idx, training_steps, avg, std, formatted_elapsed_time
         ))
         print("*" * 160)
 
     def play_for_testing(self, n_test_episodes, agent_idx):
+        self.agents[agent_idx].model.eval()
+
         episode_reward_lst = []
+
         for i in range(n_test_episodes):
             episode_reward = 0  # cumulative_reward
 
             # Environment 초기화와 변수 초기화
             observation = self.test_envs_per_agent[agent_idx].reset()
-            observation = np.expand_dims(observation, axis=0)
+            #observation = np.expand_dims(observation, axis=0)
             if isinstance(self.parameter_c.AGENT_PARAMETERS[agent_idx].MODEL, ParameterRecurrentLinearModel):
                 self.agents[agent_idx].model.init_recurrent_hidden()
                 observation = [(observation, self.agents[agent_idx].model.recurrent_hidden)]
@@ -279,8 +277,7 @@ class LearnerComparison:
                     raise ValueError()
 
                 next_observation, reward, done, _ = self.test_envs_per_agent[agent_idx].step(scaled_action)
-
-                # next_observation = np.expand_dims(next_observation, axis=0)
+                #next_observation = np.expand_dims(next_observation, axis=0)
 
                 if isinstance(self.parameter_c.AGENT_PARAMETERS[agent_idx].MODEL, ParameterRecurrentLinearModel):
                     next_observation = [(next_observation, self.agents[agent_idx].model.recurrent_hidden)]
@@ -292,6 +289,8 @@ class LearnerComparison:
                     break
 
             episode_reward_lst.append(episode_reward)
+
+        self.agents[agent_idx].model.train()
 
         return np.average(episode_reward_lst), np.std(episode_reward_lst)
 

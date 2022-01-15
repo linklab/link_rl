@@ -10,7 +10,7 @@ class ParameterComparisonCartPoleBulletDqn(ParameterComparisonBase):
     def __init__(self):
         ParameterComparisonBase.__init__(self)
 
-        self.ENV_NAME = "CartPole-v1"
+        self.ENV_NAME = "CartPoleBulletEnv-v1"
 
         self.AGENT_PARAMETERS = [
             ParameterCartPoleDqn(),
@@ -23,7 +23,7 @@ class ParameterComparisonCartPoleBulletDqnTypes(ParameterComparisonBase):
     def __init__(self):
         ParameterComparisonBase.__init__(self)
 
-        self.ENV_NAME = "CartPole-v1"
+        self.ENV_NAME = "CartPoleBulletEnv-v1"
 
         self.AGENT_PARAMETERS = [
             ParameterCartPoleBulletDqn(),
