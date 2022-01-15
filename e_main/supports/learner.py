@@ -256,8 +256,7 @@ class Learner(mp.Process):
             self.training_steps.value += 1
 
             print("Solved in {0:,} steps ({1:,} training steps)!".format(
-                self.total_time_steps.value,
-                self.training_steps.value
+                self.total_time_steps.value, self.training_steps.value
             ))
             model_save(
                 model=self.agent.model,

@@ -1,6 +1,7 @@
 import os
 import sys
 import warnings
+import datetime
 
 sys.path.append(os.path.abspath(
     os.path.join(os.path.dirname(os.path.realpath(__file__)), os.pardir)
@@ -73,8 +74,10 @@ def main():
 
     print_comparison_basic_info(observation_space, action_space, parameter_c)
 
-    comparison_stat.save_csv()
-    comparison_stat.save_fig()
+    now = datetime.datetime.now()
+    local_now = now.astimezone()
+    comparison_stat.save_csv(local_now)
+    comparison_stat.save_fig(local_now)
 
 
 if __name__ == "__main__":
