@@ -245,7 +245,7 @@ class LearnerComparison:
 
             # Environment 초기화와 변수 초기화
             observation = self.test_envs_per_agent[agent_idx].reset()
-            #observation = np.expand_dims(observation, axis=0)
+            observation = np.expand_dims(observation, axis=0)
             if isinstance(self.parameter_c.AGENT_PARAMETERS[agent_idx].MODEL, ParameterRecurrentLinearModel):
                 self.agents[agent_idx].model.init_recurrent_hidden()
                 observation = [(observation, self.agents[agent_idx].model.recurrent_hidden)]
@@ -277,7 +277,7 @@ class LearnerComparison:
                     raise ValueError()
 
                 next_observation, reward, done, _ = self.test_envs_per_agent[agent_idx].step(scaled_action)
-                #next_observation = np.expand_dims(next_observation, axis=0)
+                next_observation = np.expand_dims(next_observation, axis=0)
 
                 if isinstance(self.parameter_c.AGENT_PARAMETERS[agent_idx].MODEL, ParameterRecurrentLinearModel):
                     next_observation = [(next_observation, self.agents[agent_idx].model.recurrent_hidden)]

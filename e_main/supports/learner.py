@@ -282,7 +282,7 @@ class Learner(mp.Process):
 
             # Environment 초기화와 변수 초기화
             observation = self.test_env.reset()
-            #observation = np.expand_dims(observation, axis=0)
+            observation = np.expand_dims(observation, axis=0)
             if self.model_is_recurrent:
                 self.agent.model.init_recurrent_hidden()
                 observation = [(observation, self.agent.model.recurrent_hidden)]
@@ -314,8 +314,7 @@ class Learner(mp.Process):
                     raise ValueError()
 
                 next_observation, reward, done, _ = self.test_env.step(scaled_action)
-                #next_observation = np.expand_dims(next_observation, axis=0)
-
+                next_observation = np.expand_dims(next_observation, axis=0)
                 if self.model_is_recurrent:
                     next_observation = [(next_observation, self.agent.model.recurrent_hidden)]
 
