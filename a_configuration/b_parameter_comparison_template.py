@@ -107,20 +107,16 @@ parameter_comparison_list.append(parameter_comparison_pong_dqn_types)
 ######################################################################
 
 parameter_comparison_cart_pole_dqn_recurrent = ParameterComparisonCartPoleDqn()
-parameter_comparison_cart_pole_dqn_recurrent.AGENT_PARAMETERS[0].N_STEP = 1
-parameter_comparison_cart_pole_dqn_recurrent.AGENT_PARAMETERS[1].N_STEP = 2
-parameter_comparison_cart_pole_dqn_recurrent.AGENT_PARAMETERS[2].N_STEP = 4
+parameter_comparison_cart_pole_dqn_recurrent.AGENT_PARAMETERS[0].MODEL = ParameterRecurrentLinearModel(ModelType.SMALL_RECURRENT)
+parameter_comparison_cart_pole_dqn_recurrent.AGENT_PARAMETERS[1].MODEL = ParameterLinearModel(ModelType.SMALL_LINEAR)
+parameter_comparison_cart_pole_dqn_recurrent.AGENT_PARAMETERS[2].MODEL = ParameterLinearModel(ModelType.SMALL_LINEAR_2)
 parameter_comparison_cart_pole_dqn_recurrent.AGENT_LABELS = [
     "DQN Recurrent",
     "DQN Small Linear",
     "DQN Small Linear2"
 ]
 
-parameter_comparison_cart_pole_dqn_recurrent.AGENT_PARAMETERS[0].MODEL = ParameterRecurrentLinearModel(ModelType.SMALL_RECURRENT)
-parameter_comparison_cart_pole_dqn_recurrent.AGENT_PARAMETERS[1].MODEL = ParameterLinearModel(ModelType.SMALL_LINEAR)
-parameter_comparison_cart_pole_dqn_recurrent.AGENT_PARAMETERS[2].MODEL = ParameterLinearModel(ModelType.SMALL_LINEAR_2)
-
-parameter_comparison_cart_pole_dqn.MAX_TRAINING_STEPS = 1_000_000
+parameter_comparison_cart_pole_dqn.MAX_TRAINING_STEPS = 100_000
 parameter_comparison_cart_pole_dqn.N_RUNS = 5
 parameter_comparison_list.append(parameter_comparison_cart_pole_dqn_recurrent)
 
