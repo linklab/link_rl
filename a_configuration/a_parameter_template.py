@@ -8,12 +8,14 @@ from a_configuration.c_parameters.open_ai_gym.parameter_cartpole import Paramete
 from a_configuration.c_parameters.open_ai_gym.parameter_cartpole import ParameterCartPoleA2c
 from a_configuration.c_parameters.open_ai_gym.parameter_lunar_lander import ParameterLunarLanderContinuousA2c, \
     ParameterLunarLanderA2c, ParameterLunarLanderContinuousDdpg, ParameterLunarLanderContinuousSac
-from a_configuration.c_parameters.open_ai_gym.parameter_pong import ParameterPongDqn
+from a_configuration.c_parameters.open_ai_gym.parameter_pong import ParameterPongDqn, ParameterPongDoubleDqn, \
+    ParameterPongDuelingDqn, ParameterPongDoubleDuelingDqn
 from a_configuration.c_parameters.open_ai_gym.parameter_pong import ParameterPongA2c
 from a_configuration.c_parameters.mujoco.parameter_ant_mujoco import ParameterAntMujocoSac
 
 from a_configuration.c_parameters.pybullet.parameter_cartpole_bullet import ParameterCartPoleBulletDqn, \
-    ParameterCartPoleContinuousBulletA2c, ParameterCartPoleContinuousBulletSac, ParameterCartPoleContinuousBulletDdpg
+    ParameterCartPoleContinuousBulletA2c, ParameterCartPoleContinuousBulletSac, ParameterCartPoleContinuousBulletDdpg, \
+    ParameterCartPoleBulletDoubleDqn, ParameterCartPoleBulletDuelingDqn, ParameterCartPoleBulletDoubleDuelingDqn
 from a_configuration.c_parameters.pybullet.parameter_ant_bullet import ParameterAntBulletA2c, ParameterAntBulletSac
 from a_configuration.c_parameters.pybullet.parameter_ant_bullet import ParameterAntBulletDdpg
 from a_configuration.c_parameters.pybullet.parameter_double_inverted_pendulum_bullet import \
@@ -65,6 +67,15 @@ parameter_list.append(parameter_lunar_lander_continuous_sac)
 parameter_cart_pole_bullet_dqn = ParameterCartPoleBulletDqn()
 parameter_list.append(parameter_cart_pole_bullet_dqn)
 
+parameter_cart_pole_bullet_double_dqn = ParameterCartPoleBulletDoubleDqn()
+parameter_list.append(parameter_cart_pole_bullet_double_dqn)
+
+parameter_cart_pole_bullet_dueling_dqn = ParameterCartPoleBulletDuelingDqn()
+parameter_list.append(parameter_cart_pole_bullet_dueling_dqn)
+
+parameter_cart_pole_bullet_double_dueling_dqn = ParameterCartPoleBulletDoubleDuelingDqn()
+parameter_list.append(parameter_cart_pole_bullet_double_dueling_dqn)
+
 parameter_cart_pole_continuous_bullet_a2c = ParameterCartPoleContinuousBulletA2c()
 parameter_list.append(parameter_cart_pole_continuous_bullet_a2c)
 
@@ -96,8 +107,8 @@ parameter_list.append(parameter_hopper_bullet_sac)
 #########################################
 ##    DoubleInvertedPendulum_BULLET    ##
 #########################################
-parameter_doubleinvertedpendulum_bullet_sac = ParameterDoubleInvertedPendulumBulletSac()
-parameter_list.append(parameter_doubleinvertedpendulum_bullet_sac)
+parameter_double_inverted_pendulum_bullet_sac = ParameterDoubleInvertedPendulumBulletSac()
+parameter_list.append(parameter_double_inverted_pendulum_bullet_sac)
 
 
 ##########
@@ -105,6 +116,15 @@ parameter_list.append(parameter_doubleinvertedpendulum_bullet_sac)
 ##########
 parameter_pong_dqn = ParameterPongDqn()
 parameter_list.append(parameter_pong_dqn)
+
+parameter_pong_double_dqn = ParameterPongDoubleDqn()
+parameter_list.append(parameter_pong_double_dqn)
+
+parameter_pong_dueling_dqn = ParameterPongDuelingDqn()
+parameter_list.append(parameter_pong_dueling_dqn)
+
+parameter_pong_double_dueling_dqn = ParameterPongDoubleDuelingDqn()
+parameter_list.append(parameter_pong_double_dueling_dqn)
 
 parameter_pong_a2c = ParameterPongA2c()
 parameter_list.append(parameter_pong_a2c)

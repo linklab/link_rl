@@ -3,6 +3,8 @@ import numpy as np
 import torch
 from gym.spaces import Discrete, Box
 
+from a_configuration.b_base.c_models.recurrent_convolutional_models import ParameterRecurrentConvolutionalModel
+from a_configuration.b_base.c_models.recurrent_linear_models import ParameterRecurrentLinearModel
 from g_utils.types import Transition
 
 
@@ -11,6 +13,11 @@ class Buffer:
         self.internal_buffer = collections.deque(maxlen=capacity)
         self.action_space = action_space
         self.parameter = parameter
+
+        self.model_is_recurrent = any([
+            isinstance(self.parameter.MODEL, ParameterRecurrentLinearModel),
+            isinstance(self.parameter.MODEL, ParameterRecurrentConvolutionalModel)
+        ])
 
     def __len__(self):
         return len(self.internal_buffer)
@@ -59,8 +66,45 @@ class Buffer:
             observations, actions, next_observations, rewards, dones, infos = \
                 zip(*self.internal_buffer)
 
+        if self.model_is_recurrent:
+            """
+            type(observations): tuple ot tuple
+            observations.shape: (batch_size, 2)
+            
+            observations, hiddens = zip(*observations)
+            len(observations): batch_size
+            len(hiddens): batch_size
+            """
+            observations, hiddens = zip(*observations)
+            next_observations, next_hiddens = zip(*next_observations)
+
         # Convert to tensor
-        observations_v = torch.tensor(observations, dtype=torch.float32, device=self.parameter.DEVICE)
+        if self.model_is_recurrent:
+            """
+            type(hiddens): tuple
+            len(hiddens): batch_size
+            hiddens[0].shape: [num_layers]
+            torch.stack(hiddens, 1).shape: [num_layers, batch_size, 1, hidden]
+            torch.stack(hiddens, 1).squeeze(dim=2).shape: [num_layers, batch_size, hidden]
+            """
+            observations = torch.tensor(observations, dtype=torch.float32, device=self.parameter.DEVICE)
+            hiddens = torch.stack(hiddens, 1).squeeze(dim=2)
+
+            next_observations = torch.tensor(next_observations, dtype=torch.float32, device=self.parameter.DEVICE)
+            next_hiddens = torch.stack(next_hiddens, 1).squeeze(dim=2)
+
+            # if CNN
+            if observations.ndim == 5:  # [batch_size, 1, channel, height, width]
+                observations = observations.squeeze(1)
+                next_observations = next_observations.squeeze(1)
+                # [batch_size, channel, height, width]
+
+            observations_v = [(observations, hiddens)]
+            next_observations_v = [(next_observations, next_hiddens)]
+
+        else:
+            observations_v = torch.tensor(observations, dtype=torch.float32, device=self.parameter.DEVICE)
+            next_observations_v = torch.tensor(next_observations, dtype=torch.float32, device=self.parameter.DEVICE)
 
         if isinstance(self.action_space, Discrete):     # actions.shape = (64,)
             actions_v = torch.tensor(actions, dtype=torch.int64, device=self.parameter.DEVICE)[:, None]
@@ -69,7 +113,6 @@ class Buffer:
         else:
             raise ValueError()
 
-        next_observations_v = torch.tensor(next_observations, dtype=torch.float32, device=self.parameter.DEVICE)
         rewards_v = torch.tensor(rewards, dtype=torch.float32, device=self.parameter.DEVICE)[:, None]
         dones_v = torch.tensor(dones, dtype=torch.bool, device=self.parameter.DEVICE)
 

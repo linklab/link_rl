@@ -56,7 +56,7 @@ class AgentSac(Agent):
         self.actor_optimizer = optim.Adam(self.actor_model.parameters(), lr=self.parameter.ACTOR_LEARNING_RATE)
         self.critic_optimizer = optim.Adam(self.critic_model.parameters(), lr=self.parameter.LEARNING_RATE)
 
-        self.training_steps = 0
+        self.training_step = 0
 
         self.alpha = mp.Value('d', 0.0)
         self.min_alpha = torch.tensor(self.parameter.MIN_ALPHA, device=self.parameter.DEVICE)

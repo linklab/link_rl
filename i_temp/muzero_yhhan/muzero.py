@@ -81,7 +81,7 @@ class MuZeroConfig(object):
         self.known_bounds = known_bounds
 
         ### Training
-        self.training_steps = int(1000e3)
+        self.training_step = int(1000e3)
         self.checkpoint_interval = int(1e3)
         self.window_size = int(1e6)
         self.batch_size = batch_size
@@ -104,7 +104,7 @@ def make_board_game_config(action_space_size: int, max_moves: int,
                            dirichlet_alpha: float,
                            lr_init: float) -> MuZeroConfig:
 
-    def visit_softmax_temperature(num_moves, training_steps):
+    def visit_softmax_temperature(num_moves, training_step):
         if num_moves < 30:
             return 1.0
         else:
@@ -142,10 +142,10 @@ def make_shogi_config() -> MuZeroConfig:
 
 def make_atari_config() -> MuZeroConfig:
 
-    def visit_softmax_temperature(num_moves, training_steps):
-        if training_steps < 500e3:
+    def visit_softmax_temperature(num_moves, training_step):
+        if training_step < 500e3:
             return 1.0
-        elif training_steps < 750e3:
+        elif training_step < 750e3:
             return 0.5
         else:
             return 0.25
@@ -353,7 +353,7 @@ class Network(object):
         # Returns the weights of this network.
         return []
 
-    def training_steps(self) -> int:
+    def training_step(self) -> int:
         # How many steps / batches the network has been trained for.
         return 0
 
@@ -469,7 +469,7 @@ def select_action(config: MuZeroConfig, num_moves: int, node: Node,
         (child.visit_count, action) for action, child in node.children.items()
     ]
     t = config.visit_softmax_temperature_fn(
-        num_moves=num_moves, training_steps=network.training_steps())
+        num_moves=num_moves, training_step=network.training_step())
     _, action = softmax_sample(visit_counts, t)
     return action
 
@@ -545,12 +545,12 @@ def train_network(config: MuZeroConfig, storage: SharedStorage,
             tf.train.get_global_step() / config.lr_decay_steps)
     optimizer = tf.train.MomentumOptimizer(learning_rate, config.momentum)
 
-    for i in range(config.training_steps):
+    for i in range(config.training_step):
         if i % config.checkpoint_interval == 0:
             storage.save_network(i, network)
         batch = replay_buffer.sample_batch(config.num_unroll_steps, config.td_steps)
         update_weights(optimizer, network, batch, config.weight_decay)
-    storage.save_network(config.training_steps, network)
+    storage.save_network(config.training_step, network)
 
 
 def update_weights(optimizer: tf.train.Optimizer, network: Network, batch,

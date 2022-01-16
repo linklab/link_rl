@@ -14,6 +14,8 @@ import plotly.graph_objects as go
 from a_configuration.a_config.config import SYSTEM_USER_NAME
 from a_configuration.b_base.c_models.convolutional_models import ParameterConvolutionalModel
 from a_configuration.b_base.c_models.linear_models import ParameterLinearModel
+from a_configuration.b_base.c_models.recurrent_convolutional_models import ParameterRecurrentConvolutionalModel
+from a_configuration.b_base.c_models.recurrent_linear_models import ParameterRecurrentLinearModel
 from a_configuration.b_base.c_models.recurrent_models import ParameterRecurrentModel
 from g_utils.types import AgentType, ActorCriticAgentTypes
 
@@ -218,6 +220,24 @@ def print_model_info(model):
         item1 = "{0}: {1:}".format("MODEL", "RECURRENT_MODEL")
         item2 = "{0}: {1:}".format("---", "")
         print("{0:55} {1:55}".format(item1, item2), end="\n")
+    elif isinstance(model, ParameterRecurrentLinearModel):
+        item1 = "{0}: {1:}".format("MODEL", "RECURRENT_LINEAR_MODEL")
+        print("{0:55}".format(item1), end="\n")
+        item1 = "{0}: {1:}".format("HIDDEN_SIZE", model.HIDDEN_SIZE)
+        item2 = "{0}: {1:}".format("NUM_LAYERS", model.NUM_LAYERS)
+        item3 = "{0}: {1:}".format("NEURONS_PER_FULLY_CONNECTED_LAYER", model.NEURONS_PER_FULLY_CONNECTED_LAYER)
+        print("{0:55} {1:55} {2:55}".format(item1, item2, item3, end="\n"))
+    elif isinstance(model, ParameterRecurrentConvolutionalModel):
+        item1 = "{0}: {1:}".format("MODEL", "RECURRENT_CONVOLUTIONAL_MODEL")
+        print("{0:55}".format(item1), end="\n")
+        item1 = "{0}: {1:}".format("OUT_CHANNELS_PER_LAYER", model.OUT_CHANNELS_PER_LAYER)
+        item2 = "{0}: {1:}".format("KERNEL_SIZE_PER_LAYER", model.KERNEL_SIZE_PER_LAYER)
+        item3 = "{0}: {1:}".format("STRIDE_PER_LAYER", model.STRIDE_PER_LAYER)
+        print("{0:55} {1:55} {2:55}".format(item1, item2, item3, end="\n"))
+        item1 = "{0}: {1:}".format("HIDDEN_SIZE", model.HIDDEN_SIZE)
+        item2 = "{0}: {1:}".format("NUM_LAYERS", model.NUM_LAYERS)
+        item3 = "{0}: {1:}".format("NEURONS_PER_FULLY_CONNECTED_LAYER", model.NEURONS_PER_FULLY_CONNECTED_LAYER)
+        print("{0:55} {1:55} {2:55}".format(item1, item2, item3, end="\n"))
     else:
         raise ValueError()
 
@@ -295,7 +315,7 @@ def console_log(
 
 
 def console_log_comparison(
-        total_time_steps, total_episodes_per_agent,
+        total_time_step, total_episodes_per_agent,
         last_mean_episode_reward_per_agent, n_rollout_transitions_per_agent, training_steps_per_agent,
         agents, parameter_c
 ):
@@ -306,13 +326,15 @@ def console_log_comparison(
                       "Training Steps: {4:5,}, " \
             .format(
                 total_episodes_per_agent[agent_idx],
-                total_time_steps,
+                total_time_step,
                 last_mean_episode_reward_per_agent[agent_idx],
                 n_rollout_transitions_per_agent[agent_idx],
                 training_steps_per_agent[agent_idx]
             )
 
-        if parameter_c.AGENT_PARAMETERS[agent_idx].AGENT_TYPE == AgentType.DQN:
+        if parameter_c.AGENT_PARAMETERS[agent_idx].AGENT_TYPE in [
+            AgentType.DQN, AgentType.DOUBLE_DQN, AgentType.DUELING_DQN, AgentType.DOUBLE_DUELING_DQN
+        ]:
             console_log += "Q_net_loss: {0:>6.3f}, Epsilon: {1:>4.2f}, ".format(
                 agent.last_q_net_loss.value, agent.epsilon.value
             )
@@ -361,8 +383,8 @@ def wandb_log(learner, wandb_obj, parameter):
         "Mean Episode Reward": learner.last_mean_episode_reward.value,
         "Episode": learner.total_episodes.value,
         "Buffer Size": learner.agent.buffer.size(),
-        "Training Steps": learner.training_steps.value,
-        "Total Time Steps": learner.total_time_steps.value,
+        "Training Steps": learner.training_step.value,
+        "Total Time Steps": learner.total_time_step.value,
         "Transition Rolling Rate": learner.transition_rolling_rate.value,
         "Train Step Rate": learner.train_step_rate.value
     }
@@ -403,8 +425,8 @@ def wandb_log(learner, wandb_obj, parameter):
 #         "Mean Episode Reward": learner.last_mean_episode_reward.value,
 #         "Episode": learner.total_episodes.value,
 #         "Buffer Size": learner.n_rollout_transitions.value,
-#         "Training Steps": learner.training_steps.value,
-#         "Total Time Steps": learner.total_time_steps.value
+#         "Training Steps": learner.training_step.value,
+#         "Total Time Steps": learner.total_time_step.value
 #     }
 #     wandb_obj.log(log_dict)
 
@@ -439,10 +461,10 @@ plotly_layout = go.Layout(
 
 
 def wandb_log_comparison(
-        run, agents, agent_labels, n_episodes_for_mean_calculation, comparison_stat, wandb_obj
+        run, training_step, agents, agent_labels, n_episodes_for_mean_calculation, comparison_stat, wandb_obj
 ):
     plotly_layout.yaxis.title = "[TEST] Episode Reward"
-    plotly_layout.xaxis.title = "Training Steps (runs={0})".format(run + 1)
+    plotly_layout.xaxis.title = "Training Steps ({0}, runs={1})".format(training_step, run + 1)
     data = []
     for agent_idx, _ in enumerate(agents):
         data.append(
@@ -457,7 +479,7 @@ def wandb_log_comparison(
 
     ###############################################################################
     plotly_layout.yaxis.title = "[TEST] Std. of Episode Reward"
-    plotly_layout.xaxis.title = "Training Steps (runs={0})".format(run + 1)
+    plotly_layout.xaxis.title = "Training Steps ({0}, runs={1})".format(training_step, run + 1)
     data = []
     for agent_idx, _ in enumerate(agents):
         data.append(
@@ -472,8 +494,8 @@ def wandb_log_comparison(
 
     ###############################################################################
     plotly_layout.yaxis.title = "[TRAIN] Mean Episode Reward"
-    plotly_layout.xaxis.title = "Training Steps (Recent {0} Episodes, runs={1})".format(
-        n_episodes_for_mean_calculation, run + 1
+    plotly_layout.xaxis.title = "Training Steps ({0}, runs={1}, over {2} Episodes)".format(
+        training_step, run + 1, n_episodes_for_mean_calculation
     )
     data = []
     for agent_idx, _ in enumerate(agents):
