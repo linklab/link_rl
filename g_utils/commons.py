@@ -315,7 +315,7 @@ def console_log(
 
 
 def console_log_comparison(
-        total_time_steps, total_episodes_per_agent,
+        total_time_step, total_episodes_per_agent,
         last_mean_episode_reward_per_agent, n_rollout_transitions_per_agent, training_steps_per_agent,
         agents, parameter_c
 ):
@@ -326,7 +326,7 @@ def console_log_comparison(
                       "Training Steps: {4:5,}, " \
             .format(
                 total_episodes_per_agent[agent_idx],
-                total_time_steps,
+                total_time_step,
                 last_mean_episode_reward_per_agent[agent_idx],
                 n_rollout_transitions_per_agent[agent_idx],
                 training_steps_per_agent[agent_idx]
@@ -383,8 +383,8 @@ def wandb_log(learner, wandb_obj, parameter):
         "Mean Episode Reward": learner.last_mean_episode_reward.value,
         "Episode": learner.total_episodes.value,
         "Buffer Size": learner.agent.buffer.size(),
-        "Training Steps": learner.training_steps.value,
-        "Total Time Steps": learner.total_time_steps.value,
+        "Training Steps": learner.training_step.value,
+        "Total Time Steps": learner.total_time_step.value,
         "Transition Rolling Rate": learner.transition_rolling_rate.value,
         "Train Step Rate": learner.train_step_rate.value
     }
@@ -425,8 +425,8 @@ def wandb_log(learner, wandb_obj, parameter):
 #         "Mean Episode Reward": learner.last_mean_episode_reward.value,
 #         "Episode": learner.total_episodes.value,
 #         "Buffer Size": learner.n_rollout_transitions.value,
-#         "Training Steps": learner.training_steps.value,
-#         "Total Time Steps": learner.total_time_steps.value
+#         "Training Steps": learner.training_step.value,
+#         "Total Time Steps": learner.total_time_step.value
 #     }
 #     wandb_obj.log(log_dict)
 
@@ -461,10 +461,10 @@ plotly_layout = go.Layout(
 
 
 def wandb_log_comparison(
-        run, agents, agent_labels, n_episodes_for_mean_calculation, comparison_stat, wandb_obj
+        run, training_step, agents, agent_labels, n_episodes_for_mean_calculation, comparison_stat, wandb_obj
 ):
     plotly_layout.yaxis.title = "[TEST] Episode Reward"
-    plotly_layout.xaxis.title = "Training Steps (runs={0})".format(run + 1)
+    plotly_layout.xaxis.title = "Training Steps ({0}, runs={1})".format(training_step, run + 1)
     data = []
     for agent_idx, _ in enumerate(agents):
         data.append(
@@ -479,7 +479,7 @@ def wandb_log_comparison(
 
     ###############################################################################
     plotly_layout.yaxis.title = "[TEST] Std. of Episode Reward"
-    plotly_layout.xaxis.title = "Training Steps (runs={0})".format(run + 1)
+    plotly_layout.xaxis.title = "Training Steps ({0}, runs={1})".format(training_step, run + 1)
     data = []
     for agent_idx, _ in enumerate(agents):
         data.append(
@@ -494,8 +494,8 @@ def wandb_log_comparison(
 
     ###############################################################################
     plotly_layout.yaxis.title = "[TRAIN] Mean Episode Reward"
-    plotly_layout.xaxis.title = "Training Steps (Recent {0} Episodes, runs={1})".format(
-        n_episodes_for_mean_calculation, run + 1
+    plotly_layout.xaxis.title = "Training Steps ({0}, runs={1}, over {2} Episodes)".format(
+        training_step, run + 1, n_episodes_for_mean_calculation
     )
     data = []
     for agent_idx, _ in enumerate(agents):

@@ -2,6 +2,7 @@ from a_configuration.b_base.b_agents.agents_off_policy import ParameterDqn, Para
     ParameterDoubleDuelingDqn
 from a_configuration.b_base.b_agents.agents_on_policy import ParameterA2c, ParameterReinforce
 from a_configuration.b_base.c_models.linear_models import ParameterLinearModel
+from a_configuration.b_base.c_models.recurrent_linear_models import ParameterRecurrentLinearModel
 from a_configuration.b_base.parameter_base import ParameterBase
 from a_configuration.b_base.a_environments.open_ai_gym.gym_classic_control import ParameterCartPole
 from g_utils.types import ModelType
@@ -50,6 +51,7 @@ class ParameterCartPoleDuelingDqn(
         self.MAX_TRAINING_STEPS = 100_000
         self.CONSOLE_LOG_INTERVAL_TRAINING_STEPS = 100
         self.MODEL = ParameterLinearModel(ModelType.SMALL_LINEAR)
+
 
 class ParameterCartPoleDoubleDuelingDqn(
     ParameterBase, ParameterCartPole, ParameterDoubleDuelingDqn

@@ -37,9 +37,9 @@ class Learner(mp.Process):
         self.episode_rewards = np.zeros(shape=(self.n_actors, self.n_vectorized_envs))
         self.episode_reward_buffer = MeanBuffer(self.parameter.N_EPISODES_FOR_MEAN_CALCULATION)
 
-        self.total_time_steps = mp.Value('i', 0)
+        self.total_time_step = mp.Value('i', 0)
         self.total_episodes = mp.Value('i', 0)
-        self.training_steps = mp.Value('i', 0)
+        self.training_step = mp.Value('i', 0)
 
         self.n_rollout_transitions = mp.Value('i', 0)
 
@@ -145,7 +145,7 @@ class Learner(mp.Process):
             else:
                 n_step_transition = next(self.transition_generator)
 
-            self.total_time_steps.value += 1
+            self.total_time_step.value += 1
 
             if n_step_transition is None:
                 self.n_actor_terminations += 1
@@ -174,47 +174,47 @@ class Learner(mp.Process):
                 self.episode_rewards[actor_id][env_id] = 0.0
 
                 if self.parameter.AGENT_TYPE == AgentType.REINFORCE:
-                    is_train_success_done = self.agent.train(training_steps_v=self.training_steps.value)
+                    is_train_success_done = self.agent.train(training_steps_v=self.training_step.value)
                     if is_train_success_done:
-                        self.training_steps.value += 1
+                        self.training_step.value += 1
 
             train_conditions = [
-                self.total_time_steps.value >= self.next_train_time_step,
+                self.total_time_step.value >= self.next_train_time_step,
                 self.parameter.AGENT_TYPE != AgentType.REINFORCE
             ]
             if all(train_conditions):
-                is_train_success_done = self.agent.train(training_steps_v=self.training_steps.value)
+                is_train_success_done = self.agent.train(training_steps_v=self.training_step.value)
                 if is_train_success_done:
-                    self.training_steps.value += 1
+                    self.training_step.value += 1
 
                 self.next_train_time_step += self.parameter.TRAIN_INTERVAL_GLOBAL_TIME_STEPS
 
-            if self.training_steps.value >= self.next_console_log:
+            if self.training_step.value >= self.next_console_log:
                 total_training_time = time.time() - self.train_start_time
                 self.transition_rolling_rate.value = self.n_rollout_transitions.value / total_training_time
-                self.train_step_rate.value = self.training_steps.value / total_training_time
+                self.train_step_rate.value = self.training_step.value / total_training_time
 
                 console_log(
                     total_episodes_v=self.total_episodes.value,
-                    total_time_steps_v=self.total_time_steps.value,
+                    total_time_steps_v=self.total_time_step.value,
                     last_mean_episode_reward_v=self.last_mean_episode_reward.value,
                     n_rollout_transitions_v=self.n_rollout_transitions.value,
                     transition_rolling_rate_v=self.transition_rolling_rate.value,
-                    train_steps_v=self.training_steps.value,
+                    train_steps_v=self.training_step.value,
                     train_step_rate_v=self.train_step_rate.value,
                     agent=self.agent,
                     parameter=self.parameter
                 )
                 self.next_console_log += self.parameter.CONSOLE_LOG_INTERVAL_TRAINING_STEPS
 
-            if self.training_steps.value >= self.next_test_training_step:
+            if self.training_step.value >= self.next_test_training_step:
                 self.testing()
                 self.next_test_training_step += self.parameter.TEST_INTERVAL_TRAINING_STEPS
                 if self.parameter.USE_WANDB:
                     wandb_log(self, wandb_obj, self.parameter)
                 self.test_idx.value += 1
 
-            if self.training_steps.value >= self.parameter.MAX_TRAINING_STEPS:
+            if self.training_step.value >= self.parameter.MAX_TRAINING_STEPS:
                 print("[TRAIN TERMINATION] MAX_TRAINING_STEPS ({0:,}) REACHES!!!".format(
                     self.parameter.MAX_TRAINING_STEPS
                 ))
@@ -224,7 +224,7 @@ class Learner(mp.Process):
         formatted_total_training_time = time.strftime('%H:%M:%S', time.gmtime(total_training_time))
         print("Total Training Terminated: {}".format(formatted_total_training_time))
         print("Transition Rolling Rate: {0:.3f}/sec.".format(self.n_rollout_transitions.value / total_training_time))
-        print("Training Rate: {0:.3f}/sec.".format(self.training_steps.value / total_training_time))
+        print("Training Rate: {0:.3f}/sec.".format(self.training_step.value / total_training_time))
         if self.parameter.USE_WANDB:
             wandb_obj.join()
 
@@ -242,7 +242,7 @@ class Learner(mp.Process):
 
         print("[Test: {0}, Training Step: {1:6,}] "
               "Episode Reward - Average: {2:.3f}, Standard Dev.: {3:.3f}, Elapsed Time: {4} ".format(
-            self.test_idx.value + 1, self.training_steps.value,
+            self.test_idx.value + 1, self.training_step.value,
             self.test_episode_reward_avg.value, self.test_episode_reward_std.value, formatted_elapsed_time
         ))
 
@@ -253,10 +253,10 @@ class Learner(mp.Process):
 
         if all(termination_conditions):
             # Console 및 Wandb 로그를 위한 사항
-            self.training_steps.value += 1
+            self.training_step.value += 1
 
             print("Solved in {0:,} steps ({1:,} training steps)!".format(
-                self.total_time_steps.value, self.training_steps.value
+                self.total_time_step.value, self.training_step.value
             ))
             model_save(
                 model=self.agent.model,

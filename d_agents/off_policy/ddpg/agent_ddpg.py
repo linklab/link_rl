@@ -56,7 +56,7 @@ class AgentDdpg(Agent):
         self.actor_optimizer = optim.Adam(self.actor_model.actor_params, lr=self.parameter.ACTOR_LEARNING_RATE)
         self.critic_optimizer = optim.Adam(self.critic_model.critic_params, lr=self.parameter.LEARNING_RATE)
 
-        self.training_steps = 0
+        self.training_step = 0
 
         self.last_critic_loss = mp.Value('d', 0.0)
         self.last_actor_loss = mp.Value('d', 0.0)

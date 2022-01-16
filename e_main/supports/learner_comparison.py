@@ -67,8 +67,8 @@ class LearnerComparison:
             self.is_terminated_per_agent.append(False)
             self.is_train_success_done_per_agent.append(False)
 
-        self.total_time_steps = 0
-        self.training_steps = 0
+        self.total_time_step = 0
+        self.training_step = 0
         self.test_idx = 0
 
         self.train_comparison_start_time = None
@@ -130,7 +130,7 @@ class LearnerComparison:
         self.train_comparison_start_time = time.time()
 
         while True:
-            self.total_time_steps += 1
+            self.total_time_step += 1
 
             for agent_idx, _ in enumerate(self.agents):
                 n_step_transition = next(self.transition_generators_per_agent[agent_idx])
@@ -161,7 +161,7 @@ class LearnerComparison:
                             self.training_steps_per_agent[agent_idx] += 1
                         self.is_train_success_done_per_agent[agent_idx] = is_train_success_done
 
-            if self.total_time_steps >= self.next_train_time_step:
+            if self.total_time_step >= self.next_train_time_step:
                 for agent_idx, _ in enumerate(self.agents):
                     if self.parameter_c.AGENT_PARAMETERS[agent_idx].AGENT_TYPE != AgentType.REINFORCE:
                         is_train_success_done = self.agents[agent_idx].train(
@@ -174,11 +174,11 @@ class LearnerComparison:
                 self.next_train_time_step += self.parameter_c.TRAIN_INTERVAL_GLOBAL_TIME_STEPS
 
                 if all(self.is_train_success_done_per_agent):
-                    self.training_steps += 1
+                    self.training_step += 1
 
-            if self.training_steps >= self.next_console_log:
+            if self.training_step >= self.next_console_log:
                 console_log_comparison(
-                    self.total_time_steps,
+                    self.total_time_step,
                     self.total_episodes_per_agent,
                     self.last_mean_episode_reward_per_agent,
                     self.n_rollout_transitions_per_agent,
@@ -188,9 +188,9 @@ class LearnerComparison:
                 )
                 self.next_console_log += self.parameter_c.CONSOLE_LOG_INTERVAL_TRAINING_STEPS
 
-            if self.training_steps >= self.next_test_training_step:
+            if self.training_step >= self.next_test_training_step:
                 for agent_idx, _ in enumerate(self.agents):
-                    self.testing(self.run, agent_idx, self.training_steps)
+                    self.testing(self.run, agent_idx, self.training_step)
 
                 for agent_idx, _ in enumerate(self.agents):
                     self.update_stat(self.run, agent_idx, self.test_idx)
@@ -198,6 +198,7 @@ class LearnerComparison:
                 if self.parameter_c.USE_WANDB:
                     wandb_log_comparison(
                         run=self.run,
+                        training_step=self.training_step,
                         agents=self.agents,
                         agent_labels=self.parameter_c.AGENT_LABELS,
                         n_episodes_for_mean_calculation=self.parameter_c.N_EPISODES_FOR_MEAN_CALCULATION,
@@ -208,7 +209,7 @@ class LearnerComparison:
                 self.next_test_training_step += self.parameter_c.TEST_INTERVAL_TRAINING_STEPS
                 self.test_idx += 1
 
-            if self.training_steps >= self.parameter_c.MAX_TRAINING_STEPS:
+            if self.training_step >= self.parameter_c.MAX_TRAINING_STEPS:
                 for agent_idx, _ in enumerate(self.agents):
                     print("[TRAIN TERMINATION: AGENT {0}] MAX_TRAINING_STEPS ({1}) REACHES!!!".format(
                         agent_idx,  self.parameter_c.MAX_TRAINING_STEPS
@@ -216,7 +217,7 @@ class LearnerComparison:
                     self.is_terminated_per_agent[agent_idx] = True
                 break
 
-    def testing(self, run, agent_idx, training_steps):
+    def testing(self, run, agent_idx, training_step):
         print("*" * 160)
 
         avg, std = self.play_for_testing(self.parameter_c.N_TEST_EPISODES, agent_idx)
@@ -231,7 +232,7 @@ class LearnerComparison:
 
         print("[Test: {0}, Agent: {1}, Training Step: {2:6,}] "
               "Episode Reward - Average: {3:.3f}, Standard Dev.: {4:.3f}, Elapsed Time: {5} ".format(
-            self.test_idx + 1, agent_idx, training_steps, avg, std, formatted_elapsed_time
+            self.test_idx + 1, agent_idx, training_step, avg, std, formatted_elapsed_time
         ))
         print("*" * 160)
 
