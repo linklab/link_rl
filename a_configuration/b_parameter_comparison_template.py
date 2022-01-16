@@ -1,3 +1,5 @@
+from a_configuration.b_base.c_models.linear_models import ParameterLinearModel
+from a_configuration.b_base.c_models.recurrent_linear_models import ParameterRecurrentLinearModel
 from a_configuration.d_parameters_comparison.mujoco.parameter_comparison_ant import ParameterComparisonAntMujocoSac
 from a_configuration.d_parameters_comparison.mujoco.parameter_comparison_halfcheetah import \
     ParameterComparisonHalfCheetahMujocoSac
@@ -14,6 +16,7 @@ from a_configuration.d_parameters_comparison.pybullet.parameter_comparison_cartp
     ParameterComparisonCartPoleBulletA2c, ParameterComparisonCartPoleBulletDqnTypes
 from a_configuration.d_parameters_comparison.pybullet.parameter_comparison_double_inverted_pendulum_bullet import \
     ParameterComparisonDoubleInvertedPendulumBulletSac
+from g_utils.types import ModelType
 
 parameter_comparison_list = []
 
@@ -100,6 +103,26 @@ parameter_comparison_pong_dqn_types.AGENT_LABELS = [
 parameter_comparison_pong_dqn_types.MAX_TRAINING_STEPS = 1_000_000
 parameter_comparison_pong_dqn_types.N_RUNS = 3
 parameter_comparison_list.append(parameter_comparison_pong_dqn_types)
+
+######################################################################
+
+parameter_comparison_cart_pole_dqn_recurrent = ParameterComparisonCartPoleDqn()
+parameter_comparison_cart_pole_dqn_recurrent.AGENT_PARAMETERS[0].N_STEP = 1
+parameter_comparison_cart_pole_dqn_recurrent.AGENT_PARAMETERS[1].N_STEP = 2
+parameter_comparison_cart_pole_dqn_recurrent.AGENT_PARAMETERS[2].N_STEP = 4
+parameter_comparison_cart_pole_dqn_recurrent.AGENT_LABELS = [
+    "DQN Recurrent",
+    "DQN Small Linear",
+    "DQN Small Linear2"
+]
+
+parameter_comparison_cart_pole_dqn_recurrent.AGENT_PARAMETERS[0].MODEL = ParameterRecurrentLinearModel(ModelType.SMALL_RECURRENT)
+parameter_comparison_cart_pole_dqn_recurrent.AGENT_PARAMETERS[1].MODEL = ParameterLinearModel(ModelType.SMALL_LINEAR)
+parameter_comparison_cart_pole_dqn_recurrent.AGENT_PARAMETERS[2].MODEL = ParameterLinearModel(ModelType.SMALL_LINEAR_2)
+
+parameter_comparison_cart_pole_dqn.MAX_TRAINING_STEPS = 1_000_000
+parameter_comparison_cart_pole_dqn.N_RUNS = 5
+parameter_comparison_list.append(parameter_comparison_cart_pole_dqn_recurrent)
 
 ######################################################################
 
