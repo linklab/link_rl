@@ -102,7 +102,7 @@ parameter_comparison_cart_pole_bullet_ddpg_recurrent.AGENT_LABELS = [
     "DDPG + Linear",
     "DDPG + Linear_2",
 ]
-parameter_comparison_cart_pole_bullet_ddpg_recurrent.MAX_TRAINING_STEPS = 200_000
+parameter_comparison_cart_pole_bullet_ddpg_recurrent.MAX_TRAINING_STEPS = 50_000
 parameter_comparison_cart_pole_bullet_ddpg_recurrent.N_RUNS = 5
 parameter_comparison_list.append(parameter_comparison_cart_pole_bullet_ddpg_recurrent)
 
