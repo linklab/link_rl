@@ -7,7 +7,6 @@ from a_configuration.b_base.c_models.convolutional_models import ParameterConvol
 from a_configuration.b_base.c_models.linear_models import ParameterLinearModel
 from a_configuration.b_base.c_models.recurrent_convolutional_models import ParameterRecurrentConvolutionalModel
 from a_configuration.b_base.c_models.recurrent_linear_models import ParameterRecurrentLinearModel
-from a_configuration.b_base.c_models.recurrent_models import ParameterRecurrentModel
 from c_models.a_models import Model
 from c_models.c_policy_models import DiscreteActorModel, ContinuousActorModel, PolicyModel
 
@@ -51,13 +50,14 @@ class DdpgCriticModel(Model):
             self.critic_conv_layers = self.get_conv_layers(input_n_channels=input_n_channels)
             self.critic_params += list(self.critic_conv_layers.parameters())
 
-            conv_out_flat_size = self._get_conv_out(self.conv_layers, observation_shape)
-            self.critic_fc_layers = self.get_linear_layers(input_n_features=conv_out_flat_size + self.n_out_actions)
+            conv_out_flat_size = self._get_conv_out(self.conv_layers, self.observation_shape)
+            input_n_features = conv_out_flat_size + self.n_out_actions
+            self.critic_fc_layers = self.get_linear_layers(input_n_features=input_n_features)
             self.critic_params += list(self.critic_fc_layers.parameters())
 
         elif isinstance(self.parameter.MODEL, ParameterRecurrentLinearModel):
-            input_n_features = self.observation_shape[0]
-            self.critic_recurrent_layers = self.get_recurrent_layers(input_n_features=input_n_features + self.n_out_actions)
+            input_n_features = self.observation_shape[0] + self.n_out_actions
+            self.critic_recurrent_layers = self.get_recurrent_layers(input_n_features=input_n_features)
             self.critic_params += list(self.critic_recurrent_layers.parameters())
 
             self.critic_fc_layers = self.get_linear_layers(self.parameter.MODEL.HIDDEN_SIZE)
@@ -69,8 +69,9 @@ class DdpgCriticModel(Model):
             self.critic_params += list(self.critic_conv_layers.parameters())
 
             conv_out_flat_size = self._get_conv_out(self.critic_conv_layers, self.observation_shape)
+            input_n_features = conv_out_flat_size + self.n_out_actions
             self.critic_fc_layers_1 = nn.Linear(
-                in_features=conv_out_flat_size + self.n_out_actions, out_features=self.parameter.MODEL.HIDDEN_SIZE
+                in_features=input_n_features, out_features=self.parameter.MODEL.HIDDEN_SIZE
             )
             self.critic_params += list(self.critic_fc_layers_1.parameters())
 
@@ -88,67 +89,66 @@ class DdpgCriticModel(Model):
         # CRITIC MODEL: END #
         #####################
 
-    def forward_critic(self, x, a):
-        if isinstance(x, np.ndarray):
-            x = torch.tensor(x, dtype=torch.float32, device=self.parameter.DEVICE)
+    def forward_critic(self, obs, act):
+        if isinstance(obs, np.ndarray):
+            obs = torch.tensor(obs, dtype=torch.float32, device=self.parameter.DEVICE)
 
-        if isinstance(a, np.ndarray):
-            a = torch.tensor(a, dtype=torch.float32, device=self.parameter.DEVICE)
+        if isinstance(act, np.ndarray):
+            act = torch.tensor(act, dtype=torch.float32, device=self.parameter.DEVICE)
 
         if isinstance(self.parameter.MODEL, ParameterLinearModel):
-            x = self.critic_fc_layers(torch.cat([x, a], dim=-1))
+            x = self.critic_fc_layers(torch.cat([obs, act], dim=-1))
         elif isinstance(self.parameter.MODEL, ParameterConvolutionalModel):
-            conv_out = self.critic_conv_layers(x)
+            conv_out = self.critic_conv_layers(obs)
             conv_out = torch.flatten(conv_out, start_dim=1)
-            x = self.critic_fc_layers(torch.cat([conv_out, a], dim=-1))
+            x = self.critic_fc_layers(torch.cat([conv_out, act], dim=-1))
         elif isinstance(self.parameter.MODEL, ParameterRecurrentLinearModel):
-            rnn_in, h_0 = x[0]
+            rnn_in, hidden_in = obs[0]
             if isinstance(rnn_in, np.ndarray):
                 rnn_in = torch.tensor(rnn_in, dtype=torch.float32, device=self.parameter.DEVICE)
-            if isinstance(h_0, np.ndarray):
-                h_0 = torch.tensor(h_0, dtype=torch.float32, device=self.parameter.DEVICE)
+            if isinstance(hidden_in, np.ndarray):
+                hidden_in = torch.tensor(hidden_in, dtype=torch.float32, device=self.parameter.DEVICE)
 
-            # print(rnn_in.shape, a.shape, "!!!!")
-
-            if a.ndim == 2:
-                a = a.unsqueeze(1)
+            if act.ndim == 2:
+                act = act.unsqueeze(1)
 
             if rnn_in.ndim == 2:
                 rnn_in = rnn_in.unsqueeze(1)
 
-            rnn_out, h_n = self.critic_recurrent_layers(torch.cat([rnn_in, a], dim=-1), h_0)
-            self.recurrent_hidden = h_n.detach()  # save hidden
+            rnn_out, hidden_out = self.critic_recurrent_layers(torch.cat([rnn_in, act], dim=-1), hidden_in)
+            self.recurrent_hidden = hidden_out.detach()  # save hidden
             rnn_out_flattened = torch.flatten(rnn_out, start_dim=1)
-
             x = self.critic_fc_layers(rnn_out_flattened)
+
         elif isinstance(self.parameter.MODEL, ParameterRecurrentConvolutionalModel):
-            x, h_0 = x[0]
+            x, hidden_in = obs[0]
             if isinstance(x, np.ndarray):
                 x = torch.tensor(x, dtype=torch.float32, device=self.parameter.DEVICE)
-            if isinstance(h_0, np.ndarray):
-                h_0 = torch.tensor(h_0, dtype=torch.float32, device=self.parameter.DEVICE)
+            if isinstance(hidden_in, np.ndarray):
+                hidden_in = torch.tensor(hidden_in, dtype=torch.float32, device=self.parameter.DEVICE)
 
             conv_out = self.critic_conv_layers(x)
             conv_out = torch.flatten(conv_out, start_dim=1)
             x = self.critic_fc_layers_1(conv_out)
 
             rnn_in = x
-            if a.ndim == 2:
-                a = a.unsqueeze(1)
+            if act.ndim == 2:
+                act = act.unsqueeze(1)
 
             if rnn_in.ndim == 2:
                 rnn_in = rnn_in.unsqueeze(1)
 
-            rnn_out, h_n = self.critic_recurrent_layers(torch.cat([rnn_in, a], dim=-1), h_0)
-            self.recurrent_hidden = h_n.detach()  # save hidden
-            rnn_out = torch.flatten(rnn_out, start_dim=1)
-            x = self.critic_fc_layers_2(rnn_out)
+            rnn_out, hidden_out = self.critic_recurrent_layers(torch.cat([rnn_in, act], dim=-1), hidden_in)
+            self.recurrent_hidden = hidden_out.detach()  # save hidden
+            rnn_out_flattened = torch.flatten(rnn_out, start_dim=1)
+            x = self.critic_fc_layers_2(rnn_out_flattened)
+
         else:
             raise ValueError()
         return x
 
-    def q(self, x, a):
-        x = self.forward_critic(x, a)
+    def q(self, obs, act):
+        x = self.forward_critic(obs, act)
         q_value = self.critic_fc_last_layer(x)
         return q_value
 
