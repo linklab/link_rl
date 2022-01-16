@@ -4,6 +4,8 @@ from torch import nn
 import numpy as np
 from a_configuration.b_base.c_models.convolutional_models import ParameterConvolutionalModel
 from a_configuration.b_base.c_models.linear_models import ParameterLinearModel
+from a_configuration.b_base.c_models.recurrent_convolutional_models import ParameterRecurrentConvolutionalModel
+from a_configuration.b_base.c_models.recurrent_linear_models import ParameterRecurrentLinearModel
 from a_configuration.b_base.c_models.recurrent_models import ParameterRecurrentModel
 from c_models.a_models import Model
 from c_models.c_policy_models import DiscreteActorModel, ContinuousActorModel
@@ -29,21 +31,51 @@ class SacCriticModel(Model):
         if isinstance(self.parameter.MODEL, ParameterLinearModel):
             input_n_features = self.observation_shape[0] + self.n_out_actions
             critic_layers = self.get_linear_layers(input_n_features=input_n_features)
+
         elif isinstance(self.parameter.MODEL, ParameterConvolutionalModel):
-            input_n_channels = self.observation_shape[0] + self.n_out_actions
+            input_n_channels = self.observation_shape[0]
             critic_layers = self.get_conv_layers(input_n_channels=input_n_channels)
+
             conv_out_flat_size = self._get_conv_out(self.critic_conv_layers, self.observation_shape)
-            critic_layers = nn.Sequential(
-                critic_layers,
-                self.get_linear_layers(input_n_features=conv_out_flat_size)
+            critic_layers.add_module(
+                "critic_fc_layers_{0}".format(name),
+                self.get_linear_layers(input_n_features=conv_out_flat_size + self.n_out_actions)
             )
-        elif isinstance(self.parameter.MODEL, ParameterRecurrentModel):
-            critic_layers = None
+
+        elif isinstance(self.parameter.MODEL, ParameterRecurrentLinearModel):
+            input_n_features = self.observation_shape[0]
+            critic_layers = self.get_recurrent_layers(input_n_features=input_n_features + self.n_out_actions)
+            critic_layers.add_module(
+                "critic_fc_layers_{0}".format(name),
+                self.get_linear_layers(self.parameter.MODEL.HIDDEN_SIZE)
+            )
+
+        elif isinstance(self.parameter.MODEL, ParameterRecurrentConvolutionalModel):
+            input_n_channels = self.observation_shape[0]
+            critic_layers = self.get_conv_layers(input_n_channels=input_n_channels)
+
+            conv_out_flat_size = self._get_conv_out(self.critic_conv_layers, self.observation_shape)
+            critic_layers.add_module(
+                "critic_fc_layers_1_{0}".format(name),
+                nn.Linear(
+                    in_features=conv_out_flat_size + self.n_out_actions, out_features=self.parameter.MODEL.HIDDEN_SIZE
+                )
+            )
+
+            critic_layers.add_module(
+                "critic_recurrent_layers_{0}".format(name),
+                self.get_recurrent_layers(self.parameter.MODEL.HIDDEN_SIZE)
+            )
+
+            critic_layers.add_module(
+                "critic_fc_layers_2_{0}",format(name),
+                self.get_linear_layers(self.parameter.MODEL.HIDDEN_SIZE)
+            )
         else:
             raise ValueError()
 
         critic_layers.add_module(
-            "critic_fc_last_{0}".format(name), nn.Linear(self.parameter.MODEL.NEURONS_PER_FULLY_CONNECTED_LAYER[-1], 1)
+            "critic_fc_last_layer_{0}".format(name), nn.Linear(self.parameter.MODEL.NEURONS_PER_FULLY_CONNECTED_LAYER[-1], 1)
         )
 
         return critic_layers

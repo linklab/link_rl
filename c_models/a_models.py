@@ -111,7 +111,7 @@ class Model(nn.Module):
         assert self.parameter.MODEL.NUM_LAYERS
         assert self.parameter.MODEL.NEURONS_PER_FULLY_CONNECTED_LAYER
 
-        rnn_layers = nn.GRU(
+        rnn_layer = nn.GRU(
             input_size=input_n_features,
             hidden_size=self.parameter.MODEL.HIDDEN_SIZE,
             num_layers=self.parameter.MODEL.NUM_LAYERS,
@@ -119,7 +119,7 @@ class Model(nn.Module):
             bidirectional=False
         )
 
-        return rnn_layers
+        return rnn_layer
 
     # def _get_recurrent_out(self, recurrent_layers, input_n_features, seq_len=1):
     #     """
