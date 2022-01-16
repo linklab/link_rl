@@ -524,7 +524,7 @@ def get_train_env(parameter):
     def make_gym_env(env_name):
         def _make():
             if env_name in ["Unity3DBall"]:
-                u_env = UnityEnvironment(file_name=parameter.ENV_NAME)
+                u_env = UnityEnvironment(file_name="../i_temp/unity_3DBall/" + parameter.ENV_NAME)
                 env = UnityToGymWrapper(u_env)
                 return env
             env = gym.make(env_name)
@@ -548,7 +548,7 @@ def get_train_env(parameter):
 
 def get_single_env(parameter):
     if parameter.ENV_NAME in ["Unity3DBall"]:
-        u_env = UnityEnvironment(file_name=parameter.ENV_NAME)
+        u_env = UnityEnvironment(file_name="../i_temp/unity_3DBall/" + parameter.ENV_NAME)
         single_env = UnityToGymWrapper(u_env)
         return single_env
 
