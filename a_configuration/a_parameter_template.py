@@ -1,3 +1,4 @@
+from a_configuration.c_parameters.Unity.parameter_3dball import Parameter3DBallDdqg
 from a_configuration.c_parameters.mujoco.parameter_halfcheetah_mujoco import ParameterHalfCheetahMujocoSac
 from a_configuration.c_parameters.mujoco.parameter_hopper_mujoco import ParameterHopperMujocoSac
 from a_configuration.c_parameters.mujoco.parameter_walker2d_mujoco import ParameterWalker2dMujocoSac
@@ -156,6 +157,13 @@ parameter_list.append(parameter_walker2d_mujoco_sac)
 ##########################
 parameter_halfcheetah_mujoco_sac = ParameterHalfCheetahMujocoSac()
 parameter_list.append(parameter_halfcheetah_mujoco_sac)
+
+
+##########################
+### HALFCHEETAH_MUJOCO ###
+##########################
+parameter_3d_ball_ddpg = Parameter3DBallDdqg()
+parameter_list.append(parameter_3d_ball_ddpg)
 
 ###########################################################
 for parameter in parameter_list:

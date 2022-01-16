@@ -10,6 +10,8 @@ import wandb
 from gym.spaces import Discrete, Box
 from gym.vector import AsyncVectorEnv
 import plotly.graph_objects as go
+from gym_unity.envs import UnityToGymWrapper
+from mlagents_envs.environment import UnityEnvironment
 
 from a_configuration.a_config.config import SYSTEM_USER_NAME
 from a_configuration.b_base.c_models.convolutional_models import ParameterConvolutionalModel
@@ -521,6 +523,10 @@ def wandb_log_comparison(
 def get_train_env(parameter):
     def make_gym_env(env_name):
         def _make():
+            if env_name in ["Unity3DBall"]:
+                u_env = UnityEnvironment(file_name=parameter.ENV_NAME)
+                env = UnityToGymWrapper(u_env)
+                return env
             env = gym.make(env_name)
             if env_name in ["PongNoFrameskip-v4"]:
                 env = gym.wrappers.AtariPreprocessing(
@@ -541,6 +547,11 @@ def get_train_env(parameter):
 
 
 def get_single_env(parameter):
+    if parameter.ENV_NAME in ["Unity3DBall"]:
+        u_env = UnityEnvironment(file_name=parameter.ENV_NAME)
+        single_env = UnityToGymWrapper(u_env)
+        return single_env
+
     single_env = gym.make(parameter.ENV_NAME)
     if parameter.ENV_NAME in ["PongNoFrameskip-v4"]:
         single_env = gym.wrappers.AtariPreprocessing(
