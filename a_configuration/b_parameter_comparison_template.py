@@ -13,7 +13,8 @@ from a_configuration.d_parameters_comparison.open_ai_gym.parameter_comparison_po
     ParameterComparisonPongDqnTypes
 from a_configuration.d_parameters_comparison.pybullet.parameter_comparison_ant import ParameterComparisonAntBulletSac
 from a_configuration.d_parameters_comparison.pybullet.parameter_comparison_cartpole_bullet import \
-    ParameterComparisonCartPoleBulletA2c, ParameterComparisonCartPoleBulletDqnTypes
+    ParameterComparisonCartPoleBulletA2c, ParameterComparisonCartPoleBulletDqnTypes, \
+    ParameterComparisonCartPoleContinuousBulletDdpg
 from a_configuration.d_parameters_comparison.pybullet.parameter_comparison_double_inverted_pendulum_bullet import \
     ParameterComparisonDoubleInvertedPendulumBulletSac
 from g_utils.types import ModelType
@@ -90,6 +91,20 @@ parameter_comparison_cart_pole_bullet_dqn_types.AGENT_LABELS = [
 parameter_comparison_cart_pole_bullet_dqn_types.MAX_TRAINING_STEPS = 50_000
 parameter_comparison_cart_pole_bullet_dqn_types.N_RUNS = 5
 parameter_comparison_list.append(parameter_comparison_cart_pole_bullet_dqn_types)
+
+#######################################################################################################################
+parameter_comparison_cart_pole_bullet_ddpg_recurrent = ParameterComparisonCartPoleContinuousBulletDdpg()
+parameter_comparison_cart_pole_bullet_ddpg_recurrent.AGENT_PARAMETERS[0].MODEL = ParameterRecurrentLinearModel(ModelType.SMALL_RECURRENT)
+parameter_comparison_cart_pole_bullet_ddpg_recurrent.AGENT_PARAMETERS[1].MODEL = ParameterLinearModel(ModelType.SMALL_LINEAR)
+parameter_comparison_cart_pole_bullet_ddpg_recurrent.AGENT_PARAMETERS[2].MODEL = ParameterLinearModel(ModelType.SMALL_LINEAR_2)
+parameter_comparison_cart_pole_bullet_ddpg_recurrent.AGENT_LABELS = [
+    "DDPG + GRU",
+    "DDPG + Linear",
+    "DDPG + Linear_2",
+]
+parameter_comparison_cart_pole_bullet_ddpg_recurrent.MAX_TRAINING_STEPS = 200_000
+parameter_comparison_cart_pole_bullet_ddpg_recurrent.N_RUNS = 5
+parameter_comparison_list.append(parameter_comparison_cart_pole_bullet_ddpg_recurrent)
 
 ######################################################################
 

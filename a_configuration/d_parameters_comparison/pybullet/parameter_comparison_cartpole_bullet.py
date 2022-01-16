@@ -3,7 +3,7 @@ from a_configuration.c_parameters.open_ai_gym.parameter_cartpole import Paramete
     ParameterCartPoleA2c
 from a_configuration.c_parameters.pybullet.parameter_cartpole_bullet import ParameterCartPoleBulletA2c, \
     ParameterCartPoleBulletDqn, ParameterCartPoleBulletDoubleDqn, ParameterCartPoleBulletDuelingDqn, \
-    ParameterCartPoleBulletDoubleDuelingDqn
+    ParameterCartPoleBulletDoubleDuelingDqn, ParameterCartPoleContinuousBulletDdpg
 
 
 class ParameterComparisonCartPoleBulletDqn(ParameterComparisonBase):
@@ -44,4 +44,17 @@ class ParameterComparisonCartPoleBulletA2c(ParameterComparisonBase):
             ParameterCartPoleBulletA2c(),
             ParameterCartPoleBulletA2c(),
             ParameterCartPoleBulletA2c(),
+        ]
+
+
+class ParameterComparisonCartPoleContinuousBulletDdpg(ParameterComparisonBase):
+    def __init__(self):
+        ParameterComparisonBase.__init__(self)
+
+        self.ENV_NAME = "CartPoleContinuousBulletEnv-v0"
+
+        self.AGENT_PARAMETERS = [
+            ParameterCartPoleContinuousBulletDdpg(),
+            ParameterCartPoleContinuousBulletDdpg(),
+            ParameterCartPoleContinuousBulletDdpg(),
         ]
