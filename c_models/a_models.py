@@ -111,8 +111,7 @@ class Model(nn.Module):
         assert self.parameter.MODEL.NUM_LAYERS
         assert self.parameter.MODEL.NEURONS_PER_FULLY_CONNECTED_LAYER
 
-        recurrent_layers_dict = OrderedDict()
-        recurrent_layers_dict["recurrent"] = nn.RNN(
+        rnn_layers = nn.GRU(
             input_size=input_n_features,
             hidden_size=self.parameter.MODEL.HIDDEN_SIZE,
             num_layers=self.parameter.MODEL.NUM_LAYERS,
@@ -120,9 +119,7 @@ class Model(nn.Module):
             bidirectional=False
         )
 
-        # recurrent_layers = nn.Sequential(recurrent_layers_dict)
-        recurrent_layers = recurrent_layers_dict["recurrent"]
-        return recurrent_layers
+        return rnn_layers
 
     # def _get_recurrent_out(self, recurrent_layers, input_n_features, seq_len=1):
     #     """
