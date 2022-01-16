@@ -67,16 +67,15 @@ class Learner(mp.Process):
             for _ in range(self.parameter.N_VECTORIZED_ENVS):
                 self.histories.append(deque(maxlen=self.parameter.N_STEP))
 
-        self.model_is_recurrent = any([
+        self.is_recurrent_model = any([
             isinstance(self.parameter.MODEL, ParameterRecurrentLinearModel),
             isinstance(self.parameter.MODEL, ParameterRecurrentConvolutionalModel)
         ])
 
-
     def generator_on_policy_transition(self):
         observations = self.train_env.reset()
 
-        if self.model_is_recurrent:
+        if self.is_recurrent_model:
             self.agent.model.init_recurrent_hidden()
             observations = [(observations, self.agent.model.recurrent_hidden)]
 
@@ -94,7 +93,7 @@ class Learner(mp.Process):
                 raise ValueError()
 
             next_observations, rewards, dones, infos = self.train_env.step(scaled_actions)
-            if self.model_is_recurrent:
+            if self.is_recurrent_model:
                 next_observations = [(next_observations, self.agent.model.recurrent_hidden)]
 
             for env_id, (observation, action, next_observation, reward, done, info) in enumerate(
@@ -282,7 +281,7 @@ class Learner(mp.Process):
             # Environment 초기화와 변수 초기화
             observation = self.test_env.reset()
             observation = np.expand_dims(observation, axis=0)
-            if self.model_is_recurrent:
+            if self.is_recurrent_model:
                 self.agent.model.init_recurrent_hidden()
                 observation = [(observation, self.agent.model.recurrent_hidden)]
 
@@ -314,7 +313,7 @@ class Learner(mp.Process):
 
                 next_observation, reward, done, _ = self.test_env.step(scaled_action)
                 next_observation = np.expand_dims(next_observation, axis=0)
-                if self.model_is_recurrent:
+                if self.is_recurrent_model:
                     next_observation = [(next_observation, self.agent.model.recurrent_hidden)]
 
                 episode_reward += reward  # episode_reward 를 산출하는 방법은 감가률 고려하지 않는 이 라인이 더 올바름.

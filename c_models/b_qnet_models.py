@@ -38,8 +38,10 @@ class QNet(Model):
             self.recurrent_layers = self.get_recurrent_layers(input_n_features)
             self.qnet_params += list(self.recurrent_layers.parameters())
 
-            recurrent_out_flat_size, _ = self._get_recurrent_out(self.recurrent_layers, input_n_features)
-            self.fc_layers = self.get_linear_layers(recurrent_out_flat_size)
+            #recurrent_out_flat_size, _ = self._get_recurrent_out(self.recurrent_layers, input_n_features)
+            #self.fc_layers = self.get_linear_layers(recurrent_out_flat_size)
+
+            self.fc_layers = self.get_linear_layers(self.parameter.MODEL.HIDDEN_SIZE)
             self.qnet_params += list(self.fc_layers.parameters())
 
         elif isinstance(self.parameter.MODEL, ParameterRecurrentConvolutionalModel):
@@ -54,11 +56,11 @@ class QNet(Model):
             self.recurrent_layers = self.get_recurrent_layers(self.parameter.MODEL.HIDDEN_SIZE)
             self.qnet_params += list(self.recurrent_layers.parameters())
 
-            recurrent_out_flat_size, _ = self._get_recurrent_out(
-                self.recurrent_layers,
-                self.parameter.MODEL.HIDDEN_SIZE
-            )
-            self.fc_layers_2 = self.get_linear_layers(recurrent_out_flat_size)
+            # recurrent_out_flat_size, _ = self._get_recurrent_out(
+            #     self.recurrent_layers,
+            #     self.parameter.MODEL.HIDDEN_SIZE
+            # )
+            self.fc_layers_2 = self.get_linear_layers(self.parameter.MODEL.HIDDEN_SIZE)
             self.qnet_params += list(self.fc_layers_2.parameters())
 
         else:
@@ -125,8 +127,11 @@ class QNet(Model):
 
             rnn_out, h_n = self.recurrent_layers(rnn_in, h_0)
             self.recurrent_hidden = h_n.detach()  # save hidden
-            rnn_out = torch.flatten(rnn_out, start_dim=1)
-            x = self.fc_layers(rnn_out)
+            rnn_out_flattened = torch.flatten(rnn_out, start_dim=1)
+
+            #print(rnn_in.shape, rnn_out.shape, rnn_out_flattened.shape, "!!!!!")
+
+            x = self.fc_layers(rnn_out_flattened)
 
         elif isinstance(self.parameter.MODEL, ParameterRecurrentConvolutionalModel):
             x, h_0 = x[0]

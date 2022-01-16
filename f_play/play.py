@@ -3,8 +3,12 @@ import time
 import os
 import warnings
 
+import numpy as np
+
 from a_configuration.b_base.a_environments.pybullet.gym_mujoco import ParameterMujoco
 from a_configuration.b_base.a_environments.pybullet.gym_pybullet import ParameterBullet
+from a_configuration.b_base.c_models.recurrent_convolutional_models import ParameterRecurrentConvolutionalModel
+from a_configuration.b_base.c_models.recurrent_linear_models import ParameterRecurrentLinearModel
 
 warnings.filterwarnings("ignore")
 
@@ -27,6 +31,11 @@ device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
 
 def play(env, agent, n_episodes):
+    is_recurrent_model = any([
+        isinstance(parameter.MODEL, ParameterRecurrentLinearModel),
+        isinstance(parameter.MODEL, ParameterRecurrentConvolutionalModel)
+    ])
+
     for i in range(n_episodes):
         episode_reward = 0  # cumulative_reward
 
@@ -37,6 +46,11 @@ def play(env, agent, n_episodes):
         else:
             observation = env.reset()
             env.render()
+
+        if is_recurrent_model:
+            observation = np.expand_dims(observation, axis=0)
+            agent.model.init_recurrent_hidden()
+            observation = [(observation, agent.model.recurrent_hidden)]
 
         episode_steps = 0
 
@@ -69,6 +83,9 @@ def play(env, agent, n_episodes):
 
             # action을 통해서 next_state, reward, done, info를 받아온다
             next_observation, reward, done, _ = env.step(scaled_action)
+            if is_recurrent_model:
+                next_observation = np.expand_dims(next_observation, axis=0)
+                next_observation = [(next_observation, agent.model.recurrent_hidden)]
             env.render()
 
             episode_reward += reward  # episode_reward 를 산출하는 방법은 감가률 고려하지 않는 이 라인이 더 올바름.
