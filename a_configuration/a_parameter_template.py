@@ -160,7 +160,7 @@ parameter_list.append(parameter_halfcheetah_mujoco_sac)
 
 
 ##########################
-### HALFCHEETAH_MUJOCO ###
+### Unity3DBall ###
 ##########################
 parameter_3d_ball_ddpg = Parameter3DBallDdqg()
 parameter_list.append(parameter_3d_ball_ddpg)
