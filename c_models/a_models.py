@@ -21,16 +21,16 @@ class Model(nn.Module):
         self.parameter = parameter
         self.activation = self.parameter.LAYER_ACTIVATION
 
-        self.model_is_recurrent = any([
+        self.is_recurrent_model = any([
             isinstance(self.parameter.MODEL, ParameterRecurrentLinearModel),
             isinstance(self.parameter.MODEL, ParameterRecurrentConvolutionalModel)
         ])
-        if self.model_is_recurrent:
+        if self.is_recurrent_model:
             self.recurrent_hidden = None
             self.init_recurrent_hidden()
 
     def init_recurrent_hidden(self):
-        if self.model_is_recurrent:
+        if self.is_recurrent_model:
             self.recurrent_hidden = torch.zeros(
                 self.parameter.MODEL.NUM_LAYERS,
                 1,  # batch_size
@@ -111,30 +111,27 @@ class Model(nn.Module):
         assert self.parameter.MODEL.NUM_LAYERS
         assert self.parameter.MODEL.NEURONS_PER_FULLY_CONNECTED_LAYER
 
-        recurrent_layers_dict = OrderedDict()
-        recurrent_layers_dict["recurrent"] = nn.RNN(
-            input_n_features,
-            self.parameter.MODEL.HIDDEN_SIZE,
-            self.parameter.MODEL.NUM_LAYERS,
+        rnn_layer = nn.GRU(
+            input_size=input_n_features,
+            hidden_size=self.parameter.MODEL.HIDDEN_SIZE,
+            num_layers=self.parameter.MODEL.NUM_LAYERS,
             batch_first=True,
             bidirectional=False
         )
 
-        # recurrent_layers = nn.Sequential(recurrent_layers_dict)
-        recurrent_layers = recurrent_layers_dict["recurrent"]
-        return recurrent_layers
+        return rnn_layer
 
-    def _get_recurrent_out(self, recurrent_layers, input_n_features, seq_len=1):
-        """
-        The inputs of the RNN:
-            rnn_in (batch_size, sequence_length, HIDDEN_SIZE): the input of the sequences
-            h_0 (NUM_LAYERS, batch_size, HIDDEN_SIZE): the input of the layers
-        The outputs of the RNN:
-            rnn_out (batch_size, sequence_length, HIDDEN_SIZE): the output of the sequences
-            h_n (NUM_LAYERS, batch_size, HIDDEN_SIZE): the output of the layers
-                Defaults to zeros if not provided(or provided None).
-        """
-        rnn_in = torch.zeros(1, seq_len, input_n_features)
-        rnn_out, h_n = recurrent_layers(rnn_in)
-        return int(np.prod(rnn_out.size())), int(np.prod(h_n.size()))
+    # def _get_recurrent_out(self, recurrent_layers, input_n_features, seq_len=1):
+    #     """
+    #     The inputs of the RNN:
+    #         rnn_in (batch_size, sequence_length, HIDDEN_SIZE): the input of the sequences
+    #         h_0 (NUM_LAYERS, batch_size, HIDDEN_SIZE): the input of the layers
+    #     The outputs of the RNN:
+    #         rnn_out (batch_size, sequence_length, HIDDEN_SIZE): the output of the sequences
+    #         h_n (NUM_LAYERS, batch_size, HIDDEN_SIZE): the output of the layers
+    #             Defaults to zeros if not provided(or provided None).
+    #     """
+    #     rnn_in = torch.zeros(1, seq_len, input_n_features)
+    #     rnn_out, h_n = recurrent_layers(rnn_in)
+    #     return int(np.prod(rnn_out.size())), int(np.prod(h_n.size()))
 

@@ -18,7 +18,6 @@ from a_configuration.b_base.c_models.convolutional_models import ParameterConvol
 from a_configuration.b_base.c_models.linear_models import ParameterLinearModel
 from a_configuration.b_base.c_models.recurrent_convolutional_models import ParameterRecurrentConvolutionalModel
 from a_configuration.b_base.c_models.recurrent_linear_models import ParameterRecurrentLinearModel
-from a_configuration.b_base.c_models.recurrent_models import ParameterRecurrentModel
 from g_utils.types import AgentType, ActorCriticAgentTypes
 
 if torch.cuda.is_available():
@@ -217,10 +216,6 @@ def print_model_info(model):
         print("{0:55} {1:55} {2:55}".format(item1, item2, item3, end="\n"))
         item1 = "{0}: {1:}".format("STRIDE_PER_LAYER", model.STRIDE_PER_LAYER)
         item2 = "{0}: {1:}".format("NEURONS_PER_FULLY_CONNECTED_LAYER", model.NEURONS_PER_FULLY_CONNECTED_LAYER)
-        print("{0:55} {1:55}".format(item1, item2), end="\n")
-    elif isinstance(model, ParameterRecurrentModel):
-        item1 = "{0}: {1:}".format("MODEL", "RECURRENT_MODEL")
-        item2 = "{0}: {1:}".format("---", "")
         print("{0:55} {1:55}".format(item1, item2), end="\n")
     elif isinstance(model, ParameterRecurrentLinearModel):
         item1 = "{0}: {1:}".format("MODEL", "RECURRENT_LINEAR_MODEL")

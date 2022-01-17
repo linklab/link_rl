@@ -14,7 +14,7 @@ class Buffer:
         self.action_space = action_space
         self.parameter = parameter
 
-        self.model_is_recurrent = any([
+        self.is_recurrent_model = any([
             isinstance(self.parameter.MODEL, ParameterRecurrentLinearModel),
             isinstance(self.parameter.MODEL, ParameterRecurrentConvolutionalModel)
         ])
@@ -66,7 +66,7 @@ class Buffer:
             observations, actions, next_observations, rewards, dones, infos = \
                 zip(*self.internal_buffer)
 
-        if self.model_is_recurrent:
+        if self.is_recurrent_model:
             """
             type(observations): tuple ot tuple
             observations.shape: (batch_size, 2)
@@ -79,7 +79,7 @@ class Buffer:
             next_observations, next_hiddens = zip(*next_observations)
 
         # Convert to tensor
-        if self.model_is_recurrent:
+        if self.is_recurrent_model:
             """
             type(hiddens): tuple
             len(hiddens): batch_size
