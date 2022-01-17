@@ -14,10 +14,12 @@ from gym_unity.envs import UnityToGymWrapper
 from mlagents_envs.environment import UnityEnvironment
 
 from a_configuration.a_config.config import SYSTEM_USER_NAME
+from a_configuration.b_base.a_environments.unity.unity_box import ParameterUnityGymEnv
 from a_configuration.b_base.c_models.convolutional_models import ParameterConvolutionalModel
 from a_configuration.b_base.c_models.linear_models import ParameterLinearModel
 from a_configuration.b_base.c_models.recurrent_convolutional_models import ParameterRecurrentConvolutionalModel
 from a_configuration.b_base.c_models.recurrent_linear_models import ParameterRecurrentLinearModel
+from a_configuration.b_base.parameter_base import ParameterBase
 from g_utils.types import AgentType, ActorCriticAgentTypes
 
 if torch.cuda.is_available():
@@ -542,8 +544,24 @@ def get_train_env(parameter):
 
 
 def get_single_env(parameter):
-    if parameter.ENV_NAME in ["Unity3DBall"]:
-        u_env = UnityEnvironment(file_name="../i_temp/unity_3DBall/" + parameter.ENV_NAME, worker_id=1, no_graphics=False)
+    if isinstance(parameter, ParameterUnityGymEnv):
+        from sys import platform
+        if platform == "linux" or platform == "linux2":
+            # linux
+            platform_dir = "linux"
+        elif platform == "darwin":
+            # OS X
+            platform_dir = "mac"
+        elif platform == "win32":
+            # Windows...
+            platform_dir = "windows"
+        else:
+            raise ValueError()
+
+        u_env = UnityEnvironment(
+            file_name=os.path.join(parameter.ENV_UNITY_DIR, parameter.ENV_NAME, platform_dir, parameter.ENV_NAME),
+            worker_id=1, no_graphics=False
+        )
         single_env = UnityToGymWrapper(u_env)
         return single_env
 

@@ -1,4 +1,4 @@
-from a_configuration.c_parameters.Unity.parameter_3dball import Parameter3DBallDdqg
+from a_configuration.c_parameters.unity.parameter_3d_ball import Parameter3DBallDdqg
 from a_configuration.c_parameters.mujoco.parameter_halfcheetah_mujoco import ParameterHalfCheetahMujocoSac
 from a_configuration.c_parameters.mujoco.parameter_hopper_mujoco import ParameterHopperMujocoSac
 from a_configuration.c_parameters.mujoco.parameter_walker2d_mujoco import ParameterWalker2dMujocoSac

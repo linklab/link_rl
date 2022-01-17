@@ -17,6 +17,10 @@ class ParameterBase:
         if not os.path.exists(self.MODEL_SAVE_DIR):
             os.mkdir(self.MODEL_SAVE_DIR)
 
+        self.ENV_UNITY_DIR = os.path.join(self.PROJECT_HOME, "b_environments", "unity")
+        if not os.path.exists(self.ENV_UNITY_DIR):
+            os.mkdir(self.ENV_UNITY_DIR)
+
         self.N_VECTORIZED_ENVS = 1
         self.N_ACTORS = 1
         self.N_STEP = 1
