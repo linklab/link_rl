@@ -58,6 +58,12 @@ conda activate link_rl
     ```
   - 주의: pybullet-gym 설치하지 말것
 
+- unity
+  ```commandline
+  pip install gym-unity
+  
+  ```
+
 
 ### 3. gitignore 적용
 ```commandline

@@ -520,8 +520,25 @@ def wandb_log_comparison(
 def get_train_env(parameter):
     def make_gym_env(env_name):
         def _make():
-            if env_name in ["Unity3DBall"]:
-                u_env = UnityEnvironment(file_name="../i_temp/unity_3DBall/" + parameter.ENV_NAME, worker_id=0, no_graphics=False)
+            if isinstance(parameter, ParameterUnityGymEnv):
+                from sys import platform
+                if platform == "linux" or platform == "linux2":
+                    # linux
+                    platform_dir = "linux"
+                elif platform == "darwin":
+                    # OS X
+                    platform_dir = "mac"
+                elif platform == "win32":
+                    # Windows...
+                    platform_dir = "windows"
+                else:
+                    raise ValueError()
+
+                u_env = UnityEnvironment(
+                    file_name=os.path.join(parameter.ENV_UNITY_DIR, parameter.ENV_NAME, platform_dir,
+                                           parameter.ENV_NAME),
+                    worker_id=0, no_graphics=False
+                )
                 env = UnityToGymWrapper(u_env)
                 return env
             env = gym.make(env_name)
