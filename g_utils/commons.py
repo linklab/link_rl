@@ -563,14 +563,13 @@ def get_single_env(parameter):
             worker_id=1, no_graphics=False
         )
         single_env = UnityToGymWrapper(u_env)
-        return single_env
-
-    single_env = gym.make(parameter.ENV_NAME)
-    if parameter.ENV_NAME in ["PongNoFrameskip-v4"]:
-        single_env = gym.wrappers.AtariPreprocessing(
-            single_env, grayscale_obs=True, scale_obs=True
-        )
-        single_env = gym.wrappers.FrameStack(single_env, num_stack=4, lz4_compress=True)
+    else:
+        single_env = gym.make(parameter.ENV_NAME)
+        if parameter.ENV_NAME in ["PongNoFrameskip-v4"]:
+            single_env = gym.wrappers.AtariPreprocessing(
+                single_env, grayscale_obs=True, scale_obs=True
+            )
+            single_env = gym.wrappers.FrameStack(single_env, num_stack=4, lz4_compress=True)
 
     return single_env
 
