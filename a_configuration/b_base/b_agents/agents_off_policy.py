@@ -9,31 +9,41 @@ class ParameterDqn(ParameterAgent):
         ParameterAgent.__init__(self)
         self.AGENT_TYPE = AgentType.DQN
 
-        self.LEARNING_RATE = 0.0001
+        self.LEARNING_RATE = 0.005
 
         self.EPSILON_INIT = 1.0
         self.EPSILON_FINAL = 0.1
-        self.EPSILON_FINAL_TRAINING_STEP_PERCENT = 0.35
+        self.EPSILON_FINAL_TRAINING_STEP_PROPORTION = 0.5
 
         self.BUFFER_CAPACITY = 10_000
         self.BATCH_SIZE = 64
         self.MIN_BUFFER_SIZE_FOR_TRAIN = self.BATCH_SIZE * 10
         self.GAMMA = 0.99
-        self.TARGET_SYNC_INTERVAL_TRAINING_STEPS = 50
+        self.TARGET_SYNC_INTERVAL_TRAINING_STEPS = 1_000
 
 
-class ParameterDdqn(ParameterDqn):
+class ParameterDoubleDqn(ParameterDqn):
     def __init__(self):
-        super(ParameterDdqn, self).__init__()
+        super(ParameterDoubleDqn, self).__init__()
         self.AGENT_TYPE = AgentType.DOUBLE_DQN
 
         self.TAU = 0.005
+        del self.TARGET_SYNC_INTERVAL_TRAINING_STEPS
 
 
 class ParameterDuelingDqn(ParameterDqn):
     def __init__(self):
         super(ParameterDuelingDqn, self).__init__()
         self.AGENT_TYPE = AgentType.DUELING_DQN
+
+
+class ParameterDoubleDuelingDqn(ParameterDqn):
+    def __init__(self):
+        super(ParameterDoubleDuelingDqn, self).__init__()
+        self.AGENT_TYPE = AgentType.DOUBLE_DUELING_DQN
+
+        self.TAU = 0.005
+        del self.TARGET_SYNC_INTERVAL_TRAINING_STEPS
 
 
 class ParameterDdpg(ParameterAgent):

@@ -1,3 +1,5 @@
+from a_configuration.b_base.c_models.linear_models import ParameterLinearModel
+from a_configuration.b_base.c_models.recurrent_linear_models import ParameterRecurrentLinearModel
 from a_configuration.d_parameters_comparison.mujoco.parameter_comparison_ant import ParameterComparisonAntMujocoSac
 from a_configuration.d_parameters_comparison.mujoco.parameter_comparison_halfcheetah import \
     ParameterComparisonHalfCheetahMujocoSac
@@ -7,14 +9,17 @@ from a_configuration.d_parameters_comparison.mujoco.parameter_comparison_walker2
     ParameterComparisonWalker2dMujocoSac
 from a_configuration.d_parameters_comparison.open_ai_gym.parameter_comparison_cartpole import \
     ParameterComparisonCartPoleDqn, ParameterComparisonCartPoleDqnTypes
-from a_configuration.d_parameters_comparison.open_ai_gym.parameter_comparison_pong import ParameterComparisonPongDqn
+from a_configuration.d_parameters_comparison.open_ai_gym.parameter_comparison_pong import ParameterComparisonPongDqn, \
+    ParameterComparisonPongDqnTypes
 from a_configuration.d_parameters_comparison.pybullet.parameter_comparison_ant import ParameterComparisonAntBulletSac
 from a_configuration.d_parameters_comparison.pybullet.parameter_comparison_cartpole_bullet import \
-    ParameterComparisonCartPoleBulletA2c
+    ParameterComparisonCartPoleBulletA2c, ParameterComparisonCartPoleBulletDqnTypes, \
+    ParameterComparisonCartPoleContinuousBulletDdpg
 from a_configuration.d_parameters_comparison.pybullet.parameter_comparison_double_inverted_pendulum_bullet import \
     ParameterComparisonDoubleInvertedPendulumBulletSac
 from a_configuration.d_parameters_comparison.pybullet.parameter_comparison_humanoid_bullet import \
     ParameterComparisonHumanoidBulletSac
+from g_utils.types import ModelType
 
 parameter_comparison_list = []
 
@@ -70,10 +75,67 @@ parameter_comparison_cart_pole_dqn_types.AGENT_LABELS = [
     "DQN",
     "Double DQN",
     "Dueling DQN",
+    "Double Dueling DQN",
 ]
 parameter_comparison_cart_pole_dqn_types.MAX_TRAINING_STEPS = 50_000
 parameter_comparison_cart_pole_dqn_types.N_RUNS = 5
 parameter_comparison_list.append(parameter_comparison_cart_pole_dqn_types)
+
+######################################################################
+
+parameter_comparison_cart_pole_bullet_dqn_types = ParameterComparisonCartPoleBulletDqnTypes()
+parameter_comparison_cart_pole_bullet_dqn_types.AGENT_LABELS = [
+    "DQN",
+    "Double DQN",
+    "Dueling DQN",
+    "Double Dueling DQN",
+]
+parameter_comparison_cart_pole_bullet_dqn_types.MAX_TRAINING_STEPS = 50_000
+parameter_comparison_cart_pole_bullet_dqn_types.N_RUNS = 5
+parameter_comparison_list.append(parameter_comparison_cart_pole_bullet_dqn_types)
+
+#######################################################################################################################
+parameter_comparison_cart_pole_bullet_ddpg_recurrent = ParameterComparisonCartPoleContinuousBulletDdpg()
+parameter_comparison_cart_pole_bullet_ddpg_recurrent.AGENT_PARAMETERS[0].MODEL = ParameterRecurrentLinearModel(ModelType.SMALL_RECURRENT)
+parameter_comparison_cart_pole_bullet_ddpg_recurrent.AGENT_PARAMETERS[1].MODEL = ParameterLinearModel(ModelType.SMALL_LINEAR)
+parameter_comparison_cart_pole_bullet_ddpg_recurrent.AGENT_PARAMETERS[2].MODEL = ParameterLinearModel(ModelType.SMALL_LINEAR_2)
+parameter_comparison_cart_pole_bullet_ddpg_recurrent.AGENT_LABELS = [
+    "DDPG + GRU",
+    "DDPG + Linear",
+    "DDPG + Linear_2",
+]
+parameter_comparison_cart_pole_bullet_ddpg_recurrent.MAX_TRAINING_STEPS = 50_000
+parameter_comparison_cart_pole_bullet_ddpg_recurrent.N_RUNS = 5
+parameter_comparison_list.append(parameter_comparison_cart_pole_bullet_ddpg_recurrent)
+
+######################################################################
+
+parameter_comparison_pong_dqn_types = ParameterComparisonPongDqnTypes()
+parameter_comparison_pong_dqn_types.AGENT_LABELS = [
+    "DQN",
+    "Double DQN",
+    "Dueling DQN",
+    "Double Dueling DQN",
+]
+parameter_comparison_pong_dqn_types.MAX_TRAINING_STEPS = 1_000_000
+parameter_comparison_pong_dqn_types.N_RUNS = 3
+parameter_comparison_list.append(parameter_comparison_pong_dqn_types)
+
+######################################################################
+
+parameter_comparison_cart_pole_dqn_recurrent = ParameterComparisonCartPoleDqn()
+parameter_comparison_cart_pole_dqn_recurrent.AGENT_PARAMETERS[0].MODEL = ParameterRecurrentLinearModel(ModelType.SMALL_RECURRENT)
+parameter_comparison_cart_pole_dqn_recurrent.AGENT_PARAMETERS[1].MODEL = ParameterLinearModel(ModelType.SMALL_LINEAR)
+parameter_comparison_cart_pole_dqn_recurrent.AGENT_PARAMETERS[2].MODEL = ParameterLinearModel(ModelType.SMALL_LINEAR_2)
+parameter_comparison_cart_pole_dqn_recurrent.AGENT_LABELS = [
+    "DQN Recurrent",
+    "DQN Small Linear",
+    "DQN Small Linear2"
+]
+
+parameter_comparison_cart_pole_dqn.MAX_TRAINING_STEPS = 100_000
+parameter_comparison_cart_pole_dqn.N_RUNS = 5
+parameter_comparison_list.append(parameter_comparison_cart_pole_dqn_recurrent)
 
 ######################################################################
 
@@ -182,24 +244,24 @@ parameter_comparison_list.append(parameter_comparison_ant_bullet_alpha)
 
 ######################################################################
 
-parameter_comparison_doubleinvertedpendulum_bullet_alpha = ParameterComparisonDoubleInvertedPendulumBulletSac()
-parameter_comparison_doubleinvertedpendulum_bullet_alpha.AGENT_PARAMETERS[0].AUTOMATIC_ENTROPY_TEMPERATURE_TUNING = False
-parameter_comparison_doubleinvertedpendulum_bullet_alpha.AGENT_PARAMETERS[0].DEFAULT_ALPHA = 0.2
-parameter_comparison_doubleinvertedpendulum_bullet_alpha.AGENT_PARAMETERS[1].AUTOMATIC_ENTROPY_TEMPERATURE_TUNING = False
-parameter_comparison_doubleinvertedpendulum_bullet_alpha.AGENT_PARAMETERS[1].DEFAULT_ALPHA = 0.5
-parameter_comparison_doubleinvertedpendulum_bullet_alpha.AGENT_PARAMETERS[2].AUTOMATIC_ENTROPY_TEMPERATURE_TUNING = True
-parameter_comparison_doubleinvertedpendulum_bullet_alpha.AGENT_PARAMETERS[2].MIN_ALPHA = 0.0
-parameter_comparison_doubleinvertedpendulum_bullet_alpha.AGENT_PARAMETERS[3].AUTOMATIC_ENTROPY_TEMPERATURE_TUNING = True
-parameter_comparison_doubleinvertedpendulum_bullet_alpha.AGENT_PARAMETERS[3].MIN_ALPHA = 0.2
-parameter_comparison_doubleinvertedpendulum_bullet_alpha.AGENT_LABELS = [
+parameter_comparison_double_inverted_pendulum_bullet_alpha = ParameterComparisonDoubleInvertedPendulumBulletSac()
+parameter_comparison_double_inverted_pendulum_bullet_alpha.AGENT_PARAMETERS[0].AUTOMATIC_ENTROPY_TEMPERATURE_TUNING = False
+parameter_comparison_double_inverted_pendulum_bullet_alpha.AGENT_PARAMETERS[0].DEFAULT_ALPHA = 0.2
+parameter_comparison_double_inverted_pendulum_bullet_alpha.AGENT_PARAMETERS[1].AUTOMATIC_ENTROPY_TEMPERATURE_TUNING = False
+parameter_comparison_double_inverted_pendulum_bullet_alpha.AGENT_PARAMETERS[1].DEFAULT_ALPHA = 0.5
+parameter_comparison_double_inverted_pendulum_bullet_alpha.AGENT_PARAMETERS[2].AUTOMATIC_ENTROPY_TEMPERATURE_TUNING = True
+parameter_comparison_double_inverted_pendulum_bullet_alpha.AGENT_PARAMETERS[2].MIN_ALPHA = 0.0
+parameter_comparison_double_inverted_pendulum_bullet_alpha.AGENT_PARAMETERS[3].AUTOMATIC_ENTROPY_TEMPERATURE_TUNING = True
+parameter_comparison_double_inverted_pendulum_bullet_alpha.AGENT_PARAMETERS[3].MIN_ALPHA = 0.2
+parameter_comparison_double_inverted_pendulum_bullet_alpha.AGENT_LABELS = [
     "alpha = 0.2",
     "alpha = 0.5",
     "alpha tuning (No Alpha Limit)",
     "alpha tuning (Min Alpha = 0.2)",
 ]
-parameter_comparison_doubleinvertedpendulum_bullet_alpha.MAX_TRAINING_STEPS = 100000
-parameter_comparison_doubleinvertedpendulum_bullet_alpha.N_RUNS = 5
-parameter_comparison_list.append(parameter_comparison_doubleinvertedpendulum_bullet_alpha)
+parameter_comparison_double_inverted_pendulum_bullet_alpha.MAX_TRAINING_STEPS = 100000
+parameter_comparison_double_inverted_pendulum_bullet_alpha.N_RUNS = 5
+parameter_comparison_list.append(parameter_comparison_double_inverted_pendulum_bullet_alpha)
 
 ######################################################################
 

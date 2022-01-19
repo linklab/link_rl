@@ -11,14 +11,14 @@ def main():
     print("*" * 80)
     config = MuZeroConfig()
     replay_buffer = ReplayBuffer({}, config)
-    training_steps = 0
+    training_step = 0
     max_training_steps = 10000
     learner = Trainer(config)
     worker = SelfPlay(config, 0)
     global_steps = 0
-    while training_steps < max_training_steps:
+    while training_step < max_training_steps:
         game_history = worker.play_game(
-            config.visit_softmax_temperature_fn(training_steps),
+            config.visit_softmax_temperature_fn(training_step),
             None,
             False,
             replay_buffer
@@ -26,7 +26,7 @@ def main():
         replay_buffer.save_game(game_history)
 
         if replay_buffer.num_played_games % 10 == 0:
-            training_steps += 1
+            training_step += 1
             batch = replay_buffer.get_batch()
             (
                 priorities,

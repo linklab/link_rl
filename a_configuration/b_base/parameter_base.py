@@ -17,6 +17,10 @@ class ParameterBase:
         if not os.path.exists(self.MODEL_SAVE_DIR):
             os.mkdir(self.MODEL_SAVE_DIR)
 
+        self.ENV_UNITY_DIR = os.path.join(self.PROJECT_HOME, "b_environments", "unity")
+        if not os.path.exists(self.ENV_UNITY_DIR):
+            os.mkdir(self.ENV_UNITY_DIR)
+
         self.N_VECTORIZED_ENVS = 1
         self.N_ACTORS = 1
         self.N_STEP = 1
@@ -32,7 +36,7 @@ class ParameterBase:
 
         self.N_TEST_EPISODES = 3
 
-        self.CLIP_GRADIENT_VALUE = 3.0
+        self.CLIP_GRADIENT_VALUE = 10.0
 
         self.USE_WANDB = False
         self.WANDB_ENTITY = "link-koreatech"
