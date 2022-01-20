@@ -7,7 +7,8 @@ from a_configuration.c_parameters.open_ai_gym.parameter_cartpole import Paramete
 from a_configuration.c_parameters.open_ai_gym.parameter_cartpole import ParameterCartPoleReinforce
 from a_configuration.c_parameters.open_ai_gym.parameter_cartpole import ParameterCartPoleA2c
 from a_configuration.c_parameters.open_ai_gym.parameter_lunar_lander import ParameterLunarLanderContinuousA2c, \
-    ParameterLunarLanderA2c, ParameterLunarLanderContinuousDdpg, ParameterLunarLanderContinuousSac
+    ParameterLunarLanderA2c, ParameterLunarLanderContinuousDdpg, ParameterLunarLanderContinuousSac, \
+    ParameterLunarLanderDqn
 from a_configuration.c_parameters.open_ai_gym.parameter_pong import ParameterPongDqn, ParameterPongDoubleDqn, \
     ParameterPongDuelingDqn, ParameterPongDoubleDuelingDqn
 from a_configuration.c_parameters.open_ai_gym.parameter_pong import ParameterPongA2c
@@ -46,9 +47,13 @@ parameter_list.append(parameter_cart_pole_reinforce)
 parameter_cart_pole_a2c = ParameterCartPoleA2c()
 parameter_list.append(parameter_cart_pole_a2c)
 
-#############################
+##################
 ## LUNAR_LANDER ##
-#############################
+##################
+
+parameter_lunar_lander_dqn = ParameterLunarLanderDqn()
+parameter_list.append(parameter_lunar_lander_dqn)
+
 parameter_lunar_lander_a2c = ParameterLunarLanderA2c()
 parameter_list.append(parameter_lunar_lander_a2c)
 

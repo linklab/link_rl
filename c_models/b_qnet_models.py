@@ -123,10 +123,11 @@ class QNet(Model):
                 h_0 = torch.tensor(h_0, dtype=torch.float32, device=self.parameter.DEVICE)
 
             if rnn_in.ndim == 2:
-                rnn_in = rnn_in.unsqueeze(1)
+                rnn_in = rnn_in.unsqueeze(0)
 
             rnn_out, h_n = self.recurrent_layers(rnn_in, h_0)
             self.recurrent_hidden = h_n.detach()  # save hidden
+            # self.init_recurrent_hidden()
             rnn_out_flattened = torch.flatten(rnn_out, start_dim=1)
 
             #print(rnn_in.shape, rnn_out.shape, rnn_out_flattened.shape, "!!!!!")
@@ -146,7 +147,7 @@ class QNet(Model):
 
             rnn_in = x
             if rnn_in.ndim == 2:
-                rnn_in = rnn_in.unsqueeze(1)
+                rnn_in = rnn_in.unsqueeze(0)
 
             rnn_out, h_n = self.recurrent_layers(rnn_in, h_0)
             self.recurrent_hidden = h_n.detach()  # save hidden

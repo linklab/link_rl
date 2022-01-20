@@ -8,6 +8,22 @@ from a_configuration.b_base.a_environments.open_ai_gym.gym_classic_control impor
 from g_utils.types import ModelType
 
 
+class ParameterLunarLanderDqn(ParameterBase, ParameterLunarLander, ParameterDqn):
+    def __init__(self):
+        ParameterBase.__init__(self)
+        ParameterLunarLander.__init__(self)
+        ParameterDqn.__init__(self)
+
+        self.N_VECTORIZED_ENVS = 1
+        self.N_ACTORS = 1
+        self.MAX_TRAINING_STEPS = 100_000
+        self.BUFFER_CAPACITY = 100_000
+        self.BATCH_SIZE = 64
+        self.LEARNING_RATE = 0.001
+        self.CONSOLE_LOG_INTERVAL_TRAINING_STEPS = 100
+        self.MODEL = ParameterLinearModel(ModelType.SMALL_LINEAR)
+
+
 class ParameterLunarLanderA2c(ParameterBase, ParameterLunarLander, ParameterA2c):
     def __init__(self):
         ParameterBase.__init__(self)

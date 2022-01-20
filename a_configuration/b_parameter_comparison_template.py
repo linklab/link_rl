@@ -9,6 +9,8 @@ from a_configuration.d_parameters_comparison.mujoco.parameter_comparison_walker2
     ParameterComparisonWalker2dMujocoSac
 from a_configuration.d_parameters_comparison.open_ai_gym.parameter_comparison_cartpole import \
     ParameterComparisonCartPoleDqn, ParameterComparisonCartPoleDqnTypes
+from a_configuration.d_parameters_comparison.open_ai_gym.parameter_comparison_lunarlander import \
+    ParameterComparisonLunarLanderDqnRecurrent
 from a_configuration.d_parameters_comparison.open_ai_gym.parameter_comparison_pong import ParameterComparisonPongDqn, \
     ParameterComparisonPongDqnTypes
 from a_configuration.d_parameters_comparison.pybullet.parameter_comparison_ant import ParameterComparisonAntBulletSac
@@ -134,6 +136,18 @@ parameter_comparison_cart_pole_dqn_recurrent.AGENT_LABELS = [
 parameter_comparison_cart_pole_dqn.MAX_TRAINING_STEPS = 100_000
 parameter_comparison_cart_pole_dqn.N_RUNS = 5
 parameter_comparison_list.append(parameter_comparison_cart_pole_dqn_recurrent)
+
+######################################################################
+
+parameter_comparison_lunar_lander_recurrent = ParameterComparisonLunarLanderDqnRecurrent()
+parameter_comparison_lunar_lander_recurrent.AGENT_LABELS = [
+    "DQN Small Linear",
+    "DQN Small Recurrent",
+]
+
+parameter_comparison_lunar_lander_recurrent.MAX_TRAINING_STEPS = 100_000
+parameter_comparison_lunar_lander_recurrent.N_RUNS = 5
+parameter_comparison_list.append(parameter_comparison_lunar_lander_recurrent)
 
 ######################################################################
 
