@@ -17,6 +17,10 @@ class ParameterComparisonBase:
         if not os.path.exists(self.COMPARISON_RESULTS_SAVE_DIR):
             os.mkdir(self.COMPARISON_RESULTS_SAVE_DIR)
 
+        self.UNITY_ENV_DIR = os.path.join(self.PROJECT_HOME, "b_environments", "unity")
+        if not os.path.exists(self.UNITY_ENV_DIR):
+            os.mkdir(self.UNITY_ENV_DIR)
+            
         self.AGENT_PARAMETERS = None
         self.AGENT_LABELS = None
         
