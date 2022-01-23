@@ -19,7 +19,7 @@ parameter_c.SYSTEM_COMPUTER_NAME = SYSTEM_COMPUTER_NAME
 
 from e_main.supports.main_preamble import *
 from e_main.supports.learner_comparison import LearnerComparison
-from g_utils.commons import print_comparison_basic_info, get_wandb_obj, get_env_info, set_model_parameter
+from g_utils.commons import print_comparison_basic_info, get_wandb_obj, get_env_info, set_parameters
 
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
@@ -42,7 +42,7 @@ for agent_parameter in parameter_c.AGENT_PARAMETERS:
 
 def main():
     for parameter in parameter_c.AGENT_PARAMETERS:
-        set_model_parameter(parameter)
+        set_parameters(parameter)
 
     observation_space, action_space = get_env_info(parameter_c)
     print_comparison_basic_info(observation_space, action_space, parameter_c)

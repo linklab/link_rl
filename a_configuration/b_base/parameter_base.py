@@ -2,10 +2,8 @@ import os
 import sys
 
 import torch
-from torch import nn
-import torch.nn.functional as F
 
-from g_utils.types import ModelType
+from g_utils.types import ModelType, LayerActivationType, LossFunctionType
 
 
 class ParameterBase:
@@ -58,6 +56,9 @@ class ParameterBase:
         self.SYSTEM_COMPUTER_NAME = None
 
         self.USE_LAYER_NORM = False
-        self.LAYER_ACTIVATION = nn.LeakyReLU
 
-        self.LOSS_FUNCTION = F.huber_loss
+        self.LAYER_ACTIVATION_TYPE = LayerActivationType.LEAKY_RELU
+        self.LAYER_ACTIVATION = None
+
+        self.LOSS_FUNCTION_TYPE = LossFunctionType.HUBER_LOSS
+        self.LOSS_FUNCTION = None

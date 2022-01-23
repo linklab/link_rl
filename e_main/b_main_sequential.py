@@ -17,11 +17,12 @@ parameter.SYSTEM_COMPUTER_NAME = SYSTEM_COMPUTER_NAME
 
 from e_main.supports.main_preamble import *
 from e_main.supports.learner import Learner
-from g_utils.commons import get_env_info, print_basic_info, set_model_parameter
+from g_utils.commons import get_env_info, print_basic_info, set_parameters
 
 
 def main():
-    set_model_parameter(parameter)
+    set_parameters(parameter)
+
     observation_space, action_space = get_env_info(parameter)
     print_basic_info(observation_space, action_space, parameter)
 

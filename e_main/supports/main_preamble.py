@@ -3,16 +3,11 @@ import os
 from gym.spaces import Discrete, Box
 import warnings
 
-from a_configuration.b_base.c_models.convolutional_models import ParameterConvolutionalModel
-from a_configuration.b_base.c_models.linear_models import ParameterLinearModel
-from a_configuration.b_base.c_models.recurrent_convolutional_models import ParameterRecurrentConvolutionalModel
-from a_configuration.b_base.c_models.recurrent_linear_models import ParameterRecurrentLinearModel
 from d_agents.off_policy.ddpg.agent_ddpg import AgentDdpg
 from d_agents.off_policy.dqn.agent_double_dqn import AgentDoubleDqn
 from d_agents.off_policy.dqn.agent_double_dueling_dqn import AgentDoubleDuelingDqn
 from d_agents.off_policy.dqn.agent_dueling_dqn import AgentDuelingDqn
 from d_agents.off_policy.sac.agent_sac import AgentSac
-from g_utils.types import ModelType
 
 warnings.filterwarnings('ignore')
 warnings.simplefilter("ignore")

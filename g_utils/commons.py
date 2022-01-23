@@ -12,6 +12,8 @@ from gym.vector import AsyncVectorEnv
 import plotly.graph_objects as go
 from gym_unity.envs import UnityToGymWrapper
 from mlagents_envs.environment import UnityEnvironment
+from torch import nn
+import torch.nn.functional as F
 
 from a_configuration.a_config.config import SYSTEM_USER_NAME
 from a_configuration.b_base.a_environments.unity.unity_box import ParameterUnityGymEnv
@@ -19,7 +21,7 @@ from a_configuration.b_base.c_models.convolutional_models import ParameterConvol
 from a_configuration.b_base.c_models.linear_models import ParameterLinearModel
 from a_configuration.b_base.c_models.recurrent_convolutional_models import ParameterRecurrentConvolutionalModel
 from a_configuration.b_base.c_models.recurrent_linear_models import ParameterRecurrentLinearModel
-from g_utils.types import AgentType, ActorCriticAgentTypes, ModelType
+from g_utils.types import AgentType, ActorCriticAgentTypes, ModelType, LayerActivationType, LossFunctionType
 
 if torch.cuda.is_available():
     import nvidia_smi
@@ -220,7 +222,7 @@ def print_comparison_basic_info(observation_space, action_space, parameter_c):
 
 def print_model_info(parameter):
     if parameter.MODEL_PARAMETER is None:
-        set_model_parameter(parameter)
+        set_parameters(parameter)
 
     model_parameter = parameter.MODEL_PARAMETER
     print('-' * 76 + " MODEL_TYPE " + '-' * 76)
@@ -657,7 +659,7 @@ def get_scaled_action():
     pass
 
 
-def set_model_parameter(parameter):
+def set_parameters(parameter):
     if parameter.MODEL_TYPE in (
             ModelType.TINY_LINEAR, ModelType.SMALL_LINEAR, ModelType.SMALL_LINEAR_2,
             ModelType.MEDIUM_LINEAR, ModelType.LARGE_LINEAR
@@ -676,6 +678,20 @@ def set_model_parameter(parameter):
             ModelType.LARGE_RECURRENT_CONVOLUTIONAL
     ):
         parameter.MODEL_PARAMETER = ParameterRecurrentConvolutionalModel(parameter.MODEL_TYPE)
+    else:
+        raise ValueError()
+
+    if parameter.LAYER_ACTIVATION_TYPE == LayerActivationType.LEAKY_RELU:
+        parameter.LAYER_ACTIVATION = nn.LeakyReLU
+    elif parameter.LAYER_ACTIVATION_TYPE == LayerActivationType.ELU:
+        parameter.LAYER_ACTIVATION = nn.ELU
+    else:
+        raise ValueError()
+
+    if parameter.LOSS_FUNCTION_TYPE == LossFunctionType.MSE_LOSS:
+        parameter.LOSS_FUNCTION = F.mse_loss
+    elif parameter.LOSS_FUNCTION_TYPE == LossFunctionType.HUBER_LOSS:
+        parameter.LOSS_FUNCTION = F.huber_loss
     else:
         raise ValueError()
 

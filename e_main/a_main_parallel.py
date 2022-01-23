@@ -9,7 +9,7 @@ import torch
 
 from e_main.supports.actor import Actor
 from e_main.supports.learner import Learner
-from g_utils.commons import get_env_info, print_basic_info, set_model_parameter
+from g_utils.commons import get_env_info, print_basic_info, set_parameters
 from g_utils.types import OffPolicyAgentTypes
 
 os.environ['KMP_DUPLICATE_LIB_OK'] = 'True'
@@ -29,7 +29,7 @@ device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
 
 def main():
-    set_model_parameter(parameter)
+    set_parameters(parameter)
     observation_space, action_space = get_env_info(parameter)
     print_basic_info(observation_space, action_space, parameter)
 

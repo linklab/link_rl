@@ -46,6 +46,16 @@ class ModelType(enum.Enum):
     LARGE_RECURRENT_CONVOLUTIONAL = 13
 
 
+class LayerActivationType(enum.Enum):
+    LEAKY_RELU = 0
+    ELU = 1
+
+
+class LossFunctionType(enum.Enum):
+    MSE_LOSS = 0
+    HUBER_LOSS = 1
+
+
 class AgentType(enum.Enum):
     DQN = 0
     DOUBLE_DQN = 1
