@@ -32,8 +32,7 @@ class ParameterComparisonBase:
             "TRAIN_INTERVAL_GLOBAL_TIME_STEPS should be greater than N_VECTORIZED_ENVS * N_ACTORS"
 
         # [NOTE]
-        self.TEST_INTERVAL_TRAINING_STEPS = 1_024
-        self.CONSOLE_LOG_INTERVAL_TRAINING_STEPS = 100
+        self.TEST_INTERVAL_TRAINING_STEPS = 1_000
         self.N_EPISODES_FOR_MEAN_CALCULATION = 32
         self.MAX_TRAINING_STEPS = 100_000
         self.N_TEST_EPISODES = 3

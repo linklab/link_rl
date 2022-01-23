@@ -27,10 +27,11 @@ class AgentMode(enum.Enum):
 
 
 class ModelType(enum.Enum):
-    SMALL_LINEAR = 0
-    SMALL_LINEAR_2 = 1
-    MEDIUM_LINEAR = 2
-    LARGE_LINEAR = 3
+    TINY_LINEAR = 0
+    SMALL_LINEAR = 1
+    SMALL_LINEAR_2 = 2
+    MEDIUM_LINEAR = 3
+    LARGE_LINEAR = 4
 
     SMALL_CONVOLUTIONAL = 3
     MEDIUM_CONVOLUTIONAL = 4
@@ -52,10 +53,10 @@ class AgentType(enum.Enum):
     DOUBLE_DUELING_DQN = 3
     REINFORCE = 4
     A2C = 5
-    DDPG = 6
-    TD3 = 7
-    SAC = 8
-    PPO = 9
+    PPO = 6
+    DDPG = 7
+    TD3 = 8
+    SAC = 9
 
 
 OnPolicyAgentTypes = [

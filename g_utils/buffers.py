@@ -10,7 +10,8 @@ from g_utils.types import Transition
 
 class Buffer:
     def __init__(self, capacity, action_space, parameter):
-        self.internal_buffer = collections.deque(maxlen=capacity)
+        self.capacity = capacity
+        self.internal_buffer = collections.deque(maxlen=self.capacity)
         self.action_space = action_space
         self.parameter = parameter
 

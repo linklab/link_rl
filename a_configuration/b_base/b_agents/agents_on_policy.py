@@ -22,7 +22,19 @@ class ParameterA2c(ParameterAgent):
         self.LEARNING_RATE = 0.001
         self.BUFFER_CAPACITY = 1_000
         self.GAMMA = 0.99
-        self.BATCH_SIZE = 64
-        self.ENTROPY_BETA = 0.02
-        self.MIN_BUFFER_SIZE_FOR_TRAIN = self.BATCH_SIZE
+        self.BATCH_SIZE = 128
+        self.ENTROPY_BETA = 0.0001
+        self.CONSOLE_LOG_INTERVAL_TRAINING_STEPS = 10
 
+
+class ParameterPpo(ParameterAgent):
+    def __init__(self):
+        ParameterAgent.__init__(self)
+        self.AGENT_TYPE = AgentType.PPO
+
+        self.ACTOR_LEARNING_RATE = 0.0001
+        self.LEARNING_RATE = 0.001
+        self.BUFFER_CAPACITY = 1_000
+        self.GAMMA = 0.99
+        self.BATCH_SIZE = 64
+        self.ENTROPY_BETA = 0.0001

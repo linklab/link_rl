@@ -132,7 +132,7 @@ class AgentSac(Agent):
         # values.shape: (32, 1)
         q1_v, q2_v = self.critic_model.q(self.observations, self.actions)
         # critic_loss.shape: ()
-        critic_loss = F.huber_loss(q1_v, td_target_values.detach()) + F.huber_loss(q2_v, td_target_values.detach())
+        critic_loss = self.parameter.LOSS_FUNCTION(q1_v, td_target_values.detach()) + F.huber_loss(q2_v, td_target_values.detach())
 
         self.critic_optimizer.zero_grad()
         critic_loss.backward()

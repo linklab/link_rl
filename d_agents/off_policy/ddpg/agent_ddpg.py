@@ -106,7 +106,7 @@ class AgentDdpg(Agent):
 
         q_v = self.critic_model.q(self.observations, self.actions)
 
-        critic_loss = F.huber_loss(q_v, target_q_v.detach())
+        critic_loss = self.parameter.LOSS_FUNCTION(q_v, target_q_v.detach())
 
         self.critic_optimizer.zero_grad()
         critic_loss.backward()

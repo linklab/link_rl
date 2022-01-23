@@ -76,6 +76,14 @@ class Agent:
             assert self.critic_model
             assert self.model is self.actor_model
 
+        # [MLP]
+        # observations.shape: torch.Size([32, 4]),
+        # actions.shape: torch.Size([32, 1]),
+        # next_observations.shape: torch.Size([32, 4]),
+        # rewards.shape: torch.Size([32, 1]),
+        # dones.shape: torch.Size([32])
+        #
+        # [CNN]
         # observations.shape: torch.Size([32, 4, 84, 84]),
         # actions.shape: torch.Size([32, 1]),
         # next_observations.shape: torch.Size([32, 4, 84, 84]),
@@ -155,6 +163,7 @@ class Agent:
         torch.nn.utils.clip_grad_norm_(model_parameters, self.parameter.CLIP_GRADIENT_VALUE)
 
         grads_list = [p.grad.data.cpu().numpy().flatten() for p in model_parameters if p.grad is not None]
+
         if grads_list:
             grads = np.concatenate(grads_list)
             self.last_model_grad_l2.value = np.sqrt(np.mean(np.square(grads)))
@@ -162,7 +171,9 @@ class Agent:
 
     def clip_actor_model_parameter_grad_value(self, actor_model_parameters):
         torch.nn.utils.clip_grad_norm_(actor_model_parameters, self.parameter.CLIP_GRADIENT_VALUE)
+
         actor_grads_list = [p.grad.data.cpu().numpy().flatten() for p in actor_model_parameters if p.grad is not None]
+
         if actor_grads_list:
             actor_grads = np.concatenate(actor_grads_list)
             self.last_actor_model_grad_l2.value = np.sqrt(np.mean(np.square(actor_grads)))
@@ -170,7 +181,9 @@ class Agent:
 
     def clip_critic_model_parameter_grad_value(self, critic_model_parameters):
         torch.nn.utils.clip_grad_norm_(critic_model_parameters, self.parameter.CLIP_GRADIENT_VALUE)
+
         critic_grads_list = [p.grad.data.cpu().numpy().flatten() for p in self.critic_model.parameters() if p.grad is not None]
+
         if critic_grads_list:
             critic_grads = np.concatenate(critic_grads_list)
             self.last_critic_model_grad_l2.value = np.sqrt(np.mean(np.square(critic_grads)))

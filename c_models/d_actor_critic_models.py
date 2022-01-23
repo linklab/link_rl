@@ -78,6 +78,10 @@ class CriticModel(Model):
             conv_out = self.critic_conv_layers(x)
             conv_out = torch.flatten(conv_out, start_dim=1)
             x = self.critic_fc_layers(conv_out)
+        elif isinstance(self.parameter.MODEL, ParameterRecurrentLinearModel):
+            pass
+        elif isinstance(self.parameter.MODEL, ParameterRecurrentConvolutionalModel):
+            pass
         else:
             raise ValueError()
         return x

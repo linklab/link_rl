@@ -3,6 +3,7 @@ import sys
 
 import torch
 from torch import nn
+import torch.nn.functional as F
 
 
 class ParameterBase:
@@ -30,9 +31,11 @@ class ParameterBase:
             "TRAIN_INTERVAL_GLOBAL_TIME_STEPS should be greater than N_VECTORIZED_ENVS * N_ACTORS"
 
         self.MAX_TRAINING_STEPS = None
-        self.CONSOLE_LOG_INTERVAL_TRAINING_STEPS = None
 
         self.N_EPISODES_FOR_MEAN_CALCULATION = 32
+        self.TEST_INTERVAL_TRAINING_STEPS = 100
+        self.CONSOLE_LOG_INTERVAL_TRAINING_STEPS = 100
+        self.MODEL = None
 
         self.N_TEST_EPISODES = 3
 
@@ -43,10 +46,6 @@ class ParameterBase:
 
         self.PLAY_MODEL_FILE_NAME = ""
 
-        self.LAYER_NORM = False
-
-        self.LAYER_ACTIVATION = nn.LeakyReLU()
-
         self.DEVICE = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
         self.SEED = None
@@ -54,3 +53,8 @@ class ParameterBase:
         self.SYSTEM_USER_NAME = None
 
         self.SYSTEM_COMPUTER_NAME = None
+
+        self.LAYER_NORM = False
+        self.LAYER_ACTIVATION = nn.LeakyReLU
+
+        self.LOSS_FUNCTION = F.huber_loss

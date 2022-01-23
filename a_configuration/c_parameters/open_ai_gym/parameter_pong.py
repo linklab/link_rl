@@ -18,7 +18,6 @@ class ParameterPongDqn(
         self.N_VECTORIZED_ENVS = 1
         self.N_ACTORS = 1
         self.MAX_TRAINING_STEPS = 1_000_000
-        self.CONSOLE_LOG_INTERVAL_TRAINING_STEPS = 100
         self.BUFFER_CAPACITY = 500_000
         self.MODEL = ParameterConvolutionalModel(ModelType.MEDIUM_CONVOLUTIONAL)
 
@@ -34,7 +33,6 @@ class ParameterPongDoubleDqn(
         self.N_VECTORIZED_ENVS = 1
         self.N_ACTORS = 1
         self.MAX_TRAINING_STEPS = 1_000_000
-        self.CONSOLE_LOG_INTERVAL_TRAINING_STEPS = 100
         self.BUFFER_CAPACITY = 500_000
         self.MODEL = ParameterConvolutionalModel(ModelType.MEDIUM_CONVOLUTIONAL)
 
@@ -50,7 +48,6 @@ class ParameterPongDuelingDqn(
         self.N_VECTORIZED_ENVS = 1
         self.N_ACTORS = 1
         self.MAX_TRAINING_STEPS = 1_000_000
-        self.CONSOLE_LOG_INTERVAL_TRAINING_STEPS = 100
         self.BUFFER_CAPACITY = 500_000
         self.MODEL = ParameterConvolutionalModel(ModelType.MEDIUM_CONVOLUTIONAL)
 
@@ -66,7 +63,6 @@ class ParameterPongDoubleDuelingDqn(
         self.N_VECTORIZED_ENVS = 1
         self.N_ACTORS = 1
         self.MAX_TRAINING_STEPS = 1_000_000
-        self.CONSOLE_LOG_INTERVAL_TRAINING_STEPS = 100
         self.BUFFER_CAPACITY = 500_000
         self.MODEL = ParameterConvolutionalModel(ModelType.MEDIUM_CONVOLUTIONAL)
 
@@ -85,8 +81,6 @@ class ParameterPongA2c(
         self.N_VECTORIZED_ENVS = 2
         self.N_ACTORS = 1
         self.MAX_TRAINING_STEPS = 1_000_000
-        self.CONSOLE_LOG_INTERVAL_TRAINING_STEPS = 100
-        self.TEST_INTERVAL_TRAINING_STEPS = 1_024
         self.ENTROPY_BETA = 0.02
         self.BUFFER_CAPACITY = self.BATCH_SIZE
         self.MODEL = ParameterConvolutionalModel(ModelType.MEDIUM_CONVOLUTIONAL)

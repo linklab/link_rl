@@ -58,12 +58,13 @@ def model_load(model, env_name, agent_type_name, file_name, parameter):
     model.load_state_dict(model_params)
 
 
-def print_device_related_info(parameter):
+def print_base_info(parameter):
     n_cpu_cores = mp.cpu_count()
     print("{0:55} {1:55}".format(
         "DEVICE: {0}".format(parameter.DEVICE),
         "CPU CORES: {0}".format(n_cpu_cores),
     ), end="\n")
+
     print("{0:55} {1:55} {2:55}".format(
         "N_ACTORS: {0}".format(parameter.N_ACTORS),
         "ENVS PER ACTOR: {0}".format(parameter.N_VECTORIZED_ENVS),
@@ -72,11 +73,22 @@ def print_device_related_info(parameter):
         )
     ))
 
+    print("PROJECT_HOME: {0}".format(parameter.PROJECT_HOME))
+
+    if hasattr(parameter, "MODEL_SAVE_DIR"):
+        print("MODEL_SAVE_DIR: {0}".format(parameter.MODEL_SAVE_DIR))
+
+    if hasattr(parameter, "COMPARISON_RESULTS_SAVE_DIR"):
+        print("COMPARISON_RESULTS_SAVE_DIR: {0}".format(parameter.COMPARISON_RESULTS_SAVE_DIR))
+
+    print("ENV_UNITY_DIR: {0}".format(parameter.MODEL_SAVE_DIR))
+
 
 def print_basic_info(observation_space=None, action_space=None, parameter=None):
     print('\n' + '#' * 81 + " Base Parameters " + '#' * 82)
 
-    print_device_related_info(parameter)
+    print_base_info(parameter)
+
     print('-' * 75 + " Parameters " + '-' * 75)
 
     items = []
@@ -84,7 +96,8 @@ def print_basic_info(observation_space=None, action_space=None, parameter=None):
     for param in dir(parameter):
         if not param.startswith("__") and param not in [
             "MODEL", "NEURONS_PER_FULLY_CONNECTED_LAYER", "OUT_CHANNELS_PER_LAYER", "KERNEL_SIZE_PER_LAYER",
-            "STRIDE_PER_LAYER", "EPISODE_REWARD_AVG_SOLVED", "EPISODE_REWARD_STD_SOLVED"
+            "STRIDE_PER_LAYER", "EPISODE_REWARD_AVG_SOLVED", "EPISODE_REWARD_STD_SOLVED", "ENV_UNITY_DIR",
+            "MODEL_SAVE_DIR", "PROJECT_HOME", "LAYER_ACTIVATION", "LOSS_FUNCTION"
         ]:
             if param in [
                 "BATCH_SIZE", "BUFFER_CAPACITY", "CONSOLE_LOG_INTERVAL_TRAINING_STEPS", "MAX_TRAINING_STEPS",
@@ -108,7 +121,7 @@ def print_basic_info(observation_space=None, action_space=None, parameter=None):
             print("{0:55}".format(items[0]), end="\n")
             items.clear()
 
-    print_model_info(getattr(parameter, "MODEL"))
+    print_model_info(parameter)
 
     if observation_space and action_space:
         if observation_space and action_space:
@@ -122,7 +135,7 @@ def print_basic_info(observation_space=None, action_space=None, parameter=None):
 def print_comparison_basic_info(observation_space, action_space, parameter_c):
     print('\n' + '#' * 81 + " Base Parameters " + '#' * 82)
 
-    print_device_related_info(parameter_c)
+    print_base_info(parameter_c)
     print('-' * 71 + " Common Parameters " + '-' * 71)
 
     items = []
@@ -170,7 +183,8 @@ def print_comparison_basic_info(observation_space, action_space, parameter_c):
         for param in dir(agent_parameter):
             if not param.startswith("__") and param not in [
                 "MODEL", "NEURONS_PER_FULLY_CONNECTED_LAYER", "OUT_CHANNELS_PER_LAYER", "KERNEL_SIZE_PER_LAYER",
-                "STRIDE_PER_LAYER", "EPISODE_REWARD_AVG_SOLVED", "EPISODE_REWARD_STD_SOLVED"
+                "STRIDE_PER_LAYER", "EPISODE_REWARD_AVG_SOLVED", "EPISODE_REWARD_STD_SOLVED", "ENV_UNITY_DIR",
+                "COMPARISON_RESULTS_SAVE_DIR", "PROJECT_HOME", "LAYER_ACTIVATION", "LOSS_FUNCTION"
             ]:
                 if param in [
                     "BATCH_SIZE", "BUFFER_CAPACITY", "CONSOLE_LOG_INTERVAL_TRAINING_STEPS", "MAX_TRAINING_STEPS",
@@ -205,7 +219,8 @@ def print_comparison_basic_info(observation_space, action_space, parameter_c):
     print()
 
 
-def print_model_info(model):
+def print_model_info(parameter):
+    model = parameter.MODEL
     print('-' * 76 + " MODEL " + '-' * 76)
     if isinstance(model, ParameterLinearModel):
         item1 = "{0}: {1:}".format("MODEL", "LINEAR_MODEL")
@@ -239,6 +254,9 @@ def print_model_info(model):
         print("{0:55} {1:55} {2:55}".format(item1, item2, item3, end="\n"))
     else:
         raise ValueError()
+
+    print("LAYER_ACTIVATION: {0}".format(parameter.LAYER_ACTIVATION))
+    print("LOSS_FUNCTION: {0}".format(parameter.LOSS_FUNCTION))
 
 
 def print_space(observation_space, action_space, parameter):

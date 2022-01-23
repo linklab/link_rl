@@ -24,8 +24,6 @@ class ParameterAntMujocoSac(ParameterBase, ParameterAntMujoco, ParameterSac):
         self.N_VECTORIZED_ENVS = 1
         self.N_ACTORS = 1
         self.MAX_TRAINING_STEPS = 2_000_000
-        self.CONSOLE_LOG_INTERVAL_TRAINING_STEPS = 100
-        self.TEST_INTERVAL_TRAINING_STEPS = 5_000
 
         self.MODEL = ParameterLinearModel(ModelType.SMALL_LINEAR_2)
 

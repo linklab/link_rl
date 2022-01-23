@@ -6,6 +6,7 @@ from a_configuration.b_base.parameter_base import ParameterBase
 from g_utils.types import ModelType
 from torch import nn
 
+
 class ParameterHopperMujocoSac(ParameterBase, ParameterHopperMujoco, ParameterSac):
     def __init__(self):
         ParameterBase.__init__(self)
@@ -24,8 +25,6 @@ class ParameterHopperMujocoSac(ParameterBase, ParameterHopperMujoco, ParameterSa
         self.N_VECTORIZED_ENVS = 1
         self.N_ACTORS = 1
         self.MAX_TRAINING_STEPS = 2_000_000
-        self.CONSOLE_LOG_INTERVAL_TRAINING_STEPS = 100
-        self.TEST_INTERVAL_TRAINING_STEPS = 5_000
 
         self.MODEL = ParameterLinearModel(ModelType.SMALL_LINEAR_2)
 

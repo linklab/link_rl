@@ -3,6 +3,7 @@ from torch import nn
 from typing import Tuple
 from collections import OrderedDict
 import numpy as np
+import torch.nn.init as init
 
 from a_configuration.b_base.c_models.convolutional_models import ParameterConvolutionalModel
 from a_configuration.b_base.c_models.linear_models import ParameterLinearModel
@@ -19,7 +20,6 @@ class Model(nn.Module):
         self.n_out_actions = n_out_actions
         self.n_discrete_actions = n_discrete_actions
         self.parameter = parameter
-        self.activation = self.parameter.LAYER_ACTIVATION
 
         self.is_recurrent_model = any([
             isinstance(self.parameter.MODEL, ParameterRecurrentLinearModel),
@@ -47,18 +47,22 @@ class Model(nn.Module):
             input_n_features,
             self.parameter.MODEL.NEURONS_PER_FULLY_CONNECTED_LAYER[0]
         )
+        init.xavier_normal_(fc_layers_dict["fc_0"].weight)
         if self.parameter.LAYER_NORM:
             self.get_layer_normalization(fc_layers_dict, 0)
-        fc_layers_dict["fc_0_activation"] = self.activation
+
+        fc_layers_dict["fc_0_activation"] = self.parameter.LAYER_ACTIVATION()
 
         for idx in range(1, len(self.parameter.MODEL.NEURONS_PER_FULLY_CONNECTED_LAYER)):
             fc_layers_dict["fc_{0}".format(idx)] = nn.Linear(
                 self.parameter.MODEL.NEURONS_PER_FULLY_CONNECTED_LAYER[idx - 1],
                 self.parameter.MODEL.NEURONS_PER_FULLY_CONNECTED_LAYER[idx]
             )
+            init.xavier_normal_(fc_layers_dict["fc_{0}".format(idx)].weight)
             if self.parameter.LAYER_NORM:
                 self.get_layer_normalization(fc_layers_dict, idx)
-            fc_layers_dict["fc_{0}_activation".format(idx)] = self.activation
+
+            fc_layers_dict["fc_{0}_activation".format(idx)] = self.parameter.LAYER_ACTIVATION()
 
         fc_layers = nn.Sequential(fc_layers_dict)
 
@@ -77,7 +81,7 @@ class Model(nn.Module):
             kernel_size=self.parameter.MODEL.KERNEL_SIZE_PER_LAYER[0],
             stride=self.parameter.MODEL.STRIDE_PER_LAYER[0]
         )
-        conv_layers_dict["conv_0_activation"] = nn.LeakyReLU()
+        conv_layers_dict["conv_0_activation"] = self.parameter.LAYER_ACTIVATION()
 
         for idx in range(1, len(self.parameter.MODEL.OUT_CHANNELS_PER_LAYER)):
             conv_layers_dict["conv_{0}".format(idx)] = nn.Conv2d(
@@ -86,7 +90,7 @@ class Model(nn.Module):
                 kernel_size=self.parameter.MODEL.KERNEL_SIZE_PER_LAYER[idx],
                 stride=self.parameter.MODEL.STRIDE_PER_LAYER[idx]
             )
-            conv_layers_dict["conv_{0}_activation".format(idx)] = nn.LeakyReLU()
+            conv_layers_dict["conv_{0}_activation".format(idx)] = self.parameter.LAYER_ACTIVATION()
 
         conv_layers = nn.Sequential(conv_layers_dict)
         return conv_layers
