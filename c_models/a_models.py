@@ -48,7 +48,7 @@ class Model(nn.Module):
             self.parameter.MODEL_PARAMETER.NEURONS_PER_FULLY_CONNECTED_LAYER[0]
         )
         init.xavier_normal_(fc_layers_dict["fc_0"].weight)
-        if self.parameter.LAYER_NORM:
+        if self.parameter.USE_LAYER_NORM:
             self.get_layer_normalization(fc_layers_dict, 0)
 
         fc_layers_dict["fc_0_activation"] = self.parameter.LAYER_ACTIVATION()
@@ -59,7 +59,7 @@ class Model(nn.Module):
                 self.parameter.MODEL_PARAMETER.NEURONS_PER_FULLY_CONNECTED_LAYER[idx]
             )
             init.xavier_normal_(fc_layers_dict["fc_{0}".format(idx)].weight)
-            if self.parameter.LAYER_NORM:
+            if self.parameter.USE_LAYER_NORM:
                 self.get_layer_normalization(fc_layers_dict, idx)
 
             fc_layers_dict["fc_{0}_activation".format(idx)] = self.parameter.LAYER_ACTIVATION()

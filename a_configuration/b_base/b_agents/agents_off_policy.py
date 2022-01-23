@@ -79,7 +79,7 @@ class ParameterSac(ParameterAgent):
 
         self.LAYER_ACTIVATION = nn.ReLU
 
-        self.LAYER_NORM = True
+        self.USE_LAYER_NORM = True
 
         self.DEFAULT_ALPHA = 0.2
         self.TAU = 0.005

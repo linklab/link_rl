@@ -57,7 +57,7 @@ class ParameterBase:
 
         self.SYSTEM_COMPUTER_NAME = None
 
-        self.LAYER_NORM = False
+        self.USE_LAYER_NORM = False
         self.LAYER_ACTIVATION = nn.LeakyReLU
 
         self.LOSS_FUNCTION = F.huber_loss

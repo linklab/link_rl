@@ -28,4 +28,4 @@ class ParameterAntMujocoSac(ParameterBase, ParameterAntMujoco, ParameterSac):
         self.MODEL_TYPE = ModelType.SMALL_LINEAR
 
         self.LAYER_ACTIVATION = nn.ReLU
-        self.LAYER_NORM = False
+        self.USE_LAYER_NORM = False

@@ -39,7 +39,7 @@ class ParameterComparisonBase:
 
         self.N_RUNS = 5
 
-        self.LAYER_NORM = False
+        self.USE_LAYER_NORM = False
 
         self.LAYER_ACTIVATION = nn.LeakyReLU
 
