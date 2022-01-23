@@ -209,7 +209,7 @@ def print_comparison_basic_info(observation_space, action_space, parameter_c):
                 print("{0:55}".format(items[0]), end="\n")
                 items.clear()
 
-        print_model_info(getattr(agent_parameter, "MODEL_TYPE"))
+        print_model_info(agent_parameter)
 
     if observation_space and action_space:
         if observation_space and action_space:
