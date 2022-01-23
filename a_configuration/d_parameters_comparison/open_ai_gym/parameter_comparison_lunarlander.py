@@ -17,5 +17,5 @@ class ParameterComparisonLunarLanderDqnRecurrent(ParameterComparisonBase):
             ParameterLunarLanderDqn()
         ]
 
-        self.AGENT_PARAMETERS[0].MODEL = ModelType.SMALL_LINEAR
-        self.AGENT_PARAMETERS[1].MODEL = ModelType.SMALL_RECURRENT
+        self.AGENT_PARAMETERS[0].MODEL_TYPE = ModelType.SMALL_LINEAR
+        self.AGENT_PARAMETERS[1].MODEL_TYPE = ModelType.SMALL_RECURRENT

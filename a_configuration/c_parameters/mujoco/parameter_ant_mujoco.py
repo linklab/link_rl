@@ -25,7 +25,7 @@ class ParameterAntMujocoSac(ParameterBase, ParameterAntMujoco, ParameterSac):
         self.N_ACTORS = 1
         self.MAX_TRAINING_STEPS = 2_000_000
 
-        self.MODEL = ModelType.SMALL_LINEAR
+        self.MODEL_TYPE = ModelType.SMALL_LINEAR
 
         self.LAYER_ACTIVATION = nn.ReLU
         self.LAYER_NORM = False

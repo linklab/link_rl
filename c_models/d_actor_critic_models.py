@@ -18,7 +18,7 @@ class CriticModel(Model):
         super(CriticModel, self).__init__(observation_shape, n_out_actions, n_discrete_actions, parameter)
 
         #######################
-        # CRITIC MODEL: BEGIN #
+        # CRITIC MODEL_TYPE: BEGIN #
         #######################
         self.critic_params = []
         if isinstance(self.parameter.MODEL_PARAMETER, ParameterLinearModel):
@@ -65,7 +65,7 @@ class CriticModel(Model):
         self.critic_fc_last = nn.Linear(self.parameter.MODEL_PARAMETER.NEURONS_PER_FULLY_CONNECTED_LAYER[-1], 1)
         self.critic_params += list(self.critic_fc_last.parameters())
         #####################
-        # CRITIC MODEL: END #
+        # CRITIC MODEL_TYPE: END #
         #####################
 
     def forward_critic(self, obs):

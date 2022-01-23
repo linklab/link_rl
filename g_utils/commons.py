@@ -207,7 +207,7 @@ def print_comparison_basic_info(observation_space, action_space, parameter_c):
                 print("{0:55}".format(items[0]), end="\n")
                 items.clear()
 
-        print_model_info(getattr(agent_parameter, "MODEL"))
+        print_model_info(getattr(agent_parameter, "MODEL_TYPE"))
 
     if observation_space and action_space:
         if observation_space and action_space:
@@ -223,7 +223,7 @@ def print_model_info(parameter):
         set_model_parameter(parameter)
 
     model_parameter = parameter.MODEL_PARAMETER
-    print('-' * 76 + " MODEL " + '-' * 76)
+    print('-' * 76 + " MODEL_TYPE " + '-' * 76)
     if isinstance(model_parameter, ParameterLinearModel):
         item1 = "{0}: {1:}".format("MODEL_PARAMETER", "LINEAR_MODEL_PARAMETER")
         item2 = "{0}: {1:}".format("NEURONS_PER_FULLY_CONNECTED_LAYER", model_parameter.NEURONS_PER_FULLY_CONNECTED_LAYER)
@@ -658,24 +658,24 @@ def get_scaled_action():
 
 
 def set_model_parameter(parameter):
-    if parameter.MODEL in (
+    if parameter.MODEL_TYPE in (
             ModelType.TINY_LINEAR, ModelType.SMALL_LINEAR, ModelType.SMALL_LINEAR_2,
             ModelType.MEDIUM_LINEAR, ModelType.LARGE_LINEAR
     ):
-        parameter.MODEL_PARAMETER = ParameterLinearModel(parameter.MODEL)
-    elif parameter.MODEL in (
+        parameter.MODEL_PARAMETER = ParameterLinearModel(parameter.MODEL_TYPE)
+    elif parameter.MODEL_TYPE in (
             ModelType.SMALL_CONVOLUTIONAL, ModelType.MEDIUM_CONVOLUTIONAL, ModelType.LARGE_CONVOLUTIONAL
     ):
-        parameter.MODEL_PARAMETER = ParameterConvolutionalModel(parameter.MODEL)
-    elif parameter.MODEL in (
+        parameter.MODEL_PARAMETER = ParameterConvolutionalModel(parameter.MODEL_TYPE)
+    elif parameter.MODEL_TYPE in (
             ModelType.SMALL_RECURRENT, ModelType.MEDIUM_RECURRENT, ModelType.LARGE_RECURRENT
     ):
-        parameter.MODEL_PARAMETER = ParameterRecurrentLinearModel(parameter.MODEL)
-    elif parameter.MODEL in (
+        parameter.MODEL_PARAMETER = ParameterRecurrentLinearModel(parameter.MODEL_TYPE)
+    elif parameter.MODEL_TYPE in (
             ModelType.SMALL_RECURRENT_CONVOLUTIONAL, ModelType.MEDIUM_RECURRENT_CONVOLUTIONAL,
             ModelType.LARGE_RECURRENT_CONVOLUTIONAL
     ):
-        parameter.MODEL_PARAMETER = ParameterRecurrentConvolutionalModel(parameter.MODEL)
+        parameter.MODEL_PARAMETER = ParameterRecurrentConvolutionalModel(parameter.MODEL_TYPE)
     else:
         raise ValueError()
 

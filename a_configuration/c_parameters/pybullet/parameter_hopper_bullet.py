@@ -26,7 +26,7 @@ class ParameterHopperBulletSac(ParameterBase, ParameterHopperBullet, ParameterSa
         self.N_VECTORIZED_ENVS = 1
         self.N_ACTORS = 1
         self.MAX_TRAINING_STEPS = 2_000_000
-        self.MODEL = ModelType.SMALL_LINEAR
+        self.MODEL_TYPE = ModelType.SMALL_LINEAR
 
 
 if __name__ == "__main__":

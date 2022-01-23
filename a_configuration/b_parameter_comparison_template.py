@@ -94,9 +94,9 @@ parameter_comparison_list.append(parameter_comparison_cart_pole_bullet_dqn_types
 
 #######################################################################################################################
 parameter_comparison_cart_pole_bullet_ddpg_recurrent = ParameterComparisonCartPoleContinuousBulletDdpg()
-parameter_comparison_cart_pole_bullet_ddpg_recurrent.AGENT_PARAMETERS[0].MODEL = ModelType.SMALL_RECURRENT
-parameter_comparison_cart_pole_bullet_ddpg_recurrent.AGENT_PARAMETERS[1].MODEL = ModelType.SMALL_LINEAR
-parameter_comparison_cart_pole_bullet_ddpg_recurrent.AGENT_PARAMETERS[2].MODEL = ModelType.SMALL_LINEAR_2
+parameter_comparison_cart_pole_bullet_ddpg_recurrent.AGENT_PARAMETERS[0].MODEL_TYPE = ModelType.SMALL_RECURRENT
+parameter_comparison_cart_pole_bullet_ddpg_recurrent.AGENT_PARAMETERS[1].MODEL_TYPE = ModelType.SMALL_LINEAR
+parameter_comparison_cart_pole_bullet_ddpg_recurrent.AGENT_PARAMETERS[2].MODEL_TYPE = ModelType.SMALL_LINEAR_2
 parameter_comparison_cart_pole_bullet_ddpg_recurrent.AGENT_LABELS = [
     "DDPG + GRU",
     "DDPG + Linear",
@@ -122,9 +122,9 @@ parameter_comparison_list.append(parameter_comparison_pong_dqn_types)
 ######################################################################
 
 parameter_comparison_cart_pole_dqn_recurrent = ParameterComparisonCartPoleDqn()
-parameter_comparison_cart_pole_dqn_recurrent.AGENT_PARAMETERS[0].MODEL = ModelType.SMALL_RECURRENT
-parameter_comparison_cart_pole_dqn_recurrent.AGENT_PARAMETERS[1].MODEL = ModelType.SMALL_LINEAR
-parameter_comparison_cart_pole_dqn_recurrent.AGENT_PARAMETERS[2].MODEL = ModelType.SMALL_LINEAR_2
+parameter_comparison_cart_pole_dqn_recurrent.AGENT_PARAMETERS[0].MODEL_TYPE = ModelType.SMALL_RECURRENT
+parameter_comparison_cart_pole_dqn_recurrent.AGENT_PARAMETERS[1].MODEL_TYPE = ModelType.SMALL_LINEAR
+parameter_comparison_cart_pole_dqn_recurrent.AGENT_PARAMETERS[2].MODEL_TYPE = ModelType.SMALL_LINEAR_2
 parameter_comparison_cart_pole_dqn_recurrent.AGENT_LABELS = [
     "DQN Recurrent",
     "DQN Small Linear",

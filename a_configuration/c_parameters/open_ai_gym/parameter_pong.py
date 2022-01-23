@@ -19,7 +19,7 @@ class ParameterPongDqn(
         self.N_ACTORS = 1
         self.MAX_TRAINING_STEPS = 1_000_000
         self.BUFFER_CAPACITY = 500_000
-        self.MODEL = ModelType.MEDIUM_CONVOLUTIONAL
+        self.MODEL_TYPE = ModelType.MEDIUM_CONVOLUTIONAL
 
 
 class ParameterPongDoubleDqn(
@@ -34,7 +34,7 @@ class ParameterPongDoubleDqn(
         self.N_ACTORS = 1
         self.MAX_TRAINING_STEPS = 1_000_000
         self.BUFFER_CAPACITY = 500_000
-        self.MODEL = ModelType.MEDIUM_CONVOLUTIONAL
+        self.MODEL_TYPE = ModelType.MEDIUM_CONVOLUTIONAL
 
 
 class ParameterPongDuelingDqn(
@@ -49,7 +49,7 @@ class ParameterPongDuelingDqn(
         self.N_ACTORS = 1
         self.MAX_TRAINING_STEPS = 1_000_000
         self.BUFFER_CAPACITY = 500_000
-        self.MODEL = ModelType.MEDIUM_CONVOLUTIONAL
+        self.MODEL_TYPE = ModelType.MEDIUM_CONVOLUTIONAL
 
 
 class ParameterPongDoubleDuelingDqn(
@@ -64,7 +64,7 @@ class ParameterPongDoubleDuelingDqn(
         self.N_ACTORS = 1
         self.MAX_TRAINING_STEPS = 1_000_000
         self.BUFFER_CAPACITY = 500_000
-        self.MODEL = ModelType.MEDIUM_CONVOLUTIONAL
+        self.MODEL_TYPE = ModelType.MEDIUM_CONVOLUTIONAL
 
 
 class ParameterPongA2c(
@@ -83,4 +83,4 @@ class ParameterPongA2c(
         self.MAX_TRAINING_STEPS = 1_000_000
         self.ENTROPY_BETA = 0.02
         self.BUFFER_CAPACITY = self.BATCH_SIZE
-        self.MODEL = ModelType.MEDIUM_CONVOLUTIONAL
+        self.MODEL_TYPE = ModelType.MEDIUM_CONVOLUTIONAL

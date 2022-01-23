@@ -37,7 +37,7 @@ class ParameterBase:
         self.N_EPISODES_FOR_MEAN_CALCULATION = 32
         self.TEST_INTERVAL_TRAINING_STEPS = 1_000
         self.CONSOLE_LOG_INTERVAL_TRAINING_STEPS = 100
-        self.MODEL = ModelType.SMALL_LINEAR
+        self.MODEL_TYPE = ModelType.SMALL_LINEAR
         self.MODEL_PARAMETER = None
 
         self.N_TEST_EPISODES = 3

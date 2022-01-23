@@ -20,7 +20,7 @@ class ParameterCartPoleBulletDqn(
         self.N_VECTORIZED_ENVS = 1
         self.N_ACTORS = 1
         self.MAX_TRAINING_STEPS = 100_000
-        self.MODEL = ModelType.SMALL_LINEAR
+        self.MODEL_TYPE = ModelType.SMALL_LINEAR
 
 
 class ParameterCartPoleBulletDoubleDqn(
@@ -34,7 +34,7 @@ class ParameterCartPoleBulletDoubleDqn(
         self.N_VECTORIZED_ENVS = 1
         self.N_ACTORS = 1
         self.MAX_TRAINING_STEPS = 100_000
-        self.MODEL = ModelType.SMALL_LINEAR
+        self.MODEL_TYPE = ModelType.SMALL_LINEAR
 
 
 class ParameterCartPoleBulletDuelingDqn(
@@ -48,7 +48,7 @@ class ParameterCartPoleBulletDuelingDqn(
         self.N_VECTORIZED_ENVS = 1
         self.N_ACTORS = 1
         self.MAX_TRAINING_STEPS = 100_000
-        self.MODEL = ModelType.SMALL_LINEAR
+        self.MODEL_TYPE = ModelType.SMALL_LINEAR
 
 
 class ParameterCartPoleBulletDoubleDuelingDqn(
@@ -62,7 +62,7 @@ class ParameterCartPoleBulletDoubleDuelingDqn(
         self.N_VECTORIZED_ENVS = 1
         self.N_ACTORS = 1
         self.MAX_TRAINING_STEPS = 100_000
-        self.MODEL = ModelType.SMALL_LINEAR
+        self.MODEL_TYPE = ModelType.SMALL_LINEAR
 
 
     # OnPolicy
@@ -77,7 +77,7 @@ class ParameterCartPoleBulletA2c(
         self.N_VECTORIZED_ENVS = 1
         self.N_ACTORS = 1
         self.MAX_TRAINING_STEPS = 100_000
-        self.MODEL = ModelType.SMALL_LINEAR
+        self.MODEL_TYPE = ModelType.SMALL_LINEAR
 
 
 #############################################################################################
@@ -95,7 +95,7 @@ class ParameterCartPoleContinuousBulletA2c(
         self.N_ACTORS = 1
         self.BATCH_SIZE = 512
         self.MAX_TRAINING_STEPS = 100_000
-        self.MODEL = ModelType.SMALL_LINEAR
+        self.MODEL_TYPE = ModelType.SMALL_LINEAR
 
 
 class ParameterCartPoleContinuousBulletSac(
@@ -111,7 +111,7 @@ class ParameterCartPoleContinuousBulletSac(
         self.N_VECTORIZED_ENVS = 1
         self.N_ACTORS = 1
         self.MAX_TRAINING_STEPS = 100_000
-        self.MODEL = ModelType.SMALL_LINEAR
+        self.MODEL_TYPE = ModelType.SMALL_LINEAR
 
 
 class ParameterCartPoleContinuousBulletDdpg(
@@ -127,7 +127,7 @@ class ParameterCartPoleContinuousBulletDdpg(
         self.BUFFER_CAPACITY = 200_000
         self.N_ACTORS = 1
         self.MAX_TRAINING_STEPS = 200_000
-        self.MODEL = ModelType.SMALL_LINEAR
-        # self.MODEL = ModelType.SMALL_RECURRENT
+        self.MODEL_TYPE = ModelType.SMALL_LINEAR
+        # self.MODEL_TYPE = ModelType.SMALL_RECURRENT
 
 
