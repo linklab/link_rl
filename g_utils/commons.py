@@ -82,7 +82,7 @@ def print_base_info(parameter):
     if hasattr(parameter, "COMPARISON_RESULTS_SAVE_DIR"):
         print("COMPARISON_RESULTS_SAVE_DIR: {0}".format(parameter.COMPARISON_RESULTS_SAVE_DIR))
 
-    print("ENV_UNITY_DIR: {0}".format(parameter.MODEL_SAVE_DIR))
+    print("UNITY_ENV_DIR: {0}".format(parameter.UNITY_ENV_DIR))
 
 
 def print_basic_info(observation_space=None, action_space=None, parameter=None):
@@ -97,7 +97,7 @@ def print_basic_info(observation_space=None, action_space=None, parameter=None):
     for param in dir(parameter):
         if not param.startswith("__") and param not in [
             "MODEL_PARAMETER", "NEURONS_PER_FULLY_CONNECTED_LAYER", "OUT_CHANNELS_PER_LAYER", "KERNEL_SIZE_PER_LAYER",
-            "STRIDE_PER_LAYER", "EPISODE_REWARD_AVG_SOLVED", "EPISODE_REWARD_STD_SOLVED", "ENV_UNITY_DIR",
+            "STRIDE_PER_LAYER", "EPISODE_REWARD_AVG_SOLVED", "EPISODE_REWARD_STD_SOLVED", "UNITY_ENV_DIR",
             "MODEL_SAVE_DIR", "PROJECT_HOME", "LAYER_ACTIVATION", "LOSS_FUNCTION"
         ]:
             if param in [
@@ -184,7 +184,7 @@ def print_comparison_basic_info(observation_space, action_space, parameter_c):
         for param in dir(agent_parameter):
             if not param.startswith("__") and param not in [
                 "MODEL_PARAMETER", "NEURONS_PER_FULLY_CONNECTED_LAYER", "OUT_CHANNELS_PER_LAYER", "KERNEL_SIZE_PER_LAYER",
-                "STRIDE_PER_LAYER", "EPISODE_REWARD_AVG_SOLVED", "EPISODE_REWARD_STD_SOLVED", "ENV_UNITY_DIR",
+                "STRIDE_PER_LAYER", "EPISODE_REWARD_AVG_SOLVED", "EPISODE_REWARD_STD_SOLVED", "UNITY_ENV_DIR",
                 "COMPARISON_RESULTS_SAVE_DIR", "PROJECT_HOME", "LAYER_ACTIVATION", "LOSS_FUNCTION"
             ]:
                 if param in [
@@ -557,7 +557,7 @@ def get_train_env(parameter):
                     raise ValueError()
 
                 u_env = UnityEnvironment(
-                    file_name=os.path.join(parameter.ENV_UNITY_DIR, parameter.ENV_NAME, platform_dir,
+                    file_name=os.path.join(parameter.UNITY_ENV_DIR, parameter.ENV_NAME, platform_dir,
                                            parameter.ENV_NAME),
                     worker_id=0, no_graphics=False
                 )
@@ -598,7 +598,7 @@ def get_single_env(parameter):
             raise ValueError()
 
         u_env = UnityEnvironment(
-            file_name=os.path.join(parameter.ENV_UNITY_DIR, parameter.ENV_NAME, platform_dir, parameter.ENV_NAME),
+            file_name=os.path.join(parameter.UNITY_ENV_DIR, parameter.ENV_NAME, platform_dir, parameter.ENV_NAME),
             worker_id=1, no_graphics=False
         )
         single_env = UnityToGymWrapper(u_env)
