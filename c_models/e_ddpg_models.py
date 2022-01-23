@@ -20,7 +20,7 @@ class ContinuousDdpgActorModel(PolicyModel):
         )
 
         self.mu = nn.Sequential(
-            nn.Linear(self.parameter.MODEL.NEURONS_PER_FULLY_CONNECTED_LAYER[-1], self.n_out_actions),
+            nn.Linear(self.parameter.MODEL_PARAMETER.NEURONS_PER_FULLY_CONNECTED_LAYER[-1], self.n_out_actions),
             nn.Tanh()
         )
         self.actor_params += list(self.mu.parameters())
@@ -40,12 +40,12 @@ class DdpgCriticModel(Model):
         # CRITIC MODEL: BEGIN #
         #######################
         self.critic_params = []
-        if isinstance(self.parameter.MODEL, ParameterLinearModel):
+        if isinstance(self.parameter.MODEL_PARAMETER, ParameterLinearModel):
             input_n_features = self.observation_shape[0]
             self.critic_fc_layers = self.get_linear_layers(input_n_features=input_n_features + self.n_out_actions)
             self.critic_params += list(self.critic_fc_layers.parameters())
 
-        elif isinstance(self.parameter.MODEL, ParameterConvolutionalModel):
+        elif isinstance(self.parameter.MODEL_PARAMETER, ParameterConvolutionalModel):
             input_n_channels = self.observation_shape[0]
             self.critic_conv_layers = self.get_conv_layers(input_n_channels=input_n_channels)
             self.critic_params += list(self.critic_conv_layers.parameters())
@@ -55,15 +55,15 @@ class DdpgCriticModel(Model):
             self.critic_fc_layers = self.get_linear_layers(input_n_features=input_n_features)
             self.critic_params += list(self.critic_fc_layers.parameters())
 
-        elif isinstance(self.parameter.MODEL, ParameterRecurrentLinearModel):
+        elif isinstance(self.parameter.MODEL_PARAMETER, ParameterRecurrentLinearModel):
             input_n_features = self.observation_shape[0] + self.n_out_actions
             self.critic_recurrent_layers = self.get_recurrent_layers(input_n_features=input_n_features)
             self.critic_params += list(self.critic_recurrent_layers.parameters())
 
-            self.critic_fc_layers = self.get_linear_layers(self.parameter.MODEL.HIDDEN_SIZE)
+            self.critic_fc_layers = self.get_linear_layers(self.parameter.MODEL_PARAMETER.HIDDEN_SIZE)
             self.critic_params += list(self.critic_fc_layers.parameters())
 
-        elif isinstance(self.parameter.MODEL, ParameterRecurrentConvolutionalModel):
+        elif isinstance(self.parameter.MODEL_PARAMETER, ParameterRecurrentConvolutionalModel):
             input_n_channels = self.observation_shape[0]
             self.critic_conv_layers = self.get_conv_layers(input_n_channels=input_n_channels)
             self.critic_params += list(self.critic_conv_layers.parameters())
@@ -71,19 +71,19 @@ class DdpgCriticModel(Model):
             conv_out_flat_size = self._get_conv_out(self.critic_conv_layers, self.observation_shape)
             input_n_features = conv_out_flat_size + self.n_out_actions
             self.critic_fc_layers_1 = nn.Linear(
-                in_features=input_n_features, out_features=self.parameter.MODEL.HIDDEN_SIZE
+                in_features=input_n_features, out_features=self.parameter.MODEL_PARAMETER.HIDDEN_SIZE
             )
             self.critic_params += list(self.critic_fc_layers_1.parameters())
 
-            self.critic_recurrent_layers = self.get_recurrent_layers(self.parameter.MODEL.HIDDEN_SIZE)
+            self.critic_recurrent_layers = self.get_recurrent_layers(self.parameter.MODEL_PARAMETER.HIDDEN_SIZE)
             self.critic_params += list(self.critic_recurrent_layers.parameters())
 
-            self.critic_fc_layers_2 = self.get_linear_layers(self.parameter.MODEL.HIDDEN_SIZE)
+            self.critic_fc_layers_2 = self.get_linear_layers(self.parameter.MODEL_PARAMETER.HIDDEN_SIZE)
             self.critic_params += list(self.critic_fc_layers_2.parameters())
         else:
             raise ValueError()
 
-        self.critic_fc_last_layer = nn.Linear(self.parameter.MODEL.NEURONS_PER_FULLY_CONNECTED_LAYER[-1], 1)
+        self.critic_fc_last_layer = nn.Linear(self.parameter.MODEL_PARAMETER.NEURONS_PER_FULLY_CONNECTED_LAYER[-1], 1)
         self.critic_params += list(self.critic_fc_last_layer.parameters())
         #####################
         # CRITIC MODEL: END #
@@ -96,13 +96,13 @@ class DdpgCriticModel(Model):
         if isinstance(act, np.ndarray):
             act = torch.tensor(act, dtype=torch.float32, device=self.parameter.DEVICE)
 
-        if isinstance(self.parameter.MODEL, ParameterLinearModel):
+        if isinstance(self.parameter.MODEL_PARAMETER, ParameterLinearModel):
             x = self.critic_fc_layers(torch.cat([obs, act], dim=-1))
-        elif isinstance(self.parameter.MODEL, ParameterConvolutionalModel):
+        elif isinstance(self.parameter.MODEL_PARAMETER, ParameterConvolutionalModel):
             conv_out = self.critic_conv_layers(obs)
             conv_out = torch.flatten(conv_out, start_dim=1)
             x = self.critic_fc_layers(torch.cat([conv_out, act], dim=-1))
-        elif isinstance(self.parameter.MODEL, ParameterRecurrentLinearModel):
+        elif isinstance(self.parameter.MODEL_PARAMETER, ParameterRecurrentLinearModel):
             rnn_in, hidden_in = obs[0]
             if isinstance(rnn_in, np.ndarray):
                 rnn_in = torch.tensor(rnn_in, dtype=torch.float32, device=self.parameter.DEVICE)
@@ -120,7 +120,7 @@ class DdpgCriticModel(Model):
             rnn_out_flattened = torch.flatten(rnn_out, start_dim=1)
             x = self.critic_fc_layers(rnn_out_flattened)
 
-        elif isinstance(self.parameter.MODEL, ParameterRecurrentConvolutionalModel):
+        elif isinstance(self.parameter.MODEL_PARAMETER, ParameterRecurrentConvolutionalModel):
             x, hidden_in = obs[0]
             if isinstance(x, np.ndarray):
                 x = torch.tensor(x, dtype=torch.float32, device=self.parameter.DEVICE)

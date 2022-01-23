@@ -3,11 +3,16 @@ import os
 from gym.spaces import Discrete, Box
 import warnings
 
+from a_configuration.b_base.c_models.convolutional_models import ParameterConvolutionalModel
+from a_configuration.b_base.c_models.linear_models import ParameterLinearModel
+from a_configuration.b_base.c_models.recurrent_convolutional_models import ParameterRecurrentConvolutionalModel
+from a_configuration.b_base.c_models.recurrent_linear_models import ParameterRecurrentLinearModel
 from d_agents.off_policy.ddpg.agent_ddpg import AgentDdpg
 from d_agents.off_policy.dqn.agent_double_dqn import AgentDoubleDqn
 from d_agents.off_policy.dqn.agent_double_dueling_dqn import AgentDoubleDuelingDqn
 from d_agents.off_policy.dqn.agent_dueling_dqn import AgentDuelingDqn
 from d_agents.off_policy.sac.agent_sac import AgentSac
+from g_utils.types import ModelType
 
 warnings.filterwarnings('ignore')
 warnings.simplefilter("ignore")
@@ -28,6 +33,28 @@ from g_utils.commons import AgentType
 from gym import logger
 logger.set_level(level=40)
 
+
+def set_model_parameter(parameter):
+    if parameter.MODEL in (
+        ModelType.TINY_LINEAR, ModelType.SMALL_LINEAR, ModelType.SMALL_LINEAR_2,
+        ModelType.MEDIUM_LINEAR, ModelType.LARGE_LINEAR,
+    ):
+        parameter.MODEL_PARAMETER = ParameterLinearModel(parameter.MODEL)
+    elif parameter.MODEL in (
+        ModelType.SMALL_CONVOLUTIONAL, ModelType.MEDIUM_CONVOLUTIONAL, ModelType.LARGE_CONVOLUTIONAL
+    ):
+        parameter.MODEL_PARAMETER = ParameterConvolutionalModel(parameter.MODEL)
+    elif parameter.MODEL in (
+            ModelType.SMALL_RECURRENT, ModelType.MEDIUM_RECURRENT, ModelType.LARGE_RECURRENT
+    ):
+        parameter.MODEL_PARAMETER = ParameterRecurrentLinearModel(parameter.MODEL)
+    elif parameter.MODEL in (
+            ModelType.SMALL_RECURRENT_CONVOLUTIONAL, ModelType.MEDIUM_RECURRENT_CONVOLUTIONAL,
+            ModelType.LARGE_RECURRENT_CONVOLUTIONAL
+    ):
+        parameter.MODEL_PARAMETER = ParameterRecurrentConvolutionalModel(parameter.MODEL)
+    else:
+        raise ValueError()
 
 def get_agent(observation_space, action_space, parameter=None):
     assert isinstance(observation_space, Box)

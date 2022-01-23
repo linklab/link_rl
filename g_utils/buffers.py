@@ -16,8 +16,8 @@ class Buffer:
         self.parameter = parameter
 
         self.is_recurrent_model = any([
-            isinstance(self.parameter.MODEL, ParameterRecurrentLinearModel),
-            isinstance(self.parameter.MODEL, ParameterRecurrentConvolutionalModel)
+            isinstance(self.parameter.MODEL_PARAMETER, ParameterRecurrentLinearModel),
+            isinstance(self.parameter.MODEL_PARAMETER, ParameterRecurrentConvolutionalModel)
         ])
 
     def __len__(self):

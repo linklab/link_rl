@@ -21,6 +21,7 @@ from g_utils.commons import get_env_info, print_basic_info
 
 
 def main():
+    set_model_parameter(parameter)
     observation_space, action_space = get_env_info(parameter)
     print_basic_info(observation_space, action_space, parameter)
 

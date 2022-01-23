@@ -41,6 +41,9 @@ for agent_parameter in parameter_c.AGENT_PARAMETERS:
 
 
 def main():
+    for parameter in parameter_c.AGENT_PARAMETERS:
+        set_model_parameter(parameter)
+
     observation_space, action_space = get_env_info(parameter_c)
     print_comparison_basic_info(observation_space, action_space, parameter_c)
 

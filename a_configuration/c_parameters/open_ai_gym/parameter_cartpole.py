@@ -20,7 +20,7 @@ class ParameterCartPoleDqn(
         self.N_ACTORS = 1
         self.MAX_TRAINING_STEPS = 100_000
         self.BUFFER_CAPACITY = 50_000
-        self.MODEL = ParameterLinearModel(ModelType.SMALL_LINEAR)
+        self.MODEL = ModelType.SMALL_LINEAR
 
 
 class ParameterCartPoleDoubleDqn(
@@ -35,7 +35,7 @@ class ParameterCartPoleDoubleDqn(
         self.N_ACTORS = 1
         self.MAX_TRAINING_STEPS = 100_000
         self.BUFFER_CAPACITY = 50_000
-        self.MODEL = ParameterLinearModel(ModelType.SMALL_LINEAR)
+        self.MODEL = ModelType.SMALL_LINEAR
 
 
 class ParameterCartPoleDuelingDqn(
@@ -50,7 +50,7 @@ class ParameterCartPoleDuelingDqn(
         self.N_ACTORS = 1
         self.MAX_TRAINING_STEPS = 100_000
         self.BUFFER_CAPACITY = 50_000
-        self.MODEL = ParameterLinearModel(ModelType.SMALL_LINEAR)
+        self.MODEL = ModelType.SMALL_LINEAR
 
 
 class ParameterCartPoleDoubleDuelingDqn(
@@ -65,7 +65,7 @@ class ParameterCartPoleDoubleDuelingDqn(
         self.N_ACTORS = 1
         self.MAX_TRAINING_STEPS = 100_000
         self.BUFFER_CAPACITY = 50_000
-        self.MODEL = ParameterLinearModel(ModelType.SMALL_LINEAR)
+        self.MODEL = ModelType.SMALL_LINEAR
 
 # OnPolicy
 
@@ -81,7 +81,7 @@ class ParameterCartPoleReinforce(
         self.N_ACTORS = 1
         self.BUFFER_CAPACITY = 1_000
         self.MAX_TRAINING_STEPS = 100_000
-        self.MODEL = ParameterLinearModel(ModelType.SMALL_LINEAR)
+        self.MODEL = ModelType.SMALL_LINEAR
 
 
 class ParameterCartPoleA2c(
@@ -97,4 +97,4 @@ class ParameterCartPoleA2c(
         self.MAX_TRAINING_STEPS = 100_000
         self.BATCH_SIZE = 256
         self.BUFFER_CAPACITY = 10_000
-        self.MODEL = ParameterLinearModel(ModelType.SMALL_LINEAR)
+        self.MODEL = ModelType.SMALL_LINEAR

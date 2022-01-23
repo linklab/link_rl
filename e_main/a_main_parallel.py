@@ -27,6 +27,7 @@ device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
 
 def main():
+    set_model_parameter(parameter)
     observation_space, action_space = get_env_info(parameter)
     print_basic_info(observation_space, action_space, parameter)
 

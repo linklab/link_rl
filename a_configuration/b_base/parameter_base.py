@@ -5,6 +5,8 @@ import torch
 from torch import nn
 import torch.nn.functional as F
 
+from g_utils.types import ModelType
+
 
 class ParameterBase:
     def __init__(self):
@@ -33,9 +35,10 @@ class ParameterBase:
         self.MAX_TRAINING_STEPS = None
 
         self.N_EPISODES_FOR_MEAN_CALCULATION = 32
-        self.TEST_INTERVAL_TRAINING_STEPS = 100
+        self.TEST_INTERVAL_TRAINING_STEPS = 1_000
         self.CONSOLE_LOG_INTERVAL_TRAINING_STEPS = 100
-        self.MODEL = None
+        self.MODEL = ModelType.SMALL_LINEAR
+        self.MODEL_PARAMETER = None
 
         self.N_TEST_EPISODES = 3
 

@@ -22,8 +22,8 @@ class Model(nn.Module):
         self.parameter = parameter
 
         self.is_recurrent_model = any([
-            isinstance(self.parameter.MODEL, ParameterRecurrentLinearModel),
-            isinstance(self.parameter.MODEL, ParameterRecurrentConvolutionalModel)
+            isinstance(self.parameter.MODEL_PARAMETER, ParameterRecurrentLinearModel),
+            isinstance(self.parameter.MODEL_PARAMETER, ParameterRecurrentConvolutionalModel)
         ])
         if self.is_recurrent_model:
             self.recurrent_hidden = None
@@ -32,20 +32,20 @@ class Model(nn.Module):
     def init_recurrent_hidden(self):
         if self.is_recurrent_model:
             self.recurrent_hidden = torch.zeros(
-                self.parameter.MODEL.NUM_LAYERS,
+                self.parameter.MODEL_PARAMETER.NUM_LAYERS,
                 1,  # batch_size
-                self.parameter.MODEL.HIDDEN_SIZE,
+                self.parameter.MODEL_PARAMETER.HIDDEN_SIZE,
                 dtype=torch.float32,
                 device=self.parameter.DEVICE
             )
 
     def get_linear_layers(self, input_n_features):
-        assert self.parameter.MODEL.NEURONS_PER_FULLY_CONNECTED_LAYER
+        assert self.parameter.MODEL_PARAMETER.NEURONS_PER_FULLY_CONNECTED_LAYER
 
         fc_layers_dict = OrderedDict()
         fc_layers_dict["fc_0"] = nn.Linear(
             input_n_features,
-            self.parameter.MODEL.NEURONS_PER_FULLY_CONNECTED_LAYER[0]
+            self.parameter.MODEL_PARAMETER.NEURONS_PER_FULLY_CONNECTED_LAYER[0]
         )
         init.xavier_normal_(fc_layers_dict["fc_0"].weight)
         if self.parameter.LAYER_NORM:
@@ -53,10 +53,10 @@ class Model(nn.Module):
 
         fc_layers_dict["fc_0_activation"] = self.parameter.LAYER_ACTIVATION()
 
-        for idx in range(1, len(self.parameter.MODEL.NEURONS_PER_FULLY_CONNECTED_LAYER)):
+        for idx in range(1, len(self.parameter.MODEL_PARAMETER.NEURONS_PER_FULLY_CONNECTED_LAYER)):
             fc_layers_dict["fc_{0}".format(idx)] = nn.Linear(
-                self.parameter.MODEL.NEURONS_PER_FULLY_CONNECTED_LAYER[idx - 1],
-                self.parameter.MODEL.NEURONS_PER_FULLY_CONNECTED_LAYER[idx]
+                self.parameter.MODEL_PARAMETER.NEURONS_PER_FULLY_CONNECTED_LAYER[idx - 1],
+                self.parameter.MODEL_PARAMETER.NEURONS_PER_FULLY_CONNECTED_LAYER[idx]
             )
             init.xavier_normal_(fc_layers_dict["fc_{0}".format(idx)].weight)
             if self.parameter.LAYER_NORM:
@@ -69,26 +69,26 @@ class Model(nn.Module):
         return fc_layers
 
     def get_conv_layers(self, input_n_channels):
-        assert self.parameter.MODEL.OUT_CHANNELS_PER_LAYER
-        assert self.parameter.MODEL.KERNEL_SIZE_PER_LAYER
-        assert self.parameter.MODEL.STRIDE_PER_LAYER
-        assert self.parameter.MODEL.NEURONS_PER_FULLY_CONNECTED_LAYER
+        assert self.parameter.MODEL_PARAMETER.OUT_CHANNELS_PER_LAYER
+        assert self.parameter.MODEL_PARAMETER.KERNEL_SIZE_PER_LAYER
+        assert self.parameter.MODEL_PARAMETER.STRIDE_PER_LAYER
+        assert self.parameter.MODEL_PARAMETER.NEURONS_PER_FULLY_CONNECTED_LAYER
 
         conv_layers_dict = OrderedDict()
         conv_layers_dict["conv_0"] = nn.Conv2d(
             in_channels=input_n_channels,
-            out_channels=self.parameter.MODEL.OUT_CHANNELS_PER_LAYER[0],
-            kernel_size=self.parameter.MODEL.KERNEL_SIZE_PER_LAYER[0],
-            stride=self.parameter.MODEL.STRIDE_PER_LAYER[0]
+            out_channels=self.parameter.MODEL_PARAMETER.OUT_CHANNELS_PER_LAYER[0],
+            kernel_size=self.parameter.MODEL_PARAMETER.KERNEL_SIZE_PER_LAYER[0],
+            stride=self.parameter.MODEL_PARAMETER.STRIDE_PER_LAYER[0]
         )
         conv_layers_dict["conv_0_activation"] = self.parameter.LAYER_ACTIVATION()
 
-        for idx in range(1, len(self.parameter.MODEL.OUT_CHANNELS_PER_LAYER)):
+        for idx in range(1, len(self.parameter.MODEL_PARAMETER.OUT_CHANNELS_PER_LAYER)):
             conv_layers_dict["conv_{0}".format(idx)] = nn.Conv2d(
-                in_channels=self.parameter.MODEL.OUT_CHANNELS_PER_LAYER[idx - 1],
-                out_channels=self.parameter.MODEL.OUT_CHANNELS_PER_LAYER[idx],
-                kernel_size=self.parameter.MODEL.KERNEL_SIZE_PER_LAYER[idx],
-                stride=self.parameter.MODEL.STRIDE_PER_LAYER[idx]
+                in_channels=self.parameter.MODEL_PARAMETER.OUT_CHANNELS_PER_LAYER[idx - 1],
+                out_channels=self.parameter.MODEL_PARAMETER.OUT_CHANNELS_PER_LAYER[idx],
+                kernel_size=self.parameter.MODEL_PARAMETER.KERNEL_SIZE_PER_LAYER[idx],
+                stride=self.parameter.MODEL_PARAMETER.STRIDE_PER_LAYER[idx]
             )
             conv_layers_dict["conv_{0}_activation".format(idx)] = self.parameter.LAYER_ACTIVATION()
 
@@ -100,25 +100,25 @@ class Model(nn.Module):
         return int(np.prod(cont_out.size()))
 
     def get_layer_normalization(self, layer_dict, layer_idx):
-        if isinstance(self.parameter.MODEL, ParameterLinearModel):
+        if isinstance(self.parameter.MODEL_PARAMETER, ParameterLinearModel):
             fc_layers_dict = layer_dict
             fc_layers_dict["fc_{0}_norm".format(layer_idx)] = nn.LayerNorm(
-                self.parameter.MODEL.NEURONS_PER_FULLY_CONNECTED_LAYER[layer_idx]
+                self.parameter.MODEL_PARAMETER.NEURONS_PER_FULLY_CONNECTED_LAYER[layer_idx]
             )
-        elif isinstance(self.parameter.MODEL, ParameterConvolutionalModel):
+        elif isinstance(self.parameter.MODEL_PARAMETER, ParameterConvolutionalModel):
             pass
-        elif isinstance(self.parameter.MODEL, ParameterRecurrentLinearModel):
+        elif isinstance(self.parameter.MODEL_PARAMETER, ParameterRecurrentLinearModel):
             pass
 
     def get_recurrent_layers(self, input_n_features):
-        assert self.parameter.MODEL.HIDDEN_SIZE
-        assert self.parameter.MODEL.NUM_LAYERS
-        assert self.parameter.MODEL.NEURONS_PER_FULLY_CONNECTED_LAYER
+        assert self.parameter.MODEL_PARAMETER.HIDDEN_SIZE
+        assert self.parameter.MODEL_PARAMETER.NUM_LAYERS
+        assert self.parameter.MODEL_PARAMETER.NEURONS_PER_FULLY_CONNECTED_LAYER
 
         rnn_layer = nn.GRU(
             input_size=input_n_features,
-            hidden_size=self.parameter.MODEL.HIDDEN_SIZE,
-            num_layers=self.parameter.MODEL.NUM_LAYERS,
+            hidden_size=self.parameter.MODEL_PARAMETER.HIDDEN_SIZE,
+            num_layers=self.parameter.MODEL_PARAMETER.NUM_LAYERS,
             batch_first=True,
             bidirectional=False
         )

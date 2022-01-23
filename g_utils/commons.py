@@ -220,37 +220,37 @@ def print_comparison_basic_info(observation_space, action_space, parameter_c):
 
 
 def print_model_info(parameter):
-    model = parameter.MODEL
+    model_parameter = parameter.MODEL_PARAMETER
     print('-' * 76 + " MODEL " + '-' * 76)
-    if isinstance(model, ParameterLinearModel):
+    if isinstance(model_parameter, ParameterLinearModel):
         item1 = "{0}: {1:}".format("MODEL", "LINEAR_MODEL")
-        item2 = "{0}: {1:}".format("NEURONS_PER_FULLY_CONNECTED_LAYER", model.NEURONS_PER_FULLY_CONNECTED_LAYER)
+        item2 = "{0}: {1:}".format("NEURONS_PER_FULLY_CONNECTED_LAYER", model_parameter.NEURONS_PER_FULLY_CONNECTED_LAYER)
         print("{0:55} {1:55}".format(item1, item2), end="\n")
-    elif isinstance(model, ParameterConvolutionalModel):
+    elif isinstance(model_parameter, ParameterConvolutionalModel):
         item1 = "{0}: {1:}".format("MODEL", "CONVOLUTIONAL_MODEL")
-        item2 = "{0}: {1:}".format("OUT_CHANNELS_PER_LAYER", model.OUT_CHANNELS_PER_LAYER)
-        item3 = "{0}: {1:}".format("KERNEL_SIZE_PER_LAYER", model.KERNEL_SIZE_PER_LAYER)
+        item2 = "{0}: {1:}".format("OUT_CHANNELS_PER_LAYER", model_parameter.OUT_CHANNELS_PER_LAYER)
+        item3 = "{0}: {1:}".format("KERNEL_SIZE_PER_LAYER", model_parameter.KERNEL_SIZE_PER_LAYER)
         print("{0:55} {1:55} {2:55}".format(item1, item2, item3, end="\n"))
-        item1 = "{0}: {1:}".format("STRIDE_PER_LAYER", model.STRIDE_PER_LAYER)
-        item2 = "{0}: {1:}".format("NEURONS_PER_FULLY_CONNECTED_LAYER", model.NEURONS_PER_FULLY_CONNECTED_LAYER)
+        item1 = "{0}: {1:}".format("STRIDE_PER_LAYER", model_parameter.STRIDE_PER_LAYER)
+        item2 = "{0}: {1:}".format("NEURONS_PER_FULLY_CONNECTED_LAYER", model_parameter.NEURONS_PER_FULLY_CONNECTED_LAYER)
         print("{0:55} {1:55}".format(item1, item2), end="\n")
-    elif isinstance(model, ParameterRecurrentLinearModel):
+    elif isinstance(model_parameter, ParameterRecurrentLinearModel):
         item1 = "{0}: {1:}".format("MODEL", "RECURRENT_LINEAR_MODEL")
         print("{0:55}".format(item1), end="\n")
-        item1 = "{0}: {1:}".format("HIDDEN_SIZE", model.HIDDEN_SIZE)
-        item2 = "{0}: {1:}".format("NUM_LAYERS", model.NUM_LAYERS)
-        item3 = "{0}: {1:}".format("NEURONS_PER_FULLY_CONNECTED_LAYER", model.NEURONS_PER_FULLY_CONNECTED_LAYER)
+        item1 = "{0}: {1:}".format("HIDDEN_SIZE", model_parameter.HIDDEN_SIZE)
+        item2 = "{0}: {1:}".format("NUM_LAYERS", model_parameter.NUM_LAYERS)
+        item3 = "{0}: {1:}".format("NEURONS_PER_FULLY_CONNECTED_LAYER", model_parameter.NEURONS_PER_FULLY_CONNECTED_LAYER)
         print("{0:55} {1:55} {2:55}".format(item1, item2, item3, end="\n"))
-    elif isinstance(model, ParameterRecurrentConvolutionalModel):
+    elif isinstance(model_parameter, ParameterRecurrentConvolutionalModel):
         item1 = "{0}: {1:}".format("MODEL", "RECURRENT_CONVOLUTIONAL_MODEL")
         print("{0:55}".format(item1), end="\n")
-        item1 = "{0}: {1:}".format("OUT_CHANNELS_PER_LAYER", model.OUT_CHANNELS_PER_LAYER)
-        item2 = "{0}: {1:}".format("KERNEL_SIZE_PER_LAYER", model.KERNEL_SIZE_PER_LAYER)
-        item3 = "{0}: {1:}".format("STRIDE_PER_LAYER", model.STRIDE_PER_LAYER)
+        item1 = "{0}: {1:}".format("OUT_CHANNELS_PER_LAYER", model_parameter.OUT_CHANNELS_PER_LAYER)
+        item2 = "{0}: {1:}".format("KERNEL_SIZE_PER_LAYER", model_parameter.KERNEL_SIZE_PER_LAYER)
+        item3 = "{0}: {1:}".format("STRIDE_PER_LAYER", model_parameter.STRIDE_PER_LAYER)
         print("{0:55} {1:55} {2:55}".format(item1, item2, item3, end="\n"))
-        item1 = "{0}: {1:}".format("HIDDEN_SIZE", model.HIDDEN_SIZE)
-        item2 = "{0}: {1:}".format("NUM_LAYERS", model.NUM_LAYERS)
-        item3 = "{0}: {1:}".format("NEURONS_PER_FULLY_CONNECTED_LAYER", model.NEURONS_PER_FULLY_CONNECTED_LAYER)
+        item1 = "{0}: {1:}".format("HIDDEN_SIZE", model_parameter.HIDDEN_SIZE)
+        item2 = "{0}: {1:}".format("NUM_LAYERS", model_parameter.NUM_LAYERS)
+        item3 = "{0}: {1:}".format("NEURONS_PER_FULLY_CONNECTED_LAYER", model_parameter.NEURONS_PER_FULLY_CONNECTED_LAYER)
         print("{0:55} {1:55} {2:55}".format(item1, item2, item3, end="\n"))
     else:
         raise ValueError()
@@ -388,7 +388,7 @@ def get_wandb_obj(parameter, agent=None, comparison=False):
     wandb.run.name = local_now.strftime('%Y-%m-%d_%H:%M:%S')
     wandb.run.save()
     if agent:
-        wandb.watch(agent.model, log="all")
+        wandb.watch(agent.model_parameter, log="all")
 
     return wandb_obj
 

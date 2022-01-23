@@ -26,9 +26,9 @@ class ParameterWalker2dMujocoSac(ParameterBase, ParameterWalker2dMujoco, Paramet
         self.N_ACTORS = 1
         self.MAX_TRAINING_STEPS = 2_000_000
 
-        self.MODEL = ParameterLinearModel(ModelType.SMALL_LINEAR_2)
+        self.MODEL = ModelType.SMALL_LINEAR
 
-        self.LAYER_ACTIVATION = nn.ReLU()
+        self.LAYER_ACTIVATION = nn.ReLU
         self.LAYER_NORM = False
 
 

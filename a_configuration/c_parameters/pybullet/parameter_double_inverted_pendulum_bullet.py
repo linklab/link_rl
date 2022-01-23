@@ -24,7 +24,7 @@ class ParameterDoubleInvertedPendulumBulletA2c(ParameterBase, ParameterDoubleInv
         self.N_VECTORIZED_ENVS = 1
         self.N_ACTORS = 1
         self.MAX_TRAINING_STEPS = 2_000_000
-        self.MODEL = ParameterLinearModel(ModelType.SMALL_LINEAR)
+        self.MODEL = ModelType.SMALL_LINEAR
 
 
 class ParameterDoubleInvertedPendulumBulletDdpg(ParameterBase, ParameterDoubleInvertedPendulumBullet, ParameterDdpg):
@@ -43,7 +43,7 @@ class ParameterDoubleInvertedPendulumBulletDdpg(ParameterBase, ParameterDoubleIn
         self.N_VECTORIZED_ENVS = 1
         self.N_ACTORS = 1
         self.MAX_TRAINING_STEPS = 2_000_000
-        self.MODEL = ParameterLinearModel(ModelType.SMALL_LINEAR)
+        self.MODEL = ModelType.SMALL_LINEAR
 
 
 class ParameterDoubleInvertedPendulumBulletSac(ParameterBase, ParameterDoubleInvertedPendulumBullet, ParameterSac):
@@ -65,7 +65,7 @@ class ParameterDoubleInvertedPendulumBulletSac(ParameterBase, ParameterDoubleInv
         self.N_VECTORIZED_ENVS = 1
         self.N_ACTORS = 1
         self.MAX_TRAINING_STEPS = 2_000_000
-        self.MODEL = ParameterLinearModel(ModelType.SMALL_LINEAR_2)
+        self.MODEL = ModelType.SMALL_LINEAR
 
 
 if __name__ == "__main__":

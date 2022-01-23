@@ -1,5 +1,3 @@
-from a_configuration.b_base.c_models.linear_models import ParameterLinearModel
-from a_configuration.b_base.c_models.recurrent_linear_models import ParameterRecurrentLinearModel
 from a_configuration.d_parameters_comparison.mujoco.parameter_comparison_ant import ParameterComparisonAntMujocoSac
 from a_configuration.d_parameters_comparison.mujoco.parameter_comparison_halfcheetah import \
     ParameterComparisonHalfCheetahMujocoSac
@@ -96,9 +94,9 @@ parameter_comparison_list.append(parameter_comparison_cart_pole_bullet_dqn_types
 
 #######################################################################################################################
 parameter_comparison_cart_pole_bullet_ddpg_recurrent = ParameterComparisonCartPoleContinuousBulletDdpg()
-parameter_comparison_cart_pole_bullet_ddpg_recurrent.AGENT_PARAMETERS[0].MODEL = ParameterRecurrentLinearModel(ModelType.SMALL_RECURRENT)
-parameter_comparison_cart_pole_bullet_ddpg_recurrent.AGENT_PARAMETERS[1].MODEL = ParameterLinearModel(ModelType.SMALL_LINEAR)
-parameter_comparison_cart_pole_bullet_ddpg_recurrent.AGENT_PARAMETERS[2].MODEL = ParameterLinearModel(ModelType.SMALL_LINEAR_2)
+parameter_comparison_cart_pole_bullet_ddpg_recurrent.AGENT_PARAMETERS[0].MODEL = ModelType.SMALL_RECURRENT
+parameter_comparison_cart_pole_bullet_ddpg_recurrent.AGENT_PARAMETERS[1].MODEL = ModelType.SMALL_LINEAR
+parameter_comparison_cart_pole_bullet_ddpg_recurrent.AGENT_PARAMETERS[2].MODEL = ModelType.SMALL_LINEAR_2
 parameter_comparison_cart_pole_bullet_ddpg_recurrent.AGENT_LABELS = [
     "DDPG + GRU",
     "DDPG + Linear",
@@ -124,9 +122,9 @@ parameter_comparison_list.append(parameter_comparison_pong_dqn_types)
 ######################################################################
 
 parameter_comparison_cart_pole_dqn_recurrent = ParameterComparisonCartPoleDqn()
-parameter_comparison_cart_pole_dqn_recurrent.AGENT_PARAMETERS[0].MODEL = ParameterRecurrentLinearModel(ModelType.SMALL_RECURRENT)
-parameter_comparison_cart_pole_dqn_recurrent.AGENT_PARAMETERS[1].MODEL = ParameterLinearModel(ModelType.SMALL_LINEAR)
-parameter_comparison_cart_pole_dqn_recurrent.AGENT_PARAMETERS[2].MODEL = ParameterLinearModel(ModelType.SMALL_LINEAR_2)
+parameter_comparison_cart_pole_dqn_recurrent.AGENT_PARAMETERS[0].MODEL = ModelType.SMALL_RECURRENT
+parameter_comparison_cart_pole_dqn_recurrent.AGENT_PARAMETERS[1].MODEL = ModelType.SMALL_LINEAR
+parameter_comparison_cart_pole_dqn_recurrent.AGENT_PARAMETERS[2].MODEL = ModelType.SMALL_LINEAR_2
 parameter_comparison_cart_pole_dqn_recurrent.AGENT_LABELS = [
     "DQN Recurrent",
     "DQN Small Linear",

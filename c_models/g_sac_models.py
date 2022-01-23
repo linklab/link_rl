@@ -20,7 +20,7 @@ class SacCriticModel(Model):
 
         self.critic_params = []
 
-        if isinstance(self.parameter.MODEL, ParameterLinearModel):
+        if isinstance(self.parameter.MODEL_PARAMETER, ParameterLinearModel):
             input_n_features = self.observation_shape[0] + self.n_out_actions
 
             # q1
@@ -31,7 +31,7 @@ class SacCriticModel(Model):
             self.q2_fc_layers = self.get_linear_layers(input_n_features=input_n_features)
             self.critic_params += list(self.q2_fc_layers.parameters())
 
-        elif isinstance(self.parameter.MODEL, ParameterConvolutionalModel):
+        elif isinstance(self.parameter.MODEL_PARAMETER, ParameterConvolutionalModel):
             input_n_channels = self.observation_shape[0]
             self.conv_layers = self.get_conv_layers(input_n_channels=input_n_channels)
             self.critic_params += list(self.conv_layers.parameters())
@@ -47,21 +47,21 @@ class SacCriticModel(Model):
             self.q2_fc_layers = self.get_linear_layers(input_n_features=input_n_features)
             self.critic_params += list(self.q2_fc_layers.parameters())
 
-        elif isinstance(self.parameter.MODEL, ParameterRecurrentLinearModel):
+        elif isinstance(self.parameter.MODEL_PARAMETER, ParameterRecurrentLinearModel):
             input_n_features = self.observation_shape[0] + self.n_out_actions
 
             self.recurrent_layers = self.get_recurrent_layers(input_n_features=input_n_features)
             self.critic_params += list(self.recurrent_layers.parameters())
 
             # q1
-            self.q1_fc_layers = self.get_linear_layers(self.parameter.MODEL.HIDDEN_SIZE)
+            self.q1_fc_layers = self.get_linear_layers(self.parameter.MODEL_PARAMETER.HIDDEN_SIZE)
             self.critic_params += list(self.q1_fc_layers.parameters())
 
             # q2
-            self.q2_fc_layers = self.get_linear_layers(self.parameter.MODEL.HIDDEN_SIZE)
+            self.q2_fc_layers = self.get_linear_layers(self.parameter.MODEL_PARAMETER.HIDDEN_SIZE)
             self.critic_params += list(self.q2_fc_layers.parameters())
 
-        elif isinstance(self.parameter.MODEL, ParameterRecurrentConvolutionalModel):
+        elif isinstance(self.parameter.MODEL_PARAMETER, ParameterRecurrentConvolutionalModel):
             input_n_channels = self.observation_shape[0]
             self.conv_layers = self.get_conv_layers(input_n_channels=input_n_channels)
             self.critic_params += list(self.conv_layers.parameters())
@@ -70,29 +70,29 @@ class SacCriticModel(Model):
             input_n_features = conv_out_flat_size + self.n_out_actions
 
             self.fc_layers_1 = nn.Linear(
-                in_features=input_n_features, out_features=self.parameter.MODEL.HIDDEN_SIZE
+                in_features=input_n_features, out_features=self.parameter.MODEL_PARAMETER.HIDDEN_SIZE
             )
             self.critic_params += list(self.fc_layers_1.parameters())
 
-            self.recurrent_layers = self.get_recurrent_layers(self.parameter.MODEL.HIDDEN_SIZE)
+            self.recurrent_layers = self.get_recurrent_layers(self.parameter.MODEL_PARAMETER.HIDDEN_SIZE)
             self.critic_params += list(self.recurrent_layers.parameters())
 
             # q1
-            self.q1_fc_layers_2 = self.get_linear_layers(self.parameter.MODEL.HIDDEN_SIZE)
+            self.q1_fc_layers_2 = self.get_linear_layers(self.parameter.MODEL_PARAMETER.HIDDEN_SIZE)
             self.critic_params += list(self.q1_fc_layers_2.parameters())
 
             # q2
-            self.q2_fc_layers_2 = self.get_linear_layers(self.parameter.MODEL.HIDDEN_SIZE)
+            self.q2_fc_layers_2 = self.get_linear_layers(self.parameter.MODEL_PARAMETER.HIDDEN_SIZE)
             self.critic_params += list(self.q2_fc_layers_2.parameters())
         else:
             raise ValueError()
 
         # q1
-        self.q1_fc_last_layer = nn.Linear(self.parameter.MODEL.NEURONS_PER_FULLY_CONNECTED_LAYER[-1], 1)
+        self.q1_fc_last_layer = nn.Linear(self.parameter.MODEL_PARAMETER.NEURONS_PER_FULLY_CONNECTED_LAYER[-1], 1)
         self.critic_params += list(self.q1_fc_last_layer.parameters())
 
         # q2
-        self.q2_fc_last_layer = nn.Linear(self.parameter.MODEL.NEURONS_PER_FULLY_CONNECTED_LAYER[-1], 1)
+        self.q2_fc_last_layer = nn.Linear(self.parameter.MODEL_PARAMETER.NEURONS_PER_FULLY_CONNECTED_LAYER[-1], 1)
         self.critic_params += list(self.q2_fc_last_layer.parameters())
 
     def forward_critic(self, obs, act):
@@ -102,18 +102,18 @@ class SacCriticModel(Model):
         if isinstance(act, np.ndarray):
             act = torch.tensor(act, dtype=torch.float32, device=self.parameter.DEVICE)
 
-        if isinstance(self.parameter.MODEL, ParameterLinearModel):
+        if isinstance(self.parameter.MODEL_PARAMETER, ParameterLinearModel):
             q1_x = self.q1_fc_layers(torch.cat([obs, act], dim=-1))
             q2_x = self.q2_fc_layers(torch.cat([obs, act], dim=-1))
 
-        elif isinstance(self.parameter.MODEL, ParameterConvolutionalModel):
+        elif isinstance(self.parameter.MODEL_PARAMETER, ParameterConvolutionalModel):
             conv_out = self.q1_conv_layers(obs)
             conv_out = torch.flatten(conv_out, start_dim=1)
 
             q1_x = self.q1_fc_layers(torch.cat([conv_out, act], dim=-1))
             q2_x = self.q2_fc_layers(torch.cat([conv_out, act], dim=-1))
 
-        elif isinstance(self.parameter.MODEL, ParameterRecurrentLinearModel):
+        elif isinstance(self.parameter.MODEL_PARAMETER, ParameterRecurrentLinearModel):
             rnn_in, hidden_in = obs[0]
             if isinstance(rnn_in, np.ndarray):
                 rnn_in = torch.tensor(rnn_in, dtype=torch.float32, device=self.parameter.DEVICE)
@@ -132,7 +132,7 @@ class SacCriticModel(Model):
 
             q1_x = self.q1_fc_layers(rnn_out_flattened)
             q2_x = self.q2_fc_layers(rnn_out_flattened)
-        elif isinstance(self.parameter.MODEL, ParameterRecurrentConvolutionalModel):
+        elif isinstance(self.parameter.MODEL_PARAMETER, ParameterRecurrentConvolutionalModel):
             x, hidden_in = obs[0]
             if isinstance(x, np.ndarray):
                 x = torch.tensor(x, dtype=torch.float32, device=self.parameter.DEVICE)

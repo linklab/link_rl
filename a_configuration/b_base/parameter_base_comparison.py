@@ -41,6 +41,6 @@ class ParameterComparisonBase:
 
         self.LAYER_NORM = False
 
-        self.LAYER_ACTIVATION = nn.LeakyReLU()
+        self.LAYER_ACTIVATION = nn.LeakyReLU
 
         self.DEVICE = torch.device("cuda" if torch.cuda.is_available() else "cpu")
