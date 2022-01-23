@@ -88,9 +88,11 @@ class Buffer:
             torch.stack(hiddens, 1).shape: [num_layers, batch_size, 1, hidden]
             torch.stack(hiddens, 1).squeeze(dim=2).shape: [num_layers, batch_size, hidden]
             """
+            observations = np.array(observations)
             observations = torch.tensor(observations, dtype=torch.float32, device=self.parameter.DEVICE)
             hiddens = torch.stack(hiddens, 1).squeeze(dim=2)
 
+            next_observations = np.array(next_observations)
             next_observations = torch.tensor(next_observations, dtype=torch.float32, device=self.parameter.DEVICE)
             next_hiddens = torch.stack(next_hiddens, 1).squeeze(dim=2)
 
@@ -104,9 +106,13 @@ class Buffer:
             next_observations_v = [(next_observations, next_hiddens)]
 
         else:
+            observations = np.array(observations)
+            next_observations = np.array(next_observations)
+
             observations_v = torch.tensor(observations, dtype=torch.float32, device=self.parameter.DEVICE)
             next_observations_v = torch.tensor(next_observations, dtype=torch.float32, device=self.parameter.DEVICE)
 
+        actions = np.array(actions)
         if isinstance(self.action_space, Discrete):     # actions.shape = (64,)
             actions_v = torch.tensor(actions, dtype=torch.int64, device=self.parameter.DEVICE)[:, None]
         elif isinstance(self.action_space, Box):        # actions.shape = (64, 8)
@@ -114,7 +120,10 @@ class Buffer:
         else:
             raise ValueError()
 
+        rewards = np.array(rewards)
         rewards_v = torch.tensor(rewards, dtype=torch.float32, device=self.parameter.DEVICE)[:, None]
+
+        dones = np.array(dones, dtype=bool)
         dones_v = torch.tensor(dones, dtype=torch.bool, device=self.parameter.DEVICE)
 
         # print(observations_v.shape, actions_v.shape, next_observations_v.shape, rewards_v.shape, dones_v.shape)
