@@ -1,6 +1,6 @@
 from a_configuration.b_base.b_agents.agents_off_policy import ParameterDqn, ParameterDoubleDqn, ParameterDuelingDqn, \
     ParameterDoubleDuelingDqn
-from a_configuration.b_base.b_agents.agents_on_policy import ParameterA2c, ParameterReinforce
+from a_configuration.b_base.b_agents.agents_on_policy import ParameterA2c, ParameterReinforce, ParameterPpo
 from a_configuration.b_base.c_models.linear_models import ParameterLinearModel
 from a_configuration.b_base.c_models.recurrent_linear_models import ParameterRecurrentLinearModel
 from a_configuration.b_base.parameter_base import ParameterBase
@@ -91,6 +91,22 @@ class ParameterCartPoleA2c(
         ParameterBase.__init__(self)
         ParameterCartPole.__init__(self)
         ParameterA2c.__init__(self)
+
+        self.N_VECTORIZED_ENVS = 1
+        self.N_ACTORS = 1
+        self.MAX_TRAINING_STEPS = 100_000
+        self.BATCH_SIZE = 256
+        self.BUFFER_CAPACITY = 10_000
+        self.MODEL_TYPE = ModelType.SMALL_LINEAR
+
+
+class ParameterCartPolePpo(
+    ParameterBase, ParameterCartPole, ParameterPpo
+):
+    def __init__(self):
+        ParameterBase.__init__(self)
+        ParameterCartPole.__init__(self)
+        ParameterPpo.__init__(self)
 
         self.N_VECTORIZED_ENVS = 1
         self.N_ACTORS = 1

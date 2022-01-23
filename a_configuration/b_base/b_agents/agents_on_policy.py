@@ -9,7 +9,6 @@ class ParameterReinforce(ParameterAgent):
 
         self.LEARNING_RATE = 0.0001
         self.BUFFER_CAPACITY = 1_000
-        self.GAMMA = 0.99
         self.BATCH_SIZE = None
 
 
@@ -21,7 +20,6 @@ class ParameterA2c(ParameterAgent):
         self.ACTOR_LEARNING_RATE = 0.0001
         self.LEARNING_RATE = 0.001
         self.BUFFER_CAPACITY = 1_000
-        self.GAMMA = 0.99
         self.BATCH_SIZE = 128
         self.ENTROPY_BETA = 0.0001
         self.CONSOLE_LOG_INTERVAL_TRAINING_STEPS = 10
@@ -35,6 +33,6 @@ class ParameterPpo(ParameterAgent):
         self.ACTOR_LEARNING_RATE = 0.0001
         self.LEARNING_RATE = 0.001
         self.BUFFER_CAPACITY = 1_000
-        self.GAMMA = 0.99
-        self.BATCH_SIZE = 64
+        self.BATCH_SIZE = 128
         self.ENTROPY_BETA = 0.0001
+        self.CONSOLE_LOG_INTERVAL_TRAINING_STEPS = 10

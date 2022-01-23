@@ -12,8 +12,6 @@ from gym.vector import AsyncVectorEnv
 import plotly.graph_objects as go
 from gym_unity.envs import UnityToGymWrapper
 from mlagents_envs.environment import UnityEnvironment
-from torch import nn
-import torch.nn.functional as F
 
 from a_configuration.a_config.config import SYSTEM_USER_NAME
 from a_configuration.b_base.a_environments.unity.unity_box import ParameterUnityGymEnv
@@ -21,6 +19,7 @@ from a_configuration.b_base.c_models.convolutional_models import ParameterConvol
 from a_configuration.b_base.c_models.linear_models import ParameterLinearModel
 from a_configuration.b_base.c_models.recurrent_convolutional_models import ParameterRecurrentConvolutionalModel
 from a_configuration.b_base.c_models.recurrent_linear_models import ParameterRecurrentLinearModel
+from g_utils.commons_rl import set_parameters
 from g_utils.types import AgentType, ActorCriticAgentTypes, ModelType, LayerActivationType, LossFunctionType
 
 if torch.cuda.is_available():
@@ -657,43 +656,6 @@ def get_continuous_action_info(action_space):
 
 def get_scaled_action():
     pass
-
-
-def set_parameters(parameter):
-    if parameter.MODEL_TYPE in (
-            ModelType.TINY_LINEAR, ModelType.SMALL_LINEAR, ModelType.SMALL_LINEAR_2,
-            ModelType.MEDIUM_LINEAR, ModelType.LARGE_LINEAR
-    ):
-        parameter.MODEL_PARAMETER = ParameterLinearModel(parameter.MODEL_TYPE)
-    elif parameter.MODEL_TYPE in (
-            ModelType.SMALL_CONVOLUTIONAL, ModelType.MEDIUM_CONVOLUTIONAL, ModelType.LARGE_CONVOLUTIONAL
-    ):
-        parameter.MODEL_PARAMETER = ParameterConvolutionalModel(parameter.MODEL_TYPE)
-    elif parameter.MODEL_TYPE in (
-            ModelType.SMALL_RECURRENT, ModelType.MEDIUM_RECURRENT, ModelType.LARGE_RECURRENT
-    ):
-        parameter.MODEL_PARAMETER = ParameterRecurrentLinearModel(parameter.MODEL_TYPE)
-    elif parameter.MODEL_TYPE in (
-            ModelType.SMALL_RECURRENT_CONVOLUTIONAL, ModelType.MEDIUM_RECURRENT_CONVOLUTIONAL,
-            ModelType.LARGE_RECURRENT_CONVOLUTIONAL
-    ):
-        parameter.MODEL_PARAMETER = ParameterRecurrentConvolutionalModel(parameter.MODEL_TYPE)
-    else:
-        raise ValueError()
-
-    if parameter.LAYER_ACTIVATION_TYPE == LayerActivationType.LEAKY_RELU:
-        parameter.LAYER_ACTIVATION = nn.LeakyReLU
-    elif parameter.LAYER_ACTIVATION_TYPE == LayerActivationType.ELU:
-        parameter.LAYER_ACTIVATION = nn.ELU
-    else:
-        raise ValueError()
-
-    if parameter.LOSS_FUNCTION_TYPE == LossFunctionType.MSE_LOSS:
-        parameter.LOSS_FUNCTION = F.mse_loss
-    elif parameter.LOSS_FUNCTION_TYPE == LossFunctionType.HUBER_LOSS:
-        parameter.LOSS_FUNCTION = F.huber_loss
-    else:
-        raise ValueError()
 
 
 class EpsilonTracker:

@@ -9,13 +9,13 @@ from a_configuration.b_base.a_environments.pybullet.gym_mujoco import ParameterM
 from a_configuration.b_base.a_environments.pybullet.gym_pybullet import ParameterBullet
 from a_configuration.b_base.c_models.recurrent_convolutional_models import ParameterRecurrentConvolutionalModel
 from a_configuration.b_base.c_models.recurrent_linear_models import ParameterRecurrentLinearModel
+from g_utils.commons_rl import get_agent
 
 warnings.filterwarnings("ignore")
 
 import torch
 from gym.spaces import Discrete, Box
 
-from e_main.supports.main_preamble import get_agent
 from g_utils.types import AgentMode
 
 CURRENT_PATH = os.path.dirname(os.path.realpath(__file__))

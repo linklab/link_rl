@@ -18,7 +18,6 @@ class ParameterDqn(ParameterAgent):
         self.BUFFER_CAPACITY = 10_000
         self.BATCH_SIZE = 64
         self.MIN_BUFFER_SIZE_FOR_TRAIN = self.BATCH_SIZE * 10
-        self.GAMMA = 0.99
         self.TARGET_SYNC_INTERVAL_TRAINING_STEPS = 1_000
 
 
@@ -57,7 +56,6 @@ class ParameterDdpg(ParameterAgent):
         self.BUFFER_CAPACITY = 10_000
         self.BATCH_SIZE = 64
         self.MIN_BUFFER_SIZE_FOR_TRAIN = self.BATCH_SIZE * 10
-        self.GAMMA = 0.99
         self.TARGET_SYNC_INTERVAL_TRAINING_STEPS = 50
         self.TAU = 0.005
 
@@ -74,7 +72,6 @@ class ParameterSac(ParameterAgent):
         self.BUFFER_CAPACITY = 10_000
         self.BATCH_SIZE = 64
         self.MIN_BUFFER_SIZE_FOR_TRAIN = self.BATCH_SIZE * 10
-        self.GAMMA = 0.99
         self.TARGET_SYNC_INTERVAL_TRAINING_STEPS = 50
 
         self.LAYER_ACTIVATION = nn.ReLU
