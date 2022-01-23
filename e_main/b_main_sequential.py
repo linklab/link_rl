@@ -17,7 +17,7 @@ parameter.SYSTEM_COMPUTER_NAME = SYSTEM_COMPUTER_NAME
 
 from e_main.supports.main_preamble import *
 from e_main.supports.learner import Learner
-from g_utils.commons import get_env_info, print_basic_info
+from g_utils.commons import get_env_info, print_basic_info, set_model_parameter
 
 
 def main():

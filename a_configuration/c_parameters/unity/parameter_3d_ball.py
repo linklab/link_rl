@@ -1,5 +1,4 @@
 from a_configuration.b_base.b_agents.agents_off_policy import ParameterDdpg
-from a_configuration.b_base.c_models.linear_models import ParameterLinearModel
 from a_configuration.b_base.parameter_base import ParameterBase
 from a_configuration.b_base.a_environments.unity.unity_box import Parameter3DBall
 from g_utils.types import ModelType

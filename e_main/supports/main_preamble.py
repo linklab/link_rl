@@ -19,8 +19,6 @@ warnings.simplefilter("ignore")
 
 os.environ['KMP_DUPLICATE_LIB_OK'] = 'True'
 
-import torch
-
 np.set_printoptions(precision=3)
 np.set_printoptions(suppress=True)
 np.set_printoptions(formatter={'float': '{: 0.3f}'.format})
@@ -33,28 +31,6 @@ from g_utils.commons import AgentType
 from gym import logger
 logger.set_level(level=40)
 
-
-def set_model_parameter(parameter):
-    if parameter.MODEL in (
-        ModelType.TINY_LINEAR, ModelType.SMALL_LINEAR, ModelType.SMALL_LINEAR_2,
-        ModelType.MEDIUM_LINEAR, ModelType.LARGE_LINEAR,
-    ):
-        parameter.MODEL_PARAMETER = ParameterLinearModel(parameter.MODEL)
-    elif parameter.MODEL in (
-        ModelType.SMALL_CONVOLUTIONAL, ModelType.MEDIUM_CONVOLUTIONAL, ModelType.LARGE_CONVOLUTIONAL
-    ):
-        parameter.MODEL_PARAMETER = ParameterConvolutionalModel(parameter.MODEL)
-    elif parameter.MODEL in (
-            ModelType.SMALL_RECURRENT, ModelType.MEDIUM_RECURRENT, ModelType.LARGE_RECURRENT
-    ):
-        parameter.MODEL_PARAMETER = ParameterRecurrentLinearModel(parameter.MODEL)
-    elif parameter.MODEL in (
-            ModelType.SMALL_RECURRENT_CONVOLUTIONAL, ModelType.MEDIUM_RECURRENT_CONVOLUTIONAL,
-            ModelType.LARGE_RECURRENT_CONVOLUTIONAL
-    ):
-        parameter.MODEL_PARAMETER = ParameterRecurrentConvolutionalModel(parameter.MODEL)
-    else:
-        raise ValueError()
 
 def get_agent(observation_space, action_space, parameter=None):
     assert isinstance(observation_space, Box)

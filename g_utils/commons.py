@@ -19,8 +19,7 @@ from a_configuration.b_base.c_models.convolutional_models import ParameterConvol
 from a_configuration.b_base.c_models.linear_models import ParameterLinearModel
 from a_configuration.b_base.c_models.recurrent_convolutional_models import ParameterRecurrentConvolutionalModel
 from a_configuration.b_base.c_models.recurrent_linear_models import ParameterRecurrentLinearModel
-from a_configuration.b_base.parameter_base import ParameterBase
-from g_utils.types import AgentType, ActorCriticAgentTypes
+from g_utils.types import AgentType, ActorCriticAgentTypes, ModelType
 
 if torch.cuda.is_available():
     import nvidia_smi
@@ -95,7 +94,7 @@ def print_basic_info(observation_space=None, action_space=None, parameter=None):
 
     for param in dir(parameter):
         if not param.startswith("__") and param not in [
-            "MODEL", "NEURONS_PER_FULLY_CONNECTED_LAYER", "OUT_CHANNELS_PER_LAYER", "KERNEL_SIZE_PER_LAYER",
+            "MODEL_PARAMETER", "NEURONS_PER_FULLY_CONNECTED_LAYER", "OUT_CHANNELS_PER_LAYER", "KERNEL_SIZE_PER_LAYER",
             "STRIDE_PER_LAYER", "EPISODE_REWARD_AVG_SOLVED", "EPISODE_REWARD_STD_SOLVED", "ENV_UNITY_DIR",
             "MODEL_SAVE_DIR", "PROJECT_HOME", "LAYER_ACTIVATION", "LOSS_FUNCTION"
         ]:
@@ -182,7 +181,7 @@ def print_comparison_basic_info(observation_space, action_space, parameter_c):
         print('-' * 76 + " Agent {0} ".format(agent_idx) + '-' * 76)
         for param in dir(agent_parameter):
             if not param.startswith("__") and param not in [
-                "MODEL", "NEURONS_PER_FULLY_CONNECTED_LAYER", "OUT_CHANNELS_PER_LAYER", "KERNEL_SIZE_PER_LAYER",
+                "MODEL_PARAMETER", "NEURONS_PER_FULLY_CONNECTED_LAYER", "OUT_CHANNELS_PER_LAYER", "KERNEL_SIZE_PER_LAYER",
                 "STRIDE_PER_LAYER", "EPISODE_REWARD_AVG_SOLVED", "EPISODE_REWARD_STD_SOLVED", "ENV_UNITY_DIR",
                 "COMPARISON_RESULTS_SAVE_DIR", "PROJECT_HOME", "LAYER_ACTIVATION", "LOSS_FUNCTION"
             ]:
@@ -220,14 +219,17 @@ def print_comparison_basic_info(observation_space, action_space, parameter_c):
 
 
 def print_model_info(parameter):
+    if parameter.MODEL_PARAMETER is None:
+        set_model_parameter(parameter)
+
     model_parameter = parameter.MODEL_PARAMETER
     print('-' * 76 + " MODEL " + '-' * 76)
     if isinstance(model_parameter, ParameterLinearModel):
-        item1 = "{0}: {1:}".format("MODEL", "LINEAR_MODEL")
+        item1 = "{0}: {1:}".format("MODEL_PARAMETER", "LINEAR_MODEL_PARAMETER")
         item2 = "{0}: {1:}".format("NEURONS_PER_FULLY_CONNECTED_LAYER", model_parameter.NEURONS_PER_FULLY_CONNECTED_LAYER)
         print("{0:55} {1:55}".format(item1, item2), end="\n")
     elif isinstance(model_parameter, ParameterConvolutionalModel):
-        item1 = "{0}: {1:}".format("MODEL", "CONVOLUTIONAL_MODEL")
+        item1 = "{0}: {1:}".format("MODEL_PARAMETER", "CONVOLUTIONAL_MODEL_PARAMETER")
         item2 = "{0}: {1:}".format("OUT_CHANNELS_PER_LAYER", model_parameter.OUT_CHANNELS_PER_LAYER)
         item3 = "{0}: {1:}".format("KERNEL_SIZE_PER_LAYER", model_parameter.KERNEL_SIZE_PER_LAYER)
         print("{0:55} {1:55} {2:55}".format(item1, item2, item3, end="\n"))
@@ -235,14 +237,14 @@ def print_model_info(parameter):
         item2 = "{0}: {1:}".format("NEURONS_PER_FULLY_CONNECTED_LAYER", model_parameter.NEURONS_PER_FULLY_CONNECTED_LAYER)
         print("{0:55} {1:55}".format(item1, item2), end="\n")
     elif isinstance(model_parameter, ParameterRecurrentLinearModel):
-        item1 = "{0}: {1:}".format("MODEL", "RECURRENT_LINEAR_MODEL")
+        item1 = "{0}: {1:}".format("MODEL_PARAMETER", "RECURRENT_LINEAR_MODEL_PARAMETER")
         print("{0:55}".format(item1), end="\n")
         item1 = "{0}: {1:}".format("HIDDEN_SIZE", model_parameter.HIDDEN_SIZE)
         item2 = "{0}: {1:}".format("NUM_LAYERS", model_parameter.NUM_LAYERS)
         item3 = "{0}: {1:}".format("NEURONS_PER_FULLY_CONNECTED_LAYER", model_parameter.NEURONS_PER_FULLY_CONNECTED_LAYER)
         print("{0:55} {1:55} {2:55}".format(item1, item2, item3, end="\n"))
     elif isinstance(model_parameter, ParameterRecurrentConvolutionalModel):
-        item1 = "{0}: {1:}".format("MODEL", "RECURRENT_CONVOLUTIONAL_MODEL")
+        item1 = "{0}: {1:}".format("MODEL_PARAMETER", "RECURRENT_CONVOLUTIONAL_MODEL_PARAMETER")
         print("{0:55}".format(item1), end="\n")
         item1 = "{0}: {1:}".format("OUT_CHANNELS_PER_LAYER", model_parameter.OUT_CHANNELS_PER_LAYER)
         item2 = "{0}: {1:}".format("KERNEL_SIZE_PER_LAYER", model_parameter.KERNEL_SIZE_PER_LAYER)
@@ -653,6 +655,30 @@ def get_continuous_action_info(action_space):
 
 def get_scaled_action():
     pass
+
+
+def set_model_parameter(parameter):
+    if parameter.MODEL in (
+            ModelType.TINY_LINEAR, ModelType.SMALL_LINEAR, ModelType.SMALL_LINEAR_2,
+            ModelType.MEDIUM_LINEAR, ModelType.LARGE_LINEAR
+    ):
+        parameter.MODEL_PARAMETER = ParameterLinearModel(parameter.MODEL)
+    elif parameter.MODEL in (
+            ModelType.SMALL_CONVOLUTIONAL, ModelType.MEDIUM_CONVOLUTIONAL, ModelType.LARGE_CONVOLUTIONAL
+    ):
+        parameter.MODEL_PARAMETER = ParameterConvolutionalModel(parameter.MODEL)
+    elif parameter.MODEL in (
+            ModelType.SMALL_RECURRENT, ModelType.MEDIUM_RECURRENT, ModelType.LARGE_RECURRENT
+    ):
+        parameter.MODEL_PARAMETER = ParameterRecurrentLinearModel(parameter.MODEL)
+    elif parameter.MODEL in (
+            ModelType.SMALL_RECURRENT_CONVOLUTIONAL, ModelType.MEDIUM_RECURRENT_CONVOLUTIONAL,
+            ModelType.LARGE_RECURRENT_CONVOLUTIONAL
+    ):
+        parameter.MODEL_PARAMETER = ParameterRecurrentConvolutionalModel(parameter.MODEL)
+    else:
+        raise ValueError()
+
 
 class EpsilonTracker:
     def __init__(self, epsilon_init, epsilon_final, epsilon_final_training_step):

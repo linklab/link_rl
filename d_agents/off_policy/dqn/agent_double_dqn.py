@@ -22,7 +22,7 @@ class AgentDoubleDqn(AgentDqn):
             target_q_values = self.rewards + self.parameter.GAMMA ** self.parameter.N_STEP * next_q_values
 
         # loss is just scalar torch value
-        q_net_loss = F._loss(state_action_values, target_q_values)
+        q_net_loss = self.parameter.LOSS_FUNCTION(state_action_values, target_q_values)
 
         # print("observations.shape: {0}, actions.shape: {1}, "
         #       "next_observations.shape: {2}, rewards.shape: {3}, dones.shape: {4}".format(
