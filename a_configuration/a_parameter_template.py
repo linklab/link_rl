@@ -174,34 +174,24 @@ parameter_list.append(parameter_ant_mujoco_sac)
 #####################
 ### HOPPER_MUJOCO ###
 #####################
-parameter_hopper_mujoco_sac = ParameterHopperMujocoSac()
-parameter_list.append(parameter_hopper_mujoco_sac)
-
+parameter = ParameterHopperMujocoSac()
 
 #######################
 ### WALKER2d_MUJOCO ###
 #######################
 parameter_walker2d_mujoco_sac = ParameterWalker2dMujocoSac()
-parameter_list.append(parameter_walker2d_mujoco_sac)
-
 
 ##########################
 ### HALFCHEETAH_MUJOCO ###
 ##########################
 parameter_halfcheetah_mujoco_sac = ParameterHalfCheetahMujocoSac()
-parameter_list.append(parameter_halfcheetah_mujoco_sac)
-
 
 ##########################
 ### Unity3DBall ###
 ##########################
 parameter_3d_ball_ddpg = Parameter3DBallDdqg()
-parameter_list.append(parameter_3d_ball_ddpg)
 
 ###########################################################
-for parameter in parameter_list:
-    parameter.USE_WANDB = False
-    parameter.WANDB_ENTITY = "link-koreatech"
 
 
 if __name__ == "__main__":

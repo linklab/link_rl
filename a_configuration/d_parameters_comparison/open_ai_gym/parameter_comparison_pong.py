@@ -16,6 +16,17 @@ class ParameterComparisonPongDqn(ParameterComparisonBase):
             ParameterPongDqn()
         ]
 
+        self.AGENT_PARAMETERS[0].N_STEP = 1
+        self.AGENT_PARAMETERS[1].N_STEP = 2
+        self.AGENT_PARAMETERS[2].N_STEP = 3
+        self.AGENT_LABELS = [
+            "DQN (N_STEP=1)",
+            "DQN (N_STEP=2)",
+            "DQN (N_STEP=3)",
+        ]
+        self.MAX_TRAINING_STEPS = 1_000
+        self.N_RUNS = 5
+
 
 class ParameterComparisonPongDqnTypes(ParameterComparisonBase):
     def __init__(self):

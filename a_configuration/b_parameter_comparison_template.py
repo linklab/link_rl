@@ -36,18 +36,7 @@ parameter_comparison_list.append(parameter_comparison_cart_pole_dqn)
 
 ################################################################################
 
-parameter_comparison_pong_dqn = ParameterComparisonPongDqn()
-parameter_comparison_pong_dqn.AGENT_PARAMETERS[0].N_STEP = 1
-parameter_comparison_pong_dqn.AGENT_PARAMETERS[1].N_STEP = 2
-parameter_comparison_pong_dqn.AGENT_PARAMETERS[2].N_STEP = 3
-parameter_comparison_pong_dqn.AGENT_LABELS = [
-    "DQN (N_STEP=1)",
-    "DQN (N_STEP=2)",
-    "DQN (N_STEP=3)",
-]
-parameter_comparison_pong_dqn.MAX_TRAINING_STEPS = 1_000
-parameter_comparison_pong_dqn.N_RUNS = 5
-parameter_comparison_list.append(parameter_comparison_pong_dqn)
+parameter_c = ParameterComparisonPongDqn()
 
 ################################################################################
 
