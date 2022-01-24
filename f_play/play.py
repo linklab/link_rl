@@ -9,7 +9,7 @@ from a_configuration.b_base.a_environments.pybullet.gym_mujoco import ParameterM
 from a_configuration.b_base.a_environments.pybullet.gym_pybullet import ParameterBullet
 from a_configuration.b_base.c_models.recurrent_convolutional_models import ParameterRecurrentConvolutionalModel
 from a_configuration.b_base.c_models.recurrent_linear_models import ParameterRecurrentLinearModel
-from g_utils.commons_rl import get_agent
+from g_utils.commons_rl import get_agent, set_parameters
 
 warnings.filterwarnings("ignore")
 
@@ -101,6 +101,8 @@ def play(env, agent, n_episodes):
 
 
 def main_play(n_episodes):
+    set_parameters(parameter)
+
     observation_space, action_space = get_env_info(parameter)
     env = get_single_env(parameter)
 

@@ -56,7 +56,7 @@ class AgentReinforce(Agent):
         # action_probs_selected.shape: (32,)
         # return_lst.shape: (32,)
         # print(action_probs_selected.shape, return_lst.shape, "!!!!!!1")
-        log_pi_returns = torch.log(action_probs_selected) * return_lst
+        log_pi_returns = torch.log(action_probs_selected).sum(dim=-1, keepdim=True) * return_lst
         log_policy_objective = torch.sum(log_pi_returns)
         loss = -1.0 * log_policy_objective
 
