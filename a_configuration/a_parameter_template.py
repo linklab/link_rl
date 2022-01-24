@@ -35,14 +35,14 @@ parameter_list = []
 parameter_cart_pole_dqn = ParameterCartPoleDqn()
 parameter_list.append(parameter_cart_pole_dqn)
 
-parameter_cart_pole_ddqn = ParameterCartPoleDoubleDqn()
-parameter_list.append(parameter_cart_pole_ddqn)
+parameter_cart_pole_double_dqn = ParameterCartPoleDoubleDqn()
+parameter_list.append(parameter_cart_pole_double_dqn)
 
-parameter_cart_pole_duelingdqn = ParameterCartPoleDuelingDqn()
-parameter_list.append(parameter_cart_pole_duelingdqn)
+parameter_cart_pole_dueling_dqn = ParameterCartPoleDuelingDqn()
+parameter_list.append(parameter_cart_pole_dueling_dqn)
 
-parameter_cart_pole_doubleduelingdqn = ParameterCartPoleDoubleDuelingDqn()
-parameter_list.append(parameter_cart_pole_doubleduelingdqn)
+parameter_cart_pole_double_dueling_dqn = ParameterCartPoleDoubleDuelingDqn()
+parameter_list.append(parameter_cart_pole_double_dueling_dqn)
 
 parameter_cart_pole_reinforce = ParameterCartPoleReinforce()
 parameter_list.append(parameter_cart_pole_reinforce)
@@ -205,5 +205,5 @@ for parameter in parameter_list:
 
 
 if __name__ == "__main__":
-    parameter = parameter_cart_pole_duelingdqn
+    parameter = parameter_cart_pole_dueling_dqn
     print_basic_info(parameter=parameter)
