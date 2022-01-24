@@ -82,13 +82,14 @@ class ParameterLunarLanderContinuousPpo(ParameterBase, ParameterLunarLanderConti
         self.N_VECTORIZED_ENVS = 1
         self.N_ACTORS = 1
         self.MAX_TRAINING_STEPS = 200_000
-        self.BUFFER_CAPACITY = 200_000
         self.LEARNING_RATE = 0.001
         self.MODEL_TYPE = ModelType.SMALL_LINEAR
 
         self.BATCH_SIZE = 256
         self.PPO_TRAJECTORY_SIZE = self.BATCH_SIZE * 10
+        self.PPO_K_EPOCH = 3
         self.BUFFER_CAPACITY = self.PPO_TRAJECTORY_SIZE
+        self.CONSOLE_LOG_INTERVAL_TRAINING_STEPS = 10 * 3
 
 
 class ParameterLunarLanderContinuousDdpg(ParameterBase, ParameterLunarLanderContinuous, ParameterDdpg):
