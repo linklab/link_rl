@@ -36,8 +36,7 @@ class AgentPpo(AgentA2c):
         trajectory_advantages = (trajectory_td_target_values - trajectory_values).detach()
 
         # normalize advantages
-        trajectory_advantages = trajectory_advantages - torch.mean(trajectory_advantages)
-        trajectory_advantages /= torch.std(trajectory_advantages) + 1e-7
+        trajectory_advantages = (trajectory_advantages - torch.mean(trajectory_advantages)) / (torch.std(trajectory_advantages) + 1e-7)
 
         if isinstance(self.action_space, Discrete):
             trajectory_action_probs = self.actor_old_model.pi(self.observations)

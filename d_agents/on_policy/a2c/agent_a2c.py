@@ -55,11 +55,11 @@ class AgentA2c(Agent):
             mu_v, var_v = self.actor_model.pi(obs)
 
             if mode == AgentMode.TRAIN:
-                actions = np.random.normal(
-                    loc=mu_v.detach().cpu().numpy(), scale=torch.sqrt(var_v).detach().cpu().numpy()
-                )
-                # dist = Normal(loc=mu_v, scale=torch.sqrt(var_v))
-                # actions = dist.sample().detach().cpu().numpy()
+                # actions = np.random.normal(
+                #     loc=mu_v.detach().cpu().numpy(), scale=torch.sqrt(var_v).detach().cpu().numpy()
+                # )
+                dist = Normal(loc=mu_v, scale=torch.sqrt(var_v))
+                actions = dist.sample().detach().cpu().numpy()
             else:
                 actions = mu_v.detach().cpu().numpy()
 
@@ -102,6 +102,8 @@ class AgentA2c(Agent):
         ################################
         #q_values = td_target_values
         advantages = (td_target_values - values).detach()
+
+        advantages = (advantages - torch.mean(advantages)) / (torch.std(advantages) + 1e-7)
 
         if isinstance(self.action_space, Discrete):
             action_probs = self.actor_model.pi(self.observations)
