@@ -79,7 +79,7 @@ class AgentTd3(Agent):
         else:
             raise ValueError()
 
-    def train_ddpg(self):
+    def train_td3(self):
         count_training_steps = 0
 
         #######################

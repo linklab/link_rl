@@ -138,6 +138,13 @@ class Agent:
                 self._after_actor_critic_train()     # ACTOR_CRITIC_TYPE
                 self._after_train()
 
+        elif self.parameter.AGENT_TYPE == AgentType.TD3:
+            if len(self.buffer) >= self.parameter.BATCH_SIZE:
+                self._before_train(sample_length=self.parameter.BATCH_SIZE)
+                count_training_steps = self.train_td3()
+                self._after_actor_critic_train()     # ACTOR_CRITIC_TYPE
+                self._after_train()
+
         elif self.parameter.AGENT_TYPE == AgentType.SAC:
             if len(self.buffer) >= self.parameter.BATCH_SIZE:
                 self._before_train(sample_length=self.parameter.BATCH_SIZE)
@@ -192,31 +199,35 @@ class Agent:
 
     @abstractmethod
     def train_dqn(self, training_steps_v):
-        return 0.0
+        return 0
 
     @abstractmethod
     def train_double_dqn(self, training_steps_v):
-        return 0.0
+        return 0
 
     @abstractmethod
     def train_reinforce(self):
-        return 0.0
+        return 0
 
     @abstractmethod
     def train_a2c(self):
-        return 0.0
+        return 0
 
     @abstractmethod
     def train_ppo(self):
-        return 0.0
+        return 0
 
     @abstractmethod
     def train_ddpg(self):
-        return 0.0
+        return 0
+
+    @abstractmethod
+    def train_td3(self):
+        return 0
 
     @abstractmethod
     def train_sac(self, training_steps_v):
-        return 0.0
+        return 0
 
     def synchronize_models(self, source_model, target_model):
         target_model.load_state_dict(source_model.state_dict())

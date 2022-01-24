@@ -93,6 +93,11 @@ def get_agent(observation_space, action_space, parameter=None):
         agent = AgentDdpg(
             observation_space=observation_space, action_space=action_space, parameter=parameter
         )
+    elif parameter.AGENT_TYPE == AgentType.TD3:
+        from d_agents.off_policy.td3.agent_td3 import AgentTd3
+        agent = AgentTd3(
+            observation_space=observation_space, action_space=action_space, parameter=parameter
+        )
     elif parameter.AGENT_TYPE == AgentType.SAC:
         from d_agents.off_policy.sac.agent_sac import AgentSac
         agent = AgentSac(

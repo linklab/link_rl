@@ -79,7 +79,7 @@ class ParameterCartPoleContinuousBulletTd3(
     def __init__(self):
         ParameterBase.__init__(self)
         ParameterCartPoleContinuousBullet.__init__(self)
-        ParameterDdpg.__init__(self)
+        ParameterTd3.__init__(self)
 
         self.LEARNING_RATE = 0.001
         self.N_VECTORIZED_ENVS = 1
