@@ -115,7 +115,7 @@ class AgentPpo(AgentA2c):
                 self.actor_optimizer.step()
 
                 if torch.any(torch.isnan(batch_actor_objective)):
-                    print(batch_actor_objective, batch_ratio, batch_log_pi_action_v, batch_old_log_pi_action_v)
+                    print(batch_actor_objective, batch_mu_v, batch_var_v, batch_log_pi_action_v)
                     raise ValueError()
 
                 sum_critic_loss += batch_critic_loss.item()
