@@ -65,6 +65,10 @@ class AgentPpo(AgentA2c):
                 batch_old_log_pi_action_v = trajectory_old_log_pi_action_v[batch_offset:batch_l]
                 batch_advantages = trajectory_advantages[batch_offset:batch_l]
 
+                if torch.any(torch.isnan(batch_advantages)):
+                    print(trajectory_advantages, batch_advantages)
+                    raise ValueError()
+
                 batch_values = self.critic_model.v(batch_observations)
 
                 assert batch_values.shape == batch_td_target_values.shape
