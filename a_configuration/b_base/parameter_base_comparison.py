@@ -20,7 +20,7 @@ class ParameterComparisonBase:
         self.UNITY_ENV_DIR = os.path.join(self.PROJECT_HOME, "b_environments", "unity")
         if not os.path.exists(self.UNITY_ENV_DIR):
             os.mkdir(self.UNITY_ENV_DIR)
-            
+
         self.AGENT_PARAMETERS = None
         self.AGENT_LABELS = None
         
@@ -48,3 +48,5 @@ class ParameterComparisonBase:
         self.LAYER_ACTIVATION = nn.LeakyReLU
 
         self.DEVICE = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+
+        self.CONSOLE_LOG_INTERVAL_TRAINING_STEPS = 30
