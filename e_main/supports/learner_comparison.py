@@ -43,7 +43,6 @@ class LearnerComparison:
         self.last_mean_episode_reward_per_agent = []
         self.last_loss_train_per_agent = []
         self.is_terminated_per_agent = []
-        self.is_train_success_done_per_agent = []
 
         self.comparison_stat = comparison_stat
 
@@ -65,7 +64,6 @@ class LearnerComparison:
             self.last_mean_episode_reward_per_agent.append(0.0)
 
             self.is_terminated_per_agent.append(False)
-            self.is_train_success_done_per_agent.append(False)
 
         self.total_time_step = 0
         self.training_step = 0
@@ -153,28 +151,17 @@ class LearnerComparison:
 
                     self.episode_rewards_per_agent[agent_idx][actor_id][env_id] = 0.0
 
-                    if self.parameter_c.AGENT_PARAMETERS[agent_idx].AGENT_TYPE == AgentType.REINFORCE:
-                        is_train_success_done = self.agents[agent_idx].train(
-                            training_steps_v=self.training_steps_per_agent[agent_idx]
-                        )
-                        if is_train_success_done:
-                            self.training_steps_per_agent[agent_idx] += 1
-                        self.is_train_success_done_per_agent[agent_idx] = is_train_success_done
-
             if self.total_time_step >= self.next_train_time_step:
                 for agent_idx, _ in enumerate(self.agents):
                     if self.parameter_c.AGENT_PARAMETERS[agent_idx].AGENT_TYPE != AgentType.REINFORCE:
-                        is_train_success_done = self.agents[agent_idx].train(
+                        count_training_steps = self.agents[agent_idx].train(
                             training_steps_v=self.training_steps_per_agent[agent_idx]
                         )
-                        if is_train_success_done:
-                            self.training_steps_per_agent[agent_idx] += 1
-                        self.is_train_success_done_per_agent[agent_idx] = is_train_success_done
+                        self.training_steps_per_agent[agent_idx] += count_training_steps
 
                 self.next_train_time_step += self.parameter_c.TRAIN_INTERVAL_GLOBAL_TIME_STEPS
 
-                if all(self.is_train_success_done_per_agent):
-                    self.training_step += 1
+                self.training_step += 1
 
             if self.training_step >= self.next_console_log:
                 console_log_comparison(

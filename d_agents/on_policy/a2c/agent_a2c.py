@@ -70,6 +70,8 @@ class AgentA2c(Agent):
             raise ValueError()
 
     def train_a2c(self):
+        count_training_steps = 0
+
         ###################################
         #  Critic (Value) Loss 산출 - BEGIN #
         ###################################
@@ -83,6 +85,8 @@ class AgentA2c(Agent):
         # values.shape: (32, 1)
         values = self.critic_model.v(self.observations)
         # loss_critic.shape: (,) <--  값 1개
+
+        assert values.shape == td_target_values.shape, print(values.shape, td_target_values.shape)
         critic_loss = self.parameter.LOSS_FUNCTION(values, td_target_values.detach())
 
         self.critic_optimizer.zero_grad()
@@ -108,26 +112,23 @@ class AgentA2c(Agent):
             # dist.log_prob(value=actions.squeeze(-1)).shape: (32,)
             # criticized_log_pi_action_v.shape: (32,)
             criticized_log_pi_action_v = dist.log_prob(value=self.actions.squeeze(dim=-1)) * advantages.squeeze(dim=-1)
-            entropy = dist.entropy()
+            entropy = dist.entropy().mean()
         elif isinstance(self.action_space, Box):
             mu_v, var_v = self.actor_model.pi(self.observations)
 
             criticized_log_pi_action_v = self.calc_log_prob(mu_v, var_v, self.actions) * advantages
             entropy = 0.5 * (torch.log(2.0 * np.pi * var_v) + 1.0).sum(dim=-1)
-
+            entropy = entropy.mean()
             # dist = Normal(loc=mu_v, scale=torch.sqrt(var_v))
             # criticized_log_pi_action_v = dist.log_prob(value=self.actions) * advantages
-            # entropy = dist.entropy()
-
-            # print(criticized_log_pi_action_v.shape, entropy.shape, "!!")
-            # print(dist.log_prob(value=actions).shape, advantages.shape, "!!!!!!")
+            # entropy = dist.entropy().mean()
         else:
             raise ValueError()
 
         # actor_objective.shape: (,) <--  값 1개
         log_actor_objective = torch.mean(criticized_log_pi_action_v)
         actor_loss = -1.0 * log_actor_objective
-        entropy_loss = -1.0 * torch.mean(entropy)
+        entropy_loss = -1.0 * entropy
         actor_loss = actor_loss + entropy_loss * self.parameter.ENTROPY_BETA
 
         # actor_loss = torch.mean(-1.0 * criticized_log_pi_action_v + self.parameter.ENTROPY_BETA * -1.0 * entropy)
@@ -142,4 +143,8 @@ class AgentA2c(Agent):
 
         self.last_critic_loss.value = critic_loss.item()
         self.last_log_actor_objective.value = log_actor_objective.item()
-        self.last_entropy.value = entropy.mean().item()
+        self.last_entropy.value = entropy.item()
+
+        count_training_steps = 1
+
+        return count_training_steps

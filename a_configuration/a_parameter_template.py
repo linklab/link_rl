@@ -3,12 +3,12 @@ from a_configuration.c_parameters.mujoco.parameter_halfcheetah_mujoco import Par
 from a_configuration.c_parameters.mujoco.parameter_hopper_mujoco import ParameterHopperMujocoSac
 from a_configuration.c_parameters.mujoco.parameter_walker2d_mujoco import ParameterWalker2dMujocoSac
 from a_configuration.c_parameters.open_ai_gym.parameter_cartpole import ParameterCartPoleDqn, \
-    ParameterCartPoleDoubleDqn, ParameterCartPoleDuelingDqn, ParameterCartPoleDoubleDuelingDqn
+    ParameterCartPoleDoubleDqn, ParameterCartPoleDuelingDqn, ParameterCartPoleDoubleDuelingDqn, ParameterCartPolePpo
 from a_configuration.c_parameters.open_ai_gym.parameter_cartpole import ParameterCartPoleReinforce
 from a_configuration.c_parameters.open_ai_gym.parameter_cartpole import ParameterCartPoleA2c
 from a_configuration.c_parameters.open_ai_gym.parameter_lunar_lander import ParameterLunarLanderContinuousA2c, \
     ParameterLunarLanderA2c, ParameterLunarLanderContinuousDdpg, ParameterLunarLanderContinuousSac, \
-    ParameterLunarLanderDqn
+    ParameterLunarLanderDqn, ParameterLunarLanderPpo, ParameterLunarLanderContinuousPpo
 from a_configuration.c_parameters.open_ai_gym.parameter_pong import ParameterPongDqn, ParameterPongDoubleDqn, \
     ParameterPongDuelingDqn, ParameterPongDoubleDuelingDqn
 from a_configuration.c_parameters.open_ai_gym.parameter_pong import ParameterPongA2c
@@ -16,7 +16,8 @@ from a_configuration.c_parameters.mujoco.parameter_ant_mujoco import ParameterAn
 
 from a_configuration.c_parameters.pybullet.parameter_cartpole_bullet import ParameterCartPoleBulletDqn, \
     ParameterCartPoleContinuousBulletA2c, ParameterCartPoleContinuousBulletSac, ParameterCartPoleContinuousBulletDdpg, \
-    ParameterCartPoleBulletDoubleDqn, ParameterCartPoleBulletDuelingDqn, ParameterCartPoleBulletDoubleDuelingDqn
+    ParameterCartPoleBulletDoubleDqn, ParameterCartPoleBulletDuelingDqn, ParameterCartPoleBulletDoubleDuelingDqn, \
+    ParameterCartPoleBulletA2c, ParameterCartPoleBulletPpo, ParameterCartPoleContinuousBulletPpo
 from a_configuration.c_parameters.pybullet.parameter_ant_bullet import ParameterAntBulletA2c, ParameterAntBulletSac
 from a_configuration.c_parameters.pybullet.parameter_ant_bullet import ParameterAntBulletDdpg
 from a_configuration.c_parameters.pybullet.parameter_double_inverted_pendulum_bullet import \
@@ -47,6 +48,9 @@ parameter_list.append(parameter_cart_pole_reinforce)
 parameter_cart_pole_a2c = ParameterCartPoleA2c()
 parameter_list.append(parameter_cart_pole_a2c)
 
+parameter_cart_pole_ppo = ParameterCartPolePpo()
+parameter_list.append(parameter_cart_pole_ppo)
+
 ##################
 ## LUNAR_LANDER ##
 ##################
@@ -57,8 +61,14 @@ parameter_list.append(parameter_lunar_lander_dqn)
 parameter_lunar_lander_a2c = ParameterLunarLanderA2c()
 parameter_list.append(parameter_lunar_lander_a2c)
 
+parameter_lunar_lander_ppo = ParameterLunarLanderPpo()
+parameter_list.append(parameter_lunar_lander_ppo)
+
 parameter_lunar_lander_continuous_a2c = ParameterLunarLanderContinuousA2c()
 parameter_list.append(parameter_lunar_lander_continuous_a2c)
+
+parameter_lunar_lander_continuous_ppo = ParameterLunarLanderContinuousPpo()
+parameter_list.append(parameter_lunar_lander_continuous_ppo)
 
 parameter_lunar_lander_continuous_ddpg = ParameterLunarLanderContinuousDdpg()
 parameter_list.append(parameter_lunar_lander_continuous_ddpg)
@@ -81,8 +91,17 @@ parameter_list.append(parameter_cart_pole_bullet_dueling_dqn)
 parameter_cart_pole_bullet_double_dueling_dqn = ParameterCartPoleBulletDoubleDuelingDqn()
 parameter_list.append(parameter_cart_pole_bullet_double_dueling_dqn)
 
+parameter_cart_pole_bullet_a2c = ParameterCartPoleBulletA2c()
+parameter_list.append(parameter_cart_pole_bullet_a2c)
+
+parameter_cart_pole_bullet_ppo = ParameterCartPoleBulletPpo()
+parameter_list.append(parameter_cart_pole_bullet_ppo)
+
 parameter_cart_pole_continuous_bullet_a2c = ParameterCartPoleContinuousBulletA2c()
 parameter_list.append(parameter_cart_pole_continuous_bullet_a2c)
+
+parameter_cart_pole_continuous_bullet_ppo = ParameterCartPoleContinuousBulletPpo()
+parameter_list.append(parameter_cart_pole_continuous_bullet_ppo)
 
 parameter_cart_pole_continuous_bullet_sac = ParameterCartPoleContinuousBulletSac()
 parameter_list.append(parameter_cart_pole_continuous_bullet_sac)

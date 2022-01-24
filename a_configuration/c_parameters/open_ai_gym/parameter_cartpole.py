@@ -111,6 +111,8 @@ class ParameterCartPolePpo(
         self.N_VECTORIZED_ENVS = 1
         self.N_ACTORS = 1
         self.MAX_TRAINING_STEPS = 100_000
-        self.BATCH_SIZE = 256
-        self.BUFFER_CAPACITY = 10_000
         self.MODEL_TYPE = ModelType.SMALL_LINEAR
+
+        self.BATCH_SIZE = 256
+        self.PPO_TRAJECTORY_SIZE = self.BATCH_SIZE * 10
+        self.BUFFER_CAPACITY = self.PPO_TRAJECTORY_SIZE

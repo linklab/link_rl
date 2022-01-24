@@ -63,6 +63,8 @@ class AgentDqn(Agent):
         return action
 
     def train_dqn(self, training_steps_v):
+        count_training_steps = 0
+
         # state_action_values.shape: torch.Size([32, 1])
         state_action_values = self.q_net(self.observations).gather(dim=1, index=self.actions)
 
@@ -101,3 +103,7 @@ class AgentDqn(Agent):
         self.epsilon.value = self.epsilon_tracker.epsilon(training_steps_v)
 
         self.last_q_net_loss.value = q_net_loss.item()
+
+        count_training_steps = 1
+
+        return count_training_steps

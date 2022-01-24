@@ -41,6 +41,8 @@ class AgentReinforce(Agent):
         return action.cpu().numpy()
 
     def train_reinforce(self):
+        count_training_steps = 0
+
         G = 0
         return_lst = []
         for reward in reversed(self.rewards):
@@ -63,3 +65,7 @@ class AgentReinforce(Agent):
         self.optimizer.step()
 
         self.last_log_policy_objective.value = log_policy_objective.item()
+
+        count_training_steps = 1
+
+        return count_training_steps

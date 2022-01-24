@@ -104,6 +104,8 @@ class AgentSac(Agent):
             raise ValueError()
 
     def train_sac(self, training_steps_v):
+        count_training_steps = 0
+
         ############################
         #  Critic Training - BEGIN #
         ############################
@@ -183,3 +185,6 @@ class AgentSac(Agent):
             source_model=self.critic_model, target_model=self.target_critic_model, tau=self.parameter.TAU
         )  # TAU: 0.005
 
+        count_training_steps = 1
+
+        return count_training_steps

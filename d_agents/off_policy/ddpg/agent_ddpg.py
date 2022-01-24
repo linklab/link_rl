@@ -80,6 +80,8 @@ class AgentDdpg(Agent):
             raise ValueError()
 
     def train_ddpg(self):
+        count_training_steps = 0
+
         #######################
         # train actor - BEGIN #
         #######################
@@ -128,3 +130,7 @@ class AgentDdpg(Agent):
 
         self.last_critic_loss.value = critic_loss.item()
         self.last_actor_loss.value = actor_loss.item()
+
+        count_training_steps += 1
+
+        return count_training_steps

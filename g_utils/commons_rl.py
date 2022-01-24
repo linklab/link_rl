@@ -80,6 +80,14 @@ def get_agent(observation_space, action_space, parameter=None):
         agent = AgentA2c(
             observation_space=observation_space, action_space=action_space, parameter=parameter
         )
+    elif parameter.AGENT_TYPE == AgentType.PPO:
+        from d_agents.on_policy.a2c.agent_ppo import AgentPpo
+        assert parameter.PPO_TRAJECTORY_SIZE % parameter.BATCH_SIZE == 0, "{0} {1}".format(
+            parameter.PPO_TRAJECTORY_SIZE, parameter.BATCH_SIZE
+        )
+        agent = AgentPpo(
+            observation_space=observation_space, action_space=action_space, parameter=parameter
+        )
     elif parameter.AGENT_TYPE == AgentType.DDPG:
         from d_agents.off_policy.ddpg.agent_ddpg import AgentDdpg
         agent = AgentDdpg(

@@ -1,4 +1,7 @@
 import warnings
+
+from g_utils.types import AgentType
+
 warnings.filterwarnings("ignore")
 warnings.simplefilter("ignore")
 
@@ -52,6 +55,8 @@ for agent_parameter in parameter_c.AGENT_PARAMETERS:
 
 def main():
     for parameter in parameter_c.AGENT_PARAMETERS:
+        assert parameter.AGENT_TYPE != AgentType.REINFORCE
+        assert parameter.AGENT_TYPE != AgentType.PPO
         set_parameters(parameter)
 
     observation_space, action_space = get_env_info(parameter_c)
