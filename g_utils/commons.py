@@ -295,9 +295,9 @@ def console_log(
         n_rollout_transitions_v, transition_rolling_rate_v, train_steps_v, train_step_rate_v,
         agent, parameter
 ):
-    console_log = "[Total Episodes: {0:6,}, Total Time Steps {1:7,}] " \
-                  "Mean Episode Reward: {2:6.1f}, Transitions Rolled: {3:7,} ({4:7.3f}/sec.), " \
-                  "Training Steps: {5:5,} ({6:.3f}/sec.), " \
+    console_log = "[Tot. Episodes: {0:5,}, Tot. Time Steps {1:7,}] " \
+                  "Mean Episode Reward: {2:6.1f}, Rolling Outs: {3:7,} ({4:7.3f}/sec.), " \
+                  "Training Steps: {5:4,} ({6:.3f}/sec.), " \
         .format(
             total_episodes_v,
             total_time_steps_v,
@@ -317,15 +317,15 @@ def console_log(
             agent.last_log_policy_objective.value
         )
     elif parameter.AGENT_TYPE == AgentType.A2C:
-        console_log += "critic_loss: {0:7.3f}, log_actor_objective: {1:7.3f}, entropy: {2:5.3f}".format(
+        console_log += "critic_loss: {0:7.3f}, log_actor_obj.: {1:7.3f}, entropy: {2:5.3f}".format(
             agent.last_critic_loss.value, agent.last_log_actor_objective.value, agent.last_entropy.value
         )
     elif parameter.AGENT_TYPE == AgentType.PPO:
-        console_log += "critic_loss: {0:7.3f}, actor_objective: {1:7.3f}, ratio: {2:5.3f}, entropy: {3:5.3f}".format(
+        console_log += "critic_loss: {0:7.3f}, actor_obj.: {1:7.3f}, ratio: {2:5.3f}, entropy: {3:5.3f}".format(
             agent.last_critic_loss.value, agent.last_actor_objective.value, agent.last_ratio.value, agent.last_entropy.value
         )
     elif parameter.AGENT_TYPE == AgentType.SAC:
-        console_log += "critic_loss: {0:7.3f}, actor_objective: {1:7.3f}, alpha: {2:5.3f}, entropy: {3:5.3f}".format(
+        console_log += "critic_loss: {0:7.3f}, actor_obj.: {1:7.3f}, alpha: {2:5.3f}, entropy: {3:5.3f}".format(
             agent.last_critic_loss.value, agent.last_log_actor_objective.value, agent.alpha.value, agent.last_entropy.value
         )
     elif parameter.AGENT_TYPE == AgentType.DDPG:
@@ -345,9 +345,9 @@ def console_log_comparison(
 ):
     for agent_idx, agent in enumerate(agents):
         agent_prefix = "[Agent: {0}]".format(agent_idx)
-        console_log = agent_prefix + "[Total Episodes: {0:6,}, Total Time Steps {1:7,}] " \
-                      "Mean Episode Reward: {2:6.1f}, Transitions Rolled: {3:7,}, " \
-                      "Training Steps: {4:5,}, " \
+        console_log = agent_prefix + "[Tot. Episodes: {0:5,}, Tot. Time Steps {1:7,}] " \
+                      "Mean Episode Reward: {2:6.1f}, Rolling Outs: {3:7,}, " \
+                      "Training Steps: {4:4,}, " \
             .format(
                 total_episodes_per_agent[agent_idx],
                 total_time_step,
@@ -367,11 +367,11 @@ def console_log_comparison(
                 agent.last_log_policy_objective.value
             )
         elif parameter_c.AGENT_PARAMETERS[agent_idx].AGENT_TYPE == AgentType.A2C:
-            console_log += "critic_loss: {0:6.3f}, log_actor_objective: {1:5.3f}, ".format(
+            console_log += "critic_loss: {0:6.3f}, log_actor_obj.: {1:5.3f}, ".format(
                 agent.last_critic_loss.value, agent.last_log_actor_objective.value
             )
         elif parameter_c.AGENT_PARAMETERS[agent_idx].AGENT_TYPE == AgentType.PPO:
-            console_log += "critic_loss: {0:6.3f}, actor_objective: {1:5.3f}, ratio: {2:5.3f}".format(
+            console_log += "critic_loss: {0:6.3f}, actor_obj.: {1:5.3f}, ratio: {2:5.3f}".format(
                 agent.last_critic_loss.value, agent.last_actor_objective.value, agent.ratio.value
             )
         else:
