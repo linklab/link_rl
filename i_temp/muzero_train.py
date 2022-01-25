@@ -61,7 +61,6 @@ class Trainer:
             weight_batch,
             gradient_scale_batch,
         ) = batch
-
         # Keep values as scalars for calculating the priorities for the prioritized replay
         target_value_scalar = numpy.array(target_value, dtype="float32")
         priorities = numpy.zeros_like(target_value_scalar)
@@ -109,13 +108,14 @@ class Trainer:
         value_loss, reward_loss, policy_loss = (0, 0, 0)
         value, reward, policy_logits = predictions[0]
         # Ignore reward loss for the first batch step
+        print(target_reward[:, 0], target_reward[:, 0].shape, target_reward.shape, "!!!!!!!!!!!!!!!!!!!!!1")
         current_value_loss, _, current_policy_loss = self.loss_function(
             value.squeeze(-1),
             reward.squeeze(-1),
             policy_logits,
-            target_value[:, 0],
-            target_reward[:, 0],
-            target_policy[:, 0],
+            target_value[:, 0], # current observation에 대한 value distribution
+            target_reward[:, 0], # current observation에 대한 reward distribution
+            target_policy[:, 0], # current observation에 대한 policy distribution
         )
         value_loss += current_value_loss
         policy_loss += current_policy_loss
