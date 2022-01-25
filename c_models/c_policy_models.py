@@ -169,7 +169,7 @@ class ContinuousPolicyModel(PolicyModel):
         mu_v = self.mu(x)
 
         var_v = self.var(x)
-        var_v = torch.clamp(var_v, 1e-3, 256)
+        var_v = torch.clamp(var_v, 1e-2, 256)
 #        std_v = torch.exp(F.softplus(self.logstds))
 
         # logstd_v = self.logstd(x)
