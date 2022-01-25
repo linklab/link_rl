@@ -65,7 +65,7 @@ class AgentDdpg(Agent):
         if isinstance(self.action_space, Discrete):
             pass
         elif isinstance(self.action_space, Box):
-            mu = self.actor_model.pi(obs)
+            mu = self.actor_model.pi(obs, save_hidden=True)
             mu = mu.detach().cpu().numpy()
 
             if mode == AgentMode.TRAIN:

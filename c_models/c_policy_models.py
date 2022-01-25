@@ -58,7 +58,7 @@ class PolicyModel(Model):
         else:
             raise ValueError()
 
-    def forward_actor(self, obs):
+    def forward_actor(self, obs, save_hidden=False):
         if isinstance(obs, np.ndarray):
             obs = torch.tensor(obs, dtype=torch.float32, device=self.parameter.DEVICE)
 
@@ -81,7 +81,10 @@ class PolicyModel(Model):
                 rnn_in = rnn_in.unsqueeze(1)
 
             rnn_out, h_n = self.actor_recurrent_layers(rnn_in, h_0)
-            self.recurrent_hidden = h_n.detach()  # save hidden
+
+            if save_hidden:
+                self.recurrent_hidden = h_n.detach()
+
             rnn_out_flattened = torch.flatten(rnn_out, start_dim=1)
 
             x = self.actor_fc_layers(rnn_out_flattened)
@@ -125,8 +128,8 @@ class DiscretePolicyModel(PolicyModel):
         self.actor_fc_pi = nn.Linear(self.parameter.MODEL_PARAMETER.NEURONS_PER_FULLY_CONNECTED_LAYER[-1], self.n_discrete_actions)
         self.actor_params += list(self.actor_fc_pi.parameters())
 
-    def pi(self, obs):
-        x = self.forward_actor(obs)
+    def pi(self, obs, save_hidden=False):
+        x = self.forward_actor(obs, save_hidden=save_hidden)
         x = self.actor_fc_pi(x)
         action_prob = F.softmax(x, dim=-1)
         return action_prob
@@ -160,8 +163,8 @@ class ContinuousPolicyModel(PolicyModel):
         #     self.register_parameter("logstds", logstds_param)
         #     self.actor_params.append(self.logstds)
 
-    def pi(self, obs):
-        x = self.forward_actor(obs)
+    def pi(self, obs, save_hidden=False):
+        x = self.forward_actor(obs, save_hidden=save_hidden)
 
         mu_v = self.mu(x)
 

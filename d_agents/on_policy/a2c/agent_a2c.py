@@ -43,7 +43,7 @@ class AgentA2c(Agent):
 
     def get_action(self, obs, mode=AgentMode.TRAIN):
         if isinstance(self.action_space, Discrete):
-            action_prob = self.actor_model.pi(obs)
+            action_prob = self.actor_model.pi(obs, save_hidden=True)
 
             if mode == AgentMode.TRAIN:
                 dist = Categorical(probs=action_prob)
