@@ -19,3 +19,12 @@ class ParameterComparisonLunarLanderDqnRecurrent(ParameterComparisonBase):
 
         self.AGENT_PARAMETERS[0].MODEL_TYPE = ModelType.SMALL_LINEAR
         self.AGENT_PARAMETERS[1].MODEL_TYPE = ModelType.SMALL_RECURRENT
+
+        self.AGENT_LABELS = [
+            "DQN Small Linear",
+            "DQN Small Recurrent",
+        ]
+
+        self.MAX_TRAINING_STEPS = 100_000
+        self.N_RUNS = 5
+

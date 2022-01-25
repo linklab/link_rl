@@ -20,180 +20,71 @@ from a_configuration.d_parameters_comparison.pybullet.parameter_comparison_doubl
 from g_utils.types import ModelType
 
 
+
+###############
+## CART_POLE ##
+###############
 parameter_c = ParameterComparisonCartPoleDqn()
-
-################################################################################
-
-parameter_c = ParameterComparisonPongDqn()
-
-################################################################################
-
-parameter_c = ParameterComparisonCartPoleBulletA2c()
-
-
-#######################################################################
-
 parameter_c = ParameterComparisonCartPoleDqnTypes()
 
-
-######################################################################
-
+######################
+## CART_POLE_BULLET ##
+######################
+parameter_c = ParameterComparisonCartPoleBulletA2c()
 parameter_c = ParameterComparisonCartPoleBulletDqnTypes()
-
-
-#######################################################################################################################
 parameter_c = ParameterComparisonCartPoleContinuousBulletDdpg()
 
-######################################################################
 
+######################
+## PONG ##
+######################
+parameter_c = ParameterComparisonPongDqn()
 parameter_c = ParameterComparisonPongDqnTypes()
 
 
-######################################################################
+##################
+## LUNAR_LANDER ##
+##################
+parameter_c = ParameterComparisonLunarLanderDqnRecurrent()
 
-parameter_c = ParameterComparisonCartPoleDqn()
+
+#####################
+### HOPPER_MUJOCO ###
+#####################
+parameter_c = ParameterComparisonHopperMujocoSac()
 
 
-######################################################################
+#######################
+### WALKER2d_MUJOCO ###
+#######################
+parameter_c = ParameterComparisonWalker2dMujocoSac()
 
-parameter_comparison_lunar_lander_recurrent = ParameterComparisonLunarLanderDqnRecurrent()
-parameter_comparison_lunar_lander_recurrent.AGENT_LABELS = [
-    "DQN Small Linear",
-    "DQN Small Recurrent",
-]
 
-parameter_comparison_lunar_lander_recurrent.MAX_TRAINING_STEPS = 100_000
-parameter_comparison_lunar_lander_recurrent.N_RUNS = 5
-parameter_comparison_list.append(parameter_comparison_lunar_lander_recurrent)
+##########################
+### HALFCHEETAH_MUJOCO ###
+##########################
+parameter_c = ParameterComparisonHalfCheetahMujocoSac()
 
-######################################################################
 
-parameter_comparison_mujoco_hopper_alpha = ParameterComparisonHopperMujocoSac()
-parameter_comparison_mujoco_hopper_alpha.AGENT_PARAMETERS[0].AUTOMATIC_ENTROPY_TEMPERATURE_TUNING = False
-parameter_comparison_mujoco_hopper_alpha.AGENT_PARAMETERS[0].DEFAULT_ALPHA = 0.2
-parameter_comparison_mujoco_hopper_alpha.AGENT_PARAMETERS[1].AUTOMATIC_ENTROPY_TEMPERATURE_TUNING = False
-parameter_comparison_mujoco_hopper_alpha.AGENT_PARAMETERS[1].DEFAULT_ALPHA = 0.5
-parameter_comparison_mujoco_hopper_alpha.AGENT_PARAMETERS[2].AUTOMATIC_ENTROPY_TEMPERATURE_TUNING = True
-parameter_comparison_mujoco_hopper_alpha.AGENT_PARAMETERS[2].MIN_ALPHA = 0.0
-parameter_comparison_mujoco_hopper_alpha.AGENT_PARAMETERS[3].AUTOMATIC_ENTROPY_TEMPERATURE_TUNING = True
-parameter_comparison_mujoco_hopper_alpha.AGENT_PARAMETERS[3].MIN_ALPHA = 0.0
-parameter_comparison_mujoco_hopper_alpha.AGENT_LABELS = [
-    "alpha = 0.2",
-    "alpha = 0.5",
-    "alpha tuning (No Alpha Limit)",
-    "alpha tuning (Min Alpha = 0.2)",
-]
-parameter_comparison_mujoco_hopper_alpha.MAX_TRAINING_STEPS = 300000
-parameter_comparison_mujoco_hopper_alpha.N_RUNS = 5
-parameter_comparison_list.append(parameter_comparison_mujoco_hopper_alpha)
+##################
+### ANT_MUJOCO ###
+##################
+parameter_c = ParameterComparisonAntMujocoSac()
 
-######################################################################
 
-parameter_comparison_mujoco_walker2d_alpha = ParameterComparisonWalker2dMujocoSac()
-parameter_comparison_mujoco_walker2d_alpha.AGENT_PARAMETERS[0].AUTOMATIC_ENTROPY_TEMPERATURE_TUNING = False
-parameter_comparison_mujoco_walker2d_alpha.AGENT_PARAMETERS[0].DEFAULT_ALPHA = 0.2
-parameter_comparison_mujoco_walker2d_alpha.AGENT_PARAMETERS[1].AUTOMATIC_ENTROPY_TEMPERATURE_TUNING = False
-parameter_comparison_mujoco_walker2d_alpha.AGENT_PARAMETERS[1].DEFAULT_ALPHA = 0.5
-parameter_comparison_mujoco_walker2d_alpha.AGENT_PARAMETERS[2].AUTOMATIC_ENTROPY_TEMPERATURE_TUNING = True
-parameter_comparison_mujoco_walker2d_alpha.AGENT_PARAMETERS[2].MIN_ALPHA = 0.0
-parameter_comparison_mujoco_walker2d_alpha.AGENT_PARAMETERS[3].AUTOMATIC_ENTROPY_TEMPERATURE_TUNING = True
-parameter_comparison_mujoco_walker2d_alpha.AGENT_PARAMETERS[3].MIN_ALPHA = 0.2
-parameter_comparison_mujoco_walker2d_alpha.AGENT_LABELS = [
-    "alpha = 0.2",
-    "alpha = 0.5",
-    "alpha tuning (No Alpha Limit)",
-    "alpha tuning (Min Alpha = 0.2)",
-]
-parameter_comparison_mujoco_walker2d_alpha.MAX_TRAINING_STEPS = 700000
-parameter_comparison_mujoco_walker2d_alpha.N_RUNS = 5
-parameter_comparison_list.append(parameter_comparison_mujoco_walker2d_alpha)
+######################
+##    ANT_BULLET    ##
+######################
+parameter_c = ParameterComparisonAntBulletSac()
 
-######################################################################
 
-parameter_comparison_halfcheetah_mujoco_alpha = ParameterComparisonHalfCheetahMujocoSac()
-parameter_comparison_halfcheetah_mujoco_alpha.AGENT_PARAMETERS[0].AUTOMATIC_ENTROPY_TEMPERATURE_TUNING = False
-parameter_comparison_halfcheetah_mujoco_alpha.AGENT_PARAMETERS[0].DEFAULT_ALPHA = 0.2
-parameter_comparison_halfcheetah_mujoco_alpha.AGENT_PARAMETERS[1].AUTOMATIC_ENTROPY_TEMPERATURE_TUNING = False
-parameter_comparison_halfcheetah_mujoco_alpha.AGENT_PARAMETERS[1].DEFAULT_ALPHA = 0.5
-parameter_comparison_halfcheetah_mujoco_alpha.AGENT_PARAMETERS[2].AUTOMATIC_ENTROPY_TEMPERATURE_TUNING = True
-parameter_comparison_halfcheetah_mujoco_alpha.AGENT_PARAMETERS[2].MIN_ALPHA = 0.0
-parameter_comparison_halfcheetah_mujoco_alpha.AGENT_PARAMETERS[3].AUTOMATIC_ENTROPY_TEMPERATURE_TUNING = True
-parameter_comparison_halfcheetah_mujoco_alpha.AGENT_PARAMETERS[3].MIN_ALPHA = 0.2
-parameter_comparison_halfcheetah_mujoco_alpha.AGENT_LABELS = [
-    "alpha = 0.2",
-    "alpha = 0.5",
-    "alpha tuning (No Alpha Limit)",
-    "alpha tuning (Min Alpha = 0.2)",
-]
-parameter_comparison_halfcheetah_mujoco_alpha.MAX_TRAINING_STEPS = 500000
-parameter_comparison_halfcheetah_mujoco_alpha.N_RUNS = 5
-parameter_comparison_list.append(parameter_comparison_halfcheetah_mujoco_alpha)
-
-######################################################################
-
-parameter_comparison_ant_mujoco_alpha = ParameterComparisonAntMujocoSac()
-parameter_comparison_ant_mujoco_alpha.AGENT_PARAMETERS[0].AUTOMATIC_ENTROPY_TEMPERATURE_TUNING = False
-parameter_comparison_ant_mujoco_alpha.AGENT_PARAMETERS[0].DEFAULT_ALPHA = 0.2
-parameter_comparison_ant_mujoco_alpha.AGENT_PARAMETERS[1].AUTOMATIC_ENTROPY_TEMPERATURE_TUNING = False
-parameter_comparison_ant_mujoco_alpha.AGENT_PARAMETERS[1].DEFAULT_ALPHA = 0.5
-parameter_comparison_ant_mujoco_alpha.AGENT_PARAMETERS[2].AUTOMATIC_ENTROPY_TEMPERATURE_TUNING = True
-parameter_comparison_ant_mujoco_alpha.AGENT_PARAMETERS[2].MIN_ALPHA = 0.0
-parameter_comparison_ant_mujoco_alpha.AGENT_PARAMETERS[3].AUTOMATIC_ENTROPY_TEMPERATURE_TUNING = True
-parameter_comparison_ant_mujoco_alpha.AGENT_PARAMETERS[3].MIN_ALPHA = 0.2
-parameter_comparison_ant_mujoco_alpha.AGENT_LABELS = [
-    "alpha = 0.2",
-    "alpha = 0.5",
-    "alpha tuning (No Alpha Limit)",
-    "alpha tuning (Min Alpha = 0.2)",
-]
-parameter_comparison_ant_mujoco_alpha.MAX_TRAINING_STEPS = 500000
-parameter_comparison_ant_mujoco_alpha.N_RUNS = 5
-parameter_comparison_list.append(parameter_comparison_ant_mujoco_alpha)
-
-######################################################################
-
-parameter_comparison_ant_bullet_alpha = ParameterComparisonAntBulletSac()
-parameter_comparison_ant_bullet_alpha.AGENT_PARAMETERS[0].AUTOMATIC_ENTROPY_TEMPERATURE_TUNING = False
-parameter_comparison_ant_bullet_alpha.AGENT_PARAMETERS[0].DEFAULT_ALPHA = 0.2
-parameter_comparison_ant_bullet_alpha.AGENT_PARAMETERS[1].AUTOMATIC_ENTROPY_TEMPERATURE_TUNING = False
-parameter_comparison_ant_bullet_alpha.AGENT_PARAMETERS[1].DEFAULT_ALPHA = 0.5
-parameter_comparison_ant_bullet_alpha.AGENT_PARAMETERS[2].AUTOMATIC_ENTROPY_TEMPERATURE_TUNING = True
-parameter_comparison_ant_bullet_alpha.AGENT_PARAMETERS[2].MIN_ALPHA = 0.0
-parameter_comparison_ant_bullet_alpha.AGENT_PARAMETERS[3].AUTOMATIC_ENTROPY_TEMPERATURE_TUNING = True
-parameter_comparison_ant_bullet_alpha.AGENT_PARAMETERS[3].MIN_ALPHA = 0.2
-parameter_comparison_ant_bullet_alpha.AGENT_LABELS = [
-    "alpha = 0.2",
-    "alpha = 0.5",
-    "alpha tuning (No Alpha Limit)",
-    "alpha tuning (Min Alpha = 0.2)",
-]
-parameter_comparison_ant_bullet_alpha.MAX_TRAINING_STEPS = 500000
-parameter_comparison_ant_bullet_alpha.N_RUNS = 5
-parameter_comparison_list.append(parameter_comparison_ant_bullet_alpha)
-
-######################################################################
-
-parameter_comparison_double_inverted_pendulum_bullet_alpha = ParameterComparisonDoubleInvertedPendulumBulletSac()
-parameter_comparison_double_inverted_pendulum_bullet_alpha.AGENT_PARAMETERS[0].AUTOMATIC_ENTROPY_TEMPERATURE_TUNING = False
-parameter_comparison_double_inverted_pendulum_bullet_alpha.AGENT_PARAMETERS[0].DEFAULT_ALPHA = 0.2
-parameter_comparison_double_inverted_pendulum_bullet_alpha.AGENT_PARAMETERS[1].AUTOMATIC_ENTROPY_TEMPERATURE_TUNING = False
-parameter_comparison_double_inverted_pendulum_bullet_alpha.AGENT_PARAMETERS[1].DEFAULT_ALPHA = 0.5
-parameter_comparison_double_inverted_pendulum_bullet_alpha.AGENT_PARAMETERS[2].AUTOMATIC_ENTROPY_TEMPERATURE_TUNING = True
-parameter_comparison_double_inverted_pendulum_bullet_alpha.AGENT_PARAMETERS[2].MIN_ALPHA = 0.0
-parameter_comparison_double_inverted_pendulum_bullet_alpha.AGENT_PARAMETERS[3].AUTOMATIC_ENTROPY_TEMPERATURE_TUNING = True
-parameter_comparison_double_inverted_pendulum_bullet_alpha.AGENT_PARAMETERS[3].MIN_ALPHA = 0.2
-parameter_comparison_double_inverted_pendulum_bullet_alpha.AGENT_LABELS = [
-    "alpha = 0.2",
-    "alpha = 0.5",
-    "alpha tuning (No Alpha Limit)",
-    "alpha tuning (Min Alpha = 0.2)",
-]
-parameter_comparison_double_inverted_pendulum_bullet_alpha.MAX_TRAINING_STEPS = 100000
-parameter_comparison_double_inverted_pendulum_bullet_alpha.N_RUNS = 5
-parameter_comparison_list.append(parameter_comparison_double_inverted_pendulum_bullet_alpha)
+#########################################
+##    DoubleInvertedPendulum_BULLET    ##
+#########################################
+parameter_c = ParameterComparisonDoubleInvertedPendulumBulletSac()
 
 #######################################################################
-for parameter_comparison in parameter_comparison_list:
+for parameter_comparison in parameter_c:
     parameter_comparison.USE_WANDB = False
     parameter_comparison.WANDB_ENTITY = "link-koreatech"
 
