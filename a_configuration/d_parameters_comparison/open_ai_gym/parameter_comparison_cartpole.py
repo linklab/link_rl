@@ -16,6 +16,17 @@ class ParameterComparisonCartPoleDqn(ParameterComparisonBase):
             ParameterCartPoleDqn()
         ]
 
+        self.AGENT_PARAMETERS[0].N_STEP = 1
+        self.AGENT_PARAMETERS[1].N_STEP = 2
+        self.AGENT_PARAMETERS[2].N_STEP = 4
+        self.AGENT_LABELS = [
+            "DQN (N_STEP=1)",
+            "DQN (N_STEP=2)",
+            "DQN (N_STEP=4)",
+        ]
+        self.MAX_TRAINING_STEPS = 50_000
+        self.N_RUNS = 5
+
 
 class ParameterComparisonCartPoleDqnTypes(ParameterComparisonBase):
     def __init__(self):
@@ -30,6 +41,14 @@ class ParameterComparisonCartPoleDqnTypes(ParameterComparisonBase):
             ParameterCartPoleDoubleDuelingDqn()
         ]
 
+        self.AGENT_LABELS = [
+            "DQN",
+            "Double DQN",
+            "Dueling DQN",
+            "Double Dueling DQN",
+        ]
+        self.MAX_TRAINING_STEPS = 50_000
+        self.N_RUNS = 5
 
 # OnPolicy
 class ParameterComparisonCartPoleReinforce(ParameterComparisonBase):

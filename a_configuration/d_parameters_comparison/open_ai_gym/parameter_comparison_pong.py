@@ -42,3 +42,12 @@ class ParameterComparisonPongDqnTypes(ParameterComparisonBase):
             ParameterPongDuelingDqn(),
             ParameterPongDoubleDuelingDqn()
         ]
+
+        self.AGENT_LABELS = [
+            "DQN",
+            "Double DQN",
+            "Dueling DQN",
+            "Double Dueling DQN",
+        ]
+
+        self.N_RUNS = 3

@@ -12,6 +12,7 @@ from gym.vector import AsyncVectorEnv
 import plotly.graph_objects as go
 from gym_unity.envs import UnityToGymWrapper
 from mlagents_envs.environment import UnityEnvironment
+from mlagents_envs.side_channel.engine_configuration_channel import EngineConfigurationChannel
 
 from a_configuration.a_config.config import SYSTEM_USER_NAME
 from a_configuration.b_base.a_environments.unity.unity_box import ParameterUnityGymEnv
@@ -551,7 +552,7 @@ def wandb_log_comparison(
     wandb_obj.log(log_dict)
 
 
-def get_train_env(parameter):
+def get_train_env(parameter, no_graphics=True):
     def make_gym_env(env_name):
         def _make():
             if isinstance(parameter, ParameterUnityGymEnv):
@@ -567,12 +568,13 @@ def get_train_env(parameter):
                     platform_dir = "windows"
                 else:
                     raise ValueError()
-
+                channel = EngineConfigurationChannel()
                 u_env = UnityEnvironment(
                     file_name=os.path.join(parameter.UNITY_ENV_DIR, parameter.ENV_NAME, platform_dir,
                                            parameter.ENV_NAME),
-                    worker_id=0, no_graphics=False
+                    worker_id=0, no_graphics=no_graphics, side_channels=[channel]
                 )
+                channel.set_configuration_parameters(time_scale=parameter.time_scale)
                 env = UnityToGymWrapper(u_env)
                 return env
             env = gym.make(env_name)
@@ -594,7 +596,7 @@ def get_train_env(parameter):
     return train_env
 
 
-def get_single_env(parameter):
+def get_single_env(parameter, no_graphics=True):
     if isinstance(parameter, ParameterUnityGymEnv):
         from sys import platform
         if platform == "linux" or platform == "linux2":
@@ -609,10 +611,12 @@ def get_single_env(parameter):
         else:
             raise ValueError()
 
+        channel = EngineConfigurationChannel()
         u_env = UnityEnvironment(
             file_name=os.path.join(parameter.UNITY_ENV_DIR, parameter.ENV_NAME, platform_dir, parameter.ENV_NAME),
-            worker_id=1, no_graphics=False
+            worker_id=1, no_graphics=no_graphics, side_channels=[channel]
         )
+        channel.set_configuration_parameters(time_scale=parameter.time_scale)
         single_env = UnityToGymWrapper(u_env)
     else:
         single_env = gym.make(parameter.ENV_NAME)

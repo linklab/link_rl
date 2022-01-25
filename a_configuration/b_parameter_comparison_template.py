@@ -19,20 +19,8 @@ from a_configuration.d_parameters_comparison.pybullet.parameter_comparison_doubl
     ParameterComparisonDoubleInvertedPendulumBulletSac
 from g_utils.types import ModelType
 
-parameter_comparison_list = []
 
-parameter_comparison_cart_pole_dqn = ParameterComparisonCartPoleDqn()
-parameter_comparison_cart_pole_dqn.AGENT_PARAMETERS[0].N_STEP = 1
-parameter_comparison_cart_pole_dqn.AGENT_PARAMETERS[1].N_STEP = 2
-parameter_comparison_cart_pole_dqn.AGENT_PARAMETERS[2].N_STEP = 4
-parameter_comparison_cart_pole_dqn.AGENT_LABELS = [
-    "DQN (N_STEP=1)",
-    "DQN (N_STEP=2)",
-    "DQN (N_STEP=4)",
-]
-parameter_comparison_cart_pole_dqn.MAX_TRAINING_STEPS = 50_000
-parameter_comparison_cart_pole_dqn.N_RUNS = 5
-parameter_comparison_list.append(parameter_comparison_cart_pole_dqn)
+parameter_c = ParameterComparisonCartPoleDqn()
 
 ################################################################################
 
@@ -40,89 +28,31 @@ parameter_c = ParameterComparisonPongDqn()
 
 ################################################################################
 
-parameter_comparison_list = []
+parameter_c = ParameterComparisonCartPoleBulletA2c()
 
-parameter_comparison_cart_pole_bullet_a2c = ParameterComparisonCartPoleBulletA2c()
-parameter_comparison_cart_pole_bullet_a2c.AGENT_PARAMETERS[0].LEARNING_RATE = 0.001
-parameter_comparison_cart_pole_bullet_a2c.AGENT_PARAMETERS[1].LEARNING_RATE = 0.0001
-parameter_comparison_cart_pole_bullet_a2c.AGENT_PARAMETERS[2].LEARNING_RATE = 0.00001
-parameter_comparison_cart_pole_bullet_a2c.AGENT_LABELS = [
-    "DQN (LEARNING_RATE = 0.001)",
-    "DQN (LEARNING_RATE = 0.0001)",
-    "DQN (LEARNING_RATE = 0.00001)",
-]
-parameter_comparison_cart_pole_dqn.MAX_TRAINING_STEPS = 50_000
-parameter_comparison_cart_pole_dqn.N_RUNS = 5
-parameter_comparison_list.append(parameter_comparison_cart_pole_bullet_a2c)
 
 #######################################################################
 
-parameter_comparison_cart_pole_dqn_types = ParameterComparisonCartPoleDqnTypes()
-parameter_comparison_cart_pole_dqn_types.AGENT_LABELS = [
-    "DQN",
-    "Double DQN",
-    "Dueling DQN",
-    "Double Dueling DQN",
-]
-parameter_comparison_cart_pole_dqn_types.MAX_TRAINING_STEPS = 50_000
-parameter_comparison_cart_pole_dqn_types.N_RUNS = 5
-parameter_comparison_list.append(parameter_comparison_cart_pole_dqn_types)
+parameter_c = ParameterComparisonCartPoleDqnTypes()
+
 
 ######################################################################
 
-parameter_comparison_cart_pole_bullet_dqn_types = ParameterComparisonCartPoleBulletDqnTypes()
-parameter_comparison_cart_pole_bullet_dqn_types.AGENT_LABELS = [
-    "DQN",
-    "Double DQN",
-    "Dueling DQN",
-    "Double Dueling DQN",
-]
-parameter_comparison_cart_pole_bullet_dqn_types.MAX_TRAINING_STEPS = 50_000
-parameter_comparison_cart_pole_bullet_dqn_types.N_RUNS = 5
-parameter_comparison_list.append(parameter_comparison_cart_pole_bullet_dqn_types)
+parameter_c = ParameterComparisonCartPoleBulletDqnTypes()
+
 
 #######################################################################################################################
-parameter_comparison_cart_pole_bullet_ddpg_recurrent = ParameterComparisonCartPoleContinuousBulletDdpg()
-parameter_comparison_cart_pole_bullet_ddpg_recurrent.AGENT_PARAMETERS[0].MODEL_TYPE = ModelType.SMALL_RECURRENT
-parameter_comparison_cart_pole_bullet_ddpg_recurrent.AGENT_PARAMETERS[1].MODEL_TYPE = ModelType.SMALL_LINEAR
-parameter_comparison_cart_pole_bullet_ddpg_recurrent.AGENT_PARAMETERS[2].MODEL_TYPE = ModelType.SMALL_LINEAR_2
-parameter_comparison_cart_pole_bullet_ddpg_recurrent.AGENT_LABELS = [
-    "DDPG + GRU",
-    "DDPG + Linear",
-    "DDPG + Linear_2",
-]
-parameter_comparison_cart_pole_bullet_ddpg_recurrent.MAX_TRAINING_STEPS = 50_000
-parameter_comparison_cart_pole_bullet_ddpg_recurrent.N_RUNS = 5
-parameter_comparison_list.append(parameter_comparison_cart_pole_bullet_ddpg_recurrent)
+parameter_c = ParameterComparisonCartPoleContinuousBulletDdpg()
 
 ######################################################################
 
-parameter_comparison_pong_dqn_types = ParameterComparisonPongDqnTypes()
-parameter_comparison_pong_dqn_types.AGENT_LABELS = [
-    "DQN",
-    "Double DQN",
-    "Dueling DQN",
-    "Double Dueling DQN",
-]
-parameter_comparison_pong_dqn_types.MAX_TRAINING_STEPS = 1_000_000
-parameter_comparison_pong_dqn_types.N_RUNS = 3
-parameter_comparison_list.append(parameter_comparison_pong_dqn_types)
+parameter_c = ParameterComparisonPongDqnTypes()
+
 
 ######################################################################
 
-parameter_comparison_cart_pole_dqn_recurrent = ParameterComparisonCartPoleDqn()
-parameter_comparison_cart_pole_dqn_recurrent.AGENT_PARAMETERS[0].MODEL_TYPE = ModelType.SMALL_RECURRENT
-parameter_comparison_cart_pole_dqn_recurrent.AGENT_PARAMETERS[1].MODEL_TYPE = ModelType.SMALL_LINEAR
-parameter_comparison_cart_pole_dqn_recurrent.AGENT_PARAMETERS[2].MODEL_TYPE = ModelType.SMALL_LINEAR_2
-parameter_comparison_cart_pole_dqn_recurrent.AGENT_LABELS = [
-    "DQN Recurrent",
-    "DQN Small Linear",
-    "DQN Small Linear2"
-]
+parameter_c = ParameterComparisonCartPoleDqn()
 
-parameter_comparison_cart_pole_dqn.MAX_TRAINING_STEPS = 100_000
-parameter_comparison_cart_pole_dqn.N_RUNS = 5
-parameter_comparison_list.append(parameter_comparison_cart_pole_dqn_recurrent)
 
 ######################################################################
 

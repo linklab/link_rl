@@ -104,7 +104,7 @@ def main_play(n_episodes):
     set_parameters(parameter)
 
     observation_space, action_space = get_env_info(parameter)
-    env = get_single_env(parameter)
+    env = get_single_env(parameter, parameter.NO_TEST_GRAPHICS)
 
     agent = get_agent(observation_space, action_space, parameter)
 

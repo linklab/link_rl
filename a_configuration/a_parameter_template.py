@@ -25,6 +25,7 @@ from a_configuration.c_parameters.pybullet.parameter_ant_bullet import Parameter
 from a_configuration.c_parameters.pybullet.parameter_double_inverted_pendulum_bullet import \
     ParameterDoubleInvertedPendulumBulletSac
 from a_configuration.c_parameters.pybullet.parameter_hopper_bullet import ParameterHopperBulletSac
+from a_configuration.c_parameters.unity.parameter_walker import ParameterWalkerDdqg
 from g_utils.commons import print_basic_info
 
 ###############
@@ -152,6 +153,13 @@ parameter = ParameterHalfCheetahMujocoSac()
 ### Unity3DBall ###
 ##########################
 parameter = Parameter3DBallDdqg()
+
+
+##########################
+### UnityWalker ###
+##########################
+parameter = ParameterWalkerDdqg()
+
 
 ###########################################################
 
