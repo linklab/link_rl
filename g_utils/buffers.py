@@ -10,13 +10,14 @@ from g_utils.types import Transition
 
 class Buffer:
     def __init__(self, capacity, action_space, parameter):
-        self.internal_buffer = collections.deque(maxlen=capacity)
+        self.capacity = capacity
+        self.internal_buffer = collections.deque(maxlen=self.capacity)
         self.action_space = action_space
         self.parameter = parameter
 
         self.is_recurrent_model = any([
-            isinstance(self.parameter.MODEL, ParameterRecurrentLinearModel),
-            isinstance(self.parameter.MODEL, ParameterRecurrentConvolutionalModel)
+            isinstance(self.parameter.MODEL_PARAMETER, ParameterRecurrentLinearModel),
+            isinstance(self.parameter.MODEL_PARAMETER, ParameterRecurrentConvolutionalModel)
         ])
 
     def __len__(self):

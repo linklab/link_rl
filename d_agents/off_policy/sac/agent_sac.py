@@ -104,6 +104,8 @@ class AgentSac(Agent):
             raise ValueError()
 
     def train_sac(self, training_steps_v):
+        count_training_steps = 0
+
         ############################
         #  Critic Training - BEGIN #
         ############################
@@ -132,7 +134,7 @@ class AgentSac(Agent):
         # values.shape: (32, 1)
         q1_v, q2_v = self.critic_model.q(self.observations, self.actions)
         # critic_loss.shape: ()
-        critic_loss = F.huber_loss(q1_v, td_target_values.detach()) + F.huber_loss(q2_v, td_target_values.detach())
+        critic_loss = self.parameter.LOSS_FUNCTION(q1_v, td_target_values.detach()) + F.huber_loss(q2_v, td_target_values.detach())
 
         self.critic_optimizer.zero_grad()
         critic_loss.backward()
@@ -183,3 +185,6 @@ class AgentSac(Agent):
             source_model=self.critic_model, target_model=self.target_critic_model, tau=self.parameter.TAU
         )  # TAU: 0.005
 
+        count_training_steps = 1
+
+        return count_training_steps

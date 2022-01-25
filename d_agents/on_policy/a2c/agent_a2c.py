@@ -1,10 +1,7 @@
-import math
-
 import torch.optim as optim
 import torch
 from gym.spaces import Discrete, Box
 from torch.distributions import Categorical, Normal
-import torch.nn.functional as F
 import torch.multiprocessing as mp
 import numpy as np
 
@@ -46,23 +43,23 @@ class AgentA2c(Agent):
 
     def get_action(self, obs, mode=AgentMode.TRAIN):
         if isinstance(self.action_space, Discrete):
-            action_prob = self.actor_model.pi(obs)
-            # m = Categorical(probs=action_prob)
+            action_prob = self.actor_model.pi(obs, save_hidden=True)
+
             if mode == AgentMode.TRAIN:
-                action = np.random.choice(a=self.n_discrete_actions, p=action_prob.detach().cpu().numpy())
-                # action = m.sample()
+                dist = Categorical(probs=action_prob)
+                action = dist.sample().detach().cpu().numpy()
             else:
-                action = np.argmax(input=action_prob.detach().cpu().numpy(), dim=-1)
+                action = np.argmax(a=action_prob.detach().cpu().numpy(), axis=-1)
             return action
         elif isinstance(self.action_space, Box):
             mu_v, var_v = self.actor_model.pi(obs)
 
             if mode == AgentMode.TRAIN:
-                actions = np.random.normal(
-                    loc=mu_v.detach().cpu().numpy(), scale=torch.sqrt(var_v).detach().cpu().numpy()
-                )
-                # dist = Normal(loc=mu_v, scale=torch.sqrt(var_v))
-                # actions = dist.sample().detach().cpu().numpy()
+                # actions = np.random.normal(
+                #     loc=mu_v.detach().cpu().numpy(), scale=torch.sqrt(var_v).detach().cpu().numpy()
+                # )
+                dist = Normal(loc=mu_v, scale=torch.sqrt(var_v))
+                actions = dist.sample().detach().cpu().numpy()
             else:
                 actions = mu_v.detach().cpu().numpy()
 
@@ -73,8 +70,10 @@ class AgentA2c(Agent):
             raise ValueError()
 
     def train_a2c(self):
+        count_training_steps = 0
+
         ###################################
-        #  Critic (Value) 손실 산출 - BEGIN #
+        #  Critic (Value) Loss 산출 - BEGIN #
         ###################################
         # next_values.shape: (32, 1)
         next_values = self.critic_model.v(self.next_observations)
@@ -86,7 +85,9 @@ class AgentA2c(Agent):
         # values.shape: (32, 1)
         values = self.critic_model.v(self.observations)
         # loss_critic.shape: (,) <--  값 1개
-        critic_loss = F.huber_loss(td_target_values.detach(), values)
+
+        assert values.shape == td_target_values.shape, print(values.shape, td_target_values.shape)
+        critic_loss = self.parameter.LOSS_FUNCTION(values, td_target_values.detach())
 
         self.critic_optimizer.zero_grad()
         critic_loss.backward()
@@ -99,8 +100,10 @@ class AgentA2c(Agent):
         ################################
         #  Actor Objective 산출 - BEGIN #
         ################################
-        q_values = td_target_values
-        advantages = (q_values - values).detach()
+        #q_values = td_target_values
+        advantages = (td_target_values - values).detach()
+
+        advantages = (advantages - torch.mean(advantages)) / (torch.std(advantages) + 1e-7)
 
         if isinstance(self.action_space, Discrete):
             action_probs = self.actor_model.pi(self.observations)
@@ -110,30 +113,27 @@ class AgentA2c(Agent):
             # advantage.shape: (32, 1)
             # dist.log_prob(value=actions.squeeze(-1)).shape: (32,)
             # criticized_log_pi_action_v.shape: (32,)
-            criticized_log_pi_action_v = dist.log_prob(value=self.actions.squeeze(-1)) * advantages.squeeze(-1)
-            entropy = None
+            criticized_log_pi_action_v = dist.log_prob(value=self.actions.squeeze(dim=-1)) * advantages.squeeze(dim=-1)
+            entropy = dist.entropy().mean()
         elif isinstance(self.action_space, Box):
             mu_v, var_v = self.actor_model.pi(self.observations)
 
-            criticized_log_pi_action_v = self.calc_log_prob(mu_v, var_v, self.actions) * advantages
-            entropy = 0.5 * (torch.log(2.0 * np.pi * var_v) + 1.0).sum(dim=-1)
-
-            # dist = Normal(loc=mu_v, scale=torch.sqrt(var_v))
-            # criticized_log_pi_action_v = dist.log_prob(value=actions) * advantages
-            # entropy = dist.entropy()
-
-            # print(criticized_log_pi_action_v.shape, entropy.shape, "!!")
-            # print(dist.log_prob(value=actions).shape, advantages.shape, "!!!!!!")
+            # criticized_log_pi_action_v = self.calc_log_prob(mu_v, var_v, self.actions) * advantages
+            # entropy = 0.5 * (torch.log(2.0 * np.pi * var_v) + 1.0).sum(dim=-1)
+            # entropy = entropy.mean()
+            dist = Normal(loc=mu_v, scale=torch.sqrt(var_v))
+            criticized_log_pi_action_v = dist.log_prob(value=self.actions).sum(dim=-1, keepdim=True) * advantages
+            entropy = dist.entropy().mean()
         else:
             raise ValueError()
 
         # actor_objective.shape: (,) <--  값 1개
         log_actor_objective = torch.mean(criticized_log_pi_action_v)
         actor_loss = -1.0 * log_actor_objective
-
-        entropy_loss = -1.0 * torch.mean(entropy)
-
+        entropy_loss = -1.0 * entropy
         actor_loss = actor_loss + entropy_loss * self.parameter.ENTROPY_BETA
+
+        # actor_loss = torch.mean(-1.0 * criticized_log_pi_action_v + self.parameter.ENTROPY_BETA * -1.0 * entropy)
 
         self.actor_optimizer.zero_grad()
         actor_loss.backward()
@@ -145,4 +145,8 @@ class AgentA2c(Agent):
 
         self.last_critic_loss.value = critic_loss.item()
         self.last_log_actor_objective.value = log_actor_objective.item()
-        self.last_entropy.value = entropy.mean().item()
+        self.last_entropy.value = entropy.item()
+
+        count_training_steps = 1
+
+        return count_training_steps

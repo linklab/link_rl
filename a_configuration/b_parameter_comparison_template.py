@@ -1,5 +1,3 @@
-from a_configuration.b_base.c_models.linear_models import ParameterLinearModel
-from a_configuration.b_base.c_models.recurrent_linear_models import ParameterRecurrentLinearModel
 from a_configuration.d_parameters_comparison.mujoco.parameter_comparison_ant import ParameterComparisonAntMujocoSac
 from a_configuration.d_parameters_comparison.mujoco.parameter_comparison_halfcheetah import \
     ParameterComparisonHalfCheetahMujocoSac
@@ -9,6 +7,8 @@ from a_configuration.d_parameters_comparison.mujoco.parameter_comparison_walker2
     ParameterComparisonWalker2dMujocoSac
 from a_configuration.d_parameters_comparison.open_ai_gym.parameter_comparison_cartpole import \
     ParameterComparisonCartPoleDqn, ParameterComparisonCartPoleDqnTypes
+from a_configuration.d_parameters_comparison.open_ai_gym.parameter_comparison_lunarlander import \
+    ParameterComparisonLunarLanderDqnRecurrent
 from a_configuration.d_parameters_comparison.open_ai_gym.parameter_comparison_pong import ParameterComparisonPongDqn, \
     ParameterComparisonPongDqnTypes
 from a_configuration.d_parameters_comparison.pybullet.parameter_comparison_ant import ParameterComparisonAntBulletSac
@@ -38,18 +38,7 @@ parameter_comparison_list.append(parameter_comparison_cart_pole_dqn)
 
 ################################################################################
 
-parameter_comparison_pong_dqn = ParameterComparisonPongDqn()
-parameter_comparison_pong_dqn.AGENT_PARAMETERS[0].N_STEP = 1
-parameter_comparison_pong_dqn.AGENT_PARAMETERS[1].N_STEP = 2
-parameter_comparison_pong_dqn.AGENT_PARAMETERS[2].N_STEP = 3
-parameter_comparison_pong_dqn.AGENT_LABELS = [
-    "DQN (N_STEP=1)",
-    "DQN (N_STEP=2)",
-    "DQN (N_STEP=3)",
-]
-parameter_comparison_pong_dqn.MAX_TRAINING_STEPS = 1_000
-parameter_comparison_pong_dqn.N_RUNS = 5
-parameter_comparison_list.append(parameter_comparison_pong_dqn)
+parameter_c = ParameterComparisonPongDqn()
 
 ################################################################################
 
@@ -96,9 +85,9 @@ parameter_comparison_list.append(parameter_comparison_cart_pole_bullet_dqn_types
 
 #######################################################################################################################
 parameter_comparison_cart_pole_bullet_ddpg_recurrent = ParameterComparisonCartPoleContinuousBulletDdpg()
-parameter_comparison_cart_pole_bullet_ddpg_recurrent.AGENT_PARAMETERS[0].MODEL = ParameterRecurrentLinearModel(ModelType.SMALL_RECURRENT)
-parameter_comparison_cart_pole_bullet_ddpg_recurrent.AGENT_PARAMETERS[1].MODEL = ParameterLinearModel(ModelType.SMALL_LINEAR)
-parameter_comparison_cart_pole_bullet_ddpg_recurrent.AGENT_PARAMETERS[2].MODEL = ParameterLinearModel(ModelType.SMALL_LINEAR_2)
+parameter_comparison_cart_pole_bullet_ddpg_recurrent.AGENT_PARAMETERS[0].MODEL_TYPE = ModelType.SMALL_RECURRENT
+parameter_comparison_cart_pole_bullet_ddpg_recurrent.AGENT_PARAMETERS[1].MODEL_TYPE = ModelType.SMALL_LINEAR
+parameter_comparison_cart_pole_bullet_ddpg_recurrent.AGENT_PARAMETERS[2].MODEL_TYPE = ModelType.SMALL_LINEAR_2
 parameter_comparison_cart_pole_bullet_ddpg_recurrent.AGENT_LABELS = [
     "DDPG + GRU",
     "DDPG + Linear",
@@ -124,9 +113,9 @@ parameter_comparison_list.append(parameter_comparison_pong_dqn_types)
 ######################################################################
 
 parameter_comparison_cart_pole_dqn_recurrent = ParameterComparisonCartPoleDqn()
-parameter_comparison_cart_pole_dqn_recurrent.AGENT_PARAMETERS[0].MODEL = ParameterRecurrentLinearModel(ModelType.SMALL_RECURRENT)
-parameter_comparison_cart_pole_dqn_recurrent.AGENT_PARAMETERS[1].MODEL = ParameterLinearModel(ModelType.SMALL_LINEAR)
-parameter_comparison_cart_pole_dqn_recurrent.AGENT_PARAMETERS[2].MODEL = ParameterLinearModel(ModelType.SMALL_LINEAR_2)
+parameter_comparison_cart_pole_dqn_recurrent.AGENT_PARAMETERS[0].MODEL_TYPE = ModelType.SMALL_RECURRENT
+parameter_comparison_cart_pole_dqn_recurrent.AGENT_PARAMETERS[1].MODEL_TYPE = ModelType.SMALL_LINEAR
+parameter_comparison_cart_pole_dqn_recurrent.AGENT_PARAMETERS[2].MODEL_TYPE = ModelType.SMALL_LINEAR_2
 parameter_comparison_cart_pole_dqn_recurrent.AGENT_LABELS = [
     "DQN Recurrent",
     "DQN Small Linear",
@@ -136,6 +125,18 @@ parameter_comparison_cart_pole_dqn_recurrent.AGENT_LABELS = [
 parameter_comparison_cart_pole_dqn.MAX_TRAINING_STEPS = 100_000
 parameter_comparison_cart_pole_dqn.N_RUNS = 5
 parameter_comparison_list.append(parameter_comparison_cart_pole_dqn_recurrent)
+
+######################################################################
+
+parameter_comparison_lunar_lander_recurrent = ParameterComparisonLunarLanderDqnRecurrent()
+parameter_comparison_lunar_lander_recurrent.AGENT_LABELS = [
+    "DQN Small Linear",
+    "DQN Small Recurrent",
+]
+
+parameter_comparison_lunar_lander_recurrent.MAX_TRAINING_STEPS = 100_000
+parameter_comparison_lunar_lander_recurrent.N_RUNS = 5
+parameter_comparison_list.append(parameter_comparison_lunar_lander_recurrent)
 
 ######################################################################
 

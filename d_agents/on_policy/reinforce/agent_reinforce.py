@@ -31,7 +31,7 @@ class AgentReinforce(Agent):
         self.last_log_policy_objective = mp.Value('d', 0.0)
 
     def get_action(self, obs, mode=AgentMode.TRAIN):
-        action_prob = self.policy.pi(obs)
+        action_prob = self.policy.pi(obs, save_hidden=True)
         m = Categorical(probs=action_prob)
 
         if mode == AgentMode.TRAIN:
@@ -41,6 +41,8 @@ class AgentReinforce(Agent):
         return action.cpu().numpy()
 
     def train_reinforce(self):
+        count_training_steps = 0
+
         G = 0
         return_lst = []
         for reward in reversed(self.rewards):
@@ -54,7 +56,7 @@ class AgentReinforce(Agent):
         # action_probs_selected.shape: (32,)
         # return_lst.shape: (32,)
         # print(action_probs_selected.shape, return_lst.shape, "!!!!!!1")
-        log_pi_returns = torch.log(action_probs_selected) * return_lst
+        log_pi_returns = torch.log(action_probs_selected).sum(dim=-1, keepdim=True) * return_lst
         log_policy_objective = torch.sum(log_pi_returns)
         loss = -1.0 * log_policy_objective
 
@@ -63,3 +65,7 @@ class AgentReinforce(Agent):
         self.optimizer.step()
 
         self.last_log_policy_objective.value = log_policy_objective.item()
+
+        count_training_steps = 1
+
+        return count_training_steps

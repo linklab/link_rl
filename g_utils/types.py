@@ -27,22 +27,33 @@ class AgentMode(enum.Enum):
 
 
 class ModelType(enum.Enum):
-    SMALL_LINEAR = 0
-    SMALL_LINEAR_2 = 1
-    MEDIUM_LINEAR = 2
-    LARGE_LINEAR = 3
+    TINY_LINEAR = 0
+    SMALL_LINEAR = 1
+    SMALL_LINEAR_2 = 2
+    MEDIUM_LINEAR = 3
+    LARGE_LINEAR = 4
 
-    SMALL_CONVOLUTIONAL = 3
-    MEDIUM_CONVOLUTIONAL = 4
-    LARGE_CONVOLUTIONAL = 5
+    SMALL_CONVOLUTIONAL = 5
+    MEDIUM_CONVOLUTIONAL = 6
+    LARGE_CONVOLUTIONAL = 7
 
-    SMALL_RECURRENT = 6
-    MEDIUM_RECURRENT = 7
-    LARGE_RECURRENT = 8
+    SMALL_RECURRENT = 8
+    MEDIUM_RECURRENT = 9
+    LARGE_RECURRENT = 10
 
-    SMALL_RECURRENT_CONVOLUTIONAL = 9
-    MEDIUM_RECURRENT_CONVOLUTIONAL = 10
-    LARGE_RECURRENT_CONVOLUTIONAL = 11
+    SMALL_RECURRENT_CONVOLUTIONAL = 11
+    MEDIUM_RECURRENT_CONVOLUTIONAL = 12
+    LARGE_RECURRENT_CONVOLUTIONAL = 13
+
+
+class LayerActivationType(enum.Enum):
+    LEAKY_RELU = 0
+    ELU = 1
+
+
+class LossFunctionType(enum.Enum):
+    MSE_LOSS = 0
+    HUBER_LOSS = 1
 
 
 class AgentType(enum.Enum):
@@ -52,10 +63,10 @@ class AgentType(enum.Enum):
     DOUBLE_DUELING_DQN = 3
     REINFORCE = 4
     A2C = 5
-    DDPG = 6
-    TD3 = 7
-    SAC = 8
-    PPO = 9
+    PPO = 6
+    DDPG = 7
+    TD3 = 8
+    SAC = 9
 
 
 OnPolicyAgentTypes = [

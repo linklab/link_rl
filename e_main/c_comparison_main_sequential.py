@@ -1,25 +1,38 @@
-import os
-import sys
 import warnings
+
+from g_utils.types import AgentType
+
+warnings.filterwarnings("ignore")
+warnings.simplefilter("ignore")
+
 import datetime
+import torch
+import os
+os.environ['KMP_DUPLICATE_LIB_OK'] = 'True'
+
+import sys
+import numpy as np
+np.set_printoptions(precision=3)
+np.set_printoptions(suppress=True)
+np.set_printoptions(formatter={'float': '{: 0.3f}'.format})
+
+from gym import logger
+logger.set_level(level=40)
 
 sys.path.append(os.path.abspath(
     os.path.join(os.path.dirname(os.path.realpath(__file__)), os.pardir)
 ))
 
 from g_utils.stats import ComparisonStat
-
-warnings.filterwarnings("ignore")
-
 from e_main.parameter_comparison import parameter_c
 
 from a_configuration.a_config.config import SYSTEM_USER_NAME, SYSTEM_COMPUTER_NAME
 parameter_c.SYSTEM_USER_NAME = SYSTEM_USER_NAME
 parameter_c.SYSTEM_COMPUTER_NAME = SYSTEM_COMPUTER_NAME
 
-from e_main.supports.main_preamble import *
 from e_main.supports.learner_comparison import LearnerComparison
 from g_utils.commons import print_comparison_basic_info, get_wandb_obj, get_env_info
+from g_utils.commons_rl import set_parameters, get_agent
 
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
@@ -41,6 +54,11 @@ for agent_parameter in parameter_c.AGENT_PARAMETERS:
 
 
 def main():
+    for parameter in parameter_c.AGENT_PARAMETERS:
+        assert parameter.AGENT_TYPE != AgentType.REINFORCE
+        assert parameter.AGENT_TYPE != AgentType.PPO
+        set_parameters(parameter)
+
     observation_space, action_space = get_env_info(parameter_c)
     print_comparison_basic_info(observation_space, action_space, parameter_c)
 

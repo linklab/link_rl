@@ -147,3 +147,4 @@ git commit -m "Apply .gitignore"
 
 ### 13. Reference
 - https://github.com/PacktPublishing/Deep-Reinforcement-Learning-Hands-On-Second-Edition
+- NaN Handling: https://stable-baselines.readthedocs.io/en/master/guide/checking_nan.html

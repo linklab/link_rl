@@ -9,13 +9,13 @@ from a_configuration.b_base.a_environments.pybullet.gym_mujoco import ParameterM
 from a_configuration.b_base.a_environments.pybullet.gym_pybullet import ParameterBullet
 from a_configuration.b_base.c_models.recurrent_convolutional_models import ParameterRecurrentConvolutionalModel
 from a_configuration.b_base.c_models.recurrent_linear_models import ParameterRecurrentLinearModel
+from g_utils.commons_rl import get_agent, set_parameters
 
 warnings.filterwarnings("ignore")
 
 import torch
 from gym.spaces import Discrete, Box
 
-from e_main.supports.main_preamble import get_agent
 from g_utils.types import AgentMode
 
 CURRENT_PATH = os.path.dirname(os.path.realpath(__file__))
@@ -32,8 +32,8 @@ device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
 def play(env, agent, n_episodes):
     is_recurrent_model = any([
-        isinstance(parameter.MODEL, ParameterRecurrentLinearModel),
-        isinstance(parameter.MODEL, ParameterRecurrentConvolutionalModel)
+        isinstance(parameter.MODEL_TYPE, ParameterRecurrentLinearModel),
+        isinstance(parameter.MODEL_TYPE, ParameterRecurrentConvolutionalModel)
     ])
 
     for i in range(n_episodes):
@@ -101,6 +101,8 @@ def play(env, agent, n_episodes):
 
 
 def main_play(n_episodes):
+    set_parameters(parameter)
+
     observation_space, action_space = get_env_info(parameter)
     env = get_single_env(parameter)
 

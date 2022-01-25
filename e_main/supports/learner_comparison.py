@@ -43,7 +43,6 @@ class LearnerComparison:
         self.last_mean_episode_reward_per_agent = []
         self.last_loss_train_per_agent = []
         self.is_terminated_per_agent = []
-        self.is_train_success_done_per_agent = []
 
         self.comparison_stat = comparison_stat
 
@@ -65,7 +64,6 @@ class LearnerComparison:
             self.last_mean_episode_reward_per_agent.append(0.0)
 
             self.is_terminated_per_agent.append(False)
-            self.is_train_success_done_per_agent.append(False)
 
         self.total_time_step = 0
         self.training_step = 0
@@ -75,7 +73,7 @@ class LearnerComparison:
 
     def generator_on_policy_transition(self, agent_idx):
         observations = self.train_envs_per_agent[agent_idx].reset()
-        if isinstance(self.parameter_c.AGENT_PARAMETERS[agent_idx].MODEL, ParameterRecurrentLinearModel):
+        if isinstance(self.parameter_c.AGENT_PARAMETERS[agent_idx].MODEL_TYPE, ParameterRecurrentLinearModel):
             self.agents[agent_idx].model.init_recurrent_hidden()
             observations = [(observations, self.agents[agent_idx].model.recurrent_hidden)]
 
@@ -93,7 +91,7 @@ class LearnerComparison:
                 raise ValueError()
 
             next_observations, rewards, dones, infos = self.train_envs_per_agent[agent_idx].step(scaled_actions)
-            if isinstance(self.parameter_c.AGENT_PARAMETERS[agent_idx].MODEL, ParameterRecurrentLinearModel):
+            if isinstance(self.parameter_c.AGENT_PARAMETERS[agent_idx].MODEL_TYPE, ParameterRecurrentLinearModel):
                 next_observations = [(next_observations, self.agents[agent_idx].model.recurrent_hidden)]
 
             for env_id, (observation, action, next_observation, reward, done, info) in enumerate(
@@ -153,28 +151,17 @@ class LearnerComparison:
 
                     self.episode_rewards_per_agent[agent_idx][actor_id][env_id] = 0.0
 
-                    if self.parameter_c.AGENT_PARAMETERS[agent_idx].AGENT_TYPE == AgentType.REINFORCE:
-                        is_train_success_done = self.agents[agent_idx].train(
-                            training_steps_v=self.training_steps_per_agent[agent_idx]
-                        )
-                        if is_train_success_done:
-                            self.training_steps_per_agent[agent_idx] += 1
-                        self.is_train_success_done_per_agent[agent_idx] = is_train_success_done
-
             if self.total_time_step >= self.next_train_time_step:
                 for agent_idx, _ in enumerate(self.agents):
                     if self.parameter_c.AGENT_PARAMETERS[agent_idx].AGENT_TYPE != AgentType.REINFORCE:
-                        is_train_success_done = self.agents[agent_idx].train(
+                        count_training_steps = self.agents[agent_idx].train(
                             training_steps_v=self.training_steps_per_agent[agent_idx]
                         )
-                        if is_train_success_done:
-                            self.training_steps_per_agent[agent_idx] += 1
-                        self.is_train_success_done_per_agent[agent_idx] = is_train_success_done
+                        self.training_steps_per_agent[agent_idx] += count_training_steps
 
                 self.next_train_time_step += self.parameter_c.TRAIN_INTERVAL_GLOBAL_TIME_STEPS
 
-                if all(self.is_train_success_done_per_agent):
-                    self.training_step += 1
+                self.training_step += 1
 
             if self.training_step >= self.next_console_log:
                 console_log_comparison(
@@ -247,7 +234,7 @@ class LearnerComparison:
             # Environment 초기화와 변수 초기화
             observation = self.test_envs_per_agent[agent_idx].reset()
             observation = np.expand_dims(observation, axis=0)
-            if isinstance(self.parameter_c.AGENT_PARAMETERS[agent_idx].MODEL, ParameterRecurrentLinearModel):
+            if isinstance(self.parameter_c.AGENT_PARAMETERS[agent_idx].MODEL_TYPE, ParameterRecurrentLinearModel):
                 self.agents[agent_idx].model.init_recurrent_hidden()
                 observation = [(observation, self.agents[agent_idx].model.recurrent_hidden)]
 
@@ -280,7 +267,7 @@ class LearnerComparison:
                 next_observation, reward, done, _ = self.test_envs_per_agent[agent_idx].step(scaled_action)
                 next_observation = np.expand_dims(next_observation, axis=0)
 
-                if isinstance(self.parameter_c.AGENT_PARAMETERS[agent_idx].MODEL, ParameterRecurrentLinearModel):
+                if isinstance(self.parameter_c.AGENT_PARAMETERS[agent_idx].MODEL_TYPE, ParameterRecurrentLinearModel):
                     next_observation = [(next_observation, self.agents[agent_idx].model.recurrent_hidden)]
 
                 episode_reward += reward  # episode_reward 를 산출하는 방법은 감가률 고려하지 않는 이 라인이 더 올바름.

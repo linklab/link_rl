@@ -65,7 +65,7 @@ class AgentDdpg(Agent):
         if isinstance(self.action_space, Discrete):
             pass
         elif isinstance(self.action_space, Box):
-            mu = self.actor_model.pi(obs)
+            mu = self.actor_model.pi(obs, save_hidden=True)
             mu = mu.detach().cpu().numpy()
 
             if mode == AgentMode.TRAIN:
@@ -80,6 +80,8 @@ class AgentDdpg(Agent):
             raise ValueError()
 
     def train_ddpg(self):
+        count_training_steps = 0
+
         #######################
         # train actor - BEGIN #
         #######################
@@ -106,7 +108,7 @@ class AgentDdpg(Agent):
 
         q_v = self.critic_model.q(self.observations, self.actions)
 
-        critic_loss = F.huber_loss(q_v, target_q_v.detach())
+        critic_loss = self.parameter.LOSS_FUNCTION(q_v, target_q_v.detach())
 
         self.critic_optimizer.zero_grad()
         critic_loss.backward()
@@ -128,3 +130,7 @@ class AgentDdpg(Agent):
 
         self.last_critic_loss.value = critic_loss.item()
         self.last_actor_loss.value = actor_loss.item()
+
+        count_training_steps += 1
+
+        return count_training_steps

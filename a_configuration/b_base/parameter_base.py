@@ -2,7 +2,8 @@ import os
 import sys
 
 import torch
-from torch import nn
+
+from g_utils.types import ModelType, LayerActivationType, LossFunctionType
 
 
 class ParameterBase:
@@ -17,9 +18,9 @@ class ParameterBase:
         if not os.path.exists(self.MODEL_SAVE_DIR):
             os.mkdir(self.MODEL_SAVE_DIR)
 
-        self.ENV_UNITY_DIR = os.path.join(self.PROJECT_HOME, "b_environments", "unity")
-        if not os.path.exists(self.ENV_UNITY_DIR):
-            os.mkdir(self.ENV_UNITY_DIR)
+        self.UNITY_ENV_DIR = os.path.join(self.PROJECT_HOME, "b_environments", "unity")
+        if not os.path.exists(self.UNITY_ENV_DIR):
+            os.mkdir(self.UNITY_ENV_DIR)
 
         self.N_VECTORIZED_ENVS = 1
         self.N_ACTORS = 1
@@ -30,22 +31,21 @@ class ParameterBase:
             "TRAIN_INTERVAL_GLOBAL_TIME_STEPS should be greater than N_VECTORIZED_ENVS * N_ACTORS"
 
         self.MAX_TRAINING_STEPS = None
-        self.CONSOLE_LOG_INTERVAL_TRAINING_STEPS = None
 
         self.N_EPISODES_FOR_MEAN_CALCULATION = 32
+        self.TEST_INTERVAL_TRAINING_STEPS = 1_000
+        self.CONSOLE_LOG_INTERVAL_TRAINING_STEPS = 100
+        self.MODEL_TYPE = ModelType.SMALL_LINEAR
+        self.MODEL_PARAMETER = None
 
         self.N_TEST_EPISODES = 3
 
-        self.CLIP_GRADIENT_VALUE = 10.0
+        self.CLIP_GRADIENT_VALUE = 3.0
 
         self.USE_WANDB = False
         self.WANDB_ENTITY = "link-koreatech"
 
         self.PLAY_MODEL_FILE_NAME = ""
-
-        self.LAYER_NORM = False
-
-        self.LAYER_ACTIVATION = nn.LeakyReLU()
 
         self.DEVICE = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
@@ -54,3 +54,12 @@ class ParameterBase:
         self.SYSTEM_USER_NAME = None
 
         self.SYSTEM_COMPUTER_NAME = None
+
+        self.USE_LAYER_NORM = False
+
+        self.LAYER_ACTIVATION_TYPE = LayerActivationType.LEAKY_RELU
+        self.LAYER_ACTIVATION = None
+
+        self.LOSS_FUNCTION_TYPE = LossFunctionType.HUBER_LOSS
+        self.LOSS_FUNCTION = None
+        self.CONSOLE_LOG_INTERVAL_TRAINING_STEPS = 30

@@ -19,8 +19,8 @@ from a_configuration.b_base.c_models.convolutional_models import ParameterConvol
 from a_configuration.b_base.c_models.linear_models import ParameterLinearModel
 from a_configuration.b_base.c_models.recurrent_convolutional_models import ParameterRecurrentConvolutionalModel
 from a_configuration.b_base.c_models.recurrent_linear_models import ParameterRecurrentLinearModel
-from a_configuration.b_base.parameter_base import ParameterBase
-from g_utils.types import AgentType, ActorCriticAgentTypes
+from g_utils.commons_rl import set_parameters
+from g_utils.types import AgentType, ActorCriticAgentTypes, ModelType, LayerActivationType, LossFunctionType
 
 if torch.cuda.is_available():
     import nvidia_smi
@@ -58,12 +58,13 @@ def model_load(model, env_name, agent_type_name, file_name, parameter):
     model.load_state_dict(model_params)
 
 
-def print_device_related_info(parameter):
+def print_base_info(parameter):
     n_cpu_cores = mp.cpu_count()
     print("{0:55} {1:55}".format(
         "DEVICE: {0}".format(parameter.DEVICE),
         "CPU CORES: {0}".format(n_cpu_cores),
     ), end="\n")
+
     print("{0:55} {1:55} {2:55}".format(
         "N_ACTORS: {0}".format(parameter.N_ACTORS),
         "ENVS PER ACTOR: {0}".format(parameter.N_VECTORIZED_ENVS),
@@ -72,19 +73,31 @@ def print_device_related_info(parameter):
         )
     ))
 
+    print("PROJECT_HOME: {0}".format(parameter.PROJECT_HOME))
+
+    if hasattr(parameter, "MODEL_SAVE_DIR"):
+        print("MODEL_SAVE_DIR: {0}".format(parameter.MODEL_SAVE_DIR))
+
+    if hasattr(parameter, "COMPARISON_RESULTS_SAVE_DIR"):
+        print("COMPARISON_RESULTS_SAVE_DIR: {0}".format(parameter.COMPARISON_RESULTS_SAVE_DIR))
+
+    print("UNITY_ENV_DIR: {0}".format(parameter.UNITY_ENV_DIR))
+
 
 def print_basic_info(observation_space=None, action_space=None, parameter=None):
     print('\n' + '#' * 81 + " Base Parameters " + '#' * 82)
 
-    print_device_related_info(parameter)
+    print_base_info(parameter)
+
     print('-' * 75 + " Parameters " + '-' * 75)
 
     items = []
 
     for param in dir(parameter):
         if not param.startswith("__") and param not in [
-            "MODEL", "NEURONS_PER_FULLY_CONNECTED_LAYER", "OUT_CHANNELS_PER_LAYER", "KERNEL_SIZE_PER_LAYER",
-            "STRIDE_PER_LAYER", "EPISODE_REWARD_AVG_SOLVED", "EPISODE_REWARD_STD_SOLVED"
+            "MODEL_PARAMETER", "NEURONS_PER_FULLY_CONNECTED_LAYER", "OUT_CHANNELS_PER_LAYER", "KERNEL_SIZE_PER_LAYER",
+            "STRIDE_PER_LAYER", "EPISODE_REWARD_AVG_SOLVED", "EPISODE_REWARD_STD_SOLVED", "UNITY_ENV_DIR",
+            "MODEL_SAVE_DIR", "PROJECT_HOME", "LAYER_ACTIVATION", "LOSS_FUNCTION"
         ]:
             if param in [
                 "BATCH_SIZE", "BUFFER_CAPACITY", "CONSOLE_LOG_INTERVAL_TRAINING_STEPS", "MAX_TRAINING_STEPS",
@@ -108,7 +121,7 @@ def print_basic_info(observation_space=None, action_space=None, parameter=None):
             print("{0:55}".format(items[0]), end="\n")
             items.clear()
 
-    print_model_info(getattr(parameter, "MODEL"))
+    print_model_info(parameter)
 
     if observation_space and action_space:
         if observation_space and action_space:
@@ -122,7 +135,7 @@ def print_basic_info(observation_space=None, action_space=None, parameter=None):
 def print_comparison_basic_info(observation_space, action_space, parameter_c):
     print('\n' + '#' * 81 + " Base Parameters " + '#' * 82)
 
-    print_device_related_info(parameter_c)
+    print_base_info(parameter_c)
     print('-' * 71 + " Common Parameters " + '-' * 71)
 
     items = []
@@ -169,8 +182,9 @@ def print_comparison_basic_info(observation_space, action_space, parameter_c):
         print('-' * 76 + " Agent {0} ".format(agent_idx) + '-' * 76)
         for param in dir(agent_parameter):
             if not param.startswith("__") and param not in [
-                "MODEL", "NEURONS_PER_FULLY_CONNECTED_LAYER", "OUT_CHANNELS_PER_LAYER", "KERNEL_SIZE_PER_LAYER",
-                "STRIDE_PER_LAYER", "EPISODE_REWARD_AVG_SOLVED", "EPISODE_REWARD_STD_SOLVED"
+                "MODEL_PARAMETER", "NEURONS_PER_FULLY_CONNECTED_LAYER", "OUT_CHANNELS_PER_LAYER", "KERNEL_SIZE_PER_LAYER",
+                "STRIDE_PER_LAYER", "EPISODE_REWARD_AVG_SOLVED", "EPISODE_REWARD_STD_SOLVED", "UNITY_ENV_DIR",
+                "COMPARISON_RESULTS_SAVE_DIR", "PROJECT_HOME", "LAYER_ACTIVATION", "LOSS_FUNCTION"
             ]:
                 if param in [
                     "BATCH_SIZE", "BUFFER_CAPACITY", "CONSOLE_LOG_INTERVAL_TRAINING_STEPS", "MAX_TRAINING_STEPS",
@@ -194,7 +208,7 @@ def print_comparison_basic_info(observation_space, action_space, parameter_c):
                 print("{0:55}".format(items[0]), end="\n")
                 items.clear()
 
-        print_model_info(getattr(agent_parameter, "MODEL"))
+        print_model_info(agent_parameter)
 
     if observation_space and action_space:
         if observation_space and action_space:
@@ -205,40 +219,47 @@ def print_comparison_basic_info(observation_space, action_space, parameter_c):
     print()
 
 
-def print_model_info(model):
-    print('-' * 76 + " MODEL " + '-' * 76)
-    if isinstance(model, ParameterLinearModel):
-        item1 = "{0}: {1:}".format("MODEL", "LINEAR_MODEL")
-        item2 = "{0}: {1:}".format("NEURONS_PER_FULLY_CONNECTED_LAYER", model.NEURONS_PER_FULLY_CONNECTED_LAYER)
+def print_model_info(parameter):
+    if parameter.MODEL_PARAMETER is None:
+        set_parameters(parameter)
+
+    model_parameter = parameter.MODEL_PARAMETER
+    print('-' * 76 + " MODEL_TYPE " + '-' * 76)
+    if isinstance(model_parameter, ParameterLinearModel):
+        item1 = "{0}: {1:}".format("MODEL_PARAMETER", "LINEAR_MODEL_PARAMETER")
+        item2 = "{0}: {1:}".format("NEURONS_PER_FULLY_CONNECTED_LAYER", model_parameter.NEURONS_PER_FULLY_CONNECTED_LAYER)
         print("{0:55} {1:55}".format(item1, item2), end="\n")
-    elif isinstance(model, ParameterConvolutionalModel):
-        item1 = "{0}: {1:}".format("MODEL", "CONVOLUTIONAL_MODEL")
-        item2 = "{0}: {1:}".format("OUT_CHANNELS_PER_LAYER", model.OUT_CHANNELS_PER_LAYER)
-        item3 = "{0}: {1:}".format("KERNEL_SIZE_PER_LAYER", model.KERNEL_SIZE_PER_LAYER)
+    elif isinstance(model_parameter, ParameterConvolutionalModel):
+        item1 = "{0}: {1:}".format("MODEL_PARAMETER", "CONVOLUTIONAL_MODEL_PARAMETER")
+        item2 = "{0}: {1:}".format("OUT_CHANNELS_PER_LAYER", model_parameter.OUT_CHANNELS_PER_LAYER)
+        item3 = "{0}: {1:}".format("KERNEL_SIZE_PER_LAYER", model_parameter.KERNEL_SIZE_PER_LAYER)
         print("{0:55} {1:55} {2:55}".format(item1, item2, item3, end="\n"))
-        item1 = "{0}: {1:}".format("STRIDE_PER_LAYER", model.STRIDE_PER_LAYER)
-        item2 = "{0}: {1:}".format("NEURONS_PER_FULLY_CONNECTED_LAYER", model.NEURONS_PER_FULLY_CONNECTED_LAYER)
+        item1 = "{0}: {1:}".format("STRIDE_PER_LAYER", model_parameter.STRIDE_PER_LAYER)
+        item2 = "{0}: {1:}".format("NEURONS_PER_FULLY_CONNECTED_LAYER", model_parameter.NEURONS_PER_FULLY_CONNECTED_LAYER)
         print("{0:55} {1:55}".format(item1, item2), end="\n")
-    elif isinstance(model, ParameterRecurrentLinearModel):
-        item1 = "{0}: {1:}".format("MODEL", "RECURRENT_LINEAR_MODEL")
+    elif isinstance(model_parameter, ParameterRecurrentLinearModel):
+        item1 = "{0}: {1:}".format("MODEL_PARAMETER", "RECURRENT_LINEAR_MODEL_PARAMETER")
         print("{0:55}".format(item1), end="\n")
-        item1 = "{0}: {1:}".format("HIDDEN_SIZE", model.HIDDEN_SIZE)
-        item2 = "{0}: {1:}".format("NUM_LAYERS", model.NUM_LAYERS)
-        item3 = "{0}: {1:}".format("NEURONS_PER_FULLY_CONNECTED_LAYER", model.NEURONS_PER_FULLY_CONNECTED_LAYER)
+        item1 = "{0}: {1:}".format("HIDDEN_SIZE", model_parameter.HIDDEN_SIZE)
+        item2 = "{0}: {1:}".format("NUM_LAYERS", model_parameter.NUM_LAYERS)
+        item3 = "{0}: {1:}".format("NEURONS_PER_FULLY_CONNECTED_LAYER", model_parameter.NEURONS_PER_FULLY_CONNECTED_LAYER)
         print("{0:55} {1:55} {2:55}".format(item1, item2, item3, end="\n"))
-    elif isinstance(model, ParameterRecurrentConvolutionalModel):
-        item1 = "{0}: {1:}".format("MODEL", "RECURRENT_CONVOLUTIONAL_MODEL")
+    elif isinstance(model_parameter, ParameterRecurrentConvolutionalModel):
+        item1 = "{0}: {1:}".format("MODEL_PARAMETER", "RECURRENT_CONVOLUTIONAL_MODEL_PARAMETER")
         print("{0:55}".format(item1), end="\n")
-        item1 = "{0}: {1:}".format("OUT_CHANNELS_PER_LAYER", model.OUT_CHANNELS_PER_LAYER)
-        item2 = "{0}: {1:}".format("KERNEL_SIZE_PER_LAYER", model.KERNEL_SIZE_PER_LAYER)
-        item3 = "{0}: {1:}".format("STRIDE_PER_LAYER", model.STRIDE_PER_LAYER)
+        item1 = "{0}: {1:}".format("OUT_CHANNELS_PER_LAYER", model_parameter.OUT_CHANNELS_PER_LAYER)
+        item2 = "{0}: {1:}".format("KERNEL_SIZE_PER_LAYER", model_parameter.KERNEL_SIZE_PER_LAYER)
+        item3 = "{0}: {1:}".format("STRIDE_PER_LAYER", model_parameter.STRIDE_PER_LAYER)
         print("{0:55} {1:55} {2:55}".format(item1, item2, item3, end="\n"))
-        item1 = "{0}: {1:}".format("HIDDEN_SIZE", model.HIDDEN_SIZE)
-        item2 = "{0}: {1:}".format("NUM_LAYERS", model.NUM_LAYERS)
-        item3 = "{0}: {1:}".format("NEURONS_PER_FULLY_CONNECTED_LAYER", model.NEURONS_PER_FULLY_CONNECTED_LAYER)
+        item1 = "{0}: {1:}".format("HIDDEN_SIZE", model_parameter.HIDDEN_SIZE)
+        item2 = "{0}: {1:}".format("NUM_LAYERS", model_parameter.NUM_LAYERS)
+        item3 = "{0}: {1:}".format("NEURONS_PER_FULLY_CONNECTED_LAYER", model_parameter.NEURONS_PER_FULLY_CONNECTED_LAYER)
         print("{0:55} {1:55} {2:55}".format(item1, item2, item3, end="\n"))
     else:
         raise ValueError()
+
+    print("LAYER_ACTIVATION: {0}".format(parameter.LAYER_ACTIVATION))
+    print("LOSS_FUNCTION: {0}".format(parameter.LOSS_FUNCTION))
 
 
 def print_space(observation_space, action_space, parameter):
@@ -274,9 +295,9 @@ def console_log(
         n_rollout_transitions_v, transition_rolling_rate_v, train_steps_v, train_step_rate_v,
         agent, parameter
 ):
-    console_log = "[Total Episodes: {0:6,}, Total Time Steps {1:7,}] " \
-                  "Mean Episode Reward: {2:6.1f}, Transitions Rolled: {3:7,} ({4:7.3f}/sec.), " \
-                  "Training Steps: {5:5,} ({6:.3f}/sec.), " \
+    console_log = "[Tot. Episodes: {0:5,}, Tot. Time Steps {1:7,}] " \
+                  "Mean Episode Reward: {2:6.1f}, Rolling Outs: {3:7,} ({4:7.3f}/sec.), " \
+                  "Training Steps: {5:4,} ({6:.3f}/sec.), " \
         .format(
             total_episodes_v,
             total_time_steps_v,
@@ -296,12 +317,16 @@ def console_log(
             agent.last_log_policy_objective.value
         )
     elif parameter.AGENT_TYPE == AgentType.A2C:
-        console_log += "critic_loss: {0:7.3f}, log_actor_objective: {1:7.3f}, entropy: {2:5.3f}".format(
+        console_log += "critic_loss: {0:7.3f}, log_actor_obj.: {1:7.3f}, entropy: {2:5.3f}".format(
             agent.last_critic_loss.value, agent.last_log_actor_objective.value, agent.last_entropy.value
         )
+    elif parameter.AGENT_TYPE == AgentType.PPO:
+        console_log += "critic_loss: {0:7.3f}, actor_obj.: {1:7.3f}, ratio: {2:5.3f}, entropy: {3:5.3f}".format(
+            agent.last_critic_loss.value, agent.last_actor_objective.value, agent.last_ratio.value, agent.last_entropy.value
+        )
     elif parameter.AGENT_TYPE == AgentType.SAC:
-        console_log += "critic_loss: {0:7.3f}, actor_objective: {1:7.3f}, alpha: {2:5.3f}, entropy: {3:5.3f}".format(
-            agent.last_critic_loss.value, agent.last_actor_objective.value, agent.alpha.value, agent.last_entropy.value
+        console_log += "critic_loss: {0:7.3f}, actor_obj.: {1:7.3f}, alpha: {2:5.3f}, entropy: {3:5.3f}".format(
+            agent.last_critic_loss.value, agent.last_log_actor_objective.value, agent.alpha.value, agent.last_entropy.value
         )
     elif parameter.AGENT_TYPE == AgentType.DDPG:
         console_log += "critic_loss: {0:7.3f}, actor_loss: {1:7.3f}, ".format(
@@ -320,9 +345,9 @@ def console_log_comparison(
 ):
     for agent_idx, agent in enumerate(agents):
         agent_prefix = "[Agent: {0}]".format(agent_idx)
-        console_log = agent_prefix + "[Total Episodes: {0:6,}, Total Time Steps {1:7,}] " \
-                      "Mean Episode Reward: {2:6.1f}, Transitions Rolled: {3:7,}, " \
-                      "Training Steps: {4:5,}, " \
+        console_log = agent_prefix + "[Tot. Episodes: {0:5,}, Tot. Time Steps {1:7,}] " \
+                      "Mean Episode Reward: {2:6.1f}, Rolling Outs: {3:7,}, " \
+                      "Training Steps: {4:4,}, " \
             .format(
                 total_episodes_per_agent[agent_idx],
                 total_time_step,
@@ -342,8 +367,12 @@ def console_log_comparison(
                 agent.last_log_policy_objective.value
             )
         elif parameter_c.AGENT_PARAMETERS[agent_idx].AGENT_TYPE == AgentType.A2C:
-            console_log += "critic_loss: {0:6.3f}, log_actor_objective: {1:5.3f}, ".format(
+            console_log += "critic_loss: {0:6.3f}, log_actor_obj.: {1:5.3f}, ".format(
                 agent.last_critic_loss.value, agent.last_log_actor_objective.value
+            )
+        elif parameter_c.AGENT_PARAMETERS[agent_idx].AGENT_TYPE == AgentType.PPO:
+            console_log += "critic_loss: {0:6.3f}, actor_obj.: {1:5.3f}, ratio: {2:5.3f}".format(
+                agent.last_critic_loss.value, agent.last_actor_objective.value, agent.ratio.value
             )
         else:
             pass
@@ -396,6 +425,11 @@ def wandb_log(learner, wandb_obj, parameter):
     elif parameter.AGENT_TYPE == AgentType.A2C:
         log_dict["Critic Loss"] = learner.agent.last_critic_loss.value
         log_dict["Log Actor Objective"] = learner.agent.last_log_actor_objective.value
+        log_dict["Entropy"] = learner.agent.last_entropy.value
+    elif parameter.AGENT_TYPE == AgentType.PPO:
+        log_dict["Critic Loss"] = learner.agent.last_critic_loss.value
+        log_dict["Actor Objective"] = learner.agent.last_actor_objective.value
+        log_dict["Ratio"] = learner.agent.last_ratio.value
         log_dict["Entropy"] = learner.agent.last_entropy.value
     elif parameter.AGENT_TYPE == AgentType.SAC:
         log_dict["Critic Loss"] = learner.agent.last_critic_loss.value
@@ -535,7 +569,7 @@ def get_train_env(parameter):
                     raise ValueError()
 
                 u_env = UnityEnvironment(
-                    file_name=os.path.join(parameter.ENV_UNITY_DIR, parameter.ENV_NAME, platform_dir,
+                    file_name=os.path.join(parameter.UNITY_ENV_DIR, parameter.ENV_NAME, platform_dir,
                                            parameter.ENV_NAME),
                     worker_id=0, no_graphics=False
                 )
@@ -576,7 +610,7 @@ def get_single_env(parameter):
             raise ValueError()
 
         u_env = UnityEnvironment(
-            file_name=os.path.join(parameter.ENV_UNITY_DIR, parameter.ENV_NAME, platform_dir, parameter.ENV_NAME),
+            file_name=os.path.join(parameter.UNITY_ENV_DIR, parameter.ENV_NAME, platform_dir, parameter.ENV_NAME),
             worker_id=1, no_graphics=False
         )
         single_env = UnityToGymWrapper(u_env)
@@ -635,6 +669,7 @@ def get_continuous_action_info(action_space):
 
 def get_scaled_action():
     pass
+
 
 class EpsilonTracker:
     def __init__(self, epsilon_init, epsilon_final, epsilon_final_training_step):

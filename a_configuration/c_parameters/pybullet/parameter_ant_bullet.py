@@ -23,9 +23,7 @@ class ParameterAntBulletA2c(ParameterBase, ParameterAntBullet, ParameterA2c):
         self.N_VECTORIZED_ENVS = 1
         self.N_ACTORS = 1
         self.MAX_TRAINING_STEPS = 2_000_000
-        self.CONSOLE_LOG_INTERVAL_TRAINING_STEPS = 100
-        self.TEST_INTERVAL_TRAINING_STEPS = 5_000
-        self.MODEL = ParameterLinearModel(ModelType.SMALL_LINEAR)
+        self.MODEL_TYPE = ModelType.SMALL_LINEAR
 
 
 class ParameterAntBulletDdpg(ParameterBase, ParameterAntBullet, ParameterDdpg):
@@ -44,9 +42,7 @@ class ParameterAntBulletDdpg(ParameterBase, ParameterAntBullet, ParameterDdpg):
         self.N_VECTORIZED_ENVS = 1
         self.N_ACTORS = 1
         self.MAX_TRAINING_STEPS = 2_000_000
-        self.CONSOLE_LOG_INTERVAL_TRAINING_STEPS = 100
-        self.TEST_INTERVAL_TRAINING_STEPS = 5_000
-        self.MODEL = ParameterLinearModel(ModelType.SMALL_LINEAR)
+        self.MODEL_TYPE = ModelType.SMALL_LINEAR
 
 
 class ParameterAntBulletSac(ParameterBase, ParameterAntBullet, ParameterSac):
@@ -68,9 +64,7 @@ class ParameterAntBulletSac(ParameterBase, ParameterAntBullet, ParameterSac):
         self.N_VECTORIZED_ENVS = 1
         self.N_ACTORS = 1
         self.MAX_TRAINING_STEPS = 2_000_000
-        self.CONSOLE_LOG_INTERVAL_TRAINING_STEPS = 100
-        self.TEST_INTERVAL_TRAINING_STEPS = 5_000
-        self.MODEL = ParameterLinearModel(ModelType.SMALL_LINEAR_2)
+        self.MODEL_TYPE = ModelType.SMALL_LINEAR
 
 
 if __name__ == "__main__":

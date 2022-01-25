@@ -9,6 +9,8 @@ class AgentDoubleDqn(AgentDqn):
         super(AgentDoubleDqn, self).__init__(observation_space, action_space, parameter)
 
     def train_double_dqn(self, training_steps_v):
+        count_training_steps = 0
+
         # state_action_values.shape: torch.Size([32, 1])
         state_action_values = self.q_net(self.observations).gather(dim=-1, index=self.actions)
 
@@ -22,7 +24,7 @@ class AgentDoubleDqn(AgentDqn):
             target_q_values = self.rewards + self.parameter.GAMMA ** self.parameter.N_STEP * next_q_values
 
         # loss is just scalar torch value
-        q_net_loss = F._loss(state_action_values, target_q_values)
+        q_net_loss = self.parameter.LOSS_FUNCTION(state_action_values, target_q_values)
 
         # print("observations.shape: {0}, actions.shape: {1}, "
         #       "next_observations.shape: {2}, rewards.shape: {3}, dones.shape: {4}".format(
@@ -47,3 +49,7 @@ class AgentDoubleDqn(AgentDqn):
         self.epsilon.value = self.epsilon_tracker.epsilon(training_steps_v)
 
         self.last_q_net_loss.value = q_net_loss.item()
+
+        count_training_steps = 1
+
+        return count_training_steps

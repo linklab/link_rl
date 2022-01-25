@@ -19,12 +19,12 @@ class QNet(Model):
         super(QNet, self).__init__(observation_shape, n_out_actions, n_discrete_actions, parameter)
 
         self.qnet_params = []
-        if isinstance(self.parameter.MODEL, ParameterLinearModel):
+        if isinstance(self.parameter.MODEL_PARAMETER, ParameterLinearModel):
             input_n_features = self.observation_shape[0]
             self.fc_layers = self.get_linear_layers(input_n_features)
             self.qnet_params += list(self.fc_layers.parameters())
 
-        elif isinstance(self.parameter.MODEL, ParameterConvolutionalModel):
+        elif isinstance(self.parameter.MODEL_PARAMETER, ParameterConvolutionalModel):
             input_n_channels = self.observation_shape[0]
             self.conv_layers = self.get_conv_layers(input_n_channels)
             self.qnet_params += list(self.conv_layers.parameters())
@@ -33,58 +33,58 @@ class QNet(Model):
             self.fc_layers = self.get_linear_layers(conv_out_flat_size)
             self.qnet_params += list(self.fc_layers.parameters())
 
-        elif isinstance(self.parameter.MODEL, ParameterRecurrentLinearModel):
+        elif isinstance(self.parameter.MODEL_PARAMETER, ParameterRecurrentLinearModel):
             input_n_features = self.observation_shape[0]
             self.recurrent_layers = self.get_recurrent_layers(input_n_features)
             self.qnet_params += list(self.recurrent_layers.parameters())
 
-            #recurrent_out_flat_size, _ = self._get_recurrent_out(self.recurrent_layers, input_n_features)
-            #self.fc_layers = self.get_linear_layers(recurrent_out_flat_size)
+            # recurrent_out_flat_size, _ = self._get_recurrent_out(self.recurrent_layers, input_n_features)
+            # self.fc_layers = self.get_linear_layers(recurrent_out_flat_size)
 
-            self.fc_layers = self.get_linear_layers(self.parameter.MODEL.HIDDEN_SIZE)
+            self.fc_layers = self.get_linear_layers(self.parameter.MODEL_PARAMETER.HIDDEN_SIZE)
             self.qnet_params += list(self.fc_layers.parameters())
 
-        elif isinstance(self.parameter.MODEL, ParameterRecurrentConvolutionalModel):
+        elif isinstance(self.parameter.MODEL_PARAMETER, ParameterRecurrentConvolutionalModel):
             input_n_channels = self.observation_shape[0]
             self.conv_layers = self.get_conv_layers(input_n_channels)
             self.qnet_params += list(self.conv_layers.parameters())
 
             conv_out_flat_size = self._get_conv_out(self.conv_layers, observation_shape)
-            self.fc_layers_1 = nn.Linear(conv_out_flat_size, self.parameter.MODEL.HIDDEN_SIZE)
+            self.fc_layers_1 = nn.Linear(conv_out_flat_size, self.parameter.MODEL_PARAMETER.HIDDEN_SIZE)
             self.qnet_params += list(self.fc_layers_1.parameters())
 
-            self.recurrent_layers = self.get_recurrent_layers(self.parameter.MODEL.HIDDEN_SIZE)
+            self.recurrent_layers = self.get_recurrent_layers(self.parameter.MODEL_PARAMETER.HIDDEN_SIZE)
             self.qnet_params += list(self.recurrent_layers.parameters())
 
             # recurrent_out_flat_size, _ = self._get_recurrent_out(
             #     self.recurrent_layers,
-            #     self.parameter.MODEL.HIDDEN_SIZE
+            #     self.parameter.MODEL_PARAMETER.HIDDEN_SIZE
             # )
-            self.fc_layers_2 = self.get_linear_layers(self.parameter.MODEL.HIDDEN_SIZE)
+            self.fc_layers_2 = self.get_linear_layers(self.parameter.MODEL_PARAMETER.HIDDEN_SIZE)
             self.qnet_params += list(self.fc_layers_2.parameters())
 
         else:
             raise ValueError()
 
         self.fc_last = nn.Linear(
-            self.parameter.MODEL.NEURONS_PER_FULLY_CONNECTED_LAYER[-1], self.n_discrete_actions
+            self.parameter.MODEL_PARAMETER.NEURONS_PER_FULLY_CONNECTED_LAYER[-1], self.n_discrete_actions
         )
         self.qnet_params += list(self.fc_last.parameters())
 
         self.version = 0
 
-    def forward(self, x):
+    def forward(self, x, save_hidden=False):
         if isinstance(x, np.ndarray):
             x = torch.tensor(x, dtype=torch.float32, device=self.parameter.DEVICE)
 
-        if isinstance(self.parameter.MODEL, ParameterLinearModel):
+        if isinstance(self.parameter.MODEL_PARAMETER, ParameterLinearModel):
             x = self.fc_layers(x)
-        elif isinstance(self.parameter.MODEL, ParameterConvolutionalModel):
-            #print("x.shape:", x.shape)
+        elif isinstance(self.parameter.MODEL_PARAMETER, ParameterConvolutionalModel):
+            # print("x.shape:", x.shape)
             conv_out = self.conv_layers(x)
             conv_out = torch.flatten(conv_out, start_dim=1)
             x = self.fc_layers(conv_out)
-        elif isinstance(self.parameter.MODEL, ParameterRecurrentLinearModel):
+        elif isinstance(self.parameter.MODEL_PARAMETER, ParameterRecurrentLinearModel):
             """
             x: [(observations, hiddens)]
                 type(x): list
@@ -126,14 +126,15 @@ class QNet(Model):
                 rnn_in = rnn_in.unsqueeze(1)
 
             rnn_out, h_n = self.recurrent_layers(rnn_in, h_0)
-            self.recurrent_hidden = h_n.detach()  # save hidden
-            rnn_out_flattened = torch.flatten(rnn_out, start_dim=1)
 
-            #print(rnn_in.shape, rnn_out.shape, rnn_out_flattened.shape, "!!!!!")
+            if save_hidden:
+                self.recurrent_hidden = h_n.detach()  # save hidden
+
+            rnn_out_flattened = torch.flatten(rnn_out, start_dim=1)
 
             x = self.fc_layers(rnn_out_flattened)
 
-        elif isinstance(self.parameter.MODEL, ParameterRecurrentConvolutionalModel):
+        elif isinstance(self.parameter.MODEL_PARAMETER, ParameterRecurrentConvolutionalModel):
             x, h_0 = x[0]
             if isinstance(x, np.ndarray):
                 x = torch.tensor(x, dtype=torch.float32, device=self.parameter.DEVICE)
@@ -146,7 +147,7 @@ class QNet(Model):
 
             rnn_in = x
             if rnn_in.ndim == 2:
-                rnn_in = rnn_in.unsqueeze(1)
+                rnn_in = rnn_in.unsqueeze(0)
 
             rnn_out, h_n = self.recurrent_layers(rnn_in, h_0)
             self.recurrent_hidden = h_n.detach()  # save hidden
@@ -169,11 +170,11 @@ class DuelingQNet(Model):
         super(DuelingQNet, self).__init__(observation_shape, n_out_actions, n_discrete_actions, parameter)
 
         self.qnet_params = []
-        if isinstance(self.parameter.MODEL, ParameterLinearModel):
+        if isinstance(self.parameter.MODEL_PARAMETER, ParameterLinearModel):
             input_n_features = self.observation_shape[0]
             self.fc_layers = self.get_linear_layers(input_n_features=input_n_features)
             self.qnet_params += list(self.fc_layers.parameters())
-        elif isinstance(self.parameter.MODEL, ParameterConvolutionalModel):
+        elif isinstance(self.parameter.MODEL_PARAMETER, ParameterConvolutionalModel):
             input_n_channels = self.observation_shape[0]
             self.conv_layers = self.get_conv_layers(input_n_channels=input_n_channels)
             self.qnet_params += list(self.conv_layers.parameters())
@@ -184,12 +185,12 @@ class DuelingQNet(Model):
             raise ValueError()
 
         self.fc_last_adv = nn.Linear(
-            self.parameter.MODEL.NEURONS_PER_FULLY_CONNECTED_LAYER[-1], self.n_discrete_actions
+            self.parameter.MODEL_PARAMETER.NEURONS_PER_FULLY_CONNECTED_LAYER[-1], self.n_discrete_actions
         )
         self.qnet_params += list(self.fc_last_adv.parameters())
 
         self.fc_last_val = nn.Linear(
-            self.parameter.MODEL.NEURONS_PER_FULLY_CONNECTED_LAYER[-1], 1
+            self.parameter.MODEL_PARAMETER.NEURONS_PER_FULLY_CONNECTED_LAYER[-1], 1
         )
         self.qnet_params += list(self.fc_last_val.parameters())
 
@@ -199,11 +200,11 @@ class DuelingQNet(Model):
         if isinstance(x, np.ndarray):
             x = torch.tensor(x, dtype=torch.float32, device=self.parameter.DEVICE)
 
-        if isinstance(self.parameter.MODEL, ParameterLinearModel):
+        if isinstance(self.parameter.MODEL_PARAMETER, ParameterLinearModel):
             x = self.fc_layers(x)
             adv = self.fc_last_adv(x)
             val = self.fc_last_val(x)
-        elif isinstance(self.parameter.MODEL, ParameterConvolutionalModel):
+        elif isinstance(self.parameter.MODEL_PARAMETER, ParameterConvolutionalModel):
             conv_out = self.conv_layers(x)
             conv_out = torch.flatten(conv_out, start_dim=1)
             x = self.fc_layers(conv_out)

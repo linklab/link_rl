@@ -1,5 +1,4 @@
 from a_configuration.b_base.b_agents.agents_off_policy import ParameterDdpg
-from a_configuration.b_base.c_models.linear_models import ParameterLinearModel
 from a_configuration.b_base.parameter_base import ParameterBase
 from a_configuration.b_base.a_environments.unity.unity_box import Parameter3DBall
 from g_utils.types import ModelType
@@ -21,6 +20,4 @@ class Parameter3DBallDdqg(ParameterBase, Parameter3DBall, ParameterDdpg):
         self.N_VECTORIZED_ENVS = 1
         self.N_ACTORS = 1
         self.MAX_TRAINING_STEPS = 2_000_000
-        self.CONSOLE_LOG_INTERVAL_TRAINING_STEPS = 100
-        self.TEST_INTERVAL_TRAINING_STEPS = 5_000
-        self.MODEL = ParameterLinearModel(ModelType.SMALL_LINEAR)
+        self.MODEL_TYPE = ModelType.SMALL_LINEAR

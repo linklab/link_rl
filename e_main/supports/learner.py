@@ -68,8 +68,8 @@ class Learner(mp.Process):
                 self.histories.append(deque(maxlen=self.parameter.N_STEP))
 
         self.is_recurrent_model = any([
-            isinstance(self.parameter.MODEL, ParameterRecurrentLinearModel),
-            isinstance(self.parameter.MODEL, ParameterRecurrentConvolutionalModel)
+            isinstance(self.parameter.MODEL_PARAMETER, ParameterRecurrentLinearModel),
+            isinstance(self.parameter.MODEL_PARAMETER, ParameterRecurrentConvolutionalModel)
         ])
 
     def generator_on_policy_transition(self):
@@ -173,18 +173,16 @@ class Learner(mp.Process):
                 self.episode_rewards[actor_id][env_id] = 0.0
 
                 if self.parameter.AGENT_TYPE == AgentType.REINFORCE:
-                    is_train_success_done = self.agent.train(training_steps_v=self.training_step.value)
-                    if is_train_success_done:
-                        self.training_step.value += 1
+                    count_training_steps = self.agent.train(training_steps_v=self.training_step.value)
+                    self.training_step.value += count_training_steps
 
             train_conditions = [
                 self.total_time_step.value >= self.next_train_time_step,
                 self.parameter.AGENT_TYPE != AgentType.REINFORCE
             ]
             if all(train_conditions):
-                is_train_success_done = self.agent.train(training_steps_v=self.training_step.value)
-                if is_train_success_done:
-                    self.training_step.value += 1
+                count_training_steps = self.agent.train(training_steps_v=self.training_step.value)
+                self.training_step.value += count_training_steps
 
                 self.next_train_time_step += self.parameter.TRAIN_INTERVAL_GLOBAL_TIME_STEPS
 
@@ -231,17 +229,16 @@ class Learner(mp.Process):
         self.train_loop(parallel=True)
 
     def testing(self):
-        print("*" * 120)
-        self.test_episode_reward_avg.value, \
-        self.test_episode_reward_std.value = \
+        print("*" * 150)
+        self.test_episode_reward_avg.value, self.test_episode_reward_std.value = \
             self.play_for_testing(self.parameter.N_TEST_EPISODES)
 
         elapsed_time = time.time() - self.train_start_time
         formatted_elapsed_time = time.strftime('%H:%M:%S', time.gmtime(elapsed_time))
 
         print("[Test: {0}, Training Step: {1:6,}] "
-              "Episode Reward - Average: {2:.3f}, Standard Dev.: {3:.3f}, Elapsed Time: {4} ".format(
-            self.test_idx.value + 1, self.training_step.value,
+              "{2} Episodes Reward - Average: {3:.3f}, Standard Dev.: {4:.3f}, Elapsed Time from Training Start: {5} ".format(
+            self.test_idx.value + 1, self.training_step.value, self.parameter.N_TEST_EPISODES,
             self.test_episode_reward_avg.value, self.test_episode_reward_std.value, formatted_elapsed_time
         ))
 
@@ -268,7 +265,7 @@ class Learner(mp.Process):
             print("[TRAIN TERMINATION] TERMINATION CONDITION REACHES!!!")
             self.is_terminated.value = True
 
-        print("*" * 120)
+        print("*" * 150)
 
     def play_for_testing(self, n_test_episodes):
         self.agent.model.eval()
