@@ -124,10 +124,6 @@ class AgentPpo(AgentA2c):
                 self.clip_actor_model_parameter_grad_value(self.actor_model.actor_params)
                 self.actor_optimizer.step()
 
-                if torch.any(torch.isnan(batch_actor_objective)):
-                    print(batch_actor_objective, batch_mu_v, batch_var_v, batch_log_pi_action_v)
-                    raise ValueError()
-
                 sum_critic_loss += batch_critic_loss.item()
                 sum_actor_objective += batch_actor_objective.item()
                 sum_entropy += batch_entropy.item()
