@@ -38,8 +38,8 @@ class QNet(Model):
             self.recurrent_layers = self.get_recurrent_layers(input_n_features)
             self.qnet_params += list(self.recurrent_layers.parameters())
 
-            #recurrent_out_flat_size, _ = self._get_recurrent_out(self.recurrent_layers, input_n_features)
-            #self.fc_layers = self.get_linear_layers(recurrent_out_flat_size)
+            # recurrent_out_flat_size, _ = self._get_recurrent_out(self.recurrent_layers, input_n_features)
+            # self.fc_layers = self.get_linear_layers(recurrent_out_flat_size)
 
             self.fc_layers = self.get_linear_layers(self.parameter.MODEL_PARAMETER.HIDDEN_SIZE)
             self.qnet_params += list(self.fc_layers.parameters())
@@ -73,14 +73,14 @@ class QNet(Model):
 
         self.version = 0
 
-    def forward(self, x):
+    def forward(self, x, save_hidden=False):
         if isinstance(x, np.ndarray):
             x = torch.tensor(x, dtype=torch.float32, device=self.parameter.DEVICE)
 
         if isinstance(self.parameter.MODEL_PARAMETER, ParameterLinearModel):
             x = self.fc_layers(x)
         elif isinstance(self.parameter.MODEL_PARAMETER, ParameterConvolutionalModel):
-            #print("x.shape:", x.shape)
+            # print("x.shape:", x.shape)
             conv_out = self.conv_layers(x)
             conv_out = torch.flatten(conv_out, start_dim=1)
             x = self.fc_layers(conv_out)
@@ -123,14 +123,14 @@ class QNet(Model):
                 h_0 = torch.tensor(h_0, dtype=torch.float32, device=self.parameter.DEVICE)
 
             if rnn_in.ndim == 2:
-                rnn_in = rnn_in.unsqueeze(0)
+                rnn_in = rnn_in.unsqueeze(1)
 
             rnn_out, h_n = self.recurrent_layers(rnn_in, h_0)
-            self.recurrent_hidden = h_n.detach()  # save hidden
-            # self.init_recurrent_hidden()
-            rnn_out_flattened = torch.flatten(rnn_out, start_dim=1)
 
-            #print(rnn_in.shape, rnn_out.shape, rnn_out_flattened.shape, "!!!!!")
+            if save_hidden:
+                self.recurrent_hidden = h_n.detach()  # save hidden
+
+            rnn_out_flattened = torch.flatten(rnn_out, start_dim=1)
 
             x = self.fc_layers(rnn_out_flattened)
 
