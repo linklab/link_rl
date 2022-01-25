@@ -38,12 +38,12 @@ class AgentA2c(Agent):
         self.critic_optimizer = optim.Adam(self.critic_model.critic_params, lr=self.parameter.LEARNING_RATE)
 
         self.last_critic_loss = mp.Value('d', 0.0)
-        self.last_log_actor_objective = mp.Value('d', 0.0)
+        self.last_actor_objective = mp.Value('d', 0.0)
         self.last_entropy = mp.Value('d', 0.0)
 
     def get_action(self, obs, mode=AgentMode.TRAIN):
         if isinstance(self.action_space, Discrete):
-            action_prob = self.actor_model.pi(obs)
+            action_prob = self.actor_model.pi(obs, save_hidden=True)
 
             if mode == AgentMode.TRAIN:
                 dist = Categorical(probs=action_prob)
@@ -128,8 +128,19 @@ class AgentA2c(Agent):
             raise ValueError()
 
         # actor_objective.shape: (,) <--  값 1개
-        log_actor_objective = torch.mean(criticized_log_pi_action_v)
-        actor_loss = -1.0 * log_actor_objective
+        actor_objective = torch.mean(criticized_log_pi_action_v)
+
+        # if actor_objective.item() > 10000.0:
+        #     print("actor_objective:", actor_objective)
+        #     print("td_target_values:", td_target_values)
+        #     print("values:", values)
+        #     print("advantages:", advantages)
+        #     print("mu_v:", mu_v, "var_v:", var_v)
+        #     print("self.actions:", self.actions)
+        #     print("dist.log_prob(value=self.actions).sum(dim=-1, keepdim=True):", dist.log_prob(value=self.actions).sum(dim=-1, keepdim=True))
+        #     raise ValueError()
+
+        actor_loss = -1.0 * actor_objective
         entropy_loss = -1.0 * entropy
         actor_loss = actor_loss + entropy_loss * self.parameter.ENTROPY_BETA
 
@@ -144,7 +155,7 @@ class AgentA2c(Agent):
         ##############################
 
         self.last_critic_loss.value = critic_loss.item()
-        self.last_log_actor_objective.value = log_actor_objective.item()
+        self.last_actor_objective.value = actor_objective.item()
         self.last_entropy.value = entropy.item()
 
         count_training_steps = 1

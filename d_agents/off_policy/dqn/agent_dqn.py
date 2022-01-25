@@ -47,7 +47,7 @@ class AgentDqn(Agent):
         self.last_q_net_loss = mp.Value('d', 0.0)
 
     def get_action(self, obs, mode=AgentMode.TRAIN):
-        out = self.q_net.forward(obs)
+        out = self.q_net.forward(obs, save_hidden=True)
 
         if mode == AgentMode.TRAIN:
             coin = np.random.random()    # 0.0과 1.0사이의 임의의 값을 반환

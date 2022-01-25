@@ -31,7 +31,7 @@ class AgentReinforce(Agent):
         self.last_log_policy_objective = mp.Value('d', 0.0)
 
     def get_action(self, obs, mode=AgentMode.TRAIN):
-        action_prob = self.policy.pi(obs)
+        action_prob = self.policy.pi(obs, save_hidden=True)
         m = Categorical(probs=action_prob)
 
         if mode == AgentMode.TRAIN:

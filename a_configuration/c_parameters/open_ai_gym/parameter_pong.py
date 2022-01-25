@@ -76,7 +76,6 @@ class ParameterPongA2c(
         ParameterA2c.__init__(self)
 
         self.BATCH_SIZE = 64
-        self.LEARNING_RATE = 0.00001
         self.N_STEP = 1
         self.N_VECTORIZED_ENVS = 2
         self.N_ACTORS = 1
