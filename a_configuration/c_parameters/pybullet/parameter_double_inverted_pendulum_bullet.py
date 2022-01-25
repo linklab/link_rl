@@ -15,8 +15,6 @@ class ParameterDoubleInvertedPendulumBulletA2c(ParameterBase, ParameterDoubleInv
         ParameterA2c.__init__(self)
 
         self.BATCH_SIZE = 64
-        self.ACTOR_LEARNING_RATE = 0.0002
-        self.LEARNING_RATE = 0.001
         self.N_STEP = 1
         self.BUFFER_CAPACITY = self.BATCH_SIZE
         self.MIN_BUFFER_SIZE_FOR_TRAIN = self.BATCH_SIZE * 10

@@ -9,7 +9,7 @@ class ParameterDqn(ParameterAgent):
         ParameterAgent.__init__(self)
         self.AGENT_TYPE = AgentType.DQN
 
-        self.LEARNING_RATE = 0.005
+        self.LEARNING_RATE = 0.001
 
         self.EPSILON_INIT = 1.0
         self.EPSILON_FINAL = 0.1
