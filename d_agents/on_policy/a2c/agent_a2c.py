@@ -103,7 +103,7 @@ class AgentA2c(Agent):
         #q_values = td_target_values
         advantages = (td_target_values - values).detach()
 
-        advantages = (advantages - torch.mean(advantages)) / (torch.std(advantages) + 1e-7)
+        #advantages = (advantages - torch.mean(advantages)) / (torch.std(advantages) + 1e-7)
 
         if isinstance(self.action_space, Discrete):
             action_probs = self.actor_model.pi(self.observations)
@@ -122,6 +122,7 @@ class AgentA2c(Agent):
             # entropy = 0.5 * (torch.log(2.0 * np.pi * var_v) + 1.0).sum(dim=-1)
             # entropy = entropy.mean()
             dist = Normal(loc=mu_v, scale=torch.sqrt(var_v))
+            assert dist.log_prob(value=self.actions).sum(dim=-1, keepdim=True).shape == advantages.shape
             criticized_log_pi_action_v = dist.log_prob(value=self.actions).sum(dim=-1, keepdim=True) * advantages
             entropy = dist.entropy().mean()
         else:

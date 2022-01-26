@@ -3,7 +3,9 @@ from a_configuration.c_parameters.open_ai_gym.parameter_cartpole import Paramete
     ParameterCartPoleA2c
 from a_configuration.c_parameters.pybullet.parameter_cartpole_bullet import ParameterCartPoleBulletA2c, \
     ParameterCartPoleBulletDqn, ParameterCartPoleBulletDoubleDqn, ParameterCartPoleBulletDuelingDqn, \
-    ParameterCartPoleBulletDoubleDuelingDqn, ParameterCartPoleContinuousBulletDdpg
+    ParameterCartPoleBulletDoubleDuelingDqn
+from a_configuration.c_parameters.pybullet.parameter_cartpole_continuous_bullet import \
+    ParameterCartPoleContinuousBulletDdpg
 from g_utils.types import ModelType
 
 
