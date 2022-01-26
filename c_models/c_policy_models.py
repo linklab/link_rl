@@ -146,7 +146,8 @@ class ContinuousPolicyModel(PolicyModel):
         )
         self.actor_params += list(self.mu.parameters())
 
-        # We handle the parameter as the log of the standard deviation.
+        # We handle the log of the standard deviation as the torch parameter.
+        # log_sigma = 0.1 <- starting value. it mean std = 1.105
         log_sigma_param = nn.Parameter(torch.full((self.n_out_actions,), 0.1))
         self.register_parameter("log_sigma", log_sigma_param)
         self.actor_params.append(self.log_sigma)
@@ -171,7 +172,6 @@ class ContinuousPolicyModel(PolicyModel):
         # By doing so we ensure we don’t have negative values with numerical stability too.
         # The standard deviation can’t be negative (nor 0).
         sigma_v = torch.clamp(self.log_sigma.exp(), 1e-3, 50)
-
         return mu_v, sigma_v
 
 

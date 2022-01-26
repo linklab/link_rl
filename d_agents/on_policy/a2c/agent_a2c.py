@@ -41,7 +41,10 @@ class AgentA2c(Agent):
         self.last_actor_objective = mp.Value('d', 0.0)
         self.last_entropy = mp.Value('d', 0.0)
 
+        self.step = 0
+
     def get_action(self, obs, mode=AgentMode.TRAIN):
+        self.step += 1
         if isinstance(self.action_space, Discrete):
             action_prob = self.actor_model.pi(obs, save_hidden=True)
 
@@ -53,6 +56,7 @@ class AgentA2c(Agent):
             return action
         elif isinstance(self.action_space, Box):
             mu_v, sigma_v = self.actor_model.pi(obs)
+            #if self.step % 1000 == 0: print(sigma_v, "!!!")
 
             if mode == AgentMode.TRAIN:
                 # actions = np.random.normal(
@@ -103,7 +107,7 @@ class AgentA2c(Agent):
         #q_values = td_target_values
         advantages = (td_target_values - values).detach()
 
-        #advantages = (advantages - torch.mean(advantages)) / (torch.std(advantages) + 1e-7)
+        advantages = (advantages - torch.mean(advantages)) / (torch.std(advantages) + 1e-7)
 
         if isinstance(self.action_space, Discrete):
             action_probs = self.actor_model.pi(self.observations)

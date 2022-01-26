@@ -18,6 +18,8 @@ class ParameterCartPoleContinuousBulletA2c(
         self.BATCH_SIZE = 512
         self.MAX_TRAINING_STEPS = 100_000
         self.MODEL_TYPE = ModelType.SMALL_LINEAR
+        self.ACTOR_LEARNING_RATE = 0.0005
+        self.LEARNING_RATE = 0.001
 
 
 class ParameterCartPoleContinuousBulletPpo(
@@ -36,6 +38,8 @@ class ParameterCartPoleContinuousBulletPpo(
         self.BATCH_SIZE = 256
         self.PPO_TRAJECTORY_SIZE = self.BATCH_SIZE * 10
         self.BUFFER_CAPACITY = self.PPO_TRAJECTORY_SIZE
+        self.ACTOR_LEARNING_RATE = 0.0005
+        self.LEARNING_RATE = 0.001
 
 
 class ParameterCartPoleContinuousBulletSac(
@@ -52,6 +56,8 @@ class ParameterCartPoleContinuousBulletSac(
         self.N_ACTORS = 1
         self.MAX_TRAINING_STEPS = 100_000
         self.MODEL_TYPE = ModelType.SMALL_LINEAR
+        self.ACTOR_LEARNING_RATE = 0.0005
+        self.LEARNING_RATE = 0.001
 
 
 class ParameterCartPoleContinuousBulletDdpg(
