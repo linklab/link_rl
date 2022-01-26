@@ -76,11 +76,10 @@ class ParameterPongA2c(
         ParameterA2c.__init__(self)
 
         self.BATCH_SIZE = 64
-        self.LEARNING_RATE = 0.00001
         self.N_STEP = 1
         self.N_VECTORIZED_ENVS = 2
         self.N_ACTORS = 1
         self.MAX_TRAINING_STEPS = 1_000_000
-        self.ENTROPY_BETA = 0.02
+        self.ENTROPY_BETA = 0.0002
         self.BUFFER_CAPACITY = self.BATCH_SIZE
         self.MODEL_TYPE = ModelType.MEDIUM_CONVOLUTIONAL

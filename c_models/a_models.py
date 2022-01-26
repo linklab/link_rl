@@ -3,7 +3,6 @@ from torch import nn
 from typing import Tuple
 from collections import OrderedDict
 import numpy as np
-import torch.nn.init as init
 
 from a_configuration.b_base.c_models.convolutional_models import ParameterConvolutionalModel
 from a_configuration.b_base.c_models.linear_models import ParameterLinearModel
@@ -47,7 +46,6 @@ class Model(nn.Module):
             input_n_features,
             self.parameter.MODEL_PARAMETER.NEURONS_PER_FULLY_CONNECTED_LAYER[0]
         )
-        init.xavier_normal_(fc_layers_dict["fc_0"].weight)
         if self.parameter.USE_LAYER_NORM:
             self.get_layer_normalization(fc_layers_dict, 0)
 
@@ -58,7 +56,6 @@ class Model(nn.Module):
                 self.parameter.MODEL_PARAMETER.NEURONS_PER_FULLY_CONNECTED_LAYER[idx - 1],
                 self.parameter.MODEL_PARAMETER.NEURONS_PER_FULLY_CONNECTED_LAYER[idx]
             )
-            init.xavier_normal_(fc_layers_dict["fc_{0}".format(idx)].weight)
             if self.parameter.USE_LAYER_NORM:
                 self.get_layer_normalization(fc_layers_dict, idx)
 

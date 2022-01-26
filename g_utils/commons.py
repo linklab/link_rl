@@ -12,6 +12,7 @@ from gym.vector import AsyncVectorEnv
 import plotly.graph_objects as go
 from gym_unity.envs import UnityToGymWrapper
 from mlagents_envs.environment import UnityEnvironment
+from mlagents_envs.side_channel.engine_configuration_channel import EngineConfigurationChannel
 
 from a_configuration.a_config.config import SYSTEM_USER_NAME
 from a_configuration.b_base.a_environments.unity.unity_box import ParameterUnityGymEnv
@@ -97,7 +98,7 @@ def print_basic_info(observation_space=None, action_space=None, parameter=None):
         if not param.startswith("__") and param not in [
             "MODEL_PARAMETER", "NEURONS_PER_FULLY_CONNECTED_LAYER", "OUT_CHANNELS_PER_LAYER", "KERNEL_SIZE_PER_LAYER",
             "STRIDE_PER_LAYER", "EPISODE_REWARD_AVG_SOLVED", "EPISODE_REWARD_STD_SOLVED", "UNITY_ENV_DIR",
-            "MODEL_SAVE_DIR", "PROJECT_HOME", "LAYER_ACTIVATION", "LOSS_FUNCTION"
+            "MODEL_SAVE_DIR", "PROJECT_HOME", "LAYER_ACTIVATION", "LOSS_FUNCTION", "ENV_NAME", "PLAY_MODEL_FILE_NAME"
         ]:
             if param in [
                 "BATCH_SIZE", "BUFFER_CAPACITY", "CONSOLE_LOG_INTERVAL_TRAINING_STEPS", "MAX_TRAINING_STEPS",
@@ -126,7 +127,7 @@ def print_basic_info(observation_space=None, action_space=None, parameter=None):
     if observation_space and action_space:
         if observation_space and action_space:
             print('-' * 77 + " ENV " + '-' * 77)
-        print_space(observation_space, action_space, parameter)
+        print_env_info(observation_space, action_space, parameter)
 
     print('#' * 182)
     print()
@@ -184,7 +185,8 @@ def print_comparison_basic_info(observation_space, action_space, parameter_c):
             if not param.startswith("__") and param not in [
                 "MODEL_PARAMETER", "NEURONS_PER_FULLY_CONNECTED_LAYER", "OUT_CHANNELS_PER_LAYER", "KERNEL_SIZE_PER_LAYER",
                 "STRIDE_PER_LAYER", "EPISODE_REWARD_AVG_SOLVED", "EPISODE_REWARD_STD_SOLVED", "UNITY_ENV_DIR",
-                "COMPARISON_RESULTS_SAVE_DIR", "PROJECT_HOME", "LAYER_ACTIVATION", "LOSS_FUNCTION"
+                "COMPARISON_RESULTS_SAVE_DIR", "PROJECT_HOME", "LAYER_ACTIVATION", "LOSS_FUNCTION", "ENV_NAME",
+                "PLAY_MODEL_FILE_NAME"
             ]:
                 if param in [
                     "BATCH_SIZE", "BUFFER_CAPACITY", "CONSOLE_LOG_INTERVAL_TRAINING_STEPS", "MAX_TRAINING_STEPS",
@@ -213,7 +215,7 @@ def print_comparison_basic_info(observation_space, action_space, parameter_c):
     if observation_space and action_space:
         if observation_space and action_space:
             print('-' * 77 + " ENV " + '-' * 77)
-        print_space(observation_space, action_space, parameter_c)
+        print_env_info(observation_space, action_space, parameter_c)
 
     print('#' * 182)
     print()
@@ -260,12 +262,15 @@ def print_model_info(parameter):
 
     print("LAYER_ACTIVATION: {0}".format(parameter.LAYER_ACTIVATION))
     print("LOSS_FUNCTION: {0}".format(parameter.LOSS_FUNCTION))
+    print("PLAY_MODEL_FILE_NAME: {0}".format(parameter.PLAY_MODEL_FILE_NAME))
 
 
-def print_space(observation_space, action_space, parameter):
+def print_env_info(observation_space, action_space, parameter):
     # item1 = "{0}: {1:,}".format("EPISODE_REWARD_AVG_SOLVED", parameter.EPISODE_REWARD_AVG_SOLVED)
     # item2 = "{0}: {1:,}".format("EPISODE_REWARD_STD_SOLVED", parameter.EPISODE_REWARD_STD_SOLVED)
     # print("{0:55} {1:55}".format(item1, item2), end="\n")
+    env_name_str = "ENV_NAME: {0}".format(parameter.ENV_NAME)
+    print(env_name_str)
 
     observation_space_str = "OBSERVATION_SPACE: {0}, SHAPE: {1}".format(
         type(observation_space), observation_space.shape
@@ -318,7 +323,7 @@ def console_log(
         )
     elif parameter.AGENT_TYPE == AgentType.A2C:
         console_log += "critic_loss: {0:7.3f}, log_actor_obj.: {1:7.3f}, entropy: {2:5.3f}".format(
-            agent.last_critic_loss.value, agent.last_log_actor_objective.value, agent.last_entropy.value
+            agent.last_critic_loss.value, agent.last_actor_objective.value, agent.last_entropy.value
         )
     elif parameter.AGENT_TYPE == AgentType.PPO:
         console_log += "critic_loss: {0:7.3f}, actor_obj.: {1:7.3f}, ratio: {2:5.3f}, entropy: {3:5.3f}".format(
@@ -326,7 +331,7 @@ def console_log(
         )
     elif parameter.AGENT_TYPE == AgentType.SAC:
         console_log += "critic_loss: {0:7.3f}, actor_obj.: {1:7.3f}, alpha: {2:5.3f}, entropy: {3:5.3f}".format(
-            agent.last_critic_loss.value, agent.last_log_actor_objective.value, agent.alpha.value, agent.last_entropy.value
+            agent.last_critic_loss.value, agent.last_actor_objective.value, agent.alpha.value, agent.last_entropy.value
         )
     elif parameter.AGENT_TYPE == AgentType.DDPG:
         console_log += "critic_loss: {0:7.3f}, actor_loss: {1:7.3f}, ".format(
@@ -368,7 +373,7 @@ def console_log_comparison(
             )
         elif parameter_c.AGENT_PARAMETERS[agent_idx].AGENT_TYPE == AgentType.A2C:
             console_log += "critic_loss: {0:6.3f}, log_actor_obj.: {1:5.3f}, ".format(
-                agent.last_critic_loss.value, agent.last_log_actor_objective.value
+                agent.last_critic_loss.value, agent.last_actor_objective.value
             )
         elif parameter_c.AGENT_PARAMETERS[agent_idx].AGENT_TYPE == AgentType.PPO:
             console_log += "critic_loss: {0:6.3f}, actor_obj.: {1:5.3f}, ratio: {2:5.3f}".format(
@@ -424,7 +429,7 @@ def wandb_log(learner, wandb_obj, parameter):
         log_dict["Log Policy Objective"] = learner.agent.last_log_policy_objective.value
     elif parameter.AGENT_TYPE == AgentType.A2C:
         log_dict["Critic Loss"] = learner.agent.last_critic_loss.value
-        log_dict["Log Actor Objective"] = learner.agent.last_log_actor_objective.value
+        log_dict["Log Actor Objective"] = learner.agent.last_actor_objective.value
         log_dict["Entropy"] = learner.agent.last_entropy.value
     elif parameter.AGENT_TYPE == AgentType.PPO:
         log_dict["Critic Loss"] = learner.agent.last_critic_loss.value
@@ -551,7 +556,7 @@ def wandb_log_comparison(
     wandb_obj.log(log_dict)
 
 
-def get_train_env(parameter):
+def get_train_env(parameter, no_graphics=True):
     def make_gym_env(env_name):
         def _make():
             if isinstance(parameter, ParameterUnityGymEnv):
@@ -567,12 +572,13 @@ def get_train_env(parameter):
                     platform_dir = "windows"
                 else:
                     raise ValueError()
-
+                channel = EngineConfigurationChannel()
                 u_env = UnityEnvironment(
                     file_name=os.path.join(parameter.UNITY_ENV_DIR, parameter.ENV_NAME, platform_dir,
                                            parameter.ENV_NAME),
-                    worker_id=0, no_graphics=False
+                    worker_id=0, no_graphics=no_graphics, side_channels=[channel]
                 )
+                channel.set_configuration_parameters(time_scale=parameter.time_scale)
                 env = UnityToGymWrapper(u_env)
                 return env
             env = gym.make(env_name)
@@ -594,7 +600,7 @@ def get_train_env(parameter):
     return train_env
 
 
-def get_single_env(parameter):
+def get_single_env(parameter, no_graphics=True):
     if isinstance(parameter, ParameterUnityGymEnv):
         from sys import platform
         if platform == "linux" or platform == "linux2":
@@ -609,10 +615,12 @@ def get_single_env(parameter):
         else:
             raise ValueError()
 
+        channel = EngineConfigurationChannel()
         u_env = UnityEnvironment(
             file_name=os.path.join(parameter.UNITY_ENV_DIR, parameter.ENV_NAME, platform_dir, parameter.ENV_NAME),
-            worker_id=1, no_graphics=False
+            worker_id=1, no_graphics=no_graphics, side_channels=[channel]
         )
+        channel.set_configuration_parameters(time_scale=parameter.time_scale)
         single_env = UnityToGymWrapper(u_env)
     else:
         single_env = gym.make(parameter.ENV_NAME)

@@ -146,41 +146,33 @@ class ContinuousPolicyModel(PolicyModel):
         )
         self.actor_params += list(self.mu.parameters())
 
-        self.var = nn.Sequential(
-            nn.Linear(self.parameter.MODEL_PARAMETER.NEURONS_PER_FULLY_CONNECTED_LAYER[-1], self.n_out_actions),
-            nn.Softplus()
-        )
-        self.actor_params += list(self.var.parameters())
+        # We handle the log of the standard deviation as the torch parameter.
+        # log_sigma = 0.1 <- starting value. it mean std = 1.105
+        log_sigma_param = nn.Parameter(torch.full((self.n_out_actions,), 0.1))
+        self.register_parameter("log_sigma", log_sigma_param)
+        self.actor_params.append(self.log_sigma)
 
-        # if parameter.AGENT_TYPE == AgentType.SAC:
-        #     self.logstd = nn.Sequential(
-        #         nn.Linear(self.parameter.MODEL_PARAMETER.NEURONS_PER_FULLY_CONNECTED_LAYER[-1], self.n_out_actions),
-        #         nn.Softplus()
-        #     )
-        #     self.actor_params += list(self.logstd.parameters())
-        # else:
-        #     logstds_param = nn.Parameter(torch.full((self.n_out_actions,), 0.1))
-        #     self.register_parameter("logstds", logstds_param)
-        #     self.actor_params.append(self.logstds)
+        # self.sigma = nn.Sequential(
+        #     nn.Linear(self.parameter.MODEL_PARAMETER.NEURONS_PER_FULLY_CONNECTED_LAYER[-1], self.n_out_actions),
+        #     nn.Softplus()
+        # )
+        # self.actor_params += list(self.sigma.parameters())
+
+        # self.var = nn.Sequential(
+        #     nn.Linear(self.parameter.MODEL_PARAMETER.NEURONS_PER_FULLY_CONNECTED_LAYER[-1], self.n_out_actions),
+        #     nn.Softplus()
+        # )
+        # self.actor_params += list(self.var.parameters())
 
     def pi(self, obs, save_hidden=False):
         x = self.forward_actor(obs, save_hidden=save_hidden)
-
         mu_v = self.mu(x)
 
-        var_v = self.var(x)
-#        std_v = torch.exp(F.softplus(self.logstds))
-
-        # logstd_v = self.logstd(x)
-        # std_v = torch.exp(logstd_v)
-
-        # if self.parameter.AGENT_TYPE == AgentType.SAC:
-        #     logstd_v = self.logstd(x)
-        #     std_v = torch.exp(logstd_v)
-        # else:
-        #     std_v = F.softplus(self.logstds.exp())
-
-        return mu_v, var_v
+        # We just have to exponentiate it to have the standard deviation
+        # By doing so we ensure we don’t have negative values with numerical stability too.
+        # The standard deviation can’t be negative (nor 0).
+        sigma_v = torch.clamp(self.log_sigma.exp(), 1e-3, 50)
+        return mu_v, sigma_v
 
 
 DiscreteActorModel = DiscretePolicyModel

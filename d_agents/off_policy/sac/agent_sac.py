@@ -155,16 +155,16 @@ class AgentSac(Agent):
                     self.observations
                 )
             q1_v, q2_v = self.critic_model.q(self.observations, re_parameterized_action_v)
-            objectives_v = torch.min(q1_v, q2_v) - self.alpha.value * re_parameterized_log_prob_v
-            objectives_v = objectives_v.mean()
-            loss_actor_v = -1.0 * objectives_v
+            actor_objectives = torch.min(q1_v, q2_v) - self.alpha.value * re_parameterized_log_prob_v
+            actor_objectives = actor_objectives.mean()
+            loss_actor_v = -1.0 * actor_objectives
 
             self.actor_optimizer.zero_grad()
             loss_actor_v.backward()
             self.clip_actor_model_parameter_grad_value(self.actor_model.actor_params)
             self.actor_optimizer.step()
 
-            self.last_actor_objective.value = objectives_v.item()
+            self.last_actor_objective.value = actor_objectives.item()
 
             #  Alpha Training - BEGIN
             if self.parameter.AUTOMATIC_ENTROPY_TEMPERATURE_TUNING:
