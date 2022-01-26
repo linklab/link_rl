@@ -1,25 +1,25 @@
 ###############
 ## CART_POLE ##
 ###############
-from a_configuration.c_parameters.open_ai_gym.parameter_cartpole import ParameterCartPoleDqn
+from a_configuration.c_parameters.open_ai_gym.parameter_cart_pole import ParameterCartPoleDqn
 parameter = ParameterCartPoleDqn()
 
-from a_configuration.c_parameters.open_ai_gym.parameter_cartpole import ParameterCartPoleDoubleDqn
+from a_configuration.c_parameters.open_ai_gym.parameter_cart_pole import ParameterCartPoleDoubleDqn
 parameter = ParameterCartPoleDoubleDqn()
 
-from a_configuration.c_parameters.open_ai_gym.parameter_cartpole import ParameterCartPoleDuelingDqn
+from a_configuration.c_parameters.open_ai_gym.parameter_cart_pole import ParameterCartPoleDuelingDqn
 parameter = ParameterCartPoleDuelingDqn()
 
-from a_configuration.c_parameters.open_ai_gym.parameter_cartpole import ParameterCartPoleDoubleDuelingDqn
+from a_configuration.c_parameters.open_ai_gym.parameter_cart_pole import ParameterCartPoleDoubleDuelingDqn
 parameter = ParameterCartPoleDoubleDuelingDqn()
 
-from a_configuration.c_parameters.open_ai_gym.parameter_cartpole import ParameterCartPoleReinforce
+from a_configuration.c_parameters.open_ai_gym.parameter_cart_pole import ParameterCartPoleReinforce
 parameter = ParameterCartPoleReinforce()
 
-from a_configuration.c_parameters.open_ai_gym.parameter_cartpole import ParameterCartPoleA2c
+from a_configuration.c_parameters.open_ai_gym.parameter_cart_pole import ParameterCartPoleA2c
 parameter = ParameterCartPoleA2c()
 
-from a_configuration.c_parameters.open_ai_gym.parameter_cartpole import ParameterCartPolePpo
+from a_configuration.c_parameters.open_ai_gym.parameter_cart_pole import ParameterCartPolePpo
 parameter = ParameterCartPolePpo()
 
 ##################
@@ -34,16 +34,20 @@ parameter = ParameterLunarLanderA2c()
 from a_configuration.c_parameters.open_ai_gym.parameter_lunar_lander import ParameterLunarLanderPpo
 parameter = ParameterLunarLanderPpo()
 
-from a_configuration.c_parameters.open_ai_gym.parameter_lunar_lander import ParameterLunarLanderContinuousA2c
+
+#############################
+## LUNAR_LANDER_CONTINUOUS ##
+#############################
+from a_configuration.c_parameters.open_ai_gym.parameter_lunar_lander_continuous import ParameterLunarLanderContinuousA2c
 parameter = ParameterLunarLanderContinuousA2c()
 
-from a_configuration.c_parameters.open_ai_gym.parameter_lunar_lander import ParameterLunarLanderContinuousPpo
+from a_configuration.c_parameters.open_ai_gym.parameter_lunar_lander_continuous import ParameterLunarLanderContinuousPpo
 parameter = ParameterLunarLanderContinuousPpo()
 
-from a_configuration.c_parameters.open_ai_gym.parameter_lunar_lander import ParameterLunarLanderContinuousDdpg
+from a_configuration.c_parameters.open_ai_gym.parameter_lunar_lander_continuous import ParameterLunarLanderContinuousDdpg
 parameter = ParameterLunarLanderContinuousDdpg()
 
-from a_configuration.c_parameters.open_ai_gym.parameter_lunar_lander import ParameterLunarLanderContinuousSac
+from a_configuration.c_parameters.open_ai_gym.parameter_lunar_lander_continuous import ParameterLunarLanderContinuousSac
 parameter = ParameterLunarLanderContinuousSac()
 
 ######################

@@ -1,8 +1,5 @@
-from a_configuration.b_base.c_models.linear_models import ParameterLinearModel
-from a_configuration.b_base.c_models.recurrent_linear_models import ParameterRecurrentLinearModel
 from a_configuration.b_base.parameter_base_comparison import ParameterComparisonBase
-from a_configuration.c_parameters.open_ai_gym.parameter_lunar_lander import ParameterLunarLanderDqn, \
-    ParameterLunarLanderA2c
+from a_configuration.c_parameters.open_ai_gym.parameter_lunar_lander import ParameterLunarLanderDqn
 from g_utils.types import ModelType
 
 

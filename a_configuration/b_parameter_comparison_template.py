@@ -1,12 +1,12 @@
 ###############
 ## CART_POLE ##
 ###############
-from a_configuration.d_parameters_comparison.open_ai_gym.parameter_comparison_cartpole import ParameterComparisonCartPoleDqn
+from a_configuration.d_parameters_comparison.open_ai_gym.parameter_comparison_cart_pole import ParameterComparisonCartPoleDqn
 from g_utils.commons import print_basic_info, get_env_info, print_comparison_basic_info
 
 parameter_c = ParameterComparisonCartPoleDqn()
 
-from a_configuration.d_parameters_comparison.open_ai_gym.parameter_comparison_cartpole import ParameterComparisonCartPoleDqnTypes
+from a_configuration.d_parameters_comparison.open_ai_gym.parameter_comparison_cart_pole import ParameterComparisonCartPoleDqnTypes
 parameter_c = ParameterComparisonCartPoleDqnTypes()
 
 ######################
@@ -35,7 +35,7 @@ parameter_c = ParameterComparisonPongDqnTypes()
 ##################
 ## LUNAR_LANDER ##
 ##################
-from a_configuration.d_parameters_comparison.open_ai_gym.parameter_comparison_lunarlander import ParameterComparisonLunarLanderDqnRecurrent
+from a_configuration.d_parameters_comparison.open_ai_gym.parameter_comparison_lunar_lander import ParameterComparisonLunarLanderDqnRecurrent
 parameter_c = ParameterComparisonLunarLanderDqnRecurrent()
 
 
