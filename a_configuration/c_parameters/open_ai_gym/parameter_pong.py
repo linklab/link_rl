@@ -80,6 +80,6 @@ class ParameterPongA2c(
         self.N_VECTORIZED_ENVS = 2
         self.N_ACTORS = 1
         self.MAX_TRAINING_STEPS = 1_000_000
-        self.ENTROPY_BETA = 0.02
+        self.ENTROPY_BETA = 0.0002
         self.BUFFER_CAPACITY = self.BATCH_SIZE
         self.MODEL_TYPE = ModelType.MEDIUM_CONVOLUTIONAL

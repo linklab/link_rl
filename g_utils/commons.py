@@ -98,7 +98,7 @@ def print_basic_info(observation_space=None, action_space=None, parameter=None):
         if not param.startswith("__") and param not in [
             "MODEL_PARAMETER", "NEURONS_PER_FULLY_CONNECTED_LAYER", "OUT_CHANNELS_PER_LAYER", "KERNEL_SIZE_PER_LAYER",
             "STRIDE_PER_LAYER", "EPISODE_REWARD_AVG_SOLVED", "EPISODE_REWARD_STD_SOLVED", "UNITY_ENV_DIR",
-            "MODEL_SAVE_DIR", "PROJECT_HOME", "LAYER_ACTIVATION", "LOSS_FUNCTION"
+            "MODEL_SAVE_DIR", "PROJECT_HOME", "LAYER_ACTIVATION", "LOSS_FUNCTION", "ENV_NAME", "PLAY_MODEL_FILE_NAME"
         ]:
             if param in [
                 "BATCH_SIZE", "BUFFER_CAPACITY", "CONSOLE_LOG_INTERVAL_TRAINING_STEPS", "MAX_TRAINING_STEPS",
@@ -127,7 +127,7 @@ def print_basic_info(observation_space=None, action_space=None, parameter=None):
     if observation_space and action_space:
         if observation_space and action_space:
             print('-' * 77 + " ENV " + '-' * 77)
-        print_space(observation_space, action_space, parameter)
+        print_env_info(observation_space, action_space, parameter)
 
     print('#' * 182)
     print()
@@ -185,7 +185,8 @@ def print_comparison_basic_info(observation_space, action_space, parameter_c):
             if not param.startswith("__") and param not in [
                 "MODEL_PARAMETER", "NEURONS_PER_FULLY_CONNECTED_LAYER", "OUT_CHANNELS_PER_LAYER", "KERNEL_SIZE_PER_LAYER",
                 "STRIDE_PER_LAYER", "EPISODE_REWARD_AVG_SOLVED", "EPISODE_REWARD_STD_SOLVED", "UNITY_ENV_DIR",
-                "COMPARISON_RESULTS_SAVE_DIR", "PROJECT_HOME", "LAYER_ACTIVATION", "LOSS_FUNCTION"
+                "COMPARISON_RESULTS_SAVE_DIR", "PROJECT_HOME", "LAYER_ACTIVATION", "LOSS_FUNCTION", "ENV_NAME",
+                "PLAY_MODEL_FILE_NAME"
             ]:
                 if param in [
                     "BATCH_SIZE", "BUFFER_CAPACITY", "CONSOLE_LOG_INTERVAL_TRAINING_STEPS", "MAX_TRAINING_STEPS",
@@ -214,7 +215,7 @@ def print_comparison_basic_info(observation_space, action_space, parameter_c):
     if observation_space and action_space:
         if observation_space and action_space:
             print('-' * 77 + " ENV " + '-' * 77)
-        print_space(observation_space, action_space, parameter_c)
+        print_env_info(observation_space, action_space, parameter_c)
 
     print('#' * 182)
     print()
@@ -261,12 +262,15 @@ def print_model_info(parameter):
 
     print("LAYER_ACTIVATION: {0}".format(parameter.LAYER_ACTIVATION))
     print("LOSS_FUNCTION: {0}".format(parameter.LOSS_FUNCTION))
+    print("PLAY_MODEL_FILE_NAME: {0}".format(parameter.PLAY_MODEL_FILE_NAME))
 
 
-def print_space(observation_space, action_space, parameter):
+def print_env_info(observation_space, action_space, parameter):
     # item1 = "{0}: {1:,}".format("EPISODE_REWARD_AVG_SOLVED", parameter.EPISODE_REWARD_AVG_SOLVED)
     # item2 = "{0}: {1:,}".format("EPISODE_REWARD_STD_SOLVED", parameter.EPISODE_REWARD_STD_SOLVED)
     # print("{0:55} {1:55}".format(item1, item2), end="\n")
+    env_name_str = "ENV_NAME: {0}".format(parameter.ENV_NAME)
+    print(env_name_str)
 
     observation_space_str = "OBSERVATION_SPACE: {0}, SHAPE: {1}".format(
         type(observation_space), observation_space.shape
