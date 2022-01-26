@@ -60,12 +60,16 @@ class Learner(mp.Process):
         self.transition_rolling_rate = mp.Value('d', 0.0)
         self.train_step_rate = mp.Value('d', 0.0)
 
-        if queue is None:  # Sequential
-            self.transition_generator = self.generator_on_policy_transition()
+        if parameter.AGENT_TYPE == AgentType.MUZERO:
+            self.transition_generator = self.generator_muzero()
+            # TODO : history 저장 logic 구현
+        else:
+            if queue is None:  # Sequential
+                self.transition_generator = self.generator_on_policy_transition()
 
-            self.histories = []
-            for _ in range(self.parameter.N_VECTORIZED_ENVS):
-                self.histories.append(deque(maxlen=self.parameter.N_STEP))
+                self.histories = []
+                for _ in range(self.parameter.N_VECTORIZED_ENVS):
+                    self.histories.append(deque(maxlen=self.parameter.N_STEP))
 
         self.is_recurrent_model = any([
             isinstance(self.parameter.MODEL_PARAMETER, ParameterRecurrentLinearModel),
@@ -124,6 +128,11 @@ class Learner(mp.Process):
                 break
 
         yield None
+
+    def generator_muzero(self):
+        # TODO
+        # if
+        pass
 
     def train_loop(self, parallel=False):
         if not parallel:  # parallel인 경우 actor에서 train_env 생성/관리

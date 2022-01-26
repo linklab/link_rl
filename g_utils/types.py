@@ -67,6 +67,7 @@ class AgentType(enum.Enum):
     DDPG = 7
     TD3 = 8
     SAC = 9
+    MUZERO = 10
 
 
 OnPolicyAgentTypes = [
