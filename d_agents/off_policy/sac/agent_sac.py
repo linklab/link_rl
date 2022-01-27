@@ -85,11 +85,11 @@ class AgentSac(Agent):
                 action = torch.argmax(m.probs, dim=-1)
             return action.cpu().numpy()
         elif isinstance(self.action_space, Box):
-            mu_v, var_v = self.actor_model.pi(obs)
+            mu_v, sigma_v = self.actor_model.pi(obs)
 
             if mode == AgentMode.TRAIN:
                 actions = np.random.normal(
-                    loc=mu_v.detach().cpu().numpy(), scale=torch.sqrt(var_v).detach().cpu().numpy()
+                    loc=mu_v.detach().cpu().numpy(), scale=torch.sigma_v.detach().cpu().numpy()
                 )
 
                 # dist = Normal(loc=mu_v, scale=std_v)
@@ -113,11 +113,11 @@ class AgentSac(Agent):
             next_actions_v = None
             next_log_prob_v = None
         elif isinstance(self.action_space, Box):
-            next_mu_v, next_var_v = self.actor_model.pi(self.next_observations)
+            next_mu_v, next_sigma_v = self.actor_model.pi(self.next_observations)
 
-            next_actions_v = torch.normal(mean=next_mu_v, std=torch.sqrt(next_var_v))
+            next_actions_v = torch.normal(mean=next_mu_v, std=next_sigma_v)
             next_actions_v = torch.clamp(next_actions_v, min=self.torch_minus_ones, max=self.torch_plus_ones)
-            next_log_prob_v = self.calc_log_prob(next_mu_v, next_var_v, next_actions_v)
+            next_log_prob_v = self.calc_log_prob(next_mu_v, next_sigma_v ** 2, next_actions_v)
             # dist = Normal(loc=next_mu_v, scale=torch.sqrt(var_v))
             # next_actions_v = dist.sample()
             # next_log_prob_v = dist.log_prob(next_actions_v)

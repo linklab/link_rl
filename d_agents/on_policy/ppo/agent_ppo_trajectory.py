@@ -38,8 +38,8 @@ class AgentPpoTrajectory(AgentPpo):
             trajectory_old_log_pi_action_v = trajectory_dist.log_prob(value=self.actions.squeeze(dim=-1))
             trajectory_advantages = trajectory_advantages.squeeze(dim=-1)  # NOTE
         elif isinstance(self.action_space, Box):
-            trajectory_mu_v, trajectory_var_v = self.actor_old_model.pi(self.observations)
-            trajectory_dist = Normal(loc=trajectory_mu_v, scale=trajectory_var_v)
+            trajectory_mu_v, trajectory_sigma_v = self.actor_old_model.pi(self.observations)
+            trajectory_dist = Normal(loc=trajectory_mu_v, scale=trajectory_sigma_v)
             trajectory_old_log_pi_action_v = trajectory_dist.log_prob(value=self.actions).sum(dim=-1, keepdim=True)
         else:
             raise ValueError()
@@ -82,13 +82,13 @@ class AgentPpoTrajectory(AgentPpo):
                     batch_log_pi_action_v = batch_dist.log_prob(value=batch_actions.squeeze(dim=-1))
                     batch_entropy = batch_dist.entropy().mean()
                 elif isinstance(self.action_space, Box):
-                    batch_mu_v, batch_var_v = self.actor_model.pi(batch_observations)
+                    batch_mu_v, batch_sigma_v = self.actor_model.pi(batch_observations)
 
                     # batch_log_pi_action_v = self.calc_log_prob(batch_mu_v, batch_var_v, batch_actions)
                     # batch_entropy = 0.5 * (torch.log(2.0 * np.pi * batch_var_v) + 1.0).sum(dim=-1)
                     # batch_entropy = batch_entropy.mean()
 
-                    batch_dist = Normal(loc=batch_mu_v, scale=torch.sqrt(batch_var_v))
+                    batch_dist = Normal(loc=batch_mu_v, scale=batch_sigma_v)
                     batch_log_pi_action_v = batch_dist.log_prob(value=batch_actions).sum(dim=-1, keepdim=True)
                     batch_entropy = batch_dist.entropy().mean()
 

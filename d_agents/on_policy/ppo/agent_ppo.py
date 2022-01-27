@@ -43,8 +43,8 @@ class AgentPpo(AgentA2c):
             old_log_pi_action_v = dist.log_prob(value=self.actions.squeeze(dim=-1))
             advantages = advantages.squeeze(dim=-1)  # NOTE
         elif isinstance(self.action_space, Box):
-            mu_v, var_v = self.actor_old_model.pi(self.observations)
-            trajectory_old_log_pi_action_v = self.calc_log_prob(trajectory_mu_v, trajectory_var_v, self.actions)
+            mu_v, sigma_v = self.actor_old_model.pi(self.observations)
+            trajectory_old_log_pi_action_v = self.calc_log_prob(mu_v, sigma_v, self.actions)
         else:
             raise ValueError()
 

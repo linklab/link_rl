@@ -225,9 +225,9 @@ class ContinuousSacModel:
         ) .to(self.config.DEVICE)
 
     def re_parameterization_trick_sample(self, obs):
-        mu_v, var_v = self.actor_model.pi(obs)
+        mu_v, sigma_v = self.actor_model.pi(obs)
 
-        dist = Normal(loc=mu_v, scale=torch.sqrt(var_v))
+        dist = Normal(loc=mu_v, scale=sigma_v)
         dist = TransformedDistribution(base_distribution=dist, transforms=TanhTransform(cache_size=1))
 
         action_v = dist.rsample()  # for reparameterization trick (mean + std * N(0,1))
@@ -235,14 +235,14 @@ class ContinuousSacModel:
         log_probs = dist.log_prob(action_v).sum(dim=-1, keepdim=True)
         # action_v.shape: [128, 1]
         # log_prob.shape: [128, 1]
-        entropy = 0.5 * (torch.log(2.0 * np.pi * var_v) + 1.0).sum(dim=-1)
+        entropy = 0.5 * (torch.log(2.0 * np.pi * sigma_v ** 2) + 1.0).sum(dim=-1)
 
         return action_v, log_probs, entropy
 
     # https://github.com/pranz24/pytorch-soft-actor-critic/blob/398595e0d9dca98b7db78c7f2f939c969431871a/model.py#L64
     # def re_parameterization_trick_sample(self, obs):
-    #     mu_v, var_v = self.actor_model.pi(obs)
-    #     normal = Normal(loc=mu_v, scale=torch.sqrt(var_v))
+    #     mu_v, sigma_v = self.actor_model.pi(obs)
+    #     normal = Normal(loc=mu_v, scale=sigma_v)
     #     action_v = normal.rsample()  # for reparameterization trick (mean + std * N(0,1))
     #     action_v = torch.tanh(action_v)
     #
