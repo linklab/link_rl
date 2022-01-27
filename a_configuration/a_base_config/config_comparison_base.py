@@ -4,6 +4,8 @@ import sys
 import torch
 from torch import nn
 
+from g_utils.types import LayerActivationType
+
 
 class ConfigComparisonBase:
     def __init__(self):
@@ -45,7 +47,7 @@ class ConfigComparisonBase:
 
         self.USE_LAYER_NORM = False
 
-        self.LAYER_ACTIVATION = nn.LeakyReLU
+        self.LAYER_ACTIVATION_TYPE = LayerActivationType.LEAKY_RELU
 
         self.DEVICE = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 

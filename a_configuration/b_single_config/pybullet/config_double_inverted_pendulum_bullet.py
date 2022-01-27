@@ -54,14 +54,10 @@ class ConfigDoubleInvertedPendulumBulletSac(ConfigBase, ConfigDoubleInvertedPend
         self.ACTOR_LEARNING_RATE = 0.0002
         self.LEARNING_RATE = 0.001
 
-        self.BATCH_SIZE = 64
-
-        self.N_STEP = 1
         self.BUFFER_CAPACITY = 250_000
+        self.BATCH_SIZE = 128
         self.MIN_BUFFER_SIZE_FOR_TRAIN = self.BATCH_SIZE * 10
 
-        self.N_VECTORIZED_ENVS = 1
-        self.N_ACTORS = 1
         self.MAX_TRAINING_STEPS = 2_000_000
         self.MODEL_TYPE = ModelType.SMALL_LINEAR
 

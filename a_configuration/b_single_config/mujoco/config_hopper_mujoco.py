@@ -26,5 +26,4 @@ class ConfigHopperMujocoSac(ConfigBase, ConfigHopperMujoco, ConfigSac):
 
         self.MODEL_TYPE = ModelType.SMALL_LINEAR
 
-        self.LAYER_ACTIVATION = nn.ReLU
         self.USE_LAYER_NORM = False

@@ -2,6 +2,7 @@ from torch import nn
 
 from a_configuration.a_base_config.b_agents.agents import ConfigAgent
 from g_utils.commons import AgentType
+from g_utils.types import LayerActivationType
 
 
 class ConfigDqn(ConfigAgent):
@@ -85,17 +86,15 @@ class ConfigSac(ConfigAgent):
         self.ALPHA_LEARNING_RATE = 0.0003
 
         self.BUFFER_CAPACITY = 10_000
-        self.BATCH_SIZE = 64
+        self.BATCH_SIZE = 128
         self.MIN_BUFFER_SIZE_FOR_TRAIN = self.BATCH_SIZE * 10
         self.TARGET_SYNC_INTERVAL_TRAINING_STEPS = 50
 
-        self.LAYER_ACTIVATION = nn.ReLU
+        self.USE_LAYER_NORM = False
 
-        self.USE_LAYER_NORM = True
-
-        self.DEFAULT_ALPHA = 0.2
         self.TAU = 0.005
         self.POLICY_UPDATE_FREQUENCY_PER_TRAINING_STEP = 2
 
+        self.DEFAULT_ALPHA = 1.0
         self.AUTOMATIC_ENTROPY_TEMPERATURE_TUNING = True
         self.MIN_ALPHA = 0.2
