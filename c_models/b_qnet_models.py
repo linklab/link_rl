@@ -21,6 +21,7 @@ class QNet(Model):
         self.qnet_params = []
         if isinstance(self.parameter.MODEL_PARAMETER, ParameterLinearModel):
             input_n_features = self.observation_shape[0]
+            self.representation_layers = None
             self.fc_layers = self.get_linear_layers(input_n_features)
             self.qnet_params += list(self.fc_layers.parameters())
 
@@ -78,6 +79,7 @@ class QNet(Model):
             x = torch.tensor(x, dtype=torch.float32, device=self.parameter.DEVICE)
 
         if isinstance(self.parameter.MODEL_PARAMETER, ParameterLinearModel):
+            x = self.recurrent_layers(x)
             x = self.fc_layers(x)
         elif isinstance(self.parameter.MODEL_PARAMETER, ParameterConvolutionalModel):
             # print("x.shape:", x.shape)

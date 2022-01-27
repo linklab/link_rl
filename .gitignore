@@ -149,4 +149,5 @@ f_play/models/**
 
 /e_main/comparison_results/
 
-*/*/wandb/
+*/*/wandb/!/i_temp/muszero_original/results/
+/i_temp/muzero/muszero_original/results/
