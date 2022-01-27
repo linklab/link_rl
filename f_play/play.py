@@ -24,7 +24,7 @@ PROJECT_HOME = os.path.abspath(os.path.join(CURRENT_PATH, os.pardir))
 if PROJECT_HOME not in sys.path:
     sys.path.append(PROJECT_HOME)
 
-from e_main.config import config
+from e_main.config_single import config
 from g_utils.commons import model_load, get_single_env, get_env_info
 
 

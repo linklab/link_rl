@@ -24,7 +24,7 @@ sys.path.append(os.path.abspath(
     os.path.join(os.path.dirname(os.path.realpath(__file__)), os.pardir)
 ))
 
-from e_main.config import config
+from e_main.config_single import config
 from e_main.supports.actor import Actor
 from e_main.supports.learner import Learner
 from g_utils.commons import get_env_info, print_basic_info

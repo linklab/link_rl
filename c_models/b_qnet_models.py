@@ -74,15 +74,15 @@ class QNet(Model):
 
         self.version = 0
 
-    def forward(self, x, save_hidden=False):
-        if isinstance(x, np.ndarray):
-            x = torch.tensor(x, dtype=torch.float32, device=self.config.DEVICE)
+    def forward(self, obs, save_hidden=False):
+        if isinstance(obs, np.ndarray):
+            obs = torch.tensor(obs, dtype=torch.float32, device=self.config.DEVICE)
 
         if isinstance(self.config.MODEL_PARAMETER, ConfigLinearModel):
-            x = self.fc_layers(x)
+            x = self.fc_layers(obs)
         elif isinstance(self.config.MODEL_PARAMETER, ConfigConvolutionalModel):
             # print("x.shape:", x.shape)
-            conv_out = self.conv_layers(x)
+            conv_out = self.conv_layers(obs)
             conv_out = torch.flatten(conv_out, start_dim=1)
             x = self.fc_layers(conv_out)
         elif isinstance(self.config.MODEL_PARAMETER, ConfigRecurrentLinearModel):
@@ -117,7 +117,7 @@ class QNet(Model):
                 h_n.shape: torch.Size[num_layers, batch_size, hiddens_size]
             """
 
-            rnn_in, h_0 = x[0]
+            rnn_in, h_0 = obs[0]
             if isinstance(rnn_in, np.ndarray):
                 rnn_in = torch.tensor(rnn_in, dtype=torch.float32, device=self.config.DEVICE)
             if isinstance(h_0, np.ndarray):
@@ -136,13 +136,13 @@ class QNet(Model):
             x = self.fc_layers(rnn_out_flattened)
 
         elif isinstance(self.config.MODEL_PARAMETER, ConfigRecurrentConvolutionalModel):
-            x, h_0 = x[0]
-            if isinstance(x, np.ndarray):
-                x = torch.tensor(x, dtype=torch.float32, device=self.config.DEVICE)
+            rnn_in, h_0 = obs[0]
+            if isinstance(rnn_in, np.ndarray):
+                rnn_in = torch.tensor(rnn_in, dtype=torch.float32, device=self.config.DEVICE)
             if isinstance(h_0, np.ndarray):
                 h_0 = torch.tensor(h_0, dtype=torch.float32, device=self.config.DEVICE)
 
-            conv_out = self.conv_layers(x)
+            conv_out = self.conv_layers(rnn_in)
             conv_out = torch.flatten(conv_out, start_dim=1)
             x = self.fc_layers_1(conv_out)
 
@@ -197,16 +197,16 @@ class DuelingQNet(Model):
 
         self.version = 0
 
-    def forward(self, x, save_hidden=False):
-        if isinstance(x, np.ndarray):
-            x = torch.tensor(x, dtype=torch.float32, device=self.config.DEVICE)
+    def forward(self, obs, save_hidden=False):
+        if isinstance(obs, np.ndarray):
+            obs = torch.tensor(obs, dtype=torch.float32, device=self.config.DEVICE)
 
         if isinstance(self.config.MODEL_PARAMETER, ConfigLinearModel):
-            x = self.fc_layers(x)
+            x = self.fc_layers(obs)
             adv = self.fc_last_adv(x)
             val = self.fc_last_val(x)
         elif isinstance(self.config.MODEL_PARAMETER, ConfigConvolutionalModel):
-            conv_out = self.conv_layers(x)
+            conv_out = self.conv_layers(obs)
             conv_out = torch.flatten(conv_out, start_dim=1)
             x = self.fc_layers(conv_out)
             adv = self.fc_last_adv(x)
