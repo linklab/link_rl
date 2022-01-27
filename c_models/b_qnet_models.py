@@ -198,7 +198,7 @@ class DuelingQNet(Model):
 
         self.version = 0
 
-    def forward(self, x):
+    def forward(self, x, save_hidden=False):
         if isinstance(x, np.ndarray):
             x = torch.tensor(x, dtype=torch.float32, device=self.config.DEVICE)
 
