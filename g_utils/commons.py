@@ -1,6 +1,8 @@
 import collections
 import datetime
 import numpy as np
+from torch import nn
+import torch.nn.functional as F
 
 import gym
 import torch
@@ -20,8 +22,8 @@ from a_configuration.a_base_config.c_models.convolutional_models import ConfigCo
 from a_configuration.a_base_config.c_models.linear_models import ConfigLinearModel
 from a_configuration.a_base_config.c_models.recurrent_convolutional_models import ConfigRecurrentConvolutionalModel
 from a_configuration.a_base_config.c_models.recurrent_linear_models import ConfigRecurrentLinearModel
-from g_utils.commons_rl import set_config
-from g_utils.types import AgentType, ActorCriticAgentTypes
+from g_utils.types import AgentType, ActorCriticAgentTypes, ModelType, LayerActivationType, LossFunctionType
+
 
 if torch.cuda.is_available():
     import nvidia_smi
@@ -57,6 +59,47 @@ def model_load(model, env_name, agent_type_name, file_name, config):
     agent_model_home = os.path.join(config.MODEL_SAVE_DIR, env_name, agent_type_name)
     model_params = torch.load(os.path.join(agent_model_home, file_name), map_location=torch.device('cpu'))
     model.load_state_dict(model_params)
+
+
+def set_config(config):
+    if config.MODEL_TYPE in (
+            ModelType.TINY_LINEAR, ModelType.SMALL_LINEAR, ModelType.SMALL_LINEAR_2,
+            ModelType.MEDIUM_LINEAR, ModelType.LARGE_LINEAR
+    ):
+        from a_configuration.a_base_config.c_models.linear_models import ConfigLinearModel
+        config.MODEL_PARAMETER = ConfigLinearModel(config.MODEL_TYPE)
+    elif config.MODEL_TYPE in (
+            ModelType.SMALL_CONVOLUTIONAL, ModelType.MEDIUM_CONVOLUTIONAL, ModelType.LARGE_CONVOLUTIONAL
+    ):
+        from a_configuration.a_base_config.c_models.convolutional_models import ConfigConvolutionalModel
+        config.MODEL_PARAMETER = ConfigConvolutionalModel(config.MODEL_TYPE)
+    elif config.MODEL_TYPE in (
+            ModelType.SMALL_RECURRENT, ModelType.MEDIUM_RECURRENT, ModelType.LARGE_RECURRENT
+    ):
+        from a_configuration.a_base_config.c_models.recurrent_linear_models import ConfigRecurrentLinearModel
+        config.MODEL_PARAMETER = ConfigRecurrentLinearModel(config.MODEL_TYPE)
+    elif config.MODEL_TYPE in (
+            ModelType.SMALL_RECURRENT_CONVOLUTIONAL, ModelType.MEDIUM_RECURRENT_CONVOLUTIONAL,
+            ModelType.LARGE_RECURRENT_CONVOLUTIONAL
+    ):
+        from a_configuration.a_base_config.c_models.recurrent_convolutional_models import ConfigRecurrentConvolutionalModel
+        config.MODEL_PARAMETER = ConfigRecurrentConvolutionalModel(config.MODEL_TYPE)
+    else:
+        raise ValueError()
+
+    if config.LAYER_ACTIVATION_TYPE == LayerActivationType.LEAKY_RELU:
+        config.LAYER_ACTIVATION = nn.LeakyReLU
+    elif config.LAYER_ACTIVATION_TYPE == LayerActivationType.ELU:
+        config.LAYER_ACTIVATION = nn.ELU
+    else:
+        raise ValueError()
+
+    if config.LOSS_FUNCTION_TYPE == LossFunctionType.MSE_LOSS:
+        config.LOSS_FUNCTION = F.mse_loss
+    elif config.LOSS_FUNCTION_TYPE == LossFunctionType.HUBER_LOSS:
+        config.LOSS_FUNCTION = F.huber_loss
+    else:
+        raise ValueError()
 
 
 def print_base_info(config):
@@ -325,7 +368,7 @@ def console_log(
         console_log += "critic_loss: {0:7.3f}, log_actor_obj.: {1:7.3f}, entropy: {2:5.3f}".format(
             agent.last_critic_loss.value, agent.last_actor_objective.value, agent.last_entropy.value
         )
-    elif config.AGENT_TYPE == AgentType.PPO:
+    elif config.AGENT_TYPE in (AgentType.PPO, AgentType.PPO_TRAJECTORY):
         console_log += "critic_loss: {0:7.3f}, actor_obj.: {1:7.3f}, ratio: {2:5.3f}, entropy: {3:5.3f}".format(
             agent.last_critic_loss.value, agent.last_actor_objective.value, agent.last_ratio.value, agent.last_entropy.value
         )
@@ -375,7 +418,7 @@ def console_log_comparison(
             console_log += "critic_loss: {0:6.3f}, log_actor_obj.: {1:5.3f}, ".format(
                 agent.last_critic_loss.value, agent.last_actor_objective.value
             )
-        elif parameter_c.AGENT_PARAMETERS[agent_idx].AGENT_TYPE == AgentType.PPO:
+        elif parameter_c.AGENT_PARAMETERS[agent_idx].AGENT_TYPE in (AgentType.PPO, AgentType.PPO_TRAJECTORY):
             console_log += "critic_loss: {0:6.3f}, actor_obj.: {1:5.3f}, ratio: {2:5.3f}".format(
                 agent.last_critic_loss.value, agent.last_actor_objective.value, agent.ratio.value
             )
@@ -431,7 +474,7 @@ def wandb_log(learner, wandb_obj, config):
         log_dict["Critic Loss"] = learner.agent.last_critic_loss.value
         log_dict["Log Actor Objective"] = learner.agent.last_actor_objective.value
         log_dict["Entropy"] = learner.agent.last_entropy.value
-    elif config.AGENT_TYPE == AgentType.PPO:
+    elif config.AGENT_TYPE in (AgentType.PPO, AgentType.PPO_TRAJECTORY):
         log_dict["Critic Loss"] = learner.agent.last_critic_loss.value
         log_dict["Actor Objective"] = learner.agent.last_actor_objective.value
         log_dict["Ratio"] = learner.agent.last_ratio.value

@@ -20,7 +20,8 @@ sys.path.append(os.path.abspath(
 
 from e_main.supports.learner import Learner
 from g_utils.commons import get_env_info, print_basic_info
-from g_utils.commons_rl import set_config, get_agent
+from g_utils.commons import set_config
+from g_utils.commons_rl import get_agent
 from e_main.config import config
 
 from a_configuration.a_base_config.config_parse import SYSTEM_USER_NAME, SYSTEM_COMPUTER_NAME

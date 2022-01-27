@@ -39,6 +39,24 @@ class ConfigPpo(ConfigAgent):
 
         self.PPO_EPSILON_CLIP = 0.2
         self.BATCH_SIZE = 256
+        self.PPO_K_EPOCH = 3
+        self.BUFFER_CAPACITY = self.BATCH_SIZE
+        self.CONSOLE_LOG_INTERVAL_TRAINING_STEPS = 10
+
+
+class ConfigPpoTrajectory(ConfigAgent):
+    def __init__(self):
+        ConfigAgent.__init__(self)
+        self.AGENT_TYPE = AgentType.PPO_TRAJECTORY
+
+        self.ACTOR_LEARNING_RATE = 0.00005
+        self.LEARNING_RATE = 0.0001
+        self.ENTROPY_BETA = 0.0002
+        self.CONSOLE_LOG_INTERVAL_TRAINING_STEPS = 10
+        self.TEST_INTERVAL_TRAINING_STEPS = 200
+
+        self.PPO_EPSILON_CLIP = 0.2
+        self.BATCH_SIZE = 256
         self.PPO_TRAJECTORY_SIZE = self.BATCH_SIZE * 10
         self.PPO_K_EPOCH = 3
         self.BUFFER_CAPACITY = self.PPO_TRAJECTORY_SIZE

@@ -24,27 +24,26 @@ class AgentPpo(AgentA2c):
         count_training_steps = 0
 
         #####################################
-        # Trajectory 처리: BEGIN
+        # OLD_LOG_PI 처리: BEGIN
         #####################################
-        trajectory_next_values = self.critic_model.v(self.next_observations)
-        trajectory_next_values[self.dones] = 0.0
+        next_values = self.critic_model.v(self.next_observations)
+        next_values[self.dones] = 0.0
 
         # td_target_values.shape: (32, 1)
-        trajectory_td_target_values = self.rewards + self.config.GAMMA ** self.config.N_STEP * trajectory_next_values
-        trajectory_values = self.critic_model.v(self.observations)
+        td_target_values = self.rewards + self.config.GAMMA ** self.config.N_STEP * next_values
+        values = self.critic_model.v(self.observations)
         #
-        trajectory_advantages = (trajectory_td_target_values - trajectory_values).detach()
-
+        advantages = (td_target_values - values).detach()
         # normalize advantages
-        trajectory_advantages = (trajectory_advantages - torch.mean(trajectory_advantages)) / (torch.std(trajectory_advantages) + 1e-7)
+        advantages = (advantages - torch.mean(advantages)) / (torch.std(advantages) + 1e-7)
 
         if isinstance(self.action_space, Discrete):
-            trajectory_action_probs = self.actor_old_model.pi(self.observations)
-            trajectory_dist = Categorical(probs=trajectory_action_probs)
-            trajectory_old_log_pi_action_v = trajectory_dist.log_prob(value=self.actions.squeeze(dim=-1))
-            trajectory_advantages = trajectory_advantages.squeeze(dim=-1)  # NOTE
+            action_probs = self.actor_old_model.pi(self.observations)
+            dist = Categorical(probs=action_probs)
+            old_log_pi_action_v = dist.log_prob(value=self.actions.squeeze(dim=-1))
+            advantages = advantages.squeeze(dim=-1)  # NOTE
         elif isinstance(self.action_space, Box):
-            trajectory_mu_v, trajectory_var_v = self.actor_old_model.pi(self.observations)
+            mu_v, var_v = self.actor_old_model.pi(self.observations)
             trajectory_old_log_pi_action_v = self.calc_log_prob(trajectory_mu_v, trajectory_var_v, self.actions)
         else:
             raise ValueError()
@@ -59,76 +58,76 @@ class AgentPpo(AgentA2c):
         sum_entropy = 0.0
 
         for _ in range(self.config.PPO_K_EPOCH):
-            for batch_offset in range(0, self.config.PPO_TRAJECTORY_SIZE, self.config.BATCH_SIZE):
-                batch_l = batch_offset + self.config.BATCH_SIZE
 
-                batch_observations = self.observations[batch_offset:batch_l]
-                batch_actions = self.actions[batch_offset:batch_l]
-                batch_td_target_values = trajectory_td_target_values[batch_offset:batch_l]
-                batch_old_log_pi_action_v = trajectory_old_log_pi_action_v[batch_offset:batch_l]
-                batch_advantages = trajectory_advantages[batch_offset:batch_l]
+            batch_l = batch_offset + self.config.BATCH_SIZE
 
-                batch_values = self.critic_model.v(batch_observations)
+            batch_observations = self.observations[batch_offset:batch_l]
+            batch_actions = self.actions[batch_offset:batch_l]
+            batch_td_target_values = trajectory_td_target_values[batch_offset:batch_l]
+            batch_old_log_pi_action_v = trajectory_old_log_pi_action_v[batch_offset:batch_l]
+            batch_advantages = trajectory_advantages[batch_offset:batch_l]
 
-                assert batch_values.shape == batch_td_target_values.shape
-                batch_critic_loss = self.config.LOSS_FUNCTION(batch_values, batch_td_target_values.detach())
+            batch_values = self.critic_model.v(batch_observations)
 
-                self.critic_optimizer.zero_grad()
-                batch_critic_loss.backward()
-                self.clip_critic_model_parameter_grad_value(self.critic_model.critic_params)
-                self.critic_optimizer.step()
+            assert batch_values.shape == batch_td_target_values.shape
+            batch_critic_loss = self.config.LOSS_FUNCTION(batch_values, batch_td_target_values.detach())
 
-                if isinstance(self.action_space, Discrete):
-                    # actions.shape: (32, 1)
-                    # dist.log_prob(value=actions.squeeze(-1)).shape: (32,)
-                    # criticized_log_pi_action_v.shape: (32,)
-                    batch_action_probs = self.actor_model.pi(batch_observations)
-                    batch_dist = Categorical(probs=batch_action_probs)
-                    batch_log_pi_action_v = batch_dist.log_prob(value=batch_actions.squeeze(dim=-1))
-                    batch_entropy = batch_dist.entropy().mean()
-                elif isinstance(self.action_space, Box):
-                    batch_mu_v, batch_var_v = self.actor_model.pi(batch_observations)
+            self.critic_optimizer.zero_grad()
+            batch_critic_loss.backward()
+            self.clip_critic_model_parameter_grad_value(self.critic_model.critic_params)
+            self.critic_optimizer.step()
 
-                    # batch_log_pi_action_v = self.calc_log_prob(batch_mu_v, batch_var_v, batch_actions)
-                    # batch_entropy = 0.5 * (torch.log(2.0 * np.pi * batch_var_v) + 1.0).sum(dim=-1)
-                    # batch_entropy = batch_entropy.mean()
+            if isinstance(self.action_space, Discrete):
+                # actions.shape: (32, 1)
+                # dist.log_prob(value=actions.squeeze(-1)).shape: (32,)
+                # criticized_log_pi_action_v.shape: (32,)
+                batch_action_probs = self.actor_model.pi(batch_observations)
+                batch_dist = Categorical(probs=batch_action_probs)
+                batch_log_pi_action_v = batch_dist.log_prob(value=batch_actions.squeeze(dim=-1))
+                batch_entropy = batch_dist.entropy().mean()
+            elif isinstance(self.action_space, Box):
+                batch_mu_v, batch_var_v = self.actor_model.pi(batch_observations)
 
-                    batch_dist = Normal(loc=batch_mu_v, scale=torch.sqrt(batch_var_v))
-                    batch_log_pi_action_v = batch_dist.log_prob(value=batch_actions).sum(dim=-1, keepdim=True)
-                    batch_entropy = batch_dist.entropy().mean()
+                # batch_log_pi_action_v = self.calc_log_prob(batch_mu_v, batch_var_v, batch_actions)
+                # batch_entropy = 0.5 * (torch.log(2.0 * np.pi * batch_var_v) + 1.0).sum(dim=-1)
+                # batch_entropy = batch_entropy.mean()
 
-                    #print(batch_mu_v.shape, batch_var_v.shape, batch_actions.shape, batch_log_pi_action_v.shape, batch_entropy.shape, "@@@")
-                else:
-                    raise ValueError()
+                batch_dist = Normal(loc=batch_mu_v, scale=torch.sqrt(batch_var_v))
+                batch_log_pi_action_v = batch_dist.log_prob(value=batch_actions).sum(dim=-1, keepdim=True)
+                batch_entropy = batch_dist.entropy().mean()
 
-                batch_ratio = torch.exp(batch_log_pi_action_v - batch_old_log_pi_action_v.detach())
+                #print(batch_mu_v.shape, batch_var_v.shape, batch_actions.shape, batch_log_pi_action_v.shape, batch_entropy.shape, "@@@")
+            else:
+                raise ValueError()
 
-                assert batch_ratio.shape == batch_advantages.shape, "{0}, {1}".format(
-                    batch_ratio.shape, batch_advantages.shape
-                )
-                batch_surrogate_loss_pre_clip = batch_ratio * batch_advantages
-                batch_surrogate_loss_clip = torch.clamp(
-                    batch_ratio, 1.0 - self.config.PPO_EPSILON_CLIP, 1.0 + self.config.PPO_EPSILON_CLIP
-                ) * batch_advantages
+            batch_ratio = torch.exp(batch_log_pi_action_v - batch_old_log_pi_action_v.detach())
 
-                assert batch_surrogate_loss_clip.shape == batch_surrogate_loss_pre_clip.shape, "".format(
-                    batch_surrogate_loss_clip.shape, batch_surrogate_loss_pre_clip.shape
-                )
-                batch_actor_objective = torch.mean(torch.min(batch_surrogate_loss_pre_clip, batch_surrogate_loss_clip))
-                batch_actor_loss = -1.0 * batch_actor_objective
-                batch_entropy_loss = -1.0 * batch_entropy
-                batch_actor_loss = batch_actor_loss + batch_entropy_loss * self.config.ENTROPY_BETA
+            assert batch_ratio.shape == batch_advantages.shape, "{0}, {1}".format(
+                batch_ratio.shape, batch_advantages.shape
+            )
+            batch_surrogate_loss_pre_clip = batch_ratio * batch_advantages
+            batch_surrogate_loss_clip = torch.clamp(
+                batch_ratio, 1.0 - self.config.PPO_EPSILON_CLIP, 1.0 + self.config.PPO_EPSILON_CLIP
+            ) * batch_advantages
 
-                self.actor_optimizer.zero_grad()
-                batch_actor_loss.backward()
-                self.clip_actor_model_parameter_grad_value(self.actor_model.actor_params)
-                self.actor_optimizer.step()
+            assert batch_surrogate_loss_clip.shape == batch_surrogate_loss_pre_clip.shape, "".format(
+                batch_surrogate_loss_clip.shape, batch_surrogate_loss_pre_clip.shape
+            )
+            batch_actor_objective = torch.mean(torch.min(batch_surrogate_loss_pre_clip, batch_surrogate_loss_clip))
+            batch_actor_loss = -1.0 * batch_actor_objective
+            batch_entropy_loss = -1.0 * batch_entropy
+            batch_actor_loss = batch_actor_loss + batch_entropy_loss * self.config.ENTROPY_BETA
 
-                sum_critic_loss += batch_critic_loss.item()
-                sum_actor_objective += batch_actor_objective.item()
-                sum_entropy += batch_entropy.item()
-                sum_ratio += batch_ratio.mean().item()
-                count_training_steps += 1
+            self.actor_optimizer.zero_grad()
+            batch_actor_loss.backward()
+            self.clip_actor_model_parameter_grad_value(self.actor_model.actor_params)
+            self.actor_optimizer.step()
+
+            sum_critic_loss += batch_critic_loss.item()
+            sum_actor_objective += batch_actor_objective.item()
+            sum_entropy += batch_entropy.item()
+            sum_ratio += batch_ratio.mean().item()
+            count_training_steps += 1
 
         ##############################
         #  Actor Objective 산출 - END #

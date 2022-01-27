@@ -165,6 +165,6 @@ class AgentA2c(Agent):
         self.last_actor_objective.value = actor_objective.item()
         self.last_entropy.value = entropy.item()
 
-        count_training_steps = 1
+        count_training_steps += 1
 
         return count_training_steps

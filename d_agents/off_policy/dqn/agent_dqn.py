@@ -104,6 +104,6 @@ class AgentDqn(Agent):
 
         self.last_q_net_loss.value = q_net_loss.item()
 
-        count_training_steps = 1
+        count_training_steps += 1
 
         return count_training_steps

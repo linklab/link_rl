@@ -185,6 +185,6 @@ class AgentSac(Agent):
             source_model=self.critic_model, target_model=self.target_critic_model, tau=self.config.TAU
         )  # TAU: 0.005
 
-        count_training_steps = 1
+        count_training_steps += 1
 
         return count_training_steps

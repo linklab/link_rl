@@ -99,6 +99,9 @@ config = ConfigAntBulletA2c()
 from a_configuration.b_single_config.pybullet.config_ant_bullet import ConfigAntBulletPpo
 config = ConfigAntBulletPpo()
 
+from a_configuration.b_single_config.pybullet.config_ant_bullet import ConfigAntBulletPpoTrajectory
+config = ConfigAntBulletPpoTrajectory()
+
 from a_configuration.b_single_config.pybullet.config_ant_bullet import ConfigAntBulletDdpg
 config = ConfigAntBulletDdpg()
 

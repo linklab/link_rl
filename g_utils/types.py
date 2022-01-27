@@ -64,9 +64,10 @@ class AgentType(enum.Enum):
     REINFORCE = 4
     A2C = 5
     PPO = 6
-    DDPG = 7
-    TD3 = 8
-    SAC = 9
+    PPO_TRAJECTORY = 7
+    DDPG = 8
+    TD3 = 9
+    SAC = 10
 
 
 OnPolicyAgentTypes = [

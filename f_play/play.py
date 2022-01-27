@@ -9,7 +9,8 @@ from a_configuration.a_base_config.a_environments.pybullet.gym_mujoco import Con
 from a_configuration.a_base_config.a_environments.pybullet.gym_pybullet import ConfigBullet
 from a_configuration.a_base_config.c_models.recurrent_convolutional_models import ConfigRecurrentConvolutionalModel
 from a_configuration.a_base_config.c_models.recurrent_linear_models import ConfigRecurrentLinearModel
-from g_utils.commons_rl import get_agent, set_config
+from g_utils.commons import set_config
+from g_utils.commons_rl import get_agent
 
 warnings.filterwarnings("ignore")
 

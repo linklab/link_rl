@@ -29,7 +29,8 @@ from e_main.supports.actor import Actor
 from e_main.supports.learner import Learner
 from g_utils.commons import get_env_info, print_basic_info
 from g_utils.types import OffPolicyAgentTypes
-from g_utils.commons_rl import set_config, get_agent
+from g_utils.commons import set_config
+from g_utils.commons_rl import get_agent
 
 from a_configuration.a_base_config.config_parse import SYSTEM_USER_NAME, SYSTEM_COMPUTER_NAME
 config.SYSTEM_USER_NAME = SYSTEM_USER_NAME
