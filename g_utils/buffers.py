@@ -3,21 +3,21 @@ import numpy as np
 import torch
 from gym.spaces import Discrete, Box
 
-from a_configuration.b_base.c_models.recurrent_convolutional_models import ParameterRecurrentConvolutionalModel
-from a_configuration.b_base.c_models.recurrent_linear_models import ParameterRecurrentLinearModel
+from a_configuration.a_base_config.c_models.recurrent_convolutional_models import ConfigRecurrentConvolutionalModel
+from a_configuration.a_base_config.c_models.recurrent_linear_models import ConfigRecurrentLinearModel
 from g_utils.types import Transition
 
 
 class Buffer:
-    def __init__(self, capacity, action_space, parameter):
+    def __init__(self, capacity, action_space, config):
         self.capacity = capacity
         self.internal_buffer = collections.deque(maxlen=self.capacity)
         self.action_space = action_space
-        self.parameter = parameter
+        self.config = config
 
         self.is_recurrent_model = any([
-            isinstance(self.parameter.MODEL_PARAMETER, ParameterRecurrentLinearModel),
-            isinstance(self.parameter.MODEL_PARAMETER, ParameterRecurrentConvolutionalModel)
+            isinstance(self.config.MODEL_PARAMETER, ConfigRecurrentLinearModel),
+            isinstance(self.config.MODEL_PARAMETER, ConfigRecurrentConvolutionalModel)
         ])
 
     def __len__(self):
@@ -88,10 +88,10 @@ class Buffer:
             torch.stack(hiddens, 1).shape: [num_layers, batch_size, 1, hidden]
             torch.stack(hiddens, 1).squeeze(dim=2).shape: [num_layers, batch_size, hidden]
             """
-            observations = torch.tensor(observations, dtype=torch.float32, device=self.parameter.DEVICE)
+            observations = torch.tensor(observations, dtype=torch.float32, device=self.config.DEVICE)
             hiddens = torch.stack(hiddens, 1).squeeze(dim=2)
 
-            next_observations = torch.tensor(next_observations, dtype=torch.float32, device=self.parameter.DEVICE)
+            next_observations = torch.tensor(next_observations, dtype=torch.float32, device=self.config.DEVICE)
             next_hiddens = torch.stack(next_hiddens, 1).squeeze(dim=2)
 
             # if CNN
@@ -104,18 +104,18 @@ class Buffer:
             next_observations_v = [(next_observations, next_hiddens)]
 
         else:
-            observations_v = torch.tensor(observations, dtype=torch.float32, device=self.parameter.DEVICE)
-            next_observations_v = torch.tensor(next_observations, dtype=torch.float32, device=self.parameter.DEVICE)
+            observations_v = torch.tensor(observations, dtype=torch.float32, device=self.config.DEVICE)
+            next_observations_v = torch.tensor(next_observations, dtype=torch.float32, device=self.config.DEVICE)
 
         if isinstance(self.action_space, Discrete):     # actions.shape = (64,)
-            actions_v = torch.tensor(actions, dtype=torch.int64, device=self.parameter.DEVICE)[:, None]
+            actions_v = torch.tensor(actions, dtype=torch.int64, device=self.config.DEVICE)[:, None]
         elif isinstance(self.action_space, Box):        # actions.shape = (64, 8)
-            actions_v = torch.tensor(actions, dtype=torch.int64, device=self.parameter.DEVICE)
+            actions_v = torch.tensor(actions, dtype=torch.int64, device=self.config.DEVICE)
         else:
             raise ValueError()
 
-        rewards_v = torch.tensor(rewards, dtype=torch.float32, device=self.parameter.DEVICE)[:, None]
-        dones_v = torch.tensor(dones, dtype=torch.bool, device=self.parameter.DEVICE)
+        rewards_v = torch.tensor(rewards, dtype=torch.float32, device=self.config.DEVICE)[:, None]
+        dones_v = torch.tensor(dones, dtype=torch.bool, device=self.config.DEVICE)
 
         # print(observations_v.shape, actions_v.shape, next_observations_v.shape, rewards_v.shape, dones_v.shape)
         # observations.shape, next_observations.shape: (64, 4), (64, 4)
@@ -150,11 +150,11 @@ class Buffer:
         # actions.shape, rewards.shape, dones.shape: (64, 1) (64, 1) (64,)
 
         # Convert to tensor
-        observations_v = torch.tensor(observations, dtype=torch.float32, device=self.parameter.DEVICE)
-        actions_v = torch.tensor(actions, dtype=torch.int64, device=self.parameter.DEVICE)
-        next_observations_v = torch.tensor(next_observations, dtype=torch.float32, device=self.parameter.DEVICE)
-        rewards_v = torch.tensor([rewards], dtype=torch.float32, device=self.parameter.DEVICE)
-        dones_v = torch.tensor(dones, dtype=torch.bool, device=self.parameter.DEVICE)
+        observations_v = torch.tensor(observations, dtype=torch.float32, device=self.config.DEVICE)
+        actions_v = torch.tensor(actions, dtype=torch.int64, device=self.config.DEVICE)
+        next_observations_v = torch.tensor(next_observations, dtype=torch.float32, device=self.config.DEVICE)
+        rewards_v = torch.tensor([rewards], dtype=torch.float32, device=self.config.DEVICE)
+        dones_v = torch.tensor(dones, dtype=torch.bool, device=self.config.DEVICE)
 
         del observations
         del actions

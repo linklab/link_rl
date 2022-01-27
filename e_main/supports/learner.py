@@ -2,8 +2,8 @@ import warnings
 
 from gym.spaces import Box, Discrete
 
-from a_configuration.b_base.c_models.recurrent_convolutional_models import ParameterRecurrentConvolutionalModel
-from a_configuration.b_base.c_models.recurrent_linear_models import ParameterRecurrentLinearModel
+from a_configuration.a_base_config.c_models.recurrent_convolutional_models import ConfigRecurrentConvolutionalModel
+from a_configuration.a_base_config.c_models.recurrent_linear_models import ConfigRecurrentLinearModel
 
 warnings.filterwarnings('ignore')
 warnings.simplefilter("ignore")
@@ -21,21 +21,21 @@ from g_utils.types import AgentType, AgentMode, Transition
 
 
 class Learner(mp.Process):
-    def __init__(self, agent, queue, parameter=None):
+    def __init__(self, agent, queue, config=None):
         super(Learner, self).__init__()
         self.agent = agent
         self.queue = queue
-        self.parameter = parameter
+        self.config = config
 
         self.train_env = None
         self.test_env = None
 
-        self.n_actors = self.parameter.N_ACTORS
-        self.n_vectorized_envs = self.parameter.N_VECTORIZED_ENVS
+        self.n_actors = self.config.N_ACTORS
+        self.n_vectorized_envs = self.config.N_VECTORIZED_ENVS
         self.n_actor_terminations = 0
 
         self.episode_rewards = np.zeros(shape=(self.n_actors, self.n_vectorized_envs))
-        self.episode_reward_buffer = MeanBuffer(self.parameter.N_EPISODES_FOR_MEAN_CALCULATION)
+        self.episode_reward_buffer = MeanBuffer(self.config.N_EPISODES_FOR_MEAN_CALCULATION)
 
         self.total_time_step = mp.Value('i', 0)
         self.total_episodes = mp.Value('i', 0)
@@ -51,29 +51,28 @@ class Learner(mp.Process):
         self.test_episode_reward_avg = mp.Value('d', 0.0)
         self.test_episode_reward_std = mp.Value('d', 0.0)
 
-        self.next_train_time_step = parameter.TRAIN_INTERVAL_GLOBAL_TIME_STEPS
-        self.next_test_training_step = parameter.TEST_INTERVAL_TRAINING_STEPS
-        self.next_console_log = parameter.CONSOLE_LOG_INTERVAL_TRAINING_STEPS
+        self.next_train_time_step = config.TRAIN_INTERVAL_GLOBAL_TIME_STEPS
+        self.next_test_training_step = config.TEST_INTERVAL_TRAINING_STEPS
+        self.next_console_log = config.CONSOLE_LOG_INTERVAL_TRAINING_STEPS
 
         self.test_idx = mp.Value('i', 0)
 
         self.transition_rolling_rate = mp.Value('d', 0.0)
         self.train_step_rate = mp.Value('d', 0.0)
 
-        if parameter.AGENT_TYPE == AgentType.MUZERO:
+        if self.config.AGENT_TYPE == AgentType.MUZERO:
             self.transition_generator = self.generator_muzero()
             # TODO : history 저장 logic 구현
         else:
             if queue is None:  # Sequential
                 self.transition_generator = self.generator_on_policy_transition()
-
                 self.histories = []
-                for _ in range(self.parameter.N_VECTORIZED_ENVS):
-                    self.histories.append(deque(maxlen=self.parameter.N_STEP))
+                for _ in range(self.config.N_VECTORIZED_ENVS):
+                    self.histories.append(deque(maxlen=self.config.N_STEP))
 
         self.is_recurrent_model = any([
-            isinstance(self.parameter.MODEL_PARAMETER, ParameterRecurrentLinearModel),
-            isinstance(self.parameter.MODEL_PARAMETER, ParameterRecurrentConvolutionalModel)
+            isinstance(self.config.MODEL_PARAMETER, ConfigRecurrentLinearModel),
+            isinstance(self.config.MODEL_PARAMETER, ConfigRecurrentConvolutionalModel)
         ])
 
     def generator_on_policy_transition(self):
@@ -115,10 +114,10 @@ class Learner(mp.Process):
                     info=info
                 ))
 
-                if len(self.histories[env_id]) == self.parameter.N_STEP or done:
+                if len(self.histories[env_id]) == self.config.N_STEP or done:
                     n_step_transition = Actor.get_n_step_transition(
                         history=self.histories[env_id], env_id=env_id,
-                        actor_id=0, info=info, done=done, parameter=self.parameter
+                        actor_id=0, info=info, done=done, config=self.config
                     )
                     yield n_step_transition
 
@@ -135,12 +134,12 @@ class Learner(mp.Process):
 
     def train_loop(self, parallel=False):
         if not parallel:  # parallel인 경우 actor에서 train_env 생성/관리
-            self.train_env = get_train_env(self.parameter)
+            self.train_env = get_train_env(self.config)
 
-        self.test_env = get_single_env(self.parameter)
+        self.test_env = get_single_env(self.config)
 
-        if self.parameter.USE_WANDB:
-            wandb_obj = get_wandb_obj(self.parameter, self.agent)
+        if self.config.USE_WANDB:
+            wandb_obj = get_wandb_obj(self.config, self.agent)
         else:
             wandb_obj = None
 
@@ -180,19 +179,19 @@ class Learner(mp.Process):
 
                 self.episode_rewards[actor_id][env_id] = 0.0
 
-                if self.parameter.AGENT_TYPE == AgentType.REINFORCE:
+                if self.config.AGENT_TYPE == AgentType.REINFORCE:
                     count_training_steps = self.agent.train(training_steps_v=self.training_step.value)
                     self.training_step.value += count_training_steps
 
             train_conditions = [
                 self.total_time_step.value >= self.next_train_time_step,
-                self.parameter.AGENT_TYPE != AgentType.REINFORCE
+                self.config.AGENT_TYPE != AgentType.REINFORCE
             ]
             if all(train_conditions):
                 count_training_steps = self.agent.train(training_steps_v=self.training_step.value)
                 self.training_step.value += count_training_steps
 
-                self.next_train_time_step += self.parameter.TRAIN_INTERVAL_GLOBAL_TIME_STEPS
+                self.next_train_time_step += self.config.TRAIN_INTERVAL_GLOBAL_TIME_STEPS
 
             if self.training_step.value >= self.next_console_log:
                 total_training_time = time.time() - self.train_start_time
@@ -208,20 +207,20 @@ class Learner(mp.Process):
                     train_steps_v=self.training_step.value,
                     train_step_rate_v=self.train_step_rate.value,
                     agent=self.agent,
-                    parameter=self.parameter
+                    config=self.config
                 )
-                self.next_console_log += self.parameter.CONSOLE_LOG_INTERVAL_TRAINING_STEPS
+                self.next_console_log += self.config.CONSOLE_LOG_INTERVAL_TRAINING_STEPS
 
             if self.training_step.value >= self.next_test_training_step:
                 self.testing()
-                self.next_test_training_step += self.parameter.TEST_INTERVAL_TRAINING_STEPS
-                if self.parameter.USE_WANDB:
-                    wandb_log(self, wandb_obj, self.parameter)
+                self.next_test_training_step += self.config.TEST_INTERVAL_TRAINING_STEPS
+                if self.config.USE_WANDB:
+                    wandb_log(self, wandb_obj, self.config)
                 self.test_idx.value += 1
 
-            if self.training_step.value >= self.parameter.MAX_TRAINING_STEPS:
+            if self.training_step.value >= self.config.MAX_TRAINING_STEPS:
                 print("[TRAIN TERMINATION] MAX_TRAINING_STEPS ({0:,}) REACHES!!!".format(
-                    self.parameter.MAX_TRAINING_STEPS
+                    self.config.MAX_TRAINING_STEPS
                 ))
                 self.is_terminated.value = True
 
@@ -230,7 +229,7 @@ class Learner(mp.Process):
         print("Total Training Terminated: {}".format(formatted_total_training_time))
         print("Transition Rolling Rate: {0:.3f}/sec.".format(self.n_rollout_transitions.value / total_training_time))
         print("Training Rate: {0:.3f}/sec.".format(self.training_step.value / total_training_time))
-        if self.parameter.USE_WANDB:
+        if self.config.USE_WANDB:
             wandb_obj.join()
 
     def run(self):
@@ -239,20 +238,20 @@ class Learner(mp.Process):
     def testing(self):
         print("*" * 150)
         self.test_episode_reward_avg.value, self.test_episode_reward_std.value = \
-            self.play_for_testing(self.parameter.N_TEST_EPISODES)
+            self.play_for_testing(self.config.N_TEST_EPISODES)
 
         elapsed_time = time.time() - self.train_start_time
         formatted_elapsed_time = time.strftime('%H:%M:%S', time.gmtime(elapsed_time))
 
         print("[Test: {0}, Training Step: {1:6,}] "
               "{2} Episodes Reward - Average: {3:.3f}, Standard Dev.: {4:.3f}, Elapsed Time from Training Start: {5} ".format(
-            self.test_idx.value + 1, self.training_step.value, self.parameter.N_TEST_EPISODES,
+            self.test_idx.value + 1, self.training_step.value, self.config.N_TEST_EPISODES,
             self.test_episode_reward_avg.value, self.test_episode_reward_std.value, formatted_elapsed_time
         ))
 
         termination_conditions = [
-            self.test_episode_reward_avg.value > self.parameter.EPISODE_REWARD_AVG_SOLVED,
-            self.test_episode_reward_std.value < self.parameter.EPISODE_REWARD_STD_SOLVED
+            self.test_episode_reward_avg.value > self.config.EPISODE_REWARD_AVG_SOLVED,
+            self.test_episode_reward_std.value < self.config.EPISODE_REWARD_STD_SOLVED
         ]
 
         if all(termination_conditions):
@@ -264,11 +263,11 @@ class Learner(mp.Process):
             ))
             model_save(
                 model=self.agent.model,
-                env_name=self.parameter.ENV_NAME,
-                agent_type_name=self.parameter.AGENT_TYPE.name,
+                env_name=self.config.ENV_NAME,
+                agent_type_name=self.config.AGENT_TYPE.name,
                 test_episode_reward_avg=self.test_episode_reward_avg.value,
                 test_episode_reward_std=self.test_episode_reward_std.value,
-                parameter=self.parameter
+                config=self.config
             )
             print("[TRAIN TERMINATION] TERMINATION CONDITION REACHES!!!")
             self.is_terminated.value = True

@@ -12,29 +12,29 @@ from g_utils.types import AgentMode, ModelType
 
 
 class AgentTd3(Agent):
-    def __init__(self, observation_space, action_space, parameter):
-        super(AgentTd3, self).__init__(observation_space, action_space, parameter)
+    def __init__(self, observation_space, action_space, config):
+        super(AgentTd3, self).__init__(observation_space, action_space, config)
 
         if isinstance(self.action_space, Discrete):
             self.n_actions = self.n_discrete_actions
             self.ddpg_model = DiscreteDdpgModel(
                 observation_shape=self.observation_shape, n_out_actions=self.n_out_actions,
-                n_discrete_actions=self.n_discrete_actions, parameter=parameter
+                n_discrete_actions=self.n_discrete_actions, config=config
             )
 
             self.target_ddpg_model = DiscreteDdpgModel(
                 observation_shape=self.observation_shape, n_out_actions=self.n_out_actions,
-                n_discrete_actions=self.n_discrete_actions, parameter=parameter
+                n_discrete_actions=self.n_discrete_actions, config=config
             )
         elif isinstance(self.action_space, Box):
             self.n_actions = self.n_out_actions
 
             self.ddpg_model = ContinuousDdpgModel(
-                observation_shape=self.observation_shape, n_out_actions=self.n_out_actions, parameter=parameter
+                observation_shape=self.observation_shape, n_out_actions=self.n_out_actions, config=config
             )
 
             self.target_ddpg_model = ContinuousDdpgModel(
-                observation_shape=self.observation_shape, n_out_actions=self.n_out_actions, parameter=parameter
+                observation_shape=self.observation_shape, n_out_actions=self.n_out_actions, config=config
             )
         else:
             raise ValueError()
@@ -53,8 +53,8 @@ class AgentTd3(Agent):
         self.actor_model.share_memory()
         self.critic_model.share_memory()
 
-        self.actor_optimizer = optim.Adam(self.actor_model.actor_params, lr=self.parameter.ACTOR_LEARNING_RATE)
-        self.critic_optimizer = optim.Adam(self.critic_model.critic_params, lr=self.parameter.LEARNING_RATE)
+        self.actor_optimizer = optim.Adam(self.actor_model.actor_params, lr=self.config.ACTOR_LEARNING_RATE)
+        self.critic_optimizer = optim.Adam(self.critic_model.critic_params, lr=self.config.LEARNING_RATE)
 
         self.training_step = 0
 
@@ -104,11 +104,11 @@ class AgentTd3(Agent):
             next_mu_v = self.target_actor_model.pi(self.next_observations)
             next_q_v = self.target_critic_model.q(self.next_observations, next_mu_v)
             next_q_v[self.dones] = 0.0
-            target_q_v = self.rewards + self.parameter.GAMMA ** self.parameter.N_STEP * next_q_v
+            target_q_v = self.rewards + self.config.GAMMA ** self.config.N_STEP * next_q_v
 
         q_v = self.critic_model.q(self.observations, self.actions)
 
-        critic_loss = self.parameter.LOSS_FUNCTION(q_v, target_q_v.detach())
+        critic_loss = self.config.LOSS_FUNCTION(q_v, target_q_v.detach())
 
         self.critic_optimizer.zero_grad()
         critic_loss.backward()
@@ -120,12 +120,12 @@ class AgentTd3(Agent):
 
         # TAU: 0.0001
         self.soft_synchronize_models(
-            source_model=self.actor_model, target_model=self.target_actor_model, tau=self.parameter.TAU
+            source_model=self.actor_model, target_model=self.target_actor_model, tau=self.config.TAU
         )
 
         # TAU: 0.0001
         self.soft_synchronize_models(
-            source_model=self.critic_model, target_model=self.target_critic_model, tau=self.parameter.TAU
+            source_model=self.critic_model, target_model=self.target_critic_model, tau=self.config.TAU
         )
 
         self.last_critic_loss.value = critic_loss.item()

@@ -132,7 +132,9 @@ slprj
 
 # *.csv
 
-a_configuration/a_config/config.ini
+a_configuration/a_base_config/config.ini
+e_main/config.py
+e_main/config_comparison.py
 e_main/parameter.py
 e_main/parameter_comparison.py
 
@@ -149,4 +151,5 @@ f_play/models/**
 
 /e_main/comparison_results/
 
-*/*/wandb/
+*/*/wandb/!/i_temp/muszero_original/results/
+/i_temp/muzero/muszero_original/results/

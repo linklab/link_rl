@@ -12,33 +12,33 @@ from g_utils.types import AgentMode, ModelType
 
 
 class AgentDqn(Agent):
-    def __init__(self, observation_space, action_space, parameter):
-        super(AgentDqn, self).__init__(observation_space, action_space, parameter)
+    def __init__(self, observation_space, action_space, config):
+        super(AgentDqn, self).__init__(observation_space, action_space, config)
 
         self.q_net = QNet(
             observation_shape=self.observation_shape, n_out_actions=self.n_out_actions,
-            n_discrete_actions=self.n_discrete_actions, parameter=parameter
-        ).to(self.parameter.DEVICE)
+            n_discrete_actions=self.n_discrete_actions, config=config
+        ).to(self.config.DEVICE)
 
         self.target_q_net = QNet(
             observation_shape=self.observation_shape, n_out_actions=self.n_out_actions,
-            n_discrete_actions=self.n_discrete_actions, parameter=parameter
-        ).to(self.parameter.DEVICE)
+            n_discrete_actions=self.n_discrete_actions, config=config
+        ).to(self.config.DEVICE)
 
         self.q_net.share_memory()
         self.synchronize_models(source_model=self.q_net, target_model=self.target_q_net)
 
         self.optimizer = optim.Adam(
-            self.q_net.qnet_params, lr=self.parameter.LEARNING_RATE
+            self.q_net.qnet_params, lr=self.config.LEARNING_RATE
         )
 
         self.epsilon_tracker = EpsilonTracker(
-            epsilon_init=self.parameter.EPSILON_INIT,
-            epsilon_final=self.parameter.EPSILON_FINAL,
-            epsilon_final_training_step=(self.parameter.EPSILON_FINAL_TRAINING_STEP_PROPORTION
-                                         * self.parameter.MAX_TRAINING_STEPS)
+            epsilon_init=self.config.EPSILON_INIT,
+            epsilon_final=self.config.EPSILON_FINAL,
+            epsilon_final_training_step=(self.config.EPSILON_FINAL_TRAINING_STEP_PROPORTION
+                                         * self.config.MAX_TRAINING_STEPS)
         )
-        self.epsilon = mp.Value('d', self.parameter.EPSILON_INIT)  # d: float
+        self.epsilon = mp.Value('d', self.config.EPSILON_INIT)  # d: float
 
         self.model = self.q_net  # 에이전트 밖에서는 model이라는 이름으로 제어 모델 접근
 
@@ -74,10 +74,10 @@ class AgentDqn(Agent):
             next_q_v[self.dones] = 0.0
 
             # target_state_action_values.shape: torch.Size([32, 1])
-            target_state_action_values = self.rewards + self.parameter.GAMMA ** self.parameter.N_STEP * next_q_v
+            target_state_action_values = self.rewards + self.config.GAMMA ** self.config.N_STEP * next_q_v
 
         # loss is just scalar torch value
-        q_net_loss = self.parameter.LOSS_FUNCTION(state_action_values, target_state_action_values.detach())
+        q_net_loss = self.config.LOSS_FUNCTION(state_action_values, target_state_action_values.detach())
 
         # print("observations.shape: {0}, actions.shape: {1}, "
         #       "next_observations.shape: {2}, rewards.shape: {3}, dones.shape: {4}".format(
@@ -93,11 +93,11 @@ class AgentDqn(Agent):
 
         self.optimizer.zero_grad()
         q_net_loss.backward()
-        self.clip_model_parameter_grad_value(self.q_net.qnet_params)
+        self.clip_model_config_grad_value(self.q_net.qnet_params)
         self.optimizer.step()
 
         # sync
-        if training_steps_v % self.parameter.TARGET_SYNC_INTERVAL_TRAINING_STEPS == 0:
+        if training_steps_v % self.config.TARGET_SYNC_INTERVAL_TRAINING_STEPS == 0:
             self.synchronize_models(source_model=self.q_net, target_model=self.target_q_net)
 
         self.epsilon.value = self.epsilon_tracker.epsilon(training_steps_v)

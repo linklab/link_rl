@@ -12,10 +12,10 @@ from g_utils.types import AgentMode, AgentType, OnPolicyAgentTypes, ActorCriticA
 
 
 class Agent:
-    def __init__(self, observation_space, action_space, parameter):
+    def __init__(self, observation_space, action_space, config):
         self.observation_space = observation_space
         self.action_space = action_space
-        self.parameter = parameter
+        self.config = config
 
         # Box
         # Dict
@@ -43,17 +43,17 @@ class Agent:
 
             self.np_minus_ones = np.full(shape=action_space.shape, fill_value=-1.0)
             self.np_plus_ones = np.full(shape=action_space.shape, fill_value=1.0)
-            self.torch_minus_ones = torch.full(size=action_space.shape, fill_value=-1.0).to(self.parameter.DEVICE)
-            self.torch_plus_ones = torch.full(size=action_space.shape, fill_value=1.0).to(self.parameter.DEVICE)
+            self.torch_minus_ones = torch.full(size=action_space.shape, fill_value=-1.0).to(self.config.DEVICE)
+            self.torch_plus_ones = torch.full(size=action_space.shape, fill_value=1.0).to(self.config.DEVICE)
 
             _, _, self.action_scale, self.action_bias = get_continuous_action_info(action_space)
         else:
             raise ValueError()
 
-        self.buffer = Buffer(capacity=parameter.BUFFER_CAPACITY, action_space=action_space, parameter=self.parameter)
+        self.buffer = Buffer(capacity=config.BUFFER_CAPACITY, action_space=action_space, config=self.config)
 
         self.model = None
-        if self.parameter.AGENT_TYPE in ActorCriticAgentTypes:
+        if self.config.AGENT_TYPE in ActorCriticAgentTypes:
             self.actor_model = None
             self.critic_model = None
 
@@ -71,7 +71,7 @@ class Agent:
         pass
 
     def _before_train(self, sample_length):
-        if self.parameter.AGENT_TYPE in ActorCriticAgentTypes:
+        if self.config.AGENT_TYPE in ActorCriticAgentTypes:
             assert self.actor_model
             assert self.critic_model
             assert self.model is self.actor_model
@@ -96,58 +96,58 @@ class Agent:
     def train(self, training_steps_v=None):
         count_training_steps = 0
 
-        if self.parameter.AGENT_TYPE in (AgentType.DQN, AgentType.DUELING_DQN):
-            if len(self.buffer) >= self.parameter.MIN_BUFFER_SIZE_FOR_TRAIN:
-                self._before_train(sample_length=self.parameter.BATCH_SIZE)
+        if self.config.AGENT_TYPE in (AgentType.DQN, AgentType.DUELING_DQN):
+            if len(self.buffer) >= self.config.MIN_BUFFER_SIZE_FOR_TRAIN:
+                self._before_train(sample_length=self.config.BATCH_SIZE)
                 count_training_steps = self.train_dqn(training_steps_v=training_steps_v)
                 self._after_train()
 
-        elif self.parameter.AGENT_TYPE in (AgentType.DOUBLE_DQN, AgentType.DOUBLE_DUELING_DQN):
-            if len(self.buffer) >= self.parameter.MIN_BUFFER_SIZE_FOR_TRAIN:
-                self._before_train(sample_length=self.parameter.BATCH_SIZE)
+        elif self.config.AGENT_TYPE in (AgentType.DOUBLE_DQN, AgentType.DOUBLE_DUELING_DQN):
+            if len(self.buffer) >= self.config.MIN_BUFFER_SIZE_FOR_TRAIN:
+                self._before_train(sample_length=self.config.BATCH_SIZE)
                 count_training_steps = self.train_double_dqn(training_steps_v=training_steps_v)
                 self._after_train()
 
-        elif self.parameter.AGENT_TYPE == AgentType.REINFORCE:
+        elif self.config.AGENT_TYPE == AgentType.REINFORCE:
             if len(self.buffer) > 0:
                 self._before_train(sample_length=len(self.buffer))
                 count_training_steps = self.train_reinforce()
                 self.buffer.clear()     # ON_POLICY!
                 self._after_train()
 
-        elif self.parameter.AGENT_TYPE == AgentType.A2C:
-            if len(self.buffer) >= self.parameter.BATCH_SIZE:
-                self._before_train(sample_length=self.parameter.BATCH_SIZE)
+        elif self.config.AGENT_TYPE == AgentType.A2C:
+            if len(self.buffer) >= self.config.BATCH_SIZE:
+                self._before_train(sample_length=self.config.BATCH_SIZE)
                 count_training_steps = self.train_a2c()
                 self.buffer.clear()                 # ON_POLICY!
                 self._after_actor_critic_train()     # ACTOR_CRITIC_TYPE
                 self._after_train()
 
-        elif self.parameter.AGENT_TYPE == AgentType.PPO:
-            if len(self.buffer) >= self.parameter.PPO_TRAJECTORY_SIZE:
-                self._before_train(sample_length=self.parameter.PPO_TRAJECTORY_SIZE)
+        elif self.config.AGENT_TYPE == AgentType.PPO:
+            if len(self.buffer) >= self.config.PPO_TRAJECTORY_SIZE:
+                self._before_train(sample_length=self.config.PPO_TRAJECTORY_SIZE)
                 count_training_steps = self.train_ppo()
                 self.buffer.clear()                 # ON_POLICY!
                 self._after_actor_critic_train()     # ACTOR_CRITIC_TYPE
                 self._after_train()
 
-        elif self.parameter.AGENT_TYPE == AgentType.DDPG:
-            if len(self.buffer) >= self.parameter.BATCH_SIZE:
-                self._before_train(sample_length=self.parameter.BATCH_SIZE)
+        elif self.config.AGENT_TYPE == AgentType.DDPG:
+            if len(self.buffer) >= self.config.BATCH_SIZE:
+                self._before_train(sample_length=self.config.BATCH_SIZE)
                 count_training_steps = self.train_ddpg()
                 self._after_actor_critic_train()     # ACTOR_CRITIC_TYPE
                 self._after_train()
 
-        elif self.parameter.AGENT_TYPE == AgentType.TD3:
-            if len(self.buffer) >= self.parameter.BATCH_SIZE:
-                self._before_train(sample_length=self.parameter.BATCH_SIZE)
+        elif self.config.AGENT_TYPE == AgentType.TD3:
+            if len(self.buffer) >= self.config.BATCH_SIZE:
+                self._before_train(sample_length=self.config.BATCH_SIZE)
                 count_training_steps = self.train_td3()
                 self._after_actor_critic_train()     # ACTOR_CRITIC_TYPE
                 self._after_train()
 
-        elif self.parameter.AGENT_TYPE == AgentType.SAC:
-            if len(self.buffer) >= self.parameter.BATCH_SIZE:
-                self._before_train(sample_length=self.parameter.BATCH_SIZE)
+        elif self.config.AGENT_TYPE == AgentType.SAC:
+            if len(self.buffer) >= self.config.BATCH_SIZE:
+                self._before_train(sample_length=self.config.BATCH_SIZE)
                 count_training_steps = self.train_sac(training_steps_v=training_steps_v)
                 self._after_actor_critic_train()     # ACTOR_CRITIC_TYPE
                 self._after_train()
@@ -167,8 +167,8 @@ class Agent:
         del self.rewards
         del self.dones
 
-    def clip_model_parameter_grad_value(self, model_parameters):
-        torch.nn.utils.clip_grad_norm_(model_parameters, self.parameter.CLIP_GRADIENT_VALUE)
+    def clip_model_config_grad_value(self, model_parameters):
+        torch.nn.utils.clip_grad_norm_(model_parameters, self.config.CLIP_GRADIENT_VALUE)
 
         grads_list = [p.grad.data.cpu().numpy().flatten() for p in model_parameters if p.grad is not None]
 
@@ -178,7 +178,7 @@ class Agent:
             self.last_model_grad_max.value = np.max(grads)
 
     def clip_actor_model_parameter_grad_value(self, actor_model_parameters):
-        torch.nn.utils.clip_grad_norm_(actor_model_parameters, self.parameter.CLIP_GRADIENT_VALUE)
+        torch.nn.utils.clip_grad_norm_(actor_model_parameters, self.config.CLIP_GRADIENT_VALUE)
 
         actor_grads_list = [p.grad.data.cpu().numpy().flatten() for p in actor_model_parameters if p.grad is not None]
 
@@ -188,7 +188,7 @@ class Agent:
             self.last_actor_model_grad_max.value = np.max(actor_grads)
 
     def clip_critic_model_parameter_grad_value(self, critic_model_parameters):
-        torch.nn.utils.clip_grad_norm_(critic_model_parameters, self.parameter.CLIP_GRADIENT_VALUE)
+        torch.nn.utils.clip_grad_norm_(critic_model_parameters, self.config.CLIP_GRADIENT_VALUE)
 
         critic_grads_list = [p.grad.data.cpu().numpy().flatten() for p in self.critic_model.parameters() if p.grad is not None]
 

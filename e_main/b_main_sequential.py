@@ -20,34 +20,34 @@ sys.path.append(os.path.abspath(
 
 from e_main.supports.learner import Learner
 from g_utils.commons import get_env_info, print_basic_info
-from g_utils.commons_rl import set_parameters, get_agent
-from e_main.parameter import parameter
+from g_utils.commons_rl import set_config, get_agent
+from e_main.config import config
 
-from a_configuration.a_config.config import SYSTEM_USER_NAME, SYSTEM_COMPUTER_NAME
-parameter.SYSTEM_USER_NAME = SYSTEM_USER_NAME
-parameter.SYSTEM_COMPUTER_NAME = SYSTEM_COMPUTER_NAME
+from a_configuration.a_base_config.config_parse import SYSTEM_USER_NAME, SYSTEM_COMPUTER_NAME
+config.SYSTEM_USER_NAME = SYSTEM_USER_NAME
+config.SYSTEM_COMPUTER_NAME = SYSTEM_COMPUTER_NAME
 
 
 def main():
-    set_parameters(parameter)
+    set_config(config)
 
-    observation_space, action_space = get_env_info(parameter)
-    print_basic_info(observation_space, action_space, parameter)
+    observation_space, action_space = get_env_info(config)
+    print_basic_info(observation_space, action_space, config)
 
     input("Press Enter to continue...")
 
     agent = get_agent(
-        observation_space=observation_space, action_space=action_space, parameter=parameter
+        observation_space=observation_space, action_space=action_space, config=config
     )
 
-    learner = Learner(agent=agent, queue=None, parameter=parameter)
+    learner = Learner(agent=agent, queue=None, config=config)
 
     print("########## LEARNING STARTED !!! ##########")
     learner.train_loop(parallel=False)
 
-    print_basic_info(observation_space, action_space, parameter)
+    print_basic_info(observation_space, action_space, config)
 
 
 if __name__ == "__main__":
-    assert parameter.N_ACTORS == 1
+    assert config.N_ACTORS == 1
     main()

@@ -10,8 +10,8 @@ from d_agents.on_policy.a2c.agent_a2c import AgentA2c
 
 
 class AgentPpo(AgentA2c):
-    def __init__(self, observation_space, action_space, parameter):
-        super(AgentPpo, self).__init__(observation_space, action_space, parameter)
+    def __init__(self, observation_space, action_space, config):
+        super(AgentPpo, self).__init__(observation_space, action_space, config)
 
         self.actor_old_model = copy.deepcopy(self.actor_critic_model.actor_model)
 
@@ -30,7 +30,7 @@ class AgentPpo(AgentA2c):
         trajectory_next_values[self.dones] = 0.0
 
         # td_target_values.shape: (32, 1)
-        trajectory_td_target_values = self.rewards + self.parameter.GAMMA ** self.parameter.N_STEP * trajectory_next_values
+        trajectory_td_target_values = self.rewards + self.config.GAMMA ** self.config.N_STEP * trajectory_next_values
         trajectory_values = self.critic_model.v(self.observations)
         #
         trajectory_advantages = (trajectory_td_target_values - trajectory_values).detach()
@@ -58,9 +58,9 @@ class AgentPpo(AgentA2c):
         sum_ratio = 0.0
         sum_entropy = 0.0
 
-        for _ in range(self.parameter.PPO_K_EPOCH):
-            for batch_offset in range(0, self.parameter.PPO_TRAJECTORY_SIZE, self.parameter.BATCH_SIZE):
-                batch_l = batch_offset + self.parameter.BATCH_SIZE
+        for _ in range(self.config.PPO_K_EPOCH):
+            for batch_offset in range(0, self.config.PPO_TRAJECTORY_SIZE, self.config.BATCH_SIZE):
+                batch_l = batch_offset + self.config.BATCH_SIZE
 
                 batch_observations = self.observations[batch_offset:batch_l]
                 batch_actions = self.actions[batch_offset:batch_l]
@@ -71,7 +71,7 @@ class AgentPpo(AgentA2c):
                 batch_values = self.critic_model.v(batch_observations)
 
                 assert batch_values.shape == batch_td_target_values.shape
-                batch_critic_loss = self.parameter.LOSS_FUNCTION(batch_values, batch_td_target_values.detach())
+                batch_critic_loss = self.config.LOSS_FUNCTION(batch_values, batch_td_target_values.detach())
 
                 self.critic_optimizer.zero_grad()
                 batch_critic_loss.backward()
@@ -108,7 +108,7 @@ class AgentPpo(AgentA2c):
                 )
                 batch_surrogate_loss_pre_clip = batch_ratio * batch_advantages
                 batch_surrogate_loss_clip = torch.clamp(
-                    batch_ratio, 1.0 - self.parameter.PPO_EPSILON_CLIP, 1.0 + self.parameter.PPO_EPSILON_CLIP
+                    batch_ratio, 1.0 - self.config.PPO_EPSILON_CLIP, 1.0 + self.config.PPO_EPSILON_CLIP
                 ) * batch_advantages
 
                 assert batch_surrogate_loss_clip.shape == batch_surrogate_loss_pre_clip.shape, "".format(
@@ -117,7 +117,7 @@ class AgentPpo(AgentA2c):
                 batch_actor_objective = torch.mean(torch.min(batch_surrogate_loss_pre_clip, batch_surrogate_loss_clip))
                 batch_actor_loss = -1.0 * batch_actor_objective
                 batch_entropy_loss = -1.0 * batch_entropy
-                batch_actor_loss = batch_actor_loss + batch_entropy_loss * self.parameter.ENTROPY_BETA
+                batch_actor_loss = batch_actor_loss + batch_entropy_loss * self.config.ENTROPY_BETA
 
                 self.actor_optimizer.zero_grad()
                 batch_actor_loss.backward()
