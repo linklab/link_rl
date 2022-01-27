@@ -1,4 +1,7 @@
 import warnings
+
+from a_configuration.a_base_config.c_models.recurrent_convolutional_models import ConfigRecurrentConvolutionalModel
+
 warnings.filterwarnings('ignore')
 warnings.simplefilter("ignore")
 
@@ -43,6 +46,7 @@ class LearnerComparison:
         self.last_mean_episode_reward_per_agent = []
         self.last_loss_train_per_agent = []
         self.is_terminated_per_agent = []
+        self.is_recurrent_model_per_agent = []
 
         self.comparison_stat = comparison_stat
 
@@ -64,6 +68,11 @@ class LearnerComparison:
             self.last_mean_episode_reward_per_agent.append(0.0)
 
             self.is_terminated_per_agent.append(False)
+
+            self.is_recurrent_model_per_agent.append(any([
+                isinstance(self.config_c.AGENT_PARAMETERS[agent_idx].MODEL_PARAMETER, ConfigRecurrentLinearModel),
+                isinstance(self.config_c.AGENT_PARAMETERS[agent_idx].MODEL_PARAMETER, ConfigRecurrentConvolutionalModel)
+            ]))
 
         self.total_time_step = 0
         self.training_step = 0
@@ -234,7 +243,8 @@ class LearnerComparison:
             # Environment 초기화와 변수 초기화
             observation = self.test_envs_per_agent[agent_idx].reset()
             observation = np.expand_dims(observation, axis=0)
-            if isinstance(self.config_c.AGENT_PARAMETERS[agent_idx].MODEL_TYPE, ConfigRecurrentLinearModel):
+
+            if self.is_recurrent_model_per_agent[agent_idx]:
                 self.agents[agent_idx].model.init_recurrent_hidden()
                 observation = [(observation, self.agents[agent_idx].model.recurrent_hidden)]
 
@@ -267,7 +277,7 @@ class LearnerComparison:
                 next_observation, reward, done, _ = self.test_envs_per_agent[agent_idx].step(scaled_action)
                 next_observation = np.expand_dims(next_observation, axis=0)
 
-                if isinstance(self.config_c.AGENT_PARAMETERS[agent_idx].MODEL_TYPE, ConfigRecurrentLinearModel):
+                if self.is_recurrent_model_per_agent[agent_idx]:
                     next_observation = [(next_observation, self.agents[agent_idx].model.recurrent_hidden)]
 
                 episode_reward += reward  # episode_reward 를 산출하는 방법은 감가률 고려하지 않는 이 라인이 더 올바름.

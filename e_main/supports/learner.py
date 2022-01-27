@@ -277,15 +277,14 @@ class Learner(mp.Process):
 
             # Environment 초기화와 변수 초기화
             observation = self.test_env.reset()
+            observation = np.expand_dims(observation, axis=0)
 
             if self.is_recurrent_model:
-                observation = np.expand_dims(observation, axis=0)
                 self.agent.model.init_recurrent_hidden()
                 observation = [(observation, self.agent.model.recurrent_hidden)]
 
             while True:
                 action = self.agent.get_action(observation, mode=AgentMode.TEST)
-
                 if isinstance(self.agent.action_space, Discrete):
                     if action.ndim == 0:
                         scaled_action = action
@@ -310,8 +309,9 @@ class Learner(mp.Process):
                     raise ValueError()
 
                 next_observation, reward, done, _ = self.test_env.step(scaled_action)
+                next_observation = np.expand_dims(next_observation, axis=0)
+
                 if self.is_recurrent_model:
-                    next_observation = np.expand_dims(next_observation, axis=0)
                     next_observation = [(next_observation, self.agent.model.recurrent_hidden)]
 
                 episode_reward += reward  # episode_reward 를 산출하는 방법은 감가률 고려하지 않는 이 라인이 더 올바름.
