@@ -17,26 +17,26 @@ from g_utils.types import AgentMode
 
 
 class AgentSac(Agent):
-    def __init__(self, observation_space, action_space, parameter):
-        super(AgentSac, self).__init__(observation_space, action_space, parameter)
+    def __init__(self, observation_space, action_space, config):
+        super(AgentSac, self).__init__(observation_space, action_space, config)
 
         if isinstance(self.action_space, Discrete):
             self.sac_model = DiscreteSacModel(
                 observation_shape=self.observation_shape, n_out_actions=self.n_out_actions,
-                n_discrete_actions=self.n_discrete_actions, parameter=parameter
+                n_discrete_actions=self.n_discrete_actions, config=config
             )
 
             self.target_sac_model = DiscreteSacModel(
                 observation_shape=self.observation_shape, n_out_actions=self.n_out_actions,
-                n_discrete_actions=self.n_discrete_actions, parameter=parameter, is_target_model=True
+                n_discrete_actions=self.n_discrete_actions, config=config, is_target_model=True
             )
         elif isinstance(self.action_space, Box):
             self.sac_model = ContinuousSacModel(
-                observation_shape=self.observation_shape, n_out_actions=self.n_out_actions, parameter=parameter
+                observation_shape=self.observation_shape, n_out_actions=self.n_out_actions, config=config
             )
 
             self.target_sac_model = ContinuousSacModel(
-                observation_shape=self.observation_shape, n_out_actions=self.n_out_actions, parameter=parameter,
+                observation_shape=self.observation_shape, n_out_actions=self.n_out_actions, config=config,
                 is_target_model=True
             )
         else:
@@ -53,23 +53,23 @@ class AgentSac(Agent):
         self.actor_model.share_memory()
         self.critic_model.share_memory()
 
-        self.actor_optimizer = optim.Adam(self.actor_model.parameters(), lr=self.parameter.ACTOR_LEARNING_RATE)
-        self.critic_optimizer = optim.Adam(self.critic_model.parameters(), lr=self.parameter.LEARNING_RATE)
+        self.actor_optimizer = optim.Adam(self.actor_model.parameters(), lr=self.config.ACTOR_LEARNING_RATE)
+        self.critic_optimizer = optim.Adam(self.critic_model.parameters(), lr=self.config.LEARNING_RATE)
 
         self.training_step = 0
 
         self.alpha = mp.Value('d', 0.0)
-        self.min_alpha = torch.tensor(self.parameter.MIN_ALPHA, device=self.parameter.DEVICE)
+        self.min_alpha = torch.tensor(self.config.MIN_ALPHA, device=self.config.DEVICE)
 
-        if self.parameter.AUTOMATIC_ENTROPY_TEMPERATURE_TUNING:
+        if self.config.AUTOMATIC_ENTROPY_TEMPERATURE_TUNING:
             # self.minimum_expected_entropy = -8 for ant_bullet env.
             # it is the desired minimum expected entropy
-            self.minimum_expected_entropy = -1.0 * torch.prod(torch.Tensor(action_space.shape).to(self.parameter.DEVICE)).item()
-            self.log_alpha = torch.zeros(1, requires_grad=True, device=self.parameter.DEVICE)
-            self.alpha_optimizer = optim.Adam([self.log_alpha], lr=self.parameter.ALPHA_LEARNING_RATE)
+            self.minimum_expected_entropy = -1.0 * torch.prod(torch.Tensor(action_space.shape).to(self.config.DEVICE)).item()
+            self.log_alpha = torch.zeros(1, requires_grad=True, device=self.config.DEVICE)
+            self.alpha_optimizer = optim.Adam([self.log_alpha], lr=self.config.ALPHA_LEARNING_RATE)
             self.alpha.value = self.log_alpha.exp()  # 초기에는 무조건 1.0으로 시작함.
         else:
-            self.alpha.value = self.parameter.DEFAULT_ALPHA
+            self.alpha.value = self.config.DEFAULT_ALPHA
 
         self.last_critic_loss = mp.Value('d', 0.0)
         self.last_actor_objective = mp.Value('d', 0.0)
@@ -129,12 +129,12 @@ class AgentSac(Agent):
         next_values = next_values - self.alpha.value * next_log_prob_v  # ALPHA!!!
         next_values[self.dones] = 0.0
         # td_target_values.shape: (32, 1)
-        td_target_values = self.rewards + self.parameter.GAMMA ** self.parameter.N_STEP * next_values
+        td_target_values = self.rewards + self.config.GAMMA ** self.config.N_STEP * next_values
 
         # values.shape: (32, 1)
         q1_v, q2_v = self.critic_model.q(self.observations, self.actions)
         # critic_loss.shape: ()
-        critic_loss = self.parameter.LOSS_FUNCTION(q1_v, td_target_values.detach()) + F.huber_loss(q2_v, td_target_values.detach())
+        critic_loss = self.config.LOSS_FUNCTION(q1_v, td_target_values.detach()) + F.huber_loss(q2_v, td_target_values.detach())
 
         self.critic_optimizer.zero_grad()
         critic_loss.backward()
@@ -149,7 +149,7 @@ class AgentSac(Agent):
         ###########################
         #  Actor Training - BEGIN #
         ###########################
-        if training_steps_v % self.parameter.POLICY_UPDATE_FREQUENCY_PER_TRAINING_STEP == 0:
+        if training_steps_v % self.config.POLICY_UPDATE_FREQUENCY_PER_TRAINING_STEP == 0:
             re_parameterized_action_v, re_parameterized_log_prob_v, entropy_v = \
                 self.sac_model.re_parameterization_trick_sample(
                     self.observations
@@ -167,7 +167,7 @@ class AgentSac(Agent):
             self.last_actor_objective.value = actor_objectives.item()
 
             #  Alpha Training - BEGIN
-            if self.parameter.AUTOMATIC_ENTROPY_TEMPERATURE_TUNING:
+            if self.config.AUTOMATIC_ENTROPY_TEMPERATURE_TUNING:
                 alpha_loss = -1.0 * (self.log_alpha.exp() * (re_parameterized_log_prob_v + self.minimum_expected_entropy).detach()).mean()
 
                 self.alpha_optimizer.zero_grad()
@@ -182,7 +182,7 @@ class AgentSac(Agent):
         #########################
 
         self.soft_synchronize_models(
-            source_model=self.critic_model, target_model=self.target_critic_model, tau=self.parameter.TAU
+            source_model=self.critic_model, target_model=self.target_critic_model, tau=self.config.TAU
         )  # TAU: 0.005
 
         count_training_steps = 1

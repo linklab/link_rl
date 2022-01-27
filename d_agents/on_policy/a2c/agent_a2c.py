@@ -11,17 +11,17 @@ from g_utils.types import AgentMode
 
 
 class AgentA2c(Agent):
-    def __init__(self, observation_space, action_space, parameter):
-        super(AgentA2c, self).__init__(observation_space, action_space, parameter)
+    def __init__(self, observation_space, action_space, config):
+        super(AgentA2c, self).__init__(observation_space, action_space, config)
 
         if isinstance(self.action_space, Discrete):
             self.actor_critic_model = DiscreteActorCriticModel(
                 observation_shape=self.observation_shape, n_out_actions=self.n_out_actions,
-                n_discrete_actions=self.n_discrete_actions, parameter=parameter
+                n_discrete_actions=self.n_discrete_actions, config=config
             )
         elif isinstance(self.action_space, Box):
             self.actor_critic_model = ContinuousActorCriticModel(
-                observation_shape=self.observation_shape, n_out_actions=self.n_out_actions, parameter=parameter
+                observation_shape=self.observation_shape, n_out_actions=self.n_out_actions, config=config
             )
         else:
             raise ValueError()
@@ -34,8 +34,8 @@ class AgentA2c(Agent):
         self.actor_model.share_memory()
         self.critic_model.share_memory()
 
-        self.actor_optimizer = optim.Adam(self.actor_model.actor_params, lr=self.parameter.ACTOR_LEARNING_RATE)
-        self.critic_optimizer = optim.Adam(self.critic_model.critic_params, lr=self.parameter.LEARNING_RATE)
+        self.actor_optimizer = optim.Adam(self.actor_model.actor_params, lr=self.config.ACTOR_LEARNING_RATE)
+        self.critic_optimizer = optim.Adam(self.critic_model.critic_params, lr=self.config.LEARNING_RATE)
 
         self.last_critic_loss = mp.Value('d', 0.0)
         self.last_actor_objective = mp.Value('d', 0.0)
@@ -84,14 +84,14 @@ class AgentA2c(Agent):
         next_values[self.dones] = 0.0
 
         # td_target_values.shape: (32, 1)
-        td_target_values = self.rewards + self.parameter.GAMMA ** self.parameter.N_STEP * next_values
+        td_target_values = self.rewards + self.config.GAMMA ** self.config.N_STEP * next_values
 
         # values.shape: (32, 1)
         values = self.critic_model.v(self.observations)
         # loss_critic.shape: (,) <--  값 1개
 
         assert values.shape == td_target_values.shape, print(values.shape, td_target_values.shape)
-        critic_loss = self.parameter.LOSS_FUNCTION(values, td_target_values.detach())
+        critic_loss = self.config.LOSS_FUNCTION(values, td_target_values.detach())
 
         self.critic_optimizer.zero_grad()
         critic_loss.backward()
@@ -149,9 +149,9 @@ class AgentA2c(Agent):
 
         actor_loss = -1.0 * actor_objective
         entropy_loss = -1.0 * entropy
-        actor_loss = actor_loss + entropy_loss * self.parameter.ENTROPY_BETA
+        actor_loss = actor_loss + entropy_loss * self.config.ENTROPY_BETA
 
-        # actor_loss = torch.mean(-1.0 * criticized_log_pi_action_v + self.parameter.ENTROPY_BETA * -1.0 * entropy)
+        # actor_loss = torch.mean(-1.0 * criticized_log_pi_action_v + self.config.ENTROPY_BETA * -1.0 * entropy)
 
         self.actor_optimizer.zero_grad()
         actor_loss.backward()

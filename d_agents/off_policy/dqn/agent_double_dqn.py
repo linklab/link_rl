@@ -5,8 +5,8 @@ from d_agents.off_policy.dqn.agent_dqn import AgentDqn
 
 
 class AgentDoubleDqn(AgentDqn):
-    def __init__(self, observation_space, action_space, parameter):
-        super(AgentDoubleDqn, self).__init__(observation_space, action_space, parameter)
+    def __init__(self, observation_space, action_space, config):
+        super(AgentDoubleDqn, self).__init__(observation_space, action_space, config)
 
     def train_double_dqn(self, training_steps_v):
         count_training_steps = 0
@@ -21,10 +21,10 @@ class AgentDoubleDqn(AgentDqn):
             next_q_values = next_q_values.detach()
 
             # target_state_action_values.shape: torch.Size([32, 1])
-            target_q_values = self.rewards + self.parameter.GAMMA ** self.parameter.N_STEP * next_q_values
+            target_q_values = self.rewards + self.config.GAMMA ** self.config.N_STEP * next_q_values
 
         # loss is just scalar torch value
-        q_net_loss = self.parameter.LOSS_FUNCTION(state_action_values, target_q_values)
+        q_net_loss = self.config.LOSS_FUNCTION(state_action_values, target_q_values)
 
         # print("observations.shape: {0}, actions.shape: {1}, "
         #       "next_observations.shape: {2}, rewards.shape: {3}, dones.shape: {4}".format(
@@ -40,11 +40,11 @@ class AgentDoubleDqn(AgentDqn):
 
         self.optimizer.zero_grad()
         q_net_loss.backward()
-        self.clip_model_parameter_grad_value(self.q_net.qnet_params)
+        self.clip_model_config_grad_value(self.q_net.qnet_params)
         self.optimizer.step()
 
         # soft-sync
-        self.soft_synchronize_models(source_model=self.q_net, target_model=self.target_q_net, tau=self.parameter.TAU)
+        self.soft_synchronize_models(source_model=self.q_net, target_model=self.target_q_net, tau=self.config.TAU)
 
         self.epsilon.value = self.epsilon_tracker.epsilon(training_steps_v)
 

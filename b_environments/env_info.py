@@ -15,13 +15,13 @@ ENV_NAME = "PongNoFrameskip-v4"
 class A:
     pass
 
-parameter = A()
-parameter.ENV_NAME = ENV_NAME
-parameter.N_VECTORIZED_ENVS = 1
+config = A()
+config.ENV_NAME = ENV_NAME
+config.N_VECTORIZED_ENVS = 1
 
 
 def main_env_info():
-    # env = get_train_env(parameter)
+    # env = get_train_env(config)
     env = gym.make(ENV_NAME)
     env = gym.wrappers.AtariPreprocessing(env, grayscale_obs=True, scale_obs=True)
     env = gym.wrappers.FrameStack(env, num_stack=4, lz4_compress=True)

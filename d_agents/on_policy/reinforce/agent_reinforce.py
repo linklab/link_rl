@@ -11,20 +11,20 @@ from g_utils.types import AgentMode
 
 
 class AgentReinforce(Agent):
-    def __init__(self, observation_space, action_space, parameter):
-        super(AgentReinforce, self).__init__(observation_space, action_space, parameter)
+    def __init__(self, observation_space, action_space, config):
+        super(AgentReinforce, self).__init__(observation_space, action_space, config)
 
-        assert self.parameter.N_STEP == 1
+        assert self.config.N_STEP == 1
         assert isinstance(self.action_space, Discrete)
 
         self.policy = DiscretePolicyModel(
             observation_shape=self.observation_shape, n_out_actions=self.n_out_actions,
-            n_discrete_actions=self.n_discrete_actions, parameter=parameter
-        ).to(self.parameter.DEVICE)
+            n_discrete_actions=self.n_discrete_actions, config=config
+        ).to(self.config.DEVICE)
 
         self.policy.share_memory()
 
-        self.optimizer = optim.Adam(self.policy.parameters(), lr=self.parameter.LEARNING_RATE)
+        self.optimizer = optim.Adam(self.policy.parameters(), lr=self.config.LEARNING_RATE)
 
         self.model = self.policy  # 에이전트 밖에서는 model이라는 이름으로 제어 모델 접근
 
@@ -46,9 +46,9 @@ class AgentReinforce(Agent):
         G = 0
         return_lst = []
         for reward in reversed(self.rewards):
-            G = reward + self.parameter.GAMMA * G
+            G = reward + self.config.GAMMA * G
             return_lst.append(G)
-        return_lst = torch.tensor(return_lst[::-1], dtype=torch.float32, device=self.parameter.DEVICE)
+        return_lst = torch.tensor(return_lst[::-1], dtype=torch.float32, device=self.config.DEVICE)
 
         action_probs = self.policy.pi(self.observations)
         action_probs_selected = action_probs.gather(dim=-1, index=self.actions).squeeze(dim=-1)
@@ -61,7 +61,7 @@ class AgentReinforce(Agent):
         loss = -1.0 * log_policy_objective
 
         loss.backward()
-        self.clip_model_parameter_grad_value(self.policy.parameters())
+        self.clip_model_config_grad_value(self.policy.parameters())
         self.optimizer.step()
 
         self.last_log_policy_objective.value = log_policy_objective.item()

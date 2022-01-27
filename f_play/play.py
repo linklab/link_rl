@@ -5,11 +5,11 @@ import warnings
 
 import numpy as np
 
-from a_configuration.b_base.a_environments.pybullet.gym_mujoco import ParameterMujoco
-from a_configuration.b_base.a_environments.pybullet.gym_pybullet import ParameterBullet
-from a_configuration.b_base.c_models.recurrent_convolutional_models import ParameterRecurrentConvolutionalModel
-from a_configuration.b_base.c_models.recurrent_linear_models import ParameterRecurrentLinearModel
-from g_utils.commons_rl import get_agent, set_parameters
+from a_configuration.a_base_config.a_environments.pybullet.gym_mujoco import ConfigMujoco
+from a_configuration.a_base_config.a_environments.pybullet.gym_pybullet import ConfigBullet
+from a_configuration.a_base_config.c_models.recurrent_convolutional_models import ConfigRecurrentConvolutionalModel
+from a_configuration.a_base_config.c_models.recurrent_linear_models import ConfigRecurrentLinearModel
+from g_utils.commons_rl import get_agent, set_config
 
 warnings.filterwarnings("ignore")
 
@@ -23,7 +23,7 @@ PROJECT_HOME = os.path.abspath(os.path.join(CURRENT_PATH, os.pardir))
 if PROJECT_HOME not in sys.path:
     sys.path.append(PROJECT_HOME)
 
-from e_main.parameter import parameter
+from e_main.config import config
 from g_utils.commons import model_load, get_single_env, get_env_info
 
 
@@ -32,15 +32,15 @@ device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
 def play(env, agent, n_episodes):
     is_recurrent_model = any([
-        isinstance(parameter.MODEL_TYPE, ParameterRecurrentLinearModel),
-        isinstance(parameter.MODEL_TYPE, ParameterRecurrentConvolutionalModel)
+        isinstance(config.MODEL_TYPE, ConfigRecurrentLinearModel),
+        isinstance(config.MODEL_TYPE, ConfigRecurrentConvolutionalModel)
     ])
 
     for i in range(n_episodes):
         episode_reward = 0  # cumulative_reward
 
         # Environment 초기화와 변수 초기화
-        if isinstance(parameter, (ParameterMujoco, ParameterBullet)):
+        if isinstance(config, (ConfigMujoco, ConfigBullet)):
             env.render()
             observation = env.reset()
         else:
@@ -101,19 +101,19 @@ def play(env, agent, n_episodes):
 
 
 def main_play(n_episodes):
-    set_parameters(parameter)
+    set_config(config)
 
-    observation_space, action_space = get_env_info(parameter)
-    env = get_single_env(parameter, parameter.NO_TEST_GRAPHICS)
+    observation_space, action_space = get_env_info(config)
+    env = get_single_env(config, config.NO_TEST_GRAPHICS)
 
-    agent = get_agent(observation_space, action_space, parameter)
+    agent = get_agent(observation_space, action_space, config)
 
     model_load(
         model=agent.model,
-        env_name=parameter.ENV_NAME,
-        agent_type_name=parameter.AGENT_TYPE.name,
-        file_name=parameter.PLAY_MODEL_FILE_NAME,
-        parameter=parameter
+        env_name=config.ENV_NAME,
+        agent_type_name=config.AGENT_TYPE.name,
+        file_name=config.PLAY_MODEL_FILE_NAME,
+        config=config
     )
     play(env, agent, n_episodes=n_episodes)
 

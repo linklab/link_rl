@@ -14,14 +14,14 @@ from gym_unity.envs import UnityToGymWrapper
 from mlagents_envs.environment import UnityEnvironment
 from mlagents_envs.side_channel.engine_configuration_channel import EngineConfigurationChannel
 
-from a_configuration.a_config.config import SYSTEM_USER_NAME
-from a_configuration.b_base.a_environments.unity.unity_box import ParameterUnityGymEnv
-from a_configuration.b_base.c_models.convolutional_models import ParameterConvolutionalModel
-from a_configuration.b_base.c_models.linear_models import ParameterLinearModel
-from a_configuration.b_base.c_models.recurrent_convolutional_models import ParameterRecurrentConvolutionalModel
-from a_configuration.b_base.c_models.recurrent_linear_models import ParameterRecurrentLinearModel
-from g_utils.commons_rl import set_parameters
-from g_utils.types import AgentType, ActorCriticAgentTypes, ModelType, LayerActivationType, LossFunctionType
+from a_configuration.a_base_config.config_parse import SYSTEM_USER_NAME
+from a_configuration.a_base_config.a_environments.unity.unity_box import ConfigUnityGymEnv
+from a_configuration.a_base_config.c_models.convolutional_models import ConfigConvolutionalModel
+from a_configuration.a_base_config.c_models.linear_models import ConfigLinearModel
+from a_configuration.a_base_config.c_models.recurrent_convolutional_models import ConfigRecurrentConvolutionalModel
+from a_configuration.a_base_config.c_models.recurrent_linear_models import ConfigRecurrentLinearModel
+from g_utils.commons_rl import set_config
+from g_utils.types import AgentType, ActorCriticAgentTypes
 
 if torch.cuda.is_available():
     import nvidia_smi
@@ -34,12 +34,12 @@ else:
     pynvml = None
 
 
-def model_save(model, env_name, agent_type_name, test_episode_reward_avg, test_episode_reward_std, parameter):
-    env_model_home = os.path.join(parameter.MODEL_SAVE_DIR, env_name)
+def model_save(model, env_name, agent_type_name, test_episode_reward_avg, test_episode_reward_std, config):
+    env_model_home = os.path.join(config.MODEL_SAVE_DIR, env_name)
     if not os.path.exists(env_model_home):
         os.mkdir(env_model_home)
 
-    agent_model_home = os.path.join(parameter.MODEL_SAVE_DIR, env_name, agent_type_name)
+    agent_model_home = os.path.join(config.MODEL_SAVE_DIR, env_name, agent_type_name)
     if not os.path.exists(agent_model_home):
         os.mkdir(agent_model_home)
 
@@ -53,48 +53,48 @@ def model_save(model, env_name, agent_type_name, test_episode_reward_avg, test_e
     torch.save(model.state_dict(), os.path.join(agent_model_home, file_name))
 
 
-def model_load(model, env_name, agent_type_name, file_name, parameter):
-    agent_model_home = os.path.join(parameter.MODEL_SAVE_DIR, env_name, agent_type_name)
+def model_load(model, env_name, agent_type_name, file_name, config):
+    agent_model_home = os.path.join(config.MODEL_SAVE_DIR, env_name, agent_type_name)
     model_params = torch.load(os.path.join(agent_model_home, file_name), map_location=torch.device('cpu'))
     model.load_state_dict(model_params)
 
 
-def print_base_info(parameter):
+def print_base_info(config):
     n_cpu_cores = mp.cpu_count()
     print("{0:55} {1:55}".format(
-        "DEVICE: {0}".format(parameter.DEVICE),
+        "DEVICE: {0}".format(config.DEVICE),
         "CPU CORES: {0}".format(n_cpu_cores),
     ), end="\n")
 
     print("{0:55} {1:55} {2:55}".format(
-        "N_ACTORS: {0}".format(parameter.N_ACTORS),
-        "ENVS PER ACTOR: {0}".format(parameter.N_VECTORIZED_ENVS),
+        "N_ACTORS: {0}".format(config.N_ACTORS),
+        "ENVS PER ACTOR: {0}".format(config.N_VECTORIZED_ENVS),
         "TOTAL NUMBERS OF ENVS: {0}".format(
-            parameter.N_ACTORS * parameter.N_VECTORIZED_ENVS
+            config.N_ACTORS * config.N_VECTORIZED_ENVS
         )
     ))
 
-    print("PROJECT_HOME: {0}".format(parameter.PROJECT_HOME))
+    print("PROJECT_HOME: {0}".format(config.PROJECT_HOME))
 
-    if hasattr(parameter, "MODEL_SAVE_DIR"):
-        print("MODEL_SAVE_DIR: {0}".format(parameter.MODEL_SAVE_DIR))
+    if hasattr(config, "MODEL_SAVE_DIR"):
+        print("MODEL_SAVE_DIR: {0}".format(config.MODEL_SAVE_DIR))
 
-    if hasattr(parameter, "COMPARISON_RESULTS_SAVE_DIR"):
-        print("COMPARISON_RESULTS_SAVE_DIR: {0}".format(parameter.COMPARISON_RESULTS_SAVE_DIR))
+    if hasattr(config, "COMPARISON_RESULTS_SAVE_DIR"):
+        print("COMPARISON_RESULTS_SAVE_DIR: {0}".format(config.COMPARISON_RESULTS_SAVE_DIR))
 
-    print("UNITY_ENV_DIR: {0}".format(parameter.UNITY_ENV_DIR))
+    print("UNITY_ENV_DIR: {0}".format(config.UNITY_ENV_DIR))
 
 
-def print_basic_info(observation_space=None, action_space=None, parameter=None):
-    print('\n' + '#' * 81 + " Base Parameters " + '#' * 82)
+def print_basic_info(observation_space=None, action_space=None, config=None):
+    print('\n' + '#' * 81 + " Base Configs " + '#' * 82)
 
-    print_base_info(parameter)
+    print_base_info(config)
 
-    print('-' * 75 + " Parameters " + '-' * 75)
+    print('-' * 75 + " Config " + '-' * 75)
 
     items = []
 
-    for param in dir(parameter):
+    for param in dir(config):
         if not param.startswith("__") and param not in [
             "MODEL_PARAMETER", "NEURONS_PER_FULLY_CONNECTED_LAYER", "OUT_CHANNELS_PER_LAYER", "KERNEL_SIZE_PER_LAYER",
             "STRIDE_PER_LAYER", "EPISODE_REWARD_AVG_SOLVED", "EPISODE_REWARD_STD_SOLVED", "UNITY_ENV_DIR",
@@ -105,9 +105,9 @@ def print_basic_info(observation_space=None, action_space=None, parameter=None):
                 "MIN_BUFFER_SIZE_FOR_TRAIN", "N_EPISODES_FOR_MEAN_CALCULATION",
                 "TEST_INTERVAL_TRAINING_STEPS"
             ]:
-                item = "{0}: {1:,}".format(param, getattr(parameter, param))
+                item = "{0}: {1:,}".format(param, getattr(config, param))
             else:
-                item = "{0}: {1:}".format(param, getattr(parameter, param))
+                item = "{0}: {1:}".format(param, getattr(config, param))
             items.append(item)
 
         if len(items) == 3:
@@ -122,34 +122,34 @@ def print_basic_info(observation_space=None, action_space=None, parameter=None):
             print("{0:55}".format(items[0]), end="\n")
             items.clear()
 
-    print_model_info(parameter)
+    print_model_info(config)
 
     if observation_space and action_space:
         if observation_space and action_space:
             print('-' * 77 + " ENV " + '-' * 77)
-        print_env_info(observation_space, action_space, parameter)
+        print_env_info(observation_space, action_space, config)
 
     print('#' * 182)
     print()
 
 
-def print_comparison_basic_info(observation_space, action_space, parameter_c):
-    print('\n' + '#' * 81 + " Base Parameters " + '#' * 82)
+def print_comparison_basic_info(observation_space, action_space, config_c):
+    print('\n' + '#' * 81 + " Base Config " + '#' * 82)
 
-    print_base_info(parameter_c)
-    print('-' * 71 + " Common Parameters " + '-' * 71)
+    print_base_info(config_c)
+    print('-' * 71 + " Common Config " + '-' * 71)
 
     items = []
 
-    for param in dir(parameter_c):
+    for param in dir(config_c):
         if param == "AGENT_LABELS":
-            item1 = "{0}: {1:}".format("N_AGENTS", len(getattr(parameter_c, param)))
-            item2 = "{0}: {1:}".format(param, getattr(parameter_c, param))
+            item1 = "{0}: {1:}".format("N_AGENTS", len(getattr(config_c, param)))
+            item2 = "{0}: {1:}".format(param, getattr(config_c, param))
             print("{0:55} {1:55}".format(item1, item2))
             continue
 
         if param == "COMPARISON_RESULTS_SAVE_DIR":
-            item = "{0}: {1:}".format(param, getattr(parameter_c, param))
+            item = "{0}: {1:}".format(param, getattr(config_c, param))
             print("{0:55}".format(item))
             continue
 
@@ -162,9 +162,9 @@ def print_comparison_basic_info(observation_space, action_space, parameter_c):
                 "MIN_BUFFER_SIZE_FOR_TRAIN", "N_EPISODES_FOR_MEAN_CALCULATION",
                 "TEST_INTERVAL_TRAINING_STEPS"
             ]:
-                item = "{0}: {1:,}".format(param, getattr(parameter_c, param))
+                item = "{0}: {1:,}".format(param, getattr(config_c, param))
             else:
-                item = "{0}: {1:}".format(param, getattr(parameter_c, param))
+                item = "{0}: {1:}".format(param, getattr(config_c, param))
             items.append(item)
 
         if len(items) == 3:
@@ -179,9 +179,9 @@ def print_comparison_basic_info(observation_space, action_space, parameter_c):
             print("{0:55}".format(items[0]), end="\n")
             items.clear()
 
-    for agent_idx, agent_parameter in enumerate(parameter_c.AGENT_PARAMETERS):
+    for agent_idx, agent_config in enumerate(config_c.AGENT_PARAMETERS):
         print('-' * 76 + " Agent {0} ".format(agent_idx) + '-' * 76)
-        for param in dir(agent_parameter):
+        for param in dir(agent_config):
             if not param.startswith("__") and param not in [
                 "MODEL_PARAMETER", "NEURONS_PER_FULLY_CONNECTED_LAYER", "OUT_CHANNELS_PER_LAYER", "KERNEL_SIZE_PER_LAYER",
                 "STRIDE_PER_LAYER", "EPISODE_REWARD_AVG_SOLVED", "EPISODE_REWARD_STD_SOLVED", "UNITY_ENV_DIR",
@@ -193,9 +193,9 @@ def print_comparison_basic_info(observation_space, action_space, parameter_c):
                     "MIN_BUFFER_SIZE_FOR_TRAIN", "N_EPISODES_FOR_MEAN_CALCULATION",
                     "TEST_INTERVAL_TRAINING_STEPS"
                 ]:
-                    item = "{0}: {1:,}".format(param, getattr(agent_parameter, param))
+                    item = "{0}: {1:,}".format(param, getattr(agent_config, param))
                 else:
-                    item = "{0}: {1:}".format(param, getattr(agent_parameter, param))
+                    item = "{0}: {1:}".format(param, getattr(agent_config, param))
                 items.append(item)
 
             if len(items) == 3:
@@ -210,66 +210,66 @@ def print_comparison_basic_info(observation_space, action_space, parameter_c):
                 print("{0:55}".format(items[0]), end="\n")
                 items.clear()
 
-        print_model_info(agent_parameter)
+        print_model_info(agent_config)
 
     if observation_space and action_space:
         if observation_space and action_space:
             print('-' * 77 + " ENV " + '-' * 77)
-        print_env_info(observation_space, action_space, parameter_c)
+        print_env_info(observation_space, action_space, config_c)
 
     print('#' * 182)
     print()
 
 
-def print_model_info(parameter):
-    if parameter.MODEL_PARAMETER is None:
-        set_parameters(parameter)
+def print_model_info(config):
+    if config.MODEL_PARAMETER is None:
+        set_config(config)
 
-    model_parameter = parameter.MODEL_PARAMETER
+    model_config = config.MODEL_PARAMETER
     print('-' * 76 + " MODEL_TYPE " + '-' * 76)
-    if isinstance(model_parameter, ParameterLinearModel):
+    if isinstance(model_config, ConfigLinearModel):
         item1 = "{0}: {1:}".format("MODEL_PARAMETER", "LINEAR_MODEL_PARAMETER")
-        item2 = "{0}: {1:}".format("NEURONS_PER_FULLY_CONNECTED_LAYER", model_parameter.NEURONS_PER_FULLY_CONNECTED_LAYER)
+        item2 = "{0}: {1:}".format("NEURONS_PER_FULLY_CONNECTED_LAYER", model_config.NEURONS_PER_FULLY_CONNECTED_LAYER)
         print("{0:55} {1:55}".format(item1, item2), end="\n")
-    elif isinstance(model_parameter, ParameterConvolutionalModel):
+    elif isinstance(model_config, ConfigConvolutionalModel):
         item1 = "{0}: {1:}".format("MODEL_PARAMETER", "CONVOLUTIONAL_MODEL_PARAMETER")
-        item2 = "{0}: {1:}".format("OUT_CHANNELS_PER_LAYER", model_parameter.OUT_CHANNELS_PER_LAYER)
-        item3 = "{0}: {1:}".format("KERNEL_SIZE_PER_LAYER", model_parameter.KERNEL_SIZE_PER_LAYER)
+        item2 = "{0}: {1:}".format("OUT_CHANNELS_PER_LAYER", model_config.OUT_CHANNELS_PER_LAYER)
+        item3 = "{0}: {1:}".format("KERNEL_SIZE_PER_LAYER", model_config.KERNEL_SIZE_PER_LAYER)
         print("{0:55} {1:55} {2:55}".format(item1, item2, item3, end="\n"))
-        item1 = "{0}: {1:}".format("STRIDE_PER_LAYER", model_parameter.STRIDE_PER_LAYER)
-        item2 = "{0}: {1:}".format("NEURONS_PER_FULLY_CONNECTED_LAYER", model_parameter.NEURONS_PER_FULLY_CONNECTED_LAYER)
+        item1 = "{0}: {1:}".format("STRIDE_PER_LAYER", model_config.STRIDE_PER_LAYER)
+        item2 = "{0}: {1:}".format("NEURONS_PER_FULLY_CONNECTED_LAYER", model_config.NEURONS_PER_FULLY_CONNECTED_LAYER)
         print("{0:55} {1:55}".format(item1, item2), end="\n")
-    elif isinstance(model_parameter, ParameterRecurrentLinearModel):
+    elif isinstance(model_config, ConfigRecurrentLinearModel):
         item1 = "{0}: {1:}".format("MODEL_PARAMETER", "RECURRENT_LINEAR_MODEL_PARAMETER")
         print("{0:55}".format(item1), end="\n")
-        item1 = "{0}: {1:}".format("HIDDEN_SIZE", model_parameter.HIDDEN_SIZE)
-        item2 = "{0}: {1:}".format("NUM_LAYERS", model_parameter.NUM_LAYERS)
-        item3 = "{0}: {1:}".format("NEURONS_PER_FULLY_CONNECTED_LAYER", model_parameter.NEURONS_PER_FULLY_CONNECTED_LAYER)
+        item1 = "{0}: {1:}".format("HIDDEN_SIZE", model_config.HIDDEN_SIZE)
+        item2 = "{0}: {1:}".format("NUM_LAYERS", model_config.NUM_LAYERS)
+        item3 = "{0}: {1:}".format("NEURONS_PER_FULLY_CONNECTED_LAYER", model_config.NEURONS_PER_FULLY_CONNECTED_LAYER)
         print("{0:55} {1:55} {2:55}".format(item1, item2, item3, end="\n"))
-    elif isinstance(model_parameter, ParameterRecurrentConvolutionalModel):
+    elif isinstance(model_config, ConfigRecurrentConvolutionalModel):
         item1 = "{0}: {1:}".format("MODEL_PARAMETER", "RECURRENT_CONVOLUTIONAL_MODEL_PARAMETER")
         print("{0:55}".format(item1), end="\n")
-        item1 = "{0}: {1:}".format("OUT_CHANNELS_PER_LAYER", model_parameter.OUT_CHANNELS_PER_LAYER)
-        item2 = "{0}: {1:}".format("KERNEL_SIZE_PER_LAYER", model_parameter.KERNEL_SIZE_PER_LAYER)
-        item3 = "{0}: {1:}".format("STRIDE_PER_LAYER", model_parameter.STRIDE_PER_LAYER)
+        item1 = "{0}: {1:}".format("OUT_CHANNELS_PER_LAYER", model_config.OUT_CHANNELS_PER_LAYER)
+        item2 = "{0}: {1:}".format("KERNEL_SIZE_PER_LAYER", model_config.KERNEL_SIZE_PER_LAYER)
+        item3 = "{0}: {1:}".format("STRIDE_PER_LAYER", model_config.STRIDE_PER_LAYER)
         print("{0:55} {1:55} {2:55}".format(item1, item2, item3, end="\n"))
-        item1 = "{0}: {1:}".format("HIDDEN_SIZE", model_parameter.HIDDEN_SIZE)
-        item2 = "{0}: {1:}".format("NUM_LAYERS", model_parameter.NUM_LAYERS)
-        item3 = "{0}: {1:}".format("NEURONS_PER_FULLY_CONNECTED_LAYER", model_parameter.NEURONS_PER_FULLY_CONNECTED_LAYER)
+        item1 = "{0}: {1:}".format("HIDDEN_SIZE", model_config.HIDDEN_SIZE)
+        item2 = "{0}: {1:}".format("NUM_LAYERS", model_config.NUM_LAYERS)
+        item3 = "{0}: {1:}".format("NEURONS_PER_FULLY_CONNECTED_LAYER", model_config.NEURONS_PER_FULLY_CONNECTED_LAYER)
         print("{0:55} {1:55} {2:55}".format(item1, item2, item3, end="\n"))
     else:
         raise ValueError()
 
-    print("LAYER_ACTIVATION: {0}".format(parameter.LAYER_ACTIVATION))
-    print("LOSS_FUNCTION: {0}".format(parameter.LOSS_FUNCTION))
-    print("PLAY_MODEL_FILE_NAME: {0}".format(parameter.PLAY_MODEL_FILE_NAME))
+    print("LAYER_ACTIVATION: {0}".format(config.LAYER_ACTIVATION))
+    print("LOSS_FUNCTION: {0}".format(config.LOSS_FUNCTION))
+    print("PLAY_MODEL_FILE_NAME: {0}".format(config.PLAY_MODEL_FILE_NAME))
 
 
-def print_env_info(observation_space, action_space, parameter):
-    # item1 = "{0}: {1:,}".format("EPISODE_REWARD_AVG_SOLVED", parameter.EPISODE_REWARD_AVG_SOLVED)
-    # item2 = "{0}: {1:,}".format("EPISODE_REWARD_STD_SOLVED", parameter.EPISODE_REWARD_STD_SOLVED)
+def print_env_info(observation_space, action_space, config):
+    # item1 = "{0}: {1:,}".format("EPISODE_REWARD_AVG_SOLVED", config.EPISODE_REWARD_AVG_SOLVED)
+    # item2 = "{0}: {1:,}".format("EPISODE_REWARD_STD_SOLVED", config.EPISODE_REWARD_STD_SOLVED)
     # print("{0:55} {1:55}".format(item1, item2), end="\n")
-    env_name_str = "ENV_NAME: {0}".format(parameter.ENV_NAME)
+    env_name_str = "ENV_NAME: {0}".format(config.ENV_NAME)
     print(env_name_str)
 
     observation_space_str = "OBSERVATION_SPACE: {0}, SHAPE: {1}".format(
@@ -298,7 +298,7 @@ def print_env_info(observation_space, action_space, parameter):
 def console_log(
         total_episodes_v, total_time_steps_v, last_mean_episode_reward_v,
         n_rollout_transitions_v, transition_rolling_rate_v, train_steps_v, train_step_rate_v,
-        agent, parameter
+        agent, config
 ):
     console_log = "[Tot. Episodes: {0:5,}, Tot. Time Steps {1:7,}] " \
                   "Mean Episode Reward: {2:6.1f}, Rolling Outs: {3:7,} ({4:7.3f}/sec.), " \
@@ -313,27 +313,27 @@ def console_log(
             train_step_rate_v
         )
 
-    if parameter.AGENT_TYPE in [AgentType.DQN, AgentType.DUELING_DQN]:
+    if config.AGENT_TYPE in [AgentType.DQN, AgentType.DUELING_DQN]:
         console_log += "Q_net_loss: {0:>7.3f}, Epsilon: {1:>4.2f}, ".format(
             agent.last_q_net_loss.value, agent.epsilon.value
         )
-    elif parameter.AGENT_TYPE == AgentType.REINFORCE:
+    elif config.AGENT_TYPE == AgentType.REINFORCE:
         console_log += "log_policy_objective: {0:7.3f}, ".format(
             agent.last_log_policy_objective.value
         )
-    elif parameter.AGENT_TYPE == AgentType.A2C:
+    elif config.AGENT_TYPE == AgentType.A2C:
         console_log += "critic_loss: {0:7.3f}, log_actor_obj.: {1:7.3f}, entropy: {2:5.3f}".format(
             agent.last_critic_loss.value, agent.last_actor_objective.value, agent.last_entropy.value
         )
-    elif parameter.AGENT_TYPE == AgentType.PPO:
+    elif config.AGENT_TYPE == AgentType.PPO:
         console_log += "critic_loss: {0:7.3f}, actor_obj.: {1:7.3f}, ratio: {2:5.3f}, entropy: {3:5.3f}".format(
             agent.last_critic_loss.value, agent.last_actor_objective.value, agent.last_ratio.value, agent.last_entropy.value
         )
-    elif parameter.AGENT_TYPE == AgentType.SAC:
+    elif config.AGENT_TYPE == AgentType.SAC:
         console_log += "critic_loss: {0:7.3f}, actor_obj.: {1:7.3f}, alpha: {2:5.3f}, entropy: {3:5.3f}".format(
             agent.last_critic_loss.value, agent.last_actor_objective.value, agent.alpha.value, agent.last_entropy.value
         )
-    elif parameter.AGENT_TYPE == AgentType.DDPG:
+    elif config.AGENT_TYPE == AgentType.DDPG:
         console_log += "critic_loss: {0:7.3f}, actor_loss: {1:7.3f}, ".format(
             agent.last_critic_loss.value, agent.last_actor_loss.value
         )
@@ -385,17 +385,17 @@ def console_log_comparison(
         print(console_log)
 
 
-def get_wandb_obj(parameter, agent=None, comparison=False):
+def get_wandb_obj(config, agent=None, comparison=False):
     if comparison:
-        project = "{0}_{1}_{2}".format(parameter.ENV_NAME, "Comparison", SYSTEM_USER_NAME)
+        project = "{0}_{1}_{2}".format(config.ENV_NAME, "Comparison", SYSTEM_USER_NAME)
     else:
-        project = "{0}_{1}_{2}".format(parameter.ENV_NAME, parameter.AGENT_TYPE.name, SYSTEM_USER_NAME)
+        project = "{0}_{1}_{2}".format(config.ENV_NAME, config.AGENT_TYPE.name, SYSTEM_USER_NAME)
 
     wandb_obj = wandb.init(
-        entity=parameter.WANDB_ENTITY,
+        entity=config.WANDB_ENTITY,
         project=project,
         config={
-            key: getattr(parameter, key) for key in dir(parameter) if not key.startswith("__")
+            key: getattr(config, key) for key in dir(config) if not key.startswith("__")
         }
     )
 
@@ -409,7 +409,7 @@ def get_wandb_obj(parameter, agent=None, comparison=False):
     return wandb_obj
 
 
-def wandb_log(learner, wandb_obj, parameter):
+def wandb_log(learner, wandb_obj, config):
     log_dict = {
         "[TEST] Episode Reward": learner.test_episode_reward_avg.value,
         "[TEST] Std. of Episode Reward": learner.test_episode_reward_std.value,
@@ -422,21 +422,21 @@ def wandb_log(learner, wandb_obj, parameter):
         "Train Step Rate": learner.train_step_rate.value
     }
 
-    if parameter.AGENT_TYPE in [AgentType.DQN, AgentType.DUELING_DQN]:
+    if config.AGENT_TYPE in [AgentType.DQN, AgentType.DUELING_DQN]:
         log_dict["QNet Loss"] = learner.agent.last_q_net_loss.value
         log_dict["Epsilon"] = learner.agent.epsilon.value
-    elif parameter.AGENT_TYPE == AgentType.REINFORCE:
+    elif config.AGENT_TYPE == AgentType.REINFORCE:
         log_dict["Log Policy Objective"] = learner.agent.last_log_policy_objective.value
-    elif parameter.AGENT_TYPE == AgentType.A2C:
+    elif config.AGENT_TYPE == AgentType.A2C:
         log_dict["Critic Loss"] = learner.agent.last_critic_loss.value
         log_dict["Log Actor Objective"] = learner.agent.last_actor_objective.value
         log_dict["Entropy"] = learner.agent.last_entropy.value
-    elif parameter.AGENT_TYPE == AgentType.PPO:
+    elif config.AGENT_TYPE == AgentType.PPO:
         log_dict["Critic Loss"] = learner.agent.last_critic_loss.value
         log_dict["Actor Objective"] = learner.agent.last_actor_objective.value
         log_dict["Ratio"] = learner.agent.last_ratio.value
         log_dict["Entropy"] = learner.agent.last_entropy.value
-    elif parameter.AGENT_TYPE == AgentType.SAC:
+    elif config.AGENT_TYPE == AgentType.SAC:
         log_dict["Critic Loss"] = learner.agent.last_critic_loss.value
         log_dict["Last Actor Objective"] = learner.agent.last_actor_objective.value
         log_dict["Alpha"] = learner.agent.alpha.value
@@ -444,7 +444,7 @@ def wandb_log(learner, wandb_obj, parameter):
     else:
         pass
 
-    if parameter.AGENT_TYPE in ActorCriticAgentTypes:
+    if config.AGENT_TYPE in ActorCriticAgentTypes:
         log_dict["actor_grad_max"] = learner.agent.last_actor_model_grad_max.value
         log_dict["actor_grad_l2"] = learner.agent.last_actor_model_grad_l2.value
         log_dict["critic_grad_max"] = learner.agent.last_critic_model_grad_max.value
@@ -556,10 +556,10 @@ def wandb_log_comparison(
     wandb_obj.log(log_dict)
 
 
-def get_train_env(parameter, no_graphics=True):
+def get_train_env(config, no_graphics=True):
     def make_gym_env(env_name):
         def _make():
-            if isinstance(parameter, ParameterUnityGymEnv):
+            if isinstance(config, ConfigUnityGymEnv):
                 from sys import platform
                 if platform == "linux" or platform == "linux2":
                     # linux
@@ -574,11 +574,11 @@ def get_train_env(parameter, no_graphics=True):
                     raise ValueError()
                 channel = EngineConfigurationChannel()
                 u_env = UnityEnvironment(
-                    file_name=os.path.join(parameter.UNITY_ENV_DIR, parameter.ENV_NAME, platform_dir,
-                                           parameter.ENV_NAME),
+                    file_name=os.path.join(config.UNITY_ENV_DIR, config.ENV_NAME, platform_dir,
+                                           config.ENV_NAME),
                     worker_id=0, no_graphics=no_graphics, side_channels=[channel]
                 )
-                channel.set_configuration_parameters(time_scale=parameter.time_scale)
+                channel.set_configuration_parameters(time_scale=config.time_scale)
                 env = UnityToGymWrapper(u_env)
                 return env
             env = gym.make(env_name)
@@ -593,15 +593,15 @@ def get_train_env(parameter, no_graphics=True):
 
     train_env = AsyncVectorEnv(
         env_fns=[
-            make_gym_env(parameter.ENV_NAME) for _ in range(parameter.N_VECTORIZED_ENVS)
+            make_gym_env(config.ENV_NAME) for _ in range(config.N_VECTORIZED_ENVS)
         ]
     )
 
     return train_env
 
 
-def get_single_env(parameter, no_graphics=True):
-    if isinstance(parameter, ParameterUnityGymEnv):
+def get_single_env(config, no_graphics=True):
+    if isinstance(config, ConfigUnityGymEnv):
         from sys import platform
         if platform == "linux" or platform == "linux2":
             # linux
@@ -617,14 +617,14 @@ def get_single_env(parameter, no_graphics=True):
 
         channel = EngineConfigurationChannel()
         u_env = UnityEnvironment(
-            file_name=os.path.join(parameter.UNITY_ENV_DIR, parameter.ENV_NAME, platform_dir, parameter.ENV_NAME),
+            file_name=os.path.join(config.UNITY_ENV_DIR, config.ENV_NAME, platform_dir, config.ENV_NAME),
             worker_id=1, no_graphics=no_graphics, side_channels=[channel]
         )
-        channel.set_configuration_parameters(time_scale=parameter.time_scale)
+        channel.set_configuration_parameters(time_scale=config.time_scale)
         single_env = UnityToGymWrapper(u_env)
     else:
-        single_env = gym.make(parameter.ENV_NAME)
-        if parameter.ENV_NAME in ["PongNoFrameskip-v4"]:
+        single_env = gym.make(config.ENV_NAME)
+        if config.ENV_NAME in ["PongNoFrameskip-v4"]:
             single_env = gym.wrappers.AtariPreprocessing(
                 single_env, grayscale_obs=True, scale_obs=True
             )
@@ -638,8 +638,8 @@ def get_single_env(parameter, no_graphics=True):
 # Discrete
 # MultiBinary
 # MultiDiscrete
-def get_env_info(parameter):
-    single_env = get_single_env(parameter)
+def get_env_info(config):
+    single_env = get_single_env(config)
 
     observation_space = single_env.observation_space
     action_space = single_env.action_space
