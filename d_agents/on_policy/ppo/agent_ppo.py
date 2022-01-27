@@ -44,12 +44,13 @@ class AgentPpo(AgentA2c):
             advantages = advantages.squeeze(dim=-1)  # NOTE
         elif isinstance(self.action_space, Box):
             mu_v, sigma_v = self.actor_old_model.pi(self.observations)
-            trajectory_old_log_pi_action_v = self.calc_log_prob(mu_v, sigma_v, self.actions)
+            dist = Normal(loc=mu_v, scale=sigma_v)
+            old_log_pi_action_v = dist.log_prob(value=self.actions).sum(dim=-1, keepdim=True)
         else:
             raise ValueError()
 
         #####################################
-        # Trajectory 처리: END
+        # OLD_LOG_PI 처리: END
         #####################################
 
         sum_critic_loss = 0.0
@@ -58,19 +59,10 @@ class AgentPpo(AgentA2c):
         sum_entropy = 0.0
 
         for _ in range(self.config.PPO_K_EPOCH):
+            batch_values = self.critic_model.v(self.observations)
 
-            batch_l = batch_offset + self.config.BATCH_SIZE
-
-            batch_observations = self.observations[batch_offset:batch_l]
-            batch_actions = self.actions[batch_offset:batch_l]
-            batch_td_target_values = trajectory_td_target_values[batch_offset:batch_l]
-            batch_old_log_pi_action_v = trajectory_old_log_pi_action_v[batch_offset:batch_l]
-            batch_advantages = trajectory_advantages[batch_offset:batch_l]
-
-            batch_values = self.critic_model.v(batch_observations)
-
-            assert batch_values.shape == batch_td_target_values.shape
-            batch_critic_loss = self.config.LOSS_FUNCTION(batch_values, batch_td_target_values.detach())
+            assert batch_values.shape == td_target_values.shape
+            batch_critic_loss = self.config.LOSS_FUNCTION(batch_values, td_target_values.detach())
 
             self.critic_optimizer.zero_grad()
             batch_critic_loss.backward()
@@ -81,34 +73,33 @@ class AgentPpo(AgentA2c):
                 # actions.shape: (32, 1)
                 # dist.log_prob(value=actions.squeeze(-1)).shape: (32,)
                 # criticized_log_pi_action_v.shape: (32,)
-                batch_action_probs = self.actor_model.pi(batch_observations)
+                batch_action_probs = self.actor_model.pi(self.observations)
                 batch_dist = Categorical(probs=batch_action_probs)
-                batch_log_pi_action_v = batch_dist.log_prob(value=batch_actions.squeeze(dim=-1))
+                batch_log_pi_action_v = batch_dist.log_prob(value=self.actions.squeeze(dim=-1))
                 batch_entropy = batch_dist.entropy().mean()
             elif isinstance(self.action_space, Box):
-                batch_mu_v, batch_var_v = self.actor_model.pi(batch_observations)
+                batch_mu_v, batch_sigma_v = self.actor_model.pi(self.observations)
 
-                # batch_log_pi_action_v = self.calc_log_prob(batch_mu_v, batch_var_v, batch_actions)
-                # batch_entropy = 0.5 * (torch.log(2.0 * np.pi * batch_var_v) + 1.0).sum(dim=-1)
+                # batch_log_pi_action_v = self.calc_log_prob(batch_mu_v, batch_sigma_v ** 2, batch_actions)
+                # batch_entropy = 0.5 * (torch.log(2.0 * np.pi * batch_sigma_v ** 2) + 1.0).sum(dim=-1)
                 # batch_entropy = batch_entropy.mean()
 
-                batch_dist = Normal(loc=batch_mu_v, scale=torch.sqrt(batch_var_v))
-                batch_log_pi_action_v = batch_dist.log_prob(value=batch_actions).sum(dim=-1, keepdim=True)
+                batch_dist = Normal(loc=batch_mu_v, scale=batch_sigma_v)
+                batch_log_pi_action_v = batch_dist.log_prob(value=self.actions).sum(dim=-1, keepdim=True)
                 batch_entropy = batch_dist.entropy().mean()
 
-                #print(batch_mu_v.shape, batch_var_v.shape, batch_actions.shape, batch_log_pi_action_v.shape, batch_entropy.shape, "@@@")
             else:
                 raise ValueError()
 
-            batch_ratio = torch.exp(batch_log_pi_action_v - batch_old_log_pi_action_v.detach())
+            batch_ratio = torch.exp(batch_log_pi_action_v - old_log_pi_action_v.detach())
 
-            assert batch_ratio.shape == batch_advantages.shape, "{0}, {1}".format(
-                batch_ratio.shape, batch_advantages.shape
+            assert batch_ratio.shape == advantages.shape, "{0}, {1}".format(
+                batch_ratio.shape, advantages.shape
             )
-            batch_surrogate_loss_pre_clip = batch_ratio * batch_advantages
+            batch_surrogate_loss_pre_clip = batch_ratio * advantages
             batch_surrogate_loss_clip = torch.clamp(
                 batch_ratio, 1.0 - self.config.PPO_EPSILON_CLIP, 1.0 + self.config.PPO_EPSILON_CLIP
-            ) * batch_advantages
+            ) * advantages
 
             assert batch_surrogate_loss_clip.shape == batch_surrogate_loss_pre_clip.shape, "".format(
                 batch_surrogate_loss_clip.shape, batch_surrogate_loss_pre_clip.shape
