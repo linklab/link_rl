@@ -19,11 +19,12 @@ class ConfigA2c(ConfigAgent):
 
         self.ACTOR_LEARNING_RATE = 0.0001
         self.LEARNING_RATE = 0.0005
+        self.ENTROPY_BETA = 0.0002
+        self.TEST_INTERVAL_TRAINING_STEPS = 200
+
         self.BUFFER_CAPACITY = 1_000
         self.BATCH_SIZE = 128
-        self.ENTROPY_BETA = 0.0002
         self.CONSOLE_LOG_INTERVAL_TRAINING_STEPS = 10
-        self.TEST_INTERVAL_TRAINING_STEPS = 200
 
 
 class ConfigPpo(ConfigAgent):

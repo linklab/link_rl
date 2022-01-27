@@ -32,6 +32,9 @@ class ConfigAntBulletPpo(ConfigBase, ConfigAntBullet, ConfigPpo):
         self.N_ACTORS = 1
         self.MAX_TRAINING_STEPS = 2_000_000
         self.MODEL_TYPE = ModelType.SMALL_LINEAR
+        self.BATCH_SIZE = 128
+        self.PPO_K_EPOCH = 3
+        self.BUFFER_CAPACITY = self.BATCH_SIZE
 
 
 class ConfigAntBulletPpoTrajectory(ConfigBase, ConfigAntBullet, ConfigPpoTrajectory):

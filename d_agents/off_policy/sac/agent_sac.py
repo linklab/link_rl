@@ -89,7 +89,7 @@ class AgentSac(Agent):
 
             if mode == AgentMode.TRAIN:
                 actions = np.random.normal(
-                    loc=mu_v.detach().cpu().numpy(), scale=torch.sigma_v.detach().cpu().numpy()
+                    loc=mu_v.detach().cpu().numpy(), scale=sigma_v.detach().cpu().numpy()
                 )
 
                 # dist = Normal(loc=mu_v, scale=std_v)
