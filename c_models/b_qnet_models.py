@@ -79,7 +79,6 @@ class QNet(Model):
             x = torch.tensor(x, dtype=torch.float32, device=self.config.DEVICE)
 
         if isinstance(self.config.MODEL_PARAMETER, ConfigLinearModel):
-            x = self.recurrent_layers(x)
             x = self.fc_layers(x)
         elif isinstance(self.config.MODEL_PARAMETER, ConfigConvolutionalModel):
             # print("x.shape:", x.shape)

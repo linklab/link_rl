@@ -122,6 +122,7 @@ class Model(nn.Module):
 
         return rnn_layer
 
+
     # def _get_recurrent_out(self, recurrent_layers, input_n_features, seq_len=1):
     #     """
     #     The inputs of the RNN:
