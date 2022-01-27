@@ -22,6 +22,9 @@ config = ConfigCartPoleA2c()
 from a_configuration.b_single_config.open_ai_gym.config_cart_pole import ConfigCartPolePpo
 config = ConfigCartPolePpo()
 
+from a_configuration.b_single_config.open_ai_gym.config_cart_pole import ConfigCartPolePpoTrajectory
+config = ConfigCartPolePpoTrajectory()
+
 ##################
 ## LUNAR_LANDER ##
 ##################

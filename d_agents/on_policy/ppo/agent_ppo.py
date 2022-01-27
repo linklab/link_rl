@@ -26,22 +26,10 @@ class AgentPpo(AgentA2c):
         #####################################
         # OLD_LOG_PI 처리: BEGIN
         #####################################
-        next_values = self.critic_model.v(self.next_observations)
-        next_values[self.dones] = 0.0
-
-        # td_target_values.shape: (32, 1)
-        td_target_values = self.rewards + self.config.GAMMA ** self.config.N_STEP * next_values
-        values = self.critic_model.v(self.observations)
-        #
-        advantages = (td_target_values - values).detach()
-        # normalize advantages
-        advantages = (advantages - torch.mean(advantages)) / (torch.std(advantages) + 1e-7)
-
         if isinstance(self.action_space, Discrete):
             action_probs = self.actor_old_model.pi(self.observations)
             dist = Categorical(probs=action_probs)
             old_log_pi_action_v = dist.log_prob(value=self.actions.squeeze(dim=-1))
-            advantages = advantages.squeeze(dim=-1)  # NOTE
         elif isinstance(self.action_space, Box):
             mu_v, sigma_v = self.actor_old_model.pi(self.observations)
             dist = Normal(loc=mu_v, scale=sigma_v)
@@ -59,10 +47,21 @@ class AgentPpo(AgentA2c):
         sum_entropy = 0.0
 
         for _ in range(self.config.PPO_K_EPOCH):
-            batch_values = self.critic_model.v(self.observations)
+            batch_next_values = self.critic_model.v(self.next_observations)
+            batch_next_values[self.dones] = 0.0
 
-            assert batch_values.shape == td_target_values.shape
-            batch_critic_loss = self.config.LOSS_FUNCTION(batch_values, td_target_values.detach())
+            # td_target_values.shape: (32, 1)
+            batch_td_target_values = self.rewards + self.config.GAMMA ** self.config.N_STEP * batch_next_values
+            batch_values = self.critic_model.v(self.observations)
+            #
+            batch_advantages = (batch_td_target_values - batch_values).detach()
+            # normalize advantages
+            batch_advantages = (batch_advantages - torch.mean(batch_advantages)) / (torch.std(batch_advantages) + 1e-7)
+            if isinstance(self.action_space, Discrete):
+                batch_advantages = batch_advantages.squeeze(dim=-1)  # NOTE
+
+            assert batch_values.shape == batch_td_target_values.shape
+            batch_critic_loss = self.config.LOSS_FUNCTION(batch_values, batch_td_target_values.detach())
 
             self.critic_optimizer.zero_grad()
             batch_critic_loss.backward()
@@ -93,13 +92,13 @@ class AgentPpo(AgentA2c):
 
             batch_ratio = torch.exp(batch_log_pi_action_v - old_log_pi_action_v.detach())
 
-            assert batch_ratio.shape == advantages.shape, "{0}, {1}".format(
-                batch_ratio.shape, advantages.shape
+            assert batch_ratio.shape == batch_advantages.shape, "{0}, {1}".format(
+                batch_ratio.shape, batch_advantages.shape
             )
-            batch_surrogate_loss_pre_clip = batch_ratio * advantages
+            batch_surrogate_loss_pre_clip = batch_ratio * batch_advantages
             batch_surrogate_loss_clip = torch.clamp(
                 batch_ratio, 1.0 - self.config.PPO_EPSILON_CLIP, 1.0 + self.config.PPO_EPSILON_CLIP
-            ) * advantages
+            ) * batch_advantages
 
             assert batch_surrogate_loss_clip.shape == batch_surrogate_loss_pre_clip.shape, "".format(
                 batch_surrogate_loss_clip.shape, batch_surrogate_loss_pre_clip.shape

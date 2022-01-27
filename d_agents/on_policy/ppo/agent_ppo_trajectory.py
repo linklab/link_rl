@@ -18,34 +18,20 @@ class AgentPpoTrajectory(AgentPpo):
         count_training_steps = 0
 
         #####################################
-        # Trajectory + OLD_LOG_PI 처리: BEGIN
+        # OLD_LOG_PI 처리: BEGIN
         #####################################
-        trajectory_next_values = self.critic_model.v(self.next_observations)
-        trajectory_next_values[self.dones] = 0.0
-
-        # td_target_values.shape: (32, 1)
-        trajectory_td_target_values = self.rewards + self.config.GAMMA ** self.config.N_STEP * trajectory_next_values
-        trajectory_values = self.critic_model.v(self.observations)
-        #
-        trajectory_advantages = (trajectory_td_target_values - trajectory_values).detach()
-
-        # normalize advantages
-        trajectory_advantages = (trajectory_advantages - torch.mean(trajectory_advantages)) / (torch.std(trajectory_advantages) + 1e-7)
-
         if isinstance(self.action_space, Discrete):
             trajectory_action_probs = self.actor_old_model.pi(self.observations)
             trajectory_dist = Categorical(probs=trajectory_action_probs)
             trajectory_old_log_pi_action_v = trajectory_dist.log_prob(value=self.actions.squeeze(dim=-1))
-            trajectory_advantages = trajectory_advantages.squeeze(dim=-1)  # NOTE
         elif isinstance(self.action_space, Box):
             trajectory_mu_v, trajectory_sigma_v = self.actor_old_model.pi(self.observations)
             trajectory_dist = Normal(loc=trajectory_mu_v, scale=trajectory_sigma_v)
             trajectory_old_log_pi_action_v = trajectory_dist.log_prob(value=self.actions).sum(dim=-1, keepdim=True)
         else:
             raise ValueError()
-
         #####################################
-        # Trajectory + OLD_LOG_PI 처리: END
+        # OLD_LOG_PI 처리: END
         #####################################
 
         sum_critic_loss = 0.0
@@ -54,6 +40,19 @@ class AgentPpoTrajectory(AgentPpo):
         sum_entropy = 0.0
 
         for _ in range(self.config.PPO_K_EPOCH):
+            trajectory_next_values = self.critic_model.v(self.next_observations)
+            trajectory_next_values[self.dones] = 0.0
+
+            # td_target_values.shape: (32, 1)
+            trajectory_td_target_values = self.rewards + self.config.GAMMA ** self.config.N_STEP * trajectory_next_values
+            trajectory_values = self.critic_model.v(self.observations)
+
+            trajectory_advantages = (trajectory_td_target_values - trajectory_values).detach()
+            # normalize advantages
+            trajectory_advantages = (trajectory_advantages - torch.mean(trajectory_advantages)) / (torch.std(trajectory_advantages) + 1e-7)
+            if isinstance(self.action_space, Discrete):
+                trajectory_advantages = trajectory_advantages.squeeze(dim=-1)  # NOTE
+
             for batch_offset in range(0, self.config.PPO_TRAJECTORY_SIZE, self.config.BATCH_SIZE):
                 batch_l = batch_offset + self.config.BATCH_SIZE
 

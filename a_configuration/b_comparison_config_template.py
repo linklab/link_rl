@@ -1,9 +1,9 @@
+from g_utils.commons import print_basic_info, get_env_info, print_comparison_basic_info
+
 ###############
 ## CART_POLE ##
 ###############
 from a_configuration.c_comparison_config.open_ai_gym.config_comparison_cart_pole import ConfigComparisonCartPoleDqn
-from g_utils.commons import print_basic_info, get_env_info, print_comparison_basic_info
-
 config_c = ConfigComparisonCartPoleDqn()
 
 from a_configuration.c_comparison_config.open_ai_gym.config_comparison_cart_pole import ConfigComparisonCartPoleDqnTypes
