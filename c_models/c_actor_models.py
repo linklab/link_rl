@@ -12,11 +12,11 @@ from a_configuration.a_base_config.c_models.recurrent_linear_models import Confi
 from c_models.a_models import Model
 
 
-class PolicyModel(Model):
+class ActorModel(Model):
     def __init__(
             self, observation_shape: Tuple[int], n_out_actions: int, n_discrete_actions=None, config=None
     ):
-        super(PolicyModel, self).__init__(observation_shape, n_out_actions, n_discrete_actions, config)
+        super(ActorModel, self).__init__(observation_shape, n_out_actions, n_discrete_actions, config)
 
         if isinstance(self.config.MODEL_PARAMETER, ConfigLinearModel):
             input_n_features = self.observation_shape[0]
@@ -105,9 +105,9 @@ class PolicyModel(Model):
         pass
 
 
-class DiscretePolicyModel(PolicyModel):
+class DiscreteActorModel(ActorModel):
     def __init__(self, observation_shape, n_out_actions, n_discrete_actions, config):
-        super(DiscretePolicyModel, self).__init__(
+        super(DiscreteActorModel, self).__init__(
             observation_shape, n_out_actions, n_discrete_actions, config
         )
 
@@ -123,11 +123,14 @@ class DiscretePolicyModel(PolicyModel):
         return action_prob
 
 
-class ContinuousDeterministicPolicyModel(PolicyModel):
+DiscretePolicyModel = DiscreteActorModel
+
+
+class ContinuousDeterministicActorModel(ActorModel):
     def __init__(
             self, observation_shape: Tuple[int], n_out_actions: int, config=None
     ):
-        super(ContinuousDeterministicPolicyModel, self).__init__(
+        super(ContinuousDeterministicActorModel, self).__init__(
             observation_shape=observation_shape, n_out_actions=n_out_actions, config=config
         )
 
@@ -143,9 +146,9 @@ class ContinuousDeterministicPolicyModel(PolicyModel):
         return mu_v
 
 
-class ContinuousStochasticPolicyModel(PolicyModel):
+class ContinuousStochasticActorModel(ActorModel):
     def __init__(self, observation_shape, n_out_actions, config=None):
-        super(ContinuousStochasticPolicyModel, self).__init__(
+        super(ContinuousStochasticActorModel, self).__init__(
             observation_shape=observation_shape, n_out_actions=n_out_actions, config=config
         )
         self.mu = nn.Sequential(
@@ -179,8 +182,3 @@ class ContinuousStochasticPolicyModel(PolicyModel):
         # The standard deviation can’t be negative (nor 0).
         sigma_v = torch.clamp(self.log_sigma.exp(), 1e-3, 50)
         return mu_v, sigma_v
-
-
-DiscreteActorModel = DiscretePolicyModel
-ContinuousDeterministicActorModel = ContinuousDeterministicPolicyModel
-ContinuousStochasticActorModel = ContinuousStochasticPolicyModel

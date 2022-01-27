@@ -1,3 +1,4 @@
+from abc import abstractmethod
 from typing import Tuple
 import numpy as np
 import torch
@@ -11,10 +12,14 @@ from c_models.a_models import Model
 
 
 class CriticModel(Model):
+    pass
+
+
+class ValueCriticModel(CriticModel):
     def __init__(
             self, observation_shape: Tuple[int], n_out_actions: int, n_discrete_actions=None, config=None
     ):
-        super(CriticModel, self).__init__(observation_shape, n_out_actions, n_discrete_actions, config)
+        super(ValueCriticModel, self).__init__(observation_shape, n_out_actions, n_discrete_actions, config)
 
         ############################
         # CRITIC MODEL_TYPE: BEGIN #
@@ -37,13 +42,13 @@ class CriticModel(Model):
 
         else:
             raise ValueError()
+        ##########################
+        # CRITIC MODEL_TYPE: END #
+        ##########################
 
         self.critic_fc_last_layer = nn.Linear(self.config.MODEL_PARAMETER.NEURONS_PER_FULLY_CONNECTED_LAYER[-1], 1)
 
         self.critic_params_list = list(self.parameters())
-        ##########################
-        # CRITIC MODEL_TYPE: END #
-        ##########################
 
     def forward_critic(self, obs):
         if isinstance(obs, np.ndarray):
@@ -78,7 +83,7 @@ class CriticModel(Model):
         return value
 
 
-class QCriticModel(Model):
+class QCriticModel(CriticModel):
     def __init__(
             self, observation_shape: Tuple[int], n_out_actions: int, n_discrete_actions=None, config=None
     ):
@@ -150,7 +155,7 @@ class QCriticModel(Model):
         return q_value
     
     
-class DoubleQCriticModel(Model):
+class DoubleQCriticModel(CriticModel):
     def __init__(
             self, observation_shape: Tuple[int], n_out_actions: int, n_discrete_actions=None, config=None
     ):

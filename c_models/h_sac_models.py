@@ -4,7 +4,7 @@ import numpy as np
 from torch.distributions import Normal, TanhTransform, TransformedDistribution
 
 from c_models.d_critic_models import DoubleQCriticModel
-from c_models.c_policy_models import DiscreteActorModel, ContinuousStochasticActorModel
+from c_models.c_actor_models import DiscreteActorModel, ContinuousStochasticActorModel
 from e_main.config_single import config
 
 
