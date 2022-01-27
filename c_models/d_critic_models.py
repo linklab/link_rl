@@ -163,7 +163,8 @@ class CriticWithActionModel(Model):
             self.critic_params += list(self.critic_conv_layers.parameters())
 
             conv_out_flat_size = self._get_conv_out(self.critic_conv_layers, self.observation_shape)
-            self.critic_fc_layers = self.get_linear_layers(input_n_features=conv_out_flat_size + self.n_out_actions)
+            input_n_features = conv_out_flat_size + self.n_out_actions
+            self.critic_fc_layers = self.get_linear_layers(input_n_features=input_n_features)
             self.critic_params += list(self.critic_fc_layers.parameters())
 
         # elif isinstance(self.config.MODEL_PARAMETER, ConfigRecurrentLinearModel):

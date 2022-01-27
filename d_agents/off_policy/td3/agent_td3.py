@@ -6,6 +6,7 @@ import torch.multiprocessing as mp
 from gym.spaces import Discrete, Box
 
 from c_models.e_ddpg_models import DiscreteDdpgModel, ContinuousDdpgModel
+from c_models.e_td3_models import DiscreteTd3Model, ContinuousTd3Model
 from d_agents.agent import Agent
 from g_utils.commons import EpsilonTracker, get_continuous_action_info
 from g_utils.types import AgentMode, ModelType
@@ -17,35 +18,35 @@ class AgentTd3(Agent):
 
         if isinstance(self.action_space, Discrete):
             self.n_actions = self.n_discrete_actions
-            self.ddpg_model = DiscreteDdpgModel(
+            self.td3_model = DiscreteTd3Model(
                 observation_shape=self.observation_shape, n_out_actions=self.n_out_actions,
                 n_discrete_actions=self.n_discrete_actions, config=config
             )
 
-            self.target_ddpg_model = DiscreteDdpgModel(
+            self.target_td3_model = DiscreteTd3Model(
                 observation_shape=self.observation_shape, n_out_actions=self.n_out_actions,
                 n_discrete_actions=self.n_discrete_actions, config=config
             )
         elif isinstance(self.action_space, Box):
             self.n_actions = self.n_out_actions
 
-            self.ddpg_model = ContinuousDdpgModel(
+            self.td3_model = ContinuousTd3Model(
                 observation_shape=self.observation_shape, n_out_actions=self.n_out_actions, config=config
             )
 
-            self.target_ddpg_model = ContinuousDdpgModel(
+            self.target_td3_model = ContinuousTd3Model(
                 observation_shape=self.observation_shape, n_out_actions=self.n_out_actions, config=config
             )
         else:
             raise ValueError()
 
-        self.model = self.ddpg_model.actor_model
+        self.model = self.td3_model.actor_model
 
-        self.actor_model = self.ddpg_model.actor_model
-        self.critic_model = self.ddpg_model.critic_model
+        self.actor_model = self.td3_model.actor_model
+        self.critic_model = self.td3_model.critic_model
 
-        self.target_actor_model = self.target_ddpg_model.actor_model
-        self.target_critic_model = self.target_ddpg_model.critic_model
+        self.target_actor_model = self.target_td3_model.actor_model
+        self.target_critic_model = self.target_td3_model.critic_model
 
         self.synchronize_models(source_model=self.actor_model, target_model=self.target_actor_model)
         self.synchronize_models(source_model=self.critic_model, target_model=self.target_critic_model)
