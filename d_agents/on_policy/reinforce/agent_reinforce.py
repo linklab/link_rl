@@ -5,7 +5,7 @@ from gym.spaces import Discrete, Box
 from torch.distributions import Categorical, Normal
 import torch.multiprocessing as mp
 
-from c_models.c_policy_models import DiscretePolicyModel, ContinuousPolicyModel
+from c_models.c_policy_models import DiscretePolicyModel, ContinuousStochasticPolicyModel
 from d_agents.agent import Agent
 from g_utils.types import AgentMode
 

@@ -5,7 +5,7 @@ from torch.distributions import Categorical, Normal
 import torch.multiprocessing as mp
 import numpy as np
 
-from c_models.d_actor_critic_models import ContinuousActorCriticModel, DiscreteActorCriticModel
+from c_models.e_a2c_models import ContinuousActorCriticModel, DiscreteActorCriticModel
 from d_agents.agent import Agent
 from g_utils.types import AgentMode
 

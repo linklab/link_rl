@@ -125,7 +125,9 @@ class DiscretePolicyModel(PolicyModel):
             observation_shape, n_out_actions, n_discrete_actions, config
         )
 
-        self.actor_fc_pi = nn.Linear(self.config.MODEL_PARAMETER.NEURONS_PER_FULLY_CONNECTED_LAYER[-1], self.n_discrete_actions)
+        self.actor_fc_pi = nn.Linear(
+            self.config.MODEL_PARAMETER.NEURONS_PER_FULLY_CONNECTED_LAYER[-1], self.n_discrete_actions
+        )
         self.actor_params += list(self.actor_fc_pi.parameters())
 
     def pi(self, obs, save_hidden=False):
@@ -135,9 +137,29 @@ class DiscretePolicyModel(PolicyModel):
         return action_prob
 
 
-class ContinuousPolicyModel(PolicyModel):
+class ContinuousDeterministicPolicyModel(PolicyModel):
+    def __init__(
+            self, observation_shape: Tuple[int], n_out_actions: int, config=None
+    ):
+        super(ContinuousDeterministicPolicyModel, self).__init__(
+            observation_shape=observation_shape, n_out_actions=n_out_actions, config=config
+        )
+
+        self.mu = nn.Sequential(
+            nn.Linear(self.config.MODEL_PARAMETER.NEURONS_PER_FULLY_CONNECTED_LAYER[-1], self.n_out_actions),
+            nn.Tanh()
+        )
+        self.actor_params += list(self.mu.parameters())
+
+    def pi(self, x, save_hidden=False):
+        x = self.forward_actor(x, save_hidden=save_hidden)
+        mu_v = self.mu(x)
+        return mu_v
+
+
+class ContinuousStochasticPolicyModel(PolicyModel):
     def __init__(self, observation_shape, n_out_actions, config=None):
-        super(ContinuousPolicyModel, self).__init__(
+        super(ContinuousStochasticPolicyModel, self).__init__(
             observation_shape=observation_shape, n_out_actions=n_out_actions, config=config
         )
         self.mu = nn.Sequential(
@@ -176,4 +198,5 @@ class ContinuousPolicyModel(PolicyModel):
 
 
 DiscreteActorModel = DiscretePolicyModel
-ContinuousActorModel = ContinuousPolicyModel
+ContinuousDeterministicActorModel = ContinuousDeterministicPolicyModel
+ContinuousStochasticActorModel = ContinuousStochasticPolicyModel
