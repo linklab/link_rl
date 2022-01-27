@@ -78,22 +78,24 @@ class AgentSac(Agent):
     def get_action(self, obs, mode=AgentMode.TRAIN):
         if isinstance(self.action_space, Discrete):
             action_prob = self.actor_model.pi(obs)
-            m = Categorical(probs=action_prob)
+
             if mode == AgentMode.TRAIN:
-                action = m.sample()
+                dist = Categorical(probs=action_prob)
+                action = dist.sample().detach().cpu().numpy()
             else:
-                action = torch.argmax(m.probs, dim=-1)
-            return action.cpu().numpy()
+                action = np.argmax(a=action_prob.detach().cpu().numpy(), axis=-1)
+            return action
+
         elif isinstance(self.action_space, Box):
             mu_v, sigma_v = self.actor_model.pi(obs)
 
             if mode == AgentMode.TRAIN:
-                actions = np.random.normal(
-                    loc=mu_v.detach().cpu().numpy(), scale=sigma_v.detach().cpu().numpy()
-                )
+                # actions = np.random.normal(
+                #     loc=mu_v.detach().cpu().numpy(), scale=sigma_v.detach().cpu().numpy()
+                # )
 
-                # dist = Normal(loc=mu_v, scale=std_v)
-                # actions = dist.sample().detach().cpu().numpy()
+                dist = Normal(loc=mu_v, scale=sigma_v)
+                actions = dist.sample().detach().cpu().numpy()
             else:
                 actions = mu_v.detach().cpu().numpy()
 
@@ -115,12 +117,14 @@ class AgentSac(Agent):
         elif isinstance(self.action_space, Box):
             next_mu_v, next_sigma_v = self.actor_model.pi(self.next_observations)
 
-            next_actions_v = torch.normal(mean=next_mu_v, std=next_sigma_v)
+            # next_actions_v = torch.normal(mean=next_mu_v, std=next_sigma_v)
+            # next_actions_v = torch.clamp(next_actions_v, min=self.torch_minus_ones, max=self.torch_plus_ones)
+            # next_log_prob_v = self.calc_log_prob(next_mu_v, next_sigma_v ** 2, next_actions_v)
+
+            dist = Normal(loc=next_mu_v, scale=next_sigma_v)
+            next_actions_v = dist.sample()
             next_actions_v = torch.clamp(next_actions_v, min=self.torch_minus_ones, max=self.torch_plus_ones)
-            next_log_prob_v = self.calc_log_prob(next_mu_v, next_sigma_v ** 2, next_actions_v)
-            # dist = Normal(loc=next_mu_v, scale=torch.sqrt(var_v))
-            # next_actions_v = dist.sample()
-            # next_log_prob_v = dist.log_prob(next_actions_v)
+            next_log_prob_v = dist.log_prob(next_actions_v)
         else:
             raise ValueError()
 

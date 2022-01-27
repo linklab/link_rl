@@ -54,6 +54,7 @@ class AgentA2c(Agent):
             else:
                 action = np.argmax(a=action_prob.detach().cpu().numpy(), axis=-1)
             return action
+
         elif isinstance(self.action_space, Box):
             mu_v, sigma_v = self.actor_model.pi(obs)
             #if self.step % 1000 == 0: print(sigma_v, "!!!")
@@ -62,6 +63,7 @@ class AgentA2c(Agent):
                 # actions = np.random.normal(
                 #     loc=mu_v.detach().cpu().numpy(), scale=sigma_v.detach().cpu().numpy()
                 # )
+
                 dist = Normal(loc=mu_v, scale=sigma_v)
                 actions = dist.sample().detach().cpu().numpy()
             else:
