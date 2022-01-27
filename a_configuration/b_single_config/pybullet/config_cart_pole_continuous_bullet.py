@@ -1,6 +1,6 @@
 from a_configuration.a_base_config.a_environments.pybullet.gym_pybullet import ConfigCartPoleContinuousBullet
 from a_configuration.a_base_config.b_agents.agents_off_policy import ConfigSac, ConfigDdpg, ConfigTd3
-from a_configuration.a_base_config.b_agents.agents_on_policy import ConfigA2c, ConfigPpo
+from a_configuration.a_base_config.b_agents.agents_on_policy import ConfigA2c, ConfigPpo, ConfigPpoTrajectory
 from a_configuration.a_base_config.config_single_base import ConfigBase
 from g_utils.types import ModelType
 
@@ -22,24 +22,24 @@ class ConfigCartPoleContinuousBulletA2c(
         self.LEARNING_RATE = 0.001
 
 
-class ConfigCartPoleContinuousBulletPpo(
-    ConfigBase, ConfigCartPoleContinuousBullet, ConfigPpo
-):
+class ConfigCartPoleContinuousBulletPpo(ConfigBase, ConfigCartPoleContinuousBullet, ConfigPpo):
     def __init__(self):
         ConfigBase.__init__(self)
         ConfigCartPoleContinuousBullet.__init__(self)
         ConfigPpo.__init__(self)
 
-        self.N_VECTORIZED_ENVS = 1
-        self.N_ACTORS = 1
         self.MAX_TRAINING_STEPS = 100_000
         self.MODEL_TYPE = ModelType.SMALL_LINEAR
 
-        self.BATCH_SIZE = 256
-        self.PPO_TRAJECTORY_SIZE = self.BATCH_SIZE * 10
-        self.BUFFER_CAPACITY = self.PPO_TRAJECTORY_SIZE
-        self.ACTOR_LEARNING_RATE = 0.0005
-        self.LEARNING_RATE = 0.001
+
+class ConfigCartPoleContinuousBulletPpoTrajectory(ConfigBase, ConfigCartPoleContinuousBullet, ConfigPpoTrajectory):
+    def __init__(self):
+        ConfigBase.__init__(self)
+        ConfigCartPoleContinuousBullet.__init__(self)
+        ConfigPpoTrajectory.__init__(self)
+
+        self.MAX_TRAINING_STEPS = 100_000
+        self.MODEL_TYPE = ModelType.SMALL_LINEAR
 
 
 class ConfigCartPoleContinuousBulletSac(

@@ -37,7 +37,8 @@ config = ConfigLunarLanderA2c()
 from a_configuration.b_single_config.open_ai_gym.config_lunar_lander import ConfigLunarLanderPpo
 config = ConfigLunarLanderPpo()
 
-
+from a_configuration.b_single_config.open_ai_gym.config_lunar_lander import ConfigLunarLanderPpoTrajectory
+config = ConfigLunarLanderPpoTrajectory()
 #############################
 ## LUNAR_LANDER_CONTINUOUS ##
 #############################
@@ -46,6 +47,9 @@ config = ConfigLunarLanderContinuousA2c()
 
 from a_configuration.b_single_config.open_ai_gym.config_lunar_lander_continuous import ConfigLunarLanderContinuousPpo
 config = ConfigLunarLanderContinuousPpo()
+
+from a_configuration.b_single_config.open_ai_gym.config_lunar_lander_continuous import ConfigLunarLanderContinuousPpoTrajectory
+config = ConfigLunarLanderContinuousPpoTrajectory()
 
 from a_configuration.b_single_config.open_ai_gym.config_lunar_lander_continuous import ConfigLunarLanderContinuousDdpg
 config = ConfigLunarLanderContinuousDdpg()
@@ -74,6 +78,8 @@ config = ConfigCartPoleBulletA2c()
 from a_configuration.b_single_config.pybullet.config_cart_pole_bullet import ConfigCartPoleBulletPpo
 config = ConfigCartPoleBulletPpo()
 
+from a_configuration.b_single_config.pybullet.config_cart_pole_bullet import ConfigCartPoleBulletPpoTrajectory
+config = ConfigCartPoleBulletPpoTrajectory()
 
 #################################
 ## CART_POLE_CONTINUOUS_BULLET ##
@@ -83,6 +89,9 @@ config = ConfigCartPoleContinuousBulletA2c()
 
 from a_configuration.b_single_config.pybullet.config_cart_pole_continuous_bullet import ConfigCartPoleContinuousBulletPpo
 config = ConfigCartPoleContinuousBulletPpo()
+
+from a_configuration.b_single_config.pybullet.config_cart_pole_continuous_bullet import ConfigCartPoleContinuousBulletPpoTrajectory
+config = ConfigCartPoleContinuousBulletPpoTrajectory()
 
 from a_configuration.b_single_config.pybullet.config_cart_pole_continuous_bullet import ConfigCartPoleContinuousBulletSac
 config = ConfigCartPoleContinuousBulletSac()
