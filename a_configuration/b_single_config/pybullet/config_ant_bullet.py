@@ -1,7 +1,6 @@
 from a_configuration.a_base_config.a_environments.pybullet.gym_pybullet import ConfigAntBullet
-from a_configuration.a_base_config.b_agents.agents_off_policy import ConfigDqn, ConfigDdpg, ConfigSac
-from a_configuration.a_base_config.b_agents.agents_on_policy import ConfigA2c, ConfigReinforce
-from a_configuration.a_base_config.c_models.linear_models import ConfigLinearModel
+from a_configuration.a_base_config.b_agents.agents_off_policy import ConfigDdpg, ConfigSac
+from a_configuration.a_base_config.b_agents.agents_on_policy import ConfigA2c, ConfigPpo
 from a_configuration.a_base_config.config_single_base import ConfigBase
 from g_utils.commons import print_basic_info, get_env_info
 from g_utils.types import ModelType
@@ -13,10 +12,21 @@ class ConfigAntBulletA2c(ConfigBase, ConfigAntBullet, ConfigA2c):
         ConfigAntBullet.__init__(self)
         ConfigA2c.__init__(self)
 
-        self.BATCH_SIZE = 64
         self.N_STEP = 1
-        self.BUFFER_CAPACITY = self.BATCH_SIZE
-        self.MIN_BUFFER_SIZE_FOR_TRAIN = self.BATCH_SIZE * 10
+
+        self.N_VECTORIZED_ENVS = 1
+        self.N_ACTORS = 1
+        self.MAX_TRAINING_STEPS = 2_000_000
+        self.MODEL_TYPE = ModelType.SMALL_LINEAR
+
+
+class ConfigAntBulletPpo(ConfigBase, ConfigAntBullet, ConfigPpo):
+    def __init__(self):
+        ConfigBase.__init__(self)
+        ConfigAntBullet.__init__(self)
+        ConfigPpo.__init__(self)
+
+        self.N_STEP = 1
 
         self.N_VECTORIZED_ENVS = 1
         self.N_ACTORS = 1
