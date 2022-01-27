@@ -3,6 +3,8 @@
 # PAPER: https://arxiv.org/abs/1812.05905
 # https://www.pair.toronto.edu/csc2621-w20/assets/slides/lec4_sac.pdf
 # https://bair.berkeley.edu/blog/2017/10/06/soft-q-learning/
+import math
+
 import torch.optim as optim
 import numpy as np
 import torch
@@ -11,14 +13,15 @@ import torch.multiprocessing as mp
 from gym.spaces import Discrete, Box
 from torch.distributions import Categorical, Normal
 
-from c_models.g_sac_models import ContinuousSacModel, DiscreteSacModel
+from c_models.h_muzero_models import *
 from c_models.h_muzero_models import MuzeroModel
 from d_agents.agent import Agent
 from g_utils.types import AgentMode
 
 # 저장되는 transition이 다르다.
 # get action에 num_simulation만큼 반복하는 mcts 구현
-#
+
+
 class AgentMuZero(Agent):
     def __init__(self, observation_space, action_space, parameter):
         super(AgentMuZero, self).__init__(observation_space, action_space, parameter)
@@ -77,24 +80,29 @@ class MCTS:
             .unsqueeze(0)
             .to(next(model.parameters()).device)
         )
+        # support_to_scalar ==> muzero에서는 reward나 value도 distribution형태에서 추출하기 때문에
+        #                       distribution에서 scalar하나를 뽑는 과정
         (
-            root_predicted_value,
-            reward,
+            root_predicted_value,  # cartegorical distribution, root_node 자기 자신에 대한 value
+            reward,                # cartegorical distribution, root_node 자기 자신에 대한 reward
             policy_logits,
             hidden_state,
         ) = model.initial_inference(observation)
         root_predicted_value = support_to_scalar(
-            root_predicted_value, self.config.support_size
+            root_predicted_value, self.param.support_size
         ).item()
-        reward = support_to_scalar(reward, self.config.support_size).item()
+        reward = support_to_scalar(reward, self.param.support_size).item()
+        # TODO : action space의 type에 대한 정리
         assert (
             legal_actions
         ), f"Legal actions should not be an empty array. Got {legal_actions}."
         assert set(legal_actions).issubset(
-            set(self.config.action_space)
+            set(self.param.action_space)
         ), "Legal actions should be a subset of the action space."
+        # 의문 : child node에 대한 legal actions는 따로 처리 안하는 것인가? 그러면 parent node와 child node 간에 legal action이 다를경우
+        #       애시당초 진짜 환경의 policy logits와 일치할 수 없는거 아닌가?
         root.expand(
-            legal_actions,
+            legal_actions,  # root node 자신에 대한
             to_play,
             reward,
             policy_logits,
@@ -103,8 +111,8 @@ class MCTS:
 
         if add_exploration_noise:
             root.add_exploration_noise(
-                dirichlet_alpha=self.config.root_dirichlet_alpha,
-                exploration_fraction=self.config.root_exploration_fraction,
+                dirichlet_alpha=self.param.root_dirichlet_alpha,
+                exploration_fraction=self.param.root_exploration_fraction,
             )
 
         min_max_stats = MinMaxStats()
@@ -130,6 +138,7 @@ class MCTS:
             # Inside the search tree we use the dynamics function to obtain the next hidden
             # state given an action and the previous hidden state
             parent = search_path[-2]
+            # 해당 state에 action을 했을 경우 얻는 value와 reward
             value, reward, policy_logits, hidden_state = model.recurrent_inference(
                 parent.hidden_state,
                 torch.tensor([[action]]).to(parent.hidden_state.device),
@@ -255,6 +264,7 @@ class Node:
             torch.tensor([policy_logits[0][a] for a in actions]), dim=0
         ).tolist()
         policy = {a: policy_values[i] for i, a in enumerate(actions)}
+        # 갸능한 모든 action에 대한 chile node 생성
         for action, p in policy.items():
             self.children[action] = Node(p)
 

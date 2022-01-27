@@ -131,7 +131,6 @@ class Learner(mp.Process):
 
     def generator_muzero(self):
         # TODO
-        # if
         pass
 
     def train_loop(self, parallel=False):

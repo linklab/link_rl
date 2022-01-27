@@ -189,6 +189,7 @@ def support_to_scalar(logits, support_size):
     )
     x = torch.sum(support * probabilities, dim=1, keepdim=True)
     # Invert the scaling (defined in https://arxiv.org/abs/1805.11593)
+    # torch.sign(x) : 1 if x>0, -1 if x<0, 0 if x==0
     x = torch.sign(x) * (
         ((torch.sqrt(1 + 4 * 0.001 * (torch.abs(x) + 1 + 0.001)) - 1) / (2 * 0.001))
         ** 2
