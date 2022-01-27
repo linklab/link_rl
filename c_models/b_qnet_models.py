@@ -18,51 +18,30 @@ class QNet(Model):
     ):
         super(QNet, self).__init__(observation_shape, n_out_actions, n_discrete_actions, config)
 
-        self.qnet_params = []
         if isinstance(self.config.MODEL_PARAMETER, ConfigLinearModel):
             input_n_features = self.observation_shape[0]
             self.representation_layers = None
-            self.fc_layers = self.get_linear_layers(input_n_features)
-            self.qnet_params += list(self.fc_layers.parameters())
+            self.fc_layers = self.get_linear_layers(input_n_features=input_n_features)
 
         elif isinstance(self.config.MODEL_PARAMETER, ConfigConvolutionalModel):
             input_n_channels = self.observation_shape[0]
-            self.conv_layers = self.get_conv_layers(input_n_channels)
-            self.qnet_params += list(self.conv_layers.parameters())
-
+            self.conv_layers = self.get_conv_layers(input_n_channels=input_n_channels)
             conv_out_flat_size = self._get_conv_out(self.conv_layers, observation_shape)
-            self.fc_layers = self.get_linear_layers(conv_out_flat_size)
-            self.qnet_params += list(self.fc_layers.parameters())
+            self.fc_layers = self.get_linear_layers(input_n_features=conv_out_flat_size)
 
         elif isinstance(self.config.MODEL_PARAMETER, ConfigRecurrentLinearModel):
             input_n_features = self.observation_shape[0]
             self.recurrent_layers = self.get_recurrent_layers(input_n_features)
-            self.qnet_params += list(self.recurrent_layers.parameters())
-
-            # recurrent_out_flat_size, _ = self._get_recurrent_out(self.recurrent_layers, input_n_features)
-            # self.fc_layers = self.get_linear_layers(recurrent_out_flat_size)
-
             self.fc_layers = self.get_linear_layers(self.config.MODEL_PARAMETER.HIDDEN_SIZE)
-            self.qnet_params += list(self.fc_layers.parameters())
 
         elif isinstance(self.config.MODEL_PARAMETER, ConfigRecurrentConvolutionalModel):
             input_n_channels = self.observation_shape[0]
             self.conv_layers = self.get_conv_layers(input_n_channels)
-            self.qnet_params += list(self.conv_layers.parameters())
 
             conv_out_flat_size = self._get_conv_out(self.conv_layers, observation_shape)
             self.fc_layers_1 = nn.Linear(conv_out_flat_size, self.config.MODEL_PARAMETER.HIDDEN_SIZE)
-            self.qnet_params += list(self.fc_layers_1.parameters())
-
             self.recurrent_layers = self.get_recurrent_layers(self.config.MODEL_PARAMETER.HIDDEN_SIZE)
-            self.qnet_params += list(self.recurrent_layers.parameters())
-
-            # recurrent_out_flat_size, _ = self._get_recurrent_out(
-            #     self.recurrent_layers,
-            #     self.config.MODEL_PARAMETER.HIDDEN_SIZE
-            # )
             self.fc_layers_2 = self.get_linear_layers(self.config.MODEL_PARAMETER.HIDDEN_SIZE)
-            self.qnet_params += list(self.fc_layers_2.parameters())
 
         else:
             raise ValueError()
@@ -70,18 +49,17 @@ class QNet(Model):
         self.fc_last = nn.Linear(
             self.config.MODEL_PARAMETER.NEURONS_PER_FULLY_CONNECTED_LAYER[-1], self.n_discrete_actions
         )
-        self.qnet_params += list(self.fc_last.parameters())
 
+        self.qnet_params_list = list(self.parameters())
         self.version = 0
 
-    def forward(self, obs, save_hidden=False):
+    def _forward(self, obs, save_hidden=False):
         if isinstance(obs, np.ndarray):
             obs = torch.tensor(obs, dtype=torch.float32, device=self.config.DEVICE)
 
         if isinstance(self.config.MODEL_PARAMETER, ConfigLinearModel):
             x = self.fc_layers(obs)
         elif isinstance(self.config.MODEL_PARAMETER, ConfigConvolutionalModel):
-            #print("obs.shape:", obs.shape)
             conv_out = self.conv_layers(obs)
             conv_out = torch.flatten(conv_out, start_dim=1)
             x = self.fc_layers(conv_out)
@@ -158,11 +136,15 @@ class QNet(Model):
         else:
             raise ValueError()
 
-        x = self.fc_last(x)
         return x
 
+    def forward(self, obs, save_hidden=False):
+        x = self._forward(obs, save_hidden)
+        q_values = self.fc_last(x)
+        return q_values
 
-class DuelingQNet(Model):
+
+class DuelingQNet(QNet):
     # self.n_out_actions: 1
     # self.n_discrete_actions: 4 (for gridworld)
     def __init__(
@@ -170,49 +152,21 @@ class DuelingQNet(Model):
     ):
         super(DuelingQNet, self).__init__(observation_shape, n_out_actions, n_discrete_actions, config)
 
-        self.qnet_params = []
-        if isinstance(self.config.MODEL_PARAMETER, ConfigLinearModel):
-            input_n_features = self.observation_shape[0]
-            self.fc_layers = self.get_linear_layers(input_n_features=input_n_features)
-            self.qnet_params += list(self.fc_layers.parameters())
-        elif isinstance(self.config.MODEL_PARAMETER, ConfigConvolutionalModel):
-            input_n_channels = self.observation_shape[0]
-            self.conv_layers = self.get_conv_layers(input_n_channels=input_n_channels)
-            self.qnet_params += list(self.conv_layers.parameters())
-            conv_out_flat_size = self._get_conv_out(self.conv_layers, observation_shape)
-            self.fc_layers = self.get_linear_layers(input_n_features=conv_out_flat_size)
-            self.qnet_params += list(self.fc_layers.parameters())
-        else:
-            raise ValueError()
-
         self.fc_last_adv = nn.Linear(
             self.config.MODEL_PARAMETER.NEURONS_PER_FULLY_CONNECTED_LAYER[-1], self.n_discrete_actions
         )
-        self.qnet_params += list(self.fc_last_adv.parameters())
 
         self.fc_last_val = nn.Linear(
             self.config.MODEL_PARAMETER.NEURONS_PER_FULLY_CONNECTED_LAYER[-1], 1
         )
-        self.qnet_params += list(self.fc_last_val.parameters())
 
+        self.qnet_params_list = list(self.parameters())
         self.version = 0
 
     def forward(self, obs, save_hidden=False):
-        if isinstance(obs, np.ndarray):
-            obs = torch.tensor(obs, dtype=torch.float32, device=self.config.DEVICE)
-
-        if isinstance(self.config.MODEL_PARAMETER, ConfigLinearModel):
-            x = self.fc_layers(obs)
-            adv = self.fc_last_adv(x)
-            val = self.fc_last_val(x)
-        elif isinstance(self.config.MODEL_PARAMETER, ConfigConvolutionalModel):
-            conv_out = self.conv_layers(obs)
-            conv_out = torch.flatten(conv_out, start_dim=1)
-            x = self.fc_layers(conv_out)
-            adv = self.fc_last_adv(x)
-            val = self.fc_last_val(x)
-        else:
-            raise ValueError()
-
+        x = self._forward(obs, save_hidden)
+        adv = self.fc_last_adv(x)
+        val = self.fc_last_val(x)
         q_values = val + adv - torch.mean(adv, dim=-1, keepdim=True)
+
         return q_values

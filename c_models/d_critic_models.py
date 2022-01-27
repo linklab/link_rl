@@ -19,14 +19,12 @@ class CriticModel(Model):
         ############################
         # CRITIC MODEL_TYPE: BEGIN #
         ############################
-        self.critic_params = []
         if any([
             isinstance(self.config.MODEL_PARAMETER, ConfigLinearModel),
             isinstance(self.config.MODEL_PARAMETER, ConfigRecurrentLinearModel)
         ]):
             input_n_features = self.observation_shape[0]
             self.critic_fc_layers = self.get_linear_layers(input_n_features=input_n_features)
-            self.critic_params += list(self.critic_fc_layers.parameters())
 
         elif any([
             isinstance(self.config.MODEL_PARAMETER, ConfigConvolutionalModel),
@@ -34,17 +32,15 @@ class CriticModel(Model):
         ]):
             input_n_channels = self.observation_shape[0]
             self.critic_conv_layers = self.get_conv_layers(input_n_channels=input_n_channels)
-            self.critic_params += list(self.critic_conv_layers.parameters())
-
             conv_out_flat_size = self._get_conv_out(self.critic_conv_layers, observation_shape)
             self.critic_fc_layers = self.get_linear_layers(input_n_features=conv_out_flat_size)
-            self.critic_params += list(self.critic_fc_layers.parameters())
 
         else:
             raise ValueError()
 
         self.critic_fc_last_layer = nn.Linear(self.config.MODEL_PARAMETER.NEURONS_PER_FULLY_CONNECTED_LAYER[-1], 1)
-        self.critic_params += list(self.critic_fc_last.parameters())
+
+        self.critic_params_list = list(self.parameters())
         ##########################
         # CRITIC MODEL_TYPE: END #
         ##########################
@@ -90,14 +86,12 @@ class QCriticModel(Model):
         ############################
         # CRITIC MODEL_TYPE: BEGIN #
         ############################
-        self.critic_params = []
         if any([
             isinstance(self.config.MODEL_PARAMETER, ConfigLinearModel),
             isinstance(self.config.MODEL_PARAMETER, ConfigRecurrentLinearModel)
         ]):
             input_n_features = self.observation_shape[0] + self.n_out_actions
             self.critic_fc_layers = self.get_linear_layers(input_n_features=input_n_features)
-            self.critic_params += list(self.critic_fc_layers.parameters())
 
         elif any([
             isinstance(self.config.MODEL_PARAMETER, ConfigConvolutionalModel),
@@ -105,18 +99,17 @@ class QCriticModel(Model):
         ]):
             input_n_channels = self.observation_shape[0]
             self.critic_conv_layers = self.get_conv_layers(input_n_channels=input_n_channels)
-            self.critic_params += list(self.critic_conv_layers.parameters())
 
             conv_out_flat_size = self._get_conv_out(self.critic_conv_layers, self.observation_shape)
             input_n_features = conv_out_flat_size + self.n_out_actions
             self.critic_fc_layers = self.get_linear_layers(input_n_features=input_n_features)
-            self.critic_params += list(self.critic_fc_layers.parameters())
 
         else:
             raise ValueError()
 
         self.critic_fc_last_layer = nn.Linear(self.config.MODEL_PARAMETER.NEURONS_PER_FULLY_CONNECTED_LAYER[-1], 1)
-        self.critic_params += list(self.critic_fc_last_layer.parameters())
+        
+        self.critic_params_list = list(self.parameters())
         ##########################
         # CRITIC MODEL_TYPE: END #
         ##########################
@@ -163,8 +156,6 @@ class DoubleQCriticModel(Model):
     ):
         super(DoubleQCriticModel, self).__init__(observation_shape, n_out_actions, n_discrete_actions, config)
 
-        self.critic_params = []
-
         if any([
             isinstance(self.config.MODEL_PARAMETER, ConfigLinearModel),
             isinstance(self.config.MODEL_PARAMETER, ConfigRecurrentLinearModel)
@@ -173,11 +164,9 @@ class DoubleQCriticModel(Model):
 
             # q1
             self.q1_fc_layers = self.get_linear_layers(input_n_features=input_n_features)
-            self.critic_params += list(self.q1_fc_layers.parameters())
 
             # q2
             self.q2_fc_layers = self.get_linear_layers(input_n_features=input_n_features)
-            self.critic_params += list(self.q2_fc_layers.parameters())
 
         elif any([
             isinstance(self.config.MODEL_PARAMETER, ConfigConvolutionalModel),
@@ -185,29 +174,25 @@ class DoubleQCriticModel(Model):
         ]):
             input_n_channels = self.observation_shape[0]
             self.conv_layers = self.get_conv_layers(input_n_channels=input_n_channels)
-            self.critic_params += list(self.conv_layers.parameters())
 
             conv_out_flat_size = self._get_conv_out(self.conv_layers, self.observation_shape)
             input_n_features = conv_out_flat_size + self.n_out_actions
 
             # q1
             self.q1_fc_layers = self.get_linear_layers(input_n_features=input_n_features)
-            self.critic_params += list(self.q1_fc_layers.parameters())
 
             # q2
             self.q2_fc_layers = self.get_linear_layers(input_n_features=input_n_features)
-            self.critic_params += list(self.q2_fc_layers.parameters())
-
         else:
             raise ValueError()
 
         # q1
         self.q1_fc_last_layer = nn.Linear(self.config.MODEL_PARAMETER.NEURONS_PER_FULLY_CONNECTED_LAYER[-1], 1)
-        self.critic_params += list(self.q1_fc_last_layer.parameters())
 
         # q2
         self.q2_fc_last_layer = nn.Linear(self.config.MODEL_PARAMETER.NEURONS_PER_FULLY_CONNECTED_LAYER[-1], 1)
-        self.critic_params += list(self.q2_fc_last_layer.parameters())
+
+        self.critic_params_list = list(self.parameters())
 
     def forward_critic(self, obs, act):
         if isinstance(obs, np.ndarray):

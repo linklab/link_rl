@@ -18,43 +18,29 @@ class PolicyModel(Model):
     ):
         super(PolicyModel, self).__init__(observation_shape, n_out_actions, n_discrete_actions, config)
 
-        self.actor_params = []
         if isinstance(self.config.MODEL_PARAMETER, ConfigLinearModel):
             input_n_features = self.observation_shape[0]
             self.actor_fc_layers = self.get_linear_layers(input_n_features=input_n_features)
-            self.actor_params += list(self.actor_fc_layers.parameters())
 
         elif isinstance(self.config.MODEL_PARAMETER, ConfigConvolutionalModel):
             input_n_channels = self.observation_shape[0]
             self.actor_conv_layers = self.get_conv_layers(input_n_channels=input_n_channels)
-            self.actor_params += list(self.actor_conv_layers.parameters())
-
             conv_out_flat_size = self._get_conv_out(self.actor_conv_layers, self.observation_shape)
             self.actor_fc_layers = self.get_linear_layers(input_n_features=conv_out_flat_size)
-            self.actor_params += list(self.actor_fc_layers.parameters())
 
         elif isinstance(self.config.MODEL_PARAMETER, ConfigRecurrentLinearModel):
             input_n_features = self.observation_shape[0]
             self.actor_recurrent_layers = self.get_recurrent_layers(input_n_features=input_n_features)
-            self.actor_params += list(self.actor_recurrent_layers.parameters())
-
             self.actor_fc_layers = self.get_linear_layers(self.config.MODEL_PARAMETER.HIDDEN_SIZE)
-            self.actor_params += list(self.actor_fc_layers.parameters())
 
         elif isinstance(self.config.MODEL_PARAMETER, ConfigRecurrentConvolutionalModel):
             input_n_channels = self.observation_shape[0]
             self.actor_conv_layers = self.get_conv_layers(input_n_channels=input_n_channels)
-            self.actor_params += list(self.actor_conv_layers.parameters())
 
             conv_out_flat_size = self._get_conv_out(self.actor_conv_layers, self.observation_shape)
             self.actor_fc_layers_1 = nn.Linear(conv_out_flat_size, self.config.MODEL_PARAMETER.HIDDEN_SIZE)
-            self.actor_params += list(self.actor_fc_layers_1.parameters())
-
             self.actor_recurrent_layers = self.get_recurrent_layers(self.config.MODEL_PARAMETER.HIDDEN_SIZE)
-            self.actor_params += list(self.actor_recurrent_layers.parameters())
-
             self.actor_fc_layers_2 = self.get_linear_layers(self.config.MODEL_PARAMETER.HIDDEN_SIZE)
-            self.actor_params += list(self.actor_fc_layers_2.parameters())
         else:
             raise ValueError()
 
@@ -128,7 +114,7 @@ class DiscretePolicyModel(PolicyModel):
         self.actor_fc_pi = nn.Linear(
             self.config.MODEL_PARAMETER.NEURONS_PER_FULLY_CONNECTED_LAYER[-1], self.n_discrete_actions
         )
-        self.actor_params += list(self.actor_fc_pi.parameters())
+        self.actor_params_list = list(self.parameters())
 
     def pi(self, obs, save_hidden=False):
         x = self.forward_actor(obs, save_hidden=save_hidden)
@@ -149,7 +135,7 @@ class ContinuousDeterministicPolicyModel(PolicyModel):
             nn.Linear(self.config.MODEL_PARAMETER.NEURONS_PER_FULLY_CONNECTED_LAYER[-1], self.n_out_actions),
             nn.Tanh()
         )
-        self.actor_params += list(self.mu.parameters())
+        self.actor_params_list = list(self.parameters())
 
     def pi(self, x, save_hidden=False):
         x = self.forward_actor(x, save_hidden=save_hidden)
@@ -166,25 +152,23 @@ class ContinuousStochasticPolicyModel(PolicyModel):
             nn.Linear(self.config.MODEL_PARAMETER.NEURONS_PER_FULLY_CONNECTED_LAYER[-1], self.n_out_actions),
             nn.Tanh()
         )
-        self.actor_params += list(self.mu.parameters())
 
         # We handle the log of the standard deviation as the torch parameter.
         # log_sigma = 0.1 <- starting value. it mean std = 1.105
         log_sigma_param = nn.Parameter(torch.full((self.n_out_actions,), 0.1))
         self.register_parameter("log_sigma", log_sigma_param)
-        self.actor_params.append(self.log_sigma)
 
         # self.sigma = nn.Sequential(
         #     nn.Linear(self.config.MODEL_PARAMETER.NEURONS_PER_FULLY_CONNECTED_LAYER[-1], self.n_out_actions),
         #     nn.Softplus()
         # )
-        # self.actor_params += list(self.sigma.parameters())
 
         # self.var = nn.Sequential(
         #     nn.Linear(self.config.MODEL_PARAMETER.NEURONS_PER_FULLY_CONNECTED_LAYER[-1], self.n_out_actions),
         #     nn.Softplus()
         # )
-        # self.actor_params += list(self.var.parameters())
+
+        self.actor_params_list = list(self.parameters())
 
     def pi(self, obs, save_hidden=False):
         x = self.forward_actor(obs, save_hidden=save_hidden)

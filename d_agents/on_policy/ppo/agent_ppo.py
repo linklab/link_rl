@@ -66,7 +66,7 @@ class AgentPpo(AgentA2c):
 
             self.critic_optimizer.zero_grad()
             batch_critic_loss.backward()
-            self.clip_critic_model_parameter_grad_value(self.critic_model.critic_params)
+            self.clip_critic_model_parameter_grad_value(self.critic_model.critic_params_list)
             self.critic_optimizer.step()
 
             if isinstance(self.action_space, Discrete):
@@ -111,7 +111,7 @@ class AgentPpo(AgentA2c):
 
             self.actor_optimizer.zero_grad()
             batch_actor_loss.backward()
-            self.clip_actor_model_parameter_grad_value(self.actor_model.actor_params)
+            self.clip_actor_model_parameter_grad_value(self.actor_model.actor_params_list)
             self.actor_optimizer.step()
 
             sum_critic_loss += batch_critic_loss.item()

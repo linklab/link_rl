@@ -40,7 +40,7 @@ class AgentDoubleDqn(AgentDqn):
 
         self.optimizer.zero_grad()
         q_net_loss.backward()
-        self.clip_model_config_grad_value(self.q_net.qnet_params)
+        self.clip_model_config_grad_value(self.q_net.qnet_params_list)
         self.optimizer.step()
 
         # soft-sync

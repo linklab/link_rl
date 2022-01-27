@@ -142,7 +142,7 @@ class AgentSac(Agent):
 
         self.critic_optimizer.zero_grad()
         critic_loss.backward()
-        self.clip_critic_model_parameter_grad_value(self.critic_model.critic_params)
+        self.clip_critic_model_parameter_grad_value(self.critic_model.critic_params_list)
         self.critic_optimizer.step()
 
         self.last_critic_loss.value = critic_loss.item()
@@ -165,7 +165,7 @@ class AgentSac(Agent):
 
             self.actor_optimizer.zero_grad()
             loss_actor_v.backward()
-            self.clip_actor_model_parameter_grad_value(self.actor_model.actor_params)
+            self.clip_actor_model_parameter_grad_value(self.actor_model.actor_params_list)
             self.actor_optimizer.step()
 
             self.last_actor_objective.value = actor_objectives.item()

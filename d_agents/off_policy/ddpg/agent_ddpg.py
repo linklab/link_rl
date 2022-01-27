@@ -53,8 +53,8 @@ class AgentDdpg(Agent):
         self.actor_model.share_memory()
         self.critic_model.share_memory()
 
-        self.actor_optimizer = optim.Adam(self.actor_model.actor_params, lr=self.config.ACTOR_LEARNING_RATE)
-        self.critic_optimizer = optim.Adam(self.critic_model.critic_params, lr=self.config.LEARNING_RATE)
+        self.actor_optimizer = optim.Adam(self.actor_model.parameters(), lr=self.config.ACTOR_LEARNING_RATE)
+        self.critic_optimizer = optim.Adam(self.critic_model.parameters(), lr=self.config.LEARNING_RATE)
 
         self.training_step = 0
 
@@ -91,7 +91,7 @@ class AgentDdpg(Agent):
 
         self.actor_optimizer.zero_grad()
         actor_loss.backward()
-        self.clip_actor_model_parameter_grad_value(self.actor_model.actor_params)
+        self.clip_actor_model_parameter_grad_value(self.actor_model.actor_params_list)
         self.actor_optimizer.step()
         #####################
         # train actor - END #
@@ -112,7 +112,7 @@ class AgentDdpg(Agent):
 
         self.critic_optimizer.zero_grad()
         critic_loss.backward()
-        self.clip_critic_model_parameter_grad_value(self.critic_model.critic_params)
+        self.clip_critic_model_parameter_grad_value(self.critic_model.critic_params_list)
         self.critic_optimizer.step()
         ######################
         # train critic - end #
