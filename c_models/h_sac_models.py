@@ -3,7 +3,7 @@ import torch
 import numpy as np
 from torch.distributions import Normal, TanhTransform, TransformedDistribution
 
-from c_models.d_critic_models import DoubleQCriticWithActionModel
+from c_models.d_critic_models import DoubleQCriticModel
 from c_models.c_policy_models import DiscreteActorModel, ContinuousStochasticActorModel
 from e_main.config import config
 
@@ -23,7 +23,7 @@ class DiscreteSacModel:
                 config=self.config
             ).to(self.config.DEVICE)
 
-        self.critic_model = DoubleQCriticWithActionModel(
+        self.critic_model = DoubleQCriticModel(
             observation_shape=observation_shape, n_out_actions=n_out_actions, n_discrete_actions=n_discrete_actions,
             config=self.config
         ).to(self.config.DEVICE)
@@ -42,7 +42,7 @@ class ContinuousSacModel:
                 observation_shape=observation_shape, n_out_actions=n_out_actions, config=config
             ).to(self.config.DEVICE)
 
-        self.critic_model = DoubleQCriticWithActionModel(
+        self.critic_model = DoubleQCriticModel(
             observation_shape=observation_shape, n_out_actions=n_out_actions, n_discrete_actions=None,
             config=self.config
         ) .to(self.config.DEVICE)
@@ -78,4 +78,4 @@ class ContinuousSacModel:
 
 
 if __name__ == "__main__":
-    a = DoubleQCriticWithActionModel((4,), 1, 4, config=config)
+    a = DoubleQCriticModel((4,), 1, 4, config=config)

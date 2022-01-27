@@ -5,8 +5,8 @@ import torch.nn.functional as F
 import torch.multiprocessing as mp
 from gym.spaces import Discrete, Box
 
-from c_models.e_ddpg_models import DiscreteDdpgModel, ContinuousDdpgModel
-from c_models.e_td3_models import DiscreteTd3Model, ContinuousTd3Model
+from c_models.f_ddpg_models import DiscreteDdpgModel, ContinuousDdpgModel
+from c_models.g_td3_models import DiscreteTd3Model, ContinuousTd3Model
 from d_agents.agent import Agent
 from g_utils.commons import EpsilonTracker, get_continuous_action_info
 from g_utils.types import AgentMode, ModelType

@@ -11,7 +11,7 @@ import torch.multiprocessing as mp
 from gym.spaces import Discrete, Box
 from torch.distributions import Categorical, Normal
 
-from c_models.g_sac_models import ContinuousSacModel, DiscreteSacModel
+from c_models.h_sac_models import ContinuousSacModel, DiscreteSacModel
 from d_agents.agent import Agent
 from g_utils.types import AgentMode
 

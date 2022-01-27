@@ -1,10 +1,10 @@
 from typing import Tuple
 
 from c_models.c_policy_models import DiscreteActorModel, ContinuousDeterministicActorModel
-from c_models.d_critic_models import DoubleQCriticWithActionModel
+from c_models.d_critic_models import QCriticModel
 
 
-class DiscreteTd3Model:
+class DiscreteDdpgModel:
     def __init__(
             self, observation_shape: Tuple[int], n_out_actions: int, n_discrete_actions=None, config=None
     ):
@@ -15,13 +15,13 @@ class DiscreteTd3Model:
             config=self.config
         ).to(self.config.DEVICE)
 
-        self.critic_model = DoubleQCriticWithActionModel(
+        self.critic_model = QCriticModel(
             observation_shape=observation_shape, n_out_actions=n_out_actions, n_discrete_actions=n_discrete_actions,
             config=self.config
         ).to(self.config.DEVICE)
 
 
-class ContinuousTd3Model:
+class ContinuousDdpgModel:
     def __init__(
             self, observation_shape: Tuple[int], n_out_actions: int, config=None
     ):
@@ -31,7 +31,7 @@ class ContinuousTd3Model:
             observation_shape=observation_shape, n_out_actions=n_out_actions, config=self.config
         ).to(self.config.DEVICE)
 
-        self.critic_model = DoubleQCriticWithActionModel(
+        self.critic_model = QCriticModel(
             observation_shape=observation_shape, n_out_actions=n_out_actions, n_discrete_actions=None,
             config=self.config
         ).to(self.config.DEVICE)

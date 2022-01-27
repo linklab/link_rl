@@ -5,7 +5,7 @@ import torch.nn.functional as F
 import torch.multiprocessing as mp
 from gym.spaces import Discrete, Box
 
-from c_models.e_ddpg_models import DiscreteDdpgModel, ContinuousDdpgModel
+from c_models.f_ddpg_models import DiscreteDdpgModel, ContinuousDdpgModel
 from d_agents.agent import Agent
 from g_utils.commons import EpsilonTracker, get_continuous_action_info
 from g_utils.types import AgentMode, ModelType
@@ -91,7 +91,7 @@ class AgentDdpg(Agent):
 
         self.actor_optimizer.zero_grad()
         actor_loss.backward()
-        self.clip_actor_model_config_grad_value(self.actor_model.actor_params)
+        self.clip_actor_model_parameter_grad_value(self.actor_model.actor_params)
         self.actor_optimizer.step()
         #####################
         # train actor - END #
