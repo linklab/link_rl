@@ -12,7 +12,8 @@ from c_models.a_models import Model
 
 
 class CriticModel(Model):
-    pass
+    def _critic_forward(self, obs):
+        pass
 
 
 class ValueCriticModel(CriticModel):
@@ -40,7 +41,7 @@ class ValueCriticModel(CriticModel):
 
         self.critic_params_list = list(self.parameters())
 
-    def _forward(self, obs):
+    def forward_critic(self, obs):
         if isinstance(obs, np.ndarray):
             obs = torch.tensor(obs, dtype=torch.float32, device=self.config.DEVICE)
 
@@ -69,9 +70,6 @@ class ValueCriticModel(CriticModel):
             raise ValueError()
 
         return x
-
-    def forward_critic(self, obs):
-        return self._forward(obs)
 
     def v(self, obs):
         x = self.forward_critic(obs)
@@ -110,7 +108,7 @@ class QCriticModel(CriticModel):
         
         self.critic_params_list = list(self.parameters())
 
-    def _forward(self, obs, act):
+    def forward_critic(self, obs, act):
         if isinstance(obs, np.ndarray):
             obs = torch.tensor(obs, dtype=torch.float32, device=self.config.DEVICE)
 
@@ -148,9 +146,6 @@ class QCriticModel(CriticModel):
             raise ValueError()
 
         return x
-
-    def forward_critic(self, obs, act):
-        return self._forward(obs, act)
 
     def q(self, obs, act):
         x = self.forward_critic(obs, act)

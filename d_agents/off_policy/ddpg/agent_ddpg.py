@@ -60,21 +60,6 @@ class AgentDdpg(Agent):
     def train_ddpg(self):
         count_training_steps = 0
 
-        #######################
-        # train actor - BEGIN #
-        #######################
-        mu_v = self.actor_model.pi(self.observations)
-        q_v = self.critic_model.q(self.observations, mu_v)
-        actor_loss = -1.0 * q_v.mean()
-
-        self.actor_optimizer.zero_grad()
-        actor_loss.backward()
-        self.clip_actor_model_parameter_grad_value(self.actor_model.actor_params_list)
-        self.actor_optimizer.step()
-        #####################
-        # train actor - END #
-        #####################
-
         ########################
         # train critic - BEGIN #
         ########################
@@ -96,12 +81,27 @@ class AgentDdpg(Agent):
         # train critic - end #
         ######################
 
-        # TAU: 0.0001
+        #######################
+        # train actor - BEGIN #
+        #######################
+        mu_v = self.actor_model.pi(self.observations)
+        q_v = self.critic_model.q(self.observations, mu_v)
+        actor_loss = -1.0 * q_v.mean()
+
+        self.actor_optimizer.zero_grad()
+        actor_loss.backward()
+        self.clip_actor_model_parameter_grad_value(self.actor_model.actor_params_list)
+        self.actor_optimizer.step()
+        #####################
+        # train actor - END #
+        #####################
+
+        # TAU: 0.005
         self.soft_synchronize_models(
             source_model=self.actor_model, target_model=self.target_actor_model, tau=self.config.TAU
         )
 
-        # TAU: 0.0001
+        # TAU: 0.005
         self.soft_synchronize_models(
             source_model=self.critic_model, target_model=self.target_critic_model, tau=self.config.TAU
         )

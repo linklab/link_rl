@@ -98,13 +98,13 @@ class ContinuousStochasticActorModel(ActorModel):
 
         # We handle the log of the standard deviation as the torch parameter.
         # log_sigma = 0.1 <- starting value. it mean std = 1.105
-        log_sigma_param = nn.Parameter(torch.full((self.n_out_actions,), 0.1))
-        self.register_parameter("log_sigma", log_sigma_param)
+        # log_sigma_param = nn.Parameter(torch.full((self.n_out_actions,), 0.1))
+        # self.register_parameter("log_sigma", log_sigma_param)
 
-        # self.sigma = nn.Sequential(
-        #     nn.Linear(self.config.MODEL_PARAMETER.NEURONS_PER_FULLY_CONNECTED_LAYER[-1], self.n_out_actions),
-        #     nn.Softplus()
-        # )
+        self.sigma = nn.Sequential(
+            nn.Linear(self.config.MODEL_PARAMETER.NEURONS_PER_FULLY_CONNECTED_LAYER[-1], self.n_out_actions),
+            nn.Softplus()
+        )
 
         # self.var = nn.Sequential(
         #     nn.Linear(self.config.MODEL_PARAMETER.NEURONS_PER_FULLY_CONNECTED_LAYER[-1], self.n_out_actions),
@@ -113,6 +113,15 @@ class ContinuousStochasticActorModel(ActorModel):
 
         self.actor_params_list = list(self.parameters())
 
+    def forward_sigma(self, obs):
+        if isinstance(obs, np.ndarray):
+            obs = torch.tensor(obs, dtype=torch.float32, device=self.config.DEVICE)
+
+        s = self.repre_layers(obs)
+        sigma_v = self.sigma(s)
+
+        return sigma_v
+
     def pi(self, obs, save_hidden=False):
         x = self.forward_actor(obs, save_hidden=save_hidden)
         mu_v = self.mu(x)
@@ -120,5 +129,9 @@ class ContinuousStochasticActorModel(ActorModel):
         # We just have to exponentiate it to have the standard deviation
         # By doing so we ensure we don’t have negative values with numerical stability too.
         # The standard deviation can’t be negative (nor 0).
-        sigma_v = torch.clamp(self.log_sigma.exp(), 1e-3, 50)
+        # sigma_v = torch.clamp(self.log_sigma.exp(), 1e-3, 50)
+
+        sigma_v = self.forward_sigma(obs)
+        sigma_v = torch.clamp(sigma_v, 1e-3, 50)
+
         return mu_v, sigma_v

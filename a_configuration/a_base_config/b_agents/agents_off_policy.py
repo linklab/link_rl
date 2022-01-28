@@ -56,8 +56,6 @@ class ConfigDdpg(ConfigAgent):
 
         self.BUFFER_CAPACITY = 10_000
         self.BATCH_SIZE = 64
-        self.MIN_BUFFER_SIZE_FOR_TRAIN = self.BATCH_SIZE * 10
-        self.TARGET_SYNC_INTERVAL_TRAINING_STEPS = 50
         self.TAU = 0.005
 
 
@@ -71,9 +69,9 @@ class ConfigTd3(ConfigAgent):
 
         self.BUFFER_CAPACITY = 10_000
         self.BATCH_SIZE = 64
-        self.MIN_BUFFER_SIZE_FOR_TRAIN = self.BATCH_SIZE * 10
-        self.TARGET_SYNC_INTERVAL_TRAINING_STEPS = 50
         self.TAU = 0.005
+
+        self.POLICY_UPDATE_FREQUENCY_PER_TRAINING_STEP = 2
 
 
 class ConfigSac(ConfigAgent):
