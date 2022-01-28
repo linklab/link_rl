@@ -87,7 +87,6 @@ class ConfigSac(ConfigAgent):
 
         self.BUFFER_CAPACITY = 10_000
         self.BATCH_SIZE = 128
-        self.MIN_BUFFER_SIZE_FOR_TRAIN = self.BATCH_SIZE * 10
         self.TARGET_SYNC_INTERVAL_TRAINING_STEPS = 50
 
         self.USE_LAYER_NORM = False

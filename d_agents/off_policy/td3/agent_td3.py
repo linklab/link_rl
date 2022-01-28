@@ -1,44 +1,26 @@
 import torch.optim as optim
 import numpy as np
 import torch
-import torch.nn.functional as F
 import torch.multiprocessing as mp
-from gym.spaces import Discrete, Box
 
-from c_models.f_ddpg_models import DiscreteDdpgModel, ContinuousDdpgModel
-from c_models.g_td3_models import DiscreteTd3Model, ContinuousTd3Model
+from c_models.g_td3_models import ContinuousTd3Model
 from d_agents.agent import Agent
-from g_utils.commons import EpsilonTracker, get_continuous_action_info
-from g_utils.types import AgentMode, ModelType
+from g_utils.types import AgentMode
 
 
 class AgentTd3(Agent):
     def __init__(self, observation_space, action_space, config):
         super(AgentTd3, self).__init__(observation_space, action_space, config)
 
-        if isinstance(self.action_space, Discrete):
-            self.n_actions = self.n_discrete_actions
-            self.td3_model = DiscreteTd3Model(
-                observation_shape=self.observation_shape, n_out_actions=self.n_out_actions,
-                n_discrete_actions=self.n_discrete_actions, config=config
-            )
+        self.n_actions = self.n_out_actions
 
-            self.target_td3_model = DiscreteTd3Model(
-                observation_shape=self.observation_shape, n_out_actions=self.n_out_actions,
-                n_discrete_actions=self.n_discrete_actions, config=config
-            )
-        elif isinstance(self.action_space, Box):
-            self.n_actions = self.n_out_actions
+        self.td3_model = ContinuousTd3Model(
+            observation_shape=self.observation_shape, n_out_actions=self.n_out_actions, config=config
+        )
 
-            self.td3_model = ContinuousTd3Model(
-                observation_shape=self.observation_shape, n_out_actions=self.n_out_actions, config=config
-            )
-
-            self.target_td3_model = ContinuousTd3Model(
-                observation_shape=self.observation_shape, n_out_actions=self.n_out_actions, config=config
-            )
-        else:
-            raise ValueError()
+        self.target_td3_model = ContinuousTd3Model(
+            observation_shape=self.observation_shape, n_out_actions=self.n_out_actions, config=config
+        )
 
         self.model = self.td3_model.actor_model
 
@@ -63,22 +45,17 @@ class AgentTd3(Agent):
         self.last_actor_loss = mp.Value('d', 0.0)
 
     def get_action(self, obs, mode=AgentMode.TRAIN):
-        if isinstance(self.action_space, Discrete):
-            pass
-        elif isinstance(self.action_space, Box):
-            mu = self.actor_model.pi(obs)
-            mu = mu.detach().cpu().numpy()
+        mu = self.actor_model.pi(obs)
+        mu = mu.detach().cpu().numpy()
 
-            if mode == AgentMode.TRAIN:
-                noises = np.random.normal(size=self.n_actions, loc=0, scale=1.0)
-                action = mu + noises
-            else:
-                action = mu
-
-            action = np.clip(a=action, a_min=self.np_minus_ones, a_max=self.np_plus_ones)
-            return action
+        if mode == AgentMode.TRAIN:
+            noises = np.random.normal(size=self.n_actions, loc=0, scale=1.0)
+            action = mu + noises
         else:
-            raise ValueError()
+            action = mu
+
+        action = np.clip(a=action, a_min=self.np_minus_ones, a_max=self.np_plus_ones)
+        return action
 
     def train_td3(self):
         count_training_steps = 0

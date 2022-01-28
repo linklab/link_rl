@@ -64,11 +64,11 @@ class AgentDqn(Agent):
         count_training_steps = 0
 
         # state_action_values.shape: torch.Size([32, 1])
-        state_action_values = self.q_net(self.observations).gather(dim=1, index=self.actions)
+        state_action_values = self.q_net(self.observations).gather(dim=-1, index=self.actions)
 
         with torch.no_grad():
             # next_state_values.shape: torch.Size([32, 1])
-            next_q_v = self.target_q_net(self.next_observations).max(dim=1, keepdim=True).values
+            next_q_v = self.target_q_net(self.next_observations).max(dim=-1, keepdim=True).values
             next_q_v[self.dones] = 0.0
 
             # target_state_action_values.shape: torch.Size([32, 1])

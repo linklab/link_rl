@@ -108,7 +108,6 @@ class AgentA2c(Agent):
         ################################
         #q_values = td_target_values
         advantages = (td_target_values - values).detach()
-
         advantages = (advantages - torch.mean(advantages)) / (torch.std(advantages) + 1e-7)
 
         if isinstance(self.action_space, Discrete):

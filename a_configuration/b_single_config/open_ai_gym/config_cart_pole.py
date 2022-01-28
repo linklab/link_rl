@@ -1,5 +1,5 @@
 from a_configuration.a_base_config.b_agents.agents_off_policy import ConfigDqn, ConfigDoubleDqn, ConfigDuelingDqn, \
-    ConfigDoubleDuelingDqn
+    ConfigDoubleDuelingDqn, ConfigSac
 from a_configuration.a_base_config.b_agents.agents_on_policy import ConfigA2c, ConfigReinforce, ConfigPpo, \
     ConfigPpoTrajectory
 from a_configuration.a_base_config.config_single_base import ConfigBase
@@ -89,8 +89,6 @@ class ConfigCartPoleA2c(ConfigBase, ConfigCartPole, ConfigA2c):
         ConfigCartPole.__init__(self)
         ConfigA2c.__init__(self)
 
-        self.N_VECTORIZED_ENVS = 1
-        self.N_ACTORS = 1
         self.MAX_TRAINING_STEPS = 100_000
         self.BATCH_SIZE = 256
         self.BUFFER_CAPACITY = 10_000

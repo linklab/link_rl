@@ -1,43 +1,26 @@
 import torch.optim as optim
 import numpy as np
 import torch
-import torch.nn.functional as F
 import torch.multiprocessing as mp
-from gym.spaces import Discrete, Box
 
-from c_models.f_ddpg_models import DiscreteDdpgModel, ContinuousDdpgModel
+from c_models.f_ddpg_models import ContinuousDdpgModel
 from d_agents.agent import Agent
-from g_utils.commons import EpsilonTracker, get_continuous_action_info
-from g_utils.types import AgentMode, ModelType
+from g_utils.types import AgentMode
 
 
 class AgentDdpg(Agent):
     def __init__(self, observation_space, action_space, config):
         super(AgentDdpg, self).__init__(observation_space, action_space, config)
 
-        if isinstance(self.action_space, Discrete):
-            self.n_actions = self.n_discrete_actions
-            self.ddpg_model = DiscreteDdpgModel(
-                observation_shape=self.observation_shape, n_out_actions=self.n_out_actions,
-                n_discrete_actions=self.n_discrete_actions, config=config
-            )
+        self.n_actions = self.n_out_actions
 
-            self.target_ddpg_model = DiscreteDdpgModel(
-                observation_shape=self.observation_shape, n_out_actions=self.n_out_actions,
-                n_discrete_actions=self.n_discrete_actions, config=config
-            )
-        elif isinstance(self.action_space, Box):
-            self.n_actions = self.n_out_actions
+        self.ddpg_model = ContinuousDdpgModel(
+            observation_shape=self.observation_shape, n_out_actions=self.n_out_actions, config=config
+        )
 
-            self.ddpg_model = ContinuousDdpgModel(
-                observation_shape=self.observation_shape, n_out_actions=self.n_out_actions, config=config
-            )
-
-            self.target_ddpg_model = ContinuousDdpgModel(
-                observation_shape=self.observation_shape, n_out_actions=self.n_out_actions, config=config
-            )
-        else:
-            raise ValueError()
+        self.target_ddpg_model = ContinuousDdpgModel(
+            observation_shape=self.observation_shape, n_out_actions=self.n_out_actions, config=config
+        )
 
         self.model = self.ddpg_model.actor_model
 
@@ -62,22 +45,17 @@ class AgentDdpg(Agent):
         self.last_actor_loss = mp.Value('d', 0.0)
 
     def get_action(self, obs, mode=AgentMode.TRAIN):
-        if isinstance(self.action_space, Discrete):
-            pass
-        elif isinstance(self.action_space, Box):
-            mu = self.actor_model.pi(obs, save_hidden=True)
-            mu = mu.detach().cpu().numpy()
+        mu = self.actor_model.pi(obs, save_hidden=True)
+        mu = mu.detach().cpu().numpy()
 
-            if mode == AgentMode.TRAIN:
-                noises = np.random.normal(size=self.n_actions, loc=0, scale=1.0)
-                action = mu + noises
-            else:
-                action = mu
-
-            action = np.clip(a=action, a_min=self.np_minus_ones, a_max=self.np_plus_ones)
-            return action
+        if mode == AgentMode.TRAIN:
+            noises = np.random.normal(size=self.n_actions, loc=0, scale=1.0)
+            action = mu + noises
         else:
-            raise ValueError()
+            action = mu
+
+        action = np.clip(a=action, a_min=self.np_minus_ones, a_max=self.np_plus_ones)
+        return action
 
     def train_ddpg(self):
         count_training_steps = 0

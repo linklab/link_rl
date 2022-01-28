@@ -13,16 +13,19 @@ def get_agent(observation_space, action_space, config=None):
             observation_space=observation_space, action_space=action_space, config=config
         )
     elif config.AGENT_TYPE == AgentType.DOUBLE_DQN:
+        assert isinstance(action_space, Discrete)
         from d_agents.off_policy.dqn.agent_double_dqn import AgentDoubleDqn
         agent = AgentDoubleDqn(
             observation_space=observation_space, action_space=action_space, config=config
         )
     elif config.AGENT_TYPE == AgentType.DUELING_DQN:
+        assert isinstance(action_space, Discrete)
         from d_agents.off_policy.dqn.agent_dueling_dqn import AgentDuelingDqn
         agent = AgentDuelingDqn(
             observation_space=observation_space, action_space=action_space, config=config
         )
     elif config.AGENT_TYPE == AgentType.DOUBLE_DUELING_DQN:
+        assert isinstance(action_space, Discrete)
         from d_agents.off_policy.dqn.agent_double_dueling_dqn import AgentDoubleDuelingDqn
         agent = AgentDoubleDuelingDqn(
             observation_space=observation_space, action_space=action_space, config=config
@@ -53,16 +56,19 @@ def get_agent(observation_space, action_space, config=None):
             observation_space=observation_space, action_space=action_space, config=config
         )
     elif config.AGENT_TYPE == AgentType.DDPG:
+        assert isinstance(action_space, Box)
         from d_agents.off_policy.ddpg.agent_ddpg import AgentDdpg
         agent = AgentDdpg(
             observation_space=observation_space, action_space=action_space, config=config
         )
     elif config.AGENT_TYPE == AgentType.TD3:
+        assert isinstance(action_space, Box)
         from d_agents.off_policy.td3.agent_td3 import AgentTd3
         agent = AgentTd3(
             observation_space=observation_space, action_space=action_space, config=config
         )
     elif config.AGENT_TYPE == AgentType.SAC:
+        assert isinstance(action_space, Box)
         from d_agents.off_policy.sac.agent_sac import AgentSac
         agent = AgentSac(
             observation_space=observation_space, action_space=action_space, config=config
