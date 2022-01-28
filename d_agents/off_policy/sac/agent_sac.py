@@ -60,14 +60,14 @@ class AgentSac(Agent):
         self.last_entropy = mp.Value('d', 0.0)
 
     def get_action(self, obs, mode=AgentMode.TRAIN):
-        mu_v, sigma_v = self.actor_model.pi(obs)
+        mu_v, var_v = self.actor_model.pi(obs)
 
         if mode == AgentMode.TRAIN:
             # actions = np.random.normal(
-            #     loc=mu_v.detach().cpu().numpy(), scale=sigma_v.detach().cpu().numpy()
+            #     loc=mu_v.detach().cpu().numpy(), scale=torch.sqrt(var_v).detach().cpu().numpy()
             # )
 
-            dist = Normal(loc=mu_v, scale=sigma_v)
+            dist = Normal(loc=mu_v, scale=torch.sqrt(var_v))
             actions = dist.sample().detach().cpu().numpy()
         else:
             actions = mu_v.detach().cpu().numpy()
@@ -82,13 +82,13 @@ class AgentSac(Agent):
         ############################
         #  Critic Training - BEGIN #
         ############################
-        next_mu_v, next_sigma_v = self.actor_model.pi(self.next_observations)
+        next_mu_v, next_var_v = self.actor_model.pi(self.next_observations)
 
-        # next_actions_v = torch.normal(mean=next_mu_v, std=next_sigma_v)
+        # next_actions_v = torch.normal(mean=next_mu_v, std=torch.sqrt(next_var_v))
         # next_actions_v = torch.clamp(next_actions_v, min=self.torch_minus_ones, max=self.torch_plus_ones)
-        # next_log_prob_v = self.calc_log_prob(next_mu_v, next_sigma_v ** 2, next_actions_v)
+        # next_log_prob_v = self.calc_log_prob(next_mu_v, next_var_v, next_actions_v)
 
-        next_dist = Normal(loc=next_mu_v, scale=next_sigma_v)
+        next_dist = Normal(loc=next_mu_v, scale=torch.sqrt(next_var_v))
         next_actions_v = next_dist.sample()
         next_actions_v = torch.clamp(next_actions_v, min=self.torch_minus_ones, max=self.torch_plus_ones)
         next_log_prob_v = next_dist.log_prob(value=next_actions_v)
@@ -98,7 +98,7 @@ class AgentSac(Agent):
         next_q_values = next_q_values - self.alpha.value * next_log_prob_v  # ALPHA!!!
         next_q_values[self.dones] = 0.0
         # td_target_values.shape: (32, 1)
-        td_target_values = self.rewards + self.config.GAMMA ** self.config.N_STEP * next_q_values
+        td_target_values = self.rewards + (self.config.GAMMA ** self.config.N_STEP) * next_q_values
 
         # values.shape: (32, 1)
         q1_values, q2_values = self.critic_model.q(self.observations, self.actions)

@@ -56,15 +56,14 @@ class AgentA2c(Agent):
             return action
 
         elif isinstance(self.action_space, Box):
-            mu_v, sigma_v = self.actor_model.pi(obs)
-            #if self.step % 1000 == 0: print(sigma_v, "!!!")
+            mu_v, var_v = self.actor_model.pi(obs)
 
             if mode == AgentMode.TRAIN:
                 # actions = np.random.normal(
-                #     loc=mu_v.detach().cpu().numpy(), scale=sigma_v.detach().cpu().numpy()
+                #     loc=mu_v.detach().cpu().numpy(), scale=torch.sqrt(var_v).detach().cpu().numpy()
                 # )
 
-                dist = Normal(loc=mu_v, scale=sigma_v)
+                dist = Normal(loc=mu_v, scale=torch.sqrt(var_v))
                 actions = dist.sample().detach().cpu().numpy()
             else:
                 actions = mu_v.detach().cpu().numpy()
@@ -86,13 +85,13 @@ class AgentA2c(Agent):
         next_values[self.dones] = 0.0
 
         # td_target_values.shape: (32, 1)
-        td_target_values = self.rewards + self.config.GAMMA ** self.config.N_STEP * next_values
+        td_target_values = self.rewards + (self.config.GAMMA ** self.config.N_STEP) * next_values
 
         # values.shape: (32, 1)
         values = self.critic_model.v(self.observations)
         # loss_critic.shape: (,) <--  값 1개
 
-        assert values.shape == td_target_values.shape, print(values.shape, td_target_values.shape)
+        assert values.shape == td_target_values.shape, "{0} {1}".format(values.shape, td_target_values.shape)
         critic_loss = self.config.LOSS_FUNCTION(values, td_target_values.detach())
 
         self.critic_optimizer.zero_grad()
@@ -123,13 +122,13 @@ class AgentA2c(Agent):
 
             entropy = dist.entropy().mean()
         elif isinstance(self.action_space, Box):
-            mu_v, sigma_v = self.actor_model.pi(self.observations)
+            mu_v, var_v = self.actor_model.pi(self.observations)
 
-            # criticized_log_pi_action_v = self.calc_log_prob(mu_v, sigma_v ** 2, self.actions) * advantages
-            # entropy = 0.5 * (torch.log(2.0 * np.pi * sigma_v ** 2) + 1.0).sum(dim=-1)
+            # criticized_log_pi_action_v = self.calc_log_prob(mu_v, var_v, self.actions) * advantages
+            # entropy = 0.5 * (torch.log(2.0 * np.pi * var_v) + 1.0).sum(dim=-1)
             # entropy = entropy.mean()
 
-            dist = Normal(loc=mu_v, scale=sigma_v)
+            dist = Normal(loc=mu_v, scale=torch.sqrt(var_v))
             criticized_log_pi_action_v = dist.log_prob(value=self.actions).sum(dim=-1, keepdim=True) * advantages
             entropy = dist.entropy().mean()
         else:
@@ -143,7 +142,7 @@ class AgentA2c(Agent):
         #     print("td_target_values:", td_target_values)
         #     print("values:", values)
         #     print("advantages:", advantages)
-        #     print("mu_v:", mu_v, "sigma_v:", sigma_v)
+        #     print("mu_v:", mu_v, "var_v:", var_v)
         #     print("self.actions:", self.actions)
         #     print("dist.log_prob(value=self.actions).sum(dim=-1, keepdim=True):", dist.log_prob(value=self.actions).sum(dim=-1, keepdim=True))
         #     raise ValueError()
