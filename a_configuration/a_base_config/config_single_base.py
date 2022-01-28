@@ -63,3 +63,5 @@ class ConfigBase:
         self.LOSS_FUNCTION_TYPE = LossFunctionType.HUBER_LOSS
         self.LOSS_FUNCTION = None
         self.CONSOLE_LOG_INTERVAL_TRAINING_STEPS = 30
+
+        self.NO_TEST_GRAPHICS = True
