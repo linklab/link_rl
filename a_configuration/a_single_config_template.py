@@ -130,9 +130,20 @@ config = ConfigHopperBulletSac()
 #########################################
 ##    DoubleInvertedPendulum_BULLET    ##
 #########################################
+from a_configuration.b_single_config.pybullet.config_double_inverted_pendulum_bullet import ConfigDoubleInvertedPendulumBulletA2c
+config = ConfigDoubleInvertedPendulumBulletA2c()
+
 from a_configuration.b_single_config.pybullet.config_double_inverted_pendulum_bullet import ConfigDoubleInvertedPendulumBulletSac
 config = ConfigDoubleInvertedPendulumBulletSac()
 
+from a_configuration.b_single_config.pybullet.config_double_inverted_pendulum_bullet import ConfigDoubleInvertedPendulumBulletDdpg
+config = ConfigDoubleInvertedPendulumBulletDdpg()
+
+from a_configuration.b_single_config.pybullet.config_double_inverted_pendulum_bullet import ConfigDoubleInvertedPendulumBulletPpo
+config = ConfigDoubleInvertedPendulumBulletPpo()
+
+from a_configuration.b_single_config.pybullet.config_double_inverted_pendulum_bullet import ConfigDoubleInvertedPendulumBulletPpoTrajectory
+config = ConfigDoubleInvertedPendulumBulletPpoTrajectory()
 
 ##########
 ## PONG ##

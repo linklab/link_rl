@@ -1,7 +1,8 @@
 from a_configuration.a_base_config.a_environments.pybullet.gym_pybullet import ConfigAntBullet, \
     ConfigDoubleInvertedPendulumBullet
 from a_configuration.a_base_config.b_agents.agents_off_policy import ConfigDqn, ConfigDdpg, ConfigSac
-from a_configuration.a_base_config.b_agents.agents_on_policy import ConfigA2c, ConfigReinforce
+from a_configuration.a_base_config.b_agents.agents_on_policy import ConfigA2c, ConfigReinforce, ConfigPpo, \
+    ConfigPpoTrajectory
 from a_configuration.a_base_config.c_models.linear_models import ConfigLinearModel
 from a_configuration.a_base_config.config_single_base import ConfigBase
 from g_utils.commons import print_basic_info, get_env_info
@@ -17,10 +18,7 @@ class ConfigDoubleInvertedPendulumBulletA2c(ConfigBase, ConfigDoubleInvertedPend
         self.BATCH_SIZE = 64
         self.N_STEP = 1
         self.BUFFER_CAPACITY = self.BATCH_SIZE
-        self.MIN_BUFFER_SIZE_FOR_TRAIN = self.BATCH_SIZE * 10
 
-        self.N_VECTORIZED_ENVS = 1
-        self.N_ACTORS = 1
         self.MAX_TRAINING_STEPS = 2_000_000
         self.MODEL_TYPE = ModelType.SMALL_LINEAR
 
@@ -57,6 +55,26 @@ class ConfigDoubleInvertedPendulumBulletSac(ConfigBase, ConfigDoubleInvertedPend
         self.BUFFER_CAPACITY = 250_000
         self.BATCH_SIZE = 128
         self.MIN_BUFFER_SIZE_FOR_TRAIN = self.BATCH_SIZE * 10
+
+        self.MAX_TRAINING_STEPS = 2_000_000
+        self.MODEL_TYPE = ModelType.SMALL_LINEAR
+
+
+class ConfigDoubleInvertedPendulumBulletPpo(ConfigBase, ConfigDoubleInvertedPendulumBullet, ConfigPpo):
+    def __init__(self):
+        ConfigBase.__init__(self)
+        ConfigDoubleInvertedPendulumBullet.__init__(self)
+        ConfigPpo.__init__(self)
+
+        self.MAX_TRAINING_STEPS = 2_000_000
+        self.MODEL_TYPE = ModelType.SMALL_LINEAR
+
+
+class ConfigDoubleInvertedPendulumBulletPpoTrajectory(ConfigBase, ConfigDoubleInvertedPendulumBullet, ConfigPpoTrajectory):
+    def __init__(self):
+        ConfigBase.__init__(self)
+        ConfigDoubleInvertedPendulumBullet.__init__(self)
+        ConfigPpoTrajectory.__init__(self)
 
         self.MAX_TRAINING_STEPS = 2_000_000
         self.MODEL_TYPE = ModelType.SMALL_LINEAR
