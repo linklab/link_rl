@@ -14,91 +14,31 @@ from c_models.a_models import Model
 
 class ActorModel(Model):
     def __init__(
-            self, observation_shape: Tuple[int], n_out_actions: int, n_discrete_actions=None, config=None
+            self,
+            observation_shape: Tuple[int],
+            n_out_actions: int,
+            n_discrete_actions=None,
+            config=None
     ):
         super(ActorModel, self).__init__(observation_shape, n_out_actions, n_discrete_actions, config)
 
         if isinstance(self.config.MODEL_PARAMETER, ConfigLinearModel):
-            input_n_features = self.observation_shape[0]
-            self.actor_fc_layers = self.get_linear_layers(input_n_features=input_n_features)
+            self.make_linear_model(observation_shape=observation_shape)
 
         elif isinstance(self.config.MODEL_PARAMETER, ConfigConvolutionalModel):
-            input_n_channels = self.observation_shape[0]
-            self.actor_conv_layers = self.get_conv_layers(input_n_channels=input_n_channels)
-            conv_out_flat_size = self._get_conv_out(self.actor_conv_layers, self.observation_shape)
-            self.actor_fc_layers = self.get_linear_layers(input_n_features=conv_out_flat_size)
+            self.make_convolutional_model(observation_shape=observation_shape)
 
         elif isinstance(self.config.MODEL_PARAMETER, ConfigRecurrentLinearModel):
-            input_n_features = self.observation_shape[0]
-            self.actor_recurrent_layers = self.get_recurrent_layers(input_n_features=input_n_features)
-            self.actor_fc_layers = self.get_linear_layers(self.config.MODEL_PARAMETER.HIDDEN_SIZE)
+            self.make_recurrent_linear_model(observation_shape=observation_shape)
 
         elif isinstance(self.config.MODEL_PARAMETER, ConfigRecurrentConvolutionalModel):
-            input_n_channels = self.observation_shape[0]
-            self.actor_conv_layers = self.get_conv_layers(input_n_channels=input_n_channels)
+            self.make_recurrent_convolutional_model(observation_shape=observation_shape)
 
-            conv_out_flat_size = self._get_conv_out(self.actor_conv_layers, self.observation_shape)
-            self.actor_fc_layers_1 = nn.Linear(conv_out_flat_size, self.config.MODEL_PARAMETER.HIDDEN_SIZE)
-            self.actor_recurrent_layers = self.get_recurrent_layers(self.config.MODEL_PARAMETER.HIDDEN_SIZE)
-            self.actor_fc_layers_2 = self.get_linear_layers(self.config.MODEL_PARAMETER.HIDDEN_SIZE)
         else:
             raise ValueError()
 
     def forward_actor(self, obs, save_hidden=False):
-        if isinstance(obs, np.ndarray):
-            obs = torch.tensor(obs, dtype=torch.float32, device=self.config.DEVICE)
-
-        if isinstance(self.config.MODEL_PARAMETER, ConfigLinearModel):
-            x = self.actor_fc_layers(obs)
-
-        elif isinstance(self.config.MODEL_PARAMETER, ConfigConvolutionalModel):
-            conv_out = self.actor_conv_layers(obs)
-            conv_out = torch.flatten(conv_out, start_dim=1)
-            x = self.actor_fc_layers(conv_out)
-
-        elif isinstance(self.config.MODEL_PARAMETER, ConfigRecurrentLinearModel):
-            rnn_in, h_0 = obs[0]
-            if isinstance(rnn_in, np.ndarray):
-                rnn_in = torch.tensor(rnn_in, dtype=torch.float32, device=self.config.DEVICE)
-            if isinstance(h_0, np.ndarray):
-                h_0 = torch.tensor(h_0, dtype=torch.float32, device=self.config.DEVICE)
-
-            if rnn_in.ndim == 2:
-                rnn_in = rnn_in.unsqueeze(1)
-
-            rnn_out, h_n = self.actor_recurrent_layers(rnn_in, h_0)
-
-            if save_hidden:
-                self.recurrent_hidden = h_n.detach()
-
-            rnn_out_flattened = torch.flatten(rnn_out, start_dim=1)
-
-            x = self.actor_fc_layers(rnn_out_flattened)
-
-        elif isinstance(self.config.MODEL_PARAMETER, ConfigRecurrentConvolutionalModel):
-            x, h_0 = obs[0]
-            if isinstance(x, np.ndarray):
-                x = torch.tensor(x, dtype=torch.float32, device=self.config.DEVICE)
-            if isinstance(h_0, np.ndarray):
-                h_0 = torch.tensor(h_0, dtype=torch.float32, device=self.config.DEVICE)
-
-            conv_out = self.actor_conv_layers(x)
-            conv_out = torch.flatten(conv_out, start_dim=1)
-            x = self.actor_fc_layers_1(conv_out)
-
-            rnn_in = x
-            if rnn_in.ndim == 2:
-                rnn_in = rnn_in.unsqueeze(1)
-
-            rnn_out, h_n = self.actor_recurrent_layers(rnn_in, h_0)
-            self.recurrent_hidden = h_n.detach()  # save hidden
-            rnn_out = torch.flatten(rnn_out, start_dim=1)
-            x = self.actor_fc_layers_2(rnn_out)
-
-        else:
-            raise ValueError()
-
-        return x
+        return self._forward(obs, save_hidden=save_hidden)
 
     @abstractmethod
     def pi(self, x):
