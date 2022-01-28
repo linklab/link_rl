@@ -1,10 +1,8 @@
 import copy
-
 import torch
 from gym.spaces import Discrete, Box
 from torch.distributions import Categorical, Normal
 import torch.multiprocessing as mp
-import numpy as np
 
 from d_agents.on_policy.a2c.agent_a2c import AgentA2c
 

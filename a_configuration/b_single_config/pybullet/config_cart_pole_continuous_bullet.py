@@ -5,9 +5,7 @@ from a_configuration.a_base_config.config_single_base import ConfigBase
 from g_utils.types import ModelType
 
 
-class ConfigCartPoleContinuousBulletA2c(
-    ConfigBase, ConfigCartPoleContinuousBullet, ConfigA2c
-):
+class ConfigCartPoleContinuousBulletA2c(ConfigBase, ConfigCartPoleContinuousBullet, ConfigA2c):
     def __init__(self):
         ConfigBase.__init__(self)
         ConfigCartPoleContinuousBullet.__init__(self)
@@ -42,9 +40,7 @@ class ConfigCartPoleContinuousBulletPpoTrajectory(ConfigBase, ConfigCartPoleCont
         self.MODEL_TYPE = ModelType.SMALL_LINEAR
 
 
-class ConfigCartPoleContinuousBulletSac(
-    ConfigBase, ConfigCartPoleContinuousBullet, ConfigSac
-):
+class ConfigCartPoleContinuousBulletSac(ConfigBase, ConfigCartPoleContinuousBullet, ConfigSac):
     def __init__(self):
         ConfigBase.__init__(self)
         ConfigCartPoleContinuousBullet.__init__(self)
@@ -60,9 +56,7 @@ class ConfigCartPoleContinuousBulletSac(
         self.LEARNING_RATE = 0.001
 
 
-class ConfigCartPoleContinuousBulletDdpg(
-    ConfigBase, ConfigCartPoleContinuousBullet, ConfigDdpg
-):
+class ConfigCartPoleContinuousBulletDdpg(ConfigBase, ConfigCartPoleContinuousBullet, ConfigDdpg):
     def __init__(self):
         ConfigBase.__init__(self)
         ConfigCartPoleContinuousBullet.__init__(self)
@@ -77,9 +71,7 @@ class ConfigCartPoleContinuousBulletDdpg(
         # self.MODEL_TYPE = ModelType.SMALL_RECURRENT
 
 
-class ConfigCartPoleContinuousBulletTd3(
-    ConfigBase, ConfigCartPoleContinuousBullet, ConfigTd3
-):
+class ConfigCartPoleContinuousBulletTd3(ConfigBase, ConfigCartPoleContinuousBullet, ConfigTd3):
     def __init__(self):
         ConfigBase.__init__(self)
         ConfigCartPoleContinuousBullet.__init__(self)

@@ -18,7 +18,7 @@ class ConfigComparisonAntBulletDDpgTd3(ConfigComparisonBase):
             "DDPG",
             "TD3",
         ]
-        self.MAX_TRAINING_STEPS = 1_500_000
+        self.MAX_TRAINING_STEPS = 300_000
         self.N_RUNS = 5
 
 
