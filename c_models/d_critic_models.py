@@ -107,8 +107,7 @@ class QCriticModel(CriticModel):
             isinstance(self.config.MODEL_PARAMETER, ConfigRecurrentLinearModel)
         ]):
             self.make_linear_model(
-                observation_shape=observation_shape,
-                input_n_features=observation_shape[0] + self.n_out_actions
+                observation_shape=observation_shape, n_out_actions=self.n_out_actions
             )
 
         elif any([
@@ -116,8 +115,7 @@ class QCriticModel(CriticModel):
             isinstance(self.config.MODEL_PARAMETER, ConfigRecurrentConvolutionalModel)
         ]):
             self.make_convolutional_model(
-                observation_shape=observation_shape,
-                input_n_features=observation_shape[0] + self.n_out_actions
+                observation_shape=observation_shape, n_out_actions=self.n_out_actions
             )
 
         else:
@@ -130,35 +128,37 @@ class QCriticModel(CriticModel):
     def forward_critic(self, obs, act):
         if isinstance(obs, np.ndarray):
             obs = torch.tensor(obs, dtype=torch.float32, device=self.config.DEVICE)
-
         if isinstance(act, np.ndarray):
             act = torch.tensor(act, dtype=torch.float32, device=self.config.DEVICE)
 
         if isinstance(self.config.MODEL_PARAMETER, ConfigLinearModel):
-            x = torch.cat([obs, act], dim=-1)
-            x = self.representation_layers(x)
+            x = self.representation_layers(obs)
+
+            x = torch.cat([x, act], dim=-1)
             x = self.linear_layers(x)
 
         elif isinstance(self.config.MODEL_PARAMETER, ConfigConvolutionalModel):
             conv_out = self.convolutional_layers(obs)
             conv_out = torch.flatten(conv_out, start_dim=1)
-            x = torch.cat([conv_out, act], dim=-1)
-            x = self.representation_layers(x)
+            x = self.representation_layers(conv_out)
+
+            x = torch.cat([x, act], dim=-1)
             x = self.linear_layers(x)
 
         elif isinstance(self.config.MODEL_PARAMETER, ConfigRecurrentLinearModel):
             obs, _ = obs[0]
-            x = torch.cat([obs, act], dim=-1)
-            x = self.representation_layers(x)
+            x = self.representation_layers(obs)
+
+            x = torch.cat([x, act], dim=-1)
             x = self.linear_layers(x)
-            x = self.critic_linear_layers(torch.cat([obs, act], dim=-1))
 
         elif isinstance(self.config.MODEL_PARAMETER, ConfigRecurrentConvolutionalModel):
             obs, _ = obs[0]
             conv_out = self.convolutional_layers(obs)
             conv_out = torch.flatten(conv_out, start_dim=1)
-            x = torch.cat([conv_out, act], dim=-1)
-            x = self.representation_layers(x)
+            x = self.representation_layers(conv_out)
+
+            x = torch.cat([x, act], dim=-1)
             x = self.linear_layers(x)
 
         else:
@@ -191,18 +191,16 @@ class DoubleQCriticModel(CriticModel):
             isinstance(self.config.MODEL_PARAMETER, ConfigLinearModel),
             isinstance(self.config.MODEL_PARAMETER, ConfigRecurrentLinearModel)
         ]):
-            input_n_features = self.observation_shape[0] + self.n_out_actions
+            input_n_features = observation_shape[0]
             self.representation_layers = self.get_representation_layers(input_n_features=input_n_features)
 
+            input_n_features = self.config.MODEL_PARAMETER.NEURONS_PER_REPRESENTATION_LAYER[-1] + n_out_actions
+
             # q1
-            self.q1_linear_layers = self.get_linear_layers(
-                input_n_features=self.config.MODEL_PARAMETER.NEURONS_PER_REPRESENTATION_LAYER[-1]
-            )
+            self.q1_linear_layers = self.get_linear_layers(input_n_features=input_n_features)
 
             # q2
-            self.q2_linear_layers = self.get_linear_layers(
-                input_n_features=self.config.MODEL_PARAMETER.NEURONS_PER_REPRESENTATION_LAYER[-1]
-            )
+            self.q2_linear_layers = self.get_linear_layers(input_n_features=input_n_features)
 
         elif any([
             isinstance(self.config.MODEL_PARAMETER, ConfigConvolutionalModel),
@@ -211,18 +209,15 @@ class DoubleQCriticModel(CriticModel):
             input_n_channels = self.observation_shape[0]
             self.convolutional_layers = self.get_convolutional_layers(input_n_channels=input_n_channels)
             conv_out_flat_size = self._get_conv_out(self.convolutional_layers, self.observation_shape)
-            input_n_features = conv_out_flat_size + self.n_out_actions
-            self.representation_layers = self.get_representation_layers(input_n_features=input_n_features)
+            self.representation_layers = self.get_representation_layers(input_n_features=conv_out_flat_size)
 
             # q1
-            self.q1_linear_layers = self.get_linear_layers(
-                input_n_features=self.config.MODEL_PARAMETER.NEURONS_PER_REPRESENTATION_LAYER[-1]
-            )
+            input_n_features = self.config.MODEL_PARAMETER.NEURONS_PER_REPRESENTATION_LAYER[-1] + n_out_actions
+
+            self.q1_linear_layers = self.get_linear_layers(input_n_features=input_n_features)
 
             # q2
-            self.q2_linear_layers = self.get_linear_layers(
-                input_n_features=self.config.MODEL_PARAMETER.NEURONS_PER_REPRESENTATION_LAYER[-1]
-            )
+            self.q2_linear_layers = self.get_linear_layers(input_n_features=input_n_features)
 
         else:
             raise ValueError()
@@ -242,23 +237,26 @@ class DoubleQCriticModel(CriticModel):
             act = torch.tensor(act, dtype=torch.float32, device=self.config.DEVICE)
 
         if isinstance(self.config.MODEL_PARAMETER, ConfigLinearModel):
-            x = torch.cat([obs, act], dim=-1).float()
-            x = self.representation_layers(x)
+            x = self.representation_layers(obs)
+
+            x = torch.cat([x, act], dim=-1).float()
             q1_x = self.q1_linear_layers(x)
             q2_x = self.q2_linear_layers(x)
 
         elif isinstance(self.config.MODEL_PARAMETER, ConfigConvolutionalModel):
             conv_out = self.convolutional_layers(obs)
             conv_out = torch.flatten(conv_out, start_dim=1)
-            x = torch.cat([conv_out, act], dim=-1)
-            x = self.representation_layers(x)
+            x = self.representation_layers(conv_out)
+
+            x = torch.cat([x, act], dim=-1)
             q1_x = self.q1_linear_layers(x)
             q2_x = self.q2_linear_layers(x)
 
         elif isinstance(self.config.MODEL_PARAMETER, ConfigRecurrentLinearModel):
             obs, _ = obs[0]
-            x = torch.cat([obs, act], dim=-1)
-            x = self.representation_layers(x)
+            x = self.representation_layers(obs)
+
+            x = torch.cat([x, act], dim=-1)
             q1_x = self.q1_linear_layers(x)
             q2_x = self.q2_linear_layers(x)
 
@@ -266,8 +264,9 @@ class DoubleQCriticModel(CriticModel):
             obs, _ = obs[0]
             conv_out = self.convolutional_layers(obs)
             conv_out = torch.flatten(conv_out, start_dim=1)
-            x = torch.cat([conv_out, act], dim=-1)
-            x = self.representation_layers(x)
+            x = self.representation_layers(conv_out)
+
+            x = torch.cat([x, act], dim=-1)
             q1_x = self.q1_linear_layers(x)
             q2_x = self.q2_linear_layers(x)
 

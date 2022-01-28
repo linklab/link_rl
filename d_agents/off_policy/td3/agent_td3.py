@@ -83,6 +83,11 @@ class AgentTd3(Agent):
         self.critic_optimizer.step()
 
         self.last_critic_loss.value = critic_loss.item()
+
+        # TAU: 0.005
+        self.soft_synchronize_models(
+            source_model=self.critic_model, target_model=self.target_critic_model, tau=self.config.TAU
+        )
         ######################
         # train critic - end #
         ######################
@@ -106,11 +111,6 @@ class AgentTd3(Agent):
             # TAU: 0.005
             self.soft_synchronize_models(
                 source_model=self.actor_model, target_model=self.target_actor_model, tau=self.config.TAU
-            )
-
-            # TAU: 0.005
-            self.soft_synchronize_models(
-                source_model=self.critic_model, target_model=self.target_critic_model, tau=self.config.TAU
             )
         #####################
         # train actor - END #

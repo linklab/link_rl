@@ -389,7 +389,7 @@ def console_log(
 def console_log_comparison(
         total_time_step, total_episodes_per_agent,
         last_mean_episode_reward_per_agent, n_rollout_transitions_per_agent, training_steps_per_agent,
-        agents, parameter_c
+        agents, config_c
 ):
     for agent_idx, agent in enumerate(agents):
         agent_prefix = "[Agent: {0}]".format(agent_idx)
@@ -404,23 +404,31 @@ def console_log_comparison(
                 training_steps_per_agent[agent_idx]
             )
 
-        if parameter_c.AGENT_PARAMETERS[agent_idx].AGENT_TYPE in [
+        if config_c.AGENT_PARAMETERS[agent_idx].AGENT_TYPE in [
             AgentType.DQN, AgentType.DOUBLE_DQN, AgentType.DUELING_DQN, AgentType.DOUBLE_DUELING_DQN
         ]:
             console_log += "Q_net_loss: {0:>6.3f}, Epsilon: {1:>4.2f}, ".format(
                 agent.last_q_net_loss.value, agent.epsilon.value
             )
-        elif parameter_c.AGENT_PARAMETERS[agent_idx].AGENT_TYPE == AgentType.REINFORCE:
+        elif config_c.AGENT_PARAMETERS[agent_idx].AGENT_TYPE == AgentType.REINFORCE:
             console_log += "log_policy_objective: {0:6.3f}, ".format(
                 agent.last_log_policy_objective.value
             )
-        elif parameter_c.AGENT_PARAMETERS[agent_idx].AGENT_TYPE == AgentType.A2C:
+        elif config_c.AGENT_PARAMETERS[agent_idx].AGENT_TYPE == AgentType.A2C:
             console_log += "critic_loss: {0:6.3f}, log_actor_obj.: {1:5.3f}, ".format(
                 agent.last_critic_loss.value, agent.last_actor_objective.value
             )
-        elif parameter_c.AGENT_PARAMETERS[agent_idx].AGENT_TYPE in (AgentType.PPO, AgentType.PPO_TRAJECTORY):
+        elif config_c.AGENT_PARAMETERS[agent_idx].AGENT_TYPE in (AgentType.PPO, AgentType.PPO_TRAJECTORY):
             console_log += "critic_loss: {0:6.3f}, actor_obj.: {1:5.3f}, ratio: {2:5.3f}".format(
                 agent.last_critic_loss.value, agent.last_actor_objective.value, agent.ratio.value
+            )
+        elif config_c.AGENT_PARAMETERS[agent_idx].AGENT_TYPE == AgentType.SAC:
+            console_log += "critic_loss: {0:7.3f}, actor_obj.: {1:7.3f}, alpha: {2:5.3f}, entropy: {3:5.3f}".format(
+                agent.last_critic_loss.value, agent.last_actor_objective.value, agent.alpha.value, agent.last_entropy.value
+            )
+        elif config_c.AGENT_PARAMETERS[agent_idx].AGENT_TYPE in (AgentType.DDPG, AgentType.TD3):
+            console_log += "critic_loss: {0:7.3f}, actor_loss: {1:7.3f}, ".format(
+                agent.last_critic_loss.value, agent.last_actor_loss.value
             )
         else:
             pass

@@ -117,6 +117,9 @@ config = ConfigAntBulletPpoTrajectory()
 from a_configuration.b_single_config.pybullet.config_ant_bullet import ConfigAntBulletDdpg
 config = ConfigAntBulletDdpg()
 
+from a_configuration.b_single_config.pybullet.config_ant_bullet import ConfigAntBulletTd3
+config = ConfigAntBulletTd3()
+
 from a_configuration.b_single_config.pybullet.config_ant_bullet import ConfigAntBulletSac
 config = ConfigAntBulletSac()
 

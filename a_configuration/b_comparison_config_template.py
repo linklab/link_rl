@@ -9,6 +9,7 @@ config_c = ConfigComparisonCartPoleDqn()
 from a_configuration.c_comparison_config.open_ai_gym.config_comparison_cart_pole import ConfigComparisonCartPoleDqnTypes
 config_c = ConfigComparisonCartPoleDqnTypes()
 
+
 ######################
 ## CART_POLE_BULLET ##
 ######################
@@ -70,6 +71,9 @@ config_c = ConfigComparisonAntMujocoSac()
 ######################
 ##    ANT_BULLET    ##
 ######################
+from a_configuration.c_comparison_config.pybullet.config_comparison_ant import ConfigComparisonAntBulletDDpgTd3
+config_c = ConfigComparisonAntBulletDDpgTd3()
+
 from a_configuration.c_comparison_config.pybullet.config_comparison_ant import ConfigComparisonAntBulletSac
 config_c = ConfigComparisonAntBulletSac()
 

@@ -140,21 +140,21 @@ class Agent:
                 self._after_train()
 
         elif self.config.AGENT_TYPE == AgentType.DDPG:
-            if len(self.buffer) >= self.config.BATCH_SIZE:
+            if len(self.buffer) >= self.config.MIN_BUFFER_SIZE_FOR_TRAIN:
                 self._before_train(sample_length=self.config.BATCH_SIZE)
                 count_training_steps = self.train_ddpg()
                 self._after_actor_critic_train()     # ACTOR_CRITIC_TYPE
                 self._after_train()
 
         elif self.config.AGENT_TYPE == AgentType.TD3:
-            if len(self.buffer) >= self.config.BATCH_SIZE:
+            if len(self.buffer) >= self.config.MIN_BUFFER_SIZE_FOR_TRAIN:
                 self._before_train(sample_length=self.config.BATCH_SIZE)
                 count_training_steps = self.train_td3(training_steps_v=training_steps_v)
                 self._after_actor_critic_train()     # ACTOR_CRITIC_TYPE
                 self._after_train()
 
         elif self.config.AGENT_TYPE == AgentType.SAC:
-            if len(self.buffer) >= self.config.BATCH_SIZE:
+            if len(self.buffer) >= self.config.MIN_BUFFER_SIZE_FOR_TRAIN:
                 self._before_train(sample_length=self.config.BATCH_SIZE)
                 count_training_steps = self.train_sac(training_steps_v=training_steps_v)
                 self._after_actor_critic_train()     # ACTOR_CRITIC_TYPE
