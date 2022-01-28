@@ -64,9 +64,11 @@ class AgentTd3(Agent):
         ########################
         with torch.no_grad():
             next_mu_v = self.target_actor_model.pi(self.next_observations)
-            next_noises = np.random.normal(size=self.n_out_actions, loc=0, scale=1.0)
-            next_action = next_mu_v + np.clip(a=next_noises, a_min=self.np_minus_ones, a_max=self.np_plus_ones)
-            next_action = np.clip(a=next_action, a_min=self.np_minus_ones, a_max=self.np_plus_ones)
+            next_noises = torch.normal(
+                mean=torch.zeros_like(next_mu_v), std=torch.ones_like(next_mu_v)
+            ).to(self.config.DEVICE)
+            next_action = next_mu_v + torch.clip(input=next_noises, min=self.torch_minus_ones, max=self.torch_plus_ones)
+            next_action = torch.clip(input=next_action, min=self.torch_minus_ones, max=self.torch_plus_ones)
 
             next_q1_value, next_q2_value = self.target_critic_model.q(self.next_observations, next_action)
             min_next_q_value = torch.min(next_q1_value, next_q2_value)
