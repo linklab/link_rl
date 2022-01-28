@@ -14,13 +14,18 @@ class QNet(Model):
     # self.n_out_actions: 1
     # self.n_discrete_actions: 4 (for gridworld)
     def __init__(
-            self,
-            observation_shape: Tuple[int],
-            n_out_actions: int,
-            n_discrete_actions=None,
-            config=None
+        self,
+        observation_shape: Tuple[int],
+        n_out_actions: int,
+        n_discrete_actions=None,
+        config=None
     ):
-        super(QNet, self).__init__(observation_shape, n_out_actions, n_discrete_actions, config)
+        super(QNet, self).__init__(
+            observation_shape=observation_shape,
+            n_out_actions=n_out_actions,
+            n_discrete_actions=n_discrete_actions,
+            config=config
+        )
 
         if isinstance(self.config.MODEL_PARAMETER, ConfigLinearModel):
             self.make_linear_model(observation_shape=observation_shape)
@@ -54,9 +59,18 @@ class DuelingQNet(QNet):
     # self.n_out_actions: 1
     # self.n_discrete_actions: 4 (for gridworld)
     def __init__(
-            self, observation_shape: Tuple[int], n_out_actions: int, n_discrete_actions=None, config=None
+        self,
+        observation_shape: Tuple[int],
+        n_out_actions: int,
+        n_discrete_actions=None,
+        config=None
     ):
-        super(DuelingQNet, self).__init__(observation_shape, n_out_actions, n_discrete_actions, config)
+        super(DuelingQNet, self).__init__(
+            observation_shape=observation_shape,
+            n_out_actions=n_out_actions,
+            n_discrete_actions=n_discrete_actions,
+            config=config
+        )
 
         self.linear_last_adv = nn.Linear(
             self.config.MODEL_PARAMETER.NEURONS_PER_FULLY_CONNECTED_LAYER[-1], self.n_discrete_actions

@@ -18,9 +18,18 @@ class CriticModel(Model):
 
 class ValueCriticModel(CriticModel):
     def __init__(
-            self, observation_shape: Tuple[int], n_out_actions: int, n_discrete_actions=None, config=None
+        self,
+        observation_shape: Tuple[int],
+        n_out_actions: int,
+        n_discrete_actions=None,
+        config=None
     ):
-        super(ValueCriticModel, self).__init__(observation_shape, n_out_actions, n_discrete_actions, config)
+        super(ValueCriticModel, self).__init__(
+            observation_shape=observation_shape,
+            n_out_actions=n_out_actions,
+            n_discrete_actions=n_discrete_actions,
+            config=config
+        )
 
         if any([
             isinstance(self.config.MODEL_PARAMETER, ConfigLinearModel),
@@ -80,9 +89,18 @@ class ValueCriticModel(CriticModel):
 
 class QCriticModel(CriticModel):
     def __init__(
-            self, observation_shape: Tuple[int], n_out_actions: int, n_discrete_actions=None, config=None
+            self,
+            observation_shape: Tuple[int],
+            n_out_actions: int,
+            n_discrete_actions=None,
+            config=None
     ):
-        super(QCriticModel, self).__init__(observation_shape, n_out_actions, n_discrete_actions, config)
+        super(QCriticModel, self).__init__(
+            observation_shape=observation_shape,
+            n_out_actions=n_out_actions,
+            n_discrete_actions=n_discrete_actions,
+            config=config
+        )
 
         if any([
             isinstance(self.config.MODEL_PARAMETER, ConfigLinearModel),
@@ -156,9 +174,18 @@ class QCriticModel(CriticModel):
     
 class DoubleQCriticModel(CriticModel):
     def __init__(
-            self, observation_shape: Tuple[int], n_out_actions: int, n_discrete_actions=None, config=None
+            self,
+            observation_shape: Tuple[int],
+            n_out_actions: int,
+            n_discrete_actions=None,
+            config=None
     ):
-        super(DoubleQCriticModel, self).__init__(observation_shape, n_out_actions, n_discrete_actions, config)
+        super(DoubleQCriticModel, self).__init__(
+            observation_shape=observation_shape,
+            n_out_actions=n_out_actions,
+            n_discrete_actions=n_discrete_actions,
+            config=config
+        )
 
         if any([
             isinstance(self.config.MODEL_PARAMETER, ConfigLinearModel),

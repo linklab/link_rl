@@ -14,13 +14,18 @@ from c_models.a_models import Model
 
 class ActorModel(Model):
     def __init__(
-            self,
-            observation_shape: Tuple[int],
-            n_out_actions: int,
-            n_discrete_actions=None,
-            config=None
+        self,
+        observation_shape: Tuple[int],
+        n_out_actions: int,
+        n_discrete_actions=None,
+        config=None
     ):
-        super(ActorModel, self).__init__(observation_shape, n_out_actions, n_discrete_actions, config)
+        super(ActorModel, self).__init__(
+            observation_shape=observation_shape,
+            n_out_actions=n_out_actions,
+            n_discrete_actions=n_discrete_actions,
+            config=config
+        )
 
         if isinstance(self.config.MODEL_PARAMETER, ConfigLinearModel):
             self.make_linear_model(observation_shape=observation_shape)
@@ -46,9 +51,18 @@ class ActorModel(Model):
 
 
 class DiscreteActorModel(ActorModel):
-    def __init__(self, observation_shape, n_out_actions, n_discrete_actions, config):
+    def __init__(
+        self,
+        observation_shape: Tuple[int],
+        n_out_actions: int,
+        n_discrete_actions=None,
+        config=None
+    ):
         super(DiscreteActorModel, self).__init__(
-            observation_shape, n_out_actions, n_discrete_actions, config
+            observation_shape=observation_shape,
+            n_out_actions=n_out_actions,
+            n_discrete_actions=n_discrete_actions,
+            config=config
         )
 
         self.actor_linear_pi = nn.Linear(
@@ -68,10 +82,15 @@ DiscretePolicyModel = DiscreteActorModel
 
 class ContinuousDeterministicActorModel(ActorModel):
     def __init__(
-            self, observation_shape: Tuple[int], n_out_actions: int, config=None
+        self,
+        observation_shape: Tuple[int],
+        n_out_actions: int,
+        config=None
     ):
         super(ContinuousDeterministicActorModel, self).__init__(
-            observation_shape=observation_shape, n_out_actions=n_out_actions, config=config
+            observation_shape=observation_shape,
+            n_out_actions=n_out_actions,
+            config=config
         )
 
         self.mu = nn.Sequential(
@@ -87,9 +106,16 @@ class ContinuousDeterministicActorModel(ActorModel):
 
 
 class ContinuousStochasticActorModel(ActorModel):
-    def __init__(self, observation_shape, n_out_actions, config=None):
+    def __init__(
+        self,
+        observation_shape: Tuple[int],
+        n_out_actions: int,
+        config=None
+    ):
         super(ContinuousStochasticActorModel, self).__init__(
-            observation_shape=observation_shape, n_out_actions=n_out_actions, config=config
+            observation_shape=observation_shape,
+            n_out_actions=n_out_actions,
+            config=config
         )
         self.mu = nn.Sequential(
             nn.Linear(self.config.MODEL_PARAMETER.NEURONS_PER_FULLY_CONNECTED_LAYER[-1], self.n_out_actions),

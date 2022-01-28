@@ -10,7 +10,11 @@ from e_main.config_single import config
 
 class ContinuousSacModel:
     def __init__(
-            self, observation_shape: Tuple[int], n_out_actions: int, config=None, is_target_model=False
+            self,
+            observation_shape: Tuple[int],
+            n_out_actions: int,
+            config=None,
+            is_target_model=False
     ):
         self.config = config
 
@@ -18,11 +22,14 @@ class ContinuousSacModel:
             self.actor_model = None
         else:
             self.actor_model = ContinuousStochasticActorModel(
-                observation_shape=observation_shape, n_out_actions=n_out_actions, config=config
+                observation_shape=observation_shape,
+                n_out_actions=n_out_actions,
+                config=config
             ).to(self.config.DEVICE)
 
         self.critic_model = DoubleQCriticModel(
-            observation_shape=observation_shape, n_out_actions=n_out_actions, n_discrete_actions=None,
+            observation_shape=observation_shape,
+            n_out_actions=n_out_actions,
             config=self.config
         ) .to(self.config.DEVICE)
 
@@ -30,7 +37,10 @@ class ContinuousSacModel:
         mu, sigma = self.actor_model.pi(obs)
 
         dist = Normal(loc=mu, scale=sigma)
-        dist = TransformedDistribution(base_distribution=dist, transforms=TanhTransform(cache_size=1))
+        dist = TransformedDistribution(
+            base_distribution=dist,
+            transforms=TanhTransform(cache_size=1)
+        )
 
         action_v = dist.rsample()  # for reparameterization trick (mean + std * N(0,1))
 

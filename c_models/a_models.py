@@ -14,7 +14,11 @@ from a_configuration.a_base_config.c_models.recurrent_linear_models import Confi
 
 class Model(nn.Module):
     def __init__(
-            self, observation_shape: Tuple[int], n_out_actions: int, n_discrete_actions=None, config=None
+        self,
+        observation_shape: Tuple[int],
+        n_out_actions: int,
+        n_discrete_actions=None,
+        config=None
     ):
         super(Model, self).__init__()
         self.observation_shape = observation_shape
@@ -270,7 +274,7 @@ class Model(nn.Module):
             if save_hidden:
                 self.recurrent_hidden = h_out.detach()  # save hidden
 
-            # fully connected layers
+            # linear layers
             rnn_out_flattened = torch.flatten(rnn_out, start_dim=1)
             x = self.linear_layers(rnn_out_flattened)
 
@@ -295,7 +299,7 @@ class Model(nn.Module):
             x, h_out = self.recurrent_layers(x, h_in)
             self.recurrent_hidden = h_out.detach()  # save hidden
 
-            # fully connected layers
+            # linear layers
             x = torch.flatten(x, start_dim=1)
             x = self.linear_layers(x)
 
