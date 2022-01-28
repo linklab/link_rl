@@ -14,133 +14,39 @@ class QNet(Model):
     # self.n_out_actions: 1
     # self.n_discrete_actions: 4 (for gridworld)
     def __init__(
-            self, observation_shape: Tuple[int], n_out_actions: int, n_discrete_actions=None, config=None
+            self,
+            observation_shape: Tuple[int],
+            n_out_actions: int,
+            n_discrete_actions=None,
+            config=None
     ):
         super(QNet, self).__init__(observation_shape, n_out_actions, n_discrete_actions, config)
 
         if isinstance(self.config.MODEL_PARAMETER, ConfigLinearModel):
-            input_n_features = self.observation_shape[0]
-            self.representation_layers = None
-            self.fc_layers = self.get_linear_layers(input_n_features=input_n_features)
+            self.make_linear_model(observation_shape=observation_shape)
 
         elif isinstance(self.config.MODEL_PARAMETER, ConfigConvolutionalModel):
-            input_n_channels = self.observation_shape[0]
-            self.conv_layers = self.get_conv_layers(input_n_channels=input_n_channels)
-            conv_out_flat_size = self._get_conv_out(self.conv_layers, observation_shape)
-            self.fc_layers = self.get_linear_layers(input_n_features=conv_out_flat_size)
+            self.make_convolutional_model(observation_shape=observation_shape)
 
         elif isinstance(self.config.MODEL_PARAMETER, ConfigRecurrentLinearModel):
-            input_n_features = self.observation_shape[0]
-            self.recurrent_layers = self.get_recurrent_layers(input_n_features)
-            self.fc_layers = self.get_linear_layers(self.config.MODEL_PARAMETER.HIDDEN_SIZE)
+            self.make_recurrent_linear_model(observation_shape=observation_shape)
 
         elif isinstance(self.config.MODEL_PARAMETER, ConfigRecurrentConvolutionalModel):
-            input_n_channels = self.observation_shape[0]
-            self.conv_layers = self.get_conv_layers(input_n_channels)
-
-            conv_out_flat_size = self._get_conv_out(self.conv_layers, observation_shape)
-            self.fc_layers_1 = nn.Linear(conv_out_flat_size, self.config.MODEL_PARAMETER.HIDDEN_SIZE)
-            self.recurrent_layers = self.get_recurrent_layers(self.config.MODEL_PARAMETER.HIDDEN_SIZE)
-            self.fc_layers_2 = self.get_linear_layers(self.config.MODEL_PARAMETER.HIDDEN_SIZE)
+            self.make_recurrent_convolutional_model(observation_shape=observation_shape)
 
         else:
             raise ValueError()
 
-        self.fc_last = nn.Linear(
+        self.fc_last_layer = nn.Linear(
             self.config.MODEL_PARAMETER.NEURONS_PER_FULLY_CONNECTED_LAYER[-1], self.n_discrete_actions
         )
 
         self.qnet_params_list = list(self.parameters())
         self.version = 0
 
-    def _forward(self, obs, save_hidden=False):
-        if isinstance(obs, np.ndarray):
-            obs = torch.tensor(obs, dtype=torch.float32, device=self.config.DEVICE)
-
-        if isinstance(self.config.MODEL_PARAMETER, ConfigLinearModel):
-            x = self.fc_layers(obs)
-        elif isinstance(self.config.MODEL_PARAMETER, ConfigConvolutionalModel):
-            conv_out = self.conv_layers(obs)
-            conv_out = torch.flatten(conv_out, start_dim=1)
-            x = self.fc_layers(conv_out)
-        elif isinstance(self.config.MODEL_PARAMETER, ConfigRecurrentLinearModel):
-            """
-            x: [(observations, hiddens)]
-                type(x): list
-                len(x): 1
-            
-            x[0]: (observations, hiddens)
-                type(x[0]): tuple
-                len(x[0]): 2
-            
-            rnn_in = x[0][0]: observations
-                type(rnn_in): ndarray or tensor
-                rnn_in.shape: (batch_size, observation_shape)
-            
-            h_0 = x[0][1]: hiddens
-                type(h_0): tensor
-                h_0.shape: torch.Size([num_layers, batch_size, hidden_size])
-                
-            rnn_in = rnn_in.unsqueeze(1):
-                type(rnn_in): tensor
-                rnn_in.shape: (batch_size, 1, observation_shape)
-                
-                rnn_in.shape is torch.Size[batch_size, observation_shape],
-                but rnn_in.shape must be torch.Size[batch_size, sequence_length, observation_shape]
-                Always sequence_length is 1,
-                therefore rnn_in.shape is torch.Size[batch_size, 1, observation_shape]
-                
-            rnn_out, h_n = self.recurrent_layers(rnn_in, h_0):
-                rnn_out.shape: torch.Size(batch_size, 1, hidden_size)
-                h_n.shape: torch.Size[num_layers, batch_size, hiddens_size]
-            """
-
-            rnn_in, h_0 = obs[0]
-            if isinstance(rnn_in, np.ndarray):
-                rnn_in = torch.tensor(rnn_in, dtype=torch.float32, device=self.config.DEVICE)
-            if isinstance(h_0, np.ndarray):
-                h_0 = torch.tensor(h_0, dtype=torch.float32, device=self.config.DEVICE)
-
-            if rnn_in.ndim == 2:
-                rnn_in = rnn_in.unsqueeze(1)
-
-            rnn_out, h_n = self.recurrent_layers(rnn_in, h_0)
-
-            if save_hidden:
-                self.recurrent_hidden = h_n.detach()  # save hidden
-
-            rnn_out_flattened = torch.flatten(rnn_out, start_dim=1)
-
-            x = self.fc_layers(rnn_out_flattened)
-
-        elif isinstance(self.config.MODEL_PARAMETER, ConfigRecurrentConvolutionalModel):
-            rnn_in, h_0 = obs[0]
-            if isinstance(rnn_in, np.ndarray):
-                rnn_in = torch.tensor(rnn_in, dtype=torch.float32, device=self.config.DEVICE)
-            if isinstance(h_0, np.ndarray):
-                h_0 = torch.tensor(h_0, dtype=torch.float32, device=self.config.DEVICE)
-
-            conv_out = self.conv_layers(rnn_in)
-            conv_out = torch.flatten(conv_out, start_dim=1)
-            x = self.fc_layers_1(conv_out)
-
-            rnn_in = x
-            if rnn_in.ndim == 2:
-                rnn_in = rnn_in.unsqueeze(0)
-
-            rnn_out, h_n = self.recurrent_layers(rnn_in, h_0)
-            self.recurrent_hidden = h_n.detach()  # save hidden
-            rnn_out = torch.flatten(rnn_out, start_dim=1)
-            x = self.fc_layers_2(rnn_out)
-
-        else:
-            raise ValueError()
-
-        return x
-
     def forward(self, obs, save_hidden=False):
         x = self._forward(obs, save_hidden)
-        q_values = self.fc_last(x)
+        q_values = self.fc_last_layer(x)
         return q_values
 
 
