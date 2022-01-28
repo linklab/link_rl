@@ -48,6 +48,7 @@ class AgentTd3(Agent):
 
         if mode == AgentMode.TRAIN:
             noises = np.random.normal(size=self.n_out_actions, loc=0, scale=1.0)
+            noises = np.clip(a=noises, a_min=self.np_minus_ones, a_max=self.np_plus_ones)
             action = mu + noises
         else:
             action = mu
@@ -64,7 +65,7 @@ class AgentTd3(Agent):
         with torch.no_grad():
             next_mu_v = self.target_actor_model.pi(self.next_observations)
             next_noises = np.random.normal(size=self.n_out_actions, loc=0, scale=1.0)
-            next_action = next_mu_v + next_noises
+            next_action = next_mu_v + np.clip(a=next_noises, a_min=self.np_minus_ones, a_max=self.np_plus_ones)
             next_action = np.clip(a=next_action, a_min=self.np_minus_ones, a_max=self.np_plus_ones)
 
             next_q1_value, next_q2_value = self.target_critic_model.q(self.next_observations, next_action)
@@ -72,9 +73,9 @@ class AgentTd3(Agent):
             min_next_q_value[self.dones] = 0.0
             target_q_v = self.rewards + self.config.GAMMA ** self.config.N_STEP * min_next_q_value
 
-        q_v = self.critic_model.q(self.observations, self.actions)
+        q1_value, q2_value = self.critic_model.q(self.observations, self.actions)
 
-        critic_loss = self.config.LOSS_FUNCTION(q_v, target_q_v.detach())
+        critic_loss = self.config.LOSS_FUNCTION(q1_value, target_q_v.detach()) + self.config.LOSS_FUNCTION(q2_value, target_q_v.detach())
 
         self.critic_optimizer.zero_grad()
         critic_loss.backward()
@@ -92,7 +93,7 @@ class AgentTd3(Agent):
         if training_steps_v % self.config.POLICY_UPDATE_FREQUENCY_PER_TRAINING_STEP == 0:
             mu_v = self.actor_model.pi(self.observations)
             q1_value, q2_value = self.critic_model.q(self.observations, mu_v)
-            q_value = torch.mean(q1_value, q2_value)
+            q_value = (q1_value + q2_value) / 2.0
             actor_loss = -1.0 * q_value.mean()
 
             self.actor_optimizer.zero_grad()

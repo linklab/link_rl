@@ -204,7 +204,6 @@ class DoubleQCriticModel(CriticModel):
                 input_n_features=self.config.MODEL_PARAMETER.NEURONS_PER_REPRESENTATION_LAYER[-1]
             )
 
-
         elif any([
             isinstance(self.config.MODEL_PARAMETER, ConfigConvolutionalModel),
             isinstance(self.config.MODEL_PARAMETER, ConfigRecurrentConvolutionalModel)
@@ -236,14 +235,14 @@ class DoubleQCriticModel(CriticModel):
 
         self.critic_params_list = list(self.parameters())
 
-    def _forward(self, obs, act):
+    def forward_critic(self, obs, act):
         if isinstance(obs, np.ndarray):
             obs = torch.tensor(obs, dtype=torch.float32, device=self.config.DEVICE)
         if isinstance(act, np.ndarray):
             act = torch.tensor(act, dtype=torch.float32, device=self.config.DEVICE)
 
         if isinstance(self.config.MODEL_PARAMETER, ConfigLinearModel):
-            x = torch.cat([obs, act], dim=-1)
+            x = torch.cat([obs, act], dim=-1).float()
             x = self.representation_layers(x)
             q1_x = self.q1_linear_layers(x)
             q2_x = self.q2_linear_layers(x)
@@ -276,9 +275,6 @@ class DoubleQCriticModel(CriticModel):
             raise ValueError()
 
         return q1_x, q2_x
-
-    def forward_critic(self, obs, act):
-        return self._forward(obs, act)
 
     def q(self, obs, act):
         q1_x, q2_x = self.forward_critic(obs, act)

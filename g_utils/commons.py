@@ -376,7 +376,7 @@ def console_log(
         console_log += "critic_loss: {0:7.3f}, actor_obj.: {1:7.3f}, alpha: {2:5.3f}, entropy: {3:5.3f}".format(
             agent.last_critic_loss.value, agent.last_actor_objective.value, agent.alpha.value, agent.last_entropy.value
         )
-    elif config.AGENT_TYPE == AgentType.DDPG:
+    elif config.AGENT_TYPE in (AgentType.DDPG, AgentType.TD3):
         console_log += "critic_loss: {0:7.3f}, actor_loss: {1:7.3f}, ".format(
             agent.last_critic_loss.value, agent.last_actor_loss.value
         )
@@ -474,6 +474,9 @@ def wandb_log(learner, wandb_obj, config):
         log_dict["Critic Loss"] = learner.agent.last_critic_loss.value
         log_dict["Log Actor Objective"] = learner.agent.last_actor_objective.value
         log_dict["Entropy"] = learner.agent.last_entropy.value
+    elif config.AGENT_TYPE in (AgentType.DDPG, AgentType.TD3):
+        log_dict["Critic Loss"] = learner.agent.last_critic_loss.value
+        log_dict["Actor Loss"] = learner.agent.last_actor_loss.value
     elif config.AGENT_TYPE in (AgentType.PPO, AgentType.PPO_TRAJECTORY):
         log_dict["Critic Loss"] = learner.agent.last_critic_loss.value
         log_dict["Actor Objective"] = learner.agent.last_actor_objective.value
