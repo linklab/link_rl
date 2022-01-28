@@ -167,12 +167,12 @@ class DoubleQCriticModel(CriticModel):
             self.repre_layers = self.get_repre_layers(input_n_features=input_n_features)
 
             # q1
-            self.q1_fc_layers = self.get_linear_layers(
+            self.q1_fc_layers = self.get_fc_layers(
                 input_n_features=self.config.MODEL_PARAMETER.NEURONS_PER_REPRESENTATION_LAYER[-1]
             )
 
             # q2
-            self.q2_fc_layers = self.get_linear_layers(
+            self.q2_fc_layers = self.get_fc_layers(
                 input_n_features=self.config.MODEL_PARAMETER.NEURONS_PER_REPRESENTATION_LAYER[-1]
             )
 
@@ -188,12 +188,12 @@ class DoubleQCriticModel(CriticModel):
             self.repre_layers = self.get_repre_layers(input_n_features=input_n_features)
 
             # q1
-            self.q1_fc_layers = self.get_linear_layers(
+            self.q1_fc_layers = self.get_fc_layers(
                 input_n_features=self.config.MODEL_PARAMETER.NEURONS_PER_REPRESENTATION_LAYER[-1]
             )
 
             # q2
-            self.q2_fc_layers = self.get_linear_layers(
+            self.q2_fc_layers = self.get_fc_layers(
                 input_n_features=self.config.MODEL_PARAMETER.NEURONS_PER_REPRESENTATION_LAYER[-1]
             )
 
