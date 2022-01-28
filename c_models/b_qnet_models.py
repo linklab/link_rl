@@ -37,7 +37,7 @@ class QNet(Model):
         else:
             raise ValueError()
 
-        self.fc_last_layer = nn.Linear(
+        self.linear_last_layer = nn.Linear(
             self.config.MODEL_PARAMETER.NEURONS_PER_FULLY_CONNECTED_LAYER[-1], self.n_discrete_actions
         )
 
@@ -46,7 +46,7 @@ class QNet(Model):
 
     def forward(self, obs, save_hidden=False):
         x = self._forward(obs, save_hidden)
-        q_values = self.fc_last_layer(x)
+        q_values = self.linear_last_layer(x)
         return q_values
 
 
@@ -58,11 +58,11 @@ class DuelingQNet(QNet):
     ):
         super(DuelingQNet, self).__init__(observation_shape, n_out_actions, n_discrete_actions, config)
 
-        self.fc_last_adv = nn.Linear(
+        self.linear_last_adv = nn.Linear(
             self.config.MODEL_PARAMETER.NEURONS_PER_FULLY_CONNECTED_LAYER[-1], self.n_discrete_actions
         )
 
-        self.fc_last_val = nn.Linear(
+        self.linear_last_val = nn.Linear(
             self.config.MODEL_PARAMETER.NEURONS_PER_FULLY_CONNECTED_LAYER[-1], 1
         )
 
@@ -71,8 +71,8 @@ class DuelingQNet(QNet):
 
     def forward(self, obs, save_hidden=False):
         x = self._forward(obs, save_hidden)
-        adv = self.fc_last_adv(x)
-        val = self.fc_last_val(x)
+        adv = self.linear_last_adv(x)
+        val = self.linear_last_val(x)
         q_values = val + adv - torch.mean(adv, dim=-1, keepdim=True)
 
         return q_values

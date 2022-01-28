@@ -51,14 +51,14 @@ class DiscreteActorModel(ActorModel):
             observation_shape, n_out_actions, n_discrete_actions, config
         )
 
-        self.actor_fc_pi = nn.Linear(
+        self.actor_linear_pi = nn.Linear(
             self.config.MODEL_PARAMETER.NEURONS_PER_FULLY_CONNECTED_LAYER[-1], self.n_discrete_actions
         )
         self.actor_params_list = list(self.parameters())
 
     def pi(self, obs, save_hidden=False):
         x = self.forward_actor(obs, save_hidden=save_hidden)
-        x = self.actor_fc_pi(x)
+        x = self.actor_linear_pi(x)
         action_prob = F.softmax(x, dim=-1)
         return action_prob
 
@@ -117,7 +117,7 @@ class ContinuousStochasticActorModel(ActorModel):
         if isinstance(obs, np.ndarray):
             obs = torch.tensor(obs, dtype=torch.float32, device=self.config.DEVICE)
 
-        s = self.repre_layers(obs)
+        s = self.representation_layers(obs)
         sigma_v = self.sigma(s)
 
         return sigma_v

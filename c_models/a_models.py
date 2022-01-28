@@ -40,86 +40,86 @@ class Model(nn.Module):
                 device=self.config.DEVICE
             )
 
-    def get_fc_layers(self, input_n_features):
+    def get_linear_layers(self, input_n_features):
         assert self.config.MODEL_PARAMETER.NEURONS_PER_FULLY_CONNECTED_LAYER
 
-        fc_layers_dict = OrderedDict()
-        fc_layers_dict["fc_0"] = nn.Linear(
+        linear_layers_dict = OrderedDict()
+        linear_layers_dict["linear_0"] = nn.Linear(
             input_n_features,
             self.config.MODEL_PARAMETER.NEURONS_PER_FULLY_CONNECTED_LAYER[0]
         )
         if self.config.USE_LAYER_NORM:
-            self.get_layer_normalization(fc_layers_dict, 0)
+            self.get_layer_normalization(linear_layers_dict, 0)
 
-        fc_layers_dict["fc_0_activation"] = self.config.LAYER_ACTIVATION()
+        linear_layers_dict["linear_0_activation"] = self.config.LAYER_ACTIVATION()
 
         for idx in range(1, len(self.config.MODEL_PARAMETER.NEURONS_PER_FULLY_CONNECTED_LAYER)):
-            fc_layers_dict["fc_{0}".format(idx)] = nn.Linear(
+            linear_layers_dict["linear_{0}".format(idx)] = nn.Linear(
                 self.config.MODEL_PARAMETER.NEURONS_PER_FULLY_CONNECTED_LAYER[idx - 1],
                 self.config.MODEL_PARAMETER.NEURONS_PER_FULLY_CONNECTED_LAYER[idx]
             )
             if self.config.USE_LAYER_NORM:
-                self.get_layer_normalization(fc_layers_dict, idx)
+                self.get_layer_normalization(linear_layers_dict, idx)
 
-            fc_layers_dict["fc_{0}_activation".format(idx)] = self.config.LAYER_ACTIVATION()
+            linear_layers_dict["linear_{0}_activation".format(idx)] = self.config.LAYER_ACTIVATION()
 
-        fc_layers = nn.Sequential(fc_layers_dict)
+        linear_layers = nn.Sequential(linear_layers_dict)
 
-        return fc_layers
+        return linear_layers
 
-    def get_repre_layers(self, input_n_features):
+    def get_representation_layers(self, input_n_features):
         assert self.config.MODEL_PARAMETER.NEURONS_PER_REPRESENTATION_LAYER
 
-        repre_layers_dict = OrderedDict()
-        repre_layers_dict["repre_0"] = nn.Linear(
+        representation_layers_dict = OrderedDict()
+        representation_layers_dict["representation_0"] = nn.Linear(
             input_n_features,
             self.config.MODEL_PARAMETER.NEURONS_PER_REPRESENTATION_LAYER[0]
         )
         if self.config.USE_LAYER_NORM:
-            self.get_layer_normalization(repre_layers_dict, 0)
+            self.get_layer_normalization(representation_layers_dict, 0)
 
-        repre_layers_dict["repre_0_activation"] = self.config.LAYER_ACTIVATION()
+        representation_layers_dict["representation_0_activation"] = self.config.LAYER_ACTIVATION()
 
         for idx in range(1, len(self.config.MODEL_PARAMETER.NEURONS_PER_REPRESENTATION_LAYER)):
-            repre_layers_dict["repre_{0}".format(idx)] = nn.Linear(
+            representation_layers_dict["representation_{0}".format(idx)] = nn.Linear(
                 self.config.MODEL_PARAMETER.NEURONS_PER_REPRESENTATION_LAYER[idx - 1],
                 self.config.MODEL_PARAMETER.NEURONS_PER_REPRESENTATION_LAYER[idx]
             )
             if self.config.USE_LAYER_NORM:
-                self.get_layer_normalization(repre_layers_dict, idx)
+                self.get_layer_normalization(representation_layers_dict, idx)
 
-            repre_layers_dict["repre_{0}_activation".format(idx)] = self.config.LAYER_ACTIVATION()
+            representation_layers_dict["representation_{0}_activation".format(idx)] = self.config.LAYER_ACTIVATION()
 
-        repre_layers = nn.Sequential(repre_layers_dict)
+        representation_layers = nn.Sequential(representation_layers_dict)
 
-        return repre_layers
+        return representation_layers
 
-    def get_conv_layers(self, input_n_channels):
+    def get_convolutional_layers(self, input_n_channels):
         assert self.config.MODEL_PARAMETER.OUT_CHANNELS_PER_LAYER
         assert self.config.MODEL_PARAMETER.KERNEL_SIZE_PER_LAYER
         assert self.config.MODEL_PARAMETER.STRIDE_PER_LAYER
         assert self.config.MODEL_PARAMETER.NEURONS_PER_FULLY_CONNECTED_LAYER
 
-        conv_layers_dict = OrderedDict()
-        conv_layers_dict["conv_0"] = nn.Conv2d(
+        convolutional_layers_dict = OrderedDict()
+        convolutional_layers_dict["conv_0"] = nn.Conv2d(
             in_channels=input_n_channels,
             out_channels=self.config.MODEL_PARAMETER.OUT_CHANNELS_PER_LAYER[0],
             kernel_size=self.config.MODEL_PARAMETER.KERNEL_SIZE_PER_LAYER[0],
             stride=self.config.MODEL_PARAMETER.STRIDE_PER_LAYER[0]
         )
-        conv_layers_dict["conv_0_activation"] = self.config.LAYER_ACTIVATION()
+        convolutional_layers_dict["conv_0_activation"] = self.config.LAYER_ACTIVATION()
 
         for idx in range(1, len(self.config.MODEL_PARAMETER.OUT_CHANNELS_PER_LAYER)):
-            conv_layers_dict["conv_{0}".format(idx)] = nn.Conv2d(
+            convolutional_layers_dict["conv_{0}".format(idx)] = nn.Conv2d(
                 in_channels=self.config.MODEL_PARAMETER.OUT_CHANNELS_PER_LAYER[idx - 1],
                 out_channels=self.config.MODEL_PARAMETER.OUT_CHANNELS_PER_LAYER[idx],
                 kernel_size=self.config.MODEL_PARAMETER.KERNEL_SIZE_PER_LAYER[idx],
                 stride=self.config.MODEL_PARAMETER.STRIDE_PER_LAYER[idx]
             )
-            conv_layers_dict["conv_{0}_activation".format(idx)] = self.config.LAYER_ACTIVATION()
+            convolutional_layers_dict["conv_{0}_activation".format(idx)] = self.config.LAYER_ACTIVATION()
 
-        conv_layers = nn.Sequential(conv_layers_dict)
-        return conv_layers
+        convolutional_layers = nn.Sequential(convolutional_layers_dict)
+        return convolutional_layers
 
     def _get_conv_out(self, conv_layers, shape):
         conv_out = conv_layers(torch.zeros(1, *shape))
@@ -127,8 +127,8 @@ class Model(nn.Module):
 
     def get_layer_normalization(self, layer_dict, layer_idx):
         if isinstance(self.config.MODEL_PARAMETER, ConfigLinearModel):
-            fc_layers_dict = layer_dict
-            fc_layers_dict["fc_{0}_norm".format(layer_idx)] = nn.LayerNorm(
+            linear_layers_dict = layer_dict
+            linear_layers_dict["linear_{0}_norm".format(layer_idx)] = nn.LayerNorm(
                 self.config.MODEL_PARAMETER.NEURONS_PER_FULLY_CONNECTED_LAYER[layer_idx]
             )
         elif isinstance(self.config.MODEL_PARAMETER, ConfigConvolutionalModel):
@@ -169,8 +169,8 @@ class Model(nn.Module):
         if input_n_features is None:
             input_n_features = observation_shape[0]
 
-        self.repre_layers = self.get_repre_layers(input_n_features)
-        self.fc_layers = self.get_fc_layers(
+        self.representation_layers = self.get_representation_layers(input_n_features)
+        self.linear_layers = self.get_linear_layers(
             self.config.MODEL_PARAMETER.NEURONS_PER_REPRESENTATION_LAYER[-1]
         )
 
@@ -178,10 +178,10 @@ class Model(nn.Module):
         if input_n_channels is None:
             input_n_channels = observation_shape[0]
 
-        self.conv_layers = self.get_conv_layers(input_n_channels)
-        conv_out_flat_size = self._get_conv_out(self.conv_layers, observation_shape)
-        self.repre_layers = self.get_repre_layers(conv_out_flat_size)
-        self.fc_layers = self.get_fc_layers(
+        self.convolutional_layers = self.get_convolutional_layers(input_n_channels)
+        conv_out_flat_size = self._get_conv_out(self.convolutional_layers, observation_shape)
+        self.representation_layers = self.get_representation_layers(conv_out_flat_size)
+        self.linear_layers = self.get_linear_layers(
             self.config.MODEL_PARAMETER.NEURONS_PER_REPRESENTATION_LAYER[-1]
         )
 
@@ -189,37 +189,37 @@ class Model(nn.Module):
         if input_n_features is None:
             input_n_features = observation_shape[0]
 
-        self.repre_layers = self.get_repre_layers(input_n_features)
+        self.representation_layers = self.get_representation_layers(input_n_features)
         self.recurrent_layers = self.get_recurrent_layers(
             self.config.MODEL_PARAMETER.NEURONS_PER_REPRESENTATION_LAYER[-1]
         )
-        self.fc_layers = self.get_fc_layers(self.config.MODEL_PARAMETER.HIDDEN_SIZE)
+        self.linear_layers = self.get_linear_layers(self.config.MODEL_PARAMETER.HIDDEN_SIZE)
 
     def make_recurrent_convolutional_model(self, observation_shape, input_n_channels=None):
         if input_n_channels is None:
             input_n_channels = observation_shape[0]
 
-        self.conv_layers = self.get_conv_layers(input_n_channels)
-        conv_out_flat_size = self._get_conv_out(self.conv_layers, observation_shape)
-        self.repre_layers = self.get_repre_layers(conv_out_flat_size)
+        self.convolutional_layers = self.get_convolutional_layers(input_n_channels)
+        conv_out_flat_size = self._get_conv_out(self.convolutional_layers, observation_shape)
+        self.representation_layers = self.get_representation_layers(conv_out_flat_size)
         self.recurrent_layers = self.get_recurrent_layers(
             self.config.MODEL_PARAMETER.NEURONS_PER_REPRESENTATION_LAYER[-1]
         )
-        self.fc_layers = self.get_fc_layers(self.config.MODEL_PARAMETER.HIDDEN_SIZE)
+        self.linear_layers = self.get_linear_layers(self.config.MODEL_PARAMETER.HIDDEN_SIZE)
 
     def _forward(self, obs, save_hidden=False):
         if isinstance(obs, np.ndarray):
             obs = torch.tensor(obs, dtype=torch.float32, device=self.config.DEVICE)
 
         if isinstance(self.config.MODEL_PARAMETER, ConfigLinearModel):
-            x = self.repre_layers(obs)
-            x = self.fc_layers(x)
+            x = self.representation_layers(obs)
+            x = self.linear_layers(x)
 
         elif isinstance(self.config.MODEL_PARAMETER, ConfigConvolutionalModel):
-            conv_out = self.conv_layers(obs)
+            conv_out = self.convolutional_layers(obs)
             conv_out = torch.flatten(conv_out, start_dim=1)
-            x = self.repre_layers(conv_out)
-            x = self.fc_layers(x)
+            x = self.representation_layers(conv_out)
+            x = self.linear_layers(x)
 
         elif isinstance(self.config.MODEL_PARAMETER, ConfigRecurrentLinearModel):
             """
@@ -261,7 +261,7 @@ class Model(nn.Module):
                 h_in = torch.tensor(h_in, dtype=torch.float32, device=self.config.DEVICE)
 
             # representation layers
-            rnn_in = self.repre_layers(obs)
+            rnn_in = self.representation_layers(obs)
 
             # recurrent layers
             if rnn_in.ndim == 2:
@@ -272,7 +272,7 @@ class Model(nn.Module):
 
             # fully connected layers
             rnn_out_flattened = torch.flatten(rnn_out, start_dim=1)
-            x = self.fc_layers(rnn_out_flattened)
+            x = self.linear_layers(rnn_out_flattened)
 
         elif isinstance(self.config.MODEL_PARAMETER, ConfigRecurrentConvolutionalModel):
             # input
@@ -283,11 +283,11 @@ class Model(nn.Module):
                 h_in = torch.tensor(h_in, dtype=torch.float32, device=self.config.DEVICE)
 
             # convolutional layers
-            conv_out = self.conv_layers(obs)
+            conv_out = self.convolutional_layers(obs)
             conv_out = torch.flatten(conv_out, start_dim=1)
 
             # representation layers
-            x = self.repre_layers(conv_out)
+            x = self.representation_layers(conv_out)
 
             # recurrent layers
             if x.ndim == 2:
@@ -297,7 +297,7 @@ class Model(nn.Module):
 
             # fully connected layers
             x = torch.flatten(x, start_dim=1)
-            x = self.fc_layers(x)
+            x = self.linear_layers(x)
 
         else:
             raise ValueError()
