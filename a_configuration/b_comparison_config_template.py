@@ -84,6 +84,9 @@ config_c = ConfigComparisonAntBulletSac()
 from a_configuration.c_comparison_config.pybullet.config_comparison_double_inverted_pendulum_bullet import ConfigComparisonDoubleInvertedPendulumBulletSac
 config_c = ConfigComparisonDoubleInvertedPendulumBulletSac()
 
+from a_configuration.c_comparison_config.pybullet.config_comparison_double_inverted_pendulum_bullet import ConfigComparisonDoubleInvertedPendulumBulletA2cPpo
+config_c = ConfigComparisonDoubleInvertedPendulumBulletA2cPpo()
+
 config_c.USE_WANDB = False
 
 if __name__ == "__main__":

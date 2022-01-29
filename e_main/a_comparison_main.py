@@ -56,7 +56,7 @@ for agent_config in config_c.AGENT_PARAMETERS:
 
 def main():
     for config in config_c.AGENT_PARAMETERS:
-        assert config.AGENT_TYPE not in (AgentType.REINFORCE, AgentType.PPO, AgentType.PPO_TRAJECTORY)
+        assert config.AGENT_TYPE not in (AgentType.REINFORCE,)
         set_config(config)
 
     observation_space, action_space = get_env_info(config_c)

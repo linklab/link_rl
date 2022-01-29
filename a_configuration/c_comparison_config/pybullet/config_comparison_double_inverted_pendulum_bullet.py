@@ -3,7 +3,8 @@ from a_configuration.b_single_config.open_ai_gym.config_cart_pole import ConfigC
     ConfigCartPoleA2c
 from a_configuration.b_single_config.pybullet.config_cart_pole_bullet import ConfigCartPoleBulletA2c
 from a_configuration.b_single_config.pybullet.config_double_inverted_pendulum_bullet import \
-    ConfigDoubleInvertedPendulumBulletSac
+    ConfigDoubleInvertedPendulumBulletSac, ConfigDoubleInvertedPendulumBulletA2c, ConfigDoubleInvertedPendulumBulletPpo, \
+    ConfigDoubleInvertedPendulumBulletPpoTrajectory
 
 
 class ConfigComparisonDoubleInvertedPendulumBulletSac(ConfigComparisonBase):
@@ -34,4 +35,25 @@ class ConfigComparisonDoubleInvertedPendulumBulletSac(ConfigComparisonBase):
             "alpha tuning (Min Alpha = 0.2)",
         ]
         self.MAX_TRAINING_STEPS = 100000
+        self.N_RUNS = 5
+
+
+class ConfigComparisonDoubleInvertedPendulumBulletA2cPpo(ConfigComparisonBase):
+    def __init__(self):
+        ConfigComparisonBase.__init__(self)
+
+        self.ENV_NAME = "InvertedDoublePendulumBulletEnv-v0"
+
+        self.AGENT_PARAMETERS = [
+            ConfigDoubleInvertedPendulumBulletA2c(),
+            ConfigDoubleInvertedPendulumBulletPpo(),
+            ConfigDoubleInvertedPendulumBulletPpoTrajectory(),
+        ]
+
+        self.AGENT_LABELS = [
+            "a2c",
+            "ppo",
+            "ppo_trajectory",
+        ]
+        self.MAX_TRAINING_STEPS = 300_000
         self.N_RUNS = 5

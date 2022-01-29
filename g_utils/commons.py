@@ -419,8 +419,8 @@ def console_log_comparison(
                 agent.last_critic_loss.value, agent.last_actor_objective.value
             )
         elif config_c.AGENT_PARAMETERS[agent_idx].AGENT_TYPE in (AgentType.PPO, AgentType.PPO_TRAJECTORY):
-            console_log += "critic_loss: {0:6.3f}, actor_obj.: {1:5.3f}, ratio: {2:5.3f}".format(
-                agent.last_critic_loss.value, agent.last_actor_objective.value, agent.ratio.value
+            console_log += "critic_loss: {0:7.3f}, actor_obj.: {1:7.3f}, ratio: {2:5.3f}, entropy: {3:5.3f}".format(
+                agent.last_critic_loss.value, agent.last_actor_objective.value, agent.last_ratio.value, agent.last_entropy.value
             )
         elif config_c.AGENT_PARAMETERS[agent_idx].AGENT_TYPE == AgentType.SAC:
             console_log += "critic_loss: {0:7.3f}, actor_obj.: {1:7.3f}, alpha: {2:5.3f}, entropy: {3:5.3f}".format(
@@ -553,10 +553,12 @@ plotly_layout = go.Layout(
 
 
 def wandb_log_comparison(
-        run, training_step, agents, agent_labels, n_episodes_for_mean_calculation, comparison_stat, wandb_obj
+        run, training_steps_per_agent, agents, agent_labels, n_episodes_for_mean_calculation, comparison_stat, wandb_obj
 ):
+    training_steps_str = str([training_step for training_step in training_steps_per_agent])
+
     plotly_layout.yaxis.title = "[TEST] Episode Reward"
-    plotly_layout.xaxis.title = "Training Steps ({0}, runs={1})".format(training_step, run + 1)
+    plotly_layout.xaxis.title = "Training Steps ({0}, runs={1})".format(training_steps_str, run + 1)
     data = []
     for agent_idx, _ in enumerate(agents):
         data.append(
@@ -571,7 +573,7 @@ def wandb_log_comparison(
 
     ###############################################################################
     plotly_layout.yaxis.title = "[TEST] Std. of Episode Reward"
-    plotly_layout.xaxis.title = "Training Steps ({0}, runs={1})".format(training_step, run + 1)
+    plotly_layout.xaxis.title = "Training Steps ({0}, runs={1})".format(training_steps_str, run + 1)
     data = []
     for agent_idx, _ in enumerate(agents):
         data.append(
@@ -587,7 +589,7 @@ def wandb_log_comparison(
     ###############################################################################
     plotly_layout.yaxis.title = "[TRAIN] Mean Episode Reward"
     plotly_layout.xaxis.title = "Training Steps ({0}, runs={1}, over {2} Episodes)".format(
-        training_step, run + 1, n_episodes_for_mean_calculation
+        training_steps_str, run + 1, n_episodes_for_mean_calculation
     )
     data = []
     for agent_idx, _ in enumerate(agents):
