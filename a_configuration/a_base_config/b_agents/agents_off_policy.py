@@ -81,8 +81,8 @@ class ConfigSac(ConfigAgent):
         ConfigAgent.__init__(self)
         self.AGENT_TYPE = AgentType.SAC
 
-        self.LEARNING_RATE = 0.001
         self.ACTOR_LEARNING_RATE = 0.0001
+        self.LEARNING_RATE = 0.001
         self.ALPHA_LEARNING_RATE = 0.0003
 
         self.TAU = 0.005

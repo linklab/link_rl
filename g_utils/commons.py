@@ -357,11 +357,11 @@ def console_log(
         )
 
     if config.AGENT_TYPE in [AgentType.DQN, AgentType.DUELING_DQN]:
-        console_log += "Q_net_loss: {0:>7.3f}, Epsilon: {1:>4.2f}, ".format(
+        console_log += "Q_net_loss: {0:>7.3f}, Epsilon: {1:>4.2f}".format(
             agent.last_q_net_loss.value, agent.epsilon.value
         )
     elif config.AGENT_TYPE == AgentType.REINFORCE:
-        console_log += "log_policy_objective: {0:7.3f}, ".format(
+        console_log += "log_policy_objective: {0:7.3f}".format(
             agent.last_log_policy_objective.value
         )
     elif config.AGENT_TYPE == AgentType.A2C:
@@ -377,7 +377,7 @@ def console_log(
             agent.last_critic_loss.value, agent.last_actor_objective.value, agent.alpha.value, agent.last_entropy.value
         )
     elif config.AGENT_TYPE in (AgentType.DDPG, AgentType.TD3):
-        console_log += "critic_loss: {0:7.3f}, actor_loss: {1:7.3f}, ".format(
+        console_log += "critic_loss: {0:7.3f}, actor_loss: {1:7.3f}".format(
             agent.last_critic_loss.value, agent.last_actor_loss.value
         )
     else:

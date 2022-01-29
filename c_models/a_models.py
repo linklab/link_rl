@@ -184,7 +184,7 @@ class Model(nn.Module):
         self.convolutional_layers = self.get_convolutional_layers(input_n_channels)
 
         conv_out_flat_size = self._get_conv_out(self.convolutional_layers, observation_shape)
-        self.representation_layers = self.get_representation_layers(conv_out_flat_size)
+        self.representation_layers = self.get_representation_layers(input_n_features=conv_out_flat_size)
 
         if n_out_actions is None:
             input_n_features = self.config.MODEL_PARAMETER.NEURONS_PER_REPRESENTATION_LAYER[-1]

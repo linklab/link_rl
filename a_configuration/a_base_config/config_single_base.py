@@ -40,7 +40,7 @@ class ConfigBase:
 
         self.N_TEST_EPISODES = 3
 
-        self.CLIP_GRADIENT_VALUE = 30.0
+        self.CLIP_GRADIENT_VALUE = 50.0
 
         self.USE_WANDB = False
         self.WANDB_ENTITY = "link-koreatech"

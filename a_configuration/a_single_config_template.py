@@ -25,38 +25,6 @@ config = ConfigCartPolePpo()
 from a_configuration.b_single_config.open_ai_gym.config_cart_pole import ConfigCartPolePpoTrajectory
 config = ConfigCartPolePpoTrajectory()
 
-##################
-## LUNAR_LANDER ##
-##################
-from a_configuration.b_single_config.open_ai_gym.config_lunar_lander import ConfigLunarLanderDqn
-config = ConfigLunarLanderDqn()
-
-from a_configuration.b_single_config.open_ai_gym.config_lunar_lander import ConfigLunarLanderA2c
-config = ConfigLunarLanderA2c()
-
-from a_configuration.b_single_config.open_ai_gym.config_lunar_lander import ConfigLunarLanderPpo
-config = ConfigLunarLanderPpo()
-
-from a_configuration.b_single_config.open_ai_gym.config_lunar_lander import ConfigLunarLanderPpoTrajectory
-config = ConfigLunarLanderPpoTrajectory()
-#############################
-## LUNAR_LANDER_CONTINUOUS ##
-#############################
-from a_configuration.b_single_config.open_ai_gym.config_lunar_lander_continuous import ConfigLunarLanderContinuousA2c
-config = ConfigLunarLanderContinuousA2c()
-
-from a_configuration.b_single_config.open_ai_gym.config_lunar_lander_continuous import ConfigLunarLanderContinuousPpo
-config = ConfigLunarLanderContinuousPpo()
-
-from a_configuration.b_single_config.open_ai_gym.config_lunar_lander_continuous import ConfigLunarLanderContinuousPpoTrajectory
-config = ConfigLunarLanderContinuousPpoTrajectory()
-
-from a_configuration.b_single_config.open_ai_gym.config_lunar_lander_continuous import ConfigLunarLanderContinuousDdpg
-config = ConfigLunarLanderContinuousDdpg()
-
-from a_configuration.b_single_config.open_ai_gym.config_lunar_lander_continuous import ConfigLunarLanderContinuousSac
-config = ConfigLunarLanderContinuousSac()
-
 ######################
 ## CART_POLE_BULLET ##
 ######################
@@ -101,6 +69,39 @@ config = ConfigCartPoleContinuousBulletDdpg()
 
 from a_configuration.b_single_config.pybullet.config_cart_pole_continuous_bullet import ConfigCartPoleContinuousBulletTd3
 config = ConfigCartPoleContinuousBulletTd3()
+
+##################
+## LUNAR_LANDER ##
+##################
+from a_configuration.b_single_config.open_ai_gym.config_lunar_lander import ConfigLunarLanderDqn
+config = ConfigLunarLanderDqn()
+
+from a_configuration.b_single_config.open_ai_gym.config_lunar_lander import ConfigLunarLanderA2c
+config = ConfigLunarLanderA2c()
+
+from a_configuration.b_single_config.open_ai_gym.config_lunar_lander import ConfigLunarLanderPpo
+config = ConfigLunarLanderPpo()
+
+from a_configuration.b_single_config.open_ai_gym.config_lunar_lander import ConfigLunarLanderPpoTrajectory
+config = ConfigLunarLanderPpoTrajectory()
+
+#############################
+## LUNAR_LANDER_CONTINUOUS ##
+#############################
+from a_configuration.b_single_config.open_ai_gym.config_lunar_lander_continuous import ConfigLunarLanderContinuousA2c
+config = ConfigLunarLanderContinuousA2c()
+
+from a_configuration.b_single_config.open_ai_gym.config_lunar_lander_continuous import ConfigLunarLanderContinuousPpo
+config = ConfigLunarLanderContinuousPpo()
+
+from a_configuration.b_single_config.open_ai_gym.config_lunar_lander_continuous import ConfigLunarLanderContinuousPpoTrajectory
+config = ConfigLunarLanderContinuousPpoTrajectory()
+
+from a_configuration.b_single_config.open_ai_gym.config_lunar_lander_continuous import ConfigLunarLanderContinuousDdpg
+config = ConfigLunarLanderContinuousDdpg()
+
+from a_configuration.b_single_config.open_ai_gym.config_lunar_lander_continuous import ConfigLunarLanderContinuousSac
+config = ConfigLunarLanderContinuousSac()
 
 ######################
 ##    ANT_BULLET    ##

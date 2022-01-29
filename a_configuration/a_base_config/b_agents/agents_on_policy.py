@@ -18,9 +18,10 @@ class ConfigA2c(ConfigAgent):
         self.AGENT_TYPE = AgentType.A2C
 
         self.ACTOR_LEARNING_RATE = 0.0001
-        self.LEARNING_RATE = 0.0005
+        self.LEARNING_RATE = 0.001
+
         self.ENTROPY_BETA = 0.0002
-        self.TEST_INTERVAL_TRAINING_STEPS = 200
+        self.TEST_INTERVAL_TRAINING_STEPS = 500
 
         self.BATCH_SIZE = 128
         self.BUFFER_CAPACITY = 1_000
@@ -32,10 +33,11 @@ class ConfigPpo(ConfigAgent):
         ConfigAgent.__init__(self)
         self.AGENT_TYPE = AgentType.PPO
 
-        self.ACTOR_LEARNING_RATE = 0.00005
-        self.LEARNING_RATE = 0.0001
+        self.ACTOR_LEARNING_RATE = 0.00001
+        self.LEARNING_RATE = 0.00005
+
         self.ENTROPY_BETA = 0.0002
-        self.TEST_INTERVAL_TRAINING_STEPS = 200
+        self.TEST_INTERVAL_TRAINING_STEPS = 500
 
         self.PPO_EPSILON_CLIP = 0.2
         self.BATCH_SIZE = 128
@@ -48,10 +50,11 @@ class ConfigPpoTrajectory(ConfigAgent):
         ConfigAgent.__init__(self)
         self.AGENT_TYPE = AgentType.PPO_TRAJECTORY
 
-        self.ACTOR_LEARNING_RATE = 0.00005
-        self.LEARNING_RATE = 0.0001
+        self.ACTOR_LEARNING_RATE = 0.00001
+        self.LEARNING_RATE = 0.00005
+
         self.ENTROPY_BETA = 0.0002
-        self.TEST_INTERVAL_TRAINING_STEPS = 200
+        self.TEST_INTERVAL_TRAINING_STEPS = 500
 
         self.PPO_EPSILON_CLIP = 0.2
         self.BATCH_SIZE = 128
