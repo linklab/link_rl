@@ -41,7 +41,7 @@ class ConfigHopperBullet(ConfigBullet):
         self.EPISODE_REWARD_STD_SOLVED = 100
 
 
-class ConfigDoubleInvertedPendulumBullet(ConfigBullet):
+class ConfigInvertedDoublePendulumBullet(ConfigBullet):
     def __init__(self):
         self.ENV_NAME = "InvertedDoublePendulumBulletEnv-v0"
         self.EPISODE_REWARD_AVG_SOLVED = 8_500

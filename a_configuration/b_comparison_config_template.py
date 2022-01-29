@@ -79,13 +79,13 @@ config_c = ConfigComparisonAntBulletSac()
 
 
 #########################################
-##    DoubleInvertedPendulum_BULLET    ##
+##    InvertedDoublePendulum_BULLET    ##
 #########################################
-from a_configuration.c_comparison_config.pybullet.config_comparison_double_inverted_pendulum_bullet import ConfigComparisonDoubleInvertedPendulumBulletSac
-config_c = ConfigComparisonDoubleInvertedPendulumBulletSac()
+from a_configuration.c_comparison_config.pybullet.config_comparison_inverted_double_pendulum_bullet import ConfigComparisonInvertedDoublePendulumBulletSac
+config_c = ConfigComparisonInvertedDoublePendulumBulletSac()
 
-from a_configuration.c_comparison_config.pybullet.config_comparison_double_inverted_pendulum_bullet import ConfigComparisonDoubleInvertedPendulumBulletA2cPpo
-config_c = ConfigComparisonDoubleInvertedPendulumBulletA2cPpo()
+from a_configuration.c_comparison_config.pybullet.config_comparison_inverted_double_pendulum_bullet import ConfigComparisonInvertedDoublePendulumBulletA2cPpo
+config_c = ConfigComparisonInvertedDoublePendulumBulletA2cPpo()
 
 config_c.USE_WANDB = False
 

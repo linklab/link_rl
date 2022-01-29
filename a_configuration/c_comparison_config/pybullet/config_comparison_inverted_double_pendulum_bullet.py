@@ -2,22 +2,22 @@ from a_configuration.a_base_config.config_comparison_base import ConfigCompariso
 from a_configuration.b_single_config.open_ai_gym.config_cart_pole import ConfigCartPoleDqn, ConfigCartPoleReinforce, \
     ConfigCartPoleA2c
 from a_configuration.b_single_config.pybullet.config_cart_pole_bullet import ConfigCartPoleBulletA2c
-from a_configuration.b_single_config.pybullet.config_double_inverted_pendulum_bullet import \
-    ConfigDoubleInvertedPendulumBulletSac, ConfigDoubleInvertedPendulumBulletA2c, ConfigDoubleInvertedPendulumBulletPpo, \
-    ConfigDoubleInvertedPendulumBulletPpoTrajectory
+from a_configuration.b_single_config.pybullet.config_inverted_double_pendulum_bullet import \
+    ConfigInvertedDoublePendulumBulletSac, ConfigInvertedDoublePendulumBulletA2c, ConfigInvertedDoublePendulumBulletPpo, \
+    ConfigInvertedDoublePendulumBulletPpoTrajectory
 
 
-class ConfigComparisonDoubleInvertedPendulumBulletSac(ConfigComparisonBase):
+class ConfigComparisonInvertedDoublePendulumBulletSac(ConfigComparisonBase):
     def __init__(self):
         ConfigComparisonBase.__init__(self)
 
         self.ENV_NAME = "InvertedDoublePendulumBulletEnv-v0"
 
         self.AGENT_PARAMETERS = [
-            ConfigDoubleInvertedPendulumBulletSac(),
-            ConfigDoubleInvertedPendulumBulletSac(),
-            ConfigDoubleInvertedPendulumBulletSac(),
-            ConfigDoubleInvertedPendulumBulletSac(),
+            ConfigInvertedDoublePendulumBulletSac(),
+            ConfigInvertedDoublePendulumBulletSac(),
+            ConfigInvertedDoublePendulumBulletSac(),
+            ConfigInvertedDoublePendulumBulletSac(),
         ]
 
         self.AGENT_PARAMETERS[0].AUTOMATIC_ENTROPY_TEMPERATURE_TUNING = False
@@ -38,16 +38,16 @@ class ConfigComparisonDoubleInvertedPendulumBulletSac(ConfigComparisonBase):
         self.N_RUNS = 5
 
 
-class ConfigComparisonDoubleInvertedPendulumBulletA2cPpo(ConfigComparisonBase):
+class ConfigComparisonInvertedDoublePendulumBulletA2cPpo(ConfigComparisonBase):
     def __init__(self):
         ConfigComparisonBase.__init__(self)
 
         self.ENV_NAME = "InvertedDoublePendulumBulletEnv-v0"
 
         self.AGENT_PARAMETERS = [
-            ConfigDoubleInvertedPendulumBulletA2c(),
-            ConfigDoubleInvertedPendulumBulletPpo(),
-            ConfigDoubleInvertedPendulumBulletPpoTrajectory(),
+            ConfigInvertedDoublePendulumBulletA2c(),
+            ConfigInvertedDoublePendulumBulletPpo(),
+            ConfigInvertedDoublePendulumBulletPpoTrajectory(),
         ]
 
         self.AGENT_LABELS = [
