@@ -51,6 +51,7 @@ class AgentPpoTrajectory(AgentPpo):
             trajectory_values = self.critic_model.v(self.observations)
 
             trajectory_advantages = (trajectory_td_target_values - trajectory_values).detach()
+            trajectory_advantages = (trajectory_advantages - torch.mean(trajectory_advantages)) / (torch.std(trajectory_advantages) + 1e-7)
 
             if isinstance(self.action_space, Discrete):
                 trajectory_advantages = trajectory_advantages.squeeze(dim=-1)  # NOTE
