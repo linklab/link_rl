@@ -22,6 +22,7 @@ class AgentDoubleDqn(AgentDqn):
 
             # target_state_action_values.shape: torch.Size([32, 1])
             target_q_values = self.rewards + self.config.GAMMA ** self.config.N_STEP * next_q_values
+            target_q_values = (target_q_values - torch.mean(target_q_values)) / (torch.std(target_q_values) + 1e-7)
 
         # loss is just scalar torch value
         q_net_loss = self.config.LOSS_FUNCTION(state_action_values, target_q_values)

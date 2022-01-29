@@ -64,7 +64,7 @@ class AgentDqn(Agent):
         count_training_steps = 0
 
         # state_action_values.shape: torch.Size([32, 1])
-        state_action_values = self.q_net(self.observations).gather(dim=-1, index=self.actions)
+        q_values = self.q_net(self.observations).gather(dim=-1, index=self.actions)
 
         with torch.no_grad():
             # next_state_values.shape: torch.Size([32, 1])
@@ -72,20 +72,21 @@ class AgentDqn(Agent):
             next_q_v[self.dones] = 0.0
 
             # target_state_action_values.shape: torch.Size([32, 1])
-            target_state_action_values = self.rewards + self.config.GAMMA ** self.config.N_STEP * next_q_v
+            target_q_values = self.rewards + self.config.GAMMA ** self.config.N_STEP * next_q_v
+            target_q_values = (target_q_values - torch.mean(target_q_values)) / (torch.std(target_q_values) + 1e-7)
 
         # loss is just scalar torch value
-        q_net_loss = self.config.LOSS_FUNCTION(state_action_values, target_state_action_values.detach())
+        q_net_loss = self.config.LOSS_FUNCTION(q_values, target_q_values.detach())
 
         # print("observations.shape: {0}, actions.shape: {1}, "
         #       "next_observations.shape: {2}, rewards.shape: {3}, dones.shape: {4}".format(
         #     observations.shape, actions.shape,
         #     next_observations.shape, rewards.shape, dones.shape
         # ))
-        # print("state_action_values.shape: {0}".format(state_action_values.shape))
+        # print("q_values.shape: {0}".format(q_values.shape))
         # print("next_state_values.shape: {0}".format(next_state_values.shape))
-        # print("target_state_action_values.shape: {0}".format(
-        #     target_state_action_values.shape
+        # print("target_q_values.shape: {0}".format(
+        #     target_q_values.shape
         # ))
         # print("loss.shape: {0}".format(loss.shape))
 

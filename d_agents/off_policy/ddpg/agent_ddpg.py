@@ -68,6 +68,7 @@ class AgentDdpg(Agent):
             next_q_v = self.target_critic_model.q(self.next_observations, next_mu_v)
             next_q_v[self.dones] = 0.0
             target_q_v = self.rewards + self.config.GAMMA ** self.config.N_STEP * next_q_v
+            target_q_v = (target_q_v - torch.mean(target_q_v)) / (torch.std(target_q_v) + 1e-7)
 
         q_v = self.critic_model.q(self.observations, self.actions)
 
