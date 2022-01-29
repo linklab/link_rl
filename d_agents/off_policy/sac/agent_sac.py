@@ -99,6 +99,8 @@ class AgentSac(Agent):
         next_q_values[self.dones] = 0.0
         # td_target_values.shape: (32, 1)
         td_target_values = self.rewards + (self.config.GAMMA ** self.config.N_STEP) * next_q_values
+        # normalize td_target_values
+        td_target_values = (td_target_values - torch.mean(td_target_values)) / (torch.std(td_target_values) + 1e-7)
 
         # values.shape: (32, 1)
         q1_values, q2_values = self.critic_model.q(self.observations, self.actions)

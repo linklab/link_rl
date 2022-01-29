@@ -86,6 +86,8 @@ class AgentA2c(Agent):
 
         # td_target_values.shape: (32, 1)
         td_target_values = self.rewards + (self.config.GAMMA ** self.config.N_STEP) * next_values
+        # normalize td_target
+        td_target_values = (td_target_values - torch.mean(td_target_values)) / (torch.std(td_target_values) + 1e-7)
 
         # values.shape: (32, 1)
         values = self.critic_model.v(self.observations)
@@ -107,7 +109,6 @@ class AgentA2c(Agent):
         ################################
         #q_values = td_target_values
         advantages = (td_target_values - values).detach()
-        advantages = (advantages - torch.mean(advantages)) / (torch.std(advantages) + 1e-7)
 
         if isinstance(self.action_space, Discrete):
             action_probs = self.actor_model.pi(self.observations)
@@ -137,15 +138,14 @@ class AgentA2c(Agent):
         # actor_objective.shape: (,) <--  값 1개
         actor_objective = torch.mean(criticized_log_pi_action_v)
 
-        # if actor_objective.item() > 10000.0:
+        # if self.step % 1000 == 0:
+        #     print("mu_v:", mu_v, "var_v:", var_v)
         #     print("actor_objective:", actor_objective)
         #     print("td_target_values:", td_target_values)
         #     print("values:", values)
         #     print("advantages:", advantages)
-        #     print("mu_v:", mu_v, "var_v:", var_v)
         #     print("self.actions:", self.actions)
         #     print("dist.log_prob(value=self.actions).sum(dim=-1, keepdim=True):", dist.log_prob(value=self.actions).sum(dim=-1, keepdim=True))
-        #     raise ValueError()
 
         actor_loss = -1.0 * actor_objective
         entropy_loss = -1.0 * entropy
