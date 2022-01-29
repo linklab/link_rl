@@ -142,7 +142,7 @@ class ContinuousStochasticActorModel(ActorModel):
         else:
             raise ValueError()
 
-        self.var = nn.Sequential(
+        self.log_sigma = nn.Sequential(
             nn.Linear(self.config.MODEL_PARAMETER.NEURONS_PER_REPRESENTATION_LAYER[-1], self.n_out_actions),
             nn.Softplus()
         )
@@ -179,10 +179,7 @@ class ContinuousStochasticActorModel(ActorModel):
         else:
             raise ValueError()
 
-        var_v = self.var(x)
-        var_v = torch.clamp(var_v, 1e-3, 50)
-
-        return var_v
+        return x
 
     def pi(self, obs, save_hidden=False):
         x = self.forward_actor(obs, save_hidden=save_hidden)
@@ -192,6 +189,9 @@ class ContinuousStochasticActorModel(ActorModel):
         # By doing so we ensure we don’t have negative values with numerical stability too.
         # The standard deviation can’t be negative (nor 0).
         # sigma_v = torch.clamp(self.log_sigma.exp(), 1e-3, 50)
-        var_v = self.forward_variance(obs)
+        x = self.forward_variance(obs)
+        log_sigma_v = self.log_sigma(x)
+        sigma_v = torch.exp(log_sigma_v)
+        sigma_v = torch.clamp(sigma_v, 1e-4, 50)
 
-        return mu_v, var_v
+        return mu_v, sigma_v

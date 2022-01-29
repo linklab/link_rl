@@ -20,7 +20,7 @@ class ConfigA2c(ConfigAgent):
         self.ACTOR_LEARNING_RATE = 0.0001
         self.LEARNING_RATE = 0.001
 
-        self.ENTROPY_BETA = 0.0002
+        self.ENTROPY_BETA = 0.001
         self.TEST_INTERVAL_TRAINING_STEPS = 500
 
         self.BATCH_SIZE = 128
@@ -36,7 +36,7 @@ class ConfigPpo(ConfigAgent):
         self.ACTOR_LEARNING_RATE = 0.00001
         self.LEARNING_RATE = 0.00005
 
-        self.ENTROPY_BETA = 0.0002
+        self.ENTROPY_BETA = 0.001
         self.TEST_INTERVAL_TRAINING_STEPS = 500
 
         self.PPO_EPSILON_CLIP = 0.2
@@ -53,7 +53,7 @@ class ConfigPpoTrajectory(ConfigAgent):
         self.ACTOR_LEARNING_RATE = 0.00001
         self.LEARNING_RATE = 0.00005
 
-        self.ENTROPY_BETA = 0.0002
+        self.ENTROPY_BETA = 0.001
         self.TEST_INTERVAL_TRAINING_STEPS = 500
 
         self.PPO_EPSILON_CLIP = 0.2

@@ -17,8 +17,8 @@ class ConfigDqn(ConfigAgent):
         self.EPSILON_FINAL_TRAINING_STEP_PROPORTION = 0.5
 
         self.BUFFER_CAPACITY = 10_000
-        self.BATCH_SIZE = 64
-        self.MIN_BUFFER_SIZE_FOR_TRAIN = self.BATCH_SIZE * 10
+        self.BATCH_SIZE = 128
+        self.MIN_BUFFER_SIZE_FOR_TRAIN = self.BATCH_SIZE * 5
         self.TARGET_SYNC_INTERVAL_TRAINING_STEPS = 1_000
 
 
