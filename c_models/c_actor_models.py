@@ -126,9 +126,9 @@ class ContinuousStochasticActorModel(ActorModel):
         # log_sigma = 0.1 <- starting value. it mean std = 1.105
         # log_sigma_param = nn.Parameter(torch.full((self.n_out_actions,), 0.1))
         # self.register_parameter("log_sigma", log_sigma_param)
-
+        input_n_features = observation_shape[0]
         self.var = nn.Sequential(
-            nn.Linear(self.config.MODEL_PARAMETER.NEURONS_PER_FULLY_CONNECTED_LAYER[-1], self.n_out_actions),
+            nn.Linear(input_n_features, self.n_out_actions),
             nn.Softplus()
         )
 
@@ -143,8 +143,7 @@ class ContinuousStochasticActorModel(ActorModel):
         if isinstance(obs, np.ndarray):
             obs = torch.tensor(obs, dtype=torch.float32, device=self.config.DEVICE)
 
-        s = self.representation_layers(obs)
-        var = self.var(s)
+        var = self.var(obs)
 
         return var
 
