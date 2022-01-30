@@ -84,6 +84,7 @@ config = ConfigLunarLanderPpo()
 
 from a_configuration.b_single_config.open_ai_gym.config_lunar_lander import ConfigLunarLanderPpoTrajectory
 config = ConfigLunarLanderPpoTrajectory()
+config.WANDB_REPORT_URL = "https://wandb.ai/link-koreatech/LunarLander-v2_PPO_TRAJECTORY_anonymous/reports/LunarLander-v2-PPO_TRAJECTORY--VmlldzoxNTAwOTg0?accessToken=y2tgu6i38zzehklrq6rikdqhvza2fsexmfg22ntl2drl0q9bsvd11t1b0e09r0ry"
 
 #############################
 ## LUNAR_LANDER_CONTINUOUS ##
@@ -148,6 +149,7 @@ config = ConfigInvertedDoublePendulumBulletPpo()
 
 from a_configuration.b_single_config.pybullet.config_inverted_double_pendulum_bullet import ConfigInvertedDoublePendulumBulletPpoTrajectory
 config = ConfigInvertedDoublePendulumBulletPpoTrajectory()
+config.WANDB_REPORT_URL = "https://wandb.ai/link-koreatech/InvertedDoublePendulumBulletEnv-v0_PPO_TRAJECTORY_anonymous/reports/Inverted-Double-Pendulum-PPO_Trajectory--VmlldzoxNTAwNzg4?accessToken=j639pzfajkaiybgddbxkp552v0qjcv6zu0ogytbr6ec85qxg7j2gefdh56gvvdx7"
 
 ##########
 ## PONG ##

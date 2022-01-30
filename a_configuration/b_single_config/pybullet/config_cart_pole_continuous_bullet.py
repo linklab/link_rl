@@ -11,13 +11,8 @@ class ConfigCartPoleContinuousBulletA2c(ConfigBase, ConfigCartPoleContinuousBull
         ConfigCartPoleContinuousBullet.__init__(self)
         ConfigA2c.__init__(self)
 
-        self.N_VECTORIZED_ENVS = 1
-        self.N_ACTORS = 1
-        self.BATCH_SIZE = 512
         self.MAX_TRAINING_STEPS = 100_000
         self.MODEL_TYPE = ModelType.SMALL_LINEAR
-        self.ACTOR_LEARNING_RATE = 0.0005
-        self.LEARNING_RATE = 0.001
 
 
 class ConfigCartPoleContinuousBulletPpo(ConfigBase, ConfigCartPoleContinuousBullet, ConfigPpo):

@@ -49,7 +49,7 @@ class QNet(Model):
         self.qnet_params_list = list(self.parameters())
         self.version = 0
 
-    def forward(self, obs, save_hidden=False):
+    def q(self, obs, save_hidden=False):
         x = self._forward(obs, save_hidden)
         q_values = self.linear_last_layer(x)
         return q_values
@@ -83,7 +83,7 @@ class DuelingQNet(QNet):
         self.qnet_params_list = list(self.parameters())
         self.version = 0
 
-    def forward(self, obs, save_hidden=False):
+    def q(self, obs, save_hidden=False):
         x = self._forward(obs, save_hidden)
         adv = self.linear_last_adv(x)
         val = self.linear_last_val(x)

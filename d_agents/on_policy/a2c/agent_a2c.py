@@ -1,3 +1,5 @@
+import copy
+
 import torch.optim as optim
 import torch
 from gym.spaces import Discrete, Box
@@ -74,40 +76,53 @@ class AgentA2c(Agent):
         else:
             raise ValueError()
 
-    def train_a2c(self):
-        count_training_steps = 0
-
-        ###################################
-        #  Critic (Value) Loss 산출 - BEGIN #
-        ###################################
-        # next_values.shape: (32, 1)
-        next_values = self.critic_model.v(self.next_observations)
-        next_values[self.dones] = 0.0
+    def get_normalized_td_target_values(self, next_observations, rewards, dones):
+        # values.shape: (32, 1), next_values.shape: (32, 1)
+        next_values = self.critic_model.v(next_observations)
+        next_values[dones] = 0.0
 
         # td_target_values.shape: (32, 1)
-        td_target_values = self.rewards + (self.config.GAMMA ** self.config.N_STEP) * next_values
+        td_target_values = rewards + (self.config.GAMMA ** self.config.N_STEP) * next_values
         # normalize td_target
         td_target_values = (td_target_values - torch.mean(td_target_values)) / (torch.std(td_target_values) + 1e-7)
 
+        return td_target_values.detach()
+
+    def train_a2c(self):
+        count_training_steps = 0
+
+        #############################################
+        #  Critic (Value) Loss 산출 & Update - BEGIN #
+        #############################################
+
+        td_target_values = self.get_normalized_td_target_values(self.next_observations, self.rewards, self.dones)
+
+        # # next_values.shape: (32, 1)
+        # next_values = self.critic_model.v(self.next_observations)
+        # next_values[self.dones] = 0.0
+        #
+        # # td_target_values.shape: (32, 1)
+        # td_target_values = self.rewards + (self.config.GAMMA ** self.config.N_STEP) * next_values
+        # # normalize td_target
+        # td_target_values = (td_target_values - torch.mean(td_target_values)) / (torch.std(td_target_values) + 1e-7)
+
         # values.shape: (32, 1)
         values = self.critic_model.v(self.observations)
-        # loss_critic.shape: (,) <--  값 1개
+        # # loss_critic.shape: (,) <--  값 1개
 
-        assert values.shape == td_target_values.shape, "{0} {1}".format(values.shape, td_target_values.shape)
         critic_loss = self.config.LOSS_FUNCTION(values, td_target_values.detach())
 
         self.critic_optimizer.zero_grad()
         critic_loss.backward()
         self.clip_critic_model_parameter_grad_value(self.critic_model.critic_params_list)
         self.critic_optimizer.step()
-        ###################################
-        #  Critic (Value)  Loss 산출 - END #
-        ###################################
+        ##########################################
+        #  Critic (Value) Loss 산출 & Update- END #
+        ##########################################
 
-        ################################
-        #  Actor Objective 산출 - BEGIN #
-        ################################
-        #q_values = td_target_values
+        #########################################
+        #  Actor Objective 산출 & Update - BEGIN #
+        #########################################
         advantages = (td_target_values - values).detach()
 
         if isinstance(self.action_space, Discrete):
@@ -151,15 +166,13 @@ class AgentA2c(Agent):
         entropy_loss = -1.0 * entropy
         actor_loss = actor_loss + entropy_loss * self.config.ENTROPY_BETA
 
-        # actor_loss = torch.mean(-1.0 * criticized_log_pi_action_v + self.config.ENTROPY_BETA * -1.0 * entropy)
-
         self.actor_optimizer.zero_grad()
         actor_loss.backward()
         self.clip_actor_model_parameter_grad_value(self.actor_model.actor_params_list)
         self.actor_optimizer.step()
-        ##############################
-        #  Actor Objective 산출 - END #
-        ##############################
+        #######################################
+        #  Actor Objective 산출 & Update - END #
+        #######################################
 
         self.last_critic_loss.value = critic_loss.item()
         self.last_actor_objective.value = actor_objective.item()

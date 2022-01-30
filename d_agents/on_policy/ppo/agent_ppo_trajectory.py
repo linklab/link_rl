@@ -40,13 +40,18 @@ class AgentPpoTrajectory(AgentPpo):
         sum_entropy = 0.0
 
         for _ in range(self.config.PPO_K_EPOCH):
-            trajectory_next_values = self.critic_model.v(self.next_observations)
-            trajectory_next_values[self.dones] = 0.0
 
-            # td_target_values.shape: (32, 1)
-            trajectory_td_target_values = self.rewards + self.config.GAMMA ** self.config.N_STEP * trajectory_next_values
-            # normalize td_target_value
-            trajectory_td_target_values = (trajectory_td_target_values - torch.mean(trajectory_td_target_values)) / (torch.std(trajectory_td_target_values) + 1e-7)
+            trajectory_td_target_values = self.get_normalized_td_target_values(
+                self.next_observations, self.rewards, self.dones
+            )
+
+            # trajectory_next_values = self.critic_model.v(self.next_observations)
+            # trajectory_next_values[self.dones] = 0.0
+            #
+            # # td_target_values.shape: (32, 1)
+            # trajectory_td_target_values = self.rewards + self.config.GAMMA ** self.config.N_STEP * trajectory_next_values
+            # # normalize td_target_value
+            # trajectory_td_target_values = (trajectory_td_target_values - torch.mean(trajectory_td_target_values)) / (torch.std(trajectory_td_target_values) + 1e-7)
 
             trajectory_values = self.critic_model.v(self.observations)
             trajectory_advantages = (trajectory_td_target_values - trajectory_values).detach()

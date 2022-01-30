@@ -27,8 +27,6 @@ class ConfigLunarLanderA2c(ConfigBase, ConfigLunarLander, ConfigA2c):
         ConfigA2c.__init__(self)
 
         self.MAX_TRAINING_STEPS = 100_000
-        self.BUFFER_CAPACITY = 100_000
-        self.BATCH_SIZE = 256
         self.MODEL_TYPE = ModelType.SMALL_LINEAR
 
 

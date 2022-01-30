@@ -66,6 +66,6 @@ class AgentReinforce(Agent):
 
         self.last_log_policy_objective.value = log_policy_objective.item()
 
-        count_training_steps = 1
+        count_training_steps += 1
 
         return count_training_steps

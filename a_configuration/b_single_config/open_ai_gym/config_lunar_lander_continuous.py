@@ -11,11 +11,7 @@ class ConfigLunarLanderContinuousA2c(ConfigBase, ConfigLunarLanderContinuous, Co
         ConfigLunarLanderContinuous.__init__(self)
         ConfigA2c.__init__(self)
 
-        self.N_VECTORIZED_ENVS = 1
-        self.N_ACTORS = 1
         self.MAX_TRAINING_STEPS = 200_000
-        self.BUFFER_CAPACITY = 200_000
-        self.BATCH_SIZE = 64
         self.MODEL_TYPE = ModelType.SMALL_LINEAR
 
 

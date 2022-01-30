@@ -44,6 +44,7 @@ class ConfigBase:
 
         self.USE_WANDB = False
         self.WANDB_ENTITY = "link-koreatech"
+        self.WANDB_REPORT_URL = False
 
         self.PLAY_MODEL_FILE_NAME = ""
 
@@ -65,3 +66,4 @@ class ConfigBase:
         self.CONSOLE_LOG_INTERVAL_TRAINING_STEPS = 30
 
         self.NO_TEST_GRAPHICS = True
+

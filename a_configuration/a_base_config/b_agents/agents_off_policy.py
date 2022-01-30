@@ -88,7 +88,6 @@ class ConfigSac(ConfigAgent):
         self.TAU = 0.005
         self.BUFFER_CAPACITY = 10_000
         self.BATCH_SIZE = 128
-        self.MIN_BUFFER_SIZE_FOR_TRAIN = self.BATCH_SIZE * 10
         self.TARGET_SYNC_INTERVAL_TRAINING_STEPS = 50
 
         self.POLICY_UPDATE_FREQUENCY_PER_TRAINING_STEP = 2

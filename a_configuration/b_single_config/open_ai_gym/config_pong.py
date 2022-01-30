@@ -58,5 +58,4 @@ class ConfigPongA2c(ConfigBase, ConfigPong, ConfigA2c):
         ConfigA2c.__init__(self)
 
         self.MAX_TRAINING_STEPS = 1_000_000
-        self.BUFFER_CAPACITY = 10_000
         self.MODEL_TYPE = ModelType.MEDIUM_CONVOLUTIONAL

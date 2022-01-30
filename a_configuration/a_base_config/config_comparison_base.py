@@ -32,6 +32,7 @@ class ConfigComparisonBase:
 
         self.USE_WANDB = False
         self.WANDB_ENTITY = "link-koreatech"
+        self.WANDB_REPORT_URL = None
 
         self.TRAIN_INTERVAL_GLOBAL_TIME_STEPS = 4
         assert self.TRAIN_INTERVAL_GLOBAL_TIME_STEPS >= self.N_VECTORIZED_ENVS * self.N_ACTORS, \

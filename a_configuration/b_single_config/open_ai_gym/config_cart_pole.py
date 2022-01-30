@@ -7,24 +7,18 @@ from a_configuration.a_base_config.a_environments.open_ai_gym.gym_classic_contro
 from g_utils.types import ModelType
 
 
-class ConfigCartPoleDqn(
-    ConfigBase, ConfigCartPole, ConfigDqn
-):
+class ConfigCartPoleDqn(ConfigBase, ConfigCartPole, ConfigDqn):
     def __init__(self):
         ConfigBase.__init__(self)
         ConfigCartPole.__init__(self)
         ConfigDqn.__init__(self)
 
-        self.N_VECTORIZED_ENVS = 1
-        self.N_ACTORS = 1
         self.MAX_TRAINING_STEPS = 100_000
         self.BUFFER_CAPACITY = 50_000
         self.MODEL_TYPE = ModelType.SMALL_LINEAR
 
 
-class ConfigCartPoleDoubleDqn(
-    ConfigBase, ConfigCartPole, ConfigDoubleDqn
-):
+class ConfigCartPoleDoubleDqn(ConfigBase, ConfigCartPole, ConfigDoubleDqn):
     def __init__(self):
         ConfigBase.__init__(self)
         ConfigCartPole.__init__(self)
@@ -37,9 +31,7 @@ class ConfigCartPoleDoubleDqn(
         self.MODEL_TYPE = ModelType.SMALL_LINEAR
 
 
-class ConfigCartPoleDuelingDqn(
-    ConfigBase, ConfigCartPole, ConfigDuelingDqn
-):
+class ConfigCartPoleDuelingDqn(ConfigBase, ConfigCartPole, ConfigDuelingDqn):
     def __init__(self):
         ConfigBase.__init__(self)
         ConfigCartPole.__init__(self)
@@ -52,9 +44,7 @@ class ConfigCartPoleDuelingDqn(
         self.MODEL_TYPE = ModelType.SMALL_LINEAR
 
 
-class ConfigCartPoleDoubleDuelingDqn(
-    ConfigBase, ConfigCartPole, ConfigDoubleDuelingDqn
-):
+class ConfigCartPoleDoubleDuelingDqn(ConfigBase, ConfigCartPole, ConfigDoubleDuelingDqn):
     def __init__(self):
         ConfigBase.__init__(self)
         ConfigCartPole.__init__(self)
@@ -68,17 +58,13 @@ class ConfigCartPoleDoubleDuelingDqn(
 
 # OnPolicy
 
-class ConfigCartPoleReinforce(
-    ConfigBase, ConfigCartPole, ConfigReinforce
-):
+
+class ConfigCartPoleReinforce(ConfigBase, ConfigCartPole, ConfigReinforce):
     def __init__(self):
         ConfigBase.__init__(self)
         ConfigCartPole.__init__(self)
         ConfigReinforce.__init__(self)
 
-        self.N_VECTORIZED_ENVS = 1
-        self.N_ACTORS = 1
-        self.BUFFER_CAPACITY = 1_000
         self.MAX_TRAINING_STEPS = 100_000
         self.MODEL_TYPE = ModelType.SMALL_LINEAR
 
@@ -91,7 +77,6 @@ class ConfigCartPoleA2c(ConfigBase, ConfigCartPole, ConfigA2c):
 
         self.MAX_TRAINING_STEPS = 100_000
         self.BATCH_SIZE = 256
-        self.BUFFER_CAPACITY = 10_000
         self.MODEL_TYPE = ModelType.SMALL_LINEAR
 
 

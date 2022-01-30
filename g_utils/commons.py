@@ -22,8 +22,8 @@ from a_configuration.a_base_config.c_models.convolutional_models import ConfigCo
 from a_configuration.a_base_config.c_models.linear_models import ConfigLinearModel
 from a_configuration.a_base_config.c_models.recurrent_convolutional_models import ConfigRecurrentConvolutionalModel
 from a_configuration.a_base_config.c_models.recurrent_linear_models import ConfigRecurrentLinearModel
-from g_utils.types import AgentType, ActorCriticAgentTypes, ModelType, LayerActivationType, LossFunctionType
-
+from g_utils.types import AgentType, ActorCriticAgentTypes, ModelType, LayerActivationType, LossFunctionType, \
+    OffPolicyAgentTypes, OnPolicyAgentTypes
 
 if torch.cuda.is_available():
     import nvidia_smi
@@ -98,6 +98,28 @@ def set_config(config):
         config.LOSS_FUNCTION = F.mse_loss
     elif config.LOSS_FUNCTION_TYPE == LossFunctionType.HUBER_LOSS:
         config.LOSS_FUNCTION = F.huber_loss
+    else:
+        raise ValueError()
+
+    if config.AGENT_TYPE in OffPolicyAgentTypes:
+        config.MIN_BUFFER_SIZE_FOR_TRAIN = config.BATCH_SIZE * 5
+
+    elif config.AGENT_TYPE == AgentType.REINFORCE:
+        config.BUFFER_CAPACITY = -1
+
+    elif config.AGENT_TYPE == AgentType.A2C:
+        config.BUFFER_CAPACITY = config.BATCH_SIZE
+        config.CONSOLE_LOG_INTERVAL_TRAINING_STEPS = 10
+
+    elif config.AGENT_TYPE == AgentType.PPO:
+        config.BUFFER_CAPACITY = config.BATCH_SIZE
+        config.CONSOLE_LOG_INTERVAL_TRAINING_STEPS = 10 * config.PPO_K_EPOCH
+
+    elif config.AGENT_TYPE == AgentType.PPO_TRAJECTORY:
+        config.PPO_TRAJECTORY_SIZE = config.BATCH_SIZE * 10
+        config.BUFFER_CAPACITY = config.PPO_TRAJECTORY_SIZE
+        config.CONSOLE_LOG_INTERVAL_TRAINING_STEPS = 10 * config.PPO_K_EPOCH
+
     else:
         raise ValueError()
 

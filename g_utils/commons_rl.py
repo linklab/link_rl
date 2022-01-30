@@ -48,10 +48,7 @@ def get_agent(observation_space, action_space, config=None):
         )
     elif config.AGENT_TYPE == AgentType.PPO_TRAJECTORY:
         from d_agents.on_policy.ppo.agent_ppo_trajectory import AgentPpoTrajectory
-        assert hasattr(config, "PPO_TRAJECTORY_SIZE")
-        assert config.PPO_TRAJECTORY_SIZE % config.BATCH_SIZE == 0, "{0} {1}".format(
-            config.PPO_TRAJECTORY_SIZE, config.BATCH_SIZE
-        )
+        assert hasattr(config, "BATCH_SIZE")
         agent = AgentPpoTrajectory(
             observation_space=observation_space, action_space=action_space, config=config
         )

@@ -11,7 +11,7 @@ class AgentPpo(AgentA2c):
     def __init__(self, observation_space, action_space, config):
         super(AgentPpo, self).__init__(observation_space, action_space, config)
 
-        self.actor_old_model = copy.deepcopy(self.actor_critic_model.actor_model)
+        self.actor_old_model = copy.deepcopy(self.actor_model)
 
         self.actor_old_model.share_memory()
 
@@ -45,20 +45,21 @@ class AgentPpo(AgentA2c):
         sum_entropy = 0.0
 
         for _ in range(self.config.PPO_K_EPOCH):
-            batch_next_values = self.critic_model.v(self.next_observations)
-            batch_next_values[self.dones] = 0.0
+            #############################################
+            #  Critic (Value) Loss 산출 & Update - BEGIN #
+            #############################################
 
-            # td_target_values.shape: (32, 1)
-            batch_td_target_values = self.rewards + self.config.GAMMA ** self.config.N_STEP * batch_next_values
-            # normalize td_target_value
-            batch_td_target_values = (batch_td_target_values - torch.mean(batch_td_target_values)) / (torch.std(batch_td_target_values) + 1e-7)
+            batch_td_target_values = self.get_normalized_td_target_values(self.next_observations, self.rewards, self.dones)
+
+            # batch_next_values = self.critic_model.v(self.next_observations)
+            # batch_next_values[self.dones] = 0.0
+            #
+            # # td_target_values.shape: (32, 1)
+            # batch_td_target_values = self.rewards + self.config.GAMMA ** self.config.N_STEP * batch_next_values
+            # # normalize td_target_value
+            # batch_td_target_values = (batch_td_target_values - torch.mean(batch_td_target_values)) / (torch.std(batch_td_target_values) + 1e-7)
 
             batch_values = self.critic_model.v(self.observations)
-
-            batch_advantages = (batch_td_target_values - batch_values).detach()
-
-            if isinstance(self.action_space, Discrete):
-                batch_advantages = batch_advantages.squeeze(dim=-1)  # NOTE
 
             assert batch_values.shape == batch_td_target_values.shape
             batch_critic_loss = self.config.LOSS_FUNCTION(batch_values, batch_td_target_values.detach())
@@ -67,6 +68,14 @@ class AgentPpo(AgentA2c):
             batch_critic_loss.backward()
             self.clip_critic_model_parameter_grad_value(self.critic_model.critic_params_list)
             self.critic_optimizer.step()
+            ##########################################
+            #  Critic (Value) Loss 산출 & Update- END #
+            ##########################################
+
+            #########################################
+            #  Actor Objective 산출 & Update - BEGIN #
+            #########################################
+            batch_advantages = (batch_td_target_values - batch_values).detach()
 
             if isinstance(self.action_space, Discrete):
                 # actions.shape: (32, 1)
@@ -76,6 +85,9 @@ class AgentPpo(AgentA2c):
                 batch_dist = Categorical(probs=batch_action_probs)
                 batch_log_pi_action_v = batch_dist.log_prob(value=self.actions.squeeze(dim=-1))
                 batch_entropy = batch_dist.entropy().mean()
+
+                batch_advantages = batch_advantages.squeeze(dim=-1)  # NOTE
+
             elif isinstance(self.action_space, Box):
                 batch_mu_v, batch_sigma_v = self.actor_model.pi(self.observations)
 
@@ -119,9 +131,9 @@ class AgentPpo(AgentA2c):
             sum_ratio += batch_ratio.mean().item()
             count_training_steps += 1
 
-        ##############################
-        #  Actor Objective 산출 - END #
-        ##############################
+        #######################################
+        #  Actor Objective 산출 & Update - END #
+        #######################################
 
         self.synchronize_models(source_model=self.actor_model, target_model=self.actor_old_model)
 

@@ -9,11 +9,10 @@ from g_utils.types import Transition
 
 
 class Buffer:
-    def __init__(self, capacity, action_space, config):
-        self.capacity = capacity
-        self.internal_buffer = collections.deque(maxlen=self.capacity)
+    def __init__(self, action_space, config):
         self.action_space = action_space
         self.config = config
+        self.internal_buffer = collections.deque(maxlen=self.config.BUFFER_CAPACITY)
 
         self.is_recurrent_model = any([
             isinstance(self.config.MODEL_PARAMETER, ConfigRecurrentLinearModel),
@@ -35,25 +34,6 @@ class Buffer:
     def append(self, transition):
         self.internal_buffer.append(transition)
 
-    def append_vectorized_transitions(self, transitions):
-        for observation, action, next_observation, reward, done, info in zip(
-                transitions.observations,
-                transitions.actions,
-                transitions.next_observations,
-                transitions.rewards,
-                transitions.dones,
-                transitions.infos
-        ):
-            transition = Transition(
-                observation=observation,
-                action=action,
-                next_observation=next_observation,
-                reward=reward,
-                done=done,
-                info=info
-            )
-            self.internal_buffer.append(transition)
-
     def sample(self, batch_size):
         if batch_size:
             # Get index
@@ -64,8 +44,7 @@ class Buffer:
             observations, actions, next_observations, rewards, dones, infos = \
                 zip(*[self.internal_buffer[idx] for idx in indices])
         else:
-            observations, actions, next_observations, rewards, dones, infos = \
-                zip(*self.internal_buffer)
+            observations, actions, next_observations, rewards, dones, infos = zip(*self.internal_buffer)
 
         if self.is_recurrent_model:
             """

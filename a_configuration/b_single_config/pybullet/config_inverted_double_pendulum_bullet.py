@@ -15,10 +15,6 @@ class ConfigInvertedDoublePendulumBulletA2c(ConfigBase, ConfigInvertedDoublePend
         ConfigInvertedDoublePendulumBullet.__init__(self)
         ConfigA2c.__init__(self)
 
-        self.BATCH_SIZE = 64
-        self.N_STEP = 1
-        self.BUFFER_CAPACITY = self.BATCH_SIZE
-
         self.MAX_TRAINING_STEPS = 2_000_000
         self.MODEL_TYPE = ModelType.SMALL_LINEAR
 
