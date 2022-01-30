@@ -1,6 +1,6 @@
 from a_configuration.a_base_config.config_comparison_base import ConfigComparisonBase
 from a_configuration.b_single_config.pybullet.config_ant_bullet import ConfigAntBulletSac, ConfigAntBulletDdpg, \
-    ConfigAntBulletTd3
+    ConfigAntBulletTd3, ConfigAntBulletPpoTrajectory
 
 
 class ConfigComparisonAntBulletDDpgTd3(ConfigComparisonBase):
@@ -49,6 +49,25 @@ class ConfigComparisonAntBulletSac(ConfigComparisonBase):
             "alpha = 0.5",
             "alpha tuning (No Alpha Limit)",
             "alpha tuning (Min Alpha = 0.2)",
+        ]
+        self.MAX_TRAINING_STEPS = 500_000
+        self.N_RUNS = 5
+
+
+class ConfigComparisonAntBulletPpoSac(ConfigComparisonBase):
+    def __init__(self):
+        ConfigComparisonBase.__init__(self)
+
+        self.ENV_NAME = "AntBulletEnv-v0"
+
+        self.AGENT_PARAMETERS = [
+            ConfigAntBulletPpoTrajectory(),
+            ConfigAntBulletSac(),
+        ]
+
+        self.AGENT_LABELS = [
+            "ppo",
+            "sac",
         ]
         self.MAX_TRAINING_STEPS = 500_000
         self.N_RUNS = 5

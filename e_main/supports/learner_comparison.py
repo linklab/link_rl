@@ -141,6 +141,9 @@ class LearnerComparison:
         self.train_comparison_start_time = time.time()
 
         while True:
+            if all([is_terminated for is_terminated in self.is_terminated_per_agent]):
+                break
+
             self.total_time_step += 1
 
             for agent_idx, _ in enumerate(self.agents):

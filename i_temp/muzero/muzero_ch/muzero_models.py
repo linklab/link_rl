@@ -153,6 +153,7 @@ class Models(AbstractNetwork):
         policy_logits, value = self.prediction(next_encoded_state)
         return value, reward, policy_logits, next_encoded_state
 
+
 def scalar_to_support(x, support_size):
     """
     Transform a scalar to a categorical representation with (2 * support_size + 1) categories

@@ -116,9 +116,7 @@ class SelfPlay:
         else:
             # See paper appendix Data Generation
             visit_count_distribution = visit_counts ** (1 / temperature)
-            visit_count_distribution = visit_count_distribution / sum(
-                visit_count_distribution
-            )
+            visit_count_distribution = visit_count_distribution / sum(visit_count_distribution)
             action = numpy.random.choice(actions, p=visit_count_distribution)
 
         return action
@@ -137,13 +135,7 @@ class MCTS:
         self.config = config
 
     def run(
-        self,
-        model,
-        observation,
-        legal_actions,
-        to_play,
-        add_exploration_noise,
-        override_root_with=None,
+        self, model, observation, legal_actions, to_play, add_exploration_noise, override_root_with=None,
     ):
         """
         At the root of the search tree we use the representation function to obtain a
@@ -153,18 +145,22 @@ class MCTS:
         """
 
         root = Node(0)
+
         observation = (
             torch.tensor(observation).float().unsqueeze(dim=0).to(next(model.parameters()).device)
         )
+
         (
             root_predicted_value,
             reward,
             policy_logits,
             hidden_state,
         ) = model.initial_inference(observation)
+
         root_predicted_value = support_to_scalar(
             root_predicted_value, self.config.support_size
         ).item()
+
         reward = support_to_scalar(reward, self.config.support_size).item()
         assert (
             legal_actions
