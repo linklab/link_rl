@@ -83,7 +83,7 @@ class ConfigSac(ConfigAgent):
 
         self.ACTOR_LEARNING_RATE = 0.0001
         self.LEARNING_RATE = 0.001
-        self.ALPHA_LEARNING_RATE = 0.0003
+        self.ALPHA_LEARNING_RATE = 0.00001
 
         self.TAU = 0.005
         self.BUFFER_CAPACITY = 10_000
