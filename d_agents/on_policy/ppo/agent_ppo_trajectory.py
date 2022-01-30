@@ -40,7 +40,6 @@ class AgentPpoTrajectory(AgentPpo):
         sum_entropy = 0.0
 
         for _ in range(self.config.PPO_K_EPOCH):
-
             trajectory_td_target_values = self.get_normalized_td_target_values(
                 self.next_observations, self.rewards, self.dones
             )
@@ -128,6 +127,7 @@ class AgentPpoTrajectory(AgentPpo):
                 sum_actor_objective += batch_actor_objective.item()
                 sum_entropy += batch_entropy.item()
                 sum_ratio += batch_ratio.mean().item()
+
                 count_training_steps += 1
 
         ##############################
