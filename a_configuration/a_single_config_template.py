@@ -101,6 +101,9 @@ config = ConfigLunarLanderContinuousPpoTrajectory()
 from a_configuration.b_single_config.open_ai_gym.config_lunar_lander_continuous import ConfigLunarLanderContinuousDdpg
 config = ConfigLunarLanderContinuousDdpg()
 
+from a_configuration.b_single_config.open_ai_gym.config_lunar_lander_continuous import ConfigLunarLanderContinuousTd3
+config = ConfigLunarLanderContinuousTd3()
+
 from a_configuration.b_single_config.open_ai_gym.config_lunar_lander_continuous import ConfigLunarLanderContinuousSac
 config = ConfigLunarLanderContinuousSac()
 
@@ -145,6 +148,9 @@ config = ConfigInvertedDoublePendulumBulletSac()
 
 from a_configuration.b_single_config.pybullet.config_inverted_double_pendulum_bullet import ConfigInvertedDoublePendulumBulletDdpg
 config = ConfigInvertedDoublePendulumBulletDdpg()
+
+from a_configuration.b_single_config.pybullet.config_inverted_double_pendulum_bullet import ConfigInvertedDoublePendulumBulletTd3
+config = ConfigInvertedDoublePendulumBulletTd3()
 
 from a_configuration.b_single_config.pybullet.config_inverted_double_pendulum_bullet import ConfigInvertedDoublePendulumBulletPpo
 config = ConfigInvertedDoublePendulumBulletPpo()
