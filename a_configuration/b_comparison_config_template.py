@@ -1,4 +1,4 @@
-from g_utils.commons import print_basic_info, get_env_info, print_comparison_basic_info
+from g_utils.commons import get_env_info, print_comparison_basic_info
 
 ###############
 ## CART_POLE ##
@@ -46,8 +46,8 @@ config_c = ConfigComparisonLunarLanderDqnRecurrent()
 from a_configuration.c_comparison_config.mujoco.config_comparison_hopper import ConfigComparisonHopperMujocoSac
 config_c = ConfigComparisonHopperMujocoSac()
 
-from a_configuration.c_comparison_config.mujoco.config_comparison_hopper import ConfigComparisonHopperMujoco
-config_c = ConfigComparisonHopperMujocoSac()
+from a_configuration.c_comparison_config.mujoco.config_comparison_hopper import ConfigComparisonHopperMujocoSacPpo
+config_c = ConfigComparisonHopperMujocoSacPpo()
 
 #######################
 ### WALKER2d_MUJOCO ###
@@ -55,6 +55,8 @@ config_c = ConfigComparisonHopperMujocoSac()
 from a_configuration.c_comparison_config.mujoco.config_comparison_walker2d import ConfigComparisonWalker2dMujocoSac
 config_c = ConfigComparisonWalker2dMujocoSac()
 
+from a_configuration.c_comparison_config.mujoco.config_comparison_walker2d import ConfigComparisonWalker2dMujocoSacPpo
+config_c = ConfigComparisonWalker2dMujocoSacPpo()
 
 ##########################
 ### HALFCHEETAH_MUJOCO ###
@@ -62,6 +64,8 @@ config_c = ConfigComparisonWalker2dMujocoSac()
 from a_configuration.c_comparison_config.mujoco.config_comparison_halfcheetah import ConfigComparisonHalfCheetahMujocoSac
 config_c = ConfigComparisonHalfCheetahMujocoSac()
 
+from a_configuration.c_comparison_config.mujoco.config_comparison_halfcheetah import ConfigComparisonHalfCheetahMujocoSacPpo
+config_c = ConfigComparisonHalfCheetahMujocoSacPpo()
 
 ##################
 ### ANT_MUJOCO ###
@@ -69,6 +73,8 @@ config_c = ConfigComparisonHalfCheetahMujocoSac()
 from a_configuration.c_comparison_config.mujoco.config_comparison_ant import ConfigComparisonAntMujocoSac
 config_c = ConfigComparisonAntMujocoSac()
 
+from a_configuration.c_comparison_config.mujoco.config_comparison_ant import ConfigComparisonAntMujocoSacPpo
+config_c = ConfigComparisonAntMujocoSacPpo()
 
 ######################
 ##    ANT_BULLET    ##

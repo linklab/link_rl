@@ -34,7 +34,7 @@ class ConfigComparisonWalker2dMujocoSac(ConfigComparisonBase):
         self.N_RUNS = 5
 
 
-class ConfigComparisonWalker2dMujocoPpoTrajectory(ConfigComparisonBase):
+class ConfigComparisonWalker2dMujocoSacPpo(ConfigComparisonBase):
     def __init__(self):
         ConfigComparisonBase.__init__(self)
 

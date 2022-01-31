@@ -34,7 +34,7 @@ class ConfigComparisonHopperMujocoSac(ConfigComparisonBase):
         self.N_RUNS = 5
 
 
-class ConfigComparisonHopperMujocoPpoTrajectory(ConfigComparisonBase):
+class ConfigComparisonHopperMujocoSacPpo(ConfigComparisonBase):
     def __init__(self):
         ConfigComparisonBase.__init__(self)
 
