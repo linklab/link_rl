@@ -31,7 +31,7 @@ class ConfigLunarLanderContinuousPpoTrajectory(ConfigBase, ConfigLunarLanderCont
         ConfigLunarLanderContinuous.__init__(self)
         ConfigPpoTrajectory.__init__(self)
 
-        self.MAX_TRAINING_STEPS = 200_000
+        self.MAX_TRAINING_STEPS = 500_000
         self.MODEL_TYPE = ModelType.SMALL_LINEAR
 
 
@@ -41,12 +41,8 @@ class ConfigLunarLanderContinuousDdpg(ConfigBase, ConfigLunarLanderContinuous, C
         ConfigLunarLanderContinuous.__init__(self)
         ConfigDdpg.__init__(self)
 
-        self.N_VECTORIZED_ENVS = 1
-        self.N_ACTORS = 1
-        self.MAX_TRAINING_STEPS = 200_000
+        self.MAX_TRAINING_STEPS = 300_000
         self.BUFFER_CAPACITY = 200_000
-        self.BATCH_SIZE = 64
-        self.LEARNING_RATE = 0.001
         self.MODEL_TYPE = ModelType.SMALL_LINEAR
 
 
@@ -56,9 +52,6 @@ class ConfigLunarLanderContinuousSac(ConfigBase, ConfigLunarLanderContinuous, Co
         ConfigLunarLanderContinuous.__init__(self)
         ConfigSac.__init__(self)
 
-        self.N_VECTORIZED_ENVS = 1
-        self.N_ACTORS = 1
-        self.MAX_TRAINING_STEPS = 500_000
+        self.MAX_TRAINING_STEPS = 300_000
         self.BUFFER_CAPACITY = 200_000
-        self.BATCH_SIZE = 64
         self.MODEL_TYPE = ModelType.SMALL_LINEAR
