@@ -67,3 +67,5 @@ class ConfigBase:
 
         self.NO_TEST_GRAPHICS = True
 
+        self.TARGET_VALUE_NORMALIZE = False
+

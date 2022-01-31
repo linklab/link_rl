@@ -84,7 +84,8 @@ class AgentA2c(Agent):
         # td_target_values.shape: (32, 1)
         td_target_values = rewards + (self.config.GAMMA ** self.config.N_STEP) * next_values
         # normalize td_target
-        td_target_values = (td_target_values - torch.mean(td_target_values)) / (torch.std(td_target_values) + 1e-7)
+        if self.config.TARGET_VALUE_NORMALIZE:
+            td_target_values = (td_target_values - torch.mean(td_target_values)) / (torch.std(td_target_values) + 1e-7)
 
         return td_target_values.detach()
 
@@ -104,7 +105,8 @@ class AgentA2c(Agent):
         # # td_target_values.shape: (32, 1)
         # td_target_values = self.rewards + (self.config.GAMMA ** self.config.N_STEP) * next_values
         # # normalize td_target
-        # td_target_values = (td_target_values - torch.mean(td_target_values)) / (torch.std(td_target_values) + 1e-7)
+        # if self.config.TARGET_VALUE_NORMALIZE:
+        #     td_target_values = (td_target_values - torch.mean(td_target_values)) / (torch.std(td_target_values) + 1e-7)
 
         # values.shape: (32, 1)
         values = self.critic_model.v(self.observations)

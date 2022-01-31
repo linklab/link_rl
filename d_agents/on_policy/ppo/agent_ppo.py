@@ -57,7 +57,8 @@ class AgentPpo(AgentA2c):
             # # td_target_values.shape: (32, 1)
             # batch_td_target_values = self.rewards + self.config.GAMMA ** self.config.N_STEP * batch_next_values
             # # normalize td_target_value
-            # batch_td_target_values = (batch_td_target_values - torch.mean(batch_td_target_values)) / (torch.std(batch_td_target_values) + 1e-7)
+            # if self.config.TARGET_VALUE_NORMALIZE:
+            #     batch_td_target_values = (batch_td_target_values - torch.mean(batch_td_target_values)) / (torch.std(batch_td_target_values) + 1e-7)
 
             batch_values = self.critic_model.v(self.observations)
 
