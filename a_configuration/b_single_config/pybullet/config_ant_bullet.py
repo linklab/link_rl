@@ -22,8 +22,6 @@ class ConfigAntBulletPpo(ConfigBase, ConfigAntBullet, ConfigPpo):
         ConfigAntBullet.__init__(self)
         ConfigPpo.__init__(self)
 
-        self.N_STEP = 1
-
         self.MAX_TRAINING_STEPS = 2_000_000
         self.MODEL_TYPE = ModelType.SMALL_LINEAR
 

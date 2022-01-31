@@ -131,6 +131,8 @@ config = ConfigAntBulletSac()
 from a_configuration.b_single_config.pybullet.config_hopper_bullet import ConfigHopperBulletSac
 config = ConfigHopperBulletSac()
 
+from a_configuration.b_single_config.pybullet.config_hopper_bullet import ConfigHopperBulletPpoTrajectory
+config = ConfigHopperBulletPpoTrajectory()
 
 #########################################
 ##    InvertedDoublePendulum_BULLET    ##
@@ -176,6 +178,8 @@ config = ConfigPongA2c()
 from a_configuration.b_single_config.mujoco.config_ant_mujoco import ConfigAntMujocoSac
 config = ConfigAntMujocoSac()
 
+from a_configuration.b_single_config.mujoco.config_ant_mujoco import ConfigAntMujocoPpoTrajectory
+config = ConfigAntMujocoPpoTrajectory()
 
 #####################
 ### HOPPER_MUJOCO ###
@@ -183,17 +187,26 @@ config = ConfigAntMujocoSac()
 from a_configuration.b_single_config.mujoco.config_hopper_mujoco import ConfigHopperMujocoSac
 config = ConfigHopperMujocoSac()
 
+from a_configuration.b_single_config.mujoco.config_hopper_mujoco import ConfigHopperMujocoPpoTrajectory
+config = ConfigHopperMujocoPpoTrajectory()
+
 #######################
 ### WALKER2d_MUJOCO ###
 #######################
 from a_configuration.b_single_config.mujoco.config_walker2d_mujoco import ConfigWalker2dMujocoSac
 config = ConfigWalker2dMujocoSac()
 
+from a_configuration.b_single_config.mujoco.config_walker2d_mujoco import ConfigWalker2dMujocoPpoTrajectory
+config = ConfigWalker2dMujocoPpoTrajectory()
+
 ##########################
 ### HALFCHEETAH_MUJOCO ###
 ##########################
 from a_configuration.b_single_config.mujoco.config_halfcheetah_mujoco import ConfigHalfCheetahMujocoSac
 config = ConfigHalfCheetahMujocoSac()
+
+from a_configuration.b_single_config.mujoco.config_halfcheetah_mujoco import ConfigHalfCheetahMujocoPpoTrajectory
+config = ConfigHalfCheetahMujocoPpoTrajectory()
 
 ##########################
 ### Unity3DBall ###

@@ -46,6 +46,8 @@ config_c = ConfigComparisonLunarLanderDqnRecurrent()
 from a_configuration.c_comparison_config.mujoco.config_comparison_hopper import ConfigComparisonHopperMujocoSac
 config_c = ConfigComparisonHopperMujocoSac()
 
+from a_configuration.c_comparison_config.mujoco.config_comparison_hopper import ConfigComparisonHopperMujoco
+config_c = ConfigComparisonHopperMujocoSac()
 
 #######################
 ### WALKER2d_MUJOCO ###

@@ -1,8 +1,8 @@
 from a_configuration.a_base_config.a_environments.pybullet.gym_mujoco import ConfigWalker2dMujoco
 from a_configuration.a_base_config.b_agents.agents_off_policy import ConfigSac
+from a_configuration.a_base_config.b_agents.agents_on_policy import ConfigPpoTrajectory
 from a_configuration.a_base_config.config_single_base import ConfigBase
 from g_utils.types import ModelType
-from torch import nn
 
 
 class ConfigWalker2dMujocoSac(ConfigBase, ConfigWalker2dMujoco, ConfigSac):
@@ -11,21 +11,16 @@ class ConfigWalker2dMujocoSac(ConfigBase, ConfigWalker2dMujoco, ConfigSac):
         ConfigWalker2dMujoco.__init__(self)
         ConfigSac.__init__(self)
 
-        self.BATCH_SIZE = 256
-
-        self.ALPHA_LEARNING_RATE = 0.0001
-        self.ACTOR_LEARNING_RATE = 0.0002
-        self.LEARNING_RATE = 0.001
-        self.N_STEP = 2
         self.BUFFER_CAPACITY = 1_000_000
-        self.MIN_BUFFER_SIZE_FOR_TRAIN = self.BATCH_SIZE * 10
-
-        self.N_VECTORIZED_ENVS = 1
-        self.N_ACTORS = 1
         self.MAX_TRAINING_STEPS = 2_000_000
-
         self.MODEL_TYPE = ModelType.SMALL_LINEAR
 
-        self.USE_LAYER_NORM = False
 
+class ConfigWalker2dMujocoPpoTrajectory(ConfigBase, ConfigWalker2dMujoco, ConfigPpoTrajectory):
+    def __init__(self):
+        ConfigBase.__init__(self)
+        ConfigWalker2dMujoco.__init__(self)
+        ConfigPpoTrajectory.__init__(self)
 
+        self.MAX_TRAINING_STEPS = 2_000_000
+        self.MODEL_TYPE = ModelType.SMALL_LINEAR

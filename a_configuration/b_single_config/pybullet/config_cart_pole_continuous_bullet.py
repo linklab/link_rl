@@ -41,14 +41,8 @@ class ConfigCartPoleContinuousBulletSac(ConfigBase, ConfigCartPoleContinuousBull
         ConfigCartPoleContinuousBullet.__init__(self)
         ConfigSac.__init__(self)
 
-        self.ALPHA_LEARNING_RATE = 0.0001
-        self.LEARNING_RATE = 0.001
-        self.N_VECTORIZED_ENVS = 1
-        self.N_ACTORS = 1
         self.MAX_TRAINING_STEPS = 100_000
         self.MODEL_TYPE = ModelType.SMALL_LINEAR
-        self.ACTOR_LEARNING_RATE = 0.0005
-        self.LEARNING_RATE = 0.001
 
 
 class ConfigCartPoleContinuousBulletDdpg(ConfigBase, ConfigCartPoleContinuousBullet, ConfigDdpg):
@@ -57,10 +51,6 @@ class ConfigCartPoleContinuousBulletDdpg(ConfigBase, ConfigCartPoleContinuousBul
         ConfigCartPoleContinuousBullet.__init__(self)
         ConfigDdpg.__init__(self)
 
-        self.LEARNING_RATE = 0.001
-        self.N_VECTORIZED_ENVS = 1
-        self.BUFFER_CAPACITY = 200_000
-        self.N_ACTORS = 1
         self.MAX_TRAINING_STEPS = 200_000
         self.MODEL_TYPE = ModelType.SMALL_LINEAR
         # self.MODEL_TYPE = ModelType.SMALL_RECURRENT
@@ -72,10 +62,6 @@ class ConfigCartPoleContinuousBulletTd3(ConfigBase, ConfigCartPoleContinuousBull
         ConfigCartPoleContinuousBullet.__init__(self)
         ConfigTd3.__init__(self)
 
-        self.LEARNING_RATE = 0.001
-        self.N_VECTORIZED_ENVS = 1
-        self.BUFFER_CAPACITY = 200_000
-        self.N_ACTORS = 1
         self.MAX_TRAINING_STEPS = 200_000
         self.MODEL_TYPE = ModelType.SMALL_LINEAR
         # self.MODEL_TYPE = ModelType.SMALL_RECURRENT
