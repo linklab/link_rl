@@ -122,26 +122,6 @@ class ContinuousStochasticActorModel(ActorModel):
             nn.Tanh()
         )
 
-        if any([
-            isinstance(self.config.MODEL_PARAMETER, ConfigLinearModel),
-            isinstance(self.config.MODEL_PARAMETER, ConfigRecurrentLinearModel)
-        ]):
-            input_n_features = observation_shape[0]
-            self.representation_layers = self.get_representation_layers(input_n_features=input_n_features)
-
-        elif any([
-            isinstance(self.config.MODEL_PARAMETER, ConfigConvolutionalModel),
-            isinstance(self.config.MODEL_PARAMETER, ConfigRecurrentConvolutionalModel)
-        ]):
-            input_n_channels = observation_shape[0]
-            self.convolutional_layers = self.get_convolutional_layers(input_n_channels)
-
-            conv_out_flat_size = self._get_conv_out(self.convolutional_layers, observation_shape)
-            self.representation_layers = self.get_representation_layers(input_n_features=conv_out_flat_size)
-
-        else:
-            raise ValueError()
-
         self.log_sigma = nn.Sequential(
             nn.Linear(self.config.MODEL_PARAMETER.NEURONS_PER_REPRESENTATION_LAYER[-1], self.n_out_actions),
             nn.Softplus()
@@ -190,8 +170,7 @@ class ContinuousStochasticActorModel(ActorModel):
         # The standard deviation can’t be negative (nor 0).
         # sigma_v = torch.clamp(self.log_sigma.exp(), 1e-3, 50)
         x = self.forward_variance(obs)
-        log_sigma_v = self.log_sigma(x)
-        sigma_v = torch.exp(log_sigma_v)
+        sigma_v = self.log_sigma(x).exp()
         sigma_v = torch.clamp(sigma_v, 1e-4, 50)
 
         return mu_v, sigma_v
