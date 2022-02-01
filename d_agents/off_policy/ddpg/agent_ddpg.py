@@ -73,7 +73,8 @@ class AgentDdpg(Agent):
 
         q_v = self.critic_model.q(self.observations, self.actions)
 
-        critic_loss = self.config.LOSS_FUNCTION(q_v, target_q_v.detach())
+        critic_loss_each = self.config.LOSS_FUNCTION(q_v, target_q_v.detach(), reduction="none")
+        critic_loss = critic_loss_each.mean()
 
         self.critic_optimizer.zero_grad()
         critic_loss.backward()
@@ -113,4 +114,4 @@ class AgentDdpg(Agent):
 
         count_training_steps += 1
 
-        return count_training_steps
+        return count_training_steps, critic_loss_each

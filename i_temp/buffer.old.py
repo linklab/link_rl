@@ -12,46 +12,37 @@ class Buffer:
     def __init__(self, action_space, config):
         self.action_space = action_space
         self.config = config
-        self.internal_buffer = [None] * self.config.BUFFER_CAPACITY
+        self.internal_buffer = collections.deque(maxlen=self.config.BUFFER_CAPACITY)
 
         self.is_recurrent_model = any([
             isinstance(self.config.MODEL_PARAMETER, ConfigRecurrentLinearModel),
             isinstance(self.config.MODEL_PARAMETER, ConfigRecurrentConvolutionalModel)
         ])
 
-        self.clear()
-
     def __len__(self):
-        return self.size
+        return len(self.internal_buffer)
 
     def size(self):
-        return self.size
+        return len(self.internal_buffer)
+
+    def pop(self):
+        return self.internal_buffer.pop()
 
     def clear(self):
-        self.internal_buffer = [None] * self.config.BUFFER_CAPACITY
-
-        self.size = 0
-        self.head = -1
+        self.internal_buffer.clear()
 
     def append(self, transition):
-        self.head = (self.head + 1) % self.config.BUFFER_CAPACITY
-        self.internal_buffer[self.head] = transition
-
-        if self.size < self.config.BUFFER_CAPACITY:
-            self.size += 1
-
-    def sample_indices(self, batch_size):
-        # Get index
-        transition_indices = np.random.randint(self.size, size=batch_size)
-        return transition_indices
+        self.internal_buffer.append(transition)
 
     def sample(self, batch_size):
         if batch_size:
-            transition_indices = self.sample_indices(batch_size)
+            # Get index
+            # indices = np.random.choice(len(self.internal_buffer), size=batch_size, replace=False)
+            indices = np.random.randint(len(self.internal_buffer), size=batch_size)
 
             # Sample
             observations, actions, next_observations, rewards, dones, infos = \
-                zip(*[self.internal_buffer[idx] for idx in transition_indices])
+                zip(*[self.internal_buffer[idx] for idx in indices])
         else:
             observations, actions, next_observations, rewards, dones, infos = zip(*self.internal_buffer)
 
@@ -67,6 +58,8 @@ class Buffer:
             observations, hiddens = zip(*observations)
             next_observations, next_hiddens = zip(*next_observations)
 
+        # Convert to tensor
+        if self.is_recurrent_model:
             """
             type(hiddens): tuple
             len(hiddens): batch_size
@@ -109,4 +102,44 @@ class Buffer:
 
         return observations_v, actions_v, next_observations_v, rewards_v, dones_v
 
+    def sample_old(self, batch_size):
+        if batch_size:
+            # Get index
+            indices = np.random.choice(len(self.internal_buffer), size=batch_size, replace=False)
+
+            # Sample
+            observations, actions, next_observations, rewards, dones, infos = \
+                zip(*[self.internal_buffer[idx] for idx in indices])
+        else:
+            observations, actions, next_observations, rewards, dones, infos = \
+                zip(*self.internal_buffer)
+
+        # Convert to ndarray for speed up cuda
+        observations = np.array(observations)
+        next_observations = np.array(next_observations)
+        # observations.shape, next_observations.shape: (64, 4), (64, 4)
+
+        actions = np.array(actions)
+        actions = np.expand_dims(actions, axis=-1) if actions.ndim == 1 else actions
+
+        rewards = np.array(rewards)
+        rewards = np.expand_dims(rewards, axis=-1) if rewards.ndim == 1 else rewards
+
+        dones = np.array(dones, dtype=bool)
+        # actions.shape, rewards.shape, dones.shape: (64, 1) (64, 1) (64,)
+
+        # Convert to tensor
+        observations_v = torch.tensor(observations, dtype=torch.float32, device=self.config.DEVICE)
+        actions_v = torch.tensor(actions, dtype=torch.int64, device=self.config.DEVICE)
+        next_observations_v = torch.tensor(next_observations, dtype=torch.float32, device=self.config.DEVICE)
+        rewards_v = torch.tensor([rewards], dtype=torch.float32, device=self.config.DEVICE)
+        dones_v = torch.tensor(dones, dtype=torch.bool, device=self.config.DEVICE)
+
+        del observations
+        del actions
+        del next_observations
+        del rewards
+        del dones
+
+        return observations_v, actions_v, next_observations_v, rewards_v, dones_v
 

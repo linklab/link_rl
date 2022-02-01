@@ -108,9 +108,9 @@ class AgentSac(Agent):
         q1_values, q2_values = self.critic_model.q(self.observations, self.actions)
 
         # critic_loss.shape: ()
-        critic_loss = self.config.LOSS_FUNCTION(q1_values, td_target_values.detach()) \
-                      + self.config.LOSS_FUNCTION(q2_values, td_target_values.detach())
+        critic_loss_each = (self.config.LOSS_FUNCTION(q1_values, td_target_values.detach(), reduction="none") + self.config.LOSS_FUNCTION(q2_values, td_target_values.detach(), reduction="none")) / 2.0
 
+        critic_loss = critic_loss_each.mean()
         self.critic_optimizer.zero_grad()
         critic_loss.backward()
         self.clip_critic_model_parameter_grad_value(self.critic_model.critic_params_list)
@@ -160,4 +160,4 @@ class AgentSac(Agent):
 
         count_training_steps += 1
 
-        return count_training_steps
+        return count_training_steps, critic_loss_each

@@ -73,3 +73,4 @@ class ConfigBase:
 
         self.PER_ALPHA = 0.6
         self.PER_EPSILON = 0.01
+        self.USE_PER = False

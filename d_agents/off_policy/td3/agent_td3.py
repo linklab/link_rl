@@ -79,7 +79,8 @@ class AgentTd3(Agent):
 
         q1_value, q2_value = self.critic_model.q(self.observations, self.actions)
 
-        critic_loss = self.config.LOSS_FUNCTION(q1_value, target_q_v.detach()) + self.config.LOSS_FUNCTION(q2_value, target_q_v.detach())
+        critic_loss_each = (self.config.LOSS_FUNCTION(q1_value, target_q_v.detach(), reduction="none") + self.config.LOSS_FUNCTION(q2_value, target_q_v.detach(), reduction="none")) / 2.0
+        critic_loss = critic_loss_each.mean()
 
         self.critic_optimizer.zero_grad()
         critic_loss.backward()
@@ -122,4 +123,4 @@ class AgentTd3(Agent):
 
         count_training_steps += 1
 
-        return count_training_steps
+        return count_training_steps, critic_loss_each
