@@ -12,35 +12,56 @@ class Buffer:
     def __init__(self, action_space, config):
         self.action_space = action_space
         self.config = config
-        self.internal_buffer = collections.deque(maxlen=self.config.BUFFER_CAPACITY)
 
         self.is_recurrent_model = any([
             isinstance(self.config.MODEL_PARAMETER, ConfigRecurrentLinearModel),
             isinstance(self.config.MODEL_PARAMETER, ConfigRecurrentConvolutionalModel)
         ])
 
+        self.clear()
+
     def __len__(self):
-        return len(self.internal_buffer)
+        return self.size
 
     def size(self):
         return len(self.internal_buffer)
 
-    def pop(self):
-        return self.internal_buffer.pop()
-
     def clear(self):
-        self.internal_buffer.clear()
+        self.observations = [None] * self.config.BUFFER_CAPACITY
+        self.actions = [None] * self.config.BUFFER_CAPACITY
+        self.rewards = [None] * self.config.BUFFER_CAPACITY
+        self.next_observations = [None] * self.config.BUFFER_CAPACITY
+        self.dones = [None] * self.config.BUFFER_CAPACITY
+        self.infos = [None] * self.config.BUFFER_CAPACITY
+
+        self.size = 0
+        self.head = -1
 
     def append(self, transition):
-        self.internal_buffer.append(transition)
+        self.head = (self.head + 1) % self.config.BUFFER_CAPACITY
+
+        self.observations[self.head] = transition.observation
+        self.actions[self.head] = transition.action
+        self.rewards[self.head] = transition.reward
+        self.next_observations[self.head] = transition.next_observation
+        self.dones[self.head] = transition.done
+        self.infos[self.head] = transition.info
+
+        if self.size < self.config.BUFFER_CAPACITY:
+            self.size += 1
+
+    def sample_indices(self, batch_size):
+        # Get index
+        indices = np.random.randint(self.size, size=batch_size)
+        return indices
 
     def sample(self, batch_size):
         if batch_size:
-            # Get index
-            # indices = np.random.choice(len(self.internal_buffer), size=batch_size, replace=False)
-            indices = np.random.randint(len(self.internal_buffer), size=batch_size)
+            indices = self.sample_indices(batch_size)
 
             # Sample
+            observations = [self.observations[idx] for idx in indices]
+            
             observations, actions, next_observations, rewards, dones, infos = \
                 zip(*[self.internal_buffer[idx] for idx in indices])
         else:
@@ -58,8 +79,6 @@ class Buffer:
             observations, hiddens = zip(*observations)
             next_observations, next_hiddens = zip(*next_observations)
 
-        # Convert to tensor
-        if self.is_recurrent_model:
             """
             type(hiddens): tuple
             len(hiddens): batch_size

@@ -1,13 +1,10 @@
-from torch import nn
-
-from a_configuration.a_base_config.b_agents.agents import ConfigAgent
+from a_configuration.a_base_config.b_agents.agents import ConfigOffPolicyAgent
 from g_utils.commons import AgentType
-from g_utils.types import LayerActivationType
 
 
-class ConfigDqn(ConfigAgent):
+class ConfigDqn(ConfigOffPolicyAgent):
     def __init__(self):
-        ConfigAgent.__init__(self)
+        super(ConfigDqn, self).__init__()
         self.AGENT_TYPE = AgentType.DQN
 
         self.LEARNING_RATE = 0.001
@@ -46,9 +43,9 @@ class ConfigDoubleDuelingDqn(ConfigDqn):
         del self.TARGET_SYNC_INTERVAL_TRAINING_STEPS
 
 
-class ConfigDdpg(ConfigAgent):
+class ConfigDdpg(ConfigOffPolicyAgent):
     def __init__(self):
-        ConfigAgent.__init__(self)
+        super(ConfigDdpg, self).__init__()
         self.AGENT_TYPE = AgentType.DDPG
 
         self.ACTOR_LEARNING_RATE = 0.0001
@@ -60,9 +57,9 @@ class ConfigDdpg(ConfigAgent):
         self.MIN_BUFFER_SIZE_FOR_TRAIN = self.BATCH_SIZE * 10
 
 
-class ConfigTd3(ConfigAgent):
+class ConfigTd3(ConfigOffPolicyAgent):
     def __init__(self):
-        ConfigAgent.__init__(self)
+        super(ConfigTd3, self).__init__()
         self.AGENT_TYPE = AgentType.TD3
 
         self.ACTOR_LEARNING_RATE = 0.0001
@@ -76,9 +73,9 @@ class ConfigTd3(ConfigAgent):
         self.POLICY_UPDATE_FREQUENCY_PER_TRAINING_STEP = 2
 
 
-class ConfigSac(ConfigAgent):
+class ConfigSac(ConfigOffPolicyAgent):
     def __init__(self):
-        ConfigAgent.__init__(self)
+        super(ConfigSac, self).__init__()
         self.AGENT_TYPE = AgentType.SAC
 
         self.ACTOR_LEARNING_RATE = 0.0002

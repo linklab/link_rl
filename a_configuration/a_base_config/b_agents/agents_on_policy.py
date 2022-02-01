@@ -1,11 +1,5 @@
-from a_configuration.a_base_config.b_agents.agents import ConfigAgent
+from a_configuration.a_base_config.b_agents.agents import ConfigOnPolicyAgent
 from g_utils.commons import AgentType
-
-
-class ConfigOnPolicyAgent(ConfigAgent):
-    def __init__(self):
-        ConfigAgent.__init__(self)
-        self.TEST_INTERVAL_TRAINING_STEPS = 300
 
 
 class ConfigReinforce(ConfigOnPolicyAgent):

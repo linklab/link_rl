@@ -4,20 +4,18 @@ import enum
 Transition = namedtuple(
     typename='Transition',
     field_names=[
-        'observation', 'action', 'next_observation',
-        'reward', 'done', 'info'
+        'observation', 'action', 'next_observation', 'reward', 'done', 'info'
     ],
     defaults=[None] * 6
 )
 
-Transitions = namedtuple(
-    typename='Transitions',
-    field_names=[
-        'observations', 'actions', 'next_observations',
-        'rewards', 'dones', 'infos'
-    ],
-    defaults=[None] * 6
-)
+# Transitions = namedtuple(
+#     typename='Transitions',
+#     field_names=[
+#         'observations', 'actions', 'next_observations', 'rewards', 'dones', 'infos'
+#     ],
+#     defaults=[None] * 6
+# )
 
 
 class AgentMode(enum.Enum):
