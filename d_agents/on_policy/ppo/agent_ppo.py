@@ -49,7 +49,7 @@ class AgentPpo(AgentA2c):
             #  Critic (Value) Loss 산출 & Update - BEGIN #
             #############################################
 
-            batch_td_target_values = self.get_normalized_td_target_values(self.next_observations, self.rewards, self.dones)
+            batch_td_target_values = self.get_td_target_values(self.next_observations, self.rewards, self.dones)
 
             # batch_next_values = self.critic_model.v(self.next_observations)
             # batch_next_values[self.dones] = 0.0

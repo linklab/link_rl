@@ -40,7 +40,7 @@ class AgentPpoTrajectory(AgentPpo):
         sum_entropy = 0.0
 
         for _ in range(self.config.PPO_K_EPOCH):
-            trajectory_td_target_values = self.get_normalized_td_target_values(
+            trajectory_td_target_values = self.get_td_target_values(
                 self.next_observations, self.rewards, self.dones
             )
 

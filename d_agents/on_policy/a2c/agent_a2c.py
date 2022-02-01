@@ -76,16 +76,17 @@ class AgentA2c(Agent):
         else:
             raise ValueError()
 
-    def get_normalized_td_target_values(self, next_observations, rewards, dones):
-        # values.shape: (32, 1), next_values.shape: (32, 1)
-        next_values = self.critic_model.v(next_observations)
-        next_values[dones] = 0.0
+    def get_td_target_values(self, next_observations, rewards, dones):
+        with torch.no_grad():
+            # values.shape: (32, 1), next_values.shape: (32, 1)
+            next_values = self.critic_model.v(next_observations)
+            next_values[dones] = 0.0
 
-        # td_target_values.shape: (32, 1)
-        td_target_values = rewards + (self.config.GAMMA ** self.config.N_STEP) * next_values
-        # normalize td_target
-        if self.config.TARGET_VALUE_NORMALIZE:
-            td_target_values = (td_target_values - torch.mean(td_target_values)) / (torch.std(td_target_values) + 1e-7)
+            # td_target_values.shape: (32, 1)
+            td_target_values = rewards + (self.config.GAMMA ** self.config.N_STEP) * next_values
+            # normalize td_target
+            if self.config.TARGET_VALUE_NORMALIZE:
+                td_target_values = (td_target_values - torch.mean(td_target_values)) / (torch.std(td_target_values) + 1e-7)
 
         return td_target_values.detach()
 
@@ -96,7 +97,7 @@ class AgentA2c(Agent):
         #  Critic (Value) Loss 산출 & Update - BEGIN #
         #############################################
 
-        td_target_values = self.get_normalized_td_target_values(self.next_observations, self.rewards, self.dones)
+        td_target_values = self.get_td_target_values(self.next_observations, self.rewards, self.dones)
 
         # # next_values.shape: (32, 1)
         # next_values = self.critic_model.v(self.next_observations)
