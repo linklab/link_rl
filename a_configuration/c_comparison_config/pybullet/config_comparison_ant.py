@@ -69,5 +69,5 @@ class ConfigComparisonAntBulletPpoSac(ConfigComparisonBase):
             "ppo_trajectory",
             "sac",
         ]
-        self.MAX_TRAINING_STEPS = 500_000
+        self.MAX_TRAINING_STEPS = 1_000_000
         self.N_RUNS = 5

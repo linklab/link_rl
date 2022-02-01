@@ -97,15 +97,18 @@ config = ConfigLunarLanderContinuousPpo()
 
 from a_configuration.b_single_config.open_ai_gym.config_lunar_lander_continuous import ConfigLunarLanderContinuousPpoTrajectory
 config = ConfigLunarLanderContinuousPpoTrajectory()
+config.WANDB_REPORT_URL = "https://wandb.ai/link-koreatech/LunarLanderContinuous-v2_PPO_TRAJECTORY_yhhan/reports/LunarLanderContinuous-v2_PPO_TRAJECTORY--VmlldzoxNTA3MjAx"
 
 from a_configuration.b_single_config.open_ai_gym.config_lunar_lander_continuous import ConfigLunarLanderContinuousDdpg
 config = ConfigLunarLanderContinuousDdpg()
 
 from a_configuration.b_single_config.open_ai_gym.config_lunar_lander_continuous import ConfigLunarLanderContinuousTd3
 config = ConfigLunarLanderContinuousTd3()
+config.WANDB_REPORT_URL = "https://wandb.ai/link-koreatech/LunarLanderContinuous-v2_TD3_yhhan/reports/LunarLanderContinuous-v2_TD3--VmlldzoxNTA3MjA4"
 
 from a_configuration.b_single_config.open_ai_gym.config_lunar_lander_continuous import ConfigLunarLanderContinuousSac
 config = ConfigLunarLanderContinuousSac()
+config.WANDB_REPORT_URL = "https://wandb.ai/link-koreatech/LunarLanderContinuous-v2_SAC_yhhan/reports/LunarLanderContinuous-v2_SAC--VmlldzoxNTA3MjA2"
 
 ######################
 ##    ANT_BULLET    ##
