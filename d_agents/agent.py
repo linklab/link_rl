@@ -174,7 +174,7 @@ class Agent:
 
     def _after_train(self, loss_each=None):
         if loss_each is not None and self.config.USE_PER:
-            self.buffer.update_priorities(loss_each.detach().numpy())
+            self.buffer.update_priorities(loss_each.detach().cpu().numpy())
 
         del self.observations
         del self.actions
