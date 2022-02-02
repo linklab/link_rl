@@ -212,40 +212,6 @@ class Agent:
             self.last_critic_model_grad_l2.value = np.sqrt(np.mean(np.square(critic_grads)))
             self.last_critic_model_grad_max.value = np.max(critic_grads)
 
-    # OFF POLICY
-    @abstractmethod
-    def train_dqn(self, training_steps_v):
-        return None, None
-
-    @abstractmethod
-    def train_double_dqn(self, training_steps_v):
-        return None, None
-
-    @abstractmethod
-    def train_ddpg(self):
-        return None, None
-
-    @abstractmethod
-    def train_td3(self, training_steps_v):
-        return None, None
-
-    @abstractmethod
-    def train_sac(self, training_steps_v):
-        return None, None
-
-    # ON_POLICY
-    @abstractmethod
-    def train_reinforce(self):
-        return None
-
-    @abstractmethod
-    def train_a2c(self):
-        return None
-
-    @abstractmethod
-    def train_ppo(self):
-        return None
-
     def synchronize_models(self, source_model, target_model):
         target_model.load_state_dict(source_model.state_dict())
 
@@ -267,4 +233,36 @@ class Agent:
         log_prob = (p1 + p2).sum(dim=-1, keepdim=True)
         return log_prob
 
+    # OFF POLICY
+    @abstractmethod
+    def train_dqn(self, training_steps_v):
+        return None, None
 
+    @abstractmethod
+    def train_double_dqn(self, training_steps_v):
+        raise NotImplementedError()
+
+    @abstractmethod
+    def train_ddpg(self):
+        raise NotImplementedError()
+
+    @abstractmethod
+    def train_td3(self, training_steps_v):
+        raise NotImplementedError()
+
+    @abstractmethod
+    def train_sac(self, training_steps_v):
+        raise NotImplementedError()
+
+    # ON_POLICY
+    @abstractmethod
+    def train_reinforce(self):
+        raise NotImplementedError()
+
+    @abstractmethod
+    def train_a2c(self):
+        raise NotImplementedError()
+
+    @abstractmethod
+    def train_ppo(self):
+        raise NotImplementedError()
