@@ -7,7 +7,7 @@ from a_configuration.b_single_config.pybullet.config_inverted_double_pendulum_bu
     ConfigInvertedDoublePendulumBulletPpoTrajectory
 
 
-class ConfigComparisonInvertedDoublePendulumBulletSac(ConfigComparisonBase):
+class ConfigComparisonInvertedDoublePendulumBulletSacAlpha(ConfigComparisonBase):
     def __init__(self):
         ConfigComparisonBase.__init__(self)
 

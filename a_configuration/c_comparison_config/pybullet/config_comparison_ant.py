@@ -22,7 +22,7 @@ class ConfigComparisonAntBulletDDpgTd3(ConfigComparisonBase):
         self.N_RUNS = 5
 
 
-class ConfigComparisonAntBulletSac(ConfigComparisonBase):
+class ConfigComparisonAntBulletSacAlpha(ConfigComparisonBase):
     def __init__(self):
         ConfigComparisonBase.__init__(self)
 
@@ -49,6 +49,27 @@ class ConfigComparisonAntBulletSac(ConfigComparisonBase):
             "alpha = 0.5",
             "alpha tuning (No Alpha Limit)",
             "alpha tuning (Min Alpha = 0.2)",
+        ]
+        self.MAX_TRAINING_STEPS = 500_000
+        self.N_RUNS = 5
+
+
+class ConfigComparisonAntBulletSacPer(ConfigComparisonBase):
+    def __init__(self):
+        ConfigComparisonBase.__init__(self)
+
+        self.ENV_NAME = "AntBulletEnv-v0"
+
+        self.AGENT_PARAMETERS = [
+            ConfigAntBulletSac(),
+            ConfigAntBulletSac(),
+        ]
+
+        self.AGENT_PARAMETERS[1].USE_PER = True
+
+        self.AGENT_LABELS = [
+            "SAC",
+            "SAC + PER",
         ]
         self.MAX_TRAINING_STEPS = 500_000
         self.N_RUNS = 5

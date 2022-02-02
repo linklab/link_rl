@@ -94,8 +94,8 @@ from a_configuration.c_comparison_config.pybullet.config_comparison_ant import C
 config_c = ConfigComparisonAntBulletDDpgTd3()
 config_c.WANDB_REPORT_URL = "https://wandb.ai/link-koreatech/AntBulletEnv-v0_Comparison_anonymous/reports/AntBullet-DDPG-TD3--VmlldzoxNTAwOTgw?accessToken=1wzn8ux59sr6991ejtvmr1vgq1k1berw6ia2hu4bcm445gn5o1yk43ksbd4qkwhw"
 
-from a_configuration.c_comparison_config.pybullet.config_comparison_ant import ConfigComparisonAntBulletSac
-config_c = ConfigComparisonAntBulletSac()
+from a_configuration.c_comparison_config.pybullet.config_comparison_ant import ConfigComparisonAntBulletSacAlpha
+config_c = ConfigComparisonAntBulletSacAlpha()
 
 from a_configuration.c_comparison_config.pybullet.config_comparison_ant import ConfigComparisonAntBulletPpoSac
 config_c = ConfigComparisonAntBulletPpoSac()
@@ -103,8 +103,8 @@ config_c = ConfigComparisonAntBulletPpoSac()
 #########################################
 ##    InvertedDoublePendulum_BULLET    ##
 #########################################
-from a_configuration.c_comparison_config.pybullet.config_comparison_inverted_double_pendulum_bullet import ConfigComparisonInvertedDoublePendulumBulletSac
-config_c = ConfigComparisonInvertedDoublePendulumBulletSac()
+from a_configuration.c_comparison_config.pybullet.config_comparison_inverted_double_pendulum_bullet import ConfigComparisonInvertedDoublePendulumBulletSacAlpha
+config_c = ConfigComparisonInvertedDoublePendulumBulletSacAlpha()
 
 from a_configuration.c_comparison_config.pybullet.config_comparison_inverted_double_pendulum_bullet import ConfigComparisonInvertedDoublePendulumBulletA2cPpo
 config_c = ConfigComparisonInvertedDoublePendulumBulletA2cPpo()
