@@ -97,6 +97,9 @@ config_c.WANDB_REPORT_URL = "https://wandb.ai/link-koreatech/AntBulletEnv-v0_Com
 from a_configuration.c_comparison_config.pybullet.config_comparison_ant import ConfigComparisonAntBulletSacAlpha
 config_c = ConfigComparisonAntBulletSacAlpha()
 
+from a_configuration.c_comparison_config.pybullet.config_comparison_ant import ConfigComparisonAntBulletSacPer
+config_c = ConfigComparisonAntBulletSacPer()
+
 from a_configuration.c_comparison_config.pybullet.config_comparison_ant import ConfigComparisonAntBulletPpoSac
 config_c = ConfigComparisonAntBulletPpoSac()
 
