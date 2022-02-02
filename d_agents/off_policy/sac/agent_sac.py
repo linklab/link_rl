@@ -91,14 +91,16 @@ class AgentSac(Agent):
         next_dist = Normal(loc=next_mu_v, scale=torch.sqrt(next_var_v))
         next_actions_v = next_dist.sample()
         next_actions_v = torch.clamp(next_actions_v, min=self.torch_minus_ones, max=self.torch_plus_ones)
-        next_log_prob_v = next_dist.log_prob(value=next_actions_v)
+        next_log_prob_v = next_dist.log_prob(value=next_actions_v).sum(dim=-1, keepdim=True)
 
         with torch.no_grad():
             next_q1_values, next_q2_values = self.target_critic_model.q(self.next_observations, next_actions_v)
             next_q_values = torch.min(next_q1_values, next_q2_values)
             next_q_values = next_q_values - self.alpha.value * next_log_prob_v  # ALPHA!!!
+
             next_q_values[self.dones] = 0.0
             # td_target_values.shape: (32, 1)
+
             td_target_values = self.rewards + (self.config.GAMMA ** self.config.N_STEP) * next_q_values
             # normalize td_target_values
             if self.config.TARGET_VALUE_NORMALIZE:
@@ -111,6 +113,7 @@ class AgentSac(Agent):
         critic_loss_each = (self.config.LOSS_FUNCTION(q1_values, td_target_values.detach(), reduction="none") + self.config.LOSS_FUNCTION(q2_values, td_target_values.detach(), reduction="none")) / 2.0
 
         critic_loss = critic_loss_each.mean()
+
         self.critic_optimizer.zero_grad()
         critic_loss.backward()
         self.clip_critic_model_parameter_grad_value(self.critic_model.critic_params_list)

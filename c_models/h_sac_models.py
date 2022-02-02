@@ -60,7 +60,7 @@ class ContinuousSacModel:
     #     action_v = normal.rsample()  # for reparameterization trick (mean + std * N(0,1))
     #     action_v = torch.tanh(action_v)
     #
-    #     log_prob = normal.log_prob(action_v)
+    #     log_prob = normal.log_prob(action_v).sum(dim=-1, keepdim=True)
     #     # Enforcing Action Bound
     #     epsilon = 1e-06
     #     log_prob = log_prob - torch.log(1.0 - action_v.pow(2) + epsilon)

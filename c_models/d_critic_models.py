@@ -279,4 +279,5 @@ class DoubleQCriticModel(CriticModel):
         q1_x, q2_x = self.forward_critic(obs, act)
         q1_value = self.q1_linear_last_layer(q1_x)
         q2_value = self.q2_linear_last_layer(q2_x)
+
         return q1_value, q2_value
