@@ -24,9 +24,6 @@ class Buffer:
     def __len__(self):
         return self.size
 
-    def size(self):
-        return self.size
-
     def clear(self):
         self.internal_buffer = [None] * self.config.BUFFER_CAPACITY
 

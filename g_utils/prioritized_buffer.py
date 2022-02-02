@@ -115,7 +115,7 @@ class PrioritizedBuffer(Buffer):
         Assumes the relevant batch indices are stored in self.batch_idxs
         '''
         priorities = self._get_priority(errors)
-        assert len(priorities) == self.sampled_transition_indices.size
+        assert len(priorities) == len(self.sampled_transition_indices)
 
         for idx, p in zip(self.sampled_transition_indices, priorities):
             self.priorities[idx] = p

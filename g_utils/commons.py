@@ -488,7 +488,7 @@ def wandb_log(learner, wandb_obj, config):
         "[TEST] Std. of Episode Reward": learner.test_episode_reward_std.value,
         "Mean Episode Reward": learner.last_mean_episode_reward.value,
         "Episode": learner.total_episodes.value,
-        "Buffer Size": learner.agent.buffer.size(),
+        "Buffer Size": len(learner.agent.buffer),
         "Training Steps": learner.training_step.value,
         "Total Time Steps": learner.total_time_step.value,
         "Transition Rolling Rate": learner.transition_rolling_rate.value,
