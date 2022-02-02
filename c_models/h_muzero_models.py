@@ -9,7 +9,7 @@ from a_configuration.b_base.c_models.recurrent_linear_models import ParameterRec
 from c_models.a_models import Model
 from c_models.c_policy_models import DiscreteActorModel, ContinuousActorModel
 from torch.distributions import Normal, TanhTransform, TransformedDistribution
-from e_main.config import parameter
+from e_main.config_single import parameter
 
 
 class MuzeroModel:
