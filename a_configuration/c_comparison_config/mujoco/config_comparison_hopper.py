@@ -1,5 +1,6 @@
 from a_configuration.a_base_config.config_comparison_base import ConfigComparisonBase
-from a_configuration.b_single_config.mujoco.config_hopper_mujoco import ConfigHopperMujocoSac
+from a_configuration.b_single_config.mujoco.config_hopper_mujoco import ConfigHopperMujocoSac, \
+    ConfigHopperMujocoPpoTrajectory
 
 
 class ConfigComparisonHopperMujocoSac(ConfigComparisonBase):
@@ -30,4 +31,23 @@ class ConfigComparisonHopperMujocoSac(ConfigComparisonBase):
             "alpha tuning (Min Alpha = 0.2)",
         ]
         self.MAX_TRAINING_STEPS = 300000
+        self.N_RUNS = 5
+
+
+class ConfigComparisonHopperMujocoSacPpo(ConfigComparisonBase):
+    def __init__(self):
+        ConfigComparisonBase.__init__(self)
+
+        self.ENV_NAME = "Hopper-v2"
+
+        self.AGENT_PARAMETERS = [
+            ConfigHopperMujocoPpoTrajectory(),
+            ConfigHopperMujocoSac()
+        ]
+
+        self.AGENT_LABELS = [
+            "ppo_trajectory",
+            "sac"
+        ]
+        self.MAX_TRAINING_STEPS = 1_000_000
         self.N_RUNS = 5

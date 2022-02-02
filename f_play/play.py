@@ -9,7 +9,8 @@ from a_configuration.a_base_config.a_environments.pybullet.gym_mujoco import Con
 from a_configuration.a_base_config.a_environments.pybullet.gym_pybullet import ConfigBullet
 from a_configuration.a_base_config.c_models.recurrent_convolutional_models import ConfigRecurrentConvolutionalModel
 from a_configuration.a_base_config.c_models.recurrent_linear_models import ConfigRecurrentLinearModel
-from g_utils.commons_rl import get_agent, set_config
+from g_utils.commons import set_config
+from g_utils.commons_rl import get_agent
 
 warnings.filterwarnings("ignore")
 
@@ -23,7 +24,7 @@ PROJECT_HOME = os.path.abspath(os.path.join(CURRENT_PATH, os.pardir))
 if PROJECT_HOME not in sys.path:
     sys.path.append(PROJECT_HOME)
 
-from e_main.config import config
+from e_main.config_single import config
 from g_utils.commons import model_load, get_single_env, get_env_info
 
 

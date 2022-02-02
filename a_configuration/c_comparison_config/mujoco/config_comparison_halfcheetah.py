@@ -1,8 +1,6 @@
 from a_configuration.a_base_config.config_comparison_base import ConfigComparisonBase
-from a_configuration.b_single_config.mujoco.config_ant_mujoco import ConfigAntMujocoSac
-from a_configuration.b_single_config.mujoco.config_halfcheetah_mujoco import ConfigHalfCheetahMujocoSac
-from a_configuration.b_single_config.mujoco.config_hopper_mujoco import ConfigHopperMujocoSac
-from a_configuration.b_single_config.mujoco.config_walker2d_mujoco import ConfigWalker2dMujocoSac
+from a_configuration.b_single_config.mujoco.config_halfcheetah_mujoco import ConfigHalfCheetahMujocoSac, \
+    ConfigHalfCheetahMujocoPpoTrajectory
 
 
 class ConfigComparisonHalfCheetahMujocoSac(ConfigComparisonBase):
@@ -33,4 +31,23 @@ class ConfigComparisonHalfCheetahMujocoSac(ConfigComparisonBase):
             "alpha tuning (Min Alpha = 0.2)",
         ]
         self.MAX_TRAINING_STEPS = 500000
+        self.N_RUNS = 5
+
+
+class ConfigComparisonHalfCheetahMujocoSacPpo(ConfigComparisonBase):
+    def __init__(self):
+        ConfigComparisonBase.__init__(self)
+
+        self.ENV_NAME = "HalfCheetah-v2"
+
+        self.AGENT_PARAMETERS = [
+            ConfigHalfCheetahMujocoPpoTrajectory(),
+            ConfigHalfCheetahMujocoSac()
+        ]
+
+        self.AGENT_LABELS = [
+            "ppo_trajectory",
+            "sac"
+        ]
+        self.MAX_TRAINING_STEPS = 1_000_000
         self.N_RUNS = 5

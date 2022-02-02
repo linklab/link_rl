@@ -8,7 +8,8 @@ from gym.spaces import Discrete, Box, MultiDiscrete
 import numpy as np
 from g_utils.buffers import Buffer
 from g_utils.commons import get_continuous_action_info
-from g_utils.types import AgentMode, AgentType, OnPolicyAgentTypes, ActorCriticAgentTypes
+from g_utils.prioritized_buffer import PrioritizedBuffer
+from g_utils.types import AgentMode, AgentType, OnPolicyAgentTypes, ActorCriticAgentTypes, OffPolicyAgentTypes
 
 
 class Agent:
@@ -50,7 +51,11 @@ class Agent:
         else:
             raise ValueError()
 
-        self.buffer = Buffer(capacity=config.BUFFER_CAPACITY, action_space=action_space, config=self.config)
+        if self.config.USE_PER:
+            assert self.config.AGENT_TYPE in OffPolicyAgentTypes
+            self.buffer = PrioritizedBuffer(action_space=action_space, config=self.config)
+        else:
+            self.buffer = Buffer(action_space=action_space, config=self.config)
 
         self.model = None
         if self.config.AGENT_TYPE in ActorCriticAgentTypes:
@@ -96,71 +101,81 @@ class Agent:
     def train(self, training_steps_v=None):
         count_training_steps = 0
 
-        if self.config.AGENT_TYPE in (AgentType.DQN, AgentType.DUELING_DQN):
-            if len(self.buffer) >= self.config.MIN_BUFFER_SIZE_FOR_TRAIN:
-                self._before_train(sample_length=self.config.BATCH_SIZE)
-                count_training_steps = self.train_dqn(training_steps_v=training_steps_v)
-                self._after_train()
+        if self.config.AGENT_TYPE in OffPolicyAgentTypes:
+            if self.config.AGENT_TYPE in (AgentType.DQN, AgentType.DUELING_DQN):
+                if len(self.buffer) >= self.config.MIN_BUFFER_SIZE_FOR_TRAIN:
+                    self._before_train(sample_length=self.config.BATCH_SIZE)
+                    count_training_steps, q_net_loss_each = self.train_dqn(training_steps_v=training_steps_v)
+                    self._after_train(q_net_loss_each)
 
-        elif self.config.AGENT_TYPE in (AgentType.DOUBLE_DQN, AgentType.DOUBLE_DUELING_DQN):
-            if len(self.buffer) >= self.config.MIN_BUFFER_SIZE_FOR_TRAIN:
-                self._before_train(sample_length=self.config.BATCH_SIZE)
-                count_training_steps = self.train_double_dqn(training_steps_v=training_steps_v)
-                self._after_train()
+            elif self.config.AGENT_TYPE in (AgentType.DOUBLE_DQN, AgentType.DOUBLE_DUELING_DQN):
+                if len(self.buffer) >= self.config.MIN_BUFFER_SIZE_FOR_TRAIN:
+                    self._before_train(sample_length=self.config.BATCH_SIZE)
+                    count_training_steps, q_net_loss_each = self.train_double_dqn(training_steps_v=training_steps_v)
+                    self._after_train(q_net_loss_each)
 
-        elif self.config.AGENT_TYPE == AgentType.REINFORCE:
-            if len(self.buffer) > 0:
-                self._before_train(sample_length=len(self.buffer))
-                count_training_steps = self.train_reinforce()
-                self.buffer.clear()     # ON_POLICY!
-                self._after_train()
+            elif self.config.AGENT_TYPE == AgentType.DDPG:
+                if len(self.buffer) >= self.config.MIN_BUFFER_SIZE_FOR_TRAIN:
+                    self._before_train(sample_length=self.config.BATCH_SIZE)
+                    count_training_steps, critic_loss_each = self.train_ddpg()
+                    self._after_train(critic_loss_each)
 
-        elif self.config.AGENT_TYPE == AgentType.A2C:
-            if len(self.buffer) >= self.config.BATCH_SIZE:
-                self._before_train(sample_length=self.config.BATCH_SIZE)
-                count_training_steps = self.train_a2c()
-                self.buffer.clear()                 # ON_POLICY!
-                self._after_actor_critic_train()     # ACTOR_CRITIC_TYPE
-                self._after_train()
+            elif self.config.AGENT_TYPE == AgentType.TD3:
+                if len(self.buffer) >= self.config.MIN_BUFFER_SIZE_FOR_TRAIN:
+                    self._before_train(sample_length=self.config.BATCH_SIZE)
+                    count_training_steps, critic_loss_each = self.train_td3(training_steps_v=training_steps_v)
+                    self._after_train(critic_loss_each)
 
-        elif self.config.AGENT_TYPE == AgentType.PPO:
-            if len(self.buffer) >= self.config.PPO_TRAJECTORY_SIZE:
-                self._before_train(sample_length=self.config.PPO_TRAJECTORY_SIZE)
-                count_training_steps = self.train_ppo()
-                self.buffer.clear()                 # ON_POLICY!
-                self._after_actor_critic_train()     # ACTOR_CRITIC_TYPE
-                self._after_train()
+            elif self.config.AGENT_TYPE == AgentType.SAC:
+                if len(self.buffer) >= self.config.MIN_BUFFER_SIZE_FOR_TRAIN:
+                    self._before_train(sample_length=self.config.BATCH_SIZE)
+                    count_training_steps, critic_loss_each = self.train_sac(training_steps_v=training_steps_v)
+                    self._after_train(critic_loss_each)
 
-        elif self.config.AGENT_TYPE == AgentType.DDPG:
-            if len(self.buffer) >= self.config.BATCH_SIZE:
-                self._before_train(sample_length=self.config.BATCH_SIZE)
-                count_training_steps = self.train_ddpg()
-                self._after_actor_critic_train()     # ACTOR_CRITIC_TYPE
-                self._after_train()
+            else:
+                raise ValueError()
 
-        elif self.config.AGENT_TYPE == AgentType.TD3:
-            if len(self.buffer) >= self.config.BATCH_SIZE:
-                self._before_train(sample_length=self.config.BATCH_SIZE)
-                count_training_steps = self.train_td3()
-                self._after_actor_critic_train()     # ACTOR_CRITIC_TYPE
-                self._after_train()
+        elif self.config.AGENT_TYPE in OnPolicyAgentTypes:
+            if self.config.AGENT_TYPE == AgentType.REINFORCE:
+                if len(self.buffer) > 0:
+                    self._before_train(sample_length=None)  # sample all in order as it is
+                    count_training_steps = self.train_reinforce()
+                    self.buffer.clear()     # ON_POLICY!
+                    self._after_train()
 
-        elif self.config.AGENT_TYPE == AgentType.SAC:
-            if len(self.buffer) >= self.config.BATCH_SIZE:
-                self._before_train(sample_length=self.config.BATCH_SIZE)
-                count_training_steps = self.train_sac(training_steps_v=training_steps_v)
-                self._after_actor_critic_train()     # ACTOR_CRITIC_TYPE
-                self._after_train()
+            elif self.config.AGENT_TYPE == AgentType.A2C:
+                if len(self.buffer) >= self.config.BATCH_SIZE:
+                    self._before_train(sample_length=self.config.BATCH_SIZE)
+                    count_training_steps = self.train_a2c()
+                    self.buffer.clear()                 # ON_POLICY!
+                    self._after_train()
+
+            elif self.config.AGENT_TYPE == AgentType.PPO:
+                if len(self.buffer) >= self.config.BATCH_SIZE:
+                    self._before_train(sample_length=self.config.BATCH_SIZE)
+                    count_training_steps = self.train_ppo()
+                    self.buffer.clear()                 # ON_POLICY!
+                    self._after_train()
+
+            elif self.config.AGENT_TYPE == AgentType.PPO_TRAJECTORY:
+                if len(self.buffer) >= self.config.PPO_TRAJECTORY_SIZE:
+                    self._before_train(sample_length=self.config.PPO_TRAJECTORY_SIZE)
+                    count_training_steps = self.train_ppo()
+                    self.buffer.clear()                 # ON_POLICY!
+                    self._after_train()
+
+            else:
+                raise ValueError()
 
         else:
             raise ValueError()
 
         return count_training_steps
 
-    def _after_actor_critic_train(self):
-        pass
+    def _after_train(self, loss_each=None):
+        if loss_each is not None and self.config.USE_PER:
+            self.buffer.update_priorities(loss_each.detach().cpu().numpy())
 
-    def _after_train(self):
         del self.observations
         del self.actions
         del self.next_observations
@@ -197,38 +212,6 @@ class Agent:
             self.last_critic_model_grad_l2.value = np.sqrt(np.mean(np.square(critic_grads)))
             self.last_critic_model_grad_max.value = np.max(critic_grads)
 
-    @abstractmethod
-    def train_dqn(self, training_steps_v):
-        return 0
-
-    @abstractmethod
-    def train_double_dqn(self, training_steps_v):
-        return 0
-
-    @abstractmethod
-    def train_reinforce(self):
-        return 0
-
-    @abstractmethod
-    def train_a2c(self):
-        return 0
-
-    @abstractmethod
-    def train_ppo(self):
-        return 0
-
-    @abstractmethod
-    def train_ddpg(self):
-        return 0
-
-    @abstractmethod
-    def train_td3(self):
-        return 0
-
-    @abstractmethod
-    def train_sac(self, training_steps_v):
-        return 0
-
     def synchronize_models(self, source_model, target_model):
         target_model.load_state_dict(source_model.state_dict())
 
@@ -250,4 +233,36 @@ class Agent:
         log_prob = (p1 + p2).sum(dim=-1, keepdim=True)
         return log_prob
 
+    # OFF POLICY
+    @abstractmethod
+    def train_dqn(self, training_steps_v):
+        return None, None
 
+    @abstractmethod
+    def train_double_dqn(self, training_steps_v):
+        raise NotImplementedError()
+
+    @abstractmethod
+    def train_ddpg(self):
+        raise NotImplementedError()
+
+    @abstractmethod
+    def train_td3(self, training_steps_v):
+        raise NotImplementedError()
+
+    @abstractmethod
+    def train_sac(self, training_steps_v):
+        raise NotImplementedError()
+
+    # ON_POLICY
+    @abstractmethod
+    def train_reinforce(self):
+        raise NotImplementedError()
+
+    @abstractmethod
+    def train_a2c(self):
+        raise NotImplementedError()
+
+    @abstractmethod
+    def train_ppo(self):
+        raise NotImplementedError()

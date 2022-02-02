@@ -4,20 +4,18 @@ import enum
 Transition = namedtuple(
     typename='Transition',
     field_names=[
-        'observation', 'action', 'next_observation',
-        'reward', 'done', 'info'
+        'observation', 'action', 'next_observation', 'reward', 'done', 'info'
     ],
     defaults=[None] * 6
 )
 
-Transitions = namedtuple(
-    typename='Transitions',
-    field_names=[
-        'observations', 'actions', 'next_observations',
-        'rewards', 'dones', 'infos'
-    ],
-    defaults=[None] * 6
-)
+# Transitions = namedtuple(
+#     typename='Transitions',
+#     field_names=[
+#         'observations', 'actions', 'next_observations', 'rewards', 'dones', 'infos'
+#     ],
+#     defaults=[None] * 6
+# )
 
 
 class AgentMode(enum.Enum):
@@ -64,14 +62,21 @@ class AgentType(enum.Enum):
     REINFORCE = 4
     A2C = 5
     PPO = 6
+<<<<<<< HEAD
     DDPG = 7
     TD3 = 8
     SAC = 9
     MUZERO = 10
+=======
+    PPO_TRAJECTORY = 7
+    DDPG = 8
+    TD3 = 9
+    SAC = 10
+>>>>>>> main
 
 
 OnPolicyAgentTypes = [
-    AgentType.REINFORCE, AgentType.A2C, AgentType.PPO
+    AgentType.REINFORCE, AgentType.A2C, AgentType.PPO, AgentType.PPO_TRAJECTORY
 ]
 
 OffPolicyAgentTypes = [
@@ -80,5 +85,5 @@ OffPolicyAgentTypes = [
 ]
 
 ActorCriticAgentTypes = [
-    AgentType.A2C, AgentType.PPO, AgentType.DDPG, AgentType.TD3, AgentType.SAC
+    AgentType.A2C, AgentType.PPO, AgentType.PPO_TRAJECTORY, AgentType.DDPG, AgentType.TD3, AgentType.SAC
 ]

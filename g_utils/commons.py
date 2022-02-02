@@ -1,6 +1,8 @@
 import collections
 import datetime
 import numpy as np
+from torch import nn
+import torch.nn.functional as F
 
 import gym
 import torch
@@ -20,8 +22,8 @@ from a_configuration.a_base_config.c_models.convolutional_models import ConfigCo
 from a_configuration.a_base_config.c_models.linear_models import ConfigLinearModel
 from a_configuration.a_base_config.c_models.recurrent_convolutional_models import ConfigRecurrentConvolutionalModel
 from a_configuration.a_base_config.c_models.recurrent_linear_models import ConfigRecurrentLinearModel
-from g_utils.commons_rl import set_config
-from g_utils.types import AgentType, ActorCriticAgentTypes
+from g_utils.types import AgentType, ActorCriticAgentTypes, ModelType, LayerActivationType, LossFunctionType, \
+    OffPolicyAgentTypes, OnPolicyAgentTypes
 
 if torch.cuda.is_available():
     import nvidia_smi
@@ -57,6 +59,69 @@ def model_load(model, env_name, agent_type_name, file_name, config):
     agent_model_home = os.path.join(config.MODEL_SAVE_DIR, env_name, agent_type_name)
     model_params = torch.load(os.path.join(agent_model_home, file_name), map_location=torch.device('cpu'))
     model.load_state_dict(model_params)
+
+
+def set_config(config):
+    if config.MODEL_TYPE in (
+            ModelType.TINY_LINEAR, ModelType.SMALL_LINEAR, ModelType.SMALL_LINEAR_2,
+            ModelType.MEDIUM_LINEAR, ModelType.LARGE_LINEAR
+    ):
+        from a_configuration.a_base_config.c_models.linear_models import ConfigLinearModel
+        config.MODEL_PARAMETER = ConfigLinearModel(config.MODEL_TYPE)
+    elif config.MODEL_TYPE in (
+            ModelType.SMALL_CONVOLUTIONAL, ModelType.MEDIUM_CONVOLUTIONAL, ModelType.LARGE_CONVOLUTIONAL
+    ):
+        from a_configuration.a_base_config.c_models.convolutional_models import ConfigConvolutionalModel
+        config.MODEL_PARAMETER = ConfigConvolutionalModel(config.MODEL_TYPE)
+    elif config.MODEL_TYPE in (
+            ModelType.SMALL_RECURRENT, ModelType.MEDIUM_RECURRENT, ModelType.LARGE_RECURRENT
+    ):
+        from a_configuration.a_base_config.c_models.recurrent_linear_models import ConfigRecurrentLinearModel
+        config.MODEL_PARAMETER = ConfigRecurrentLinearModel(config.MODEL_TYPE)
+    elif config.MODEL_TYPE in (
+            ModelType.SMALL_RECURRENT_CONVOLUTIONAL, ModelType.MEDIUM_RECURRENT_CONVOLUTIONAL,
+            ModelType.LARGE_RECURRENT_CONVOLUTIONAL
+    ):
+        from a_configuration.a_base_config.c_models.recurrent_convolutional_models import ConfigRecurrentConvolutionalModel
+        config.MODEL_PARAMETER = ConfigRecurrentConvolutionalModel(config.MODEL_TYPE)
+    else:
+        raise ValueError()
+
+    if config.LAYER_ACTIVATION_TYPE == LayerActivationType.LEAKY_RELU:
+        config.LAYER_ACTIVATION = nn.LeakyReLU
+    elif config.LAYER_ACTIVATION_TYPE == LayerActivationType.ELU:
+        config.LAYER_ACTIVATION = nn.ELU
+    else:
+        raise ValueError()
+
+    if config.LOSS_FUNCTION_TYPE == LossFunctionType.MSE_LOSS:
+        config.LOSS_FUNCTION = F.mse_loss
+    elif config.LOSS_FUNCTION_TYPE == LossFunctionType.HUBER_LOSS:
+        config.LOSS_FUNCTION = F.huber_loss
+    else:
+        raise ValueError()
+
+    if config.AGENT_TYPE in OffPolicyAgentTypes:
+        config.MIN_BUFFER_SIZE_FOR_TRAIN = config.BATCH_SIZE * 5
+
+    elif config.AGENT_TYPE == AgentType.REINFORCE:
+        config.BUFFER_CAPACITY = -1
+
+    elif config.AGENT_TYPE == AgentType.A2C:
+        config.BUFFER_CAPACITY = config.BATCH_SIZE
+        config.CONSOLE_LOG_INTERVAL_TRAINING_STEPS = 10
+
+    elif config.AGENT_TYPE == AgentType.PPO:
+        config.BUFFER_CAPACITY = config.BATCH_SIZE
+        config.CONSOLE_LOG_INTERVAL_TRAINING_STEPS = 10 * config.PPO_K_EPOCH
+
+    elif config.AGENT_TYPE == AgentType.PPO_TRAJECTORY:
+        config.PPO_TRAJECTORY_SIZE = config.BATCH_SIZE * 10
+        config.BUFFER_CAPACITY = config.PPO_TRAJECTORY_SIZE
+        config.CONSOLE_LOG_INTERVAL_TRAINING_STEPS = 10 * config.PPO_K_EPOCH
+
+    else:
+        raise ValueError()
 
 
 def print_base_info(config):
@@ -314,18 +379,18 @@ def console_log(
         )
 
     if config.AGENT_TYPE in [AgentType.DQN, AgentType.DUELING_DQN]:
-        console_log += "Q_net_loss: {0:>7.3f}, Epsilon: {1:>4.2f}, ".format(
+        console_log += "Q_net_loss: {0:>7.3f}, Epsilon: {1:>4.2f}".format(
             agent.last_q_net_loss.value, agent.epsilon.value
         )
     elif config.AGENT_TYPE == AgentType.REINFORCE:
-        console_log += "log_policy_objective: {0:7.3f}, ".format(
+        console_log += "log_policy_objective: {0:7.3f}".format(
             agent.last_log_policy_objective.value
         )
     elif config.AGENT_TYPE == AgentType.A2C:
         console_log += "critic_loss: {0:7.3f}, log_actor_obj.: {1:7.3f}, entropy: {2:5.3f}".format(
             agent.last_critic_loss.value, agent.last_actor_objective.value, agent.last_entropy.value
         )
-    elif config.AGENT_TYPE == AgentType.PPO:
+    elif config.AGENT_TYPE in (AgentType.PPO, AgentType.PPO_TRAJECTORY):
         console_log += "critic_loss: {0:7.3f}, actor_obj.: {1:7.3f}, ratio: {2:5.3f}, entropy: {3:5.3f}".format(
             agent.last_critic_loss.value, agent.last_actor_objective.value, agent.last_ratio.value, agent.last_entropy.value
         )
@@ -333,8 +398,8 @@ def console_log(
         console_log += "critic_loss: {0:7.3f}, actor_obj.: {1:7.3f}, alpha: {2:5.3f}, entropy: {3:5.3f}".format(
             agent.last_critic_loss.value, agent.last_actor_objective.value, agent.alpha.value, agent.last_entropy.value
         )
-    elif config.AGENT_TYPE == AgentType.DDPG:
-        console_log += "critic_loss: {0:7.3f}, actor_loss: {1:7.3f}, ".format(
+    elif config.AGENT_TYPE in (AgentType.DDPG, AgentType.TD3):
+        console_log += "critic_loss: {0:7.3f}, actor_loss: {1:7.3f}".format(
             agent.last_critic_loss.value, agent.last_actor_loss.value
         )
     else:
@@ -346,7 +411,7 @@ def console_log(
 def console_log_comparison(
         total_time_step, total_episodes_per_agent,
         last_mean_episode_reward_per_agent, n_rollout_transitions_per_agent, training_steps_per_agent,
-        agents, parameter_c
+        agents, config_c
 ):
     for agent_idx, agent in enumerate(agents):
         agent_prefix = "[Agent: {0}]".format(agent_idx)
@@ -361,23 +426,31 @@ def console_log_comparison(
                 training_steps_per_agent[agent_idx]
             )
 
-        if parameter_c.AGENT_PARAMETERS[agent_idx].AGENT_TYPE in [
+        if config_c.AGENT_PARAMETERS[agent_idx].AGENT_TYPE in [
             AgentType.DQN, AgentType.DOUBLE_DQN, AgentType.DUELING_DQN, AgentType.DOUBLE_DUELING_DQN
         ]:
             console_log += "Q_net_loss: {0:>6.3f}, Epsilon: {1:>4.2f}, ".format(
                 agent.last_q_net_loss.value, agent.epsilon.value
             )
-        elif parameter_c.AGENT_PARAMETERS[agent_idx].AGENT_TYPE == AgentType.REINFORCE:
+        elif config_c.AGENT_PARAMETERS[agent_idx].AGENT_TYPE == AgentType.REINFORCE:
             console_log += "log_policy_objective: {0:6.3f}, ".format(
                 agent.last_log_policy_objective.value
             )
-        elif parameter_c.AGENT_PARAMETERS[agent_idx].AGENT_TYPE == AgentType.A2C:
+        elif config_c.AGENT_PARAMETERS[agent_idx].AGENT_TYPE == AgentType.A2C:
             console_log += "critic_loss: {0:6.3f}, log_actor_obj.: {1:5.3f}, ".format(
                 agent.last_critic_loss.value, agent.last_actor_objective.value
             )
-        elif parameter_c.AGENT_PARAMETERS[agent_idx].AGENT_TYPE == AgentType.PPO:
-            console_log += "critic_loss: {0:6.3f}, actor_obj.: {1:5.3f}, ratio: {2:5.3f}".format(
-                agent.last_critic_loss.value, agent.last_actor_objective.value, agent.ratio.value
+        elif config_c.AGENT_PARAMETERS[agent_idx].AGENT_TYPE in (AgentType.PPO, AgentType.PPO_TRAJECTORY):
+            console_log += "critic_loss: {0:7.3f}, actor_obj.: {1:7.3f}, ratio: {2:5.3f}, entropy: {3:5.3f}".format(
+                agent.last_critic_loss.value, agent.last_actor_objective.value, agent.last_ratio.value, agent.last_entropy.value
+            )
+        elif config_c.AGENT_PARAMETERS[agent_idx].AGENT_TYPE == AgentType.SAC:
+            console_log += "critic_loss: {0:7.3f}, actor_obj.: {1:7.3f}, alpha: {2:5.3f}, entropy: {3:5.3f}".format(
+                agent.last_critic_loss.value, agent.last_actor_objective.value, agent.alpha.value, agent.last_entropy.value
+            )
+        elif config_c.AGENT_PARAMETERS[agent_idx].AGENT_TYPE in (AgentType.DDPG, AgentType.TD3):
+            console_log += "critic_loss: {0:7.3f}, actor_loss: {1:7.3f}, ".format(
+                agent.last_critic_loss.value, agent.last_actor_loss.value
             )
         else:
             pass
@@ -415,7 +488,7 @@ def wandb_log(learner, wandb_obj, config):
         "[TEST] Std. of Episode Reward": learner.test_episode_reward_std.value,
         "Mean Episode Reward": learner.last_mean_episode_reward.value,
         "Episode": learner.total_episodes.value,
-        "Buffer Size": learner.agent.buffer.size(),
+        "Buffer Size": len(learner.agent.buffer),
         "Training Steps": learner.training_step.value,
         "Total Time Steps": learner.total_time_step.value,
         "Transition Rolling Rate": learner.transition_rolling_rate.value,
@@ -431,7 +504,10 @@ def wandb_log(learner, wandb_obj, config):
         log_dict["Critic Loss"] = learner.agent.last_critic_loss.value
         log_dict["Log Actor Objective"] = learner.agent.last_actor_objective.value
         log_dict["Entropy"] = learner.agent.last_entropy.value
-    elif config.AGENT_TYPE == AgentType.PPO:
+    elif config.AGENT_TYPE in (AgentType.DDPG, AgentType.TD3):
+        log_dict["Critic Loss"] = learner.agent.last_critic_loss.value
+        log_dict["Actor Loss"] = learner.agent.last_actor_loss.value
+    elif config.AGENT_TYPE in (AgentType.PPO, AgentType.PPO_TRAJECTORY):
         log_dict["Critic Loss"] = learner.agent.last_critic_loss.value
         log_dict["Actor Objective"] = learner.agent.last_actor_objective.value
         log_dict["Ratio"] = learner.agent.last_ratio.value
@@ -499,10 +575,12 @@ plotly_layout = go.Layout(
 
 
 def wandb_log_comparison(
-        run, training_step, agents, agent_labels, n_episodes_for_mean_calculation, comparison_stat, wandb_obj
+        run, training_steps_per_agent, agents, agent_labels, n_episodes_for_mean_calculation, comparison_stat, wandb_obj
 ):
+    training_steps_str = str([training_step for training_step in training_steps_per_agent])
+
     plotly_layout.yaxis.title = "[TEST] Episode Reward"
-    plotly_layout.xaxis.title = "Training Steps ({0}, runs={1})".format(training_step, run + 1)
+    plotly_layout.xaxis.title = "Training Steps ({0}, runs={1})".format(training_steps_str, run + 1)
     data = []
     for agent_idx, _ in enumerate(agents):
         data.append(
@@ -517,7 +595,7 @@ def wandb_log_comparison(
 
     ###############################################################################
     plotly_layout.yaxis.title = "[TEST] Std. of Episode Reward"
-    plotly_layout.xaxis.title = "Training Steps ({0}, runs={1})".format(training_step, run + 1)
+    plotly_layout.xaxis.title = "Training Steps ({0}, runs={1})".format(training_steps_str, run + 1)
     data = []
     for agent_idx, _ in enumerate(agents):
         data.append(
@@ -533,7 +611,7 @@ def wandb_log_comparison(
     ###############################################################################
     plotly_layout.yaxis.title = "[TRAIN] Mean Episode Reward"
     plotly_layout.xaxis.title = "Training Steps ({0}, runs={1}, over {2} Episodes)".format(
-        training_step, run + 1, n_episodes_for_mean_calculation
+        training_steps_str, run + 1, n_episodes_for_mean_calculation
     )
     data = []
     for agent_idx, _ in enumerate(agents):

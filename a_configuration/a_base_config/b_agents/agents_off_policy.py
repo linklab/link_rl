@@ -1,12 +1,10 @@
-from torch import nn
-
-from a_configuration.a_base_config.b_agents.agents import ConfigAgent
+from a_configuration.a_base_config.b_agents.agents import ConfigOffPolicyAgent
 from g_utils.commons import AgentType
 
 
-class ConfigDqn(ConfigAgent):
+class ConfigDqn(ConfigOffPolicyAgent):
     def __init__(self):
-        ConfigAgent.__init__(self)
+        super(ConfigDqn, self).__init__()
         self.AGENT_TYPE = AgentType.DQN
 
         self.LEARNING_RATE = 0.001
@@ -16,8 +14,8 @@ class ConfigDqn(ConfigAgent):
         self.EPSILON_FINAL_TRAINING_STEP_PROPORTION = 0.5
 
         self.BUFFER_CAPACITY = 10_000
-        self.BATCH_SIZE = 64
-        self.MIN_BUFFER_SIZE_FOR_TRAIN = self.BATCH_SIZE * 10
+        self.BATCH_SIZE = 128
+        self.MIN_BUFFER_SIZE_FOR_TRAIN = self.BATCH_SIZE * 5
         self.TARGET_SYNC_INTERVAL_TRAINING_STEPS = 1_000
 
 
@@ -45,57 +43,52 @@ class ConfigDoubleDuelingDqn(ConfigDqn):
         del self.TARGET_SYNC_INTERVAL_TRAINING_STEPS
 
 
-class ConfigDdpg(ConfigAgent):
+class ConfigDdpg(ConfigOffPolicyAgent):
     def __init__(self):
-        ConfigAgent.__init__(self)
+        super(ConfigDdpg, self).__init__()
         self.AGENT_TYPE = AgentType.DDPG
 
         self.ACTOR_LEARNING_RATE = 0.0001
         self.LEARNING_RATE = 0.001
 
-        self.BUFFER_CAPACITY = 10_000
-        self.BATCH_SIZE = 64
-        self.MIN_BUFFER_SIZE_FOR_TRAIN = self.BATCH_SIZE * 10
-        self.TARGET_SYNC_INTERVAL_TRAINING_STEPS = 50
         self.TAU = 0.005
+        self.BUFFER_CAPACITY = 10_000
+        self.BATCH_SIZE = 128
+        self.MIN_BUFFER_SIZE_FOR_TRAIN = self.BATCH_SIZE * 10
 
 
-class ConfigTd3(ConfigAgent):
+class ConfigTd3(ConfigOffPolicyAgent):
     def __init__(self):
-        ConfigAgent.__init__(self)
+        super(ConfigTd3, self).__init__()
         self.AGENT_TYPE = AgentType.TD3
 
         self.ACTOR_LEARNING_RATE = 0.0001
         self.LEARNING_RATE = 0.001
 
-        self.BUFFER_CAPACITY = 10_000
-        self.BATCH_SIZE = 64
-        self.MIN_BUFFER_SIZE_FOR_TRAIN = self.BATCH_SIZE * 10
-        self.TARGET_SYNC_INTERVAL_TRAINING_STEPS = 50
         self.TAU = 0.005
-
-
-class ConfigSac(ConfigAgent):
-    def __init__(self):
-        ConfigAgent.__init__(self)
-        self.AGENT_TYPE = AgentType.SAC
-
-        self.LEARNING_RATE = 0.001
-        self.ACTOR_LEARNING_RATE = 0.0001
-        self.ALPHA_LEARNING_RATE = 0.0003
-
         self.BUFFER_CAPACITY = 10_000
-        self.BATCH_SIZE = 64
+        self.BATCH_SIZE = 128
         self.MIN_BUFFER_SIZE_FOR_TRAIN = self.BATCH_SIZE * 10
-        self.TARGET_SYNC_INTERVAL_TRAINING_STEPS = 50
 
-        self.LAYER_ACTIVATION = nn.ReLU
-
-        self.USE_LAYER_NORM = True
-
-        self.DEFAULT_ALPHA = 0.2
-        self.TAU = 0.005
         self.POLICY_UPDATE_FREQUENCY_PER_TRAINING_STEP = 2
 
+
+class ConfigSac(ConfigOffPolicyAgent):
+    def __init__(self):
+        super(ConfigSac, self).__init__()
+        self.AGENT_TYPE = AgentType.SAC
+
+        self.ACTOR_LEARNING_RATE = 0.0002
+        self.LEARNING_RATE = 0.001
+        self.ALPHA_LEARNING_RATE = 0.00001
+
+        self.TAU = 0.005
+        self.BUFFER_CAPACITY = 10_000
+        self.BATCH_SIZE = 128
+        self.TARGET_SYNC_INTERVAL_TRAINING_STEPS = 50
+
+        self.POLICY_UPDATE_FREQUENCY_PER_TRAINING_STEP = 2
+
+        self.DEFAULT_ALPHA = 1.0
         self.AUTOMATIC_ENTROPY_TEMPERATURE_TUNING = True
         self.MIN_ALPHA = 0.2

@@ -28,9 +28,7 @@ class AgentDqn(Agent):
         self.q_net.share_memory()
         self.synchronize_models(source_model=self.q_net, target_model=self.target_q_net)
 
-        self.optimizer = optim.Adam(
-            self.q_net.qnet_params, lr=self.config.LEARNING_RATE
-        )
+        self.optimizer = optim.Adam(self.q_net.parameters(), lr=self.config.LEARNING_RATE)
 
         self.epsilon_tracker = EpsilonTracker(
             epsilon_init=self.config.EPSILON_INIT,
@@ -47,17 +45,17 @@ class AgentDqn(Agent):
         self.last_q_net_loss = mp.Value('d', 0.0)
 
     def get_action(self, obs, mode=AgentMode.TRAIN):
-        out = self.q_net.forward(obs, save_hidden=True)
+        q_values = self.q_net.q(obs, save_hidden=True)
 
         if mode == AgentMode.TRAIN:
             coin = np.random.random()    # 0.0과 1.0사이의 임의의 값을 반환
             if coin < self.epsilon.value:
                 action = np.random.randint(low=0, high=self.n_discrete_actions, size=len(obs))
             else:
-                action = out.argmax(dim=-1)
+                action = q_values.argmax(dim=-1)
                 action = action.cpu().numpy()  # argmax: 가장 큰 값에 대응되는 인덱스 반환
         else:
-            action = out.argmax(dim=-1)
+            action = q_values.argmax(dim=-1)
             action = action.cpu().numpy()
 
         return action
@@ -66,34 +64,36 @@ class AgentDqn(Agent):
         count_training_steps = 0
 
         # state_action_values.shape: torch.Size([32, 1])
-        state_action_values = self.q_net(self.observations).gather(dim=1, index=self.actions)
+        q_values = self.q_net.q(self.observations).gather(dim=-1, index=self.actions)
 
         with torch.no_grad():
             # next_state_values.shape: torch.Size([32, 1])
-            next_q_v = self.target_q_net(self.next_observations).max(dim=1, keepdim=True).values
+            next_q_v = self.target_q_net.q(self.next_observations).max(dim=-1, keepdim=True).values
             next_q_v[self.dones] = 0.0
 
             # target_state_action_values.shape: torch.Size([32, 1])
-            target_state_action_values = self.rewards + self.config.GAMMA ** self.config.N_STEP * next_q_v
+            target_q_values = self.rewards + self.config.GAMMA ** self.config.N_STEP * next_q_v
+            if self.config.TARGET_VALUE_NORMALIZE:
+                target_q_values = (target_q_values - torch.mean(target_q_values)) / (torch.std(target_q_values) + 1e-7)
 
-        # loss is just scalar torch value
-        q_net_loss = self.config.LOSS_FUNCTION(state_action_values, target_state_action_values.detach())
+        q_net_loss_each = self.config.LOSS_FUNCTION(q_values, target_q_values.detach(), reduction="none")
+        q_net_loss = q_net_loss_each.mean()
 
         # print("observations.shape: {0}, actions.shape: {1}, "
         #       "next_observations.shape: {2}, rewards.shape: {3}, dones.shape: {4}".format(
         #     observations.shape, actions.shape,
         #     next_observations.shape, rewards.shape, dones.shape
         # ))
-        # print("state_action_values.shape: {0}".format(state_action_values.shape))
+        # print("q_values.shape: {0}".format(q_values.shape))
         # print("next_state_values.shape: {0}".format(next_state_values.shape))
-        # print("target_state_action_values.shape: {0}".format(
-        #     target_state_action_values.shape
+        # print("target_q_values.shape: {0}".format(
+        #     target_q_values.shape
         # ))
         # print("loss.shape: {0}".format(loss.shape))
 
         self.optimizer.zero_grad()
         q_net_loss.backward()
-        self.clip_model_config_grad_value(self.q_net.qnet_params)
+        self.clip_model_config_grad_value(self.q_net.qnet_params_list)
         self.optimizer.step()
 
         # sync
@@ -104,6 +104,6 @@ class AgentDqn(Agent):
 
         self.last_q_net_loss.value = q_net_loss.item()
 
-        count_training_steps = 1
+        count_training_steps += 1
 
-        return count_training_steps
+        return count_training_steps, q_net_loss_each

@@ -47,28 +47,26 @@ class SelfPlay:
                 assert (
                     len(numpy.array(observation).shape) == 3
                 ), f"Observation should be 3 dimensionnal instead of {len(numpy.array(observation).shape)} dimensionnal. Got observation of shape: {numpy.array(observation).shape}"
+
                 assert (
                     numpy.array(observation).shape == self.config.observation_shape
                 ), f"Observation should match the observation_shape defined in MuZeroConfig. Expected {self.config.observation_shape} but got {numpy.array(observation).shape}."
+
                 stacked_observations = game_history.get_stacked_observations(
-                    -1,
-                    self.config.stacked_observations,
+                    index=-1, num_stacked_observations=self.config.stacked_observations,
                 )
 
                 # Choose the action
                 root, mcts_info = MCTS(self.config).run(
-                    self.model,
-                    stacked_observations,
-                    self.game.legal_actions(),
-                    self.game.to_play(),
-                    True,
+                    model=self.model,
+                    observation=stacked_observations,
+                    legal_actions=self.game.legal_actions(),
+                    to_play=self.game.to_play(),
+                    add_exploration_noise=True,
                 )
                 action = self.select_action(
-                    root,
-                    temperature
-                    if not temperature_threshold
-                    or len(game_history.action_history) < temperature_threshold
-                    else 0,
+                    node=root,
+                    temperature=temperature if not temperature_threshold or len(game_history.action_history) < temperature_threshold else 0
                 )
 
                 # if render:
@@ -93,6 +91,8 @@ class SelfPlay:
             if temperature == 0:
                 print("episode_reward : ", episode_reward)
 
+        print(game_history)
+
         return game_history
 
     def close_game(self):
@@ -116,9 +116,7 @@ class SelfPlay:
         else:
             # See paper appendix Data Generation
             visit_count_distribution = visit_counts ** (1 / temperature)
-            visit_count_distribution = visit_count_distribution / sum(
-                visit_count_distribution
-            )
+            visit_count_distribution = visit_count_distribution / sum(visit_count_distribution)
             action = numpy.random.choice(actions, p=visit_count_distribution)
 
         return action
@@ -137,13 +135,7 @@ class MCTS:
         self.config = config
 
     def run(
-        self,
-        model,
-        observation,
-        legal_actions,
-        to_play,
-        add_exploration_noise,
-        override_root_with=None,
+        self, model, observation, legal_actions, to_play, add_exploration_noise, override_root_with=None,
     ):
         """
         At the root of the search tree we use the representation function to obtain a
@@ -153,21 +145,22 @@ class MCTS:
         """
 
         root = Node(0)
+
         observation = (
-            torch.tensor(observation)
-            .float()
-            .unsqueeze(0)
-            .to(next(model.parameters()).device)
+            torch.tensor(observation).float().unsqueeze(dim=0).to(next(model.parameters()).device)
         )
+
         (
             root_predicted_value,
             reward,
             policy_logits,
             hidden_state,
         ) = model.initial_inference(observation)
+
         root_predicted_value = support_to_scalar(
             root_predicted_value, self.config.support_size
         ).item()
+
         reward = support_to_scalar(reward, self.config.support_size).item()
         assert (
             legal_actions
@@ -354,7 +347,7 @@ class Node:
 
 class GameHistory:
     """
-    Store only usefull information of a self-play game.
+    Store only useful information of a self-play game.
     """
 
     def __init__(self):
@@ -368,6 +361,9 @@ class GameHistory:
         # For PER
         self.priorities = None
         self.game_priority = None
+
+    def __str__(self):
+        return "{0}".format(self.to_play_history)
 
     def store_search_statistics(self, root, action_space):
         # Turn visit count from root into a policy

@@ -32,7 +32,8 @@ config_c.SYSTEM_COMPUTER_NAME = SYSTEM_COMPUTER_NAME
 
 from e_main.supports.learner_comparison import LearnerComparison
 from g_utils.commons import print_comparison_basic_info, get_wandb_obj, get_env_info
-from g_utils.commons_rl import set_config, get_agent
+from g_utils.commons import set_config
+from g_utils.commons_rl import get_agent
 
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
@@ -55,8 +56,7 @@ for agent_config in config_c.AGENT_PARAMETERS:
 
 def main():
     for config in config_c.AGENT_PARAMETERS:
-        assert config.AGENT_TYPE != AgentType.REINFORCE
-        assert config.AGENT_TYPE != AgentType.PPO
+        assert config.AGENT_TYPE not in (AgentType.REINFORCE,)
         set_config(config)
 
     observation_space, action_space = get_env_info(config_c)

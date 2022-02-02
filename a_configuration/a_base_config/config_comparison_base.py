@@ -4,6 +4,8 @@ import sys
 import torch
 from torch import nn
 
+from g_utils.types import LayerActivationType
+
 
 class ConfigComparisonBase:
     def __init__(self):
@@ -30,6 +32,7 @@ class ConfigComparisonBase:
 
         self.USE_WANDB = False
         self.WANDB_ENTITY = "link-koreatech"
+        self.WANDB_REPORT_URL = None
 
         self.TRAIN_INTERVAL_GLOBAL_TIME_STEPS = 4
         assert self.TRAIN_INTERVAL_GLOBAL_TIME_STEPS >= self.N_VECTORIZED_ENVS * self.N_ACTORS, \
@@ -45,7 +48,7 @@ class ConfigComparisonBase:
 
         self.USE_LAYER_NORM = False
 
-        self.LAYER_ACTIVATION = nn.LeakyReLU
+        self.LAYER_ACTIVATION_TYPE = LayerActivationType.LEAKY_RELU
 
         self.DEVICE = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
