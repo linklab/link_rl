@@ -62,7 +62,7 @@ class MCTS:
         observation,
         legal_actions,
         to_play,
-        add_exploration_noise,
+        add_exploration_noise,  # type(add_exploration_noise) = bool
         override_root_with=None,
     ):
         """
@@ -102,7 +102,7 @@ class MCTS:
         # 의문 : child node에 대한 legal actions는 따로 처리 안하는 것인가? 그러면 parent node와 child node 간에 legal action이 다를경우
         #       애시당초 진짜 환경의 policy logits와 일치할 수 없는거 아닌가?
         root.expand(
-            legal_actions,  # root node 자신에 대한
+            legal_actions,  # root node 자신에 대한 reward(0), hidden_state
             to_play,
             reward,
             policy_logits,
@@ -137,7 +137,7 @@ class MCTS:
 
             # Inside the search tree we use the dynamics function to obtain the next hidden
             # state given an action and the previous hidden state
-            parent = search_path[-2]
+            parent = search_path[-2]  # child = search_path[-1]
             # 해당 state에 action을 했을 경우 얻는 value와 reward
             value, reward, policy_logits, hidden_state = model.recurrent_inference(
                 parent.hidden_state,
@@ -156,7 +156,6 @@ class MCTS:
             self.backpropagate(search_path, value, virtual_to_play, min_max_stats)
 
             max_tree_depth = max(max_tree_depth, current_tree_depth)
-
         extra_info = {
             "max_tree_depth": max_tree_depth,
             "root_predicted_value": root_predicted_value,
@@ -169,7 +168,7 @@ class MCTS:
         """
         max_ucb = max(
             self.ucb_score(node, child, min_max_stats)
-            for action, child in node.children.items()
+            for action, child in node.children.items()  # node.children = {action, 이 action으로 선택되는 child_node}
         )
         action = numpy.random.choice(
             [
@@ -266,6 +265,7 @@ class Node:
         policy = {a: policy_values[i] for i, a in enumerate(actions)}
         # 갸능한 모든 action에 대한 chile node 생성
         for action, p in policy.items():
+            # 왜 child node를 생성할 때 prior 자리에 그 행동을 뽑을 확률이 들어가나.
             self.children[action] = Node(p)
 
     def add_exploration_noise(self, dirichlet_alpha, exploration_fraction):
@@ -278,3 +278,24 @@ class Node:
         frac = exploration_fraction
         for a, n in zip(actions, noise):
             self.children[a].prior = self.children[a].prior * (1 - frac) + n * frac
+
+
+class MinMaxStats:
+    """
+    A class that holds the min-max values of the tree.
+    """
+
+    def __init__(self):
+        self.maximum = -float("inf")
+        self.minimum = float("inf")
+
+    def update(self, value):
+        self.maximum = max(self.maximum, value)
+        self.minimum = min(self.minimum, value)
+
+    def normalize(self, value):
+        if self.maximum > self.minimum:
+            # We normalize only when we have set the maximum and minimum values
+            return (value - self.minimum) / (self.maximum - self.minimum)
+        return value
+

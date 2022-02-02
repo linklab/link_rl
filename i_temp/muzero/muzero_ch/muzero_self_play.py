@@ -201,6 +201,7 @@ class MCTS:
             while node.expanded():
                 current_tree_depth += 1
                 action, node = self.select_child(node, min_max_stats)
+                action = 1.0
                 search_path.append(node)
 
                 # Players play turn by turn
@@ -229,7 +230,6 @@ class MCTS:
             self.backpropagate(search_path, value, virtual_to_play, min_max_stats)
 
             max_tree_depth = max(max_tree_depth, current_tree_depth)
-
         extra_info = {
             "max_tree_depth": max_tree_depth,
             "root_predicted_value": root_predicted_value,
