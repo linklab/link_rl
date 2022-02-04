@@ -80,7 +80,6 @@ class Model(nn.Module):
             linear_layers_dict["linear_{0}_activation".format(idx)] = self.config.LAYER_ACTIVATION()
 
         linear_layers = nn.Sequential(linear_layers_dict)
-
         return linear_layers
 
     def get_representation_layers(self, input_n_features):
@@ -110,7 +109,6 @@ class Model(nn.Module):
             representation_layers_dict["representation_{0}_activation".format(idx)] = self.config.LAYER_ACTIVATION()
 
         representation_layers = nn.Sequential(representation_layers_dict)
-
         return representation_layers
 
     def get_convolutional_layers(self, input_n_channels):
