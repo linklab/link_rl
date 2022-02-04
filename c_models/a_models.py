@@ -49,72 +49,66 @@ class Model(nn.Module):
                 device=self.config.DEVICE
             )
 
+    ####################
+    #   get_*_layers   #
+    ####################
+
     def get_linear_layers(self, input_n_features):
-        # assert self.config.MODEL_PARAMETER.NEURONS_PER_FULLY_CONNECTED_LAYER
         if not self.config.MODEL_PARAMETER.NEURONS_PER_FULLY_CONNECTED_LAYER:
             print("self.config.MODEL_PARAMETER.NEURONS_PER_FULLY_CONNECTED_LAYER is empty")
             return nn.Sequential()
 
         linear_layers_dict = OrderedDict()
-        linear_layers_dict["linear_0"] = nn.Linear(
-            input_n_features,
-            self.config.MODEL_PARAMETER.NEURONS_PER_FULLY_CONNECTED_LAYER[0]
-        )
-        if self.config.USE_LAYER_NORM:
-            linear_layers_dict["linear_0_norm"] = nn.LayerNorm(
-                self.config.MODEL_PARAMETER.NEURONS_PER_FULLY_CONNECTED_LAYER[0]
-            )
+        neurons_per_fully_connected_layer = self.config.MODEL_PARAMETER.NEURONS_PER_FULLY_CONNECTED_LAYER.copy()
+        neurons_per_fully_connected_layer.append(input_n_features)
+        # neurons_per_fully_connected_layer[-1] == input_n_features
 
-        linear_layers_dict["linear_0_activation"] = self.config.LAYER_ACTIVATION()
-
-        for idx in range(1, len(self.config.MODEL_PARAMETER.NEURONS_PER_FULLY_CONNECTED_LAYER)):
+        for idx in range(len(self.config.MODEL_PARAMETER.NEURONS_PER_FULLY_CONNECTED_LAYER)):
+            # Linear Layer
             linear_layers_dict["linear_{0}".format(idx)] = nn.Linear(
-                self.config.MODEL_PARAMETER.NEURONS_PER_FULLY_CONNECTED_LAYER[idx - 1],
-                self.config.MODEL_PARAMETER.NEURONS_PER_FULLY_CONNECTED_LAYER[idx]
+                neurons_per_fully_connected_layer[idx - 1],
+                neurons_per_fully_connected_layer[idx]
             )
+
+            # Layer Normalization
             if self.config.USE_LAYER_NORM:
                 linear_layers_dict["linear_{0}_norm".format(idx)] = nn.LayerNorm(
-                    self.config.MODEL_PARAMETER.NEURONS_PER_FULLY_CONNECTED_LAYER[idx]
+                    neurons_per_fully_connected_layer[idx]
                 )
 
+            # Activation Function
             linear_layers_dict["linear_{0}_activation".format(idx)] = self.config.LAYER_ACTIVATION()
 
         linear_layers = nn.Sequential(linear_layers_dict)
-
         return linear_layers
 
     def get_representation_layers(self, input_n_features):
-        # assert self.config.MODEL_PARAMETER.NEURONS_PER_REPRESENTATION_LAYER
         if not self.config.MODEL_PARAMETER.NEURONS_PER_REPRESENTATION_LAYER:
             print("self.config.MODEL_PARAMETER.NEURONS_PER_REPRESENTATION_LAYER is empty")
             return nn.Sequential()
 
         representation_layers_dict = OrderedDict()
-        representation_layers_dict["representation_0"] = nn.Linear(
-            input_n_features,
-            self.config.MODEL_PARAMETER.NEURONS_PER_REPRESENTATION_LAYER[0]
-        )
-        if self.config.USE_LAYER_NORM:
-            representation_layers_dict["representation_0_norm"] = nn.LayerNorm(
-                self.config.MODEL_PARAMETER.NEURONS_PER_REPRESENTATION_LAYER[0]
-            )
+        neurons_per_representation_layer = self.config.MODEL_PARAMETER.NEURONS_PER_REPRESENTATION_LAYER.copy()
+        neurons_per_representation_layer.append(input_n_features)
+        # neurons_per_representation_layer[-1] == input_n_features
 
-        representation_layers_dict["representation_0_activation"] = self.config.LAYER_ACTIVATION()
-
-        for idx in range(1, len(self.config.MODEL_PARAMETER.NEURONS_PER_REPRESENTATION_LAYER)):
+        for idx in range(len(self.config.MODEL_PARAMETER.NEURONS_PER_REPRESENTATION_LAYER)):
+            # Representation Layer
             representation_layers_dict["representation_{0}".format(idx)] = nn.Linear(
-                self.config.MODEL_PARAMETER.NEURONS_PER_REPRESENTATION_LAYER[idx - 1],
-                self.config.MODEL_PARAMETER.NEURONS_PER_REPRESENTATION_LAYER[idx]
+                neurons_per_representation_layer[idx - 1],
+                neurons_per_representation_layer[idx]
             )
+
+            # Layer Normalization
             if self.config.USE_LAYER_NORM:
                 representation_layers_dict["representation_{0}_norm".format(idx)] = nn.LayerNorm(
-                    self.config.MODEL_PARAMETER.NEURONS_PER_REPRESENTATION_LAYER[idx]
+                    neurons_per_representation_layer[idx]
                 )
 
+            # Activation Function
             representation_layers_dict["representation_{0}_activation".format(idx)] = self.config.LAYER_ACTIVATION()
 
         representation_layers = nn.Sequential(representation_layers_dict)
-
         return representation_layers
 
     def get_convolutional_layers(self, input_n_channels):
@@ -123,21 +117,20 @@ class Model(nn.Module):
         assert self.config.MODEL_PARAMETER.STRIDE_PER_LAYER
 
         convolutional_layers_dict = OrderedDict()
-        convolutional_layers_dict["conv_0"] = nn.Conv2d(
-            in_channels=input_n_channels,
-            out_channels=self.config.MODEL_PARAMETER.OUT_CHANNELS_PER_LAYER[0],
-            kernel_size=self.config.MODEL_PARAMETER.KERNEL_SIZE_PER_LAYER[0],
-            stride=self.config.MODEL_PARAMETER.STRIDE_PER_LAYER[0]
-        )
-        convolutional_layers_dict["conv_0_activation"] = self.config.LAYER_ACTIVATION()
+        out_channels_per_layer = self.config.MODEL_PARAMETER.OUT_CHANNELS_PER_LAYER.copy()
+        out_channels_per_layer.append(input_n_channels)
+        # out_channels_per_layer[-1] == input_n_channels
 
-        for idx in range(1, len(self.config.MODEL_PARAMETER.OUT_CHANNELS_PER_LAYER)):
+        for idx in range(len(self.config.MODEL_PARAMETER.OUT_CHANNELS_PER_LAYER)):
+            # Convolutional Layer
             convolutional_layers_dict["conv_{0}".format(idx)] = nn.Conv2d(
-                in_channels=self.config.MODEL_PARAMETER.OUT_CHANNELS_PER_LAYER[idx - 1],
-                out_channels=self.config.MODEL_PARAMETER.OUT_CHANNELS_PER_LAYER[idx],
+                in_channels=out_channels_per_layer[idx - 1],
+                out_channels=out_channels_per_layer[idx],
                 kernel_size=self.config.MODEL_PARAMETER.KERNEL_SIZE_PER_LAYER[idx],
                 stride=self.config.MODEL_PARAMETER.STRIDE_PER_LAYER[idx]
             )
+
+            # Activation Function
             convolutional_layers_dict["conv_{0}_activation".format(idx)] = self.config.LAYER_ACTIVATION()
 
         convolutional_layers = nn.Sequential(convolutional_layers_dict)
@@ -185,6 +178,10 @@ class Model(nn.Module):
     #     rnn_in = torch.zeros(1, seq_len, input_n_features)
     #     rnn_out, h_n = recurrent_layers(rnn_in)
     #     return int(np.prod(rnn_out.size())), int(np.prod(h_n.size()))
+
+    ####################
+    #   make_*_model   #
+    ####################
 
     def make_linear_model(self, observation_shape, n_out_actions=None):
         # representation_layers
