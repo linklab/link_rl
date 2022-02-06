@@ -92,3 +92,4 @@ class ConfigSac(ConfigOffPolicyAgent):
         self.DEFAULT_ALPHA = 1.0
         self.AUTOMATIC_ENTROPY_TEMPERATURE_TUNING = True
         self.MIN_ALPHA = 0.2
+

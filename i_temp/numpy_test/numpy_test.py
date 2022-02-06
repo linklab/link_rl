@@ -1,6 +1,8 @@
 import numpy as np
 import torch
 
+print(np.random.randint(low=10, high=100), "!!!")
+
 a = np.zeros(10)
 b = np.array(a)
 c = torch.tensor(b)

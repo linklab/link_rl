@@ -58,7 +58,7 @@ class ConfigBase:
 
         self.SYSTEM_COMPUTER_NAME = None
 
-        self.USE_LAYER_NORM = False
+        self.USE_LAYER_NORM = True
 
         self.LAYER_ACTIVATION_TYPE = LayerActivationType.LEAKY_RELU
         self.LAYER_ACTIVATION = None

@@ -66,7 +66,7 @@ class DiscreteActorModel(ActorModel):
         )
 
         self.actor_linear_pi = nn.Linear(
-            self.config.MODEL_PARAMETER.NEURONS_PER_FULLY_CONNECTED_LAYER[-1], self.n_discrete_actions
+            self._get_forward_pre_out(observation_shape), self.n_discrete_actions
         )
         self.actor_params_list = list(self.parameters())
 
@@ -94,7 +94,9 @@ class ContinuousDeterministicActorModel(ActorModel):
         )
 
         self.mu = nn.Sequential(
-            nn.Linear(self.config.MODEL_PARAMETER.NEURONS_PER_FULLY_CONNECTED_LAYER[-1], self.n_out_actions),
+            nn.Linear(
+                self._get_forward_pre_out(observation_shape), self.n_out_actions
+            ),
             nn.Tanh()
         )
         self.actor_params_list = list(self.parameters())
@@ -118,12 +120,16 @@ class ContinuousStochasticActorModel(ActorModel):
             config=config
         )
         self.mu = nn.Sequential(
-            nn.Linear(self.config.MODEL_PARAMETER.NEURONS_PER_FULLY_CONNECTED_LAYER[-1], self.n_out_actions),
+            nn.Linear(
+                self._get_forward_pre_out(observation_shape), self.n_out_actions
+            ),
             nn.Tanh()
         )
 
         self.log_sigma = nn.Sequential(
-            nn.Linear(self.config.MODEL_PARAMETER.NEURONS_PER_REPRESENTATION_LAYER[-1], self.n_out_actions),
+            nn.Linear(
+                self._get_forward_pre_out(observation_shape), self.n_out_actions
+            ),
             nn.Softplus()
         )
 

@@ -43,7 +43,7 @@ class QNet(Model):
             raise ValueError()
 
         self.linear_last_layer = nn.Linear(
-            self.config.MODEL_PARAMETER.NEURONS_PER_FULLY_CONNECTED_LAYER[-1], self.n_discrete_actions
+            self._get_forward_pre_out(observation_shape), self.n_discrete_actions
         )
 
         self.qnet_params_list = list(self.parameters())
