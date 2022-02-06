@@ -176,6 +176,7 @@ class ContinuousStochasticActorModel(ActorModel):
         # The standard deviation can’t be negative (nor 0).
         # sigma_v = torch.clamp(self.log_sigma.exp(), 1e-3, 50)
         x = self.forward_variance(obs)
+        x = self.variance(x)
         # sigma_v = self.log_sigma(x).exp()
         var_v = torch.clamp(x, 1e-4, 50)
 
