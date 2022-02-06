@@ -378,7 +378,7 @@ def console_log(
             train_step_rate_v
         )
 
-    if config.AGENT_TYPE in [AgentType.DQN, AgentType.DUELING_DQN]:
+    if config.AGENT_TYPE in [AgentType.DQN, AgentType.DUELING_DQN, AgentType.DOUBLE_DQN, AgentType.DOUBLE_DUELING_DQN]:
         console_log += "Q_net_loss: {0:>7.3f}, Epsilon: {1:>4.2f}".format(
             agent.last_q_net_loss.value, agent.epsilon.value
         )
@@ -495,7 +495,7 @@ def wandb_log(learner, wandb_obj, config):
         "Train Step Rate": learner.train_step_rate.value
     }
 
-    if config.AGENT_TYPE in [AgentType.DQN, AgentType.DUELING_DQN]:
+    if config.AGENT_TYPE in [AgentType.DQN, AgentType.DUELING_DQN, AgentType.DOUBLE_DQN, AgentType.DOUBLE_DUELING_DQN]:
         log_dict["QNet Loss"] = learner.agent.last_q_net_loss.value
         log_dict["Epsilon"] = learner.agent.epsilon.value
     elif config.AGENT_TYPE == AgentType.REINFORCE:
