@@ -8,11 +8,11 @@ import torch.multiprocessing as mp
 import numpy as np
 
 from c_models.e_a2c_models import ContinuousActorCriticModel, DiscreteActorCriticModel
-from d_agents.agent import Agent
+from d_agents.agent import OnPolicyAgent
 from g_utils.types import AgentMode
 
 
-class AgentA2c(Agent):
+class AgentA2c(OnPolicyAgent):
     def __init__(self, observation_space, action_space, config):
         super(AgentA2c, self).__init__(observation_space, action_space, config)
 

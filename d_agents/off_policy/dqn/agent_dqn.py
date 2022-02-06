@@ -2,16 +2,15 @@
 import torch.optim as optim
 import numpy as np
 import torch
-import torch.nn.functional as F
 import torch.multiprocessing as mp
 
 from c_models.b_qnet_models import QNet
-from d_agents.agent import Agent
+from d_agents.agent import OffPolicyAgent
 from g_utils.commons import EpsilonTracker
-from g_utils.types import AgentMode, ModelType
+from g_utils.types import AgentMode
 
 
-class AgentDqn(Agent):
+class AgentDqn(OffPolicyAgent):
     def __init__(self, observation_space, action_space, config):
         super(AgentDqn, self).__init__(observation_space, action_space, config)
 
