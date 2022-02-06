@@ -52,6 +52,7 @@ class SelfPlay:
                     numpy.array(observation).shape == self.config.observation_shape
                 ), f"Observation should match the observation_shape defined in MuZeroConfig. Expected {self.config.observation_shape} but got {numpy.array(observation).shape}."
 
+                # index : 타겟 만들 때 원하는 포지션에서 타겟값을 만들기 위해 필요!
                 stacked_observations = game_history.get_stacked_observations(
                     index=-1, num_stacked_observations=self.config.stacked_observations,
                 )
@@ -90,8 +91,6 @@ class SelfPlay:
 
             if temperature == 0:
                 print("episode_reward : ", episode_reward)
-
-        print(game_history)
 
         return game_history
 

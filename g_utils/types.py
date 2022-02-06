@@ -9,6 +9,15 @@ Transition = namedtuple(
     defaults=[None] * 6
 )
 
+Episode_history = namedtuple(
+    typename='Episode_history',
+    field_names=[
+        'observation_history', 'action_history', 'reward_history', 'to_play_history',
+        'child_visits_history', 'root_values_history', 'info_history'
+    ],
+    defaults=[None] * 7
+)
+
 # Transitions = namedtuple(
 #     typename='Transitions',
 #     field_names=[
@@ -62,17 +71,11 @@ class AgentType(enum.Enum):
     REINFORCE = 4
     A2C = 5
     PPO = 6
-<<<<<<< HEAD
-    DDPG = 7
-    TD3 = 8
-    SAC = 9
-    MUZERO = 10
-=======
     PPO_TRAJECTORY = 7
     DDPG = 8
     TD3 = 9
     SAC = 10
->>>>>>> main
+    MUZERO = 11
 
 
 OnPolicyAgentTypes = [

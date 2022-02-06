@@ -94,9 +94,12 @@ class Agent:
         # next_observations.shape: torch.Size([32, 4, 84, 84]),
         # rewards.shape: torch.Size([32, 1]),
         # dones.shape: torch.Size([32])
-        self.observations, self.actions, self.next_observations, self.rewards, self.dones = self.buffer.sample(
-            batch_size=sample_length
-        )
+        if self.config.AGENT_TYPE == AgentType.MUZERO:
+            self.episode_idxs, self.episode_historys = self.buffer.sample_muzero(batch_size=sample_length)
+        else:
+            self.observations, self.actions, self.next_observations, self.rewards, self.dones = self.buffer.sample(
+                batch_size=sample_length
+            )
 
     def train(self, training_steps_v=None):
         count_training_steps = 0

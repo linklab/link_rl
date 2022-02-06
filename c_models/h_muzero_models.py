@@ -1,15 +1,5 @@
 from typing import Tuple
 import torch
-from torch import nn
-import numpy as np
-from a_configuration.b_base.c_models.convolutional_models import ParameterConvolutionalModel
-from a_configuration.b_base.c_models.linear_models import ParameterLinearModel
-from a_configuration.b_base.c_models.recurrent_convolutional_models import ParameterRecurrentConvolutionalModel
-from a_configuration.b_base.c_models.recurrent_linear_models import ParameterRecurrentLinearModel
-from c_models.a_models import Model
-from c_models.c_policy_models import DiscreteActorModel, ContinuousActorModel
-from torch.distributions import Normal, TanhTransform, TransformedDistribution
-from e_main.config_single import parameter
 
 
 class MuzeroModel:
@@ -17,7 +7,11 @@ class MuzeroModel:
             self, observation_shape: Tuple[int], n_out_actions: int, n_discrete_actions=None, parameter=None,
             is_target_model=False
     ):
-        pass
+        self.representation_network
+        self.dynamics_encoded_state_network
+        self.dynamics_reward_network
+        self.prediction_policy_network
+        self.prediction_value_network
 
     def representation(self, observation):
         pass

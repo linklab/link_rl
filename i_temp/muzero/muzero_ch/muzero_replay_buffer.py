@@ -17,6 +17,7 @@ class ReplayBuffer:
         self.total_samples = sum(
             [len(game_history.root_values) for game_history in self.buffer.values()]
         )
+
         if self.total_samples != 0:
             print(
                 f"Replay buffer initialized with {self.total_samples} samples ({self.num_played_games} games).\n"
@@ -231,6 +232,7 @@ class ReplayBuffer:
         else:
             value = 0
 
+        # reward history에는 reset의 reward부터 저장하기 때문에 뽑은 index에서 +1을 해준다.
         for i, reward in enumerate(
             game_history.reward_history[index + 1 : bootstrap_index + 1]
         ):

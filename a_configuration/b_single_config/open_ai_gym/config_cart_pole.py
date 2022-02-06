@@ -1,3 +1,4 @@
+from a_configuration.a_base_config.b_agents.agents import ConfigMuzero
 from a_configuration.a_base_config.b_agents.agents_off_policy import ConfigDqn, ConfigDoubleDqn, ConfigDuelingDqn, \
     ConfigDoubleDuelingDqn, ConfigSac
 from a_configuration.a_base_config.b_agents.agents_on_policy import ConfigA2c, ConfigReinforce, ConfigPpo, \
@@ -98,3 +99,12 @@ class ConfigCartPolePpoTrajectory(ConfigBase, ConfigCartPole, ConfigPpoTrajector
 
         self.MAX_TRAINING_STEPS = 100_000
         self.MODEL_TYPE = ModelType.SMALL_LINEAR
+
+
+class ConfigCartPoleMuzero(ConfigBase, ConfigCartPole, ConfigMuzero):
+    def __init__(self):
+        ConfigBase.__init__(self)
+        ConfigCartPole.__init__(self)
+        ConfigMuzero.__init__(self)
+
+        self.MAX_TRAINING_STEPS = 100_000
