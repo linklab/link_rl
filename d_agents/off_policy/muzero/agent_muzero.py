@@ -14,7 +14,6 @@ from gym.spaces import Discrete, Box
 from torch.distributions import Categorical, Normal
 
 from c_models.h_muzero_models import *
-from c_models.h_muzero_models import MuzeroModel
 from d_agents.agent import Agent
 from g_utils.types import AgentMode
 
@@ -27,9 +26,12 @@ class AgentMuZero(Agent):
         super(AgentMuZero, self).__init__(observation_space, action_space, config)
 
         if isinstance(self.action_space, Discrete):
-            self.model = MuzeroModel()
+            self.model = DiscreteMuzeroModel(
+                observation_shape=self.observation_shape, n_out_actions=self.n_out_actions,
+                n_discrete_actions=self.n_discrete_actions, config=config
+            )
         elif isinstance(self.action_space, Box):
-            pass
+            raise ValueError()
         else:
             raise ValueError()
 

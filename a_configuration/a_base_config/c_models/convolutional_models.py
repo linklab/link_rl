@@ -25,7 +25,7 @@ class ConfigConvolutionalModel:
             self.KERNEL_SIZE_PER_LAYER = [4, 4, 4, 3]
             self.STRIDE_PER_LAYER = [2, 2, 2, 1]
 
-            self.NEURONS_PER_REPRESENTATION_LAYER [512]
+            self.NEURONS_PER_REPRESENTATION_LAYER = [512]
             self.NEURONS_PER_FULLY_CONNECTED_LAYER = [256]
 
         else:

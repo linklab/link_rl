@@ -109,3 +109,4 @@ class ConfigCartPoleMuzero(ConfigBase, ConfigCartPole, ConfigMuzero):
         self.MAX_TRAINING_STEPS = 100_000
         self.MODEL_TYPE = ModelType.SMALL_LINEAR
         self.BUFFER_CAPACITY = 10_000
+        self.SUPPORT_SIZE = 10

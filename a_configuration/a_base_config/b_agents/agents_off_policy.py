@@ -104,3 +104,4 @@ class ConfigMuzero(ConfigOffPolicyAgent):
         self.STACKED_OBSERVATION = 0
         self.INDEX_STACKED_OBSERVATIONS = -1
 
+        self.SUPPORT_SIZE = 10

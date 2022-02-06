@@ -1,17 +1,83 @@
 from typing import Tuple
 import torch
+from torch import nn
+
+from a_configuration.a_base_config.c_models.convolutional_models import ConfigConvolutionalModel
+from a_configuration.a_base_config.c_models.linear_models import ConfigLinearModel
+from c_models.a_models import Model
 
 
-class MuzeroModel:
+class DiscreteMuzeroModel(Model):
     def __init__(
-            self, observation_shape: Tuple[int], n_out_actions: int, n_discrete_actions=None, parameter=None,
-            is_target_model=False
+            self,
+            observation_shape: Tuple[int],
+            n_out_actions: int,
+            n_discrete_actions=None,
+            config=None
     ):
-        self.representation_network
-        self.dynamics_encoded_state_network
-        self.dynamics_reward_network
-        self.prediction_policy_network
-        self.prediction_value_network
+        super(DiscreteMuzeroModel, self).__init__(
+            observation_shape=observation_shape,
+            n_out_actions=n_out_actions,
+            n_discrete_actions=n_discrete_actions,
+            config=config
+        )
+        if isinstance(self.config.MODEL_PARAMETER, ConfigLinearModel):
+            # representation_layers
+            input_n_features = observation_shape[0]
+            self.representation_network = self.get_representation_layers(input_n_features=input_n_features)
+
+            assert self.config.MODEL_PARAMETER.NEURONS_PER_REPRESENTATION_LAYER is not None
+            input_n_features = self.config.MODEL_PARAMETER.NEURONS_PER_REPRESENTATION_LAYER[-1]
+
+            assert n_out_actions is not None
+            input_n_features_with_n_out_actions = input_n_features + self.n_out_actions  # self.n_out_actions = 1
+
+            self.dynamics_encoded_state_network = self.get_linear_layers(
+                input_n_features=input_n_features_with_n_out_actions
+            )
+
+            self.dynamics_reward_layers = self.get_linear_layers(input_n_features=input_n_features)
+            self.prediction_policy_layers = self.get_linear_layers(input_n_features=input_n_features)
+            self.prediction_value_layers = self.get_linear_layers(input_n_features=input_n_features)
+
+        elif isinstance(self.config.MODEL_PARAMETER, ConfigConvolutionalModel):
+            # convolutional_layers
+            input_n_channels = observation_shape[0]
+            self.convolutional_layers = self.get_convolutional_layers(input_n_channels)
+
+            # representation_layers
+            conv_out_flat_size = self._get_conv_out(self.convolutional_layers, observation_shape)
+            self.representation_network = self.get_representation_layers(input_n_features=conv_out_flat_size)
+
+            assert self.config.MODEL_PARAMETER.NEURONS_PER_REPRESENTATION_LAYER is not None
+            input_n_features = self.config.MODEL_PARAMETER.NEURONS_PER_REPRESENTATION_LAYER[-1]
+
+            assert n_out_actions is not None
+            input_n_features_with_n_out_actions = input_n_features + self.n_out_actions  # self.n_out_actions = 1
+
+            self.dynamics_encoded_state_network = self.get_linear_layers(
+                input_n_features=input_n_features_with_n_out_actions
+            )
+
+            self.dynamics_reward_layers = self.get_linear_layers(input_n_features=input_n_features)
+            self.prediction_policy_layers = self.get_linear_layers(input_n_features=input_n_features)
+            self.prediction_value_layers = self.get_linear_layers(input_n_features=input_n_features)
+        else:
+            raise ValueError()
+
+        self.dynamics_reward_last_layer = nn.Linear(
+            self.config.MODEL_PARAMETER.NEURONS_PER_FULLY_CONNECTED_LAYER[-1], self.config.SUPPORT_SIZE * 2 + 1
+        )
+
+        self.prediction_last_policy_layer = nn.Linear(
+            self.config.MODEL_PARAMETER.NEURONS_PER_FULLY_CONNECTED_LAYER[-1], self.n_discrete_actions
+        )
+
+        self.prediction_value_last_layer = nn.Linear(
+            self.config.MODEL_PARAMETER.NEURONS_PER_FULLY_CONNECTED_LAYER[-1], self.config.SUPPORT_SIZE * 2 + 1
+        )
+
+        self.critic_params_list = list(self.parameters())
 
     def representation(self, observation):
         pass

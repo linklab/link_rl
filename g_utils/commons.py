@@ -68,22 +68,26 @@ def set_config(config):
     ):
         from a_configuration.a_base_config.c_models.linear_models import ConfigLinearModel
         config.MODEL_PARAMETER = ConfigLinearModel(config.MODEL_TYPE)
+
     elif config.MODEL_TYPE in (
             ModelType.SMALL_CONVOLUTIONAL, ModelType.MEDIUM_CONVOLUTIONAL, ModelType.LARGE_CONVOLUTIONAL
     ):
         from a_configuration.a_base_config.c_models.convolutional_models import ConfigConvolutionalModel
         config.MODEL_PARAMETER = ConfigConvolutionalModel(config.MODEL_TYPE)
+
     elif config.MODEL_TYPE in (
             ModelType.SMALL_RECURRENT, ModelType.MEDIUM_RECURRENT, ModelType.LARGE_RECURRENT
     ):
         from a_configuration.a_base_config.c_models.recurrent_linear_models import ConfigRecurrentLinearModel
         config.MODEL_PARAMETER = ConfigRecurrentLinearModel(config.MODEL_TYPE)
+
     elif config.MODEL_TYPE in (
             ModelType.SMALL_RECURRENT_CONVOLUTIONAL, ModelType.MEDIUM_RECURRENT_CONVOLUTIONAL,
             ModelType.LARGE_RECURRENT_CONVOLUTIONAL
     ):
         from a_configuration.a_base_config.c_models.recurrent_convolutional_models import ConfigRecurrentConvolutionalModel
         config.MODEL_PARAMETER = ConfigRecurrentConvolutionalModel(config.MODEL_TYPE)
+
     else:
         raise ValueError()
 
