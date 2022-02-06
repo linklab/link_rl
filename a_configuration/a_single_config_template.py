@@ -25,6 +25,9 @@ config = ConfigCartPolePpo()
 from a_configuration.b_single_config.open_ai_gym.config_cart_pole import ConfigCartPolePpoTrajectory
 config = ConfigCartPolePpoTrajectory()
 
+from a_configuration.b_single_config.open_ai_gym.config_cart_pole import ConfigCartPoleMuzero
+config = ConfigCartPoleMuzero()
+
 ######################
 ## CART_POLE_BULLET ##
 ######################

@@ -22,7 +22,6 @@ class ParameterHumanoidBulletSac(ParameterBase, ParameterHumanoidBullet, Paramet
 
         self.N_STEP = 1
         self.BUFFER_CAPACITY = 250_000
-        self.MIN_BUFFER_SIZE_FOR_TRAIN = self.BATCH_SIZE * 10
 
         self.N_VECTORIZED_ENVS = 1
         self.N_ACTORS = 1

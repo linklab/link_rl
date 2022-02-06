@@ -1,6 +1,5 @@
-from a_configuration.a_base_config.b_agents.agents import ConfigMuzero
 from a_configuration.a_base_config.b_agents.agents_off_policy import ConfigDqn, ConfigDoubleDqn, ConfigDuelingDqn, \
-    ConfigDoubleDuelingDqn, ConfigSac
+    ConfigDoubleDuelingDqn, ConfigSac, ConfigMuzero
 from a_configuration.a_base_config.b_agents.agents_on_policy import ConfigA2c, ConfigReinforce, ConfigPpo, \
     ConfigPpoTrajectory
 from a_configuration.a_base_config.config_single_base import ConfigBase
@@ -108,3 +107,5 @@ class ConfigCartPoleMuzero(ConfigBase, ConfigCartPole, ConfigMuzero):
         ConfigMuzero.__init__(self)
 
         self.MAX_TRAINING_STEPS = 100_000
+        self.MODEL_TYPE = ModelType.SMALL_LINEAR
+        self.BUFFER_CAPACITY = 10_000

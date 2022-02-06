@@ -120,6 +120,9 @@ def set_config(config):
         config.BUFFER_CAPACITY = config.PPO_TRAJECTORY_SIZE
         config.CONSOLE_LOG_INTERVAL_TRAINING_STEPS = 10 * config.PPO_K_EPOCH
 
+    elif config.AGENT_TYPE == AgentType.MUZERO:
+        pass
+
     else:
         raise ValueError()
 

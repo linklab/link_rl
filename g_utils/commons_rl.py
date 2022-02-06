@@ -70,6 +70,12 @@ def get_agent(observation_space, action_space, config=None):
         agent = AgentSac(
             observation_space=observation_space, action_space=action_space, config=config
         )
+    elif config.AGENT_TYPE == AgentType.MUZERO:
+        assert config.N_ACTORS * config.N_VECTORIZED_ENVS == 1, "TOTAL NUMBERS OF ENVS should be one"
+        from d_agents.off_policy.muzero.agent_muzero import AgentMuZero
+        agent = AgentMuZero(
+            observation_space=observation_space, action_space=action_space, config=config
+        )
     else:
         raise ValueError()
 
