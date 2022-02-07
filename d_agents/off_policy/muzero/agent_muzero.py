@@ -77,7 +77,7 @@ class AgentMuZero(Agent):
         elif isinstance(self.action_space, Box):
             pass
 
-        return action
+        return np.asarray(action)
 
     def get_batch(self):
         (
