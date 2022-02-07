@@ -110,6 +110,7 @@ class Models(AbstractNetwork):
             .float()
         )
         action_one_hot.scatter_(1, action.long(), 1.0)
+        print(action_one_hot.shape, action_one_hot, "!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!@@@@")
         x = torch.cat((encoded_state, action_one_hot), dim=1)
 
         next_encoded_state = self.dynamics_encoded_state_network(x)

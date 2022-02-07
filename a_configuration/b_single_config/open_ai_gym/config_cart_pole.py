@@ -110,3 +110,5 @@ class ConfigCartPoleMuzero(ConfigBase, ConfigCartPole, ConfigMuzero):
         self.MODEL_TYPE = ModelType.SMALL_LINEAR
         self.BUFFER_CAPACITY = 10_000
         self.SUPPORT_SIZE = 10
+        self.CONSOLE_LOG_INTERVAL_TRAINING_STEPS = 10
+        self.VALUE_LOSS_WEIGHT = 1

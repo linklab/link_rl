@@ -104,4 +104,17 @@ class ConfigMuzero(ConfigOffPolicyAgent):
         self.STACKED_OBSERVATION = 0
         self.INDEX_STACKED_OBSERVATIONS = -1
 
+        self.ROOT_DIRCHLET_ALPHA = 0.25
+        self.ROOT_EXPLORATION_FRACTION = 0.25
+
+        self.PB_C_BASE = 19652
+        self.PB_C_INIT = 1.25
+
+        self.NUM_SIMULATION = 50
+        self.PLAYERS = list(range(1))
+
         self.SUPPORT_SIZE = 10
+
+        self.NUM_UNROLL_STEPS = 5
+
+        self.VALUE_LOSS_WEIGHT = 0.25

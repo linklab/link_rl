@@ -36,22 +36,23 @@ class AgentMuZero(Agent):
             raise ValueError()
 
         self.config = config
-        self.temperature = self.config.TEMPERATURE
         self.to_plays = []
         self.legal_actions = []
         self.roots = None
         self.mcts_extra_infos = None
         self.temperature = None
 
-        self.optimizer = optim.Adam(self.model.parameters(), lr=self.config.ACTOR_LEARNING_RATE)
+        self.optimizer = optim.Adam(self.model.parameters(), lr=self.config.LEARNING_RATE)
 
     def get_action(self, stacked_observations, mode=AgentMode.TRAIN):
+        action = []
         if isinstance(self.action_space, Discrete):
             self.roots, self.mcts_extra_infos = MCTS(self.config).run(
                 model=self.model,
                 observations=stacked_observations,
                 legal_actions=self.legal_actions,
                 to_plays=self.to_plays,
+                action_space=self.action_space,
                 add_exploration_noise=True,
             )
             # visit_counts's shape = (n_vectorized, n_root's_child)
@@ -62,22 +63,21 @@ class AgentMuZero(Agent):
             actions = np.array(
                [self.mcts_extra_infos[env_id]["actions"] for env_id in range(len(self.roots))]
             )
-
             # TODO : numpy batch 연산
             if mode == AgentMode.TRAIN:
                 visit_count_distributions = visit_counts ** (1 / self.temperature)
                 visit_count_distributions = visit_count_distributions / \
                                             np.sum(visit_count_distributions, axis=-1)[:, np.newaxis]
                 for i in range(self.config.N_VECTORIZED_ENVS):
-                    actions[i] = np.random.choice(actions[i], p=visit_count_distributions[i])
+                    action.append(np.random.choice(actions[i], p=visit_count_distributions[i]))
             elif mode == AgentMode.TEST:
                 for i in range(self.config.N_VECTORIZED_ENVS):
-                    actions[i] = actions[i][np.argmax(visit_counts[i])]
+                    action.append(actions[i][np.argmax(visit_counts[i])])
 
         elif isinstance(self.action_space, Box):
             pass
 
-        return actions
+        return action
 
     def get_batch(self):
         (
@@ -90,20 +90,15 @@ class AgentMuZero(Agent):
             gradient_scale_batch,
         ) = ([], [], [], [], [], [], [])
 
-        for episode_idx, episode_history in zip(self.episode_idxss, self.episode_historys):
-            state_index = np.random.choice(len(self.episode_historys.root_values))
+        for episode_idx, episode_history in zip(self.episode_idxs, self.episode_historys):
+            state_index = np.random.choice(len(episode_history.root_values_history))
 
             values, rewards, policies, actions = self.make_target(
                 episode_history, state_index
             )
 
             index_batch.append([episode_idx, state_index])
-            observation_batch.append(
-                episode_history.get_stacked_observations(
-                    state_index, self.config.stacked_observations,
-
-                )
-            )
+            observation_batch.append(episode_history.observation_history[state_index])
             action_batch.append(actions)
             value_batch.append(values)
             reward_batch.append(rewards)
@@ -111,7 +106,7 @@ class AgentMuZero(Agent):
             gradient_scale_batch.append(
                 [
                     min(
-                        self.config.num_unroll_steps,
+                        self.config.NUM_UNROLL_STEPS,
                         len(episode_history.action_history) - state_index,
                     )
                 ]
@@ -141,12 +136,8 @@ class AgentMuZero(Agent):
         # The value target is the discounted root value of the search tree td_steps into the
         # future, plus the discounted sum of all rewards until then.
         bootstrap_index = index + self.config.N_STEP
-        if bootstrap_index < len(episode_history.root_values):
-            root_values = (
-                episode_history.root_values
-                if episode_history.reanalysed_predicted_root_values is None
-                else episode_history.reanalysed_predicted_root_values
-            )
+        if bootstrap_index < len(episode_history.root_values_history):
+            root_values = (episode_history.root_values_history)
             last_step_value = (
                 root_values[bootstrap_index]
                 if episode_history.to_play_history[bootstrap_index]
@@ -154,13 +145,13 @@ class AgentMuZero(Agent):
                 else -root_values[bootstrap_index]
             )
 
-            value = last_step_value * self.config.discount ** self.config.td_steps
+            value = last_step_value * self.config.GAMMA ** self.config.N_STEP
         else:
             value = 0
 
         # reward history에는 reset의 reward부터 저장하기 때문에 뽑은 index에서 +1을 해준다.
         for i, reward in enumerate(
-                episode_history.reward_history[index + 1: bootstrap_index + 1]
+                episode_history.reward_history[index : bootstrap_index]
         ):
             # The value is oriented from the perspective of the current player
             value += (
@@ -168,7 +159,7 @@ class AgentMuZero(Agent):
                          if episode_history.to_play_history[index]
                             == episode_history.to_play_history[index + i]
                          else -reward
-                     ) * self.config.discount ** i
+                     ) * self.config.GAMMA ** i
 
         return value
 
@@ -183,22 +174,22 @@ class AgentMuZero(Agent):
         ):
             value = self.compute_target_value(episode_history, current_index)
 
-            if current_index < len(episode_history.root_values):
+            if current_index < len(episode_history.root_values_history):
                 target_values.append(value)
                 target_rewards.append(episode_history.reward_history[current_index])
-                target_policies.append(episode_history.child_visits[current_index])
+                target_policies.append(episode_history.child_visits_history[current_index])
                 actions.append(episode_history.action_history[current_index])
-            elif current_index == len(episode_history.root_values):
+            elif current_index == len(episode_history.root_values_history):
                 target_values.append(0)
-                target_rewards.append(episode_history.reward_history[current_index])
+                target_rewards.append(episode_history.reward_history[current_index-1])
                 # Uniform policy
                 target_policies.append(
                     [
-                        1 / len(episode_history.child_visits[0])
-                        for _ in range(len(episode_history.child_visits[0]))
+                        1 / len(episode_history.child_visits_history[0])
+                        for _ in range(len(episode_history.child_visits_history[0]))
                     ]
                 )
-                actions.append(episode_history.action_history[current_index])
+                actions.append(episode_history.action_history[current_index-1])
             else:
                 # States past the end of games are treated as absorbing states
                 target_values.append(0)
@@ -206,11 +197,11 @@ class AgentMuZero(Agent):
                 # Uniform policy
                 target_policies.append(
                     [
-                        1 / len(episode_history.child_visits[0])
-                        for _ in range(len(episode_history.child_visits[0]))
+                        1 / len(episode_history.child_visits_history[0])
+                        for _ in range(len(episode_history.child_visits_history[0]))
                     ]
                 )
-                actions.append(np.random.choice(self.action_space))
+                actions.append(np.random.choice(list(range(self.action_space.n))))
 
         return target_values, target_rewards, target_policies, actions
 
@@ -282,9 +273,26 @@ class AgentMuZero(Agent):
         else:
             self.temperature = 0.25
 
+    def loss_function(
+        self,
+        value,
+        reward,
+        policy_logits,
+        target_value,
+        target_reward,
+        target_policy,
+    ):
+        # Cross-entropy seems to have a better convergence than MSE
+        value_loss = (-target_value * torch.nn.LogSoftmax(dim=1)(value)).sum(1)
+        reward_loss = (-target_reward * torch.nn.LogSoftmax(dim=1)(reward)).sum(1)
+        policy_loss = (-target_policy * torch.nn.LogSoftmax(dim=1)(policy_logits)).sum(
+            1
+        )
+        return value_loss, reward_loss, policy_loss
+
     def train_muzero(self, training_steps_v):
         count_training_steps = 0
-
+        batch = self.get_batch()
         if isinstance(self.action_space, Discrete):
             (
                 observation_batch,
@@ -292,18 +300,19 @@ class AgentMuZero(Agent):
                 target_value,
                 target_reward,
                 target_policy,
-            ) = self.episode_historys
+                gradient_scale_batch,
+            ) = batch[-1]
+
             # Keep values as scalars for calculating the priorities for the prioritized replay
             target_value_scalar = np.array(target_value, dtype="float32")
             priorities = np.zeros_like(target_value_scalar)
 
-            device = next(self.model.parameters()).device
-
-            observation_batch = torch.tensor(observation_batch).float().to(device)
-            action_batch = torch.tensor(action_batch).long().to(device).unsqueeze(-1)
-            target_value = torch.tensor(target_value).float().to(device)
-            target_reward = torch.tensor(target_reward).float().to(device)
-            target_policy = torch.tensor(target_policy).float().to(device)
+            observation_batch = torch.tensor(observation_batch).float().to(self.config.DEVICE)
+            action_batch = torch.tensor(action_batch).long().to(self.config.DEVICE).unsqueeze(-1)
+            target_value = torch.tensor(target_value).float().to(self.config.DEVICE)
+            target_reward = torch.tensor(target_reward).float().to(self.config.DEVICE)
+            target_policy = torch.tensor(target_policy).float().to(self.config.DEVICE)
+            gradient_scale_batch = torch.tensor(gradient_scale_batch).float().to(self.config.DEVICE)
 
             # observation_batch: batch, channels, height, width
             # action_batch: batch, num_unroll_steps+1, 1 (unsqueeze)
@@ -330,34 +339,27 @@ class AgentMuZero(Agent):
                     hidden_state, action_batch[:, i]
                 )
                 # TODO : 이해하
-                # # Scale the gradient at the start of the dynamics function (See paper appendix Training)
-                # hidden_state.register_hook(lambda grad: grad * 0.5)
-                # predictions.append((value, reward, policy_logits))
+                # Scale the gradient at the start of the dynamics function (See paper appendix Training)
+                hidden_state.register_hook(lambda grad: grad * 0.5)
+                predictions.append((value, reward, policy_logits))
             # predictions: num_unroll_steps+1, 3, batch, 2*support_size+1 | 2*support_size+1 | 9 (according to the 2nd dim)
 
             ## Compute losses
             value_loss, reward_loss, policy_loss = (0, 0, 0)
             value, reward, policy_logits = predictions[0]
             # Ignore reward loss for the first batch step
-            print(target_reward[:, 0], target_reward[:, 0].shape, target_reward.shape, "!!!!!!!!!!!!!!!!!!!!!1")
+
             current_value_loss, _, current_policy_loss = self.loss_function(
                 value.squeeze(-1),
                 reward.squeeze(-1),
                 policy_logits,
                 target_value[:, 0],  # current observation에 대한 value distribution
                 target_reward[:, 0],  # current observation에 대한 reward distribution
-                target_policy[:, 0],  # current observation에 대한 policy distribution
+                target_policy[:, 0]  # current observation에 대한 policy distribution
             )
+
             value_loss += current_value_loss
             policy_loss += current_policy_loss
-            # Compute priorities for the prioritized replay (See paper appendix Training)
-            pred_value_scalar = (
-                support_to_scalar(value, self.config.support_size)
-                    .detach()
-                    .cpu()
-                    .numpy()
-                    .squeeze()
-            )
 
             for i in range(1, len(predictions)):
                 value, reward, policy_logits = predictions[i]
@@ -376,54 +378,37 @@ class AgentMuZero(Agent):
 
                 # TODO : 이해하
                 # # Scale gradient by the number of unroll steps (See paper appendix Training)
-                # current_value_loss.register_hook(
-                #     lambda grad: grad / gradient_scale_batch[:, i]
-                # )
-                # current_reward_loss.register_hook(
-                #     lambda grad: grad / gradient_scale_batch[:, i]
-                # )
-                # current_policy_loss.register_hook(
-                #     lambda grad: grad / gradient_scale_batch[:, i]
-                # )
+                current_value_loss.register_hook(
+                    lambda grad: grad / gradient_scale_batch[:, i]
+                )
+                current_reward_loss.register_hook(
+                    lambda grad: grad / gradient_scale_batch[:, i]
+                )
+                current_policy_loss.register_hook(
+                    lambda grad: grad / gradient_scale_batch[:, i]
+                )
 
                 value_loss += current_value_loss
                 reward_loss += current_reward_loss
                 policy_loss += current_policy_loss
 
-                # Compute priorities for the prioritized replay (See paper appendix Training)
-                pred_value_scalar = (
-                    support_to_scalar(value, self.config.support_size)
-                        .detach()
-                        .cpu()
-                        .numpy()
-                        .squeeze()
-                )
-
             # Scale the value loss, paper recommends by 0.25 (See paper appendix Reanalyze)
-            loss = value_loss * self.config.value_loss_weight + reward_loss + policy_loss
+            loss_each = value_loss * self.config.VALUE_LOSS_WEIGHT + reward_loss + policy_loss
 
             # Mean over batch dimension (pseudocode do a sum)
-            loss = loss.mean()
+            loss = loss_each.mean()
 
             # Optimize
             self.optimizer.zero_grad()
             loss.backward()
             self.optimizer.step()
             count_training_steps += 1
-            print()
-            return count_training_steps, \
-                (
-                priorities,
-                # For log purpose
-                loss.item(),
-                value_loss.mean().item(),
-                reward_loss.mean().item(),
-                policy_loss.mean().item(),
-            )
         elif isinstance(self.action_space, Box):
             pass
         else:
             raise ValueError()
+
+        return count_training_steps, loss_each
 
 # TODO : batch MCTS 구현하기
 class MCTS:
@@ -437,6 +422,7 @@ class MCTS:
         legal_actions,
         to_plays,
         add_exploration_noise,  # type(add_exploration_noise) = bool
+        action_space,
         override_root_with=None,
     ):
         """
@@ -445,8 +431,9 @@ class MCTS:
         We then run a Monte Carlo Tree Search using only action sequences and the model
         learned by the network.
         """
-        roots = [None for _ in range(len(self.config.N_VECTORIZED_ENVS))]
-        extra_infos = [None for _ in range(len(self.config.N_VECTORIZED_ENVS))]
+        action_space = list(range(action_space.n))
+        roots = [None for _ in range(self.config.N_VECTORIZED_ENVS)]
+        extra_infos = [None for _ in range(self.config.N_VECTORIZED_ENVS)]
         for env_id, (observation, legal_action, to_play) in enumerate(zip(observations, legal_actions, to_plays)):
             root = Node(0)
             # 3차원의 영상(atrai)등을 처리하기 위해하는 전처리 작업, observation.shape[0] = 1이 항상 만족한다.
@@ -454,7 +441,7 @@ class MCTS:
                 torch.tensor(observation)
                 .float()
                 .unsqueeze(0)
-                .to(next(model.parameters()).device)
+                .to(self.config.DEVICE)
             )
             # support_to_scalar ==> muzero에서는 reward나 value도 distribution형태에서 추출하기 때문에
             #                       distribution에서 scalar하나를 뽑는 과정
@@ -465,20 +452,20 @@ class MCTS:
                 hidden_state,
             ) = model.initial_inference(observation)
             root_predicted_value = support_to_scalar(
-                root_predicted_value, self.config.support_size
+                root_predicted_value, self.config.SUPPORT_SIZE
             ).item()
-            reward = support_to_scalar(reward, self.config.support_size).item()
+            reward = support_to_scalar(reward, self.config.SUPPORT_SIZE).item()
             # TODO : action space의 type에 대한 정리
             assert (
-                legal_actions
-            ), f"Legal actions should not be an empty array. Got {legal_actions}."
-            assert set(legal_actions).issubset(
-                set(self.config.action_space)
+                legal_action
+            ), f"Legal actions should not be an empty array. Got {legal_action}."
+            assert set(legal_action).issubset(
+                set(action_space)
             ), "Legal actions should be a subset of the action space."
             # 의문 : child node에 대한 legal actions는 따로 처리 안하는 것인가? 그러면 parent node와 child node 간에 legal action이 다를경우
             #       애시당초 진짜 환경의 policy logits와 일치할 수 없는거 아닌가?
             root.expand(
-                legal_actions,  # root node 자신에 대한 reward(0), hidden_state
+                legal_action,  # root node 자신에 대한 reward(0), hidden_state
                 to_play,
                 reward,
                 policy_logits,
@@ -487,15 +474,15 @@ class MCTS:
 
             if add_exploration_noise:
                 root.add_exploration_noise(
-                    dirichlet_alpha=self.config.root_dirichlet_alpha,
-                    exploration_fraction=self.config.root_exploration_fraction,
+                    dirichlet_alpha=self.config.ROOT_DIRCHLET_ALPHA,
+                    exploration_fraction=self.config.ROOT_EXPLORATION_FRACTION,
                 )
 
             min_max_stats = MinMaxStats()
 
             max_tree_depth = 0
-            for _ in range(self.config.num_simulations):
-                virtual_to_play = to_play
+            for _ in range(self.config.NUM_SIMULATION):
+                virtual_to_play = to_play[0]
                 node = root
                 search_path = [node]
                 current_tree_depth = 0
@@ -506,10 +493,10 @@ class MCTS:
                     search_path.append(node)
 
                     # Players play turn by turn
-                    if virtual_to_play + 1 < len(self.config.players):
-                        virtual_to_play = self.config.players[virtual_to_play + 1]
+                    if virtual_to_play + 1 < len(self.config.PLAYERS):
+                        virtual_to_play = self.config.PLAYERS[virtual_to_play + 1]
                     else:
-                        virtual_to_play = self.config.players[0]
+                        virtual_to_play = self.config.PLAYERS[0]
 
                 # Inside the search tree we use the dynamics function to obtain the next hidden
                 # state given an action and the previous hidden state
@@ -519,10 +506,10 @@ class MCTS:
                     parent.hidden_state,
                     torch.tensor([[action]]).to(parent.hidden_state.device),
                 )
-                value = support_to_scalar(value, self.config.support_size).item()
-                reward = support_to_scalar(reward, self.config.support_size).item()
+                value = support_to_scalar(value, self.config.SUPPORT_SIZE).item()
+                reward = support_to_scalar(reward, self.config.SUPPORT_SIZE).item()
                 node.expand(
-                    self.config.action_space,
+                    action_space,
                     virtual_to_play,
                     reward,
                     policy_logits,
@@ -538,10 +525,8 @@ class MCTS:
                 "child_visit_counts": [child.visit_count for child in root.children.values()],
                 "actions": [action for action in root.children.keys()]
             }
-
             roots[env_id] = root
             extra_infos[env_id] = extra_info
-
         return roots, extra_infos
 
     def select_child(self, node, min_max_stats):
@@ -567,9 +552,9 @@ class MCTS:
         """
         pb_c = (
             math.log(
-                (parent.visit_count + self.config.pb_c_base + 1) / self.config.pb_c_base
+                (parent.visit_count + self.config.PB_C_BASE + 1) / self.config.PB_C_BASE
             )
-            + self.config.pb_c_init
+            + self.config.PB_C_INIT
         )
         pb_c *= math.sqrt(parent.visit_count) / (child.visit_count + 1)
 
@@ -579,8 +564,8 @@ class MCTS:
             # Mean value Q
             value_score = min_max_stats.normalize(
                 child.reward
-                + self.config.discount
-                * (child.value() if len(self.config.players) == 1 else -child.value())
+                + self.config.GAMMA
+                * (child.value() if len(self.config.PLAYERS) == 1 else -child.value())
             )
         else:
             value_score = 0
@@ -592,23 +577,23 @@ class MCTS:
         At the end of a simulation, we propagate the evaluation all the way up the tree
         to the root.
         """
-        if len(self.config.players) == 1:
+        if len(self.config.PLAYERS) == 1:
             for node in reversed(search_path):
                 node.value_sum += value
                 node.visit_count += 1
-                min_max_stats.update(node.reward + self.config.discount * node.value())
+                min_max_stats.update(node.reward + self.config.GAMMA * node.value())
 
-                value = node.reward + self.config.discount * value
+                value = node.reward + self.config.GAMMA * value
 
-        elif len(self.config.players) == 2:
+        elif len(self.config.PLAYERS) == 2:
             for node in reversed(search_path):
                 node.value_sum += value if node.to_play == to_play else -value
                 node.visit_count += 1
-                min_max_stats.update(node.reward + self.config.discount * -node.value())
+                min_max_stats.update(node.reward + self.config.GAMMA * -node.value())
 
                 value = (
                     -node.reward if node.to_play == to_play else node.reward
-                ) + self.config.discount * value
+                ) + self.config.GAMMA * value
 
         else:
             raise NotImplementedError("More than two player mode not implemented.")

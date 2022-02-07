@@ -80,13 +80,35 @@ class DiscreteMuzeroModel(Model):
         self.critic_params_list = list(self.parameters())
 
     def representation(self, observation):
-        pass
+        encoded_state = self.representation_network(observation)
 
-    def dynamics(self):
-        pass
+        return encoded_state
+
+
+    def dynamics(self, encoded_state, action):
+        # action_one_hot = (
+        #     torch.zeros((action.shape[0], self.n_discrete_actions))
+        #         .to(self.config.DEVICE)
+        #         .float()
+        # )
+        # action_one_hot.scatter_(1, action.long(), 1.0)
+
+        x = torch.cat((encoded_state, action), dim=1)
+        next_encoded_state = self.dynamics_encoded_state_network(x)
+
+        x = self.dynamics_reward_layers(next_encoded_state)
+        reward = self.dynamics_reward_last_layer(x)
+
+        return next_encoded_state, reward
 
     def prediction(self, encoded_state):
-        pass
+        x = self.prediction_policy_layers(encoded_state)
+        policy_logits = self.prediction_last_policy_layer(x)
+
+        x = self.prediction_value_layers(encoded_state)
+        value = self.prediction_value_last_layer(x)
+
+        return policy_logits, value
 
     def initial_inference(self, observation):
         encoded_state = self.representation(observation)
@@ -94,8 +116,8 @@ class DiscreteMuzeroModel(Model):
         # reward equal to 0 for consistency
         reward = torch.log(
             (
-                torch.zeros(1, self.full_support_size)
-                    .scatter(1, torch.tensor([[self.full_support_size // 2]]).long(), 1.0)
+                torch.zeros(1, self.config.SUPPORT_SIZE * 2 + 1)
+                    .scatter(1, torch.tensor([[self.config.SUPPORT_SIZE]]).long(), 1.0)
                     .repeat(len(observation), 1)
                     .to(observation.device)
             )

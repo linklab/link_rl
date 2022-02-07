@@ -1,4 +1,5 @@
 import warnings
+import copy
 
 from gym.spaces import Box, Discrete
 
@@ -131,10 +132,10 @@ class Learner(mp.Process):
         # 매 step마다 해야할 것 : legal action 고르기, to_play 설정, stacked_observations 생각
         observations = self.train_env.reset()
 
-        observations_history = []
-        actions_history = []
-        rewards_history = []
-        infos_history = []
+        observations_history = [[] for _ in range(self.config.N_VECTORIZED_ENVS)]
+        actions_history = [[] for _ in range(self.config.N_VECTORIZED_ENVS)]
+        rewards_history = [[] for _ in range(self.config.N_VECTORIZED_ENVS)]
+        infos_history = [[] for _ in range(self.config.N_VECTORIZED_ENVS)]
         to_play_history = [[] for _ in range(self.config.N_VECTORIZED_ENVS)]  # TODO : np.zeros((observations.shape[0], slef.train_env.to_play()))
         child_visits_history = [[] for _ in range(self.config.N_VECTORIZED_ENVS)]
         root_values_history = [[] for _ in range(self.config.N_VECTORIZED_ENVS)]
@@ -148,43 +149,38 @@ class Learner(mp.Process):
         while True:
             actor_time_step += 1
 
-            if actor_time_step == 1:
-                stacked_observations = observations
-            else:
-                stacked_observations = self.agent.get_stacked_observations(
-                    -1, self.config.STACKED_OBSERVATION,
-                    observations_history, actions_history
-                )
+            # if actor_time_step == 1:
+            #     stacked_observations = observations
+            # else:
+            #     stacked_observations = self.agent.get_stacked_observations(
+            #         -1, self.config.STACKED_OBSERVATION,
+            #         observations_history, actions_history
+            #     )
 
             self.agent.legal_actions = [[0,1] for _ in range(self.config.N_VECTORIZED_ENVS)]  # action masking, shape : (n_vectorized, action_space)
-            self.agent.to_play = [0 for _ in range(self.config.N_VECTORIZED_ENVS)]  # shape : (n_vectorized, 1)
+            self.agent.to_plays = [[0] for _ in range(self.config.N_VECTORIZED_ENVS)]  # shape : (n_vectorized, 1)
             self.agent.visit_softmax_temperature_fn(self.training_step.value)  # temperature 설정
 
-            actions = self.agent.get_action(stacked_observations)
-
+            actions = self.agent.get_action(observations)
             if isinstance(self.agent.action_space, Discrete):
                 scaled_actions = actions
             elif isinstance(self.agent.action_space, Box):
                 scaled_actions = actions * self.agent.action_scale + self.agent.action_bias
             else:
                 raise ValueError()
-
             # TODO : batch MCTS 구현
             next_observations, rewards, dones, infos = self.train_env.step(scaled_actions)
 
             if self.is_recurrent_model:
                 next_observations = [(next_observations, self.agent.model.recurrent_hidden)]
 
-            observations_history.append(next_observations)
-            actions_history.append(actions)
-            rewards_history.append(rewards)
-            infos_history.append(infos)
-
-            for env_id, (done, info, root) in enumerate(zip(dones, infos, self.agent.roots)):
+            for env_id, (next_observation, action, reward, done, info, root, to_play) in enumerate(
+                    zip(next_observations, actions, rewards, dones, infos, self.agent.roots, self.agent.to_plays)
+            ):
                 info["actor_id"] = 0
                 info["env_id"] = env_id
                 info["actor_time_step"] = actor_time_step
-
+                infos_history[env_id].append(info)
                 if root is not None:
                     sum_visits = sum(child.visit_count for child in root.children.values())
                     child_visits_history[env_id].append(
@@ -192,22 +188,27 @@ class Learner(mp.Process):
                             root.children[a].visit_count / sum_visits
                             if a in root.children
                             else 0
-                            for a in self.agent.action_space
+                            for a in range(self.agent.action_space.n)
                         ]
                     )
                     root_values_history[env_id].append(root.value())
                 else:
                     root_values_history[env_id].append(None)
 
+                observations_history[env_id].append(next_observation)
+                actions_history[env_id].append(action)
+                rewards_history[env_id].append(reward)
+                to_play_history[env_id].append(to_play)
+
                 if done == True:
                     episode_transition = Episode_history(
-                        observation_history=observations_history[env_id],
-                        action_history=actions_history[env_id],
-                        reward_history=rewards_history[env_id],
-                        to_play_history=to_play_history[env_id],
-                        child_visits_history=child_visits_history[env_id],
-                        root_values_history=root_values_history[env_id],
-                        info_history=infos_history[env_id]
+                        observation_history=copy.deepcopy(observations_history[env_id]),
+                        action_history=copy.deepcopy(actions_history[env_id]),
+                        reward_history=copy.deepcopy(rewards_history[env_id]),
+                        to_play_history=copy.deepcopy(to_play_history[env_id]),
+                        child_visits_history=copy.deepcopy(child_visits_history[env_id]),
+                        root_values_history=copy.deepcopy(root_values_history[env_id]),
+                        info_history=copy.deepcopy(infos_history[env_id])
                     )
                     yield episode_transition
                     observations_history[env_id] = []
@@ -218,6 +219,7 @@ class Learner(mp.Process):
                     root_values_history[env_id] = []
                     infos_history[env_id] = []
 
+                    observations = next_observations
             if self.is_terminated.value:
                 break
 
@@ -258,9 +260,9 @@ class Learner(mp.Process):
             self.agent.buffer.append(n_step_transition)
             self.n_rollout_transitions.value += 1
 
-            actor_id = n_step_transition.info["actor_id"]
-            env_id = n_step_transition.info["env_id"]
             if self.config.AGENT_TYPE == AgentType.MUZERO:
+                actor_id = n_step_transition.info_history[0]["actor_id"]
+                env_id = n_step_transition.info_history[0]["env_id"]
                 self.total_episodes.value += 1
 
                 self.episode_rewards[actor_id][env_id] = sum(n_step_transition.reward_history)
@@ -269,6 +271,8 @@ class Learner(mp.Process):
 
                 self.episode_rewards[actor_id][env_id] = 0.0
             else:
+                actor_id = n_step_transition.info["actor_id"]
+                env_id = n_step_transition.info["env_id"]
                 self.episode_rewards[actor_id][env_id] += n_step_transition.reward
                 if n_step_transition.done:
                     self.total_episodes.value += 1

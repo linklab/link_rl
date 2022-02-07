@@ -19,3 +19,7 @@ b[9] = 1000
 print(a)
 print(b)
 print(c)
+
+b = np.array([[0, 0]])
+b[0] = np.array([1])
+print(b)
