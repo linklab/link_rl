@@ -4,11 +4,11 @@ import torch
 import torch.multiprocessing as mp
 
 from c_models.f_ddpg_models import ContinuousDdpgModel
-from d_agents.agent import Agent
+from d_agents.agent import OffPolicyAgent
 from g_utils.types import AgentMode
 
 
-class AgentDdpg(Agent):
+class AgentDdpg(OffPolicyAgent):
     def __init__(self, observation_space, action_space, config):
         super(AgentDdpg, self).__init__(observation_space, action_space, config)
 

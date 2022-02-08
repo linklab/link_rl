@@ -1,16 +1,15 @@
-import numpy as np
 import torch.optim as optim
 import torch
-from gym.spaces import Discrete, Box
+from gym.spaces import Discrete
 from torch.distributions import Categorical, Normal
 import torch.multiprocessing as mp
 
 from c_models.c_actor_models import DiscretePolicyModel
-from d_agents.agent import Agent
+from d_agents.agent import OnPolicyAgent
 from g_utils.types import AgentMode
 
 
-class AgentReinforce(Agent):
+class AgentReinforce(OnPolicyAgent):
     def __init__(self, observation_space, action_space, config):
         super(AgentReinforce, self).__init__(observation_space, action_space, config)
 

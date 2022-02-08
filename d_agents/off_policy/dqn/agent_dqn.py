@@ -2,16 +2,15 @@
 import torch.optim as optim
 import numpy as np
 import torch
-import torch.nn.functional as F
 import torch.multiprocessing as mp
 
 from c_models.b_qnet_models import QNet
-from d_agents.agent import Agent
+from d_agents.agent import OffPolicyAgent
 from g_utils.commons import EpsilonTracker
-from g_utils.types import AgentMode, ModelType
+from g_utils.types import AgentMode
 
 
-class AgentDqn(Agent):
+class AgentDqn(OffPolicyAgent):
     def __init__(self, observation_space, action_space, config):
         super(AgentDqn, self).__init__(observation_space, action_space, config)
 
@@ -45,16 +44,16 @@ class AgentDqn(Agent):
         self.last_q_net_loss = mp.Value('d', 0.0)
 
     def get_action(self, obs, mode=AgentMode.TRAIN):
-        q_values = self.q_net.q(obs, save_hidden=True)
-
         if mode == AgentMode.TRAIN:
             coin = np.random.random()    # 0.0과 1.0사이의 임의의 값을 반환
             if coin < self.epsilon.value:
                 action = np.random.randint(low=0, high=self.n_discrete_actions, size=len(obs))
             else:
+                q_values = self.q_net.q(obs, save_hidden=True)
                 action = q_values.argmax(dim=-1)
                 action = action.cpu().numpy()  # argmax: 가장 큰 값에 대응되는 인덱스 반환
         else:
+            q_values = self.q_net.q(obs, save_hidden=True)
             action = q_values.argmax(dim=-1)
             action = action.cpu().numpy()
 

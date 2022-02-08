@@ -4,11 +4,11 @@ import torch
 import torch.multiprocessing as mp
 
 from c_models.g_td3_models import ContinuousTd3Model
-from d_agents.agent import Agent
+from d_agents.agent import OffPolicyAgent
 from g_utils.types import AgentMode
 
 
-class AgentTd3(Agent):
+class AgentTd3(OffPolicyAgent):
     def __init__(self, observation_space, action_space, config):
         super(AgentTd3, self).__init__(observation_space, action_space, config)
 

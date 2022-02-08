@@ -136,6 +136,7 @@ config = ConfigAntBulletSac()
 #########################
 from a_configuration.b_single_config.pybullet.config_hopper_bullet import ConfigHopperBulletSac
 config = ConfigHopperBulletSac()
+config.WANDB_REPORT_URL = "https://wandb.ai/link-koreatech/HopperBulletEnv-v0_SAC_yhhan/reports/HopperBullet-SAC--VmlldzoxNTI4NTA3?accessToken=4irm57nvvd1ffqf7ggrjt7i47nfckc5d0e0libe5ifsgovz3tr3ewzvt9s2tgr0n"
 
 from a_configuration.b_single_config.pybullet.config_hopper_bullet import ConfigHopperBulletPpoTrajectory
 config = ConfigHopperBulletPpoTrajectory()
@@ -204,6 +205,7 @@ config = ConfigHopperMujocoPpoTrajectory()
 #######################
 from a_configuration.b_single_config.mujoco.config_walker2d_mujoco import ConfigWalker2dMujocoSac
 config = ConfigWalker2dMujocoSac()
+config.WANDB_REPORT_URL = "https://wandb.ai/link-koreatech/Walker2d-v2_SAC_yhhan/reports/3DBall-SAC--VmlldzoxNTI4NDk4?accessToken=ikha9ymzoqh7o3zefs6cn0ao5hmz7qzc8wnx0shd7i63wesx8585ja901i1bie1z"
 
 from a_configuration.b_single_config.mujoco.config_walker2d_mujoco import ConfigWalker2dMujocoPpoTrajectory
 config = ConfigWalker2dMujocoPpoTrajectory()

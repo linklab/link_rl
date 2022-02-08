@@ -10,11 +10,11 @@ import torch.multiprocessing as mp
 from torch.distributions import Normal
 
 from c_models.h_sac_models import ContinuousSacModel
-from d_agents.agent import Agent
+from d_agents.agent import OffPolicyAgent
 from g_utils.types import AgentMode
 
 
-class AgentSac(Agent):
+class AgentSac(OffPolicyAgent):
     def __init__(self, observation_space, action_space, config):
         super(AgentSac, self).__init__(observation_space, action_space, config)
 

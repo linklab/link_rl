@@ -126,7 +126,7 @@ class ContinuousStochasticActorModel(ActorModel):
             nn.Tanh()
         )
 
-        self.log_sigma = nn.Sequential(
+        self.variance = nn.Sequential(
             nn.Linear(
                 self._get_forward_pre_out(observation_shape), self.n_out_actions
             ),
@@ -176,7 +176,8 @@ class ContinuousStochasticActorModel(ActorModel):
         # The standard deviation can’t be negative (nor 0).
         # sigma_v = torch.clamp(self.log_sigma.exp(), 1e-3, 50)
         x = self.forward_variance(obs)
-        sigma_v = self.log_sigma(x).exp()
-        sigma_v = torch.clamp(sigma_v, 1e-4, 50)
+        x = self.variance(x)
+        # sigma_v = self.log_sigma(x).exp()
+        var_v = torch.clamp(x, 1e-4, 50)
 
-        return mu_v, sigma_v
+        return mu_v, var_v
