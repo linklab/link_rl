@@ -151,3 +151,5 @@ f_play/models/**
 
 */*/wandb/!/i_temp/muszero_original/results/
 /i_temp/muzero/muszero_original/results/
+
+*_timers.json
