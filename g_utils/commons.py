@@ -22,6 +22,7 @@ from a_configuration.a_base_config.c_models.convolutional_models import ConfigCo
 from a_configuration.a_base_config.c_models.linear_models import ConfigLinearModel
 from a_configuration.a_base_config.c_models.recurrent_convolutional_models import ConfigRecurrentConvolutionalModel
 from a_configuration.a_base_config.c_models.recurrent_linear_models import ConfigRecurrentLinearModel
+from b_environments.wrappers import MakeBoxFrozenLake
 from g_utils.types import AgentType, ActorCriticAgentTypes, ModelType, LayerActivationType, LossFunctionType, \
     OffPolicyAgentTypes, OnPolicyAgentTypes
 
@@ -665,6 +666,8 @@ def get_train_env(config, no_graphics=True):
                     env, grayscale_obs=True, scale_obs=True
                 )
                 env = gym.wrappers.FrameStack(env, num_stack=4, lz4_compress=True)
+            if env_name in ["FrozenLake-v1"]:
+                env = MakeBoxFrozenLake()
             return env
 
         return _make
@@ -707,6 +710,8 @@ def get_single_env(config, no_graphics=True):
                 single_env, grayscale_obs=True, scale_obs=True
             )
             single_env = gym.wrappers.FrameStack(single_env, num_stack=4, lz4_compress=True)
+        if config.ENV_NAME in ["FrozenLake-v1"]:
+            single_env = MakeBoxFrozenLake()
 
     return single_env
 
