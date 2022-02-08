@@ -7,6 +7,7 @@ import numpy as np
 
 from a_configuration.a_base_config.a_environments.pybullet.gym_mujoco import ConfigMujoco
 from a_configuration.a_base_config.a_environments.pybullet.gym_pybullet import ConfigBullet
+from a_configuration.a_base_config.a_environments.unity.unity_box import ConfigUnityGymEnv
 from a_configuration.a_base_config.c_models.recurrent_convolutional_models import ConfigRecurrentConvolutionalModel
 from a_configuration.a_base_config.c_models.recurrent_linear_models import ConfigRecurrentLinearModel
 from g_utils.commons import set_config
@@ -105,6 +106,10 @@ def main_play(n_episodes):
     set_config(config)
 
     observation_space, action_space = get_env_info(config)
+
+    if isinstance(config, ConfigUnityGymEnv):
+        config.NO_TEST_GRAPHICS = False
+
     env = get_single_env(config, config.NO_TEST_GRAPHICS)
 
     agent = get_agent(observation_space, action_space, config)
