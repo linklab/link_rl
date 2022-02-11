@@ -78,12 +78,12 @@ class ConfigSac(ConfigOffPolicyAgent):
         super(ConfigSac, self).__init__()
         self.AGENT_TYPE = AgentType.SAC
 
-        self.ACTOR_LEARNING_RATE = 0.00006
-        self.LEARNING_RATE = 0.0003
+        self.ACTOR_LEARNING_RATE = 0.0002
+        self.LEARNING_RATE = 0.001
         self.ALPHA_LEARNING_RATE = 0.00001
 
         self.TAU = 0.005
-        self.BUFFER_CAPACITY = 10_000
+        self.BUFFER_CAPACITY = 250_000
         self.BATCH_SIZE = 128
         self.TARGET_SYNC_INTERVAL_TRAINING_STEPS = 50
 
@@ -91,5 +91,5 @@ class ConfigSac(ConfigOffPolicyAgent):
 
         self.DEFAULT_ALPHA = 1.0
         self.AUTOMATIC_ENTROPY_TEMPERATURE_TUNING = True
-        self.MIN_ALPHA = 0.2
+        self.MIN_ALPHA = 0.1
 
