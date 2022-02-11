@@ -78,8 +78,8 @@ class ConfigSac(ConfigOffPolicyAgent):
         super(ConfigSac, self).__init__()
         self.AGENT_TYPE = AgentType.SAC
 
-        self.ACTOR_LEARNING_RATE = 0.0002
-        self.LEARNING_RATE = 0.001
+        self.ACTOR_LEARNING_RATE = 0.00006
+        self.LEARNING_RATE = 0.0003
         self.ALPHA_LEARNING_RATE = 0.00001
 
         self.TAU = 0.005
