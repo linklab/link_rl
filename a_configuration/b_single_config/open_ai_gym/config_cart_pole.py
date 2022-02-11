@@ -98,3 +98,4 @@ class ConfigCartPolePpoTrajectory(ConfigBase, ConfigCartPole, ConfigPpoTrajector
 
         self.MAX_TRAINING_STEPS = 100_000
         self.MODEL_TYPE = ModelType.SMALL_LINEAR
+é
