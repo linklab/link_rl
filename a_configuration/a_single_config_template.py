@@ -229,8 +229,11 @@ config = Config3DBallDdqg()
 ##########################
 ### UnityWalker ###
 ##########################
-from a_configuration.b_single_config.unity.config_walker import ConfigWalkerDdqg
-config = ConfigWalkerDdqg()
+from a_configuration.b_single_config.unity.config_walker import ConfigWalkerSac
+config = ConfigWalkerSac()
+
+
+
 
 config.USE_WANDB = False
 

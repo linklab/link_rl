@@ -67,7 +67,7 @@ conda activate link_rl
 
 ### 3. gitignore 적용
 ```commandline
-git reset HEAD
+git rm -r --cached .
 git add .
 git commit -m "Apply .gitignore"  
 ```
