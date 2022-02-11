@@ -12,6 +12,14 @@ from c_models.a_models import Model
 
 
 class CriticModel(Model):
+    @abstractmethod
+    def _forward(self, obs):
+        pass
+
+    @abstractmethod
+    def _forward(self, obs, act):
+        pass
+
     def forward_critic(self, obs):
         pass
 
@@ -21,6 +29,7 @@ class CriticModel(Model):
         forward_pre_out = self._forward(obs, act)
 
         return int(np.prod(forward_pre_out.size()))
+
 
 class ValueCriticModel(CriticModel):
     def __init__(

@@ -23,17 +23,7 @@ from a_configuration.a_base_config.c_models.linear_models import ConfigLinearMod
 from a_configuration.a_base_config.c_models.recurrent_convolutional_models import ConfigRecurrentConvolutionalModel
 from a_configuration.a_base_config.c_models.recurrent_linear_models import ConfigRecurrentLinearModel
 from g_utils.types import AgentType, ActorCriticAgentTypes, ModelType, LayerActivationType, LossFunctionType, \
-    OffPolicyAgentTypes, OnPolicyAgentTypes
-
-if torch.cuda.is_available():
-    import nvidia_smi
-    nvidia_smi.nvmlInit()
-
-    import pynvml
-    pynvml.nvmlInit()
-else:
-    nvidia_smi = None
-    pynvml = None
+    OffPolicyAgentTypes
 
 
 def model_save(model, env_name, agent_type_name, test_episode_reward_avg, test_episode_reward_std, config):
