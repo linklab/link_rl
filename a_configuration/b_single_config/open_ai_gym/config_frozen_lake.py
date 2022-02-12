@@ -13,7 +13,7 @@ class ConfigFrozenLakeDqn(ConfigBase, ConfigFrozenLake, ConfigDqn):
         ConfigFrozenLake.__init__(self)
         ConfigDqn.__init__(self)
 
-        self.MAX_TRAINING_STEPS = 50_000
+        self.MAX_TRAINING_STEPS = 100_000
         self.BUFFER_CAPACITY = 50_000
         self.MODEL_TYPE = ModelType.TINY_CONVOLUTIONAL
 
