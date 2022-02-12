@@ -23,7 +23,6 @@ config_c = ConfigComparisonCartPoleBulletA2c()
 from a_configuration.c_comparison_config.pybullet.config_comparison_cart_pole_bullet import ConfigComparisonCartPoleBulletDqnTypes
 config_c = ConfigComparisonCartPoleBulletDqnTypes()
 
-
 #################################
 ## CART_POLE_CONTINUOUS_BULLET ##
 #################################
@@ -33,6 +32,9 @@ config_c = ConfigComparisonCartPoleContinuousBulletDdpg()
 
 from a_configuration.c_comparison_config.pybullet.config_comparison_cart_pole_continuous_bullet import ConfigComparisonCartPoleContinuousBulletAll
 config_c = ConfigComparisonCartPoleContinuousBulletAll()
+
+from a_configuration.c_comparison_config.pybullet.config_comparison_cart_pole_continuous_bullet import ConfigComparisonCartPoleContinuousBulletPpo
+config_c = ConfigComparisonCartPoleContinuousBulletPpo()
 
 ######################
 ## PONG ##

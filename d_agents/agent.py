@@ -6,6 +6,8 @@ import torch.multiprocessing as mp
 from gym.spaces import Discrete, Box, MultiDiscrete
 
 import numpy as np
+from torch.distributions import Categorical, Normal
+
 from g_utils.buffers import Buffer
 from g_utils.commons import get_continuous_action_info
 from g_utils.prioritized_buffer import PrioritizedBuffer
@@ -65,11 +67,13 @@ class Agent:
         self.last_model_grad_max = mp.Value('d', 0.0)
         self.last_model_grad_l2 = mp.Value('d', 0.0)
 
+        self.last_actor_model_grad_l2 = mp.Value('d', 0.0)
         self.last_actor_model_grad_max = mp.Value('d', 0.0)
+
+        self.last_critic_model_grad_l2 = mp.Value('d', 0.0)
         self.last_critic_model_grad_max = mp.Value('d', 0.0)
 
-        self.last_actor_model_grad_l2 = mp.Value('d', 0.0)
-        self.last_critic_model_grad_l2 = mp.Value('d', 0.0)
+        self.step = 0
 
     @abstractmethod
     def get_action(self, obs, mode=AgentMode.TRAIN):
@@ -168,6 +172,37 @@ class OnPolicyAgent(Agent):
     def __init__(self, observation_space, action_space, config):
         super(OnPolicyAgent, self).__init__(observation_space, action_space, config)
         assert self.config.AGENT_TYPE in OnPolicyAgentTypes
+
+    def get_action(self, obs, mode=AgentMode.TRAIN):
+        self.step += 1
+        if isinstance(self.action_space, Discrete):
+            action_prob = self.actor_model.pi(obs, save_hidden=True)
+
+            if mode == AgentMode.TRAIN:
+                dist = Categorical(probs=action_prob)
+                action = dist.sample().detach().cpu().numpy()
+            else:
+                action = np.argmax(a=action_prob.detach().cpu().numpy(), axis=-1)
+            return action
+
+        elif isinstance(self.action_space, Box):
+            mu_v, var_v = self.actor_model.pi(obs)
+
+            if mode == AgentMode.TRAIN:
+                actions = np.random.normal(
+                    loc=mu_v.detach().cpu().numpy(), scale=torch.sqrt(var_v).detach().cpu().numpy()
+                )
+
+                # dist = Normal(loc=mu_v, scale=torch.sqrt(var_v))
+                # actions = dist.sample().detach().cpu().numpy()
+            else:
+                actions = mu_v.detach().cpu().numpy()
+
+            actions = np.clip(a=actions, a_min=self.np_minus_ones, a_max=self.np_plus_ones)
+
+            return actions
+        else:
+            raise ValueError()
 
     def train(self, training_steps_v=None):
         count_training_steps = 0

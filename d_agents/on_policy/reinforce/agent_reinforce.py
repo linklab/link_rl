@@ -1,66 +1,79 @@
+import numpy as np
 import torch.optim as optim
 import torch
-from gym.spaces import Discrete
+from gym.spaces import Discrete, Box
 from torch.distributions import Categorical, Normal
 import torch.multiprocessing as mp
 
-from c_models.c_actor_models import DiscretePolicyModel
+from c_models.c_actor_models import DiscreteActorModel, ContinuousStochasticActorModel
 from d_agents.agent import OnPolicyAgent
-from g_utils.types import AgentMode
 
 
 class AgentReinforce(OnPolicyAgent):
     def __init__(self, observation_space, action_space, config):
         super(AgentReinforce, self).__init__(observation_space, action_space, config)
 
-        assert self.config.N_STEP == 1
-        assert isinstance(self.action_space, Discrete)
+        if isinstance(self.action_space, Discrete):
+            self.actor_model = DiscreteActorModel(
+                observation_shape=self.observation_shape, n_out_actions=self.n_out_actions,
+                n_discrete_actions=self.n_discrete_actions, config=config
+            ).to(self.config.DEVICE)
+        elif isinstance(self.action_space, Box):
+            self.actor_model = ContinuousStochasticActorModel(
+                observation_shape=self.observation_shape, n_out_actions=self.n_out_actions, config=config
+            ).to(self.config.DEVICE)
+        else:
+            raise ValueError()
 
-        self.policy = DiscretePolicyModel(
-            observation_shape=self.observation_shape, n_out_actions=self.n_out_actions,
-            n_discrete_actions=self.n_discrete_actions, config=config
-        ).to(self.config.DEVICE)
+        self.actor_model.share_memory()
 
-        self.policy.share_memory()
+        self.optimizer = optim.Adam(self.actor_model.parameters(), lr=self.config.LEARNING_RATE)
 
-        self.optimizer = optim.Adam(self.policy.parameters(), lr=self.config.LEARNING_RATE)
-
-        self.model = self.policy  # 에이전트 밖에서는 model이라는 이름으로 제어 모델 접근
+        self.model = self.actor_model  # 에이전트 밖에서는 model이라는 이름으로 제어 모델 접근
 
         self.last_log_policy_objective = mp.Value('d', 0.0)
 
-    def get_action(self, obs, mode=AgentMode.TRAIN):
-        action_prob = self.policy.pi(obs, save_hidden=True)
-        m = Categorical(probs=action_prob)
-
-        if mode == AgentMode.TRAIN:
-            action = m.sample()
-        else:
-            action = torch.argmax(m.probs, dim=-1)
-        return action.cpu().numpy()
-
     def train_reinforce(self):
         count_training_steps = 0
+
+        # The episodes of low number of steps is ignored and not used for train
+        if len(self.observations) < 10:
+            return count_training_steps
 
         G = 0
         return_lst = []
         for reward in reversed(self.rewards):
             G = reward + self.config.GAMMA * G
             return_lst.append(G)
-        return_lst = torch.tensor(return_lst[::-1], dtype=torch.float32, device=self.config.DEVICE)
+        returns = torch.tensor(return_lst[::-1], dtype=torch.float32, device=self.config.DEVICE).detach()
 
-        action_probs = self.policy.pi(self.observations)
-        action_probs_selected = action_probs.gather(dim=-1, index=self.actions).squeeze(dim=-1)
+        if isinstance(self.action_space, Discrete):
+            action_probs = self.actor_model.pi(self.observations)
+            dist = Categorical(probs=action_probs)
 
-        # action_probs_selected.shape: (32,)
-        # return_lst.shape: (32,)
-        # print(action_probs_selected.shape, return_lst.shape, "!!!!!!1")
-        log_pi_returns = torch.log(action_probs_selected).sum(dim=-1, keepdim=True) * return_lst
-        log_policy_objective = torch.sum(log_pi_returns)
+            # dist.log_prob(value=self.actions.squeeze(dim=-1)).shape: (32,)
+            # return_lst.shape: (32,)
+            log_pi_returns = dist.log_prob(value=self.actions.squeeze(dim=-1)) * returns
+            #print(log_pi_returns, "!!!")
+
+        elif isinstance(self.action_space, Box):
+            mu_v, var_v = self.actor_model.pi(self.observations)
+            dist = Normal(loc=mu_v, scale=torch.sqrt(var_v))
+
+            # dist.log_prob(value=self.actions).sum(dim=-1).shape: (32,)
+            # return_lst.shape: (32,)
+            log_pi_returns = dist.log_prob(value=self.actions).sum(dim=-1) * returns
+
+        else:
+            raise ValueError()
+
+        log_policy_objective = torch.mean(log_pi_returns)
+
         loss = -1.0 * log_policy_objective
 
+        self.optimizer.zero_grad()
         loss.backward()
-        self.clip_model_config_grad_value(self.policy.parameters())
+        self.clip_actor_model_parameter_grad_value(self.actor_model.actor_params_list)
         self.optimizer.step()
 
         self.last_log_policy_objective.value = log_policy_objective.item()

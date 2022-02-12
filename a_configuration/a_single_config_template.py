@@ -24,6 +24,7 @@ config = ConfigCartPolePpo()
 
 from a_configuration.b_single_config.open_ai_gym.config_cart_pole import ConfigCartPolePpoTrajectory
 config = ConfigCartPolePpoTrajectory()
+config.WANDB_REPORT_URL = "https://wandb.ai/link-koreatech/CartPole-v1_PPO_TRAJECTORY_yhhan/reports/CartPole-PPO_TRAJECTORY--VmlldzoxNTUyNDQw?accessToken=7vs10v66vi6fyitrxma0p2g62pq4nfiiccaskfgv2x2b5jrmwfae38u4pfm1xfq1"
 
 ######################
 ## CART_POLE_BULLET ##
@@ -52,6 +53,9 @@ config = ConfigCartPoleBulletPpoTrajectory()
 #################################
 ## CART_POLE_CONTINUOUS_BULLET ##
 #################################
+from a_configuration.b_single_config.pybullet.config_cart_pole_continuous_bullet import ConfigCartPoleContinuousBulletReinforce
+config = ConfigCartPoleContinuousBulletReinforce()
+
 from a_configuration.b_single_config.pybullet.config_cart_pole_continuous_bullet import ConfigCartPoleContinuousBulletA2c
 config = ConfigCartPoleContinuousBulletA2c()
 
@@ -61,14 +65,14 @@ config = ConfigCartPoleContinuousBulletPpo()
 from a_configuration.b_single_config.pybullet.config_cart_pole_continuous_bullet import ConfigCartPoleContinuousBulletPpoTrajectory
 config = ConfigCartPoleContinuousBulletPpoTrajectory()
 
-from a_configuration.b_single_config.pybullet.config_cart_pole_continuous_bullet import ConfigCartPoleContinuousBulletSac
-config = ConfigCartPoleContinuousBulletSac()
-
 from a_configuration.b_single_config.pybullet.config_cart_pole_continuous_bullet import ConfigCartPoleContinuousBulletDdpg
 config = ConfigCartPoleContinuousBulletDdpg()
 
 from a_configuration.b_single_config.pybullet.config_cart_pole_continuous_bullet import ConfigCartPoleContinuousBulletTd3
 config = ConfigCartPoleContinuousBulletTd3()
+
+from a_configuration.b_single_config.pybullet.config_cart_pole_continuous_bullet import ConfigCartPoleContinuousBulletSac
+config = ConfigCartPoleContinuousBulletSac()
 
 ##################
 ## LUNAR_LANDER ##

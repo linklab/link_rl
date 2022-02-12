@@ -31,7 +31,7 @@ class AgentPpo(AgentA2c):
         elif isinstance(self.action_space, Box):
             mu_v, var_v = self.actor_old_model.pi(self.observations)
             dist = Normal(loc=mu_v, scale=torch.sqrt(var_v))
-            old_log_pi_action_v = dist.log_prob(value=self.actions).sum(dim=-1, keepdim=True)
+            old_log_pi_action_v = dist.log_prob(value=self.actions).sum(dim=-1)
         else:
             raise ValueError()
 
@@ -49,21 +49,21 @@ class AgentPpo(AgentA2c):
             #  Critic (Value) Loss 산출 & Update - BEGIN #
             #############################################
 
-            batch_td_target_values = self.get_td_target_values(self.next_observations, self.rewards, self.dones)
+            batch_target_values = self.get_target_values(self.next_observations, self.rewards, self.dones)
 
             # batch_next_values = self.critic_model.v(self.next_observations)
             # batch_next_values[self.dones] = 0.0
             #
-            # # td_target_values.shape: (32, 1)
-            # batch_td_target_values = self.rewards + self.config.GAMMA ** self.config.N_STEP * batch_next_values
+            # # target_values.shape: (32, 1)
+            # batch_target_values = self.rewards + self.config.GAMMA ** self.config.N_STEP * batch_next_values
             # # normalize td_target_value
             # if self.config.TARGET_VALUE_NORMALIZE:
-            #     batch_td_target_values = (batch_td_target_values - torch.mean(batch_td_target_values)) / (torch.std(batch_td_target_values) + 1e-7)
+            #     batch_target_values = (batch_target_values - torch.mean(batch_target_values)) / (torch.std(batch_target_values) + 1e-7)
 
             batch_values = self.critic_model.v(self.observations)
 
-            assert batch_values.shape == batch_td_target_values.shape
-            batch_critic_loss = self.config.LOSS_FUNCTION(batch_values, batch_td_target_values.detach())
+            assert batch_values.shape == batch_target_values.shape
+            batch_critic_loss = self.config.LOSS_FUNCTION(batch_values, batch_target_values.detach())
 
             self.critic_optimizer.zero_grad()
             batch_critic_loss.backward()
@@ -76,7 +76,9 @@ class AgentPpo(AgentA2c):
             #########################################
             #  Actor Objective 산출 & Update - BEGIN #
             #########################################
-            batch_advantages = (batch_td_target_values - batch_values).detach()
+            batch_advantages = (batch_target_values - batch_values).detach()
+            batch_advantages = (batch_advantages - torch.mean(batch_advantages)) / (torch.std(batch_advantages) + 1e-7)
+            batch_advantages = batch_advantages.squeeze(dim=-1)  # NOTE
 
             if isinstance(self.action_space, Discrete):
                 # actions.shape: (32, 1)
@@ -87,8 +89,6 @@ class AgentPpo(AgentA2c):
                 batch_log_pi_action_v = batch_dist.log_prob(value=self.actions.squeeze(dim=-1))
                 batch_entropy = batch_dist.entropy().mean()
 
-                batch_advantages = batch_advantages.squeeze(dim=-1)  # NOTE
-
             elif isinstance(self.action_space, Box):
                 batch_mu_v, batch_var_v = self.actor_model.pi(self.observations)
 
@@ -97,7 +97,7 @@ class AgentPpo(AgentA2c):
                 # batch_entropy = batch_entropy.mean()
 
                 batch_dist = Normal(loc=batch_mu_v, scale=torch.sqrt(batch_var_v))
-                batch_log_pi_action_v = batch_dist.log_prob(value=self.actions).sum(dim=-1, keepdim=True)
+                batch_log_pi_action_v = batch_dist.log_prob(value=self.actions).sum(dim=-1)
                 batch_entropy = batch_dist.entropy().mean()
 
             else:

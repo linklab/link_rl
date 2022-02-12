@@ -5,7 +5,7 @@ import warnings
 
 import numpy as np
 
-from a_configuration.a_base_config.a_environments.pybullet.gym_mujoco import ConfigMujoco
+from a_configuration.a_base_config.a_environments.mujoco.gym_mujoco import ConfigMujoco
 from a_configuration.a_base_config.a_environments.pybullet.gym_pybullet import ConfigBullet
 from a_configuration.a_base_config.a_environments.unity.unity_box import ConfigUnityGymEnv
 from a_configuration.a_base_config.c_models.recurrent_convolutional_models import ConfigRecurrentConvolutionalModel

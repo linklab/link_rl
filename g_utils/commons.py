@@ -97,6 +97,7 @@ def set_config(config):
 
     elif config.AGENT_TYPE == AgentType.REINFORCE:
         config.BUFFER_CAPACITY = -1
+        config.N_STEP = 1
 
     elif config.AGENT_TYPE == AgentType.A2C:
         config.BUFFER_CAPACITY = config.BATCH_SIZE
@@ -516,6 +517,9 @@ def wandb_log(learner, wandb_obj, config):
         log_dict["actor_grad_l2"] = learner.agent.last_actor_model_grad_l2.value
         log_dict["critic_grad_max"] = learner.agent.last_critic_model_grad_max.value
         log_dict["critic_grad_l2"] = learner.agent.last_critic_model_grad_l2.value
+    elif config.AGENT_TYPE == AgentType.REINFORCE:
+        log_dict["policy_grad_max"] = learner.agent.last_actor_model_grad_max.value
+        log_dict["policy_grad_l2"] = learner.agent.last_actor_model_grad_l2.value
     else:
         log_dict["grad_max"] = learner.agent.last_model_grad_max.value
         log_dict["grad_l2"] = learner.agent.last_model_grad_l2.value
