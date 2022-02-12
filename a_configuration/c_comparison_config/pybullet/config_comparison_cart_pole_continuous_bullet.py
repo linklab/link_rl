@@ -59,6 +59,8 @@ class ConfigComparisonCartPoleContinuousBulletPpo(ConfigComparisonBase):
     def __init__(self):
         ConfigComparisonBase.__init__(self)
 
+        self.ENV_NAME = "CartPoleContinuousBulletEnv-v0"
+
         self.AGENT_PARAMETERS = [
             ConfigCartPolePpo(),
             ConfigCartPolePpoTrajectory()

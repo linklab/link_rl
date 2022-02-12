@@ -56,6 +56,8 @@ class ConfigComparisonCartPoleReinforce(ConfigComparisonBase):
     def __init__(self):
         ConfigComparisonBase.__init__(self)
 
+        self.ENV_NAME = "CartPole-v1"
+
         self.AGENT_PARAMETERS = [
             ConfigCartPoleReinforce(),
             ConfigCartPoleReinforce(),
@@ -67,6 +69,8 @@ class ConfigComparisonCartPoleA2c(ConfigComparisonBase):
     def __init__(self):
         ConfigComparisonBase.__init__(self)
 
+        self.ENV_NAME = "CartPole-v1"
+
         self.AGENT_PARAMETERS = [
             ConfigCartPoleA2c(),
             ConfigCartPoleA2c(),
@@ -77,6 +81,8 @@ class ConfigComparisonCartPoleA2c(ConfigComparisonBase):
 class ConfigComparisonCartPolePpo(ConfigComparisonBase):
     def __init__(self):
         ConfigComparisonBase.__init__(self)
+
+        self.ENV_NAME = "CartPole-v1"
 
         self.AGENT_PARAMETERS = [
             ConfigCartPolePpo(),
