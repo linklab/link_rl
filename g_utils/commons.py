@@ -60,7 +60,8 @@ def set_config(config):
         from a_configuration.a_base_config.c_models.linear_models import ConfigLinearModel
         config.MODEL_PARAMETER = ConfigLinearModel(config.MODEL_TYPE)
     elif config.MODEL_TYPE in (
-            ModelType.SMALL_CONVOLUTIONAL, ModelType.MEDIUM_CONVOLUTIONAL, ModelType.LARGE_CONVOLUTIONAL
+            ModelType.TINY_CONVOLUTIONAL, ModelType.SMALL_CONVOLUTIONAL,
+            ModelType.MEDIUM_CONVOLUTIONAL, ModelType.LARGE_CONVOLUTIONAL
     ):
         from a_configuration.a_base_config.c_models.convolutional_models import ConfigConvolutionalModel
         config.MODEL_PARAMETER = ConfigConvolutionalModel(config.MODEL_TYPE)

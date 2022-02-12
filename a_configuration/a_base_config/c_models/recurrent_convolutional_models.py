@@ -7,6 +7,7 @@ class ConfigRecurrentConvolutionalModel:
             self.OUT_CHANNELS_PER_LAYER = [8, 16, 32]
             self.KERNEL_SIZE_PER_LAYER = [4, 3, 2]
             self.STRIDE_PER_LAYER = [2, 2, 1]
+            self.PADDING = 0
 
             self.NEURONS_PER_REPRESENTATION_LAYER = [128]
 
@@ -20,6 +21,7 @@ class ConfigRecurrentConvolutionalModel:
             self.OUT_CHANNELS_PER_LAYER = [16, 32, 64, 64]
             self.KERNEL_SIZE_PER_LAYER = [8, 4, 4, 3]
             self.STRIDE_PER_LAYER = [4, 2, 2, 1]
+            self.PADDING = 0
 
             self.NEURONS_PER_REPRESENTATION_LAYER = [128]
 
@@ -32,6 +34,7 @@ class ConfigRecurrentConvolutionalModel:
             self.OUT_CHANNELS_PER_LAYER = [32, 64, 64, 128]
             self.KERNEL_SIZE_PER_LAYER = [4, 4, 4, 3]
             self.STRIDE_PER_LAYER = [2, 2, 2, 1]
+            self.PADDING = 0
 
             self.NEURONS_PER_REPRESENTATION_LAYER = [256]
 
