@@ -115,6 +115,7 @@ class Model(nn.Module):
         assert self.config.MODEL_PARAMETER.OUT_CHANNELS_PER_LAYER
         assert self.config.MODEL_PARAMETER.KERNEL_SIZE_PER_LAYER
         assert self.config.MODEL_PARAMETER.STRIDE_PER_LAYER
+        assert self.config.MODEL_PARAMETER.PADDING
 
         convolutional_layers_dict = OrderedDict()
         out_channels_per_layer = self.config.MODEL_PARAMETER.OUT_CHANNELS_PER_LAYER.copy()
@@ -127,7 +128,8 @@ class Model(nn.Module):
                 in_channels=out_channels_per_layer[idx - 1],
                 out_channels=out_channels_per_layer[idx],
                 kernel_size=self.config.MODEL_PARAMETER.KERNEL_SIZE_PER_LAYER[idx],
-                stride=self.config.MODEL_PARAMETER.STRIDE_PER_LAYER[idx]
+                stride=self.config.MODEL_PARAMETER.STRIDE_PER_LAYER[idx],
+                padding=self.config.MODEL_PARAMETER.PADDING
             )
 
             # Activation Function
