@@ -8,6 +8,7 @@ conda activate link_rl
 ### 2. 주요 패키지/모듈
 - pytorch 설치
   - https://pytorch.org/ 참고
+
 - OpenAI GYM
   ```commandline
   conda install -c conda-forge gym-all
@@ -45,8 +46,7 @@ conda activate link_rl
   - mpi4py 관련 MAC 에러 대처법 (Library not loaded: /usr/local/lib/libmpi.12.dylib)
     : https://stackoverflow.com/questions/35370396/mpi4py-library-not-loaded-usr-local-lib-libmpi-1-dylib
     : ln -s /usr/local/opt/open-mpi/lib/libmpi.40.dylib /usr/local/lib/libpmpi.12.dylib
-
-
+  
 - pybullet
   ```commandline
   conda install -c conda-forge pybullet
@@ -61,10 +61,22 @@ conda activate link_rl
 - unity
   ```commandline
   pip install gym-unity
-  
   ```
 
-
+- mujoco_py
+  ```commandline
+  pip3 install -U 'mujoco-py<2.2,>=2.1'
+  ```
+  - https://github.com/openai/mujoco-py#install-mujoco
+  - add following line to .bashrc:
+     - export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/home/user/.mujoco/mujoco210/bin
+     - export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/usr/lib/nvidia
+  - execute the followings in command window
+  ```commandline
+  sudo apt install clang
+  sudo apt install libglew-dev
+  sudo apt install patchelf
+  ```
 ### 3. gitignore 적용
 ```commandline
 git rm -r --cached .
