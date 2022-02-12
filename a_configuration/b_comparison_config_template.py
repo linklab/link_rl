@@ -9,6 +9,8 @@ config_c = ConfigComparisonCartPoleDqn()
 from a_configuration.c_comparison_config.open_ai_gym.config_comparison_cart_pole import ConfigComparisonCartPoleDqnTypes
 config_c = ConfigComparisonCartPoleDqnTypes()
 
+from a_configuration.c_comparison_config.open_ai_gym.config_comparison_cart_pole import ConfigComparisonCartPolePpo
+config_c = ConfigComparisonCartPolePpo()
 
 ######################
 ## CART_POLE_BULLET ##
