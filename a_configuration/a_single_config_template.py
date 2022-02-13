@@ -19,6 +19,9 @@ config = ConfigCartPoleReinforce()
 from a_configuration.b_single_config.open_ai_gym.config_cart_pole import ConfigCartPoleA2c
 config = ConfigCartPoleA2c()
 
+from a_configuration.b_single_config.open_ai_gym.config_cart_pole import ConfigCartPoleA3c
+config = ConfigCartPoleA3c()
+
 from a_configuration.b_single_config.open_ai_gym.config_cart_pole import ConfigCartPolePpo
 config = ConfigCartPolePpo()
 

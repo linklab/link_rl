@@ -1,15 +1,11 @@
-import copy
-
 import torch.optim as optim
 import torch
 from gym.spaces import Discrete, Box
 from torch.distributions import Categorical, Normal
 import torch.multiprocessing as mp
-import numpy as np
 
 from c_models.e_a2c_models import ContinuousActorCriticModel, DiscreteActorCriticModel
 from d_agents.agent import OnPolicyAgent
-from g_utils.types import AgentMode
 
 
 class AgentA2c(OnPolicyAgent):
@@ -78,7 +74,6 @@ class AgentA2c(OnPolicyAgent):
 
         # values.shape: (32, 1)
         values = self.critic_model.v(self.observations)
-        # # loss_critic.shape: (,) <--  값 1개
 
         critic_loss = self.config.LOSS_FUNCTION(values, target_values.detach())
 

@@ -171,7 +171,7 @@ class Agent:
 class OnPolicyAgent(Agent):
     def __init__(self, observation_space, action_space, config):
         super(OnPolicyAgent, self).__init__(observation_space, action_space, config)
-        assert self.config.AGENT_TYPE in OnPolicyAgentTypes
+        assert self.config.AGENT_TYPE in OnPolicyAgentTypes or self.config.AGENT_TYPE == AgentType.A3C
 
     def get_action(self, obs, mode=AgentMode.TRAIN):
         self.step += 1
@@ -232,6 +232,13 @@ class OnPolicyAgent(Agent):
                 self.buffer.clear()                 # ON_POLICY!
                 self._after_train()
 
+        elif self.config.AGENT_TYPE == AgentType.A3C:
+            if len(self.buffer) >= self.config.BATCH_SIZE:
+                self._before_train(sample_length=self.config.BATCH_SIZE)
+                count_training_steps = self.train_a3c()
+                self.buffer.clear()                 # ON_POLICY!
+                self._after_train()
+
         elif self.config.AGENT_TYPE == AgentType.PPO_TRAJECTORY:
             if len(self.buffer) >= self.config.PPO_TRAJECTORY_SIZE:
                 self._before_train(sample_length=self.config.PPO_TRAJECTORY_SIZE)
@@ -251,6 +258,10 @@ class OnPolicyAgent(Agent):
 
     @abstractmethod
     def train_a2c(self):
+        raise NotImplementedError()
+
+    @abstractmethod
+    def train_a3c(self):
         raise NotImplementedError()
 
     @abstractmethod

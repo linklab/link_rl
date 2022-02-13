@@ -1,4 +1,7 @@
 import warnings
+
+from d_agents.on_policy.a3c.agent_a3c import WorkerAgentA3c
+
 warnings.filterwarnings("ignore")
 warnings.simplefilter("ignore")
 
@@ -25,10 +28,10 @@ sys.path.append(os.path.abspath(
 ))
 
 from e_main.config_single import config
-from e_main.supports.actor import Actor
+from e_main.supports.actor import Actor, A3cActor
 from e_main.supports.learner import Learner
 from g_utils.commons import get_env_info, print_basic_info
-from g_utils.types import OffPolicyAgentTypes
+from g_utils.types import OffPolicyAgentTypes, AgentType
 from g_utils.commons import set_config
 from g_utils.commons_rl import get_agent
 
@@ -56,11 +59,23 @@ def main():
 
     learner = Learner(agent=agent, queue=queue, config=config)
 
-    actors = [
-        Actor(
-            env_name=config.ENV_NAME, actor_id=actor_id, agent=agent, queue=queue, config=config
-        ) for actor_id in range(config.N_ACTORS)
-    ]
+    if config.AGENT_TYPE == AgentType.A3C:
+        actors = []
+        for actor_id in range(config.N_ACTORS):
+            worker_agent = WorkerAgentA3c(
+                master_agent=agent, observation_space=observation_space, action_space=action_space, config=config
+            )
+            actors.append(
+                A3cActor(
+                    env_name=config.ENV_NAME, actor_id=actor_id, worker_agent=worker_agent, queue=queue, config=config
+                )
+            )
+    else:
+        actors = [
+            Actor(
+                env_name=config.ENV_NAME, actor_id=actor_id, agent=agent, queue=queue, config=config
+            ) for actor_id in range(config.N_ACTORS)
+        ]
 
     for actor in actors:
         actor.start()
@@ -96,5 +111,5 @@ def main():
 
 
 if __name__ == "__main__":
-    assert config.AGENT_TYPE in OffPolicyAgentTypes
+    assert config.AGENT_TYPE in OffPolicyAgentTypes or config.AGENT_TYPE == AgentType.A3C
     main()

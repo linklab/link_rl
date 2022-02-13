@@ -62,12 +62,12 @@ class AgentType(enum.Enum):
     DOUBLE_DUELING_DQN = 3
     REINFORCE = 4
     A2C = 5
-    PPO = 6
-    PPO_TRAJECTORY = 7
-    DDPG = 8
-    TD3 = 9
-    SAC = 10
-
+    A3C = 6
+    PPO = 7
+    PPO_TRAJECTORY = 8
+    DDPG = 9
+    TD3 = 10
+    SAC = 11
 
 OnPolicyAgentTypes = [
     AgentType.REINFORCE, AgentType.A2C, AgentType.PPO, AgentType.PPO_TRAJECTORY

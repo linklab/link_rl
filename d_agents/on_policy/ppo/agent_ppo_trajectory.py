@@ -18,7 +18,7 @@ class AgentPpoTrajectory(AgentPpo):
         count_training_steps = 0
 
         #####################################
-        # OLD_LOG_PI 처리: BEGIN
+        # OLD_LOG_PI 얻어오기: BEGIN
         #####################################
         if isinstance(self.action_space, Discrete):
             trajectory_action_probs = self.actor_old_model.pi(self.observations)
@@ -31,7 +31,8 @@ class AgentPpoTrajectory(AgentPpo):
         else:
             raise ValueError()
         #####################################
-        # OLD_LOG_PI 처리: END
+        # OLD_LOG_PI 얻어오기: END
+        # action_space가 Discrete와 Box에 관계없이 --> trajectory_old_log_pi_action_v.shape: (1280,)
         #####################################
 
         sum_critic_loss = 0.0
