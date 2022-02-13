@@ -43,8 +43,6 @@ class AgentA2c(OnPolicyAgent):
         self.last_actor_objective = mp.Value('d', 0.0)
         self.last_entropy = mp.Value('d', 0.0)
 
-        self.step = 0
-
     def get_target_values(self, next_observations, rewards, dones):
         with torch.no_grad():
             # values.shape: (32, 1), next_values.shape: (32, 1)

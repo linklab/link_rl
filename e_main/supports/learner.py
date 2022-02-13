@@ -172,19 +172,25 @@ class Learner(mp.Process):
 
                 self.episode_rewards[actor_id][env_id] = 0.0
 
-                if self.config.AGENT_TYPE == AgentType.REINFORCE:
-                    count_training_steps = self.agent.train(training_steps_v=self.training_step.value)
-                    self.training_step.value += count_training_steps
-
+            ###################
+            ### TRAIN START ###
+            ###################
+            reinforce_train_conditions = [
+                n_step_transition.done,
+                self.config.AGENT_TYPE == AgentType.REINFORCE
+            ]
             train_conditions = [
                 self.total_time_step.value >= self.next_train_time_step,
                 self.config.AGENT_TYPE != AgentType.REINFORCE
             ]
-            if all(train_conditions):
+            if all(train_conditions) or all(reinforce_train_conditions):
                 count_training_steps = self.agent.train(training_steps_v=self.training_step.value)
                 self.training_step.value += count_training_steps
 
                 self.next_train_time_step += self.config.TRAIN_INTERVAL_GLOBAL_TIME_STEPS
+            #################
+            ### TRAIN END ###
+            #################
 
             if self.training_step.value >= self.next_console_log:
                 total_training_time = time.time() - self.train_start_time

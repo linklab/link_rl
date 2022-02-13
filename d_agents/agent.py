@@ -179,8 +179,12 @@ class OnPolicyAgent(Agent):
             action_prob = self.actor_model.pi(obs, save_hidden=True)
 
             if mode == AgentMode.TRAIN:
-                dist = Categorical(probs=action_prob)
-                action = dist.sample().detach().cpu().numpy()
+                action = np.random.choice(
+                    a=self.n_discrete_actions, size=self.n_out_actions, p=action_prob[0].detach().cpu().numpy()
+                )
+
+                # dist = Categorical(probs=action_prob)
+                # action = dist.sample().detach().cpu().numpy()
             else:
                 action = np.argmax(a=action_prob.detach().cpu().numpy(), axis=-1)
             return action
