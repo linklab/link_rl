@@ -1,10 +1,13 @@
 import copy
+
+import numpy as np
 import torch
 from gym.spaces import Discrete, Box
 from torch.distributions import Categorical, Normal
 import torch.multiprocessing as mp
 
 from d_agents.on_policy.a2c.agent_a2c import AgentA2c
+from g_utils.types import AgentMode
 
 
 class AgentPpo(AgentA2c):
@@ -17,6 +20,37 @@ class AgentPpo(AgentA2c):
 
         self.last_actor_objective = mp.Value('d', 0.0)
         self.last_ratio = mp.Value('d', 0.0)
+
+    def get_action(self, obs, mode=AgentMode.TRAIN):
+        self.step += 1
+        if isinstance(self.action_space, Discrete):
+            action_prob = self.actor_old_model.pi(obs, save_hidden=True)
+
+            if mode == AgentMode.TRAIN:
+                dist = Categorical(probs=action_prob)
+                action = dist.sample().detach().cpu().numpy()
+            else:
+                action = np.argmax(a=action_prob.detach().cpu().numpy(), axis=-1)
+            return action
+
+        elif isinstance(self.action_space, Box):
+            mu_v, var_v = self.actor_old_model.pi(obs)
+
+            if mode == AgentMode.TRAIN:
+                actions = np.random.normal(
+                    loc=mu_v.detach().cpu().numpy(), scale=torch.sqrt(var_v).detach().cpu().numpy()
+                )
+
+                # dist = Normal(loc=mu_v, scale=torch.sqrt(var_v))
+                # actions = dist.sample().detach().cpu().numpy()
+            else:
+                actions = mu_v.detach().cpu().numpy()
+
+            actions = np.clip(a=actions, a_min=self.np_minus_ones, a_max=self.np_plus_ones)
+
+            return actions
+        else:
+            raise ValueError()
 
     def train_ppo(self):
         count_training_steps = 0
@@ -45,23 +79,15 @@ class AgentPpo(AgentA2c):
         sum_entropy = 0.0
 
         for _ in range(self.config.PPO_K_EPOCH):
+            batch_target_values = self.get_target_values(self.next_observations, self.rewards, self.dones)
+            batch_values = self.critic_model.v(self.observations)
+            batch_advantages = (batch_target_values - batch_values).detach()
+            batch_advantages = (batch_advantages - torch.mean(batch_advantages)) / (torch.std(batch_advantages) + 1e-7)
+            batch_advantages = batch_advantages.squeeze(dim=-1)  # NOTE
+
             #############################################
             #  Critic (Value) Loss 산출 & Update - BEGIN #
             #############################################
-
-            batch_target_values = self.get_target_values(self.next_observations, self.rewards, self.dones)
-
-            # batch_next_values = self.critic_model.v(self.next_observations)
-            # batch_next_values[self.dones] = 0.0
-            #
-            # # target_values.shape: (32, 1)
-            # batch_target_values = self.rewards + self.config.GAMMA ** self.config.N_STEP * batch_next_values
-            # # normalize td_target_value
-            # if self.config.TARGET_VALUE_NORMALIZE:
-            #     batch_target_values = (batch_target_values - torch.mean(batch_target_values)) / (torch.std(batch_target_values) + 1e-7)
-
-            batch_values = self.critic_model.v(self.observations)
-
             assert batch_values.shape == batch_target_values.shape
             batch_critic_loss = self.config.LOSS_FUNCTION(batch_values, batch_target_values.detach())
 
@@ -76,10 +102,6 @@ class AgentPpo(AgentA2c):
             #########################################
             #  Actor Objective 산출 & Update - BEGIN #
             #########################################
-            batch_advantages = (batch_target_values - batch_values).detach()
-            batch_advantages = (batch_advantages - torch.mean(batch_advantages)) / (torch.std(batch_advantages) + 1e-7)
-            batch_advantages = batch_advantages.squeeze(dim=-1)  # NOTE
-
             if isinstance(self.action_space, Discrete):
                 # actions.shape: (32, 1)
                 # dist.log_prob(value=actions.squeeze(-1)).shape: (32,)
@@ -130,11 +152,11 @@ class AgentPpo(AgentA2c):
             sum_actor_objective += batch_actor_objective.item()
             sum_entropy += batch_entropy.item()
             sum_ratio += batch_ratio.mean().item()
-            count_training_steps += 1
 
-        #######################################
-        #  Actor Objective 산출 & Update - END #
-        #######################################
+            count_training_steps += 1
+            #######################################
+            #  Actor Objective 산출 & Update - END #
+            #######################################
 
         self.synchronize_models(source_model=self.actor_model, target_model=self.actor_old_model)
 
