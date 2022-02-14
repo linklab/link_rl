@@ -189,6 +189,7 @@ config = ConfigPongA2c()
 ##################
 from a_configuration.b_single_config.mujoco.config_ant_mujoco import ConfigAntMujocoSac
 config = ConfigAntMujocoSac()
+config.WANDB_REPORT_URL = "https://wandb.ai/link-koreatech/Ant-v2_SAC_yhhan/reports/Ant-v2_SAC--VmlldzoxNTM0NDMz"
 
 from a_configuration.b_single_config.mujoco.config_ant_mujoco import ConfigAntMujocoPpoTrajectory
 config = ConfigAntMujocoPpoTrajectory()
@@ -225,6 +226,7 @@ config = ConfigHalfCheetahMujocoPpoTrajectory()
 ##########################
 from a_configuration.b_single_config.unity.config_3d_ball import Config3DBallDdqg
 config = Config3DBallDdqg()
+config.WANDB_REPORT_URL = "https://wandb.ai/link-koreatech/Unity3DBall_DDPG_yhhan/reports/3DBall-Ddqg--VmlldzoxNTM0NTUy?accessToken=gxnxojzda8hu41wb52vv873kql0qkir16nyqfcrrzq6eeaozen9xfe2pmg4f0dt5"
 
 
 ##########################
