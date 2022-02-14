@@ -49,7 +49,7 @@ class ConfigInvertedDoublePendulumBullet(ConfigBullet):
         self.TEST_INTERVAL_TRAINING_STEPS = 5_000
 
 
-class ParameterHumanoidBullet(ParameterBullet):
+class ParameterHumanoidBullet(ConfigBullet):
     def __init__(self):
         self.ENV_NAME = "HumanoidBulletEnv-v0"
         self.EPISODE_REWARD_AVG_SOLVED = 3_000

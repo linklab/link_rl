@@ -106,9 +106,14 @@ class ConfigCartPoleMuzero(ConfigBase, ConfigCartPole, ConfigMuzero):
         ConfigCartPole.__init__(self)
         ConfigMuzero.__init__(self)
 
-        self.MAX_TRAINING_STEPS = 100_000
+        self.MAX_TRAINING_STEPS = 10_000
         self.MODEL_TYPE = ModelType.SMALL_LINEAR
-        self.BUFFER_CAPACITY = 10_000
+        self.BUFFER_CAPACITY = 500
         self.SUPPORT_SIZE = 10
-        self.CONSOLE_LOG_INTERVAL_TRAINING_STEPS = 10
+        self.CONSOLE_LOG_INTERVAL_TRAINING_STEPS = 30
         self.VALUE_LOSS_WEIGHT = 1
+        self.TRAIN_INTERVAL_GLOBAL_TIME_STEPS = 10
+        self.TEST_INTERVAL_TRAINING_STEPS = 100
+        self.NUM_UNROLL_STEPS = 10
+        self.N_STEP = 50
+        self.BATCH_SIZE = 64

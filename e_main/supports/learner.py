@@ -136,7 +136,7 @@ class Learner(mp.Process):
         actions_history = [[] for _ in range(self.config.N_VECTORIZED_ENVS)]
         rewards_history = [[] for _ in range(self.config.N_VECTORIZED_ENVS)]
         infos_history = [[] for _ in range(self.config.N_VECTORIZED_ENVS)]
-        to_play_history = [[] for _ in range(self.config.N_VECTORIZED_ENVS)]  # TODO : np.zeros((observations.shape[0], slef.train_env.to_play()))
+        to_play_history = [[[]] for _ in range(self.config.N_VECTORIZED_ENVS)]  # TODO : np.zeros((observations.shape[0], slef.train_env.to_play()))
         child_visits_history = [[] for _ in range(self.config.N_VECTORIZED_ENVS)]
         root_values_history = [[] for _ in range(self.config.N_VECTORIZED_ENVS)]
 
@@ -174,8 +174,8 @@ class Learner(mp.Process):
             if self.is_recurrent_model:
                 next_observations = [(next_observations, self.agent.model.recurrent_hidden)]
 
-            for env_id, (next_observation, action, reward, done, info, root, to_play) in enumerate(
-                    zip(next_observations, actions, rewards, dones, infos, self.agent.roots, self.agent.to_plays)
+            for env_id, (observation, action, reward, done, info, root, to_play) in enumerate(
+                    zip(observations, actions, rewards, dones, infos, self.agent.roots, self.agent.to_plays)
             ):
                 info["actor_id"] = 0
                 info["env_id"] = env_id
@@ -195,7 +195,7 @@ class Learner(mp.Process):
                 else:
                     root_values_history[env_id].append(None)
 
-                observations_history[env_id].append(next_observation)
+                observations_history[env_id].append(observation)
                 actions_history[env_id].append(action)
                 rewards_history[env_id].append(reward)
                 to_play_history[env_id].append(to_play)
@@ -219,7 +219,8 @@ class Learner(mp.Process):
                     root_values_history[env_id] = []
                     infos_history[env_id] = []
 
-                    observations = next_observations
+            observations = next_observations
+
             if self.is_terminated.value:
                 break
 

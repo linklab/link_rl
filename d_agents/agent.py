@@ -137,10 +137,10 @@ class Agent:
 
             elif self.config.AGENT_TYPE == AgentType.MUZERO:
                 assert self.config.N_VECTORIZED_ENVS == 1
-                # if len(self.buffer) >= self.config.BATCH_SIZE:
-                self._before_train(sample_length=self.config.BATCH_SIZE)
-                count_training_steps, critic_loss_each = self.train_muzero(training_steps_v=training_steps_v)
-                self._after_train(critic_loss_each)
+                if len(self.buffer) >= self.config.BATCH_SIZE:
+                    self._before_train(sample_length=self.config.BATCH_SIZE)
+                    count_training_steps, critic_loss_each = self.train_muzero(training_steps_v=training_steps_v)
+                    self._after_train(critic_loss_each)
 
             else:
                 raise ValueError()

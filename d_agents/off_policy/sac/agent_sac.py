@@ -111,7 +111,6 @@ class AgentSac(Agent):
 
         # critic_loss.shape: ()
         critic_loss_each = (self.config.LOSS_FUNCTION(q1_values, td_target_values.detach(), reduction="none") + self.config.LOSS_FUNCTION(q2_values, td_target_values.detach(), reduction="none")) / 2.0
-
         critic_loss = critic_loss_each.mean()
 
         self.critic_optimizer.zero_grad()
@@ -131,7 +130,6 @@ class AgentSac(Agent):
             action_v, log_prob_v, entropy_v = self.sac_model.re_parameterization_trick_sample(self.observations)
             q1_value, q2_value = self.critic_model.q(self.observations, action_v)
             actor_objectives = torch.min(q1_value, q2_value) - self.alpha.value * log_prob_v
-
             actor_objectives = actor_objectives.mean()
             loss_actor_v = -1.0 * actor_objectives
 

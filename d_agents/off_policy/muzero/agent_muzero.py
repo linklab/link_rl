@@ -40,42 +40,47 @@ class AgentMuZero(Agent):
         self.legal_actions = []
         self.roots = None
         self.mcts_extra_infos = None
-        self.temperature = None
+        self.temperature = mp.Value('d', 1.0)
+        self.value_loss = mp.Value('d', 1.0)
+        self.policy_loss = mp.Value('d', 1.0)
+        self.reward_loss = mp.Value('d', 1.0)
+        self.loss = mp.Value('d', 1.0)
 
         self.optimizer = optim.Adam(self.model.parameters(), lr=self.config.LEARNING_RATE)
 
-    def get_action(self, stacked_observations, mode=AgentMode.TRAIN):
+    def get_action(self, observations, mode=AgentMode.TRAIN):
         action = []
-        if isinstance(self.action_space, Discrete):
-            self.roots, self.mcts_extra_infos = MCTS(self.config).run(
-                model=self.model,
-                observations=stacked_observations,
-                legal_actions=self.legal_actions,
-                to_plays=self.to_plays,
-                action_space=self.action_space,
-                add_exploration_noise=True,
-            )
-            # visit_counts's shape = (n_vectorized, n_root's_child)
-            visit_counts = np.array(
-               [self.mcts_extra_infos[env_id]["child_visit_counts"] for env_id in range(len(self.roots))], dtype="int32"
-            )
-            # actions's shape = (n_vectorized, n_root's_child)
-            actions = np.array(
-               [self.mcts_extra_infos[env_id]["actions"] for env_id in range(len(self.roots))]
-            )
-            # TODO : numpy batch 연산
-            if mode == AgentMode.TRAIN:
-                visit_count_distributions = visit_counts ** (1 / self.temperature)
-                visit_count_distributions = visit_count_distributions / \
-                                            np.sum(visit_count_distributions, axis=-1)[:, np.newaxis]
-                for i in range(self.config.N_VECTORIZED_ENVS):
-                    action.append(np.random.choice(actions[i], p=visit_count_distributions[i]))
-            elif mode == AgentMode.TEST:
-                for i in range(self.config.N_VECTORIZED_ENVS):
-                    action.append(actions[i][np.argmax(visit_counts[i])])
+        with torch.no_grad():
+            if isinstance(self.action_space, Discrete):
+                self.roots, self.mcts_extra_infos = MCTS(self.config).run(
+                    model=self.model,
+                    observations=observations,
+                    legal_actions=self.legal_actions,
+                    to_plays=self.to_plays,
+                    action_space=self.action_space,
+                    add_exploration_noise=True,
+                )
+                # child_visit_counts's shape = (n_vectorized, n_root's_child)
+                child_visit_counts = np.array(
+                   [self.mcts_extra_infos[env_id]["child_visit_counts"] for env_id in range(len(self.roots))], dtype="int32"
+                )
+                # actions's shape = (n_vectorized, n_root's_child)
+                actions = np.array(
+                   [self.mcts_extra_infos[env_id]["actions"] for env_id in range(len(self.roots))]
+                )
+                # TODO : numpy batch 연산
+                if mode == AgentMode.TRAIN:
+                    visit_count_distributions = child_visit_counts ** (1 / self.temperature.value)
+                    visit_count_distributions = visit_count_distributions / \
+                                                np.sum(visit_count_distributions, axis=-1)[:, np.newaxis]
+                    for i in range(self.config.N_VECTORIZED_ENVS):
+                        action.append(np.random.choice(actions[i], p=visit_count_distributions[i]))
+                elif mode == AgentMode.TEST:
+                    for i in range(self.config.N_VECTORIZED_ENVS):
+                        action.append(actions[i][np.argmax(child_visit_counts[i])])
 
-        elif isinstance(self.action_space, Box):
-            pass
+            elif isinstance(self.action_space, Box):
+                pass
 
         return np.asarray(action)
 
@@ -136,7 +141,7 @@ class AgentMuZero(Agent):
         # The value target is the discounted root value of the search tree td_steps into the
         # future, plus the discounted sum of all rewards until then.
         bootstrap_index = index + self.config.N_STEP
-        if bootstrap_index < len(episode_history.root_values_history):
+        if bootstrap_index <= len(episode_history.root_values_history)-1:
             root_values = (episode_history.root_values_history)
             last_step_value = (
                 root_values[bootstrap_index]
@@ -144,14 +149,12 @@ class AgentMuZero(Agent):
                    == episode_history.to_play_history[index]
                 else -root_values[bootstrap_index]
             )
-
             value = last_step_value * self.config.GAMMA ** self.config.N_STEP
         else:
             value = 0
 
-        # reward history에는 reset의 reward부터 저장하기 때문에 뽑은 index에서 +1을 해준다.
         for i, reward in enumerate(
-                episode_history.reward_history[index : bootstrap_index]
+                episode_history.reward_history[index: bootstrap_index]
         ):
             # The value is oriented from the perspective of the current player
             value += (
@@ -174,22 +177,22 @@ class AgentMuZero(Agent):
         ):
             value = self.compute_target_value(episode_history, current_index)
 
-            if current_index < len(episode_history.root_values_history):
+            if current_index <= len(episode_history.root_values_history)-1:
                 target_values.append(value)
                 target_rewards.append(episode_history.reward_history[current_index])
                 target_policies.append(episode_history.child_visits_history[current_index])
                 actions.append(episode_history.action_history[current_index])
-            elif current_index == len(episode_history.root_values_history):
-                target_values.append(0)
-                target_rewards.append(episode_history.reward_history[current_index-1])
-                # Uniform policy
-                target_policies.append(
-                    [
-                        1 / len(episode_history.child_visits_history[0])
-                        for _ in range(len(episode_history.child_visits_history[0]))
-                    ]
-                )
-                actions.append(episode_history.action_history[current_index-1])
+            # elif current_index == len(episode_history.root_values_history):
+            #     target_values.append(0)
+            #     target_rewards.append(episode_history.reward_history[current_index-1])
+            #     # Uniform policy
+            #     target_policies.append(
+            #         [
+            #             1 / len(episode_history.child_visits_history[0])
+            #             for _ in range(len(episode_history.child_visits_history[0]))
+            #         ]
+            #     )
+            #     actions.append(episode_history.action_history[current_index-1])
             else:
                 # States past the end of games are treated as absorbing states
                 target_values.append(0)
@@ -267,11 +270,11 @@ class AgentMuZero(Agent):
             Positive float.
         """
         if trained_steps < 0.5 * self.config.MAX_TRAINING_STEPS:
-            self.temperature = 1.0
+            self.temperature.value = 1.0
         elif trained_steps < 0.75 * self.config.MAX_TRAINING_STEPS:
-            self.temperature = 0.5
+            self.temperature.value = 0.5
         else:
-            self.temperature = 0.25
+            self.temperature.value = 0.25
 
     def loss_function(
         self,
@@ -283,131 +286,154 @@ class AgentMuZero(Agent):
         target_policy,
     ):
         # Cross-entropy seems to have a better convergence than MSE
+        # torch.Size([128, 21]) torch.Size([128, 21]) torch.Size([128, 21]) torch.Size([128, 21])
+        # torch.Size([128, 2]) torch.Size([128, 2]) !!!!!
+        # print(
+        #     target_value.shape, value.shape, target_reward.shape, reward.shape,
+        #     target_policy.shape, policy_logits.shape, "!!!!!"
+        # )
         value_loss = (-target_value * torch.nn.LogSoftmax(dim=1)(value)).sum(1)
         reward_loss = (-target_reward * torch.nn.LogSoftmax(dim=1)(reward)).sum(1)
-        policy_loss = (-target_policy * torch.nn.LogSoftmax(dim=1)(policy_logits)).sum(
-            1
-        )
+        policy_loss = (-target_policy * torch.nn.LogSoftmax(dim=1)(policy_logits)).sum(1)
+
+        # torch.Size([128]) torch.Size([128]) torch.Size([128]) !@!@
+        # print(value_loss.shape, reward_loss.shape, policy_loss.shape, "!@!@")
+
         return value_loss, reward_loss, policy_loss
 
     def train_muzero(self, training_steps_v):
         count_training_steps = 0
-        batch = self.get_batch()
-        if isinstance(self.action_space, Discrete):
-            (
-                observation_batch,
-                action_batch,
-                target_value,
-                target_reward,
-                target_policy,
-                gradient_scale_batch,
-            ) = batch[-1]
-
-            # Keep values as scalars for calculating the priorities for the prioritized replay
-            target_value_scalar = np.array(target_value, dtype="float32")
-            priorities = np.zeros_like(target_value_scalar)
-
-            observation_batch = torch.tensor(observation_batch).float().to(self.config.DEVICE)
-            action_batch = torch.tensor(action_batch).long().to(self.config.DEVICE).unsqueeze(-1)
-            target_value = torch.tensor(target_value).float().to(self.config.DEVICE)
-            target_reward = torch.tensor(target_reward).float().to(self.config.DEVICE)
-            target_policy = torch.tensor(target_policy).float().to(self.config.DEVICE)
-            gradient_scale_batch = torch.tensor(gradient_scale_batch).float().to(self.config.DEVICE)
-
-            # observation_batch: batch, channels, height, width
-            # action_batch: batch, num_unroll_steps+1, 1 (unsqueeze)
-            # target_value: batch, num_unroll_steps+1
-            # target_reward: batch, num_unroll_steps+1
-            # target_policy: batch, num_unroll_steps+1, len(action_space)
-            # gradient_scale_batch: batch, num_unroll_steps+1
-
-            target_value = scalar_to_support(target_value, self.config.SUPPORT_SIZE)
-            target_reward = scalar_to_support(
-                target_reward, self.config.SUPPORT_SIZE
-            )
-            # target_value: batch, num_unroll_steps+1, 2*support_size+1
-            # target_reward: batch, num_unroll_steps+1, 2*support_size+1
-
-            ## Generate predictions
-            value, reward, policy_logits, hidden_state = self.model.initial_inference(
-                observation_batch
-            )
-
-            predictions = [(value, reward, policy_logits)]
-            for i in range(1, action_batch.shape[1]):
-                value, reward, policy_logits, hidden_state = self.model.recurrent_inference(
-                    hidden_state, action_batch[:, i]
-                )
-                # TODO : 이해하
-                # Scale the gradient at the start of the dynamics function (See paper appendix Training)
-                hidden_state.register_hook(lambda grad: grad * 0.5)
-                predictions.append((value, reward, policy_logits))
-            # predictions: num_unroll_steps+1, 3, batch, 2*support_size+1 | 2*support_size+1 | 9 (according to the 2nd dim)
-
-            ## Compute losses
-            value_loss, reward_loss, policy_loss = (0, 0, 0)
-            value, reward, policy_logits = predictions[0]
-            # Ignore reward loss for the first batch step
-
-            current_value_loss, _, current_policy_loss = self.loss_function(
-                value.squeeze(-1),
-                reward.squeeze(-1),
-                policy_logits,
-                target_value[:, 0],  # current observation에 대한 value distribution
-                target_reward[:, 0],  # current observation에 대한 reward distribution
-                target_policy[:, 0]  # current observation에 대한 policy distribution
-            )
-
-            value_loss += current_value_loss
-            policy_loss += current_policy_loss
-
-            for i in range(1, len(predictions)):
-                value, reward, policy_logits = predictions[i]
+        for _ in range(20):
+            batch = self.get_batch()
+            if isinstance(self.action_space, Discrete):
                 (
-                    current_value_loss,
-                    current_reward_loss,
-                    current_policy_loss,
-                ) = self.loss_function(
+                    observation_batch,
+                    action_batch,
+                    target_value,
+                    target_reward,
+                    target_policy,
+                    gradient_scale_batch,
+                ) = batch[-1]
+
+                # Keep values as scalars for calculating the priorities for the prioritized replay
+                target_value_scalar = np.array(target_value, dtype="float32")
+                priorities = np.zeros_like(target_value_scalar)
+
+                observation_batch = torch.tensor(observation_batch).float().to(self.config.DEVICE)
+                action_batch = torch.tensor(action_batch).long().to(self.config.DEVICE).unsqueeze(-1)
+                target_value = torch.tensor(target_value).float().to(self.config.DEVICE)
+                target_reward = torch.tensor(target_reward).float().to(self.config.DEVICE)
+                target_policy = torch.tensor(target_policy).float().to(self.config.DEVICE)
+                gradient_scale_batch = torch.tensor(gradient_scale_batch).float().to(self.config.DEVICE)
+
+                # torch.Size([128, 4]) torch.Size([128, 6, 1]) torch.Size([128, 6]) torch.Size([128, 6])
+                # torch.Size([128, 6, 2]) torch.Size([128, 6]) !!!!!!!!!!
+                # print(
+                #     observation_batch.shape, action_batch.shape, target_value.shape, target_reward.shape,
+                #     target_policy.shape, gradient_scale_batch.shape, "!!!!!!!!!!"
+                # )
+
+                # observation_batch: batch, channels, height, width
+                # action_batch: batch, num_unroll_steps+1, 1 (unsqueeze)
+                # target_value: batch, num_unroll_steps+1
+                # target_reward: batch, num_unroll_steps+1
+                # target_policy: batch, num_unroll_steps+1, len(action_space)
+                # gradient_scale_batch: batch, num_unroll_steps+1
+
+                target_value = scalar_to_support(target_value, self.config.SUPPORT_SIZE)
+                target_reward = scalar_to_support(target_reward, self.config.SUPPORT_SIZE)
+                # target_value: batch, num_unroll_steps+1, 2*support_size+1
+                # target_reward: batch, num_unroll_steps+1, 2*support_size+1
+
+                ## Generate predictions
+                value, reward, policy_logits, hidden_state = self.model.initial_inference(
+                    observation_batch
+                )
+
+                # torch.Size([128, 21]) torch.Size([128, 21]) torch.Size([128, 2]) torch.Size([128, 128]) ##$$#$#$#$#$
+                # print(value.shape, reward.shape, policy_logits.shape, hidden_state.shape, "##$$#$#$#$#$")
+
+                predictions = [(value, reward, policy_logits)]
+                for i in range(1, action_batch.shape[1]):
+                    value, reward, policy_logits, hidden_state = self.model.recurrent_inference(
+                        hidden_state, action_batch[:, i]
+                    )
+                    # TODO : 이해하
+                    # Scale the gradient at the start of the dynamics function (See paper appendix Training)
+                    hidden_state.register_hook(lambda grad: grad * 0.5)
+                    predictions.append((value, reward, policy_logits))
+                # predictions: num_unroll_steps+1, 3, batch, 2*support_size+1 | 2*support_size+1 | 9 (according to the 2nd dim)
+
+                ## Compute losses
+                value_loss, reward_loss, policy_loss = (0, 0, 0)
+                value, reward, policy_logits = predictions[0]
+                # Ignore reward loss for the first batch step
+
+                current_value_loss, _, current_policy_loss = self.loss_function(
                     value.squeeze(-1),
                     reward.squeeze(-1),
                     policy_logits,
-                    target_value[:, i],
-                    target_reward[:, i],
-                    target_policy[:, i],
-                )
-
-                # TODO : 이해하
-                # # Scale gradient by the number of unroll steps (See paper appendix Training)
-                current_value_loss.register_hook(
-                    lambda grad: grad / gradient_scale_batch[:, i]
-                )
-                current_reward_loss.register_hook(
-                    lambda grad: grad / gradient_scale_batch[:, i]
-                )
-                current_policy_loss.register_hook(
-                    lambda grad: grad / gradient_scale_batch[:, i]
+                    target_value[:, 0],  # current observation에 대한 value distribution
+                    target_reward[:, 0],  # current observation에 대한 reward distribution
+                    target_policy[:, 0]  # current observation에 대한 policy distribution
                 )
 
                 value_loss += current_value_loss
-                reward_loss += current_reward_loss
                 policy_loss += current_policy_loss
 
-            # Scale the value loss, paper recommends by 0.25 (See paper appendix Reanalyze)
-            loss_each = value_loss * self.config.VALUE_LOSS_WEIGHT + reward_loss + policy_loss
+                # print(value.squeeze(-1).shape, reward.squeeze(-1).shape, policy_logits.shape, target_value[:, 0].shape,
+                #       target_reward[:, 0].shape, target_policy[:, 0].shape, current_value_loss.shape,
+                #       current_policy_loss.shape, value_loss.shape, policy_loss.shape, "!!!!!!!!!")
 
-            # Mean over batch dimension (pseudocode do a sum)
-            loss = loss_each.mean()
+                for i in range(1, len(predictions)):
+                    value, reward, policy_logits = predictions[i]
+                    (
+                        current_value_loss,
+                        current_reward_loss,
+                        current_policy_loss,
+                    ) = self.loss_function(
+                        value.squeeze(-1),
+                        reward.squeeze(-1),
+                        policy_logits,
+                        target_value[:, i],
+                        target_reward[:, i],
+                        target_policy[:, i],
+                    )
 
-            # Optimize
-            self.optimizer.zero_grad()
-            loss.backward()
-            self.optimizer.step()
+                    # # Scale gradient by the number of unroll steps (See paper appendix Training)
+                    current_value_loss.register_hook(
+                        lambda grad: grad / gradient_scale_batch[:, i]
+                    )
+                    current_reward_loss.register_hook(
+                        lambda grad: grad / gradient_scale_batch[:, i]
+                    )
+                    current_policy_loss.register_hook(
+                        lambda grad: grad / gradient_scale_batch[:, i]
+                    )
+
+                    value_loss += current_value_loss
+                    reward_loss += current_reward_loss
+                    policy_loss += current_policy_loss
+
+                # Scale the value loss, paper recommends by 0.25 (See paper appendix Reanalyze)
+                loss_each = value_loss * self.config.VALUE_LOSS_WEIGHT + reward_loss + policy_loss
+                # Mean over batch dimension (pseudocode do a sum)
+                loss = loss_each.mean()
+
+                self.value_loss.value = value_loss.mean()
+                self.reward_loss.value = reward_loss.mean()
+                self.policy_loss.value = policy_loss.mean()
+                self.loss.value = loss
+
+                # Optimize
+                self.optimizer.zero_grad()
+                loss.backward()
+                self.optimizer.step()
+            elif isinstance(self.action_space, Box):
+                pass
+            else:
+                raise ValueError()
             count_training_steps += 1
-        elif isinstance(self.action_space, Box):
-            pass
-        else:
-            raise ValueError()
-
         return count_training_steps, loss_each
 
 # TODO : batch MCTS 구현하기
@@ -519,6 +545,7 @@ class MCTS:
                 self.backpropagate(search_path, value, virtual_to_play, min_max_stats)
 
                 max_tree_depth = max(max_tree_depth, current_tree_depth)
+
             extra_info = {
                 "max_tree_depth": max_tree_depth,
                 "root_predicted_value": root_predicted_value,
