@@ -19,11 +19,15 @@ config = ConfigCartPoleReinforce()
 from a_configuration.b_single_config.open_ai_gym.config_cart_pole import ConfigCartPoleA2c
 config = ConfigCartPoleA2c()
 
+from a_configuration.b_single_config.open_ai_gym.config_cart_pole import ConfigCartPoleA3c
+config = ConfigCartPoleA3c()
+
 from a_configuration.b_single_config.open_ai_gym.config_cart_pole import ConfigCartPolePpo
 config = ConfigCartPolePpo()
 
 from a_configuration.b_single_config.open_ai_gym.config_cart_pole import ConfigCartPolePpoTrajectory
 config = ConfigCartPolePpoTrajectory()
+config.WANDB_REPORT_URL = "https://wandb.ai/link-koreatech/CartPole-v1_PPO_TRAJECTORY_yhhan/reports/CartPole-PPO_TRAJECTORY--VmlldzoxNTUyNDQw?accessToken=7vs10v66vi6fyitrxma0p2g62pq4nfiiccaskfgv2x2b5jrmwfae38u4pfm1xfq1"
 
 ######################
 ## CART_POLE_BULLET ##
@@ -43,6 +47,9 @@ config = ConfigCartPoleBulletDoubleDuelingDqn()
 from a_configuration.b_single_config.pybullet.config_cart_pole_bullet import ConfigCartPoleBulletA2c
 config = ConfigCartPoleBulletA2c()
 
+from a_configuration.b_single_config.pybullet.config_cart_pole_bullet import ConfigCartPoleBulletA3c
+config = ConfigCartPoleBulletA3c()
+
 from a_configuration.b_single_config.pybullet.config_cart_pole_bullet import ConfigCartPoleBulletPpo
 config = ConfigCartPoleBulletPpo()
 
@@ -52,8 +59,14 @@ config = ConfigCartPoleBulletPpoTrajectory()
 #################################
 ## CART_POLE_CONTINUOUS_BULLET ##
 #################################
+from a_configuration.b_single_config.pybullet.config_cart_pole_continuous_bullet import ConfigCartPoleContinuousBulletReinforce
+config = ConfigCartPoleContinuousBulletReinforce()
+
 from a_configuration.b_single_config.pybullet.config_cart_pole_continuous_bullet import ConfigCartPoleContinuousBulletA2c
 config = ConfigCartPoleContinuousBulletA2c()
+
+from a_configuration.b_single_config.pybullet.config_cart_pole_continuous_bullet import ConfigCartPoleContinuousBulletA3c
+config = ConfigCartPoleContinuousBulletA3c()
 
 from a_configuration.b_single_config.pybullet.config_cart_pole_continuous_bullet import ConfigCartPoleContinuousBulletPpo
 config = ConfigCartPoleContinuousBulletPpo()
@@ -61,14 +74,14 @@ config = ConfigCartPoleContinuousBulletPpo()
 from a_configuration.b_single_config.pybullet.config_cart_pole_continuous_bullet import ConfigCartPoleContinuousBulletPpoTrajectory
 config = ConfigCartPoleContinuousBulletPpoTrajectory()
 
-from a_configuration.b_single_config.pybullet.config_cart_pole_continuous_bullet import ConfigCartPoleContinuousBulletSac
-config = ConfigCartPoleContinuousBulletSac()
-
 from a_configuration.b_single_config.pybullet.config_cart_pole_continuous_bullet import ConfigCartPoleContinuousBulletDdpg
 config = ConfigCartPoleContinuousBulletDdpg()
 
 from a_configuration.b_single_config.pybullet.config_cart_pole_continuous_bullet import ConfigCartPoleContinuousBulletTd3
 config = ConfigCartPoleContinuousBulletTd3()
+
+from a_configuration.b_single_config.pybullet.config_cart_pole_continuous_bullet import ConfigCartPoleContinuousBulletSac
+config = ConfigCartPoleContinuousBulletSac()
 
 ##################
 ## LUNAR_LANDER ##
@@ -78,6 +91,9 @@ config = ConfigLunarLanderDqn()
 
 from a_configuration.b_single_config.open_ai_gym.config_lunar_lander import ConfigLunarLanderA2c
 config = ConfigLunarLanderA2c()
+
+from a_configuration.b_single_config.open_ai_gym.config_lunar_lander import ConfigLunarLanderA3c
+config = ConfigLunarLanderA3c()
 
 from a_configuration.b_single_config.open_ai_gym.config_lunar_lander import ConfigLunarLanderPpo
 config = ConfigLunarLanderPpo()
@@ -91,6 +107,9 @@ config.WANDB_REPORT_URL = "https://wandb.ai/link-koreatech/LunarLander-v2_PPO_TR
 #############################
 from a_configuration.b_single_config.open_ai_gym.config_lunar_lander_continuous import ConfigLunarLanderContinuousA2c
 config = ConfigLunarLanderContinuousA2c()
+
+from a_configuration.b_single_config.open_ai_gym.config_lunar_lander_continuous import ConfigLunarLanderContinuousA3c
+config = ConfigLunarLanderContinuousA3c()
 
 from a_configuration.b_single_config.open_ai_gym.config_lunar_lander_continuous import ConfigLunarLanderContinuousPpo
 config = ConfigLunarLanderContinuousPpo()

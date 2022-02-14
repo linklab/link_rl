@@ -1,8 +1,29 @@
 from a_configuration.a_base_config.config_comparison_base import ConfigComparisonBase
+from a_configuration.b_single_config.open_ai_gym.config_cart_pole import ConfigCartPolePpo, ConfigCartPolePpoTrajectory
 from a_configuration.b_single_config.pybullet.config_cart_pole_continuous_bullet import \
     ConfigCartPoleContinuousBulletDdpg, ConfigCartPoleContinuousBulletTd3, ConfigCartPoleContinuousBulletSac, \
-    ConfigCartPoleContinuousBulletA2c, ConfigCartPoleContinuousBulletPpoTrajectory
+    ConfigCartPoleContinuousBulletA2c, ConfigCartPoleContinuousBulletPpoTrajectory, ConfigCartPoleContinuousBulletPpo
 from g_utils.types import ModelType
+
+
+class ConfigComparisonCartPoleContinuousBulletDdpgTd3(ConfigComparisonBase):
+    def __init__(self):
+        ConfigComparisonBase.__init__(self)
+
+        self.ENV_NAME = "CartPoleContinuousBulletEnv-v0"
+
+        self.AGENT_PARAMETERS = [
+            ConfigCartPoleContinuousBulletDdpg(),
+            ConfigCartPoleContinuousBulletTd3(),
+        ]
+
+        self.AGENT_LABELS = [
+            "DDPG",
+            "TD3",
+        ]
+
+        self.MAX_TRAINING_STEPS = 10_000
+        self.N_RUNS = 5
 
 
 class ConfigComparisonCartPoleContinuousBulletDdpg(ConfigComparisonBase):
@@ -51,4 +72,23 @@ class ConfigComparisonCartPoleContinuousBulletAll(ConfigComparisonBase):
             "ppo_trajectory"
         ]
         self.MAX_TRAINING_STEPS = 100_000
+        self.N_RUNS = 5
+
+
+class ConfigComparisonCartPoleContinuousBulletPpo(ConfigComparisonBase):
+    def __init__(self):
+        ConfigComparisonBase.__init__(self)
+
+        self.ENV_NAME = "CartPoleContinuousBulletEnv-v0"
+
+        self.AGENT_PARAMETERS = [
+            ConfigCartPoleContinuousBulletPpo(),
+            ConfigCartPoleContinuousBulletPpoTrajectory(),
+        ]
+
+        self.AGENT_LABELS = [
+            "PPO",
+            "PPO Trajectory"
+        ]
+        self.MAX_TRAINING_STEPS = 10_000
         self.N_RUNS = 5

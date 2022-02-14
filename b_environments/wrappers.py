@@ -15,7 +15,7 @@ class CustomObservationWrapper(gym.ObservationWrapper):
     def observation(self, observation):  # Observation --> One-hot vector
         if observation is None:
             return None
-        new_obs = np.zeros(self.discrete_observation_space_n) # [0, 0, 0, 0]
+        new_obs = np.zeros(self.discrete_observation_space_n)  # [0, 0, 0, 0]
         new_obs[observation] = 1  # [0, 1, 0, 0]
         return new_obs
 
@@ -50,11 +50,12 @@ class MakeBoxFrozenLake(gym.Wrapper):
         self.observation_space = gym.spaces.Box(
             low=0, high=1, shape=(4, self.nrow, self.ncol)
         )
+        self.reward_range = (-100, 100)
 
     def _generate_random_map(self):
         from gym.envs.toy_text.frozen_lake import generate_random_map
-        random_map = generate_random_map(size=6, p=0.25)  # F:H = 0.25:0.75
-        env = gym.make("FrozenLake-v1", desc=random_map)
+        random_map = generate_random_map(size=5, p=0.4)  # F:H = p:1-p
+        env = gym.make("FrozenLake-v1", desc=random_map, is_slippery=False)
         super().__init__(env)
 
     def reset(self, **kwargs):
@@ -65,6 +66,7 @@ class MakeBoxFrozenLake(gym.Wrapper):
     def step(self, action):
         _, reward, done, info = self.env.step(action)
         observation = self.observation()
+        reward = 100. if reward == 1. else -1.
         return observation, reward, done, info
 
     def observation(self):

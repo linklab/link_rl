@@ -12,7 +12,7 @@ class ConfigWalkerDdqg(ConfigBase, ConfigWalker, ConfigDdpg):
         ConfigWalker.__init__(self)
         ConfigDdpg.__init__(self)
 
-        self.BATCH_SIZE = 64
+        self.BATCH_SIZE = 256
         self.ACTOR_LEARNING_RATE = 0.0002
         self.LEARNING_RATE = 0.001
         self.N_STEP = 1

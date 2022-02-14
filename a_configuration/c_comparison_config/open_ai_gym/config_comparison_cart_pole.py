@@ -1,7 +1,8 @@
 from a_configuration.a_base_config.config_comparison_base import ConfigComparisonBase
 from a_configuration.b_single_config.open_ai_gym.config_cart_pole import ConfigCartPoleDqn, \
     ConfigCartPoleReinforce, \
-    ConfigCartPoleA2c, ConfigCartPoleDoubleDqn, ConfigCartPoleDuelingDqn, ConfigCartPoleDoubleDuelingDqn
+    ConfigCartPoleA2c, ConfigCartPoleDoubleDqn, ConfigCartPoleDuelingDqn, ConfigCartPoleDoubleDuelingDqn, \
+    ConfigCartPolePpo, ConfigCartPolePpoTrajectory
 
 
 class ConfigComparisonCartPoleDqn(ConfigComparisonBase):
@@ -55,6 +56,8 @@ class ConfigComparisonCartPoleReinforce(ConfigComparisonBase):
     def __init__(self):
         ConfigComparisonBase.__init__(self)
 
+        self.ENV_NAME = "CartPole-v1"
+
         self.AGENT_PARAMETERS = [
             ConfigCartPoleReinforce(),
             ConfigCartPoleReinforce(),
@@ -66,8 +69,29 @@ class ConfigComparisonCartPoleA2c(ConfigComparisonBase):
     def __init__(self):
         ConfigComparisonBase.__init__(self)
 
+        self.ENV_NAME = "CartPole-v1"
+
         self.AGENT_PARAMETERS = [
             ConfigCartPoleA2c(),
             ConfigCartPoleA2c(),
             ConfigCartPoleA2c(),
         ]
+
+
+class ConfigComparisonCartPolePpo(ConfigComparisonBase):
+    def __init__(self):
+        ConfigComparisonBase.__init__(self)
+
+        self.ENV_NAME = "CartPole-v1"
+
+        self.AGENT_PARAMETERS = [
+            ConfigCartPolePpo(),
+            ConfigCartPolePpoTrajectory()
+        ]
+
+        self.AGENT_LABELS = [
+            "PPO",
+            "PPO Trajectory"
+        ]
+        self.MAX_TRAINING_STEPS = 10_000
+        self.N_RUNS = 5

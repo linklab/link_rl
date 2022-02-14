@@ -1,4 +1,4 @@
-from a_configuration.a_base_config.a_environments.pybullet.gym_mujoco import ConfigHopperMujoco
+from a_configuration.a_base_config.a_environments.mujoco.gym_mujoco import ConfigHopperMujoco
 from a_configuration.a_base_config.b_agents.agents_off_policy import ConfigSac
 from a_configuration.a_base_config.b_agents.agents_on_policy import ConfigPpoTrajectory
 from a_configuration.a_base_config.config_single_base import ConfigBase

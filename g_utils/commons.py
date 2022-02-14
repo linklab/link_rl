@@ -24,17 +24,7 @@ from a_configuration.a_base_config.c_models.recurrent_convolutional_models impor
 from a_configuration.a_base_config.c_models.recurrent_linear_models import ConfigRecurrentLinearModel
 from b_environments.wrappers import MakeBoxFrozenLake
 from g_utils.types import AgentType, ActorCriticAgentTypes, ModelType, LayerActivationType, LossFunctionType, \
-    OffPolicyAgentTypes, OnPolicyAgentTypes
-
-if torch.cuda.is_available():
-    import nvidia_smi
-    nvidia_smi.nvmlInit()
-
-    import pynvml
-    pynvml.nvmlInit()
-else:
-    nvidia_smi = None
-    pynvml = None
+    OffPolicyAgentTypes
 
 
 def model_save(model, env_name, agent_type_name, test_episode_reward_avg, test_episode_reward_std, config):
@@ -70,7 +60,8 @@ def set_config(config):
         from a_configuration.a_base_config.c_models.linear_models import ConfigLinearModel
         config.MODEL_PARAMETER = ConfigLinearModel(config.MODEL_TYPE)
     elif config.MODEL_TYPE in (
-            ModelType.SMALL_CONVOLUTIONAL, ModelType.MEDIUM_CONVOLUTIONAL, ModelType.LARGE_CONVOLUTIONAL
+            ModelType.TINY_CONVOLUTIONAL, ModelType.SMALL_CONVOLUTIONAL,
+            ModelType.MEDIUM_CONVOLUTIONAL, ModelType.LARGE_CONVOLUTIONAL
     ):
         from a_configuration.a_base_config.c_models.convolutional_models import ConfigConvolutionalModel
         config.MODEL_PARAMETER = ConfigConvolutionalModel(config.MODEL_TYPE)
@@ -107,10 +98,16 @@ def set_config(config):
 
     elif config.AGENT_TYPE == AgentType.REINFORCE:
         config.BUFFER_CAPACITY = -1
+        config.N_STEP = 1
 
     elif config.AGENT_TYPE == AgentType.A2C:
         config.BUFFER_CAPACITY = config.BATCH_SIZE
         config.CONSOLE_LOG_INTERVAL_TRAINING_STEPS = 10
+
+    elif config.AGENT_TYPE == AgentType.A3C:
+        config.BUFFER_CAPACITY = config.BATCH_SIZE
+        config.CONSOLE_LOG_INTERVAL_TRAINING_STEPS = config.CONSOLE_LOG_INTERVAL_TRAINING_STEPS * config.N_ACTORS / 2
+        assert config.N_ACTORS > 1
 
     elif config.AGENT_TYPE == AgentType.PPO:
         config.BUFFER_CAPACITY = config.BATCH_SIZE
@@ -362,16 +359,15 @@ def print_env_info(observation_space, action_space, config):
 
 
 def console_log(
-        total_episodes_v, total_time_steps_v, last_mean_episode_reward_v,
+        total_episodes_v, last_mean_episode_reward_v,
         n_rollout_transitions_v, transition_rolling_rate_v, train_steps_v, train_step_rate_v,
         agent, config
 ):
-    console_log = "[Tot. Episodes: {0:5,}, Tot. Time Steps {1:7,}] " \
-                  "Mean Episode Reward: {2:6.1f}, Rolling Outs: {3:7,} ({4:7.3f}/sec.), " \
-                  "Training Steps: {5:4,} ({6:.3f}/sec.), " \
+    console_log = "[Tot. Episodes: {0:5,}] " \
+                  "Mean Episode Reward: {1:6.1f}, Rolling Outs: {2:7,} ({3:7.3f}/sec.), " \
+                  "Training Steps: {4:4,} ({5:.3f}/sec.), " \
         .format(
             total_episodes_v,
-            total_time_steps_v,
             last_mean_episode_reward_v,
             n_rollout_transitions_v,
             transition_rolling_rate_v,
@@ -387,7 +383,7 @@ def console_log(
         console_log += "log_policy_objective: {0:7.3f}".format(
             agent.last_log_policy_objective.value
         )
-    elif config.AGENT_TYPE == AgentType.A2C:
+    elif config.AGENT_TYPE in (AgentType.A2C, AgentType.A3C):
         console_log += "critic_loss: {0:7.3f}, log_actor_obj.: {1:7.3f}, entropy: {2:5.3f}".format(
             agent.last_critic_loss.value, agent.last_actor_objective.value, agent.last_entropy.value
         )
@@ -437,7 +433,7 @@ def console_log_comparison(
             console_log += "log_policy_objective: {0:6.3f}, ".format(
                 agent.last_log_policy_objective.value
             )
-        elif config_c.AGENT_PARAMETERS[agent_idx].AGENT_TYPE == AgentType.A2C:
+        elif config_c.AGENT_PARAMETERS[agent_idx].AGENT_TYPE in (AgentType.A2C, AgentType.A3C):
             console_log += "critic_loss: {0:6.3f}, log_actor_obj.: {1:5.3f}, ".format(
                 agent.last_critic_loss.value, agent.last_actor_objective.value
             )
@@ -501,7 +497,7 @@ def wandb_log(learner, wandb_obj, config):
         log_dict["Epsilon"] = learner.agent.epsilon.value
     elif config.AGENT_TYPE == AgentType.REINFORCE:
         log_dict["Log Policy Objective"] = learner.agent.last_log_policy_objective.value
-    elif config.AGENT_TYPE == AgentType.A2C:
+    elif config.AGENT_TYPE in (AgentType.A2C, AgentType.A3C):
         log_dict["Critic Loss"] = learner.agent.last_critic_loss.value
         log_dict["Log Actor Objective"] = learner.agent.last_actor_objective.value
         log_dict["Entropy"] = learner.agent.last_entropy.value
@@ -526,24 +522,15 @@ def wandb_log(learner, wandb_obj, config):
         log_dict["actor_grad_l2"] = learner.agent.last_actor_model_grad_l2.value
         log_dict["critic_grad_max"] = learner.agent.last_critic_model_grad_max.value
         log_dict["critic_grad_l2"] = learner.agent.last_critic_model_grad_l2.value
+    elif config.AGENT_TYPE == AgentType.REINFORCE:
+        log_dict["policy_grad_max"] = learner.agent.last_actor_model_grad_max.value
+        log_dict["policy_grad_l2"] = learner.agent.last_actor_model_grad_l2.value
     else:
         log_dict["grad_max"] = learner.agent.last_model_grad_max.value
         log_dict["grad_l2"] = learner.agent.last_model_grad_l2.value
 
     wandb_obj.log(log_dict)
 
-
-# def wandb_log_comparison(learner, wandb_obj):
-#     log_dict = {
-#         "[TEST] Episode Reward": learner.test_episode_reward_avg.value,
-#         "[TEST] Std. of Episode Reward": learner.test_episode_reward_std.value,
-#         "Mean Episode Reward": learner.last_mean_episode_reward.value,
-#         "Episode": learner.total_episodes.value,
-#         "Buffer Size": learner.n_rollout_transitions.value,
-#         "Training Steps": learner.training_step.value,
-#         "Total Time Steps": learner.total_time_step.value
-#     }
-#     wandb_obj.log(log_dict)
 
 plotly_layout = go.Layout(
     plot_bgcolor="#FFF",  # Sets background color to white
@@ -655,7 +642,7 @@ def get_train_env(config, no_graphics=True):
                 u_env = UnityEnvironment(
                     file_name=os.path.join(config.UNITY_ENV_DIR, config.ENV_NAME, platform_dir,
                                            config.ENV_NAME),
-                    worker_id=0, no_graphics=no_graphics, side_channels=[channel]
+                    train_actor_id=0, no_graphics=no_graphics, side_channels=[channel]
                 )
                 channel.set_configuration_parameters(time_scale=config.time_scale)
                 env = UnityToGymWrapper(u_env)
@@ -699,7 +686,7 @@ def get_single_env(config, no_graphics=True):
         channel = EngineConfigurationChannel()
         u_env = UnityEnvironment(
             file_name=os.path.join(config.UNITY_ENV_DIR, config.ENV_NAME, platform_dir, config.ENV_NAME),
-            worker_id=1, no_graphics=no_graphics, side_channels=[channel]
+            train_actor_id=1, no_graphics=no_graphics, side_channels=[channel]
         )
         channel.set_configuration_parameters(time_scale=config.time_scale)
         single_env = UnityToGymWrapper(u_env)

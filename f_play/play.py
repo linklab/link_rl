@@ -5,7 +5,7 @@ import warnings
 
 import numpy as np
 
-from a_configuration.a_base_config.a_environments.pybullet.gym_mujoco import ConfigMujoco
+from a_configuration.a_base_config.a_environments.mujoco.gym_mujoco import ConfigMujoco
 from a_configuration.a_base_config.a_environments.pybullet.gym_pybullet import ConfigBullet
 from a_configuration.a_base_config.a_environments.unity.unity_box import ConfigUnityGymEnv
 from a_configuration.a_base_config.c_models.recurrent_convolutional_models import ConfigRecurrentConvolutionalModel
@@ -49,8 +49,8 @@ def play(env, agent, n_episodes):
             observation = env.reset()
             env.render()
 
+        observation = np.expand_dims(observation, axis=0)
         if is_recurrent_model:
-            observation = np.expand_dims(observation, axis=0)
             agent.model.init_recurrent_hidden()
             observation = [(observation, agent.model.recurrent_hidden)]
 
@@ -85,8 +85,8 @@ def play(env, agent, n_episodes):
 
             # action을 통해서 next_state, reward, done, info를 받아온다
             next_observation, reward, done, _ = env.step(scaled_action)
+            next_observation = np.expand_dims(next_observation, axis=0)
             if is_recurrent_model:
-                next_observation = np.expand_dims(next_observation, axis=0)
                 next_observation = [(next_observation, agent.model.recurrent_hidden)]
             env.render()
 

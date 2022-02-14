@@ -10,7 +10,6 @@ warnings.simplefilter("ignore")
 
 from collections import deque
 
-import torch
 import torch.multiprocessing as mp
 import numpy as np
 import time
@@ -21,7 +20,7 @@ from g_utils.types import AgentType, AgentMode, Transition
 
 
 class Learner(mp.Process):
-    def __init__(self, agent, queue, config=None):
+    def __init__(self, agent, queue, shared_model_access_lock=None, config=None):
         super(Learner, self).__init__()
         self.agent = agent
         self.queue = queue
@@ -40,8 +39,6 @@ class Learner(mp.Process):
         self.total_time_step = mp.Value('i', 0)
         self.total_episodes = mp.Value('i', 0)
         self.training_step = mp.Value('i', 0)
-
-        self.n_rollout_transitions = mp.Value('i', 0)
 
         self.train_start_time = None
         self.last_mean_episode_reward = mp.Value('d', 0.0)
@@ -71,6 +68,8 @@ class Learner(mp.Process):
             isinstance(self.config.MODEL_PARAMETER, ConfigRecurrentLinearModel),
             isinstance(self.config.MODEL_PARAMETER, ConfigRecurrentConvolutionalModel)
         ])
+
+        self.shared_model_access_lock = shared_model_access_lock  # For only LearningActor (A3C)
 
     def generator_on_policy_transition(self):
         observations = self.train_env.reset()
@@ -139,63 +138,89 @@ class Learner(mp.Process):
         self.train_start_time = time.time()
 
         while True:
-            if parallel:
-                n_step_transition = self.queue.get()
-            else:
-                n_step_transition = next(self.transition_generator)
+            if self.config.AGENT_TYPE == AgentType.A3C:
+                a3c_info = self.queue.get()
 
-            self.total_time_step.value += 1
-
-            if n_step_transition is None:
-                self.n_actor_terminations += 1
-                if self.n_actor_terminations >= self.n_actors:
-                    self.is_terminated.value = True
-                    break
+                if a3c_info is None:
+                    self.n_actor_terminations += 1
+                    if self.n_actor_terminations >= self.n_actors:
+                        self.is_terminated.value = True
+                        break
+                    else:
+                        continue
                 else:
-                    continue
+                    if self.is_terminated.value:
+                        continue
+
+                if a3c_info["message_type"] == "DONE":
+                    self.total_episodes.value += 1
+                    self.episode_reward_buffer.add(a3c_info["episode_reward"])
+                    self.last_mean_episode_reward.value = self.episode_reward_buffer.mean()
+                elif a3c_info["message_type"] == "TRAIN":
+                    self.training_step.value += a3c_info["count_training_steps"]
+                    self.total_time_step.value += a3c_info["n_rollout_transitions"]
+                else:
+                    raise ValueError()
             else:
-                if self.is_terminated.value:
-                    continue
+                if parallel:
+                    n_step_transition = self.queue.get()
+                else:
+                    n_step_transition = next(self.transition_generator)
 
-            self.agent.buffer.append(n_step_transition)
-            self.n_rollout_transitions.value += 1
+                if n_step_transition is None:
+                    self.n_actor_terminations += 1
+                    if self.n_actor_terminations >= self.n_actors:
+                        self.is_terminated.value = True
+                        break
+                    else:
+                        continue
+                else:
+                    if self.is_terminated.value:
+                        continue
 
-            actor_id = n_step_transition.info["actor_id"]
-            env_id = n_step_transition.info["env_id"]
-            self.episode_rewards[actor_id][env_id] += n_step_transition.reward
+                self.total_time_step.value += 1
 
-            if n_step_transition.done:
-                self.total_episodes.value += 1
+                self.agent.buffer.append(n_step_transition)
 
-                self.episode_reward_buffer.add(self.episode_rewards[actor_id][env_id])
-                self.last_mean_episode_reward.value = self.episode_reward_buffer.mean()
+                actor_id = n_step_transition.info["actor_id"]
+                env_id = n_step_transition.info["env_id"]
+                self.episode_rewards[actor_id][env_id] += n_step_transition.reward
 
-                self.episode_rewards[actor_id][env_id] = 0.0
+                if n_step_transition.done:
+                    self.total_episodes.value += 1
+                    self.episode_reward_buffer.add(self.episode_rewards[actor_id][env_id])
+                    self.last_mean_episode_reward.value = self.episode_reward_buffer.mean()
 
-                if self.config.AGENT_TYPE == AgentType.REINFORCE:
+                    self.episode_rewards[actor_id][env_id] = 0.0
+
+                ###################
+                ### TRAIN START ###
+                ###################
+                reinforce_train_conditions = [
+                    n_step_transition.done,
+                    self.config.AGENT_TYPE == AgentType.REINFORCE
+                ]
+                train_conditions = [
+                    self.total_time_step.value >= self.next_train_time_step,
+                    self.config.AGENT_TYPE != AgentType.REINFORCE,
+                ]
+                if all(train_conditions) or all(reinforce_train_conditions):
                     count_training_steps = self.agent.train(training_steps_v=self.training_step.value)
                     self.training_step.value += count_training_steps
-
-            train_conditions = [
-                self.total_time_step.value >= self.next_train_time_step,
-                self.config.AGENT_TYPE != AgentType.REINFORCE
-            ]
-            if all(train_conditions):
-                count_training_steps = self.agent.train(training_steps_v=self.training_step.value)
-                self.training_step.value += count_training_steps
-
-                self.next_train_time_step += self.config.TRAIN_INTERVAL_GLOBAL_TIME_STEPS
+                    self.next_train_time_step += self.config.TRAIN_INTERVAL_GLOBAL_TIME_STEPS
+                #################
+                ### TRAIN END ###
+                #################
 
             if self.training_step.value >= self.next_console_log:
                 total_training_time = time.time() - self.train_start_time
-                self.transition_rolling_rate.value = self.n_rollout_transitions.value / total_training_time
+                self.transition_rolling_rate.value = self.total_time_step.value / total_training_time
                 self.train_step_rate.value = self.training_step.value / total_training_time
 
                 console_log(
                     total_episodes_v=self.total_episodes.value,
-                    total_time_steps_v=self.total_time_step.value,
                     last_mean_episode_reward_v=self.last_mean_episode_reward.value,
-                    n_rollout_transitions_v=self.n_rollout_transitions.value,
+                    n_rollout_transitions_v=self.total_time_step.value,
                     transition_rolling_rate_v=self.transition_rolling_rate.value,
                     train_steps_v=self.training_step.value,
                     train_step_rate_v=self.train_step_rate.value,
@@ -220,7 +245,7 @@ class Learner(mp.Process):
         total_training_time = time.time() - self.train_start_time
         formatted_total_training_time = time.strftime('%H:%M:%S', time.gmtime(total_training_time))
         print("Total Training Terminated: {}".format(formatted_total_training_time))
-        print("Transition Rolling Rate: {0:.3f}/sec.".format(self.n_rollout_transitions.value / total_training_time))
+        print("Transition Rolling Rate: {0:.3f}/sec.".format(self.total_time_step.value / total_training_time))
         print("Training Rate: {0:.3f}/sec.".format(self.training_step.value / total_training_time))
         if self.config.USE_WANDB:
             wandb_obj.join()
@@ -268,6 +293,9 @@ class Learner(mp.Process):
         print("*" * 150)
 
     def play_for_testing(self, n_test_episodes):
+        if self.config.AGENT_TYPE == AgentType.A3C:
+            self.shared_model_access_lock.acquire()
+
         self.agent.model.eval()
 
         episode_reward_lst = []
@@ -323,5 +351,7 @@ class Learner(mp.Process):
             episode_reward_lst.append(episode_reward)
 
         self.agent.model.train()
+        if self.config.AGENT_TYPE == AgentType.A3C:
+            self.shared_model_access_lock.release()
 
         return np.average(episode_reward_lst), np.std(episode_reward_lst)
