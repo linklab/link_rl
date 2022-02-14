@@ -171,11 +171,10 @@ class LearnerComparison:
             if self.total_time_step >= self.next_train_time_step:
                 for agent_idx, _ in enumerate(self.agents):
                     if not self.is_terminated_per_agent[agent_idx]:
-                        if self.config_c.AGENT_PARAMETERS[agent_idx].AGENT_TYPE != AgentType.REINFORCE:
-                            count_training_steps = self.agents[agent_idx].train(
-                                training_steps_v=self.training_steps_per_agent[agent_idx]
-                            )
-                            self.training_steps_per_agent[agent_idx] += count_training_steps
+                        count_training_steps = self.agents[agent_idx].train(
+                            training_steps_v=self.training_steps_per_agent[agent_idx]
+                        )
+                        self.training_steps_per_agent[agent_idx] += count_training_steps
 
                         if self.training_steps_per_agent[agent_idx] >= self.next_console_log_per_agent[agent_idx]:
                             console_log_comparison(

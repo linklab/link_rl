@@ -16,11 +16,8 @@ class AgentA3c(AgentA2c):
 class WorkerAgentA3c(AgentA2c):
     def __init__(self, master_agent, observation_space, action_space, shared_model_access_lock, config):
         super(WorkerAgentA3c, self).__init__(observation_space, action_space, config)
+
         self.master_agent = master_agent
-
-        self.critic_optimizer = self.master_agent.critic_optimizer
-        self.actor_optimizer = self.master_agent.actor_optimizer
-
         self.shared_model_access_lock = shared_model_access_lock
 
     def worker_train(self):
@@ -41,14 +38,14 @@ class WorkerAgentA3c(AgentA2c):
         critic_loss = self.config.LOSS_FUNCTION(values, target_values.detach())
 
         # calculate local gradients and push local worker parameters to master parameters
-        self.critic_optimizer.zero_grad()
+        self.master_agent.critic_optimizer.zero_grad()
         critic_loss.backward()
-        for master_parameter, worker_parameter in zip(
+        for master_critic_model_parameter, worker_critic_model_parameter in zip(
                 self.master_agent.critic_model.parameters(), self.critic_model.parameters()
         ):
-            master_parameter._grad = worker_parameter.grad
-        self.clip_critic_model_parameter_grad_value(self.master_agent.critic_model.critic_params_list)
-        self.critic_optimizer.step()
+            master_critic_model_parameter._grad = worker_critic_model_parameter.grad
+        self.master_agent.clip_critic_model_parameter_grad_value(self.master_agent.critic_model.critic_params_list)
+        self.master_agent.critic_optimizer.step()
 
         # pull global parameters
         self.synchronize_models(source_model=self.master_agent.critic_model, target_model=self.critic_model)
@@ -95,14 +92,14 @@ class WorkerAgentA3c(AgentA2c):
         actor_loss = actor_loss + entropy_loss * self.config.ENTROPY_BETA
 
         # calculate local gradients and push local worker parameters to master parameters
-        self.actor_optimizer.zero_grad()
+        self.master_agent.actor_optimizer.zero_grad()
         actor_loss.backward()
-        for master_parameter, worker_parameter in zip(
+        for master_actor_model_parameter, worker_actor_model_parameter in zip(
                 self.master_agent.actor_model.parameters(), self.actor_model.parameters()
         ):
-            master_parameter._grad = worker_parameter.grad
-        self.clip_actor_model_parameter_grad_value(self.master_agent.actor_model.actor_params_list)
-        self.actor_optimizer.step()
+            master_actor_model_parameter._grad = worker_actor_model_parameter.grad
+        self.master_agent.clip_actor_model_parameter_grad_value(self.master_agent.actor_model.actor_params_list)
+        self.master_agent.actor_optimizer.step()
 
         # pull global parameters
         self.synchronize_models(source_model=self.master_agent.actor_model, target_model=self.actor_model)
