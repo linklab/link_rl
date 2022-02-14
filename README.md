@@ -160,3 +160,5 @@ git commit -m "Apply .gitignore"
 ### 13. Reference
 - https://github.com/PacktPublishing/Deep-Reinforcement-Learning-Hands-On-Second-Edition
 - NaN Handling: https://stable-baselines.readthedocs.io/en/master/guide/checking_nan.html
+- https://github.com/p-christ/Deep-Reinforcement-Learning-Algorithms-with-PyTorch
+- https://github.com/MorvanZhou/PyTorch-Tutorial

@@ -20,7 +20,7 @@ from g_utils.types import AgentType, AgentMode, Transition
 
 
 class Learner(mp.Process):
-    def __init__(self, agent, queue, config=None):
+    def __init__(self, agent, queue, shared_model_access_lock=None, config=None):
         super(Learner, self).__init__()
         self.agent = agent
         self.queue = queue
@@ -68,6 +68,8 @@ class Learner(mp.Process):
             isinstance(self.config.MODEL_PARAMETER, ConfigRecurrentLinearModel),
             isinstance(self.config.MODEL_PARAMETER, ConfigRecurrentConvolutionalModel)
         ])
+
+        self.shared_model_access_lock = shared_model_access_lock  # For only LearningActor (A3C)
 
     def generator_on_policy_transition(self):
         observations = self.train_env.reset()
@@ -291,6 +293,9 @@ class Learner(mp.Process):
         print("*" * 150)
 
     def play_for_testing(self, n_test_episodes):
+        if self.config.AGENT_TYPE == AgentType.A3C:
+            self.shared_model_access_lock.acquire()
+
         self.agent.model.eval()
 
         episode_reward_lst = []
@@ -346,5 +351,7 @@ class Learner(mp.Process):
             episode_reward_lst.append(episode_reward)
 
         self.agent.model.train()
+        if self.config.AGENT_TYPE == AgentType.A3C:
+            self.shared_model_access_lock.release()
 
         return np.average(episode_reward_lst), np.std(episode_reward_lst)

@@ -78,13 +78,6 @@ class Actor(mp.Process):
                 break
 
         self.queue.put(None)
-        #
-        # if self.config.AGENT_TYPE in OffPolicyAgentTypes:
-        #     self.queue.put(None)
-        # elif self.config.AGENT_TYPE in OnPolicyAgentTypes:
-        #     yield None
-        # else:
-        #     raise ValueError()
 
     @staticmethod
     def get_n_step_transition(history, env_id, actor_id, info, done, config):
@@ -117,36 +110,16 @@ class Actor(mp.Process):
         return n_step_transition
 
 
-class A3cActor(mp.Process):
-    def __init__(self, env_name, actor_id, worker_agent, queue, config):
-        super(A3cActor, self).__init__()
-        self.env_name = env_name
-        self.actor_id = actor_id
-        self.worker_agent = worker_agent
-        self.queue = queue
-        self.config = config
-
-        self.is_vectorized_env_created = mp.Value('i', False)
-        self.is_terminated = mp.Value('i', False)
-
-        self.train_env = None
-
-        self.histories = None
+class LearningActor(Actor):
+    def __init__(self, env_name, actor_id, agent, queue, config):
+        super(LearningActor, self).__init__(env_name, actor_id, agent, queue, config)
 
         # FOR TRAIN
         self.total_time_step = 0
         self.training_step = 0
         self.next_train_time_step = config.TRAIN_INTERVAL_GLOBAL_TIME_STEPS
 
-    def run(self):
-        self.train_env = get_train_env(self.config)
-
-        self.is_vectorized_env_created.value = True
-
-        self.histories = []
-        for _ in range(self.config.N_VECTORIZED_ENVS):
-            self.histories.append(deque(maxlen=self.config.N_STEP))
-
+    def roll_out(self):
         self.roll_out_and_train()
 
     def roll_out_and_train(self):
@@ -157,7 +130,7 @@ class A3cActor(mp.Process):
 
         while True:
             actor_time_step += 1
-            actions = self.worker_agent.get_action(observations)
+            actions = self.agent.get_action(observations)
             next_observations, rewards, dones, infos = self.train_env.step(actions)
 
             for env_id, (observation, action, next_observation, reward, done, info) in enumerate(
@@ -184,21 +157,21 @@ class A3cActor(mp.Process):
                     )
                     episode_rewards[env_id] += n_step_transition.reward
 
-                    self.worker_agent.buffer.append(n_step_transition)
+                    self.agent.buffer.append(n_step_transition)
                     self.total_time_step += 1
 
                     if done:
                         self.queue.put({
                             "message_type": "DONE",
                             "episode_reward": episode_rewards[env_id],
-                            "worker_id": self.actor_id
+                            "train_actor_id": self.actor_id
                         })
                         episode_rewards[env_id] = 0.0
 
             observations = next_observations
 
-            if len(self.worker_agent.buffer) >= self.config.BATCH_SIZE:
-                count_training_steps = self.worker_agent.worker_train()
+            if len(self.agent.buffer) >= self.config.BATCH_SIZE:
+                count_training_steps = self.agent.worker_train()
                 self.training_step += count_training_steps
                 self.next_train_time_step += self.config.TRAIN_INTERVAL_GLOBAL_TIME_STEPS
 
@@ -206,47 +179,10 @@ class A3cActor(mp.Process):
                     "message_type": "TRAIN",
                     "count_training_steps": count_training_steps,
                     "n_rollout_transitions": self.config.BATCH_SIZE,
-                    "worker_id": self.actor_id
+                    "train_actor_id": self.actor_id
                 })
 
             if self.is_terminated.value:
                 break
 
         self.queue.put(None)
-        #
-        # if self.config.AGENT_TYPE in OffPolicyAgentTypes:
-        #     self.queue.put(None)
-        # elif self.config.AGENT_TYPE in OnPolicyAgentTypes:
-        #     yield None
-        # else:
-        #     raise ValueError()
-
-    @staticmethod
-    def get_n_step_transition(history, env_id, actor_id, info, done, config):
-        n_step_transitions = tuple(history)
-        next_observation = n_step_transitions[-1].next_observation
-
-        n_step_reward = 0.0
-        for n_step_transition in reversed(n_step_transitions):
-            n_step_reward = n_step_transition.reward + \
-                            config.GAMMA * n_step_reward * \
-                            (0.0 if n_step_transition.done else 1.0)
-            # if n_step_transition.done:
-            #     break
-
-        info["actor_id"] = actor_id
-        info["env_id"] = env_id
-        info["actor_time_step"] = n_step_transitions[0].info["actor_time_step"]
-        info["real_n_steps"] = len(n_step_transitions)
-        n_step_transition = Transition(
-            observation=n_step_transitions[0].observation,
-            action=n_step_transitions[0].action,
-            next_observation=next_observation,
-            reward=n_step_reward,
-            done=done,
-            info=info
-        )
-
-        history.clear()
-
-        return n_step_transition

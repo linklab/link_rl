@@ -106,7 +106,7 @@ def set_config(config):
 
     elif config.AGENT_TYPE == AgentType.A3C:
         config.BUFFER_CAPACITY = config.BATCH_SIZE
-        config.CONSOLE_LOG_INTERVAL_TRAINING_STEPS = 10
+        config.CONSOLE_LOG_INTERVAL_TRAINING_STEPS = config.CONSOLE_LOG_INTERVAL_TRAINING_STEPS * config.N_ACTORS / 2
         assert config.N_ACTORS > 1
 
     elif config.AGENT_TYPE == AgentType.PPO:
@@ -642,7 +642,7 @@ def get_train_env(config, no_graphics=True):
                 u_env = UnityEnvironment(
                     file_name=os.path.join(config.UNITY_ENV_DIR, config.ENV_NAME, platform_dir,
                                            config.ENV_NAME),
-                    worker_id=0, no_graphics=no_graphics, side_channels=[channel]
+                    train_actor_id=0, no_graphics=no_graphics, side_channels=[channel]
                 )
                 channel.set_configuration_parameters(time_scale=config.time_scale)
                 env = UnityToGymWrapper(u_env)
@@ -686,7 +686,7 @@ def get_single_env(config, no_graphics=True):
         channel = EngineConfigurationChannel()
         u_env = UnityEnvironment(
             file_name=os.path.join(config.UNITY_ENV_DIR, config.ENV_NAME, platform_dir, config.ENV_NAME),
-            worker_id=1, no_graphics=no_graphics, side_channels=[channel]
+            train_actor_id=1, no_graphics=no_graphics, side_channels=[channel]
         )
         channel.set_configuration_parameters(time_scale=config.time_scale)
         single_env = UnityToGymWrapper(u_env)

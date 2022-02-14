@@ -28,7 +28,7 @@ sys.path.append(os.path.abspath(
 ))
 
 from e_main.config_single import config
-from e_main.supports.actor import Actor, A3cActor
+from e_main.supports.actor import Actor, LearningActor
 from e_main.supports.learner import Learner
 from g_utils.commons import get_env_info, print_basic_info
 from g_utils.types import OffPolicyAgentTypes, AgentType
@@ -53,24 +53,35 @@ def main():
     mp.set_start_method('spawn', force=True)
     queue = mp.Queue()
 
-    agent = get_agent(
-        observation_space=observation_space, action_space=action_space, config=config
-    )
-
-    learner = Learner(agent=agent, queue=queue, config=config)
-
     if config.AGENT_TYPE == AgentType.A3C:
-        actors = []
-        for actor_id in range(config.N_ACTORS):
-            worker_agent = WorkerAgentA3c(
-                master_agent=agent, observation_space=observation_space, action_space=action_space, config=config
-            )
-            actors.append(
-                A3cActor(
-                    env_name=config.ENV_NAME, actor_id=actor_id, worker_agent=worker_agent, queue=queue, config=config
-                )
-            )
+        master_agent = get_agent(
+            observation_space=observation_space, action_space=action_space, config=config
+        )
+
+        shared_model_access_lock = mp.Lock()
+
+        learner = Learner(
+            agent=master_agent, queue=queue, shared_model_access_lock=shared_model_access_lock, config=config
+        )
+
+        worker_agents = [
+            WorkerAgentA3c(
+                master_agent=master_agent, observation_space=observation_space, action_space=action_space,
+                shared_model_access_lock=shared_model_access_lock, config=config
+            ) for _ in range(config.N_ACTORS)
+        ]
+        actors = [
+            LearningActor(
+                env_name=config.ENV_NAME, actor_id=actor_id, agent=worker_agents[actor_id], queue=queue, config=config
+            ) for actor_id in range(config.N_ACTORS)
+        ]
     else:
+        agent = get_agent(
+            observation_space=observation_space, action_space=action_space, config=config
+        )
+
+        learner = Learner(agent=agent, queue=queue, config=config)
+
         actors = [
             Actor(
                 env_name=config.ENV_NAME, actor_id=actor_id, agent=agent, queue=queue, config=config

@@ -10,21 +10,25 @@ class AgentA3c(AgentA2c):
         super(AgentA3c, self).__init__(observation_space, action_space, config)
 
     def train_a3c(self):
-        print("@@@@")
+        pass
 
 
 class WorkerAgentA3c(AgentA2c):
-    def __init__(self, master_agent, observation_space, action_space, config):
+    def __init__(self, master_agent, observation_space, action_space, shared_model_access_lock, config):
         super(WorkerAgentA3c, self).__init__(observation_space, action_space, config)
         self.master_agent = master_agent
 
         self.critic_optimizer = self.master_agent.critic_optimizer
         self.actor_optimizer = self.master_agent.actor_optimizer
 
+        self.shared_model_access_lock = shared_model_access_lock
+
     def worker_train(self):
         self._before_train(sample_length=self.config.BATCH_SIZE)
 
         count_training_steps = 0
+
+        self.shared_model_access_lock.acquire()
 
         #############################################
         #  Critic (Value) Loss 산출 & Update - BEGIN #
@@ -105,6 +109,8 @@ class WorkerAgentA3c(AgentA2c):
         #######################################
         #  Actor Objective 산출 & Update - END #
         #######################################
+
+        self.shared_model_access_lock.release()
 
         self.master_agent.last_critic_loss.value = critic_loss.item()
         self.master_agent.last_actor_objective.value = actor_objective.item()
