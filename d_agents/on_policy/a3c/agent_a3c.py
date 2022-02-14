@@ -51,7 +51,7 @@ class WorkerAgentA3c(AgentA2c):
         self.critic_optimizer.step()
 
         # pull global parameters
-        self.critic_model.load_state_dict(self.master_agent.critic_model.state_dict())
+        self.synchronize_models(source_model=self.master_agent.critic_model, target_model=self.critic_model)
         ##########################################
         #  Critic (Value) Loss 산출 & Update- END #
         ##########################################
@@ -105,7 +105,7 @@ class WorkerAgentA3c(AgentA2c):
         self.actor_optimizer.step()
 
         # pull global parameters
-        self.actor_model.load_state_dict(self.master_agent.actor_model.state_dict())
+        self.synchronize_models(source_model=self.master_agent.actor_model, target_model=self.actor_model)
         #######################################
         #  Actor Objective 산출 & Update - END #
         #######################################

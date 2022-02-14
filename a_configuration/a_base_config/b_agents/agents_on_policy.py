@@ -15,10 +15,10 @@ class ConfigA2c(ConfigOnPolicyAgent):
         ConfigOnPolicyAgent.__init__(self)
         self.AGENT_TYPE = AgentType.A2C
 
-        self.ACTOR_LEARNING_RATE = 0.0001
-        self.LEARNING_RATE = 0.001
+        self.ACTOR_LEARNING_RATE = 0.00005
+        self.LEARNING_RATE = 0.0005
 
-        self.ENTROPY_BETA = 0.001
+        self.ENTROPY_BETA = 0.005
 
         self.BATCH_SIZE = 128
 
@@ -28,10 +28,9 @@ class ConfigA3c(ConfigOnPolicyAgent):
         ConfigOnPolicyAgent.__init__(self)
         self.AGENT_TYPE = AgentType.A3C
 
-        self.ACTOR_LEARNING_RATE = 0.0001
-        self.LEARNING_RATE = 0.001
-
-        self.ENTROPY_BETA = 0.001
+        self.ACTOR_LEARNING_RATE = 0.00001
+        self.LEARNING_RATE = 0.0001
+        self.ENTROPY_BETA = 0.005
 
         self.BATCH_SIZE = 128
         self.N_ACTORS = 2
