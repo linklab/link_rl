@@ -47,6 +47,9 @@ config = ConfigCartPoleBulletDoubleDuelingDqn()
 from a_configuration.b_single_config.pybullet.config_cart_pole_bullet import ConfigCartPoleBulletA2c
 config = ConfigCartPoleBulletA2c()
 
+from a_configuration.b_single_config.pybullet.config_cart_pole_bullet import ConfigCartPoleBulletA3c
+config = ConfigCartPoleBulletA3c()
+
 from a_configuration.b_single_config.pybullet.config_cart_pole_bullet import ConfigCartPoleBulletPpo
 config = ConfigCartPoleBulletPpo()
 
@@ -61,6 +64,9 @@ config = ConfigCartPoleContinuousBulletReinforce()
 
 from a_configuration.b_single_config.pybullet.config_cart_pole_continuous_bullet import ConfigCartPoleContinuousBulletA2c
 config = ConfigCartPoleContinuousBulletA2c()
+
+from a_configuration.b_single_config.pybullet.config_cart_pole_continuous_bullet import ConfigCartPoleContinuousBulletA3c
+config = ConfigCartPoleContinuousBulletA3c()
 
 from a_configuration.b_single_config.pybullet.config_cart_pole_continuous_bullet import ConfigCartPoleContinuousBulletPpo
 config = ConfigCartPoleContinuousBulletPpo()
@@ -86,6 +92,9 @@ config = ConfigLunarLanderDqn()
 from a_configuration.b_single_config.open_ai_gym.config_lunar_lander import ConfigLunarLanderA2c
 config = ConfigLunarLanderA2c()
 
+from a_configuration.b_single_config.open_ai_gym.config_lunar_lander import ConfigLunarLanderA3c
+config = ConfigLunarLanderA3c()
+
 from a_configuration.b_single_config.open_ai_gym.config_lunar_lander import ConfigLunarLanderPpo
 config = ConfigLunarLanderPpo()
 
@@ -98,6 +107,9 @@ config.WANDB_REPORT_URL = "https://wandb.ai/link-koreatech/LunarLander-v2_PPO_TR
 #############################
 from a_configuration.b_single_config.open_ai_gym.config_lunar_lander_continuous import ConfigLunarLanderContinuousA2c
 config = ConfigLunarLanderContinuousA2c()
+
+from a_configuration.b_single_config.open_ai_gym.config_lunar_lander_continuous import ConfigLunarLanderContinuousA3c
+config = ConfigLunarLanderContinuousA3c()
 
 from a_configuration.b_single_config.open_ai_gym.config_lunar_lander_continuous import ConfigLunarLanderContinuousPpo
 config = ConfigLunarLanderContinuousPpo()
