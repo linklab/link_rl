@@ -92,6 +92,9 @@ config = ConfigCartPoleContinuousBulletSac()
 from a_configuration.b_single_config.open_ai_gym.config_lunar_lander import ConfigLunarLanderDqn
 config = ConfigLunarLanderDqn()
 
+from a_configuration.b_single_config.open_ai_gym.config_lunar_lander import ConfigLunarLanderMuzero
+config = ConfigLunarLanderMuzero()
+
 from a_configuration.b_single_config.open_ai_gym.config_lunar_lander import ConfigLunarLanderA2c
 config = ConfigLunarLanderA2c()
 
