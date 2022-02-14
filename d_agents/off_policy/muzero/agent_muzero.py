@@ -14,14 +14,14 @@ from gym.spaces import Discrete, Box
 from torch.distributions import Categorical, Normal
 
 from c_models.h_muzero_models import *
-from d_agents.agent import Agent
+from d_agents.agent import Agent, OffPolicyAgent
 from g_utils.types import AgentMode
 
 # 저장되는 transition이 다르다.
 # get action에 num_simulation만큼 반복하는 mcts 구현
 
 
-class AgentMuZero(Agent):
+class AgentMuZero(OffPolicyAgent):
     def __init__(self, observation_space, action_space, config):
         super(AgentMuZero, self).__init__(observation_space, action_space, config)
 

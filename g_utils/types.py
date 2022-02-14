@@ -13,9 +13,9 @@ Episode_history = namedtuple(
     typename='Episode_history',
     field_names=[
         'observation_history', 'action_history', 'reward_history', 'to_play_history',
-        'child_visits_history', 'root_values_history', 'info_history'
+        'child_visits_history', 'root_values_history', 'info_history', 'done'
     ],
-    defaults=[None] * 7
+    defaults=[None] * 8
 )
 
 # Transitions = namedtuple(
