@@ -40,17 +40,18 @@ class ModelType(enum.Enum):
     MEDIUM_LINEAR = 3
     LARGE_LINEAR = 4
 
-    SMALL_CONVOLUTIONAL = 5
-    MEDIUM_CONVOLUTIONAL = 6
-    LARGE_CONVOLUTIONAL = 7
+    TINY_CONVOLUTIONAL = 5
+    SMALL_CONVOLUTIONAL = 6
+    MEDIUM_CONVOLUTIONAL = 7
+    LARGE_CONVOLUTIONAL = 8
 
-    SMALL_RECURRENT = 8
-    MEDIUM_RECURRENT = 9
-    LARGE_RECURRENT = 10
+    SMALL_RECURRENT = 9
+    MEDIUM_RECURRENT = 10
+    LARGE_RECURRENT = 11
 
-    SMALL_RECURRENT_CONVOLUTIONAL = 11
-    MEDIUM_RECURRENT_CONVOLUTIONAL = 12
-    LARGE_RECURRENT_CONVOLUTIONAL = 13
+    SMALL_RECURRENT_CONVOLUTIONAL = 12
+    MEDIUM_RECURRENT_CONVOLUTIONAL = 13
+    LARGE_RECURRENT_CONVOLUTIONAL = 14
 
 
 class LayerActivationType(enum.Enum):
@@ -70,12 +71,13 @@ class AgentType(enum.Enum):
     DOUBLE_DUELING_DQN = 3
     REINFORCE = 4
     A2C = 5
-    PPO = 6
-    PPO_TRAJECTORY = 7
-    DDPG = 8
-    TD3 = 9
-    SAC = 10
-    MUZERO = 11
+    A3C = 6
+    PPO = 7
+    PPO_TRAJECTORY = 8
+    DDPG = 9
+    TD3 = 10
+    SAC = 11
+    MUZERO = 12
 
 
 OnPolicyAgentTypes = [
@@ -88,5 +90,5 @@ OffPolicyAgentTypes = [
 ]
 
 ActorCriticAgentTypes = [
-    AgentType.A2C, AgentType.PPO, AgentType.PPO_TRAJECTORY, AgentType.DDPG, AgentType.TD3, AgentType.SAC
+    AgentType.A2C, AgentType.A3C, AgentType.PPO, AgentType.PPO_TRAJECTORY, AgentType.DDPG, AgentType.TD3, AgentType.SAC
 ]

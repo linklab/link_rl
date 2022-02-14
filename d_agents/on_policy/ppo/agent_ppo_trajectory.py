@@ -18,20 +18,21 @@ class AgentPpoTrajectory(AgentPpo):
         count_training_steps = 0
 
         #####################################
-        # OLD_LOG_PI 처리: BEGIN
+        # OLD_LOG_PI 얻어오기: BEGIN
         #####################################
         if isinstance(self.action_space, Discrete):
             trajectory_action_probs = self.actor_old_model.pi(self.observations)
             trajectory_dist = Categorical(probs=trajectory_action_probs)
             trajectory_old_log_pi_action_v = trajectory_dist.log_prob(value=self.actions.squeeze(dim=-1))
         elif isinstance(self.action_space, Box):
-            trajectory_mu_v, trajectory_sigma_v = self.actor_old_model.pi(self.observations)
-            trajectory_dist = Normal(loc=trajectory_mu_v, scale=trajectory_sigma_v)
-            trajectory_old_log_pi_action_v = trajectory_dist.log_prob(value=self.actions).sum(dim=-1, keepdim=True)
+            trajectory_mu_v, trajectory_var_v = self.actor_old_model.pi(self.observations)
+            trajectory_dist = Normal(loc=trajectory_mu_v, scale=torch.sqrt(trajectory_var_v))
+            trajectory_old_log_pi_action_v = trajectory_dist.log_prob(value=self.actions).sum(dim=-1)
         else:
             raise ValueError()
         #####################################
-        # OLD_LOG_PI 처리: END
+        # OLD_LOG_PI 얻어오기: END
+        # action_space가 Discrete와 Box에 관계없이 --> trajectory_old_log_pi_action_v.shape: (1280,)
         #####################################
 
         sum_critic_loss = 0.0
@@ -40,43 +41,40 @@ class AgentPpoTrajectory(AgentPpo):
         sum_entropy = 0.0
 
         for _ in range(self.config.PPO_K_EPOCH):
-            trajectory_td_target_values = self.get_td_target_values(
-                self.next_observations, self.rewards, self.dones
-            )
-
-            # trajectory_next_values = self.critic_model.v(self.next_observations)
-            # trajectory_next_values[self.dones] = 0.0
-            #
-            # # td_target_values.shape: (32, 1)
-            # trajectory_td_target_values = self.rewards + self.config.GAMMA ** self.config.N_STEP * trajectory_next_values
-            # # normalize td_target_value
-            # trajectory_td_target_values = (trajectory_td_target_values - torch.mean(trajectory_td_target_values)) / (torch.std(trajectory_td_target_values) + 1e-7)
-
+            trajectory_target_values = self.get_target_values(self.next_observations, self.rewards, self.dones)
             trajectory_values = self.critic_model.v(self.observations)
-            trajectory_advantages = (trajectory_td_target_values - trajectory_values).detach()
-
-            if isinstance(self.action_space, Discrete):
-                trajectory_advantages = trajectory_advantages.squeeze(dim=-1)  # NOTE
+            trajectory_advantages = (trajectory_target_values - trajectory_values).detach()
+            trajectory_advantages = (trajectory_advantages - torch.mean(trajectory_advantages)) / (torch.std(trajectory_advantages) + 1e-7)
+            trajectory_advantages = trajectory_advantages.squeeze(dim=-1)  # NOTE
 
             for batch_offset in range(0, self.config.PPO_TRAJECTORY_SIZE, self.config.BATCH_SIZE):
                 batch_l = batch_offset + self.config.BATCH_SIZE
 
                 batch_observations = self.observations[batch_offset:batch_l]
                 batch_actions = self.actions[batch_offset:batch_l]
-                batch_td_target_values = trajectory_td_target_values[batch_offset:batch_l]
+                batch_target_values = trajectory_target_values[batch_offset:batch_l]
                 batch_old_log_pi_action_v = trajectory_old_log_pi_action_v[batch_offset:batch_l]
                 batch_advantages = trajectory_advantages[batch_offset:batch_l]
 
+                #############################################
+                #  Critic (Value) Loss 산출 & Update - BEGIN #
+                #############################################
                 batch_values = self.critic_model.v(batch_observations)
 
-                assert batch_values.shape == batch_td_target_values.shape
-                batch_critic_loss = self.config.LOSS_FUNCTION(batch_values, batch_td_target_values.detach())
+                assert batch_values.shape == batch_target_values.shape
+                batch_critic_loss = self.config.LOSS_FUNCTION(batch_values, batch_target_values.detach())
 
                 self.critic_optimizer.zero_grad()
                 batch_critic_loss.backward()
                 self.clip_critic_model_parameter_grad_value(self.critic_model.critic_params_list)
                 self.critic_optimizer.step()
+                ##########################################
+                #  Critic (Value) Loss 산출 & Update- END #
+                ##########################################
 
+                #########################################
+                #  Actor Objective 산출 & Update - BEGIN #
+                #########################################
                 if isinstance(self.action_space, Discrete):
                     # actions.shape: (32, 1)
                     # dist.log_prob(value=actions.squeeze(-1)).shape: (32,)
@@ -86,14 +84,14 @@ class AgentPpoTrajectory(AgentPpo):
                     batch_log_pi_action_v = batch_dist.log_prob(value=batch_actions.squeeze(dim=-1))
                     batch_entropy = batch_dist.entropy().mean()
                 elif isinstance(self.action_space, Box):
-                    batch_mu_v, batch_sigma_v = self.actor_model.pi(batch_observations)
+                    batch_mu_v, batch_var_v = self.actor_model.pi(batch_observations)
 
                     # batch_log_pi_action_v = self.calc_log_prob(batch_mu_v, batch_var_v, batch_actions)
                     # batch_entropy = 0.5 * (torch.log(2.0 * np.pi * batch_var_v) + 1.0).sum(dim=-1)
                     # batch_entropy = batch_entropy.mean()
 
-                    batch_dist = Normal(loc=batch_mu_v, scale=batch_sigma_v)
-                    batch_log_pi_action_v = batch_dist.log_prob(value=batch_actions).sum(dim=-1, keepdim=True)
+                    batch_dist = Normal(loc=batch_mu_v, scale=torch.sqrt(batch_var_v))
+                    batch_log_pi_action_v = batch_dist.log_prob(value=batch_actions).sum(dim=-1)
                     batch_entropy = batch_dist.entropy().mean()
 
                     #print(batch_mu_v.shape, batch_var_v.shape, batch_actions.shape, batch_log_pi_action_v.shape, batch_entropy.shape, "@@@")
@@ -129,10 +127,9 @@ class AgentPpoTrajectory(AgentPpo):
                 sum_ratio += batch_ratio.mean().item()
 
                 count_training_steps += 1
-
-        ##############################
-        #  Actor Objective 산출 - END #
-        ##############################
+                #######################################
+                #  Actor Objective 산출 & Update - END #
+                #######################################
 
         self.synchronize_models(source_model=self.actor_model, target_model=self.actor_old_model)
 

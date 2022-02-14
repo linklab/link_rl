@@ -15,12 +15,25 @@ class ConfigA2c(ConfigOnPolicyAgent):
         ConfigOnPolicyAgent.__init__(self)
         self.AGENT_TYPE = AgentType.A2C
 
-        self.ACTOR_LEARNING_RATE = 0.0001
-        self.LEARNING_RATE = 0.001
+        self.ACTOR_LEARNING_RATE = 0.00005
+        self.LEARNING_RATE = 0.0005
 
         self.ENTROPY_BETA = 0.001
 
         self.BATCH_SIZE = 128
+
+
+class ConfigA3c(ConfigOnPolicyAgent):
+    def __init__(self):
+        ConfigOnPolicyAgent.__init__(self)
+        self.AGENT_TYPE = AgentType.A3C
+
+        self.ACTOR_LEARNING_RATE = 0.00001
+        self.LEARNING_RATE = 0.0001
+        self.ENTROPY_BETA = 0.001
+
+        self.BATCH_SIZE = 128
+        self.N_ACTORS = 2
 
 
 class ConfigPpo(ConfigOnPolicyAgent):
@@ -29,7 +42,7 @@ class ConfigPpo(ConfigOnPolicyAgent):
         self.AGENT_TYPE = AgentType.PPO
 
         self.ACTOR_LEARNING_RATE = 0.00001
-        self.LEARNING_RATE = 0.00005
+        self.LEARNING_RATE = 0.0001
 
         self.ENTROPY_BETA = 0.001
 
@@ -44,7 +57,7 @@ class ConfigPpoTrajectory(ConfigOnPolicyAgent):
         self.AGENT_TYPE = AgentType.PPO_TRAJECTORY
 
         self.ACTOR_LEARNING_RATE = 0.00001
-        self.LEARNING_RATE = 0.00005
+        self.LEARNING_RATE = 0.0001
 
         self.ENTROPY_BETA = 0.001
 

@@ -12,29 +12,38 @@ class Buffer:
     def __init__(self, action_space, config):
         self.action_space = action_space
         self.config = config
-        self.internal_buffer = [None] * self.config.BUFFER_CAPACITY
-
         self.is_recurrent_model = any([
             isinstance(self.config.MODEL_PARAMETER, ConfigRecurrentLinearModel),
             isinstance(self.config.MODEL_PARAMETER, ConfigRecurrentConvolutionalModel)
         ])
+        self.internal_buffer = None
+        self.size = None
+        self.head = None
 
         self.clear()
+
+    def clear(self):
+        if self.config.BUFFER_CAPACITY > 0:
+            self.internal_buffer = [None] * self.config.BUFFER_CAPACITY
+            self.head = -1
+        else:
+            self.internal_buffer = []
+            self.head = None
+
+        self.size = 0
 
     def __len__(self):
         return self.size
 
-    def clear(self):
-        self.internal_buffer = [None] * self.config.BUFFER_CAPACITY
-
-        self.size = 0
-        self.head = -1
-
     def append(self, transition):
-        self.head = (self.head + 1) % self.config.BUFFER_CAPACITY
-        self.internal_buffer[self.head] = transition
+        if self.config.BUFFER_CAPACITY > 0:
+            self.head = (self.head + 1) % self.config.BUFFER_CAPACITY
+            self.internal_buffer[self.head] = transition
 
-        if self.size < self.config.BUFFER_CAPACITY:
+            if self.size < self.config.BUFFER_CAPACITY:
+                self.size += 1
+        else:
+            self.internal_buffer.append(transition)
             self.size += 1
 
     def sample_indices(self, batch_size):

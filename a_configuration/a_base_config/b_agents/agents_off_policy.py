@@ -79,15 +79,15 @@ class ConfigSac(ConfigOffPolicyAgent):
         self.ALPHA_LEARNING_RATE = 0.00001
 
         self.TAU = 0.005
-        self.BUFFER_CAPACITY = 10_000
-        self.BATCH_SIZE = 128
+        self.BUFFER_CAPACITY = 2_000_000
+        self.BATCH_SIZE = 1024
         self.TARGET_SYNC_INTERVAL_TRAINING_STEPS = 50
 
         self.POLICY_UPDATE_FREQUENCY_PER_TRAINING_STEP = 2
 
         self.DEFAULT_ALPHA = 1.0
         self.AUTOMATIC_ENTROPY_TEMPERATURE_TUNING = True
-        self.MIN_ALPHA = 0.2
+        self.MIN_ALPHA = 0.1
 
 
 class ConfigMuzero(ConfigOffPolicyAgent):

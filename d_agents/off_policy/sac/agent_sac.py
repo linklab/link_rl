@@ -10,11 +10,11 @@ import torch.multiprocessing as mp
 from torch.distributions import Normal
 
 from c_models.h_sac_models import ContinuousSacModel
-from d_agents.agent import Agent
+from d_agents.agent import OffPolicyAgent
 from g_utils.types import AgentMode
 
 
-class AgentSac(Agent):
+class AgentSac(OffPolicyAgent):
     def __init__(self, observation_space, action_space, config):
         super(AgentSac, self).__init__(observation_space, action_space, config)
 
@@ -99,18 +99,18 @@ class AgentSac(Agent):
             next_q_values = next_q_values - self.alpha.value * next_log_prob_v  # ALPHA!!!
 
             next_q_values[self.dones] = 0.0
-            # td_target_values.shape: (32, 1)
+            # target_values.shape: (32, 1)
 
-            td_target_values = self.rewards + (self.config.GAMMA ** self.config.N_STEP) * next_q_values
-            # normalize td_target_values
+            target_values = self.rewards + (self.config.GAMMA ** self.config.N_STEP) * next_q_values
+            # normalize target_values
             if self.config.TARGET_VALUE_NORMALIZE:
-                td_target_values = (td_target_values - torch.mean(td_target_values)) / (torch.std(td_target_values) + 1e-7)
+                target_values = (target_values - torch.mean(target_values)) / (torch.std(target_values) + 1e-7)
 
         # values.shape: (32, 1)
         q1_values, q2_values = self.critic_model.q(self.observations, self.actions)
 
         # critic_loss.shape: ()
-        critic_loss_each = (self.config.LOSS_FUNCTION(q1_values, td_target_values.detach(), reduction="none") + self.config.LOSS_FUNCTION(q2_values, td_target_values.detach(), reduction="none")) / 2.0
+        critic_loss_each = (self.config.LOSS_FUNCTION(q1_values, target_values.detach(), reduction="none") + self.config.LOSS_FUNCTION(q2_values, target_values.detach(), reduction="none")) / 2.0
         critic_loss = critic_loss_each.mean()
 
         self.critic_optimizer.zero_grad()

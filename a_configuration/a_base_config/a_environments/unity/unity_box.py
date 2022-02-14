@@ -13,7 +13,7 @@ class Config3DBall(ConfigUnityGymEnv):
 class ConfigWalker(ConfigUnityGymEnv):
     def __init__(self):
         self.ENV_NAME = "UnityWalker"
-        self.EPISODE_REWARD_AVG_SOLVED = 1500
-        self.EPISODE_REWARD_STD_SOLVED = 300
+        self.EPISODE_REWARD_AVG_SOLVED = 500
+        self.EPISODE_REWARD_STD_SOLVED = 500
         self.NO_TEST_GRAPHICS = True
-        self.time_scale = 30.0
+        self.time_scale = 2.0

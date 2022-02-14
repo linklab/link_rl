@@ -1,8 +1,19 @@
 from a_configuration.a_base_config.a_environments.pybullet.gym_pybullet import ConfigCartPoleContinuousBullet
 from a_configuration.a_base_config.b_agents.agents_off_policy import ConfigSac, ConfigDdpg, ConfigTd3
-from a_configuration.a_base_config.b_agents.agents_on_policy import ConfigA2c, ConfigPpo, ConfigPpoTrajectory
+from a_configuration.a_base_config.b_agents.agents_on_policy import ConfigA2c, ConfigPpo, ConfigPpoTrajectory, \
+    ConfigReinforce, ConfigA3c
 from a_configuration.a_base_config.config_single_base import ConfigBase
 from g_utils.types import ModelType
+
+
+class ConfigCartPoleContinuousBulletReinforce(ConfigBase, ConfigCartPoleContinuousBullet, ConfigReinforce):
+    def __init__(self):
+        ConfigBase.__init__(self)
+        ConfigCartPoleContinuousBullet.__init__(self)
+        ConfigReinforce.__init__(self)
+
+        self.MAX_TRAINING_STEPS = 100_000
+        self.MODEL_TYPE = ModelType.SMALL_LINEAR
 
 
 class ConfigCartPoleContinuousBulletA2c(ConfigBase, ConfigCartPoleContinuousBullet, ConfigA2c):
@@ -10,6 +21,16 @@ class ConfigCartPoleContinuousBulletA2c(ConfigBase, ConfigCartPoleContinuousBull
         ConfigBase.__init__(self)
         ConfigCartPoleContinuousBullet.__init__(self)
         ConfigA2c.__init__(self)
+
+        self.MAX_TRAINING_STEPS = 100_000
+        self.MODEL_TYPE = ModelType.SMALL_LINEAR
+
+
+class ConfigCartPoleContinuousBulletA3c(ConfigBase, ConfigCartPoleContinuousBullet, ConfigA3c):
+    def __init__(self):
+        ConfigBase.__init__(self)
+        ConfigCartPoleContinuousBullet.__init__(self)
+        ConfigA3c.__init__(self)
 
         self.MAX_TRAINING_STEPS = 100_000
         self.MODEL_TYPE = ModelType.SMALL_LINEAR

@@ -1,18 +1,14 @@
-import copy
-
 import torch.optim as optim
 import torch
 from gym.spaces import Discrete, Box
 from torch.distributions import Categorical, Normal
 import torch.multiprocessing as mp
-import numpy as np
 
 from c_models.e_a2c_models import ContinuousActorCriticModel, DiscreteActorCriticModel
-from d_agents.agent import Agent
-from g_utils.types import AgentMode
+from d_agents.agent import OnPolicyAgent
 
 
-class AgentA2c(Agent):
+class AgentA2c(OnPolicyAgent):
     def __init__(self, observation_space, action_space, config):
         super(AgentA2c, self).__init__(observation_space, action_space, config)
 
@@ -43,52 +39,19 @@ class AgentA2c(Agent):
         self.last_actor_objective = mp.Value('d', 0.0)
         self.last_entropy = mp.Value('d', 0.0)
 
-        self.step = 0
-
-    def get_action(self, obs, mode=AgentMode.TRAIN):
-        self.step += 1
-        if isinstance(self.action_space, Discrete):
-            action_prob = self.actor_model.pi(obs, save_hidden=True)
-
-            if mode == AgentMode.TRAIN:
-                dist = Categorical(probs=action_prob)
-                action = dist.sample().detach().cpu().numpy()
-            else:
-                action = np.argmax(a=action_prob.detach().cpu().numpy(), axis=-1)
-            return action
-
-        elif isinstance(self.action_space, Box):
-            mu_v, sigma_v = self.actor_model.pi(obs)
-
-            if mode == AgentMode.TRAIN:
-                # actions = np.random.normal(
-                #     loc=mu_v.detach().cpu().numpy(), scale=torch.sqrt(var_v).detach().cpu().numpy()
-                # )
-
-                dist = Normal(loc=mu_v, scale=sigma_v)
-                actions = dist.sample().detach().cpu().numpy()
-            else:
-                actions = mu_v.detach().cpu().numpy()
-
-            actions = np.clip(a=actions, a_min=self.np_minus_ones, a_max=self.np_plus_ones)
-
-            return actions
-        else:
-            raise ValueError()
-
-    def get_td_target_values(self, next_observations, rewards, dones):
+    def get_target_values(self, next_observations, rewards, dones):
         with torch.no_grad():
             # values.shape: (32, 1), next_values.shape: (32, 1)
             next_values = self.critic_model.v(next_observations)
             next_values[dones] = 0.0
 
-            # td_target_values.shape: (32, 1)
-            td_target_values = rewards + (self.config.GAMMA ** self.config.N_STEP) * next_values
+            # target_values.shape: (32, 1)
+            target_values = rewards + (self.config.GAMMA ** self.config.N_STEP) * next_values
             # normalize td_target
             if self.config.TARGET_VALUE_NORMALIZE:
-                td_target_values = (td_target_values - torch.mean(td_target_values)) / (torch.std(td_target_values) + 1e-7)
+                target_values = (target_values - torch.mean(target_values)) / (torch.std(target_values) + 1e-7)
 
-        return td_target_values.detach()
+        return target_values.detach()
 
     def train_a2c(self):
         count_training_steps = 0
@@ -97,23 +60,22 @@ class AgentA2c(Agent):
         #  Critic (Value) Loss 산출 & Update - BEGIN #
         #############################################
 
-        td_target_values = self.get_td_target_values(self.next_observations, self.rewards, self.dones)
+        target_values = self.get_target_values(self.next_observations, self.rewards, self.dones)
 
         # # next_values.shape: (32, 1)
         # next_values = self.critic_model.v(self.next_observations)
         # next_values[self.dones] = 0.0
         #
-        # # td_target_values.shape: (32, 1)
-        # td_target_values = self.rewards + (self.config.GAMMA ** self.config.N_STEP) * next_values
+        # # target_values.shape: (32, 1)
+        # target_values = self.rewards + (self.config.GAMMA ** self.config.N_STEP) * next_values
         # # normalize td_target
         # if self.config.TARGET_VALUE_NORMALIZE:
-        #     td_target_values = (td_target_values - torch.mean(td_target_values)) / (torch.std(td_target_values) + 1e-7)
+        #     target_values = (target_values - torch.mean(target_values)) / (torch.std(target_values) + 1e-7)
 
         # values.shape: (32, 1)
         values = self.critic_model.v(self.observations)
-        # # loss_critic.shape: (,) <--  값 1개
 
-        critic_loss = self.config.LOSS_FUNCTION(values, td_target_values.detach())
+        critic_loss = self.config.LOSS_FUNCTION(values, target_values.detach())
 
         self.critic_optimizer.zero_grad()
         critic_loss.backward()
@@ -126,7 +88,8 @@ class AgentA2c(Agent):
         #########################################
         #  Actor Objective 산출 & Update - BEGIN #
         #########################################
-        advantages = (td_target_values - values).detach()
+        advantages = (target_values - values).detach()
+        advantages = (advantages - torch.mean(advantages)) / (torch.std(advantages) + 1e-7)
 
         if isinstance(self.action_space, Discrete):
             action_probs = self.actor_model.pi(self.observations)
@@ -141,14 +104,14 @@ class AgentA2c(Agent):
 
             entropy = dist.entropy().mean()
         elif isinstance(self.action_space, Box):
-            mu_v, sigma_v = self.actor_model.pi(self.observations)
+            mu_v, var_v = self.actor_model.pi(self.observations)
 
             # criticized_log_pi_action_v = self.calc_log_prob(mu_v, var_v, self.actions) * advantages
             # entropy = 0.5 * (torch.log(2.0 * np.pi * var_v) + 1.0).sum(dim=-1)
             # entropy = entropy.mean()
 
-            dist = Normal(loc=mu_v, scale=sigma_v)
-            criticized_log_pi_action_v = dist.log_prob(value=self.actions).sum(dim=-1, keepdim=True) * advantages
+            dist = Normal(loc=mu_v, scale=torch.sqrt(var_v))
+            criticized_log_pi_action_v = dist.log_prob(value=self.actions).sum(dim=-1) * advantages.squeeze(dim=-1)
             entropy = dist.entropy().mean()
         else:
             raise ValueError()
@@ -159,7 +122,7 @@ class AgentA2c(Agent):
         # if self.step % 1000 == 0:
         #     print("mu_v:", mu_v, "var_v:", var_v)
         #     print("actor_objective:", actor_objective)
-        #     print("td_target_values:", td_target_values)
+        #     print("target_values:", target_values)
         #     print("values:", values)
         #     print("advantages:", advantages)
         #     print("self.actions:", self.actions)

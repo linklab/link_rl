@@ -1,6 +1,6 @@
 from a_configuration.a_base_config.a_environments.open_ai_gym.gym_box2d import ConfigLunarLanderContinuous
 from a_configuration.a_base_config.b_agents.agents_off_policy import ConfigDdpg, ConfigSac, ConfigTd3
-from a_configuration.a_base_config.b_agents.agents_on_policy import ConfigA2c, ConfigPpo, ConfigPpoTrajectory
+from a_configuration.a_base_config.b_agents.agents_on_policy import ConfigA2c, ConfigPpo, ConfigPpoTrajectory, ConfigA3c
 from a_configuration.a_base_config.config_single_base import ConfigBase
 from g_utils.types import ModelType
 
@@ -10,6 +10,16 @@ class ConfigLunarLanderContinuousA2c(ConfigBase, ConfigLunarLanderContinuous, Co
         ConfigBase.__init__(self)
         ConfigLunarLanderContinuous.__init__(self)
         ConfigA2c.__init__(self)
+
+        self.MAX_TRAINING_STEPS = 200_000
+        self.MODEL_TYPE = ModelType.SMALL_LINEAR
+
+
+class ConfigLunarLanderContinuousA3c(ConfigBase, ConfigLunarLanderContinuous, ConfigA3c):
+    def __init__(self):
+        ConfigBase.__init__(self)
+        ConfigLunarLanderContinuous.__init__(self)
+        ConfigA3c.__init__(self)
 
         self.MAX_TRAINING_STEPS = 200_000
         self.MODEL_TYPE = ModelType.SMALL_LINEAR

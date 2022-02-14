@@ -41,6 +41,11 @@ def get_agent(observation_space, action_space, config=None):
         agent = AgentA2c(
             observation_space=observation_space, action_space=action_space, config=config
         )
+    elif config.AGENT_TYPE == AgentType.A3C:
+        from d_agents.on_policy.a3c.agent_a3c import AgentA3c
+        agent = AgentA3c(
+            observation_space=observation_space, action_space=action_space, config=config
+        )
     elif config.AGENT_TYPE == AgentType.PPO:
         from d_agents.on_policy.ppo.agent_ppo import AgentPpo
         agent = AgentPpo(

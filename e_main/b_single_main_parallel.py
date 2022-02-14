@@ -1,4 +1,7 @@
 import warnings
+
+from d_agents.on_policy.a3c.agent_a3c import WorkerAgentA3c
+
 warnings.filterwarnings("ignore")
 warnings.simplefilter("ignore")
 
@@ -25,10 +28,10 @@ sys.path.append(os.path.abspath(
 ))
 
 from e_main.config_single import config
-from e_main.supports.actor import Actor
+from e_main.supports.actor import Actor, LearningActor
 from e_main.supports.learner import Learner
 from g_utils.commons import get_env_info, print_basic_info
-from g_utils.types import OffPolicyAgentTypes
+from g_utils.types import OffPolicyAgentTypes, AgentType
 from g_utils.commons import set_config
 from g_utils.commons_rl import get_agent
 
@@ -50,17 +53,40 @@ def main():
     mp.set_start_method('spawn', force=True)
     queue = mp.Queue()
 
-    agent = get_agent(
-        observation_space=observation_space, action_space=action_space, config=config
-    )
+    if config.AGENT_TYPE == AgentType.A3C:
+        master_agent = get_agent(
+            observation_space=observation_space, action_space=action_space, config=config
+        )
 
-    learner = Learner(agent=agent, queue=queue, config=config)
+        shared_model_access_lock = mp.Lock()
 
-    actors = [
-        Actor(
-            env_name=config.ENV_NAME, actor_id=actor_id, agent=agent, queue=queue, config=config
-        ) for actor_id in range(config.N_ACTORS)
-    ]
+        learner = Learner(
+            agent=master_agent, queue=queue, shared_model_access_lock=shared_model_access_lock, config=config
+        )
+
+        worker_agents = [
+            WorkerAgentA3c(
+                master_agent=master_agent, observation_space=observation_space, action_space=action_space,
+                shared_model_access_lock=shared_model_access_lock, config=config
+            ) for _ in range(config.N_ACTORS)
+        ]
+        actors = [
+            LearningActor(
+                env_name=config.ENV_NAME, actor_id=actor_id, agent=worker_agents[actor_id], queue=queue, config=config
+            ) for actor_id in range(config.N_ACTORS)
+        ]
+    else:
+        agent = get_agent(
+            observation_space=observation_space, action_space=action_space, config=config
+        )
+
+        learner = Learner(agent=agent, queue=queue, config=config)
+
+        actors = [
+            Actor(
+                env_name=config.ENV_NAME, actor_id=actor_id, agent=agent, queue=queue, config=config
+            ) for actor_id in range(config.N_ACTORS)
+        ]
 
     for actor in actors:
         actor.start()
@@ -96,5 +122,5 @@ def main():
 
 
 if __name__ == "__main__":
-    assert config.AGENT_TYPE in OffPolicyAgentTypes
+    assert config.AGENT_TYPE in OffPolicyAgentTypes or config.AGENT_TYPE == AgentType.A3C
     main()

@@ -77,9 +77,6 @@ class DiscreteActorModel(ActorModel):
         return action_prob
 
 
-DiscretePolicyModel = DiscreteActorModel
-
-
 class ContinuousDeterministicActorModel(ActorModel):
     def __init__(
         self,
@@ -120,18 +117,16 @@ class ContinuousStochasticActorModel(ActorModel):
             config=config
         )
         self.mu = nn.Sequential(
-            nn.Linear(
-                self._get_forward_pre_out(observation_shape), self.n_out_actions
-            ),
+            nn.Linear(self._get_forward_pre_out(observation_shape), self.n_out_actions),
             nn.Tanh()
         )
 
-        self.log_sigma = nn.Sequential(
-            nn.Linear(
-                self._get_forward_pre_out(observation_shape), self.n_out_actions
-            ),
+        self.variance = nn.Sequential(
+            nn.Linear(self._get_forward_pre_out(observation_shape), self.n_out_actions),
             nn.Softplus()
         )
+
+        #self.variance = torch.full(size=(self.n_out_actions,), fill_value=1.0)
 
         # We handle the log of the standard deviation as the torch parameter.
         # log_sigma = 0.1 <- starting value. it mean std = 1.105
@@ -175,8 +170,10 @@ class ContinuousStochasticActorModel(ActorModel):
         # By doing so we ensure we don’t have negative values with numerical stability too.
         # The standard deviation can’t be negative (nor 0).
         # sigma_v = torch.clamp(self.log_sigma.exp(), 1e-3, 50)
-        x = self.forward_variance(obs)
-        sigma_v = self.log_sigma(x).exp()
-        sigma_v = torch.clamp(sigma_v, 1e-4, 50)
+        # sigma_v = self.log_sigma(x).exp()
 
-        return mu_v, sigma_v
+        x = self.forward_variance(obs)
+        var_v = self.variance(x)
+        var_v = torch.clamp(var_v, 1e-4, 50)
+
+        return mu_v, var_v
