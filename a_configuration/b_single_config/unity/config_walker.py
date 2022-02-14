@@ -30,6 +30,6 @@ class ConfigWalkerSac(ConfigBase, ConfigWalker, ConfigSac):
         ConfigWalker.__init__(self)
         ConfigSac.__init__(self)
 
-        self.BUFFER_CAPACITY = 1_000_000
-        self.MAX_TRAINING_STEPS = 4_000_000
+        self.BUFFER_CAPACITY = 2_000_000
+        self.MAX_TRAINING_STEPS = 15_000_000
         self.MODEL_TYPE = ModelType.SMALL_LINEAR

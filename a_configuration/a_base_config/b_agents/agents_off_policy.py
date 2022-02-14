@@ -83,8 +83,8 @@ class ConfigSac(ConfigOffPolicyAgent):
         self.ALPHA_LEARNING_RATE = 0.00001
 
         self.TAU = 0.005
-        self.BUFFER_CAPACITY = 250_000
-        self.BATCH_SIZE = 128
+        self.BUFFER_CAPACITY = 2_000_000
+        self.BATCH_SIZE = 1024
         self.TARGET_SYNC_INTERVAL_TRAINING_STEPS = 50
 
         self.POLICY_UPDATE_FREQUENCY_PER_TRAINING_STEP = 2
