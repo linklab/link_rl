@@ -43,11 +43,11 @@ class WorkerAgentA3c(AgentA2c):
         # calculate local gradients and push local worker parameters to master parameters
         self.critic_optimizer.zero_grad()
         critic_loss.backward()
-        self.clip_critic_model_parameter_grad_value(self.critic_model.critic_params_list)
         for master_parameter, worker_parameter in zip(
                 self.master_agent.critic_model.parameters(), self.critic_model.parameters()
         ):
             master_parameter._grad = worker_parameter.grad
+        self.clip_critic_model_parameter_grad_value(self.master_agent.critic_model.critic_params_list)
         self.critic_optimizer.step()
 
         # pull global parameters
@@ -97,11 +97,11 @@ class WorkerAgentA3c(AgentA2c):
         # calculate local gradients and push local worker parameters to master parameters
         self.actor_optimizer.zero_grad()
         actor_loss.backward()
-        self.clip_actor_model_parameter_grad_value(self.actor_model.actor_params_list)
         for master_parameter, worker_parameter in zip(
                 self.master_agent.actor_model.parameters(), self.actor_model.parameters()
         ):
             master_parameter._grad = worker_parameter.grad
+        self.clip_actor_model_parameter_grad_value(self.master_agent.actor_model.actor_params_list)
         self.actor_optimizer.step()
 
         # pull global parameters
