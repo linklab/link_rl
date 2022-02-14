@@ -76,8 +76,8 @@ class ConfigCartPoleA2c(ConfigBase, ConfigCartPole, ConfigA2c):
         ConfigA2c.__init__(self)
 
         self.MAX_TRAINING_STEPS = 100_000
-        self.BATCH_SIZE = 256
         self.MODEL_TYPE = ModelType.SMALL_LINEAR
+        self.CLIP_GRADIENT_VALUE = 30.0
 
 
 class ConfigCartPoleA3c(ConfigBase, ConfigCartPole, ConfigA3c):
@@ -87,8 +87,8 @@ class ConfigCartPoleA3c(ConfigBase, ConfigCartPole, ConfigA3c):
         ConfigA3c.__init__(self)
 
         self.MAX_TRAINING_STEPS = 100_000
-        self.BATCH_SIZE = 256
         self.MODEL_TYPE = ModelType.SMALL_LINEAR
+        self.CLIP_GRADIENT_VALUE = 30.0
 
 
 class ConfigCartPolePpo(ConfigBase, ConfigCartPole, ConfigPpo):
