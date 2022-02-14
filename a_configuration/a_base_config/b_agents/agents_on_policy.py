@@ -18,7 +18,7 @@ class ConfigA2c(ConfigOnPolicyAgent):
         self.ACTOR_LEARNING_RATE = 0.00005
         self.LEARNING_RATE = 0.0005
 
-        self.ENTROPY_BETA = 0.005
+        self.ENTROPY_BETA = 0.001
 
         self.BATCH_SIZE = 128
 
@@ -30,7 +30,7 @@ class ConfigA3c(ConfigOnPolicyAgent):
 
         self.ACTOR_LEARNING_RATE = 0.00001
         self.LEARNING_RATE = 0.0001
-        self.ENTROPY_BETA = 0.005
+        self.ENTROPY_BETA = 0.001
 
         self.BATCH_SIZE = 128
         self.N_ACTORS = 2
@@ -42,7 +42,7 @@ class ConfigPpo(ConfigOnPolicyAgent):
         self.AGENT_TYPE = AgentType.PPO
 
         self.ACTOR_LEARNING_RATE = 0.00001
-        self.LEARNING_RATE = 0.00005
+        self.LEARNING_RATE = 0.0001
 
         self.ENTROPY_BETA = 0.001
 
@@ -57,7 +57,7 @@ class ConfigPpoTrajectory(ConfigOnPolicyAgent):
         self.AGENT_TYPE = AgentType.PPO_TRAJECTORY
 
         self.ACTOR_LEARNING_RATE = 0.00001
-        self.LEARNING_RATE = 0.00005
+        self.LEARNING_RATE = 0.0001
 
         self.ENTROPY_BETA = 0.001
 
