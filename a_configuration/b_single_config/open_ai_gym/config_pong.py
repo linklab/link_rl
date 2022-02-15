@@ -1,7 +1,7 @@
 from a_configuration.a_base_config.b_agents.agents_off_policy import ConfigDqn, ConfigDoubleDqn, ConfigDuelingDqn, \
     ConfigDoubleDuelingDqn
 from a_configuration.a_base_config.a_environments.open_ai_gym.gym_atari import ConfigPong
-from a_configuration.a_base_config.b_agents.agents_on_policy import ConfigA2c
+from a_configuration.a_base_config.b_agents.agents_on_policy import ConfigA2c, ConfigA3c, ConfigPpo, ConfigPpoTrajectory
 from a_configuration.a_base_config.c_models.convolutional_models import ConfigConvolutionalModel
 from a_configuration.a_base_config.config_single_base import ConfigBase
 from g_utils.types import ModelType
@@ -56,6 +56,36 @@ class ConfigPongA2c(ConfigBase, ConfigPong, ConfigA2c):
         ConfigBase.__init__(self)
         ConfigPong.__init__(self)
         ConfigA2c.__init__(self)
+
+        self.MAX_TRAINING_STEPS = 1_000_000
+        self.MODEL_TYPE = ModelType.MEDIUM_CONVOLUTIONAL
+
+
+class ConfigPongA3c(ConfigBase, ConfigPong, ConfigA3c):
+    def __init__(self):
+        ConfigBase.__init__(self)
+        ConfigPong.__init__(self)
+        ConfigA3c.__init__(self)
+
+        self.MAX_TRAINING_STEPS = 1_000_000
+        self.MODEL_TYPE = ModelType.MEDIUM_CONVOLUTIONAL
+
+
+class ConfigPongPpo(ConfigBase, ConfigPong, ConfigPpo):
+    def __init__(self):
+        ConfigBase.__init__(self)
+        ConfigPong.__init__(self)
+        ConfigPpo.__init__(self)
+
+        self.MAX_TRAINING_STEPS = 1_000_000
+        self.MODEL_TYPE = ModelType.MEDIUM_CONVOLUTIONAL
+
+
+class ConfigPongPpoTrajectory(ConfigBase, ConfigPong, ConfigPpoTrajectory):
+    def __init__(self):
+        ConfigBase.__init__(self)
+        ConfigPong.__init__(self)
+        ConfigPpoTrajectory.__init__(self)
 
         self.MAX_TRAINING_STEPS = 1_000_000
         self.MODEL_TYPE = ModelType.MEDIUM_CONVOLUTIONAL

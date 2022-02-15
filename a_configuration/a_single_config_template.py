@@ -163,6 +163,9 @@ from a_configuration.b_single_config.pybullet.config_hopper_bullet import Config
 config = ConfigHopperBulletSac()
 config.WANDB_REPORT_URL = "https://wandb.ai/link-koreatech/HopperBulletEnv-v0_SAC_yhhan/reports/HopperBullet-SAC--VmlldzoxNTI4NTA3?accessToken=4irm57nvvd1ffqf7ggrjt7i47nfckc5d0e0libe5ifsgovz3tr3ewzvt9s2tgr0n"
 
+from a_configuration.b_single_config.pybullet.config_hopper_bullet import ConfigHopperBulletPpo
+config = ConfigHopperBulletPpo()
+
 from a_configuration.b_single_config.pybullet.config_hopper_bullet import ConfigHopperBulletPpoTrajectory
 config = ConfigHopperBulletPpoTrajectory()
 
@@ -206,6 +209,14 @@ config = ConfigPongDoubleDuelingDqn()
 from a_configuration.b_single_config.open_ai_gym.config_pong import ConfigPongA2c
 config = ConfigPongA2c()
 
+from a_configuration.b_single_config.open_ai_gym.config_pong import ConfigPongA3c
+config = ConfigPongA3c()
+
+from a_configuration.b_single_config.open_ai_gym.config_pong import ConfigPongPpo
+config = ConfigPongPpo()
+
+from a_configuration.b_single_config.open_ai_gym.config_pong import ConfigPongPpoTrajectory
+config = ConfigPongPpoTrajectory()
 
 ##################
 ### ANT_MUJOCO ###
@@ -213,6 +224,9 @@ config = ConfigPongA2c()
 from a_configuration.b_single_config.mujoco.config_ant_mujoco import ConfigAntMujocoSac
 config = ConfigAntMujocoSac()
 config.WANDB_REPORT_URL = "https://wandb.ai/link-koreatech/Ant-v2_SAC_yhhan/reports/Ant-v2_SAC--VmlldzoxNTM0NDMz"
+
+from a_configuration.b_single_config.mujoco.config_ant_mujoco import ConfigAntMujocoPpo
+config = ConfigAntMujocoPpo()
 
 from a_configuration.b_single_config.mujoco.config_ant_mujoco import ConfigAntMujocoPpoTrajectory
 config = ConfigAntMujocoPpoTrajectory()
@@ -222,6 +236,9 @@ config = ConfigAntMujocoPpoTrajectory()
 #####################
 from a_configuration.b_single_config.mujoco.config_hopper_mujoco import ConfigHopperMujocoSac
 config = ConfigHopperMujocoSac()
+
+from a_configuration.b_single_config.mujoco.config_hopper_mujoco import ConfigHopperMujocoPpo
+config = ConfigHopperMujocoPpo()
 
 from a_configuration.b_single_config.mujoco.config_hopper_mujoco import ConfigHopperMujocoPpoTrajectory
 config = ConfigHopperMujocoPpoTrajectory()
@@ -233,6 +250,9 @@ from a_configuration.b_single_config.mujoco.config_walker2d_mujoco import Config
 config = ConfigWalker2dMujocoSac()
 config.WANDB_REPORT_URL = "https://wandb.ai/link-koreatech/Walker2d-v2_SAC_yhhan/reports/3DBall-SAC--VmlldzoxNTI4NDk4?accessToken=ikha9ymzoqh7o3zefs6cn0ao5hmz7qzc8wnx0shd7i63wesx8585ja901i1bie1z"
 
+from a_configuration.b_single_config.mujoco.config_walker2d_mujoco import ConfigWalker2dMujocoPpo
+config = ConfigWalker2dMujocoPpo()
+
 from a_configuration.b_single_config.mujoco.config_walker2d_mujoco import ConfigWalker2dMujocoPpoTrajectory
 config = ConfigWalker2dMujocoPpoTrajectory()
 
@@ -241,6 +261,9 @@ config = ConfigWalker2dMujocoPpoTrajectory()
 ##########################
 from a_configuration.b_single_config.mujoco.config_halfcheetah_mujoco import ConfigHalfCheetahMujocoSac
 config = ConfigHalfCheetahMujocoSac()
+
+from a_configuration.b_single_config.mujoco.config_halfcheetah_mujoco import ConfigHalfCheetahMujocoPpo
+config = ConfigHalfCheetahMujocoPpo()
 
 from a_configuration.b_single_config.mujoco.config_halfcheetah_mujoco import ConfigHalfCheetahMujocoPpoTrajectory
 config = ConfigHalfCheetahMujocoPpoTrajectory()
