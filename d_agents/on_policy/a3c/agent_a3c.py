@@ -30,7 +30,7 @@ class WorkerAgentA3c(AgentA2c):
         #############################################
         #  Critic (Value) Loss 산출 & Update - BEGIN #
         #############################################
-        target_values = self.get_target_values(self.next_observations, self.rewards, self.dones)
+        target_values = self.get_target_values()
 
         # values.shape: (32, 1)
         values = self.critic_model.v(self.observations)

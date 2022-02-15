@@ -50,6 +50,8 @@ class ConfigPpo(ConfigOnPolicyAgent):
         self.BATCH_SIZE = 256
         self.PPO_K_EPOCH = 3
 
+        self.PPO_GAE_LAMBDA = 0.95
+
 
 class ConfigPpoTrajectory(ConfigOnPolicyAgent):
     def __init__(self):
@@ -64,3 +66,5 @@ class ConfigPpoTrajectory(ConfigOnPolicyAgent):
         self.PPO_EPSILON_CLIP = 0.2
         self.BATCH_SIZE = 256
         self.PPO_K_EPOCH = 3
+
+        self.PPO_GAE_LAMBDA = 0.95
