@@ -13,7 +13,7 @@ class ConfigHalfCheetahMujocoSac(ConfigBase, ConfigHalfCheetahMujoco, ConfigSac)
 
         self.BUFFER_CAPACITY = 1_000_000
         self.MAX_TRAINING_STEPS = 2_000_000
-        self.MODEL_TYPE = ModelType.SMALL_LINEAR
+        self.MODEL_TYPE = ModelType.MEDIUM_LINEAR
 
 
 class ConfigHalfCheetahMujocoPpoTrajectory(ConfigBase, ConfigHalfCheetahMujoco, ConfigPpoTrajectory):
@@ -23,4 +23,4 @@ class ConfigHalfCheetahMujocoPpoTrajectory(ConfigBase, ConfigHalfCheetahMujoco, 
         ConfigPpoTrajectory.__init__(self)
 
         self.MAX_TRAINING_STEPS = 2_000_000
-        self.MODEL_TYPE = ModelType.SMALL_LINEAR
+        self.MODEL_TYPE = ModelType.MEDIUM_LINEAR

@@ -13,7 +13,7 @@ class ConfigWalker2dMujocoSac(ConfigBase, ConfigWalker2dMujoco, ConfigSac):
 
         self.BUFFER_CAPACITY = 1_000_000
         self.MAX_TRAINING_STEPS = 2_000_000
-        self.MODEL_TYPE = ModelType.SMALL_LINEAR
+        self.MODEL_TYPE = ModelType.MEDIUM_LINEAR
 
 
 class ConfigWalker2dMujocoPpoTrajectory(ConfigBase, ConfigWalker2dMujoco, ConfigPpoTrajectory):
@@ -23,4 +23,4 @@ class ConfigWalker2dMujocoPpoTrajectory(ConfigBase, ConfigWalker2dMujoco, Config
         ConfigPpoTrajectory.__init__(self)
 
         self.MAX_TRAINING_STEPS = 2_000_000
-        self.MODEL_TYPE = ModelType.SMALL_LINEAR
+        self.MODEL_TYPE = ModelType.MEDIUM_LINEAR
