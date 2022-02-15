@@ -21,7 +21,7 @@ class ConfigHopperBulletPpo(ConfigBase, ConfigHopperBullet, ConfigPpo):
     def __init__(self):
         ConfigBase.__init__(self)
         ConfigHopperBullet.__init__(self)
-        ConfigPpoTrajectory.__init__(self)
+        ConfigPpo.__init__(self)
 
         self.MAX_TRAINING_STEPS = 2_000_000
         self.MODEL_TYPE = ModelType.MEDIUM_LINEAR

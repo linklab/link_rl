@@ -1,7 +1,4 @@
-from a_configuration.a_base_config.b_agents.agents_off_policy import ConfigDqn, ConfigDoubleDqn, ConfigDuelingDqn, \
-    ConfigDoubleDuelingDqn, ConfigSac
-from a_configuration.a_base_config.b_agents.agents_on_policy import ConfigA2c, ConfigReinforce, ConfigPpo, \
-    ConfigPpoTrajectory
+from a_configuration.a_base_config.b_agents.agents_off_policy import ConfigDqn
 from a_configuration.a_base_config.config_single_base import ConfigBase
 from a_configuration.a_base_config.a_environments.open_ai_gym.gym_toy_text import ConfigFrozenLake
 from g_utils.types import ModelType
