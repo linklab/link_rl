@@ -13,7 +13,7 @@ class ConfigAntBulletA2c(ConfigBase, ConfigAntBullet, ConfigA2c):
         ConfigA2c.__init__(self)
 
         self.MAX_TRAINING_STEPS = 2_000_000
-        self.MODEL_TYPE = ModelType.SMALL_LINEAR
+        self.MODEL_TYPE = ModelType.MEDIUM_LINEAR
 
 
 class ConfigAntBulletPpo(ConfigBase, ConfigAntBullet, ConfigPpo):
@@ -23,7 +23,7 @@ class ConfigAntBulletPpo(ConfigBase, ConfigAntBullet, ConfigPpo):
         ConfigPpo.__init__(self)
 
         self.MAX_TRAINING_STEPS = 2_000_000
-        self.MODEL_TYPE = ModelType.SMALL_LINEAR
+        self.MODEL_TYPE = ModelType.MEDIUM_LINEAR
 
 
 class ConfigAntBulletPpoTrajectory(ConfigBase, ConfigAntBullet, ConfigPpoTrajectory):
@@ -33,7 +33,7 @@ class ConfigAntBulletPpoTrajectory(ConfigBase, ConfigAntBullet, ConfigPpoTraject
         ConfigPpoTrajectory.__init__(self)
 
         self.MAX_TRAINING_STEPS = 2_000_000
-        self.MODEL_TYPE = ModelType.SMALL_LINEAR
+        self.MODEL_TYPE = ModelType.MEDIUM_LINEAR
 
 
 class ConfigAntBulletDdpg(ConfigBase, ConfigAntBullet, ConfigDdpg):
@@ -44,7 +44,7 @@ class ConfigAntBulletDdpg(ConfigBase, ConfigAntBullet, ConfigDdpg):
 
         self.BUFFER_CAPACITY = 250_000
         self.MAX_TRAINING_STEPS = 2_000_000
-        self.MODEL_TYPE = ModelType.SMALL_LINEAR
+        self.MODEL_TYPE = ModelType.MEDIUM_LINEAR
 
 
 class ConfigAntBulletTd3(ConfigBase, ConfigAntBullet, ConfigTd3):
@@ -55,7 +55,7 @@ class ConfigAntBulletTd3(ConfigBase, ConfigAntBullet, ConfigTd3):
 
         self.BUFFER_CAPACITY = 250_000
         self.MAX_TRAINING_STEPS = 2_000_000
-        self.MODEL_TYPE = ModelType.SMALL_LINEAR
+        self.MODEL_TYPE = ModelType.MEDIUM_LINEAR
 
 
 class ConfigAntBulletSac(ConfigBase, ConfigAntBullet, ConfigSac):

@@ -64,12 +64,13 @@ class AgentPpo(AgentA2c):
             next_values[self.dones] = 0.0
 
             # target_values.shape: (32, 1)
-            target_values = self.rewards + (self.config.GAMMA ** self.config.N_STEP) * next_values
+            target_values = self.rewards + self.config.GAMMA * next_values
 
             # generalized advantage estimator (gae): smoothed version of the advantage
             # by trajectory calculate advantage and 1-step target action value
-            last_gae = 0.0
             deltas = target_values - values
+
+            last_gae = 0.0
             advantages = []
             for delta in reversed(deltas):
                 last_gae = delta + self.config.GAMMA * self.config.PPO_GAE_LAMBDA * last_gae

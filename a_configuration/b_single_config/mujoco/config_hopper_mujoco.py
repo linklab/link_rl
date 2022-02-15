@@ -1,6 +1,6 @@
 from a_configuration.a_base_config.a_environments.mujoco.gym_mujoco import ConfigHopperMujoco
 from a_configuration.a_base_config.b_agents.agents_off_policy import ConfigSac
-from a_configuration.a_base_config.b_agents.agents_on_policy import ConfigPpoTrajectory
+from a_configuration.a_base_config.b_agents.agents_on_policy import ConfigPpoTrajectory, ConfigPpo
 from a_configuration.a_base_config.config_single_base import ConfigBase
 from g_utils.types import ModelType
 
@@ -12,6 +12,16 @@ class ConfigHopperMujocoSac(ConfigBase, ConfigHopperMujoco, ConfigSac):
         ConfigSac.__init__(self)
 
         self.BUFFER_CAPACITY = 1_000_000
+        self.MAX_TRAINING_STEPS = 2_000_000
+        self.MODEL_TYPE = ModelType.MEDIUM_LINEAR
+
+
+class ConfigHopperMujocoPpo(ConfigBase, ConfigHopperMujoco, ConfigPpo):
+    def __init__(self):
+        ConfigBase.__init__(self)
+        ConfigHopperMujoco.__init__(self)
+        ConfigPpo.__init__(self)
+
         self.MAX_TRAINING_STEPS = 2_000_000
         self.MODEL_TYPE = ModelType.MEDIUM_LINEAR
 
