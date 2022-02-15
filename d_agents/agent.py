@@ -227,28 +227,32 @@ class OnPolicyAgent(Agent):
 
         elif self.config.AGENT_TYPE == AgentType.A2C:
             if len(self.buffer) >= self.config.BATCH_SIZE:
-                self._before_train(sample_length=self.config.BATCH_SIZE)
+                self._before_train(sample_length=None)
+                assert len(self.observations) == self.config.BATCH_SIZE
                 count_training_steps = self.train_a2c()
-                self.buffer.clear()                 # ON_POLICY!
-                self._after_train()
-
-        elif self.config.AGENT_TYPE == AgentType.PPO:
-            if len(self.buffer) >= self.config.BATCH_SIZE:
-                self._before_train(sample_length=self.config.BATCH_SIZE)
-                count_training_steps = self.train_ppo()
                 self.buffer.clear()                 # ON_POLICY!
                 self._after_train()
 
         elif self.config.AGENT_TYPE == AgentType.A3C:
             if len(self.buffer) >= self.config.BATCH_SIZE:
-                self._before_train(sample_length=self.config.BATCH_SIZE)
+                self._before_train(sample_length=None)
+                assert len(self.observations) == self.config.BATCH_SIZE
                 count_training_steps = self.train_a3c()
+                self.buffer.clear()                 # ON_POLICY!
+                self._after_train()
+
+        elif self.config.AGENT_TYPE == AgentType.PPO:
+            if len(self.buffer) >= self.config.BATCH_SIZE:
+                self._before_train(sample_length=None)
+                assert len(self.observations) == self.config.BATCH_SIZE
+                count_training_steps = self.train_ppo()
                 self.buffer.clear()                 # ON_POLICY!
                 self._after_train()
 
         elif self.config.AGENT_TYPE == AgentType.PPO_TRAJECTORY:
             if len(self.buffer) >= self.config.PPO_TRAJECTORY_SIZE:
-                self._before_train(sample_length=self.config.PPO_TRAJECTORY_SIZE)
+                self._before_train(sample_length=None)
+                assert len(self.observations) == self.config.PPO_TRAJECTORY_SIZE
                 count_training_steps = self.train_ppo()
                 self.buffer.clear()                 # ON_POLICY!
                 self._after_train()

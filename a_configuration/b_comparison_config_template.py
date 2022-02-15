@@ -117,7 +117,13 @@ config_c = ConfigComparisonInvertedDoublePendulumBulletA2cPpo()
 config_c.USE_WANDB = False
 
 if __name__ == "__main__":
-    from g_utils.commons import get_env_info, print_comparison_basic_info
+    from g_utils.commons import get_env_info, print_comparison_basic_info, set_config
+    from g_utils.types import AgentType
+
+    for config in config_c.AGENT_PARAMETERS:
+        assert config.AGENT_TYPE not in (AgentType.REINFORCE,)
+        set_config(config)
+
     observation_space, action_space = get_env_info(config_c)
     print_comparison_basic_info(observation_space, action_space, config_c)
 
