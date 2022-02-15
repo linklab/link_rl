@@ -122,7 +122,7 @@ class ContinuousStochasticActorModel(ActorModel):
         )
 
         self.variance = nn.Sequential(
-            nn.Linear(self._get_forward_pre_out(observation_shape), self.n_out_actions),
+            nn.Linear(self.config.MODEL_PARAMETER.NEURONS_PER_REPRESENTATION_LAYER[-1], self.n_out_actions),
             nn.Softplus()
         )
 
