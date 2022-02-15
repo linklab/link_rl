@@ -46,3 +46,13 @@ class ConfigInvertedDoublePendulumBullet(ConfigBullet):
         self.ENV_NAME = "InvertedDoublePendulumBulletEnv-v0"
         self.EPISODE_REWARD_AVG_SOLVED = 8_500
         self.EPISODE_REWARD_STD_SOLVED = 500
+        self.TEST_INTERVAL_TRAINING_STEPS = 5_000
+
+
+class ParameterHumanoidBullet(ConfigBullet):
+    def __init__(self):
+        self.ENV_NAME = "HumanoidBulletEnv-v0"
+        self.EPISODE_REWARD_AVG_SOLVED = 3_000
+        self.EPISODE_REWARD_STD_SOLVED = 100
+        self.TEST_INTERVAL_TRAINING_STEPS = 5_000
+

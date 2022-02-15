@@ -9,6 +9,15 @@ Transition = namedtuple(
     defaults=[None] * 6
 )
 
+Episode_history = namedtuple(
+    typename='Episode_history',
+    field_names=[
+        'observation_history', 'action_history', 'reward_history', 'to_play_history',
+        'child_visits_history', 'root_values_history', 'info_history', 'done'
+    ],
+    defaults=[None] * 8
+)
+
 # Transitions = namedtuple(
 #     typename='Transitions',
 #     field_names=[
@@ -68,6 +77,8 @@ class AgentType(enum.Enum):
     DDPG = 9
     TD3 = 10
     SAC = 11
+    MUZERO = 12
+
 
 OnPolicyAgentTypes = [
     AgentType.REINFORCE, AgentType.A2C, AgentType.PPO, AgentType.PPO_TRAJECTORY
@@ -75,7 +86,7 @@ OnPolicyAgentTypes = [
 
 OffPolicyAgentTypes = [
     AgentType.DQN, AgentType.DOUBLE_DQN, AgentType.DUELING_DQN, AgentType.DOUBLE_DUELING_DQN,
-    AgentType.DDPG, AgentType.TD3, AgentType.SAC
+    AgentType.DDPG, AgentType.TD3, AgentType.SAC, AgentType.MUZERO
 ]
 
 ActorCriticAgentTypes = [

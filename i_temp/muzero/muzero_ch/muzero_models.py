@@ -110,6 +110,7 @@ class Models(AbstractNetwork):
             .float()
         )
         action_one_hot.scatter_(1, action.long(), 1.0)
+        print(action_one_hot.shape, action_one_hot, "!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!@@@@")
         x = torch.cat((encoded_state, action_one_hot), dim=1)
 
         next_encoded_state = self.dynamics_encoded_state_network(x)
@@ -191,6 +192,7 @@ def support_to_scalar(logits, support_size):
     )
     x = torch.sum(support * probabilities, dim=1, keepdim=True)
     # Invert the scaling (defined in https://arxiv.org/abs/1805.11593)
+    # torch.sign(x) : 1 if x>0, -1 if x<0, 0 if x==0
     x = torch.sign(x) * (
         ((torch.sqrt(1 + 4 * 0.001 * (torch.abs(x) + 1 + 0.001)) - 1) / (2 * 0.001))
         ** 2

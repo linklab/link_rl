@@ -37,7 +37,7 @@ class ConfigConvolutionalModel:
             self.STRIDE_PER_LAYER = [2, 2, 2, 1]
             self.PADDING = 0
 
-            self.NEURONS_PER_REPRESENTATION_LAYER [512]
+            self.NEURONS_PER_REPRESENTATION_LAYER = [512]
             self.NEURONS_PER_FULLY_CONNECTED_LAYER = [256]
 
         else:

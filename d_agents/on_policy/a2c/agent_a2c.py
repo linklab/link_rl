@@ -39,14 +39,14 @@ class AgentA2c(OnPolicyAgent):
         self.last_actor_objective = mp.Value('d', 0.0)
         self.last_entropy = mp.Value('d', 0.0)
 
-    def get_target_values(self, next_observations, rewards, dones):
+    def get_target_values(self):
         with torch.no_grad():
             # values.shape: (32, 1), next_values.shape: (32, 1)
-            next_values = self.critic_model.v(next_observations)
-            next_values[dones] = 0.0
+            next_values = self.critic_model.v(self.next_observations)
+            next_values[self.dones] = 0.0
 
             # target_values.shape: (32, 1)
-            target_values = rewards + (self.config.GAMMA ** self.config.N_STEP) * next_values
+            target_values = self.rewards + (self.config.GAMMA ** self.config.N_STEP) * next_values
             # normalize td_target
             if self.config.TARGET_VALUE_NORMALIZE:
                 target_values = (target_values - torch.mean(target_values)) / (torch.std(target_values) + 1e-7)
@@ -60,7 +60,7 @@ class AgentA2c(OnPolicyAgent):
         #  Critic (Value) Loss 산출 & Update - BEGIN #
         #############################################
 
-        target_values = self.get_target_values(self.next_observations, self.rewards, self.dones)
+        target_values = self.get_target_values()
 
         # # next_values.shape: (32, 1)
         # next_values = self.critic_model.v(self.next_observations)

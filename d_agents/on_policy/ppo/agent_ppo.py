@@ -56,6 +56,34 @@ class AgentPpo(AgentA2c):
         else:
             raise ValueError()
 
+    def get_target_values_and_advantages(self):
+        assert self.config.N_STEP == 1
+        with torch.no_grad():
+            values = self.critic_model.v(self.observations)
+            next_values = self.critic_model.v(self.next_observations)
+            next_values[self.dones] = 0.0
+
+            # target_values.shape: (32, 1)
+            target_values = self.rewards + (self.config.GAMMA ** self.config.N_STEP) * next_values
+
+            # generalized advantage estimator (gae): smoothed version of the advantage
+            # by trajectory calculate advantage and 1-step target action value
+            last_gae = 0.0
+            deltas = target_values - values
+            advantages = []
+            for delta in reversed(deltas):
+                last_gae = delta + self.config.GAMMA * self.config.PPO_GAE_LAMBDA * last_gae
+                advantages.append(last_gae)
+
+            advantages = torch.tensor(list(reversed(advantages)), dtype=torch.float32, device=self.config.DEVICE)
+            advantages = (advantages - torch.mean(advantages)) / (torch.std(advantages) + 1e-7)
+
+            # normalize target values
+            if self.config.TARGET_VALUE_NORMALIZE:
+                target_values = (target_values - torch.mean(target_values)) / (torch.std(target_values) + 1e-7)
+
+        return target_values.detach(), advantages.detach()
+
     def train_ppo(self):
         count_training_steps = 0
 
@@ -82,16 +110,21 @@ class AgentPpo(AgentA2c):
         sum_ratio = 0.0
         sum_entropy = 0.0
 
+        batch_target_values, batch_advantages = self.get_target_values_and_advantages()
+        batch_advantages = batch_advantages.squeeze(dim=-1)  # NOTE
+
         for _ in range(self.config.PPO_K_EPOCH):
-            batch_target_values = self.get_target_values(self.next_observations, self.rewards, self.dones)
-            batch_values = self.critic_model.v(self.observations)
-            batch_advantages = (batch_target_values - batch_values).detach()
-            batch_advantages = (batch_advantages - torch.mean(batch_advantages)) / (torch.std(batch_advantages) + 1e-7)
-            batch_advantages = batch_advantages.squeeze(dim=-1)  # NOTE
+            # batch_target_values = self.get_target_values()
+            # batch_values = self.critic_model.v(self.observations)
+            # batch_advantages = (batch_target_values - batch_values).detach()
+            # batch_advantages = (batch_advantages - torch.mean(batch_advantages)) / (torch.std(batch_advantages) + 1e-7)
+            # batch_advantages = batch_advantages.squeeze(dim=-1)  # NOTE
 
             #############################################
             #  Critic (Value) Loss 산출 & Update - BEGIN #
             #############################################
+            batch_values = self.critic_model.v(self.observations)
+
             assert batch_values.shape == batch_target_values.shape
             batch_critic_loss = self.config.LOSS_FUNCTION(batch_values, batch_target_values.detach())
 

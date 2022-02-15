@@ -98,9 +98,12 @@ class Agent:
         # next_observations.shape: torch.Size([32, 4, 84, 84]),
         # rewards.shape: torch.Size([32, 1]),
         # dones.shape: torch.Size([32])
-        self.observations, self.actions, self.next_observations, self.rewards, self.dones = self.buffer.sample(
-            batch_size=sample_length
-        )
+        if self.config.AGENT_TYPE == AgentType.MUZERO:
+            self.episode_idxs, self.episode_historys = self.buffer.sample_muzero(batch_size=sample_length)
+        else:
+            self.observations, self.actions, self.next_observations, self.rewards, self.dones = self.buffer.sample(
+                batch_size=sample_length
+            )
 
     @abstractmethod
     def train(self, training_steps_v=None):
@@ -110,11 +113,15 @@ class Agent:
         if loss_each is not None and self.config.USE_PER:
             self.buffer.update_priorities(loss_each.detach().cpu().numpy())
 
-        del self.observations
-        del self.actions
-        del self.next_observations
-        del self.rewards
-        del self.dones
+        if self.config.AGENT_TYPE == AgentType.MUZERO:
+            del self.episode_historys
+            del self.episode_idxs
+        else:
+            del self.observations
+            del self.actions
+            del self.next_observations
+            del self.rewards
+            del self.dones
 
     def clip_model_config_grad_value(self, model_parameters):
         torch.nn.utils.clip_grad_norm_(model_parameters, self.config.CLIP_GRADIENT_VALUE)
@@ -307,6 +314,13 @@ class OffPolicyAgent(Agent):
                 count_training_steps, critic_loss_each = self.train_sac(training_steps_v=training_steps_v)
                 self._after_train(critic_loss_each)
 
+        elif self.config.AGENT_TYPE == AgentType.MUZERO:
+            assert self.config.N_VECTORIZED_ENVS == 1
+            if len(self.buffer) >= self.config.BATCH_SIZE:
+                self._before_train(sample_length=self.config.BATCH_SIZE)
+                count_training_steps, critic_loss_each = self.train_muzero(training_steps_v=training_steps_v)
+                self._after_train(critic_loss_each)
+
         else:
             raise ValueError()
 
@@ -331,4 +345,8 @@ class OffPolicyAgent(Agent):
 
     @abstractmethod
     def train_sac(self, training_steps_v):
+        raise NotImplementedError()
+
+    @abstractmethod
+    def train_muzero(self, training_steps_v):
         raise NotImplementedError()

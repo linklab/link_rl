@@ -20,7 +20,7 @@ class ConfigA2c(ConfigOnPolicyAgent):
 
         self.ENTROPY_BETA = 0.001
 
-        self.BATCH_SIZE = 128
+        self.BATCH_SIZE = 256
 
 
 class ConfigA3c(ConfigOnPolicyAgent):
@@ -32,7 +32,7 @@ class ConfigA3c(ConfigOnPolicyAgent):
         self.LEARNING_RATE = 0.0001
         self.ENTROPY_BETA = 0.001
 
-        self.BATCH_SIZE = 128
+        self.BATCH_SIZE = 256
         self.N_ACTORS = 2
 
 
@@ -47,8 +47,10 @@ class ConfigPpo(ConfigOnPolicyAgent):
         self.ENTROPY_BETA = 0.001
 
         self.PPO_EPSILON_CLIP = 0.2
-        self.BATCH_SIZE = 128
+        self.BATCH_SIZE = 256
         self.PPO_K_EPOCH = 3
+
+        self.PPO_GAE_LAMBDA = 0.95
 
 
 class ConfigPpoTrajectory(ConfigOnPolicyAgent):
@@ -62,5 +64,7 @@ class ConfigPpoTrajectory(ConfigOnPolicyAgent):
         self.ENTROPY_BETA = 0.001
 
         self.PPO_EPSILON_CLIP = 0.2
-        self.BATCH_SIZE = 128
+        self.BATCH_SIZE = 256
         self.PPO_K_EPOCH = 3
+
+        self.PPO_GAE_LAMBDA = 0.95

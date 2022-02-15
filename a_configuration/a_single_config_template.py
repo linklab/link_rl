@@ -29,6 +29,9 @@ from a_configuration.b_single_config.open_ai_gym.config_cart_pole import ConfigC
 config = ConfigCartPolePpoTrajectory()
 config.WANDB_REPORT_URL = "https://wandb.ai/link-koreatech/CartPole-v1_PPO_TRAJECTORY_yhhan/reports/CartPole-PPO_TRAJECTORY--VmlldzoxNTUyNDQw?accessToken=7vs10v66vi6fyitrxma0p2g62pq4nfiiccaskfgv2x2b5jrmwfae38u4pfm1xfq1"
 
+from a_configuration.b_single_config.open_ai_gym.config_cart_pole import ConfigCartPoleMuzero
+config = ConfigCartPoleMuzero()
+
 ######################
 ## CART_POLE_BULLET ##
 ######################
@@ -88,6 +91,9 @@ config = ConfigCartPoleContinuousBulletSac()
 ##################
 from a_configuration.b_single_config.open_ai_gym.config_lunar_lander import ConfigLunarLanderDqn
 config = ConfigLunarLanderDqn()
+
+from a_configuration.b_single_config.open_ai_gym.config_lunar_lander import ConfigLunarLanderMuzero
+config = ConfigLunarLanderMuzero()
 
 from a_configuration.b_single_config.open_ai_gym.config_lunar_lander import ConfigLunarLanderA2c
 config = ConfigLunarLanderA2c()
@@ -206,6 +212,7 @@ config = ConfigPongA2c()
 ##################
 from a_configuration.b_single_config.mujoco.config_ant_mujoco import ConfigAntMujocoSac
 config = ConfigAntMujocoSac()
+config.WANDB_REPORT_URL = "https://wandb.ai/link-koreatech/Ant-v2_SAC_yhhan/reports/Ant-v2_SAC--VmlldzoxNTM0NDMz"
 
 from a_configuration.b_single_config.mujoco.config_ant_mujoco import ConfigAntMujocoPpoTrajectory
 config = ConfigAntMujocoPpoTrajectory()
@@ -243,6 +250,7 @@ config = ConfigHalfCheetahMujocoPpoTrajectory()
 ##########################
 from a_configuration.b_single_config.unity.config_3d_ball import Config3DBallDdqg
 config = Config3DBallDdqg()
+config.WANDB_REPORT_URL = "https://wandb.ai/link-koreatech/Unity3DBall_DDPG_yhhan/reports/3DBall-Ddqg--VmlldzoxNTM0NTUy?accessToken=gxnxojzda8hu41wb52vv873kql0qkir16nyqfcrrzq6eeaozen9xfe2pmg4f0dt5"
 
 
 ##########################

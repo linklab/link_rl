@@ -136,6 +136,7 @@ a_configuration/a_base_config/config.ini
 e_main/config_comparison.py
 e_main/config_single.py
 
+
 *.para
 *.local
 *.dump
@@ -152,4 +153,4 @@ f_play/models/**
 */*/wandb/!/i_temp/muszero_original/results/
 /i_temp/muzero/muszero_original/results/
 
-*_timers.json
+b_environments/unity

@@ -15,7 +15,6 @@ class ConfigDqn(ConfigOffPolicyAgent):
 
         self.BUFFER_CAPACITY = 10_000
         self.BATCH_SIZE = 128
-        self.MIN_BUFFER_SIZE_FOR_TRAIN = self.BATCH_SIZE * 5
         self.TARGET_SYNC_INTERVAL_TRAINING_STEPS = 1_000
 
 
@@ -54,8 +53,6 @@ class ConfigDdpg(ConfigOffPolicyAgent):
         self.TAU = 0.005
         self.BUFFER_CAPACITY = 10_000
         self.BATCH_SIZE = 128
-        self.MIN_BUFFER_SIZE_FOR_TRAIN = self.BATCH_SIZE * 10
-
 
 class ConfigTd3(ConfigOffPolicyAgent):
     def __init__(self):
@@ -68,7 +65,6 @@ class ConfigTd3(ConfigOffPolicyAgent):
         self.TAU = 0.005
         self.BUFFER_CAPACITY = 10_000
         self.BATCH_SIZE = 128
-        self.MIN_BUFFER_SIZE_FOR_TRAIN = self.BATCH_SIZE * 10
 
         self.POLICY_UPDATE_FREQUENCY_PER_TRAINING_STEP = 2
 
@@ -93,3 +89,32 @@ class ConfigSac(ConfigOffPolicyAgent):
         self.AUTOMATIC_ENTROPY_TEMPERATURE_TUNING = True
         self.MIN_ALPHA = 0.1
 
+
+class ConfigMuzero(ConfigOffPolicyAgent):
+    def __init__(self):
+        super(ConfigMuzero, self).__init__()
+        self.AGENT_TYPE = AgentType.MUZERO
+
+        self.LEARNING_RATE = 0.001
+        self.BUFFER_CAPACITY = 10_000  # Episode-based
+        self.BATCH_SIZE = 128
+
+        self.TEST_INTERVAL_TRAINING_STEPS = 300
+        self.MAX_TRAINING_STEPS = 10000
+        self.STACKED_OBSERVATION = 0
+        self.INDEX_STACKED_OBSERVATIONS = -1
+
+        self.ROOT_DIRCHLET_ALPHA = 0.25
+        self.ROOT_EXPLORATION_FRACTION = 0.25
+
+        self.PB_C_BASE = 19652
+        self.PB_C_INIT = 1.25
+
+        self.NUM_SIMULATION = 50
+        self.PLAYERS = list(range(1))
+
+        self.SUPPORT_SIZE = 10
+
+        self.NUM_UNROLL_STEPS = 5
+
+        self.VALUE_LOSS_WEIGHT = 0.25

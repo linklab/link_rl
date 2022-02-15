@@ -41,10 +41,13 @@ class AgentPpoTrajectory(AgentPpo):
         sum_entropy = 0.0
 
         for _ in range(self.config.PPO_K_EPOCH):
-            trajectory_target_values = self.get_target_values(self.next_observations, self.rewards, self.dones)
-            trajectory_values = self.critic_model.v(self.observations)
-            trajectory_advantages = (trajectory_target_values - trajectory_values).detach()
-            trajectory_advantages = (trajectory_advantages - torch.mean(trajectory_advantages)) / (torch.std(trajectory_advantages) + 1e-7)
+            # trajectory_target_values = self.get_target_values()
+            # trajectory_values = self.critic_model.v(self.observations)
+            # trajectory_advantages = (trajectory_target_values - trajectory_values).detach()
+            # trajectory_advantages = (trajectory_advantages - torch.mean(trajectory_advantages)) / (torch.std(trajectory_advantages) + 1e-7)
+            # trajectory_advantages = trajectory_advantages.squeeze(dim=-1)  # NOTE
+
+            trajectory_target_values, trajectory_advantages = self.get_target_values_and_advantages()
             trajectory_advantages = trajectory_advantages.squeeze(dim=-1)  # NOTE
 
             for batch_offset in range(0, self.config.PPO_TRAJECTORY_SIZE, self.config.BATCH_SIZE):

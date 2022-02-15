@@ -59,23 +59,27 @@ def set_config(config):
     ):
         from a_configuration.a_base_config.c_models.linear_models import ConfigLinearModel
         config.MODEL_PARAMETER = ConfigLinearModel(config.MODEL_TYPE)
+
     elif config.MODEL_TYPE in (
             ModelType.TINY_CONVOLUTIONAL, ModelType.SMALL_CONVOLUTIONAL,
             ModelType.MEDIUM_CONVOLUTIONAL, ModelType.LARGE_CONVOLUTIONAL
     ):
         from a_configuration.a_base_config.c_models.convolutional_models import ConfigConvolutionalModel
         config.MODEL_PARAMETER = ConfigConvolutionalModel(config.MODEL_TYPE)
+
     elif config.MODEL_TYPE in (
             ModelType.SMALL_RECURRENT, ModelType.MEDIUM_RECURRENT, ModelType.LARGE_RECURRENT
     ):
         from a_configuration.a_base_config.c_models.recurrent_linear_models import ConfigRecurrentLinearModel
         config.MODEL_PARAMETER = ConfigRecurrentLinearModel(config.MODEL_TYPE)
+
     elif config.MODEL_TYPE in (
             ModelType.SMALL_RECURRENT_CONVOLUTIONAL, ModelType.MEDIUM_RECURRENT_CONVOLUTIONAL,
             ModelType.LARGE_RECURRENT_CONVOLUTIONAL
     ):
         from a_configuration.a_base_config.c_models.recurrent_convolutional_models import ConfigRecurrentConvolutionalModel
         config.MODEL_PARAMETER = ConfigRecurrentConvolutionalModel(config.MODEL_TYPE)
+
     else:
         raise ValueError()
 
@@ -117,6 +121,9 @@ def set_config(config):
         config.PPO_TRAJECTORY_SIZE = config.BATCH_SIZE * 10
         config.BUFFER_CAPACITY = config.PPO_TRAJECTORY_SIZE
         config.CONSOLE_LOG_INTERVAL_TRAINING_STEPS = 10 * config.PPO_K_EPOCH
+
+    elif config.AGENT_TYPE == AgentType.MUZERO:
+        pass
 
     else:
         raise ValueError()
@@ -292,29 +299,36 @@ def print_model_info(config):
     print('-' * 76 + " MODEL_TYPE " + '-' * 76)
     if isinstance(model_config, ConfigLinearModel):
         item1 = "{0}: {1:}".format("MODEL_PARAMETER", "LINEAR_MODEL_PARAMETER")
-        item2 = "{0}: {1:}".format("NEURONS_PER_FULLY_CONNECTED_LAYER", model_config.NEURONS_PER_FULLY_CONNECTED_LAYER)
-        print("{0:55} {1:55}".format(item1, item2), end="\n")
+        item2 = "{0}: {1:}".format("NEURONS_PER_REPRESENTATION_LAYER", model_config.NEURONS_PER_REPRESENTATION_LAYER)
+        item3 = "{0}: {1:}".format("NEURONS_PER_FULLY_CONNECTED_LAYER", model_config.NEURONS_PER_FULLY_CONNECTED_LAYER)
+        print("{0:55} {1:55} {2:55}".format(item1, item2, item3), end="\n")
     elif isinstance(model_config, ConfigConvolutionalModel):
         item1 = "{0}: {1:}".format("MODEL_PARAMETER", "CONVOLUTIONAL_MODEL_PARAMETER")
         item2 = "{0}: {1:}".format("OUT_CHANNELS_PER_LAYER", model_config.OUT_CHANNELS_PER_LAYER)
         item3 = "{0}: {1:}".format("KERNEL_SIZE_PER_LAYER", model_config.KERNEL_SIZE_PER_LAYER)
         print("{0:55} {1:55} {2:55}".format(item1, item2, item3, end="\n"))
         item1 = "{0}: {1:}".format("STRIDE_PER_LAYER", model_config.STRIDE_PER_LAYER)
+        item2 = "{0}: {1:}".format("PADDING", model_config.PADDING)
+        print("{0:55} {1:55}".format(item1, item2, end="\n"))
+        item1 = "{0}: {1:}".format("NEURONS_PER_REPRESENTATION_LAYER", model_config.NEURONS_PER_REPRESENTATION_LAYER)
         item2 = "{0}: {1:}".format("NEURONS_PER_FULLY_CONNECTED_LAYER", model_config.NEURONS_PER_FULLY_CONNECTED_LAYER)
         print("{0:55} {1:55}".format(item1, item2), end="\n")
     elif isinstance(model_config, ConfigRecurrentLinearModel):
         item1 = "{0}: {1:}".format("MODEL_PARAMETER", "RECURRENT_LINEAR_MODEL_PARAMETER")
-        print("{0:55}".format(item1), end="\n")
+        item2 = "{0}: {1:}".format("NEURONS_PER_REPRESENTATION_LAYER", model_config.NEURONS_PER_REPRESENTATION_LAYER)
+        print("{0:55} {1:55}".format(item1, item2, end="\n"))
         item1 = "{0}: {1:}".format("HIDDEN_SIZE", model_config.HIDDEN_SIZE)
         item2 = "{0}: {1:}".format("NUM_LAYERS", model_config.NUM_LAYERS)
         item3 = "{0}: {1:}".format("NEURONS_PER_FULLY_CONNECTED_LAYER", model_config.NEURONS_PER_FULLY_CONNECTED_LAYER)
         print("{0:55} {1:55} {2:55}".format(item1, item2, item3, end="\n"))
     elif isinstance(model_config, ConfigRecurrentConvolutionalModel):
         item1 = "{0}: {1:}".format("MODEL_PARAMETER", "RECURRENT_CONVOLUTIONAL_MODEL_PARAMETER")
-        print("{0:55}".format(item1), end="\n")
-        item1 = "{0}: {1:}".format("OUT_CHANNELS_PER_LAYER", model_config.OUT_CHANNELS_PER_LAYER)
-        item2 = "{0}: {1:}".format("KERNEL_SIZE_PER_LAYER", model_config.KERNEL_SIZE_PER_LAYER)
-        item3 = "{0}: {1:}".format("STRIDE_PER_LAYER", model_config.STRIDE_PER_LAYER)
+        item2 = "{0}: {1:}".format("OUT_CHANNELS_PER_LAYER", model_config.OUT_CHANNELS_PER_LAYER)
+        item3 = "{0}: {1:}".format("KERNEL_SIZE_PER_LAYER", model_config.KERNEL_SIZE_PER_LAYER)
+        print("{0:55} {1:55} {2:55}".format(item1, item2, item3, end="\n"))
+        item1 = "{0}: {1:}".format("STRIDE_PER_LAYER", model_config.STRIDE_PER_LAYER)
+        item2 = "{0}: {1:}".format("PADDING", model_config.PADDING)
+        item3 = "{0}: {1:}".format("NEURONS_PER_REPRESENTATION_LAYER", model_config.NEURONS_PER_REPRESENTATION_LAYER)
         print("{0:55} {1:55} {2:55}".format(item1, item2, item3, end="\n"))
         item1 = "{0}: {1:}".format("HIDDEN_SIZE", model_config.HIDDEN_SIZE)
         item2 = "{0}: {1:}".format("NUM_LAYERS", model_config.NUM_LAYERS)
@@ -398,6 +412,12 @@ def console_log(
     elif config.AGENT_TYPE in (AgentType.DDPG, AgentType.TD3):
         console_log += "critic_loss: {0:7.3f}, actor_loss: {1:7.3f}".format(
             agent.last_critic_loss.value, agent.last_actor_loss.value
+        )
+    elif config.AGENT_TYPE == AgentType.MUZERO:
+        console_log += "temperature: {0:7.3f}, value_loss: {1:7.3f}, policy_loss: {2:7.3f}, " \
+                       "reward_loss: {3:7.3f}, total_loss: {4:7.3f}".format(
+            agent.temperature.value, agent.value_loss.value, agent.policy_loss.value, agent.reward_loss.value,
+            agent.loss.value
         )
     else:
         pass
@@ -514,6 +534,13 @@ def wandb_log(learner, wandb_obj, config):
         log_dict["Last Actor Objective"] = learner.agent.last_actor_objective.value
         log_dict["Alpha"] = learner.agent.alpha.value
         log_dict["Entropy"] = learner.agent.last_entropy.value
+    elif config.AGENT_TYPE == AgentType.MUZERO:
+        log_dict["Temperature"] = learner.agent.temperature.value
+        log_dict["Value Loss"] = learner.agent.value_loss.value
+        log_dict["Policy Loss"] = learner.agent.policy_loss.value
+        log_dict["Reward Loss"] = learner.agent.reward_loss.value
+        log_dict["Total Loss"] = learner.agent.loss.value
+
     else:
         pass
 
