@@ -1,10 +1,6 @@
-import copy
-
 import torch
 from gym.spaces import Discrete, Box
 from torch.distributions import Categorical, Normal
-import torch.multiprocessing as mp
-import numpy as np
 
 
 from d_agents.on_policy.ppo.agent_ppo import AgentPpo
@@ -21,11 +17,11 @@ class AgentPpoTrajectory(AgentPpo):
         # OLD_LOG_PI 얻어오기: BEGIN
         #####################################
         if isinstance(self.action_space, Discrete):
-            trajectory_action_probs = self.actor_old_model.pi(self.observations)
+            trajectory_action_probs = self.actor_model.pi(self.observations)
             trajectory_dist = Categorical(probs=trajectory_action_probs)
             trajectory_old_log_pi_action_v = trajectory_dist.log_prob(value=self.actions.squeeze(dim=-1))
         elif isinstance(self.action_space, Box):
-            trajectory_mu_v, trajectory_var_v = self.actor_old_model.pi(self.observations)
+            trajectory_mu_v, trajectory_var_v = self.actor_model.pi(self.observations)
             trajectory_dist = Normal(loc=trajectory_mu_v, scale=torch.sqrt(trajectory_var_v))
             trajectory_old_log_pi_action_v = trajectory_dist.log_prob(value=self.actions).sum(dim=-1)
         else:
@@ -40,19 +36,20 @@ class AgentPpoTrajectory(AgentPpo):
         sum_ratio = 0.0
         sum_entropy = 0.0
 
+        trajectory_target_values, trajectory_advantages = self.get_target_values_and_advantages()
+        trajectory_advantages = trajectory_advantages.squeeze(dim=-1)  # NOTE
+
+        # trajectory_target_values = self.get_target_values()
+        # trajectory_values = self.critic_model.v(self.observations)
+        # trajectory_advantages = (trajectory_target_values - trajectory_values).detach()
+        # trajectory_advantages = (trajectory_advantages - torch.mean(trajectory_advantages)) / (torch.std(trajectory_advantages) + 1e-7)
+        # trajectory_advantages = trajectory_advantages.squeeze(dim=-1)  # NOTE
+
         for _ in range(self.config.PPO_K_EPOCH):
-            # trajectory_target_values = self.get_target_values()
-            # trajectory_values = self.critic_model.v(self.observations)
-            # trajectory_advantages = (trajectory_target_values - trajectory_values).detach()
-            # trajectory_advantages = (trajectory_advantages - torch.mean(trajectory_advantages)) / (torch.std(trajectory_advantages) + 1e-7)
-            # trajectory_advantages = trajectory_advantages.squeeze(dim=-1)  # NOTE
-
-            trajectory_target_values, trajectory_advantages = self.get_target_values_and_advantages()
-            trajectory_advantages = trajectory_advantages.squeeze(dim=-1)  # NOTE
-
             for batch_offset in range(0, self.config.PPO_TRAJECTORY_SIZE, self.config.BATCH_SIZE):
                 batch_l = batch_offset + self.config.BATCH_SIZE
 
+                # Batch 단위의 훈련에 필요한 재료 마련
                 batch_observations = self.observations[batch_offset:batch_l]
                 batch_actions = self.actions[batch_offset:batch_l]
                 batch_target_values = trajectory_target_values[batch_offset:batch_l]
@@ -63,14 +60,7 @@ class AgentPpoTrajectory(AgentPpo):
                 #  Critic (Value) Loss 산출 & Update - BEGIN #
                 #############################################
                 batch_values = self.critic_model.v(batch_observations)
-
-                assert batch_values.shape == batch_target_values.shape
-                batch_critic_loss = self.config.LOSS_FUNCTION(batch_values, batch_target_values.detach())
-
-                self.critic_optimizer.zero_grad()
-                batch_critic_loss.backward()
-                self.clip_critic_model_parameter_grad_value(self.critic_model.critic_params_list)
-                self.critic_optimizer.step()
+                batch_critic_loss = self.train_critic(values=batch_values, target_values=batch_target_values)
                 ##########################################
                 #  Critic (Value) Loss 산출 & Update- END #
                 ##########################################
@@ -106,15 +96,15 @@ class AgentPpoTrajectory(AgentPpo):
                 assert batch_ratio.shape == batch_advantages.shape, "{0}, {1}".format(
                     batch_ratio.shape, batch_advantages.shape
                 )
-                batch_surrogate_loss_pre_clip = batch_ratio * batch_advantages
-                batch_surrogate_loss_clip = torch.clamp(
+                batch_surrogate_objective_1 = batch_ratio * batch_advantages
+                batch_surrogate_objective_2 = torch.clamp(
                     batch_ratio, 1.0 - self.config.PPO_EPSILON_CLIP, 1.0 + self.config.PPO_EPSILON_CLIP
                 ) * batch_advantages
 
-                assert batch_surrogate_loss_clip.shape == batch_surrogate_loss_pre_clip.shape, "".format(
-                    batch_surrogate_loss_clip.shape, batch_surrogate_loss_pre_clip.shape
+                assert batch_surrogate_objective_1.shape == batch_surrogate_objective_2.shape, "{0} {1}".format(
+                    batch_surrogate_objective_1.shape, batch_surrogate_objective_2.shape
                 )
-                batch_actor_objective = torch.mean(torch.min(batch_surrogate_loss_pre_clip, batch_surrogate_loss_clip))
+                batch_actor_objective = torch.mean(torch.min(batch_surrogate_objective_1, batch_surrogate_objective_2))
                 batch_actor_loss = -1.0 * batch_actor_objective
                 batch_entropy_loss = -1.0 * batch_entropy
                 batch_actor_loss = batch_actor_loss + batch_entropy_loss * self.config.ENTROPY_BETA
@@ -134,7 +124,7 @@ class AgentPpoTrajectory(AgentPpo):
                 #  Actor Objective 산출 & Update - END #
                 #######################################
 
-        self.synchronize_models(source_model=self.actor_model, target_model=self.actor_old_model)
+        self.synchronize_models(source_model=self.actor_model, target_model=self.actor_model)
 
         self.last_critic_loss.value = sum_critic_loss / count_training_steps
         self.last_actor_objective.value = sum_actor_objective / count_training_steps

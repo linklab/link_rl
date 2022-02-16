@@ -39,19 +39,22 @@ class AgentA2c(OnPolicyAgent):
         self.last_actor_objective = mp.Value('d', 0.0)
         self.last_entropy = mp.Value('d', 0.0)
 
-    def get_target_values(self):
-        with torch.no_grad():
-            # values.shape: (32, 1), next_values.shape: (32, 1)
-            next_values = self.critic_model.v(self.next_observations)
-            next_values[self.dones] = 0.0
+    def train_critic(self, values, target_values):
+        #############################################
+        #  Critic (Value) Loss 산출 & Update - BEGIN #
+        #############################################
+        assert values.shape == target_values.shape
+        critic_loss = self.config.LOSS_FUNCTION(values, target_values.detach())
 
-            # target_values.shape: (32, 1)
-            target_values = self.rewards + (self.config.GAMMA ** self.config.N_STEP) * next_values
-            # normalize td_target
-            if self.config.TARGET_VALUE_NORMALIZE:
-                target_values = (target_values - torch.mean(target_values)) / (torch.std(target_values) + 1e-7)
+        self.critic_optimizer.zero_grad()
+        critic_loss.backward()
+        self.clip_critic_model_parameter_grad_value(self.critic_model.critic_params_list)
+        self.critic_optimizer.step()
+        ##########################################
+        #  Critic (Value) Loss 산출 & Update- END #
+        ##########################################
 
-        return target_values.detach()
+        return critic_loss
 
     def train_a2c(self):
         count_training_steps = 0
@@ -59,28 +62,10 @@ class AgentA2c(OnPolicyAgent):
         #############################################
         #  Critic (Value) Loss 산출 & Update - BEGIN #
         #############################################
-
         target_values = self.get_target_values()
-
-        # # next_values.shape: (32, 1)
-        # next_values = self.critic_model.v(self.next_observations)
-        # next_values[self.dones] = 0.0
-        #
-        # # target_values.shape: (32, 1)
-        # target_values = self.rewards + (self.config.GAMMA ** self.config.N_STEP) * next_values
-        # # normalize td_target
-        # if self.config.TARGET_VALUE_NORMALIZE:
-        #     target_values = (target_values - torch.mean(target_values)) / (torch.std(target_values) + 1e-7)
-
-        # values.shape: (32, 1)
         values = self.critic_model.v(self.observations)
 
-        critic_loss = self.config.LOSS_FUNCTION(values, target_values.detach())
-
-        self.critic_optimizer.zero_grad()
-        critic_loss.backward()
-        self.clip_critic_model_parameter_grad_value(self.critic_model.critic_params_list)
-        self.critic_optimizer.step()
+        critic_loss = self.train_critic(values=values, target_values=target_values)
         ##########################################
         #  Critic (Value) Loss 산출 & Update- END #
         ##########################################

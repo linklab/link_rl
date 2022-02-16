@@ -146,7 +146,8 @@ class Agent:
     def clip_critic_model_parameter_grad_value(self, critic_model_parameters):
         torch.nn.utils.clip_grad_norm_(critic_model_parameters, self.config.CLIP_GRADIENT_VALUE)
 
-        critic_grads_list = [p.grad.data.cpu().numpy().flatten() for p in self.critic_model.parameters() if p.grad is not None]
+        critic_grads_list = [p.grad.data.cpu().numpy().flatten() for p in self.critic_model.parameters() if
+                             p.grad is not None]
 
         if critic_grads_list:
             critic_grads = np.concatenate(critic_grads_list)
@@ -215,6 +216,20 @@ class OnPolicyAgent(Agent):
         else:
             raise ValueError()
 
+    def get_target_values(self):
+        with torch.no_grad():
+            # values.shape: (32, 1), next_values.shape: (32, 1)
+            next_values = self.critic_model.v(self.next_observations)
+            next_values[self.dones] = 0.0
+
+            # target_values.shape: (32, 1)
+            target_values = self.rewards + (self.config.GAMMA ** self.config.N_STEP) * next_values
+            # normalize td_target
+            if self.config.TARGET_VALUE_NORMALIZE:
+                target_values = (target_values - torch.mean(target_values)) / (torch.std(target_values) + 1e-7)
+
+        return target_values.detach()
+
     def train(self, training_steps_v=None):
         count_training_steps = 0
 
@@ -222,7 +237,7 @@ class OnPolicyAgent(Agent):
             if len(self.buffer) > 0:
                 self._before_train(sample_length=None)  # sample all in order as it is
                 count_training_steps = self.train_reinforce()
-                self.buffer.clear()     # ON_POLICY!
+                self.buffer.clear()  # ON_POLICY!
                 self._after_train()
 
         elif self.config.AGENT_TYPE == AgentType.A2C:
@@ -230,7 +245,7 @@ class OnPolicyAgent(Agent):
                 self._before_train(sample_length=None)
                 assert len(self.observations) == self.config.BATCH_SIZE
                 count_training_steps = self.train_a2c()
-                self.buffer.clear()                 # ON_POLICY!
+                self.buffer.clear()  # ON_POLICY!
                 self._after_train()
 
         elif self.config.AGENT_TYPE == AgentType.A3C:
@@ -238,7 +253,7 @@ class OnPolicyAgent(Agent):
                 self._before_train(sample_length=None)
                 assert len(self.observations) == self.config.BATCH_SIZE
                 count_training_steps = self.train_a3c()
-                self.buffer.clear()                 # ON_POLICY!
+                self.buffer.clear()  # ON_POLICY!
                 self._after_train()
 
         elif self.config.AGENT_TYPE == AgentType.PPO:
@@ -246,7 +261,7 @@ class OnPolicyAgent(Agent):
                 self._before_train(sample_length=None)
                 assert len(self.observations) == self.config.BATCH_SIZE
                 count_training_steps = self.train_ppo()
-                self.buffer.clear()                 # ON_POLICY!
+                self.buffer.clear()  # ON_POLICY!
                 self._after_train()
 
         elif self.config.AGENT_TYPE == AgentType.PPO_TRAJECTORY:
@@ -254,7 +269,7 @@ class OnPolicyAgent(Agent):
                 self._before_train(sample_length=None)
                 assert len(self.observations) == self.config.PPO_TRAJECTORY_SIZE
                 count_training_steps = self.train_ppo()
-                self.buffer.clear()                 # ON_POLICY!
+                self.buffer.clear()  # ON_POLICY!
                 self._after_train()
 
         else:
