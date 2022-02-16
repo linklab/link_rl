@@ -13,7 +13,6 @@ class ConfigLunarLanderDqn(ConfigBase, ConfigLunarLander, ConfigDqn):
 
         self.MAX_TRAINING_STEPS = 100_000
         self.BUFFER_CAPACITY = 100_000
-        self.LEARNING_RATE = 0.001
         self.MODEL_TYPE = ModelType.SMALL_LINEAR
 
 

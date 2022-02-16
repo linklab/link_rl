@@ -292,6 +292,8 @@ config = ConfigDroneDdpg()
 config.USE_WANDB = False
 
 if __name__ == "__main__":
-    from g_utils.commons import print_basic_info, get_env_info
+    from g_utils.commons import print_basic_info, get_env_info, set_config
+
+    set_config(config)
     observation_space, action_space = get_env_info(config)
     print_basic_info(observation_space, action_space, config)

@@ -12,6 +12,9 @@ class ConfigOffPolicyAgent(ConfigAgent):
         super(ConfigOffPolicyAgent, self).__init__()
         self.TEST_INTERVAL_TRAINING_STEPS = 1000
 
+        self.ACTOR_LEARNING_RATE = 0.0002
+        self.LEARNING_RATE = 0.0001
+
 
 class ConfigOnPolicyAgent(ConfigAgent):
     def __init__(self):
@@ -21,3 +24,7 @@ class ConfigOnPolicyAgent(ConfigAgent):
         self.USE_GAE = False
         self.GAE_LAMBDA = 0.95
         self.USE_BOOTSTRAP_FOR_TARGET_VALUE = False
+
+        self.ACTOR_LEARNING_RATE = 0.00001
+        self.LEARNING_RATE = 0.0001
+        self.ENTROPY_BETA = 0.001

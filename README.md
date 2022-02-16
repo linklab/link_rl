@@ -57,7 +57,7 @@ conda activate link_rl
     python -m pybullet_envs.examples.kukaGymEnvTest
     ```
   - 주의: pybullet-gym 설치하지 말것
-
+  
 - unity
   ```commandline
   pip install gym-unity
