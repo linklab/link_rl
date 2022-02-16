@@ -283,7 +283,11 @@ from a_configuration.b_single_config.unity.config_walker import ConfigWalkerSac
 config = ConfigWalkerSac()
 
 
-
+##########################
+### UnityDrone ###
+##########################
+from a_configuration.b_single_config.unity.config_drone import ConfigDroneDdpg
+config = ConfigDroneDdpg()
 
 config.USE_WANDB = False
 
