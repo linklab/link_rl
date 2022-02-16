@@ -5,11 +5,11 @@ import warnings
 
 import numpy as np
 
-from a_configuration.a_base_config.a_environments.mujoco.gym_mujoco import ConfigMujoco
-from a_configuration.a_base_config.a_environments.pybullet.gym_pybullet import ConfigBullet
-from a_configuration.a_base_config.a_environments.unity.unity_box import ConfigUnityGymEnv
-from a_configuration.a_base_config.c_models.recurrent_convolutional_models import ConfigRecurrentConvolutionalModel
-from a_configuration.a_base_config.c_models.recurrent_linear_models import ConfigRecurrentLinearModel
+from a_configuration.a_base_config.a_environments.mujoco.config_gym_mujoco import ConfigMujoco
+from a_configuration.a_base_config.a_environments.pybullet.config_gym_pybullet import ConfigBullet
+from a_configuration.a_base_config.a_environments.unity.config_unity_box import ConfigUnityGymEnv
+from a_configuration.a_base_config.c_models.config_recurrent_convolutional_models import ConfigRecurrentConvolutionalModel
+from a_configuration.a_base_config.c_models.config_recurrent_linear_models import ConfigRecurrentLinearModel
 from g_utils.commons import set_config
 from g_utils.commons_rl import get_agent
 

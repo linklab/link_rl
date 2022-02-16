@@ -1,6 +1,6 @@
-from a_configuration.a_base_config.b_agents.agents_off_policy import ConfigDdpg
+from a_configuration.a_base_config.b_agents.config_agents_off_policy import ConfigDdpg
 from a_configuration.a_base_config.config_single_base import ConfigBase
-from a_configuration.a_base_config.a_environments.unity.unity_box import Config3DBall
+from a_configuration.a_base_config.a_environments.unity.config_unity_box import Config3DBall
 from g_utils.types import ModelType
 
 
@@ -10,7 +10,6 @@ class Config3DBallDdqg(ConfigBase, Config3DBall, ConfigDdpg):
         Config3DBall.__init__(self)
         ConfigDdpg.__init__(self)
 
-        self.BATCH_SIZE = 64
         self.ACTOR_LEARNING_RATE = 0.0002
         self.LEARNING_RATE = 0.001
         self.N_STEP = 1

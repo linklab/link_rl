@@ -1,4 +1,4 @@
-from a_configuration.a_base_config.b_agents.agents import ConfigOnPolicyAgent
+from a_configuration.a_base_config.b_agents.config_agents import ConfigOnPolicyAgent
 from g_utils.commons import AgentType
 
 
@@ -18,10 +18,6 @@ class ConfigA2c(ConfigOnPolicyAgent):
         self.ACTOR_LEARNING_RATE = 0.00005
         self.LEARNING_RATE = 0.0005
 
-        self.ENTROPY_BETA = 0.001
-
-        self.BATCH_SIZE = 256
-
 
 class ConfigA3c(ConfigOnPolicyAgent):
     def __init__(self):
@@ -32,7 +28,6 @@ class ConfigA3c(ConfigOnPolicyAgent):
         self.LEARNING_RATE = 0.0001
         self.ENTROPY_BETA = 0.001
 
-        self.BATCH_SIZE = 256
         self.N_ACTORS = 2
 
 
@@ -44,13 +39,9 @@ class ConfigPpo(ConfigOnPolicyAgent):
         self.ACTOR_LEARNING_RATE = 0.00001
         self.LEARNING_RATE = 0.0001
 
-        self.ENTROPY_BETA = 0.001
-
         self.PPO_EPSILON_CLIP = 0.2
-        self.BATCH_SIZE = 256
         self.PPO_K_EPOCH = 3
 
-        self.PPO_GAE_LAMBDA = 0.95
 
 
 class ConfigPpoTrajectory(ConfigOnPolicyAgent):
@@ -61,10 +52,5 @@ class ConfigPpoTrajectory(ConfigOnPolicyAgent):
         self.ACTOR_LEARNING_RATE = 0.00001
         self.LEARNING_RATE = 0.0001
 
-        self.ENTROPY_BETA = 0.001
-
         self.PPO_EPSILON_CLIP = 0.2
-        self.BATCH_SIZE = 256
         self.PPO_K_EPOCH = 3
-
-        self.PPO_GAE_LAMBDA = 0.95

@@ -1,6 +1,6 @@
-from a_configuration.a_base_config.a_environments.mujoco.gym_mujoco import ConfigAntMujoco
-from a_configuration.a_base_config.b_agents.agents_off_policy import ConfigSac
-from a_configuration.a_base_config.b_agents.agents_on_policy import ConfigPpoTrajectory, ConfigPpo
+from a_configuration.a_base_config.a_environments.mujoco.config_gym_mujoco import ConfigAntMujoco
+from a_configuration.a_base_config.b_agents.config_agents_off_policy import ConfigSac
+from a_configuration.a_base_config.b_agents.config_agents_on_policy import ConfigPpoTrajectory, ConfigPpo
 from a_configuration.a_base_config.config_single_base import ConfigBase
 from g_utils.types import ModelType
 

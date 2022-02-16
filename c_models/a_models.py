@@ -6,10 +6,10 @@ from typing import Tuple
 from collections import OrderedDict
 import numpy as np
 
-from a_configuration.a_base_config.c_models.convolutional_models import ConfigConvolutionalModel
-from a_configuration.a_base_config.c_models.linear_models import ConfigLinearModel
-from a_configuration.a_base_config.c_models.recurrent_convolutional_models import ConfigRecurrentConvolutionalModel
-from a_configuration.a_base_config.c_models.recurrent_linear_models import ConfigRecurrentLinearModel
+from a_configuration.a_base_config.c_models.config_convolutional_models import ConfigConvolutionalModel
+from a_configuration.a_base_config.c_models.config_linear_models import ConfigLinearModel
+from a_configuration.a_base_config.c_models.config_recurrent_convolutional_models import ConfigRecurrentConvolutionalModel
+from a_configuration.a_base_config.c_models.config_recurrent_linear_models import ConfigRecurrentLinearModel
 
 
 class Model(nn.Module):

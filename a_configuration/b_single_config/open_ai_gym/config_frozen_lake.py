@@ -1,6 +1,6 @@
-from a_configuration.a_base_config.b_agents.agents_off_policy import ConfigDqn
+from a_configuration.a_base_config.b_agents.config_agents_off_policy import ConfigDqn
 from a_configuration.a_base_config.config_single_base import ConfigBase
-from a_configuration.a_base_config.a_environments.open_ai_gym.gym_toy_text import ConfigFrozenLake
+from a_configuration.a_base_config.a_environments.open_ai_gym.config_gym_toy_text import ConfigFrozenLake
 from g_utils.types import ModelType
 
 
@@ -73,7 +73,6 @@ class ConfigFrozenLakeDqn(ConfigBase, ConfigFrozenLake, ConfigDqn):
 #         ConfigA2c.__init__(self)
 #
 #         self.MAX_TRAINING_STEPS = 100_000
-#         self.BATCH_SIZE = 256
 #         self.MODEL_TYPE = ModelType.SMALL_LINEAR
 #
 #

@@ -1,6 +1,6 @@
 import warnings
 
-from a_configuration.a_base_config.c_models.recurrent_convolutional_models import ConfigRecurrentConvolutionalModel
+from a_configuration.a_base_config.c_models.config_recurrent_convolutional_models import ConfigRecurrentConvolutionalModel
 
 warnings.filterwarnings('ignore')
 warnings.simplefilter("ignore")
@@ -10,7 +10,7 @@ from collections import deque
 import numpy as np
 from gym.spaces import Discrete, Box
 
-from a_configuration.a_base_config.c_models.recurrent_linear_models import ConfigRecurrentLinearModel
+from a_configuration.a_base_config.c_models.config_recurrent_linear_models import ConfigRecurrentLinearModel
 from e_main.supports.actor import Actor
 from g_utils.commons import get_train_env, get_single_env, console_log_comparison, wandb_log_comparison, MeanBuffer
 from g_utils.types import AgentType, AgentMode, Transition

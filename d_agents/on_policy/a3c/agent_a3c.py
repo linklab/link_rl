@@ -27,11 +27,10 @@ class WorkerAgentA3c(AgentA2c):
 
         self.shared_model_access_lock.acquire()
 
+        target_values, advantages = self.get_target_values_and_advantages()
         #############################################
         #  Critic (Value) Loss 산출 & Update - BEGIN #
         #############################################
-        target_values = self.get_target_values()
-
         # values.shape: (32, 1)
         values = self.critic_model.v(self.observations)
 
@@ -56,9 +55,6 @@ class WorkerAgentA3c(AgentA2c):
         #########################################
         #  Actor Objective 산출 & Update - BEGIN #
         #########################################
-        advantages = (target_values - values).detach()
-        advantages = (advantages - torch.mean(advantages)) / (torch.std(advantages) + 1e-7)
-
         if isinstance(self.action_space, Discrete):
             action_probs = self.actor_model.pi(self.observations)
             dist = Categorical(probs=action_probs)

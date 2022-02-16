@@ -13,35 +13,6 @@ class AgentPpo(AgentA2c):
         self.last_actor_objective = mp.Value('d', 0.0)
         self.last_ratio = mp.Value('d', 0.0)
 
-    def get_target_values_and_advantages(self):
-        assert self.config.N_STEP == 1
-        with torch.no_grad():
-            values = self.critic_model.v(self.observations)
-            next_values = self.critic_model.v(self.next_observations)
-            next_values[self.dones] = 0.0
-
-            # target_values.shape: (32, 1)
-            target_values = self.rewards + self.config.GAMMA * next_values
-
-            # normalize target values
-            if self.config.TARGET_VALUE_NORMALIZE:
-                target_values = (target_values - torch.mean(target_values)) / (torch.std(target_values) + 1e-7)
-
-            # generalized advantage estimator (gae): smoothed version of the advantage
-            # by trajectory calculate advantage and 1-step target action value
-            deltas = target_values - values
-
-            last_gae = 0.0
-            advantages = []
-            for delta in reversed(deltas):
-                last_gae = delta + self.config.GAMMA * self.config.PPO_GAE_LAMBDA * last_gae
-                advantages.append(last_gae)
-
-            advantages = torch.tensor(list(reversed(advantages)), dtype=torch.float32, device=self.config.DEVICE)
-            advantages = (advantages - torch.mean(advantages)) / (torch.std(advantages) + 1e-7)
-
-        return target_values.detach(), advantages.detach()
-
     def train_ppo(self):
         count_training_steps = 0
 
