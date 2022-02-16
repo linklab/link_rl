@@ -87,6 +87,21 @@ def set_config(config):
         config.LAYER_ACTIVATION = nn.LeakyReLU
     elif config.LAYER_ACTIVATION_TYPE == LayerActivationType.ELU:
         config.LAYER_ACTIVATION = nn.ELU
+    elif config.LAYER_ACTIVATION_TYPE == LayerActivationType.PReLU:
+        config.LAYER_ACTIVATION = nn.PReLU
+    elif config.LAYER_ACTIVATION_TYPE == LayerActivationType.SELU:
+        config.LAYER_ACTIVATION = nn.SELU
+    else:
+        raise ValueError()
+
+    if config.VALUE_NETWORK_LAYER_ACTIVATION_TYPE == LayerActivationType.LEAKY_RELU:
+        config.VALUE_NETWORK_LAYER_ACTIVATION = nn.LeakyReLU
+    elif config.VALUE_NETWORK_LAYER_ACTIVATION_TYPE == LayerActivationType.ELU:
+        config.VALUE_NETWORK_LAYER_ACTIVATION = nn.ELU
+    elif config.VALUE_NETWORK_LAYER_ACTIVATION_TYPE == LayerActivationType.PReLU:
+        config.VALUE_NETWORK_LAYER_ACTIVATION = nn.PReLU
+    elif config.VALUE_NETWORK_LAYER_ACTIVATION_TYPE == LayerActivationType.SELU:
+        config.VALUE_NETWORK_LAYER_ACTIVATION = nn.SELU
     else:
         raise ValueError()
 
@@ -168,7 +183,7 @@ def print_basic_info(observation_space=None, action_space=None, config=None):
         if not param.startswith("__") and param not in [
             "MODEL_PARAMETER", "NEURONS_PER_FULLY_CONNECTED_LAYER", "OUT_CHANNELS_PER_LAYER", "KERNEL_SIZE_PER_LAYER",
             "STRIDE_PER_LAYER", "EPISODE_REWARD_AVG_SOLVED", "EPISODE_REWARD_STD_SOLVED", "UNITY_ENV_DIR",
-            "MODEL_SAVE_DIR", "PROJECT_HOME", "LAYER_ACTIVATION", "LOSS_FUNCTION", "ENV_NAME", "PLAY_MODEL_FILE_NAME"
+            "MODEL_SAVE_DIR", "PROJECT_HOME", "LAYER_ACTIVATION", "VALUE_NETWORK_LAYER_ACTIVATION", "LOSS_FUNCTION", "ENV_NAME", "PLAY_MODEL_FILE_NAME"
         ]:
             if param in [
                 "BATCH_SIZE", "BUFFER_CAPACITY", "CONSOLE_LOG_INTERVAL_TRAINING_STEPS", "MAX_TRAINING_STEPS",
@@ -255,8 +270,8 @@ def print_comparison_basic_info(observation_space, action_space, config_c):
             if not param.startswith("__") and param not in [
                 "MODEL_PARAMETER", "NEURONS_PER_FULLY_CONNECTED_LAYER", "OUT_CHANNELS_PER_LAYER", "KERNEL_SIZE_PER_LAYER",
                 "STRIDE_PER_LAYER", "EPISODE_REWARD_AVG_SOLVED", "EPISODE_REWARD_STD_SOLVED", "UNITY_ENV_DIR",
-                "COMPARISON_RESULTS_SAVE_DIR", "PROJECT_HOME", "LAYER_ACTIVATION", "LOSS_FUNCTION", "ENV_NAME",
-                "PLAY_MODEL_FILE_NAME"
+                "COMPARISON_RESULTS_SAVE_DIR", "PROJECT_HOME", "LAYER_ACTIVATION", "VALUE_NETWORK_LAYER_ACTIVATION",
+                "LOSS_FUNCTION", "ENV_NAME", "PLAY_MODEL_FILE_NAME"
             ]:
                 if param in [
                     "BATCH_SIZE", "BUFFER_CAPACITY", "CONSOLE_LOG_INTERVAL_TRAINING_STEPS", "MAX_TRAINING_STEPS",
@@ -338,6 +353,7 @@ def print_model_info(config):
         raise ValueError()
 
     print("LAYER_ACTIVATION: {0}".format(config.LAYER_ACTIVATION))
+    print("VALUE_NETWORK_LAYER_ACTIVATION: {0}".format(config.VALUE_NETWORK_LAYER_ACTIVATION))
     print("LOSS_FUNCTION: {0}".format(config.LOSS_FUNCTION))
     print("PLAY_MODEL_FILE_NAME: {0}".format(config.PLAY_MODEL_FILE_NAME))
 

@@ -57,6 +57,9 @@ class ModelType(enum.Enum):
 class LayerActivationType(enum.Enum):
     LEAKY_RELU = 0
     ELU = 1
+    PReLU = 2
+    SELU = 3
+    LINEAR = 4
 
 
 class LossFunctionType(enum.Enum):

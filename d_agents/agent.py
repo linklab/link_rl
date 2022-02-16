@@ -226,7 +226,6 @@ class OnPolicyAgent(Agent):
             return_lst.append(G)
 
         returns = torch.tensor(return_lst[::-1], dtype=torch.float32, device=self.config.DEVICE).detach()
-
         return returns
 
     def get_target_values_and_advantages(self):

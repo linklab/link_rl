@@ -2,7 +2,7 @@ from a_configuration.a_base_config.a_environments.open_ai_gym.config_gym_box2d i
 from a_configuration.a_base_config.b_agents.config_agents_off_policy import ConfigDdpg, ConfigSac, ConfigTd3
 from a_configuration.a_base_config.b_agents.config_agents_on_policy import ConfigA2c, ConfigPpo, ConfigPpoTrajectory, ConfigA3c
 from a_configuration.a_base_config.config_single_base import ConfigBase
-from g_utils.types import ModelType
+from g_utils.types import ModelType, LossFunctionType
 
 
 class ConfigLunarLanderContinuousA2c(ConfigBase, ConfigLunarLanderContinuous, ConfigA2c):
@@ -33,6 +33,11 @@ class ConfigLunarLanderContinuousPpo(ConfigBase, ConfigLunarLanderContinuous, Co
 
         self.MAX_TRAINING_STEPS = 200_000
         self.MODEL_TYPE = ModelType.SMALL_LINEAR
+
+        self.USE_GAE = True
+        self.CLIP_GRADIENT_VALUE = 1.0
+        self.ENTROPY_BETA = 0.001
+        self.LOSS_FUNCTION_TYPE = LossFunctionType.HUBER_LOSS
 
 
 class ConfigLunarLanderContinuousPpoTrajectory(ConfigBase, ConfigLunarLanderContinuous, ConfigPpoTrajectory):

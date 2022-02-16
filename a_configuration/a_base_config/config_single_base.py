@@ -61,7 +61,9 @@ class ConfigBase:
         self.USE_LAYER_NORM = True
 
         self.LAYER_ACTIVATION_TYPE = LayerActivationType.LEAKY_RELU
+        self.VALUE_NETWORK_LAYER_ACTIVATION_TYPE = LayerActivationType.PReLU
         self.LAYER_ACTIVATION = None
+        self.VALUE_NETWORK_LAYER_ACTIVATION = None
 
         self.LOSS_FUNCTION_TYPE = LossFunctionType.MSE_LOSS
         self.LOSS_FUNCTION = None
