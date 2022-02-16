@@ -1,4 +1,4 @@
-from a_configuration.a_base_config.b_agents.agents import ConfigOffPolicyAgent
+from a_configuration.a_base_config.b_agents.config_agents import ConfigOffPolicyAgent
 from g_utils.commons import AgentType
 
 
@@ -14,7 +14,6 @@ class ConfigDqn(ConfigOffPolicyAgent):
         self.EPSILON_FINAL_TRAINING_STEP_PROPORTION = 0.5
 
         self.BUFFER_CAPACITY = 10_000
-        self.BATCH_SIZE = 128
         self.TARGET_SYNC_INTERVAL_TRAINING_STEPS = 1_000
 
 
@@ -52,7 +51,6 @@ class ConfigDdpg(ConfigOffPolicyAgent):
 
         self.TAU = 0.005
         self.BUFFER_CAPACITY = 10_000
-        self.BATCH_SIZE = 128
 
 class ConfigTd3(ConfigOffPolicyAgent):
     def __init__(self):
@@ -64,7 +62,6 @@ class ConfigTd3(ConfigOffPolicyAgent):
 
         self.TAU = 0.005
         self.BUFFER_CAPACITY = 10_000
-        self.BATCH_SIZE = 128
 
         self.POLICY_UPDATE_FREQUENCY_PER_TRAINING_STEP = 2
 
@@ -80,7 +77,6 @@ class ConfigSac(ConfigOffPolicyAgent):
 
         self.TAU = 0.005
         self.BUFFER_CAPACITY = 2_000_000
-        self.BATCH_SIZE = 1024
         self.TARGET_SYNC_INTERVAL_TRAINING_STEPS = 50
 
         self.POLICY_UPDATE_FREQUENCY_PER_TRAINING_STEP = 2
@@ -97,7 +93,6 @@ class ConfigMuzero(ConfigOffPolicyAgent):
 
         self.LEARNING_RATE = 0.001
         self.BUFFER_CAPACITY = 10_000  # Episode-based
-        self.BATCH_SIZE = 128
 
         self.TEST_INTERVAL_TRAINING_STEPS = 300
         self.MAX_TRAINING_STEPS = 10000

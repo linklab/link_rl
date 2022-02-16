@@ -1,9 +1,9 @@
-from a_configuration.a_base_config.b_agents.agents_off_policy import ConfigDqn, ConfigDoubleDqn, ConfigDuelingDqn, \
+from a_configuration.a_base_config.b_agents.config_agents_off_policy import ConfigDqn, ConfigDoubleDqn, ConfigDuelingDqn, \
     ConfigDoubleDuelingDqn, ConfigSac, ConfigMuzero
-from a_configuration.a_base_config.b_agents.agents_on_policy import ConfigA2c, ConfigReinforce, ConfigPpo, \
+from a_configuration.a_base_config.b_agents.config_agents_on_policy import ConfigA2c, ConfigReinforce, ConfigPpo, \
     ConfigPpoTrajectory, ConfigA3c
 from a_configuration.a_base_config.config_single_base import ConfigBase
-from a_configuration.a_base_config.a_environments.open_ai_gym.gym_classic_control import ConfigCartPole
+from a_configuration.a_base_config.a_environments.open_ai_gym.config_gym_classic_control import ConfigCartPole
 from g_utils.types import ModelType
 
 
@@ -73,7 +73,6 @@ class ConfigCartPoleMuzero(ConfigBase, ConfigCartPole, ConfigMuzero):
         self.TEST_INTERVAL_TRAINING_STEPS = 100
         self.NUM_UNROLL_STEPS = 10
         self.N_STEP = 50
-        self.BATCH_SIZE = 64
 
 # OnPolicy
 
@@ -96,7 +95,6 @@ class ConfigCartPoleA2c(ConfigBase, ConfigCartPole, ConfigA2c):
 
         self.MAX_TRAINING_STEPS = 100_000
         self.MODEL_TYPE = ModelType.SMALL_LINEAR
-        self.CLIP_GRADIENT_VALUE = 30.0
 
 
 class ConfigCartPoleA3c(ConfigBase, ConfigCartPole, ConfigA3c):
@@ -107,7 +105,6 @@ class ConfigCartPoleA3c(ConfigBase, ConfigCartPole, ConfigA3c):
 
         self.MAX_TRAINING_STEPS = 100_000
         self.MODEL_TYPE = ModelType.SMALL_LINEAR
-        self.CLIP_GRADIENT_VALUE = 30.0
 
 
 class ConfigCartPolePpo(ConfigBase, ConfigCartPole, ConfigPpo):

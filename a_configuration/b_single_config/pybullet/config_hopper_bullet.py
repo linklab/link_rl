@@ -1,6 +1,6 @@
-from a_configuration.a_base_config.a_environments.pybullet.gym_pybullet import ConfigHopperBullet
-from a_configuration.a_base_config.b_agents.agents_off_policy import ConfigSac
-from a_configuration.a_base_config.b_agents.agents_on_policy import ConfigPpoTrajectory, ConfigPpo
+from a_configuration.a_base_config.a_environments.pybullet.config_gym_pybullet import ConfigHopperBullet
+from a_configuration.a_base_config.b_agents.config_agents_off_policy import ConfigSac
+from a_configuration.a_base_config.b_agents.config_agents_on_policy import ConfigPpoTrajectory, ConfigPpo
 from a_configuration.a_base_config.config_single_base import ConfigBase
 from g_utils.commons import print_basic_info, get_env_info
 from g_utils.types import ModelType

@@ -1,6 +1,6 @@
-from a_configuration.a_base_config.a_environments.open_ai_gym.gym_box2d import ConfigLunarLanderContinuous
-from a_configuration.a_base_config.b_agents.agents_off_policy import ConfigDdpg, ConfigSac, ConfigTd3
-from a_configuration.a_base_config.b_agents.agents_on_policy import ConfigA2c, ConfigPpo, ConfigPpoTrajectory, ConfigA3c
+from a_configuration.a_base_config.a_environments.open_ai_gym.config_gym_box2d import ConfigLunarLanderContinuous
+from a_configuration.a_base_config.b_agents.config_agents_off_policy import ConfigDdpg, ConfigSac, ConfigTd3
+from a_configuration.a_base_config.b_agents.config_agents_on_policy import ConfigA2c, ConfigPpo, ConfigPpoTrajectory, ConfigA3c
 from a_configuration.a_base_config.config_single_base import ConfigBase
 from g_utils.types import ModelType
 

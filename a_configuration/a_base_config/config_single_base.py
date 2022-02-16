@@ -42,7 +42,7 @@ class ConfigBase:
 
         self.N_TEST_EPISODES = 3
 
-        self.CLIP_GRADIENT_VALUE = 5.0
+        self.CLIP_GRADIENT_VALUE = 30.0
 
         self.USE_WANDB = False
         self.WANDB_ENTITY = "link-koreatech"
@@ -69,7 +69,7 @@ class ConfigBase:
 
         self.NO_TEST_GRAPHICS = True
 
-        self.TARGET_VALUE_NORMALIZE = True
+        self.TARGET_VALUE_NORMALIZE = False
 
         self.PER_ALPHA = 0.6
         self.PER_EPSILON = 0.01

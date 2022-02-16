@@ -216,19 +216,72 @@ class OnPolicyAgent(Agent):
         else:
             raise ValueError()
 
-    def get_target_values(self):
-        with torch.no_grad():
-            # values.shape: (32, 1), next_values.shape: (32, 1)
-            next_values = self.critic_model.v(self.next_observations)
-            next_values[self.dones] = 0.0
+    def get_returns(self):
+        G = 0
+        return_lst = []
+        for reward, done in zip(reversed(self.rewards), reversed(self.dones)):
+            if done:
+                G = 0
+            G = reward + (self.config.GAMMA ** self.config.N_STEP) * G
+            return_lst.append(G)
 
-            # target_values.shape: (32, 1)
-            target_values = self.rewards + (self.config.GAMMA ** self.config.N_STEP) * next_values
-            # normalize td_target
-            if self.config.TARGET_VALUE_NORMALIZE:
-                target_values = (target_values - torch.mean(target_values)) / (torch.std(target_values) + 1e-7)
+        returns = torch.tensor(return_lst[::-1], dtype=torch.float32, device=self.config.DEVICE).detach()
 
-        return target_values.detach()
+        return returns
+
+    def get_target_values_and_advantages(self):
+        combined_observations = torch.vstack([self.observations, self.next_observations[-1:]])
+        combined_values = self.critic_model.v(combined_observations)
+
+        # values.shape: (32, 1), next_values.shape: (32, 1)
+        values = combined_values[:-1]
+        next_values = combined_values[1:]
+        next_values[self.dones] = 0.0
+
+        if self.config.USE_GAE:
+            assert self.config.N_STEP == 1
+
+            with torch.no_grad():
+                if self.config.USE_BOOTSTRAP_FOR_TARGET_VALUE:
+                    target_values = self.rewards + self.config.GAMMA * next_values
+                else:
+                    target_values = self.get_returns().unsqueeze(dim=-1)
+
+                # target_values.shape: (32, 1)
+                # normalize target values
+                if self.config.TARGET_VALUE_NORMALIZE:
+                    target_values = (target_values - torch.mean(target_values)) / (torch.std(target_values) + 1e-7)
+
+                # generalized advantage estimator (gae): smoothed version of the advantage
+                # by trajectory calculate advantage and 1-step target action value
+                assert target_values.shape == values.shape, "{0} {1}".format(target_values.shape, values.shape)
+                deltas = target_values - values
+
+                last_gae = 0.0
+                advantages = []
+                for delta in reversed(deltas):
+                    last_gae = delta + self.config.GAMMA * self.config.GAE_LAMBDA * last_gae
+                    advantages.append(last_gae)
+
+                advantages = torch.tensor(advantages[::-1], dtype=torch.float32, device=self.config.DEVICE)
+        else:
+            with torch.no_grad():
+                if self.config.USE_BOOTSTRAP_FOR_TARGET_VALUE:
+                    target_values = self.rewards + (self.config.GAMMA ** self.config.N_STEP) * next_values
+                else:
+                    target_values = self.get_returns().unsqueeze(dim=-1)
+
+                # target_values.shape: (32, 1)
+                # normalize td_target
+                if self.config.TARGET_VALUE_NORMALIZE:
+                    target_values = (target_values - torch.mean(target_values)) / (torch.std(target_values) + 1e-7)
+
+                assert target_values.shape == values.shape, "{0} {1}".format(target_values.shape, values.shape)
+                advantages = (target_values - values).detach()
+
+        advantages = (advantages - torch.mean(advantages)) / (torch.std(advantages) + 1e-7)
+
+        return target_values.detach(), advantages.detach()
 
     def train(self, training_steps_v=None):
         count_training_steps = 0

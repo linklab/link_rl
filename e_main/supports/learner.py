@@ -3,8 +3,8 @@ import copy
 
 from gym.spaces import Box, Discrete
 
-from a_configuration.a_base_config.c_models.recurrent_convolutional_models import ConfigRecurrentConvolutionalModel
-from a_configuration.a_base_config.c_models.recurrent_linear_models import ConfigRecurrentLinearModel
+from a_configuration.a_base_config.c_models.config_recurrent_convolutional_models import ConfigRecurrentConvolutionalModel
+from a_configuration.a_base_config.c_models.config_recurrent_linear_models import ConfigRecurrentLinearModel
 
 warnings.filterwarnings('ignore')
 warnings.simplefilter("ignore")

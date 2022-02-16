@@ -1,6 +1,6 @@
-from a_configuration.a_base_config.a_environments.pybullet.gym_pybullet import ConfigCartPoleContinuousBullet
-from a_configuration.a_base_config.b_agents.agents_off_policy import ConfigSac, ConfigDdpg, ConfigTd3
-from a_configuration.a_base_config.b_agents.agents_on_policy import ConfigA2c, ConfigPpo, ConfigPpoTrajectory, \
+from a_configuration.a_base_config.a_environments.pybullet.config_gym_pybullet import ConfigCartPoleContinuousBullet
+from a_configuration.a_base_config.b_agents.config_agents_off_policy import ConfigSac, ConfigDdpg, ConfigTd3
+from a_configuration.a_base_config.b_agents.config_agents_on_policy import ConfigA2c, ConfigPpo, ConfigPpoTrajectory, \
     ConfigReinforce, ConfigA3c
 from a_configuration.a_base_config.config_single_base import ConfigBase
 from g_utils.types import ModelType

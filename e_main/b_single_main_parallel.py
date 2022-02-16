@@ -1,7 +1,4 @@
 import warnings
-
-from d_agents.on_policy.a3c.agent_a3c import WorkerAgentA3c
-
 warnings.filterwarnings("ignore")
 warnings.simplefilter("ignore")
 
@@ -26,6 +23,8 @@ os.environ['KMP_DUPLICATE_LIB_OK'] = 'True'
 sys.path.append(os.path.abspath(
     os.path.join(os.path.dirname(os.path.realpath(__file__)), os.pardir)
 ))
+
+from d_agents.on_policy.a3c.agent_a3c import WorkerAgentA3c
 
 from e_main.config_single import config
 from e_main.supports.actor import Actor, LearningActor

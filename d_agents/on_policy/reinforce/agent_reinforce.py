@@ -40,12 +40,7 @@ class AgentReinforce(OnPolicyAgent):
         if len(self.observations) < 10:
             return count_training_steps
 
-        G = 0
-        return_lst = []
-        for reward in reversed(self.rewards):
-            G = reward + self.config.GAMMA * G
-            return_lst.append(G)
-        returns = torch.tensor(return_lst[::-1], dtype=torch.float32, device=self.config.DEVICE).detach()
+        returns = self.get_returns()
 
         if isinstance(self.action_space, Discrete):
             action_probs = self.actor_model.pi(self.observations)
@@ -73,7 +68,7 @@ class AgentReinforce(OnPolicyAgent):
 
         self.optimizer.zero_grad()
         loss.backward()
-        self.clip_actor_model_parameter_grad_value(self.actor_model.actor_params_list)
+        #self.clip_actor_model_parameter_grad_value(self.actor_model.actor_params_list)
         self.optimizer.step()
 
         self.last_log_policy_objective.value = log_policy_objective.item()

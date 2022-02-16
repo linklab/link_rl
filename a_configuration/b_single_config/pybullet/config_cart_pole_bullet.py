@@ -1,7 +1,8 @@
-from a_configuration.a_base_config.a_environments.pybullet.gym_pybullet import ConfigCartPoleBullet
-from a_configuration.a_base_config.b_agents.agents_off_policy import ConfigDqn, \
+from a_configuration.a_base_config.a_environments.pybullet.config_gym_pybullet import ConfigCartPoleBullet
+from a_configuration.a_base_config.b_agents.config_agents_off_policy import ConfigDqn, \
     ConfigDoubleDqn, ConfigDuelingDqn, ConfigDoubleDuelingDqn
-from a_configuration.a_base_config.b_agents.agents_on_policy import ConfigA2c, ConfigPpo, ConfigPpoTrajectory, ConfigA3c
+from a_configuration.a_base_config.b_agents.config_agents_on_policy import ConfigA2c, ConfigPpo, ConfigPpoTrajectory, \
+    ConfigA3c, ConfigReinforce
 from a_configuration.a_base_config.config_single_base import ConfigBase
 from g_utils.types import ModelType
 
@@ -41,6 +42,16 @@ class ConfigCartPoleBulletDoubleDuelingDqn(ConfigBase, ConfigCartPoleBullet, Con
         ConfigBase.__init__(self)
         ConfigCartPoleBullet.__init__(self)
         ConfigDoubleDuelingDqn.__init__(self)
+
+        self.MAX_TRAINING_STEPS = 100_000
+        self.MODEL_TYPE = ModelType.SMALL_LINEAR
+
+
+class ConfigCartPoleBulletReinforce(ConfigBase, ConfigCartPoleBullet, ConfigReinforce):
+    def __init__(self):
+        ConfigBase.__init__(self)
+        ConfigCartPoleBullet.__init__(self)
+        ConfigReinforce.__init__(self)
 
         self.MAX_TRAINING_STEPS = 100_000
         self.MODEL_TYPE = ModelType.SMALL_LINEAR

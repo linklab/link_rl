@@ -50,5 +50,5 @@ def main():
 
 
 if __name__ == "__main__":
-    assert config.N_ACTORS == 1
+    assert config.N_ACTORS == 1, "Current config.N_ACTORS: {0}".format(config.N_ACTORS)
     main()

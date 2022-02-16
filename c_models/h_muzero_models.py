@@ -2,8 +2,8 @@ from typing import Tuple
 import torch
 from torch import nn
 
-from a_configuration.a_base_config.c_models.convolutional_models import ConfigConvolutionalModel
-from a_configuration.a_base_config.c_models.linear_models import ConfigLinearModel
+from a_configuration.a_base_config.c_models.config_convolutional_models import ConfigConvolutionalModel
+from a_configuration.a_base_config.c_models.config_linear_models import ConfigLinearModel
 from c_models.a_models import Model
 
 

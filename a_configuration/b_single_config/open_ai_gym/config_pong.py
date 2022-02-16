@@ -1,8 +1,8 @@
-from a_configuration.a_base_config.b_agents.agents_off_policy import ConfigDqn, ConfigDoubleDqn, ConfigDuelingDqn, \
+from a_configuration.a_base_config.b_agents.config_agents_off_policy import ConfigDqn, ConfigDoubleDqn, ConfigDuelingDqn, \
     ConfigDoubleDuelingDqn
-from a_configuration.a_base_config.a_environments.open_ai_gym.gym_atari import ConfigPong
-from a_configuration.a_base_config.b_agents.agents_on_policy import ConfigA2c, ConfigA3c, ConfigPpo, ConfigPpoTrajectory
-from a_configuration.a_base_config.c_models.convolutional_models import ConfigConvolutionalModel
+from a_configuration.a_base_config.a_environments.open_ai_gym.config_gym_atari import ConfigPong
+from a_configuration.a_base_config.b_agents.config_agents_on_policy import ConfigA2c, ConfigA3c, ConfigPpo, ConfigPpoTrajectory
+from a_configuration.a_base_config.c_models.config_convolutional_models import ConfigConvolutionalModel
 from a_configuration.a_base_config.config_single_base import ConfigBase
 from g_utils.types import ModelType
 
