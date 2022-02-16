@@ -66,7 +66,7 @@ class WorkerAgentA3c(AgentA2c):
             # criticized_log_pi_action_v.shape: (32,)
             criticized_log_pi_action_v = dist.log_prob(value=self.actions.squeeze(dim=-1)) * advantages.squeeze(dim=-1)
 
-            entropy = dist.entropy().mean()
+            entropy = torch.mean(dist.entropy())
         elif isinstance(self.action_space, Box):
             mu_v, var_v = self.actor_model.pi(self.observations)
 
@@ -76,7 +76,7 @@ class WorkerAgentA3c(AgentA2c):
 
             dist = Normal(loc=mu_v, scale=torch.sqrt(var_v))
             criticized_log_pi_action_v = dist.log_prob(value=self.actions).sum(dim=-1) * advantages.squeeze(dim=-1)
-            entropy = dist.entropy().mean()
+            entropy = torch.mean(dist.entropy())
         else:
             raise ValueError()
 
