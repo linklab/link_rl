@@ -115,7 +115,6 @@ class Model(nn.Module):
         assert self.config.MODEL_PARAMETER.OUT_CHANNELS_PER_LAYER
         assert self.config.MODEL_PARAMETER.KERNEL_SIZE_PER_LAYER
         assert self.config.MODEL_PARAMETER.STRIDE_PER_LAYER
-        assert self.config.MODEL_PARAMETER.PADDING
 
         convolutional_layers_dict = OrderedDict()
         out_channels_per_layer = self.config.MODEL_PARAMETER.OUT_CHANNELS_PER_LAYER.copy()

@@ -673,6 +673,9 @@ def get_train_env(config, no_graphics=True):
                 )
                 channel.set_configuration_parameters(time_scale=config.time_scale)
                 env = UnityToGymWrapper(u_env)
+                if config.ENV_NAME in ["UnityDrone"]:
+                    from b_environments.unitywrappers import ProcessFrame
+                    env = ProcessFrame(env)
                 return env
             env = gym.make(env_name)
             if env_name in ["PongNoFrameskip-v4"]:
@@ -717,6 +720,9 @@ def get_single_env(config, no_graphics=True):
         )
         channel.set_configuration_parameters(time_scale=config.time_scale)
         single_env = UnityToGymWrapper(u_env)
+        if config.ENV_NAME in ["UnityDrone"]:
+            from b_environments.unitywrappers import ProcessFrame
+            single_env = ProcessFrame(single_env)
     else:
         single_env = gym.make(config.ENV_NAME)
         if config.ENV_NAME in ["PongNoFrameskip-v4"]:
