@@ -21,8 +21,10 @@ class ConfigOnPolicyAgent(ConfigAgent):
         ConfigAgent.__init__(self)
         self.TEST_INTERVAL_TRAINING_STEPS = 200
         self.ENTROPY_BETA = 0.001
+
         self.USE_GAE = False
         self.GAE_LAMBDA = 0.95
+
         self.USE_BOOTSTRAP_FOR_TARGET_VALUE = False
 
         self.ACTOR_LEARNING_RATE = 0.00001
