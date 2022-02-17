@@ -24,6 +24,7 @@ class ConfigOnPolicyAgent(ConfigAgent):
 
         self.USE_GAE = False
         self.GAE_LAMBDA = 0.95
+        self.USE_GAE_RECALCULATE_TARGET_VALUE = True
 
         self.USE_BOOTSTRAP_FOR_TARGET_VALUE = False
 
