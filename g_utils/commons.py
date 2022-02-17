@@ -449,8 +449,8 @@ def console_log(
             agent.last_critic_loss.value, agent.last_actor_objective.value, agent.alpha.value, agent.last_entropy.value
         )
     elif config.AGENT_TYPE in (AgentType.DDPG, AgentType.TD3):
-        console_log += "critic_loss: {0:7.3f}, actor_loss: {1:7.3f}".format(
-            agent.last_critic_loss.value, agent.last_actor_loss.value
+        console_log += "critic_loss: {0:7.3f}, actor_objective: {1:7.3f}".format(
+            agent.last_critic_loss.value, agent.last_actor_objective.value
         )
     elif config.AGENT_TYPE == AgentType.MUZERO:
         console_log += "temperature: {0:7.3f}, value_loss: {1:7.3f}, policy_loss: {2:7.3f}, " \
@@ -505,8 +505,8 @@ def console_log_comparison(
                 agent.last_critic_loss.value, agent.last_actor_objective.value, agent.alpha.value, agent.last_entropy.value
             )
         elif config_c.AGENT_PARAMETERS[agent_idx].AGENT_TYPE in (AgentType.DDPG, AgentType.TD3):
-            console_log += "critic_loss: {0:7.3f}, actor_loss: {1:7.3f}, ".format(
-                agent.last_critic_loss.value, agent.last_actor_loss.value
+            console_log += "critic_loss: {0:7.3f}, actor_objective: {1:7.3f}, ".format(
+                agent.last_critic_loss.value, agent.last_actor_objective.value
             )
         else:
             pass

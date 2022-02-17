@@ -40,7 +40,7 @@ class AgentTd3(OffPolicyAgent):
         self.training_step = 0
 
         self.last_critic_loss = mp.Value('d', 0.0)
-        self.last_actor_loss = mp.Value('d', 0.0)
+        self.last_actor_objective = mp.Value('d', 0.0)
 
     def get_action(self, obs, mode=AgentMode.TRAIN):
         mu = self.actor_model.pi(obs)
@@ -103,15 +103,15 @@ class AgentTd3(OffPolicyAgent):
         if training_steps_v % self.config.POLICY_UPDATE_FREQUENCY_PER_TRAINING_STEP == 0:
             mu_v = self.actor_model.pi(self.observations)
             q1_value, q2_value = self.critic_model.q(self.observations, mu_v)
-            q_value = (q1_value + q2_value) / 2.0
-            actor_loss = -1.0 * q_value.mean()
+            actor_objective = torch.min(q1_value, q2_value).mean()
+            actor_loss = -1.0 * actor_objective
 
             self.actor_optimizer.zero_grad()
             actor_loss.backward()
             self.clip_actor_model_parameter_grad_value(self.actor_model.actor_params_list)
             self.actor_optimizer.step()
 
-            self.last_actor_loss.value = actor_loss.item()
+            self.last_actor_objective.value = actor_objective.item()
 
             # TAU: 0.005
             self.soft_synchronize_models(
