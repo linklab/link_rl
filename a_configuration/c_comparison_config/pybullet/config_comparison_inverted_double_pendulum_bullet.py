@@ -7,6 +7,34 @@ from a_configuration.b_single_config.pybullet.config_inverted_double_pendulum_bu
     ConfigInvertedDoublePendulumBulletPpoTrajectory
 
 
+class ConfigComparisonInvertedDoublePendulumBulletA2c(ConfigComparisonBase):
+    def __init__(self):
+        ConfigComparisonBase.__init__(self)
+
+        self.ENV_NAME = "InvertedDoublePendulumBulletEnv-v0"
+
+        self.AGENT_PARAMETERS = [
+            ConfigInvertedDoublePendulumBulletA2c(),
+            ConfigInvertedDoublePendulumBulletA2c(),
+            ConfigInvertedDoublePendulumBulletA2c(),
+        ]
+        self.AGENT_PARAMETERS[0].USE_GAE = False
+        self.AGENT_PARAMETERS[0].USE_BOOTSTRAP_FOR_TARGET_VALUE = False
+
+        self.AGENT_PARAMETERS[1].USE_GAE = False
+        self.AGENT_PARAMETERS[1].USE_BOOTSTRAP_FOR_TARGET_VALUE = True
+
+        self.AGENT_PARAMETERS[2].USE_GAE = True
+
+        self.AGENT_LABELS = [
+            "a2c + no gae + full return",
+            "a2c + no gae + td bootstrap",
+            "a2c + gae",
+        ]
+        self.MAX_TRAINING_STEPS = 300_000
+        self.N_RUNS = 5
+
+
 class ConfigComparisonInvertedDoublePendulumBulletSacAlpha(ConfigComparisonBase):
     def __init__(self):
         ConfigComparisonBase.__init__(self)

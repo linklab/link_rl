@@ -108,6 +108,9 @@ config_c = ConfigComparisonAntBulletPpoSac()
 #########################################
 ##    InvertedDoublePendulum_BULLET    ##
 #########################################
+from a_configuration.c_comparison_config.pybullet.config_comparison_inverted_double_pendulum_bullet import ConfigComparisonInvertedDoublePendulumBulletA2c
+config_c = ConfigComparisonInvertedDoublePendulumBulletA2c()
+
 from a_configuration.c_comparison_config.pybullet.config_comparison_inverted_double_pendulum_bullet import ConfigComparisonInvertedDoublePendulumBulletSacAlpha
 config_c = ConfigComparisonInvertedDoublePendulumBulletSacAlpha()
 
