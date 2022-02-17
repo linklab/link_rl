@@ -121,7 +121,7 @@ def set_config(config):
 
     elif config.AGENT_TYPE == AgentType.A2C:
         config.BUFFER_CAPACITY = config.BATCH_SIZE
-        config.CONSOLE_LOG_INTERVAL_TRAINING_STEPS = 10
+        config.CONSOLE_LOG_INTERVAL_TRAINING_STEPS = 30
 
     elif config.AGENT_TYPE == AgentType.A3C:
         config.BUFFER_CAPACITY = config.BATCH_SIZE

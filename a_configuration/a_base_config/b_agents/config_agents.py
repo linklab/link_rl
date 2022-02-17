@@ -26,7 +26,7 @@ class ConfigOnPolicyAgent(ConfigAgent):
         self.GAE_LAMBDA = 0.95
         self.USE_GAE_RECALCULATE_TARGET_VALUE = True
 
-        self.USE_BOOTSTRAP_FOR_TARGET_VALUE = False
+        self.USE_BOOTSTRAP_FOR_TARGET_VALUE = True
 
         self.ACTOR_LEARNING_RATE = 0.00001
         self.LEARNING_RATE = 0.0001
