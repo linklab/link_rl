@@ -35,8 +35,6 @@ class ConfigLunarLanderContinuousPpo(ConfigBase, ConfigLunarLanderContinuous, Co
         self.MODEL_TYPE = ModelType.SMALL_LINEAR
 
         self.USE_GAE = True
-        self.CLIP_GRADIENT_VALUE = 1.0
-        self.ENTROPY_BETA = 0.001
         self.LOSS_FUNCTION_TYPE = LossFunctionType.HUBER_LOSS
 
 

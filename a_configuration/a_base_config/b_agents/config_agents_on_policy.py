@@ -30,7 +30,6 @@ class ConfigPpo(ConfigOnPolicyAgent):
         self.PPO_K_EPOCH = 3
 
 
-
 class ConfigPpoTrajectory(ConfigOnPolicyAgent):
     def __init__(self):
         ConfigOnPolicyAgent.__init__(self)
