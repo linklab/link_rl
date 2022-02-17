@@ -102,7 +102,7 @@ class Buffer:
         if isinstance(self.action_space, Discrete):     # actions.shape = (64,)
             actions_v = torch.tensor(actions, dtype=torch.int64, device=self.config.DEVICE)[:, None]
         elif isinstance(self.action_space, Box):        # actions.shape = (64, 8)
-            actions_v = torch.tensor(actions, dtype=torch.int64, device=self.config.DEVICE)
+            actions_v = torch.tensor(actions, dtype=torch.float32, device=self.config.DEVICE)
         else:
             raise ValueError()
 
