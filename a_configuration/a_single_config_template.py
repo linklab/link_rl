@@ -289,6 +289,10 @@ config = ConfigWalkerSac()
 from a_configuration.b_single_config.unity.config_drone import ConfigDroneDdpg
 config = ConfigDroneDdpg()
 
+from a_configuration.b_single_config.unity.config_drone import ConfigDroneSac
+config = ConfigDroneSac()
+
+
 config.USE_WANDB = False
 
 if __name__ == "__main__":
