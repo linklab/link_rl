@@ -156,6 +156,8 @@ git commit -m "Apply .gitignore"
 2. Past at C:\Program Files\NVIDIA Corporation\NVSMI
 3. If not exist the directory, make the folder
 
+### 13. ubuntu zip
+- https://askubuntu.com/questions/31298/how-to-extract-and-join-files-xxx-zip-xxx-z01-and-xxx-z02
 
 ### 13. Reference
 - https://github.com/PacktPublishing/Deep-Reinforcement-Learning-Hands-On-Second-Edition
