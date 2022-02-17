@@ -710,11 +710,12 @@ def get_train_env(config, no_graphics=True):
                                            config.ENV_NAME),
                     worker_id=0, no_graphics=no_graphics, side_channels=[channel]
                 )
-                channel.set_configuration_parameters(time_scale=config.time_scale)
+                channel.set_configuration_parameters(time_scale=config.time_scale, width=config.width, height=config.height)
                 env = UnityToGymWrapper(u_env)
                 if config.ENV_NAME in ["UnityDrone"]:
-                    from b_environments.unitywrappers import ProcessFrame
-                    env = ProcessFrame(env)
+                    from b_environments.unitywrappers import GrayScaleObservation, ResizeObservation
+                    from gym.wrappers import FrameStack
+                    env = FrameStack(ResizeObservation(GrayScaleObservation(env), shape=84),num_stack=4)
                 return env
             env = gym.make(env_name)
             if env_name in ["PongNoFrameskip-v4"]:
@@ -757,11 +758,12 @@ def get_single_env(config, no_graphics=True):
             file_name=os.path.join(config.UNITY_ENV_DIR, config.ENV_NAME, platform_dir, config.ENV_NAME),
             worker_id=1, no_graphics=no_graphics, side_channels=[channel]
         )
-        channel.set_configuration_parameters(time_scale=config.time_scale)
+        channel.set_configuration_parameters(time_scale=config.time_scale, width=config.width, height=config.height)
         single_env = UnityToGymWrapper(u_env)
         if config.ENV_NAME in ["UnityDrone"]:
-            from b_environments.unitywrappers import ProcessFrame
-            single_env = ProcessFrame(single_env)
+            from b_environments.unitywrappers import GrayScaleObservation, ResizeObservation
+            from gym.wrappers import FrameStack
+            single_env = FrameStack(ResizeObservation(GrayScaleObservation(single_env), shape=84), num_stack=4)
     else:
         single_env = gym.make(config.ENV_NAME)
         if config.ENV_NAME in ["PongNoFrameskip-v4"]:
