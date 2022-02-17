@@ -105,3 +105,22 @@ class ConfigComparisonInvertedDoublePendulumBulletA2cPpo(ConfigComparisonBase):
         ]
         self.MAX_TRAINING_STEPS = 300_000
         self.N_RUNS = 5
+
+
+class ConfigComparisonInvertedDoublePendulumBulletSacPpo(ConfigComparisonBase):
+    def __init__(self):
+        ConfigComparisonBase.__init__(self)
+
+        self.ENV_NAME = "InvertedDoublePendulumBulletEnv-v0"
+
+        self.AGENT_PARAMETERS = [
+            ConfigInvertedDoublePendulumBulletSac(),
+            ConfigInvertedDoublePendulumBulletPpo()
+        ]
+
+        self.AGENT_LABELS = [
+            "sac",
+            "ppo"
+        ]
+        self.MAX_TRAINING_STEPS = 300_000
+        self.N_RUNS = 5
