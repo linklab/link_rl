@@ -277,7 +277,7 @@ class OnPolicyAgent(Agent):
 
         advantages = (advantages - torch.mean(advantages)) / (torch.std(advantages) + 1e-7)
 
-        return target_values.detach(), advantages.detach()
+        return values, target_values.detach(), advantages.detach()
 
     def train(self, training_steps_v=None):
         count_training_steps = 0

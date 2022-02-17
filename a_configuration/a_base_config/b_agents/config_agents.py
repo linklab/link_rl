@@ -1,3 +1,6 @@
+from g_utils.types import LossFunctionType
+
+
 class ConfigAgent:
     def __init__(self):
         self.AGENT_TYPE = None
@@ -26,8 +29,10 @@ class ConfigOnPolicyAgent(ConfigAgent):
         self.GAE_LAMBDA = 0.95
         self.USE_GAE_RECALCULATE_TARGET_VALUE = True
 
-        self.USE_BOOTSTRAP_FOR_TARGET_VALUE = False
+        self.USE_BOOTSTRAP_FOR_TARGET_VALUE = True
 
         self.ACTOR_LEARNING_RATE = 0.00001
         self.LEARNING_RATE = 0.0001
         self.ENTROPY_BETA = 0.001
+
+        self.LOSS_FUNCTION_TYPE = LossFunctionType.HUBER_LOSS
