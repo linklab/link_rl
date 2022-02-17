@@ -1,16 +1,20 @@
-import collections
 import numpy as np
 import torch
 from gym.spaces import Discrete, Box
 
 from a_configuration.a_base_config.c_models.config_recurrent_convolutional_models import ConfigRecurrentConvolutionalModel
 from a_configuration.a_base_config.c_models.config_recurrent_linear_models import ConfigRecurrentLinearModel
-from g_utils.types import Transition
 
 
 class Buffer:
     def __init__(self, action_space, config):
         self.action_space = action_space
+
+        if isinstance(action_space, Discrete):
+            self.n_out_actions = 1
+        elif isinstance(action_space, Box):
+            self.n_out_actions = action_space.shape[0]
+
         self.config = config
         self.is_recurrent_model = any([
             isinstance(self.config.MODEL_PARAMETER, ConfigRecurrentLinearModel),
@@ -99,19 +103,37 @@ class Buffer:
             observations_v = torch.tensor(observations, dtype=torch.float32, device=self.config.DEVICE)
             next_observations_v = torch.tensor(next_observations, dtype=torch.float32, device=self.config.DEVICE)
 
-        if isinstance(self.action_space, Discrete):     # actions.shape = (64,)
-            actions_v = torch.tensor(actions, dtype=torch.int64, device=self.config.DEVICE)[:, None]
-        elif isinstance(self.action_space, Box):        # actions.shape = (64, 8)
+        if isinstance(self.action_space, Discrete):
+            # actions.shape = (256, 1)
+            actions_v = torch.tensor(actions, dtype=torch.int64, device=self.config.DEVICE).unsqueeze(dim=-1)
+
+        elif isinstance(self.action_space, Box):
+            # actions.shape = (256, 1)
             actions_v = torch.tensor(actions, dtype=torch.float32, device=self.config.DEVICE)
+
         else:
             raise ValueError()
 
-        rewards_v = torch.tensor(rewards, dtype=torch.float32, device=self.config.DEVICE)[:, None]
+        rewards_v = torch.tensor(rewards, dtype=torch.float32, device=self.config.DEVICE).unsqueeze(dim=-1)
         dones_v = torch.tensor(dones, dtype=torch.bool, device=self.config.DEVICE)
 
         # print(observations_v.shape, actions_v.shape, next_observations_v.shape, rewards_v.shape, dones_v.shape)
         # observations.shape, next_observations.shape: (64, 4), (64, 4)
         # actions.shape, rewards.shape, dones.shape: (64, 1) (64, 1) (64,)
+
+        # [MLP]
+        # observations.shape: torch.Size([32, 4]),
+        # actions.shape: torch.Size([32, 1]),
+        # next_observations.shape: torch.Size([32, 4]),
+        # rewards.shape: torch.Size([32, 1]),
+        # dones.shape: torch.Size([32])
+        #
+        # [CNN]
+        # observations.shape: torch.Size([32, 4, 84, 84]),
+        # actions.shape: torch.Size([32, 1]),
+        # next_observations.shape: torch.Size([32, 4, 84, 84]),
+        # rewards.shape: torch.Size([32, 1]),
+        # dones.shape: torch.Size([32])
 
         return observations_v, actions_v, next_observations_v, rewards_v, dones_v
 

@@ -5,7 +5,7 @@ from torch.distributions import Categorical, Normal
 import torch.multiprocessing as mp
 
 from c_models.e_a2c_models import ContinuousActorCriticModel, DiscreteActorCriticModel
-from d_agents.agent import OnPolicyAgent
+from d_agents.on_policy.on_policy_agent import OnPolicyAgent
 
 
 class AgentA2c(OnPolicyAgent):
