@@ -21,7 +21,7 @@ class WorkerAgentA3c(AgentA2c):
         self.shared_model_access_lock = shared_model_access_lock
 
     def worker_train(self):
-        self._before_train(sample_length=self.config.BATCH_SIZE)
+        self._before_train()
 
         count_training_steps = 0
 
