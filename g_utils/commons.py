@@ -121,7 +121,7 @@ def set_config(config):
 
     elif config.AGENT_TYPE == AgentType.A2C:
         config.BUFFER_CAPACITY = config.BATCH_SIZE
-        config.CONSOLE_LOG_INTERVAL_TRAINING_STEPS = 10
+        config.CONSOLE_LOG_INTERVAL_TRAINING_STEPS = 30
 
     elif config.AGENT_TYPE == AgentType.A3C:
         config.BUFFER_CAPACITY = config.BATCH_SIZE
@@ -449,8 +449,8 @@ def console_log(
             agent.last_critic_loss.value, agent.last_actor_objective.value, agent.alpha.value, agent.last_entropy.value
         )
     elif config.AGENT_TYPE in (AgentType.DDPG, AgentType.TD3):
-        console_log += "critic_loss: {0:7.3f}, actor_loss: {1:7.3f}".format(
-            agent.last_critic_loss.value, agent.last_actor_loss.value
+        console_log += "critic_loss: {0:7.3f}, actor_objective: {1:7.3f}".format(
+            agent.last_critic_loss.value, agent.last_actor_objective.value
         )
     elif config.AGENT_TYPE == AgentType.MUZERO:
         console_log += "temperature: {0:7.3f}, value_loss: {1:7.3f}, policy_loss: {2:7.3f}, " \
@@ -505,8 +505,8 @@ def console_log_comparison(
                 agent.last_critic_loss.value, agent.last_actor_objective.value, agent.alpha.value, agent.last_entropy.value
             )
         elif config_c.AGENT_PARAMETERS[agent_idx].AGENT_TYPE in (AgentType.DDPG, AgentType.TD3):
-            console_log += "critic_loss: {0:7.3f}, actor_loss: {1:7.3f}, ".format(
-                agent.last_critic_loss.value, agent.last_actor_loss.value
+            console_log += "critic_loss: {0:7.3f}, actor_objective: {1:7.3f}, ".format(
+                agent.last_critic_loss.value, agent.last_actor_objective.value
             )
         else:
             pass
@@ -516,7 +516,7 @@ def console_log_comparison(
 
 def get_wandb_obj(config, agent=None, comparison=False):
     if comparison:
-        project = "{0}_{1}_{2}".format(config.ENV_NAME, "Comparison", SYSTEM_USER_NAME)
+        project = "{0}_{1}_{2}".format(config.__class__.__name__, "Comparison", SYSTEM_USER_NAME)
     else:
         project = "{0}_{1}_{2}".format(config.ENV_NAME, config.AGENT_TYPE.name, SYSTEM_USER_NAME)
 
@@ -710,11 +710,12 @@ def get_train_env(config, no_graphics=True):
                                            config.ENV_NAME),
                     worker_id=0, no_graphics=no_graphics, side_channels=[channel]
                 )
-                channel.set_configuration_parameters(time_scale=config.time_scale)
+                channel.set_configuration_parameters(time_scale=config.time_scale, width=config.width, height=config.height)
                 env = UnityToGymWrapper(u_env)
                 if config.ENV_NAME in ["UnityDrone"]:
-                    from b_environments.unitywrappers import ProcessFrame
-                    env = ProcessFrame(env)
+                    from b_environments.unitywrappers import GrayScaleObservation, ResizeObservation
+                    from gym.wrappers import FrameStack
+                    env = FrameStack(ResizeObservation(GrayScaleObservation(env), shape=84),num_stack=4)
                 return env
             env = gym.make(env_name)
             if env_name in ["PongNoFrameskip-v4"]:
@@ -757,11 +758,12 @@ def get_single_env(config, no_graphics=True):
             file_name=os.path.join(config.UNITY_ENV_DIR, config.ENV_NAME, platform_dir, config.ENV_NAME),
             worker_id=1, no_graphics=no_graphics, side_channels=[channel]
         )
-        channel.set_configuration_parameters(time_scale=config.time_scale)
+        channel.set_configuration_parameters(time_scale=config.time_scale, width=config.width, height=config.height)
         single_env = UnityToGymWrapper(u_env)
         if config.ENV_NAME in ["UnityDrone"]:
-            from b_environments.unitywrappers import ProcessFrame
-            single_env = ProcessFrame(single_env)
+            from b_environments.unitywrappers import GrayScaleObservation, ResizeObservation
+            from gym.wrappers import FrameStack
+            single_env = FrameStack(ResizeObservation(GrayScaleObservation(single_env), shape=84), num_stack=4)
     else:
         single_env = gym.make(config.ENV_NAME)
         if config.ENV_NAME in ["PongNoFrameskip-v4"]:

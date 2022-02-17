@@ -163,6 +163,7 @@ class ContinuousStochasticActorModel(ActorModel):
             isinstance(self.config.MODEL_PARAMETER, ConfigRecurrentConvolutionalModel)
         ]):
             x = self.convolutional_layers(obs)
+            x = torch.flatten(x, start_dim=1)
             x = self.representation_layers(x)
 
         else:

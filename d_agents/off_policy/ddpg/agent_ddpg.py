@@ -42,7 +42,7 @@ class AgentDdpg(OffPolicyAgent):
         self.training_step = 0
 
         self.last_critic_loss = mp.Value('d', 0.0)
-        self.last_actor_loss = mp.Value('d', 0.0)
+        self.last_actor_objective = mp.Value('d', 0.0)
 
     def get_action(self, obs, mode=AgentMode.TRAIN):
         mu = self.actor_model.pi(obs, save_hidden=True)
@@ -89,7 +89,8 @@ class AgentDdpg(OffPolicyAgent):
         #######################
         mu_v = self.actor_model.pi(self.observations)
         q_v = self.critic_model.q(self.observations, mu_v)
-        actor_loss = -1.0 * q_v.mean()
+        actor_objective = q_v.mean()
+        actor_loss = -1.0 * actor_objective
 
         self.actor_optimizer.zero_grad()
         actor_loss.backward()
@@ -110,7 +111,7 @@ class AgentDdpg(OffPolicyAgent):
         )
 
         self.last_critic_loss.value = critic_loss.item()
-        self.last_actor_loss.value = actor_loss.item()
+        self.last_actor_objective.value = actor_objective.item()
 
         count_training_steps += 1
 
