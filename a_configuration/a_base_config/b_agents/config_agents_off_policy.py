@@ -7,8 +7,6 @@ class ConfigDqn(ConfigOffPolicyAgent):
         super(ConfigDqn, self).__init__()
         self.AGENT_TYPE = AgentType.DQN
 
-        self.LEARNING_RATE = 0.001
-
         self.EPSILON_INIT = 1.0
         self.EPSILON_FINAL = 0.1
         self.EPSILON_FINAL_TRAINING_STEP_PROPORTION = 0.5
@@ -46,19 +44,14 @@ class ConfigDdpg(ConfigOffPolicyAgent):
         super(ConfigDdpg, self).__init__()
         self.AGENT_TYPE = AgentType.DDPG
 
-        self.ACTOR_LEARNING_RATE = 0.0001
-        self.LEARNING_RATE = 0.001
-
         self.TAU = 0.005
         self.BUFFER_CAPACITY = 10_000
+
 
 class ConfigTd3(ConfigOffPolicyAgent):
     def __init__(self):
         super(ConfigTd3, self).__init__()
         self.AGENT_TYPE = AgentType.TD3
-
-        self.ACTOR_LEARNING_RATE = 0.0001
-        self.LEARNING_RATE = 0.001
 
         self.TAU = 0.005
         self.BUFFER_CAPACITY = 10_000
@@ -71,10 +64,6 @@ class ConfigSac(ConfigOffPolicyAgent):
         super(ConfigSac, self).__init__()
         self.AGENT_TYPE = AgentType.SAC
 
-        self.ACTOR_LEARNING_RATE = 0.0002
-        self.LEARNING_RATE = 0.001
-        self.ALPHA_LEARNING_RATE = 0.00001
-
         self.TAU = 0.005
         self.BUFFER_CAPACITY = 2_000_000
         self.TARGET_SYNC_INTERVAL_TRAINING_STEPS = 50
@@ -83,6 +72,7 @@ class ConfigSac(ConfigOffPolicyAgent):
 
         self.DEFAULT_ALPHA = 1.0
         self.AUTOMATIC_ENTROPY_TEMPERATURE_TUNING = True
+        self.ALPHA_LEARNING_RATE = 0.00001
         self.MIN_ALPHA = 0.1
 
 

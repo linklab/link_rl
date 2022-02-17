@@ -1,3 +1,5 @@
+# https://github.com/ericyangyu/PPO-for-Beginners/blob/master/ppo.py
+# https://github.com/medipixel/rl_algorithms
 import torch
 from gym.spaces import Discrete, Box
 from torch.distributions import Categorical, Normal

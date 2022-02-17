@@ -7,16 +7,13 @@ class ConfigReinforce(ConfigOnPolicyAgent):
         ConfigOnPolicyAgent.__init__(self)
         self.AGENT_TYPE = AgentType.REINFORCE
 
-        self.LEARNING_RATE = 0.0001
-
 
 class ConfigA2c(ConfigOnPolicyAgent):
     def __init__(self):
         ConfigOnPolicyAgent.__init__(self)
         self.AGENT_TYPE = AgentType.A2C
 
-        self.ACTOR_LEARNING_RATE = 0.00005
-        self.LEARNING_RATE = 0.0005
+        self.USE_GAE = False
 
 
 class ConfigA3c(ConfigOnPolicyAgent):
@@ -24,11 +21,8 @@ class ConfigA3c(ConfigOnPolicyAgent):
         ConfigOnPolicyAgent.__init__(self)
         self.AGENT_TYPE = AgentType.A3C
 
-        self.ACTOR_LEARNING_RATE = 0.00001
-        self.LEARNING_RATE = 0.0001
-        self.ENTROPY_BETA = 0.001
-
         self.N_ACTORS = 2
+        self.USE_GAE = False
 
 
 class ConfigPpo(ConfigOnPolicyAgent):
@@ -36,12 +30,11 @@ class ConfigPpo(ConfigOnPolicyAgent):
         ConfigOnPolicyAgent.__init__(self)
         self.AGENT_TYPE = AgentType.PPO
 
-        self.ACTOR_LEARNING_RATE = 0.00001
-        self.LEARNING_RATE = 0.0001
+        self.USE_GAE = True
+        self.USE_GAE_RECALCULATE_TARGET_VALUE = True
 
         self.PPO_EPSILON_CLIP = 0.2
         self.PPO_K_EPOCH = 3
-
 
 
 class ConfigPpoTrajectory(ConfigOnPolicyAgent):
@@ -49,8 +42,8 @@ class ConfigPpoTrajectory(ConfigOnPolicyAgent):
         ConfigOnPolicyAgent.__init__(self)
         self.AGENT_TYPE = AgentType.PPO_TRAJECTORY
 
-        self.ACTOR_LEARNING_RATE = 0.00001
-        self.LEARNING_RATE = 0.0001
+        self.USE_GAE = True
+        self.USE_GAE_RECALCULATE_TARGET_VALUE = True
 
         self.PPO_EPSILON_CLIP = 0.2
         self.PPO_K_EPOCH = 3

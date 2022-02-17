@@ -12,15 +12,11 @@ class ConfigWalkerDdqg(ConfigBase, ConfigWalker, ConfigDdpg):
         ConfigWalker.__init__(self)
         ConfigDdpg.__init__(self)
 
-        self.ACTOR_LEARNING_RATE = 0.0002
-        self.LEARNING_RATE = 0.001
         self.N_STEP = 1
         self.BUFFER_CAPACITY = 250_000
 
-        self.N_VECTORIZED_ENVS = 1
-        self.N_ACTORS = 1
         self.MAX_TRAINING_STEPS = 2_000_000
-        self.MODEL_TYPE = ModelType.SMALL_LINEAR
+        self.MODEL_TYPE = ModelType.MEDIUM_LINEAR
 
 
 class ConfigWalkerSac(ConfigBase, ConfigWalker, ConfigSac):

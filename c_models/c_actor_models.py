@@ -28,16 +28,24 @@ class ActorModel(Model):
         )
 
         if isinstance(self.config.MODEL_PARAMETER, ConfigLinearModel):
-            self.make_linear_model(observation_shape=observation_shape)
+            self.make_linear_model(
+                observation_shape=observation_shape, activation=self.config.LAYER_ACTIVATION()
+            )
 
         elif isinstance(self.config.MODEL_PARAMETER, ConfigConvolutionalModel):
-            self.make_convolutional_model(observation_shape=observation_shape)
+            self.make_convolutional_model(
+                observation_shape=observation_shape, activation=self.config.LAYER_ACTIVATION()
+            )
 
         elif isinstance(self.config.MODEL_PARAMETER, ConfigRecurrentLinearModel):
-            self.make_recurrent_linear_model(observation_shape=observation_shape)
+            self.make_recurrent_linear_model(
+                observation_shape=observation_shape, activation=self.config.LAYER_ACTIVATION()
+            )
 
         elif isinstance(self.config.MODEL_PARAMETER, ConfigRecurrentConvolutionalModel):
-            self.make_recurrent_convolutional_model(observation_shape=observation_shape)
+            self.make_recurrent_convolutional_model(
+                observation_shape=observation_shape, activation=self.config.LAYER_ACTIVATION()
+            )
 
         else:
             raise ValueError()

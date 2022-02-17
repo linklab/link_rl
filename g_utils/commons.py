@@ -87,6 +87,21 @@ def set_config(config):
         config.LAYER_ACTIVATION = nn.LeakyReLU
     elif config.LAYER_ACTIVATION_TYPE == LayerActivationType.ELU:
         config.LAYER_ACTIVATION = nn.ELU
+    elif config.LAYER_ACTIVATION_TYPE == LayerActivationType.PReLU:
+        config.LAYER_ACTIVATION = nn.PReLU
+    elif config.LAYER_ACTIVATION_TYPE == LayerActivationType.SELU:
+        config.LAYER_ACTIVATION = nn.SELU
+    else:
+        raise ValueError()
+
+    if config.VALUE_NETWORK_LAYER_ACTIVATION_TYPE == LayerActivationType.LEAKY_RELU:
+        config.VALUE_NETWORK_LAYER_ACTIVATION = nn.LeakyReLU
+    elif config.VALUE_NETWORK_LAYER_ACTIVATION_TYPE == LayerActivationType.ELU:
+        config.VALUE_NETWORK_LAYER_ACTIVATION = nn.ELU
+    elif config.VALUE_NETWORK_LAYER_ACTIVATION_TYPE == LayerActivationType.PReLU:
+        config.VALUE_NETWORK_LAYER_ACTIVATION = nn.PReLU
+    elif config.VALUE_NETWORK_LAYER_ACTIVATION_TYPE == LayerActivationType.SELU:
+        config.VALUE_NETWORK_LAYER_ACTIVATION = nn.SELU
     else:
         raise ValueError()
 
@@ -106,7 +121,7 @@ def set_config(config):
 
     elif config.AGENT_TYPE == AgentType.A2C:
         config.BUFFER_CAPACITY = config.BATCH_SIZE
-        config.CONSOLE_LOG_INTERVAL_TRAINING_STEPS = 10
+        config.CONSOLE_LOG_INTERVAL_TRAINING_STEPS = 30
 
     elif config.AGENT_TYPE == AgentType.A3C:
         config.BUFFER_CAPACITY = config.BATCH_SIZE
@@ -168,7 +183,10 @@ def print_basic_info(observation_space=None, action_space=None, config=None):
         if not param.startswith("__") and param not in [
             "MODEL_PARAMETER", "NEURONS_PER_FULLY_CONNECTED_LAYER", "OUT_CHANNELS_PER_LAYER", "KERNEL_SIZE_PER_LAYER",
             "STRIDE_PER_LAYER", "EPISODE_REWARD_AVG_SOLVED", "EPISODE_REWARD_STD_SOLVED", "UNITY_ENV_DIR",
-            "MODEL_SAVE_DIR", "PROJECT_HOME", "LAYER_ACTIVATION", "LOSS_FUNCTION", "ENV_NAME", "PLAY_MODEL_FILE_NAME"
+            "MODEL_SAVE_DIR", "PROJECT_HOME", "LAYER_ACTIVATION", "LAYER_ACTIVATION_TYPE",
+            "VALUE_NETWORK_LAYER_ACTIVATION", "VALUE_NETWORK_LAYER_ACTIVATION_TYPE",
+            "LOSS_FUNCTION", "ENV_NAME", "PLAY_MODEL_FILE_NAME", "MODEL_TYPE", "LEARNING_RATE", "ACTOR_LEARNING_RATE",
+            "ALPHA_LEARNING_RATE"
         ]:
             if param in [
                 "BATCH_SIZE", "BUFFER_CAPACITY", "CONSOLE_LOG_INTERVAL_TRAINING_STEPS", "MAX_TRAINING_STEPS",
@@ -192,6 +210,7 @@ def print_basic_info(observation_space=None, action_space=None, config=None):
             print("{0:55}".format(items[0]), end="\n")
             items.clear()
 
+    print_learning_rate_info(config)
     print_model_info(config)
 
     if observation_space and action_space:
@@ -255,8 +274,10 @@ def print_comparison_basic_info(observation_space, action_space, config_c):
             if not param.startswith("__") and param not in [
                 "MODEL_PARAMETER", "NEURONS_PER_FULLY_CONNECTED_LAYER", "OUT_CHANNELS_PER_LAYER", "KERNEL_SIZE_PER_LAYER",
                 "STRIDE_PER_LAYER", "EPISODE_REWARD_AVG_SOLVED", "EPISODE_REWARD_STD_SOLVED", "UNITY_ENV_DIR",
-                "COMPARISON_RESULTS_SAVE_DIR", "PROJECT_HOME", "LAYER_ACTIVATION", "LOSS_FUNCTION", "ENV_NAME",
-                "PLAY_MODEL_FILE_NAME"
+                "COMPARISON_RESULTS_SAVE_DIR", "PROJECT_HOME", "LAYER_ACTIVATION", "LAYER_ACTIVATION_TYPE",
+                "VALUE_NETWORK_LAYER_ACTIVATION", "VALUE_NETWORK_LAYER_ACTIVATION_TYPE",
+                "LOSS_FUNCTION", "ENV_NAME", "PLAY_MODEL_FILE_NAME", "MODEL_TYPE", "LEARNING_RATE", "ACTOR_LEARNING_RATE",
+                "ALPHA_LEARNING_RATE"
             ]:
                 if param in [
                     "BATCH_SIZE", "BUFFER_CAPACITY", "CONSOLE_LOG_INTERVAL_TRAINING_STEPS", "MAX_TRAINING_STEPS",
@@ -280,6 +301,8 @@ def print_comparison_basic_info(observation_space, action_space, config_c):
                 print("{0:55}".format(items[0]), end="\n")
                 items.clear()
 
+        print_learning_rate_info(agent_config)
+
         print_model_info(agent_config)
 
     if observation_space and action_space:
@@ -291,19 +314,34 @@ def print_comparison_basic_info(observation_space, action_space, config_c):
     print()
 
 
+def print_learning_rate_info(config):
+    print('-' * 72 + " LEARNING_RATE " + '-' * 72)
+
+    ptr_str = "{:55} ".format("{0}: {1:}".format("LEARNING_RATE", config.LEARNING_RATE))
+
+    if hasattr(config, "ACTOR_LEARNING_RATE"):
+        ptr_str += "{:55} ".format("{0}: {1:}".format("ACTOR_LEARNING_RATE", config.ACTOR_LEARNING_RATE))
+
+    if hasattr(config, "ALPHA_LEARNING_RATE"):
+        ptr_str += "{:55}".format("{0}: {1:}".format("ALPHA_LEARNING_RATE", config.ALPHA_LEARNING_RATE))
+
+    print(ptr_str, end="\n")
+
+
 def print_model_info(config):
     if config.MODEL_PARAMETER is None:
         set_config(config)
 
     model_config = config.MODEL_PARAMETER
-    print('-' * 76 + " MODEL_TYPE " + '-' * 76)
+    print('-' * 74 + " MODEL_TYPE " + '-' * 74)
+
     if isinstance(model_config, ConfigLinearModel):
-        item1 = "{0}: {1:}".format("MODEL_PARAMETER", "LINEAR_MODEL_PARAMETER")
+        item1 = "{0}: {1:}".format("MODEL_TYPE", config.MODEL_TYPE)
         item2 = "{0}: {1:}".format("NEURONS_PER_REPRESENTATION_LAYER", model_config.NEURONS_PER_REPRESENTATION_LAYER)
         item3 = "{0}: {1:}".format("NEURONS_PER_FULLY_CONNECTED_LAYER", model_config.NEURONS_PER_FULLY_CONNECTED_LAYER)
         print("{0:55} {1:55} {2:55}".format(item1, item2, item3), end="\n")
     elif isinstance(model_config, ConfigConvolutionalModel):
-        item1 = "{0}: {1:}".format("MODEL_PARAMETER", "CONVOLUTIONAL_MODEL_PARAMETER")
+        item1 = "{0}: {1:}".format("MODEL_TYPE", config.MODEL_TYPE)
         item2 = "{0}: {1:}".format("OUT_CHANNELS_PER_LAYER", model_config.OUT_CHANNELS_PER_LAYER)
         item3 = "{0}: {1:}".format("KERNEL_SIZE_PER_LAYER", model_config.KERNEL_SIZE_PER_LAYER)
         print("{0:55} {1:55} {2:55}".format(item1, item2, item3, end="\n"))
@@ -314,7 +352,7 @@ def print_model_info(config):
         item2 = "{0}: {1:}".format("NEURONS_PER_FULLY_CONNECTED_LAYER", model_config.NEURONS_PER_FULLY_CONNECTED_LAYER)
         print("{0:55} {1:55}".format(item1, item2), end="\n")
     elif isinstance(model_config, ConfigRecurrentLinearModel):
-        item1 = "{0}: {1:}".format("MODEL_PARAMETER", "RECURRENT_LINEAR_MODEL_PARAMETER")
+        item1 = "{0}: {1:}".format("MODEL_TYPE", config.MODEL_TYPE)
         item2 = "{0}: {1:}".format("NEURONS_PER_REPRESENTATION_LAYER", model_config.NEURONS_PER_REPRESENTATION_LAYER)
         print("{0:55} {1:55}".format(item1, item2, end="\n"))
         item1 = "{0}: {1:}".format("HIDDEN_SIZE", model_config.HIDDEN_SIZE)
@@ -322,7 +360,7 @@ def print_model_info(config):
         item3 = "{0}: {1:}".format("NEURONS_PER_FULLY_CONNECTED_LAYER", model_config.NEURONS_PER_FULLY_CONNECTED_LAYER)
         print("{0:55} {1:55} {2:55}".format(item1, item2, item3, end="\n"))
     elif isinstance(model_config, ConfigRecurrentConvolutionalModel):
-        item1 = "{0}: {1:}".format("MODEL_PARAMETER", "RECURRENT_CONVOLUTIONAL_MODEL_PARAMETER")
+        item1 = "{0}: {1:}".format("MODEL_TYPE", config.MODEL_TYPE)
         item2 = "{0}: {1:}".format("OUT_CHANNELS_PER_LAYER", model_config.OUT_CHANNELS_PER_LAYER)
         item3 = "{0}: {1:}".format("KERNEL_SIZE_PER_LAYER", model_config.KERNEL_SIZE_PER_LAYER)
         print("{0:55} {1:55} {2:55}".format(item1, item2, item3, end="\n"))
@@ -337,8 +375,9 @@ def print_model_info(config):
     else:
         raise ValueError()
 
-    print("LAYER_ACTIVATION: {0}".format(config.LAYER_ACTIVATION))
-    print("LOSS_FUNCTION: {0}".format(config.LOSS_FUNCTION))
+    print("LAYER_ACTIVATION_TYPE: {0}".format(config.LAYER_ACTIVATION_TYPE))
+    print("VALUE_NETWORK_LAYER_ACTIVATION_TYPE: {0}".format(config.VALUE_NETWORK_LAYER_ACTIVATION_TYPE))
+    print("LOSS_FUNCTION_TYPE: {0}".format(config.LOSS_FUNCTION_TYPE))
     print("PLAY_MODEL_FILE_NAME: {0}".format(config.PLAY_MODEL_FILE_NAME))
 
 

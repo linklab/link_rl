@@ -53,7 +53,7 @@ class Model(nn.Module):
     #   get_*_layers   #
     ####################
 
-    def get_linear_layers(self, input_n_features):
+    def get_linear_layers(self, input_n_features, activation=nn.ReLU()):
         if not self.config.MODEL_PARAMETER.NEURONS_PER_FULLY_CONNECTED_LAYER:
             print("self.config.MODEL_PARAMETER.NEURONS_PER_FULLY_CONNECTED_LAYER is empty")
             return nn.Sequential()
@@ -77,12 +77,12 @@ class Model(nn.Module):
                 )
 
             # Activation Function
-            linear_layers_dict["linear_{0}_activation".format(idx)] = self.config.LAYER_ACTIVATION()
+            linear_layers_dict["linear_{0}_activation".format(idx)] = activation
 
         linear_layers = nn.Sequential(linear_layers_dict)
         return linear_layers
 
-    def get_representation_layers(self, input_n_features):
+    def get_representation_layers(self, input_n_features, activation=nn.ReLU()):
         if not self.config.MODEL_PARAMETER.NEURONS_PER_REPRESENTATION_LAYER:
             print("self.config.MODEL_PARAMETER.NEURONS_PER_REPRESENTATION_LAYER is empty")
             return nn.Sequential()
@@ -106,12 +106,12 @@ class Model(nn.Module):
                 )
 
             # Activation Function
-            representation_layers_dict["representation_{0}_activation".format(idx)] = self.config.LAYER_ACTIVATION()
+            representation_layers_dict["representation_{0}_activation".format(idx)] = activation
 
         representation_layers = nn.Sequential(representation_layers_dict)
         return representation_layers
 
-    def get_convolutional_layers(self, input_n_channels):
+    def get_convolutional_layers(self, input_n_channels, activation=nn.ReLU()):
         assert self.config.MODEL_PARAMETER.OUT_CHANNELS_PER_LAYER
         assert self.config.MODEL_PARAMETER.KERNEL_SIZE_PER_LAYER
         assert self.config.MODEL_PARAMETER.STRIDE_PER_LAYER
@@ -132,7 +132,7 @@ class Model(nn.Module):
             )
 
             # Activation Function
-            convolutional_layers_dict["conv_{0}_activation".format(idx)] = self.config.LAYER_ACTIVATION()
+            convolutional_layers_dict["conv_{0}_activation".format(idx)] = activation
 
         convolutional_layers = nn.Sequential(convolutional_layers_dict)
         return convolutional_layers
@@ -184,10 +184,12 @@ class Model(nn.Module):
     #   make_*_model   #
     ####################
 
-    def make_linear_model(self, observation_shape, n_out_actions=None):
+    def make_linear_model(self, observation_shape, n_out_actions=None, activation=nn.ReLU()):
         # representation_layers
         input_n_features = observation_shape[0]
-        self.representation_layers = self.get_representation_layers(input_n_features=input_n_features)
+        self.representation_layers = self.get_representation_layers(
+            input_n_features=input_n_features, activation=activation
+        )
 
         # linear_layers
         if self.config.MODEL_PARAMETER.NEURONS_PER_REPRESENTATION_LAYER:
@@ -196,16 +198,18 @@ class Model(nn.Module):
         if n_out_actions is not None:
             input_n_features = input_n_features + n_out_actions
 
-        self.linear_layers = self.get_linear_layers(input_n_features=input_n_features)
+        self.linear_layers = self.get_linear_layers(input_n_features=input_n_features, activation=activation)
 
-    def make_convolutional_model(self, observation_shape, n_out_actions=None):
+    def make_convolutional_model(self, observation_shape, n_out_actions=None, activation=nn.ReLU()):
         # convolutional_layers
         input_n_channels = observation_shape[0]
-        self.convolutional_layers = self.get_convolutional_layers(input_n_channels)
+        self.convolutional_layers = self.get_convolutional_layers(input_n_channels, activation=activation)
 
         # representation_layers
         conv_out_flat_size = self._get_conv_out(self.convolutional_layers, observation_shape)
-        self.representation_layers = self.get_representation_layers(input_n_features=conv_out_flat_size)
+        self.representation_layers = self.get_representation_layers(
+            input_n_features=conv_out_flat_size, activation=activation
+        )
 
         # linear_layers
         if self.config.MODEL_PARAMETER.NEURONS_PER_REPRESENTATION_LAYER:
@@ -216,12 +220,14 @@ class Model(nn.Module):
         if n_out_actions is not None:
             input_n_features = input_n_features + n_out_actions
 
-        self.linear_layers = self.get_linear_layers(input_n_features=input_n_features)
+        self.linear_layers = self.get_linear_layers(input_n_features=input_n_features, activation=activation)
 
-    def make_recurrent_linear_model(self, observation_shape):
+    def make_recurrent_linear_model(self, observation_shape, activation=nn.ReLU()):
         # representation_layers
         input_n_features = observation_shape[0]
-        self.representation_layers = self.get_representation_layers(input_n_features=input_n_features)
+        self.representation_layers = self.get_representation_layers(
+            input_n_features=input_n_features, activation=activation
+        )
 
         # recurrent_layers
         if self.config.MODEL_PARAMETER.NEURONS_PER_REPRESENTATION_LAYER:
@@ -230,16 +236,16 @@ class Model(nn.Module):
 
         # linear_layers
         input_n_features = self.config.MODEL_PARAMETER.HIDDEN_SIZE
-        self.linear_layers = self.get_linear_layers(input_n_features=input_n_features)
+        self.linear_layers = self.get_linear_layers(input_n_features=input_n_features, activation=activation)
 
-    def make_recurrent_convolutional_model(self, observation_shape):
+    def make_recurrent_convolutional_model(self, observation_shape, activation=nn.ReLU()):
         # convolutional_layers
         input_n_channels = observation_shape[0]
-        self.convolutional_layers = self.get_convolutional_layers(input_n_channels)
+        self.convolutional_layers = self.get_convolutional_layers(input_n_channels, activation=activation)
 
         # representation_layers
         conv_out_flat_size = self._get_conv_out(self.convolutional_layers, observation_shape)
-        self.representation_layers = self.get_representation_layers(conv_out_flat_size)
+        self.representation_layers = self.get_representation_layers(conv_out_flat_size, activation=activation)
 
         # recurrent_layers
         if self.config.MODEL_PARAMETER.NEURONS_PER_REPRESENTATION_LAYER:
@@ -250,7 +256,7 @@ class Model(nn.Module):
 
         # linear_layers
         input_n_features = self.config.MODEL_PARAMETER.HIDDEN_SIZE
-        self.linear_layers = self.get_linear_layers(input_n_features=input_n_features)
+        self.linear_layers = self.get_linear_layers(input_n_features=input_n_features, activation=activation)
 
     def _forward(self, obs, save_hidden=False):
         if isinstance(obs, np.ndarray):

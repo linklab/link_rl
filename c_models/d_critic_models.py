@@ -50,13 +50,17 @@ class ValueCriticModel(CriticModel):
             isinstance(self.config.MODEL_PARAMETER, ConfigLinearModel),
             isinstance(self.config.MODEL_PARAMETER, ConfigRecurrentLinearModel)
         ]):
-            self.make_linear_model(observation_shape=observation_shape)
+            self.make_linear_model(
+                observation_shape=observation_shape, activation=self.config.VALUE_NETWORK_LAYER_ACTIVATION()
+            )
 
         elif any([
             isinstance(self.config.MODEL_PARAMETER, ConfigConvolutionalModel),
             isinstance(self.config.MODEL_PARAMETER, ConfigRecurrentConvolutionalModel)
         ]):
-            self.make_convolutional_model(observation_shape=observation_shape)
+            self.make_convolutional_model(
+                observation_shape=observation_shape, activation=self.config.VALUE_NETWORK_LAYER_ACTIVATION()
+            )
 
         else:
             raise ValueError()
@@ -126,7 +130,8 @@ class QCriticModel(CriticModel):
             isinstance(self.config.MODEL_PARAMETER, ConfigRecurrentLinearModel)
         ]):
             self.make_linear_model(
-                observation_shape=observation_shape, n_out_actions=self.n_out_actions
+                observation_shape=observation_shape, n_out_actions=self.n_out_actions,
+                activation=self.config.VALUE_NETWORK_LAYER_ACTIVATION()
             )
 
         elif any([
@@ -134,7 +139,8 @@ class QCriticModel(CriticModel):
             isinstance(self.config.MODEL_PARAMETER, ConfigRecurrentConvolutionalModel)
         ]):
             self.make_convolutional_model(
-                observation_shape=observation_shape, n_out_actions=self.n_out_actions
+                observation_shape=observation_shape, n_out_actions=self.n_out_actions,
+                activation=self.config.VALUE_NETWORK_LAYER_ACTIVATION()
             )
 
         else:

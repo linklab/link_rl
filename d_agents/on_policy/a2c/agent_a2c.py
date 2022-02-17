@@ -94,7 +94,7 @@ class AgentA2c(OnPolicyAgent):
         else:
             raise ValueError()
 
-        entropy = dist.entropy().mean()
+        entropy = torch.mean(dist.entropy())
 
         # actor_objective.shape: (,) <--  값 1개
         actor_objective = torch.mean(criticized_log_pi_action_v)
