@@ -516,7 +516,7 @@ def console_log_comparison(
 
 def get_wandb_obj(config, agent=None, comparison=False):
     if comparison:
-        project = "{0}_{1}_{2}".format(config.ENV_NAME, "Comparison", SYSTEM_USER_NAME)
+        project = "{0}_{1}_{2}".format(config.__name__, "Comparison", SYSTEM_USER_NAME)
     else:
         project = "{0}_{1}_{2}".format(config.ENV_NAME, config.AGENT_TYPE.name, SYSTEM_USER_NAME)
 
