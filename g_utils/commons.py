@@ -763,18 +763,17 @@ def get_single_env(config, no_graphics=True):
         single_env = UnityToGymWrapper(u_env)
         if config.ENV_NAME in ["UnityDrone"]:
             from b_environments.unitywrappers import GrayScaleObservation, ResizeObservation, TransformReward
-            from gym.wrappers import FrameStack
-            single_env = FrameStack(ResizeObservation(GrayScaleObservation(single_env), shape=64), num_stack=4)
+            single_env = gym.wrappers.FrameStack(ResizeObservation(GrayScaleObservation(single_env), shape=64), num_stack=4)
             single_env = TransformReward(single_env)
     else:
-        single_env = gym.make(config.ENV_NAME)
-        if config.ENV_NAME in ["PongNoFrameskip-v4"]:
-            single_env = gym.wrappers.AtariPreprocessing(
-                single_env, grayscale_obs=True, scale_obs=True
-            )
-            single_env = gym.wrappers.FrameStack(single_env, num_stack=4, lz4_compress=True)
         if config.ENV_NAME in ["FrozenLake-v1"]:
             single_env = MakeBoxFrozenLake()
+        else:
+            single_env = gym.make(config.ENV_NAME)
+
+            if config.ENV_NAME in ["PongNoFrameskip-v4"]:
+                single_env = gym.wrappers.AtariPreprocessing(single_env, grayscale_obs=True, scale_obs=True)
+                single_env = gym.wrappers.FrameStack(single_env, num_stack=4, lz4_compress=True)
 
     return single_env
 
