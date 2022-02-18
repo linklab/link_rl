@@ -6,7 +6,7 @@ from torch.distributions import Categorical, Normal
 import torch.multiprocessing as mp
 
 from c_models.c_actor_models import DiscreteActorModel, ContinuousStochasticActorModel
-from d_agents.agent import OnPolicyAgent
+from d_agents.on_policy.on_policy_agent import OnPolicyAgent
 
 
 class AgentReinforce(OnPolicyAgent):

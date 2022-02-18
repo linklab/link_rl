@@ -9,7 +9,7 @@ from collections import deque
 import torch.multiprocessing as mp
 
 from g_utils.commons import get_train_env
-from g_utils.types import Transition
+from g_utils.types import Transition, AgentType
 
 
 class Actor(mp.Process):
@@ -113,6 +113,7 @@ class Actor(mp.Process):
 class LearningActor(Actor):
     def __init__(self, env_name, actor_id, agent, queue, config):
         super(LearningActor, self).__init__(env_name, actor_id, agent, queue, config)
+        assert self.config.AGENT_TYPE == AgentType.A3C
 
         # FOR TRAIN
         self.total_time_step = 0

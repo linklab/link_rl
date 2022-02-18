@@ -84,7 +84,7 @@ class AgentType(enum.Enum):
 
 
 OnPolicyAgentTypes = [
-    AgentType.REINFORCE, AgentType.A2C, AgentType.PPO, AgentType.PPO_TRAJECTORY
+    AgentType.REINFORCE, AgentType.A2C, AgentType.A3C, AgentType.PPO, AgentType.PPO_TRAJECTORY
 ]
 
 OffPolicyAgentTypes = [

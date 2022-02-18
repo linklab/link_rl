@@ -14,7 +14,7 @@ from gym.spaces import Discrete, Box
 from torch.distributions import Categorical, Normal
 
 from c_models.h_muzero_models import *
-from d_agents.agent import Agent, OffPolicyAgent
+from d_agents.off_policy.off_policy_agent import OffPolicyAgent
 from g_utils.types import AgentMode
 
 # 저장되는 transition이 다르다.

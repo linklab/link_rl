@@ -21,20 +21,17 @@ class WorkerAgentA3c(AgentA2c):
         self.shared_model_access_lock = shared_model_access_lock
 
     def worker_train(self):
-        self._before_train(sample_length=self.config.BATCH_SIZE)
+        self._before_train()
 
         count_training_steps = 0
 
         self.shared_model_access_lock.acquire()
 
-        target_values, advantages = self.get_target_values_and_advantages()
+        values, detached_target_values, detached_advantages = self.get_target_values_and_advantages()
         #############################################
         #  Critic (Value) Loss 산출 & Update - BEGIN #
         #############################################
-        # values.shape: (32, 1)
-        values = self.critic_model.v(self.observations)
-
-        critic_loss = self.config.LOSS_FUNCTION(values, target_values.detach())
+        critic_loss = self.config.LOSS_FUNCTION(values, detached_target_values)
 
         # calculate local gradients and push local worker parameters to master parameters
         self.master_agent.critic_optimizer.zero_grad()
@@ -64,18 +61,18 @@ class WorkerAgentA3c(AgentA2c):
             # advantage.shape: (32, 1)
             # dist.log_prob(value=actions.squeeze(-1)).shape: (32,)
             # criticized_log_pi_action_v.shape: (32,)
-            criticized_log_pi_action_v = dist.log_prob(value=self.actions.squeeze(dim=-1)) * advantages.squeeze(dim=-1)
+            criticized_log_pi_action_v = dist.log_prob(value=self.actions.squeeze(dim=-1)) * detached_advantages.squeeze(dim=-1)
 
             entropy = torch.mean(dist.entropy())
         elif isinstance(self.action_space, Box):
             mu_v, var_v = self.actor_model.pi(self.observations)
 
-            # criticized_log_pi_action_v = self.calc_log_prob(mu_v, var_v, self.actions) * advantages
+            # criticized_log_pi_action_v = self.calc_log_prob(mu_v, var_v, self.actions) * detached_advantages
             # entropy = 0.5 * (torch.log(2.0 * np.pi * var_v) + 1.0).sum(dim=-1)
             # entropy = entropy.mean()
 
             dist = Normal(loc=mu_v, scale=torch.sqrt(var_v))
-            criticized_log_pi_action_v = dist.log_prob(value=self.actions).sum(dim=-1) * advantages.squeeze(dim=-1)
+            criticized_log_pi_action_v = dist.log_prob(value=self.actions).sum(dim=-1) * detached_advantages.squeeze(dim=-1)
             entropy = torch.mean(dist.entropy())
         else:
             raise ValueError()

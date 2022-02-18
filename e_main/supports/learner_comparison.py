@@ -13,7 +13,7 @@ from gym.spaces import Discrete, Box
 from a_configuration.a_base_config.c_models.config_recurrent_linear_models import ConfigRecurrentLinearModel
 from e_main.supports.actor import Actor
 from g_utils.commons import get_train_env, get_single_env, console_log_comparison, wandb_log_comparison, MeanBuffer
-from g_utils.types import AgentType, AgentMode, Transition
+from g_utils.types import AgentType, AgentMode, Transition, OnPolicyAgentTypes, OffPolicyAgentTypes
 
 
 class LearnerComparison:
@@ -150,7 +150,13 @@ class LearnerComparison:
                 if not self.is_terminated_per_agent[agent_idx]:
                     n_step_transition = next(self.transition_generators_per_agent[agent_idx])
 
-                    self.agents[agent_idx].buffer.append(n_step_transition)
+                    if self.config_c.AGENT_PARAMETERS[agent_idx].AGENT_TYPE in OnPolicyAgentTypes:
+                        self.agents[agent_idx].buffer.append(n_step_transition)
+                    elif self.config_c.AGENT_PARAMETERS[agent_idx].AGENT_TYPE in OffPolicyAgentTypes:
+                        self.agents[agent_idx].replay_buffer.append(n_step_transition)
+                    else:
+                        raise ValueError()
+
                     self.n_rollout_transitions_per_agent[agent_idx] += 1
 
                     actor_id = n_step_transition.info["actor_id"]   # SHOULD BE 1

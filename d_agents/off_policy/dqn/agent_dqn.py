@@ -5,7 +5,7 @@ import torch
 import torch.multiprocessing as mp
 
 from c_models.b_qnet_models import QNet
-from d_agents.agent import OffPolicyAgent
+from d_agents.off_policy.off_policy_agent import OffPolicyAgent
 from g_utils.commons import EpsilonTracker
 from g_utils.types import AgentMode
 
