@@ -35,7 +35,6 @@ class ConfigLunarLanderContinuousPpo(ConfigBase, ConfigLunarLanderContinuous, Co
         self.MODEL_TYPE = ModelType.SMALL_LINEAR
 
         self.USE_GAE = True
-        self.LOSS_FUNCTION_TYPE = LossFunctionType.HUBER_LOSS
 
 
 class ConfigLunarLanderContinuousPpoTrajectory(ConfigBase, ConfigLunarLanderContinuous, ConfigPpoTrajectory):

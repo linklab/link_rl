@@ -12,5 +12,3 @@ class ConfigCartPole(ConfigGymClassicControl):
         self.ENV_NAME = "CartPole-v1"
         self.EPISODE_REWARD_AVG_SOLVED = 450
         self.EPISODE_REWARD_STD_SOLVED = 50.0
-
-        self.LOSS_FUNCTION_TYPE = LossFunctionType.MSE_LOSS

@@ -36,14 +36,8 @@ class AgentPpoTrajectory(AgentPpo):
         sum_ratio = 0.0
         sum_entropy = 0.0
 
-        trajectory_target_values, trajectory_advantages = self.get_target_values_and_advantages()
-        trajectory_advantages = trajectory_advantages.squeeze(dim=-1)  # NOTE
-
-        # trajectory_target_values = self.get_target_values()
-        # trajectory_values = self.critic_model.v(self.observations)
-        # trajectory_advantages = (trajectory_target_values - trajectory_values).detach()
-        # trajectory_advantages = (trajectory_advantages - torch.mean(trajectory_advantages)) / (torch.std(trajectory_advantages) + 1e-7)
-        # trajectory_advantages = trajectory_advantages.squeeze(dim=-1)  # NOTE
+        _, trajectory_detached_target_values, trajectory_detached_advantages = self.get_target_values_and_advantages()
+        trajectory_detached_advantages = trajectory_detached_advantages.squeeze(dim=-1)  # NOTE
 
         for _ in range(self.config.PPO_K_EPOCH):
             for batch_offset in range(0, self.config.PPO_TRAJECTORY_SIZE, self.config.BATCH_SIZE):
@@ -52,15 +46,17 @@ class AgentPpoTrajectory(AgentPpo):
                 # Batch 단위의 훈련에 필요한 재료 마련
                 batch_observations = self.observations[batch_offset:batch_l]
                 batch_actions = self.actions[batch_offset:batch_l]
-                batch_target_values = trajectory_target_values[batch_offset:batch_l]
+                batch_detached_target_values = trajectory_detached_target_values[batch_offset:batch_l]
                 batch_old_log_pi_action_v = trajectory_old_log_pi_action_v[batch_offset:batch_l]
-                batch_advantages = trajectory_advantages[batch_offset:batch_l]
+                batch_detached_advantages = trajectory_detached_advantages[batch_offset:batch_l]
 
                 #############################################
                 #  Critic (Value) Loss 산출 & Update - BEGIN #
                 #############################################
                 batch_values = self.critic_model.v(batch_observations)
-                batch_critic_loss = self.train_critic(values=batch_values, target_values=batch_target_values)
+                batch_critic_loss = self.train_critic(
+                    values=batch_values, detached_target_values=batch_detached_target_values
+                )
                 ##########################################
                 #  Critic (Value) Loss 산출 & Update- END #
                 ##########################################
@@ -93,13 +89,13 @@ class AgentPpoTrajectory(AgentPpo):
 
                 batch_ratio = torch.exp(batch_log_pi_action_v - batch_old_log_pi_action_v.detach())
 
-                assert batch_ratio.shape == batch_advantages.shape, "{0}, {1}".format(
-                    batch_ratio.shape, batch_advantages.shape
+                assert batch_ratio.shape == batch_detached_advantages.shape, "{0}, {1}".format(
+                    batch_ratio.shape, batch_detached_advantages.shape
                 )
-                batch_surrogate_objective_1 = batch_ratio * batch_advantages
+                batch_surrogate_objective_1 = batch_ratio * batch_detached_advantages
                 batch_surrogate_objective_2 = torch.clamp(
                     batch_ratio, 1.0 - self.config.PPO_EPSILON_CLIP, 1.0 + self.config.PPO_EPSILON_CLIP
-                ) * batch_advantages
+                ) * batch_detached_advantages
 
                 assert batch_surrogate_objective_1.shape == batch_surrogate_objective_2.shape, "{0} {1}".format(
                     batch_surrogate_objective_1.shape, batch_surrogate_objective_2.shape

@@ -17,7 +17,7 @@ import time
 
 from e_main.supports.actor import Actor
 from g_utils.commons import model_save, console_log, wandb_log, get_wandb_obj, get_train_env, get_single_env, MeanBuffer
-from g_utils.types import AgentType, AgentMode, Transition, Episode_history
+from g_utils.types import AgentType, AgentMode, Transition, Episode_history, OnPolicyAgentTypes, OffPolicyAgentTypes
 
 
 class Learner(mp.Process):
@@ -281,7 +281,13 @@ class Learner(mp.Process):
 
                 self.total_time_step.value += 1
 
-                self.agent.buffer.append(n_step_transition)
+                if self.config.AGENT_TYPE in OnPolicyAgentTypes:
+                    self.agent.buffer.append(n_step_transition)
+                elif self.config.AGENT_TYPE in OffPolicyAgentTypes:
+                    self.agent.replay_buffer.append(n_step_transition)
+                else:
+                    raise ValueError()
+
                 if self.config.AGENT_TYPE == AgentType.MUZERO:
                     actor_id = n_step_transition.info_history[0]["actor_id"]
                     env_id = n_step_transition.info_history[0]["env_id"]

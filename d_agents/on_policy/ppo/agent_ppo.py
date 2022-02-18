@@ -41,21 +41,15 @@ class AgentPpo(AgentA2c):
         sum_ratio = 0.0
         sum_entropy = 0.0
 
-        batch_target_values, batch_advantages = self.get_target_values_and_advantages()
-        batch_advantages = batch_advantages.squeeze(dim=-1)  # NOTE
-        # batch_target_values = self.get_target_values()
-        # batch_values = self.critic_model.v(self.observations)
-        # batch_advantages = (batch_target_values - batch_values).detach()
-        # batch_advantages = (batch_advantages - torch.mean(batch_advantages)) / (torch.std(batch_advantages) + 1e-7)
-        # batch_advantages = batch_advantages.squeeze(dim=-1)  # NOTE
+        _, detached_target_values, detached_advantages = self.get_target_values_and_advantages()
+        detached_advantages = detached_advantages.squeeze(dim=-1)  # NOTE
 
         for _ in range(self.config.PPO_K_EPOCH):
-
             #############################################
             #  Critic (Value) Loss 산출 & Update - BEGIN #
             #############################################
-            batch_values = self.critic_model.v(self.observations)
-            batch_critic_loss = self.train_critic(values=batch_values, target_values=batch_target_values)
+            values = self.critic_model.v(self.observations)
+            critic_loss = self.train_critic(values=values, detached_target_values=detached_target_values)
             ##########################################
             #  Critic (Value) Loss 산출 & Update- END #
             ##########################################
@@ -67,52 +61,49 @@ class AgentPpo(AgentA2c):
                 # actions.shape: (32, 1)
                 # dist.log_prob(value=actions.squeeze(-1)).shape: (32,)
                 # criticized_log_pi_action_v.shape: (32,)
-                batch_action_probs = self.actor_model.pi(self.observations)
-                batch_dist = Categorical(probs=batch_action_probs)
-                batch_log_pi_action_v = batch_dist.log_prob(value=self.actions.squeeze(dim=-1))
-                batch_entropy = batch_dist.entropy().mean()
-
+                action_probs = self.actor_model.pi(self.observations)
+                dist = Categorical(probs=action_probs)
+                log_pi_action_v = dist.log_prob(value=self.actions.squeeze(dim=-1))
             elif isinstance(self.action_space, Box):
-                batch_mu_v, batch_var_v = self.actor_model.pi(self.observations)
+                mu_v, var_v = self.actor_model.pi(self.observations)
 
-                # batch_log_pi_action_v = self.calc_log_prob(batch_mu_v, batch_var_v, batch_actions)
-                # batch_entropy = 0.5 * (torch.log(2.0 * np.pi * batch_var_v) + 1.0).sum(dim=-1)
-                # batch_entropy = batch_entropy.mean()
+                # log_pi_action_v = self.calc_log_prob(mu_v, var_v, actions)
+                # entropy = 0.5 * (torch.log(2.0 * np.pi * var_v) + 1.0).sum(dim=-1)
+                # entropy = entropy.mean()
 
-                batch_dist = Normal(loc=batch_mu_v, scale=torch.sqrt(batch_var_v))
-                batch_log_pi_action_v = batch_dist.log_prob(value=self.actions).sum(dim=-1)
-                batch_entropy = batch_dist.entropy().mean()
-
+                dist = Normal(loc=mu_v, scale=torch.sqrt(var_v))
+                log_pi_action_v = dist.log_prob(value=self.actions).sum(dim=-1)
             else:
                 raise ValueError()
 
-            batch_ratio = torch.exp(batch_log_pi_action_v - old_log_pi_action_v.detach())
+            entropy = dist.entropy().mean()
+            ratio = torch.exp(log_pi_action_v - old_log_pi_action_v.detach())
 
-            assert batch_ratio.shape == batch_advantages.shape, "{0}, {1}".format(
-                batch_ratio.shape, batch_advantages.shape
+            assert ratio.shape == detached_advantages.shape, "{0}, {1}".format(
+                ratio.shape, detached_advantages.shape
             )
-            batch_surrogate_objective_1 = batch_ratio * batch_advantages
-            batch_surrogate_objective_2 = torch.clamp(
-                batch_ratio, 1.0 - self.config.PPO_EPSILON_CLIP, 1.0 + self.config.PPO_EPSILON_CLIP
-            ) * batch_advantages
+            surrogate_objective_1 = ratio * detached_advantages
+            surrogate_objective_2 = torch.clamp(
+                ratio, 1.0 - self.config.PPO_EPSILON_CLIP, 1.0 + self.config.PPO_EPSILON_CLIP
+            ) * detached_advantages
 
-            assert batch_surrogate_objective_1.shape == batch_surrogate_objective_2.shape, "{0} {1}".format(
-                batch_surrogate_objective_1.shape, batch_surrogate_objective_2.shape
+            assert surrogate_objective_1.shape == surrogate_objective_2.shape, "{0} {1}".format(
+                surrogate_objective_1.shape, surrogate_objective_2.shape
             )
-            batch_actor_objective = torch.mean(torch.min(batch_surrogate_objective_1, batch_surrogate_objective_2))
-            batch_actor_loss = -1.0 * batch_actor_objective
-            batch_entropy_loss = -1.0 * batch_entropy
-            batch_actor_loss = batch_actor_loss + batch_entropy_loss * self.config.ENTROPY_BETA
+            actor_objective = torch.mean(torch.min(surrogate_objective_1, surrogate_objective_2))
+            actor_loss = -1.0 * actor_objective
+            entropy_loss = -1.0 * entropy
+            actor_loss = actor_loss + entropy_loss * self.config.ENTROPY_BETA
 
             self.actor_optimizer.zero_grad()
-            batch_actor_loss.backward()
+            actor_loss.backward()
             self.clip_actor_model_parameter_grad_value(self.actor_model.actor_params_list)
             self.actor_optimizer.step()
 
-            sum_critic_loss += batch_critic_loss.item()
-            sum_actor_objective += batch_actor_objective.item()
-            sum_entropy += batch_entropy.item()
-            sum_ratio += batch_ratio.mean().item()
+            sum_critic_loss += critic_loss.item()
+            sum_actor_objective += actor_objective.item()
+            sum_entropy += entropy.item()
+            sum_ratio += ratio.mean().item()
 
             count_training_steps += 1
             #######################################

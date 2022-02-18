@@ -15,16 +15,12 @@ class ConfigCartPoleBullet(ConfigBullet):
         self.EPISODE_REWARD_AVG_SOLVED = 190
         self.EPISODE_REWARD_STD_SOLVED = 20
 
-        self.LOSS_FUNCTION_TYPE = LossFunctionType.MSE_LOSS
-
 
 class ConfigCartPoleContinuousBullet(ConfigBullet):
     def __init__(self):
         self.ENV_NAME = "CartPoleContinuousBulletEnv-v0"
         self.EPISODE_REWARD_AVG_SOLVED = 190
         self.EPISODE_REWARD_STD_SOLVED = 20
-
-        self.LOSS_FUNCTION_TYPE = LossFunctionType.MSE_LOSS
 
 
 class ConfigAntBullet(ConfigBullet):

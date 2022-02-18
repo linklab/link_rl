@@ -5,7 +5,7 @@ from torch.distributions import Categorical, Normal
 import torch.multiprocessing as mp
 
 from c_models.e_a2c_models import ContinuousActorCriticModel, DiscreteActorCriticModel
-from d_agents.agent import OnPolicyAgent
+from d_agents.on_policy.on_policy_agent import OnPolicyAgent
 
 
 class AgentA2c(OnPolicyAgent):
@@ -39,12 +39,12 @@ class AgentA2c(OnPolicyAgent):
         self.last_actor_objective = mp.Value('d', 0.0)
         self.last_entropy = mp.Value('d', 0.0)
 
-    def train_critic(self, values, target_values):
+    def train_critic(self, values, detached_target_values):
         #############################################
         #  Critic (Value) Loss 산출 & Update - BEGIN #
         #############################################
-        assert values.shape == target_values.shape, "{0} {1}".format(values.shape, target_values.shape)
-        critic_loss = self.config.LOSS_FUNCTION(values, target_values.detach())
+        assert values.shape == detached_target_values.shape, "{0} {1}".format(values.shape, detached_target_values.shape)
+        critic_loss = self.config.LOSS_FUNCTION(values, detached_target_values.detach())
 
         self.critic_optimizer.zero_grad()
         critic_loss.backward()
@@ -59,15 +59,14 @@ class AgentA2c(OnPolicyAgent):
     def train_a2c(self):
         count_training_steps = 0
 
-        target_values, advantages = self.get_target_values_and_advantages()
-
+        # values.shape: (256, 1)
+        # detached_target_values.shape: (256, 1)
+        # detached_advantages.shape: (256, 1)
+        values, detached_target_values, detached_advantages = self.get_target_values_and_advantages()
         #############################################
         #  Critic (Value) Loss 산출 & Update - BEGIN #
         #############################################
-        # target_values = self.get_target_values()
-        values = self.critic_model.v(self.observations)
-
-        critic_loss = self.train_critic(values=values, target_values=target_values)
+        critic_loss = self.train_critic(values=values, detached_target_values=detached_target_values)
         ##########################################
         #  Critic (Value) Loss 산출 & Update- END #
         ##########################################
@@ -76,21 +75,21 @@ class AgentA2c(OnPolicyAgent):
         #  Actor Objective 산출 & Update - BEGIN #
         #########################################
         if isinstance(self.action_space, Discrete):
-            action_probs = self.actor_model.pi(self.observations)
-            dist = Categorical(probs=action_probs)
-
             # action_probs.shape: (32, 2)
             # actions.shape: (32, 1)
             # advantage.shape: (32, 1)
             # dist.log_prob(value=actions.squeeze(-1)).shape: (32,)
             # criticized_log_pi_action_v.shape: (32,)
-            criticized_log_pi_action_v = dist.log_prob(value=self.actions.squeeze(dim=-1)) * advantages.squeeze(dim=-1)
+
+            action_probs = self.actor_model.pi(self.observations)
+            dist = Categorical(probs=action_probs)
+            criticized_log_pi_action_v = dist.log_prob(value=self.actions.squeeze(dim=-1)) * detached_advantages.squeeze(dim=-1)
 
         elif isinstance(self.action_space, Box):
             mu_v, var_v = self.actor_model.pi(self.observations)
 
             dist = Normal(loc=mu_v, scale=torch.sqrt(var_v))
-            criticized_log_pi_action_v = dist.log_prob(value=self.actions).sum(dim=-1) * advantages.squeeze(dim=-1)
+            criticized_log_pi_action_v = dist.log_prob(value=self.actions).sum(dim=-1) * detached_advantages.squeeze(dim=-1)
         else:
             raise ValueError()
 
@@ -98,16 +97,6 @@ class AgentA2c(OnPolicyAgent):
 
         # actor_objective.shape: (,) <--  값 1개
         actor_objective = torch.mean(criticized_log_pi_action_v)
-
-        # if self.step % 1000 == 0:
-        #     print("mu_v:", mu_v, "var_v:", var_v)
-        #     print("actor_objective:", actor_objective)
-        #     print("target_values:", target_values)
-        #     print("values:", values)
-        #     print("advantages:", advantages)
-        #     print("self.actions:", self.actions)
-        #     print("dist.log_prob(value=self.actions).sum(dim=-1, keepdim=True):", dist.log_prob(value=self.actions).sum(dim=-1, keepdim=True))
-
         actor_loss = -1.0 * actor_objective
         entropy_loss = -1.0 * entropy
         actor_loss = actor_loss + entropy_loss * self.config.ENTROPY_BETA

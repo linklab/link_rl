@@ -1,17 +1,13 @@
-import math
-from abc import abstractmethod, ABC
+from abc import abstractmethod
 
 import torch
 import torch.multiprocessing as mp
-from gym.spaces import Discrete, Box, MultiDiscrete
+from gym.spaces import Discrete, Box
 
 import numpy as np
-from torch.distributions import Categorical, Normal
 
-from g_utils.buffers import Buffer
 from g_utils.commons import get_continuous_action_info
-from g_utils.prioritized_buffer import PrioritizedBuffer
-from g_utils.types import AgentMode, AgentType, OnPolicyAgentTypes, ActorCriticAgentTypes, OffPolicyAgentTypes
+from g_utils.types import AgentMode, ActorCriticAgentTypes
 
 
 class Agent:
@@ -53,12 +49,6 @@ class Agent:
         else:
             raise ValueError()
 
-        if self.config.USE_PER:
-            assert self.config.AGENT_TYPE in OffPolicyAgentTypes
-            self.buffer = PrioritizedBuffer(action_space=action_space, config=self.config)
-        else:
-            self.buffer = Buffer(action_space=action_space, config=self.config)
-
         self.model = None
         if self.config.AGENT_TYPE in ActorCriticAgentTypes:
             self.actor_model = None
@@ -79,49 +69,9 @@ class Agent:
     def get_action(self, obs, mode=AgentMode.TRAIN):
         pass
 
-    def _before_train(self, sample_length):
-        if self.config.AGENT_TYPE in ActorCriticAgentTypes:
-            assert self.actor_model
-            assert self.critic_model
-            assert self.model is self.actor_model
-
-        # [MLP]
-        # observations.shape: torch.Size([32, 4]),
-        # actions.shape: torch.Size([32, 1]),
-        # next_observations.shape: torch.Size([32, 4]),
-        # rewards.shape: torch.Size([32, 1]),
-        # dones.shape: torch.Size([32])
-        #
-        # [CNN]
-        # observations.shape: torch.Size([32, 4, 84, 84]),
-        # actions.shape: torch.Size([32, 1]),
-        # next_observations.shape: torch.Size([32, 4, 84, 84]),
-        # rewards.shape: torch.Size([32, 1]),
-        # dones.shape: torch.Size([32])
-        if self.config.AGENT_TYPE == AgentType.MUZERO:
-            self.episode_idxs, self.episode_historys = self.buffer.sample_muzero(batch_size=sample_length)
-        else:
-            self.observations, self.actions, self.next_observations, self.rewards, self.dones = self.buffer.sample(
-                batch_size=sample_length
-            )
-
     @abstractmethod
     def train(self, training_steps_v=None):
         raise NotImplementedError()
-
-    def _after_train(self, loss_each=None):
-        if loss_each is not None and self.config.USE_PER:
-            self.buffer.update_priorities(loss_each.detach().cpu().numpy())
-
-        if self.config.AGENT_TYPE == AgentType.MUZERO:
-            del self.episode_historys
-            del self.episode_idxs
-        else:
-            del self.observations
-            del self.actions
-            del self.next_observations
-            del self.rewards
-            del self.dones
 
     def clip_model_config_grad_value(self, model_parameters):
         torch.nn.utils.clip_grad_norm_(model_parameters, self.config.CLIP_GRADIENT_VALUE)
@@ -167,254 +117,3 @@ class Agent:
             target_model_state[k] = (1.0 - tau) * target_model_state[k] + tau * v
         target_model.load_state_dict(target_model_state)
 
-    def calc_log_prob(self, mu_v, var_v, actions_v):
-        p1 = -0.5 * ((actions_v - mu_v) ** 2) / (var_v.clamp(min=1e-03))
-        # p1 = -1.0 * ((mu_v - actions_v) ** 2) / (2.0 * var_v.clamp(min=1e-3))
-        p2 = -0.5 * torch.log(2 * np.pi * var_v)
-
-        log_prob = (p1 + p2).sum(dim=-1, keepdim=True)
-        return log_prob
-
-
-class OnPolicyAgent(Agent):
-    def __init__(self, observation_space, action_space, config):
-        super(OnPolicyAgent, self).__init__(observation_space, action_space, config)
-        assert self.config.AGENT_TYPE in OnPolicyAgentTypes or self.config.AGENT_TYPE == AgentType.A3C
-
-    def get_action(self, obs, mode=AgentMode.TRAIN):
-        self.step += 1
-        if isinstance(self.action_space, Discrete):
-            action_prob = self.actor_model.pi(obs, save_hidden=True)
-
-            if mode == AgentMode.TRAIN:
-                action = np.random.choice(
-                    a=self.n_discrete_actions, size=self.n_out_actions, p=action_prob[0].detach().cpu().numpy()
-                )
-
-                # dist = Categorical(probs=action_prob)
-                # action = dist.sample().detach().cpu().numpy()
-            else:
-                action = np.argmax(a=action_prob.detach().cpu().numpy(), axis=-1)
-            return action
-
-        elif isinstance(self.action_space, Box):
-            mu_v, var_v = self.actor_model.pi(obs)
-
-            if mode == AgentMode.TRAIN:
-                actions = np.random.normal(
-                    loc=mu_v.detach().cpu().numpy(), scale=torch.sqrt(var_v).detach().cpu().numpy()
-                )
-
-                # dist = Normal(loc=mu_v, scale=torch.sqrt(var_v))
-                # actions = dist.sample().detach().cpu().numpy()
-            else:
-                actions = mu_v.detach().cpu().numpy()
-
-            actions = np.clip(a=actions, a_min=self.np_minus_ones, a_max=self.np_plus_ones)
-
-            return actions
-        else:
-            raise ValueError()
-
-    def get_returns(self):
-        G = 0
-        return_lst = []
-        for reward, done in zip(reversed(self.rewards), reversed(self.dones)):
-            if done:
-                G = 0
-            G = reward + (self.config.GAMMA ** self.config.N_STEP) * G
-            return_lst.append(G)
-
-        returns = torch.tensor(return_lst[::-1], dtype=torch.float32, device=self.config.DEVICE).detach()
-        return returns
-
-    def get_target_values_and_advantages(self):
-        combined_observations = torch.vstack([self.observations, self.next_observations[-1:]])
-        combined_values = self.critic_model.v(combined_observations)
-
-        # values.shape: (32, 1), next_values.shape: (32, 1)
-        values = combined_values[:-1]
-        next_values = combined_values[1:]
-        next_values[self.dones] = 0.0
-
-        if self.config.USE_GAE:
-            assert self.config.N_STEP == 1
-
-            target_values = self.rewards + self.config.GAMMA * next_values
-
-            # generalized advantage estimator (gae): smoothed version of the advantage
-            # by trajectory calculate advantage and 1-step target action value
-            assert target_values.shape == values.shape, "{0} {1}".format(target_values.shape, values.shape)
-            deltas = target_values - values
-
-            last_gae = 0.0
-            advantages = []
-            for delta in reversed(deltas):
-                last_gae = delta + self.config.GAMMA * self.config.GAE_LAMBDA * last_gae
-                advantages.append(last_gae)
-
-            advantages = torch.tensor(advantages[::-1], dtype=torch.float32, device=self.config.DEVICE).unsqueeze(dim=-1)
-
-            if self.config.USE_GAE_RECALCULATE_TARGET_VALUE:
-                target_values = advantages + values
-
-            # target_values.shape: (256, 1)
-            if self.config.TARGET_VALUE_NORMALIZE:
-                target_values = (target_values - torch.mean(target_values)) / (torch.std(target_values) + 1e-7)
-        else:
-            if self.config.USE_BOOTSTRAP_FOR_TARGET_VALUE:
-                target_values = self.rewards + (self.config.GAMMA ** self.config.N_STEP) * next_values
-            else:
-                target_values = self.get_returns().unsqueeze(dim=-1)
-
-            # target_values.shape: (32, 1)
-            # normalize td_target
-            if self.config.TARGET_VALUE_NORMALIZE:
-                target_values = (target_values - torch.mean(target_values)) / (torch.std(target_values) + 1e-7)
-
-            assert target_values.shape == values.shape, "{0} {1}".format(target_values.shape, values.shape)
-            advantages = (target_values - values).detach()
-
-        advantages = (advantages - torch.mean(advantages)) / (torch.std(advantages) + 1e-7)
-
-        return target_values.detach(), advantages.detach()
-
-    def train(self, training_steps_v=None):
-        count_training_steps = 0
-
-        if self.config.AGENT_TYPE == AgentType.REINFORCE:
-            if len(self.buffer) > 0:
-                self._before_train(sample_length=None)  # sample all in order as it is
-                count_training_steps = self.train_reinforce()
-                self.buffer.clear()  # ON_POLICY!
-                self._after_train()
-
-        elif self.config.AGENT_TYPE == AgentType.A2C:
-            if len(self.buffer) >= self.config.BATCH_SIZE:
-                self._before_train(sample_length=None)
-                assert len(self.observations) == self.config.BATCH_SIZE
-                count_training_steps = self.train_a2c()
-                self.buffer.clear()  # ON_POLICY!
-                self._after_train()
-
-        elif self.config.AGENT_TYPE == AgentType.A3C:
-            if len(self.buffer) >= self.config.BATCH_SIZE:
-                self._before_train(sample_length=None)
-                assert len(self.observations) == self.config.BATCH_SIZE
-                count_training_steps = self.train_a3c()
-                self.buffer.clear()  # ON_POLICY!
-                self._after_train()
-
-        elif self.config.AGENT_TYPE == AgentType.PPO:
-            if len(self.buffer) >= self.config.BATCH_SIZE:
-                self._before_train(sample_length=None)
-                assert len(self.observations) == self.config.BATCH_SIZE
-                count_training_steps = self.train_ppo()
-                self.buffer.clear()  # ON_POLICY!
-                self._after_train()
-
-        elif self.config.AGENT_TYPE == AgentType.PPO_TRAJECTORY:
-            if len(self.buffer) >= self.config.PPO_TRAJECTORY_SIZE:
-                self._before_train(sample_length=None)
-                assert len(self.observations) == self.config.PPO_TRAJECTORY_SIZE
-                count_training_steps = self.train_ppo()
-                self.buffer.clear()  # ON_POLICY!
-                self._after_train()
-
-        else:
-            raise ValueError()
-
-        return count_training_steps
-
-    # ON_POLICY
-    @abstractmethod
-    def train_reinforce(self):
-        raise NotImplementedError()
-
-    @abstractmethod
-    def train_a2c(self):
-        raise NotImplementedError()
-
-    @abstractmethod
-    def train_a3c(self):
-        raise NotImplementedError()
-
-    @abstractmethod
-    def train_ppo(self):
-        raise NotImplementedError()
-
-
-class OffPolicyAgent(Agent):
-    def __init__(self, observation_space, action_space, config):
-        super(OffPolicyAgent, self).__init__(observation_space, action_space, config)
-        assert self.config.AGENT_TYPE in OffPolicyAgentTypes
-
-    def train(self, training_steps_v=None):
-        count_training_steps = 0
-
-        if self.config.AGENT_TYPE in (AgentType.DQN, AgentType.DUELING_DQN):
-            if len(self.buffer) >= self.config.MIN_BUFFER_SIZE_FOR_TRAIN:
-                self._before_train(sample_length=self.config.BATCH_SIZE)
-                count_training_steps, q_net_loss_each = self.train_dqn(training_steps_v=training_steps_v)
-                self._after_train(q_net_loss_each)
-
-        elif self.config.AGENT_TYPE in (AgentType.DOUBLE_DQN, AgentType.DOUBLE_DUELING_DQN):
-            if len(self.buffer) >= self.config.MIN_BUFFER_SIZE_FOR_TRAIN:
-                self._before_train(sample_length=self.config.BATCH_SIZE)
-                count_training_steps, q_net_loss_each = self.train_double_dqn(training_steps_v=training_steps_v)
-                self._after_train(q_net_loss_each)
-
-        elif self.config.AGENT_TYPE == AgentType.DDPG:
-            if len(self.buffer) >= self.config.MIN_BUFFER_SIZE_FOR_TRAIN:
-                self._before_train(sample_length=self.config.BATCH_SIZE)
-                count_training_steps, critic_loss_each = self.train_ddpg()
-                self._after_train(critic_loss_each)
-
-        elif self.config.AGENT_TYPE == AgentType.TD3:
-            if len(self.buffer) >= self.config.MIN_BUFFER_SIZE_FOR_TRAIN:
-                self._before_train(sample_length=self.config.BATCH_SIZE)
-                count_training_steps, critic_loss_each = self.train_td3(training_steps_v=training_steps_v)
-                self._after_train(critic_loss_each)
-
-        elif self.config.AGENT_TYPE == AgentType.SAC:
-            if len(self.buffer) >= self.config.MIN_BUFFER_SIZE_FOR_TRAIN:
-                self._before_train(sample_length=self.config.BATCH_SIZE)
-                count_training_steps, critic_loss_each = self.train_sac(training_steps_v=training_steps_v)
-                self._after_train(critic_loss_each)
-
-        elif self.config.AGENT_TYPE == AgentType.MUZERO:
-            assert self.config.N_VECTORIZED_ENVS == 1
-            if len(self.buffer) >= self.config.BATCH_SIZE:
-                self._before_train(sample_length=self.config.BATCH_SIZE)
-                count_training_steps, critic_loss_each = self.train_muzero(training_steps_v=training_steps_v)
-                self._after_train(critic_loss_each)
-
-        else:
-            raise ValueError()
-
-        return count_training_steps
-
-    # OFF POLICY
-    @abstractmethod
-    def train_dqn(self, training_steps_v):
-        return None, None
-
-    @abstractmethod
-    def train_double_dqn(self, training_steps_v):
-        raise NotImplementedError()
-
-    @abstractmethod
-    def train_ddpg(self):
-        raise NotImplementedError()
-
-    @abstractmethod
-    def train_td3(self, training_steps_v):
-        raise NotImplementedError()
-
-    @abstractmethod
-    def train_sac(self, training_steps_v):
-        raise NotImplementedError()
-
-    @abstractmethod
-    def train_muzero(self, training_steps_v):
-        raise NotImplementedError()
