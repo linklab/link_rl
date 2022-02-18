@@ -154,3 +154,4 @@ f_play/models/**
 /i_temp/muzero/muszero_original/results/
 
 b_environments/unity
+/f_play/reference_history/
