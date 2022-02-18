@@ -713,9 +713,10 @@ def get_train_env(config, no_graphics=True):
                 channel.set_configuration_parameters(time_scale=config.time_scale, width=config.width, height=config.height)
                 env = UnityToGymWrapper(u_env)
                 if config.ENV_NAME in ["UnityDrone"]:
-                    from b_environments.unitywrappers import GrayScaleObservation, ResizeObservation
+                    from b_environments.unitywrappers import GrayScaleObservation, ResizeObservation, TransformReward
                     from gym.wrappers import FrameStack
-                    env = FrameStack(ResizeObservation(GrayScaleObservation(env), shape=84),num_stack=4)
+                    env = FrameStack(ResizeObservation(GrayScaleObservation(env), shape=64),num_stack=4)
+                    env = TransformReward(env)
                 return env
             env = gym.make(env_name)
             if env_name in ["PongNoFrameskip-v4"]:
@@ -761,9 +762,10 @@ def get_single_env(config, no_graphics=True):
         channel.set_configuration_parameters(time_scale=config.time_scale, width=config.width, height=config.height)
         single_env = UnityToGymWrapper(u_env)
         if config.ENV_NAME in ["UnityDrone"]:
-            from b_environments.unitywrappers import GrayScaleObservation, ResizeObservation
+            from b_environments.unitywrappers import GrayScaleObservation, ResizeObservation, TransformReward
             from gym.wrappers import FrameStack
-            single_env = FrameStack(ResizeObservation(GrayScaleObservation(single_env), shape=84), num_stack=4)
+            single_env = FrameStack(ResizeObservation(GrayScaleObservation(single_env), shape=64), num_stack=4)
+            single_env = TransformReward(single_env)
     else:
         single_env = gym.make(config.ENV_NAME)
         if config.ENV_NAME in ["PongNoFrameskip-v4"]:

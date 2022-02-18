@@ -51,3 +51,11 @@ class ResizeObservation(gym.ObservationWrapper):
         )
         observation = transforms(observation).squeeze(0)
         return observation
+
+
+class TransformReward(gym.RewardWrapper):
+    def __init__(self, env):
+        super().__init__(env)
+
+    def reward(self, reward):
+        return np.tanh(reward)
