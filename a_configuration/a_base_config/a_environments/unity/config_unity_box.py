@@ -32,4 +32,4 @@ class ConfigDrone(ConfigUnityGymEnv):
         self.NO_TEST_GRAPHICS = True
         self.width = 600
         self.height = 600
-        self.time_scale = 2.0
+        self.time_scale = 12.0
