@@ -713,7 +713,7 @@ def get_train_env(config, no_graphics=True):
                 channel.set_configuration_parameters(time_scale=config.time_scale, width=config.width, height=config.height)
                 env = UnityToGymWrapper(u_env)
                 if config.ENV_NAME in ["UnityDrone"]:
-                    from b_environments.unitywrappers import GrayScaleObservation, ResizeObservation, TransformReward
+                    from b_environments.wrappers.unity.unitywrappers import GrayScaleObservation, ResizeObservation, TransformReward
                     from gym.wrappers import FrameStack
                     env = FrameStack(ResizeObservation(GrayScaleObservation(env), shape=64),num_stack=4)
                     env = TransformReward(env)
@@ -762,19 +762,18 @@ def get_single_env(config, no_graphics=True):
         channel.set_configuration_parameters(time_scale=config.time_scale, width=config.width, height=config.height)
         single_env = UnityToGymWrapper(u_env)
         if config.ENV_NAME in ["UnityDrone"]:
-            from b_environments.unitywrappers import GrayScaleObservation, ResizeObservation, TransformReward
-            from gym.wrappers import FrameStack
-            single_env = FrameStack(ResizeObservation(GrayScaleObservation(single_env), shape=64), num_stack=4)
+            from b_environments.wrappers.unity.unitywrappers import GrayScaleObservation, ResizeObservation, TransformReward
+            single_env = gym.wrappers.FrameStack(ResizeObservation(GrayScaleObservation(single_env), shape=64), num_stack=4)
             single_env = TransformReward(single_env)
     else:
-        single_env = gym.make(config.ENV_NAME)
-        if config.ENV_NAME in ["PongNoFrameskip-v4"]:
-            single_env = gym.wrappers.AtariPreprocessing(
-                single_env, grayscale_obs=True, scale_obs=True
-            )
-            single_env = gym.wrappers.FrameStack(single_env, num_stack=4, lz4_compress=True)
         if config.ENV_NAME in ["FrozenLake-v1"]:
             single_env = MakeBoxFrozenLake()
+        else:
+            single_env = gym.make(config.ENV_NAME)
+
+            if config.ENV_NAME in ["PongNoFrameskip-v4"]:
+                single_env = gym.wrappers.AtariPreprocessing(single_env, grayscale_obs=True, scale_obs=True)
+                single_env = gym.wrappers.FrameStack(single_env, num_stack=4, lz4_compress=True)
 
     return single_env
 
