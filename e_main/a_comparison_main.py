@@ -1,7 +1,5 @@
 import warnings
 
-from g_utils.types import AgentType
-
 warnings.filterwarnings("ignore")
 warnings.simplefilter("ignore")
 
@@ -23,6 +21,7 @@ sys.path.append(os.path.abspath(
     os.path.join(os.path.dirname(os.path.realpath(__file__)), os.pardir)
 ))
 
+from g_utils.types import AgentType
 from g_utils.stats import ComparisonStat
 from e_main.config_comparison import config_c
 
