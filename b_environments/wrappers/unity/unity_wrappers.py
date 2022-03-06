@@ -1,5 +1,9 @@
+import copy
+
 import gym
 from gym.spaces import Box
+from gym_unity.envs import UnityToGymWrapper
+from mlagents_envs.base_env import ActionTuple
 from torchvision import transforms as T
 import numpy as np
 import torch

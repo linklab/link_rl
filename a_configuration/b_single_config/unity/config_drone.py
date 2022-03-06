@@ -25,7 +25,7 @@ class ConfigDroneSac(ConfigBase, ConfigDrone, ConfigSac):
 
         self.BUFFER_CAPACITY = 1_000_000
         self.MAX_TRAINING_STEPS = 30_000_000
-        self.MODEL_TYPE = ModelType.SMALL_CONVOLUTIONAL
+        self.MODEL_TYPE = ModelType.SMALL_LINEAR
 
         self.ACTOR_LEARNING_RATE = 0.0005
         self.POLICY_UPDATE_FREQUENCY_PER_TRAINING_STEP = 128

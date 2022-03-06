@@ -1,7 +1,7 @@
 import gym
 import time
 
-from b_environments.wrappers import CustomActionWrapper, CustomRewardWrapper, CustomObservationWrapper
+from b_environments.wrapper import CustomActionWrapper, CustomRewardWrapper, CustomObservationWrapper
 
 
 class SleepyToyEnv(gym.Env):

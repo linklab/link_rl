@@ -12,9 +12,6 @@ import wandb
 from gym.spaces import Discrete, Box
 from gym.vector import AsyncVectorEnv
 import plotly.graph_objects as go
-from gym_unity.envs import UnityToGymWrapper
-from mlagents_envs.environment import UnityEnvironment
-from mlagents_envs.side_channel.engine_configuration_channel import EngineConfigurationChannel
 
 from a_configuration.a_base_config.config_parse import SYSTEM_USER_NAME
 from a_configuration.a_base_config.a_environments.unity.config_unity_box import ConfigUnityGymEnv
@@ -22,7 +19,7 @@ from a_configuration.a_base_config.c_models.config_convolutional_models import C
 from a_configuration.a_base_config.c_models.config_linear_models import ConfigLinearModel
 from a_configuration.a_base_config.c_models.config_recurrent_convolutional_models import ConfigRecurrentConvolutionalModel
 from a_configuration.a_base_config.c_models.config_recurrent_linear_models import ConfigRecurrentLinearModel
-from b_environments.wrappers import MakeBoxFrozenLake
+from b_environments.wrapper import MakeBoxFrozenLake
 from g_utils.types import AgentType, ActorCriticAgentTypes, ModelType, LayerActivationType, LossFunctionType, \
     OffPolicyAgentTypes
 
@@ -704,6 +701,9 @@ def get_train_env(config, no_graphics=True):
                     platform_dir = "windows"
                 else:
                     raise ValueError()
+                from gym_unity.envs import UnityToGymWrapper
+                from mlagents_envs.environment import UnityEnvironment
+                from mlagents_envs.side_channel.engine_configuration_channel import EngineConfigurationChannel
                 channel = EngineConfigurationChannel()
                 u_env = UnityEnvironment(
                     file_name=os.path.join(config.UNITY_ENV_DIR, config.ENV_NAME, platform_dir,
@@ -713,9 +713,8 @@ def get_train_env(config, no_graphics=True):
                 channel.set_configuration_parameters(time_scale=config.time_scale, width=config.width, height=config.height)
                 env = UnityToGymWrapper(u_env)
                 if config.ENV_NAME in ["UnityDrone"]:
-                    from b_environments.wrappers.unity.unitywrappers import GrayScaleObservation, ResizeObservation, TransformReward
-                    from gym.wrappers import FrameStack
-                    env = FrameStack(ResizeObservation(GrayScaleObservation(env), shape=64),num_stack=4)
+                    from b_environments.wrappers.unity.unity_wrappers import GrayScaleObservation, ResizeObservation, TransformReward
+                    env = gym.wrappers.FrameStack(ResizeObservation(GrayScaleObservation(env), shape=64), num_stack=4)
                     env = TransformReward(env)
                 return env
             env = gym.make(env_name)
@@ -754,6 +753,9 @@ def get_single_env(config, no_graphics=True):
         else:
             raise ValueError()
 
+        from gym_unity.envs import UnityToGymWrapper
+        from mlagents_envs.environment import UnityEnvironment
+        from mlagents_envs.side_channel.engine_configuration_channel import EngineConfigurationChannel
         channel = EngineConfigurationChannel()
         u_env = UnityEnvironment(
             file_name=os.path.join(config.UNITY_ENV_DIR, config.ENV_NAME, platform_dir, config.ENV_NAME),
@@ -762,7 +764,7 @@ def get_single_env(config, no_graphics=True):
         channel.set_configuration_parameters(time_scale=config.time_scale, width=config.width, height=config.height)
         single_env = UnityToGymWrapper(u_env)
         if config.ENV_NAME in ["UnityDrone"]:
-            from b_environments.wrappers.unity.unitywrappers import GrayScaleObservation, ResizeObservation, TransformReward
+            from b_environments.wrappers.unity.unity_wrappers import GrayScaleObservation, ResizeObservation, TransformReward
             single_env = gym.wrappers.FrameStack(ResizeObservation(GrayScaleObservation(single_env), shape=64), num_stack=4)
             single_env = TransformReward(single_env)
     else:
