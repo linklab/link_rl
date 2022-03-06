@@ -53,9 +53,7 @@ def epsilon_greedy_action(action_values, epsilon):
 
 def q_learning(num_episodes=500, num_test_episodes=7, alpha=0.1, gamma=0.95, epsilon=0.1):
     # Q-Table 초기화
-    q_table = np.zeros(
-        [env.observation_space.n, env.action_space.n]
-    )
+    q_table = np.zeros([env.observation_space.n, env.action_space.n])
 
     episode_reward_list = []
 
