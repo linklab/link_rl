@@ -27,6 +27,7 @@
   pip install opencv-python==4.5.5.62
   pip install lz4==4.0.0
   conda install -c plotly plotly
+  conda install -c conda-forge wandb
   ```
 
 - Test package(code)  
