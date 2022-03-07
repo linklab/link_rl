@@ -20,15 +20,15 @@
 - Install package
   ```commandline
   pip install gym==0.22.0
-  pip install pygame
-  conda install -c conda-forge swig
-  conda install -c conda-forge box2d-py
-  pip install ale-py
-  pip install gym[accept-rom-license]
-  pip install opencv-python
+  pip install pygame==2.1.2
+  conda install -c conda-forge swig==4.0.2
+  conda install -c conda-forge box2d-py==2.3.8
+  pip install ale-py==0.7.4
+  pip install gym[accept-rom-license]==0.4.2
+  pip install opencv-python==4.5.5.62
   pip install lz4==4.0.0
-  conda install -c fastai nvidia-ml-py3
-  conda install -c plotly plotly
+  conda install -c fastai nvidia-ml-py3==7.352.0
+  conda install -c plotly plotly==5.6.0
   conda install -c conda-forge wandb
   ```
 
