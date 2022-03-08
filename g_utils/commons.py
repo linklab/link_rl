@@ -559,7 +559,7 @@ def wandb_log(learner, wandb_obj, config):
         log_dict["Entropy"] = learner.agent.last_entropy.value
     elif config.AGENT_TYPE in (AgentType.DDPG, AgentType.TD3):
         log_dict["Critic Loss"] = learner.agent.last_critic_loss.value
-        log_dict["Actor Loss"] = learner.agent.last_actor_loss.value
+        log_dict["Actor Objective"] = learner.agent.last_actor_objective.value
     elif config.AGENT_TYPE in (AgentType.PPO, AgentType.PPO_TRAJECTORY):
         log_dict["Critic Loss"] = learner.agent.last_critic_loss.value
         log_dict["Actor Objective"] = learner.agent.last_actor_objective.value
