@@ -13,7 +13,7 @@ Notice: Gym do not officially support Windows
 
 - Install pytorch
   - go to https://pytorch.org/ and install pytorch
-  - check cuda
+  - check cuda if you installed cuda-support version
     ```commandline
     python -c "import torch; print(torch.cuda.is_available()); print(torch.rand(2,3).cuda());"
     ```
