@@ -43,19 +43,23 @@ class AgentDqn(OffPolicyAgent):
 
         self.last_q_net_loss = mp.Value('d', 0.0)
 
-    def get_action(self, obs, mode=AgentMode.TRAIN):
+    def get_action(self, obs, unavailable_actions=None, mode=AgentMode.TRAIN):
         if mode == AgentMode.TRAIN:
             coin = np.random.random()    # 0.0과 1.0사이의 임의의 값을 반환
             if coin < self.epsilon.value:
-                action = np.random.randint(low=0, high=self.n_discrete_actions, size=len(obs))
+                q_values = torch.rand(len(obs), self.n_discrete_actions)
             else:
                 q_values = self.q_net.q(obs, save_hidden=True)
-                action = q_values.argmax(dim=-1)
-                action = action.cpu().numpy()  # argmax: 가장 큰 값에 대응되는 인덱스 반환
         else:
             q_values = self.q_net.q(obs, save_hidden=True)
-            action = q_values.argmax(dim=-1)
-            action = action.cpu().numpy()
+
+        if unavailable_actions is not None:
+            for i, unavailable_action in enumerate(unavailable_actions):
+                q_values[i][unavailable_action] = -np.inf
+            q_values = torch.softmax(q_values, dim=-1)
+
+        action = q_values.argmax(dim=-1)
+        action = action.cpu().numpy()  # argmax: 가장 큰 값에 대응되는 인덱스 반환
 
         return action
 
@@ -63,6 +67,7 @@ class AgentDqn(OffPolicyAgent):
         count_training_steps = 0
 
         # state_action_values.shape: torch.Size([32, 1])
+        # print("self.observations.shape:", self.observations.shape)
         q_values = self.q_net.q(self.observations).gather(dim=-1, index=self.actions)
 
         with torch.no_grad():

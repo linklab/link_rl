@@ -26,7 +26,7 @@ class OffPolicyAgent(Agent):
         if self.config.AGENT_TYPE == AgentType.MUZERO:
             self.episode_idxs, self.episode_historys = self.replay_buffer.sample_muzero(batch_size=sample_length)
         else:
-            self.observations, self.actions, self.next_observations, self.rewards, self.dones = self.replay_buffer.sample(
+            self.observations, self.actions, self.next_observations, self.rewards, self.dones, self.infos = self.replay_buffer.sample(
                 batch_size=self.config.BATCH_SIZE
             )
 
@@ -92,7 +92,7 @@ class OffPolicyAgent(Agent):
     # OFF POLICY
     @abstractmethod
     def train_dqn(self, training_steps_v):
-        return None, None
+        raise NotImplementedError()
 
     @abstractmethod
     def train_double_dqn(self, training_steps_v):

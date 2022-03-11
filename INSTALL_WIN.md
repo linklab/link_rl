@@ -1,5 +1,5 @@
 # Installation for Windows
-Notice: Gym do not officially support Windows
+Notice: Gym does not officially support Windows
 
 - Create environment
   ```commandline

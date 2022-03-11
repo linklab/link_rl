@@ -55,7 +55,7 @@ class ActorModel(Model):
 
     @abstractmethod
     def pi(self, x):
-        pass
+        raise NotImplementedError()
 
 
 class DiscreteActorModel(ActorModel):

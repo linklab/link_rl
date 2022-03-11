@@ -3,6 +3,7 @@ import copy
 
 from gym.spaces import Box, Discrete
 
+import b_environments.wrapper
 from a_configuration.a_base_config.c_models.config_recurrent_convolutional_models import ConfigRecurrentConvolutionalModel
 from a_configuration.a_base_config.c_models.config_recurrent_linear_models import ConfigRecurrentLinearModel
 
@@ -73,20 +74,34 @@ class Learner(mp.Process):
             isinstance(self.config.MODEL_PARAMETER, ConfigRecurrentConvolutionalModel)
         ])
 
+        if self.config.ACTION_MASKING:
+            assert isinstance(self.agent.action_space, Discrete)
+
         self.shared_model_access_lock = shared_model_access_lock  # For only LearningActor (A3C)
 
     def generator_on_policy_transition(self):
-        observations = self.train_env.reset()
-        actions_history = np.zeros((self.config.N_VECTORIZED_ENVS, 1))
+        observations, infos = self.train_env.reset(return_info=True)
+
         if self.is_recurrent_model:
             self.agent.model.init_recurrent_hidden()
             observations = [(observations, self.agent.model.recurrent_hidden)]
+
+        if self.config.ACTION_MASKING:
+            unavailable_actions = []
+            for env_id in range(self.train_env.num_envs):
+                unavailable_actions.append(infos[env_id]["unavailable_actions"])
+        else:
+            unavailable_actions = None
 
         actor_time_step = 0
 
         while True:
             actor_time_step += 1
-            actions = self.agent.get_action(observations)
+            if self.config.ACTION_MASKING:
+                actions = self.agent.get_action(obs=observations, unavailable_actions=unavailable_actions)
+            else:
+                actions = self.agent.get_action(obs=observations)
+
             if isinstance(self.agent.action_space, Discrete):
                 scaled_actions = actions
             elif isinstance(self.agent.action_space, Box):
@@ -97,6 +112,11 @@ class Learner(mp.Process):
             next_observations, rewards, dones, infos = self.train_env.step(scaled_actions)
             if self.is_recurrent_model:
                 next_observations = [(next_observations, self.agent.model.recurrent_hidden)]
+
+            if self.config.ACTION_MASKING:
+                unavailable_actions = []
+                for env_id in range(self.train_env.num_envs):
+                    unavailable_actions.append(infos[env_id]["unavailable_actions"])
 
             for env_id, (observation, action, next_observation, reward, done, info) in enumerate(
                     zip(observations, actions, next_observations, rewards, dones, infos)
@@ -310,7 +330,7 @@ class Learner(mp.Process):
                         self.episode_rewards[actor_id][env_id] = 0.0
 
                 ###################
-                ### TRAIN START ###
+                #   TRAIN START   #
                 ###################
                 reinforce_train_conditions = [
                     n_step_transition.done,
@@ -325,7 +345,7 @@ class Learner(mp.Process):
                     self.training_step.value += count_training_steps
                     self.next_train_time_step += self.config.TRAIN_INTERVAL_GLOBAL_TIME_STEPS
                 #################
-                ### TRAIN END ###
+                #   TRAIN END   #
                 #################
 
             if self.training_step.value >= self.next_console_log:
@@ -420,15 +440,26 @@ class Learner(mp.Process):
             episode_reward = 0  # cumulative_reward
 
             # Environment 초기화와 변수 초기화
-            observation = self.test_env.reset()
+            observation, info = self.test_env.reset(return_info=True)
             observation = np.expand_dims(observation, axis=0)
 
             if self.is_recurrent_model:
                 self.agent.model.init_recurrent_hidden()
                 observation = [(observation, self.agent.model.recurrent_hidden)]
 
+            if self.config.ACTION_MASKING:
+                unavailable_actions = [info['unavailable_actions']]
+            else:
+                unavailable_actions = None
+
             while True:
-                action = self.agent.get_action(observation, mode=AgentMode.TEST)
+                if self.config.ACTION_MASKING:
+                    action = self.agent.get_action(obs=observation,
+                                                   unavailable_actions=unavailable_actions,
+                                                   mode=AgentMode.TEST)
+                else:
+                    action = self.agent.get_action(obs=observation, mode=AgentMode.TEST)
+
                 if isinstance(self.agent.action_space, Discrete):
                     if action.ndim == 0:
                         scaled_action = action
@@ -452,11 +483,14 @@ class Learner(mp.Process):
                 else:
                     raise ValueError()
 
-                next_observation, reward, done, _ = self.test_env.step(scaled_action)
+                next_observation, reward, done, info = self.test_env.step(scaled_action)
                 next_observation = np.expand_dims(next_observation, axis=0)
 
                 if self.is_recurrent_model:
                     next_observation = [(next_observation, self.agent.model.recurrent_hidden)]
+
+                if self.config.ACTION_MASKING:
+                    unavailable_actions = [info['unavailable_actions']]
 
                 episode_reward += reward  # episode_reward 를 산출하는 방법은 감가률 고려하지 않는 이 라인이 더 올바름.
                 observation = next_observation

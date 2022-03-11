@@ -22,9 +22,8 @@ class OnPolicyAgent(Agent):
             assert self.critic_model
             assert self.model is self.actor_model
 
-        self.observations, self.actions, self.next_observations, self.rewards, self.dones = self.buffer.sample(
-            batch_size=None
-        )
+        transition = self.buffer.sample(batch_size=None)
+        self.observations, self.actions, self.next_observations, self.rewards, self.dones, self.infos = transition
 
     def train(self, training_steps_v=None):
         count_training_steps = 0

@@ -135,7 +135,7 @@ class Buffer:
         # rewards.shape: torch.Size([32, 1]),
         # dones.shape: torch.Size([32])
 
-        return observations_v, actions_v, next_observations_v, rewards_v, dones_v
+        return observations_v, actions_v, next_observations_v, rewards_v, dones_v, infos
 
     def sample_muzero(self, batch_size):
         """

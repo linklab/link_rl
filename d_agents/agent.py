@@ -66,8 +66,8 @@ class Agent:
         self.step = 0
 
     @abstractmethod
-    def get_action(self, obs, mode=AgentMode.TRAIN):
-        pass
+    def get_action(self, obs, unavailable_actions=None, mode=AgentMode.TRAIN):
+        raise NotImplementedError()
 
     @abstractmethod
     def train(self, training_steps_v=None):

@@ -14,14 +14,14 @@ from c_models.a_models import Model
 class CriticModel(Model):
     @abstractmethod
     def _forward(self, obs):
-        pass
+        raise NotImplementedError()
 
     @abstractmethod
     def _forward(self, obs, act):
-        pass
+        raise NotImplementedError()
 
     def forward_critic(self, obs):
-        pass
+        raise NotImplementedError()
 
     def _get_forward_pre_out_with_act(self, observation_shape, n_out_actions):
         obs = torch.zeros(1, *observation_shape)

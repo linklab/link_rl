@@ -33,11 +33,10 @@ def main():
     set_config(config)
 
     observation_space, action_space = get_env_info(config)
-    # print("@@@@@@@@@@@@@@ observation", observation_space.shape)
-    # print("@@@@@@@@@@@@@@ action_space", action_space)
+
     print_basic_info(observation_space, action_space, config)
 
-    input("Press Enter to continue...")
+    # input("Press Enter to continue...")
 
     agent = get_agent(
         observation_space=observation_space, action_space=action_space, config=config

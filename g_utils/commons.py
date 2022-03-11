@@ -19,7 +19,7 @@ from a_configuration.a_base_config.c_models.config_convolutional_models import C
 from a_configuration.a_base_config.c_models.config_linear_models import ConfigLinearModel
 from a_configuration.a_base_config.c_models.config_recurrent_convolutional_models import ConfigRecurrentConvolutionalModel
 from a_configuration.a_base_config.c_models.config_recurrent_linear_models import ConfigRecurrentLinearModel
-from b_environments.wrapper import MakeBoxFrozenLake
+from b_environments.wrapper import MakeBoxFrozenLake, FrozenLakeActionMask, VectorEnvReturnInfo
 from g_utils.types import AgentType, ActorCriticAgentTypes, ModelType, LayerActivationType, LossFunctionType, \
     OffPolicyAgentTypes
 
@@ -717,6 +717,7 @@ def get_train_env(config, no_graphics=True):
                     env = gym.wrappers.FrameStack(ResizeObservation(GrayScaleObservation(env), shape=64), num_stack=4)
                     env = TransformReward(env)
                 return env
+
             env = gym.make(env_name)
             if env_name in ["PongNoFrameskip-v4"]:
                 env = gym.wrappers.AtariPreprocessing(
@@ -724,7 +725,10 @@ def get_train_env(config, no_graphics=True):
                 )
                 env = gym.wrappers.FrameStack(env, num_stack=4, lz4_compress=True)
             if env_name in ["FrozenLake-v1"]:
-                env = MakeBoxFrozenLake()
+                env = MakeBoxFrozenLake(random_map=config.RANDOM_MAP)
+                # env = MakeBoxFrozenLake()
+                if config.ACTION_MASKING:
+                    env = FrozenLakeActionMask(env)
             return env
 
         return _make
@@ -769,10 +773,11 @@ def get_single_env(config, no_graphics=True):
             single_env = TransformReward(single_env)
     else:
         if config.ENV_NAME in ["FrozenLake-v1"]:
-            single_env = MakeBoxFrozenLake()
+            single_env = MakeBoxFrozenLake(random_map=config.RANDOM_MAP)
+            if config.ACTION_MASKING:
+                single_env = FrozenLakeActionMask(single_env)
         else:
             single_env = gym.make(config.ENV_NAME)
-
             if config.ENV_NAME in ["PongNoFrameskip-v4"]:
                 single_env = gym.wrappers.AtariPreprocessing(single_env, grayscale_obs=True, scale_obs=True)
                 single_env = gym.wrappers.FrameStack(single_env, num_stack=4, lz4_compress=True)
