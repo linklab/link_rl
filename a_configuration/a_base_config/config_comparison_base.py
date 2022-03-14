@@ -31,7 +31,6 @@ class ConfigComparisonBase:
         self.MAX_TRAINING_STEPS = None
 
         self.USE_WANDB = False
-        self.WANDB_ENTITY = "link-koreatech"
         self.WANDB_REPORT_URL = None
 
         self.TRAIN_INTERVAL_GLOBAL_TIME_STEPS = 4

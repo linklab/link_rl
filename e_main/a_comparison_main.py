@@ -48,7 +48,6 @@ for agent_config in config_c.AGENT_PARAMETERS:
     del agent_config.TEST_INTERVAL_TRAINING_STEPS
     del agent_config.TRAIN_INTERVAL_GLOBAL_TIME_STEPS
     del agent_config.USE_WANDB
-    del agent_config.WANDB_ENTITY
     del agent_config.MODEL_SAVE_DIR
     del agent_config.CONSOLE_LOG_INTERVAL_TRAINING_STEPS
 

@@ -45,7 +45,6 @@ class ConfigBase:
         self.CLIP_GRADIENT_VALUE = 30.0
 
         self.USE_WANDB = False
-        self.WANDB_ENTITY = "link-koreatech"
         self.WANDB_REPORT_URL = False
 
         self.PLAY_MODEL_FILE_NAME = ""

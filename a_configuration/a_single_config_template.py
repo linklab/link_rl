@@ -1,3 +1,9 @@
+#################
+## FROZEN_LAKE ##
+#################
+from a_configuration.b_single_config.open_ai_gym.config_frozen_lake import ConfigFrozenLakeDqn
+config = ConfigFrozenLakeDqn()
+
 ###############
 ## CART_POLE ##
 ###############

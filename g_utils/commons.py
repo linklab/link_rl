@@ -22,7 +22,7 @@ from a_configuration.a_base_config.c_models.config_recurrent_convolutional_model
 from a_configuration.a_base_config.c_models.config_recurrent_linear_models import ConfigRecurrentLinearModel
 from b_environments.wrapper import MakeBoxFrozenLake, FrozenLakeActionMask, VectorEnvReturnInfo
 from g_utils.types import AgentType, ActorCriticAgentTypes, ModelType, LayerActivationType, LossFunctionType, \
-    OffPolicyAgentTypes
+    OffPolicyAgentTypes, OnPolicyAgentTypes
 
 
 def model_save(model, env_name, agent_type_name, test_episode_reward_avg, test_episode_reward_std, config):
@@ -519,7 +519,6 @@ def get_wandb_obj(config, agent=None, comparison=False):
         project = "{0}_{1}_{2}".format(config.ENV_NAME, config.AGENT_TYPE.name, SYSTEM_USER_NAME)
 
     wandb_obj = wandb.init(
-        entity=config.WANDB_ENTITY,
         project=project,
         config={
             key: getattr(config, key) for key in dir(config) if not key.startswith("__")
@@ -537,12 +536,19 @@ def get_wandb_obj(config, agent=None, comparison=False):
 
 
 def wandb_log(learner, wandb_obj, config):
+    if config.AGENT_TYPE in OnPolicyAgentTypes:
+        buffer = learner.agent.buffer
+    elif config.AGENT_TYPE in OffPolicyAgentTypes:
+        buffer = learner.agent.replay_buffer
+    else:
+        raise ValueError()
+
     log_dict = {
         "[TEST] Episode Reward": learner.test_episode_reward_avg.value,
         "[TEST] Std. of Episode Reward": learner.test_episode_reward_std.value,
         "Mean Episode Reward": learner.last_mean_episode_reward.value,
         "Episode": learner.total_episodes.value,
-        "Buffer Size": len(learner.agent.buffer),
+        "Buffer Size": len(buffer),
         "Training Steps": learner.training_step.value,
         "Total Time Steps": learner.total_time_step.value,
         "Transition Rolling Rate": learner.transition_rolling_rate.value,
