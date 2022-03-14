@@ -4,6 +4,7 @@ from a_configuration.b_single_config.open_ai_gym.config_cart_pole import ConfigC
     ConfigCartPoleReinforce, \
     ConfigCartPoleA2c, ConfigCartPoleDoubleDqn, ConfigCartPoleDuelingDqn, ConfigCartPoleDoubleDuelingDqn, \
     ConfigCartPolePpo, ConfigCartPolePpoTrajectory
+from a_configuration.b_single_config.open_ai_gym.config_frozen_lake import ConfigFrozenLakeDqn
 
 
 class ConfigComparisonFrozenLakeDqnActionMasking(ConfigComparisonBase):
@@ -13,8 +14,8 @@ class ConfigComparisonFrozenLakeDqnActionMasking(ConfigComparisonBase):
         self.ENV_NAME = "FrozenLake-v1"
 
         self.AGENT_PARAMETERS = [
-            ConfigFrozenLake(),
-            ConfigFrozenLake()
+            ConfigFrozenLakeDqn(),
+            ConfigFrozenLakeDqn()
         ]
 
         self.AGENT_PARAMETERS[0].ACTION_MASKING = True
@@ -28,4 +29,7 @@ class ConfigComparisonFrozenLakeDqnActionMasking(ConfigComparisonBase):
         ]
         self.MAX_TRAINING_STEPS = 100_000
         self.N_RUNS = 5
+
+        self.RANDOM_MAP = False
+        self.ACTION_MASKING = True
 
