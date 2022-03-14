@@ -28,4 +28,6 @@ Notice: Gym does not officially support Windows
   pip install lz4==4.0.0
   pip install plotly==5.6.0
   conda install -c conda-forge wandb
+  conda install -c conda-forge pandas
+  conda install -c conda-forge matplotlib
   ```
