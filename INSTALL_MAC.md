@@ -21,9 +21,9 @@
   ```commandline
   pip install gym==0.22.0
   pip install pygame==2.1.2
+  pip install gym[atari,accept-rom-license]==0.22.0
   conda install -c conda-forge swig==4.0.2
   conda install -c conda-forge box2d-py==2.3.8
-  pip install gym[atari,accept-rom-license]==0.22.0
   pip install opencv-python==4.5.5.62
   pip install lz4==4.0.0
   conda install -c plotly plotly==5.6.0
@@ -53,7 +53,7 @@
     ```
   - Train Pong using DQN
     ```python
-    from a_configuration.b_single_config.open_ai_gym.config_pong import ConfigPongDqn
+    from a_configuration.b_single_config.open_ai_gym.atari.config_pong import ConfigPongDqn
     config = ConfigPongDqn()
     config.MAX_TRAINING_STEPS = 2_000_000
     ```

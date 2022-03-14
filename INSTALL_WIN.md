@@ -47,7 +47,7 @@ Notice: Gym does not officially support Windows
     ```
   - Train Pong using DQN
     ```python
-    from a_configuration.b_single_config.open_ai_gym.config_pong import ConfigPongDqn
+    from a_configuration.b_single_config.open_ai_gym.atari.config_pong import ConfigPongDqn
     config = ConfigPongDqn()
     config.MAX_TRAINING_STEPS = 1000
     ```

@@ -6,6 +6,7 @@ import warnings
 import numpy as np
 
 from a_configuration.a_base_config.a_environments.mujoco.config_gym_mujoco import ConfigMujoco
+from a_configuration.a_base_config.a_environments.open_ai_gym.config_gym_atari import ConfigGymAtari
 from a_configuration.a_base_config.a_environments.pybullet.config_gym_pybullet import ConfigBullet
 from a_configuration.a_base_config.a_environments.unity.config_unity_box import ConfigUnityGymEnv
 from a_configuration.a_base_config.c_models.config_recurrent_convolutional_models import ConfigRecurrentConvolutionalModel
@@ -42,7 +43,9 @@ def play(env, agent, n_episodes):
         episode_reward = 0  # cumulative_reward
 
         # Environment 초기화와 변수 초기화
-        if isinstance(config, (ConfigMujoco, ConfigBullet)):
+        if isinstance(config, ConfigGymAtari):
+            observation = env.reset()
+        elif isinstance(config, (ConfigMujoco, ConfigBullet)):
             env.render()
             observation = env.reset()
         else:
@@ -88,7 +91,9 @@ def play(env, agent, n_episodes):
             next_observation = np.expand_dims(next_observation, axis=0)
             if is_recurrent_model:
                 next_observation = [(next_observation, agent.model.recurrent_hidden)]
-            env.render()
+
+            if not isinstance(config, ConfigGymAtari):
+                env.render()
 
             episode_reward += reward  # episode_reward 를 산출하는 방법은 감가률 고려하지 않는 이 라인이 더 올바름.
             observation = next_observation
@@ -110,7 +115,7 @@ def main_play(n_episodes):
     if isinstance(config, ConfigUnityGymEnv):
         config.NO_TEST_GRAPHICS = False
 
-    env = get_single_env(config, config.NO_TEST_GRAPHICS)
+    env = get_single_env(config, config.NO_TEST_GRAPHICS, play=True)
 
     agent = get_agent(observation_space, action_space, config)
 

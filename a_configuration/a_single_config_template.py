@@ -194,29 +194,83 @@ config.WANDB_REPORT_URL = "https://wandb.ai/link-koreatech/InvertedDoublePendulu
 ##########
 ## PONG ##
 ##########
-from a_configuration.b_single_config.open_ai_gym.config_pong import ConfigPongDqn
+from a_configuration.b_single_config.open_ai_gym.atari.config_pong import ConfigPongDqn
 config = ConfigPongDqn()
 
-from a_configuration.b_single_config.open_ai_gym.config_pong import ConfigPongDoubleDqn
+from a_configuration.b_single_config.open_ai_gym.atari.config_pong import ConfigPongDoubleDqn
 config = ConfigPongDoubleDqn()
 
-from a_configuration.b_single_config.open_ai_gym.config_pong import ConfigPongDuelingDqn
+from a_configuration.b_single_config.open_ai_gym.atari.config_pong import ConfigPongDuelingDqn
 config = ConfigPongDuelingDqn()
 
-from a_configuration.b_single_config.open_ai_gym.config_pong import ConfigPongDoubleDuelingDqn
+from a_configuration.b_single_config.open_ai_gym.atari.config_pong import ConfigPongDoubleDuelingDqn
 config = ConfigPongDoubleDuelingDqn()
 
-from a_configuration.b_single_config.open_ai_gym.config_pong import ConfigPongA2c
+from a_configuration.b_single_config.open_ai_gym.atari.config_pong import ConfigPongA2c
 config = ConfigPongA2c()
 
-from a_configuration.b_single_config.open_ai_gym.config_pong import ConfigPongA3c
+from a_configuration.b_single_config.open_ai_gym.atari.config_pong import ConfigPongA3c
 config = ConfigPongA3c()
 
-from a_configuration.b_single_config.open_ai_gym.config_pong import ConfigPongPpo
+from a_configuration.b_single_config.open_ai_gym.atari.config_pong import ConfigPongPpo
 config = ConfigPongPpo()
 
-from a_configuration.b_single_config.open_ai_gym.config_pong import ConfigPongPpoTrajectory
+from a_configuration.b_single_config.open_ai_gym.atari.config_pong import ConfigPongPpoTrajectory
 config = ConfigPongPpoTrajectory()
+
+##########
+## Breakout ##
+##########
+from a_configuration.b_single_config.open_ai_gym.atari.config_breakout import ConfigBreakoutDqn
+config = ConfigBreakoutDqn()
+
+from a_configuration.b_single_config.open_ai_gym.atari.config_breakout import ConfigBreakoutDoubleDqn
+config = ConfigBreakoutDoubleDqn()
+
+from a_configuration.b_single_config.open_ai_gym.atari.config_breakout import ConfigBreakoutDuelingDqn
+config = ConfigBreakoutDuelingDqn()
+
+from a_configuration.b_single_config.open_ai_gym.atari.config_breakout import ConfigBreakoutDoubleDuelingDqn
+config = ConfigBreakoutDoubleDuelingDqn()
+
+from a_configuration.b_single_config.open_ai_gym.atari.config_breakout import ConfigBreakoutA2c
+config = ConfigBreakoutA2c()
+
+from a_configuration.b_single_config.open_ai_gym.atari.config_breakout import ConfigBreakoutA3c
+config = ConfigBreakoutA3c()
+
+from a_configuration.b_single_config.open_ai_gym.atari.config_breakout import ConfigBreakoutPpo
+config = ConfigBreakoutPpo()
+
+from a_configuration.b_single_config.open_ai_gym.atari.config_breakout import ConfigBreakoutPpoTrajectory
+config = ConfigBreakoutPpoTrajectory()
+
+##########
+## VideoPinball ##
+##########
+from a_configuration.b_single_config.open_ai_gym.atari.config_video_pinball import ConfigVideoPinballDqn
+config = ConfigVideoPinballDqn()
+
+from a_configuration.b_single_config.open_ai_gym.atari.config_video_pinball import ConfigVideoPinballDoubleDqn
+config = ConfigVideoPinballDoubleDqn()
+
+from a_configuration.b_single_config.open_ai_gym.atari.config_video_pinball import ConfigVideoPinballDuelingDqn
+config = ConfigVideoPinballDuelingDqn()
+
+from a_configuration.b_single_config.open_ai_gym.atari.config_video_pinball import ConfigVideoPinballDoubleDuelingDqn
+config = ConfigVideoPinballDoubleDuelingDqn()
+
+from a_configuration.b_single_config.open_ai_gym.atari.config_video_pinball import ConfigVideoPinballA2c
+config = ConfigVideoPinballA2c()
+
+from a_configuration.b_single_config.open_ai_gym.atari.config_video_pinball import ConfigVideoPinballA3c
+config = ConfigVideoPinballA3c()
+
+from a_configuration.b_single_config.open_ai_gym.atari.config_video_pinball import ConfigVideoPinballPpo
+config = ConfigVideoPinballPpo()
+
+from a_configuration.b_single_config.open_ai_gym.atari.config_video_pinball import ConfigVideoPinballPpoTrajectory
+config = ConfigVideoPinballPpoTrajectory()
 
 ##################
 ### ANT_MUJOCO ###

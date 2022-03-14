@@ -13,6 +13,7 @@ from gym.spaces import Discrete, Box
 from gym.vector import AsyncVectorEnv
 import plotly.graph_objects as go
 
+from a_configuration.a_base_config.a_environments.open_ai_gym.config_gym_atari import ConfigGymAtari
 from a_configuration.a_base_config.config_parse import SYSTEM_USER_NAME
 from a_configuration.a_base_config.a_environments.unity.config_unity_box import ConfigUnityGymEnv
 from a_configuration.a_base_config.c_models.config_convolutional_models import ConfigConvolutionalModel
@@ -742,7 +743,7 @@ def get_train_env(config, no_graphics=True):
     return train_env
 
 
-def get_single_env(config, no_graphics=True):
+def get_single_env(config, no_graphics=True, play=False):
     if isinstance(config, ConfigUnityGymEnv):
         from sys import platform
         if platform == "linux" or platform == "linux2":
@@ -777,10 +778,16 @@ def get_single_env(config, no_graphics=True):
             if config.ACTION_MASKING:
                 single_env = FrozenLakeActionMask(single_env)
         else:
-            single_env = gym.make(config.ENV_NAME)
-            if config.ENV_NAME in ["PongNoFrameskip-v4"]:
-                single_env = gym.wrappers.AtariPreprocessing(single_env, grayscale_obs=True, scale_obs=True)
+
+            if isinstance(config, ConfigGymAtari):
+                if play:
+                    single_env = gym.make(config.ENV_NAME, render_mode="human")
+                else:
+                    single_env = gym.make(config.ENV_NAME)
+                single_env = gym.wrappers.AtariPreprocessing(single_env, frame_skip=1, grayscale_obs=True, scale_obs=True)
                 single_env = gym.wrappers.FrameStack(single_env, num_stack=4, lz4_compress=True)
+            else:
+                single_env = gym.make(config.ENV_NAME)
 
     return single_env
 

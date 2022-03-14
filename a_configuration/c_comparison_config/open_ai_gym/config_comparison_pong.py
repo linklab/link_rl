@@ -1,5 +1,5 @@
 from a_configuration.a_base_config.config_comparison_base import ConfigComparisonBase
-from a_configuration.b_single_config.open_ai_gym.config_pong import ConfigPongDqn, ConfigPongDoubleDqn, \
+from a_configuration.b_single_config.open_ai_gym.atari.config_pong import ConfigPongDqn, ConfigPongDoubleDqn, \
     ConfigPongDuelingDqn, ConfigPongDoubleDuelingDqn
 
 
