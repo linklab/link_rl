@@ -32,8 +32,3 @@
   conda install -c conda-forge pandas
   conda install -c conda-forge matplotlib
   ```
-
-- Train  
-
-
-- Play
