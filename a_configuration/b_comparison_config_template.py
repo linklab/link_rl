@@ -1,6 +1,12 @@
 ###############
 ## CART_POLE ##
 ###############
+from a_configuration.c_comparison_config.open_ai_gym.config_comparison_frozen_lake import ConfigComparisonFrozenLakeDqnActionMasking
+config_c = ConfigComparisonFrozenLakeDqnActionMasking()
+
+###############
+## CART_POLE ##
+###############
 from a_configuration.c_comparison_config.open_ai_gym.config_comparison_cart_pole import ConfigComparisonCartPoleDqn
 config_c = ConfigComparisonCartPoleDqn()
 

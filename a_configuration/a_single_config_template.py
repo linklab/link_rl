@@ -3,6 +3,8 @@
 #################
 from a_configuration.b_single_config.open_ai_gym.config_frozen_lake import ConfigFrozenLakeDqn
 config = ConfigFrozenLakeDqn()
+config.ACTION_MASKING = True
+config.RANDOM_MAP = False
 
 ###############
 ## CART_POLE ##
