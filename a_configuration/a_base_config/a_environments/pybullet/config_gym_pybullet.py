@@ -1,5 +1,4 @@
 # [NOTE] 바로 아래 CartPoleBulletEnv import 구문 삭제하지 말것
-from pybullet_envs.bullet.cartpole_bullet import CartPoleBulletEnv
 import torch.nn.functional as F
 
 from g_utils.types import LossFunctionType
@@ -11,6 +10,7 @@ class ConfigBullet:
 
 class ConfigCartPoleBullet(ConfigBullet):
     def __init__(self):
+        from pybullet_envs.bullet.cartpole_bullet import CartPoleBulletEnv
         self.ENV_NAME = "CartPoleBulletEnv-v1"
         self.EPISODE_REWARD_AVG_SOLVED = 190
         self.EPISODE_REWARD_STD_SOLVED = 20
@@ -18,6 +18,7 @@ class ConfigCartPoleBullet(ConfigBullet):
 
 class ConfigCartPoleContinuousBullet(ConfigBullet):
     def __init__(self):
+        from pybullet_envs.bullet.cartpole_bullet import CartPoleBulletEnv
         self.ENV_NAME = "CartPoleContinuousBulletEnv-v0"
         self.EPISODE_REWARD_AVG_SOLVED = 190
         self.EPISODE_REWARD_STD_SOLVED = 20

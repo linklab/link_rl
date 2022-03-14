@@ -21,8 +21,7 @@ Notice: Gym does not officially support Windows
 - Install package
   ```commandline
   pip install gym==0.22.0
-  pip install gym[atari]==0.22.0
-  pip install gym[accept-rom-license]==0.22.0
+  pip install gym[atari,accept-rom-license]==0.22.0
   conda install -c conda-forge box2d-py==2.3.8
   pip install pygame==2.1.0
   pip install opencv-python==4.5.5.62

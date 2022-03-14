@@ -14,7 +14,7 @@ ENV_NAME = "PongNoFrameskip-v4"
 
 
 def main_env_info():
-    env = gym.make(ENV_NAME, render_mode='human')
+    env = gym.make(ENV_NAME)
     env = gym.wrappers.AtariPreprocessing(env, grayscale_obs=True, scale_obs=True)
     env = gym.wrappers.FrameStack(env, num_stack=4, lz4_compress=True)
 
@@ -65,7 +65,7 @@ def main_env_info():
     # This sets the initial state at S, our starting point
     # We can render the environment to see where we are on the 4x4 frozenlake gridworld
     observation = env.reset()
-    #env.render()
+    env.render()
 
     # actions = [0, 1, 2, 3, 4, 5, 0, 1, 2, 3, 4, 5]
 
@@ -74,7 +74,7 @@ def main_env_info():
     for action in actions:
         time.sleep(0.05)
         next_observation, reward, done, info = env.step(action)
-        #env.render()
+        env.render()
         print("Observation: {0}, Action: {1}, Next Observation: {2}, Reward: {3}, Done: {4}, Info: {5}".format(
             observation.shape, action, next_observation.shape, reward, done, info
         ))
