@@ -384,7 +384,7 @@ class Learner(mp.Process):
         print("Transition Rolling Rate: {0:.3f}/sec.".format(self.total_time_step.value / total_training_time))
         print("Training Rate: {0:.3f}/sec.".format(self.training_step.value / total_training_time))
         if self.config.USE_WANDB:
-            wandb_obj.join()
+            wandb_obj.finish()
 
     def run(self):
         self.train_loop(parallel=True)

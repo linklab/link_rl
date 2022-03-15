@@ -67,7 +67,7 @@ class ConfigBase:
 
         self.LOSS_FUNCTION_TYPE = LossFunctionType.MSE_LOSS
         self.LOSS_FUNCTION = None
-        self.CONSOLE_LOG_INTERVAL_TRAINING_STEPS = 30
+        self.CONSOLE_LOG_INTERVAL_TRAINING_STEPS = 50
 
         self.NO_TEST_GRAPHICS = True
 

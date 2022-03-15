@@ -13,6 +13,7 @@ class ConfigCartPoleDqn(ConfigBase, ConfigCartPole, ConfigDqn):
         ConfigCartPole.__init__(self)
         ConfigDqn.__init__(self)
 
+        self.LEARNING_RATE = 0.001
         self.MAX_TRAINING_STEPS = 100_000
         self.BUFFER_CAPACITY = 50_000
         self.MODEL_TYPE = ModelType.SMALL_LINEAR
@@ -24,8 +25,7 @@ class ConfigCartPoleDoubleDqn(ConfigBase, ConfigCartPole, ConfigDoubleDqn):
         ConfigCartPole.__init__(self)
         ConfigDoubleDqn.__init__(self)
 
-        self.N_VECTORIZED_ENVS = 1
-        self.N_ACTORS = 1
+        self.LEARNING_RATE = 0.001
         self.MAX_TRAINING_STEPS = 100_000
         self.BUFFER_CAPACITY = 50_000
         self.MODEL_TYPE = ModelType.SMALL_LINEAR
@@ -37,8 +37,7 @@ class ConfigCartPoleDuelingDqn(ConfigBase, ConfigCartPole, ConfigDuelingDqn):
         ConfigCartPole.__init__(self)
         ConfigDuelingDqn.__init__(self)
 
-        self.N_VECTORIZED_ENVS = 1
-        self.N_ACTORS = 1
+        self.LEARNING_RATE = 0.001
         self.MAX_TRAINING_STEPS = 100_000
         self.BUFFER_CAPACITY = 50_000
         self.MODEL_TYPE = ModelType.SMALL_LINEAR
@@ -50,8 +49,7 @@ class ConfigCartPoleDoubleDuelingDqn(ConfigBase, ConfigCartPole, ConfigDoubleDue
         ConfigCartPole.__init__(self)
         ConfigDoubleDuelingDqn.__init__(self)
 
-        self.N_VECTORIZED_ENVS = 1
-        self.N_ACTORS = 1
+        self.LEARNING_RATE = 0.001
         self.MAX_TRAINING_STEPS = 100_000
         self.BUFFER_CAPACITY = 50_000
         self.MODEL_TYPE = ModelType.SMALL_LINEAR

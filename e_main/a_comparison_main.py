@@ -60,7 +60,7 @@ def main():
     observation_space, action_space = get_env_info(config_c)
     print_comparison_basic_info(observation_space, action_space, config_c)
 
-    input("Press Enter to continue...")
+    input("Press Enter (two or more times) to continue...")
 
     if config_c.USE_WANDB:
         wandb_obj = get_wandb_obj(config_c, comparison=True)
@@ -86,7 +86,7 @@ def main():
         learner_comparison.train_comparison_loop()
 
     if config_c.USE_WANDB:
-        wandb_obj.join()
+        wandb_obj.finish()
 
     print_comparison_basic_info(observation_space, action_space, config_c)
 

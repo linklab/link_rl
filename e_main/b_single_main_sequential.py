@@ -35,7 +35,7 @@ def main():
     observation_space, action_space = get_env_info(config)
     print_basic_info(observation_space, action_space, config)
 
-    input("Press Enter to continue...")
+    input("Press Enter (two or more times) to continue...")
 
     agent = get_agent(
         observation_space=observation_space, action_space=action_space, config=config

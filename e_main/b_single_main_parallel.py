@@ -47,7 +47,7 @@ def main():
     observation_space, action_space = get_env_info(config)
     print_basic_info(observation_space, action_space, config)
 
-    input("Press Enter to continue...")
+    input("Press Enter (two or more times) to continue...")
 
     mp.set_start_method('spawn', force=True)
     queue = mp.Queue()
