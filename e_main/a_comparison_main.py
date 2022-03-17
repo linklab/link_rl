@@ -39,11 +39,11 @@ device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 n_agents = len(config_c.AGENT_PARAMETERS)
 
 for agent_config in config_c.AGENT_PARAMETERS:
-    #del agent_config.MAX_TRAINING_STEPS
+    # del agent_config.MAX_TRAINING_STEPS
     del agent_config.N_ACTORS
     del agent_config.N_EPISODES_FOR_MEAN_CALCULATION
     del agent_config.N_TEST_EPISODES
-    del agent_config.N_VECTORIZED_ENVS
+    # del agent_config.N_VECTORIZED_ENVS
     del agent_config.PROJECT_HOME
     del agent_config.TEST_INTERVAL_TRAINING_STEPS
     del agent_config.TRAIN_INTERVAL_GLOBAL_TIME_STEPS
@@ -57,7 +57,7 @@ def main():
         assert config.AGENT_TYPE not in (AgentType.REINFORCE,)
         set_config(config)
 
-    observation_space, action_space = get_env_info(config_c)
+    observation_space, action_space = get_env_info(config_c.AGENT_PARAMETERS[0])
     print_comparison_basic_info(observation_space, action_space, config_c)
 
     input("Press Enter (two or more times) to continue...")
@@ -73,10 +73,11 @@ def main():
     for run in range(0, config_c.N_RUNS):
         print("\n" + ">" * 30 + " RUN: {0} ".format(run + 1) + "<" * 30)
         agents = []
-        for agent_idx, _ in enumerate(config_c.AGENT_PARAMETERS):
+        for config in config_c.AGENT_PARAMETERS:
+            observation_space, action_space = get_env_info(config)
             agent = get_agent(
                 observation_space=observation_space, action_space=action_space,
-                config=config_c.AGENT_PARAMETERS[agent_idx]
+                config=config
             )
             agents.append(agent)
 

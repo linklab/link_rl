@@ -20,7 +20,7 @@ from a_configuration.a_base_config.c_models.config_convolutional_models import C
 from a_configuration.a_base_config.c_models.config_linear_models import ConfigLinearModel
 from a_configuration.a_base_config.c_models.config_recurrent_convolutional_models import ConfigRecurrentConvolutionalModel
 from a_configuration.a_base_config.c_models.config_recurrent_linear_models import ConfigRecurrentLinearModel
-from b_environments.wrapper import MakeBoxFrozenLake, FrozenLakeActionMask, VectorEnvReturnInfo
+from b_environments import wrapper
 from g_utils.types import AgentType, ActorCriticAgentTypes, ModelType, LayerActivationType, LossFunctionType, \
     OffPolicyAgentTypes, OnPolicyAgentTypes
 
@@ -66,7 +66,7 @@ def set_config(config):
         config.MODEL_PARAMETER = ConfigConvolutionalModel(config.MODEL_TYPE)
 
     elif config.MODEL_TYPE in (
-            ModelType.SMALL_RECURRENT, ModelType.MEDIUM_RECURRENT, ModelType.LARGE_RECURRENT
+            ModelType.TINY_RECURRENT, ModelType.SMALL_RECURRENT, ModelType.MEDIUM_RECURRENT, ModelType.LARGE_RECURRENT
     ):
         from a_configuration.a_base_config.c_models.config_recurrent_linear_models import ConfigRecurrentLinearModel
         config.MODEL_PARAMETER = ConfigRecurrentLinearModel(config.MODEL_TYPE)
@@ -695,6 +695,9 @@ def wandb_log_comparison(
 def get_train_env(config, no_graphics=True):
     def make_gym_env(env_name):
         def _make():
+            #############
+            #   Unity   #
+            #############
             if isinstance(config, ConfigUnityGymEnv):
                 from sys import platform
                 if platform == "linux" or platform == "linux2":
@@ -725,17 +728,37 @@ def get_train_env(config, no_graphics=True):
                     env = TransformReward(env)
                 return env
 
-            env = gym.make(env_name)
-            if env_name in ["PongNoFrameskip-v4"]:
-                env = gym.wrappers.AtariPreprocessing(
-                    env, grayscale_obs=True, scale_obs=True
-                )
+            #############
+            #   Atari   #
+            #############
+            elif isinstance(config, ConfigGymAtari):
+                env = gym.make(env_name)
+                env = gym.wrappers.AtariPreprocessing(env, grayscale_obs=True, scale_obs=True)
                 env = gym.wrappers.FrameStack(env, num_stack=4, lz4_compress=True)
-            if env_name in ["FrozenLake-v1"]:
-                env = MakeBoxFrozenLake(random_map=config.RANDOM_MAP)
-                # env = MakeBoxFrozenLake()
-                if config.ACTION_MASKING:
-                    env = FrozenLakeActionMask(env)
+
+            ############
+            #   Else   #
+            ############
+            else:
+                env = gym.make(env_name, **config.KWARGS)
+                if isinstance(env.observation_space, Discrete):
+                    env = wrapper.DiscreteToBox(env)
+
+                if env_name in ["FrozenLake-v1"]:
+                    if config.BOX_OBSERVATION:
+                        env = wrapper.MakeBoxFrozenLake(random_map=config.RANDOM_MAP)
+                        if config.ACTION_MASKING:
+                            env = wrapper.FrozenLakeActionMask(env)
+
+                ################
+                #   Wrappers   #
+                ################
+                if config.TRANSFORM_OBSERVATION is not None:
+                    env = gym.wrappers.TransformObservation(env=env, f=config.TRANSFORM_OBSERVATION)
+
+                if config.TIME_AWARE_OBSERVATION:
+                    env = gym.wrappers.TimeAwareObservation(env)
+
             return env
 
         return _make
@@ -750,6 +773,9 @@ def get_train_env(config, no_graphics=True):
 
 
 def get_single_env(config, no_graphics=True, play=False):
+    #############
+    #   Unity   #
+    #############
     if isinstance(config, ConfigUnityGymEnv):
         from sys import platform
         if platform == "linux" or platform == "linux2":
@@ -778,22 +804,40 @@ def get_single_env(config, no_graphics=True, play=False):
             from b_environments.wrappers.unity.unity_wrappers import GrayScaleObservation, ResizeObservation, TransformReward
             single_env = gym.wrappers.FrameStack(ResizeObservation(GrayScaleObservation(single_env), shape=64), num_stack=4)
             single_env = TransformReward(single_env)
-    else:
-        if config.ENV_NAME in ["FrozenLake-v1"]:
-            single_env = MakeBoxFrozenLake(random_map=config.RANDOM_MAP)
-            if config.ACTION_MASKING:
-                single_env = FrozenLakeActionMask(single_env)
-        else:
 
-            if isinstance(config, ConfigGymAtari):
-                if play:
-                    single_env = gym.make(config.ENV_NAME, render_mode="human")
-                else:
-                    single_env = gym.make(config.ENV_NAME)
-                single_env = gym.wrappers.AtariPreprocessing(single_env, frame_skip=1, grayscale_obs=True, scale_obs=True)
-                single_env = gym.wrappers.FrameStack(single_env, num_stack=4, lz4_compress=True)
-            else:
-                single_env = gym.make(config.ENV_NAME)
+    #############
+    #   Atari   #
+    #############
+    elif isinstance(config, ConfigGymAtari):
+        if play:
+            single_env = gym.make(config.ENV_NAME, render_mode="human")
+        else:
+            single_env = gym.make(config.ENV_NAME)
+        single_env = gym.wrappers.AtariPreprocessing(single_env, frame_skip=1, grayscale_obs=True, scale_obs=True)
+        single_env = gym.wrappers.FrameStack(single_env, num_stack=4, lz4_compress=True)
+
+    ############
+    #   else   #
+    ############
+    else:
+        single_env = gym.make(config.ENV_NAME, **config.KWARGS)
+        if isinstance(single_env.observation_space, Discrete):
+            single_env = wrapper.DiscreteToBox(single_env)
+
+        if config.ENV_NAME in ["FrozenLake-v1"]:
+            if config.BOX_OBSERVATION:
+                single_env = wrapper.MakeBoxFrozenLake(random_map=config.RANDOM_MAP)
+                if config.ACTION_MASKING:
+                    single_env = wrapper.FrozenLakeActionMask(single_env)
+
+        ################
+        #   Wrappers   #
+        ################
+        if config.TRANSFORM_OBSERVATION is not None:
+            single_env = gym.wrappers.TransformObservation(env=single_env, f=config.TRANSFORM_OBSERVATION)
+
+        if config.TIME_AWARE_OBSERVATION:
+            single_env = gym.wrappers.TimeAwareObservation(single_env)
 
     return single_env
 

@@ -55,7 +55,6 @@ class Model(nn.Module):
 
     def get_linear_layers(self, input_n_features, activation=nn.ReLU()):
         if not self.config.MODEL_PARAMETER.NEURONS_PER_FULLY_CONNECTED_LAYER:
-            print("self.config.MODEL_PARAMETER.NEURONS_PER_FULLY_CONNECTED_LAYER is empty")
             return nn.Sequential()
 
         linear_layers_dict = OrderedDict()
@@ -84,7 +83,6 @@ class Model(nn.Module):
 
     def get_representation_layers(self, input_n_features, activation=nn.ReLU()):
         if not self.config.MODEL_PARAMETER.NEURONS_PER_REPRESENTATION_LAYER:
-            print("self.config.MODEL_PARAMETER.NEURONS_PER_REPRESENTATION_LAYER is empty")
             return nn.Sequential()
 
         representation_layers_dict = OrderedDict()

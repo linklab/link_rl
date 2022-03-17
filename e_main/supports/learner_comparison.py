@@ -53,7 +53,7 @@ class LearnerComparison:
         self.comparison_stat = comparison_stat
 
         for agent_idx, _ in enumerate(agents):
-            self.train_envs_per_agent.append(get_train_env(self.config_c))
+            self.train_envs_per_agent.append(get_train_env(self.config_c.AGENT_PARAMETERS[agent_idx]))
             self.test_envs_per_agent.append(get_single_env(self.config_c.AGENT_PARAMETERS[agent_idx]))
             self.episode_rewards_per_agent.append(np.zeros(shape=(self.n_actors, self.n_vectorized_envs)))
             self.episode_reward_buffer_per_agent.append(MeanBuffer(self.config_c.N_EPISODES_FOR_MEAN_CALCULATION))
@@ -85,8 +85,9 @@ class LearnerComparison:
         self.train_comparison_start_time = None
 
     def generator_on_policy_transition(self, agent_idx):
-        observations = self.train_envs_per_agent[agent_idx].reset()
-        if isinstance(self.config_c.AGENT_PARAMETERS[agent_idx].MODEL_TYPE, ConfigRecurrentLinearModel):
+        observations, infos = self.train_envs_per_agent[agent_idx].reset(return_info=True)
+
+        if self.is_recurrent_model_per_agent[agent_idx]:
             self.agents[agent_idx].model.init_recurrent_hidden()
             observations = [(observations, self.agents[agent_idx].model.recurrent_hidden)]
 
@@ -104,7 +105,7 @@ class LearnerComparison:
                 raise ValueError()
 
             next_observations, rewards, dones, infos = self.train_envs_per_agent[agent_idx].step(scaled_actions)
-            if isinstance(self.config_c.AGENT_PARAMETERS[agent_idx].MODEL_TYPE, ConfigRecurrentLinearModel):
+            if self.is_recurrent_model_per_agent[agent_idx]:
                 next_observations = [(next_observations, self.agents[agent_idx].model.recurrent_hidden)]
 
             for env_id, (observation, action, next_observation, reward, done, info) in enumerate(

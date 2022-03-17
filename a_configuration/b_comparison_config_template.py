@@ -1,8 +1,11 @@
-###############
-## CART_POLE ##
-###############
+#################
+## FROZEN_LAKE ##
+#################
 from a_configuration.c_comparison_config.open_ai_gym.config_comparison_frozen_lake import ConfigComparisonFrozenLakeDqnActionMasking
 config_c = ConfigComparisonFrozenLakeDqnActionMasking()
+
+from a_configuration.c_comparison_config.open_ai_gym.config_comparison_frozen_lake import ConfigComparisonFrozenLakeDqnTime
+config_c = ConfigComparisonFrozenLakeDqnTime()
 
 ###############
 ## CART_POLE ##

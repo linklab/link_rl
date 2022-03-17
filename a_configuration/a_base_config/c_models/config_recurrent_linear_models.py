@@ -3,7 +3,15 @@ from g_utils.types import ModelType
 
 class ConfigRecurrentLinearModel:
     def __init__(self, model_type):
-        if model_type == ModelType.SMALL_RECURRENT:
+        if model_type == ModelType.TINY_RECURRENT:
+            self.NEURONS_PER_REPRESENTATION_LAYER = [64]
+
+            self.HIDDEN_SIZE = 64
+            self.NUM_LAYERS = 2
+
+            self.NEURONS_PER_FULLY_CONNECTED_LAYER = []
+
+        elif model_type == ModelType.SMALL_RECURRENT:
             self.NEURONS_PER_REPRESENTATION_LAYER = [128]
 
             self.HIDDEN_SIZE = 128

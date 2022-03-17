@@ -44,6 +44,29 @@ class CustomActionWrapper(gym.ActionWrapper):
         raise NotImplementedError()
 
 
+class DiscreteToBox(gym.ObservationWrapper):
+    def __init__(self, env):
+        super().__init__(env)
+        assert isinstance(env.observation_space, gym.spaces.Discrete), \
+            "Should only be used to wrap Discrete envs."
+
+        self.discrete_observation_space_n = self.observation_space.n
+        self.observation_space = gym.spaces.Box(
+            low=0,
+            high=1,
+            shape=(self.discrete_observation_space_n,)
+        )
+
+    def observation(self, observation):
+        if observation is None:
+            return None
+
+        new_obs = np.zeros(self.discrete_observation_space_n)
+        new_obs[observation] = 1
+
+        return new_obs
+
+
 class MakeBoxFrozenLake(gym.Wrapper):
     def __init__(self, random_map=True):
         if random_map:

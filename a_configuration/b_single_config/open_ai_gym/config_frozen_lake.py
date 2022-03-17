@@ -12,7 +12,11 @@ class ConfigFrozenLakeDqn(ConfigBase, ConfigFrozenLake, ConfigDqn):
 
         self.MAX_TRAINING_STEPS = 100_000
         self.BUFFER_CAPACITY = 50_000
-        self.MODEL_TYPE = ModelType.TINY_CONVOLUTIONAL
+
+        if self.BOX_OBSERVATION:
+            self.MODEL_TYPE = ModelType.TINY_CONVOLUTIONAL
+        else:
+            self.MODEL_TYPE = ModelType.TINY_LINEAR
 
 
 # class ConfigFrozenLakeDoubleDqn(ConfigBase, ConfigFrozenLake, ConfigDoubleDqn):

@@ -1,5 +1,6 @@
 import os
 import sys
+from typing import Callable
 
 import torch
 
@@ -77,4 +78,9 @@ class ConfigBase:
         self.PER_EPSILON = 0.01
         self.USE_PER = False
 
+        self.KWARGS = dict()
+
+        # Wrappers
         self.ACTION_MASKING = False
+        self.TRANSFORM_OBSERVATION: Callable[[any], any] = None
+        self.TIME_AWARE_OBSERVATION = False

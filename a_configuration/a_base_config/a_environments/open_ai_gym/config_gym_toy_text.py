@@ -1,5 +1,3 @@
-import torch.nn.functional as F
-
 from g_utils.types import LossFunctionType
 
 
@@ -14,5 +12,6 @@ class ConfigFrozenLake(ConfigGymToyText):
         self.EPISODE_REWARD_STD_SOLVED = 20
         self.N_TEST_EPISODES = 40
         self.RANDOM_MAP = False
+        self.BOX_OBSERVATION = False
 
         self.LOSS_FUNCTION_TYPE = LossFunctionType.MSE_LOSS
