@@ -19,10 +19,16 @@ config_c = ConfigComparisonCartPoleDqnTypes()
 from a_configuration.c_comparison_config.open_ai_gym.config_comparison_cart_pole import ConfigComparisonCartPolePpo
 config_c = ConfigComparisonCartPolePpo()
 
+from a_configuration.c_comparison_config.open_ai_gym.config_comparison_cart_pole import ConfigComparisonCartPoleDqnTime
+config_c = ConfigComparisonCartPoleDqnTime()
+
+from a_configuration.c_comparison_config.open_ai_gym.config_comparison_cart_pole import \
+    ConfigComparisonCartPoleDqnReversActionTime
+config_c = ConfigComparisonCartPoleDqnReversActionTime()
+
 ######################
 ## CART_POLE_BULLET ##
 ######################
-
 from a_configuration.c_comparison_config.pybullet.config_comparison_cart_pole_bullet import ConfigComparisonCartPoleBulletDqn
 config_c = ConfigComparisonCartPoleBulletDqn()
 
@@ -35,7 +41,6 @@ config_c = ConfigComparisonCartPoleBulletDqnTypes()
 #################################
 ## CART_POLE_CONTINUOUS_BULLET ##
 #################################
-
 from a_configuration.c_comparison_config.pybullet.config_comparison_cart_pole_continuous_bullet import ConfigComparisonCartPoleContinuousBulletDdpg
 config_c = ConfigComparisonCartPoleContinuousBulletDdpg()
 

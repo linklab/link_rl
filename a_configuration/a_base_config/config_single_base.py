@@ -1,6 +1,6 @@
 import os
 import sys
-from typing import Callable
+from typing import Callable, List, Tuple, Dict
 
 import torch
 
@@ -78,9 +78,8 @@ class ConfigBase:
         self.PER_EPSILON = 0.01
         self.USE_PER = False
 
-        self.KWARGS = dict()
+        self.ENV_KWARGS = dict()
 
         # Wrappers
         self.ACTION_MASKING = False
-        self.TRANSFORM_OBSERVATION: Callable[[any], any] = None
-        self.TIME_AWARE_OBSERVATION = False
+        self.WRAPPERS: List[Tuple[Callable, Dict]] = []

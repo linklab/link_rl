@@ -1,8 +1,14 @@
+import gym
+
 from a_configuration.a_base_config.config_comparison_base import ConfigComparisonBase
 from a_configuration.b_single_config.open_ai_gym.config_cart_pole import ConfigCartPoleDqn, \
     ConfigCartPoleReinforce, \
     ConfigCartPoleA2c, ConfigCartPoleDoubleDqn, ConfigCartPoleDuelingDqn, ConfigCartPoleDoubleDuelingDqn, \
     ConfigCartPolePpo, ConfigCartPolePpoTrajectory
+from b_environments import wrapper
+from g_utils.types import ModelType
+
+import numpy as np
 
 
 class ConfigComparisonCartPoleDqn(ConfigComparisonBase):
@@ -95,3 +101,75 @@ class ConfigComparisonCartPolePpo(ConfigComparisonBase):
         ]
         self.MAX_TRAINING_STEPS = 10_000
         self.N_RUNS = 5
+
+
+class ConfigComparisonCartPoleDqnTime(ConfigComparisonBase):
+    def __init__(self):
+        super().__init__()
+
+        self.ENV_NAME = "CartPole-v1"
+
+        self.MAX_TRAINING_STEPS = 100_000
+        self.N_RUNS = 5
+
+        self.AGENT_LABELS = [
+            "Original",
+            "Original + Time",
+            "Original + GRU",
+        ]
+
+        self.AGENT_PARAMETERS = [
+            ConfigCartPoleDqn(),
+            ConfigCartPoleDqn(),
+            ConfigCartPoleDqn()
+        ]
+
+        # common
+
+        # Original
+
+        # Original + Time
+        self.AGENT_PARAMETERS[1].config.WRAPPERS.append(
+            (gym.wrappers.TimeAwareObservation, {})
+        )
+
+        # Original + GRU
+        self.AGENT_PARAMETERS[2].MODEL_TYPE = ModelType.SMALL_RECURRENT
+
+
+class ConfigComparisonCartPoleDqnReversActionTime(ConfigComparisonBase):
+    def __init__(self):
+        super().__init__()
+
+        self.ENV_NAME = "CartPole-v1"
+
+        self.MAX_TRAINING_STEPS = 100_000
+        self.N_RUNS = 5
+
+        self.AGENT_LABELS = [
+            "Original",
+            "Original + Time",
+            "Original + GRU",
+        ]
+
+        self.AGENT_PARAMETERS = [
+            ConfigCartPoleDqn(),
+            ConfigCartPoleDqn(),
+            ConfigCartPoleDqn()
+        ]
+
+        # common
+        for config in self.AGENT_PARAMETERS:
+            config.WRAPPERS.append(
+                (wrapper.ReverseActionCartpole, {})
+            )
+
+        # Original
+
+        # Original + Time
+        self.AGENT_PARAMETERS[1].WRAPPERS.append(
+            (gym.wrappers.TimeAwareObservation, {})
+        )
+
+        # Original + GRU
+        self.AGENT_PARAMETERS[2].MODEL_TYPE = ModelType.SMALL_RECURRENT

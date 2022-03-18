@@ -1,8 +1,11 @@
+import gym
+
 from a_configuration.a_base_config.config_comparison_base import ConfigComparisonBase
 from a_configuration.b_single_config.open_ai_gym.config_frozen_lake import ConfigFrozenLakeDqn
 
 import numpy as np
 
+from b_environments import wrapper
 from g_utils.types import ModelType
 
 
@@ -66,33 +69,48 @@ class ConfigComparisonFrozenLakeDqnTime(ConfigComparisonFrozenLakeBase):
 
         # common
         for agent in self.AGENT_PARAMETERS:
-            agent.KWARGS["is_slippery"] = False
-            agent.KWARGS["desc"] = ["SFF",
-                                    "FHF",
-                                    "FFG"]
+            agent.ENV_KWARGS["is_slippery"] = False
+            agent.ENV_KWARGS["desc"] = ["SFF",
+                                        "FHF",
+                                        "FFG"]
 
         # Original
-        self.AGENT_PARAMETERS[0].TRANSFORM_OBSERVATION = None
 
         # Zero
-        self.AGENT_PARAMETERS[1].TRANSFORM_OBSERVATION = lambda obs: np.zeros(obs.shape)
+        self.AGENT_PARAMETERS[1].WRAPPERS.append(
+            (gym.wrappers.TransformObservation, {"f": lambda obs: np.zeros(obs.shape)})
+        )
 
         # Zero + Time
-        self.AGENT_PARAMETERS[2].TRANSFORM_OBSERVATION = lambda obs: np.zeros(obs.shape)
-        self.AGENT_PARAMETERS[2].TIME_AWARE_OBSERVATION = True
+        self.AGENT_PARAMETERS[2].WRAPPERS.append(
+            (gym.wrappers.TransformObservation, {"f": lambda obs: np.zeros(obs.shape)})
+        )
+        self.AGENT_PARAMETERS[2].WRAPPERS.append(
+            (gym.wrappers.TimeAwareObservation, {})
+        )
 
         # Zero + GRU
-        self.AGENT_PARAMETERS[3].TRANSFORM_OBSERVATION = lambda obs: np.zeros(obs.shape)
+        self.AGENT_PARAMETERS[3].WRAPPERS.append(
+            (gym.wrappers.TransformObservation, {"f": lambda obs: np.zeros(obs.shape)})
+        )
         self.AGENT_PARAMETERS[3].MODEL_TYPE = ModelType.TINY_RECURRENT
 
         # Random
-        self.AGENT_PARAMETERS[4].TRANSFORM_OBSERVATION = lambda obs: np.random.randn(*obs.shape)
+        self.AGENT_PARAMETERS[4].WRAPPERS.append(
+            (gym.wrappers.TransformObservation, {"f": lambda obs: np.random.randn(*obs.shape)})
+        )
 
         # Random + Time
-        self.AGENT_PARAMETERS[5].TRANSFORM_OBSERVATION = lambda obs: np.random.randn(*obs.shape)
-        self.AGENT_PARAMETERS[5].TIME_AWARE_OBSERVATION = True
+        self.AGENT_PARAMETERS[5].WRAPPERS.append(
+            (gym.wrappers.TransformObservation, {"f": lambda obs: np.random.randn(*obs.shape)})
+        )
+        self.AGENT_PARAMETERS[5].WRAPPERS.append(
+            (gym.wrappers.TimeAwareObservation, {})
+        )
 
         # Random + GRU
-        self.AGENT_PARAMETERS[6].TRANSFORM_OBSERVATION = lambda obs: np.random.randn(*obs.shape)
+        self.AGENT_PARAMETERS[6].WRAPPERS.append(
+            (gym.wrappers.TransformObservation, {"f": lambda obs: np.random.randn(*obs.shape)})
+        )
         self.AGENT_PARAMETERS[6].MODEL_TYPE = ModelType.TINY_RECURRENT
 

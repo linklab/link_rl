@@ -740,7 +740,7 @@ def get_train_env(config, no_graphics=True):
             #   Else   #
             ############
             else:
-                env = gym.make(env_name, **config.KWARGS)
+                env = gym.make(env_name, **config.ENV_KWARGS)
                 if isinstance(env.observation_space, Discrete):
                     env = wrapper.DiscreteToBox(env)
 
@@ -753,11 +753,10 @@ def get_train_env(config, no_graphics=True):
                 ################
                 #   Wrappers   #
                 ################
-                if config.TRANSFORM_OBSERVATION is not None:
-                    env = gym.wrappers.TransformObservation(env=env, f=config.TRANSFORM_OBSERVATION)
-
-                if config.TIME_AWARE_OBSERVATION:
-                    env = gym.wrappers.TimeAwareObservation(env)
+                for env_wrapper, kwargs in config.WRAPPERS:
+                    if not kwargs:
+                        kwargs = dict()
+                    env = env_wrapper(env, **kwargs)
 
             return env
 
@@ -820,7 +819,7 @@ def get_single_env(config, no_graphics=True, play=False):
     #   else   #
     ############
     else:
-        single_env = gym.make(config.ENV_NAME, **config.KWARGS)
+        single_env = gym.make(config.ENV_NAME, **config.ENV_KWARGS)
         if isinstance(single_env.observation_space, Discrete):
             single_env = wrapper.DiscreteToBox(single_env)
 
@@ -833,11 +832,10 @@ def get_single_env(config, no_graphics=True, play=False):
         ################
         #   Wrappers   #
         ################
-        if config.TRANSFORM_OBSERVATION is not None:
-            single_env = gym.wrappers.TransformObservation(env=single_env, f=config.TRANSFORM_OBSERVATION)
-
-        if config.TIME_AWARE_OBSERVATION:
-            single_env = gym.wrappers.TimeAwareObservation(single_env)
+        for env_wrapper, kwargs in config.WRAPPERS:
+            if not kwargs:
+                kwargs = dict()
+            single_env = env_wrapper(single_env, **kwargs)
 
     return single_env
 

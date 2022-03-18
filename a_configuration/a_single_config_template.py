@@ -1,3 +1,8 @@
+import gym
+import numpy as np
+
+from g_utils.types import ModelType
+
 #################
 ## FROZEN_LAKE ##
 #################
@@ -5,6 +10,35 @@ from a_configuration.b_single_config.open_ai_gym.config_frozen_lake import Confi
 config = ConfigFrozenLakeDqn()
 config.ACTION_MASKING = True
 config.RANDOM_MAP = False
+
+from a_configuration.b_single_config.open_ai_gym.config_frozen_lake import ConfigFrozenLakeDqn
+config = ConfigFrozenLakeDqn()
+config.ENV_KWARGS["is_slippery"] = False
+config.ENV_KWARGS["desc"] = ["SFF", "FHF", "FFG"]
+config.WRAPPERS.append(
+    (gym.wrappers.TransformObservation, {"f": lambda obs: np.random.randn(*obs.shape)})
+)
+
+from a_configuration.b_single_config.open_ai_gym.config_frozen_lake import ConfigFrozenLakeDqn
+config = ConfigFrozenLakeDqn()
+config.ENV_KWARGS["is_slippery"] = False
+config.ENV_KWARGS["desc"] = ["SFF", "FHF", "FFG"]
+config.WRAPPERS.append((gym.wrappers.TimeAwareObservation, dict()))
+config.WRAPPERS.append(
+    (gym.wrappers.TransformObservation, {"f": lambda obs: np.random.randn(*obs.shape)})
+)
+config.WRAPPERS.append(
+    (gym.wrappers.TimeAwareObservation, {})
+)
+
+from a_configuration.b_single_config.open_ai_gym.config_frozen_lake import ConfigFrozenLakeDqn
+config = ConfigFrozenLakeDqn()
+config.ENV_KWARGS["is_slippery"] = False
+config.ENV_KWARGS["desc"] = ["SFF", "FHF", "FFG"]
+config.MODEL_TYPE = ModelType.TINY_RECURRENT
+config.WRAPPERS.append(
+    (gym.wrappers.TransformObservation, {"f": lambda obs: np.random.randn(*obs.shape)})
+)
 
 ###############
 ## CART_POLE ##

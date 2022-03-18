@@ -1,3 +1,5 @@
+from abc import abstractmethod
+
 import numpy as np
 import gym
 
@@ -159,6 +161,7 @@ class ActionMaskWrapper(gym.Wrapper):
         info["available_actions"], info["unavailable_actions"] = self.get_action_mask()
         return info
 
+    @abstractmethod
     def get_action_mask(self):
         raise NotImplementedError()
 
@@ -204,3 +207,41 @@ class VectorEnvReturnInfo(gym.vector.VectorEnvWrapper):
     def reset(self):
         obs, info = self.env.reset(return_info=True)
         return obs, info
+
+
+class ReverseActionWrapper(gym.Wrapper):
+    def __init__(self, env, threshold):
+        super().__init__(env)
+        self.t = 0
+        if threshold < 0:
+            ValueError("Must be threshold >= 0")
+        else:
+            self.threshold = threshold
+
+    def reset(self, **kwargs):
+        self.t = 0
+        return super().reset(**kwargs)
+
+    def step(self, action):
+        current = self.t
+        self.t += 1
+
+        if current < self.threshold:
+            return self.env.step(self.action(action))
+        else:
+            return self.env.step(self.reverse_action(action))
+
+    def action(self, action):
+        return action
+
+    @abstractmethod
+    def reverse_action(self, action):
+        raise NotImplementedError
+
+
+class ReverseActionCartpole(ReverseActionWrapper):
+    def __init__(self, env, threshold=250):
+        super().__init__(env=env, threshold=threshold)
+
+    def reverse_action(self, action):
+        return 1 - action
