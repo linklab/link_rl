@@ -355,6 +355,12 @@ from a_configuration.b_single_config.unity.config_drone import ConfigDroneSac
 config = ConfigDroneSac()
 
 
+##########################
+### TaskAllocation ###
+##########################
+from a_configuration.b_single_config.config_task_allocation import ConfigTaskAllocation0Dqn
+config = ConfigTaskAllocation0Dqn()
+
 config.USE_WANDB = False
 
 if __name__ == "__main__":

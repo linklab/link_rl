@@ -10,9 +10,10 @@ class ConfigTaskAllocation0Dqn(ConfigBase, ConfigTakAllocation0, ConfigDqn):
         ConfigTakAllocation0.__init__(self)
         ConfigDqn.__init__(self)
 
-        self.LEARNING_RATE = 0.0001
+        self.LEARNING_RATE = 0.0003
         self.MAX_TRAINING_STEPS = 200_000
         self.BUFFER_CAPACITY = 35_000
         self.CONSOLE_LOG_INTERVAL_TRAINING_STEPS = 20
         self.MODEL_TYPE = ModelType.SMALL_LINEAR
+        self.TARGET_SYNC_INTERVAL_TRAINING_STEPS = 100
 
