@@ -79,6 +79,9 @@ class Learner(mp.Process):
 
         self.shared_model_access_lock = shared_model_access_lock  # For only LearningActor (A3C)
 
+        if self.config.ENV_NAME in ["TaskAllocation_v0"]:
+            self.task_allocation_info = None
+
     def generator_on_policy_transition(self):
         observations, infos = self.train_env.reset(return_info=True)
 
@@ -110,6 +113,10 @@ class Learner(mp.Process):
                 raise ValueError()
 
             next_observations, rewards, dones, infos = self.train_env.step(scaled_actions)
+
+            if self.config.ENV_NAME in ["TaskAllocation_v0"]:
+                self.task_allocation_info = infos[0]
+
             if self.is_recurrent_model:
                 next_observations = [(next_observations, self.agent.model.recurrent_hidden)]
 
@@ -354,6 +361,7 @@ class Learner(mp.Process):
                 self.train_step_rate.value = self.training_step.value / total_training_time
 
                 console_log(
+                    self,
                     total_episodes_v=self.total_episodes.value,
                     last_mean_episode_reward_v=self.last_mean_episode_reward.value,
                     n_rollout_transitions_v=self.total_time_step.value,
