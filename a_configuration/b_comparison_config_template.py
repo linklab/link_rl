@@ -137,6 +137,13 @@ config_c = ConfigComparisonInvertedDoublePendulumBulletA2cPpo()
 from a_configuration.c_comparison_config.pybullet.config_comparison_inverted_double_pendulum_bullet import ConfigComparisonInvertedDoublePendulumBulletSacPpo
 config_c = ConfigComparisonInvertedDoublePendulumBulletSacPpo()
 
+
+##########################
+##    TaskAllocation    ##
+##########################
+from a_configuration.c_comparison_config.config_comparison_task_allocation import ConfigComparisonTaskAllocationDqnTypes
+config_c = ConfigComparisonTaskAllocationDqnTypes()
+
 config_c.USE_WANDB = False
 
 if __name__ == "__main__":
