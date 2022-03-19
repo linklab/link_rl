@@ -1,6 +1,7 @@
 import gym
 import numpy as np
 
+from b_environments import wrapper
 from g_utils.types import ModelType
 
 #################
@@ -45,6 +46,28 @@ config.WRAPPERS.append(
 ###############
 from a_configuration.b_single_config.open_ai_gym.config_cart_pole import ConfigCartPoleDqn
 config = ConfigCartPoleDqn()
+
+from a_configuration.b_single_config.open_ai_gym.config_cart_pole import ConfigCartPoleDqn
+config = ConfigCartPoleDqn()
+config.WRAPPERS.append(
+    (wrapper.ReverseActionCartpole, {})
+)
+
+from a_configuration.b_single_config.open_ai_gym.config_cart_pole import ConfigCartPoleDqn
+config = ConfigCartPoleDqn()
+config.WRAPPERS.append(
+    (wrapper.ReverseActionCartpole, {})
+)
+config.WRAPPERS.append(
+    (gym.wrappers.TimeAwareObservation, {})
+)
+
+from a_configuration.b_single_config.open_ai_gym.config_cart_pole import ConfigCartPoleDqn
+config = ConfigCartPoleDqn()
+config.WRAPPERS.append(
+    (wrapper.ReverseActionCartpole, {})
+)
+config.MODEL_TYPE = ModelType.SMALL_RECURRENT
 
 from a_configuration.b_single_config.open_ai_gym.config_cart_pole import ConfigCartPoleDoubleDqn
 config = ConfigCartPoleDoubleDqn()
