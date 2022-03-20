@@ -129,7 +129,7 @@ class ConfigComparisonCartPoleDqnTime(ConfigComparisonBase):
         # Original
 
         # Original + Time
-        self.AGENT_PARAMETERS[1].config.WRAPPERS.append(
+        self.AGENT_PARAMETERS[1].WRAPPERS.append(
             (gym.wrappers.TimeAwareObservation, {})
         )
 
