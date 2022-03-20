@@ -50,6 +50,9 @@ class Learner(mp.Process):
         self.test_episode_reward_avg = mp.Value('d', 0.0)
         self.test_episode_reward_std = mp.Value('d', 0.0)
 
+        if config.ENV_NAME in ["Task_Allocation_v0"]:
+            self.test_episode_utilization = mp.Value('d', 0.0)
+
         self.next_train_time_step = config.TRAIN_INTERVAL_GLOBAL_TIME_STEPS
         self.next_test_training_step = config.TEST_INTERVAL_TRAINING_STEPS
         self.next_console_log = config.CONSOLE_LOG_INTERVAL_TRAINING_STEPS
@@ -79,7 +82,7 @@ class Learner(mp.Process):
 
         self.shared_model_access_lock = shared_model_access_lock  # For only LearningActor (A3C)
 
-        if self.config.ENV_NAME in ["TaskAllocation_v0"]:
+        if self.config.ENV_NAME in ["Task_Allocation_v0"]:
             self.task_allocation_info = None
 
     def generator_on_policy_transition(self):
@@ -114,7 +117,7 @@ class Learner(mp.Process):
 
             next_observations, rewards, dones, infos = self.train_env.step(scaled_actions)
 
-            if self.config.ENV_NAME in ["TaskAllocation_v0"]:
+            if self.config.ENV_NAME in ["Task_Allocation_v0"]:
                 self.task_allocation_info = infos[0]
 
             if self.is_recurrent_model:
@@ -399,17 +402,30 @@ class Learner(mp.Process):
 
     def testing(self):
         print("*" * 150)
-        self.test_episode_reward_avg.value, self.test_episode_reward_std.value = \
-            self.play_for_testing(self.config.N_TEST_EPISODES)
+
+        if self.config.ENV_NAME in ["Task_Allocation_v0"]:
+            self.test_episode_reward_avg.value, self.test_episode_reward_std.value, self.test_episode_utilization.value = \
+                self.play_for_testing(self.config.N_TEST_EPISODES)
+        else:
+            self.test_episode_reward_avg.value, self.test_episode_reward_std.value = \
+                self.play_for_testing(self.config.N_TEST_EPISODES)
 
         elapsed_time = time.time() - self.train_start_time
         formatted_elapsed_time = time.strftime('%H:%M:%S', time.gmtime(elapsed_time))
 
-        print("[Test: {0}, Training Step: {1:6,}] "
-              "{2} Episodes Reward - Average: {3:.3f}, Standard Dev.: {4:.3f}, Elapsed Time from Training Start: {5} ".format(
-            self.test_idx.value + 1, self.training_step.value, self.config.N_TEST_EPISODES,
-            self.test_episode_reward_avg.value, self.test_episode_reward_std.value, formatted_elapsed_time
-        ))
+        test_str = "[Test: {0}, Training Step: {1:6,}] {2} Episodes Reward - Average: {3:.3f}, Standard Dev.: {4:.3f}".format(
+            self.test_idx.value + 1,
+            self.training_step.value,
+            self.config.N_TEST_EPISODES,
+            self.test_episode_reward_avg.value,
+            self.test_episode_reward_std.value
+        )
+
+        if self.config.ENV_NAME in ["Task_Allocation_v0"]:
+            test_str += ", Utilization: {0}".format(self.test_episode_utilization.value)
+
+        test_str += ", Elapsed Time from Training Start: {0}".format(formatted_elapsed_time)
+        print(test_str)
 
         termination_conditions = [
             self.test_episode_reward_avg.value > self.config.EPISODE_REWARD_AVG_SOLVED,
@@ -443,6 +459,8 @@ class Learner(mp.Process):
         self.agent.model.eval()
 
         episode_reward_lst = []
+        if self.config.ENV_NAME in ["Task_Allocation_v0"]:
+            episode_utilization_lst = []
 
         for i in range(n_test_episodes):
             episode_reward = 0  # cumulative_reward
@@ -508,8 +526,14 @@ class Learner(mp.Process):
 
             episode_reward_lst.append(episode_reward)
 
+            if self.config.ENV_NAME in ["Task_Allocation_v0"]:
+                episode_utilization_lst.append(info["Utilization"])
+
         self.agent.model.train()
         if self.config.AGENT_TYPE == AgentType.A3C:
             self.shared_model_access_lock.release()
 
-        return np.average(episode_reward_lst), np.std(episode_reward_lst)
+        if self.config.ENV_NAME in ["Task_Allocation_v0"]:
+            return np.average(episode_reward_lst), np.std(episode_reward_lst), np.average(episode_utilization_lst)
+        else:
+            return np.average(episode_reward_lst), np.std(episode_reward_lst)

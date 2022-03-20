@@ -459,7 +459,7 @@ def console_log(learner,
     else:
         pass
 
-    if config.ENV_NAME in ["TaskAllocation_v0"]:
+    if config.ENV_NAME in ["Task_Allocation_v0"]:
         info = learner.task_allocation_info
         resource_allocation_info = " Alloc.: {0:3}, Limit: {1:3}, Util.: {2:5.1f}%, Tasks: {3}, Actions: {4}".format(
             info["Resources allocated"], info["Limit"], 100 * (info["Resources allocated"] / info["Limit"]),
@@ -563,10 +563,10 @@ def wandb_log(learner, wandb_obj, config):
         "Train Step Rate": learner.train_step_rate.value
     }
 
-    if config.ENV_NAME in ["TaskAllocation_v0"]:
-        log_dict["Alloc"] = learner.task_allocation_info["Resources allocated"]
-        log_dict["Utils"] = 100 * (learner.task_allocation_info["Resources allocated"] / learner.task_allocation_info["Limit"])
-
+    if config.ENV_NAME in ["Task_Allocation_v0"]:
+        log_dict["Allocation"] = learner.task_allocation_info["Resources allocated"]
+        log_dict["Utilization"] = 100 * learner.task_allocation_info["Utilization"]
+        log_dict["[TEST] Utilization"] = 100 * learner.test_episode_utilization.value
     if config.AGENT_TYPE in [AgentType.DQN, AgentType.DUELING_DQN, AgentType.DOUBLE_DQN, AgentType.DOUBLE_DUELING_DQN]:
         log_dict["QNet Loss"] = learner.agent.last_q_net_loss.value
         log_dict["Epsilon"] = learner.agent.epsilon.value
@@ -595,7 +595,6 @@ def wandb_log(learner, wandb_obj, config):
         log_dict["Policy Loss"] = learner.agent.policy_loss.value
         log_dict["Reward Loss"] = learner.agent.reward_loss.value
         log_dict["Total Loss"] = learner.agent.loss.value
-
     else:
         pass
 
@@ -740,9 +739,9 @@ def get_train_env(config, no_graphics=True):
                     env = TransformReward(env)
                 return env
 
-            elif config.ENV_NAME in ["TaskAllocation_v0"]:
+            elif config.ENV_NAME in ["Task_Allocation_v0"]:
                 from b_environments.task_allocation import EnvironmentTaskScheduling0
-                env = EnvironmentTaskScheduling0()
+                env = EnvironmentTaskScheduling0(config)
 
             #############
             #   Atari   #
@@ -820,9 +819,9 @@ def get_single_env(config, no_graphics=True, play=False):
             single_env = gym.wrappers.FrameStack(ResizeObservation(GrayScaleObservation(single_env), shape=64), num_stack=4)
             single_env = TransformReward(single_env)
 
-    elif config.ENV_NAME in ["TaskAllocation_v0"]:
+    elif config.ENV_NAME in ["Task_Allocation_v0"]:
         from b_environments.task_allocation import EnvironmentTaskScheduling0
-        single_env = EnvironmentTaskScheduling0()
+        single_env = EnvironmentTaskScheduling0(config)
 
     #############
     #   Atari   #

@@ -7,7 +7,7 @@ class ConfigComparisonTaskAllocationDqnTypes(ConfigComparisonBase):
     def __init__(self):
         ConfigComparisonBase.__init__(self)
 
-        self.ENV_NAME = "TaskAllocation_v0"
+        self.ENV_NAME = "Task_Allocation_v0"
 
         self.AGENT_PARAMETERS = [
             ConfigTaskAllocation0Dqn(),
