@@ -10,7 +10,14 @@ class ConfigTaskAllocation0Dqn(ConfigBase, ConfigTakAllocation0, ConfigDqn):
         ConfigTakAllocation0.__init__(self)
         ConfigDqn.__init__(self)
 
-        self.BUFFER_CAPACITY = self.NUM_TASK * 2_000
+        self.NUM_TASK = 20
+        self.NUM_RESOURCES = 1
+        self.INITIAL_RESOURCES_CAPACITY = [200]
+        self.LOW_DEMAND_RESOURCE_AT_TASK = [10]
+        self.HIGH_DEMAND_RESOURCE_AT_TASK = [15]
+        self.INITIAL_TASK_DISTRIBUTION_FIXED = True
+        self.MAX_TRAINING_STEPS = self.NUM_TASK * 2_000
+        self.BUFFER_CAPACITY = self.NUM_TASK * 1_000
 
 
 class ConfigTaskAllocation0DoubleDqn(ConfigBase, ConfigTakAllocation0, ConfigDoubleDqn):
@@ -19,7 +26,14 @@ class ConfigTaskAllocation0DoubleDqn(ConfigBase, ConfigTakAllocation0, ConfigDou
         ConfigTakAllocation0.__init__(self)
         ConfigDoubleDqn.__init__(self)
 
-        self.BUFFER_CAPACITY = self.NUM_TASK * 2_000
+        self.NUM_TASK = 20
+        self.NUM_RESOURCES = 1
+        self.INITIAL_RESOURCES_CAPACITY = [200]
+        self.LOW_DEMAND_RESOURCE_AT_TASK = [10]
+        self.HIGH_DEMAND_RESOURCE_AT_TASK = [15]
+        self.INITIAL_TASK_DISTRIBUTION_FIXED = True
+        self.MAX_TRAINING_STEPS = self.NUM_TASK * 2_000
+        self.BUFFER_CAPACITY = self.NUM_TASK * 1_000
 
 
 class ConfigTaskAllocation0DuelingDqn(ConfigBase, ConfigTakAllocation0, ConfigDuelingDqn):
@@ -28,7 +42,14 @@ class ConfigTaskAllocation0DuelingDqn(ConfigBase, ConfigTakAllocation0, ConfigDu
         ConfigTakAllocation0.__init__(self)
         ConfigDuelingDqn.__init__(self)
 
-        self.BUFFER_CAPACITY = self.NUM_TASK * 2_000
+        self.NUM_TASK = 20
+        self.NUM_RESOURCES = 1
+        self.INITIAL_RESOURCES_CAPACITY = [200]
+        self.LOW_DEMAND_RESOURCE_AT_TASK = [10]
+        self.HIGH_DEMAND_RESOURCE_AT_TASK = [15]
+        self.INITIAL_TASK_DISTRIBUTION_FIXED = True
+        self.MAX_TRAINING_STEPS = self.NUM_TASK * 2_000
+        self.BUFFER_CAPACITY = self.NUM_TASK * 1_000
 
 
 class ConfigTaskAllocation0DoubleDuelingDqn(ConfigBase, ConfigTakAllocation0, ConfigDoubleDuelingDqn):
@@ -37,4 +58,11 @@ class ConfigTaskAllocation0DoubleDuelingDqn(ConfigBase, ConfigTakAllocation0, Co
         ConfigTakAllocation0.__init__(self)
         ConfigDoubleDuelingDqn.__init__(self)
 
-        self.BUFFER_CAPACITY = self.NUM_TASK * 2_000
+        self.NUM_TASK = 20
+        self.NUM_RESOURCES = 1
+        self.INITIAL_RESOURCES_CAPACITY = [200]
+        self.LOW_DEMAND_RESOURCE_AT_TASK = [10]
+        self.HIGH_DEMAND_RESOURCE_AT_TASK = [15]
+        self.INITIAL_TASK_DISTRIBUTION_FIXED = True
+        self.MAX_TRAINING_STEPS = self.NUM_TASK * 2_000
+        self.BUFFER_CAPACITY = self.NUM_TASK * 1_000
