@@ -226,10 +226,16 @@ class ReverseActionWrapper(gym.Wrapper):
         current = self.t
         self.t += 1
 
-        if current < self.threshold:
+        quotient = current // self.threshold
+        if quotient % 2 == 0:
             return self.env.step(self.action(action))
         else:
             return self.env.step(self.reverse_action(action))
+
+        # if current < self.threshold:
+        #     return self.env.step(self.action(action))
+        # else:
+        #     return self.env.step(self.reverse_action(action))
 
     def action(self, action):
         return action
@@ -240,7 +246,7 @@ class ReverseActionWrapper(gym.Wrapper):
 
 
 class ReverseActionCartpole(ReverseActionWrapper):
-    def __init__(self, env, threshold=250):
+    def __init__(self, env, threshold=30):
         super().__init__(env=env, threshold=threshold)
 
     def reverse_action(self, action):

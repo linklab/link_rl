@@ -13,7 +13,7 @@ class ComparisonStat:
 
         for step in range(
                 config_c.TEST_INTERVAL_TRAINING_STEPS,
-                config_c.MAX_TRAINING_STEPS,
+                config_c.MAX_TRAINING_STEPS+1,
                 config_c.TEST_INTERVAL_TRAINING_STEPS,
         ):
             self.test_training_steps_lst.append(step)
