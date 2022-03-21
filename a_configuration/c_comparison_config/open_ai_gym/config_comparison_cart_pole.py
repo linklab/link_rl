@@ -160,15 +160,49 @@ class ConfigComparisonCartPoleDqnReversActionTime(ConfigComparisonBase):
 
         # common
         for config in self.AGENT_PARAMETERS:
-            config.WRAPPERS.append(
-                (wrapper.ReverseActionCartpole, {})
-            )
+            config.WRAPPERS.append(wrapper.ReverseActionCartpole)
 
         # Original
 
         # Original + Time
         self.AGENT_PARAMETERS[1].WRAPPERS.append(
-            (gym.wrappers.TimeAwareObservation, {})
+            gym.wrappers.TimeAwareObservation
+        )
+
+        # Original + GRU
+        self.AGENT_PARAMETERS[2].MODEL_TYPE = ModelType.SMALL_RECURRENT
+
+
+class ConfigComparisonCartPoleDqnWithoutVelocityTime(ConfigComparisonBase):
+    def __init__(self):
+        super().__init__()
+
+        self.ENV_NAME = "CartPole-v1"
+
+        self.MAX_TRAINING_STEPS = 100_000
+        self.N_RUNS = 5
+
+        self.AGENT_LABELS = [
+            "Original",
+            "Original + Time",
+            "Original + GRU",
+        ]
+
+        self.AGENT_PARAMETERS = [
+            ConfigCartPoleDqn(),
+            ConfigCartPoleDqn(),
+            ConfigCartPoleDqn()
+        ]
+
+        # common
+        for config in self.AGENT_PARAMETERS:
+            config.WRAPPERS.append(wrapper.CartpoleWithoutVelocity)
+
+        # Original
+
+        # Original + Time
+        self.AGENT_PARAMETERS[1].WRAPPERS.append(
+            gym.wrappers.TimeAwareObservation
         )
 
         # Original + GRU

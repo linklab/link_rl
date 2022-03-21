@@ -784,9 +784,14 @@ def get_train_env(config, no_graphics=True):
                 ################
                 #   Wrappers   #
                 ################
-                for env_wrapper, kwargs in config.WRAPPERS:
-                    if not kwargs:
+                for env_wrapper in config.WRAPPERS:
+                    if not callable(env_wrapper):
+                        env_wrapper, kwargs = env_wrapper
+                        if not kwargs:
+                            kwargs = dict()
+                    else:
                         kwargs = dict()
+
                     env = env_wrapper(env, **kwargs)
 
             return env
@@ -867,9 +872,14 @@ def get_single_env(config, no_graphics=True, play=False):
         ################
         #   Wrappers   #
         ################
-        for env_wrapper, kwargs in config.WRAPPERS:
-            if not kwargs:
+        for env_wrapper in config.WRAPPERS:
+            if not callable(env_wrapper):
+                env_wrapper, kwargs = env_wrapper
+                if not kwargs:
+                    kwargs = dict()
+            else:
                 kwargs = dict()
+
             single_env = env_wrapper(single_env, **kwargs)
 
     return single_env

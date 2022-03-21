@@ -251,3 +251,26 @@ class ReverseActionCartpole(ReverseActionWrapper):
 
     def reverse_action(self, action):
         return 1 - action
+
+
+class CartpoleWithoutVelocity(gym.ObservationWrapper):
+    def __init__(self, env):
+        # | Num   | Observation             | Min                    | Max                  |
+        # | ----- | ----------------------- | ---------------------- | -------------------- |
+        # | 0     | CartPosition            | -4.8                   | 4.8                  |   O
+        # | 1     | CartVelocity            | -Inf                   | Inf                  |   X
+        # | 2     | PoleAngle               | ~ -0.418 rad(-24°)     | ~ 0.418rad(24°)      |   O
+        # | 3     | PoleAngularVelocity     | -Inf                   | Inf                  |   X
+        super().__init__(env)
+        high = np.array(
+            [
+                self.x_threshold * 2,
+                self.theta_threshold_radians * 2,
+            ],
+            dtype=np.float32,
+        )
+        self.observation_space = gym.spaces.Box(-high, high, dtype=np.float32)
+
+    def observation(self, observation):
+        cart_position, _, pole_angle, _ = observation
+        return cart_position, pole_angle
