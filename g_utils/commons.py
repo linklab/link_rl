@@ -461,10 +461,26 @@ def console_log(learner,
 
     if config.ENV_NAME in ["Task_Allocation_v0"]:
         info = learner.task_allocation_info
-        resource_allocation_info = " Alloc.: {0:3}, Limit: {1:3}, Util.: {2:5.1f}%, Tasks: {3}, Actions: {4}".format(
-            info["Resources allocated"], info["Limit"], 100 * (info["Resources allocated"] / info["Limit"]),
-            sorted(info["Tasks selected"]), info['Actions sequence']
-        )
+
+        resource_allocation_info = " Alloc.: "
+        resource_allocation_info += "/".join(map(str, info["Resources allocated"]))
+        resource_allocation_info += ", Limit: "
+        resource_allocation_info += "/".join(map(str, info["Limit"]))
+        resource_allocation_info += ",, Util.: "
+        resource_allocation_info += "/".join(map(str, np.round((100 * (np.array(info["Resources allocated"]) / np.array(info["Limit"]))), 1).tolist()))
+        resource_allocation_info += " Tasks: {0}, Actions: {1}".format(sorted(info["Tasks selected"]), info['Actions sequence'])
+
+        # resources_allocated_info = ""
+        # limit_info = ""
+        #
+        # for i in range(config.NUM_RESOURCES):
+        #     resources_allocated_info += info["Resources allocated"][i]
+        #     limit_info += info["Limit"][i]
+        # resource_allocation_info = " Alloc.: {0:3}, Limit: {1:3}, Util.: {2:5.1f}%, Tasks: {3}, Actions: {4}".format(
+        #     info["Resources allocated"], info["Limit"], 100 * (np.array(info["Resources allocated"]) / np.array(info["Limit"])).tolist(),
+        #     sorted(info["Tasks selected"]), info['Actions sequence']
+        # )
+
         console_log += resource_allocation_info
 
     print(console_log)

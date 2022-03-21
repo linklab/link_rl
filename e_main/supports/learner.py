@@ -422,7 +422,7 @@ class Learner(mp.Process):
         )
 
         if self.config.ENV_NAME in ["Task_Allocation_v0"]:
-            test_str += ", Utilization: {0}".format(self.test_episode_utilization.value)
+            test_str += ", Utilization: {0:.2f}".format(self.test_episode_utilization.value)
 
         test_str += ", Elapsed Time from Training Start: {0}".format(formatted_elapsed_time)
         print(test_str)

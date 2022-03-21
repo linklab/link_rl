@@ -20,6 +20,22 @@ class ConfigTaskAllocation0Dqn(ConfigBase, ConfigTakAllocation0, ConfigDqn):
         self.BUFFER_CAPACITY = self.NUM_TASK * 1_000
 
 
+class ConfigTaskAllocation1Dqn(ConfigBase, ConfigTakAllocation0, ConfigDqn):
+    def __init__(self):
+        ConfigBase.__init__(self)
+        ConfigTakAllocation0.__init__(self)
+        ConfigDqn.__init__(self)
+
+        self.NUM_TASK = 20
+        self.NUM_RESOURCES = 2
+        self.INITIAL_RESOURCES_CAPACITY = [100, 100]
+        self.LOW_DEMAND_RESOURCE_AT_TASK = [10]
+        self.HIGH_DEMAND_RESOURCE_AT_TASK = [15]
+        self.INITIAL_TASK_DISTRIBUTION_FIXED = True
+        self.MAX_TRAINING_STEPS = self.NUM_TASK * 2_000
+        self.BUFFER_CAPACITY = self.NUM_TASK * 1_000
+
+
 class ConfigTaskAllocation0DoubleDqn(ConfigBase, ConfigTakAllocation0, ConfigDoubleDqn):
     def __init__(self):
         ConfigBase.__init__(self)

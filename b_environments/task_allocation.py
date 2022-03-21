@@ -51,7 +51,10 @@ class EnvironmentTaskScheduling0(gym.Env):
             )
             state[task_idx][2:] = resource_demand
 
-        self.min_task_demand = state[:-1, 2].min()
+        self.min_task_demand = []
+
+        for i in range(self.NUM_RESOURCES):
+            self.min_task_demand.append(state[:-1, 2+i:].min())
 
         state[-1][2:] = np.array(self.INITIAL_RESOURCES_CAPACITY)
 
@@ -69,7 +72,7 @@ class EnvironmentTaskScheduling0(gym.Env):
             self.internal_state = self.get_initial_internal_state()
 
         self.tasks_selected = []
-        self.resource_of_all_tasks_selected = 0
+        self.resource_of_all_tasks_selected = [0 for _ in range(self.NUM_RESOURCES)]
         self.actions_sequence = []
 
         self.num_step = 0
@@ -87,33 +90,33 @@ class EnvironmentTaskScheduling0(gym.Env):
     def step(self, action_idx):
         self.actions_sequence.append(action_idx)
         info = dict()
-        step_resource = self.internal_state[self.num_step][2]
+        step_resource = self.internal_state[self.num_step][2:]
 
         if action_idx == 1:
             self.tasks_selected.append(self.num_step)
-            self.resource_of_all_tasks_selected += step_resource
-            self.internal_state[self.num_step][1] = 1
-            self.internal_state[self.num_step][2] = -1
-            self.internal_state[-1][1] = self.resource_of_all_tasks_selected
-            self.internal_state[-1][2] -= step_resource
+            for i in range(self.NUM_RESOURCES):
+                self.resource_of_all_tasks_selected[i] += step_resource[i]
+                self.internal_state[-1][2 + i] -= step_resource[i]
 
-        possible = False
-        for _, _, resource in self.internal_state[self.num_step:self.NUM_TASKS]:
-            if resource <= self.internal_state[-1][2]:
-                possible = True
-                break
+            self.internal_state[self.num_step][1] = 1
+            self.internal_state[self.num_step][2:] = -1
+            self.internal_state[-1][1] = sum(self.resource_of_all_tasks_selected)
+
+        possible = self.check_allocation_possible()
 
         done = False
         if self.num_step == self.NUM_TASKS - 1 or not possible:
             done = True
 
-            if self.resource_of_all_tasks_selected > self.SUM_RESOURCE_CAPACITY:
-                info['DoneReasonType'] = DoneReasonType0.TYPE_1         # Resource Limit Exceeded
-            else:
-                if 0 not in self.internal_state[:, 1]:
-                    info['DoneReasonType'] = DoneReasonType0.TYPE_3     # All Tasks Selected
+            for i in range(self.NUM_RESOURCES):
+                if self.resource_of_all_tasks_selected[i] > self.INITIAL_RESOURCES_CAPACITY[i]:
+                    info['DoneReasonType'] = DoneReasonType0.TYPE_1         # Resource Limit Exceeded
+                    break
                 else:
-                    info['DoneReasonType'] = DoneReasonType0.TYPE_2     # Resource Remains
+                    if 0 not in self.internal_state[:, 1]:
+                        info['DoneReasonType'] = DoneReasonType0.TYPE_3     # All Tasks Selected
+                    else:
+                        info['DoneReasonType'] = DoneReasonType0.TYPE_2     # Resource Remains
         else:
             self.internal_state[self.num_step][0] = 0
             self.num_step += 1
@@ -129,11 +132,24 @@ class EnvironmentTaskScheduling0(gym.Env):
         info['Actions sequence'] = self.actions_sequence
         info['Tasks selected'] = self.tasks_selected
         info['Resources allocated'] = self.resource_of_all_tasks_selected
-        info['Limit'] = self.SUM_RESOURCE_CAPACITY
-        info['Utilization'] = self.resource_of_all_tasks_selected / self.SUM_RESOURCE_CAPACITY if self.resource_of_all_tasks_selected / self.SUM_RESOURCE_CAPACITY <= 1.0 else 0.0
+        info['Limit'] = self.INITIAL_RESOURCES_CAPACITY
+        info['Utilization'] = sum(self.resource_of_all_tasks_selected) / self.SUM_RESOURCE_CAPACITY if sum(self.resource_of_all_tasks_selected) / self.SUM_RESOURCE_CAPACITY <= 1.0 else 0.0
         info['internal_state'] = copy.deepcopy(self.internal_state)
 
         return observation, reward, done, info
+
+    def check_allocation_possible(self):
+        possible = False
+
+        for task in self.internal_state[self.num_step:self.NUM_TASKS]:
+            resources = task[2:]
+
+            for i in range(self.NUM_RESOURCES):
+                if resources[i] <= self.internal_state[-1][2+i]:
+                    possible = True
+                    break
+
+        return possible
 
     def reward(self, done_type=None):
         if done_type is None:  # Normal Step
@@ -147,12 +163,12 @@ class EnvironmentTaskScheduling0(gym.Env):
             misbehavior_reward = -1.0
 
         elif done_type == DoneReasonType0.TYPE_2:  # Resource Remains
-            resource_efficiency_reward = self.resource_of_all_tasks_selected / self.SUM_RESOURCE_CAPACITY
+            resource_efficiency_reward = sum(self.resource_of_all_tasks_selected) / self.SUM_RESOURCE_CAPACITY
             mission_complete_reward = 0.0
             misbehavior_reward = 0.0
 
         elif done_type == DoneReasonType0.TYPE_3:  # All Tasks Selected
-            resource_efficiency_reward = self.resource_of_all_tasks_selected / self.SUM_RESOURCE_CAPACITY
+            resource_efficiency_reward = sum(self.resource_of_all_tasks_selected) / self.SUM_RESOURCE_CAPACITY
             mission_complete_reward = 1.0
             misbehavior_reward = 0.0
 
@@ -160,6 +176,11 @@ class EnvironmentTaskScheduling0(gym.Env):
             raise ValueError()
 
         return resource_efficiency_reward + mission_complete_reward + misbehavior_reward
+
+    def print_internal_state(self):
+        print("----------------------state-----------------------------")
+        print(self.internal_state)
+        print("--------------------------------------------------------")
 
 
 def run_env():
