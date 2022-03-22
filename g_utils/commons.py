@@ -768,12 +768,12 @@ def get_train_env(config, no_graphics=True):
                 return env
 
             elif config.ENV_NAME in ["Task_Allocation_v0"]:
-                from b_environments.task_allocation import EnvironmentTaskScheduling0
+                from b_environments.combinatorial_optimization.task_allocation import EnvironmentTaskScheduling0
                 env = EnvironmentTaskScheduling0(config)
 
             elif config.ENV_NAME in ["Knapsack_Problem_v0"]:
-                from b_environments.knapsack_problem import KnapsackProblemEnv
-                env = KnapsackProblemEnv(config)
+                from b_environments.combinatorial_optimization.knapsack import KnapsackEnv
+                env = KnapsackEnv(config)
 
             #############
             #   Atari   #
@@ -857,12 +857,12 @@ def get_single_env(config, no_graphics=True, play=False):
             single_env = TransformReward(single_env)
 
     elif config.ENV_NAME in ["Task_Allocation_v0"]:
-        from b_environments.task_allocation import EnvironmentTaskScheduling0
+        from b_environments.combinatorial_optimization.task_allocation import EnvironmentTaskScheduling0
         single_env = EnvironmentTaskScheduling0(config)
 
     elif config.ENV_NAME in ["Knapsack_Problem_v0"]:
-        from b_environments.knapsack_problem import KnapsackProblemEnv
-        single_env = KnapsackProblemEnv(config)
+        from b_environments.combinatorial_optimization.knapsack import KnapsackEnv
+        single_env = KnapsackEnv(config)
 
     #############
     #   Atari   #

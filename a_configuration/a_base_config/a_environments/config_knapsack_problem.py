@@ -1,7 +1,7 @@
 from g_utils.types import ModelType
 
 
-class ConfigKnapsackProblem:
+class ConfigKnapsack:
     def __init__(self):
         self.EPISODE_REWARD_AVG_SOLVED = 100
         self.EPISODE_REWARD_STD_SOLVED = 20
@@ -13,7 +13,7 @@ class ConfigKnapsackProblem:
         self.NUM_ITEM = 20
 
         self.MIN_WEIGHT_ITEM = 10
-        self.MAX_WEIGHT_ITEM = 15
+        self.MAX_WEIGHT_KNAPSACK_ITEM = 15
 
         self.MIN_VALUE_ITEM = 10
         self.MAX_VALUE_ITEM = 15
@@ -24,11 +24,11 @@ class ConfigKnapsackProblem:
         self.BUFFER_CAPACITY = self.NUM_ITEM * 1_000
 
 
-class ConfigKnapsackProblem0(ConfigKnapsackProblem):
+class ConfigKnapsack0(ConfigKnapsack):
     def __init__(self):
-        ConfigKnapsackProblem.__init__(self)
+        ConfigKnapsack.__init__(self)
 
         self.ENV_NAME = "Knapsack_Problem_v0"
         self.LEARNING_RATE = 0.0003
 
-        self.MAX_WEIGHT = 200
+        self.LIMIT_WEIGHT_KNAPSACK = 200

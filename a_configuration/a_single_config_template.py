@@ -423,10 +423,10 @@ config = ConfigTaskAllocation1Dqn()
 
 
 ##########################
-### KnapsackProblem ###
+### Knapsack ###
 ##########################
-from a_configuration.b_single_config.config_knapsack_problem import ConfigKnapsackProblem0Dqn
-config = ConfigKnapsackProblem0Dqn()
+from a_configuration.b_single_config.config_knapsack_problem import ConfigKnapsack0Dqn
+config = ConfigKnapsack0Dqn()
 
 
 config.USE_WANDB = False

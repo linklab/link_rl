@@ -6,7 +6,8 @@ import copy
 from typing import Optional
 import random
 
-from a_configuration.a_base_config.a_environments.config_knapsack_problem import ConfigKnapsackProblem0
+from a_configuration.a_base_config.a_environments.config_knapsack_problem import ConfigKnapsack0
+
 
 class DoneReasonType0(enum.Enum):
     TYPE_1 = "Weight Limit Exceeded"
@@ -14,13 +15,13 @@ class DoneReasonType0(enum.Enum):
     TYPE_3 = "All Item Selected"
 
 
-class KnapsackProblemEnv(gym.Env):
+class KnapsackEnv(gym.Env):
     def __init__(self, config):
         self.NUM_ITEM = config.NUM_ITEM
-        self.MAX_WEIGHT = config.MAX_WEIGHT
+        self.LIMIT_WEIGHT_KNAPSACK = config.LIMIT_WEIGHT_KNAPSACK
 
         self.MIN_WEIGHT_ITEM = config.MIN_WEIGHT_ITEM
-        self.MAX_WEIGHT_ITEM = config.MAX_WEIGHT_ITEM
+        self.MAX_WEIGHT_KNAPSACK_ITEM = config.MAX_WEIGHT_KNAPSACK_ITEM
 
         self.MIN_VALUE_ITEM = config.MIN_VALUE_ITEM
         self.MAX_VALUE_ITEM = config.MAX_VALUE_ITEM
@@ -48,19 +49,15 @@ class KnapsackProblemEnv(gym.Env):
 
         for item_idx in range(self.NUM_ITEM):
             item_weight = np.random.randint(
-                low=self.MIN_WEIGHT_ITEM,
-                high=self.MAX_WEIGHT_ITEM,
-                size=(1, 1)
+                low=self.MIN_WEIGHT_ITEM, high=self.MAX_WEIGHT_KNAPSACK_ITEM, size=(1, 1)
             )
             item_value = np.random.randint(
-                low=self.MIN_VALUE_ITEM,
-                high=self.MAX_VALUE_ITEM,
-                size=(1, 1)
+                low=self.MIN_VALUE_ITEM, high=self.MAX_VALUE_ITEM, size=(1, 1)
             )
             state[item_idx][2] = item_weight
             state[item_idx][3] = item_value
 
-        state[-1][2] = np.array(self.MAX_WEIGHT)
+        state[-1][2] = np.array(self.LIMIT_WEIGHT_KNAPSACK)
 
         return state
 
@@ -77,7 +74,7 @@ class KnapsackProblemEnv(gym.Env):
         return possible
 
     def observation(self):
-        observation = copy.deepcopy(self.internal_state.flatten()) / self.MAX_WEIGHT
+        observation = copy.deepcopy(self.internal_state.flatten()) / self.LIMIT_WEIGHT_KNAPSACK
         return observation
 
     def reward(self, done_type=None):
@@ -92,12 +89,12 @@ class KnapsackProblemEnv(gym.Env):
             misbehavior_reward = -1.0
 
         elif done_type == DoneReasonType0.TYPE_2:  # "Weight Remains"
-            value_of_all_items_selected_reward = self.value_of_all_items_selected / self.MAX_WEIGHT
+            value_of_all_items_selected_reward = self.value_of_all_items_selected / self.LIMIT_WEIGHT_KNAPSACK
             mission_complete_reward = 0.0
             misbehavior_reward = 0.0
 
         elif done_type == DoneReasonType0.TYPE_3:  # "All Item Selected"
-            value_of_all_items_selected_reward = self.value_of_all_items_selected / self.MAX_WEIGHT
+            value_of_all_items_selected_reward = self.value_of_all_items_selected / self.LIMIT_WEIGHT_KNAPSACK
             mission_complete_reward = 1.0
             misbehavior_reward = 0.0
 
@@ -154,7 +151,7 @@ class KnapsackProblemEnv(gym.Env):
         if self.num_step == self.NUM_ITEM - 1 or not possible:
             done = True
 
-            if self.weight_of_all_items_selected > self.MAX_WEIGHT:
+            if self.weight_of_all_items_selected > self.LIMIT_WEIGHT_KNAPSACK:
                 info['DoneReasonType'] = DoneReasonType0.TYPE_1  # "Weight Limit Exceeded"
             elif 0 not in self.internal_state[:, 1]:
                 info['DoneReasonType'] = DoneReasonType0.TYPE_3  # "All Item Selected"
@@ -193,8 +190,8 @@ def run_env():
     print("START RUN!!!")
     agent = Dummy_Agent()
 
-    config = ConfigKnapsackProblem0()
-    env = KnapsackProblemEnv(config)
+    config = ConfigKnapsack0()
+    env = KnapsackEnv(config)
 
     for i in range(2):
         observation, info = env.reset(return_info=True)
