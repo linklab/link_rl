@@ -53,6 +53,9 @@ class Learner(mp.Process):
         if config.ENV_NAME in ["Task_Allocation_v0"]:
             self.test_episode_utilization = mp.Value('d', 0.0)
 
+        if config.ENV_NAME in ["Knapsack_Problem_v0"]:
+            self.test_episode_items_value = mp.Value('d', 0.0)
+
         self.next_train_time_step = config.TRAIN_INTERVAL_GLOBAL_TIME_STEPS
         self.next_test_training_step = config.TEST_INTERVAL_TRAINING_STEPS
         self.next_console_log = config.CONSOLE_LOG_INTERVAL_TRAINING_STEPS
@@ -82,8 +85,8 @@ class Learner(mp.Process):
 
         self.shared_model_access_lock = shared_model_access_lock  # For only LearningActor (A3C)
 
-        if self.config.ENV_NAME in ["Task_Allocation_v0"]:
-            self.task_allocation_info = None
+        if self.config.ENV_NAME in ["Task_Allocation_v0", "Knapsack_Problem_v0"]:
+            self.env_info = None
 
     def generator_on_policy_transition(self):
         observations, infos = self.train_env.reset(return_info=True)
@@ -117,8 +120,8 @@ class Learner(mp.Process):
 
             next_observations, rewards, dones, infos = self.train_env.step(scaled_actions)
 
-            if self.config.ENV_NAME in ["Task_Allocation_v0"]:
-                self.task_allocation_info = infos[0]
+            if self.config.ENV_NAME in ["Task_Allocation_v0", "Knapsack_Problem_v0"]:
+                self.env_info = infos[0]
 
             if self.is_recurrent_model:
                 next_observations = [(next_observations, self.agent.model.recurrent_hidden)]
@@ -406,6 +409,9 @@ class Learner(mp.Process):
         if self.config.ENV_NAME in ["Task_Allocation_v0"]:
             self.test_episode_reward_avg.value, self.test_episode_reward_std.value, self.test_episode_utilization.value = \
                 self.play_for_testing(self.config.N_TEST_EPISODES)
+        elif self.config.ENV_NAME in ["Knapsack_Problem_v0"]:
+            self.test_episode_reward_avg.value, self.test_episode_reward_std.value, self.test_episode_items_value.value = \
+                self.play_for_testing(self.config.N_TEST_EPISODES)
         else:
             self.test_episode_reward_avg.value, self.test_episode_reward_std.value = \
                 self.play_for_testing(self.config.N_TEST_EPISODES)
@@ -423,6 +429,8 @@ class Learner(mp.Process):
 
         if self.config.ENV_NAME in ["Task_Allocation_v0"]:
             test_str += ", Utilization: {0:.2f}".format(self.test_episode_utilization.value)
+        if self.config.ENV_NAME in ["Knapsack_Problem_v0"]:
+            test_str += ", Values: {0:.2f}".format(self.test_episode_items_value.value)
 
         test_str += ", Elapsed Time from Training Start: {0}".format(formatted_elapsed_time)
         print(test_str)
@@ -461,6 +469,8 @@ class Learner(mp.Process):
         episode_reward_lst = []
         if self.config.ENV_NAME in ["Task_Allocation_v0"]:
             episode_utilization_lst = []
+        elif self.config.ENV_NAME in ["Knapsack_Problem_v0"]:
+            episode_value_lst = []
 
         for i in range(n_test_episodes):
             episode_reward = 0  # cumulative_reward
@@ -528,6 +538,8 @@ class Learner(mp.Process):
 
             if self.config.ENV_NAME in ["Task_Allocation_v0"]:
                 episode_utilization_lst.append(info["Utilization"])
+            elif self.config.ENV_NAME in ["Knapsack_Problem_v0"]:
+                episode_value_lst.append(info["Value"])
 
         self.agent.model.train()
         if self.config.AGENT_TYPE == AgentType.A3C:
@@ -535,5 +547,7 @@ class Learner(mp.Process):
 
         if self.config.ENV_NAME in ["Task_Allocation_v0"]:
             return np.average(episode_reward_lst), np.std(episode_reward_lst), np.average(episode_utilization_lst)
+        elif self.config.ENV_NAME in ["Knapsack_Problem_v0"]:
+            return np.average(episode_reward_lst), np.std(episode_reward_lst), np.average(episode_value_lst)
         else:
             return np.average(episode_reward_lst), np.std(episode_reward_lst)

@@ -460,7 +460,7 @@ def console_log(learner,
         pass
 
     if config.ENV_NAME in ["Task_Allocation_v0"]:
-        info = learner.task_allocation_info
+        info = learner.env_info
 
         resource_allocation_info = " Alloc.: "
         resource_allocation_info += "/".join(map(str, info["Resources allocated"]))
@@ -482,6 +482,15 @@ def console_log(learner,
         # )
 
         console_log += resource_allocation_info
+
+    if config.ENV_NAME in ["Knapsack_Problem_v0"]:
+        info = learner.env_info
+
+        knapsack_info = " Value.: {0:3}, Weight: {1:3}, Tasks: {2}, Actions: {3}".format(
+            info["Value"], info["Weight"], sorted(info["Tasks selected"]), info['Actions sequence']
+        )
+
+        console_log += knapsack_info
 
     print(console_log)
 
@@ -580,9 +589,12 @@ def wandb_log(learner, wandb_obj, config):
     }
 
     if config.ENV_NAME in ["Task_Allocation_v0"]:
-        log_dict["Allocation"] = learner.task_allocation_info["Resources allocated"]
-        log_dict["Utilization"] = 100 * learner.task_allocation_info["Utilization"]
+        log_dict["Allocation"] = learner.env_info["Resources allocated"]
+        log_dict["Utilization"] = 100 * learner.env_info["Utilization"]
         log_dict["[TEST] Utilization"] = 100 * learner.test_episode_utilization.value
+    if config.ENV_NAME in ["Knapsack_Problem_v0"]:
+        log_dict["Value of All Item Selected"] = learner.env_info["Value"]
+        log_dict["[TEST] Value of All Item Selected"] = learner.test_episode_items_value.value
     if config.AGENT_TYPE in [AgentType.DQN, AgentType.DUELING_DQN, AgentType.DOUBLE_DQN, AgentType.DOUBLE_DUELING_DQN]:
         log_dict["QNet Loss"] = learner.agent.last_q_net_loss.value
         log_dict["Epsilon"] = learner.agent.epsilon.value
@@ -759,6 +771,10 @@ def get_train_env(config, no_graphics=True):
                 from b_environments.task_allocation import EnvironmentTaskScheduling0
                 env = EnvironmentTaskScheduling0(config)
 
+            elif config.ENV_NAME in ["Knapsack_Problem_v0"]:
+                from b_environments.knapsack_problem import KnapsackProblemEnv
+                env = KnapsackProblemEnv(config)
+
             #############
             #   Atari   #
             #############
@@ -843,6 +859,10 @@ def get_single_env(config, no_graphics=True, play=False):
     elif config.ENV_NAME in ["Task_Allocation_v0"]:
         from b_environments.task_allocation import EnvironmentTaskScheduling0
         single_env = EnvironmentTaskScheduling0(config)
+
+    elif config.ENV_NAME in ["Knapsack_Problem_v0"]:
+        from b_environments.knapsack_problem import KnapsackProblemEnv
+        single_env = KnapsackProblemEnv(config)
 
     #############
     #   Atari   #

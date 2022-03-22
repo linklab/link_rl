@@ -421,6 +421,14 @@ config = ConfigTaskAllocation0Dqn()
 from a_configuration.b_single_config.config_task_allocation import ConfigTaskAllocation1Dqn
 config = ConfigTaskAllocation1Dqn()
 
+
+##########################
+### KnapsackProblem ###
+##########################
+from a_configuration.b_single_config.config_knapsack_problem import ConfigKnapsackProblem0Dqn
+config = ConfigKnapsackProblem0Dqn()
+
+
 config.USE_WANDB = False
 
 if __name__ == "__main__":
