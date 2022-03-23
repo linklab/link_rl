@@ -61,7 +61,8 @@ class EnvironmentTaskScheduling0(gym.Env):
         for i in range(self.NUM_RESOURCES):
             self.min_task_demand.append(state[:-1, 2 + i:].min())
 
-        state[-1][1] = np.array(self.INITIAL_RESOURCES_CAPACITY)
+        state[-1][1] = sum(self.INITIAL_RESOURCES_CAPACITY)
+        state[-1][2:] = np.array(self.INITIAL_RESOURCES_CAPACITY)
 
         return state
 
@@ -207,7 +208,16 @@ def run_env():
     agent = Dummy_Agent()
 
     config = ConfigTakAllocation0()
+    # config.NUM_TASK = 3
+    # config.NUM_RESOURCES = 3
+    # config.INITIAL_RESOURCES_CAPACITY = [100, 200, 300]
+    # config.LOW_DEMAND_RESOURCE_AT_TASK = [10, 20, 30]
+    # config.HIGH_DEMAND_RESOURCE_AT_TASK = [20, 30, 40]
     config.NUM_TASK = 3
+    config.NUM_RESOURCES = 1
+    config.INITIAL_RESOURCES_CAPACITY = [100]
+    config.LOW_DEMAND_RESOURCE_AT_TASK = [10]
+    config.HIGH_DEMAND_RESOURCE_AT_TASK = [20]
 
     env = EnvironmentTaskScheduling0(config)
 
