@@ -428,6 +428,12 @@ config = ConfigTaskAllocation1Dqn()
 from a_configuration.b_single_config.combinatorial_optimization.config_knapsack import ConfigKnapsack0Dqn
 config = ConfigKnapsack0Dqn()
 
+from a_configuration.b_single_config.combinatorial_optimization.config_knapsack import ConfigKnapsack0A2c
+config = ConfigKnapsack0A2c()
+
+from a_configuration.b_single_config.combinatorial_optimization.config_knapsack import ConfigKnapsack0Ppo
+config = ConfigKnapsack0Ppo()
+
 
 config.USE_WANDB = False
 
