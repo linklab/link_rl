@@ -116,11 +116,10 @@ class EnvironmentTaskScheduling0(gym.Env):
             for i in range(self.NUM_RESOURCES):
                 self.resource_of_all_tasks_selected[i] += step_resource[i]
                 self.internal_state[-1][2 + i] -= step_resource[i]
+                self.internal_state[-1][1] -= step_resource[i]
 
             self.internal_state[self.num_step][1] = 1
             self.internal_state[self.num_step][2:] = -1
-
-            self.internal_state[-1][1] -= sum(self.resource_of_all_tasks_selected)
 
         possible = self.check_future_allocation_possible()
 
@@ -214,8 +213,8 @@ def run_env():
     # config.LOW_DEMAND_RESOURCE_AT_TASK = [10, 20, 30]
     # config.HIGH_DEMAND_RESOURCE_AT_TASK = [20, 30, 40]
     config.NUM_TASK = 3
-    config.NUM_RESOURCES = 1
-    config.INITIAL_RESOURCES_CAPACITY = [100]
+    config.NUM_RESOURCES = 2
+    config.INITIAL_RESOURCES_CAPACITY = [config.NUM_TASK * 10 for _ in range(config.NUM_RESOURCES)]
     config.LOW_DEMAND_RESOURCE_AT_TASK = [10]
     config.HIGH_DEMAND_RESOURCE_AT_TASK = [20]
 
