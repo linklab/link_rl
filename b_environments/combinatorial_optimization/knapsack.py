@@ -115,7 +115,6 @@ class KnapsackEnv(gym.Env):
         self.internal_state[self.num_step][0] = 1
 
         observation = self.observation()
-
         info = dict()
         info['internal_state'] = copy.deepcopy(self.internal_state)
 
