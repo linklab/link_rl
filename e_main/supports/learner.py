@@ -2,6 +2,7 @@ import warnings
 import copy
 
 from gym.spaces import Box, Discrete
+from gym.vector import VectorEnv
 
 import b_environments.wrapper
 from a_configuration.a_base_config.a_environments.combinatorial_optimization.config_knapsack import ConfigKnapsack
@@ -272,8 +273,8 @@ class Learner(mp.Process):
 
         if any(combinatorial_env_conditions):
             test_env_equal_to_train_env_conditions = [
-                self.config.INITIAL_ITEM_DISTRIBUTION_FIXED is True,
-                self.config.INITIAL_TASK_DISTRIBUTION_FIXED is True
+                isinstance(self.config, ConfigKnapsack) and self.config.INITIAL_ITEM_DISTRIBUTION_FIXED is True,
+                isinstance(self.config, ConfigTakAllocation) and self.config.INITIAL_TASK_DISTRIBUTION_FIXED is True
             ]
             if any(test_env_equal_to_train_env_conditions):
                 assert parallel is False
@@ -496,7 +497,9 @@ class Learner(mp.Process):
 
             # Environment 초기화와 변수 초기화
             observation, info = self.test_env.reset(return_info=True)
-            observation = np.expand_dims(observation, axis=0)
+
+            if not isinstance(self.test_env, VectorEnv):
+                observation = np.expand_dims(observation, axis=0)
 
             if self.is_recurrent_model:
                 self.agent.model.init_recurrent_hidden()
@@ -515,28 +518,31 @@ class Learner(mp.Process):
                 else:
                     action = self.agent.get_action(obs=observation, mode=AgentMode.TEST)
 
-                if isinstance(self.agent.action_space, Discrete):
-                    if action.ndim == 0:
-                        scaled_action = action
-                    elif action.ndim == 1:
-                        scaled_action = action[0]
-                    else:
-                        raise ValueError()
-                elif isinstance(self.agent.action_space, Box):
-                    if action.ndim == 1:
-                        if self.agent.action_scale is not None:
-                            scaled_action = action * self.agent.action_scale[0] + self.agent.action_bias[0]
-                        else:
+                if not isinstance(self.test_env, VectorEnv):
+                    if isinstance(self.agent.action_space, Discrete):
+                        if action.ndim == 0:
                             scaled_action = action
-                    elif action.ndim == 2:
-                        if self.agent.action_scale is not None:
-                            scaled_action = action[0] * self.agent.action_scale[0] + self.agent.action_bias[0]
-                        else:
+                        elif action.ndim == 1:
                             scaled_action = action[0]
+                        else:
+                            raise ValueError()
+                    elif isinstance(self.agent.action_space, Box):
+                        if action.ndim == 1:
+                            if self.agent.action_scale is not None:
+                                scaled_action = action * self.agent.action_scale[0] + self.agent.action_bias[0]
+                            else:
+                                scaled_action = action
+                        elif action.ndim == 2:
+                            if self.agent.action_scale is not None:
+                                scaled_action = action[0] * self.agent.action_scale[0] + self.agent.action_bias[0]
+                            else:
+                                scaled_action = action[0]
+                        else:
+                            raise ValueError()
                     else:
                         raise ValueError()
                 else:
-                    raise ValueError()
+                    scaled_action = action
 
                 next_observation, reward, done, info = self.test_env.step(scaled_action)
                 next_observation = np.expand_dims(next_observation, axis=0)
@@ -556,9 +562,9 @@ class Learner(mp.Process):
             episode_reward_lst.append(episode_reward)
 
             if self.config.ENV_NAME in ["Task_Allocation_v0"]:
-                episode_utilization_lst.append(info["Utilization"])
+                episode_utilization_lst.append(info[0]["Utilization"])
             elif self.config.ENV_NAME in ["Knapsack_Problem_v0"]:
-                episode_value_lst.append(info["Value"])
+                episode_value_lst.append(info[0]["Value"])
 
         self.agent.model.train()
         if self.config.AGENT_TYPE == AgentType.A3C:
