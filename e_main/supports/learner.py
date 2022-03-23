@@ -272,8 +272,8 @@ class Learner(mp.Process):
 
         if any(combinatorial_env_conditions):
             test_env_equal_to_train_env_conditions = [
-                self.config.INITIAL_ITEM_DISTRIBUTION_FIXED is True,
-                self.config.INITIAL_TASK_DISTRIBUTION_FIXED is True
+                isinstance(self.config, ConfigKnapsack) and self.config.INITIAL_ITEM_DISTRIBUTION_FIXED is True,
+                isinstance(self.config, ConfigTakAllocation) and self.config.INITIAL_TASK_DISTRIBUTION_FIXED is True
             ]
             if any(test_env_equal_to_train_env_conditions):
                 assert parallel is False

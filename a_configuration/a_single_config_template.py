@@ -46,6 +46,7 @@ config.WRAPPERS.append(
 ###############
 from a_configuration.b_single_config.open_ai_gym.config_cart_pole import ConfigCartPoleDqn
 config = ConfigCartPoleDqn()
+config.WANDB_REPORT_URL = "https://wandb.ai/link-koreatech/CartPole-v1_Dqn_anonymous/reports/Cartpole-DQN--VmlldzoxNzI3NzU0?accessToken=5m3zzlj30hpflat7mb9zu3ygql9ani0lox22y5ermhocotbakar4so5lq8pe86gk"
 
 from a_configuration.b_single_config.open_ai_gym.config_cart_pole import ConfigCartPoleDqn
 config = ConfigCartPoleDqn()
