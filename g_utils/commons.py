@@ -415,7 +415,7 @@ def console_log(learner,
         agent, config
 ):
     console_log = "[Tot. Episodes: {0:5,}] " \
-                  "Mean Episode Reward: {1:6.1f}, Rolling Outs: {2:7,} ({3:7.3f}/sec.), " \
+                  "Mean Episode Reward: {1:6.2f}, Rolling Outs: {2:7,} ({3:7.3f}/sec.), " \
                   "Training Steps: {4:4,} ({5:.3f}/sec.), " \
         .format(
             total_episodes_v,
@@ -503,7 +503,7 @@ def console_log_comparison(
     for agent_idx, agent in enumerate(agents):
         agent_prefix = "[Agent: {0}]".format(agent_idx)
         console_log = agent_prefix + "[Tot. Episodes: {0:5,}, Tot. Time Steps {1:7,}] " \
-                      "Mean Episode Reward: {2:6.1f}, Rolling Outs: {3:7,}, " \
+                      "Mean Episode Reward: {2:6.2f}, Rolling Outs: {3:7,}, " \
                       "Training Steps: {4:4,}, " \
             .format(
                 total_episodes_per_agent[agent_idx],

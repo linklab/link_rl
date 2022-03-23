@@ -141,7 +141,7 @@ config_c = ConfigComparisonInvertedDoublePendulumBulletSacPpo()
 ##########################
 ##    TaskAllocation    ##
 ##########################
-from a_configuration.c_comparison_config.config_comparison_task_allocation import ConfigComparisonTaskAllocationDqnTypes
+from a_configuration.c_comparison_config.combinatorial_optimization.config_comparison_task_allocation import ConfigComparisonTaskAllocationDqnTypes
 config_c = ConfigComparisonTaskAllocationDqnTypes()
 
 config_c.USE_WANDB = False

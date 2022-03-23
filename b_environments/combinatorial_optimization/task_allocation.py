@@ -7,7 +7,7 @@ import enum
 import copy
 import numpy as np
 
-from a_configuration.a_base_config.a_environments.config_task_allocation import ConfigTakAllocation0
+from a_configuration.a_base_config.a_environments.combinatorial_optimization.config_task_allocation import ConfigTakAllocation0
 
 class DoneReasonType0(enum.Enum):
     TYPE_1 = "Resource Limit Exceeded"

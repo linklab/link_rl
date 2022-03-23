@@ -1,5 +1,5 @@
 from a_configuration.a_base_config.config_comparison_base import ConfigComparisonBase
-from a_configuration.b_single_config.config_task_allocation import ConfigTaskAllocation0Dqn, \
+from a_configuration.b_single_config.combinatorial_optimization.config_task_allocation import ConfigTaskAllocation0Dqn, \
     ConfigTaskAllocation0DoubleDqn, ConfigTaskAllocation0DuelingDqn, ConfigTaskAllocation0DoubleDuelingDqn
 
 

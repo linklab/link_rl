@@ -415,17 +415,17 @@ config = ConfigDroneSac()
 ##########################
 ### TaskAllocation ###
 ##########################
-from a_configuration.b_single_config.config_task_allocation import ConfigTaskAllocation0Dqn
+from a_configuration.b_single_config.combinatorial_optimization.config_task_allocation import ConfigTaskAllocation0Dqn
 config = ConfigTaskAllocation0Dqn()
 
-from a_configuration.b_single_config.config_task_allocation import ConfigTaskAllocation1Dqn
+from a_configuration.b_single_config.combinatorial_optimization.config_task_allocation import ConfigTaskAllocation1Dqn
 config = ConfigTaskAllocation1Dqn()
 
 
 ##########################
 ### Knapsack ###
 ##########################
-from a_configuration.b_single_config.config_knapsack_problem import ConfigKnapsack0Dqn
+from a_configuration.b_single_config.combinatorial_optimization.config_knapsack import ConfigKnapsack0Dqn
 config = ConfigKnapsack0Dqn()
 
 

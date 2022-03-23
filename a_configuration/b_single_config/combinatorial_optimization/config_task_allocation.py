@@ -1,7 +1,7 @@
 from a_configuration.a_base_config.b_agents.config_agents_off_policy import ConfigDqn, ConfigDoubleDqn, \
     ConfigDuelingDqn, ConfigDoubleDuelingDqn
 from a_configuration.a_base_config.config_single_base import ConfigBase
-from a_configuration.a_base_config.a_environments.config_task_allocation import ConfigTakAllocation0
+from a_configuration.a_base_config.a_environments.combinatorial_optimization.config_task_allocation import ConfigTakAllocation0
 
 
 class ConfigTaskAllocation0Dqn(ConfigBase, ConfigTakAllocation0, ConfigDqn):

@@ -6,7 +6,7 @@ import copy
 from typing import Optional
 import random
 
-from a_configuration.a_base_config.a_environments.config_knapsack_problem import ConfigKnapsack0
+from a_configuration.a_base_config.a_environments.combinatorial_optimization.config_knapsack import ConfigKnapsack0
 
 
 class DoneReasonType0(enum.Enum):
@@ -25,6 +25,8 @@ class KnapsackEnv(gym.Env):
 
         self.MIN_VALUE_ITEM = config.MIN_VALUE_ITEM
         self.MAX_VALUE_ITEM = config.MAX_VALUE_ITEM
+
+        self.TOTAL_VALUE_FOR_ALL_ITEMS = None
 
         self.INITIAL_ITEM_DISTRIBUTION_FIXED = config.INITIAL_ITEM_DISTRIBUTION_FIXED
 
@@ -82,12 +84,12 @@ class KnapsackEnv(gym.Env):
             misbehavior_reward = -1.0
 
         elif done_type == DoneReasonType0.TYPE_2:  # "Weight Remains"
-            value_of_all_items_selected_reward = self.value_of_all_items_selected / self.LIMIT_WEIGHT_KNAPSACK
+            value_of_all_items_selected_reward = self.value_of_all_items_selected / self.TOTAL_VALUE_FOR_ALL_ITEMS
             mission_complete_reward = 0.0
             misbehavior_reward = 0.0
 
         elif done_type == DoneReasonType0.TYPE_3:  # "All Item Selected"
-            value_of_all_items_selected_reward = self.value_of_all_items_selected / self.LIMIT_WEIGHT_KNAPSACK
+            value_of_all_items_selected_reward = self.value_of_all_items_selected / self.TOTAL_VALUE_FOR_ALL_ITEMS
             mission_complete_reward = 1.0
             misbehavior_reward = 0.0
 
@@ -103,6 +105,7 @@ class KnapsackEnv(gym.Env):
         else:
             self.internal_state = self.get_initial_state()
 
+        self.TOTAL_VALUE_FOR_ALL_ITEMS = sum(self.internal_state[:, 3])
         self.items_selected = []
         self.actions_sequence = []
         self.weight_of_all_items_selected = 0

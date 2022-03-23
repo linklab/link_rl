@@ -4,6 +4,9 @@ import copy
 from gym.spaces import Box, Discrete
 
 import b_environments.wrapper
+from a_configuration.a_base_config.a_environments.combinatorial_optimization.config_knapsack import ConfigKnapsack
+from a_configuration.a_base_config.a_environments.combinatorial_optimization.config_task_allocation import \
+    ConfigTakAllocation
 from a_configuration.a_base_config.c_models.config_recurrent_convolutional_models import ConfigRecurrentConvolutionalModel
 from a_configuration.a_base_config.c_models.config_recurrent_linear_models import ConfigRecurrentLinearModel
 
@@ -259,10 +262,26 @@ class Learner(mp.Process):
         yield None
 
     def train_loop(self, parallel=False):
+        combinatorial_env_conditions = [
+            isinstance(self.config, ConfigKnapsack),
+            isinstance(self.config, ConfigTakAllocation)
+        ]
+
         if not parallel:  # parallel인 경우 actor에서 train_env 생성/관리
             self.train_env = get_train_env(self.config)
 
-        self.test_env = get_single_env(self.config)
+        if any(combinatorial_env_conditions):
+            test_env_equal_to_train_env_conditions = [
+                self.config.INITIAL_ITEM_DISTRIBUTION_FIXED is True,
+                self.config.INITIAL_TASK_DISTRIBUTION_FIXED is True
+            ]
+            if any(test_env_equal_to_train_env_conditions):
+                assert parallel is False
+                self.test_env = self.train_env
+            else:
+                self.test_env = get_single_env(self.config)
+        else:
+            self.test_env = get_single_env(self.config)
 
         if self.config.USE_WANDB:
             wandb_obj = get_wandb_obj(self.config, self.agent)
