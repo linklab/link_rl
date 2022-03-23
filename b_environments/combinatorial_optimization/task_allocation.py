@@ -40,6 +40,11 @@ class EnvironmentTaskScheduling0(gym.Env):
         if self.INITIAL_TASK_DISTRIBUTION_FIXED:
             self.fixed_initial_internal_state = self.get_initial_internal_state()
 
+    # Last Row in State
+    # 0: Always 0
+    # 1: initially set to LIMIT_WEIGHT_KNAPSACK, and decrease by an item's weight whenever the item is selected
+    # 2: initially set to 0, and increase by an item's weight whenever the item is selected
+    # 3: initially set to 0, and increase by an item's value whenever the item is selected
     def get_initial_internal_state(self):
         state = np.zeros(shape=(self.NUM_TASKS + 1, self.NUM_RESOURCES + 2), dtype=int)
 
@@ -54,9 +59,9 @@ class EnvironmentTaskScheduling0(gym.Env):
         self.min_task_demand = []
 
         for i in range(self.NUM_RESOURCES):
-            self.min_task_demand.append(state[:-1, 2+i:].min())
+            self.min_task_demand.append(state[:-1, 2 + i:].min())
 
-        state[-1][2:] = np.array(self.INITIAL_RESOURCES_CAPACITY)
+        state[-1][1] = np.array(self.INITIAL_RESOURCES_CAPACITY)
 
         return state
 
@@ -87,6 +92,19 @@ class EnvironmentTaskScheduling0(gym.Env):
         else:
             return observation
 
+    def check_future_allocation_possible(self):
+        possible = False
+
+        for task in self.internal_state[self.num_step + 1: self.NUM_TASKS]:
+            resources = task[2:]
+
+            for i in range(self.NUM_RESOURCES):
+                if resources[i] <= self.internal_state[-1][2 + i]:
+                    possible = True
+                    break
+
+        return possible
+
     def step(self, action_idx):
         self.actions_sequence.append(action_idx)
         info = dict()
@@ -100,23 +118,30 @@ class EnvironmentTaskScheduling0(gym.Env):
 
             self.internal_state[self.num_step][1] = 1
             self.internal_state[self.num_step][2:] = -1
-            self.internal_state[-1][1] = sum(self.resource_of_all_tasks_selected)
 
-        possible = self.check_allocation_possible()
+            self.internal_state[-1][1] -= sum(self.resource_of_all_tasks_selected)
+
+        possible = self.check_future_allocation_possible()
 
         done = False
         if self.num_step == self.NUM_TASKS - 1 or not possible:
             done = True
 
-            for i in range(self.NUM_RESOURCES):
-                if self.resource_of_all_tasks_selected[i] > self.INITIAL_RESOURCES_CAPACITY[i]:
-                    info['DoneReasonType'] = DoneReasonType0.TYPE_1         # Resource Limit Exceeded
-                    break
-                else:
-                    if 0 not in self.internal_state[:, 1]:
-                        info['DoneReasonType'] = DoneReasonType0.TYPE_3     # All Tasks Selected
-                    else:
-                        info['DoneReasonType'] = DoneReasonType0.TYPE_2     # Resource Remains
+            if 0 not in self.internal_state[:, 1]:
+                info['DoneReasonType'] = DoneReasonType0.TYPE_3     # All Tasks Selected
+            else:
+                over_resource = False
+                for i in range(self.NUM_RESOURCES):
+                    if self.resource_of_all_tasks_selected[i] > self.INITIAL_RESOURCES_CAPACITY[i]:
+                        info['DoneReasonType'] = DoneReasonType0.TYPE_1         # Resource Limit Exceeded
+                        over_resource = True
+                        break
+
+                if not over_resource:
+                    info['DoneReasonType'] = DoneReasonType0.TYPE_2     # Resource Remains
+
+            self.internal_state[self.num_step][0] = 0
+            self.internal_state[-1][0] = 1
         else:
             self.internal_state[self.num_step][0] = 0
             self.num_step += 1
@@ -137,19 +162,6 @@ class EnvironmentTaskScheduling0(gym.Env):
         info['internal_state'] = copy.deepcopy(self.internal_state)
 
         return observation, reward, done, info
-
-    def check_allocation_possible(self):
-        possible = False
-
-        for task in self.internal_state[self.num_step:self.NUM_TASKS]:
-            resources = task[2:]
-
-            for i in range(self.NUM_RESOURCES):
-                if resources[i] <= self.internal_state[-1][2+i]:
-                    possible = True
-                    break
-
-        return possible
 
     def reward(self, done_type=None):
         if done_type is None:  # Normal Step
@@ -195,18 +207,25 @@ def run_env():
     agent = Dummy_Agent()
 
     config = ConfigTakAllocation0()
+    config.NUM_TASK = 3
+
     env = EnvironmentTaskScheduling0(config)
 
     for i in range(2):
         observation, info = env.reset(return_info=True)
         done = False
+        print("EPISODE: {0} ".format(i + 1) + "#" * 50)
         while not done:
             action = agent.get_action(observation)
             next_observation, reward, done, next_info = env.step(action)
 
-            print("Observation: {0}, Action: {1}, next_observation: {2}, Reward: {3}, Done: {4}".format(
+            print("Observation: \n{0}, \nAction: {1}, next_observation: \n{2}, Reward: {3}, Done: {4} ".format(
                 info['internal_state'], action, next_info['internal_state'], reward, done
-            ))
+            ), end="")
+            if done:
+                print("({0}: {1})\n".format(next_info['DoneReasonType'], next_info['DoneReasonType'].value))
+            else:
+                print("\n")
             observation = next_observation
             info = next_info
 

@@ -44,6 +44,11 @@ class KnapsackEnv(gym.Env):
         if self.INITIAL_ITEM_DISTRIBUTION_FIXED:
             self.fixed_initial_internal_state = self.get_initial_state()
 
+    # Last Row in State
+    # 0: Always 0
+    # 1: initially set to LIMIT_WEIGHT_KNAPSACK, and decrease by an item's weight whenever the item is selected
+    # 2: initially set to 0, and increase by an item's weight whenever the item is selected
+    # 3: initially set to 0, and increase by an item's value whenever the item is selected
     def get_initial_state(self):
         state = np.zeros(shape=(self.NUM_ITEM + 1, 4), dtype=int)
 
@@ -57,21 +62,9 @@ class KnapsackEnv(gym.Env):
             state[item_idx][2] = item_weight
             state[item_idx][3] = item_value
 
-        state[-1][2] = np.array(self.LIMIT_WEIGHT_KNAPSACK)
+        state[-1][1] = np.array(self.LIMIT_WEIGHT_KNAPSACK)
 
         return state
-
-    def check_select_possible(self):
-        possible = False
-
-        for item in self.internal_state[self.num_step:self.NUM_ITEM]:
-            weight = item[2]
-
-            if weight <= self.internal_state[-1][2]:
-                possible = True
-                break
-
-        return possible
 
     def observation(self):
         observation = copy.deepcopy(self.internal_state.flatten()) / self.LIMIT_WEIGHT_KNAPSACK
@@ -128,36 +121,50 @@ class KnapsackEnv(gym.Env):
         else:
             return observation
 
+    def check_future_select_possible(self):
+        possible = False
+
+        for item in self.internal_state[self.num_step + 1: self.NUM_ITEM]:
+            weight = item[2]
+
+            if weight <= self.internal_state[-1][1]:
+                possible = True
+                break
+
+        return possible
+
     def step(self, action_idx):
         self.actions_sequence.append(action_idx)
         info = dict()
         step_item_weight, step_item_value = self.internal_state[self.num_step][2:]
-        #step_item_value = self.internal_state[self.num_step][3]
 
         if action_idx == 1:
             self.items_selected.append(self.num_step)
             self.weight_of_all_items_selected += step_item_weight
             self.value_of_all_items_selected += step_item_value
-            self.internal_state[-1][2] -= step_item_weight
 
             self.internal_state[self.num_step][1] = 1
             self.internal_state[self.num_step][2:] = -1
-            self.internal_state[-1][0] = self.weight_of_all_items_selected
-            self.internal_state[-1][1] = self.value_of_all_items_selected
 
-        possible = self.check_select_possible()
+            self.internal_state[-1][1] -= step_item_weight
+            self.internal_state[-1][2] = self.weight_of_all_items_selected
+            self.internal_state[-1][3] = self.value_of_all_items_selected
+
+        possible = self.check_future_select_possible()
 
         done = False
         if self.num_step == self.NUM_ITEM - 1 or not possible:
             done = True
 
-            if self.weight_of_all_items_selected > self.LIMIT_WEIGHT_KNAPSACK:
-                info['DoneReasonType'] = DoneReasonType0.TYPE_1  # "Weight Limit Exceeded"
-            elif 0 not in self.internal_state[:, 1]:
+            if 0 not in self.internal_state[:, 1]:
                 info['DoneReasonType'] = DoneReasonType0.TYPE_3  # "All Item Selected"
+            elif self.weight_of_all_items_selected > self.LIMIT_WEIGHT_KNAPSACK:
+                info['DoneReasonType'] = DoneReasonType0.TYPE_1  # "Weight Limit Exceeded"
             else:
                 info['DoneReasonType'] = DoneReasonType0.TYPE_2  # "Weight Remains"
 
+            self.internal_state[self.num_step][0] = 0
+            self.internal_state[-1][0] = 1
         else:
             self.internal_state[self.num_step][0] = 0
             self.num_step += 1
@@ -191,18 +198,25 @@ def run_env():
     agent = Dummy_Agent()
 
     config = ConfigKnapsack0()
+    config.NUM_ITEM = 10
+    config.LIMIT_WEIGHT_KNAPSACK = 100
     env = KnapsackEnv(config)
 
     for i in range(2):
         observation, info = env.reset(return_info=True)
         done = False
+        print("EPISODE: {0} ".format(i + 1) + "#" * 50)
         while not done:
             action = agent.get_action(observation)
             next_observation, reward, done, next_info = env.step(action)
 
-            print("Observation: {0}, Action: {1}, next_observation: {2}, Reward: {3}, Done: {4}".format(
+            print("Observation: \n{0}, \nAction: {1}, next_observation: \n{2}, Reward: {3}, Done: {4} ".format(
                 info['internal_state'], action, next_info['internal_state'], reward, done
-            ))
+            ), end="")
+            if done:
+                print("({0}: {1})\n".format(next_info['DoneReasonType'], next_info['DoneReasonType'].value))
+            else:
+                print("\n")
             observation = next_observation
             info = next_info
 
