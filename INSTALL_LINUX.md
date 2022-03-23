@@ -26,4 +26,6 @@
   pip install gym[atari]
   conda install -c conda-forge wandb
   conda install -c plotly plotly==5.6.0
+  conda install -c conda-forge pandas
+  conda install -c conda-forge matplotlib
   ```
