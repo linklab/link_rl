@@ -462,7 +462,7 @@ def console_log(learner,
     if config.ENV_NAME in ["Task_Allocation_v0"]:
         info = learner.env_info
 
-        resource_allocation_info = " Alloc.: "
+        resource_allocation_info = ", Alloc.: "
         resource_allocation_info += "/".join(map(str, info["Resources allocated"]))
         resource_allocation_info += ", Limit: "
         resource_allocation_info += "/".join(map(str, info["Limit"]))
@@ -486,8 +486,8 @@ def console_log(learner,
     if config.ENV_NAME in ["Knapsack_Problem_v0"]:
         info = learner.env_info
 
-        knapsack_info = " Value.: {0:3}, Weight: {1:3}, Tasks: {2}, Actions: {3}".format(
-            info["Value"], info["Weight"], sorted(info["Tasks selected"]), info['Actions sequence']
+        knapsack_info = ", Value.: {0:3}, Weight: {1:3}, Items: {2}, Actions: {3}".format(
+            info["Value"], info["Weight"], sorted(info["Items selected"]), info['Actions sequence']
         )
 
         console_log += knapsack_info

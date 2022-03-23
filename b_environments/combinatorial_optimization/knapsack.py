@@ -178,7 +178,7 @@ class KnapsackEnv(gym.Env):
             reward = self.reward(done_type=None)
 
         info['Actions sequence'] = self.actions_sequence
-        info['Tasks selected'] = self.items_selected
+        info['Items selected'] = self.items_selected
         info['Value'] = self.value_of_all_items_selected
         info['Weight'] = self.weight_of_all_items_selected
         info['internal_state'] = copy.deepcopy(self.internal_state)
