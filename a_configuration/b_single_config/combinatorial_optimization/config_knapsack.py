@@ -13,7 +13,7 @@ class ConfigKnapsack0Dqn(ConfigBase, ConfigKnapsack0, ConfigDqn):
         self.NUM_ITEM = 20
         self.LIMIT_WEIGHT_KNAPSACK = 200
         self.MIN_WEIGHT_ITEM = 10
-        self.MAX_WEIGHT_KNAPSACK_ITEM = 15
+        self.MAX_WEIGHT_ITEM = 15
         self.MIN_VALUE_ITEM = 10
         self.MAX_VALUE_ITEM = 15
         self.INITIAL_TASK_DISTRIBUTION_FIXED = True
@@ -30,7 +30,7 @@ class ConfigKnapsack0A2c(ConfigBase, ConfigKnapsack0, ConfigA2c):
         self.NUM_ITEM = 20
         self.LIMIT_WEIGHT_KNAPSACK = 200
         self.MIN_WEIGHT_ITEM = 10
-        self.MAX_WEIGHT_KNAPSACK_ITEM = 15
+        self.MAX_WEIGHT_ITEM = 15
         self.MIN_VALUE_ITEM = 10
         self.MAX_VALUE_ITEM = 15
         self.INITIAL_TASK_DISTRIBUTION_FIXED = True
@@ -47,7 +47,7 @@ class ConfigKnapsack0Ppo(ConfigBase, ConfigKnapsack0, ConfigPpo):
         self.NUM_ITEM = 20
         self.LIMIT_WEIGHT_KNAPSACK = 200
         self.MIN_WEIGHT_ITEM = 10
-        self.MAX_WEIGHT_KNAPSACK_ITEM = 15
+        self.MAX_WEIGHT_ITEM = 15
         self.MIN_VALUE_ITEM = 10
         self.MAX_VALUE_ITEM = 15
         self.INITIAL_TASK_DISTRIBUTION_FIXED = True

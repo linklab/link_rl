@@ -13,7 +13,7 @@ class ConfigKnapsack:
         self.NUM_ITEM = 20
 
         self.MIN_WEIGHT_ITEM = 10
-        self.MAX_WEIGHT_KNAPSACK_ITEM = 15
+        self.MAX_WEIGHT_ITEM = 15
 
         self.MIN_VALUE_ITEM = 10
         self.MAX_VALUE_ITEM = 15

@@ -21,7 +21,7 @@ class KnapsackEnv(gym.Env):
         self.LIMIT_WEIGHT_KNAPSACK = config.LIMIT_WEIGHT_KNAPSACK
 
         self.MIN_WEIGHT_ITEM = config.MIN_WEIGHT_ITEM
-        self.MAX_WEIGHT_KNAPSACK_ITEM = config.MAX_WEIGHT_KNAPSACK_ITEM
+        self.MAX_WEIGHT_ITEM = config.MAX_WEIGHT_ITEM
 
         self.MIN_VALUE_ITEM = config.MIN_VALUE_ITEM
         self.MAX_VALUE_ITEM = config.MAX_VALUE_ITEM
@@ -56,7 +56,7 @@ class KnapsackEnv(gym.Env):
 
         for item_idx in range(self.NUM_ITEM):
             item_weight = np.random.randint(
-                low=self.MIN_WEIGHT_ITEM, high=self.MAX_WEIGHT_KNAPSACK_ITEM, size=(1, 1)
+                low=self.MIN_WEIGHT_ITEM, high=self.MAX_WEIGHT_ITEM, size=(1, 1)
             )
             item_value = np.random.randint(
                 low=self.MIN_VALUE_ITEM, high=self.MAX_VALUE_ITEM, size=(1, 1)
