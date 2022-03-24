@@ -144,6 +144,13 @@ config_c = ConfigComparisonInvertedDoublePendulumBulletSacPpo()
 from a_configuration.c_comparison_config.combinatorial_optimization.config_comparison_task_allocation import ConfigComparisonTaskAllocationDqnTypes
 config_c = ConfigComparisonTaskAllocationDqnTypes()
 
+
+##########################
+### Knapsack ###
+##########################
+from a_configuration.c_comparison_config.combinatorial_optimization.config_comparison_knapsack import ConfigComparisonTaskAllocationDqnA2cPpo
+config_c = ConfigComparisonTaskAllocationDqnA2cPpo()
+
 config_c.USE_WANDB = False
 
 if __name__ == "__main__":
