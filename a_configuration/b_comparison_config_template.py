@@ -19,12 +19,12 @@ config_c = ConfigComparisonCartPoleDqnTypes()
 from a_configuration.c_comparison_config.open_ai_gym.config_comparison_cart_pole import ConfigComparisonCartPolePpo
 config_c = ConfigComparisonCartPolePpo()
 
-from a_configuration.c_comparison_config.open_ai_gym.config_comparison_cart_pole import ConfigComparisonCartPoleDqnTime
-config_c = ConfigComparisonCartPoleDqnTime()
+from a_configuration.c_comparison_config.open_ai_gym.config_comparison_cart_pole import ConfigComparisonCartPoleDqnRecurrent
+config_c = ConfigComparisonCartPoleDqnRecurrent()
 
 from a_configuration.c_comparison_config.open_ai_gym.config_comparison_cart_pole import \
-    ConfigComparisonCartPoleDqnReversActionTime
-config_c = ConfigComparisonCartPoleDqnReversActionTime()
+    ConfigComparisonCartPoleDqnRecurrentReversAction
+config_c = ConfigComparisonCartPoleDqnRecurrentReversAction()
 
 ######################
 ## CART_POLE_BULLET ##
@@ -63,8 +63,13 @@ config_c = ConfigComparisonPongDqnTypes()
 ##################
 ## LUNAR_LANDER ##
 ##################
-from a_configuration.c_comparison_config.open_ai_gym.config_comparison_lunar_lander import ConfigComparisonLunarLanderDqnRecurrent
+from a_configuration.c_comparison_config.open_ai_gym.config_comparison_lunar_lander import \
+    ConfigComparisonLunarLanderDqnRecurrent
 config_c = ConfigComparisonLunarLanderDqnRecurrent()
+
+from a_configuration.c_comparison_config.open_ai_gym.config_comparison_lunar_lander import \
+    ConfigComparisonLunarLanderDqnRecurrentWithoutVelocity
+config_c = ConfigComparisonLunarLanderDqnRecurrentWithoutVelocity()
 
 
 #####################

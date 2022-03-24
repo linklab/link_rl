@@ -103,7 +103,7 @@ class ConfigComparisonCartPolePpo(ConfigComparisonBase):
         self.N_RUNS = 5
 
 
-class ConfigComparisonCartPoleDqnTime(ConfigComparisonBase):
+class ConfigComparisonCartPoleDqnRecurrent(ConfigComparisonBase):
     def __init__(self):
         super().__init__()
 
@@ -137,7 +137,7 @@ class ConfigComparisonCartPoleDqnTime(ConfigComparisonBase):
         self.AGENT_PARAMETERS[2].MODEL_TYPE = ModelType.SMALL_RECURRENT
 
 
-class ConfigComparisonCartPoleDqnReversActionTime(ConfigComparisonBase):
+class ConfigComparisonCartPoleDqnRecurrentReversAction(ConfigComparisonBase):
     def __init__(self):
         super().__init__()
 
@@ -173,7 +173,7 @@ class ConfigComparisonCartPoleDqnReversActionTime(ConfigComparisonBase):
         self.AGENT_PARAMETERS[2].MODEL_TYPE = ModelType.SMALL_RECURRENT
 
 
-class ConfigComparisonCartPoleDqnWithoutVelocityTime(ConfigComparisonBase):
+class ConfigComparisonCartPoleDqnRecurrentWithoutVelocity(ConfigComparisonBase):
     def __init__(self):
         super().__init__()
 

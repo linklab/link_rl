@@ -274,3 +274,26 @@ class CartpoleWithoutVelocity(gym.ObservationWrapper):
     def observation(self, observation):
         cart_position, _, pole_angle, _ = observation
         return cart_position, pole_angle
+
+
+class LunarLanderWithoutVelocity(gym.ObservationWrapper):
+    def __init__(self, env):
+        # | Num   | Observation             | Min                    | Max                  |
+        # | ----- | ----------------------- | ---------------------- | -------------------- |
+        # | 0     | pos.x                   | -Inf                   | Inf                  |   O
+        # | 1     | pos.y                   | -Inf                   | Inf                  |   O
+        # | 2     | vel.x                   | -Inf                   | Inf                  |   X
+        # | 3     | vel.y                   | -Inf                   | Inf                  |   X
+        # | 4     | angle                   | -Inf                   | Inf                  |   O
+        # | 5     | angular velocity        | -Inf                   | Inf                  |   X
+        # | 6     | legs[0].ground_contact  | -Inf                   | Inf                  |   O
+        # | 7     | legs[1].ground_contact  | -Inf                   | Inf                  |   O
+        super().__init__(env)
+
+        self.observation_space = gym.spaces.Box(
+            -np.inf, np.inf, shape=(5,), dtype=np.float32
+        )
+
+    def observation(self, observation):
+        pos_x, pos_y, _, _, angle, _, legs_0_contact, legs_1_contact = observation
+        return pos_x, pos_y, angle, legs_0_contact, legs_1_contact
