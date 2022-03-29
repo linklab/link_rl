@@ -157,6 +157,7 @@ config = ConfigCartPoleContinuousBulletSac()
 ##################
 from a_configuration.b_single_config.open_ai_gym.config_lunar_lander import ConfigLunarLanderDqn
 config = ConfigLunarLanderDqn()
+config.WANDB_REPORt_URL = 'https://wandb.ai/link-koreatech/LunarLander-v2_DQN_anonymous/reports/Lunar-Lander-DQN--VmlldzoxNzI3OTU5?accessToken=4kbmznjvysvlh5zbf30vy8jg403ojrjxjefiewfpcn5iu3cwo5mirclsj8f6dx1u'
 
 from a_configuration.b_single_config.open_ai_gym.config_lunar_lander import ConfigLunarLanderMuzero
 config = ConfigLunarLanderMuzero()
