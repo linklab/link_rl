@@ -1,3 +1,5 @@
+import csv
+
 import gym
 from gym import spaces
 import enum
@@ -30,6 +32,8 @@ class KnapsackEnv(gym.Env):
 
         self.INITIAL_ITEM_DISTRIBUTION_FIXED = config.INITIAL_ITEM_DISTRIBUTION_FIXED
 
+        self.FILE_PATH = config.FILE_PATH
+
         self.internal_state = None
         self.items_selected = None
         self.actions_sequence = None
@@ -52,20 +56,37 @@ class KnapsackEnv(gym.Env):
     # 2: initially set to 0, and increase by an item's weight whenever the item is selected
     # 3: initially set to 0, and increase by an item's value whenever the item is selected
     def get_initial_state(self):
-        state = np.zeros(shape=(self.NUM_ITEM + 1, 4), dtype=int)
+        state = np.zeros(shape=(self.NUM_ITEM + 1, 4), dtype=float)
 
-        for item_idx in range(self.NUM_ITEM):
-            item_weight = np.random.randint(
-                low=self.MIN_WEIGHT_ITEM, high=self.MAX_WEIGHT_ITEM, size=(1, 1)
-            )
-            item_value = np.random.randint(
-                low=self.MIN_VALUE_ITEM, high=self.MAX_VALUE_ITEM, size=(1, 1)
-            )
-            state[item_idx][2] = item_weight
-            state[item_idx][3] = item_value
+        if self.FILE_PATH:
+            f = open(self.FILE_PATH, "r")
+            reader = csv.reader(f)
+            data = list(reader)
+            f.close()
 
-        state[-1][1] = np.array(self.LIMIT_WEIGHT_KNAPSACK)
+            for item_idx in range(self.NUM_ITEM):
+                state[item_idx][2] = data[item_idx][1]
+                state[item_idx][3] = data[item_idx][0]
 
+            state[-1][1] = data[self.NUM_ITEM][1]
+        else:
+            for item_idx in range(self.NUM_ITEM):
+                item_weight = np.random.randint(
+                    low=self.MIN_WEIGHT_ITEM, high=self.MAX_WEIGHT_ITEM, size=(1, 1)
+                )
+                item_value = np.random.randint(
+                    low=self.MIN_VALUE_ITEM, high=self.MAX_VALUE_ITEM, size=(1, 1)
+                )
+                state[item_idx][2] = item_weight
+                state[item_idx][3] = item_value
+
+            state[-1][1] = np.array(self.LIMIT_WEIGHT_KNAPSACK)
+
+        # for item_idx in range(self.NUM_ITEM):
+        #     state[item_idx][2] = data[item_idx][1]
+        #     state[item_idx][3] = data[item_idx][0]
+        #
+        # state[-1][1] = data[self.NUM_ITEM][1]
         return state
 
     def observation(self):
@@ -200,8 +221,7 @@ def run_env():
     agent = Dummy_Agent()
 
     config = ConfigKnapsack0()
-    config.NUM_ITEM = 10
-    config.LIMIT_WEIGHT_KNAPSACK = 100
+    config.NUM_ITEM = 50
     env = KnapsackEnv(config)
 
     for i in range(2):
