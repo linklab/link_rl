@@ -164,7 +164,8 @@ def generate_hard_instamces():
             print("done", n)
 
 
-generate_random_instamces()
-generate_fixed_instamces()
-generate_hard_instamces()
+if __name__ == "__main__":
+    generate_random_instamces()
+    generate_fixed_instamces()
+    generate_hard_instamces()
 
