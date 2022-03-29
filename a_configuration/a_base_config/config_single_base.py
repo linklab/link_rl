@@ -23,6 +23,10 @@ class ConfigBase:
         if not os.path.exists(self.UNITY_ENV_DIR):
             os.mkdir(self.UNITY_ENV_DIR)
 
+        self.COMBINATORIAL_OPTIMIZATION_ENV_DIR = os.path.join(self.PROJECT_HOME, "b_environments", "combinatorial_optimization")
+        if not os.path.exists(self.UNITY_ENV_DIR):
+            os.mkdir(self.UNITY_ENV_DIR)
+
         self.N_VECTORIZED_ENVS = 1
         self.N_ACTORS = 1
         self.N_STEP = 1

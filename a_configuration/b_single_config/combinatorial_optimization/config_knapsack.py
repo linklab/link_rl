@@ -29,7 +29,8 @@ class ConfigKnapsackRandomInsatances0Dqn(ConfigBase, ConfigKnapsack0, ConfigDqn)
         ConfigKnapsack0.__init__(self)
         ConfigDqn.__init__(self)
 
-        self.FILE_PATH = os.path.join(self.PROJECT_HOME, "b_environments\\combinatorial_optimization\\random_instances\\n_50_r_100\\instance0.csv")
+        self.INSTANCE_PATH = os.path.join("random_instances", "n_50_r_100", "instance0.csv")
+        self.FILE_PATH = os.path.join(self.COMBINATORIAL_OPTIMIZATION_ENV_DIR, self.INSTANCE_PATH)
         self.NUM_ITEM = 20
         self.INITIAL_TASK_DISTRIBUTION_FIXED = True
         self.MAX_TRAINING_STEPS = self.NUM_ITEM * 2_000
