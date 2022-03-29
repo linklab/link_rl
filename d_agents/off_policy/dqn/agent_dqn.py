@@ -70,7 +70,7 @@ class AgentDqn(OffPolicyAgent):
         # print("self.observations.shape:", self.observations.shape)
         q_values = self.q_net.q(self.observations).gather(dim=-1, index=self.actions)
 
-        with torch.no_grad():
+        with torch.no_grad():  # autograd를 끔으로써 메모리 사용량을 줄이고 연산 속도를 높히기 위함
             # next_state_values.shape: torch.Size([32, 1])
             next_q_v = self.target_q_net.q(self.next_observations).max(dim=-1, keepdim=True).values
             next_q_v[self.dones] = 0.0

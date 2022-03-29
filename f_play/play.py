@@ -126,6 +126,9 @@ def main_play(n_episodes):
         file_name=config.PLAY_MODEL_FILE_NAME,
         config=config
     )
+
+    agent.model.eval()
+
     play(env, agent, n_episodes=n_episodes)
 
     env.close()

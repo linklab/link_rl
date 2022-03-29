@@ -567,6 +567,7 @@ class Learner(mp.Process):
                 episode_value_lst.append(info[0]["Value"])
 
         self.agent.model.train()
+
         if self.config.AGENT_TYPE == AgentType.A3C:
             self.shared_model_access_lock.release()
 
