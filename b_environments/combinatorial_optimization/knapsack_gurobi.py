@@ -5,7 +5,7 @@ import numpy as np
 from gurobipy import * # conda install gurobi
 
 
-def randoem_instacne_reader(key, num):
+def random_instance_reader(key, num):
     instance_info_keys = ["n_50_r_100", "n_300_r_600", "n_500_r_1800"]
 
     file_path = os.path.join("random_instances", instance_info_keys[key])
@@ -22,7 +22,7 @@ def randoem_instacne_reader(key, num):
     return data
 
 
-def fixed_instacne_reader(key, num):
+def fixed_instance_reader(key, num):
     instance_info_keys = ["n_50_wp_12.5", "n_300_wp_37.5", "n_500_wp_37.5"]
 
     file_path = os.path.join("fixed_instances", instance_info_keys[key])
@@ -39,7 +39,7 @@ def fixed_instacne_reader(key, num):
     return data
 
 
-def hard_instacne_reader(key, num):
+def hard_instance_reader(key, num):
     instance_info_keys = ["n_50_r_100", "n_300_r_600", "n_500_r_1000"]
 
     file_path = os.path.join("hard_instances", instance_info_keys[key])
@@ -83,12 +83,14 @@ if __name__ == "__main__":
     M = 1000
     for idx in range(INDEX):
         for m in range(M):
-            data = randoem_instacne_reader(idx, m)
+            data = random_instance_reader(idx, m)
+            #data = fixed_instance_reader(idx, m)
+            #data = hard_instance_reader(idx, m)
             Knapsack_capacity = float(data[-1][1])
             values = data[:-1, 0]
             weights = data[:-1, 1]
 
             items_selected, total_value = model_kp(Knapsack_capacity, values, weights, False)
-            print("randoem_instacne_reader", idx, m)
+            print("instance_reader", idx, m)
             print("items_selected", items_selected)
             print("total_value", total_value)
