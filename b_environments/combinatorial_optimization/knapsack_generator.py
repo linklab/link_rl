@@ -149,7 +149,7 @@ def generate_hard_instamces():
             instance0 = KnapsackGenerator()
             instance0.pre_generator(instance_info_values[idx], GeneratorType.TYPE_3)
             state = instance0.generator(GeneratorType.TYPE_3)
-            file_path = os.path.join("random_instances2", instance_info_keys[idx])
+            file_path = os.path.join("hard_instances2", instance_info_keys[idx])
 
             if not os.path.isdir(file_path):
                 os.makedirs(file_path)

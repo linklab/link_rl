@@ -1,23 +1,63 @@
 import csv
+import os
+
 import numpy as np
-from gurobipy import *
+from gurobipy import * # conda install gurobi
 
-f = open("random_instances/n_50_r_100/instance0.csv", "r")
-reader = csv.reader(f)
 
-data = list(reader)
+def randoem_instacne_reader(key, num):
+    instance_info_keys = ["n_50_r_100", "n_300_r_600", "n_500_r_1800"]
 
-f.close()
+    file_path = os.path.join("random_instances", instance_info_keys[key])
 
-data = np.array(data)
+    if not os.path.isdir(file_path):
+        os.makedirs(file_path)
 
-Knapsack_capacity = float(data[-1][1])
-values = data[:-1, 0]
-weights = data[:-1, 1]
+    f = open(file_path + "/instance" + str(num) + ".csv", "r", )
+    reader = csv.reader(f)
+    data = list(reader)
+    data = np.array(data)
+    f.close()
+
+    return data
+
+
+def fixed_instacne_reader(key, num):
+    instance_info_keys = ["n_50_wp_12.5", "n_300_wp_37.5", "n_500_wp_37.5"]
+
+    file_path = os.path.join("fixed_instances", instance_info_keys[key])
+
+    if not os.path.isdir(file_path):
+        os.makedirs(file_path)
+
+    f = open(file_path + "/instance" + str(num) + ".csv", "r", )
+    reader = csv.reader(f)
+    data = list(reader)
+    data = np.array(data)
+    f.close()
+
+    return data
+
+
+def hard_instacne_reader(key, num):
+    instance_info_keys = ["n_50_r_100", "n_300_r_600", "n_500_r_1000"]
+
+    file_path = os.path.join("hard_instances", instance_info_keys[key])
+
+    if not os.path.isdir(file_path):
+        os.makedirs(file_path)
+
+    f = open(file_path + "/instance" + str(num) + ".csv", "r", )
+    reader = csv.reader(f)
+    data = list(reader)
+    data = np.array(data)
+    f.close()
+
+    return data
 
 
 def model_kp(capacity, value, weight, LogToConsole = True, TimeLimit=10):
-    num_item = 50
+    num_item = len(value)
     assert num_item == len(weight)
     model = Model()
     model.params.LogToConsole = LogToConsole
@@ -34,9 +74,21 @@ def model_kp(capacity, value, weight, LogToConsole = True, TimeLimit=10):
 
 
 if __name__ == "__main__":
-    items_selected, total_value = model_kp(Knapsack_capacity, values, weights, False)
-    print("items_selected", items_selected)
-    print("total_value", total_value)
+    # Knapsack_capacity = 10
+    # print(Knapsack_capacity)
+    # values = [1, 10, 1, 2, 9]
+    # weights = [10, 1, 10, 1, 9]
 
+    INDEX = 3
+    M = 1000
+    for idx in range(INDEX):
+        for m in range(M):
+            data = randoem_instacne_reader(idx, m)
+            Knapsack_capacity = float(data[-1][1])
+            values = data[:-1, 0]
+            weights = data[:-1, 1]
 
-
+            items_selected, total_value = model_kp(Knapsack_capacity, values, weights, False)
+            print("randoem_instacne_reader", idx, m)
+            print("items_selected", items_selected)
+            print("total_value", total_value)
