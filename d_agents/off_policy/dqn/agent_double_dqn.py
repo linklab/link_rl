@@ -11,8 +11,8 @@ class AgentDoubleDqn(AgentDqn):
     def train_double_dqn(self, training_steps_v):
         count_training_steps = 0
 
-        # state_action_values.shape: torch.Size([32, 1])
-        state_action_values = self.q_net.q(self.observations).gather(dim=-1, index=self.actions)
+        # q_values.shape: torch.Size([32, 1])
+        q_values = self.q_net.q(self.observations).gather(dim=-1, index=self.actions)
 
         with torch.no_grad():
             target_argmax_action = torch.argmax(self.q_net.q(self.next_observations), dim=-1, keepdim=True)
@@ -26,7 +26,7 @@ class AgentDoubleDqn(AgentDqn):
                 target_q_values = (target_q_values - torch.mean(target_q_values)) / (torch.std(target_q_values) + 1e-7)
 
         # loss is just scalar torch value
-        q_net_loss_each = self.config.LOSS_FUNCTION(state_action_values, target_q_values, reduction="none")
+        q_net_loss_each = self.config.LOSS_FUNCTION(q_values, target_q_values, reduction="none")
         q_net_loss = q_net_loss_each.mean()
 
         # print("observations.shape: {0}, actions.shape: {1}, "
@@ -34,7 +34,7 @@ class AgentDoubleDqn(AgentDqn):
         #     observations.shape, actions.shape,
         #     next_observations.shape, rewards.shape, dones.shape
         # ))
-        # print("state_action_values.shape: {0}".format(state_action_values.shape))
+        # print("q_values.shape: {0}".format(q_values.shape))
         # print("next_state_values.shape: {0}".format(next_state_values.shape))
         # print("target_state_action_values.shape: {0}".format(
         #     target_state_action_values.shape
