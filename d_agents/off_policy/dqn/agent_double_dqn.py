@@ -20,7 +20,7 @@ class AgentDoubleDqn(AgentDqn):
             next_q_values[self.dones] = 0.0
             next_q_values = next_q_values.detach()
 
-            # target_state_action_values.shape: torch.Size([32, 1])
+            # target_q_values.shape: torch.Size([32, 1])
             target_q_values = self.rewards + self.config.GAMMA ** self.config.N_STEP * next_q_values
             if self.config.TARGET_VALUE_NORMALIZE:
                 target_q_values = (target_q_values - torch.mean(target_q_values)) / (torch.std(target_q_values) + 1e-7)
@@ -36,8 +36,8 @@ class AgentDoubleDqn(AgentDqn):
         # ))
         # print("q_values.shape: {0}".format(q_values.shape))
         # print("next_state_values.shape: {0}".format(next_state_values.shape))
-        # print("target_state_action_values.shape: {0}".format(
-        #     target_state_action_values.shape
+        # print("target_q_values.shape: {0}".format(
+        #     target_q_values.shape
         # ))
         # print("loss.shape: {0}".format(loss.shape))
 
