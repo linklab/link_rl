@@ -486,8 +486,8 @@ def console_log(learner,
     if config.ENV_NAME in ["Knapsack_Problem_v0"]:
         info = learner.env_info
 
-        knapsack_info = ", Value.: {0:3}, Weight: {1:3}, Items: {2}, Actions: {3}, Optimal_solution: {4}".format(
-            info["Value"], info["Weight"], sorted(info["Items selected"]), info['Actions sequence'], info['Optimal_solution']
+        knapsack_info = ", Value.: {0:3}, Weight: {1:3}, Items: {2}, Actions: {3}, Solution_Found: {4}".format(
+            info["Value"], info["Weight"], sorted(info["Items selected"]), info['Actions sequence'], info['solution_found']
         )
 
         console_log += knapsack_info

@@ -34,7 +34,7 @@ class KnapsackEnv(gym.Env):
 
         self.FILE_PATH = config.FILE_PATH
 
-        self.optimal_solution = [0]
+        self.solution_found = [0]
 
         self.internal_state = None
         self.items_selected = None
@@ -199,9 +199,9 @@ class KnapsackEnv(gym.Env):
 
         if done:
             reward = self.reward(done_type=info['DoneReasonType'])
-            if self.optimal_solution[0] < self.value_of_all_items_selected:
-                self.optimal_solution[0] = self.value_of_all_items_selected
-                self.optimal_solution[1:] = self.items_selected
+            if self.solution_found[0] < self.value_of_all_items_selected:
+                self.solution_found[0] = self.value_of_all_items_selected
+                self.solution_found[1:] = self.items_selected
         else:
             reward = self.reward(done_type=None)
 
@@ -210,7 +210,7 @@ class KnapsackEnv(gym.Env):
         info['Value'] = self.value_of_all_items_selected
         info['Weight'] = self.weight_of_all_items_selected
         info['internal_state'] = copy.deepcopy(self.internal_state)
-        info['Optimal_solution'] = self.optimal_solution
+        info['solution_found'] = self.solution_found
 
         return observation, reward, done, info
 
