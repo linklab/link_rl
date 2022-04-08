@@ -13,3 +13,6 @@ SYSTEM_COMPUTER_NAME = config.get('SYSTEM', 'computer_name', fallback="any_com")
 
 SLACK_WEBHOOK_URL = config.get('SLACK', 'webhook_url', fallback='')
 SLACK_API_TOKEN = config.get('SLACK', 'api_token', fallback='')
+
+S3_ACCESS_ID = config.get('S3', 'access_id', fallback='')
+S3_ACCESS_SECRET = config.get('S3', 'access_secret', fallback='')
