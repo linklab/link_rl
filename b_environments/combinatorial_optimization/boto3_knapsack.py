@@ -148,9 +148,41 @@ def load_instance(bucket_name, file_path):
 
     return state
 
+
+def load_solution(bucket_name, file_path):
+    client = boto3.resource('s3', aws_access_key_id=S3_ACCESS_ID, aws_secret_access_key=S3_ACCESS_SECRET)
+    obj = client.Object(bucket_name, file_path)
+
+    myBody = obj.get()['Body'].read()
+    myBody = myBody.decode()
+
+    print(myBody)
+    print(list(myBody))
+
+    info = ""
+    info_list = []
+    for x in myBody:
+        if x == '\n' or x == '\r':
+            info_list.append(info)
+            break
+        elif x == " ":
+            pass
+        else:
+            info += x
+
+    data = []
+
+    for y in info_list:
+        if y != "":
+            data.append(y)
+
+    return float(data[0])
+
 if __name__ == '__main__':
     #show_bucket_name()
     bucket_name = 'linklab'
-    file_path = 'knapsack_instances/RI/instances/n_50_r_100/instance0.csv'
+    #file_path = 'knapsack_instances/RI/instances/n_50_r_100/instance0.csv'
     #file_path = 'knapsack_instances/FI/instances/n_50_wp_12.5/instance0.csv'
-    load_instance(bucket_name, file_path)
+    #load_instance(bucket_name, file_path)
+    file_path = 'knapsack_instances/RI/optimal_solution/n_50_r_100/solution0.csv'
+    load_solution(bucket_name, file_path)

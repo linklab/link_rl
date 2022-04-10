@@ -9,7 +9,7 @@ from typing import Optional
 import random
 
 from a_configuration.a_base_config.a_environments.combinatorial_optimization.config_knapsack import ConfigKnapsack0
-from b_environments.combinatorial_optimization.boto3_knapsack import load_instance, upload_file
+from b_environments.combinatorial_optimization.boto3_knapsack import load_instance, upload_file, load_solution
 
 
 class DoneReasonType0(enum.Enum):
@@ -35,8 +35,10 @@ class KnapsackEnv(gym.Env):
 
         self.FILE_PATH = config.FILE_PATH
         self.UPLOAD_PATH = config.UPLOAD_PATH
+        self.OPTIMAL_PATH = config.OPTIMAL_PATH
 
         self.solution_found = [0]
+        self.optimal_value = 0
 
         self.internal_state = None
         self.items_selected = None
@@ -84,6 +86,10 @@ class KnapsackEnv(gym.Env):
         #     state[item_idx][3] = data[item_idx][0]
         #
         # state[-1][1] = data[self.NUM_ITEM][1]
+
+        if self.OPTIMAL_PATH:
+            self.optimal_value = load_solution('linklab', self.OPTIMAL_PATH)
+
         return state
 
     def observation(self):
@@ -194,9 +200,14 @@ class KnapsackEnv(gym.Env):
 
         if done:
             reward = self.reward(done_type=info['DoneReasonType'])
+
             if self.solution_found[0] < self.value_of_all_items_selected:
                 self.solution_found[0] = self.value_of_all_items_selected
                 self.solution_found[1:] = self.items_selected
+
+                if self.OPTIMAL_PATH:
+                    self.solution_found[-1] = self.solution_found[0] / self.optimal_value
+
                 if self.UPLOAD_PATH:
                     upload_file('linklab', self.solution_found, self.UPLOAD_PATH)
         else:
@@ -225,9 +236,11 @@ def run_env():
 
     config = ConfigKnapsack0()
     config.NUM_ITEM = 50
+    config.FILE_PATH = 'knapsack_instances/RI/instances/n_300_r_600/instance0.csv'
+    config.UPLOAD_PATH = 'knapsack_instances/RI/link_solution/n_300_r_600/instance0.csv'
+    config.OPTIMAL_PATH = 'knapsack_instances/RI/optimal_solution/n_300_r_600/solution0.csv'
     env = KnapsackEnv(config)
-    # config.FILE_PATH = 'knapsack_instances/RI/instances/n_300_r_600/instance0.csv'
-    # config.UPLOAD_PATH = 'knapsack_instances/RI/link_solution/n_300_r_600/instance0.csv'
+
 
     for i in range(2):
         observation, info = env.reset(return_info=True)
