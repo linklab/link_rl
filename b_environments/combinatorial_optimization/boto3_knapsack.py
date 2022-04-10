@@ -1,4 +1,5 @@
 import os
+import numpy as np
 
 from a_configuration.a_base_config.config_parse import S3_ACCESS_ID, S3_ACCESS_SECRET
 
@@ -23,14 +24,18 @@ def download_file(name, obj, save):
     bucket.download_file(obj_file, save_file)
 
 
-def upload_file(name, local, obj):
+def upload_file(name, content, obj):
     bucket_name = name
-    s3 = boto3.resource('s3', aws_access_key_id=S3_ACCESS_ID, aws_secret_access_key=S3_ACCESS_SECRET)
-    bucket = s3.Bucket(bucket_name)
-
-    local_file = local
-    obj_file = obj
-    bucket.upload_file(local_file, obj_file)
+    s3 = boto3.client('s3', aws_access_key_id=S3_ACCESS_ID, aws_secret_access_key=S3_ACCESS_SECRET)
+    # bucket = s3.Bucket(bucket_name)
+    #
+    # local_file = local
+    # obj_file = obj
+    # bucket.upload_file(local_file, obj_file)
+    #encode_file = np.array(content).tobytes()
+    encode_file = str(content)
+    #s3.Object(bucket_name, obj).put(Body=encode_file)
+    s3.put_object(Bucket=bucket_name, Key=obj, Body=encode_file)
 
 
 def hard_instacnces_upload():
@@ -99,18 +104,53 @@ def fixed_instacnces_upload():
             print(file_name)
 
 
-def load_instance(bucket_name, flie_path):
+def load_instance(bucket_name, file_path):
     client = boto3.resource('s3', aws_access_key_id=S3_ACCESS_ID, aws_secret_access_key=S3_ACCESS_SECRET)
-    obj = client.Object(bucket_name, flie_path)
+    obj = client.Object(bucket_name, file_path)
 
     myBody = obj.get()['Body'].read()
     myBody = myBody.decode()
 
-    print(myBody)
+    info = ""
+    info_list = []
+    for x in myBody:
+        if x == ",":
+            info_list.append(info)
+            info = ""
+        elif x == '\n' or x == '\r':
+            info_list.append(info)
+            info = ""
+        else:
+            info += x
 
+    data = []
+
+    for y in info_list:
+        if y != "":
+            data.append(y)
+
+    #print(len(data))
+
+    num_items = int(len(data)/2)
+    state = np.zeros(shape=(num_items, 4), dtype=float)
+
+    data_idx = 0
+
+    for item_idx in range(num_items-1):
+        state[data_idx][2] = data[item_idx + data_idx]
+        state[data_idx][3] = data[item_idx + data_idx + 1]
+
+        data_idx += 1
+
+    state[-1][1] = data[-1]
+
+    #print(state)
+
+    return state
 
 if __name__ == '__main__':
     #show_bucket_name()
     bucket_name = 'linklab'
-    flie_path = 'knapsack_instances/FI/instances/n_50_wp_12.5/instance0.csv'
-    load_instance(bucket_name, flie_path)
+    file_path = 'knapsack_instances/RI/instances/n_50_r_100/instance0.csv'
+    #file_path = 'knapsack_instances/FI/instances/n_50_wp_12.5/instance0.csv'
+    load_instance(bucket_name, file_path)

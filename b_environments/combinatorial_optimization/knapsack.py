@@ -9,6 +9,7 @@ from typing import Optional
 import random
 
 from a_configuration.a_base_config.a_environments.combinatorial_optimization.config_knapsack import ConfigKnapsack0
+from b_environments.combinatorial_optimization.boto3_knapsack import load_instance, upload_file
 
 
 class DoneReasonType0(enum.Enum):
@@ -33,6 +34,7 @@ class KnapsackEnv(gym.Env):
         self.INITIAL_ITEM_DISTRIBUTION_FIXED = config.INITIAL_ITEM_DISTRIBUTION_FIXED
 
         self.FILE_PATH = config.FILE_PATH
+        self.UPLOAD_PATH = config.UPLOAD_PATH
 
         self.solution_found = [0]
 
@@ -61,16 +63,9 @@ class KnapsackEnv(gym.Env):
         state = np.zeros(shape=(self.NUM_ITEM + 1, 4), dtype=float)
 
         if self.FILE_PATH:
-            f = open(self.FILE_PATH, "r")
-            reader = csv.reader(f)
-            data = list(reader)
-            f.close()
+            data = load_instance('linklab', self.FILE_PATH)
 
-            for item_idx in range(self.NUM_ITEM):
-                state[item_idx][2] = data[item_idx][1]
-                state[item_idx][3] = data[item_idx][0]
-
-            state[-1][1] = data[self.NUM_ITEM][1]
+            state = data
         else:
             for item_idx in range(self.NUM_ITEM):
                 item_weight = np.random.randint(
@@ -79,8 +74,8 @@ class KnapsackEnv(gym.Env):
                 item_value = np.random.randint(
                     low=self.MIN_VALUE_ITEM, high=self.MAX_VALUE_ITEM, size=(1, 1)
                 )
-                state[item_idx][2] = item_weight
-                state[item_idx][3] = item_value
+                state[item_idx][2] = item_value
+                state[item_idx][3] = item_weight
 
             state[-1][1] = np.array(self.LIMIT_WEIGHT_KNAPSACK)
 
@@ -128,7 +123,7 @@ class KnapsackEnv(gym.Env):
         else:
             self.internal_state = self.get_initial_state()
 
-        self.TOTAL_VALUE_FOR_ALL_ITEMS = sum(self.internal_state[:, 3])
+        self.TOTAL_VALUE_FOR_ALL_ITEMS = sum(self.internal_state[:, 2])
         self.items_selected = []
         self.actions_sequence = []
         self.weight_of_all_items_selected = 0
@@ -150,7 +145,7 @@ class KnapsackEnv(gym.Env):
         possible = False
 
         for item in self.internal_state[self.num_step + 1: self.NUM_ITEM]:
-            weight = item[2]
+            weight = item[3]
 
             if weight <= self.internal_state[-1][1]:
                 possible = True
@@ -161,19 +156,19 @@ class KnapsackEnv(gym.Env):
     def step(self, action_idx):
         self.actions_sequence.append(action_idx)
         info = dict()
-        step_item_weight, step_item_value = self.internal_state[self.num_step][2:]
+        step_item_value, step_item_weight = self.internal_state[self.num_step][2:]
 
         if action_idx == 1:
             self.items_selected.append(self.num_step)
-            self.weight_of_all_items_selected += step_item_weight
             self.value_of_all_items_selected += step_item_value
+            self.weight_of_all_items_selected += step_item_weight
 
             self.internal_state[self.num_step][1] = 1
             self.internal_state[self.num_step][2:] = -1
 
             self.internal_state[-1][1] -= step_item_weight
-            self.internal_state[-1][2] = self.weight_of_all_items_selected
             self.internal_state[-1][3] = self.value_of_all_items_selected
+            self.internal_state[-1][2] = self.weight_of_all_items_selected
 
         possible = self.check_future_select_possible()
 
@@ -202,6 +197,8 @@ class KnapsackEnv(gym.Env):
             if self.solution_found[0] < self.value_of_all_items_selected:
                 self.solution_found[0] = self.value_of_all_items_selected
                 self.solution_found[1:] = self.items_selected
+                if self.UPLOAD_PATH:
+                    upload_file('linklab', self.solution_found, self.UPLOAD_PATH)
         else:
             reward = self.reward(done_type=None)
 
@@ -229,6 +226,8 @@ def run_env():
     config = ConfigKnapsack0()
     config.NUM_ITEM = 50
     env = KnapsackEnv(config)
+    # config.FILE_PATH = 'knapsack_instances/RI/instances/n_300_r_600/instance0.csv'
+    # config.UPLOAD_PATH = 'knapsack_instances/RI/link_solution/n_300_r_600/instance0.csv'
 
     for i in range(2):
         observation, info = env.reset(return_info=True)
