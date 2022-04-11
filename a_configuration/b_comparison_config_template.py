@@ -17,6 +17,9 @@ from a_configuration.c_comparison_config.open_ai_gym.config_comparison_cart_pole
 config_c = ConfigComparisonCartPoleDqnTypes()
 config_c.WANDB_REPORT_URL = "https://wandb.ai/link-koreatech/ConfigComparisonCartPoleDqnTypes_Comparison_yhhan/reports/Comparison_CartPole_Dqn_Types--VmlldzoxODIzNDM1?accessToken=clgmrpy3zegf7b634f2cggnc3umylvvol0iujb9etabqya00r3cfrn9ekc816a89"
 
+from a_configuration.c_comparison_config.open_ai_gym.config_comparison_cart_pole import ConfigComparisonCartPoleDqnPer
+config_c = ConfigComparisonCartPoleDqnPer()
+
 from a_configuration.c_comparison_config.open_ai_gym.config_comparison_cart_pole import ConfigComparisonCartPolePpo
 config_c = ConfigComparisonCartPolePpo()
 
