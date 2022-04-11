@@ -3,7 +3,7 @@ import numpy as np
 
 from a_configuration.a_base_config.config_parse import S3_ACCESS_ID, S3_ACCESS_SECRET
 
-import boto3
+import boto3 #conda install boto3
 
 
 def show_bucket_name():
@@ -156,8 +156,8 @@ def load_solution(bucket_name, file_path):
     myBody = obj.get()['Body'].read()
     myBody = myBody.decode()
 
-    print(myBody)
-    print(list(myBody))
+    #print(myBody)
+    #print(list(myBody))
 
     info = ""
     info_list = []
