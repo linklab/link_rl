@@ -111,6 +111,10 @@ class AgentSac(OffPolicyAgent):
 
         # critic_loss.shape: ()
         critic_loss_each = (self.config.LOSS_FUNCTION(q1_values, target_values.detach(), reduction="none") + self.config.LOSS_FUNCTION(q2_values, target_values.detach(), reduction="none")) / 2.0
+
+        if self.config.USE_PER:
+            critic_loss_each *= torch.FloatTensor(self.important_sampling_weights).to(self.config.DEVICE)[:, None]
+
         critic_loss = critic_loss_each.mean()
 
         self.critic_optimizer.zero_grad()

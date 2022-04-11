@@ -14,6 +14,7 @@ class OffPolicyAgent(Agent):
         if self.config.USE_PER:
             assert self.config.AGENT_TYPE in OffPolicyAgentTypes
             self.replay_buffer = PrioritizedBuffer(action_space=action_space, config=self.config)
+            self.important_sampling_weights = None
         else:
             self.replay_buffer = Buffer(action_space=action_space, config=self.config)
 
@@ -26,9 +27,15 @@ class OffPolicyAgent(Agent):
         if self.config.AGENT_TYPE == AgentType.MUZERO:
             self.episode_idxs, self.episode_historys = self.replay_buffer.sample_muzero(batch_size=sample_length)
         else:
-            self.observations, self.actions, self.next_observations, self.rewards, self.dones, self.infos = self.replay_buffer.sample(
-                batch_size=self.config.BATCH_SIZE
-            )
+            if self.config.USE_PER:
+                self.observations, self.actions, self.next_observations, self.rewards, self.dones, self.infos, \
+                self.important_sampling_weights = self.replay_buffer.sample(
+                    batch_size=self.config.BATCH_SIZE
+                )
+            else:
+                self.observations, self.actions, self.next_observations, self.rewards, self.dones, self.infos = self.replay_buffer.sample(
+                    batch_size=self.config.BATCH_SIZE
+                )
 
     def train(self, training_steps_v=None):
         count_training_steps = 0

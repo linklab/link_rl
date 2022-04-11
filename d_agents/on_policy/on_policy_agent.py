@@ -13,6 +13,7 @@ class OnPolicyAgent(Agent):
     def __init__(self, observation_space, action_space, config):
         super(OnPolicyAgent, self).__init__(observation_space, action_space, config)
         assert self.config.AGENT_TYPE in OnPolicyAgentTypes
+        assert self.config.USE_PER is False
 
         self.buffer = Buffer(action_space=action_space, config=self.config)
 

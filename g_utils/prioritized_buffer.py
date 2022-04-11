@@ -56,15 +56,24 @@ class SumTree:
     def get(self, x):
         assert x <= self.total()
         node_idx = self._retrieve(0, x)
-        indexIdx = node_idx - self.capacity + 1
+        index_idx = node_idx - self.capacity + 1
 
-        return (node_idx, self.binary_tree[node_idx], self.transition_indices[indexIdx])
+        return node_idx, self.binary_tree[node_idx], self.transition_indices[index_idx]
+
+    def num_transition_entries(self):
+        return len(self.transition_indices)
 
     def print_tree(self):
+        print("#" * 100)
+        print(f'Capacity: {self.capacity}')
+        for j in range(self.capacity - 1):
+            print(f'Idx: -, Data idx: -, Node Idx: {j}, Priority: {self.binary_tree[j]}')
+
         for i in range(len(self.transition_indices)):
             j = i + self.capacity - 1
-            print(f'Idx: {i}, Data idx: {self.transition_indices[i]}, Priority: {self.binary_tree[j]}')
+            print(f'Idx: {i}, Data idx: {self.transition_indices[i]}, Node Idx: {j}, Priority: {self.binary_tree[j]}')
         print(f"Total: {self.total()}")
+        print("#" * 100)
 
 
 class PrioritizedBuffer(Buffer):
@@ -89,25 +98,39 @@ class PrioritizedBuffer(Buffer):
         self.priorities[self.head] = priority
         self.sum_tree.add(priority, self.head)
 
-    def _get_priority(self, error):
-        '''Takes in the error of one or more examples and returns the proportional priority'''
-        return np.power(error + self.config.PER_EPSILON, self.config.PER_ALPHA)
+    def _get_priority(self, td_error):
+        '''
+        - Takes in the td_error of one or more examples and returns the proportional priority
+        - default_priority = (100_000 + 0.01)^0.6
+        '''
+        return np.power(td_error + self.config.PER_EPSILON, self.config.PER_ALPHA)
 
     def sample_indices(self, batch_size):
         '''Samples batch_size indices from memory in proportional to their priority.'''
         transition_indices = np.zeros(batch_size, dtype=int)
         node_indices = np.zeros(batch_size, dtype=int)
+        priorities = np.zeros(batch_size, dtype=float)
 
         for i in range(batch_size):
             x = random.uniform(0, self.sum_tree.total())
-            node_idx, _, idx = self.sum_tree.get(x)
+            node_idx, priority, idx = self.sum_tree.get(x)
             transition_indices[i] = idx
             node_indices[i] = node_idx
+            priorities[i] = priority
 
         self.sampled_transition_indices = np.asarray(transition_indices).astype(int)
         self.sampled_node_indices = node_indices
 
-        return transition_indices
+        priorities = np.asarray(priorities).astype(float)
+        sampling_probabilities = priorities / self.sum_tree.total()
+
+        important_sampling_weights = np.power(
+            self.sum_tree.num_transition_entries() * sampling_probabilities,
+            -1.0 * self.config.PER_BETA
+        )
+        important_sampling_weights /= important_sampling_weights.max()
+
+        return transition_indices, important_sampling_weights
 
     def update_priorities(self, errors):
         '''
@@ -158,8 +181,8 @@ if __name__ == "__main__":
     print()
 
     print("SAMPLE & UPDATE #1")
-    samples = prioritized_buffer.sample_indices(batch_size=3)
-    print(samples)
+    samples, priorities = prioritized_buffer.sample_indices(batch_size=3)
+    print(samples, priorities)
 
     errors = np.ones_like(samples)
     prioritized_buffer.update_priorities(errors)
@@ -168,8 +191,8 @@ if __name__ == "__main__":
     print()
 
     print("SAMPLE & UPDATE #2")
-    samples = prioritized_buffer.sample_indices(batch_size=3)
-    print(samples)
+    samples, priorities = prioritized_buffer.sample_indices(batch_size=3)
+    print(samples, priorities)
 
     errors = np.ones_like(samples)
     prioritized_buffer.update_priorities(errors)
@@ -178,8 +201,8 @@ if __name__ == "__main__":
     print()
 
     print("SAMPLE & UPDATE #3")
-    samples = prioritized_buffer.sample_indices(batch_size=3)
-    print(samples)
+    samples, priorities = prioritized_buffer.sample_indices(batch_size=3)
+    print(samples, priorities)
 
     errors = np.full(samples.shape, 100.0)
     prioritized_buffer.update_priorities(errors)
@@ -187,10 +210,10 @@ if __name__ == "__main__":
 
     print()
 
-    print("SAMPLE & UPDATE #3")
-    samples = prioritized_buffer.sample_indices(batch_size=3)
-    print(samples)
+    print("SAMPLE & UPDATE #4")
+    samples, priorities = prioritized_buffer.sample_indices(batch_size=3)
+    print(samples, priorities)
 
-    errors = np.full(samples.shape, 100.0)
+    errors = np.full(samples.shape, 10.0)
     prioritized_buffer.update_priorities(errors)
     prioritized_buffer.sum_tree.print_tree()

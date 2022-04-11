@@ -57,7 +57,10 @@ class Buffer:
 
     def sample(self, batch_size):
         if batch_size:
-            transition_indices = self.sample_indices(batch_size)
+            if self.config.USE_PER:
+                transition_indices, important_sampling_weights = self.sample_indices(batch_size)
+            else:
+                transition_indices = self.sample_indices(batch_size)
 
             # Sample
             observations, actions, next_observations, rewards, dones, infos = \
@@ -135,7 +138,10 @@ class Buffer:
         # rewards.shape: torch.Size([32, 1]),
         # dones.shape: torch.Size([32])
 
-        return observations_v, actions_v, next_observations_v, rewards_v, dones_v, infos
+        if self.config.USE_PER:
+            return observations_v, actions_v, next_observations_v, rewards_v, dones_v, infos, important_sampling_weights
+        else:
+            return observations_v, actions_v, next_observations_v, rewards_v, dones_v, infos
 
     def sample_muzero(self, batch_size):
         """
@@ -147,7 +153,7 @@ class Buffer:
             value
             gradient_scale
         """
-        transition_indices = self.sample_indices(batch_size)
+        transition_indices, _ = self.sample_indices(batch_size)
 
         # Sample
         episode_idx, episode_history = zip(*[(idx, self.internal_buffer[idx]) for idx in transition_indices])

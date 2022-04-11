@@ -80,6 +80,7 @@ class ConfigBase:
 
         self.PER_ALPHA = 0.6
         self.PER_EPSILON = 0.01
+        self.PER_BETA = 0.4
         self.USE_PER = False
 
         self.ENV_KWARGS = dict()
