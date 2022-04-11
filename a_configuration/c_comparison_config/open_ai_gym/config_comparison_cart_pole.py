@@ -57,6 +57,34 @@ class ConfigComparisonCartPoleDqnTypes(ConfigComparisonBase):
         self.MAX_TRAINING_STEPS = 50_000
         self.N_RUNS = 5
 
+
+class ConfigComparisonCartPoleDqnPer(ConfigComparisonBase):
+    def __init__(self):
+        ConfigComparisonBase.__init__(self)
+
+        self.ENV_NAME = "CartPole-v1"
+
+        self.AGENT_PARAMETERS = [
+            ConfigCartPoleDoubleDuelingDqn(),
+            ConfigCartPoleDoubleDuelingDqn(),
+            ConfigCartPoleDoubleDuelingDqn()
+        ]
+
+        self.AGENT_PARAMETERS[1].USE_PER = True
+        self.AGENT_PARAMETERS[1].PER_ALPHA = 0.6
+
+        self.AGENT_PARAMETERS[2].USE_PER = True
+        self.AGENT_PARAMETERS[2].PER_ALPHA = 0.9
+
+        self.AGENT_LABELS = [
+            "Double Dueling DQN",
+            "Double Dueling DQN + PER (ALPHA: 0.6)",
+            "Double Dueling DQN + PER (ALPHA: 0.9)",
+        ]
+        self.MAX_TRAINING_STEPS = 50_000
+        self.N_RUNS = 5
+
+
 # OnPolicy
 class ConfigComparisonCartPoleReinforce(ConfigComparisonBase):
     def __init__(self):
