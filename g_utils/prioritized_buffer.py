@@ -1,3 +1,5 @@
+import math
+
 import numpy as np
 import random
 
@@ -11,8 +13,8 @@ class SumTree:
     def __init__(self, capacity):
         self.write = 0
         self.capacity = capacity
-        self.binary_tree = np.zeros(2 * self.capacity - 1)  # Stores the priorities and sums of priorities
-        self.transition_indices = np.zeros(self.capacity, dtype=int)              # Stores the indices of the experiences
+        self.binary_tree = np.zeros(2 * self.capacity - 1)            # Stores the priorities and sums of priorities
+        self.transition_indices = np.zeros(self.capacity, dtype=int)  # Stores the indices of the experiences
 
     def _propagate(self, node_idx, change):
         parent_node_idx = (node_idx - 1) // 2
@@ -54,7 +56,7 @@ class SumTree:
         self._propagate(node_idx, change)
 
     def get(self, x):
-        assert x <= self.total()
+        assert x <= self.total(), "{0} {1}".format(x, self.total())
         node_idx = self._retrieve(0, x)
         index_idx = node_idx - self.capacity + 1
 
@@ -140,10 +142,11 @@ class PrioritizedBuffer(Buffer):
         priorities = self._get_priority(errors)
         assert len(priorities) == len(self.sampled_transition_indices)
 
-        for idx, p in zip(self.sampled_transition_indices, priorities):
-            self.priorities[idx] = p
-
-        for priority, node_idx in zip(priorities, self.sampled_node_indices):
+        for idx, node_idx, priority in zip(self.sampled_transition_indices, self.sampled_node_indices, priorities):
+            if math.isnan(priority):
+                continue
+            assert not math.isnan(priority), "{0} {1} {2}".format(idx, node_idx, priority)
+            self.priorities[idx] = priority
             self.sum_tree.update(node_idx, priority)
 
 
