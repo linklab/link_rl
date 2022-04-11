@@ -36,8 +36,9 @@ class KnapsackEnv(gym.Env):
         self.FILE_PATH = config.FILE_PATH
         self.UPLOAD_PATH = config.UPLOAD_PATH
         self.OPTIMAL_PATH = config.OPTIMAL_PATH
+        self.INSTANCE_INDEX = config.INSTANCE_INDEX
 
-        self.solution_found = [0]
+        self.solution_found = config.SOLUTION_FOUND
         self.optimal_value = 0
 
         self.internal_state = None
@@ -65,6 +66,7 @@ class KnapsackEnv(gym.Env):
         state = np.zeros(shape=(self.NUM_ITEM + 1, 4), dtype=float)
 
         if self.FILE_PATH:
+            self.FILE_PATH = self.FILE_PATH + '/instance' + str(self.INSTANCE_INDEX) + '.csv'
             data = load_instance('linklab', self.FILE_PATH)
 
             state = data
@@ -88,7 +90,11 @@ class KnapsackEnv(gym.Env):
         # state[-1][1] = data[self.NUM_ITEM][1]
 
         if self.OPTIMAL_PATH:
+            self.OPTIMAL_PATH = self.OPTIMAL_PATH + '/solution' + str(self.INSTANCE_INDEX) + '.csv'
             self.optimal_value = load_solution('linklab', self.OPTIMAL_PATH)
+
+        if self.UPLOAD_PATH:
+            self.UPLOAD_PATH = self.UPLOAD_PATH + '/link_solution' + str(self.INSTANCE_INDEX) + '.csv'
 
         return state
 
@@ -234,11 +240,16 @@ def run_env():
     print("START RUN!!!")
     agent = Dummy_Agent()
 
+    random_instance_info_keys = ["n_50_r_100", "n_300_r_600", "n_500_r_1800"]
+    hard_instance_info_keys = ["n_50_r_100", "n_300_r_600", "n_500_r_1000"]
+    fixed_instance_info_keys = ["n_50_wp_12.5", "n_300_wp_37.5", "n_500_wp_37.5"]
     config = ConfigKnapsack0()
     config.NUM_ITEM = 50
-    config.FILE_PATH = 'knapsack_instances/RI/instances/n_300_r_600/instance0.csv'
-    config.UPLOAD_PATH = 'knapsack_instances/RI/link_solution/n_300_r_600/instance0.csv'
-    config.OPTIMAL_PATH = 'knapsack_instances/RI/optimal_solution/n_300_r_600/solution0.csv'
+    config.INSTANCE_INDEX = 0
+    config.FILE_PATH = 'knapsack_instances/RI/instances/' + random_instance_info_keys[0]
+    config.UPLOAD_PATH = 'knapsack_instances/RI/link_solution/' + random_instance_info_keys[0]
+    config.OPTIMAL_PATH = 'knapsack_instances/RI/optimal_solution/' + random_instance_info_keys[0]
+    config.SOLUTION_FOUND = [0]
     env = KnapsackEnv(config)
 
 
