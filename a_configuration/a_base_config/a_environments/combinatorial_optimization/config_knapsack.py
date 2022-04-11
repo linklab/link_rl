@@ -20,6 +20,12 @@ class ConfigKnapsack:
 
         self.INITIAL_ITEM_DISTRIBUTION_FIXED = True
 
+        self.FILE_PATH = 'knapsack_instances/RI/instances/n_50_r_100/instance0.csv'
+        self.UPLOAD_PATH = 'knapsack_instances/RI/link_solution/n_50_r_100/link_solution0.csv'
+        self.OPTIMAL_PATH = 'knapsack_instances/RI/optimal_solution/n_50_r_100/solution0.csv'
+        self.INSTANCE_INDEX = 0
+        self.SOLUTION_FOUND = [0]
+
         self.MAX_TRAINING_STEPS = self.NUM_ITEM * 2_000
         self.BUFFER_CAPACITY = self.NUM_ITEM * 1_000
 

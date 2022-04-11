@@ -1,5 +1,3 @@
-import csv
-
 import gym
 from gym import spaces
 import enum
@@ -7,6 +5,7 @@ import numpy as np
 import copy
 from typing import Optional
 import random
+import datetime as dt
 
 from a_configuration.a_base_config.a_environments.combinatorial_optimization.config_knapsack import ConfigKnapsack0
 from b_environments.combinatorial_optimization.boto3_knapsack import load_instance, upload_file, load_solution
@@ -94,7 +93,9 @@ class KnapsackEnv(gym.Env):
             self.optimal_value = load_solution('linklab', self.OPTIMAL_PATH)
 
         if self.UPLOAD_PATH:
-            self.UPLOAD_PATH = self.UPLOAD_PATH + '/link_solution' + str(self.INSTANCE_INDEX) + '.csv'
+            date = dt.datetime.now()
+            date_str = '/' + str(date.year) + str(date.month) + str(date.day)
+            self.UPLOAD_PATH = self.UPLOAD_PATH + date_str + '/link_solution' + str(self.INSTANCE_INDEX) + '.csv'
 
         return state
 
