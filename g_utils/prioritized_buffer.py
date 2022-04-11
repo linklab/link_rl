@@ -113,9 +113,16 @@ class PrioritizedBuffer(Buffer):
         node_indices = np.zeros(batch_size, dtype=int)
         priorities = np.zeros(batch_size, dtype=float)
 
+        # xs = np.zeros(batch_size, dtype=float)
+
         for i in range(batch_size):
             x = random.uniform(0, self.sum_tree.total())
+            # xs[i] = x
             node_idx, priority, idx = self.sum_tree.get(x)
+
+            if priority == 0.0:
+                priority = self.config.PER_EPSILON
+
             transition_indices[i] = idx
             node_indices[i] = node_idx
             priorities[i] = priority
@@ -131,6 +138,18 @@ class PrioritizedBuffer(Buffer):
             -1.0 * self.config.PER_BETA
         )
         important_sampling_weights /= important_sampling_weights.max()
+
+        # if np.isnan(important_sampling_weights).any():
+        #     zero_idx = None
+        #     for idx, idx2 in enumerate(transition_indices):
+        #         if idx2 == 0:
+        #             zero_idx = idx
+        #             break
+        #     print(xs, xs[zero_idx], self.sum_tree.total(), "%%%% - 0")
+        #     print(transition_indices, transition_indices[zero_idx], "%%%% - 1")
+        #     print(node_indices, node_indices[zero_idx], "%%%% - 2")
+        #     print(priorities, priorities[zero_idx], "%%%% - 3")
+        #     print(important_sampling_weights, important_sampling_weights[zero_idx], "%%%% - 4")
 
         return transition_indices, important_sampling_weights
 

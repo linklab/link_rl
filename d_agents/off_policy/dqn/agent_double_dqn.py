@@ -1,6 +1,6 @@
 # https://www.deeplearningwizard.com/deep_learning/deep_reinforcement_learning_pytorch/dynamic_programming_frozenlake/
+
 import torch
-import torch.nn.functional as F
 from d_agents.off_policy.dqn.agent_dqn import AgentDqn
 
 
