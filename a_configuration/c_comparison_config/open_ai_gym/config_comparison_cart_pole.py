@@ -67,17 +67,22 @@ class ConfigComparisonCartPoleDqnPer(ConfigComparisonBase):
         self.AGENT_PARAMETERS = [
             ConfigCartPoleDoubleDuelingDqn(),
             ConfigCartPoleDoubleDuelingDqn(),
+            ConfigCartPoleDoubleDuelingDqn(),
             ConfigCartPoleDoubleDuelingDqn()
         ]
 
         self.AGENT_PARAMETERS[1].USE_PER = True
-        self.AGENT_PARAMETERS[1].PER_ALPHA = 0.6
+        self.AGENT_PARAMETERS[1].PER_ALPHA = 0.3
+
+        self.AGENT_PARAMETERS[2].USE_PER = True
+        self.AGENT_PARAMETERS[2].PER_ALPHA = 0.6
 
         self.AGENT_PARAMETERS[2].USE_PER = True
         self.AGENT_PARAMETERS[2].PER_ALPHA = 0.9
 
         self.AGENT_LABELS = [
             "Double Dueling DQN",
+            "Double Dueling DQN + PER (ALPHA: 0.3)",
             "Double Dueling DQN + PER (ALPHA: 0.6)",
             "Double Dueling DQN + PER (ALPHA: 0.9)",
         ]
