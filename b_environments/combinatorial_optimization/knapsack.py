@@ -70,6 +70,8 @@ class KnapsackEnv(gym.Env):
             data = load_instance('linklab', self.FILE_PATH)
 
             state = data
+
+            self.LIMIT_WEIGHT_KNAPSACK = state[-1][1]
         else:
             for item_idx in range(self.NUM_ITEM):
                 item_weight = np.random.randint(
@@ -211,15 +213,16 @@ class KnapsackEnv(gym.Env):
         if done:
             reward = self.reward(done_type=info['DoneReasonType'])
 
-            if self.solution_found[0] < self.value_of_all_items_selected:
-                self.solution_found[0] = self.value_of_all_items_selected
-                self.solution_found[1:] = self.items_selected
+            if info['DoneReasonType'] != DoneReasonType0.TYPE_1:
+                if self.solution_found[0] < self.value_of_all_items_selected:
+                    self.solution_found[0] = self.value_of_all_items_selected
+                    self.solution_found[1:] = self.items_selected
 
-                if self.OPTIMAL_PATH:
-                    self.solution_found[-1] = self.solution_found[0] / self.optimal_value
+                    if self.OPTIMAL_PATH:
+                        self.solution_found[-1] = self.solution_found[0] / self.optimal_value
 
-                if self.UPLOAD_PATH:
-                    upload_file('linklab', self.solution_found, self.UPLOAD_PATH)
+                    if self.UPLOAD_PATH:
+                        upload_file('linklab', self.solution_found, self.UPLOAD_PATH)
         else:
             reward = self.reward(done_type=None)
 
@@ -255,7 +258,6 @@ def run_env():
     config.OPTIMAL_PATH = 'knapsack_instances/RI/optimal_solution/' + random_instance_info_keys[0]
     config.SOLUTION_FOUND = [0]
     env = KnapsackEnv(config)
-
 
     for i in range(2):
         observation, info = env.reset(return_info=True)
