@@ -780,7 +780,7 @@ def get_train_env(config, no_graphics=True):
             #############
             elif isinstance(config, ConfigGymAtari):
                 env = gym.make(env_name)
-                env = gym.wrappers.AtariPreprocessing(env, grayscale_obs=True, scale_obs=True)
+                env = gym.wrappers.AtariPreprocessing(env, frame_skip=1, grayscale_obs=True, scale_obs=True)
                 env = gym.wrappers.FrameStack(env, num_stack=4, lz4_compress=True)
 
             ############
