@@ -276,7 +276,7 @@ class CartpoleWithoutVelocity(gym.ObservationWrapper):
         return cart_position, pole_angle
 
 
-class LunarLanderWithoutVelocity(gym.ObservationWrapper):
+class LunarLanderWithoutVelocity(gym.Wrapper):
     def __init__(self, env):
         # | Num   | Observation             | Min                    | Max                  |
         # | ----- | ----------------------- | ---------------------- | -------------------- |
@@ -294,6 +294,66 @@ class LunarLanderWithoutVelocity(gym.ObservationWrapper):
             -np.inf, np.inf, shape=(5,), dtype=np.float32
         )
 
+        self.episode_reward = 0
+
+    def reset(self, **kwargs):
+        self.episode_reward = 0
+
+        if kwargs.get("return_info", False):
+            obs, info = self.env.reset(**kwargs)
+            return self.observation(obs), info
+        else:
+            return self.observation(self.env.reset(**kwargs))
+
+    def step(self, action):
+        observation, reward, done, info = self.env.step(action)
+        self.episode_reward += reward
+        return self.observation(observation), reward, self.done(done), info
+
     def observation(self, observation):
         pos_x, pos_y, _, _, angle, _, legs_0_contact, legs_1_contact = observation
         return pos_x, pos_y, angle, legs_0_contact, legs_1_contact
+
+    def done(self, done):
+        if self.episode_reward < -300:
+            return True
+        return done
+
+
+class AcrobotWithoutVelocity(gym.ObservationWrapper):
+    def __init__(self, env):
+        # | Num   | Observation                | Min                 | Max               |
+        # | ----- | -------------------------- | ------------------- | ----------------- |
+        # | 0     | Cosine of theta1           | -1                  | 1                 | O
+        # | 1     | Sine of theta1             | -1                  | 1                 | O
+        # | 2     | Cosine of theta2           | -1                  | 1                 | O
+        # | 3     | Sine of theta2             | -1                  | 1                 | O
+        # | 4     | Angular velocity of theta1 | ~ -12.567 (-4 * pi) | ~ 12.567 (4 * pi) | X
+        # | 5     | Angular velocity of theta2 | ~ -28.274 (-9 * pi) | ~ 28.274 (9 * pi) | X
+        super().__init__(env)
+
+        self.observation_space = gym.spaces.Box(
+            -1, 1, shape=(4,), dtype=np.float32
+        )
+
+    def observation(self, observation):
+        cos1, sin1, cos2, sin2, _, _ = observation
+        return cos1, sin1, cos2, sin2
+
+
+class MountainCarWithoutVelocity(gym.ObservationWrapper):
+    def __init__(self, env):
+        # | Num   | Observation                | Min        | Max        |
+        # | ----- | -------------------------- | ---------- | ---------- |
+        # | 0     | Cosine of theta1           | -Inf       | Inf        | O
+        # | 1     | Sine of theta1             | -Inf       | Inf        | X
+        super().__init__(env)
+
+
+        self.observation_space = gym.spaces.Box(
+            self.min_position, self.max_position, shape=(1,), dtype=np.float32
+        )
+
+    def observation(self, observation):
+        position, velocity = observation
+        return position,

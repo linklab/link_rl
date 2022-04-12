@@ -240,3 +240,59 @@ class ConfigComparisonCartPoleDqnRecurrentWithoutVelocity(ConfigComparisonBase):
 
         # Original + GRU
         self.AGENT_PARAMETERS[2].MODEL_TYPE = ModelType.SMALL_RECURRENT
+
+
+class ConfigComparisonCartPoleDoubleDqnRecurrent(ConfigComparisonBase):
+    def __init__(self):
+        super().__init__()
+
+        self.ENV_NAME = "CartPole-v1"
+
+        self.MAX_TRAINING_STEPS = 100_000
+        self.N_RUNS = 5
+
+        self.AGENT_LABELS = [
+            "Linear",
+            "GRU"
+        ]
+
+        self.AGENT_PARAMETERS = [
+            ConfigCartPoleDoubleDqn(),
+            ConfigCartPoleDoubleDqn()
+        ]
+
+        # Linear
+        self.AGENT_PARAMETERS[0].MODEL_TYPE = ModelType.SMALL_LINEAR
+
+        # GRU
+        self.AGENT_PARAMETERS[1].MODEL_TYPE = ModelType.SMALL_RECURRENT
+
+
+class ConfigComparisonCartPoleDoubleDqnRecurrentWithoutVelocity(ConfigComparisonBase):
+    def __init__(self):
+        super().__init__()
+
+        self.ENV_NAME = "CartPole-v1"
+
+        self.MAX_TRAINING_STEPS = 100_000
+        self.N_RUNS = 5
+
+        self.AGENT_LABELS = [
+            "Linear",
+            "GRU"
+        ]
+
+        self.AGENT_PARAMETERS = [
+            ConfigCartPoleDoubleDqn(),
+            ConfigCartPoleDoubleDqn()
+        ]
+
+        # common
+        for config in self.AGENT_PARAMETERS:
+            config.WRAPPERS.append(wrapper.CartpoleWithoutVelocity)
+
+        # Linear
+        self.AGENT_PARAMETERS[0].MODEL_TYPE = ModelType.SMALL_LINEAR
+
+        # GRU
+        self.AGENT_PARAMETERS[1].MODEL_TYPE = ModelType.SMALL_RECURRENT
