@@ -29,6 +29,7 @@ class AgentDoubleDqn(AgentDqn):
         q_net_loss_each = self.config.LOSS_FUNCTION(q_values, target_q_values.detach(), reduction="none")
 
         if self.config.USE_PER:
+            #print(torch.FloatTensor(self.important_sampling_weights).to(self.config.DEVICE)[:, None].shape, q_net_loss_each.shape, "!!!!")
             q_net_loss_each *= torch.FloatTensor(self.important_sampling_weights).to(self.config.DEVICE)[:, None]
 
         q_net_loss = q_net_loss_each.mean()
