@@ -456,8 +456,8 @@ class Learner(mp.Process):
         print(test_str)
 
         termination_conditions = [
-            self.test_episode_reward_avg.value > self.config.EPISODE_REWARD_AVG_SOLVED,
-            self.test_episode_reward_std.value < self.config.EPISODE_REWARD_STD_SOLVED
+            self.test_episode_reward_avg.value >= self.config.EPISODE_REWARD_AVG_SOLVED,
+            self.test_episode_reward_std.value <= self.config.EPISODE_REWARD_STD_SOLVED
         ]
 
         if all(termination_conditions):
