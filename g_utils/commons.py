@@ -549,7 +549,8 @@ def get_wandb_obj(config, agent=None, comparison=False):
     if comparison:
         project = "{0}_{1}_{2}".format(config.__class__.__name__, "Comparison", SYSTEM_USER_NAME)
     else:
-        project = "{0}_{1}_{2}".format(config.ENV_NAME, config.AGENT_TYPE.name, SYSTEM_USER_NAME)
+        env_name = config.ENV_NAME.split("/")[1] if "/" in config.ENV_NAME else config.ENV_NAME
+        project = "{0}_{1}_{2}".format(env_name, config.AGENT_TYPE.name, SYSTEM_USER_NAME)
 
     wandb_obj = wandb.init(
         project=project,
