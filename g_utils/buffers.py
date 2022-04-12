@@ -4,6 +4,7 @@ from gym.spaces import Discrete, Box
 
 from a_configuration.a_base_config.c_models.config_recurrent_convolutional_models import ConfigRecurrentConvolutionalModel
 from a_configuration.a_base_config.c_models.config_recurrent_linear_models import ConfigRecurrentLinearModel
+from g_utils.types import Transition
 
 
 class Buffer:
@@ -35,6 +36,11 @@ class Buffer:
             self.head = None
 
         self.size = 0
+
+    def print_buffer(self):
+        for idx, transition in enumerate(self.internal_buffer):
+            print(f"Idx: {idx}, Transition: {transition}")
+        print(f"Head: {self.head}, Size: {self.size}")
 
     def __len__(self):
         return self.size
@@ -159,3 +165,24 @@ class Buffer:
         episode_idx, episode_history = zip(*[(idx, self.internal_buffer[idx]) for idx in transition_indices])
         return episode_idx, episode_history
 
+
+if __name__ == "__main__":
+    class Config:
+        BUFFER_CAPACITY = 8
+        MODEL_PARAMETER = None
+
+    config = Config()
+
+    buffer = Buffer(action_space=Discrete, config=config)
+    buffer.print_buffer()
+
+    for idx in range(config.BUFFER_CAPACITY + 4):
+        buffer.append(Transition(
+            observation=np.full((4,), idx),
+            action=0,
+            next_observation=np.full((4,), idx + 1),
+            reward=1.0,
+            done=False,
+            info=None
+        ))
+        buffer.print_buffer()
