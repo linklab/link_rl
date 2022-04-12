@@ -35,8 +35,8 @@ device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
 def play(env, agent, n_episodes):
     is_recurrent_model = any([
-        isinstance(config.MODEL_TYPE, ConfigRecurrentLinearModel),
-        isinstance(config.MODEL_TYPE, ConfigRecurrentConvolutionalModel)
+        isinstance(config.MODEL_PARAMETER, ConfigRecurrentLinearModel),
+        isinstance(config.MODEL_PARAMETER, ConfigRecurrentConvolutionalModel)
     ])
 
     for i in range(n_episodes):
