@@ -1,8 +1,11 @@
+import collections
 import math
+from queue import Queue
 
 import numpy as np
 import random
 
+import torch
 from gym.spaces import Discrete
 
 from g_utils.buffers import Buffer
@@ -15,36 +18,36 @@ class Node:
      - value
      - index (only for leaf nodes)
      - parent
-     - child1
-     - child2
+     - left
+     - right
     The index, only present for leaf nodes, corresponds to a specific transition in replay memory.
     """
 
-    def __init__(self, value, index, parent, child1, child2):
+    def __init__(self, value, index, parent, left, right):
         """
         :param value: float, value of the node
         :param index: int, index of the corresponding experience, else None
         :param parent: parent Node, only None for root node
-        :param child1: left child Node, only None for leaf nodes
-        :param child2: right child Node, only None for leaf nodes
+        :param left: left child Node, only None for leaf nodes
+        :param right: right child Node, only None for leaf nodes
         """
         self.value = value
         self.index = index
         self.parent = parent
-        self.child1 = child1
-        self.child2 = child2
+        self.left = left
+        self.right = right
 
     def __str__(self):
         return f"[Value: {self.value}, Index: {self.index}, " \
                f"Parent: {self.parent.value if self.parent is not None else None}, " \
-               f"Child1: {self.child1.value if self.child1 is not None else None}, " \
-               f"Child2: {self.child2.value if self.child2 is not None else None}]"
+               f"Child1: {self.left.value if self.left is not None else None}, " \
+               f"Child2: {self.right.value if self.right is not None else None}]"
 
     def is_leaf_node(self):
         """
         :returns: True if node is a leaf node, i.e. has no children
         """
-        return self.child1 is None and self.child2 is None
+        return self.left is None and self.right is None
 
     def set_value_and_update_parent(self, new_value):
         """
@@ -64,7 +67,7 @@ class Node:
         Recalculates the value based on the value of its children. Then,
         tells its parent to also recalculate its value.
         """
-        self.value = self.child1.value + self.child2.value
+        self.value = self.left.value + self.right.value
         if self.parent:
             self.parent.recalculate_value()
 
@@ -104,11 +107,10 @@ class SumTree:
 
     def get_index_from_value(self, x):
         """
-        Performs the traversing given a value x. The algorithm works by
-        repeatedly performing the following:
+        Performs the traversing given a value x. The algorithm works by repeatedly performing the following:
             1) Start at the root node
-            2) If x is smaller than the value of child 1, move to child 1,
-               else, subtract the value of child 1 and move to child 2.
+            2) If x is smaller than the value of left child, move to left child,
+               else, subtract the value of left child and move to child 2.
             3) Check if this is a leaf node. If so return its index and value.
             4) Repeat until done.
         :param x: float, value to use while traversing
@@ -116,11 +118,11 @@ class SumTree:
         """
         node = self.root
         while not node.is_leaf_node():
-            if x <= node.child1.value:
-                node = node.child1
+            if x <= node.left.value:
+                node = node.left
             else:
-                x -= node.child1.value
-                node = node.child2
+                x -= node.left.value
+                node = node.right
         return node.index, node.value
 
     def construct_empty_tree(self, n_leaf_nodes):
@@ -132,7 +134,7 @@ class SumTree:
         :param n_leaf_nodes: int, number of leaf nodes
         """
         self.leaf_nodes = [
-            Node(value=0, index=i, parent=None, child1=None, child2=None) for i in range(n_leaf_nodes)
+            Node(value=0, index=i, parent=None, left=None, right=None) for i in range(n_leaf_nodes)
         ]
         layer_nodes = self.leaf_nodes
         while len(layer_nodes) != 1:
@@ -157,27 +159,64 @@ class SumTree:
                 parent_nodes.append(layer_nodes[i])
             else:
                 # Determine the childeren
-                child1 = layer_nodes[i]
-                child2 = layer_nodes[i + 1]
+                left = layer_nodes[i]
+                right = layer_nodes[i + 1]
                 # Construct a new parent
                 parent_node = Node(
-                    value=child1.value + child2.value,
+                    value=left.value + right.value,
                     index=None,
                     parent=None,
-                    child1=child1,
-                    child2=child2,
+                    left=left,
+                    right=right,
                 )
                 # Add the parent to the children and to the list
-                child1.parent = child2.parent = parent_node
+                left.parent = right.parent = parent_node
                 parent_nodes.append(parent_node)
 
         return parent_nodes
 
+    def level_order_traversal(self):
+        ans = []
+
+        # Return Null if the tree is empty
+        if self.root is None:
+            return ans
+
+        # Initialize queue
+        queue = collections.deque()
+        queue.append(self.root)
+
+        # Iterate over the queue until it's empty
+        while queue:
+            # Check the length of queue
+            current_size = len(queue)
+            current_list = []
+
+            while current_size > 0:
+                # Dequeue element
+                current_node = queue.popleft()
+                current_list.append(current_node.value)
+                current_size -= 1
+
+                # Check for left child
+                if current_node.left is not None:
+                    queue.append(current_node.left)
+                    
+                # Check for right child
+                if current_node.right is not None:
+                    queue.append(current_node.right)
+
+            # Append the current_list to answer after each iteration
+            ans.append(current_list)
+
+        # Return answer list
+        return ans
+
     def print_tree(self):
         print("* SUN TREE *")
-        print(f'Capacity: {self.config.BUFFER_CAPACITY}')
-        current_node = self.root
-        print("ROOT: ", self.root)
+        node_list = self.level_order_traversal()
+        for node in node_list:
+            print(node)
 
 
 class PrioritizedBuffer(Buffer):
@@ -227,6 +266,9 @@ class PrioritizedBuffer(Buffer):
             self.num_transitions * sampling_probabilities, -1.0 * self.config.PER_BETA
         )
         important_sampling_weights /= important_sampling_weights.max()
+
+        if important_sampling_weights.ndim > 1:
+            important_sampling_weights = np.squeeze(important_sampling_weights, axis=-1)
 
         return self.batch_indices, important_sampling_weights
 
@@ -280,42 +322,13 @@ if __name__ == "__main__":
 
     print()
 
-    print("SAMPLE & UPDATE #1")
-    transition_indices, important_sampling_weights = prioritized_buffer.sample_indices(batch_size=config.BATCH_SIZE)
-    print(transition_indices, important_sampling_weights)
-
-    errors = np.ones_like(transition_indices)
-    prioritized_buffer.update_priorities(errors)
-    print()
-    #
-    # print("SAMPLE & UPDATE #2")
-    # transition_indices, important_sampling_weights = prioritized_buffer.sample_indices(batch_size=config.BATCH_SIZE)
-    # print(transition_indices, important_sampling_weights)
-    #
-    # errors = np.ones_like(transition_indices)
-    # prioritized_buffer.update_priorities(errors)
-    # print("#" * 100)
-    # prioritized_buffer.sum_tree.print_tree()
-    # print("#" * 100);print()
-    # print()
-    #
-    # print("SAMPLE & UPDATE #3")
-    # transition_indices, important_sampling_weights = prioritized_buffer.sample_indices(batch_size=config.BATCH_SIZE)
-    # print(transition_indices, important_sampling_weights)
-    #
-    # errors = np.full(transition_indices.shape, 100.0)
-    # prioritized_buffer.update_priorities(errors)
-    # print("#" * 100)
-    # prioritized_buffer.sum_tree.print_tree()
-    # print("#" * 100);print()
-    # print()
-    #
-    # print("SAMPLE & UPDATE #4")
-    # transition_indices, important_sampling_weights = prioritized_buffer.sample_indices(batch_size=config.BATCH_SIZE)
-    # print(transition_indices, important_sampling_weights)
-    #
-    # errors = np.full(transition_indices.shape, 10.0)
-    # prioritized_buffer.update_priorities(errors)
-    # print("#" * 100)
-    # prioritized_buffer.sum_tree.print_tree()
-    # print("#" * 100);print()
+    for idx in range(100_000):
+        print("SAMPLE & UPDATE #{0}".format(idx))
+        transition_indices, important_sampling_weights = prioritized_buffer.sample_indices(batch_size=config.BATCH_SIZE)
+        print(transition_indices, important_sampling_weights, torch.FloatTensor(important_sampling_weights)[:, None].shape)
+        assert tuple(torch.FloatTensor(important_sampling_weights)[:, None].shape) == (2, 1)
+        errors = np.ones_like(transition_indices) * idx
+        prioritized_buffer.update_priorities(errors)
+        print("#" * 100)
+        prioritized_buffer.sum_tree.print_tree()
+        print("#" * 100);print()
