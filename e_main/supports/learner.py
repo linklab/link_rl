@@ -456,8 +456,8 @@ class Learner(mp.Process):
         print(test_str)
 
         termination_conditions = [
-            self.test_episode_reward_avg.value > self.config.EPISODE_REWARD_AVG_SOLVED,
-            self.test_episode_reward_std.value < self.config.EPISODE_REWARD_STD_SOLVED
+            self.test_episode_reward_avg.value >= self.config.EPISODE_REWARD_AVG_SOLVED,
+            self.test_episode_reward_std.value <= self.config.EPISODE_REWARD_STD_SOLVED
         ]
 
         if all(termination_conditions):
@@ -467,9 +467,12 @@ class Learner(mp.Process):
             print("Solved in {0:,} steps ({1:,} training steps)!".format(
                 self.total_time_step.value, self.training_step.value
             ))
+
+            env_name = self.config.ENV_NAME.split("/")[1] if "/" in self.config.ENV_NAME else self.config.ENV_NAME
+
             model_save(
                 model=self.agent.model,
-                env_name=self.config.ENV_NAME,
+                env_name=env_name,
                 agent_type_name=self.config.AGENT_TYPE.name,
                 test_episode_reward_avg=self.test_episode_reward_avg.value,
                 test_episode_reward_std=self.test_episode_reward_std.value,

@@ -1,17 +1,17 @@
 import gym
 
 from a_configuration.a_base_config.config_comparison_base import ConfigComparisonBase
-from a_configuration.b_single_config.open_ai_gym.config_lunar_lander import ConfigLunarLanderDqn, \
-    ConfigLunarLanderDoubleDqn
+from a_configuration.b_single_config.open_ai_gym.config_mountain_car import ConfigMountainCarDqn, \
+    ConfigMountainCarDoubleDqn
 from b_environments import wrapper
 from g_utils.types import ModelType
 
 
-class ConfigComparisonLunarLanderDqnRecurrent(ConfigComparisonBase):
+class ConfigComparisonMountainCarDqnRecurrent(ConfigComparisonBase):
     def __init__(self):
         super().__init__()
 
-        self.ENV_NAME = "LunarLander-v2"
+        self.ENV_NAME = "MountainCar-v0"
 
         self.MAX_TRAINING_STEPS = 100_000
         self.N_RUNS = 5
@@ -23,9 +23,9 @@ class ConfigComparisonLunarLanderDqnRecurrent(ConfigComparisonBase):
         ]
 
         self.AGENT_PARAMETERS = [
-            ConfigLunarLanderDqn(),
-            ConfigLunarLanderDqn(),
-            ConfigLunarLanderDqn()
+            ConfigMountainCarDqn(),
+            ConfigMountainCarDqn(),
+            ConfigMountainCarDqn()
         ]
 
         # common
@@ -40,37 +40,11 @@ class ConfigComparisonLunarLanderDqnRecurrent(ConfigComparisonBase):
         self.AGENT_PARAMETERS[2].MODEL_TYPE = ModelType.SMALL_RECURRENT
 
 
-class ConfigComparisonLunarLanderDoubleDqnRecurrent(ConfigComparisonBase):
+class ConfigComparisonMountainCarDqnRecurrentWithoutVelocity(ConfigComparisonBase):
     def __init__(self):
         super().__init__()
 
-        self.ENV_NAME = "LunarLander-v2"
-
-        self.MAX_TRAINING_STEPS = 100_000
-        self.N_RUNS = 5
-
-        self.AGENT_LABELS = [
-            "Linear",
-            "GRU",
-        ]
-
-        self.AGENT_PARAMETERS = [
-            ConfigLunarLanderDoubleDqn(),
-            ConfigLunarLanderDoubleDqn()
-        ]
-
-        # Linear
-        self.AGENT_PARAMETERS[0].MODEL_TYPE = ModelType.SMALL_LINEAR
-
-        # GRU
-        self.AGENT_PARAMETERS[1].MODEL_TYPE = ModelType.SMALL_RECURRENT
-
-
-class ConfigComparisonLunarLanderDqnRecurrentWithoutVelocity(ConfigComparisonBase):
-    def __init__(self):
-        super().__init__()
-
-        self.ENV_NAME = "LunarLander-v2"
+        self.ENV_NAME = "MountainCar-v0"
 
         self.MAX_TRAINING_STEPS = 100_000
         self.N_RUNS = 5
@@ -82,14 +56,14 @@ class ConfigComparisonLunarLanderDqnRecurrentWithoutVelocity(ConfigComparisonBas
         ]
 
         self.AGENT_PARAMETERS = [
-            ConfigLunarLanderDqn(),
-            ConfigLunarLanderDqn(),
-            ConfigLunarLanderDqn()
+            ConfigMountainCarDqn(),
+            ConfigMountainCarDqn(),
+            ConfigMountainCarDqn()
         ]
 
         # common
         for config in self.AGENT_PARAMETERS:
-            config.WRAPPERS.append(wrapper.LunarLanderWithoutVelocity)
+            config.WRAPPERS.append(wrapper.MountainCarWithoutVelocity)
 
         # Linear
         self.AGENT_PARAMETERS[0].MODEL_TYPE = ModelType.SMALL_LINEAR
@@ -102,31 +76,34 @@ class ConfigComparisonLunarLanderDqnRecurrentWithoutVelocity(ConfigComparisonBas
         self.AGENT_PARAMETERS[2].MODEL_TYPE = ModelType.SMALL_RECURRENT
 
 
-class ConfigComparisonLunarLanderDoubleDqnRecurrentWithoutVelocity(ConfigComparisonBase):
+class ConfigComparisonMountainCarDoubleDqnRecurrentWithoutVelocity(ConfigComparisonBase):
     def __init__(self):
         super().__init__()
 
-        self.ENV_NAME = "LunarLander-v2"
+        self.ENV_NAME = "MountainCar-v0"
 
         self.MAX_TRAINING_STEPS = 100_000
         self.N_RUNS = 5
 
         self.AGENT_LABELS = [
             "Linear",
-            "GRU"
+            "Linear without velocity",
+            "Recurrent without velocity",
         ]
 
         self.AGENT_PARAMETERS = [
-            ConfigLunarLanderDoubleDqn(),
-            ConfigLunarLanderDoubleDqn()
+            ConfigMountainCarDoubleDqn(),
+            ConfigMountainCarDoubleDqn(),
+            ConfigMountainCarDoubleDqn()
         ]
-
-        # common
-        for config in self.AGENT_PARAMETERS:
-            config.WRAPPERS.append(wrapper.LunarLanderWithoutVelocity)
 
         # Linear
         self.AGENT_PARAMETERS[0].MODEL_TYPE = ModelType.SMALL_LINEAR
 
-        # GRU
-        self.AGENT_PARAMETERS[1].MODEL_TYPE = ModelType.SMALL_RECURRENT
+        # Linear without velocity
+        self.AGENT_PARAMETERS[1].MODEL_TYPE = ModelType.SMALL_LINEAR
+        self.AGENT_PARAMETERS[1].WRAPPERS.append(wrapper.MountainCarWithoutVelocity)
+
+        # Recurrent without velocity
+        self.AGENT_PARAMETERS[2].MODEL_TYPE = ModelType.SMALL_RECURRENT
+        self.AGENT_PARAMETERS[2].WRAPPERS.append(wrapper.MountainCarWithoutVelocity)

@@ -8,6 +8,7 @@ import random
 import datetime as dt
 
 from a_configuration.a_base_config.a_environments.combinatorial_optimization.config_knapsack import ConfigKnapsack0
+from a_configuration.a_base_config.config_parse import SYSTEM_USER_NAME, SYSTEM_COMPUTER_NAME
 from b_environments.combinatorial_optimization.boto3_knapsack import load_instance, upload_file, load_solution
 
 
@@ -69,6 +70,8 @@ class KnapsackEnv(gym.Env):
             data = load_instance('linklab', self.FILE_PATH)
 
             state = data
+
+            self.LIMIT_WEIGHT_KNAPSACK = state[-1][1]
         else:
             for item_idx in range(self.NUM_ITEM):
                 item_weight = np.random.randint(
@@ -95,7 +98,9 @@ class KnapsackEnv(gym.Env):
         if self.UPLOAD_PATH:
             date = dt.datetime.now()
             date_str = '/' + str(date.year) + str(date.month) + str(date.day)
-            self.UPLOAD_PATH = self.UPLOAD_PATH + date_str + '/link_solution' + str(self.INSTANCE_INDEX) + '.csv'
+            user = SYSTEM_USER_NAME
+            com = SYSTEM_COMPUTER_NAME
+            self.UPLOAD_PATH = self.UPLOAD_PATH + date_str + user + com + '/link_solution' + str(self.INSTANCE_INDEX) + '.csv'
 
         return state
 
@@ -180,8 +185,8 @@ class KnapsackEnv(gym.Env):
             self.internal_state[self.num_step][2:] = -1
 
             self.internal_state[-1][1] -= step_item_weight
-            self.internal_state[-1][3] = self.value_of_all_items_selected
-            self.internal_state[-1][2] = self.weight_of_all_items_selected
+            self.internal_state[-1][2] = self.value_of_all_items_selected
+            self.internal_state[-1][3] = self.weight_of_all_items_selected
 
         possible = self.check_future_select_possible()
 
@@ -208,15 +213,16 @@ class KnapsackEnv(gym.Env):
         if done:
             reward = self.reward(done_type=info['DoneReasonType'])
 
-            if self.solution_found[0] < self.value_of_all_items_selected:
-                self.solution_found[0] = self.value_of_all_items_selected
-                self.solution_found[1:] = self.items_selected
+            if info['DoneReasonType'] != DoneReasonType0.TYPE_1:
+                if self.solution_found[0] < self.value_of_all_items_selected:
+                    self.solution_found[0] = self.value_of_all_items_selected
+                    self.solution_found[1:] = self.items_selected
 
-                if self.OPTIMAL_PATH:
-                    self.solution_found[-1] = self.solution_found[0] / self.optimal_value
+                    if self.OPTIMAL_PATH:
+                        self.solution_found[-1] = self.solution_found[0] / self.optimal_value
 
-                if self.UPLOAD_PATH:
-                    upload_file('linklab', self.solution_found, self.UPLOAD_PATH)
+                    if self.UPLOAD_PATH:
+                        upload_file('linklab', self.solution_found, self.UPLOAD_PATH)
         else:
             reward = self.reward(done_type=None)
 
@@ -252,7 +258,6 @@ def run_env():
     config.OPTIMAL_PATH = 'knapsack_instances/RI/optimal_solution/' + random_instance_info_keys[0]
     config.SOLUTION_FOUND = [0]
     env = KnapsackEnv(config)
-
 
     for i in range(2):
         observation, info = env.reset(return_info=True)
