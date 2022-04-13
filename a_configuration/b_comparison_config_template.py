@@ -32,6 +32,7 @@ config_c.WANDB_REPORT_URL = "https://wandb.ai/link-koreatech/ConfigComparisonCar
 
 from a_configuration.c_comparison_config.open_ai_gym.config_comparison_cart_pole import ConfigComparisonCartPoleDqnPer
 config_c = ConfigComparisonCartPoleDqnPer()
+config_c.WANDB_REPORT_URL = "https://wandb.ai/link-koreatech/ConfigComparisonCartPoleDqnPer_Comparison_yhhan/reports/Comparison_CartPole_Dqn_Per_Comparison_yhhan--VmlldzoxODMyNzA0?accessToken=02ju0016483twfnr44956n5muo09c6wi6yj2u9296gj3lhb43hu7c2vfbvofn7j2"
 
 from a_configuration.c_comparison_config.open_ai_gym.config_comparison_cart_pole import \
     ConfigComparisonCartPolePpo
@@ -101,6 +102,10 @@ config_c = ConfigComparisonPongDqnTypes()
 ##################
 #  LUNAR_LANDER  #
 ##################
+from a_configuration.c_comparison_config.open_ai_gym.config_comparison_lunar_lander import \
+    ConfigComparisonLunarLanderDqnTypes
+config_c = ConfigComparisonLunarLanderDqnTypes()
+
 from a_configuration.c_comparison_config.open_ai_gym.config_comparison_lunar_lander import \
     ConfigComparisonLunarLanderDqnRecurrent
 config_c = ConfigComparisonLunarLanderDqnRecurrent()

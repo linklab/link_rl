@@ -185,6 +185,7 @@ class LearnerComparison:
 
                         if self.training_steps_per_agent[agent_idx] >= self.next_console_log_per_agent[agent_idx]:
                             console_log_comparison(
+                                run=self.run,
                                 total_time_step=self.total_time_step,
                                 total_episodes_per_agent=self.total_episodes_per_agent,
                                 last_mean_episode_reward_per_agent=self.last_mean_episode_reward_per_agent,

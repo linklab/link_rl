@@ -496,16 +496,17 @@ def console_log(learner,
 
 
 def console_log_comparison(
-        total_time_step, total_episodes_per_agent,
+        run, total_time_step, total_episodes_per_agent,
         last_mean_episode_reward_per_agent, n_rollout_transitions_per_agent, training_steps_per_agent,
         agents, config_c
 ):
     for agent_idx, agent in enumerate(agents):
         agent_prefix = "[Agent: {0}]".format(agent_idx)
-        console_log = agent_prefix + "[Tot. Episodes: {0:5,}, Tot. Time Steps {1:7,}] " \
-                      "Mean Episode Reward: {2:6.2f}, Rolling Outs: {3:7,}, " \
-                      "Training Steps: {4:4,}, " \
+        console_log = agent_prefix + "[Run: {0}, Tot. Episodes: {1:5,}, Tot. Time Steps {2:7,}] " \
+                      "Mean Episode Reward: {3:6.2f}, Rolling Outs: {4:7,}, " \
+                      "Training Steps: {5:4,}, " \
             .format(
+                run + 1,
                 total_episodes_per_agent[agent_idx],
                 total_time_step,
                 last_mean_episode_reward_per_agent[agent_idx],

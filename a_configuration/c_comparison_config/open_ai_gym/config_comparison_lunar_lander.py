@@ -2,7 +2,7 @@ import gym
 
 from a_configuration.a_base_config.config_comparison_base import ConfigComparisonBase
 from a_configuration.b_single_config.open_ai_gym.config_lunar_lander import ConfigLunarLanderDqn, \
-    ConfigLunarLanderDoubleDqn
+    ConfigLunarLanderDoubleDqn, ConfigLunarLanderDuelingDqn, ConfigLunarLanderDoubleDuelingDqn
 from b_environments import wrapper
 from g_utils.types import ModelType
 
@@ -130,3 +130,31 @@ class ConfigComparisonLunarLanderDoubleDqnRecurrentWithoutVelocity(ConfigCompari
 
         # GRU
         self.AGENT_PARAMETERS[1].MODEL_TYPE = ModelType.SMALL_RECURRENT
+
+
+class ConfigComparisonLunarLanderDqnTypes(ConfigComparisonBase):
+    def __init__(self):
+        super().__init__()
+
+        self.ENV_NAME = "LunarLander-v2"
+
+        self.MAX_TRAINING_STEPS = 100_000
+        self.N_RUNS = 5
+
+        self.AGENT_PARAMETERS = [
+            ConfigLunarLanderDqn(),
+            ConfigLunarLanderDoubleDqn(),
+            ConfigLunarLanderDuelingDqn(),
+            ConfigLunarLanderDoubleDuelingDqn(),
+            ConfigLunarLanderDoubleDuelingDqn(),
+        ]
+
+        self.AGENT_PARAMETERS[4].USE_PER = True
+
+        self.AGENT_LABELS = [
+            "DQN",
+            "Double DQN",
+            "Dueling DQN",
+            "Double Dueling DQN",
+            "Double Dueling DQN + PER",
+        ]
