@@ -6,7 +6,7 @@ from a_configuration.b_single_config.open_ai_gym.atari.config_pong import Config
 class ConfigComparisonPongDqn(ConfigComparisonBase):
     def __init__(self):
         ConfigComparisonBase.__init__(self)
-        self.ENV_NAME = "PongNoFrameskip-v4"
+        self.ENV_NAME = "ALE/Pong-v5"
 
         self.MAX_TRAINING_STEPS = 1_000_000
 
@@ -32,7 +32,7 @@ class ConfigComparisonPongDqnTypes(ConfigComparisonBase):
     def __init__(self):
         ConfigComparisonBase.__init__(self)
 
-        self.ENV_NAME = "PongNoFrameskip-v4"
+        self.ENV_NAME = "ALE/Pong-v5"
 
         self.MAX_TRAINING_STEPS = 1_000_000
 
@@ -40,14 +40,18 @@ class ConfigComparisonPongDqnTypes(ConfigComparisonBase):
             ConfigPongDqn(),
             ConfigPongDoubleDqn(),
             ConfigPongDuelingDqn(),
+            ConfigPongDoubleDuelingDqn(),
             ConfigPongDoubleDuelingDqn()
         ]
+
+        self.AGENT_PARAMETERS[4].USE_PER = True
 
         self.AGENT_LABELS = [
             "DQN",
             "Double DQN",
             "Dueling DQN",
             "Double Dueling DQN",
+            "Double Dueling DQN + PER",
         ]
 
         self.N_RUNS = 3
