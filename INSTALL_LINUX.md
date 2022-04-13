@@ -23,7 +23,7 @@
   pip install --upgrade pip
   sudo apt-get install swig
   pip install gym[nomujoco]
-  pip install gym[atari]
+  pip install gym[atari,accept-rom-license]
   conda install -c conda-forge wandb
   conda install -c plotly plotly==5.6.0
   conda install -c conda-forge pandas
