@@ -131,12 +131,12 @@ def load_instance(bucket_name, file_path):
 
     #print(len(data))
 
-    num_items = int(len(data)/2)
-    state = np.zeros(shape=(num_items, 4), dtype=float)
+    num_items = int(len(data)/2) - 1
+    state = np.zeros(shape=(num_items+2, 4), dtype=float)
 
     data_idx = 0
 
-    for item_idx in range(num_items-1):
+    for item_idx in range(num_items):
         state[data_idx][2] = data[item_idx + data_idx]
         state[data_idx][3] = data[item_idx + data_idx + 1]
 
@@ -144,7 +144,7 @@ def load_instance(bucket_name, file_path):
 
     state[-1][1] = data[-1]
 
-    #print(state)
+    print(state)
 
     return state
 
@@ -184,5 +184,5 @@ if __name__ == '__main__':
     #file_path = 'knapsack_instances/RI/instances/n_50_r_100/instance0.csv'
     #file_path = 'knapsack_instances/FI/instances/n_50_wp_12.5/instance0.csv'
     #load_instance(bucket_name, file_path)
-    file_path = 'knapsack_instances/RI/optimal_solution/n_50_r_100/solution0.csv'
-    load_solution(bucket_name, file_path)
+    #file_path = 'knapsack_instances/RI/optimal_solution/n_50_r_100/solution0.csv'
+    #load_solution(bucket_name, file_path)

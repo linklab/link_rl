@@ -51,7 +51,7 @@ class KnapsackEnv(gym.Env):
         self.action_space = spaces.Discrete(2)
         self.observation_space = spaces.Box(
             low=-1.0, high=1000.0,
-            shape=((self.NUM_ITEM + 1) * 4,)
+            shape=((self.NUM_ITEM + 2) * 4,)
         )
 
         if self.INITIAL_ITEM_DISTRIBUTION_FIXED:
@@ -63,13 +63,17 @@ class KnapsackEnv(gym.Env):
     # 2: initially set to 0, and increase by an item's weight whenever the item is selected
     # 3: initially set to 0, and increase by an item's value whenever the item is selected
     def get_initial_state(self):
-        state = np.zeros(shape=(self.NUM_ITEM + 1, 4), dtype=float)
+        state = np.zeros(shape=(self.NUM_ITEM + 2, 4), dtype=float)
 
         if self.FILE_PATH:
             self.FILE_PATH = self.FILE_PATH + '/instance' + str(self.INSTANCE_INDEX) + '.csv'
             data = load_instance('linklab', self.FILE_PATH)
 
             state = data
+
+            for item_idx in range(self.NUM_ITEM):
+                state[self.NUM_ITEM][2] += state[item_idx][2]
+                state[self.NUM_ITEM][3] += state[item_idx][3]
 
             self.LIMIT_WEIGHT_KNAPSACK = state[-1][1]
         else:
@@ -184,6 +188,9 @@ class KnapsackEnv(gym.Env):
             self.internal_state[self.num_step][1] = 1
             self.internal_state[self.num_step][2:] = -1
 
+            self.internal_state[self.NUM_ITEM][0] = self.internal_state[self.NUM_ITEM][2] - self.value_of_all_items_selected
+            self.internal_state[self.NUM_ITEM][1] = self.internal_state[self.NUM_ITEM][3] - self.weight_of_all_items_selected
+
             self.internal_state[-1][1] -= step_item_weight
             self.internal_state[-1][2] = self.value_of_all_items_selected
             self.internal_state[-1][3] = self.weight_of_all_items_selected
@@ -194,7 +201,7 @@ class KnapsackEnv(gym.Env):
         if self.num_step == self.NUM_ITEM - 1 or not possible:
             done = True
 
-            if 0 not in self.internal_state[:, 1]:
+            if 0 not in self.internal_state[:self.NUM_ITEM, 1]:
                 info['DoneReasonType'] = DoneReasonType0.TYPE_3  # "All Item Selected"
             elif self.weight_of_all_items_selected > self.LIMIT_WEIGHT_KNAPSACK:
                 info['DoneReasonType'] = DoneReasonType0.TYPE_1  # "Weight Limit Exceeded"
