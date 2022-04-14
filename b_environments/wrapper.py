@@ -349,7 +349,6 @@ class MountainCarWithoutVelocity(gym.ObservationWrapper):
         # | 1     | Sine of theta1             | -Inf       | Inf        | X
         super().__init__(env)
 
-
         self.observation_space = gym.spaces.Box(
             self.min_position, self.max_position, shape=(1,), dtype=np.float32
         )
