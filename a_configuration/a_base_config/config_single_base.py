@@ -54,7 +54,8 @@ class ConfigBase:
 
         self.PLAY_MODEL_FILE_NAME = ""
 
-        self.DEVICE = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+        self.FORCE_USE_CPU = False
+        self.DEVICE = None
 
         self.SEED = None
 

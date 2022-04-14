@@ -49,6 +49,7 @@ class ConfigComparisonBase:
 
         self.LAYER_ACTIVATION_TYPE = LayerActivationType.LEAKY_RELU
 
-        self.DEVICE = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+        self.FORCE_USE_CPU = False
+        self.DEVICE = None
 
         self.CONSOLE_LOG_INTERVAL_TRAINING_STEPS = 30

@@ -51,6 +51,8 @@ def model_load(model, env_name, agent_type_name, file_name, config):
 
 
 def set_config(config):
+    config.DEVICE = torch.device("cuda" if torch.cuda.is_available() and not config.FORCE_USE_CPU else "cpu")
+
     if config.MODEL_TYPE in (
             ModelType.TINY_LINEAR, ModelType.SMALL_LINEAR, ModelType.SMALL_LINEAR_2,
             ModelType.MEDIUM_LINEAR, ModelType.LARGE_LINEAR
