@@ -10,13 +10,13 @@ PROJECT_HOME = os.path.abspath(os.path.join(CURRENT_PATH, os.pardir))
 if PROJECT_HOME not in sys.path:
     sys.path.append(PROJECT_HOME)
 
-# ENV_NAME = "PongNoFrameskip-v4"
-ENV_NAME = "ALE/Pong-v5"
+ENV_NAME = "PongNoFrameskip-v4"
+#ENV_NAME = "ALE/Pong-v5"
 
 
 def main_env_info():
     env = gym.make(ENV_NAME, render_mode="human")
-    env = gym.wrappers.AtariPreprocessing(env, frame_skip=1, grayscale_obs=True, scale_obs=True)
+    env = gym.wrappers.AtariPreprocessing(env, frame_skip=4, grayscale_obs=True, scale_obs=True)
     env = gym.wrappers.FrameStack(env, num_stack=4, lz4_compress=True)
 
     print("*" * 80)
