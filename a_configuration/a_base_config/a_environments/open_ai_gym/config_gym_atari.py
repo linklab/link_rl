@@ -7,6 +7,7 @@ class ConfigPong(ConfigGymAtari):
         self.ENV_NAME = "ALE/Pong-v5"
         self.EPISODE_REWARD_AVG_SOLVED = 20
         self.EPISODE_REWARD_STD_SOLVED = 1.0
+        self.FRAME_SKIP = 4
 
 
 class ConfigBreakout(ConfigGymAtari):
@@ -14,6 +15,7 @@ class ConfigBreakout(ConfigGymAtari):
         self.ENV_NAME = "ALE/Breakout-v5"
         self.EPISODE_REWARD_AVG_SOLVED = 700
         self.EPISODE_REWARD_STD_SOLVED = 20.0
+        self.FRAME_SKIP = 4
 
 
 class ConfigVideoPinball(ConfigGymAtari):
@@ -21,3 +23,4 @@ class ConfigVideoPinball(ConfigGymAtari):
         self.ENV_NAME = "ALE/VideoPinball-v5"
         self.EPISODE_REWARD_AVG_SOLVED = 900_000
         self.EPISODE_REWARD_STD_SOLVED = 100.0
+        self.FRAME_SKIP = 4
