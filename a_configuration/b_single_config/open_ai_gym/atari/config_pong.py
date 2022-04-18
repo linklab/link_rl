@@ -14,7 +14,7 @@ class ConfigPongDqn(ConfigBase, ConfigPong, ConfigDqn):
         ConfigDqn.__init__(self)
 
         self.MAX_TRAINING_STEPS = 1_000_000
-        self.BUFFER_CAPACITY = 750_000
+        self.BUFFER_CAPACITY = 250_000
         self.MODEL_TYPE = ModelType.MEDIUM_CONVOLUTIONAL
 
 
@@ -25,7 +25,7 @@ class ConfigPongDoubleDqn(ConfigBase, ConfigPong, ConfigDoubleDqn):
         ConfigDoubleDqn.__init__(self)
 
         self.MAX_TRAINING_STEPS = 1_000_000
-        self.BUFFER_CAPACITY = 750_000
+        self.BUFFER_CAPACITY = 250_000
         self.MODEL_TYPE = ModelType.MEDIUM_CONVOLUTIONAL
 
 
@@ -36,7 +36,7 @@ class ConfigPongDuelingDqn(ConfigBase, ConfigPong, ConfigDuelingDqn):
         ConfigDuelingDqn.__init__(self)
 
         self.MAX_TRAINING_STEPS = 1_000_000
-        self.BUFFER_CAPACITY = 750_000
+        self.BUFFER_CAPACITY = 250_000
         self.MODEL_TYPE = ModelType.MEDIUM_CONVOLUTIONAL
 
 
@@ -47,7 +47,7 @@ class ConfigPongDoubleDuelingDqn(ConfigBase, ConfigPong, ConfigDoubleDuelingDqn)
         ConfigDoubleDuelingDqn.__init__(self)
 
         self.MAX_TRAINING_STEPS = 1_000_000
-        self.BUFFER_CAPACITY = 750_000
+        self.BUFFER_CAPACITY = 250_000
         self.MODEL_TYPE = ModelType.MEDIUM_CONVOLUTIONAL
 
 

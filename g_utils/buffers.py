@@ -93,10 +93,10 @@ class Buffer:
             torch.stack(hiddens, 1).shape: [num_layers, batch_size, 1, hidden]
             torch.stack(hiddens, 1).squeeze(dim=2).shape: [num_layers, batch_size, hidden]
             """
-            observations = torch.tensor(observations, dtype=torch.float32, device=self.config.DEVICE)
+            observations = torch.from_numpy(np.array(observations)).to(self.config.DEVICE)
             hiddens = torch.stack(hiddens, 1).squeeze(dim=2)
 
-            next_observations = torch.tensor(next_observations, dtype=torch.float32, device=self.config.DEVICE)
+            next_observations = torch.from_numpy(np.array(next_observations)).to(self.config.DEVICE)
             next_hiddens = torch.stack(next_hiddens, 1).squeeze(dim=2)
 
             # if CNN
@@ -109,22 +109,22 @@ class Buffer:
             next_observations_v = [(next_observations, next_hiddens)]
 
         else:
-            observations_v = torch.tensor(observations, dtype=torch.float32, device=self.config.DEVICE)
-            next_observations_v = torch.tensor(next_observations, dtype=torch.float32, device=self.config.DEVICE)
+            observations_v = torch.from_numpy(np.array(observations)).to(self.config.DEVICE)
+            next_observations_v = torch.from_numpy(np.array(next_observations)).to(self.config.DEVICE)
 
         if isinstance(self.action_space, Discrete):
             # actions.shape = (256, 1)
-            actions_v = torch.tensor(actions, dtype=torch.int64, device=self.config.DEVICE).unsqueeze(dim=-1)
+            actions_v = torch.from_numpy(np.array(actions)).unsqueeze(dim=-1).to(self.config.DEVICE)
 
         elif isinstance(self.action_space, Box):
             # actions.shape = (256, 1)
-            actions_v = torch.tensor(actions, dtype=torch.float32, device=self.config.DEVICE)
+            actions_v = torch.from_numpy(np.array(actions)).to(self.config.DEVICE)
 
         else:
             raise ValueError()
 
-        rewards_v = torch.tensor(rewards, dtype=torch.float32, device=self.config.DEVICE).unsqueeze(dim=-1)
-        dones_v = torch.tensor(dones, dtype=torch.bool, device=self.config.DEVICE)
+        rewards_v = torch.from_numpy(np.array(rewards, dtype=np.float32)).unsqueeze(dim=-1).to(self.config.DEVICE)
+        dones_v = torch.from_numpy(np.array(dones, dtype=np.bool)).to(self.config.DEVICE)
 
         # print(observations_v.shape, actions_v.shape, next_observations_v.shape, rewards_v.shape, dones_v.shape)
         # observations.shape, next_observations.shape: (64, 4), (64, 4)
