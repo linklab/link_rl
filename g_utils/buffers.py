@@ -144,6 +144,12 @@ class Buffer:
         # rewards.shape: torch.Size([32, 1]),
         # dones.shape: torch.Size([32])
 
+        del observations
+        del actions
+        del next_observations
+        del rewards
+        del dones
+
         if self.config.USE_PER:
             return observations_v, actions_v, next_observations_v, rewards_v, dones_v, infos, important_sampling_weights
         else:

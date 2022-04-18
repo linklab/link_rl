@@ -42,6 +42,10 @@ def main_env_info():
     observation = env.reset()
     print(observation.shape)
 
+    # float32
+    # 32 * 4 * 84 * 84 = 110KB
+    # 110KB * 1,000,000 = 110,250,000KB = 105GB
+
     # Reward:
     # Reward is 1 for every step taken, including the termination step
     action = 0  # LEFT
