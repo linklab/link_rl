@@ -25,7 +25,7 @@ class OffPolicyAgent(Agent):
             assert self.model is self.actor_model
 
         if self.config.AGENT_TYPE == AgentType.MUZERO:
-            self.episode_idxs, self.episode_historys = self.replay_buffer.sample_muzero(batch_size=sample_length)
+            self.episode_idxs, self.episode_historys = self.replay_buffer.sample_muzero(batch_size=self.config.BATCH_SIZE)
         else:
             if self.config.USE_PER:
                 self.observations, self.actions, self.next_observations, self.rewards, self.dones, self.infos, \
