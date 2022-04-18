@@ -17,6 +17,7 @@ class ConfigOffPolicyAgent(ConfigAgent):
 
         self.ACTOR_LEARNING_RATE = 0.0002
         self.LEARNING_RATE = 0.0001
+        self.BUFFER_CAPACITY = 10_000
 
 
 class ConfigOnPolicyAgent(ConfigAgent):
