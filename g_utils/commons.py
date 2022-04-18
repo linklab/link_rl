@@ -783,7 +783,7 @@ def get_train_env(config, no_graphics=True):
             #   Atari   #
             #############
             elif isinstance(config, ConfigGymAtari):
-                env = gym.make(env_name)
+                env = gym.make(env_name, frameskip=config.FRAME_SKIP, repeat_action_probability=0.0)
                 env = gym.wrappers.AtariPreprocessing(env, frame_skip=1, grayscale_obs=True, scale_obs=True)
                 env = gym.wrappers.FrameStack(env, num_stack=4, lz4_compress=True)
 
@@ -873,9 +873,9 @@ def get_single_env(config, no_graphics=True, play=False):
     #############
     elif isinstance(config, ConfigGymAtari):
         if play:
-            single_env = gym.make(config.ENV_NAME, render_mode="human")
+            single_env = gym.make(config.ENV_NAME, render_mode="human", frameskip=config.FRAME_SKIP, repeat_action_probability=0.0)
         else:
-            single_env = gym.make(config.ENV_NAME)
+            single_env = gym.make(config.ENV_NAME, frameskip=config.FRAME_SKIP, repeat_action_probability=0.0)
         single_env = gym.wrappers.AtariPreprocessing(single_env, frame_skip=1, grayscale_obs=True, scale_obs=True)
         single_env = gym.wrappers.FrameStack(single_env, num_stack=4, lz4_compress=True)
 
