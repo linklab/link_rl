@@ -139,9 +139,9 @@ config.USE_WANDB = False
 
 #### To Do
 - git action 만들기
-- atari games 최신 버전 train play render env_info 등 호환
 - Learner 상속으로 if문 줄이기
 - *.pth에 weights만이 아니라 hyperparameters(config 인스턴스)도 함께 저장
+- transition 전부 device에 올리고 transition과 같은 타입의 버퍼에 저장
 - 학습할수록 속도가 느려지는 문제 해결
 - recurrent 보수 작업 (recurrent_hidden)
 - docstring 작성
