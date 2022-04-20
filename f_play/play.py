@@ -119,9 +119,11 @@ def main_play(n_episodes):
 
     agent = get_agent(observation_space, action_space, config)
 
+    env_name = config.ENV_NAME.split("/")[1] if "/" in config.ENV_NAME else config.ENV_NAME
+
     model_load(
         model=agent.model,
-        env_name=config.ENV_NAME,
+        env_name=env_name,
         agent_type_name=config.AGENT_TYPE.name,
         file_name=config.PLAY_MODEL_FILE_NAME,
         config=config
