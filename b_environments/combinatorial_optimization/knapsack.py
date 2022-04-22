@@ -88,6 +88,10 @@ class KnapsackEnv(gym.Env):
                 )
                 state[item_idx][2] = item_value
                 state[item_idx][3] = item_weight
+
+                state[self.NUM_ITEM][0] += item_value
+                state[self.NUM_ITEM][1] += item_weight
+
                 state[self.NUM_ITEM][2] += item_value
                 state[self.NUM_ITEM][3] += item_weight
 
@@ -217,10 +221,6 @@ class KnapsackEnv(gym.Env):
             self.weight_of_all_items_selected += step_item_weight
 
             self.internal_state[self.num_step][1] = 1
-            self.internal_state[self.num_step][2:] = -1
-
-            self.internal_state[self.NUM_ITEM][0] = self.internal_state[self.NUM_ITEM][2] - self.value_of_all_items_selected
-            self.internal_state[self.NUM_ITEM][1] = self.internal_state[self.NUM_ITEM][3] - self.weight_of_all_items_selected
 
             self.internal_state[-1][1] -= step_item_weight
             self.internal_state[-1][2] = self.value_of_all_items_selected
@@ -229,6 +229,12 @@ class KnapsackEnv(gym.Env):
         possible = self.check_future_select_possible()
 
         done = False
+
+        self.internal_state[self.NUM_ITEM][0] = self.internal_state[self.NUM_ITEM][2] - self.internal_state[self.num_step][2]
+        self.internal_state[self.NUM_ITEM][1] = self.internal_state[self.NUM_ITEM][3] - self.internal_state[self.num_step][3]
+        self.internal_state[self.num_step][0] = 0
+        self.internal_state[self.num_step][2:] = -1
+
         if self.num_step == self.NUM_ITEM - 1 or not possible:
             done = True
 
@@ -238,11 +244,7 @@ class KnapsackEnv(gym.Env):
                 info['DoneReasonType'] = DoneReasonType0.TYPE_1  # "Weight Limit Exceeded"
             else:
                 info['DoneReasonType'] = DoneReasonType0.TYPE_2  # "Weight Remains"
-
-            self.internal_state[self.num_step][0] = 0
-            self.internal_state[-1][0] = 1
         else:
-            self.internal_state[self.num_step][0] = 0
             self.num_step += 1
             self.internal_state[self.num_step][0] = 1
 
