@@ -27,14 +27,7 @@ def download_file(name, obj, save):
 def upload_file(name, content, obj):
     bucket_name = name
     s3 = boto3.client('s3', aws_access_key_id=S3_ACCESS_ID, aws_secret_access_key=S3_ACCESS_SECRET)
-    # bucket = s3.Bucket(bucket_name)
-    #
-    # local_file = local
-    # obj_file = obj
-    # bucket.upload_file(local_file, obj_file)
-    #encode_file = np.array(content).tobytes()
     encode_file = str(content)
-    #s3.Object(bucket_name, obj).put(Body=encode_file)
     s3.put_object(Bucket=bucket_name, Key=obj, Body=encode_file)
 
 
@@ -129,8 +122,6 @@ def load_instance(bucket_name, file_path):
         if y != "":
             data.append(y)
 
-    #print(len(data))
-
     num_items = int(len(data)/2) - 1
     state = np.zeros(shape=(num_items+2, 4), dtype=float)
 
@@ -156,9 +147,6 @@ def load_solution(bucket_name, file_path):
     myBody = obj.get()['Body'].read()
     myBody = myBody.decode()
 
-    #print(myBody)
-    #print(list(myBody))
-
     info = ""
     info_list = []
     for x in myBody:
@@ -178,6 +166,41 @@ def load_solution(bucket_name, file_path):
 
     return float(data[0])
 
+
+def check_link_solution(bucket_name, file_path):
+    client = boto3.resource('s3', aws_access_key_id=S3_ACCESS_ID, aws_secret_access_key=S3_ACCESS_SECRET)
+    obj = client.Object(bucket_name, file_path)
+
+    myBody = obj.get()['Body'].read()
+    myBody = myBody.decode()
+
+    info = ""
+    info_list = []
+    for x in myBody:
+        if x == '[' or x == " ":
+            pass
+        elif x == ',' or x == ']':
+            info_list.append(info)
+            info = ""
+        else:
+            info += x
+
+    print(info_list)
+
+    return float(info_list[-1])
+
+def check_solution(bucket_name, file_path, size):
+    total = 0
+    for i in range(size):
+        file_paths = file_path + '/link_solution' + str(i) + '.csv'
+        value = check_link_solution(bucket_name, file_paths)
+
+        if value == 1.0:
+            total += 1
+
+    print("result : {0}%".format((total/size)*100))
+
+
 if __name__ == '__main__':
     #show_bucket_name()
     bucket_name = 'linklab'
@@ -186,3 +209,6 @@ if __name__ == '__main__':
     #load_instance(bucket_name, file_path)
     #file_path = 'knapsack_instances/RI/optimal_solution/n_50_r_100/solution0.csv'
     #load_solution(bucket_name, file_path)
+
+    file_path = 'knapsack_instances/TEST/link_solution/2022422zerowin'
+    check_solution(bucket_name, file_path, 3)
