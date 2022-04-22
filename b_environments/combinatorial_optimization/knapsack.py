@@ -7,9 +7,11 @@ from typing import Optional
 import random
 import datetime as dt
 
-from a_configuration.a_base_config.a_environments.combinatorial_optimization.config_knapsack import ConfigKnapsack0
+from a_configuration.a_base_config.a_environments.combinatorial_optimization.config_knapsack import ConfigKnapsack0, \
+    ConfigKnapsackTest
 from a_configuration.a_base_config.config_parse import SYSTEM_USER_NAME, SYSTEM_COMPUTER_NAME
 from b_environments.combinatorial_optimization.boto3_knapsack import load_instance, upload_file, load_solution
+from b_environments.combinatorial_optimization.knapsack_gurobi import model_kp
 
 
 class DoneReasonType0(enum.Enum):
@@ -86,18 +88,10 @@ class KnapsackEnv(gym.Env):
                 )
                 state[item_idx][2] = item_value
                 state[item_idx][3] = item_weight
+                state[self.NUM_ITEM][2] += item_value
+                state[self.NUM_ITEM][3] += item_weight
 
             state[-1][1] = np.array(self.LIMIT_WEIGHT_KNAPSACK)
-
-        # for item_idx in range(self.NUM_ITEM):
-        #     state[item_idx][2] = data[item_idx][1]
-        #     state[item_idx][3] = data[item_idx][0]
-        #
-        # state[-1][1] = data[self.NUM_ITEM][1]
-
-        if self.OPTIMAL_PATH:
-            self.OPTIMAL_PATH = self.OPTIMAL_PATH + '/solution' + str(self.INSTANCE_INDEX) + '.csv'
-            self.optimal_value = load_solution('linklab', self.OPTIMAL_PATH)
 
         if self.UPLOAD_PATH:
             date = dt.datetime.now()
@@ -105,6 +99,32 @@ class KnapsackEnv(gym.Env):
             user = SYSTEM_USER_NAME
             com = SYSTEM_COMPUTER_NAME
             self.UPLOAD_PATH = self.UPLOAD_PATH + date_str + user + com + '/link_solution' + str(self.INSTANCE_INDEX) + '.csv'
+        else:
+            self.UPLOAD_PATH = 'knapsack_instances/TEST/link_solution'
+            date = dt.datetime.now()
+            date_str = '/' + str(date.year) + str(date.month) + str(date.day)
+            user = SYSTEM_USER_NAME
+            com = SYSTEM_COMPUTER_NAME
+            self.UPLOAD_PATH = self.UPLOAD_PATH + date_str + user + com + '/link_solution' + str(self.INSTANCE_INDEX) + '.csv'
+
+        if self.OPTIMAL_PATH:
+            self.OPTIMAL_PATH = self.OPTIMAL_PATH + '/solution' + str(self.INSTANCE_INDEX) + '.csv'
+            self.optimal_value = load_solution('linklab', self.OPTIMAL_PATH)
+        else:
+            Knapsack_capacity = float(state[-1][1])
+            values = state[:-1, 2]
+            weights = state[:-1, 3]
+
+            items_selected, self.optimal_value = model_kp(Knapsack_capacity, values, weights, False)
+
+            self.OPTIMAL_PATH = 'knapsack_instances/TEST/optimal_solution'
+            date = dt.datetime.now()
+            date_str = '/' + str(date.year) + str(date.month) + str(date.day)
+            user = SYSTEM_USER_NAME
+            com = SYSTEM_COMPUTER_NAME
+            self.OPTIMAL_PATH = self.OPTIMAL_PATH + date_str + user + com + '/optimal_solution' + str(self.INSTANCE_INDEX) + '.csv'
+
+            upload_file('linklab', (items_selected, self.optimal_value), self.OPTIMAL_PATH)
 
         return state
 
@@ -157,6 +177,17 @@ class KnapsackEnv(gym.Env):
         observation = self.observation()
         info = dict()
         info['internal_state'] = copy.deepcopy(self.internal_state)
+
+        if not self.FILE_PATH:
+            self.FILE_PATH = 'knapsack_instances/TEST/instances'
+            date = dt.datetime.now()
+            date_str = '/' + str(date.year) + str(date.month) + str(date.day)
+            user = SYSTEM_USER_NAME
+            com = SYSTEM_COMPUTER_NAME
+            self.FILE_PATH = self.FILE_PATH + date_str + user + com + '/instance' + str(
+                self.INSTANCE_INDEX) + '.csv'
+
+            upload_file('linklab', self.internal_state, self.FILE_PATH)
 
         if return_info:
             return observation, info
@@ -225,8 +256,7 @@ class KnapsackEnv(gym.Env):
                     self.solution_found[0] = self.value_of_all_items_selected
                     self.solution_found[1:] = self.items_selected
 
-                    if self.OPTIMAL_PATH:
-                        self.solution_found[-1] = self.solution_found[0] / self.optimal_value
+                    self.solution_found.append(self.solution_found[0] / self.optimal_value)
 
                     if self.UPLOAD_PATH:
                         upload_file('linklab', self.solution_found, self.UPLOAD_PATH)
@@ -254,16 +284,19 @@ def run_env():
     print("START RUN!!!")
     agent = Dummy_Agent()
 
-    random_instance_info_keys = ["n_50_r_100", "n_300_r_600", "n_500_r_1800"]
-    hard_instance_info_keys = ["n_50_r_100", "n_300_r_600", "n_500_r_1000"]
-    fixed_instance_info_keys = ["n_50_wp_12.5", "n_300_wp_37.5", "n_500_wp_37.5"]
-    config = ConfigKnapsack0()
-    config.NUM_ITEM = 50
-    config.INSTANCE_INDEX = 0
-    config.FILE_PATH = 'knapsack_instances/RI/instances/' + random_instance_info_keys[0]
-    config.UPLOAD_PATH = 'knapsack_instances/RI/link_solution/' + random_instance_info_keys[0]
-    config.OPTIMAL_PATH = 'knapsack_instances/RI/optimal_solution/' + random_instance_info_keys[0]
-    config.SOLUTION_FOUND = [0]
+    # random_instance_info_keys = ["n_50_r_100", "n_300_r_600", "n_500_r_1800"]
+    # hard_instance_info_keys = ["n_50_r_100", "n_300_r_600", "n_500_r_1000"]
+    # fixed_instance_info_keys = ["n_50_wp_12.5", "n_300_wp_37.5", "n_500_wp_37.5"]
+    # config = ConfigKnapsack0()
+    # config.NUM_ITEM = 50
+    # config.INSTANCE_INDEX = 0
+    # config.FILE_PATH = 'knapsack_instances/RI/instances/' + random_instance_info_keys[0]
+    # config.UPLOAD_PATH = 'knapsack_instances/RI/link_solution/' + random_instance_info_keys[0]
+    # config.OPTIMAL_PATH = 'knapsack_instances/RI/optimal_solution/' + random_instance_info_keys[0]
+    # config.SOLUTION_FOUND = [0]
+    # env = KnapsackEnv(config)
+
+    config = ConfigKnapsackTest()
     env = KnapsackEnv(config)
 
     for i in range(2):
