@@ -5,7 +5,7 @@ class Config1DConvolutionalModel:
     def __init__(self, model_type):
         if model_type == ModelType.TINY_1D_CONVOLUTIONAL:
             self.OUT_CHANNELS_PER_LAYER = [4, 8]
-            self.KERNEL_SIZE_PER_LAYER = [4, 2]
+            self.KERNEL_SIZE_PER_LAYER = [4, 1]
             self.STRIDE_PER_LAYER = [1, 1]
             self.PADDING = 0
 

@@ -515,11 +515,13 @@ class Learner(mp.Process):
 
             while True:
                 if self.config.ACTION_MASKING:
-                    action = self.agent.get_action(obs=observation,
-                                                   unavailable_actions=unavailable_actions,
-                                                   mode=AgentMode.TEST)
+                    action = self.agent.get_action(
+                        obs=observation, unavailable_actions=unavailable_actions, mode=AgentMode.TEST
+                    )
                 else:
-                    action = self.agent.get_action(obs=observation, mode=AgentMode.TEST)
+                    action = self.agent.get_action(
+                        obs=observation, mode=AgentMode.TEST
+                    )
 
                 if not isinstance(self.test_env, VectorEnv):
                     if isinstance(self.agent.action_space, Discrete):
@@ -548,7 +550,9 @@ class Learner(mp.Process):
                     scaled_action = action
 
                 next_observation, reward, done, info = self.test_env.step(scaled_action)
-                next_observation = np.expand_dims(next_observation, axis=0)
+
+                if not isinstance(self.test_env, VectorEnv):
+                    next_observation = np.expand_dims(next_observation, axis=0)
 
                 if self.is_recurrent_model:
                     next_observation = [(next_observation, self.agent.model.recurrent_hidden)]

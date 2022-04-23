@@ -9,6 +9,8 @@ import datetime as dt
 
 from a_configuration.a_base_config.a_environments.combinatorial_optimization.config_knapsack import ConfigKnapsack0, \
     ConfigKnapsackTest
+from a_configuration.a_base_config.c_models.config_convolutional_models import Config1DConvolutionalModel
+from a_configuration.a_base_config.c_models.config_linear_models import ConfigLinearModel
 from a_configuration.a_base_config.config_parse import SYSTEM_USER_NAME, SYSTEM_COMPUTER_NAME
 from b_environments.combinatorial_optimization.boto3_knapsack import load_instance, upload_file, load_solution
 from b_environments.combinatorial_optimization.knapsack_gurobi import model_kp
@@ -22,6 +24,7 @@ class DoneReasonType0(enum.Enum):
 
 class KnapsackEnv(gym.Env):
     def __init__(self, config):
+        self.config = config
         self.NUM_ITEM = config.NUM_ITEM
         self.LIMIT_WEIGHT_KNAPSACK = config.LIMIT_WEIGHT_KNAPSACK
 
@@ -51,10 +54,19 @@ class KnapsackEnv(gym.Env):
         self.num_step = None
 
         self.action_space = spaces.Discrete(2)
-        self.observation_space = spaces.Box(
-            low=-1.0, high=1000.0,
-            shape=((self.NUM_ITEM + 2) * 4,)
-        )
+
+        if isinstance(config.MODEL_PARAMETER, ConfigLinearModel):
+            self.observation_space = spaces.Box(
+                low=-1.0, high=1000.0,
+                shape=((self.NUM_ITEM + 2) * 4,)
+            )
+        elif isinstance(config.MODEL_PARAMETER, Config1DConvolutionalModel):
+            self.observation_space = spaces.Box(
+                low=-1.0, high=1000.0,
+                shape=(self.NUM_ITEM + 2, 4)
+            )
+        else:
+            raise ValueError()
 
         if self.INITIAL_ITEM_DISTRIBUTION_FIXED:
             self.fixed_initial_internal_state = self.get_initial_state()
@@ -133,7 +145,12 @@ class KnapsackEnv(gym.Env):
         return state
 
     def observation(self):
-        observation = copy.deepcopy(self.internal_state.flatten()) / self.LIMIT_WEIGHT_KNAPSACK
+        if isinstance(self.config.MODEL_PARAMETER, ConfigLinearModel):
+            observation = copy.deepcopy(self.internal_state.flatten()) / self.LIMIT_WEIGHT_KNAPSACK
+        elif isinstance(self.config.MODEL_PARAMETER, Config1DConvolutionalModel):
+            observation = copy.deepcopy(self.internal_state) / self.LIMIT_WEIGHT_KNAPSACK
+        else:
+            raise ValueError()
         return observation
 
     def reward(self, done_type=None):

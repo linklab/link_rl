@@ -6,9 +6,11 @@ from typing import Tuple
 from collections import OrderedDict
 import numpy as np
 
-from a_configuration.a_base_config.c_models.config_convolutional_models import Config2DConvolutionalModel
+from a_configuration.a_base_config.c_models.config_convolutional_models import Config2DConvolutionalModel, \
+    Config1DConvolutionalModel
 from a_configuration.a_base_config.c_models.config_linear_models import ConfigLinearModel
-from a_configuration.a_base_config.c_models.config_recurrent_convolutional_models import ConfigRecurrent2DConvolutionalModel
+from a_configuration.a_base_config.c_models.config_recurrent_convolutional_models import \
+    ConfigRecurrent2DConvolutionalModel, ConfigRecurrent1DConvolutionalModel
 from a_configuration.a_base_config.c_models.config_recurrent_linear_models import ConfigRecurrentLinearModel
 from g_utils.types import ConvolutionType
 
@@ -217,7 +219,7 @@ class Model(nn.Module):
         # convolutional_layers
         input_n_channels = observation_shape[0]
         self.convolutional_layers = self.get_convolutional_layers(
-            input_n_channels, activation=activation, convolution_type=convolution_type
+            input_n_channels=input_n_channels, activation=activation, convolution_type=convolution_type
         )
 
         # representation_layers
@@ -286,7 +288,7 @@ class Model(nn.Module):
             x = self.representation_layers(obs)
             x = self.linear_layers(x)
 
-        elif isinstance(self.config.MODEL_PARAMETER, Config2DConvolutionalModel):
+        elif isinstance(self.config.MODEL_PARAMETER, (Config1DConvolutionalModel, Config2DConvolutionalModel)):
             conv_out = self.convolutional_layers(obs)
             conv_out = torch.flatten(conv_out, start_dim=1)
             x = self.representation_layers(conv_out)
@@ -346,7 +348,9 @@ class Model(nn.Module):
             rnn_out_flattened = torch.flatten(rnn_out, start_dim=1)
             x = self.linear_layers(rnn_out_flattened)
 
-        elif isinstance(self.config.MODEL_PARAMETER, ConfigRecurrent2DConvolutionalModel):
+        elif isinstance(
+                self.config.MODEL_PARAMETER, (ConfigRecurrent1DConvolutionalModel, ConfigRecurrent2DConvolutionalModel)
+        ):
             # input
             obs, h_in = obs[0]
             if isinstance(obs, np.ndarray):
