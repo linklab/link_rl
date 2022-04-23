@@ -6,10 +6,11 @@ from typing import Tuple
 from collections import OrderedDict
 import numpy as np
 
-from a_configuration.a_base_config.c_models.config_convolutional_models import ConfigConvolutionalModel
+from a_configuration.a_base_config.c_models.config_convolutional_models import Config2DConvolutionalModel
 from a_configuration.a_base_config.c_models.config_linear_models import ConfigLinearModel
-from a_configuration.a_base_config.c_models.config_recurrent_convolutional_models import ConfigRecurrentConvolutionalModel
+from a_configuration.a_base_config.c_models.config_recurrent_convolutional_models import ConfigRecurrent2DConvolutionalModel
 from a_configuration.a_base_config.c_models.config_recurrent_linear_models import ConfigRecurrentLinearModel
+from g_utils.types import ConvolutionType
 
 
 class Model(nn.Module):
@@ -28,7 +29,7 @@ class Model(nn.Module):
 
         self.is_recurrent_model = any([
             isinstance(self.config.MODEL_PARAMETER, ConfigRecurrentLinearModel),
-            isinstance(self.config.MODEL_PARAMETER, ConfigRecurrentConvolutionalModel)
+            isinstance(self.config.MODEL_PARAMETER, ConfigRecurrent2DConvolutionalModel)
         ])
         if self.is_recurrent_model:
             self.recurrent_hidden = None
@@ -109,7 +110,9 @@ class Model(nn.Module):
         representation_layers = nn.Sequential(representation_layers_dict)
         return representation_layers
 
-    def get_convolutional_layers(self, input_n_channels, activation=nn.ReLU()):
+    def get_convolutional_layers(
+            self, input_n_channels, activation=nn.ReLU(), convolution_type=ConvolutionType.TWO_DIMENSION
+    ):
         assert self.config.MODEL_PARAMETER.OUT_CHANNELS_PER_LAYER
         assert self.config.MODEL_PARAMETER.KERNEL_SIZE_PER_LAYER
         assert self.config.MODEL_PARAMETER.STRIDE_PER_LAYER
@@ -120,8 +123,17 @@ class Model(nn.Module):
         # out_channels_per_layer[-1] == input_n_channels
 
         for idx in range(len(self.config.MODEL_PARAMETER.OUT_CHANNELS_PER_LAYER)):
+            if convolution_type == ConvolutionType.ONE_DIMENSION:
+                nn_conv = nn.Conv1d
+            elif convolution_type == ConvolutionType.TWO_DIMENSION:
+                nn_conv = nn.Conv2d
+            elif convolution_type == ConvolutionType.THREE_DIMENSION:
+                nn_conv = nn.Conv3d
+            else:
+                raise ValueError()
+
             # Convolutional Layer
-            convolutional_layers_dict["conv_{0}".format(idx)] = nn.Conv2d(
+            convolutional_layers_dict["conv_{0}".format(idx)] = nn_conv(
                 in_channels=out_channels_per_layer[idx - 1],
                 out_channels=out_channels_per_layer[idx],
                 kernel_size=self.config.MODEL_PARAMETER.KERNEL_SIZE_PER_LAYER[idx],
@@ -145,7 +157,7 @@ class Model(nn.Module):
     #         linear_layers_dict["linear_{0}_norm".format(layer_idx)] = nn.LayerNorm(
     #             self.config.MODEL_PARAMETER.NEURONS_PER_FULLY_CONNECTED_LAYER[layer_idx]
     #         )
-    #     elif isinstance(self.config.MODEL_PARAMETER, ConfigConvolutionalModel):
+    #     elif isinstance(self.config.MODEL_PARAMETER, Config2DConvolutionalModel):
     #         pass
     #     elif isinstance(self.config.MODEL_PARAMETER, ConfigRecurrentLinearModel):
     #         pass
@@ -198,10 +210,15 @@ class Model(nn.Module):
 
         self.linear_layers = self.get_linear_layers(input_n_features=input_n_features, activation=activation)
 
-    def make_convolutional_model(self, observation_shape, n_out_actions=None, activation=nn.ReLU()):
+    def make_convolutional_model(
+            self, observation_shape, n_out_actions=None, activation=nn.ReLU(),
+            convolution_type=ConvolutionType.TWO_DIMENSION
+    ):
         # convolutional_layers
         input_n_channels = observation_shape[0]
-        self.convolutional_layers = self.get_convolutional_layers(input_n_channels, activation=activation)
+        self.convolutional_layers = self.get_convolutional_layers(
+            input_n_channels, activation=activation, convolution_type=convolution_type
+        )
 
         # representation_layers
         conv_out_flat_size = self._get_conv_out(self.convolutional_layers, observation_shape)
@@ -236,10 +253,15 @@ class Model(nn.Module):
         input_n_features = self.config.MODEL_PARAMETER.HIDDEN_SIZE
         self.linear_layers = self.get_linear_layers(input_n_features=input_n_features, activation=activation)
 
-    def make_recurrent_convolutional_model(self, observation_shape, activation=nn.ReLU()):
+    def make_recurrent_convolutional_model(
+            self, observation_shape, activation=nn.ReLU(),
+            convolution_type=ConvolutionType.TWO_DIMENSION
+    ):
         # convolutional_layers
         input_n_channels = observation_shape[0]
-        self.convolutional_layers = self.get_convolutional_layers(input_n_channels, activation=activation)
+        self.convolutional_layers = self.get_convolutional_layers(
+            input_n_channels, activation=activation, convolution_type=convolution_type
+        )
 
         # representation_layers
         conv_out_flat_size = self._get_conv_out(self.convolutional_layers, observation_shape)
@@ -264,7 +286,7 @@ class Model(nn.Module):
             x = self.representation_layers(obs)
             x = self.linear_layers(x)
 
-        elif isinstance(self.config.MODEL_PARAMETER, ConfigConvolutionalModel):
+        elif isinstance(self.config.MODEL_PARAMETER, Config2DConvolutionalModel):
             conv_out = self.convolutional_layers(obs)
             conv_out = torch.flatten(conv_out, start_dim=1)
             x = self.representation_layers(conv_out)
@@ -324,7 +346,7 @@ class Model(nn.Module):
             rnn_out_flattened = torch.flatten(rnn_out, start_dim=1)
             x = self.linear_layers(rnn_out_flattened)
 
-        elif isinstance(self.config.MODEL_PARAMETER, ConfigRecurrentConvolutionalModel):
+        elif isinstance(self.config.MODEL_PARAMETER, ConfigRecurrent2DConvolutionalModel):
             # input
             obs, h_in = obs[0]
             if isinstance(obs, np.ndarray):
