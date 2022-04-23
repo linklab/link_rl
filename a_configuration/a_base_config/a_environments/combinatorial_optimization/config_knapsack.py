@@ -7,7 +7,7 @@ class ConfigKnapsack:
         self.EPISODE_REWARD_STD_SOLVED = 20
 
         self.CONSOLE_LOG_INTERVAL_TRAINING_STEPS = 50
-        self.MODEL_TYPE = ModelType.SMALL_LINEAR
+        self.MODEL_TYPE = ModelType.TINY_1D_CONVOLUTIONAL
         self.TARGET_SYNC_INTERVAL_TRAINING_STEPS = 100
 
         self.NUM_ITEM = 20

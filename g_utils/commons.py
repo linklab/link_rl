@@ -16,9 +16,11 @@ import plotly.graph_objects as go
 from a_configuration.a_base_config.a_environments.open_ai_gym.config_gym_atari import ConfigGymAtari
 from a_configuration.a_base_config.config_parse import SYSTEM_USER_NAME
 from a_configuration.a_base_config.a_environments.unity.config_unity_box import ConfigUnityGymEnv
-from a_configuration.a_base_config.c_models.config_convolutional_models import Config2DConvolutionalModel
+from a_configuration.a_base_config.c_models.config_convolutional_models import Config2DConvolutionalModel, \
+    Config1DConvolutionalModel
 from a_configuration.a_base_config.c_models.config_linear_models import ConfigLinearModel
-from a_configuration.a_base_config.c_models.config_recurrent_convolutional_models import ConfigRecurrent2DConvolutionalModel
+from a_configuration.a_base_config.c_models.config_recurrent_convolutional_models import \
+    ConfigRecurrent2DConvolutionalModel, ConfigRecurrent1DConvolutionalModel
 from a_configuration.a_base_config.c_models.config_recurrent_linear_models import ConfigRecurrentLinearModel
 from b_environments import wrapper
 from g_utils.types import AgentType, ActorCriticAgentTypes, ModelType, LayerActivationType, LossFunctionType, \
@@ -61,6 +63,13 @@ def set_config(config):
         config.MODEL_PARAMETER = ConfigLinearModel(config.MODEL_TYPE)
 
     elif config.MODEL_TYPE in (
+            ModelType.TINY_1D_CONVOLUTIONAL, ModelType.SMALL_1D_CONVOLUTIONAL,
+            ModelType.MEDIUM_1D_CONVOLUTIONAL, ModelType.LARGE_1D_CONVOLUTIONAL
+    ):
+        from a_configuration.a_base_config.c_models.config_convolutional_models import Config1DConvolutionalModel
+        config.MODEL_PARAMETER = Config1DConvolutionalModel(config.MODEL_TYPE)
+
+    elif config.MODEL_TYPE in (
             ModelType.TINY_2D_CONVOLUTIONAL, ModelType.SMALL_2D_CONVOLUTIONAL,
             ModelType.MEDIUM_2D_CONVOLUTIONAL, ModelType.LARGE_2D_CONVOLUTIONAL
     ):
@@ -74,8 +83,15 @@ def set_config(config):
         config.MODEL_PARAMETER = ConfigRecurrentLinearModel(config.MODEL_TYPE)
 
     elif config.MODEL_TYPE in (
-            ModelType.SMALL_RECURRENT_2D_CONVOLUTIONAL, ModelType.MEDIUM_RECURRENT_2D_CONVOLUTIONAL,
-            ModelType.LARGE_RECURRENT_2D_CONVOLUTIONAL
+            ModelType.TINY_RECURRENT_1D_CONVOLUTIONAL, ModelType.SMALL_RECURRENT_1D_CONVOLUTIONAL,
+            ModelType.MEDIUM_RECURRENT_1D_CONVOLUTIONAL, ModelType.LARGE_RECURRENT_1D_CONVOLUTIONAL
+    ):
+        from a_configuration.a_base_config.c_models.config_recurrent_convolutional_models import ConfigRecurrent1DConvolutionalModel
+        config.MODEL_PARAMETER = ConfigRecurrent1DConvolutionalModel(config.MODEL_TYPE)
+
+    elif config.MODEL_TYPE in (
+            ModelType.TINY_RECURRENT_2D_CONVOLUTIONAL, ModelType.SMALL_RECURRENT_2D_CONVOLUTIONAL,
+            ModelType.MEDIUM_RECURRENT_2D_CONVOLUTIONAL, ModelType.LARGE_RECURRENT_2D_CONVOLUTIONAL
     ):
         from a_configuration.a_base_config.c_models.config_recurrent_convolutional_models import ConfigRecurrent2DConvolutionalModel
         config.MODEL_PARAMETER = ConfigRecurrent2DConvolutionalModel(config.MODEL_TYPE)
@@ -340,7 +356,7 @@ def print_model_info(config):
         item2 = "{0}: {1:}".format("NEURONS_PER_REPRESENTATION_LAYER", model_config.NEURONS_PER_REPRESENTATION_LAYER)
         item3 = "{0}: {1:}".format("NEURONS_PER_FULLY_CONNECTED_LAYER", model_config.NEURONS_PER_FULLY_CONNECTED_LAYER)
         print("{0:55} {1:55} {2:55}".format(item1, item2, item3), end="\n")
-    elif isinstance(model_config, Config2DConvolutionalModel):
+    elif isinstance(model_config, (Config1DConvolutionalModel, Config2DConvolutionalModel)):
         item1 = "{0}: {1:}".format("MODEL_TYPE", config.MODEL_TYPE)
         item2 = "{0}: {1:}".format("OUT_CHANNELS_PER_LAYER", model_config.OUT_CHANNELS_PER_LAYER)
         item3 = "{0}: {1:}".format("KERNEL_SIZE_PER_LAYER", model_config.KERNEL_SIZE_PER_LAYER)
@@ -359,7 +375,7 @@ def print_model_info(config):
         item2 = "{0}: {1:}".format("NUM_LAYERS", model_config.NUM_LAYERS)
         item3 = "{0}: {1:}".format("NEURONS_PER_FULLY_CONNECTED_LAYER", model_config.NEURONS_PER_FULLY_CONNECTED_LAYER)
         print("{0:55} {1:55} {2:55}".format(item1, item2, item3, end="\n"))
-    elif isinstance(model_config, ConfigRecurrent2DConvolutionalModel):
+    elif isinstance(model_config, (ConfigRecurrent1DConvolutionalModel, ConfigRecurrent2DConvolutionalModel)):
         item1 = "{0}: {1:}".format("MODEL_TYPE", config.MODEL_TYPE)
         item2 = "{0}: {1:}".format("OUT_CHANNELS_PER_LAYER", model_config.OUT_CHANNELS_PER_LAYER)
         item3 = "{0}: {1:}".format("KERNEL_SIZE_PER_LAYER", model_config.KERNEL_SIZE_PER_LAYER)
