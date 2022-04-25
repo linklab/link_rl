@@ -14,6 +14,7 @@ from a_configuration.a_base_config.c_models.config_linear_models import ConfigLi
 from a_configuration.a_base_config.config_parse import SYSTEM_USER_NAME, SYSTEM_COMPUTER_NAME
 from b_environments.combinatorial_optimization.boto3_knapsack import load_instance, upload_file, load_solution
 from b_environments.combinatorial_optimization.knapsack_gurobi import model_kp
+from g_utils.types import ModelType
 
 
 class DoneReasonType0(enum.Enum):
@@ -42,6 +43,7 @@ class KnapsackEnv(gym.Env):
         self.UPLOAD_PATH = config.UPLOAD_PATH
         self.OPTIMAL_PATH = config.OPTIMAL_PATH
         self.INSTANCE_INDEX = config.INSTANCE_INDEX
+        self.SORTING_TYPE = config.SORTING_TYPE
 
         self.solution_found = config.SOLUTION_FOUND
         self.optimal_value = 0
@@ -52,6 +54,7 @@ class KnapsackEnv(gym.Env):
         self.weight_of_all_items_selected = None
         self.value_of_all_items_selected = None
         self.num_step = None
+
 
         self.action_space = spaces.Discrete(2)
 
@@ -144,6 +147,83 @@ class KnapsackEnv(gym.Env):
 
         return state
 
+    def state_sorting(self, state, start, end):
+
+        if self.SORTING_TYPE == 1: #Value Per Weight
+            if start >= end:
+                return
+
+            pivot = start
+            left = start + 1
+            right = end
+
+            while left <= right:
+                while left <= end and (state[left][2] / state[left][3]) <= (state[pivot][2] / state[pivot][3]):
+                    left += 1
+
+                while right > start and (state[right][2] / state[right][3]) >= (state[pivot][2] / state[pivot][3]):
+                    right -= 1
+
+                if left > right:
+                    state[[right, pivot]] = state[[pivot, right]]
+                else:
+                    state[[left, right]] = state[[right, left]]
+
+            self.state_sorting(state, start, right - 1)
+            self.state_sorting(state, right + 1, end)
+
+        elif self.SORTING_TYPE == 2: #Value
+            if start >= end:
+                return
+
+            pivot = start
+            left = start + 1
+            right = end
+
+            while left <= right:
+                while left <= end and state[left][2] <= state[pivot][2]:
+                    left += 1
+
+                while right > start and state[right][2] >= state[pivot][2]:
+                    right -= 1
+
+                if left > right:
+                    state[[right, pivot]] = state[[pivot, right]]
+                else:
+                    state[[left, right]] = state[[right, left]]
+
+            self.state_sorting(state, start, right - 1)
+            self.state_sorting(state, right + 1, end)
+
+        elif self.SORTING_TYPE == 3: #weight
+            if start >= end:
+                return
+
+            pivot = start
+            left = start + 1
+            right = end
+
+            while left <= right:
+                while left <= end and state[left][3] <= state[pivot][3]:
+                    left += 1
+
+                while right > start and state[right][3] >= state[pivot][3]:
+                    right -= 1
+
+                if left > right:
+                    state[[right, pivot]] = state[[pivot, right]]
+                else:
+                    state[[left, right]] = state[[right, left]]
+
+            self.state_sorting(state, start, right - 1)
+            self.state_sorting(state, right + 1, end)
+
+        elif self.SORTING_TYPE is None:
+            pass
+
+        else:
+            raise ValueError()
+
     def observation(self):
         if isinstance(self.config.MODEL_PARAMETER, ConfigLinearModel):
             observation = copy.deepcopy(self.internal_state.flatten()) / self.LIMIT_WEIGHT_KNAPSACK
@@ -186,6 +266,7 @@ class KnapsackEnv(gym.Env):
         else:
             self.internal_state = self.get_initial_state()
 
+        self.state_sorting(self.internal_state, 0, self.NUM_ITEM - 1)
         self.TOTAL_VALUE_FOR_ALL_ITEMS = sum(self.internal_state[:, 2])
         self.items_selected = []
         self.actions_sequence = []
@@ -316,6 +397,14 @@ def run_env():
     # env = KnapsackEnv(config)
 
     config = ConfigKnapsackTest()
+
+    if config.MODEL_TYPE in (
+        ModelType.TINY_1D_CONVOLUTIONAL, ModelType.SMALL_1D_CONVOLUTIONAL,
+        ModelType.MEDIUM_1D_CONVOLUTIONAL, ModelType.LARGE_1D_CONVOLUTIONAL
+    ):
+        from a_configuration.a_base_config.c_models.config_convolutional_models import Config1DConvolutionalModel
+        config.MODEL_PARAMETER = Config1DConvolutionalModel(config.MODEL_TYPE)
+
     env = KnapsackEnv(config)
 
     for i in range(2):
