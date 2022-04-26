@@ -1,6 +1,5 @@
 from g_utils.types import ModelType
 
-
 class ConfigKnapsack:
     def __init__(self):
         self.EPISODE_REWARD_AVG_SOLVED = 100
@@ -30,6 +29,7 @@ class ConfigKnapsack:
         self.OPTIMAL_PATH = False
         self.INSTANCE_INDEX = False
 
+        self.SORTING_TYPE = None
         self.ENV_NAME = "Knapsack_Problem_v0"
         self.LEARNING_RATE = 0.0003
 
