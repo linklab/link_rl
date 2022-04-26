@@ -4,9 +4,9 @@ from g_utils.types import ModelType
 class Config1DConvolutionalModel:
     def __init__(self, model_type):
         if model_type == ModelType.TINY_1D_CONVOLUTIONAL:
-            self.OUT_CHANNELS_PER_LAYER = [4, 8]
-            self.KERNEL_SIZE_PER_LAYER = [4, 1]
-            self.STRIDE_PER_LAYER = [1, 1]
+            self.OUT_CHANNELS_PER_LAYER = [48]
+            self.KERNEL_SIZE_PER_LAYER = [4]
+            self.STRIDE_PER_LAYER = [1]
             self.PADDING = 0
 
             self.NEURONS_PER_REPRESENTATION_LAYER = [64]
