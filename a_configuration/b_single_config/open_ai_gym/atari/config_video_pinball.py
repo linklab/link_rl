@@ -14,7 +14,7 @@ class ConfigVideoPinballDqn(ConfigBase, ConfigVideoPinball, ConfigDqn):
 
         self.MAX_TRAINING_STEPS = 1_000_000
         self.BUFFER_CAPACITY = 500_000
-        self.MODEL_TYPE = ModelType.MEDIUM_CONVOLUTIONAL
+        self.MODEL_TYPE = ModelType.MEDIUM_2D_CONVOLUTIONAL
 
 
 class ConfigVideoPinballDoubleDqn(ConfigBase, ConfigVideoPinball, ConfigDoubleDqn):
@@ -25,7 +25,7 @@ class ConfigVideoPinballDoubleDqn(ConfigBase, ConfigVideoPinball, ConfigDoubleDq
 
         self.MAX_TRAINING_STEPS = 1_000_000
         self.BUFFER_CAPACITY = 500_000
-        self.MODEL_TYPE = ModelType.MEDIUM_CONVOLUTIONAL
+        self.MODEL_TYPE = ModelType.MEDIUM_2D_CONVOLUTIONAL
 
 
 class ConfigVideoPinballDuelingDqn(ConfigBase, ConfigVideoPinball, ConfigDuelingDqn):
@@ -36,7 +36,7 @@ class ConfigVideoPinballDuelingDqn(ConfigBase, ConfigVideoPinball, ConfigDueling
 
         self.MAX_TRAINING_STEPS = 1_000_000
         self.BUFFER_CAPACITY = 500_000
-        self.MODEL_TYPE = ModelType.MEDIUM_CONVOLUTIONAL
+        self.MODEL_TYPE = ModelType.MEDIUM_2D_CONVOLUTIONAL
 
 
 class ConfigVideoPinballDoubleDuelingDqn(ConfigBase, ConfigVideoPinball, ConfigDoubleDuelingDqn):
@@ -47,7 +47,7 @@ class ConfigVideoPinballDoubleDuelingDqn(ConfigBase, ConfigVideoPinball, ConfigD
 
         self.MAX_TRAINING_STEPS = 1_000_000
         self.BUFFER_CAPACITY = 500_000
-        self.MODEL_TYPE = ModelType.MEDIUM_CONVOLUTIONAL
+        self.MODEL_TYPE = ModelType.MEDIUM_2D_CONVOLUTIONAL
 
 
 class ConfigVideoPinballA2c(ConfigBase, ConfigVideoPinball, ConfigA2c):
@@ -57,7 +57,7 @@ class ConfigVideoPinballA2c(ConfigBase, ConfigVideoPinball, ConfigA2c):
         ConfigA2c.__init__(self)
 
         self.MAX_TRAINING_STEPS = 1_000_000
-        self.MODEL_TYPE = ModelType.MEDIUM_CONVOLUTIONAL
+        self.MODEL_TYPE = ModelType.MEDIUM_2D_CONVOLUTIONAL
 
 
 class ConfigVideoPinballA3c(ConfigBase, ConfigVideoPinball, ConfigA3c):
@@ -67,7 +67,7 @@ class ConfigVideoPinballA3c(ConfigBase, ConfigVideoPinball, ConfigA3c):
         ConfigA3c.__init__(self)
 
         self.MAX_TRAINING_STEPS = 1_000_000
-        self.MODEL_TYPE = ModelType.MEDIUM_CONVOLUTIONAL
+        self.MODEL_TYPE = ModelType.MEDIUM_2D_CONVOLUTIONAL
 
 
 class ConfigVideoPinballPpo(ConfigBase, ConfigVideoPinball, ConfigPpo):
@@ -77,7 +77,7 @@ class ConfigVideoPinballPpo(ConfigBase, ConfigVideoPinball, ConfigPpo):
         ConfigPpo.__init__(self)
 
         self.MAX_TRAINING_STEPS = 1_000_000
-        self.MODEL_TYPE = ModelType.MEDIUM_CONVOLUTIONAL
+        self.MODEL_TYPE = ModelType.MEDIUM_2D_CONVOLUTIONAL
 
 
 class ConfigVideoPinballPpoTrajectory(ConfigBase, ConfigVideoPinball, ConfigPpoTrajectory):
@@ -87,4 +87,4 @@ class ConfigVideoPinballPpoTrajectory(ConfigBase, ConfigVideoPinball, ConfigPpoT
         ConfigPpoTrajectory.__init__(self)
 
         self.MAX_TRAINING_STEPS = 1_000_000
-        self.MODEL_TYPE = ModelType.MEDIUM_CONVOLUTIONAL
+        self.MODEL_TYPE = ModelType.MEDIUM_2D_CONVOLUTIONAL

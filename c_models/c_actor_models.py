@@ -5,11 +5,14 @@ import torch
 from torch import nn
 import torch.nn.functional as F
 
-from a_configuration.a_base_config.c_models.config_convolutional_models import ConfigConvolutionalModel
+from a_configuration.a_base_config.c_models.config_convolutional_models import Config2DConvolutionalModel, \
+    Config1DConvolutionalModel
 from a_configuration.a_base_config.c_models.config_linear_models import ConfigLinearModel
-from a_configuration.a_base_config.c_models.config_recurrent_convolutional_models import ConfigRecurrentConvolutionalModel
+from a_configuration.a_base_config.c_models.config_recurrent_convolutional_models import \
+    ConfigRecurrent2DConvolutionalModel, ConfigRecurrent1DConvolutionalModel
 from a_configuration.a_base_config.c_models.config_recurrent_linear_models import ConfigRecurrentLinearModel
 from c_models.a_models import Model
+from g_utils.types import ConvolutionType
 
 
 class ActorModel(Model):
@@ -32,9 +35,16 @@ class ActorModel(Model):
                 observation_shape=observation_shape, activation=self.config.LAYER_ACTIVATION()
             )
 
-        elif isinstance(self.config.MODEL_PARAMETER, ConfigConvolutionalModel):
+        elif isinstance(self.config.MODEL_PARAMETER, Config1DConvolutionalModel):
             self.make_convolutional_model(
-                observation_shape=observation_shape, activation=self.config.LAYER_ACTIVATION()
+                observation_shape=observation_shape, activation=self.config.LAYER_ACTIVATION(),
+                convolution_type=ConvolutionType.ONE_DIMENSION
+            )
+
+        elif isinstance(self.config.MODEL_PARAMETER, Config2DConvolutionalModel):
+            self.make_convolutional_model(
+                observation_shape=observation_shape, activation=self.config.LAYER_ACTIVATION(),
+                convolution_type=ConvolutionType.TWO_DIMENSION
             )
 
         elif isinstance(self.config.MODEL_PARAMETER, ConfigRecurrentLinearModel):
@@ -42,9 +52,16 @@ class ActorModel(Model):
                 observation_shape=observation_shape, activation=self.config.LAYER_ACTIVATION()
             )
 
-        elif isinstance(self.config.MODEL_PARAMETER, ConfigRecurrentConvolutionalModel):
+        elif isinstance(self.config.MODEL_PARAMETER, ConfigRecurrent1DConvolutionalModel):
             self.make_recurrent_convolutional_model(
-                observation_shape=observation_shape, activation=self.config.LAYER_ACTIVATION()
+                observation_shape=observation_shape, activation=self.config.LAYER_ACTIVATION(),
+                convolution_type=ConvolutionType.ONE_DIMENSION
+            )
+
+        elif isinstance(self.config.MODEL_PARAMETER, ConfigRecurrent2DConvolutionalModel):
+            self.make_recurrent_convolutional_model(
+                observation_shape=observation_shape, activation=self.config.LAYER_ACTIVATION(),
+                convolution_type=ConvolutionType.TWO_DIMENSION
             )
 
         else:
@@ -159,8 +176,8 @@ class ContinuousStochasticActorModel(ActorModel):
             x = self.representation_layers(obs)
 
         elif any([
-            isinstance(self.config.MODEL_PARAMETER, ConfigConvolutionalModel),
-            isinstance(self.config.MODEL_PARAMETER, ConfigRecurrentConvolutionalModel)
+            isinstance(self.config.MODEL_PARAMETER, Config2DConvolutionalModel),
+            isinstance(self.config.MODEL_PARAMETER, ConfigRecurrent2DConvolutionalModel)
         ]):
             x = self.convolutional_layers(obs)
             x = torch.flatten(x, start_dim=1)

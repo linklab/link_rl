@@ -14,7 +14,7 @@ class ConfigBreakoutDqn(ConfigBase, ConfigBreakout, ConfigDqn):
 
         self.MAX_TRAINING_STEPS = 1_000_000
         self.BUFFER_CAPACITY = 500_000
-        self.MODEL_TYPE = ModelType.MEDIUM_CONVOLUTIONAL
+        self.MODEL_TYPE = ModelType.MEDIUM_2D_CONVOLUTIONAL
 
 
 class ConfigBreakoutDoubleDqn(ConfigBase, ConfigBreakout, ConfigDoubleDqn):
@@ -25,7 +25,7 @@ class ConfigBreakoutDoubleDqn(ConfigBase, ConfigBreakout, ConfigDoubleDqn):
 
         self.MAX_TRAINING_STEPS = 1_000_000
         self.BUFFER_CAPACITY = 500_000
-        self.MODEL_TYPE = ModelType.MEDIUM_CONVOLUTIONAL
+        self.MODEL_TYPE = ModelType.MEDIUM_2D_CONVOLUTIONAL
 
 
 class ConfigBreakoutDuelingDqn(ConfigBase, ConfigBreakout, ConfigDuelingDqn):
@@ -36,7 +36,7 @@ class ConfigBreakoutDuelingDqn(ConfigBase, ConfigBreakout, ConfigDuelingDqn):
 
         self.MAX_TRAINING_STEPS = 1_000_000
         self.BUFFER_CAPACITY = 500_000
-        self.MODEL_TYPE = ModelType.MEDIUM_CONVOLUTIONAL
+        self.MODEL_TYPE = ModelType.MEDIUM_2D_CONVOLUTIONAL
 
 
 class ConfigBreakoutDoubleDuelingDqn(ConfigBase, ConfigBreakout, ConfigDoubleDuelingDqn):
@@ -47,7 +47,7 @@ class ConfigBreakoutDoubleDuelingDqn(ConfigBase, ConfigBreakout, ConfigDoubleDue
 
         self.MAX_TRAINING_STEPS = 1_000_000
         self.BUFFER_CAPACITY = 500_000
-        self.MODEL_TYPE = ModelType.MEDIUM_CONVOLUTIONAL
+        self.MODEL_TYPE = ModelType.MEDIUM_2D_CONVOLUTIONAL
 
 
 class ConfigBreakoutA2c(ConfigBase, ConfigBreakout, ConfigA2c):
@@ -57,7 +57,7 @@ class ConfigBreakoutA2c(ConfigBase, ConfigBreakout, ConfigA2c):
         ConfigA2c.__init__(self)
 
         self.MAX_TRAINING_STEPS = 1_000_000
-        self.MODEL_TYPE = ModelType.MEDIUM_CONVOLUTIONAL
+        self.MODEL_TYPE = ModelType.MEDIUM_2D_CONVOLUTIONAL
 
 
 class ConfigBreakoutA3c(ConfigBase, ConfigBreakout, ConfigA3c):
@@ -67,7 +67,7 @@ class ConfigBreakoutA3c(ConfigBase, ConfigBreakout, ConfigA3c):
         ConfigA3c.__init__(self)
 
         self.MAX_TRAINING_STEPS = 1_000_000
-        self.MODEL_TYPE = ModelType.MEDIUM_CONVOLUTIONAL
+        self.MODEL_TYPE = ModelType.MEDIUM_2D_CONVOLUTIONAL
 
 
 class ConfigBreakoutPpo(ConfigBase, ConfigBreakout, ConfigPpo):
@@ -77,7 +77,7 @@ class ConfigBreakoutPpo(ConfigBase, ConfigBreakout, ConfigPpo):
         ConfigPpo.__init__(self)
 
         self.MAX_TRAINING_STEPS = 1_000_000
-        self.MODEL_TYPE = ModelType.MEDIUM_CONVOLUTIONAL
+        self.MODEL_TYPE = ModelType.MEDIUM_2D_CONVOLUTIONAL
 
 
 class ConfigBreakoutPpoTrajectory(ConfigBase, ConfigBreakout, ConfigPpoTrajectory):
@@ -87,4 +87,4 @@ class ConfigBreakoutPpoTrajectory(ConfigBase, ConfigBreakout, ConfigPpoTrajector
         ConfigPpoTrajectory.__init__(self)
 
         self.MAX_TRAINING_STEPS = 1_000_000
-        self.MODEL_TYPE = ModelType.MEDIUM_CONVOLUTIONAL
+        self.MODEL_TYPE = ModelType.MEDIUM_2D_CONVOLUTIONAL

@@ -3,7 +3,7 @@ import numpy as np
 import torch
 from gym.spaces import Discrete, Box
 
-from a_configuration.a_base_config.c_models.config_recurrent_convolutional_models import ConfigRecurrentConvolutionalModel
+from a_configuration.a_base_config.c_models.config_recurrent_convolutional_models import ConfigRecurrent2DConvolutionalModel
 from a_configuration.a_base_config.c_models.config_recurrent_linear_models import ConfigRecurrentLinearModel
 from g_utils.types import Transition
 
@@ -16,7 +16,7 @@ class Buffer:
 
         self.is_recurrent_model = any([
             isinstance(self.config.MODEL_PARAMETER, ConfigRecurrentLinearModel),
-            isinstance(self.config.MODEL_PARAMETER, ConfigRecurrentConvolutionalModel)
+            isinstance(self.config.MODEL_PARAMETER, ConfigRecurrent2DConvolutionalModel)
         ])
 
     def __len__(self):

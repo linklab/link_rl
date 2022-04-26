@@ -1,6 +1,6 @@
 import warnings
 
-from a_configuration.a_base_config.c_models.config_recurrent_convolutional_models import ConfigRecurrentConvolutionalModel
+from a_configuration.a_base_config.c_models.config_recurrent_convolutional_models import ConfigRecurrent2DConvolutionalModel
 
 warnings.filterwarnings('ignore')
 warnings.simplefilter("ignore")
@@ -73,7 +73,7 @@ class LearnerComparison:
 
             self.is_recurrent_model_per_agent.append(any([
                 isinstance(self.config_c.AGENT_PARAMETERS[agent_idx].MODEL_PARAMETER, ConfigRecurrentLinearModel),
-                isinstance(self.config_c.AGENT_PARAMETERS[agent_idx].MODEL_PARAMETER, ConfigRecurrentConvolutionalModel)
+                isinstance(self.config_c.AGENT_PARAMETERS[agent_idx].MODEL_PARAMETER, ConfigRecurrent2DConvolutionalModel)
             ]))
 
             self.next_console_log_per_agent.append(self.config_c.CONSOLE_LOG_INTERVAL_TRAINING_STEPS)

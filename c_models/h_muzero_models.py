@@ -2,7 +2,7 @@ from typing import Tuple
 import torch
 from torch import nn
 
-from a_configuration.a_base_config.c_models.config_convolutional_models import ConfigConvolutionalModel
+from a_configuration.a_base_config.c_models.config_convolutional_models import Config2DConvolutionalModel
 from a_configuration.a_base_config.c_models.config_linear_models import ConfigLinearModel
 from c_models.a_models import Model
 
@@ -40,7 +40,7 @@ class DiscreteMuzeroModel(Model):
             self.prediction_policy_layers = self.get_linear_layers(input_n_features=input_n_features)
             self.prediction_value_layers = self.get_linear_layers(input_n_features=input_n_features)
 
-        elif isinstance(self.config.MODEL_PARAMETER, ConfigConvolutionalModel):
+        elif isinstance(self.config.MODEL_PARAMETER, Config2DConvolutionalModel):
             # convolutional_layers
             input_n_channels = observation_shape[0]
             self.convolutional_layers = self.get_convolutional_layers(input_n_channels)

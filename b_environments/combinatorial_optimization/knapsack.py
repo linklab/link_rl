@@ -7,9 +7,14 @@ from typing import Optional
 import random
 import datetime as dt
 
-from a_configuration.a_base_config.a_environments.combinatorial_optimization.config_knapsack import ConfigKnapsack0
+from a_configuration.a_base_config.a_environments.combinatorial_optimization.config_knapsack import ConfigKnapsack0, \
+    ConfigKnapsackTest
+from a_configuration.a_base_config.c_models.config_convolutional_models import Config1DConvolutionalModel
+from a_configuration.a_base_config.c_models.config_linear_models import ConfigLinearModel
 from a_configuration.a_base_config.config_parse import SYSTEM_USER_NAME, SYSTEM_COMPUTER_NAME
 from b_environments.combinatorial_optimization.boto3_knapsack import load_instance, upload_file, load_solution
+from b_environments.combinatorial_optimization.knapsack_gurobi import model_kp
+from g_utils.types import ModelType
 
 
 class DoneReasonType0(enum.Enum):
@@ -20,6 +25,7 @@ class DoneReasonType0(enum.Enum):
 
 class KnapsackEnv(gym.Env):
     def __init__(self, config):
+        self.config = config
         self.NUM_ITEM = config.NUM_ITEM
         self.LIMIT_WEIGHT_KNAPSACK = config.LIMIT_WEIGHT_KNAPSACK
 
@@ -37,6 +43,7 @@ class KnapsackEnv(gym.Env):
         self.UPLOAD_PATH = config.UPLOAD_PATH
         self.OPTIMAL_PATH = config.OPTIMAL_PATH
         self.INSTANCE_INDEX = config.INSTANCE_INDEX
+        self.SORTING_TYPE = config.SORTING_TYPE
 
         self.solution_found = config.SOLUTION_FOUND
         self.optimal_value = 0
@@ -48,11 +55,21 @@ class KnapsackEnv(gym.Env):
         self.value_of_all_items_selected = None
         self.num_step = None
 
+
         self.action_space = spaces.Discrete(2)
-        self.observation_space = spaces.Box(
-            low=-1.0, high=1000.0,
-            shape=((self.NUM_ITEM + 2) * 4,)
-        )
+
+        if isinstance(config.MODEL_PARAMETER, ConfigLinearModel):
+            self.observation_space = spaces.Box(
+                low=-1.0, high=1000.0,
+                shape=((self.NUM_ITEM + 2) * 4,)
+            )
+        elif isinstance(config.MODEL_PARAMETER, Config1DConvolutionalModel):
+            self.observation_space = spaces.Box(
+                low=-1.0, high=1000.0,
+                shape=(self.NUM_ITEM + 2, 4)
+            )
+        else:
+            raise ValueError()
 
         if self.INITIAL_ITEM_DISTRIBUTION_FIXED:
             self.fixed_initial_internal_state = self.get_initial_state()
@@ -87,17 +104,13 @@ class KnapsackEnv(gym.Env):
                 state[item_idx][2] = item_value
                 state[item_idx][3] = item_weight
 
+                state[self.NUM_ITEM][0] += item_value
+                state[self.NUM_ITEM][1] += item_weight
+
+                state[self.NUM_ITEM][2] += item_value
+                state[self.NUM_ITEM][3] += item_weight
+
             state[-1][1] = np.array(self.LIMIT_WEIGHT_KNAPSACK)
-
-        # for item_idx in range(self.NUM_ITEM):
-        #     state[item_idx][2] = data[item_idx][1]
-        #     state[item_idx][3] = data[item_idx][0]
-        #
-        # state[-1][1] = data[self.NUM_ITEM][1]
-
-        if self.OPTIMAL_PATH:
-            self.OPTIMAL_PATH = self.OPTIMAL_PATH + '/solution' + str(self.INSTANCE_INDEX) + '.csv'
-            self.optimal_value = load_solution('linklab', self.OPTIMAL_PATH)
 
         if self.UPLOAD_PATH:
             date = dt.datetime.now()
@@ -105,11 +118,119 @@ class KnapsackEnv(gym.Env):
             user = SYSTEM_USER_NAME
             com = SYSTEM_COMPUTER_NAME
             self.UPLOAD_PATH = self.UPLOAD_PATH + date_str + user + com + '/link_solution' + str(self.INSTANCE_INDEX) + '.csv'
+        else:
+            self.UPLOAD_PATH = 'knapsack_instances/TEST/link_solution'
+            date = dt.datetime.now()
+            date_str = '/' + str(date.year) + str(date.month) + str(date.day)
+            user = SYSTEM_USER_NAME
+            com = SYSTEM_COMPUTER_NAME
+            self.UPLOAD_PATH = self.UPLOAD_PATH + date_str + user + com + '/link_solution' + str(self.INSTANCE_INDEX) + '.csv'
+
+        if self.OPTIMAL_PATH:
+            self.OPTIMAL_PATH = self.OPTIMAL_PATH + '/solution' + str(self.INSTANCE_INDEX) + '.csv'
+            self.optimal_value = load_solution('linklab', self.OPTIMAL_PATH)
+        else:
+            Knapsack_capacity = float(state[-1][1])
+            values = state[:-1, 2]
+            weights = state[:-1, 3]
+
+            items_selected, self.optimal_value = model_kp(Knapsack_capacity, values, weights, False)
+
+            self.OPTIMAL_PATH = 'knapsack_instances/TEST/optimal_solution'
+            date = dt.datetime.now()
+            date_str = '/' + str(date.year) + str(date.month) + str(date.day)
+            user = SYSTEM_USER_NAME
+            com = SYSTEM_COMPUTER_NAME
+            self.OPTIMAL_PATH = self.OPTIMAL_PATH + date_str + user + com + '/optimal_solution' + str(self.INSTANCE_INDEX) + '.csv'
+
+            upload_file('linklab', (items_selected, self.optimal_value), self.OPTIMAL_PATH)
 
         return state
 
+    def state_sorting(self, state, start, end):
+
+        if self.SORTING_TYPE == 1: #Value Per Weight
+            if start >= end:
+                return
+
+            pivot = start
+            left = start + 1
+            right = end
+
+            while left <= right:
+                while left <= end and (state[left][2] / state[left][3]) <= (state[pivot][2] / state[pivot][3]):
+                    left += 1
+
+                while right > start and (state[right][2] / state[right][3]) >= (state[pivot][2] / state[pivot][3]):
+                    right -= 1
+
+                if left > right:
+                    state[[right, pivot]] = state[[pivot, right]]
+                else:
+                    state[[left, right]] = state[[right, left]]
+
+            self.state_sorting(state, start, right - 1)
+            self.state_sorting(state, right + 1, end)
+
+        elif self.SORTING_TYPE == 2: #Value
+            if start >= end:
+                return
+
+            pivot = start
+            left = start + 1
+            right = end
+
+            while left <= right:
+                while left <= end and state[left][2] <= state[pivot][2]:
+                    left += 1
+
+                while right > start and state[right][2] >= state[pivot][2]:
+                    right -= 1
+
+                if left > right:
+                    state[[right, pivot]] = state[[pivot, right]]
+                else:
+                    state[[left, right]] = state[[right, left]]
+
+            self.state_sorting(state, start, right - 1)
+            self.state_sorting(state, right + 1, end)
+
+        elif self.SORTING_TYPE == 3: #weight
+            if start >= end:
+                return
+
+            pivot = start
+            left = start + 1
+            right = end
+
+            while left <= right:
+                while left <= end and state[left][3] <= state[pivot][3]:
+                    left += 1
+
+                while right > start and state[right][3] >= state[pivot][3]:
+                    right -= 1
+
+                if left > right:
+                    state[[right, pivot]] = state[[pivot, right]]
+                else:
+                    state[[left, right]] = state[[right, left]]
+
+            self.state_sorting(state, start, right - 1)
+            self.state_sorting(state, right + 1, end)
+
+        elif self.SORTING_TYPE is None:
+            pass
+
+        else:
+            raise ValueError()
+
     def observation(self):
-        observation = copy.deepcopy(self.internal_state.flatten()) / self.LIMIT_WEIGHT_KNAPSACK
+        if isinstance(self.config.MODEL_PARAMETER, ConfigLinearModel):
+            observation = copy.deepcopy(self.internal_state.flatten()) / self.LIMIT_WEIGHT_KNAPSACK
+        elif isinstance(self.config.MODEL_PARAMETER, Config1DConvolutionalModel):
+            observation = copy.deepcopy(self.internal_state) / self.LIMIT_WEIGHT_KNAPSACK
+        else:
+            raise ValueError()
         return observation
 
     def reward(self, done_type=None):
@@ -145,6 +266,7 @@ class KnapsackEnv(gym.Env):
         else:
             self.internal_state = self.get_initial_state()
 
+        self.state_sorting(self.internal_state, 0, self.NUM_ITEM - 1)
         self.TOTAL_VALUE_FOR_ALL_ITEMS = sum(self.internal_state[:, 2])
         self.items_selected = []
         self.actions_sequence = []
@@ -157,6 +279,17 @@ class KnapsackEnv(gym.Env):
         observation = self.observation()
         info = dict()
         info['internal_state'] = copy.deepcopy(self.internal_state)
+
+        if not self.FILE_PATH:
+            self.FILE_PATH = 'knapsack_instances/TEST/instances'
+            date = dt.datetime.now()
+            date_str = '/' + str(date.year) + str(date.month) + str(date.day)
+            user = SYSTEM_USER_NAME
+            com = SYSTEM_COMPUTER_NAME
+            self.FILE_PATH = self.FILE_PATH + date_str + user + com + '/instance' + str(
+                self.INSTANCE_INDEX) + '.csv'
+
+            upload_file('linklab', self.internal_state, self.FILE_PATH)
 
         if return_info:
             return observation, info
@@ -186,10 +319,6 @@ class KnapsackEnv(gym.Env):
             self.weight_of_all_items_selected += step_item_weight
 
             self.internal_state[self.num_step][1] = 1
-            self.internal_state[self.num_step][2:] = -1
-
-            self.internal_state[self.NUM_ITEM][0] = self.internal_state[self.NUM_ITEM][2] - self.value_of_all_items_selected
-            self.internal_state[self.NUM_ITEM][1] = self.internal_state[self.NUM_ITEM][3] - self.weight_of_all_items_selected
 
             self.internal_state[-1][1] -= step_item_weight
             self.internal_state[-1][2] = self.value_of_all_items_selected
@@ -198,6 +327,12 @@ class KnapsackEnv(gym.Env):
         possible = self.check_future_select_possible()
 
         done = False
+
+        self.internal_state[self.NUM_ITEM][0] = self.internal_state[self.NUM_ITEM][2] - self.internal_state[self.num_step][2]
+        self.internal_state[self.NUM_ITEM][1] = self.internal_state[self.NUM_ITEM][3] - self.internal_state[self.num_step][3]
+        self.internal_state[self.num_step][0] = 0
+        self.internal_state[self.num_step][2:] = -1
+
         if self.num_step == self.NUM_ITEM - 1 or not possible:
             done = True
 
@@ -207,11 +342,7 @@ class KnapsackEnv(gym.Env):
                 info['DoneReasonType'] = DoneReasonType0.TYPE_1  # "Weight Limit Exceeded"
             else:
                 info['DoneReasonType'] = DoneReasonType0.TYPE_2  # "Weight Remains"
-
-            self.internal_state[self.num_step][0] = 0
-            self.internal_state[-1][0] = 1
         else:
-            self.internal_state[self.num_step][0] = 0
             self.num_step += 1
             self.internal_state[self.num_step][0] = 1
 
@@ -225,8 +356,7 @@ class KnapsackEnv(gym.Env):
                     self.solution_found[0] = self.value_of_all_items_selected
                     self.solution_found[1:] = self.items_selected
 
-                    if self.OPTIMAL_PATH:
-                        self.solution_found[-1] = self.solution_found[0] / self.optimal_value
+                    self.solution_found.append(self.solution_found[0] / self.optimal_value)
 
                     if self.UPLOAD_PATH:
                         upload_file('linklab', self.solution_found, self.UPLOAD_PATH)
@@ -254,16 +384,27 @@ def run_env():
     print("START RUN!!!")
     agent = Dummy_Agent()
 
-    random_instance_info_keys = ["n_50_r_100", "n_300_r_600", "n_500_r_1800"]
-    hard_instance_info_keys = ["n_50_r_100", "n_300_r_600", "n_500_r_1000"]
-    fixed_instance_info_keys = ["n_50_wp_12.5", "n_300_wp_37.5", "n_500_wp_37.5"]
-    config = ConfigKnapsack0()
-    config.NUM_ITEM = 50
-    config.INSTANCE_INDEX = 0
-    config.FILE_PATH = 'knapsack_instances/RI/instances/' + random_instance_info_keys[0]
-    config.UPLOAD_PATH = 'knapsack_instances/RI/link_solution/' + random_instance_info_keys[0]
-    config.OPTIMAL_PATH = 'knapsack_instances/RI/optimal_solution/' + random_instance_info_keys[0]
-    config.SOLUTION_FOUND = [0]
+    # random_instance_info_keys = ["n_50_r_100", "n_300_r_600", "n_500_r_1800"]
+    # hard_instance_info_keys = ["n_50_r_100", "n_300_r_600", "n_500_r_1000"]
+    # fixed_instance_info_keys = ["n_50_wp_12.5", "n_300_wp_37.5", "n_500_wp_37.5"]
+    # config = ConfigKnapsack0()
+    # config.NUM_ITEM = 50
+    # config.INSTANCE_INDEX = 0
+    # config.FILE_PATH = 'knapsack_instances/RI/instances/' + random_instance_info_keys[0]
+    # config.UPLOAD_PATH = 'knapsack_instances/RI/link_solution/' + random_instance_info_keys[0]
+    # config.OPTIMAL_PATH = 'knapsack_instances/RI/optimal_solution/' + random_instance_info_keys[0]
+    # config.SOLUTION_FOUND = [0]
+    # env = KnapsackEnv(config)
+
+    config = ConfigKnapsackTest()
+
+    if config.MODEL_TYPE in (
+        ModelType.TINY_1D_CONVOLUTIONAL, ModelType.SMALL_1D_CONVOLUTIONAL,
+        ModelType.MEDIUM_1D_CONVOLUTIONAL, ModelType.LARGE_1D_CONVOLUTIONAL
+    ):
+        from a_configuration.a_base_config.c_models.config_convolutional_models import Config1DConvolutionalModel
+        config.MODEL_PARAMETER = Config1DConvolutionalModel(config.MODEL_TYPE)
+
     env = KnapsackEnv(config)
 
     for i in range(2):
