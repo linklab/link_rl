@@ -14,7 +14,7 @@ class ConfigFrozenLakeDqn(ConfigBase, ConfigFrozenLake, ConfigDqn):
         self.BUFFER_CAPACITY = 50_000
 
         if self.BOX_OBSERVATION:
-            self.MODEL_TYPE = ModelType.TINY_CONVOLUTIONAL
+            self.MODEL_TYPE = ModelType.TINY_2D_CONVOLUTIONAL
         else:
             self.MODEL_TYPE = ModelType.TINY_LINEAR
 

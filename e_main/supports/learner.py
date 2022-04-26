@@ -8,7 +8,7 @@ import b_environments.wrapper
 from a_configuration.a_base_config.a_environments.combinatorial_optimization.config_knapsack import ConfigKnapsack
 from a_configuration.a_base_config.a_environments.combinatorial_optimization.config_task_allocation import \
     ConfigTakAllocation
-from a_configuration.a_base_config.c_models.config_recurrent_convolutional_models import ConfigRecurrentConvolutionalModel
+from a_configuration.a_base_config.c_models.config_recurrent_convolutional_models import ConfigRecurrent2DConvolutionalModel
 from a_configuration.a_base_config.c_models.config_recurrent_linear_models import ConfigRecurrentLinearModel
 
 warnings.filterwarnings('ignore')
@@ -81,7 +81,7 @@ class Learner(mp.Process):
 
         self.is_recurrent_model = any([
             isinstance(self.config.MODEL_PARAMETER, ConfigRecurrentLinearModel),
-            isinstance(self.config.MODEL_PARAMETER, ConfigRecurrentConvolutionalModel)
+            isinstance(self.config.MODEL_PARAMETER, ConfigRecurrent2DConvolutionalModel)
         ])
 
         if self.config.ACTION_MASKING:
@@ -515,11 +515,13 @@ class Learner(mp.Process):
 
             while True:
                 if self.config.ACTION_MASKING:
-                    action = self.agent.get_action(obs=observation,
-                                                   unavailable_actions=unavailable_actions,
-                                                   mode=AgentMode.TEST)
+                    action = self.agent.get_action(
+                        obs=observation, unavailable_actions=unavailable_actions, mode=AgentMode.TEST
+                    )
                 else:
-                    action = self.agent.get_action(obs=observation, mode=AgentMode.TEST)
+                    action = self.agent.get_action(
+                        obs=observation, mode=AgentMode.TEST
+                    )
 
                 if not isinstance(self.test_env, VectorEnv):
                     if isinstance(self.agent.action_space, Discrete):
@@ -548,7 +550,9 @@ class Learner(mp.Process):
                     scaled_action = action
 
                 next_observation, reward, done, info = self.test_env.step(scaled_action)
-                next_observation = np.expand_dims(next_observation, axis=0)
+
+                if not isinstance(self.test_env, VectorEnv):
+                    next_observation = np.expand_dims(next_observation, axis=0)
 
                 if self.is_recurrent_model:
                     next_observation = [(next_observation, self.agent.model.recurrent_hidden)]

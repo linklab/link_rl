@@ -15,7 +15,7 @@ class ConfigDroneDdpg(ConfigBase, ConfigDrone, ConfigDdpg):
         self.BUFFER_CAPACITY = 250_000
 
         self.MAX_TRAINING_STEPS = 2_000_000
-        self.MODEL_TYPE = ModelType.SMALL_CONVOLUTIONAL
+        self.MODEL_TYPE = ModelType.SMALL_2D_CONVOLUTIONAL
 
 class ConfigDroneSac(ConfigBase, ConfigDrone, ConfigSac):
     def __init__(self):

@@ -34,7 +34,7 @@ class ConfigComparisonPongDqnTypes(ConfigComparisonBase):
 
         self.ENV_NAME = "ALE/Pong-v5"
 
-        self.MAX_TRAINING_STEPS = 1_000_000
+        self.MAX_TRAINING_STEPS = 300_000
 
         self.AGENT_PARAMETERS = [
             ConfigPongDqn(),
@@ -43,6 +43,10 @@ class ConfigComparisonPongDqnTypes(ConfigComparisonBase):
             ConfigPongDoubleDuelingDqn(),
             ConfigPongDoubleDuelingDqn()
         ]
+
+        for parameter in self.AGENT_PARAMETERS:
+            parameter.FRAME_SKIP = 16
+            parameter.BUFFER_CAPACITY = 250_000
 
         self.AGENT_PARAMETERS[4].USE_PER = True
 

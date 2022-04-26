@@ -272,6 +272,7 @@ config = ConfigPongDuelingDqn()
 
 from a_configuration.b_single_config.open_ai_gym.atari.config_pong import ConfigPongDoubleDuelingDqn
 config = ConfigPongDoubleDuelingDqn()
+config.WANDB_REPORT_URL = "https://wandb.ai/link-koreatech/Pong-v5_DOUBLE_DUELING_DQN_yhhan/reports/Pong-v5_DOUBLE_DUELING_DQN--VmlldzoxODYxMjU4?accessToken=gsvpknqu1gqi6cb0177jgdzk61oqhpua4kcj680l89fdvwer1cg3wms7rb62syj8"
 
 from a_configuration.b_single_config.open_ai_gym.atari.config_pong import ConfigPongA2c
 config = ConfigPongA2c()
@@ -436,6 +437,14 @@ config = ConfigKnapsack0A2c()
 from a_configuration.b_single_config.combinatorial_optimization.config_knapsack import ConfigKnapsack0Ppo
 config = ConfigKnapsack0Ppo()
 
+from a_configuration.b_single_config.combinatorial_optimization.config_knapsack import ConfigKnapsackTestDqn
+config = ConfigKnapsackTestDqn()
+
+from a_configuration.b_single_config.combinatorial_optimization.config_knapsack import ConfigKnapsackTestA2c
+config = ConfigKnapsackTestA2c()
+
+from a_configuration.b_single_config.combinatorial_optimization.config_knapsack import ConfigKnapsackTestPpo
+config = ConfigKnapsackTestPpo()
 
 config.USE_WANDB = False
 

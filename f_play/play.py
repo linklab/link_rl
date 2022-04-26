@@ -9,7 +9,7 @@ from a_configuration.a_base_config.a_environments.mujoco.config_gym_mujoco impor
 from a_configuration.a_base_config.a_environments.open_ai_gym.config_gym_atari import ConfigGymAtari
 from a_configuration.a_base_config.a_environments.pybullet.config_gym_pybullet import ConfigBullet
 from a_configuration.a_base_config.a_environments.unity.config_unity_box import ConfigUnityGymEnv
-from a_configuration.a_base_config.c_models.config_recurrent_convolutional_models import ConfigRecurrentConvolutionalModel
+from a_configuration.a_base_config.c_models.config_recurrent_convolutional_models import ConfigRecurrent2DConvolutionalModel
 from a_configuration.a_base_config.c_models.config_recurrent_linear_models import ConfigRecurrentLinearModel
 from g_utils.commons import set_config
 from g_utils.commons_rl import get_agent
@@ -36,7 +36,7 @@ device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 def play(env, agent, n_episodes):
     is_recurrent_model = any([
         isinstance(config.MODEL_PARAMETER, ConfigRecurrentLinearModel),
-        isinstance(config.MODEL_PARAMETER, ConfigRecurrentConvolutionalModel)
+        isinstance(config.MODEL_PARAMETER, ConfigRecurrent2DConvolutionalModel)
     ])
 
     for i in range(n_episodes):
@@ -119,9 +119,11 @@ def main_play(n_episodes):
 
     agent = get_agent(observation_space, action_space, config)
 
+    env_name = config.ENV_NAME.split("/")[1] if "/" in config.ENV_NAME else config.ENV_NAME
+
     model_load(
         model=agent.model,
-        env_name=config.ENV_NAME,
+        env_name=env_name,
         agent_type_name=config.AGENT_TYPE.name,
         file_name=config.PLAY_MODEL_FILE_NAME,
         config=config

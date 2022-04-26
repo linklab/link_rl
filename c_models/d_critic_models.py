@@ -4,11 +4,14 @@ import numpy as np
 import torch
 from torch import nn
 
-from a_configuration.a_base_config.c_models.config_convolutional_models import ConfigConvolutionalModel
+from a_configuration.a_base_config.c_models.config_convolutional_models import Config2DConvolutionalModel, \
+    Config1DConvolutionalModel
 from a_configuration.a_base_config.c_models.config_linear_models import ConfigLinearModel
-from a_configuration.a_base_config.c_models.config_recurrent_convolutional_models import ConfigRecurrentConvolutionalModel
+from a_configuration.a_base_config.c_models.config_recurrent_convolutional_models import \
+    ConfigRecurrent2DConvolutionalModel, ConfigRecurrent1DConvolutionalModel
 from a_configuration.a_base_config.c_models.config_recurrent_linear_models import ConfigRecurrentLinearModel
 from c_models.a_models import Model
+from g_utils.types import ConvolutionType
 
 
 class CriticModel(Model):
@@ -55,11 +58,21 @@ class ValueCriticModel(CriticModel):
             )
 
         elif any([
-            isinstance(self.config.MODEL_PARAMETER, ConfigConvolutionalModel),
-            isinstance(self.config.MODEL_PARAMETER, ConfigRecurrentConvolutionalModel)
+            isinstance(self.config.MODEL_PARAMETER, Config1DConvolutionalModel),
+            isinstance(self.config.MODEL_PARAMETER, ConfigRecurrent1DConvolutionalModel)
         ]):
             self.make_convolutional_model(
-                observation_shape=observation_shape, activation=self.config.VALUE_NETWORK_LAYER_ACTIVATION()
+                observation_shape=observation_shape, activation=self.config.VALUE_NETWORK_LAYER_ACTIVATION(),
+                convolution_type=ConvolutionType.ONE_DIMENSION
+            )
+
+        elif any([
+            isinstance(self.config.MODEL_PARAMETER, Config2DConvolutionalModel),
+            isinstance(self.config.MODEL_PARAMETER, ConfigRecurrent2DConvolutionalModel)
+        ]):
+            self.make_convolutional_model(
+                observation_shape=observation_shape, activation=self.config.VALUE_NETWORK_LAYER_ACTIVATION(),
+                convolution_type=ConvolutionType.TWO_DIMENSION
             )
 
         else:
@@ -79,7 +92,7 @@ class ValueCriticModel(CriticModel):
             x = self.representation_layers(obs)
             x = self.linear_layers(x)
 
-        elif isinstance(self.config.MODEL_PARAMETER, ConfigConvolutionalModel):
+        elif isinstance(self.config.MODEL_PARAMETER, Config2DConvolutionalModel):
             conv_out = self.convolutional_layers(obs)
             conv_out = torch.flatten(conv_out, start_dim=1)
             x = self.representation_layers(conv_out)
@@ -90,7 +103,7 @@ class ValueCriticModel(CriticModel):
             x = self.representation_layers(obs)
             x = self.linear_layers(x)
 
-        elif isinstance(self.config.MODEL_PARAMETER, ConfigRecurrentConvolutionalModel):
+        elif isinstance(self.config.MODEL_PARAMETER, ConfigRecurrent2DConvolutionalModel):
             conv_out = self.convolutional_layers(obs)
             conv_out = torch.flatten(conv_out, start_dim=1)
             x = self.representation_layers(conv_out)
@@ -135,8 +148,8 @@ class QCriticModel(CriticModel):
             )
 
         elif any([
-            isinstance(self.config.MODEL_PARAMETER, ConfigConvolutionalModel),
-            isinstance(self.config.MODEL_PARAMETER, ConfigRecurrentConvolutionalModel)
+            isinstance(self.config.MODEL_PARAMETER, Config2DConvolutionalModel),
+            isinstance(self.config.MODEL_PARAMETER, ConfigRecurrent2DConvolutionalModel)
         ]):
             self.make_convolutional_model(
                 observation_shape=observation_shape, n_out_actions=self.n_out_actions,
@@ -167,7 +180,7 @@ class QCriticModel(CriticModel):
             x = torch.cat([x, act], dim=-1)
             x = self.linear_layers(x)
 
-        elif isinstance(self.config.MODEL_PARAMETER, ConfigConvolutionalModel):
+        elif isinstance(self.config.MODEL_PARAMETER, Config2DConvolutionalModel):
             conv_out = self.convolutional_layers(obs)
 
             conv_out = torch.flatten(conv_out, start_dim=1)
@@ -183,7 +196,7 @@ class QCriticModel(CriticModel):
             x = torch.cat([x, act], dim=-1)
             x = self.linear_layers(x)
 
-        elif isinstance(self.config.MODEL_PARAMETER, ConfigRecurrentConvolutionalModel):
+        elif isinstance(self.config.MODEL_PARAMETER, ConfigRecurrent2DConvolutionalModel):
             obs, _ = obs[0]
             conv_out = self.convolutional_layers(obs)
 
@@ -241,8 +254,8 @@ class DoubleQCriticModel(CriticModel):
             self.q2_linear_layers = self.get_linear_layers(input_n_features=input_n_features)
 
         elif any([
-            isinstance(self.config.MODEL_PARAMETER, ConfigConvolutionalModel),
-            isinstance(self.config.MODEL_PARAMETER, ConfigRecurrentConvolutionalModel)
+            isinstance(self.config.MODEL_PARAMETER, Config2DConvolutionalModel),
+            isinstance(self.config.MODEL_PARAMETER, ConfigRecurrent2DConvolutionalModel)
         ]):
             input_n_channels = self.observation_shape[0]
             self.convolutional_layers = self.get_convolutional_layers(input_n_channels=input_n_channels)
@@ -294,7 +307,7 @@ class DoubleQCriticModel(CriticModel):
             q1_x = self.q1_linear_layers(x)
             q2_x = self.q2_linear_layers(x)
 
-        elif isinstance(self.config.MODEL_PARAMETER, ConfigConvolutionalModel):
+        elif isinstance(self.config.MODEL_PARAMETER, Config2DConvolutionalModel):
             conv_out = self.convolutional_layers(obs)
             conv_out = torch.flatten(conv_out, start_dim=1)
             x = self.representation_layers(conv_out)
@@ -311,7 +324,7 @@ class DoubleQCriticModel(CriticModel):
             q1_x = self.q1_linear_layers(x)
             q2_x = self.q2_linear_layers(x)
 
-        elif isinstance(self.config.MODEL_PARAMETER, ConfigRecurrentConvolutionalModel):
+        elif isinstance(self.config.MODEL_PARAMETER, ConfigRecurrent2DConvolutionalModel):
             obs, _ = obs[0]
             conv_out = self.convolutional_layers(obs)
             conv_out = torch.flatten(conv_out, start_dim=1)
