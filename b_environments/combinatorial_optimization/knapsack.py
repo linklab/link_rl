@@ -89,8 +89,8 @@ class KnapsackEnv(gym.Env):
             state = data
 
             for item_idx in range(self.NUM_ITEM):
-                state[self.NUM_ITEM][2] += state[item_idx][2]
-                state[self.NUM_ITEM][3] += state[item_idx][3]
+                state[-1][2] += state[item_idx][2]
+                state[-1][3] += state[item_idx][3]
 
             self.LIMIT_WEIGHT_KNAPSACK = state[-1][1]
         else:
@@ -104,11 +104,11 @@ class KnapsackEnv(gym.Env):
                 state[item_idx][2] = item_value
                 state[item_idx][3] = item_weight
 
-                state[self.NUM_ITEM][0] += item_value
-                state[self.NUM_ITEM][1] += item_weight
-
                 state[self.NUM_ITEM][2] += item_value
                 state[self.NUM_ITEM][3] += item_weight
+
+                state[-1][2] += item_value
+                state[-1][3] += item_weight
 
             state[-1][1] = np.array(self.LIMIT_WEIGHT_KNAPSACK)
 
@@ -275,6 +275,8 @@ class KnapsackEnv(gym.Env):
 
         self.num_step = 0
         self.internal_state[self.num_step][0] = 1
+        self.internal_state[self.NUM_ITEM][0] = self.internal_state[self.num_step][2]
+        self.internal_state[self.NUM_ITEM][1] = self.internal_state[self.num_step][3]
 
         observation = self.observation()
         info = dict()
@@ -302,7 +304,7 @@ class KnapsackEnv(gym.Env):
         for item in self.internal_state[self.num_step + 1: self.NUM_ITEM]:
             weight = item[3]
 
-            if weight <= self.internal_state[-1][1]:
+            if weight + self.internal_state[-1][0] <= self.internal_state[-1][1]:
                 possible = True
                 break
 
@@ -315,21 +317,23 @@ class KnapsackEnv(gym.Env):
 
         if action_idx == 1:
             self.items_selected.append(self.num_step)
+
             self.value_of_all_items_selected += step_item_value
             self.weight_of_all_items_selected += step_item_weight
 
             self.internal_state[self.num_step][1] = 1
 
-            self.internal_state[-1][1] -= step_item_weight
-            self.internal_state[-1][2] = self.value_of_all_items_selected
-            self.internal_state[-1][3] = self.weight_of_all_items_selected
+            self.internal_state[-1][0] += step_item_weight
+
+            self.internal_state[self.NUM_ITEM][2] = self.internal_state[self.NUM_ITEM][2] - \
+                                                    self.internal_state[self.num_step][2]
+            self.internal_state[self.NUM_ITEM][3] = self.internal_state[self.NUM_ITEM][3] - \
+                                                    self.internal_state[self.num_step][3]
 
         possible = self.check_future_select_possible()
 
         done = False
 
-        self.internal_state[self.NUM_ITEM][0] = self.internal_state[self.NUM_ITEM][2] - self.internal_state[self.num_step][2]
-        self.internal_state[self.NUM_ITEM][1] = self.internal_state[self.NUM_ITEM][3] - self.internal_state[self.num_step][3]
         self.internal_state[self.num_step][0] = 0
         self.internal_state[self.num_step][2:] = -1
 
@@ -345,6 +349,8 @@ class KnapsackEnv(gym.Env):
         else:
             self.num_step += 1
             self.internal_state[self.num_step][0] = 1
+            self.internal_state[self.NUM_ITEM][0] = self.internal_state[self.num_step][2]
+            self.internal_state[self.NUM_ITEM][1] = self.internal_state[self.num_step][3]
 
         observation = self.observation()
 
@@ -356,7 +362,7 @@ class KnapsackEnv(gym.Env):
                     self.solution_found[0] = self.value_of_all_items_selected
                     self.solution_found[1:] = self.items_selected
 
-                    self.solution_found.append(self.solution_found[0] / self.optimal_value)
+                    self.solution_found.append(round(self.solution_found[0] / self.optimal_value, 3))
 
                     if self.UPLOAD_PATH:
                         upload_file('linklab', self.solution_found, self.UPLOAD_PATH)
