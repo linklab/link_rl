@@ -79,18 +79,40 @@ if __name__ == "__main__":
     # values = [1, 10, 1, 2, 9]
     # weights = [10, 1, 10, 1, 9]
 
-    INDEX = 3
-    M = 1000
-    for idx in range(INDEX):
-        for m in range(M):
-            data = random_instance_reader(idx, m)
-            #data = fixed_instance_reader(idx, m)
-            #data = hard_instance_reader(idx, m)
-            Knapsack_capacity = float(data[-1][1])
-            values = data[:-1, 0]
-            weights = data[:-1, 1]
+    Knapsack_capacity = 500
+    values = [
+        12.000, 19.000, 11.000, 14.000, 11.000, 2.000, 7.000, 11.000, 17.000,
+        17.000, 6.000, 13.000, 2.000, 1.000, 13.000, 15.000, 19.000, 7.000,
+        15.000, 10.000, 7.000, 13.000, 2.000, 15.000, 15.000, 6.000, 3.000,
+        2.000, 6.000, 16.000, 11.000, 15.000, 12.000, 4.000, 18.000, 6.000,
+        16.000, 2.000, 13.000, 12.000, 1.000, 5.000, 18.000, 3.000, 5.000,
+        18.000, 18.000, 8.000, 3.000, 13.000
+    ]
+    weights = [
+        12.000, 11.000, 4.000, 3.000, 4.000, 19.000, 10.000, 1.000, 10.000,
+        6.000, 18.000, 5.000, 2.000, 9.000, 19.000, 8.000, 8.000, 12.000, 13.000,
+        2.000, 19.000, 3.000, 8.000, 10.000, 8.000, 14.000, 17.000, 15.000,
+        4.000, 12.000, 14.000, 11.000, 1.000, 18.000, 15.000, 4.000, 6.000,
+        3.000, 16.000, 12.000, 11.000, 11.000, 19.000, 17.000, 15.000, 7.000,
+        1.000, 8.000, 14.000, 10.000
+    ]
 
-            items_selected, total_value = model_kp(Knapsack_capacity, values, weights, False)
-            print("instance_reader", idx, m)
-            print("items_selected", items_selected)
-            print("total_value", total_value)
+    items_selected, total_value = model_kp(Knapsack_capacity, values, weights, False)
+    print("items_selected", items_selected)
+    print("total_value", total_value)
+
+    # INDEX = 3
+    # M = 1000
+    # for idx in range(INDEX):
+    #     for m in range(M):
+    #         data = random_instance_reader(idx, m)
+    #         #data = fixed_instance_reader(idx, m)
+    #         #data = hard_instance_reader(idx, m)
+    #         Knapsack_capacity = float(data[-1][1])
+    #         values = data[:-1, 0]
+    #         weights = data[:-1, 1]
+    #
+    #         items_selected, total_value = model_kp(Knapsack_capacity, values, weights, False)
+    #         print("instance_reader", idx, m)
+    #         print("items_selected", items_selected)
+    #         print("total_value", total_value)

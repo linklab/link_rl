@@ -440,6 +440,9 @@ config = ConfigKnapsack0Ppo()
 from a_configuration.b_single_config.combinatorial_optimization.config_knapsack import ConfigKnapsackTestDqn
 config = ConfigKnapsackTestDqn()
 
+from a_configuration.b_single_config.combinatorial_optimization.config_knapsack import ConfigKnapsackStaticTestDqn
+config = ConfigKnapsackStaticTestDqn()
+
 from a_configuration.b_single_config.combinatorial_optimization.config_knapsack import ConfigKnapsackTestA2c
 config = ConfigKnapsackTestA2c()
 

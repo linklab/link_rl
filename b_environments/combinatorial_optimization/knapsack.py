@@ -16,6 +16,63 @@ from b_environments.combinatorial_optimization.boto3_knapsack import load_instan
 from b_environments.combinatorial_optimization.knapsack_gurobi import model_kp
 from g_utils.types import ModelType
 
+STATIC_INITIAL_STATE_50 = np.asarray([
+    [0.000, 0.000, 12.000, 12.000],
+    [0.000, 0.000, 19.000, 11.000],
+    [0.000, 0.000, 11.000, 4.000],
+    [0.000, 0.000, 14.000, 3.000],
+    [0.000, 0.000, 11.000, 4.000],
+    [0.000, 0.000, 2.000, 19.000],
+    [0.000, 0.000, 7.000, 10.000],
+    [0.000, 0.000, 11.000, 1.000],
+    [0.000, 0.000, 17.000, 10.000],
+    [0.000, 0.000, 17.000, 6.000],
+    [0.000, 0.000, 6.000, 18.000],
+    [0.000, 0.000, 13.000, 5.000],
+    [0.000, 0.000, 2.000, 2.000],
+    [0.000, 0.000, 1.000, 9.000],
+    [0.000, 0.000, 13.000, 19.000],
+    [0.000, 0.000, 15.000, 8.000],
+    [0.000, 0.000, 19.000, 8.000],
+    [0.000, 0.000, 7.000, 12.000],
+    [0.000, 0.000, 15.000, 13.000],
+    [0.000, 0.000, 10.000, 2.000],
+    [0.000, 0.000, 7.000, 19.000],
+    [0.000, 0.000, 13.000, 3.000],
+    [0.000, 0.000, 2.000, 8.000],
+    [0.000, 0.000, 15.000, 10.000],
+    [0.000, 0.000, 15.000, 8.000],
+    [0.000, 0.000, 6.000, 14.000],
+    [0.000, 0.000, 3.000, 17.000],
+    [0.000, 0.000, 2.000, 15.000],
+    [0.000, 0.000, 6.000, 4.000],
+    [0.000, 0.000, 16.000, 12.000],
+    [0.000, 0.000, 11.000, 14.000],
+    [0.000, 0.000, 15.000, 11.000],
+    [0.000, 0.000, 12.000, 1.000],
+    [0.000, 0.000, 4.000, 18.000],
+    [0.000, 0.000, 18.000, 15.000],
+    [0.000, 0.000, 6.000, 4.000],
+    [0.000, 0.000, 16.000, 6.000],
+    [0.000, 0.000, 2.000, 3.000],
+    [0.000, 0.000, 13.000, 16.000],
+    [0.000, 0.000, 12.000, 12.000],
+    [0.000, 0.000, 1.000, 11.000],
+    [0.000, 0.000, 5.000, 11.000],
+    [0.000, 0.000, 18.000, 19.000],
+    [0.000, 0.000, 3.000, 17.000],
+    [0.000, 0.000, 5.000, 15.000],
+    [0.000, 0.000, 18.000, 7.000],
+    [0.000, 0.000, 18.000, 1.000],
+    [0.000, 0.000, 8.000, 8.000],
+    [0.000, 0.000, 3.000, 14.000],
+    [0.000, 0.000, 13.000, 10.000],
+    [0.000, 0.000, 508.000, 499.000],
+    [0.000, 200.000, 508.000, 499.000]
+])
+
+STATIC_INITIAL_STATE_50_OPTIMAL = 508.0
+
 
 class DoneReasonType0(enum.Enum):
     TYPE_1 = "Weight Limit Exceeded"
@@ -55,7 +112,6 @@ class KnapsackEnv(gym.Env):
         self.value_of_all_items_selected = None
         self.num_step = None
 
-
         self.action_space = spaces.Discrete(2)
 
         if isinstance(config.MODEL_PARAMETER, ConfigLinearModel):
@@ -80,70 +136,76 @@ class KnapsackEnv(gym.Env):
     # 2: initially set to 0, and increase by an item's weight whenever the item is selected
     # 3: initially set to 0, and increase by an item's value whenever the item is selected
     def get_initial_state(self):
-        state = np.zeros(shape=(self.NUM_ITEM + 2, 4), dtype=float)
-
-        if self.FILE_PATH:
-            self.FILE_PATH = self.FILE_PATH + '/instance' + str(self.INSTANCE_INDEX) + '.csv'
-            data = load_instance('linklab', self.FILE_PATH)
-
-            state = data
-
-            for item_idx in range(self.NUM_ITEM):
-                state[-1][2] += state[item_idx][2]
-                state[-1][3] += state[item_idx][3]
-
+        if self.config.STATIC_INITIAL_STATE_50:
+            state = copy.deepcopy(STATIC_INITIAL_STATE_50)
             self.LIMIT_WEIGHT_KNAPSACK = state[-1][1]
+            self.optimal_value = 508.0
+            print("*** STATIC_INITIAL_STATE_50 is used!!! ***")
         else:
-            for item_idx in range(self.NUM_ITEM):
-                item_weight = np.random.randint(
-                    low=self.MIN_WEIGHT_ITEM, high=self.MAX_WEIGHT_ITEM, size=(1, 1)
-                )
-                item_value = np.random.randint(
-                    low=self.MIN_VALUE_ITEM, high=self.MAX_VALUE_ITEM, size=(1, 1)
-                )
-                state[item_idx][2] = item_value
-                state[item_idx][3] = item_weight
+            state = np.zeros(shape=(self.NUM_ITEM + 2, 4), dtype=float)
 
-                state[self.NUM_ITEM][2] += item_value
-                state[self.NUM_ITEM][3] += item_weight
+            if self.FILE_PATH:
+                self.FILE_PATH = self.FILE_PATH + '/instance' + str(self.INSTANCE_INDEX) + '.csv'
+                data = load_instance('linklab', self.FILE_PATH)
 
-                state[-1][2] += item_value
-                state[-1][3] += item_weight
+                state = data
 
-            state[-1][1] = np.array(self.LIMIT_WEIGHT_KNAPSACK)
+                for item_idx in range(self.NUM_ITEM):
+                    state[-1][2] += state[item_idx][2]
+                    state[-1][3] += state[item_idx][3]
 
-        if self.UPLOAD_PATH:
-            date = dt.datetime.now()
-            date_str = '/' + str(date.year) + str(date.month) + str(date.day)
-            user = SYSTEM_USER_NAME
-            com = SYSTEM_COMPUTER_NAME
-            self.UPLOAD_PATH = self.UPLOAD_PATH + date_str + user + com + '/link_solution' + str(self.INSTANCE_INDEX) + '.csv'
-        else:
-            self.UPLOAD_PATH = 'knapsack_instances/TEST/link_solution'
-            date = dt.datetime.now()
-            date_str = '/' + str(date.year) + str(date.month) + str(date.day)
-            user = SYSTEM_USER_NAME
-            com = SYSTEM_COMPUTER_NAME
-            self.UPLOAD_PATH = self.UPLOAD_PATH + date_str + user + com + '/link_solution' + str(self.INSTANCE_INDEX) + '.csv'
+                self.LIMIT_WEIGHT_KNAPSACK = state[-1][1]
+            else:
+                for item_idx in range(self.NUM_ITEM):
+                    item_weight = np.random.randint(
+                        low=self.MIN_WEIGHT_ITEM, high=self.MAX_WEIGHT_ITEM, size=(1, 1)
+                    )
+                    item_value = np.random.randint(
+                        low=self.MIN_VALUE_ITEM, high=self.MAX_VALUE_ITEM, size=(1, 1)
+                    )
+                    state[item_idx][2] = item_value
+                    state[item_idx][3] = item_weight
 
-        if self.OPTIMAL_PATH:
-            self.OPTIMAL_PATH = self.OPTIMAL_PATH + '/solution' + str(self.INSTANCE_INDEX) + '.csv'
-            self.optimal_value = load_solution('linklab', self.OPTIMAL_PATH)
-        else:
-            Knapsack_capacity = float(state[-1][1])
-            values = state[:-1, 2]
-            weights = state[:-1, 3]
+                    state[self.NUM_ITEM][2] += item_value
+                    state[self.NUM_ITEM][3] += item_weight
 
-            items_selected, self.optimal_value = model_kp(Knapsack_capacity, values, weights, False)
+                    state[-1][2] += item_value
+                    state[-1][3] += item_weight
 
-            self.OPTIMAL_PATH = 'knapsack_instances/TEST/optimal_solution'
-            date = dt.datetime.now()
-            date_str = '/' + str(date.year) + str(date.month) + str(date.day)
-            user = SYSTEM_USER_NAME
-            com = SYSTEM_COMPUTER_NAME
-            self.OPTIMAL_PATH = self.OPTIMAL_PATH + date_str + user + com + '/optimal_solution' + str(self.INSTANCE_INDEX) + '.csv'
+                state[-1][1] = np.array(self.LIMIT_WEIGHT_KNAPSACK)
 
-            upload_file('linklab', (items_selected, self.optimal_value), self.OPTIMAL_PATH)
+            if self.UPLOAD_PATH:
+                date = dt.datetime.now()
+                date_str = '/' + str(date.year) + str(date.month) + str(date.day)
+                user = SYSTEM_USER_NAME
+                com = SYSTEM_COMPUTER_NAME
+                self.UPLOAD_PATH = self.UPLOAD_PATH + date_str + user + com + '/link_solution' + str(self.INSTANCE_INDEX) + '.csv'
+            else:
+                self.UPLOAD_PATH = 'knapsack_instances/TEST/link_solution'
+                date = dt.datetime.now()
+                date_str = '/' + str(date.year) + str(date.month) + str(date.day)
+                user = SYSTEM_USER_NAME
+                com = SYSTEM_COMPUTER_NAME
+                self.UPLOAD_PATH = self.UPLOAD_PATH + date_str + user + com + '/link_solution' + str(self.INSTANCE_INDEX) + '.csv'
+
+            if self.OPTIMAL_PATH:
+                self.OPTIMAL_PATH = self.OPTIMAL_PATH + '/solution' + str(self.INSTANCE_INDEX) + '.csv'
+                self.optimal_value = load_solution('linklab', self.OPTIMAL_PATH)
+            else:
+                Knapsack_capacity = float(state[-1][1])
+                values = state[:-1, 2]
+                weights = state[:-1, 3]
+
+                items_selected, self.optimal_value = model_kp(Knapsack_capacity, values, weights, False)
+
+                self.OPTIMAL_PATH = 'knapsack_instances/TEST/optimal_solution'
+                date = dt.datetime.now()
+                date_str = '/' + str(date.year) + str(date.month) + str(date.day)
+                user = SYSTEM_USER_NAME
+                com = SYSTEM_COMPUTER_NAME
+                self.OPTIMAL_PATH = self.OPTIMAL_PATH + date_str + user + com + '/optimal_solution' + str(self.INSTANCE_INDEX) + '.csv'
+
+                upload_file('linklab', (items_selected, self.optimal_value), self.OPTIMAL_PATH)
 
         return state
 

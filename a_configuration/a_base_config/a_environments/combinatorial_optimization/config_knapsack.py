@@ -33,6 +33,8 @@ class ConfigKnapsack:
         self.ENV_NAME = "Knapsack_Problem_v0"
         self.LEARNING_RATE = 0.0003
 
+        self.STATIC_INITIAL_STATE_50 = False
+
 
 class ConfigKnapsack0(ConfigKnapsack):
     def __init__(self):
@@ -50,7 +52,10 @@ class ConfigKnapsackTest(ConfigKnapsack):
     def __init__(self):
         ConfigKnapsack.__init__(self)
 
-        self.NUM_ITEM = 20
-        self.LIMIT_WEIGHT_KNAPSACK = 200
 
+class ConfigKnapsackStaticTest(ConfigKnapsack):
+    def __init__(self):
+        ConfigKnapsack.__init__(self)
+
+        self.STATIC_INITIAL_STATE_50 = True
 
