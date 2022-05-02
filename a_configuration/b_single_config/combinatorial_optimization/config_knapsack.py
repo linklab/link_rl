@@ -50,7 +50,7 @@ class ConfigKnapsackStaticTestDqn(ConfigBase, ConfigKnapsackStaticTest, ConfigDq
 
         self.NUM_ITEM = 50
         self.LIMIT_WEIGHT_KNAPSACK = 500
-        self.MAX_TRAINING_STEPS = self.NUM_ITEM * 2_000
+        self.MAX_TRAINING_STEPS = self.NUM_ITEM * 20_000
         self.INITIAL_TASK_DISTRIBUTION_FIXED = True
         self.BUFFER_CAPACITY = self.NUM_ITEM * 1_000
 
