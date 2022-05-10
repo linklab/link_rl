@@ -7,7 +7,7 @@ import enum
 import copy
 import numpy as np
 
-from a_configuration.a_base_config.a_environments.combinatorial_optimization.config_task_allocation import ConfigTakAllocation0
+from a_configuration.a_base_config.a_environments.task_allocation.config_basic_task_allocation import ConfigBasicTaskAllocation0
 
 class DoneReasonType0(enum.Enum):
     TYPE_1 = "Resource Limit Exceeded"
@@ -15,7 +15,7 @@ class DoneReasonType0(enum.Enum):
     TYPE_3 = "All Tasks Selected"
 
 
-class EnvironmentTaskScheduling0(gym.Env):
+class EnvironmentBasicTaskScheduling0(gym.Env):
     def __init__(self, config):
         self.NUM_TASKS = config.NUM_TASK
         self.NUM_RESOURCES = config.NUM_RESOURCES
@@ -206,7 +206,7 @@ def run_env():
     print("START RUN!!!")
     agent = Dummy_Agent()
 
-    config = ConfigTakAllocation0()
+    config = ConfigBasicTaskAllocation0()
     # config.NUM_TASK = 3
     # config.NUM_RESOURCES = 3
     # config.INITIAL_RESOURCES_CAPACITY = [100, 200, 300]
@@ -218,7 +218,7 @@ def run_env():
     config.LOW_DEMAND_RESOURCE_AT_TASK = [10]
     config.HIGH_DEMAND_RESOURCE_AT_TASK = [20]
 
-    env = EnvironmentTaskScheduling0(config)
+    env = EnvironmentBasicTaskScheduling0(config)
 
     for i in range(2):
         observation, info = env.reset(return_info=True)
