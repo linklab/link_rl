@@ -114,14 +114,18 @@ class TaskAllocationEnvironment:
         self.cloud_server_cpu_list = None
         self.edge_server_cpu_list = None
         self.total_server_cpu_list = None
+        self.cloud_bandwidth = None
+        self.edge_bandwidth = None
 
         self.revenue = None
         self.resource_util = None
 
-    def reset(self):  # ???????? ?????? ?? ???? ????
+    def reset(self):
         self.task = Task(self.config)
         self.cloud_net = CloudNetwork(self.config)
         self.edge_net = EdgeNetwork(self.config)
+        self.cloud_bandwidth = self.cloud_net.bandwidth
+        self.edge_bandwidth = self.edge_net.bandwidth
         self.revenue = 0
         self.resource_util = 0
 
@@ -163,11 +167,13 @@ class TaskAllocationEnvironment:
             # Apply action and update cloud and edge servers' cpu info
             self.total_server_cpu_list[action_idx] -= self.task.tasks[self.task_id][1]
             # select cloud
-            if self.config.NUM_CLOUD_SERVER - action_idx > 0:
+            if self.config.NUM_CLOUD_SERVER - action_idx >= 0:
                 self.cloud_server_remain_cpu -= self.task.tasks[self.task_id][1]
+                self.cloud_bandwidth -= request_bandwidth
             # select edge
             else:
                 self.edge_server_remain_cpu -= self.task.tasks[self.task_id][1]
+                self.edge_bandwidth -= request_bandwidth
             # Calculate resource utilization
             self.resource_util += self.task.tasks[self.task_id][1] + request_bandwidth
             reward = (self.task.tasks[self.task_id][2] - total_delay) * self.resource_util
@@ -186,11 +192,11 @@ class TaskAllocationEnvironment:
     def calculate_delay(self, action_idx):
         # 1. Transmission delay
         trans_delay = 0
-        edge_trans_delay = (self.task.tasks[self.task_id][0] / self.edge_net.bandwidth) + \
-                           (self.task.tasks[self.task_id][0] / self.edge_net.bandwidth)
+        edge_trans_delay = (self.task.tasks[self.task_id][0] / self.edge_bandwidth) + \
+                           (self.task.tasks[self.task_id][0] / self.edge_bandwidth)
         cloud_trans_delay = edge_trans_delay + \
-                            (self.task.tasks[self.task_id][0] / self.cloud_net.bandwidth) + \
-                            (self.task.tasks[self.task_id][0] / self.cloud_net.bandwidth)
+                            (self.task.tasks[self.task_id][0] / self.cloud_bandwidth) + \
+                            (self.task.tasks[self.task_id][0] / self.cloud_bandwidth)
         if self.config.NUM_CLOUD_SERVER - action_idx > 0:  # select cloud
             trans_delay = cloud_trans_delay
         else:  # select edge
@@ -213,27 +219,40 @@ class TaskAllocationEnvironment:
 
         return total_delay
 
+class Dummy_Agent:
+    def __init__(self, config):
+        self.config = config
+
+    def get_action(self, state):
+        assert state is not None
+        available_action_ids = range(self.config.NUM_CLOUD_SERVER + self.config.NUM_EDGE_SERVER)
+        action_id = random.choice(available_action_ids)
+        return action_id
+
+class Heuristic_Agent:
+    def __init__(self, config):
+        self.config = config
+
+    def get_action(self, state):
+        assert state is not None
+        available_action_ids = range(self.config.NUM_CLOUD_SERVER + self.config.NUM_EDGE_SERVER)
+        action_id = random.choice(available_action_ids)
+        return action_id
 
 def run_env():
     config = ConfigTaskAllocation()
 
-    class Dummy_Agent:
-        def get_action(self, state):
-            assert state is not None
-            available_action_ids = range(config.NUM_CLOUD_SERVER + config.NUM_EDGE_SERVER)
-            action_id = random.choice(available_action_ids)
-            return action_id
-
     env = TaskAllocationEnvironment(config)
-    agent = Dummy_Agent()
+    agent = Dummy_Agent(config)
+    # agent = Heuristic_Agent(config)
     state = env.reset()
 
     print("task", env.task.tasks)
     print("Cloud Net", env.cloud_net.servers)
     print("Edge Net", env.edge_net.servers)
-    print("reset state", state)
     print()
 
+    print("reset state", state)
     action_idx = agent.get_action(state)
     state, reward, done = env.step(action_idx)
     print("step 0, action: ", action_idx, state, reward, done)
