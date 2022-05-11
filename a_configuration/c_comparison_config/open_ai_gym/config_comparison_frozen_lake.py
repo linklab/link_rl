@@ -1,11 +1,10 @@
 import gym
 
 from a_configuration.a_base_config.config_comparison_base import ConfigComparisonBase
-from a_configuration.b_single_config.open_ai_gym.config_frozen_lake import ConfigFrozenLakeDqn
+from a_configuration.b_single_config.open_ai_gym.toy_text.config_frozen_lake import ConfigFrozenLakeDqn
 
 import numpy as np
 
-from b_environments import wrapper
 from g_utils.types import ModelType
 
 

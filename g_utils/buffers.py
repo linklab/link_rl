@@ -93,10 +93,10 @@ class Buffer:
             torch.stack(hiddens, 1).shape: [num_layers, batch_size, 1, hidden]
             torch.stack(hiddens, 1).squeeze(dim=2).shape: [num_layers, batch_size, hidden]
             """
-            observations = torch.from_numpy(np.array(observations)).to(self.config.DEVICE)
+            observations = torch.from_numpy(np.array(observations, dtype=np.float32)).to(self.config.DEVICE)
             hiddens = torch.stack(hiddens, 1).squeeze(dim=2)
 
-            next_observations = torch.from_numpy(np.array(next_observations)).to(self.config.DEVICE)
+            next_observations = torch.from_numpy(np.array(next_observations, dtype=np.float32)).to(self.config.DEVICE)
             next_hiddens = torch.stack(next_hiddens, 1).squeeze(dim=2)
 
             # if CNN
@@ -109,8 +109,8 @@ class Buffer:
             next_observations_v = [(next_observations, next_hiddens)]
 
         else:
-            observations_v = torch.from_numpy(np.array(observations)).to(self.config.DEVICE)
-            next_observations_v = torch.from_numpy(np.array(next_observations)).to(self.config.DEVICE)
+            observations_v = torch.from_numpy(np.array(observations, dtype=np.float32)).to(self.config.DEVICE)
+            next_observations_v = torch.from_numpy(np.array(next_observations, dtype=np.float32)).to(self.config.DEVICE)
 
         if isinstance(self.action_space, Discrete):
             # actions.shape = (256, 1)

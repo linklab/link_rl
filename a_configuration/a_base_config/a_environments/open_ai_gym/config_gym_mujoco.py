@@ -28,3 +28,10 @@ class ConfigHalfCheetahMujoco(ConfigMujoco):
         self.ENV_NAME = "HalfCheetah-v2"
         self.EPISODE_REWARD_AVG_SOLVED = 12500
         self.EPISODE_REWARD_STD_SOLVED = 300
+
+
+class ConfigInvertedDoublePendulumMujoco(ConfigMujoco):
+    def __init__(self):
+        self.ENV_NAME = "InvertedDoublePendulum-v2"
+        self.EPISODE_REWARD_AVG_SOLVED = 8_500
+        self.EPISODE_REWARD_STD_SOLVED = 500

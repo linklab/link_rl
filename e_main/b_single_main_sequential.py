@@ -28,7 +28,6 @@ from a_configuration.a_base_config.config_parse import SYSTEM_USER_NAME, SYSTEM_
 config.SYSTEM_USER_NAME = SYSTEM_USER_NAME
 config.SYSTEM_COMPUTER_NAME = SYSTEM_COMPUTER_NAME
 
-
 def main():
     set_config(config)
 

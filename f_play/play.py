@@ -5,7 +5,7 @@ import warnings
 
 import numpy as np
 
-from a_configuration.a_base_config.a_environments.mujoco.config_gym_mujoco import ConfigMujoco
+from a_configuration.a_base_config.a_environments.open_ai_gym.config_gym_mujoco import ConfigMujoco
 from a_configuration.a_base_config.a_environments.open_ai_gym.config_gym_atari import ConfigGymAtari
 from a_configuration.a_base_config.a_environments.pybullet.config_gym_pybullet import ConfigBullet
 from a_configuration.a_base_config.a_environments.unity.config_unity_box import ConfigUnityGymEnv

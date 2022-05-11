@@ -1,5 +1,5 @@
 from a_configuration.a_base_config.config_comparison_base import ConfigComparisonBase
-from a_configuration.b_single_config.mujoco.config_ant_mujoco import ConfigAntMujocoSac, ConfigAntMujocoPpoTrajectory
+from a_configuration.b_single_config.open_ai_gym.mujoco.config_ant_mujoco import ConfigAntMujocoSac, ConfigAntMujocoPpoTrajectory
 
 
 class ConfigComparisonAntMujocoSac(ConfigComparisonBase):

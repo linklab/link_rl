@@ -1,7 +1,7 @@
 import gym
 
 from a_configuration.a_base_config.config_comparison_base import ConfigComparisonBase
-from a_configuration.b_single_config.open_ai_gym.config_mountain_car import ConfigMountainCarDqn, \
+from a_configuration.b_single_config.open_ai_gym.classic_control.config_mountain_car import ConfigMountainCarDqn, \
     ConfigMountainCarDoubleDqn
 from b_environments import wrapper
 from g_utils.types import ModelType

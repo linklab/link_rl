@@ -1,5 +1,5 @@
 from a_configuration.a_base_config.config_comparison_base import ConfigComparisonBase
-from a_configuration.b_single_config.open_ai_gym.config_cart_pole import ConfigCartPoleDqn
+from a_configuration.b_single_config.open_ai_gym.classic_control.config_cart_pole import ConfigCartPoleDqn
 from a_configuration.b_single_config.pybullet.config_cart_pole_bullet import ConfigCartPoleBulletA2c, \
     ConfigCartPoleBulletDqn, ConfigCartPoleBulletDoubleDqn, ConfigCartPoleBulletDuelingDqn, \
     ConfigCartPoleBulletDoubleDuelingDqn

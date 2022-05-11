@@ -7,12 +7,12 @@ from g_utils.types import ModelType
 #################
 ## FROZEN_LAKE ##
 #################
-from a_configuration.b_single_config.open_ai_gym.config_frozen_lake import ConfigFrozenLakeDqn
+from a_configuration.b_single_config.open_ai_gym.toy_text.config_frozen_lake import ConfigFrozenLakeDqn
 config = ConfigFrozenLakeDqn()
 config.ACTION_MASKING = True
 config.RANDOM_MAP = False
 
-from a_configuration.b_single_config.open_ai_gym.config_frozen_lake import ConfigFrozenLakeDqn
+from a_configuration.b_single_config.open_ai_gym.toy_text.config_frozen_lake import ConfigFrozenLakeDqn
 config = ConfigFrozenLakeDqn()
 config.ENV_KWARGS["is_slippery"] = False
 config.ENV_KWARGS["desc"] = ["SFF", "FHF", "FFG"]
@@ -20,7 +20,7 @@ config.WRAPPERS.append(
     (gym.wrappers.TransformObservation, {"f": lambda obs: np.random.randn(*obs.shape)})
 )
 
-from a_configuration.b_single_config.open_ai_gym.config_frozen_lake import ConfigFrozenLakeDqn
+from a_configuration.b_single_config.open_ai_gym.toy_text.config_frozen_lake import ConfigFrozenLakeDqn
 config = ConfigFrozenLakeDqn()
 config.ENV_KWARGS["is_slippery"] = False
 config.ENV_KWARGS["desc"] = ["SFF", "FHF", "FFG"]
@@ -32,7 +32,7 @@ config.WRAPPERS.append(
     (gym.wrappers.TimeAwareObservation, {})
 )
 
-from a_configuration.b_single_config.open_ai_gym.config_frozen_lake import ConfigFrozenLakeDqn
+from a_configuration.b_single_config.open_ai_gym.toy_text.config_frozen_lake import ConfigFrozenLakeDqn
 config = ConfigFrozenLakeDqn()
 config.ENV_KWARGS["is_slippery"] = False
 config.ENV_KWARGS["desc"] = ["SFF", "FHF", "FFG"]
@@ -44,17 +44,17 @@ config.WRAPPERS.append(
 ###############
 ## CART_POLE ##
 ###############
-from a_configuration.b_single_config.open_ai_gym.config_cart_pole import ConfigCartPoleDqn
+from a_configuration.b_single_config.open_ai_gym.classic_control.config_cart_pole import ConfigCartPoleDqn
 config = ConfigCartPoleDqn()
 config.WANDB_REPORT_URL = "https://wandb.ai/link-koreatech/CartPole-v1_Dqn_anonymous/reports/Cartpole-DQN--VmlldzoxNzI3NzU0?accessToken=5m3zzlj30hpflat7mb9zu3ygql9ani0lox22y5ermhocotbakar4so5lq8pe86gk"
 
-from a_configuration.b_single_config.open_ai_gym.config_cart_pole import ConfigCartPoleDqn
+from a_configuration.b_single_config.open_ai_gym.classic_control.config_cart_pole import ConfigCartPoleDqn
 config = ConfigCartPoleDqn()
 config.WRAPPERS.append(
     (wrapper.ReverseActionCartpole, {})
 )
 
-from a_configuration.b_single_config.open_ai_gym.config_cart_pole import ConfigCartPoleDqn
+from a_configuration.b_single_config.open_ai_gym.classic_control.config_cart_pole import ConfigCartPoleDqn
 config = ConfigCartPoleDqn()
 config.WRAPPERS.append(
     (wrapper.ReverseActionCartpole, {})
@@ -63,39 +63,39 @@ config.WRAPPERS.append(
     (gym.wrappers.TimeAwareObservation, {})
 )
 
-from a_configuration.b_single_config.open_ai_gym.config_cart_pole import ConfigCartPoleDqn
+from a_configuration.b_single_config.open_ai_gym.classic_control.config_cart_pole import ConfigCartPoleDqn
 config = ConfigCartPoleDqn()
 config.WRAPPERS.append(
     (wrapper.ReverseActionCartpole, {})
 )
 config.MODEL_TYPE = ModelType.SMALL_RECURRENT
 
-from a_configuration.b_single_config.open_ai_gym.config_cart_pole import ConfigCartPoleDoubleDqn
+from a_configuration.b_single_config.open_ai_gym.classic_control.config_cart_pole import ConfigCartPoleDoubleDqn
 config = ConfigCartPoleDoubleDqn()
 
-from a_configuration.b_single_config.open_ai_gym.config_cart_pole import ConfigCartPoleDuelingDqn
+from a_configuration.b_single_config.open_ai_gym.classic_control.config_cart_pole import ConfigCartPoleDuelingDqn
 config = ConfigCartPoleDuelingDqn()
 
-from a_configuration.b_single_config.open_ai_gym.config_cart_pole import ConfigCartPoleDoubleDuelingDqn
+from a_configuration.b_single_config.open_ai_gym.classic_control.config_cart_pole import ConfigCartPoleDoubleDuelingDqn
 config = ConfigCartPoleDoubleDuelingDqn()
 
-from a_configuration.b_single_config.open_ai_gym.config_cart_pole import ConfigCartPoleReinforce
+from a_configuration.b_single_config.open_ai_gym.classic_control.config_cart_pole import ConfigCartPoleReinforce
 config = ConfigCartPoleReinforce()
 
-from a_configuration.b_single_config.open_ai_gym.config_cart_pole import ConfigCartPoleA2c
+from a_configuration.b_single_config.open_ai_gym.classic_control.config_cart_pole import ConfigCartPoleA2c
 config = ConfigCartPoleA2c()
 
-from a_configuration.b_single_config.open_ai_gym.config_cart_pole import ConfigCartPoleA3c
+from a_configuration.b_single_config.open_ai_gym.classic_control.config_cart_pole import ConfigCartPoleA3c
 config = ConfigCartPoleA3c()
 
-from a_configuration.b_single_config.open_ai_gym.config_cart_pole import ConfigCartPolePpo
+from a_configuration.b_single_config.open_ai_gym.classic_control.config_cart_pole import ConfigCartPolePpo
 config = ConfigCartPolePpo()
 
-from a_configuration.b_single_config.open_ai_gym.config_cart_pole import ConfigCartPolePpoTrajectory
+from a_configuration.b_single_config.open_ai_gym.classic_control.config_cart_pole import ConfigCartPolePpoTrajectory
 config = ConfigCartPolePpoTrajectory()
 config.WANDB_REPORT_URL = "https://wandb.ai/link-koreatech/CartPole-v1_PPO_TRAJECTORY_yhhan/reports/CartPole-PPO_TRAJECTORY--VmlldzoxNTUyNDQw?accessToken=7vs10v66vi6fyitrxma0p2g62pq4nfiiccaskfgv2x2b5jrmwfae38u4pfm1xfq1"
 
-from a_configuration.b_single_config.open_ai_gym.config_cart_pole import ConfigCartPoleMuzero
+from a_configuration.b_single_config.open_ai_gym.classic_control.config_cart_pole import ConfigCartPoleMuzero
 config = ConfigCartPoleMuzero()
 
 ######################
@@ -155,52 +155,102 @@ config = ConfigCartPoleContinuousBulletSac()
 ##################
 ## LUNAR_LANDER ##
 ##################
-from a_configuration.b_single_config.open_ai_gym.config_lunar_lander import ConfigLunarLanderDqn
+from a_configuration.b_single_config.open_ai_gym.box2d.config_lunar_lander import ConfigLunarLanderDqn
 config = ConfigLunarLanderDqn()
 config.WANDB_REPORt_URL = 'https://wandb.ai/link-koreatech/LunarLander-v2_DQN_anonymous/reports/Lunar-Lander-DQN--VmlldzoxNzI3OTU5?accessToken=4kbmznjvysvlh5zbf30vy8jg403ojrjxjefiewfpcn5iu3cwo5mirclsj8f6dx1u'
 
-from a_configuration.b_single_config.open_ai_gym.config_lunar_lander import ConfigLunarLanderMuzero
+from a_configuration.b_single_config.open_ai_gym.box2d.config_lunar_lander import ConfigLunarLanderMuzero
 config = ConfigLunarLanderMuzero()
 
-from a_configuration.b_single_config.open_ai_gym.config_lunar_lander import ConfigLunarLanderA2c
+from a_configuration.b_single_config.open_ai_gym.box2d.config_lunar_lander import ConfigLunarLanderA2c
 config = ConfigLunarLanderA2c()
 
-from a_configuration.b_single_config.open_ai_gym.config_lunar_lander import ConfigLunarLanderA3c
+from a_configuration.b_single_config.open_ai_gym.box2d.config_lunar_lander import ConfigLunarLanderA3c
 config = ConfigLunarLanderA3c()
 
-from a_configuration.b_single_config.open_ai_gym.config_lunar_lander import ConfigLunarLanderPpo
+from a_configuration.b_single_config.open_ai_gym.box2d.config_lunar_lander import ConfigLunarLanderPpo
 config = ConfigLunarLanderPpo()
 
-from a_configuration.b_single_config.open_ai_gym.config_lunar_lander import ConfigLunarLanderPpoTrajectory
+from a_configuration.b_single_config.open_ai_gym.box2d.config_lunar_lander import ConfigLunarLanderPpoTrajectory
 config = ConfigLunarLanderPpoTrajectory()
 config.WANDB_REPORT_URL = "https://wandb.ai/link-koreatech/LunarLander-v2_PPO_TRAJECTORY_anonymous/reports/LunarLander-v2-PPO_TRAJECTORY--VmlldzoxNTAwOTg0?accessToken=y2tgu6i38zzehklrq6rikdqhvza2fsexmfg22ntl2drl0q9bsvd11t1b0e09r0ry"
 
 #############################
 ## LUNAR_LANDER_CONTINUOUS ##
 #############################
-from a_configuration.b_single_config.open_ai_gym.config_lunar_lander_continuous import ConfigLunarLanderContinuousA2c
+from a_configuration.b_single_config.open_ai_gym.box2d.config_lunar_lander_continuous import ConfigLunarLanderContinuousA2c
 config = ConfigLunarLanderContinuousA2c()
 
-from a_configuration.b_single_config.open_ai_gym.config_lunar_lander_continuous import ConfigLunarLanderContinuousA3c
+from a_configuration.b_single_config.open_ai_gym.box2d.config_lunar_lander_continuous import ConfigLunarLanderContinuousA3c
 config = ConfigLunarLanderContinuousA3c()
 
-from a_configuration.b_single_config.open_ai_gym.config_lunar_lander_continuous import ConfigLunarLanderContinuousPpo
+from a_configuration.b_single_config.open_ai_gym.box2d.config_lunar_lander_continuous import ConfigLunarLanderContinuousPpo
 config = ConfigLunarLanderContinuousPpo()
 
-from a_configuration.b_single_config.open_ai_gym.config_lunar_lander_continuous import ConfigLunarLanderContinuousPpoTrajectory
+from a_configuration.b_single_config.open_ai_gym.box2d.config_lunar_lander_continuous import ConfigLunarLanderContinuousPpoTrajectory
 config = ConfigLunarLanderContinuousPpoTrajectory()
 config.WANDB_REPORT_URL = "https://wandb.ai/link-koreatech/LunarLanderContinuous-v2_PPO_TRAJECTORY_yhhan/reports/LunarLanderContinuous-v2_PPO_TRAJECTORY--VmlldzoxNTA3MjAx"
 
-from a_configuration.b_single_config.open_ai_gym.config_lunar_lander_continuous import ConfigLunarLanderContinuousDdpg
+from a_configuration.b_single_config.open_ai_gym.box2d.config_lunar_lander_continuous import ConfigLunarLanderContinuousDdpg
 config = ConfigLunarLanderContinuousDdpg()
 
-from a_configuration.b_single_config.open_ai_gym.config_lunar_lander_continuous import ConfigLunarLanderContinuousTd3
+from a_configuration.b_single_config.open_ai_gym.box2d.config_lunar_lander_continuous import ConfigLunarLanderContinuousTd3
 config = ConfigLunarLanderContinuousTd3()
 config.WANDB_REPORT_URL = "https://wandb.ai/link-koreatech/LunarLanderContinuous-v2_TD3_yhhan/reports/LunarLanderContinuous-v2_TD3--VmlldzoxNTA3MjA4"
 
-from a_configuration.b_single_config.open_ai_gym.config_lunar_lander_continuous import ConfigLunarLanderContinuousSac
+from a_configuration.b_single_config.open_ai_gym.box2d.config_lunar_lander_continuous import ConfigLunarLanderContinuousSac
 config = ConfigLunarLanderContinuousSac()
 config.WANDB_REPORT_URL = "https://wandb.ai/link-koreatech/LunarLanderContinuous-v2_SAC_yhhan/reports/LunarLanderContinuous-v2_SAC--VmlldzoxNTA3MjA2"
+
+####################
+## Bipedal Walker ##
+####################
+from a_configuration.b_single_config.open_ai_gym.box2d.config_bipedal_walker import ConfigBipedalWalkerA2c
+config = ConfigBipedalWalkerA2c()
+
+from a_configuration.b_single_config.open_ai_gym.box2d.config_bipedal_walker import ConfigBipedalWalkerA3c
+config = ConfigBipedalWalkerA3c()
+
+from a_configuration.b_single_config.open_ai_gym.box2d.config_bipedal_walker import ConfigBipedalWalkerPpo
+config = ConfigBipedalWalkerPpo()
+
+from a_configuration.b_single_config.open_ai_gym.box2d.config_bipedal_walker import ConfigBipedalWalkerPpoTrajectory
+config = ConfigBipedalWalkerPpoTrajectory()
+
+from a_configuration.b_single_config.open_ai_gym.box2d.config_bipedal_walker import ConfigBipedalWalkerDdpg
+config = ConfigBipedalWalkerDdpg()
+
+from a_configuration.b_single_config.open_ai_gym.box2d.config_bipedal_walker import ConfigBipedalWalkerTd3
+config = ConfigBipedalWalkerTd3()
+
+from a_configuration.b_single_config.open_ai_gym.box2d.config_bipedal_walker import ConfigBipedalWalkerSac
+config = ConfigBipedalWalkerSac()
+
+
+################
+## Car Racing ##
+################
+from a_configuration.b_single_config.open_ai_gym.box2d.config_car_racing import ConfigCarRacingA2c
+config = ConfigCarRacingA2c()
+
+from a_configuration.b_single_config.open_ai_gym.box2d.config_car_racing import ConfigCarRacingA3c
+config = ConfigCarRacingA3c()
+
+from a_configuration.b_single_config.open_ai_gym.box2d.config_car_racing import ConfigCarRacingPpo
+config = ConfigCarRacingPpo()
+
+from a_configuration.b_single_config.open_ai_gym.box2d.config_car_racing import ConfigCarRacingPpoTrajectory
+config = ConfigCarRacingPpoTrajectory()
+
+from a_configuration.b_single_config.open_ai_gym.box2d.config_car_racing import ConfigCarRacingDdpg
+config = ConfigCarRacingDdpg()
+
+from a_configuration.b_single_config.open_ai_gym.box2d.config_car_racing import ConfigCarRacingTd3
+config = ConfigCarRacingTd3()
+
+from a_configuration.b_single_config.open_ai_gym.box2d.config_car_racing import ConfigCarRacingSac
+config = ConfigCarRacingSac()
+
 
 ######################
 ##    ANT_BULLET    ##
@@ -235,6 +285,13 @@ config = ConfigHopperBulletPpo()
 
 from a_configuration.b_single_config.pybullet.config_hopper_bullet import ConfigHopperBulletPpoTrajectory
 config = ConfigHopperBulletPpoTrajectory()
+
+
+#########################################
+##    InvertedDoublePendulumMujoco    ##
+#########################################
+from a_configuration.b_single_config.open_ai_gym.mujoco.config_inverted_double_pendulum_mujoco import ConfigInvertedDoublePendulumMujocoPpo
+config = ConfigInvertedDoublePendulumMujocoPpo()
 
 #########################################
 ##    InvertedDoublePendulum_BULLET    ##
@@ -343,51 +400,51 @@ config = ConfigVideoPinballPpoTrajectory()
 ##################
 ### ANT_MUJOCO ###
 ##################
-from a_configuration.b_single_config.mujoco.config_ant_mujoco import ConfigAntMujocoSac
+from a_configuration.b_single_config.open_ai_gym.mujoco.config_ant_mujoco import ConfigAntMujocoSac
 config = ConfigAntMujocoSac()
 config.WANDB_REPORT_URL = "https://wandb.ai/link-koreatech/Ant-v2_SAC_yhhan/reports/Ant-v2_SAC--VmlldzoxNTM0NDMz"
 
-from a_configuration.b_single_config.mujoco.config_ant_mujoco import ConfigAntMujocoPpo
+from a_configuration.b_single_config.open_ai_gym.mujoco.config_ant_mujoco import ConfigAntMujocoPpo
 config = ConfigAntMujocoPpo()
 
-from a_configuration.b_single_config.mujoco.config_ant_mujoco import ConfigAntMujocoPpoTrajectory
+from a_configuration.b_single_config.open_ai_gym.mujoco.config_ant_mujoco import ConfigAntMujocoPpoTrajectory
 config = ConfigAntMujocoPpoTrajectory()
 
 #####################
 ### HOPPER_MUJOCO ###
 #####################
-from a_configuration.b_single_config.mujoco.config_hopper_mujoco import ConfigHopperMujocoSac
+from a_configuration.b_single_config.open_ai_gym.mujoco.config_hopper_mujoco import ConfigHopperMujocoSac
 config = ConfigHopperMujocoSac()
 
-from a_configuration.b_single_config.mujoco.config_hopper_mujoco import ConfigHopperMujocoPpo
+from a_configuration.b_single_config.open_ai_gym.mujoco.config_hopper_mujoco import ConfigHopperMujocoPpo
 config = ConfigHopperMujocoPpo()
 
-from a_configuration.b_single_config.mujoco.config_hopper_mujoco import ConfigHopperMujocoPpoTrajectory
+from a_configuration.b_single_config.open_ai_gym.mujoco.config_hopper_mujoco import ConfigHopperMujocoPpoTrajectory
 config = ConfigHopperMujocoPpoTrajectory()
 
 #######################
 ### WALKER2d_MUJOCO ###
 #######################
-from a_configuration.b_single_config.mujoco.config_walker2d_mujoco import ConfigWalker2dMujocoSac
+from a_configuration.b_single_config.open_ai_gym.mujoco.config_walker2d_mujoco import ConfigWalker2dMujocoSac
 config = ConfigWalker2dMujocoSac()
 config.WANDB_REPORT_URL = "https://wandb.ai/link-koreatech/Walker2d-v2_SAC_yhhan/reports/3DBall-SAC--VmlldzoxNTI4NDk4?accessToken=ikha9ymzoqh7o3zefs6cn0ao5hmz7qzc8wnx0shd7i63wesx8585ja901i1bie1z"
 
-from a_configuration.b_single_config.mujoco.config_walker2d_mujoco import ConfigWalker2dMujocoPpo
+from a_configuration.b_single_config.open_ai_gym.mujoco.config_walker2d_mujoco import ConfigWalker2dMujocoPpo
 config = ConfigWalker2dMujocoPpo()
 
-from a_configuration.b_single_config.mujoco.config_walker2d_mujoco import ConfigWalker2dMujocoPpoTrajectory
+from a_configuration.b_single_config.open_ai_gym.mujoco.config_walker2d_mujoco import ConfigWalker2dMujocoPpoTrajectory
 config = ConfigWalker2dMujocoPpoTrajectory()
 
 ##########################
 ### HALFCHEETAH_MUJOCO ###
 ##########################
-from a_configuration.b_single_config.mujoco.config_halfcheetah_mujoco import ConfigHalfCheetahMujocoSac
+from a_configuration.b_single_config.open_ai_gym.mujoco.config_halfcheetah_mujoco import ConfigHalfCheetahMujocoSac
 config = ConfigHalfCheetahMujocoSac()
 
-from a_configuration.b_single_config.mujoco.config_halfcheetah_mujoco import ConfigHalfCheetahMujocoPpo
+from a_configuration.b_single_config.open_ai_gym.mujoco.config_halfcheetah_mujoco import ConfigHalfCheetahMujocoPpo
 config = ConfigHalfCheetahMujocoPpo()
 
-from a_configuration.b_single_config.mujoco.config_halfcheetah_mujoco import ConfigHalfCheetahMujocoPpoTrajectory
+from a_configuration.b_single_config.open_ai_gym.mujoco.config_halfcheetah_mujoco import ConfigHalfCheetahMujocoPpoTrajectory
 config = ConfigHalfCheetahMujocoPpoTrajectory()
 
 ##########################

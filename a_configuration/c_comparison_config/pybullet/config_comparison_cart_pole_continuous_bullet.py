@@ -1,5 +1,4 @@
 from a_configuration.a_base_config.config_comparison_base import ConfigComparisonBase
-from a_configuration.b_single_config.open_ai_gym.config_cart_pole import ConfigCartPolePpo, ConfigCartPolePpoTrajectory
 from a_configuration.b_single_config.pybullet.config_cart_pole_continuous_bullet import \
     ConfigCartPoleContinuousBulletDdpg, ConfigCartPoleContinuousBulletTd3, ConfigCartPoleContinuousBulletSac, \
     ConfigCartPoleContinuousBulletA2c, ConfigCartPoleContinuousBulletPpoTrajectory, ConfigCartPoleContinuousBulletPpo

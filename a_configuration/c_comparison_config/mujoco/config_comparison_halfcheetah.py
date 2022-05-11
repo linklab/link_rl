@@ -1,5 +1,5 @@
 from a_configuration.a_base_config.config_comparison_base import ConfigComparisonBase
-from a_configuration.b_single_config.mujoco.config_halfcheetah_mujoco import ConfigHalfCheetahMujocoSac, \
+from a_configuration.b_single_config.open_ai_gym.mujoco.config_halfcheetah_mujoco import ConfigHalfCheetahMujocoSac, \
     ConfigHalfCheetahMujocoPpoTrajectory
 
 

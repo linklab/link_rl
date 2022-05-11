@@ -1,7 +1,7 @@
 import gym
 
 from a_configuration.a_base_config.config_comparison_base import ConfigComparisonBase
-from a_configuration.b_single_config.open_ai_gym.config_lunar_lander import ConfigLunarLanderDqn, \
+from a_configuration.b_single_config.open_ai_gym.box2d.config_lunar_lander import ConfigLunarLanderDqn, \
     ConfigLunarLanderDoubleDqn, ConfigLunarLanderDuelingDqn, ConfigLunarLanderDoubleDuelingDqn
 from b_environments import wrapper
 from g_utils.types import ModelType

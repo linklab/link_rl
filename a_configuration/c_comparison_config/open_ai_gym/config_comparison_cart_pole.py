@@ -1,14 +1,12 @@
 import gym
 
 from a_configuration.a_base_config.config_comparison_base import ConfigComparisonBase
-from a_configuration.b_single_config.open_ai_gym.config_cart_pole import ConfigCartPoleDqn, \
+from a_configuration.b_single_config.open_ai_gym.classic_control.config_cart_pole import ConfigCartPoleDqn, \
     ConfigCartPoleReinforce, \
     ConfigCartPoleA2c, ConfigCartPoleDoubleDqn, ConfigCartPoleDuelingDqn, ConfigCartPoleDoubleDuelingDqn, \
     ConfigCartPolePpo, ConfigCartPolePpoTrajectory
 from b_environments import wrapper
 from g_utils.types import ModelType
-
-import numpy as np
 
 
 class ConfigComparisonCartPoleDqn(ConfigComparisonBase):
