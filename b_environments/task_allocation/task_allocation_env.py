@@ -17,24 +17,13 @@ from a_configuration.a_base_config.a_environments.task_allocation.config_task_al
 class CloudNetwork:
     def __init__(self, config):
         self.config = config
-        self.initial_s_cpu_capacity = {}
-        self.initial_s_bw_capacity = {}
-        self.initial_s_node_total_bandwidth = {}
-
-        self.initial_total_cpu_capacity = 0
-        self.initial_total_bandwidth_capacity = 0
-
-        # corresponding CPU and BANDWIDTH resources of it are real numbers uniformly distributed from 50 to 100
-        self.min_cpu_capacity = 1.0e10
-        self.max_cpu_capacity = 0.0
-        self.min_bandwidth_capacity = 1.0e10
-        self.max_bandwidth_capacity = 0.0
 
         # generate cloud servers
         self.servers = {}
         for server_id in range(self.config.NUM_CLOUD_SERVER):
             self.servers[server_id] = random.randint(
                     self.config.CLOUD_CPU_CAPACITY_MIN, self.config.CLOUD_CPU_CAPACITY_MAX)
+        self.bandwidth = self.config.CLOUD_BANDWIDTH_CAPACITY
 
     def get_resource_remains(self):
         remaining_cpu_resource = sum([self.servers[server_id] for server_id in self.servers])
@@ -65,24 +54,13 @@ class CloudNetwork:
 class EdgeNetwork:
     def __init__(self, config):
         self.config = config
-        self.initial_s_cpu_capacity = {}
-        self.initial_s_bw_capacity = {}
-        self.initial_s_node_total_bandwidth = {}
-
-        self.initial_total_cpu_capacity = 0
-        self.initial_total_bandwidth_capacity = 0
-
-        # corresponding CPU and BANDWIDTH resources of it are real numbers uniformly distributed from 50 to 100
-        self.min_cpu_capacity = 1.0e10
-        self.max_cpu_capacity = 0.0
-        self.min_bandwidth_capacity = 1.0e10
-        self.max_bandwidth_capacity = 0.0
 
         # generate cloud servers
         self.servers = {}
         for server_id in range(self.config.NUM_EDGE_SERVER):
             self.servers[server_id] = random.randint(
                 self.config.EDGE_CPU_CAPACITY_MIN, self.config.EDGE_CPU_CAPACITY_MAX)
+        self.bandwidth = self.config.EDGE_BANDWIDTH_CAPACITY
 
     def get_resource_remains(self):
         remaining_cpu_resource = sum([self.servers[server_id] for server_id in self.servers])
@@ -113,7 +91,6 @@ class EdgeNetwork:
 class Task:
     def __init__(self, config):
         self.config = config
-        self.revenue_cpu = 0
         self.tasks = {}
 
         for task_id in range(self.config.NUM_TASK):
@@ -122,29 +99,170 @@ class Task:
             request_latency = int(random.randint(self.config.TASK_LATENCY_REQUEST_MIN, self.config.TASK_LATENCY_REQUEST_MAX))
             self.tasks[task_id] = (data_size, request_cpu, request_latency)
 
-        for task_id in range(self.config.NUM_TASK):
-            for _, request_cpu, _ in self.tasks[task_id]:
-                self.revenue += request_cpu
-        self.cost = None
 
+class TaskAllocationEnvironment:
+    def __init__(self, config):
+        self.config = config
+        self.task = Task(self.config)
+        self.cloud_net = CloudNetwork(self.config)
+        self.edge_net = EdgeNetwork(self.config)
 
-# class TaskAllocationEnvironment:
-#     def __init__(self, config):
-#         self.config = config
-#
-#
-#     def reset(self):  # 에피소드 시작할 때 한번 호출
-#
-#
-#     def step(self, v_actions, actions, assigned_vnr_id_list):
+        self.state = None
+        self.task_id = None
+        self.cloud_server_remain_cpu = None
+        self.edge_server_remain_cpu = None
+        self.cloud_server_cpu_list = None
+        self.edge_server_cpu_list = None
+        self.total_server_cpu_list = None
+        self.cloud_bandwidth = None
+        self.edge_bandwidth = None
 
+        self.revenue = None
+        self.resource_util = None
 
+    def reset(self):
+        self.task = Task(self.config)
+        self.cloud_net = CloudNetwork(self.config)
+        self.edge_net = EdgeNetwork(self.config)
+        self.cloud_bandwidth = self.cloud_net.bandwidth
+        self.edge_bandwidth = self.edge_net.bandwidth
+        self.revenue = 0
+        self.resource_util = 0
+
+        # Set the first task ID
+        self.task_id = 0
+
+        # Get the cloud and edge servers' total remain cpu
+        self.cloud_server_remain_cpu = self.cloud_net.get_resource_remains()
+        self.edge_server_remain_cpu = self.edge_net.get_resource_remains()
+        # Get the cloud and edge servers' each remain cpu
+        self.cloud_server_cpu_list = [self.cloud_net.servers[server_id] for server_id in self.cloud_net.servers]
+        self.edge_server_cpu_list = [self.edge_net.servers[server_id] for server_id in self.edge_net.servers]
+
+        # Configurate initial state
+        # [task_request_cpu, total_cloud_remain_cpu, total_edge_remain_cpu, each_cloud_remain_cpu, each_edge_remain_cpu]
+        self.state = [self.task.tasks[self.task_id][1], self.cloud_server_remain_cpu, self.edge_server_remain_cpu]
+        self.total_server_cpu_list = self.cloud_server_cpu_list + self.edge_server_cpu_list
+        self.state += self.total_server_cpu_list
+
+        return self.state
+
+    def step(self, action_idx):
+        total_delay = 0
+        request_bandwidth = 0
+        reward = 0
+        done = False
+
+        # Calculate delay
+        total_delay = self.calculate_delay(action_idx)
+
+        # Calculate request bandwidth
+        request_bandwidth = self.task.tasks[self.task_id][0] / self.task.tasks[self.task_id][2]
+
+        # Reward
+        if total_delay > self.task.tasks[self.task_id][2] or \
+                self.total_server_cpu_list[action_idx] < self.task.tasks[self.task_id][1]:
+            reward = (self.task.tasks[self.task_id][2] - total_delay) * self.resource_util
+        else:
+            # Apply action and update cloud and edge servers' cpu info
+            self.total_server_cpu_list[action_idx] -= self.task.tasks[self.task_id][1]
+            # select cloud
+            if self.config.NUM_CLOUD_SERVER - action_idx >= 0:
+                self.cloud_server_remain_cpu -= self.task.tasks[self.task_id][1]
+                self.cloud_bandwidth -= request_bandwidth
+            # select edge
+            else:
+                self.edge_server_remain_cpu -= self.task.tasks[self.task_id][1]
+                self.edge_bandwidth -= request_bandwidth
+            # Calculate resource utilization
+            self.resource_util += self.task.tasks[self.task_id][1] + request_bandwidth
+            reward = (self.task.tasks[self.task_id][2] - total_delay) * self.resource_util
+
+        self.task_id += 1
+        if self.config.NUM_TASK <= self.task_id:
+            done = True
+        else:
+            done = False
+            # Generate next state
+            self.state = [self.task.tasks[self.task_id][1], self.cloud_server_remain_cpu, self.edge_server_remain_cpu]
+            self.state += self.total_server_cpu_list
+
+        return self.state, reward, done
+
+    def calculate_delay(self, action_idx):
+        # 1. Transmission delay
+        trans_delay = 0
+        edge_trans_delay = (self.task.tasks[self.task_id][0] / self.edge_bandwidth) + \
+                           (self.task.tasks[self.task_id][0] / self.edge_bandwidth)
+        cloud_trans_delay = edge_trans_delay + \
+                            (self.task.tasks[self.task_id][0] / self.cloud_bandwidth) + \
+                            (self.task.tasks[self.task_id][0] / self.cloud_bandwidth)
+        if self.config.NUM_CLOUD_SERVER - action_idx > 0:  # select cloud
+            trans_delay = cloud_trans_delay
+        else:  # select edge
+            trans_delay = edge_trans_delay
+
+        # 2. Propagation delay
+        prop_delay = 0
+        # select cloud
+        if self.config.NUM_CLOUD_SERVER - action_idx > 0:
+            prop_delay += 50
+        # select edge
+        else:
+            prop_delay += 5
+
+        # 3. Processing delay
+        proc_delay = 0
+        proc_delay = self.task.tasks[self.task_id][1] / self.total_server_cpu_list[action_idx]
+
+        total_delay = trans_delay + prop_delay + proc_delay
+
+        return total_delay
+
+class Dummy_Agent:
+    def __init__(self, config):
+        self.config = config
+
+    def get_action(self, state):
+        assert state is not None
+        available_action_ids = range(self.config.NUM_CLOUD_SERVER + self.config.NUM_EDGE_SERVER)
+        action_id = random.choice(available_action_ids)
+        return action_id
+
+class Heuristic_Agent:
+    def __init__(self, config):
+        self.config = config
+
+    def get_action(self, state):
+        assert state is not None
+        available_action_ids = range(self.config.NUM_CLOUD_SERVER + self.config.NUM_EDGE_SERVER)
+        action_id = random.choice(available_action_ids)
+        return action_id
 
 def run_env():
     config = ConfigTaskAllocation()
-    task = Task(config)
-    cloudNet = CloudNetwork(config)
-    edgeNet = EdgeNetwork(config)
+
+    env = TaskAllocationEnvironment(config)
+    agent = Dummy_Agent(config)
+    # agent = Heuristic_Agent(config)
+    state = env.reset()
+
+    print("task", env.task.tasks)
+    print("Cloud Net", env.cloud_net.servers)
+    print("Edge Net", env.edge_net.servers)
+    print()
+
+    print("reset state", state)
+    action_idx = agent.get_action(state)
+    state, reward, done = env.step(action_idx)
+    print("step 0, action: ", action_idx, state, reward, done)
+    state, reward, done = env.step(action_idx)
+    action_idx = agent.get_action(state)
+    print("step 1, action: ", action_idx, state, reward, done)
+    action_idx = agent.get_action(state)
+    state, reward, done = env.step(action_idx)
+    print("step 2, action: ", action_idx, state, reward, done)
+
 
 if __name__ == "__main__":
     run_env()
