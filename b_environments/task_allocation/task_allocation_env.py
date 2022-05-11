@@ -216,31 +216,33 @@ class TaskAllocationEnvironment:
 
 def run_env():
     config = ConfigTaskAllocation()
-    task = Task(config)
-    cloud_net = CloudNetwork(config)
-    edge_net = EdgeNetwork(config)
+
+    class Dummy_Agent:
+        def get_action(self, state):
+            assert state is not None
+            available_action_ids = range(config.NUM_CLOUD_SERVER + config.NUM_EDGE_SERVER)
+            action_id = random.choice(available_action_ids)
+            return action_id
+
     env = TaskAllocationEnvironment(config)
+    agent = Dummy_Agent()
     state = env.reset()
 
-    print("check task", env.task.tasks)
-    print("reset()", state)
+    print("task", env.task.tasks)
+    print("Cloud Net", env.cloud_net.servers)
+    print("Edge Net", env.edge_net.servers)
+    print("reset state", state)
+    print()
 
-    state, reward, done = env.step(0)
-    print("step()", state, reward, done)
-    state, reward, done = env.step(1)
-    print("step()", state, reward, done)
-    state, reward, done = env.step(2)
-    print("step()", state, reward, done)
-
-
-    # print("Initiate Task")
-    # print(task.tasks)
-    # print("Initiate CloudNet")
-    # print(cloud_net.servers)
-    # print(cloud_net.get_resource_remains())
-    # print("Initiate EdgeNet")
-    # print(edge_net.servers)
-    # print(edge_net.get_resource_remains())
+    action_idx = agent.get_action(state)
+    state, reward, done = env.step(action_idx)
+    print("step 0, action: ", action_idx, state, reward, done)
+    state, reward, done = env.step(action_idx)
+    action_idx = agent.get_action(state)
+    print("step 1, action: ", action_idx, state, reward, done)
+    action_idx = agent.get_action(state)
+    state, reward, done = env.step(action_idx)
+    print("step 2, action: ", action_idx, state, reward, done)
 
 
 if __name__ == "__main__":
