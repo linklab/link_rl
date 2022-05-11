@@ -2,6 +2,7 @@ from abc import abstractmethod
 
 import numpy as np
 import gym
+from gym import spaces
 
 
 class CustomObservationWrapper(gym.ObservationWrapper):
@@ -356,3 +357,18 @@ class MountainCarWithoutVelocity(gym.ObservationWrapper):
     def observation(self, observation):
         position, velocity = observation
         return position,
+
+
+class CarRacingObservationTransposeWrapper(gym.ObservationWrapper):
+    def __init__(self, env):
+        super().__init__(env)
+
+        STATE_W = 96
+        STATE_H = 96
+
+        self.observation_space = spaces.Box(
+            low=0, high=255, shape=(3, STATE_H, STATE_W), dtype=np.uint8
+        )
+
+    def observation(self, observation):
+        return np.transpose(observation, axes=(2, 1, 0))

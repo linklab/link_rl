@@ -817,6 +817,9 @@ def get_train_env(config, no_graphics=True):
                         if config.ACTION_MASKING:
                             env = wrapper.FrozenLakeActionMask(env)
 
+                if env_name in ["CarRacing-v1"]:
+                    env = wrapper.CarRacingObservationTransposeWrapper(env=env)
+
                 ################
                 #   Wrappers   #
                 ################
@@ -909,6 +912,9 @@ def get_single_env(config, no_graphics=True, play=False):
                 if config.ACTION_MASKING:
                     single_env = wrapper.FrozenLakeActionMask(single_env)
 
+        if config.ENV_NAME in ["CarRacing-v1"]:
+            single_env = wrapper.CarRacingObservationTransposeWrapper(env=single_env)
+
         ################
         #   Wrappers   #
         ################
@@ -959,7 +965,7 @@ def get_continuous_action_info(action_space):
     action_bound_low = np.expand_dims(action_space.low, axis=0)
     action_bound_high = np.expand_dims(action_space.high, axis=0)
 
-    assert np.equal(action_bound_high, -1.0 * action_bound_low).all()
+    #assert np.equal(action_bound_high, -1.0 * action_bound_low).all()
 
     action_scale = (action_space.high - action_space.low) / 2.
     action_bias = (action_space.high + action_space.low) / 2.
