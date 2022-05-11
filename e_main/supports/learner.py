@@ -4,10 +4,9 @@ import copy
 from gym.spaces import Box, Discrete
 from gym.vector import VectorEnv
 
-import b_environments.wrapper
 from a_configuration.a_base_config.a_environments.combinatorial_optimization.config_knapsack import ConfigKnapsack
-from a_configuration.a_base_config.a_environments.combinatorial_optimization.config_task_allocation import \
-    ConfigTakAllocation
+from a_configuration.a_base_config.a_environments.task_allocation.config_basic_task_allocation import \
+    ConfigBasicTaskAllocation
 from a_configuration.a_base_config.c_models.config_recurrent_convolutional_models import ConfigRecurrent2DConvolutionalModel
 from a_configuration.a_base_config.c_models.config_recurrent_linear_models import ConfigRecurrentLinearModel
 
@@ -265,7 +264,7 @@ class Learner(mp.Process):
     def train_loop(self, parallel=False):
         combinatorial_env_conditions = [
             isinstance(self.config, ConfigKnapsack),
-            isinstance(self.config, ConfigTakAllocation)
+            isinstance(self.config, ConfigBasicTaskAllocation)
         ]
 
         if not parallel:  # parallel인 경우 actor에서 train_env 생성/관리
@@ -274,7 +273,7 @@ class Learner(mp.Process):
         if any(combinatorial_env_conditions):
             test_env_equal_to_train_env_conditions = [
                 isinstance(self.config, ConfigKnapsack) and self.config.INITIAL_ITEM_DISTRIBUTION_FIXED is True,
-                isinstance(self.config, ConfigTakAllocation) and self.config.INITIAL_TASK_DISTRIBUTION_FIXED is True
+                isinstance(self.config, ConfigBasicTaskAllocation) and self.config.INITIAL_TASK_DISTRIBUTION_FIXED is True
             ]
             if any(test_env_equal_to_train_env_conditions):
                 assert parallel is False

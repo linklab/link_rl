@@ -1,13 +1,13 @@
 from a_configuration.a_base_config.b_agents.config_agents_off_policy import ConfigDqn, ConfigDoubleDqn, \
     ConfigDuelingDqn, ConfigDoubleDuelingDqn
 from a_configuration.a_base_config.config_single_base import ConfigBase
-from a_configuration.a_base_config.a_environments.combinatorial_optimization.config_task_allocation import ConfigTakAllocation0
+from a_configuration.a_base_config.a_environments.task_allocation.config_basic_task_allocation import ConfigBasicTaskAllocation0
 
 
-class ConfigTaskAllocation0Dqn(ConfigBase, ConfigTakAllocation0, ConfigDqn):
+class ConfigTaskAllocation0Dqn(ConfigBase, ConfigBasicTaskAllocation0, ConfigDqn):
     def __init__(self):
         ConfigBase.__init__(self)
-        ConfigTakAllocation0.__init__(self)
+        ConfigBasicTaskAllocation0.__init__(self)
         ConfigDqn.__init__(self)
 
         self.NUM_TASK = 20
@@ -20,10 +20,10 @@ class ConfigTaskAllocation0Dqn(ConfigBase, ConfigTakAllocation0, ConfigDqn):
         self.BUFFER_CAPACITY = self.NUM_TASK * 1_000
 
 
-class ConfigTaskAllocation1Dqn(ConfigBase, ConfigTakAllocation0, ConfigDqn):
+class ConfigTaskAllocation1Dqn(ConfigBase, ConfigBasicTaskAllocation0, ConfigDqn):
     def __init__(self):
         ConfigBase.__init__(self)
-        ConfigTakAllocation0.__init__(self)
+        ConfigBasicTaskAllocation0.__init__(self)
         ConfigDqn.__init__(self)
 
         self.NUM_TASK = 20
@@ -36,10 +36,10 @@ class ConfigTaskAllocation1Dqn(ConfigBase, ConfigTakAllocation0, ConfigDqn):
         self.BUFFER_CAPACITY = self.NUM_TASK * 1_000
 
 
-class ConfigTaskAllocation0DoubleDqn(ConfigBase, ConfigTakAllocation0, ConfigDoubleDqn):
+class ConfigTaskAllocation0DoubleDqn(ConfigBase, ConfigBasicTaskAllocation0, ConfigDoubleDqn):
     def __init__(self):
         ConfigBase.__init__(self)
-        ConfigTakAllocation0.__init__(self)
+        ConfigBasicTaskAllocation0.__init__(self)
         ConfigDoubleDqn.__init__(self)
 
         self.NUM_TASK = 20
@@ -52,10 +52,10 @@ class ConfigTaskAllocation0DoubleDqn(ConfigBase, ConfigTakAllocation0, ConfigDou
         self.BUFFER_CAPACITY = self.NUM_TASK * 1_000
 
 
-class ConfigTaskAllocation0DuelingDqn(ConfigBase, ConfigTakAllocation0, ConfigDuelingDqn):
+class ConfigTaskAllocation0DuelingDqn(ConfigBase, ConfigBasicTaskAllocation0, ConfigDuelingDqn):
     def __init__(self):
         ConfigBase.__init__(self)
-        ConfigTakAllocation0.__init__(self)
+        ConfigBasicTaskAllocation0.__init__(self)
         ConfigDuelingDqn.__init__(self)
 
         self.NUM_TASK = 20
@@ -68,10 +68,10 @@ class ConfigTaskAllocation0DuelingDqn(ConfigBase, ConfigTakAllocation0, ConfigDu
         self.BUFFER_CAPACITY = self.NUM_TASK * 1_000
 
 
-class ConfigTaskAllocation0DoubleDuelingDqn(ConfigBase, ConfigTakAllocation0, ConfigDoubleDuelingDqn):
+class ConfigTaskAllocation0DoubleDuelingDqn(ConfigBase, ConfigBasicTaskAllocation0, ConfigDoubleDuelingDqn):
     def __init__(self):
         ConfigBase.__init__(self)
-        ConfigTakAllocation0.__init__(self)
+        ConfigBasicTaskAllocation0.__init__(self)
         ConfigDoubleDuelingDqn.__init__(self)
 
         self.NUM_TASK = 20

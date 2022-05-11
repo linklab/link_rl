@@ -1,7 +1,7 @@
 from g_utils.types import ModelType
 
 
-class ConfigTakAllocation:
+class ConfigBasicTaskAllocation:
     def __init__(self):
         self.EPISODE_REWARD_AVG_SOLVED = 100
         self.EPISODE_REWARD_STD_SOLVED = 20
@@ -19,9 +19,9 @@ class ConfigTakAllocation:
         self.BUFFER_CAPACITY = self.NUM_TASK * 1_000
 
 
-class ConfigTakAllocation0(ConfigTakAllocation):
+class ConfigBasicTaskAllocation0(ConfigBasicTaskAllocation):
     def __init__(self):
-        ConfigTakAllocation.__init__(self)
+        ConfigBasicTaskAllocation.__init__(self)
 
         self.ENV_NAME = "Task_Allocation_v0"
         self.LEARNING_RATE = 0.0003
