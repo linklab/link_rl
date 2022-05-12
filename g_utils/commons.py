@@ -14,6 +14,8 @@ from gym.vector import AsyncVectorEnv
 import plotly.graph_objects as go
 
 from a_configuration.a_base_config.a_environments.open_ai_gym.config_gym_atari import ConfigGymAtari
+from a_configuration.a_base_config.a_environments.open_ai_gym.config_gym_box2d import ConfigHardcoreBipedalWalker, \
+    ConfigNormalBipedalWalker
 from a_configuration.a_base_config.config_parse import SYSTEM_USER_NAME
 from a_configuration.a_base_config.a_environments.unity.config_unity_box import ConfigUnityGymEnv
 from a_configuration.a_base_config.c_models.config_convolutional_models import Config2DConvolutionalModel, \
@@ -807,7 +809,13 @@ def get_train_env(config, no_graphics=True):
             #   Else   #
             ############
             else:
-                env = gym.make(env_name, **config.ENV_KWARGS)
+                if isinstance(config, ConfigHardcoreBipedalWalker):
+                    env = gym.make("BipedalWalker-v3", hardcore=True, **config.ENV_KWARGS)
+                elif isinstance(config, ConfigNormalBipedalWalker):
+                    env = gym.make("BipedalWalker-v3", **config.ENV_KWARGS)
+                else:
+                    env = gym.make(env_name, **config.ENV_KWARGS)
+
                 if isinstance(env.observation_space, Discrete):
                     env = wrapper.DiscreteToBox(env)
 
@@ -902,7 +910,13 @@ def get_single_env(config, no_graphics=True, play=False):
     #   else   #
     ############
     else:
-        single_env = gym.make(config.ENV_NAME, **config.ENV_KWARGS)
+        if isinstance(config, ConfigHardcoreBipedalWalker):
+            single_env = gym.make("BipedalWalker-v3", hardcore=True, **config.ENV_KWARGS)
+        elif isinstance(config, ConfigNormalBipedalWalker):
+            single_env = gym.make("BipedalWalker-v3", **config.ENV_KWARGS)
+        else:
+            single_env = gym.make(config.ENV_NAME, **config.ENV_KWARGS)
+
         if isinstance(single_env.observation_space, Discrete):
             single_env = wrapper.DiscreteToBox(single_env)
 

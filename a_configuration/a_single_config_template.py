@@ -186,6 +186,7 @@ config = ConfigLunarLanderContinuousA3c()
 
 from a_configuration.b_single_config.open_ai_gym.box2d.config_lunar_lander_continuous import ConfigLunarLanderContinuousPpo
 config = ConfigLunarLanderContinuousPpo()
+config.WANDB_REPORT_URL = "https://wandb.ai/link-koreatech/LunarLanderContinuous-v2_PPO_yhhan/reports/LunarLanderContinuous-v2_PPO--VmlldzoxOTkyMDUy?accessToken=von6k6x7zlz1fns9gb7ld7lqpsvtemc3z6yx70t43iuxarppga7v0f0ard4uf18t"
 
 from a_configuration.b_single_config.open_ai_gym.box2d.config_lunar_lander_continuous import ConfigLunarLanderContinuousPpoTrajectory
 config = ConfigLunarLanderContinuousPpoTrajectory()
@@ -202,29 +203,53 @@ from a_configuration.b_single_config.open_ai_gym.box2d.config_lunar_lander_conti
 config = ConfigLunarLanderContinuousSac()
 config.WANDB_REPORT_URL = "https://wandb.ai/link-koreatech/LunarLanderContinuous-v2_SAC_yhhan/reports/LunarLanderContinuous-v2_SAC--VmlldzoxNTA3MjA2"
 
-####################
-## Bipedal Walker ##
-####################
-from a_configuration.b_single_config.open_ai_gym.box2d.config_bipedal_walker import ConfigBipedalWalkerA2c
-config = ConfigBipedalWalkerA2c()
+###########################
+## Normal Bipedal Walker ##
+###########################
+from a_configuration.b_single_config.open_ai_gym.box2d.config_bipedal_walker import ConfigNormalBipedalWalkerA2c
+config = ConfigNormalBipedalWalkerA2c()
 
-from a_configuration.b_single_config.open_ai_gym.box2d.config_bipedal_walker import ConfigBipedalWalkerA3c
-config = ConfigBipedalWalkerA3c()
+from a_configuration.b_single_config.open_ai_gym.box2d.config_bipedal_walker import ConfigNormalBipedalWalkerA3c
+config = ConfigNormalBipedalWalkerA3c()
 
-from a_configuration.b_single_config.open_ai_gym.box2d.config_bipedal_walker import ConfigBipedalWalkerPpo
-config = ConfigBipedalWalkerPpo()
+from a_configuration.b_single_config.open_ai_gym.box2d.config_bipedal_walker import ConfigNormalBipedalWalkerPpo
+config = ConfigNormalBipedalWalkerPpo()
 
-from a_configuration.b_single_config.open_ai_gym.box2d.config_bipedal_walker import ConfigBipedalWalkerPpoTrajectory
-config = ConfigBipedalWalkerPpoTrajectory()
+from a_configuration.b_single_config.open_ai_gym.box2d.config_bipedal_walker import ConfigNormalBipedalWalkerPpoTrajectory
+config = ConfigNormalBipedalWalkerPpoTrajectory()
 
-from a_configuration.b_single_config.open_ai_gym.box2d.config_bipedal_walker import ConfigBipedalWalkerDdpg
-config = ConfigBipedalWalkerDdpg()
+from a_configuration.b_single_config.open_ai_gym.box2d.config_bipedal_walker import ConfigNormalBipedalWalkerDdpg
+config = ConfigNormalBipedalWalkerDdpg()
 
-from a_configuration.b_single_config.open_ai_gym.box2d.config_bipedal_walker import ConfigBipedalWalkerTd3
-config = ConfigBipedalWalkerTd3()
+from a_configuration.b_single_config.open_ai_gym.box2d.config_bipedal_walker import ConfigNormalBipedalWalkerTd3
+config = ConfigNormalBipedalWalkerTd3()
 
-from a_configuration.b_single_config.open_ai_gym.box2d.config_bipedal_walker import ConfigBipedalWalkerSac
-config = ConfigBipedalWalkerSac()
+from a_configuration.b_single_config.open_ai_gym.box2d.config_bipedal_walker import ConfigNormalBipedalWalkerSac
+config = ConfigNormalBipedalWalkerSac()
+
+#############################
+## Hardcore Bipedal Walker ##
+#############################
+from a_configuration.b_single_config.open_ai_gym.box2d.config_bipedal_walker import ConfigHardcoreBipedalWalkerA2c
+config = ConfigHardcoreBipedalWalkerA2c()
+
+from a_configuration.b_single_config.open_ai_gym.box2d.config_bipedal_walker import ConfigHardcoreBipedalWalkerA3c
+config = ConfigHardcoreBipedalWalkerA3c()
+
+from a_configuration.b_single_config.open_ai_gym.box2d.config_bipedal_walker import ConfigHardcoreBipedalWalkerPpo
+config = ConfigHardcoreBipedalWalkerPpo()
+
+from a_configuration.b_single_config.open_ai_gym.box2d.config_bipedal_walker import ConfigHardcoreBipedalWalkerPpoTrajectory
+config = ConfigHardcoreBipedalWalkerPpoTrajectory()
+
+from a_configuration.b_single_config.open_ai_gym.box2d.config_bipedal_walker import ConfigHardcoreBipedalWalkerDdpg
+config = ConfigHardcoreBipedalWalkerDdpg()
+
+from a_configuration.b_single_config.open_ai_gym.box2d.config_bipedal_walker import ConfigHardcoreBipedalWalkerTd3
+config = ConfigHardcoreBipedalWalkerTd3()
+
+from a_configuration.b_single_config.open_ai_gym.box2d.config_bipedal_walker import ConfigHardcoreBipedalWalkerSac
+config = ConfigHardcoreBipedalWalkerSac()
 
 
 ################
