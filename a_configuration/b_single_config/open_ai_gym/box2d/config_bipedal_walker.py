@@ -89,7 +89,7 @@ class ConfigHardcoreBipedalWalkerA2c(ConfigBase, ConfigHardcoreBipedalWalker, Co
         ConfigA2c.__init__(self)
 
         self.MAX_TRAINING_STEPS = 700_000
-        self.MODEL_TYPE = ModelType.SMALL_LINEAR
+        self.MODEL_TYPE = ModelType.MEDIUM_LINEAR
 
 
 class ConfigHardcoreBipedalWalkerA3c(ConfigBase, ConfigHardcoreBipedalWalker, ConfigA3c):
@@ -99,7 +99,7 @@ class ConfigHardcoreBipedalWalkerA3c(ConfigBase, ConfigHardcoreBipedalWalker, Co
         ConfigA3c.__init__(self)
 
         self.MAX_TRAINING_STEPS = 700_000
-        self.MODEL_TYPE = ModelType.SMALL_LINEAR
+        self.MODEL_TYPE = ModelType.MEDIUM_LINEAR
 
 
 class ConfigHardcoreBipedalWalkerPpo(ConfigBase, ConfigHardcoreBipedalWalker, ConfigPpo):
@@ -109,7 +109,7 @@ class ConfigHardcoreBipedalWalkerPpo(ConfigBase, ConfigHardcoreBipedalWalker, Co
         ConfigPpo.__init__(self)
 
         self.MAX_TRAINING_STEPS = 700_000
-        self.MODEL_TYPE = ModelType.SMALL_LINEAR
+        self.MODEL_TYPE = ModelType.MEDIUM_LINEAR
 
         self.USE_GAE = True
 
@@ -121,7 +121,7 @@ class ConfigHardcoreBipedalWalkerPpoTrajectory(ConfigBase, ConfigHardcoreBipedal
         ConfigPpoTrajectory.__init__(self)
 
         self.MAX_TRAINING_STEPS = 700_000
-        self.MODEL_TYPE = ModelType.SMALL_LINEAR
+        self.MODEL_TYPE = ModelType.MEDIUM_LINEAR
 
 
 class ConfigHardcoreBipedalWalkerDdpg(ConfigBase, ConfigHardcoreBipedalWalker, ConfigDdpg):
@@ -132,7 +132,7 @@ class ConfigHardcoreBipedalWalkerDdpg(ConfigBase, ConfigHardcoreBipedalWalker, C
 
         self.MAX_TRAINING_STEPS = 700_000
         self.BUFFER_CAPACITY = 200_000
-        self.MODEL_TYPE = ModelType.SMALL_LINEAR
+        self.MODEL_TYPE = ModelType.MEDIUM_LINEAR
 
 
 class ConfigHardcoreBipedalWalkerTd3(ConfigBase, ConfigHardcoreBipedalWalker, ConfigTd3):
@@ -143,7 +143,7 @@ class ConfigHardcoreBipedalWalkerTd3(ConfigBase, ConfigHardcoreBipedalWalker, Co
 
         self.MAX_TRAINING_STEPS = 700_000
         self.BUFFER_CAPACITY = 200_000
-        self.MODEL_TYPE = ModelType.SMALL_LINEAR
+        self.MODEL_TYPE = ModelType.MEDIUM_LINEAR
 
 
 class ConfigHardcoreBipedalWalkerSac(ConfigBase, ConfigHardcoreBipedalWalker, ConfigSac):
@@ -154,4 +154,5 @@ class ConfigHardcoreBipedalWalkerSac(ConfigBase, ConfigHardcoreBipedalWalker, Co
 
         self.MAX_TRAINING_STEPS = 700_000
         self.BUFFER_CAPACITY = 200_000
-        self.MODEL_TYPE = ModelType.SMALL_LINEAR
+        self.MODEL_TYPE = ModelType.MEDIUM_LINEAR
+        self.MIN_ALPHA = 0.25
