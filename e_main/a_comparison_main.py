@@ -38,6 +38,16 @@ device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
 n_agents = len(config_c.AGENT_PARAMETERS)
 
+import random
+import torch
+
+if config_c.SEED is not None:
+    random.seed(config_c.SEED)
+    torch.manual_seed(config_c.SEED)
+    np.random.seed(config_c.SEED)
+    torch.backends.cudnn.deterministic = True
+    torch.backends.cudnn.benchmark = False
+
 for agent_config in config_c.AGENT_PARAMETERS:
     # del agent_config.MAX_TRAINING_STEPS
     del agent_config.N_ACTORS

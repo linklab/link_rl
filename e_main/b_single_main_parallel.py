@@ -1,44 +1,11 @@
-import warnings
-warnings.filterwarnings("ignore")
-warnings.simplefilter("ignore")
+from b_single_main_common import *
 
-import os
-os.environ['KMP_DUPLICATE_LIB_OK'] = 'True'
-
-import sys
 import time
-
-import numpy as np
-np.set_printoptions(precision=3)
-np.set_printoptions(suppress=True)
-np.set_printoptions(formatter={'float': '{: 0.3f}'.format})
-
-from gym import logger
-logger.set_level(level=40)
-
 import torch.multiprocessing as mp
-import torch
-
-os.environ['KMP_DUPLICATE_LIB_OK'] = 'True'
-sys.path.append(os.path.abspath(
-    os.path.join(os.path.dirname(os.path.realpath(__file__)), os.pardir)
-))
-
 from d_agents.on_policy.a3c.agent_a3c import WorkerAgentA3c
 
-from e_main.config_single import config
 from e_main.supports.actor import Actor, LearningActor
-from e_main.supports.learner import Learner
-from g_utils.commons import get_env_info, print_basic_info
 from g_utils.types import OffPolicyAgentTypes, AgentType
-from g_utils.commons import set_config
-from g_utils.commons_rl import get_agent
-
-from a_configuration.a_base_config.config_parse import SYSTEM_USER_NAME, SYSTEM_COMPUTER_NAME
-config.SYSTEM_USER_NAME = SYSTEM_USER_NAME
-config.SYSTEM_COMPUTER_NAME = SYSTEM_COMPUTER_NAME
-
-device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
 
 def main():

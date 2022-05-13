@@ -53,3 +53,5 @@ class ConfigComparisonBase:
         self.DEVICE = None
 
         self.CONSOLE_LOG_INTERVAL_TRAINING_STEPS = 30
+
+        self.SEED = None
