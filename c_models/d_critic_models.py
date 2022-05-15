@@ -177,7 +177,7 @@ class QCriticModel(CriticModel):
         if isinstance(self.config.MODEL_PARAMETER, ConfigLinearModel):
             x = self.representation_layers(obs)
 
-            x = torch.cat([x, act], dim=-1)
+            x = torch.cat([x, act], dim=-1).float()
             x = self.linear_layers(x)
 
         elif isinstance(self.config.MODEL_PARAMETER, Config2DConvolutionalModel):
@@ -186,14 +186,14 @@ class QCriticModel(CriticModel):
             conv_out = torch.flatten(conv_out, start_dim=1)
             x = self.representation_layers(conv_out)
 
-            x = torch.cat([x, act], dim=-1)
+            x = torch.cat([x, act], dim=-1).float()
             x = self.linear_layers(x)
 
         elif isinstance(self.config.MODEL_PARAMETER, ConfigRecurrentLinearModel):
             obs, _ = obs[0]
             x = self.representation_layers(obs)
 
-            x = torch.cat([x, act], dim=-1)
+            x = torch.cat([x, act], dim=-1).float()
             x = self.linear_layers(x)
 
         elif isinstance(self.config.MODEL_PARAMETER, ConfigRecurrent2DConvolutionalModel):
@@ -203,7 +203,7 @@ class QCriticModel(CriticModel):
             conv_out = torch.flatten(conv_out, start_dim=1)
             x = self.representation_layers(conv_out)
 
-            x = torch.cat([x, act], dim=-1)
+            x = torch.cat([x, act], dim=-1).float()
             x = self.linear_layers(x)
 
         else:
@@ -312,7 +312,7 @@ class DoubleQCriticModel(CriticModel):
             conv_out = torch.flatten(conv_out, start_dim=1)
             x = self.representation_layers(conv_out)
 
-            x = torch.cat([x, act], dim=-1)
+            x = torch.cat([x, act], dim=-1).float()
             q1_x = self.q1_linear_layers(x)
             q2_x = self.q2_linear_layers(x)
 
@@ -320,7 +320,7 @@ class DoubleQCriticModel(CriticModel):
             obs, _ = obs[0]
             x = self.representation_layers(obs)
 
-            x = torch.cat([x, act], dim=-1)
+            x = torch.cat([x, act], dim=-1).float()
             q1_x = self.q1_linear_layers(x)
             q2_x = self.q2_linear_layers(x)
 
@@ -330,7 +330,7 @@ class DoubleQCriticModel(CriticModel):
             conv_out = torch.flatten(conv_out, start_dim=1)
             x = self.representation_layers(conv_out)
 
-            x = torch.cat([x, act], dim=-1)
+            x = torch.cat([x, act], dim=-1).float()
             q1_x = self.q1_linear_layers(x)
             q2_x = self.q2_linear_layers(x)
 
