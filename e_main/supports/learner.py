@@ -406,6 +406,16 @@ class Learner(mp.Process):
                 self.test_idx.value += 1
 
             if self.training_step.value >= self.config.MAX_TRAINING_STEPS:
+                env_name = self.config.ENV_NAME.split("/")[1] if "/" in self.config.ENV_NAME else self.config.ENV_NAME
+
+                model_save(
+                    model=self.agent.model,
+                    env_name=env_name,
+                    agent_type_name=self.config.AGENT_TYPE.name,
+                    test_episode_reward_avg=self.test_episode_reward_avg.value,
+                    test_episode_reward_std=self.test_episode_reward_std.value,
+                    config=self.config
+                )
                 print("[TRAIN TERMINATION] MAX_TRAINING_STEPS ({0:,}) REACHES!!!".format(
                     self.config.MAX_TRAINING_STEPS
                 ))

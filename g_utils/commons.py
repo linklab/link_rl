@@ -40,7 +40,7 @@ def model_save(model, env_name, agent_type_name, test_episode_reward_avg, test_e
 
     now = datetime.datetime.now()
     local_now = now.astimezone()
-    file_name = "{0:4.1f}_{1:3.1f}_{2}_{3}_{4}_{5}_{6}.pth".format(
+    file_name = "{0:.1f}_{1:.1f}_{2}_{3}_{4}_{5}_{6}.pth".format(
         test_episode_reward_avg, test_episode_reward_std, local_now.year, local_now.month, local_now.day,
         env_name, agent_type_name
     )
