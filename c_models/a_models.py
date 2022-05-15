@@ -280,7 +280,7 @@ class Model(nn.Module):
         input_n_features = self.config.MODEL_PARAMETER.HIDDEN_SIZE
         self.linear_layers = self.get_linear_layers(input_n_features=input_n_features, activation=activation)
 
-    def _forward(self, obs, save_hidden=False):
+    def _forward(self, obs):
         if isinstance(obs, np.ndarray):
             obs = torch.tensor(obs, dtype=torch.float32, device=self.config.DEVICE)
 
@@ -341,8 +341,7 @@ class Model(nn.Module):
             if rnn_in.ndim == 2:
                 rnn_in = rnn_in.unsqueeze(1)
             rnn_out, h_out = self.recurrent_layers(rnn_in, h_in)
-            if save_hidden:
-                self.recurrent_hidden = h_out.detach()  # save hidden
+            self.recurrent_hidden = h_out.detach()  # save hidden
 
             # linear layers
             rnn_out_flattened = torch.flatten(rnn_out, start_dim=1)

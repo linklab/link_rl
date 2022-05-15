@@ -753,6 +753,11 @@ def wandb_log_comparison(
     wandb_obj.log(log_dict)
 
 
+def put_seed_to_env(config, env):
+    if config.SEED is not None and hasattr(env, "seed"):
+        env.seed(config.SEED)
+
+
 def get_train_env(config, no_graphics=True):
     def make_gym_env(env_name):
         def _make():
@@ -840,6 +845,8 @@ def get_train_env(config, no_graphics=True):
                         kwargs = dict()
 
                     env = env_wrapper(env, **kwargs)
+
+            put_seed_to_env(config, env)
 
             return env
 
@@ -941,6 +948,8 @@ def get_single_env(config, no_graphics=True, play=False):
                 kwargs = dict()
 
             single_env = env_wrapper(single_env, **kwargs)
+
+    put_seed_to_env(config, single_env)
 
     return single_env
 
