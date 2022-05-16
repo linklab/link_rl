@@ -93,8 +93,8 @@ class Buffer:
             torch.stack(hiddens, 1).shape: [num_layers, batch_size, 1, hidden]
             torch.stack(hiddens, 1).squeeze(dim=2).shape: [num_layers, batch_size, hidden]
             """
-            print(observations[0].shape)
-            print(hiddens[0].shape)
+            # print(observations[0].shape)
+            # print(hiddens[0].shape)
             observations = torch.from_numpy(np.array(observations, dtype=np.float32)).to(self.config.DEVICE)
             hiddens = torch.stack(tensors=hiddens, dim=1).squeeze(dim=2)
 
