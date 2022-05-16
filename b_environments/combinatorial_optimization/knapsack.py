@@ -9,6 +9,9 @@ import datetime as dt
 
 from a_configuration.a_base_config.c_models.config_convolutional_models import Config1DConvolutionalModel
 from a_configuration.a_base_config.c_models.config_linear_models import ConfigLinearModel
+from a_configuration.a_base_config.c_models.config_recurrent_convolutional_models import \
+    ConfigRecurrent1DConvolutionalModel
+from a_configuration.a_base_config.c_models.config_recurrent_linear_models import ConfigRecurrentLinearModel
 from a_configuration.a_base_config.config_parse import SYSTEM_USER_NAME, SYSTEM_COMPUTER_NAME
 from b_environments.combinatorial_optimization.boto3_knapsack import load_instance, upload_file, load_solution
 from b_environments.combinatorial_optimization.knapsack_gurobi import model_kp
@@ -112,12 +115,12 @@ class KnapsackEnv(gym.Env):
 
         self.action_space = spaces.Discrete(2)
 
-        if isinstance(config.MODEL_PARAMETER, ConfigLinearModel):
+        if isinstance(config.MODEL_PARAMETER, (ConfigLinearModel, ConfigRecurrentLinearModel)):
             self.observation_space = spaces.Box(
                 low=-1.0, high=1000.0,
                 shape=((self.NUM_ITEM + 4) * 2,)
             )
-        elif isinstance(config.MODEL_PARAMETER, Config1DConvolutionalModel):
+        elif isinstance(config.MODEL_PARAMETER, (Config1DConvolutionalModel, ConfigRecurrent1DConvolutionalModel)):
             self.observation_space = spaces.Box(
                 low=-1.0, high=1000.0,
                 shape=(self.NUM_ITEM + 4, 2)
