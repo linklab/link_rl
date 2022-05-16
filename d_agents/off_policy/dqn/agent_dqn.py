@@ -49,9 +49,9 @@ class AgentDqn(OffPolicyAgent):
             if coin < self.epsilon.value:
                 q_values = torch.rand(len(obs), self.n_discrete_actions)
             else:
-                q_values = self.q_net.q(obs)
+                q_values = self.q_net.q(obs, save_hidden=True)
         else:
-            q_values = self.q_net.q(obs)
+            q_values = self.q_net.q(obs, save_hidden=True)
 
         if unavailable_actions is not None:
             for i, unavailable_action in enumerate(unavailable_actions):

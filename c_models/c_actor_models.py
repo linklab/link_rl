@@ -67,11 +67,11 @@ class ActorModel(Model):
         else:
             raise ValueError()
 
-    def forward_actor(self, obs):
-        return self._forward(obs)
+    def forward_actor(self, obs, save_hidden=False):
+        return self._forward(obs, save_hidden=save_hidden)
 
     @abstractmethod
-    def pi(self, x):
+    def pi(self, x, save_hidden=False):
         raise NotImplementedError()
 
 
@@ -95,8 +95,8 @@ class DiscreteActorModel(ActorModel):
         )
         self.actor_params_list = list(self.parameters())
 
-    def pi(self, obs):
-        x = self.forward_actor(obs)
+    def pi(self, obs, save_hidden=False):
+        x = self.forward_actor(obs, save_hidden=save_hidden)
         x = self.actor_linear_pi(x)
         action_prob = F.softmax(x, dim=-1)
         return action_prob
@@ -123,8 +123,8 @@ class ContinuousDeterministicActorModel(ActorModel):
         )
         self.actor_params_list = list(self.parameters())
 
-    def pi(self, x):
-        x = self.forward_actor(x)
+    def pi(self, x, save_hidden=False):
+        x = self.forward_actor(x, save_hidden=save_hidden)
         mu_v = self.mu(x)
         return mu_v
 
@@ -188,8 +188,8 @@ class ContinuousStochasticActorModel(ActorModel):
 
         return x
 
-    def pi(self, obs):
-        x = self.forward_actor(obs)
+    def pi(self, obs, save_hidden=False):
+        x = self.forward_actor(obs, save_hidden=save_hidden)
         mu_v = self.mu(x)
 
         # We just have to exponentiate it to have the standard deviation

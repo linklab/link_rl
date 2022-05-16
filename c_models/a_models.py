@@ -46,7 +46,8 @@ class Model(nn.Module):
         if self.is_recurrent_model:
             self.recurrent_hidden = torch.zeros(
                 self.config.MODEL_PARAMETER.NUM_LAYERS,
-                1,  # batch_size is always 1
+                1,  # batch_size is always 1,
+                    # exactly this is the number of envs in vector_env, but now ONLY 1 is supported
                 self.config.MODEL_PARAMETER.HIDDEN_SIZE,
                 dtype=torch.float32,
                 device=self.config.DEVICE
@@ -280,7 +281,7 @@ class Model(nn.Module):
         input_n_features = self.config.MODEL_PARAMETER.HIDDEN_SIZE
         self.linear_layers = self.get_linear_layers(input_n_features=input_n_features, activation=activation)
 
-    def _forward(self, obs):
+    def _forward(self, obs, save_hidden=False):
         if isinstance(obs, np.ndarray):
             obs = torch.tensor(obs, dtype=torch.float32, device=self.config.DEVICE)
 
@@ -341,7 +342,13 @@ class Model(nn.Module):
             if rnn_in.ndim == 2:
                 rnn_in = rnn_in.unsqueeze(1)
             rnn_out, h_out = self.recurrent_layers(rnn_in, h_in)
-            self.recurrent_hidden = h_out.detach()  # save hidden
+
+            # if roll out, have to save hidden
+            # if train, not
+            # when _forward() is called in get_action(), save_hidden is True
+            # when _forward() is called on training, save_hidden is False
+            if save_hidden:
+                self.recurrent_hidden = h_out.detach()  # save hidden
 
             # linear layers
             rnn_out_flattened = torch.flatten(rnn_out, start_dim=1)
@@ -368,7 +375,9 @@ class Model(nn.Module):
             if x.ndim == 2:
                 x = x.unsqueeze(1)
             x, h_out = self.recurrent_layers(x, h_in)
-            self.recurrent_hidden = h_out.detach()  # save hidden
+
+            if save_hidden:
+                self.recurrent_hidden = h_out.detach()  # save hidden
 
             # linear layers
             x = torch.flatten(x, start_dim=1)
