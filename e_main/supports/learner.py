@@ -91,6 +91,8 @@ class Learner(mp.Process):
         if self.config.ENV_NAME in ["Task_Allocation_v0", "Knapsack_Problem_v0"]:
             self.env_info = None
 
+        self.modified_env_name = self.config.ENV_NAME.split("/")[1] if "/" in self.config.ENV_NAME else self.config.ENV_NAME
+
     def generator_on_policy_transition(self):
         observations, infos = self.train_env.reset(return_info=True)
 
@@ -406,11 +408,9 @@ class Learner(mp.Process):
                 self.test_idx.value += 1
 
             if self.training_step.value >= self.config.MAX_TRAINING_STEPS:
-                env_name = self.config.ENV_NAME.split("/")[1] if "/" in self.config.ENV_NAME else self.config.ENV_NAME
-
                 model_save(
                     model=self.agent.model,
-                    env_name=env_name,
+                    env_name=self.modified_env_name,
                     agent_type_name=self.config.AGENT_TYPE.name,
                     test_episode_reward_avg=self.test_episode_reward_avg.value,
                     test_episode_reward_std=self.test_episode_reward_std.value,
@@ -477,11 +477,9 @@ class Learner(mp.Process):
                 self.total_time_step.value, self.training_step.value
             ))
 
-            env_name = self.config.ENV_NAME.split("/")[1] if "/" in self.config.ENV_NAME else self.config.ENV_NAME
-
             model_save(
                 model=self.agent.model,
-                env_name=env_name,
+                env_name=self.modified_env_name,
                 agent_type_name=self.config.AGENT_TYPE.name,
                 test_episode_reward_avg=self.test_episode_reward_avg.value,
                 test_episode_reward_std=self.test_episode_reward_std.value,

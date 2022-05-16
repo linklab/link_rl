@@ -36,5 +36,6 @@ if config.SEED is not None:
     random.seed(config.SEED)
     torch.manual_seed(config.SEED)
     np.random.seed(config.SEED)
-    torch.backends.cudnn.deterministic = True
-    torch.backends.cudnn.benchmark = False
+    torch.cuda.manual_seed(config.SEED)
+    # torch.backends.cudnn.deterministic = True
+    # torch.backends.cudnn.benchmark = False
