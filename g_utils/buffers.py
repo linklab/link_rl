@@ -89,17 +89,17 @@ class Buffer:
             """
             type(hiddens): tuple
             len(hiddens): batch_size
-            hiddens[0].shape: [num_layers]
+            hiddens[0].shape: [num_layers, 1, hidden], 1 is the number of envs
             torch.stack(hiddens, 1).shape: [num_layers, batch_size, 1, hidden]
             torch.stack(hiddens, 1).squeeze(dim=2).shape: [num_layers, batch_size, hidden]
             """
             print(observations[0].shape)
             print(hiddens[0].shape)
             observations = torch.from_numpy(np.array(observations, dtype=np.float32)).to(self.config.DEVICE)
-            hiddens = torch.stack(hiddens, 1).squeeze(dim=2)
+            hiddens = torch.stack(tensors=hiddens, dim=1).squeeze(dim=2)
 
             next_observations = torch.from_numpy(np.array(next_observations, dtype=np.float32)).to(self.config.DEVICE)
-            next_hiddens = torch.stack(next_hiddens, 1).squeeze(dim=2)
+            next_hiddens = torch.stack(tensors=next_hiddens, dim=1).squeeze(dim=2)
 
             # if CNN
             if observations.ndim == 5:  # [batch_size, 1, channel, height, width]

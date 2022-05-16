@@ -507,29 +507,134 @@ from a_configuration.b_single_config.combinatorial_optimization.config_task_allo
 config = ConfigTaskAllocation1Dqn()
 
 
-##########################
-### Knapsack ###
-##########################
-from a_configuration.b_single_config.combinatorial_optimization.config_knapsack import ConfigKnapsack0Dqn
-config = ConfigKnapsack0Dqn()
+###########################
+#### Knapsack - Random ####
+###########################
+from a_configuration.b_single_config.combinatorial_optimization.config_knapsack import ConfigKnapsack0RandomTestDqn
+config = ConfigKnapsack0RandomTestDqn()
 
-from a_configuration.b_single_config.combinatorial_optimization.config_knapsack import ConfigKnapsack0A2c
-config = ConfigKnapsack0A2c()
+from a_configuration.b_single_config.combinatorial_optimization.config_knapsack import ConfigKnapsack0RandomTestA2c
+config = ConfigKnapsack0RandomTestA2c()
 
-from a_configuration.b_single_config.combinatorial_optimization.config_knapsack import ConfigKnapsack0Ppo
-config = ConfigKnapsack0Ppo()
+from a_configuration.b_single_config.combinatorial_optimization.config_knapsack import ConfigKnapsack0RandomTestPpo
+config = ConfigKnapsack0RandomTestPpo()
 
-from a_configuration.b_single_config.combinatorial_optimization.config_knapsack import ConfigKnapsackTestDqn
-config = ConfigKnapsackTestDqn()
 
-from a_configuration.b_single_config.combinatorial_optimization.config_knapsack import ConfigKnapsackStaticTestDqn
-config = ConfigKnapsackStaticTestDqn()
+#################################
+#### Knapsack - Random Linear ####
+#################################
+from a_configuration.b_single_config.combinatorial_optimization.config_knapsack import ConfigKnapsack0RandomTestLinearDqn
+config = ConfigKnapsack0RandomTestLinearDqn()
 
-from a_configuration.b_single_config.combinatorial_optimization.config_knapsack import ConfigKnapsackTestA2c
-config = ConfigKnapsackTestA2c()
+from a_configuration.b_single_config.combinatorial_optimization.config_knapsack import ConfigKnapsack0RandomTestLinearA2c
+config = ConfigKnapsack0RandomTestLinearA2c()
 
-from a_configuration.b_single_config.combinatorial_optimization.config_knapsack import ConfigKnapsackTestPpo
-config = ConfigKnapsackTestPpo()
+from a_configuration.b_single_config.combinatorial_optimization.config_knapsack import ConfigKnapsack0RandomTestLinearPpo
+config = ConfigKnapsack0RandomTestLinearPpo()
+
+
+#################################
+######## Knapsack - Load ########
+#################################
+from a_configuration.b_single_config.combinatorial_optimization.config_knapsack import ConfigKnapsack0LoadTestDqn
+config = ConfigKnapsack0LoadTestDqn()
+
+
+#################################
+#### Knapsack - Load Linear #####
+#################################
+from a_configuration.b_single_config.combinatorial_optimization.config_knapsack import ConfigKnapsack0LoadTestLinearDqn
+config = ConfigKnapsack0LoadTestLinearDqn()
+
+from a_configuration.b_single_config.combinatorial_optimization.config_knapsack import ConfigKnapsack0LoadTestLinearA2c
+config = ConfigKnapsack0LoadTestLinearA2c()
+
+from a_configuration.b_single_config.combinatorial_optimization.config_knapsack import ConfigKnapsack0LoadTestLinearPpo
+config = ConfigKnapsack0LoadTestLinearPpo()
+
+
+#################################
+####### Knapsack - static #######
+#################################
+from a_configuration.b_single_config.combinatorial_optimization.config_knapsack import ConfigKnapsack0StaticTestDqn
+config = ConfigKnapsack0StaticTestDqn()
+
+
+
+########################################
+####### Knapsack - Static Linear #######
+########################################
+
+from a_configuration.b_single_config.combinatorial_optimization.config_knapsack import ConfigKnapsack0StaticTestLinearDqn
+config = ConfigKnapsack0StaticTestLinearDqn()
+
+from a_configuration.b_single_config.combinatorial_optimization.config_knapsack import ConfigKnapsack0StaticTestLinearA2c
+config = ConfigKnapsack0StaticTestLinearA2c()
+
+from a_configuration.b_single_config.combinatorial_optimization.config_knapsack import ConfigKnapsack0StaticTestLinearPpo
+config = ConfigKnapsack0StaticTestLinearPpo()
+
+
+##################################
+##Action_Space = NUMBER_OF_ITEMS##
+####### Knapsack - Random ########
+##################################
+from a_configuration.b_single_config.combinatorial_optimization.config_knapsack import ConfigKnapsack1RandomTestDqn
+config = ConfigKnapsack1RandomTestDqn()
+
+
+#################################
+#### Knapsack - Random Linear ####
+#################################
+from a_configuration.b_single_config.combinatorial_optimization.config_knapsack import ConfigKnapsack1RandomTestLinearDqn
+config = ConfigKnapsack1RandomTestLinearDqn()
+
+from a_configuration.b_single_config.combinatorial_optimization.config_knapsack import ConfigKnapsack1RandomTestLinearA2c
+config = ConfigKnapsack1RandomTestLinearA2c()
+
+from a_configuration.b_single_config.combinatorial_optimization.config_knapsack import ConfigKnapsack1RandomTestLinearPpo
+config = ConfigKnapsack1RandomTestLinearPpo()
+
+
+#################################
+######## Knapsack - Load ########
+#################################
+from a_configuration.b_single_config.combinatorial_optimization.config_knapsack import ConfigKnapsack1LoadTestDqn
+config = ConfigKnapsack1LoadTestDqn()
+
+
+#################################
+#### Knapsack - Load Linear #####
+#################################
+from a_configuration.b_single_config.combinatorial_optimization.config_knapsack import ConfigKnapsack1LoadTestLinearDqn
+config = ConfigKnapsack1LoadTestLinearDqn()
+
+from a_configuration.b_single_config.combinatorial_optimization.config_knapsack import ConfigKnapsack1LoadTestLinearA2c
+config = ConfigKnapsack1LoadTestLinearA2c()
+
+from a_configuration.b_single_config.combinatorial_optimization.config_knapsack import ConfigKnapsack1LoadTestLinearPpo
+config = ConfigKnapsack1LoadTestLinearPpo()
+
+
+#################################
+####### Knapsack - static #######
+#################################
+from a_configuration.b_single_config.combinatorial_optimization.config_knapsack import ConfigKnapsack1StaticTestDqn
+config = ConfigKnapsack1StaticTestDqn()
+
+########################################
+####### Knapsack - Static Linear #######
+########################################
+
+from a_configuration.b_single_config.combinatorial_optimization.config_knapsack import ConfigKnapsack1StaticTestLinearDqn
+config = ConfigKnapsack1StaticTestLinearDqn()
+
+from a_configuration.b_single_config.combinatorial_optimization.config_knapsack import ConfigKnapsack1StaticTestLinearA2c
+config = ConfigKnapsack1StaticTestLinearA2c()
+
+from a_configuration.b_single_config.combinatorial_optimization.config_knapsack import ConfigKnapsack1StaticTestLinearPpo
+config = ConfigKnapsack1StaticTestLinearPpo()
+
 
 config.USE_WANDB = False
 

@@ -100,7 +100,7 @@ class OnPolicyAgent(Agent):
     def get_action(self, obs, mode=AgentMode.TRAIN):
         self.step += 1
         if isinstance(self.action_space, Discrete):
-            action_prob = self.actor_model.pi(obs)
+            action_prob = self.actor_model.pi(obs, save_hidden=True)
 
             if mode == AgentMode.TRAIN:
                 action = np.random.choice(

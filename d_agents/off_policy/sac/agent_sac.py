@@ -60,7 +60,7 @@ class AgentSac(OffPolicyAgent):
         self.last_entropy = mp.Value('d', 0.0)
 
     def get_action(self, obs, mode=AgentMode.TRAIN):
-        mu_v, var_v = self.actor_model.pi(obs)
+        mu_v, var_v = self.actor_model.pi(obs, save_hidden=True)
 
         if mode == AgentMode.TRAIN:
             # actions = np.random.normal(
