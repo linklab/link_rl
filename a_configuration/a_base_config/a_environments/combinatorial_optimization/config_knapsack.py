@@ -89,6 +89,14 @@ class ConfigKnapsack0StaticTestLinear(ConfigKnapsack):
         self.MODEL_TYPE = ModelType.MEDIUM_LINEAR
 
 
+class ConfigKnapsack0StaticTestLinearRecurrent(ConfigKnapsack):
+    def __init__(self):
+        ConfigKnapsack.__init__(self)
+
+        self.STATIC_INITIAL_STATE_50 = True
+        self.MODEL_TYPE = ModelType.MEDIUM_RECURRENT
+
+
 ##################################
 ##Action_Space = NUMBER_OF_ITEMS##
 ##################################

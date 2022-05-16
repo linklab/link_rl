@@ -1,17 +1,20 @@
 from a_configuration.a_base_config.config_comparison_base import ConfigComparisonBase
-from a_configuration.b_single_config.combinatorial_optimization.config_knapsack import ConfigKnapsack0Dqn, ConfigKnapsack0A2c, ConfigKnapsack0Ppo
+from a_configuration.b_single_config.combinatorial_optimization.config_knapsack import \
+    ConfigKnapsack0StaticTestLinearDqn, \
+    ConfigKnapsack0StaticTestLinearA2c, ConfigKnapsack0StaticTestLinearPpo, \
+    ConfigKnapsack0StaticTestLinearDoubleDuelingDqn, ConfigKnapsack0StaticTestRecurrentDoubleDuelingDqn
 
 
-class ConfigComparisonTaskAllocationDqnA2cPpo(ConfigComparisonBase):
+class ConfigComparisonKnapsack0StaticTestLinearDqnA2cPpo(ConfigComparisonBase):
     def __init__(self):
         ConfigComparisonBase.__init__(self)
 
         self.ENV_NAME = "Knapsack_Problem_v0"
 
         self.AGENT_PARAMETERS = [
-            ConfigKnapsack0Dqn(),
-            ConfigKnapsack0A2c(),
-            ConfigKnapsack0Ppo(),
+            ConfigKnapsack0StaticTestLinearDqn(),
+            ConfigKnapsack0StaticTestLinearA2c(),
+            ConfigKnapsack0StaticTestLinearPpo(),
         ]
 
         self.AGENT_LABELS = [
@@ -23,3 +26,24 @@ class ConfigComparisonTaskAllocationDqnA2cPpo(ConfigComparisonBase):
         self.MAX_TRAINING_STEPS = 200_000
         self.N_RUNS = 5
 
+
+class ConfigComparisonKnapsack0StaticTestLinearDqn(ConfigComparisonBase):
+    def __init__(self):
+        ConfigComparisonBase.__init__(self)
+
+        self.ENV_NAME = "Knapsack_Problem_v0"
+
+        self.AGENT_PARAMETERS = [
+            ConfigKnapsack0StaticTestLinearDqn(),
+            ConfigKnapsack0StaticTestLinearDoubleDuelingDqn(),
+            ConfigKnapsack0StaticTestRecurrentDoubleDuelingDqn(),
+        ]
+
+        self.AGENT_LABELS = [
+            "DQN",
+            "DD_DQN",
+            "Recurrent DD_DQN",
+        ]
+
+        self.MAX_TRAINING_STEPS = 200_000
+        self.N_RUNS = 5

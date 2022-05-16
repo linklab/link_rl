@@ -228,8 +228,12 @@ config_c = ConfigComparisonTaskAllocationDqnTypes()
 #  Knapsack  #
 ##############
 from a_configuration.c_comparison_config.combinatorial_optimization.config_comparison_knapsack import \
-    ConfigComparisonTaskAllocationDqnA2cPpo
-config_c = ConfigComparisonTaskAllocationDqnA2cPpo()
+    ConfigComparisonKnapsack0StaticTestLinearDqnA2cPpo
+config_c = ConfigComparisonKnapsack0StaticTestLinearDqnA2cPpo()
+
+from a_configuration.c_comparison_config.combinatorial_optimization.config_comparison_knapsack import \
+    ConfigComparisonKnapsack0StaticTestLinearDqn
+config_c = ConfigComparisonKnapsack0StaticTestLinearDqn()
 
 
 if __name__ == "__main__":

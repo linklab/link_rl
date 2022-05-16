@@ -513,12 +513,6 @@ config = ConfigTaskAllocation1Dqn()
 from a_configuration.b_single_config.combinatorial_optimization.config_knapsack import ConfigKnapsack0RandomTestDqn
 config = ConfigKnapsack0RandomTestDqn()
 
-from a_configuration.b_single_config.combinatorial_optimization.config_knapsack import ConfigKnapsack0RandomTestA2c
-config = ConfigKnapsack0RandomTestA2c()
-
-from a_configuration.b_single_config.combinatorial_optimization.config_knapsack import ConfigKnapsack0RandomTestPpo
-config = ConfigKnapsack0RandomTestPpo()
-
 
 #################################
 #### Knapsack - Random Linear ####
