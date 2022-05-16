@@ -123,19 +123,16 @@ def load_instance(bucket_name, file_path):
             data.append(y)
 
     num_items = int(len(data)/2) - 1
-    state = np.zeros(shape=(num_items+2, 4), dtype=float)
-
-    data_idx = 0
+    state = np.zeros(shape=(num_items+4, 2), dtype=float)
 
     for item_idx in range(num_items):
-        state[data_idx][2] = data[item_idx + data_idx]
-        state[data_idx][3] = data[item_idx + data_idx + 1]
+        state[item_idx + 4][0] = data[item_idx * 2]
+        state[item_idx + 4][1] = data[item_idx * 2 + 1]
 
-        data_idx += 1
+    state[0][1] = data[-1]
 
-    state[-1][1] = data[-1]
-
-    print(state)
+    #print(data)
+    #print(state)
 
     return state
 
@@ -204,11 +201,12 @@ def check_solution(bucket_name, file_path, size):
 if __name__ == '__main__':
     #show_bucket_name()
     bucket_name = 'linklab'
-    #file_path = 'knapsack_instances/RI/instances/n_50_r_100/instance0.csv'
+    file_path = 'knapsack_instances/RI/instances/n_50_r_100/instance0.csv'
     #file_path = 'knapsack_instances/FI/instances/n_50_wp_12.5/instance0.csv'
-    #load_instance(bucket_name, file_path)
+    load_instance(bucket_name, file_path)
+
     #file_path = 'knapsack_instances/RI/optimal_solution/n_50_r_100/solution0.csv'
     #load_solution(bucket_name, file_path)
 
-    file_path = 'knapsack_instances/TEST/link_solution/2022422zerowin'
-    check_solution(bucket_name, file_path, 3)
+    # file_path = 'knapsack_instances/TEST/link_solution/2022422zerowin'
+    # check_solution(bucket_name, file_path, 3)

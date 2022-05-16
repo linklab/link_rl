@@ -75,6 +75,7 @@ STATIC_INITIAL_STATE_50_OPTIMAL = 385
 
 
 class DoneReasonType0(enum.Enum):
+    TYPE_0 = "Selected same items"
     TYPE_1 = "Weight Limit Exceeded"
     TYPE_2 = "Weight Remains"
     TYPE_3 = "All Item Selected"
@@ -110,7 +111,7 @@ class KnapsackEnv(gym.Env):
         self.value_of_all_items_selected = None
         self.num_step = None
 
-        self.action_space = spaces.Discrete(2)
+        self.action_space = spaces.Discrete(self.NUM_ITEM)
 
         if isinstance(config.MODEL_PARAMETER, ConfigLinearModel):
             self.observation_space = spaces.Box(
@@ -290,6 +291,11 @@ class KnapsackEnv(gym.Env):
             mission_complete_reward = 0.0
             misbehavior_reward = 0.0
 
+        elif done_type == DoneReasonType0.TYPE_0:  # "Selected Same Item"
+            value_of_all_items_selected_reward = 0.0
+            mission_complete_reward = 0.0
+            misbehavior_reward = -1.0
+
         elif done_type == DoneReasonType0.TYPE_1:  # "Weight Limit Exceeded"
             value_of_all_items_selected_reward = 0.0
             mission_complete_reward = 0.0
@@ -326,10 +332,6 @@ class KnapsackEnv(gym.Env):
         self.weight_of_all_items_selected = 0
         self.value_of_all_items_selected = 0
 
-        self.num_step = 0
-        self.internal_state[3][0] = self.internal_state[4][0]
-        self.internal_state[3][1] = self.internal_state[4][1]
-
         observation = self.observation()
         info = dict()
         info['internal_state'] = copy.deepcopy(self.internal_state)
@@ -342,65 +344,55 @@ class KnapsackEnv(gym.Env):
     def check_future_select_possible(self):
         possible = False
 
-        for item in self.internal_state[self.num_step + 5:]:
+        for item in self.internal_state[4:-1]:
             weight = item[1]
 
-            if weight + self.internal_state[2][1] <= self.internal_state[0][1]:
+            if weight != -1 and weight + self.internal_state[2][1] <= self.internal_state[0][1]:
                 possible = True
                 break
 
         return possible
 
     def step(self, action_idx):
-        self.actions_sequence.append(action_idx)
         info = dict()
-        step_item_value, step_item_weight = self.internal_state[self.num_step + 4][:]
+        step_item_value, step_item_weight = self.internal_state[action_idx + 4][:]
 
-        if action_idx == 1:
-            self.items_selected.append(self.num_step)
+        if action_idx in self.actions_sequence:
+            done = True
+            info['DoneReasonType'] = DoneReasonType0.TYPE_0
+            self.actions_sequence.append(action_idx)
 
+        else:
+            self.actions_sequence.append(action_idx)
+            self.items_selected.append(action_idx)
             self.value_of_all_items_selected += step_item_value
             self.weight_of_all_items_selected += step_item_weight
 
             self.internal_state[2][0] += step_item_value
             self.internal_state[2][1] += step_item_weight
 
-        possible = self.check_future_select_possible()
+            possible = self.check_future_select_possible()
 
-        done = False
+            self.internal_state[action_idx + 4][:] = -1
 
-        self.internal_state[self.num_step + 4][:] = -1
+            if not possible:
+                done = True
+
+                if self.weight_of_all_items_selected > self.LIMIT_WEIGHT_KNAPSACK:
+                    info['DoneReasonType'] = DoneReasonType0.TYPE_1  # "Weight Limit Exceeded"
+                else:
+                    info['DoneReasonType'] = DoneReasonType0.TYPE_2  # "Weight Remains"
+            else:
+                done = False
+
         self.internal_state[0][0] -= 1
-
-        if self.num_step == self.NUM_ITEM - 1 or not possible:
-            done = True
-
-            if self.internal_state[1][0] == self.internal_state[2][0]:
-                info['DoneReasonType'] = DoneReasonType0.TYPE_3  # "All Item Selected"
-            elif self.weight_of_all_items_selected > self.LIMIT_WEIGHT_KNAPSACK:
-                info['DoneReasonType'] = DoneReasonType0.TYPE_1  # "Weight Limit Exceeded"
-            else:
-                info['DoneReasonType'] = DoneReasonType0.TYPE_2  # "Weight Remains"
-
-            if self.num_step != self.NUM_ITEM - 1:
-                self.num_step += 1
-                self.internal_state[3][0] = self.internal_state[self.num_step + 4][0]
-                self.internal_state[3][1] = self.internal_state[self.num_step + 4][1]
-            else:
-                self.num_step += 1
-                self.internal_state[3][0] = 0
-                self.internal_state[3][1] = 0
-        else:
-            self.num_step += 1
-            self.internal_state[3][0] = self.internal_state[self.num_step + 4][0]
-            self.internal_state[3][1] = self.internal_state[self.num_step + 4][1]
 
         observation = self.observation()
 
         if done:
             reward = self.reward(done_type=info['DoneReasonType'])
 
-            if info['DoneReasonType'] != DoneReasonType0.TYPE_1:
+            if info['DoneReasonType'] != DoneReasonType0.TYPE_0 and info['DoneReasonType'] != DoneReasonType0.TYPE_1:
                 if self.solution_found[0] < self.value_of_all_items_selected:
                     self.solution_found[0] = self.value_of_all_items_selected
                     self.solution_found[1:] = self.items_selected
@@ -421,40 +413,34 @@ class KnapsackEnv(gym.Env):
 
         return observation, reward, done, info
 
+#Random Instance Test
+from a_configuration.a_base_config.a_environments.combinatorial_optimization.config_knapsack import \
+    ConfigKnapsack0RandomTest
+config = ConfigKnapsack0RandomTest()
 
-def run_env():
+#Load Instance Test
+from a_configuration.a_base_config.a_environments.combinatorial_optimization.config_knapsack import \
+    ConfigKnapsack0LoadTest
+config = ConfigKnapsack0LoadTest()
+
+#Static Instance Test
+from a_configuration.a_base_config.a_environments.combinatorial_optimization.config_knapsack import \
+    ConfigKnapsack0StaticTest
+config = ConfigKnapsack0StaticTest()
+
+from a_configuration.a_base_config.c_models.config_convolutional_models import Config1DConvolutionalModel
+config.MODEL_PARAMETER = Config1DConvolutionalModel(config.MODEL_TYPE)
+
+def run_env(config):
     class Dummy_Agent:
         def get_action(self, observation):
             assert observation is not None
-            available_action_ids = [0, 1]
+            available_action_ids = list(range(config.NUM_ITEM))
             action_id = random.choice(available_action_ids)
             return action_id
 
     print("START RUN!!!")
     agent = Dummy_Agent()
-
-    #Random Instance Test
-    from a_configuration.a_base_config.a_environments.combinatorial_optimization.config_knapsack import \
-        ConfigKnapsack0RandomTest
-    config = ConfigKnapsack0RandomTest()
-
-    #Load Instance Test
-    from a_configuration.a_base_config.a_environments.combinatorial_optimization.config_knapsack import \
-        ConfigKnapsack0LoadTest
-    config = ConfigKnapsack0LoadTest()
-
-    #Static Instance Test
-    from a_configuration.a_base_config.a_environments.combinatorial_optimization.config_knapsack import \
-        ConfigKnapsack0StaticTest
-    config = ConfigKnapsack0StaticTest()
-
-    if config.MODEL_TYPE in (
-        ModelType.TINY_1D_CONVOLUTIONAL, ModelType.SMALL_1D_CONVOLUTIONAL,
-        ModelType.MEDIUM_1D_CONVOLUTIONAL, ModelType.LARGE_1D_CONVOLUTIONAL
-    ):
-        from a_configuration.a_base_config.c_models.config_convolutional_models import Config1DConvolutionalModel
-        config.MODEL_PARAMETER = Config1DConvolutionalModel(config.MODEL_TYPE)
-
     env = KnapsackEnv(config)
 
     for i in range(2):
@@ -477,4 +463,4 @@ def run_env():
 
 
 if __name__ == "__main__":
-    run_env()
+    run_env(config)

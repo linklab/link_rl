@@ -802,6 +802,10 @@ def get_train_env(config, no_graphics=True):
                 from b_environments.combinatorial_optimization.knapsack import KnapsackEnv
                 env = KnapsackEnv(config)
 
+            elif config.ENV_NAME in ["Knapsack_Problem_v1"]:
+                from b_environments.combinatorial_optimization.knapsack_actions import KnapsackEnv
+                env = KnapsackEnv(config)
+
             #############
             #   Atari   #
             #############
@@ -900,6 +904,10 @@ def get_single_env(config, no_graphics=True, play=False):
 
     elif config.ENV_NAME in ["Knapsack_Problem_v0"]:
         from b_environments.combinatorial_optimization.knapsack import KnapsackEnv
+        single_env = KnapsackEnv(config)
+
+    elif config.ENV_NAME in ["Knapsack_Problem_v1"]:
+        from b_environments.combinatorial_optimization.knapsack_actions import KnapsackEnv
         single_env = KnapsackEnv(config)
 
     #############
