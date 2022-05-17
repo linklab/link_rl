@@ -503,7 +503,7 @@ def console_log(learner,
 
         console_log += resource_allocation_info
 
-    if config.ENV_NAME in ["Knapsack_Problem_v0"]:
+    if config.ENV_NAME in ["Knapsack_Problem_v0", "Knapsack_Problem_v1"]:
         info = learner.env_info
 
         knapsack_info = ", Value.: {0:3}, Weight: {1:3}, Items: {2}, Actions: {3}, Solution_Found: {4}".format(
@@ -614,7 +614,7 @@ def wandb_log(learner, wandb_obj, config):
         log_dict["Allocation"] = learner.env_info["Resources allocated"]
         log_dict["Utilization"] = 100 * learner.env_info["Utilization"]
         log_dict["[TEST] Utilization"] = 100 * learner.test_episode_utilization.value
-    if config.ENV_NAME in ["Knapsack_Problem_v0"]:
+    if config.ENV_NAME in ["Knapsack_Problem_v0", "Knapsack_Problem_v1"]:
         log_dict["Value of All Item Selected"] = learner.env_info["Value"]
         log_dict["[TEST] Value of All Item Selected"] = learner.test_episode_items_value.value
     if config.AGENT_TYPE in [AgentType.DQN, AgentType.DUELING_DQN, AgentType.DOUBLE_DQN, AgentType.DOUBLE_DUELING_DQN]:
@@ -798,6 +798,10 @@ def get_train_env(config, no_graphics=True):
                 from b_environments.task_allocation.basic_task_allocation import EnvironmentBasicTaskScheduling0
                 env = EnvironmentBasicTaskScheduling0(config)
 
+            elif config.ENV_NAME in ["Task_Allocation_v1"]:
+                from b_environments.task_allocation.task_allocation_env import TaskAllocationEnvironment
+                env = TaskAllocationEnvironment(config)
+
             elif config.ENV_NAME in ["Knapsack_Problem_v0"]:
                 from b_environments.combinatorial_optimization.knapsack import KnapsackEnv
                 env = KnapsackEnv(config)
@@ -901,6 +905,10 @@ def get_single_env(config, no_graphics=True, play=False):
     elif config.ENV_NAME in ["Task_Allocation_v0"]:
         from b_environments.task_allocation.basic_task_allocation import EnvironmentBasicTaskScheduling0
         single_env = EnvironmentBasicTaskScheduling0(config)
+
+    elif config.ENV_NAME in ["Task_Allocation_v1"]:
+        from b_environments.task_allocation.task_allocation_env import TaskAllocationEnvironment
+        single_env = TaskAllocationEnvironment(config)
 
     elif config.ENV_NAME in ["Knapsack_Problem_v0"]:
         from b_environments.combinatorial_optimization.knapsack import KnapsackEnv

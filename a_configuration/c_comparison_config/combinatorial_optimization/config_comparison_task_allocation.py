@@ -1,6 +1,6 @@
 from a_configuration.a_base_config.config_comparison_base import ConfigComparisonBase
-from a_configuration.b_single_config.combinatorial_optimization.config_task_allocation import ConfigTaskAllocation0Dqn, \
-    ConfigTaskAllocation0DoubleDqn, ConfigTaskAllocation0DuelingDqn, ConfigTaskAllocation0DoubleDuelingDqn
+from a_configuration.b_single_config.combinatorial_optimization.config_basic_task_allocation import ConfigBasicTaskAllocation0Dqn, \
+    ConfigBasicTaskAllocation0DoubleDqn, ConfigBasicTaskAllocation0DuelingDqn, ConfigBasicTaskAllocation0DoubleDuelingDqn
 
 
 class ConfigComparisonTaskAllocationDqnTypes(ConfigComparisonBase):
@@ -10,10 +10,10 @@ class ConfigComparisonTaskAllocationDqnTypes(ConfigComparisonBase):
         self.ENV_NAME = "Task_Allocation_v0"
 
         self.AGENT_PARAMETERS = [
-            ConfigTaskAllocation0Dqn(),
-            ConfigTaskAllocation0DoubleDqn(),
-            ConfigTaskAllocation0DuelingDqn(),
-            ConfigTaskAllocation0DoubleDuelingDqn()
+            ConfigBasicTaskAllocation0Dqn(),
+            ConfigBasicTaskAllocation0DoubleDqn(),
+            ConfigBasicTaskAllocation0DuelingDqn(),
+            ConfigBasicTaskAllocation0DoubleDuelingDqn()
         ]
 
         self.AGENT_LABELS = [

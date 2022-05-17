@@ -496,17 +496,6 @@ config = ConfigDroneDdpg()
 from a_configuration.b_single_config.unity.config_drone import ConfigDroneSac
 config = ConfigDroneSac()
 
-
-##########################
-### TaskAllocation ###
-##########################
-from a_configuration.b_single_config.combinatorial_optimization.config_task_allocation import ConfigTaskAllocation0Dqn
-config = ConfigTaskAllocation0Dqn()
-
-from a_configuration.b_single_config.combinatorial_optimization.config_task_allocation import ConfigTaskAllocation1Dqn
-config = ConfigTaskAllocation1Dqn()
-
-
 ###########################
 #### Knapsack - Random ####
 ###########################
@@ -514,9 +503,9 @@ from a_configuration.b_single_config.combinatorial_optimization.config_knapsack 
 config = ConfigKnapsack0RandomTestDqn()
 
 
-#################################
+##################################
 #### Knapsack - Random Linear ####
-#################################
+##################################
 from a_configuration.b_single_config.combinatorial_optimization.config_knapsack import ConfigKnapsack0RandomTestLinearDqn
 config = ConfigKnapsack0RandomTestLinearDqn()
 
@@ -632,6 +621,22 @@ config = ConfigKnapsack1StaticTestLinearA2c()
 from a_configuration.b_single_config.combinatorial_optimization.config_knapsack import ConfigKnapsack1StaticTestLinearPpo
 config = ConfigKnapsack1StaticTestLinearPpo()
 
+
+###########################
+### BasicTaskAllocation ###
+###########################
+from a_configuration.b_single_config.combinatorial_optimization.config_basic_task_allocation import ConfigBasicTaskAllocation0Dqn
+config = ConfigBasicTaskAllocation0Dqn()
+
+from a_configuration.b_single_config.combinatorial_optimization.config_basic_task_allocation import ConfigBasicTaskAllocation1Dqn
+config = ConfigBasicTaskAllocation1Dqn()
+
+
+###############################
+####### Task Allocation #######
+###############################
+from a_configuration.b_single_config.combinatorial_optimization.config_task_allocation import ConfigTaskAllocationDqn
+config = ConfigTaskAllocationDqn()
 
 config.USE_WANDB = False
 
