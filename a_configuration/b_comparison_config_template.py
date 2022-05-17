@@ -234,6 +234,7 @@ config_c = ConfigComparisonKnapsack0StaticTestLinearDqnA2cPpo()
 from a_configuration.c_comparison_config.combinatorial_optimization.config_comparison_knapsack import \
     ConfigComparisonKnapsack0StaticTestLinearDqn
 config_c = ConfigComparisonKnapsack0StaticTestLinearDqn()
+config_c.WANDB_REPORT_URL = "https://wandb.ai/link-koreatech/ConfigComparisonKnapsack0StaticTestLinearDqn_Comparison_yhhan/reports/Knapsack0StaticTestLinearDqn_Comparison--VmlldzoyMDI0MzEz?accessToken=3a41c3eqjby8x7tjg7j3micxkzlz9iobjy12ld98j797uowgte9kdf3j33biyojx"
 
 from a_configuration.c_comparison_config.combinatorial_optimization.config_comparison_knapsack import \
     ConfigComparisonKnapsack0StaticTestLinearRecurrentDqn
