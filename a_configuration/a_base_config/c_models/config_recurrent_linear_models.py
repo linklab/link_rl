@@ -7,17 +7,17 @@ class ConfigRecurrentLinearModel:
             self.NEURONS_PER_REPRESENTATION_LAYER = [64]
 
             self.HIDDEN_SIZE = 64
-            self.NUM_LAYERS = 2
+            self.NUM_LAYERS = 1
 
-            self.NEURONS_PER_FULLY_CONNECTED_LAYER = []
+            self.NEURONS_PER_FULLY_CONNECTED_LAYER = [64]
 
         elif model_type == ModelType.SMALL_RECURRENT:
             self.NEURONS_PER_REPRESENTATION_LAYER = [128]
 
             self.HIDDEN_SIZE = 128
-            self.NUM_LAYERS = 2
+            self.NUM_LAYERS = 1
 
-            self.NEURONS_PER_FULLY_CONNECTED_LAYER = []
+            self.NEURONS_PER_FULLY_CONNECTED_LAYER = [128]
 
         # elif model_type == ModelType.SMALL_RECURRENT:
         #     self.NEURONS_PER_REPRESENTATION_LAYER = [4]

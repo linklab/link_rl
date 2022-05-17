@@ -2,7 +2,8 @@ from a_configuration.a_base_config.config_comparison_base import ConfigCompariso
 from a_configuration.b_single_config.combinatorial_optimization.config_knapsack import \
     ConfigKnapsack0StaticTestLinearDqn, \
     ConfigKnapsack0StaticTestLinearA2c, ConfigKnapsack0StaticTestLinearPpo, \
-    ConfigKnapsack0StaticTestLinearDoubleDuelingDqn, ConfigKnapsack0StaticTestRecurrentDoubleDuelingDqn
+    ConfigKnapsack0StaticTestLinearDoubleDuelingDqn, ConfigKnapsack0StaticTestLinearDoubleDqn
+from g_utils.types import ModelType
 
 
 class ConfigComparisonKnapsack0StaticTestLinearDqnA2cPpo(ConfigComparisonBase):
@@ -35,11 +36,13 @@ class ConfigComparisonKnapsack0StaticTestLinearDqn(ConfigComparisonBase):
 
         self.AGENT_PARAMETERS = [
             ConfigKnapsack0StaticTestLinearDqn(),
+            ConfigKnapsack0StaticTestLinearDoubleDqn(),
             ConfigKnapsack0StaticTestLinearDoubleDuelingDqn(),
         ]
 
         self.AGENT_LABELS = [
             "DQN",
+            "Double DQN",
             "Double Dueling DQN",
         ]
 
@@ -55,8 +58,9 @@ class ConfigComparisonKnapsack0StaticTestLinearRecurrentDqn(ConfigComparisonBase
 
         self.AGENT_PARAMETERS = [
             ConfigKnapsack0StaticTestLinearDoubleDuelingDqn(),
-            ConfigKnapsack0StaticTestRecurrentDoubleDuelingDqn(),
+            ConfigKnapsack0StaticTestLinearDoubleDuelingDqn(),
         ]
+        self.AGENT_PARAMETERS[1].MODEL_TYPE = ModelType.SMALL_RECURRENT
 
         self.AGENT_LABELS = [
             "Double Dueling DQN",
