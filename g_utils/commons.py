@@ -798,6 +798,10 @@ def get_train_env(config, no_graphics=True):
                 from b_environments.task_allocation.basic_task_allocation import EnvironmentBasicTaskScheduling0
                 env = EnvironmentBasicTaskScheduling0(config)
 
+            elif config.ENV_NAME in ["Task_Allocation_v1"]:
+                from b_environments.task_allocation.task_allocation_env import TaskAllocationEnvironment
+                env = TaskAllocationEnvironment(config)
+
             elif config.ENV_NAME in ["Knapsack_Problem_v0"]:
                 from b_environments.combinatorial_optimization.knapsack import KnapsackEnv
                 env = KnapsackEnv(config)
@@ -901,6 +905,10 @@ def get_single_env(config, no_graphics=True, play=False):
     elif config.ENV_NAME in ["Task_Allocation_v0"]:
         from b_environments.task_allocation.basic_task_allocation import EnvironmentBasicTaskScheduling0
         single_env = EnvironmentBasicTaskScheduling0(config)
+
+    elif config.ENV_NAME in ["Task_Allocation_v1"]:
+        from b_environments.task_allocation.task_allocation_env import TaskAllocationEnvironment
+        single_env = TaskAllocationEnvironment(config)
 
     elif config.ENV_NAME in ["Knapsack_Problem_v0"]:
         from b_environments.combinatorial_optimization.knapsack import KnapsackEnv

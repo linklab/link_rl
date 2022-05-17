@@ -10,6 +10,8 @@ import enum
 import copy
 import gym
 import os
+from gym import spaces
+from typing import Optional
 
 from a_configuration.a_base_config.a_environments.task_allocation.config_task_allocation import ConfigTaskAllocation
 
@@ -100,7 +102,7 @@ class Task:
             self.tasks[task_id] = (data_size, request_cpu, request_latency)
 
 
-class TaskAllocationEnvironment:
+class TaskAllocationEnvironment(gym.Env):
     def __init__(self, config):
         self.config = config
         self.task = Task(self.config)
@@ -127,7 +129,12 @@ class TaskAllocationEnvironment:
         self.revenue = None
         self.resource_util = None
 
-    def reset(self):
+        self.action_space = spaces.Discrete(self.config.NUM_CLOUD_SERVER + self.config.NUM_EDGE_SERVER)
+
+        self.obs_space = self.config.NUM_TASK + self.config.NUM_EDGE_SERVER + self.config.NUM_CLOUD_SERVER + 6
+        self.observation_space = spaces.Box(low=-1.0, high=10000.0, shape=((self.obs_space * 3,)))
+
+    def reset(self, *, seed: Optional[int] = None, return_info: bool = False, options: Optional[dict] = None,):
         self.task = Task(self.config)
         self.cloud_net = CloudNetwork(self.config)
         self.edge_net = EdgeNetwork(self.config)
@@ -163,7 +170,19 @@ class TaskAllocationEnvironment:
         self.total_server_cpu_list = self.cloud_server_cpu_list + self.edge_server_cpu_list
         # self.state += self.total_server_cpu_list
 
-        return self.state
+        observation = self.observation()
+
+        info = dict()
+
+        if return_info:
+            return observation, info
+        else:
+            return observation
+
+    def observation(self):
+        observation = copy.deepcopy(self.state.flatten()) / (self.config.CLOUD_BANDWIDTH_CAPACITY + self.config.EDGE_BANDWIDTH_CAPACITY)
+
+        return observation
 
     def step(self, action_idx):
         total_delay = 0
@@ -221,7 +240,9 @@ class TaskAllocationEnvironment:
             # Generate next state
             self.configurate_state()
 
-        return self.state, reward, done, info
+        observation = self.observation()
+
+        return observation, reward, done, info
 
     def configurate_state(self):
         self.state = [[
