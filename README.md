@@ -22,7 +22,7 @@ Install package
   pip install --upgrade pip
   sudo apt-get install swig
   pip install gym[nomujoco]
-  pip install gym[atari,accept-rom-license]
+  pip install gym[atari,box2d,accept-rom-license]
   conda install -c conda-forge wandb
   conda install -c plotly plotly==5.6.0
   conda install -c conda-forge pandas
@@ -31,7 +31,7 @@ Install package
 - Windows
   ```commandline
   pip install gym==0.22.0
-  pip install gym[atari,accept-rom-license]==0.22.0
+  pip install gym[atari,box2d,accept-rom-license]==0.22.0
   conda install -c conda-forge box2d-py==2.3.8
   pip install pygame==2.1.0
   pip install opencv-python==4.5.5.62
@@ -45,7 +45,7 @@ Install package
   ```commandline
   pip install gym==0.22.0
   pip install pygame==2.1.2
-  pip install gym[atari,accept-rom-license]==0.22.0
+  pip install gym[atari,box2d,accept-rom-license]==0.22.0
   conda install -c conda-forge swig==4.0.2
   conda install -c conda-forge box2d-py==2.3.8
   pip install opencv-python==4.5.5.62
