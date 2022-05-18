@@ -54,9 +54,12 @@ def main():
     env = gym.make("HumanoidStandup-v2");play(env, n_episodes=5)
 
 
+#  pip install gym-robotics
 def main_robotics():
-    env = gym.make("FetchReach-v1");play(env, n_episodes=5)  #  pip install gym-robotics
-
+    env = gym.make("FetchReach-v1");play(env, n_episodes=5)
+    #env = gym.make("FetchPush-v1");play(env, n_episodes=5)
+    #env = gym.make("FetchPickAndPlace-v1");play(env, n_episodes=5)
+    #env = gym.make("FetchSlide-v1");play(env, n_episodes=5)
 
 if __name__ == "__main__":
     #main()
