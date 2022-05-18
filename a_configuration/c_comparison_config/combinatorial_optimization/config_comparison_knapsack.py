@@ -79,13 +79,13 @@ class ConfigComparisonKnapsack0And1StaticTestLinearDoubleDqn(ConfigComparisonBas
         self.ENV_NAME = "Knapsack_Problem_v0"
 
         self.AGENT_PARAMETERS = [
-            ConfigKnapsack0StaticTestLinearDoubleDqn(),
             ConfigKnapsack1StaticTestLinearDoubleDqn(),
+            ConfigKnapsack0StaticTestLinearDoubleDqn(),
         ]
 
         self.AGENT_LABELS = [
             "Dueling DQN (M1)",
-            "Dueling DQN (M2)",
+            "Dueling DQN (M2 - 2 Actions)",
         ]
 
         self.MAX_TRAINING_STEPS = 200_000
