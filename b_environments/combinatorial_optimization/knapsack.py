@@ -215,7 +215,7 @@ class KnapsackEnv(gym.Env):
                 while left <= end and (state[left][0] / state[left][1]) <= (state[pivot][0] / state[pivot][1]):
                     left += 1
 
-                while right > start and (state[right][0] / state[right][1]) >= (state[pivot][0] / state[pivot][0]):
+                while right > start and (state[right][0] / state[right][1]) >= (state[pivot][0] / state[pivot][1]):
                     right -= 1
 
                 if left > right:
@@ -320,7 +320,7 @@ class KnapsackEnv(gym.Env):
         else:
             self.internal_state = self.get_initial_state()
 
-        if self.SORTING_TYPE:
+        if self.SORTING_TYPE is not None:
             self.state_sorting(self.internal_state, 4, self.NUM_ITEM + 3)
 
         self.TOTAL_VALUE_FOR_ALL_ITEMS = sum(self.internal_state[:, 0])
@@ -451,6 +451,7 @@ def run_env():
         ConfigKnapsack0StaticTest
     config = ConfigKnapsack0StaticTest()
 
+    #config.SORTING_TYPE = 1
     if config.MODEL_TYPE in (
         ModelType.TINY_1D_CONVOLUTIONAL, ModelType.SMALL_1D_CONVOLUTIONAL,
         ModelType.MEDIUM_1D_CONVOLUTIONAL, ModelType.LARGE_1D_CONVOLUTIONAL

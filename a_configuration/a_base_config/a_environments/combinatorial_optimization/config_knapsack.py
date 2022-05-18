@@ -56,6 +56,7 @@ class ConfigKnapsack0LoadTest(ConfigKnapsack):
     def __init__(self):
         ConfigKnapsack.__init__(self)
 
+        self.NUM_ITEM = 50
         self.FILE_PATH = 'knapsack_instances/RI/instances/n_50_r_100'
         self.UPLOAD_PATH = 'knapsack_instances/RI/link_solution/n_50_r_100'
         self.OPTIMAL_PATH = 'knapsack_instances/RI/optimal_solution/n_50_r_100'
@@ -66,6 +67,7 @@ class ConfigKnapsack0LoadTestLinear(ConfigKnapsack):
     def __init__(self):
         ConfigKnapsack.__init__(self)
 
+        self.NUM_ITEM = 50
         self.FILE_PATH = 'knapsack_instances/RI/instances/n_50_r_100'
         self.UPLOAD_PATH = 'knapsack_instances/RI/link_solution/n_50_r_100'
         self.OPTIMAL_PATH = 'knapsack_instances/RI/optimal_solution/n_50_r_100'
@@ -78,6 +80,7 @@ class ConfigKnapsack0StaticTest(ConfigKnapsack):
     def __init__(self):
         ConfigKnapsack.__init__(self)
 
+        self.NUM_ITEM = 50
         self.STATIC_INITIAL_STATE_50 = True
 
 
@@ -85,6 +88,7 @@ class ConfigKnapsack0StaticTestLinear(ConfigKnapsack):
     def __init__(self):
         ConfigKnapsack.__init__(self)
 
+        self.NUM_ITEM = 50
         self.STATIC_INITIAL_STATE_50 = True
         self.MODEL_TYPE = ModelType.MEDIUM_LINEAR
 
@@ -93,6 +97,7 @@ class ConfigKnapsack0StaticTestLinearRecurrent(ConfigKnapsack):
     def __init__(self):
         ConfigKnapsack.__init__(self)
 
+        self.NUM_ITEM = 50
         self.STATIC_INITIAL_STATE_50 = True
         self.MODEL_TYPE = ModelType.MEDIUM_RECURRENT
 
@@ -124,6 +129,7 @@ class ConfigKnapsack1LoadTest(ConfigKnapsack1):
     def __init__(self):
         ConfigKnapsack1.__init__(self)
 
+        self.NUM_ITEM = 50
         self.FILE_PATH = 'knapsack_instances/RI/instances/n_50_r_100'
         self.UPLOAD_PATH = 'knapsack_instances/RI/link_solution/n_50_r_100'
         self.OPTIMAL_PATH = 'knapsack_instances/RI/optimal_solution/n_50_r_100'
@@ -134,6 +140,7 @@ class ConfigKnapsack1LoadTestLinear(ConfigKnapsack1):
     def __init__(self):
         ConfigKnapsack1.__init__(self)
 
+        self.NUM_ITEM = 50
         self.FILE_PATH = 'knapsack_instances/RI/instances/n_50_r_100'
         self.UPLOAD_PATH = 'knapsack_instances/RI/link_solution/n_50_r_100'
         self.OPTIMAL_PATH = 'knapsack_instances/RI/optimal_solution/n_50_r_100'
@@ -146,6 +153,7 @@ class ConfigKnapsack1StaticTest(ConfigKnapsack1):
     def __init__(self):
         ConfigKnapsack1.__init__(self)
 
+        self.NUM_ITEM = 50
         self.STATIC_INITIAL_STATE_50 = True
 
 
@@ -153,5 +161,6 @@ class ConfigKnapsack1StaticTestLinear(ConfigKnapsack1):
     def __init__(self):
         ConfigKnapsack1.__init__(self)
 
+        self.NUM_ITEM = 50
         self.STATIC_INITIAL_STATE_50 = True
         self.MODEL_TYPE = ModelType.MEDIUM_LINEAR
