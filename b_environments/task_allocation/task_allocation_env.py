@@ -134,10 +134,11 @@ class TaskAllocationEnvironment(gym.Env):
         self.obs_space = self.config.NUM_TASK + self.config.NUM_EDGE_SERVER + self.config.NUM_CLOUD_SERVER + 6
         self.observation_space = spaces.Box(low=-1.0, high=10000.0, shape=((self.obs_space * 3,)))
 
-    def reset(self, *, seed: Optional[int] = None, return_info: bool = False, options: Optional[dict] = None,):
         self.task = Task(self.config)
         self.cloud_net = CloudNetwork(self.config)
         self.edge_net = EdgeNetwork(self.config)
+
+    def reset(self, *, seed: Optional[int] = None, return_info: bool = False, options: Optional[dict] = None,):
         self.cloud_bandwidth = self.cloud_net.bandwidth
         self.edge_bandwidth = self.edge_net.bandwidth
 
@@ -169,6 +170,7 @@ class TaskAllocationEnvironment(gym.Env):
         # self.state = [self.task.tasks[self.task_id][1], self.cloud_server_remain_cpu, self.edge_server_remain_cpu]
         self.total_server_cpu_list = self.cloud_server_cpu_list + self.edge_server_cpu_list
         # self.state += self.total_server_cpu_list
+        # print("state: ", self.state)
 
         observation = self.observation()
 
@@ -192,7 +194,10 @@ class TaskAllocationEnvironment(gym.Env):
         info = {}
 
         # Calculate delay
-        total_delay = self.calculate_delay(action_idx)
+        if self.total_server_cpu_list[action_idx] < self.task.tasks[self.task_id][1]:
+            total_delay = 51
+        else:
+            total_delay = self.calculate_delay(action_idx)
         # print("delay: ", total_delay)
         # print("task latency: ", self.task.tasks[self.task_id][2])
 
@@ -203,7 +208,8 @@ class TaskAllocationEnvironment(gym.Env):
         # Reward
         if total_delay > self.task.tasks[self.task_id][2] or \
                 self.total_server_cpu_list[action_idx] < self.task.tasks[self.task_id][1]:
-            reward = (self.task.tasks[self.task_id][2] - total_delay) * self.resource_util
+            # reward = (self.task.tasks[self.task_id][2] - total_delay) * self.resource_util
+            reward = -1
         else:
             self.num_remain_task -= 1
             # Apply action and update cloud and edge servers' cpu info
@@ -227,7 +233,10 @@ class TaskAllocationEnvironment(gym.Env):
 
             # Calculate resource utilization
             self.resource_util += self.task.tasks[self.task_id][1] + request_bandwidth
-            reward = (self.task.tasks[self.task_id][2] - total_delay) * self.resource_util
+            # reward = (self.task.tasks[self.task_id][2] - total_delay) * self.resource_util
+            reward = 1
+
+        # print("state: ", self.state)
 
         self.task_id += 1
         if self.config.NUM_TASK <= self.task_id:
