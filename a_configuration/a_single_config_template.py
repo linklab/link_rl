@@ -552,7 +552,7 @@ from a_configuration.b_single_config.combinatorial_optimization.config_knapsack 
 config = ConfigKnapsack0StaticTestLinearDqn()
 
 from a_configuration.b_single_config.combinatorial_optimization.config_knapsack import ConfigKnapsack0StaticTestLinearDoubleDuelingDqn
-config = ConfigKnapsack0StaticTestLinearDoubleDuelingDqn
+config = ConfigKnapsack0StaticTestLinearDoubleDuelingDqn()
 
 from a_configuration.b_single_config.combinatorial_optimization.config_knapsack import ConfigKnapsack0StaticTestLinearA2c
 config = ConfigKnapsack0StaticTestLinearA2c()
@@ -614,6 +614,12 @@ config = ConfigKnapsack1StaticTestDqn()
 
 from a_configuration.b_single_config.combinatorial_optimization.config_knapsack import ConfigKnapsack1StaticTestLinearDqn
 config = ConfigKnapsack1StaticTestLinearDqn()
+
+from a_configuration.b_single_config.combinatorial_optimization.config_knapsack import ConfigKnapsack1StaticTestLinearDoubleDqn
+config = ConfigKnapsack1StaticTestLinearDoubleDqn()
+
+from a_configuration.b_single_config.combinatorial_optimization.config_knapsack import ConfigKnapsack1StaticTestLinearDoubleDuelingDqn
+config = ConfigKnapsack1StaticTestLinearDoubleDuelingDqn()
 
 from a_configuration.b_single_config.combinatorial_optimization.config_knapsack import ConfigKnapsack1StaticTestLinearA2c
 config = ConfigKnapsack1StaticTestLinearA2c()

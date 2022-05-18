@@ -240,6 +240,9 @@ from a_configuration.c_comparison_config.combinatorial_optimization.config_compa
     ConfigComparisonKnapsack0StaticTestLinearRecurrentDqn
 config_c = ConfigComparisonKnapsack0StaticTestLinearRecurrentDqn()
 
+from a_configuration.c_comparison_config.combinatorial_optimization.config_comparison_knapsack import \
+    ConfigComparisonKnapsack0And1StaticTestLinearDoubleDqn
+config_c = ConfigComparisonKnapsack0And1StaticTestLinearDoubleDqn()
 
 if __name__ == "__main__":
     from g_utils.commons import get_env_info, print_comparison_basic_info, set_config

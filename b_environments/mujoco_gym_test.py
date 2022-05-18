@@ -9,8 +9,8 @@ def play(env, n_episodes):
     for i in range(n_episodes):
         episode_reward = 0  # cumulative_reward
 
-        env.render()
         observation = env.reset()
+        env.render()
 
         episode_steps = 0
 
@@ -18,13 +18,16 @@ def play(env, n_episodes):
             episode_steps += 1
             action = env.action_space.sample()
 
-            next_observation, reward, done, _ = env.step(action)
+            next_observation, reward, done, info = env.step(action)
+            print("Observation: {0}, Action: {1}, next_observation: {2}, Reward: {3}, Done: {4}, Info: {5}".format(
+                observation, action, next_observation, reward, done, info
+            ))
             env.render()
 
             episode_reward += reward  # episode_reward 를 산출하는 방법은 감가률 고려하지 않는 이 라인이 더 올바름.
             observation = next_observation
 
-            time.sleep(0.05)
+            time.sleep(0.01)
             if done:
                 break
 
@@ -51,5 +54,10 @@ def main():
     env = gym.make("HumanoidStandup-v2");play(env, n_episodes=5)
 
 
+def main_robotics():
+    env = gym.make("FetchReach-v1");play(env, n_episodes=5)  #  pip install gym-robotics
+
+
 if __name__ == "__main__":
-    main()
+    #main()
+    main_robotics()
