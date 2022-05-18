@@ -170,7 +170,7 @@ class TaskAllocationEnvironment(gym.Env):
         # self.state = [self.task.tasks[self.task_id][1], self.cloud_server_remain_cpu, self.edge_server_remain_cpu]
         self.total_server_cpu_list = self.cloud_server_cpu_list + self.edge_server_cpu_list
         # self.state += self.total_server_cpu_list
-        print("state: ", self.state)
+        # print("state: ", self.state)
 
         observation = self.observation()
 
