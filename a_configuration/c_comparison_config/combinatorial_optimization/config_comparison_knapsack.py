@@ -3,7 +3,8 @@ from a_configuration.b_single_config.combinatorial_optimization.config_knapsack 
     ConfigKnapsack0StaticTestLinearDqn, \
     ConfigKnapsack0StaticTestLinearA2c, ConfigKnapsack0StaticTestLinearPpo, \
     ConfigKnapsack0StaticTestLinearDoubleDuelingDqn, ConfigKnapsack0StaticTestLinearDoubleDqn, \
-    ConfigKnapsack1StaticTestLinearDoubleDqn
+    ConfigKnapsack1StaticTestLinearDoubleDqn, ConfigKnapsack1LoadTestLinearDoubleDqn, \
+    ConfigKnapsack0LoadTestLinearDoubleDqn
 from g_utils.types import ModelType
 
 
@@ -89,4 +90,23 @@ class ConfigComparisonKnapsack0And1StaticTestLinearDoubleDqn(ConfigComparisonBas
         ]
 
         self.MAX_TRAINING_STEPS = 200_000
+        self.N_RUNS = 5
+
+class ConfigComparisonKnapsack0And1LoadTestLinearDoubleDqn(ConfigComparisonBase):
+    def __init__(self):
+        ConfigComparisonBase.__init__(self)
+
+        self.ENV_NAME = "Knapsack_Problem_v0"
+
+        self.AGENT_PARAMETERS = [
+            ConfigKnapsack1LoadTestLinearDoubleDqn(),
+            ConfigKnapsack0LoadTestLinearDoubleDqn(),
+        ]
+
+        self.AGENT_LABELS = [
+            "Dueling DQN (M1)",
+            "Dueling DQN (M2 - 2 Actions)",
+        ]
+
+        self.MAX_TRAINING_STEPS = 30_000
         self.N_RUNS = 5

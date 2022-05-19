@@ -122,7 +122,7 @@ class KnapsackEnv(gym.Env):
         self.total_num_step = 0
 
         if self.STRATEGY == 1:
-            self.actions_space = spaces.Discrete(self.NUM_ITEM)
+            self.action_space = spaces.Discrete(self.NUM_ITEM)
         else:
             self.action_space = spaces.Discrete(2)
 
@@ -340,8 +340,9 @@ class KnapsackEnv(gym.Env):
             return possible
 
     def step(self, action_idx):
+        info = dict()
+
         if self.STRATEGY == 1:
-            info = dict()
             step_item_value, step_item_weight = self.internal_state[action_idx + 4][:]
 
             if action_idx in self.actions_sequence:
@@ -351,12 +352,14 @@ class KnapsackEnv(gym.Env):
 
             else:
                 self.actions_sequence.append(action_idx)
-                self.items_selected.append(action_idx)
-                self.value_of_all_items_selected += step_item_value
-                self.weight_of_all_items_selected += step_item_weight
 
-                self.internal_state[2][0] += step_item_value
-                self.internal_state[2][1] += step_item_weight
+                if self.weight_of_all_items_selected + step_item_weight <= self.LIMIT_WEIGHT_KNAPSACK:
+                    self.items_selected.append(action_idx)
+                    self.value_of_all_items_selected += step_item_value
+                    self.weight_of_all_items_selected += step_item_weight
+
+                    self.internal_state[2][0] += step_item_value
+                    self.internal_state[2][1] += step_item_weight
 
                 possible = self.check_future_select_possible()
 
@@ -365,42 +368,18 @@ class KnapsackEnv(gym.Env):
                 if not possible:
                     done = True
 
-                    if self.weight_of_all_items_selected > self.LIMIT_WEIGHT_KNAPSACK:
+                    if self.weight_of_all_items_selected + step_item_weight > self.LIMIT_WEIGHT_KNAPSACK:
                         info['DoneReasonType'] = DoneReasonType0.TYPE_1  # "Weight Limit Exceeded"
                     else:
                         info['DoneReasonType'] = DoneReasonType0.TYPE_2  # "Weight Remains"
                 else:
                     done = False
+                    self.total_num_step += 1
 
             self.internal_state[0][0] -= 1
 
-            observation = self.observation()
-
-            if done:
-                reward = self.reward(done_type=info['DoneReasonType'])
-
-                if info['DoneReasonType'] != DoneReasonType0.TYPE_0 and info[
-                    'DoneReasonType'] != DoneReasonType0.TYPE_1:
-                    if self.solution_found[0] < self.value_of_all_items_selected:
-                        self.solution_found[0] = self.value_of_all_items_selected
-                        self.solution_found[1:] = self.items_selected
-
-                        self.solution_found.append(round(self.solution_found[0] / self.optimal_value, 3))
-
-                        self.simple_solution_found = [
-                            self.value_of_all_items_selected,
-                            round(self.value_of_all_items_selected / self.optimal_value, 3),
-                            self.total_num_step
-                        ]
-
-                        if self.UPLOAD_PATH:
-                            upload_file('linklab', self.solution_found, self.UPLOAD_PATH)
-            else:
-                reward = self.reward(done_type=None)
-
         else:
             self.actions_sequence.append(action_idx)
-            info = dict()
             step_item_value, step_item_weight = self.internal_state[self.num_step + 4][:]
 
             done = False
@@ -436,16 +415,17 @@ class KnapsackEnv(gym.Env):
                 self.internal_state[3][0] = self.internal_state[self.num_step + 4][0]
                 self.internal_state[3][1] = self.internal_state[self.num_step + 4][1]
 
-            observation = self.observation()
+        observation = self.observation()
 
-            if done:
-                reward = self.reward(done_type=info['DoneReasonType'])
+        if done:
+            reward = self.reward(done_type=info['DoneReasonType'])
 
-                if info['DoneReasonType'] != DoneReasonType0.TYPE_1:  # "Weight Limit Exceeded"
-                    if self.solution_found[0] < self.value_of_all_items_selected:
-                        self.process_solution_found()
-            else:
-                reward = self.reward(done_type=None)
+            if info['DoneReasonType'] != DoneReasonType0.TYPE_0 and info[
+                'DoneReasonType'] != DoneReasonType0.TYPE_1:
+                if self.solution_found[0] < self.value_of_all_items_selected:
+                    self.process_solution_found()
+        else:
+            reward = self.reward(done_type=None)
 
         info['Actions sequence'] = self.actions_sequence
         info['Items selected'] = self.items_selected
@@ -454,6 +434,7 @@ class KnapsackEnv(gym.Env):
         info['internal_state'] = copy.deepcopy(self.internal_state)
         info['solution_found'] = self.solution_found
         info['simple_solution_found'] = self.simple_solution_found
+        info['STRATEGY'] = self.STRATEGY
 
         return observation, reward, done, info
 
@@ -496,24 +477,24 @@ def run_env():
 
     #Static Instance Test
     from a_configuration.b_single_config.combinatorial_optimization.config_knapsack import \
-        ConfigKnapsack0RandomTestLinearDqn
-    config = ConfigKnapsack0RandomTestLinearDqn()
+        ConfigKnapsack0StaticTestDqn
+    config = ConfigKnapsack0StaticTestDqn()
 
 
-    #Random Instance Test
-    from a_configuration.b_single_config.combinatorial_optimization.config_knapsack import \
-        ConfigKnapsack1RandomTestLinearDqn
-    config = ConfigKnapsack1RandomTestLinearDqn()
-
-    #Load Instance Test
-    from a_configuration.b_single_config.combinatorial_optimization.config_knapsack import \
-        ConfigKnapsack1LoadTestLinearDqn
-    config = ConfigKnapsack1LoadTestLinearDqn()
-
-    #Static Instance Test
-    from a_configuration.b_single_config.combinatorial_optimization.config_knapsack import \
-        ConfigKnapsack1RandomTestLinearDqn
-    config = ConfigKnapsack1RandomTestLinearDqn()
+    # #Random Instance Test
+    # from a_configuration.b_single_config.combinatorial_optimization.config_knapsack import \
+    #     ConfigKnapsack1RandomTestLinearDqn
+    # config = ConfigKnapsack1RandomTestLinearDqn()
+    #
+    # #Load Instance Test
+    # from a_configuration.b_single_config.combinatorial_optimization.config_knapsack import \
+    #     ConfigKnapsack1LoadTestLinearDqn
+    # config = ConfigKnapsack1LoadTestLinearDqn()
+    #
+    # #Static Instance Test
+    # from a_configuration.b_single_config.combinatorial_optimization.config_knapsack import \
+    #     ConfigKnapsack1RandomTestLinearDqn
+    # config = ConfigKnapsack1RandomTestLinearDqn()
 
     set_config(config)
 
