@@ -81,6 +81,7 @@ STATIC_INITIAL_STATE_50_OPTIMAL = 385
 
 
 class DoneReasonType0(enum.Enum):
+    TYPE_0 = "Selected same items"
     TYPE_1 = "Weight Limit Exceeded"
     TYPE_2 = "Weight Remains"
     TYPE_3 = "All Item Selected"
@@ -106,6 +107,7 @@ class KnapsackEnv(gym.Env):
         self.OPTIMAL_PATH = config.OPTIMAL_PATH
         self.INSTANCE_INDEX = config.INSTANCE_INDEX
         self.SORTING_TYPE = config.SORTING_TYPE
+        self.STRATEGY = config.STRATEGY
 
         self.solution_found = [0]
         self.simple_solution_found = None
@@ -119,7 +121,10 @@ class KnapsackEnv(gym.Env):
         self.num_step = None
         self.total_num_step = 0
 
-        self.action_space = spaces.Discrete(2)
+        if self.STRATEGY == 1:
+            self.actions_space = spaces.Discrete(self.NUM_ITEM)
+        else:
+            self.action_space = spaces.Discrete(2)
 
         if isinstance(config.MODEL_PARAMETER, (ConfigLinearModel, ConfigRecurrentLinearModel)):
             self.observation_space = spaces.Box(
@@ -237,82 +242,6 @@ class KnapsackEnv(gym.Env):
 
         return state
 
-    # def state_sorting(self, state, start, end):
-    #     if self.SORTING_TYPE == 1: #Value Per Weight
-    #         if start >= end:
-    #             return
-    #
-    #         pivot = start
-    #         left = start + 1
-    #         right = end
-    #
-    #         while left <= right:
-    #             while left <= end and (state[left][0] / state[left][1]) <= (state[pivot][0] / state[pivot][1]):
-    #                 left += 1
-    #
-    #             while right > start and (state[right][0] / state[right][1]) >= (state[pivot][0] / state[pivot][1]):
-    #                 right -= 1
-    #
-    #             if left > right:
-    #                 state[[right, pivot]] = state[[pivot, right]]
-    #             else:
-    #                 state[[left, right]] = state[[right, left]]
-    #
-    #         self.state_sorting(state, start, right - 1)
-    #         self.state_sorting(state, right + 1, end)
-    #
-    #     elif self.SORTING_TYPE == 2: #Value
-    #         if start >= end:
-    #             return
-    #
-    #         pivot = start
-    #         left = start + 1
-    #         right = end
-    #
-    #         while left <= right:
-    #             while left <= end and state[left][0] <= state[pivot][0]:
-    #                 left += 1
-    #
-    #             while right > start and state[right][0] >= state[pivot][0]:
-    #                 right -= 1
-    #
-    #             if left > right:
-    #                 state[[right, pivot]] = state[[pivot, right]]
-    #             else:
-    #                 state[[left, right]] = state[[right, left]]
-    #
-    #         self.state_sorting(state, start, right - 1)
-    #         self.state_sorting(state, right + 1, end)
-    #
-    #     elif self.SORTING_TYPE == 3: #weight
-    #         if start >= end:
-    #             return
-    #
-    #         pivot = start
-    #         left = start + 1
-    #         right = end
-    #
-    #         while left <= right:
-    #             while left <= end and state[left][1] <= state[pivot][1]:
-    #                 left += 1
-    #
-    #             while right > start and state[right][1] >= state[pivot][1]:
-    #                 right -= 1
-    #
-    #             if left > right:
-    #                 state[[right, pivot]] = state[[pivot, right]]
-    #             else:
-    #                 state[[left, right]] = state[[right, left]]
-    #
-    #         self.state_sorting(state, start, right - 1)
-    #         self.state_sorting(state, right + 1, end)
-    #
-    #     elif self.SORTING_TYPE is None:
-    #         pass
-    #
-    #     else:
-    #         raise ValueError()
-
     def observation(self):
         if isinstance(self.config.MODEL_PARAMETER, (ConfigLinearModel, ConfigRecurrentLinearModel)):
             observation = copy.deepcopy(self.internal_state.flatten()) / self.LIMIT_WEIGHT_KNAPSACK
@@ -327,6 +256,11 @@ class KnapsackEnv(gym.Env):
             value_of_all_items_selected_reward = 0.0
             mission_complete_reward = 0.0
             misbehavior_reward = 0.0
+
+        elif done_type == DoneReasonType0.TYPE_0:  # "Selected Same Item"
+            value_of_all_items_selected_reward = 0.0
+            mission_complete_reward = 0.0
+            misbehavior_reward = -1.0
 
         elif done_type == DoneReasonType0.TYPE_1:  # "Weight Limit Exceeded"
             value_of_all_items_selected_reward = 0.0
@@ -365,8 +299,13 @@ class KnapsackEnv(gym.Env):
         self.value_of_all_items_selected = 0
 
         self.num_step = 0
-        self.internal_state[3][0] = self.internal_state[4][0]
-        self.internal_state[3][1] = self.internal_state[4][1]
+
+        if self.STRATEGY == 1:
+            self.internal_state[3][0] = 0
+            self.internal_state[3][1] = 0
+        else:
+            self.internal_state[3][0] = self.internal_state[4][0]
+            self.internal_state[3][1] = self.internal_state[4][1]
 
         observation = self.observation()
         info = dict()
@@ -380,71 +319,133 @@ class KnapsackEnv(gym.Env):
     def check_future_select_possible(self):
         possible = False
 
-        for item in self.internal_state[self.num_step + 5:]:
-            weight = item[1]
+        if self.STRATEGY == 1:
+            for item in self.internal_state[4:-1]:
+                weight = item[1]
 
-            if weight + self.internal_state[2][1] <= self.internal_state[0][1]:
-                possible = True
-                break
+                if weight != -1 and weight + self.internal_state[2][1] <= self.internal_state[0][1]:
+                    possible = True
+                    break
 
-        return possible
+            return possible
+
+        else:
+            for item in self.internal_state[self.num_step + 5:]:
+                weight = item[1]
+
+                if weight + self.internal_state[2][1] <= self.internal_state[0][1]:
+                    possible = True
+                    break
+
+            return possible
 
     def step(self, action_idx):
-        self.actions_sequence.append(action_idx)
-        info = dict()
-        step_item_value, step_item_weight = self.internal_state[self.num_step + 4][:]
+        if self.STRATEGY == 1:
+            info = dict()
+            step_item_value, step_item_weight = self.internal_state[action_idx + 4][:]
 
-        done = False
+            if action_idx in self.actions_sequence:
+                done = True
+                info['DoneReasonType'] = DoneReasonType0.TYPE_0
+                self.actions_sequence.append(action_idx)
 
-        if action_idx == 1 and self.weight_of_all_items_selected + step_item_weight <= self.LIMIT_WEIGHT_KNAPSACK:
-            self.items_selected.append(self.num_step)
-
-            self.value_of_all_items_selected += step_item_value
-            self.weight_of_all_items_selected += step_item_weight
-
-            self.internal_state[2][0] += step_item_value
-            self.internal_state[2][1] += step_item_weight
-
-        possible = self.check_future_select_possible()
-
-        self.internal_state[self.num_step + 4][:] = -1
-        self.internal_state[0][0] -= 1
-
-        if action_idx == 1 and self.weight_of_all_items_selected + step_item_weight > self.LIMIT_WEIGHT_KNAPSACK:
-            done = True
-            info['DoneReasonType'] = DoneReasonType0.TYPE_1  # "Weight Limit Exceeded"
-        elif self.num_step == self.NUM_ITEM - 1 or not possible:
-            done = True
-
-            if len(self.items_selected) == self.NUM_ITEM:
-                info['DoneReasonType'] = DoneReasonType0.TYPE_3  # "All Item Selected"
             else:
-                info['DoneReasonType'] = DoneReasonType0.TYPE_2  # "Weight Remains"
+                self.actions_sequence.append(action_idx)
+                self.items_selected.append(action_idx)
+                self.value_of_all_items_selected += step_item_value
+                self.weight_of_all_items_selected += step_item_weight
 
-            # if self.num_step != self.NUM_ITEM - 1:
-            #     self.num_step += 1
-            #     self.internal_state[3][0] = self.internal_state[self.num_step + 4][0]
-            #     self.internal_state[3][1] = self.internal_state[self.num_step + 4][1]
-            # else:
-            #     self.num_step += 1
-            #     self.internal_state[3][0] = 0
-            #     self.internal_state[3][1] = 0
+                self.internal_state[2][0] += step_item_value
+                self.internal_state[2][1] += step_item_weight
+
+                possible = self.check_future_select_possible()
+
+                self.internal_state[action_idx + 4][:] = -1
+
+                if not possible:
+                    done = True
+
+                    if self.weight_of_all_items_selected > self.LIMIT_WEIGHT_KNAPSACK:
+                        info['DoneReasonType'] = DoneReasonType0.TYPE_1  # "Weight Limit Exceeded"
+                    else:
+                        info['DoneReasonType'] = DoneReasonType0.TYPE_2  # "Weight Remains"
+                else:
+                    done = False
+
+            self.internal_state[0][0] -= 1
+
+            observation = self.observation()
+
+            if done:
+                reward = self.reward(done_type=info['DoneReasonType'])
+
+                if info['DoneReasonType'] != DoneReasonType0.TYPE_0 and info[
+                    'DoneReasonType'] != DoneReasonType0.TYPE_1:
+                    if self.solution_found[0] < self.value_of_all_items_selected:
+                        self.solution_found[0] = self.value_of_all_items_selected
+                        self.solution_found[1:] = self.items_selected
+
+                        self.solution_found.append(round(self.solution_found[0] / self.optimal_value, 3))
+
+                        self.simple_solution_found = [
+                            self.value_of_all_items_selected,
+                            round(self.value_of_all_items_selected / self.optimal_value, 3),
+                            self.total_num_step
+                        ]
+
+                        if self.UPLOAD_PATH:
+                            upload_file('linklab', self.solution_found, self.UPLOAD_PATH)
+            else:
+                reward = self.reward(done_type=None)
+
         else:
-            self.num_step += 1
-            self.total_num_step += 1
-            self.internal_state[3][0] = self.internal_state[self.num_step + 4][0]
-            self.internal_state[3][1] = self.internal_state[self.num_step + 4][1]
+            self.actions_sequence.append(action_idx)
+            info = dict()
+            step_item_value, step_item_weight = self.internal_state[self.num_step + 4][:]
 
-        observation = self.observation()
+            done = False
 
-        if done:
-            reward = self.reward(done_type=info['DoneReasonType'])
+            if action_idx == 1 and self.weight_of_all_items_selected + step_item_weight <= self.LIMIT_WEIGHT_KNAPSACK:
+                self.items_selected.append(self.num_step)
 
-            if info['DoneReasonType'] != DoneReasonType0.TYPE_1:  # "Weight Limit Exceeded"
-                if self.solution_found[0] < self.value_of_all_items_selected:
-                    self.process_solution_found()
-        else:
-            reward = self.reward(done_type=None)
+                self.value_of_all_items_selected += step_item_value
+                self.weight_of_all_items_selected += step_item_weight
+
+                self.internal_state[2][0] += step_item_value
+                self.internal_state[2][1] += step_item_weight
+
+            possible = self.check_future_select_possible()
+
+            self.internal_state[self.num_step + 4][:] = -1
+            self.internal_state[0][0] -= 1
+
+            if action_idx == 1 and self.weight_of_all_items_selected + step_item_weight > self.LIMIT_WEIGHT_KNAPSACK:
+                done = True
+                info['DoneReasonType'] = DoneReasonType0.TYPE_1  # "Weight Limit Exceeded"
+            elif self.num_step == self.NUM_ITEM - 1 or not possible:
+                done = True
+
+                if len(self.items_selected) == self.NUM_ITEM:
+                    info['DoneReasonType'] = DoneReasonType0.TYPE_3  # "All Item Selected"
+                else:
+                    info['DoneReasonType'] = DoneReasonType0.TYPE_2  # "Weight Remains"
+
+            else:
+                self.num_step += 1
+                self.total_num_step += 1
+                self.internal_state[3][0] = self.internal_state[self.num_step + 4][0]
+                self.internal_state[3][1] = self.internal_state[self.num_step + 4][1]
+
+            observation = self.observation()
+
+            if done:
+                reward = self.reward(done_type=info['DoneReasonType'])
+
+                if info['DoneReasonType'] != DoneReasonType0.TYPE_1:  # "Weight Limit Exceeded"
+                    if self.solution_found[0] < self.value_of_all_items_selected:
+                        self.process_solution_found()
+            else:
+                reward = self.reward(done_type=None)
 
         info['Actions sequence'] = self.actions_sequence
         info['Items selected'] = self.items_selected
@@ -484,21 +485,35 @@ def run_env():
     agent = Dummy_Agent()
 
     #Random Instance Test
-    from a_configuration.a_base_config.a_environments.combinatorial_optimization.knapsack.config_knapsack import \
-        ConfigKnapsack0RandomTest
-    config = ConfigKnapsack0RandomTest()
+    from a_configuration.b_single_config.combinatorial_optimization.config_knapsack import \
+        ConfigKnapsack0RandomTestLinearDqn
+    config = ConfigKnapsack0RandomTestLinearDqn()
 
     #Load Instance Test
-    from a_configuration.a_base_config.a_environments.combinatorial_optimization.knapsack.config_knapsack import \
-        ConfigKnapsack0LoadTest
-    config = ConfigKnapsack0LoadTest()
+    from a_configuration.b_single_config.combinatorial_optimization.config_knapsack import \
+        ConfigKnapsack0LoadTestLinearDqn
+    config = ConfigKnapsack0LoadTestLinearDqn()
 
     #Static Instance Test
-    from a_configuration.a_base_config.a_environments.combinatorial_optimization.knapsack.config_knapsack import \
-        ConfigKnapsack0StaticTest
-    config = ConfigKnapsack0StaticTest()
+    from a_configuration.b_single_config.combinatorial_optimization.config_knapsack import \
+        ConfigKnapsack0RandomTestLinearDqn
+    config = ConfigKnapsack0RandomTestLinearDqn()
 
-    #config.SORTING_TYPE = 1
+
+    #Random Instance Test
+    from a_configuration.b_single_config.combinatorial_optimization.config_knapsack import \
+        ConfigKnapsack1RandomTestLinearDqn
+    config = ConfigKnapsack1RandomTestLinearDqn()
+
+    #Load Instance Test
+    from a_configuration.b_single_config.combinatorial_optimization.config_knapsack import \
+        ConfigKnapsack1LoadTestLinearDqn
+    config = ConfigKnapsack1LoadTestLinearDqn()
+
+    #Static Instance Test
+    from a_configuration.b_single_config.combinatorial_optimization.config_knapsack import \
+        ConfigKnapsack1RandomTestLinearDqn
+    config = ConfigKnapsack1RandomTestLinearDqn()
 
     set_config(config)
 

@@ -38,21 +38,28 @@ class ConfigKnapsack:
         self.TARGET_SYNC_INTERVAL_TRAINING_STEPS = 100
 
 
-class ConfigKnapsack0RandomTest(ConfigKnapsack):
+class ConfigKnapsack0(ConfigKnapsack):
     def __init__(self):
         ConfigKnapsack.__init__(self)
 
+        self.STRATEGY = 2
 
-class ConfigKnapsack0RandomTestLinear(ConfigKnapsack):
+
+class ConfigKnapsack0RandomTest(ConfigKnapsack0):
     def __init__(self):
-        ConfigKnapsack.__init__(self)
+        ConfigKnapsack0.__init__(self)
+
+
+class ConfigKnapsack0RandomTestLinear(ConfigKnapsack0):
+    def __init__(self):
+        ConfigKnapsack0.__init__(self)
 
         self.MODEL_TYPE = ModelType.MEDIUM_LINEAR
 
 
-class ConfigKnapsack0LoadTest(ConfigKnapsack):
+class ConfigKnapsack0LoadTest(ConfigKnapsack0):
     def __init__(self):
-        ConfigKnapsack.__init__(self)
+        ConfigKnapsack0.__init__(self)
 
         self.NUM_ITEM = 50
         self.INITIAL_STATE_FILE_PATH = 'knapsack_instances/RI/instances/n_50_r_100'
@@ -61,9 +68,9 @@ class ConfigKnapsack0LoadTest(ConfigKnapsack):
         self.INSTANCE_INDEX = 0
 
 
-class ConfigKnapsack0LoadTestLinear(ConfigKnapsack):
+class ConfigKnapsack0LoadTestLinear(ConfigKnapsack0):
     def __init__(self):
-        ConfigKnapsack.__init__(self)
+        ConfigKnapsack0.__init__(self)
 
         self.NUM_ITEM = 50
         self.INITIAL_STATE_FILE_PATH = 'knapsack_instances/RI/instances/n_50_r_100'
@@ -74,26 +81,26 @@ class ConfigKnapsack0LoadTestLinear(ConfigKnapsack):
         self.MODEL_TYPE = ModelType.MEDIUM_LINEAR
 
 
-class ConfigKnapsack0StaticTest(ConfigKnapsack):
+class ConfigKnapsack0StaticTest(ConfigKnapsack0):
     def __init__(self):
-        ConfigKnapsack.__init__(self)
+        ConfigKnapsack0.__init__(self)
 
         self.NUM_ITEM = 50
         self.STATIC_INITIAL_STATE_50 = True
 
 
-class ConfigKnapsack0StaticTestLinear(ConfigKnapsack):
+class ConfigKnapsack0StaticTestLinear(ConfigKnapsack0):
     def __init__(self):
-        ConfigKnapsack.__init__(self)
+        ConfigKnapsack0.__init__(self)
 
         self.NUM_ITEM = 50
         self.STATIC_INITIAL_STATE_50 = True
         self.MODEL_TYPE = ModelType.MEDIUM_LINEAR
 
 
-class ConfigKnapsack0StaticTestLinearRecurrent(ConfigKnapsack):
+class ConfigKnapsack0StaticTestLinearRecurrent(ConfigKnapsack0):
     def __init__(self):
-        ConfigKnapsack.__init__(self)
+        ConfigKnapsack0.__init__(self)
 
         self.NUM_ITEM = 50
         self.STATIC_INITIAL_STATE_50 = True
@@ -108,7 +115,7 @@ class ConfigKnapsack1(ConfigKnapsack):
     def __init__(self):
         ConfigKnapsack.__init__(self)
 
-        self.ENV_NAME = "Knapsack_Problem_v1"
+        self.STRATEGY = 1
 
 
 class ConfigKnapsack1RandomTest(ConfigKnapsack1):
