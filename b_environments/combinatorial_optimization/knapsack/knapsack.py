@@ -441,7 +441,6 @@ class KnapsackEnv(gym.Env):
             reward = self.reward(done_type=info['DoneReasonType'])
 
             if info['DoneReasonType'] != DoneReasonType0.TYPE_1:  # "Weight Limit Exceeded"
-                print(self.value_of_all_items_selected, "##############")
                 if self.solution_found[0] < self.value_of_all_items_selected:
                     self.solution_found[0] = self.value_of_all_items_selected
                     self.solution_found[1:] = self.items_selected

@@ -1,5 +1,6 @@
 from g_utils.types import ModelType
 
+
 class ConfigTaskAllocation:
     def __init__(self):
         # cloud network config
