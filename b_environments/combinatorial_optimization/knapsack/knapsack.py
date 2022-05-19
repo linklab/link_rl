@@ -116,6 +116,7 @@ class KnapsackEnv(gym.Env):
         self.weight_of_all_items_selected = None
         self.value_of_all_items_selected = None
         self.num_step = None
+        self.total_num_step = 0
 
         self.action_space = spaces.Discrete(2)
 
@@ -429,6 +430,7 @@ class KnapsackEnv(gym.Env):
             #     self.internal_state[3][1] = 0
         else:
             self.num_step += 1
+            self.total_num_step += 1
             self.internal_state[3][0] = self.internal_state[self.num_step + 4][0]
             self.internal_state[3][1] = self.internal_state[self.num_step + 4][1]
 
@@ -446,8 +448,10 @@ class KnapsackEnv(gym.Env):
 
                     self.simple_solution_found = [
                         self.value_of_all_items_selected,
-                        round(self.value_of_all_items_selected / self.optimal_value, 3)
+                        round(self.value_of_all_items_selected / self.optimal_value, 3),
+                        self.total_num_step
                     ]
+
                     if self.UPLOAD_PATH:
                         upload_file('linklab', self.solution_found, self.UPLOAD_PATH)
         else:

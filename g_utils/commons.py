@@ -510,8 +510,9 @@ def console_log(learner,
         #     info["Value"], info["Weight"], sorted(info["Items selected"]), info['Actions sequence'], info['solution_found']
         # )
 
-        knapsack_info = ", Value.: {0:5.1f}, Weight: {1:5.1f}, Solution_Found: {2} ({3:5.3f})".format(
-            info["Value"], info["Weight"], info['simple_solution_found'][0], info['simple_solution_found'][1]
+        knapsack_info = ", Value.: {0:5.1f}, Weight: {1:5.1f}, Solution_Found: {2} ({3:5.3f}, Total Steps Found: {4})".format(
+            info["Value"], info["Weight"],
+            info['simple_solution_found'][0], info['simple_solution_found'][1], info['simple_solution_found'][2]
         )
 
         console_log += knapsack_info
