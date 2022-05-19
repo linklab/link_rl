@@ -58,14 +58,14 @@ class ConfigComparisonKnapsack0StaticTestLinearRecurrentDqn(ConfigComparisonBase
         self.ENV_NAME = "Knapsack_Problem_v0"
 
         self.AGENT_PARAMETERS = [
-            ConfigKnapsack0StaticTestLinearDoubleDuelingDqn(),
-            ConfigKnapsack0StaticTestLinearDoubleDuelingDqn(),
+            ConfigKnapsack0StaticTestLinearDoubleDqn(),
+            ConfigKnapsack0StaticTestLinearDoubleDqn(),
         ]
         self.AGENT_PARAMETERS[1].MODEL_TYPE = ModelType.SMALL_RECURRENT
 
         self.AGENT_LABELS = [
-            "Double Dueling DQN",
-            "Recurrent Double Dueling DQN",
+            "Double DQN",
+            "Recurrent Double DQN",
         ]
 
         self.MAX_TRAINING_STEPS = 200_000
