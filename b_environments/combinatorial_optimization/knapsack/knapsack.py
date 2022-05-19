@@ -13,8 +13,9 @@ from a_configuration.a_base_config.c_models.config_recurrent_convolutional_model
     ConfigRecurrent1DConvolutionalModel
 from a_configuration.a_base_config.c_models.config_recurrent_linear_models import ConfigRecurrentLinearModel
 from a_configuration.a_base_config.config_parse import SYSTEM_USER_NAME, SYSTEM_COMPUTER_NAME
-from b_environments.combinatorial_optimization.boto3_knapsack import load_instance, upload_file, load_solution
-from b_environments.combinatorial_optimization.knapsack_gurobi import model_kp
+from b_environments.combinatorial_optimization.knapsack.boto3_knapsack import load_instance, upload_file, load_solution
+from b_environments.combinatorial_optimization.knapsack.knapsack_gurobi import model_kp
+from g_utils.commons import set_config
 from g_utils.types import ModelType
 
 STATIC_INITIAL_STATE_50 = np.asarray([
@@ -279,9 +280,9 @@ class KnapsackEnv(gym.Env):
             raise ValueError()
 
     def observation(self):
-        if isinstance(self.config.MODEL_PARAMETER, ConfigLinearModel):
+        if isinstance(self.config.MODEL_PARAMETER, (ConfigLinearModel, ConfigRecurrentLinearModel)):
             observation = copy.deepcopy(self.internal_state.flatten()) / self.LIMIT_WEIGHT_KNAPSACK
-        elif isinstance(self.config.MODEL_PARAMETER, Config1DConvolutionalModel):
+        elif isinstance(self.config.MODEL_PARAMETER, (Config1DConvolutionalModel, ConfigRecurrent1DConvolutionalModel)):
             observation = copy.deepcopy(self.internal_state) / self.LIMIT_WEIGHT_KNAPSACK
         else:
             raise ValueError()
@@ -437,27 +438,23 @@ def run_env():
     agent = Dummy_Agent()
 
     #Random Instance Test
-    from a_configuration.a_base_config.a_environments.combinatorial_optimization.config_knapsack import \
+    from a_configuration.a_base_config.a_environments.combinatorial_optimization.knapsack.config_knapsack import \
         ConfigKnapsack0RandomTest
     config = ConfigKnapsack0RandomTest()
 
     #Load Instance Test
-    from a_configuration.a_base_config.a_environments.combinatorial_optimization.config_knapsack import \
+    from a_configuration.a_base_config.a_environments.combinatorial_optimization.knapsack.config_knapsack import \
         ConfigKnapsack0LoadTest
     config = ConfigKnapsack0LoadTest()
 
     #Static Instance Test
-    from a_configuration.a_base_config.a_environments.combinatorial_optimization.config_knapsack import \
+    from a_configuration.a_base_config.a_environments.combinatorial_optimization.knapsack.config_knapsack import \
         ConfigKnapsack0StaticTest
     config = ConfigKnapsack0StaticTest()
 
     #config.SORTING_TYPE = 1
-    if config.MODEL_TYPE in (
-        ModelType.TINY_1D_CONVOLUTIONAL, ModelType.SMALL_1D_CONVOLUTIONAL,
-        ModelType.MEDIUM_1D_CONVOLUTIONAL, ModelType.LARGE_1D_CONVOLUTIONAL
-    ):
-        from a_configuration.a_base_config.c_models.config_convolutional_models import Config1DConvolutionalModel
-        config.MODEL_PARAMETER = Config1DConvolutionalModel(config.MODEL_TYPE)
+
+    set_config(config)
 
     env = KnapsackEnv(config)
 

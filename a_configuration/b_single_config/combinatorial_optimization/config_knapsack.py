@@ -1,11 +1,8 @@
-import os
-import random
-
-from a_configuration.a_base_config.a_environments.combinatorial_optimization.config_knapsack import \
+from a_configuration.a_base_config.a_environments.combinatorial_optimization.knapsack.config_knapsack import \
     ConfigKnapsack0RandomTest, ConfigKnapsack0RandomTestLinear, ConfigKnapsack0LoadTest, ConfigKnapsack0LoadTestLinear, \
     ConfigKnapsack0StaticTest, ConfigKnapsack0StaticTestLinear, ConfigKnapsack1RandomTest, \
     ConfigKnapsack1RandomTestLinear, ConfigKnapsack1LoadTest, ConfigKnapsack1LoadTestLinear, ConfigKnapsack1StaticTest, \
-    ConfigKnapsack1StaticTestLinear, ConfigKnapsack0StaticTestLinearRecurrent
+    ConfigKnapsack1StaticTestLinear
 from a_configuration.a_base_config.b_agents.config_agents_off_policy import ConfigDqn, ConfigDoubleDuelingDqn, \
     ConfigDoubleDqn
 from a_configuration.a_base_config.b_agents.config_agents_on_policy import ConfigA2c, ConfigPpo

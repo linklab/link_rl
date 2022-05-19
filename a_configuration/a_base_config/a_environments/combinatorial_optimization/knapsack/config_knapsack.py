@@ -30,7 +30,7 @@ class ConfigKnapsack:
         self.LEARNING_RATE = 0.0003
 
         self.MAX_TRAINING_STEPS = self.NUM_ITEM * 2_000
-        self.BUFFER_CAPACITY = self.NUM_ITEM * 1_000
+        self.BUFFER_CAPACITY = self.NUM_ITEM * 2_000
 
         self.EPISODE_REWARD_AVG_SOLVED = 100
         self.EPISODE_REWARD_STD_SOLVED = 20

@@ -7,12 +7,10 @@ from typing import Optional
 import random
 import datetime as dt
 
-from a_configuration.a_base_config.c_models.config_convolutional_models import Config1DConvolutionalModel
 from a_configuration.a_base_config.c_models.config_linear_models import ConfigLinearModel
 from a_configuration.a_base_config.config_parse import SYSTEM_USER_NAME, SYSTEM_COMPUTER_NAME
-from b_environments.combinatorial_optimization.boto3_knapsack import load_instance, upload_file, load_solution
-from b_environments.combinatorial_optimization.knapsack_gurobi import model_kp
-from g_utils.types import ModelType
+from b_environments.combinatorial_optimization.knapsack.boto3_knapsack import load_instance, upload_file, load_solution
+from b_environments.combinatorial_optimization.knapsack.knapsack_gurobi import model_kp
 
 STATIC_INITIAL_STATE_50 = np.asarray([
     [50.000, 200.000],
@@ -414,17 +412,17 @@ class KnapsackEnv(gym.Env):
         return observation, reward, done, info
 
 #Random Instance Test
-from a_configuration.a_base_config.a_environments.combinatorial_optimization.config_knapsack import \
+from a_configuration.a_base_config.a_environments.combinatorial_optimization.knapsack.config_knapsack import \
     ConfigKnapsack0RandomTest
 config = ConfigKnapsack0RandomTest()
 
 #Load Instance Test
-from a_configuration.a_base_config.a_environments.combinatorial_optimization.config_knapsack import \
+from a_configuration.a_base_config.a_environments.combinatorial_optimization.knapsack.config_knapsack import \
     ConfigKnapsack0LoadTest
 config = ConfigKnapsack0LoadTest()
 
 #Static Instance Test
-from a_configuration.a_base_config.a_environments.combinatorial_optimization.config_knapsack import \
+from a_configuration.a_base_config.a_environments.combinatorial_optimization.knapsack.config_knapsack import \
     ConfigKnapsack0StaticTest
 config = ConfigKnapsack0StaticTest()
 

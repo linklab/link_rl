@@ -4,7 +4,7 @@ import copy
 from gym.spaces import Box, Discrete
 from gym.vector import VectorEnv
 
-from a_configuration.a_base_config.a_environments.combinatorial_optimization.config_knapsack import ConfigKnapsack
+from a_configuration.a_base_config.a_environments.combinatorial_optimization.knapsack.config_knapsack import ConfigKnapsack
 from a_configuration.a_base_config.a_environments.task_allocation.config_basic_task_allocation import \
     ConfigBasicTaskAllocation
 from a_configuration.a_base_config.c_models.config_recurrent_convolutional_models import ConfigRecurrent2DConvolutionalModel

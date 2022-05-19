@@ -551,6 +551,9 @@ config = ConfigKnapsack0StaticTestDqn()
 from a_configuration.b_single_config.combinatorial_optimization.config_knapsack import ConfigKnapsack0StaticTestLinearDqn
 config = ConfigKnapsack0StaticTestLinearDqn()
 
+from a_configuration.b_single_config.combinatorial_optimization.config_knapsack import ConfigKnapsack0StaticTestLinearDoubleDqn
+config = ConfigKnapsack0StaticTestLinearDoubleDqn()
+
 from a_configuration.b_single_config.combinatorial_optimization.config_knapsack import ConfigKnapsack0StaticTestLinearDoubleDuelingDqn
 config = ConfigKnapsack0StaticTestLinearDoubleDuelingDqn()
 
