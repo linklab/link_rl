@@ -23,8 +23,6 @@ class ConfigKnapsack:
         self.OPTIMAL_PATH = False
         self.INSTANCE_INDEX = False
 
-        self.SOLUTION_FOUND = [0]
-
         self.STATIC_INITIAL_STATE_50 = False
 
         self.LEARNING_RATE = 0.0003

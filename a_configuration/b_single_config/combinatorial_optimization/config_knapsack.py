@@ -32,6 +32,9 @@ class ConfigKnapsack0RandomTestDqn(ConfigBase, ConfigKnapsack0RandomTest, Config
         self.MAX_TRAINING_STEPS = self.NUM_ITEM * 2_000
         self.BUFFER_CAPACITY = self.NUM_ITEM * 2_000
 
+        self.GAMMA = 0.999
+        self.LEARNING_RATE = 0.001
+
 
 class ConfigKnapsack0RandomTestLinearDqn(ConfigBase, ConfigKnapsack0RandomTestLinear, ConfigDqn):
     def __init__(self):
@@ -53,6 +56,9 @@ class ConfigKnapsack0RandomTestLinearDqn(ConfigBase, ConfigKnapsack0RandomTestLi
         self.MAX_TRAINING_STEPS = self.NUM_ITEM * 2_000
         self.BUFFER_CAPACITY = self.NUM_ITEM * 2_000
 
+        self.GAMMA = 0.999
+        self.LEARNING_RATE = 0.001
+
 
 class ConfigKnapsack0LoadTestDqn(ConfigBase, ConfigKnapsack0LoadTest, ConfigDqn):
     def __init__(self):
@@ -72,6 +78,9 @@ class ConfigKnapsack0LoadTestDqn(ConfigBase, ConfigKnapsack0LoadTest, ConfigDqn)
 
         self.MAX_TRAINING_STEPS = self.NUM_ITEM * 3_000
         self.BUFFER_CAPACITY = self.NUM_ITEM * 2_000
+
+        self.GAMMA = 0.999
+        self.LEARNING_RATE = 0.001
 
 
 class ConfigKnapsack0LoadTestLinearDqn(ConfigBase, ConfigKnapsack0LoadTestLinear, ConfigDqn):
@@ -93,6 +102,9 @@ class ConfigKnapsack0LoadTestLinearDqn(ConfigBase, ConfigKnapsack0LoadTestLinear
         self.MAX_TRAINING_STEPS = self.NUM_ITEM * 3_000
         self.BUFFER_CAPACITY = self.NUM_ITEM * 2_000
 
+        self.GAMMA = 0.999
+        self.LEARNING_RATE = 0.001
+
 
 class ConfigKnapsack0StaticTestDqn(ConfigBase, ConfigKnapsack0StaticTest, ConfigDqn):
     def __init__(self):
@@ -110,6 +122,9 @@ class ConfigKnapsack0StaticTestDqn(ConfigBase, ConfigKnapsack0StaticTest, Config
         self.MAX_TRAINING_STEPS = self.NUM_ITEM * 20_000
         self.BUFFER_CAPACITY = self.NUM_ITEM * 2_000
 
+        self.GAMMA = 0.999
+        self.LEARNING_RATE = 0.001
+
 
 class ConfigKnapsack0StaticTestLinearDqn(ConfigBase, ConfigKnapsack0StaticTestLinear, ConfigDqn):
     def __init__(self):
@@ -126,6 +141,9 @@ class ConfigKnapsack0StaticTestLinearDqn(ConfigBase, ConfigKnapsack0StaticTestLi
 
         self.MAX_TRAINING_STEPS = self.NUM_ITEM * 20_000
         self.BUFFER_CAPACITY = self.NUM_ITEM * 2_000
+
+        self.GAMMA = 0.999
+        self.LEARNING_RATE = 0.001
 
 
 class ConfigKnapsack0StaticTestLinearDoubleDqn(
@@ -146,6 +164,9 @@ class ConfigKnapsack0StaticTestLinearDoubleDqn(
         self.MAX_TRAINING_STEPS = self.NUM_ITEM * 20_000
         self.BUFFER_CAPACITY = self.NUM_ITEM * 2_000
 
+        self.GAMMA = 0.999
+        self.LEARNING_RATE = 0.001
+
 
 class ConfigKnapsack0StaticTestLinearDoubleDuelingDqn(
     ConfigBase, ConfigKnapsack0StaticTestLinear, ConfigDoubleDuelingDqn
@@ -164,6 +185,9 @@ class ConfigKnapsack0StaticTestLinearDoubleDuelingDqn(
 
         self.MAX_TRAINING_STEPS = self.NUM_ITEM * 20_000
         self.BUFFER_CAPACITY = self.NUM_ITEM * 2_000
+
+        self.GAMMA = 0.999
+        self.LEARNING_RATE = 0.001
 
 
 #####################################
@@ -189,6 +213,9 @@ class ConfigKnapsack0RandomTestLinearA2c(ConfigBase, ConfigKnapsack0RandomTestLi
         self.MAX_TRAINING_STEPS = self.NUM_ITEM * 2_000
         self.BUFFER_CAPACITY = self.NUM_ITEM * 2_000
 
+        self.GAMMA = 0.999
+        self.LEARNING_RATE = 0.001
+
 
 class ConfigKnapsack0LoadTestLinearA2c(ConfigBase, ConfigKnapsack0LoadTestLinear, ConfigA2c):
     def __init__(self):
@@ -209,6 +236,9 @@ class ConfigKnapsack0LoadTestLinearA2c(ConfigBase, ConfigKnapsack0LoadTestLinear
         self.MAX_TRAINING_STEPS = self.NUM_ITEM * 3_000
         self.BUFFER_CAPACITY = self.NUM_ITEM * 2_000
 
+        self.GAMMA = 0.999
+        self.LEARNING_RATE = 0.001
+
 
 class ConfigKnapsack0StaticTestLinearA2c(ConfigBase, ConfigKnapsack0StaticTestLinear, ConfigA2c):
     def __init__(self):
@@ -225,6 +255,9 @@ class ConfigKnapsack0StaticTestLinearA2c(ConfigBase, ConfigKnapsack0StaticTestLi
 
         self.MAX_TRAINING_STEPS = self.NUM_ITEM * 20_000
         self.BUFFER_CAPACITY = self.NUM_ITEM * 2_000
+
+        self.GAMMA = 0.999
+        self.LEARNING_RATE = 0.001
 
 
 #####################################
@@ -250,6 +283,9 @@ class ConfigKnapsack0RandomTestLinearPpo(ConfigBase, ConfigKnapsack0RandomTestLi
         self.MAX_TRAINING_STEPS = self.NUM_ITEM * 2_000
         self.BUFFER_CAPACITY = self.NUM_ITEM * 2_000
 
+        self.GAMMA = 0.999
+        self.LEARNING_RATE = 0.001
+
 
 class ConfigKnapsack0LoadTestLinearPpo(ConfigBase, ConfigKnapsack0LoadTestLinear, ConfigPpo):
     def __init__(self):
@@ -270,6 +306,9 @@ class ConfigKnapsack0LoadTestLinearPpo(ConfigBase, ConfigKnapsack0LoadTestLinear
         self.MAX_TRAINING_STEPS = self.NUM_ITEM * 3_000
         self.BUFFER_CAPACITY = self.NUM_ITEM * 2_000
 
+        self.GAMMA = 0.999
+        self.LEARNING_RATE = 0.001
+
 
 class ConfigKnapsack0StaticTestLinearPpo(ConfigBase, ConfigKnapsack0StaticTestLinear, ConfigPpo):
     def __init__(self):
@@ -287,7 +326,10 @@ class ConfigKnapsack0StaticTestLinearPpo(ConfigBase, ConfigKnapsack0StaticTestLi
         self.MAX_TRAINING_STEPS = self.NUM_ITEM * 20_000
         self.BUFFER_CAPACITY = self.NUM_ITEM * 2_000
 
+        self.GAMMA = 0.999
+        self.LEARNING_RATE = 0.001
 
+''
 #####################################
 ####Action_Space = NUMBER_OF_ITEMS###
 ######### Agent_Type = DQN ##########
@@ -313,6 +355,9 @@ class ConfigKnapsack1RandomTestDqn(ConfigBase, ConfigKnapsack1RandomTest, Config
         self.MAX_TRAINING_STEPS = self.NUM_ITEM * 2_000
         self.BUFFER_CAPACITY = self.NUM_ITEM * 2_000
 
+        self.GAMMA = 0.999
+        self.LEARNING_RATE = 0.001
+
 
 class ConfigKnapsack1RandomTestLinearDqn(ConfigBase, ConfigKnapsack1RandomTestLinear, ConfigDqn):
     def __init__(self):
@@ -334,6 +379,9 @@ class ConfigKnapsack1RandomTestLinearDqn(ConfigBase, ConfigKnapsack1RandomTestLi
         self.MAX_TRAINING_STEPS = self.NUM_ITEM * 2_000
         self.BUFFER_CAPACITY = self.NUM_ITEM * 2_000
 
+        self.GAMMA = 0.999
+        self.LEARNING_RATE = 0.001
+
 
 class ConfigKnapsack1LoadTestDqn(ConfigBase, ConfigKnapsack1LoadTest, ConfigDqn):
     def __init__(self):
@@ -353,6 +401,9 @@ class ConfigKnapsack1LoadTestDqn(ConfigBase, ConfigKnapsack1LoadTest, ConfigDqn)
 
         self.MAX_TRAINING_STEPS = self.NUM_ITEM * 3_000
         self.BUFFER_CAPACITY = self.NUM_ITEM * 2_000
+
+        self.GAMMA = 0.999
+        self.LEARNING_RATE = 0.001
 
 
 class ConfigKnapsack1LoadTestLinearDqn(ConfigBase, ConfigKnapsack1LoadTestLinear, ConfigDqn):
@@ -374,6 +425,9 @@ class ConfigKnapsack1LoadTestLinearDqn(ConfigBase, ConfigKnapsack1LoadTestLinear
         self.MAX_TRAINING_STEPS = self.NUM_ITEM * 3_000
         self.BUFFER_CAPACITY = self.NUM_ITEM * 2_000
 
+        self.GAMMA = 0.999
+        self.LEARNING_RATE = 0.001
+
 
 class ConfigKnapsack1StaticTestDqn(ConfigBase, ConfigKnapsack1StaticTest, ConfigDqn):
     def __init__(self):
@@ -390,6 +444,9 @@ class ConfigKnapsack1StaticTestDqn(ConfigBase, ConfigKnapsack1StaticTest, Config
 
         self.MAX_TRAINING_STEPS = self.NUM_ITEM * 20_000
         self.BUFFER_CAPACITY = self.NUM_ITEM * 2_000
+
+        self.GAMMA = 0.999
+        self.LEARNING_RATE = 0.001
 
 
 class ConfigKnapsack1StaticTestLinearDqn(ConfigBase, ConfigKnapsack1StaticTestLinear, ConfigDqn):
@@ -408,6 +465,9 @@ class ConfigKnapsack1StaticTestLinearDqn(ConfigBase, ConfigKnapsack1StaticTestLi
         self.MAX_TRAINING_STEPS = self.NUM_ITEM * 20_000
         self.BUFFER_CAPACITY = self.NUM_ITEM * 2_000
 
+        self.GAMMA = 0.999
+        self.LEARNING_RATE = 0.001
+
 
 class ConfigKnapsack1StaticTestLinearDoubleDqn(ConfigBase, ConfigKnapsack1StaticTestLinear, ConfigDoubleDqn):
     def __init__(self):
@@ -425,6 +485,9 @@ class ConfigKnapsack1StaticTestLinearDoubleDqn(ConfigBase, ConfigKnapsack1Static
         self.MAX_TRAINING_STEPS = self.NUM_ITEM * 20_000
         self.BUFFER_CAPACITY = self.NUM_ITEM * 2_000
 
+        self.GAMMA = 0.999
+        self.LEARNING_RATE = 0.001
+
 
 class ConfigKnapsack1StaticTestLinearDoubleDuelingDqn(ConfigBase, ConfigKnapsack1StaticTestLinear, ConfigDoubleDuelingDqn):
     def __init__(self):
@@ -441,6 +504,10 @@ class ConfigKnapsack1StaticTestLinearDoubleDuelingDqn(ConfigBase, ConfigKnapsack
 
         self.MAX_TRAINING_STEPS = self.NUM_ITEM * 20_000
         self.BUFFER_CAPACITY = self.NUM_ITEM * 2_000
+
+        self.GAMMA = 0.999
+        self.LEARNING_RATE = 0.001
+
 
 #####################################
 ######### Agent_Type = A2C ##########
@@ -465,6 +532,9 @@ class ConfigKnapsack1RandomTestLinearA2c(ConfigBase, ConfigKnapsack1RandomTestLi
         self.MAX_TRAINING_STEPS = self.NUM_ITEM * 2_000
         self.BUFFER_CAPACITY = self.NUM_ITEM * 2_000
 
+        self.GAMMA = 0.999
+        self.LEARNING_RATE = 0.001
+
 
 class ConfigKnapsack1LoadTestLinearA2c(ConfigBase, ConfigKnapsack1LoadTestLinear, ConfigA2c):
     def __init__(self):
@@ -485,6 +555,9 @@ class ConfigKnapsack1LoadTestLinearA2c(ConfigBase, ConfigKnapsack1LoadTestLinear
         self.MAX_TRAINING_STEPS = self.NUM_ITEM * 3_000
         self.BUFFER_CAPACITY = self.NUM_ITEM * 2_000
 
+        self.GAMMA = 0.999
+        self.LEARNING_RATE = 0.001
+
 
 class ConfigKnapsack1StaticTestLinearA2c(ConfigBase, ConfigKnapsack1StaticTestLinear, ConfigA2c):
     def __init__(self):
@@ -501,6 +574,9 @@ class ConfigKnapsack1StaticTestLinearA2c(ConfigBase, ConfigKnapsack1StaticTestLi
 
         self.MAX_TRAINING_STEPS = self.NUM_ITEM * 20_000
         self.BUFFER_CAPACITY = self.NUM_ITEM * 2_000
+
+        self.GAMMA = 0.999
+        self.LEARNING_RATE = 0.001
 
 
 #####################################
@@ -526,6 +602,9 @@ class ConfigKnapsack1RandomTestLinearPpo(ConfigBase, ConfigKnapsack1RandomTestLi
         self.MAX_TRAINING_STEPS = self.NUM_ITEM * 2_000
         self.BUFFER_CAPACITY = self.NUM_ITEM * 2_000
 
+        self.GAMMA = 0.999
+        self.LEARNING_RATE = 0.001
+
 
 class ConfigKnapsack1LoadTestLinearPpo(ConfigBase, ConfigKnapsack1LoadTestLinear, ConfigPpo):
     def __init__(self):
@@ -546,6 +625,9 @@ class ConfigKnapsack1LoadTestLinearPpo(ConfigBase, ConfigKnapsack1LoadTestLinear
         self.MAX_TRAINING_STEPS = self.NUM_ITEM * 3_000
         self.BUFFER_CAPACITY = self.NUM_ITEM * 2_000
 
+        self.GAMMA = 0.999
+        self.LEARNING_RATE = 0.001
+
 
 class ConfigKnapsack1StaticTestLinearPpo(ConfigBase, ConfigKnapsack1StaticTestLinear, ConfigPpo):
     def __init__(self):
@@ -562,3 +644,6 @@ class ConfigKnapsack1StaticTestLinearPpo(ConfigBase, ConfigKnapsack1StaticTestLi
 
         self.MAX_TRAINING_STEPS = self.NUM_ITEM * 20_000
         self.BUFFER_CAPACITY = self.NUM_ITEM * 2_000
+
+        self.GAMMA = 0.999
+        self.LEARNING_RATE = 0.001

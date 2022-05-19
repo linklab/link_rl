@@ -99,7 +99,7 @@ class KnapsackEnv(gym.Env):
         self.INSTANCE_INDEX = config.INSTANCE_INDEX
         self.SORTING_TYPE = config.SORTING_TYPE
 
-        self.solution_found = config.SOLUTION_FOUND
+        self.solution_found = [0]
         self.optimal_value = 0
 
         self.internal_state = None
