@@ -348,7 +348,7 @@ class KnapsackEnv(gym.Env):
 
         return value_of_all_items_selected_reward + mission_complete_reward + misbehavior_reward
 
-    def reset(self, *, seed: Optional[int] = None, return_info: bool = False, options: Optional[dict] = None,):
+    def reset(self, *, seed: Optional[int] = None, return_info: bool = False, options: Optional[dict] = None):
         if self.INITIAL_ITEM_DISTRIBUTION_FIXED:
             assert self.fixed_initial_internal_state is not None
             self.internal_state = copy.deepcopy(self.fixed_initial_internal_state)
