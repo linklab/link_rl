@@ -442,19 +442,7 @@ class KnapsackEnv(gym.Env):
 
             if info['DoneReasonType'] != DoneReasonType0.TYPE_1:  # "Weight Limit Exceeded"
                 if self.solution_found[0] < self.value_of_all_items_selected:
-                    self.solution_found[0] = self.value_of_all_items_selected
-                    self.solution_found[1:] = self.items_selected
-
-                    self.solution_found.append(round(self.solution_found[0] / self.optimal_value, 3))
-
-                    self.simple_solution_found = [
-                        self.value_of_all_items_selected,
-                        round(self.value_of_all_items_selected / self.optimal_value, 3),
-                        self.total_num_step
-                    ]
-
-                    if self.UPLOAD_PATH:
-                        upload_file('linklab', self.solution_found, self.UPLOAD_PATH)
+                    self.process_solution_found()
         else:
             reward = self.reward(done_type=None)
 
@@ -467,6 +455,21 @@ class KnapsackEnv(gym.Env):
         info['simple_solution_found'] = self.simple_solution_found
 
         return observation, reward, done, info
+
+    def process_solution_found(self):
+        self.solution_found[0] = self.value_of_all_items_selected
+        self.solution_found[1:] = self.items_selected
+
+        self.solution_found.append(round(self.solution_found[0] / self.optimal_value, 3))
+
+        self.simple_solution_found = [
+            self.value_of_all_items_selected,
+            round(self.value_of_all_items_selected / self.optimal_value, 3),
+            self.total_num_step
+        ]
+
+        if self.UPLOAD_PATH:
+            upload_file('linklab', self.solution_found, self.UPLOAD_PATH)
 
 
 def run_env():

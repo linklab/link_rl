@@ -99,6 +99,11 @@ class HerKnapsackEnv(KnapsackEnv):
 
         if done:
             reward = self.reward(done_type=info['DoneReasonType'])
+
+            if info['DoneReasonType'] != DoneReasonType0.TYPE_1:  # "Weight Limit Exceeded"
+                if self.solution_found[0] < self.value_of_all_items_selected:
+                    self.process_solution_found()
+
             if info['DoneReasonType'] == DoneReasonType0.TYPE_2:
                 info[HerConstant.HER_SAVE_DONE] = True
             else:
