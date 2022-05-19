@@ -242,7 +242,7 @@ class Learner(mp.Process):
                 rewards_history[env_id].append(reward)
                 to_play_history[env_id].append(to_play)
 
-                if done == True:
+                if done:
                     episode_transition = Episode_history(
                         observation_history=copy.deepcopy(observations_history[env_id]),
                         action_history=copy.deepcopy(actions_history[env_id]),
@@ -342,6 +342,14 @@ class Learner(mp.Process):
                     self.agent.buffer.append(n_step_transition)
                 elif self.config.AGENT_TYPE in OffPolicyAgentTypes:
                     self.agent.replay_buffer.append(n_step_transition)
+                    if self.config.USE_HER:
+                        self.agent.her_buffer.append(n_step_transition)
+                        if n_step_transition.done and n_step_transition.info["HER_SAVE_DONE"]:
+                            her_goal = n_step_transition.info["ACHIEVED_GOAL"]
+                            new_episode_trajectory = self.agent.her_buffer.get_her_trajectory(her_goal)
+                            for her_transition in new_episode_trajectory:
+                                self.agent.replay_buffer.append(her_transition)
+                            self.agent.her_buffer.reset()
                 else:
                     raise ValueError()
 

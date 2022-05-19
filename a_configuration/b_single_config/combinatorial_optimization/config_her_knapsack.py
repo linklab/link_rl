@@ -24,3 +24,5 @@ class ConfigHerKnapsack0StaticTestLinearDoubleDqn(
 
         self.GAMMA = 0.999
         self.LEARNING_RATE = 0.001
+
+        self.USE_HER = True

@@ -2,9 +2,7 @@ import os
 import sys
 from typing import Callable, List, Tuple, Dict
 
-import torch
-
-from g_utils.types import ModelType, LayerActivationType, LossFunctionType
+from g_utils.types import LayerActivationType, LossFunctionType
 
 
 class ConfigBase:
@@ -89,3 +87,5 @@ class ConfigBase:
         # Wrappers
         self.ACTION_MASKING = False
         self.WRAPPERS: List[Tuple[Callable, Dict]] = []
+
+        self.USE_HER = False

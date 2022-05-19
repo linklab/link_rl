@@ -1,5 +1,6 @@
 from abc import abstractmethod
 
+from b_environments.combinatorial_optimization.knapsack.her_knapsack import HerEpisodeBuffer
 from d_agents.agent import Agent
 from g_utils.buffers import Buffer
 from g_utils.prioritized_buffer import PrioritizedBuffer
@@ -17,6 +18,11 @@ class OffPolicyAgent(Agent):
             self.important_sampling_weights = None
         else:
             self.replay_buffer = Buffer(action_space=action_space, config=self.config)
+
+        if self.config.USE_HER:
+            assert self.config.ENV_NAME in ["Her_Knapsack_Problem_v0"]
+            self.her_buffer = HerEpisodeBuffer(self.config)
+            self.her_buffer.reset()
 
     def _before_train(self):
         if self.config.AGENT_TYPE in ActorCriticAgentTypes:

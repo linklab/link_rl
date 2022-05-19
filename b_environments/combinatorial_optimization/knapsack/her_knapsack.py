@@ -38,7 +38,7 @@ class HerEpisodeBuffer:
     def reset(self):
         self.episode_buffer = deque()
 
-    def save(self, transition):
+    def append(self, transition):
         self.episode_buffer.append(transition)
 
     def size(self):
@@ -61,10 +61,10 @@ class HerEpisodeBuffer:
             raise ValueError()
 
     def get_her_trajectory(self, her_goal):
-        new_episode_buffer = deque()
+        new_episode_trajectory = deque()
 
         for idx, transition in enumerate(self.episode_buffer):
-            new_episode_buffer.append(Transition(
+            new_episode_trajectory.append(Transition(
                 observation=self._get_observation_and_goal(transition.observation, her_goal),
                 action=transition.action,
                 next_observation=self._get_observation_and_goal(transition.next_observation, her_goal),
@@ -74,7 +74,7 @@ class HerEpisodeBuffer:
             ))
 
         #print(new_episode_buffer, "!!!")
-        return new_episode_buffer
+        return new_episode_trajectory
 
 
 class HerKnapsackEnv(gym.Env):
