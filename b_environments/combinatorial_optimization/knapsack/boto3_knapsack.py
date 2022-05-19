@@ -134,12 +134,12 @@ def load_instance(bucket_name, file_path):
 
     items = []
     for item_idx in range(num_items):
-        items.append([data[item_idx * 2], data[item_idx * 2 + 1]])
+        items.append([float(data[item_idx * 2]), float(data[item_idx * 2 + 1])])
 
     #print(data)
     #print(state)
 
-    return items, data[-1]
+    return items, float(data[-1])
 
 
 def load_solution(bucket_name, file_path):
