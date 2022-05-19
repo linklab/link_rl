@@ -123,18 +123,23 @@ def load_instance(bucket_name, file_path):
             data.append(y)
 
     num_items = int(len(data)/2) - 1
-    state = np.zeros(shape=(num_items+4, 2), dtype=float)
 
+    # state = np.zeros(shape=(num_items+4, 2), dtype=float)
+    #
+    # for item_idx in range(num_items):
+    #     state[item_idx + 4][0] = data[item_idx * 2]
+    #     state[item_idx + 4][1] = data[item_idx * 2 + 1]
+
+    # state[0][1] = data[-1]
+
+    items = []
     for item_idx in range(num_items):
-        state[item_idx + 4][0] = data[item_idx * 2]
-        state[item_idx + 4][1] = data[item_idx * 2 + 1]
-
-    state[0][1] = data[-1]
+        items.append([data[item_idx * 2], data[item_idx * 2 + 1]])
 
     #print(data)
     #print(state)
 
-    return state
+    return items, data[-1]
 
 
 def load_solution(bucket_name, file_path):

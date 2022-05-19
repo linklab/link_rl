@@ -18,7 +18,7 @@ class ConfigNewKnapsack:
 
         self.SORTING_TYPE = None
 
-        self.FILE_PATH = False
+        self.INITIAL_STATE_FILE_PATH = False
         self.UPLOAD_PATH = False
         self.OPTIMAL_PATH = False
         self.INSTANCE_INDEX = False

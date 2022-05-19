@@ -62,7 +62,7 @@ class ConfigKnapsack0LoadTestDqn(ConfigBase, ConfigKnapsack0LoadTest, ConfigDqn)
 
         self.NUM_ITEM = 50
 
-        self.FILE_PATH = 'knapsack_instances/RI/instances/n_50_r_100'
+        self.INITIAL_STATE_FILE_PATH = 'knapsack_instances/RI/instances/n_50_r_100'
         self.UPLOAD_PATH = 'knapsack_instances/RI/link_solution/n_50_r_100'
         self.OPTIMAL_PATH = 'knapsack_instances/RI/optimal_solution/n_50_r_100'
 
@@ -82,7 +82,7 @@ class ConfigKnapsack0LoadTestLinearDqn(ConfigBase, ConfigKnapsack0LoadTestLinear
 
         self.NUM_ITEM = 50
 
-        self.FILE_PATH = 'knapsack_instances/RI/instances/n_50_r_100'
+        self.INITIAL_STATE_FILE_PATH = 'knapsack_instances/RI/instances/n_50_r_100'
         self.UPLOAD_PATH = 'knapsack_instances/RI/link_solution/n_50_r_100'
         self.OPTIMAL_PATH = 'knapsack_instances/RI/optimal_solution/n_50_r_100'
 
@@ -198,7 +198,7 @@ class ConfigKnapsack0LoadTestLinearA2c(ConfigBase, ConfigKnapsack0LoadTestLinear
 
         self.NUM_ITEM = 50
 
-        self.FILE_PATH = 'knapsack_instances/RI/instances/n_50_r_100'
+        self.INITIAL_STATE_FILE_PATH = 'knapsack_instances/RI/instances/n_50_r_100'
         self.UPLOAD_PATH = 'knapsack_instances/RI/link_solution/n_50_r_100'
         self.OPTIMAL_PATH = 'knapsack_instances/RI/optimal_solution/n_50_r_100'
 
@@ -259,7 +259,7 @@ class ConfigKnapsack0LoadTestLinearPpo(ConfigBase, ConfigKnapsack0LoadTestLinear
 
         self.NUM_ITEM = 50
 
-        self.FILE_PATH = 'knapsack_instances/RI/instances/n_50_r_100'
+        self.INITIAL_STATE_FILE_PATH = 'knapsack_instances/RI/instances/n_50_r_100'
         self.UPLOAD_PATH = 'knapsack_instances/RI/link_solution/n_50_r_100'
         self.OPTIMAL_PATH = 'knapsack_instances/RI/optimal_solution/n_50_r_100'
 
@@ -343,7 +343,7 @@ class ConfigKnapsack1LoadTestDqn(ConfigBase, ConfigKnapsack1LoadTest, ConfigDqn)
 
         self.NUM_ITEM = 50
 
-        self.FILE_PATH = 'knapsack_instances/RI/instances/n_50_r_100'
+        self.INITIAL_STATE_FILE_PATH = 'knapsack_instances/RI/instances/n_50_r_100'
         self.UPLOAD_PATH = 'knapsack_instances/RI/link_solution/n_50_r_100'
         self.OPTIMAL_PATH = 'knapsack_instances/RI/optimal_solution/n_50_r_100'
 
@@ -363,7 +363,7 @@ class ConfigKnapsack1LoadTestLinearDqn(ConfigBase, ConfigKnapsack1LoadTestLinear
 
         self.NUM_ITEM = 50
 
-        self.FILE_PATH = 'knapsack_instances/RI/instances/n_50_r_100'
+        self.INITIAL_STATE_FILE_PATH = 'knapsack_instances/RI/instances/n_50_r_100'
         self.UPLOAD_PATH = 'knapsack_instances/RI/link_solution/n_50_r_100'
         self.OPTIMAL_PATH = 'knapsack_instances/RI/optimal_solution/n_50_r_100'
 
@@ -474,7 +474,7 @@ class ConfigKnapsack1LoadTestLinearA2c(ConfigBase, ConfigKnapsack1LoadTestLinear
 
         self.NUM_ITEM = 50
 
-        self.FILE_PATH = 'knapsack_instances/RI/instances/n_50_r_100'
+        self.INITIAL_STATE_FILE_PATH = 'knapsack_instances/RI/instances/n_50_r_100'
         self.UPLOAD_PATH = 'knapsack_instances/RI/link_solution/n_50_r_100'
         self.OPTIMAL_PATH = 'knapsack_instances/RI/optimal_solution/n_50_r_100'
 
@@ -535,7 +535,7 @@ class ConfigKnapsack1LoadTestLinearPpo(ConfigBase, ConfigKnapsack1LoadTestLinear
 
         self.NUM_ITEM = 50
 
-        self.FILE_PATH = 'knapsack_instances/RI/instances/n_50_r_100'
+        self.INITIAL_STATE_FILE_PATH = 'knapsack_instances/RI/instances/n_50_r_100'
         self.UPLOAD_PATH = 'knapsack_instances/RI/link_solution/n_50_r_100'
         self.OPTIMAL_PATH = 'knapsack_instances/RI/optimal_solution/n_50_r_100'
 

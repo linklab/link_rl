@@ -18,7 +18,7 @@ class ConfigKnapsack:
 
         self.SORTING_TYPE = None
 
-        self.FILE_PATH = False
+        self.INITIAL_STATE_FILE_PATH = False
         self.UPLOAD_PATH = False
         self.OPTIMAL_PATH = False
         self.INSTANCE_INDEX = False
@@ -57,7 +57,7 @@ class ConfigKnapsack0LoadTest(ConfigKnapsack):
         ConfigKnapsack.__init__(self)
 
         self.NUM_ITEM = 50
-        self.FILE_PATH = 'knapsack_instances/RI/instances/n_50_r_100'
+        self.INITIAL_STATE_FILE_PATH = 'knapsack_instances/RI/instances/n_50_r_100'
         self.UPLOAD_PATH = 'knapsack_instances/RI/link_solution/n_50_r_100'
         self.OPTIMAL_PATH = 'knapsack_instances/RI/optimal_solution/n_50_r_100'
         self.INSTANCE_INDEX = 0
@@ -68,7 +68,7 @@ class ConfigKnapsack0LoadTestLinear(ConfigKnapsack):
         ConfigKnapsack.__init__(self)
 
         self.NUM_ITEM = 50
-        self.FILE_PATH = 'knapsack_instances/RI/instances/n_50_r_100'
+        self.INITIAL_STATE_FILE_PATH = 'knapsack_instances/RI/instances/n_50_r_100'
         self.UPLOAD_PATH = 'knapsack_instances/RI/link_solution/n_50_r_100'
         self.OPTIMAL_PATH = 'knapsack_instances/RI/optimal_solution/n_50_r_100'
         self.INSTANCE_INDEX = 0
@@ -130,7 +130,7 @@ class ConfigKnapsack1LoadTest(ConfigKnapsack1):
         ConfigKnapsack1.__init__(self)
 
         self.NUM_ITEM = 50
-        self.FILE_PATH = 'knapsack_instances/RI/instances/n_50_r_100'
+        self.INITIAL_STATE_FILE_PATH = 'knapsack_instances/RI/instances/n_50_r_100'
         self.UPLOAD_PATH = 'knapsack_instances/RI/link_solution/n_50_r_100'
         self.OPTIMAL_PATH = 'knapsack_instances/RI/optimal_solution/n_50_r_100'
         self.INSTANCE_INDEX = 0
@@ -141,7 +141,7 @@ class ConfigKnapsack1LoadTestLinear(ConfigKnapsack1):
         ConfigKnapsack1.__init__(self)
 
         self.NUM_ITEM = 50
-        self.FILE_PATH = 'knapsack_instances/RI/instances/n_50_r_100'
+        self.INITIAL_STATE_FILE_PATH = 'knapsack_instances/RI/instances/n_50_r_100'
         self.UPLOAD_PATH = 'knapsack_instances/RI/link_solution/n_50_r_100'
         self.OPTIMAL_PATH = 'knapsack_instances/RI/optimal_solution/n_50_r_100'
         self.INSTANCE_INDEX = 0

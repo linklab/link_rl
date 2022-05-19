@@ -15,7 +15,7 @@ class ConfigNewKnapsack0StaticTestLinearDoubleDqn(
         self.NUM_ITEM = 50
         self.LIMIT_WEIGHT_KNAPSACK = 200
 
-        self.SORTING_TYPE = None
+        self.SORTING_TYPE = 1
 
         self.INITIAL_ITEM_DISTRIBUTION_FIXED = True
 

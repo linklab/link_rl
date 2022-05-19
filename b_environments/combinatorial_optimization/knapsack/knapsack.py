@@ -16,13 +16,8 @@ from a_configuration.a_base_config.config_parse import SYSTEM_USER_NAME, SYSTEM_
 from b_environments.combinatorial_optimization.knapsack.boto3_knapsack import load_instance, upload_file, load_solution
 from b_environments.combinatorial_optimization.knapsack.knapsack_gurobi import model_kp
 from g_utils.commons import set_config
-from g_utils.types import ModelType
 
-STATIC_INITIAL_STATE_50 = np.asarray([
-    [50.000, 200.000],
-    [508.000, 499.000],
-    [0.000, 0.000], #sum2
-    [0.000, 0.000], #indicator3
+STATIC_ITEMS_50 = np.asarray([
     [12.000, 12.000],
     [19.000, 11.000],
     [11.000, 4.000],
@@ -75,6 +70,13 @@ STATIC_INITIAL_STATE_50 = np.asarray([
     [13.000, 10.000]
 ])
 
+STATIC_INITIAL_STATE_50 = np.asarray([
+    [50.000, 200.000],
+    [508.000, 499.000],
+    [0.000, 0.000], #sum2
+    [0.000, 0.000], #indicator3
+])
+
 STATIC_INITIAL_STATE_50_OPTIMAL = 385
 
 
@@ -98,7 +100,7 @@ class KnapsackEnv(gym.Env):
 
         self.INITIAL_ITEM_DISTRIBUTION_FIXED = config.INITIAL_ITEM_DISTRIBUTION_FIXED
 
-        self.FILE_PATH = config.FILE_PATH
+        self.INITIAL_STATE_FILE_PATH = config.INITIAL_STATE_FILE_PATH
         self.UPLOAD_PATH = config.UPLOAD_PATH
         self.OPTIMAL_PATH = config.OPTIMAL_PATH
         self.INSTANCE_INDEX = config.INSTANCE_INDEX
@@ -132,6 +134,22 @@ class KnapsackEnv(gym.Env):
         if self.INITIAL_ITEM_DISTRIBUTION_FIXED:
             self.fixed_initial_internal_state = self.get_initial_state()
 
+    def sort_items(self, items):
+        if self.SORTING_TYPE is not None and self.SORTING_TYPE == 1:    # Value Per Weight
+            value_per_weights = np.expand_dims((items[:, 0] / items[:, 1]), axis=1)
+            new_items = np.hstack([items, value_per_weights])
+            new_items = np.asarray(sorted(new_items, key=lambda x: x[2], reverse=True))
+            new_items = np.delete(new_items, 2, 1)
+            return new_items
+        elif self.SORTING_TYPE is not None and self.SORTING_TYPE == 2:  # Value
+            new_items = np.asarray(sorted(items, key=lambda x: x[0], reverse=True))
+            return new_items
+        elif self.SORTING_TYPE is not None and self.SORTING_TYPE == 3:  # weight
+            new_items = np.asarray(sorted(items, key=lambda x: x[1], reverse=True))
+            return new_items
+        else:
+            return items
+
     # Last Row in State
     # 0: Always 0
     # 1: initially set to LIMIT_WEIGHT_KNAPSACK, and decrease by an item's weight whenever the item is selected
@@ -139,39 +157,53 @@ class KnapsackEnv(gym.Env):
     # 3: initially set to 0, and increase by an item's value whenever the item is selected
     def get_initial_state(self):
         if self.config.STATIC_INITIAL_STATE_50:
+            items = copy.deepcopy(STATIC_ITEMS_50)
+            items = self.sort_items(items)
+
             state = copy.deepcopy(STATIC_INITIAL_STATE_50)
+            state = np.vstack([state, items])
+
             self.LIMIT_WEIGHT_KNAPSACK = state[0][1]
             self.optimal_value = STATIC_INITIAL_STATE_50_OPTIMAL
             print("*** STATIC_INITIAL_STATE_50 is used!!! ***")
 
-        elif self.FILE_PATH:
-            self.FILE_PATH = self.FILE_PATH + '/instance' + str(self.INSTANCE_INDEX) + '.csv'
-            data = load_instance('linklab', self.FILE_PATH)
+        elif self.INITIAL_STATE_FILE_PATH:
+            self.INITIAL_STATE_FILE_PATH = self.INITIAL_STATE_FILE_PATH + '/instance' + str(self.INSTANCE_INDEX) + '.csv'
+            items, self.LIMIT_WEIGHT_KNAPSACK = load_instance('linklab', self.INITIAL_STATE_FILE_PATH)
 
-            state = data
+            items = self.sort_items(np.asarray(items))
+
+            state = np.zeros(shape=(self.NUM_ITEM + 4, 2), dtype=float)
 
             for item_idx in range(self.NUM_ITEM):
-                state[1][0] += state[item_idx + 4][0]
-                state[1][1] += state[item_idx + 4][1]
+                state[item_idx + 4][0] = items[item_idx][0]
+                state[item_idx + 4][1] = items[item_idx][1]
+                state[1][0] += items[item_idx][0]
+                state[1][1] += items[item_idx][1]
 
-            self.LIMIT_WEIGHT_KNAPSACK = state[0][1]
             state[0][0] = self.NUM_ITEM
+            state[0][1] = self.LIMIT_WEIGHT_KNAPSACK
 
         else:
             state = np.zeros(shape=(self.NUM_ITEM + 4, 2), dtype=float)
 
+            items = []
             for item_idx in range(self.NUM_ITEM):
-                item_weight = np.random.randint(
-                    low=self.MIN_WEIGHT_ITEM, high=self.MAX_WEIGHT_ITEM, size=(1, 1)
-                )
                 item_value = np.random.randint(
                     low=self.MIN_VALUE_ITEM, high=self.MAX_VALUE_ITEM, size=(1, 1)
                 )
-                state[item_idx + 4][0] = item_value
-                state[item_idx + 4][1] = item_weight
+                item_weight = np.random.randint(
+                    low=self.MIN_WEIGHT_ITEM, high=self.MAX_WEIGHT_ITEM, size=(1, 1)
+                )
+                items.append([item_value, item_weight])
 
-                state[1][0] += item_value
-                state[1][1] += item_weight
+            items = self.sort_items(np.asarray(items))
+
+            for item_idx in range(self.NUM_ITEM):
+                state[item_idx + 4][0] = items[item_idx][0]
+                state[item_idx + 4][1] = items[item_idx][1]
+                state[1][0] += items[item_idx][0]
+                state[1][1] += items[item_idx][1]
 
             state[0][0] = self.NUM_ITEM
             state[0][1] = self.LIMIT_WEIGHT_KNAPSACK
@@ -181,103 +213,102 @@ class KnapsackEnv(gym.Env):
             self.optimal_value = load_solution('linklab', self.OPTIMAL_PATH)
         else:
             values = state[4:, 0]
-            weigths = state[4:, 1]
-            items_selected, self.optimal_value = model_kp(self.LIMIT_WEIGHT_KNAPSACK, values, weigths, False)
+            weights = state[4:, 1]
+            items_selected, self.optimal_value = model_kp(self.LIMIT_WEIGHT_KNAPSACK, values, weights, False)
 
         if self.UPLOAD_PATH:
             date = dt.datetime.now()
             date_str = '/' + str(date.year) + str(date.month) + str(date.day)
             user = SYSTEM_USER_NAME
             com = SYSTEM_COMPUTER_NAME
-            self.UPLOAD_PATH = self.UPLOAD_PATH + date_str + user + com + '/link_solution' + str(
-                self.INSTANCE_INDEX) + '.csv'
+            self.UPLOAD_PATH = \
+                self.UPLOAD_PATH + date_str + user + com + '/link_solution' + str(self.INSTANCE_INDEX) + '.csv'
         else:
             self.UPLOAD_PATH = 'knapsack_instances'
             date = dt.datetime.now()
             date_str = '/' + str(date.year) + str(date.month) + str(date.day)
             user = SYSTEM_USER_NAME
             com = SYSTEM_COMPUTER_NAME
-            self.UPLOAD_PATH = self.UPLOAD_PATH + date_str + user + com + '/link_solution' + str(
-                self.INSTANCE_INDEX) + '.csv'
+            self.UPLOAD_PATH = \
+                self.UPLOAD_PATH + date_str + user + com + '/link_solution' + str(self.INSTANCE_INDEX) + '.csv'
 
         return state
 
-    def state_sorting(self, state, start, end):
-
-        if self.SORTING_TYPE == 1: #Value Per Weight
-            if start >= end:
-                return
-
-            pivot = start
-            left = start + 1
-            right = end
-
-            while left <= right:
-                while left <= end and (state[left][0] / state[left][1]) <= (state[pivot][0] / state[pivot][1]):
-                    left += 1
-
-                while right > start and (state[right][0] / state[right][1]) >= (state[pivot][0] / state[pivot][1]):
-                    right -= 1
-
-                if left > right:
-                    state[[right, pivot]] = state[[pivot, right]]
-                else:
-                    state[[left, right]] = state[[right, left]]
-
-            self.state_sorting(state, start, right - 1)
-            self.state_sorting(state, right + 1, end)
-
-        elif self.SORTING_TYPE == 2: #Value
-            if start >= end:
-                return
-
-            pivot = start
-            left = start + 1
-            right = end
-
-            while left <= right:
-                while left <= end and state[left][0] <= state[pivot][0]:
-                    left += 1
-
-                while right > start and state[right][0] >= state[pivot][0]:
-                    right -= 1
-
-                if left > right:
-                    state[[right, pivot]] = state[[pivot, right]]
-                else:
-                    state[[left, right]] = state[[right, left]]
-
-            self.state_sorting(state, start, right - 1)
-            self.state_sorting(state, right + 1, end)
-
-        elif self.SORTING_TYPE == 3: #weight
-            if start >= end:
-                return
-
-            pivot = start
-            left = start + 1
-            right = end
-
-            while left <= right:
-                while left <= end and state[left][1] <= state[pivot][1]:
-                    left += 1
-
-                while right > start and state[right][1] >= state[pivot][1]:
-                    right -= 1
-
-                if left > right:
-                    state[[right, pivot]] = state[[pivot, right]]
-                else:
-                    state[[left, right]] = state[[right, left]]
-
-            self.state_sorting(state, start, right - 1)
-            self.state_sorting(state, right + 1, end)
-
-        elif self.SORTING_TYPE is None:
-            pass
-
-        else:
-            raise ValueError()
+    # def state_sorting(self, state, start, end):
+    #     if self.SORTING_TYPE == 1: #Value Per Weight
+    #         if start >= end:
+    #             return
+    #
+    #         pivot = start
+    #         left = start + 1
+    #         right = end
+    #
+    #         while left <= right:
+    #             while left <= end and (state[left][0] / state[left][1]) <= (state[pivot][0] / state[pivot][1]):
+    #                 left += 1
+    #
+    #             while right > start and (state[right][0] / state[right][1]) >= (state[pivot][0] / state[pivot][1]):
+    #                 right -= 1
+    #
+    #             if left > right:
+    #                 state[[right, pivot]] = state[[pivot, right]]
+    #             else:
+    #                 state[[left, right]] = state[[right, left]]
+    #
+    #         self.state_sorting(state, start, right - 1)
+    #         self.state_sorting(state, right + 1, end)
+    #
+    #     elif self.SORTING_TYPE == 2: #Value
+    #         if start >= end:
+    #             return
+    #
+    #         pivot = start
+    #         left = start + 1
+    #         right = end
+    #
+    #         while left <= right:
+    #             while left <= end and state[left][0] <= state[pivot][0]:
+    #                 left += 1
+    #
+    #             while right > start and state[right][0] >= state[pivot][0]:
+    #                 right -= 1
+    #
+    #             if left > right:
+    #                 state[[right, pivot]] = state[[pivot, right]]
+    #             else:
+    #                 state[[left, right]] = state[[right, left]]
+    #
+    #         self.state_sorting(state, start, right - 1)
+    #         self.state_sorting(state, right + 1, end)
+    #
+    #     elif self.SORTING_TYPE == 3: #weight
+    #         if start >= end:
+    #             return
+    #
+    #         pivot = start
+    #         left = start + 1
+    #         right = end
+    #
+    #         while left <= right:
+    #             while left <= end and state[left][1] <= state[pivot][1]:
+    #                 left += 1
+    #
+    #             while right > start and state[right][1] >= state[pivot][1]:
+    #                 right -= 1
+    #
+    #             if left > right:
+    #                 state[[right, pivot]] = state[[pivot, right]]
+    #             else:
+    #                 state[[left, right]] = state[[right, left]]
+    #
+    #         self.state_sorting(state, start, right - 1)
+    #         self.state_sorting(state, right + 1, end)
+    #
+    #     elif self.SORTING_TYPE is None:
+    #         pass
+    #
+    #     else:
+    #         raise ValueError()
 
     def observation(self):
         if isinstance(self.config.MODEL_PARAMETER, (ConfigLinearModel, ConfigRecurrentLinearModel)):
@@ -321,8 +352,8 @@ class KnapsackEnv(gym.Env):
         else:
             self.internal_state = self.get_initial_state()
 
-        if self.SORTING_TYPE is not None:
-            self.state_sorting(self.internal_state, 4, self.NUM_ITEM + 3)
+        # if self.SORTING_TYPE is not None:
+        #     self.state_sorting(self.internal_state, 4, self.NUM_ITEM + 3)
 
         self.TOTAL_VALUE_FOR_ALL_ITEMS = sum(self.internal_state[:, 0])
         self.items_selected = []

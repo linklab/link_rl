@@ -21,7 +21,9 @@ def run_env():
     from a_configuration.b_single_config.combinatorial_optimization.config_new_knapsack import \
         ConfigNewKnapsack0StaticTestLinearDoubleDqn
     config = ConfigNewKnapsack0StaticTestLinearDoubleDqn()
-
+    config.STATIC_INITIAL_STATE_50 = False
+    config.SORTING_TYPE = 1
+    config.NUM_ITEM = 5
     set_config(config)
 
     env = NewKnapsackEnv(config)
