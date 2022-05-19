@@ -631,6 +631,14 @@ from a_configuration.b_single_config.combinatorial_optimization.config_knapsack 
 config = ConfigKnapsack1StaticTestLinearPpo()
 
 
+###########################################
+####### HerKnapsack - Static Linear #######
+###########################################
+
+from a_configuration.b_single_config.combinatorial_optimization.config_her_knapsack import ConfigHerKnapsack0StaticTestLinearDoubleDqn
+config = ConfigHerKnapsack0StaticTestLinearDoubleDqn()
+
+
 ###########################
 ### BasicTaskAllocation ###
 ###########################
@@ -644,7 +652,7 @@ config = ConfigBasicTaskAllocation1Dqn()
 ###############################
 ####### Task Allocation #######
 ###############################
-from a_configuration.b_single_config.combinatorial_optimization.config_task_allocation import ConfigTaskAllocationDqn
+from a_configuration.b_single_config.task_allocation.config_task_allocation import ConfigTaskAllocationDqn
 config = ConfigTaskAllocationDqn()
 
 config.USE_WANDB = False

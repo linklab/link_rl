@@ -101,6 +101,12 @@ class ConvolutionType(enum.Enum):
     THREE_DIMENSION = 2
 
 
+class HerConstant:
+    ACHIEVED_GOAL = "ACHIEVED_GOAL"
+    DESIRED_GOAL = "DESIRED_GOAL"
+    HER_SAVE_DONE = "HER_SAVE_DONE"   # HER_SAVE_DONE 이 True일 때만 HER_BUFFER에 SAVE
+
+
 OnPolicyAgentTypes = [
     AgentType.REINFORCE, AgentType.A2C, AgentType.A3C, AgentType.PPO, AgentType.PPO_TRAJECTORY
 ]

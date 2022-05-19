@@ -1,9 +1,9 @@
 from g_utils.types import ModelType
 
 
-class ConfigNewKnapsack:
+class ConfigHerKnapsack:
     def __init__(self):
-        self.ENV_NAME = "New_Knapsack_Problem_v0"
+        self.ENV_NAME = "Her_Knapsack_Problem_v0"
 
         self.NUM_ITEM = 20
         self.LIMIT_WEIGHT_KNAPSACK = 200
@@ -38,9 +38,9 @@ class ConfigNewKnapsack:
         self.TARGET_SYNC_INTERVAL_TRAINING_STEPS = 100
 
 
-class ConfigNewKnapsack0StaticTestLinear(ConfigNewKnapsack):
+class ConfigHerKnapsack0StaticTestLinear(ConfigHerKnapsack):
     def __init__(self):
-        ConfigNewKnapsack.__init__(self)
+        ConfigHerKnapsack.__init__(self)
 
         self.NUM_ITEM = 50
         self.STATIC_INITIAL_STATE_50 = True

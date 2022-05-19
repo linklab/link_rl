@@ -84,6 +84,7 @@ class DoneReasonType0(enum.Enum):
     TYPE_1 = "Weight Limit Exceeded"
     TYPE_2 = "Weight Remains"
     TYPE_3 = "All Item Selected"
+    TYPE_4 = "Goal Achieved"
 
 
 class KnapsackEnv(gym.Env):
@@ -439,7 +440,8 @@ class KnapsackEnv(gym.Env):
         if done:
             reward = self.reward(done_type=info['DoneReasonType'])
 
-            if info['DoneReasonType'] != DoneReasonType0.TYPE_1:
+            if info['DoneReasonType'] != DoneReasonType0.TYPE_1:  # "Weight Limit Exceeded"
+                print(self.value_of_all_items_selected, "##############")
                 if self.solution_found[0] < self.value_of_all_items_selected:
                     self.solution_found[0] = self.value_of_all_items_selected
                     self.solution_found[1:] = self.items_selected

@@ -22,22 +22,23 @@ class HER:
     def size(self):
         return len(self.buffer)
 
-    def get_her_trajectory(self):
+    def get_her_trajectory(self, her_goal):
         new_buffer = deepcopy(self.buffer)
         num = len(new_buffer)
 
-        # 에피소드 마지막에 도착한 상태를 her_goal로 지정
-        her_goal = self.buffer[-1][3][0:self.N]
+        # # 에피소드 마지막에 도착한 상태를 her_goal로 지정
+        # her_goal = self.buffer[-1][3][0:self.N]
 
         for i in range(num):
             new_buffer[-1 - i][0][self.N:] = her_goal
             new_buffer[-1 - i][2] = -1.0
             new_buffer[-1 - i][3][self.N:] = her_goal
             new_buffer[-1 - i][4] = False
-            if np.sum(np.abs((new_buffer[-1 - i][3][self.N:] - her_goal))) == 0:
+            if np.sum(np.abs((new_buffer[-1 - i][3][:self.N] - her_goal))) == 0:
                 new_buffer[-1 - i][2] = 0.0
                 new_buffer[-1 - i][4] = True
 
+        #print(new_buffer, "!!!")
         return new_buffer
 
 
@@ -91,10 +92,12 @@ class DQN_HER:
 
     def run_episode(self):
         self.her.reset()
-        state = self.env.reset()
+        state, info = self.env.reset()
         sum_r = 0
         mean_loss = mean_val()
         min_dist = self.N
+
+        her_goal = None
 
         for t in range(self.N):
             self.steps += 1
@@ -110,11 +113,11 @@ class DQN_HER:
             else:
                 action = torch.argmax(Q, dim=1)
 
-            new_state, reward, done, dist = self.env.step(state, action.item())
+            new_state, reward, done, info = self.env.step(action.item())
             sum_r = sum_r + reward
 
-            if dist < min_dist:
-                min_dist = dist
+            if info["dist"] < min_dist:
+                min_dist = info["dist"]
 
             if t + 1 == self.N:
                 done = True
@@ -126,11 +129,6 @@ class DQN_HER:
                 deepcopy(new_state.squeeze(0).numpy()),
                 deepcopy(done)
             ])
-
-            if done:
-                self.her.keep([
-                    state.squeeze(0).numpy(), action, reward, new_state. squeeze(0).numpy(), done
-                ])
 
             self.her.keep([
                 state.squeeze(0).numpy(), action, reward, new_state.squeeze(0).numpy(), done
@@ -148,7 +146,10 @@ class DQN_HER:
                 self.step_counter = 0
                 print('updated target model')
 
-        her_trajectory = self.her.get_her_trajectory()
+            if done:
+                her_goal = info["achieved_goal"]
+
+        her_trajectory = self.her.get_her_trajectory(her_goal.squeeze(0).numpy())
 
         for transition in her_trajectory:
             self.replay_buffer.append(transition)
