@@ -442,6 +442,10 @@ class KnapsackEnv(gym.Env):
 
                     self.solution_found.append(round(self.solution_found[0] / self.optimal_value, 3))
 
+                    date = dt.datetime.now()
+                    self.solution_found.append((str(date.month) + '/' + str(date.day) + ' ' + str(
+                        date.hour) + ' : ' + str(date.minute) + ' : ' + str(date.second)))
+
                     if self.UPLOAD_PATH:
                         upload_file('linklab', self.solution_found, self.UPLOAD_PATH)
         else:
