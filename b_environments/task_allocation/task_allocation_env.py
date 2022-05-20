@@ -22,9 +22,12 @@ class CloudNetwork:
 
         # generate cloud servers
         self.servers = {}
-        for server_id in range(self.config.NUM_CLOUD_SERVER):
-            self.servers[server_id] = random.randint(
-                    self.config.CLOUD_CPU_CAPACITY_MIN, self.config.CLOUD_CPU_CAPACITY_MAX)
+        if self.config.FIX_ENV_PARAM == 1:
+            self.servers = {0: 50, 1: 70, 2: 90}
+        else:
+            for server_id in range(self.config.NUM_CLOUD_SERVER):
+                self.servers[server_id] = random.randint(
+                        self.config.CLOUD_CPU_CAPACITY_MIN, self.config.CLOUD_CPU_CAPACITY_MAX)
         self.bandwidth = self.config.CLOUD_BANDWIDTH_CAPACITY
 
     def get_resource_remains(self):
@@ -59,9 +62,12 @@ class EdgeNetwork:
 
         # generate cloud servers
         self.servers = {}
-        for server_id in range(self.config.NUM_EDGE_SERVER):
-            self.servers[server_id] = random.randint(
-                self.config.EDGE_CPU_CAPACITY_MIN, self.config.EDGE_CPU_CAPACITY_MAX)
+        if self.config.FIX_ENV_PARAM == 1:
+            self.servers = {0: 30, 1: 50, 2: 70}
+        else:
+            for server_id in range(self.config.NUM_EDGE_SERVER):
+                self.servers[server_id] = random.randint(
+                    self.config.EDGE_CPU_CAPACITY_MIN, self.config.EDGE_CPU_CAPACITY_MAX)
         self.bandwidth = self.config.EDGE_BANDWIDTH_CAPACITY
 
     def get_resource_remains(self):
@@ -95,11 +101,14 @@ class Task:
         self.config = config
         self.tasks = {}
 
-        for task_id in range(self.config.NUM_TASK):
-            data_size = int(random.randint(self.config.TASK_DATA_SIZE_MIN, self.config.TASK_DATA_SIZE_MAX))
-            request_cpu = int(random.randint(self.config.TASK_CPU_REQUEST_MIN, self.config.TASK_CPU_REQUEST_MAX))
-            request_latency = int(random.randint(self.config.TASK_LATENCY_REQUEST_MIN, self.config.TASK_LATENCY_REQUEST_MAX))
-            self.tasks[task_id] = (data_size, request_cpu, request_latency)
+        if self.config.FIX_ENV_PARAM == 1:
+            self.tasks = {0: (36, 10, 17), 1: (38, 19, 19), 2: (50, 12, 17), 3: (28, 14, 32), 4: (26, 20, 15), 5: (49, 14, 2), 6: (29, 13, 26), 7: (45, 13, 14), 8: (30, 14, 34), 9: (47, 10, 36)}
+        else:
+            for task_id in range(self.config.NUM_TASK):
+                data_size = int(random.randint(self.config.TASK_DATA_SIZE_MIN, self.config.TASK_DATA_SIZE_MAX))
+                request_cpu = int(random.randint(self.config.TASK_CPU_REQUEST_MIN, self.config.TASK_CPU_REQUEST_MAX))
+                request_latency = int(random.randint(self.config.TASK_LATENCY_REQUEST_MIN, self.config.TASK_LATENCY_REQUEST_MAX))
+                self.tasks[task_id] = (data_size, request_cpu, request_latency)
 
 
 class TaskAllocationEnvironment(gym.Env):
