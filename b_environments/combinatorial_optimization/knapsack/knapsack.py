@@ -282,6 +282,12 @@ class KnapsackEnv(gym.Env):
 
         return value_of_all_items_selected_reward + mission_complete_reward + misbehavior_reward
 
+    def print_knapsack_problem_instance_details(self):
+        details = "[RESET] NUM ITEMS: {0}, LIMIT_WEIGHT_KNAPSACK: {1}, TOTAL_VALUE_FOR_ALL_ITEMS: {2}, OPTIMAL_VALUE: {3}".format(
+            self.NUM_ITEM, self.LIMIT_WEIGHT_KNAPSACK, self.TOTAL_VALUE_FOR_ALL_ITEMS, self.optimal_value
+        )
+        print(details)
+
     def reset(self, *, seed: Optional[int] = None, return_info: bool = False, options: Optional[dict] = None):
         if self.INITIAL_ITEM_DISTRIBUTION_FIXED:
             assert self.fixed_initial_internal_state is not None
@@ -310,6 +316,9 @@ class KnapsackEnv(gym.Env):
         observation = self.observation()
         info = dict()
         info['internal_state'] = copy.deepcopy(self.internal_state)
+
+        if self.config.PRINT_PROBLEM_INSTANCE_AT_RESET:
+            self.print_knapsack_problem_instance_details()
 
         if return_info:
             return observation, info
