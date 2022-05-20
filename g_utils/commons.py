@@ -737,7 +737,8 @@ plotly_layout = go.Layout(
 
 
 def wandb_log_comparison(
-        run, training_steps_per_agent, agents, agent_labels, n_episodes_for_mean_calculation, comparison_stat, wandb_obj
+        run, training_steps_per_agent, agents, agent_labels, n_episodes_for_mean_calculation, comparison_stat,
+        wandb_obj, config_c
 ):
     training_steps_str = str([training_step for training_step in training_steps_per_agent])
 
@@ -850,13 +851,17 @@ def get_train_env(config, no_graphics=True):
                 from b_environments.task_allocation.task_allocation_env import TaskAllocationEnvironment
                 env = TaskAllocationEnvironment(config)
 
+            ################
+            #   Knapsack   #
+            ################
+
             elif config.ENV_NAME in ["Knapsack_Problem_v0"]:
                 from b_environments.combinatorial_optimization.knapsack.knapsack import KnapsackEnv
                 env = KnapsackEnv(config)
 
-            elif config.ENV_NAME in ["Knapsack_Problem_v1"]:
-                from b_environments.combinatorial_optimization.knapsack.knapsack_actions import KnapsackEnv
-                env = KnapsackEnv(config)
+            elif config.ENV_NAME in ["Her_Knapsack_Problem_v0"]:
+                from b_environments.combinatorial_optimization.knapsack.her_knapsack import HerKnapsackEnv
+                env = HerKnapsackEnv(config)
 
             #############
             #   Atari   #
@@ -958,13 +963,16 @@ def get_single_env(config, no_graphics=True, play=False):
         from b_environments.task_allocation.task_allocation_env import TaskAllocationEnvironment
         single_env = TaskAllocationEnvironment(config)
 
+    ################
+    #   Knapsack   #
+    ################
     elif config.ENV_NAME in ["Knapsack_Problem_v0"]:
         from b_environments.combinatorial_optimization.knapsack.knapsack import KnapsackEnv
         single_env = KnapsackEnv(config)
 
-    elif config.ENV_NAME in ["Knapsack_Problem_v1"]:
-        from b_environments.combinatorial_optimization.knapsack.knapsack_actions import KnapsackEnv
-        single_env = KnapsackEnv(config)
+    elif config.ENV_NAME in ["Her_Knapsack_Problem_v0"]:
+        from b_environments.combinatorial_optimization.knapsack.her_knapsack import HerKnapsackEnv
+        single_env = HerKnapsackEnv(config)
 
     #############
     #   Atari   #
