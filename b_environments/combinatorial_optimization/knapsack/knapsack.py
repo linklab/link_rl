@@ -91,6 +91,12 @@ class DoneReasonType0(enum.Enum):
 class KnapsackEnv(gym.Env):
     def __init__(self, config):
         self.config = config
+
+        self.INITIAL_ITEM_DISTRIBUTION_FIXED = config.INITIAL_ITEM_DISTRIBUTION_FIXED
+
+        if self.config.STATIC_INITIAL_STATE_50:
+            assert self.config.INITIAL_ITEM_DISTRIBUTION_FIXED
+
         self.NUM_ITEM = config.NUM_ITEM
         self.LIMIT_WEIGHT_KNAPSACK = config.LIMIT_WEIGHT_KNAPSACK
 
@@ -99,8 +105,6 @@ class KnapsackEnv(gym.Env):
 
         self.MIN_VALUE_ITEM = config.MIN_VALUE_ITEM
         self.MAX_VALUE_ITEM = config.MAX_VALUE_ITEM
-
-        self.INITIAL_ITEM_DISTRIBUTION_FIXED = config.INITIAL_ITEM_DISTRIBUTION_FIXED
 
         self.INITIAL_STATE_FILE_PATH = config.INITIAL_STATE_FILE_PATH
         self.UPLOAD_PATH = config.UPLOAD_PATH
@@ -470,7 +474,7 @@ class KnapsackEnv(gym.Env):
             self.total_num_step
         ]
 
-        if self.UPLOAD_PATH:
+        if self.UPLOAD_PATH and self.config.INITIAL_ITEM_DISTRIBUTION_FIXED:
             upload_file('linklab', self.solution_found, self.UPLOAD_PATH)
 
 
