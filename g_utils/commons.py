@@ -503,29 +503,27 @@ def console_log(learner,
 
         console_log += resource_allocation_info
 
-    if config.ENV_NAME in ["Knapsack_Problem_v0", "Her_Knapsack_Problem_v0"]:
+    if config.ENV_NAME in ["Task_Allocation_v1"]:
         info = learner.env_info
 
-        # knapsack_info = ", Value.: {0:5.1f}, Weight: {1:5.1f}, Items: {2}, Actions: {3}, Solution_Found: {4}".format(
-        #     info["Value"], info["Weight"], sorted(info["Items selected"]), info['Actions sequence'], info['solution_found']
-        # )
+        resource_utilization_info = ", Resource Utilization: " + str(info[0]["Resource_utilization"])
+        resource_utilization_info += ", Average_latency: " + str(sum(info[0]["Latency"]) / len(info[0]["Latency"]))
 
-        if info['simple_solution_found'] is None:
-            knapsack_info = ", Value.: {0:5.1f}, Weight: {1:5.1f}".format(
-                info["Value"], info["Weight"]
-            )
-        else:
-            knapsack_info = ", Value.: {0:5.1f}, Weight: {1:5.1f}, Solution_Found: {2} ({3:5.3f}, Total Steps Found: {4:,})".format(
-                info["Value"], info["Weight"],
-                info['simple_solution_found'][0], info['simple_solution_found'][1], info['simple_solution_found'][2]
-            )
+        console_log += resource_utilization_info
+
+    if config.ENV_NAME in ["Knapsack_Problem_v0", "Knapsack_Problem_v1"]:
+        info = learner.env_info
+
+        knapsack_info = ", Value.: {0:3}, Weight: {1:3}, Items: {2}, Actions: {3}, Solution_Found: {4}".format(
+            info["Value"], info["Weight"], sorted(info["Items selected"]), info['Actions sequence'], info['solution_found']
+        )
 
         console_log += knapsack_info
 
     print(console_log)
 
 
-def console_log_comparison(learner_c,
+def console_log_comparison(
         run, total_time_step, total_episodes_per_agent,
         last_mean_episode_reward_per_agent, n_rollout_transitions_per_agent, training_steps_per_agent,
         agents, config_c
@@ -572,27 +570,6 @@ def console_log_comparison(learner_c,
             )
         else:
             pass
-
-        if config_c.ENV_NAME in ["Knapsack_Problem_v0", "Her_Knapsack_Problem_v0"]:
-            info = learner_c.env_info[agent_idx]
-
-            # knapsack_info = ", Value.: {0:5.1f}, Weight: {1:5.1f}, Items: {2}, Actions: {3}, Solution_Found: {4}".format(
-            #     info["Value"], info["Weight"], sorted(info["Items selected"]), info['Actions sequence'], info['solution_found']
-            # )
-            if info['simple_solution_found'] is None:
-                knapsack_info = ", Value.: {0:5.1f}, Weight: {1:5.1f}".format(
-                    info["Value"], info["Weight"]
-                )
-            else:
-                knapsack_info = ", Value.: {0:5.1f}, Weight: {1:5.1f}, Solution_Found: {2} ({3:5.3f}, Total Steps Found: {4:,})".format(
-                    info["Value"], info["Weight"],
-                    info['simple_solution_found'][0], info['simple_solution_found'][1], info['simple_solution_found'][2]
-                )
-
-            knapsack_method = " STRATEGY. : {0:}".format(info["STRATEGY"])
-
-            console_log += knapsack_info
-            console_log += knapsack_method
 
         print(console_log)
 
@@ -645,7 +622,11 @@ def wandb_log(learner, wandb_obj, config):
         log_dict["Allocation"] = learner.env_info["Resources allocated"]
         log_dict["Utilization"] = 100 * learner.env_info["Utilization"]
         log_dict["[TEST] Utilization"] = 100 * learner.test_episode_utilization.value
-    if config.ENV_NAME in ["Knapsack_Problem_v0", "Her_Knapsack_Problem_v0"]:
+    if config.ENV_NAME in ["Task_Allocation_v1"]:
+        log_dict["Resource Utilization"] = learner.env_info["Resource_utilization"]
+        average_latency = sum(learner.env_info["Latency"]) / len(learner.env_info["Latency"])
+        log_dict["Average Latency"] = average_latency
+    if config.ENV_NAME in ["Knapsack_Problem_v0", "Knapsack_Problem_v1"]:
         log_dict["Value of All Item Selected"] = learner.env_info["Value"]
         log_dict["[TEST] Value of All Item Selected"] = learner.test_episode_items_value.value
     if config.AGENT_TYPE in [AgentType.DQN, AgentType.DUELING_DQN, AgentType.DOUBLE_DQN, AgentType.DOUBLE_DUELING_DQN]:
@@ -725,7 +706,7 @@ plotly_layout = go.Layout(
 
 
 def wandb_log_comparison(
-        run, training_steps_per_agent, agents, agent_labels, n_episodes_for_mean_calculation, comparison_stat, wandb_obj, config_c
+        run, training_steps_per_agent, agents, agent_labels, n_episodes_for_mean_calculation, comparison_stat, wandb_obj
 ):
     training_steps_str = str([training_step for training_step in training_steps_per_agent])
 
@@ -781,27 +762,6 @@ def wandb_log_comparison(
         "train_last_mean_episode_reward": train_last_mean_episode_reward
     }
 
-    #knapsack
-    ###############################################################################
-    plotly_layout.yaxis.title = "[Test] Mean Value of items selected"
-    plotly_layout.xaxis.title = "Training Steps ({0}, runs={1}, over {2} Episodes)".format(
-        training_steps_str, run + 1, n_episodes_for_mean_calculation
-    )
-    data = []
-    for agent_idx, _ in enumerate(agents):
-        data.append(
-            go.Scatter(
-                name=agent_labels[agent_idx],
-                x=comparison_stat.test_training_steps_lst,
-                y=comparison_stat.MEAN_test_value_of_items_selected_per_agent[agent_idx, :],
-                showlegend=True
-            )
-        )
-    train_last_mean_value_of_items_selected = go.Figure(data=data, layout=plotly_layout)
-
-    if config_c.ENV_NAME in ["Knapsack_Problem_v0"]:
-        log_dict["train_last_mean_value_of_items_selected"] = train_last_mean_value_of_items_selected
-
     wandb_obj.log(log_dict)
 
 
@@ -854,17 +814,13 @@ def get_train_env(config, no_graphics=True):
                 from b_environments.task_allocation.task_allocation_env import TaskAllocationEnvironment
                 env = TaskAllocationEnvironment(config)
 
-            #############
-            #   Knapsack   #
-            #############
-
             elif config.ENV_NAME in ["Knapsack_Problem_v0"]:
-                from b_environments.combinatorial_optimization.knapsack.knapsack import KnapsackEnv
+                from b_environments.combinatorial_optimization.knapsack import KnapsackEnv
                 env = KnapsackEnv(config)
 
-            elif config.ENV_NAME in ["Her_Knapsack_Problem_v0"]:
-                from b_environments.combinatorial_optimization.knapsack.her_knapsack import HerKnapsackEnv
-                env = HerKnapsackEnv(config)
+            elif config.ENV_NAME in ["Knapsack_Problem_v1"]:
+                from b_environments.combinatorial_optimization.knapsack_actions import KnapsackEnv
+                env = KnapsackEnv(config)
 
             #############
             #   Atari   #
@@ -967,12 +923,12 @@ def get_single_env(config, no_graphics=True, play=False):
         single_env = TaskAllocationEnvironment(config)
 
     elif config.ENV_NAME in ["Knapsack_Problem_v0"]:
-        from b_environments.combinatorial_optimization.knapsack.knapsack import KnapsackEnv
+        from b_environments.combinatorial_optimization.knapsack import KnapsackEnv
         single_env = KnapsackEnv(config)
 
-    elif config.ENV_NAME in ["Her_Knapsack_Problem_v0"]:
-        from b_environments.combinatorial_optimization.knapsack.her_knapsack import HerKnapsackEnv
-        single_env = HerKnapsackEnv(config)
+    elif config.ENV_NAME in ["Knapsack_Problem_v1"]:
+        from b_environments.combinatorial_optimization.knapsack_actions import KnapsackEnv
+        single_env = KnapsackEnv(config)
 
     #############
     #   Atari   #
