@@ -793,6 +793,11 @@ def wandb_log_comparison(
         "train_last_mean_episode_reward": train_last_mean_episode_reward
     }
 
+    train_last_mean_value_of_items_selected = go.Figure(data=data, layout=plotly_layout)
+
+    if config_c.ENV_NAME in ["Knapsack_Problem_v0"]:
+        log_dict["train_last_mean_value_of_items_selected"] = train_last_mean_value_of_items_selected
+
     wandb_obj.log(log_dict)
 
 
