@@ -106,6 +106,26 @@ class ConfigKnapsack0LoadTestLinearDqn(ConfigBase, ConfigKnapsack0LoadTestLinear
         self.LEARNING_RATE = 0.001
 
 
+class ConfigKnapsack0LoadTestLinearDoubleDqn(ConfigBase, ConfigKnapsack0LoadTestLinear, ConfigDoubleDqn):
+    def __init__(self):
+        ConfigBase.__init__(self)
+        ConfigKnapsack0LoadTestLinear.__init__(self)
+        ConfigDoubleDqn.__init__(self)
+
+        self.NUM_ITEM = 50
+        self.LIMIT_WEIGHT_KNAPSACK = 200
+
+        self.SORTING_TYPE = None
+
+        self.INITIAL_ITEM_DISTRIBUTION_FIXED = True
+
+        self.MAX_TRAINING_STEPS = self.NUM_ITEM * 20_000
+        self.BUFFER_CAPACITY = self.NUM_ITEM * 2_000
+
+        self.GAMMA = 0.999
+        self.LEARNING_RATE = 0.001
+
+
 class ConfigKnapsack0StaticTestDqn(ConfigBase, ConfigKnapsack0StaticTest, ConfigDqn):
     def __init__(self):
         ConfigBase.__init__(self)
@@ -423,6 +443,26 @@ class ConfigKnapsack1LoadTestLinearDqn(ConfigBase, ConfigKnapsack1LoadTestLinear
         self.INITIAL_ITEM_DISTRIBUTION_FIXED = True
 
         self.MAX_TRAINING_STEPS = self.NUM_ITEM * 3_000
+        self.BUFFER_CAPACITY = self.NUM_ITEM * 2_000
+
+        self.GAMMA = 0.999
+        self.LEARNING_RATE = 0.001
+
+
+class ConfigKnapsack1LoadTestLinearDoubleDqn(ConfigBase, ConfigKnapsack1LoadTestLinear, ConfigDoubleDqn):
+    def __init__(self):
+        ConfigBase.__init__(self)
+        ConfigKnapsack1LoadTestLinear.__init__(self)
+        ConfigDoubleDqn.__init__(self)
+
+        self.NUM_ITEM = 50
+        self.LIMIT_WEIGHT_KNAPSACK = 200
+
+        self.SORTING_TYPE = None
+
+        self.INITIAL_ITEM_DISTRIBUTION_FIXED = True
+
+        self.MAX_TRAINING_STEPS = self.NUM_ITEM * 20_000
         self.BUFFER_CAPACITY = self.NUM_ITEM * 2_000
 
         self.GAMMA = 0.999

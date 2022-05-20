@@ -84,6 +84,11 @@ class LearnerComparison:
 
         self.train_comparison_start_time = None
 
+        if self.config_c.ENV_NAME in [
+            "Task_Allocation_v0", "Knapsack_Problem_v0", "Her_Knapsack_Problem_v0"
+        ]:
+            self.env_info = [None] * len(self.agents)
+
     def generator_on_policy_transition(self, agent_idx):
         observations, infos = self.train_envs_per_agent[agent_idx].reset(return_info=True)
 
@@ -105,6 +110,12 @@ class LearnerComparison:
                 raise ValueError()
 
             next_observations, rewards, dones, infos = self.train_envs_per_agent[agent_idx].step(scaled_actions)
+
+            if self.config_c.ENV_NAME in [
+                "Task_Allocation_v0", "Knapsack_Problem_v0", "Her_Knapsack_Problem_v0"
+            ]:
+                self.env_info[agent_idx] = infos[0]
+
             if self.is_recurrent_model_per_agent[agent_idx]:
                 next_observations = [(next_observations, self.agents[agent_idx].model.recurrent_hidden)]
 
@@ -185,6 +196,7 @@ class LearnerComparison:
 
                         if self.training_steps_per_agent[agent_idx] >= self.next_console_log_per_agent[agent_idx]:
                             console_log_comparison(
+                                self,
                                 run=self.run,
                                 total_time_step=self.total_time_step,
                                 total_episodes_per_agent=self.total_episodes_per_agent,
@@ -283,7 +295,13 @@ class LearnerComparison:
                 else:
                     raise ValueError()
 
-                next_observation, reward, done, _ = self.test_envs_per_agent[agent_idx].step(scaled_action)
+                next_observation, reward, done, infos = self.test_envs_per_agent[agent_idx].step(scaled_action)
+
+                if self.config_c.ENV_NAME in [
+                    "Task_Allocation_v0", "Knapsack_Problem_v0", "Her_Knapsack_Problem_v0"
+                ]:
+                    self.env_info[agent_idx] = infos
+
                 next_observation = np.expand_dims(next_observation, axis=0)
 
                 if self.is_recurrent_model_per_agent[agent_idx]:

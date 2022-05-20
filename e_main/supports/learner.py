@@ -58,7 +58,7 @@ class Learner(mp.Process):
         if config.ENV_NAME in ["Task_Allocation_v0"]:
             self.test_episode_utilization = mp.Value('d', 0.0)
 
-        if config.ENV_NAME in ["Knapsack_Problem_v0", "Knapsack_Problem_v1", "Her_Knapsack_Problem_v0"]:
+        if config.ENV_NAME in ["Knapsack_Problem_v0", "Her_Knapsack_Problem_v0"]:
             self.test_episode_items_value = mp.Value('d', 0.0)
 
         self.next_train_time_step = config.TRAIN_INTERVAL_GLOBAL_TIME_STEPS
@@ -91,7 +91,7 @@ class Learner(mp.Process):
         self.shared_model_access_lock = shared_model_access_lock  # For only LearningActor (A3C)
 
         if self.config.ENV_NAME in [
-            "Task_Allocation_v0", "Knapsack_Problem_v0", "Knapsack_Problem_v1", "Her_Knapsack_Problem_v0"
+            "Task_Allocation_v0", "Knapsack_Problem_v0", "Her_Knapsack_Problem_v0"
         ]:
             self.env_info = None
 
@@ -130,7 +130,7 @@ class Learner(mp.Process):
             next_observations, rewards, dones, infos = self.train_env.step(scaled_actions)
 
             if self.config.ENV_NAME in [
-                "Task_Allocation_v0", "Knapsack_Problem_v0", "Knapsack_Problem_v1", "Her_Knapsack_Problem_v0"
+                "Task_Allocation_v0", "Knapsack_Problem_v0", "Her_Knapsack_Problem_v0"
             ]:
                 self.env_info = infos[0]
 
@@ -242,7 +242,7 @@ class Learner(mp.Process):
                 rewards_history[env_id].append(reward)
                 to_play_history[env_id].append(to_play)
 
-                if done:
+                if done == True:
                     episode_transition = Episode_history(
                         observation_history=copy.deepcopy(observations_history[env_id]),
                         action_history=copy.deepcopy(actions_history[env_id]),
@@ -273,7 +273,7 @@ class Learner(mp.Process):
             self.train_env = get_train_env(self.config)
 
         if self.config.ENV_NAME in [
-            "Task_Allocation_v0", "Knapsack_Problem_v0", "Knapsack_Problem_v1", "Her_Knapsack_Problem_v0"
+            "Task_Allocation_v0", "Knapsack_Problem_v0", "Her_Knapsack_Problem_v0"
         ]:
             test_env_equal_to_train_env_conditions = [
                 isinstance(self.config, ConfigKnapsack) and self.config.INITIAL_ITEM_DISTRIBUTION_FIXED is True,
@@ -342,14 +342,6 @@ class Learner(mp.Process):
                     self.agent.buffer.append(n_step_transition)
                 elif self.config.AGENT_TYPE in OffPolicyAgentTypes:
                     self.agent.replay_buffer.append(n_step_transition)
-                    if self.config.USE_HER:
-                        self.agent.her_buffer.append(n_step_transition)
-                        if n_step_transition.done and n_step_transition.info["HER_SAVE_DONE"]:
-                            her_goal = n_step_transition.info["ACHIEVED_GOAL"]
-                            new_episode_trajectory = self.agent.her_buffer.get_her_trajectory(her_goal)
-                            for her_transition in new_episode_trajectory:
-                                self.agent.replay_buffer.append(her_transition)
-                            self.agent.her_buffer.reset()
                 else:
                     raise ValueError()
 
@@ -449,7 +441,8 @@ class Learner(mp.Process):
         if self.config.ENV_NAME in ["Task_Allocation_v0"]:
             self.test_episode_reward_avg.value, self.test_episode_reward_std.value, self.test_episode_utilization.value = \
                 self.play_for_testing(self.config.N_TEST_EPISODES)
-        elif self.config.ENV_NAME in ["Knapsack_Problem_v0", "Knapsack_Problem_v1", "Her_Knapsack_Problem_v0"]:
+
+        elif self.config.ENV_NAME in ["Knapsack_Problem_v0", "her_Knapsack_Problem_v0"]:
             self.test_episode_reward_avg.value, self.test_episode_reward_std.value, self.test_episode_items_value.value = \
                 self.play_for_testing(self.config.N_TEST_EPISODES)
         else:
@@ -469,7 +462,7 @@ class Learner(mp.Process):
 
         if self.config.ENV_NAME in ["Task_Allocation_v0"]:
             test_str += ", Utilization: {0:.2f}".format(self.test_episode_utilization.value)
-        if self.config.ENV_NAME in ["Knapsack_Problem_v0", "Knapsack_Problem_v1", "Her_Knapsack_Problem_v0"]:
+        if self.config.ENV_NAME in ["Knapsack_Problem_v0", "Her_Knapsack_Problem_v0"]:
             test_str += ", Values: {0:.2f}".format(self.test_episode_items_value.value)
 
         test_str += ", Elapsed Time from Training Start: {0}".format(formatted_elapsed_time)
@@ -510,7 +503,7 @@ class Learner(mp.Process):
         episode_reward_lst = []
         if self.config.ENV_NAME in ["Task_Allocation_v0"]:
             episode_utilization_lst = []
-        elif self.config.ENV_NAME in ["Knapsack_Problem_v0", "Knapsack_Problem_v1", "Her_Knapsack_Problem_v0"]:
+        elif self.config.ENV_NAME in ["Knapsack_Problem_v0", "Her_Knapsack_Problem_v0"]:
             episode_value_lst = []
 
         for i in range(n_test_episodes):
@@ -588,7 +581,7 @@ class Learner(mp.Process):
 
             if self.config.ENV_NAME in ["Task_Allocation_v0"]:
                 episode_utilization_lst.append(info[0]["Utilization"])
-            elif self.config.ENV_NAME in ["Knapsack_Problem_v0", "Knapsack_Problem_v1", "Her_Knapsack_Problem_v0"]:
+            elif self.config.ENV_NAME in ["Knapsack_Problem_v0", "Her_Knapsack_Problem_v0"]:
                 episode_value_lst.append(info[0]["Value"])
 
         self.agent.model.train()
@@ -598,7 +591,7 @@ class Learner(mp.Process):
 
         if self.config.ENV_NAME in ["Task_Allocation_v0"]:
             return np.average(episode_reward_lst), np.std(episode_reward_lst), np.average(episode_utilization_lst)
-        elif self.config.ENV_NAME in ["Knapsack_Problem_v0", "Knapsack_Problem_v1", "Her_Knapsack_Problem_v0"]:
+        elif self.config.ENV_NAME in ["Knapsack_Problem_v0", "Her_Knapsack_Problem_v0"]:
             return np.average(episode_reward_lst), np.std(episode_reward_lst), np.average(episode_value_lst)
         else:
             return np.average(episode_reward_lst), np.std(episode_reward_lst)
