@@ -126,6 +126,10 @@ class TaskAllocationEnvironment(gym.Env):
         self.cloud_server_cpu_list = None
         self.edge_server_cpu_list = None
         self.total_server_cpu_list = None
+        self.task_data_size_list = None
+        self.task_cpu_list = None
+        self.task_latency_list = None
+
         self.cloud_bandwidth = None
         self.edge_bandwidth = None
         self.selected_num_cloud_server = None
@@ -184,6 +188,22 @@ class TaskAllocationEnvironment(gym.Env):
         observation = self.observation()
 
         info = dict()
+
+        self.task_data_size_list = []
+        self.task_cpu_list = []
+        self.task_latency_list = []
+        for key in self.task.tasks:
+            self.task_data_size_list.append(self.task.tasks[key][0])
+            self.task_cpu_list.append(self.task.tasks[key][1])
+            self.task_latency_list.append(self.task.tasks[key][2])
+
+        info["Task_data_size_list"] = self.task_data_size_list
+        info["Task_cpu_list"] = self.task_cpu_list
+        info["Task_latency_list"] = self.task_latency_list
+        info["Cloud_server_cpu_list"] = self.cloud_server_cpu_list
+        info["Cloud_server_bandwidth"] = self.cloud_bandwidth
+        info["Edge_server_cpu_list"] = self.edge_server_cpu_list
+        info["Edge_server_bandwidth"] = self.edge_bandwidth
 
         if return_info:
             return observation, info
@@ -259,6 +279,19 @@ class TaskAllocationEnvironment(gym.Env):
             self.configurate_state()
 
         observation = self.observation()
+
+        for key in self.task.tasks:
+            self.task_data_size_list.append(self.task.tasks[key][0])
+            self.task_cpu_list.append(self.task.tasks[key][1])
+            self.task_latency_list.append(self.task.tasks[key][2])
+
+        info["Task_data_size_list"] = self.task_data_size_list
+        info["Task_cpu_list"] = self.task_cpu_list
+        info["Task_latency_list"] = self.task_latency_list
+        info["Cloud_server_cpu_list"] = self.cloud_server_cpu_list
+        info["Cloud_server_bandwidth"] = self.cloud_bandwidth
+        info["Edge_server_cpu_list"] = self.edge_server_cpu_list
+        info["Edge_server_bandwidth"] = self.edge_bandwidth
 
         return observation, reward, done, info
 
@@ -357,7 +390,7 @@ def run_env():
     # state, reward, done, info = env.step(action_idx)
     # print("step 2, action: ", action_idx, state, reward, done)
 
-    print("reset state", state)
+    # print("reset state", state)
     print(type(state), state.shape)
     action_idx = agent.get_action(state)
     state, reward, done, info = env.step(action_idx)
