@@ -506,8 +506,8 @@ def console_log(learner,
     if config.ENV_NAME in ["Task_Allocation_v1"]:
         info = learner.env_info
 
-        resource_utilization_info = ", Resource Utilization: " + str(info[0]["Resource_utilization"])
-        resource_utilization_info += ", Average_latency: " + str(sum(info[0]["Latency"]) / len(info[0]["Latency"]))
+        resource_utilization_info = ", Resource Utilization: {0:>4.2f}".format(info[0]["Resource_utilization"])
+        resource_utilization_info += ", Average_latency: {0:>4.2f}".format(sum(info[0]["Latency"]) / len(info[0]["Latency"]))
 
         console_log += resource_utilization_info
 
