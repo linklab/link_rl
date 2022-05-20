@@ -320,14 +320,12 @@ class KnapsackEnv(gym.Env):
         possible = False
 
         if self.STRATEGY == 1:
-            for item in self.internal_state[4:-1]:
+            for item in self.internal_state[4:]:
                 weight = item[1]
 
                 if weight != -1 and weight + self.internal_state[2][1] <= self.internal_state[0][1]:
                     possible = True
                     break
-
-            return possible
 
         else:
             for item in self.internal_state[self.num_step + 5:]:
@@ -337,7 +335,7 @@ class KnapsackEnv(gym.Env):
                     possible = True
                     break
 
-            return possible
+        return possible
 
     def step(self, action_idx):
         info = dict()
@@ -358,8 +356,8 @@ class KnapsackEnv(gym.Env):
                     self.value_of_all_items_selected += step_item_value
                     self.weight_of_all_items_selected += step_item_weight
 
-                    self.internal_state[2][0] += step_item_value
-                    self.internal_state[2][1] += step_item_weight
+                self.internal_state[2][0] += step_item_value
+                self.internal_state[2][1] += step_item_weight
 
                 possible = self.check_future_select_possible()
 
@@ -378,17 +376,30 @@ class KnapsackEnv(gym.Env):
 
             self.internal_state[0][0] -= 1
 
+            observation = self.observation()
+
+            if done:
+                reward = self.reward(done_type=info['DoneReasonType'])
+
+                if info['DoneReasonType'] != DoneReasonType0.TYPE_0 and info[
+                    'DoneReasonType'] != DoneReasonType0.TYPE_1:
+                    if self.solution_found[0] < self.value_of_all_items_selected:
+                        self.process_solution_found()
+            else:
+                reward = self.reward(done_type=None)
+
         else:
             self.actions_sequence.append(action_idx)
             step_item_value, step_item_weight = self.internal_state[self.num_step + 4][:]
 
             done = False
 
-            if action_idx == 1 and self.weight_of_all_items_selected + step_item_weight <= self.LIMIT_WEIGHT_KNAPSACK:
+            if action_idx == 1:
                 self.items_selected.append(self.num_step)
 
-                self.value_of_all_items_selected += step_item_value
-                self.weight_of_all_items_selected += step_item_weight
+                if self.weight_of_all_items_selected + step_item_weight <= self.LIMIT_WEIGHT_KNAPSACK:
+                    self.value_of_all_items_selected += step_item_value
+                    self.weight_of_all_items_selected += step_item_weight
 
                 self.internal_state[2][0] += step_item_value
                 self.internal_state[2][1] += step_item_weight
@@ -412,20 +423,20 @@ class KnapsackEnv(gym.Env):
             else:
                 self.num_step += 1
                 self.total_num_step += 1
-                self.internal_state[3][0] = self.internal_state[self.num_step + 4][0]
-                self.internal_state[3][1] = self.internal_state[self.num_step + 4][1]
 
-        observation = self.observation()
+            self.internal_state[3][0] = self.internal_state[self.num_step + 4][0]
+            self.internal_state[3][1] = self.internal_state[self.num_step + 4][1]
 
-        if done:
-            reward = self.reward(done_type=info['DoneReasonType'])
+            observation = self.observation()
 
-            if info['DoneReasonType'] != DoneReasonType0.TYPE_0 and info[
-                'DoneReasonType'] != DoneReasonType0.TYPE_1:
-                if self.solution_found[0] < self.value_of_all_items_selected:
-                    self.process_solution_found()
-        else:
-            reward = self.reward(done_type=None)
+            if done:
+                reward = self.reward(done_type=info['DoneReasonType'])
+
+                if info['DoneReasonType'] != DoneReasonType0.TYPE_1:
+                    if self.solution_found[0] < self.value_of_all_items_selected:
+                        self.process_solution_found()
+            else:
+                reward = self.reward(done_type=None)
 
         info['Actions sequence'] = self.actions_sequence
         info['Items selected'] = self.items_selected

@@ -75,6 +75,25 @@ class ComparisonStat:
             int(config_c.MAX_TRAINING_STEPS // config_c.TEST_INTERVAL_TRAINING_STEPS)
         ))
 
+        #knapsack
+        self.test_value_of_items_selected_per_agent = np.zeros((
+            config_c.N_RUNS,
+            len(config_c.AGENT_PARAMETERS),
+            int(config_c.MAX_TRAINING_STEPS // config_c.TEST_INTERVAL_TRAINING_STEPS)
+        ))
+        self.MIN_test_value_of_items_selected_per_agent = np.zeros((
+            len(config_c.AGENT_PARAMETERS),
+            int(config_c.MAX_TRAINING_STEPS // config_c.TEST_INTERVAL_TRAINING_STEPS)
+        ))
+        self.MEAN_test_value_of_items_selected_per_agent = np.zeros((
+            len(config_c.AGENT_PARAMETERS),
+            int(config_c.MAX_TRAINING_STEPS // config_c.TEST_INTERVAL_TRAINING_STEPS)
+        ))
+        self.MAX_test_value_of_items_selected_per_agent = np.zeros((
+            len(config_c.AGENT_PARAMETERS),
+            int(config_c.MAX_TRAINING_STEPS // config_c.TEST_INTERVAL_TRAINING_STEPS)
+        ))
+
     def save_fig(self, local_now):
         # Test Average Episode Reward
         plt.figure(figsize=(12, 5))
