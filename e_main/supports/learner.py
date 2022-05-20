@@ -4,9 +4,7 @@ import copy
 from gym.spaces import Box, Discrete
 from gym.vector import VectorEnv
 
-from a_configuration.a_base_config.a_environments.combinatorial_optimization.knapsack.config_her_knapsack import \
-    ConfigHerKnapsack
-from a_configuration.a_base_config.a_environments.combinatorial_optimization.knapsack.config_knapsack import ConfigKnapsack
+from a_configuration.a_base_config.a_environments.combinatorial_optimization.config_knapsack import ConfigKnapsack
 from a_configuration.a_base_config.a_environments.task_allocation.config_basic_task_allocation import \
     ConfigBasicTaskAllocation
 from a_configuration.a_base_config.c_models.config_recurrent_convolutional_models import ConfigRecurrent2DConvolutionalModel
@@ -58,7 +56,7 @@ class Learner(mp.Process):
         if config.ENV_NAME in ["Task_Allocation_v0"]:
             self.test_episode_utilization = mp.Value('d', 0.0)
 
-        if config.ENV_NAME in ["Knapsack_Problem_v0", "Her_Knapsack_Problem_v0"]:
+        if config.ENV_NAME in ["Knapsack_Problem_v0", "Knapsack_Problem_v1"]:
             self.test_episode_items_value = mp.Value('d', 0.0)
 
         self.next_train_time_step = config.TRAIN_INTERVAL_GLOBAL_TIME_STEPS
@@ -72,7 +70,7 @@ class Learner(mp.Process):
 
         if self.config.AGENT_TYPE == AgentType.MUZERO:
             self.transition_generator = self.generator_muzero()
-            # TODO : history 저장 logic 구현
+            # TODO : history ???? logic ????
         else:
             if queue is None:  # Sequential
                 self.transition_generator = self.generator_on_policy_transition()
@@ -90,9 +88,7 @@ class Learner(mp.Process):
 
         self.shared_model_access_lock = shared_model_access_lock  # For only LearningActor (A3C)
 
-        if self.config.ENV_NAME in [
-            "Task_Allocation_v0", "Knapsack_Problem_v0", "Her_Knapsack_Problem_v0"
-        ]:
+        if self.config.ENV_NAME in ["Task_Allocation_v0", "Task_Allocation_v1", "Knapsack_Problem_v0", "Knapsack_Problem_v1"]:
             self.env_info = None
 
         self.modified_env_name = self.config.ENV_NAME.split("/")[1] if "/" in self.config.ENV_NAME else self.config.ENV_NAME
@@ -129,10 +125,11 @@ class Learner(mp.Process):
 
             next_observations, rewards, dones, infos = self.train_env.step(scaled_actions)
 
-            if self.config.ENV_NAME in [
-                "Task_Allocation_v0", "Knapsack_Problem_v0", "Her_Knapsack_Problem_v0"
-            ]:
+            if self.config.ENV_NAME in ["Task_Allocation_v0", "Knapsack_Problem_v0", "Knapsack_Problem_v1"]:
                 self.env_info = infos[0]
+
+            if self.config.ENV_NAME in ["Task_Allocation_v1"]:
+                self.env_info = infos
 
             if self.is_recurrent_model:
                 next_observations = [(next_observations, self.agent.model.recurrent_hidden)]
@@ -163,6 +160,7 @@ class Learner(mp.Process):
                     )
                     yield n_step_transition
 
+
             observations = next_observations
             if self.is_terminated.value:
                 break
@@ -171,7 +169,7 @@ class Learner(mp.Process):
 
     def generator_muzero(self):
         # TODO
-        # 매 step마다 해야할 것 : legal action 고르기, to_play 설정, stacked_observations 생각
+        # ?? step???? ?????? ?? : legal action ??????, to_play ????, stacked_observations ????
         observations = self.train_env.reset()
 
         observations_history = [[] for _ in range(self.config.N_VECTORIZED_ENVS)]
@@ -201,7 +199,7 @@ class Learner(mp.Process):
 
             self.agent.legal_actions = [[0,1] for _ in range(self.config.N_VECTORIZED_ENVS)]  # action masking, shape : (n_vectorized, action_space)
             self.agent.to_plays = [[0] for _ in range(self.config.N_VECTORIZED_ENVS)]  # shape : (n_vectorized, 1)
-            self.agent.visit_softmax_temperature_fn(self.training_step.value)  # temperature 설정
+            self.agent.visit_softmax_temperature_fn(self.training_step.value)  # temperature ????
 
             actions = self.agent.get_action(observations)
             if isinstance(self.agent.action_space, Discrete):
@@ -210,7 +208,7 @@ class Learner(mp.Process):
                 scaled_actions = actions * self.agent.action_scale + self.agent.action_bias
             else:
                 raise ValueError()
-            # TODO : batch MCTS 구현
+            # TODO : batch MCTS ????
             next_observations, rewards, dones, infos = self.train_env.step(scaled_actions)
 
             if self.is_recurrent_model:
@@ -269,15 +267,17 @@ class Learner(mp.Process):
         yield None
 
     def train_loop(self, parallel=False):
-        if not parallel:  # parallel인 경우 actor에서 train_env 생성/관리
+        combinatorial_env_conditions = [
+            isinstance(self.config, ConfigKnapsack),
+            isinstance(self.config, ConfigBasicTaskAllocation)
+        ]
+
+        if not parallel:  # parallel?? ???? actor???? train_env ????/????
             self.train_env = get_train_env(self.config)
 
-        if self.config.ENV_NAME in [
-            "Task_Allocation_v0", "Knapsack_Problem_v0", "Her_Knapsack_Problem_v0"
-        ]:
+        if any(combinatorial_env_conditions):
             test_env_equal_to_train_env_conditions = [
                 isinstance(self.config, ConfigKnapsack) and self.config.INITIAL_ITEM_DISTRIBUTION_FIXED is True,
-                isinstance(self.config, ConfigHerKnapsack) and self.config.INITIAL_ITEM_DISTRIBUTION_FIXED is True,
                 isinstance(self.config, ConfigBasicTaskAllocation) and self.config.INITIAL_TASK_DISTRIBUTION_FIXED is True
             ]
             if any(test_env_equal_to_train_env_conditions):
@@ -441,8 +441,7 @@ class Learner(mp.Process):
         if self.config.ENV_NAME in ["Task_Allocation_v0"]:
             self.test_episode_reward_avg.value, self.test_episode_reward_std.value, self.test_episode_utilization.value = \
                 self.play_for_testing(self.config.N_TEST_EPISODES)
-
-        elif self.config.ENV_NAME in ["Knapsack_Problem_v0", "Her_Knapsack_Problem_v0"]:
+        elif self.config.ENV_NAME in ["Knapsack_Problem_v0", "Knapsack_Problem_v1"]:
             self.test_episode_reward_avg.value, self.test_episode_reward_std.value, self.test_episode_items_value.value = \
                 self.play_for_testing(self.config.N_TEST_EPISODES)
         else:
@@ -462,7 +461,7 @@ class Learner(mp.Process):
 
         if self.config.ENV_NAME in ["Task_Allocation_v0"]:
             test_str += ", Utilization: {0:.2f}".format(self.test_episode_utilization.value)
-        if self.config.ENV_NAME in ["Knapsack_Problem_v0", "Her_Knapsack_Problem_v0"]:
+        if self.config.ENV_NAME in ["Knapsack_Problem_v0", "Knapsack_Problem_v1"]:
             test_str += ", Values: {0:.2f}".format(self.test_episode_items_value.value)
 
         test_str += ", Elapsed Time from Training Start: {0}".format(formatted_elapsed_time)
@@ -474,7 +473,7 @@ class Learner(mp.Process):
         ]
 
         if all(termination_conditions):
-            # Console 및 Wandb 로그를 위한 사항
+            # Console ?? Wandb ?????? ???? ????
             self.training_step.value += 1
 
             print("Solved in {0:,} steps ({1:,} training steps)!".format(
@@ -503,13 +502,13 @@ class Learner(mp.Process):
         episode_reward_lst = []
         if self.config.ENV_NAME in ["Task_Allocation_v0"]:
             episode_utilization_lst = []
-        elif self.config.ENV_NAME in ["Knapsack_Problem_v0", "Her_Knapsack_Problem_v0"]:
+        elif self.config.ENV_NAME in ["Knapsack_Problem_v0", "Knapsack_Problem_v1"]:
             episode_value_lst = []
 
         for i in range(n_test_episodes):
             episode_reward = 0  # cumulative_reward
 
-            # Environment 초기화와 변수 초기화
+            # Environment ???????? ???? ??????
             observation, info = self.test_env.reset(return_info=True)
 
             if not isinstance(self.test_env, VectorEnv):
@@ -571,7 +570,7 @@ class Learner(mp.Process):
                 if self.config.ACTION_MASKING:
                     unavailable_actions = [info['unavailable_actions']]
 
-                episode_reward += reward  # episode_reward 를 산출하는 방법은 감가률 고려하지 않는 이 라인이 더 올바름.
+                episode_reward += reward  # episode_reward ?? ???????? ?????? ?????? ???????? ???? ?? ?????? ?? ??????.
                 observation = next_observation
 
                 if done:
@@ -580,15 +579,9 @@ class Learner(mp.Process):
             episode_reward_lst.append(episode_reward)
 
             if self.config.ENV_NAME in ["Task_Allocation_v0"]:
-                if self.config.INITIAL_ITEM_DISTRIBUTION_FIXED:
-                    episode_utilization_lst.append(info[0]["Utilization"])
-                else:
-                    episode_utilization_lst.append(info["Utilization"])
-            elif self.config.ENV_NAME in ["Knapsack_Problem_v0", "Her_Knapsack_Problem_v0"]:
-                if self.config.INITIAL_ITEM_DISTRIBUTION_FIXED:
-                    episode_value_lst.append(info[0]["Value"])
-                else:
-                    episode_value_lst.append(info["Value"])
+                episode_utilization_lst.append(info[0]["Utilization"])
+            elif self.config.ENV_NAME in ["Knapsack_Problem_v0", "Knapsack_Problem_v1"]:
+                episode_value_lst.append(info[0]["Value"])
 
         self.agent.model.train()
 
@@ -597,7 +590,7 @@ class Learner(mp.Process):
 
         if self.config.ENV_NAME in ["Task_Allocation_v0"]:
             return np.average(episode_reward_lst), np.std(episode_reward_lst), np.average(episode_utilization_lst)
-        elif self.config.ENV_NAME in ["Knapsack_Problem_v0", "Her_Knapsack_Problem_v0"]:
+        elif self.config.ENV_NAME in ["Knapsack_Problem_v0","Knapsack_Problem_v1"]:
             return np.average(episode_reward_lst), np.std(episode_reward_lst), np.average(episode_value_lst)
         else:
             return np.average(episode_reward_lst), np.std(episode_reward_lst)
