@@ -579,9 +579,15 @@ class Learner(mp.Process):
             episode_reward_lst.append(episode_reward)
 
             if self.config.ENV_NAME in ["Task_Allocation_v0"]:
-                episode_utilization_lst.append(info[0]["Utilization"])
-            elif self.config.ENV_NAME in ["Knapsack_Problem_v0", "Knapsack_Problem_v1"]:
-                episode_value_lst.append(info[0]["Value"])
+                if self.config.INITIAL_ITEM_DISTRIBUTION_FIXED:
+                    episode_utilization_lst.append(info[0]["Utilization"])
+                else:
+                    episode_utilization_lst.append(info["Utilization"])
+            elif self.config.ENV_NAME in ["Knapsack_Problem_v0", "Her_Knapsack_Problem_v0"]:
+                if self.config.INITIAL_ITEM_DISTRIBUTION_FIXED:
+                    episode_value_lst.append(info[0]["Value"])
+                else:
+                    episode_value_lst.append(info["Value"])
 
         self.agent.model.train()
 
