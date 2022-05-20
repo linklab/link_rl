@@ -725,7 +725,7 @@ plotly_layout = go.Layout(
 
 
 def wandb_log_comparison(
-        run, training_steps_per_agent, agents, agent_labels, n_episodes_for_mean_calculation, comparison_stat, wandb_obj
+        run, training_steps_per_agent, agents, agent_labels, n_episodes_for_mean_calculation, comparison_stat, wandb_obj, config_c
 ):
     training_steps_str = str([training_step for training_step in training_steps_per_agent])
 
@@ -780,6 +780,27 @@ def wandb_log_comparison(
         "episode_reward_std": test_episode_reward_std,
         "train_last_mean_episode_reward": train_last_mean_episode_reward
     }
+
+    #knapsack
+    ###############################################################################
+    plotly_layout.yaxis.title = "[Test] Mean Value of items selected"
+    plotly_layout.xaxis.title = "Training Steps ({0}, runs={1}, over {2} Episodes)".format(
+        training_steps_str, run + 1, n_episodes_for_mean_calculation
+    )
+    data = []
+    for agent_idx, _ in enumerate(agents):
+        data.append(
+            go.Scatter(
+                name=agent_labels[agent_idx],
+                x=comparison_stat.test_training_steps_lst,
+                y=comparison_stat.MEAN_test_value_of_items_selected_per_agent[agent_idx, :],
+                showlegend=True
+            )
+        )
+    train_last_mean_value_of_items_selected = go.Figure(data=data, layout=plotly_layout)
+
+    if config_c.ENV_NAME in ["Knapsack_Problem_v0"]:
+        log_dict["train_last_mean_value_of_items_selected"] = train_last_mean_value_of_items_selected
 
     wandb_obj.log(log_dict)
 

@@ -108,5 +108,5 @@ class ConfigComparisonKnapsack0And1LoadTestLinearDoubleDqn(ConfigComparisonBase)
             "Dueling DQN (M2 - 2 Actions)",
         ]
 
-        self.MAX_TRAINING_STEPS = 30_000
+        self.MAX_TRAINING_STEPS = 200_000
         self.N_RUNS = 5

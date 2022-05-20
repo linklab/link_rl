@@ -88,6 +88,7 @@ class LearnerComparison:
             "Task_Allocation_v0", "Knapsack_Problem_v0", "Her_Knapsack_Problem_v0"
         ]:
             self.env_info = [None] * len(self.agents)
+            self.test_info = [None] * len(self.agents)
 
     def generator_on_policy_transition(self, agent_idx):
         observations, infos = self.train_envs_per_agent[agent_idx].reset(return_info=True)
@@ -220,7 +221,8 @@ class LearnerComparison:
                                     agent_labels=self.config_c.AGENT_LABELS,
                                     n_episodes_for_mean_calculation=self.config_c.N_EPISODES_FOR_MEAN_CALCULATION,
                                     comparison_stat=self.comparison_stat,
-                                    wandb_obj=self.wandb_obj
+                                    wandb_obj=self.wandb_obj,
+                                    config_c=self.config_c
                                 )
 
                             self.next_test_training_step_per_agent[agent_idx] += self.config_c.TEST_INTERVAL_TRAINING_STEPS
@@ -244,14 +246,25 @@ class LearnerComparison:
         self.comparison_stat.mean_episode_reward_per_agent[run, agent_idx, self.test_idx_per_agent[agent_idx]] = \
             self.last_mean_episode_reward_per_agent[agent_idx]
 
+        if self.config_c.ENV_NAME in ["Knapsack_Problem_v0"]:
+            if self.test_info[agent_idx] is not None:
+                self.comparison_stat.test_value_of_items_selected_per_agent[run, agent_idx, self.test_idx_per_agent[agent_idx]] = self.test_info[agent_idx][0]
+
         elapsed_time = time.time() - self.train_comparison_start_time
         formatted_elapsed_time = time.strftime('%H:%M:%S', time.gmtime(elapsed_time))
 
-        print("[Test: {0}, Agent: {1}, Training Step: {2:6,}] "
-              "Episode Reward - Average: {3:.3f}, Standard Dev.: {4:.3f}, Elapsed Time: {5} ".format(
-            self.test_idx_per_agent[agent_idx] + 1, agent_idx, training_step, avg, std, formatted_elapsed_time
-        ))
-        print("*" * 160)
+        if self.config_c.ENV_NAME in ["Knapsack_Problem_v0"] and self.test_info[agent_idx] is not None:
+            print("[Test: {0}, Agent: {1}, Training Step: {2:6,}] "
+                  "Episode Reward - Average: {3:.3f}, Standard Dev.: {4:.3f}, Elapsed Time: {5}, Solution_Found {6} ({7:5.3f}, Total Steps Found: {8:,})".format(
+                self.test_idx_per_agent[agent_idx] + 1, agent_idx, training_step, avg, std, formatted_elapsed_time, self.test_info[agent_idx][0], self.test_info[agent_idx][1], self.test_info[agent_idx][2]
+            ))
+            print("*" * 160)
+        else:
+            print("[Test: {0}, Agent: {1}, Training Step: {2:6,}] "
+                  "Episode Reward - Average: {3:.3f}, Standard Dev.: {4:.3f}, Elapsed Time: {5} ".format(
+                self.test_idx_per_agent[agent_idx] + 1, agent_idx, training_step, avg, std, formatted_elapsed_time
+            ))
+            print("*" * 160)
 
     def play_for_testing(self, n_test_episodes, agent_idx):
         self.agents[agent_idx].model.eval()
@@ -295,12 +308,7 @@ class LearnerComparison:
                 else:
                     raise ValueError()
 
-                next_observation, reward, done, infos = self.test_envs_per_agent[agent_idx].step(scaled_action)
-
-                if self.config_c.ENV_NAME in [
-                    "Task_Allocation_v0", "Knapsack_Problem_v0", "Her_Knapsack_Problem_v0"
-                ]:
-                    self.env_info[agent_idx] = infos
+                next_observation, reward, done, info = self.test_envs_per_agent[agent_idx].step(scaled_action)
 
                 next_observation = np.expand_dims(next_observation, axis=0)
 
@@ -314,6 +322,9 @@ class LearnerComparison:
                     break
 
             episode_reward_lst.append(episode_reward)
+
+            if self.config_c.ENV_NAME in ["Knapsack_Problem_v0"]:
+                self.test_info[agent_idx] = info["simple_solution_found"]
 
         self.agents[agent_idx].model.train()
 
@@ -374,3 +385,20 @@ class LearnerComparison:
         self.comparison_stat.MAX_mean_episode_reward_per_agent[agent_idx, test_idx] = max_value
         self.comparison_stat.MEAN_mean_episode_reward_per_agent[agent_idx, test_idx] = sum_value / (run + 1)
 
+        #knapsack
+        min_value = np.finfo(np.float64).max
+        max_value = np.finfo(np.float64).min
+        sum_value = 0.0
+
+        for i in range(run + 1):
+            if self.comparison_stat.test_value_of_items_selected_per_agent[i, agent_idx, test_idx] < min_value:
+                min_value = self.comparison_stat.test_value_of_items_selected_per_agent[i, agent_idx, test_idx]
+
+            if self.comparison_stat.test_value_of_items_selected_per_agent[i, agent_idx, test_idx] > max_value:
+                max_value = self.comparison_stat.test_value_of_items_selected_per_agent[i, agent_idx, test_idx]
+
+            sum_value += self.comparison_stat.test_value_of_items_selected_per_agent[i, agent_idx, test_idx]
+
+        self.comparison_stat.MIN_test_value_of_items_selected_per_agent[agent_idx, test_idx] = min_value
+        self.comparison_stat.MAX_test_value_of_items_selected_per_agent[agent_idx, test_idx] = max_value
+        self.comparison_stat.MEAN_test_value_of_items_selected_per_agent[agent_idx, test_idx] = sum_value / (run + 1)
