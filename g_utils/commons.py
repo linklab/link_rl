@@ -533,7 +533,7 @@ def console_log(learner,
     print(console_log)
 
 
-def console_log_comparison(
+def console_log_comparison(learner_c,
         run, total_time_step, total_episodes_per_agent,
         last_mean_episode_reward_per_agent, n_rollout_transitions_per_agent, training_steps_per_agent,
         agents, config_c
