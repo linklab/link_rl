@@ -26,3 +26,4 @@ class ConfigHerKnapsack0StaticTestLinearDoubleDqn(
         self.LEARNING_RATE = 0.001
 
         self.USE_HER = True
+        self.BUFFER_CAPACITY = 200_000

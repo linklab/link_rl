@@ -127,7 +127,7 @@ class HerKnapsackEnv(gym.Env):
         else:
             raise ValueError()
 
-        self.current_goal = 100
+        self.current_goal = 0
 
     def sort_items(self, items):
         if self.SORTING_TYPE is not None and self.SORTING_TYPE == 1:    # Value Per Weight
@@ -393,6 +393,7 @@ class HerKnapsackEnv(gym.Env):
             goal_achieved = 0.0
             mission_complete_reward = 0.0
             misbehavior_reward = -1.0
+            #misbehavior_reward = 0.0
 
         elif done_type == DoneReasonType0.TYPE_2:  # "Weight Remains"
             goal_achieved = 0.0
