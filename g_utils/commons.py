@@ -657,7 +657,7 @@ def wandb_log(learner, wandb_obj, config):
         log_dict["Resource Utilization"] = learner.env_info["Resource_utilization"]
         average_latency = sum(learner.env_info["Latency"]) / len(learner.env_info["Latency"])
         log_dict["Average Latency"] = average_latency
-    if config.ENV_NAME in ["Knapsack_Problem_v0", "Knapsack_Problem_v1"]:
+    if config.ENV_NAME in ["Knapsack_Problem_v0", "Her_Knapsack_Problem_v0"]:
         log_dict["Value of All Item Selected"] = learner.env_info["Value"]
         log_dict["[TEST] Value of All Item Selected"] = learner.test_episode_items_value.value
     if config.AGENT_TYPE in [AgentType.DQN, AgentType.DUELING_DQN, AgentType.DOUBLE_DQN, AgentType.DOUBLE_DUELING_DQN]:
