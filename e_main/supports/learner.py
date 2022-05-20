@@ -442,7 +442,7 @@ class Learner(mp.Process):
             self.test_episode_reward_avg.value, self.test_episode_reward_std.value, self.test_episode_utilization.value = \
                 self.play_for_testing(self.config.N_TEST_EPISODES)
 
-        elif self.config.ENV_NAME in ["Knapsack_Problem_v0", "her_Knapsack_Problem_v0"]:
+        elif self.config.ENV_NAME in ["Knapsack_Problem_v0", "Knapsack_Problem_v1", "Her_Knapsack_Problem_v0"]:
             self.test_episode_reward_avg.value, self.test_episode_reward_std.value, self.test_episode_items_value.value = \
                 self.play_for_testing(self.config.N_TEST_EPISODES)
         else:
