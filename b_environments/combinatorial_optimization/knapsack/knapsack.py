@@ -292,10 +292,13 @@ class KnapsackEnv(gym.Env):
         return value_of_all_items_selected_reward + mission_complete_reward + misbehavior_reward
 
     def print_knapsack_details_at_episode_end(self, info):
-        details = "[NEW EPISODE] NUM ITEMS: {0}, LIMIT_WEIGHT_KNAPSACK: {1}, TOTAL_VALUE_FOR_ALL_ITEMS: {2}, " \
-                  "ITEM VALUES SELECTED: {3} (OPTIMAL_VALUE: {4}), ITEM WEIGHTS SELECTED: {5}, DONE REASON: {6}".format(
+        details = "[NEW EPISODE] NUM ITEMS: {0}, LIMIT_WEIGHT_KNAPSACK: {1}, TOTAL_VALUE_FOR_ALL_ITEMS: {2:5.1f}, " \
+                  "ITEM VALUES SELECTED: {3:5.1f} (OPTIMAL_VALUE: {4:5.1f}, RATIO: {5:4.2f}), " \
+                  "ITEM WEIGHTS SELECTED: {6:5.1f}, DONE REASON: {7}".format(
             self.NUM_ITEM, self.LIMIT_WEIGHT_KNAPSACK, self.TOTAL_VALUE_FOR_ALL_ITEMS,
-            self.last_ep_value_of_all_items_selected, self.optimal_value, self.last_ep_weight_of_all_items_selected,
+            self.last_ep_value_of_all_items_selected, self.optimal_value,
+            self.last_ep_value_of_all_items_selected / self.optimal_value if self.last_ep_value_of_all_items_selected is not None else 0.0,
+            self.last_ep_weight_of_all_items_selected,
             info['DoneReasonType'].value
         )
         print(details)
