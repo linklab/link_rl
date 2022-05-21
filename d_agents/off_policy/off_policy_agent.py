@@ -1,8 +1,7 @@
 from abc import abstractmethod
 
-from b_environments.combinatorial_optimization.knapsack.her_knapsack import HerEpisodeBuffer
 from d_agents.agent import Agent
-from g_utils.buffers import Buffer
+from g_utils.buffers import Buffer, HerEpisodeBuffer
 from g_utils.prioritized_buffer import PrioritizedBuffer
 from g_utils.types import AgentType, OffPolicyAgentTypes, ActorCriticAgentTypes
 
