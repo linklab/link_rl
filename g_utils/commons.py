@@ -657,7 +657,9 @@ def wandb_log(learner, wandb_obj, config):
         log_dict["Average Latency"] = average_latency
     if config.ENV_NAME in ["Knapsack_Problem_v0", "Her_Knapsack_Problem_v0"]:
         log_dict["Value of All Item Selected"] = learner.env_info["last_ep_value_of_all_items_selected"]
+        log_dict["Ratio (Value to Optimal Value)"] = learner.env_info["last_ep_ratio"]
         log_dict["[TEST] Value of All Item Selected"] = learner.test_episode_items_value.value
+        log_dict["[TEST] Ratio (Value to Optimal Value)"] = learner.test_episode_ratio_value.value
     if config.AGENT_TYPE in [AgentType.DQN, AgentType.DUELING_DQN, AgentType.DOUBLE_DQN, AgentType.DOUBLE_DUELING_DQN]:
         log_dict["QNet Loss"] = learner.agent.last_q_net_loss.value
         log_dict["Epsilon"] = learner.agent.epsilon.value
