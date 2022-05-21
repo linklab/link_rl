@@ -457,7 +457,11 @@ class KnapsackEnv(gym.Env):
         info['last_ep_simple_solution_found'] = self.last_ep_simple_solution_found
         info['last_ep_ratio'] = self.last_ep_value_of_all_items_selected / self.optimal_value if self.last_ep_value_of_all_items_selected is not None else 0.0
 
-        assert info['last_ep_ratio'] <= 1.0
+        assert info['last_ep_ratio'] <= 1.0, "self.last_ep_value_of_all_items_selected: {0}, self.optimal_value: {1}, info['last_ep_ratio']: {2}".format(
+            self.last_ep_value_of_all_items_selected,
+            self.optimal_value,
+            info['last_ep_ratio']
+        )
 
         if done and self.config.PRINT_DETAILS_AT_EPISODE_END:
             self.print_knapsack_details_at_episode_end(info)
