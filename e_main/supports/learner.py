@@ -503,7 +503,7 @@ class Learner(mp.Process):
         if self.config.ENV_NAME in ["Task_Allocation_v0"]:
             episode_utilization_lst = []
         elif self.config.ENV_NAME in ["Knapsack_Problem_v0", "Her_Knapsack_Problem_v0"]:
-            episode_value_lst = []
+            episode_items_value_selected_lst = []
 
         for i in range(n_test_episodes):
             episode_reward = 0  # cumulative_reward
@@ -585,9 +585,9 @@ class Learner(mp.Process):
                     episode_utilization_lst.append(info["Utilization"])
             elif self.config.ENV_NAME in ["Knapsack_Problem_v0", "Her_Knapsack_Problem_v0"]:
                 if self.config.INITIAL_ITEM_DISTRIBUTION_FIXED:
-                    episode_value_lst.append(info[0]["Value"])
+                    episode_items_value_selected_lst.append(info[0]["last_ep_value_of_all_items_selected"])
                 else:
-                    episode_value_lst.append(info["Value"])
+                    episode_items_value_selected_lst.append(info["last_ep_value_of_all_items_selected"])
 
         self.agent.model.train()
 
@@ -597,6 +597,7 @@ class Learner(mp.Process):
         if self.config.ENV_NAME in ["Task_Allocation_v0"]:
             return np.average(episode_reward_lst), np.std(episode_reward_lst), np.average(episode_utilization_lst)
         elif self.config.ENV_NAME in ["Knapsack_Problem_v0", "Her_Knapsack_Problem_v0"]:
-            return np.average(episode_reward_lst), np.std(episode_reward_lst), np.average(episode_value_lst)
+            return np.average(episode_reward_lst), np.std(episode_reward_lst), \
+                   np.average(episode_items_value_selected_lst)
         else:
             return np.average(episode_reward_lst), np.std(episode_reward_lst)

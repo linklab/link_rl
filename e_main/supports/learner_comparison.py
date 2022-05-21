@@ -324,7 +324,7 @@ class LearnerComparison:
             episode_reward_lst.append(episode_reward)
 
             if self.config_c.ENV_NAME in ["Knapsack_Problem_v0"]:
-                self.test_info[agent_idx] = info["simple_solution_found"]
+                self.test_info[agent_idx] = info["last_ep_simple_solution_found"]
 
         self.agents[agent_idx].model.train()
 

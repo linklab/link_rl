@@ -37,7 +37,7 @@ class ConfigKnapsack:
         self.MODEL_TYPE = ModelType.TINY_1D_CONVOLUTIONAL
         self.TARGET_SYNC_INTERVAL_TRAINING_STEPS = 100
 
-        self.PRINT_PROBLEM_INSTANCE_AT_RESET = False
+        self.PRINT_DETAILS_AT_EPISODE_END = False
 
 
 class ConfigKnapsack0(ConfigKnapsack):

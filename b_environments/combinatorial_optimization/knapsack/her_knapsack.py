@@ -97,15 +97,15 @@ class HerKnapsackEnv(gym.Env):
         self.INSTANCE_INDEX = config.INSTANCE_INDEX
         self.SORTING_TYPE = config.SORTING_TYPE
 
-        self.solution_found = [0]
-        self.simple_solution_found = None
+        self.last_ep_solution_found = [0]
+        self.last_ep_simple_solution_found = None
         self.optimal_value = 0
 
         self.internal_state = None
         self.items_selected = None
         self.actions_sequence = None
-        self.weight_of_all_items_selected = None
-        self.value_of_all_items_selected = None
+        self.last_ep_weight_of_all_items_selected = None
+        self.last_ep_value_of_all_items_selected = None
         self.num_step = None
         self.total_num_step = 0
 
@@ -251,8 +251,8 @@ class HerKnapsackEnv(gym.Env):
         self.TOTAL_VALUE_FOR_ALL_ITEMS = sum(self.internal_state[:, 0])
         self.items_selected = []
         self.actions_sequence = []
-        self.weight_of_all_items_selected = 0
-        self.value_of_all_items_selected = 0
+        self.last_ep_weight_of_all_items_selected = 0
+        self.last_ep_value_of_all_items_selected = 0
 
         self.num_step = 0
         self.internal_state[3][0] = self.internal_state[4][0]
@@ -293,11 +293,11 @@ class HerKnapsackEnv(gym.Env):
 
         done = False
 
-        if action_idx == 1 and self.weight_of_all_items_selected + step_item_weight <= self.LIMIT_WEIGHT_KNAPSACK:
+        if action_idx == 1 and self.last_ep_weight_of_all_items_selected + step_item_weight <= self.LIMIT_WEIGHT_KNAPSACK:
             self.items_selected.append(self.num_step)
 
-            self.value_of_all_items_selected += step_item_value
-            self.weight_of_all_items_selected += step_item_weight
+            self.last_ep_value_of_all_items_selected += step_item_value
+            self.last_ep_weight_of_all_items_selected += step_item_weight
 
             self.internal_state[2][0] += step_item_value
             self.internal_state[2][1] += step_item_weight
@@ -307,7 +307,7 @@ class HerKnapsackEnv(gym.Env):
         self.internal_state[self.num_step + 4][:] = -1
         self.internal_state[0][0] -= 1
 
-        if action_idx == 1 and self.weight_of_all_items_selected + step_item_weight > self.LIMIT_WEIGHT_KNAPSACK:
+        if action_idx == 1 and self.last_ep_weight_of_all_items_selected + step_item_weight > self.LIMIT_WEIGHT_KNAPSACK:
             done = True
             info['DoneReasonType'] = DoneReasonType0.TYPE_1  # "Weight Limit Exceeded"
         elif self.num_step == self.NUM_ITEM - 1 or not possible:
@@ -318,8 +318,8 @@ class HerKnapsackEnv(gym.Env):
             else:
                 info['DoneReasonType'] = DoneReasonType0.TYPE_2  # "Weight Remains"
 
-        elif self.current_goal < self.value_of_all_items_selected:
-            self.current_goal = self.value_of_all_items_selected + 1
+        elif self.current_goal < self.last_ep_value_of_all_items_selected:
+            self.current_goal = self.last_ep_value_of_all_items_selected + 1
             info['DoneReasonType'] = DoneReasonType0.TYPE_4
             done = True
             # if self.num_step != self.NUM_ITEM - 1:
@@ -336,14 +336,14 @@ class HerKnapsackEnv(gym.Env):
             self.internal_state[3][0] = self.internal_state[self.num_step + 4][0]
             self.internal_state[3][1] = self.internal_state[self.num_step + 4][1]
 
-        info[HerConstant.ACHIEVED_GOAL] = self.value_of_all_items_selected
+        info[HerConstant.ACHIEVED_GOAL] = self.last_ep_value_of_all_items_selected
         info[HerConstant.DESIRED_GOAL] = self.current_goal
 
         if done:
             reward = self.reward(done_type=info['DoneReasonType'])
 
             if info['DoneReasonType'] != DoneReasonType0.TYPE_1:  # "Weight Limit Exceeded"
-                if self.solution_found[0] < self.value_of_all_items_selected:
+                if self.last_ep_solution_found[0] < self.last_ep_value_of_all_items_selected:
                     self.process_solution_found()
 
             if info['DoneReasonType'] == DoneReasonType0.TYPE_2:
@@ -358,30 +358,30 @@ class HerKnapsackEnv(gym.Env):
 
         info['Actions sequence'] = self.actions_sequence
         info['Items selected'] = self.items_selected
-        info['Value'] = self.value_of_all_items_selected
-        info['Weight'] = self.weight_of_all_items_selected
+        info['Value'] = self.last_ep_value_of_all_items_selected
+        info['Weight'] = self.last_ep_weight_of_all_items_selected
         info['internal_state'] = copy.deepcopy(self.internal_state)
-        info['solution_found'] = self.solution_found
-        info['simple_solution_found'] = self.simple_solution_found
+        info['last_ep_solution_found'] = self.last_ep_solution_found
+        info['last_ep_simple_solution_found'] = self.last_ep_simple_solution_found
 
         observation = self.observation()
 
         return observation, reward, done, info
 
     def process_solution_found(self):
-        self.solution_found[0] = self.value_of_all_items_selected
-        self.solution_found[1:] = self.items_selected
+        self.last_ep_solution_found[0] = self.last_ep_value_of_all_items_selected
+        self.last_ep_solution_found[1:] = self.items_selected
 
-        self.solution_found.append(round(self.solution_found[0] / self.optimal_value, 3))
+        self.last_ep_solution_found.append(round(self.last_ep_solution_found[0] / self.optimal_value, 3))
 
-        self.simple_solution_found = [
-            self.value_of_all_items_selected,
-            round(self.value_of_all_items_selected / self.optimal_value, 3),
+        self.last_ep_simple_solution_found = [
+            self.last_ep_value_of_all_items_selected,
+            round(self.last_ep_value_of_all_items_selected / self.optimal_value, 3),
             self.total_num_step
         ]
 
         if self.UPLOAD_PATH:
-            upload_file('linklab', self.solution_found, self.UPLOAD_PATH)
+            upload_file('linklab', self.last_ep_solution_found, self.UPLOAD_PATH)
 
     def reward(self, done_type=None):
         if done_type is None:  # Normal Step

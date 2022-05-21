@@ -181,7 +181,7 @@ class ConfigKnapsack0StaticTestLinearDoubleDqn(
 
         self.INITIAL_ITEM_DISTRIBUTION_FIXED = True
 
-        self.MAX_TRAINING_STEPS = self.NUM_ITEM * 20_000
+        self.MAX_TRAINING_STEPS = self.NUM_ITEM * 2_000
         self.BUFFER_CAPACITY = self.NUM_ITEM * 2_000
 
         self.GAMMA = 0.999

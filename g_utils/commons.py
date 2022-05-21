@@ -429,12 +429,11 @@ def print_env_info(observation_space, action_space, config):
     print(action_space_str)
 
 
-def console_log(learner,
-        total_episodes_v, last_mean_episode_reward_v,
-        n_rollout_transitions_v, transition_rolling_rate_v, train_steps_v, train_step_rate_v,
-        agent, config
+def console_log(
+        learner, total_episodes_v, last_mean_episode_reward_v, n_rollout_transitions_v, transition_rolling_rate_v,
+        train_steps_v, train_step_rate_v, agent, config
 ):
-    console_log = "[Tot. Episodes: {0:5,}] " \
+    console_log = "[Episodes: {0:5,}] " \
                   "Mean Episode Reward: {1:6.2f}, Rolling Outs: {2:7,} ({3:7.3f}/sec.), " \
                   "Training Steps: {4:4,} ({5:.3f}/sec.), " \
         .format(
@@ -514,18 +513,17 @@ def console_log(learner,
     if config.ENV_NAME in ["Knapsack_Problem_v0", "Her_Knapsack_Problem_v0"]:
         info = learner.env_info
 
-        # knapsack_info = ", Value.: {0:5.1f}, Weight: {1:5.1f}, Items: {2}, Actions: {3}, Solution_Found: {4}".format(
-        #     info["Value"], info["Weight"], sorted(info["Items selected"]), info['Actions sequence'], info['solution_found']
+        # knapsack_info = ", Value.: {0:5.1f}, Weight: {1:5.1f}, Items: {2}, Actions: {3}, Sol. Found: {4}".format(
+        #     info["Value"], info["Weight"], sorted(info["Items selected"]), info['Actions sequence'], info['last_ep_solution_found']
         # )
 
-        if info['simple_solution_found'] is None:
-            knapsack_info = ", Value.: {0:5.1f}, Weight: {1:5.1f}".format(
-                info["Value"], info["Weight"]
-            )
-        else:
-            knapsack_info = ", Value.: {0:5.1f}, Weight: {1:5.1f}, Solution_Found: {2} ({3:5.3f}, Total Steps Found: {4:,})".format(
-                info["Value"], info["Weight"],
-                info['simple_solution_found'][0], info['simple_solution_found'][1], info['simple_solution_found'][2]
+        knapsack_info = ", Items Value Selected: {0:5.1f}, Items Weight Selected: {1:5.1f}".format(
+            info["last_ep_value_of_all_items_selected"], info["last_ep_weight_of_all_items_selected"]
+        )
+
+        if info['last_ep_simple_solution_found'] is not None:
+            knapsack_info += ", Sol. Found: {0} ({1:5.3f}, Ep. Found: {2:,})".format(
+                info['last_ep_simple_solution_found'][0], info['last_ep_simple_solution_found'][1], info['last_ep_simple_solution_found'][2]
             )
 
         console_log += knapsack_info
@@ -540,9 +538,9 @@ def console_log_comparison(learner_c,
 ):
     for agent_idx, agent in enumerate(agents):
         agent_prefix = "[Agent: {0}]".format(agent_idx)
-        console_log = agent_prefix + "[Run: {0}, Tot. Episodes: {1:5,}, Tot. Time Steps {2:7,}] " \
+        console_log = agent_prefix + "[Run: {0}, Episodes: {1:5,}, Tot. Time Steps {2:7,}] " \
                       "Mean Episode Reward: {3:6.2f}, Rolling Outs: {4:7,}, " \
-                      "Training Steps: {5:4,}, " \
+                      "Train Steps: {5:4,}, " \
             .format(
                 run + 1,
                 total_episodes_per_agent[agent_idx],
@@ -584,17 +582,17 @@ def console_log_comparison(learner_c,
         if config_c.ENV_NAME in ["Knapsack_Problem_v0", "Her_Knapsack_Problem_v0"]:
             info = learner_c.env_info[agent_idx]
 
-            # knapsack_info = ", Value.: {0:5.1f}, Weight: {1:5.1f}, Items: {2}, Actions: {3}, Solution_Found: {4}".format(
-            #     info["Value"], info["Weight"], sorted(info["Items selected"]), info['Actions sequence'], info['solution_found']
+            # knapsack_info = ", Value.: {0:5.1f}, Weight: {1:5.1f}, Items: {2}, Actions: {3}, Sol. Found: {4}".format(
+            #     info["Value"], info["Weight"], sorted(info["Items selected"]), info['Actions sequence'], info['last_ep_solution_found']
             # )
-            if info['simple_solution_found'] is None:
-                knapsack_info = ", Value.: {0:5.1f}, Weight: {1:5.1f}".format(
-                    info["Value"], info["Weight"]
-                )
-            else:
-                knapsack_info = ", Value.: {0:5.1f}, Weight: {1:5.1f}, Solution_Found: {2} ({3:5.3f}, Total Steps Found: {4:,})".format(
-                    info["Value"], info["Weight"],
-                    info['simple_solution_found'][0], info['simple_solution_found'][1], info['simple_solution_found'][2]
+
+            knapsack_info = ", Items Value Selected: {0:5.1f}, Items Weight Selected: {1:5.1f}".format(
+                info["last_ep_value_of_all_items_selected"], info["last_ep_weight_of_all_items_selected"]
+            )
+
+            if info['last_ep_simple_solution_found'] is not None:
+                knapsack_info = ", Sol. Found: {0} ({1:5.3f}, Total Steps Found: {2:,})".format(
+                    info['last_ep_simple_solution_found'][0], info['last_ep_simple_solution_found'][1], info['last_ep_simple_solution_found'][2]
                 )
 
             knapsack_method = " STRATEGY. : {0:}".format(info["STRATEGY"])
@@ -658,7 +656,7 @@ def wandb_log(learner, wandb_obj, config):
         average_latency = sum(learner.env_info["Latency"]) / len(learner.env_info["Latency"])
         log_dict["Average Latency"] = average_latency
     if config.ENV_NAME in ["Knapsack_Problem_v0", "Her_Knapsack_Problem_v0"]:
-        log_dict["Value of All Item Selected"] = learner.env_info["Value"]
+        log_dict["Value of All Item Selected"] = learner.env_info["last_ep_value_of_all_items_selected"]
         log_dict["[TEST] Value of All Item Selected"] = learner.test_episode_items_value.value
     if config.AGENT_TYPE in [AgentType.DQN, AgentType.DUELING_DQN, AgentType.DOUBLE_DQN, AgentType.DOUBLE_DUELING_DQN]:
         log_dict["QNet Loss"] = learner.agent.last_q_net_loss.value

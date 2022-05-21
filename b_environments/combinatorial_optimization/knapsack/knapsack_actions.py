@@ -99,14 +99,14 @@ class KnapsackEnv(gym.Env):
         self.INSTANCE_INDEX = config.INSTANCE_INDEX
         self.SORTING_TYPE = config.SORTING_TYPE
 
-        self.solution_found = [0]
+        self.last_ep_solution_found = [0]
         self.optimal_value = 0
 
         self.internal_state = None
         self.items_selected = None
         self.actions_sequence = None
-        self.weight_of_all_items_selected = None
-        self.value_of_all_items_selected = None
+        self.last_ep_weight_of_all_items_selected = None
+        self.last_ep_value_of_all_items_selected = None
         self.num_step = None
 
         self.action_space = spaces.Discrete(self.NUM_ITEM)
@@ -300,12 +300,12 @@ class KnapsackEnv(gym.Env):
             misbehavior_reward = -1.0
 
         elif done_type == DoneReasonType0.TYPE_2:  # "Weight Remains"
-            value_of_all_items_selected_reward = self.value_of_all_items_selected / self.TOTAL_VALUE_FOR_ALL_ITEMS
+            value_of_all_items_selected_reward = self.last_ep_value_of_all_items_selected / self.TOTAL_VALUE_FOR_ALL_ITEMS
             mission_complete_reward = 0.0
             misbehavior_reward = 0.0
 
         elif done_type == DoneReasonType0.TYPE_3:  # "All Item Selected"
-            value_of_all_items_selected_reward = self.value_of_all_items_selected / self.TOTAL_VALUE_FOR_ALL_ITEMS
+            value_of_all_items_selected_reward = self.last_ep_value_of_all_items_selected / self.TOTAL_VALUE_FOR_ALL_ITEMS
             mission_complete_reward = 1.0
             misbehavior_reward = 0.0
 
@@ -327,8 +327,8 @@ class KnapsackEnv(gym.Env):
         self.TOTAL_VALUE_FOR_ALL_ITEMS = sum(self.internal_state[:, 0])
         self.items_selected = []
         self.actions_sequence = []
-        self.weight_of_all_items_selected = 0
-        self.value_of_all_items_selected = 0
+        self.last_ep_weight_of_all_items_selected = 0
+        self.last_ep_value_of_all_items_selected = 0
 
         observation = self.observation()
         info = dict()
@@ -363,8 +363,8 @@ class KnapsackEnv(gym.Env):
         else:
             self.actions_sequence.append(action_idx)
             self.items_selected.append(action_idx)
-            self.value_of_all_items_selected += step_item_value
-            self.weight_of_all_items_selected += step_item_weight
+            self.last_ep_value_of_all_items_selected += step_item_value
+            self.last_ep_weight_of_all_items_selected += step_item_weight
 
             self.internal_state[2][0] += step_item_value
             self.internal_state[2][1] += step_item_weight
@@ -376,7 +376,7 @@ class KnapsackEnv(gym.Env):
             if not possible:
                 done = True
 
-                if self.weight_of_all_items_selected > self.LIMIT_WEIGHT_KNAPSACK:
+                if self.last_ep_weight_of_all_items_selected > self.LIMIT_WEIGHT_KNAPSACK:
                     info['DoneReasonType'] = DoneReasonType0.TYPE_1  # "Weight Limit Exceeded"
                 else:
                     info['DoneReasonType'] = DoneReasonType0.TYPE_2  # "Weight Remains"
@@ -391,27 +391,27 @@ class KnapsackEnv(gym.Env):
             reward = self.reward(done_type=info['DoneReasonType'])
 
             if info['DoneReasonType'] != DoneReasonType0.TYPE_0 and info['DoneReasonType'] != DoneReasonType0.TYPE_1:
-                if self.solution_found[0] < self.value_of_all_items_selected:
-                    self.solution_found[0] = self.value_of_all_items_selected
-                    self.solution_found[1:] = self.items_selected
+                if self.last_ep_solution_found[0] < self.last_ep_value_of_all_items_selected:
+                    self.last_ep_solution_found[0] = self.last_ep_value_of_all_items_selected
+                    self.last_ep_solution_found[1:] = self.items_selected
 
-                    self.solution_found.append(round(self.solution_found[0] / self.optimal_value, 3))
+                    self.last_ep_solution_found.append(round(self.last_ep_solution_found[0] / self.optimal_value, 3))
 
                     date = dt.datetime.now()
-                    self.solution_found.append((str(date.month) + '/' + str(date.day) + ' ' + str(
+                    self.last_ep_solution_found.append((str(date.month) + '/' + str(date.day) + ' ' + str(
                         date.hour) + ' : ' + str(date.minute) + ' : ' + str(date.second)))
 
                     if self.UPLOAD_PATH:
-                        upload_file('linklab', self.solution_found, self.UPLOAD_PATH)
+                        upload_file('linklab', self.last_ep_solution_found, self.UPLOAD_PATH)
         else:
             reward = self.reward(done_type=None)
 
         info['Actions sequence'] = self.actions_sequence
         info['Items selected'] = self.items_selected
-        info['Value'] = self.value_of_all_items_selected
-        info['Weight'] = self.weight_of_all_items_selected
+        info['Value'] = self.last_ep_value_of_all_items_selected
+        info['Weight'] = self.last_ep_weight_of_all_items_selected
         info['internal_state'] = copy.deepcopy(self.internal_state)
-        info['solution_found'] = self.solution_found
+        info['last_ep_solution_found'] = self.last_ep_solution_found
 
         return observation, reward, done, info
 
