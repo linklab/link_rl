@@ -557,22 +557,6 @@ def run_env():
         ConfigKnapsack0StaticTestDqn
     config = ConfigKnapsack0StaticTestDqn()
 
-
-    # #Random Instance Test
-    # from a_configuration.b_single_config.combinatorial_optimization.config_knapsack import \
-    #     ConfigKnapsack1RandomTestLinearDqn
-    # config = ConfigKnapsack1RandomTestLinearDqn()
-    #
-    # #Load Instance Test
-    # from a_configuration.b_single_config.combinatorial_optimization.config_knapsack import \
-    #     ConfigKnapsack1LoadTestLinearDqn
-    # config = ConfigKnapsack1LoadTestLinearDqn()
-    #
-    # #Static Instance Test
-    # from a_configuration.b_single_config.combinatorial_optimization.config_knapsack import \
-    #     ConfigKnapsack1RandomTestLinearDqn
-    # config = ConfigKnapsack1RandomTestLinearDqn()
-
     set_config(config)
 
     env = KnapsackEnv(config)

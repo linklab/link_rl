@@ -3,8 +3,7 @@ from a_configuration.b_single_config.combinatorial_optimization.config_knapsack 
     ConfigKnapsack0StaticTestLinearDqn, \
     ConfigKnapsack0StaticTestLinearA2c, ConfigKnapsack0StaticTestLinearPpo, \
     ConfigKnapsack0StaticTestLinearDoubleDuelingDqn, ConfigKnapsack0StaticTestLinearDoubleDqn, \
-    ConfigKnapsack1StaticTestLinearDoubleDqn, ConfigKnapsack1LoadTestLinearDoubleDqn, \
-    ConfigKnapsack0LoadTestLinearDoubleDqn
+    ConfigKnapsack0RandomTestLinearDoubleDqn
 from g_utils.types import ModelType
 
 
@@ -73,40 +72,44 @@ class ConfigComparisonKnapsack0StaticTestLinearRecurrentDqn(ConfigComparisonBase
         self.N_RUNS = 5
 
 
-class ConfigComparisonKnapsack0And1StaticTestLinearDoubleDqn(ConfigComparisonBase):
+class ConfigComparisonKnapsack0RandomTestLinearDoubleDqn(ConfigComparisonBase):
     def __init__(self):
         ConfigComparisonBase.__init__(self)
 
         self.ENV_NAME = "Knapsack_Problem_v0"
 
         self.AGENT_PARAMETERS = [
-            ConfigKnapsack1StaticTestLinearDoubleDqn(),
-            ConfigKnapsack0StaticTestLinearDoubleDqn(),
+            ConfigKnapsack0RandomTestLinearDoubleDqn(),
+            ConfigKnapsack0RandomTestLinearDoubleDqn(),
         ]
 
         self.AGENT_LABELS = [
-            "Dueling DQN (M1)",
-            "Dueling DQN (M2 - 2 Actions)",
+            "Random - Double DQN - Many Actions",
+            "Random - Double DQN - Two Actions",
         ]
+        self.AGENT_PARAMETERS[0].STRATEGY = 1
+        self.AGENT_PARAMETERS[1].STRATEGY = 2
 
-        self.MAX_TRAINING_STEPS = 200_000
+        self.MAX_TRAINING_STEPS = 1_000_000
         self.N_RUNS = 5
 
-class ConfigComparisonKnapsack0And1LoadTestLinearDoubleDqn(ConfigComparisonBase):
+
+class ConfigComparisonKnapsack0RandomTestLinearDoubleDqnHer(ConfigComparisonBase):
     def __init__(self):
         ConfigComparisonBase.__init__(self)
 
         self.ENV_NAME = "Knapsack_Problem_v0"
 
         self.AGENT_PARAMETERS = [
-            ConfigKnapsack1LoadTestLinearDoubleDqn(),
-            ConfigKnapsack0LoadTestLinearDoubleDqn(),
+            ConfigKnapsack0RandomTestLinearDoubleDqn(),
+            ConfigKnapsack0RandomTestLinearDoubleDqn(),
         ]
 
         self.AGENT_LABELS = [
-            "Dueling DQN (M1)",
-            "Dueling DQN (M2 - 2 Actions)",
+            "Random - Double DQN",
+            "Random - Double DQN - HER",
         ]
+        self.AGENT_PARAMETERS[1].USE_HER = True
 
-        self.MAX_TRAINING_STEPS = 200_000
+        self.MAX_TRAINING_STEPS = 1_000_000
         self.N_RUNS = 5

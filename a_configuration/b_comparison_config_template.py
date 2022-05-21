@@ -241,8 +241,13 @@ from a_configuration.c_comparison_config.combinatorial_optimization.config_compa
 config_c = ConfigComparisonKnapsack0StaticTestLinearRecurrentDqn()
 
 from a_configuration.c_comparison_config.combinatorial_optimization.config_comparison_knapsack import \
-    ConfigComparisonKnapsack0And1StaticTestLinearDoubleDqn
-config_c = ConfigComparisonKnapsack0And1StaticTestLinearDoubleDqn()
+    ConfigComparisonKnapsack0RandomTestLinearDoubleDqn
+config_c = ConfigComparisonKnapsack0RandomTestLinearDoubleDqn()
+
+from a_configuration.c_comparison_config.combinatorial_optimization.config_comparison_knapsack import \
+    ConfigComparisonKnapsack0RandomTestLinearDoubleDqnHer
+config_c = ConfigComparisonKnapsack0RandomTestLinearDoubleDqnHer()
+
 
 if __name__ == "__main__":
     from g_utils.commons import get_env_info, print_comparison_basic_info, set_config

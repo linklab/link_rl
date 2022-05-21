@@ -16,7 +16,7 @@ class ConfigKnapsack:
 
         self.INITIAL_ITEM_DISTRIBUTION_FIXED = True
 
-        self.SORTING_TYPE = None
+        self.SORTING_TYPE = 1
 
         self.INITIAL_STATE_FILE_PATH = False
         self.UPLOAD_PATH = False
@@ -44,7 +44,7 @@ class ConfigKnapsack0(ConfigKnapsack):
     def __init__(self):
         ConfigKnapsack.__init__(self)
 
-        self.STRATEGY = 2
+        self.STRATEGY = 2  # ACTION SPACE: 2
 
 
 class ConfigKnapsack0RandomTest(ConfigKnapsack0):
@@ -107,67 +107,3 @@ class ConfigKnapsack0StaticTestLinearRecurrent(ConfigKnapsack0):
         self.NUM_ITEM = 50
         self.STATIC_INITIAL_STATE_50 = True
         self.MODEL_TYPE = ModelType.MEDIUM_RECURRENT
-
-
-##################################
-##Action_Space = NUMBER_OF_ITEMS##
-##################################
-
-class ConfigKnapsack1(ConfigKnapsack):
-    def __init__(self):
-        ConfigKnapsack.__init__(self)
-
-        self.STRATEGY = 1
-
-
-class ConfigKnapsack1RandomTest(ConfigKnapsack1):
-    def __init__(self):
-        ConfigKnapsack1.__init__(self)
-
-
-class ConfigKnapsack1RandomTestLinear(ConfigKnapsack1):
-    def __init__(self):
-        ConfigKnapsack1.__init__(self)
-
-        self.MODEL_TYPE = ModelType.MEDIUM_LINEAR
-
-
-class ConfigKnapsack1LoadTest(ConfigKnapsack1):
-    def __init__(self):
-        ConfigKnapsack1.__init__(self)
-
-        self.NUM_ITEM = 50
-        self.INITIAL_STATE_FILE_PATH = 'knapsack_instances/RI/instances/n_50_r_100'
-        self.UPLOAD_PATH = 'knapsack_instances/RI/link_solution/n_50_r_100'
-        self.OPTIMAL_PATH = 'knapsack_instances/RI/optimal_solution/n_50_r_100'
-        self.INSTANCE_INDEX = 0
-
-
-class ConfigKnapsack1LoadTestLinear(ConfigKnapsack1):
-    def __init__(self):
-        ConfigKnapsack1.__init__(self)
-
-        self.NUM_ITEM = 50
-        self.INITIAL_STATE_FILE_PATH = 'knapsack_instances/RI/instances/n_50_r_100'
-        self.UPLOAD_PATH = 'knapsack_instances/RI/link_solution/n_50_r_100'
-        self.OPTIMAL_PATH = 'knapsack_instances/RI/optimal_solution/n_50_r_100'
-        self.INSTANCE_INDEX = 0
-
-        self.MODEL_TYPE = ModelType.MEDIUM_LINEAR
-
-
-class ConfigKnapsack1StaticTest(ConfigKnapsack1):
-    def __init__(self):
-        ConfigKnapsack1.__init__(self)
-
-        self.NUM_ITEM = 50
-        self.STATIC_INITIAL_STATE_50 = True
-
-
-class ConfigKnapsack1StaticTestLinear(ConfigKnapsack1):
-    def __init__(self):
-        ConfigKnapsack1.__init__(self)
-
-        self.NUM_ITEM = 50
-        self.STATIC_INITIAL_STATE_50 = True
-        self.MODEL_TYPE = ModelType.MEDIUM_LINEAR

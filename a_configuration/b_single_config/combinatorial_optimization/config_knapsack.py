@@ -1,8 +1,6 @@
 from a_configuration.a_base_config.a_environments.combinatorial_optimization.knapsack.config_knapsack import \
     ConfigKnapsack0RandomTest, ConfigKnapsack0RandomTestLinear, ConfigKnapsack0LoadTest, ConfigKnapsack0LoadTestLinear, \
-    ConfigKnapsack0StaticTest, ConfigKnapsack0StaticTestLinear, ConfigKnapsack1RandomTest, \
-    ConfigKnapsack1RandomTestLinear, ConfigKnapsack1LoadTest, ConfigKnapsack1LoadTestLinear, ConfigKnapsack1StaticTest, \
-    ConfigKnapsack1StaticTestLinear
+    ConfigKnapsack0StaticTest, ConfigKnapsack0StaticTestLinear
 from a_configuration.a_base_config.b_agents.config_agents_off_policy import ConfigDqn, ConfigDoubleDuelingDqn, \
     ConfigDoubleDqn
 from a_configuration.a_base_config.b_agents.config_agents_on_policy import ConfigA2c, ConfigPpo
@@ -25,12 +23,12 @@ class ConfigKnapsack0RandomTestDqn(ConfigBase, ConfigKnapsack0RandomTest, Config
         self.MIN_VALUE_ITEM = 10
         self.MAX_VALUE_ITEM = 15
 
-        self.SORTING_TYPE = None
+        self.SORTING_TYPE = 1
 
-        self.INITIAL_ITEM_DISTRIBUTION_FIXED = True
+        self.INITIAL_ITEM_DISTRIBUTION_FIXED = False
 
-        self.MAX_TRAINING_STEPS = self.NUM_ITEM * 2_000
-        self.BUFFER_CAPACITY = self.NUM_ITEM * 2_000
+        self.MAX_TRAINING_STEPS = self.NUM_ITEM * 50_000
+        self.BUFFER_CAPACITY = self.NUM_ITEM * 10_000
 
         self.GAMMA = 0.999
         self.LEARNING_RATE = 0.001
@@ -49,16 +47,40 @@ class ConfigKnapsack0RandomTestLinearDqn(ConfigBase, ConfigKnapsack0RandomTestLi
         self.MIN_VALUE_ITEM = 10
         self.MAX_VALUE_ITEM = 15
 
-        self.SORTING_TYPE = None
+        self.SORTING_TYPE = 1
 
-        self.INITIAL_ITEM_DISTRIBUTION_FIXED = True
+        self.INITIAL_ITEM_DISTRIBUTION_FIXED = False
 
-        self.MAX_TRAINING_STEPS = self.NUM_ITEM * 2_000
-        self.BUFFER_CAPACITY = self.NUM_ITEM * 2_000
+        self.MAX_TRAINING_STEPS = self.NUM_ITEM * 50_000
+        self.BUFFER_CAPACITY = self.NUM_ITEM * 10_000
 
         self.GAMMA = 0.999
         self.LEARNING_RATE = 0.001
 
+
+class ConfigKnapsack0RandomTestLinearDoubleDqn(ConfigBase, ConfigKnapsack0RandomTestLinear, ConfigDoubleDqn):
+    def __init__(self):
+        ConfigBase.__init__(self)
+        ConfigKnapsack0RandomTestLinear.__init__(self)
+        ConfigDoubleDqn.__init__(self)
+
+        self.NUM_ITEM = 20
+        self.LIMIT_WEIGHT_KNAPSACK = 200
+        self.MIN_WEIGHT_ITEM = 10
+        self.MAX_WEIGHT_ITEM = 15
+        self.MIN_VALUE_ITEM = 10
+        self.MAX_VALUE_ITEM = 15
+
+        self.SORTING_TYPE = 1
+
+        self.INITIAL_ITEM_DISTRIBUTION_FIXED = False
+
+        self.MAX_TRAINING_STEPS = self.NUM_ITEM * 50_000
+        self.BUFFER_CAPACITY = self.NUM_ITEM * 10_000
+
+        self.GAMMA = 0.999
+        self.LEARNING_RATE = 0.001
+        
 
 class ConfigKnapsack0LoadTestDqn(ConfigBase, ConfigKnapsack0LoadTest, ConfigDqn):
     def __init__(self):
@@ -72,7 +94,7 @@ class ConfigKnapsack0LoadTestDqn(ConfigBase, ConfigKnapsack0LoadTest, ConfigDqn)
         self.UPLOAD_PATH = 'knapsack_instances/RI/link_solution/n_50_r_100'
         self.OPTIMAL_PATH = 'knapsack_instances/RI/optimal_solution/n_50_r_100'
 
-        self.SORTING_TYPE = None
+        self.SORTING_TYPE = 1
 
         self.INITIAL_ITEM_DISTRIBUTION_FIXED = True
 
@@ -95,7 +117,7 @@ class ConfigKnapsack0LoadTestLinearDqn(ConfigBase, ConfigKnapsack0LoadTestLinear
         self.UPLOAD_PATH = 'knapsack_instances/RI/link_solution/n_50_r_100'
         self.OPTIMAL_PATH = 'knapsack_instances/RI/optimal_solution/n_50_r_100'
 
-        self.SORTING_TYPE = None
+        self.SORTING_TYPE = 1
 
         self.INITIAL_ITEM_DISTRIBUTION_FIXED = True
 
@@ -115,7 +137,7 @@ class ConfigKnapsack0LoadTestLinearDoubleDqn(ConfigBase, ConfigKnapsack0LoadTest
         self.NUM_ITEM = 50
         self.LIMIT_WEIGHT_KNAPSACK = 200
 
-        self.SORTING_TYPE = None
+        self.SORTING_TYPE = 1
 
         self.INITIAL_ITEM_DISTRIBUTION_FIXED = True
 
@@ -135,7 +157,7 @@ class ConfigKnapsack0StaticTestDqn(ConfigBase, ConfigKnapsack0StaticTest, Config
         self.NUM_ITEM = 50
         self.LIMIT_WEIGHT_KNAPSACK = 200
 
-        self.SORTING_TYPE = None
+        self.SORTING_TYPE = 1
 
         self.INITIAL_ITEM_DISTRIBUTION_FIXED = True
 
@@ -155,7 +177,7 @@ class ConfigKnapsack0StaticTestLinearDqn(ConfigBase, ConfigKnapsack0StaticTestLi
         self.NUM_ITEM = 50
         self.LIMIT_WEIGHT_KNAPSACK = 200
 
-        self.SORTING_TYPE = None
+        self.SORTING_TYPE = 1
 
         self.INITIAL_ITEM_DISTRIBUTION_FIXED = True
 
@@ -177,7 +199,7 @@ class ConfigKnapsack0StaticTestLinearDoubleDqn(
         self.NUM_ITEM = 50
         self.LIMIT_WEIGHT_KNAPSACK = 200
 
-        self.SORTING_TYPE = None
+        self.SORTING_TYPE = 1
 
         self.INITIAL_ITEM_DISTRIBUTION_FIXED = True
 
@@ -199,7 +221,7 @@ class ConfigKnapsack0StaticTestLinearDoubleDuelingDqn(
         self.NUM_ITEM = 50
         self.LIMIT_WEIGHT_KNAPSACK = 200
 
-        self.SORTING_TYPE = None
+        self.SORTING_TYPE = 1
 
         self.INITIAL_ITEM_DISTRIBUTION_FIXED = True
 
@@ -226,7 +248,7 @@ class ConfigKnapsack0RandomTestLinearA2c(ConfigBase, ConfigKnapsack0RandomTestLi
         self.MIN_VALUE_ITEM = 10
         self.MAX_VALUE_ITEM = 15
 
-        self.SORTING_TYPE = None
+        self.SORTING_TYPE = 1
 
         self.INITIAL_ITEM_DISTRIBUTION_FIXED = True
 
@@ -249,7 +271,7 @@ class ConfigKnapsack0LoadTestLinearA2c(ConfigBase, ConfigKnapsack0LoadTestLinear
         self.UPLOAD_PATH = 'knapsack_instances/RI/link_solution/n_50_r_100'
         self.OPTIMAL_PATH = 'knapsack_instances/RI/optimal_solution/n_50_r_100'
 
-        self.SORTING_TYPE = None
+        self.SORTING_TYPE = 1
 
         self.INITIAL_ITEM_DISTRIBUTION_FIXED = True
 
@@ -269,7 +291,7 @@ class ConfigKnapsack0StaticTestLinearA2c(ConfigBase, ConfigKnapsack0StaticTestLi
         self.NUM_ITEM = 50
         self.LIMIT_WEIGHT_KNAPSACK = 200
 
-        self.SORTING_TYPE = None
+        self.SORTING_TYPE = 1
 
         self.INITIAL_ITEM_DISTRIBUTION_FIXED = True
 
@@ -296,7 +318,7 @@ class ConfigKnapsack0RandomTestLinearPpo(ConfigBase, ConfigKnapsack0RandomTestLi
         self.MIN_VALUE_ITEM = 10
         self.MAX_VALUE_ITEM = 15
 
-        self.SORTING_TYPE = None
+        self.SORTING_TYPE = 1
 
         self.INITIAL_ITEM_DISTRIBUTION_FIXED = True
 
@@ -319,7 +341,7 @@ class ConfigKnapsack0LoadTestLinearPpo(ConfigBase, ConfigKnapsack0LoadTestLinear
         self.UPLOAD_PATH = 'knapsack_instances/RI/link_solution/n_50_r_100'
         self.OPTIMAL_PATH = 'knapsack_instances/RI/optimal_solution/n_50_r_100'
 
-        self.SORTING_TYPE = None
+        self.SORTING_TYPE = 1
 
         self.INITIAL_ITEM_DISTRIBUTION_FIXED = True
 
@@ -339,346 +361,7 @@ class ConfigKnapsack0StaticTestLinearPpo(ConfigBase, ConfigKnapsack0StaticTestLi
         self.NUM_ITEM = 50
         self.LIMIT_WEIGHT_KNAPSACK = 200
 
-        self.SORTING_TYPE = None
-
-        self.INITIAL_ITEM_DISTRIBUTION_FIXED = True
-
-        self.MAX_TRAINING_STEPS = self.NUM_ITEM * 20_000
-        self.BUFFER_CAPACITY = self.NUM_ITEM * 2_000
-
-        self.GAMMA = 0.999
-        self.LEARNING_RATE = 0.001
-
-''
-#####################################
-####Action_Space = NUMBER_OF_ITEMS###
-######### Agent_Type = DQN ##########
-#####################################
-
-class ConfigKnapsack1RandomTestDqn(ConfigBase, ConfigKnapsack1RandomTest, ConfigDqn):
-    def __init__(self):
-        ConfigBase.__init__(self)
-        ConfigKnapsack1RandomTest.__init__(self)
-        ConfigDqn.__init__(self)
-
-        self.NUM_ITEM = 20
-        self.LIMIT_WEIGHT_KNAPSACK = 200
-        self.MIN_WEIGHT_ITEM = 10
-        self.MAX_WEIGHT_ITEM = 15
-        self.MIN_VALUE_ITEM = 10
-        self.MAX_VALUE_ITEM = 15
-
-        self.SORTING_TYPE = None
-
-        self.INITIAL_ITEM_DISTRIBUTION_FIXED = True
-
-        self.MAX_TRAINING_STEPS = self.NUM_ITEM * 2_000
-        self.BUFFER_CAPACITY = self.NUM_ITEM * 2_000
-
-        self.GAMMA = 0.999
-        self.LEARNING_RATE = 0.001
-
-
-class ConfigKnapsack1RandomTestLinearDqn(ConfigBase, ConfigKnapsack1RandomTestLinear, ConfigDqn):
-    def __init__(self):
-        ConfigBase.__init__(self)
-        ConfigKnapsack1RandomTestLinear.__init__(self)
-        ConfigDqn.__init__(self)
-
-        self.NUM_ITEM = 20
-        self.LIMIT_WEIGHT_KNAPSACK = 200
-        self.MIN_WEIGHT_ITEM = 10
-        self.MAX_WEIGHT_ITEM = 15
-        self.MIN_VALUE_ITEM = 10
-        self.MAX_VALUE_ITEM = 15
-
-        self.SORTING_TYPE = None
-
-        self.INITIAL_ITEM_DISTRIBUTION_FIXED = True
-
-        self.MAX_TRAINING_STEPS = self.NUM_ITEM * 2_000
-        self.BUFFER_CAPACITY = self.NUM_ITEM * 2_000
-
-        self.GAMMA = 0.999
-        self.LEARNING_RATE = 0.001
-
-
-class ConfigKnapsack1LoadTestDqn(ConfigBase, ConfigKnapsack1LoadTest, ConfigDqn):
-    def __init__(self):
-        ConfigBase.__init__(self)
-        ConfigKnapsack1LoadTest.__init__(self)
-        ConfigDqn.__init__(self)
-
-        self.NUM_ITEM = 50
-
-        self.INITIAL_STATE_FILE_PATH = 'knapsack_instances/RI/instances/n_50_r_100'
-        self.UPLOAD_PATH = 'knapsack_instances/RI/link_solution/n_50_r_100'
-        self.OPTIMAL_PATH = 'knapsack_instances/RI/optimal_solution/n_50_r_100'
-
-        self.SORTING_TYPE = None
-
-        self.INITIAL_ITEM_DISTRIBUTION_FIXED = True
-
-        self.MAX_TRAINING_STEPS = self.NUM_ITEM * 3_000
-        self.BUFFER_CAPACITY = self.NUM_ITEM * 2_000
-
-        self.GAMMA = 0.999
-        self.LEARNING_RATE = 0.001
-
-
-class ConfigKnapsack1LoadTestLinearDqn(ConfigBase, ConfigKnapsack1LoadTestLinear, ConfigDqn):
-    def __init__(self):
-        ConfigBase.__init__(self)
-        ConfigKnapsack1LoadTestLinear.__init__(self)
-        ConfigDqn.__init__(self)
-
-        self.NUM_ITEM = 50
-
-        self.INITIAL_STATE_FILE_PATH = 'knapsack_instances/RI/instances/n_50_r_100'
-        self.UPLOAD_PATH = 'knapsack_instances/RI/link_solution/n_50_r_100'
-        self.OPTIMAL_PATH = 'knapsack_instances/RI/optimal_solution/n_50_r_100'
-
-        self.SORTING_TYPE = None
-
-        self.INITIAL_ITEM_DISTRIBUTION_FIXED = True
-
-        self.MAX_TRAINING_STEPS = self.NUM_ITEM * 3_000
-        self.BUFFER_CAPACITY = self.NUM_ITEM * 2_000
-
-        self.GAMMA = 0.999
-        self.LEARNING_RATE = 0.001
-
-
-class ConfigKnapsack1LoadTestLinearDoubleDqn(ConfigBase, ConfigKnapsack1LoadTestLinear, ConfigDoubleDqn):
-    def __init__(self):
-        ConfigBase.__init__(self)
-        ConfigKnapsack1LoadTestLinear.__init__(self)
-        ConfigDoubleDqn.__init__(self)
-
-        self.NUM_ITEM = 50
-        self.LIMIT_WEIGHT_KNAPSACK = 200
-
-        self.SORTING_TYPE = None
-
-        self.INITIAL_ITEM_DISTRIBUTION_FIXED = True
-
-        self.MAX_TRAINING_STEPS = self.NUM_ITEM * 20_000
-        self.BUFFER_CAPACITY = self.NUM_ITEM * 2_000
-
-        self.GAMMA = 0.999
-        self.LEARNING_RATE = 0.001
-
-
-class ConfigKnapsack1StaticTestDqn(ConfigBase, ConfigKnapsack1StaticTest, ConfigDqn):
-    def __init__(self):
-        ConfigBase.__init__(self)
-        ConfigKnapsack1StaticTest.__init__(self)
-        ConfigDqn.__init__(self)
-
-        self.NUM_ITEM = 50
-        self.LIMIT_WEIGHT_KNAPSACK = 200
-
-        self.SORTING_TYPE = None
-
-        self.INITIAL_ITEM_DISTRIBUTION_FIXED = True
-
-        self.MAX_TRAINING_STEPS = self.NUM_ITEM * 20_000
-        self.BUFFER_CAPACITY = self.NUM_ITEM * 2_000
-
-        self.GAMMA = 0.999
-        self.LEARNING_RATE = 0.001
-
-
-class ConfigKnapsack1StaticTestLinearDqn(ConfigBase, ConfigKnapsack1StaticTestLinear, ConfigDqn):
-    def __init__(self):
-        ConfigBase.__init__(self)
-        ConfigKnapsack1StaticTestLinear.__init__(self)
-        ConfigDqn.__init__(self)
-
-        self.NUM_ITEM = 50
-        self.LIMIT_WEIGHT_KNAPSACK = 200
-
-        self.SORTING_TYPE = None
-
-        self.INITIAL_ITEM_DISTRIBUTION_FIXED = True
-
-        self.MAX_TRAINING_STEPS = self.NUM_ITEM * 20_000
-        self.BUFFER_CAPACITY = self.NUM_ITEM * 2_000
-
-        self.GAMMA = 0.999
-        self.LEARNING_RATE = 0.001
-
-
-class ConfigKnapsack1StaticTestLinearDoubleDqn(ConfigBase, ConfigKnapsack1StaticTestLinear, ConfigDoubleDqn):
-    def __init__(self):
-        ConfigBase.__init__(self)
-        ConfigKnapsack1StaticTestLinear.__init__(self)
-        ConfigDoubleDqn.__init__(self)
-
-        self.NUM_ITEM = 50
-        self.LIMIT_WEIGHT_KNAPSACK = 200
-
-        self.SORTING_TYPE = None
-
-        self.INITIAL_ITEM_DISTRIBUTION_FIXED = True
-
-        self.MAX_TRAINING_STEPS = self.NUM_ITEM * 20_000
-        self.BUFFER_CAPACITY = self.NUM_ITEM * 2_000
-
-        self.GAMMA = 0.999
-        self.LEARNING_RATE = 0.001
-
-
-class ConfigKnapsack1StaticTestLinearDoubleDuelingDqn(ConfigBase, ConfigKnapsack1StaticTestLinear, ConfigDoubleDuelingDqn):
-    def __init__(self):
-        ConfigBase.__init__(self)
-        ConfigKnapsack1StaticTestLinear.__init__(self)
-        ConfigDoubleDuelingDqn.__init__(self)
-
-        self.NUM_ITEM = 50
-        self.LIMIT_WEIGHT_KNAPSACK = 200
-
-        self.SORTING_TYPE = None
-
-        self.INITIAL_ITEM_DISTRIBUTION_FIXED = True
-
-        self.MAX_TRAINING_STEPS = self.NUM_ITEM * 20_000
-        self.BUFFER_CAPACITY = self.NUM_ITEM * 2_000
-
-        self.GAMMA = 0.999
-        self.LEARNING_RATE = 0.001
-
-
-#####################################
-######### Agent_Type = A2C ##########
-#####################################
-class ConfigKnapsack1RandomTestLinearA2c(ConfigBase, ConfigKnapsack1RandomTestLinear, ConfigA2c):
-    def __init__(self):
-        ConfigBase.__init__(self)
-        ConfigKnapsack1RandomTestLinear.__init__(self)
-        ConfigA2c.__init__(self)
-
-        self.NUM_ITEM = 20
-        self.LIMIT_WEIGHT_KNAPSACK = 200
-        self.MIN_WEIGHT_ITEM = 10
-        self.MAX_WEIGHT_ITEM = 15
-        self.MIN_VALUE_ITEM = 10
-        self.MAX_VALUE_ITEM = 15
-
-        self.SORTING_TYPE = None
-
-        self.INITIAL_ITEM_DISTRIBUTION_FIXED = True
-
-        self.MAX_TRAINING_STEPS = self.NUM_ITEM * 2_000
-        self.BUFFER_CAPACITY = self.NUM_ITEM * 2_000
-
-        self.GAMMA = 0.999
-        self.LEARNING_RATE = 0.001
-
-
-class ConfigKnapsack1LoadTestLinearA2c(ConfigBase, ConfigKnapsack1LoadTestLinear, ConfigA2c):
-    def __init__(self):
-        ConfigBase.__init__(self)
-        ConfigKnapsack1LoadTestLinear.__init__(self)
-        ConfigA2c.__init__(self)
-
-        self.NUM_ITEM = 50
-
-        self.INITIAL_STATE_FILE_PATH = 'knapsack_instances/RI/instances/n_50_r_100'
-        self.UPLOAD_PATH = 'knapsack_instances/RI/link_solution/n_50_r_100'
-        self.OPTIMAL_PATH = 'knapsack_instances/RI/optimal_solution/n_50_r_100'
-
-        self.SORTING_TYPE = None
-
-        self.INITIAL_ITEM_DISTRIBUTION_FIXED = True
-
-        self.MAX_TRAINING_STEPS = self.NUM_ITEM * 3_000
-        self.BUFFER_CAPACITY = self.NUM_ITEM * 2_000
-
-        self.GAMMA = 0.999
-        self.LEARNING_RATE = 0.001
-
-
-class ConfigKnapsack1StaticTestLinearA2c(ConfigBase, ConfigKnapsack1StaticTestLinear, ConfigA2c):
-    def __init__(self):
-        ConfigBase.__init__(self)
-        ConfigKnapsack1StaticTestLinear.__init__(self)
-        ConfigA2c.__init__(self)
-
-        self.NUM_ITEM = 50
-        self.LIMIT_WEIGHT_KNAPSACK = 200
-
-        self.SORTING_TYPE = None
-
-        self.INITIAL_ITEM_DISTRIBUTION_FIXED = True
-
-        self.MAX_TRAINING_STEPS = self.NUM_ITEM * 20_000
-        self.BUFFER_CAPACITY = self.NUM_ITEM * 2_000
-
-        self.GAMMA = 0.999
-        self.LEARNING_RATE = 0.001
-
-
-#####################################
-######### Agent_Type = Ppo ##########
-#####################################
-class ConfigKnapsack1RandomTestLinearPpo(ConfigBase, ConfigKnapsack1RandomTestLinear, ConfigPpo):
-    def __init__(self):
-        ConfigBase.__init__(self)
-        ConfigKnapsack1RandomTestLinear.__init__(self)
-        ConfigPpo.__init__(self)
-
-        self.NUM_ITEM = 20
-        self.LIMIT_WEIGHT_KNAPSACK = 200
-        self.MIN_WEIGHT_ITEM = 10
-        self.MAX_WEIGHT_ITEM = 15
-        self.MIN_VALUE_ITEM = 10
-        self.MAX_VALUE_ITEM = 15
-
-        self.SORTING_TYPE = None
-
-        self.INITIAL_ITEM_DISTRIBUTION_FIXED = True
-
-        self.MAX_TRAINING_STEPS = self.NUM_ITEM * 2_000
-        self.BUFFER_CAPACITY = self.NUM_ITEM * 2_000
-
-        self.GAMMA = 0.999
-        self.LEARNING_RATE = 0.001
-
-
-class ConfigKnapsack1LoadTestLinearPpo(ConfigBase, ConfigKnapsack1LoadTestLinear, ConfigPpo):
-    def __init__(self):
-        ConfigBase.__init__(self)
-        ConfigKnapsack1LoadTestLinear.__init__(self)
-        ConfigPpo.__init__(self)
-
-        self.NUM_ITEM = 50
-
-        self.INITIAL_STATE_FILE_PATH = 'knapsack_instances/RI/instances/n_50_r_100'
-        self.UPLOAD_PATH = 'knapsack_instances/RI/link_solution/n_50_r_100'
-        self.OPTIMAL_PATH = 'knapsack_instances/RI/optimal_solution/n_50_r_100'
-
-        self.SORTING_TYPE = None
-
-        self.INITIAL_ITEM_DISTRIBUTION_FIXED = True
-
-        self.MAX_TRAINING_STEPS = self.NUM_ITEM * 3_000
-        self.BUFFER_CAPACITY = self.NUM_ITEM * 2_000
-
-        self.GAMMA = 0.999
-        self.LEARNING_RATE = 0.001
-
-
-class ConfigKnapsack1StaticTestLinearPpo(ConfigBase, ConfigKnapsack1StaticTestLinear, ConfigPpo):
-    def __init__(self):
-        ConfigBase.__init__(self)
-        ConfigKnapsack1StaticTestLinear.__init__(self)
-        ConfigPpo.__init__(self)
-
-        self.NUM_ITEM = 50
-        self.LIMIT_WEIGHT_KNAPSACK = 200
-
-        self.SORTING_TYPE = None
+        self.SORTING_TYPE = 1
 
         self.INITIAL_ITEM_DISTRIBUTION_FIXED = True
 
