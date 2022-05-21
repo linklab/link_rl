@@ -56,7 +56,7 @@ class Learner(mp.Process):
         if config.ENV_NAME in ["Task_Allocation_v0"]:
             self.test_episode_utilization = mp.Value('d', 0.0)
 
-        if config.ENV_NAME in ["Knapsack_Problem_v0", "Her_Knapsack_Problem_v0"]:
+        if config.ENV_NAME in ["Knapsack_Problem_v0"]:
             self.test_episode_items_value = mp.Value('d', 0.0)
             self.test_episode_ratio_value = mp.Value('d', 0.0)
 
@@ -89,7 +89,7 @@ class Learner(mp.Process):
 
         self.shared_model_access_lock = shared_model_access_lock  # For only LearningActor (A3C)
 
-        if self.config.ENV_NAME in ["Task_Allocation_v0", "Task_Allocation_v1", "Knapsack_Problem_v0", "Her_Knapsack_Problem_v0"]:
+        if self.config.ENV_NAME in ["Task_Allocation_v0", "Task_Allocation_v1", "Knapsack_Problem_v0"]:
             self.env_info = None
 
         self.modified_env_name = self.config.ENV_NAME.split("/")[1] if "/" in self.config.ENV_NAME else self.config.ENV_NAME
@@ -126,7 +126,7 @@ class Learner(mp.Process):
 
             next_observations, rewards, dones, infos = self.train_env.step(scaled_actions)
 
-            if self.config.ENV_NAME in ["Task_Allocation_v0", "Knapsack_Problem_v0", "Her_Knapsack_Problem_v0"]:
+            if self.config.ENV_NAME in ["Task_Allocation_v0", "Knapsack_Problem_v0"]:
                 self.env_info = infos[0]
 
             if self.config.ENV_NAME in ["Task_Allocation_v1"]:
@@ -343,6 +343,9 @@ class Learner(mp.Process):
                     self.agent.buffer.append(n_step_transition)
                 elif self.config.AGENT_TYPE in OffPolicyAgentTypes:
                     self.agent.replay_buffer.append(n_step_transition)
+
+                    if self.config.USE_HER:
+                        self.agent.her_buffer.append(n_step_transition)
                 else:
                     raise ValueError()
 
@@ -366,6 +369,10 @@ class Learner(mp.Process):
                         self.last_mean_episode_reward.value = self.episode_reward_buffer.mean()
 
                         self.episode_rewards[actor_id][env_id] = 0.0
+
+                        if self.config.USE_HER:
+                            print(self.agent.her_buffer.size())
+                            self.agent.her_buffer.reset()
 
                 ###################
                 #   TRAIN START   #
@@ -442,7 +449,7 @@ class Learner(mp.Process):
         if self.config.ENV_NAME in ["Task_Allocation_v0"]:
             self.test_episode_reward_avg.value, self.test_episode_reward_std.value, self.test_episode_utilization.value = \
                 self.play_for_testing(self.config.N_TEST_EPISODES)
-        elif self.config.ENV_NAME in ["Knapsack_Problem_v0", "Her_Knapsack_Problem_v0"]:
+        elif self.config.ENV_NAME in ["Knapsack_Problem_v0"]:
             self.test_episode_reward_avg.value, self.test_episode_reward_std.value, \
             self.test_episode_items_value.value, self.test_episode_ratio_value.value = \
                 self.play_for_testing(self.config.N_TEST_EPISODES)
@@ -463,7 +470,7 @@ class Learner(mp.Process):
 
         if self.config.ENV_NAME in ["Task_Allocation_v0"]:
             test_str += ", Utilization: {0:.2f}".format(self.test_episode_utilization.value)
-        if self.config.ENV_NAME in ["Knapsack_Problem_v0", "Her_Knapsack_Problem_v0"]:
+        if self.config.ENV_NAME in ["Knapsack_Problem_v0"]:
             test_str += ", Item. Value Selected: {0:.2f}, Ratio: {1:.2f}".format(
                 self.test_episode_items_value.value, self.test_episode_ratio_value.value
             )
@@ -506,7 +513,7 @@ class Learner(mp.Process):
         episode_reward_lst = []
         if self.config.ENV_NAME in ["Task_Allocation_v0"]:
             episode_utilization_lst = []
-        elif self.config.ENV_NAME in ["Knapsack_Problem_v0", "Her_Knapsack_Problem_v0"]:
+        elif self.config.ENV_NAME in ["Knapsack_Problem_v0"]:
             episode_items_value_selected_lst = []
             episode_ratio_lst = []
 
@@ -588,7 +595,7 @@ class Learner(mp.Process):
                     episode_utilization_lst.append(info[0]["Utilization"])
                 else:
                     episode_utilization_lst.append(info["Utilization"])
-            elif self.config.ENV_NAME in ["Knapsack_Problem_v0", "Her_Knapsack_Problem_v0"]:
+            elif self.config.ENV_NAME in ["Knapsack_Problem_v0"]:
                 if self.config.INITIAL_ITEM_DISTRIBUTION_FIXED:
                     episode_items_value_selected_lst.append(info[0]["last_ep_value_of_all_items_selected"])
                     episode_ratio_lst.append(info[0]["last_ep_ratio"])
@@ -603,7 +610,7 @@ class Learner(mp.Process):
 
         if self.config.ENV_NAME in ["Task_Allocation_v0"]:
             return np.average(episode_reward_lst), np.std(episode_reward_lst), np.average(episode_utilization_lst)
-        elif self.config.ENV_NAME in ["Knapsack_Problem_v0", "Her_Knapsack_Problem_v0"]:
+        elif self.config.ENV_NAME in ["Knapsack_Problem_v0"]:
             return np.average(episode_reward_lst), np.std(episode_reward_lst), \
                    np.average(episode_items_value_selected_lst), np.average(episode_ratio_lst)
         else:

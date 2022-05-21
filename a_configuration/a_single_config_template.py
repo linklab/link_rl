@@ -631,14 +631,6 @@ from a_configuration.b_single_config.combinatorial_optimization.config_knapsack 
 config = ConfigKnapsack1StaticTestLinearPpo()
 
 
-###########################################
-####### HerKnapsack - Static Linear #######
-###########################################
-
-from a_configuration.b_single_config.combinatorial_optimization.config_her_knapsack import ConfigHerKnapsack0StaticTestLinearDoubleDqn
-config = ConfigHerKnapsack0StaticTestLinearDoubleDqn()
-
-
 ###########################
 ### BasicTaskAllocation ###
 ###########################

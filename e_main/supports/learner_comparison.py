@@ -84,9 +84,7 @@ class LearnerComparison:
 
         self.train_comparison_start_time = None
 
-        if self.config_c.ENV_NAME in [
-            "Task_Allocation_v0", "Knapsack_Problem_v0", "Her_Knapsack_Problem_v0"
-        ]:
+        if self.config_c.ENV_NAME in ["Task_Allocation_v0", "Knapsack_Problem_v0"]:
             self.env_info = [None] * len(self.agents)
             self.test_info = [None] * len(self.agents)
 
@@ -112,9 +110,7 @@ class LearnerComparison:
 
             next_observations, rewards, dones, infos = self.train_envs_per_agent[agent_idx].step(scaled_actions)
 
-            if self.config_c.ENV_NAME in [
-                "Task_Allocation_v0", "Knapsack_Problem_v0", "Her_Knapsack_Problem_v0"
-            ]:
+            if self.config_c.ENV_NAME in ["Task_Allocation_v0", "Knapsack_Problem_v0"]:
                 self.env_info[agent_idx] = infos[0]
 
             if self.is_recurrent_model_per_agent[agent_idx]:

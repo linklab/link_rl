@@ -510,7 +510,7 @@ def console_log(
 
         console_log += resource_utilization_info
 
-    if config.ENV_NAME in ["Knapsack_Problem_v0", "Her_Knapsack_Problem_v0"]:
+    if config.ENV_NAME in ["Knapsack_Problem_v0"]:
         info = learner.env_info
 
         # knapsack_info = ", Value.: {0:5.1f}, Weight: {1:5.1f}, Items: {2}, Actions: {3}, Sol. Found: {4}".format(
@@ -579,7 +579,7 @@ def console_log_comparison(learner_c,
         else:
             pass
 
-        if config_c.ENV_NAME in ["Knapsack_Problem_v0", "Her_Knapsack_Problem_v0"]:
+        if config_c.ENV_NAME in ["Knapsack_Problem_v0"]:
             info = learner_c.env_info[agent_idx]
 
             # knapsack_info = ", Value.: {0:5.1f}, Weight: {1:5.1f}, Items: {2}, Actions: {3}, Sol. Found: {4}".format(
@@ -655,7 +655,7 @@ def wandb_log(learner, wandb_obj, config):
         log_dict["Resource Utilization"] = learner.env_info["Resource_utilization"]
         average_latency = sum(learner.env_info["Latency"]) / len(learner.env_info["Latency"])
         log_dict["Average Latency"] = average_latency
-    if config.ENV_NAME in ["Knapsack_Problem_v0", "Her_Knapsack_Problem_v0"]:
+    if config.ENV_NAME in ["Knapsack_Problem_v0"]:
         log_dict["Value of All Item Selected"] = learner.env_info["last_ep_value_of_all_items_selected"]
         log_dict["Ratio (Value to Optimal Value)"] = learner.env_info["last_ep_ratio"]
         log_dict["[TEST] Value of All Item Selected"] = learner.test_episode_items_value.value
@@ -859,10 +859,6 @@ def get_train_env(config, no_graphics=True):
                 from b_environments.combinatorial_optimization.knapsack.knapsack import KnapsackEnv
                 env = KnapsackEnv(config)
 
-            elif config.ENV_NAME in ["Her_Knapsack_Problem_v0"]:
-                from b_environments.combinatorial_optimization.knapsack.her_knapsack import HerKnapsackEnv
-                env = HerKnapsackEnv(config)
-
             #############
             #   Atari   #
             #############
@@ -969,10 +965,6 @@ def get_single_env(config, no_graphics=True, play=False):
     elif config.ENV_NAME in ["Knapsack_Problem_v0"]:
         from b_environments.combinatorial_optimization.knapsack.knapsack import KnapsackEnv
         single_env = KnapsackEnv(config)
-
-    elif config.ENV_NAME in ["Her_Knapsack_Problem_v0"]:
-        from b_environments.combinatorial_optimization.knapsack.her_knapsack import HerKnapsackEnv
-        single_env = HerKnapsackEnv(config)
 
     #############
     #   Atari   #

@@ -195,7 +195,7 @@ class HerEpisodeBuffer:
         return len(self.episode_buffer)
 
     def _get_observation_and_goal(self, observation, her_goal):
-        if self.config.ENV_NAME in ["Her_Knapsack_Problem_v0"]:
+        if self.config.ENV_NAME in ["Knapsack_Problem_v0"]:
             normalized_her_goal = her_goal / self.config.LIMIT_WEIGHT_KNAPSACK
             if isinstance(self.config.MODEL_PARAMETER, (ConfigLinearModel, ConfigRecurrentLinearModel)):
                 observation[-1] = normalized_her_goal
