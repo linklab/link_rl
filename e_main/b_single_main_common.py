@@ -1,4 +1,7 @@
 import warnings
+
+from g_utils.types import OffPolicyAgentTypes
+
 warnings.filterwarnings("ignore")
 warnings.simplefilter("ignore")
 
@@ -39,3 +42,6 @@ if config.SEED is not None:
     torch.cuda.manual_seed(config.SEED)
     # torch.backends.cudnn.deterministic = True
     # torch.backends.cudnn.benchmark = False
+
+if config.USE_HER:
+    assert config.AGENT_TYPE in OffPolicyAgentTypes

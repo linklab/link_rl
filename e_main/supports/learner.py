@@ -21,7 +21,8 @@ import time
 
 from e_main.supports.actor import Actor
 from g_utils.commons import model_save, console_log, wandb_log, get_wandb_obj, get_train_env, get_single_env, MeanBuffer
-from g_utils.types import AgentType, AgentMode, Transition, Episode_history, OnPolicyAgentTypes, OffPolicyAgentTypes
+from g_utils.types import AgentType, AgentMode, Transition, Episode_history, OnPolicyAgentTypes, OffPolicyAgentTypes, \
+    HerConstant
 
 
 class Learner(mp.Process):
@@ -371,7 +372,10 @@ class Learner(mp.Process):
                         self.episode_rewards[actor_id][env_id] = 0.0
 
                         if self.config.USE_HER:
-                            print(self.agent.her_buffer.size())
+                            if n_step_transition.info[HerConstant.HER_SAVE_DONE]:
+                                her_trajectory = self.agent.her_buffer.get_her_trajectory(n_step_transition.info[HerConstant.ACHIEVED_GOAL])
+                                for her_transition in her_trajectory:
+                                    self.agent.replay_buffer.append(her_transition)
                             self.agent.her_buffer.reset()
 
                 ###################

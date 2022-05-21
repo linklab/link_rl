@@ -276,8 +276,6 @@ class KnapsackEnv(gym.Env):
 
         self.weight_of_all_items_selected = 0
         self.value_of_all_items_selected = 0
-        self.last_ep_weight_of_all_items_selected = 0
-        self.last_ep_value_of_all_items_selected = 0
 
         self.num_step = 0
 
@@ -440,13 +438,13 @@ class KnapsackEnv(gym.Env):
         if self.config.USE_HER:
             info[HerConstant.ACHIEVED_GOAL] = self.last_ep_value_of_all_items_selected
             info[HerConstant.DESIRED_GOAL] = self.current_goal
-            if info['DoneReasonType'] == DoneReasonType0.TYPE_2:
+            self.internal_state[-1][0] = self.current_goal
+            self.internal_state[-1][1] = self.current_goal
+
+            if done and info['DoneReasonType'] == DoneReasonType0.TYPE_2:
                 info[HerConstant.HER_SAVE_DONE] = True
             else:
                 info[HerConstant.HER_SAVE_DONE] = False
-
-            self.internal_state[-1][0] = self.current_goal
-            self.internal_state[-1][1] = self.current_goal
 
         info['Actions sequence'] = self.actions_sequence
         info['Items selected'] = self.items_selected
