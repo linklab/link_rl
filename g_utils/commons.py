@@ -579,27 +579,9 @@ def console_log_comparison(learner_c,
         else:
             pass
 
-        # if config_c.ENV_NAME in ["Knapsack_Problem_v0"]:
-        #     info = learner_c.env_info[agent_idx]
-        #
-        #     # knapsack_info = ", Value.: {0:5.1f}, Weight: {1:5.1f}, Items: {2}, Actions: {3}, Sol. Found: {4}".format(
-        #     #     info["Value"], info["Weight"], sorted(info["Items selected"]), info['Actions sequence'], info['last_ep_solution_found']
-        #     # )
-        #
-        #     knapsack_info = ", Items Value Selected: {0:5.1f}, Items Weight Selected: {1:5.1f}".format(
-        #         info["last_ep_value_of_all_items_selected"], info["last_ep_weight_of_all_items_selected"]
-        #     )
-        #
-        #     if info['last_ep_simple_solution_found'] is not None:
-        #         knapsack_info = ", Sol. Found: {0} ({1:5.3f}, Total Steps Found: {2:,})".format(
-        #             info['last_ep_simple_solution_found'][0], info['last_ep_simple_solution_found'][1], info['last_ep_simple_solution_found'][2]
-        #         )
-        #
-        #     knapsack_method = " STRATEGY. : {0:}".format(info["STRATEGY"])
-        #
-        #     console_log += knapsack_info
-        #     console_log += knapsack_method
-            
+        if config_c.ENV_NAME in ["Knapsack_Problem_v0"]:
+            pass
+
         print(console_log)
 
 
@@ -789,16 +771,91 @@ def wandb_log_comparison(
 
     train_last_mean_episode_reward = go.Figure(data=data, layout=plotly_layout)
 
+
+    if config_c.ENV_NAME in ["Knapsack_Problem_v0"]:
+        ###############################################################################
+        plotly_layout.yaxis.title = "[TEST] Value of Items Selected"
+        plotly_layout.xaxis.title = "Training Steps ({0}, runs={1}, over {2} Episodes)".format(
+            training_steps_str, run + 1, n_episodes_for_mean_calculation
+        )
+        data = []
+        for agent_idx, _ in enumerate(agents):
+            data.append(
+                go.Scatter(
+                    name=agent_labels[agent_idx],
+                    x=comparison_stat.test_training_steps_lst,
+                    y=comparison_stat.MEAN_test_value_of_items_selected_per_agent[agent_idx, :],
+                    showlegend=True
+                )
+            )
+
+        test_value_of_items_selected_per_agent = go.Figure(data=data, layout=plotly_layout)
+
+        ###############################################################################
+        plotly_layout.yaxis.title = "[TEST] Ratio (Value to Optimal Value)"
+        plotly_layout.xaxis.title = "Training Steps ({0}, runs={1}, over {2} Episodes)".format(
+            training_steps_str, run + 1, n_episodes_for_mean_calculation
+        )
+        data = []
+        for agent_idx, _ in enumerate(agents):
+            data.append(
+                go.Scatter(
+                    name=agent_labels[agent_idx],
+                    x=comparison_stat.test_training_steps_lst,
+                    y=comparison_stat.MEAN_test_ratio_value_to_optimal_value[agent_idx, :],
+                    showlegend=True
+                )
+            )
+
+        test_ratio_value_to_optimal_value = go.Figure(data=data, layout=plotly_layout)
+
+        ###############################################################################
+        plotly_layout.yaxis.title = "[TRAIN] Value of Items Selected"
+        plotly_layout.xaxis.title = "Training Steps ({0}, runs={1}, over {2} Episodes)".format(
+            training_steps_str, run + 1, n_episodes_for_mean_calculation
+        )
+        data = []
+        for agent_idx, _ in enumerate(agents):
+            data.append(
+                go.Scatter(
+                    name=agent_labels[agent_idx],
+                    x=comparison_stat.test_training_steps_lst,
+                    y=comparison_stat.MEAN_train_value_of_items_selected_per_agent[agent_idx, :],
+                    showlegend=True
+                )
+            )
+
+        train_value_of_items_selected_per_agent = go.Figure(data=data, layout=plotly_layout)
+
+        ###############################################################################
+        plotly_layout.yaxis.title = "[TRAIN] Ratio (Value to Optimal Value)"
+        plotly_layout.xaxis.title = "Training Steps ({0}, runs={1}, over {2} Episodes)".format(
+            training_steps_str, run + 1, n_episodes_for_mean_calculation
+        )
+        data = []
+        for agent_idx, _ in enumerate(agents):
+            data.append(
+                go.Scatter(
+                    name=agent_labels[agent_idx],
+                    x=comparison_stat.test_training_steps_lst,
+                    y=comparison_stat.MEAN_train_ratio_value_to_optimal_value[agent_idx, :],
+                    showlegend=True
+                )
+            )
+
+        train_ratio_value_to_optimal_value = go.Figure(data=data, layout=plotly_layout)
+
     log_dict = {
         "[TEST] episode_reward_avg": test_episode_reward_avg,
         "[TEST] episode_reward_std": test_episode_reward_std,
-        "[TRAIN] last_mean_episode_reward": train_last_mean_episode_reward
+        "[TRAIN] last_mean_episode_reward": train_last_mean_episode_reward,
     }
 
-    train_last_mean_value_of_items_selected = go.Figure(data=data, layout=plotly_layout)
-
     if config_c.ENV_NAME in ["Knapsack_Problem_v0"]:
-        log_dict["train_last_mean_value_of_items_selected"] = train_last_mean_value_of_items_selected
+        log_dict["[TEST] value_of_items_selected_per_agent"] = test_value_of_items_selected_per_agent
+        log_dict["[TEST] ratio_value_to_optimal_value"] = test_ratio_value_to_optimal_value
+        log_dict["[TRAIN] value_of_items_selected_per_agent"] = train_value_of_items_selected_per_agent
+        log_dict["[TRAIN] ratio_value_to_optimal_value"] = train_ratio_value_to_optimal_value
 
     wandb_obj.log(log_dict)
 

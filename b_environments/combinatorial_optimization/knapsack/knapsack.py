@@ -557,6 +557,7 @@ def run_env():
         ConfigKnapsack0StaticTestDqn
     config = ConfigKnapsack0StaticTestDqn()
 
+
     set_config(config)
 
     env = KnapsackEnv(config)

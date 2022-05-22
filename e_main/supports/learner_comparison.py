@@ -358,74 +358,67 @@ class LearnerComparison:
             return np.average(episode_reward_lst), np.std(episode_reward_lst)
 
     def update_stat(self, run, agent_idx, test_idx):
-        # 1
-        min_value = np.finfo(np.float64).max
-        max_value = np.finfo(np.float64).min
-        sum_value = 0.0
+        target_stats = [
+            self.comparison_stat.test_episode_reward_avg_per_agent,
+            self.comparison_stat.test_episode_reward_std_per_agent,
+            self.comparison_stat.mean_episode_reward_per_agent,
+        ]
 
-        for i in range(run + 1):
-            if self.comparison_stat.test_episode_reward_avg_per_agent[i, agent_idx, test_idx] < min_value:
-                min_value = self.comparison_stat.test_episode_reward_avg_per_agent[i, agent_idx, test_idx]
+        min_target_stats = [
+            self.comparison_stat.MIN_test_episode_reward_avg_per_agent,
+            self.comparison_stat.MIN_test_episode_reward_std_per_agent,
+            self.comparison_stat.MIN_mean_episode_reward_per_agent
+        ]
 
-            if self.comparison_stat.test_episode_reward_avg_per_agent[i, agent_idx, test_idx] > max_value:
-                max_value = self.comparison_stat.test_episode_reward_avg_per_agent[i, agent_idx, test_idx]
+        max_target_stats = [
+            self.comparison_stat.MAX_test_episode_reward_avg_per_agent,
+            self.comparison_stat.MAX_test_episode_reward_std_per_agent,
+            self.comparison_stat.MAX_mean_episode_reward_per_agent
+        ]
 
-            sum_value += self.comparison_stat.test_episode_reward_avg_per_agent[i, agent_idx, test_idx]
+        mean_target_stats = [
+            self.comparison_stat.MEAN_test_episode_reward_avg_per_agent,
+            self.comparison_stat.MEAN_test_episode_reward_std_per_agent,
+            self.comparison_stat.MEAN_mean_episode_reward_per_agent
+        ]
 
-        self.comparison_stat.MIN_test_episode_reward_avg_per_agent[agent_idx, test_idx] = min_value
-        self.comparison_stat.MAX_test_episode_reward_avg_per_agent[agent_idx, test_idx] = max_value
-        self.comparison_stat.MEAN_test_episode_reward_avg_per_agent[agent_idx, test_idx] = sum_value / (run + 1)
+        if self.config_c.ENV_NAME in ["Knapsack_Problem_v0"]:
+            target_stats.append(self.comparison_stat.test_value_of_items_selected_per_agent)
+            target_stats.append(self.comparison_stat.train_value_of_items_selected_per_agent)
+            target_stats.append(self.comparison_stat.test_ratio_value_to_optimal_value)
+            target_stats.append(self.comparison_stat.train_ratio_value_to_optimal_value)
 
-        # 2
-        min_value = np.finfo(np.float64).max
-        max_value = np.finfo(np.float64).min
-        sum_value = 0.0
+            min_target_stats.append(self.comparison_stat.MIN_test_value_of_items_selected_per_agent)
+            min_target_stats.append(self.comparison_stat.MIN_train_value_of_items_selected_per_agent)
+            min_target_stats.append(self.comparison_stat.MIN_test_ratio_value_to_optimal_value)
+            min_target_stats.append(self.comparison_stat.MIN_train_ratio_value_to_optimal_value)
 
-        for i in range(run + 1):
-            if self.comparison_stat.test_episode_reward_std_per_agent[i, agent_idx, test_idx] < min_value:
-                min_value = self.comparison_stat.test_episode_reward_std_per_agent[i, agent_idx, test_idx]
+            max_target_stats.append(self.comparison_stat.MAX_test_value_of_items_selected_per_agent)
+            max_target_stats.append(self.comparison_stat.MAX_train_value_of_items_selected_per_agent)
+            max_target_stats.append(self.comparison_stat.MAX_test_ratio_value_to_optimal_value)
+            max_target_stats.append(self.comparison_stat.MAX_train_ratio_value_to_optimal_value)
 
-            if self.comparison_stat.test_episode_reward_std_per_agent[i, agent_idx, test_idx] > max_value:
-                max_value = self.comparison_stat.test_episode_reward_std_per_agent[i, agent_idx, test_idx]
+            mean_target_stats.append(self.comparison_stat.MEAN_test_value_of_items_selected_per_agent)
+            mean_target_stats.append(self.comparison_stat.MEAN_train_value_of_items_selected_per_agent)
+            mean_target_stats.append(self.comparison_stat.MEAN_test_ratio_value_to_optimal_value)
+            mean_target_stats.append(self.comparison_stat.MEAN_train_ratio_value_to_optimal_value)
 
-            sum_value += self.comparison_stat.test_episode_reward_std_per_agent[i, agent_idx, test_idx]
+        for target_stat, min_target_stat, max_target_stat, mean_target_stat in zip(
+                target_stats, min_target_stats, max_target_stats, mean_target_stats
+        ):
+            min_value = np.finfo(np.float64).max
+            max_value = np.finfo(np.float64).min
+            sum_value = 0.0
 
-        self.comparison_stat.MIN_test_episode_reward_std_per_agent[agent_idx, test_idx] = min_value
-        self.comparison_stat.MAX_test_episode_reward_std_per_agent[agent_idx, test_idx] = max_value
-        self.comparison_stat.MEAN_test_episode_reward_std_per_agent[agent_idx, test_idx] = sum_value / (run + 1)
+            for i in range(run + 1):
+                if target_stat[i, agent_idx, test_idx] < min_value:
+                    min_value = target_stat[i, agent_idx, test_idx]
 
-        # 3
-        min_value = np.finfo(np.float64).max
-        max_value = np.finfo(np.float64).min
-        sum_value = 0.0
+                if target_stat[i, agent_idx, test_idx] > max_value:
+                    max_value = target_stat[i, agent_idx, test_idx]
 
-        for i in range(run + 1):
-            if self.comparison_stat.mean_episode_reward_per_agent[i, agent_idx, test_idx] < min_value:
-                min_value = self.comparison_stat.mean_episode_reward_per_agent[i, agent_idx, test_idx]
+                sum_value += target_stat[i, agent_idx, test_idx]
 
-            if self.comparison_stat.mean_episode_reward_per_agent[i, agent_idx, test_idx] > max_value:
-                max_value = self.comparison_stat.mean_episode_reward_per_agent[i, agent_idx, test_idx]
-
-            sum_value += self.comparison_stat.mean_episode_reward_per_agent[i, agent_idx, test_idx]
-
-        self.comparison_stat.MIN_mean_episode_reward_per_agent[agent_idx, test_idx] = min_value
-        self.comparison_stat.MAX_mean_episode_reward_per_agent[agent_idx, test_idx] = max_value
-        self.comparison_stat.MEAN_mean_episode_reward_per_agent[agent_idx, test_idx] = sum_value / (run + 1)
-
-        #knapsack
-        min_value = np.finfo(np.float64).max
-        max_value = np.finfo(np.float64).min
-        sum_value = 0.0
-
-        for i in range(run + 1):
-            if self.comparison_stat.test_value_of_items_selected_per_agent[i, agent_idx, test_idx] < min_value:
-                min_value = self.comparison_stat.test_value_of_items_selected_per_agent[i, agent_idx, test_idx]
-
-            if self.comparison_stat.test_value_of_items_selected_per_agent[i, agent_idx, test_idx] > max_value:
-                max_value = self.comparison_stat.test_value_of_items_selected_per_agent[i, agent_idx, test_idx]
-
-            sum_value += self.comparison_stat.test_value_of_items_selected_per_agent[i, agent_idx, test_idx]
-
-        self.comparison_stat.MIN_test_value_of_items_selected_per_agent[agent_idx, test_idx] = min_value
-        self.comparison_stat.MAX_test_value_of_items_selected_per_agent[agent_idx, test_idx] = max_value
-        self.comparison_stat.MEAN_test_value_of_items_selected_per_agent[agent_idx, test_idx] = sum_value / (run + 1)
+            min_target_stat[agent_idx, test_idx] = min_value
+            max_target_stat[agent_idx, test_idx] = max_value
+            mean_target_stat[agent_idx, test_idx] = sum_value / (run + 1)

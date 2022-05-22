@@ -72,6 +72,28 @@ class ConfigComparisonKnapsack0StaticTestLinearRecurrentDqn(ConfigComparisonBase
         self.N_RUNS = 5
 
 
+class ConfigComparisonKnapsack0StaticTestLinearDoubleDqn(ConfigComparisonBase):
+    def __init__(self):
+        ConfigComparisonBase.__init__(self)
+
+        self.ENV_NAME = "Knapsack_Problem_v0"
+
+        self.AGENT_PARAMETERS = [
+            ConfigKnapsack0StaticTestLinearDoubleDqn(),
+            ConfigKnapsack0StaticTestLinearDoubleDqn(),
+        ]
+
+        self.AGENT_LABELS = [
+            "Static - Double DQN - Many Actions",
+            "Static - Double DQN - Two Actions",
+        ]
+        self.AGENT_PARAMETERS[0].STRATEGY = 1
+        self.AGENT_PARAMETERS[1].STRATEGY = 2
+
+        self.MAX_TRAINING_STEPS = 500_000
+        self.N_RUNS = 5
+
+
 class ConfigComparisonKnapsack0RandomTestLinearDoubleDqn(ConfigComparisonBase):
     def __init__(self):
         ConfigComparisonBase.__init__(self)

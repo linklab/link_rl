@@ -241,6 +241,10 @@ from a_configuration.c_comparison_config.combinatorial_optimization.config_compa
 config_c = ConfigComparisonKnapsack0StaticTestLinearRecurrentDqn()
 
 from a_configuration.c_comparison_config.combinatorial_optimization.config_comparison_knapsack import \
+    ConfigComparisonKnapsack0StaticTestLinearDoubleDqn
+config_c = ConfigComparisonKnapsack0StaticTestLinearDoubleDqn()
+
+from a_configuration.c_comparison_config.combinatorial_optimization.config_comparison_knapsack import \
     ConfigComparisonKnapsack0RandomTestLinearDoubleDqn
 config_c = ConfigComparisonKnapsack0RandomTestLinearDoubleDqn()
 
