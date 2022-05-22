@@ -104,6 +104,7 @@ class KnapsackEnv(gym.Env):
         self.last_ep_value_of_all_items_selected = None
         self.last_ep_solution_found = [0]
         self.last_ep_simple_solution_found = None
+        self.last_ep_ratio = None
 
         self.optimal_value = 0
 
@@ -297,6 +298,7 @@ class KnapsackEnv(gym.Env):
         info['last_ep_weight_of_all_items_selected'] = self.last_ep_weight_of_all_items_selected
         info['last_ep_solution_found'] = self.last_ep_solution_found
         info['last_ep_simple_solution_found'] = self.last_ep_simple_solution_found
+        info['last_ep_ratio'] = self.last_ep_ratio
 
         self.episodes += 1
 
@@ -406,11 +408,14 @@ class KnapsackEnv(gym.Env):
             if info['DoneReasonType'] in [DoneReasonType0.TYPE_0, DoneReasonType0.TYPE_1]:
                 self.last_ep_value_of_all_items_selected = 0.0
                 self.last_ep_weight_of_all_items_selected = 0.0
+                self.last_ep_ratio = 0.0
             else:
                 self.last_ep_value_of_all_items_selected = self.value_of_all_items_selected
                 self.last_ep_weight_of_all_items_selected = self.weight_of_all_items_selected
+
+                self.last_ep_ratio = min(1.0, round(self.value_of_all_items_selected / self.optimal_value, 3))
                 if self.last_ep_solution_found[0] < self.value_of_all_items_selected:
-                    self.last_ep_simple_solution_found = self.process_solution_found()
+                    self.last_ep_simple_solution_found = self.process_solution_found(self.last_ep_ratio)
         else:
             reward = self.reward(done_type=None)
 
@@ -432,30 +437,20 @@ class KnapsackEnv(gym.Env):
         info['internal_state'] = copy.deepcopy(self.internal_state)
         info['STRATEGY'] = self.config.STRATEGY
 
-        if self.last_ep_value_of_all_items_selected:
-            ratio = min(1.0, round(self.value_of_all_items_selected / self.optimal_value, 3))
-        else:
-            ratio = 0.0
-
         info['last_ep_value_of_all_items_selected'] = self.last_ep_value_of_all_items_selected
         info['last_ep_weight_of_all_items_selected'] = self.last_ep_weight_of_all_items_selected
         info['last_ep_solution_found'] = self.last_ep_solution_found
         info['last_ep_simple_solution_found'] = self.last_ep_simple_solution_found
-        info['last_ep_ratio'] = ratio
+        info['last_ep_ratio'] = self.last_ep_ratio
 
         if done and self.config.PRINT_DETAILS_AT_EPISODE_END:
-            self.print_knapsack_details_at_episode_end(info, ratio)
+            self.print_knapsack_details_at_episode_end(info, self.last_ep_ratio)
             
         return observation, reward, done, info
 
-    def process_solution_found(self):
+    def process_solution_found(self, ratio):
         self.last_ep_solution_found[0] = self.value_of_all_items_selected
         self.last_ep_solution_found[1:] = self.items_selected
-
-        if self.last_ep_value_of_all_items_selected:
-            ratio = min(1.0, round(self.value_of_all_items_selected / self.optimal_value, 3))
-        else:
-            ratio = 0.0
 
         self.last_ep_solution_found.append(ratio)
 
