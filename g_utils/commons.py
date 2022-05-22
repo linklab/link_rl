@@ -786,12 +786,13 @@ def wandb_log_comparison(
                 showlegend=True
             )
         )
+
     train_last_mean_episode_reward = go.Figure(data=data, layout=plotly_layout)
 
     log_dict = {
-        "episode_reward_avg": test_episode_reward_avg,
-        "episode_reward_std": test_episode_reward_std,
-        "train_last_mean_episode_reward": train_last_mean_episode_reward
+        "[TEST] episode_reward_avg": test_episode_reward_avg,
+        "[TEST] episode_reward_std": test_episode_reward_std,
+        "[TRAIN] last_mean_episode_reward": train_last_mean_episode_reward
     }
 
     train_last_mean_value_of_items_selected = go.Figure(data=data, layout=plotly_layout)

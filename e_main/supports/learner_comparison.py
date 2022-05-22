@@ -1,6 +1,7 @@
 import warnings
 
-from a_configuration.a_base_config.c_models.config_recurrent_convolutional_models import ConfigRecurrent2DConvolutionalModel
+from a_configuration.a_base_config.c_models.config_recurrent_convolutional_models import \
+    ConfigRecurrent2DConvolutionalModel, ConfigRecurrent1DConvolutionalModel
 
 warnings.filterwarnings('ignore')
 warnings.simplefilter("ignore")
@@ -50,6 +51,10 @@ class LearnerComparison:
         self.next_test_training_step_per_agent = []
         self.test_idx_per_agent = []
 
+        if config_c.ENV_NAME in ["Knapsack_Problem_v0"]:
+            self.last_ep_value_of_all_items_selected_per_agent = []
+            self.last_ep_ratio_per_agent = []
+
         self.comparison_stat = comparison_stat
 
         for agent_idx, _ in enumerate(agents):
@@ -69,11 +74,20 @@ class LearnerComparison:
             self.n_rollout_transitions_per_agent.append(0)
             self.last_mean_episode_reward_per_agent.append(0.0)
 
+            if config_c.ENV_NAME in ["Knapsack_Problem_v0"]:
+                self.last_ep_value_of_all_items_selected_per_agent.append(0.0)
+                self.last_ep_ratio_per_agent.append(0.0)
+
             self.is_terminated_per_agent.append(False)
 
             self.is_recurrent_model_per_agent.append(any([
                 isinstance(self.config_c.AGENT_PARAMETERS[agent_idx].MODEL_PARAMETER, ConfigRecurrentLinearModel),
-                isinstance(self.config_c.AGENT_PARAMETERS[agent_idx].MODEL_PARAMETER, ConfigRecurrent2DConvolutionalModel)
+                isinstance(
+                    self.config_c.AGENT_PARAMETERS[agent_idx].MODEL_PARAMETER, ConfigRecurrent1DConvolutionalModel
+                ),
+                isinstance(
+                    self.config_c.AGENT_PARAMETERS[agent_idx].MODEL_PARAMETER, ConfigRecurrent2DConvolutionalModel
+                )
             ]))
 
             self.next_console_log_per_agent.append(self.config_c.CONSOLE_LOG_INTERVAL_TRAINING_STEPS)
@@ -83,10 +97,6 @@ class LearnerComparison:
         self.total_time_step = 0
 
         self.train_comparison_start_time = None
-
-        if self.config_c.ENV_NAME in ["Task_Allocation_v0", "Knapsack_Problem_v0"]:
-            self.env_info = [None] * len(self.agents)
-            self.test_info = [None] * len(self.agents)
 
     def generator_on_policy_transition(self, agent_idx):
         observations, infos = self.train_envs_per_agent[agent_idx].reset(return_info=True)
@@ -109,9 +119,6 @@ class LearnerComparison:
                 raise ValueError()
 
             next_observations, rewards, dones, infos = self.train_envs_per_agent[agent_idx].step(scaled_actions)
-
-            if self.config_c.ENV_NAME in ["Task_Allocation_v0", "Knapsack_Problem_v0"]:
-                self.env_info[agent_idx] = infos[0]
 
             if self.is_recurrent_model_per_agent[agent_idx]:
                 next_observations = [(next_observations, self.agents[agent_idx].model.recurrent_hidden)]
@@ -183,6 +190,10 @@ class LearnerComparison:
 
                         self.episode_rewards_per_agent[agent_idx][actor_id][env_id] = 0.0
 
+                        if self.config_c.ENV_NAME in ["Knapsack_Problem_v0"]:
+                            self.last_ep_value_of_all_items_selected_per_agent[agent_idx] = n_step_transition.info['last_ep_weight_of_all_items_selected']
+                            self.last_ep_ratio_per_agent[agent_idx] = n_step_transition.info['last_ep_ratio']
+
             if self.total_time_step >= self.next_train_time_step:
                 for agent_idx, _ in enumerate(self.agents):
                     if not self.is_terminated_per_agent[agent_idx]:
@@ -233,9 +244,12 @@ class LearnerComparison:
                 self.next_train_time_step += self.config_c.TRAIN_INTERVAL_GLOBAL_TIME_STEPS
 
     def testing(self, run, agent_idx, training_step):
-        print("*" * 160)
-
-        avg, std = self.play_for_testing(self.config_c.N_TEST_EPISODES, agent_idx)
+        if self.config_c.ENV_NAME in ["Knapsack_Problem_v0"]:
+            avg, std, avg_last_ep_value_of_all_items_selected, avg_last_ep_ration = self.play_for_testing(
+                self.config_c.N_TEST_EPISODES, agent_idx
+            )
+        else:
+            avg, std = self.play_for_testing(self.config_c.N_TEST_EPISODES, agent_idx)
 
         self.comparison_stat.test_episode_reward_avg_per_agent[run, agent_idx, self.test_idx_per_agent[agent_idx]] = avg
         self.comparison_stat.test_episode_reward_std_per_agent[run, agent_idx, self.test_idx_per_agent[agent_idx]] = std
@@ -243,29 +257,41 @@ class LearnerComparison:
             self.last_mean_episode_reward_per_agent[agent_idx]
 
         if self.config_c.ENV_NAME in ["Knapsack_Problem_v0"]:
-            if self.test_info[agent_idx] is not None:
-                self.comparison_stat.test_value_of_items_selected_per_agent[run, agent_idx, self.test_idx_per_agent[agent_idx]] = self.test_info[agent_idx][0]
+            self.comparison_stat.test_value_of_items_selected_per_agent[run, agent_idx, self.test_idx_per_agent[agent_idx]] = \
+                avg_last_ep_value_of_all_items_selected
+            self.comparison_stat.test_ratio_value_to_optimal_value[run, agent_idx, self.test_idx_per_agent[agent_idx]] = \
+                avg_last_ep_ration
+            self.comparison_stat.train_value_of_items_selected_per_agent[run, agent_idx, self.test_idx_per_agent[agent_idx]] = \
+                self.last_ep_value_of_all_items_selected_per_agent[agent_idx]
+            self.comparison_stat.train_ratio_value_to_optimal_value[run, agent_idx, self.test_idx_per_agent[agent_idx]] = \
+                self.last_ep_ratio_per_agent[agent_idx]
 
         elapsed_time = time.time() - self.train_comparison_start_time
         formatted_elapsed_time = time.strftime('%H:%M:%S', time.gmtime(elapsed_time))
 
-        if self.config_c.ENV_NAME in ["Knapsack_Problem_v0"] and self.test_info[agent_idx] is not None:
-            print("[Test: {0}, Agent: {1}, Training Step: {2:6,}] "
-                  "Episode Reward - Average: {3:.3f}, Standard Dev.: {4:.3f}, Elapsed Time: {5}, Solution_Found {6} ({7:5.3f}, Total Steps Found: {8:,})".format(
-                self.test_idx_per_agent[agent_idx] + 1, agent_idx, training_step, avg, std, formatted_elapsed_time, self.test_info[agent_idx][0], self.test_info[agent_idx][1], self.test_info[agent_idx][2]
+        print("*" * 160)
+        print("[Test: {0}, Agent: {1}, Training Step: {2:6,}] "
+              "Episode Reward - Average: {3:.3f}, Standard Dev.: {4:.3f}, Elapsed Time: {5} ".format(
+            self.test_idx_per_agent[agent_idx] + 1, agent_idx, training_step, avg, std, formatted_elapsed_time
+        ), end="")
+
+        if self.config_c.ENV_NAME in ["Knapsack_Problem_v0"]:
+            print("Items Value Selected - Average: {0:5.1f}, Ratio (Value to Optimal Value): {1:5.1f})".format(
+                avg_last_ep_value_of_all_items_selected, avg_last_ep_ration
             ))
-            print("*" * 160)
         else:
-            print("[Test: {0}, Agent: {1}, Training Step: {2:6,}] "
-                  "Episode Reward - Average: {3:.3f}, Standard Dev.: {4:.3f}, Elapsed Time: {5} ".format(
-                self.test_idx_per_agent[agent_idx] + 1, agent_idx, training_step, avg, std, formatted_elapsed_time
-            ))
-            print("*" * 160)
+            print()
+
+        print("*" * 160)
 
     def play_for_testing(self, n_test_episodes, agent_idx):
         self.agents[agent_idx].model.eval()
 
         episode_reward_lst = []
+
+        if self.config_c.ENV_NAME in ["Knapsack_Problem_v0"]:
+            last_ep_value_of_all_items_selected_lst = []
+            last_ep_ratio_lst = []
 
         for i in range(n_test_episodes):
             episode_reward = 0  # cumulative_reward
@@ -320,11 +346,16 @@ class LearnerComparison:
             episode_reward_lst.append(episode_reward)
 
             if self.config_c.ENV_NAME in ["Knapsack_Problem_v0"]:
-                self.test_info[agent_idx] = info["last_ep_simple_solution_found"]
+                last_ep_value_of_all_items_selected_lst.append(info['last_ep_value_of_all_items_selected'])
+                last_ep_ratio_lst.append(info['last_ep_ratio'])
 
         self.agents[agent_idx].model.train()
 
-        return np.average(episode_reward_lst), np.std(episode_reward_lst)
+        if self.config_c.ENV_NAME in ["Knapsack_Problem_v0"]:
+            return np.average(episode_reward_lst), np.std(episode_reward_lst), \
+                   np.average(last_ep_value_of_all_items_selected_lst), np.average(last_ep_ratio_lst)
+        else:
+            return np.average(episode_reward_lst), np.std(episode_reward_lst)
 
     def update_stat(self, run, agent_idx, test_idx):
         # 1

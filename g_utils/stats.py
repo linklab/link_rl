@@ -75,24 +75,79 @@ class ComparisonStat:
             int(config_c.MAX_TRAINING_STEPS // config_c.TEST_INTERVAL_TRAINING_STEPS)
         ))
 
-        #knapsack
-        self.test_value_of_items_selected_per_agent = np.zeros((
-            config_c.N_RUNS,
-            len(config_c.AGENT_PARAMETERS),
-            int(config_c.MAX_TRAINING_STEPS // config_c.TEST_INTERVAL_TRAINING_STEPS)
-        ))
-        self.MIN_test_value_of_items_selected_per_agent = np.zeros((
-            len(config_c.AGENT_PARAMETERS),
-            int(config_c.MAX_TRAINING_STEPS // config_c.TEST_INTERVAL_TRAINING_STEPS)
-        ))
-        self.MEAN_test_value_of_items_selected_per_agent = np.zeros((
-            len(config_c.AGENT_PARAMETERS),
-            int(config_c.MAX_TRAINING_STEPS // config_c.TEST_INTERVAL_TRAINING_STEPS)
-        ))
-        self.MAX_test_value_of_items_selected_per_agent = np.zeros((
-            len(config_c.AGENT_PARAMETERS),
-            int(config_c.MAX_TRAINING_STEPS // config_c.TEST_INTERVAL_TRAINING_STEPS)
-        ))
+        if config_c.ENV_NAME in ["Knapsack_Problem_v0"]:
+            #knapsack
+            self.test_value_of_items_selected_per_agent = np.zeros((
+                config_c.N_RUNS,
+                len(config_c.AGENT_PARAMETERS),
+                int(config_c.MAX_TRAINING_STEPS // config_c.TEST_INTERVAL_TRAINING_STEPS)
+            ))
+            self.MIN_test_value_of_items_selected_per_agent = np.zeros((
+                len(config_c.AGENT_PARAMETERS),
+                int(config_c.MAX_TRAINING_STEPS // config_c.TEST_INTERVAL_TRAINING_STEPS)
+            ))
+            self.MEAN_test_value_of_items_selected_per_agent = np.zeros((
+                len(config_c.AGENT_PARAMETERS),
+                int(config_c.MAX_TRAINING_STEPS // config_c.TEST_INTERVAL_TRAINING_STEPS)
+            ))
+            self.MAX_test_value_of_items_selected_per_agent = np.zeros((
+                len(config_c.AGENT_PARAMETERS),
+                int(config_c.MAX_TRAINING_STEPS // config_c.TEST_INTERVAL_TRAINING_STEPS)
+            ))
+
+            self.train_value_of_items_selected_per_agent = np.zeros((
+                config_c.N_RUNS,
+                len(config_c.AGENT_PARAMETERS),
+                int(config_c.MAX_TRAINING_STEPS // config_c.TEST_INTERVAL_TRAINING_STEPS)
+            ))
+            self.MIN_train_value_of_items_selected_per_agent = np.zeros((
+                len(config_c.AGENT_PARAMETERS),
+                int(config_c.MAX_TRAINING_STEPS // config_c.TEST_INTERVAL_TRAINING_STEPS)
+            ))
+            self.MEAN_train_value_of_items_selected_per_agent = np.zeros((
+                len(config_c.AGENT_PARAMETERS),
+                int(config_c.MAX_TRAINING_STEPS // config_c.TEST_INTERVAL_TRAINING_STEPS)
+            ))
+            self.MAX_train_value_of_items_selected_per_agent = np.zeros((
+                len(config_c.AGENT_PARAMETERS),
+                int(config_c.MAX_TRAINING_STEPS // config_c.TEST_INTERVAL_TRAINING_STEPS)
+            ))
+
+            self.test_ratio_value_to_optimal_value = np.zeros((
+                config_c.N_RUNS,
+                len(config_c.AGENT_PARAMETERS),
+                int(config_c.MAX_TRAINING_STEPS // config_c.TEST_INTERVAL_TRAINING_STEPS)
+            ))
+            self.MIN_test_ratio_value_to_optimal_value = np.zeros((
+                len(config_c.AGENT_PARAMETERS),
+                int(config_c.MAX_TRAINING_STEPS // config_c.TEST_INTERVAL_TRAINING_STEPS)
+            ))
+            self.MEAN_test_ratio_value_to_optimal_value = np.zeros((
+                len(config_c.AGENT_PARAMETERS),
+                int(config_c.MAX_TRAINING_STEPS // config_c.TEST_INTERVAL_TRAINING_STEPS)
+            ))
+            self.MAX_test_ratio_value_to_optimal_value = np.zeros((
+                len(config_c.AGENT_PARAMETERS),
+                int(config_c.MAX_TRAINING_STEPS // config_c.TEST_INTERVAL_TRAINING_STEPS)
+            ))
+
+            self.train_ratio_value_to_optimal_value = np.zeros((
+                config_c.N_RUNS,
+                len(config_c.AGENT_PARAMETERS),
+                int(config_c.MAX_TRAINING_STEPS // config_c.TEST_INTERVAL_TRAINING_STEPS)
+            ))
+            self.MIN_train_ratio_value_to_optimal_value = np.zeros((
+                len(config_c.AGENT_PARAMETERS),
+                int(config_c.MAX_TRAINING_STEPS // config_c.TEST_INTERVAL_TRAINING_STEPS)
+            ))
+            self.MEAN_train_ratio_value_to_optimal_value = np.zeros((
+                len(config_c.AGENT_PARAMETERS),
+                int(config_c.MAX_TRAINING_STEPS // config_c.TEST_INTERVAL_TRAINING_STEPS)
+            ))
+            self.MAX_train_ratio_value_to_optimal_value = np.zeros((
+                len(config_c.AGENT_PARAMETERS),
+                int(config_c.MAX_TRAINING_STEPS // config_c.TEST_INTERVAL_TRAINING_STEPS)
+            ))
 
     def save_fig(self, local_now):
         # Test Average Episode Reward
