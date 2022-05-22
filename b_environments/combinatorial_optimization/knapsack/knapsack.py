@@ -87,8 +87,7 @@ class DoneReasonType0(enum.Enum):
     TYPE_0 = "Selected Same items"
     TYPE_1 = "Weight Limit Exceeded"
     TYPE_2 = "Weight Remains"
-    TYPE_3 = "All Item Selected"
-    TYPE_4 = "Goal Achieved"
+    TYPE_3 = "Goal Achieved"
 
 
 class KnapsackEnv(gym.Env):
@@ -337,7 +336,7 @@ class KnapsackEnv(gym.Env):
 
             if action_idx in self.actions_sequence:
                 done = True
-                info['DoneReasonType'] = DoneReasonType0.TYPE_0
+                info['DoneReasonType'] = DoneReasonType0.TYPE_0   # "Selected Same items"
                 self.actions_sequence.append(action_idx)
 
             else:
@@ -366,21 +365,6 @@ class KnapsackEnv(gym.Env):
                     done = False
 
             self.internal_state[0][0] -= 1
-
-            if done:
-                reward = self.reward(done_type=info['DoneReasonType'])
-                self.last_ep_value_of_all_items_selected = self.value_of_all_items_selected
-                self.last_ep_weight_of_all_items_selected = self.weight_of_all_items_selected
-
-                # TYPE_0 = "Selected Same items"
-                # TYPE_1 = "Weight Limit Exceeded"
-                if info['DoneReasonType'] != DoneReasonType0.TYPE_0 and info[
-                    'DoneReasonType'] != DoneReasonType0.TYPE_1:
-                    if self.last_ep_solution_found[0] < self.value_of_all_items_selected:
-                        self.last_ep_simple_solution_found = self.process_solution_found()
-            else:
-                reward = self.reward(done_type=None)
-
         else:
             self.actions_sequence.append(action_idx)
             step_item_value, step_item_weight = self.internal_state[self.num_step + 4][:]
@@ -407,29 +391,28 @@ class KnapsackEnv(gym.Env):
                 info['DoneReasonType'] = DoneReasonType0.TYPE_1  # "Weight Limit Exceeded"
             elif self.num_step == self.config.NUM_ITEM - 1 or not possible:
                 done = True
-
-                if len(self.items_selected) == self.config.NUM_ITEM:
-                    info['DoneReasonType'] = DoneReasonType0.TYPE_3  # "All Item Selected"
-                else:
-                    info['DoneReasonType'] = DoneReasonType0.TYPE_2  # "Weight Remains"
-
+                info['DoneReasonType'] = DoneReasonType0.TYPE_2  # "Weight Remains"
             else:
                 self.num_step += 1
 
             self.internal_state[3][0] = self.internal_state[self.num_step + 4][0]
             self.internal_state[3][1] = self.internal_state[self.num_step + 4][1]
 
-            if done:
-                reward = self.reward(done_type=info['DoneReasonType'])
+        if done:
+            reward = self.reward(done_type=info['DoneReasonType'])
+
+            # TYPE_0 = "Selected Same items"
+            # TYPE_1 = "Weight Limit Exceeded"
+            if info['DoneReasonType'] in [DoneReasonType0.TYPE_0, DoneReasonType0.TYPE_1]:
+                self.last_ep_value_of_all_items_selected = 0.0
+                self.last_ep_weight_of_all_items_selected = 0.0
+            else:
                 self.last_ep_value_of_all_items_selected = self.value_of_all_items_selected
                 self.last_ep_weight_of_all_items_selected = self.weight_of_all_items_selected
-
-                if info['DoneReasonType'] != DoneReasonType0.TYPE_1:
-                    if self.last_ep_solution_found[0] < self.value_of_all_items_selected:
-                        self.last_ep_simple_solution_found = self.process_solution_found()
-
-            else:
-                reward = self.reward(done_type=None)
+                if self.last_ep_solution_found[0] < self.value_of_all_items_selected:
+                    self.last_ep_simple_solution_found = self.process_solution_found()
+        else:
+            reward = self.reward(done_type=None)
 
         observation = self.observation()
 
@@ -508,13 +491,7 @@ class KnapsackEnv(gym.Env):
             value_of_all_items_selected_reward = self.value_of_all_items_selected / self.TOTAL_VALUE_FOR_ALL_ITEMS
             goal_achieved_reward = 0.0
 
-        elif done_type == DoneReasonType0.TYPE_3:  # "All Item Selected"
-            mission_complete_reward = 1.0
-            misbehavior_reward = 0.0
-            value_of_all_items_selected_reward = self.value_of_all_items_selected / self.TOTAL_VALUE_FOR_ALL_ITEMS
-            goal_achieved_reward = 1.0
-
-        elif done_type == DoneReasonType0.TYPE_4:  # "Goal Achieved"
+        elif done_type == DoneReasonType0.TYPE_3:  # "Goal Achieved"
             mission_complete_reward = 0.0
             misbehavior_reward = 0.0
             value_of_all_items_selected_reward = 0.0
