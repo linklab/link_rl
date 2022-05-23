@@ -249,10 +249,10 @@ class KnapsackEnv(gym.Env):
         return observation
 
     def print_knapsack_details_at_episode_end(self, info, ratio):
-        details = "[NEW EPISODE] NUM ITEMS: {0}, LIMIT_WEIGHT_KNAPSACK: {1}, TOTAL_VALUE_FOR_ALL_ITEMS: {2:5.1f}, " \
-                  "ITEM VALUES SELECTED: {3:5.1f} (OPTIMAL_VALUE: {4:5.1f}, RATIO: {5:4.2f}), " \
-                  "ITEM WEIGHTS SELECTED: {6:5.1f}, DONE REASON: {7}".format(
-            self.config.NUM_ITEM, self.config.LIMIT_WEIGHT_KNAPSACK, self.TOTAL_VALUE_FOR_ALL_ITEMS,
+        details = "[NEW EPISODE (STEPS: {0:4})] NUM ITEMS: {1}, LIMIT_WEIGHT_KNAPSACK: {2}, " \
+                  "TOTAL_VALUE_FOR_ALL_ITEMS: {3:5.1f}, ITEM VALUES SELECTED: {4:5.1f} (OPTIMAL_VALUE: {5:5.1f}, " \
+                  "RATIO: {6:4.2f}), ITEM WEIGHTS SELECTED: {7:5.1f}, DONE REASON: {8}".format(
+            self.num_step, self.config.NUM_ITEM, self.config.LIMIT_WEIGHT_KNAPSACK, self.TOTAL_VALUE_FOR_ALL_ITEMS,
             self.last_ep_value_of_all_items_selected, self.optimal_value,
             ratio, self.last_ep_weight_of_all_items_selected, info['DoneReasonType'].value
         )
@@ -268,7 +268,8 @@ class KnapsackEnv(gym.Env):
         # if self.config.SORTING_TYPE is not None:
         #     self.state_sorting(self.internal_state, 4, self.config.NUM_ITEM + 3)
 
-        self.TOTAL_VALUE_FOR_ALL_ITEMS = sum(self.internal_state[:, 0])
+        self.TOTAL_VALUE_FOR_ALL_ITEMS = sum(self.internal_state[4:, 0])
+        # TODO: HER
         self.items_selected = []
         self.actions_sequence = []
 
@@ -309,63 +310,53 @@ class KnapsackEnv(gym.Env):
         else:
             return observation
 
-    def check_future_select_possible(self):
-        possible = False
-
-        if self.config.STRATEGY == 1:
-            for item in self.internal_state[4:]:
-                weight = item[1]
-
-                if weight != -1 and weight + self.internal_state[2][1] <= self.internal_state[0][1]:
-                    possible = True
-                    break
-
-        else:
-            for item in self.internal_state[self.num_step + 5:]:
-                weight = item[1]
-
-                if weight + self.internal_state[2][1] <= self.internal_state[0][1]:
-                    possible = True
-                    break
-
-        return possible
-
     def step(self, action_idx):
         info = dict()
 
         if self.config.STRATEGY == 1:
             step_item_value, step_item_weight = self.internal_state[action_idx + 4][:]
 
+            done = False
+
             if action_idx in self.actions_sequence:
+                # DONE CHECK - #1
                 done = True
                 info['DoneReasonType'] = DoneReasonType0.TYPE_0   # "Selected Same items"
-                self.actions_sequence.append(action_idx)
-
             else:
                 self.actions_sequence.append(action_idx)
 
+                # DONE CHECK - #2
                 if self.weight_of_all_items_selected + step_item_weight <= self.config.LIMIT_WEIGHT_KNAPSACK:
                     self.items_selected.append(action_idx)
                     self.value_of_all_items_selected += step_item_value
                     self.weight_of_all_items_selected += step_item_weight
 
-                self.internal_state[2][0] += step_item_value
-                self.internal_state[2][1] += step_item_weight
+                    self.internal_state[2][0] += step_item_value
+                    self.internal_state[2][1] += step_item_weight
 
-                possible = self.check_future_select_possible()
-
-                self.internal_state[action_idx + 4][:] = -1
-
-                if not possible:
-                    done = True
-
-                    if self.weight_of_all_items_selected + step_item_weight > self.config.LIMIT_WEIGHT_KNAPSACK:
-                        info['DoneReasonType'] = DoneReasonType0.TYPE_1  # "Weight Limit Exceeded"
-                    else:
-                        info['DoneReasonType'] = DoneReasonType0.TYPE_2  # "Weight Remains"
+                    # 해당 아이템 선택 표시
+                    self.internal_state[action_idx + 4][:] = -1
                 else:
-                    done = False
+                    done = True
+                    info['DoneReasonType'] = DoneReasonType0.TYPE_1  # "Weight Limit Exceeded"
 
+                if not done:
+                    # DONE CHECK - #3
+                    possible = False
+
+                    for item in self.internal_state[4:]:
+                        weight = item[1]
+
+                        if weight != -1 and weight + self.internal_state[2][1] <= self.internal_state[0][1]:
+                            possible = True
+                            break
+
+                    if not possible:
+                        done = True
+                        info['DoneReasonType'] = DoneReasonType0.TYPE_2  # "Weight Remains"
+
+            if not done:
+                self.num_step += 1
             self.internal_state[0][0] -= 1
         else:
             self.actions_sequence.append(action_idx)
@@ -373,6 +364,7 @@ class KnapsackEnv(gym.Env):
 
             done = False
 
+            # DONE CHECK - #1
             if action_idx == 1:
                 self.items_selected.append(self.num_step)
 
@@ -380,23 +372,34 @@ class KnapsackEnv(gym.Env):
                     self.value_of_all_items_selected += step_item_value
                     self.weight_of_all_items_selected += step_item_weight
 
-                self.internal_state[2][0] += step_item_value
-                self.internal_state[2][1] += step_item_weight
+                    self.internal_state[2][0] += step_item_value
+                    self.internal_state[2][1] += step_item_weight
+                else:
+                    done = True
+                    info['DoneReasonType'] = DoneReasonType0.TYPE_1  # "Weight Limit Exceeded"
 
-            possible = self.check_future_select_possible()
+            if not done:
+                # DONE CHECK - #2
+                possible = False
 
+                if self.num_step < self.config.NUM_ITEM - 1:
+                    for item in self.internal_state[self.num_step + 5:]:
+                        weight = item[1]
+
+                        if weight + self.internal_state[2][1] <= self.internal_state[0][1]:
+                            possible = True
+                            break
+
+                if self.num_step == self.config.NUM_ITEM - 1 or not possible:
+                    done = True
+                    info['DoneReasonType'] = DoneReasonType0.TYPE_2  # "Weight Remains"
+
+            # LAST PROCESS
             self.internal_state[self.num_step + 4][:] = -1
             self.internal_state[0][0] -= 1
 
-            if action_idx == 1 and self.weight_of_all_items_selected + step_item_weight > self.config.LIMIT_WEIGHT_KNAPSACK:
-                done = True
-                info['DoneReasonType'] = DoneReasonType0.TYPE_1  # "Weight Limit Exceeded"
-            elif self.num_step == self.config.NUM_ITEM - 1 or not possible:
-                done = True
-                info['DoneReasonType'] = DoneReasonType0.TYPE_2  # "Weight Remains"
-            else:
+            if not done:
                 self.num_step += 1
-
             self.internal_state[3][0] = self.internal_state[self.num_step + 4][0]
             self.internal_state[3][1] = self.internal_state[self.num_step + 4][1]
 
@@ -406,14 +409,19 @@ class KnapsackEnv(gym.Env):
             # TYPE_0 = "Selected Same items"
             # TYPE_1 = "Weight Limit Exceeded"
             if info['DoneReasonType'] in [DoneReasonType0.TYPE_0, DoneReasonType0.TYPE_1]:
-                self.last_ep_value_of_all_items_selected = 0.0
-                self.last_ep_weight_of_all_items_selected = 0.0
-                self.last_ep_ratio = 0.0
+                # self.last_ep_value_of_all_items_selected = 0.0
+                # self.last_ep_weight_of_all_items_selected = 0.0
+                # self.last_ep_ratio = 0.0
+                self.last_ep_value_of_all_items_selected = self.value_of_all_items_selected
+                self.last_ep_weight_of_all_items_selected = self.weight_of_all_items_selected
+
+                self.last_ep_ratio = min(1.0, round(self.value_of_all_items_selected / self.optimal_value, 3))
             else:
                 self.last_ep_value_of_all_items_selected = self.value_of_all_items_selected
                 self.last_ep_weight_of_all_items_selected = self.weight_of_all_items_selected
 
                 self.last_ep_ratio = min(1.0, round(self.value_of_all_items_selected / self.optimal_value, 3))
+
                 if self.last_ep_solution_found[0] < self.value_of_all_items_selected:
                     self.last_ep_simple_solution_found = self.process_solution_found(self.last_ep_ratio)
         else:
