@@ -634,8 +634,8 @@ def wandb_log(learner, wandb_obj, config):
         log_dict["Utilization"] = 100 * learner.env_info["Utilization"]
         log_dict["[TEST] Utilization"] = 100 * learner.test_episode_utilization.value
     if config.ENV_NAME in ["Task_Allocation_v1"]:
-        log_dict["Resource Utilization"] = learner.env_info["Resource_utilization"]
-        average_latency = sum(learner.env_info["Latency"]) / len(learner.env_info["Latency"])
+        log_dict["Resource Utilization"] = learner.env_info[0]["Resource_utilization"]
+        average_latency = sum(learner.env_info[0]["Latency"]) / len(learner.env_info[0]["Latency"])
         log_dict["Average Latency"] = average_latency
     if config.ENV_NAME in ["Knapsack_Problem_v0"]:
         log_dict["Value of All Item Selected"] = learner.env_info["last_ep_value_of_all_items_selected"]

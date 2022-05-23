@@ -129,6 +129,7 @@ class TaskAllocationEnvironment(gym.Env):
         self.task_data_size_list = None
         self.task_cpu_list = None
         self.task_latency_list = None
+        self.latency_list = None
 
         self.cloud_bandwidth = None
         self.edge_bandwidth = None
@@ -192,6 +193,8 @@ class TaskAllocationEnvironment(gym.Env):
         self.task_data_size_list = []
         self.task_cpu_list = []
         self.task_latency_list = []
+        self.latency_list = []
+
         for key in self.task.tasks:
             self.task_data_size_list.append(self.task.tasks[key][0])
             self.task_cpu_list.append(self.task.tasks[key][1])
@@ -204,6 +207,8 @@ class TaskAllocationEnvironment(gym.Env):
         info["Cloud_server_bandwidth"] = self.cloud_bandwidth
         info["Edge_server_cpu_list"] = self.edge_server_cpu_list
         info["Edge_server_bandwidth"] = self.edge_bandwidth
+        info["Resource_utilization"] = 0
+        info["Latency"] = self.latency_list
 
         if return_info:
             return observation, info
@@ -222,48 +227,59 @@ class TaskAllocationEnvironment(gym.Env):
         done = False
         info = {}
 
-        # Calculate delay
-        if self.total_server_cpu_list[action_idx] < self.task.tasks[self.task_id][1]:
-            total_delay = 51
+        if action_idx == 0:
+            reward = 0
         else:
-            total_delay = self.calculate_delay(action_idx)
-        # print("delay: ", total_delay)
-        # print("task latency: ", self.task.tasks[self.task_id][2])
-
-        # Calculate request bandwidth
-        request_bandwidth = self.task.tasks[self.task_id][0] / self.task.tasks[self.task_id][2]
-        # print("Request_bandwidth: ", request_bandwidth)
-
-        # Reward
-        if total_delay > self.task.tasks[self.task_id][2] or \
-                self.total_server_cpu_list[action_idx] < self.task.tasks[self.task_id][1]:
-            # reward = (self.task.tasks[self.task_id][2] - total_delay) * self.resource_util
-            reward = -1
-        else:
-            self.num_remain_task -= 1
-            # Apply action and update cloud and edge servers' cpu info
-            self.total_server_cpu_list[action_idx] -= self.task.tasks[self.task_id][1]
-            # select cloud
-            if self.config.NUM_CLOUD_SERVER - action_idx > 0:
-                self.cloud_server_remain_cpu -= self.task.tasks[self.task_id][1]
-                self.cloud_bandwidth -= request_bandwidth
-                self.cloud_server_cpu_list[action_idx] -= self.task.tasks[self.task_id][1]
-                self.selected_cloud_bandwidth += request_bandwidth
-                self.selected_cloud_server_cpu += self.task.tasks[self.task_id][1]
-                self.selected_num_cloud_server += 1
-            # select edge
+            action_idx -= 1
+            # Calculate delay
+            if self.total_server_cpu_list[action_idx] < self.task.tasks[self.task_id][1]:
+                total_delay = 51
             else:
+                total_delay = self.calculate_delay(action_idx)
+            # print("delay: ", total_delay)
+            # print("task latency: ", self.task.tasks[self.task_id][2])
+
+            # Calculate request bandwidth
+            request_bandwidth = self.task.tasks[self.task_id][0] / self.task.tasks[self.task_id][2]
+            # print("Request_bandwidth: ", request_bandwidth)
+
+            # Reward
+            if total_delay > self.task.tasks[self.task_id][2] or \
+                    self.total_server_cpu_list[action_idx] < self.task.tasks[self.task_id][1]:
+                # reward = (self.task.tasks[self.task_id][2] - total_delay) * self.resource_util
+                reward = -1
+            else:
+                self.num_remain_task -= 1
+                # Apply action and update cloud and edge servers' cpu info
+                self.total_server_cpu_list[action_idx] -= self.task.tasks[self.task_id][1]
+                # select cloud
+                if self.config.NUM_CLOUD_SERVER - action_idx > 0:
+                    self.cloud_server_remain_cpu -= self.task.tasks[self.task_id][1]
+                    self.cloud_bandwidth -= request_bandwidth
+                    self.cloud_server_cpu_list[action_idx] -= self.task.tasks[self.task_id][1]
+                    self.selected_cloud_bandwidth += request_bandwidth
+                    self.selected_cloud_server_cpu += self.task.tasks[self.task_id][1]
+                    self.selected_num_cloud_server += 1
+                # select edge
+                else:
+                    self.edge_server_remain_cpu -= self.task.tasks[self.task_id][1]
+                    self.edge_bandwidth -= request_bandwidth
+                    self.edge_server_cpu_list[action_idx - self.config.NUM_CLOUD_SERVER] -= self.task.tasks[self.task_id][1]
+                    self.selected_edge_bandwidth += request_bandwidth
+                    self.selected_edge_server_cpu += self.task.tasks[self.task_id][1]
+                    self.selected_num_edge_server += 1
+
+                # Calculate resource utilization
+                self.resource_util += self.task.tasks[self.task_id][1] + request_bandwidth
+                # reward = (self.task.tasks[self.task_id][2] - total_delay) * self.resource_util
+                reward = 1
+
                 self.edge_server_remain_cpu -= self.task.tasks[self.task_id][1]
                 self.edge_bandwidth -= request_bandwidth
                 self.edge_server_cpu_list[action_idx - self.config.NUM_CLOUD_SERVER] -= self.task.tasks[self.task_id][1]
                 self.selected_edge_bandwidth += request_bandwidth
                 self.selected_edge_server_cpu += self.task.tasks[self.task_id][1]
                 self.selected_num_edge_server += 1
-
-            # Calculate resource utilization
-            self.resource_util += self.task.tasks[self.task_id][1] + request_bandwidth
-            # reward = (self.task.tasks[self.task_id][2] - total_delay) * self.resource_util
-            reward = 1
 
         # print("state: ", self.state)
 
@@ -273,6 +289,7 @@ class TaskAllocationEnvironment(gym.Env):
             # Generate next state
             self.task_id -= 1
             self.configurate_state()
+            # print("final state: ", self.state)
         else:
             done = False
             # Generate next state
@@ -285,6 +302,8 @@ class TaskAllocationEnvironment(gym.Env):
             self.task_cpu_list.append(self.task.tasks[key][1])
             self.task_latency_list.append(self.task.tasks[key][2])
 
+        self.latency_list.append(total_delay)
+
         info["Task_data_size_list"] = self.task_data_size_list
         info["Task_cpu_list"] = self.task_cpu_list
         info["Task_latency_list"] = self.task_latency_list
@@ -292,6 +311,8 @@ class TaskAllocationEnvironment(gym.Env):
         info["Cloud_server_bandwidth"] = self.cloud_bandwidth
         info["Edge_server_cpu_list"] = self.edge_server_cpu_list
         info["Edge_server_bandwidth"] = self.edge_bandwidth
+        info["Resource_utilization"] = self.resource_util
+        info["Latency"] = self.latency_list
 
         return observation, reward, done, info
 
@@ -352,7 +373,7 @@ class Dummy_Agent:
 
     def get_action(self, state):
         assert state is not None
-        available_action_ids = range(self.config.NUM_CLOUD_SERVER + self.config.NUM_EDGE_SERVER)
+        available_action_ids = range(self.config.NUM_CLOUD_SERVER + self.config.NUM_EDGE_SERVER + 1)
         action_id = random.choice(available_action_ids)
         return action_id
 
@@ -394,13 +415,16 @@ def run_env():
     print(type(state), state.shape)
     action_idx = agent.get_action(state)
     state, reward, done, info = env.step(action_idx)
-    print("step 0, action: ", action_idx, reward, done)
+    print("step 0, action: ", action_idx, "reward: ", reward, done)
     state, reward, done, info = env.step(action_idx)
     action_idx = agent.get_action(state)
-    print("step 1, action: ", action_idx, reward, done)
+    print("step 1, action: ", action_idx, "reward: ", reward, done)
     action_idx = agent.get_action(state)
     state, reward, done, info = env.step(action_idx)
-    print("step 2, action: ", action_idx, reward, done)
+    print("step 2, action: ", action_idx, "reward: ", reward, done)
+    action_idx = agent.get_action(state)
+    state, reward, done, info = env.step(action_idx)
+    print("step 3, action: ", action_idx, "reward: ", reward, done)
 
 
 if __name__ == "__main__":
