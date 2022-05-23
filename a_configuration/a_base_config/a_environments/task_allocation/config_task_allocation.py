@@ -16,13 +16,15 @@ class ConfigTaskAllocation:
         self.EDGE_BANDWIDTH_CAPACITY = 100 * self.NUM_EDGE_SERVER
 
         # task config
-        self.NUM_TASK = 3
+        self.NUM_TASK = 10
         self.TASK_DATA_SIZE_MIN = 25
         self.TASK_DATA_SIZE_MAX = 50
         self.TASK_CPU_REQUEST_MIN = 10
         self.TASK_CPU_REQUEST_MAX = 20
         self.TASK_LATENCY_REQUEST_MIN = 1
         self.TASK_LATENCY_REQUEST_MAX = 50
+
+        self.FIX_ENV_PARAM = 1
 
         #training setting
         self.MAX_TRAINING_STEPS = self.NUM_TASK * 2_000
