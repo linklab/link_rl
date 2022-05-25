@@ -1,6 +1,6 @@
 from a_configuration.a_base_config.a_environments.task_allocation.config_task_allocation import \
     ConfigTaskAllocationInitParam
-from a_configuration.a_base_config.b_agents.config_agents_off_policy import ConfigDqn
+from a_configuration.a_base_config.b_agents.config_agents_off_policy import ConfigDqn, ConfigDoubleDqn
 from a_configuration.a_base_config.config_single_base import ConfigBase
 
 
@@ -9,4 +9,10 @@ class ConfigTaskAllocationDqn(ConfigBase, ConfigTaskAllocationInitParam, ConfigD
         ConfigBase.__init__(self)
         ConfigTaskAllocationInitParam.__init__(self)
         ConfigDqn.__init__(self)
+
+class ConfigTaskAllocationDoubleDqn(ConfigBase, ConfigTaskAllocationInitParam, ConfigDoubleDqn):
+    def __init__(self):
+        ConfigBase.__init__(self)
+        ConfigTaskAllocationInitParam.__init__(self)
+        ConfigDoubleDqn.__init__(self)
 
