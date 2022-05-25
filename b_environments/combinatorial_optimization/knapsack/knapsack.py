@@ -423,9 +423,9 @@ class KnapsackEnv(gym.Env):
                 if self.last_ep_solution_found[0] < self.value_of_all_items_selected:
                     self.last_ep_simple_solution_found = self.process_solution_found(self.last_ep_ratio)
 
-                if self.config.USE_HER and self.current_goal <= self.value_of_all_items_selected:
-                    self.current_goal = self.value_of_all_items_selected + 1
-                    info['DoneReasonType'] = DoneReasonType0.TYPE_3
+            if self.config.USE_HER and self.current_goal <= self.value_of_all_items_selected:
+                self.current_goal = self.value_of_all_items_selected + 1
+                info['DoneReasonType'] = DoneReasonType0.TYPE_3
 
             reward = self.reward(done_type=info['DoneReasonType'])
 
