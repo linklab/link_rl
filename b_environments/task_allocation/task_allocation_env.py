@@ -142,17 +142,28 @@ class TaskAllocationEnvironment(gym.Env):
 
         self.revenue = None
         self.resource_util = None
+        self.num_rejection = None
 
-        self.action_space = spaces.Discrete(self.config.NUM_CLOUD_SERVER + self.config.NUM_EDGE_SERVER)
+        self.action_space = spaces.Discrete(self.config.NUM_CLOUD_SERVER + self.config.NUM_EDGE_SERVER + 1)
 
         self.obs_space = self.config.NUM_TASK + self.config.NUM_EDGE_SERVER + self.config.NUM_CLOUD_SERVER + 6
         self.observation_space = spaces.Box(low=-1.0, high=10000.0, shape=((self.obs_space * 3,)))
 
-        self.task = Task(self.config)
-        self.cloud_net = CloudNetwork(self.config)
-        self.edge_net = EdgeNetwork(self.config)
+        with open('/home/link/link_rl/e_main/random_instances/task_allocation/task.p', 'wb') as f:
+            pickle.dump(self.task, f)
+        with open('/home/link/link_rl/e_main/random_instances/task_allocation/cloud_net.p', 'wb') as f:
+            pickle.dump(self.cloud_net, f)
+        with open('/home/link/link_rl/e_main/random_instances/task_allocation/edge_net.p', 'wb') as f:
+            pickle.dump(self.edge_net, f)
 
     def reset(self, *, seed: Optional[int] = None, return_info: bool = False, options: Optional[dict] = None,):
+        with open('/home/link/link_rl/e_main/random_instances/task_allocation/task.p', 'rb') as f:
+            self.task = pickle.load(f)
+        with open('/home/link/link_rl/e_main/random_instances/task_allocation/cloud_net.p', 'rb') as f:
+            self.cloud_net = pickle.load(f)
+        with open('/home/link/link_rl/e_main/random_instances/task_allocation/edge_net.p', 'rb') as f:
+            self.edge_net = pickle.load(f)
+
         self.cloud_bandwidth = self.cloud_net.bandwidth
         self.edge_bandwidth = self.edge_net.bandwidth
 
@@ -164,6 +175,7 @@ class TaskAllocationEnvironment(gym.Env):
         self.selected_edge_bandwidth = 0
         self.revenue = 0
         self.resource_util = 0
+        self.num_rejection = 0
         self.num_remain_task = self.config.NUM_TASK
 
         # Set the first task ID
@@ -209,6 +221,7 @@ class TaskAllocationEnvironment(gym.Env):
         info["Edge_server_bandwidth"] = self.edge_bandwidth
         info["Resource_utilization"] = 0
         info["Latency"] = self.latency_list
+        info["Rejection_ratio"] = 0
 
         if return_info:
             return observation, info
@@ -226,14 +239,17 @@ class TaskAllocationEnvironment(gym.Env):
         reward = 0
         done = False
         info = {}
+        edge_cost_alpha = 5
+        cloud_cost_alpha = 10
 
         if action_idx == 0:
             reward = 0
+            self.num_rejection += 1
         else:
             action_idx -= 1
             # Calculate delay
             if self.total_server_cpu_list[action_idx] < self.task.tasks[self.task_id][1]:
-                total_delay = 51
+                total_delay = self.config.TASK_LATENCY_REQUEST_MAX + 1
             else:
                 total_delay = self.calculate_delay(action_idx)
             # print("delay: ", total_delay)
@@ -248,6 +264,8 @@ class TaskAllocationEnvironment(gym.Env):
                     self.total_server_cpu_list[action_idx] < self.task.tasks[self.task_id][1]:
                 # reward = (self.task.tasks[self.task_id][2] - total_delay) * self.resource_util
                 reward = -1
+                self.num_rejection += 1
+                self.num_remain_task -= 1
             else:
                 self.num_remain_task -= 1
                 # Apply action and update cloud and edge servers' cpu info
@@ -274,12 +292,7 @@ class TaskAllocationEnvironment(gym.Env):
                 # reward = (self.task.tasks[self.task_id][2] - total_delay) * self.resource_util
                 reward = 1
 
-                self.edge_server_remain_cpu -= self.task.tasks[self.task_id][1]
-                self.edge_bandwidth -= request_bandwidth
-                self.edge_server_cpu_list[action_idx - self.config.NUM_CLOUD_SERVER] -= self.task.tasks[self.task_id][1]
-                self.selected_edge_bandwidth += request_bandwidth
-                self.selected_edge_server_cpu += self.task.tasks[self.task_id][1]
-                self.selected_num_edge_server += 1
+                self.latency_list.append(total_delay)
 
         # print("state: ", self.state)
 
@@ -302,8 +315,6 @@ class TaskAllocationEnvironment(gym.Env):
             self.task_cpu_list.append(self.task.tasks[key][1])
             self.task_latency_list.append(self.task.tasks[key][2])
 
-        self.latency_list.append(total_delay)
-
         info["Task_data_size_list"] = self.task_data_size_list
         info["Task_cpu_list"] = self.task_cpu_list
         info["Task_latency_list"] = self.task_latency_list
@@ -313,6 +324,7 @@ class TaskAllocationEnvironment(gym.Env):
         info["Edge_server_bandwidth"] = self.edge_bandwidth
         info["Resource_utilization"] = self.resource_util
         info["Latency"] = self.latency_list
+        info["Rejection_ratio"] = self.num_rejection / self.config.NUM_TASK
 
         return observation, reward, done, info
 
@@ -367,6 +379,7 @@ class TaskAllocationEnvironment(gym.Env):
 
         return total_delay
 
+
 class Dummy_Agent:
     def __init__(self, config):
         self.config = config
@@ -377,22 +390,37 @@ class Dummy_Agent:
         action_id = random.choice(available_action_ids)
         return action_id
 
+
 class Heuristic_Agent:
     def __init__(self, config):
         self.config = config
 
-    def get_action(self, state):
-        assert state is not None
-        available_action_ids = range(self.config.NUM_CLOUD_SERVER + self.config.NUM_EDGE_SERVER)
-        action_id = random.choice(available_action_ids)
-        return action_id
+    def get_action(self, task_id, task_list, cloud_server_cpu_list, edge_server_cpu_list):
+        action_idx = 0
+        edge_server = len(edge_server_cpu_list)
+        for idx_server, edge_server_cpu in enumerate(edge_server_cpu_list):
+            edge_server -= 1
+            if task_list[task_id][1] <= edge_server_cpu:
+                print("Task: ", task_id, "is assigned to edge server", idx_server)
+                action_idx = idx_server + len(edge_server_cpu_list)
+                break
+            else:
+                if edge_server == 0:
+                    print("\nFor task", task_id, " edge server not found, So send it to cloud")
+                    for idx_cserver, cloud_server_cpu in enumerate(cloud_server_cpu_list):
+                        if task_list[task_id][1] <= cloud_server_cpu:
+                            print("Task: ", task_id, "is assigned to edge server", idx_cserver)
+                            action_idx = idx_cserver
+                            break
+
+        return action_idx
 
 def run_env():
     config = ConfigTaskAllocation()
 
     env = TaskAllocationEnvironment(config)
-    agent = Dummy_Agent(config)
-    # agent = Heuristic_Agent(config)
+    # agent = Dummy_Agent(config)
+    agent = Heuristic_Agent(config)
     state = env.reset()
 
     print("task", env.task.tasks)
@@ -400,32 +428,56 @@ def run_env():
     print("Edge Net", env.edge_net.servers)
     print()
 
+    # Dummy Agent Test
     # print("reset state", state)
+    # print(type(state), state.shape)
     # action_idx = agent.get_action(state)
     # state, reward, done, info = env.step(action_idx)
-    # print("step 0, action: ", action_idx, state, reward, done)
-    # state, reward, done, info = env.step(action_idx)
-    # action_idx = agent.get_action(state)
-    # print("step 1, action: ", action_idx, state, reward, done)
+    # print("step 0, action: ", action_idx, "reward: ", reward, done)
     # action_idx = agent.get_action(state)
     # state, reward, done, info = env.step(action_idx)
-    # print("step 2, action: ", action_idx, state, reward, done)
+    # print("step 1, action: ", action_idx, "reward: ", reward, done)
+    # action_idx = agent.get_action(state)
+    # state, reward, done, info = env.step(action_idx)
+    # print("step 2, action: ", action_idx, "reward: ", reward, done)
+    # action_idx = agent.get_action(state)
+    # state, reward, done, info = env.step(action_idx)
+    # print("step 3, action: ", action_idx, "reward: ", reward, done)
 
-    # print("reset state", state)
-    print(type(state), state.shape)
-    action_idx = agent.get_action(state)
-    state, reward, done, info = env.step(action_idx)
-    print("step 0, action: ", action_idx, "reward: ", reward, done)
-    state, reward, done, info = env.step(action_idx)
-    action_idx = agent.get_action(state)
-    print("step 1, action: ", action_idx, "reward: ", reward, done)
-    action_idx = agent.get_action(state)
-    state, reward, done, info = env.step(action_idx)
-    print("step 2, action: ", action_idx, "reward: ", reward, done)
-    action_idx = agent.get_action(state)
-    state, reward, done, info = env.step(action_idx)
-    print("step 3, action: ", action_idx, "reward: ", reward, done)
+    info = None
+    for _ in range(config.NUM_TASK):
+        action_idx = agent.get_action(env.task_id, env.task.tasks, env.cloud_server_cpu_list, env.edge_server_cpu_list)
+        print("Edge server remain cpu: ", env.edge_server_cpu_list)
+        print("Cloud server remain cpu", env.cloud_server_cpu_list)
+        state, reward, done, info = env.step(action_idx + 1)
+        print(reward, done)
+    print()
+    print("Resource Utilization: ", info["Resource_utilization"])
+    print("Average Latency: ", np.average(info["Latency"]))
+    print("Rejection_ratio: ", info["Rejection_ratio"])
 
+    # action_idx = agent.get_action(task_id, task_list, env.cloud_server_cpu_list, env.edge_server_cpu_list)
+    # state, reward, done, info = env.step(action_idx)
+    # task_list = env.task.tasks
+    # task_id = env.task_id
+    # print("step 0, action: ", action_idx, "reward: ", reward, done)
+    # print("latency: ", info["Latency"])
+    # action_idx = agent.get_action(task_id, task_list, env.cloud_server_cpu_list, env.edge_server_cpu_list)
+    # state, reward, done, info = env.step(action_idx)
+    # print("latency: ", info["Latency"])
+    # task_list = env.task.tasks
+    # task_id = env.task_id
+    # print("step 1, action: ", action_idx, "reward: ", reward, done)
+    # action_idx = agent.get_action(task_id, task_list, env.cloud_server_cpu_list, env.edge_server_cpu_list)
+    # state, reward, done, info = env.step(action_idx)
+    # print("latency: ", info["Latency"])
+    # task_list = env.task.tasks
+    # task_id = env.task_id
+    # print("step 2, action: ", action_idx, "reward: ", reward, done)
+    # action_idx = agent.get_action(task_id, task_list, env.cloud_server_cpu_list, env.edge_server_cpu_list)
+    # state, reward, done, info = env.step(action_idx)
+    # print("step 3, action: ", action_idx, "reward: ", reward, done)
+    # print("latency: ", info["Latency"])
 
 if __name__ == "__main__":
     run_env()
