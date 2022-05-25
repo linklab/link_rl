@@ -114,9 +114,6 @@ class Task:
 class TaskAllocationEnvironment(gym.Env):
     def __init__(self, config):
         self.config = config
-        self.task = Task(self.config)
-        self.cloud_net = CloudNetwork(self.config)
-        self.edge_net = EdgeNetwork(self.config)
 
         self.state = None
         self.task_id = None
@@ -149,20 +146,23 @@ class TaskAllocationEnvironment(gym.Env):
         self.obs_space = self.config.NUM_TASK + self.config.NUM_EDGE_SERVER + self.config.NUM_CLOUD_SERVER + 6
         self.observation_space = spaces.Box(low=-1.0, high=10000.0, shape=((self.obs_space * 3,)))
 
-        with open('/home/link/link_rl/e_main/random_instances/task_allocation/task.p', 'wb') as f:
-            pickle.dump(self.task, f)
-        with open('/home/link/link_rl/e_main/random_instances/task_allocation/cloud_net.p', 'wb') as f:
-            pickle.dump(self.cloud_net, f)
-        with open('/home/link/link_rl/e_main/random_instances/task_allocation/edge_net.p', 'wb') as f:
-            pickle.dump(self.edge_net, f)
+        self.task = Task(self.config)
+        self.cloud_net = CloudNetwork(self.config)
+        self.edge_net = EdgeNetwork(self.config)
+        # with open('/home/link/link_rl/e_main/random_instances/task_allocation/task.p', 'wb') as f:
+        #     pickle.dump(self.task, f)
+        # with open('/home/link/link_rl/e_main/random_instances/task_allocation/cloud_net.p', 'wb') as f:
+        #     pickle.dump(self.cloud_net, f)
+        # with open('/home/link/link_rl/e_main/random_instances/task_allocation/edge_net.p', 'wb') as f:
+        #     pickle.dump(self.edge_net, f)
 
     def reset(self, *, seed: Optional[int] = None, return_info: bool = False, options: Optional[dict] = None,):
-        with open('/home/link/link_rl/e_main/random_instances/task_allocation/task.p', 'rb') as f:
-            self.task = pickle.load(f)
-        with open('/home/link/link_rl/e_main/random_instances/task_allocation/cloud_net.p', 'rb') as f:
-            self.cloud_net = pickle.load(f)
-        with open('/home/link/link_rl/e_main/random_instances/task_allocation/edge_net.p', 'rb') as f:
-            self.edge_net = pickle.load(f)
+        # with open('/home/link/link_rl/e_main/random_instances/task_allocation/task.p', 'rb') as f:
+        #     self.task = pickle.load(f)
+        # with open('/home/link/link_rl/e_main/random_instances/task_allocation/cloud_net.p', 'rb') as f:
+        #     self.cloud_net = pickle.load(f)
+        # with open('/home/link/link_rl/e_main/random_instances/task_allocation/edge_net.p', 'rb') as f:
+        #     self.edge_net = pickle.load(f)
 
         self.cloud_bandwidth = self.cloud_net.bandwidth
         self.edge_bandwidth = self.edge_net.bandwidth
