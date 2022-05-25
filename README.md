@@ -44,10 +44,8 @@ Install package
 - Mac
   ```commandline
   pip install gym==0.22.0
-  pip install pygame==2.1.2
   pip install gym[atari,box2d,accept-rom-license]==0.22.0
-  conda install -c conda-forge swig==4.0.2
-  conda install -c conda-forge box2d-py==2.3.8
+  pip install pygame==2.1.2
   pip install opencv-python==4.5.5.62
   pip install lz4==4.0.0
   conda install -c plotly plotly==5.6.0
@@ -56,6 +54,9 @@ Install package
   conda install -c conda-forge matplotlib
   ```
 
+  conda install -c conda-forge swig==4.0.2
+  conda install -c conda-forge box2d-py==2.3.8
+- 
 ## How to use link_rl
 ### Train
 Enter the code below into ```e_main\config_single.py``` and run ```e_main\b_single_main_sequential.py``` 
@@ -146,6 +147,13 @@ config = ConfigPongDqn()
 config.PLAY_MODEL_FILE_NAME = [*.pth]
 config.USE_WANDB = False  
 ```
+
+#### MuJoCo210 or MuJoCo220
+https://ropiens.tistory.com/178
+https://github.com/openai/mujoco-py/issues/662
+
+#### Gym-Robotics
+pip install gym-robotics
 
 ***
 
