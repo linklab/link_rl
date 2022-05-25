@@ -506,7 +506,8 @@ def console_log(
         info = learner.env_info
 
         resource_utilization_info = ", Resource Utilization: {0:>4.2f}".format(info[0]["Resource_utilization"])
-        resource_utilization_info += ", Average_latency: {0:>4.2f}".format(sum(info[0]["Latency"]) / len(info[0]["Latency"]))
+        resource_utilization_info += ", Average latency: {0:>4.2f}".format(learner.test_average_latency.value)
+        resource_utilization_info += ", Rejection ratio: {0:>4.2f}".format(info[0]["Rejection_ratio"])
 
         console_log += resource_utilization_info
 
@@ -634,9 +635,9 @@ def wandb_log(learner, wandb_obj, config):
         log_dict["Utilization"] = 100 * learner.env_info["Utilization"]
         log_dict["[TEST] Utilization"] = 100 * learner.test_episode_utilization.value
     if config.ENV_NAME in ["Task_Allocation_v1"]:
-        log_dict["Resource Utilization"] = learner.env_info[0]["Resource_utilization"]
-        average_latency = sum(learner.env_info[0]["Latency"]) / len(learner.env_info[0]["Latency"])
-        log_dict["Average Latency"] = average_latency
+        log_dict["[TEST]Resource Utilization"] = learner.env_info[0]["Resource_utilization"]
+        log_dict["[TEST]Average Latency"] = learner.test_average_latency.value
+        log_dict["[TEST]Rejection ratio"] = learner.test_rejection_ratio.value
     if config.ENV_NAME in ["Knapsack_Problem_v0"]:
         log_dict["Value of All Item Selected"] = learner.env_info["last_ep_value_of_all_items_selected"]
         log_dict["Ratio (Value to Optimal Value)"] = learner.env_info["last_ep_ratio"]

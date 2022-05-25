@@ -57,6 +57,11 @@ class Learner(mp.Process):
         if config.ENV_NAME in ["Task_Allocation_v0"]:
             self.test_episode_utilization = mp.Value('d', 0.0)
 
+        if config.ENV_NAME in ["Task_Allocation_v1"]:
+            self.test_resource_utilization = mp.Value('d', 0.0)
+            self.test_average_latency = mp.Value('d', 0.0)
+            self.test_rejection_ratio = mp.Value('d', 0.0)
+
         if config.ENV_NAME in ["Knapsack_Problem_v0"]:
             self.test_episode_items_value = mp.Value('d', 0.0)
             self.test_episode_ratio_value = mp.Value('d', 0.0)
@@ -455,6 +460,9 @@ class Learner(mp.Process):
         if self.config.ENV_NAME in ["Task_Allocation_v0"]:
             self.test_episode_reward_avg.value, self.test_episode_reward_std.value, self.test_episode_utilization.value = \
                 self.play_for_testing(self.config.N_TEST_EPISODES)
+        if self.config.ENV_NAME in ["Task_Allocation_v1"]:
+            self.test_episode_reward_avg.value, self.test_episode_reward_std.value, self.test_resource_utilization.value, self.test_average_latency.value, self.test_rejection_ratio.value = \
+                self.play_for_testing(self.config.N_TEST_EPISODES)
         elif self.config.ENV_NAME in ["Knapsack_Problem_v0"]:
             self.test_episode_reward_avg.value, self.test_episode_reward_std.value, \
             self.test_episode_items_value.value, self.test_episode_ratio_value.value = \
@@ -476,6 +484,10 @@ class Learner(mp.Process):
 
         if self.config.ENV_NAME in ["Task_Allocation_v0"]:
             test_str += ", Utilization: {0:.2f}".format(self.test_episode_utilization.value)
+        if self.config.ENV_NAME in ["Task_Allocation_v1"]:
+            test_str += ", Resource utilization: {0:.2f}".format(self.test_resource_utilization.value)
+            test_str += ", Average latency: {0:.2f}".format(self.test_average_latency.value)
+            test_str += ", Rejection ratio: {0:.2f}".format(self.test_rejection_ratio.value)
         if self.config.ENV_NAME in ["Knapsack_Problem_v0"]:
             test_str += ", Item. Value Selected: {0:.2f}, Ratio: {1:.2f}".format(
                 self.test_episode_items_value.value, self.test_episode_ratio_value.value
@@ -519,6 +531,8 @@ class Learner(mp.Process):
         episode_reward_lst = []
         if self.config.ENV_NAME in ["Task_Allocation_v0"]:
             episode_utilization_lst = []
+        elif self.config.ENV_NAME in ["Task_Allocation_v1"]:
+            average_latency = 0
         elif self.config.ENV_NAME in ["Knapsack_Problem_v0"]:
             episode_items_value_selected_lst = []
             episode_ratio_lst = []
@@ -601,6 +615,10 @@ class Learner(mp.Process):
                     episode_utilization_lst.append(info[0]["Utilization"])
                 else:
                     episode_utilization_lst.append(info["Utilization"])
+            elif self.config.ENV_NAME in ["Task_Allocation_v1"]:
+                resource_utilization = self.env_info[0]["Resource_utilization"]
+                average_latency = self.env_info[0]["Latency"]
+                rejection_ratio = self.env_info[0]["Rejection_ratio"]
             elif self.config.ENV_NAME in ["Knapsack_Problem_v0"]:
                 if self.config.INITIAL_ITEM_DISTRIBUTION_FIXED:
                     episode_items_value_selected_lst.append(info[0]["last_ep_value_of_all_items_selected"])
@@ -616,6 +634,8 @@ class Learner(mp.Process):
 
         if self.config.ENV_NAME in ["Task_Allocation_v0"]:
             return np.average(episode_reward_lst), np.std(episode_reward_lst), np.average(episode_utilization_lst)
+        elif self.config.ENV_NAME in ["Task_Allocation_v1"]:
+            return np.average(episode_reward_lst), np.std(episode_reward_lst), np.average(resource_utilization), np.average(average_latency), np.average(rejection_ratio)
         elif self.config.ENV_NAME in ["Knapsack_Problem_v0"]:
             return np.average(episode_reward_lst), np.std(episode_reward_lst), \
                    np.average(episode_items_value_selected_lst), np.average(episode_ratio_lst)
