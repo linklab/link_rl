@@ -269,7 +269,7 @@ class KnapsackEnv(gym.Env):
         #     self.state_sorting(self.internal_state, 4, self.config.NUM_ITEM + 3)
 
         self.TOTAL_VALUE_FOR_ALL_ITEMS = sum(self.internal_state[4:, 0])
-        # TODO: HER
+
         self.items_selected = []
         self.actions_sequence = []
 
@@ -288,6 +288,7 @@ class KnapsackEnv(gym.Env):
         info = dict()
 
         if self.config.USE_HER:
+            self.current_goal = self.TOTAL_VALUE_FOR_ALL_ITEMS
             goal_array = np.asarray([self.current_goal, self.current_goal])
             self.internal_state = np.vstack([self.internal_state, goal_array])
             info[HerConstant.ACHIEVED_GOAL] = self.current_goal
