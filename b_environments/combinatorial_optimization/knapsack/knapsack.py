@@ -288,7 +288,7 @@ class KnapsackEnv(gym.Env):
         info = dict()
 
         if self.config.USE_HER:
-            self.current_goal = self.TOTAL_VALUE_FOR_ALL_ITEMS
+            self.current_goal = random.randint(1, self.TOTAL_VALUE_FOR_ALL_ITEMS)
             goal_array = np.asarray([self.current_goal, self.current_goal])
             self.internal_state = np.vstack([self.internal_state, goal_array])
             info[HerConstant.ACHIEVED_GOAL] = self.current_goal
@@ -424,9 +424,9 @@ class KnapsackEnv(gym.Env):
                 if self.last_ep_solution_found[0] < self.value_of_all_items_selected:
                     self.last_ep_simple_solution_found = self.process_solution_found(self.last_ep_ratio)
 
-            if self.config.USE_HER and self.current_goal <= self.value_of_all_items_selected:
-                self.current_goal = self.value_of_all_items_selected + 1
-                info['DoneReasonType'] = DoneReasonType0.TYPE_3
+                if self.config.USE_HER and self.current_goal <= self.value_of_all_items_selected:
+                    self.current_goal = self.value_of_all_items_selected + 1
+                    info['DoneReasonType'] = DoneReasonType0.TYPE_3
 
             reward = self.reward(done_type=info['DoneReasonType'])
 
