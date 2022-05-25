@@ -62,5 +62,5 @@ def main_robotics():
     #env = gym.make("FetchSlide-v1");play(env, n_episodes=5)
 
 if __name__ == "__main__":
-    #main()
-    main_robotics()
+    main()
+    #main_robotics()

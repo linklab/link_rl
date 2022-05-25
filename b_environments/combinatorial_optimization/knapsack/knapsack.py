@@ -269,7 +269,7 @@ class KnapsackEnv(gym.Env):
         #     self.state_sorting(self.internal_state, 4, self.config.NUM_ITEM + 3)
 
         self.TOTAL_VALUE_FOR_ALL_ITEMS = sum(self.internal_state[4:, 0])
-        # TODO: HER
+
         self.items_selected = []
         self.actions_sequence = []
 
@@ -288,6 +288,7 @@ class KnapsackEnv(gym.Env):
         info = dict()
 
         if self.config.USE_HER:
+            self.current_goal = random.randint(1, self.TOTAL_VALUE_FOR_ALL_ITEMS)
             goal_array = np.asarray([self.current_goal, self.current_goal])
             self.internal_state = np.vstack([self.internal_state, goal_array])
             info[HerConstant.ACHIEVED_GOAL] = self.current_goal
@@ -404,8 +405,6 @@ class KnapsackEnv(gym.Env):
             self.internal_state[3][1] = self.internal_state[self.num_step + 4][1]
 
         if done:
-            reward = self.reward(done_type=info['DoneReasonType'])
-
             # TYPE_0 = "Selected Same items"
             # TYPE_1 = "Weight Limit Exceeded"
             if info['DoneReasonType'] in [DoneReasonType0.TYPE_0, DoneReasonType0.TYPE_1]:
@@ -424,6 +423,13 @@ class KnapsackEnv(gym.Env):
 
                 if self.last_ep_solution_found[0] < self.value_of_all_items_selected:
                     self.last_ep_simple_solution_found = self.process_solution_found(self.last_ep_ratio)
+
+                if self.config.USE_HER and self.current_goal <= self.value_of_all_items_selected:
+                    self.current_goal = self.value_of_all_items_selected + 1
+                    info['DoneReasonType'] = DoneReasonType0.TYPE_3
+
+            reward = self.reward(done_type=info['DoneReasonType'])
+
         else:
             reward = self.reward(done_type=None)
 
@@ -435,7 +441,7 @@ class KnapsackEnv(gym.Env):
             self.internal_state[-1][0] = self.current_goal
             self.internal_state[-1][1] = self.current_goal
 
-            if done and info['DoneReasonType'] == DoneReasonType0.TYPE_2:
+            if done and info['DoneReasonType'] == DoneReasonType0.TYPE_2:  # "Weight Remains"
                 info[HerConstant.HER_SAVE_DONE] = True
             else:
                 info[HerConstant.HER_SAVE_DONE] = False
@@ -504,7 +510,7 @@ class KnapsackEnv(gym.Env):
             raise ValueError()
 
         if self.config.USE_HER:
-            reward = mission_complete_reward + misbehavior_reward + goal_achieved_reward
+            reward = goal_achieved_reward
         else:
             reward = mission_complete_reward + misbehavior_reward + value_of_all_items_selected_reward
 
