@@ -34,8 +34,6 @@ from g_utils.commons import print_comparison_basic_info, get_wandb_obj, get_env_
 from g_utils.commons import set_config
 from g_utils.commons_rl import get_agent
 
-device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-
 n_agents = len(config_c.AGENT_PARAMETERS)
 
 import random

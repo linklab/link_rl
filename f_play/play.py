@@ -30,9 +30,6 @@ from e_main.config_single import config
 from g_utils.commons import model_load, get_single_env, get_env_info
 
 
-device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-
-
 def play(env, agent, n_episodes):
     is_recurrent_model = any([
         isinstance(config.MODEL_PARAMETER, ConfigRecurrentLinearModel),

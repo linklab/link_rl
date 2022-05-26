@@ -351,8 +351,7 @@ class Learner(mp.Process):
                     self.agent.replay_buffer.append(n_step_transition)
 
                     if self.config.USE_HER:
-                        if n_step_transition.info[HerConstant.HER_SAVE_DONE]:
-                            self.agent.her_buffer.append(n_step_transition)
+                        self.agent.her_buffer.append(n_step_transition)
                 else:
                     raise ValueError()
 
@@ -378,11 +377,12 @@ class Learner(mp.Process):
                         self.episode_rewards[actor_id][env_id] = 0.0
 
                         if self.config.USE_HER:
-                            her_trajectory = self.agent.her_buffer.get_her_trajectory(
-                                n_step_transition.info[HerConstant.ACHIEVED_GOAL]
-                            )
-                            for her_transition in her_trajectory:
-                                self.agent.replay_buffer.append(her_transition)
+                            if n_step_transition.info[HerConstant.HER_SAVE_DONE]:
+                                her_trajectory = self.agent.her_buffer.get_her_trajectory(
+                                    n_step_transition.info[HerConstant.ACHIEVED_GOAL]
+                                )
+                                for her_transition in her_trajectory:
+                                    self.agent.replay_buffer.append(her_transition)
                             self.agent.her_buffer.reset()
 
                 ###################
