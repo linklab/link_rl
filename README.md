@@ -155,6 +155,12 @@ https://github.com/openai/mujoco-py/issues/662
 #### Gym-Robotics
 pip install gym-robotics
 
+#### DM Control
+pip install dm_control
+
+# https://github.com/denisyarats/dmc2gym
+pip install git+https://github.com/denisyarats/dmc2gym.git
+
 ***
 
 #### To Do

@@ -31,6 +31,7 @@ class Model(nn.Module):
 
         self.is_recurrent_model = any([
             isinstance(self.config.MODEL_PARAMETER, ConfigRecurrentLinearModel),
+            isinstance(self.config.MODEL_PARAMETER, ConfigRecurrent1DConvolutionalModel),
             isinstance(self.config.MODEL_PARAMETER, ConfigRecurrent2DConvolutionalModel)
         ])
         if self.is_recurrent_model:
@@ -43,20 +44,18 @@ class Model(nn.Module):
         self.linear_layers = None
 
     def init_recurrent_hidden(self):
-        if self.is_recurrent_model:
-            self.recurrent_hidden = torch.zeros(
-                self.config.MODEL_PARAMETER.NUM_LAYERS,
-                1,  # batch_size is always 1,
-                    # exactly this is the number of envs in vector_env, but now ONLY 1 is supported
-                self.config.MODEL_PARAMETER.HIDDEN_SIZE,
-                dtype=torch.float32,
-                device=self.config.DEVICE
-            )
+        self.recurrent_hidden = torch.zeros(
+            self.config.MODEL_PARAMETER.NUM_LAYERS,
+            1,  # batch_size is always 1,
+                # exactly this is the number of envs in vector_env, but now ONLY 1 is supported
+            self.config.MODEL_PARAMETER.HIDDEN_SIZE,
+            dtype=torch.float32,
+            device=self.config.DEVICE
+        )
 
     ####################
     #   get_*_layers   #
     ####################
-
     def get_linear_layers(self, input_n_features, activation=nn.ReLU()):
         if not self.config.MODEL_PARAMETER.NEURONS_PER_FULLY_CONNECTED_LAYER:
             return nn.Sequential()

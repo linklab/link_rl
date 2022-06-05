@@ -1,7 +1,10 @@
-from time import time
+import time
 import csv
 import random
+import numpy as np
 from gurobipy import * # conda install gurobi
+
+RUNS = 20
 
 
 def model_kp(capacity, value, weight, LogToConsole = True, TimeLimit=10):
@@ -46,29 +49,36 @@ def dummy_test():
 
 def test_gurobi(capacity, nums, max_v, min_v, max_w, min_w):
 
-    values = []
-    weights = []
-    items = []
-    for item_idx in range(nums):
-        item_value = random.randint(min_v, max_v)
-        item_weight = random.randint(min_w, max_w)
+    elapsed_time_list = []
+    for run in range(RUNS):
+        values = []
+        weights = []
+        items = []
+        for item_idx in range(nums):
+            item_value = random.randint(min_v, max_v)
+            item_weight = random.randint(min_w, max_w)
 
-        items.append([item_value, item_weight])
+            items.append([item_value, item_weight])
 
-        values.append(item_value)
-        weights.append(item_weight)
+            values.append(item_value)
+            weights.append(item_weight)
 
-    start_time = time()
-    items_selected, total_value = model_kp(capacity, values, weights, False)
-    end_time = time()
+        start_time = time.process_time()
+        items_selected, total_value = model_kp(capacity, values, weights, False)
+        end_time = time.process_time()
 
-    print("items : ", items)
-    print("items_selected : ", items_selected)
-    print("total_value : ", total_value)
-    print("time : ", end_time-start_time)
+        elapsed_time_in_ms = 1000 * (end_time - start_time)
+        elapsed_time_list.append(elapsed_time_in_ms)
 
-    write_csv(items, items_selected, total_value, end_time-start_time)
-    print("end!!!")
+    #print("items : ", items)
+    #print("items_selected : ", items_selected)
+    #print("total_value : ", total_value)
+    print("Capacity: {0:4}, Num_items: {1:4}, Elapsed_time: {2:7.5f} ms".format(
+        capacity, nums, np.mean(elapsed_time_list))
+    )
+
+    #write_csv(items, items_selected, total_value, elapsed_time_in_ms)
+    #print("end!!!")
 
 
 def write_csv(items, items_selected, total_value, time):
@@ -91,7 +101,18 @@ if __name__ == "__main__":
     Max_weight = 20
     Min_weight = 10
 
-    test_gurobi(Knapsack_capacity, Num_items, Max_value, Min_value, Max_weight, Min_weight)
+    capacity_list  = [500, 1_000, 1_500, 2_000, 2_500, 3_000, 3_500, 4_000, 4_500, 5_000]
+    num_items_list = [50,    100,   150,   200,   250,   300,   350,   400,   450,   500]
 
+    print("#" * 100)
+    for capacity in capacity_list:
+        print()
+        for num_items in num_items_list:
+            test_gurobi(capacity, num_items, Max_value, Min_value, Max_weight, Min_weight)
 
+    print("#" * 100)
+    for num_items in num_items_list:
+        print()
+        for capacity in capacity_list:
+            test_gurobi(capacity, num_items, Max_value, Min_value, Max_weight, Min_weight)
 
