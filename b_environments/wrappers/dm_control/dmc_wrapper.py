@@ -49,7 +49,7 @@ class DMCWrapper(core.Env):
 			environment_kwargs=None,
 			channels_first=True
 	):
-		assert 'random' in task_kwargs, 'please specify a seed, for deterministic behaviour'
+		#assert 'random' in task_kwargs, 'please specify a seed, for deterministic behaviour'
 		self._from_pixels = from_pixels
 		self._height = height
 		self._width = width
@@ -95,7 +95,7 @@ class DMCWrapper(core.Env):
 		self.current_state = None
 
 		# set seed
-		self.seed(seed=task_kwargs.get('random', 1))
+		self.seed(seed=task_kwargs.get('seed', 1))
 
 	def __getattr__(self, name):
 		return getattr(self.original_env, name)
@@ -144,9 +144,9 @@ class DMCWrapper(core.Env):
 		self._observation_space.seed(seed)
 
 	def step(self, action):
-		assert self._norm_action_space.contains(action)
+		#assert self._norm_action_space.contains(action)
 		action = self._convert_action(action)
-		assert self._true_action_space.contains(action)
+		#assert self._true_action_space.contains(action)
 		reward = 0
 		extra = {'internal_state': self.original_env.physics.get_state().copy()}
 
@@ -161,11 +161,14 @@ class DMCWrapper(core.Env):
 		extra['discount'] = time_step.discount
 		return obs, reward, done, extra
 
-	def reset(self):
+	def reset(self, return_info=False):
 		time_step = self.original_env.reset()
 		self.current_state = _flatten_obs(time_step.observation)
 		obs = self._get_obs(time_step)
-		return obs
+		if return_info:
+			return obs, None
+		else:
+			return obs
 
 	def render(self, mode='rgb_array', height=None, width=None, camera_id=0):
 		assert mode == 'rgb_array', 'only support rgb_array mode, given %s' % mode

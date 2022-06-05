@@ -98,6 +98,17 @@ config.WANDB_REPORT_URL = "https://wandb.ai/link-koreatech/CartPole-v1_PPO_TRAJE
 from a_configuration.b_single_config.open_ai_gym.classic_control.config_cart_pole import ConfigCartPoleMuzero
 config = ConfigCartPoleMuzero()
 
+##########################
+## DM_CONTROL_CART_POLE ##
+##########################
+from a_configuration.b_single_config.dm_control.config_dm_control_cartpole import ConfigDmControlCartPoleBalanceA2c
+config = ConfigDmControlCartPoleBalanceA2c()
+
+from a_configuration.b_single_config.dm_control.config_dm_control_cartpole import ConfigDmControlCartPoleBalanceA3c
+config = ConfigDmControlCartPoleBalanceA3c()
+
+from a_configuration.b_single_config.dm_control.config_dm_control_cartpole import ConfigDmControlCartPoleBalancePpo
+config = ConfigDmControlCartPoleBalancePpo()
 ######################
 ## CART_POLE_BULLET ##
 ######################

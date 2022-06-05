@@ -1,8 +1,10 @@
+import time
+
 import numpy as np
 from dm_control.suite import ALL_TASKS
 
 from dm_control import viewer
-import b_environments.wrappers.dm_control as dmc2gym
+import b_environments.wrappers.dm_control as dmc_gym
 
 # print(*ALL_TASKS, sep="\n")
 from gym.spaces import Discrete, Box
@@ -10,7 +12,7 @@ from gym.spaces import Discrete, Box
 
 def print_all_dmc_env_info():
 	for id, (domain_name, task_name) in enumerate(ALL_TASKS):
-		env = dmc2gym.make(domain_name=domain_name, task_name=task_name, seed=1)
+		env = dmc_gym.make(domain_name=domain_name, task_name=task_name, seed=1)
 		observation_space = env.observation_space
 		action_space = env.action_space
 
@@ -35,8 +37,36 @@ def print_all_dmc_env_info():
 		))
 
 
-def print_sample_execution():
-	env = dmc2gym.make(domain_name="humanoid", task_name="stand", seed=1)
+def dummy_agent_test():
+	env = dmc_gym.make(domain_name="cartpole", task_name="balance", seed=1)
+
+	class Dummy_Agent:
+		def get_action(self, observation):
+			assert observation is not None
+			actions = env.action_space.sample()
+			return actions
+
+	agent = Dummy_Agent()
+
+	for i in range(100):
+		observation = env.reset()
+		done = False
+
+		while not done:
+			time.sleep(0.05)
+			action = agent.get_action(observation)
+			next_observation, reward, done, info = env.step(action)
+			# env.render()
+			print("Observation: {0}, Action: {1}, next_observation: {2}, Reward: {3}, Done: {4}, Info: {5}".format(
+				observation, action, next_observation, reward, done, info
+			))
+			observation = next_observation
+
+		time.sleep(1)
+
+
+def play_test():
+	env = dmc_gym.make(domain_name="humanoid", task_name="stand", seed=1)
 
 	# Define a uniform random policy.
 	def get_action(obs):
@@ -50,5 +80,6 @@ def print_sample_execution():
 
 if __name__ == "__main__":
 	#print_all_dmc_env_info()
-	print_sample_execution()
+	dummy_agent_test()
+	#play_test()
 

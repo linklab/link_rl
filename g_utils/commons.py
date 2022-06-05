@@ -13,6 +13,7 @@ from gym.spaces import Discrete, Box
 from gym.vector import AsyncVectorEnv
 import plotly.graph_objects as go
 
+from a_configuration.a_base_config.a_environments.dm_control import ConfigDmControl
 from a_configuration.a_base_config.a_environments.open_ai_gym.config_gym_atari import ConfigGymAtari
 from a_configuration.a_base_config.a_environments.open_ai_gym.config_gym_box2d import ConfigHardcoreBipedalWalker, \
     ConfigNormalBipedalWalker
@@ -918,6 +919,15 @@ def get_train_env(config, no_graphics=True):
                 from b_environments.combinatorial_optimization.knapsack.knapsack import KnapsackEnv
                 env = KnapsackEnv(config)
 
+            #################
+            #   DM_CONTROL  #
+            #################
+            elif isinstance(config, ConfigDmControl):
+                import b_environments.wrappers.dm_control as dmc_gym
+                assert hasattr(config, "DOMAIN_NAME")
+                assert hasattr(config, "TASK_NAME")
+                env = dmc_gym.make(domain_name=config.DOMAIN_NAME, task_name=config.TASK_NAME, seed=config.SEED)
+
             #############
             #   Atari   #
             #############
@@ -1024,6 +1034,15 @@ def get_single_env(config, no_graphics=True, play=False):
     elif config.ENV_NAME in ["Knapsack_Problem_v0"]:
         from b_environments.combinatorial_optimization.knapsack.knapsack import KnapsackEnv
         single_env = KnapsackEnv(config)
+
+    #################
+    #   DM_CONTROL  #
+    #################
+    elif isinstance(config, ConfigDmControl):
+        import b_environments.wrappers.dm_control as dmc_gym
+        assert hasattr(config, "DOMAIN_NAME")
+        assert hasattr(config, "TASK_NAME")
+        single_env = dmc_gym.make(domain_name=config.DOMAIN_NAME, task_name=config.TASK_NAME, seed=config.SEED)
 
     #############
     #   Atari   #
