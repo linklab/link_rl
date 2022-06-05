@@ -401,9 +401,6 @@ def print_model_info(config):
 
 
 def print_env_info(observation_space, action_space, config):
-    # item1 = "{0}: {1:,}".format("EPISODE_REWARD_AVG_SOLVED", config.EPISODE_REWARD_AVG_SOLVED)
-    # item2 = "{0}: {1:,}".format("EPISODE_REWARD_STD_SOLVED", config.EPISODE_REWARD_STD_SOLVED)
-    # print("{0:55} {1:55}".format(item1, item2), end="\n")
     env_name_str = "ENV_NAME: {0}".format(config.ENV_NAME)
     print(env_name_str)
 
@@ -428,6 +425,11 @@ def print_env_info(observation_space, action_space, config):
     else:
         raise ValueError()
     print(action_space_str)
+
+    if hasattr(config, "EPISODE_REWARD_AVG_SOLVED") and hasattr(config, "EPISODE_REWARD_STD_SOLVED"):
+        item1 = "{0}: {1:,}".format("EPISODE_REWARD_AVG_SOLVED", config.EPISODE_REWARD_AVG_SOLVED)
+        item2 = "{0}: {1:,}".format("EPISODE_REWARD_STD_SOLVED", config.EPISODE_REWARD_STD_SOLVED)
+        print("{0:55} {1:55}".format(item1, item2), end="\n")
 
 
 def console_log(

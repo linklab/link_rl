@@ -75,7 +75,7 @@ class ConfigDmControlCartPoleThreePolesA2c(ConfigBase, ConfigDmControlCartpoleTh
         ConfigDmControlCartpoleThreePoles.__init__(self)
         ConfigA2c.__init__(self)
 
-        self.MAX_TRAINING_STEPS = 100_000
+        self.MAX_TRAINING_STEPS = 500_000
         self.MODEL_TYPE = ModelType.SMALL_LINEAR
 
 
@@ -85,7 +85,7 @@ class ConfigDmControlCartPoleThreePolesA3c(ConfigBase, ConfigDmControlCartpoleTh
         ConfigDmControlCartpoleThreePoles.__init__(self)
         ConfigA3c.__init__(self)
 
-        self.MAX_TRAINING_STEPS = 100_000
+        self.MAX_TRAINING_STEPS = 500_000
         self.MODEL_TYPE = ModelType.SMALL_LINEAR
 
 
@@ -95,7 +95,7 @@ class ConfigDmControlCartPoleThreePolesPpo(ConfigBase, ConfigDmControlCartpoleTh
         ConfigDmControlCartpoleThreePoles.__init__(self)
         ConfigPpo.__init__(self)
 
-        self.MAX_TRAINING_STEPS = 100_000
+        self.MAX_TRAINING_STEPS = 500_000
         self.MODEL_TYPE = ModelType.SMALL_LINEAR
 
 
@@ -105,7 +105,7 @@ class ConfigDmControlCartPoleThreePolesDdpg(ConfigBase, ConfigDmControlCartpoleT
         ConfigDmControlCartpoleThreePoles.__init__(self)
         ConfigDdpg.__init__(self)
 
-        self.MAX_TRAINING_STEPS = 100_000
+        self.MAX_TRAINING_STEPS = 500_000
         self.MODEL_TYPE = ModelType.SMALL_LINEAR
 
 
@@ -115,7 +115,7 @@ class ConfigDmControlCartPoleThreePolesTd3(ConfigBase, ConfigDmControlCartpoleTh
         ConfigDmControlCartpoleThreePoles.__init__(self)
         ConfigTd3.__init__(self)
 
-        self.MAX_TRAINING_STEPS = 100_000
+        self.MAX_TRAINING_STEPS = 500_000
         self.MODEL_TYPE = ModelType.SMALL_LINEAR
 
 
@@ -125,5 +125,5 @@ class ConfigDmControlCartPoleThreePolesSac(ConfigBase, ConfigDmControlCartpoleTh
         ConfigDmControlCartpoleThreePoles.__init__(self)
         ConfigSac.__init__(self)
 
-        self.MAX_TRAINING_STEPS = 100_000
+        self.MAX_TRAINING_STEPS = 500_000
         self.MODEL_TYPE = ModelType.SMALL_LINEAR
