@@ -517,12 +517,12 @@ class Learner(mp.Process):
             self.is_terminated.value = True
 
         model_save_conditions = [
-            self.test_episode_reward_avg.value >= self.config.test_episode_reward_avg_best,
+            self.test_episode_reward_avg.value >= self.test_episode_reward_avg_best,
             self.test_episode_reward_std.value <= self.config.EPISODE_REWARD_STD_SOLVED
         ]
 
         if all(model_save_conditions) and not all(termination_conditions):
-            self.config.test_episode_reward_avg_best = self.test_episode_reward_avg.value
+            self.test_episode_reward_avg_best = self.test_episode_reward_avg.value
             model_save(
                 model=self.agent.model,
                 env_name=self.modified_env_name,
