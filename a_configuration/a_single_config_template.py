@@ -137,6 +137,25 @@ config = ConfigDmControlCartPoleThreePolesTd3()
 
 from a_configuration.b_single_config.dm_control.config_dm_control_cartpole import ConfigDmControlCartPoleThreePolesSac
 config = ConfigDmControlCartPoleThreePolesSac()
+
+
+from a_configuration.b_single_config.dm_control.config_dm_control_cheetah import ConfigDmControlCheetahA2c
+config = ConfigDmControlCheetahA2c()
+
+from a_configuration.b_single_config.dm_control.config_dm_control_cheetah import ConfigDmControlCheetahA3c
+config = ConfigDmControlCheetahA3c()
+
+from a_configuration.b_single_config.dm_control.config_dm_control_cheetah import ConfigDmControlCheetahPpo
+config = ConfigDmControlCheetahPpo()
+
+from a_configuration.b_single_config.dm_control.config_dm_control_cheetah import ConfigDmControlCheetahDdpg
+config = ConfigDmControlCheetahDdpg()
+
+from a_configuration.b_single_config.dm_control.config_dm_control_cheetah import ConfigDmControlCheetahTd3
+config = ConfigDmControlCheetahTd3()
+
+from a_configuration.b_single_config.dm_control.config_dm_control_cheetah import ConfigDmControlCheetahSac
+config = ConfigDmControlCheetahSac()
 ######################
 ## CART_POLE_BULLET ##
 ######################
