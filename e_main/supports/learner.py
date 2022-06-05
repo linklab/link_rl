@@ -55,6 +55,8 @@ class Learner(mp.Process):
         self.test_episode_reward_avg = mp.Value('d', 0.0)
         self.test_episode_reward_std = mp.Value('d', 0.0)
 
+        self.test_episode_reward_avg_best = 0.0
+
         if config.ENV_NAME in ["Task_Allocation_v0"]:
             self.test_episode_utilization = mp.Value('d', 0.0)
 
@@ -432,14 +434,6 @@ class Learner(mp.Process):
                 self.test_idx.value += 1
 
             if self.training_step.value >= self.config.MAX_TRAINING_STEPS:
-                model_save(
-                    model=self.agent.model,
-                    env_name=self.modified_env_name,
-                    agent_type_name=self.config.AGENT_TYPE.name,
-                    test_episode_reward_avg=self.test_episode_reward_avg.value,
-                    test_episode_reward_std=self.test_episode_reward_std.value,
-                    config=self.config
-                )
                 print("[TRAIN TERMINATION] MAX_TRAINING_STEPS ({0:,}) REACHES!!!".format(
                     self.config.MAX_TRAINING_STEPS
                 ))
@@ -504,8 +498,8 @@ class Learner(mp.Process):
         ]
 
         if all(termination_conditions):
-            # Console ?? Wandb ?????? ???? ????
-            self.training_step.value += 1
+            # # Console ?? Wandb ?????? ???? ????
+            # self.training_step.value += 1
 
             print("Solved in {0:,} steps ({1:,} training steps)!".format(
                 self.total_time_step.value, self.training_step.value
@@ -521,6 +515,23 @@ class Learner(mp.Process):
             )
             print("[TRAIN TERMINATION] TERMINATION CONDITION REACHES!!!")
             self.is_terminated.value = True
+
+        model_save_conditions = [
+            self.test_episode_reward_avg.value >= self.config.test_episode_reward_avg_best,
+            self.test_episode_reward_std.value <= self.config.EPISODE_REWARD_STD_SOLVED
+        ]
+
+        if all(model_save_conditions) and not all(termination_conditions):
+            self.config.test_episode_reward_avg_best = self.test_episode_reward_avg.value
+            model_save(
+                model=self.agent.model,
+                env_name=self.modified_env_name,
+                agent_type_name=self.config.AGENT_TYPE.name,
+                test_episode_reward_avg=self.test_episode_reward_avg.value,
+                test_episode_reward_std=self.test_episode_reward_std.value,
+                config=self.config
+            )
+            print("[BEST TEST RESULT] MODEL SAVED!!!")
 
         print("*" * 150)
 
