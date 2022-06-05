@@ -5,11 +5,13 @@ import warnings
 
 import numpy as np
 
+from a_configuration.a_base_config.a_environments.dm_control import ConfigDmControl
 from a_configuration.a_base_config.a_environments.open_ai_gym.config_gym_mujoco import ConfigMujoco
 from a_configuration.a_base_config.a_environments.open_ai_gym.config_gym_atari import ConfigGymAtari
 from a_configuration.a_base_config.a_environments.pybullet.config_gym_pybullet import ConfigBullet
 from a_configuration.a_base_config.a_environments.unity.config_unity_box import ConfigUnityGymEnv
-from a_configuration.a_base_config.c_models.config_recurrent_convolutional_models import ConfigRecurrent2DConvolutionalModel
+from a_configuration.a_base_config.c_models.config_recurrent_convolutional_models import \
+    ConfigRecurrent2DConvolutionalModel, ConfigRecurrent1DConvolutionalModel
 from a_configuration.a_base_config.c_models.config_recurrent_linear_models import ConfigRecurrentLinearModel
 from g_utils.commons import set_config
 from g_utils.commons_rl import get_agent
@@ -29,13 +31,17 @@ if PROJECT_HOME not in sys.path:
 from e_main.config_single import config
 from g_utils.commons import model_load, get_single_env, get_env_info
 
+is_recurrent_model = any([
+    isinstance(config.MODEL_PARAMETER, ConfigRecurrentLinearModel),
+    isinstance(config.MODEL_PARAMETER, ConfigRecurrent1DConvolutionalModel),
+    isinstance(config.MODEL_PARAMETER, ConfigRecurrent2DConvolutionalModel)
+])
+
+dm_control_episode_steps = 0
+dm_control_episode_reward = 0.0
+
 
 def play(env, agent, n_episodes):
-    is_recurrent_model = any([
-        isinstance(config.MODEL_PARAMETER, ConfigRecurrentLinearModel),
-        isinstance(config.MODEL_PARAMETER, ConfigRecurrent2DConvolutionalModel)
-    ])
-
     for i in range(n_episodes):
         episode_reward = 0  # cumulative_reward
 
@@ -100,8 +106,31 @@ def play(env, agent, n_episodes):
                 break
 
         print("[EPISODE: {0}] EPISODE_STEPS: {1:3d}, EPISODE REWARD: {2:4.1f}".format(
-            i, episode_steps, episode_reward
+            i + 1, episode_steps, episode_reward
         ))
+
+
+def dm_control_play(env, agent, n_episodes):
+    global dm_control_episode_steps, dm_control_episode_reward
+    from dm_control import viewer
+
+    def get_action(time_step):
+        global dm_control_episode_steps, dm_control_episode_reward
+        dm_control_episode_steps += 1
+        observation = env.get_observation(time_step)
+        actions = agent.get_action(observation, mode=AgentMode.PLAY)
+        actions_np = np.asarray(actions)
+        dm_control_episode_reward += time_step.reward or 0
+        return actions_np
+
+    for i in range(n_episodes):
+        env.reset()
+        viewer.launch(env.original_env, policy=get_action)
+        print("[EPISODE: {0}] EPISODE_STEPS: {1:3d}, EPISODE REWARD: {2:4.1f}".format(
+            i + 1, dm_control_episode_steps, dm_control_episode_reward
+        ))
+        dm_control_episode_steps = 0
+        dm_control_episode_reward = 0.0
 
 
 def main_play(n_episodes):
@@ -128,7 +157,10 @@ def main_play(n_episodes):
 
     agent.model.eval()
 
-    play(env, agent, n_episodes=n_episodes)
+    if isinstance(config, ConfigDmControl):
+        dm_control_play(env, agent, n_episodes=n_episodes)
+    else:
+        play(env, agent, n_episodes=n_episodes)
 
     env.close()
 

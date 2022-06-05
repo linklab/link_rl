@@ -100,7 +100,7 @@ class DMCWrapper(core.Env):
 	def __getattr__(self, name):
 		return getattr(self.original_env, name)
 
-	def _get_obs(self, time_step):
+	def get_observation(self, time_step):
 		if self._from_pixels:
 			obs = self.render(
 				height=self._height,
@@ -156,7 +156,7 @@ class DMCWrapper(core.Env):
 			done = time_step.last()
 			if done:
 				break
-		obs = self._get_obs(time_step)
+		obs = self.get_observation(time_step)
 		self.current_state = _flatten_obs(time_step.observation)
 		extra['discount'] = time_step.discount
 		return obs, reward, done, extra
@@ -164,7 +164,7 @@ class DMCWrapper(core.Env):
 	def reset(self, return_info=False):
 		time_step = self.original_env.reset()
 		self.current_state = _flatten_obs(time_step.observation)
-		obs = self._get_obs(time_step)
+		obs = self.get_observation(time_step)
 		if return_info:
 			return obs, None
 		else:

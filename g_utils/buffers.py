@@ -25,6 +25,7 @@ class Buffer:
         self.config = config
         self.is_recurrent_model = any([
             isinstance(self.config.MODEL_PARAMETER, ConfigRecurrentLinearModel),
+            isinstance(self.config.MODEL_PARAMETER, ConfigRecurrent1DConvolutionalModel),
             isinstance(self.config.MODEL_PARAMETER, ConfigRecurrent2DConvolutionalModel)
         ])
         self.internal_buffer = None

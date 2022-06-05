@@ -66,8 +66,8 @@ def dummy_agent_test():
 
 
 def play_test():
-	env = dmc_gym.make(domain_name="humanoid", task_name="stand", seed=1)
-
+	# env = dmc_gym.make(domain_name="humanoid", task_name="stand", seed=1)
+	env = dmc_gym.make(domain_name="cartpole", task_name="three_poles", seed=1)
 	# Define a uniform random policy.
 	def get_action(obs):
 		actions = env.action_space.sample()
@@ -80,6 +80,6 @@ def play_test():
 
 if __name__ == "__main__":
 	#print_all_dmc_env_info()
-	dummy_agent_test()
-	#play_test()
+	#dummy_agent_test()
+	play_test()
 

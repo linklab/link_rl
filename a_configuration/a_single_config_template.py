@@ -109,6 +109,34 @@ config = ConfigDmControlCartPoleBalanceA3c()
 
 from a_configuration.b_single_config.dm_control.config_dm_control_cartpole import ConfigDmControlCartPoleBalancePpo
 config = ConfigDmControlCartPoleBalancePpo()
+
+from a_configuration.b_single_config.dm_control.config_dm_control_cartpole import ConfigDmControlCartPoleBalanceDdpg
+config = ConfigDmControlCartPoleBalanceDdpg()
+
+from a_configuration.b_single_config.dm_control.config_dm_control_cartpole import ConfigDmControlCartPoleBalanceTd3
+config = ConfigDmControlCartPoleBalanceTd3()
+
+from a_configuration.b_single_config.dm_control.config_dm_control_cartpole import ConfigDmControlCartPoleBalanceSac
+config = ConfigDmControlCartPoleBalanceSac()
+
+
+from a_configuration.b_single_config.dm_control.config_dm_control_cartpole import ConfigDmControlCartPoleThreePolesA2c
+config = ConfigDmControlCartPoleThreePolesA2c()
+
+from a_configuration.b_single_config.dm_control.config_dm_control_cartpole import ConfigDmControlCartPoleThreePolesA3c
+config = ConfigDmControlCartPoleThreePolesA3c()
+
+from a_configuration.b_single_config.dm_control.config_dm_control_cartpole import ConfigDmControlCartPoleThreePolesPpo
+config = ConfigDmControlCartPoleThreePolesPpo()
+
+from a_configuration.b_single_config.dm_control.config_dm_control_cartpole import ConfigDmControlCartPoleThreePolesDdpg
+config = ConfigDmControlCartPoleThreePolesDdpg()
+
+from a_configuration.b_single_config.dm_control.config_dm_control_cartpole import ConfigDmControlCartPoleThreePolesTd3
+config = ConfigDmControlCartPoleThreePolesTd3()
+
+from a_configuration.b_single_config.dm_control.config_dm_control_cartpole import ConfigDmControlCartPoleThreePolesSac
+config = ConfigDmControlCartPoleThreePolesSac()
 ######################
 ## CART_POLE_BULLET ##
 ######################
