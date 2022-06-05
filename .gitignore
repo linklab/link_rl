@@ -155,3 +155,5 @@ f_play/models/**
 
 b_environments/unity
 /f_play/reference_history/
+
+/i_temp/gurobi_result.csv
