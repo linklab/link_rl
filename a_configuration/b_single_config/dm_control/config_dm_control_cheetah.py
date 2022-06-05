@@ -11,7 +11,7 @@ class ConfigDmControlCheetahA2c(ConfigBase, ConfigDmControlCheetahRun, ConfigA2c
         ConfigDmControlCheetahRun.__init__(self)
         ConfigA2c.__init__(self)
 
-        self.MAX_TRAINING_STEPS = 100_000
+        self.MAX_TRAINING_STEPS = 500_000
         self.MODEL_TYPE = ModelType.SMALL_LINEAR
 
 
@@ -21,7 +21,7 @@ class ConfigDmControlCheetahA3c(ConfigBase, ConfigDmControlCheetahRun, ConfigA3c
         ConfigDmControlCheetahRun.__init__(self)
         ConfigA3c.__init__(self)
 
-        self.MAX_TRAINING_STEPS = 100_000
+        self.MAX_TRAINING_STEPS = 500_000
         self.MODEL_TYPE = ModelType.SMALL_LINEAR
 
 
@@ -31,7 +31,7 @@ class ConfigDmControlCheetahPpo(ConfigBase, ConfigDmControlCheetahRun, ConfigPpo
         ConfigDmControlCheetahRun.__init__(self)
         ConfigPpo.__init__(self)
 
-        self.MAX_TRAINING_STEPS = 100_000
+        self.MAX_TRAINING_STEPS = 500_000
         self.MODEL_TYPE = ModelType.SMALL_LINEAR
 
 
@@ -41,7 +41,7 @@ class ConfigDmControlCheetahDdpg(ConfigBase, ConfigDmControlCheetahRun, ConfigDd
         ConfigDmControlCheetahRun.__init__(self)
         ConfigDdpg.__init__(self)
 
-        self.MAX_TRAINING_STEPS = 100_000
+        self.MAX_TRAINING_STEPS = 500_000
         self.MODEL_TYPE = ModelType.SMALL_LINEAR
 
 
@@ -51,7 +51,7 @@ class ConfigDmControlCheetahTd3(ConfigBase, ConfigDmControlCheetahRun, ConfigTd3
         ConfigDmControlCheetahRun.__init__(self)
         ConfigTd3.__init__(self)
 
-        self.MAX_TRAINING_STEPS = 100_000
+        self.MAX_TRAINING_STEPS = 500_000
         self.MODEL_TYPE = ModelType.SMALL_LINEAR
 
 
@@ -61,5 +61,5 @@ class ConfigDmControlCheetahSac(ConfigBase, ConfigDmControlCheetahRun, ConfigSac
         ConfigDmControlCheetahRun.__init__(self)
         ConfigSac.__init__(self)
 
-        self.MAX_TRAINING_STEPS = 100_000
+        self.MAX_TRAINING_STEPS = 500_000
         self.MODEL_TYPE = ModelType.SMALL_LINEAR
