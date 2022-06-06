@@ -109,6 +109,8 @@ class DMCWrapper(core.Env):
 			)
 			if self._channels_first:
 				obs = obs.transpose(2, 0, 1).copy()
+
+			obs = obs / 255.0
 		else:
 			obs = _flatten_obs(time_step.observation)
 		return obs

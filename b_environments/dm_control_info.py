@@ -40,8 +40,16 @@ def print_all_dmc_env_info(from_pixels=False):
 	print()
 
 
-def dummy_agent_test():
-	env = dmc_gym.make(domain_name="cartpole", task_name="balance", seed=1)
+def dummy_agent_test(from_pixels=False):
+	domain_name = "cartpole"
+	task_name = "balance"
+
+	if from_pixels:
+		env = dmc_gym.make(
+			domain_name=domain_name, task_name=task_name, seed=1, from_pixels=True, visualize_reward=False
+		)
+	else:
+		env = dmc_gym.make(domain_name=domain_name, task_name=task_name, seed=2)
 
 	class Dummy_Agent:
 		def get_action(self, observation):
@@ -82,8 +90,11 @@ def play_test():
 
 
 if __name__ == "__main__":
-	print_all_dmc_env_info(from_pixels=True)
-	print_all_dmc_env_info(from_pixels=False)
-	#dummy_agent_test()
+	#print_all_dmc_env_info(from_pixels=True)
+	#print_all_dmc_env_info(from_pixels=False)
+
+	dummy_agent_test(from_pixels=True)
+	dummy_agent_test(from_pixels=False)
+
 	#play_test()
 
