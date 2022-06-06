@@ -158,7 +158,7 @@ def main_play(n_episodes):
     agent.model.eval()
 
     if isinstance(config, ConfigDmControl):
-        dm_control_play(env, agent, n_episodes=n_episodes)
+        dm_control_play(env, agent, n_episodes=1)
     else:
         play(env, agent, n_episodes=n_episodes)
 
