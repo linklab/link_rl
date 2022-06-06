@@ -139,23 +139,23 @@ from a_configuration.b_single_config.dm_control.config_dm_control_cartpole impor
 config = ConfigDmControlCartPoleThreePolesSac()
 
 
-from a_configuration.b_single_config.dm_control.config_dm_control_cheetah import ConfigDmControlCheetahA2c
-config = ConfigDmControlCheetahA2c()
+from a_configuration.b_single_config.dm_control.config_dm_control_cheetah_run import ConfigDmControlCheetahRunA2c
+config = ConfigDmControlCheetahRunA2c()
 
-from a_configuration.b_single_config.dm_control.config_dm_control_cheetah import ConfigDmControlCheetahA3c
-config = ConfigDmControlCheetahA3c()
+from a_configuration.b_single_config.dm_control.config_dm_control_cheetah_run import ConfigDmControlCheetahRunA3c
+config = ConfigDmControlCheetahRunA3c()
 
-from a_configuration.b_single_config.dm_control.config_dm_control_cheetah import ConfigDmControlCheetahPpo
-config = ConfigDmControlCheetahPpo()
+from a_configuration.b_single_config.dm_control.config_dm_control_cheetah_run import ConfigDmControlCheetahRunPpo
+config = ConfigDmControlCheetahRunPpo()
 
-from a_configuration.b_single_config.dm_control.config_dm_control_cheetah import ConfigDmControlCheetahDdpg
-config = ConfigDmControlCheetahDdpg()
+from a_configuration.b_single_config.dm_control.config_dm_control_cheetah_run import ConfigDmControlCheetahRunDdpg
+config = ConfigDmControlCheetahRunDdpg()
 
-from a_configuration.b_single_config.dm_control.config_dm_control_cheetah import ConfigDmControlCheetahTd3
-config = ConfigDmControlCheetahTd3()
+from a_configuration.b_single_config.dm_control.config_dm_control_cheetah_run import ConfigDmControlCheetahRunTd3
+config = ConfigDmControlCheetahRunTd3()
 
-from a_configuration.b_single_config.dm_control.config_dm_control_cheetah import ConfigDmControlCheetahSac
-config = ConfigDmControlCheetahSac()
+from a_configuration.b_single_config.dm_control.config_dm_control_cheetah_run import ConfigDmControlCheetahRunSac
+config = ConfigDmControlCheetahRunSac()
 ######################
 ## CART_POLE_BULLET ##
 ######################

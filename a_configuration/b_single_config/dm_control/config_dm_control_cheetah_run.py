@@ -5,7 +5,7 @@ from a_configuration.a_base_config.config_single_base import ConfigBase
 from g_utils.types import ModelType
 
 
-class ConfigDmControlCheetahA2c(ConfigBase, ConfigDmControlCheetahRun, ConfigA2c):
+class ConfigDmControlCheetahRunA2c(ConfigBase, ConfigDmControlCheetahRun, ConfigA2c):
     def __init__(self):
         ConfigBase.__init__(self)
         ConfigDmControlCheetahRun.__init__(self)
@@ -15,7 +15,7 @@ class ConfigDmControlCheetahA2c(ConfigBase, ConfigDmControlCheetahRun, ConfigA2c
         self.MODEL_TYPE = ModelType.SMALL_LINEAR
 
 
-class ConfigDmControlCheetahA3c(ConfigBase, ConfigDmControlCheetahRun, ConfigA3c):
+class ConfigDmControlCheetahRunA3c(ConfigBase, ConfigDmControlCheetahRun, ConfigA3c):
     def __init__(self):
         ConfigBase.__init__(self)
         ConfigDmControlCheetahRun.__init__(self)
@@ -25,7 +25,7 @@ class ConfigDmControlCheetahA3c(ConfigBase, ConfigDmControlCheetahRun, ConfigA3c
         self.MODEL_TYPE = ModelType.SMALL_LINEAR
 
 
-class ConfigDmControlCheetahPpo(ConfigBase, ConfigDmControlCheetahRun, ConfigPpo):
+class ConfigDmControlCheetahRunPpo(ConfigBase, ConfigDmControlCheetahRun, ConfigPpo):
     def __init__(self):
         ConfigBase.__init__(self)
         ConfigDmControlCheetahRun.__init__(self)
@@ -35,7 +35,7 @@ class ConfigDmControlCheetahPpo(ConfigBase, ConfigDmControlCheetahRun, ConfigPpo
         self.MODEL_TYPE = ModelType.SMALL_LINEAR
 
 
-class ConfigDmControlCheetahDdpg(ConfigBase, ConfigDmControlCheetahRun, ConfigDdpg):
+class ConfigDmControlCheetahRunDdpg(ConfigBase, ConfigDmControlCheetahRun, ConfigDdpg):
     def __init__(self):
         ConfigBase.__init__(self)
         ConfigDmControlCheetahRun.__init__(self)
@@ -45,7 +45,7 @@ class ConfigDmControlCheetahDdpg(ConfigBase, ConfigDmControlCheetahRun, ConfigDd
         self.MODEL_TYPE = ModelType.SMALL_LINEAR
 
 
-class ConfigDmControlCheetahTd3(ConfigBase, ConfigDmControlCheetahRun, ConfigTd3):
+class ConfigDmControlCheetahRunTd3(ConfigBase, ConfigDmControlCheetahRun, ConfigTd3):
     def __init__(self):
         ConfigBase.__init__(self)
         ConfigDmControlCheetahRun.__init__(self)
@@ -55,7 +55,7 @@ class ConfigDmControlCheetahTd3(ConfigBase, ConfigDmControlCheetahRun, ConfigTd3
         self.MODEL_TYPE = ModelType.SMALL_LINEAR
 
 
-class ConfigDmControlCheetahSac(ConfigBase, ConfigDmControlCheetahRun, ConfigSac):
+class ConfigDmControlCheetahRunSac(ConfigBase, ConfigDmControlCheetahRun, ConfigSac):
     def __init__(self):
         ConfigBase.__init__(self)
         ConfigDmControlCheetahRun.__init__(self)

@@ -45,23 +45,24 @@ config = ConfigDmControlCartPoleThreePolesSac()
 ##################################
 ## DM_CONTROL_CART_POLE_CHEETAH ##
 ##################################
-from a_configuration.b_single_config.dm_control.config_dm_control_cheetah import ConfigDmControlCheetahA2c
-config = ConfigDmControlCheetahA2c()
+from a_configuration.b_single_config.dm_control.config_dm_control_cheetah_run import ConfigDmControlCheetahRunA2c
+config = ConfigDmControlCheetahRunA2c()
 
-from a_configuration.b_single_config.dm_control.config_dm_control_cheetah import ConfigDmControlCheetahA3c
-config = ConfigDmControlCheetahA3c()
+from a_configuration.b_single_config.dm_control.config_dm_control_cheetah_run import ConfigDmControlCheetahRunA3c
+config = ConfigDmControlCheetahRunA3c()
 
-from a_configuration.b_single_config.dm_control.config_dm_control_cheetah import ConfigDmControlCheetahPpo
-config = ConfigDmControlCheetahPpo()
+from a_configuration.b_single_config.dm_control.config_dm_control_cheetah_run import ConfigDmControlCheetahRunPpo
+config = ConfigDmControlCheetahRunPpo()
+config.WANDB_REPORT_URL = "https://wandb.ai/link-koreatech/dm_control_cheetah_run_PPO_yhhan/reports/dm_control_cheetah_run_PPO--VmlldzoyMTIwNDM3?accessToken=iznwh3lje5aum3woxmmfk7ce13fhke3k64ap2iqwxjlbuoe5gb0l94eu3hiznt78"
 
-from a_configuration.b_single_config.dm_control.config_dm_control_cheetah import ConfigDmControlCheetahDdpg
-config = ConfigDmControlCheetahDdpg()
+from a_configuration.b_single_config.dm_control.config_dm_control_cheetah_run import ConfigDmControlCheetahRunDdpg
+config = ConfigDmControlCheetahRunDdpg()
 
-from a_configuration.b_single_config.dm_control.config_dm_control_cheetah import ConfigDmControlCheetahTd3
-config = ConfigDmControlCheetahTd3()
+from a_configuration.b_single_config.dm_control.config_dm_control_cheetah_run import ConfigDmControlCheetahRunTd3
+config = ConfigDmControlCheetahRunTd3()
 
-from a_configuration.b_single_config.dm_control.config_dm_control_cheetah import ConfigDmControlCheetahSac
-config = ConfigDmControlCheetahSac()
+from a_configuration.b_single_config.dm_control.config_dm_control_cheetah_run import ConfigDmControlCheetahRunSac
+config = ConfigDmControlCheetahRunSac()
 
 
 ############################################
