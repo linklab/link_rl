@@ -8,5 +8,5 @@ class ConfigDmControlBallInCupCatch(ConfigDmControl):
         self.ENV_NAME = "dm_control_ball_in_cup_catch"
         self.DOMAIN_NAME = "ball_in_cup"
         self.TASK_NAME = "catch"
-        self.EPISODE_REWARD_AVG_SOLVED = 450
-        self.EPISODE_REWARD_STD_SOLVED = 50.0
+        self.EPISODE_REWARD_AVG_SOLVED = 990
+        self.EPISODE_REWARD_STD_SOLVED = 10.0
