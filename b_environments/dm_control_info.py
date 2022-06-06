@@ -80,7 +80,7 @@ def play_test():
 	# env = dmc_gym.make(domain_name="humanoid", task_name="stand", seed=1)
 	env = dmc_gym.make(domain_name="cartpole", task_name="three_poles", seed=1)
 	# Define a uniform random policy.
-	def get_action(obs):
+	def get_action(time_step):
 		actions = env.action_space.sample()
 		actions_np = np.asarray(actions)
 		return actions_np
