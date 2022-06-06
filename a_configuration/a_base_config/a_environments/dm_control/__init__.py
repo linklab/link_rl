@@ -1,3 +1,7 @@
+from g_utils.types import ModelType
+
+
 class ConfigDmControl:
     def __init__(self):
-        pass
+        self.FROM_PIXELS = False
+        self.MODEL_TYPE_PIXEL = ModelType.SMALL_2D_CONVOLUTIONAL

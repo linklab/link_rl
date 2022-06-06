@@ -1,11 +1,11 @@
 from a_configuration.a_base_config.a_environments.dm_control import ConfigDmControl
-from g_utils.types import LossFunctionType
 
 
 class ConfigDmControlCartpole(ConfigDmControl):
     def __init__(self):
-        super(ConfigDmControl, self).__init__()
+        super(ConfigDmControlCartpole, self).__init__()
         self.DOMAIN_NAME = "cartpole"
+        self.TASK_NAME = None
 
 
 class ConfigDmControlCartpoleBalance(ConfigDmControlCartpole):

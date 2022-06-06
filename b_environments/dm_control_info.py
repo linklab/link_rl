@@ -10,31 +10,34 @@ import b_environments.wrappers.dm_control as dmc_gym
 from gym.spaces import Discrete, Box
 
 
-def print_all_dmc_env_info():
+def print_all_dmc_env_info(from_pixels=False):
 	for id, (domain_name, task_name) in enumerate(ALL_TASKS):
-		env = dmc_gym.make(domain_name=domain_name, task_name=task_name, seed=1)
+		if from_pixels:
+			env = dmc_gym.make(
+				domain_name=domain_name, task_name=task_name, seed=1, from_pixels=True, visualize_reward=False
+			)
+		else:
+			env = dmc_gym.make(domain_name=domain_name, task_name=task_name, seed=2)
+
 		observation_space = env.observation_space
 		action_space = env.action_space
-
 		env_spec = env.spec
 
-		observation_space_str = "OBS_SPACE: {0}, SHAPE: {1}".format(
-			type(observation_space), observation_space.shape
-		)
-
-		action_space_str = "ACTION_SPACE: {0}, SHAPE: {1}".format(
-			type(action_space), action_space.shape
-		)
+		observation_space_str = "OBS_SPACE: {0}, SHAPE: {1}".format(type(observation_space), observation_space.shape)
+		action_space_str = "ACTION_SPACE: {0}, SHAPE: {1}".format(type(action_space), action_space.shape)
 
 		if isinstance(action_space, Discrete):
 			action_space_str += ", N: {0}".format(action_space.n)
 		elif isinstance(action_space, Box):
 			action_space_str += ", RANGE: {0}".format(action_space)
+		else:
+			raise ValueError()
 
 		print("{0:2}: Domain Name: {1:>12}, Task Name: {2:>14} | reward_threshold: {3} | {4:55} {5}".format(
-			id + 1, domain_name, task_name, env_spec.reward_threshold,
-			observation_space_str, action_space_str
+			id + 1, domain_name, task_name, env_spec.reward_threshold, observation_space_str, action_space_str
 		))
+		del env
+	print()
 
 
 def dummy_agent_test():
@@ -79,7 +82,8 @@ def play_test():
 
 
 if __name__ == "__main__":
-	#print_all_dmc_env_info()
+	print_all_dmc_env_info(from_pixels=True)
+	print_all_dmc_env_info(from_pixels=False)
 	#dummy_agent_test()
-	play_test()
+	#play_test()
 

@@ -4,7 +4,7 @@ from g_utils.types import LossFunctionType
 
 class ConfigDmControlBallInCupCatch(ConfigDmControl):
     def __init__(self):
-        super(ConfigDmControl, self).__init__()
+        super(ConfigDmControlBallInCupCatch, self).__init__()
         self.ENV_NAME = "dm_control_ball_in_cup_catch"
         self.DOMAIN_NAME = "ball_in_cup"
         self.TASK_NAME = "catch"

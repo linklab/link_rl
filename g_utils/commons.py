@@ -58,6 +58,11 @@ def model_load(model, env_name, agent_type_name, file_name, config):
 def set_config(config):
     config.DEVICE = torch.device("cuda" if torch.cuda.is_available() and not config.FORCE_USE_CPU else "cpu")
 
+    if isinstance(config, ConfigDmControl):
+        assert hasattr(config, "MODEL_TYPE_PIXEL")
+        if config.FROM_PIXELS:
+            config.MODEL_TYPE = config.MODEL_TYPE_PIXEL
+
     if config.MODEL_TYPE in (
             ModelType.TINY_LINEAR, ModelType.SMALL_LINEAR, ModelType.SMALL_LINEAR_2,
             ModelType.MEDIUM_LINEAR, ModelType.LARGE_LINEAR
@@ -928,7 +933,13 @@ def get_train_env(config, no_graphics=True):
                 import b_environments.wrappers.dm_control as dmc_gym
                 assert hasattr(config, "DOMAIN_NAME")
                 assert hasattr(config, "TASK_NAME")
-                env = dmc_gym.make(domain_name=config.DOMAIN_NAME, task_name=config.TASK_NAME, seed=config.SEED)
+                if config.FROM_PIXELS:
+                    env = dmc_gym.make(
+                        domain_name=config.DOMAIN_NAME, task_name=config.TASK_NAME, seed=config.SEED,
+                        from_pixels=True, visualize_reward=False
+                    )
+                else:
+                    env = dmc_gym.make(domain_name=config.DOMAIN_NAME, task_name=config.TASK_NAME, seed=config.SEED)
 
             #############
             #   Atari   #
@@ -1044,7 +1055,13 @@ def get_single_env(config, no_graphics=True, play=False):
         import b_environments.wrappers.dm_control as dmc_gym
         assert hasattr(config, "DOMAIN_NAME")
         assert hasattr(config, "TASK_NAME")
-        single_env = dmc_gym.make(domain_name=config.DOMAIN_NAME, task_name=config.TASK_NAME, seed=config.SEED)
+        if config.FROM_PIXELS:
+            single_env = dmc_gym.make(
+                domain_name=config.DOMAIN_NAME, task_name=config.TASK_NAME, seed=config.SEED,
+                from_pixels=True, visualize_reward=False
+            )
+        else:
+            single_env = dmc_gym.make(domain_name=config.DOMAIN_NAME, task_name=config.TASK_NAME, seed=config.SEED)
 
     #############
     #   Atari   #
