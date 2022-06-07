@@ -1,7 +1,5 @@
 import time
 
-import numpy as np
-from dm_control import viewer
 import gym
 from gym.spaces import Discrete, Box
 from gym import envs
@@ -16,8 +14,11 @@ def print_all_gym_robotics_env_info():
 		action_space = env.action_space
 		env_spec = env.spec
 
-		print(observation_space["achieved_goal"], observation_space["desired_goal"], observation_space["observation"])
-		observation_space_str = "OBS_SPACE: {0}, SHAPE: {1}".format(type(observation_space), observation_space.shape)
+		observation_space_str = "OBS_SPACE: {0}, SHAPE: {1} [ACHIEVED_GOAL_SPACE: {2}, SHAPE: {3}] [DESIRED_GOAL_SPACE: {4}, SHAPE: {5}]".format(
+			type(observation_space["observation"]), observation_space["observation"].shape,
+			type(observation_space["achieved_goal"]), observation_space["achieved_goal"].shape,
+			type(observation_space["desired_goal"]), observation_space["desired_goal"].shape,
+		)
 		action_space_str = "ACTION_SPACE: {0}, SHAPE: {1}".format(type(action_space), action_space.shape)
 
 		if isinstance(action_space, Discrete):
@@ -27,23 +28,16 @@ def print_all_gym_robotics_env_info():
 		else:
 			raise ValueError()
 
-		print("{0:2}: env_id: {1:>45} | {2:55} {3}".format(
+		print("{0:2}: env_id: {1:>50} | {2:60} | {3}".format(
 			idx + 1, env_spec.id, observation_space_str, action_space_str
 		))
 		del env
 	print()
 
 
-def dummy_agent_test(from_pixels=False):
-	domain_name = "cartpole"
-	task_name = "balance"
-
-	if from_pixels:
-		env = dmc_gym.make(
-			domain_name=domain_name, task_name=task_name, seed=1, from_pixels=True, visualize_reward=False
-		)
-	else:
-		env = dmc_gym.make(domain_name=domain_name, task_name=task_name, seed=2)
+def dummy_agent_test(render=False):
+	env_id = "HandManipulateBlockRotateXYZ-v0"
+	env = gym.make(env_id)
 
 	class Dummy_Agent:
 		def get_action(self, observation):
@@ -56,7 +50,7 @@ def dummy_agent_test(from_pixels=False):
 	for i in range(100):
 		observation = env.reset()
 		done = False
-
+		env.render()
 		while not done:
 			time.sleep(0.05)
 			action = agent.get_action(observation)
@@ -66,29 +60,13 @@ def dummy_agent_test(from_pixels=False):
 				observation, action, next_observation, reward, done, info
 			))
 			observation = next_observation
+			env.render()
 
 		time.sleep(1)
 
 
-def play_test():
-	# env = dmc_gym.make(domain_name="humanoid", task_name="stand", seed=1)
-	env = dmc_gym.make(domain_name="cartpole", task_name="three_poles", seed=1)
-	# Define a uniform random policy.
-	def get_action(time_step):
-		actions = env.action_space.sample()
-		actions_np = np.asarray(actions)
-		return actions_np
-
-	# Launch the viewer application.
-	viewer.launch(env.original_env, policy=get_action)
-
-
 if __name__ == "__main__":
-	print_all_gym_robotics_env_info()
+	#print_all_gym_robotics_env_info()
+	dummy_agent_test(render=True)
 
-
-	# dummy_agent_test(from_pixels=True)
-	# dummy_agent_test(from_pixels=False)
-
-	#play_test()
 
