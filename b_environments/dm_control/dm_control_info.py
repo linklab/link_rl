@@ -4,7 +4,7 @@ import numpy as np
 from dm_control.suite import ALL_TASKS
 
 from dm_control import viewer
-import b_environments.wrappers.dm_control as dmc_gym
+import b_environments.dm_control as dmc_gym
 
 # print(*ALL_TASKS, sep="\n")
 from gym.spaces import Discrete, Box

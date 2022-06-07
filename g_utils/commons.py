@@ -905,7 +905,7 @@ def get_train_env(config, no_graphics=True):
                 channel.set_configuration_parameters(time_scale=config.time_scale, width=config.width, height=config.height)
                 env = UnityToGymWrapper(u_env)
                 if config.ENV_NAME in ["UnityDrone"]:
-                    from b_environments.wrappers.unity.unity_wrappers import GrayScaleObservation, ResizeObservation, TransformReward
+                    from b_environments.unity.unity_wrappers import GrayScaleObservation, ResizeObservation, TransformReward
                     env = gym.wrappers.FrameStack(ResizeObservation(GrayScaleObservation(env), shape=64), num_stack=4)
                     env = TransformReward(env)
                 return env
@@ -930,7 +930,7 @@ def get_train_env(config, no_graphics=True):
             #   DM_CONTROL  #
             #################
             elif isinstance(config, ConfigDmControl):
-                import b_environments.wrappers.dm_control as dmc_gym
+                import b_environments.dm_control as dmc_gym
                 assert hasattr(config, "DOMAIN_NAME")
                 assert hasattr(config, "TASK_NAME")
                 if config.FROM_PIXELS:
@@ -1029,7 +1029,7 @@ def get_single_env(config, no_graphics=True, play=False):
         channel.set_configuration_parameters(time_scale=config.time_scale, width=config.width, height=config.height)
         single_env = UnityToGymWrapper(u_env)
         if config.ENV_NAME in ["UnityDrone"]:
-            from b_environments.wrappers.unity.unity_wrappers import GrayScaleObservation, ResizeObservation, TransformReward
+            from b_environments.unity.unity_wrappers import GrayScaleObservation, ResizeObservation, TransformReward
             single_env = gym.wrappers.FrameStack(ResizeObservation(GrayScaleObservation(single_env), shape=64), num_stack=4)
             single_env = TransformReward(single_env)
 
@@ -1052,7 +1052,7 @@ def get_single_env(config, no_graphics=True, play=False):
     #   DM_CONTROL  #
     #################
     elif isinstance(config, ConfigDmControl):
-        import b_environments.wrappers.dm_control as dmc_gym
+        import b_environments.dm_control as dmc_gym
         assert hasattr(config, "DOMAIN_NAME")
         assert hasattr(config, "TASK_NAME")
         if config.FROM_PIXELS:

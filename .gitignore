@@ -153,7 +153,6 @@ f_play/models/**
 */*/wandb/!/i_temp/muszero_original/results/
 /i_temp/muzero/muszero_original/results/
 
-b_environments/unity
 /f_play/reference_history/
 
 /i_temp/gurobi_result.csv
