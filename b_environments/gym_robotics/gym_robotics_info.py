@@ -1,28 +1,22 @@
 import time
 
 import numpy as np
-from dm_control.suite import ALL_TASKS
-
 from dm_control import viewer
-import b_environments.dm_control as dmc_gym
-
-# print(*ALL_TASKS, sep="\n")
+import gym
 from gym.spaces import Discrete, Box
+from gym import envs
 
 
-def print_all_dmc_env_info(from_pixels=False):
-	for idx, (domain_name, task_name) in enumerate(ALL_TASKS):
-		if from_pixels:
-			env = dmc_gym.make(
-				domain_name=domain_name, task_name=task_name, seed=1, from_pixels=True, visualize_reward=False
-			)
-		else:
-			env = dmc_gym.make(domain_name=domain_name, task_name=task_name, seed=2)
-
+def print_all_gym_robotics_env_info():
+	for idx, env_spec in enumerate(envs.registry.all()):
+		if idx > 63:
+			break
+		env = gym.make(env_spec.id)
 		observation_space = env.observation_space
 		action_space = env.action_space
 		env_spec = env.spec
 
+		print(observation_space["achieved_goal"], observation_space["desired_goal"], observation_space["observation"])
 		observation_space_str = "OBS_SPACE: {0}, SHAPE: {1}".format(type(observation_space), observation_space.shape)
 		action_space_str = "ACTION_SPACE: {0}, SHAPE: {1}".format(type(action_space), action_space.shape)
 
@@ -33,8 +27,8 @@ def print_all_dmc_env_info(from_pixels=False):
 		else:
 			raise ValueError()
 
-		print("{0:2}: Domain Name: {1:>12}, Task Name: {2:>14} | reward_threshold: {3} | {4:55} {5}".format(
-			idx + 1, domain_name, task_name, env_spec.reward_threshold, observation_space_str, action_space_str
+		print("{0:2}: env_id: {1:>45} | {2:55} {3}".format(
+			idx + 1, env_spec.id, observation_space_str, action_space_str
 		))
 		del env
 	print()
@@ -90,11 +84,11 @@ def play_test():
 
 
 if __name__ == "__main__":
-	#print_all_dmc_env_info(from_pixels=True)
-	#print_all_dmc_env_info(from_pixels=False)
+	print_all_gym_robotics_env_info()
 
-	dummy_agent_test(from_pixels=True)
-	dummy_agent_test(from_pixels=False)
+
+	# dummy_agent_test(from_pixels=True)
+	# dummy_agent_test(from_pixels=False)
 
 	#play_test()
 
