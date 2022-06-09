@@ -1,7 +1,7 @@
 from abc import abstractmethod
 
 from d_agents.agent import Agent
-from g_utils.buffers.buffer import Buffer, HerEpisodeBuffer
+from g_utils.buffers.buffer import Buffer
 from g_utils.buffers.prioritized_buffer import PrioritizedBuffer
 from g_utils.types import AgentType, OffPolicyAgentTypes, ActorCriticAgentTypes
 
@@ -23,6 +23,7 @@ class OffPolicyAgent(Agent):
             )
 
         if self.config.USE_HER:
+            from g_utils.buffers.her_buffer import HerEpisodeBuffer
             self.her_buffer = HerEpisodeBuffer(
                 observation_space=observation_space, action_space=action_space, config=self.config
             )
