@@ -1,14 +1,12 @@
 import collections
-import math
-from queue import Queue
 
+import gym
 import numpy as np
 import random
 
 import torch
-from gym.spaces import Discrete
 
-from g_utils.buffers import Buffer
+from g_utils.buffers.buffer import Buffer
 from g_utils.types import Transition
 
 
@@ -213,15 +211,15 @@ class SumTree:
         return ans
 
     def print_tree(self):
-        print("* SUN TREE *")
+        print("* SUM TREE *")
         node_list = self.level_order_traversal()
         for node in node_list:
             print(node)
 
 
 class PrioritizedBuffer(Buffer):
-    def __init__(self, action_space, config):
-        super(PrioritizedBuffer, self).__init__(action_space, config)
+    def __init__(self, observation_space, action_space, config):
+        super(PrioritizedBuffer, self).__init__(observation_space, action_space, config)
 
         self.sum_tree = SumTree(config=self.config)
         # self.priorities = [None] * self.config.BUFFER_CAPACITY
@@ -297,10 +295,18 @@ if __name__ == "__main__":
         PER_BETA = 0.4
         MODEL_PARAMETER = None
         BATCH_SIZE = 2
+        DEVICE = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
     config = Config()
 
-    prioritized_buffer = PrioritizedBuffer(action_space=Discrete, config=config)
+    observation_space = gym.spaces.Box(
+        low=np.float32([-10, -10, -10, -10]),       # shape: (4,)
+        high=np.float32([10, 10, 10, 10])           # shape: (4,)
+    )
+    action_space = gym.spaces.Discrete(n=3)  # 0, 1, 2
+
+    prioritized_buffer = PrioritizedBuffer(observation_space=observation_space, action_space=action_space, config=config)
+
     print("#" * 100)
     prioritized_buffer.print_buffer()
     prioritized_buffer.sum_tree.print_tree()
@@ -308,9 +314,9 @@ if __name__ == "__main__":
 
     for idx in range(config.BUFFER_CAPACITY + 4):
         prioritized_buffer.append(Transition(
-            observation=np.full((4,), idx),
-            action=0,
-            next_observation=np.full((4,), idx + 1),
+            observation=torch.full(size=(4,), fill_value=idx),
+            action=100,
+            next_observation=torch.full(size=(4,), fill_value=idx+1),
             reward=1.0,
             done=False,
             info=None
@@ -322,7 +328,7 @@ if __name__ == "__main__":
 
     print()
 
-    for idx in range(100_000):
+    for idx in range(1_000):
         print("SAMPLE & UPDATE #{0}".format(idx))
         transition_indices, important_sampling_weights = prioritized_buffer.sample_indices(batch_size=config.BATCH_SIZE)
         print(transition_indices, important_sampling_weights, torch.FloatTensor(important_sampling_weights)[:, None].shape)
