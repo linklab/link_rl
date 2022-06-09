@@ -178,7 +178,7 @@ class Buffer:
 
     def sample_indices(self, batch_size):
         # Get index
-        transition_indices = torch.randint(self.size, size=batch_size)
+        transition_indices = torch.randint(self.size, size=(batch_size,), device=self.config.DEVICE)
         return transition_indices
 
     def sample(self, batch_size):
