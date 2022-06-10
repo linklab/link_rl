@@ -5,8 +5,8 @@ from gym.spaces import Discrete, Box
 import numpy as np
 
 from d_agents.agent import Agent
-from g_utils.buffers import Buffer
-from g_utils.types import AgentMode, AgentType, OnPolicyAgentTypes, ActorCriticAgentTypes, OffPolicyAgentTypes
+from g_utils.buffers.buffer import Buffer
+from g_utils.types import AgentMode, AgentType, OnPolicyAgentTypes, ActorCriticAgentTypes
 
 
 class OnPolicyAgent(Agent):
@@ -15,7 +15,7 @@ class OnPolicyAgent(Agent):
         assert self.config.AGENT_TYPE in OnPolicyAgentTypes
         assert self.config.USE_PER is False
 
-        self.buffer = Buffer(action_space=action_space, config=self.config)
+        self.buffer = Buffer(observation_space=observation_space, action_space=action_space, config=self.config)
 
     def _before_train(self):
         if self.config.AGENT_TYPE in ActorCriticAgentTypes:

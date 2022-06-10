@@ -1,8 +1,8 @@
 from abc import abstractmethod
 
 from d_agents.agent import Agent
-from g_utils.buffers import Buffer, HerEpisodeBuffer
-from g_utils.prioritized_buffer import PrioritizedBuffer
+from g_utils.buffers.buffer import Buffer
+from g_utils.buffers.prioritized_buffer import PrioritizedBuffer
 from g_utils.types import AgentType, OffPolicyAgentTypes, ActorCriticAgentTypes
 
 
@@ -13,13 +13,20 @@ class OffPolicyAgent(Agent):
 
         if self.config.USE_PER:
             assert self.config.AGENT_TYPE in OffPolicyAgentTypes
-            self.replay_buffer = PrioritizedBuffer(action_space=action_space, config=self.config)
+            self.replay_buffer = PrioritizedBuffer(
+                observation_space=observation_space, action_space=action_space, config=self.config
+            )
             self.important_sampling_weights = None
         else:
-            self.replay_buffer = Buffer(action_space=action_space, config=self.config)
+            self.replay_buffer = Buffer(
+                observation_space=observation_space, action_space=action_space, config=self.config
+            )
 
         if self.config.USE_HER:
-            self.her_buffer = HerEpisodeBuffer(self.config)
+            from g_utils.buffers.her_buffer import HerEpisodeBuffer
+            self.her_buffer = HerEpisodeBuffer(
+                observation_space=observation_space, action_space=action_space, config=self.config
+            )
             self.her_buffer.reset()
 
     def _before_train(self):

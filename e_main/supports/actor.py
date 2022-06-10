@@ -1,6 +1,7 @@
 import warnings
 
 import numpy as np
+import torch
 
 warnings.filterwarnings('ignore')
 warnings.simplefilter("ignore")
@@ -87,8 +88,7 @@ class Actor(mp.Process):
         n_step_reward = 0.0
         for n_step_transition in reversed(n_step_transitions):
             n_step_reward = n_step_transition.reward + \
-                            config.GAMMA * n_step_reward * \
-                            (0.0 if n_step_transition.done else 1.0)
+                            config.GAMMA * n_step_reward * (0.0 if n_step_transition.done else 1.0)
             # if n_step_transition.done:
             #     break
 

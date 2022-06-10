@@ -1,11 +1,10 @@
 import math
 
+import gym
 import numpy as np
 import random
 
-from gym.spaces import Discrete
-
-from g_utils.buffers import Buffer
+from g_utils.buffers.buffer import Buffer
 from g_utils.types import Transition
 
 
@@ -74,8 +73,8 @@ class SumTree:
 
 
 class PrioritizedBuffer(Buffer):
-    def __init__(self, action_space, config):
-        super(PrioritizedBuffer, self).__init__(action_space, config)
+    def __init__(self, observation_space, action_space, config):
+        super(PrioritizedBuffer, self).__init__(observation_space, action_space, config)
 
         self.sum_tree = SumTree(self.config.BUFFER_CAPACITY)
         self.priorities = [None] * self.config.BUFFER_CAPACITY
@@ -179,7 +178,10 @@ if __name__ == "__main__":
 
     config = Config()
 
-    prioritized_buffer = PrioritizedBuffer(action_space=Discrete, config=config)
+    observation_space = gym.spaces.Discrete(n=4)  # 0, 1, 2, 3
+    action_space = gym.spaces.Discrete(n=3)  # 0, 1, 2
+
+    prioritized_buffer = PrioritizedBuffer(observation_space=observation_space, action_space=action_space, config=config)
     print("#" * 100)
     prioritized_buffer.print_buffer()
     prioritized_buffer.sum_tree.print_tree()
