@@ -4,7 +4,7 @@
 # 描述：选择运行环境，需要维护env/__ini__.py && config.json（存储环境默认参数）
 
 import json
-import olympics_env
+import b_environments.competition_olympics.olympics_env as env
 import os
 
 
@@ -16,9 +16,9 @@ def make(env_type, seed=None, config=None):
     class_literal = config['class_literal']
 
     if env_type.split('-')[0] in ["olympics"]:
-        return getattr(olympics_env, class_literal)(config, seed)
+        return getattr(env, class_literal)(config, seed)
     else:
-        return getattr(olympics_env, class_literal)(config)
+        return getattr(env, class_literal)(config)
 
 
 if __name__ == "__main__":

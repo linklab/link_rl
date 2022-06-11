@@ -3,7 +3,7 @@ import os
 import sys
 from pathlib import Path
 
-CURRENT_PATH = str(Path(__file__).resolve().parent.parent.parent)
+CURRENT_PATH = str(Path(__file__).resolve().parent.parent)
 olympics_path = os.path.join(CURRENT_PATH, "olympics_engine")
 sys.path.append(olympics_path)
 sys.path.append(CURRENT_PATH)
