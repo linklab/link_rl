@@ -5,7 +5,7 @@ import gym
 from gym.spaces import Discrete, Box
 from gym import envs
 
-from b_environments.gym_robotics.gym_robotics_wrapper import GymRoboticsEnv
+from b_environments.gym_robotics.gym_robotics_wrapper import GymRoboticsEnvWrapper
 
 
 def print_all_gym_robotics_env_info():
@@ -13,7 +13,7 @@ def print_all_gym_robotics_env_info():
 		if idx > 63:
 			break
 		env = gym.make(env_spec.id)
-		env = GymRoboticsEnv(env)
+		env = GymRoboticsEnvWrapper(env)
 
 		observation_space = env.observation_space
 		achieved_goal_space = env.achieved_goal_space
@@ -43,9 +43,9 @@ def print_all_gym_robotics_env_info():
 
 
 def dummy_agent_test(render=False):
-	env_id = "HandManipulateBlockRotateZDense-v0"
+	env_id = "HandManipulateBlockRotateXYZ-v0"
 	env = gym.make(env_id)
-	env = GymRoboticsEnv(env)
+	env = GymRoboticsEnvWrapper(env)
 
 	class Dummy_Agent:
 		def get_action(self, observation):
@@ -75,7 +75,7 @@ def dummy_agent_test(render=False):
 
 
 if __name__ == "__main__":
-	#print_all_gym_robotics_env_info()
-	dummy_agent_test(render=True)
+	print_all_gym_robotics_env_info()
+	#dummy_agent_test(render=True)
 
 
