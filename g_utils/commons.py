@@ -29,7 +29,7 @@ from a_configuration.a_base_config.c_models.config_recurrent_convolutional_model
 from a_configuration.a_base_config.c_models.config_recurrent_linear_models import ConfigRecurrentLinearModel
 from b_environments import wrapper
 from b_environments.gym_robotics.gym_robotics_wrapper import GymRoboticsEnvWrapper
-from competition_olympics_env_wrapper import CompetitionOlympicsEnvWrapper
+from b_environments.competition_olympics.competition_olympics_env_wrapper import CompetitionOlympicsEnvWrapper
 from g_utils.types import AgentType, ActorCriticAgentTypes, ModelType, LayerActivationType, LossFunctionType, \
     OffPolicyAgentTypes, OnPolicyAgentTypes
 
