@@ -38,6 +38,10 @@ class CompetitionOlympicsEnvWrapper(gym.Wrapper):
 
 		self.opponent_agent = DummyCompetitionOlympicsAgent()
 		self.last_observation_opponent_agent = None
+		self.max_value = 0
+
+	def _get_normalize_observation(self, observation):
+		return observation / 10.0
 
 	def reset(self, return_info=False):
 		observation = self.env.reset()
@@ -47,6 +51,8 @@ class CompetitionOlympicsEnvWrapper(gym.Wrapper):
 		)
 
 		self.last_observation_opponent_agent = observation_opponent_agent
+
+		observation_controlled_agent = self._get_normalize_observation(observation_controlled_agent)
 
 		if return_info:
 			info = {}
@@ -66,13 +72,24 @@ class CompetitionOlympicsEnvWrapper(gym.Wrapper):
 		)
 
 		self.last_observation_opponent_agent = next_observation_opponent_agent
+		next_observation_controlled_agent = self._get_normalize_observation(next_observation_controlled_agent)
 
-		reward_controlled = reward[self.controlled_agent_index]
+		reward_controlled = self._get_reward_shaped(reward, done, self.controlled_agent_index)
 		#reward_opponent = reward[1 - self.controlled_agent_index]
 
 		info = {}
 
 		return next_observation_controlled_agent, reward_controlled, done, info
+
+	def _get_reward_shaped(self, reward, done, controlled_agent_index):
+		if not done:
+			reward_shaped = [-1., -1.]
+		else:
+			if reward[0] != reward[1]:
+				reward_shaped = [reward[0] - 100, reward[1]] if reward[0] < reward[1] else [reward[0], reward[1] - 100]
+			else:
+				reward_shaped = [-1., -1.]
+		return reward_shaped[controlled_agent_index]
 
 	def close(self):
 		pass

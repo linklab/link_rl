@@ -70,10 +70,11 @@ def competition_olympics_controlled_agent_test(config, controlled_agent_index=1,
     record_win = deque(maxlen=100)
     record_win_op = deque(maxlen=100)
 
+    env = make(config.ENV_NAME)  # build environment
+
     MAX_EPISODE = 100
 
     for episode in range(MAX_EPISODE):
-        env = make(config.ENV_NAME)  # build environment
         observation = env.reset()
         #print("RESET & NEW ENV - {0}".format(i + 1))
         done = False
@@ -131,11 +132,15 @@ def competition_olympics_controlled_agent_test_2(config, controlled_agent_index=
     record_win = deque(maxlen=100)
     record_win_op = deque(maxlen=100)
 
+    env = make(config.ENV_NAME)  # build environment
+    env = CompetitionOlympicsEnvWrapper(env, controlled_agent_index=controlled_agent_index)
+
     MAX_EPISODE = 100
 
+    global_max_value_in_obs = 0
+
     for episode in range(MAX_EPISODE):
-        env = make(config.ENV_NAME)  # build environment
-        env = CompetitionOlympicsEnvWrapper(env, controlled_agent_index=controlled_agent_index)
+
         observation = env.reset()
         done = False
 
@@ -154,26 +159,28 @@ def competition_olympics_controlled_agent_test_2(config, controlled_agent_index=
             # ))
             # observation = next_observation
 
+            episode_reward += reward
+            observation = next_observation
+
+            # print(observation, local_max_value_in_obs)
+            local_max_value_in_obs = np.amax(observation)
+            if local_max_value_in_obs > global_max_value_in_obs:
+                global_max_value_in_obs = local_max_value_in_obs
+
         win_is = 1 if reward == 100 else 0
         win_is_op = 1 if reward != 100 else 0
         record_win.append(win_is)
         record_win_op.append(win_is_op)
         print(
-            "Episode: {0}, Controlled agent: {1}, Reward: {2}, Win Rate (controlled & opponent): {3:.2f}, {4:.2f}".format(
-                episode, controlled_agent_index, reward,
-                sum(record_win) / len(record_win), sum(record_win_op) / len(record_win_op)
+            "Episode: {0}, Controlled agent: {1}, Last Reward: {2}, Episode Reward: {3}, "
+            "Win Rate (controlled & opponent): {4:.2f}, {5:.2f}, Max Value in Obs.: {6}".format(
+                episode, controlled_agent_index, reward, episode_reward,
+                sum(record_win) / len(record_win), sum(record_win_op) / len(record_win_op), global_max_value_in_obs
             ), end="\n\n"
         )
 
 
 if __name__ == '__main__':
-    # args = parser.parse_args()
-    #args.load_model = True
-    #args.load_run = 3
-    #args.map = 3
-    #args.load_episode= 900
-    #main_original(args)
-
     from a_configuration.b_single_config.competition_olympics.config_competition_olympics_integrated import \
         ConfigCompetitionOlympicsIntegratedPpo
 
