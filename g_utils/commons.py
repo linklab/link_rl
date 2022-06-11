@@ -14,6 +14,7 @@ from gym.vector import AsyncVectorEnv
 import plotly.graph_objects as go
 
 from a_configuration.a_base_config.a_environments.dm_control import ConfigDmControl
+from a_configuration.a_base_config.a_environments.gym_robotics import ConfigGymRobotics
 from a_configuration.a_base_config.a_environments.open_ai_gym.config_gym_atari import ConfigGymAtari
 from a_configuration.a_base_config.a_environments.open_ai_gym.config_gym_box2d import ConfigHardcoreBipedalWalker, \
     ConfigNormalBipedalWalker
@@ -26,6 +27,7 @@ from a_configuration.a_base_config.c_models.config_recurrent_convolutional_model
     ConfigRecurrent2DConvolutionalModel, ConfigRecurrent1DConvolutionalModel
 from a_configuration.a_base_config.c_models.config_recurrent_linear_models import ConfigRecurrentLinearModel
 from b_environments import wrapper
+from b_environments.gym_robotics.gym_robotics_wrapper import GymRoboticsEnvWrapper
 from g_utils.types import AgentType, ActorCriticAgentTypes, ModelType, LayerActivationType, LossFunctionType, \
     OffPolicyAgentTypes, OnPolicyAgentTypes
 
@@ -972,6 +974,9 @@ def get_train_env(config, no_graphics=True):
                 if env_name in ["CarRacing-v1"]:
                     env = wrapper.CarRacingObservationTransposeWrapper(env=env)
 
+                if isinstance(config, ConfigGymRobotics):
+                    env = GymRoboticsEnvWrapper(env=env)
+
                 ################
                 #   Wrappers   #
                 ################
@@ -1096,6 +1101,9 @@ def get_single_env(config, no_graphics=True, play=False):
 
         if config.ENV_NAME in ["CarRacing-v1"]:
             single_env = wrapper.CarRacingObservationTransposeWrapper(env=single_env)
+
+        if isinstance(config, ConfigGymRobotics):
+            single_env = GymRoboticsEnvWrapper(env=single_env)
 
         ################
         #   Wrappers   #

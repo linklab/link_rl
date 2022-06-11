@@ -536,6 +536,23 @@ from a_configuration.b_single_config.combinatorial_optimization.config_knapsack 
 config = ConfigKnapsack0StaticTestLinearPpo()
 
 
+###################
+### GymRobotics ###
+###################
+
+from a_configuration.b_single_config.gym_robotics.config_gym_robotics_hand_manipulate_block_rotate_xyz import ConfigHandManipulateBlockRotateXYZA2c
+config = ConfigHandManipulateBlockRotateXYZA2c()
+
+from a_configuration.b_single_config.gym_robotics.config_gym_robotics_hand_manipulate_block_rotate_xyz import ConfigHandManipulateBlockRotateXYZPpo
+config = ConfigHandManipulateBlockRotateXYZPpo()
+
+from a_configuration.b_single_config.gym_robotics.config_gym_robotics_hand_manipulate_block_rotate_xyz import ConfigHandManipulateBlockRotateXYZTd3
+config = ConfigHandManipulateBlockRotateXYZTd3()
+
+from a_configuration.b_single_config.gym_robotics.config_gym_robotics_hand_manipulate_block_rotate_xyz import ConfigHandManipulateBlockRotateXYZSac
+config = ConfigHandManipulateBlockRotateXYZSac()
+
+
 ###########################
 ### BasicTaskAllocation ###
 ###########################

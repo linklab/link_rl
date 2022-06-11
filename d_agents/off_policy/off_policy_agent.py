@@ -39,12 +39,13 @@ class OffPolicyAgent(Agent):
             self.episode_idxs, self.episode_historys = self.replay_buffer.sample_muzero(batch_size=self.config.BATCH_SIZE)
         else:
             if self.config.USE_PER:
-                self.observations, self.actions, self.next_observations, self.rewards, self.dones, self.infos, \
-                self.important_sampling_weights = self.replay_buffer.sample(
+                self.observations, self.actions, self.next_observations, self.rewards, self.dones, \
+                self.infos, self.important_sampling_weights = self.replay_buffer.sample(
                     batch_size=self.config.BATCH_SIZE
                 )
             else:
-                self.observations, self.actions, self.next_observations, self.rewards, self.dones, self.infos = self.replay_buffer.sample(
+                self.observations, self.actions, self.next_observations, self.rewards, self.dones, \
+                self.infos = self.replay_buffer.sample(
                     batch_size=self.config.BATCH_SIZE
                 )
 
