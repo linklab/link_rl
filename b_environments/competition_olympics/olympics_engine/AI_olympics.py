@@ -1,4 +1,4 @@
-from scenario import Running_competition, table_hockey, football, wrestling
+from olympics_engine.scenario import Running_competition, table_hockey, football, wrestling
 import sys
 from pathlib import Path
 base_path = str(Path(__file__).resolve().parent.parent)

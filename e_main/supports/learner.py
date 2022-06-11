@@ -589,12 +589,12 @@ class Learner(mp.Process):
                     elif isinstance(self.agent.action_space, Box):
                         if action.ndim == 1:
                             if self.agent.action_scale is not None:
-                                scaled_action = action * self.agent.action_scale[0] + self.agent.action_bias[0]
+                                scaled_action = action * self.agent.action_scale + self.agent.action_bias
                             else:
                                 scaled_action = action
                         elif action.ndim == 2:
                             if self.agent.action_scale is not None:
-                                scaled_action = action[0] * self.agent.action_scale[0] + self.agent.action_bias[0]
+                                scaled_action = action[0] * self.agent.action_scale + self.agent.action_bias
                             else:
                                 scaled_action = action[0]
                         else:

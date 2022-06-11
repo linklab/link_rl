@@ -180,3 +180,6 @@ class DMCWrapper(core.Env):
 		return self.original_env.physics.render(
 			height=height, width=width, camera_id=camera_id
 		)
+
+	def close(self):
+		self.original_env.close()

@@ -13,6 +13,7 @@ from gym.spaces import Discrete, Box
 from gym.vector import AsyncVectorEnv
 import plotly.graph_objects as go
 
+from a_configuration.a_base_config.a_environments.competition_olympics import ConfigCompetitionOlympics
 from a_configuration.a_base_config.a_environments.dm_control import ConfigDmControl
 from a_configuration.a_base_config.a_environments.gym_robotics import ConfigGymRobotics
 from a_configuration.a_base_config.a_environments.open_ai_gym.config_gym_atari import ConfigGymAtari
@@ -28,6 +29,7 @@ from a_configuration.a_base_config.c_models.config_recurrent_convolutional_model
 from a_configuration.a_base_config.c_models.config_recurrent_linear_models import ConfigRecurrentLinearModel
 from b_environments import wrapper
 from b_environments.gym_robotics.gym_robotics_wrapper import GymRoboticsEnvWrapper
+from competition_olympics_env_wrapper import CompetitionOlympicsEnvWrapper
 from g_utils.types import AgentType, ActorCriticAgentTypes, ModelType, LayerActivationType, LossFunctionType, \
     OffPolicyAgentTypes, OnPolicyAgentTypes
 
@@ -951,6 +953,14 @@ def get_train_env(config, no_graphics=True):
                 env = gym.wrappers.AtariPreprocessing(env, frame_skip=1, grayscale_obs=True, scale_obs=True)
                 env = gym.wrappers.FrameStack(env, num_stack=4, lz4_compress=True)
 
+            ###########################
+            #   CompetitionOlympics   #
+            ###########################
+            elif isinstance(config, ConfigCompetitionOlympics):
+                from olympics_env.chooseenv import make
+                env = make(config.ENV_NAME)
+                env = CompetitionOlympicsEnvWrapper(env=env, controlled_agent_index=config.CONTROLLED_AGENT_INDEX)
+
             ############
             #   Else   #
             ############
@@ -1078,6 +1088,14 @@ def get_single_env(config, no_graphics=True, play=False):
             single_env = gym.make(config.ENV_NAME, frameskip=config.FRAME_SKIP, repeat_action_probability=0.0)
         single_env = gym.wrappers.AtariPreprocessing(single_env, frame_skip=1, grayscale_obs=True, scale_obs=True)
         single_env = gym.wrappers.FrameStack(single_env, num_stack=4, lz4_compress=True)
+
+    ###########################
+    #   CompetitionOlympics   #
+    ###########################
+    elif isinstance(config, ConfigCompetitionOlympics):
+        from olympics_env.chooseenv import make
+        single_env = make(config.ENV_NAME)
+        single_env = CompetitionOlympicsEnvWrapper(env=single_env, controlled_agent_index=config.CONTROLLED_AGENT_INDEX)
 
     ############
     #   else   #

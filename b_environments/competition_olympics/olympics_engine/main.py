@@ -1,5 +1,8 @@
 import sys
 from pathlib import Path
+
+from olympics_engine.scenario.curling_joint import curling_joint
+
 base_path = str(Path(__file__).resolve().parent.parent)
 sys.path.append(base_path)
 print(sys.path)

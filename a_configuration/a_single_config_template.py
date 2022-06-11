@@ -554,6 +554,14 @@ config = ConfigHandManipulateBlockRotateXYZSac()
 
 
 ###########################
+### CompetitionOlympics ###
+###########################
+
+from a_configuration.b_single_config.competition_olympics.config_competition_olympics_integrated import ConfigCompetitionOlympicsIntegratedPpo
+config = ConfigCompetitionOlympicsIntegratedPpo()
+
+
+###########################
 ### BasicTaskAllocation ###
 ###########################
 from a_configuration.b_single_config.combinatorial_optimization.config_basic_task_allocation import ConfigBasicTaskAllocation0Dqn

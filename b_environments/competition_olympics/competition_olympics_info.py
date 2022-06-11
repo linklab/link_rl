@@ -1,185 +1,186 @@
-# here lies an example of how to train an RL agent
-import argparse
-import datetime
-
-from torch.utils.tensorboard import SummaryWriter
-import torch
+import random
 import numpy as np
-import os
-from pathlib import Path
-import sys
+from collections import deque
 
-base_dir = str(Path(__file__).resolve().parent)
-sys.path.append(base_dir)
-engine_path = os.path.join(base_dir, "olympics_engine")
-sys.path.append(engine_path)
+from competition_olympics_env_wrapper import CompetitionOlympicsEnvWrapper
+from olympics_env.chooseenv import make
 
 
-from collections import deque, namedtuple
+def print_all_competition_olympics_info(config):
+    env = make(config.ENV_NAME, seed=42)          #build environment
+    # print(env)
 
+    from inspect import getmembers, ismethod
 
-from env.chooseenv import make
-from rl_trainer.log_path import *
-from rl_trainer.algo.ppo import PPO
-from rl_trainer.algo.random import random_agent
+    member_list = [o for o in getmembers(env)]
+    method_list = [o for o in getmembers(env, predicate=ismethod)]
+    method_name_list = [o[0] for o in getmembers(env, predicate=ismethod)]
 
+    idx = 0
+    for method in method_list:
+            idx += 1
+            print(idx, method)
 
-parser = argparse.ArgumentParser()
-parser.add_argument('--game_name', default="olympics-integrated", type=str)
-parser.add_argument('--algo', default="ppo", type=str, help="ppo/sac")
-parser.add_argument('--max_episodes', default=1500, type=int)
-parser.add_argument('--episode_length', default=500, type=int)
-parser.add_argument('--map', default=1, type = int)
+    idx = 0
+    for member in member_list:
+        if not member[0].startswith("__") and not member[0].startswith("_") and member[0] not in method_name_list:
+            idx += 1
+            print(idx, member)
 
-parser.add_argument('--seed', default=1, type=int)
-
-parser.add_argument("--save_interval", default=100, type=int)
-parser.add_argument("--model_episode", default=0, type=int)
-
-parser.add_argument("--load_model", action='store_true')
-parser.add_argument("--load_run", default=2, type=int)
-parser.add_argument("--load_episode", default=900, type=int)
-
-
-device = 'cpu'
-RENDER = True
-actions_map = {0: [-100, -30], 1: [-100, -18], 2: [-100, -6], 3: [-100, 6], 4: [-100, 18], 5: [-100, 30], 6: [-40, -30],
-               7: [-40, -18], 8: [-40, -6], 9: [-40, 6], 10: [-40, 18], 11: [-40, 30], 12: [20, -30], 13: [20, -18],
-               14: [20, -6], 15: [20, 6], 16: [20, 18], 17: [20, 30], 18: [80, -30], 19: [80, -18], 20: [80, -6],
-               21: [80, 6], 22: [80, 18], 23: [80, 30], 24: [140, -30], 25: [140, -18], 26: [140, -6], 27: [140, 6],
-               28: [140, 18], 29: [140, 30], 30: [200, -30], 31: [200, -18], 32: [200, -6], 33: [200, 6], 34: [200, 18],
-               35: [200, 30]}           #dicretise action space
-
-
-def main(args):
-    print("==algo: ", args.algo)
-    print(f'device: {device}')
-    print(f'model episode: {args.model_episode}')
-    print(f'save interval: {args.save_interval}')
-
-    env = make(args.game_name)          #build environment
-
+    print("OBSERVATION TYPE:", type(env.current_state[0]['agent_obs']))
+    print("OBSERVATION SHAPE:", env.current_state[0]['agent_obs'].shape)
 
     num_agents = env.n_player
     print(f'Total agent number: {num_agents}')
 
-    ctrl_agent_index = 1
-    print(f'Agent control by the actor: {ctrl_agent_index}')
-
-    ctrl_agent_num = 1
-
-    width = env.env_core.view_setting['width']+2*env.env_core.view_setting['edge']
-    height = env.env_core.view_setting['height']+2*env.env_core.view_setting['edge']
+    width = env.env_core.view_setting['width'] + 2 * env.env_core.view_setting['edge']
+    height = env.env_core.view_setting['height'] + 2 * env.env_core.view_setting['edge']
     print(f'Game board width: {width}')
     print(f'Game board height: {height}')
 
     act_dim = env.action_dim
-    obs_dim = 40*40
+    obs_dim = (40, 40)
     print(f'action dimension: {act_dim}')
     print(f'observation dimension: {obs_dim}')
 
-    torch.manual_seed(args.seed)
-    # define checkpoint path
-    run_dir, log_dir = make_logpath(args.game_name, args.algo)
-    if not args.load_model:
-        writer = SummaryWriter(os.path.join(str(log_dir), "{}_{} on olympics-integrated".format(
-            datetime.datetime.now().strftime("%Y-%m-%d_%H-%M-%S"),args.algo)))
-        save_config(args, log_dir)
+
+class Dummy_Agent:
+    def __init__(self, gym_wrapper=False):
+        self.force_range = [-100, 200]
+        self.angle_range = [-30, 30]
+        self.gym_wrapper = gym_wrapper
+
+    def seed(self, seed=None):
+        random.seed(seed)
+
+    def get_action(self, obs):
+        force = random.uniform(self.force_range[0], self.force_range[1])
+        angle = random.uniform(self.angle_range[0], self.angle_range[1])
+
+        if self.gym_wrapper:
+            return [force, angle]
+        else:
+            return [[force], [angle]]
+
+
+def competition_olympics_controlled_agent_test(config, controlled_agent_index=1, render=False):
+    controlled_agent = Dummy_Agent(gym_wrapper=False)
+    opponent_agent = Dummy_Agent(gym_wrapper=False)
 
     record_win = deque(maxlen=100)
     record_win_op = deque(maxlen=100)
 
-    if args.load_model:         #setup algos
-        model = PPO()
-        load_dir = os.path.join(os.path.dirname(run_dir), "run" + str(args.load_run))
-        model.load(load_dir,episode=args.load_episode)
-    else:
-        model = PPO(run_dir)
-        Transition = namedtuple('Transition', ['state', 'action', 'a_log_prob', 'reward', 'next_state', 'done'])
+    MAX_EPISODE = 100
 
-    opponent_agent = random_agent()     #we use random opponent agent here
+    for episode in range(MAX_EPISODE):
+        env = make(config.ENV_NAME)  # build environment
+        observation = env.reset()
+        #print("RESET & NEW ENV - {0}".format(i + 1))
+        done = False
 
-    episode = 0
-    train_count = 0
+        # if render:
+        #     env.env_core.render()
 
-    while episode < args.max_episodes:
-        env = make(args.game_name)          #rebuild each time to shuffle the running map
-        state = env.reset()
-        if RENDER:
-            env.env_core.render()
-        obs_ctrl_agent = np.array(state[ctrl_agent_index]['obs']['agent_obs']).flatten()
-        NEW_GAME_flag = state[ctrl_agent_index]['obs']['game_mode']
-        obs_oppo_agent = np.array(state[1-ctrl_agent_index]['obs']['agent_obs'])   #[25,25]
+        observation_opponent_agent = np.array(observation[1 - controlled_agent_index]['obs']['agent_obs'])
+        observation_controlled_agent = observation[controlled_agent_index]['obs']['agent_obs']
 
-        episode += 1
-        step = 0
-        Gt = 0
+        reward = None
+        episode_reward = 0.0
 
-        while True:
-            action_opponent = opponent_agent.act(obs_oppo_agent)        #opponent action
-            action_opponent = [[0],[0]]  #here we assume the opponent is not moving in the demo
+        time_step = 0
 
-            action_ctrl_raw, action_prob= model.select_action(obs_ctrl_agent, False if args.load_model else True)
-                            #inference
-            action_ctrl = actions_map[action_ctrl_raw]
-            action_ctrl = [[action_ctrl[0]], [action_ctrl[1]]]        #wrapping up the action
+        while not done:
+            time_step += 1
+            action_opponent = opponent_agent.get_action(observation_opponent_agent)
+            action_controlled = controlled_agent.get_action(observation_controlled_agent)
 
-            action = [action_opponent, action_ctrl] if ctrl_agent_index == 1 else [action_ctrl, action_opponent]
+            action = [action_opponent, action_controlled] if controlled_agent_index == 1 else [action_controlled, action_opponent]
 
-            next_state, reward, done, _, info = env.step(action)
+            next_observation, reward, done, info_before, info_after = env.step(action)
 
-            next_obs_ctrl_agent = np.array(next_state[ctrl_agent_index]['obs']['agent_obs']).flatten()
-            next_obs_oppo_agent = next_state[1-ctrl_agent_index]['obs']
+            next_observation_opponent_agent = next_observation[1 - controlled_agent_index]['obs']['agent_obs']
+            next_observation_controlled_agent = next_observation[controlled_agent_index]['obs']['agent_obs']
 
-            step += 1
+            reward_opponent = reward[1 - controlled_agent_index]
+            reward_controlled = reward[controlled_agent_index]
 
-            if not done:            #reward shaping, here we simply penality every time step
-                post_reward = [-1., -1.]
-            else:
-                if reward[0] != reward[1]:
-                    post_reward = [reward[0]-100, reward[1]] if reward[0]<reward[1] else [reward[0], reward[1]-100]
-                else:
-                    post_reward=[-1., -1.]
+            print("Observation: {0}, Action: {1}, next_observation: {2}, Reward: {3}, Done: {4}, "
+                  "info_before: {5}, info_after: {6}".format(
+                observation_controlled_agent.shape, action, next_observation_controlled_agent.shape, reward_controlled, done,
+                info_after, info_after
+            ))
+            observation_controlled_agent = next_observation_controlled_agent
+            observation_opponent_agent = next_observation_opponent_agent
 
-            if not args.load_model:
-                trans = Transition(obs_ctrl_agent, action_ctrl_raw, action_prob, post_reward[ctrl_agent_index],
-                                   next_obs_ctrl_agent, done)
-                model.store_transition(trans)
+            # if render:
+            #     env.env_core.render()
 
-            obs_oppo_agent = next_obs_oppo_agent
-            obs_ctrl_agent = np.array(next_obs_ctrl_agent).flatten()
-            if RENDER:
-                env.env_core.render()
-            Gt += reward[ctrl_agent_index] if done else -1
+        win_is = 1 if reward[controlled_agent_index] > reward[1 - controlled_agent_index] else 0
+        win_is_op = 1 if reward[controlled_agent_index] < reward[1 - controlled_agent_index] else 0
+        record_win.append(win_is)
+        record_win_op.append(win_is_op)
+        print("Episode: {0}, Controlled agent: {1}, Reward: {2}, Win Rate (controlled & opponent): {3:.2f}, {4:.2f}".format(
+            episode, controlled_agent_index, reward,
+            sum(record_win) / len(record_win), sum(record_win_op) / len(record_win_op)
+        ), end="\n\n")
 
-            if done:
-                win_is = 1 if reward[ctrl_agent_index]>reward[1-ctrl_agent_index] else 0
-                win_is_op = 1 if reward[ctrl_agent_index]<reward[1-ctrl_agent_index] else 0
-                record_win.append(win_is)
-                record_win_op.append(win_is_op)
-                print("Episode: ", episode, "controlled agent: ", ctrl_agent_index, "; Episode Return: ", Gt,
-                      "; win rate(controlled & opponent): ", '%.2f' % (sum(record_win)/len(record_win)),
-                      '%.2f' % (sum(record_win_op)/len(record_win_op)), '; Trained episode:', train_count)
 
-                if not args.load_model:
-                    if args.algo == 'ppo' and len(model.buffer) >= model.batch_size:
-                        if win_is == 1:
-                            model.update(episode)           #model training
-                            train_count += 1
-                        else:
-                            model.clear_buffer()
+def competition_olympics_controlled_agent_test_2(config, controlled_agent_index=1, render=False):
+    agent = Dummy_Agent(gym_wrapper=True)
 
-                    writer.add_scalar('training Gt', Gt, episode)
+    record_win = deque(maxlen=100)
+    record_win_op = deque(maxlen=100)
 
-                break
-        if episode % args.save_interval == 0 and not args.load_model:
-            model.save(run_dir, episode)
+    MAX_EPISODE = 100
+
+    for episode in range(MAX_EPISODE):
+        env = make(config.ENV_NAME)  # build environment
+        env = CompetitionOlympicsEnvWrapper(env, controlled_agent_index=controlled_agent_index)
+        observation = env.reset()
+        done = False
+
+        reward = None
+        episode_reward = 0.0
+
+        time_step = 0
+
+        while not done:
+            time_step += 1
+            action = agent.get_action(observation)
+            next_observation, reward, done, info = env.step(action)
+
+            # print("Observation: {0}, Action: {1}, next_observation: {2}, Reward: {3}, Done: {4}, info: {5}".format(
+            #     next_observation.shape, action, next_observation.shape, reward, done, info
+            # ))
+            # observation = next_observation
+
+        win_is = 1 if reward == 100 else 0
+        win_is_op = 1 if reward != 100 else 0
+        record_win.append(win_is)
+        record_win_op.append(win_is_op)
+        print(
+            "Episode: {0}, Controlled agent: {1}, Reward: {2}, Win Rate (controlled & opponent): {3:.2f}, {4:.2f}".format(
+                episode, controlled_agent_index, reward,
+                sum(record_win) / len(record_win), sum(record_win_op) / len(record_win_op)
+            ), end="\n\n"
+        )
 
 
 if __name__ == '__main__':
-    args = parser.parse_args()
+    # args = parser.parse_args()
     #args.load_model = True
     #args.load_run = 3
     #args.map = 3
     #args.load_episode= 900
-    main(args)
+    #main_original(args)
+
+    from a_configuration.b_single_config.competition_olympics.config_competition_olympics_integrated import \
+        ConfigCompetitionOlympicsIntegratedPpo
+
+    config = ConfigCompetitionOlympicsIntegratedPpo()
+
+    #print_all_competition_olympics_info(config)
+
+    #competition_olympics_controlled_agent_test(config, controlled_agent_index=0)
+
+    competition_olympics_controlled_agent_test_2(config, controlled_agent_index=0)
