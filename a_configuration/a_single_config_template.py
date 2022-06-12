@@ -563,6 +563,9 @@ config = ConfigHandManipulateBlockRotateXYZSac()
 from a_configuration.b_single_config.competition_olympics.config_competition_olympics_integrated import ConfigCompetitionOlympicsIntegratedPpo
 config = ConfigCompetitionOlympicsIntegratedPpo()
 
+from a_configuration.b_single_config.competition_olympics.config_competition_olympics_integrated import ConfigCompetitionOlympicsIntegratedAsynchronousPpo
+config = ConfigCompetitionOlympicsIntegratedAsynchronousPpo()
+
 from a_configuration.b_single_config.competition_olympics.config_competition_olympics_integrated import ConfigCompetitionOlympicsIntegratedA3c
 config = ConfigCompetitionOlympicsIntegratedA3c()
 
