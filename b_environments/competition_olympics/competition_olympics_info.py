@@ -136,7 +136,6 @@ def competition_olympics_controlled_agent_test_2(config, controlled_agent_index=
     env = CompetitionOlympicsEnvWrapper(env, controlled_agent_index=controlled_agent_index)
 
     MAX_EPISODE = 100
-
     global_max_value_in_obs = 0
 
     for episode in range(MAX_EPISODE):
@@ -145,6 +144,8 @@ def competition_olympics_controlled_agent_test_2(config, controlled_agent_index=
         done = False
 
         reward = None
+        info = None
+
         episode_reward = 0.0
 
         time_step = 0
@@ -167,15 +168,35 @@ def competition_olympics_controlled_agent_test_2(config, controlled_agent_index=
             if local_max_value_in_obs > global_max_value_in_obs:
                 global_max_value_in_obs = local_max_value_in_obs
 
-        win_is = 1 if reward == 100 else 0
-        win_is_op = 1 if reward != 100 else 0
+        win_is = 1 if info['win'] == controlled_agent_index else 0
+        win_is_op = 1 if info['win'] == 1 - controlled_agent_index else 0
         record_win.append(win_is)
         record_win_op.append(win_is_op)
+
+        print_episode_stat(
+            episode, controlled_agent_index, reward, episode_reward, global_max_value_in_obs, record_win, record_win_op
+        )
+
+
+def print_episode_stat(
+        episode, controlled_agent_index, reward, episode_reward, global_max_value_in_obs, record_win, record_win_op
+):
+    print(
+        "Episode: {0}, Controlled agent: {1}, Last Reward: {2}, Episode Reward: {3}, Max Value in Obs.: {4}".format(
+            episode, controlled_agent_index, reward, episode_reward, global_max_value_in_obs
+        ), end=""
+    )
+
+    if controlled_agent_index == 0:
         print(
-            "Episode: {0}, Controlled agent: {1}, Last Reward: {2}, Episode Reward: {3}, "
-            "Win Rate (controlled & opponent): {4:.2f}, {5:.2f}, Max Value in Obs.: {6}".format(
-                episode, controlled_agent_index, reward, episode_reward,
-                sum(record_win) / len(record_win), sum(record_win_op) / len(record_win_op), global_max_value_in_obs
+            ", Win Rate (controlled: {0:.2f} & opponent: {1:.2f})".format(
+                sum(record_win) / len(record_win), sum(record_win_op) / len(record_win_op)
+            ), end="\n\n"
+        )
+    else:
+        print(
+            ", Win Rate (opponent: {1:.2f}) & controlled: {0:.2f}".format(
+                sum(record_win_op) / len(record_win_op), sum(record_win) / len(record_win),
             ), end="\n\n"
         )
 
@@ -188,6 +209,6 @@ if __name__ == '__main__':
 
     #print_all_competition_olympics_info(config)
 
-    #competition_olympics_controlled_agent_test(config, controlled_agent_index=0)
+    #competition_olympics_controlled_agent_test(config, controlled_agent_index=1)
 
-    competition_olympics_controlled_agent_test_2(config, controlled_agent_index=0)
+    competition_olympics_controlled_agent_test_2(config, controlled_agent_index=1)

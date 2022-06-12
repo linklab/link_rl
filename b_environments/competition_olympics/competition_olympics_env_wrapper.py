@@ -23,6 +23,10 @@ class CompetitionOlympicsEnvWrapper(gym.Wrapper):
 
 	def __init__(self, env, controlled_agent_index=1):
 		super().__init__(env)
+		print(
+			"CompetitionOlympicsEnv INITIALIZED with controlled_agent_index = {0}".format(controlled_agent_index),
+			flush=True
+		)
 
 		self.controlled_agent_index = controlled_agent_index
 		self.observation_space = gym.spaces.Box(
@@ -78,18 +82,34 @@ class CompetitionOlympicsEnvWrapper(gym.Wrapper):
 		#reward_opponent = reward[1 - self.controlled_agent_index]
 
 		info = {}
+		if done:
+			if reward[self.controlled_agent_index] > reward[1 - self.controlled_agent_index]:
+				info = {'win': self.controlled_agent_index}
+			else:
+				info = {'win': 1 - self.controlled_agent_index}
 
 		return next_observation_controlled_agent, reward_controlled, done, info
 
 	def _get_reward_shaped(self, reward, done, controlled_agent_index):
-		if not done:
-			reward_shaped = [-1., -1.]
+		if done and reward[0] != reward[1]:
+			reward_shaped = [0.0, 10.0] if reward[0] < reward[1] else [10.0, 0.0]
+			#print("-" * 10, reward, reward_shaped, reward_shaped[controlled_agent_index])
 		else:
-			if reward[0] != reward[1]:
-				reward_shaped = [reward[0] - 100, reward[1]] if reward[0] < reward[1] else [reward[0], reward[1] - 100]
-			else:
-				reward_shaped = [-1., -1.]
+			# if reward[0] != reward[1]:
+			# 	print("-" * 10, reward, reward[controlled_agent_index])
+			reward_shaped = reward
+
 		return reward_shaped[controlled_agent_index]
+
+	# def _get_reward_shaped(self, reward, done, controlled_agent_index):
+	# 	if not done:
+	# 		reward_shaped = [-1., -1.]
+	# 	else:
+	# 		if reward[0] != reward[1]:
+	# 			reward_shaped = [reward[0] - 100, reward[1]] if reward[0] < reward[1] else [reward[0], reward[1] - 100]
+	# 		else:
+	# 			reward_shaped = [-1., -1.]
+	# 	return reward_shaped[controlled_agent_index]
 
 	def close(self):
 		pass
