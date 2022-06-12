@@ -161,7 +161,10 @@ pip install dm_control
 # https://github.com/denisyarats/dmc2gym
 pip install git+https://github.com/denisyarats/dmc2gym.git
 
-***
+#### git ignore 적용
+git rm -r --cached .
+git add .
+git commit -m "fixed untracked files"
 
 #### To Do
 - git action 만들기

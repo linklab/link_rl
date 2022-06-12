@@ -37,6 +37,19 @@ class ConfigPpo(ConfigOnPolicyAgent):
         self.PPO_K_EPOCH = 3
 
 
+class ConfigAsynchronousPpo(ConfigOnPolicyAgent):
+    def __init__(self):
+        ConfigOnPolicyAgent.__init__(self)
+        self.AGENT_TYPE = AgentType.ASYNCHRONOUS_PPO
+
+        self.USE_GAE = True
+        self.USE_GAE_RECALCULATE_TARGET_VALUE = True
+
+        self.PPO_EPSILON_CLIP = 0.2
+        self.PPO_K_EPOCH = 3
+        self.N_ACTORS = 2
+
+
 class ConfigPpoTrajectory(ConfigOnPolicyAgent):
     def __init__(self):
         ConfigOnPolicyAgent.__init__(self)

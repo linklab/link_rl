@@ -5,20 +5,26 @@ import gym
 from gym.spaces import Discrete, Box
 from gym import envs
 
+from b_environments.gym_robotics.gym_robotics_wrapper import GymRoboticsEnvWrapper
+
 
 def print_all_gym_robotics_env_info():
 	for idx, env_spec in enumerate(envs.registry.all()):
 		if idx > 63:
 			break
 		env = gym.make(env_spec.id)
+		env = GymRoboticsEnvWrapper(env)
+
 		observation_space = env.observation_space
+		achieved_goal_space = env.achieved_goal_space
+		desired_goal_space = env.desired_goal
 		action_space = env.action_space
 		env_spec = env.spec
 
 		observation_space_str = "OBS_SPACE: {0}, SHAPE: {1} [ACHIEVED_GOAL_SPACE: {2}, SHAPE: {3}] [DESIRED_GOAL_SPACE: {4}, SHAPE: {5}]".format(
-			type(observation_space["observation"]), observation_space["observation"].shape,
-			type(observation_space["achieved_goal"]), observation_space["achieved_goal"].shape,
-			type(observation_space["desired_goal"]), observation_space["desired_goal"].shape,
+			type(observation_space), observation_space.shape,
+			type(achieved_goal_space), achieved_goal_space.shape,
+			type(desired_goal_space), desired_goal_space.shape,
 		)
 		action_space_str = "ACTION_SPACE: {0}, SHAPE: {1}".format(type(action_space), action_space.shape)
 
@@ -39,6 +45,7 @@ def print_all_gym_robotics_env_info():
 def dummy_agent_test(render=False):
 	env_id = "HandManipulateBlockRotateXYZ-v0"
 	env = gym.make(env_id)
+	env = GymRoboticsEnvWrapper(env)
 
 	class Dummy_Agent:
 		def get_action(self, observation):
@@ -50,6 +57,7 @@ def dummy_agent_test(render=False):
 
 	for i in range(100):
 		observation = env.reset()
+		print("!!!!", observation)
 		done = False
 		env.render()
 		while not done:
@@ -67,7 +75,7 @@ def dummy_agent_test(render=False):
 
 
 if __name__ == "__main__":
-	#print_all_gym_robotics_env_info()
-	dummy_agent_test(render=True)
+	print_all_gym_robotics_env_info()
+	#dummy_agent_test(render=True)
 
 

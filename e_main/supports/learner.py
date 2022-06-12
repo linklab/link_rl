@@ -97,7 +97,7 @@ class Learner(mp.Process):
         if self.config.ACTION_MASKING:
             assert isinstance(self.agent.action_space, Discrete)
 
-        self.shared_model_access_lock = shared_model_access_lock  # For only LearningActor (A3C)
+        self.shared_model_access_lock = shared_model_access_lock  # For only LearningActor (A3C, AsynchronousPPO)
 
         if self.config.ENV_NAME in ["Task_Allocation_v0", "Task_Allocation_v1", "Knapsack_Problem_v0"]:
             self.env_info = None
@@ -307,10 +307,10 @@ class Learner(mp.Process):
         self.train_start_time = time.time()
 
         while True:
-            if self.config.AGENT_TYPE == AgentType.A3C:
-                a3c_info = self.queue.get()
+            if self.config.AGENT_TYPE in [AgentType.A3C, AgentType.ASYNCHRONOUS_PPO]:
+                async_info = self.queue.get()
 
-                if a3c_info is None:
+                if async_info is None:
                     self.n_actor_terminations += 1
                     if self.n_actor_terminations >= self.n_actors:
                         self.is_terminated.value = True
@@ -321,13 +321,13 @@ class Learner(mp.Process):
                     if self.is_terminated.value:
                         continue
 
-                if a3c_info["message_type"] == "DONE":
+                if async_info["message_type"] == "DONE":
                     self.total_episodes.value += 1
-                    self.episode_reward_buffer.add(a3c_info["episode_reward"])
+                    self.episode_reward_buffer.add(async_info["episode_reward"])
                     self.last_mean_episode_reward.value = self.episode_reward_buffer.mean()
-                elif a3c_info["message_type"] == "TRAIN":
-                    self.training_step.value += a3c_info["count_training_steps"]
-                    self.total_time_step.value += a3c_info["n_rollout_transitions"]
+                elif async_info["message_type"] == "TRAIN":
+                    self.training_step.value += async_info["count_training_steps"]
+                    self.total_time_step.value += async_info["n_rollout_transitions"]
                 else:
                     raise ValueError()
             else:
@@ -536,7 +536,7 @@ class Learner(mp.Process):
         print("*" * 150)
 
     def play_for_testing(self, n_test_episodes):
-        if self.config.AGENT_TYPE == AgentType.A3C:
+        if self.config.AGENT_TYPE in [AgentType.A3C, AgentType.ASYNCHRONOUS_PPO]:
             self.shared_model_access_lock.acquire()
 
         self.agent.model.eval()
@@ -589,12 +589,12 @@ class Learner(mp.Process):
                     elif isinstance(self.agent.action_space, Box):
                         if action.ndim == 1:
                             if self.agent.action_scale is not None:
-                                scaled_action = action * self.agent.action_scale[0] + self.agent.action_bias[0]
+                                scaled_action = action * self.agent.action_scale + self.agent.action_bias
                             else:
                                 scaled_action = action
                         elif action.ndim == 2:
                             if self.agent.action_scale is not None:
-                                scaled_action = action[0] * self.agent.action_scale[0] + self.agent.action_bias[0]
+                                scaled_action = action[0] * self.agent.action_scale + self.agent.action_bias
                             else:
                                 scaled_action = action[0]
                         else:
@@ -642,7 +642,7 @@ class Learner(mp.Process):
 
         self.agent.model.train()
 
-        if self.config.AGENT_TYPE == AgentType.A3C:
+        if self.config.AGENT_TYPE in [AgentType.A3C, AgentType.ASYNCHRONOUS_PPO]:
             self.shared_model_access_lock.release()
 
         if self.config.ENV_NAME in ["Task_Allocation_v0"]:
@@ -653,4 +653,5 @@ class Learner(mp.Process):
             return np.average(episode_reward_lst), np.std(episode_reward_lst), \
                    np.average(episode_items_value_selected_lst), np.average(episode_ratio_lst)
         else:
+
             return np.average(episode_reward_lst), np.std(episode_reward_lst)

@@ -97,6 +97,10 @@ class OnPolicyAgent(Agent):
     def train_ppo(self):
         raise NotImplementedError()
 
+    @abstractmethod
+    def train_asynchronous_ppo(self):
+        raise NotImplementedError()
+
     def get_action(self, obs, mode=AgentMode.TRAIN):
         self.step += 1
         if isinstance(self.action_space, Discrete):

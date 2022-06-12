@@ -3,6 +3,7 @@ from b_single_main_common import *
 import time
 import torch.multiprocessing as mp
 from d_agents.on_policy.a3c.agent_a3c import WorkerAgentA3c
+from d_agents.on_policy.asynchronous_ppo.agent_asynchronous_ppo import WorkerAsynchronousPpo
 
 from e_main.supports.actor import Actor, LearningActor
 from g_utils.types import OffPolicyAgentTypes, AgentType
@@ -19,7 +20,7 @@ def main():
     mp.set_start_method('spawn', force=True)
     queue = mp.Queue()
 
-    if config.AGENT_TYPE == AgentType.A3C:
+    if config.AGENT_TYPE in [AgentType.A3C, AgentType.ASYNCHRONOUS_PPO]:
         master_agent = get_agent(
             observation_space=observation_space, action_space=action_space, config=config
         )
@@ -30,12 +31,20 @@ def main():
             agent=master_agent, queue=queue, shared_model_access_lock=shared_model_access_lock, config=config
         )
 
+        if config.AGENT_TYPE == AgentType.A3C:
+            worker_agent_class = WorkerAgentA3c
+        elif config.AGENT_TYPE == AgentType.ASYNCHRONOUS_PPO:
+            worker_agent_class = WorkerAsynchronousPpo
+        else:
+            raise ValueError()
+
         worker_agents = [
-            WorkerAgentA3c(
+            worker_agent_class(
                 master_agent=master_agent, observation_space=observation_space, action_space=action_space,
                 shared_model_access_lock=shared_model_access_lock, config=config
             ) for _ in range(config.N_ACTORS)
         ]
+
         actors = [
             LearningActor(
                 env_name=config.ENV_NAME, actor_id=actor_id, agent=worker_agents[actor_id], queue=queue, config=config
@@ -88,5 +97,5 @@ def main():
 
 
 if __name__ == "__main__":
-    assert config.AGENT_TYPE in OffPolicyAgentTypes or config.AGENT_TYPE == AgentType.A3C
+    assert config.AGENT_TYPE in OffPolicyAgentTypes or config.AGENT_TYPE in [AgentType.A3C, AgentType.ASYNCHRONOUS_PPO]
     main()

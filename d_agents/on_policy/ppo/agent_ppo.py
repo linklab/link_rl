@@ -15,9 +15,7 @@ class AgentPpo(AgentA2c):
         self.last_actor_objective = mp.Value('d', 0.0)
         self.last_ratio = mp.Value('d', 0.0)
 
-    def train_ppo(self):
-        count_training_steps = 0
-
+    def process_with_old_log_pi(self):
         #####################################
         # OLD_LOG_PI 처리: BEGIN
         #####################################
@@ -32,9 +30,55 @@ class AgentPpo(AgentA2c):
         else:
             raise ValueError()
 
+        return old_log_pi_action_v
         #####################################
         # OLD_LOG_PI 처리: END
         #####################################
+
+    def get_ppo_actor_loss(self, old_log_pi_action_v, detached_advantages):
+        if isinstance(self.action_space, Discrete):
+            # actions.shape: (32, 1)
+            # dist.log_prob(value=actions.squeeze(-1)).shape: (32,)
+            # criticized_log_pi_action_v.shape: (32,)
+            action_probs = self.actor_model.pi(self.observations)
+            dist = Categorical(probs=action_probs)
+            log_pi_action_v = dist.log_prob(value=self.actions.squeeze(dim=-1))
+        elif isinstance(self.action_space, Box):
+            mu_v, var_v = self.actor_model.pi(self.observations)
+
+            # log_pi_action_v = self.calc_log_prob(mu_v, var_v, actions)
+            # entropy = 0.5 * (torch.log(2.0 * np.pi * var_v) + 1.0).sum(dim=-1)
+            # entropy = entropy.mean()
+
+            dist = Normal(loc=mu_v, scale=torch.sqrt(var_v))
+            log_pi_action_v = dist.log_prob(value=self.actions).sum(dim=-1)
+        else:
+            raise ValueError()
+
+        entropy = dist.entropy().mean()
+        ratio = torch.exp(log_pi_action_v - old_log_pi_action_v.detach())
+
+        assert ratio.shape == detached_advantages.shape, "{0}, {1}".format(
+            ratio.shape, detached_advantages.shape
+        )
+        surrogate_objective_1 = ratio * detached_advantages
+        surrogate_objective_2 = torch.clamp(
+            ratio, 1.0 - self.config.PPO_EPSILON_CLIP, 1.0 + self.config.PPO_EPSILON_CLIP
+        ) * detached_advantages
+
+        assert surrogate_objective_1.shape == surrogate_objective_2.shape, "{0} {1}".format(
+            surrogate_objective_1.shape, surrogate_objective_2.shape
+        )
+        actor_objective = torch.mean(torch.min(surrogate_objective_1, surrogate_objective_2))
+        actor_loss = -1.0 * actor_objective
+        entropy_loss = -1.0 * entropy
+        actor_loss = actor_loss + entropy_loss * self.config.ENTROPY_BETA
+        return actor_loss, actor_objective, entropy, ratio
+
+    def train_ppo(self):
+        count_training_steps = 0
+
+        old_log_pi_action_v = self.process_with_old_log_pi()
 
         sum_critic_loss = 0.0
         sum_actor_objective = 0.0
@@ -49,7 +93,12 @@ class AgentPpo(AgentA2c):
             #  Critic (Value) Loss 산출 & Update - BEGIN #
             #############################################
             values = self.critic_model.v(self.observations)
-            critic_loss = self.train_critic(values=values, detached_target_values=detached_target_values)
+            critic_loss = self.get_critic_loss(values=values, detached_target_values=detached_target_values)
+
+            self.critic_optimizer.zero_grad()
+            critic_loss.backward()
+            self.clip_critic_model_parameter_grad_value(self.critic_model.critic_params_list)
+            self.critic_optimizer.step()
             ##########################################
             #  Critic (Value) Loss 산출 & Update- END #
             ##########################################
@@ -57,43 +106,9 @@ class AgentPpo(AgentA2c):
             #########################################
             #  Actor Objective 산출 & Update - BEGIN #
             #########################################
-            if isinstance(self.action_space, Discrete):
-                # actions.shape: (32, 1)
-                # dist.log_prob(value=actions.squeeze(-1)).shape: (32,)
-                # criticized_log_pi_action_v.shape: (32,)
-                action_probs = self.actor_model.pi(self.observations)
-                dist = Categorical(probs=action_probs)
-                log_pi_action_v = dist.log_prob(value=self.actions.squeeze(dim=-1))
-            elif isinstance(self.action_space, Box):
-                mu_v, var_v = self.actor_model.pi(self.observations)
-
-                # log_pi_action_v = self.calc_log_prob(mu_v, var_v, actions)
-                # entropy = 0.5 * (torch.log(2.0 * np.pi * var_v) + 1.0).sum(dim=-1)
-                # entropy = entropy.mean()
-
-                dist = Normal(loc=mu_v, scale=torch.sqrt(var_v))
-                log_pi_action_v = dist.log_prob(value=self.actions).sum(dim=-1)
-            else:
-                raise ValueError()
-
-            entropy = dist.entropy().mean()
-            ratio = torch.exp(log_pi_action_v - old_log_pi_action_v.detach())
-
-            assert ratio.shape == detached_advantages.shape, "{0}, {1}".format(
-                ratio.shape, detached_advantages.shape
+            actor_loss, actor_objective, entropy, ratio = self.get_ppo_actor_loss(
+                old_log_pi_action_v=old_log_pi_action_v, detached_advantages=detached_advantages
             )
-            surrogate_objective_1 = ratio * detached_advantages
-            surrogate_objective_2 = torch.clamp(
-                ratio, 1.0 - self.config.PPO_EPSILON_CLIP, 1.0 + self.config.PPO_EPSILON_CLIP
-            ) * detached_advantages
-
-            assert surrogate_objective_1.shape == surrogate_objective_2.shape, "{0} {1}".format(
-                surrogate_objective_1.shape, surrogate_objective_2.shape
-            )
-            actor_objective = torch.mean(torch.min(surrogate_objective_1, surrogate_objective_2))
-            actor_loss = -1.0 * actor_objective
-            entropy_loss = -1.0 * entropy
-            actor_loss = actor_loss + entropy_loss * self.config.ENTROPY_BETA
 
             self.actor_optimizer.zero_grad()
             actor_loss.backward()

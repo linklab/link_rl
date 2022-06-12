@@ -161,6 +161,9 @@ from a_configuration.b_single_config.open_ai_gym.box2d.config_lunar_lander_conti
 config = ConfigLunarLanderContinuousPpo()
 config.WANDB_REPORT_URL = "https://wandb.ai/link-koreatech/LunarLanderContinuous-v2_PPO_yhhan/reports/LunarLanderContinuous-v2_PPO--VmlldzoxOTkyMDUy?accessToken=von6k6x7zlz1fns9gb7ld7lqpsvtemc3z6yx70t43iuxarppga7v0f0ard4uf18t"
 
+from a_configuration.b_single_config.open_ai_gym.box2d.config_lunar_lander_continuous import ConfigLunarLanderContinuousAsynchronousPpo
+config = ConfigLunarLanderContinuousAsynchronousPpo()
+
 from a_configuration.b_single_config.open_ai_gym.box2d.config_lunar_lander_continuous import ConfigLunarLanderContinuousPpoTrajectory
 config = ConfigLunarLanderContinuousPpoTrajectory()
 config.WANDB_REPORT_URL = "https://wandb.ai/link-koreatech/LunarLanderContinuous-v2_PPO_TRAJECTORY_yhhan/reports/LunarLanderContinuous-v2_PPO_TRAJECTORY--VmlldzoxNTA3MjAx"
@@ -534,6 +537,43 @@ config = ConfigKnapsack0StaticTestLinearA2c()
 
 from a_configuration.b_single_config.combinatorial_optimization.config_knapsack import ConfigKnapsack0StaticTestLinearPpo
 config = ConfigKnapsack0StaticTestLinearPpo()
+
+
+###################
+### GymRobotics ###
+###################
+
+from a_configuration.b_single_config.gym_robotics.config_gym_robotics_hand_manipulate_block_rotate_xyz import ConfigHandManipulateBlockRotateXYZA2c
+config = ConfigHandManipulateBlockRotateXYZA2c()
+
+from a_configuration.b_single_config.gym_robotics.config_gym_robotics_hand_manipulate_block_rotate_xyz import ConfigHandManipulateBlockRotateXYZPpo
+config = ConfigHandManipulateBlockRotateXYZPpo()
+
+from a_configuration.b_single_config.gym_robotics.config_gym_robotics_hand_manipulate_block_rotate_xyz import ConfigHandManipulateBlockRotateXYZTd3
+config = ConfigHandManipulateBlockRotateXYZTd3()
+
+from a_configuration.b_single_config.gym_robotics.config_gym_robotics_hand_manipulate_block_rotate_xyz import ConfigHandManipulateBlockRotateXYZSac
+config = ConfigHandManipulateBlockRotateXYZSac()
+
+
+###########################
+### CompetitionOlympics ###
+###########################
+
+from a_configuration.b_single_config.competition_olympics.config_competition_olympics_integrated import ConfigCompetitionOlympicsIntegratedA3c
+config = ConfigCompetitionOlympicsIntegratedA3c()
+
+from a_configuration.b_single_config.competition_olympics.config_competition_olympics_integrated import ConfigCompetitionOlympicsIntegratedPpo
+config = ConfigCompetitionOlympicsIntegratedPpo()
+
+from a_configuration.b_single_config.competition_olympics.config_competition_olympics_integrated import ConfigCompetitionOlympicsIntegratedAsynchronousPpo
+config = ConfigCompetitionOlympicsIntegratedAsynchronousPpo()
+
+from a_configuration.b_single_config.competition_olympics.config_competition_olympics_integrated import ConfigCompetitionOlympicsIntegratedTd3
+config = ConfigCompetitionOlympicsIntegratedTd3()
+
+from a_configuration.b_single_config.competition_olympics.config_competition_olympics_integrated import ConfigCompetitionOlympicsIntegratedSac
+config = ConfigCompetitionOlympicsIntegratedSac()
 
 
 ###########################

@@ -13,7 +13,9 @@ from gym.spaces import Discrete, Box
 from gym.vector import AsyncVectorEnv
 import plotly.graph_objects as go
 
+from a_configuration.a_base_config.a_environments.competition_olympics import ConfigCompetitionOlympics
 from a_configuration.a_base_config.a_environments.dm_control import ConfigDmControl
+from a_configuration.a_base_config.a_environments.gym_robotics import ConfigGymRobotics
 from a_configuration.a_base_config.a_environments.open_ai_gym.config_gym_atari import ConfigGymAtari
 from a_configuration.a_base_config.a_environments.open_ai_gym.config_gym_box2d import ConfigHardcoreBipedalWalker, \
     ConfigNormalBipedalWalker
@@ -26,6 +28,8 @@ from a_configuration.a_base_config.c_models.config_recurrent_convolutional_model
     ConfigRecurrent2DConvolutionalModel, ConfigRecurrent1DConvolutionalModel
 from a_configuration.a_base_config.c_models.config_recurrent_linear_models import ConfigRecurrentLinearModel
 from b_environments import wrapper
+from b_environments.gym_robotics.gym_robotics_wrapper import GymRoboticsEnvWrapper
+from b_environments.competition_olympics.competition_olympics_env_wrapper import CompetitionOlympicsEnvWrapper
 from g_utils.types import AgentType, ActorCriticAgentTypes, ModelType, LayerActivationType, LossFunctionType, \
     OffPolicyAgentTypes, OnPolicyAgentTypes
 
@@ -155,6 +159,11 @@ def set_config(config):
     elif config.AGENT_TYPE == AgentType.PPO:
         config.BUFFER_CAPACITY = config.BATCH_SIZE
         config.CONSOLE_LOG_INTERVAL_TRAINING_STEPS = 10 * config.PPO_K_EPOCH
+
+    elif config.AGENT_TYPE == AgentType.ASYNCHRONOUS_PPO:
+        config.BUFFER_CAPACITY = config.BATCH_SIZE
+        config.CONSOLE_LOG_INTERVAL_TRAINING_STEPS = config.CONSOLE_LOG_INTERVAL_TRAINING_STEPS * config.N_ACTORS / 2
+        assert config.N_ACTORS > 1
 
     elif config.AGENT_TYPE == AgentType.PPO_TRAJECTORY:
         config.PPO_TRAJECTORY_SIZE = config.BATCH_SIZE * 10
@@ -465,7 +474,7 @@ def console_log(
         console_log += "critic_loss: {0:7.3f}, log_actor_obj.: {1:7.3f}, entropy: {2:5.3f}".format(
             agent.last_critic_loss.value, agent.last_actor_objective.value, agent.last_entropy.value
         )
-    elif config.AGENT_TYPE in (AgentType.PPO, AgentType.PPO_TRAJECTORY):
+    elif config.AGENT_TYPE in (AgentType.PPO, AgentType.ASYNCHRONOUS_PPO, AgentType.PPO_TRAJECTORY):
         console_log += "critic_loss: {0:7.3f}, actor_obj.: {1:7.3f}, ratio: {2:5.3f}, entropy: {3:5.3f}".format(
             agent.last_critic_loss.value, agent.last_actor_objective.value, agent.last_ratio.value, agent.last_entropy.value
         )
@@ -573,7 +582,7 @@ def console_log_comparison(learner_c,
             console_log += "critic_loss: {0:6.3f}, log_actor_obj.: {1:5.3f}, ".format(
                 agent.last_critic_loss.value, agent.last_actor_objective.value
             )
-        elif config_c.AGENT_PARAMETERS[agent_idx].AGENT_TYPE in (AgentType.PPO, AgentType.PPO_TRAJECTORY):
+        elif config_c.AGENT_PARAMETERS[agent_idx].AGENT_TYPE in (AgentType.PPO, AgentType.ASYNCHRONOUS_PPO, AgentType.PPO_TRAJECTORY):
             console_log += "critic_loss: {0:7.3f}, actor_obj.: {1:7.3f}, ratio: {2:5.3f}, entropy: {3:5.3f}".format(
                 agent.last_critic_loss.value, agent.last_actor_objective.value, agent.last_ratio.value, agent.last_entropy.value
             )
@@ -663,7 +672,7 @@ def wandb_log(learner, wandb_obj, config):
     elif config.AGENT_TYPE in (AgentType.DDPG, AgentType.TD3):
         log_dict["Critic Loss"] = learner.agent.last_critic_loss.value
         log_dict["Actor Objective"] = learner.agent.last_actor_objective.value
-    elif config.AGENT_TYPE in (AgentType.PPO, AgentType.PPO_TRAJECTORY):
+    elif config.AGENT_TYPE in (AgentType.PPO, AgentType.ASYNCHRONOUS_PPO, AgentType.PPO_TRAJECTORY):
         log_dict["Critic Loss"] = learner.agent.last_critic_loss.value
         log_dict["Actor Objective"] = learner.agent.last_actor_objective.value
         log_dict["Ratio"] = learner.agent.last_ratio.value
@@ -950,6 +959,14 @@ def get_train_env(config, no_graphics=True):
                 env = gym.wrappers.AtariPreprocessing(env, frame_skip=1, grayscale_obs=True, scale_obs=True)
                 env = gym.wrappers.FrameStack(env, num_stack=4, lz4_compress=True)
 
+            ###########################
+            #   CompetitionOlympics   #
+            ###########################
+            elif isinstance(config, ConfigCompetitionOlympics):
+                from b_environments.competition_olympics.olympics_env.chooseenv import make
+                env = make(config.ENV_NAME)
+                env = CompetitionOlympicsEnvWrapper(env=env, controlled_agent_index=config.CONTROLLED_AGENT_INDEX)
+
             ############
             #   Else   #
             ############
@@ -972,6 +989,9 @@ def get_train_env(config, no_graphics=True):
 
                 if env_name in ["CarRacing-v1"]:
                     env = wrapper.CarRacingObservationTransposeWrapper(env=env)
+
+                if isinstance(config, ConfigGymRobotics):
+                    env = GymRoboticsEnvWrapper(env=env)
 
                 ################
                 #   Wrappers   #
@@ -1076,6 +1096,14 @@ def get_single_env(config, no_graphics=True, play=False):
         single_env = gym.wrappers.AtariPreprocessing(single_env, frame_skip=1, grayscale_obs=True, scale_obs=True)
         single_env = gym.wrappers.FrameStack(single_env, num_stack=4, lz4_compress=True)
 
+    ###########################
+    #   CompetitionOlympics   #
+    ###########################
+    elif isinstance(config, ConfigCompetitionOlympics):
+        from b_environments.competition_olympics.olympics_env.chooseenv import make
+        single_env = make(config.ENV_NAME)
+        single_env = CompetitionOlympicsEnvWrapper(env=single_env, controlled_agent_index=config.CONTROLLED_AGENT_INDEX)
+
     ############
     #   else   #
     ############
@@ -1098,6 +1126,9 @@ def get_single_env(config, no_graphics=True, play=False):
 
         if config.ENV_NAME in ["CarRacing-v1"]:
             single_env = wrapper.CarRacingObservationTransposeWrapper(env=single_env)
+
+        if isinstance(config, ConfigGymRobotics):
+            single_env = GymRoboticsEnvWrapper(env=single_env)
 
         ################
         #   Wrappers   #
