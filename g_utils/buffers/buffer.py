@@ -43,7 +43,7 @@ class Buffer:
 
     @staticmethod
     def get_new_buffer_without_capacity(observation_space, action_space, config):
-        observations_buffer = torch.zeros(size=(0, *observation_space.shape), device=config.DEVICE)
+        observations_buffer = torch.zeros(size=(0, *observation_space.shape), dtype=torch.float16, device=config.DEVICE)
 
         if isinstance(action_space, Discrete):
             actions_buffer = torch.zeros(size=(0,), dtype=torch.int64, device=config.DEVICE)
@@ -52,7 +52,7 @@ class Buffer:
         else:
             raise ValueError()
 
-        next_observations_buffer = torch.zeros(size=(0, *observation_space.shape), device=config.DEVICE)
+        next_observations_buffer = torch.zeros(size=(0, *observation_space.shape), dtype=torch.float16, device=config.DEVICE)
         rewards_buffer = torch.zeros(size=(0,), device=config.DEVICE)
         dones_buffer = torch.zeros(size=(0,), dtype=torch.bool, device=config.DEVICE)
         infos_buffer = [None] * config.BUFFER_CAPACITY
@@ -60,7 +60,7 @@ class Buffer:
 
     @staticmethod
     def get_new_buffer_with_capacity(observation_space, action_space, config):
-        observations_buffer = torch.zeros(size=(config.BUFFER_CAPACITY, *observation_space.shape), device=config.DEVICE)
+        observations_buffer = torch.zeros(size=(config.BUFFER_CAPACITY, *observation_space.shape), dtype=torch.float16, device=config.DEVICE)
 
         if isinstance(action_space, Discrete):
             actions_buffer = torch.zeros(size=(config.BUFFER_CAPACITY,), dtype=torch.int64, device=config.DEVICE)
@@ -69,7 +69,7 @@ class Buffer:
         else:
             raise ValueError()
 
-        next_observations_buffer = torch.zeros(size=(config.BUFFER_CAPACITY, *observation_space.shape), device=config.DEVICE)
+        next_observations_buffer = torch.zeros(size=(config.BUFFER_CAPACITY, *observation_space.shape), dtype=torch.float16, device=config.DEVICE)
         rewards_buffer = torch.zeros(size=(config.BUFFER_CAPACITY,), device=config.DEVICE)
         dones_buffer = torch.zeros(size=(config.BUFFER_CAPACITY,), dtype=torch.bool, device=config.DEVICE)
         infos_buffer = [None] * config.BUFFER_CAPACITY
