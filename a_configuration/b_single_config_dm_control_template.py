@@ -10,6 +10,9 @@ config = ConfigDmControlCartPoleBalanceA3c()
 from a_configuration.b_single_config.dm_control.config_dm_control_cartpole_balance import ConfigDmControlCartPoleBalancePpo
 config = ConfigDmControlCartPoleBalancePpo()
 
+from a_configuration.b_single_config.dm_control.config_dm_control_cartpole_balance import ConfigDmControlCartPoleBalanceAsynchronousPpo
+config = ConfigDmControlCartPoleBalanceAsynchronousPpo()
+
 from a_configuration.b_single_config.dm_control.config_dm_control_cartpole_balance import ConfigDmControlCartPoleBalanceDdpg
 config = ConfigDmControlCartPoleBalanceDdpg()
 

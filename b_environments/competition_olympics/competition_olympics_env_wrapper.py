@@ -2,6 +2,10 @@ import gym
 import numpy as np
 import random
 
+GAME_NAME_LIST = [
+    'running-competition', 'wrestling', 'football', 'table-hockey'
+]
+
 
 class DummyCompetitionOlympicsAgent:
 	def __init__(self):
@@ -23,14 +27,10 @@ class CompetitionOlympicsEnvWrapper(gym.Wrapper):
 
 	def __init__(self, env, controlled_agent_index=1):
 		super().__init__(env)
-		print(
-			"CompetitionOlympicsEnv INITIALIZED with controlled_agent_index = {0}".format(controlled_agent_index),
-			flush=True
-		)
 
 		self.controlled_agent_index = controlled_agent_index
 		self.observation_space = gym.spaces.Box(
-			low=-np.inf, high=np.inf, shape=(1, 40, 40), dtype=np.float32
+			low=-np.inf, high=np.inf, shape=(2, 40, 40), dtype=np.float32
 		)
 		self.action_space = gym.spaces.Box(
 			low=np.asarray([-100., -30.0]), high=np.asarray([200., 30.0]), shape=(2,), dtype=float
@@ -44,7 +44,18 @@ class CompetitionOlympicsEnvWrapper(gym.Wrapper):
 		self.last_observation_opponent_agent = None
 		self.max_value = 0
 
-	def _get_normalize_observation(self, observation):
+	def _get_normalize_observation(self, observation, game_name):
+		if game_name == 'running-competition':
+			observation = np.concatenate((observation, np.full(shape=(1, 40, 40), fill_value=0.0)), axis=0)
+		elif game_name == 'wrestling':
+			observation = np.concatenate((observation, np.full(shape=(1, 40, 40), fill_value=1.0)), axis=0)
+		elif game_name == 'football':
+			observation = np.concatenate((observation, np.full(shape=(1, 40, 40), fill_value=2.0)), axis=0)
+		elif game_name == 'table-hockey':
+			observation = np.concatenate((observation, np.full(shape=(1, 40, 40), fill_value=3.0)), axis=0)
+		else:
+			raise ValueError()
+
 		return observation / 10.0
 
 	def reset(self, return_info=False):
@@ -56,10 +67,12 @@ class CompetitionOlympicsEnvWrapper(gym.Wrapper):
 
 		self.last_observation_opponent_agent = observation_opponent_agent
 
-		observation_controlled_agent = self._get_normalize_observation(observation_controlled_agent)
+		observation_controlled_agent = self._get_normalize_observation(
+			observation_controlled_agent, self.env.env_core.current_game.game_name
+		)
 
 		if return_info:
-			info = {}
+			info = {"game_name": self.env.env_core.current_game.game_name}
 			return observation_controlled_agent, info
 		else:
 			return observation_controlled_agent
@@ -76,17 +89,23 @@ class CompetitionOlympicsEnvWrapper(gym.Wrapper):
 		)
 
 		self.last_observation_opponent_agent = next_observation_opponent_agent
-		next_observation_controlled_agent = self._get_normalize_observation(next_observation_controlled_agent)
+		next_observation_controlled_agent = self._get_normalize_observation(
+			next_observation_controlled_agent, self.env.env_core.current_game.game_name
+		)
 
 		reward_controlled = self._get_reward_shaped(reward, done, self.controlled_agent_index)
 		#reward_opponent = reward[1 - self.controlled_agent_index]
 
-		info = {}
+		info = {"game_name": self.env.env_core.current_game.game_name}
 		if done:
 			if reward[self.controlled_agent_index] > reward[1 - self.controlled_agent_index]:
-				info = {'win': self.controlled_agent_index}
+				info['win_controlled_agent'] = True
+			elif reward[self.controlled_agent_index] < reward[1 - self.controlled_agent_index]:
+				info['win_opponent_agent'] = True
+			elif reward[self.controlled_agent_index] == reward[1 - self.controlled_agent_index]:
+				info['draw'] = True
 			else:
-				info = {'win': 1 - self.controlled_agent_index}
+				raise ValueError()
 
 		return next_observation_controlled_agent, reward_controlled, done, info
 

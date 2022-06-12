@@ -1,7 +1,8 @@
 from a_configuration.a_base_config.a_environments.dm_control.config_dm_control_cartpole import \
     ConfigDmControlCartpoleBalance
 from a_configuration.a_base_config.b_agents.config_agents_off_policy import ConfigDdpg, ConfigTd3, ConfigSac
-from a_configuration.a_base_config.b_agents.config_agents_on_policy import ConfigA2c, ConfigPpo, ConfigA3c
+from a_configuration.a_base_config.b_agents.config_agents_on_policy import ConfigA2c, ConfigPpo, ConfigA3c, \
+    ConfigAsynchronousPpo
 from a_configuration.a_base_config.config_single_base import ConfigBase
 from g_utils.types import ModelType
 
@@ -12,7 +13,7 @@ class ConfigDmControlCartPoleBalanceA2c(ConfigBase, ConfigDmControlCartpoleBalan
         ConfigDmControlCartpoleBalance.__init__(self)
         ConfigA2c.__init__(self)
 
-        self.MAX_TRAINING_STEPS = 100_000
+        self.MAX_TRAINING_STEPS = 300_000
         self.MODEL_TYPE = ModelType.SMALL_LINEAR
 
 
@@ -22,7 +23,7 @@ class ConfigDmControlCartPoleBalanceA3c(ConfigBase, ConfigDmControlCartpoleBalan
         ConfigDmControlCartpoleBalance.__init__(self)
         ConfigA3c.__init__(self)
 
-        self.MAX_TRAINING_STEPS = 100_000
+        self.MAX_TRAINING_STEPS = 300_000
         self.MODEL_TYPE = ModelType.SMALL_LINEAR
 
 
@@ -32,7 +33,17 @@ class ConfigDmControlCartPoleBalancePpo(ConfigBase, ConfigDmControlCartpoleBalan
         ConfigDmControlCartpoleBalance.__init__(self)
         ConfigPpo.__init__(self)
 
-        self.MAX_TRAINING_STEPS = 100_000
+        self.MAX_TRAINING_STEPS = 300_000
+        self.MODEL_TYPE = ModelType.SMALL_LINEAR
+
+
+class ConfigDmControlCartPoleBalanceAsynchronousPpo(ConfigBase, ConfigDmControlCartpoleBalance, ConfigAsynchronousPpo):
+    def __init__(self):
+        ConfigBase.__init__(self)
+        ConfigDmControlCartpoleBalance.__init__(self)
+        ConfigAsynchronousPpo.__init__(self)
+
+        self.MAX_TRAINING_STEPS = 300_000
         self.MODEL_TYPE = ModelType.SMALL_LINEAR
 
 
@@ -42,7 +53,7 @@ class ConfigDmControlCartPoleBalanceDdpg(ConfigBase, ConfigDmControlCartpoleBala
         ConfigDmControlCartpoleBalance.__init__(self)
         ConfigDdpg.__init__(self)
 
-        self.MAX_TRAINING_STEPS = 100_000
+        self.MAX_TRAINING_STEPS = 300_000
         self.MODEL_TYPE = ModelType.SMALL_LINEAR
 
 
@@ -52,7 +63,7 @@ class ConfigDmControlCartPoleBalanceTd3(ConfigBase, ConfigDmControlCartpoleBalan
         ConfigDmControlCartpoleBalance.__init__(self)
         ConfigTd3.__init__(self)
 
-        self.MAX_TRAINING_STEPS = 100_000
+        self.MAX_TRAINING_STEPS = 300_000
         self.MODEL_TYPE = ModelType.SMALL_LINEAR
 
 
@@ -62,5 +73,5 @@ class ConfigDmControlCartPoleBalanceSac(ConfigBase, ConfigDmControlCartpoleBalan
         ConfigDmControlCartpoleBalance.__init__(self)
         ConfigSac.__init__(self)
 
-        self.MAX_TRAINING_STEPS = 100_000
+        self.MAX_TRAINING_STEPS = 300_000
         self.MODEL_TYPE = ModelType.SMALL_LINEAR

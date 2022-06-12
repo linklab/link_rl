@@ -5,6 +5,10 @@ from collections import deque
 from competition_olympics_env_wrapper import CompetitionOlympicsEnvWrapper
 from olympics_env.chooseenv import make
 
+GAME_NAME_LIST = [
+    'running-competition', 'wrestling', 'football', 'table-hockey'
+]
+
 
 def print_all_competition_olympics_info(config):
     env = make(config.ENV_NAME, seed=42)          #build environment
@@ -69,6 +73,11 @@ def competition_olympics_controlled_agent_test(config, controlled_agent_index=1,
 
     record_win = deque(maxlen=100)
     record_win_op = deque(maxlen=100)
+    record_draw = deque(maxlen=100)
+    print(
+        "CompetitionOlympicsEnv INITIALIZED with controlled_agent_index = {0}".format(controlled_agent_index),
+        flush=True
+    )
 
     env = make(config.ENV_NAME)  # build environment
 
@@ -88,10 +97,10 @@ def competition_olympics_controlled_agent_test(config, controlled_agent_index=1,
         reward = None
         episode_reward = 0.0
 
-        time_step = 0
+        time_steps = 0
 
         while not done:
-            time_step += 1
+            time_steps += 1
             action_opponent = opponent_agent.get_action(observation_opponent_agent)
             action_controlled = controlled_agent.get_action(observation_controlled_agent)
 
@@ -118,12 +127,17 @@ def competition_olympics_controlled_agent_test(config, controlled_agent_index=1,
 
         win_is = 1 if reward[controlled_agent_index] > reward[1 - controlled_agent_index] else 0
         win_is_op = 1 if reward[controlled_agent_index] < reward[1 - controlled_agent_index] else 0
+        draw_is = 1 if reward[controlled_agent_index] == reward[1 - controlled_agent_index] else 0
         record_win.append(win_is)
         record_win_op.append(win_is_op)
-        print("Episode: {0}, Controlled agent: {1}, Reward: {2}, Win Rate (controlled & opponent): {3:.2f}, {4:.2f}".format(
-            episode, controlled_agent_index, reward,
-            sum(record_win) / len(record_win), sum(record_win_op) / len(record_win_op)
-        ), end="\n\n")
+        record_draw.append(draw_is)
+
+        global_max_value_in_obs = 0.0
+
+        print_episode_stat(
+            episode, time_steps, controlled_agent_index, reward, episode_reward, global_max_value_in_obs,
+            record_win, record_win_op, record_draw
+        )
 
 
 def competition_olympics_controlled_agent_test_2(config, controlled_agent_index=1, render=False):
@@ -131,7 +145,11 @@ def competition_olympics_controlled_agent_test_2(config, controlled_agent_index=
 
     record_win = deque(maxlen=100)
     record_win_op = deque(maxlen=100)
-
+    record_draw = deque(maxlen=100)
+    print(
+        "CompetitionOlympicsEnv INITIALIZED with controlled_agent_index = {0}".format(controlled_agent_index),
+        flush=True
+    )
     env = make(config.ENV_NAME)  # build environment
     env = CompetitionOlympicsEnvWrapper(env, controlled_agent_index=controlled_agent_index)
 
@@ -139,8 +157,8 @@ def competition_olympics_controlled_agent_test_2(config, controlled_agent_index=
     global_max_value_in_obs = 0
 
     for episode in range(MAX_EPISODE):
-
         observation = env.reset()
+
         done = False
 
         reward = None
@@ -148,17 +166,16 @@ def competition_olympics_controlled_agent_test_2(config, controlled_agent_index=
 
         episode_reward = 0.0
 
-        time_step = 0
+        time_steps = 0
 
         while not done:
-            time_step += 1
+            time_steps += 1
             action = agent.get_action(observation)
             next_observation, reward, done, info = env.step(action)
 
-            # print("Observation: {0}, Action: {1}, next_observation: {2}, Reward: {3}, Done: {4}, info: {5}".format(
-            #     next_observation.shape, action, next_observation.shape, reward, done, info
-            # ))
-            # observation = next_observation
+            print("Observation: {0}, Action: {1}, next_observation: {2}, Reward: {3}, Done: {4}, info: {5}".format(
+                next_observation.shape, action, next_observation.shape, reward, done, info
+            ))
 
             episode_reward += reward
             observation = next_observation
@@ -168,35 +185,44 @@ def competition_olympics_controlled_agent_test_2(config, controlled_agent_index=
             if local_max_value_in_obs > global_max_value_in_obs:
                 global_max_value_in_obs = local_max_value_in_obs
 
-        win_is = 1 if info['win'] == controlled_agent_index else 0
-        win_is_op = 1 if info['win'] == 1 - controlled_agent_index else 0
+        win_is = 1 if 'win_controlled_agent' in info and info['win_controlled_agent'] else 0
+        win_is_op = 1 if 'win_opponent_agent' in info and info['win_opponent_agent'] else 0
+        draw_is = 1 if 'draw' in info and info['draw'] else 0
         record_win.append(win_is)
         record_win_op.append(win_is_op)
+        record_draw.append(draw_is)
 
         print_episode_stat(
-            episode, controlled_agent_index, reward, episode_reward, global_max_value_in_obs, record_win, record_win_op
+            episode, time_steps, controlled_agent_index, reward, episode_reward, global_max_value_in_obs,
+            record_win, record_win_op, record_draw
         )
 
 
 def print_episode_stat(
-        episode, controlled_agent_index, reward, episode_reward, global_max_value_in_obs, record_win, record_win_op
+        episode, time_steps, controlled_agent_index, reward, episode_reward, global_max_value_in_obs,
+        record_win, record_win_op, record_draw
 ):
     print(
-        "Episode: {0}, Controlled agent: {1}, Last Reward: {2}, Episode Reward: {3}, Max Value in Obs.: {4}".format(
-            episode, controlled_agent_index, reward, episode_reward, global_max_value_in_obs
+        "Episode: {0}, Elapsed Time Steps: {1}, Controlled agent: {2}, Last Reward: {3},"
+        " Episode Reward: {4}, Max Value in Obs.: {5}".format(
+            episode + 1, time_steps, controlled_agent_index, reward, episode_reward, global_max_value_in_obs
         ), end=""
     )
 
     if controlled_agent_index == 0:
         print(
-            ", Win Rate (controlled: {0:.2f} & opponent: {1:.2f})".format(
-                sum(record_win) / len(record_win), sum(record_win_op) / len(record_win_op)
+            ", Controlled Win : Opponent Win : Draw = {0:.2f} : {1:.2f} : {2:.2f}".format(
+                sum(record_win) / len(record_win),
+                sum(record_win_op) / len(record_win_op),
+                sum(record_draw) / len(record_draw)
             ), end="\n\n"
         )
     else:
         print(
-            ", Win Rate (opponent: {1:.2f}) & controlled: {0:.2f}".format(
-                sum(record_win_op) / len(record_win_op), sum(record_win) / len(record_win),
+            ", Opponent Win : Controlled Win : Draw = {0:.2f} : {1:.2f} : {2:.2f}".format(
+                sum(record_win_op) / len(record_win_op),
+                sum(record_win) / len(record_win),
+                sum(record_draw) / len(record_draw)
             ), end="\n\n"
         )
 
