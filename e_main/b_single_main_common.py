@@ -34,6 +34,10 @@ from g_utils.commons import set_config
 
 import random
 import torch
+import gc
+
+gc.collect()
+torch.cuda.empty_cache()
 
 if config.SEED is not None:
     random.seed(config.SEED)

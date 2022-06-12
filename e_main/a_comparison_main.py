@@ -38,6 +38,10 @@ n_agents = len(config_c.AGENT_PARAMETERS)
 
 import random
 import torch
+import gc
+
+gc.collect()
+torch.cuda.empty_cache()
 
 if config_c.SEED is not None:
     random.seed(config_c.SEED)
