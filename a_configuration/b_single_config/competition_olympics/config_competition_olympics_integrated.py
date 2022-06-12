@@ -1,9 +1,20 @@
 from a_configuration.a_base_config.a_environments.competition_olympics.config_competition_olympics_integrated import \
     ConfigCompetitionOlympicsIntegrated
-from a_configuration.a_base_config.b_agents.config_agents_off_policy import ConfigSac
+from a_configuration.a_base_config.b_agents.config_agents_off_policy import ConfigSac, ConfigTd3
 from a_configuration.a_base_config.b_agents.config_agents_on_policy import ConfigPpo, ConfigA3c, ConfigAsynchronousPpo
 from a_configuration.a_base_config.config_single_base import ConfigBase
 from g_utils.types import ModelType
+
+
+class ConfigCompetitionOlympicsIntegratedA3c(ConfigBase, ConfigCompetitionOlympicsIntegrated, ConfigA3c):
+    def __init__(self):
+        ConfigBase.__init__(self)
+        ConfigCompetitionOlympicsIntegrated.__init__(self)
+        ConfigA3c.__init__(self)
+
+        self.MAX_TRAINING_STEPS = 5_000_000
+        self.MODEL_TYPE = ModelType.MEDIUM_2D_CONVOLUTIONAL
+        self.TEST_INTERVAL_TRAINING_STEPS = 2_000
 
 
 class ConfigCompetitionOlympicsIntegratedPpo(ConfigBase, ConfigCompetitionOlympicsIntegrated, ConfigPpo):
@@ -28,11 +39,11 @@ class ConfigCompetitionOlympicsIntegratedAsynchronousPpo(ConfigBase, ConfigCompe
         self.TEST_INTERVAL_TRAINING_STEPS = 2_000
 
 
-class ConfigCompetitionOlympicsIntegratedA3c(ConfigBase, ConfigCompetitionOlympicsIntegrated, ConfigA3c):
+class ConfigCompetitionOlympicsIntegratedTd3(ConfigBase, ConfigCompetitionOlympicsIntegrated, ConfigTd3):
     def __init__(self):
         ConfigBase.__init__(self)
         ConfigCompetitionOlympicsIntegrated.__init__(self)
-        ConfigA3c.__init__(self)
+        ConfigTd3.__init__(self)
 
         self.MAX_TRAINING_STEPS = 5_000_000
         self.MODEL_TYPE = ModelType.MEDIUM_2D_CONVOLUTIONAL

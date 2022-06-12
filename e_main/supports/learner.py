@@ -653,4 +653,5 @@ class Learner(mp.Process):
             return np.average(episode_reward_lst), np.std(episode_reward_lst), \
                    np.average(episode_items_value_selected_lst), np.average(episode_ratio_lst)
         else:
+
             return np.average(episode_reward_lst), np.std(episode_reward_lst)

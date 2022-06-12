@@ -560,14 +560,17 @@ config = ConfigHandManipulateBlockRotateXYZSac()
 ### CompetitionOlympics ###
 ###########################
 
+from a_configuration.b_single_config.competition_olympics.config_competition_olympics_integrated import ConfigCompetitionOlympicsIntegratedA3c
+config = ConfigCompetitionOlympicsIntegratedA3c()
+
 from a_configuration.b_single_config.competition_olympics.config_competition_olympics_integrated import ConfigCompetitionOlympicsIntegratedPpo
 config = ConfigCompetitionOlympicsIntegratedPpo()
 
 from a_configuration.b_single_config.competition_olympics.config_competition_olympics_integrated import ConfigCompetitionOlympicsIntegratedAsynchronousPpo
 config = ConfigCompetitionOlympicsIntegratedAsynchronousPpo()
 
-from a_configuration.b_single_config.competition_olympics.config_competition_olympics_integrated import ConfigCompetitionOlympicsIntegratedA3c
-config = ConfigCompetitionOlympicsIntegratedA3c()
+from a_configuration.b_single_config.competition_olympics.config_competition_olympics_integrated import ConfigCompetitionOlympicsIntegratedTd3
+config = ConfigCompetitionOlympicsIntegratedTd3()
 
 from a_configuration.b_single_config.competition_olympics.config_competition_olympics_integrated import ConfigCompetitionOlympicsIntegratedSac
 config = ConfigCompetitionOlympicsIntegratedSac()
