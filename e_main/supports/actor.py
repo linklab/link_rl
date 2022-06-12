@@ -113,7 +113,7 @@ class Actor(mp.Process):
 class LearningActor(Actor):
     def __init__(self, env_name, actor_id, agent, queue, config):
         super(LearningActor, self).__init__(env_name, actor_id, agent, queue, config)
-        assert self.config.AGENT_TYPE == AgentType.A3C
+        assert self.config.AGENT_TYPE in [AgentType.A3C, AgentType.ASYNCHRONOUS_PPO]
 
         # FOR TRAIN
         self.total_time_step = 0

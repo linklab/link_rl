@@ -161,6 +161,9 @@ from a_configuration.b_single_config.open_ai_gym.box2d.config_lunar_lander_conti
 config = ConfigLunarLanderContinuousPpo()
 config.WANDB_REPORT_URL = "https://wandb.ai/link-koreatech/LunarLanderContinuous-v2_PPO_yhhan/reports/LunarLanderContinuous-v2_PPO--VmlldzoxOTkyMDUy?accessToken=von6k6x7zlz1fns9gb7ld7lqpsvtemc3z6yx70t43iuxarppga7v0f0ard4uf18t"
 
+from a_configuration.b_single_config.open_ai_gym.box2d.config_lunar_lander_continuous import ConfigLunarLanderContinuousAsynchronousPpo
+config = ConfigLunarLanderContinuousAsynchronousPpo()
+
 from a_configuration.b_single_config.open_ai_gym.box2d.config_lunar_lander_continuous import ConfigLunarLanderContinuousPpoTrajectory
 config = ConfigLunarLanderContinuousPpoTrajectory()
 config.WANDB_REPORT_URL = "https://wandb.ai/link-koreatech/LunarLanderContinuous-v2_PPO_TRAJECTORY_yhhan/reports/LunarLanderContinuous-v2_PPO_TRAJECTORY--VmlldzoxNTA3MjAx"
@@ -559,6 +562,12 @@ config = ConfigHandManipulateBlockRotateXYZSac()
 
 from a_configuration.b_single_config.competition_olympics.config_competition_olympics_integrated import ConfigCompetitionOlympicsIntegratedPpo
 config = ConfigCompetitionOlympicsIntegratedPpo()
+
+from a_configuration.b_single_config.competition_olympics.config_competition_olympics_integrated import ConfigCompetitionOlympicsIntegratedA3c
+config = ConfigCompetitionOlympicsIntegratedA3c()
+
+from a_configuration.b_single_config.competition_olympics.config_competition_olympics_integrated import ConfigCompetitionOlympicsIntegratedSac
+config = ConfigCompetitionOlympicsIntegratedSac()
 
 
 ###########################

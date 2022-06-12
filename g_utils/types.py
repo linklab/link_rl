@@ -88,11 +88,12 @@ class AgentType(enum.Enum):
     A2C = 5
     A3C = 6
     PPO = 7
-    PPO_TRAJECTORY = 8
-    DDPG = 9
-    TD3 = 10
-    SAC = 11
-    MUZERO = 12
+    ASYNCHRONOUS_PPO = 8
+    PPO_TRAJECTORY = 9
+    DDPG = 10
+    TD3 = 11
+    SAC = 12
+    MUZERO = 13
 
 
 class ConvolutionType(enum.Enum):
@@ -108,7 +109,7 @@ class HerConstant:
 
 
 OnPolicyAgentTypes = [
-    AgentType.REINFORCE, AgentType.A2C, AgentType.A3C, AgentType.PPO, AgentType.PPO_TRAJECTORY
+    AgentType.REINFORCE, AgentType.A2C, AgentType.A3C, AgentType.PPO, AgentType.ASYNCHRONOUS_PPO, AgentType.PPO_TRAJECTORY
 ]
 
 OffPolicyAgentTypes = [
@@ -117,5 +118,5 @@ OffPolicyAgentTypes = [
 ]
 
 ActorCriticAgentTypes = [
-    AgentType.A2C, AgentType.A3C, AgentType.PPO, AgentType.PPO_TRAJECTORY, AgentType.DDPG, AgentType.TD3, AgentType.SAC
+    AgentType.A2C, AgentType.A3C, AgentType.PPO, AgentType.ASYNCHRONOUS_PPO, AgentType.PPO_TRAJECTORY, AgentType.DDPG, AgentType.TD3, AgentType.SAC
 ]

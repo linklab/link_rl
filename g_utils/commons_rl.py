@@ -51,6 +51,11 @@ def get_agent(observation_space, action_space, config=None):
         agent = AgentPpo(
             observation_space=observation_space, action_space=action_space, config=config
         )
+    elif config.AGENT_TYPE == AgentType.ASYNCHRONOUS_PPO:
+        from d_agents.on_policy.asynchronous_ppo.agent_asynchronous_ppo import AgentAsynchronousPpo
+        agent = AgentAsynchronousPpo(
+            observation_space=observation_space, action_space=action_space, config=config
+        )
     elif config.AGENT_TYPE == AgentType.PPO_TRAJECTORY:
         from d_agents.on_policy.ppo.agent_ppo_trajectory import AgentPpoTrajectory
         assert hasattr(config, "BATCH_SIZE")

@@ -39,41 +39,12 @@ class AgentA2c(OnPolicyAgent):
         self.last_actor_objective = mp.Value('d', 0.0)
         self.last_entropy = mp.Value('d', 0.0)
 
-    def train_critic(self, values, detached_target_values):
-        #############################################
-        #  Critic (Value) Loss 산출 & Update - BEGIN #
-        #############################################
+    def get_critic_loss(self, values, detached_target_values):
         assert values.shape == detached_target_values.shape, "{0} {1}".format(values.shape, detached_target_values.shape)
         critic_loss = self.config.LOSS_FUNCTION(values, detached_target_values.detach())
-
-        self.critic_optimizer.zero_grad()
-        critic_loss.backward()
-        self.clip_critic_model_parameter_grad_value(self.critic_model.critic_params_list)
-        self.critic_optimizer.step()
-        ##########################################
-        #  Critic (Value) Loss 산출 & Update- END #
-        ##########################################
-
         return critic_loss
 
-    def train_a2c(self):
-        count_training_steps = 0
-
-        # values.shape: (256, 1)
-        # detached_target_values.shape: (256, 1)
-        # detached_advantages.shape: (256, 1)
-        values, detached_target_values, detached_advantages = self.get_target_values_and_advantages()
-        #############################################
-        #  Critic (Value) Loss 산출 & Update - BEGIN #
-        #############################################
-        critic_loss = self.train_critic(values=values, detached_target_values=detached_target_values)
-        ##########################################
-        #  Critic (Value) Loss 산출 & Update- END #
-        ##########################################
-
-        #########################################
-        #  Actor Objective 산출 & Update - BEGIN #
-        #########################################
+    def get_actor_loss(self, detached_advantages):
         if isinstance(self.action_space, Discrete):
             # action_probs.shape: (32, 2)
             # actions.shape: (32, 1)
@@ -100,6 +71,33 @@ class AgentA2c(OnPolicyAgent):
         actor_loss = -1.0 * actor_objective
         entropy_loss = -1.0 * entropy
         actor_loss = actor_loss + entropy_loss * self.config.ENTROPY_BETA
+
+        return actor_loss, actor_objective, entropy
+
+    def train_a2c(self):
+        count_training_steps = 0
+
+        # values.shape: (256, 1)
+        # detached_target_values.shape: (256, 1)
+        # detached_advantages.shape: (256, 1)
+        values, detached_target_values, detached_advantages = self.get_target_values_and_advantages()
+        #############################################
+        #  Critic (Value) Loss 산출 & Update - BEGIN #
+        #############################################
+        critic_loss = self.get_critic_loss(values=values, detached_target_values=detached_target_values)
+
+        self.critic_optimizer.zero_grad()
+        critic_loss.backward()
+        self.clip_critic_model_parameter_grad_value(self.critic_model.critic_params_list)
+        self.critic_optimizer.step()
+        ##########################################
+        #  Critic (Value) Loss 산출 & Update- END #
+        ##########################################
+
+        #########################################
+        #  Actor Objective 산출 & Update - BEGIN #
+        #########################################
+        actor_loss, actor_objective, entropy = self.get_actor_loss(detached_advantages=detached_advantages)
 
         self.actor_optimizer.zero_grad()
         actor_loss.backward()

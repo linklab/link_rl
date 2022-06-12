@@ -160,6 +160,11 @@ def set_config(config):
         config.BUFFER_CAPACITY = config.BATCH_SIZE
         config.CONSOLE_LOG_INTERVAL_TRAINING_STEPS = 10 * config.PPO_K_EPOCH
 
+    elif config.AGENT_TYPE == AgentType.ASYNCHRONOUS_PPO:
+        config.BUFFER_CAPACITY = config.BATCH_SIZE
+        config.CONSOLE_LOG_INTERVAL_TRAINING_STEPS = config.CONSOLE_LOG_INTERVAL_TRAINING_STEPS * config.N_ACTORS / 2
+        assert config.N_ACTORS > 1
+
     elif config.AGENT_TYPE == AgentType.PPO_TRAJECTORY:
         config.PPO_TRAJECTORY_SIZE = config.BATCH_SIZE * 10
         config.BUFFER_CAPACITY = config.PPO_TRAJECTORY_SIZE
@@ -469,7 +474,7 @@ def console_log(
         console_log += "critic_loss: {0:7.3f}, log_actor_obj.: {1:7.3f}, entropy: {2:5.3f}".format(
             agent.last_critic_loss.value, agent.last_actor_objective.value, agent.last_entropy.value
         )
-    elif config.AGENT_TYPE in (AgentType.PPO, AgentType.PPO_TRAJECTORY):
+    elif config.AGENT_TYPE in (AgentType.PPO, AgentType.ASYNCHRONOUS_PPO, AgentType.PPO_TRAJECTORY):
         console_log += "critic_loss: {0:7.3f}, actor_obj.: {1:7.3f}, ratio: {2:5.3f}, entropy: {3:5.3f}".format(
             agent.last_critic_loss.value, agent.last_actor_objective.value, agent.last_ratio.value, agent.last_entropy.value
         )
@@ -577,7 +582,7 @@ def console_log_comparison(learner_c,
             console_log += "critic_loss: {0:6.3f}, log_actor_obj.: {1:5.3f}, ".format(
                 agent.last_critic_loss.value, agent.last_actor_objective.value
             )
-        elif config_c.AGENT_PARAMETERS[agent_idx].AGENT_TYPE in (AgentType.PPO, AgentType.PPO_TRAJECTORY):
+        elif config_c.AGENT_PARAMETERS[agent_idx].AGENT_TYPE in (AgentType.PPO, AgentType.ASYNCHRONOUS_PPO, AgentType.PPO_TRAJECTORY):
             console_log += "critic_loss: {0:7.3f}, actor_obj.: {1:7.3f}, ratio: {2:5.3f}, entropy: {3:5.3f}".format(
                 agent.last_critic_loss.value, agent.last_actor_objective.value, agent.last_ratio.value, agent.last_entropy.value
             )
@@ -667,7 +672,7 @@ def wandb_log(learner, wandb_obj, config):
     elif config.AGENT_TYPE in (AgentType.DDPG, AgentType.TD3):
         log_dict["Critic Loss"] = learner.agent.last_critic_loss.value
         log_dict["Actor Objective"] = learner.agent.last_actor_objective.value
-    elif config.AGENT_TYPE in (AgentType.PPO, AgentType.PPO_TRAJECTORY):
+    elif config.AGENT_TYPE in (AgentType.PPO, AgentType.ASYNCHRONOUS_PPO, AgentType.PPO_TRAJECTORY):
         log_dict["Critic Loss"] = learner.agent.last_critic_loss.value
         log_dict["Actor Objective"] = learner.agent.last_actor_objective.value
         log_dict["Ratio"] = learner.agent.last_ratio.value

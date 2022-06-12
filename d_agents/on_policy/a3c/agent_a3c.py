@@ -31,7 +31,7 @@ class WorkerAgentA3c(AgentA2c):
         #############################################
         #  Critic (Value) Loss 산출 & Update - BEGIN #
         #############################################
-        critic_loss = self.config.LOSS_FUNCTION(values, detached_target_values)
+        critic_loss = self.get_critic_loss(values, detached_target_values)
 
         # calculate local gradients and push local worker parameters to master parameters
         self.master_agent.critic_optimizer.zero_grad()
@@ -52,37 +52,7 @@ class WorkerAgentA3c(AgentA2c):
         #########################################
         #  Actor Objective 산출 & Update - BEGIN #
         #########################################
-        if isinstance(self.action_space, Discrete):
-            action_probs = self.actor_model.pi(self.observations)
-            dist = Categorical(probs=action_probs)
-
-            # action_probs.shape: (32, 2)
-            # actions.shape: (32, 1)
-            # advantage.shape: (32, 1)
-            # dist.log_prob(value=actions.squeeze(-1)).shape: (32,)
-            # criticized_log_pi_action_v.shape: (32,)
-            criticized_log_pi_action_v = dist.log_prob(value=self.actions.squeeze(dim=-1)) * detached_advantages.squeeze(dim=-1)
-
-            entropy = torch.mean(dist.entropy())
-        elif isinstance(self.action_space, Box):
-            mu_v, var_v = self.actor_model.pi(self.observations)
-
-            # criticized_log_pi_action_v = self.calc_log_prob(mu_v, var_v, self.actions) * detached_advantages
-            # entropy = 0.5 * (torch.log(2.0 * np.pi * var_v) + 1.0).sum(dim=-1)
-            # entropy = entropy.mean()
-
-            dist = Normal(loc=mu_v, scale=torch.sqrt(var_v))
-            criticized_log_pi_action_v = dist.log_prob(value=self.actions).sum(dim=-1) * detached_advantages.squeeze(dim=-1)
-            entropy = torch.mean(dist.entropy())
-        else:
-            raise ValueError()
-
-        # actor_objective.shape: (,) <--  값 1개
-        actor_objective = torch.mean(criticized_log_pi_action_v)
-
-        actor_loss = -1.0 * actor_objective
-        entropy_loss = -1.0 * entropy
-        actor_loss = actor_loss + entropy_loss * self.config.ENTROPY_BETA
+        actor_loss, actor_objective, entropy = self.get_actor_loss(detached_advantages=detached_advantages)
 
         # calculate local gradients and push local worker parameters to master parameters
         self.master_agent.actor_optimizer.zero_grad()
