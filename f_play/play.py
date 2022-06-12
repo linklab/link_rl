@@ -76,12 +76,12 @@ def play(env, agent, n_episodes):
             elif isinstance(agent.action_space, Box):
                 if action.ndim == 1:
                     if agent.action_scale is not None:
-                        scaled_action = action * agent.action_scale[0] + agent.action_bias[0]
+                        scaled_action = action * agent.action_scale + agent.action_bias
                     else:
                         scaled_action = action
                 elif action.ndim == 2:
                     if agent.action_scale is not None:
-                        scaled_action = action[0] * agent.action_scale[0] + agent.action_bias[0]
+                        scaled_action = action[0] * agent.action_scale + agent.action_bias
                     else:
                         scaled_action = action[0]
                 else:
