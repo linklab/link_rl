@@ -188,7 +188,7 @@ class Buffer:
             else:
                 transition_indices = self.sample_indices(batch_size)
 
-            observations = self.observations_buffer[transition_indices]
+            observations = self.observations_buffer[transition_indices].to(torch.float32)
 
             if isinstance(self.action_space, Discrete):
                 actions = self.actions_buffer[transition_indices].unsqueeze(dim=-1)
@@ -197,7 +197,7 @@ class Buffer:
             else:
                 raise ValueError()
 
-            next_observations = self.next_observations_buffer[transition_indices]
+            next_observations = self.next_observations_buffer[transition_indices].to(torch.float32)
             rewards = self.rewards_buffer[transition_indices].unsqueeze(dim=-1)
             dones = self.dones_buffer[transition_indices]
             infos = [self.infos_buffer[idx] for idx in transition_indices]
@@ -209,7 +209,7 @@ class Buffer:
             # print(dones, dones.shape)
             # print(infos)
         else:
-            observations = self.observations_buffer
+            observations = self.observations_buffer.to(torch.float32)
 
             if isinstance(self.action_space, Discrete):
                 actions = self.actions_buffer.unsqueeze(dim=-1)
@@ -218,7 +218,7 @@ class Buffer:
             else:
                 raise ValueError()
 
-            next_observations = self.next_observations_buffer
+            next_observations = self.next_observations_buffer.to(torch.float32)
             rewards = self.rewards_buffer.unsqueeze(dim=-1)
             dones = self.dones_buffer
             infos = self.infos_buffer
