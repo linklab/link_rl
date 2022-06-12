@@ -173,9 +173,9 @@ def competition_olympics_controlled_agent_test_2(config, controlled_agent_index=
             action = agent.get_action(observation)
             next_observation, reward, done, info = env.step(action)
 
-            print("Observation: {0}, Action: {1}, next_observation: {2}, Reward: {3}, Done: {4}, info: {5}".format(
-                next_observation.shape, action, next_observation.shape, reward, done, info
-            ))
+            # print("Observation: {0}, Action: {1}, next_observation: {2}, Reward: {3}, Done: {4}, info: {5}".format(
+            #     next_observation.shape, action, next_observation.shape, reward, done, info
+            # ))
 
             episode_reward += reward
             observation = next_observation
