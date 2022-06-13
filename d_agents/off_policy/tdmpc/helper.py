@@ -225,6 +225,7 @@ class ReplayBuffer():
         self._eps = 1e-6
         self._full = False
         self.idx = 0
+        self.buffer_len = 0
 
         self.observation_shape = observation_space.shape
         self.n_out_action = action_space
@@ -232,6 +233,9 @@ class ReplayBuffer():
     def __add__(self, episode: Episode):
         self.add(episode)
         return self
+
+    def __len__(self):
+        return self.buffer_len
 
     def append(self, episode: Episode):
         self.add(episode)
@@ -254,6 +258,7 @@ class ReplayBuffer():
         self._priorities[self.idx:self.idx + self.episode_length] = new_priorities
         self.idx = (self.idx + self.episode_length) % self.capacity
         self._full = self._full or self.idx == 0
+        self.buffer_len = min(self.buffer_len+1, self.config.BUFFER_CAPACITY)
 
     def update_priorities(self, idxs, priorities):
         self._priorities[idxs] = priorities.squeeze(1).to(self.device) + self._eps
