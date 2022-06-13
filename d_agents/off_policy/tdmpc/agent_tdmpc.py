@@ -26,7 +26,7 @@ class AgentTdmpc(OffPolicyAgent):
         super(AgentTdmpc, self).__init__(observation_space, action_space, config)
         self.config = config
         self.device = torch.device('cuda')
-        self.std = h.linear_schedule(config.STD_SCHEDULER, 0)
+        self.std = h.linear_schedule(config.STD_SCHEDULE, 0)
         self.model = TOLD(
             observation_shape=self.observation_shape, n_out_actions=self.n_out_actions, config=config
         )
@@ -166,7 +166,7 @@ class AgentTdmpc(OffPolicyAgent):
         obs, next_obses, action, reward, idxs, weights = \
             self.observations, self.next_observations, self.actions, self.rewards, self.idx, self.weifhts
         self.optim.zero_grad(set_to_none=True)
-        self.std = h.linear_schedule(self.config.STD_SCHEDULER, step)
+        self.std = h.linear_schedule(self.config.STD_SCHEDULE, step)
         self.model.train()
 
         # Representation
