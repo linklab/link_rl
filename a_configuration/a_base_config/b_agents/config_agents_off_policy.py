@@ -150,3 +150,8 @@ class ConfigTdmpc(ConfigOffPolicyAgent):
         self.ACTION_REPEAT = 4
         self.FRAME_STACK = 3
         self.SEED_STEPS = 5000
+
+        self.LATENT_DIM = 50
+        self.ENC_DIM = 256
+        self.MLP_DIM = 512
+        self.NUM_CHANNELS = 32

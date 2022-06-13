@@ -124,9 +124,9 @@ def mlp(in_dim, mlp_dim, out_dim, act_fn=nn.ELU()):
         nn.Linear(mlp_dim[1], out_dim))
 
 
-def q(config, act_fn=nn.ELU()):
+def q(config, n_out_actions, act_fn=nn.ELU()):
     """Returns a Q-function that uses Layer Normalization."""
-    return nn.Sequential(nn.Linear(config.LATENT_DIM + config.ACTION_SIM, config.MLP_DIM), nn.LayerNorm(config.MLP_DIM), nn.Tanh(),
+    return nn.Sequential(nn.Linear(config.LATENT_DIM + n_out_actions, config.MLP_DIM), nn.LayerNorm(config.MLP_DIM), nn.Tanh(),
                          nn.Linear(config.MLP_DIM, config.MLP_DIM), nn.ELU(),
                          nn.Linear(config.MLP_DIM, 1))
 

@@ -12,7 +12,7 @@ class TOLD(nn.Module):
         self._dynamics = h.mlp(config.LATENT_DIM + n_out_actions, config.MLP_DIM, config.LATENT_DIM)
         self._reward = h.mlp(config.LATENT_DIM + n_out_actions, config.MLP_DIM, 1)
         self._pi = h.mlp(config.LATENT_DIM, config.MLP_DIM, n_out_actions)
-        self._Q1, self._Q2 = h.q(config), h.q(config)
+        self._Q1, self._Q2 = h.q(config, n_out_actions), h.q(config, n_out_actions)
         # 모든 model들의 weight는 orthogonal matrix로 그리고 bias는 모두 0으로 초기화
         self.apply(h.orthogonal_init)
         # reward와 q model들의 마지막 layer는 weight와 bias를 모두 0으로 초기화
