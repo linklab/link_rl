@@ -34,7 +34,13 @@ class AgentTdmpc(OffPolicyAgent):
         self.model.eval()
         self.model_target.eval()
 
-        self.alpha = mp.Value('d', 0.0)
+        self.consistency_loss = mp.Value('d', 0.0)
+        self.reward_loss = mp.Value('d', 0.0)
+        self.value_loss = mp.Value('d', 0.0)
+        self.pi_loss = mp.Value('d', 0.0)
+        self.total_loss = mp.Value('d', 0.0)
+        self.weighted_loss = mp.Value('d', 0.0)
+        self.grad_norm = mp.Value('d', 0.0)
 
     def get_action(self, obs, mode=AgentMode.TRAIN, t0=False, step=None):
         action = self.plan(obs, mode, step, t0)

@@ -611,45 +611,46 @@ class Learner(mp.Process):
                 unavailable_actions = None
 
             while True:
-                if self.config.ACTION_MASKING:
+                if self.config.AGENT_TYPE == AgentType.TDMPC:
                     action = self.agent.get_action(
-                        obs=observation, unavailable_actions=unavailable_actions, mode=AgentMode.TEST
+                        obs=observation, mode=AgentMode.TEST, step=self.training_step.value, t0=episode_step == 0
                     )
+                    scaled_action = action
                 else:
-                    if self.config.AGENT_TYPE == AgentType.TDMPC:
+                    if self.config.ACTION_MASKING:
                         action = self.agent.get_action(
-                            obs=observation, mode=AgentMode.TEST, step=self.training_step.value, t0=episode_step == 0
+                            obs=observation, unavailable_actions=unavailable_actions, mode=AgentMode.TEST
                         )
                     else:
                         action = self.agent.get_action(
                             obs=observation, mode=AgentMode.TEST
                         )
 
-                if not isinstance(self.test_env, VectorEnv):
-                    if isinstance(self.agent.action_space, Discrete):
-                        if action.ndim == 0:
-                            scaled_action = action
-                        elif action.ndim == 1:
-                            scaled_action = action[0]
-                        else:
-                            raise ValueError()
-                    elif isinstance(self.agent.action_space, Box):
-                        if action.ndim == 1:
-                            if self.agent.action_scale is not None:
-                                scaled_action = action * self.agent.action_scale + self.agent.action_bias
-                            else:
+                    if not isinstance(self.test_env, VectorEnv):
+                        if isinstance(self.agent.action_space, Discrete):
+                            if action.ndim == 0:
                                 scaled_action = action
-                        elif action.ndim == 2:
-                            if self.agent.action_scale is not None:
-                                scaled_action = action[0] * self.agent.action_scale + self.agent.action_bias
-                            else:
+                            elif action.ndim == 1:
                                 scaled_action = action[0]
+                            else:
+                                raise ValueError()
+                        elif isinstance(self.agent.action_space, Box):
+                            if action.ndim == 1:
+                                if self.agent.action_scale is not None:
+                                    scaled_action = action * self.agent.action_scale + self.agent.action_bias
+                                else:
+                                    scaled_action = action
+                            elif action.ndim == 2:
+                                if self.agent.action_scale is not None:
+                                    scaled_action = action[0] * self.agent.action_scale + self.agent.action_bias
+                                else:
+                                    scaled_action = action[0]
+                            else:
+                                raise ValueError()
                         else:
                             raise ValueError()
                     else:
-                        raise ValueError()
-                else:
-                    scaled_action = action
+                        scaled_action = action
 
                 next_observation, reward, done, info = self.test_env.step(scaled_action)
                 episode_step += 1
