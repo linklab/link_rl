@@ -142,7 +142,7 @@ class ConfigTdmpc(ConfigOffPolicyAgent):
 
         self.TRAIN_INTERVAL_GLOBAL_TIME_STEPS = 1
 
-        self.N_STEP = self.HORIZON
+        self.N_STEP = 1
 
         self.USE_PER = False
 
