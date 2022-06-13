@@ -597,8 +597,9 @@ class Learner(mp.Process):
             # Environment ???????? ???? ??????
             observation, info = self.test_env.reset(return_info=True)
 
-            if not isinstance(self.test_env, VectorEnv):
-                observation = np.expand_dims(observation, axis=0)
+            if not self.config.AGENT_TYPE == AgentType.TDMPC:
+                if not isinstance(self.test_env, VectorEnv):
+                    observation = np.expand_dims(observation, axis=0)
 
             if self.is_recurrent_model:
                 self.agent.model.init_recurrent_hidden()
@@ -617,7 +618,7 @@ class Learner(mp.Process):
                 else:
                     if self.config.AGENT_TYPE == AgentType.TDMPC:
                         action = self.agent.get_action(
-                            obs=observation, mode=AgentMode.TEST, step=step, t0=episode_step == 0
+                            obs=observation, mode=AgentMode.TEST, step=self.training_step.value, t0=episode_step == 0
                         )
                     else:
                         action = self.agent.get_action(
@@ -653,8 +654,9 @@ class Learner(mp.Process):
                 next_observation, reward, done, info = self.test_env.step(scaled_action)
                 episode_step += 1
 
-                if not isinstance(self.test_env, VectorEnv):
-                    next_observation = np.expand_dims(next_observation, axis=0)
+                if not self.config.AGENT_TYPE == AgentType.TDMPC:
+                    if not isinstance(self.test_env, VectorEnv):
+                        next_observation = np.expand_dims(next_observation, axis=0)
 
                 if self.is_recurrent_model:
                     next_observation = [(next_observation, self.agent.model.recurrent_hidden)]

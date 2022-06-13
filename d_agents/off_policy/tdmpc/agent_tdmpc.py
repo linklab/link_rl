@@ -16,9 +16,6 @@ from c_models.j_tdmpc_models import TOLD
 from d_agents.off_policy.off_policy_agent import OffPolicyAgent
 from g_utils.types import AgentMode
 from d_agents.off_policy.tdmpc import helper as h
-from d_agents.off_policy.tdmpc.tdmpc import TDMPC
-import re
-from d_agents.off_policy.tdmpc import helper
 
 
 class AgentTdmpc(OffPolicyAgent):
@@ -36,6 +33,8 @@ class AgentTdmpc(OffPolicyAgent):
         self.aug = h.RandomShiftsAug(config)
         self.model.eval()
         self.model_target.eval()
+
+        self.alpha = mp.Value('d', 0.0)
 
     def get_action(self, obs, mode=AgentMode.TRAIN, t0=False, step=None):
         action = self.plan(obs, mode, step, t0)
@@ -77,7 +76,7 @@ class AgentTdmpc(OffPolicyAgent):
         t0: whether current step is the first step of an episode.
         """
         # Seed steps
-        if step < self.config.TRAIN_INTERVAL_GLOBAL_TIME_STEPS and mode == AgentMode.TRAIN:
+        if step < self.config.SEED_STEPS and mode == AgentMode.TRAIN:
             return torch.empty(self.n_out_actions, dtype=torch.float32, device=self.device).uniform_(-1, 1)
 
         # Sample policy trajectories

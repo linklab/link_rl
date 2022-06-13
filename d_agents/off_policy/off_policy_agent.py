@@ -114,26 +114,18 @@ class OffPolicyAgent(Agent):
         return count_training_steps
 
     def _after_train(self, loss_each=None):
-        if self.config.AGENT_TYPE == AgentType.TDMPC:
-            del self.observations
-            del self.next_observations
-            del self.actions
-            del self.rewards
-            del self.idx
-            del self.weights
-        else:
-            if loss_each is not None and self.config.USE_PER:
-                self.replay_buffer.update_priorities(loss_each.detach().cpu().numpy())
+        if loss_each is not None and self.config.USE_PER:
+            self.replay_buffer.update_priorities(loss_each.detach().cpu().numpy())
 
-            if self.config.AGENT_TYPE == AgentType.MUZERO:
-                del self.episode_historys
-                del self.episode_idxs
-            else:
-                del self.observations
-                del self.actions
-                del self.next_observations
-                del self.rewards
-                del self.dones
+        if self.config.AGENT_TYPE == AgentType.MUZERO:
+            del self.episode_historys
+            del self.episode_idxs
+        else:
+            del self.observations
+            del self.actions
+            del self.next_observations
+            del self.rewards
+            del self.dones
 
     # OFF POLICY
     @abstractmethod
