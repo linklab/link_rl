@@ -161,12 +161,12 @@ class AgentTdmpc(OffPolicyAgent):
                     torch.min(*self.model_target.Q(next_z, self.model.pi(next_z, self.config.MIN_STD)))
         return td_target
 
-    def train_tdmpc(self, step):
+    def train_tdmpc(self, training_steps_v):
         """Main update function. Corresponds to one iteration of the TOLD model learning."""
         obs, next_obses, action, reward, idxs, weights = \
-            self.observations, self.next_observations, self.actions, self.rewards, self.idx, self.weifhts
+            self.observations, self.next_observations, self.actions, self.rewards, self.idx, self.weights
         self.optim.zero_grad(set_to_none=True)
-        self.std = h.linear_schedule(self.config.STD_SCHEDULE, step)
+        self.std = h.linear_schedule(self.config.STD_SCHEDULE, training_steps_v)
         self.model.train()
 
         # Representation
@@ -205,7 +205,7 @@ class AgentTdmpc(OffPolicyAgent):
 
         # Update policy + target network
         pi_loss = self.update_pi(zs)
-        if step % self.config.UPDATE_FREQ == 0:
+        if training_steps_v % self.config.UPDATE_FREQ == 0:
             h.ema(self.model, self.model_target, self.config.TAU)
 
         self.model.eval()
