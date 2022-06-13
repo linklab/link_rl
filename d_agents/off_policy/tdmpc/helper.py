@@ -258,7 +258,7 @@ class ReplayBuffer():
         self._priorities[self.idx:self.idx + self.episode_length] = new_priorities
         self.idx = (self.idx + self.episode_length) % self.capacity
         self._full = self._full or self.idx == 0
-        self.buffer_len = min(self.buffer_len+1, self.config.BUFFER_CAPACITY)
+        self.buffer_len = min(self.buffer_len+self.episode_length, self.config.BUFFER_CAPACITY)
 
     def update_priorities(self, idxs, priorities):
         self._priorities[idxs] = priorities.squeeze(1).to(self.device) + self._eps
