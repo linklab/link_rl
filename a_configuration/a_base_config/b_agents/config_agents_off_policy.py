@@ -120,7 +120,7 @@ class ConfigTdmpc(ConfigOffPolicyAgent):
         self.MIXTURE_COEF = 0.05
         self.MIN_STD = 0.05
         self.TEMPERATURE = 0.5
-        self.MOMENTUM = 0.9
+        self.MOMENTUM = 0.1
 
 
         self.BATCH_SIZE = 512
@@ -155,3 +155,5 @@ class ConfigTdmpc(ConfigOffPolicyAgent):
         self.ENC_DIM = 256
         self.MLP_DIM = 512
         self.NUM_CHANNELS = 32
+
+        self.TARGET_MODEL_UPDATE_FREQ = 2

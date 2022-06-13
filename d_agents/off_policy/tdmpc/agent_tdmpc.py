@@ -205,7 +205,7 @@ class AgentTdmpc(OffPolicyAgent):
 
         # Update policy + target network
         pi_loss = self.update_pi(zs)
-        if training_steps_v % self.config.UPDATE_FREQ == 0:
+        if training_steps_v % self.config.TARGET_MODEL_UPDATE_FREQ == 0:
             h.ema(self.model, self.model_target, self.config.TAU)
 
         self.model.eval()
