@@ -103,3 +103,46 @@ class ConfigMuzero(ConfigOffPolicyAgent):
         self.NUM_UNROLL_STEPS = 5
 
         self.VALUE_LOSS_WEIGHT = 0.25
+
+
+class ConfigTdmpc(ConfigOffPolicyAgent):
+    def __init__(self):
+        super(ConfigTdmpc, self).__init__()
+        self.AGENT_TYPE = AgentType.TDMPC
+
+        self.TAU = 0.01
+        self.BUFFER_CAPACITY = 2_000_000
+        self.TARGET_SYNC_INTERVAL_TRAINING_STEPS = 50
+
+        self.ITERATIONS = 6
+        self.NUM_SAMPLES = 512
+        self.NUM_ELITES = 64
+        self.MIXTURE_COEF = 0.05
+        self.MIN_STD = 0.05
+        self.TEMPERATURE = 0.5
+        self.MOMENTUM = 0.9
+
+
+        self.BATCH_SIZE = 512
+        self.BUFFER_CAPACITY = 1000000
+        self.HORIZON = 5
+        self.REWARD_COEF = 0.5
+        self.VALUE_COEF = 0.1
+        self.CONSISTENCY_COEF = 2
+        self.RHO = 0.5
+        self.LEARNING_RATE = 0.001
+
+        self.STD_SCHEDULE = 'linear(0.5, {}, 25000)'.format(self.MIN_STD)
+        self.HORIZON_SCHEDULE = 'linear(1, {}, 25000)'.format(self.HORIZON)
+
+        self.MAX_TRAINING_STEPS = 25000
+        self.POLICY_UPDATE_FREQUENCY_PER_TRAINING_STEP = 2
+        self.TAU = 0.01
+        self.CLIP_GRADIENT_VALUE = 10
+
+        self.TRAIN_INTERVAL_GLOBAL_TIME_STEPS = 1
+
+        self.N_STEP = self.HORIZON
+
+        self.USE_PER = True
+
