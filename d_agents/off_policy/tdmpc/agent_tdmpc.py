@@ -192,7 +192,7 @@ class AgentTdmpc(OffPolicyAgent):
             priority_loss += rho * (h.l1(Q1, td_target) + h.l1(Q2, td_target))
 
         # Optimize model
-        total_loss = self.config.COSISTENCY_COEF * consistency_loss.clamp(max=1e4) + \
+        total_loss = self.config.CONSISTENCY_COEF * consistency_loss.clamp(max=1e4) + \
                      self.config.REWARD_COEF * reward_loss.clamp(max=1e4) + \
                      self.config.VALUE_COEF * value_loss.clamp(max=1e4)
         weighted_loss = (total_loss * weights).mean()
