@@ -139,7 +139,7 @@ class RandomShiftsAug(nn.Module):
 
     def __init__(self, config):
         super().__init__()
-        self.pad = int(config.img_size / 21) if config.modality == 'pixels' else None
+        self.pad = int(config.IMG_SIZE / 21) if config.FROM_PIXELS else None
 
     def forward(self, x):
         if not self.pad:
@@ -162,7 +162,7 @@ class RandomShiftsAug(nn.Module):
 class Episode(object):
     """Storage object for a single episode."""
 
-    def __init__(self, config, init_obs, observation_shape, n_out_action):
+    def __init__(self, config, init_obs, n_out_action):
         self.config = config
         self.device = torch.device(config.DEVICE)
         dtype = torch.float32 if not config.FROM_PIXELS else torch.uint8
@@ -173,6 +173,7 @@ class Episode(object):
         self.cumulative_reward = 0
         self.done = False
         self._idx = 0
+        self.info = {}
 
     def __len__(self):
         return self._idx
@@ -185,12 +186,17 @@ class Episode(object):
         self.add(*transition)
         return self
 
-    def add(self, obs, action, reward, done):
+    def append(self, transition):
+        self.add(*transition)
+        return self
+
+    def add(self, obs, action, reward, done, info):
         self.obs[self._idx + 1] = torch.tensor(obs, dtype=self.obs.dtype, device=self.obs.device)
         self.action[self._idx] = action
         self.reward[self._idx] = reward
         self.cumulative_reward += reward
         self.done = done
+        self.info = info
         self._idx += 1
 
 
@@ -200,33 +206,37 @@ class ReplayBuffer():
     The replay buffer is stored in GPU memory when training from state.
     Uses prioritized experience replay by default."""
 
-    def __init__(self, config, observation_shape, n_out_action):
+    def __init__(self, config, observation_space, action_space):
         self.config = config
         self.device = torch.device(config.DEVICE)
         self.capacity = min(config.MAX_TRAINING_STEPS, config.BUFFER_CAPACITY)
         dtype = torch.float32 if not config.FROM_PIXELS else torch.uint8
-        obs_shape = observation_shape
+        obs_shape = observation_space
         self._obs = torch.empty((self.capacity + 1, *obs_shape), dtype=dtype, device=self.device)
         # _last_obs 에는 한 에피소드의 마지막 obs 저장된다.
-        self._last_obs = torch.empty((self.capacity // (1000/config.ACTION_REPEAT), *observation_shape), dtype=dtype,
+        self._last_obs = torch.empty((self.capacity // (1000/config.ACTION_REPEAT), *observation_space), dtype=dtype,
                                      device=self.device)
-        self._action = torch.empty((self.capacity, n_out_action), dtype=torch.float32, device=self.device)
+        self._action = torch.empty((self.capacity, action_space), dtype=torch.float32, device=self.device)
         self._reward = torch.empty((self.capacity,), dtype=torch.float32, device=self.device)
         self._priorities = torch.ones((self.capacity,), dtype=torch.float32, device=self.device)
         self._eps = 1e-6
         self._full = False
         self.idx = 0
 
-        self.observation_shape = observation_shape
-        self.n_out_action = n_out_action
+        self.observation_shape = observation_space
+        self.n_out_action = action_space
 
     def __add__(self, episode: Episode):
         self.add(episode)
         return self
 
+    def append(self, episode: Episode):
+        self.add(episode)
+        return self
+
     def add(self, episode: Episode):
         self._obs[self.idx:self.idx + (1000/self.config.ACTION_REPEAT)] = episode.obs[
-                                                                 :-1] if self.config.modality == 'state' else episode.obs[
+                                                                 :-1] if not self.config.FROM_PIXELS else episode.obs[
                                                                                                            :-1, -3:]
         self._last_obs[self.idx // (1000/self.config.ACTION_REPEAT)] = episode.obs[-1]
         self._action[self.idx:self.idx + (1000/self.config.ACTION_REPEAT)] = episode.action
@@ -246,7 +256,7 @@ class ReplayBuffer():
         self._priorities[idxs] = priorities.squeeze(1).to(self.device) + self._eps
 
     def _get_obs(self, arr, idxs):
-        if self.config.modality == 'state':
+        if not self.config.FROM_PIXELS:
             return arr[idxs]
         obs = torch.empty((self.config.batch_size, *self.observation_shape), dtype=arr.dtype,
                           device=torch.device('cuda'))

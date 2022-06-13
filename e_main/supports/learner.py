@@ -10,6 +10,7 @@ from a_configuration.a_base_config.a_environments.task_allocation.config_basic_t
 from a_configuration.a_base_config.c_models.config_recurrent_convolutional_models import \
     ConfigRecurrent2DConvolutionalModel, ConfigRecurrent1DConvolutionalModel
 from a_configuration.a_base_config.c_models.config_recurrent_linear_models import ConfigRecurrentLinearModel
+from d_agents.off_policy.tdmpc.helper import Episode
 
 warnings.filterwarnings('ignore')
 warnings.simplefilter("ignore")
@@ -81,6 +82,8 @@ class Learner(mp.Process):
         if self.config.AGENT_TYPE == AgentType.MUZERO:
             self.transition_generator = self.generator_muzero()
             # TODO : history ???? logic ????
+        elif self.config.AGENT_TYPE == AgentType.TDMPC:
+            self.transition_generator = self.generator_tdmpc()
         else:
             if queue is None:  # Sequential
                 self.transition_generator = self.generator_on_policy_transition()
@@ -177,6 +180,26 @@ class Learner(mp.Process):
                 break
 
         yield None
+
+    def generator_tdmpc(self):
+        actor_time_step = 0
+        step = 0
+        while True:
+            actor_time_step += 1
+
+            # Collect trajectory
+            obs = self.train_env.reset()
+            episode = Episode(self.config, obs)
+            while not episode.done:
+                action = self.agent.get_action(obs, step=step, t0=episode.first)
+                obs, reward, done, info = self.train_env.step(action.cpu().numpy())
+                info["actor_id"] = 0
+                info["env_id"] = 0
+                info["actor_time_step"] = actor_time_step
+                episode += (obs, action, reward, done, info)
+            assert len(episode) == 1000/self.config.ACTION_REPEAT
+            step += 1000/self.config.ACTION_REPEAT
+            yield episode
 
     def generator_muzero(self):
         # TODO
@@ -349,6 +372,7 @@ class Learner(mp.Process):
 
                 self.total_time_step.value += 1
 
+
                 if self.config.AGENT_TYPE in OnPolicyAgentTypes:
                     self.agent.buffer.append(n_step_transition)
                 elif self.config.AGENT_TYPE in OffPolicyAgentTypes:
@@ -365,6 +389,16 @@ class Learner(mp.Process):
                     self.total_episodes.value += 1
 
                     self.episode_rewards[actor_id][env_id] = sum(n_step_transition.reward_history)
+                    self.episode_reward_buffer.add(self.episode_rewards[actor_id][env_id])
+                    self.last_mean_episode_reward.value = self.episode_reward_buffer.mean()
+
+                    self.episode_rewards[actor_id][env_id] = 0.0
+                elif self.config.AGENT_TYPE == AgentType.TDMPC:
+                    actor_id = n_step_transition.info["actor_id"]
+                    env_id = n_step_transition.info["env_id"]
+                    self.total_episodes.value += 1
+
+                    self.episode_rewards[actor_id][env_id] = n_step_transition.cumulative_reward
                     self.episode_reward_buffer.add(self.episode_rewards[actor_id][env_id])
                     self.last_mean_episode_reward.value = self.episode_reward_buffer.mean()
 
