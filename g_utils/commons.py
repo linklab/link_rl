@@ -945,11 +945,12 @@ def get_train_env(config, no_graphics=True):
                 if config.FROM_PIXELS:
                     env = dmc_gym.make(
                         domain_name=config.DOMAIN_NAME, task_name=config.TASK_NAME, seed=config.SEED,
-                        from_pixels=True, visualize_reward=False
+                        from_pixels=True, visualize_reward=False, frame_skip=config.ACTION_REPEAT
                     )
                     env = gym.wrappers.FrameStack(env, num_stack=config.FRAME_STACK, lz4_compress=True)
                 else:
-                    env = dmc_gym.make(domain_name=config.DOMAIN_NAME, task_name=config.TASK_NAME, seed=config.SEED)
+                    env = dmc_gym.make(domain_name=config.DOMAIN_NAME, task_name=config.TASK_NAME, seed=config.SEED,
+                                       frame_skip=config.ACTION_REPEAT)
 
             #############
             #   Atari   #
