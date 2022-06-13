@@ -248,11 +248,11 @@ class ReplayBuffer():
             max_priority = self._priorities.max().to(self.device).item()
         else:
             max_priority = 1. if self.idx == 0 else self._priorities[:self.idx].max().to(self.device).item()
-        mask = torch.arange((1000/self.config.ACTION_REPEAT)) >= self.episode_length - self.config.HORIZON
-        new_priorities = torch.full(((1000/self.config.ACTION_REPEAT),), max_priority, device=self.device)
+        mask = torch.arange(self.episode_length) >= self.episode_length - self.config.HORIZON
+        new_priorities = torch.full((self.episode_length,), max_priority, device=self.device)
         new_priorities[mask] = 0
         self._priorities[self.idx:self.idx + self.episode_length] = new_priorities
-        self.idx = (self.idx + (1000/self.config.ACTION_REPEAT)) % self.capacity
+        self.idx = (self.idx + self.episode_length) % self.capacity
         self._full = self._full or self.idx == 0
 
     def update_priorities(self, idxs, priorities):
