@@ -616,7 +616,7 @@ class Learner(mp.Process):
                         obs=observation, mode=AgentMode.TEST, step=self.training_step.value, t0=episode_step == 0
                     )
                     scaled_action = action
-                    scaled_action = scaled_action.cpu().numpy()
+                    # scaled_action = scaled_action.cpu().numpy()
                 else:
                     if self.config.ACTION_MASKING:
                         action = self.agent.get_action(

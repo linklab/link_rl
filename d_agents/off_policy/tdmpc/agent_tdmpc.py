@@ -44,7 +44,7 @@ class AgentTdmpc(OffPolicyAgent):
 
     def get_action(self, obs, mode=AgentMode.TRAIN, t0=False, step=None):
         action = self.plan(obs, mode, step, t0)
-        return action
+        return action.cpu().numpy()
 
     def state_dict(self):
         """Retrieve state dict of TOLD model, including slow-moving target network."""
