@@ -146,3 +146,6 @@ class ConfigTdmpc(ConfigOffPolicyAgent):
 
         self.USE_PER = True
 
+        self.IMG_SIZE = 84
+        self.ACTION_REPEAT = 4
+
