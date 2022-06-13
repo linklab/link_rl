@@ -95,9 +95,9 @@ class AgentTdmpc(OffPolicyAgent):
         z = self.model.h(obs).repeat(self.config.NUM_SAMPLES + num_pi_trajs, 1)
         mean = torch.zeros(horizon, self.n_out_actions, device=self.device)
         std = 2 * torch.ones(horizon, self.n_out_actions, device=self.device)
-        if not t0 and hasattr(self, '_prev_mean') and mode == AgentMode.TRAIN:
+        if not t0 and hasattr(self, '_train_prev_mean') and mode == AgentMode.TRAIN:
             mean[:-1] = self._train_prev_mean[1:]
-        elif not t0 and hasattr(self, '_prev_mean') and mode == AgentMode.TEST:
+        elif not t0 and hasattr(self, '_test_prev_mean') and mode == AgentMode.TEST:
             mean[:-1] = self._test_prev_mean[1:]
 
         # Iterate CEM
