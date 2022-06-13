@@ -37,8 +37,8 @@ class AgentTdmpc(OffPolicyAgent):
         self.model.eval()
         self.model_target.eval()
 
-    def get_action(self, obs, mode=AgentMode.TRAIN):
-        action = self.plan(obs, mode)
+    def get_action(self, obs, mode=AgentMode.TRAIN, t0=False, step=None):
+        action = self.plan(obs, mode, step, t0)
         return action
 
     def state_dict(self):
@@ -95,8 +95,10 @@ class AgentTdmpc(OffPolicyAgent):
         z = self.model.h(obs).repeat(self.config.NUM_SAMPLES + num_pi_trajs, 1)
         mean = torch.zeros(horizon, self.action_space, device=self.device)
         std = 2 * torch.ones(horizon, self.action_space, device=self.device)
-        if not t0 and hasattr(self, '_prev_mean'):
-            mean[:-1] = self._prev_mean[1:]
+        if not t0 and hasattr(self, '_prev_mean') and mode == AgentMode.TRAIN:
+            mean[:-1] = self._train_prev_mean[1:]
+        elif not t0 and hasattr(self, '_prev_mean') and mode == AgentMode.TEST:
+            mean[:-1] = self._test_prev_mean[1:]
 
         # Iterate CEM
         for i in range(self.config.ITERATION):
@@ -124,11 +126,13 @@ class AgentTdmpc(OffPolicyAgent):
         # Outputs
         score = score.squeeze(1).cpu().numpy()
         actions = elite_actions[:, np.random.choice(np.arange(score.shape[0]), p=score)]
-        self._prev_mean = mean
         mean, std = actions[0], _std[0]
         a = mean
         if mode == AgentMode.TRAIN:
             a += std * torch.randn(self.action_space, device=std.device)
+            self._train_prev_mean = mean
+        else:
+            self._test_prev_mean = mean
         return a
 
     def update_pi(self, zs):
@@ -197,7 +201,7 @@ class AgentTdmpc(OffPolicyAgent):
         grad_norm = torch.nn.utils.clip_grad_norm_(self.model.parameters(), self.config.GRAD_CLIP_NORM,
                                                    error_if_nonfinite=False)
         self.optim.step()
-        replay_buffer.update_priorities(idxs, priority_loss.clamp(max=1e4).detach())
+        self.replay_buffer.update_priorities(idxs, priority_loss.clamp(max=1e4).detach())
 
         # Update policy + target network
         pi_loss = self.update_pi(zs)

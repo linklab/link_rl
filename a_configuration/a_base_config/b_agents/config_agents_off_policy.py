@@ -144,8 +144,9 @@ class ConfigTdmpc(ConfigOffPolicyAgent):
 
         self.N_STEP = self.HORIZON
 
-        self.USE_PER = True
+        self.USE_PER = False
 
         self.IMG_SIZE = 84
         self.ACTION_REPEAT = 4
-
+        self.FRAME_STACK = 3
+        self.SEED_STEPS = 5000

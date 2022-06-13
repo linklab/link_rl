@@ -4,7 +4,8 @@ import copy
 from gym.spaces import Box, Discrete
 from gym.vector import VectorEnv
 
-from a_configuration.a_base_config.a_environments.combinatorial_optimization.knapsack.config_knapsack import ConfigKnapsack
+from a_configuration.a_base_config.a_environments.combinatorial_optimization.knapsack.config_knapsack import \
+    ConfigKnapsack
 from a_configuration.a_base_config.a_environments.task_allocation.config_basic_task_allocation import \
     ConfigBasicTaskAllocation
 from a_configuration.a_base_config.c_models.config_recurrent_convolutional_models import \
@@ -105,7 +106,8 @@ class Learner(mp.Process):
         if self.config.ENV_NAME in ["Task_Allocation_v0", "Task_Allocation_v1", "Knapsack_Problem_v0"]:
             self.env_info = None
 
-        self.modified_env_name = self.config.ENV_NAME.split("/")[1] if "/" in self.config.ENV_NAME else self.config.ENV_NAME
+        self.modified_env_name = self.config.ENV_NAME.split("/")[
+            1] if "/" in self.config.ENV_NAME else self.config.ENV_NAME
 
     def generator_on_policy_transition(self):
         observations, infos = self.train_env.reset(return_info=True)
@@ -174,7 +176,6 @@ class Learner(mp.Process):
                     )
                     yield n_step_transition
 
-
             observations = next_observations
             if self.is_terminated.value:
                 break
@@ -197,8 +198,8 @@ class Learner(mp.Process):
                 info["env_id"] = 0
                 info["actor_time_step"] = actor_time_step
                 episode += (obs, action, reward, done, info)
-            assert len(episode) == 1000/self.config.ACTION_REPEAT
-            step += 1000/self.config.ACTION_REPEAT
+            assert len(episode) == 1000 / self.config.ACTION_REPEAT
+            step += 1000 / self.config.ACTION_REPEAT
             yield episode
 
     def generator_muzero(self):
@@ -210,7 +211,8 @@ class Learner(mp.Process):
         actions_history = [[] for _ in range(self.config.N_VECTORIZED_ENVS)]
         rewards_history = [[] for _ in range(self.config.N_VECTORIZED_ENVS)]
         infos_history = [[] for _ in range(self.config.N_VECTORIZED_ENVS)]
-        to_play_history = [[[]] for _ in range(self.config.N_VECTORIZED_ENVS)]  # TODO : np.zeros((observations.shape[0], slef.train_env.to_play()))
+        to_play_history = [[[]] for _ in range(
+            self.config.N_VECTORIZED_ENVS)]  # TODO : np.zeros((observations.shape[0], slef.train_env.to_play()))
         child_visits_history = [[] for _ in range(self.config.N_VECTORIZED_ENVS)]
         root_values_history = [[] for _ in range(self.config.N_VECTORIZED_ENVS)]
 
@@ -231,7 +233,8 @@ class Learner(mp.Process):
             #         observations_history, actions_history
             #     )
 
-            self.agent.legal_actions = [[0,1] for _ in range(self.config.N_VECTORIZED_ENVS)]  # action masking, shape : (n_vectorized, action_space)
+            self.agent.legal_actions = [[0, 1] for _ in range(
+                self.config.N_VECTORIZED_ENVS)]  # action masking, shape : (n_vectorized, action_space)
             self.agent.to_plays = [[0] for _ in range(self.config.N_VECTORIZED_ENVS)]  # shape : (n_vectorized, 1)
             self.agent.visit_softmax_temperature_fn(self.training_step.value)  # temperature ????
 
@@ -307,12 +310,16 @@ class Learner(mp.Process):
         ]
 
         if not parallel:  # parallel?? ???? actor???? train_env ????/????
-            self.train_env = get_train_env(self.config)
+            if self.config.AGENT_TYPE == AgentType.TDMPC:
+                self.train_env = get_single_env(self.config)
+            else:
+                self.train_env = get_train_env(self.config)
 
         if any(combinatorial_env_conditions):
             test_env_equal_to_train_env_conditions = [
                 isinstance(self.config, ConfigKnapsack) and self.config.INITIAL_ITEM_DISTRIBUTION_FIXED is True,
-                isinstance(self.config, ConfigBasicTaskAllocation) and self.config.INITIAL_TASK_DISTRIBUTION_FIXED is True
+                isinstance(self.config,
+                           ConfigBasicTaskAllocation) and self.config.INITIAL_TASK_DISTRIBUTION_FIXED is True
             ]
             if any(test_env_equal_to_train_env_conditions):
                 assert parallel is False
@@ -371,7 +378,6 @@ class Learner(mp.Process):
                         continue
 
                 self.total_time_step.value += 1
-
 
                 if self.config.AGENT_TYPE in OnPolicyAgentTypes:
                     self.agent.buffer.append(n_step_transition)
@@ -586,7 +592,8 @@ class Learner(mp.Process):
 
         for i in range(n_test_episodes):
             episode_reward = 0  # cumulative_reward
-
+            episode_step = 0
+            step = episode_step
             # Environment ???????? ???? ??????
             observation, info = self.test_env.reset(return_info=True)
 
@@ -608,9 +615,14 @@ class Learner(mp.Process):
                         obs=observation, unavailable_actions=unavailable_actions, mode=AgentMode.TEST
                     )
                 else:
-                    action = self.agent.get_action(
-                        obs=observation, mode=AgentMode.TEST
-                    )
+                    if self.config.AGENT_TYPE == AgentType.TDMPC:
+                        action = self.agent.get_action(
+                            obs=observation, mode=AgentMode.TEST, step=step, t0=episode_step == 0
+                        )
+                    else:
+                        action = self.agent.get_action(
+                            obs=observation, mode=AgentMode.TEST
+                        )
 
                 if not isinstance(self.test_env, VectorEnv):
                     if isinstance(self.agent.action_space, Discrete):
@@ -639,6 +651,7 @@ class Learner(mp.Process):
                     scaled_action = action
 
                 next_observation, reward, done, info = self.test_env.step(scaled_action)
+                episode_step += 1
 
                 if not isinstance(self.test_env, VectorEnv):
                     next_observation = np.expand_dims(next_observation, axis=0)
@@ -682,7 +695,8 @@ class Learner(mp.Process):
         if self.config.ENV_NAME in ["Task_Allocation_v0"]:
             return np.average(episode_reward_lst), np.std(episode_reward_lst), np.average(episode_utilization_lst)
         elif self.config.ENV_NAME in ["Task_Allocation_v1"]:
-            return np.average(episode_reward_lst), np.std(episode_reward_lst), np.average(resource_utilization), np.average(average_latency), np.average(rejection_ratio)
+            return np.average(episode_reward_lst), np.std(episode_reward_lst), np.average(
+                resource_utilization), np.average(average_latency), np.average(rejection_ratio)
         elif self.config.ENV_NAME in ["Knapsack_Problem_v0"]:
             return np.average(episode_reward_lst), np.std(episode_reward_lst), \
                    np.average(episode_items_value_selected_lst), np.average(episode_ratio_lst)
