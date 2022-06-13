@@ -93,8 +93,8 @@ class AgentTdmpc(OffPolicyAgent):
 
         # Initialize state and parameters
         z = self.model.h(obs).repeat(self.config.NUM_SAMPLES + num_pi_trajs, 1)
-        mean = torch.zeros(horizon, self.action_space, device=self.device)
-        std = 2 * torch.ones(horizon, self.action_space, device=self.device)
+        mean = torch.zeros(horizon, self.n_out_actions, device=self.device)
+        std = 2 * torch.ones(horizon, self.n_out_actions, device=self.device)
         if not t0 and hasattr(self, '_prev_mean') and mode == AgentMode.TRAIN:
             mean[:-1] = self._train_prev_mean[1:]
         elif not t0 and hasattr(self, '_prev_mean') and mode == AgentMode.TEST:
@@ -103,7 +103,7 @@ class AgentTdmpc(OffPolicyAgent):
         # Iterate CEM
         for i in range(self.config.ITERATION):
             actions = torch.clamp(mean.unsqueeze(1) + std.unsqueeze(1) * \
-                                  torch.randn(horizon, self.config.NUM_SAMPLES, self.action_space, device=std.device),
+                                  torch.randn(horizon, self.config.NUM_SAMPLES, self.n_out_actions, device=std.device),
                                   -1, 1)
             if num_pi_trajs > 0:
                 actions = torch.cat([actions, pi_actions], dim=1)
@@ -129,7 +129,7 @@ class AgentTdmpc(OffPolicyAgent):
         mean, std = actions[0], _std[0]
         a = mean
         if mode == AgentMode.TRAIN:
-            a += std * torch.randn(self.action_space, device=std.device)
+            a += std * torch.randn(self.n_out_actions, device=std.device)
             self._train_prev_mean = mean
         else:
             self._test_prev_mean = mean
