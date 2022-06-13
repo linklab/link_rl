@@ -190,7 +190,7 @@ class Learner(mp.Process):
 
             # Collect trajectory
             obs = self.train_env.reset()
-            episode = Episode(self.config, obs)
+            episode = Episode(self.config, obs, self.agent.n_out_actions)
             while not episode.done:
                 action = self.agent.get_action(obs, step=step, t0=episode.first)
                 obs, reward, done, info = self.train_env.step(action.cpu().numpy())
