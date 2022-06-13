@@ -212,10 +212,10 @@ class ReplayBuffer():
         self.capacity = min(config.MAX_TRAINING_STEPS, config.BUFFER_CAPACITY)
         dtype = torch.float32 if not config.FROM_PIXELS else torch.uint8
         obs_shape = observation_space.shape
-        action_space = action_space.shape
+        action_space = action_space.shape[0]
         self._obs = torch.empty((self.capacity + 1, *obs_shape), dtype=dtype, device=self.device)
         # _last_obs 에는 한 에피소드의 마지막 obs 저장된다.
-        self._last_obs = torch.empty((self.capacity // (1000/config.ACTION_REPEAT), *observation_space), dtype=dtype,
+        self._last_obs = torch.empty((self.capacity // (1000/config.ACTION_REPEAT), *obs_shape), dtype=dtype,
                                      device=self.device)
         self._action = torch.empty((self.capacity, action_space), dtype=torch.float32, device=self.device)
         self._reward = torch.empty((self.capacity,), dtype=torch.float32, device=self.device)
@@ -224,7 +224,7 @@ class ReplayBuffer():
         self._full = False
         self.idx = 0
 
-        self.observation_shape = observation_space
+        self.observation_shape = observation_space.shape
         self.n_out_action = action_space
 
     def __add__(self, episode: Episode):
