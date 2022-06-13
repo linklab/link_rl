@@ -26,3 +26,4 @@ class AgentDuelingDqn(AgentDqn):
         )
 
         self.model = self.q_net
+        self.model.eval()

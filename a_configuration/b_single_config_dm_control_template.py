@@ -44,6 +44,9 @@ config = ConfigDmControlCartPoleThreePolesTd3()
 from a_configuration.b_single_config.dm_control.config_dm_control_cartpole_three_poles import ConfigDmControlCartPoleThreePolesSac
 config = ConfigDmControlCartPoleThreePolesSac()
 
+from a_configuration.b_single_config.dm_control.config_dm_control_cartpole_three_poles import ConfigDmControlCartPoleThreePolesTdmpc
+config = ConfigDmControlCartPoleThreePolesTdmpc()
+
 
 ##################################
 ## DM_CONTROL_CART_POLE_CHEETAH ##

@@ -86,6 +86,11 @@ def get_agent(observation_space, action_space, config=None):
         agent = AgentMuZero(
             observation_space=observation_space, action_space=action_space, config=config
         )
+    elif config.AGENT_TYPE == AgentType.TDMPC:
+        from d_agents.off_policy.tdmpc.agent_tdmpc import AgentTdmpc
+        agent = AgentTdmpc(
+            observation_space=observation_space, action_space=action_space, config=config
+        )
     else:
         raise ValueError()
 

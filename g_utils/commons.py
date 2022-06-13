@@ -492,6 +492,12 @@ def console_log(
             agent.temperature.value, agent.value_loss.value, agent.policy_loss.value, agent.reward_loss.value,
             agent.loss.value
         )
+    elif config.AGENT_TYPE == AgentType.TDMPC:
+        console_log += "consistency_loss: {0:7.3f}, value_loss: {1:7.3f}, policy_loss: {2:7.3f}, " \
+                       "reward_loss: {3:7.3f}, total_loss: {4:7.3f}".format(
+            agent.consistency_loss.value, agent.value_loss.value, agent.pi_loss.value, agent.reward_loss.value,
+            agent.total_loss.value
+        )
     else:
         pass
 
@@ -688,6 +694,13 @@ def wandb_log(learner, wandb_obj, config):
         log_dict["Policy Loss"] = learner.agent.policy_loss.value
         log_dict["Reward Loss"] = learner.agent.reward_loss.value
         log_dict["Total Loss"] = learner.agent.loss.value
+    elif config.AGENT_TYPE == AgentType.TDMPC:
+        log_dict["Consistency Loss"] = learner.agent.consistency_loss.value
+        log_dict["Value Loss"] = learner.agent.value_loss.value
+        log_dict["Policy Loss"] = learner.agent.pi_loss.value
+        log_dict["Reward Loss"] = learner.agent.reward_loss.value
+        log_dict["Total Loss"] = learner.agent.total_loss.value
+        log_dict["Weighted Loss"] = learner.agent.weighted_loss.value
     else:
         pass
 
@@ -945,10 +958,12 @@ def get_train_env(config, no_graphics=True):
                 if config.FROM_PIXELS:
                     env = dmc_gym.make(
                         domain_name=config.DOMAIN_NAME, task_name=config.TASK_NAME, seed=config.SEED,
-                        from_pixels=True, visualize_reward=False
+                        from_pixels=True, visualize_reward=False, frame_skip=config.ACTION_REPEAT
                     )
+                    env = gym.wrappers.FrameStack(env, num_stack=config.FRAME_STACK, lz4_compress=True)
                 else:
-                    env = dmc_gym.make(domain_name=config.DOMAIN_NAME, task_name=config.TASK_NAME, seed=config.SEED)
+                    env = dmc_gym.make(domain_name=config.DOMAIN_NAME, task_name=config.TASK_NAME, seed=config.SEED,
+                                       frame_skip=config.ACTION_REPEAT, height=config.IMG_SIZE, width=config.IMG_SIZE)
 
             #############
             #   Atari   #
@@ -1079,10 +1094,13 @@ def get_single_env(config, no_graphics=True, play=False):
         if config.FROM_PIXELS:
             single_env = dmc_gym.make(
                 domain_name=config.DOMAIN_NAME, task_name=config.TASK_NAME, seed=config.SEED,
-                from_pixels=True, visualize_reward=False
+                from_pixels=True, visualize_reward=False, frame_skip=config.ACTION_REPEAT,
+                height=config.IMG_SIZE, width=config.IMG_SIZE
             )
+            single_env = gym.wrappers.FrameStack(single_env, num_stack=config.FRAME_STACK, lz4_compress=True)
         else:
-            single_env = dmc_gym.make(domain_name=config.DOMAIN_NAME, task_name=config.TASK_NAME, seed=config.SEED)
+            single_env = dmc_gym.make(domain_name=config.DOMAIN_NAME, task_name=config.TASK_NAME, seed=config.SEED,
+                                      frame_skip=config.ACTION_REPEAT, height=config.IMG_SIZE, width=config.IMG_SIZE)
 
     #############
     #   Atari   #

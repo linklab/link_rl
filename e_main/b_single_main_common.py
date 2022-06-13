@@ -1,7 +1,5 @@
 import warnings
 
-from g_utils.types import OffPolicyAgentTypes
-
 warnings.filterwarnings("ignore")
 warnings.simplefilter("ignore")
 
@@ -22,6 +20,7 @@ sys.path.append(os.path.abspath(
     os.path.join(os.path.dirname(os.path.realpath(__file__)), os.pardir)
 ))
 
+from g_utils.types import OffPolicyAgentTypes
 from e_main.config_single import config
 from a_configuration.a_base_config.config_parse import SYSTEM_USER_NAME, SYSTEM_COMPUTER_NAME
 config.SYSTEM_USER_NAME = SYSTEM_USER_NAME
