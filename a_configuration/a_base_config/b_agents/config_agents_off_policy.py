@@ -111,7 +111,7 @@ class ConfigTdmpc(ConfigOffPolicyAgent):
         self.AGENT_TYPE = AgentType.TDMPC
 
         self.TAU = 0.01
-        self.BUFFER_CAPACITY = 2_000_000
+        self.BUFFER_CAPACITY = 1_000_000
         self.TARGET_SYNC_INTERVAL_TRAINING_STEPS = 50
 
         self.ITERATIONS = 6
