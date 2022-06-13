@@ -100,11 +100,11 @@ class OffPolicyAgent(Agent):
             if len(self.replay_buffer) >= self.config.MIN_BUFFER_SIZE_FOR_TRAIN:
                 self._before_train()
                 if training_steps_v == 0:
-                    for _ in range(5000):
+                    for _ in range(self.config.SEED_STEPS):
                         train_info = self.train_tdmpc(training_steps_v=training_steps_v)
                     count_training_steps = 5000
                 else:
-                    for _ in range(1000/self.config.ACTION_REPEAT):
+                    for _ in range(int(1000/self.config.ACTION_REPEAT)):
                         train_info = self.train_tdmpc(training_steps_v=training_steps_v)
                     count_training_steps = int(1000/self.config.ACTION_REPEAT)
 
