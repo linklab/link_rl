@@ -165,11 +165,12 @@ class Episode(object):
     def __init__(self, config, init_obs, n_out_action):
         self.config = config
         self.device = torch.device(config.DEVICE)
+        episode_length = int(1000/config.ACTION_REPEAT)
         dtype = torch.float32 if not config.FROM_PIXELS else torch.uint8
-        self.obs = torch.empty(((1000/config.ACTION_REPEAT) + 1, init_obs.shape), dtype=dtype, device=self.device)
+        self.obs = torch.empty((episode_length + 1, *init_obs.shape), dtype=dtype, device=self.device)
         self.obs[0] = torch.tensor(init_obs, dtype=dtype, device=self.device)
-        self.action = torch.empty(((1000/config.ACTION_REPEAT), n_out_action), dtype=torch.float32, device=self.device)
-        self.reward = torch.empty((config.episode_length,), dtype=torch.float32, device=self.device)
+        self.action = torch.empty((episode_length, n_out_action), dtype=torch.float32, device=self.device)
+        self.reward = torch.empty((episode_length,), dtype=torch.float32, device=self.device)
         self.cumulative_reward = 0
         self.done = False
         self._idx = 0
