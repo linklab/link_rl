@@ -78,14 +78,14 @@ class AgentTdmpc(OffPolicyAgent):
         """
         # Seed steps
         if step < self.config.TRAIN_INTERVAL_GLOBAL_TIME_STEPS and mode == AgentMode.TRAIN:
-            return torch.empty(self.action_space, dtype=torch.float32, device=self.device).uniform_(-1, 1)
+            return torch.empty(self.n_out_actions, dtype=torch.float32, device=self.device).uniform_(-1, 1)
 
         # Sample policy trajectories
         obs = torch.tensor(obs, dtype=torch.float32, device=self.device).unsqueeze(0)
         horizon = int(min(self.config.HORIZON, h.linear_schedule(self.config.HORIZON_SCHEDULE, step)))
         num_pi_trajs = int(self.config.MIXTURE_COEF * self.config.NUM_SAMPLES)
         if num_pi_trajs > 0:
-            pi_actions = torch.empty(horizon, num_pi_trajs, self.action_space, device=self.device)
+            pi_actions = torch.empty(horizon, num_pi_trajs, self.n_out_actions, device=self.device)
             z = self.model.h(obs).repeat(num_pi_trajs, 1)
             for t in range(horizon):
                 pi_actions[t] = self.model.pi(z, self.config.MIN_STD)
@@ -148,7 +148,7 @@ class AgentTdmpc(OffPolicyAgent):
             pi_loss += -Q.mean() * (self.config.RHO ** t)
 
         pi_loss.backward()
-        torch.nn.utils.clip_grad_norm_(self.model._pi.parameters(), self.config.GRAD_CLIP_NORM, error_if_nonfinite=False)
+        torch.nn.utils.clip_grad_norm_(self.model._pi.parameters(), self.config.CLIP_GRADIENT_VALUE, error_if_nonfinite=False)
         self.pi_optim.step()
         self.model.track_q_grad(True)
         return pi_loss.item()
@@ -198,7 +198,7 @@ class AgentTdmpc(OffPolicyAgent):
         weighted_loss = (total_loss * weights).mean()
         weighted_loss.register_hook(lambda grad: grad * (1 / self.config.HORIZON))
         weighted_loss.backward()
-        grad_norm = torch.nn.utils.clip_grad_norm_(self.model.parameters(), self.config.GRAD_CLIP_NORM,
+        grad_norm = torch.nn.utils.clip_grad_norm_(self.model.parameters(), self.config.CLIP_GRADIENT_VALUE,
                                                    error_if_nonfinite=False)
         self.optim.step()
         self.replay_buffer.update_priorities(idxs, priority_loss.clamp(max=1e4).detach())
