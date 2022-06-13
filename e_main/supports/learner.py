@@ -198,8 +198,8 @@ class Learner(mp.Process):
                 info["env_id"] = 0
                 info["actor_time_step"] = actor_time_step
                 episode += (obs, action, reward, done, info)
-            assert len(episode) == 1000 / self.config.ACTION_REPEAT
-            step += 1000 / self.config.ACTION_REPEAT
+            assert len(episode) == int(1000 / self.config.ACTION_REPEAT)
+            step += int(1000 / self.config.ACTION_REPEAT)
             yield episode
 
     def generator_muzero(self):

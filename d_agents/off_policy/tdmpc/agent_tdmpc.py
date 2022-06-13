@@ -126,10 +126,10 @@ class AgentTdmpc(OffPolicyAgent):
         # Outputs
         score = score.squeeze(1).cpu().numpy()
         actions = elite_actions[:, np.random.choice(np.arange(score.shape[0]), p=score)]
-        mean, std = actions[0], _std[0]
-        a = mean
+        mean_action, std_action = actions[0], _std[0]
+        a = mean_action
         if mode == AgentMode.TRAIN:
-            a += std * torch.randn(self.n_out_actions, device=std.device)
+            a += std_action * torch.randn(self.n_out_actions, device=std.device)
             self._train_prev_mean = mean
         else:
             self._test_prev_mean = mean
