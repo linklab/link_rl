@@ -25,6 +25,7 @@ class OnPolicyAgent(Agent):
 
         transition = self.buffer.sample(batch_size=None)
         self.observations, self.actions, self.next_observations, self.rewards, self.dones, self.infos = transition
+        self.model.train()
 
     def train(self, training_steps_v=None):
         count_training_steps = 0
@@ -80,6 +81,8 @@ class OnPolicyAgent(Agent):
         del self.rewards
         del self.dones
 
+        self.model.eval()
+
     # ON_POLICY
     @abstractmethod
     def train_reinforce(self):
@@ -101,6 +104,7 @@ class OnPolicyAgent(Agent):
     def train_asynchronous_ppo(self):
         raise NotImplementedError()
 
+    @torch.no_grad()
     def get_action(self, obs, mode=AgentMode.TRAIN):
         self.step += 1
         if isinstance(self.action_space, Discrete):

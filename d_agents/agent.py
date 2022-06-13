@@ -66,6 +66,7 @@ class Agent:
         self.step = 0
 
     @abstractmethod
+    @torch.no_grad()
     def get_action(self, obs, unavailable_actions=None, mode=AgentMode.TRAIN, t0=False, step=None):
         raise NotImplementedError()
 

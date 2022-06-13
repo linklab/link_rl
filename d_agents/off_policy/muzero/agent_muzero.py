@@ -30,6 +30,7 @@ class AgentMuZero(OffPolicyAgent):
                 observation_shape=self.observation_shape, n_out_actions=self.n_out_actions,
                 n_discrete_actions=self.n_discrete_actions, config=config
             )
+            self.model.eval()
         elif isinstance(self.action_space, Box):
             raise ValueError()
         else:
@@ -48,6 +49,7 @@ class AgentMuZero(OffPolicyAgent):
 
         self.optimizer = optim.Adam(self.model.parameters(), lr=self.config.LEARNING_RATE)
 
+    @torch.no_grad()
     def get_action(self, observations, mode=AgentMode.TRAIN):
         action = []
         with torch.no_grad():

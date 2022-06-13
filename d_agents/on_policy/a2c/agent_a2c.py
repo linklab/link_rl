@@ -28,6 +28,7 @@ class AgentA2c(OnPolicyAgent):
         self.critic_model = self.actor_critic_model.critic_model
 
         self.model = self.actor_model  # 에이전트 밖에서는 model이라는 이름으로 제어 모델 접근
+        self.model.eval()
 
         self.actor_model.share_memory()
         self.critic_model.share_memory()

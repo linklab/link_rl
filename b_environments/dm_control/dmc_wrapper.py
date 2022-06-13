@@ -92,7 +92,7 @@ class DMCWrapper(core.Env):
 			np.float64
 		)
 
-		self.current_state = None
+		# self.current_state = None
 
 		# set seed
 		self.seed(seed=task_kwargs.get('seed', 1))
@@ -159,13 +159,13 @@ class DMCWrapper(core.Env):
 			if done:
 				break
 		obs = self.get_observation(time_step)
-		self.current_state = _flatten_obs(time_step.observation)
+		# self.current_state = _flatten_obs(time_step.observation)
 		extra['discount'] = time_step.discount
 		return obs, reward, done, extra
 
 	def reset(self, return_info=False):
 		time_step = self.original_env.reset()
-		self.current_state = _flatten_obs(time_step.observation)
+		# self.current_state = _flatten_obs(time_step.observation)
 		obs = self.get_observation(time_step)
 		if return_info:
 			return obs, None

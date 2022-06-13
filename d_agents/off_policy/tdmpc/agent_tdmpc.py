@@ -22,7 +22,7 @@ class AgentTdmpc(OffPolicyAgent):
     def __init__(self, observation_space, action_space, config):
         super(AgentTdmpc, self).__init__(observation_space, action_space, config)
         self.config = config
-        self.device = torch.device('cuda')
+        assert self.config.N_STEP == 1
         self.std = h.linear_schedule(config.STD_SCHEDULE, 0)
         self.model = TOLD(
             observation_shape=self.observation_shape, n_out_actions=self.n_out_actions, config=config
@@ -46,20 +46,20 @@ class AgentTdmpc(OffPolicyAgent):
         action = self.plan(obs, mode, step, t0)
         return action
 
-    def state_dict(self):
-        """Retrieve state dict of TOLD model, including slow-moving target network."""
-        return {'model': self.model.state_dict(),
-                'model_target': self.model_target.state_dict()}
-
-    def save(self, fp):
-        """Save state dict of TOLD model to filepath."""
-        torch.save(self.state_dict(), fp)
-
-    def load(self, fp):
-        """Load a saved state dict from filepath into current agent."""
-        d = torch.load(fp)
-        self.model.load_state_dict(d['model'])
-        self.model_target.load_state_dict(d['model_target'])
+    # def state_dict(self):
+    #     """Retrieve state dict of TOLD model, including slow-moving target network."""
+    #     return {'model': self.model.state_dict(),
+    #             'model_target': self.model_target.state_dict()}
+    #
+    # def save(self, fp):
+    #     """Save state dict of TOLD model to filepath."""
+    #     torch.save(self.state_dict(), fp)
+    #
+    # def load(self, fp):
+    #     """Load a saved state dict from filepath into current agent."""
+    #     d = torch.load(fp)
+    #     self.model.load_state_dict(d['model'])
+    #     self.model_target.load_state_dict(d['model_target'])
 
     @torch.no_grad()
     def estimate_value(self, z, actions, horizon):
@@ -83,23 +83,23 @@ class AgentTdmpc(OffPolicyAgent):
         """
         # Seed steps
         if step < self.config.SEED_STEPS and mode == AgentMode.TRAIN:
-            return torch.empty(self.n_out_actions, dtype=torch.float32, device=self.device).uniform_(-1, 1)
+            return torch.empty(self.n_out_actions, dtype=torch.float32, device=self.config.DEVICE).uniform_(-1, 1)
 
         # Sample policy trajectories
-        obs = torch.tensor(obs, dtype=torch.float32, device=self.device).unsqueeze(0)
+        obs = torch.tensor(obs, dtype=torch.float32, device=self.config.DEVICE).unsqueeze(0)
         horizon = int(min(self.config.HORIZON, h.linear_schedule(self.config.HORIZON_SCHEDULE, step)))
         num_pi_trajs = int(self.config.MIXTURE_COEF * self.config.NUM_SAMPLES)
         if num_pi_trajs > 0:
-            pi_actions = torch.empty(horizon, num_pi_trajs, self.n_out_actions, device=self.device)
-            z = self.model.h(obs).repeat(num_pi_trajs, 1)
+            pi_actions = torch.empty(horizon, num_pi_trajs, self.n_out_actions, device=self.config.DEVICE)
+            z = self.model.encode(obs).repeat(num_pi_trajs, 1)
             for t in range(horizon):
                 pi_actions[t] = self.model.pi(z, self.config.MIN_STD)
                 z, _ = self.model.next(z, pi_actions[t])
 
         # Initialize state and parameters
-        z = self.model.h(obs).repeat(self.config.NUM_SAMPLES + num_pi_trajs, 1)
-        mean = torch.zeros(horizon, self.n_out_actions, device=self.device)
-        std = 2 * torch.ones(horizon, self.n_out_actions, device=self.device)
+        z = self.model.encode(obs).repeat(self.config.NUM_SAMPLES + num_pi_trajs, 1)
+        mean = torch.zeros(horizon, self.n_out_actions, device=self.config.DEVICE)
+        std = 2 * torch.ones(horizon, self.n_out_actions, device=self.config.DEVICE)
         if not t0 and hasattr(self, '_train_prev_mean') and mode == AgentMode.TRAIN:
             mean[:-1] = self._train_prev_mean[1:]
         elif not t0 and hasattr(self, '_test_prev_mean') and mode == AgentMode.TEST:
@@ -162,21 +162,21 @@ class AgentTdmpc(OffPolicyAgent):
     @torch.no_grad()
     def _td_target(self, next_obs, reward):
         """Compute the TD-target from a reward and the observation at the following time step."""
-        next_z = self.model.h(next_obs)
+        next_z = self.model.encode(next_obs)
         td_target = reward + self.config.GAMMA * \
                     torch.min(*self.model_target.Q(next_z, self.model.pi(next_z, self.config.MIN_STD)))
         return td_target
 
     def train_tdmpc(self, training_steps_v):
         """Main update function. Corresponds to one iteration of the TOLD model learning."""
-        obs, next_obses, action, reward, idxs, weights = \
-            self.observations, self.next_observations, self.actions, self.rewards, self.idx, self.weights
+        obs, next_obses, action, reward, idxs, important_sampling_weights = \
+            self.observations, self.next_observations, self.actions, self.rewards, self.idx, self.important_sampling_weights
         self.optim.zero_grad(set_to_none=True)
         self.std = h.linear_schedule(self.config.STD_SCHEDULE, training_steps_v)
         self.model.train()
 
         # Representation
-        z = self.model.h(self.aug(obs))
+        z = self.model.encode(self.aug(obs))
         zs = [z.detach()]
 
         consistency_loss, reward_loss, value_loss, priority_loss = 0, 0, 0, 0
@@ -186,7 +186,7 @@ class AgentTdmpc(OffPolicyAgent):
             z, reward_pred = self.model.next(z, action[t])
             with torch.no_grad():
                 next_obs = self.aug(next_obses[t])
-                next_z = self.model_target.h(next_obs)
+                next_z = self.model_target.encode(next_obs)
                 td_target = self._td_target(next_obs, reward[t])
             zs.append(z.detach())
 
@@ -201,7 +201,7 @@ class AgentTdmpc(OffPolicyAgent):
         total_loss = self.config.CONSISTENCY_COEF * consistency_loss.clamp(max=1e4) + \
                      self.config.REWARD_COEF * reward_loss.clamp(max=1e4) + \
                      self.config.VALUE_COEF * value_loss.clamp(max=1e4)
-        weighted_loss = (total_loss * weights).mean()
+        weighted_loss = (total_loss * important_sampling_weights).mean()
         weighted_loss.register_hook(lambda grad: grad * (1 / self.config.HORIZON))
         weighted_loss.backward()
         grad_norm = torch.nn.utils.clip_grad_norm_(self.model.parameters(), self.config.CLIP_GRADIENT_VALUE,

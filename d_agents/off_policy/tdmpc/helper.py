@@ -101,8 +101,7 @@ def enc(config, observation_shape):
     """Returns a TOLD encoder."""
     if config.FROM_PIXELS:
         C = int(3 * config.FRAME_STACK)
-        layers = [NormalizeImg(),
-                  nn.Conv2d(C, config.NUM_CHANNELS, 7, stride=2), nn.ReLU(),
+        layers = [nn.Conv2d(C, config.NUM_CHANNELS, 7, stride=2), nn.ReLU(),
                   nn.Conv2d(config.NUM_CHANNELS, config.NUM_CHANNELS, 5, stride=2), nn.ReLU(),
                   nn.Conv2d(config.NUM_CHANNELS, config.NUM_CHANNELS, 3, stride=2), nn.ReLU(),
                   nn.Conv2d(config.NUM_CHANNELS, config.NUM_CHANNELS, 3, stride=2), nn.ReLU()]
@@ -164,13 +163,12 @@ class Episode(object):
 
     def __init__(self, config, init_obs, n_out_action):
         self.config = config
-        self.device = torch.device(config.DEVICE)
         episode_length = int(1000/config.ACTION_REPEAT)
         dtype = torch.float32 if not config.FROM_PIXELS else torch.uint8
-        self.obs = torch.empty((episode_length + 1, *init_obs.shape), dtype=dtype, device=self.device)
-        self.obs[0] = torch.tensor(init_obs, dtype=dtype, device=self.device)
-        self.action = torch.empty((episode_length, n_out_action), dtype=torch.float32, device=self.device)
-        self.reward = torch.empty((episode_length,), dtype=torch.float32, device=self.device)
+        self.obs = torch.empty((episode_length + 1, *init_obs.shape), dtype=dtype, device=self.config.DEVICE)
+        self.obs[0] = torch.tensor(init_obs, dtype=dtype, device=self.config.DEVICE)
+        self.action = torch.empty((episode_length, n_out_action), dtype=torch.float32, device=self.config.DEVICE)
+        self.reward = torch.empty((episode_length,), dtype=torch.float32, device=self.config.DEVICE)
         self.cumulative_reward = 0
         self.done = False
         self._idx = 0
@@ -209,19 +207,18 @@ class ReplayBuffer():
 
     def __init__(self, config, observation_space, action_space):
         self.config = config
-        self.device = torch.device(config.DEVICE)
         self.capacity = min(config.MAX_TRAINING_STEPS, config.BUFFER_CAPACITY)
         dtype = torch.float32 if not config.FROM_PIXELS else torch.uint8
         obs_shape = observation_space.shape
         action_space = action_space.shape[0]
         self.episode_length = int(1000/config.ACTION_REPEAT)
         last_obs_first_shape = int(self.capacity // self.episode_length)
-        self._obs = torch.empty((self.capacity + 1, *obs_shape), dtype=dtype, device=self.device)
+        self._obs = torch.empty((self.capacity + 1, *obs_shape), dtype=dtype, device=self.config.DEVICE)
         # _last_obs 에는 한 에피소드의 마지막 obs 저장된다.
-        self._last_obs = torch.empty((last_obs_first_shape, *obs_shape), dtype=dtype, device=self.device)
-        self._action = torch.empty((self.capacity, action_space), dtype=torch.float32, device=self.device)
-        self._reward = torch.empty((self.capacity,), dtype=torch.float32, device=self.device)
-        self._priorities = torch.ones((self.capacity,), dtype=torch.float32, device=self.device)
+        self._last_obs = torch.empty((last_obs_first_shape, *obs_shape), dtype=dtype, device=self.config.DEVICE)
+        self._action = torch.empty((self.capacity, action_space), dtype=torch.float32, device=self.config.DEVICE)
+        self._reward = torch.empty((self.capacity,), dtype=torch.float32, device=self.config.DEVICE)
+        self._priorities = torch.ones((self.capacity,), dtype=torch.float32, device=self.config.DEVICE)
         self._eps = 1e-6
         self._full = False
         self.idx = 0
@@ -249,11 +246,11 @@ class ReplayBuffer():
         self._action[self.idx:self.idx + self.episode_length] = episode.action
         self._reward[self.idx:self.idx + self.episode_length] = episode.reward
         if self._full:
-            max_priority = self._priorities.max().to(self.device).item()
+            max_priority = self._priorities.max().to(self.config.DEVICE).item()
         else:
-            max_priority = 1. if self.idx == 0 else self._priorities[:self.idx].max().to(self.device).item()
+            max_priority = 1. if self.idx == 0 else self._priorities[:self.idx].max().to(self.config.DEVICE).item()
         mask = torch.arange(self.episode_length) >= self.episode_length - self.config.HORIZON
-        new_priorities = torch.full((self.episode_length,), max_priority, device=self.device)
+        new_priorities = torch.full((self.episode_length,), max_priority, device=self.config.DEVICE)
         new_priorities[mask] = 0
         self._priorities[self.idx:self.idx + self.episode_length] = new_priorities
         self.idx = (self.idx + self.episode_length) % self.capacity
@@ -261,13 +258,13 @@ class ReplayBuffer():
         self.buffer_len = min(self.buffer_len+self.episode_length, self.config.BUFFER_CAPACITY)
 
     def update_priorities(self, idxs, priorities):
-        self._priorities[idxs] = priorities.squeeze(1).to(self.device) + self._eps
+        self._priorities[idxs] = priorities.squeeze(1).to(self.config.DEVICE) + self._eps
 
     def _get_obs(self, arr, idxs):
         if not self.config.FROM_PIXELS:
             return arr[idxs]
         obs = torch.empty((self.config.batch_size, *self.observation_shape), dtype=arr.dtype,
-                          device=torch.device('cuda'))
+                          device=self.config.DEVICE)
         obs[:, -3:] = arr[idxs].cuda()
         _idxs = idxs.clone()
         mask = torch.ones_like(_idxs, dtype=torch.bool)
@@ -285,16 +282,16 @@ class ReplayBuffer():
         probs /= probs.sum()
         total = len(probs)
         idxs = torch.from_numpy(
-            np.random.choice(total, self.config.BATCH_SIZE, p=probs.cpu().numpy(), replace=not self._full)).to(self.device)
+            np.random.choice(total, self.config.BATCH_SIZE, p=probs.cpu().numpy(), replace=not self._full)).to(self.config.DEVICE)
         weights = (total * probs[idxs]) ** (-self.config.PER_BETA)
         weights /= weights.max()
 
         obs = self._get_obs(self._obs, idxs)
         next_obs = torch.empty((self.config.HORIZON + 1, self.config.BATCH_SIZE, *self.observation_shape), dtype=obs.dtype,
-                               device=obs.device)
+                               device=self.config.DEVICE)
         action = torch.empty((self.config.HORIZON + 1, self.config.BATCH_SIZE, *self._action.shape[1:]), dtype=torch.float32,
-                             device=self.device)
-        reward = torch.empty((self.config.HORIZON + 1, self.config.BATCH_SIZE), dtype=torch.float32, device=self.device)
+                             device=self.config.DEVICE)
+        reward = torch.empty((self.config.HORIZON + 1, self.config.BATCH_SIZE), dtype=torch.float32, device=self.config.DEVICE)
         for t in range(self.config.HORIZON + 1):
             _idxs = idxs + t
             next_obs[t] = self._get_obs(self._obs, _idxs + 1)

@@ -25,7 +25,7 @@ class TOLD(nn.Module):
         for m in [self._Q1, self._Q2]:
             h.set_requires_grad(m, enable)
 
-    def h(self, obs):
+    def encode(self, obs):
         """Encodes an observation into its latent representation (h)."""
         return self._encoder(obs)
 

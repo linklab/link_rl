@@ -42,7 +42,7 @@ class OffPolicyAgent(Agent):
         if self.config.AGENT_TYPE == AgentType.MUZERO:
             self.episode_idxs, self.episode_historys = self.replay_buffer.sample_muzero(batch_size=self.config.BATCH_SIZE)
         elif self.config.AGENT_TYPE == AgentType.TDMPC:
-            self.observations, self.next_observations, self.actions, self.rewards, self.idx, self.weights = \
+            self.observations, self.next_observations, self.actions, self.rewards, self.idx, self.important_sampling_weights = \
             self.replay_buffer.sample()
         else:
             if self.config.USE_PER:
@@ -55,6 +55,7 @@ class OffPolicyAgent(Agent):
                 self.infos = self.replay_buffer.sample(
                     batch_size=self.config.BATCH_SIZE
                 )
+        self.model.train()
 
     def train(self, training_steps_v=None):
         count_training_steps = 0
@@ -126,6 +127,8 @@ class OffPolicyAgent(Agent):
             del self.next_observations
             del self.rewards
             del self.dones
+
+        self.model.eval()
 
     # OFF POLICY
     @abstractmethod
