@@ -492,6 +492,12 @@ def console_log(
             agent.temperature.value, agent.value_loss.value, agent.policy_loss.value, agent.reward_loss.value,
             agent.loss.value
         )
+    elif config.AGENT_TYPE == AgentType.TDMPC:
+        console_log += "consistency_loss: {0:7.3f}, value_loss: {1:7.3f}, policy_loss: {2:7.3f}, " \
+                       "reward_loss: {3:7.3f}, total_loss: {4:7.3f}".format(
+            agent.consistency_loss.value, agent.value_loss.value, agent.pi_loss.value, agent.reward_loss.value,
+            agent.total_loss.value
+        )
     else:
         pass
 
@@ -688,6 +694,13 @@ def wandb_log(learner, wandb_obj, config):
         log_dict["Policy Loss"] = learner.agent.policy_loss.value
         log_dict["Reward Loss"] = learner.agent.reward_loss.value
         log_dict["Total Loss"] = learner.agent.loss.value
+    elif config.AGENT_TYPE == AgentType.MUZERO:
+        log_dict["Consistency Loss"] = learner.agent.consistency_loss.value
+        log_dict["Value Loss"] = learner.agent.value_loss.value
+        log_dict["Policy Loss"] = learner.agent.pi_loss.value
+        log_dict["Reward Loss"] = learner.agent.reward_loss.value
+        log_dict["Total Loss"] = learner.agent.total_loss.value
+        log_dict["Weighted Loss"] = learner.agent.weighted_loss.value
     else:
         pass
 

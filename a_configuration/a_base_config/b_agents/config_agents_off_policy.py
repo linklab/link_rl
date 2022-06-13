@@ -157,3 +157,4 @@ class ConfigTdmpc(ConfigOffPolicyAgent):
         self.NUM_CHANNELS = 32
 
         self.TARGET_MODEL_UPDATE_FREQ = 2
+        self.TEST_INTERVAL_TRAINING_STEPS = 2500
