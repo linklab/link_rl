@@ -109,7 +109,7 @@ def enc(config, observation_shape):
         out_shape = _get_out_shape(observation_shape, layers)
         layers.extend([Flatten(), nn.Linear(np.prod(out_shape), config.LATENT_DIM)])
     else:
-        layers = [nn.Linear(observation_shape, config.ENC_DIM), nn.ELU(),
+        layers = [nn.Linear(*observation_shape, config.ENC_DIM), nn.ELU(),
                   nn.Linear(config.ENC_DIM, config.LATENT_DIM)]
     return nn.Sequential(*layers)
 
