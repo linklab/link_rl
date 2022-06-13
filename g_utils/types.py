@@ -93,8 +93,7 @@ class AgentType(enum.Enum):
     DDPG = 10
     TD3 = 11
     SAC = 12
-    MUZERO = 13
-    TDMPC = 14
+    TDMPC = 13
 
 
 class ConvolutionType(enum.Enum):
@@ -115,7 +114,7 @@ OnPolicyAgentTypes = [
 
 OffPolicyAgentTypes = [
     AgentType.DQN, AgentType.DOUBLE_DQN, AgentType.DUELING_DQN, AgentType.DOUBLE_DUELING_DQN,
-    AgentType.DDPG, AgentType.TD3, AgentType.SAC, AgentType.MUZERO, AgentType.TDMPC
+    AgentType.DDPG, AgentType.TD3, AgentType.SAC, AgentType.TDMPC
 ]
 
 ActorCriticAgentTypes = [

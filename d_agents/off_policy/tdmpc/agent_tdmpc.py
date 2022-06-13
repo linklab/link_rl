@@ -12,7 +12,7 @@ import torch.multiprocessing as mp
 from torch.distributions import Normal
 
 from c_models.h_sac_models import ContinuousSacModel
-from c_models.j_tdmpc_models import TOLD
+from c_models.i_tdmpc_models import TOLD
 from d_agents.off_policy.off_policy_agent import OffPolicyAgent
 from g_utils.types import AgentMode
 from d_agents.off_policy.tdmpc import helper as h

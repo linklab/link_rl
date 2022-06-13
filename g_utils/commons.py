@@ -170,9 +170,6 @@ def set_config(config):
         config.BUFFER_CAPACITY = config.PPO_TRAJECTORY_SIZE
         config.CONSOLE_LOG_INTERVAL_TRAINING_STEPS = 10 * config.PPO_K_EPOCH
 
-    elif config.AGENT_TYPE == AgentType.MUZERO:
-        pass
-
     else:
         raise ValueError()
 
@@ -486,12 +483,6 @@ def console_log(
         console_log += "critic_loss: {0:7.3f}, actor_objective: {1:7.3f}".format(
             agent.last_critic_loss.value, agent.last_actor_objective.value
         )
-    elif config.AGENT_TYPE == AgentType.MUZERO:
-        console_log += "temperature: {0:7.3f}, value_loss: {1:7.3f}, policy_loss: {2:7.3f}, " \
-                       "reward_loss: {3:7.3f}, total_loss: {4:7.3f}".format(
-            agent.temperature.value, agent.value_loss.value, agent.policy_loss.value, agent.reward_loss.value,
-            agent.loss.value
-        )
     elif config.AGENT_TYPE == AgentType.TDMPC:
         console_log += "consistency_loss: {0:7.3f}, value_loss: {1:7.3f}, policy_loss: {2:7.3f}, " \
                        "reward_loss: {3:7.3f}, total_loss: {4:7.3f}".format(
@@ -688,12 +679,6 @@ def wandb_log(learner, wandb_obj, config):
         log_dict["Last Actor Objective"] = learner.agent.last_actor_objective.value
         log_dict["Alpha"] = learner.agent.alpha.value
         log_dict["Entropy"] = learner.agent.last_entropy.value
-    elif config.AGENT_TYPE == AgentType.MUZERO:
-        log_dict["Temperature"] = learner.agent.temperature.value
-        log_dict["Value Loss"] = learner.agent.value_loss.value
-        log_dict["Policy Loss"] = learner.agent.policy_loss.value
-        log_dict["Reward Loss"] = learner.agent.reward_loss.value
-        log_dict["Total Loss"] = learner.agent.loss.value
     elif config.AGENT_TYPE == AgentType.TDMPC:
         log_dict["Consistency Loss"] = learner.agent.consistency_loss.value
         log_dict["Value Loss"] = learner.agent.value_loss.value

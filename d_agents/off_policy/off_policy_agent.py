@@ -39,9 +39,7 @@ class OffPolicyAgent(Agent):
             assert self.critic_model
             assert self.model is self.actor_model
         # obs, next_obs, action, reward.unsqueeze(2), idxs, weights
-        if self.config.AGENT_TYPE == AgentType.MUZERO:
-            self.episode_idxs, self.episode_historys = self.replay_buffer.sample_muzero(batch_size=self.config.BATCH_SIZE)
-        elif self.config.AGENT_TYPE == AgentType.TDMPC:
+        if self.config.AGENT_TYPE == AgentType.TDMPC:
             self.observations, self.next_observations, self.actions, self.rewards, self.idx, self.important_sampling_weights = \
             self.replay_buffer.sample()
         else:
@@ -90,13 +88,6 @@ class OffPolicyAgent(Agent):
                 count_training_steps, critic_loss_each = self.train_sac(training_steps_v=training_steps_v)
                 self._after_train(critic_loss_each)
 
-        elif self.config.AGENT_TYPE == AgentType.MUZERO:
-            assert self.config.N_VECTORIZED_ENVS == 1
-            if len(self.replay_buffer) >= self.config.BATCH_SIZE:
-                self._before_train()
-                count_training_steps, critic_loss_each = self.train_muzero(training_steps_v=training_steps_v)
-                self._after_train(critic_loss_each)
-
         elif self.config.AGENT_TYPE == AgentType.TDMPC:
             if len(self.replay_buffer) >= self.config.MIN_BUFFER_SIZE_FOR_TRAIN:
                 self._before_train()
@@ -118,15 +109,11 @@ class OffPolicyAgent(Agent):
         if loss_each is not None and self.config.USE_PER:
             self.replay_buffer.update_priorities(loss_each.detach().cpu().numpy())
 
-        if self.config.AGENT_TYPE == AgentType.MUZERO:
-            del self.episode_historys
-            del self.episode_idxs
-        else:
-            del self.observations
-            del self.actions
-            del self.next_observations
-            del self.rewards
-            del self.dones
+        del self.observations
+        del self.actions
+        del self.next_observations
+        del self.rewards
+        del self.dones
 
         self.model.eval()
 
@@ -149,10 +136,6 @@ class OffPolicyAgent(Agent):
 
     @abstractmethod
     def train_sac(self, training_steps_v):
-        raise NotImplementedError()
-
-    @abstractmethod
-    def train_muzero(self, training_steps_v):
         raise NotImplementedError()
 
     @abstractmethod

@@ -80,10 +80,7 @@ class Learner(mp.Process):
         self.transition_rolling_rate = mp.Value('d', 0.0)
         self.train_step_rate = mp.Value('d', 0.0)
 
-        if self.config.AGENT_TYPE == AgentType.MUZERO:
-            self.transition_generator = self.generator_muzero()
-            # TODO : history ???? logic ????
-        elif self.config.AGENT_TYPE == AgentType.TDMPC:
+        if self.config.AGENT_TYPE == AgentType.TDMPC:
             self.transition_generator = self.generator_tdmpc()
         else:
             if queue is None:  # Sequential
@@ -202,107 +199,6 @@ class Learner(mp.Process):
             step += int(1000 / self.config.ACTION_REPEAT)
             yield episode
 
-    def generator_muzero(self):
-        # TODO
-        # ?? step???? ?????? ?? : legal action ??????, to_play ????, stacked_observations ????
-        observations = self.train_env.reset()
-
-        observations_history = [[] for _ in range(self.config.N_VECTORIZED_ENVS)]
-        actions_history = [[] for _ in range(self.config.N_VECTORIZED_ENVS)]
-        rewards_history = [[] for _ in range(self.config.N_VECTORIZED_ENVS)]
-        infos_history = [[] for _ in range(self.config.N_VECTORIZED_ENVS)]
-        to_play_history = [[[]] for _ in range(
-            self.config.N_VECTORIZED_ENVS)]  # TODO : np.zeros((observations.shape[0], slef.train_env.to_play()))
-        child_visits_history = [[] for _ in range(self.config.N_VECTORIZED_ENVS)]
-        root_values_history = [[] for _ in range(self.config.N_VECTORIZED_ENVS)]
-
-        if self.is_recurrent_model:
-            self.agent.model.init_recurrent_hidden()
-            observations = [(observations, self.agent.model.recurrent_hidden)]
-
-        actor_time_step = 0
-
-        while True:
-            actor_time_step += 1
-
-            # if actor_time_step == 1:
-            #     stacked_observations = observations
-            # else:
-            #     stacked_observations = self.agent.get_stacked_observations(
-            #         -1, self.config.STACKED_OBSERVATION,
-            #         observations_history, actions_history
-            #     )
-
-            self.agent.legal_actions = [[0, 1] for _ in range(
-                self.config.N_VECTORIZED_ENVS)]  # action masking, shape : (n_vectorized, action_space)
-            self.agent.to_plays = [[0] for _ in range(self.config.N_VECTORIZED_ENVS)]  # shape : (n_vectorized, 1)
-            self.agent.visit_softmax_temperature_fn(self.training_step.value)  # temperature ????
-
-            actions = self.agent.get_action(observations)
-            if isinstance(self.agent.action_space, Discrete):
-                scaled_actions = actions
-            elif isinstance(self.agent.action_space, Box):
-                scaled_actions = actions * self.agent.action_scale + self.agent.action_bias
-            else:
-                raise ValueError()
-            # TODO : batch MCTS ????
-            next_observations, rewards, dones, infos = self.train_env.step(scaled_actions)
-
-            if self.is_recurrent_model:
-                next_observations = [(next_observations, self.agent.model.recurrent_hidden)]
-
-            for env_id, (observation, action, reward, done, info, root, to_play) in enumerate(
-                    zip(observations, actions, rewards, dones, infos, self.agent.roots, self.agent.to_plays)
-            ):
-                info["actor_id"] = 0
-                info["env_id"] = env_id
-                info["actor_time_step"] = actor_time_step
-                infos_history[env_id].append(info)
-                if root is not None:
-                    sum_visits = sum(child.visit_count for child in root.children.values())
-                    child_visits_history[env_id].append(
-                        [
-                            root.children[a].visit_count / sum_visits
-                            if a in root.children
-                            else 0
-                            for a in range(self.agent.action_space.n)
-                        ]
-                    )
-                    root_values_history[env_id].append(root.value())
-                else:
-                    root_values_history[env_id].append(None)
-
-                observations_history[env_id].append(observation)
-                actions_history[env_id].append(action)
-                rewards_history[env_id].append(reward)
-                to_play_history[env_id].append(to_play)
-
-                if done == True:
-                    episode_transition = Episode_history(
-                        observation_history=copy.deepcopy(observations_history[env_id]),
-                        action_history=copy.deepcopy(actions_history[env_id]),
-                        reward_history=copy.deepcopy(rewards_history[env_id]),
-                        to_play_history=copy.deepcopy(to_play_history[env_id]),
-                        child_visits_history=copy.deepcopy(child_visits_history[env_id]),
-                        root_values_history=copy.deepcopy(root_values_history[env_id]),
-                        info_history=copy.deepcopy(infos_history[env_id])
-                    )
-                    yield episode_transition
-                    observations_history[env_id] = []
-                    actions_history[env_id] = []
-                    rewards_history[env_id] = []
-                    to_play_history[env_id] = []
-                    child_visits_history[env_id] = []
-                    root_values_history[env_id] = []
-                    infos_history[env_id] = []
-
-            observations = next_observations
-
-            if self.is_terminated.value:
-                break
-
-        yield None
-
     def train_loop(self, parallel=False):
         combinatorial_env_conditions = [
             isinstance(self.config, ConfigKnapsack),
@@ -389,17 +285,7 @@ class Learner(mp.Process):
                 else:
                     raise ValueError()
 
-                if self.config.AGENT_TYPE == AgentType.MUZERO:
-                    actor_id = n_step_transition.info_history[0]["actor_id"]
-                    env_id = n_step_transition.info_history[0]["env_id"]
-                    self.total_episodes.value += 1
-
-                    self.episode_rewards[actor_id][env_id] = sum(n_step_transition.reward_history)
-                    self.episode_reward_buffer.add(self.episode_rewards[actor_id][env_id])
-                    self.last_mean_episode_reward.value = self.episode_reward_buffer.mean()
-
-                    self.episode_rewards[actor_id][env_id] = 0.0
-                elif self.config.AGENT_TYPE == AgentType.TDMPC:
+                if self.config.AGENT_TYPE == AgentType.TDMPC:
                     actor_id = n_step_transition.info["actor_id"]
                     env_id = n_step_transition.info["env_id"]
                     self.total_episodes.value += 1

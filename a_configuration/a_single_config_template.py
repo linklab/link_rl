@@ -95,9 +95,6 @@ from a_configuration.b_single_config.open_ai_gym.classic_control.config_cart_pol
 config = ConfigCartPolePpoTrajectory()
 config.WANDB_REPORT_URL = "https://wandb.ai/link-koreatech/CartPole-v1_PPO_TRAJECTORY_yhhan/reports/CartPole-PPO_TRAJECTORY--VmlldzoxNTUyNDQw?accessToken=7vs10v66vi6fyitrxma0p2g62pq4nfiiccaskfgv2x2b5jrmwfae38u4pfm1xfq1"
 
-from a_configuration.b_single_config.open_ai_gym.classic_control.config_cart_pole import ConfigCartPoleMuzero
-config = ConfigCartPoleMuzero()
-
 #################################
 ## CART_POLE_CONTINUOUS_BULLET ##
 #################################
@@ -131,9 +128,6 @@ config = ConfigCartPoleContinuousBulletSac()
 from a_configuration.b_single_config.open_ai_gym.box2d.config_lunar_lander import ConfigLunarLanderDqn
 config = ConfigLunarLanderDqn()
 config.WANDB_REPORt_URL = 'https://wandb.ai/link-koreatech/LunarLander-v2_DQN_anonymous/reports/Lunar-Lander-DQN--VmlldzoxNzI3OTU5?accessToken=4kbmznjvysvlh5zbf30vy8jg403ojrjxjefiewfpcn5iu3cwo5mirclsj8f6dx1u'
-
-from a_configuration.b_single_config.open_ai_gym.box2d.config_lunar_lander import ConfigLunarLanderMuzero
-config = ConfigLunarLanderMuzero()
 
 from a_configuration.b_single_config.open_ai_gym.box2d.config_lunar_lander import ConfigLunarLanderA2c
 config = ConfigLunarLanderA2c()
