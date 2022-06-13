@@ -101,7 +101,7 @@ class AgentTdmpc(OffPolicyAgent):
             mean[:-1] = self._test_prev_mean[1:]
 
         # Iterate CEM
-        for i in range(self.config.ITERATION):
+        for i in range(self.config.ITERATIONS):
             actions = torch.clamp(mean.unsqueeze(1) + std.unsqueeze(1) * \
                                   torch.randn(horizon, self.config.NUM_SAMPLES, self.n_out_actions, device=std.device),
                                   -1, 1)
