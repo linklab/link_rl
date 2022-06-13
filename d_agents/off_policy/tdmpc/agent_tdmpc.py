@@ -214,6 +214,15 @@ class AgentTdmpc(OffPolicyAgent):
             h.ema(self.model, self.model_target, self.config.TAU)
 
         self.model.eval()
+
+        self.consistency_loss.value = float(consistency_loss.mean().item())
+        self.reward_loss.value = float(reward_loss.mean().item())
+        self.value_loss.value = float(value_loss.mean().item())
+        self.pi_loss.value = pi_loss
+        self.total_loss.value = float(total_loss.mean().item())
+        self.weighted_loss.value = float(weighted_loss.mean().item())
+        self.grad_norm.value = float(grad_norm)
+
         return {'consistency_loss': float(consistency_loss.mean().item()),
                 'reward_loss': float(reward_loss.mean().item()),
                 'value_loss': float(value_loss.mean().item()),
