@@ -214,7 +214,8 @@ class ReplayBuffer():
         dtype = torch.float32 if not config.FROM_PIXELS else torch.uint8
         obs_shape = observation_space.shape
         action_space = action_space.shape[0]
-        last_obs_first_shape = int(self.capacity // (1000/config.ACTION_REPEAT))
+        self.episode_length = int(1000/config.ACTION_REPEAT)
+        last_obs_first_shape = int(self.capacity // self.episode_length)
         self._obs = torch.empty((self.capacity + 1, *obs_shape), dtype=dtype, device=self.device)
         # _last_obs 에는 한 에피소드의 마지막 obs 저장된다.
         self._last_obs = torch.empty((last_obs_first_shape, *obs_shape), dtype=dtype, device=self.device)
@@ -237,20 +238,20 @@ class ReplayBuffer():
         return self
 
     def add(self, episode: Episode):
-        self._obs[self.idx:self.idx + (1000/self.config.ACTION_REPEAT)] = episode.obs[
+        self._obs[self.idx:self.idx + self.episode_length] = episode.obs[
                                                                  :-1] if not self.config.FROM_PIXELS else episode.obs[
                                                                                                            :-1, -3:]
-        self._last_obs[self.idx // (1000/self.config.ACTION_REPEAT)] = episode.obs[-1]
-        self._action[self.idx:self.idx + (1000/self.config.ACTION_REPEAT)] = episode.action
-        self._reward[self.idx:self.idx + (1000/self.config.ACTION_REPEAT)] = episode.reward
+        self._last_obs[self.idx // self.episode_length] = episode.obs[-1]
+        self._action[self.idx:self.idx + self.episode_length] = episode.action
+        self._reward[self.idx:self.idx + self.episode_length] = episode.reward
         if self._full:
             max_priority = self._priorities.max().to(self.device).item()
         else:
             max_priority = 1. if self.idx == 0 else self._priorities[:self.idx].max().to(self.device).item()
-        mask = torch.arange((1000/self.config.ACTION_REPEAT)) >= (1000/self.config.ACTION_REPEAT) - self.config.HORIZON
+        mask = torch.arange((1000/self.config.ACTION_REPEAT)) >= self.episode_length - self.config.HORIZON
         new_priorities = torch.full(((1000/self.config.ACTION_REPEAT),), max_priority, device=self.device)
         new_priorities[mask] = 0
-        self._priorities[self.idx:self.idx + (1000/self.config.ACTION_REPEAT)] = new_priorities
+        self._priorities[self.idx:self.idx + self.episode_length] = new_priorities
         self.idx = (self.idx + (1000/self.config.ACTION_REPEAT)) % self.capacity
         self._full = self._full or self.idx == 0
 
@@ -269,7 +270,7 @@ class ReplayBuffer():
         # done = True 일경우에는 자신의 obs를 frame stack 시킴
         
         for i in range(1, self.config.FRAME_STACK):
-            mask[_idxs % (1000/self.config.ACTION_REPEAT) == 0] = False
+            mask[_idxs % self.episode_length == 0] = False
             _idxs[mask] -= 1
             obs[:, -(i + 1) * 3:-i * 3] = arr[_idxs].cuda()
         return obs.float()
@@ -295,10 +296,10 @@ class ReplayBuffer():
             action[t] = self._action[_idxs]
             reward[t] = self._reward[_idxs]
 
-        mask = (_idxs + 1) % (1000/self.config.ACTION_REPEAT) == 0
+        mask = (_idxs + 1) % self.episode_length == 0
         # next_obs[-1, mask] : 가장 마지막 horizon step에서 mask가 true인 tensor들
         # horizon + 1 step에 에피소드가 종료 되었다면, 마지막 horizon 스텝을 에피소드 종료 obs로 변경한다.
-        next_obs[-1, mask] = self._last_obs[_idxs[mask] // (1000/self.config.ACTION_REPEAT)].cuda().float()
+        next_obs[-1, mask] = self._last_obs[_idxs[mask] // self.episode_length].cuda().float()
         if not action.is_cuda:
             action, reward, idxs, weights = \
                 action.cuda(), reward.cuda(), idxs.cuda(), weights.cuda()
