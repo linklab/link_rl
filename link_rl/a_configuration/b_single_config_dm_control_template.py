@@ -22,6 +22,9 @@ config = ConfigDmControlCartPoleBalanceTd3()
 from link_rl.a_configuration.b_single_config.dm_control.config_dm_control_cartpole_balance import ConfigDmControlCartPoleBalanceSac
 config = ConfigDmControlCartPoleBalanceSac()
 
+from link_rl.a_configuration.b_single_config.dm_control.config_dm_control_cartpole_balance import ConfigDmControlCartPoleBalanceTdmpc
+config = ConfigDmControlCartPoleBalanceTdmpc()
+
 
 ######################################
 ## DM_CONTROL_CART_POLE_THREE_POLES ##
@@ -43,6 +46,9 @@ config = ConfigDmControlCartPoleThreePolesTd3()
 
 from link_rl.a_configuration.b_single_config.dm_control.config_dm_control_cartpole_three_poles import ConfigDmControlCartPoleThreePolesSac
 config = ConfigDmControlCartPoleThreePolesSac()
+
+from link_rl.a_configuration.b_single_config.dm_control.config_dm_control_cartpole_three_poles import ConfigDmControlCartPoleThreePolesTdmpc
+config = ConfigDmControlCartPoleThreePolesTdmpc()
 
 
 ##################################
@@ -67,6 +73,9 @@ config = ConfigDmControlCheetahRunTd3()
 from link_rl.a_configuration.b_single_config.dm_control.config_dm_control_cheetah_run import ConfigDmControlCheetahRunSac
 config = ConfigDmControlCheetahRunSac()
 
+from link_rl.a_configuration.b_single_config.dm_control.config_dm_control_cheetah_run import ConfigDmControlCheetahRunTdmpc
+config = ConfigDmControlCheetahRunTdmpc()
+
 
 ############################################
 ## DM_CONTROL_CART_POLE_BALL_IN_CUP_CATCH ##
@@ -88,6 +97,9 @@ config = ConfigDmControlBallInCupCatchTd3()
 
 from link_rl.a_configuration.b_single_config.dm_control.config_dm_control_ball_in_cup_catch import ConfigDmControlBallInCupCatchSac
 config = ConfigDmControlBallInCupCatchSac()
+
+from link_rl.a_configuration.b_single_config.dm_control.config_dm_control_ball_in_cup_catch import ConfigDmControlBallInCupCatchTdmpc
+config = ConfigDmControlBallInCupCatchTdmpc()
 
 
 if __name__ == "__main__":
