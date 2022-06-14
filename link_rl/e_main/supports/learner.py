@@ -157,6 +157,7 @@ class Learner(mp.Process):
                 info["actor_id"] = 0
                 info["env_id"] = env_id
                 info["actor_time_step"] = actor_time_step
+
                 self.histories[env_id].append(Transition(
                     observation=observation,
                     action=action,
