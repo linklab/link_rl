@@ -4,7 +4,9 @@ from link_rl.d_agents.on_policy.a3c.agent_a3c import WorkerAgentA3c
 from link_rl.d_agents.on_policy.asynchronous_ppo.agent_asynchronous_ppo import WorkerAsynchronousPpo
 
 from link_rl.e_main.supports.actor import Actor, LearningActor
-from link_rl.g_utils.types import OffPolicyAgentTypes, AgentType
+from link_rl.g_utils.types import AgentType
+
+from b_single_main_common import *
 
 
 def main():

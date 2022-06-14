@@ -17,11 +17,14 @@ from gym import logger
 logger.set_level(level=40)
 
 sys.path.append(os.path.abspath(
-    os.path.join(os.path.dirname(os.path.realpath(__file__)), os.pardir)
+    os.path.join(os.path.dirname(os.path.realpath(__file__)), os.pardir, os.pardir)
 ))
 
 from link_rl.e_main.config_single import config
 from link_rl.a_configuration.a_base_config.config_parse import SYSTEM_USER_NAME, SYSTEM_COMPUTER_NAME
+from link_rl.e_main.supports.learner import Learner
+from link_rl.g_utils.commons import get_env_info, set_config, print_basic_info
+from link_rl.g_utils.commons_rl import get_agent
 
 config.SYSTEM_USER_NAME = SYSTEM_USER_NAME
 config.SYSTEM_COMPUTER_NAME = SYSTEM_COMPUTER_NAME
