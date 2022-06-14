@@ -150,8 +150,8 @@ link_rl/f_play/models/**
 /link_rl/e_main/comparison_results/
 
 */*/wandb/!/i_temp/muszero_original/results/
-/i_temp/muzero/muszero_original/results/
+/temp/muzero/muszero_original/results/
 
 /link_rl/f_play/reference_history/
 
-/i_temp/gurobi_result.csv
+/temp/gurobi_result.csv
