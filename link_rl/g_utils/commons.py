@@ -943,7 +943,8 @@ def get_train_env(config, no_graphics=True):
                 if config.FROM_PIXELS:
                     env = dmc_gym.make(
                         domain_name=config.DOMAIN_NAME, task_name=config.TASK_NAME, seed=config.SEED,
-                        from_pixels=True, visualize_reward=False, frame_skip=config.ACTION_REPEAT
+                        from_pixels=True, visualize_reward=False, frame_skip=config.ACTION_REPEAT,
+                        height=config.IMG_SIZE, width=config.IMG_SIZE
                     )
                     env = gym.wrappers.FrameStack(env, num_stack=config.FRAME_STACK, lz4_compress=True)
                 else:
@@ -1082,7 +1083,7 @@ def get_single_env(config, no_graphics=True, play=False):
                 from_pixels=True, visualize_reward=False, frame_skip=config.ACTION_REPEAT,
                 height=config.IMG_SIZE, width=config.IMG_SIZE
             )
-            single_env = gym.wrappers.FrameStack(single_env, num_stack=config.FRAME_STACK, lz4_compress=True)
+            #single_env = gym.wrappers.FrameStack(single_env, num_stack=config.FRAME_STACK, lz4_compress=True)
         else:
             single_env = dmc_gym.make(domain_name=config.DOMAIN_NAME, task_name=config.TASK_NAME, seed=config.SEED,
                                       frame_skip=config.ACTION_REPEAT, height=config.IMG_SIZE, width=config.IMG_SIZE)
@@ -1092,7 +1093,9 @@ def get_single_env(config, no_graphics=True, play=False):
     #############
     elif isinstance(config, ConfigGymAtari):
         if play:
-            single_env = gym.make(config.ENV_NAME, render_mode="human", frameskip=config.FRAME_SKIP, repeat_action_probability=0.0)
+            single_env = gym.make(
+                config.ENV_NAME, render_mode="human", frameskip=config.FRAME_SKIP, repeat_action_probability=0.0
+            )
         else:
             single_env = gym.make(config.ENV_NAME, frameskip=config.FRAME_SKIP, repeat_action_probability=0.0)
         single_env = gym.wrappers.AtariPreprocessing(single_env, frame_skip=1, grayscale_obs=True, scale_obs=True)
@@ -1104,8 +1107,9 @@ def get_single_env(config, no_graphics=True, play=False):
     elif isinstance(config, ConfigCompetitionOlympics):
         from link_rl.b_environments.competition_olympics.olympics_env.chooseenv import make
         single_env = make(config.ENV_NAME)
-        single_env = CompetitionOlympicsEnvWrapper(env=single_env, controlled_agent_index=config.CONTROLLED_AGENT_INDEX,
-                                                   env_render=config.RENDER_OVER_TRAIN)
+        single_env = CompetitionOlympicsEnvWrapper(
+            env=single_env, controlled_agent_index=config.CONTROLLED_AGENT_INDEX, env_render=config.RENDER_OVER_TRAIN
+        )
 
     ############
     #   else   #

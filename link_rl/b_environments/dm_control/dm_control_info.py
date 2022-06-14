@@ -1,5 +1,6 @@
 import time
 
+import gym
 import numpy as np
 from dm_control.suite import ALL_TASKS
 
@@ -48,6 +49,12 @@ def dummy_agent_test(from_pixels=False):
 		env = dmc_gym.make(
 			domain_name=domain_name, task_name=task_name, seed=1, from_pixels=True, visualize_reward=False
 		)
+		env = dmc_gym.make(
+			domain_name=domain_name, task_name=task_name, seed=1,
+			from_pixels=True, visualize_reward=False, frame_skip=3
+		)
+		env = gym.wrappers.FrameStack(env, num_stack=4, lz4_compress=True)
+
 	else:
 		env = dmc_gym.make(domain_name=domain_name, task_name=task_name, seed=2)
 
@@ -90,10 +97,10 @@ def play_test():
 
 
 if __name__ == "__main__":
-	print_all_dmc_env_info(from_pixels=True)
+	#print_all_dmc_env_info(from_pixels=True)
 	#print_all_dmc_env_info(from_pixels=False)
 
-	#dummy_agent_test(from_pixels=True)
+	dummy_agent_test(from_pixels=True)
 	#dummy_agent_test(from_pixels=False)
 
 	play_test()
