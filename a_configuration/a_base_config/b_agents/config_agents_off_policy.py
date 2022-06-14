@@ -135,7 +135,7 @@ class ConfigTdmpc(ConfigOffPolicyAgent):
         self.STD_SCHEDULE = 'linear(0.5, {}, 25000)'.format(self.MIN_STD)
         self.HORIZON_SCHEDULE = 'linear(1, {}, 25000)'.format(self.HORIZON)
 
-        self.MAX_TRAINING_STEPS = 25000
+        self.MAX_TRAINING_STEPS = 1_000_000
         self.POLICY_UPDATE_FREQUENCY_PER_TRAINING_STEP = 2
         self.TAU = 0.01
         self.CLIP_GRADIENT_VALUE = 10

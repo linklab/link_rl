@@ -89,3 +89,5 @@ class ConfigBase:
         self.WRAPPERS: List[Tuple[Callable, Dict]] = []
 
         self.USE_HER = False
+
+        self.RENDER_OVER_TRAIN = False

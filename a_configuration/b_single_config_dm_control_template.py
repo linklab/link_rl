@@ -22,6 +22,9 @@ config = ConfigDmControlCartPoleBalanceTd3()
 from a_configuration.b_single_config.dm_control.config_dm_control_cartpole_balance import ConfigDmControlCartPoleBalanceSac
 config = ConfigDmControlCartPoleBalanceSac()
 
+from a_configuration.b_single_config.dm_control.config_dm_control_cartpole_balance import ConfigDmControlCartPoleBalanceTdmpc
+config = ConfigDmControlCartPoleBalanceTdmpc()
+
 
 ######################################
 ## DM_CONTROL_CART_POLE_THREE_POLES ##
@@ -70,6 +73,9 @@ config = ConfigDmControlCheetahRunTd3()
 from a_configuration.b_single_config.dm_control.config_dm_control_cheetah_run import ConfigDmControlCheetahRunSac
 config = ConfigDmControlCheetahRunSac()
 
+from a_configuration.b_single_config.dm_control.config_dm_control_cheetah_run import ConfigDmControlCheetahRunTdmpc
+config = ConfigDmControlCheetahRunTdmpc()
+
 
 ############################################
 ## DM_CONTROL_CART_POLE_BALL_IN_CUP_CATCH ##
@@ -91,6 +97,9 @@ config = ConfigDmControlBallInCupCatchTd3()
 
 from a_configuration.b_single_config.dm_control.config_dm_control_ball_in_cup_catch import ConfigDmControlBallInCupCatchSac
 config = ConfigDmControlBallInCupCatchSac()
+
+from a_configuration.b_single_config.dm_control.config_dm_control_ball_in_cup_catch import ConfigDmControlBallInCupCatchTdmpc
+config = ConfigDmControlBallInCupCatchTdmpc()
 
 
 if __name__ == "__main__":
