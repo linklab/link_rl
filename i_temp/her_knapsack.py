@@ -9,18 +9,18 @@ from typing import Optional
 import random
 import datetime as dt
 
-from a_configuration.a_base_config.c_models.config_convolutional_models import Config1DConvolutionalModel
-from a_configuration.a_base_config.c_models.config_linear_models import ConfigLinearModel
-from a_configuration.a_base_config.c_models.config_recurrent_convolutional_models import \
+from link_rl.a_configuration.a_base_config.c_models.config_convolutional_models import Config1DConvolutionalModel
+from link_rl.a_configuration.a_base_config.c_models.config_linear_models import ConfigLinearModel
+from link_rl.a_configuration.a_base_config.c_models.config_recurrent_convolutional_models import \
     ConfigRecurrent1DConvolutionalModel
-from a_configuration.a_base_config.c_models.config_recurrent_linear_models import ConfigRecurrentLinearModel
-from a_configuration.a_base_config.config_parse import SYSTEM_USER_NAME, SYSTEM_COMPUTER_NAME
-from b_environments.combinatorial_optimization.knapsack.boto3_knapsack import load_instance, upload_file, load_solution
-from b_environments.combinatorial_optimization.knapsack.knapsack import STATIC_ITEMS_50, STATIC_INITIAL_STATE_50, \
+from link_rl.a_configuration.a_base_config.c_models.config_recurrent_linear_models import ConfigRecurrentLinearModel
+from link_rl.a_configuration.a_base_config.config_parse import SYSTEM_USER_NAME, SYSTEM_COMPUTER_NAME
+from link_rl.b_environments.combinatorial_optimization.knapsack.boto3_knapsack import load_instance, upload_file, load_solution
+from link_rl.b_environments.combinatorial_optimization.knapsack.knapsack import STATIC_ITEMS_50, STATIC_INITIAL_STATE_50, \
     STATIC_INITIAL_STATE_50_OPTIMAL
-from b_environments.combinatorial_optimization.knapsack.knapsack_gurobi import model_kp
-from g_utils.commons import set_config
-from g_utils.types import Transition, HerConstant
+from link_rl.b_environments.combinatorial_optimization.knapsack.knapsack_gurobi import model_kp
+from link_rl.g_utils.commons import set_config
+from link_rl.g_utils.types import Transition, HerConstant
 
 
 class DoneReasonType0(enum.Enum):

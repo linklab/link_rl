@@ -4,8 +4,8 @@ import gym
 import numpy as np
 import random
 
-from g_utils.buffers.buffer import Buffer
-from g_utils.types import Transition
+from link_rl.g_utils.buffers.buffer import Buffer
+from link_rl.g_utils.types import Transition
 
 
 class SumTree:

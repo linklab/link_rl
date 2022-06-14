@@ -3,10 +3,9 @@ import numpy as np
 import torch
 from gym.spaces import Discrete, Box
 
-from a_configuration.a_base_config.c_models.config_recurrent_convolutional_models import \
+from link_rl.a_configuration.a_base_config.c_models.config_recurrent_convolutional_models import \
     ConfigRecurrent2DConvolutionalModel, ConfigRecurrent1DConvolutionalModel
-from a_configuration.a_base_config.c_models.config_recurrent_linear_models import ConfigRecurrentLinearModel
-from g_utils.types import Transition
+from link_rl.a_configuration.a_base_config.c_models.config_recurrent_linear_models import ConfigRecurrentLinearModel
 
 
 class Buffer:
