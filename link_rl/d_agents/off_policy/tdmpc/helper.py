@@ -209,13 +209,13 @@ class ReplayBuffer():
         self.config = config
         self.capacity = min(config.MAX_TRAINING_STEPS, config.BUFFER_CAPACITY)
         dtype = torch.float32 if not config.FROM_PIXELS else torch.uint8
-        obs_shape = observation_space.shape
+        obs_shape = observation_space.shape if not config.FROM_PIXELS else (3, *observation_space.shape[-2:])
         action_space = action_space.shape[0]
         self.episode_length = int(1000/config.ACTION_REPEAT)
         last_obs_first_shape = int(self.capacity // self.episode_length)
         self._obs = torch.empty((self.capacity + 1, *obs_shape), dtype=dtype, device=self.config.DEVICE)
-        # _last_obs 에는 한 에피소드의 마지막 obs 저장된다.
-        self._last_obs = torch.empty((last_obs_first_shape, *obs_shape), dtype=dtype, device=self.config.DEVICE)
+        # _last_obs 에는 한 'episode_length+1' obs가 저장된다.
+        self._last_obs = torch.empty((last_obs_first_shape, *observation_space.shape), dtype=dtype, device=self.config.DEVICE)
         self._action = torch.empty((self.capacity, action_space), dtype=torch.float32, device=self.config.DEVICE)
         self._reward = torch.empty((self.capacity,), dtype=torch.float32, device=self.config.DEVICE)
         self._priorities = torch.ones((self.capacity,), dtype=torch.float32, device=self.config.DEVICE)
@@ -263,18 +263,17 @@ class ReplayBuffer():
     def _get_obs(self, arr, idxs):
         if not self.config.FROM_PIXELS:
             return arr[idxs]
-        obs = torch.empty((self.config.BATCH_SIZE, 3*self.config.FRAME_STACK, *arr.shape[-2:]), dtype=arr.dtype,
+        obs = torch.empty((self.config.BATCH_SIZE, 3 * self.config.FRAME_STACK, *arr.shape[-2:]), dtype=arr.dtype,
                           device=self.config.DEVICE)
-        obs[:, -3:] = arr[idxs].cuda()
+        obs[:, -3:] = arr[idxs].to(self.config.DEVICE)
         _idxs = idxs.clone()
         mask = torch.ones_like(_idxs, dtype=torch.bool)
         
         # done = True 일경우에는 자신의 obs를 frame stack 시킴
-        
         for i in range(1, self.config.FRAME_STACK):
-            mask[_idxs % self.episode_length == 0] = False
-            _idxs[mask] -= 1
-            obs[:, -(i + 1) * 3:-i * 3] = arr[_idxs].cuda()
+            mask[_idxs % self.episode_length == 0] = False  # episode 첫 idx의 mask를 False로 바꾼다.
+            _idxs[mask] -= 1  # episode의 첫 idx를 제외한 모든 idx를 -1씩 한다.
+            obs[:, -(i + 1) * 3:-i * 3] = arr[_idxs].to(self.config.DEVICE)
         return obs.float()
 
     def sample(self):
@@ -287,7 +286,8 @@ class ReplayBuffer():
         weights /= weights.max()
 
         obs = self._get_obs(self._obs, idxs)
-        next_obs = torch.empty((self.config.HORIZON + 1, self.config.BATCH_SIZE, *self.observation_shape), dtype=obs.dtype,
+        next_obs_shape = self._last_obs.shape[1:] if not self.config.FROM_PIXELS else (3 * self.config.FRAME_STACK, *self._last_obs.shape[-2:])
+        next_obs = torch.empty((self.config.HORIZON + 1, self.config.BATCH_SIZE, *next_obs_shape), dtype=obs.dtype,
                                device=self.config.DEVICE)
         action = torch.empty((self.config.HORIZON + 1, self.config.BATCH_SIZE, *self._action.shape[1:]), dtype=torch.float32,
                              device=self.config.DEVICE)
@@ -298,13 +298,13 @@ class ReplayBuffer():
             action[t] = self._action[_idxs]
             reward[t] = self._reward[_idxs]
 
-        mask = (_idxs + 1) % self.episode_length == 0
-        # next_obs[-1, mask] : 가장 마지막 horizon step에서 mask가 true인 tensor들
-        # horizon + 1 step에 에피소드가 종료 되었다면, 마지막 horizon 스텝을 에피소드 종료 obs로 변경한다.
-        next_obs[-1, mask] = self._last_obs[_idxs[mask] // self.episode_length].cuda().float()
-        if not action.is_cuda:
+        mask = (_idxs + 1) % self.episode_length == 0  # episode 첫 스텝 mask
+        # next_step이 episode의 첫 스텝 일 때(에피소드가 현재 obs에서 종료 되었을 때), self._last_obs를 준다.
+        # self._last_obs = episode.obs[episode_length + 1], 즉 에피소드 종료 후에 한 스텝 더 간 obs
+        next_obs[-1, mask] = self._last_obs[_idxs[mask] // self.episode_length].to(self.config.DEVICE).float()
+        if not action.device == self.config.DEVICE:
             action, reward, idxs, weights = \
-                action.cuda(), reward.cuda(), idxs.cuda(), weights.cuda()
+                action.to(self.config.DEVICE), reward.to(self.config.DEVICE), idxs.to(self.config.DEVICE), weights.to(self.config.DEVICE)
 
         return obs, next_obs, action, reward.unsqueeze(2), idxs, weights
 

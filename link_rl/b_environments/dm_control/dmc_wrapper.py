@@ -2,6 +2,7 @@ from gym import core, spaces
 from dm_control import suite
 from dm_env import specs
 import numpy as np
+from collections import deque
 
 
 def _spec_to_box(spec, dtype):
@@ -47,7 +48,7 @@ class DMCWrapper(core.Env):
 			camera_id=0,
 			frame_skip=4,
 			environment_kwargs=None,
-			channels_first=True
+			frame_stack=1
 	):
 		#assert 'random' in task_kwargs, 'please specify a seed, for deterministic behaviour'
 		self._from_pixels = from_pixels
@@ -55,7 +56,7 @@ class DMCWrapper(core.Env):
 		self._width = width
 		self._camera_id = camera_id
 		self._frame_skip = frame_skip
-		self._channels_first = channels_first
+		self._frame_stack = frame_stack
 
 		# create task
 		self.original_env = suite.load(
@@ -77,10 +78,12 @@ class DMCWrapper(core.Env):
 
 		# create observation space
 		if from_pixels:
-			shape = [3, height, width] if channels_first else [height, width, 3]
+			assert frame_stack > 0 or not isinstance(frame_stack, int)
+			shape = [3 * self._frame_stack, height, width]
 			self._observation_space = spaces.Box(
-				low=0, high=255, shape=shape, dtype=np.uint8
+				low=0, high=1, shape=shape, dtype=np.uint8
 			)
+			self._frames = deque([], maxlen=self._frame_stack)
 		else:
 			self._observation_space = _spec_to_box(
 				self.original_env.observation_spec().values(),
@@ -107,8 +110,7 @@ class DMCWrapper(core.Env):
 				width=self._width,
 				camera_id=self._camera_id
 			)
-			if self._channels_first:
-				obs = obs.transpose(2, 0, 1).copy()
+			obs = obs.transpose(2, 0, 1).copy()
 
 			obs = obs / 255.0
 		else:
@@ -160,6 +162,11 @@ class DMCWrapper(core.Env):
 				break
 		obs = self.get_observation(time_step)
 		# self.current_state = _flatten_obs(time_step.observation)
+		######### frame stack #########
+		if self._from_pixels:
+			self._frames.append(obs)
+			obs = self._transform_observation()
+		################################
 		extra['discount'] = time_step.discount
 		return obs, reward, done, extra
 
@@ -167,6 +174,12 @@ class DMCWrapper(core.Env):
 		time_step = self.original_env.reset()
 		# self.current_state = _flatten_obs(time_step.observation)
 		obs = self.get_observation(time_step)
+		######### frame stack #########
+		if self._from_pixels:
+			for _ in range(self._frame_stack):
+				self._frames.append(obs)
+			obs = self._transform_observation()
+		################################
 		if return_info:
 			return obs, None
 		else:
@@ -183,3 +196,8 @@ class DMCWrapper(core.Env):
 
 	def close(self):
 		self.original_env.close()
+
+	def _transform_observation(self):
+		assert len(self._frames) == self._frame_stack
+		obs = np.concatenate(list(self._frames), axis=0)
+		return obs

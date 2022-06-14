@@ -944,9 +944,8 @@ def get_train_env(config, no_graphics=True):
                     env = dmc_gym.make(
                         domain_name=config.DOMAIN_NAME, task_name=config.TASK_NAME, seed=config.SEED,
                         from_pixels=True, visualize_reward=False, frame_skip=config.ACTION_REPEAT,
-                        height=config.IMG_SIZE, width=config.IMG_SIZE
+                        height=config.IMG_SIZE, width=config.IMG_SIZE, frame_stack=config.FRAME_STACK
                     )
-                    env = gym.wrappers.FrameStack(env, num_stack=config.FRAME_STACK, lz4_compress=True)
                 else:
                     env = dmc_gym.make(domain_name=config.DOMAIN_NAME, task_name=config.TASK_NAME, seed=config.SEED,
                                        frame_skip=config.ACTION_REPEAT, height=config.IMG_SIZE, width=config.IMG_SIZE)
@@ -1081,9 +1080,8 @@ def get_single_env(config, no_graphics=True, play=False):
             single_env = dmc_gym.make(
                 domain_name=config.DOMAIN_NAME, task_name=config.TASK_NAME, seed=config.SEED,
                 from_pixels=True, visualize_reward=False, frame_skip=config.ACTION_REPEAT,
-                height=config.IMG_SIZE, width=config.IMG_SIZE
+                height=config.IMG_SIZE, width=config.IMG_SIZE, frame_stack=config.FRAME_STACK
             )
-            single_env = gym.wrappers.FrameStack(single_env, num_stack=config.FRAME_STACK, lz4_compress=True)
         else:
             single_env = dmc_gym.make(domain_name=config.DOMAIN_NAME, task_name=config.TASK_NAME, seed=config.SEED,
                                       frame_skip=config.ACTION_REPEAT, height=config.IMG_SIZE, width=config.IMG_SIZE)
