@@ -105,7 +105,7 @@ def enc(config, observation_shape):
                   nn.Conv2d(config.NUM_CHANNELS, config.NUM_CHANNELS, 5, stride=2), nn.ReLU(),
                   nn.Conv2d(config.NUM_CHANNELS, config.NUM_CHANNELS, 3, stride=2), nn.ReLU(),
                   nn.Conv2d(config.NUM_CHANNELS, config.NUM_CHANNELS, 3, stride=2), nn.ReLU()]
-        out_shape = _get_out_shape(observation_shape, layers)
+        out_shape = _get_out_shape((C, config.IMG_SIZE, config.IMG_SIZE), layers)
         layers.extend([Flatten(), nn.Linear(np.prod(out_shape), config.LATENT_DIM)])
     else:
         layers = [nn.Linear(*observation_shape, config.ENC_DIM), nn.ELU(),
@@ -263,7 +263,7 @@ class ReplayBuffer():
     def _get_obs(self, arr, idxs):
         if not self.config.FROM_PIXELS:
             return arr[idxs]
-        obs = torch.empty((self.config.batch_size, *self.observation_shape), dtype=arr.dtype,
+        obs = torch.empty((self.config.BATCH_SIZE, 3*self.config.FRAME_STACK, *arr.shape[-2:]), dtype=arr.dtype,
                           device=self.config.DEVICE)
         obs[:, -3:] = arr[idxs].cuda()
         _idxs = idxs.clone()
