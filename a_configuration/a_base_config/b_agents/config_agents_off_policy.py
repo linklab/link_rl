@@ -76,35 +76,6 @@ class ConfigSac(ConfigOffPolicyAgent):
         self.MIN_ALPHA = 0.01
 
 
-class ConfigMuzero(ConfigOffPolicyAgent):
-    def __init__(self):
-        super(ConfigMuzero, self).__init__()
-        self.AGENT_TYPE = AgentType.MUZERO
-
-        self.LEARNING_RATE = 0.001
-        self.BUFFER_CAPACITY = 10_000  # Episode-based
-
-        self.TEST_INTERVAL_TRAINING_STEPS = 300
-        self.MAX_TRAINING_STEPS = 10000
-        self.STACKED_OBSERVATION = 0
-        self.INDEX_STACKED_OBSERVATIONS = -1
-
-        self.ROOT_DIRCHLET_ALPHA = 0.25
-        self.ROOT_EXPLORATION_FRACTION = 0.25
-
-        self.PB_C_BASE = 19652
-        self.PB_C_INIT = 1.25
-
-        self.NUM_SIMULATION = 50
-        self.PLAYERS = list(range(1))
-
-        self.SUPPORT_SIZE = 10
-
-        self.NUM_UNROLL_STEPS = 5
-
-        self.VALUE_LOSS_WEIGHT = 0.25
-
-
 class ConfigTdmpc(ConfigOffPolicyAgent):
     def __init__(self):
         super(ConfigTdmpc, self).__init__()

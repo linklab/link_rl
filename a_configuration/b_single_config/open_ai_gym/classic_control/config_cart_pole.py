@@ -1,5 +1,5 @@
 from a_configuration.a_base_config.b_agents.config_agents_off_policy import ConfigDqn, ConfigDoubleDqn, ConfigDuelingDqn, \
-    ConfigDoubleDuelingDqn, ConfigSac, ConfigMuzero
+    ConfigDoubleDuelingDqn, ConfigSac
 from a_configuration.a_base_config.b_agents.config_agents_on_policy import ConfigA2c, ConfigReinforce, ConfigPpo, \
     ConfigPpoTrajectory, ConfigA3c
 from a_configuration.a_base_config.config_single_base import ConfigBase
@@ -54,23 +54,6 @@ class ConfigCartPoleDoubleDuelingDqn(ConfigBase, ConfigCartPole, ConfigDoubleDue
         self.BUFFER_CAPACITY = 50_000
         self.MODEL_TYPE = ModelType.SMALL_LINEAR
 
-
-class ConfigCartPoleMuzero(ConfigBase, ConfigCartPole, ConfigMuzero):
-    def __init__(self):
-        ConfigBase.__init__(self)
-        ConfigCartPole.__init__(self)
-        ConfigMuzero.__init__(self)
-
-        self.MAX_TRAINING_STEPS = 10_000
-        self.MODEL_TYPE = ModelType.SMALL_LINEAR
-        self.BUFFER_CAPACITY = 500
-        self.SUPPORT_SIZE = 10
-        self.CONSOLE_LOG_INTERVAL_TRAINING_STEPS = 30
-        self.VALUE_LOSS_WEIGHT = 1
-        self.TRAIN_INTERVAL_GLOBAL_TIME_STEPS = 10
-        self.TEST_INTERVAL_TRAINING_STEPS = 100
-        self.NUM_UNROLL_STEPS = 10
-        self.N_STEP = 50
 
 # OnPolicy
 
