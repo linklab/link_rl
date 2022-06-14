@@ -33,7 +33,7 @@ def make(
             task_kwargs['time_limit'] = time_limit
         register(
             id=env_id,
-            entry_point='b_environments.dm_control.dmc_wrapper:DMCWrapper',
+            entry_point='link_rl.b_environments.dm_control.dmc_wrapper:DMCWrapper',
             kwargs=dict(
                 domain_name=domain_name,
                 task_name=task_name,

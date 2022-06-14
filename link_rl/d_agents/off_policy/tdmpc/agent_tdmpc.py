@@ -11,11 +11,11 @@ import torch
 import torch.multiprocessing as mp
 from torch.distributions import Normal
 
-from c_models.h_sac_models import ContinuousSacModel
-from c_models.i_tdmpc_models import TOLD
-from d_agents.off_policy.off_policy_agent import OffPolicyAgent
-from g_utils.types import AgentMode
-from d_agents.off_policy.tdmpc import helper as h
+from link_rl.c_models.h_sac_models import ContinuousSacModel
+from link_rl.c_models.i_tdmpc_models import TOLD
+from link_rl.d_agents.off_policy.off_policy_agent import OffPolicyAgent
+from link_rl.g_utils.types import AgentMode
+from link_rl.d_agents.off_policy.tdmpc import helper as h
 
 
 class AgentTdmpc(OffPolicyAgent):

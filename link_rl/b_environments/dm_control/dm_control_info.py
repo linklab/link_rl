@@ -90,7 +90,7 @@ def play_test():
 
 
 if __name__ == "__main__":
-	#print_all_dmc_env_info(from_pixels=True)
+	print_all_dmc_env_info(from_pixels=True)
 	#print_all_dmc_env_info(from_pixels=False)
 
 	#dummy_agent_test(from_pixels=True)

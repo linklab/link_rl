@@ -1,6 +1,6 @@
 import torch
 from torch import nn
-from d_agents.off_policy.tdmpc import helper as h
+from link_rl.d_agents.off_policy.tdmpc import helper as h
 
 
 class TOLD(nn.Module):
