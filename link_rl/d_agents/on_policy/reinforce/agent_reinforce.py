@@ -29,6 +29,7 @@ class AgentReinforce(OnPolicyAgent):
         self.optimizer = optim.Adam(self.actor_model.parameters(), lr=self.config.LEARNING_RATE)
 
         self.model = self.actor_model  # 에이전트 밖에서는 model이라는 이름으로 제어 모델 접근
+        self.model.eval()
 
         self.last_log_policy_objective = mp.Value('d', 0.0)
 

@@ -28,6 +28,7 @@ class AgentSac(OffPolicyAgent):
         )
 
         self.model = self.sac_model.actor_model
+        self.model.eval()
 
         self.actor_model = self.sac_model.actor_model
         self.critic_model = self.sac_model.critic_model
@@ -59,6 +60,7 @@ class AgentSac(OffPolicyAgent):
         self.last_actor_objective = mp.Value('d', 0.0)
         self.last_entropy = mp.Value('d', 0.0)
 
+    @torch.no_grad()
     def get_action(self, obs, mode=AgentMode.TRAIN):
         mu_v, var_v = self.actor_model.pi(obs, save_hidden=True)
 

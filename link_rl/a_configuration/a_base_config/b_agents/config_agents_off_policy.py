@@ -76,30 +76,56 @@ class ConfigSac(ConfigOffPolicyAgent):
         self.MIN_ALPHA = 0.01
 
 
-class ConfigMuzero(ConfigOffPolicyAgent):
+class ConfigTdmpc(ConfigOffPolicyAgent):
     def __init__(self):
-        super(ConfigMuzero, self).__init__()
-        self.AGENT_TYPE = AgentType.MUZERO
+        super(ConfigTdmpc, self).__init__()
+        self.AGENT_TYPE = AgentType.TDMPC
 
+        self.TAU = 0.01
+        self.BUFFER_CAPACITY = 1_000_000
+        self.TARGET_SYNC_INTERVAL_TRAINING_STEPS = 50
+
+        self.ITERATIONS = 6
+        self.NUM_SAMPLES = 512
+        self.NUM_ELITES = 64
+        self.MIXTURE_COEF = 0.05
+        self.MIN_STD = 0.05
+        self.TEMPERATURE = 0.5
+        self.MOMENTUM = 0.1
+
+
+        self.BATCH_SIZE = 512
+        self.BUFFER_CAPACITY = 1000000
+        self.HORIZON = 5
+        self.REWARD_COEF = 0.5
+        self.VALUE_COEF = 0.1
+        self.CONSISTENCY_COEF = 2
+        self.RHO = 0.5
         self.LEARNING_RATE = 0.001
-        self.BUFFER_CAPACITY = 10_000  # Episode-based
 
-        self.TEST_INTERVAL_TRAINING_STEPS = 300
-        self.MAX_TRAINING_STEPS = 10000
-        self.STACKED_OBSERVATION = 0
-        self.INDEX_STACKED_OBSERVATIONS = -1
+        self.STD_SCHEDULE = 'linear(0.5, {}, 25000)'.format(self.MIN_STD)
+        self.HORIZON_SCHEDULE = 'linear(1, {}, 25000)'.format(self.HORIZON)
 
-        self.ROOT_DIRCHLET_ALPHA = 0.25
-        self.ROOT_EXPLORATION_FRACTION = 0.25
+        self.MAX_TRAINING_STEPS = 1_000_000
+        self.POLICY_UPDATE_FREQUENCY_PER_TRAINING_STEP = 2
+        self.TAU = 0.01
+        self.CLIP_GRADIENT_VALUE = 10
 
-        self.PB_C_BASE = 19652
-        self.PB_C_INIT = 1.25
+        self.TRAIN_INTERVAL_GLOBAL_TIME_STEPS = 1
 
-        self.NUM_SIMULATION = 50
-        self.PLAYERS = list(range(1))
+        self.N_STEP = 1
 
-        self.SUPPORT_SIZE = 10
+        self.USE_PER = False
 
-        self.NUM_UNROLL_STEPS = 5
+        self.IMG_SIZE = 84
+        self.ACTION_REPEAT = 4
+        self.FRAME_STACK = 3
+        self.SEED_STEPS = 5000
 
-        self.VALUE_LOSS_WEIGHT = 0.25
+        self.LATENT_DIM = 50
+        self.ENC_DIM = 256
+        self.MLP_DIM = 512
+        self.NUM_CHANNELS = 32
+
+        self.TARGET_MODEL_UPDATE_FREQ = 2
+        self.TEST_INTERVAL_TRAINING_STEPS = 2500

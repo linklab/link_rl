@@ -38,11 +38,13 @@ class AgentDqn(OffPolicyAgent):
         self.epsilon = mp.Value('d', self.config.EPSILON_INIT)  # d: float
 
         self.model = self.q_net  # 에이전트 밖에서는 model이라는 이름으로 제어 모델 접근
+        self.model.eval()
 
         self.training_step = 0
 
         self.last_q_net_loss = mp.Value('d', 0.0)
 
+    @torch.no_grad()
     def get_action(self, obs, unavailable_actions=None, mode=AgentMode.TRAIN):
         if mode == AgentMode.TRAIN:
             coin = np.random.random()    # 0.0과 1.0사이의 임의의 값을 반환

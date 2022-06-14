@@ -80,10 +80,9 @@ def get_agent(observation_space, action_space, config=None):
         agent = AgentSac(
             observation_space=observation_space, action_space=action_space, config=config
         )
-    elif config.AGENT_TYPE == AgentType.MUZERO:
-        assert config.N_ACTORS * config.N_VECTORIZED_ENVS == 1, "TOTAL NUMBERS OF ENVS should be one"
-        from link_rl.d_agents.off_policy.muzero.agent_muzero import AgentMuZero
-        agent = AgentMuZero(
+    elif config.AGENT_TYPE == AgentType.TDMPC:
+        from link_rl.d_agents.off_policy.tdmpc.agent_tdmpc import AgentTdmpc
+        agent = AgentTdmpc(
             observation_space=observation_space, action_space=action_space, config=config
         )
     else:

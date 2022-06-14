@@ -269,23 +269,6 @@ class Buffer:
         else:
             return observations, actions, next_observations, rewards, dones, infos
 
-    def sample_muzero(self, batch_size):
-        """
-        In muzero's buffer, transition is episode_history that save every step's
-            observation
-            action
-            reward
-            policy
-            value
-            gradient_scale
-        """
-        transition_indices, _ = self.sample_indices(batch_size)
-
-        # Sample
-        episode_idx, episode_history = zip(*[(idx, self.internal_buffer[idx]) for idx in transition_indices])
-        return episode_idx, episode_history
-
-
 def buffer_sample_test(buffer):
     print("SAMPLE")
 

@@ -25,9 +25,10 @@ class DummyCompetitionOlympicsAgent:
 class CompetitionOlympicsEnvWrapper(gym.Wrapper):
 	metadata = {}
 
-	def __init__(self, env, controlled_agent_index=1):
+	def __init__(self, env, env_render=False, controlled_agent_index=1):
 		super().__init__(env)
 
+		self.env_render = env_render
 		self.controlled_agent_index = controlled_agent_index
 		self.observation_space = gym.spaces.Box(
 			low=-np.inf, high=np.inf, shape=(2, 40, 40), dtype=np.float32
@@ -59,7 +60,6 @@ class CompetitionOlympicsEnvWrapper(gym.Wrapper):
 
 	def reset(self, return_info=False):
 		observation = self.env.reset()
-
 		observation_opponent_agent = np.array(observation[1 - self.controlled_agent_index]['obs']['agent_obs'])
 		observation_controlled_agent = np.expand_dims(
 			observation[self.controlled_agent_index]['obs']['agent_obs'], axis=0
@@ -77,6 +77,8 @@ class CompetitionOlympicsEnvWrapper(gym.Wrapper):
 			return observation_controlled_agent
 
 	def step(self, action_controlled):
+		if self.env_render:
+			self.render()
 		action_controlled = np.expand_dims(action_controlled, axis=1)
 		action_opponent = self.opponent_agent.get_action(self.last_observation_opponent_agent)
 		action = [action_opponent, action_controlled] if self.controlled_agent_index == 1 else [action_controlled, action_opponent]
@@ -133,6 +135,9 @@ class CompetitionOlympicsEnvWrapper(gym.Wrapper):
 	# 		else:
 	# 			reward_shaped = [-1., -1.]
 	# 	return reward_shaped[controlled_agent_index]
+
+	def render(self, mode='human'):
+		self.env.env_core.render()
 
 	def close(self):
 		pass
