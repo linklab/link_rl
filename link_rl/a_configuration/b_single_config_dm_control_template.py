@@ -102,6 +102,18 @@ from link_rl.a_configuration.b_single_config.dm_control.config_dm_control_ball_i
 config = ConfigDmControlBallInCupCatchTdmpc()
 
 
+############################
+## DM_CONTROL_FINGER_SPIN ##
+############################
+
+from link_rl.a_configuration.b_single_config.dm_control.config_dm_control_finger_spin import ConfigDmControlFingerSpinSac
+config = ConfigDmControlFingerSpinSac()
+
+from link_rl.a_configuration.b_single_config.dm_control.config_dm_control_finger_spin import ConfigDmControlFingerSpinTdmpc
+config = ConfigDmControlFingerSpinTdmpc()
+
+
+
 if __name__ == "__main__":
     from link_rl.g_utils.commons import print_basic_info, get_env_info, set_config
 

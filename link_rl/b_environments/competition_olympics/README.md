@@ -128,3 +128,16 @@ Playing table-hockey
 16 ('set_seed', <bound method OlympicsIntegrated.set_seed of <olympics_env.olympics_integrated.OlympicsIntegrated object at 0x163235220>>)
 17 ('step', <bound method OlympicsIntegrated.step of <olympics_env.olympics_integrated.OlympicsIntegrated object at 0x163235220>>)
 18 ('step_before_info', <bound method OlympicsIntegrated.step_before_info of <olympics_env.olympics_integrated.OlympicsIntegrated object at 0x163235220>>)
+
+# RESET OBSERVATION[-2]
+## Football
+Team0 : [ 6.  6.  6.  6.  6.  6.  6.  6.  6.  7.  7.  7.  7.  7.  7.  7.  7.  7.  7.  7.  7.  7.  7.  7.  7.  7.  7.  7.  7.  7.  6.  6.  6.  6.  6.  6.  6.  6.  6.  6.] </br>
+Team1 : [ 6.  6.  6.  6.  6.  6.  6.  6.  6.  7.  7.  7.  7.  7.  7.  7.  7.  7.  7.  7.  7.  7.  7.  7.  7.  7.  7.  7.  7.  7.  6.  6.  6.  6.  6.  6.  6.  6.  6.  6.]
+
+## Wrestling
+Team0 : [ 0.  0.  1.  1.  1.  0.  0.  0.  0.  0.  0.  0.  0.  0.  0.  0.  0.  0.  0.  0.  0.  0.  0.  0.  0.  0.  0.  0.  0.  0.  0.  0.  0.  0.  0.  1.  1.  1.  0.  0.] </br>
+Team1 : [ 0.  0.  1.  1.  1.  0.  0.  0.  0.  0.  0.  0.  0.  0.  0.  0.  0.  0.  0.  0.  0.  0.  0.  0.  0.  0.  0.  0.  0.  0.  0.  0.  0.  0.  0.  1.  1.  1.  0.  0.]
+
+## TableHockey
+Team0 : [ 0.  0.  0.  0.  0.  0.  0.  0. 10. 10.  0.  0.  0.  0.  0.  0.  0.  0.  0.  0.  0.  0.  0.  0.  0.  0.  0.  0.  0.  0.  0. 10. 10.  0.  0.  0.  0.  0.  0.  0.] </br>
+Team1 : [ 0.  0.  0.  0.  0.  0.  0.  0.  8.  0.  0.  0.  0.  0.  0.  0.  0.  0.  0.  0.  0.  0.  0.  0.  0.  0.  0.  0.  0.  0.  8.  0.  0.  0.  0.  0.  0.  0.  0.  0.]
