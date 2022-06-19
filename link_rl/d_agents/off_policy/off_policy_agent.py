@@ -58,50 +58,47 @@ class OffPolicyAgent(Agent):
     def train(self, training_steps_v=None):
         count_training_steps = 0
 
-        if self.config.AGENT_TYPE in (AgentType.DQN, AgentType.DUELING_DQN):
-            if len(self.replay_buffer) >= self.config.MIN_BUFFER_SIZE_FOR_TRAIN:
+        if len(self.replay_buffer) >= self.config.MIN_BUFFER_SIZE_FOR_TRAIN:
+            if self.config.AGENT_TYPE in (AgentType.DQN, AgentType.DUELING_DQN):
                 self._before_train()
                 count_training_steps, q_net_loss_each = self.train_dqn(training_steps_v=training_steps_v)
                 self._after_train(q_net_loss_each)
 
-        elif self.config.AGENT_TYPE in (AgentType.DOUBLE_DQN, AgentType.DOUBLE_DUELING_DQN):
-            if len(self.replay_buffer) >= self.config.MIN_BUFFER_SIZE_FOR_TRAIN:
+            elif self.config.AGENT_TYPE in (AgentType.DOUBLE_DQN, AgentType.DOUBLE_DUELING_DQN):
                 self._before_train()
                 count_training_steps, q_net_loss_each = self.train_double_dqn(training_steps_v=training_steps_v)
                 self._after_train(q_net_loss_each)
 
-        elif self.config.AGENT_TYPE == AgentType.DDPG:
-            if len(self.replay_buffer) >= self.config.MIN_BUFFER_SIZE_FOR_TRAIN:
+            elif self.config.AGENT_TYPE == AgentType.DDPG:
                 self._before_train()
                 count_training_steps, critic_loss_each = self.train_ddpg()
                 self._after_train(critic_loss_each)
 
-        elif self.config.AGENT_TYPE == AgentType.TD3:
-            if len(self.replay_buffer) >= self.config.MIN_BUFFER_SIZE_FOR_TRAIN:
+            elif self.config.AGENT_TYPE == AgentType.TD3:
                 self._before_train()
                 count_training_steps, critic_loss_each = self.train_td3(training_steps_v=training_steps_v)
                 self._after_train(critic_loss_each)
 
-        elif self.config.AGENT_TYPE == AgentType.SAC:
-            if len(self.replay_buffer) >= self.config.MIN_BUFFER_SIZE_FOR_TRAIN:
+            elif self.config.AGENT_TYPE == AgentType.SAC:
                 self._before_train()
                 count_training_steps, critic_loss_each = self.train_sac(training_steps_v=training_steps_v)
                 self._after_train(critic_loss_each)
 
-        elif self.config.AGENT_TYPE == AgentType.TDMPC:
-            if len(self.replay_buffer) >= self.config.MIN_BUFFER_SIZE_FOR_TRAIN:
+            elif self.config.AGENT_TYPE == AgentType.TDMPC:
                 self._before_train()
                 if training_steps_v == 0:
                     for _ in range(self.config.SEED_STEPS):
                         train_info = self.train_tdmpc(training_steps_v=training_steps_v)
-                    count_training_steps = 5000
+                    count_training_steps = self.config.SEED_STEPS
                 else:
                     for _ in range(int(1000/self.config.ACTION_REPEAT)):
                         train_info = self.train_tdmpc(training_steps_v=training_steps_v)
                     count_training_steps = int(1000/self.config.ACTION_REPEAT)
-
+                self._after_train(loss_each=0.0)
+            else:
+                raise ValueError()
         else:
-            raise ValueError()
+            pass
 
         return count_training_steps
 
