@@ -5,6 +5,7 @@ def main():
     set_config(config)
 
     observation_space, action_space = get_env_info(config)
+
     print_basic_info(observation_space, action_space, config)
 
     input("Press Enter (two or more times) to continue...")
