@@ -9,8 +9,8 @@ from link_rl.d_agents.on_policy.on_policy_agent import OnPolicyAgent
 
 
 class AgentReinforce(OnPolicyAgent):
-    def __init__(self, observation_space, action_space, config):
-        super(AgentReinforce, self).__init__(observation_space, action_space, config)
+    def __init__(self, observation_space, action_space, config, need_train):
+        super(AgentReinforce, self).__init__(observation_space, action_space, config, need_train)
 
         if isinstance(self.action_space, Discrete):
             self.actor_model = DiscreteActorModel(

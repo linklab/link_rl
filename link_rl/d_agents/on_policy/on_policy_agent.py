@@ -10,12 +10,15 @@ from link_rl.g_utils.types import AgentMode, AgentType, OnPolicyAgentTypes, Acto
 
 
 class OnPolicyAgent(Agent):
-    def __init__(self, observation_space, action_space, config):
+    def __init__(self, observation_space, action_space, config, need_train):
         super(OnPolicyAgent, self).__init__(observation_space, action_space, config)
         assert self.config.AGENT_TYPE in OnPolicyAgentTypes
         assert self.config.USE_PER is False
 
-        self.buffer = Buffer(observation_space=observation_space, action_space=action_space, config=self.config)
+        if need_train:
+            self.buffer = Buffer(observation_space=observation_space, action_space=action_space, config=self.config)
+        else:
+            self.buffer = None
 
     def _before_train(self):
         if self.config.AGENT_TYPE in ActorCriticAgentTypes:

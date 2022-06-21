@@ -19,10 +19,11 @@ from link_rl.d_agents.off_policy.tdmpc import helper as h
 
 
 class AgentTdmpc(OffPolicyAgent):
-    def __init__(self, observation_space, action_space, config):
-        super(AgentTdmpc, self).__init__(observation_space, action_space, config)
+    def __init__(self, observation_space, action_space, config, need_train):
+        super(AgentTdmpc, self).__init__(observation_space, action_space, config, need_train)
         self.config = config
         assert self.config.N_STEP == 1
+
         self.std = h.linear_schedule(config.STD_SCHEDULE, 0)
         self.model = TOLD(
             observation_shape=self.observation_shape, n_out_actions=self.n_out_actions, config=config
@@ -42,7 +43,7 @@ class AgentTdmpc(OffPolicyAgent):
         self.weighted_loss = mp.Value('d', 0.0)
         self.grad_norm = mp.Value('d', 0.0)
 
-    def get_action(self, obs, mode=AgentMode.TRAIN, t0=False, step=None):
+    def get_action(self, obs, mode=AgentMode.TRAIN, step=None, t0=False):
         action = self.plan(obs, mode, step, t0)
         return action
 

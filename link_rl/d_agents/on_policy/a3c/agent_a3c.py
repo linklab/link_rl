@@ -2,16 +2,16 @@ from link_rl.d_agents.on_policy.a2c.agent_a2c import AgentA2c
 
 
 class AgentA3c(AgentA2c):
-    def __init__(self, observation_space, action_space, config):
-        super(AgentA3c, self).__init__(observation_space, action_space, config)
+    def __init__(self, observation_space, action_space, config, need_train):
+        super(AgentA3c, self).__init__(observation_space, action_space, config, need_train)
 
     def train_a3c(self):
         pass
 
 
 class WorkerAgentA3c(AgentA2c):
-    def __init__(self, master_agent, observation_space, action_space, shared_model_access_lock, config):
-        super(WorkerAgentA3c, self).__init__(observation_space, action_space, config)
+    def __init__(self, master_agent, observation_space, action_space, shared_model_access_lock, config, need_train):
+        super(WorkerAgentA3c, self).__init__(observation_space, action_space, config, need_train)
 
         self.master_agent = master_agent
         self.shared_model_access_lock = shared_model_access_lock

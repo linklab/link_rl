@@ -41,7 +41,7 @@ def main():
         worker_agents = [
             worker_agent_class(
                 master_agent=master_agent, observation_space=observation_space, action_space=action_space,
-                shared_model_access_lock=shared_model_access_lock, config=config
+                shared_model_access_lock=shared_model_access_lock, config=config, need_train=True
             ) for _ in range(config.N_ACTORS)
         ]
 

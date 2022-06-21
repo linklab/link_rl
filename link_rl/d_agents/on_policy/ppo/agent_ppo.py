@@ -9,8 +9,8 @@ from link_rl.d_agents.on_policy.a2c.agent_a2c import AgentA2c
 
 
 class AgentPpo(AgentA2c):
-    def __init__(self, observation_space, action_space, config):
-        super(AgentPpo, self).__init__(observation_space, action_space, config)
+    def __init__(self, observation_space, action_space, config, need_train):
+        super(AgentPpo, self).__init__(observation_space, action_space, config, need_train)
 
         self.last_actor_objective = mp.Value('d', 0.0)
         self.last_ratio = mp.Value('d', 0.0)

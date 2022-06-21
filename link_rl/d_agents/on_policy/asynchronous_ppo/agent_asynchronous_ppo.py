@@ -2,8 +2,8 @@ from link_rl.d_agents.on_policy.ppo.agent_ppo import AgentPpo
 
 
 class AgentAsynchronousPpo(AgentPpo):
-    def __init__(self, observation_space, action_space, config):
-        super(AgentAsynchronousPpo, self).__init__(observation_space, action_space, config)
+    def __init__(self, observation_space, action_space, config, need_train):
+        super(AgentAsynchronousPpo, self).__init__(observation_space, action_space, config, need_train)
 
     def train_asynchronous_ppo(self):
         pass

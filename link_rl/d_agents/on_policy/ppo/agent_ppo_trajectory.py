@@ -7,8 +7,8 @@ from link_rl.d_agents.on_policy.ppo.agent_ppo import AgentPpo
 
 
 class AgentPpoTrajectory(AgentPpo):
-    def __init__(self, observation_space, action_space, config):
-        super(AgentPpoTrajectory, self).__init__(observation_space, action_space, config)
+    def __init__(self, observation_space, action_space, config, need_train):
+        super(AgentPpoTrajectory, self).__init__(observation_space, action_space, config, need_train)
 
     def train_ppo(self):
         count_training_steps = 0

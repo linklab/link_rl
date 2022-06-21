@@ -5,8 +5,8 @@ from link_rl.d_agents.off_policy.dqn.agent_dqn import AgentDqn
 
 
 class AgentDoubleDqn(AgentDqn):
-    def __init__(self, observation_space, action_space, config):
-        super(AgentDoubleDqn, self).__init__(observation_space, action_space, config)
+    def __init__(self, observation_space, action_space, config, need_train):
+        super(AgentDoubleDqn, self).__init__(observation_space, action_space, config, need_train)
 
     def train_double_dqn(self, training_steps_v):
         count_training_steps = 0

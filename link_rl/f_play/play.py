@@ -142,7 +142,7 @@ def main_play(n_episodes):
 
     env = get_single_env(config, config.NO_TEST_GRAPHICS, play=True)
 
-    agent = get_agent(observation_space, action_space, config)
+    agent = get_agent(observation_space, action_space, config, need_train=False)
 
     env_name = config.ENV_NAME.split("/")[1] if "/" in config.ENV_NAME else config.ENV_NAME
 

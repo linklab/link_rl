@@ -9,8 +9,8 @@ from link_rl.g_utils.types import AgentMode
 
 
 class AgentDdpg(OffPolicyAgent):
-    def __init__(self, observation_space, action_space, config):
-        super(AgentDdpg, self).__init__(observation_space, action_space, config)
+    def __init__(self, observation_space, action_space, config, need_train):
+        super(AgentDdpg, self).__init__(observation_space, action_space, config, need_train)
 
         self.n_actions = self.n_out_actions
 

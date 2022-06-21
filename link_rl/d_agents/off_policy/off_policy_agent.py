@@ -8,30 +8,35 @@ from link_rl.d_agents.off_policy.tdmpc.helper import ReplayBuffer
 
 
 class OffPolicyAgent(Agent):
-    def __init__(self, observation_space, action_space, config):
+    def __init__(self, observation_space, action_space, config, need_train):
         super(OffPolicyAgent, self).__init__(observation_space, action_space, config)
         assert self.config.AGENT_TYPE in OffPolicyAgentTypes
 
-        if self.config.AGENT_TYPE == AgentType.TDMPC:
-            self.replay_buffer = ReplayBuffer(config, observation_space=observation_space, action_space=action_space)
-        else:
-            if self.config.USE_PER:
-                assert self.config.AGENT_TYPE in OffPolicyAgentTypes
-                self.replay_buffer = PrioritizedBuffer(
-                    observation_space=observation_space, action_space=action_space, config=self.config
-                )
-                self.important_sampling_weights = None
+        if need_train:
+            if self.config.AGENT_TYPE == AgentType.TDMPC:
+                self.replay_buffer = ReplayBuffer(config, observation_space=observation_space, action_space=action_space)
             else:
-                self.replay_buffer = Buffer(
+                if self.config.USE_PER:
+                    assert self.config.AGENT_TYPE in OffPolicyAgentTypes
+                    self.replay_buffer = PrioritizedBuffer(
+                        observation_space=observation_space, action_space=action_space, config=self.config
+                    )
+                    self.important_sampling_weights = None
+                else:
+                    self.replay_buffer = Buffer(
+                        observation_space=observation_space, action_space=action_space, config=self.config
+                    )
+
+            if self.config.USE_HER:
+                from link_rl.g_utils.buffers.her_buffer import HerEpisodeBuffer
+                self.her_buffer = HerEpisodeBuffer(
                     observation_space=observation_space, action_space=action_space, config=self.config
                 )
-
-        if self.config.USE_HER:
-            from link_rl.g_utils.buffers.her_buffer import HerEpisodeBuffer
-            self.her_buffer = HerEpisodeBuffer(
-                observation_space=observation_space, action_space=action_space, config=self.config
-            )
-            self.her_buffer.reset()
+                self.her_buffer.reset()
+        else:
+            self.replay_buffer = None
+            self.her_buffer = None
+            self.important_sampling_weights = None
 
     def _before_train(self):
         if self.config.AGENT_TYPE in ActorCriticAgentTypes:

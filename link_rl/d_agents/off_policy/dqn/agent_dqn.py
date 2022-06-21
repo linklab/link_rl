@@ -11,8 +11,8 @@ from link_rl.g_utils.types import AgentMode
 
 
 class AgentDqn(OffPolicyAgent):
-    def __init__(self, observation_space, action_space, config):
-        super(AgentDqn, self).__init__(observation_space, action_space, config)
+    def __init__(self, observation_space, action_space, config, need_train):
+        super(AgentDqn, self).__init__(observation_space, action_space, config, need_train)
 
         self.q_net = QNet(
             observation_shape=self.observation_shape, n_out_actions=self.n_out_actions,
