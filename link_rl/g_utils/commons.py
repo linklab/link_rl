@@ -3,6 +3,8 @@ import datetime
 import numpy as np
 from torch import nn
 import torch.nn.functional as F
+import glob
+import os.path
 
 import gym
 import torch
@@ -34,7 +36,7 @@ from link_rl.g_utils.types import AgentType, ActorCriticAgentTypes, ModelType, L
     OffPolicyAgentTypes, OnPolicyAgentTypes
 
 
-def model_save(model, env_name, agent_type_name, test_episode_reward_avg, test_episode_reward_std, config):
+def model_save(agent, env_name, agent_type_name, test_episode_reward_avg, test_episode_reward_std, config):
     env_model_home = os.path.join(config.MODEL_SAVE_DIR, env_name)
     if not os.path.exists(env_model_home):
         os.mkdir(env_model_home)
@@ -45,18 +47,89 @@ def model_save(model, env_name, agent_type_name, test_episode_reward_avg, test_e
 
     now = datetime.datetime.now()
     local_now = now.astimezone()
-    file_name = "{0:.1f}_{1:.1f}_{2}_{3}_{4}_{5}_{6}.pth".format(
-        test_episode_reward_avg, test_episode_reward_std, local_now.year, local_now.month, local_now.day,
-        env_name, agent_type_name
-    )
 
-    torch.save(model.state_dict(), os.path.join(agent_model_home, file_name))
+    if config.AGENT_TYPE in ActorCriticAgentTypes:
+        actor_file_name = "{0:.1f}_{1:.1f}_{2}_{3}_{4}_{5}_{6}_ACTOR.pth".format(
+            test_episode_reward_avg, test_episode_reward_std, local_now.year, local_now.month, local_now.day,
+            env_name, agent_type_name
+        )
+        torch.save(agent.actor_model.state_dict(), os.path.join(agent_model_home, actor_file_name))
+        critic_file_name = "{0:.1f}_{1:.1f}_{2}_{3}_{4}_{5}_{6}_CRITIC.pth".format(
+            test_episode_reward_avg, test_episode_reward_std, local_now.year, local_now.month, local_now.day,
+            env_name, agent_type_name
+        )
+        torch.save(agent.critic_model.state_dict(), os.path.join(agent_model_home, critic_file_name))
+    else:
+        file_name = "{0:.1f}_{1:.1f}_{2}_{3}_{4}_{5}_{6}.pth".format(
+            test_episode_reward_avg, test_episode_reward_std, local_now.year, local_now.month, local_now.day,
+            env_name, agent_type_name
+        )
+        torch.save(agent.model.state_dict(), os.path.join(agent_model_home, file_name))
 
 
-def model_load(model, env_name, agent_type_name, file_name, config):
+def model_load(agent, env_name, agent_type_name, config, need_train=True):
+    model_file_list = []
     agent_model_home = os.path.join(config.MODEL_SAVE_DIR, env_name, agent_type_name)
-    model_params = torch.load(os.path.join(agent_model_home, file_name), map_location=torch.device('cpu'))
-    model.load_state_dict(model_params)
+    if os.path.isdir(agent_model_home):
+        model_file_list = glob.glob(os.path.join(agent_model_home, "*.pth"))
+
+    model_file_list.sort(key=lambda x: float(x.split(os.sep)[-1].split("_")[0]))
+    model_file_dict = {}
+
+    print("0. No use of pre-trained model")
+
+    if config.AGENT_TYPE in ActorCriticAgentTypes:
+        assert len(model_file_list) % 2 == 0
+        idx = 1
+        for model_file_name in model_file_list:
+            if model_file_name.endswith("_ACTOR.pth"):
+                model_file_name_prefix = model_file_name.split("_ACTOR.pth")[0]
+                actor_model_file_name = model_file_name_prefix + "_ACTOR.pth"
+                critic_model_file_name = model_file_name_prefix + "_CRITIC.pth"
+                assert actor_model_file_name in model_file_list and critic_model_file_name in model_file_list
+                print("{0}.".format(idx))
+                print("{0}".format(actor_model_file_name))
+                print("{0}".format(critic_model_file_name))
+                model_file_dict[idx] = (actor_model_file_name, critic_model_file_name)
+                idx += 1
+    else:
+        idx = 1
+        for model_file_name in model_file_list:
+            print("{0}. {1}".format(idx, model_file_name))
+            model_file_dict[idx] = model_file_name
+            idx += 1
+
+    print()
+
+    chosen_number = int(input("Choose ONE NUMBER from the above options and press enter (two or more times) to continue..."))
+
+    if chosen_number == 0:
+        print("*** START WITH RANDOM DEEP LEARNING MODEL !!!")
+    elif chosen_number > 0:
+        print("### START WITH THE SELECTED MODEL: ", end="")
+        if config.AGENT_TYPE in ActorCriticAgentTypes:
+            actor_model_file_name = model_file_dict[chosen_number][0]
+            critic_model_file_name = model_file_dict[chosen_number][1]
+            print()
+            print(actor_model_file_name)
+            print(critic_model_file_name)
+            actor_model_params = torch.load(
+                os.path.join(agent_model_home, actor_model_file_name), map_location=torch.device('cpu')
+            )
+            agent.actor_model.load_state_dict(actor_model_params)
+            critic_model_params = torch.load(
+                os.path.join(agent_model_home, critic_model_file_name), map_location=torch.device('cpu')
+            )
+            agent.critic_model.load_state_dict(critic_model_params)
+        else:
+            model_file_name = model_file_dict[chosen_number]
+            print(model_file_name)
+            model_params = torch.load(
+                os.path.join(agent_model_home, model_file_name), map_location=torch.device('cpu')
+            )
+            agent.model.load_state_dict(model_params)
+    else:
+        raise ValueError()
 
 
 def set_config(config):
@@ -200,6 +273,11 @@ def print_base_info(config):
     print("UNITY_ENV_DIR: {0}".format(config.UNITY_ENV_DIR))
 
 
+def select_pre_trained_model():
+    input("Choose one from the following options and enter (two or more times) to continue...")
+    pass
+
+
 def print_basic_info(observation_space=None, action_space=None, config=None):
     print('\n' + '#' * 81 + " Base Configs " + '#' * 82)
 
@@ -215,7 +293,7 @@ def print_basic_info(observation_space=None, action_space=None, config=None):
             "STRIDE_PER_LAYER", "EPISODE_REWARD_AVG_SOLVED", "EPISODE_REWARD_STD_SOLVED", "UNITY_ENV_DIR",
             "MODEL_SAVE_DIR", "PROJECT_HOME", "LAYER_ACTIVATION", "LAYER_ACTIVATION_TYPE",
             "VALUE_NETWORK_LAYER_ACTIVATION", "VALUE_NETWORK_LAYER_ACTIVATION_TYPE",
-            "LOSS_FUNCTION", "ENV_NAME", "PLAY_MODEL_FILE_NAME", "MODEL_TYPE", "LEARNING_RATE", "ACTOR_LEARNING_RATE",
+            "LOSS_FUNCTION", "ENV_NAME", "MODEL_TYPE", "LEARNING_RATE", "ACTOR_LEARNING_RATE",
             "ALPHA_LEARNING_RATE"
         ]:
             if param in [
@@ -306,7 +384,7 @@ def print_comparison_basic_info(observation_space, action_space, config_c):
                 "STRIDE_PER_LAYER", "EPISODE_REWARD_AVG_SOLVED", "EPISODE_REWARD_STD_SOLVED", "UNITY_ENV_DIR",
                 "COMPARISON_RESULTS_SAVE_DIR", "PROJECT_HOME", "LAYER_ACTIVATION", "LAYER_ACTIVATION_TYPE",
                 "VALUE_NETWORK_LAYER_ACTIVATION", "VALUE_NETWORK_LAYER_ACTIVATION_TYPE",
-                "LOSS_FUNCTION", "ENV_NAME", "PLAY_MODEL_FILE_NAME", "MODEL_TYPE", "LEARNING_RATE", "ACTOR_LEARNING_RATE",
+                "LOSS_FUNCTION", "ENV_NAME", "MODEL_TYPE", "LEARNING_RATE", "ACTOR_LEARNING_RATE",
                 "ALPHA_LEARNING_RATE"
             ]:
                 if param in [
@@ -408,7 +486,6 @@ def print_model_info(config):
     print("LAYER_ACTIVATION_TYPE: {0}".format(config.LAYER_ACTIVATION_TYPE))
     print("VALUE_NETWORK_LAYER_ACTIVATION_TYPE: {0}".format(config.VALUE_NETWORK_LAYER_ACTIVATION_TYPE))
     print("LOSS_FUNCTION_TYPE: {0}".format(config.LOSS_FUNCTION_TYPE))
-    print("PLAY_MODEL_FILE_NAME: {0}".format(config.PLAY_MODEL_FILE_NAME))
 
 
 def print_env_info(observation_space, action_space, config):
@@ -600,11 +677,15 @@ def console_log_comparison(learner_c,
         print(console_log)
 
 
+def get_specific_env_name(config):
+    return config.ENV_NAME.split("/")[1] if "/" in config.ENV_NAME else config.ENV_NAME
+
+
 def get_wandb_obj(config, agent=None, comparison=False):
     if comparison:
         project = "{0}_{1}_{2}".format(config.__class__.__name__, "Comparison", SYSTEM_USER_NAME)
     else:
-        env_name = config.ENV_NAME.split("/")[1] if "/" in config.ENV_NAME else config.ENV_NAME
+        env_name = get_specific_env_name(config=config)
         project = "{0}_{1}_{2}".format(env_name, config.AGENT_TYPE.name, SYSTEM_USER_NAME)
 
     wandb_obj = wandb.init(

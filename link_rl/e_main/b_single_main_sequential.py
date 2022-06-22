@@ -1,4 +1,5 @@
 from b_single_main_common import *
+from link_rl.g_utils.commons import model_load, get_specific_env_name
 
 
 def main():
@@ -7,11 +8,13 @@ def main():
     observation_space, action_space = get_env_info(config)
     print_basic_info(observation_space, action_space, config)
 
-    input("Press Enter (two or more times) to continue...")
-
     agent = get_agent(
         observation_space=observation_space, action_space=action_space, config=config
     )
+
+    env_name = get_specific_env_name(config=config)
+
+    model_load(agent=agent, env_name=env_name, agent_type_name=config.AGENT_TYPE.name, config=config)
 
     learner = Learner(agent=agent, queue=None, config=config)
 

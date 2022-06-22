@@ -50,8 +50,6 @@ class ConfigBase:
         self.USE_WANDB = False
         self.WANDB_REPORT_URL = False
 
-        self.PLAY_MODEL_FILE_NAME = ""
-
         self.FORCE_USE_CPU = False
         self.DEVICE = None
 

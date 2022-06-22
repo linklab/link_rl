@@ -432,7 +432,7 @@ class Learner(mp.Process):
             ))
 
             model_save(
-                model=self.agent.model,
+                agent=self.agent,
                 env_name=self.modified_env_name,
                 agent_type_name=self.config.AGENT_TYPE.name,
                 test_episode_reward_avg=self.test_episode_reward_avg.value,
@@ -450,7 +450,7 @@ class Learner(mp.Process):
         if all(model_save_conditions) and not all(termination_conditions):
             self.test_episode_reward_avg_best = self.test_episode_reward_avg.value
             model_save(
-                model=self.agent.model,
+                agent=self.agent,
                 env_name=self.modified_env_name,
                 agent_type_name=self.config.AGENT_TYPE.name,
                 test_episode_reward_avg=self.test_episode_reward_avg.value,

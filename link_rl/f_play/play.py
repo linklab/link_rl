@@ -13,7 +13,7 @@ from link_rl.a_configuration.a_base_config.a_environments.unity.config_unity_box
 from link_rl.a_configuration.a_base_config.c_models.config_recurrent_convolutional_models import \
     ConfigRecurrent2DConvolutionalModel, ConfigRecurrent1DConvolutionalModel
 from link_rl.a_configuration.a_base_config.c_models.config_recurrent_linear_models import ConfigRecurrentLinearModel
-from link_rl.g_utils.commons import set_config
+from link_rl.g_utils.commons import set_config, get_specific_env_name
 from link_rl.g_utils.commons_rl import get_agent
 
 warnings.filterwarnings("ignore")
@@ -144,14 +144,10 @@ def main_play(n_episodes):
 
     agent = get_agent(observation_space, action_space, config, need_train=False)
 
-    env_name = config.ENV_NAME.split("/")[1] if "/" in config.ENV_NAME else config.ENV_NAME
+    env_name = get_specific_env_name(config=config)
 
     model_load(
-        model=agent.model,
-        env_name=env_name,
-        agent_type_name=config.AGENT_TYPE.name,
-        file_name=config.PLAY_MODEL_FILE_NAME,
-        config=config
+        agent=agent, env_name=env_name, agent_type_name=config.AGENT_TYPE.name, config=config, need_train=False
     )
 
     agent.model.eval()

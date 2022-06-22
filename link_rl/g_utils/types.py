@@ -118,5 +118,12 @@ OffPolicyAgentTypes = [
 ]
 
 ActorCriticAgentTypes = [
-    AgentType.A2C, AgentType.A3C, AgentType.PPO, AgentType.ASYNCHRONOUS_PPO, AgentType.PPO_TRAJECTORY, AgentType.DDPG, AgentType.TD3, AgentType.SAC
+    AgentType.A2C,
+    AgentType.A3C,
+    AgentType.PPO,
+    AgentType.ASYNCHRONOUS_PPO,
+    AgentType.PPO_TRAJECTORY,
+    AgentType.DDPG,
+    AgentType.TD3,
+    AgentType.SAC
 ]
