@@ -82,6 +82,12 @@ class OffPolicyAgent(Agent):
                 count_training_steps, critic_loss_each = self.train_td3(training_steps_v=training_steps_v)
                 self._after_train(critic_loss_each)
 
+        elif self.config.AGENT_TYPE == AgentType.Td3Drq2:
+            if len(self.replay_buffer) >= self.config.MIN_BUFFER_SIZE_FOR_TRAIN:
+                self._before_train()
+                count_training_steps, critic_loss_each = self.train_td3_drqv2(training_steps_v=training_steps_v)
+                self._after_train(critic_loss_each)
+
         elif self.config.AGENT_TYPE == AgentType.SAC:
             if len(self.replay_buffer) >= self.config.MIN_BUFFER_SIZE_FOR_TRAIN:
                 self._before_train()
@@ -132,6 +138,10 @@ class OffPolicyAgent(Agent):
 
     @abstractmethod
     def train_td3(self, training_steps_v):
+        raise NotImplementedError()
+
+    @abstractmethod
+    def train_td3_drqv2(self, training_steps_v):
         raise NotImplementedError()
 
     @abstractmethod
