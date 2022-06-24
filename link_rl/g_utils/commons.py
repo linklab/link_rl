@@ -962,7 +962,7 @@ def put_seed_to_env(config, env):
         env.seed(config.SEED)
 
 
-def get_train_env(config, no_graphics=True):
+def get_train_env(config, no_graphics=True, agent=None):
     def make_gym_env(env_name):
         def _make():
             #############
@@ -1046,7 +1046,7 @@ def get_train_env(config, no_graphics=True):
                 from link_rl.b_environments.competition_olympics.olympics_env.chooseenv import make
                 env = make(config.ENV_NAME)
                 env = CompetitionOlympicsEnvWrapper(env=env, controlled_agent_index=config.CONTROLLED_AGENT_INDEX,
-                                                    env_render=config.RENDER_OVER_TRAIN)
+                                                    env_render=config.RENDER_OVER_TRAIN, agent=agent)
 
             ############
             #   Else   #
@@ -1102,7 +1102,7 @@ def get_train_env(config, no_graphics=True):
     return train_env
 
 
-def get_single_env(config, no_graphics=True, play=False):
+def get_single_env(config, no_graphics=True, play=False, agent=None):
     #############
     #   Unity   #
     #############
@@ -1187,7 +1187,8 @@ def get_single_env(config, no_graphics=True, play=False):
         from link_rl.b_environments.competition_olympics.olympics_env.chooseenv import make
         single_env = make(config.ENV_NAME)
         single_env = CompetitionOlympicsEnvWrapper(
-            env=single_env, controlled_agent_index=config.CONTROLLED_AGENT_INDEX, env_render=config.RENDER_OVER_TRAIN
+            env=single_env, controlled_agent_index=config.CONTROLLED_AGENT_INDEX, env_render=config.RENDER_OVER_TRAIN,
+            agent=agent
         )
 
     ############

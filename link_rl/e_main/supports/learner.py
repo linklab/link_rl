@@ -5,6 +5,7 @@ from gym.spaces import Box, Discrete
 from gym.vector import VectorEnv
 
 from link_rl.a_configuration.a_base_config.a_environments.combinatorial_optimization.knapsack.config_knapsack import ConfigKnapsack
+from link_rl.a_configuration.a_base_config.a_environments.competition_olympics import ConfigCompetitionOlympics
 from link_rl.a_configuration.a_base_config.a_environments.task_allocation.config_basic_task_allocation import \
     ConfigBasicTaskAllocation
 from link_rl.a_configuration.a_base_config.c_models.config_recurrent_convolutional_models import \
@@ -208,6 +209,8 @@ class Learner(mp.Process):
         if not parallel:  # parallel?? ???? actor???? train_env ????/????
             if self.config.AGENT_TYPE == AgentType.TDMPC:
                 self.train_env = get_single_env(self.config)
+            elif isinstance(self.config, ConfigCompetitionOlympics):
+                self.train_env = get_train_env(self.config, self.agent)
             else:
                 self.train_env = get_train_env(self.config)
 

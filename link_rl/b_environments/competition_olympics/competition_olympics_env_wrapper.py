@@ -25,7 +25,7 @@ class DummyCompetitionOlympicsAgent:
 class CompetitionOlympicsEnvWrapper(gym.Wrapper):
 	metadata = {}
 
-	def __init__(self, env, env_render=False, controlled_agent_index=1):
+	def __init__(self, env, env_render=False, controlled_agent_index=1, agent=None):
 		super().__init__(env)
 
 		self.env_render = env_render
