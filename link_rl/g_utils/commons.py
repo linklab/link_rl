@@ -1046,7 +1046,7 @@ def get_train_env(config, no_graphics=True, agent=None):
                 from link_rl.b_environments.competition_olympics.olympics_env.chooseenv import make
                 env = make(config.ENV_NAME)
                 env = CompetitionOlympicsEnvWrapper(env=env, controlled_agent_index=config.CONTROLLED_AGENT_INDEX,
-                                                    env_render=config.RENDER_OVER_TRAIN, agent=agent)
+                                                    env_render=config.RENDER_OVER_TRAIN)
 
             ############
             #   Else   #
@@ -1187,8 +1187,7 @@ def get_single_env(config, no_graphics=True, play=False, agent=None):
         from link_rl.b_environments.competition_olympics.olympics_env.chooseenv import make
         single_env = make(config.ENV_NAME)
         single_env = CompetitionOlympicsEnvWrapper(
-            env=single_env, controlled_agent_index=config.CONTROLLED_AGENT_INDEX, env_render=config.RENDER_OVER_TRAIN,
-            agent=agent
+            env=single_env, controlled_agent_index=config.CONTROLLED_AGENT_INDEX, env_render=config.RENDER_OVER_TRAIN
         )
 
     ############

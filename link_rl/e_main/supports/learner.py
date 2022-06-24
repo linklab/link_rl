@@ -209,8 +209,6 @@ class Learner(mp.Process):
         if not parallel:  # parallel?? ???? actor???? train_env ????/????
             if self.config.AGENT_TYPE == AgentType.TDMPC:
                 self.train_env = get_single_env(self.config)
-            elif isinstance(self.config, ConfigCompetitionOlympics):
-                self.train_env = get_train_env(self.config, self.agent)
             else:
                 self.train_env = get_train_env(self.config)
 
