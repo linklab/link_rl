@@ -1,5 +1,6 @@
-from computer_vision.cv_utils import Rectangle
+from link_rl.b_environments.ai_birds.computer_vision.cv_utils import Rectangle
 from enum import Enum
+
 
 class GameObjectType(Enum):
     UNKNOWN = 'unknown'
@@ -18,6 +19,7 @@ class GameObjectType(Enum):
     STONE = 'stone'
     TERRAIN = 'terrain'
     TNT = 'TNT'
+
 
 class GameObjectShape(Enum):
    

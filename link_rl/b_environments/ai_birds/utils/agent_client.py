@@ -12,6 +12,7 @@ import time
 import os
 import cv2
 
+
 #logging.basicConfig(stream=sys.stdout, level=logging.DEBUG)
 class GameState(Enum):
     """The state of the game at a particular instant"""

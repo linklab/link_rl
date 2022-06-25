@@ -5,6 +5,8 @@ import socket
 import json
 import numpy as np
 import logging
+import torch
+import torch.nn.functional as F
 
 from link_rl.b_environments.ai_birds.computer_vision.GroundTruthReader import NotVaildStateError, GroundTruthReader
 from link_rl.b_environments.ai_birds.utils.agent_client import AgentClient
@@ -18,6 +20,26 @@ log_dir = os.path.join(
 )
 if not os.path.exists(log_dir):
     os.mkdir(log_dir)
+
+
+class StateMaker:
+    def __init__(self):
+        # Crops 480x840x3 picture to 310x770x3 and
+        # then resizes it to 84x84x3
+        # also normalizes the pixel values to -1,1 range
+        # Important: pass png without alpha channel
+        pass
+
+    def make(self, raw_state):
+        state = raw_state.transpose((2, 0, 1))
+        state = state.astype(np.float32)
+        state /= 255
+
+        tensor_state = torch.from_numpy(state).unsqueeze(0)
+        tensor_state = F.interpolate(tensor_state, size=84)
+
+        return tensor_state
+
 
 class ClientRLAgent(Thread):
     def __init__(self):
@@ -84,11 +106,9 @@ class ClientRLAgent(Thread):
             ground_truth = self.agent_client.get_ground_truth_without_screenshot()
             ground_truth_reader = GroundTruthReader(ground_truth, self.model, self.target_class)
             sling = ground_truth_reader.find_slingshot_mbr()[0]
-            print(sling, sling.X, "###")
             sling.width, sling.height = sling.height, sling.width
             self.sling_center = self.tp.get_reference_point(sling)
             self.sling_mbr = sling
-
         except NotVaildStateError:
             self.agent_client.fully_zoom_out()
             ground_truth = self.agent_client.get_ground_truth_without_screenshot()
