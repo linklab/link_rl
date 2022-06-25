@@ -9,7 +9,7 @@ import torch
 import torch.nn.functional as F
 
 from link_rl.b_environments.ai_birds.computer_vision.GroundTruthReader import NotVaildStateError, GroundTruthReader
-from link_rl.b_environments.ai_birds.utils.agent_client import AgentClient
+from link_rl.b_environments.ai_birds.utils.agent_client import AgentClient, PlayingMode
 from link_rl.b_environments.ai_birds.utils.trajectory_planner import SimpleTrajectoryPlanner
 
 CURRENT_PATH = os.path.dirname(os.path.realpath(__file__))
@@ -41,7 +41,7 @@ class StateMaker:
         return tensor_state
 
 
-class ClientRLAgent(Thread):
+class ClientRLAgent:
     def __init__(self):
         self.id = 0
 

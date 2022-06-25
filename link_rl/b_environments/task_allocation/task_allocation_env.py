@@ -409,6 +409,7 @@ class Heuristic_Agent:
 
         return action_idx
 
+
 def run_env():
     config = ConfigTaskAllocation()
 

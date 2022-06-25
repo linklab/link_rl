@@ -36,13 +36,14 @@ class Dummy_Agent:
 class LinkBird:
 	def __init__(self):
 		# TRAINING/ EVALUATION SWITCH Parameters
-		self.IS_IN_TRAINING_MODE = True  # indicates if the agent is in training mode, switching it off will stop agent from training
-		self.EVAL_LEVELS_NUMBER = 51  # total number of eval levels
-		self.TRAIN_LEVELS_NUMBER = 1501  # total number of train levels
-		self.TRAINING_SCORES = np.zeros([self.TRAIN_LEVELS_NUMBER,
-										 3])  # 300 training levels, for each level we have: level score, Won or Not?, Num of birds used
-		self.EVAL_SCORES = np.zeros([self.EVAL_LEVELS_NUMBER,
-									 3])  # 50 evaluation levels, for each level we have: level score, Won or Not?, Num of birds used
+		self.IS_IN_TRAINING_MODE = True  	# indicates if the agent is in training mode, switching it off will stop agent from training
+
+		self.TRAIN_LEVELS_NUMBER = 1501  	# total number of train levels
+		self.TRAINING_SCORES = np.zeros([self.TRAIN_LEVELS_NUMBER, 3])  # 300 training levels, for each level we have: level score, Won or Not?, Num of birds used
+
+		self.EVAL_LEVELS_NUMBER = 51  		# total number of eval levels
+		self.EVAL_SCORES = np.zeros([self.EVAL_LEVELS_NUMBER, 3])  # 50 evaluation levels, for each level we have: level score, Won or Not?, Num of birds used
+
 		# TRAINING_SET_TIMES = 0 # num of times all train levels were played
 		# EVAL_SET_TIMES = -1 # num of times all eval levels were played
 
@@ -51,12 +52,15 @@ class LinkBird:
 		self.agent = Dummy_Agent()
 
 		self.rl_client = ClientRLAgent()
+
 		self.state_maker = StateMaker()
 
 		self.shoots_before_level_is_completed = 0
 
 	def print_game_state(self, game_state):
-		print("▶▶▶ Game State: {0:30}| rl_client.level_count: {1} ◀◀◀".format(game_state, self.rl_client.level_count))
+		print("▶▶▶ Game State: {0:30} | IS_IN_TRAINING_MODE: {1} | rl_client.level_count: {2} ◀◀◀".format(
+			game_state, self.IS_IN_TRAINING_MODE, self.rl_client.level_count
+		))
 
 	def run(self, run_id):
 		highest_total_score_TRAIN = 0
@@ -233,11 +237,11 @@ class LinkBird:
 						r_previous *= -1
 
 					if self.IS_IN_TRAINING_MODE == True:
-						self.TRAINING_SCORES[self.rl_client.level_count, :] = [
-							self.rl_client.agent_client.get_current_score(), is_win, OFFSET + env_step]
+						self.TRAINING_SCORES[self.rl_client.level_count, :] = \
+							[self.rl_client.agent_client.get_current_score(), is_win, OFFSET + env_step]
 					else:
-						self.EVAL_SCORES[self.rl_client.level_count, :] = [
-							self.rl_client.agent_client.get_current_score(), is_win, OFFSET + env_step]
+						self.EVAL_SCORES[self.rl_client.level_count, :] = \
+							[self.rl_client.agent_client.get_current_score(), is_win, OFFSET + env_step]
 
 					d = 1
 					first_time_in_level_in_episode = True
