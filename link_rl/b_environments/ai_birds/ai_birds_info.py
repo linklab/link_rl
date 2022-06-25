@@ -57,9 +57,9 @@ class LinkBird:
 
 		self.shoots_before_level_is_completed = 0
 
-	def print_game_state(self, game_state):
-		print("▶▶▶ Game State: {0:30} | IS_IN_TRAINING_MODE: {1} | rl_client.level_count: {2} ◀◀◀".format(
-			game_state, self.IS_IN_TRAINING_MODE, self.rl_client.level_count
+	def print_game_state(self, game_state, env_step):
+		print("▶▶▶ Game State: {0:30} | IS_IN_TRAINING_MODE: {1} | rl_client.level_count: {2} | env_step: {3}◀◀◀".format(
+			game_state, self.IS_IN_TRAINING_MODE, self.rl_client.level_count, env_step
 		))
 
 	def run(self, run_id):
@@ -94,7 +94,7 @@ class LinkBird:
 			for env_step in range(1, TOTAL_STEPS):
 				game_state = self.rl_client.agent_client.get_game_state()
 
-				self.print_game_state(game_state=game_state)
+				self.print_game_state(game_state=game_state, env_step=env_step)
 
 				# ■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■ #
 				if game_state == GameState.REQUESTNOVELTYLIKELIHOOD:
