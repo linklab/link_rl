@@ -50,6 +50,7 @@ class DMCWrapper(core.Env):
 			environment_kwargs=None,
 			frame_stack=1
 	):
+		super(DMCWrapper, self).__init__()
 		#assert 'random' in task_kwargs, 'please specify a seed, for deterministic behaviour'
 		self._from_pixels = from_pixels
 		self._height = height

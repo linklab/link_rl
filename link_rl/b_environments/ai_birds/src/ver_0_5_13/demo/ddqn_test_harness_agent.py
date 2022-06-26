@@ -225,16 +225,26 @@ class DDQN():
             tf.summary.histogram("predictions", self.best_q)
         ])
 
-class ClientRLAgent(Thread):
-    def __init__(self):
+
+class ClientRLAgent:
+    def __init__(self, train_mode=True):
         # Wrapper of the communicating messages
-        with open('./src/ver_0_5_13/client/server_client_config.json', 'r') as config:
+
+        if train_mode:
+            json_file = './src/ver_0_5_13/client/server_client_config.json'
+        else:
+            json_file = './src/ver_0_5_13/client/server_client_test_config.json'
+
+        with open(json_file, 'r') as config:
             sc_json_config = json.load(config)
+
         self.ar = AgentClient(**sc_json_config[0])
+
         try:
             self.ar.connect_to_server()
         except socket.error as e:
             print("Error in client-server communication: " + str(e))
+
         self.level_count = 0
         self.failed_counter = 0
         self.solved = []
@@ -295,6 +305,7 @@ class ClientRLAgent(Thread):
                 self.solved[level - 1] = 1
             level += 1
         return scores
+
 
 class ExperienceReplay():
     def __init__(self, memory_size=10000000):

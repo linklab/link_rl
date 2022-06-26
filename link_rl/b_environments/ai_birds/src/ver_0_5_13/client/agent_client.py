@@ -90,18 +90,26 @@ class AgentClient:
         self._buffer = bytearray()
 
         self._extra_args = kwargs
+
         if "logger" in kwargs:
             self._logger = kwargs['logger']
         else:
             self._logger = logging.getLogger('Agent Client')
+            file_handler = logging.FileHandler('my.log')
+            formatter = logging.Formatter('%(asctime)s - %(levelname)s - %(message)s')
+            file_handler.setFormatter(formatter)
+            self._logger.addHandler(file_handler)
 
         logging.getLogger().setLevel(logging.INFO)
+
     def _read_raw_from_buff(self, size):
         """Read a specific number of bytes from server_socket"""
         self._logger.debug("Reading %s bytes from server", size)
+
         while len(self._buffer) < size:
             new_bytes = self.server_socket.recv(size - len(self._buffer))
             self._buffer.extend(new_bytes)
+
         encoded = bytearray(self._buffer[:size])
         self._logger.debug(
             "Read: |%s|",
@@ -171,6 +179,7 @@ class AgentClient:
         )
 
         (round_number, limit, levels) = self._read_from_buff("BBB")
+
         self._logger.info(
             'Received configuration: Round = %d, time_limit=%d, levels = %d',
             round_number, limit, levels
