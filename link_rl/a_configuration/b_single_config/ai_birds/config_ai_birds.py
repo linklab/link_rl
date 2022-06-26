@@ -17,8 +17,9 @@ class ConfigAiBirdsDqn(ConfigBase, ConfigAiBirds, ConfigDqn):
         self.BUFFER_CAPACITY = 500_000
         self.MODEL_TYPE = ModelType.MEDIUM_2D_CONVOLUTIONAL
 
+        self.BATCH_SIZE = 128
         self.MIN_BUFFER_SIZE_FOR_TRAIN = self.BATCH_SIZE
-        self.CONSOLE_LOG_INTERVAL_TRAINING_STEPS = 1
+        self.CONSOLE_LOG_INTERVAL_TRAINING_STEPS = 3
         self.TEST_INTERVAL_TRAINING_STEPS = 10
 
 
@@ -33,8 +34,9 @@ class ConfigAiBirdsDoubleDqn(ConfigBase, ConfigAiBirds, ConfigDoubleDqn):
         self.BUFFER_CAPACITY = 500_000
         self.MODEL_TYPE = ModelType.MEDIUM_2D_CONVOLUTIONAL
 
+        self.BATCH_SIZE = 128
         self.MIN_BUFFER_SIZE_FOR_TRAIN = self.BATCH_SIZE
-        self.CONSOLE_LOG_INTERVAL_TRAINING_STEPS = 1
+        self.CONSOLE_LOG_INTERVAL_TRAINING_STEPS = 3
         self.TEST_INTERVAL_TRAINING_STEPS = 10
 
 
@@ -49,8 +51,9 @@ class ConfigAiBirdsDuelingDqn(ConfigBase, ConfigAiBirds, ConfigDuelingDqn):
         self.BUFFER_CAPACITY = 500_000
         self.MODEL_TYPE = ModelType.MEDIUM_2D_CONVOLUTIONAL
 
+        self.BATCH_SIZE = 128
         self.MIN_BUFFER_SIZE_FOR_TRAIN = self.BATCH_SIZE
-        self.CONSOLE_LOG_INTERVAL_TRAINING_STEPS = 1
+        self.CONSOLE_LOG_INTERVAL_TRAINING_STEPS = 3
         self.TEST_INTERVAL_TRAINING_STEPS = 10
 
 
@@ -65,8 +68,9 @@ class ConfigAiBirdsDoubleDuelingDqn(ConfigBase, ConfigAiBirds, ConfigDoubleDueli
         self.BUFFER_CAPACITY = 500_000
         self.MODEL_TYPE = ModelType.MEDIUM_2D_CONVOLUTIONAL
 
+        self.BATCH_SIZE = 128
         self.MIN_BUFFER_SIZE_FOR_TRAIN = self.BATCH_SIZE
-        self.CONSOLE_LOG_INTERVAL_TRAINING_STEPS = 1
+        self.CONSOLE_LOG_INTERVAL_TRAINING_STEPS = 3
         self.TEST_INTERVAL_TRAINING_STEPS = 10
 
 
