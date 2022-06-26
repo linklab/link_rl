@@ -586,7 +586,27 @@ config = ConfigBasicTaskAllocation1Dqn()
 from link_rl.a_configuration.b_single_config.task_allocation.config_task_allocation import ConfigTaskAllocationDqn
 config = ConfigTaskAllocationDqn()
 
-config.USE_WANDB = False
+###############################
+####### AI Birds #######
+###############################
+from link_rl.a_configuration.b_single_config.ai_birds.config_ai_birds import ConfigAiBirdsDqn
+config = ConfigAiBirdsDqn()
+
+from link_rl.a_configuration.b_single_config.ai_birds.config_ai_birds import ConfigAiBirdsDoubleDqn
+config = ConfigAiBirdsDoubleDqn()
+
+from link_rl.a_configuration.b_single_config.ai_birds.config_ai_birds import ConfigAiBirdsDuelingDqn
+config = ConfigAiBirdsDuelingDqn()
+
+from link_rl.a_configuration.b_single_config.ai_birds.config_ai_birds import ConfigAiBirdsDoubleDuelingDqn
+config = ConfigAiBirdsDoubleDuelingDqn()
+
+from link_rl.a_configuration.b_single_config.ai_birds.config_ai_birds import ConfigAiBirdsA3c
+config = ConfigAiBirdsA3c()
+
+from link_rl.a_configuration.b_single_config.ai_birds.config_ai_birds import ConfigAiBirdsAsynchronousPpo
+config = ConfigAiBirdsAsynchronousPpo()
+
 
 if __name__ == "__main__":
     from link_rl.g_utils.commons import print_basic_info, get_env_info, set_config

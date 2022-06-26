@@ -230,10 +230,14 @@ class ClientRLAgent:
     def __init__(self, train_mode=True):
         # Wrapper of the communicating messages
 
+        PROJECT_HOME = os.path.abspath(
+            os.path.join(os.path.dirname(os.path.realpath(__file__)), os.pardir, os.pardir, os.pardir, os.pardir, os.pardir, os.pardir)
+        )
+
         if train_mode:
-            json_file = './src/ver_0_5_13/client/server_client_config.json'
+            json_file = os.path.join(PROJECT_HOME, "link_rl", "b_environments", "ai_birds", "src", "ver_0_5_13", "client", "server_client_config.json")
         else:
-            json_file = './src/ver_0_5_13/client/server_client_test_config.json'
+            json_file = os.path.join(PROJECT_HOME, "link_rl", "b_environments", "ai_birds", "src", "ver_0_5_13", "client", "server_client_test_config.json")
 
         with open(json_file, 'r') as config:
             sc_json_config = json.load(config)
@@ -255,8 +259,11 @@ class ClientRLAgent:
         self.first_shot = True
         self.prev_target = None
 
-        self.model = np.loadtxt("model", delimiter=",")
-        self.target_class = list(map(lambda x: x.replace("\n", ""), open('target_class').readlines()))
+        model_file = os.path.join(PROJECT_HOME, "link_rl", "b_environments", "ai_birds", "model")
+        self.model = np.loadtxt(model_file, delimiter=",")
+
+        target_class_file = os.path.join(PROJECT_HOME, "link_rl", "b_environments", "ai_birds", "target_class")
+        self.target_class = list(map(lambda x: x.replace("\n", ""), open(target_class_file).readlines()))
 
     def get_slingshot_center(self):
         try:

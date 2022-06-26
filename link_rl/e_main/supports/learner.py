@@ -177,12 +177,12 @@ class Learner(mp.Process):
 
     def set_train_env(self):
         if self.config.AGENT_TYPE == AgentType.TDMPC:
-            self.train_env = get_single_env(self.config)
+            self.train_env = get_single_env(self.config, train_mode=True)
         else:
             self.train_env = get_train_env(self.config)
 
     def set_test_env(self):
-        self.test_env = get_single_env(self.config)
+        self.test_env = get_single_env(self.config, train_mode=False)
 
     def train_loop(self):
         self.set_train_env()

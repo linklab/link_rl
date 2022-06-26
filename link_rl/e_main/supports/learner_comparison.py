@@ -14,7 +14,7 @@ from gym.spaces import Discrete, Box
 from link_rl.a_configuration.a_base_config.c_models.config_recurrent_linear_models import ConfigRecurrentLinearModel
 from link_rl.e_main.supports.actor import Actor
 from link_rl.g_utils.commons import get_train_env, get_single_env, console_log_comparison, wandb_log_comparison, MeanBuffer
-from link_rl.g_utils.types import AgentMode, Transition, OnPolicyAgentTypes, OffPolicyAgentTypes
+from link_rl.g_utils.types import AgentMode, Transition, OnPolicyAgentTypes, OffPolicyAgentTypes, AgentType
 
 
 class LearnerComparison:
@@ -54,8 +54,15 @@ class LearnerComparison:
         self.comparison_stat = comparison_stat
 
         for agent_idx, _ in enumerate(agents):
-            self.train_envs_per_agent.append(get_train_env(self.config_c.AGENT_PARAMETERS[agent_idx]))
-            self.test_envs_per_agent.append(get_single_env(self.config_c.AGENT_PARAMETERS[agent_idx]))
+            if self.config_c.AGENT_PARAMETERS[agent_idx].AGENT_TYPE == AgentType.TDMPC:
+                self.train_envs_per_agent.append(
+                    get_single_env(self.config_c.AGENT_PARAMETERS[agent_idx], train_mode=True)
+                )
+            else:
+                self.train_envs_per_agent.append(get_train_env(self.config_c.AGENT_PARAMETERS[agent_idx]))
+
+            self.test_envs_per_agent.append(get_single_env(self.config_c.AGENT_PARAMETERS[agent_idx], train_mode=False))
+
             self.episode_rewards_per_agent.append(np.zeros(shape=(self.n_actors, self.n_vectorized_envs)))
             self.episode_reward_buffer_per_agent.append(MeanBuffer(self.config_c.N_EPISODES_FOR_MEAN_CALCULATION))
 

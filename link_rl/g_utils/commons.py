@@ -15,6 +15,7 @@ from gym.spaces import Discrete, Box
 from gym.vector import AsyncVectorEnv
 import plotly.graph_objects as go
 
+from link_rl.a_configuration.a_base_config.a_environments.ai_birds.config_ai_birds import ConfigAiBirds
 from link_rl.a_configuration.a_base_config.a_environments.competition_olympics import ConfigCompetitionOlympics
 from link_rl.a_configuration.a_base_config.a_environments.dm_control import ConfigDmControl
 from link_rl.a_configuration.a_base_config.a_environments.gym_robotics import ConfigGymRobotics
@@ -101,10 +102,13 @@ def model_load(agent, env_name, agent_type_name, config, need_train=True):
 
     print()
 
-    chosen_number = int(input("Choose ONE NUMBER from the above options and press enter (two or more times) to continue..."))
+    try:
+        chosen_number = int(input("Choose ONE NUMBER from the above options and press enter (two or more times) to continue..."))
+    except ValueError as e:
+        chosen_number = 0
 
     if chosen_number == 0:
-        print("*** START WITH RANDOM DEEP LEARNING MODEL !!!")
+        print("### START WITH *RANDOM* DEEP LEARNING MODEL")
     elif chosen_number > 0:
         print("### START WITH THE SELECTED MODEL: ", end="")
         if config.AGENT_TYPE in ActorCriticAgentTypes:
@@ -916,6 +920,13 @@ def get_train_env(config, no_graphics=True, agent=None):
                 env = CompetitionOlympicsEnvWrapper(env=env, controlled_agent_index=config.CONTROLLED_AGENT_INDEX,
                                                     env_render=config.RENDER_OVER_TRAIN)
 
+            ################
+            #   AI Birds   #
+            ################
+            elif isinstance(config, ConfigAiBirds):
+                from link_rl.b_environments.ai_birds.ai_birds_wrapper import AIBirdsWrapper
+                env = AIBirdsWrapper(train_mode=True)
+
             ############
             #   Else   #
             ############
@@ -970,7 +981,7 @@ def get_train_env(config, no_graphics=True, agent=None):
     return train_env
 
 
-def get_single_env(config, no_graphics=True, play=False, agent=None):
+def get_single_env(config, no_graphics=True, train_mode=True):
     #############
     #   Unity   #
     #############
@@ -1039,7 +1050,7 @@ def get_single_env(config, no_graphics=True, play=False, agent=None):
     #   Atari   #
     #############
     elif isinstance(config, ConfigGymAtari):
-        if play:
+        if not train_mode:
             single_env = gym.make(
                 config.ENV_NAME, render_mode="human", frameskip=config.FRAME_SKIP, repeat_action_probability=0.0
             )
@@ -1057,6 +1068,13 @@ def get_single_env(config, no_graphics=True, play=False, agent=None):
         single_env = CompetitionOlympicsEnvWrapper(
             env=single_env, controlled_agent_index=config.CONTROLLED_AGENT_INDEX, env_render=config.RENDER_OVER_TRAIN
         )
+
+    ################
+    #   AI Birds   #
+    ################
+    elif isinstance(config, ConfigAiBirds):
+        from link_rl.b_environments.ai_birds.ai_birds_wrapper import AIBirdsWrapper
+        single_env = AIBirdsWrapper(train_mode=train_mode)
 
     ############
     #   else   #

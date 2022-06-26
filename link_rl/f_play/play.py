@@ -140,7 +140,7 @@ def main_play(n_episodes):
     if isinstance(config, ConfigUnityGymEnv):
         config.NO_TEST_GRAPHICS = False
 
-    env = get_single_env(config, config.NO_TEST_GRAPHICS, play=True)
+    env = get_single_env(config, config.NO_TEST_GRAPHICS, train_mode=False)
 
     agent = get_agent(observation_space, action_space, config, need_train=False)
 
