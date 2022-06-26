@@ -37,7 +37,7 @@ from link_rl.g_utils.types import AgentType, ActorCriticAgentTypes, ModelType, L
     OffPolicyAgentTypes, OnPolicyAgentTypes
 
 
-def model_save(agent, env_name, agent_type_name, test_episode_reward_avg, test_episode_reward_std, config):
+def model_save(agent, env_name, agent_type_name, test_episode_reward_min, config):
     env_model_home = os.path.join(config.MODEL_SAVE_DIR, env_name)
     if not os.path.exists(env_model_home):
         os.mkdir(env_model_home)
@@ -50,25 +50,22 @@ def model_save(agent, env_name, agent_type_name, test_episode_reward_avg, test_e
     local_now = now.astimezone()
 
     if config.AGENT_TYPE in ActorCriticAgentTypes:
-        actor_file_name = "{0:.1f}_{1:.1f}_{2}_{3}_{4}_{5}_{6}_ACTOR.pth".format(
-            test_episode_reward_avg, test_episode_reward_std, local_now.year, local_now.month, local_now.day,
-            env_name, agent_type_name
+        actor_file_name = "{0:.1f}_{1}_{2}_{3}_{4}_{5}_ACTOR.pth".format(
+            test_episode_reward_min, local_now.year, local_now.month, local_now.day, env_name, agent_type_name
         )
         torch.save(agent.actor_model.state_dict(), os.path.join(agent_model_home, actor_file_name))
-        critic_file_name = "{0:.1f}_{1:.1f}_{2}_{3}_{4}_{5}_{6}_CRITIC.pth".format(
-            test_episode_reward_avg, test_episode_reward_std, local_now.year, local_now.month, local_now.day,
-            env_name, agent_type_name
+        critic_file_name = "{0:.1f}_{1}_{2}_{3}_{4}_{5}_CRITIC.pth".format(
+            test_episode_reward_min, local_now.year, local_now.month, local_now.day, env_name, agent_type_name
         )
         torch.save(agent.critic_model.state_dict(), os.path.join(agent_model_home, critic_file_name))
     else:
-        file_name = "{0:.1f}_{1:.1f}_{2}_{3}_{4}_{5}_{6}.pth".format(
-            test_episode_reward_avg, test_episode_reward_std, local_now.year, local_now.month, local_now.day,
-            env_name, agent_type_name
+        file_name = "{0:.1f}_{1}_{2}_{3}_{4}_{5}.pth".format(
+            test_episode_reward_min, local_now.year, local_now.month, local_now.day, env_name, agent_type_name
         )
         torch.save(agent.model.state_dict(), os.path.join(agent_model_home, file_name))
 
 
-def model_load(agent, env_name, agent_type_name, config, need_train=True):
+def model_load(agent, env_name, agent_type_name, config):
     model_file_list = []
     agent_model_home = os.path.join(config.MODEL_SAVE_DIR, env_name, agent_type_name)
     if os.path.isdir(agent_model_home):
@@ -294,7 +291,7 @@ def print_basic_info(observation_space=None, action_space=None, config=None):
     for param in dir(config):
         if not param.startswith("__") and param not in [
             "MODEL_PARAMETER", "NEURONS_PER_FULLY_CONNECTED_LAYER", "OUT_CHANNELS_PER_LAYER", "KERNEL_SIZE_PER_LAYER",
-            "STRIDE_PER_LAYER", "EPISODE_REWARD_AVG_SOLVED", "EPISODE_REWARD_STD_SOLVED", "UNITY_ENV_DIR",
+            "STRIDE_PER_LAYER", "EPISODE_REWARD_MIN_SOLVED", "UNITY_ENV_DIR",
             "MODEL_SAVE_DIR", "PROJECT_HOME", "LAYER_ACTIVATION", "LAYER_ACTIVATION_TYPE",
             "VALUE_NETWORK_LAYER_ACTIVATION", "VALUE_NETWORK_LAYER_ACTIVATION_TYPE",
             "LOSS_FUNCTION", "ENV_NAME", "MODEL_TYPE", "LEARNING_RATE", "ACTOR_LEARNING_RATE",
@@ -385,7 +382,7 @@ def print_comparison_basic_info(observation_space, action_space, config_c):
         for param in dir(agent_config):
             if not param.startswith("__") and param not in [
                 "MODEL_PARAMETER", "NEURONS_PER_FULLY_CONNECTED_LAYER", "OUT_CHANNELS_PER_LAYER", "KERNEL_SIZE_PER_LAYER",
-                "STRIDE_PER_LAYER", "EPISODE_REWARD_AVG_SOLVED", "EPISODE_REWARD_STD_SOLVED", "UNITY_ENV_DIR",
+                "STRIDE_PER_LAYER", "EPISODE_REWARD_MIN_SOLVED", "UNITY_ENV_DIR",
                 "COMPARISON_RESULTS_SAVE_DIR", "PROJECT_HOME", "LAYER_ACTIVATION", "LAYER_ACTIVATION_TYPE",
                 "VALUE_NETWORK_LAYER_ACTIVATION", "VALUE_NETWORK_LAYER_ACTIVATION_TYPE",
                 "LOSS_FUNCTION", "ENV_NAME", "MODEL_TYPE", "LEARNING_RATE", "ACTOR_LEARNING_RATE",
@@ -518,10 +515,9 @@ def print_env_info(observation_space, action_space, config):
         raise ValueError()
     print(action_space_str)
 
-    if hasattr(config, "EPISODE_REWARD_AVG_SOLVED") and hasattr(config, "EPISODE_REWARD_STD_SOLVED"):
-        item1 = "{0}: {1:,}".format("EPISODE_REWARD_AVG_SOLVED", config.EPISODE_REWARD_AVG_SOLVED)
-        item2 = "{0}: {1:,}".format("EPISODE_REWARD_STD_SOLVED", config.EPISODE_REWARD_STD_SOLVED)
-        print("{0:55} {1:55}".format(item1, item2), end="\n")
+    if hasattr(config, "EPISODE_REWARD_MIN_SOLVED"):
+        item1 = "{0}: {1:,}".format("EPISODE_REWARD_MIN_SOLVED", config.EPISODE_REWARD_MIN_SOLVED)
+        print("{0:55}".format(item1), end="\n")
 
 
 def console_log(
@@ -667,8 +663,7 @@ def wandb_log(learner, wandb_obj, config):
         raise ValueError()
 
     log_dict = {
-        "[TEST] Episode Reward": learner.test_episode_reward_avg.value,
-        "[TEST] Std. of Episode Reward": learner.test_episode_reward_std.value,
+        "[TEST] Episode Reward": learner.test_episode_reward_min.value,
         "Mean Episode Reward": learner.last_mean_episode_reward.value,
         "Episode": learner.total_episodes.value,
         "Buffer Size": len(buffer),
@@ -772,26 +767,11 @@ def wandb_log_comparison(
             go.Scatter(
                 name=agent_labels[agent_idx],
                 x=comparison_stat.test_training_steps_lst,
-                y=comparison_stat.MEAN_test_episode_reward_avg_per_agent[agent_idx, :],
+                y=comparison_stat.MEAN_test_episode_reward_min_per_agent[agent_idx, :],
                 showlegend=True
             )
         )
-    test_episode_reward_avg = go.Figure(data=data, layout=plotly_layout)
-
-    ###############################################################################
-    plotly_layout.yaxis.title = "[TEST] Std. of Episode Reward"
-    plotly_layout.xaxis.title = "Training Steps ({0}, runs={1})".format(training_steps_str, run + 1)
-    data = []
-    for agent_idx, _ in enumerate(agents):
-        data.append(
-            go.Scatter(
-                name=agent_labels[agent_idx],
-                x=comparison_stat.test_training_steps_lst,
-                y=comparison_stat.MEAN_test_episode_reward_std_per_agent[agent_idx, :],
-                showlegend=True
-            )
-        )
-    test_episode_reward_std = go.Figure(data=data, layout=plotly_layout)
+    test_episode_reward_min = go.Figure(data=data, layout=plotly_layout)
 
     ###############################################################################
     plotly_layout.yaxis.title = "[TRAIN] Mean Episode Reward"
@@ -812,8 +792,7 @@ def wandb_log_comparison(
     train_last_mean_episode_reward = go.Figure(data=data, layout=plotly_layout)
 
     log_dict = {
-        "[TEST] episode_reward_avg": test_episode_reward_avg,
-        "[TEST] episode_reward_std": test_episode_reward_std,
+        "[TEST] episode_reward_avg": test_episode_reward_min,
         "[TRAIN] last_mean_episode_reward": train_last_mean_episode_reward,
     }
 
@@ -834,7 +813,7 @@ def put_seed_to_env(config, env):
         env.seed(config.SEED)
 
 
-def get_train_env(config, no_graphics=True, agent=None):
+def get_train_env(config, no_graphics=True):
     def make_gym_env(env_name):
         def _make():
             #############

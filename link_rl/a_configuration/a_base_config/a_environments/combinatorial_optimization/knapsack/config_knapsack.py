@@ -31,8 +31,7 @@ class ConfigKnapsack:
         self.MAX_TRAINING_STEPS = self.NUM_ITEM * 2_000
         self.BUFFER_CAPACITY = self.NUM_ITEM * 2_000
 
-        self.EPISODE_REWARD_AVG_SOLVED = 100
-        self.EPISODE_REWARD_STD_SOLVED = 20
+        self.EPISODE_REWARD_MIN_SOLVED = 100
 
         self.CONSOLE_LOG_INTERVAL_TRAINING_STEPS = 50
         self.MODEL_TYPE = ModelType.TINY_1D_CONVOLUTIONAL

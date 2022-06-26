@@ -147,7 +147,7 @@ def main_play(n_episodes):
     env_name = get_specific_env_name(config=config)
 
     model_load(
-        agent=agent, env_name=env_name, agent_type_name=config.AGENT_TYPE.name, config=config, need_train=False
+        agent=agent, env_name=env_name, agent_type_name=config.AGENT_TYPE.name, config=config
     )
 
     agent.model.eval()

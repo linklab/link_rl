@@ -13,8 +13,7 @@ class ConfigDmControlCartpoleBalance(ConfigDmControlCartpole):
         super(ConfigDmControlCartpoleBalance, self).__init__()
         self.ENV_NAME = "dm_control_cartpole_balance"
         self.TASK_NAME = "balance"
-        self.EPISODE_REWARD_AVG_SOLVED = 995.0
-        self.EPISODE_REWARD_STD_SOLVED = 5.0
+        self.EPISODE_REWARD_MIN_SOLVED = 995.0
 
 
 class ConfigDmControlCartpoleBalanceSparse(ConfigDmControlCartpole):
@@ -22,8 +21,7 @@ class ConfigDmControlCartpoleBalanceSparse(ConfigDmControlCartpole):
         super(ConfigDmControlCartpoleBalanceSparse, self).__init__()
         self.ENV_NAME = "dm_control_cartpole_balance_sparse"
         self.TASK_NAME = "balance_sparse"
-        self.EPISODE_REWARD_AVG_SOLVED = 450.0
-        self.EPISODE_REWARD_STD_SOLVED = 50.0
+        self.EPISODE_REWARD_MIN_SOLVED = 450.0
 
 
 class ConfigDmControlCartpoleSwingup(ConfigDmControlCartpole):
@@ -31,8 +29,7 @@ class ConfigDmControlCartpoleSwingup(ConfigDmControlCartpole):
         super(ConfigDmControlCartpoleSwingup, self).__init__()
         self.ENV_NAME = "dm_control_cartpole_swingup"
         self.TASK_NAME = "swingup"
-        self.EPISODE_REWARD_AVG_SOLVED = 450.0
-        self.EPISODE_REWARD_STD_SOLVED = 5.0
+        self.EPISODE_REWARD_MIN_SOLVED = 450.0
 
 
 class ConfigDmControlCartpoleSwingupSparse(ConfigDmControlCartpole):
@@ -40,8 +37,7 @@ class ConfigDmControlCartpoleSwingupSparse(ConfigDmControlCartpole):
         super(ConfigDmControlCartpoleSwingupSparse, self).__init__()
         self.ENV_NAME = "dm_control_cartpole_swingup_sparse"
         self.TASK_NAME = "swingup_sparse"
-        self.EPISODE_REWARD_AVG_SOLVED = 450
-        self.EPISODE_REWARD_STD_SOLVED = 50.0
+        self.EPISODE_REWARD_MIN_SOLVED = 450
 
 
 class ConfigDmControlCartpoleTwoPoles(ConfigDmControlCartpole):
@@ -49,8 +45,7 @@ class ConfigDmControlCartpoleTwoPoles(ConfigDmControlCartpole):
         super(ConfigDmControlCartpoleTwoPoles, self).__init__()
         self.ENV_NAME = "dm_control_cartpole_two_poles"
         self.TASK_NAME = "two_poles"
-        self.EPISODE_REWARD_AVG_SOLVED = 150
-        self.EPISODE_REWARD_STD_SOLVED = 10.0
+        self.EPISODE_REWARD_MIN_SOLVED = 150
 
 
 class ConfigDmControlCartpoleThreePoles(ConfigDmControlCartpole):
@@ -58,5 +53,4 @@ class ConfigDmControlCartpoleThreePoles(ConfigDmControlCartpole):
         super(ConfigDmControlCartpoleThreePoles, self).__init__()
         self.ENV_NAME = "dm_control_cartpole_three_poles"
         self.TASK_NAME = "three_poles"
-        self.EPISODE_REWARD_AVG_SOLVED = 499
-        self.EPISODE_REWARD_STD_SOLVED = 10.0
+        self.EPISODE_REWARD_MIN_SOLVED = 499

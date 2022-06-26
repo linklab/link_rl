@@ -4,8 +4,7 @@ from link_rl.g_utils.types import ModelType
 
 class ConfigBasicTaskAllocation:
     def __init__(self):
-        self.EPISODE_REWARD_AVG_SOLVED = 100
-        self.EPISODE_REWARD_STD_SOLVED = 20
+        self.EPISODE_REWARD_MIN_SOLVED = 100
 
         self.CONSOLE_LOG_INTERVAL_TRAINING_STEPS = 50
         self.MODEL_TYPE = ModelType.SMALL_LINEAR
