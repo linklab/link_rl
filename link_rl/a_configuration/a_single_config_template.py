@@ -573,10 +573,10 @@ config = ConfigCompetitionOlympicsIntegratedSac()
 ###########################
 ### BasicTaskAllocation ###
 ###########################
-from link_rl.a_configuration.b_single_config.combinatorial_optimization.config_basic_task_allocation import ConfigBasicTaskAllocation0Dqn
+from link_rl.a_configuration.b_single_config.task_allocation.config_basic_task_allocation import ConfigBasicTaskAllocation0Dqn
 config = ConfigBasicTaskAllocation0Dqn()
 
-from link_rl.a_configuration.b_single_config.combinatorial_optimization.config_basic_task_allocation import ConfigBasicTaskAllocation1Dqn
+from link_rl.a_configuration.b_single_config.task_allocation.config_basic_task_allocation import ConfigBasicTaskAllocation1Dqn
 config = ConfigBasicTaskAllocation1Dqn()
 
 

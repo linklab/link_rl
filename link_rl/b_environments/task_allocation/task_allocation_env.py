@@ -204,8 +204,6 @@ class TaskAllocationEnvironment(gym.Env):
         # with open('/home/link/link_rl/e_main/random_instances/task_allocation/edge_net.p', 'wb') as f:
         #     pickle.dump(self.edge_net, f)
 
-        self.custom_env_stat = TaskAllocationEnvironmentStat()
-
     def reset(self, *, seed: Optional[int] = None, return_info: bool = False, options: Optional[dict] = None,):
         # with open('/home/link/link_rl/e_main/random_instances/task_allocation/task.p', 'rb') as f:
         #     self.task = pickle.load(f)

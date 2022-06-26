@@ -75,8 +75,6 @@ class EnvironmentBasicTaskScheduling0(gym.Env):
         if self.INITIAL_TASK_DISTRIBUTION_FIXED:
             self.fixed_initial_internal_state = self.get_initial_internal_state()
 
-        self.custom_env_stat = EnvironmentBasicTaskScheduling0Stat()
-
     # Last Row in State
     # 0: Always 0
     # 1: initially set to LIMIT_WEIGHT_KNAPSACK, and decrease by an item's weight whenever the item is selected

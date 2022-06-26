@@ -1,3 +1,4 @@
+from link_rl.b_environments.combinatorial_optimization.knapsack.knapsack import KnapsackEnvStat
 from link_rl.g_utils.types import ModelType
 
 
@@ -38,6 +39,8 @@ class ConfigKnapsack:
         self.TARGET_SYNC_INTERVAL_TRAINING_STEPS = 100
 
         self.PRINT_DETAILS_AT_EPISODE_END = False
+
+        self.CUSTOM_ENV_STAT = KnapsackEnvStat()
 
 
 class ConfigKnapsack0(ConfigKnapsack):

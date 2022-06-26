@@ -139,8 +139,6 @@ class KnapsackEnv(gym.Env):
         if self.config.USE_HER:
             self.current_goal = 0.0
 
-        self.custom_env_stat = KnapsackEnvStat()
-
     def sort_items(self, items):
         if self.config.SORTING_TYPE is not None and self.config.SORTING_TYPE == 1:    # Value Per Weight
             value_per_weights = np.expand_dims((items[:, 0] / items[:, 1]), axis=1)

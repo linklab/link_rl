@@ -4,9 +4,6 @@ import copy
 from gym.spaces import Box, Discrete
 from gym.vector import VectorEnv
 
-from link_rl.a_configuration.a_base_config.a_environments.combinatorial_optimization.knapsack.config_knapsack import ConfigKnapsack
-from link_rl.a_configuration.a_base_config.a_environments.task_allocation.config_basic_task_allocation import \
-    ConfigBasicTaskAllocation
 from link_rl.a_configuration.a_base_config.c_models.config_recurrent_convolutional_models import \
     ConfigRecurrent2DConvolutionalModel, ConfigRecurrent1DConvolutionalModel
 from link_rl.a_configuration.a_base_config.c_models.config_recurrent_linear_models import ConfigRecurrentLinearModel
@@ -89,8 +86,6 @@ class Learner(mp.Process):
 
         self.modified_env_name = self.config.ENV_NAME.split("/")[
             1] if "/" in self.config.ENV_NAME else self.config.ENV_NAME
-
-        self.custom_env_stat = None
 
     def generator_on_policy_transition(self):
         observations, infos = self.train_env.reset(return_info=True)
@@ -187,30 +182,11 @@ class Learner(mp.Process):
             self.train_env = get_train_env(self.config)
 
     def set_test_env(self):
-        combinatorial_env_conditions = [
-            isinstance(self.config, ConfigKnapsack),
-            isinstance(self.config, ConfigBasicTaskAllocation)
-        ]
-
-        if any(combinatorial_env_conditions):
-            test_env_equal_to_train_env_conditions = [
-                isinstance(self.config, ConfigKnapsack) and self.config.INITIAL_ITEM_DISTRIBUTION_FIXED is True,
-                isinstance(self.config,
-                           ConfigBasicTaskAllocation) and self.config.INITIAL_TASK_DISTRIBUTION_FIXED is True
-            ]
-            if any(test_env_equal_to_train_env_conditions):
-                self.test_env = self.train_env
-            else:
-                self.test_env = get_single_env(self.config)
-        else:
-            self.test_env = get_single_env(self.config)
+        self.test_env = get_single_env(self.config)
 
     def train_loop(self):
         self.set_train_env()
         self.set_test_env()
-
-        if hasattr(self.test_env, "custom_env_stat"):
-            self.custom_env_stat = self.test_env.custom_env_stat
 
         if self.config.USE_WANDB:
             wandb_obj = get_wandb_obj(self.config, self.agent)
@@ -325,8 +301,8 @@ class Learner(mp.Process):
                 #   TRAIN END   #
                 #################
 
-            if self.custom_env_stat is not None:
-                self.test_env.custom_env_stat.train_evaluate(last_train_env_info)
+            if self.config.CUSTOM_ENV_STAT is not None:
+                self.config.CUSTOM_ENV_STAT.train_evaluate(last_train_env_info)
 
             if self.training_step.value >= self.next_console_log:
                 total_training_time = time.time() - self.train_start_time
@@ -388,8 +364,8 @@ class Learner(mp.Process):
             self.test_episode_reward_std.value
         )
 
-        if self.custom_env_stat is not None:
-            test_str += ", " + self.test_env.custom_env_stat.test_evaluation_str()
+        if self.config.CUSTOM_ENV_STAT is not None:
+            test_str += ", " + self.config.CUSTOM_ENV_STAT.test_evaluation_str()
 
         test_str += ", Elapsed Time from Training Start: {0}".format(formatted_elapsed_time)
 
@@ -446,8 +422,8 @@ class Learner(mp.Process):
 
         episode_reward_lst = []
 
-        if self.custom_env_stat is not None:
-            self.test_env.custom_env_stat.test_reset()
+        if self.config.CUSTOM_ENV_STAT is not None:
+            self.config.CUSTOM_ENV_STAT.test_reset()
 
         for i in range(n_test_episodes):
             episode_reward = 0  # cumulative_reward
@@ -532,11 +508,11 @@ class Learner(mp.Process):
 
             episode_reward_lst.append(episode_reward)
 
-            if self.custom_env_stat is not None:
-                self.test_env.custom_env_stat.test_episode_done(info=info)
+            if self.config.CUSTOM_ENV_STAT is not None:
+                self.config.CUSTOM_ENV_STAT.test_episode_done(info=info)
 
-        if self.custom_env_stat is not None:
-            self.test_env.custom_env_stat.test_evaluate()
+        if self.config.CUSTOM_ENV_STAT is not None:
+            self.config.CUSTOM_ENV_STAT.test_evaluate()
             
         self.agent.model.train()
 

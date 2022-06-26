@@ -1,3 +1,4 @@
+from link_rl.b_environments.task_allocation.basic_task_allocation import EnvironmentBasicTaskScheduling0Stat
 from link_rl.g_utils.types import ModelType
 
 
@@ -17,6 +18,8 @@ class ConfigBasicTaskAllocation:
         self.INITIAL_TASK_DISTRIBUTION_FIXED = True
         self.MAX_TRAINING_STEPS = self.NUM_TASK * 2_000
         self.BUFFER_CAPACITY = self.NUM_TASK * 1_000
+
+        self.CUSTOM_ENV_STAT = EnvironmentBasicTaskScheduling0Stat()
 
 
 class ConfigBasicTaskAllocation0(ConfigBasicTaskAllocation):

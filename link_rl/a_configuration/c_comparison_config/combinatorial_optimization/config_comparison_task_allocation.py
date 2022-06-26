@@ -1,5 +1,5 @@
 from link_rl.a_configuration.a_base_config.config_comparison_base import ConfigComparisonBase
-from link_rl.a_configuration.b_single_config.combinatorial_optimization.config_basic_task_allocation import ConfigBasicTaskAllocation0Dqn, \
+from link_rl.a_configuration.b_single_config.task_allocation.config_basic_task_allocation import ConfigBasicTaskAllocation0Dqn, \
     ConfigBasicTaskAllocation0DoubleDqn, ConfigBasicTaskAllocation0DuelingDqn, ConfigBasicTaskAllocation0DoubleDuelingDqn
 
 

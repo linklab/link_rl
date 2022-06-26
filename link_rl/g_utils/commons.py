@@ -569,8 +569,8 @@ def console_log(
     else:
         pass
 
-    if learner.custom_env_stat is not None:
-        console_log += ", " + learner.custom_env_stat.train_evaluation_str()
+    if config.CUSTOM_ENV_STAT is not None:
+        console_log += ", " + config.CUSTOM_ENV_STAT.train_evaluation_str()
 
     print(console_log)
 
@@ -718,8 +718,8 @@ def wandb_log(learner, wandb_obj, config):
         log_dict["grad_max"] = learner.agent.last_model_grad_max.value
         log_dict["grad_l2"] = learner.agent.last_model_grad_l2.value
 
-    if learner.custom_env_stat is not None:
-        learner.custom_env_stat.add_wandb_log(log_dict=log_dict)
+    if config.CUSTOM_ENV_STAT is not None:
+        config.CUSTOM_ENV_STAT.add_wandb_log(log_dict=log_dict)
 
     wandb_obj.log(log_dict)
 

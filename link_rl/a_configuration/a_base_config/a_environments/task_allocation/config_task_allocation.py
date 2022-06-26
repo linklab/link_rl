@@ -1,3 +1,4 @@
+from link_rl.b_environments.task_allocation.task_allocation_env import TaskAllocationEnvironmentStat
 from link_rl.g_utils.types import ModelType
 
 
@@ -35,6 +36,8 @@ class ConfigTaskAllocation:
         self.CONSOLE_LOG_INTERVAL_TRAINING_STEPS = 50
         self.MODEL_TYPE = ModelType.SMALL_LINEAR
         self.TARGET_SYNC_INTERVAL_TRAINING_STEPS = 100
+
+        self.CUSTOM_ENV_STAT = TaskAllocationEnvironmentStat()
 
 
 class ConfigTaskAllocationInitParam(ConfigTaskAllocation):
