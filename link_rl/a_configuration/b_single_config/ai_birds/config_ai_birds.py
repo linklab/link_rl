@@ -93,5 +93,6 @@ class ConfigAiBirdsPpo(ConfigBase, ConfigAiBirds, ConfigPpo):
         self.MAX_TRAINING_STEPS = 1_000_000
         self.MODEL_TYPE = ModelType.MEDIUM_2D_CONVOLUTIONAL
 
-        self.CONSOLE_LOG_INTERVAL_TRAINING_STEPS = 1
+        self.CONSOLE_LOG_INTERVAL_TRAINING_STEPS = self.PPO_K_EPOCH
         self.TEST_INTERVAL_TRAINING_STEPS = 10
+        self.BATCH_SIZE = 128
