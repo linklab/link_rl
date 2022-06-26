@@ -1,5 +1,9 @@
 import warnings
-import copy
+from collections import deque
+
+import torch.multiprocessing as mp
+import numpy as np
+import time
 
 from gym.spaces import Box, Discrete
 from gym.vector import VectorEnv
@@ -12,16 +16,10 @@ from link_rl.d_agents.off_policy.tdmpc.helper import Episode
 warnings.filterwarnings('ignore')
 warnings.simplefilter("ignore")
 
-from collections import deque
-
-import torch.multiprocessing as mp
-import numpy as np
-import time
-
 from link_rl.e_main.supports.actor import Actor
-from link_rl.g_utils.commons import model_save, console_log, wandb_log, get_wandb_obj, get_train_env, get_single_env, MeanBuffer
-from link_rl.g_utils.types import AgentType, AgentMode, Transition, Episode_history, OnPolicyAgentTypes, OffPolicyAgentTypes, \
-    HerConstant
+from link_rl.g_utils.commons import model_save, console_log, wandb_log, get_wandb_obj, get_train_env, get_single_env
+from link_rl.g_utils.commons import MeanBuffer
+from link_rl.g_utils.types import AgentType, AgentMode, Transition, OnPolicyAgentTypes, OffPolicyAgentTypes, HerConstant
 
 
 class Learner(mp.Process):
@@ -414,7 +412,7 @@ class Learner(mp.Process):
         for i in range(n_test_episodes):
             episode_reward = 0  # cumulative_reward
             episode_step = 0
-            step = episode_step
+
             # Environment ???????? ???? ??????
             observation, info = self.test_env.reset(return_info=True)
 
@@ -499,7 +497,7 @@ class Learner(mp.Process):
 
         if self.config.CUSTOM_ENV_STAT is not None:
             self.config.CUSTOM_ENV_STAT.test_evaluate()
-            
+
         self.agent.model.train()
 
         if self.config.AGENT_TYPE in [AgentType.A3C, AgentType.ASYNCHRONOUS_PPO]:
