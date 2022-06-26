@@ -601,11 +601,11 @@ config = ConfigAiBirdsDuelingDqn()
 from link_rl.a_configuration.b_single_config.ai_birds.config_ai_birds import ConfigAiBirdsDoubleDuelingDqn
 config = ConfigAiBirdsDoubleDuelingDqn()
 
-from link_rl.a_configuration.b_single_config.ai_birds.config_ai_birds import ConfigAiBirdsA3c
-config = ConfigAiBirdsA3c()
+from link_rl.a_configuration.b_single_config.ai_birds.config_ai_birds import ConfigAiBirdsA2c
+config = ConfigAiBirdsA2c()
 
-from link_rl.a_configuration.b_single_config.ai_birds.config_ai_birds import ConfigAiBirdsAsynchronousPpo
-config = ConfigAiBirdsAsynchronousPpo()
+from link_rl.a_configuration.b_single_config.ai_birds.config_ai_birds import ConfigAiBirdsPpo
+config = ConfigAiBirdsPpo()
 
 
 if __name__ == "__main__":

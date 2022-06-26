@@ -1,7 +1,7 @@
 from link_rl.a_configuration.a_base_config.a_environments.ai_birds.config_ai_birds import ConfigAiBirds
 from link_rl.a_configuration.a_base_config.b_agents.config_agents_off_policy import ConfigDqn, ConfigDoubleDqn, \
     ConfigDuelingDqn, ConfigDoubleDuelingDqn
-from link_rl.a_configuration.a_base_config.b_agents.config_agents_on_policy import ConfigA3c, ConfigAsynchronousPpo
+from link_rl.a_configuration.a_base_config.b_agents.config_agents_on_policy import ConfigA2c, ConfigPpo
 from link_rl.a_configuration.a_base_config.config_single_base import ConfigBase
 from link_rl.g_utils.types import ModelType
 
@@ -71,11 +71,11 @@ class ConfigAiBirdsDoubleDuelingDqn(ConfigBase, ConfigAiBirds, ConfigDoubleDueli
 
 
 # OnPolicy
-class ConfigAiBirdsA3c(ConfigBase, ConfigAiBirds, ConfigA3c):
+class ConfigAiBirdsA2c(ConfigBase, ConfigAiBirds, ConfigA2c):
     def __init__(self):
         ConfigBase.__init__(self)
         ConfigAiBirds.__init__(self)
-        ConfigA3c.__init__(self)
+        ConfigA2c.__init__(self)
 
         self.MAX_TRAINING_STEPS = 1_000_000
         self.MODEL_TYPE = ModelType.MEDIUM_2D_CONVOLUTIONAL
@@ -84,11 +84,11 @@ class ConfigAiBirdsA3c(ConfigBase, ConfigAiBirds, ConfigA3c):
         self.TEST_INTERVAL_TRAINING_STEPS = 10
 
 
-class ConfigAiBirdsAsynchronousPpo(ConfigBase, ConfigAiBirds, ConfigAsynchronousPpo):
+class ConfigAiBirdsPpo(ConfigBase, ConfigAiBirds, ConfigPpo):
     def __init__(self):
         ConfigBase.__init__(self)
         ConfigAiBirds.__init__(self)
-        ConfigAsynchronousPpo.__init__(self)
+        ConfigPpo.__init__(self)
 
         self.MAX_TRAINING_STEPS = 1_000_000
         self.MODEL_TYPE = ModelType.MEDIUM_2D_CONVOLUTIONAL

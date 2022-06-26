@@ -232,7 +232,6 @@ def set_config(config):
 
     elif config.AGENT_TYPE == AgentType.PPO:
         config.BUFFER_CAPACITY = config.BATCH_SIZE
-        config.CONSOLE_LOG_INTERVAL_TRAINING_STEPS = 10 * config.PPO_K_EPOCH
 
     elif config.AGENT_TYPE == AgentType.ASYNCHRONOUS_PPO:
         config.BUFFER_CAPACITY = config.BATCH_SIZE
