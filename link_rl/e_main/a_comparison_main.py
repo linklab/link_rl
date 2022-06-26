@@ -95,7 +95,7 @@ def main():
         learner_comparison = LearnerComparison(
             run=run, agents=agents, wandb_obj=wandb_obj, config_c=config_c, comparison_stat=comparison_stat
         )
-        learner_comparison.train_comparison_loop()
+        learner_comparison.train_comparison_loop(run=run)
 
     if config_c.USE_WANDB:
         wandb_obj.finish()

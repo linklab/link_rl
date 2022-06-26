@@ -569,61 +569,13 @@ def console_log(
     else:
         pass
 
-    if config.ENV_NAME in ["Task_Allocation_v0"]:
-        info = learner.env_info
-
-        resource_allocation_info = ", Alloc.: "
-        resource_allocation_info += "/".join(map(str, info["Resources allocated"]))
-        resource_allocation_info += ", Limit: "
-        resource_allocation_info += "/".join(map(str, info["Limit"]))
-        resource_allocation_info += ",, Util.: "
-        resource_allocation_info += "/".join(map(str, np.round((100 * (np.array(info["Resources allocated"]) / np.array(info["Limit"]))), 1).tolist()))
-        resource_allocation_info += " Tasks: {0}, Actions: {1}".format(sorted(info["Tasks selected"]), info['Actions sequence'])
-
-        # resources_allocated_info = ""
-        # limit_info = ""
-        #
-        # for i in range(config.NUM_RESOURCES):
-        #     resources_allocated_info += info["Resources allocated"][i]
-        #     limit_info += info["Limit"][i]
-        # resource_allocation_info = " Alloc.: {0:3}, Limit: {1:3}, Util.: {2:5.1f}%, Tasks: {3}, Actions: {4}".format(
-        #     info["Resources allocated"], info["Limit"], 100 * (np.array(info["Resources allocated"]) / np.array(info["Limit"])).tolist(),
-        #     sorted(info["Tasks selected"]), info['Actions sequence']
-        # )
-
-        console_log += resource_allocation_info
-
-    if config.ENV_NAME in ["Task_Allocation_v1"]:
-        info = learner.env_info
-
-        resource_utilization_info = ", Resource Utilization: {0:>4.2f}".format(info[0]["Resource_utilization"])
-        resource_utilization_info += ", Average latency: {0:>4.2f}".format(learner.test_average_latency.value)
-        resource_utilization_info += ", Rejection ratio: {0:>4.2f}".format(info[0]["Rejection_ratio"])
-
-        console_log += resource_utilization_info
-
-    if config.ENV_NAME in ["Knapsack_Problem_v0"]:
-        info = learner.env_info
-
-        # knapsack_info = ", Value.: {0:5.1f}, Weight: {1:5.1f}, Items: {2}, Actions: {3}, Sol. Found: {4}".format(
-        #     info["Value"], info["Weight"], sorted(info["Items selected"]), info['Actions sequence'], info['last_ep_solution_found']
-        # )
-
-        knapsack_info = ", Items Value Selected: {0:5.1f}, Items Weight Selected: {1:5.1f}".format(
-            info["last_ep_value_of_all_items_selected"], info["last_ep_weight_of_all_items_selected"]
-        )
-
-        if info['last_ep_simple_solution_found'] is not None:
-            knapsack_info += ", Sol. Found: {0} ({1:5.3f}, Ep. Found: {2:,})".format(
-                info['last_ep_simple_solution_found'][0], info['last_ep_simple_solution_found'][1], info['last_ep_simple_solution_found'][2]
-            )
-
-        console_log += knapsack_info
+    if learner.custom_env_stat is not None:
+        console_log += ", " + learner.custom_env_stat.train_evaluation_str()
 
     print(console_log)
 
 
-def console_log_comparison(learner_c,
+def console_log_comparison(
         run, total_time_step, total_episodes_per_agent,
         last_mean_episode_reward_per_agent, n_rollout_transitions_per_agent, training_steps_per_agent,
         agents, config_c
@@ -669,9 +621,6 @@ def console_log_comparison(learner_c,
                 agent.last_critic_loss.value, agent.last_actor_objective.value
             )
         else:
-            pass
-
-        if config_c.ENV_NAME in ["Knapsack_Problem_v0"]:
             pass
 
         print(console_log)
@@ -725,19 +674,6 @@ def wandb_log(learner, wandb_obj, config):
         "Train Step Rate": learner.train_step_rate.value
     }
 
-    if config.ENV_NAME in ["Task_Allocation_v0"]:
-        log_dict["Allocation"] = learner.env_info["Resources allocated"]
-        log_dict["Utilization"] = 100 * learner.env_info["Utilization"]
-        log_dict["[TEST] Utilization"] = 100 * learner.test_episode_utilization.value
-    if config.ENV_NAME in ["Task_Allocation_v1"]:
-        log_dict["[TEST]Resource Utilization"] = learner.env_info[0]["Resource_utilization"]
-        log_dict["[TEST]Average Latency"] = learner.test_average_latency.value
-        log_dict["[TEST]Rejection ratio"] = learner.test_rejection_ratio.value
-    if config.ENV_NAME in ["Knapsack_Problem_v0"]:
-        log_dict["Value of All Item Selected"] = learner.env_info["last_ep_value_of_all_items_selected"]
-        log_dict["Ratio (Value to Optimal Value)"] = learner.env_info["last_ep_ratio"]
-        log_dict["[TEST] Value of All Item Selected"] = learner.test_episode_items_value.value
-        log_dict["[TEST] Ratio (Value to Optimal Value)"] = learner.test_episode_ratio_value.value
     if config.AGENT_TYPE in [AgentType.DQN, AgentType.DUELING_DQN, AgentType.DOUBLE_DQN, AgentType.DOUBLE_DUELING_DQN]:
         log_dict["QNet Loss"] = learner.agent.last_q_net_loss.value
         log_dict["Epsilon"] = learner.agent.epsilon.value
@@ -781,6 +717,9 @@ def wandb_log(learner, wandb_obj, config):
     else:
         log_dict["grad_max"] = learner.agent.last_model_grad_max.value
         log_dict["grad_l2"] = learner.agent.last_model_grad_l2.value
+
+    if learner.custom_env_stat is not None:
+        learner.custom_env_stat.add_wandb_log(log_dict=log_dict)
 
     wandb_obj.log(log_dict)
 
@@ -868,91 +807,20 @@ def wandb_log_comparison(
 
     train_last_mean_episode_reward = go.Figure(data=data, layout=plotly_layout)
 
-
-    if config_c.ENV_NAME in ["Knapsack_Problem_v0"]:
-        ###############################################################################
-        plotly_layout.yaxis.title = "[TEST] Value of Items Selected"
-        plotly_layout.xaxis.title = "Training Steps ({0}, runs={1}, over {2} Episodes)".format(
-            training_steps_str, run + 1, n_episodes_for_mean_calculation
-        )
-        data = []
-        for agent_idx, _ in enumerate(agents):
-            data.append(
-                go.Scatter(
-                    name=agent_labels[agent_idx],
-                    x=comparison_stat.test_training_steps_lst,
-                    y=comparison_stat.MEAN_test_value_of_items_selected_per_agent[agent_idx, :],
-                    showlegend=True
-                )
-            )
-
-        test_value_of_items_selected_per_agent = go.Figure(data=data, layout=plotly_layout)
-
-        ###############################################################################
-        plotly_layout.yaxis.title = "[TEST] Ratio (Value to Optimal Value)"
-        plotly_layout.xaxis.title = "Training Steps ({0}, runs={1}, over {2} Episodes)".format(
-            training_steps_str, run + 1, n_episodes_for_mean_calculation
-        )
-        data = []
-        for agent_idx, _ in enumerate(agents):
-            data.append(
-                go.Scatter(
-                    name=agent_labels[agent_idx],
-                    x=comparison_stat.test_training_steps_lst,
-                    y=comparison_stat.MEAN_test_ratio_value_to_optimal_value[agent_idx, :],
-                    showlegend=True
-                )
-            )
-
-        test_ratio_value_to_optimal_value = go.Figure(data=data, layout=plotly_layout)
-
-        ###############################################################################
-        plotly_layout.yaxis.title = "[TRAIN] Value of Items Selected"
-        plotly_layout.xaxis.title = "Training Steps ({0}, runs={1}, over {2} Episodes)".format(
-            training_steps_str, run + 1, n_episodes_for_mean_calculation
-        )
-        data = []
-        for agent_idx, _ in enumerate(agents):
-            data.append(
-                go.Scatter(
-                    name=agent_labels[agent_idx],
-                    x=comparison_stat.test_training_steps_lst,
-                    y=comparison_stat.MEAN_train_value_of_items_selected_per_agent[agent_idx, :],
-                    showlegend=True
-                )
-            )
-
-        train_value_of_items_selected_per_agent = go.Figure(data=data, layout=plotly_layout)
-
-        ###############################################################################
-        plotly_layout.yaxis.title = "[TRAIN] Ratio (Value to Optimal Value)"
-        plotly_layout.xaxis.title = "Training Steps ({0}, runs={1}, over {2} Episodes)".format(
-            training_steps_str, run + 1, n_episodes_for_mean_calculation
-        )
-        data = []
-        for agent_idx, _ in enumerate(agents):
-            data.append(
-                go.Scatter(
-                    name=agent_labels[agent_idx],
-                    x=comparison_stat.test_training_steps_lst,
-                    y=comparison_stat.MEAN_train_ratio_value_to_optimal_value[agent_idx, :],
-                    showlegend=True
-                )
-            )
-
-        train_ratio_value_to_optimal_value = go.Figure(data=data, layout=plotly_layout)
-
     log_dict = {
         "[TEST] episode_reward_avg": test_episode_reward_avg,
         "[TEST] episode_reward_std": test_episode_reward_std,
         "[TRAIN] last_mean_episode_reward": train_last_mean_episode_reward,
     }
 
-    if config_c.ENV_NAME in ["Knapsack_Problem_v0"]:
-        log_dict["[TEST] value_of_items_selected_per_agent"] = test_value_of_items_selected_per_agent
-        log_dict["[TEST] ratio_value_to_optimal_value"] = test_ratio_value_to_optimal_value
-        log_dict["[TRAIN] value_of_items_selected_per_agent"] = train_value_of_items_selected_per_agent
-        log_dict["[TRAIN] ratio_value_to_optimal_value"] = train_ratio_value_to_optimal_value
+    if config_c.CUSTOM_ENV_COMPARISON_STAT is not None:
+        config_c.CUSTOM_ENV_COMPARISON_STAT.add_wandb_log_comparison(
+            plotly_layout=plotly_layout,
+            training_steps_str=training_steps_str,
+            run=run,
+            test_training_steps_lst=comparison_stat.test_training_steps_lst,
+            log_dict=log_dict
+        )
 
     wandb_obj.log(log_dict)
 

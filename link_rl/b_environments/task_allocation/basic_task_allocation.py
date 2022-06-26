@@ -8,11 +8,46 @@ import copy
 import numpy as np
 
 from link_rl.a_configuration.a_base_config.a_environments.task_allocation.config_basic_task_allocation import ConfigBasicTaskAllocation0
+from link_rl.g_utils.stats import CustomEnvStat
+
 
 class DoneReasonType0(enum.Enum):
     TYPE_1 = "Resource Limit Exceeded"
     TYPE_2 = "Resource Remains"
     TYPE_3 = "All Tasks Selected"
+
+
+class EnvironmentBasicTaskScheduling0Stat(CustomEnvStat):
+    def __init__(self):
+        super(EnvironmentBasicTaskScheduling0Stat, self).__init__()
+        self.test_utilization_lst = []
+
+        self.test_last_avg_utilization = 0.0
+
+        self.train_last_utilization = 0.0
+
+    def test_reset(self):
+        self.test_utilization_lst.clear()
+
+    def test_episode_done(self, info):
+        self.test_utilization_lst.append(info["Utilization"])
+
+    def test_evaluate(self):
+        self.test_last_avg_utilization = np.average(self.test_utilization_lst)
+
+    def test_evaluation_str(self):
+        return "Utilization: {0:.2f}".format(self.test_last_avg_utilization)
+
+    def train_evaluate(self, last_train_env_info):
+        self.train_last_utilization = last_train_env_info["Utilization"]
+
+    def train_evaluation_str(self):
+        _train_evaluation_str = "Resource Utilization: {0:>4.2f}".format(self.train_last_utilization)
+        return _train_evaluation_str
+
+    def add_wandb_log(self, log_dict):
+        log_dict["Utilization"] = self.train_last_utilization
+        log_dict["[TEST] Utilization"] = self.test_last_avg_utilization
 
 
 class EnvironmentBasicTaskScheduling0(gym.Env):
@@ -39,6 +74,8 @@ class EnvironmentBasicTaskScheduling0(gym.Env):
 
         if self.INITIAL_TASK_DISTRIBUTION_FIXED:
             self.fixed_initial_internal_state = self.get_initial_internal_state()
+
+        self.custom_env_stat = EnvironmentBasicTaskScheduling0Stat()
 
     # Last Row in State
     # 0: Always 0
@@ -149,17 +186,17 @@ class EnvironmentBasicTaskScheduling0(gym.Env):
 
         observation = self.observation()
 
-        if done:
-            reward = self.reward(done_type=info['DoneReasonType'])
-        else:
-            reward = self.reward(done_type=None)
-
         info['Actions sequence'] = self.actions_sequence
         info['Tasks selected'] = self.tasks_selected
         info['Resources allocated'] = self.resource_of_all_tasks_selected
         info['Limit'] = self.INITIAL_RESOURCES_CAPACITY
         info['Utilization'] = sum(self.resource_of_all_tasks_selected) / self.SUM_RESOURCE_CAPACITY if sum(self.resource_of_all_tasks_selected) / self.SUM_RESOURCE_CAPACITY <= 1.0 else 0.0
         info['internal_state'] = copy.deepcopy(self.internal_state)
+
+        if done:
+            reward = self.reward(done_type=info['DoneReasonType'])
+        else:
+            reward = self.reward(done_type=None)
 
         return observation, reward, done, info
 

@@ -6,6 +6,7 @@ import copy
 from typing import Optional
 import random
 import datetime as dt
+import plotly.graph_objects as go
 
 from link_rl.a_configuration.a_base_config.c_models.config_convolutional_models import Config1DConvolutionalModel
 from link_rl.a_configuration.a_base_config.c_models.config_linear_models import ConfigLinearModel
@@ -16,6 +17,7 @@ from link_rl.a_configuration.a_base_config.config_parse import SYSTEM_USER_NAME,
 from link_rl.b_environments.combinatorial_optimization.knapsack.boto3_knapsack import load_instance, upload_file, load_solution
 from link_rl.b_environments.combinatorial_optimization.knapsack.knapsack_gurobi import model_kp
 from link_rl.g_utils.commons import set_config
+from link_rl.g_utils.stats import CustomEnvStat, CustomEnvComparisonStat
 from link_rl.g_utils.types import HerConstant
 
 STATIC_ITEMS_50 = np.asarray([
@@ -136,6 +138,8 @@ class KnapsackEnv(gym.Env):
 
         if self.config.USE_HER:
             self.current_goal = 0.0
+
+        self.custom_env_stat = KnapsackEnvStat()
 
     def sort_items(self, items):
         if self.config.SORTING_TYPE is not None and self.config.SORTING_TYPE == 1:    # Value Per Weight
@@ -564,6 +568,241 @@ def run_env():
                 print("\n")
             observation = next_observation
             info = next_info
+
+
+class KnapsackEnvStat(CustomEnvStat):
+    def __init__(self):
+        super(KnapsackEnvStat, self).__init__()
+        self.test_items_value_lst = []
+        self.test_ratio_value_lst = []
+
+        self.test_last_avg_items_value = 0.0
+        self.test_last_avg_ratio_value = 0.0
+
+        self.train_last_ep_value_of_all_items_selected = 0.0
+        self.train_last_ep_weight_of_all_items_selected = 0.0
+        self.train_last_ep_simple_solution_found = None
+        self.train_last_ep_ratio_value = 0.0
+
+    def test_reset(self):
+        self.test_items_value_lst.clear()
+        self.test_ratio_value_lst.clear()
+
+    def test_episode_done(self, info):
+        self.test_items_value_lst.append(info["last_ep_value_of_all_items_selected"])
+        self.test_ratio_value_lst.append(info["last_ep_ratio"])
+
+    def test_evaluate(self):
+        self.test_last_avg_items_value = np.average(self.test_items_value_lst)
+        self.test_last_avg_ratio_value = np.average(self.test_ratio_value_lst)
+
+    def test_evaluation_str(self):
+        _test_evaluation_str = "Item value: {0:.2f}".format(self.test_last_avg_items_value)
+        _test_evaluation_str += ", Ratio: {0:.2f}".format(self.test_last_avg_ratio_value)
+        return _test_evaluation_str
+
+    def train_evaluate(self, last_train_env_info):
+        self.train_last_ep_value_of_all_items_selected = last_train_env_info["last_ep_value_of_all_items_selected"]
+        self.train_last_ep_weight_of_all_items_selected = last_train_env_info["last_ep_weight_of_all_items_selected"]
+        self.train_last_ep_simple_solution_found = last_train_env_info["last_ep_simple_solution_found"]
+        if self.train_last_ep_simple_solution_found:
+            self.train_last_ep_ratio_value = self.train_last_ep_simple_solution_found[1]
+
+    def train_evaluation_str(self):
+        _train_evaluation_str = "Items Value Selected: {0:5.1f}, Items Weight Selected: {1:5.1f}".format(
+            self.train_last_ep_value_of_all_items_selected, self.train_last_ep_weight_of_all_items_selected
+        )
+
+        if self.train_last_ep_simple_solution_found is not None:
+            _train_evaluation_str += ", Sol. Found: {0} (Ratio: {1:5.3f}, Ep. Found: {2:,})".format(
+                self.train_last_ep_simple_solution_found[0],
+                self.train_last_ep_simple_solution_found[1],
+                self.train_last_ep_simple_solution_found[2]
+            )
+
+        return _train_evaluation_str
+
+    def add_wandb_log(self, log_dict):
+        log_dict["Value of All Item Selected"] = self.train_last_ep_value_of_all_items_selected
+        log_dict["Ratio (Value to Optimal Value)"] = self.train_last_ep_ratio_value
+        log_dict["[TEST] Value of All Item Selected"] = self.test_last_avg_items_value
+        log_dict["[TEST] Ratio (Value to Optimal Value)"] = self.test_last_avg_ratio_value
+
+
+class KnapsackEnvComparisonStat(CustomEnvComparisonStat):
+    def __init__(
+            self, n_runs, agents_labels, num_stat_data_size, n_episodes_for_mean_calculation
+    ):
+        super(KnapsackEnvComparisonStat, self).__init__(
+            n_runs, agents_labels, num_stat_data_size, n_episodes_for_mean_calculation
+        )
+
+        self.test_last_ep_value_of_all_items_selected_lst = []
+        self.test_last_ep_ratio_lst = []
+
+        self.test_last_avg_ep_value_of_all_items_selected = 0.0
+        self.test_last_avg_ep_ratio = 0.0
+
+        self.train_last_ep_value_of_all_items_selected_per_agent = []
+        self.train_last_ep_ratio_per_agent = []
+
+        self.test_value_of_items_selected_per_agent = np.zeros((n_runs, self.n_agents, self.num_stat_data_size))
+        self.MIN_test_value_of_items_selected_per_agent = np.zeros((self.n_agents, self.num_stat_data_size))
+        self.MEAN_test_value_of_items_selected_per_agent = np.zeros((self.n_agents, self.num_stat_data_size))
+        self.MAX_test_value_of_items_selected_per_agent = np.zeros((self.n_agents, self.num_stat_data_size))
+
+        self.train_value_of_items_selected_per_agent = np.zeros((n_runs, self.n_agents, self.num_stat_data_size))
+        self.MIN_train_value_of_items_selected_per_agent = np.zeros((self.n_agents, self.num_stat_data_size))
+        self.MEAN_train_value_of_items_selected_per_agent = np.zeros((self.n_agents, self.num_stat_data_size))
+        self.MAX_train_value_of_items_selected_per_agent = np.zeros((self.n_agents, self.num_stat_data_size))
+
+        self.test_ratio_value_to_optimal_value = np.zeros((n_runs, self.n_agents, self.num_stat_data_size))
+        self.MIN_test_ratio_value_to_optimal_value = np.zeros((self.n_agents, self.num_stat_data_size))
+        self.MEAN_test_ratio_value_to_optimal_value = np.zeros((self.n_agents, self.num_stat_data_size))
+        self.MAX_test_ratio_value_to_optimal_value = np.zeros((self.n_agents, self.num_stat_data_size))
+
+        self.train_ratio_value_to_optimal_value = np.zeros((n_runs, self.n_agents, self.num_stat_data_size))
+        self.MIN_train_ratio_value_to_optimal_value = np.zeros((self.n_agents, self.num_stat_data_size))
+        self.MEAN_train_ratio_value_to_optimal_value = np.zeros((self.n_agents, self.num_stat_data_size))
+        self.MAX_train_ratio_value_to_optimal_value = np.zeros((self.n_agents, self.num_stat_data_size))
+
+    def test_reset(self):
+        self.test_last_ep_value_of_all_items_selected_lst.clear()
+        self.test_last_ep_ratio_lst.clear()
+
+    def test_episode_done(self, info):
+        self.test_last_ep_value_of_all_items_selected_lst.append(info['last_ep_value_of_all_items_selected'])
+        self.test_last_ep_ratio_lst.append(info['last_ep_ratio'])
+
+    def test_evaluate(self):
+        self.test_last_avg_ep_value_of_all_items_selected = np.average(self.test_last_ep_value_of_all_items_selected_lst)
+        self.test_last_avg_ep_ratio = np.average(self.test_last_ep_ratio_lst)
+
+    def test_evaluation_str(self):
+        _test_evaliation_str = "Items Value Selected - Average: {0:5.1f}, Ratio (Value to Optimal Value): {1:5.1f})".format(
+                self.test_last_avg_ep_value_of_all_items_selected, self.test_last_avg_ep_ratio
+        )
+        return _test_evaliation_str
+
+    def train_reset(self):
+        self.train_last_ep_value_of_all_items_selected_per_agent.append(0.0)
+        self.train_last_ep_ratio_per_agent.append(0.0)
+
+    def train_evaluate(self, agent_idx, last_train_env_info):
+        self.train_last_ep_value_of_all_items_selected_per_agent[agent_idx] = \
+            last_train_env_info['last_ep_weight_of_all_items_selected']
+        self.train_last_ep_ratio_per_agent[agent_idx] = last_train_env_info['last_ep_ratio']
+
+    def update_stat(self, run, agent_idx, stat_idx, target_stats, min_target_stats, max_target_stats, mean_target_stats):
+        self.test_value_of_items_selected_per_agent[run, agent_idx, stat_idx] = \
+            self.test_last_avg_ep_value_of_all_items_selected
+
+        self.train_value_of_items_selected_per_agent[run, agent_idx, stat_idx] = \
+            self.train_last_ep_value_of_all_items_selected_per_agent[agent_idx]
+
+        self.test_ratio_value_to_optimal_value[run, agent_idx, stat_idx] = \
+            self.test_last_avg_ep_ratio
+
+        self.train_ratio_value_to_optimal_value[run, agent_idx, stat_idx] = \
+            self.train_last_ep_ratio_per_agent[agent_idx]
+
+        target_stats.append(self.test_value_of_items_selected_per_agent)
+        target_stats.append(self.train_value_of_items_selected_per_agent)
+        target_stats.append(self.test_ratio_value_to_optimal_value)
+        target_stats.append(self.train_ratio_value_to_optimal_value)
+
+        min_target_stats.append(self.MIN_test_value_of_items_selected_per_agent)
+        min_target_stats.append(self.MIN_train_value_of_items_selected_per_agent)
+        min_target_stats.append(self.MIN_test_ratio_value_to_optimal_value)
+        min_target_stats.append(self.MIN_train_ratio_value_to_optimal_value)
+
+        max_target_stats.append(self.MAX_test_value_of_items_selected_per_agent)
+        max_target_stats.append(self.MAX_train_value_of_items_selected_per_agent)
+        max_target_stats.append(self.MAX_test_ratio_value_to_optimal_value)
+        max_target_stats.append(self.MAX_train_ratio_value_to_optimal_value)
+
+        mean_target_stats.append(self.MEAN_test_value_of_items_selected_per_agent)
+        mean_target_stats.append(self.MEAN_train_value_of_items_selected_per_agent)
+        mean_target_stats.append(self.MEAN_test_ratio_value_to_optimal_value)
+        mean_target_stats.append(self.MEAN_train_ratio_value_to_optimal_value)
+
+    def add_wandb_log_comparison(self, plotly_layout, training_steps_str, run, test_training_steps_lst, log_dict):
+        ###############################################################################
+        plotly_layout.yaxis.title = "[TEST] Value of Items Selected"
+        plotly_layout.xaxis.title = "Training Steps ({0}, runs={1}, over {2} Episodes)".format(
+            training_steps_str, run + 1, self.n_episodes_for_mean_calculation
+        )
+        data = []
+        for agent_idx in range(self.n_agents):
+            data.append(
+                go.Scatter(
+                    name=self.agent_labels[agent_idx],
+                    x=test_training_steps_lst,
+                    y=self.MEAN_test_value_of_items_selected_per_agent[agent_idx, :],
+                    showlegend=True
+                )
+            )
+
+        test_value_of_items_selected_per_agent = go.Figure(data=data, layout=plotly_layout)
+
+        ###############################################################################
+        plotly_layout.yaxis.title = "[TEST] Ratio (Value to Optimal Value)"
+        plotly_layout.xaxis.title = "Training Steps ({0}, runs={1}, over {2} Episodes)".format(
+            training_steps_str, run + 1, self.n_episodes_for_mean_calculation
+        )
+        data = []
+        for agent_idx in range(self.n_agents):
+            data.append(
+                go.Scatter(
+                    name=self.agent_labels[agent_idx],
+                    x=test_training_steps_lst,
+                    y=self.MEAN_test_ratio_value_to_optimal_value[agent_idx, :],
+                    showlegend=True
+                )
+            )
+
+        test_ratio_value_to_optimal_value = go.Figure(data=data, layout=plotly_layout)
+
+        ###############################################################################
+        plotly_layout.yaxis.title = "[TRAIN] Value of Items Selected"
+        plotly_layout.xaxis.title = "Training Steps ({0}, runs={1}, over {2} Episodes)".format(
+            training_steps_str, run + 1, self.n_episodes_for_mean_calculation
+        )
+        data = []
+        for agent_idx in range(self.n_agents):
+            data.append(
+                go.Scatter(
+                    name=self.agent_labels[agent_idx],
+                    x=test_training_steps_lst,
+                    y=self.MEAN_train_value_of_items_selected_per_agent[agent_idx, :],
+                    showlegend=True
+                )
+            )
+
+        train_value_of_items_selected_per_agent = go.Figure(data=data, layout=plotly_layout)
+
+        ###############################################################################
+        plotly_layout.yaxis.title = "[TRAIN] Ratio (Value to Optimal Value)"
+        plotly_layout.xaxis.title = "Training Steps ({0}, runs={1}, over {2} Episodes)".format(
+            training_steps_str, run + 1, self.n_episodes_for_mean_calculation
+        )
+        data = []
+        for agent_idx in range(self.n_agents):
+            data.append(
+                go.Scatter(
+                    name=self.agent_labels[agent_idx],
+                    x=test_training_steps_lst,
+                    y=self.MEAN_train_ratio_value_to_optimal_value[agent_idx, :],
+                    showlegend=True
+                )
+            )
+
+        train_ratio_value_to_optimal_value = go.Figure(data=data, layout=plotly_layout)
+
+        log_dict["[TEST] value_of_items_selected_per_agent"] = test_value_of_items_selected_per_agent
+        log_dict["[TEST] ratio_value_to_optimal_value"] = test_ratio_value_to_optimal_value
+        log_dict["[TRAIN] value_of_items_selected_per_agent"] = train_value_of_items_selected_per_agent
+        log_dict["[TRAIN] ratio_value_to_optimal_value"] = train_ratio_value_to_optimal_value
 
 
 if __name__ == "__main__":

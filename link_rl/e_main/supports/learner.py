@@ -5,7 +5,6 @@ from gym.spaces import Box, Discrete
 from gym.vector import VectorEnv
 
 from link_rl.a_configuration.a_base_config.a_environments.combinatorial_optimization.knapsack.config_knapsack import ConfigKnapsack
-from link_rl.a_configuration.a_base_config.a_environments.competition_olympics import ConfigCompetitionOlympics
 from link_rl.a_configuration.a_base_config.a_environments.task_allocation.config_basic_task_allocation import \
     ConfigBasicTaskAllocation
 from link_rl.a_configuration.a_base_config.c_models.config_recurrent_convolutional_models import \
@@ -59,18 +58,6 @@ class Learner(mp.Process):
 
         self.test_episode_reward_avg_best = 0.0
 
-        if config.ENV_NAME in ["Task_Allocation_v0"]:
-            self.test_episode_utilization = mp.Value('d', 0.0)
-
-        if config.ENV_NAME in ["Task_Allocation_v1"]:
-            self.test_resource_utilization = mp.Value('d', 0.0)
-            self.test_average_latency = mp.Value('d', 0.0)
-            self.test_rejection_ratio = mp.Value('d', 0.0)
-
-        if config.ENV_NAME in ["Knapsack_Problem_v0"]:
-            self.test_episode_items_value = mp.Value('d', 0.0)
-            self.test_episode_ratio_value = mp.Value('d', 0.0)
-
         self.next_train_time_step = config.TRAIN_INTERVAL_GLOBAL_TIME_STEPS
         self.next_test_training_step = config.TEST_INTERVAL_TRAINING_STEPS
         self.next_console_log = config.CONSOLE_LOG_INTERVAL_TRAINING_STEPS
@@ -100,11 +87,10 @@ class Learner(mp.Process):
 
         self.shared_model_access_lock = shared_model_access_lock  # For only LearningActor (A3C, AsynchronousPPO)
 
-        if self.config.ENV_NAME in ["Task_Allocation_v0", "Task_Allocation_v1", "Knapsack_Problem_v0"]:
-            self.env_info = None
-
         self.modified_env_name = self.config.ENV_NAME.split("/")[
             1] if "/" in self.config.ENV_NAME else self.config.ENV_NAME
+
+        self.custom_env_stat = None
 
     def generator_on_policy_transition(self):
         observations, infos = self.train_env.reset(return_info=True)
@@ -137,12 +123,6 @@ class Learner(mp.Process):
                 raise ValueError()
 
             next_observations, rewards, dones, infos = self.train_env.step(scaled_actions)
-
-            if self.config.ENV_NAME in ["Task_Allocation_v0", "Knapsack_Problem_v0"]:
-                self.env_info = infos[0]
-
-            if self.config.ENV_NAME in ["Task_Allocation_v1"]:
-                self.env_info = infos
 
             if self.is_recurrent_model:
                 next_observations = [(next_observations, self.agent.model.recurrent_hidden)]
@@ -200,17 +180,17 @@ class Learner(mp.Process):
             step += int(1000 / self.config.ACTION_REPEAT)
             yield episode
 
-    def train_loop(self, parallel=False):
+    def set_train_env(self):
+        if self.config.AGENT_TYPE == AgentType.TDMPC:
+            self.train_env = get_single_env(self.config)
+        else:
+            self.train_env = get_train_env(self.config)
+
+    def set_test_env(self):
         combinatorial_env_conditions = [
             isinstance(self.config, ConfigKnapsack),
             isinstance(self.config, ConfigBasicTaskAllocation)
         ]
-
-        if not parallel:  # parallel?? ???? actor???? train_env ????/????
-            if self.config.AGENT_TYPE == AgentType.TDMPC:
-                self.train_env = get_single_env(self.config)
-            else:
-                self.train_env = get_train_env(self.config)
 
         if any(combinatorial_env_conditions):
             test_env_equal_to_train_env_conditions = [
@@ -219,12 +199,18 @@ class Learner(mp.Process):
                            ConfigBasicTaskAllocation) and self.config.INITIAL_TASK_DISTRIBUTION_FIXED is True
             ]
             if any(test_env_equal_to_train_env_conditions):
-                assert parallel is False
                 self.test_env = self.train_env
             else:
                 self.test_env = get_single_env(self.config)
         else:
             self.test_env = get_single_env(self.config)
+
+    def train_loop(self):
+        self.set_train_env()
+        self.set_test_env()
+
+        if hasattr(self.test_env, "custom_env_stat"):
+            self.custom_env_stat = self.test_env.custom_env_stat
 
         if self.config.USE_WANDB:
             wandb_obj = get_wandb_obj(self.config, self.agent)
@@ -257,8 +243,10 @@ class Learner(mp.Process):
                     self.total_time_step.value += async_info["n_rollout_transitions"]
                 else:
                     raise ValueError()
+
+                last_train_env_info = async_info["last_train_env_info"]
             else:
-                if parallel:
+                if self.queue is not None:
                     n_step_transition = self.queue.get()
                 else:
                     n_step_transition = next(self.transition_generator)
@@ -285,6 +273,8 @@ class Learner(mp.Process):
                         self.agent.her_buffer.append(n_step_transition)
                 else:
                     raise ValueError()
+
+                last_train_env_info = n_step_transition.info
 
                 if self.config.AGENT_TYPE == AgentType.TDMPC:
                     actor_id = n_step_transition.info["actor_id"]
@@ -335,6 +325,9 @@ class Learner(mp.Process):
                 #   TRAIN END   #
                 #################
 
+            if self.custom_env_stat is not None:
+                self.test_env.custom_env_stat.train_evaluate(last_train_env_info)
+
             if self.training_step.value >= self.next_console_log:
                 total_training_time = time.time() - self.train_start_time
                 self.transition_rolling_rate.value = self.total_time_step.value / total_training_time
@@ -375,24 +368,14 @@ class Learner(mp.Process):
             wandb_obj.finish()
 
     def run(self):
-        self.train_loop(parallel=True)
+        self.train_loop()
 
     def testing(self):
         print("*" * 150)
 
-        if self.config.ENV_NAME in ["Task_Allocation_v0"]:
-            self.test_episode_reward_avg.value, self.test_episode_reward_std.value, self.test_episode_utilization.value = \
-                self.play_for_testing(self.config.N_TEST_EPISODES)
-        if self.config.ENV_NAME in ["Task_Allocation_v1"]:
-            self.test_episode_reward_avg.value, self.test_episode_reward_std.value, self.test_resource_utilization.value, self.test_average_latency.value, self.test_rejection_ratio.value = \
-                self.play_for_testing(self.config.N_TEST_EPISODES)
-        elif self.config.ENV_NAME in ["Knapsack_Problem_v0"]:
-            self.test_episode_reward_avg.value, self.test_episode_reward_std.value, \
-            self.test_episode_items_value.value, self.test_episode_ratio_value.value = \
-                self.play_for_testing(self.config.N_TEST_EPISODES)
-        else:
-            self.test_episode_reward_avg.value, self.test_episode_reward_std.value = \
-                self.play_for_testing(self.config.N_TEST_EPISODES)
+        self.test_episode_reward_avg.value, self.test_episode_reward_std.value = self.play_for_testing(
+            self.config.N_TEST_EPISODES
+        )
 
         elapsed_time = time.time() - self.train_start_time
         formatted_elapsed_time = time.strftime('%H:%M:%S', time.gmtime(elapsed_time))
@@ -405,18 +388,11 @@ class Learner(mp.Process):
             self.test_episode_reward_std.value
         )
 
-        if self.config.ENV_NAME in ["Task_Allocation_v0"]:
-            test_str += ", Utilization: {0:.2f}".format(self.test_episode_utilization.value)
-        if self.config.ENV_NAME in ["Task_Allocation_v1"]:
-            test_str += ", Resource utilization: {0:.2f}".format(self.test_resource_utilization.value)
-            test_str += ", Average latency: {0:.2f}".format(self.test_average_latency.value)
-            test_str += ", Rejection ratio: {0:.2f}".format(self.test_rejection_ratio.value)
-        if self.config.ENV_NAME in ["Knapsack_Problem_v0"]:
-            test_str += ", Item. Value Selected: {0:.2f}, Ratio: {1:.2f}".format(
-                self.test_episode_items_value.value, self.test_episode_ratio_value.value
-            )
+        if self.custom_env_stat is not None:
+            test_str += ", " + self.test_env.custom_env_stat.test_evaluation_str()
 
         test_str += ", Elapsed Time from Training Start: {0}".format(formatted_elapsed_time)
+
         print(test_str)
 
         termination_conditions = [
@@ -469,13 +445,9 @@ class Learner(mp.Process):
         self.agent.model.eval()
 
         episode_reward_lst = []
-        if self.config.ENV_NAME in ["Task_Allocation_v0"]:
-            episode_utilization_lst = []
-        elif self.config.ENV_NAME in ["Task_Allocation_v1"]:
-            average_latency = 0
-        elif self.config.ENV_NAME in ["Knapsack_Problem_v0"]:
-            episode_items_value_selected_lst = []
-            episode_ratio_lst = []
+
+        if self.custom_env_stat is not None:
+            self.test_env.custom_env_stat.test_reset()
 
         for i in range(n_test_episodes):
             episode_reward = 0  # cumulative_reward
@@ -497,7 +469,9 @@ class Learner(mp.Process):
             else:
                 unavailable_actions = None
 
-            while True:
+            done = False
+
+            while not done:
                 if self.config.AGENT_TYPE == AgentType.TDMPC:
                     action = self.agent.get_action(
                         obs=observation, mode=AgentMode.TEST, step=self.training_step.value, t0=episode_step == 0
@@ -556,41 +530,17 @@ class Learner(mp.Process):
                 episode_reward += reward  # episode_reward ?? ???????? ?????? ?????? ???????? ???? ?? ?????? ?? ??????.
                 observation = next_observation
 
-                if done:
-                    break
-
             episode_reward_lst.append(episode_reward)
 
-            if self.config.ENV_NAME in ["Task_Allocation_v0"]:
-                if self.config.INITIAL_ITEM_DISTRIBUTION_FIXED:
-                    episode_utilization_lst.append(info[0]["Utilization"])
-                else:
-                    episode_utilization_lst.append(info["Utilization"])
-            elif self.config.ENV_NAME in ["Task_Allocation_v1"]:
-                resource_utilization = self.env_info[0]["Resource_utilization"]
-                average_latency = self.env_info[0]["Latency"]
-                rejection_ratio = self.env_info[0]["Rejection_ratio"]
-            elif self.config.ENV_NAME in ["Knapsack_Problem_v0"]:
-                if self.config.INITIAL_ITEM_DISTRIBUTION_FIXED:
-                    episode_items_value_selected_lst.append(info[0]["last_ep_value_of_all_items_selected"])
-                    episode_ratio_lst.append(info[0]["last_ep_ratio"])
-                else:
-                    episode_items_value_selected_lst.append(info["last_ep_value_of_all_items_selected"])
-                    episode_ratio_lst.append(info["last_ep_ratio"])
+            if self.custom_env_stat is not None:
+                self.test_env.custom_env_stat.test_episode_done(info=info)
 
+        if self.custom_env_stat is not None:
+            self.test_env.custom_env_stat.test_evaluate()
+            
         self.agent.model.train()
 
         if self.config.AGENT_TYPE in [AgentType.A3C, AgentType.ASYNCHRONOUS_PPO]:
             self.shared_model_access_lock.release()
 
-        if self.config.ENV_NAME in ["Task_Allocation_v0"]:
-            return np.average(episode_reward_lst), np.std(episode_reward_lst), np.average(episode_utilization_lst)
-        elif self.config.ENV_NAME in ["Task_Allocation_v1"]:
-            return np.average(episode_reward_lst), np.std(episode_reward_lst), np.average(
-                resource_utilization), np.average(average_latency), np.average(rejection_ratio)
-        elif self.config.ENV_NAME in ["Knapsack_Problem_v0"]:
-            return np.average(episode_reward_lst), np.std(episode_reward_lst), \
-                   np.average(episode_items_value_selected_lst), np.average(episode_ratio_lst)
-        else:
-
-            return np.average(episode_reward_lst), np.std(episode_reward_lst)
+        return np.average(episode_reward_lst), np.std(episode_reward_lst)

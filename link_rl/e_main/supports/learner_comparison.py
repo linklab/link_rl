@@ -51,10 +51,6 @@ class LearnerComparison:
         self.next_test_training_step_per_agent = []
         self.test_idx_per_agent = []
 
-        if config_c.ENV_NAME in ["Knapsack_Problem_v0"]:
-            self.last_ep_value_of_all_items_selected_per_agent = []
-            self.last_ep_ratio_per_agent = []
-
         self.comparison_stat = comparison_stat
 
         for agent_idx, _ in enumerate(agents):
@@ -74,14 +70,15 @@ class LearnerComparison:
             self.n_rollout_transitions_per_agent.append(0)
             self.last_mean_episode_reward_per_agent.append(0.0)
 
-            if config_c.ENV_NAME in ["Knapsack_Problem_v0"]:
-                self.last_ep_value_of_all_items_selected_per_agent.append(0.0)
-                self.last_ep_ratio_per_agent.append(0.0)
+            if self.config_c.CUSTOM_ENV_COMPARISON_STAT is not None:
+                self.config_c.CUSTOM_ENV_COMPARISON_STAT.train_reset()
 
             self.is_terminated_per_agent.append(False)
 
             self.is_recurrent_model_per_agent.append(any([
-                isinstance(self.config_c.AGENT_PARAMETERS[agent_idx].MODEL_PARAMETER, ConfigRecurrentLinearModel),
+                isinstance(
+                    self.config_c.AGENT_PARAMETERS[agent_idx].MODEL_PARAMETER, ConfigRecurrentLinearModel
+                ),
                 isinstance(
                     self.config_c.AGENT_PARAMETERS[agent_idx].MODEL_PARAMETER, ConfigRecurrent1DConvolutionalModel
                 ),
@@ -153,7 +150,7 @@ class LearnerComparison:
 
         yield None
 
-    def train_comparison_loop(self):
+    def train_comparison_loop(self, run):
         self.train_comparison_start_time = time.time()
 
         while True:
@@ -190,9 +187,10 @@ class LearnerComparison:
 
                         self.episode_rewards_per_agent[agent_idx][actor_id][env_id] = 0.0
 
-                        if self.config_c.ENV_NAME in ["Knapsack_Problem_v0"]:
-                            self.last_ep_value_of_all_items_selected_per_agent[agent_idx] = n_step_transition.info['last_ep_weight_of_all_items_selected']
-                            self.last_ep_ratio_per_agent[agent_idx] = n_step_transition.info['last_ep_ratio']
+                        if self.config_c.CUSTOM_ENV_COMPARISON_STAT is not None:
+                            self.config_c.CUSTOM_ENV_COMPARISON_STAT.train_evaluate(
+                                agent_idx=agent_idx, last_train_env_info=n_step_transition.info
+                            )
 
             if self.total_time_step >= self.next_train_time_step:
                 for agent_idx, _ in enumerate(self.agents):
@@ -204,7 +202,6 @@ class LearnerComparison:
 
                         if self.training_steps_per_agent[agent_idx] >= self.next_console_log_per_agent[agent_idx]:
                             console_log_comparison(
-                                self,
                                 run=self.run,
                                 total_time_step=self.total_time_step,
                                 total_episodes_per_agent=self.total_episodes_per_agent,
@@ -244,54 +241,36 @@ class LearnerComparison:
                 self.next_train_time_step += self.config_c.TRAIN_INTERVAL_GLOBAL_TIME_STEPS
 
     def testing(self, run, agent_idx, training_step):
-        if self.config_c.ENV_NAME in ["Knapsack_Problem_v0"]:
-            avg, std, avg_last_ep_value_of_all_items_selected, avg_last_ep_ration = self.play_for_testing(
-                self.config_c.N_TEST_EPISODES, agent_idx
-            )
-        else:
-            avg, std = self.play_for_testing(self.config_c.N_TEST_EPISODES, agent_idx)
+        avg, std = self.play_for_testing(self.config_c.N_TEST_EPISODES, run, agent_idx)
 
         self.comparison_stat.test_episode_reward_avg_per_agent[run, agent_idx, self.test_idx_per_agent[agent_idx]] = avg
         self.comparison_stat.test_episode_reward_std_per_agent[run, agent_idx, self.test_idx_per_agent[agent_idx]] = std
         self.comparison_stat.mean_episode_reward_per_agent[run, agent_idx, self.test_idx_per_agent[agent_idx]] = \
             self.last_mean_episode_reward_per_agent[agent_idx]
 
-        if self.config_c.ENV_NAME in ["Knapsack_Problem_v0"]:
-            self.comparison_stat.test_value_of_items_selected_per_agent[run, agent_idx, self.test_idx_per_agent[agent_idx]] = \
-                avg_last_ep_value_of_all_items_selected
-            self.comparison_stat.test_ratio_value_to_optimal_value[run, agent_idx, self.test_idx_per_agent[agent_idx]] = \
-                avg_last_ep_ration
-            self.comparison_stat.train_value_of_items_selected_per_agent[run, agent_idx, self.test_idx_per_agent[agent_idx]] = \
-                self.last_ep_value_of_all_items_selected_per_agent[agent_idx]
-            self.comparison_stat.train_ratio_value_to_optimal_value[run, agent_idx, self.test_idx_per_agent[agent_idx]] = \
-                self.last_ep_ratio_per_agent[agent_idx]
-
         elapsed_time = time.time() - self.train_comparison_start_time
         formatted_elapsed_time = time.strftime('%H:%M:%S', time.gmtime(elapsed_time))
 
         print("*" * 160)
-        print("[Test: {0}, Agent: {1}, Training Step: {2:6,}] "
-              "Episode Reward - Average: {3:.3f}, Standard Dev.: {4:.3f}, Elapsed Time: {5} ".format(
+        test_str = "[Test: {0}, Agent: {1}, Training Step: {2:6,}] " \
+                   "Episode Reward - Average: {3:.3f}, Standard Dev.: {4:.3f}, Elapsed Time: {5} ".format(
             self.test_idx_per_agent[agent_idx] + 1, agent_idx, training_step, avg, std, formatted_elapsed_time
-        ), end="")
+        )
 
-        if self.config_c.ENV_NAME in ["Knapsack_Problem_v0"]:
-            print("Items Value Selected - Average: {0:5.1f}, Ratio (Value to Optimal Value): {1:5.1f})".format(
-                avg_last_ep_value_of_all_items_selected, avg_last_ep_ration
-            ))
-        else:
-            print()
+        if self.config_c.CUSTOM_ENV_COMPARISON_STAT is not None:
+            test_str += "," + self.config_c.CUSTOM_ENV_COMPARISON_STAT.test_evaluation_str()
+
+        print(test_str)
 
         print("*" * 160)
 
-    def play_for_testing(self, n_test_episodes, agent_idx):
+    def play_for_testing(self, n_test_episodes, run, agent_idx):
         self.agents[agent_idx].model.eval()
 
         episode_reward_lst = []
 
-        if self.config_c.ENV_NAME in ["Knapsack_Problem_v0"]:
-            last_ep_value_of_all_items_selected_lst = []
-            last_ep_ratio_lst = []
+        if self.config_c.CUSTOM_ENV_COMPARISON_STAT is not None:
+            self.config_c.CUSTOM_ENV_COMPARISON_STAT.test_reset()
 
         for i in range(n_test_episodes):
             episode_reward = 0  # cumulative_reward
@@ -345,17 +324,15 @@ class LearnerComparison:
 
             episode_reward_lst.append(episode_reward)
 
-            if self.config_c.ENV_NAME in ["Knapsack_Problem_v0"]:
-                last_ep_value_of_all_items_selected_lst.append(info['last_ep_value_of_all_items_selected'])
-                last_ep_ratio_lst.append(info['last_ep_ratio'])
+            if self.config_c.CUSTOM_ENV_COMPARISON_STAT is not None:
+                self.config_c.CUSTOM_ENV_COMPARISON_STAT.test_episode_done(info)
 
         self.agents[agent_idx].model.train()
 
-        if self.config_c.ENV_NAME in ["Knapsack_Problem_v0"]:
-            return np.average(episode_reward_lst), np.std(episode_reward_lst), \
-                   np.average(last_ep_value_of_all_items_selected_lst), np.average(last_ep_ratio_lst)
-        else:
-            return np.average(episode_reward_lst), np.std(episode_reward_lst)
+        if self.config_c.CUSTOM_ENV_COMPARISON_STAT is not None:
+            self.config_c.CUSTOM_ENV_COMPARISON_STAT.test_evaluate()
+
+        return np.average(episode_reward_lst), np.std(episode_reward_lst)
 
     def update_stat(self, run, agent_idx, test_idx):
         target_stats = [
@@ -382,26 +359,16 @@ class LearnerComparison:
             self.comparison_stat.MEAN_mean_episode_reward_per_agent
         ]
 
-        if self.config_c.ENV_NAME in ["Knapsack_Problem_v0"]:
-            target_stats.append(self.comparison_stat.test_value_of_items_selected_per_agent)
-            target_stats.append(self.comparison_stat.train_value_of_items_selected_per_agent)
-            target_stats.append(self.comparison_stat.test_ratio_value_to_optimal_value)
-            target_stats.append(self.comparison_stat.train_ratio_value_to_optimal_value)
-
-            min_target_stats.append(self.comparison_stat.MIN_test_value_of_items_selected_per_agent)
-            min_target_stats.append(self.comparison_stat.MIN_train_value_of_items_selected_per_agent)
-            min_target_stats.append(self.comparison_stat.MIN_test_ratio_value_to_optimal_value)
-            min_target_stats.append(self.comparison_stat.MIN_train_ratio_value_to_optimal_value)
-
-            max_target_stats.append(self.comparison_stat.MAX_test_value_of_items_selected_per_agent)
-            max_target_stats.append(self.comparison_stat.MAX_train_value_of_items_selected_per_agent)
-            max_target_stats.append(self.comparison_stat.MAX_test_ratio_value_to_optimal_value)
-            max_target_stats.append(self.comparison_stat.MAX_train_ratio_value_to_optimal_value)
-
-            mean_target_stats.append(self.comparison_stat.MEAN_test_value_of_items_selected_per_agent)
-            mean_target_stats.append(self.comparison_stat.MEAN_train_value_of_items_selected_per_agent)
-            mean_target_stats.append(self.comparison_stat.MEAN_test_ratio_value_to_optimal_value)
-            mean_target_stats.append(self.comparison_stat.MEAN_train_ratio_value_to_optimal_value)
+        if self.config_c.CUSTOM_ENV_COMPARISON_STAT is not None:
+            self.config_c.CUSTOM_ENV_COMPARISON_STAT.update_stat(
+                run=run,
+                agent_idx=agent_idx,
+                stat_idx=self.test_idx_per_agent[agent_idx],
+                target_stats=target_stats,
+                min_target_stats=min_target_stats,
+                max_target_stats=max_target_stats,
+                mean_target_stats=mean_target_stats
+            )
 
         for target_stat, min_target_stat, max_target_stat, mean_target_stat in zip(
                 target_stats, min_target_stats, max_target_stats, mean_target_stats

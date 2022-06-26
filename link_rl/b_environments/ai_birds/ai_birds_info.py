@@ -58,7 +58,7 @@ class LinkBird:
 		self.shoots_before_level_is_completed = 0
 
 	def print_game_state(self, game_state, env_step):
-		print("▶▶▶ Game State: {0:30} | IS_IN_TRAINING_MODE: {1} | rl_client.level_count: {2} | env_step: {3}◀◀◀".format(
+		print("▶▶▶ Game State: {0:30} | IS_IN_TRAINING_MODE: {1} | rl_client.level_count: {2} | env_step: {3} ◀◀◀".format(
 			game_state, self.IS_IN_TRAINING_MODE, self.rl_client.level_count, env_step
 		))
 

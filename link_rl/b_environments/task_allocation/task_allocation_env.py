@@ -8,6 +8,7 @@ from gym import spaces
 from typing import Optional
 
 from link_rl.a_configuration.a_base_config.a_environments.task_allocation.config_task_allocation import ConfigTaskAllocation
+from link_rl.g_utils.stats import CustomEnvStat
 
 
 class CloudNetwork:
@@ -105,6 +106,59 @@ class Task:
                 self.tasks[task_id] = (data_size, request_cpu, request_latency)
 
 
+class TaskAllocationEnvironmentStat(CustomEnvStat):
+    def __init__(self):
+        super(TaskAllocationEnvironmentStat, self).__init__()
+        self.test_utilization_lst = []
+        self.test_latency_lst = []
+        self.test_rejection_ratio_lst = []
+
+        self.test_last_avg_utilization = 0.0
+        self.test_last_avg_latency = 0.0
+        self.test_last_avg_rejection_ratio = 0.0
+
+        self.train_last_utilization = 0.0
+        self.train_last_latency = 0.0
+        self.train_last_rejection_ratio = 0.0
+
+    def test_reset(self):
+        self.test_utilization_lst.clear()
+        self.test_latency_lst.clear()
+        self.test_rejection_ratio_lst.clear()
+
+    def test_episode_done(self, info):
+        self.test_utilization_lst.append(info["Resource_utilization"])
+        self.test_latency_lst.append(info["Latency"])
+        self.test_rejection_ratio_lst.append(info["Rejection_ratio"])
+
+    def test_evaluate(self):
+        self.test_last_avg_utilization = np.average(self.test_utilization_lst)
+        self.test_last_avg_latency = np.average(self.test_latency_lst)
+        self.test_last_avg_rejection_ratio = np.average(self.test_rejection_ratio_lst)
+
+    def test_evaluation_str(self):
+        _test_evaluation_str = "Resource utilization: {0:.2f}".format(self.test_last_avg_utilization)
+        _test_evaluation_str += ", Average latency: {0:.2f}".format(self.test_last_avg_latency)
+        _test_evaluation_str += ", Rejection ratio: {0:.2f}".format(self.test_last_avg_rejection_ratio)
+        return _test_evaluation_str
+
+    def train_evaluate(self, last_train_env_info):
+        self.train_last_utilization = last_train_env_info["Resource_utilization"]
+        self.train_last_latency = last_train_env_info["Latency"]
+        self.train_last_rejection_ratio = last_train_env_info["Rejection_ratio"]
+
+    def train_evaluation_str(self):
+        _train_evaluation_str = "Resource Utilization: {0:>4.2f}".format(self.train_last_utilization)
+        _train_evaluation_str += ", Average latency: {0:>4.2f}".format(self.train_last_latency)
+        _train_evaluation_str += ", Rejection ratio: {0:>4.2f}".format(self.train_last_rejection_ratio)
+        return _train_evaluation_str
+
+    def add_wandb_log(self, log_dict):
+        log_dict["[TEST]Resource Utilization"] = self.test_last_avg_utilization
+        log_dict["[TEST]Latency"] = self.test_last_avg_latency
+        log_dict["[TEST]Rejection ratio"] = self.test_last_avg_rejection_ratio
+
+
 class TaskAllocationEnvironment(gym.Env):
     def __init__(self, config):
         self.config = config
@@ -149,6 +203,8 @@ class TaskAllocationEnvironment(gym.Env):
         #     pickle.dump(self.cloud_net, f)
         # with open('/home/link/link_rl/e_main/random_instances/task_allocation/edge_net.p', 'wb') as f:
         #     pickle.dump(self.edge_net, f)
+
+        self.custom_env_stat = TaskAllocationEnvironmentStat()
 
     def reset(self, *, seed: Optional[int] = None, return_info: bool = False, options: Optional[dict] = None,):
         # with open('/home/link/link_rl/e_main/random_instances/task_allocation/task.p', 'rb') as f:

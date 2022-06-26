@@ -19,7 +19,7 @@ def main():
     learner = Learner(agent=agent, queue=None, config=config)
 
     print("########## LEARNING STARTED !!! ##########")
-    learner.train_loop(parallel=False)
+    learner.train_loop()
 
     print_basic_info(observation_space, action_space, config)
 

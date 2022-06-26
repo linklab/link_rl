@@ -4,6 +4,7 @@ from link_rl.a_configuration.b_single_config.combinatorial_optimization.config_k
     ConfigKnapsack0StaticTestLinearA2c, ConfigKnapsack0StaticTestLinearPpo, \
     ConfigKnapsack0StaticTestLinearDoubleDuelingDqn, ConfigKnapsack0StaticTestLinearDoubleDqn, \
     ConfigKnapsack0RandomTestLinearDoubleDqn
+from link_rl.b_environments.combinatorial_optimization.knapsack.knapsack import KnapsackEnvComparisonStat
 from link_rl.g_utils.types import ModelType
 
 
@@ -28,6 +29,13 @@ class ConfigComparisonKnapsack0StaticTestLinearDqnA2cPpo(ConfigComparisonBase):
         self.MAX_TRAINING_STEPS = 200_000
         self.N_RUNS = 5
 
+        self.CUSTOM_ENV_COMPARISON_STAT = KnapsackEnvComparisonStat(
+            n_runs=self.N_RUNS,
+            agents_labels=self.AGENT_LABELS,
+            num_stat_data_size=int(self.MAX_TRAINING_STEPS // self.TEST_INTERVAL_TRAINING_STEPS),
+            n_episodes_for_mean_calculation=self.N_EPISODES_FOR_MEAN_CALCULATION
+        )
+
 
 class ConfigComparisonKnapsack0StaticTestLinearDqn(ConfigComparisonBase):
     def __init__(self):
@@ -50,6 +58,13 @@ class ConfigComparisonKnapsack0StaticTestLinearDqn(ConfigComparisonBase):
         self.MAX_TRAINING_STEPS = 200_000
         self.N_RUNS = 5
 
+        self.CUSTOM_ENV_COMPARISON_STAT = KnapsackEnvComparisonStat(
+            n_runs=self.N_RUNS,
+            agents_labels=self.AGENT_LABELS,
+            num_stat_data_size=int(self.MAX_TRAINING_STEPS // self.TEST_INTERVAL_TRAINING_STEPS),
+            n_episodes_for_mean_calculation=self.N_EPISODES_FOR_MEAN_CALCULATION
+        )
+
 
 class ConfigComparisonKnapsack0StaticTestLinearRecurrentDqn(ConfigComparisonBase):
     def __init__(self):
@@ -70,6 +85,13 @@ class ConfigComparisonKnapsack0StaticTestLinearRecurrentDqn(ConfigComparisonBase
 
         self.MAX_TRAINING_STEPS = 200_000
         self.N_RUNS = 5
+
+        self.CUSTOM_ENV_COMPARISON_STAT = KnapsackEnvComparisonStat(
+            n_runs=self.N_RUNS,
+            agents_labels=self.AGENT_LABELS,
+            num_stat_data_size=int(self.MAX_TRAINING_STEPS // self.TEST_INTERVAL_TRAINING_STEPS),
+            n_episodes_for_mean_calculation=self.N_EPISODES_FOR_MEAN_CALCULATION
+        )
 
 
 class ConfigComparisonKnapsack0StaticTestLinearDoubleDqn(ConfigComparisonBase):
@@ -93,6 +115,13 @@ class ConfigComparisonKnapsack0StaticTestLinearDoubleDqn(ConfigComparisonBase):
         self.MAX_TRAINING_STEPS = 500_000
         self.N_RUNS = 5
 
+        self.CUSTOM_ENV_COMPARISON_STAT = KnapsackEnvComparisonStat(
+            n_runs=self.N_RUNS,
+            agents_labels=self.AGENT_LABELS,
+            num_stat_data_size=int(self.MAX_TRAINING_STEPS // self.TEST_INTERVAL_TRAINING_STEPS),
+            n_episodes_for_mean_calculation=self.N_EPISODES_FOR_MEAN_CALCULATION
+        )
+
 
 class ConfigComparisonKnapsack0RandomTestLinearDoubleDqn(ConfigComparisonBase):
     def __init__(self):
@@ -115,6 +144,13 @@ class ConfigComparisonKnapsack0RandomTestLinearDoubleDqn(ConfigComparisonBase):
         self.MAX_TRAINING_STEPS = 1_000_000
         self.N_RUNS = 5
 
+        self.CUSTOM_ENV_COMPARISON_STAT = KnapsackEnvComparisonStat(
+            n_runs=self.N_RUNS,
+            agents_labels=self.AGENT_LABELS,
+            num_stat_data_size=int(self.MAX_TRAINING_STEPS // self.TEST_INTERVAL_TRAINING_STEPS),
+            n_episodes_for_mean_calculation=self.N_EPISODES_FOR_MEAN_CALCULATION
+        )
+
 
 class ConfigComparisonKnapsack0RandomTestLinearDoubleDqnHer(ConfigComparisonBase):
     def __init__(self):
@@ -135,3 +171,10 @@ class ConfigComparisonKnapsack0RandomTestLinearDoubleDqnHer(ConfigComparisonBase
 
         self.MAX_TRAINING_STEPS = 1_000_000
         self.N_RUNS = 5
+
+        self.CUSTOM_ENV_COMPARISON_STAT = KnapsackEnvComparisonStat(
+            n_runs=self.N_RUNS,
+            agents_labels=self.AGENT_LABELS,
+            num_stat_data_size=int(self.MAX_TRAINING_STEPS // self.TEST_INTERVAL_TRAINING_STEPS),
+            n_episodes_for_mean_calculation=self.N_EPISODES_FOR_MEAN_CALCULATION
+        )

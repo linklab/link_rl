@@ -128,6 +128,8 @@ class LearningActor(Actor):
         actor_time_step = 0
         episode_rewards = np.zeros(shape=(self.config.N_VECTORIZED_ENVS,))
 
+        last_train_env_info = None
+
         while True:
             actor_time_step += 1
             actions = self.agent.get_action(observations)
@@ -149,6 +151,8 @@ class LearningActor(Actor):
                     info=info
                 ))
 
+                last_train_env_info = info
+
                 if len(self.histories[env_id]) == self.config.N_STEP or done:
                     n_step_transition = Actor.get_n_step_transition(
                         history=self.histories[env_id], env_id=env_id,
@@ -164,7 +168,8 @@ class LearningActor(Actor):
                         self.queue.put({
                             "message_type": "DONE",
                             "episode_reward": episode_rewards[env_id],
-                            "train_actor_id": self.actor_id
+                            "train_actor_id": self.actor_id,
+                            "last_train_env_info": last_train_env_info
                         })
                         episode_rewards[env_id] = 0.0
 
@@ -178,8 +183,9 @@ class LearningActor(Actor):
                 self.queue.put({
                     "message_type": "TRAIN",
                     "count_training_steps": count_training_steps,
+                    "train_actor_id": self.actor_id,
+                    "last_train_env_info": last_train_env_info,
                     "n_rollout_transitions": self.config.BATCH_SIZE,
-                    "train_actor_id": self.actor_id
                 })
 
             if self.is_terminated.value:
