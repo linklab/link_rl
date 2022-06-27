@@ -122,6 +122,7 @@ def load_instance(bucket_name, file_path):
             data.append(y)
 
     num_items = int(len(data)/2) - 1
+<<<<<<< HEAD:link_rl/b_environments/combinatorial_optimization/knapsack/boto3_knapsack.py
 
     # state = np.zeros(shape=(num_items+4, 2), dtype=float)
     #
@@ -134,6 +135,19 @@ def load_instance(bucket_name, file_path):
     items = []
     for item_idx in range(num_items):
         items.append([float(data[item_idx * 2]), float(data[item_idx * 2 + 1])])
+=======
+    state = np.zeros(shape=(num_items+4, 2), dtype=float)
+
+    data_idx = 4
+
+    for item_idx in range(num_items):
+        state[data_idx][0] = data[item_idx + data_idx - 4]
+        state[data_idx][1] = data[item_idx + data_idx + 1 - 4]
+
+        data_idx += 1
+
+    state[0][1] = data[-1]
+>>>>>>> f3684a1ee26789bc76c24ee72e30e96bb0d523ba:b_environments/combinatorial_optimization/boto3_knapsack.py
 
     #print(data)
     #print(state)

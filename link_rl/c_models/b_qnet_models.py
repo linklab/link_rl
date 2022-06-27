@@ -7,9 +7,15 @@ from link_rl.a_configuration.a_base_config.c_models.config_convolutional_models 
 from link_rl.a_configuration.a_base_config.c_models.config_linear_models import ConfigLinearModel
 from link_rl.a_configuration.a_base_config.c_models.config_recurrent_convolutional_models import \
     ConfigRecurrent2DConvolutionalModel, ConfigRecurrent1DConvolutionalModel
+<<<<<<< HEAD:link_rl/c_models/b_qnet_models.py
 from link_rl.a_configuration.a_base_config.c_models.config_recurrent_linear_models import ConfigRecurrentLinearModel
 from link_rl.c_models.a_models import Model
 from link_rl.g_utils.types import ConvolutionType
+=======
+from a_configuration.a_base_config.c_models.config_recurrent_linear_models import ConfigRecurrentLinearModel
+from c_models.a_models import Model
+from g_utils.types import ConvolutionType, ModelType
+>>>>>>> f3684a1ee26789bc76c24ee72e30e96bb0d523ba:c_models/b_qnet_models.py
 
 
 class QNet(Model):
@@ -41,10 +47,17 @@ class QNet(Model):
             )
 
         elif isinstance(self.config.MODEL_PARAMETER, Config2DConvolutionalModel):
-            self.make_convolutional_model(
-                observation_shape=observation_shape, activation=self.config.LAYER_ACTIVATION(),
-                convolution_type=ConvolutionType.TWO_DIMENSION
-            )
+            if self.config.MODEL_TYPE == ModelType.KNAPSACK_TEST:
+                self.make_knapsack_model(
+                    observation_shape=observation_shape, activation=self.config.LAYER_ACTIVATION(),
+                    convolution_first_type=ConvolutionType.TWO_DIMENSION
+                )
+            else:
+                self.make_convolutional_model(
+                    observation_shape=observation_shape, activation=self.config.LAYER_ACTIVATION(),
+                    convolution_type=ConvolutionType.TWO_DIMENSION
+                )
+
 
         elif isinstance(self.config.MODEL_PARAMETER, ConfigRecurrentLinearModel):
             self.make_recurrent_linear_model(
@@ -66,8 +79,12 @@ class QNet(Model):
         else:
             raise ValueError()
 
+        print("self._get_forward_pre_out(observation_shape)", self._get_forward_pre_out)
+
+        forward_pre_out = self._get_forward_pre_out(observation_shape)
+
         self.linear_last_layer = nn.Linear(
-            self._get_forward_pre_out(observation_shape), self.n_discrete_actions
+            forward_pre_out, self.n_discrete_actions
         )
 
         self.qnet_params_list = list(self.parameters())

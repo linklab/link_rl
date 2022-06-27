@@ -83,5 +83,14 @@ class Config2DConvolutionalModel:
             self.NEURONS_PER_REPRESENTATION_LAYER = [512]
             self.NEURONS_PER_FULLY_CONNECTED_LAYER = [256]
 
+        elif model_type == ModelType.KNAPSACK_TEST:
+            self.OUT_CHANNELS_PER_LAYER = [4]
+            self.KERNEL_SIZE_PER_LAYER = [(1, 4)]
+            self.STRIDE_PER_LAYER = [1]
+            self.PADDING = 0
+
+            self.NEURONS_PER_REPRESENTATION_LAYER = [64]
+            self.NEURONS_PER_FULLY_CONNECTED_LAYER = [64]
+
         else:
             raise ValueError()

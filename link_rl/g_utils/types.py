@@ -65,6 +65,7 @@ class ModelType(enum.Enum):
     MEDIUM_RECURRENT_2D_CONVOLUTIONAL = 23
     LARGE_RECURRENT_2D_CONVOLUTIONAL = 24
 
+    KNAPSACK_TEST = 25
 
 class LayerActivationType(enum.Enum):
     LEAKY_RELU = 0
