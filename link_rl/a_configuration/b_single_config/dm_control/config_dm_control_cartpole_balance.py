@@ -1,7 +1,7 @@
 from link_rl.a_configuration.a_base_config.a_environments.dm_control.config_dm_control_cartpole import \
     ConfigDmControlCartpoleBalance
 from link_rl.a_configuration.a_base_config.b_agents.config_agents_off_policy import ConfigDdpg, ConfigTd3, ConfigSac, \
-    ConfigTdmpc
+    ConfigTdmpc, ConfigTd3Drq2
 from link_rl.a_configuration.a_base_config.b_agents.config_agents_on_policy import ConfigA2c, ConfigPpo, ConfigA3c, \
     ConfigAsynchronousPpo
 from link_rl.a_configuration.a_base_config.config_single_base import ConfigBase
@@ -66,6 +66,17 @@ class ConfigDmControlCartPoleBalanceTd3(ConfigBase, ConfigDmControlCartpoleBalan
 
         self.MAX_TRAINING_STEPS = 300_000
         self.MODEL_TYPE = ModelType.SMALL_LINEAR
+
+
+class ConfigDmControlCartPoleBalanceTd3Drq2(ConfigBase, ConfigDmControlCartpoleBalance, ConfigTd3Drq2):
+    def __init__(self):
+        ConfigBase.__init__(self)
+        ConfigDmControlCartpoleBalance.__init__(self)
+        ConfigTd3Drq2.__init__(self)
+
+        self.MAX_TRAINING_STEPS = 500_000
+        self.MODEL_TYPE = ModelType.SMALL_LINEAR
+        self.MODEL_TYPE_PIXEL = ModelType.LARGE_LINEAR
 
 
 class ConfigDmControlCartPoleBalanceSac(ConfigBase, ConfigDmControlCartpoleBalance, ConfigSac):

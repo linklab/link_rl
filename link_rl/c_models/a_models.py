@@ -278,6 +278,40 @@ class Model(nn.Module):
         input_n_features = self.config.MODEL_PARAMETER.HIDDEN_SIZE
         self.linear_layers = self.get_linear_layers(input_n_features=input_n_features, activation=activation)
 
+    ###########################################
+    #####             Knapsack            #####
+    ###########################################
+    def make_knapsack_model(
+            self, observation_shape, n_out_actions=None, activation=nn.ReLU(),
+            convolution_first_type=ConvolutionType.TWO_DIMENSION,
+    ):
+
+        # convolutional_2d_layers
+        input_first_n_channels = observation_shape[0]
+
+        self.convolutional_layers = self.get_convolutional_layers(
+            input_first_n_channels, activation=activation, convolution_type=convolution_first_type
+        )
+
+        # representation_layers
+        conv_out_flat_size = self._get_conv_out(self.convolutional_layers, observation_shape)
+        self.representation_layers = self.get_representation_layers(conv_out_flat_size, activation=activation)
+
+        # linear_layers
+        if self.config.MODEL_PARAMETER.NEURONS_PER_REPRESENTATION_LAYER:
+            input_n_features = self.config.MODEL_PARAMETER.NEURONS_PER_REPRESENTATION_LAYER[-1]
+        else:
+            input_n_features = conv_out_flat_size
+
+        if n_out_actions is not None:
+            input_n_features = input_n_features + n_out_actions
+
+        self.linear_layers = self.get_linear_layers(input_n_features=input_n_features, activation=activation)
+
+    ###########################################
+    #####          Knapsack_end           #####
+    ###########################################
+
     def _forward(self, obs, save_hidden=False):
         if isinstance(obs, np.ndarray):
             obs = torch.tensor(obs, dtype=torch.float32, device=self.config.DEVICE)

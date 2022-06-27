@@ -108,6 +108,10 @@ def set_config(config):
         from link_rl.a_configuration.a_base_config.c_models.config_recurrent_convolutional_models import ConfigRecurrent2DConvolutionalModel
         config.MODEL_PARAMETER = ConfigRecurrent2DConvolutionalModel(config.MODEL_TYPE)
 
+    elif config.MODEL_TYPE == ModelType.KNAPSACK_TEST:
+
+        from a_configuration.a_base_config.c_models.config_convolutional_models import Config2DConvolutionalModel
+        config.MODEL_PARAMETER = Config2DConvolutionalModel(config.MODEL_TYPE)
     else:
         raise ValueError()
 

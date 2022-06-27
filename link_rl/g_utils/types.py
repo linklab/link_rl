@@ -65,6 +65,7 @@ class ModelType(enum.Enum):
     MEDIUM_RECURRENT_2D_CONVOLUTIONAL = 23
     LARGE_RECURRENT_2D_CONVOLUTIONAL = 24
 
+    KNAPSACK_TEST = 25
 
 class LayerActivationType(enum.Enum):
     LEAKY_RELU = 0
@@ -94,7 +95,7 @@ class AgentType(enum.Enum):
     TD3 = 11
     SAC = 12
     TDMPC = 13
-
+    Td3Drq2 = 14
 
 class ConvolutionType(enum.Enum):
     ONE_DIMENSION = 0
@@ -114,7 +115,7 @@ OnPolicyAgentTypes = [
 
 OffPolicyAgentTypes = [
     AgentType.DQN, AgentType.DOUBLE_DQN, AgentType.DUELING_DQN, AgentType.DOUBLE_DUELING_DQN,
-    AgentType.DDPG, AgentType.TD3, AgentType.SAC, AgentType.TDMPC
+    AgentType.DDPG, AgentType.TD3, AgentType.SAC, AgentType.TDMPC, AgentType.Td3Drq2
 ]
 
 ActorCriticAgentTypes = [

@@ -132,6 +132,10 @@ class OffPolicyAgent(Agent):
         raise NotImplementedError()
 
     @abstractmethod
+    def train_td3_drqv2(self, training_steps_v):
+        raise NotImplementedError()
+
+    @abstractmethod
     def train_sac(self, training_steps_v):
         raise NotImplementedError()
 

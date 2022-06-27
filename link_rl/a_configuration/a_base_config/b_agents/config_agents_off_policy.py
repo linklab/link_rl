@@ -59,6 +59,18 @@ class ConfigTd3(ConfigOffPolicyAgent):
         self.POLICY_UPDATE_FREQUENCY_PER_TRAINING_STEP = 2
 
 
+class ConfigTd3Drq2(ConfigOffPolicyAgent):
+    def __init__(self):
+        super(ConfigTd3Drq2, self).__init__()
+        self.AGENT_TYPE = AgentType.Td3Drq2
+
+        self.TAU = 0.005
+        self.BUFFER_CAPACITY = 10_000
+
+        self.POLICY_UPDATE_FREQUENCY_PER_TRAINING_STEP = 2
+        self.num_expl_steps = 2000
+
+
 class ConfigSac(ConfigOffPolicyAgent):
     def __init__(self):
         super(ConfigSac, self).__init__()

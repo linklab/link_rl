@@ -74,6 +74,12 @@ def get_agent(observation_space, action_space, config=None):
         agent = AgentTd3(
             observation_space=observation_space, action_space=action_space, config=config
         )
+    elif config.AGENT_TYPE == AgentType.Td3Drq2:
+        assert isinstance(action_space, Box)
+        from link_rl.d_agents.off_policy.td3.agent_td3_drqv2 import AgentTd3DrqV2
+        agent = AgentTd3DrqV2(
+            observation_space=observation_space, action_space=action_space, config=config
+        )
     elif config.AGENT_TYPE == AgentType.SAC:
         assert isinstance(action_space, Box)
         from link_rl.d_agents.off_policy.sac.agent_sac import AgentSac
