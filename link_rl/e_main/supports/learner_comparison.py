@@ -66,7 +66,7 @@ class LearnerComparison:
             self.episode_rewards_per_agent.append(np.zeros(shape=(self.n_actors, self.n_vectorized_envs)))
             self.episode_reward_buffer_per_agent.append(MeanBuffer(self.config_c.N_EPISODES_FOR_MEAN_CALCULATION))
 
-            self.transition_generators_per_agent.append(self.generator_on_policy_transition(agent_idx))
+            self.transition_generators_per_agent.append(self.generate_transition_for_comparison(agent_idx))
 
             self.histories_per_agent.append(
                 [deque(maxlen=config_c.AGENT_PARAMETERS[agent_idx].N_STEP) for _ in range(self.n_vectorized_envs)]
@@ -102,7 +102,7 @@ class LearnerComparison:
 
         self.train_comparison_start_time = None
 
-    def generator_on_policy_transition(self, agent_idx):
+    def generate_transition_for_comparison(self, agent_idx):
         observations, infos = self.train_envs_per_agent[agent_idx].reset(return_info=True)
 
         if self.is_recurrent_model_per_agent[agent_idx]:

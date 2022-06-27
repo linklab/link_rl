@@ -65,7 +65,7 @@ class Learner(mp.Process):
             self.transition_generator = self.generator_tdmpc()
         else:
             if queue is None:  # Sequential
-                self.transition_generator = self.generator_on_policy_transition()
+                self.transition_generator = self.generate_transition()
                 self.histories = []
                 for _ in range(self.config.N_VECTORIZED_ENVS):
                     self.histories.append(deque(maxlen=self.config.N_STEP))
@@ -84,8 +84,12 @@ class Learner(mp.Process):
         self.modified_env_name = self.config.ENV_NAME.split("/")[
             1] if "/" in self.config.ENV_NAME else self.config.ENV_NAME
 
-    def generator_on_policy_transition(self):
+    def generate_transition(self):
         observations, infos = self.train_env.reset(return_info=True)
+
+        if self.config.N_ACTORS == 1 and self.config.N_VECTORIZED_ENVS == 1:
+            observations = np.expand_dims(observations, axis=0)
+            infos = [infos]
 
         if self.is_recurrent_model:
             self.agent.model.init_recurrent_hidden()
@@ -114,7 +118,16 @@ class Learner(mp.Process):
             else:
                 raise ValueError()
 
+            if self.config.N_ACTORS == 1 and self.config.N_VECTORIZED_ENVS == 1:
+                scaled_actions = scaled_actions[0]
+
             next_observations, rewards, dones, infos = self.train_env.step(scaled_actions)
+
+            if self.config.N_ACTORS == 1 and self.config.N_VECTORIZED_ENVS == 1:
+                next_observations = np.expand_dims(next_observations, axis=0)
+                rewards = [rewards]
+                dones = [dones]
+                infos = [infos]
 
             if self.is_recurrent_model:
                 next_observations = [(next_observations, self.agent.model.recurrent_hidden)]
@@ -124,14 +137,19 @@ class Learner(mp.Process):
                 for env_id in range(self.train_env.num_envs):
                     unavailable_actions.append(infos[env_id]["unavailable_actions"])
 
-            for env_id, (observation, action, next_observation, reward, done, info) in enumerate(
-                    zip(observations, actions, next_observations, rewards, dones, infos)
-            ):
+            if self.config.N_ACTORS == 1 and self.config.N_VECTORIZED_ENVS == 1:
+                observation = observations[0]
+                action = actions[0]
+                next_observation = next_observations[0]
+                reward = rewards[0]
+                done = dones[0]
+                info = infos[0]
+
                 info["actor_id"] = 0
-                info["env_id"] = env_id
+                info["env_id"] = 0
                 info["actor_time_step"] = actor_time_step
 
-                self.histories[env_id].append(Transition(
+                self.histories[0].append(Transition(
                     observation=observation,
                     action=action,
                     next_observation=next_observation,
@@ -139,14 +157,57 @@ class Learner(mp.Process):
                     done=done,
                     info=info
                 ))
-                if len(self.histories[env_id]) == self.config.N_STEP or done:
+                if len(self.histories[0]) == self.config.N_STEP or done:
                     n_step_transition = Actor.get_n_step_transition(
-                        history=self.histories[env_id], env_id=env_id,
+                        history=self.histories[0], env_id=0,
                         actor_id=0, info=info, done=done, config=self.config
                     )
                     yield n_step_transition
 
-            observations = next_observations
+                if done:
+                    observations, infos = self.train_env.reset(return_info=True)
+
+                    observations = np.expand_dims(observations, axis=0)
+                    infos = [infos]
+
+                    if self.is_recurrent_model:
+                        observations = [(observations, self.agent.model.recurrent_hidden)]
+
+                    if self.config.ACTION_MASKING:
+                        unavailable_actions = []
+                        for env_id in range(self.train_env.num_envs):
+                            unavailable_actions.append(infos[env_id]["unavailable_actions"])
+                    else:
+                        unavailable_actions = None
+
+                else:
+                    observations = next_observations
+
+            else:
+                for env_id, (observation, action, next_observation, reward, done, info) in enumerate(
+                        zip(observations, actions, next_observations, rewards, dones, infos)
+                ):
+                    info["actor_id"] = 0
+                    info["env_id"] = env_id
+                    info["actor_time_step"] = actor_time_step
+
+                    self.histories[env_id].append(Transition(
+                        observation=observation,
+                        action=action,
+                        next_observation=next_observation,
+                        reward=reward,
+                        done=done,
+                        info=info
+                    ))
+                    if len(self.histories[env_id]) == self.config.N_STEP or done:
+                        n_step_transition = Actor.get_n_step_transition(
+                            history=self.histories[env_id], env_id=env_id,
+                            actor_id=0, info=info, done=done, config=self.config
+                        )
+                        yield n_step_transition
+
+                    observations = next_observations
+
             if self.is_terminated.value:
                 break
 
@@ -173,7 +234,8 @@ class Learner(mp.Process):
             yield episode
 
     def set_train_env(self):
-        if self.config.AGENT_TYPE == AgentType.TDMPC:
+        # if self.config.AGENT_TYPE == AgentType.TDMPC:
+        if self.config.AGENT_TYPE == AgentType.TDMPC or (self.config.N_ACTORS == 1 and self.config.N_VECTORIZED_ENVS == 1):
             self.train_env = get_single_env(self.config, train_mode=True)
         else:
             self.train_env = get_train_env(self.config)
