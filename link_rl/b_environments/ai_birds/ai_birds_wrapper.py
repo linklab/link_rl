@@ -119,6 +119,7 @@ class AIBirdsWrapper(gym.Env):
 		elif game_state == GameState.PLAYING:
 			pass
 		else:
+			print(game_state, "!!!")
 			raise ValueError()
 
 		return reward
@@ -150,19 +151,26 @@ def run_env():
 	env = AIBirdsWrapper()
 	agent = Dummy_Agent()
 
-	for i in range(100):
+	total_episodes = 10_000
+	total_time_steps = 1
+
+	for ep in range(1, total_episodes + 1):
 		observation, info = env.reset(return_info=True)
 		print("RESET!!!", info)
 		done = False
+		episode_time_steps = 1
 
 		while not done:
 			action = agent.get_action(observation)
 			next_observation, reward, done, info = env.step(action)
-			print("Observation: {0}, Action: {1}, next_observation: {2}, Reward: {3}, Done: {4}, Info: {5}".format(
+			print("[Ep.: {0:4}, Time Steps: {1:4}/{2:4}] "
+				  "Observation: {3}, Action: {4}, next_observation: {5}, Reward: {6}, Done: {7}, Info: {8}".format(
+				ep, episode_time_steps, total_time_steps,
 				observation.shape, action, next_observation.shape, reward, done, info
 			))
 			observation = next_observation
-
+			total_time_steps += 1
+			episode_time_steps += 1
 
 if __name__ == "__main__":
 	run_env()
