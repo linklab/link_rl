@@ -31,7 +31,7 @@ class AIBirdsWrapper(gym.Env):
 
 		self.current_game_level = -1
 
-		self.NUMBER_OF_LEVELS = 319
+		self.NUMBER_OF_LEVELS = 320
 
 	def get_observation(self, raw_state):
 		obs = cv2.resize(src=raw_state, dsize=(self.new_obs_size, self.new_obs_size), interpolation=cv2.INTER_AREA)
@@ -42,8 +42,7 @@ class AIBirdsWrapper(gym.Env):
 		print("##### INITIAL_PHASE: BEGIN #####")
 		self.rl_client.ar.configure(self.rl_client.id)
 
-		self.current_game_level = self.rl_client.ar.set_game_simulation_speed(100)
-		self.rl_client.ar.load_next_available_level()
+		self.rl_client.ar.set_game_simulation_speed(100)
 
 		game_state = self.rl_client.ar.get_game_state()		# GameState.NEWTRIAL
 		print("1. game_state: {0}".format(game_state))
@@ -149,10 +148,6 @@ class Dummy_Agent:
 		self.IS_IN_TRAINING_MODE = True
 		self.shoots_before_level_is_completed = 0
 		self.TOTAL_ACTIONS = 50  # 0=10, 50=60
-
-	def reset_agent(self):
-		self.IS_IN_TRAINING_MODE = True  # indicates if the agent is in training mode, switching it off will stop agent from training
-		pass
 
 	def get_action(self, observation):
 		assert observation is not None
