@@ -19,7 +19,9 @@ from link_rl.b_environments.ai_birds.src.ver_0_5_13.demo.ddqn_test_harness_agent
 class AIBirdsWrapper(gym.Env):
 	def __init__(self, train_mode=True):
 		super(AIBirdsWrapper, self).__init__()
-		self.rl_client = ClientRLAgent(train_mode=train_mode)
+		self.train_mode = train_mode
+
+		self.rl_client = ClientRLAgent(train_mode=self.train_mode)
 
 		self.new_obs_size = 84
 		self.observation_space = spaces.Box(low=-np.inf, high=np.inf, shape=(3, self.new_obs_size, self.new_obs_size))
@@ -27,34 +29,45 @@ class AIBirdsWrapper(gym.Env):
 
 		self.pass_initial_phase = False
 
+		self.current_game_level = -1
+
+		self.NUMBER_OF_LEVELS = 3
+
 	def get_observation(self, raw_state):
 		obs = cv2.resize(src=raw_state, dsize=(self.new_obs_size, self.new_obs_size), interpolation=cv2.INTER_AREA)
 		obs = np.transpose(obs, axes=(2, 0, 1))
 		return obs
 
 	def proceed_initial_phase(self):
+		print("##### INITIAL_PHASE: BEGIN #####")
 		self.rl_client.ar.configure(self.rl_client.id)
 
-		self.rl_client.ar.set_game_simulation_speed(100)
+		self.current_game_level = self.rl_client.ar.set_game_simulation_speed(100)
 		self.rl_client.ar.load_next_available_level()
 
-		self.rl_client.ar.get_game_state()		# GameState.NEWTRIAL
+		game_state = self.rl_client.ar.get_game_state()		# GameState.NEWTRIAL
+		print("1. game_state: {0}".format(game_state))
+
 		self.rl_client.ar.ready_for_new_set()
 
 		self.rl_client.ar.get_game_state()		# GameState.NEWTRAININGSET
+		print("2. game_state: {0}".format(game_state))
+
 		self.rl_client.ar.ready_for_new_set()
 
 		main_menu = False
 		while not main_menu:
 			game_state = self.rl_client.ar.get_game_state()		# GameState.LOADING, GameState.LOADING, ...., GameState.MAIN_MENU
+			print("3. game_state: {0}".format(game_state))
 			if game_state == GameState.MAIN_MENU:
 				main_menu = True
 
-		self.rl_client.ar.load_next_available_level()
+		self.current_game_level = self.rl_client.ar.load_next_available_level()
 		self.rl_client.level_count += 1
 		self.rl_client.novelty_existence = self.rl_client.ar.get_novelty_info()
 
 		self.pass_initial_phase = True
+		print("##### INITIAL_PHASE: END #####")
 
 	def reset(self, *, seed: Optional[int] = None, return_info: bool = False, options: Optional[dict] = None):
 		if not self.pass_initial_phase:
@@ -65,10 +78,7 @@ class AIBirdsWrapper(gym.Env):
 		raw_state, ground_truth = self.rl_client.ar.get_ground_truth_with_screenshot()
 		observation = self.get_observation(raw_state)
 
-		info = {
-			"game_state": game_state,
-			"level_count": self.rl_client.level_count
-		}
+		info = self.get_info(game_state)
 
 		if return_info:
 			return observation, info
@@ -87,25 +97,23 @@ class AIBirdsWrapper(gym.Env):
 
 		game_state = self.rl_client.ar.get_game_state()   # GameState.PLAYING
 
-		info = {
-			"game_state": game_state,
-			"level_count": self.rl_client.level_count
-		}
-
-		reward = self.get_reward(reward, game_state)
+		info = self.get_info(game_state)
 
 		if game_state in [GameState.WON, GameState.LOST]:
 			done = True
 
-			# check for change of number of levels in the game
-			self.rl_client.update_no_of_levels()
-			# scores = self.rl_client.ar.get_all_level_scores()
-			self.rl_client.check_my_score()
-
-			self.rl_client.ar.load_next_available_level()
+			self.current_game_level = self.rl_client.ar.load_next_available_level()
 			self.rl_client.level_count += 1
 		else:
 			done = False
+
+		reward = self.get_reward(reward, game_state)
+
+		# [NOTE] game_state 가 GameState.EVALUATION_TERMINATED 가 되기 전에 미리 전체 초기화
+		# 이유: GameState.EVALUATION_TERMINATED 일 때에는 WON 인지 LOST인지 파악 불가
+		if self.train_mode and self.current_game_level == self.NUMBER_OF_LEVELS:
+			self.rl_client = ClientRLAgent(train_mode=self.train_mode)
+			self.pass_initial_phase = False
 
 		return observation, reward, done, info
 
@@ -123,6 +131,14 @@ class AIBirdsWrapper(gym.Env):
 			raise ValueError()
 
 		return reward
+
+	def get_info(self, game_state):
+		info = {
+			"game_state": game_state,
+			"current_game_level": self.current_game_level
+		}
+
+		return info
 
 	def render(self, mode="human"):
 		pass
@@ -164,7 +180,7 @@ def run_env():
 			action = agent.get_action(observation)
 			next_observation, reward, done, info = env.step(action)
 			print("[Ep.: {0:4}, Time Steps: {1:4}/{2:4}] "
-				  "Observation: {3}, Action: {4}, next_observation: {5}, Reward: {6}, Done: {7}, Info: {8}".format(
+				  "Obs.: {3}, Action: {4}, Next_obs.: {5}, Reward: {6:.4f}, Done: {7}, Info: {8}".format(
 				ep, episode_time_steps, total_time_steps,
 				observation.shape, action, next_observation.shape, reward, done, info
 			))

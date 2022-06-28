@@ -235,9 +235,15 @@ class ClientRLAgent:
         )
 
         if train_mode:
-            json_file = os.path.join(PROJECT_HOME, "link_rl", "b_environments", "ai_birds", "src", "ver_0_5_13", "client", "server_client_config.json")
+            json_file = os.path.join(
+                PROJECT_HOME, "link_rl", "b_environments", "ai_birds", "src", "ver_0_5_13", "client",
+                "server_client_config.json"
+            )
         else:
-            json_file = os.path.join(PROJECT_HOME, "link_rl", "b_environments", "ai_birds", "src", "ver_0_5_13", "client", "server_client_test_config.json")
+            json_file = os.path.join(
+                PROJECT_HOME, "link_rl", "b_environments", "ai_birds", "src", "ver_0_5_13", "client",
+                "server_client_test_config.json"
+            )
 
         with open(json_file, 'r') as config:
             sc_json_config = json.load(config)
