@@ -31,7 +31,7 @@ class AIBirdsWrapper(gym.Env):
 
 		self.current_game_level = -1
 
-		self.NUMBER_OF_LEVELS = 3
+		self.NUMBER_OF_LEVELS = 319
 
 	def get_observation(self, raw_state):
 		obs = cv2.resize(src=raw_state, dsize=(self.new_obs_size, self.new_obs_size), interpolation=cv2.INTER_AREA)
@@ -187,6 +187,7 @@ def run_env():
 			observation = next_observation
 			total_time_steps += 1
 			episode_time_steps += 1
+
 
 if __name__ == "__main__":
 	run_env()
