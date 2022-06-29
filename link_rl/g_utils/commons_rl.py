@@ -1,6 +1,48 @@
+import torch
 from gym.spaces import Box, Discrete
 
 from link_rl.g_utils.types import AgentType
+
+
+class Episode(object):
+    """Storage object for a single episode."""
+
+    def __init__(self, config, init_obs, n_out_action):
+        self.config = config
+        episode_length = int(1000/config.ACTION_REPEAT)
+        dtype = torch.float32 if not config.FROM_PIXELS else torch.uint8
+        self.obs = torch.empty((episode_length + 1, *init_obs.shape), dtype=dtype, device=self.config.DEVICE)
+        self.obs[0] = torch.tensor(init_obs, dtype=dtype, device=self.config.DEVICE)
+        self.action = torch.empty((episode_length, n_out_action), dtype=torch.float32, device=self.config.DEVICE)
+        self.reward = torch.empty((episode_length,), dtype=torch.float32, device=self.config.DEVICE)
+        self.cumulative_reward = 0
+        self.done = False
+        self._idx = 0
+        self.info = {}
+
+    def __len__(self):
+        return self._idx
+
+    @property
+    def first(self):
+        return len(self) == 0
+
+    def __add__(self, transition):
+        self.add(*transition)
+        return self
+
+    def append(self, transition):
+        self.add(*transition)
+        return self
+
+    def add(self, obs, action, reward, done, info):
+        self.obs[self._idx + 1] = torch.tensor(obs, dtype=self.obs.dtype, device=self.obs.device)
+        self.action[self._idx] = action
+        self.reward[self._idx] = reward
+        self.cumulative_reward += reward
+        self.done = done
+        self.info = info
+        self._idx += 1
 
 
 def get_agent(observation_space, action_space, config=None, need_train=True):

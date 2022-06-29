@@ -42,10 +42,9 @@ class Actor(mp.Process):
     def roll_out(self):
         observations = self.train_env.reset()
 
-        actor_time_step = 0
+        actor_time_step = 1
 
         while True:
-            actor_time_step += 1
             actions = self.agent.get_action(observations)
             next_observations, rewards, dones, infos = self.train_env.step(actions)
 
@@ -72,6 +71,7 @@ class Actor(mp.Process):
                     )
                     self.queue.put(n_step_transition)
 
+            actor_time_step += 1
             observations = next_observations
 
             if self.is_terminated.value:

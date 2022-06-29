@@ -61,6 +61,9 @@ class AIBirdsWrapper(gym.Env):
 			if game_state == GameState.MAIN_MENU:
 				main_menu = True
 
+		number_of_levels = self.rl_client.ar.get_number_of_levels()
+		print("number_of_levels: ", number_of_levels)
+
 		self.current_game_level = self.rl_client.ar.load_next_available_level()
 		self.rl_client.level_count += 1
 		self.rl_client.novelty_existence = self.rl_client.ar.get_novelty_info()

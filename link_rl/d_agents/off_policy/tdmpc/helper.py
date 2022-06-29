@@ -8,6 +8,8 @@ from torch.distributions.utils import _standard_normal
 
 __REDUCE__ = lambda b: 'mean' if b else 'none'
 
+from link_rl.g_utils.commons_rl import Episode
+
 
 def l1(pred, target, reduce=False):
     """Computes the L1-loss between predictions and targets."""
@@ -158,45 +160,7 @@ class RandomShiftsAug(nn.Module):
         return F.grid_sample(x, grid, padding_mode='zeros', align_corners=False)
 
 
-class Episode(object):
-    """Storage object for a single episode."""
 
-    def __init__(self, config, init_obs, n_out_action):
-        self.config = config
-        episode_length = int(1000/config.ACTION_REPEAT)
-        dtype = torch.float32 if not config.FROM_PIXELS else torch.uint8
-        self.obs = torch.empty((episode_length + 1, *init_obs.shape), dtype=dtype, device=self.config.DEVICE)
-        self.obs[0] = torch.tensor(init_obs, dtype=dtype, device=self.config.DEVICE)
-        self.action = torch.empty((episode_length, n_out_action), dtype=torch.float32, device=self.config.DEVICE)
-        self.reward = torch.empty((episode_length,), dtype=torch.float32, device=self.config.DEVICE)
-        self.cumulative_reward = 0
-        self.done = False
-        self._idx = 0
-        self.info = {}
-
-    def __len__(self):
-        return self._idx
-
-    @property
-    def first(self):
-        return len(self) == 0
-
-    def __add__(self, transition):
-        self.add(*transition)
-        return self
-
-    def append(self, transition):
-        self.add(*transition)
-        return self
-
-    def add(self, obs, action, reward, done, info):
-        self.obs[self._idx + 1] = torch.tensor(obs, dtype=self.obs.dtype, device=self.obs.device)
-        self.action[self._idx] = action
-        self.reward[self._idx] = reward
-        self.cumulative_reward += reward
-        self.done = done
-        self.info = info
-        self._idx += 1
 
 
 class ReplayBuffer():

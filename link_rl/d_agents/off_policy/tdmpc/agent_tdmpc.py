@@ -25,12 +25,15 @@ class AgentTdmpc(OffPolicyAgent):
         assert self.config.N_STEP == 1
 
         self.std = h.linear_schedule(config.STD_SCHEDULE, 0)
+
         self.model = TOLD(
             observation_shape=self.observation_shape, n_out_actions=self.n_out_actions, config=config
         ).to(config.DEVICE)
         self.model_target = deepcopy(self.model).to(config.DEVICE)
+
         self.optim = torch.optim.Adam(self.model.parameters(), lr=self.config.LEARNING_RATE)
         self.pi_optim = torch.optim.Adam(self.model._pi.parameters(), lr=self.config.LEARNING_RATE)
+
         self.aug = h.RandomShiftsAug(config)
         self.model.eval()
         self.model_target.eval()
