@@ -48,13 +48,19 @@ class Actor(mp.Process):
 
         self.set_train_env()
 
-        if self.config.AGENT_TYPE == AgentType.TDMPC:
-            self.generate_episode_for_single_env()
-        elif self.config.N_VECTORIZED_ENVS == 1:
-            print(self.queue, "#####")
-            self.generate_transition_for_single_env()
-        else:
-            self.generate_transition_for_vectorized_env()
+        try:
+            if self.config.AGENT_TYPE == AgentType.TDMPC:
+                while not self.is_terminated.value:
+                    next(self.generate_episode_for_single_env())
+
+            elif self.config.N_VECTORIZED_ENVS == 1:
+                while not self.is_terminated.value:
+                    next(self.generate_transition_for_single_env())
+            else:
+                while not self.is_terminated.value:
+                    next(self.generate_transition_for_vectorized_env())
+        except StopIteration as e:
+            pass
 
     def set_train_env(self):
         if self.config.AGENT_TYPE == AgentType.TDMPC or self.config.N_VECTORIZED_ENVS == 1:
