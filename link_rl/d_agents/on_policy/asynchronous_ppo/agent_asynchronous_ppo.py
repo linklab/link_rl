@@ -9,9 +9,9 @@ class AgentAsynchronousPpo(AgentPpo):
         pass
 
 
-class WorkerAsynchronousPpo(AgentPpo):
+class WorkingAsynchronousPpo(AgentPpo):
     def __init__(self, master_agent, observation_space, action_space, shared_model_access_lock, config):
-        super(WorkerAsynchronousPpo, self).__init__(observation_space, action_space, config)
+        super(WorkingAsynchronousPpo, self).__init__(observation_space, action_space, config)
 
         self.master_agent = master_agent
         self.shared_model_access_lock = shared_model_access_lock

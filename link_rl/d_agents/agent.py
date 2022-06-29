@@ -6,6 +6,9 @@ from gym.spaces import Discrete, Box
 
 import numpy as np
 
+from link_rl.a_configuration.a_base_config.c_models.config_recurrent_convolutional_models import \
+    ConfigRecurrent1DConvolutionalModel, ConfigRecurrent2DConvolutionalModel
+from link_rl.a_configuration.a_base_config.c_models.config_recurrent_linear_models import ConfigRecurrentLinearModel
 from link_rl.g_utils.commons import get_continuous_action_info
 from link_rl.g_utils.types import AgentMode, ActorCriticAgentTypes
 
@@ -62,6 +65,12 @@ class Agent:
 
         self.last_critic_model_grad_l2 = mp.Value('d', 0.0)
         self.last_critic_model_grad_max = mp.Value('d', 0.0)
+
+        self.is_recurrent_model = any([
+            isinstance(self.config.MODEL_PARAMETER, ConfigRecurrentLinearModel),
+            isinstance(self.config.MODEL_PARAMETER, ConfigRecurrent1DConvolutionalModel),
+            isinstance(self.config.MODEL_PARAMETER, ConfigRecurrent2DConvolutionalModel)
+        ])
 
         self.step = 0
 

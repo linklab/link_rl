@@ -9,9 +9,9 @@ class AgentA3c(AgentA2c):
         pass
 
 
-class WorkerAgentA3c(AgentA2c):
+class WorkingAgentA3c(AgentA2c):
     def __init__(self, master_agent, observation_space, action_space, shared_model_access_lock, config, need_train):
-        super(WorkerAgentA3c, self).__init__(observation_space, action_space, config, need_train)
+        super(WorkingAgentA3c, self).__init__(observation_space, action_space, config, need_train)
 
         self.master_agent = master_agent
         self.shared_model_access_lock = shared_model_access_lock

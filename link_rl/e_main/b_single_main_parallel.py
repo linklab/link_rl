@@ -1,9 +1,10 @@
 import time
 import torch.multiprocessing as mp
-from link_rl.d_agents.on_policy.a3c.agent_a3c import WorkerAgentA3c
-from link_rl.d_agents.on_policy.asynchronous_ppo.agent_asynchronous_ppo import WorkerAsynchronousPpo
+from link_rl.d_agents.on_policy.a3c.agent_a3c import WorkingAgentA3c
+from link_rl.d_agents.on_policy.asynchronous_ppo.agent_asynchronous_ppo import WorkingAsynchronousPpo
 
-from link_rl.e_main.supports.actor import Actor, LearningActor
+from link_rl.e_main.supports.actor import Actor
+from link_rl.g_utils.commons import get_specific_env_name, model_load
 from link_rl.g_utils.types import AgentType
 
 from b_single_main_common import *
@@ -15,12 +16,12 @@ def main():
     observation_space, action_space = get_env_info(config)
     print_basic_info(observation_space, action_space, config)
 
-    input("Press Enter (two or more times) to continue...")
-
     mp.set_start_method('spawn', force=True)
     queue = mp.Queue()
 
     if config.AGENT_TYPE in [AgentType.A3C, AgentType.ASYNCHRONOUS_PPO]:
+        input("Press Enter (two or more times) to continue...")
+
         master_agent = get_agent(
             observation_space=observation_space, action_space=action_space, config=config
         )
@@ -32,22 +33,22 @@ def main():
         )
 
         if config.AGENT_TYPE == AgentType.A3C:
-            worker_agent_class = WorkerAgentA3c
+            working_agent_class = WorkingAgentA3c
         elif config.AGENT_TYPE == AgentType.ASYNCHRONOUS_PPO:
-            worker_agent_class = WorkerAsynchronousPpo
+            working_agent_class = WorkingAsynchronousPpo
         else:
             raise ValueError()
 
-        worker_agents = [
-            worker_agent_class(
+        working_agents = [
+            working_agent_class(
                 master_agent=master_agent, observation_space=observation_space, action_space=action_space,
                 shared_model_access_lock=shared_model_access_lock, config=config, need_train=True
             ) for _ in range(config.N_ACTORS)
         ]
 
         actors = [
-            LearningActor(
-                env_name=config.ENV_NAME, actor_id=actor_id, agent=worker_agents[actor_id], queue=queue, config=config
+            Actor(
+                actor_id=actor_id, agent=working_agents[actor_id], queue=queue, config=config, working_actor=True
             ) for actor_id in range(config.N_ACTORS)
         ]
     else:
@@ -55,11 +56,15 @@ def main():
             observation_space=observation_space, action_space=action_space, config=config
         )
 
+        env_name = get_specific_env_name(config=config)
+
+        model_load(agent=agent, env_name=env_name, agent_type_name=config.AGENT_TYPE.name, config=config)
+
         learner = Learner(agent=agent, queue=queue, config=config)
 
         actors = [
             Actor(
-                env_name=config.ENV_NAME, actor_id=actor_id, agent=agent, queue=queue, config=config
+                actor_id=actor_id, agent=agent, queue=queue, config=config
             ) for actor_id in range(config.N_ACTORS)
         ]
 
@@ -68,7 +73,7 @@ def main():
 
     # Busy Wait: 모든 액터들이 VecEnv를 생성 완료할 때까지 대기
     for actor in actors:
-        while not actor.is_vectorized_env_created.value:
+        while not actor.is_env_created.value:
             time.sleep(0.1)
 
     print("########## LEARNING STARTED !!! ##########")

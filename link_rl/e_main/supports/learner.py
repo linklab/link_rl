@@ -1,5 +1,4 @@
 import warnings
-from collections import deque
 
 import torch.multiprocessing as mp
 import numpy as np
@@ -8,10 +7,7 @@ import time
 from gym.spaces import Box, Discrete
 from gym.vector import VectorEnv
 
-from link_rl.a_configuration.a_base_config.c_models.config_recurrent_convolutional_models import \
-    ConfigRecurrent2DConvolutionalModel, ConfigRecurrent1DConvolutionalModel
-from link_rl.a_configuration.a_base_config.c_models.config_recurrent_linear_models import ConfigRecurrentLinearModel
-from link_rl.e_main.supports.generator import TransitionGenerator
+from link_rl.e_main.supports.actor import Actor
 
 warnings.filterwarnings('ignore')
 warnings.simplefilter("ignore")
@@ -60,50 +56,34 @@ class Learner(mp.Process):
         self.transition_rolling_rate = mp.Value('d', 0.0)
         self.train_step_rate = mp.Value('d', 0.0)
 
-        self.is_recurrent_model = any([
-            isinstance(self.config.MODEL_PARAMETER, ConfigRecurrentLinearModel),
-            isinstance(self.config.MODEL_PARAMETER, ConfigRecurrent1DConvolutionalModel),
-            isinstance(self.config.MODEL_PARAMETER, ConfigRecurrent2DConvolutionalModel)
-        ])
-
-        self.transition_generator = None
+        self.single_actor_transition_generator = None
 
         if self.config.ACTION_MASKING:
             assert isinstance(self.agent.action_space, Discrete)
 
-        self.shared_model_access_lock = shared_model_access_lock  # For only LearningActor (A3C, AsynchronousPPO)
+        self.shared_model_access_lock = shared_model_access_lock  # For only WorkingActor (A3C, AsynchronousPPO)
 
         self.modified_env_name = self.config.ENV_NAME.split("/")[
             1] if "/" in self.config.ENV_NAME else self.config.ENV_NAME
 
-    def set_train_env(self):
-        # if self.config.AGENT_TYPE == AgentType.TDMPC:
-        if self.config.AGENT_TYPE == AgentType.TDMPC or self.config.N_VECTORIZED_ENVS == 1:
-            self.train_env = get_single_env(self.config, train_mode=True)
-        else:
-            self.train_env = get_train_env(self.config)
-
-        if self.queue is None:
-            generator = TransitionGenerator(
-                train_env=self.train_env,
-                agent=self.agent,
-                is_recurrent_model=self.is_recurrent_model,
-                is_terminated=self.is_terminated,
-                config=self.config
-            )
-            if self.config.AGENT_TYPE == AgentType.TDMPC:
-                self.transition_generator = generator.generate_episode_for_single_env()
-            elif self.config.N_VECTORIZED_ENVS == 1:
-                self.transition_generator = generator.generate_transition_for_single_env()
-            else:
-                self.transition_generator = generator.generate_transition_for_vectorized_env()
-
-    def set_test_env(self):
-        self.test_env = get_single_env(self.config, train_mode=False)
+        self.single_actor = None  # for sequential (N_ACTOR == 1)
 
     def train_loop(self):
-        self.set_train_env()
-        self.set_test_env()
+        if self.queue is None:
+            self.single_actor = Actor(
+                actor_id=0, agent=self.agent, queue=None, config=self.config
+            )
+
+            self.single_actor.set_train_env()
+
+            if self.config.AGENT_TYPE == AgentType.TDMPC:
+                self.single_actor_transition_generator = self.single_actor.generate_episode_for_single_env()
+            elif self.config.N_VECTORIZED_ENVS == 1:
+                self.single_actor_transition_generator = self.single_actor.generate_transition_for_single_env()
+            else:
+                self.single_actor_transition_generator = self.single_actor.generate_transition_for_vectorized_env()
+
+        self.test_env = get_single_env(self.config, train_mode=False)
 
         if self.config.USE_WANDB:
             wandb_obj = get_wandb_obj(self.config, self.agent)
@@ -139,15 +119,17 @@ class Learner(mp.Process):
 
                 last_train_env_info = async_info["last_train_env_info"]
             else:
-                if self.queue is not None:
-                    n_step_transition = self.queue.get()
+                if self.queue is None:
+                    n_step_transition = next(self.single_actor_transition_generator)
                 else:
-                    n_step_transition = next(self.transition_generator)
+                    n_step_transition = self.queue.get()
 
                 if n_step_transition is None:
                     self.n_actor_terminations += 1
                     if self.n_actor_terminations >= self.n_actors:
                         self.is_terminated.value = True
+                        if self.queue is None:
+                            self.single_actor.is_terminated.value = True
                         break
                     else:
                         continue
@@ -251,6 +233,8 @@ class Learner(mp.Process):
                     self.config.MAX_TRAINING_STEPS
                 ))
                 self.is_terminated.value = True
+                if self.queue is None:
+                    self.single_actor.is_terminated.value = True
 
         total_training_time = time.time() - self.train_start_time
         formatted_total_training_time = time.strftime('%H:%M:%S', time.gmtime(total_training_time))
@@ -286,7 +270,7 @@ class Learner(mp.Process):
         print(test_str)
 
         # model_save_conditions
-        if self.test_episode_reward_min.value >= self.test_episode_reward_best:
+        if self.test_episode_reward_min.value > self.test_episode_reward_best:
             self.test_episode_reward_best = self.test_episode_reward_min.value
             model_save(
                 agent=self.agent,
@@ -315,6 +299,8 @@ class Learner(mp.Process):
             )
             print("[TRAIN TERMINATION] TERMINATION CONDITION REACHES!!!")
             self.is_terminated.value = True
+            if self.queue is None:
+                self.single_actor.is_terminated.value = True
 
         print("*" * 150)
 
@@ -333,14 +319,13 @@ class Learner(mp.Process):
             episode_reward = 0  # cumulative_reward
             episode_step = 0
 
-            # Environment ???????? ???? ??????
             observation, info = self.test_env.reset(return_info=True)
 
             if not self.config.AGENT_TYPE == AgentType.TDMPC:
                 if not isinstance(self.test_env, VectorEnv):
                     observation = np.expand_dims(observation, axis=0)
 
-            if self.is_recurrent_model:
+            if self.agent.is_recurrent_model:
                 self.agent.model.init_recurrent_hidden()
                 observation = [(observation, self.agent.model.recurrent_hidden)]
 
@@ -401,13 +386,13 @@ class Learner(mp.Process):
                     if not isinstance(self.test_env, VectorEnv):
                         next_observation = np.expand_dims(next_observation, axis=0)
 
-                if self.is_recurrent_model:
+                if self.agent.is_recurrent_model:
                     next_observation = [(next_observation, self.agent.model.recurrent_hidden)]
 
                 if self.config.ACTION_MASKING:
                     unavailable_actions = [info['unavailable_actions']]
 
-                episode_reward += reward  # episode_reward ?? ???????? ?????? ?????? ???????? ???? ?? ?????? ?? ??????.
+                episode_reward += reward
                 observation = next_observation
 
             episode_reward_lst.append(episode_reward)

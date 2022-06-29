@@ -109,10 +109,7 @@ class LearnerComparison:
             self.agents[agent_idx].model.init_recurrent_hidden()
             observations = [(observations, self.agents[agent_idx].model.recurrent_hidden)]
 
-        actor_time_step = 0
-
         while True:
-            actor_time_step += 1
             actions = self.agents[agent_idx].get_action(observations)
 
             if isinstance(self.agents[agent_idx].action_space, Discrete):
@@ -132,7 +129,6 @@ class LearnerComparison:
             ):
                 info["actor_id"] = 0
                 info["env_id"] = env_id
-                info["actor_time_step"] = actor_time_step
                 self.histories_per_agent[agent_idx][env_id].append(Transition(
                     observation=observation,
                     action=action,
