@@ -766,7 +766,7 @@ def wandb_log_comparison(
             go.Scatter(
                 name=agent_labels[agent_idx],
                 x=comparison_stat.test_training_steps_lst,
-                y=comparison_stat.MEAN_test_episode_reward_min_per_agent[agent_idx, :],
+                y=comparison_stat.MEAN_test_episode_reward_per_agent[agent_idx, :],
                 showlegend=True
             )
         )
@@ -783,7 +783,7 @@ def wandb_log_comparison(
             go.Scatter(
                 name=agent_labels[agent_idx],
                 x=comparison_stat.test_training_steps_lst,
-                y=comparison_stat.MEAN_mean_episode_reward_per_agent[agent_idx, :],
+                y=comparison_stat.MEAN_train_mean_episode_reward_per_agent[agent_idx, :],
                 showlegend=True
             )
         )

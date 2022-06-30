@@ -4,17 +4,17 @@ import torch.multiprocessing as mp
 import numpy as np
 import time
 
-from gym.spaces import Box, Discrete
-from gym.vector import VectorEnv
+from gym.spaces import Discrete
 
 from link_rl.e_main.supports.actor import Actor
+from link_rl.e_main.supports.tester import Tester
 
 warnings.filterwarnings('ignore')
 warnings.simplefilter("ignore")
 
-from link_rl.g_utils.commons import model_save, console_log, wandb_log, get_wandb_obj, get_train_env, get_single_env
+from link_rl.g_utils.commons import model_save, console_log, wandb_log, get_wandb_obj, get_single_env
 from link_rl.g_utils.commons import MeanBuffer
-from link_rl.g_utils.types import AgentType, AgentMode, OnPolicyAgentTypes, OffPolicyAgentTypes, HerConstant
+from link_rl.g_utils.types import AgentType, OnPolicyAgentTypes, OffPolicyAgentTypes, HerConstant
 
 
 class Learner(mp.Process):
@@ -67,6 +67,8 @@ class Learner(mp.Process):
 
         self.single_actor = None  # for sequential (N_ACTOR == 1)
 
+        self.tester = None
+
     def train_loop(self):
         if self.queue is None:
             self.single_actor = Actor(
@@ -82,7 +84,7 @@ class Learner(mp.Process):
             else:
                 self.single_actor_transition_generator = self.single_actor.generate_transition_for_vectorized_env()
 
-        self.test_env = get_single_env(self.config, train_mode=False)
+        self.tester = Tester(agent=self.agent, config=self.config)
 
         if self.config.USE_WANDB:
             wandb_obj = get_wandb_obj(self.config, self.agent)
@@ -249,7 +251,13 @@ class Learner(mp.Process):
     def testing(self):
         print("*" * 150)
 
-        self.test_episode_reward_min.value = self.play_for_testing(self.config.N_TEST_EPISODES)
+        if self.config.AGENT_TYPE in [AgentType.A3C, AgentType.ASYNCHRONOUS_PPO]:
+            self.shared_model_access_lock.acquire()
+
+        self.test_episode_reward_min.value = self.tester.play_for_testing(self.config.N_TEST_EPISODES)
+
+        if self.config.AGENT_TYPE in [AgentType.A3C, AgentType.ASYNCHRONOUS_PPO]:
+            self.shared_model_access_lock.release()
 
         elapsed_time = time.time() - self.train_start_time
         formatted_elapsed_time = time.strftime('%H:%M:%S', time.gmtime(elapsed_time))
@@ -302,109 +310,3 @@ class Learner(mp.Process):
                 self.single_actor.is_terminated.value = True
 
         print("*" * 150)
-
-    def play_for_testing(self, n_test_episodes):
-        if self.config.AGENT_TYPE in [AgentType.A3C, AgentType.ASYNCHRONOUS_PPO]:
-            self.shared_model_access_lock.acquire()
-
-        self.agent.model.eval()
-
-        episode_reward_lst = []
-
-        if self.config.CUSTOM_ENV_STAT is not None:
-            self.config.CUSTOM_ENV_STAT.test_reset()
-
-        for i in range(n_test_episodes):
-            episode_reward = 0  # cumulative_reward
-            episode_step = 0
-
-            observation, info = self.test_env.reset(return_info=True)
-
-            if not self.config.AGENT_TYPE == AgentType.TDMPC:
-                if not isinstance(self.test_env, VectorEnv):
-                    observation = np.expand_dims(observation, axis=0)
-
-            if self.agent.is_recurrent_model:
-                self.agent.model.init_recurrent_hidden()
-                observation = [(observation, self.agent.model.recurrent_hidden)]
-
-            if self.config.ACTION_MASKING:
-                unavailable_actions = [info['unavailable_actions']]
-            else:
-                unavailable_actions = None
-
-            done = False
-
-            while not done:
-                if self.config.AGENT_TYPE == AgentType.TDMPC:
-                    action = self.agent.get_action(
-                        obs=observation, mode=AgentMode.TEST, step=self.training_step.value, t0=episode_step == 0
-                    )
-                    scaled_action = action
-                    # scaled_action = scaled_action.cpu().numpy()
-                else:
-                    if self.config.ACTION_MASKING:
-                        action = self.agent.get_action(
-                            obs=observation, unavailable_actions=unavailable_actions, mode=AgentMode.TEST
-                        )
-                    else:
-                        action = self.agent.get_action(
-                            obs=observation, mode=AgentMode.TEST
-                        )
-
-                    if not isinstance(self.test_env, VectorEnv):
-                        if isinstance(self.agent.action_space, Discrete):
-                            if action.ndim == 0:
-                                scaled_action = action
-                            elif action.ndim == 1:
-                                scaled_action = action[0]
-                            else:
-                                raise ValueError()
-                        elif isinstance(self.agent.action_space, Box):
-                            if action.ndim == 1:
-                                if self.agent.action_scale is not None:
-                                    scaled_action = action * self.agent.action_scale + self.agent.action_bias
-                                else:
-                                    scaled_action = action
-                            elif action.ndim == 2:
-                                if self.agent.action_scale is not None:
-                                    scaled_action = action[0] * self.agent.action_scale + self.agent.action_bias
-                                else:
-                                    scaled_action = action[0]
-                            else:
-                                raise ValueError()
-                        else:
-                            raise ValueError()
-                    else:
-                        scaled_action = action
-
-                next_observation, reward, done, info = self.test_env.step(scaled_action)
-                episode_step += 1
-
-                if not self.config.AGENT_TYPE == AgentType.TDMPC:
-                    if not isinstance(self.test_env, VectorEnv):
-                        next_observation = np.expand_dims(next_observation, axis=0)
-
-                if self.agent.is_recurrent_model:
-                    next_observation = [(next_observation, self.agent.model.recurrent_hidden)]
-
-                if self.config.ACTION_MASKING:
-                    unavailable_actions = [info['unavailable_actions']]
-
-                episode_reward += reward
-                observation = next_observation
-
-            episode_reward_lst.append(episode_reward)
-
-            if self.config.CUSTOM_ENV_STAT is not None:
-                self.config.CUSTOM_ENV_STAT.test_episode_done(info=info)
-
-        if self.config.CUSTOM_ENV_STAT is not None:
-            self.config.CUSTOM_ENV_STAT.test_evaluate()
-
-        self.agent.model.train()
-
-        if self.config.AGENT_TYPE in [AgentType.A3C, AgentType.ASYNCHRONOUS_PPO]:
-            self.shared_model_access_lock.release()
-
-        return min(episode_reward_lst)

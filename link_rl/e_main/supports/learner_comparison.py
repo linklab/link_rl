@@ -2,6 +2,7 @@ import warnings
 
 from link_rl.a_configuration.a_base_config.c_models.config_recurrent_convolutional_models import \
     ConfigRecurrent2DConvolutionalModel, ConfigRecurrent1DConvolutionalModel
+from link_rl.e_main.supports.tester import Tester
 
 warnings.filterwarnings('ignore')
 warnings.simplefilter("ignore")
@@ -37,7 +38,6 @@ class LearnerComparison:
         self.episode_rewards_per_agent = []
         self.episode_reward_buffer_per_agent = []
         self.transition_generators_per_agent = []
-        self.histories_per_agent = []
 
         self.total_episodes_per_agent = []
         self.training_steps_per_agent = []
@@ -49,6 +49,7 @@ class LearnerComparison:
 
         self.next_console_log_per_agent = []
         self.next_test_training_step_per_agent = []
+        self.tester_per_agent = []
         self.test_idx_per_agent = []
 
         self.comparison_stat = comparison_stat
@@ -61,16 +62,8 @@ class LearnerComparison:
             else:
                 self.train_envs_per_agent.append(get_train_env(self.config_c.AGENT_PARAMETERS[agent_idx]))
 
-            self.test_envs_per_agent.append(get_single_env(self.config_c.AGENT_PARAMETERS[agent_idx], train_mode=False))
-
             self.episode_rewards_per_agent.append(np.zeros(shape=(self.n_actors, self.n_vectorized_envs)))
             self.episode_reward_buffer_per_agent.append(MeanBuffer(self.config_c.N_EPISODES_FOR_MEAN_CALCULATION))
-
-            self.transition_generators_per_agent.append(self.generate_transition_for_comparison(agent_idx))
-
-            self.histories_per_agent.append(
-                [deque(maxlen=config_c.AGENT_PARAMETERS[agent_idx].N_STEP) for _ in range(self.n_vectorized_envs)]
-            )
 
             self.total_episodes_per_agent.append(0)
             self.training_steps_per_agent.append(0)
@@ -96,65 +89,28 @@ class LearnerComparison:
 
             self.next_console_log_per_agent.append(self.config_c.CONSOLE_LOG_INTERVAL_TRAINING_STEPS)
             self.next_test_training_step_per_agent.append(self.config_c.TEST_INTERVAL_TRAINING_STEPS)
+            self.tester_per_agent.append(Tester(agent=self.agents[agent_idx], config=self.config_c.AGENT_PARAMETERS[agent_idx]))
             self.test_idx_per_agent.append(0)
 
         self.total_time_step = 0
 
         self.train_comparison_start_time = None
 
-    def generate_transition_for_comparison(self, agent_idx):
-        observations, infos = self.train_envs_per_agent[agent_idx].reset(return_info=True)
-
-        if self.is_recurrent_model_per_agent[agent_idx]:
-            self.agents[agent_idx].model.init_recurrent_hidden()
-            observations = [(observations, self.agents[agent_idx].model.recurrent_hidden)]
-
-        while True:
-            actions = self.agents[agent_idx].get_action(observations)
-
-            if isinstance(self.agents[agent_idx].action_space, Discrete):
-                scaled_actions = actions
-            elif isinstance(self.agents[agent_idx].action_space, Box):
-                scaled_actions = actions * self.agents[agent_idx].action_scale + self.agents[agent_idx].action_bias
-            else:
-                raise ValueError()
-
-            next_observations, rewards, dones, infos = self.train_envs_per_agent[agent_idx].step(scaled_actions)
-
-            if self.is_recurrent_model_per_agent[agent_idx]:
-                next_observations = [(next_observations, self.agents[agent_idx].model.recurrent_hidden)]
-
-            for env_id, (observation, action, next_observation, reward, done, info) in enumerate(
-                    zip(observations, actions, next_observations, rewards, dones, infos)
-            ):
-                info["actor_id"] = 0
-                info["env_id"] = env_id
-                self.histories_per_agent[agent_idx][env_id].append(Transition(
-                    observation=observation,
-                    action=action,
-                    next_observation=next_observation,
-                    reward=reward,
-                    done=done,
-                    info=info
-                ))
-
-                if len(self.histories_per_agent[agent_idx][env_id]) == self.config_c.AGENT_PARAMETERS[agent_idx].N_STEP \
-                        or done:
-                    n_step_transition = Actor.get_n_step_transition(
-                        real_n_steps=len(self.histories_per_agent[agent_idx][env_id]), env_id=env_id,
-                        actor_id=0, info=info, done=done, total_time_step=self.total_time_step,
-                        config=self.config_c.AGENT_PARAMETERS[agent_idx]
-                    )
-                    yield n_step_transition
-
-            observations = next_observations
-
-            if self.is_terminated_per_agent[agent_idx]:
-                break
-
-        yield None
-
     def train_comparison_loop(self, run):
+        for agent_idx, _ in enumerate(self.agents):
+            single_actor = Actor(
+                actor_id=0, agent=self.agents[agent_idx], queue=None, config=self.config_c.AGENT_PARAMETERS[agent_idx]
+            )
+
+            single_actor.set_train_env()
+
+            if self.config_c.AGENT_PARAMETERS[agent_idx].AGENT_TYPE == AgentType.TDMPC:
+                self.transition_generators_per_agent.append(single_actor.generate_episode_for_single_env())
+            else:
+                self.transition_generators_per_agent.append(single_actor.generate_transition_for_single_env())
+
+            self.test_envs_per_agent.append(get_single_env(self.config_c.AGENT_PARAMETERS[agent_idx], train_mode=False))
+
         self.train_comparison_start_time = time.time()
 
         while True:
@@ -245,20 +201,19 @@ class LearnerComparison:
                 self.next_train_time_step += self.config_c.TRAIN_INTERVAL_GLOBAL_TIME_STEPS
 
     def testing(self, run, agent_idx, training_step):
-        avg, std = self.play_for_testing(self.config_c.N_TEST_EPISODES, run, agent_idx)
+        test_episode_reward = self.tester_per_agent[agent_idx].play_for_testing(n_test_episodes=1)
 
-        self.comparison_stat.test_episode_reward_avg_per_agent[run, agent_idx, self.test_idx_per_agent[agent_idx]] = avg
-        self.comparison_stat.test_episode_reward_std_per_agent[run, agent_idx, self.test_idx_per_agent[agent_idx]] = std
-        self.comparison_stat.mean_episode_reward_per_agent[run, agent_idx, self.test_idx_per_agent[agent_idx]] = \
-            self.last_mean_episode_reward_per_agent[agent_idx]
+        self.comparison_stat.test_episode_reward_per_agent[run, agent_idx, self.test_idx_per_agent[agent_idx]] \
+            = test_episode_reward
+        self.comparison_stat.train_mean_episode_reward_per_agent[run, agent_idx, self.test_idx_per_agent[agent_idx]] \
+            = self.last_mean_episode_reward_per_agent[agent_idx]
 
         elapsed_time = time.time() - self.train_comparison_start_time
         formatted_elapsed_time = time.strftime('%H:%M:%S', time.gmtime(elapsed_time))
 
         print("*" * 160)
-        test_str = "[Test: {0}, Agent: {1}, Training Step: {2:6,}] " \
-                   "Episode Reward - Average: {3:.3f}, Standard Dev.: {4:.3f}, Elapsed Time: {5} ".format(
-            self.test_idx_per_agent[agent_idx] + 1, agent_idx, training_step, avg, std, formatted_elapsed_time
+        test_str = "[Test: {0}, Agent: {1}, Training Step: {2:6,}] Episode Reward: {3:.3f}, Elapsed Time: {4} ".format(
+            self.test_idx_per_agent[agent_idx] + 1, agent_idx, training_step, test_episode_reward, formatted_elapsed_time
         )
 
         if self.config_c.CUSTOM_ENV_COMPARISON_STAT is not None:
@@ -268,99 +223,25 @@ class LearnerComparison:
 
         print("*" * 160)
 
-    def play_for_testing(self, n_test_episodes, run, agent_idx):
-        self.agents[agent_idx].model.eval()
-
-        episode_reward_lst = []
-
-        if self.config_c.CUSTOM_ENV_COMPARISON_STAT is not None:
-            self.config_c.CUSTOM_ENV_COMPARISON_STAT.test_reset()
-
-        for i in range(n_test_episodes):
-            episode_reward = 0  # cumulative_reward
-
-            # Environment 초기화와 변수 초기화
-            observation = self.test_envs_per_agent[agent_idx].reset()
-            observation = np.expand_dims(observation, axis=0)
-
-            if self.is_recurrent_model_per_agent[agent_idx]:
-                self.agents[agent_idx].model.init_recurrent_hidden()
-                observation = [(observation, self.agents[agent_idx].model.recurrent_hidden)]
-
-            while True:
-                action = self.agents[agent_idx].get_action(observation, mode=AgentMode.TEST)
-
-                if isinstance(self.agents[agent_idx].action_space, Discrete):
-                    if action.ndim == 0:
-                        scaled_action = action
-                    elif action.ndim == 1:
-                        scaled_action = action[0]
-                    else:
-                        raise ValueError()
-                elif isinstance(self.agents[agent_idx].action_space, Box):
-                    if action.ndim == 1:
-                        if self.agents[agent_idx].action_scale is not None:
-                            scaled_action = action * self.agents[agent_idx].action_scale[0] + self.agents[agent_idx].action_bias[0]
-                        else:
-                            scaled_action = action
-                    elif action.ndim == 2:
-                        if self.agents[agent_idx].action_scale is not None:
-                            scaled_action = action[0] * self.agents[agent_idx].action_scale[0] + self.agents[agent_idx].action_bias[0]
-                        else:
-                            scaled_action = action[0]
-                    else:
-                        raise ValueError()
-                else:
-                    raise ValueError()
-
-                next_observation, reward, done, info = self.test_envs_per_agent[agent_idx].step(scaled_action)
-
-                next_observation = np.expand_dims(next_observation, axis=0)
-
-                if self.is_recurrent_model_per_agent[agent_idx]:
-                    next_observation = [(next_observation, self.agents[agent_idx].model.recurrent_hidden)]
-
-                episode_reward += reward  # episode_reward 를 산출하는 방법은 감가률 고려하지 않는 이 라인이 더 올바름.
-                observation = next_observation
-
-                if done:
-                    break
-
-            episode_reward_lst.append(episode_reward)
-
-            if self.config_c.CUSTOM_ENV_COMPARISON_STAT is not None:
-                self.config_c.CUSTOM_ENV_COMPARISON_STAT.test_episode_done(info)
-
-        self.agents[agent_idx].model.train()
-
-        if self.config_c.CUSTOM_ENV_COMPARISON_STAT is not None:
-            self.config_c.CUSTOM_ENV_COMPARISON_STAT.test_evaluate()
-
-        return np.average(episode_reward_lst), np.std(episode_reward_lst)
-
     def update_stat(self, run, agent_idx, test_idx):
         target_stats = [
-            self.comparison_stat.test_episode_reward_avg_per_agent,
-            self.comparison_stat.test_episode_reward_std_per_agent,
-            self.comparison_stat.mean_episode_reward_per_agent,
+            self.comparison_stat.test_episode_reward_per_agent,
+            self.comparison_stat.train_mean_episode_reward_per_agent,
         ]
 
         min_target_stats = [
-            self.comparison_stat.MIN_test_episode_reward_avg_per_agent,
-            self.comparison_stat.MIN_test_episode_reward_std_per_agent,
-            self.comparison_stat.MIN_mean_episode_reward_per_agent
+            self.comparison_stat.MIN_test_episode_reward_per_agent,
+            self.comparison_stat.MIN_train_mean_episode_reward_per_agent
         ]
 
         max_target_stats = [
-            self.comparison_stat.MAX_test_episode_reward_avg_per_agent,
-            self.comparison_stat.MAX_test_episode_reward_std_per_agent,
-            self.comparison_stat.MAX_mean_episode_reward_per_agent
+            self.comparison_stat.MAX_test_episode_reward_per_agent,
+            self.comparison_stat.MAX_train_mean_episode_reward_per_agent
         ]
 
         mean_target_stats = [
-            self.comparison_stat.MEAN_test_episode_reward_avg_per_agent,
-            self.comparison_stat.MEAN_test_episode_reward_std_per_agent,
-            self.comparison_stat.MEAN_mean_episode_reward_per_agent
+            self.comparison_stat.MEAN_test_episode_reward_per_agent,
+            self.comparison_stat.MEAN_train_mean_episode_reward_per_agent
         ]
 
         if self.config_c.CUSTOM_ENV_COMPARISON_STAT is not None:
