@@ -160,9 +160,6 @@ class RandomShiftsAug(nn.Module):
         return F.grid_sample(x, grid, padding_mode='zeros', align_corners=False)
 
 
-
-
-
 class ReplayBuffer():
     """
     Storage and sampling functionality for training TD-MPC / TOLD.
@@ -175,7 +172,7 @@ class ReplayBuffer():
         dtype = torch.float32 if not config.FROM_PIXELS else torch.uint8
         obs_shape = observation_space.shape if not config.FROM_PIXELS else (3, *observation_space.shape[-2:])
         action_space = action_space.shape[0]
-        self.episode_length = int(1000/config.ACTION_REPEAT)
+        self.episode_length = int(self.config.FIXED_TOTAL_TIME_STEPS_PER_EPISODE/config.ACTION_REPEAT)
         last_obs_first_shape = int(self.capacity // self.episode_length)
         self._obs = torch.empty((self.capacity + 1, *obs_shape), dtype=dtype, device=self.config.DEVICE)
         # _last_obs 에는 한 'episode_length+1' obs가 저장된다.

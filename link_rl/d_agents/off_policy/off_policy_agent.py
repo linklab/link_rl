@@ -48,6 +48,7 @@ class OffPolicyAgent(Agent):
         if self.config.AGENT_TYPE == AgentType.TDMPC:
             self.observations, self.next_observations, self.actions, self.rewards, self.idx, self.important_sampling_weights = \
             self.replay_buffer.sample()
+            self.dones = None
         else:
             if self.config.USE_PER:
                 self.observations, self.actions, self.next_observations, self.rewards, self.dones, \
@@ -92,14 +93,19 @@ class OffPolicyAgent(Agent):
 
             elif self.config.AGENT_TYPE == AgentType.TDMPC:
                 self._before_train()
+                print("TDMPC TRAIN - START")
                 if training_steps_v == 0:
-                    for _ in range(self.config.SEED_STEPS):
+                    for train_idx in range(self.config.SEED_STEPS):
+                        print("{0}".format(train_idx), end=" ")
                         train_info = self.train_tdmpc(training_steps_v=training_steps_v)
                     count_training_steps = self.config.SEED_STEPS
                 else:
-                    for _ in range(int(1000/self.config.ACTION_REPEAT)):
+                    for train_idx in range(int(self.config.FIXED_TOTAL_TIME_STEPS_PER_EPISODE/self.config.ACTION_REPEAT)):
+                        print("{0}".format(train_idx), end=" ")
                         train_info = self.train_tdmpc(training_steps_v=training_steps_v)
-                    count_training_steps = int(1000/self.config.ACTION_REPEAT)
+                    print()
+                    count_training_steps = int(self.config.FIXED_TOTAL_TIME_STEPS_PER_EPISODE/self.config.ACTION_REPEAT)
+                print("\nTDMPC TRAIN - END")
                 self._after_train(loss_each=0.0)
             else:
                 raise ValueError()

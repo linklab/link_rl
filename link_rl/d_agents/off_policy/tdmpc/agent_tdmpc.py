@@ -184,6 +184,7 @@ class AgentTdmpc(OffPolicyAgent):
         zs = [z.detach()]
 
         consistency_loss, reward_loss, value_loss, priority_loss = 0, 0, 0, 0
+
         for t in range(self.config.HORIZON):
             # Predictions
             Q1, Q2 = self.model.Q(z, action[t])

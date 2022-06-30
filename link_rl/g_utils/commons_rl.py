@@ -9,7 +9,7 @@ class Episode(object):
 
     def __init__(self, config, init_obs, n_out_action):
         self.config = config
-        episode_length = int(1000/config.ACTION_REPEAT)
+        episode_length = int(self.config.FIXED_TOTAL_TIME_STEPS_PER_EPISODE/config.ACTION_REPEAT)
         dtype = torch.float32 if not config.FROM_PIXELS else torch.uint8
         self.obs = torch.empty((episode_length + 1, *init_obs.shape), dtype=dtype, device=self.config.DEVICE)
         self.obs[0] = torch.tensor(init_obs, dtype=dtype, device=self.config.DEVICE)
@@ -29,6 +29,7 @@ class Episode(object):
 
     def __add__(self, transition):
         self.add(*transition)
+        self.info["real_n_steps"] = self._idx
         return self
 
     def append(self, transition):

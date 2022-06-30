@@ -190,11 +190,15 @@ class Learner(mp.Process):
                     n_step_transition.done,
                     self.config.AGENT_TYPE == AgentType.REINFORCE
                 ]
+                tdmpc_train_conditions = [
+                    self.total_time_step.value >= self.config.SEED_STEPS,
+                    self.config.AGENT_TYPE == AgentType.TDMPC
+                ]
                 train_conditions = [
                     self.total_time_step.value >= self.next_train_time_step,
-                    self.config.AGENT_TYPE != AgentType.REINFORCE,
+                    self.config.AGENT_TYPE not in [AgentType.REINFORCE, AgentType.TDMPC]
                 ]
-                if all(train_conditions) or all(reinforce_train_conditions):
+                if all(train_conditions) or all(tdmpc_train_conditions) or all(reinforce_train_conditions):
                     count_training_steps = self.agent.train(training_steps_v=self.training_step.value)
                     self.training_step.value += count_training_steps
                     self.next_train_time_step += self.config.TRAIN_INTERVAL_GLOBAL_TIME_STEPS
