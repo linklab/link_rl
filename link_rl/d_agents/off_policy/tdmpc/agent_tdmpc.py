@@ -111,9 +111,10 @@ class AgentTdmpc(OffPolicyAgent):
 
         # Iterate CEM
         for i in range(self.config.ITERATIONS):
-            actions = torch.clamp(mean.unsqueeze(1) + std.unsqueeze(1) * \
-                                  torch.randn(horizon, self.config.NUM_SAMPLES, self.n_out_actions, device=std.device),
-                                  -1, 1)
+            actions = torch.clamp(
+                mean.unsqueeze(1) + std.unsqueeze(1) * torch.randn(horizon, self.config.NUM_SAMPLES, self.n_out_actions, device=std.device),
+                -1, 1
+            )
             if num_pi_trajs > 0:
                 actions = torch.cat([actions, pi_actions], dim=1)
 
@@ -127,8 +128,7 @@ class AgentTdmpc(OffPolicyAgent):
             score = torch.exp(self.config.TEMPERATURE * (elite_value - max_value))
             score /= score.sum(0)
             _mean = torch.sum(score.unsqueeze(0) * elite_actions, dim=1) / (score.sum(0) + 1e-9)
-            _std = torch.sqrt(torch.sum(score.unsqueeze(0) * (elite_actions - _mean.unsqueeze(1)) ** 2, dim=1) / (
-                    score.sum(0) + 1e-9))
+            _std = torch.sqrt(torch.sum(score.unsqueeze(0) * (elite_actions - _mean.unsqueeze(1)) ** 2, dim=1) / (score.sum(0) + 1e-9))
             _std = _std.clamp_(self.std, 2)
             mean, std = self.config.MOMENTUM * mean + (1 - self.config.MOMENTUM) * _mean, _std
 
