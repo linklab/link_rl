@@ -1,5 +1,6 @@
 from b_single_main_common import *
 from link_rl.g_utils.commons import model_load, get_specific_env_name
+from link_rl.g_utils.types import AgentType
 
 
 def main():
@@ -25,5 +26,6 @@ def main():
 
 
 if __name__ == "__main__":
+    assert config.AGENT_TYPE not in [AgentType.A3C, AgentType.ASYNCHRONOUS_PPO]
     assert config.N_ACTORS == 1, "Current config.N_ACTORS: {0}".format(config.N_ACTORS)
     main()

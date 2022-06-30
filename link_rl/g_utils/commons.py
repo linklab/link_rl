@@ -520,7 +520,7 @@ def print_env_info(observation_space, action_space, config):
 
 
 def console_log(
-        learner, total_episodes_v, last_mean_episode_reward_v, n_rollout_transitions_v, transition_rolling_rate_v,
+        total_episodes_v, last_mean_episode_reward_v, n_rollout_transitions_v, transition_rolling_rate_v,
         train_steps_v, train_step_rate_v, agent, config
 ):
     console_log = "[Episodes: {0:5,}] " \
@@ -663,7 +663,7 @@ def wandb_log(learner, wandb_obj, config):
 
     log_dict = {
         "[TEST] Episode Reward": learner.test_episode_reward_min.value,
-        "Mean Episode Reward": learner.last_mean_episode_reward.value,
+        "[TRAIN] Mean Episode Reward ({0})".format(config.N_EPISODES_FOR_MEAN_CALCULATION): learner.last_mean_episode_reward.value,
         "Episode": learner.total_episodes.value,
         "Buffer Size": len(buffer),
         "Training Steps": learner.training_step.value,

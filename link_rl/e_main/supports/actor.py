@@ -43,23 +43,18 @@ class Actor(mp.Process):
             self.episode_rewards = np.zeros(shape=(self.config.N_VECTORIZED_ENVS,))
             self.last_train_env_info = None
 
-    def run(self):
+    def run(self):          # b_single_main_parallel.py로 실행하였을 때에만 자동으로 호출 (멀티프로세스 프레임워크)
         assert self.queue is not None
 
         self.set_train_env()
 
         try:
             if self.config.AGENT_TYPE == AgentType.TDMPC:
-                while not self.is_terminated.value:
-                    next(self.generate_episode_for_single_env())
-
+                next(self.generate_episode_for_single_env())
             elif self.config.N_VECTORIZED_ENVS == 1:
-                while not self.is_terminated.value:
-                    next(self.generate_transition_for_single_env())
+                next(self.generate_transition_for_single_env())
             else:
-                while not self.is_terminated.value:
-                    next(self.generate_transition_for_vectorized_env())
-
+                next(self.generate_transition_for_vectorized_env())
         except StopIteration as e:
             pass
 
@@ -90,6 +85,8 @@ class Actor(mp.Process):
 
             next_observation, reward, done, info = self.train_env.step(scaled_action)
 
+            self.total_time_step += 1
+
             info["actor_id"] = self.actor_id
             info["env_id"] = 0
 
@@ -106,22 +103,23 @@ class Actor(mp.Process):
                 self.last_train_env_info = info
 
             if len(self.histories[0]) == self.config.N_STEP or done:
-                n_step_transition = Actor.get_n_step_transition(
+                n_step_transition, real_n_steps = Actor.get_n_step_transition(
                     history=self.histories[0], env_id=0, actor_id=self.actor_id,
-                    info=info, done=done, config=self.config
+                    info=info, done=done, total_time_step=self.total_time_step, config=self.config
                 )
 
                 if self.working_actor:
-                    self.episode_rewards[0] += n_step_transition.reward
                     self.agent.buffer.append(n_step_transition)
+                    self.episode_rewards[0] += n_step_transition.reward
 
+                    self.queue.put({
+                        "message_type": "TRANSITION",
+                        "done": done,
+                        "episode_reward": self.episode_rewards[0],
+                        "last_train_env_info": self.last_train_env_info,
+                        "real_n_steps": real_n_steps
+                    })
                     if done:
-                        self.queue.put({
-                            "message_type": "DONE",
-                            "episode_reward": self.episode_rewards[0],
-                            "train_actor_id": self.actor_id,
-                            "last_train_env_info": self.last_train_env_info
-                        })
                         self.episode_rewards[0] = 0.0
                 else:
                     if self.queue is not None:
@@ -134,7 +132,7 @@ class Actor(mp.Process):
 
             observation = next_observation
 
-            if self.working_actor:
+            if self.working_actor and len(self.agent.buffer) >= self.config.BATCH_SIZE:
                 self.working_train()
 
             if self.is_terminated.value:
@@ -154,6 +152,7 @@ class Actor(mp.Process):
             while not episode.done:
                 action = self.agent.get_action(obs, step=step, t0=episode.first)
                 obs, reward, done, info = self.train_env.step(action.cpu().numpy())
+                self.total_time_step += 1
                 info["actor_id"] = self.actor_id
                 info["env_id"] = 0
                 episode += (obs, action, reward, done, info)
@@ -195,6 +194,8 @@ class Actor(mp.Process):
             for env_id, (observation, action, next_observation, reward, done, info) in enumerate(
                     zip(observations, actions, next_observations, rewards, dones, infos)
             ):
+                self.total_time_step += 1
+
                 info["actor_id"] = self.actor_id
                 info["env_id"] = env_id
 
@@ -207,29 +208,29 @@ class Actor(mp.Process):
                     info=info
                 ))
 
-                self.total_time_step += 1
-
                 if self.working_actor:
                     self.last_train_env_info = info
 
                 if len(self.histories[env_id]) == self.config.N_STEP or done:
-                    n_step_transition = Actor.get_n_step_transition(
+                    n_step_transition, real_n_steps = Actor.get_n_step_transition(
                         history=self.histories[env_id], env_id=env_id,
-                        actor_id=self.actor_id, info=info, done=done, config=self.config
+                        actor_id=self.actor_id, info=info, done=done, total_time_step=self.total_time_step,
+                        config=self.config
                     )
 
                     if self.working_actor:
                         self.episode_rewards[env_id] += n_step_transition.reward
                         self.agent.buffer.append(n_step_transition)
 
+                        self.queue.put({
+                            "message_type": "TRANSITION",
+                            "done": done,
+                            "episode_reward": self.episode_rewards[env_id],
+                            "last_train_env_info": self.last_train_env_info,
+                            "real_n_steps": real_n_steps
+                        })
                         if done:
-                            self.queue.put({
-                                "message_type": "DONE",
-                                "episode_reward": self.episode_rewards[env_id],
-                                "train_actor_id": self.actor_id,
-                                "last_train_env_info": self.last_train_env_info
-                            })
-                            self.episode_rewards[env_id] = 0.0
+                            self.episode_rewards[0] = 0.0
                     else:
                         if self.queue is not None:
                             self.queue.put(n_step_transition)
@@ -238,7 +239,7 @@ class Actor(mp.Process):
 
             observations = next_observations
 
-            if self.working_actor:
+            if self.working_actor and len(self.agent.buffer) >= self.config.BATCH_SIZE:
                 self.working_train()
 
             if self.is_terminated.value:
@@ -268,7 +269,7 @@ class Actor(mp.Process):
             return actions[0], scaled_actions[0]
 
     @staticmethod
-    def get_n_step_transition(history, env_id, actor_id, info, done, config):
+    def get_n_step_transition(history, env_id, actor_id, info, done, total_time_step, config):
         n_step_transitions = tuple(history)
         next_observation = n_step_transitions[-1].next_observation
 
@@ -282,6 +283,7 @@ class Actor(mp.Process):
         info["actor_id"] = actor_id
         info["env_id"] = env_id
         info["real_n_steps"] = len(n_step_transitions)
+
         n_step_transition = Transition(
             observation=n_step_transitions[0].observation,
             action=n_step_transitions[0].action,
@@ -293,18 +295,15 @@ class Actor(mp.Process):
 
         history.clear()
 
-        return n_step_transition
+        return n_step_transition, info["real_n_steps"]
 
     def working_train(self):
-        if len(self.agent.buffer) >= self.config.BATCH_SIZE:
-            count_training_steps = self.agent.worker_train()
-            self.training_step += count_training_steps
-            self.next_train_time_step += self.config.TRAIN_INTERVAL_GLOBAL_TIME_STEPS
+        count_training_steps = self.agent.worker_train()
+        self.training_step += count_training_steps
+        self.next_train_time_step += self.config.TRAIN_INTERVAL_GLOBAL_TIME_STEPS
 
-            self.queue.put({
-                "message_type": "TRAIN",
-                "count_training_steps": count_training_steps,
-                "train_actor_id": self.actor_id,
-                "last_train_env_info": self.last_train_env_info,
-                "n_rollout_transitions": self.config.BATCH_SIZE,
-            })
+        self.queue.put({
+            "message_type": "TRAIN",
+            "count_training_steps": count_training_steps,
+            "last_train_env_info": self.last_train_env_info
+        })

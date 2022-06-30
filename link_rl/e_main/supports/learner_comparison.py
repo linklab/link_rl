@@ -141,8 +141,9 @@ class LearnerComparison:
                 if len(self.histories_per_agent[agent_idx][env_id]) == self.config_c.AGENT_PARAMETERS[agent_idx].N_STEP \
                         or done:
                     n_step_transition = Actor.get_n_step_transition(
-                        history=self.histories_per_agent[agent_idx][env_id], env_id=env_id,
-                        actor_id=0, info=info, done=done, config=self.config_c.AGENT_PARAMETERS[agent_idx]
+                        real_n_steps=len(self.histories_per_agent[agent_idx][env_id]), env_id=env_id,
+                        actor_id=0, info=info, done=done, total_time_step=self.total_time_step,
+                        config=self.config_c.AGENT_PARAMETERS[agent_idx]
                     )
                     yield n_step_transition
 

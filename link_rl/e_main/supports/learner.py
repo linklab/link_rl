@@ -24,7 +24,6 @@ class Learner(mp.Process):
         self.queue = queue
         self.config = config
 
-        self.train_env = None
         self.test_env = None
 
         self.n_actors = self.config.N_ACTORS
@@ -94,9 +93,9 @@ class Learner(mp.Process):
 
         while True:
             if self.config.AGENT_TYPE in [AgentType.A3C, AgentType.ASYNCHRONOUS_PPO]:
-                async_info = self.queue.get()
+                working_actor_message = self.queue.get()
 
-                if async_info is None:
+                if working_actor_message is None:
                     self.n_actor_terminations += 1
                     if self.n_actor_terminations >= self.n_actors:
                         self.is_terminated.value = True
@@ -107,17 +106,18 @@ class Learner(mp.Process):
                     if self.is_terminated.value:
                         continue
 
-                if async_info["message_type"] == "DONE":
-                    self.total_episodes.value += 1
-                    self.episode_reward_buffer.add(async_info["episode_reward"])
-                    self.last_mean_episode_reward.value = self.episode_reward_buffer.mean()
-                elif async_info["message_type"] == "TRAIN":
-                    self.training_step.value += async_info["count_training_steps"]
-                    self.total_time_step.value += async_info["n_rollout_transitions"]
+                if working_actor_message["message_type"] == "TRANSITION":
+                    if working_actor_message["done"]:
+                        self.total_episodes.value += 1
+                        self.episode_reward_buffer.add(working_actor_message["episode_reward"])
+                        self.last_mean_episode_reward.value = self.episode_reward_buffer.mean()
+                    self.total_time_step.value += working_actor_message["real_n_steps"]
+                elif working_actor_message["message_type"] == "TRAIN":
+                    self.training_step.value += working_actor_message["count_training_steps"]
                 else:
                     raise ValueError()
 
-                last_train_env_info = async_info["last_train_env_info"]
+                last_train_env_info = working_actor_message["last_train_env_info"]
             else:
                 if self.queue is None:
                     n_step_transition = next(self.single_actor_transition_generator)
@@ -137,7 +137,7 @@ class Learner(mp.Process):
                     if self.is_terminated.value:
                         continue
 
-                self.total_time_step.value += 1
+                self.total_time_step.value += n_step_transition.info["real_n_steps"]
 
                 if self.config.AGENT_TYPE in OnPolicyAgentTypes:
                     self.agent.buffer.append(n_step_transition)
@@ -209,7 +209,6 @@ class Learner(mp.Process):
                 self.train_step_rate.value = self.training_step.value / total_training_time
 
                 console_log(
-                    self,
                     total_episodes_v=self.total_episodes.value,
                     last_mean_episode_reward_v=self.last_mean_episode_reward.value,
                     n_rollout_transitions_v=self.total_time_step.value,
