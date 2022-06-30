@@ -59,6 +59,7 @@ class Actor(mp.Process):
             else:
                 while not self.is_terminated.value:
                     next(self.generate_transition_for_vectorized_env())
+
         except StopIteration as e:
             pass
 

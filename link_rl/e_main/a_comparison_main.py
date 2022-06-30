@@ -85,6 +85,7 @@ def main():
         print("\n" + ">" * 30 + " RUN: {0} ".format(run + 1) + "<" * 30)
         agents = []
         for config in config_c.AGENT_PARAMETERS:
+            assert config.AGENT_TYPE not in [AgentType.A3C, AgentType.ASYNCHRONOUS_PPO]
             observation_space, action_space = get_env_info(config)
             agent = get_agent(
                 observation_space=observation_space, action_space=action_space,
