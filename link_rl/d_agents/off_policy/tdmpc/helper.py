@@ -200,9 +200,8 @@ class ReplayBuffer():
         return self
 
     def add(self, episode: Episode):
-        self._obs[self.idx:self.idx + self.episode_length] = episode.obs[
-                                                                 :-1] if not self.config.FROM_PIXELS else episode.obs[
-                                                                                                           :-1, -3:]
+        self._obs[self.idx:self.idx + self.episode_length] \
+            = episode.obs[:-1] if not self.config.FROM_PIXELS else episode.obs[:-1, -3:]
         self._last_obs[self.idx // self.episode_length] = episode.obs[-1]
         self._action[self.idx:self.idx + self.episode_length] = episode.action
         self._reward[self.idx:self.idx + self.episode_length] = episode.reward
