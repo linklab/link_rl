@@ -46,7 +46,7 @@ class AgentTdmpc(OffPolicyAgent):
         self.weighted_loss = mp.Value('d', 0.0)
         self.grad_norm = mp.Value('d', 0.0)
 
-    def get_action(self, obs, mode=AgentMode.TRAIN, step=None, t0=False):
+    def get_action(self, obs, mode=AgentMode.TRAIN, step=0, t0=False):
         action = self.plan(obs, mode, step, t0)
         return action
 

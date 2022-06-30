@@ -68,11 +68,13 @@ class Actor(mp.Process):
     def generate_transition_for_single_env(self):
         observation, info = self.train_env.reset(return_info=True)
 
+        if self.agent.is_recurrent_model:
+            self.agent.model.init_recurrent_hidden()
+
         while True:
             observations = np.expand_dims(observation, axis=0)
 
             if self.agent.is_recurrent_model:
-                self.agent.model.init_recurrent_hidden()
                 observations = [(observations, self.agent.model.recurrent_hidden)]
 
             if self.config.ACTION_MASKING:
@@ -175,9 +177,11 @@ class Actor(mp.Process):
     def generate_transition_for_vectorized_env(self):
         observations, infos = self.train_env.reset(return_info=True)
 
+        if self.agent.is_recurrent_model:
+            self.agent.model.init_recurrent_hidden()
+
         while True:
             if self.agent.is_recurrent_model:
-                self.agent.model.init_recurrent_hidden()
                 observations = [(observations, self.agent.model.recurrent_hidden)]
 
             if self.config.ACTION_MASKING:

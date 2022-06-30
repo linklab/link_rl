@@ -46,6 +46,9 @@ class Tester:
 
             observation, info = self.test_env.reset(return_info=True)
 
+            if self.agent.is_recurrent_model:
+                self.agent.model.init_recurrent_hidden()
+
             if all(render_after_reset_conditions):
                 self.test_env.render()
 
@@ -56,7 +59,6 @@ class Tester:
                     observation = np.expand_dims(observation, axis=0)
 
                 if self.agent.is_recurrent_model:
-                    self.agent.model.init_recurrent_hidden()
                     observation = [(observation, self.agent.model.recurrent_hidden)]
 
                 if self.config.ACTION_MASKING:

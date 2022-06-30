@@ -108,25 +108,14 @@ class Learner(mp.Process):
                     if self.is_terminated.value:
                         continue
 
-                if working_actor_message["message_type"] == "TRANSITION":
-                    if working_actor_message["done"]:
-                        self.total_episodes.value += 1
-                        self.episode_reward_buffer.add(working_actor_message["episode_reward"])
-                        self.last_mean_episode_reward.value = self.episode_reward_buffer.mean()
-                    self.total_time_step.value += working_actor_message["real_n_steps"]
-                elif working_actor_message["message_type"] == "TRAIN":
-                    self.training_step.value += working_actor_message["count_training_steps"]
-                else:
-                    raise ValueError()
-
-                last_train_env_info = working_actor_message["last_train_env_info"]
+                last_train_env_info = self.process_working_actor_message(working_actor_message=working_actor_message)
             else:
                 if self.queue is None:
-                    n_step_transition = next(self.single_actor_transition_generator)
+                    actor_message = next(self.single_actor_transition_generator)
                 else:
-                    n_step_transition = self.queue.get()
+                    actor_message = self.queue.get()
 
-                if n_step_transition is None:
+                if actor_message is None:
                     self.n_actor_terminations += 1
                     if self.n_actor_terminations >= self.n_actors:
                         self.is_terminated.value = True
@@ -139,72 +128,7 @@ class Learner(mp.Process):
                     if self.is_terminated.value:
                         continue
 
-                self.total_time_step.value += n_step_transition.info["real_n_steps"]
-
-                if self.config.AGENT_TYPE in OnPolicyAgentTypes:
-                    self.agent.buffer.append(n_step_transition)
-                elif self.config.AGENT_TYPE in OffPolicyAgentTypes:
-                    self.agent.replay_buffer.append(n_step_transition)
-
-                    if self.config.USE_HER:
-                        self.agent.her_buffer.append(n_step_transition)
-                else:
-                    raise ValueError()
-
-                last_train_env_info = n_step_transition.info
-
-                if self.config.AGENT_TYPE == AgentType.TDMPC:
-                    actor_id = n_step_transition.info["actor_id"]
-                    env_id = n_step_transition.info["env_id"]
-                    self.total_episodes.value += 1
-
-                    self.episode_rewards[actor_id][env_id] = n_step_transition.cumulative_reward
-                    self.episode_reward_buffer.add(self.episode_rewards[actor_id][env_id])
-                    self.last_mean_episode_reward.value = self.episode_reward_buffer.mean()
-
-                    self.episode_rewards[actor_id][env_id] = 0.0
-                else:
-                    actor_id = n_step_transition.info["actor_id"]
-                    env_id = n_step_transition.info["env_id"]
-                    self.episode_rewards[actor_id][env_id] += n_step_transition.reward
-                    if n_step_transition.done:
-                        self.total_episodes.value += 1
-                        self.episode_reward_buffer.add(self.episode_rewards[actor_id][env_id])
-                        self.last_mean_episode_reward.value = self.episode_reward_buffer.mean()
-
-                        self.episode_rewards[actor_id][env_id] = 0.0
-
-                        if self.config.USE_HER:
-                            if n_step_transition.info[HerConstant.HER_SAVE_DONE]:
-                                her_trajectory = self.agent.her_buffer.get_her_trajectory(
-                                    n_step_transition.info[HerConstant.ACHIEVED_GOAL]
-                                )
-                                for her_transition in her_trajectory:
-                                    self.agent.replay_buffer.append(her_transition)
-                            self.agent.her_buffer.reset()
-
-                ###################
-                #   TRAIN START   #
-                ###################
-                reinforce_train_conditions = [
-                    n_step_transition.done,
-                    self.config.AGENT_TYPE == AgentType.REINFORCE
-                ]
-                tdmpc_train_conditions = [
-                    self.total_time_step.value >= self.config.SEED_STEPS,
-                    self.config.AGENT_TYPE == AgentType.TDMPC
-                ]
-                train_conditions = [
-                    self.total_time_step.value >= self.next_train_time_step,
-                    self.config.AGENT_TYPE not in [AgentType.REINFORCE, AgentType.TDMPC]
-                ]
-                if all(train_conditions) or all(tdmpc_train_conditions) or all(reinforce_train_conditions):
-                    count_training_steps = self.agent.train(training_steps_v=self.training_step.value)
-                    self.training_step.value += count_training_steps
-                    self.next_train_time_step += self.config.TRAIN_INTERVAL_GLOBAL_TIME_STEPS
-                #################
-                #   TRAIN END   #
-                #################
+                last_train_env_info = self.process_actor_message(actor_message=actor_message)
 
             if self.config.CUSTOM_ENV_STAT is not None:
                 self.config.CUSTOM_ENV_STAT.train_evaluate(last_train_env_info)
@@ -248,6 +172,95 @@ class Learner(mp.Process):
         print("Training Rate: {0:.3f}/sec.".format(self.training_step.value / total_training_time))
         if self.config.USE_WANDB:
             wandb_obj.finish()
+
+    def process_working_actor_message(self, working_actor_message):
+        if working_actor_message["message_type"] == "TRANSITION":
+            if working_actor_message["done"]:
+                self.total_episodes.value += 1
+                self.episode_reward_buffer.add(working_actor_message["episode_reward"])
+                self.last_mean_episode_reward.value = self.episode_reward_buffer.mean()
+            self.total_time_step.value += working_actor_message["real_n_steps"]
+        elif working_actor_message["message_type"] == "TRAIN":
+            self.training_step.value += working_actor_message["count_training_steps"]
+        else:
+            raise ValueError()
+
+        last_train_env_info = working_actor_message["last_train_env_info"]
+
+        return last_train_env_info
+
+    def process_actor_message(self, actor_message):
+        n_step_transition = actor_message
+
+        self.total_time_step.value += n_step_transition.info["real_n_steps"]
+
+        if self.config.AGENT_TYPE in OnPolicyAgentTypes:
+            self.agent.buffer.append(n_step_transition)
+        elif self.config.AGENT_TYPE in OffPolicyAgentTypes:
+            self.agent.replay_buffer.append(n_step_transition)
+
+            if self.config.USE_HER:
+                self.agent.her_buffer.append(n_step_transition)
+        else:
+            raise ValueError()
+
+        last_train_env_info = n_step_transition.info
+
+        if self.config.AGENT_TYPE == AgentType.TDMPC:
+            actor_id = n_step_transition.info["actor_id"]
+            env_id = n_step_transition.info["env_id"]
+            self.total_episodes.value += 1
+
+            self.episode_rewards[actor_id][env_id] = n_step_transition.cumulative_reward
+            self.episode_reward_buffer.add(self.episode_rewards[actor_id][env_id])
+            self.last_mean_episode_reward.value = self.episode_reward_buffer.mean()
+
+            self.episode_rewards[actor_id][env_id] = 0.0
+        else:
+            actor_id = n_step_transition.info["actor_id"]
+            env_id = n_step_transition.info["env_id"]
+            self.episode_rewards[actor_id][env_id] += n_step_transition.reward
+            if n_step_transition.done:
+                self.total_episodes.value += 1
+                self.episode_reward_buffer.add(self.episode_rewards[actor_id][env_id])
+                self.last_mean_episode_reward.value = self.episode_reward_buffer.mean()
+
+                self.episode_rewards[actor_id][env_id] = 0.0
+
+                if self.config.USE_HER:
+                    if n_step_transition.info[HerConstant.HER_SAVE_DONE]:
+                        her_trajectory = self.agent.her_buffer.get_her_trajectory(
+                            n_step_transition.info[HerConstant.ACHIEVED_GOAL]
+                        )
+                        for her_transition in her_trajectory:
+                            self.agent.replay_buffer.append(her_transition)
+                    self.agent.her_buffer.reset()
+
+        reinforce_train_conditions = [
+            n_step_transition.done,
+            self.config.AGENT_TYPE == AgentType.REINFORCE
+        ]
+        tdmpc_train_conditions = [
+            self.total_time_step.value >= self.config.SEED_STEPS,
+            self.config.AGENT_TYPE == AgentType.TDMPC
+        ]
+        train_conditions = [
+            self.total_time_step.value >= self.next_train_time_step,
+            self.config.AGENT_TYPE not in [AgentType.REINFORCE, AgentType.TDMPC]
+        ]
+
+        ###################
+        #   TRAIN START   #
+        ###################
+        if all(train_conditions) or all(tdmpc_train_conditions) or all(reinforce_train_conditions):
+            count_training_steps = self.agent.train(training_steps_v=self.training_step.value)
+            self.training_step.value += count_training_steps
+            self.next_train_time_step += self.config.TRAIN_INTERVAL_GLOBAL_TIME_STEPS
+        #################
+        #   TRAIN END   #
+        #################
+
+        return last_train_env_info
 
     def run(self):
         self.train_loop()
