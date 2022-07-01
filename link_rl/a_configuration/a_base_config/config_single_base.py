@@ -91,3 +91,5 @@ class ConfigBase:
         self.RENDER_OVER_TRAIN = False
 
         self.CUSTOM_ENV_STAT = None
+
+        self.SEED_STEPS = -1
