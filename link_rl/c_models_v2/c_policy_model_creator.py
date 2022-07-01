@@ -1,10 +1,12 @@
 from torch import nn
 from typing import final
+from link_rl.c_models_v2.a_model_creator import SingleModelCreator, model_creator_registry
 
-from link_rl.c_models_v2.a_model_creator import SingleModelCreator
 
-
+@model_creator_registry.add
 class DiscretePolicyModelCreator(SingleModelCreator):
+    name = "DiscretePolicyModelCreator"
+
     def __init__(
         self,
         n_input: int,
