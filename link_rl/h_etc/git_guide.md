@@ -46,6 +46,16 @@
     git merge A
     ```
 
+- Rebase
+  - branch A: 1 - 2 - 3 - 4
+  - branch B: 1 - 2 - 5 - 6
+  - For branch B 1 - 2 - 3 - 4 - 5 - 6
+    ```commandline
+    git switch B
+    git rebase A
+    ```
+
+
 - Delete
   - local  
     ```commandline
