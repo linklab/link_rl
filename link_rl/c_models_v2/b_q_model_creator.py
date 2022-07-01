@@ -1,6 +1,6 @@
 import torch
 from torch import nn
-from typing import final
+from typing import final, Tuple
 
 from link_rl.c_models_v2.a_model_creator import SingleModelCreator, model_creator_registry
 
@@ -11,12 +11,12 @@ class QModelCreator(SingleModelCreator):
 
     def __init__(
         self,
-        n_input: int,
+        observation_shape: Tuple[int, ...],
         n_out_actions: int,
         n_discrete_actions=None
     ):
         super(QModelCreator, self).__init__(
-            n_input,
+            observation_shape,
             n_out_actions,
             n_discrete_actions
         )
@@ -42,12 +42,12 @@ class DuelingQModelCreator(SingleModelCreator):
     name = "DuelingQModelCreator"
     def __init__(
         self,
-        n_input: int,
+        observation_shape: Tuple[int, ...],
         n_out_actions: int,
         n_discrete_actions=None
     ):
         super(DuelingQModelCreator, self).__init__(
-            n_input,
+            observation_shape,
             n_out_actions,
             n_discrete_actions
         )

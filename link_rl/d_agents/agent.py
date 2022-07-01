@@ -55,7 +55,7 @@ class Agent:
 
         model_creator_class = model_creators.get(self.config.MODEL_CREATOR_TYPE)
         self._model_creator = model_creator_class(
-            n_input=self.observation_shape[0],
+            observation_shape=self.observation_shape,
             n_out_actions=self.n_out_actions,
             n_discrete_actions=self.n_discrete_actions
         )

@@ -9,11 +9,12 @@ from link_rl.g_utils.registry import Registry
 class ModelCreator(ABC):
     def __init__(
         self,
-        n_input: int,
+        observation_shape: Tuple[int, ...],
         n_out_actions: int,
         n_discrete_actions=None
     ):
-        self._n_input = n_input
+        self._observation_shape = observation_shape
+        self._n_input = observation_shape[0]
         self._n_out_actions = n_out_actions
         self._n_discrete_actions = n_discrete_actions
 
@@ -32,12 +33,12 @@ model_creator_registry = Registry(ModelCreator)
 class SingleModelCreator(ModelCreator, ABC):
     def __init__(
         self,
-        n_input: int,
+        observation_shape: Tuple[int, ...],
         n_out_actions: int,
         n_discrete_actions=None
     ):
         super(SingleModelCreator, self).__init__(
-            n_input,
+            observation_shape,
             n_out_actions,
             n_discrete_actions
         )
@@ -53,12 +54,12 @@ class SingleModelCreator(ModelCreator, ABC):
 class DoubleModelCreator(ModelCreator):
     def __init__(
         self,
-        n_input: int,
+        observation_shape: Tuple[int, ...],
         n_out_actions: int,
         n_discrete_actions=None
     ):
         super(DoubleModelCreator, self).__init__(
-            n_input,
+            observation_shape,
             n_out_actions,
             n_discrete_actions
         )

@@ -11,12 +11,12 @@ class ContinuousTd3ModelCreator(DoubleModelCreator):
 
     def __init__(
         self,
-        n_input: int,
+        observation_shape: Tuple[int, ...],
         n_out_actions: int,
         n_discrete_actions=None
     ):
         super(ContinuousTd3ModelCreator, self).__init__(
-            n_input,
+            observation_shape,
             n_out_actions,
             n_discrete_actions
         )
