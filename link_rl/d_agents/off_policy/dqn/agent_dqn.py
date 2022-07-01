@@ -5,6 +5,7 @@ import torch
 import torch.multiprocessing as mp
 
 from link_rl.c_models.b_qnet_models import QNet
+from link_rl.c_models_v2.b_q_model_creator import QModelCreator
 from link_rl.d_agents.off_policy.off_policy_agent import OffPolicyAgent
 from link_rl.g_utils.commons import EpsilonTracker
 from link_rl.g_utils.types import AgentMode
@@ -14,15 +15,16 @@ class AgentDqn(OffPolicyAgent):
     def __init__(self, observation_space, action_space, config, need_train):
         super(AgentDqn, self).__init__(observation_space, action_space, config, need_train)
 
-        self.q_net = QNet(
-            observation_shape=self.observation_shape, n_out_actions=self.n_out_actions,
-            n_discrete_actions=self.n_discrete_actions, config=config
-        ).to(self.config.DEVICE)
+        self._model_creator = QModelCreator(
+            n_input=self.observation_shape[0],
+            n_out_actions=self.n_out_actions,
+            n_discrete_actions=self.n_discrete_actions
+        )
+        self.q_net = self._model_creator.create_model()
+        self.target_q_net = self._model_creator.create_model()
 
-        self.target_q_net = QNet(
-            observation_shape=self.observation_shape, n_out_actions=self.n_out_actions,
-            n_discrete_actions=self.n_discrete_actions, config=config
-        ).to(self.config.DEVICE)
+        self.q_net.to(self.config.DEVICE)
+        self.target_q_net.to(self.config.DEVICE)
 
         self.q_net.share_memory()
         self.synchronize_models(source_model=self.q_net, target_model=self.target_q_net)
@@ -46,14 +48,16 @@ class AgentDqn(OffPolicyAgent):
 
     @torch.no_grad()
     def get_action(self, obs, unavailable_actions=None, mode=AgentMode.TRAIN):
+        if isinstance(obs, np.ndarray):
+            obs = torch.from_numpy(obs).float().to(self.config.DEVICE)
         if mode == AgentMode.TRAIN:
             coin = np.random.random()    # 0.0과 1.0사이의 임의의 값을 반환
             if coin < self.epsilon.value:
                 q_values = torch.rand(len(obs), self.n_discrete_actions)
             else:
-                q_values = self.q_net.q(obs, save_hidden=True)
+                q_values = self.q_net(obs)
         else:
-            q_values = self.q_net.q(obs, save_hidden=True)
+            q_values = self.q_net(obs)
 
         if unavailable_actions is not None:
             for i, unavailable_action in enumerate(unavailable_actions):
@@ -70,11 +74,11 @@ class AgentDqn(OffPolicyAgent):
 
         # state_action_values.shape: torch.Size([32, 1])
         # print("self.observations.shape:", self.observations.shape)
-        q_values = self.q_net.q(self.observations).gather(dim=-1, index=self.actions)
+        q_values = self.q_net(self.observations).gather(dim=-1, index=self.actions)
 
         with torch.no_grad():  # autograd를 끔으로써 메모리 사용량을 줄이고 연산 속도를 높히기 위함
             # next_state_values.shape: torch.Size([32, 1])
-            next_q_v = self.target_q_net.q(self.next_observations).max(dim=-1, keepdim=True).values
+            next_q_v = self.target_q_net(self.next_observations).max(dim=-1, keepdim=True).values
             next_q_v[self.dones] = 0.0
 
             # target_state_action_values.shape: torch.Size([32, 1])
@@ -103,7 +107,7 @@ class AgentDqn(OffPolicyAgent):
 
         self.optimizer.zero_grad()
         q_net_loss.backward()
-        self.clip_model_config_grad_value(self.q_net.qnet_params_list)
+        self.clip_model_config_grad_value(self.q_net.parameters())
         self.optimizer.step()
 
         # sync

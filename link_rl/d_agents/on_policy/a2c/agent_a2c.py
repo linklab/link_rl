@@ -5,6 +5,7 @@ from torch.distributions import Categorical, Normal
 import torch.multiprocessing as mp
 
 from link_rl.c_models.e_a2c_models import ContinuousActorCriticModel, DiscreteActorCriticModel
+from link_rl.c_models_v2.d_a2c_model_creator import DiscreteActorCriticModelCreator, ContinuousActorCriticModelCreator
 from link_rl.d_agents.on_policy.on_policy_agent import OnPolicyAgent
 
 
@@ -13,21 +14,27 @@ class AgentA2c(OnPolicyAgent):
         super(AgentA2c, self).__init__(observation_space, action_space, config, need_train)
 
         if isinstance(self.action_space, Discrete):
-            self.actor_critic_model = DiscreteActorCriticModel(
-                observation_shape=self.observation_shape, n_out_actions=self.n_out_actions,
-                n_discrete_actions=self.n_discrete_actions, config=config
+            self._model_creator = DiscreteActorCriticModelCreator(
+                n_input=self.observation_shape[0],
+                n_out_actions=self.n_out_actions,
+                n_discrete_actions=self.n_discrete_actions
             )
         elif isinstance(self.action_space, Box):
-            self.actor_critic_model = ContinuousActorCriticModel(
-                observation_shape=self.observation_shape, n_out_actions=self.n_out_actions, config=config
+            self._model_creator = ContinuousActorCriticModelCreator(
+                n_input=self.observation_shape[0],
+                n_out_actions=self.n_out_actions,
+                n_discrete_actions=self.n_discrete_actions
             )
         else:
             raise ValueError()
 
-        self.actor_model = self.actor_critic_model.actor_model
-        self.critic_model = self.actor_critic_model.critic_model
+        model = self._model_creator.create_model()
+        self.actor_model, self.critic_model = model
 
-        self.model = self.actor_model  # 에이전트 밖에서는 model이라는 이름으로 제어 모델 접근
+        self.actor_model.to(self.config.DEVICE)
+        self.critic_model.to(self.config.DEVICE)
+
+        self.model = self.actor_model
         self.model.eval()
 
         self.actor_model.share_memory()
@@ -53,12 +60,12 @@ class AgentA2c(OnPolicyAgent):
             # dist.log_prob(value=actions.squeeze(-1)).shape: (32,)
             # criticized_log_pi_action_v.shape: (32,)
 
-            action_probs = self.actor_model.pi(self.observations)
+            action_probs = self.actor_model(self.observations)
             dist = Categorical(probs=action_probs)
             criticized_log_pi_action_v = dist.log_prob(value=self.actions.squeeze(dim=-1)) * detached_advantages.squeeze(dim=-1)
 
         elif isinstance(self.action_space, Box):
-            mu_v, var_v = self.actor_model.pi(self.observations)
+            mu_v, var_v = self.actor_model(self.observations)
 
             dist = Normal(loc=mu_v, scale=torch.sqrt(var_v))
             criticized_log_pi_action_v = dist.log_prob(value=self.actions).sum(dim=-1) * detached_advantages.squeeze(dim=-1)
@@ -89,7 +96,7 @@ class AgentA2c(OnPolicyAgent):
 
         self.critic_optimizer.zero_grad()
         critic_loss.backward()
-        self.clip_critic_model_parameter_grad_value(self.critic_model.critic_params_list)
+        self.clip_critic_model_parameter_grad_value(self.critic_model.parameters())
         self.critic_optimizer.step()
         ##########################################
         #  Critic (Value) Loss 산출 & Update- END #
@@ -102,7 +109,7 @@ class AgentA2c(OnPolicyAgent):
 
         self.actor_optimizer.zero_grad()
         actor_loss.backward()
-        self.clip_actor_model_parameter_grad_value(self.actor_model.actor_params_list)
+        self.clip_actor_model_parameter_grad_value(self.actor_model.parameters())
         self.actor_optimizer.step()
         #######################################
         #  Actor Objective 산출 & Update - END #

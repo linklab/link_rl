@@ -4,6 +4,7 @@ import torch
 import torch.multiprocessing as mp
 
 from link_rl.c_models.f_ddpg_models import ContinuousDdpgModel
+from link_rl.c_models_v2.e_ddpg_model_creator import ContinuousDdpgModelCreator
 from link_rl.d_agents.off_policy.off_policy_agent import OffPolicyAgent
 from link_rl.g_utils.types import AgentMode
 
@@ -12,24 +13,25 @@ class AgentDdpg(OffPolicyAgent):
     def __init__(self, observation_space, action_space, config, need_train):
         super(AgentDdpg, self).__init__(observation_space, action_space, config, need_train)
 
-        self.n_actions = self.n_out_actions
-
-        self.ddpg_model = ContinuousDdpgModel(
-            observation_shape=self.observation_shape, n_out_actions=self.n_out_actions, config=config
+        self._model_creator = ContinuousDdpgModelCreator(
+            n_input=self.observation_shape[0],
+            n_out_actions=self.n_out_actions,
+            n_discrete_actions=self.n_discrete_actions
         )
 
-        self.target_ddpg_model = ContinuousDdpgModel(
-            observation_shape=self.observation_shape, n_out_actions=self.n_out_actions, config=config
-        )
+        model = self._model_creator.create_model()
+        target_model = self._model_creator.create_model()
 
-        self.model = self.ddpg_model.actor_model
+        self.actor_model, self.critic_model = model
+        self.target_actor_model, self.target_critic_model = target_model
+
+        self.actor_model.to(self.config.DEVICE)
+        self.critic_model.to(self.config.DEVICE)
+        self.target_actor_model.to(self.config.DEVICE)
+        self.target_critic_model.to(self.config.DEVICE)
+
+        self.model = self.actor_model
         self.model.eval()
-
-        self.actor_model = self.ddpg_model.actor_model
-        self.critic_model = self.ddpg_model.critic_model
-
-        self.target_actor_model = self.target_ddpg_model.actor_model
-        self.target_critic_model = self.target_ddpg_model.critic_model
 
         self.synchronize_models(source_model=self.actor_model, target_model=self.target_actor_model)
         self.synchronize_models(source_model=self.critic_model, target_model=self.target_critic_model)
@@ -47,11 +49,14 @@ class AgentDdpg(OffPolicyAgent):
 
     @torch.no_grad()
     def get_action(self, obs, mode=AgentMode.TRAIN):
-        mu = self.actor_model.pi(obs, save_hidden=True)
+        if isinstance(obs, np.ndarray):
+            obs = torch.from_numpy(obs).float().to(self.config.DEVICE)
+
+        mu = self.actor_model(obs)
         mu = mu.detach().cpu().numpy()
 
         if mode == AgentMode.TRAIN:
-            noises = np.random.normal(size=self.n_actions, loc=0, scale=1.0)
+            noises = np.random.normal(size=self.n_out_actions, loc=0, scale=1.0)
             action = mu + noises
         else:
             action = mu
@@ -66,14 +71,14 @@ class AgentDdpg(OffPolicyAgent):
         # train critic - BEGIN #
         ########################
         with torch.no_grad():
-            next_mu_v = self.target_actor_model.pi(self.next_observations)
-            next_q_v = self.target_critic_model.q(self.next_observations, next_mu_v)
+            next_mu_v = self.target_actor_model(self.next_observations)
+            next_q_v = self.target_critic_model(self.next_observations, next_mu_v)
             next_q_v[self.dones] = 0.0
             target_q_v = self.rewards + self.config.GAMMA ** self.config.N_STEP * next_q_v
             if self.config.TARGET_VALUE_NORMALIZE:
                 target_q_v = (target_q_v - torch.mean(target_q_v)) / (torch.std(target_q_v) + 1e-7)
 
-        q_v = self.critic_model.q(self.observations, self.actions)
+        q_v = self.critic_model(self.observations, self.actions)
 
         critic_loss_each = self.config.LOSS_FUNCTION(q_v, target_q_v.detach(), reduction="none")
 
@@ -84,7 +89,7 @@ class AgentDdpg(OffPolicyAgent):
 
         self.critic_optimizer.zero_grad()
         critic_loss.backward()
-        self.clip_critic_model_parameter_grad_value(self.critic_model.critic_params_list)
+        self.clip_critic_model_parameter_grad_value(self.critic_model.parameters())
         self.critic_optimizer.step()
         ######################
         # train critic - end #
@@ -93,14 +98,14 @@ class AgentDdpg(OffPolicyAgent):
         #######################
         # train actor - BEGIN #
         #######################
-        mu_v = self.actor_model.pi(self.observations)
-        q_v = self.critic_model.q(self.observations, mu_v)
+        mu_v = self.actor_model(self.observations)
+        q_v = self.critic_model(self.observations, mu_v)
         actor_objective = q_v.mean()
         actor_loss = -1.0 * actor_objective
 
         self.actor_optimizer.zero_grad()
         actor_loss.backward()
-        self.clip_actor_model_parameter_grad_value(self.actor_model.actor_params_list)
+        self.clip_actor_model_parameter_grad_value(self.actor_model.parameters())
         self.actor_optimizer.step()
         #####################
         # train actor - END #

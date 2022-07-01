@@ -12,11 +12,11 @@ class AgentDoubleDqn(AgentDqn):
         count_training_steps = 0
 
         # q_values.shape: torch.Size([32, 1])
-        q_values = self.q_net.q(self.observations).gather(dim=-1, index=self.actions)
+        q_values = self.q_net(self.observations).gather(dim=-1, index=self.actions)
 
         with torch.no_grad():
-            target_argmax_action = torch.argmax(self.q_net.q(self.next_observations), dim=-1, keepdim=True)
-            next_q_values = self.target_q_net.q(self.next_observations).gather(dim=-1, index=target_argmax_action)
+            target_argmax_action = torch.argmax(self.q_net(self.next_observations), dim=-1, keepdim=True)
+            next_q_values = self.target_q_net(self.next_observations).gather(dim=-1, index=target_argmax_action)
             next_q_values[self.dones] = 0.0
             next_q_values = next_q_values.detach()
 
@@ -47,7 +47,7 @@ class AgentDoubleDqn(AgentDqn):
 
         self.optimizer.zero_grad()
         q_net_loss.backward()
-        self.clip_model_config_grad_value(self.q_net.qnet_params_list)
+        self.clip_model_config_grad_value(self.q_net.parameters())
         self.optimizer.step()
 
         # soft-sync
