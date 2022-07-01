@@ -1,5 +1,7 @@
 from abc import abstractmethod, ABC
 
+import numpy as np
+import torch
 from torch import nn
 from typing import Tuple, final, Union
 
@@ -25,6 +27,11 @@ class ModelCreator(ABC):
     @abstractmethod
     def create_model(self) -> Union[nn.Module, Tuple[nn.Module, nn.Module]]:
         raise NotImplementedError
+
+    @staticmethod
+    def _get_conv_out(conv_layers, shape):
+        conv_out = conv_layers(torch.zeros(1, *shape))
+        return int(np.prod(conv_out.size()))
 
 
 model_creator_registry = Registry(ModelCreator)
