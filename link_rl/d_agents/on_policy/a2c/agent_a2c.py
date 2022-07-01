@@ -13,20 +13,20 @@ class AgentA2c(OnPolicyAgent):
     def __init__(self, observation_space, action_space, config, need_train):
         super(AgentA2c, self).__init__(observation_space, action_space, config, need_train)
 
-        if isinstance(self.action_space, Discrete):
-            self._model_creator = DiscreteActorCriticModelCreator(
-                n_input=self.observation_shape[0],
-                n_out_actions=self.n_out_actions,
-                n_discrete_actions=self.n_discrete_actions
-            )
-        elif isinstance(self.action_space, Box):
-            self._model_creator = ContinuousActorCriticModelCreator(
-                n_input=self.observation_shape[0],
-                n_out_actions=self.n_out_actions,
-                n_discrete_actions=self.n_discrete_actions
-            )
-        else:
-            raise ValueError()
+        # if isinstance(self.action_space, Discrete):
+        #     self._model_creator = DiscreteActorCriticModelCreator(
+        #         n_input=self.observation_shape[0],
+        #         n_out_actions=self.n_out_actions,
+        #         n_discrete_actions=self.n_discrete_actions
+        #     )
+        # elif isinstance(self.action_space, Box):
+        #     self._model_creator = ContinuousActorCriticModelCreator(
+        #         n_input=self.observation_shape[0],
+        #         n_out_actions=self.n_out_actions,
+        #         n_discrete_actions=self.n_discrete_actions
+        #     )
+        # else:
+        #     raise ValueError()
 
         model = self._model_creator.create_model()
         self.actor_model, self.critic_model = model

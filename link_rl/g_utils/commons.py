@@ -141,60 +141,60 @@ def set_config(config):
         if config.FROM_PIXELS:
             config.MODEL_TYPE = config.MODEL_TYPE_PIXEL
 
-    if config.MODEL_TYPE in (
-            ModelType.TINY_LINEAR, ModelType.SMALL_LINEAR, ModelType.SMALL_LINEAR_2,
-            ModelType.MEDIUM_LINEAR, ModelType.LARGE_LINEAR
-    ):
-        from link_rl.a_configuration.a_base_config.c_models.config_linear_models import ConfigLinearModel
-        config.MODEL_PARAMETER = ConfigLinearModel(config.MODEL_TYPE)
-
-    elif config.MODEL_TYPE in (
-            ModelType.TINY_1D_CONVOLUTIONAL, ModelType.SMALL_1D_CONVOLUTIONAL,
-            ModelType.MEDIUM_1D_CONVOLUTIONAL, ModelType.LARGE_1D_CONVOLUTIONAL
-    ):
-        from link_rl.a_configuration.a_base_config.c_models.config_convolutional_models import Config1DConvolutionalModel
-        config.MODEL_PARAMETER = Config1DConvolutionalModel(config.MODEL_TYPE)
-
-    elif config.MODEL_TYPE in (
-            ModelType.TINY_2D_CONVOLUTIONAL, ModelType.SMALL_2D_CONVOLUTIONAL,
-            ModelType.MEDIUM_2D_CONVOLUTIONAL, ModelType.LARGE_2D_CONVOLUTIONAL
-    ):
-        from link_rl.a_configuration.a_base_config.c_models.config_convolutional_models import Config2DConvolutionalModel
-        config.MODEL_PARAMETER = Config2DConvolutionalModel(config.MODEL_TYPE)
-
-    elif config.MODEL_TYPE in (
-            ModelType.TINY_RECURRENT, ModelType.SMALL_RECURRENT, ModelType.MEDIUM_RECURRENT, ModelType.LARGE_RECURRENT
-    ):
-        from link_rl.a_configuration.a_base_config.c_models.config_recurrent_linear_models import ConfigRecurrentLinearModel
-        config.MODEL_PARAMETER = ConfigRecurrentLinearModel(config.MODEL_TYPE)
-
-    elif config.MODEL_TYPE in (
-            ModelType.TINY_RECURRENT_1D_CONVOLUTIONAL, ModelType.SMALL_RECURRENT_1D_CONVOLUTIONAL,
-            ModelType.MEDIUM_RECURRENT_1D_CONVOLUTIONAL, ModelType.LARGE_RECURRENT_1D_CONVOLUTIONAL
-    ):
-        from link_rl.a_configuration.a_base_config.c_models.config_recurrent_convolutional_models import ConfigRecurrent1DConvolutionalModel
-        config.MODEL_PARAMETER = ConfigRecurrent1DConvolutionalModel(config.MODEL_TYPE)
-
-    elif config.MODEL_TYPE in (
-            ModelType.TINY_RECURRENT_2D_CONVOLUTIONAL, ModelType.SMALL_RECURRENT_2D_CONVOLUTIONAL,
-            ModelType.MEDIUM_RECURRENT_2D_CONVOLUTIONAL, ModelType.LARGE_RECURRENT_2D_CONVOLUTIONAL
-    ):
-        from link_rl.a_configuration.a_base_config.c_models.config_recurrent_convolutional_models import ConfigRecurrent2DConvolutionalModel
-        config.MODEL_PARAMETER = ConfigRecurrent2DConvolutionalModel(config.MODEL_TYPE)
-
-    else:
-        raise ValueError()
-
-    if config.LAYER_ACTIVATION_TYPE == LayerActivationType.LEAKY_RELU:
-        config.LAYER_ACTIVATION = nn.LeakyReLU
-    elif config.LAYER_ACTIVATION_TYPE == LayerActivationType.ELU:
-        config.LAYER_ACTIVATION = nn.ELU
-    elif config.LAYER_ACTIVATION_TYPE == LayerActivationType.PReLU:
-        config.LAYER_ACTIVATION = nn.PReLU
-    elif config.LAYER_ACTIVATION_TYPE == LayerActivationType.SELU:
-        config.LAYER_ACTIVATION = nn.SELU
-    else:
-        raise ValueError()
+    # if config.MODEL_TYPE in (
+    #         ModelType.TINY_LINEAR, ModelType.SMALL_LINEAR, ModelType.SMALL_LINEAR_2,
+    #         ModelType.MEDIUM_LINEAR, ModelType.LARGE_LINEAR
+    # ):
+    #     from link_rl.a_configuration.a_base_config.c_models.config_linear_models import ConfigLinearModel
+    #     config.MODEL_PARAMETER = ConfigLinearModel(config.MODEL_TYPE)
+    #
+    # elif config.MODEL_TYPE in (
+    #         ModelType.TINY_1D_CONVOLUTIONAL, ModelType.SMALL_1D_CONVOLUTIONAL,
+    #         ModelType.MEDIUM_1D_CONVOLUTIONAL, ModelType.LARGE_1D_CONVOLUTIONAL
+    # ):
+    #     from link_rl.a_configuration.a_base_config.c_models.config_convolutional_models import Config1DConvolutionalModel
+    #     config.MODEL_PARAMETER = Config1DConvolutionalModel(config.MODEL_TYPE)
+    #
+    # elif config.MODEL_TYPE in (
+    #         ModelType.TINY_2D_CONVOLUTIONAL, ModelType.SMALL_2D_CONVOLUTIONAL,
+    #         ModelType.MEDIUM_2D_CONVOLUTIONAL, ModelType.LARGE_2D_CONVOLUTIONAL
+    # ):
+    #     from link_rl.a_configuration.a_base_config.c_models.config_convolutional_models import Config2DConvolutionalModel
+    #     config.MODEL_PARAMETER = Config2DConvolutionalModel(config.MODEL_TYPE)
+    #
+    # elif config.MODEL_TYPE in (
+    #         ModelType.TINY_RECURRENT, ModelType.SMALL_RECURRENT, ModelType.MEDIUM_RECURRENT, ModelType.LARGE_RECURRENT
+    # ):
+    #     from link_rl.a_configuration.a_base_config.c_models.config_recurrent_linear_models import ConfigRecurrentLinearModel
+    #     config.MODEL_PARAMETER = ConfigRecurrentLinearModel(config.MODEL_TYPE)
+    #
+    # elif config.MODEL_TYPE in (
+    #         ModelType.TINY_RECURRENT_1D_CONVOLUTIONAL, ModelType.SMALL_RECURRENT_1D_CONVOLUTIONAL,
+    #         ModelType.MEDIUM_RECURRENT_1D_CONVOLUTIONAL, ModelType.LARGE_RECURRENT_1D_CONVOLUTIONAL
+    # ):
+    #     from link_rl.a_configuration.a_base_config.c_models.config_recurrent_convolutional_models import ConfigRecurrent1DConvolutionalModel
+    #     config.MODEL_PARAMETER = ConfigRecurrent1DConvolutionalModel(config.MODEL_TYPE)
+    #
+    # elif config.MODEL_TYPE in (
+    #         ModelType.TINY_RECURRENT_2D_CONVOLUTIONAL, ModelType.SMALL_RECURRENT_2D_CONVOLUTIONAL,
+    #         ModelType.MEDIUM_RECURRENT_2D_CONVOLUTIONAL, ModelType.LARGE_RECURRENT_2D_CONVOLUTIONAL
+    # ):
+    #     from link_rl.a_configuration.a_base_config.c_models.config_recurrent_convolutional_models import ConfigRecurrent2DConvolutionalModel
+    #     config.MODEL_PARAMETER = ConfigRecurrent2DConvolutionalModel(config.MODEL_TYPE)
+    #
+    # else:
+    #     raise ValueError()
+    #
+    # if config.LAYER_ACTIVATION_TYPE == LayerActivationType.LEAKY_RELU:
+    #     config.LAYER_ACTIVATION = nn.LeakyReLU
+    # elif config.LAYER_ACTIVATION_TYPE == LayerActivationType.ELU:
+    #     config.LAYER_ACTIVATION = nn.ELU
+    # elif config.LAYER_ACTIVATION_TYPE == LayerActivationType.PReLU:
+    #     config.LAYER_ACTIVATION = nn.PReLU
+    # elif config.LAYER_ACTIVATION_TYPE == LayerActivationType.SELU:
+    #     config.LAYER_ACTIVATION = nn.SELU
+    # else:
+    #     raise ValueError()
 
     if config.VALUE_NETWORK_LAYER_ACTIVATION_TYPE == LayerActivationType.LEAKY_RELU:
         config.VALUE_NETWORK_LAYER_ACTIVATION = nn.LeakyReLU
@@ -440,48 +440,48 @@ def print_model_info(config):
     if config.MODEL_PARAMETER is None:
         set_config(config)
 
-    model_config = config.MODEL_PARAMETER
-    print('-' * 74 + " MODEL_TYPE " + '-' * 74)
-
-    if isinstance(model_config, ConfigLinearModel):
-        item1 = "{0}: {1:}".format("MODEL_TYPE", config.MODEL_TYPE)
-        item2 = "{0}: {1:}".format("NEURONS_PER_REPRESENTATION_LAYER", model_config.NEURONS_PER_REPRESENTATION_LAYER)
-        item3 = "{0}: {1:}".format("NEURONS_PER_FULLY_CONNECTED_LAYER", model_config.NEURONS_PER_FULLY_CONNECTED_LAYER)
-        print("{0:55} {1:55} {2:55}".format(item1, item2, item3), end="\n")
-    elif isinstance(model_config, (Config1DConvolutionalModel, Config2DConvolutionalModel)):
-        item1 = "{0}: {1:}".format("MODEL_TYPE", config.MODEL_TYPE)
-        item2 = "{0}: {1:}".format("OUT_CHANNELS_PER_LAYER", model_config.OUT_CHANNELS_PER_LAYER)
-        item3 = "{0}: {1:}".format("KERNEL_SIZE_PER_LAYER", model_config.KERNEL_SIZE_PER_LAYER)
-        print("{0:55} {1:55} {2:55}".format(item1, item2, item3, end="\n"))
-        item1 = "{0}: {1:}".format("STRIDE_PER_LAYER", model_config.STRIDE_PER_LAYER)
-        item2 = "{0}: {1:}".format("PADDING", model_config.PADDING)
-        print("{0:55} {1:55}".format(item1, item2, end="\n"))
-        item1 = "{0}: {1:}".format("NEURONS_PER_REPRESENTATION_LAYER", model_config.NEURONS_PER_REPRESENTATION_LAYER)
-        item2 = "{0}: {1:}".format("NEURONS_PER_FULLY_CONNECTED_LAYER", model_config.NEURONS_PER_FULLY_CONNECTED_LAYER)
-        print("{0:55} {1:55}".format(item1, item2), end="\n")
-    elif isinstance(model_config, ConfigRecurrentLinearModel):
-        item1 = "{0}: {1:}".format("MODEL_TYPE", config.MODEL_TYPE)
-        item2 = "{0}: {1:}".format("NEURONS_PER_REPRESENTATION_LAYER", model_config.NEURONS_PER_REPRESENTATION_LAYER)
-        print("{0:55} {1:55}".format(item1, item2, end="\n"))
-        item1 = "{0}: {1:}".format("HIDDEN_SIZE", model_config.HIDDEN_SIZE)
-        item2 = "{0}: {1:}".format("NUM_LAYERS", model_config.NUM_LAYERS)
-        item3 = "{0}: {1:}".format("NEURONS_PER_FULLY_CONNECTED_LAYER", model_config.NEURONS_PER_FULLY_CONNECTED_LAYER)
-        print("{0:55} {1:55} {2:55}".format(item1, item2, item3, end="\n"))
-    elif isinstance(model_config, (ConfigRecurrent1DConvolutionalModel, ConfigRecurrent2DConvolutionalModel)):
-        item1 = "{0}: {1:}".format("MODEL_TYPE", config.MODEL_TYPE)
-        item2 = "{0}: {1:}".format("OUT_CHANNELS_PER_LAYER", model_config.OUT_CHANNELS_PER_LAYER)
-        item3 = "{0}: {1:}".format("KERNEL_SIZE_PER_LAYER", model_config.KERNEL_SIZE_PER_LAYER)
-        print("{0:55} {1:55} {2:55}".format(item1, item2, item3, end="\n"))
-        item1 = "{0}: {1:}".format("STRIDE_PER_LAYER", model_config.STRIDE_PER_LAYER)
-        item2 = "{0}: {1:}".format("PADDING", model_config.PADDING)
-        item3 = "{0}: {1:}".format("NEURONS_PER_REPRESENTATION_LAYER", model_config.NEURONS_PER_REPRESENTATION_LAYER)
-        print("{0:55} {1:55} {2:55}".format(item1, item2, item3, end="\n"))
-        item1 = "{0}: {1:}".format("HIDDEN_SIZE", model_config.HIDDEN_SIZE)
-        item2 = "{0}: {1:}".format("NUM_LAYERS", model_config.NUM_LAYERS)
-        item3 = "{0}: {1:}".format("NEURONS_PER_FULLY_CONNECTED_LAYER", model_config.NEURONS_PER_FULLY_CONNECTED_LAYER)
-        print("{0:55} {1:55} {2:55}".format(item1, item2, item3, end="\n"))
-    else:
-        raise ValueError()
+    # model_config = config.MODEL_PARAMETER
+    # print('-' * 74 + " MODEL_TYPE " + '-' * 74)
+    #
+    # if isinstance(model_config, ConfigLinearModel):
+    #     item1 = "{0}: {1:}".format("MODEL_TYPE", config.MODEL_TYPE)
+    #     item2 = "{0}: {1:}".format("NEURONS_PER_REPRESENTATION_LAYER", model_config.NEURONS_PER_REPRESENTATION_LAYER)
+    #     item3 = "{0}: {1:}".format("NEURONS_PER_FULLY_CONNECTED_LAYER", model_config.NEURONS_PER_FULLY_CONNECTED_LAYER)
+    #     print("{0:55} {1:55} {2:55}".format(item1, item2, item3), end="\n")
+    # elif isinstance(model_config, (Config1DConvolutionalModel, Config2DConvolutionalModel)):
+    #     item1 = "{0}: {1:}".format("MODEL_TYPE", config.MODEL_TYPE)
+    #     item2 = "{0}: {1:}".format("OUT_CHANNELS_PER_LAYER", model_config.OUT_CHANNELS_PER_LAYER)
+    #     item3 = "{0}: {1:}".format("KERNEL_SIZE_PER_LAYER", model_config.KERNEL_SIZE_PER_LAYER)
+    #     print("{0:55} {1:55} {2:55}".format(item1, item2, item3, end="\n"))
+    #     item1 = "{0}: {1:}".format("STRIDE_PER_LAYER", model_config.STRIDE_PER_LAYER)
+    #     item2 = "{0}: {1:}".format("PADDING", model_config.PADDING)
+    #     print("{0:55} {1:55}".format(item1, item2, end="\n"))
+    #     item1 = "{0}: {1:}".format("NEURONS_PER_REPRESENTATION_LAYER", model_config.NEURONS_PER_REPRESENTATION_LAYER)
+    #     item2 = "{0}: {1:}".format("NEURONS_PER_FULLY_CONNECTED_LAYER", model_config.NEURONS_PER_FULLY_CONNECTED_LAYER)
+    #     print("{0:55} {1:55}".format(item1, item2), end="\n")
+    # elif isinstance(model_config, ConfigRecurrentLinearModel):
+    #     item1 = "{0}: {1:}".format("MODEL_TYPE", config.MODEL_TYPE)
+    #     item2 = "{0}: {1:}".format("NEURONS_PER_REPRESENTATION_LAYER", model_config.NEURONS_PER_REPRESENTATION_LAYER)
+    #     print("{0:55} {1:55}".format(item1, item2, end="\n"))
+    #     item1 = "{0}: {1:}".format("HIDDEN_SIZE", model_config.HIDDEN_SIZE)
+    #     item2 = "{0}: {1:}".format("NUM_LAYERS", model_config.NUM_LAYERS)
+    #     item3 = "{0}: {1:}".format("NEURONS_PER_FULLY_CONNECTED_LAYER", model_config.NEURONS_PER_FULLY_CONNECTED_LAYER)
+    #     print("{0:55} {1:55} {2:55}".format(item1, item2, item3, end="\n"))
+    # elif isinstance(model_config, (ConfigRecurrent1DConvolutionalModel, ConfigRecurrent2DConvolutionalModel)):
+    #     item1 = "{0}: {1:}".format("MODEL_TYPE", config.MODEL_TYPE)
+    #     item2 = "{0}: {1:}".format("OUT_CHANNELS_PER_LAYER", model_config.OUT_CHANNELS_PER_LAYER)
+    #     item3 = "{0}: {1:}".format("KERNEL_SIZE_PER_LAYER", model_config.KERNEL_SIZE_PER_LAYER)
+    #     print("{0:55} {1:55} {2:55}".format(item1, item2, item3, end="\n"))
+    #     item1 = "{0}: {1:}".format("STRIDE_PER_LAYER", model_config.STRIDE_PER_LAYER)
+    #     item2 = "{0}: {1:}".format("PADDING", model_config.PADDING)
+    #     item3 = "{0}: {1:}".format("NEURONS_PER_REPRESENTATION_LAYER", model_config.NEURONS_PER_REPRESENTATION_LAYER)
+    #     print("{0:55} {1:55} {2:55}".format(item1, item2, item3, end="\n"))
+    #     item1 = "{0}: {1:}".format("HIDDEN_SIZE", model_config.HIDDEN_SIZE)
+    #     item2 = "{0}: {1:}".format("NUM_LAYERS", model_config.NUM_LAYERS)
+    #     item3 = "{0}: {1:}".format("NEURONS_PER_FULLY_CONNECTED_LAYER", model_config.NEURONS_PER_FULLY_CONNECTED_LAYER)
+    #     print("{0:55} {1:55} {2:55}".format(item1, item2, item3, end="\n"))
+    # else:
+    #     raise ValueError()
 
     print("LAYER_ACTIVATION_TYPE: {0}".format(config.LAYER_ACTIVATION_TYPE))
     print("VALUE_NETWORK_LAYER_ACTIVATION_TYPE: {0}".format(config.VALUE_NETWORK_LAYER_ACTIVATION_TYPE))

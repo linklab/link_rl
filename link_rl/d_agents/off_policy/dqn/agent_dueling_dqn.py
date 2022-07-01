@@ -9,11 +9,11 @@ class AgentDuelingDqn(AgentDqn):
     def __init__(self, observation_space, action_space, config, need_train):
         super(AgentDuelingDqn, self).__init__(observation_space, action_space, config, need_train)
 
-        self._model_creator = DuelingQModelCreator(
-            n_input=self.observation_shape[0],
-            n_out_actions=self.n_out_actions,
-            n_discrete_actions=self.n_discrete_actions
-        )
+        # self._model_creator = DuelingQModelCreator(
+        #     n_input=self.observation_shape[0],
+        #     n_out_actions=self.n_out_actions,
+        #     n_discrete_actions=self.n_discrete_actions
+        # )
         self.q_net = self._model_creator.create_model()
         self.target_q_net = self._model_creator.create_model()
 
