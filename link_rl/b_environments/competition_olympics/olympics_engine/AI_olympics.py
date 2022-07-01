@@ -6,7 +6,7 @@ from link_rl.b_environments.competition_olympics.olympics_engine.generator impor
 from link_rl.b_environments.competition_olympics.olympics_engine.scenario import Running_competition, table_hockey, \
     wrestling
 from link_rl.b_environments.competition_olympics.olympics_engine.scenario import football
-
+from link_rl.e_main.config_single import config
 import random
 
 
@@ -49,13 +49,14 @@ class AI_Olympics:
         self.current_game_count = 0
         selected_game_idx = self.selected_game_idx_pool[self.current_game_count]
 
+        selected_game_idx = config.GAME_MODE
 
-        print(f'Playing {self.game_pool[selected_game_idx]["name"]}')
-        # if self.game_pool[selected_game_idx]['name'] == 'running-competition':
-        #     self.game_pool[selected_game_idx]['game'] = \
-        #         Running_competition.reset_map(meta_map= self.running_game.meta_map,map_id=None, vis=200, vis_clear=5,
-        #                                       agent1_color = 'light red', agent2_color = 'blue')     #random sample a map
-        #     self.game_pool[selected_game_idx]['game'].max_step = self.max_step
+        # print(f'Playing {self.game_pool[selected_game_idx]["name"]}')
+        if self.game_pool[selected_game_idx]['name'] == 'running-competition':
+            self.game_pool[selected_game_idx]['game'] = \
+                Running_competition.reset_map(meta_map= self.running_game.meta_map,map_id=None, vis=200, vis_clear=5,
+                                              agent1_color = 'light red', agent2_color = 'blue')     #random sample a map
+            self.game_pool[selected_game_idx]['game'].max_step = self.max_step
 
         self.current_game = self.game_pool[selected_game_idx]['game']
         self.game_score = [0,0]
@@ -79,6 +80,7 @@ class AI_Olympics:
             obs = [{'agent_obs': obs[i], 'id': f'team_{i}'} for i in [0,1]]
         for i in obs:
             i['game_mode'] = ''
+            i['done'] = done
 
         for i,j in enumerate(obs):
             j['energy'] = self.current_game.agent_list[i].energy
@@ -87,23 +89,26 @@ class AI_Olympics:
             winner = self.current_game.check_win()
             if winner != '-1':
                 self.game_score[int(winner)] += 1
+                reward = [0, 0]
+                reward[int(winner)] += 100
+                reward[1-int(winner)] -= 0
 
             if self.current_game_count == len(self.game_pool)-1:
                 self.done = True
-            else:
-                # self.current_game_idx += 1
-                self.current_game_count += 1
-                self.current_game_idx = self.selected_game_idx_pool[self.current_game_count]
-
-                self.current_game = self.game_pool[self.current_game_idx]['game']
-                print(f'Playing {self.game_pool[self.current_game_idx]["name"]}')
-                obs = self.current_game.reset()
-                if self.current_game.game_name == 'running-competition':
-                    obs = [{'agent_obs': obs[i], 'id': f'team_{i}'} for i in [0,1]]
-                for i in obs:
-                    i['game_mode'] = 'NEW GAME'
-                for i,j in enumerate(obs):
-                    j['energy'] = self.current_game.agent_list[i].energy
+            # else:
+            #     # self.current_game_idx += 1
+            #     self.current_game_count += 1
+            #     self.current_game_idx = self.selected_game_idx_pool[self.current_game_count]
+            #
+            #     self.current_game = self.game_pool[self.current_game_idx]['game']
+            #     print(f'Playing {self.game_pool[self.current_game_idx]["name"]}')
+            #     obs = self.current_game.reset()
+            #     if self.current_game.game_name == 'running-competition':
+            #         obs = [{'agent_obs': obs[i], 'id': f'team_{i}'} for i in [0,1]]
+            #     for i in obs:
+            #         i['game_mode'] = 'NEW GAME'
+            #     for i,j in enumerate(obs):
+            #         j['energy'] = self.current_game.agent_list[i].energy
 
         if self.done:
             print('game score = ', self.game_score)

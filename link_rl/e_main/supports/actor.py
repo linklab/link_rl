@@ -3,6 +3,7 @@ import warnings
 import numpy as np
 from gym.spaces import Discrete, Box
 
+from link_rl.a_configuration.a_base_config.a_environments.competition_olympics import ConfigCompetitionOlympics
 from link_rl.g_utils.commons_rl import Episode
 
 warnings.filterwarnings('ignore')
@@ -60,14 +61,16 @@ class Actor(mp.Process):
 
     def set_train_env(self):
         if self.config.AGENT_TYPE == AgentType.TDMPC or self.config.N_VECTORIZED_ENVS == 1:
-            self.train_env = get_single_env(self.config, train_mode=True)
+            if isinstance(self.config, ConfigCompetitionOlympics):
+                self.train_env = get_single_env(self.config, train_mode=True, agent=self.agent)
+            else:
+                self.train_env = get_single_env(self.config, train_mode=True)
         else:
             self.train_env = get_train_env(self.config)
         self.is_env_created.value = True
 
     def generate_transition_for_single_env(self):
         observation, info = self.train_env.reset(return_info=True)
-
         if self.agent.is_recurrent_model:
             self.agent.model.init_recurrent_hidden()
 

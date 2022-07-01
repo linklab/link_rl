@@ -959,7 +959,7 @@ def get_train_env(config, no_graphics=True):
     return train_env
 
 
-def get_single_env(config, no_graphics=True, train_mode=True):
+def get_single_env(config, no_graphics=True, train_mode=True, agent=None):
     #############
     #   Unity   #
     #############
@@ -1042,9 +1042,10 @@ def get_single_env(config, no_graphics=True, train_mode=True):
     ###########################
     elif isinstance(config, ConfigCompetitionOlympics):
         from link_rl.b_environments.competition_olympics.olympics_env.chooseenv import make
-        single_env = make(config.ENV_NAME)
+        single_env = make("olympics-integrated")
         single_env = CompetitionOlympicsEnvWrapper(
-            env=single_env, controlled_agent_index=config.CONTROLLED_AGENT_INDEX, env_render=config.RENDER_OVER_TRAIN
+            env=single_env, controlled_agent_index=config.CONTROLLED_AGENT_INDEX, env_render=config.RENDER_OVER_TRAIN,
+            agent=agent, config=config
         )
 
     ################

@@ -550,21 +550,81 @@ from link_rl.a_configuration.b_single_config.gym_robotics.config_gym_robotics_ha
 config = ConfigHandManipulateBlockRotateXYZSac()
 
 
-###########################
-### CompetitionOlympics ###
-###########################
+####################################
+### CompetitionOlympics-Football ###
+####################################
 
-from link_rl.a_configuration.b_single_config.competition_olympics.config_competition_olympics_integrated import ConfigCompetitionOlympicsIntegratedA3c
-config = ConfigCompetitionOlympicsIntegratedA3c()
+from link_rl.a_configuration.b_single_config.competition_olympics.config_competition_olympics_football import ConfigCompetitionOlympicsFootballA3c
+config = ConfigCompetitionOlympicsFootballA3c()
 
-from link_rl.a_configuration.b_single_config.competition_olympics.config_competition_olympics_integrated import ConfigCompetitionOlympicsIntegratedPpo
-config = ConfigCompetitionOlympicsIntegratedPpo()
+from link_rl.a_configuration.b_single_config.competition_olympics.config_competition_olympics_football import ConfigCompetitionOlympicsFootballPpo
+config = ConfigCompetitionOlympicsFootballPpo()
 
-from link_rl.a_configuration.b_single_config.competition_olympics.config_competition_olympics_integrated import ConfigCompetitionOlympicsIntegratedAsynchronousPpo
-config = ConfigCompetitionOlympicsIntegratedAsynchronousPpo()
+from link_rl.a_configuration.b_single_config.competition_olympics.config_competition_olympics_football import ConfigCompetitionOlympicsFootballAsynchronousPpo
+config = ConfigCompetitionOlympicsFootballAsynchronousPpo()
 
-from link_rl.a_configuration.b_single_config.competition_olympics.config_competition_olympics_integrated import ConfigCompetitionOlympicsIntegratedTd3
-config = ConfigCompetitionOlympicsIntegratedTd3()
+from link_rl.a_configuration.b_single_config.competition_olympics.config_competition_olympics_football import ConfigCompetitionOlympicsFootballTd3
+config = ConfigCompetitionOlympicsFootballTd3()
+
+from link_rl.a_configuration.b_single_config.competition_olympics.config_competition_olympics_football import ConfigCompetitionOlympicsFootballSac
+config = ConfigCompetitionOlympicsFootballSac()
+
+
+#####################################
+### CompetitionOlympics-Wrestling ###
+#####################################
+
+from link_rl.a_configuration.b_single_config.competition_olympics.config_competition_olympics_wrestling import ConfigCompetitionOlympicsWrestlingA3c
+config = ConfigCompetitionOlympicsWrestlingA3c()
+
+from link_rl.a_configuration.b_single_config.competition_olympics.config_competition_olympics_wrestling import ConfigCompetitionOlympicsWrestlingPpo
+config = ConfigCompetitionOlympicsWrestlingPpo()
+
+from link_rl.a_configuration.b_single_config.competition_olympics.config_competition_olympics_wrestling import ConfigCompetitionOlympicsWrestlingAsynchronousPpo
+config = ConfigCompetitionOlympicsWrestlingAsynchronousPpo()
+
+from link_rl.a_configuration.b_single_config.competition_olympics.config_competition_olympics_wrestling import ConfigCompetitionOlympicsWrestlingTd3
+config = ConfigCompetitionOlympicsWrestlingTd3()
+
+from link_rl.a_configuration.b_single_config.competition_olympics.config_competition_olympics_wrestling import ConfigCompetitionOlympicsWrestlingSac
+config = ConfigCompetitionOlympicsWrestlingSac()
+
+
+####################################
+### CompetitionOlympics-Running ###
+####################################
+
+from link_rl.a_configuration.b_single_config.competition_olympics.config_competition_olympics_running import ConfigCompetitionOlympicsRunningA3c
+config = ConfigCompetitionOlympicsRunningA3c()
+
+from link_rl.a_configuration.b_single_config.competition_olympics.config_competition_olympics_running import ConfigCompetitionOlympicsRunningPpo
+config = ConfigCompetitionOlympicsRunningPpo()
+
+from link_rl.a_configuration.b_single_config.competition_olympics.config_competition_olympics_running import ConfigCompetitionOlympicsRunningAsynchronousPpo
+config = ConfigCompetitionOlympicsRunningAsynchronousPpo()
+
+from link_rl.a_configuration.b_single_config.competition_olympics.config_competition_olympics_running import ConfigCompetitionOlympicsRunningTd3
+config = ConfigCompetitionOlympicsRunningTd3()
+
+from link_rl.a_configuration.b_single_config.competition_olympics.config_competition_olympics_running import ConfigCompetitionOlympicsRunningSac
+config = ConfigCompetitionOlympicsRunningSac()
+
+
+####################################
+### CompetitionOlympics-TableHockey ###
+####################################
+
+from link_rl.a_configuration.b_single_config.competition_olympics.config_competition_olympics_tablehockey import ConfigCompetitionOlympicsTableHockeyA3c
+config = ConfigCompetitionOlympicsTableHockeyA3c()
+
+from link_rl.a_configuration.b_single_config.competition_olympics.config_competition_olympics_tablehockey import ConfigCompetitionOlympicsTableHockeyPpo
+config = ConfigCompetitionOlympicsTableHockeyPpo()
+
+from link_rl.a_configuration.b_single_config.competition_olympics.config_competition_olympics_tablehockey import ConfigCompetitionOlympicsTableHockeyAsynchronousPpo
+config = ConfigCompetitionOlympicsTableHockeyAsynchronousPpo()
+
+from link_rl.a_configuration.b_single_config.competition_olympics.config_competition_olympics_tablehockey import ConfigCompetitionOlympicsTableHockeyTd3
+config = ConfigCompetitionOlympicsTableHockeyTd3()
 
 from link_rl.a_configuration.b_single_config.competition_olympics.config_competition_olympics_integrated import ConfigCompetitionOlympicsIntegratedSac
 config = ConfigCompetitionOlympicsIntegratedSac()

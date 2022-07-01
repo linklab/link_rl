@@ -3,6 +3,7 @@ import time
 import numpy as np
 from gym.spaces import Discrete, Box
 
+from link_rl.a_configuration.a_base_config.a_environments.competition_olympics import ConfigCompetitionOlympics
 from link_rl.a_configuration.a_base_config.a_environments.open_ai_gym.config_gym_atari import ConfigGymAtari
 from link_rl.a_configuration.a_base_config.a_environments.open_ai_gym.config_gym_mujoco import ConfigMujoco
 from link_rl.a_configuration.a_base_config.a_environments.pybullet.config_gym_pybullet import ConfigBullet
@@ -15,7 +16,11 @@ class Tester:
         self.agent = agent
         self.config = config
         self.play = play
-        self.test_env = get_single_env(self.config, train_mode=False)
+
+        if isinstance(self.config, ConfigCompetitionOlympics):
+            self.test_env = get_single_env(self.config, train_mode=True, agent=self.agent)
+        else:
+            self.test_env = get_single_env(self.config, train_mode=True)
 
     def play_for_testing(self, n_episodes):
         self.agent.model.eval()
