@@ -8,5 +8,5 @@ class AgentDoubleDuelingDqn(AgentDoubleDqn, AgentDuelingDqn):
         AgentDoubleDqn.__init__(self, observation_space, action_space, config, need_train)
         AgentDuelingDqn.__init__(self, observation_space, action_space, config, need_train)
 
-        assert isinstance(self.q_net, DuelingQNet)
-        assert isinstance(self.target_q_net, DuelingQNet)
+        # assert isinstance(self.q_net, DuelingQNet)
+        # assert isinstance(self.target_q_net, DuelingQNet)

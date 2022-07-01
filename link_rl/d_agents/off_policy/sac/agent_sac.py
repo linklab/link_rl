@@ -7,9 +7,10 @@ import torch.optim as optim
 import numpy as np
 import torch
 import torch.multiprocessing as mp
-from torch.distributions import Normal
+from torch.distributions import Normal, TransformedDistribution, TanhTransform
 
 from link_rl.c_models.h_sac_models import ContinuousSacModel
+from link_rl.c_models_v2.g_sac_model_creator import ContinuousSacModelCreator
 from link_rl.d_agents.off_policy.off_policy_agent import OffPolicyAgent
 from link_rl.g_utils.types import AgentMode
 
@@ -18,21 +19,26 @@ class AgentSac(OffPolicyAgent):
     def __init__(self, observation_space, action_space, config, need_train):
         super(AgentSac, self).__init__(observation_space, action_space, config, need_train)
 
-        self.sac_model = ContinuousSacModel(
-            observation_shape=self.observation_shape, n_out_actions=self.n_out_actions, config=config
+        self._model_creator = ContinuousSacModelCreator(
+            n_input=self.observation_shape[0],
+            n_out_actions=self.n_out_actions,
+            n_discrete_actions=self.n_discrete_actions
         )
 
-        self.target_sac_model = ContinuousSacModel(
-            observation_shape=self.observation_shape, n_out_actions=self.n_out_actions, config=config,
-            is_target_model=True
-        )
+        model = self._model_creator.create_model()
+        target_model = self._model_creator.create_model()
 
-        self.model = self.sac_model.actor_model
+        self.actor_model, self.critic_model = model
+        self.target_actor_model, self.target_critic_model = target_model
+
+        self.actor_model.to(self.config.DEVICE)
+        self.critic_model.to(self.config.DEVICE)
+        self.target_actor_model.to(self.config.DEVICE)
+        self.target_critic_model.to(self.config.DEVICE)
+
+        self.model = self.actor_model
         self.model.eval()
 
-        self.actor_model = self.sac_model.actor_model
-        self.critic_model = self.sac_model.critic_model
-        self.target_critic_model = self.target_sac_model.critic_model
         self.synchronize_models(source_model=self.critic_model, target_model=self.target_critic_model)
 
         self.actor_model.share_memory()
@@ -62,7 +68,10 @@ class AgentSac(OffPolicyAgent):
 
     @torch.no_grad()
     def get_action(self, obs, mode=AgentMode.TRAIN):
-        mu_v, var_v = self.actor_model.pi(obs, save_hidden=True)
+        if isinstance(obs, np.ndarray):
+            obs = torch.from_numpy(obs).float().to(self.config.DEVICE)
+
+        mu_v, var_v = self.actor_model(obs)
 
         if mode == AgentMode.TRAIN:
             # actions = np.random.normal(
@@ -84,7 +93,7 @@ class AgentSac(OffPolicyAgent):
         ############################
         #  Critic Training - BEGIN #
         ############################
-        next_mu_v, next_var_v = self.actor_model.pi(self.next_observations)
+        next_mu_v, next_var_v = self.actor_model(self.next_observations)
 
         # next_actions_v = torch.normal(mean=next_mu_v, std=torch.sqrt(next_var_v))
         # next_actions_v = torch.clamp(next_actions_v, min=self.torch_minus_ones, max=self.torch_plus_ones)
@@ -96,7 +105,7 @@ class AgentSac(OffPolicyAgent):
         next_log_prob_v = next_dist.log_prob(value=next_actions_v).sum(dim=-1, keepdim=True)
 
         with torch.no_grad():
-            next_q1_values, next_q2_values = self.target_critic_model.q(self.next_observations, next_actions_v)
+            next_q1_values, next_q2_values = self.target_critic_model(self.next_observations, next_actions_v)
             next_q_values = torch.min(next_q1_values, next_q2_values)
             next_q_values = next_q_values - self.alpha.value * next_log_prob_v  # ALPHA!!!
 
@@ -109,7 +118,7 @@ class AgentSac(OffPolicyAgent):
                 target_values = (target_values - torch.mean(target_values)) / (torch.std(target_values) + 1e-7)
 
         # values.shape: (32, 1)
-        q1_values, q2_values = self.critic_model.q(self.observations, self.actions)
+        q1_values, q2_values = self.critic_model(self.observations, self.actions)
 
         # critic_loss.shape: ()
         critic_loss_each = (self.config.LOSS_FUNCTION(q1_values, target_values.detach(), reduction="none") + self.config.LOSS_FUNCTION(q2_values, target_values.detach(), reduction="none")) / 2.0
@@ -121,7 +130,7 @@ class AgentSac(OffPolicyAgent):
 
         self.critic_optimizer.zero_grad()
         critic_loss.backward()
-        self.clip_critic_model_parameter_grad_value(self.critic_model.critic_params_list)
+        self.clip_critic_model_parameter_grad_value(self.critic_model.parameters())
         self.critic_optimizer.step()
 
         self.last_critic_loss.value = critic_loss.item()
@@ -133,15 +142,15 @@ class AgentSac(OffPolicyAgent):
         #  Actor Training - BEGIN #
         ###########################
         if training_steps_v % self.config.POLICY_UPDATE_FREQUENCY_PER_TRAINING_STEP == 0:
-            action_v, log_prob_v, entropy_v = self.sac_model.re_parameterization_trick_sample(self.observations)
-            q1_value, q2_value = self.critic_model.q(self.observations, action_v)
+            action_v, log_prob_v, entropy_v = self._re_parameterization_trick_sample(self.observations)
+            q1_value, q2_value = self.critic_model(self.observations, action_v)
             actor_objectives = torch.min(q1_value, q2_value) - self.alpha.value * log_prob_v
             actor_objectives = actor_objectives.mean()
             loss_actor_v = -1.0 * actor_objectives
 
             self.actor_optimizer.zero_grad()
             loss_actor_v.backward()
-            self.clip_actor_model_parameter_grad_value(self.actor_model.actor_params_list)
+            self.clip_actor_model_parameter_grad_value(self.actor_model.parameters())
             self.actor_optimizer.step()
 
             self.last_actor_objective.value = actor_objectives.item()
@@ -168,3 +177,23 @@ class AgentSac(OffPolicyAgent):
         count_training_steps += 1
 
         return count_training_steps, critic_loss_each
+
+    def _re_parameterization_trick_sample(self, obs):
+        mu, var = self.actor_model(obs)
+
+        dist = Normal(loc=mu, scale=torch.sqrt(var))
+        dist = TransformedDistribution(
+            base_distribution=dist,
+            transforms=TanhTransform(cache_size=1)
+        )
+
+        action_v = dist.rsample()  # for reparameterization trick (mean + std * N(0,1))
+
+        log_probs = dist.log_prob(action_v).sum(dim=-1, keepdim=True)
+
+        # action_v.shape: (128, 8)
+        # log_prob.shape: (128, 1)
+        # entropy.shape: ()
+        entropy = 0.5 * (torch.log(2.0 * np.pi * var) + 1.0).sum(dim=-1)
+
+        return action_v, log_probs, entropy

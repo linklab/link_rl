@@ -4,6 +4,7 @@ import torch
 import torch.multiprocessing as mp
 
 from link_rl.c_models.g_td3_models import ContinuousTd3Model
+from link_rl.c_models_v2.f_td3_model_creator import ContinuousTd3ModelCreator
 from link_rl.d_agents.off_policy.off_policy_agent import OffPolicyAgent
 from link_rl.g_utils.types import AgentMode
 
@@ -12,22 +13,25 @@ class AgentTd3(OffPolicyAgent):
     def __init__(self, observation_space, action_space, config, need_train):
         super(AgentTd3, self).__init__(observation_space, action_space, config, need_train)
 
-        self.td3_model = ContinuousTd3Model(
-            observation_shape=self.observation_shape, n_out_actions=self.n_out_actions, config=config
+        self._model_creator = ContinuousTd3ModelCreator(
+            n_input=self.observation_shape[0],
+            n_out_actions=self.n_out_actions,
+            n_discrete_actions=self.n_discrete_actions
         )
 
-        self.target_td3_model = ContinuousTd3Model(
-            observation_shape=self.observation_shape, n_out_actions=self.n_out_actions, config=config
-        )
+        model = self._model_creator.create_model()
+        target_model = self._model_creator.create_model()
 
-        self.model = self.td3_model.actor_model
+        self.actor_model, self.critic_model = model
+        self.target_actor_model, self.target_critic_model = target_model
+
+        self.actor_model.to(self.config.DEVICE)
+        self.critic_model.to(self.config.DEVICE)
+        self.target_actor_model.to(self.config.DEVICE)
+        self.target_critic_model.to(self.config.DEVICE)
+
+        self.model = self.actor_model
         self.model.eval()
-
-        self.actor_model = self.td3_model.actor_model
-        self.critic_model = self.td3_model.critic_model
-
-        self.target_actor_model = self.target_td3_model.actor_model
-        self.target_critic_model = self.target_td3_model.critic_model
 
         self.synchronize_models(source_model=self.actor_model, target_model=self.target_actor_model)
         self.synchronize_models(source_model=self.critic_model, target_model=self.target_critic_model)
@@ -45,7 +49,10 @@ class AgentTd3(OffPolicyAgent):
 
     @torch.no_grad()
     def get_action(self, obs, mode=AgentMode.TRAIN):
-        mu = self.actor_model.pi(obs, save_hidden=True)
+        if isinstance(obs, np.ndarray):
+            obs = torch.from_numpy(obs).float().to(self.config.DEVICE)
+
+        mu = self.actor_model(obs)
         mu = mu.detach().cpu().numpy()
 
         if mode == AgentMode.TRAIN:
@@ -65,21 +72,21 @@ class AgentTd3(OffPolicyAgent):
         # train critic - BEGIN #
         ########################
         with torch.no_grad():
-            next_mu_v = self.target_actor_model.pi(self.next_observations)
+            next_mu_v = self.target_actor_model(self.next_observations)
             next_noises = torch.normal(
                 mean=torch.zeros_like(next_mu_v), std=torch.ones_like(next_mu_v)
             ).to(self.config.DEVICE)
             next_action = next_mu_v + torch.clip(input=next_noises, min=self.torch_minus_ones, max=self.torch_plus_ones)
             next_action = torch.clip(input=next_action, min=self.torch_minus_ones, max=self.torch_plus_ones)
 
-            next_q1_value, next_q2_value = self.target_critic_model.q(self.next_observations, next_action)
+            next_q1_value, next_q2_value = self.target_critic_model(self.next_observations, next_action)
             min_next_q_value = torch.min(next_q1_value, next_q2_value)
             min_next_q_value[self.dones] = 0.0
             target_q_v = self.rewards + self.config.GAMMA ** self.config.N_STEP * min_next_q_value
             if self.config.TARGET_VALUE_NORMALIZE:
                 target_q_v = (target_q_v - torch.mean(target_q_v)) / (torch.std(target_q_v) + 1e-7)
 
-        q1_value, q2_value = self.critic_model.q(self.observations, self.actions)
+        q1_value, q2_value = self.critic_model(self.observations, self.actions)
 
         critic_loss_each = (self.config.LOSS_FUNCTION(q1_value, target_q_v.detach(), reduction="none") + self.config.LOSS_FUNCTION(q2_value, target_q_v.detach(), reduction="none")) / 2.0
 
@@ -90,7 +97,7 @@ class AgentTd3(OffPolicyAgent):
 
         self.critic_optimizer.zero_grad()
         critic_loss.backward()
-        self.clip_critic_model_parameter_grad_value(self.critic_model.critic_params_list)
+        self.clip_critic_model_parameter_grad_value(self.critic_model.parameters())
         self.critic_optimizer.step()
 
         self.last_critic_loss.value = critic_loss.item()
@@ -107,14 +114,14 @@ class AgentTd3(OffPolicyAgent):
         # train actor - BEGIN #
         #######################
         if training_steps_v % self.config.POLICY_UPDATE_FREQUENCY_PER_TRAINING_STEP == 0:
-            mu_v = self.actor_model.pi(self.observations)
-            q1_value, q2_value = self.critic_model.q(self.observations, mu_v)
+            mu_v = self.actor_model(self.observations)
+            q1_value, q2_value = self.critic_model(self.observations, mu_v)
             actor_objective = torch.min(q1_value, q2_value).mean()
             actor_loss = -1.0 * actor_objective
 
             self.actor_optimizer.zero_grad()
             actor_loss.backward()
-            self.clip_actor_model_parameter_grad_value(self.actor_model.actor_params_list)
+            self.clip_actor_model_parameter_grad_value(self.actor_model.parameters())
             self.actor_optimizer.step()
 
             self.last_actor_objective.value = actor_objective.item()
