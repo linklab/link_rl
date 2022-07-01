@@ -9,6 +9,7 @@ import numpy as np
 from link_rl.a_configuration.a_base_config.c_models.config_recurrent_convolutional_models import \
     ConfigRecurrent1DConvolutionalModel, ConfigRecurrent2DConvolutionalModel
 from link_rl.a_configuration.a_base_config.c_models.config_recurrent_linear_models import ConfigRecurrentLinearModel
+from link_rl.c_models_v2 import model_creators
 from link_rl.g_utils.commons import get_continuous_action_info
 from link_rl.g_utils.types import AgentMode, ActorCriticAgentTypes
 
@@ -52,6 +53,12 @@ class Agent:
         else:
             raise ValueError()
 
+        model_creator_class = model_creators.get(self.config.MODEL_CREATOR_TYPE)
+        self._model_creator = model_creator_class(
+            n_input=self.observation_shape[0],
+            n_out_actions=self.n_out_actions,
+            n_discrete_actions=self.n_discrete_actions
+        )
         self.model = None
         if self.config.AGENT_TYPE in ActorCriticAgentTypes:
             self.actor_model = None
