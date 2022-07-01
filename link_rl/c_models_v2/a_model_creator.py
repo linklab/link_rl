@@ -1,9 +1,9 @@
 from abc import abstractmethod, ABC
 
-import torch
 from torch import nn
 from typing import Tuple, final, Union
-import numpy as np
+
+from link_rl.g_utils.registry import Registry
 
 
 class ModelCreator(ABC):
@@ -24,6 +24,9 @@ class ModelCreator(ABC):
     @abstractmethod
     def create_model(self) -> Union[nn.Module, Tuple[nn.Module, nn.Module]]:
         raise NotImplementedError
+
+
+model_creator_registry = Registry(ModelCreator)
 
 
 class SingleModelCreator(ModelCreator, ABC):

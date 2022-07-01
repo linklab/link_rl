@@ -2,10 +2,13 @@ import torch
 from torch import nn
 from typing import final
 
-from link_rl.c_models_v2.a_model_creator import SingleModelCreator
+from link_rl.c_models_v2.a_model_creator import SingleModelCreator, model_creator_registry
 
 
+@model_creator_registry.add
 class QModelCreator(SingleModelCreator):
+    name = "QModelCreator"
+
     def __init__(
         self,
         n_input: int,
@@ -34,8 +37,9 @@ class QModelCreator(SingleModelCreator):
         )
         return model
 
-
+@model_creator_registry.add
 class DuelingQModelCreator(SingleModelCreator):
+    name = "DuelingQModelCreator"
     def __init__(
         self,
         n_input: int,

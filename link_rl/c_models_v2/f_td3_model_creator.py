@@ -2,10 +2,13 @@ import torch
 from torch import nn
 from typing import Tuple, final
 
-from link_rl.c_models_v2.a_model_creator import DoubleModelCreator
+from link_rl.c_models_v2.a_model_creator import DoubleModelCreator, model_creator_registry
 
 
+@model_creator_registry.add
 class ContinuousTd3ModelCreator(DoubleModelCreator):
+    name = "ContinuousTd3ModelCreator"
+
     def __init__(
         self,
         n_input: int,
