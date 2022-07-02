@@ -2,6 +2,7 @@ import warnings
 
 import numpy as np
 from gym.spaces import Discrete, Box
+from gym.wrappers import LazyFrames
 
 from link_rl.a_configuration.a_base_config.a_environments.competition_olympics import ConfigCompetitionOlympics
 from link_rl.g_utils.commons_rl import Episode
@@ -71,6 +72,7 @@ class Actor(mp.Process):
 
     def generate_transition_for_single_env(self):
         observation, info = self.train_env.reset(return_info=True)
+
         if self.agent.is_recurrent_model:
             self.agent.model.init_recurrent_hidden()
 
@@ -153,10 +155,18 @@ class Actor(mp.Process):
         while True:
             # Collect trajectory
             obs = self.train_env.reset()
+
+            if type(obs) == LazyFrames:
+                obs = np.asarray(obs)
+
             episode = Episode(self.config, obs, self.agent.n_out_actions)
             while not episode.done:
                 action = self.agent.get_action(obs, step=step, t0=episode.first)
                 obs, reward, done, info = self.train_env.step(action.cpu().numpy())
+
+                if type(obs) == LazyFrames:
+                    obs = np.asarray(obs)
+
                 self.total_time_step += 1
                 info["actor_id"] = self.actor_id
                 info["env_id"] = 0
@@ -291,8 +301,16 @@ class Actor(mp.Process):
         info["env_id"] = env_id
         info["real_n_steps"] = len(n_step_transitions)
 
+        if type(n_step_transitions[0].observation) == LazyFrames:
+            observation = np.asarray(n_step_transitions[0].observation)
+        else:
+            observation = n_step_transitions[0].observation
+
+        if type(n_step_transitions[0].observation) == LazyFrames:
+            next_observation = np.asarray(next_observation)
+
         n_step_transition = Transition(
-            observation=n_step_transitions[0].observation,
+            observation=observation,
             action=n_step_transitions[0].action,
             next_observation=next_observation,
             reward=n_step_reward,

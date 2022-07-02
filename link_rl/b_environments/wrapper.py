@@ -1,3 +1,4 @@
+import warnings
 from abc import abstractmethod
 
 import numpy as np
@@ -372,3 +373,12 @@ class CarRacingObservationTransposeWrapper(gym.ObservationWrapper):
 
     def observation(self, observation):
         return np.transpose(observation, axes=(2, 1, 0))
+
+
+class FrameStackVectorizedEnvWrapper(gym.ObservationWrapper):
+    def __init__(self, env):
+        super().__init__(env)
+
+    def observation(self, observation):
+        observation = np.swapaxes(observation, 0, 1)
+        return observation

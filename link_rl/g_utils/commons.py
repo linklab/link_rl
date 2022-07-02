@@ -24,16 +24,11 @@ from link_rl.a_configuration.a_base_config.a_environments.open_ai_gym.config_gym
     ConfigNormalBipedalWalker
 from link_rl.a_configuration.a_base_config.config_parse import SYSTEM_USER_NAME
 from link_rl.a_configuration.a_base_config.a_environments.unity.config_unity_box import ConfigUnityGymEnv
-from link_rl.a_configuration.a_base_config.c_models.config_convolutional_models import Config2DConvolutionalModel, \
-    Config1DConvolutionalModel
-from link_rl.a_configuration.a_base_config.c_models.config_linear_models import ConfigLinearModel
-from link_rl.a_configuration.a_base_config.c_models.config_recurrent_convolutional_models import \
-    ConfigRecurrent2DConvolutionalModel, ConfigRecurrent1DConvolutionalModel
-from link_rl.a_configuration.a_base_config.c_models.config_recurrent_linear_models import ConfigRecurrentLinearModel
 from link_rl.b_environments import wrapper
 from link_rl.b_environments.gym_robotics.gym_robotics_wrapper import GymRoboticsEnvWrapper
 from link_rl.b_environments.competition_olympics.competition_olympics_env_wrapper import CompetitionOlympicsEnvWrapper
-from link_rl.g_utils.types import AgentType, ActorCriticAgentTypes, ModelType, LayerActivationType, LossFunctionType, \
+from link_rl.b_environments.wrapper import FrameStackVectorizedEnvWrapper
+from link_rl.g_utils.types import AgentType, ActorCriticAgentTypes, LayerActivationType, LossFunctionType, \
     OffPolicyAgentTypes, OnPolicyAgentTypes
 
 
@@ -844,8 +839,9 @@ def get_train_env(config, no_graphics=True):
                 env = UnityToGymWrapper(u_env)
                 if config.ENV_NAME in ["UnityDrone"]:
                     from link_rl.b_environments.unity.unity_wrappers import GrayScaleObservation, ResizeObservation, TransformReward
-                    env = gym.wrappers.FrameStack(ResizeObservation(GrayScaleObservation(env), shape=64), num_stack=4)
+                    env = ResizeObservation(GrayScaleObservation(env), shape=64)
                     env = TransformReward(env)
+                    # env = gym.wrappers.FrameStack(env, num_stack=4)
                 return env
 
             elif config.ENV_NAME in ["Task_Allocation_v0"]:
@@ -887,7 +883,7 @@ def get_train_env(config, no_graphics=True):
             elif isinstance(config, ConfigGymAtari):
                 env = gym.make(env_name, frameskip=config.FRAME_SKIP, repeat_action_probability=0.0)
                 env = gym.wrappers.AtariPreprocessing(env, frame_skip=1, grayscale_obs=True, scale_obs=True)
-                env = gym.wrappers.FrameStack(env, num_stack=4, lz4_compress=True)
+                #env = gym.wrappers.FrameStack(env, num_stack=4, lz4_compress=True)
 
             ###########################
             #   CompetitionOlympics   #
@@ -956,6 +952,15 @@ def get_train_env(config, no_graphics=True):
         ]
     )
 
+    if isinstance(config, ConfigGymAtari):
+        train_env = gym.wrappers.FrameStack(train_env, num_stack=4, lz4_compress=True)
+        train_env = FrameStackVectorizedEnvWrapper(train_env)
+    elif config.ENV_NAME in ["UnityDrone"]:
+        train_env = gym.wrappers.FrameStack(train_env, num_stack=4, lz4_compress=True)
+        train_env = FrameStackVectorizedEnvWrapper(train_env)
+    else:
+        pass
+
     return train_env
 
 
@@ -989,8 +994,9 @@ def get_single_env(config, no_graphics=True, train_mode=True, agent=None):
         single_env = UnityToGymWrapper(u_env)
         if config.ENV_NAME in ["UnityDrone"]:
             from link_rl.b_environments.unity.unity_wrappers import GrayScaleObservation, ResizeObservation, TransformReward
-            single_env = gym.wrappers.FrameStack(ResizeObservation(GrayScaleObservation(single_env), shape=64), num_stack=4)
+            single_env = ResizeObservation(GrayScaleObservation(single_env), shape=64)
             single_env = TransformReward(single_env)
+            single_env = gym.wrappers.FrameStack(single_env, num_stack=4)
 
     elif config.ENV_NAME in ["Task_Allocation_v0"]:
         from link_rl.b_environments.task_allocation.basic_task_allocation import EnvironmentBasicTaskScheduling0
