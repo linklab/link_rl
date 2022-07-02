@@ -151,3 +151,39 @@ class QModelCreatorConv(SingleModelCreator):
         )
 
         return model
+
+
+@model_creator_registry.add
+class QModelCreatorGymAtariConv(SingleModelCreator):
+    name = "QModelCreatorGymAtariConv"
+
+    def __init__(
+        self,
+        observation_shape: Tuple[int, ...],
+        n_out_actions: int,
+        n_discrete_actions=None
+    ):
+        super(QModelCreatorGymAtariConv, self).__init__(
+            observation_shape,
+            n_out_actions,
+            n_discrete_actions
+        )
+
+    @final
+    def _create_model(self) -> nn.Module:
+        model = nn.Sequential(
+            nn.Conv2d(in_channels=self._n_input, out_channels=32, kernel_size=8, stride=4),
+            nn.BatchNorm2d(32),
+            nn.LeakyReLU(),
+            nn.Conv2d(in_channels=32, out_channels=64, kernel_size=4, stride=2),
+            nn.BatchNorm2d(64),
+            nn.LeakyReLU(),
+            nn.Conv2d(in_channels=64, out_channels=64, kernel_size=3, stride=1),
+            nn.BatchNorm2d(64),
+            nn.LeakyReLU(),
+            nn.Flatten(start_dim=1),
+            nn.Linear(7 * 7 * 64, 512),
+            nn.LeakyReLU(),
+            nn.Linear(512, self._n_discrete_actions)
+        )
+        return model
