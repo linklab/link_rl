@@ -12,6 +12,7 @@ from b_single_main_common import *
 
 def main():
     set_config(config)
+    config.TRAIN_INTERVAL_GLOBAL_TIME_STEPS = 1
 
     observation_space, action_space = get_env_info(config)
     print_basic_info(observation_space, action_space, config)
