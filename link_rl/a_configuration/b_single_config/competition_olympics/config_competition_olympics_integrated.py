@@ -60,5 +60,6 @@ class ConfigCompetitionOlympicsIntegratedSac(ConfigBase, ConfigCompetitionOlympi
         self.MODEL_TYPE = ModelType.MEDIUM_2D_CONVOLUTIONAL
         self.TRAIN_INTERVAL_GLOBAL_TIME_STEPS = 10
         self.TEST_INTERVAL_TRAINING_STEPS = 2_000
+        self.ALPHA_LEARNING_RATE = 0.000025
         self.OPPONENT_AGENT_RANDOM_ACTION_RATIO = 'linear(0.3, 0.01, 100000)'
-        self.MIN_ALPHA = 0.1
+        self.MIN_ALPHA = 0.2
