@@ -21,8 +21,6 @@ def main():
     queue = mp.Queue()
 
     if config.AGENT_TYPE in [AgentType.A3C, AgentType.ASYNCHRONOUS_PPO]:
-        input("Press Enter (two or more times) to continue...")
-
         master_agent = get_agent(
             observation_space=observation_space, action_space=action_space, config=config
         )
@@ -46,6 +44,10 @@ def main():
                 shared_model_access_lock=shared_model_access_lock, config=config, need_train=True
             ) for _ in range(config.N_ACTORS)
         ]
+
+        env_name = get_specific_env_name(config=config)
+
+        model_load(agent=working_agents, env_name=env_name, agent_type_name=config.AGENT_TYPE.name, config=config)
 
         actors = [
             Actor(

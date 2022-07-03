@@ -109,14 +109,22 @@ def model_load(agent, env_name, agent_type_name, config):
             print()
             print(actor_model_file_name)
             print(critic_model_file_name)
+
             actor_model_params = torch.load(
                 os.path.join(agent_model_home, actor_model_file_name), map_location=torch.device('cpu')
             )
-            agent.actor_model.load_state_dict(actor_model_params)
+
             critic_model_params = torch.load(
                 os.path.join(agent_model_home, critic_model_file_name), map_location=torch.device('cpu')
             )
-            agent.critic_model.load_state_dict(critic_model_params)
+
+            if config.AGENT_TYPE in [AgentType.A3C, AgentType.ASYNCHRONOUS_PPO]:
+                for working_agent in agent:
+                    working_agent.actor_model.load_state_dict(actor_model_params)
+                    working_agent.critic_model.load_state_dict(critic_model_params)
+            else:
+                agent.actor_model.load_state_dict(actor_model_params)
+                agent.critic_model.load_state_dict(critic_model_params)
         else:
             model_file_name = model_file_dict[chosen_number]
             print(model_file_name)
