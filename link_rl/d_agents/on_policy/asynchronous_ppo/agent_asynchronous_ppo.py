@@ -19,8 +19,6 @@ class WorkingAsynchronousPpo(AgentPpo):
     def worker_train(self):
         count_training_steps = 0
 
-        self.shared_model_access_lock.acquire()
-
         old_log_pi_action_v = self.process_with_old_log_pi()
 
         sum_critic_loss = 0.0
@@ -84,13 +82,9 @@ class WorkingAsynchronousPpo(AgentPpo):
             #  Actor Objective 산출 & Update - END #
             #######################################
 
-        self.shared_model_access_lock.release()
-
         self.master_agent.last_critic_loss.value = sum_critic_loss / count_training_steps
         self.master_agent.last_actor_objective.value = sum_actor_objective / count_training_steps
         self.master_agent.last_entropy.value = sum_entropy / count_training_steps
         self.master_agent.last_ratio.value = sum_ratio / count_training_steps
-
-        self.buffer.clear()
 
         return count_training_steps

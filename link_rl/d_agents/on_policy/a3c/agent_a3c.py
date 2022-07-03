@@ -19,8 +19,6 @@ class WorkingAgentA3c(AgentA2c):
     def worker_train(self):
         count_training_steps = 0
 
-        self.shared_model_access_lock.acquire()
-
         values, detached_target_values, detached_advantages = self.get_target_values_and_advantages()
         #############################################
         #  Critic (Value) Loss 산출 & Update - BEGIN #
@@ -64,14 +62,10 @@ class WorkingAgentA3c(AgentA2c):
         #  Actor Objective 산출 & Update - END #
         #######################################
 
-        self.shared_model_access_lock.release()
-
         self.master_agent.last_critic_loss.value = critic_loss.item()
         self.master_agent.last_actor_objective.value = actor_objective.item()
         self.master_agent.last_entropy.value = entropy.item()
 
         count_training_steps += 1
-
-        self.buffer.clear()                 # ON_POLICY!
 
         return count_training_steps

@@ -325,7 +325,10 @@ class Actor(mp.Process):
 
     def working_train(self):
         self.agent._before_train()
+        self.agent.shared_model_access_lock.acquire()
         count_training_steps = self.agent.worker_train()
+        self.agent.shared_model_access_lock.release()
+        self.agent.buffer.clear()                 # ON_POLICY!
         self.agent._after_train()
 
         self.training_step += count_training_steps
