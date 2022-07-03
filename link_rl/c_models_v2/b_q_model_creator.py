@@ -171,7 +171,7 @@ class QModelCreatorGymAtariConv(SingleModelCreator):
 
     @final
     def _create_model(self) -> nn.Module:
-        model = nn.Sequential(
+        encoder_net = nn.Sequential(
             nn.Conv2d(in_channels=self._n_input, out_channels=32, kernel_size=8, stride=4),
             nn.BatchNorm2d(32),
             nn.LeakyReLU(),
@@ -180,10 +180,22 @@ class QModelCreatorGymAtariConv(SingleModelCreator):
             nn.LeakyReLU(),
             nn.Conv2d(in_channels=64, out_channels=64, kernel_size=3, stride=1),
             nn.BatchNorm2d(64),
-            nn.LeakyReLU(),
-            nn.Flatten(start_dim=1),
-            nn.Linear(7 * 7 * 64, 512),
+            nn.LeakyReLU()        )
+
+        encorder_out = self._get_conv_out(
+            conv_layers=encoder_net,
+            shape=self._observation_shape
+        )
+
+        linear_model = nn.Sequential(
+            nn.Linear(encorder_out, 512),
             nn.LeakyReLU(),
             nn.Linear(512, self._n_discrete_actions)
+        )
+
+        model = nn.Sequential(
+            encoder_net,
+            nn.Flatten(start_dim=1),
+            linear_model
         )
         return model

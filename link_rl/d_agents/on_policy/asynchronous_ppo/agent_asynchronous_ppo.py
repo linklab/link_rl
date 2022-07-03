@@ -10,8 +10,8 @@ class AgentAsynchronousPpo(AgentPpo):
 
 
 class WorkingAsynchronousPpo(AgentPpo):
-    def __init__(self, master_agent, observation_space, action_space, shared_model_access_lock, config):
-        super(WorkingAsynchronousPpo, self).__init__(observation_space, action_space, config)
+    def __init__(self, master_agent, observation_space, action_space, shared_model_access_lock, config, need_train):
+        super(WorkingAsynchronousPpo, self).__init__(observation_space, action_space, config, need_train)
 
         self.master_agent = master_agent
         self.shared_model_access_lock = shared_model_access_lock

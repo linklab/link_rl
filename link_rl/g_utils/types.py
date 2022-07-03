@@ -96,6 +96,10 @@ class AgentType(enum.Enum):
     TDMPC = 13
 
 
+class EncoderType(enum.Enum):
+    TWO_CONVOLUTION = 0
+
+
 class ConvolutionType(enum.Enum):
     ONE_DIMENSION = 0
     TWO_DIMENSION = 1
