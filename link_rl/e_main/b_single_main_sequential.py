@@ -1,6 +1,6 @@
 from b_single_main_common import *
 from link_rl.g_utils.commons import model_load, get_specific_env_name
-from link_rl.g_utils.types import AgentType
+from link_rl.g_utils.types import AgentType, ActorCriticAgentTypes
 
 
 def main():
@@ -12,6 +12,13 @@ def main():
     agent = get_agent(
         observation_space=observation_space, action_space=action_space, config=config
     )
+
+    print("MODEL_CREATOR_TYPE:", config.MODEL_CREATOR_TYPE, end="\n\n")
+    if config.AGENT_TYPE in ActorCriticAgentTypes:
+        print(agent.actor_model)
+        print(agent.critic_model)
+    else:
+        print(agent.model)
 
     env_name = get_specific_env_name(config=config)
 

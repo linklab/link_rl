@@ -5,7 +5,7 @@ from link_rl.d_agents.on_policy.asynchronous_ppo.agent_asynchronous_ppo import W
 
 from link_rl.e_main.supports.actor import Actor
 from link_rl.g_utils.commons import get_specific_env_name, model_load
-from link_rl.g_utils.types import AgentType
+from link_rl.g_utils.types import AgentType, ActorCriticAgentTypes
 
 from b_single_main_common import *
 
@@ -24,6 +24,13 @@ def main():
         master_agent = get_agent(
             observation_space=observation_space, action_space=action_space, config=config
         )
+
+        print("MODEL_CREATOR_TYPE:", config.MODEL_CREATOR_TYPE, end="\n\n")
+        if config.AGENT_TYPE in ActorCriticAgentTypes:
+            print(master_agent.actor_model)
+            print(master_agent.critic_model)
+        else:
+            print(master_agent.model)
 
         shared_model_access_lock = mp.Lock()
 
@@ -58,6 +65,13 @@ def main():
         agent = get_agent(
             observation_space=observation_space, action_space=action_space, config=config
         )
+
+        print("MODEL_CREATOR_TYPE:", config.MODEL_CREATOR_TYPE, end="\n\n")
+        if config.AGENT_TYPE in ActorCriticAgentTypes:
+            print(agent.actor_model)
+            print(agent.critic_model)
+        else:
+            print(agent.model)
 
         env_name = get_specific_env_name(config=config)
 

@@ -69,3 +69,4 @@ class ConfigCompetitionOlympicsFootballSac(ConfigBase, ConfigCompetitionOlympics
         self.BUFFER_CAPACITY = 1_000_000
         self.MIN_ALPHA = 0.8
         self.ALPHA_LEARNING_RATE = 0.00005
+        self.MIN_ALPHA = 0.1

@@ -68,3 +68,4 @@ class ConfigCompetitionOlympicsRunningSac(ConfigBase, ConfigCompetitionOlympicsR
         self.TEST_INTERVAL_TRAINING_STEPS = 2_000
         self.BUFFER_CAPACITY = 1_000_000
         self.ALPHA_LEARNING_RATE = 0.00005
+        self.MIN_ALPHA = 0.1

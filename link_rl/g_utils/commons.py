@@ -297,7 +297,7 @@ def print_basic_info(observation_space=None, action_space=None, config=None):
             "MODEL_SAVE_DIR", "PROJECT_HOME", "LAYER_ACTIVATION", "LAYER_ACTIVATION_TYPE",
             "VALUE_NETWORK_LAYER_ACTIVATION", "VALUE_NETWORK_LAYER_ACTIVATION_TYPE",
             "LOSS_FUNCTION", "ENV_NAME", "MODEL_TYPE", "LEARNING_RATE", "ACTOR_LEARNING_RATE",
-            "ALPHA_LEARNING_RATE"
+            "ALPHA_LEARNING_RATE", "MODEL_CREATOR_TYPE"
         ]:
             if param in [
                 "BATCH_SIZE", "BUFFER_CAPACITY", "CONSOLE_LOG_INTERVAL_TRAINING_STEPS", "MAX_TRAINING_STEPS",
@@ -388,7 +388,7 @@ def print_comparison_basic_info(observation_space, action_space, config_c):
                 "COMPARISON_RESULTS_SAVE_DIR", "PROJECT_HOME", "LAYER_ACTIVATION", "LAYER_ACTIVATION_TYPE",
                 "VALUE_NETWORK_LAYER_ACTIVATION", "VALUE_NETWORK_LAYER_ACTIVATION_TYPE",
                 "LOSS_FUNCTION", "ENV_NAME", "MODEL_TYPE", "LEARNING_RATE", "ACTOR_LEARNING_RATE",
-                "ALPHA_LEARNING_RATE"
+                "ALPHA_LEARNING_RATE", "MODEL_CREATOR_TYPE"
             ]:
                 if param in [
                     "BATCH_SIZE", "BUFFER_CAPACITY", "CONSOLE_LOG_INTERVAL_TRAINING_STEPS", "MAX_TRAINING_STEPS",

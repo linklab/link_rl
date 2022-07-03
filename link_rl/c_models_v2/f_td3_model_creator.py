@@ -92,44 +92,44 @@ class ContinuousEncoderTd3ModelCreator(DoubleModelCreator):
     def _create_model(self) -> Tuple[nn.Module, nn.Module]:
         if self.encoder_type == EncoderType.TWO_CONVOLUTION:
             encoder_net = nn.Sequential(
-                nn.Conv2d(in_channels=self._n_input, out_channels=16, kernel_size=4, stride=2, padding=0),
+                nn.Conv2d(in_channels=self._n_input, out_channels=16, kernel_size=4, stride=2),
                 nn.BatchNorm2d(16),
                 nn.LeakyReLU(),
-                nn.Conv2d(in_channels=16, out_channels=32, kernel_size=4, stride=2, padding=0),
+                nn.Conv2d(in_channels=16, out_channels=32, kernel_size=4, stride=2),
                 nn.BatchNorm2d(32),
                 nn.LeakyReLU(),
-                nn.Conv2d(in_channels=32, out_channels=64, kernel_size=4, stride=2, padding=0),
+                nn.Conv2d(in_channels=32, out_channels=64, kernel_size=4, stride=2),
                 nn.BatchNorm2d(64),
                 nn.LeakyReLU(),
-                nn.Conv2d(in_channels=64, out_channels=64, kernel_size=3, stride=1, padding=0),
+                nn.Conv2d(in_channels=64, out_channels=64, kernel_size=3, stride=1),
                 nn.BatchNorm2d(64),
                 nn.LeakyReLU()
             )
         else:
             raise ValueError()
 
-        encoder_out = self._get_conv_out(
-            conv_layers=encoder_net,
-            shape=self._observation_shape
-        )
+        # encoder_out = self._get_conv_out(
+        #     conv_layers=encoder_net,
+        #     shape=self._observation_shape
+        # )
 
         shared_net = nn.Sequential(
             nn.Flatten(start_dim=1),
-            nn.Linear(encoder_out, 256),
-            nn.LayerNorm(256),
+            nn.Linear(64, 256),
+            nn.LayerNorm(128),
             nn.LeakyReLU(),
         )
 
         actor_net = nn.Sequential(
-            nn.Linear(256, 256),
-            nn.LayerNorm(256),
+            nn.Linear(128, 128),
+            nn.LayerNorm(128),
             nn.LeakyReLU(),
-            nn.Linear(256, self._n_out_actions),
+            nn.Linear(128, self._n_out_actions),
             nn.Tanh()
         )
         critic_net = nn.Sequential(
-            nn.Linear(256 + self._n_out_actions, 256),
-            nn.LayerNorm(256),
+            nn.Linear(128 + self._n_out_actions, 128),
+            nn.LayerNorm(128),
             nn.LeakyReLU(),
         )
 
