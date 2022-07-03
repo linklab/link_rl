@@ -33,43 +33,47 @@ from link_rl.g_utils.types import AgentType, ActorCriticAgentTypes, LayerActivat
 
 
 def model_save(agent, env_name, agent_type_name, test_episode_reward_min, config):
-    env_model_home = os.path.join(config.MODEL_SAVE_DIR, env_name)
-    if not os.path.exists(env_model_home):
-        os.mkdir(env_model_home)
+    env_name_dir = os.path.join(config.MODEL_SAVE_DIR, env_name)
+    if not os.path.exists(env_name_dir):
+        os.mkdir(env_name_dir)
 
-    agent_model_home = os.path.join(config.MODEL_SAVE_DIR, env_name, agent_type_name)
-    if not os.path.exists(agent_model_home):
-        os.mkdir(agent_model_home)
+    agent_name_dir = os.path.join(config.MODEL_SAVE_DIR, env_name, agent_type_name)
+    if not os.path.exists(agent_name_dir):
+        os.mkdir(agent_name_dir)
+
+    model_name_dir = os.path.join(config.MODEL_SAVE_DIR, env_name, agent_type_name, config.MODEL_CREATOR_TYPE)
+    if not os.path.exists(model_name_dir):
+        os.mkdir(model_name_dir)
 
     now = datetime.datetime.now()
     local_now = now.astimezone()
 
     if config.AGENT_TYPE in ActorCriticAgentTypes:
         actor_file_name = "{0:.1f}_{1}_{2}_{3}_{4}_{5}_ACTOR.pth".format(
-            test_episode_reward_min, local_now.year, local_now.month, local_now.day, env_name, agent_type_name
+            test_episode_reward_min, local_now.year, local_now.month, local_now.day, local_now.hour, local_now.minute
         )
-        torch.save(agent.actor_model.state_dict(), os.path.join(agent_model_home, actor_file_name))
+        torch.save(agent.actor_model.state_dict(), os.path.join(model_name_dir, actor_file_name))
         critic_file_name = "{0:.1f}_{1}_{2}_{3}_{4}_{5}_CRITIC.pth".format(
-            test_episode_reward_min, local_now.year, local_now.month, local_now.day, env_name, agent_type_name
+            test_episode_reward_min, local_now.year, local_now.month, local_now.day, local_now.hour, local_now.minute
         )
-        torch.save(agent.critic_model.state_dict(), os.path.join(agent_model_home, critic_file_name))
+        torch.save(agent.critic_model.state_dict(), os.path.join(model_name_dir, critic_file_name))
     else:
         file_name = "{0:.1f}_{1}_{2}_{3}_{4}_{5}.pth".format(
-            test_episode_reward_min, local_now.year, local_now.month, local_now.day, env_name, agent_type_name
+            test_episode_reward_min, local_now.year, local_now.month, local_now.day, local_now.hour, local_now.minute
         )
-        torch.save(agent.model.state_dict(), os.path.join(agent_model_home, file_name))
+        torch.save(agent.model.state_dict(), os.path.join(model_name_dir, file_name))
 
 
 def model_load(agent, env_name, agent_type_name, config):
     model_file_list = []
-    agent_model_home = os.path.join(config.MODEL_SAVE_DIR, env_name, agent_type_name)
-    if os.path.isdir(agent_model_home):
-        model_file_list = glob.glob(os.path.join(agent_model_home, "*.pth"))
+    model_name_dir = os.path.join(config.MODEL_SAVE_DIR, env_name, agent_type_name, config.MODEL_CREATOR_TYPE)
+    if os.path.isdir(model_name_dir):
+        model_file_list = glob.glob(os.path.join(model_name_dir, "*.pth"))
 
     model_file_list.sort(key=lambda x: float(x.split(os.sep)[-1].split("_")[0]))
     model_file_dict = {}
 
-    print("0. No use of pre-trained model")
+    print("\n0. No use of pre-trained model")
 
     if config.AGENT_TYPE in ActorCriticAgentTypes:
         assert len(model_file_list) % 2 == 0
@@ -111,11 +115,11 @@ def model_load(agent, env_name, agent_type_name, config):
             print(critic_model_file_name)
 
             actor_model_params = torch.load(
-                os.path.join(agent_model_home, actor_model_file_name), map_location=torch.device('cpu')
+                os.path.join(model_name_dir, actor_model_file_name), map_location=torch.device('cpu')
             )
 
             critic_model_params = torch.load(
-                os.path.join(agent_model_home, critic_model_file_name), map_location=torch.device('cpu')
+                os.path.join(model_name_dir, critic_model_file_name), map_location=torch.device('cpu')
             )
 
             if config.AGENT_TYPE in [AgentType.A3C, AgentType.ASYNCHRONOUS_PPO]:
@@ -129,7 +133,7 @@ def model_load(agent, env_name, agent_type_name, config):
             model_file_name = model_file_dict[chosen_number]
             print(model_file_name)
             model_params = torch.load(
-                os.path.join(agent_model_home, model_file_name), map_location=torch.device('cpu')
+                os.path.join(model_name_dir, model_file_name), map_location=torch.device('cpu')
             )
             agent.model.load_state_dict(model_params)
     else:
