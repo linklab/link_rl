@@ -9,6 +9,18 @@ from link_rl.c_models_v2.a_model_creator import DoubleModelCreator, model_creato
 class ContinuousDdpgModelCreator(DoubleModelCreator):
     name = "ContinuousDdpgModelCreator"
 
+    class CriticModel(nn.Module):
+        def __init__(self, shared_net, critic_net):
+            super().__init__()
+            self.shared_net = shared_net
+            self.critic_net = critic_net
+
+        def forward(self, obs, action):
+            x = self.shared_net(obs)
+            x = torch.cat([x, action], dim=-1).float()
+            q = self.critic_net(x)
+            return q
+
     def __init__(
         self,
         observation_shape: Tuple[int, ...],
@@ -43,21 +55,9 @@ class ContinuousDdpgModelCreator(DoubleModelCreator):
             nn.Linear(128, 1)
         )
 
-        class CriticModel(nn.Module):
-            def __init__(self):
-                super().__init__()
-                self.shared_net = shared_net
-                self.critic_net = critic_net
-
-            def forward(self, obs, action):
-                x = self.shared_net(obs)
-                x = torch.cat([x, action], dim=-1).float()
-                q = self.critic_net(x)
-                return q
-
         actor_model = nn.Sequential(
             shared_net, actor_net
         )
-        critic_model = CriticModel()
+        critic_model = ContinuousDdpgModelCreator.CriticModel(shared_net, critic_net)
 
         return actor_model, critic_model

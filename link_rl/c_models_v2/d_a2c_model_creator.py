@@ -57,6 +57,21 @@ class DiscreteActorCriticModelCreator(DoubleModelCreator):
 class ContinuousActorCriticModelCreator(DoubleModelCreator):
     name = "ContinuousActorCriticModelCreator"
 
+    class ActorModel(nn.Module):
+        def __init__(self, shared_net, actor_net, actor_mu_net, actor_var_net):
+            super().__init__()
+            self.share_net = shared_net
+            self.actor_net = actor_net
+            self.actor_mu_net = actor_mu_net
+            self.actor_var_net = actor_var_net
+
+        def forward(self, obs):
+            x = self.share_net(obs)
+            x = self.actor_net(x)
+            mu = self.actor_mu_net(x)
+            var = self.actor_var_net(x)
+            return mu, var
+
     def __init__(
         self,
         observation_shape: Tuple[int, ...],
@@ -100,22 +115,7 @@ class ContinuousActorCriticModelCreator(DoubleModelCreator):
             nn.Linear(128, 1)
         )
 
-        class ActorModel(nn.Module):
-            def __init__(self):
-                super().__init__()
-                self.share_net = shared_net
-                self.actor_net = actor_net
-                self.actor_mu_net = actor_mu_net
-                self.actor_var_net = actor_var_net
-
-            def forward(self, obs):
-                x = self.share_net(obs)
-                x = self.actor_net(x)
-                mu = self.actor_mu_net(x)
-                var = self.actor_var_net(x)
-                return mu, var
-
-        actor_model = ActorModel()
+        actor_model = ContinuousActorCriticModelCreator.ActorModel(shared_net, actor_net, actor_mu_net, actor_var_net)
         critic_model = nn.Sequential(
             shared_net, critic_net
         )
@@ -126,6 +126,23 @@ class ContinuousActorCriticModelCreator(DoubleModelCreator):
 @model_creator_registry.add
 class ContinuousEncoderActorCriticModelCreator(DoubleModelCreator):
     name = "ContinuousEncoderActorCriticModelCreator"
+
+    class ActorModel(nn.Module):
+        def __init__(self, encoder_net, shared_net, actor_net, actor_mu_net, actor_var_net):
+            super().__init__()
+            self.encoder_net = encoder_net
+            self.share_net = shared_net
+            self.actor_net = actor_net
+            self.actor_mu_net = actor_mu_net
+            self.actor_var_net = actor_var_net
+
+        def forward(self, obs):
+            x = self.encoder_net(obs)
+            x = self.share_net(x)
+            x = self.actor_net(x)
+            mu = self.actor_mu_net(x)
+            var = self.actor_var_net(x)
+            return mu, var
 
     def __init__(
         self,
@@ -191,24 +208,9 @@ class ContinuousEncoderActorCriticModelCreator(DoubleModelCreator):
             nn.Linear(128, 1)
         )
 
-        class ActorModel(nn.Module):
-            def __init__(self):
-                super().__init__()
-                self.encoder_net = encoder_net
-                self.share_net = shared_net
-                self.actor_net = actor_net
-                self.actor_mu_net = actor_mu_net
-                self.actor_var_net = actor_var_net
-
-            def forward(self, obs):
-                x = self.encoder_net(obs)
-                x = self.share_net(x)
-                x = self.actor_net(x)
-                mu = self.actor_mu_net(x)
-                var = self.actor_var_net(x)
-                return mu, var
-
-        actor_model = ActorModel()
+        actor_model = ContinuousEncoderActorCriticModelCreator.ActorModel(
+            encoder_net, shared_net, actor_net, actor_mu_net, actor_var_net
+        )
         critic_model = nn.Sequential(
             encoder_net,
             shared_net,

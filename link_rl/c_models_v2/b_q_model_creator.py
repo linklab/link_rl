@@ -37,9 +37,26 @@ class QModelCreator(SingleModelCreator):
         )
         return model
 
+
 @model_creator_registry.add
 class DuelingQModelCreator(SingleModelCreator):
     name = "DuelingQModelCreator"
+
+    class DuelingQModel(nn.Module):
+        def __init__(self, shared_net, adv_net, val_net):
+            super().__init__()
+            self.shared_net = shared_net
+            self.adv_net = adv_net
+            self.val_net = val_net
+
+        def forward(self, obs):
+            x = self.shared_net(obs)
+            adv = self.adv_net(x)
+            val = self.val_net(x)
+            q_values = val + adv - torch.mean(adv, dim=-1, keepdim=True)
+
+            return q_values
+
     def __init__(
         self,
         observation_shape: Tuple[int, ...],
@@ -65,22 +82,7 @@ class DuelingQModelCreator(SingleModelCreator):
         adv_net = nn.Linear(128, self._n_discrete_actions)
         val_net = nn.Linear(128, 1)
 
-        class DuelingQModel(nn.Module):
-            def __init__(self):
-                super().__init__()
-                self.shared_net = shared_net
-                self.adv_net = adv_net
-                self.val_net = val_net
-
-            def forward(self, obs):
-                x = self.shared_net(obs)
-                adv = self.adv_net(x)
-                val = self.val_net(x)
-                q_values = val + adv - torch.mean(adv, dim=-1, keepdim=True)
-
-                return q_values
-
-        dueling_q_model = DuelingQModel()
+        dueling_q_model = DuelingQModelCreator.DuelingQModel(shared_net, adv_net, val_net)
         return dueling_q_model
 
 
