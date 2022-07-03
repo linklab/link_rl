@@ -6,7 +6,7 @@ class ConfigCompetitionOlympicsTableHockey(ConfigCompetitionOlympics):
         super(ConfigCompetitionOlympics, self).__init__()
         self.ENV_NAME = "olympics-table-hockey"
         self.CONTROLLED_AGENT_INDEX = 1          # 0 or 1
-        self.N_TEST_EPISODES = 10
+        self.N_TEST_EPISODES = 5
         self.EPISODE_REWARD_MIN_SOLVED = 2000
         self.OPPONENT_AGENT_RANDOM_ACTION_RATIO = 'linear(0.7, 0.1, 300000)'
         self.RENDER_OVER_TRAIN = False
