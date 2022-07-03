@@ -62,7 +62,7 @@ class WorkingAsynchronousPpo(AgentPpo):
             )
 
             # calculate local gradients and push local worker parameters to master parameters
-            self.master_agent.actor_optㅜㅜㅈimizer.zero_grad()
+            self.master_agent.actor_optimizer.zero_grad()
             actor_loss.backward()
             for master_actor_model_parameter, worker_actor_model_parameter in zip(
                     self.master_agent.actor_model.parameters(), self.actor_model.parameters()
