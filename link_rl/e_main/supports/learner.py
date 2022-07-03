@@ -173,15 +173,17 @@ class Learner(mp.Process):
         if self.config.USE_WANDB:
             wandb_obj.finish()
 
-    def process_working_actor_message(self, working_actor_message):
+    def process_working_actor_message(self, working_actor_message):     # For A3C & Async PPO
         if working_actor_message["message_type"] == "TRANSITION":
             if working_actor_message["done"]:
                 self.total_episodes.value += 1
                 self.episode_reward_buffer.add(working_actor_message["episode_reward"])
                 self.last_mean_episode_reward.value = self.episode_reward_buffer.mean()
             self.total_time_step.value += working_actor_message["real_n_steps"]
+
         elif working_actor_message["message_type"] == "TRAIN":
             self.training_step.value += working_actor_message["count_training_steps"]
+
         else:
             raise ValueError()
 

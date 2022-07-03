@@ -107,7 +107,7 @@ class AgentPpoTrajectory(AgentPpo):
 
                 self.actor_optimizer.zero_grad()
                 batch_actor_loss.backward()
-                self.clip_actor_model_parameter_grad_value(self.actor_model.actor_params_list)
+                self.clip_actor_model_parameter_grad_value(self.actor_model.parameters())
                 self.actor_optimizer.step()
 
                 sum_critic_loss += batch_critic_loss.item()

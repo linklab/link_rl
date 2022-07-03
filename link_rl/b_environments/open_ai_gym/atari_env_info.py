@@ -5,6 +5,8 @@ import time
 
 import gym
 
+from link_rl.g_utils.commons import get_train_env, get_single_env
+
 CURRENT_PATH = os.path.dirname(os.path.realpath(__file__))
 PROJECT_HOME = os.path.abspath(os.path.join(CURRENT_PATH, os.pardir))
 if PROJECT_HOME not in sys.path:
@@ -87,6 +89,46 @@ def main_env_info():
 
     env.close()
 
+def main_env_info2(config):
+    class Dummy_Agent:
+        def __init__(self):
+            pass
+
+        def get_action(self, observation):
+            import numpy as np
+            action = np.random.randint(0, 2)
+            return action
+
+    env = get_single_env(config)
+    agent = Dummy_Agent()
+
+    total_episodes = 10_000
+    total_time_steps = 1
+
+    for ep in range(1, total_episodes + 1):
+        observation, info = env.reset(return_info=True)
+        done = False
+        episode_time_steps = 1
+
+        while not done:
+            action = agent.get_action(observation)
+            next_observation, reward, done, info = env.step(action)
+
+            print("[Ep.: {0:4}, Time Steps: {1:4}/{2:4}] "
+                  "Obs.: {3}, Action: {4}, Next_obs.: {5}, Reward: {6}, Done: {7}, Info: {8}".format(
+                ep, episode_time_steps, total_time_steps,
+                str(observation.shape), str(action), str(next_observation.shape), str(reward), done, info
+            ))
+            observation = next_observation
+            total_time_steps += 1
+            episode_time_steps += 1
+
 
 if __name__ == "__main__":
-    main_env_info()
+    #main_env_info()
+
+    from link_rl.a_configuration.b_single_config.open_ai_gym.atari.config_pong import ConfigPongDqn
+    config = ConfigPongDqn()
+    config.MODEL_CREATOR_TYPE = "QModelCreatorGymAtariConv"
+
+    main_env_info2(config)

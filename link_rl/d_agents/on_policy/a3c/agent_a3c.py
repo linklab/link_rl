@@ -17,8 +17,6 @@ class WorkingAgentA3c(AgentA2c):
         self.shared_model_access_lock = shared_model_access_lock
 
     def worker_train(self):
-        self._before_train()
-
         count_training_steps = 0
 
         self.shared_model_access_lock.acquire()
@@ -27,7 +25,7 @@ class WorkingAgentA3c(AgentA2c):
         #############################################
         #  Critic (Value) Loss 산출 & Update - BEGIN #
         #############################################
-        critic_loss = self.get_critic_loss(values, detached_target_values)
+        critic_loss = self.get_critic_loss(values=values, detached_target_values=detached_target_values)
 
         # calculate local gradients and push local worker parameters to master parameters
         self.master_agent.critic_optimizer.zero_grad()
@@ -36,7 +34,7 @@ class WorkingAgentA3c(AgentA2c):
                 self.master_agent.critic_model.parameters(), self.critic_model.parameters()
         ):
             master_critic_model_parameter._grad = worker_critic_model_parameter.grad
-        self.master_agent.clip_critic_model_parameter_grad_value(self.master_agent.critic_model.critic_params_list)
+        self.master_agent.clip_critic_model_parameter_grad_value(self.master_agent.critic_model.parameters())
         self.master_agent.critic_optimizer.step()
 
         # pull global parameters
@@ -57,7 +55,7 @@ class WorkingAgentA3c(AgentA2c):
                 self.master_agent.actor_model.parameters(), self.actor_model.parameters()
         ):
             master_actor_model_parameter._grad = worker_actor_model_parameter.grad
-        self.master_agent.clip_actor_model_parameter_grad_value(self.master_agent.actor_model.actor_params_list)
+        self.master_agent.clip_actor_model_parameter_grad_value(self.master_agent.actor_model.parameters())
         self.master_agent.actor_optimizer.step()
 
         # pull global parameters
@@ -75,6 +73,5 @@ class WorkingAgentA3c(AgentA2c):
         count_training_steps += 1
 
         self.buffer.clear()                 # ON_POLICY!
-        self._after_train()
 
         return count_training_steps

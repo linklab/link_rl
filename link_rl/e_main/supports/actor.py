@@ -1,3 +1,4 @@
+import time
 import warnings
 
 import numpy as np
@@ -323,7 +324,10 @@ class Actor(mp.Process):
         return n_step_transition, info["real_n_steps"]
 
     def working_train(self):
+        self.agent._before_train()
         count_training_steps = self.agent.worker_train()
+        self.agent._after_train()
+
         self.training_step += count_training_steps
         self.next_train_time_step += self.config.TRAIN_INTERVAL_GLOBAL_TIME_STEPS
 

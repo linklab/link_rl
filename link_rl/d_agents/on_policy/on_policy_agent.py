@@ -48,14 +48,6 @@ class OnPolicyAgent(Agent):
                 self.buffer.clear()  # ON_POLICY!
                 self._after_train()
 
-        elif self.config.AGENT_TYPE == AgentType.A3C:
-            if len(self.buffer) >= self.config.BATCH_SIZE:
-                self._before_train()
-                assert len(self.observations) == self.config.BATCH_SIZE
-                count_training_steps = self.train_a3c()
-                self.buffer.clear()  # ON_POLICY!
-                self._after_train()
-
         elif self.config.AGENT_TYPE == AgentType.PPO:
             if len(self.buffer) >= self.config.BATCH_SIZE:
                 self._before_train()
@@ -71,6 +63,15 @@ class OnPolicyAgent(Agent):
                 count_training_steps = self.train_ppo()
                 self.buffer.clear()  # ON_POLICY!
                 self._after_train()
+
+        elif self.config.AGENT_TYPE in [AgentType.A3C, AgentType.ASYNCHRONOUS_PPO]:
+            pass
+            # if len(self.buffer) >= self.config.BATCH_SIZE:
+            #     self._before_train()
+            #     assert len(self.observations) == self.config.BATCH_SIZE
+            #     count_training_steps = self.train_a3c()
+            #     self.buffer.clear()  # ON_POLICY!
+            #     self._after_train()
 
         else:
             raise ValueError()
