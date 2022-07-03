@@ -49,16 +49,16 @@ def model_save(agent, env_name, agent_type_name, test_episode_reward_min, config
     local_now = now.astimezone()
 
     if config.AGENT_TYPE in ActorCriticAgentTypes:
-        actor_file_name = "{0:.1f}_{1}_{2}_{3}_{4}_{5}_ACTOR.pth".format(
+        actor_file_name = "{0:.1f}_{1}_{2}_{3}_T_{4}_{5}_ACTOR.pth".format(
             test_episode_reward_min, local_now.year, local_now.month, local_now.day, local_now.hour, local_now.minute
         )
         torch.save(agent.actor_model.state_dict(), os.path.join(model_name_dir, actor_file_name))
-        critic_file_name = "{0:.1f}_{1}_{2}_{3}_{4}_{5}_CRITIC.pth".format(
+        critic_file_name = "{0:.1f}_{1}_{2}_{3}_T_{4}_{5}_CRITIC.pth".format(
             test_episode_reward_min, local_now.year, local_now.month, local_now.day, local_now.hour, local_now.minute
         )
         torch.save(agent.critic_model.state_dict(), os.path.join(model_name_dir, critic_file_name))
     else:
-        file_name = "{0:.1f}_{1}_{2}_{3}_{4}_{5}.pth".format(
+        file_name = "{0:.1f}_{1}_{2}_{3}_T_{4}_{5}.pth".format(
             test_episode_reward_min, local_now.year, local_now.month, local_now.day, local_now.hour, local_now.minute
         )
         torch.save(agent.model.state_dict(), os.path.join(model_name_dir, file_name))
