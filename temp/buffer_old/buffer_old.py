@@ -32,7 +32,6 @@ class Buffer:
         self.observations_buffer = None
         self.actions_buffer = None
         self.next_observations_buffer = None
-        self.next_observation_value = None
         self.rewards_buffer = None
         self.dones_buffer = None
         self.infos_buffer = None
@@ -72,15 +71,18 @@ class Buffer:
         else:
             raise ValueError()
 
+        next_observations_buffer = torch.zeros(size=(config.BUFFER_CAPACITY, *observation_space.shape),
+                                               dtype=torch.float16, device=config.DEVICE)
         rewards_buffer = torch.zeros(size=(config.BUFFER_CAPACITY,), device=config.DEVICE)
         dones_buffer = torch.zeros(size=(config.BUFFER_CAPACITY,), dtype=torch.bool, device=config.DEVICE)
         infos_buffer = [None] * config.BUFFER_CAPACITY
-        return observations_buffer, actions_buffer, rewards_buffer, dones_buffer, infos_buffer
+        return observations_buffer, actions_buffer, next_observations_buffer, rewards_buffer, dones_buffer, infos_buffer
 
     def clear(self):
         if self.config.BUFFER_CAPACITY > 0:
             self.observations_buffer, \
             self.actions_buffer, \
+            self.next_observations_buffer, \
             self.rewards_buffer, \
             self.dones_buffer, \
             self.infos_buffer = Buffer.get_new_buffer_with_capacity(
@@ -106,6 +108,7 @@ class Buffer:
         transitions_in_buffer = zip(
             self.observations_buffer,
             self.actions_buffer,
+            self.next_observations_buffer,
             self.rewards_buffer,
             self.dones_buffer
         )
@@ -115,6 +118,7 @@ class Buffer:
         print(f"Head: {self.head}, Size: {self.size}, \n"
               f"observations_buffer.shape: {self.observations_buffer.shape}, \n"
               f"actions_buffer.shape: {self.actions_buffer.shape}, \n"
+              f"next_observations_buffer.shape: {self.next_observations_buffer.shape}, \n"
               f"rewards_buffer.shape: {self.rewards_buffer.shape}, \n"
               f"dones_buffer.shape: {self.dones_buffer.shape}"
               )
@@ -137,7 +141,7 @@ class Buffer:
             else:
                 raise ValueError()
 
-            self.next_observation_value = torch.from_numpy(transition.next_observation).to(
+            self.next_observations_buffer[self.head] = torch.from_numpy(transition.next_observation).to(
                 self.config.DEVICE)  # TENSOR
             self.rewards_buffer[self.head] = transition.reward
             self.dones_buffer[self.head] = bool(transition.done)
@@ -189,8 +193,6 @@ class Buffer:
         return transition_indices
 
     def sample(self, batch_size):
-        assert self.config.N_VECTORIZED_ENVS == 1
-
         if batch_size:
             if self.config.USE_PER:
                 transition_indices, important_sampling_weights = self.sample_indices(batch_size)
@@ -206,21 +208,10 @@ class Buffer:
             else:
                 raise ValueError()
 
+            next_observations = self.next_observations_buffer[transition_indices].to(torch.float32)
             rewards = self.rewards_buffer[transition_indices].unsqueeze(dim=-1)
             dones = self.dones_buffer[transition_indices]
             infos = [self.infos_buffer[idx] for idx in transition_indices]
-
-            next_observation_value_indices = np.where(transition_indices == self.head, -1, transition_indices)
-            next_observation_value_indices = torch.tensor(next_observation_value_indices)
-
-            observation_ndim = observations.ndim - 1
-            observation_view = [1] * observation_ndim
-            next_observation_value_indices = next_observation_value_indices.view(len(next_observation_value_indices), *observation_view)
-
-            next_observations = self.observations_buffer[(transition_indices + 1) % self.config.BUFFER_CAPACITY].to(
-                torch.float32)
-            next_observations = torch.where(next_observation_value_indices < 0,
-                                            self.next_observation_value.to(torch.float32), next_observations)
 
             # print(observations, observations.shape)
             # print(actions, actions.shape)
@@ -406,7 +397,6 @@ if __name__ == "__main__":
         MODEL_PARAMETER = None
         DEVICE = torch.device("cuda" if torch.cuda.is_available() else "cpu")
         USE_PER = False
-        N_VECTORIZED_ENVS = 1
 
 
     config = Config()
