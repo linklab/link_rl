@@ -173,7 +173,11 @@ class ReplayBuffer():
         self.config = config
         self.capacity = min(config.MAX_TRAINING_STEPS, config.BUFFER_CAPACITY)
         dtype = torch.float32 if not config.FROM_PIXELS else torch.uint8
-        obs_shape = observation_space.shape if not config.FROM_PIXELS else (3, *observation_space.shape[-2:])
+        if self.config.GRAY_SCALE:
+            self.obs_channel = self.config.FRAME_STACK
+        else:
+            self.obs_channel = 3 * self.config.FRAME_STACK
+        obs_shape = observation_space.shape
         action_space = action_space.shape[0]
         self.episode_length = int(self.config.FIXED_TOTAL_TIME_STEPS_PER_EPISODE/config.ACTION_REPEAT)
         last_obs_first_shape = int(self.capacity // self.episode_length)
@@ -224,20 +228,7 @@ class ReplayBuffer():
         self._priorities[idxs] = priorities.squeeze(1).to(self.config.DEVICE) + self._eps
 
     def _get_obs(self, arr, idxs):
-        if not self.config.FROM_PIXELS:
-            return arr[idxs]
-        obs = torch.empty((self.config.BATCH_SIZE, 3 * self.config.FRAME_STACK, *arr.shape[-2:]), dtype=arr.dtype,
-                          device=self.config.DEVICE)
-        obs[:, -3:] = arr[idxs].to(self.config.DEVICE)
-        _idxs = idxs.clone()
-        mask = torch.ones_like(_idxs, dtype=torch.bool)
-        
-        # done = True 일경우에는 자신의 obs를 frame stack 시킴
-        for i in range(1, self.config.FRAME_STACK):
-            mask[_idxs % self.episode_length == 0] = False  # episode 첫 idx의 mask를 False로 바꾼다.
-            _idxs[mask] -= 1  # episode의 첫 idx를 제외한 모든 idx를 -1씩 한다.
-            obs[:, -(i + 1) * 3:-i * 3] = arr[_idxs].to(self.config.DEVICE)
-        return obs.float()
+        return arr[idxs]
 
     def sample(self):
         probs = (self._priorities if self._full else self._priorities[:self.idx]) ** self.config.PER_ALPHA
@@ -249,7 +240,7 @@ class ReplayBuffer():
         weights /= weights.max()
 
         obs = self._get_obs(self._obs, idxs)
-        next_obs_shape = self._last_obs.shape[1:] if not self.config.FROM_PIXELS else (3 * self.config.FRAME_STACK, *self._last_obs.shape[-2:])
+        next_obs_shape = self._last_obs.shape[1:] if not self.config.FROM_PIXELS else (self.obs_channel, *self._last_obs.shape[-2:])
         next_obs = torch.empty((self.config.HORIZON + 1, self.config.BATCH_SIZE, *next_obs_shape), dtype=obs.dtype,
                                device=self.config.DEVICE)
         action = torch.empty((self.config.HORIZON + 1, self.config.BATCH_SIZE, *self._action.shape[1:]), dtype=torch.float32,
