@@ -211,7 +211,7 @@ class Buffer:
             infos = [self.infos_buffer[idx] for idx in transition_indices]
 
             next_observation_value_indices = np.where(transition_indices == self.head, -1, transition_indices)
-            next_observation_value_indices = torch.tensor(next_observation_value_indices)
+            next_observation_value_indices = torch.tensor(next_observation_value_indices).to(self.config.DEVICE)
 
             observation_ndim = observations.ndim - 1
             observation_view = [1] * observation_ndim
