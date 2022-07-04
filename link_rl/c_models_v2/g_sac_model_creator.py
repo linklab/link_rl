@@ -111,15 +111,15 @@ class ContinuousSacModelCreator(DoubleModelCreator):
             return mu, var
 
     class CriticModel(nn.Module):
-        def __init__(self, representation_net, critic_net, q1_critic_net, q2_critic_net):
+        def __init__(self, critic_net, representation_net, q1_critic_net, q2_critic_net):
             super().__init__()
-            self.representation_net = representation_net
             self.critic_net = critic_net
+            self.representation_net = representation_net
             self.q1_critic_net = q1_critic_net
             self.q2_critic_net = q2_critic_net
 
         def forward(self, obs, action):
-            x = self.shared_net(obs)
+            x = self.representation_net(obs)
             x = torch.cat([x, action], dim=-1).float()
             x = self.critic_net(x)
             q1 = self.q1_critic_net(x)
@@ -175,7 +175,7 @@ class ContinuousSacModelCreator(DoubleModelCreator):
         q2_critic_net = nn.Linear(128, 1)
 
         actor_model = ContinuousSacModelCreator.ActorModel(actor_net, actor_mu_net, actor_var_net)
-        critic_model = ContinuousSacModelCreator.CriticModel(critic_net, q1_critic_net, q2_critic_net)
+        critic_model = ContinuousSacModelCreator.CriticModel(critic_net, representation_net, q1_critic_net, q2_critic_net)
         return actor_model, critic_model
 
 
@@ -322,15 +322,17 @@ class ContinuousEncoderSacModelCreator(DoubleModelCreator):
             return mu, var
 
     class CriticModel(nn.Module):
-        def __init__(self, encoder_net, critic_net, q1_critic_net, q2_critic_net):
+        def __init__(self, encoder_net, representation_net, critic_net, q1_critic_net, q2_critic_net):
             super().__init__()
             self.encoder_net = encoder_net
+            self.representation_net = representation_net
             self.critic_net = critic_net
             self.q1_critic_net = q1_critic_net
             self.q2_critic_net = q2_critic_net
 
         def forward(self, obs, action):
             x = self.encoder_net(obs)
+            x = self.representation_net(x)
             x = torch.cat([x, action], dim=-1).float()
             x = self.critic_net(x)
             q1 = self.q1_critic_net(x)
@@ -402,11 +404,14 @@ class ContinuousEncoderSacModelCreator(DoubleModelCreator):
             nn.Softplus()
         )
 
-        critic_net = nn.Sequential(
+        representation_net = nn.Sequential(
             nn.Flatten(start_dim=1),
             nn.Linear(encoder_out, 128),
             nn.LayerNorm(128),
-            nn.LeakyReLU(),
+            nn.LeakyReLU()
+        )
+
+        critic_net = nn.Sequential(
             nn.Linear(128 + self._n_out_actions, 128),
             nn.LayerNorm(128),
             nn.LeakyReLU(),
@@ -419,7 +424,7 @@ class ContinuousEncoderSacModelCreator(DoubleModelCreator):
             actor_encoder_net, actor_net, actor_mu_net, actor_var_net
         )
         critic_model = ContinuousEncoderSacModelCreator.CriticModel(
-            critic_encoder_net, critic_net, q1_critic_net, q2_critic_net
+            critic_encoder_net, representation_net, critic_net, q1_critic_net, q2_critic_net
         )
 
         summary(
