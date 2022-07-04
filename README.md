@@ -27,7 +27,7 @@ Install package
   conda install -c plotly plotly==5.6.0
   conda install -c conda-forge pandas
   conda install -c conda-forge matplotlib
-  pip install torchsummary
+  pip install torchinfo
   ```
 - Windows
   ```commandline
@@ -41,7 +41,7 @@ Install package
   conda install -c conda-forge wandb
   conda install -c conda-forge pandas
   conda install -c conda-forge matplotlib
-  pip install torchsummary  
+  pip install torchinfo  
   ```
 - Mac
   ```commandline
@@ -58,7 +58,7 @@ Install package
 
   conda install -c conda-forge swig==4.0.2
   conda install -c conda-forge box2d-py==2.3.8
-  pip install torchsummary
+  pip install torchinfo
 - 
 ## How to use link_rl
 ### Train
