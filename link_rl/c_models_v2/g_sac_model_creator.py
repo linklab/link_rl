@@ -149,24 +149,24 @@ class ContinuousEncoderSacModelCreator(DoubleModelCreator):
     def _create_model(self) -> Tuple[nn.Module, nn.Module]:
         if self.encoder_type == EncoderType.TWO_CONVOLUTION:
             encoder_net = nn.Sequential(
-                nn.Conv2d(in_channels=self._n_input, out_channels=16, kernel_size=4, stride=2),
+                nn.Conv2d(in_channels=self._n_input, out_channels=16, kernel_size=(4, 4), stride=(2, 2)),
                 nn.BatchNorm2d(16),
                 nn.LeakyReLU(),
-                nn.Conv2d(in_channels=16, out_channels=32, kernel_size=4, stride=2),
+                nn.Conv2d(in_channels=16, out_channels=32, kernel_size=(4, 4), stride=(2, 2)),
                 nn.BatchNorm2d(32),
                 nn.LeakyReLU(),
-                nn.Conv2d(in_channels=32, out_channels=64, kernel_size=4, stride=2),
+                nn.Conv2d(in_channels=32, out_channels=64, kernel_size=(4, 4), stride=(2, 2)),
                 nn.BatchNorm2d(64),
                 nn.LeakyReLU(),
-                nn.Conv2d(in_channels=64, out_channels=64, kernel_size=3, stride=1),
+                nn.Conv2d(in_channels=64, out_channels=64, kernel_size=(3, 3), stride=(1, 1)),
                 nn.BatchNorm2d(64),
-                nn.LeakyReLU()
+                nn.LeakyReLU(),
+                nn.Flatten(start_dim=1),
             )
         else:
             raise ValueError()
 
         shared_net = nn.Sequential(
-            nn.Flatten(start_dim=1),
             nn.Linear(64, 128),
             nn.LayerNorm(128),
             nn.LeakyReLU(),

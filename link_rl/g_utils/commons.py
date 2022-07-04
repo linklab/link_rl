@@ -285,6 +285,20 @@ def select_pre_trained_model():
     pass
 
 
+def print_model_summary(agent, observation_space, action_space, config):
+    import torchsummary
+
+    print("MODEL_CREATOR_TYPE: {0}, Observation Shape: {1}".format(
+        config.MODEL_CREATOR_TYPE, observation_space.shape
+    ), end="\n\n")
+
+    if config.AGENT_TYPE in ActorCriticAgentTypes:
+        torchsummary.summary(agent.actor_model, input_size=observation_space.shape)
+        #torchsummary.summary(agent.critic_model, input_size=[observation_space.shape, (2,)])
+    else:
+        torchsummary.summary(agent.model, input_size=observation_space.shape)
+
+
 def print_basic_info(observation_space=None, action_space=None, config=None):
     print('\n' + '#' * 81 + " Base Configs " + '#' * 82)
 
