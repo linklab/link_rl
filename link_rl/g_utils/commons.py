@@ -727,15 +727,15 @@ def wandb_log(learner, wandb_obj, config):
 
     if config.AGENT_TYPE in ActorCriticAgentTypes:
         log_dict["actor_grad_max"] = learner.agent.last_actor_model_grad_max.value
-        log_dict["actor_grad_l2"] = learner.agent.last_actor_model_grad_l2.value
+        log_dict["actor_grad_l1"] = learner.agent.last_actor_model_grad_l1.value
         log_dict["critic_grad_max"] = learner.agent.last_critic_model_grad_max.value
-        log_dict["critic_grad_l2"] = learner.agent.last_critic_model_grad_l2.value
+        log_dict["critic_grad_l1"] = learner.agent.last_critic_model_grad_l1.value
     elif config.AGENT_TYPE == AgentType.REINFORCE:
         log_dict["policy_grad_max"] = learner.agent.last_actor_model_grad_max.value
-        log_dict["policy_grad_l2"] = learner.agent.last_actor_model_grad_l2.value
+        log_dict["policy_grad_l1"] = learner.agent.last_actor_model_grad_l1.value
     else:
         log_dict["grad_max"] = learner.agent.last_model_grad_max.value
-        log_dict["grad_l2"] = learner.agent.last_model_grad_l2.value
+        log_dict["grad_l1"] = learner.agent.last_model_grad_l1.value
 
     if config.CUSTOM_ENV_STAT is not None:
         config.CUSTOM_ENV_STAT.add_wandb_log(log_dict=log_dict)

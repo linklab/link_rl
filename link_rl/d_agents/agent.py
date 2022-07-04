@@ -65,12 +65,12 @@ class Agent:
             self.critic_model = None
 
         self.last_model_grad_max = mp.Value('d', 0.0)
-        self.last_model_grad_l2 = mp.Value('d', 0.0)
+        self.last_model_grad_l1 = mp.Value('d', 0.0)
 
-        self.last_actor_model_grad_l2 = mp.Value('d', 0.0)
+        self.last_actor_model_grad_l1 = mp.Value('d', 0.0)
         self.last_actor_model_grad_max = mp.Value('d', 0.0)
 
-        self.last_critic_model_grad_l2 = mp.Value('d', 0.0)
+        self.last_critic_model_grad_l1 = mp.Value('d', 0.0)
         self.last_critic_model_grad_max = mp.Value('d', 0.0)
 
         self.is_recurrent_model = any([
@@ -91,23 +91,26 @@ class Agent:
         raise NotImplementedError()
 
     def clip_model_config_grad_value(self, model_parameters):
-        torch.nn.utils.clip_grad_norm_(model_parameters, self.config.CLIP_GRADIENT_VALUE)
+        total_norm = torch.nn.utils.clip_grad_norm_(model_parameters, self.config.CLIP_GRADIENT_VALUE)
 
         grads_list = [p.grad.data.cpu().numpy().flatten() for p in model_parameters if p.grad is not None]
 
         if grads_list:
             grads = np.concatenate(grads_list)
-            self.last_model_grad_l2.value = np.sqrt(np.mean(np.square(grads)))
+            self.last_model_grad_l1.value = total_norm
             self.last_model_grad_max.value = np.max(grads)
 
     def clip_actor_model_parameter_grad_value(self, actor_model_parameters):
-        torch.nn.utils.clip_grad_norm_(actor_model_parameters, self.config.CLIP_GRADIENT_VALUE)
+        total_norm = torch.nn.utils.clip_grad_norm_(actor_model_parameters, self.config.CLIP_GRADIENT_VALUE)
 
-        actor_grads_list = [p.grad.data.cpu().numpy().flatten() for p in actor_model_parameters if p.grad is not None]
+        # actor_grads_list = [p.grad.data.cpu().numpy().flatten() for p in actor_model_parameters if
+        #                     p.grad is not None]
+        actor_grads_list = [p.grad.data.cpu().numpy().flatten() for p in self.actor_model.parameters() if
+                            p.grad is not None]
 
         if actor_grads_list:
             actor_grads = np.concatenate(actor_grads_list)
-            self.last_actor_model_grad_l2.value = np.sqrt(np.mean(np.square(actor_grads)))
+            self.last_actor_model_grad_l1.value = total_norm
             self.last_actor_model_grad_max.value = np.max(actor_grads)
 
     def clip_critic_model_parameter_grad_value(self, critic_model_parameters):
@@ -118,7 +121,7 @@ class Agent:
 
         if critic_grads_list:
             critic_grads = np.concatenate(critic_grads_list)
-            self.last_critic_model_grad_l2.value = np.sqrt(np.mean(np.square(critic_grads)))
+            self.last_critic_model_grad_l1.value = np.sqrt(np.mean(np.square(critic_grads)))
             self.last_critic_model_grad_max.value = np.max(critic_grads)
 
     def synchronize_models(self, source_model, target_model):
