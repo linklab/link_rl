@@ -15,7 +15,8 @@ def make(
         episode_length=1000,
         environment_kwargs=None,
         time_limit=None,
-        frame_stack=1
+        frame_stack=1,
+        grayscale=True
 ):
     env_id = 'dmc_%s_%s_%s-v1' % (domain_name, task_name, seed)
 
@@ -45,7 +46,8 @@ def make(
                 width=width,
                 camera_id=camera_id,
                 frame_skip=frame_skip,
-                frame_stack=frame_stack
+                frame_stack=frame_stack,
+                grayscale=grayscale
             ),
             max_episode_steps=max_episode_steps,
         )

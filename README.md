@@ -28,6 +28,7 @@ Install package
   conda install -c conda-forge pandas
   conda install -c conda-forge matplotlib
   pip install torchinfo
+  pip install opencv-python
   ```
 - Windows
   ```commandline
@@ -42,6 +43,7 @@ Install package
   conda install -c conda-forge pandas
   conda install -c conda-forge matplotlib
   pip install torchinfo  
+  pip install opencv-python
   ```
 - Mac
   ```commandline
@@ -59,6 +61,7 @@ Install package
   conda install -c conda-forge swig==4.0.2
   conda install -c conda-forge box2d-py==2.3.8
   pip install torchinfo
+  pip install opencv-python
 - 
 ## How to use link_rl
 ### Train

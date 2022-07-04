@@ -3,6 +3,7 @@ from dm_control import suite
 from dm_env import specs
 import numpy as np
 from collections import deque
+import cv2
 
 
 def _spec_to_box(spec, dtype):
@@ -48,7 +49,8 @@ class DMCWrapper(core.Env):
 			camera_id=0,
 			frame_skip=4,
 			environment_kwargs=None,
-			frame_stack=1
+			frame_stack=1,
+			grayscale=True
 	):
 		super(DMCWrapper, self).__init__()
 		#assert 'random' in task_kwargs, 'please specify a seed, for deterministic behaviour'
@@ -58,6 +60,7 @@ class DMCWrapper(core.Env):
 		self._camera_id = camera_id
 		self._frame_skip = frame_skip
 		self._frame_stack = frame_stack
+		self._grayscale = grayscale
 
 		# create task
 		self.original_env = suite.load(
@@ -79,8 +82,11 @@ class DMCWrapper(core.Env):
 
 		# create observation space
 		if from_pixels:
-			assert frame_stack > 0 or not isinstance(frame_stack, int)
-			shape = [3 * self._frame_stack, height, width]
+			assert isinstance(frame_stack, int) and frame_stack > 0
+			if self._grayscale:
+				shape = [self._frame_stack, height, width]
+			else:
+				shape = [3 * self._frame_stack, height, width]
 			self._observation_space = spaces.Box(
 				low=0, high=1, shape=shape, dtype=np.uint8
 			)
@@ -111,8 +117,11 @@ class DMCWrapper(core.Env):
 				width=self._width,
 				camera_id=self._camera_id
 			)
-			obs = obs.transpose(2, 0, 1).copy()
-
+			if self._grayscale:
+				obs = cv2.cvtColor(obs, cv2.COLOR_RGB2GRAY)
+				obs = np.expand_dims(obs, 0)
+			else:
+				obs = obs.transpose(2, 0, 1).copy()
 			obs = obs / 255.0
 		else:
 			obs = _flatten_obs(time_step.observation)

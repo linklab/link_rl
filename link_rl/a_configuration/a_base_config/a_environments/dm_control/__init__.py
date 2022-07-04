@@ -9,4 +9,5 @@ class ConfigDmControl:
         self.IMG_SIZE = 84
         self.FRAME_STACK = 3
         self.FIXED_TOTAL_TIME_STEPS_PER_EPISODE = 1_000
+        self.GRAY_SCALE = True
 
