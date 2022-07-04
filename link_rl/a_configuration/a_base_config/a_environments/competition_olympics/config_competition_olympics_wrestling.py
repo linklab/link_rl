@@ -8,7 +8,7 @@ class ConfigCompetitionOlympicsWrestling(ConfigCompetitionOlympics):
         self.CONTROLLED_AGENT_INDEX = 1          # 0 or 1
         self.N_TEST_EPISODES = 5
         self.EPISODE_REWARD_MIN_SOLVED = 2000
-        self.OPPONENT_AGENT_RANDOM_ACTION_RATIO = 'linear(0.3, 0.01, 100000)'
+        self.OPPONENT_AGENT_RANDOM_ACTION_RATIO = 'linear(0.3, 0.01, 1000000)'
         self.RENDER_OVER_TRAIN = False
         self.RENDER_OVER_TEST = False
 
