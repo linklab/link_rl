@@ -86,7 +86,8 @@ class AgentTd3(OffPolicyAgent):
 
         q1_value, q2_value = self.critic_model(self.observations, self.actions)
 
-        critic_loss_each = (self.config.LOSS_FUNCTION(q1_value, target_q_v.detach(), reduction="none") + self.config.LOSS_FUNCTION(q2_value, target_q_v.detach(), reduction="none")) / 2.0
+        critic_loss_each = (self.config.LOSS_FUNCTION(q1_value, target_q_v.detach(), reduction="none")
+                            + self.config.LOSS_FUNCTION(q2_value, target_q_v.detach(), reduction="none")) / 2.0
 
         if self.config.USE_PER:
             critic_loss_each *= torch.FloatTensor(self.important_sampling_weights).to(self.config.DEVICE)[:, None]

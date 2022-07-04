@@ -54,7 +54,7 @@ class ContinuousTd3ModelCreator(DoubleModelCreator):
             nn.LayerNorm(128),
             nn.LeakyReLU(),
             nn.Linear(128, self._n_out_actions),
-            nn.Softmax(dim=-1)
+            nn.Tanh()
         )
         critic_net = nn.Sequential(
             nn.Linear(128 + self._n_out_actions, 128),

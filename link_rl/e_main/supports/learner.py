@@ -44,7 +44,7 @@ class Learner(mp.Process):
 
         self.test_episode_reward_min = mp.Value('d', 0.0)
 
-        self.test_episode_reward_best = 0.0
+        self.test_episode_reward_best = float('-inf')
 
         self.next_train_time_step = config.TRAIN_INTERVAL_GLOBAL_TIME_STEPS
         self.next_test_training_step = config.TEST_INTERVAL_TRAINING_STEPS

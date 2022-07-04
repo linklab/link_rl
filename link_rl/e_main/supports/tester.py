@@ -22,7 +22,7 @@ class Tester:
         else:
             self.test_env = get_single_env(self.config, train_mode=True)
 
-    def play_for_testing(self, n_episodes):
+    def play_for_testing(self, n_episodes, delay=0.0):
         self.agent.model.eval()
 
         episode_reward_lst = []
