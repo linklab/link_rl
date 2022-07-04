@@ -3,8 +3,6 @@ import numpy as np
 import torch
 import torch.multiprocessing as mp
 
-from link_rl.c_models.g_td3_models import ContinuousTd3Model
-from link_rl.c_models_v2.f_td3_model_creator import ContinuousTd3ModelCreator
 from link_rl.d_agents.off_policy.off_policy_agent import OffPolicyAgent
 from link_rl.g_utils.types import AgentMode
 

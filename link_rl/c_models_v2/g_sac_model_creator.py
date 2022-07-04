@@ -158,16 +158,13 @@ class ContinuousEncoderSacModelCreator(DoubleModelCreator):
                 nn.Conv2d(in_channels=32, out_channels=64, kernel_size=(4, 4), stride=(2, 2)),
                 nn.BatchNorm2d(64),
                 nn.LeakyReLU(),
-                nn.Conv2d(in_channels=64, out_channels=64, kernel_size=(3, 3), stride=(1, 1)),
-                nn.BatchNorm2d(64),
-                nn.LeakyReLU(),
-                nn.Flatten(start_dim=1),
             )
         else:
             raise ValueError()
 
         shared_net = nn.Sequential(
-            nn.Linear(64, 128),
+            nn.Flatten(start_dim=1),
+            nn.Linear(576, 128),
             nn.LayerNorm(128),
             nn.LeakyReLU(),
         )
