@@ -102,7 +102,10 @@ class Flatten(nn.Module):
 def enc(config, observation_shape):
     """Returns a TOLD encoder."""
     if config.FROM_PIXELS:
-        C = int(3 * config.FRAME_STACK)
+        if config.GRAY_SCALE:
+            C = int(config.FRAME_STACK)
+        else:
+            C = int(3 * config.FRAME_STACK)
         layers = [nn.Conv2d(C, config.NUM_CHANNELS, 7, stride=2), nn.ReLU(),
                   nn.Conv2d(config.NUM_CHANNELS, config.NUM_CHANNELS, 5, stride=2), nn.ReLU(),
                   nn.Conv2d(config.NUM_CHANNELS, config.NUM_CHANNELS, 3, stride=2), nn.ReLU(),
