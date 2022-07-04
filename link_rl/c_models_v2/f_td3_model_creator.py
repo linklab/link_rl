@@ -2,6 +2,8 @@ import torch
 from torch import nn
 from typing import Tuple, final
 
+from torchinfo import summary
+
 from link_rl.c_models_v2.a_model_creator import DoubleModelCreator, model_creator_registry
 from link_rl.g_utils.types import EncoderType
 
@@ -72,7 +74,7 @@ class ContinuousTd3ModelCreator(DoubleModelCreator):
 
 @model_creator_registry.add
 class ContinuousEncoderTd3ModelCreator(DoubleModelCreator):
-    name = "ContinuousEncoderTd3ModelCreator"
+    name = "ContinuousSharedEncoderTd3ModelCreator"
 
     class CriticModel(nn.Module):
         def __init__(self, encoder_net, shared_net, critic_net, q1_critic_net, q2_critic_net):
@@ -120,21 +122,15 @@ class ContinuousEncoderTd3ModelCreator(DoubleModelCreator):
                 nn.Conv2d(in_channels=32, out_channels=64, kernel_size=4, stride=2),
                 nn.BatchNorm2d(64),
                 nn.LeakyReLU(),
-                nn.Conv2d(in_channels=64, out_channels=64, kernel_size=3, stride=1),
-                nn.BatchNorm2d(64),
-                nn.LeakyReLU()
             )
         else:
             raise ValueError()
 
-        # encoder_out = self._get_conv_out(
-        #     conv_layers=encoder_net,
-        #     shape=self._observation_shape
-        # )
+        encoder_out = self._get_conv_out(conv_layers=encoder_net, shape=self._observation_shape)
 
         shared_net = nn.Sequential(
             nn.Flatten(start_dim=1),
-            nn.Linear(64, 256),
+            nn.Linear(encoder_out, 128),
             nn.LayerNorm(128),
             nn.LeakyReLU(),
         )
@@ -155,7 +151,6 @@ class ContinuousEncoderTd3ModelCreator(DoubleModelCreator):
         q1_critic_net = nn.Linear(128, 1)
         q2_critic_net = nn.Linear(128, 1)
 
-
         actor_model = nn.Sequential(
             encoder_net,
             shared_net,
@@ -164,6 +159,15 @@ class ContinuousEncoderTd3ModelCreator(DoubleModelCreator):
 
         critic_model = ContinuousEncoderTd3ModelCreator.CriticModel(
             encoder_net, shared_net, critic_net, q1_critic_net, q2_critic_net
+        )
+
+        summary(
+            actor_model, input_size=(1, *self._observation_shape),
+            col_names=["kernel_size", "input_size", "output_size", "num_params", "mult_adds"],
+        )
+        summary(
+            critic_model, input_size=[(1, *self._observation_shape), (1, self._n_out_actions)],
+            col_names=["kernel_size", "input_size", "output_size", "num_params", "mult_adds"],
         )
 
         return actor_model, critic_model
