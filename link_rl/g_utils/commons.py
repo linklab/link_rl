@@ -286,27 +286,41 @@ def select_pre_trained_model():
 
 
 def print_model_summary(agent, observation_space, action_space, config):
-    pass
-    # from torchinfo import summary
-    #
-    # print("MODEL_CREATOR_TYPE: {0}, Observation Shape: {1}".format(
-    #     config.MODEL_CREATOR_TYPE, observation_space.shape
-    # ), end="\n\n")
-    #
-    # if config.AGENT_TYPE in ActorCriticAgentTypes:
-    #     summary(
-    #         agent.actor_model, input_size=(1, *observation_space.shape),
-    #         col_names=["kernel_size", "input_size", "output_size", "num_params", "mult_adds"],
-    #     )
-    #     summary(
-    #         agent.critic_model, input_size=[(1, *observation_space.shape), (1, *action_space.shape)],
-    #         col_names=["kernel_size", "input_size", "output_size", "num_params", "mult_adds"],
-    #     )
-    # else:
-    #     summary(
-    #         agent.model, input_size=observation_space.shape,
-    #         col_names=["kernel_size", "input_size", "output_size", "num_params", "mult_adds"],
-    #     )
+    # pass
+    import torchinfo
+
+    print("MODEL_CREATOR_TYPE: {0}, Observation Shape: {1}".format(
+        config.MODEL_CREATOR_TYPE, observation_space.shape
+    ), end="\n\n")
+
+
+    # gather models
+    models = []
+    if config.AGENT_TYPE in ActorCriticAgentTypes:
+        models.append(agent.actor_model)
+        models.append(agent.critic_model)
+    else:
+        models.append(agent.model)
+
+    # print models summary
+    summary_config = dict(
+        batch_dim=0,
+        row_settings=["ascii_only", "depth", "var_names"],
+        col_names=["kernel_size", "input_size", "output_size", "num_params", "mult_adds"],
+    )
+    for model in models:
+        try:
+            torchinfo.summary(
+                model=model,
+                input_size=observation_space.shape,
+                **summary_config
+            )
+        except Exception as e:
+            torchinfo.summary(
+                model=model,
+                input_size=(observation_space.shape, action_space.shape),
+                **summary_config
+            )
 
 
 def print_basic_info(observation_space=None, action_space=None, config=None):
