@@ -93,7 +93,7 @@ class Agent:
     def clip_model_config_grad_value(self, model_parameters):
         total_norm = torch.nn.utils.clip_grad_norm_(model_parameters, self.config.CLIP_GRADIENT_VALUE)
 
-        grads_list = [p.grad.data.cpu().numpy().flatten() for p in model_parameters if p.grad is not None]
+        grads_list = [p.grad.data.cpu().numpy().flatten() for p in self.model.parameters() if p.grad is not None]
 
         if grads_list:
             grads = np.concatenate(grads_list)
@@ -103,8 +103,6 @@ class Agent:
     def clip_actor_model_parameter_grad_value(self, actor_model_parameters):
         total_norm = torch.nn.utils.clip_grad_norm_(actor_model_parameters, self.config.CLIP_GRADIENT_VALUE)
 
-        # actor_grads_list = [p.grad.data.cpu().numpy().flatten() for p in actor_model_parameters if
-        #                     p.grad is not None]
         actor_grads_list = [p.grad.data.cpu().numpy().flatten() for p in self.actor_model.parameters() if
                             p.grad is not None]
 
