@@ -73,7 +73,7 @@ class ContinuousTd3ModelCreator(DoubleModelCreator):
 
 
 @model_creator_registry.add
-class ContinuousEncoderTd3ModelCreator(DoubleModelCreator):
+class ContinuousSharedEncoderTd3ModelCreator(DoubleModelCreator):
     name = "ContinuousSharedEncoderTd3ModelCreator"
 
     class CriticModel(nn.Module):
@@ -102,7 +102,7 @@ class ContinuousEncoderTd3ModelCreator(DoubleModelCreator):
         n_discrete_actions=None,
         encoder_type=EncoderType.TWO_CONVOLUTION
     ):
-        super(ContinuousEncoderTd3ModelCreator, self).__init__(
+        super(ContinuousSharedEncoderTd3ModelCreator, self).__init__(
             observation_shape,
             n_out_actions,
             n_discrete_actions
@@ -157,7 +157,7 @@ class ContinuousEncoderTd3ModelCreator(DoubleModelCreator):
             actor_net
         )
 
-        critic_model = ContinuousEncoderTd3ModelCreator.CriticModel(
+        critic_model = ContinuousSharedEncoderTd3ModelCreator.CriticModel(
             encoder_net, shared_net, critic_net, q1_critic_net, q2_critic_net
         )
 
