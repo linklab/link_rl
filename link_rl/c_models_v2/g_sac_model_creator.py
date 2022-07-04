@@ -290,14 +290,14 @@ class ContinuousSharedEncoderSacModelCreator(DoubleModelCreator):
             encoder_net, shared_net, critic_net, q1_critic_net, q2_critic_net
         )
 
-        summary(
-            actor_model, input_size=(1, *self._observation_shape),
-            col_names=["kernel_size", "input_size", "output_size", "num_params", "mult_adds"],
-        )
-        summary(
-            critic_model, input_size=[(1, *self._observation_shape), (1, self._n_out_actions)],
-            col_names=["kernel_size", "input_size", "output_size", "num_params", "mult_adds"],
-        )
+        # summary(
+        #     actor_model, input_size=(1, *self._observation_shape),
+        #     col_names=["kernel_size", "input_size", "output_size", "num_params", "mult_adds"],
+        # )
+        # summary(
+        #     critic_model, input_size=[(1, *self._observation_shape), (1, self._n_out_actions)],
+        #     col_names=["kernel_size", "input_size", "output_size", "num_params", "mult_adds"],
+        # )
 
         return actor_model, critic_model
 
