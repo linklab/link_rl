@@ -115,7 +115,7 @@ class TdmpcEncoderModelCreator(SingleModelCreator):
     @final
     def _create_model(self) -> Tuple[nn.Module, nn.Module]:
         cnn_net = nn.Sequential(
-            nn.Conv2d(self.self._n_input, 32, 7, stride=2),
+            nn.Conv2d(self._n_input, 32, 7, stride=2),
             nn.ReLU(),
             nn.Conv2d(32, 32, 5, stride=2),
             nn.ReLU(),

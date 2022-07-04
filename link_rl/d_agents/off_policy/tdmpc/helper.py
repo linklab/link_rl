@@ -172,7 +172,6 @@ class ReplayBuffer():
     def __init__(self, config, observation_space, action_space):
         self.config = config
         self.capacity = min(config.MAX_TRAINING_STEPS, config.BUFFER_CAPACITY)
-        dtype = torch.float32 if not config.FROM_PIXELS else torch.uint8
         if self.config.GRAY_SCALE:
             self.obs_channel = self.config.FRAME_STACK
         else:
@@ -181,9 +180,9 @@ class ReplayBuffer():
         action_space = action_space.shape[0]
         self.episode_length = int(self.config.FIXED_TOTAL_TIME_STEPS_PER_EPISODE/config.ACTION_REPEAT)
         last_obs_first_shape = int(self.capacity // self.episode_length)
-        self._obs = torch.empty((self.capacity + 1, *obs_shape), dtype=dtype, device=self.config.DEVICE)
+        self._obs = torch.empty((self.capacity + 1, *obs_shape), dtype=torch.float32, device=self.config.DEVICE)
         # _last_obs 에는 한 'episode_length+1' obs가 저장된다.
-        self._last_obs = torch.empty((last_obs_first_shape, *observation_space.shape), dtype=dtype, device=self.config.DEVICE)
+        self._last_obs = torch.empty((last_obs_first_shape, *observation_space.shape), dtype=torch.float32, device=self.config.DEVICE)
         self._action = torch.empty((self.capacity, action_space), dtype=torch.float32, device=self.config.DEVICE)
         self._reward = torch.empty((self.capacity,), dtype=torch.float32, device=self.config.DEVICE)
         self._priorities = torch.ones((self.capacity,), dtype=torch.float32, device=self.config.DEVICE)
