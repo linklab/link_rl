@@ -93,3 +93,5 @@ class ConfigBase:
         self.CUSTOM_ENV_STAT = None
 
         self.SEED_STEPS = -1
+
+        self.USE_DRQ = False
