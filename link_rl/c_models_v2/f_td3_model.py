@@ -122,6 +122,9 @@ class ContinuousTd3EncoderModel(DoubleModel):
                 nn.Conv2d(in_channels=32, out_channels=64, kernel_size=(4, 4), stride=(2, 2)),
                 nn.BatchNorm2d(64),
                 nn.LeakyReLU(),
+                nn.Conv2d(in_channels=64, out_channels=64, kernel_size=(3, 3), stride=(1, 1)),
+                nn.BatchNorm2d(64),
+                nn.LeakyReLU(),
             )
             critic_encoder_net = nn.Sequential(
                 nn.Conv2d(in_channels=self._n_input, out_channels=16, kernel_size=(4, 4), stride=(2, 2)),
@@ -131,6 +134,9 @@ class ContinuousTd3EncoderModel(DoubleModel):
                 nn.BatchNorm2d(32),
                 nn.LeakyReLU(),
                 nn.Conv2d(in_channels=32, out_channels=64, kernel_size=(4, 4), stride=(2, 2)),
+                nn.BatchNorm2d(64),
+                nn.LeakyReLU(),
+                nn.Conv2d(in_channels=64, out_channels=64, kernel_size=(3, 3), stride=(1, 1)),
                 nn.BatchNorm2d(64),
                 nn.LeakyReLU(),
             )
@@ -220,6 +226,9 @@ class ContinuousTd3SharedEncoderModel(DoubleModel):
                 nn.BatchNorm2d(32),
                 nn.LeakyReLU(),
                 nn.Conv2d(in_channels=32, out_channels=64, kernel_size=4, stride=2),
+                nn.BatchNorm2d(64),
+                nn.LeakyReLU(),
+                nn.Conv2d(in_channels=64, out_channels=64, kernel_size=(3, 3), stride=(1, 1)),
                 nn.BatchNorm2d(64),
                 nn.LeakyReLU(),
             )

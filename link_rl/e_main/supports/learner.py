@@ -77,6 +77,8 @@ class Learner(mp.Process):
 
             self.single_actor.set_train_env()
 
+            self.agent.model.eval()
+
             if self.config.AGENT_TYPE == AgentType.TDMPC:
                 self.single_actor_transition_generator = self.single_actor.generate_episode_for_single_env()
             elif self.config.N_VECTORIZED_ENVS == 1:

@@ -51,6 +51,8 @@ class Actor(mp.Process):
 
         self.set_train_env()
 
+        self.agent.model.eval()
+        
         try:
             if self.config.AGENT_TYPE == AgentType.TDMPC:
                 next(self.generate_episode_for_single_env())

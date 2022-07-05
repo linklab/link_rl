@@ -30,6 +30,7 @@ class BaseModel(ABC):
 
     @staticmethod
     def _get_conv_out(conv_layers, shape):
+        conv_layers.eval()
         conv_out = conv_layers(torch.zeros(1, *shape))
         return int(np.prod(conv_out.size()))
 
@@ -53,8 +54,7 @@ class SingleModel(BaseModel, ABC):
     @final
     def create_model(self) -> nn.Module:
         model = self._create_model()
-        assert (isinstance(model, nn.Module),
-                "self._create_model() has to return nn.Module")
+        assert (isinstance(model, nn.Module), "self._create_model() has to return nn.Module")
         return model
 
 
