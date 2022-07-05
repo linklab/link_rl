@@ -42,7 +42,7 @@ def dm_control_play(env, agent, n_episodes):
     def get_action(time_step):
         global dm_control_episode_steps, dm_control_episode_reward
         dm_control_episode_steps += 1
-        observation = env.get_observation(time_step)
+        observation = env.get_observation(time_step, dm_control_episode_steps == 0)
         actions = agent.get_action(observation, mode=AgentMode.PLAY)
         actions_np = np.asarray(actions)
         dm_control_episode_reward += time_step.reward or 0
