@@ -45,7 +45,10 @@ class AgentTdmpc(OffPolicyAgent):
         self.grad_norm = mp.Value('d', 0.0)
 
     def get_action(self, obs, mode=AgentMode.TRAIN, step=0, t0=False):
-        action = self.plan(obs, mode, step, t0)
+        if mode == AgentMode.PLAY:
+            action = self.get_action_from_pi(obs)
+        else:
+            action = self.plan(obs, mode, step, t0)
         return action
 
     # def state_dict(self):
@@ -234,3 +237,10 @@ class AgentTdmpc(OffPolicyAgent):
                 'total_loss': float(total_loss.mean().item()),
                 'weighted_loss': float(weighted_loss.mean().item()),
                 'grad_norm': float(grad_norm)}
+
+    def get_action_from_pi(self, obs):
+        obs = torch.tensor(obs, dtype=torch.float32, device=self.config.DEVICE).unsqueeze(0)
+        z = self.model.encode(obs)
+        pi_actions = self.model.pi(z)
+
+        return pi_actions.detach().cpu().numpy()
