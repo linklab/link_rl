@@ -110,7 +110,7 @@ class DMCWrapper(core.Env):
 	def __getattr__(self, name):
 		return getattr(self.original_env, name)
 
-	def get_observation(self, time_step):
+	def get_observation(self, time_step, first_step=False):
 		if self._from_pixels:
 			obs = self.render(
 				height=self._height,
@@ -122,6 +122,15 @@ class DMCWrapper(core.Env):
 				obs = np.expand_dims(obs, 0)
 			else:
 				obs = obs.transpose(2, 0, 1).copy()
+			##############FRAME_STACK###############
+			if first_step:
+				for _ in range(self._frame_stack):
+					self._frames.append(obs)
+				obs = self._transform_observation()
+			else:
+				self._frames.append(obs)
+				obs = self._transform_observation()
+			########################################
 			obs = obs / 255.0
 		else:
 			obs = _flatten_obs(time_step.observation)
@@ -170,26 +179,16 @@ class DMCWrapper(core.Env):
 			done = time_step.last()
 			if done:
 				break
-		obs = self.get_observation(time_step)
+		obs = self.get_observation(time_step, first_step=False)
 		# self.current_state = _flatten_obs(time_step.observation)
-		######### frame stack #########
-		if self._from_pixels:
-			self._frames.append(obs)
-			obs = self._transform_observation()
-		################################
 		extra['discount'] = time_step.discount
 		return obs, reward, done, extra
 
 	def reset(self, return_info=False):
 		time_step = self.original_env.reset()
 		# self.current_state = _flatten_obs(time_step.observation)
-		obs = self.get_observation(time_step)
-		######### frame stack #########
-		if self._from_pixels:
-			for _ in range(self._frame_stack):
-				self._frames.append(obs)
-			obs = self._transform_observation()
-		################################
+		obs = self.get_observation(time_step, first_step=True)
+		
 		if return_info:
 			return obs, None
 		else:
