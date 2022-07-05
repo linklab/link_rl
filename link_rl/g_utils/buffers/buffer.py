@@ -31,7 +31,6 @@ class Buffer:
 
         self.observations_buffer = None
         self.actions_buffer = None
-        self.next_observations_buffer = None
         self.next_observation_value = None
         self.rewards_buffer = None
         self.dones_buffer = None
@@ -53,12 +52,10 @@ class Buffer:
         else:
             raise ValueError()
 
-        next_observations_buffer = torch.zeros(size=(0, *observation_space.shape), dtype=torch.float16,
-                                               device=config.DEVICE)
         rewards_buffer = torch.zeros(size=(0,), device=config.DEVICE)
         dones_buffer = torch.zeros(size=(0,), dtype=torch.bool, device=config.DEVICE)
         infos_buffer = [None] * config.BUFFER_CAPACITY
-        return observations_buffer, actions_buffer, next_observations_buffer, rewards_buffer, dones_buffer, infos_buffer
+        return observations_buffer, actions_buffer, rewards_buffer, dones_buffer, infos_buffer
 
     @staticmethod
     def get_new_buffer_with_capacity(observation_space, action_space, config):
@@ -91,7 +88,6 @@ class Buffer:
         else:
             self.observations_buffer, \
             self.actions_buffer, \
-            self.next_observations_buffer, \
             self.rewards_buffer, \
             self.dones_buffer, \
             self.infos_buffer = Buffer.get_new_buffer_without_capacity(
@@ -165,10 +161,8 @@ class Buffer:
             else:
                 raise ValueError()
 
-            self.next_observations_buffer = torch.cat(  # TENSOR
-                (self.next_observations_buffer,
-                 torch.unsqueeze(torch.from_numpy(transition.next_observation).to(self.config.DEVICE), dim=0)), dim=0
-            )
+            self.next_observation_value = torch.from_numpy(transition.next_observation).to(
+                self.config.DEVICE)  # TENSOR
 
             self.rewards_buffer = torch.cat(
                 (self.rewards_buffer, torch.full((1,), fill_value=transition.reward, device=self.config.DEVICE)), dim=0
@@ -238,7 +232,16 @@ class Buffer:
             else:
                 raise ValueError()
 
-            next_observations = self.next_observations_buffer.to(torch.float32)
+            next_observations = self.observations_buffer.clone().detach().to(torch.float32)
+
+            next_observations = torch.cat(  # TENSOR
+                (next_observations,
+                 torch.unsqueeze(torch.from_numpy(self.next_observation_value.numpy()).to(self.config.DEVICE), dim=0)),
+                dim=0
+            )
+
+            next_observations = next_observations[1:]
+
             rewards = self.rewards_buffer.unsqueeze(dim=-1)
             dones = self.dones_buffer
             infos = self.infos_buffer
