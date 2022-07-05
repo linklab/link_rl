@@ -48,7 +48,7 @@ class ConfigCompetitionOlympicsIntegratedTd3(ConfigBase, ConfigCompetitionOlympi
         ConfigTd3.__init__(self)
 
         self.MAX_TRAINING_STEPS = 5_000_000
-        self.MODEL_TYPE = ModelType.MEDIUM_2D_CONVOLUTIONAL
+        # self.MODEL_TYPE = ModelType.MEDIUM_2D_CONVOLUTIONAL
         self.TEST_INTERVAL_TRAINING_STEPS = 2_000
         self.MODEL_TYPE = TD3_MODEL.ContinuousTd3EncoderModel.value
 
@@ -60,7 +60,7 @@ class ConfigCompetitionOlympicsIntegratedSac(ConfigBase, ConfigCompetitionOlympi
         ConfigSac.__init__(self)
 
         self.MAX_TRAINING_STEPS = 5_000_000
-        self.MODEL_TYPE = ModelType.MEDIUM_2D_CONVOLUTIONAL
+        # self.MODEL_TYPE = ModelType.MEDIUM_2D_CONVOLUTIONAL
         self.TRAIN_INTERVAL_GLOBAL_TIME_STEPS = 10
         self.TEST_INTERVAL_TRAINING_STEPS = 2_000
         self.ALPHA_LEARNING_RATE = 0.000025

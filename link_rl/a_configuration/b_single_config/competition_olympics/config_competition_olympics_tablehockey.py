@@ -53,7 +53,7 @@ class ConfigCompetitionOlympicsTableHockeyTd3(ConfigBase, ConfigCompetitionOlymp
         ConfigTd3.__init__(self)
 
         self.MAX_TRAINING_STEPS = 5_000_000
-        self.MODEL_TYPE = ModelType.MEDIUM_2D_CONVOLUTIONAL
+        # self.MODEL_TYPE = ModelType.MEDIUM_2D_CONVOLUTIONAL
         self.TEST_INTERVAL_TRAINING_STEPS = 2_000
         self.BUFFER_CAPACITY = 1_000_000
         self.MODEL_TYPE = TD3_MODEL.ContinuousTd3EncoderModel.value
@@ -66,7 +66,7 @@ class ConfigCompetitionOlympicsTableHockeySac(ConfigBase, ConfigCompetitionOlymp
         ConfigSac.__init__(self)
 
         self.MAX_TRAINING_STEPS = 5_000_000
-        self.MODEL_TYPE = ModelType.MEDIUM_2D_CONVOLUTIONAL
+        # self.MODEL_TYPE = ModelType.MEDIUM_2D_CONVOLUTIONAL
         self.TRAIN_INTERVAL_GLOBAL_TIME_STEPS = 10
         self.TEST_INTERVAL_TRAINING_STEPS = 2_000
         self.BUFFER_CAPACITY = 1_000_000
