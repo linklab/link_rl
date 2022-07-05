@@ -7,8 +7,6 @@ from link_rl.c_models_v2.a_model_creator import DoubleModelCreator, model_creato
 
 @model_creator_registry.add
 class ContinuousDdpgModelCreator(DoubleModelCreator):
-    name = "ContinuousDdpgModelCreator"
-
     class CriticModel(nn.Module):
         def __init__(self, shared_net, critic_net):
             super().__init__()

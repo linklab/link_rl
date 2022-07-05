@@ -55,8 +55,6 @@ def _set_requires_grad(net, value):
 
 @model_creator_registry.add
 class TdmpcEncoderModelCreator(SingleModelCreator):
-    name = "TdmpcEncoderModelCreator"
-
     class TOLDModel(nn.Module):
         def __init__(self, encoder_net, dynamics_net, reward_net, pi_net, q1_net, q2_net):
             super().__init__()
@@ -175,8 +173,6 @@ class TdmpcEncoderModelCreator(SingleModelCreator):
 
 @model_creator_registry.add
 class TdmpcModelCreator(SingleModelCreator):
-    name = "TdmpcModelCreator"
-
     class TOLDModel(nn.Module):
         def __init__(self, encoder_net, dynamics_net, reward_net, pi_net, q1_net, q2_net):
             super().__init__()

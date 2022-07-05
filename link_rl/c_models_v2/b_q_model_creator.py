@@ -7,8 +7,6 @@ from link_rl.c_models_v2.a_model_creator import SingleModelCreator, model_creato
 
 @model_creator_registry.add
 class QModelCreator(SingleModelCreator):
-    name = "QModelCreator"
-
     def __init__(
         self,
         observation_shape: Tuple[int, ...],
@@ -40,8 +38,6 @@ class QModelCreator(SingleModelCreator):
 
 @model_creator_registry.add
 class DuelingQModelCreator(SingleModelCreator):
-    name = "DuelingQModelCreator"
-
     class DuelingQModel(nn.Module):
         def __init__(self, shared_net, adv_net, val_net):
             super().__init__()
@@ -88,8 +84,6 @@ class DuelingQModelCreator(SingleModelCreator):
 
 @model_creator_registry.add
 class QModelCreatorConv(SingleModelCreator):
-    name = "QModelCreatorConv"
-
     def __init__(
         self,
         observation_shape: Tuple[int, ...],
@@ -157,8 +151,6 @@ class QModelCreatorConv(SingleModelCreator):
 
 @model_creator_registry.add
 class QModelCreatorGymAtariConv(SingleModelCreator):
-    name = "QModelCreatorGymAtariConv"
-
     def __init__(
         self,
         observation_shape: Tuple[int, ...],

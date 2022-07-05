@@ -10,8 +10,6 @@ from link_rl.g_utils.types import EncoderType
 
 @model_creator_registry.add
 class ContinuousTd3ModelCreator(DoubleModelCreator):
-    name = "ContinuousTd3ModelCreator"
-
     class CriticModel(nn.Module):
         def __init__(self, shared_net, critic_net, q1_critic_net, q2_critic_net):
             super().__init__()
@@ -74,8 +72,6 @@ class ContinuousTd3ModelCreator(DoubleModelCreator):
 
 @model_creator_registry.add
 class ContinuousSharedEncoderTd3ModelCreator(DoubleModelCreator):
-    name = "ContinuousSharedEncoderTd3ModelCreator"
-
     class CriticModel(nn.Module):
         def __init__(self, encoder_net, shared_net, critic_net, q1_critic_net, q2_critic_net):
             super().__init__()

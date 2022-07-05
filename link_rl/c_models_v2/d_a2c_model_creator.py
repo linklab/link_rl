@@ -7,8 +7,6 @@ from link_rl.g_utils.types import EncoderType
 
 @model_creator_registry.add
 class DiscreteActorCriticModelCreator(DoubleModelCreator):
-    name = "DiscreteActorCriticModelCreator"
-
     def __init__(
         self,
         observation_shape: Tuple[int, ...],
@@ -55,8 +53,6 @@ class DiscreteActorCriticModelCreator(DoubleModelCreator):
 
 @model_creator_registry.add
 class ContinuousActorCriticModelCreator(DoubleModelCreator):
-    name = "ContinuousActorCriticModelCreator"
-
     class ActorModel(nn.Module):
         def __init__(self, shared_net, actor_net, actor_mu_net, actor_var_net):
             super().__init__()
@@ -125,8 +121,6 @@ class ContinuousActorCriticModelCreator(DoubleModelCreator):
 
 @model_creator_registry.add
 class ContinuousEncoderActorCriticModelCreator(DoubleModelCreator):
-    name = "ContinuousEncoderActorCriticModelCreator"
-
     class ActorModel(nn.Module):
         def __init__(self, encoder_net, shared_net, actor_net, actor_mu_net, actor_var_net):
             super().__init__()

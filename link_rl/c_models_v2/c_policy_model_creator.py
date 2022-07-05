@@ -5,8 +5,6 @@ from link_rl.c_models_v2.a_model_creator import SingleModelCreator, model_creato
 
 @model_creator_registry.add
 class DiscretePolicyModelCreator(SingleModelCreator):
-    name = "DiscretePolicyModelCreator"
-
     def __init__(
         self,
         observation_shape: Tuple[int, ...],

@@ -50,12 +50,12 @@ class Registry:
 
         See Registry class docstring for example.
         """
-        assert "." not in cls.name
+        assert "." not in cls.__name__
         if self.base_class:
             assert issubclass(cls, self.base_class)
-        self._lookup[cls.name.lower()] = cls
-        if cls.name not in self._entries:
-            self._entries.append(cls.name)
+        self._lookup[cls.__name__.lower()] = cls
+        if cls.__name__ not in self._entries:
+            self._entries.append(cls.__name__)
         return cls
 
     def get(self, cls_name):
@@ -65,7 +65,7 @@ class Registry:
             cls_name (str): Name of the registered class to get.
 
         Returns:
-            Registered class cls, where cls.name matches cls_name (ignoring casing).
+            Registered class cls, where cls.__name__ matches cls_name (ignoring casing).
 
         See Registry class docstring for example.
         """

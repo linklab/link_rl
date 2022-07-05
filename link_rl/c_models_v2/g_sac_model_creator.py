@@ -10,8 +10,6 @@ from link_rl.g_utils.types import EncoderType
 
 @model_creator_registry.add
 class ContinuousSharedSacModelCreator(DoubleModelCreator):
-    name = "ContinuousSharedSacModelCreator"
-
     class ActorModel(nn.Module):
         def __init__(self, shared_net, actor_net, actor_mu_net, actor_var_net):
             super().__init__()
@@ -95,8 +93,6 @@ class ContinuousSharedSacModelCreator(DoubleModelCreator):
 
 @model_creator_registry.add
 class ContinuousSacModelCreator(DoubleModelCreator):
-    name = "ContinuousSacModelCreator"
-
     class ActorModel(nn.Module):
         def __init__(self, actor_net, actor_mu_net, actor_var_net):
             super().__init__()
@@ -181,8 +177,6 @@ class ContinuousSacModelCreator(DoubleModelCreator):
 
 @model_creator_registry.add
 class ContinuousSharedEncoderSacModelCreator(DoubleModelCreator):
-    name = "ContinuousSharedEncoderSacModelCreator"
-
     class ActorModel(nn.Module):
         def __init__(self, encoder_net, shared_net, actor_net, actor_mu_net, actor_var_net):
             super().__init__()
@@ -295,8 +289,6 @@ class ContinuousSharedEncoderSacModelCreator(DoubleModelCreator):
 
 @model_creator_registry.add
 class ContinuousEncoderSacModelCreator(DoubleModelCreator):
-    name = "ContinuousEncoderSacModelCreator"
-
     class ActorModel(nn.Module):
         def __init__(self, encoder_net, actor_net, actor_mu_net, actor_var_net):
             super().__init__()
