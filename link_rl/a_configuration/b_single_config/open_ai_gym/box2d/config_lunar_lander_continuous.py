@@ -3,6 +3,7 @@ from link_rl.a_configuration.a_base_config.b_agents.config_agents_off_policy imp
 from link_rl.a_configuration.a_base_config.b_agents.config_agents_on_policy import ConfigA2c, ConfigPpo, ConfigPpoTrajectory, \
     ConfigA3c, ConfigAsynchronousPpo
 from link_rl.a_configuration.a_base_config.config_single_base import ConfigBase
+from link_rl.c_models_v2.g_sac_model import SAC_MODEL
 from link_rl.g_utils.types import ModelType
 
 
@@ -89,3 +90,4 @@ class ConfigLunarLanderContinuousSac(ConfigBase, ConfigLunarLanderContinuous, Co
         self.MAX_TRAINING_STEPS = 300_000
         self.BUFFER_CAPACITY = 200_000
         self.MODEL_TYPE = ModelType.SMALL_LINEAR
+        self.MODEL_TYPE = SAC_MODEL.ContinuousSacModel.value

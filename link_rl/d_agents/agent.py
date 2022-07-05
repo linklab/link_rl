@@ -53,6 +53,8 @@ class Agent:
         else:
             raise ValueError()
 
+        print(self.config.MODEL_TYPE, "##########")
+
         model_creator_class = model_creators.get(self.config.MODEL_TYPE)
         self._model_creator = model_creator_class(
             observation_shape=self.observation_shape,

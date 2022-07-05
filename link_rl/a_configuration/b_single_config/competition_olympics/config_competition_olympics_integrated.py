@@ -3,6 +3,8 @@ from link_rl.a_configuration.a_base_config.a_environments.competition_olympics.c
 from link_rl.a_configuration.a_base_config.b_agents.config_agents_off_policy import ConfigSac, ConfigTd3
 from link_rl.a_configuration.a_base_config.b_agents.config_agents_on_policy import ConfigPpo, ConfigA3c, ConfigAsynchronousPpo
 from link_rl.a_configuration.a_base_config.config_single_base import ConfigBase
+from link_rl.c_models_v2.f_td3_model import TD3_MODEL
+from link_rl.c_models_v2.g_sac_model import SAC_MODEL
 from link_rl.g_utils.types import ModelType
 
 
@@ -48,6 +50,7 @@ class ConfigCompetitionOlympicsIntegratedTd3(ConfigBase, ConfigCompetitionOlympi
         self.MAX_TRAINING_STEPS = 5_000_000
         self.MODEL_TYPE = ModelType.MEDIUM_2D_CONVOLUTIONAL
         self.TEST_INTERVAL_TRAINING_STEPS = 2_000
+        self.MODEL_TYPE = TD3_MODEL.ContinuousTd3EncoderModel.value
 
 
 class ConfigCompetitionOlympicsIntegratedSac(ConfigBase, ConfigCompetitionOlympicsIntegrated, ConfigSac):
@@ -63,3 +66,4 @@ class ConfigCompetitionOlympicsIntegratedSac(ConfigBase, ConfigCompetitionOlympi
         self.ALPHA_LEARNING_RATE = 0.000025
         self.OPPONENT_AGENT_RANDOM_ACTION_RATIO = 'linear(0.3, 0.01, 100000)'
         self.MIN_ALPHA = 0.2
+        self.MODEL_TYPE = SAC_MODEL.ContinuousSacEncoderModel.value

@@ -306,23 +306,23 @@ class ContinuousSacEncoderModel(DoubleModel):
 
         def forward(self, obs):
             x = self.encoder_net(obs)
+            x = x.flatten(start_dim=1)
             x = self.actor_net(x)
             mu = self.actor_mu_net(x)
             var = self.actor_var_net(x)
             return mu, var
 
     class CriticModel(nn.Module):
-        def __init__(self, encoder_net, representation_net, critic_net, q1_critic_net, q2_critic_net):
+        def __init__(self, encoder_net, critic_net, q1_critic_net, q2_critic_net):
             super().__init__()
             self.encoder_net = encoder_net
-            self.representation_net = representation_net
             self.critic_net = critic_net
             self.q1_critic_net = q1_critic_net
             self.q2_critic_net = q2_critic_net
 
         def forward(self, obs, action):
             x = self.encoder_net(obs)
-            x = self.representation_net(x)
+            x = x.flatten(start_dim=1)
             x = torch.cat([x, action], dim=-1).float()
             x = self.critic_net(x)
             q1 = self.q1_critic_net(x)
@@ -375,7 +375,6 @@ class ContinuousSacEncoderModel(DoubleModel):
         encoder_out = self._get_conv_out(actor_encoder_net, self._observation_shape)
 
         actor_net = nn.Sequential(
-            nn.Flatten(start_dim=1),
             nn.Linear(encoder_out, 128),
             nn.LayerNorm(128),
             nn.LeakyReLU(),
@@ -394,15 +393,11 @@ class ContinuousSacEncoderModel(DoubleModel):
             nn.Softplus()
         )
 
-        representation_net = nn.Sequential(
-            nn.Flatten(start_dim=1),
-            nn.Linear(encoder_out, 128),
-            nn.LayerNorm(128),
-            nn.LeakyReLU()
-        )
-
         critic_net = nn.Sequential(
-            nn.Linear(128 + self._n_out_actions, 128),
+            nn.Linear(encoder_out + self._n_out_actions, 128),
+            nn.LayerNorm(128),
+            nn.LeakyReLU(),
+            nn.Linear(128, 128),
             nn.LayerNorm(128),
             nn.LeakyReLU(),
         )
@@ -414,7 +409,7 @@ class ContinuousSacEncoderModel(DoubleModel):
             actor_encoder_net, actor_net, actor_mu_net, actor_var_net
         )
         critic_model = ContinuousSacEncoderModel.CriticModel(
-            critic_encoder_net, representation_net, critic_net, q1_critic_net, q2_critic_net
+            critic_encoder_net, critic_net, q1_critic_net, q2_critic_net
         )
 
         return actor_model, critic_model
