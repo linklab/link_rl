@@ -60,6 +60,14 @@ class OffPolicyAgent(Agent):
                 self.infos = self.replay_buffer.sample(
                     batch_size=self.config.BATCH_SIZE
                 )
+
+                if self.config.USE_DRQ:
+                    from link_rl.d_agents.off_policy.tdmpc.helper import RandomShiftsAug
+
+                    aug = RandomShiftsAug(self.config)
+                    self.observations = aug(self.observations)
+                    self.next_observations = aug(self.next_observations)
+
         self.model.train()
 
     def train(self, training_steps_v=None):
