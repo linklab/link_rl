@@ -143,11 +143,6 @@ def model_load(agent, env_name, agent_type_name, config):
 def set_config(config):
     config.DEVICE = torch.device("cuda" if torch.cuda.is_available() and not config.FORCE_USE_CPU else "cpu")
 
-    if isinstance(config, ConfigDmControl):
-        assert hasattr(config, "MODEL_TYPE_PIXEL")
-        if config.FROM_PIXELS:
-            config.MODEL_TYPE = config.MODEL_TYPE_PIXEL
-
     # if config.MODEL_TYPE in (
     #         ModelType.TINY_LINEAR, ModelType.SMALL_LINEAR, ModelType.SMALL_LINEAR_2,
     #         ModelType.MEDIUM_LINEAR, ModelType.LARGE_LINEAR
