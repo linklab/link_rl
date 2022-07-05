@@ -3,7 +3,8 @@ from link_rl.a_configuration.a_base_config.b_agents.config_agents_off_policy imp
 from link_rl.a_configuration.a_base_config.a_environments.open_ai_gym.config_gym_atari import ConfigPong
 from link_rl.a_configuration.a_base_config.b_agents.config_agents_on_policy import ConfigA2c, ConfigA3c, ConfigPpo, ConfigPpoTrajectory
 from link_rl.a_configuration.a_base_config.config_single_base import ConfigBase
-from link_rl.g_utils.types import ModelType
+from link_rl.c_models_v2.b_q_model import Q_MODEL
+from link_rl.c_models_v2.d_basic_actor_critic_model import BASIC_ACTOR_CRITIC_MODEL
 
 
 class ConfigPongDqn(ConfigBase, ConfigPong, ConfigDqn):
@@ -14,7 +15,8 @@ class ConfigPongDqn(ConfigBase, ConfigPong, ConfigDqn):
 
         self.MAX_TRAINING_STEPS = 1_000_000
         self.BUFFER_CAPACITY = 250_000
-        self.MODEL_TYPE = ModelType.MEDIUM_2D_CONVOLUTIONAL
+        # self.MODEL_TYPE = ModelType.MEDIUM_2D_CONVOLUTIONAL
+        self.MODEL_TYPE = Q_MODEL.GymAtariQModel.value
 
 
 class ConfigPongDoubleDqn(ConfigBase, ConfigPong, ConfigDoubleDqn):
@@ -25,7 +27,8 @@ class ConfigPongDoubleDqn(ConfigBase, ConfigPong, ConfigDoubleDqn):
 
         self.MAX_TRAINING_STEPS = 1_000_000
         self.BUFFER_CAPACITY = 250_000
-        self.MODEL_TYPE = ModelType.MEDIUM_2D_CONVOLUTIONAL
+        # self.MODEL_TYPE = ModelType.MEDIUM_2D_CONVOLUTIONAL
+        self.MODEL_TYPE = Q_MODEL.GymAtariQModel.value
 
 
 class ConfigPongDuelingDqn(ConfigBase, ConfigPong, ConfigDuelingDqn):
@@ -36,7 +39,8 @@ class ConfigPongDuelingDqn(ConfigBase, ConfigPong, ConfigDuelingDqn):
 
         self.MAX_TRAINING_STEPS = 1_000_000
         self.BUFFER_CAPACITY = 250_000
-        self.MODEL_TYPE = ModelType.MEDIUM_2D_CONVOLUTIONAL
+        # self.MODEL_TYPE = ModelType.MEDIUM_2D_CONVOLUTIONAL
+        self.MODEL_TYPE = Q_MODEL.GymAtariQModel.value
 
 
 class ConfigPongDoubleDuelingDqn(ConfigBase, ConfigPong, ConfigDoubleDuelingDqn):
@@ -47,7 +51,8 @@ class ConfigPongDoubleDuelingDqn(ConfigBase, ConfigPong, ConfigDoubleDuelingDqn)
 
         self.MAX_TRAINING_STEPS = 1_000_000
         self.BUFFER_CAPACITY = 250_000
-        self.MODEL_TYPE = ModelType.MEDIUM_2D_CONVOLUTIONAL
+        # self.MODEL_TYPE = ModelType.MEDIUM_2D_CONVOLUTIONAL
+        self.MODEL_TYPE = Q_MODEL.GymAtariQModel.value
 
 
 class ConfigPongA2c(ConfigBase, ConfigPong, ConfigA2c):
@@ -57,7 +62,8 @@ class ConfigPongA2c(ConfigBase, ConfigPong, ConfigA2c):
         ConfigA2c.__init__(self)
 
         self.MAX_TRAINING_STEPS = 1_000_000
-        self.MODEL_TYPE = ModelType.MEDIUM_2D_CONVOLUTIONAL
+        # self.MODEL_TYPE = ModelType.MEDIUM_2D_CONVOLUTIONAL
+        self.MODEL_TYPE = BASIC_ACTOR_CRITIC_MODEL.DiscreteBasicActorCriticEncoderSharedModel.value
 
 
 class ConfigPongA3c(ConfigBase, ConfigPong, ConfigA3c):
@@ -67,7 +73,8 @@ class ConfigPongA3c(ConfigBase, ConfigPong, ConfigA3c):
         ConfigA3c.__init__(self)
 
         self.MAX_TRAINING_STEPS = 1_000_000
-        self.MODEL_TYPE = ModelType.MEDIUM_2D_CONVOLUTIONAL
+        # self.MODEL_TYPE = ModelType.MEDIUM_2D_CONVOLUTIONAL
+        self.MODEL_TYPE = Q_MODEL.GymAtariQModel.value
 
 
 class ConfigPongPpo(ConfigBase, ConfigPong, ConfigPpo):
@@ -77,7 +84,8 @@ class ConfigPongPpo(ConfigBase, ConfigPong, ConfigPpo):
         ConfigPpo.__init__(self)
 
         self.MAX_TRAINING_STEPS = 1_000_000
-        self.MODEL_TYPE = ModelType.MEDIUM_2D_CONVOLUTIONAL
+        # self.MODEL_TYPE = ModelType.MEDIUM_2D_CONVOLUTIONAL
+        self.MODEL_TYPE = Q_MODEL.GymAtariQModel.value
 
 
 class ConfigPongPpoTrajectory(ConfigBase, ConfigPong, ConfigPpoTrajectory):
@@ -87,4 +95,5 @@ class ConfigPongPpoTrajectory(ConfigBase, ConfigPong, ConfigPpoTrajectory):
         ConfigPpoTrajectory.__init__(self)
 
         self.MAX_TRAINING_STEPS = 1_000_000
-        self.MODEL_TYPE = ModelType.MEDIUM_2D_CONVOLUTIONAL
+        # self.MODEL_TYPE = ModelType.MEDIUM_2D_CONVOLUTIONAL
+        self.MODEL_TYPE = Q_MODEL.GymAtariQModel.value

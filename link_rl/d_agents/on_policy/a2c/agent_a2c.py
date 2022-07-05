@@ -4,8 +4,6 @@ from gym.spaces import Discrete, Box
 from torch.distributions import Categorical, Normal
 import torch.multiprocessing as mp
 
-from link_rl.c_models.e_a2c_models import ContinuousActorCriticModel, DiscreteActorCriticModel
-from link_rl.c_models_v2.d_basic_actor_critic_model import DiscreteBasicActorCriticModel, ContinuousBasicActorCriticModel
 from link_rl.d_agents.on_policy.on_policy_agent import OnPolicyAgent
 
 
