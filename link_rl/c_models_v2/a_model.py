@@ -8,7 +8,7 @@ from typing import Tuple, final, Union
 from link_rl.g_utils.registry import Registry
 
 
-class ModelCreator(ABC):
+class BaseModel(ABC):
     def __init__(
         self,
         observation_shape: Tuple[int, ...],
@@ -34,17 +34,17 @@ class ModelCreator(ABC):
         return int(np.prod(conv_out.size()))
 
 
-model_creator_registry = Registry(ModelCreator)
+model_registry = Registry(BaseModel)
 
 
-class SingleModelCreator(ModelCreator, ABC):
+class SingleModel(BaseModel, ABC):
     def __init__(
         self,
         observation_shape: Tuple[int, ...],
         n_out_actions: int,
         n_discrete_actions=None
     ):
-        super(SingleModelCreator, self).__init__(
+        super(SingleModel, self).__init__(
             observation_shape,
             n_out_actions,
             n_discrete_actions
@@ -58,14 +58,14 @@ class SingleModelCreator(ModelCreator, ABC):
         return model
 
 
-class DoubleModelCreator(ModelCreator):
+class DoubleModel(BaseModel):
     def __init__(
         self,
         observation_shape: Tuple[int, ...],
         n_out_actions: int,
         n_discrete_actions=None
     ):
-        super(DoubleModelCreator, self).__init__(
+        super(DoubleModel, self).__init__(
             observation_shape,
             n_out_actions,
             n_discrete_actions

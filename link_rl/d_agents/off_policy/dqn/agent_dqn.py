@@ -5,7 +5,7 @@ import torch
 import torch.multiprocessing as mp
 
 from link_rl.c_models.b_qnet_models import QNet
-from link_rl.c_models_v2.b_q_model_creator import QModelCreator
+from link_rl.c_models_v2.b_q_model import QModel
 from link_rl.d_agents.off_policy.off_policy_agent import OffPolicyAgent
 from link_rl.g_utils.commons import EpsilonTracker
 from link_rl.g_utils.types import AgentMode
@@ -15,7 +15,7 @@ class AgentDqn(OffPolicyAgent):
     def __init__(self, observation_space, action_space, config, need_train):
         super(AgentDqn, self).__init__(observation_space, action_space, config, need_train)
 
-        # self._model_creator = QModelCreator(
+        # self._model_creator = QModel(
         #     n_input=self.observation_shape[0],
         #     n_out_actions=self.n_out_actions,
         #     n_discrete_actions=self.n_discrete_actions

@@ -5,7 +5,7 @@ from torch.distributions import Categorical, Normal
 import torch.multiprocessing as mp
 
 from link_rl.c_models.e_a2c_models import ContinuousActorCriticModel, DiscreteActorCriticModel
-from link_rl.c_models_v2.d_a2c_model_creator import DiscreteActorCriticModelCreator, ContinuousActorCriticModelCreator
+from link_rl.c_models_v2.d_basic_actor_critic_model import DiscreteBasicActorCriticModel, ContinuousBasicActorCriticModel
 from link_rl.d_agents.on_policy.on_policy_agent import OnPolicyAgent
 
 
@@ -14,13 +14,13 @@ class AgentA2c(OnPolicyAgent):
         super(AgentA2c, self).__init__(observation_space, action_space, config, need_train)
 
         # if isinstance(self.action_space, Discrete):
-        #     self._model_creator = DiscreteActorCriticModelCreator(
+        #     self._model_creator = DiscreteBasicActorCriticModel(
         #         n_input=self.observation_shape[0],
         #         n_out_actions=self.n_out_actions,
         #         n_discrete_actions=self.n_discrete_actions
         #     )
         # elif isinstance(self.action_space, Box):
-        #     self._model_creator = ContinuousActorCriticModelCreator(
+        #     self._model_creator = ContinuousBasicActorCriticModel(
         #         n_input=self.observation_shape[0],
         #         n_out_actions=self.n_out_actions,
         #         n_discrete_actions=self.n_discrete_actions

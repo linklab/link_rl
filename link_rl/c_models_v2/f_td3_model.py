@@ -1,15 +1,20 @@
+import enum
+
 import torch
 from torch import nn
 from typing import Tuple, final
 
-from torchinfo import summary
-
-from link_rl.c_models_v2.a_model_creator import DoubleModelCreator, model_creator_registry
+from link_rl.c_models_v2.a_model import DoubleModel, model_registry
 from link_rl.g_utils.types import EncoderType
 
 
-@model_creator_registry.add
-class ContinuousTd3ModelCreator(DoubleModelCreator):
+class TD3_MODEL(enum.Enum):
+    ContinuousTd3Model = "ContinuousTd3Model"
+    ContinuousTd3SharedEncoderModel = "ContinuousTd3SharedEncoderModel"
+
+
+@model_registry.add
+class ContinuousTd3Model(DoubleModel):
     class CriticModel(nn.Module):
         def __init__(self, shared_net, critic_net, q1_critic_net, q2_critic_net):
             super().__init__()
@@ -33,7 +38,7 @@ class ContinuousTd3ModelCreator(DoubleModelCreator):
         n_out_actions: int,
         n_discrete_actions=None
     ):
-        super(ContinuousTd3ModelCreator, self).__init__(
+        super(ContinuousTd3Model, self).__init__(
             observation_shape,
             n_out_actions,
             n_discrete_actions
@@ -65,13 +70,13 @@ class ContinuousTd3ModelCreator(DoubleModelCreator):
         actor_model = nn.Sequential(
             shared_net, actor_net
         )
-        critic_model = ContinuousTd3ModelCreator.CriticModel(shared_net, critic_net, q1_critic_net, q2_critic_net)
+        critic_model = ContinuousTd3Model.CriticModel(shared_net, critic_net, q1_critic_net, q2_critic_net)
 
         return actor_model, critic_model
 
 
-@model_creator_registry.add
-class ContinuousSharedEncoderTd3ModelCreator(DoubleModelCreator):
+@model_registry.add
+class ContinuousTd3SharedEncoderModel(DoubleModel):
     class CriticModel(nn.Module):
         def __init__(self, encoder_net, shared_net, critic_net, q1_critic_net, q2_critic_net):
             super().__init__()
@@ -98,7 +103,7 @@ class ContinuousSharedEncoderTd3ModelCreator(DoubleModelCreator):
         n_discrete_actions=None,
         encoder_type=EncoderType.TWO_CONVOLUTION
     ):
-        super(ContinuousSharedEncoderTd3ModelCreator, self).__init__(
+        super(ContinuousTd3SharedEncoderModel, self).__init__(
             observation_shape,
             n_out_actions,
             n_discrete_actions
@@ -153,7 +158,7 @@ class ContinuousSharedEncoderTd3ModelCreator(DoubleModelCreator):
             actor_net
         )
 
-        critic_model = ContinuousSharedEncoderTd3ModelCreator.CriticModel(
+        critic_model = ContinuousTd3SharedEncoderModel.CriticModel(
             encoder_net, shared_net, critic_net, q1_critic_net, q2_critic_net
         )
 

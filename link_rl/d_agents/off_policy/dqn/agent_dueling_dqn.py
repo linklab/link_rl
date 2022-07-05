@@ -1,7 +1,7 @@
 import torch.optim as optim
 
 from link_rl.c_models.b_qnet_models import DuelingQNet
-from link_rl.c_models_v2.b_q_model_creator import DuelingQModelCreator
+from link_rl.c_models_v2.b_q_model import DuelingQModel
 from link_rl.d_agents.off_policy.dqn.agent_dqn import AgentDqn
 
 
@@ -9,7 +9,7 @@ class AgentDuelingDqn(AgentDqn):
     def __init__(self, observation_space, action_space, config, need_train):
         super(AgentDuelingDqn, self).__init__(observation_space, action_space, config, need_train)
 
-        # self._model_creator = DuelingQModelCreator(
+        # self._model_creator = DuelingQModel(
         #     n_input=self.observation_shape[0],
         #     n_out_actions=self.n_out_actions,
         #     n_discrete_actions=self.n_discrete_actions

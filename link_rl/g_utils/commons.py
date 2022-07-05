@@ -41,7 +41,7 @@ def model_save(agent, env_name, agent_type_name, test_episode_reward_min, config
     if not os.path.exists(agent_name_dir):
         os.mkdir(agent_name_dir)
 
-    model_name_dir = os.path.join(config.MODEL_SAVE_DIR, env_name, agent_type_name, config.MODEL_CREATOR_TYPE)
+    model_name_dir = os.path.join(config.MODEL_SAVE_DIR, env_name, agent_type_name, config.MODEL_TYPE)
     if not os.path.exists(model_name_dir):
         os.mkdir(model_name_dir)
 
@@ -66,7 +66,7 @@ def model_save(agent, env_name, agent_type_name, test_episode_reward_min, config
 
 def model_load(agent, env_name, agent_type_name, config):
     model_file_list = []
-    model_name_dir = os.path.join(config.MODEL_SAVE_DIR, env_name, agent_type_name, config.MODEL_CREATOR_TYPE)
+    model_name_dir = os.path.join(config.MODEL_SAVE_DIR, env_name, agent_type_name, config.MODEL_TYPE)
     if os.path.isdir(model_name_dir):
         model_file_list = glob.glob(os.path.join(model_name_dir, "*.pth"))
 
@@ -289,8 +289,8 @@ def print_model_summary(agent, observation_space, action_space, config):
     # pass
     import torchinfo
 
-    print("MODEL_CREATOR_TYPE: {0}, Observation Shape: {1}".format(
-        config.MODEL_CREATOR_TYPE, observation_space.shape
+    print("MODEL_TYPE: {0}, Observation Shape: {1}".format(
+        config.MODEL_TYPE, observation_space.shape
     ), end="\n\n")
 
 
@@ -339,7 +339,7 @@ def print_basic_info(observation_space=None, action_space=None, config=None):
             "MODEL_SAVE_DIR", "PROJECT_HOME", "LAYER_ACTIVATION", "LAYER_ACTIVATION_TYPE",
             "VALUE_NETWORK_LAYER_ACTIVATION", "VALUE_NETWORK_LAYER_ACTIVATION_TYPE",
             "LOSS_FUNCTION", "ENV_NAME", "MODEL_TYPE", "LEARNING_RATE", "ACTOR_LEARNING_RATE",
-            "ALPHA_LEARNING_RATE", "MODEL_CREATOR_TYPE"
+            "ALPHA_LEARNING_RATE", "MODEL_TYPE"
         ]:
             if param in [
                 "BATCH_SIZE", "BUFFER_CAPACITY", "CONSOLE_LOG_INTERVAL_TRAINING_STEPS", "MAX_TRAINING_STEPS",
@@ -430,7 +430,7 @@ def print_comparison_basic_info(observation_space, action_space, config_c):
                 "COMPARISON_RESULTS_SAVE_DIR", "PROJECT_HOME", "LAYER_ACTIVATION", "LAYER_ACTIVATION_TYPE",
                 "VALUE_NETWORK_LAYER_ACTIVATION", "VALUE_NETWORK_LAYER_ACTIVATION_TYPE",
                 "LOSS_FUNCTION", "ENV_NAME", "MODEL_TYPE", "LEARNING_RATE", "ACTOR_LEARNING_RATE",
-                "ALPHA_LEARNING_RATE", "MODEL_CREATOR_TYPE"
+                "ALPHA_LEARNING_RATE", "MODEL_TYPE"
             ]:
                 if param in [
                     "BATCH_SIZE", "BUFFER_CAPACITY", "CONSOLE_LOG_INTERVAL_TRAINING_STEPS", "MAX_TRAINING_STEPS",

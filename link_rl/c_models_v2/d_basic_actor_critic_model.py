@@ -1,19 +1,27 @@
+import enum
+
 from torch import nn
 from typing import Tuple, final
 
-from link_rl.c_models_v2.a_model_creator import DoubleModelCreator, model_creator_registry
+from link_rl.c_models_v2.a_model import DoubleModel, model_registry
 from link_rl.g_utils.types import EncoderType
 
 
-@model_creator_registry.add
-class DiscreteActorCriticModelCreator(DoubleModelCreator):
+class BASIC_ACTOR_CRITIC_MODEL(enum.Enum):
+    DiscreteBasicActorCriticModel = "DiscreteBasicActorCriticModel"
+    ContinuousBasicActorCriticModel = "ContinuousBasicActorCriticModel"
+    ContinuousBasicActorCriticEncoderModel = "ContinuousBasicActorCriticEncoderModel"
+
+
+@model_registry.add
+class DiscreteBasicActorCriticModel(DoubleModel):
     def __init__(
         self,
         observation_shape: Tuple[int, ...],
         n_out_actions: int,
         n_discrete_actions=None
     ):
-        super(DiscreteActorCriticModelCreator, self).__init__(
+        super(DiscreteBasicActorCriticModel, self).__init__(
             observation_shape,
             n_out_actions,
             n_discrete_actions
@@ -51,8 +59,8 @@ class DiscreteActorCriticModelCreator(DoubleModelCreator):
         return actor_model, critic_model
 
 
-@model_creator_registry.add
-class ContinuousActorCriticModelCreator(DoubleModelCreator):
+@model_registry.add
+class ContinuousBasicActorCriticModel(DoubleModel):
     class ActorModel(nn.Module):
         def __init__(self, shared_net, actor_net, actor_mu_net, actor_var_net):
             super().__init__()
@@ -74,7 +82,7 @@ class ContinuousActorCriticModelCreator(DoubleModelCreator):
         n_out_actions: int,
         n_discrete_actions=None
     ):
-        super(ContinuousActorCriticModelCreator, self).__init__(
+        super(ContinuousBasicActorCriticModel, self).__init__(
             observation_shape,
             n_out_actions,
             n_discrete_actions
@@ -111,7 +119,7 @@ class ContinuousActorCriticModelCreator(DoubleModelCreator):
             nn.Linear(128, 1)
         )
 
-        actor_model = ContinuousActorCriticModelCreator.ActorModel(shared_net, actor_net, actor_mu_net, actor_var_net)
+        actor_model = ContinuousBasicActorCriticModel.ActorModel(shared_net, actor_net, actor_mu_net, actor_var_net)
         critic_model = nn.Sequential(
             shared_net, critic_net
         )
@@ -119,8 +127,8 @@ class ContinuousActorCriticModelCreator(DoubleModelCreator):
         return actor_model, critic_model
 
 
-@model_creator_registry.add
-class ContinuousEncoderActorCriticModelCreator(DoubleModelCreator):
+@model_registry.add
+class ContinuousBasicActorCriticEncoderModel(DoubleModel):
     class ActorModel(nn.Module):
         def __init__(self, encoder_net, shared_net, actor_net, actor_mu_net, actor_var_net):
             super().__init__()
@@ -145,7 +153,7 @@ class ContinuousEncoderActorCriticModelCreator(DoubleModelCreator):
         n_discrete_actions=None,
         encoder_type=EncoderType.TWO_CONVOLUTION
     ):
-        super(ContinuousEncoderActorCriticModelCreator, self).__init__(
+        super(ContinuousBasicActorCriticEncoderModel, self).__init__(
             observation_shape,
             n_out_actions,
             n_discrete_actions
@@ -202,7 +210,7 @@ class ContinuousEncoderActorCriticModelCreator(DoubleModelCreator):
             nn.Linear(128, 1)
         )
 
-        actor_model = ContinuousEncoderActorCriticModelCreator.ActorModel(
+        actor_model = ContinuousBasicActorCriticEncoderModel.ActorModel(
             encoder_net, shared_net, actor_net, actor_mu_net, actor_var_net
         )
         critic_model = nn.Sequential(

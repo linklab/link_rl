@@ -1,15 +1,22 @@
+import enum
+
 import torch
 from torch import nn
 from typing import Tuple, final
 
-from torchinfo import summary
-
-from link_rl.c_models_v2.a_model_creator import DoubleModelCreator, model_creator_registry
+from link_rl.c_models_v2.a_model import DoubleModel, model_registry
 from link_rl.g_utils.types import EncoderType
 
 
-@model_creator_registry.add
-class ContinuousSharedSacModelCreator(DoubleModelCreator):
+class SAC_MODEL(enum.Enum):
+    ContinuousSacSharedModel = "ContinuousSacSharedModel"
+    ContinuousSacModel = "ContinuousSacModel"
+    ContinuousSacSharedEncoderModel = "ContinuousSacSharedEncoderModel"
+    ContinuousSacEncoderModel = "ContinuousSacEncoderModel"
+
+
+@model_registry.add
+class ContinuousSacSharedModel(DoubleModel):
     class ActorModel(nn.Module):
         def __init__(self, shared_net, actor_net, actor_mu_net, actor_var_net):
             super().__init__()
@@ -48,7 +55,7 @@ class ContinuousSharedSacModelCreator(DoubleModelCreator):
         n_out_actions: int,
         n_discrete_actions=None
     ):
-        super(ContinuousSharedSacModelCreator, self).__init__(
+        super(ContinuousSacSharedModel, self).__init__(
             observation_shape,
             n_out_actions,
             n_discrete_actions
@@ -86,13 +93,13 @@ class ContinuousSharedSacModelCreator(DoubleModelCreator):
         q1_critic_net = nn.Linear(128, 1)
         q2_critic_net = nn.Linear(128, 1)
 
-        actor_model = ContinuousSharedSacModelCreator.ActorModel(shared_net, actor_net, actor_mu_net, actor_var_net)
-        critic_model = ContinuousSharedSacModelCreator.CriticModel(shared_net, critic_net, q1_critic_net, q2_critic_net)
+        actor_model = ContinuousSacSharedModel.ActorModel(shared_net, actor_net, actor_mu_net, actor_var_net)
+        critic_model = ContinuousSacSharedModel.CriticModel(shared_net, critic_net, q1_critic_net, q2_critic_net)
         return actor_model, critic_model
 
 
-@model_creator_registry.add
-class ContinuousSacModelCreator(DoubleModelCreator):
+@model_registry.add
+class ContinuousSacModel(DoubleModel):
     class ActorModel(nn.Module):
         def __init__(self, actor_net, actor_mu_net, actor_var_net):
             super().__init__()
@@ -129,7 +136,7 @@ class ContinuousSacModelCreator(DoubleModelCreator):
         n_out_actions: int,
         n_discrete_actions=None
     ):
-        super(ContinuousSacModelCreator, self).__init__(
+        super(ContinuousSacModel, self).__init__(
             observation_shape,
             n_out_actions,
             n_discrete_actions
@@ -170,13 +177,13 @@ class ContinuousSacModelCreator(DoubleModelCreator):
         q1_critic_net = nn.Linear(128, 1)
         q2_critic_net = nn.Linear(128, 1)
 
-        actor_model = ContinuousSacModelCreator.ActorModel(actor_net, actor_mu_net, actor_var_net)
-        critic_model = ContinuousSacModelCreator.CriticModel(critic_net, representation_net, q1_critic_net, q2_critic_net)
+        actor_model = ContinuousSacModel.ActorModel(actor_net, actor_mu_net, actor_var_net)
+        critic_model = ContinuousSacModel.CriticModel(critic_net, representation_net, q1_critic_net, q2_critic_net)
         return actor_model, critic_model
 
 
-@model_creator_registry.add
-class ContinuousSharedEncoderSacModelCreator(DoubleModelCreator):
+@model_registry.add
+class ContinuousSacSharedEncoderModel(DoubleModel):
     class ActorModel(nn.Module):
         def __init__(self, encoder_net, shared_net, actor_net, actor_mu_net, actor_var_net):
             super().__init__()
@@ -220,7 +227,7 @@ class ContinuousSharedEncoderSacModelCreator(DoubleModelCreator):
         n_discrete_actions=None,
         encoder_type=EncoderType.TWO_CONVOLUTION
     ):
-        super(ContinuousSharedEncoderSacModelCreator, self).__init__(
+        super(ContinuousSacSharedEncoderModel, self).__init__(
             observation_shape,
             n_out_actions,
             n_discrete_actions
@@ -277,18 +284,18 @@ class ContinuousSharedEncoderSacModelCreator(DoubleModelCreator):
         q1_critic_net = nn.Linear(128, 1)
         q2_critic_net = nn.Linear(128, 1)
 
-        actor_model = ContinuousSharedEncoderSacModelCreator.ActorModel(
+        actor_model = ContinuousSacSharedEncoderModel.ActorModel(
             encoder_net, shared_net, actor_net, actor_mu_net, actor_var_net
         )
-        critic_model = ContinuousSharedEncoderSacModelCreator.CriticModel(
+        critic_model = ContinuousSacSharedEncoderModel.CriticModel(
             encoder_net, shared_net, critic_net, q1_critic_net, q2_critic_net
         )
 
         return actor_model, critic_model
 
 
-@model_creator_registry.add
-class ContinuousEncoderSacModelCreator(DoubleModelCreator):
+@model_registry.add
+class ContinuousSacEncoderModel(DoubleModel):
     class ActorModel(nn.Module):
         def __init__(self, encoder_net, actor_net, actor_mu_net, actor_var_net):
             super().__init__()
@@ -330,7 +337,7 @@ class ContinuousEncoderSacModelCreator(DoubleModelCreator):
         n_discrete_actions=None,
         encoder_type=EncoderType.TWO_CONVOLUTION
     ):
-        super(ContinuousEncoderSacModelCreator, self).__init__(
+        super(ContinuousSacEncoderModel, self).__init__(
             observation_shape,
             n_out_actions,
             n_discrete_actions
@@ -403,10 +410,10 @@ class ContinuousEncoderSacModelCreator(DoubleModelCreator):
         q1_critic_net = nn.Linear(128, 1)
         q2_critic_net = nn.Linear(128, 1)
 
-        actor_model = ContinuousEncoderSacModelCreator.ActorModel(
+        actor_model = ContinuousSacEncoderModel.ActorModel(
             actor_encoder_net, actor_net, actor_mu_net, actor_var_net
         )
-        critic_model = ContinuousEncoderSacModelCreator.CriticModel(
+        critic_model = ContinuousSacEncoderModel.CriticModel(
             critic_encoder_net, representation_net, critic_net, q1_critic_net, q2_critic_net
         )
 

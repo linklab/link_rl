@@ -1,12 +1,18 @@
+import enum
+
 import torch
 from torch import nn
 from typing import Tuple, final
 
-from link_rl.c_models_v2.a_model_creator import DoubleModelCreator, model_creator_registry
+from link_rl.c_models_v2.a_model import DoubleModel, model_registry
 
 
-@model_creator_registry.add
-class ContinuousDdpgModelCreator(DoubleModelCreator):
+class DDPG_MODEL(enum.Enum):
+    ContinuousDdpgModel = "ContinuousDdpgModel"
+
+
+@model_registry.add
+class ContinuousDdpgModel(DoubleModel):
     class CriticModel(nn.Module):
         def __init__(self, shared_net, critic_net):
             super().__init__()
@@ -25,7 +31,7 @@ class ContinuousDdpgModelCreator(DoubleModelCreator):
         n_out_actions: int,
         n_discrete_actions=None
     ):
-        super(ContinuousDdpgModelCreator, self).__init__(
+        super(ContinuousDdpgModel, self).__init__(
             observation_shape,
             n_out_actions,
             n_discrete_actions
@@ -56,6 +62,6 @@ class ContinuousDdpgModelCreator(DoubleModelCreator):
         actor_model = nn.Sequential(
             shared_net, actor_net
         )
-        critic_model = ContinuousDdpgModelCreator.CriticModel(shared_net, critic_net)
+        critic_model = ContinuousDdpgModel.CriticModel(shared_net, critic_net)
 
         return actor_model, critic_model

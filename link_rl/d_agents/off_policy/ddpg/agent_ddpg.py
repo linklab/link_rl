@@ -4,7 +4,7 @@ import torch
 import torch.multiprocessing as mp
 
 from link_rl.c_models.f_ddpg_models import ContinuousDdpgModel
-from link_rl.c_models_v2.e_ddpg_model_creator import ContinuousDdpgModelCreator
+from link_rl.c_models_v2.e_ddpg_model import ContinuousDdpgModel
 from link_rl.d_agents.off_policy.off_policy_agent import OffPolicyAgent
 from link_rl.g_utils.types import AgentMode
 
@@ -13,7 +13,7 @@ class AgentDdpg(OffPolicyAgent):
     def __init__(self, observation_space, action_space, config, need_train):
         super(AgentDdpg, self).__init__(observation_space, action_space, config, need_train)
 
-        # self._model_creator = ContinuousDdpgModelCreator(
+        # self._model_creator = ContinuousDdpgModel(
         #     n_input=self.observation_shape[0],
         #     n_out_actions=self.n_out_actions,
         #     n_discrete_actions=self.n_discrete_actions

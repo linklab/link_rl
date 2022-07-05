@@ -1,12 +1,16 @@
+import enum
+
 import torch
 from torch import nn
 from typing import Tuple, final
 from torch import distributions as pyd
 from torch.distributions.utils import _standard_normal
-from torchinfo import summary
-from link_rl.c_models_v2.a_model_creator import SingleModelCreator, model_creator_registry
-from link_rl.g_utils.types import EncoderType
+from link_rl.c_models_v2.a_model import SingleModel, model_registry
 
+
+class TDMPC_MODEL(enum.Enum):
+    TdmpcEncoderModel = "TdmpcEncoderModel"
+    TdmpcModel = "TdmpcModel"
 
 class _TruncatedNormal(pyd.Normal):
     """Utility class implementing the truncated normal distribution."""
@@ -53,8 +57,8 @@ def _set_requires_grad(net, value):
         param.requires_grad_(value)
 
 
-@model_creator_registry.add
-class TdmpcEncoderModelCreator(SingleModelCreator):
+@model_registry.add
+class TdmpcEncoderModel(SingleModel):
     class TOLDModel(nn.Module):
         def __init__(self, encoder_net, dynamics_net, reward_net, pi_net, q1_net, q2_net):
             super().__init__()
@@ -104,7 +108,7 @@ class TdmpcEncoderModelCreator(SingleModelCreator):
         n_out_actions: int,
         n_discrete_actions=None
     ):
-        super(TdmpcEncoderModelCreator, self).__init__(
+        super(TdmpcEncoderModel, self).__init__(
             observation_shape,
             n_out_actions,
             n_discrete_actions
@@ -164,15 +168,15 @@ class TdmpcEncoderModelCreator(SingleModelCreator):
                                nn.Linear(512, 512), nn.ELU(),
                                nn.Linear(512, 1))
 
-        told_model = TdmpcEncoderModelCreator.TOLDModel(
+        told_model = TdmpcEncoderModel.TOLDModel(
             encoder_net, dynamics_net, reward_net, pi_net, q1_net, q2_net
         )
 
         return told_model
 
 
-@model_creator_registry.add
-class TdmpcModelCreator(SingleModelCreator):
+@model_registry.add
+class TdmpcModel(SingleModel):
     class TOLDModel(nn.Module):
         def __init__(self, encoder_net, dynamics_net, reward_net, pi_net, q1_net, q2_net):
             super().__init__()
@@ -231,7 +235,7 @@ class TdmpcModelCreator(SingleModelCreator):
             n_out_actions: int,
             n_discrete_actions=None
     ):
-        super(TdmpcModelCreator, self).__init__(
+        super(TdmpcModel, self).__init__(
             observation_shape,
             n_out_actions,
             n_discrete_actions
@@ -277,7 +281,7 @@ class TdmpcModelCreator(SingleModelCreator):
                                nn.Linear(512, 512), nn.ELU(),
                                nn.Linear(512, 1))
 
-        told_model = TdmpcEncoderModelCreator.TOLDModel(
+        told_model = TdmpcEncoderModel.TOLDModel(
             encoder_net, dynamics_net, reward_net, pi_net, q1_net, q2_net
         )
 

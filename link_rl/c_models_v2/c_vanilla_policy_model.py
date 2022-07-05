@@ -1,17 +1,22 @@
+import enum
+
 from torch import nn
 from typing import final, Tuple
-from link_rl.c_models_v2.a_model_creator import SingleModelCreator, model_creator_registry
+from link_rl.c_models_v2.a_model import SingleModel, model_registry
 
 
-@model_creator_registry.add
-class DiscretePolicyModelCreator(SingleModelCreator):
+class BASIC_POLICY_MODEL(enum.Enum):
+    DiscreteVanillaPolicyModel = "DiscreteVanillaPolicyModel"
+
+@model_registry.add
+class DiscreteVanillaPolicyModel(SingleModel):
     def __init__(
         self,
         observation_shape: Tuple[int, ...],
         n_out_actions: int,
         n_discrete_actions=None
     ):
-        super(DiscretePolicyModelCreator, self).__init__(
+        super(DiscreteVanillaPolicyModel, self).__init__(
             observation_shape,
             n_out_actions,
             n_discrete_actions

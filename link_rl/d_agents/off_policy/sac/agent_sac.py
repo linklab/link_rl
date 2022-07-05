@@ -9,8 +9,6 @@ import torch
 import torch.multiprocessing as mp
 from torch.distributions import Normal, TransformedDistribution, TanhTransform
 
-from link_rl.c_models.h_sac_models import ContinuousSacModel
-from link_rl.c_models_v2.g_sac_model_creator import ContinuousSacModelCreator
 from link_rl.d_agents.off_policy.off_policy_agent import OffPolicyAgent
 from link_rl.g_utils.types import AgentMode
 
@@ -19,7 +17,7 @@ class AgentSac(OffPolicyAgent):
     def __init__(self, observation_space, action_space, config, need_train):
         super(AgentSac, self).__init__(observation_space, action_space, config, need_train)
 
-        # self._model_creator = ContinuousSacModelCreator(
+        # self._model_creator = ContinuousSacModel(
         #     n_input=self.observation_shape[0],
         #     n_out_actions=self.n_out_actions,
         #     n_discrete_actions=self.n_discrete_actions

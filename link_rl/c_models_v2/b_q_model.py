@@ -1,19 +1,28 @@
+import enum
+
 import torch
 from torch import nn
 from typing import final, Tuple, List, Union, cast
 
-from link_rl.c_models_v2.a_model_creator import SingleModelCreator, model_creator_registry
+from link_rl.c_models_v2.a_model import SingleModel, model_registry
 
 
-@model_creator_registry.add
-class QModelCreator(SingleModelCreator):
+class Q_MODEL(enum.Enum):
+    QModel = "QModel"
+    DuelingQModel = "DuelingQModel"
+    EncoderQModel = "EncoderQModel"
+    GymAtariQModel = "GymAtariQModel"
+
+
+@model_registry.add
+class QModel(SingleModel):
     def __init__(
         self,
         observation_shape: Tuple[int, ...],
         n_out_actions: int,
         n_discrete_actions=None
     ):
-        super(QModelCreator, self).__init__(
+        super(QModel, self).__init__(
             observation_shape,
             n_out_actions,
             n_discrete_actions
@@ -36,8 +45,8 @@ class QModelCreator(SingleModelCreator):
         return model
 
 
-@model_creator_registry.add
-class DuelingQModelCreator(SingleModelCreator):
+@model_registry.add
+class DuelingQModel(SingleModel):
     class DuelingQModel(nn.Module):
         def __init__(self, shared_net, adv_net, val_net):
             super().__init__()
@@ -59,7 +68,7 @@ class DuelingQModelCreator(SingleModelCreator):
         n_out_actions: int,
         n_discrete_actions=None
     ):
-        super(DuelingQModelCreator, self).__init__(
+        super(DuelingQModel, self).__init__(
             observation_shape,
             n_out_actions,
             n_discrete_actions
@@ -78,19 +87,19 @@ class DuelingQModelCreator(SingleModelCreator):
         adv_net = nn.Linear(128, self._n_discrete_actions)
         val_net = nn.Linear(128, 1)
 
-        dueling_q_model = DuelingQModelCreator.DuelingQModel(shared_net, adv_net, val_net)
+        dueling_q_model = DuelingQModel.DuelingQModel(shared_net, adv_net, val_net)
         return dueling_q_model
 
 
-@model_creator_registry.add
-class QModelCreatorConv(SingleModelCreator):
+@model_registry.add
+class EncoderQModel(SingleModel):
     def __init__(
         self,
         observation_shape: Tuple[int, ...],
         n_out_actions: int,
         n_discrete_actions=None
     ):
-        super(QModelCreatorConv, self).__init__(
+        super(EncoderQModel, self).__init__(
             observation_shape,
             n_out_actions,
             n_discrete_actions
@@ -149,15 +158,15 @@ class QModelCreatorConv(SingleModelCreator):
         return model
 
 
-@model_creator_registry.add
-class QModelCreatorGymAtariConv(SingleModelCreator):
+@model_registry.add
+class GymAtariQModel(SingleModel):
     def __init__(
         self,
         observation_shape: Tuple[int, ...],
         n_out_actions: int,
         n_discrete_actions=None
     ):
-        super(QModelCreatorGymAtariConv, self).__init__(
+        super(GymAtariQModel, self).__init__(
             observation_shape,
             n_out_actions,
             n_discrete_actions

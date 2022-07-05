@@ -67,7 +67,7 @@ class ConfigBase:
         self.VALUE_NETWORK_LAYER_ACTIVATION_TYPE = LayerActivationType.PReLU
         self.VALUE_NETWORK_LAYER_ACTIVATION = None
 
-        self.LOSS_FUNCTION_TYPE = LossFunctionType.MSE_LOSS
+        self.LOSS_FUNCTION_TYPE = LossFunctionType.HUBER_LOSS
         self.LOSS_FUNCTION = None
         self.CONSOLE_LOG_INTERVAL_TRAINING_STEPS = 50
 

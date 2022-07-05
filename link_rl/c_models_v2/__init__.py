@@ -1,4 +1,4 @@
-from .a_model_creator import model_creator_registry as model_creators
+from .a_model import model_registry as model_creators
 
 import os
 
