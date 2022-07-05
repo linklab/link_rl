@@ -206,6 +206,14 @@ class DMCWrapper(core.Env):
 	def close(self):
 		self.original_env.close()
 
+	def action_repeat_for_play(self, action):
+		action = self._convert_action(action)
+		for _ in range(self._frame_skip - 1):
+			time_step = self.original_env.step(action)
+			done = time_step.last()
+			if done:
+				break
+
 	def _transform_observation(self):
 		assert len(self._frames) == self._frame_stack
 		obs = np.concatenate(list(self._frames), axis=0)
