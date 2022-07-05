@@ -307,7 +307,7 @@ class CompetitionOlympicsEnvWrapper(gym.Wrapper):
 		return reward/100
 
 	def football_tablehockey_reward(self, obs, action):
-		goal_viewed_obs = obs[27:29][:, 10:30]
+		goal_viewed_obs = obs[20:29][:, 10:30]
 		goal_reward = len(goal_viewed_obs[goal_viewed_obs == 2])
 		# action_reward = action / 100
 		#
@@ -317,9 +317,9 @@ class CompetitionOlympicsEnvWrapper(gym.Wrapper):
 		# else:
 		# 	reward = goal_reward
 
-		if goal_reward > 1:
+		if goal_reward > 30:
 			line_viewed_obs = obs[15:29][:, 10:30]
-			line_reward = len(line_viewed_obs[line_viewed_obs == 7])
+			line_reward = len(line_viewed_obs[line_viewed_obs == 7]) * 10
 		else:
 			line_reward = 0
 
