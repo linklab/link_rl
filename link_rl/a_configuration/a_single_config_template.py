@@ -569,6 +569,9 @@ config = ConfigCompetitionOlympicsFootballTd3()
 from link_rl.a_configuration.b_single_config.competition_olympics.config_competition_olympics_football import ConfigCompetitionOlympicsFootballSac
 config = ConfigCompetitionOlympicsFootballSac()
 
+from link_rl.a_configuration.b_single_config.competition_olympics.config_competition_olympics_football import ConfigCompetitionOlympicsFootballTdmpc
+config = ConfigCompetitionOlympicsFootballTdmpc()
+
 
 #####################################
 ### CompetitionOlympics-Wrestling ###
