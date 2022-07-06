@@ -13,7 +13,7 @@ class OffPolicyAgent(Agent):
         super(OffPolicyAgent, self).__init__(observation_space, action_space, config)
         assert self.config.AGENT_TYPE in OffPolicyAgentTypes
 
-        if need_train:
+        if need_train and not hasattr(self, "replay_buffer"):
             if self.config.AGENT_TYPE == AgentType.TDMPC:
                 self.replay_buffer = ReplayBuffer(config, observation_space=observation_space, action_space=action_space)
             else:

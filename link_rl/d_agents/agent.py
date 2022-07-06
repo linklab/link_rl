@@ -53,14 +53,15 @@ class Agent:
         else:
             raise ValueError()
 
-        print(self.config.MODEL_TYPE, "##########")
+        if not hasattr(self, "_model_creator"):
+            print(self.config.MODEL_TYPE, "##########")
+            model_creator_class = model_creators.get(self.config.MODEL_TYPE)
+            self._model_creator = model_creator_class(
+                observation_shape=self.observation_shape,
+                n_out_actions=self.n_out_actions,
+                n_discrete_actions=self.n_discrete_actions
+            )
 
-        model_creator_class = model_creators.get(self.config.MODEL_TYPE)
-        self._model_creator = model_creator_class(
-            observation_shape=self.observation_shape,
-            n_out_actions=self.n_out_actions,
-            n_discrete_actions=self.n_discrete_actions
-        )
         self.model = None
         if self.config.AGENT_TYPE in ActorCriticAgentTypes:
             self.actor_model = None
