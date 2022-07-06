@@ -1,7 +1,5 @@
 from link_rl.a_configuration.a_base_config.a_environments.competition_olympics.config_competition_olympics_football import \
     ConfigCompetitionOlympicsFootball
-from link_rl.a_configuration.a_base_config.a_environments.competition_olympics.config_competition_olympics_integrated import \
-    ConfigCompetitionOlympicsIntegrated
 from link_rl.a_configuration.a_base_config.b_agents.config_agents_off_policy import ConfigSac, ConfigTd3, ConfigTdmpc
 from link_rl.a_configuration.a_base_config.b_agents.config_agents_on_policy import ConfigPpo, ConfigA3c, ConfigAsynchronousPpo
 from link_rl.a_configuration.a_base_config.config_single_base import ConfigBase

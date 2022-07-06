@@ -392,6 +392,31 @@ config = ConfigVideoPinballPpo()
 from link_rl.a_configuration.b_single_config.open_ai_gym.atari.config_video_pinball import ConfigVideoPinballPpoTrajectory
 config = ConfigVideoPinballPpoTrajectory()
 
+
+#################
+## DemonAttack ##
+#################
+from link_rl.a_configuration.b_single_config.open_ai_gym.atari.config_demon_attack import ConfigDemonAttackDqn
+config = ConfigDemonAttackDqn()
+
+from link_rl.a_configuration.b_single_config.open_ai_gym.atari.config_demon_attack import ConfigDemonAttackDoubleDqn
+config = ConfigDemonAttackDoubleDqn()
+
+from link_rl.a_configuration.b_single_config.open_ai_gym.atari.config_demon_attack import ConfigDemonAttackDuelingDqn
+config = ConfigDemonAttackDuelingDqn()
+
+from link_rl.a_configuration.b_single_config.open_ai_gym.atari.config_demon_attack import ConfigDemonAttackDoubleDuelingDqn
+config = ConfigDemonAttackDoubleDuelingDqn()
+
+from link_rl.a_configuration.b_single_config.open_ai_gym.atari.config_demon_attack import ConfigDemonAttackA2c
+config = ConfigDemonAttackA2c()
+
+from link_rl.a_configuration.b_single_config.open_ai_gym.atari.config_demon_attack import ConfigDemonAttackA3c
+config = ConfigDemonAttackA3c()
+
+from link_rl.a_configuration.b_single_config.open_ai_gym.atari.config_demon_attack import ConfigDemonAttackPpo
+config = ConfigDemonAttackPpo()
+
 ##################
 ### ANT_MUJOCO ###
 ##################

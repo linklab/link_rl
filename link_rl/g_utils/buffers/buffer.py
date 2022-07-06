@@ -123,8 +123,7 @@ class Buffer:
         if self.config.BUFFER_CAPACITY > 0:
             self.head = (self.head + 1) % self.config.BUFFER_CAPACITY
 
-            self.observations_buffer[self.head] = torch.from_numpy(transition.observation).to(
-                self.config.DEVICE)  # TENSOR
+            self.observations_buffer[self.head] = torch.from_numpy(transition.observation).to(self.config.DEVICE) # TENSOR
 
             if isinstance(self.action_space, Discrete):
                 self.actions_buffer[self.head] = transition.action
@@ -133,8 +132,8 @@ class Buffer:
             else:
                 raise ValueError()
 
-            self.next_observation_value = torch.from_numpy(transition.next_observation).to(
-                self.config.DEVICE)  # TENSOR
+            self.next_observation_value = torch.from_numpy(transition.next_observation).to(self.config.DEVICE)  # TENSOR
+
             self.rewards_buffer[self.head] = transition.reward
             self.dones_buffer[self.head] = bool(transition.done)
             self.infos_buffer[self.head] = transition.info
@@ -143,33 +142,46 @@ class Buffer:
                 self.size += 1
         else:
             self.observations_buffer = torch.cat(  # TENSOR
-                (self.observations_buffer,
-                 torch.unsqueeze(torch.from_numpy(transition.observation).to(self.config.DEVICE), dim=0)), dim=0
+                (
+                    self.observations_buffer,
+                    torch.unsqueeze(torch.from_numpy(transition.observation).to(self.config.DEVICE), dim=0)
+                ),
+                dim=0
             )
 
             if isinstance(self.action_space, Discrete):
                 self.actions_buffer = torch.cat(
-                    (self.actions_buffer, torch.full((1,), fill_value=transition.action, device=self.config.DEVICE)),
+                    (
+                        self.actions_buffer,
+                        torch.full((1,), fill_value=transition.action, device=self.config.DEVICE)
+                    ),
                     dim=0
                 )
             elif isinstance(self.action_space, Box):
                 self.actions_buffer = torch.cat(
-                    (self.actions_buffer,
-                     torch.unsqueeze(torch.from_numpy(transition.action).to(self.config.DEVICE), dim=0)), dim=0
+                    (
+                        self.actions_buffer,
+                        torch.unsqueeze(torch.from_numpy(transition.action).to(self.config.DEVICE), dim=0)
+                    ), dim=0
                     # TENSOR
                 )
             else:
                 raise ValueError()
 
-            self.next_observation_value = torch.from_numpy(transition.next_observation).to(
-                self.config.DEVICE)  # TENSOR
+            self.next_observation_value = torch.from_numpy(transition.next_observation).to(self.config.DEVICE)  # TENSOR
 
             self.rewards_buffer = torch.cat(
-                (self.rewards_buffer, torch.full((1,), fill_value=transition.reward, device=self.config.DEVICE)), dim=0
+                (
+                    self.rewards_buffer,
+                    torch.full((1,), fill_value=transition.reward, device=self.config.DEVICE)
+                ), dim=0
             )
 
             self.dones_buffer = torch.cat(
-                (self.dones_buffer, torch.full((1,), fill_value=bool(transition.done), device=self.config.DEVICE)),
+                (
+                    self.dones_buffer,
+                    torch.full((1,), fill_value=bool(transition.done), device=self.config.DEVICE)
+                ),
                 dim=0
             )
 
@@ -205,16 +217,19 @@ class Buffer:
             infos = [self.infos_buffer[idx] for idx in transition_indices]
 
             next_observation_value_indices = np.where(transition_indices == self.head, -1, transition_indices)
-            next_observation_value_indices = torch.tensor(next_observation_value_indices).to(self.config.DEVICE)
+            next_observation_value_indices = torch.tensor(next_observation_value_indices, device=self.config.DEVICE)
 
             observation_ndim = observations.ndim - 1
             observation_view = [1] * observation_ndim
-            next_observation_value_indices = next_observation_value_indices.view(len(next_observation_value_indices), *observation_view)
+            next_observation_value_indices = next_observation_value_indices.view(
+                len(next_observation_value_indices), *observation_view
+            )
 
-            next_observations = self.observations_buffer[(transition_indices + 1) % self.config.BUFFER_CAPACITY].to(
-                torch.float32)
-            next_observations = torch.where(next_observation_value_indices < 0,
-                                            self.next_observation_value.to(torch.float32), next_observations)
+            next_observations = self.observations_buffer[(transition_indices + 1) % self.config.BUFFER_CAPACITY].to(torch.float32)
+            next_observations = torch.where(
+                next_observation_value_indices < 0,
+                self.next_observation_value.to(torch.float32), next_observations
+            )
 
             # print(observations, observations.shape)
             # print(actions, actions.shape)
@@ -234,9 +249,12 @@ class Buffer:
 
             next_observations = self.observations_buffer.clone().detach().to(torch.float32)
 
-            next_observations = torch.cat(  # TENSOR
-                (next_observations,
-                 torch.unsqueeze(torch.from_numpy(self.next_observation_value.numpy()).to(self.config.DEVICE), dim=0)),
+            next_observations = torch.cat(
+                (
+                    next_observations,
+                    # torch.unsqueeze(torch.from_numpy(self.next_observation_value.numpy()).to(self.config.DEVICE), dim=0)
+                    torch.unsqueeze(self.next_observation_value, dim=0)
+                ),
                 dim=0
             )
 
