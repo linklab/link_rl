@@ -104,6 +104,6 @@ class ConfigDmControlCartPoleBalanceTdmpc(ConfigBase, ConfigDmControlCartpoleBal
         ConfigTdmpc.__init__(self)
 
         self.MAX_TRAINING_STEPS = 300_000
-        self.MODEL_TYPE = ModelType.SMALL_LINEAR
+        # self.MODEL_TYPE = ModelType.SMALL_LINEAR
         self.FROM_PIXELS = True
         self.MODEL_TYPE = TDMPC_MODEL.TdmpcEncoderModel.value
