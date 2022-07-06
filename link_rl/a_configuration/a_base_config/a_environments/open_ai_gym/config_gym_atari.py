@@ -21,3 +21,10 @@ class ConfigVideoPinball(ConfigGymAtari):
         self.ENV_NAME = "ALE/VideoPinball-v5"
         self.EPISODE_REWARD_MIN_SOLVED = 900_000
         self.FRAME_SKIP = 4
+
+
+class ConfigDemonAttack(ConfigGymAtari):
+    def __init__(self):
+        self.ENV_NAME = "ALE/DemonAttack-v5"
+        self.EPISODE_REWARD_MIN_SOLVED = 900_000
+        self.FRAME_SKIP = 4
