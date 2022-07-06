@@ -15,6 +15,8 @@ class ConfigDmControlHumanoidStandTdmpc(ConfigBase, ConfigDmControlHumanoidStand
         ConfigTdmpc.__init__(self)
 
         self.MAX_TRAINING_STEPS = 1_000_000
+        self.ACTION_REPEAT = 2
+        self.ITERATION = 12
         self.MODEL_TYPE = TDMPC_MODEL.TdmpcEncoderModel.value
 
 
@@ -25,4 +27,6 @@ class ConfigDmControlHumanoidStandSac(ConfigBase, ConfigDmControlHumanoidStand, 
         ConfigSac.__init__(self)
 
         self.MAX_TRAINING_STEPS = 1_000_000
+        self.ACTION_REPEAT = 2
+        self.ITERATION = 12
         self.MODEL_TYPE = SAC_MODEL.ContinuousSacModel.value
