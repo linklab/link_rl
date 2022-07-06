@@ -35,6 +35,7 @@ class AgentSac(OffPolicyAgent):
         self.target_critic_model.to(self.config.DEVICE)
 
         self.model = self.actor_model
+        self.model.eval()
 
         self.synchronize_models(source_model=self.actor_model, target_model=self.target_actor_model)
         self.synchronize_models(source_model=self.critic_model, target_model=self.target_critic_model)

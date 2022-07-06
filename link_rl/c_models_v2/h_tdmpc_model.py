@@ -11,7 +11,8 @@ from link_rl.c_models_v2.a_model import SingleModel, model_registry
 class TDMPC_MODEL(enum.Enum):
     TdmpcEncoderModel = "TdmpcEncoderModel"
     TdmpcModel = "TdmpcModel"
-    TdmpcParameterizedEncoderModel = "TdmpcParameterizedEncoderModel"
+    TdmpcRepresentationParameterizedEncoderModel = "TdmpcRepresentationParameterizedEncoderModel"
+    TdmpcCNNParameterizedEncoderModel = "TdmpcCNNParameterizedEncoderModel"
 
 
 class _TruncatedNormal(pyd.Normal):
@@ -291,7 +292,7 @@ class TdmpcModel(SingleModel):
 
 
 @model_registry.add
-class TdmpcParameterizedEncoderModel(SingleModel):
+class TdmpcRepresentationParameterizedEncoderModel(SingleModel):
     class TOLDModel(nn.Module):
         def __init__(
                 self, cnn_net, representation_net, coef_parameterized_net, freedom_parameterized_net,
@@ -353,7 +354,7 @@ class TdmpcParameterizedEncoderModel(SingleModel):
         n_out_actions: int,
         n_discrete_actions=None
     ):
-        super(TdmpcParameterizedEncoderModel, self).__init__(
+        super(TdmpcRepresentationParameterizedEncoderModel, self).__init__(
             observation_shape,
             n_out_actions,
             n_discrete_actions
@@ -418,7 +419,145 @@ class TdmpcParameterizedEncoderModel(SingleModel):
                                nn.Linear(512, 512), nn.ELU(),
                                nn.Linear(512, 1))
 
-        told_model = TdmpcParameterizedEncoderModel.TOLDModel(
+        told_model = TdmpcRepresentationParameterizedEncoderModel.TOLDModel(
+            cnn_net, representation_net, coef_parameterized_net, freedom_parameterized_net, dynamics_net,
+            reward_net, pi_net, q1_net, q2_net
+        )
+
+        return told_model
+
+
+@model_registry.add
+class TdmpcCNNParameterizedEncoderModel(SingleModel):
+    class TOLDModel(nn.Module):
+        def __init__(
+                self, cnn_net, representation_net, coef_parameterized_net, freedom_parameterized_net,
+                dynamics_net, reward_net, pi_net, q1_net, q2_net
+        ):
+            super().__init__()
+            #######################ENCODER############################
+            self.cnn_net = cnn_net
+            self.representation_net = representation_net
+            self.coef_parameterized_net = coef_parameterized_net
+            self.freedom_parameterized_net = freedom_parameterized_net
+            ##########################################################
+            self.dynamics_net = dynamics_net
+            self.reward_net = reward_net
+            self.pi_net = pi_net
+            self.q1_net = q1_net
+            self.q2_net = q2_net
+
+            self.apply(_orthogonal_init)
+
+            for m in [self.reward_net, self.q1_net, self.q2_net]:
+                m[-1].weight.data.fill_(0)
+                m[-1].bias.data.fill_(0)
+
+        def track_q_grad(self, enable=True):
+            """Utility function. Enables/disables gradient tracking of Q-networks."""
+            for m in [self.q1_net, self.q2_net]:
+                _set_requires_grad(m, enable)
+
+        def encode(self, obs):
+            """Encodes an observation into its latent representation (h)."""
+            x = self.cnn_net(obs)
+            z = self.representation_net(x)
+            k = self.coef_parameterized_net(x)
+            z0 = self.freedom_parameterized_net(x)
+            return (k*z) - (k*z0)
+
+        def next(self, z, a):
+            """Predicts next latent state (d) and single-step reward (R)."""
+            x = torch.cat([z, a], dim=-1)
+            return self.dynamics_net(x), self.reward_net(x)
+
+        def pi(self, z, std=0):
+            """Samples an action from the learned policy (pi)."""
+            mu = torch.tanh(self.pi_net(z))
+            if std > 0:
+                std = torch.ones_like(mu) * std
+                return _TruncatedNormal(mu, std).sample(clip=0.3)
+            return mu
+
+        def Q(self, z, a):
+            """Predict state-action value (Q)."""
+            x = torch.cat([z, a], dim=-1)
+            return self.q1_net(x), self.q2_net(x)
+
+    def __init__(
+        self,
+        observation_shape: Tuple[int, ...],
+        n_out_actions: int,
+        n_discrete_actions=None
+    ):
+        super(TdmpcCNNParameterizedEncoderModel, self).__init__(
+            observation_shape,
+            n_out_actions,
+            n_discrete_actions
+        )
+
+    @final
+    def _create_model(self) -> Tuple[nn.Module, nn.Module]:
+        cnn_net = nn.Sequential(
+            nn.Conv2d(self._n_input, 32, 7, stride=2),
+            nn.ReLU(),
+            nn.Conv2d(32, 32, 5, stride=2),
+            nn.ReLU(),
+            nn.Conv2d(32, 32, 3, stride=2),
+            nn.ReLU(),
+            nn.Conv2d(32, 32, 3, stride=2),
+            nn.ReLU()
+        )
+        cnn_out = self._get_conv_out(cnn_net, self._observation_shape)
+        representation_net = nn.Sequential(
+            nn.Flatten(start_dim=1),
+            nn.Linear(cnn_out, 50)
+        )
+
+        coef_parameterized_net = nn.Sequential(
+            nn.Flatten(start_dim=1),
+            nn.Linear(cnn_out, 50),
+            nn.Sigmoid()
+        )
+
+        freedom_parameterized_net = nn.Sequential(
+            nn.Flatten(start_dim=1),
+            nn.Linear(cnn_out, 50)
+        )
+
+        dynamics_net = nn.Sequential(
+            nn.Linear(50 + self._n_out_actions, 512),
+            nn.ELU(),
+            nn.Linear(512, 512),
+            nn.ELU(),
+            nn.Linear(512, 50))
+
+        reward_net = nn.Sequential(
+            nn.Linear(50 + self._n_out_actions, 512),
+            nn.ELU(),
+            nn.Linear(512, 512),
+            nn.ELU(),
+            nn.Linear(512, 1))
+
+        pi_net = nn.Sequential(
+            nn.Linear(50, 512),
+            nn.ELU(),
+            nn.Linear(512, 512),
+            nn.ELU(),
+            nn.Linear(512, self._n_out_actions))
+
+        q1_net = nn.Sequential(nn.Linear(50 + self._n_out_actions, 512),
+                               nn.LayerNorm(512),
+                               nn.Tanh(),
+                               nn.Linear(512, 512), nn.ELU(),
+                               nn.Linear(512, 1))
+        q2_net = nn.Sequential(nn.Linear(50 + self._n_out_actions, 512),
+                               nn.LayerNorm(512),
+                               nn.Tanh(),
+                               nn.Linear(512, 512), nn.ELU(),
+                               nn.Linear(512, 1))
+
+        told_model = TdmpcCNNParameterizedEncoderModel.TOLDModel(
             cnn_net, representation_net, coef_parameterized_net, freedom_parameterized_net, dynamics_net,
             reward_net, pi_net, q1_net, q2_net
         )
