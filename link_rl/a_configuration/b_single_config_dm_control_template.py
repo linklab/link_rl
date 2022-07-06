@@ -105,13 +105,41 @@ config = ConfigDmControlBallInCupCatchTdmpc()
 ############################
 ## DM_CONTROL_FINGER_SPIN ##
 ############################
-
 from link_rl.a_configuration.b_single_config.dm_control.config_dm_control_finger_spin import ConfigDmControlFingerSpinSac
 config = ConfigDmControlFingerSpinSac()
 
 from link_rl.a_configuration.b_single_config.dm_control.config_dm_control_finger_spin import ConfigDmControlFingerSpinTdmpc
 config = ConfigDmControlFingerSpinTdmpc()
 
+
+#############################
+## DM_CONTROL_HUMANOID_RUN ##
+#############################
+from link_rl.a_configuration.b_single_config.dm_control.config_dm_control_humanoid_run import ConfigDmControlHumanoidRunSac
+config = ConfigDmControlHumanoidRunSac()
+
+from link_rl.a_configuration.b_single_config.dm_control.config_dm_control_humanoid_run import ConfigDmControlHumanoidRunTdmpc
+config = ConfigDmControlHumanoidRunTdmpc()
+
+
+###############################
+## DM_CONTROL_HUMANOID_STAND ##
+###############################
+from link_rl.a_configuration.b_single_config.dm_control.config_dm_control_humanoid_stand import ConfigDmControlHumanoidStandSac
+config = ConfigDmControlHumanoidStandSac()
+
+from link_rl.a_configuration.b_single_config.dm_control.config_dm_control_humanoid_stand import ConfigDmControlHumanoidStandTdmpc
+config = ConfigDmControlHumanoidStandTdmpc()
+
+
+##############################
+## DM_CONTROL_HUMANOID_WALK ##
+##############################
+from link_rl.a_configuration.b_single_config.dm_control.config_dm_control_humanoid_walk import ConfigDmControlHumanoidWalkSac
+config = ConfigDmControlHumanoidWalkSac()
+
+from link_rl.a_configuration.b_single_config.dm_control.config_dm_control_humanoid_walk import ConfigDmControlHumanoidWalkTdmpc
+config = ConfigDmControlHumanoidWalkTdmpc()
 
 
 if __name__ == "__main__":
