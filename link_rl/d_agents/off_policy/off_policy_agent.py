@@ -101,19 +101,19 @@ class OffPolicyAgent(Agent):
 
             elif self.config.AGENT_TYPE == AgentType.TDMPC:
                 self._before_train()
-                print("TDMPC TRAIN - START")
+                # print("TDMPC TRAIN - START")
                 if training_steps_v == 0:
                     for train_idx in range(self.config.SEED_STEPS):
-                        print("{0}".format(train_idx), end=" ")
+                        # print("{0}".format(train_idx), end=" ")
                         train_info = self.train_tdmpc(training_steps_v=training_steps_v)
                     count_training_steps = self.config.SEED_STEPS
                 else:
                     for train_idx in range(int(self.config.FIXED_TOTAL_TIME_STEPS_PER_EPISODE/self.config.ACTION_REPEAT)):
-                        print("{0}".format(train_idx), end=" ")
+                        # print("{0}".format(train_idx), end=" ")
                         train_info = self.train_tdmpc(training_steps_v=training_steps_v)
                     print()
                     count_training_steps = int(self.config.FIXED_TOTAL_TIME_STEPS_PER_EPISODE/self.config.ACTION_REPEAT)
-                print("\nTDMPC TRAIN - END")
+                # print("\nTDMPC TRAIN - END")
                 self._after_train(loss_each=0.0)
             else:
                 raise ValueError()
