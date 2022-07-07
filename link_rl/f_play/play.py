@@ -15,7 +15,7 @@ from link_rl.g_utils.commons_rl import get_agent
 
 warnings.filterwarnings("ignore")
 
-from link_rl.g_utils.types import AgentMode
+from link_rl.g_utils.types import AgentMode, AgentType
 
 CURRENT_PATH = os.path.dirname(os.path.realpath(__file__))
 PROJECT_HOME = os.path.abspath(os.path.join(CURRENT_PATH, os.pardir))
@@ -43,6 +43,8 @@ def dm_control_play(env, agent, n_episodes):
         global dm_control_episode_steps, dm_control_episode_reward
         dm_control_episode_steps += 1
         observation = env.get_observation(time_step, dm_control_episode_steps == 0)
+        if config.AGENT_TYPE not in [AgentType.TDMPC]:
+            observation = np.expand_dims(observation, axis=0)
         actions = agent.get_action(observation, mode=AgentMode.PLAY)
         actions_np = np.asarray(actions)
         env.action_repeat_for_play(actions)
