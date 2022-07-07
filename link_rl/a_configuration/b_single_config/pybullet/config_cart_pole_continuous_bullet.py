@@ -3,6 +3,11 @@ from link_rl.a_configuration.a_base_config.b_agents.config_agents_off_policy imp
 from link_rl.a_configuration.a_base_config.b_agents.config_agents_on_policy import ConfigA2c, ConfigPpo, ConfigPpoTrajectory, \
     ConfigReinforce, ConfigA3c
 from link_rl.a_configuration.a_base_config.config_single_base import ConfigBase
+from link_rl.c_models_v2.c_vanilla_policy_model import VANILLA_POLICY_MODEL
+from link_rl.c_models_v2.d_basic_actor_critic_model import BASIC_ACTOR_CRITIC_MODEL
+from link_rl.c_models_v2.e_ddpg_model import DDPG_MODEL
+from link_rl.c_models_v2.f_td3_model import TD3_MODEL
+from link_rl.c_models_v2.g_sac_model import SAC_MODEL
 from link_rl.g_utils.types import ModelType
 
 
@@ -13,7 +18,7 @@ class ConfigCartPoleContinuousBulletReinforce(ConfigBase, ConfigCartPoleContinuo
         ConfigReinforce.__init__(self)
 
         self.MAX_TRAINING_STEPS = 100_000
-        self.MODEL_TYPE = ModelType.SMALL_LINEAR
+        self.MODEL_TYPE = VANILLA_POLICY_MODEL.DiscreteVanillaPolicyModel.value
 
 
 class ConfigCartPoleContinuousBulletA2c(ConfigBase, ConfigCartPoleContinuousBullet, ConfigA2c):
@@ -23,7 +28,7 @@ class ConfigCartPoleContinuousBulletA2c(ConfigBase, ConfigCartPoleContinuousBull
         ConfigA2c.__init__(self)
 
         self.MAX_TRAINING_STEPS = 100_000
-        self.MODEL_TYPE = ModelType.SMALL_LINEAR
+        self.MODEL_TYPE = BASIC_ACTOR_CRITIC_MODEL.ContinuousBasicActorCriticSharedModel.value
 
 
 class ConfigCartPoleContinuousBulletA3c(ConfigBase, ConfigCartPoleContinuousBullet, ConfigA3c):
@@ -33,7 +38,7 @@ class ConfigCartPoleContinuousBulletA3c(ConfigBase, ConfigCartPoleContinuousBull
         ConfigA3c.__init__(self)
 
         self.MAX_TRAINING_STEPS = 100_000
-        self.MODEL_TYPE = ModelType.SMALL_LINEAR
+        self.MODEL_TYPE = BASIC_ACTOR_CRITIC_MODEL.ContinuousBasicActorCriticSharedModel.value
 
 
 class ConfigCartPoleContinuousBulletPpo(ConfigBase, ConfigCartPoleContinuousBullet, ConfigPpo):
@@ -43,7 +48,7 @@ class ConfigCartPoleContinuousBulletPpo(ConfigBase, ConfigCartPoleContinuousBull
         ConfigPpo.__init__(self)
 
         self.MAX_TRAINING_STEPS = 100_000
-        self.MODEL_TYPE = ModelType.SMALL_LINEAR
+        self.MODEL_TYPE = BASIC_ACTOR_CRITIC_MODEL.ContinuousBasicActorCriticSharedModel.value
 
 
 class ConfigCartPoleContinuousBulletPpoTrajectory(ConfigBase, ConfigCartPoleContinuousBullet, ConfigPpoTrajectory):
@@ -53,7 +58,7 @@ class ConfigCartPoleContinuousBulletPpoTrajectory(ConfigBase, ConfigCartPoleCont
         ConfigPpoTrajectory.__init__(self)
 
         self.MAX_TRAINING_STEPS = 100_000
-        self.MODEL_TYPE = ModelType.SMALL_LINEAR
+        self.MODEL_TYPE = BASIC_ACTOR_CRITIC_MODEL.ContinuousBasicActorCriticSharedModel.value
 
 
 class ConfigCartPoleContinuousBulletSac(ConfigBase, ConfigCartPoleContinuousBullet, ConfigSac):
@@ -63,7 +68,7 @@ class ConfigCartPoleContinuousBulletSac(ConfigBase, ConfigCartPoleContinuousBull
         ConfigSac.__init__(self)
 
         self.MAX_TRAINING_STEPS = 100_000
-        self.MODEL_TYPE = ModelType.SMALL_LINEAR
+        self.MODEL_TYPE = SAC_MODEL.ContinuousSacModel.value
 
 
 class ConfigCartPoleContinuousBulletDdpg(ConfigBase, ConfigCartPoleContinuousBullet, ConfigDdpg):
@@ -73,8 +78,7 @@ class ConfigCartPoleContinuousBulletDdpg(ConfigBase, ConfigCartPoleContinuousBul
         ConfigDdpg.__init__(self)
 
         self.MAX_TRAINING_STEPS = 200_000
-        self.MODEL_TYPE = ModelType.SMALL_LINEAR
-        # self.MODEL_TYPE = ModelType.SMALL_RECURRENT
+        self.MODEL_TYPE = DDPG_MODEL.ContinuousDdpgModel.value
 
 
 class ConfigCartPoleContinuousBulletTd3(ConfigBase, ConfigCartPoleContinuousBullet, ConfigTd3):
@@ -84,5 +88,4 @@ class ConfigCartPoleContinuousBulletTd3(ConfigBase, ConfigCartPoleContinuousBull
         ConfigTd3.__init__(self)
 
         self.MAX_TRAINING_STEPS = 200_000
-        self.MODEL_TYPE = ModelType.SMALL_LINEAR
-        # self.MODEL_TYPE = ModelType.SMALL_RECURRENT
+        self.MODEL_TYPE = TD3_MODEL.ContinuousTd3Model.value

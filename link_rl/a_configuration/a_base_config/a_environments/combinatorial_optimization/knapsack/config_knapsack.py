@@ -34,7 +34,7 @@ class ConfigKnapsack:
         self.EPISODE_REWARD_MIN_SOLVED = 100
 
         self.CONSOLE_LOG_INTERVAL_TRAINING_STEPS = 50
-        self.MODEL_TYPE = ModelType.TINY_1D_CONVOLUTIONAL
+        self.MODEL_TYPE = None
         self.TARGET_SYNC_INTERVAL_TRAINING_STEPS = 100
 
         self.PRINT_DETAILS_AT_EPISODE_END = False
@@ -58,8 +58,6 @@ class ConfigKnapsack0RandomTestLinear(ConfigKnapsack0):
     def __init__(self):
         ConfigKnapsack0.__init__(self)
 
-        self.MODEL_TYPE = ModelType.MEDIUM_LINEAR
-
 
 class ConfigKnapsack0LoadTest(ConfigKnapsack0):
     def __init__(self):
@@ -82,8 +80,6 @@ class ConfigKnapsack0LoadTestLinear(ConfigKnapsack0):
         self.OPTIMAL_PATH = 'knapsack_instances/RI/optimal_solution/n_50_r_100'
         self.INSTANCE_INDEX = 0
 
-        self.MODEL_TYPE = ModelType.MEDIUM_LINEAR
-
 
 class ConfigKnapsack0StaticTest(ConfigKnapsack0):
     def __init__(self):
@@ -99,7 +95,6 @@ class ConfigKnapsack0StaticTestLinear(ConfigKnapsack0):
 
         self.NUM_ITEM = 50
         self.STATIC_INITIAL_STATE_50 = True
-        self.MODEL_TYPE = ModelType.MEDIUM_LINEAR
 
 
 class ConfigKnapsack0StaticTestLinearRecurrent(ConfigKnapsack0):
@@ -108,4 +103,3 @@ class ConfigKnapsack0StaticTestLinearRecurrent(ConfigKnapsack0):
 
         self.NUM_ITEM = 50
         self.STATIC_INITIAL_STATE_50 = True
-        self.MODEL_TYPE = ModelType.MEDIUM_RECURRENT

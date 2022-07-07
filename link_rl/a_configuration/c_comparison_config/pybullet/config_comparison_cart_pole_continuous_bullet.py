@@ -2,6 +2,7 @@ from link_rl.a_configuration.a_base_config.config_comparison_base import ConfigC
 from link_rl.a_configuration.b_single_config.pybullet.config_cart_pole_continuous_bullet import \
     ConfigCartPoleContinuousBulletDdpg, ConfigCartPoleContinuousBulletTd3, ConfigCartPoleContinuousBulletSac, \
     ConfigCartPoleContinuousBulletA2c, ConfigCartPoleContinuousBulletPpoTrajectory, ConfigCartPoleContinuousBulletPpo
+from link_rl.c_models_v2.e_ddpg_model import DDPG_MODEL
 from link_rl.g_utils.types import ModelType
 
 
@@ -37,13 +38,12 @@ class ConfigComparisonCartPoleContinuousBulletDdpg(ConfigComparisonBase):
             ConfigCartPoleContinuousBulletDdpg(),
         ]
 
-        self.AGENT_PARAMETERS[0].MODEL_TYPE = ModelType.SMALL_RECURRENT
-        self.AGENT_PARAMETERS[1].MODEL_TYPE = ModelType.SMALL_LINEAR
-        self.AGENT_PARAMETERS[2].MODEL_TYPE = ModelType.SMALL_LINEAR_2
+        self.AGENT_PARAMETERS[0].MODEL_TYPE = None
+        self.AGENT_PARAMETERS[1].MODEL_TYPE = DDPG_MODEL.ContinuousDdpgModel.value
+
         self.AGENT_LABELS = [
             "DDPG + GRU",
             "DDPG + Linear",
-            "DDPG + Linear_2",
         ]
         self.MAX_TRAINING_STEPS = 50_000
         self.N_RUNS = 5

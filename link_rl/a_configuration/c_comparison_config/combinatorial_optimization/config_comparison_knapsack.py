@@ -76,7 +76,7 @@ class ConfigComparisonKnapsack0StaticTestLinearRecurrentDqn(ConfigComparisonBase
             ConfigKnapsack0StaticTestLinearDoubleDqn(),
             ConfigKnapsack0StaticTestLinearDoubleDqn(),
         ]
-        self.AGENT_PARAMETERS[1].MODEL_TYPE = ModelType.SMALL_RECURRENT
+        self.AGENT_PARAMETERS[1].MODEL_TYPE = None
 
         self.AGENT_LABELS = [
             "Double DQN",

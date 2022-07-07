@@ -4,6 +4,7 @@ from link_rl.a_configuration.a_base_config.config_comparison_base import ConfigC
 from link_rl.a_configuration.b_single_config.open_ai_gym.box2d.config_lunar_lander import ConfigLunarLanderDqn, \
     ConfigLunarLanderDoubleDqn, ConfigLunarLanderDuelingDqn, ConfigLunarLanderDoubleDuelingDqn
 from link_rl.b_environments import wrapper
+from link_rl.c_models_v2.b_q_model import Q_MODEL
 from link_rl.g_utils.types import ModelType
 
 
@@ -19,25 +20,25 @@ class ConfigComparisonLunarLanderDqnRecurrent(ConfigComparisonBase):
         self.AGENT_LABELS = [
             "Linear",
             "Linear + Time",
-            "Recurrent",
+            #"Recurrent",
         ]
 
         self.AGENT_PARAMETERS = [
             ConfigLunarLanderDqn(),
             ConfigLunarLanderDqn(),
-            ConfigLunarLanderDqn()
+            #ConfigLunarLanderDqn()
         ]
 
         # common
 
         # Linear
-        self.AGENT_PARAMETERS[0].MODEL_TYPE = ModelType.SMALL_LINEAR
+        self.AGENT_PARAMETERS[0].MODEL_TYPE = Q_MODEL.QModel.value
 
         # Linear + Time
         self.AGENT_PARAMETERS[1].WRAPPERS.append(gym.wrappers.TimeAwareObservation)
 
         # Recurrent
-        self.AGENT_PARAMETERS[2].MODEL_TYPE = ModelType.SMALL_RECURRENT
+        #self.AGENT_PARAMETERS[2].MODEL_TYPE = None
 
 
 class ConfigComparisonLunarLanderDoubleDqnRecurrent(ConfigComparisonBase):
@@ -51,19 +52,19 @@ class ConfigComparisonLunarLanderDoubleDqnRecurrent(ConfigComparisonBase):
 
         self.AGENT_LABELS = [
             "Linear",
-            "GRU",
+            #"GRU",
         ]
 
         self.AGENT_PARAMETERS = [
             ConfigLunarLanderDoubleDqn(),
-            ConfigLunarLanderDoubleDqn()
+            #ConfigLunarLanderDoubleDqn()
         ]
 
         # Linear
-        self.AGENT_PARAMETERS[0].MODEL_TYPE = ModelType.SMALL_LINEAR
+        self.AGENT_PARAMETERS[0].MODEL_TYPE = Q_MODEL.QModel.value
 
         # GRU
-        self.AGENT_PARAMETERS[1].MODEL_TYPE = ModelType.SMALL_RECURRENT
+        #self.AGENT_PARAMETERS[1].MODEL_TYPE = None
 
 
 class ConfigComparisonLunarLanderDqnRecurrentWithoutVelocity(ConfigComparisonBase):
@@ -78,13 +79,13 @@ class ConfigComparisonLunarLanderDqnRecurrentWithoutVelocity(ConfigComparisonBas
         self.AGENT_LABELS = [
             "Linear",
             "Linear + Time",
-            "Recurrent",
+            #"Recurrent",
         ]
 
         self.AGENT_PARAMETERS = [
             ConfigLunarLanderDqn(),
             ConfigLunarLanderDqn(),
-            ConfigLunarLanderDqn()
+            #ConfigLunarLanderDqn()
         ]
 
         # common
@@ -92,14 +93,14 @@ class ConfigComparisonLunarLanderDqnRecurrentWithoutVelocity(ConfigComparisonBas
             config.WRAPPERS.append(wrapper.LunarLanderWithoutVelocity)
 
         # Linear
-        self.AGENT_PARAMETERS[0].MODEL_TYPE = ModelType.SMALL_LINEAR
+        self.AGENT_PARAMETERS[0].MODEL_TYPE = Q_MODEL.QModel.value
 
         # Linear + Time
-        self.AGENT_PARAMETERS[1].MODEL_TYPE = ModelType.SMALL_LINEAR
+        self.AGENT_PARAMETERS[1].MODEL_TYPE = Q_MODEL.QModel.value
         self.AGENT_PARAMETERS[1].WRAPPERS.append(gym.wrappers.TimeAwareObservation)
 
         # Recurrent
-        self.AGENT_PARAMETERS[2].MODEL_TYPE = ModelType.SMALL_RECURRENT
+        #self.AGENT_PARAMETERS[2].MODEL_TYPE = None
 
 
 class ConfigComparisonLunarLanderDoubleDqnRecurrentWithoutVelocity(ConfigComparisonBase):
@@ -113,12 +114,12 @@ class ConfigComparisonLunarLanderDoubleDqnRecurrentWithoutVelocity(ConfigCompari
 
         self.AGENT_LABELS = [
             "Linear",
-            "GRU"
+            #"GRU"
         ]
 
         self.AGENT_PARAMETERS = [
             ConfigLunarLanderDoubleDqn(),
-            ConfigLunarLanderDoubleDqn()
+            #ConfigLunarLanderDoubleDqn()
         ]
 
         # common
@@ -126,10 +127,10 @@ class ConfigComparisonLunarLanderDoubleDqnRecurrentWithoutVelocity(ConfigCompari
             config.WRAPPERS.append(wrapper.LunarLanderWithoutVelocity)
 
         # Linear
-        self.AGENT_PARAMETERS[0].MODEL_TYPE = ModelType.SMALL_LINEAR
+        self.AGENT_PARAMETERS[0].MODEL_TYPE = Q_MODEL.QModel.value
 
         # GRU
-        self.AGENT_PARAMETERS[1].MODEL_TYPE = ModelType.SMALL_RECURRENT
+        #self.AGENT_PARAMETERS[1].MODEL_TYPE = None
 
 
 class ConfigComparisonLunarLanderDqnTypes(ConfigComparisonBase):

@@ -9,6 +9,9 @@ from link_rl.a_configuration.a_base_config.config_single_base import ConfigBase
 #####################################
 ######### Agent_Type = DQN ##########
 #####################################
+from link_rl.c_models_v2.b_q_model import Q_MODEL
+from link_rl.c_models_v2.d_basic_actor_critic_model import BASIC_ACTOR_CRITIC_MODEL
+
 
 class ConfigKnapsack0RandomTestDqn(ConfigBase, ConfigKnapsack0RandomTest, ConfigDqn):
     def __init__(self):
@@ -32,6 +35,7 @@ class ConfigKnapsack0RandomTestDqn(ConfigBase, ConfigKnapsack0RandomTest, Config
 
         self.GAMMA = 0.999
         self.LEARNING_RATE = 0.001
+        self.MODEL_TYPE = Q_MODEL.QModel.value
 
 
 class ConfigKnapsack0RandomTestLinearDqn(ConfigBase, ConfigKnapsack0RandomTestLinear, ConfigDqn):
@@ -56,6 +60,7 @@ class ConfigKnapsack0RandomTestLinearDqn(ConfigBase, ConfigKnapsack0RandomTestLi
 
         self.GAMMA = 0.999
         self.LEARNING_RATE = 0.001
+        self.MODEL_TYPE = Q_MODEL.QModel.value
 
 
 class ConfigKnapsack0RandomTestLinearDoubleDqn(ConfigBase, ConfigKnapsack0RandomTestLinear, ConfigDoubleDqn):
@@ -80,6 +85,7 @@ class ConfigKnapsack0RandomTestLinearDoubleDqn(ConfigBase, ConfigKnapsack0Random
 
         self.GAMMA = 0.999
         self.LEARNING_RATE = 0.001
+        self.MODEL_TYPE = Q_MODEL.QModel.value
         
 
 class ConfigKnapsack0LoadTestDqn(ConfigBase, ConfigKnapsack0LoadTest, ConfigDqn):
@@ -103,6 +109,7 @@ class ConfigKnapsack0LoadTestDqn(ConfigBase, ConfigKnapsack0LoadTest, ConfigDqn)
 
         self.GAMMA = 0.999
         self.LEARNING_RATE = 0.001
+        self.MODEL_TYPE = Q_MODEL.QModel.value
 
 
 class ConfigKnapsack0LoadTestLinearDqn(ConfigBase, ConfigKnapsack0LoadTestLinear, ConfigDqn):
@@ -126,7 +133,7 @@ class ConfigKnapsack0LoadTestLinearDqn(ConfigBase, ConfigKnapsack0LoadTestLinear
 
         self.GAMMA = 0.999
         self.LEARNING_RATE = 0.001
-
+        self.MODEL_TYPE = Q_MODEL.QModel.value
 
 class ConfigKnapsack0LoadTestLinearDoubleDqn(ConfigBase, ConfigKnapsack0LoadTestLinear, ConfigDoubleDqn):
     def __init__(self):
@@ -146,6 +153,7 @@ class ConfigKnapsack0LoadTestLinearDoubleDqn(ConfigBase, ConfigKnapsack0LoadTest
 
         self.GAMMA = 0.999
         self.LEARNING_RATE = 0.001
+        self.MODEL_TYPE = Q_MODEL.QModel.value
 
 
 class ConfigKnapsack0StaticTestDqn(ConfigBase, ConfigKnapsack0StaticTest, ConfigDqn):
@@ -166,6 +174,7 @@ class ConfigKnapsack0StaticTestDqn(ConfigBase, ConfigKnapsack0StaticTest, Config
 
         self.GAMMA = 0.999
         self.LEARNING_RATE = 0.001
+        self.MODEL_TYPE = Q_MODEL.QModel.value
 
 
 class ConfigKnapsack0StaticTestLinearDqn(ConfigBase, ConfigKnapsack0StaticTestLinear, ConfigDqn):
@@ -186,6 +195,7 @@ class ConfigKnapsack0StaticTestLinearDqn(ConfigBase, ConfigKnapsack0StaticTestLi
 
         self.GAMMA = 0.999
         self.LEARNING_RATE = 0.001
+        self.MODEL_TYPE = Q_MODEL.QModel.value
 
 
 class ConfigKnapsack0StaticTestLinearDoubleDqn(
@@ -208,6 +218,7 @@ class ConfigKnapsack0StaticTestLinearDoubleDqn(
 
         self.GAMMA = 0.999
         self.LEARNING_RATE = 0.001
+        self.MODEL_TYPE = Q_MODEL.QModel.value
 
 
 class ConfigKnapsack0StaticTestLinearDoubleDuelingDqn(
@@ -230,6 +241,7 @@ class ConfigKnapsack0StaticTestLinearDoubleDuelingDqn(
 
         self.GAMMA = 0.999
         self.LEARNING_RATE = 0.001
+        self.MODEL_TYPE = Q_MODEL.QModel.value
 
 
 #####################################
@@ -257,6 +269,7 @@ class ConfigKnapsack0RandomTestLinearA2c(ConfigBase, ConfigKnapsack0RandomTestLi
 
         self.GAMMA = 0.999
         self.LEARNING_RATE = 0.001
+        self.MODEL_TYPE = BASIC_ACTOR_CRITIC_MODEL.DiscreteBasicActorCriticSharedModel.value
 
 
 class ConfigKnapsack0LoadTestLinearA2c(ConfigBase, ConfigKnapsack0LoadTestLinear, ConfigA2c):
@@ -280,6 +293,7 @@ class ConfigKnapsack0LoadTestLinearA2c(ConfigBase, ConfigKnapsack0LoadTestLinear
 
         self.GAMMA = 0.999
         self.LEARNING_RATE = 0.001
+        self.MODEL_TYPE = BASIC_ACTOR_CRITIC_MODEL.DiscreteBasicActorCriticSharedModel.value
 
 
 class ConfigKnapsack0StaticTestLinearA2c(ConfigBase, ConfigKnapsack0StaticTestLinear, ConfigA2c):
@@ -300,6 +314,7 @@ class ConfigKnapsack0StaticTestLinearA2c(ConfigBase, ConfigKnapsack0StaticTestLi
 
         self.GAMMA = 0.999
         self.LEARNING_RATE = 0.001
+        self.MODEL_TYPE = BASIC_ACTOR_CRITIC_MODEL.DiscreteBasicActorCriticSharedModel.value
 
 
 #####################################
@@ -327,6 +342,7 @@ class ConfigKnapsack0RandomTestLinearPpo(ConfigBase, ConfigKnapsack0RandomTestLi
 
         self.GAMMA = 0.999
         self.LEARNING_RATE = 0.001
+        self.MODEL_TYPE = BASIC_ACTOR_CRITIC_MODEL.DiscreteBasicActorCriticSharedModel.value
 
 
 class ConfigKnapsack0LoadTestLinearPpo(ConfigBase, ConfigKnapsack0LoadTestLinear, ConfigPpo):
@@ -350,6 +366,7 @@ class ConfigKnapsack0LoadTestLinearPpo(ConfigBase, ConfigKnapsack0LoadTestLinear
 
         self.GAMMA = 0.999
         self.LEARNING_RATE = 0.001
+        self.MODEL_TYPE = BASIC_ACTOR_CRITIC_MODEL.DiscreteBasicActorCriticSharedModel.value
 
 
 class ConfigKnapsack0StaticTestLinearPpo(ConfigBase, ConfigKnapsack0StaticTestLinear, ConfigPpo):
@@ -370,3 +387,4 @@ class ConfigKnapsack0StaticTestLinearPpo(ConfigBase, ConfigKnapsack0StaticTestLi
 
         self.GAMMA = 0.999
         self.LEARNING_RATE = 0.001
+        self.MODEL_TYPE = BASIC_ACTOR_CRITIC_MODEL.DiscreteBasicActorCriticSharedModel.value

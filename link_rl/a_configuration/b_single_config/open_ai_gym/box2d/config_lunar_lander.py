@@ -4,6 +4,8 @@ from link_rl.a_configuration.a_base_config.b_agents.config_agents_off_policy imp
 from link_rl.a_configuration.a_base_config.b_agents.config_agents_on_policy import ConfigA2c, ConfigPpo, \
     ConfigPpoTrajectory, ConfigA3c
 from link_rl.a_configuration.a_base_config.config_single_base import ConfigBase
+from link_rl.c_models_v2.b_q_model import Q_MODEL
+from link_rl.c_models_v2.d_basic_actor_critic_model import BASIC_ACTOR_CRITIC_MODEL
 from link_rl.g_utils.types import ModelType
 
 
@@ -15,7 +17,7 @@ class ConfigLunarLanderDqn(ConfigBase, ConfigLunarLander, ConfigDqn):
 
         self.MAX_TRAINING_STEPS = 100_000
         self.BUFFER_CAPACITY = 100_000
-        self.MODEL_TYPE = ModelType.SMALL_LINEAR
+        self.MODEL_TYPE = Q_MODEL.QModel.value
 
 
 class ConfigLunarLanderDoubleDqn(ConfigBase, ConfigLunarLander, ConfigDoubleDqn):
@@ -26,7 +28,7 @@ class ConfigLunarLanderDoubleDqn(ConfigBase, ConfigLunarLander, ConfigDoubleDqn)
 
         self.MAX_TRAINING_STEPS = 100_000
         self.BUFFER_CAPACITY = 100_000
-        self.MODEL_TYPE = ModelType.SMALL_LINEAR
+        self.MODEL_TYPE = Q_MODEL.QModel.value
 
 
 class ConfigLunarLanderDuelingDqn(ConfigBase, ConfigLunarLander, ConfigDuelingDqn):
@@ -37,7 +39,7 @@ class ConfigLunarLanderDuelingDqn(ConfigBase, ConfigLunarLander, ConfigDuelingDq
 
         self.MAX_TRAINING_STEPS = 100_000
         self.BUFFER_CAPACITY = 100_000
-        self.MODEL_TYPE = ModelType.SMALL_LINEAR
+        self.MODEL_TYPE = Q_MODEL.DuelingQModel.value
 
 
 class ConfigLunarLanderDoubleDuelingDqn(ConfigBase, ConfigLunarLander, ConfigDoubleDuelingDqn):
@@ -48,7 +50,7 @@ class ConfigLunarLanderDoubleDuelingDqn(ConfigBase, ConfigLunarLander, ConfigDou
 
         self.MAX_TRAINING_STEPS = 100_000
         self.BUFFER_CAPACITY = 100_000
-        self.MODEL_TYPE = ModelType.SMALL_LINEAR
+        self.MODEL_TYPE = Q_MODEL.DuelingQModel.value
 
 
 class ConfigLunarLanderA2c(ConfigBase, ConfigLunarLander, ConfigA2c):
@@ -58,7 +60,7 @@ class ConfigLunarLanderA2c(ConfigBase, ConfigLunarLander, ConfigA2c):
         ConfigA2c.__init__(self)
 
         self.MAX_TRAINING_STEPS = 100_000
-        self.MODEL_TYPE = ModelType.SMALL_LINEAR
+        self.MODEL_TYPE = BASIC_ACTOR_CRITIC_MODEL.DiscreteBasicActorCriticSharedModel
 
 
 class ConfigLunarLanderA3c(ConfigBase, ConfigLunarLander, ConfigA3c):
@@ -68,7 +70,7 @@ class ConfigLunarLanderA3c(ConfigBase, ConfigLunarLander, ConfigA3c):
         ConfigA3c.__init__(self)
 
         self.MAX_TRAINING_STEPS = 100_000
-        self.MODEL_TYPE = ModelType.SMALL_LINEAR
+        self.MODEL_TYPE = BASIC_ACTOR_CRITIC_MODEL.DiscreteBasicActorCriticSharedModel
 
 
 class ConfigLunarLanderPpo(ConfigBase, ConfigLunarLander, ConfigPpo):
@@ -78,7 +80,7 @@ class ConfigLunarLanderPpo(ConfigBase, ConfigLunarLander, ConfigPpo):
         ConfigPpo.__init__(self)
 
         self.MAX_TRAINING_STEPS = 100_000
-        self.MODEL_TYPE = ModelType.SMALL_LINEAR
+        self.MODEL_TYPE = BASIC_ACTOR_CRITIC_MODEL.DiscreteBasicActorCriticSharedModel
 
 
 class ConfigLunarLanderPpoTrajectory(ConfigBase, ConfigLunarLander, ConfigPpoTrajectory):
@@ -88,4 +90,4 @@ class ConfigLunarLanderPpoTrajectory(ConfigBase, ConfigLunarLander, ConfigPpoTra
         ConfigPpoTrajectory.__init__(self)
 
         self.MAX_TRAINING_STEPS = 100_000
-        self.MODEL_TYPE = ModelType.SMALL_LINEAR
+        self.MODEL_TYPE = BASIC_ACTOR_CRITIC_MODEL.DiscreteBasicActorCriticSharedModel

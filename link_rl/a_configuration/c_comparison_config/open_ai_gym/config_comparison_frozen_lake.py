@@ -50,20 +50,20 @@ class ConfigComparisonFrozenLakeDqnTime(ConfigComparisonFrozenLakeBase):
             "Original",
             "Zero",
             "Zero + Time",
-            "Zero + GRU",
+            #"Zero + GRU",
             "Random",
             "Random + Time",
-            "Random + GRU",
+            #"Random + GRU",
         ]
 
         self.AGENT_PARAMETERS = [
             ConfigFrozenLakeDqn(),
             ConfigFrozenLakeDqn(),
             ConfigFrozenLakeDqn(),
+            #ConfigFrozenLakeDqn(),
             ConfigFrozenLakeDqn(),
             ConfigFrozenLakeDqn(),
-            ConfigFrozenLakeDqn(),
-            ConfigFrozenLakeDqn()
+            #ConfigFrozenLakeDqn()
         ]
 
         # common
@@ -89,10 +89,10 @@ class ConfigComparisonFrozenLakeDqnTime(ConfigComparisonFrozenLakeBase):
         )
 
         # Zero + GRU
-        self.AGENT_PARAMETERS[3].WRAPPERS.append(
-            (gym.wrappers.TransformObservation, {"f": lambda obs: np.zeros(obs.shape)})
-        )
-        self.AGENT_PARAMETERS[3].MODEL_TYPE = ModelType.TINY_RECURRENT
+        # self.AGENT_PARAMETERS[3].WRAPPERS.append(
+        #     (gym.wrappers.TransformObservation, {"f": lambda obs: np.zeros(obs.shape)})
+        # )
+        # self.AGENT_PARAMETERS[3].MODEL_TYPE = None
 
         # Random
         self.AGENT_PARAMETERS[4].WRAPPERS.append(
@@ -108,8 +108,8 @@ class ConfigComparisonFrozenLakeDqnTime(ConfigComparisonFrozenLakeBase):
         )
 
         # Random + GRU
-        self.AGENT_PARAMETERS[6].WRAPPERS.append(
-            (gym.wrappers.TransformObservation, {"f": lambda obs: np.random.randn(*obs.shape)})
-        )
-        self.AGENT_PARAMETERS[6].MODEL_TYPE = ModelType.TINY_RECURRENT
+        # self.AGENT_PARAMETERS[6].WRAPPERS.append(
+        #     (gym.wrappers.TransformObservation, {"f": lambda obs: np.random.randn(*obs.shape)})
+        # )
+        # self.AGENT_PARAMETERS[6].MODEL_TYPE = None
 

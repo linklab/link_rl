@@ -2,6 +2,7 @@ import gym
 import numpy as np
 
 from link_rl.b_environments import wrapper
+from link_rl.c_models_v2.b_q_model import Q_MODEL
 from link_rl.g_utils.types import ModelType
 
 #################
@@ -36,7 +37,7 @@ from link_rl.a_configuration.b_single_config.open_ai_gym.toy_text.config_frozen_
 config = ConfigFrozenLakeDqn()
 config.ENV_KWARGS["is_slippery"] = False
 config.ENV_KWARGS["desc"] = ["SFF", "FHF", "FFG"]
-config.MODEL_TYPE = ModelType.TINY_RECURRENT
+config.MODEL_TYPE = Q_MODEL.QModel.value
 config.WRAPPERS.append(
     (gym.wrappers.TransformObservation, {"f": lambda obs: np.random.randn(*obs.shape)})
 )
@@ -65,10 +66,10 @@ config.WRAPPERS.append(
 
 from link_rl.a_configuration.b_single_config.open_ai_gym.classic_control.config_cart_pole import ConfigCartPoleDqn
 config = ConfigCartPoleDqn()
-config.WRAPPERS.append(
-    (wrapper.ReverseActionCartpole, {})
-)
-config.MODEL_TYPE = ModelType.SMALL_RECURRENT
+# config.WRAPPERS.append(
+#     (wrapper.ReverseActionCartpole, {})
+# )
+config.MODEL_TYPE = Q_MODEL.QModel.value
 
 from link_rl.a_configuration.b_single_config.open_ai_gym.classic_control.config_cart_pole import ConfigCartPoleDoubleDqn
 config = ConfigCartPoleDoubleDqn()

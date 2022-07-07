@@ -33,7 +33,7 @@ class ConfigTaskAllocation:
         self.EPISODE_REWARD_MIN_SOLVED = 1000000
 
         self.CONSOLE_LOG_INTERVAL_TRAINING_STEPS = 50
-        self.MODEL_TYPE = ModelType.SMALL_LINEAR
+        self.MODEL_TYPE = None
         self.TARGET_SYNC_INTERVAL_TRAINING_STEPS = 100
 
         self.CUSTOM_ENV_STAT = TaskAllocationEnvironmentStat()
@@ -46,4 +46,4 @@ class ConfigTaskAllocationInitParam(ConfigTaskAllocation):
         self.ENV_NAME = "Task_Allocation_v1"
         self.LEARNING_RATE = 0.0003
 
-        self.MODEL_TYPE = ModelType.SMALL_LINEAR
+        self.MODEL_TYPE = None

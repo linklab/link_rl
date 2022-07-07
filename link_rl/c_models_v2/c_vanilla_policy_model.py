@@ -5,8 +5,9 @@ from typing import final, Tuple
 from link_rl.c_models_v2.a_model import SingleModel, model_registry
 
 
-class BASIC_POLICY_MODEL(enum.Enum):
+class VANILLA_POLICY_MODEL(enum.Enum):
     DiscreteVanillaPolicyModel = "DiscreteVanillaPolicyModel"
+
 
 @model_registry.add
 class DiscreteVanillaPolicyModel(SingleModel):

@@ -7,7 +7,7 @@ class ConfigBasicTaskAllocation:
         self.EPISODE_REWARD_MIN_SOLVED = 100
 
         self.CONSOLE_LOG_INTERVAL_TRAINING_STEPS = 50
-        self.MODEL_TYPE = ModelType.SMALL_LINEAR
+        self.MODEL_TYPE = None
         self.TARGET_SYNC_INTERVAL_TRAINING_STEPS = 100
 
         self.NUM_TASK = 20

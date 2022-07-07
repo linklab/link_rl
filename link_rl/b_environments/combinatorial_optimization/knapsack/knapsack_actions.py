@@ -10,7 +10,6 @@ import datetime as dt
 from link_rl.a_configuration.a_base_config.c_models.config_linear_models import ConfigLinearModel
 from link_rl.a_configuration.a_base_config.config_parse import SYSTEM_USER_NAME, SYSTEM_COMPUTER_NAME
 from link_rl.b_environments.combinatorial_optimization.knapsack.boto3_knapsack import load_instance, upload_file, load_solution
-from link_rl.b_environments.combinatorial_optimization.knapsack.knapsack import KnapsackEnvTestStat
 from link_rl.b_environments.combinatorial_optimization.knapsack.knapsack_gurobi import model_kp
 
 STATIC_INITIAL_STATE_50 = np.asarray([
@@ -128,7 +127,7 @@ class KnapsackEnv(gym.Env):
         if self.INITIAL_ITEM_DISTRIBUTION_FIXED:
             self.fixed_initial_internal_state = self.get_initial_state()
 
-        self.custom_env_stat = KnapsackEnvTestStat()
+        # self.custom_env_stat = KnapsackEnvTestStat()
 
     # Last Row in State
     # 0: Always 0
@@ -434,7 +433,8 @@ from link_rl.a_configuration.a_base_config.a_environments.combinatorial_optimiza
 config = ConfigKnapsack0StaticTest()
 
 from link_rl.a_configuration.a_base_config.c_models.config_convolutional_models import Config1DConvolutionalModel
-config.MODEL_PARAMETER = Config1DConvolutionalModel(config.MODEL_TYPE)
+# config.MODEL_PARAMETER = Config1DConvolutionalModel(config.MODEL_TYPE)
+
 
 def run_env(config):
     class Dummy_Agent:

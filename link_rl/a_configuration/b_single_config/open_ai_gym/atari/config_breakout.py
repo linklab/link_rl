@@ -3,6 +3,8 @@ from link_rl.a_configuration.a_base_config.b_agents.config_agents_off_policy imp
 from link_rl.a_configuration.a_base_config.a_environments.open_ai_gym.config_gym_atari import ConfigBreakout
 from link_rl.a_configuration.a_base_config.b_agents.config_agents_on_policy import ConfigA2c, ConfigA3c, ConfigPpo, ConfigPpoTrajectory
 from link_rl.a_configuration.a_base_config.config_single_base import ConfigBase
+from link_rl.c_models_v2.b_q_model import Q_MODEL
+from link_rl.c_models_v2.d_basic_actor_critic_model import BASIC_ACTOR_CRITIC_MODEL
 from link_rl.g_utils.types import ModelType
 
 
@@ -14,7 +16,7 @@ class ConfigBreakoutDqn(ConfigBase, ConfigBreakout, ConfigDqn):
 
         self.MAX_TRAINING_STEPS = 1_000_000
         self.BUFFER_CAPACITY = 500_000
-        self.MODEL_TYPE = ModelType.MEDIUM_2D_CONVOLUTIONAL
+        self.MODEL_TYPE = Q_MODEL.QModel.value
 
 
 class ConfigBreakoutDoubleDqn(ConfigBase, ConfigBreakout, ConfigDoubleDqn):
@@ -25,7 +27,7 @@ class ConfigBreakoutDoubleDqn(ConfigBase, ConfigBreakout, ConfigDoubleDqn):
 
         self.MAX_TRAINING_STEPS = 1_000_000
         self.BUFFER_CAPACITY = 500_000
-        self.MODEL_TYPE = ModelType.MEDIUM_2D_CONVOLUTIONAL
+        self.MODEL_TYPE = Q_MODEL.QModel.value
 
 
 class ConfigBreakoutDuelingDqn(ConfigBase, ConfigBreakout, ConfigDuelingDqn):
@@ -36,7 +38,7 @@ class ConfigBreakoutDuelingDqn(ConfigBase, ConfigBreakout, ConfigDuelingDqn):
 
         self.MAX_TRAINING_STEPS = 1_000_000
         self.BUFFER_CAPACITY = 500_000
-        self.MODEL_TYPE = ModelType.MEDIUM_2D_CONVOLUTIONAL
+        self.MODEL_TYPE = Q_MODEL.DuelingQModel.value
 
 
 class ConfigBreakoutDoubleDuelingDqn(ConfigBase, ConfigBreakout, ConfigDoubleDuelingDqn):
@@ -47,7 +49,7 @@ class ConfigBreakoutDoubleDuelingDqn(ConfigBase, ConfigBreakout, ConfigDoubleDue
 
         self.MAX_TRAINING_STEPS = 1_000_000
         self.BUFFER_CAPACITY = 500_000
-        self.MODEL_TYPE = ModelType.MEDIUM_2D_CONVOLUTIONAL
+        self.MODEL_TYPE = Q_MODEL.DuelingQModel.value
 
 
 class ConfigBreakoutA2c(ConfigBase, ConfigBreakout, ConfigA2c):
@@ -57,7 +59,7 @@ class ConfigBreakoutA2c(ConfigBase, ConfigBreakout, ConfigA2c):
         ConfigA2c.__init__(self)
 
         self.MAX_TRAINING_STEPS = 1_000_000
-        self.MODEL_TYPE = ModelType.MEDIUM_2D_CONVOLUTIONAL
+        self.MODEL_TYPE = BASIC_ACTOR_CRITIC_MODEL.DiscreteBasicActorCriticEncoderSharedModel.value
 
 
 class ConfigBreakoutA3c(ConfigBase, ConfigBreakout, ConfigA3c):
@@ -67,7 +69,7 @@ class ConfigBreakoutA3c(ConfigBase, ConfigBreakout, ConfigA3c):
         ConfigA3c.__init__(self)
 
         self.MAX_TRAINING_STEPS = 1_000_000
-        self.MODEL_TYPE = ModelType.MEDIUM_2D_CONVOLUTIONAL
+        self.MODEL_TYPE = BASIC_ACTOR_CRITIC_MODEL.DiscreteBasicActorCriticEncoderSharedModel.value
 
 
 class ConfigBreakoutPpo(ConfigBase, ConfigBreakout, ConfigPpo):
@@ -77,7 +79,7 @@ class ConfigBreakoutPpo(ConfigBase, ConfigBreakout, ConfigPpo):
         ConfigPpo.__init__(self)
 
         self.MAX_TRAINING_STEPS = 1_000_000
-        self.MODEL_TYPE = ModelType.MEDIUM_2D_CONVOLUTIONAL
+        self.MODEL_TYPE = BASIC_ACTOR_CRITIC_MODEL.DiscreteBasicActorCriticEncoderSharedModel.value
 
 
 class ConfigBreakoutPpoTrajectory(ConfigBase, ConfigBreakout, ConfigPpoTrajectory):
@@ -87,4 +89,4 @@ class ConfigBreakoutPpoTrajectory(ConfigBase, ConfigBreakout, ConfigPpoTrajector
         ConfigPpoTrajectory.__init__(self)
 
         self.MAX_TRAINING_STEPS = 1_000_000
-        self.MODEL_TYPE = ModelType.MEDIUM_2D_CONVOLUTIONAL
+        self.MODEL_TYPE = BASIC_ACTOR_CRITIC_MODEL.DiscreteBasicActorCriticEncoderSharedModel.value

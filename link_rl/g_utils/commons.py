@@ -198,16 +198,16 @@ def set_config(config):
     # else:
     #     raise ValueError()
 
-    if config.VALUE_NETWORK_LAYER_ACTIVATION_TYPE == LayerActivationType.LEAKY_RELU:
-        config.VALUE_NETWORK_LAYER_ACTIVATION = nn.LeakyReLU
-    elif config.VALUE_NETWORK_LAYER_ACTIVATION_TYPE == LayerActivationType.ELU:
-        config.VALUE_NETWORK_LAYER_ACTIVATION = nn.ELU
-    elif config.VALUE_NETWORK_LAYER_ACTIVATION_TYPE == LayerActivationType.PReLU:
-        config.VALUE_NETWORK_LAYER_ACTIVATION = nn.PReLU
-    elif config.VALUE_NETWORK_LAYER_ACTIVATION_TYPE == LayerActivationType.SELU:
-        config.VALUE_NETWORK_LAYER_ACTIVATION = nn.SELU
-    else:
-        raise ValueError()
+    # if config.VALUE_NETWORK_LAYER_ACTIVATION_TYPE == LayerActivationType.LEAKY_RELU:
+    #     config.VALUE_NETWORK_LAYER_ACTIVATION = nn.LeakyReLU
+    # elif config.VALUE_NETWORK_LAYER_ACTIVATION_TYPE == LayerActivationType.ELU:
+    #     config.VALUE_NETWORK_LAYER_ACTIVATION = nn.ELU
+    # elif config.VALUE_NETWORK_LAYER_ACTIVATION_TYPE == LayerActivationType.PReLU:
+    #     config.VALUE_NETWORK_LAYER_ACTIVATION = nn.PReLU
+    # elif config.VALUE_NETWORK_LAYER_ACTIVATION_TYPE == LayerActivationType.SELU:
+    #     config.VALUE_NETWORK_LAYER_ACTIVATION = nn.SELU
+    # else:
+    #     raise ValueError()
 
     if config.LOSS_FUNCTION_TYPE == LossFunctionType.MSE_LOSS:
         config.LOSS_FUNCTION = F.mse_loss

@@ -6,6 +6,7 @@ from link_rl.a_configuration.b_single_config.open_ai_gym.classic_control.config_
     ConfigCartPoleA2c, ConfigCartPoleDoubleDqn, ConfigCartPoleDuelingDqn, ConfigCartPoleDoubleDuelingDqn, \
     ConfigCartPolePpo, ConfigCartPolePpoTrajectory
 from link_rl.b_environments import wrapper
+from link_rl.c_models_v2.b_q_model import Q_MODEL
 from link_rl.g_utils.types import ModelType
 
 
@@ -146,13 +147,13 @@ class ConfigComparisonCartPoleDqnRecurrent(ConfigComparisonBase):
         self.AGENT_LABELS = [
             "Original",
             "Original + Time",
-            "Original + GRU",
+            #"Original + GRU",
         ]
 
         self.AGENT_PARAMETERS = [
             ConfigCartPoleDqn(),
             ConfigCartPoleDqn(),
-            ConfigCartPoleDqn()
+            #ConfigCartPoleDqn()
         ]
 
         # common
@@ -165,7 +166,7 @@ class ConfigComparisonCartPoleDqnRecurrent(ConfigComparisonBase):
         )
 
         # Original + GRU
-        self.AGENT_PARAMETERS[2].MODEL_TYPE = ModelType.SMALL_RECURRENT
+        #self.AGENT_PARAMETERS[2].MODEL_TYPE = None
 
 
 class ConfigComparisonCartPoleDqnRecurrentReversAction(ConfigComparisonBase):
@@ -180,13 +181,13 @@ class ConfigComparisonCartPoleDqnRecurrentReversAction(ConfigComparisonBase):
         self.AGENT_LABELS = [
             "Original",
             "Original + Time",
-            "Original + GRU",
+            #"Original + GRU",
         ]
 
         self.AGENT_PARAMETERS = [
             ConfigCartPoleDqn(),
             ConfigCartPoleDqn(),
-            ConfigCartPoleDqn()
+            #ConfigCartPoleDqn()
         ]
 
         # common
@@ -201,7 +202,7 @@ class ConfigComparisonCartPoleDqnRecurrentReversAction(ConfigComparisonBase):
         )
 
         # Original + GRU
-        self.AGENT_PARAMETERS[2].MODEL_TYPE = ModelType.SMALL_RECURRENT
+        #self.AGENT_PARAMETERS[2].MODEL_TYPE = None
 
 
 class ConfigComparisonCartPoleDqnRecurrentWithoutVelocity(ConfigComparisonBase):
@@ -216,13 +217,13 @@ class ConfigComparisonCartPoleDqnRecurrentWithoutVelocity(ConfigComparisonBase):
         self.AGENT_LABELS = [
             "Original",
             "Original + Time",
-            "Original + GRU",
+            #"Original + GRU",
         ]
 
         self.AGENT_PARAMETERS = [
             ConfigCartPoleDqn(),
             ConfigCartPoleDqn(),
-            ConfigCartPoleDqn()
+            #ConfigCartPoleDqn()
         ]
 
         # common
@@ -237,7 +238,7 @@ class ConfigComparisonCartPoleDqnRecurrentWithoutVelocity(ConfigComparisonBase):
         )
 
         # Original + GRU
-        self.AGENT_PARAMETERS[2].MODEL_TYPE = ModelType.SMALL_RECURRENT
+        #self.AGENT_PARAMETERS[2].MODEL_TYPE = None
 
 
 class ConfigComparisonCartPoleDoubleDqnRecurrent(ConfigComparisonBase):
@@ -251,19 +252,19 @@ class ConfigComparisonCartPoleDoubleDqnRecurrent(ConfigComparisonBase):
 
         self.AGENT_LABELS = [
             "Linear",
-            "GRU"
+            #"GRU"
         ]
 
         self.AGENT_PARAMETERS = [
             ConfigCartPoleDoubleDqn(),
-            ConfigCartPoleDoubleDqn()
+            #ConfigCartPoleDoubleDqn()
         ]
 
         # Linear
-        self.AGENT_PARAMETERS[0].MODEL_TYPE = ModelType.SMALL_LINEAR
+        self.AGENT_PARAMETERS[0].MODEL_TYPE = Q_MODEL.QModel
 
         # GRU
-        self.AGENT_PARAMETERS[1].MODEL_TYPE = ModelType.SMALL_RECURRENT
+        #self.AGENT_PARAMETERS[1].MODEL_TYPE = None
 
 
 class ConfigComparisonCartPoleDoubleDqnRecurrentWithoutVelocity(ConfigComparisonBase):
@@ -277,12 +278,12 @@ class ConfigComparisonCartPoleDoubleDqnRecurrentWithoutVelocity(ConfigComparison
 
         self.AGENT_LABELS = [
             "Linear",
-            "GRU"
+            #"GRU"
         ]
 
         self.AGENT_PARAMETERS = [
             ConfigCartPoleDoubleDqn(),
-            ConfigCartPoleDoubleDqn()
+            #ConfigCartPoleDoubleDqn()
         ]
 
         # common
@@ -290,7 +291,7 @@ class ConfigComparisonCartPoleDoubleDqnRecurrentWithoutVelocity(ConfigComparison
             config.WRAPPERS.append(wrapper.CartpoleWithoutVelocity)
 
         # Linear
-        self.AGENT_PARAMETERS[0].MODEL_TYPE = ModelType.SMALL_LINEAR
+        self.AGENT_PARAMETERS[0].MODEL_TYPE = Q_MODEL.QModel.value
 
         # GRU
-        self.AGENT_PARAMETERS[1].MODEL_TYPE = ModelType.SMALL_RECURRENT
+        #self.AGENT_PARAMETERS[1].MODEL_TYPE = None
