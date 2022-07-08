@@ -11,8 +11,7 @@ module_list = [
     and file.replace(".py", "") not in ["__init__",
                                         "base",
                                         "head",
-                                        "utils",
-                                        "a_model_creator"]
+                                        "utils"]
 ]
 
 # naming_rule = lambda x: re.sub("([a-z])([A-Z])", r"\1_\2", x).lower()

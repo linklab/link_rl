@@ -20,11 +20,11 @@ class AgentPpo(AgentA2c):
         # OLD_LOG_PI 처리: BEGIN
         #####################################
         if isinstance(self.action_space, Discrete):
-            action_probs = self.actor_model(self.observations)
+            action_probs = self.actor_forward(self.observations)
             dist = Categorical(probs=action_probs)
             old_log_pi_action_v = dist.log_prob(value=self.actions.squeeze(dim=-1))
         elif isinstance(self.action_space, Box):
-            mu_v, var_v = self.actor_model(self.observations)
+            mu_v, var_v = self.actor_forward(self.observations)
             dist = Normal(loc=mu_v, scale=torch.sqrt(var_v))
             old_log_pi_action_v = dist.log_prob(value=self.actions).sum(dim=-1)
         else:
@@ -40,11 +40,11 @@ class AgentPpo(AgentA2c):
             # actions.shape: (32, 1)
             # dist.log_prob(value=actions.squeeze(-1)).shape: (32,)
             # criticized_log_pi_action_v.shape: (32,)
-            action_probs = self.actor_model(self.observations)
+            action_probs = self.actor_forward(self.observations)
             dist = Categorical(probs=action_probs)
             log_pi_action_v = dist.log_prob(value=self.actions.squeeze(dim=-1))
         elif isinstance(self.action_space, Box):
-            mu_v, var_v = self.actor_model(self.observations)
+            mu_v, var_v = self.actor_forward(self.observations)
 
             # log_pi_action_v = self.calc_log_prob(mu_v, var_v, actions)
             # entropy = 0.5 * (torch.log(2.0 * np.pi * var_v) + 1.0).sum(dim=-1)
@@ -92,12 +92,16 @@ class AgentPpo(AgentA2c):
             #############################################
             #  Critic (Value) Loss 산출 & Update - BEGIN #
             #############################################
-            values = self.critic_model(self.observations)
+            values = self.critic_forward(self.observations)
             critic_loss = self.get_critic_loss(values=values, detached_target_values=detached_target_values)
 
+            if self.encoder_is_not_identity:
+                self.encoder_optimizer.zero_grad()
             self.critic_optimizer.zero_grad()
             critic_loss.backward()
             self.clip_critic_model_parameter_grad_value(self.critic_model.parameters())
+            if self.encoder_is_not_identity:
+                self.encoder_optimizer.step()
             self.critic_optimizer.step()
             ##########################################
             #  Critic (Value) Loss 산출 & Update- END #

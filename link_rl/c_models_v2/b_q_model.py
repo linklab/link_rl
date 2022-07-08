@@ -18,12 +18,12 @@ class Q_MODEL(enum.Enum):
 class QModel(SingleModel):
     def __init__(
         self,
-        observation_shape: Tuple[int, ...],
+        n_input: int,
         n_out_actions: int,
         n_discrete_actions=None
     ):
-        super(QModel, self).__init__(
-            observation_shape,
+        super().__init__(
+            n_input,
             n_out_actions,
             n_discrete_actions
         )
@@ -64,12 +64,12 @@ class DuelingQModel(SingleModel):
 
     def __init__(
         self,
-        observation_shape: Tuple[int, ...],
+        n_input: int,
         n_out_actions: int,
         n_discrete_actions=None
     ):
-        super(DuelingQModel, self).__init__(
-            observation_shape,
+        super().__init__(
+            n_input,
             n_out_actions,
             n_discrete_actions
         )
@@ -95,12 +95,12 @@ class DuelingQModel(SingleModel):
 class EncoderQModel(SingleModel):
     def __init__(
         self,
-        observation_shape: Tuple[int, ...],
+        n_input: int,
         n_out_actions: int,
         n_discrete_actions=None
     ):
-        super(EncoderQModel, self).__init__(
-            observation_shape,
+        super().__init__(
+            n_input,
             n_out_actions,
             n_discrete_actions
         )
@@ -162,12 +162,12 @@ class EncoderQModel(SingleModel):
 class GymAtariQModel(SingleModel):
     def __init__(
         self,
-        observation_shape: Tuple[int, ...],
+        n_input: int,
         n_out_actions: int,
         n_discrete_actions=None
     ):
-        super(GymAtariQModel, self).__init__(
-            observation_shape,
+        super().__init__(
+            n_input,
             n_out_actions,
             n_discrete_actions
         )

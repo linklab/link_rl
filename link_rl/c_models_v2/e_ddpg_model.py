@@ -27,12 +27,12 @@ class ContinuousDdpgModel(DoubleModel):
 
     def __init__(
         self,
-        observation_shape: Tuple[int, ...],
+        n_input: int,
         n_out_actions: int,
         n_discrete_actions=None
     ):
-        super(ContinuousDdpgModel, self).__init__(
-            observation_shape,
+        super().__init__(
+            n_input,
             n_out_actions,
             n_discrete_actions
         )

@@ -115,7 +115,7 @@ class OnPolicyAgent(Agent):
 
         self.step += 1
         if isinstance(self.action_space, Discrete):
-            action_prob = self.actor_model(obs)
+            action_prob = self.actor_forward(obs)
 
             if mode == AgentMode.TRAIN:
                 action = np.random.choice(
@@ -129,7 +129,7 @@ class OnPolicyAgent(Agent):
             return action
 
         elif isinstance(self.action_space, Box):
-            mu_v, var_v = self.actor_model(obs)
+            mu_v, var_v = self.actor_forward(obs)
 
             if mode == AgentMode.TRAIN:
                 actions = np.random.normal(
@@ -161,7 +161,7 @@ class OnPolicyAgent(Agent):
 
     def get_target_values_and_advantages(self):
         combined_observations = torch.vstack([self.observations, self.next_observations[-1:]])
-        combined_values = self.critic_model(combined_observations)
+        combined_values = self.critic_forward(combined_observations)
 
         # values.shape: (32, 1), next_values.shape: (32, 1)
         values = combined_values[:-1]

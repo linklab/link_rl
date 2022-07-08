@@ -18,12 +18,12 @@ class BASIC_ACTOR_CRITIC_MODEL(enum.Enum):
 class DiscreteBasicActorCriticSharedModel(DoubleModel):
     def __init__(
         self,
-        observation_shape: Tuple[int, ...],
+        n_input: int,
         n_out_actions: int,
         n_discrete_actions=None
     ):
-        super(DiscreteBasicActorCriticSharedModel, self).__init__(
-            observation_shape,
+        super().__init__(
+            n_input,
             n_out_actions,
             n_discrete_actions
         )
@@ -64,17 +64,15 @@ class DiscreteBasicActorCriticSharedModel(DoubleModel):
 class DiscreteBasicActorCriticEncoderSharedModel(DoubleModel):
     def __init__(
         self,
-        observation_shape: Tuple[int, ...],
+        n_input: int,
         n_out_actions: int,
-        n_discrete_actions=None,
-        encoder_type=EncoderType.TWO_CONVOLUTION
+        n_discrete_actions=None
     ):
-        super(DiscreteBasicActorCriticEncoderSharedModel, self).__init__(
-            observation_shape,
+        super().__init__(
+            n_input,
             n_out_actions,
             n_discrete_actions
         )
-        self.encoder_type = encoder_type
 
     @final
     def _create_model(self) -> Tuple[nn.Module, nn.Module]:
@@ -148,12 +146,12 @@ class ContinuousBasicActorCriticSharedModel(DoubleModel):
 
     def __init__(
         self,
-        observation_shape: Tuple[int, ...],
+        n_input: int,
         n_out_actions: int,
         n_discrete_actions=None
     ):
-        super(ContinuousBasicActorCriticSharedModel, self).__init__(
-            observation_shape,
+        super().__init__(
+            n_input,
             n_out_actions,
             n_discrete_actions
         )
@@ -218,17 +216,15 @@ class ContinuousBasicActorCriticEncoderSharedModel(DoubleModel):
 
     def __init__(
         self,
-        observation_shape: Tuple[int, ...],
+        n_input: int,
         n_out_actions: int,
-        n_discrete_actions=None,
-        encoder_type=EncoderType.TWO_CONVOLUTION
+        n_discrete_actions=None
     ):
-        super(ContinuousBasicActorCriticEncoderSharedModel, self).__init__(
-            observation_shape,
+        super().__init__(
+            n_input,
             n_out_actions,
             n_discrete_actions
         )
-        self.encoder_type = encoder_type
 
     @final
     def _create_model(self) -> Tuple[nn.Module, nn.Module]:

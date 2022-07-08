@@ -1,7 +1,7 @@
 import enum
 
 from torch import nn
-from typing import final, Tuple
+from typing import final
 from link_rl.c_models_v2.a_model import SingleModel, model_registry
 
 
@@ -13,12 +13,12 @@ class VANILLA_POLICY_MODEL(enum.Enum):
 class DiscreteVanillaPolicyModel(SingleModel):
     def __init__(
         self,
-        observation_shape: Tuple[int, ...],
+        n_input: int,
         n_out_actions: int,
         n_discrete_actions=None
     ):
-        super(DiscreteVanillaPolicyModel, self).__init__(
-            observation_shape,
+        super().__init__(
+            n_input,
             n_out_actions,
             n_discrete_actions
         )

@@ -11,12 +11,11 @@ from link_rl.g_utils.registry import Registry
 class BaseModel(ABC):
     def __init__(
         self,
-        observation_shape: Tuple[int, ...],
+        n_input: int,
         n_out_actions: int,
         n_discrete_actions=None
     ):
-        self._observation_shape = observation_shape
-        self._n_input = observation_shape[0]
+        self._n_input = n_input
         self._n_out_actions = n_out_actions
         self._n_discrete_actions = n_discrete_actions
 
@@ -41,12 +40,12 @@ model_registry = Registry(BaseModel)
 class SingleModel(BaseModel, ABC):
     def __init__(
         self,
-        observation_shape: Tuple[int, ...],
+        n_input: int,
         n_out_actions: int,
         n_discrete_actions=None
     ):
-        super(SingleModel, self).__init__(
-            observation_shape,
+        super().__init__(
+            n_input,
             n_out_actions,
             n_discrete_actions
         )
@@ -58,15 +57,15 @@ class SingleModel(BaseModel, ABC):
         return model
 
 
-class DoubleModel(BaseModel):
+class DoubleModel(BaseModel, ABC):
     def __init__(
         self,
-        observation_shape: Tuple[int, ...],
+        n_input: int,
         n_out_actions: int,
         n_discrete_actions=None
     ):
-        super(DoubleModel, self).__init__(
-            observation_shape,
+        super().__init__(
+            n_input,
             n_out_actions,
             n_discrete_actions
         )

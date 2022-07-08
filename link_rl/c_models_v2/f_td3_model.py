@@ -35,12 +35,12 @@ class ContinuousTd3Model(DoubleModel):
 
     def __init__(
         self,
-        observation_shape: Tuple[int, ...],
+        n_input: int,
         n_out_actions: int,
         n_discrete_actions=None
     ):
-        super(ContinuousTd3Model, self).__init__(
-            observation_shape,
+        super().__init__(
+            n_input,
             n_out_actions,
             n_discrete_actions
         )
@@ -100,17 +100,15 @@ class ContinuousTd3EncoderModel(DoubleModel):
 
     def __init__(
         self,
-        observation_shape: Tuple[int, ...],
+        n_input: int,
         n_out_actions: int,
-        n_discrete_actions=None,
-        encoder_type=EncoderType.TWO_CONVOLUTION
+        n_discrete_actions=None
     ):
-        super(ContinuousTd3EncoderModel, self).__init__(
-            observation_shape,
+        super().__init__(
+            n_input,
             n_out_actions,
             n_discrete_actions
         )
-        self.encoder_type = encoder_type
 
     @final
     def _create_model(self) -> Tuple[nn.Module, nn.Module]:
@@ -210,17 +208,15 @@ class ContinuousTd3SharedEncoderModel(DoubleModel):
 
     def __init__(
         self,
-        observation_shape: Tuple[int, ...],
+        n_input: int,
         n_out_actions: int,
-        n_discrete_actions=None,
-        encoder_type=EncoderType.TWO_CONVOLUTION
+        n_discrete_actions=None
     ):
-        super(ContinuousTd3SharedEncoderModel, self).__init__(
-            observation_shape,
+        super().__init__(
+            n_input,
             n_out_actions,
             n_discrete_actions
         )
-        self.encoder_type = encoder_type
 
     @final
     def _create_model(self) -> Tuple[nn.Module, nn.Module]:

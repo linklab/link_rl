@@ -107,12 +107,12 @@ class TdmpcEncoderModel(SingleModel):
 
     def __init__(
         self,
-        observation_shape: Tuple[int, ...],
+        n_input: int,
         n_out_actions: int,
         n_discrete_actions=None
     ):
-        super(TdmpcEncoderModel, self).__init__(
-            observation_shape,
+        super().__init__(
+            n_input,
             n_out_actions,
             n_discrete_actions
         )
@@ -233,13 +233,13 @@ class TdmpcModel(SingleModel):
             return self.q1_net(x), self.q2_net(x)
 
     def __init__(
-            self,
-            observation_shape: Tuple[int, ...],
-            n_out_actions: int,
-            n_discrete_actions=None
+        self,
+        n_input: int,
+        n_out_actions: int,
+        n_discrete_actions=None
     ):
-        super(TdmpcModel, self).__init__(
-            observation_shape,
+        super().__init__(
+            n_input,
             n_out_actions,
             n_discrete_actions
         )
@@ -350,12 +350,12 @@ class TdmpcRepresentationParameterizedEncoderModel(SingleModel):
 
     def __init__(
         self,
-        observation_shape: Tuple[int, ...],
+        n_input: int,
         n_out_actions: int,
         n_discrete_actions=None
     ):
-        super(TdmpcRepresentationParameterizedEncoderModel, self).__init__(
-            observation_shape,
+        super().__init__(
+            n_input,
             n_out_actions,
             n_discrete_actions
         )
@@ -486,12 +486,12 @@ class TdmpcCNNParameterizedEncoderModel(SingleModel):
 
     def __init__(
         self,
-        observation_shape: Tuple[int, ...],
+        n_input: int,
         n_out_actions: int,
         n_discrete_actions=None
     ):
-        super(TdmpcCNNParameterizedEncoderModel, self).__init__(
-            observation_shape,
+        super().__init__(
+            n_input,
             n_out_actions,
             n_discrete_actions
         )

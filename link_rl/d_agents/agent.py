@@ -9,7 +9,10 @@ import numpy as np
 from link_rl.a_configuration.a_base_config.c_models.config_recurrent_convolutional_models import \
     ConfigRecurrent1DConvolutionalModel, ConfigRecurrent2DConvolutionalModel
 from link_rl.a_configuration.a_base_config.c_models.config_recurrent_linear_models import ConfigRecurrentLinearModel
+from link_rl.c_encoders.a_encoder import BaseEncoder
 from link_rl.c_models_v2 import model_creators
+from link_rl.c_encoders import encoder_creators
+from link_rl.c_models_v2.a_model import BaseModel
 from link_rl.g_utils.commons import get_continuous_action_info
 from link_rl.g_utils.types import AgentMode, ActorCriticAgentTypes
 
@@ -53,11 +56,18 @@ class Agent:
         else:
             raise ValueError()
 
+        if not hasattr(self, "_encoder_creator"):
+            print(self.config.ENCODER_TYPE, "##########")
+            encoder_creators_class = encoder_creators.get(self.config.ENCODER_TYPE)
+            self._encoder_creator: BaseEncoder = encoder_creators_class(
+                observation_shape=self.observation_shape
+            )
+
         if not hasattr(self, "_model_creator"):
             print(self.config.MODEL_TYPE, "##########")
             model_creator_class = model_creators.get(self.config.MODEL_TYPE)
-            self._model_creator = model_creator_class(
-                observation_shape=self.observation_shape,
+            self._model_creator: BaseModel = model_creator_class(
+                n_input=self._encoder_creator.conv_out,
                 n_out_actions=self.n_out_actions,
                 n_discrete_actions=self.n_discrete_actions
             )
@@ -83,6 +93,10 @@ class Agent:
         ])
 
         self.step = 0
+
+    @property
+    def enc_out(self):
+        return self._encoder_creator.conv_out
 
     @abstractmethod
     @torch.no_grad()

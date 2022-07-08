@@ -11,46 +11,74 @@ class AgentTd3(OffPolicyAgent):
     def __init__(self, observation_space, action_space, config, need_train):
         super(AgentTd3, self).__init__(observation_space, action_space, config, need_train)
 
-        # self._model_creator = ContinuousTd3ModelCreator(
-        #     n_input=self.observation_shape[0],
-        #     n_out_actions=self.n_out_actions,
-        #     n_discrete_actions=self.n_discrete_actions
-        # )
+        # models
+        self.encoder = self._encoder_creator.create_encoder()
+        self.target_encoder = self._encoder_creator.create_encoder()
+        self.actor_model, self.critic_model = self._model_creator.create_model()
+        self.target_actor_model, self.target_critic_model = self._model_creator.create_model()
 
-        model = self._model_creator.create_model()
-        target_model = self._model_creator.create_model()
-
-        self.actor_model, self.critic_model = model
-        self.target_actor_model, self.target_critic_model = target_model
-
+        # to(device)
+        self.encoder.to(self.config.DEVICE)
+        self.target_encoder.to(self.config.DEVICE)
         self.actor_model.to(self.config.DEVICE)
-        self.critic_model.to(self.config.DEVICE)
         self.target_actor_model.to(self.config.DEVICE)
+        self.critic_model.to(self.config.DEVICE)
         self.target_critic_model.to(self.config.DEVICE)
 
+        # Access
         self.model = self.actor_model
         self.model.eval()
 
+        # sync models
+        self.synchronize_models(source_model=self.encoder, target_model=self.target_encoder)
         self.synchronize_models(source_model=self.actor_model, target_model=self.target_actor_model)
         self.synchronize_models(source_model=self.critic_model, target_model=self.target_critic_model)
 
+        # share memory
+        self.encoder.share_memory()
         self.actor_model.share_memory()
         self.critic_model.share_memory()
 
+        # optimizers
+        self.encoder_is_not_identity = type(self.encoder).__name__ != "Identity"
+        if self.encoder_is_not_identity:
+            self.encoder_optimizer = optim.Adam(self.actor_model.parameters(), lr=self.config.LEARNING_RATE)
         self.actor_optimizer = optim.Adam(self.actor_model.parameters(), lr=self.config.ACTOR_LEARNING_RATE)
         self.critic_optimizer = optim.Adam(self.critic_model.parameters(), lr=self.config.LEARNING_RATE)
 
+        # training step
         self.training_step = 0
 
+        # loss
         self.last_critic_loss = mp.Value('d', 0.0)
         self.last_actor_objective = mp.Value('d', 0.0)
+
+    def actor_forward(self, obs):
+        x = self.encoder(obs)
+        mu = self.actor_model(x)
+        return mu
+
+    def critic_forward(self, obs, action):
+        x = self.encoder(obs)
+        q1, q2 = self.critic_model(x, action)
+        return q1, q2
+
+    def target_actor_forward(self, obs):
+        x = self.target_encoder(obs)
+        mu = self.target_actor_model(x)
+        return mu
+
+    def target_critic_forward(self, obs, action):
+        x = self.target_encoder(obs)
+        q1, q2 = self.target_critic_model(x, action)
+        return q1, q2
 
     @torch.no_grad()
     def get_action(self, obs, mode=AgentMode.TRAIN):
         if isinstance(obs, np.ndarray):
             obs = torch.from_numpy(obs).float().to(self.config.DEVICE)
 
-        mu = self.actor_model(obs)
+        mu = self.actor_forward(obs)
         mu = mu.detach().cpu().numpy()
 
         if mode == AgentMode.TRAIN:
@@ -70,21 +98,21 @@ class AgentTd3(OffPolicyAgent):
         # train critic - BEGIN #
         ########################
         with torch.no_grad():
-            next_mu_v = self.target_actor_model(self.next_observations)
+            next_mu_v = self.target_actor_forward(self.next_observations)
             next_noises = torch.normal(
                 mean=torch.zeros_like(next_mu_v), std=torch.ones_like(next_mu_v)
             ).to(self.config.DEVICE)
             next_action = next_mu_v + torch.clip(input=next_noises, min=self.torch_minus_ones, max=self.torch_plus_ones)
             next_action = torch.clip(input=next_action, min=self.torch_minus_ones, max=self.torch_plus_ones)
 
-            next_q1_value, next_q2_value = self.target_critic_model(self.next_observations, next_action)
+            next_q1_value, next_q2_value = self.target_critic_forward(self.next_observations, next_action)
             min_next_q_value = torch.min(next_q1_value, next_q2_value)
             min_next_q_value[self.dones] = 0.0
             target_q_v = self.rewards + self.config.GAMMA ** self.config.N_STEP * min_next_q_value
             if self.config.TARGET_VALUE_NORMALIZE:
                 target_q_v = (target_q_v - torch.mean(target_q_v)) / (torch.std(target_q_v) + 1e-7)
 
-        q1_value, q2_value = self.critic_model(self.observations, self.actions)
+        q1_value, q2_value = self.critic_forward(self.observations, self.actions)
 
         critic_loss_each = (self.config.LOSS_FUNCTION(q1_value, target_q_v.detach(), reduction="none")
                             + self.config.LOSS_FUNCTION(q2_value, target_q_v.detach(), reduction="none")) / 2.0
@@ -94,14 +122,22 @@ class AgentTd3(OffPolicyAgent):
 
         critic_loss = critic_loss_each.mean()
 
+        if self.encoder_is_not_identity:
+            self.encoder_optimizer.zero_grad()
         self.critic_optimizer.zero_grad()
         critic_loss.backward()
+        self.clip_critic_model_parameter_grad_value(self.encoder.parameters())
         self.clip_critic_model_parameter_grad_value(self.critic_model.parameters())
+        if self.encoder_is_not_identity:
+            self.encoder_optimizer.step()
         self.critic_optimizer.step()
 
         self.last_critic_loss.value = critic_loss.item()
 
         # TAU: 0.005
+        self.soft_synchronize_models(
+            source_model=self.encoder, target_model=self.target_encoder, tau=self.config.TAU
+        )
         self.soft_synchronize_models(
             source_model=self.critic_model, target_model=self.target_critic_model, tau=self.config.TAU
         )
@@ -113,8 +149,8 @@ class AgentTd3(OffPolicyAgent):
         # train actor - BEGIN #
         #######################
         if training_steps_v % self.config.POLICY_UPDATE_FREQUENCY_PER_TRAINING_STEP == 0:
-            mu_v = self.actor_model(self.observations)
-            q1_value, q2_value = self.critic_model(self.observations, mu_v)
+            mu_v = self.actor_forward(self.observations)
+            q1_value, q2_value = self.critic_forward(self.observations, mu_v)
             actor_objective = torch.min(q1_value, q2_value).mean()
             actor_loss = -1.0 * actor_objective
 

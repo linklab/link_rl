@@ -13,46 +13,74 @@ class AgentDdpg(OffPolicyAgent):
     def __init__(self, observation_space, action_space, config, need_train):
         super(AgentDdpg, self).__init__(observation_space, action_space, config, need_train)
 
-        # self._model_creator = ContinuousDdpgModel(
-        #     n_input=self.observation_shape[0],
-        #     n_out_actions=self.n_out_actions,
-        #     n_discrete_actions=self.n_discrete_actions
-        # )
+        # models
+        self.encoder = self._encoder_creator.create_encoder()
+        self.target_encoder = self._encoder_creator.create_encoder()
+        self.actor_model, self.critic_model = self._model_creator.create_model()
+        self.target_actor_model, self.target_critic_model = self._model_creator.create_model()
 
-        model = self._model_creator.create_model()
-        target_model = self._model_creator.create_model()
-
-        self.actor_model, self.critic_model = model
-        self.target_actor_model, self.target_critic_model = target_model
-
+        # to(device)
+        self.encoder.to(self.config.DEVICE)
+        self.target_encoder.to(self.config.DEVICE)
         self.actor_model.to(self.config.DEVICE)
-        self.critic_model.to(self.config.DEVICE)
         self.target_actor_model.to(self.config.DEVICE)
+        self.critic_model.to(self.config.DEVICE)
         self.target_critic_model.to(self.config.DEVICE)
 
+        # Access
         self.model = self.actor_model
         self.model.eval()
 
+        # sync models
+        self.synchronize_models(source_model=self.encoder, target_model=self.target_encoder)
         self.synchronize_models(source_model=self.actor_model, target_model=self.target_actor_model)
         self.synchronize_models(source_model=self.critic_model, target_model=self.target_critic_model)
 
+        # share memory
+        self.encoder.share_memory()
         self.actor_model.share_memory()
         self.critic_model.share_memory()
 
+        # optimizers
+        self.encoder_is_not_identity = type(self.encoder).__name__ != "Identity"
+        if self.encoder_is_not_identity:
+            self.encoder_optimizer = optim.Adam(self.encoder.parameters(), lr=self.config.LEARNING_RATE)
         self.actor_optimizer = optim.Adam(self.actor_model.parameters(), lr=self.config.ACTOR_LEARNING_RATE)
         self.critic_optimizer = optim.Adam(self.critic_model.parameters(), lr=self.config.LEARNING_RATE)
 
+        # training step
         self.training_step = 0
 
+        # loss
         self.last_critic_loss = mp.Value('d', 0.0)
         self.last_actor_objective = mp.Value('d', 0.0)
+
+    def actor_forward(self, obs):
+        x = self.encoder(obs)
+        mu = self.actor_model(x)
+        return mu
+
+    def critic_forward(self, obs, action):
+        x = self.encoder(obs)
+        q = self.critic_model(x, action)
+        return q
+
+    def target_actor_forward(self, obs):
+        x = self.target_encoder(obs)
+        mu = self.target_actor_model(x)
+        return mu
+
+    def target_critic_forward(self, obs, action):
+        x = self.target_encoder(obs)
+        q = self.target_critic_model(x, action)
+        return q
 
     @torch.no_grad()
     def get_action(self, obs, mode=AgentMode.TRAIN):
         if isinstance(obs, np.ndarray):
             obs = torch.from_numpy(obs).float().to(self.config.DEVICE)
 
-        mu = self.actor_model(obs)
+        mu = self.actor_forward(obs)
         mu = mu.detach().cpu().numpy()
 
         if mode == AgentMode.TRAIN:
@@ -71,14 +99,14 @@ class AgentDdpg(OffPolicyAgent):
         # train critic - BEGIN #
         ########################
         with torch.no_grad():
-            next_mu_v = self.target_actor_model(self.next_observations)
-            next_q_v = self.target_critic_model(self.next_observations, next_mu_v)
+            next_mu_v = self.target_actor_forward(self.next_observations)
+            next_q_v = self.target_critic_forward(self.next_observations, next_mu_v)
             next_q_v[self.dones] = 0.0
             target_q_v = self.rewards + self.config.GAMMA ** self.config.N_STEP * next_q_v
             if self.config.TARGET_VALUE_NORMALIZE:
                 target_q_v = (target_q_v - torch.mean(target_q_v)) / (torch.std(target_q_v) + 1e-7)
 
-        q_v = self.critic_model(self.observations, self.actions)
+        q_v = self.critic_forward(self.observations, self.actions)
 
         critic_loss_each = self.config.LOSS_FUNCTION(q_v, target_q_v.detach(), reduction="none")
 
@@ -87,9 +115,14 @@ class AgentDdpg(OffPolicyAgent):
 
         critic_loss = critic_loss_each.mean()
 
+        if self.encoder_is_not_identity:
+            self.encoder_optimizer.zero_grad()
         self.critic_optimizer.zero_grad()
         critic_loss.backward()
+        self.clip_critic_model_parameter_grad_value(self.encoder.parameters())
         self.clip_critic_model_parameter_grad_value(self.critic_model.parameters())
+        if self.encoder_is_not_identity:
+            self.encoder_optimizer.step()
         self.critic_optimizer.step()
         ######################
         # train critic - end #
@@ -98,8 +131,8 @@ class AgentDdpg(OffPolicyAgent):
         #######################
         # train actor - BEGIN #
         #######################
-        mu_v = self.actor_model(self.observations)
-        q_v = self.critic_model(self.observations, mu_v)
+        mu_v = self.actor_forward(self.observations)
+        q_v = self.critic_forward(self.observations, mu_v)
         actor_objective = q_v.mean()
         actor_loss = -1.0 * actor_objective
 
@@ -113,10 +146,11 @@ class AgentDdpg(OffPolicyAgent):
 
         # TAU: 0.005
         self.soft_synchronize_models(
+            source_model=self.encoder, target_model=self.target_encoder, tau=self.config.TAU
+        )
+        self.soft_synchronize_models(
             source_model=self.actor_model, target_model=self.target_actor_model, tau=self.config.TAU
         )
-
-        # TAU: 0.005
         self.soft_synchronize_models(
             source_model=self.critic_model, target_model=self.target_critic_model, tau=self.config.TAU
         )

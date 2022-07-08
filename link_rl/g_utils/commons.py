@@ -303,17 +303,22 @@ def print_model_summary(agent, observation_space, action_space, config):
         row_settings=["ascii_only", "depth", "var_names"],
         col_names=["kernel_size", "input_size", "output_size", "num_params", "mult_adds"],
     )
+    torchinfo.summary(
+        model=agent.encoder,
+        input_size=observation_space.shape,
+        **summary_config
+    )
     for model in models:
         try:
             torchinfo.summary(
                 model=model,
-                input_size=observation_space.shape,
+                input_size=(agent.enc_out,),
                 **summary_config
             )
-        except Exception as e:
+        except Exception as e:  # TODO Too broad exception clause
             torchinfo.summary(
                 model=model,
-                input_size=(observation_space.shape, action_space.shape),
+                input_size=((agent.enc_out,), action_space.shape),
                 **summary_config
             )
 

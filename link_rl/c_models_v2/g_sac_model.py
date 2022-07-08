@@ -51,12 +51,12 @@ class ContinuousSacSharedModel(DoubleModel):
 
     def __init__(
         self,
-        observation_shape: Tuple[int, ...],
+        n_input: int,
         n_out_actions: int,
         n_discrete_actions=None
     ):
-        super(ContinuousSacSharedModel, self).__init__(
-            observation_shape,
+        super().__init__(
+            n_input,
             n_out_actions,
             n_discrete_actions
         )
@@ -132,12 +132,12 @@ class ContinuousSacModel(DoubleModel):
 
     def __init__(
         self,
-        observation_shape: Tuple[int, ...],
+        n_input: int,
         n_out_actions: int,
         n_discrete_actions=None
     ):
-        super(ContinuousSacModel, self).__init__(
-            observation_shape,
+        super().__init__(
+            n_input,
             n_out_actions,
             n_discrete_actions
         )
@@ -222,17 +222,15 @@ class ContinuousSacSharedEncoderModel(DoubleModel):
 
     def __init__(
         self,
-        observation_shape: Tuple[int, ...],
+        n_input: int,
         n_out_actions: int,
-        n_discrete_actions=None,
-        encoder_type=EncoderType.TWO_CONVOLUTION
+        n_discrete_actions=None
     ):
-        super(ContinuousSacSharedEncoderModel, self).__init__(
-            observation_shape,
+        super().__init__(
+            n_input,
             n_out_actions,
             n_discrete_actions
         )
-        self.encoder_type = encoder_type
 
     @final
     def _create_model(self) -> Tuple[nn.Module, nn.Module]:
@@ -337,17 +335,15 @@ class ContinuousSacEncoderModel(DoubleModel):
 
     def __init__(
         self,
-        observation_shape: Tuple[int, ...],
+        n_input: int,
         n_out_actions: int,
-        n_discrete_actions=None,
-        encoder_type=EncoderType.TWO_CONVOLUTION
+        n_discrete_actions=None
     ):
-        super(ContinuousSacEncoderModel, self).__init__(
-            observation_shape,
+        super().__init__(
+            n_input,
             n_out_actions,
             n_discrete_actions
         )
-        self.encoder_type = encoder_type
 
     @final
     def _create_model(self) -> Tuple[nn.Module, nn.Module]:
