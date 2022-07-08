@@ -1,4 +1,3 @@
-from link_rl.g_utils.types import ModelType
 
 
 class ConfigDmControl:

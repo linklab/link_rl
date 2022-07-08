@@ -5,7 +5,6 @@ from link_rl.a_configuration.a_base_config.config_single_base import ConfigBase
 from link_rl.c_models_v2.d_basic_actor_critic_model import BASIC_ACTOR_CRITIC_MODEL
 from link_rl.c_models_v2.g_sac_model import SAC_MODEL
 from link_rl.g_utils.commons import print_basic_info, get_env_info
-from link_rl.g_utils.types import ModelType
 
 
 class ConfigHopperBulletSac(ConfigBase, ConfigHopperBullet, ConfigSac):
@@ -26,7 +25,6 @@ class ConfigHopperBulletPpo(ConfigBase, ConfigHopperBullet, ConfigPpo):
         ConfigPpo.__init__(self)
 
         self.MAX_TRAINING_STEPS = 2_000_000
-        self.MODEL_TYPE = ModelType.MEDIUM_LINEAR
         self.MODEL_TYPE = BASIC_ACTOR_CRITIC_MODEL.ContinuousBasicActorCriticEncoderSharedModel.value
 
 

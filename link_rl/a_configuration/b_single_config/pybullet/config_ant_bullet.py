@@ -7,7 +7,6 @@ from link_rl.c_models_v2.e_ddpg_model import DDPG_MODEL
 from link_rl.c_models_v2.f_td3_model import TD3_MODEL
 from link_rl.c_models_v2.g_sac_model import SAC_MODEL
 from link_rl.g_utils.commons import print_basic_info, get_env_info
-from link_rl.g_utils.types import ModelType
 
 
 class ConfigAntBulletA2c(ConfigBase, ConfigAntBullet, ConfigA2c):

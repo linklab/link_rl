@@ -8,7 +8,6 @@ from link_rl.c_models_v2.d_basic_actor_critic_model import BASIC_ACTOR_CRITIC_MO
 from link_rl.c_models_v2.e_ddpg_model import DDPG_MODEL
 from link_rl.c_models_v2.f_td3_model import TD3_MODEL
 from link_rl.c_models_v2.g_sac_model import SAC_MODEL
-from link_rl.g_utils.types import ModelType
 
 
 class ConfigCartPoleContinuousBulletReinforce(ConfigBase, ConfigCartPoleContinuousBullet, ConfigReinforce):

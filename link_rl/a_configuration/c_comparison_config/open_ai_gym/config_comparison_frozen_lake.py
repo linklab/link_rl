@@ -5,8 +5,6 @@ from link_rl.a_configuration.b_single_config.open_ai_gym.toy_text.config_frozen_
 
 import numpy as np
 
-from link_rl.g_utils.types import ModelType
-
 
 class ConfigComparisonFrozenLakeBase(ConfigComparisonBase):
     def __init__(self):

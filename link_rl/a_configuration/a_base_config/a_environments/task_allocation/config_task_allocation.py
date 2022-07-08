@@ -1,5 +1,4 @@
 from link_rl.b_environments.task_allocation.task_allocation_env import TaskAllocationEnvironmentStat
-from link_rl.g_utils.types import ModelType
 
 
 class ConfigTaskAllocation:

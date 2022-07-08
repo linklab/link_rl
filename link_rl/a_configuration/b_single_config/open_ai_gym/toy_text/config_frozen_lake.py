@@ -1,7 +1,7 @@
 from link_rl.a_configuration.a_base_config.b_agents.config_agents_off_policy import ConfigDqn
 from link_rl.a_configuration.a_base_config.config_single_base import ConfigBase
 from link_rl.a_configuration.a_base_config.a_environments.open_ai_gym.config_gym_toy_text import ConfigFrozenLake
-from link_rl.g_utils.types import ModelType
+from link_rl.c_models_v2.b_q_model import Q_MODEL
 
 
 class ConfigFrozenLakeDqn(ConfigBase, ConfigFrozenLake, ConfigDqn):
@@ -14,9 +14,9 @@ class ConfigFrozenLakeDqn(ConfigBase, ConfigFrozenLake, ConfigDqn):
         self.BUFFER_CAPACITY = 50_000
 
         if self.BOX_OBSERVATION:
-            self.MODEL_TYPE = ModelType.TINY_2D_CONVOLUTIONAL
+            self.MODEL_TYPE = Q_MODEL.EncoderQModel.value
         else:
-            self.MODEL_TYPE = ModelType.TINY_LINEAR
+            self.MODEL_TYPE = Q_MODEL.QModel.value
 
 
 # class ConfigFrozenLakeDoubleDqn(ConfigBase, ConfigFrozenLake, ConfigDoubleDqn):

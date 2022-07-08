@@ -7,7 +7,6 @@ from link_rl.a_configuration.a_base_config.config_single_base import ConfigBase
 from link_rl.c_models_v2.b_q_model import Q_MODEL
 from link_rl.c_models_v2.c_vanilla_policy_model import VANILLA_POLICY_MODEL
 from link_rl.c_models_v2.d_basic_actor_critic_model import BASIC_ACTOR_CRITIC_MODEL
-from link_rl.g_utils.types import ModelType
 
 
 class ConfigCartPoleBulletDqn(ConfigBase, ConfigCartPoleBullet, ConfigDqn):

@@ -1,5 +1,4 @@
 from link_rl.b_environments.combinatorial_optimization.knapsack.knapsack import KnapsackEnvStat
-from link_rl.g_utils.types import ModelType
 
 
 class ConfigKnapsack:

@@ -1,5 +1,4 @@
 from link_rl.b_environments.task_allocation.basic_task_allocation import EnvironmentBasicTaskScheduling0Stat
-from link_rl.g_utils.types import ModelType
 
 
 class ConfigBasicTaskAllocation:

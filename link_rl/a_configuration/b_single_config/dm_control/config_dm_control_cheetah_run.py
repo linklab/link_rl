@@ -8,8 +8,6 @@ from link_rl.c_models_v2.e_ddpg_model import DDPG_MODEL
 from link_rl.c_models_v2.f_td3_model import TD3_MODEL
 from link_rl.c_models_v2.g_sac_model import SAC_MODEL
 from link_rl.c_models_v2.h_tdmpc_model import TDMPC_MODEL
-from link_rl.g_utils.types import ModelType
-
 
 
 class ConfigDmControlCheetahRunA2c(ConfigBase, ConfigDmControlCheetahRun, ConfigA2c):
@@ -19,7 +17,6 @@ class ConfigDmControlCheetahRunA2c(ConfigBase, ConfigDmControlCheetahRun, Config
         ConfigA2c.__init__(self)
 
         self.MAX_TRAINING_STEPS = 1_000_000
-        # self.MODEL_TYPE = ModelType.SMALL_LINEAR
         self.FROM_PIXELS = True
         self.MODEL_TYPE = BASIC_ACTOR_CRITIC_MODEL.ContinuousBasicActorCriticEncoderSharedModel.value
 
@@ -31,7 +28,6 @@ class ConfigDmControlCheetahRunA3c(ConfigBase, ConfigDmControlCheetahRun, Config
         ConfigA3c.__init__(self)
 
         self.MAX_TRAINING_STEPS = 1_000_000
-        # self.MODEL_TYPE = ModelType.SMALL_LINEAR
         self.FROM_PIXELS = True
         self.MODEL_TYPE = BASIC_ACTOR_CRITIC_MODEL.ContinuousBasicActorCriticEncoderSharedModel.value
 
@@ -43,7 +39,6 @@ class ConfigDmControlCheetahRunPpo(ConfigBase, ConfigDmControlCheetahRun, Config
         ConfigPpo.__init__(self)
 
         self.MAX_TRAINING_STEPS = 1_000_000
-        # self.MODEL_TYPE = ModelType.SMALL_LINEAR
         self.FROM_PIXELS = True
         self.MODEL_TYPE = BASIC_ACTOR_CRITIC_MODEL.ContinuousBasicActorCriticEncoderSharedModel.value
 
@@ -55,7 +50,6 @@ class ConfigDmControlCheetahRunDdpg(ConfigBase, ConfigDmControlCheetahRun, Confi
         ConfigDdpg.__init__(self)
 
         self.MAX_TRAINING_STEPS = 1_000_000
-        # self.MODEL_TYPE = ModelType.SMALL_LINEAR
         self.FROM_PIXELS = True
         self.MODEL_TYPE = DDPG_MODEL.ContinuousDdpgModel.value
 
@@ -67,7 +61,6 @@ class ConfigDmControlCheetahRunTd3(ConfigBase, ConfigDmControlCheetahRun, Config
         ConfigTd3.__init__(self)
 
         self.MAX_TRAINING_STEPS = 1_000_000
-        # self.MODEL_TYPE = ModelType.SMALL_LINEAR
         self.FROM_PIXELS = True
         self.MODEL_TYPE = TD3_MODEL.ContinuousTd3EncoderModel.value
 
@@ -79,7 +72,6 @@ class ConfigDmControlCheetahRunSac(ConfigBase, ConfigDmControlCheetahRun, Config
         ConfigSac.__init__(self)
 
         self.MAX_TRAINING_STEPS = 1_000_000
-        # self.MODEL_TYPE = ModelType.SMALL_LINEAR
         self.FROM_PIXELS = True
         self.MODEL_TYPE = SAC_MODEL.ContinuousSacEncoderModel.value
 
@@ -91,6 +83,5 @@ class ConfigDmControlCheetahRunTdmpc(ConfigBase, ConfigDmControlCheetahRun, Conf
         ConfigTdmpc.__init__(self)
 
         self.MAX_TRAINING_STEPS = 1_000_000
-        # self.MODEL_TYPE = ModelType.SMALL_LINEAR
         self.FROM_PIXELS = True
         self.MODEL_TYPE = TDMPC_MODEL.TdmpcEncoderModel.value

@@ -6,7 +6,6 @@ from link_rl.a_configuration.a_base_config.b_agents.config_agents_on_policy impo
 from link_rl.a_configuration.a_base_config.config_single_base import ConfigBase
 from link_rl.c_models_v2.b_q_model import Q_MODEL
 from link_rl.c_models_v2.d_basic_actor_critic_model import BASIC_ACTOR_CRITIC_MODEL
-from link_rl.g_utils.types import ModelType
 
 
 class ConfigLunarLanderDqn(ConfigBase, ConfigLunarLander, ConfigDqn):

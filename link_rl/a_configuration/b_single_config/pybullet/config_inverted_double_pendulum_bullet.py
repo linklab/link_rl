@@ -7,7 +7,6 @@ from link_rl.c_models_v2.e_ddpg_model import DDPG_MODEL
 from link_rl.c_models_v2.f_td3_model import TD3_MODEL
 from link_rl.c_models_v2.g_sac_model import SAC_MODEL
 from link_rl.g_utils.commons import print_basic_info, get_env_info
-from link_rl.g_utils.types import ModelType
 
 
 class ConfigInvertedDoublePendulumBulletA2c(ConfigBase, ConfigInvertedDoublePendulumBullet, ConfigA2c):
@@ -28,7 +27,6 @@ class ConfigInvertedDoublePendulumBulletDdpg(ConfigBase, ConfigInvertedDoublePen
 
         self.BUFFER_CAPACITY = 250_000
         self.MAX_TRAINING_STEPS = 2_000_000
-        self.MODEL_TYPE = ModelType.SMALL_LINEAR
         self.MODEL_TYPE = DDPG_MODEL.ContinuousDdpgModel.value
 
 
@@ -40,7 +38,6 @@ class ConfigInvertedDoublePendulumBulletTd3(ConfigBase, ConfigInvertedDoublePend
 
         self.BUFFER_CAPACITY = 250_000
         self.MAX_TRAINING_STEPS = 2_000_000
-        self.MODEL_TYPE = ModelType.SMALL_LINEAR
         self.MODEL_TYPE = TD3_MODEL.ContinuousTd3Model.value
 
 
@@ -51,7 +48,6 @@ class ConfigInvertedDoublePendulumBulletSac(ConfigBase, ConfigInvertedDoublePend
         ConfigSac.__init__(self)
 
         self.MAX_TRAINING_STEPS = 2_000_000
-        self.MODEL_TYPE = ModelType.SMALL_LINEAR
         self.MODEL_TYPE = SAC_MODEL.ContinuousSacModel.value
 
 
@@ -73,7 +69,7 @@ class ConfigInvertedDoublePendulumBulletPpoTrajectory(ConfigBase, ConfigInverted
 
         self.MAX_TRAINING_STEPS = 2_000_000
         self.MODEL_TYPE = BASIC_ACTOR_CRITIC_MODEL.ContinuousBasicActorCriticSharedModel.value
-    
+
 
 if __name__ == "__main__":
     config = ConfigInvertedDoublePendulumBulletSac()

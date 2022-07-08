@@ -3,7 +3,6 @@ import numpy as np
 
 from link_rl.b_environments import wrapper
 from link_rl.c_models_v2.b_q_model import Q_MODEL
-from link_rl.g_utils.types import ModelType
 
 #################
 ## FROZEN_LAKE ##

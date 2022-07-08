@@ -5,7 +5,6 @@ from link_rl.a_configuration.b_single_config.combinatorial_optimization.config_k
     ConfigKnapsack0StaticTestLinearDoubleDuelingDqn, ConfigKnapsack0StaticTestLinearDoubleDqn, \
     ConfigKnapsack0RandomTestLinearDoubleDqn
 from link_rl.b_environments.combinatorial_optimization.knapsack.knapsack import KnapsackEnvComparisonStat
-from link_rl.g_utils.types import ModelType
 
 
 class ConfigComparisonKnapsack0StaticTestLinearDqnA2cPpo(ConfigComparisonBase):

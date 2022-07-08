@@ -3,7 +3,6 @@ from link_rl.a_configuration.b_single_config.pybullet.config_cart_pole_continuou
     ConfigCartPoleContinuousBulletDdpg, ConfigCartPoleContinuousBulletTd3, ConfigCartPoleContinuousBulletSac, \
     ConfigCartPoleContinuousBulletA2c, ConfigCartPoleContinuousBulletPpoTrajectory, ConfigCartPoleContinuousBulletPpo
 from link_rl.c_models_v2.e_ddpg_model import DDPG_MODEL
-from link_rl.g_utils.types import ModelType
 
 
 class ConfigComparisonCartPoleContinuousBulletDdpgTd3(ConfigComparisonBase):

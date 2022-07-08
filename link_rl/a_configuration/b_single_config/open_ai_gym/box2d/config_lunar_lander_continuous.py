@@ -3,8 +3,10 @@ from link_rl.a_configuration.a_base_config.b_agents.config_agents_off_policy imp
 from link_rl.a_configuration.a_base_config.b_agents.config_agents_on_policy import ConfigA2c, ConfigPpo, ConfigPpoTrajectory, \
     ConfigA3c, ConfigAsynchronousPpo
 from link_rl.a_configuration.a_base_config.config_single_base import ConfigBase
+from link_rl.c_models_v2.d_basic_actor_critic_model import BASIC_ACTOR_CRITIC_MODEL
+from link_rl.c_models_v2.e_ddpg_model import DDPG_MODEL
+from link_rl.c_models_v2.f_td3_model import TD3_MODEL
 from link_rl.c_models_v2.g_sac_model import SAC_MODEL
-from link_rl.g_utils.types import ModelType
 
 
 class ConfigLunarLanderContinuousA2c(ConfigBase, ConfigLunarLanderContinuous, ConfigA2c):
@@ -14,7 +16,7 @@ class ConfigLunarLanderContinuousA2c(ConfigBase, ConfigLunarLanderContinuous, Co
         ConfigA2c.__init__(self)
 
         self.MAX_TRAINING_STEPS = 200_000
-        self.MODEL_TYPE = ModelType.SMALL_LINEAR
+        self.MODEL_TYPE = BASIC_ACTOR_CRITIC_MODEL.ContinuousBasicActorCriticSharedModel.value
 
 
 class ConfigLunarLanderContinuousA3c(ConfigBase, ConfigLunarLanderContinuous, ConfigA3c):
@@ -24,7 +26,7 @@ class ConfigLunarLanderContinuousA3c(ConfigBase, ConfigLunarLanderContinuous, Co
         ConfigA3c.__init__(self)
 
         self.MAX_TRAINING_STEPS = 200_000
-        self.MODEL_TYPE = ModelType.SMALL_LINEAR
+        self.MODEL_TYPE = BASIC_ACTOR_CRITIC_MODEL.ContinuousBasicActorCriticSharedModel.value
 
 
 class ConfigLunarLanderContinuousPpo(ConfigBase, ConfigLunarLanderContinuous, ConfigPpo):
@@ -34,7 +36,7 @@ class ConfigLunarLanderContinuousPpo(ConfigBase, ConfigLunarLanderContinuous, Co
         ConfigPpo.__init__(self)
 
         self.MAX_TRAINING_STEPS = 200_000
-        self.MODEL_TYPE = ModelType.SMALL_LINEAR
+        self.MODEL_TYPE = BASIC_ACTOR_CRITIC_MODEL.ContinuousBasicActorCriticSharedModel.value
         self.USE_GAE = True
 
 
@@ -45,7 +47,7 @@ class ConfigLunarLanderContinuousAsynchronousPpo(ConfigBase, ConfigLunarLanderCo
         ConfigAsynchronousPpo.__init__(self)
 
         self.MAX_TRAINING_STEPS = 200_000
-        self.MODEL_TYPE = ModelType.SMALL_LINEAR
+        self.MODEL_TYPE = BASIC_ACTOR_CRITIC_MODEL.ContinuousBasicActorCriticSharedModel.value
         self.USE_GAE = True
 
 
@@ -56,7 +58,7 @@ class ConfigLunarLanderContinuousPpoTrajectory(ConfigBase, ConfigLunarLanderCont
         ConfigPpoTrajectory.__init__(self)
 
         self.MAX_TRAINING_STEPS = 500_000
-        self.MODEL_TYPE = ModelType.SMALL_LINEAR
+        self.MODEL_TYPE = BASIC_ACTOR_CRITIC_MODEL.ContinuousBasicActorCriticSharedModel.value
 
 
 class ConfigLunarLanderContinuousDdpg(ConfigBase, ConfigLunarLanderContinuous, ConfigDdpg):
@@ -67,7 +69,7 @@ class ConfigLunarLanderContinuousDdpg(ConfigBase, ConfigLunarLanderContinuous, C
 
         self.MAX_TRAINING_STEPS = 300_000
         self.BUFFER_CAPACITY = 200_000
-        self.MODEL_TYPE = ModelType.SMALL_LINEAR
+        self.MODEL_TYPE = DDPG_MODEL.ContinuousDdpgModel.value
 
 
 class ConfigLunarLanderContinuousTd3(ConfigBase, ConfigLunarLanderContinuous, ConfigTd3):
@@ -78,7 +80,7 @@ class ConfigLunarLanderContinuousTd3(ConfigBase, ConfigLunarLanderContinuous, Co
 
         self.MAX_TRAINING_STEPS = 300_000
         self.BUFFER_CAPACITY = 200_000
-        self.MODEL_TYPE = ModelType.SMALL_LINEAR
+        self.MODEL_TYPE = TD3_MODEL.ContinuousTd3Model.value
 
 
 class ConfigLunarLanderContinuousSac(ConfigBase, ConfigLunarLanderContinuous, ConfigSac):
@@ -89,5 +91,4 @@ class ConfigLunarLanderContinuousSac(ConfigBase, ConfigLunarLanderContinuous, Co
 
         self.MAX_TRAINING_STEPS = 300_000
         self.BUFFER_CAPACITY = 200_000
-        self.MODEL_TYPE = ModelType.SMALL_LINEAR
         self.MODEL_TYPE = SAC_MODEL.ContinuousSacModel.value
