@@ -1,4 +1,5 @@
 from link_rl.b_environments.task_allocation.task_allocation_env import TaskAllocationEnvironmentStat
+from link_rl.c_encoders.a_encoder import ENCODER
 
 
 class ConfigTaskAllocation:
@@ -32,6 +33,8 @@ class ConfigTaskAllocation:
         self.EPISODE_REWARD_MIN_SOLVED = 1000000
 
         self.CONSOLE_LOG_INTERVAL_TRAINING_STEPS = 50
+
+        self.ENCODER_TYPE = ENCODER.IdentityEncoder.value
         self.MODEL_TYPE = None
         self.TARGET_SYNC_INTERVAL_TRAINING_STEPS = 100
 

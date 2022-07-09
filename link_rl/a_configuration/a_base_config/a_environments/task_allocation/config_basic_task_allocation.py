@@ -1,4 +1,5 @@
 from link_rl.b_environments.task_allocation.basic_task_allocation import EnvironmentBasicTaskScheduling0Stat
+from link_rl.c_encoders.a_encoder import ENCODER
 
 
 class ConfigBasicTaskAllocation:
@@ -18,6 +19,8 @@ class ConfigBasicTaskAllocation:
         self.BUFFER_CAPACITY = self.NUM_TASK * 1_000
 
         self.CUSTOM_ENV_STAT = EnvironmentBasicTaskScheduling0Stat()
+
+        self.ENCODER_TYPE = ENCODER.IdentityEncoder.value
 
 
 class ConfigBasicTaskAllocation0(ConfigBasicTaskAllocation):

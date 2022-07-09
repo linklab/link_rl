@@ -1,5 +1,4 @@
 from link_rl.a_configuration.a_base_config.a_environments.open_ai_gym import ConfigGymToyText
-from link_rl.g_utils.types import LossFunctionType
 
 
 class ConfigFrozenLake(ConfigGymToyText):

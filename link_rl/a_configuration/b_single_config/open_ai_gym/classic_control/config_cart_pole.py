@@ -4,7 +4,9 @@ from link_rl.a_configuration.a_base_config.b_agents.config_agents_on_policy impo
     ConfigPpoTrajectory, ConfigA3c
 from link_rl.a_configuration.a_base_config.config_single_base import ConfigBase
 from link_rl.a_configuration.a_base_config.a_environments.open_ai_gym.config_gym_classic_control import ConfigCartPole
-from link_rl.g_utils.types import ModelType
+from link_rl.c_models_v2.b_q_model import Q_MODEL
+from link_rl.c_models_v2.c_vanilla_policy_model import VANILLA_POLICY_MODEL
+from link_rl.c_models_v2.d_basic_actor_critic_model import BASIC_ACTOR_CRITIC_MODEL
 
 
 class ConfigCartPoleDqn(ConfigBase, ConfigCartPole, ConfigDqn):
@@ -16,7 +18,7 @@ class ConfigCartPoleDqn(ConfigBase, ConfigCartPole, ConfigDqn):
         self.LEARNING_RATE = 0.001
         self.MAX_TRAINING_STEPS = 100_000
         self.BUFFER_CAPACITY = 50_000
-        self.MODEL_TYPE = ModelType.SMALL_LINEAR
+        self.MODEL_TYPE = Q_MODEL.QModel.value
 
 
 class ConfigCartPoleDoubleDqn(ConfigBase, ConfigCartPole, ConfigDoubleDqn):
@@ -28,7 +30,7 @@ class ConfigCartPoleDoubleDqn(ConfigBase, ConfigCartPole, ConfigDoubleDqn):
         self.LEARNING_RATE = 0.001
         self.MAX_TRAINING_STEPS = 100_000
         self.BUFFER_CAPACITY = 50_000
-        self.MODEL_TYPE = ModelType.SMALL_LINEAR
+        self.MODEL_TYPE = Q_MODEL.QModel.value
 
 
 class ConfigCartPoleDuelingDqn(ConfigBase, ConfigCartPole, ConfigDuelingDqn):
@@ -40,7 +42,7 @@ class ConfigCartPoleDuelingDqn(ConfigBase, ConfigCartPole, ConfigDuelingDqn):
         self.LEARNING_RATE = 0.001
         self.MAX_TRAINING_STEPS = 100_000
         self.BUFFER_CAPACITY = 50_000
-        self.MODEL_TYPE = ModelType.SMALL_LINEAR
+        self.MODEL_TYPE = Q_MODEL.DuelingQModel.value
 
 
 class ConfigCartPoleDoubleDuelingDqn(ConfigBase, ConfigCartPole, ConfigDoubleDuelingDqn):
@@ -52,7 +54,7 @@ class ConfigCartPoleDoubleDuelingDqn(ConfigBase, ConfigCartPole, ConfigDoubleDue
         self.LEARNING_RATE = 0.001
         self.MAX_TRAINING_STEPS = 100_000
         self.BUFFER_CAPACITY = 50_000
-        self.MODEL_TYPE = ModelType.SMALL_LINEAR
+        self.MODEL_TYPE = Q_MODEL.DuelingQModel.value
 
 
 # OnPolicy
@@ -65,7 +67,7 @@ class ConfigCartPoleReinforce(ConfigBase, ConfigCartPole, ConfigReinforce):
         ConfigReinforce.__init__(self)
 
         self.MAX_TRAINING_STEPS = 100_000
-        self.MODEL_TYPE = ModelType.SMALL_LINEAR
+        self.MODEL_TYPE = VANILLA_POLICY_MODEL.DiscreteVanillaPolicyModel.value
 
 
 class ConfigCartPoleA2c(ConfigBase, ConfigCartPole, ConfigA2c):
@@ -75,7 +77,7 @@ class ConfigCartPoleA2c(ConfigBase, ConfigCartPole, ConfigA2c):
         ConfigA2c.__init__(self)
 
         self.MAX_TRAINING_STEPS = 100_000
-        self.MODEL_TYPE = ModelType.SMALL_LINEAR
+        self.MODEL_TYPE = BASIC_ACTOR_CRITIC_MODEL.DiscreteBasicActorCriticSharedModel.value
 
 
 class ConfigCartPoleA3c(ConfigBase, ConfigCartPole, ConfigA3c):
@@ -85,7 +87,7 @@ class ConfigCartPoleA3c(ConfigBase, ConfigCartPole, ConfigA3c):
         ConfigA3c.__init__(self)
 
         self.MAX_TRAINING_STEPS = 100_000
-        self.MODEL_TYPE = ModelType.SMALL_LINEAR
+        self.MODEL_TYPE = BASIC_ACTOR_CRITIC_MODEL.DiscreteBasicActorCriticSharedModel.value
 
 
 class ConfigCartPolePpo(ConfigBase, ConfigCartPole, ConfigPpo):
@@ -95,7 +97,7 @@ class ConfigCartPolePpo(ConfigBase, ConfigCartPole, ConfigPpo):
         ConfigPpo.__init__(self)
 
         self.MAX_TRAINING_STEPS = 100_000
-        self.MODEL_TYPE = ModelType.SMALL_LINEAR
+        self.MODEL_TYPE = BASIC_ACTOR_CRITIC_MODEL.DiscreteBasicActorCriticSharedModel.value
 
 
 class ConfigCartPolePpoTrajectory(ConfigBase, ConfigCartPole, ConfigPpoTrajectory):
@@ -105,7 +107,4 @@ class ConfigCartPolePpoTrajectory(ConfigBase, ConfigCartPole, ConfigPpoTrajector
         ConfigPpoTrajectory.__init__(self)
 
         self.MAX_TRAINING_STEPS = 100_000
-        self.MODEL_TYPE = ModelType.SMALL_LINEAR
-
-
-
+        self.MODEL_TYPE = BASIC_ACTOR_CRITIC_MODEL.DiscreteBasicActorCriticSharedModel.value

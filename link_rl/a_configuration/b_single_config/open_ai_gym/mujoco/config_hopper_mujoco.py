@@ -2,7 +2,8 @@ from link_rl.a_configuration.a_base_config.a_environments.open_ai_gym.config_gym
 from link_rl.a_configuration.a_base_config.b_agents.config_agents_off_policy import ConfigSac
 from link_rl.a_configuration.a_base_config.b_agents.config_agents_on_policy import ConfigPpoTrajectory, ConfigPpo
 from link_rl.a_configuration.a_base_config.config_single_base import ConfigBase
-from link_rl.g_utils.types import ModelType
+from link_rl.c_models_v2.d_basic_actor_critic_model import BASIC_ACTOR_CRITIC_MODEL
+from link_rl.c_models_v2.g_sac_model import SAC_MODEL
 
 
 class ConfigHopperMujocoSac(ConfigBase, ConfigHopperMujoco, ConfigSac):
@@ -13,7 +14,7 @@ class ConfigHopperMujocoSac(ConfigBase, ConfigHopperMujoco, ConfigSac):
 
         self.BUFFER_CAPACITY = 1_000_000
         self.MAX_TRAINING_STEPS = 2_000_000
-        self.MODEL_TYPE = ModelType.MEDIUM_LINEAR
+        self.MODEL_TYPE = SAC_MODEL.ContinuousSacModel.value
 
 
 class ConfigHopperMujocoPpo(ConfigBase, ConfigHopperMujoco, ConfigPpo):
@@ -23,7 +24,7 @@ class ConfigHopperMujocoPpo(ConfigBase, ConfigHopperMujoco, ConfigPpo):
         ConfigPpo.__init__(self)
 
         self.MAX_TRAINING_STEPS = 2_000_000
-        self.MODEL_TYPE = ModelType.MEDIUM_LINEAR
+        self.MODEL_TYPE = BASIC_ACTOR_CRITIC_MODEL.ContinuousBasicActorCriticSharedModel.value
 
 
 class ConfigHopperMujocoPpoTrajectory(ConfigBase, ConfigHopperMujoco, ConfigPpoTrajectory):
@@ -33,4 +34,5 @@ class ConfigHopperMujocoPpoTrajectory(ConfigBase, ConfigHopperMujoco, ConfigPpoT
         ConfigPpoTrajectory.__init__(self)
 
         self.MAX_TRAINING_STEPS = 2_000_000
-        self.MODEL_TYPE = ModelType.MEDIUM_LINEAR
+        self.MODEL_TYPE = BASIC_ACTOR_CRITIC_MODEL.ContinuousBasicActorCriticSharedModel.value
+

@@ -15,7 +15,7 @@ class ConfigCarRacingA2c(ConfigBase, ConfigCarRacing, ConfigA2c):
         ConfigA2c.__init__(self)
 
         self.MAX_TRAINING_STEPS = 200_000
-        self.MODEL_TYPE = BASIC_ACTOR_CRITIC_MODEL.ContinuousBasicActorCriticEncoderSharedModel.value
+        self.MODEL_TYPE = BASIC_ACTOR_CRITIC_MODEL.ContinuousBasicActorCriticSharedModel.value
 
 
 class ConfigCarRacingA3c(ConfigBase, ConfigCarRacing, ConfigA3c):
@@ -25,7 +25,7 @@ class ConfigCarRacingA3c(ConfigBase, ConfigCarRacing, ConfigA3c):
         ConfigA3c.__init__(self)
 
         self.MAX_TRAINING_STEPS = 200_000
-        self.MODEL_TYPE = BASIC_ACTOR_CRITIC_MODEL.ContinuousBasicActorCriticEncoderSharedModel.value
+        self.MODEL_TYPE = BASIC_ACTOR_CRITIC_MODEL.ContinuousBasicActorCriticSharedModel.value
 
 
 class ConfigCarRacingPpo(ConfigBase, ConfigCarRacing, ConfigPpo):
@@ -35,7 +35,7 @@ class ConfigCarRacingPpo(ConfigBase, ConfigCarRacing, ConfigPpo):
         ConfigPpo.__init__(self)
 
         self.MAX_TRAINING_STEPS = 200_000
-        self.MODEL_TYPE = BASIC_ACTOR_CRITIC_MODEL.ContinuousBasicActorCriticEncoderSharedModel.value
+        self.MODEL_TYPE = BASIC_ACTOR_CRITIC_MODEL.ContinuousBasicActorCriticSharedModel.value
         self.USE_GAE = True
 
 
@@ -46,7 +46,7 @@ class ConfigCarRacingPpoTrajectory(ConfigBase, ConfigCarRacing, ConfigPpoTraject
         ConfigPpoTrajectory.__init__(self)
 
         self.MAX_TRAINING_STEPS = 500_000
-        self.MODEL_TYPE = BASIC_ACTOR_CRITIC_MODEL.ContinuousBasicActorCriticEncoderSharedModel.value
+        self.MODEL_TYPE = BASIC_ACTOR_CRITIC_MODEL.ContinuousBasicActorCriticSharedModel.value
 
 
 class ConfigCarRacingDdpg(ConfigBase, ConfigCarRacing, ConfigDdpg):
@@ -68,7 +68,7 @@ class ConfigCarRacingTd3(ConfigBase, ConfigCarRacing, ConfigTd3):
 
         self.MAX_TRAINING_STEPS = 300_000
         self.BUFFER_CAPACITY = 200_000
-        self.MODEL_TYPE = TD3_MODEL.ContinuousTd3EncoderModel.value
+        self.MODEL_TYPE = TD3_MODEL.ContinuousTd3Model.value
 
 
 class ConfigCarRacingSac(ConfigBase, ConfigCarRacing, ConfigSac):
@@ -79,4 +79,4 @@ class ConfigCarRacingSac(ConfigBase, ConfigCarRacing, ConfigSac):
 
         self.MAX_TRAINING_STEPS = 300_000
         self.BUFFER_CAPACITY = 200_000
-        self.MODEL_TYPE = SAC_MODEL.ContinuousSacEncoderModel.value
+        self.MODEL_TYPE = SAC_MODEL.ContinuousSacModel.value

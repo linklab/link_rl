@@ -20,7 +20,7 @@ def play(env, n_episodes):
 
             next_observation, reward, done, info = env.step(action)
             print("Observation: {0}, Action: {1}, next_observation: {2}, Reward: {3}, Done: {4}, Info: {5}".format(
-                observation, action, next_observation, reward, done, info
+                observation.shape, action.shape, next_observation.shape, reward, done, info
             ))
             env.render()
 

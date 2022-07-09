@@ -2,6 +2,7 @@ from link_rl.a_configuration.a_base_config.b_agents.config_agents_off_policy imp
     ConfigDuelingDqn, ConfigDoubleDuelingDqn
 from link_rl.a_configuration.a_base_config.config_single_base import ConfigBase
 from link_rl.a_configuration.a_base_config.a_environments.task_allocation.config_basic_task_allocation import ConfigBasicTaskAllocation0
+from link_rl.c_models_v2.b_q_model import Q_MODEL
 
 
 class ConfigBasicTaskAllocation0Dqn(ConfigBase, ConfigBasicTaskAllocation0, ConfigDqn):
@@ -18,6 +19,7 @@ class ConfigBasicTaskAllocation0Dqn(ConfigBase, ConfigBasicTaskAllocation0, Conf
         self.INITIAL_TASK_DISTRIBUTION_FIXED = True
         self.MAX_TRAINING_STEPS = self.NUM_TASK * 2_000
         self.BUFFER_CAPACITY = self.NUM_TASK * 1_000
+        self.MODEL_TYPE = Q_MODEL.QModel.value
 
 
 class ConfigBasicTaskAllocation1Dqn(ConfigBase, ConfigBasicTaskAllocation0, ConfigDqn):
@@ -34,6 +36,7 @@ class ConfigBasicTaskAllocation1Dqn(ConfigBase, ConfigBasicTaskAllocation0, Conf
         self.INITIAL_TASK_DISTRIBUTION_FIXED = True
         self.MAX_TRAINING_STEPS = self.NUM_TASK * 2_000
         self.BUFFER_CAPACITY = self.NUM_TASK * 1_000
+        self.MODEL_TYPE = Q_MODEL.QModel.value
 
 
 class ConfigBasicTaskAllocation0DoubleDqn(ConfigBase, ConfigBasicTaskAllocation0, ConfigDoubleDqn):
@@ -50,6 +53,7 @@ class ConfigBasicTaskAllocation0DoubleDqn(ConfigBase, ConfigBasicTaskAllocation0
         self.INITIAL_TASK_DISTRIBUTION_FIXED = True
         self.MAX_TRAINING_STEPS = self.NUM_TASK * 2_000
         self.BUFFER_CAPACITY = self.NUM_TASK * 1_000
+        self.MODEL_TYPE = Q_MODEL.QModel.value
 
 
 class ConfigBasicTaskAllocation0DuelingDqn(ConfigBase, ConfigBasicTaskAllocation0, ConfigDuelingDqn):
@@ -66,6 +70,7 @@ class ConfigBasicTaskAllocation0DuelingDqn(ConfigBase, ConfigBasicTaskAllocation
         self.INITIAL_TASK_DISTRIBUTION_FIXED = True
         self.MAX_TRAINING_STEPS = self.NUM_TASK * 2_000
         self.BUFFER_CAPACITY = self.NUM_TASK * 1_000
+        self.MODEL_TYPE = Q_MODEL.DuelingQModel.value
 
 
 class ConfigBasicTaskAllocation0DoubleDuelingDqn(ConfigBase, ConfigBasicTaskAllocation0, ConfigDoubleDuelingDqn):
@@ -82,3 +87,4 @@ class ConfigBasicTaskAllocation0DoubleDuelingDqn(ConfigBase, ConfigBasicTaskAllo
         self.INITIAL_TASK_DISTRIBUTION_FIXED = True
         self.MAX_TRAINING_STEPS = self.NUM_TASK * 2_000
         self.BUFFER_CAPACITY = self.NUM_TASK * 1_000
+        self.MODEL_TYPE = Q_MODEL.DuelingQModel.value
