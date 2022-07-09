@@ -1,11 +1,17 @@
 from abc import abstractmethod, ABC
 
+import enum
 import numpy as np
 import torch
 from torch import nn
 from typing import Tuple, final, Optional
 
 from link_rl.g_utils.registry import Registry
+
+
+class ENCODER(enum.Enum):
+    IdentityEncoder = "IdentityEncoder"
+    SimpleEncoder = "SimpleEncoder"
 
 
 class BaseEncoder(ABC):

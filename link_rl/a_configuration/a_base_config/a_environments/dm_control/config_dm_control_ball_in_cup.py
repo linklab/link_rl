@@ -8,3 +8,6 @@ class ConfigDmControlBallInCupCatch(ConfigDmControl):
         self.DOMAIN_NAME = "ball_in_cup"
         self.TASK_NAME = "catch"
         self.EPISODE_REWARD_MIN_SOLVED = 990
+        self.FROM_PIXELS = True
+        self.ENCODER_TYPE = "IdentityEncoder"
+

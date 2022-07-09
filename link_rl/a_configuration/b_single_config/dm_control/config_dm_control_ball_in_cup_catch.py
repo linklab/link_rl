@@ -9,7 +9,6 @@ from link_rl.c_models_v2.e_ddpg_model import DDPG_MODEL
 from link_rl.c_models_v2.f_td3_model import TD3_MODEL
 from link_rl.c_models_v2.g_sac_model import SAC_MODEL
 from link_rl.c_models_v2.h_tdmpc_model import TDMPC_MODEL
-from link_rl.g_utils.types import ModelType
 
 
 class ConfigDmControlBallInCupCatchA2c(ConfigBase, ConfigDmControlBallInCupCatch, ConfigA2c):
@@ -19,7 +18,6 @@ class ConfigDmControlBallInCupCatchA2c(ConfigBase, ConfigDmControlBallInCupCatch
         ConfigA2c.__init__(self)
 
         self.MAX_TRAINING_STEPS = 1_000_000
-        self.FROM_PIXELS = True
         self.MODEL_TYPE = BASIC_ACTOR_CRITIC_MODEL.ContinuousBasicActorCriticEncoderSharedModel.value
 
 
