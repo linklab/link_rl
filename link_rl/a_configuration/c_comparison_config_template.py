@@ -177,8 +177,8 @@ config_c = ConfigComparisonKnapsack0RandomTestLinearDoubleDqnHer()
 
 
 if __name__ == "__main__":
-    from link_rl.g_utils.commons import get_env_info, print_comparison_basic_info, set_config
-    from link_rl.g_utils.types import AgentType
+    from link_rl.h_utils.commons import get_env_info, print_comparison_basic_info, set_config
+    from link_rl.h_utils.types import AgentType
 
     for config in config_c.AGENT_PARAMETERS:
         assert config.AGENT_TYPE not in (AgentType.REINFORCE,)

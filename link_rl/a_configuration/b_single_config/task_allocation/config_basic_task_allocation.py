@@ -2,7 +2,7 @@ from link_rl.a_configuration.a_base_config.b_agents.config_agents_off_policy imp
     ConfigDuelingDqn, ConfigDoubleDuelingDqn
 from link_rl.a_configuration.a_base_config.config_single_base import ConfigBase
 from link_rl.a_configuration.a_base_config.a_environments.task_allocation.config_basic_task_allocation import ConfigBasicTaskAllocation0
-from link_rl.c_models_v2.b_q_model import Q_MODEL
+from link_rl.d_models.b_q_model import Q_MODEL
 
 
 class ConfigBasicTaskAllocation0Dqn(ConfigBase, ConfigBasicTaskAllocation0, ConfigDqn):

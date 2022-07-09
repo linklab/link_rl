@@ -4,10 +4,10 @@ from link_rl.a_configuration.a_base_config.b_agents.config_agents_off_policy imp
     ConfigTdmpc
 from link_rl.a_configuration.a_base_config.b_agents.config_agents_on_policy import ConfigA2c, ConfigPpo, ConfigA3c
 from link_rl.a_configuration.a_base_config.config_single_base import ConfigBase
-from link_rl.c_models_v2.d_basic_actor_critic_model import BASIC_ACTOR_CRITIC_MODEL
-from link_rl.c_models_v2.e_ddpg_model import DDPG_MODEL
-from link_rl.c_models_v2.f_td3_model import TD3_MODEL
-from link_rl.c_models_v2.g_sac_model import SAC_MODEL
+from link_rl.d_models.d_basic_actor_critic_model import BASIC_ACTOR_CRITIC_MODEL
+from link_rl.d_models.e_ddpg_model import DDPG_MODEL
+from link_rl.d_models.f_td3_model import TD3_MODEL
+from link_rl.d_models.g_sac_model import SAC_MODEL
 
 
 class ConfigDmControlCartPoleThreePolesA2c(ConfigBase, ConfigDmControlCartpoleThreePoles, ConfigA2c):

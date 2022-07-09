@@ -3,7 +3,7 @@ import sys
 from typing import Callable, List, Tuple, Dict
 
 from link_rl.c_encoders.a_encoder import ENCODER
-from link_rl.g_utils.types import LayerActivationType, LossFunctionType
+from link_rl.h_utils.types import LayerActivationType, LossFunctionType
 
 
 class ConfigBase:
@@ -14,7 +14,7 @@ class ConfigBase:
         if self.PROJECT_HOME not in sys.path:
             sys.path.append(self.PROJECT_HOME)
 
-        self.MODEL_SAVE_DIR = os.path.join(self.PROJECT_HOME, "f_play", "models")
+        self.MODEL_SAVE_DIR = os.path.join(self.PROJECT_HOME, "g_play", "models")
         if not os.path.exists(self.MODEL_SAVE_DIR):
             os.mkdir(self.MODEL_SAVE_DIR)
 

@@ -143,7 +143,7 @@ config = ConfigDmControlHumanoidWalkTdmpc()
 
 
 if __name__ == "__main__":
-    from link_rl.g_utils.commons import print_basic_info, get_env_info, set_config
+    from link_rl.h_utils.commons import print_basic_info, get_env_info, set_config
 
     set_config(config)
     observation_space, action_space = get_env_info(config)

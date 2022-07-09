@@ -3,7 +3,7 @@ from gym.spaces import Discrete, Box
 from torch.distributions import Categorical, Normal
 
 
-from link_rl.d_agents.on_policy.ppo.agent_ppo import AgentPpo
+from link_rl.e_agents.on_policy.ppo.agent_ppo import AgentPpo
 
 
 class AgentPpoTrajectory(AgentPpo):

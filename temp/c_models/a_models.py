@@ -10,7 +10,7 @@ from link_rl.a_configuration.a_base_config.c_models.config_linear_models import 
 from link_rl.a_configuration.a_base_config.c_models.config_recurrent_convolutional_models import \
     ConfigRecurrent2DConvolutionalModel, ConfigRecurrent1DConvolutionalModel
 from link_rl.a_configuration.a_base_config.c_models.config_recurrent_linear_models import ConfigRecurrentLinearModel
-from link_rl.g_utils.types import ConvolutionType
+from link_rl.h_utils.types import ConvolutionType
 
 
 class Model(nn.Module):

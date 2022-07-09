@@ -6,7 +6,7 @@ import torch
 from torch import nn
 from typing import Tuple, final, Optional
 
-from link_rl.g_utils.registry import Registry
+from link_rl.h_utils.registry import Registry
 
 
 class ENCODER(enum.Enum):

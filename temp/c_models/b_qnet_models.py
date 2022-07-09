@@ -9,7 +9,7 @@ from link_rl.a_configuration.a_base_config.c_models.config_recurrent_convolution
     ConfigRecurrent2DConvolutionalModel, ConfigRecurrent1DConvolutionalModel
 from link_rl.a_configuration.a_base_config.c_models.config_recurrent_linear_models import ConfigRecurrentLinearModel
 from link_rl.c_models.a_models import Model
-from link_rl.g_utils.types import ConvolutionType
+from link_rl.h_utils.types import ConvolutionType
 
 
 class QNet(Model):

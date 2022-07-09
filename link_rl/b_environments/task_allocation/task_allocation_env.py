@@ -8,7 +8,7 @@ from gym import spaces
 from typing import Optional
 
 from link_rl.a_configuration.a_base_config.a_environments.task_allocation.config_task_allocation import ConfigTaskAllocation
-from link_rl.g_utils.stats import CustomEnvStat
+from link_rl.h_utils.stats import CustomEnvStat
 
 
 class CloudNetwork:
@@ -197,19 +197,19 @@ class TaskAllocationEnvironment(gym.Env):
         self.task = Task(self.config)
         self.cloud_net = CloudNetwork(self.config)
         self.edge_net = EdgeNetwork(self.config)
-        # with open('/home/link/link_rl/e_main/random_instances/task_allocation/task.p', 'wb') as f:
+        # with open('/home/link/link_rl/f_main/random_instances/task_allocation/task.p', 'wb') as f:
         #     pickle.dump(self.task, f)
-        # with open('/home/link/link_rl/e_main/random_instances/task_allocation/cloud_net.p', 'wb') as f:
+        # with open('/home/link/link_rl/f_main/random_instances/task_allocation/cloud_net.p', 'wb') as f:
         #     pickle.dump(self.cloud_net, f)
-        # with open('/home/link/link_rl/e_main/random_instances/task_allocation/edge_net.p', 'wb') as f:
+        # with open('/home/link/link_rl/f_main/random_instances/task_allocation/edge_net.p', 'wb') as f:
         #     pickle.dump(self.edge_net, f)
 
     def reset(self, *, seed: Optional[int] = None, return_info: bool = False, options: Optional[dict] = None,):
-        # with open('/home/link/link_rl/e_main/random_instances/task_allocation/task.p', 'rb') as f:
+        # with open('/home/link/link_rl/f_main/random_instances/task_allocation/task.p', 'rb') as f:
         #     self.task = pickle.load(f)
-        # with open('/home/link/link_rl/e_main/random_instances/task_allocation/cloud_net.p', 'rb') as f:
+        # with open('/home/link/link_rl/f_main/random_instances/task_allocation/cloud_net.p', 'rb') as f:
         #     self.cloud_net = pickle.load(f)
-        # with open('/home/link/link_rl/e_main/random_instances/task_allocation/edge_net.p', 'rb') as f:
+        # with open('/home/link/link_rl/f_main/random_instances/task_allocation/edge_net.p', 'rb') as f:
         #     self.edge_net = pickle.load(f)
 
         self.cloud_bandwidth = self.cloud_net.bandwidth

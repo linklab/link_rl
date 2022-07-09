@@ -5,7 +5,7 @@ import time
 
 import gym
 
-from link_rl.g_utils.commons import get_train_env, get_single_env
+from link_rl.h_utils.commons import get_train_env, get_single_env
 
 CURRENT_PATH = os.path.dirname(os.path.realpath(__file__))
 PROJECT_HOME = os.path.abspath(os.path.join(CURRENT_PATH, os.pardir))

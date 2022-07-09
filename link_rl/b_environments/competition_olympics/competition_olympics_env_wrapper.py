@@ -2,9 +2,9 @@ import gym
 import numpy as np
 import random
 
-from link_rl.g_utils.types import AgentType, AgentMode
+from link_rl.h_utils.types import AgentType, AgentMode
 from collections import deque
-from link_rl.d_agents.off_policy.tdmpc import helper as h
+from link_rl.e_agents.off_policy.tdmpc import helper as h
 
 np.set_printoptions(threshold=np.inf, linewidth=np.inf)
 

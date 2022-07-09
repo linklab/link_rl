@@ -2,7 +2,7 @@ import gym
 import numpy as np
 
 from link_rl.b_environments import wrapper
-from link_rl.c_models_v2.b_q_model import Q_MODEL
+from link_rl.d_models.b_q_model import Q_MODEL
 
 #################
 ## FROZEN_LAKE ##
@@ -612,7 +612,7 @@ config = ConfigAiBirdsPpo()
 
 
 if __name__ == "__main__":
-    from link_rl.g_utils.commons import print_basic_info, get_env_info, set_config
+    from link_rl.h_utils.commons import print_basic_info, get_env_info, set_config
 
     set_config(config)
     observation_space, action_space = get_env_info(config)

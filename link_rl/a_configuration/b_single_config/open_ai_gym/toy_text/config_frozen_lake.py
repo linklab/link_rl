@@ -1,7 +1,7 @@
 from link_rl.a_configuration.a_base_config.b_agents.config_agents_off_policy import ConfigDqn
 from link_rl.a_configuration.a_base_config.config_single_base import ConfigBase
 from link_rl.a_configuration.a_base_config.a_environments.open_ai_gym.config_gym_toy_text import ConfigFrozenLake
-from link_rl.c_models_v2.b_q_model import Q_MODEL
+from link_rl.d_models.b_q_model import Q_MODEL
 
 
 class ConfigFrozenLakeDqn(ConfigBase, ConfigFrozenLake, ConfigDqn):

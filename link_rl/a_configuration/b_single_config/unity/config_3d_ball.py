@@ -1,7 +1,7 @@
 from link_rl.a_configuration.a_base_config.b_agents.config_agents_off_policy import ConfigDdpg
 from link_rl.a_configuration.a_base_config.config_single_base import ConfigBase
 from link_rl.a_configuration.a_base_config.a_environments.unity.config_unity_box import Config3DBall
-from link_rl.c_models_v2.e_ddpg_model import DDPG_MODEL
+from link_rl.d_models.e_ddpg_model import DDPG_MODEL
 
 
 class Config3DBallDdqg(ConfigBase, Config3DBall, ConfigDdpg):

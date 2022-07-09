@@ -5,7 +5,7 @@ from torch.distributions import Normal, TanhTransform, TransformedDistribution
 
 from link_rl.c_models.d_critic_models import DoubleQCriticModel
 from link_rl.c_models.c_actor_models import ContinuousStochasticActorModel
-from link_rl.e_main.config_single import config
+from link_rl.f_main.config_single import config
 
 
 class ContinuousSacModel:
