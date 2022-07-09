@@ -269,9 +269,7 @@ def print_basic_info(observation_space=None, action_space=None, config=None):
     for param in dir(config):
         if not param.startswith("__") and param not in [
             "MODEL_PARAMETER", "NEURONS_PER_FULLY_CONNECTED_LAYER", "OUT_CHANNELS_PER_LAYER", "KERNEL_SIZE_PER_LAYER",
-            "STRIDE_PER_LAYER", "EPISODE_REWARD_MIN_SOLVED", "UNITY_ENV_DIR",
-            "MODEL_SAVE_DIR", "PROJECT_HOME", "LAYER_ACTIVATION", "LAYER_ACTIVATION_TYPE",
-            "VALUE_NETWORK_LAYER_ACTIVATION", "VALUE_NETWORK_LAYER_ACTIVATION_TYPE",
+            "STRIDE_PER_LAYER", "EPISODE_REWARD_MIN_SOLVED", "UNITY_ENV_DIR", "MODEL_SAVE_DIR", "PROJECT_HOME",
             "LOSS_FUNCTION", "ENV_NAME", "MODEL_TYPE", "LEARNING_RATE", "ACTOR_LEARNING_RATE",
             "ALPHA_LEARNING_RATE", "MODEL_TYPE"
         ]:
@@ -360,10 +358,8 @@ def print_comparison_basic_info(observation_space, action_space, config_c):
         for param in dir(agent_config):
             if not param.startswith("__") and param not in [
                 "MODEL_PARAMETER", "NEURONS_PER_FULLY_CONNECTED_LAYER", "OUT_CHANNELS_PER_LAYER", "KERNEL_SIZE_PER_LAYER",
-                "STRIDE_PER_LAYER", "EPISODE_REWARD_MIN_SOLVED", "UNITY_ENV_DIR",
-                "COMPARISON_RESULTS_SAVE_DIR", "PROJECT_HOME", "LAYER_ACTIVATION", "LAYER_ACTIVATION_TYPE",
-                "VALUE_NETWORK_LAYER_ACTIVATION", "VALUE_NETWORK_LAYER_ACTIVATION_TYPE",
-                "LOSS_FUNCTION", "ENV_NAME", "MODEL_TYPE", "LEARNING_RATE", "ACTOR_LEARNING_RATE",
+                "STRIDE_PER_LAYER", "EPISODE_REWARD_MIN_SOLVED", "UNITY_ENV_DIR", "COMPARISON_RESULTS_SAVE_DIR",
+                "PROJECT_HOME", "LOSS_FUNCTION", "ENV_NAME", "MODEL_TYPE", "LEARNING_RATE", "ACTOR_LEARNING_RATE",
                 "ALPHA_LEARNING_RATE", "MODEL_TYPE"
             ]:
                 if param in [
@@ -462,8 +458,6 @@ def print_model_info(config):
     # else:
     #     raise ValueError()
 
-    print("LAYER_ACTIVATION_TYPE: {0}".format(config.LAYER_ACTIVATION_TYPE))
-    print("VALUE_NETWORK_LAYER_ACTIVATION_TYPE: {0}".format(config.VALUE_NETWORK_LAYER_ACTIVATION_TYPE))
     print("LOSS_FUNCTION_TYPE: {0}".format(config.LOSS_FUNCTION_TYPE))
 
 

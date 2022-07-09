@@ -64,12 +64,6 @@ class ConfigBase:
 
         self.USE_LAYER_NORM = True
 
-        self.LAYER_ACTIVATION_TYPE = LayerActivationType.LEAKY_RELU
-        self.LAYER_ACTIVATION = None
-
-        self.VALUE_NETWORK_LAYER_ACTIVATION_TYPE = LayerActivationType.PReLU
-        self.VALUE_NETWORK_LAYER_ACTIVATION = None
-
         self.LOSS_FUNCTION_TYPE = LossFunctionType.HUBER_LOSS
         self.LOSS_FUNCTION = None
         self.CONSOLE_LOG_INTERVAL_TRAINING_STEPS = 50

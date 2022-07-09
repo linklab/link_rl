@@ -44,8 +44,6 @@ class ConfigComparisonBase:
 
         self.USE_LAYER_NORM = False
 
-        self.LAYER_ACTIVATION_TYPE = LayerActivationType.LEAKY_RELU
-
         self.FORCE_USE_CPU = False
         self.DEVICE = None
 

@@ -40,6 +40,11 @@ class OffPolicyAgent(Agent):
             self.her_buffer = None
             self.important_sampling_weights = None
 
+        if self.config.USE_DRQ:
+            from link_rl.e_agents.off_policy.tdmpc.helper import RandomShiftsAug
+
+            self.aug = RandomShiftsAug(self.config)
+
     def _before_train(self):
         super(OffPolicyAgent, self)._before_train()
 
@@ -55,17 +60,12 @@ class OffPolicyAgent(Agent):
                     batch_size=self.config.BATCH_SIZE
                 )
             else:
-                self.observations, self.actions, self.next_observations, self.rewards, self.dones, \
-                self.infos = self.replay_buffer.sample(
-                    batch_size=self.config.BATCH_SIZE
-                )
+                self.observations, self.actions, self.next_observations, self.rewards, self.dones, self.infos \
+                    = self.replay_buffer.sample(batch_size=self.config.BATCH_SIZE)
 
                 if self.config.USE_DRQ:
-                    from link_rl.e_agents.off_policy.tdmpc.helper import RandomShiftsAug
-
-                    aug = RandomShiftsAug(self.config)
-                    self.observations = aug(self.observations)
-                    self.next_observations = aug(self.next_observations)
+                    self.observations = self.aug(self.observations)
+                    self.next_observations = self.aug(self.next_observations)
 
     def train(self, training_steps_v=None):
         count_training_steps = 0
