@@ -13,11 +13,12 @@ class ConfigFrozenLakeDqn(ConfigBase, ConfigFrozenLake, ConfigDqn):
         self.MAX_TRAINING_STEPS = 100_000
         self.BUFFER_CAPACITY = 50_000
 
-        if self.BOX_OBSERVATION:
-            self.MODEL_TYPE = Q_MODEL.EncoderQModel.value
-        else:
-            self.MODEL_TYPE = Q_MODEL.QModel.value
+        # if self.BOX_OBSERVATION:
+        #     self.MODEL_TYPE = Q_MODEL.EncoderQModel.value
+        # else:
+        #     self.MODEL_TYPE = Q_MODEL.QModel.value
 
+        self.MODEL_TYPE = Q_MODEL.QModel.value
 
 # class ConfigFrozenLakeDoubleDqn(ConfigBase, ConfigFrozenLake, ConfigDoubleDqn):
 #     def __init__(self):
