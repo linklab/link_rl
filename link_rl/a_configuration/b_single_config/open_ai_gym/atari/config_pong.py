@@ -15,7 +15,7 @@ class ConfigPongDqn(ConfigBase, ConfigPong, ConfigDqn):
 
         self.MAX_TRAINING_STEPS = 1_000_000
         self.BUFFER_CAPACITY = 250_000
-        self.MODEL_TYPE = Q_MODEL.GymAtariQModel.value
+        self.MODEL_TYPE = Q_MODEL.NatureAtariQModel.value
 
 
 class ConfigPongDoubleDqn(ConfigBase, ConfigPong, ConfigDoubleDqn):
@@ -26,7 +26,7 @@ class ConfigPongDoubleDqn(ConfigBase, ConfigPong, ConfigDoubleDqn):
 
         self.MAX_TRAINING_STEPS = 1_000_000
         self.BUFFER_CAPACITY = 250_000
-        self.MODEL_TYPE = Q_MODEL.GymAtariQModel.value
+        self.MODEL_TYPE = Q_MODEL.NatureAtariQModel.value
 
 
 class ConfigPongDuelingDqn(ConfigBase, ConfigPong, ConfigDuelingDqn):
@@ -37,7 +37,7 @@ class ConfigPongDuelingDqn(ConfigBase, ConfigPong, ConfigDuelingDqn):
 
         self.MAX_TRAINING_STEPS = 1_000_000
         self.BUFFER_CAPACITY = 250_000
-        self.MODEL_TYPE = Q_MODEL.GymAtariQModel.value
+        self.MODEL_TYPE = Q_MODEL.NatureAtariQModel.value
 
 
 class ConfigPongDoubleDuelingDqn(ConfigBase, ConfigPong, ConfigDoubleDuelingDqn):
@@ -48,7 +48,7 @@ class ConfigPongDoubleDuelingDqn(ConfigBase, ConfigPong, ConfigDoubleDuelingDqn)
 
         self.MAX_TRAINING_STEPS = 1_000_000
         self.BUFFER_CAPACITY = 250_000
-        self.MODEL_TYPE = Q_MODEL.GymAtariQModel.value
+        self.MODEL_TYPE = Q_MODEL.NatureAtariQModel.value
 
 
 class ConfigPongA2c(ConfigBase, ConfigPong, ConfigA2c):

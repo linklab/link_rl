@@ -25,11 +25,11 @@ class AgentDoubleDqn(AgentDqn):
             if self.config.TARGET_VALUE_NORMALIZE:
                 target_q_values = (target_q_values - torch.mean(target_q_values)) / (torch.std(target_q_values) + 1e-7)
 
-        # loss is just scalar torch value
         q_net_loss_each = self.config.LOSS_FUNCTION(q_values, target_q_values.detach(), reduction="none")
 
         if self.config.USE_PER:
             q_net_loss_each *= torch.FloatTensor(self.important_sampling_weights).to(self.config.DEVICE)[:, None]
+            self.last_loss_for_per = q_net_loss_each
 
         q_net_loss = q_net_loss_each.mean()
 
@@ -45,13 +45,9 @@ class AgentDoubleDqn(AgentDqn):
         # ))
         # print("loss.shape: {0}".format(loss.shape))
 
-        if self.encoder_is_not_identity:
-            self.encoder_optimizer.zero_grad()
         self.optimizer.zero_grad()
         q_net_loss.backward()
         self.clip_model_config_grad_value(self.q_net.parameters())
-        if self.encoder_is_not_identity:
-            self.encoder_optimizer.step()
         self.optimizer.step()
 
         # soft-sync
@@ -61,6 +57,9 @@ class AgentDoubleDqn(AgentDqn):
 
         self.last_q_net_loss.value = q_net_loss.item()
 
+        if self.encoder_is_not_identity:
+            self.last_loss_for_encoder = q_net_loss
+
         count_training_steps += 1
 
-        return count_training_steps, q_net_loss_each
+        return count_training_steps

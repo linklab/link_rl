@@ -16,14 +16,10 @@ class AgentDqn(OffPolicyAgent):
         super(AgentDqn, self).__init__(observation_space, action_space, config, need_train)
 
         # models
-        self.encoder = self._encoder_creator.create_encoder()
-        self.target_encoder = self._encoder_creator.create_encoder()
         self.q_net = self._model_creator.create_model()
         self.target_q_net = self._model_creator.create_model()
 
         # to(device)
-        self.encoder.to(self.config.DEVICE)
-        self.target_encoder.to(self.config.DEVICE)
         self.q_net.to(self.config.DEVICE)
         self.target_q_net.to(self.config.DEVICE)
 
@@ -32,17 +28,12 @@ class AgentDqn(OffPolicyAgent):
         self.model.eval()
 
         # sync models
-        self.synchronize_models(source_model=self.encoder, target_model=self.target_encoder)
         self.synchronize_models(source_model=self.q_net, target_model=self.target_q_net)
 
         # share memory
-        self.encoder.share_memory()
         self.q_net.share_memory()
 
-        # optimizers
-        self.encoder_is_not_identity = type(self.encoder).__name__ != "Identity"
-        if self.encoder_is_not_identity:
-            self.encoder_optimizer = optim.Adam(self.encoder.parameters(), lr=self.config.LEARNING_RATE)
+        # optimizer
         self.optimizer = optim.Adam(self.q_net.parameters(), lr=self.config.LEARNING_RATE)
 
         # epsilon
@@ -96,8 +87,7 @@ class AgentDqn(OffPolicyAgent):
     def train_dqn(self, training_steps_v):
         count_training_steps = 0
 
-        # state_action_values.shape: torch.Size([32, 1])
-        # print("self.observations.shape:", self.observations.shape)
+        # q_values.shape: torch.Size([32, 1])
         q_values = self.q_net_forward(self.observations).gather(dim=-1, index=self.actions)
 
         with torch.no_grad():  # autograd를 끔으로써 메모리 사용량을 줄이고 연산 속도를 높히기 위함
@@ -114,6 +104,7 @@ class AgentDqn(OffPolicyAgent):
 
         if self.config.USE_PER:
             q_net_loss_each *= torch.FloatTensor(self.important_sampling_weights).to(self.config.DEVICE)[:, None]
+            self.last_loss_for_per = q_net_loss_each
 
         q_net_loss = q_net_loss_each.mean()
 
@@ -129,13 +120,9 @@ class AgentDqn(OffPolicyAgent):
         # ))
         # print("loss.shape: {0}".format(loss.shape))
 
-        if self.encoder_is_not_identity:
-            self.encoder_optimizer.zero_grad()
         self.optimizer.zero_grad()
         q_net_loss.backward()
         self.clip_model_config_grad_value(self.q_net.parameters())
-        if self.encoder_is_not_identity:
-            self.encoder_optimizer.step()
         self.optimizer.step()
 
         # sync
@@ -146,6 +133,9 @@ class AgentDqn(OffPolicyAgent):
 
         self.last_q_net_loss.value = q_net_loss.item()
 
+        if self.encoder_is_not_identity:
+            self.last_loss_for_encoder = q_net_loss
+
         count_training_steps += 1
 
-        return count_training_steps, q_net_loss_each
+        return count_training_steps

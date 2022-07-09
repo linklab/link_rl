@@ -2,6 +2,7 @@ import os
 import sys
 from typing import Callable, List, Tuple, Dict
 
+from link_rl.c_encoders.a_encoder import ENCODER
 from link_rl.g_utils.types import LayerActivationType, LossFunctionType
 
 
@@ -40,6 +41,8 @@ class ConfigBase:
         self.N_EPISODES_FOR_MEAN_CALCULATION = 32
         self.TEST_INTERVAL_TRAINING_STEPS = None
         self.CONSOLE_LOG_INTERVAL_TRAINING_STEPS = 100
+
+        self.ENCODER_TYPE = ENCODER.IdentityEncoder.value
         self.MODEL_TYPE = None
         self.MODEL_PARAMETER = None
 

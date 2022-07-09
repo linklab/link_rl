@@ -147,9 +147,9 @@ class Model(nn.Module):
         convolutional_layers = nn.Sequential(convolutional_layers_dict)
         return convolutional_layers
 
-    def _get_conv_out(self, conv_layers, shape):
-        conv_out = conv_layers(torch.zeros(1, *shape))
-        return int(np.prod(conv_out.size()))
+    def _get_encoder_out(self, conv_layers, shape):
+        encoder_out = conv_layers(torch.zeros(1, *shape))
+        return int(np.prod(encoder_out.size()))
 
     # def get_layer_normalization(self, layer_dict, layer_idx):
     #     if isinstance(self.config.MODEL_PARAMETER, ConfigLinearModel):
@@ -221,16 +221,16 @@ class Model(nn.Module):
         )
 
         # representation_layers
-        conv_out_flat_size = self._get_conv_out(self.convolutional_layers, observation_shape)
+        encoder_out_flat_size = self._get_encoder_out(self.convolutional_layers, observation_shape)
         self.representation_layers = self.get_representation_layers(
-            input_n_features=conv_out_flat_size, activation=activation
+            input_n_features=encoder_out_flat_size, activation=activation
         )
 
         # linear_layers
         if self.config.MODEL_PARAMETER.NEURONS_PER_REPRESENTATION_LAYER:
             input_n_features = self.config.MODEL_PARAMETER.NEURONS_PER_REPRESENTATION_LAYER[-1]
         else:
-            input_n_features = conv_out_flat_size
+            input_n_features = encoder_out_flat_size
 
         if n_out_actions is not None:
             input_n_features = input_n_features + n_out_actions
@@ -264,14 +264,14 @@ class Model(nn.Module):
         )
 
         # representation_layers
-        conv_out_flat_size = self._get_conv_out(self.convolutional_layers, observation_shape)
-        self.representation_layers = self.get_representation_layers(conv_out_flat_size, activation=activation)
+        encoder_out_flat_size = self._get_encoder_out(self.convolutional_layers, observation_shape)
+        self.representation_layers = self.get_representation_layers(encoder_out_flat_size, activation=activation)
 
         # recurrent_layers
         if self.config.MODEL_PARAMETER.NEURONS_PER_REPRESENTATION_LAYER:
             input_n_features = self.config.MODEL_PARAMETER.NEURONS_PER_REPRESENTATION_LAYER[-1]
         else:
-            input_n_features = conv_out_flat_size
+            input_n_features = encoder_out_flat_size
         self.recurrent_layers = self.get_recurrent_layers(input_n_features=input_n_features)
 
         # linear_layers
@@ -287,9 +287,9 @@ class Model(nn.Module):
             x = self.linear_layers(x)
 
         elif isinstance(self.config.MODEL_PARAMETER, (Config1DConvolutionalModel, Config2DConvolutionalModel)):
-            conv_out = self.convolutional_layers(obs)
-            conv_out = torch.flatten(conv_out, start_dim=1)
-            x = self.representation_layers(conv_out)
+            encoder_out = self.convolutional_layers(obs)
+            encoder_out = torch.flatten(encoder_out, start_dim=1)
+            x = self.representation_layers(encoder_out)
             x = self.linear_layers(x)
 
         elif isinstance(self.config.MODEL_PARAMETER, ConfigRecurrentLinearModel):
@@ -362,11 +362,11 @@ class Model(nn.Module):
                 h_in = torch.tensor(h_in, dtype=torch.float32, device=self.config.DEVICE)
 
             # convolutional layers
-            conv_out = self.convolutional_layers(obs)
-            conv_out = torch.flatten(conv_out, start_dim=1)
+            encoder_out = self.convolutional_layers(obs)
+            encoder_out = torch.flatten(encoder_out, start_dim=1)
 
             # representation layers
-            x = self.representation_layers(conv_out)
+            x = self.representation_layers(encoder_out)
 
             # recurrent layers
             if x.ndim == 2:

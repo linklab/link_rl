@@ -95,14 +95,14 @@ class AgentPpo(AgentA2c):
             values = self.critic_forward(self.observations)
             critic_loss = self.get_critic_loss(values=values, detached_target_values=detached_target_values)
 
-            if self.encoder_is_not_identity:
-                self.encoder_optimizer.zero_grad()
             self.critic_optimizer.zero_grad()
             critic_loss.backward()
             self.clip_critic_model_parameter_grad_value(self.critic_model.parameters())
-            if self.encoder_is_not_identity:
-                self.encoder_optimizer.step()
             self.critic_optimizer.step()
+
+            if self.encoder_is_not_identity:
+                self.last_loss_for_encoder = critic_loss
+
             ##########################################
             #  Critic (Value) Loss 산출 & Update- END #
             ##########################################

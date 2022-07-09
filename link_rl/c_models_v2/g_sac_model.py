@@ -252,7 +252,7 @@ class ContinuousSacSharedEncoderModel(DoubleModel):
         else:
             raise ValueError()
 
-        encoder_out = self._get_conv_out(encoder_net, self._observation_shape)
+        encoder_out = self._get_encoder_out(encoder_net, self._observation_shape)
 
         shared_net = nn.Sequential(
             nn.Flatten(start_dim=1),
@@ -379,7 +379,7 @@ class ContinuousSacEncoderModel(DoubleModel):
         else:
             raise ValueError()
 
-        encoder_out = self._get_conv_out(actor_encoder_net, self._observation_shape)
+        encoder_out = self._get_encoder_out(actor_encoder_net, self._observation_shape)
 
         actor_net = nn.Sequential(
             nn.Linear(encoder_out, 128),

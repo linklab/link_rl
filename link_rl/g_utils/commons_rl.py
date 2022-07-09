@@ -99,7 +99,7 @@ def get_agent(observation_space, action_space, config=None, need_train=True):
             observation_space=observation_space, action_space=action_space, config=config, need_train=need_train
         )
     elif config.AGENT_TYPE == AgentType.PPO_TRAJECTORY:
-        from link_rl.d_agents.on_policy.ppo.agent_ppo_trajectory import AgentPpoTrajectory
+        from temp.agent_ppo_trajectory import AgentPpoTrajectory
         assert hasattr(config, "BATCH_SIZE")
         agent = AgentPpoTrajectory(
             observation_space=observation_space, action_space=action_space, config=config, need_train=need_train

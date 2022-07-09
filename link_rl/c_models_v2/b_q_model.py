@@ -11,7 +11,7 @@ class Q_MODEL(enum.Enum):
     QModel = "QModel"
     DuelingQModel = "DuelingQModel"
     EncoderQModel = "EncoderQModel"
-    GymAtariQModel = "GymAtariQModel"
+    NatureAtariQModel = "NatureAtariQModel"
 
 
 @model_registry.add
@@ -131,13 +131,13 @@ class EncoderQModel(SingleModel):
             config=vgg16_layers
         )
 
-        conv_out = self._get_conv_out(
+        encoder_out = self._get_encoder_out(
             conv_layers=vgg16_net,
             shape=self._observation_shape
         )
 
         linear_model = nn.Sequential(
-            nn.Linear(conv_out, 512),
+            nn.Linear(encoder_out, 512),
             nn.LayerNorm(512),
             nn.LeakyReLU(),
             nn.Linear(512, 256),
@@ -159,7 +159,7 @@ class EncoderQModel(SingleModel):
 
 
 @model_registry.add
-class GymAtariQModel(SingleModel):
+class NatureAtariQModel(SingleModel):
     def __init__(
         self,
         n_input: int,
@@ -174,31 +174,13 @@ class GymAtariQModel(SingleModel):
 
     @final
     def _create_model(self) -> nn.Module:
-        encoder_net = nn.Sequential(
-            nn.Conv2d(in_channels=self._n_input, out_channels=32, kernel_size=8, stride=4),
-            nn.BatchNorm2d(32),
-            nn.LeakyReLU(),
-            nn.Conv2d(in_channels=32, out_channels=64, kernel_size=4, stride=2),
-            nn.BatchNorm2d(64),
-            nn.LeakyReLU(),
-            nn.Conv2d(in_channels=64, out_channels=64, kernel_size=3, stride=1),
-            nn.BatchNorm2d(64),
-            nn.LeakyReLU()        )
-
-        encorder_out = self._get_conv_out(
-            conv_layers=encoder_net,
-            shape=self._observation_shape
-        )
-
         linear_model = nn.Sequential(
-            nn.Linear(encorder_out, 512),
+            nn.Linear(self._n_input, 512),
             nn.LeakyReLU(),
             nn.Linear(512, self._n_discrete_actions)
         )
 
         model = nn.Sequential(
-            encoder_net,
-            nn.Flatten(start_dim=1),
             linear_model
         )
         return model

@@ -144,7 +144,7 @@ class ContinuousTd3EncoderModel(DoubleModel):
         else:
             raise ValueError()
 
-        encoder_out = self._get_conv_out(conv_layers=actor_encoder_net, shape=self._observation_shape)
+        encoder_out = self._get_encoder_out(conv_layers=actor_encoder_net, shape=self._observation_shape)
 
         actor_net = nn.Sequential(
             nn.Linear(encoder_out, 128),
@@ -238,7 +238,7 @@ class ContinuousTd3SharedEncoderModel(DoubleModel):
         else:
             raise ValueError()
 
-        encoder_out = self._get_conv_out(conv_layers=encoder_net, shape=self._observation_shape)
+        encoder_out = self._get_encoder_out(conv_layers=encoder_net, shape=self._observation_shape)
 
         shared_net = nn.Sequential(
             nn.Flatten(start_dim=1),

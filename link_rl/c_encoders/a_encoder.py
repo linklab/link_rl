@@ -12,6 +12,7 @@ from link_rl.g_utils.registry import Registry
 class ENCODER(enum.Enum):
     IdentityEncoder = "IdentityEncoder"
     SimpleEncoder = "SimpleEncoder"
+    NatureAtariEncoder = "NatureAtariEncoder"
 
 
 class BaseEncoder(ABC):
@@ -19,12 +20,12 @@ class BaseEncoder(ABC):
         self._observation_shape = observation_shape
         self._n_channels = observation_shape[0]
 
-        def get_conv_out(conv_layers, shape) -> int:
+        def get_encoder_out(conv_layers, shape) -> int:
             conv_layers.eval()
-            conv_out = conv_layers(torch.zeros(1, *shape))
-            return int(np.prod(conv_out.size()))
+            encoder_out = conv_layers(torch.zeros(1, *shape))
+            return int(np.prod(encoder_out.size()))
         encoder = self._create_encoder()
-        self._conv_out = get_conv_out(encoder, self._observation_shape)
+        self._encoder_out = get_encoder_out(encoder, self._observation_shape)
         del encoder
 
     @abstractmethod
@@ -40,8 +41,8 @@ class BaseEncoder(ABC):
         return encoder
 
     @property
-    def conv_out(self):
-        return self._conv_out
+    def encoder_out(self):
+        return self._encoder_out
 
 
 encoder_registry = Registry(BaseEncoder)

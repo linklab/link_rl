@@ -12,27 +12,22 @@ class AgentA2c(OnPolicyAgent):
         super(AgentA2c, self).__init__(observation_space, action_space, config, need_train)
 
         # models
-        self.encoder = self._encoder_creator.create_encoder()
         self.actor_model, self.critic_model = self._model_creator.create_model()
 
         # to(device)
-        self.encoder.to(self.config.DEVICE)
         self.actor_model.to(self.config.DEVICE)
         self.critic_model.to(self.config.DEVICE)
 
         # Access
         self.model = self.actor_model
-        self.model.eval()
 
         # share memory
-        self.encoder.share_memory()
         self.actor_model.share_memory()
         self.critic_model.share_memory()
+        self.actor_model.eval()
+        self.critic_model.eval()
 
         # optimizers
-        self.encoder_is_not_identity = type(self.encoder).__name__ != "Identity"
-        if self.encoder_is_not_identity:
-            self.encoder_optimizer = optim.Adam(self.encoder.parameters(), lr=self.config.LEARNING_RATE)
         self.actor_optimizer = optim.Adam(self.actor_model.parameters(), lr=self.config.ACTOR_LEARNING_RATE)
         self.critic_optimizer = optim.Adam(self.critic_model.parameters(), lr=self.config.LEARNING_RATE)
 
@@ -98,15 +93,13 @@ class AgentA2c(OnPolicyAgent):
         #############################################
         critic_loss = self.get_critic_loss(values=values, detached_target_values=detached_target_values)
 
-        if self.encoder_is_not_identity:
-            self.encoder_optimizer.zero_grad()
         self.critic_optimizer.zero_grad()
         critic_loss.backward()
-        self.clip_critic_model_parameter_grad_value(self.encoder.parameters())
         self.clip_critic_model_parameter_grad_value(self.critic_model.parameters())
-        if self.encoder_is_not_identity:
-            self.encoder_optimizer.step()
         self.critic_optimizer.step()
+
+        if self.encoder_is_not_identity:
+            self.last_loss_for_encoder = critic_loss
         ##########################################
         #  Critic (Value) Loss 산출 & Update- END #
         ##########################################

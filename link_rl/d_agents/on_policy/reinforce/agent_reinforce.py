@@ -71,6 +71,9 @@ class AgentReinforce(OnPolicyAgent):
         #self.clip_actor_model_parameter_grad_value(self.actor_model.actor_params_list)
         self.optimizer.step()
 
+        if self.encoder_is_not_identity:
+            self.last_loss_for_encoder = loss
+
         self.last_log_policy_objective.value = log_policy_objective.item()
 
         count_training_steps += 1

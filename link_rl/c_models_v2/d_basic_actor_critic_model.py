@@ -94,7 +94,7 @@ class DiscreteBasicActorCriticEncoderSharedModel(DoubleModel):
         else:
             raise ValueError()
 
-        encoder_out = self._get_conv_out(conv_layers=encoder_net, shape=self._observation_shape)
+        encoder_out = self._get_encoder_out(conv_layers=encoder_net, shape=self._observation_shape)
 
         shared_net = nn.Sequential(
             nn.Flatten(start_dim=1),
@@ -247,7 +247,7 @@ class ContinuousBasicActorCriticEncoderSharedModel(DoubleModel):
         else:
             raise ValueError()
 
-        encoder_out = self._get_conv_out(
+        encoder_out = self._get_encoder_out(
             conv_layers=encoder_net,
             shape=self._observation_shape
         )

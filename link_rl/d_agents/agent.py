@@ -2,6 +2,7 @@ from abc import abstractmethod
 
 import torch
 import torch.multiprocessing as mp
+from torch import optim
 from gym.spaces import Discrete, Box
 
 import numpy as np
@@ -14,7 +15,7 @@ from link_rl.c_models_v2 import model_creators
 from link_rl.c_encoders import encoder_creators
 from link_rl.c_models_v2.a_model import BaseModel
 from link_rl.g_utils.commons import get_continuous_action_info
-from link_rl.g_utils.types import AgentMode, ActorCriticAgentTypes
+from link_rl.g_utils.types import AgentMode, ActorCriticAgentTypes, AgentType, OffPolicyAgentTypes
 
 
 class Agent:
@@ -67,7 +68,7 @@ class Agent:
             print(self.config.MODEL_TYPE, "##########")
             model_creator_class = model_creators.get(self.config.MODEL_TYPE)
             self._model_creator: BaseModel = model_creator_class(
-                n_input=self._encoder_creator.conv_out,
+                n_input=self._encoder_creator.encoder_out,
                 n_out_actions=self.n_out_actions,
                 n_discrete_actions=self.n_discrete_actions
             )
@@ -94,18 +95,70 @@ class Agent:
 
         self.step = 0
 
+        ### ENCODER - START###
+        self.encoder = self._encoder_creator.create_encoder()
+        self.target_encoder = self._encoder_creator.create_encoder()
+
+        self.encoder.to(self.config.DEVICE)
+        self.target_encoder.to(self.config.DEVICE)
+
+        self.synchronize_models(source_model=self.encoder, target_model=self.target_encoder)
+
+        self.encoder.share_memory()
+        self.encoder.eval()
+
+        self.encoder_is_not_identity = type(self.encoder).__name__ != "Identity"
+        if self.encoder_is_not_identity:
+            self.encoder_optimizer = optim.Adam(self.encoder.parameters(), lr=self.config.LEARNING_RATE)
+
+        self.last_loss_for_encoder = None
+        ### ENCODER - END ###
+
     @property
     def enc_out(self):
-        return self._encoder_creator.conv_out
+        return self._encoder_creator.encoder_out
 
     @abstractmethod
     @torch.no_grad()
     def get_action(self, obs, unavailable_actions=None, mode=AgentMode.TRAIN, t0=False, step=None):
         raise NotImplementedError()
 
+    def _before_train(self):
+        self.encoder.train()
+        if self.config.AGENT_TYPE in ActorCriticAgentTypes:
+            self.actor_model.train()
+            self.critic_model.train()
+        else:
+            self.model.train()
+
+        if self.encoder_is_not_identity:
+            self.encoder_optimizer.zero_grad()
+
     @abstractmethod
     def train(self, training_steps_v=None):
         raise NotImplementedError()
+
+    def _after_train(self):
+        torch.nn.utils.clip_grad_norm_(self.encoder.parameters(), self.config.CLIP_GRADIENT_VALUE)
+
+        if self.encoder_is_not_identity:
+            self.encoder_optimizer.step()
+
+        if self.config.AGENT_TYPE in OffPolicyAgentTypes:
+            if self.config.AGENT_TYPE in [AgentType.DQN]:
+                self.synchronize_models(source_model=self.encoder, target_model=self.target_encoder)
+            else:
+                assert hasattr(self.config, "TAU")
+                self.soft_synchronize_models(
+                    source_model=self.encoder, target_model=self.target_encoder, tau=self.config.TAU
+                )
+
+        self.encoder.eval()
+        if self.config.AGENT_TYPE in ActorCriticAgentTypes:
+            self.actor_model.eval()
+            self.critic_model.eval()
+        else:
+            self.model.eval()
 
     def clip_model_config_grad_value(self, model_parameters):
         total_norm = torch.nn.utils.clip_grad_norm_(model_parameters, self.config.CLIP_GRADIENT_VALUE)

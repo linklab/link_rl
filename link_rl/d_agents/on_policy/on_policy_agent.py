@@ -21,57 +21,39 @@ class OnPolicyAgent(Agent):
             self.buffer = None
 
     def _before_train(self):
-        if self.config.AGENT_TYPE in ActorCriticAgentTypes:
-            assert self.actor_model
-            assert self.critic_model
-            assert self.model is self.actor_model
+        super(OnPolicyAgent, self)._before_train()
 
-        transition = self.buffer.sample(batch_size=None)
-        self.observations, self.actions, self.next_observations, self.rewards, self.dones, self.infos = transition
-        self.model.train()
+        self.observations, self.actions, self.next_observations, self.rewards, self.dones, self.infos \
+            = self.buffer.sample(batch_size=None)
 
     def train(self, training_steps_v=None):
         count_training_steps = 0
 
-        if self.config.AGENT_TYPE == AgentType.REINFORCE:
-            if len(self.buffer) > 0:
-                self._before_train()  # sample all in order as it is
-                count_training_steps = self.train_reinforce()
-                self.buffer.clear()  # ON_POLICY!
-                self._after_train()
+        if self.config.AGENT_TYPE == AgentType.REINFORCE and len(self.buffer) > 0:
+            self._before_train()  # sample all in order as it is
+            count_training_steps = self.train_reinforce()
+            self._after_train()
 
-        elif self.config.AGENT_TYPE == AgentType.A2C:
-            if len(self.buffer) >= self.config.BATCH_SIZE:
-                self._before_train()
-                assert len(self.observations) == self.config.BATCH_SIZE
-                count_training_steps = self.train_a2c()
-                self.buffer.clear()  # ON_POLICY!
-                self._after_train()
+        elif self.config.AGENT_TYPE == AgentType.A2C and len(self.buffer) >= self.config.BATCH_SIZE:
+            self._before_train()
+            assert len(self.observations) == self.config.BATCH_SIZE
+            count_training_steps = self.train_a2c()
+            self._after_train()
 
-        elif self.config.AGENT_TYPE == AgentType.PPO:
-            if len(self.buffer) >= self.config.BATCH_SIZE:
-                self._before_train()
-                assert len(self.observations) == self.config.BATCH_SIZE
-                count_training_steps = self.train_ppo()
-                self.buffer.clear()  # ON_POLICY!
-                self._after_train()
+        elif self.config.AGENT_TYPE == AgentType.PPO and len(self.buffer) >= self.config.BATCH_SIZE:
+            self._before_train()
+            assert len(self.observations) == self.config.BATCH_SIZE
+            count_training_steps = self.train_ppo()
+            self._after_train()
 
-        elif self.config.AGENT_TYPE == AgentType.PPO_TRAJECTORY:
-            if len(self.buffer) >= self.config.PPO_TRAJECTORY_SIZE:
-                self._before_train()
-                assert len(self.observations) == self.config.PPO_TRAJECTORY_SIZE
-                count_training_steps = self.train_ppo()
-                self.buffer.clear()  # ON_POLICY!
-                self._after_train()
+        elif self.config.AGENT_TYPE == AgentType.PPO_TRAJECTORY and len(self.buffer) >= self.config.PPO_TRAJECTORY_SIZE:
+            self._before_train()
+            assert len(self.observations) == self.config.PPO_TRAJECTORY_SIZE
+            count_training_steps = self.train_ppo()
+            self._after_train()
 
         elif self.config.AGENT_TYPE in [AgentType.A3C, AgentType.ASYNCHRONOUS_PPO]:
             pass
-            # if len(self.buffer) >= self.config.BATCH_SIZE:
-            #     self._before_train()
-            #     assert len(self.observations) == self.config.BATCH_SIZE
-            #     count_training_steps = self.train_a3c()
-            #     self.buffer.clear()  # ON_POLICY!
-            #     self._after_train()
 
         else:
             raise ValueError()
@@ -79,13 +61,9 @@ class OnPolicyAgent(Agent):
         return count_training_steps
 
     def _after_train(self, loss_each=None):
-        del self.observations
-        del self.actions
-        del self.next_observations
-        del self.rewards
-        del self.dones
+        super(OnPolicyAgent, self)._after_train()
 
-        self.model.eval()
+        self.buffer.clear()  # ON_POLICY!
 
     # ON_POLICY
     @abstractmethod

@@ -16,7 +16,7 @@ class ConfigDemonAttackDqn(ConfigBase, ConfigDemonAttack, ConfigDqn):
 
         self.MAX_TRAINING_STEPS = 1_000_000
         self.BUFFER_CAPACITY = 1_000_000
-        self.MODEL_TYPE = Q_MODEL.GymAtariQModel.value
+        self.MODEL_TYPE = Q_MODEL.NatureAtariQModel.value
 
 
 class ConfigDemonAttackDoubleDqn(ConfigBase, ConfigDemonAttack, ConfigDoubleDqn):
@@ -27,7 +27,7 @@ class ConfigDemonAttackDoubleDqn(ConfigBase, ConfigDemonAttack, ConfigDoubleDqn)
 
         self.MAX_TRAINING_STEPS = 1_000_000
         self.BUFFER_CAPACITY = 1_000_000
-        self.MODEL_TYPE = Q_MODEL.GymAtariQModel.value
+        self.MODEL_TYPE = Q_MODEL.NatureAtariQModel.value
 
 
 class ConfigDemonAttackDuelingDqn(ConfigBase, ConfigDemonAttack, ConfigDuelingDqn):
@@ -38,7 +38,7 @@ class ConfigDemonAttackDuelingDqn(ConfigBase, ConfigDemonAttack, ConfigDuelingDq
 
         self.MAX_TRAINING_STEPS = 1_000_000
         self.BUFFER_CAPACITY = 1_000_000
-        self.MODEL_TYPE = Q_MODEL.GymAtariQModel.value
+        self.MODEL_TYPE = Q_MODEL.NatureAtariQModel.value
 
 
 class ConfigDemonAttackDoubleDuelingDqn(ConfigBase, ConfigDemonAttack, ConfigDoubleDuelingDqn):
@@ -49,7 +49,7 @@ class ConfigDemonAttackDoubleDuelingDqn(ConfigBase, ConfigDemonAttack, ConfigDou
 
         self.MAX_TRAINING_STEPS = 1_000_000
         self.BUFFER_CAPACITY = 1_000_000
-        self.MODEL_TYPE = Q_MODEL.GymAtariQModel.value
+        self.MODEL_TYPE = Q_MODEL.NatureAtariQModel.value
 
 
 class ConfigDemonAttackA2c(ConfigBase, ConfigDemonAttack, ConfigA2c):

@@ -129,7 +129,7 @@ class TdmpcEncoderModel(SingleModel):
             nn.Conv2d(32, 32, 3, stride=2),
             nn.ReLU()
         )
-        cnn_out = self._get_conv_out(cnn_net, self._observation_shape)
+        cnn_out = self._get_encoder_out(cnn_net, self._observation_shape)
         representation_net = nn.Sequential(
             nn.Flatten(start_dim=1),
             nn.Linear(cnn_out, 50)
@@ -372,7 +372,7 @@ class TdmpcRepresentationParameterizedEncoderModel(SingleModel):
             nn.Conv2d(32, 32, 3, stride=2),
             nn.ReLU()
         )
-        cnn_out = self._get_conv_out(cnn_net, self._observation_shape)
+        cnn_out = self._get_encoder_out(cnn_net, self._observation_shape)
         representation_net = nn.Sequential(
             nn.Flatten(start_dim=1),
             nn.Linear(cnn_out, 50)
@@ -508,7 +508,7 @@ class TdmpcCNNParameterizedEncoderModel(SingleModel):
             nn.Conv2d(32, 32, 3, stride=2),
             nn.ReLU()
         )
-        cnn_out = self._get_conv_out(cnn_net, self._observation_shape)
+        cnn_out = self._get_encoder_out(cnn_net, self._observation_shape)
         representation_net = nn.Sequential(
             nn.Flatten(start_dim=1),
             nn.Linear(cnn_out, 50)

@@ -129,6 +129,6 @@ if __name__ == "__main__":
 
     from link_rl.a_configuration.b_single_config.open_ai_gym.atari.config_pong import ConfigPongDqn
     config = ConfigPongDqn()
-    config.MODEL_TYPE = "GymAtariQModel"
+    config.MODEL_TYPE = "NatureAtariQModel"
 
     main_env_info2(config)

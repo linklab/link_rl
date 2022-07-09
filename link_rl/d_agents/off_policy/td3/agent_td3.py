@@ -12,14 +12,10 @@ class AgentTd3(OffPolicyAgent):
         super(AgentTd3, self).__init__(observation_space, action_space, config, need_train)
 
         # models
-        self.encoder = self._encoder_creator.create_encoder()
-        self.target_encoder = self._encoder_creator.create_encoder()
         self.actor_model, self.critic_model = self._model_creator.create_model()
         self.target_actor_model, self.target_critic_model = self._model_creator.create_model()
 
         # to(device)
-        self.encoder.to(self.config.DEVICE)
-        self.target_encoder.to(self.config.DEVICE)
         self.actor_model.to(self.config.DEVICE)
         self.target_actor_model.to(self.config.DEVICE)
         self.critic_model.to(self.config.DEVICE)
@@ -27,22 +23,18 @@ class AgentTd3(OffPolicyAgent):
 
         # Access
         self.model = self.actor_model
-        self.model.eval()
 
         # sync models
-        self.synchronize_models(source_model=self.encoder, target_model=self.target_encoder)
         self.synchronize_models(source_model=self.actor_model, target_model=self.target_actor_model)
         self.synchronize_models(source_model=self.critic_model, target_model=self.target_critic_model)
 
         # share memory
-        self.encoder.share_memory()
         self.actor_model.share_memory()
         self.critic_model.share_memory()
+        self.actor_model.eval()
+        self.critic_model.eval()
 
         # optimizers
-        self.encoder_is_not_identity = type(self.encoder).__name__ != "Identity"
-        if self.encoder_is_not_identity:
-            self.encoder_optimizer = optim.Adam(self.actor_model.parameters(), lr=self.config.LEARNING_RATE)
         self.actor_optimizer = optim.Adam(self.actor_model.parameters(), lr=self.config.ACTOR_LEARNING_RATE)
         self.critic_optimizer = optim.Adam(self.critic_model.parameters(), lr=self.config.LEARNING_RATE)
 
@@ -119,25 +111,21 @@ class AgentTd3(OffPolicyAgent):
 
         if self.config.USE_PER:
             critic_loss_each *= torch.FloatTensor(self.important_sampling_weights).to(self.config.DEVICE)[:, None]
+            self.last_loss_for_per = critic_loss_each
 
         critic_loss = critic_loss_each.mean()
 
-        if self.encoder_is_not_identity:
-            self.encoder_optimizer.zero_grad()
         self.critic_optimizer.zero_grad()
         critic_loss.backward()
-        self.clip_critic_model_parameter_grad_value(self.encoder.parameters())
         self.clip_critic_model_parameter_grad_value(self.critic_model.parameters())
-        if self.encoder_is_not_identity:
-            self.encoder_optimizer.step()
         self.critic_optimizer.step()
+
+        if self.encoder_is_not_identity:
+            self.last_loss_for_encoder = critic_loss
 
         self.last_critic_loss.value = critic_loss.item()
 
         # TAU: 0.005
-        self.soft_synchronize_models(
-            source_model=self.encoder, target_model=self.target_encoder, tau=self.config.TAU
-        )
         self.soft_synchronize_models(
             source_model=self.critic_model, target_model=self.target_critic_model, tau=self.config.TAU
         )

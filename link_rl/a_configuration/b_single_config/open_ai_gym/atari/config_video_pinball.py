@@ -15,7 +15,7 @@ class ConfigVideoPinballDqn(ConfigBase, ConfigVideoPinball, ConfigDqn):
 
         self.MAX_TRAINING_STEPS = 1_000_000
         self.BUFFER_CAPACITY = 500_000
-        self.MODEL_TYPE = Q_MODEL.GymAtariQModel.value
+        self.MODEL_TYPE = Q_MODEL.NatureAtariQModel.value
 
 
 class ConfigVideoPinballDoubleDqn(ConfigBase, ConfigVideoPinball, ConfigDoubleDqn):
@@ -26,7 +26,7 @@ class ConfigVideoPinballDoubleDqn(ConfigBase, ConfigVideoPinball, ConfigDoubleDq
 
         self.MAX_TRAINING_STEPS = 1_000_000
         self.BUFFER_CAPACITY = 500_000
-        self.MODEL_TYPE = Q_MODEL.GymAtariQModel.value
+        self.MODEL_TYPE = Q_MODEL.NatureAtariQModel.value
 
 
 class ConfigVideoPinballDuelingDqn(ConfigBase, ConfigVideoPinball, ConfigDuelingDqn):
@@ -37,7 +37,7 @@ class ConfigVideoPinballDuelingDqn(ConfigBase, ConfigVideoPinball, ConfigDueling
 
         self.MAX_TRAINING_STEPS = 1_000_000
         self.BUFFER_CAPACITY = 500_000
-        self.MODEL_TYPE = Q_MODEL.GymAtariQModel.value
+        self.MODEL_TYPE = Q_MODEL.NatureAtariQModel.value
 
 
 class ConfigVideoPinballDoubleDuelingDqn(ConfigBase, ConfigVideoPinball, ConfigDoubleDuelingDqn):
@@ -48,7 +48,7 @@ class ConfigVideoPinballDoubleDuelingDqn(ConfigBase, ConfigVideoPinball, ConfigD
 
         self.MAX_TRAINING_STEPS = 1_000_000
         self.BUFFER_CAPACITY = 500_000
-        self.MODEL_TYPE = Q_MODEL.GymAtariQModel.value
+        self.MODEL_TYPE = Q_MODEL.NatureAtariQModel.value
 
 
 class ConfigVideoPinballA2c(ConfigBase, ConfigVideoPinball, ConfigA2c):

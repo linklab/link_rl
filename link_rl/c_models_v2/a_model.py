@@ -28,10 +28,10 @@ class BaseModel(ABC):
         raise NotImplementedError
 
     @staticmethod
-    def _get_conv_out(conv_layers, shape):
+    def _get_encoder_out(conv_layers, shape):
         conv_layers.eval()
-        conv_out = conv_layers(torch.zeros(1, *shape))
-        return int(np.prod(conv_out.size()))
+        encoder_out = conv_layers(torch.zeros(1, *shape))
+        return int(np.prod(encoder_out.size()))
 
 
 model_registry = Registry(BaseModel)
