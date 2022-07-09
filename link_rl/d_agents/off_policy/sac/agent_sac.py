@@ -50,7 +50,6 @@ class AgentSac(OffPolicyAgent):
         self.min_alpha = torch.tensor(self.config.MIN_ALPHA, device=self.config.DEVICE)
 
         if self.config.AUTOMATIC_ENTROPY_TEMPERATURE_TUNING:
-            # self.minimum_expected_entropy = -8 for ant_bullet env.
             # it is the desired minimum expected entropy
             self.minimum_expected_entropy = -1.0 * torch.prod(torch.Tensor(action_space.shape).to(self.config.DEVICE)).item()
             self.log_alpha = torch.zeros(1, requires_grad=True, device=self.config.DEVICE)

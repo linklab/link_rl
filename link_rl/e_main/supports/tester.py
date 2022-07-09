@@ -6,7 +6,6 @@ from gym.spaces import Discrete, Box
 from link_rl.a_configuration.a_base_config.a_environments.competition_olympics import ConfigCompetitionOlympics
 from link_rl.a_configuration.a_base_config.a_environments.open_ai_gym.config_gym_atari import ConfigGymAtari
 from link_rl.a_configuration.a_base_config.a_environments.open_ai_gym.config_gym_mujoco import ConfigMujoco
-from link_rl.a_configuration.a_base_config.a_environments.pybullet.config_gym_pybullet import ConfigBullet
 from link_rl.g_utils.commons import get_single_env
 from link_rl.g_utils.types import AgentType, AgentMode
 
@@ -37,13 +36,13 @@ class Tester:
             render_before_reset_conditions = [
                 self.play,
                 not isinstance(self.config, ConfigGymAtari),
-                isinstance(self.config, (ConfigMujoco, ConfigBullet))
+                isinstance(self.config, ConfigMujoco)
             ]
 
             render_after_reset_conditions = [
                 self.play,
                 not isinstance(self.config, ConfigGymAtari),
-                not isinstance(self.config, (ConfigMujoco, ConfigBullet))
+                not isinstance(self.config, ConfigMujoco)
             ]
 
             if all(render_before_reset_conditions):

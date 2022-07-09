@@ -55,38 +55,6 @@ from link_rl.a_configuration.c_comparison_config.open_ai_gym.config_comparison_c
 config_c = ConfigComparisonCartPoleDoubleDqnRecurrentWithoutVelocity()
 
 
-######################
-#  CART_POLE_BULLET  #
-######################
-from link_rl.a_configuration.c_comparison_config.pybullet.config_comparison_cart_pole_bullet import \
-    ConfigComparisonCartPoleBulletDqn
-config_c = ConfigComparisonCartPoleBulletDqn()
-
-from link_rl.a_configuration.c_comparison_config.pybullet.config_comparison_cart_pole_bullet import \
-    ConfigComparisonCartPoleBulletA2c
-config_c = ConfigComparisonCartPoleBulletA2c()
-
-from link_rl.a_configuration.c_comparison_config.pybullet.config_comparison_cart_pole_bullet import \
-    ConfigComparisonCartPoleBulletDqnTypes
-config_c = ConfigComparisonCartPoleBulletDqnTypes()
-
-
-#################################
-#  CART_POLE_CONTINUOUS_BULLET  #
-#################################
-from link_rl.a_configuration.c_comparison_config.pybullet.config_comparison_cart_pole_continuous_bullet import \
-    ConfigComparisonCartPoleContinuousBulletDdpg
-config_c = ConfigComparisonCartPoleContinuousBulletDdpg()
-
-from link_rl.a_configuration.c_comparison_config.pybullet.config_comparison_cart_pole_continuous_bullet import \
-    ConfigComparisonCartPoleContinuousBulletAll
-config_c = ConfigComparisonCartPoleContinuousBulletAll()
-
-from link_rl.a_configuration.c_comparison_config.pybullet.config_comparison_cart_pole_continuous_bullet import \
-    ConfigComparisonCartPoleContinuousBulletPpo
-config_c = ConfigComparisonCartPoleContinuousBulletPpo()
-
-
 ##########
 #  PONG  #
 ##########
@@ -169,51 +137,6 @@ config_c = ConfigComparisonAntMujocoSac()
 from link_rl.a_configuration.c_comparison_config.mujoco.config_comparison_ant import \
     ConfigComparisonAntMujocoSacPpo
 config_c = ConfigComparisonAntMujocoSacPpo()
-
-
-################
-#  ANT_BULLET  #
-################
-from link_rl.a_configuration.c_comparison_config.pybullet.config_comparison_ant import \
-    ConfigComparisonAntBulletDDpgTd3
-config_c = ConfigComparisonAntBulletDDpgTd3()
-config_c.WANDB_REPORT_URL = "https://wandb.ai/link-koreatech/AntBulletEnv-v0_Comparison_anonymous/reports/AntBullet-DDPG-TD3--VmlldzoxNTAwOTgw?accessToken=1wzn8ux59sr6991ejtvmr1vgq1k1berw6ia2hu4bcm445gn5o1yk43ksbd4qkwhw"
-
-from link_rl.a_configuration.c_comparison_config.pybullet.config_comparison_ant import \
-    ConfigComparisonAntBulletSacAlpha
-config_c = ConfigComparisonAntBulletSacAlpha()
-
-from link_rl.a_configuration.c_comparison_config.pybullet.config_comparison_ant import \
-    ConfigComparisonAntBulletSacPer
-config_c = ConfigComparisonAntBulletSacPer()
-
-from link_rl.a_configuration.c_comparison_config.pybullet.config_comparison_ant import \
-    ConfigComparisonAntBulletPpoSac
-config_c = ConfigComparisonAntBulletPpoSac()
-
-
-###################################
-#  InvertedDoublePendulum_BULLET  #
-###################################
-from link_rl.a_configuration.c_comparison_config.pybullet.config_comparison_inverted_double_pendulum_bullet import \
-    ConfigComparisonInvertedDoublePendulumBulletA2c
-config_c = ConfigComparisonInvertedDoublePendulumBulletA2c()
-
-from link_rl.a_configuration.c_comparison_config.pybullet.config_comparison_inverted_double_pendulum_bullet import \
-    ConfigComparisonInvertedDoublePendulumBulletSacAlpha
-config_c = ConfigComparisonInvertedDoublePendulumBulletSacAlpha()
-
-from link_rl.a_configuration.c_comparison_config.pybullet.config_comparison_inverted_double_pendulum_bullet import \
-    ConfigComparisonInvertedDoublePendulumBulletSacPer
-config_c = ConfigComparisonInvertedDoublePendulumBulletSacPer()
-
-from link_rl.a_configuration.c_comparison_config.pybullet.config_comparison_inverted_double_pendulum_bullet import \
-    ConfigComparisonInvertedDoublePendulumBulletA2cPpo
-config_c = ConfigComparisonInvertedDoublePendulumBulletA2cPpo()
-
-from link_rl.a_configuration.c_comparison_config.pybullet.config_comparison_inverted_double_pendulum_bullet import \
-    ConfigComparisonInvertedDoublePendulumBulletSacPpo
-config_c = ConfigComparisonInvertedDoublePendulumBulletSacPpo()
 
 
 ####################
