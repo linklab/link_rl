@@ -15,7 +15,7 @@ class ConfigVideoPinballDqn(ConfigBase, ConfigVideoPinball, ConfigDqn):
 
         self.MAX_TRAINING_STEPS = 1_000_000
         self.BUFFER_CAPACITY = 500_000
-        self.MODEL_TYPE = Q_MODEL.NatureAtariQModel.value
+        self.MODEL_TYPE = Q_MODEL.QModel.value
 
 
 class ConfigVideoPinballDoubleDqn(ConfigBase, ConfigVideoPinball, ConfigDoubleDqn):
@@ -26,7 +26,7 @@ class ConfigVideoPinballDoubleDqn(ConfigBase, ConfigVideoPinball, ConfigDoubleDq
 
         self.MAX_TRAINING_STEPS = 1_000_000
         self.BUFFER_CAPACITY = 500_000
-        self.MODEL_TYPE = Q_MODEL.NatureAtariQModel.value
+        self.MODEL_TYPE = Q_MODEL.QModel.value
 
 
 class ConfigVideoPinballDuelingDqn(ConfigBase, ConfigVideoPinball, ConfigDuelingDqn):
@@ -37,7 +37,7 @@ class ConfigVideoPinballDuelingDqn(ConfigBase, ConfigVideoPinball, ConfigDueling
 
         self.MAX_TRAINING_STEPS = 1_000_000
         self.BUFFER_CAPACITY = 500_000
-        self.MODEL_TYPE = Q_MODEL.NatureAtariQModel.value
+        self.MODEL_TYPE = Q_MODEL.DuelingQModel.value
 
 
 class ConfigVideoPinballDoubleDuelingDqn(ConfigBase, ConfigVideoPinball, ConfigDoubleDuelingDqn):
@@ -48,7 +48,7 @@ class ConfigVideoPinballDoubleDuelingDqn(ConfigBase, ConfigVideoPinball, ConfigD
 
         self.MAX_TRAINING_STEPS = 1_000_000
         self.BUFFER_CAPACITY = 500_000
-        self.MODEL_TYPE = Q_MODEL.NatureAtariQModel.value
+        self.MODEL_TYPE = Q_MODEL.DuelingQModel.value
 
 
 class ConfigVideoPinballA2c(ConfigBase, ConfigVideoPinball, ConfigA2c):
@@ -58,7 +58,7 @@ class ConfigVideoPinballA2c(ConfigBase, ConfigVideoPinball, ConfigA2c):
         ConfigA2c.__init__(self)
 
         self.MAX_TRAINING_STEPS = 1_000_000
-        self.MODEL_TYPE = BASIC_ACTOR_CRITIC_MODEL.DiscreteBasicActorCriticEncoderSharedModel.value
+        self.MODEL_TYPE = BASIC_ACTOR_CRITIC_MODEL.DiscreteBasicActorCriticSharedModel.value
 
 
 class ConfigVideoPinballA3c(ConfigBase, ConfigVideoPinball, ConfigA3c):
@@ -68,7 +68,7 @@ class ConfigVideoPinballA3c(ConfigBase, ConfigVideoPinball, ConfigA3c):
         ConfigA3c.__init__(self)
 
         self.MAX_TRAINING_STEPS = 1_000_000
-        self.MODEL_TYPE = BASIC_ACTOR_CRITIC_MODEL.DiscreteBasicActorCriticEncoderSharedModel.value
+        self.MODEL_TYPE = BASIC_ACTOR_CRITIC_MODEL.DiscreteBasicActorCriticSharedModel.value
 
 
 class ConfigVideoPinballPpo(ConfigBase, ConfigVideoPinball, ConfigPpo):
@@ -78,7 +78,7 @@ class ConfigVideoPinballPpo(ConfigBase, ConfigVideoPinball, ConfigPpo):
         ConfigPpo.__init__(self)
 
         self.MAX_TRAINING_STEPS = 1_000_000
-        self.MODEL_TYPE = BASIC_ACTOR_CRITIC_MODEL.DiscreteBasicActorCriticEncoderSharedModel.value
+        self.MODEL_TYPE = BASIC_ACTOR_CRITIC_MODEL.DiscreteBasicActorCriticSharedModel.value
 
 
 class ConfigVideoPinballPpoTrajectory(ConfigBase, ConfigVideoPinball, ConfigPpoTrajectory):
@@ -88,4 +88,4 @@ class ConfigVideoPinballPpoTrajectory(ConfigBase, ConfigVideoPinball, ConfigPpoT
         ConfigPpoTrajectory.__init__(self)
 
         self.MAX_TRAINING_STEPS = 1_000_000
-        self.MODEL_TYPE = BASIC_ACTOR_CRITIC_MODEL.DiscreteBasicActorCriticEncoderSharedModel.value
+        self.MODEL_TYPE = BASIC_ACTOR_CRITIC_MODEL.DiscreteBasicActorCriticSharedModel.value

@@ -1,4 +1,5 @@
 from link_rl.b_environments.combinatorial_optimization.knapsack.knapsack import KnapsackEnvStat
+from link_rl.c_encoders.a_encoder import ENCODER
 
 
 class ConfigKnapsack:
@@ -33,7 +34,10 @@ class ConfigKnapsack:
         self.EPISODE_REWARD_MIN_SOLVED = 100
 
         self.CONSOLE_LOG_INTERVAL_TRAINING_STEPS = 50
+
+        self.ENCODER_TYPE = ENCODER.IdentityEncoder.value
         self.MODEL_TYPE = None
+
         self.TARGET_SYNC_INTERVAL_TRAINING_STEPS = 100
 
         self.PRINT_DETAILS_AT_EPISODE_END = False

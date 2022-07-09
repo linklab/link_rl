@@ -16,7 +16,7 @@ class ConfigDemonAttackDqn(ConfigBase, ConfigDemonAttack, ConfigDqn):
 
         self.MAX_TRAINING_STEPS = 1_000_000
         self.BUFFER_CAPACITY = 1_000_000
-        self.MODEL_TYPE = Q_MODEL.NatureAtariQModel.value
+        self.MODEL_TYPE = Q_MODEL.QModel.value
 
 
 class ConfigDemonAttackDoubleDqn(ConfigBase, ConfigDemonAttack, ConfigDoubleDqn):
@@ -27,7 +27,7 @@ class ConfigDemonAttackDoubleDqn(ConfigBase, ConfigDemonAttack, ConfigDoubleDqn)
 
         self.MAX_TRAINING_STEPS = 1_000_000
         self.BUFFER_CAPACITY = 1_000_000
-        self.MODEL_TYPE = Q_MODEL.NatureAtariQModel.value
+        self.MODEL_TYPE = Q_MODEL.QModel.value
 
 
 class ConfigDemonAttackDuelingDqn(ConfigBase, ConfigDemonAttack, ConfigDuelingDqn):
@@ -38,7 +38,7 @@ class ConfigDemonAttackDuelingDqn(ConfigBase, ConfigDemonAttack, ConfigDuelingDq
 
         self.MAX_TRAINING_STEPS = 1_000_000
         self.BUFFER_CAPACITY = 1_000_000
-        self.MODEL_TYPE = Q_MODEL.NatureAtariQModel.value
+        self.MODEL_TYPE = Q_MODEL.DuelingQModel.value
 
 
 class ConfigDemonAttackDoubleDuelingDqn(ConfigBase, ConfigDemonAttack, ConfigDoubleDuelingDqn):
@@ -49,7 +49,7 @@ class ConfigDemonAttackDoubleDuelingDqn(ConfigBase, ConfigDemonAttack, ConfigDou
 
         self.MAX_TRAINING_STEPS = 1_000_000
         self.BUFFER_CAPACITY = 1_000_000
-        self.MODEL_TYPE = Q_MODEL.NatureAtariQModel.value
+        self.MODEL_TYPE = Q_MODEL.DuelingQModel.value
 
 
 class ConfigDemonAttackA2c(ConfigBase, ConfigDemonAttack, ConfigA2c):
@@ -59,7 +59,7 @@ class ConfigDemonAttackA2c(ConfigBase, ConfigDemonAttack, ConfigA2c):
         ConfigA2c.__init__(self)
 
         self.MAX_TRAINING_STEPS = 1_000_000
-        self.MODEL_TYPE = BASIC_ACTOR_CRITIC_MODEL.DiscreteBasicActorCriticEncoderSharedModel.value
+        self.MODEL_TYPE = BASIC_ACTOR_CRITIC_MODEL.DiscreteBasicActorCriticSharedModel.value
 
 
 class ConfigDemonAttackA3c(ConfigBase, ConfigDemonAttack, ConfigA3c):
@@ -69,7 +69,7 @@ class ConfigDemonAttackA3c(ConfigBase, ConfigDemonAttack, ConfigA3c):
         ConfigA3c.__init__(self)
 
         self.MAX_TRAINING_STEPS = 1_000_000
-        self.MODEL_TYPE = BASIC_ACTOR_CRITIC_MODEL.DiscreteBasicActorCriticEncoderSharedModel.value
+        self.MODEL_TYPE = BASIC_ACTOR_CRITIC_MODEL.DiscreteBasicActorCriticSharedModel.value
 
 
 class ConfigDemonAttackPpo(ConfigBase, ConfigDemonAttack, ConfigPpo):
@@ -79,7 +79,7 @@ class ConfigDemonAttackPpo(ConfigBase, ConfigDemonAttack, ConfigPpo):
         ConfigPpo.__init__(self)
 
         self.MAX_TRAINING_STEPS = 1_000_000
-        self.MODEL_TYPE = BASIC_ACTOR_CRITIC_MODEL.DiscreteBasicActorCriticEncoderSharedModel.value
+        self.MODEL_TYPE = BASIC_ACTOR_CRITIC_MODEL.DiscreteBasicActorCriticSharedModel.value
 
 
 class ConfigDemonAttackPpoTrajectory(ConfigBase, ConfigDemonAttack, ConfigPpoTrajectory):
@@ -89,4 +89,4 @@ class ConfigDemonAttackPpoTrajectory(ConfigBase, ConfigDemonAttack, ConfigPpoTra
         ConfigPpoTrajectory.__init__(self)
 
         self.MAX_TRAINING_STEPS = 1_000_000
-        self.MODEL_TYPE = BASIC_ACTOR_CRITIC_MODEL.DiscreteBasicActorCriticEncoderSharedModel.value
+        self.MODEL_TYPE = BASIC_ACTOR_CRITIC_MODEL.DiscreteBasicActorCriticSharedModel.value

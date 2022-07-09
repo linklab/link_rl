@@ -18,7 +18,7 @@ class ConfigDmControlCheetahRunA2c(ConfigBase, ConfigDmControlCheetahRun, Config
 
         self.MAX_TRAINING_STEPS = 1_000_000
         self.FROM_PIXELS = True
-        self.MODEL_TYPE = BASIC_ACTOR_CRITIC_MODEL.ContinuousBasicActorCriticEncoderSharedModel.value
+        self.MODEL_TYPE = BASIC_ACTOR_CRITIC_MODEL.ContinuousBasicActorCriticSharedModel.value
 
 
 class ConfigDmControlCheetahRunA3c(ConfigBase, ConfigDmControlCheetahRun, ConfigA3c):
@@ -29,7 +29,7 @@ class ConfigDmControlCheetahRunA3c(ConfigBase, ConfigDmControlCheetahRun, Config
 
         self.MAX_TRAINING_STEPS = 1_000_000
         self.FROM_PIXELS = True
-        self.MODEL_TYPE = BASIC_ACTOR_CRITIC_MODEL.ContinuousBasicActorCriticEncoderSharedModel.value
+        self.MODEL_TYPE = BASIC_ACTOR_CRITIC_MODEL.ContinuousBasicActorCriticSharedModel.value
 
 
 class ConfigDmControlCheetahRunPpo(ConfigBase, ConfigDmControlCheetahRun, ConfigPpo):
@@ -40,7 +40,7 @@ class ConfigDmControlCheetahRunPpo(ConfigBase, ConfigDmControlCheetahRun, Config
 
         self.MAX_TRAINING_STEPS = 1_000_000
         self.FROM_PIXELS = True
-        self.MODEL_TYPE = BASIC_ACTOR_CRITIC_MODEL.ContinuousBasicActorCriticEncoderSharedModel.value
+        self.MODEL_TYPE = BASIC_ACTOR_CRITIC_MODEL.ContinuousBasicActorCriticSharedModel.value
 
 
 class ConfigDmControlCheetahRunDdpg(ConfigBase, ConfigDmControlCheetahRun, ConfigDdpg):
@@ -62,7 +62,7 @@ class ConfigDmControlCheetahRunTd3(ConfigBase, ConfigDmControlCheetahRun, Config
 
         self.MAX_TRAINING_STEPS = 1_000_000
         self.FROM_PIXELS = True
-        self.MODEL_TYPE = TD3_MODEL.ContinuousTd3EncoderModel.value
+        self.MODEL_TYPE = TD3_MODEL.ContinuousTd3Model.value
 
 
 class ConfigDmControlCheetahRunSac(ConfigBase, ConfigDmControlCheetahRun, ConfigSac):
@@ -73,7 +73,7 @@ class ConfigDmControlCheetahRunSac(ConfigBase, ConfigDmControlCheetahRun, Config
 
         self.MAX_TRAINING_STEPS = 1_000_000
         self.FROM_PIXELS = True
-        self.MODEL_TYPE = SAC_MODEL.ContinuousSacEncoderModel.value
+        self.MODEL_TYPE = SAC_MODEL.ContinuousSacModel.value
 
 
 class ConfigDmControlCheetahRunTdmpc(ConfigBase, ConfigDmControlCheetahRun, ConfigTdmpc):
@@ -84,4 +84,4 @@ class ConfigDmControlCheetahRunTdmpc(ConfigBase, ConfigDmControlCheetahRun, Conf
 
         self.MAX_TRAINING_STEPS = 1_000_000
         self.FROM_PIXELS = True
-        self.MODEL_TYPE = TDMPC_MODEL.TdmpcEncoderModel.value
+        self.MODEL_TYPE = TDMPC_MODEL.TdmpcModel.value

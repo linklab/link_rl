@@ -18,7 +18,7 @@ class ConfigDmControlBallInCupCatchA2c(ConfigBase, ConfigDmControlBallInCupCatch
         ConfigA2c.__init__(self)
 
         self.MAX_TRAINING_STEPS = 1_000_000
-        self.MODEL_TYPE = BASIC_ACTOR_CRITIC_MODEL.ContinuousBasicActorCriticEncoderSharedModel.value
+        self.MODEL_TYPE = BASIC_ACTOR_CRITIC_MODEL.ContinuousBasicActorCriticSharedModel.value
 
 
 class ConfigDmControlBallInCupCatchA3c(ConfigBase, ConfigDmControlBallInCupCatch, ConfigA3c):
@@ -29,7 +29,7 @@ class ConfigDmControlBallInCupCatchA3c(ConfigBase, ConfigDmControlBallInCupCatch
 
         self.MAX_TRAINING_STEPS = 1_000_000
         self.FROM_PIXELS = True
-        self.MODEL_TYPE = BASIC_ACTOR_CRITIC_MODEL.ContinuousBasicActorCriticEncoderSharedModel.value
+        self.MODEL_TYPE = BASIC_ACTOR_CRITIC_MODEL.ContinuousBasicActorCriticSharedModel.value
 
 
 class ConfigDmControlBallInCupCatchPpo(ConfigBase, ConfigDmControlBallInCupCatch, ConfigPpo):
@@ -40,7 +40,7 @@ class ConfigDmControlBallInCupCatchPpo(ConfigBase, ConfigDmControlBallInCupCatch
 
         self.MAX_TRAINING_STEPS = 1_000_000
         self.FROM_PIXELS = True
-        self.MODEL_TYPE = BASIC_ACTOR_CRITIC_MODEL.ContinuousBasicActorCriticEncoderSharedModel.value
+        self.MODEL_TYPE = BASIC_ACTOR_CRITIC_MODEL.ContinuousBasicActorCriticSharedModel.value
 
 
 class ConfigDmControlBallInCupCatchDdpg(ConfigBase, ConfigDmControlBallInCupCatch, ConfigDdpg):
@@ -62,7 +62,7 @@ class ConfigDmControlBallInCupCatchTd3(ConfigBase, ConfigDmControlBallInCupCatch
 
         self.MAX_TRAINING_STEPS = 1_000_000
         self.FROM_PIXELS = True
-        self.MODEL_TYPE = TD3_MODEL.ContinuousTd3EncoderModel.value
+        self.MODEL_TYPE = TD3_MODEL.ContinuousTd3Model.value
 
 
 class ConfigDmControlBallInCupCatchSac(ConfigBase, ConfigDmControlBallInCupCatch, ConfigSac):
@@ -73,7 +73,7 @@ class ConfigDmControlBallInCupCatchSac(ConfigBase, ConfigDmControlBallInCupCatch
 
         self.MAX_TRAINING_STEPS = 1_000_000
         self.FROM_PIXELS = True
-        self.MODEL_TYPE = SAC_MODEL.ContinuousSacEncoderModel.value
+        self.MODEL_TYPE = SAC_MODEL.ContinuousSacModel.value
 
 
 class ConfigDmControlBallInCupCatchTdmpc(ConfigBase, ConfigDmControlBallInCupCatch, ConfigTdmpc):
@@ -84,4 +84,4 @@ class ConfigDmControlBallInCupCatchTdmpc(ConfigBase, ConfigDmControlBallInCupCat
 
         self.MAX_TRAINING_STEPS = 1_000_000
         self.FROM_PIXELS = True
-        self.MODEL_TYPE = TDMPC_MODEL.TdmpcEncoderModel.value
+        self.MODEL_TYPE = TDMPC_MODEL.TdmpcModel.value

@@ -3,7 +3,8 @@ from link_rl.a_configuration.a_base_config.b_agents.config_agents_off_policy imp
     ConfigDuelingDqn, ConfigDoubleDuelingDqn
 from link_rl.a_configuration.a_base_config.b_agents.config_agents_on_policy import ConfigA2c, ConfigPpo
 from link_rl.a_configuration.a_base_config.config_single_base import ConfigBase
-from link_rl.g_utils.types import ModelType
+from link_rl.c_models_v2.b_q_model import Q_MODEL
+from link_rl.c_models_v2.d_basic_actor_critic_model import BASIC_ACTOR_CRITIC_MODEL
 
 
 class ConfigAiBirdsDqn(ConfigBase, ConfigAiBirds, ConfigDqn):
@@ -15,7 +16,7 @@ class ConfigAiBirdsDqn(ConfigBase, ConfigAiBirds, ConfigDqn):
         self.LEARNING_RATE = 0.001
         self.MAX_TRAINING_STEPS = 1_000_000
         self.BUFFER_CAPACITY = 500_000
-        self.MODEL_TYPE = ModelType.MEDIUM_2D_CONVOLUTIONAL
+        self.MODEL_TYPE = Q_MODEL.QModel
 
         self.BATCH_SIZE = 128
         self.MIN_BUFFER_SIZE_FOR_TRAIN = self.BATCH_SIZE
@@ -32,7 +33,7 @@ class ConfigAiBirdsDoubleDqn(ConfigBase, ConfigAiBirds, ConfigDoubleDqn):
         self.LEARNING_RATE = 0.001
         self.MAX_TRAINING_STEPS = 1_000_000
         self.BUFFER_CAPACITY = 500_000
-        self.MODEL_TYPE = ModelType.MEDIUM_2D_CONVOLUTIONAL
+        self.MODEL_TYPE = Q_MODEL.QModel
 
         self.BATCH_SIZE = 128
         self.MIN_BUFFER_SIZE_FOR_TRAIN = self.BATCH_SIZE
@@ -49,7 +50,7 @@ class ConfigAiBirdsDuelingDqn(ConfigBase, ConfigAiBirds, ConfigDuelingDqn):
         self.LEARNING_RATE = 0.001
         self.MAX_TRAINING_STEPS = 1_000_000
         self.BUFFER_CAPACITY = 500_000
-        self.MODEL_TYPE = ModelType.MEDIUM_2D_CONVOLUTIONAL
+        self.MODEL_TYPE = Q_MODEL.DuelingQModel.value
 
         self.BATCH_SIZE = 128
         self.MIN_BUFFER_SIZE_FOR_TRAIN = self.BATCH_SIZE
@@ -66,7 +67,7 @@ class ConfigAiBirdsDoubleDuelingDqn(ConfigBase, ConfigAiBirds, ConfigDoubleDueli
         self.LEARNING_RATE = 0.001
         self.MAX_TRAINING_STEPS = 1_000_000
         self.BUFFER_CAPACITY = 500_000
-        self.MODEL_TYPE = ModelType.MEDIUM_2D_CONVOLUTIONAL
+        self.MODEL_TYPE = Q_MODEL.DuelingQModel.value
 
         self.BATCH_SIZE = 128
         self.MIN_BUFFER_SIZE_FOR_TRAIN = self.BATCH_SIZE
@@ -82,7 +83,7 @@ class ConfigAiBirdsA2c(ConfigBase, ConfigAiBirds, ConfigA2c):
         ConfigA2c.__init__(self)
 
         self.MAX_TRAINING_STEPS = 1_000_000
-        self.MODEL_TYPE = ModelType.MEDIUM_2D_CONVOLUTIONAL
+        self.MODEL_TYPE = BASIC_ACTOR_CRITIC_MODEL.DiscreteBasicActorCriticSharedModel.value
 
         self.CONSOLE_LOG_INTERVAL_TRAINING_STEPS = 1
         self.TEST_INTERVAL_TRAINING_STEPS = 10
@@ -95,7 +96,7 @@ class ConfigAiBirdsPpo(ConfigBase, ConfigAiBirds, ConfigPpo):
         ConfigPpo.__init__(self)
 
         self.MAX_TRAINING_STEPS = 1_000_000
-        self.MODEL_TYPE = ModelType.MEDIUM_2D_CONVOLUTIONAL
+        self.MODEL_TYPE = BASIC_ACTOR_CRITIC_MODEL.DiscreteBasicActorCriticSharedModel.value
 
         self.CONSOLE_LOG_INTERVAL_TRAINING_STEPS = self.PPO_K_EPOCH
         self.TEST_INTERVAL_TRAINING_STEPS = 10

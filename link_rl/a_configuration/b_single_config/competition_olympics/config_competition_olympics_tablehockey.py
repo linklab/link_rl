@@ -1,13 +1,11 @@
-from link_rl.a_configuration.a_base_config.a_environments.competition_olympics.config_competition_olympics_integrated import \
-    ConfigCompetitionOlympicsIntegrated
 from link_rl.a_configuration.a_base_config.a_environments.competition_olympics.config_competition_olympics_tablehockey import \
     ConfigCompetitionOlympicsTableHockey
 from link_rl.a_configuration.a_base_config.b_agents.config_agents_off_policy import ConfigSac, ConfigTd3
 from link_rl.a_configuration.a_base_config.b_agents.config_agents_on_policy import ConfigPpo, ConfigA3c, ConfigAsynchronousPpo
 from link_rl.a_configuration.a_base_config.config_single_base import ConfigBase
+from link_rl.c_models_v2.d_basic_actor_critic_model import BASIC_ACTOR_CRITIC_MODEL
 from link_rl.c_models_v2.f_td3_model import TD3_MODEL
 from link_rl.c_models_v2.g_sac_model import SAC_MODEL
-from link_rl.g_utils.types import ModelType
 
 
 class ConfigCompetitionOlympicsTableHockeyA3c(ConfigBase, ConfigCompetitionOlympicsTableHockey, ConfigA3c):
@@ -17,9 +15,9 @@ class ConfigCompetitionOlympicsTableHockeyA3c(ConfigBase, ConfigCompetitionOlymp
         ConfigA3c.__init__(self)
 
         self.MAX_TRAINING_STEPS = 5_000_000
-        self.MODEL_TYPE = ModelType.MEDIUM_2D_CONVOLUTIONAL
         self.TEST_INTERVAL_TRAINING_STEPS = 2_000
         self.BUFFER_CAPACITY = 1_000_000
+        self.MODEL_TYPE = BASIC_ACTOR_CRITIC_MODEL.ContinuousBasicActorCriticSharedModel.value
 
 
 class ConfigCompetitionOlympicsTableHockeyPpo(ConfigBase, ConfigCompetitionOlympicsTableHockey, ConfigPpo):
@@ -29,9 +27,9 @@ class ConfigCompetitionOlympicsTableHockeyPpo(ConfigBase, ConfigCompetitionOlymp
         ConfigPpo.__init__(self)
 
         self.MAX_TRAINING_STEPS = 5_000_000
-        self.MODEL_TYPE = ModelType.MEDIUM_2D_CONVOLUTIONAL
         self.TEST_INTERVAL_TRAINING_STEPS = 2_000
         self.BUFFER_CAPACITY = 1_000_000
+        self.MODEL_TYPE = BASIC_ACTOR_CRITIC_MODEL.ContinuousBasicActorCriticSharedModel.value
 
 
 class ConfigCompetitionOlympicsTableHockeyAsynchronousPpo(ConfigBase, ConfigCompetitionOlympicsTableHockey, ConfigAsynchronousPpo):
@@ -41,9 +39,9 @@ class ConfigCompetitionOlympicsTableHockeyAsynchronousPpo(ConfigBase, ConfigComp
         ConfigAsynchronousPpo.__init__(self)
 
         self.MAX_TRAINING_STEPS = 5_000_000
-        self.MODEL_TYPE = ModelType.MEDIUM_2D_CONVOLUTIONAL
         self.TEST_INTERVAL_TRAINING_STEPS = 2_000
         self.BUFFER_CAPACITY = 1_000_000
+        self.MODEL_TYPE = BASIC_ACTOR_CRITIC_MODEL.ContinuousBasicActorCriticSharedModel.value
 
 
 class ConfigCompetitionOlympicsTableHockeyTd3(ConfigBase, ConfigCompetitionOlympicsTableHockey, ConfigTd3):
@@ -53,10 +51,9 @@ class ConfigCompetitionOlympicsTableHockeyTd3(ConfigBase, ConfigCompetitionOlymp
         ConfigTd3.__init__(self)
 
         self.MAX_TRAINING_STEPS = 5_000_000
-        # self.MODEL_TYPE = ModelType.MEDIUM_2D_CONVOLUTIONAL
         self.TEST_INTERVAL_TRAINING_STEPS = 2_000
         self.BUFFER_CAPACITY = 1_000_000
-        self.MODEL_TYPE = TD3_MODEL.ContinuousTd3EncoderModel.value
+        self.MODEL_TYPE = TD3_MODEL.ContinuousTd3Model.value
 
 
 class ConfigCompetitionOlympicsTableHockeySac(ConfigBase, ConfigCompetitionOlympicsTableHockey, ConfigSac):
@@ -66,10 +63,9 @@ class ConfigCompetitionOlympicsTableHockeySac(ConfigBase, ConfigCompetitionOlymp
         ConfigSac.__init__(self)
 
         self.MAX_TRAINING_STEPS = 5_000_000
-        # self.MODEL_TYPE = ModelType.MEDIUM_2D_CONVOLUTIONAL
         self.TRAIN_INTERVAL_GLOBAL_TIME_STEPS = 10
         self.TEST_INTERVAL_TRAINING_STEPS = 2_000
         self.BUFFER_CAPACITY = 1_000_000
         self.ALPHA_LEARNING_RATE = 0.000025
         self.MIN_ALPHA = 0.2
-        self.MODEL_TYPE = SAC_MODEL.ContinuousSacEncoderModel.value
+        self.MODEL_TYPE = SAC_MODEL.ContinuousSacModel.value

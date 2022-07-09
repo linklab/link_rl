@@ -135,6 +135,7 @@ class ConfigKnapsack0LoadTestLinearDqn(ConfigBase, ConfigKnapsack0LoadTestLinear
         self.LEARNING_RATE = 0.001
         self.MODEL_TYPE = Q_MODEL.QModel.value
 
+
 class ConfigKnapsack0LoadTestLinearDoubleDqn(ConfigBase, ConfigKnapsack0LoadTestLinear, ConfigDoubleDqn):
     def __init__(self):
         ConfigBase.__init__(self)

@@ -15,7 +15,7 @@ class ConfigPongDqn(ConfigBase, ConfigPong, ConfigDqn):
 
         self.MAX_TRAINING_STEPS = 1_000_000
         self.BUFFER_CAPACITY = 250_000
-        self.MODEL_TYPE = Q_MODEL.NatureAtariQModel.value
+        self.MODEL_TYPE = Q_MODEL.QModel.value
 
 
 class ConfigPongDoubleDqn(ConfigBase, ConfigPong, ConfigDoubleDqn):
@@ -26,7 +26,7 @@ class ConfigPongDoubleDqn(ConfigBase, ConfigPong, ConfigDoubleDqn):
 
         self.MAX_TRAINING_STEPS = 1_000_000
         self.BUFFER_CAPACITY = 250_000
-        self.MODEL_TYPE = Q_MODEL.NatureAtariQModel.value
+        self.MODEL_TYPE = Q_MODEL.QModel.value
 
 
 class ConfigPongDuelingDqn(ConfigBase, ConfigPong, ConfigDuelingDqn):
@@ -37,7 +37,7 @@ class ConfigPongDuelingDqn(ConfigBase, ConfigPong, ConfigDuelingDqn):
 
         self.MAX_TRAINING_STEPS = 1_000_000
         self.BUFFER_CAPACITY = 250_000
-        self.MODEL_TYPE = Q_MODEL.NatureAtariQModel.value
+        self.MODEL_TYPE = Q_MODEL.DuelingQModel.value
 
 
 class ConfigPongDoubleDuelingDqn(ConfigBase, ConfigPong, ConfigDoubleDuelingDqn):
@@ -48,7 +48,7 @@ class ConfigPongDoubleDuelingDqn(ConfigBase, ConfigPong, ConfigDoubleDuelingDqn)
 
         self.MAX_TRAINING_STEPS = 1_000_000
         self.BUFFER_CAPACITY = 250_000
-        self.MODEL_TYPE = Q_MODEL.NatureAtariQModel.value
+        self.MODEL_TYPE = Q_MODEL.DuelingQModel.value
 
 
 class ConfigPongA2c(ConfigBase, ConfigPong, ConfigA2c):
@@ -58,7 +58,7 @@ class ConfigPongA2c(ConfigBase, ConfigPong, ConfigA2c):
         ConfigA2c.__init__(self)
 
         self.MAX_TRAINING_STEPS = 1_000_000
-        self.MODEL_TYPE = BASIC_ACTOR_CRITIC_MODEL.DiscreteBasicActorCriticEncoderSharedModel.value
+        self.MODEL_TYPE = BASIC_ACTOR_CRITIC_MODEL.DiscreteBasicActorCriticSharedModel.value
 
 
 class ConfigPongA3c(ConfigBase, ConfigPong, ConfigA3c):
@@ -68,7 +68,7 @@ class ConfigPongA3c(ConfigBase, ConfigPong, ConfigA3c):
         ConfigA3c.__init__(self)
 
         self.MAX_TRAINING_STEPS = 1_000_000
-        self.MODEL_TYPE = BASIC_ACTOR_CRITIC_MODEL.DiscreteBasicActorCriticEncoderSharedModel.value
+        self.MODEL_TYPE = BASIC_ACTOR_CRITIC_MODEL.DiscreteBasicActorCriticSharedModel.value
 
 
 class ConfigPongPpo(ConfigBase, ConfigPong, ConfigPpo):
@@ -78,7 +78,7 @@ class ConfigPongPpo(ConfigBase, ConfigPong, ConfigPpo):
         ConfigPpo.__init__(self)
 
         self.MAX_TRAINING_STEPS = 1_000_000
-        self.MODEL_TYPE = BASIC_ACTOR_CRITIC_MODEL.DiscreteBasicActorCriticEncoderSharedModel.value
+        self.MODEL_TYPE = BASIC_ACTOR_CRITIC_MODEL.DiscreteBasicActorCriticSharedModel.value
 
 
 class ConfigPongPpoTrajectory(ConfigBase, ConfigPong, ConfigPpoTrajectory):
@@ -88,4 +88,4 @@ class ConfigPongPpoTrajectory(ConfigBase, ConfigPong, ConfigPpoTrajectory):
         ConfigPpoTrajectory.__init__(self)
 
         self.MAX_TRAINING_STEPS = 1_000_000
-        self.MODEL_TYPE = BASIC_ACTOR_CRITIC_MODEL.DiscreteBasicActorCriticEncoderSharedModel.value
+        self.MODEL_TYPE = BASIC_ACTOR_CRITIC_MODEL.DiscreteBasicActorCriticSharedModel.value
