@@ -50,15 +50,15 @@ class AgentDoubleDqn(AgentDqn):
         self.clip_model_config_grad_value(self.q_net.parameters())
         self.optimizer.step()
 
+        if self.encoder_is_not_identity:
+            self.train_encoder()
+
         # soft-sync
         self.soft_synchronize_models(source_model=self.q_net, target_model=self.target_q_net, tau=self.config.TAU)
 
         self.epsilon.value = self.epsilon_tracker.epsilon(training_steps_v)
 
         self.last_q_net_loss.value = q_net_loss.item()
-
-        if self.encoder_is_not_identity:
-            self.last_loss_for_encoder = q_net_loss
 
         count_training_steps += 1
 

@@ -146,15 +146,15 @@ class AgentSac(OffPolicyAgent):
         self.clip_critic_model_parameter_grad_value(self.critic_model.parameters())
         self.critic_optimizer.step()
 
-        if self.encoder_is_not_identity:
-            self.last_loss_for_encoder = critic_loss
-
         self.last_critic_loss.value = critic_loss.item()
 
         # TAU: 0.005
         self.soft_synchronize_models(
             source_model=self.critic_model, target_model=self.target_critic_model, tau=self.config.TAU
         )
+
+        if self.encoder_is_not_identity:
+            self.train_encoder()
         ##########################
         #  Critic Training - END #
         ##########################

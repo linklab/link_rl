@@ -114,7 +114,7 @@ class AgentDdpg(OffPolicyAgent):
         self.critic_optimizer.step()
 
         if self.encoder_is_not_identity:
-            self.last_loss_for_encoder = critic_loss
+            self.train_encoder()
 
         ######################
         # train critic - end #

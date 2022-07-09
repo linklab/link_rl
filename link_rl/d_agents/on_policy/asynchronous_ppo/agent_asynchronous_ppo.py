@@ -26,9 +26,6 @@ class WorkingAsynchronousPpo(AgentPpo):
         sum_ratio = 0.0
         sum_entropy = 0.0
 
-        if self.encoder_is_not_identity:
-            self.last_loss_for_encoder = 0.0
-
         _, detached_target_values, detached_advantages = self.get_target_values_and_advantages()
         detached_advantages = detached_advantages.squeeze(dim=-1)  # NOTE
 
@@ -49,11 +46,11 @@ class WorkingAsynchronousPpo(AgentPpo):
             self.master_agent.clip_critic_model_parameter_grad_value(self.master_agent.critic_model.parameters())
             self.master_agent.critic_optimizer.step()
 
-            if self.encoder_is_not_identity:
-                self.last_loss_for_encoder += critic_loss
-
             # pull global parameters
             self.synchronize_models(source_model=self.master_agent.critic_model, target_model=self.critic_model)
+
+            if self.encoder_is_not_identity:
+                self.train_encoder()
             ##########################################
             #  Critic (Value) Loss 산출 & Update- END #
             ##########################################
@@ -87,9 +84,6 @@ class WorkingAsynchronousPpo(AgentPpo):
             #######################################
             #  Actor Objective 산출 & Update - END #
             #######################################
-
-        if self.encoder_is_not_identity:
-            self.last_loss_for_encoder /= count_training_steps
 
         self.master_agent.last_critic_loss.value = sum_critic_loss / count_training_steps
         self.master_agent.last_actor_objective.value = sum_actor_objective / count_training_steps

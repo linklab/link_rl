@@ -6,7 +6,7 @@ from link_rl.c_encoders.a_encoder import BaseEncoder, encoder_registry
 
 
 @encoder_registry.add
-class SimpleEncoder(BaseEncoder):
+class SimpleConvEncoder(BaseEncoder):
     def __init__(self, observation_shape: Tuple[int, ...]):
         super().__init__(observation_shape)
 

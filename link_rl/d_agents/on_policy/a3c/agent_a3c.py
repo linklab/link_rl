@@ -35,11 +35,11 @@ class WorkingAgentA3c(AgentA2c):
         self.master_agent.clip_critic_model_parameter_grad_value(self.master_agent.critic_model.parameters())
         self.master_agent.critic_optimizer.step()
 
-        if self.encoder_is_not_identity:
-            self.last_loss_for_encoder = critic_loss
-
         # pull global parameters
         self.synchronize_models(source_model=self.master_agent.critic_model, target_model=self.critic_model)
+
+        if self.encoder_is_not_identity:
+            self.train_encoder()
         ##########################################
         #  Critic (Value) Loss 산출 & Update- END #
         ##########################################

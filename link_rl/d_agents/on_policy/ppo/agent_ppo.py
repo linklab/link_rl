@@ -101,8 +101,7 @@ class AgentPpo(AgentA2c):
             self.critic_optimizer.step()
 
             if self.encoder_is_not_identity:
-                self.last_loss_for_encoder = critic_loss
-
+                self.train_encoder()
             ##########################################
             #  Critic (Value) Loss 산출 & Update- END #
             ##########################################

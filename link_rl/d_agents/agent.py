@@ -110,8 +110,6 @@ class Agent:
         self.encoder_is_not_identity = type(self.encoder).__name__ != "Identity"
         if self.encoder_is_not_identity:
             self.encoder_optimizer = optim.Adam(self.encoder.parameters(), lr=self.config.LEARNING_RATE)
-
-        self.last_loss_for_encoder = None
         ### ENCODER - END ###
 
     @property
@@ -124,7 +122,6 @@ class Agent:
         raise NotImplementedError()
 
     def _before_train(self):
-        self.encoder.train()
         if self.config.AGENT_TYPE in ActorCriticAgentTypes:
             self.actor_model.train()
             self.critic_model.train()
@@ -132,17 +129,16 @@ class Agent:
             self.model.train()
 
         if self.encoder_is_not_identity:
+            self.encoder.train()
             self.encoder_optimizer.zero_grad()
 
     @abstractmethod
     def train(self, training_steps_v=None):
         raise NotImplementedError()
 
-    def _after_train(self):
+    def train_encoder(self):
         torch.nn.utils.clip_grad_norm_(self.encoder.parameters(), self.config.CLIP_GRADIENT_VALUE)
-
-        if self.encoder_is_not_identity:
-            self.encoder_optimizer.step()
+        self.encoder_optimizer.step()
 
         if self.config.AGENT_TYPE in OffPolicyAgentTypes:
             if self.config.AGENT_TYPE in [AgentType.DQN]:
@@ -154,6 +150,8 @@ class Agent:
                 )
 
         self.encoder.eval()
+
+    def _after_train(self):
         if self.config.AGENT_TYPE in ActorCriticAgentTypes:
             self.actor_model.eval()
             self.critic_model.eval()

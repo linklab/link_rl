@@ -72,7 +72,7 @@ class AgentReinforce(OnPolicyAgent):
         self.optimizer.step()
 
         if self.encoder_is_not_identity:
-            self.last_loss_for_encoder = loss
+            self.train_encoder()
 
         self.last_log_policy_objective.value = log_policy_objective.item()
 

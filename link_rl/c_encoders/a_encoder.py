@@ -11,7 +11,7 @@ from link_rl.g_utils.registry import Registry
 
 class ENCODER(enum.Enum):
     IdentityEncoder = "IdentityEncoder"
-    SimpleEncoder = "SimpleEncoder"
+    SimpleConvEncoder = "SimpleConvEncoder"
     NatureAtariEncoder = "NatureAtariEncoder"
 
 

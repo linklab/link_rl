@@ -10,5 +10,5 @@ class ConfigDmControlBallInCupCatch(ConfigDmControl):
         self.TASK_NAME = "catch"
         self.EPISODE_REWARD_MIN_SOLVED = 990
         self.FROM_PIXELS = True
-        self.ENCODER_TYPE = ENCODER.SimpleEncoder.value
+        self.ENCODER_TYPE = ENCODER.SimpleConvEncoder.value
 
