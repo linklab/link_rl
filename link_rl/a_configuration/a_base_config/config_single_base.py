@@ -3,7 +3,7 @@ import sys
 from typing import Callable, List, Tuple, Dict
 
 from link_rl.c_encoders.a_encoder import ENCODER
-from link_rl.h_utils.types import LayerActivationType, LossFunctionType
+from link_rl.h_utils.types import LossFunctionType
 
 
 class ConfigBase:
@@ -19,10 +19,6 @@ class ConfigBase:
             os.mkdir(self.MODEL_SAVE_DIR)
 
         self.UNITY_ENV_DIR = os.path.join(self.PROJECT_HOME, "b_environments", "unity")
-        if not os.path.exists(self.UNITY_ENV_DIR):
-            os.mkdir(self.UNITY_ENV_DIR)
-
-        self.COMBINATORIAL_OPTIMIZATION_ENV_DIR = os.path.join(self.PROJECT_HOME, "b_environments", "combinatorial_optimization")
         if not os.path.exists(self.UNITY_ENV_DIR):
             os.mkdir(self.UNITY_ENV_DIR)
 

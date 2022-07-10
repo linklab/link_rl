@@ -1,3 +1,5 @@
+import os
+
 from link_rl.b_environments.combinatorial_optimization.knapsack.knapsack import KnapsackEnvStat
 from link_rl.c_encoders.a_encoder import ENCODER
 
@@ -5,6 +7,20 @@ from link_rl.c_encoders.a_encoder import ENCODER
 class ConfigKnapsack:
     def __init__(self):
         self.ENV_NAME = "Knapsack_Problem_v0"
+
+        self.PROJECT_HOME = os.path.abspath(
+            os.path.join(
+                os.path.dirname(os.path.realpath(__file__)), os.pardir, os.pardir, os.pardir, os.pardir, os.pardir
+            )
+        )
+
+        self.COMBINATORIAL_OPTIMIZATION_ENV_DIR = os.path.join(
+            self.PROJECT_HOME,
+            "b_environments",
+            "combinatorial_optimization"
+        )
+        if not os.path.exists(self.COMBINATORIAL_OPTIMIZATION_ENV_DIR):
+            os.mkdir(self.COMBINATORIAL_OPTIMIZATION_ENV_DIR)
 
         self.NUM_ITEM = 20
         self.LIMIT_WEIGHT_KNAPSACK = 200
