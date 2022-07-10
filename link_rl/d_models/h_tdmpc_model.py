@@ -197,12 +197,10 @@ class TdmpcModel(SingleModel):
                 m[-1].bias.data.fill_(0)
 
         def forward(self, obs):
-            z = self.encoder_net(obs)
+            z = self.encode(obs)
             a = self.pi_net(z)
-            q1 = self.q1_net(z, a)
-            q2 = self.q2_net(z, a)
-            dynamics = self.dynamics_net(z, a)
-            reward = self.reward_net(z, a)
+            q1, q2 = self.Q(z, a)
+            dynamics, reward = self.next(z, a)
             return q1, q2, dynamics, reward
 
         def track_q_grad(self, enable=True):
