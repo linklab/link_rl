@@ -223,6 +223,10 @@ class ReplayBuffer():
         return self
 
     def add(self, episode: Episode):
+        # episode.obs.shape: torch.Size([251, 3, 84, 84])
+        # episode.obs[:-1, -3:].shape: torch.Size([250, 3, 84, 84])
+        print(torch.equal(episode.obs[:-1], episode.obs[:-1, -3:]), "###")
+
         self._obs[self.idx:self.idx + self.episode_length] \
             = episode.obs[:-1] if not self.config.FROM_PIXELS else episode.obs[:-1, -3:]
         self._last_obs[self.idx // self.episode_length] = episode.obs[-1]

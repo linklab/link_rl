@@ -45,15 +45,15 @@ def dummy_agent_test(from_pixels=False):
 	domain_name = "cartpole"
 	task_name = "balance"
 
+	action_repeat = 4
+	frame_stack = 3
+
 	if from_pixels:
 		env = dmc_gym.make(
-			domain_name=domain_name, task_name=task_name, seed=1, from_pixels=True, visualize_reward=False
+			domain_name=domain_name, task_name=task_name, seed=1, frame_stack=frame_stack,
+			from_pixels=True, visualize_reward=False, frame_skip=action_repeat
 		)
-		env = dmc_gym.make(
-			domain_name=domain_name, task_name=task_name, seed=1,
-			from_pixels=True, visualize_reward=False, frame_skip=3
-		)
-		env = gym.wrappers.FrameStack(env, num_stack=4, lz4_compress=True)
+		#env = gym.wrappers.FrameStack(env, num_stack=4, lz4_compress=True)
 
 	else:
 		env = dmc_gym.make(domain_name=domain_name, task_name=task_name, seed=2)
@@ -66,19 +66,19 @@ def dummy_agent_test(from_pixels=False):
 
 	agent = Dummy_Agent()
 
-	for i in range(100):
+	for ep in range(1, 100):
 		observation = env.reset()
 		done = False
-
+		step = 1
 		while not done:
-			time.sleep(0.05)
 			action = agent.get_action(observation)
 			next_observation, reward, done, info = env.step(action)
 			# env.render()
-			print("Observation: {0}, Action: {1}, next_observation: {2}, Reward: {3}, Done: {4}, Info: {5}".format(
-				observation, action, next_observation, reward, done, info
+			print("[EP: {0}, STEP: {1}] Observation: {2}, Action: {3}, next_observation: {4}, Reward: {5}, Done: {6}".format(
+				ep, step, observation.shape, action, next_observation.shape, reward, done
 			))
 			observation = next_observation
+			step += 1
 
 		time.sleep(1)
 
@@ -103,5 +103,5 @@ if __name__ == "__main__":
 	dummy_agent_test(from_pixels=True)
 	#dummy_agent_test(from_pixels=False)
 
-	play_test()
+	#play_test()
 

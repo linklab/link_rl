@@ -852,8 +852,10 @@ def get_train_env(config, no_graphics=True):
                         grayscale=config.GRAY_SCALE
                     )
                 else:
-                    env = dmc_gym.make(domain_name=config.DOMAIN_NAME, task_name=config.TASK_NAME, seed=config.SEED,
-                                       frame_skip=config.ACTION_REPEAT, height=config.IMG_SIZE, width=config.IMG_SIZE)
+                    env = dmc_gym.make(
+                        domain_name=config.DOMAIN_NAME, task_name=config.TASK_NAME, seed=config.SEED,
+                        frame_skip=config.ACTION_REPEAT, height=config.IMG_SIZE, width=config.IMG_SIZE
+                    )
 
             #############
             #   Atari   #
