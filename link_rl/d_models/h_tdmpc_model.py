@@ -9,7 +9,6 @@ from link_rl.d_models.a_model import SingleModel, model_registry
 
 
 class TDMPC_MODEL(enum.Enum):
-    TdmpcEncoderModel = "TdmpcEncoderModel"
     TdmpcModel = "TdmpcModel"
     TdmpcRepresentationParameterizedEncoderModel = "TdmpcRepresentationParameterizedEncoderModel"
     TdmpcCNNParameterizedEncoderModel = "TdmpcCNNParameterizedEncoderModel"
