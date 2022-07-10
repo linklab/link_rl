@@ -288,9 +288,11 @@ class ReplayBuffer():
             reward[t] = self._reward[_idxs]
 
         mask = (_idxs + 1) % self.episode_length == 0  # episode 첫 스텝 mask
+
         # next_step이 episode의 첫 스텝 일 때(에피소드가 현재 obs에서 종료 되었을 때), self._last_obs를 준다.
         # self._last_obs = episode.obs[episode_length + 1], 즉 에피소드 종료 후에 한 스텝 더 간 obs
         next_obs[-1, mask] = self._last_obs[_idxs[mask] // self.episode_length].to(self.config.DEVICE).float()
+
         if not action.device == self.config.DEVICE:
             action, reward, idxs, weights = \
                 action.to(self.config.DEVICE), reward.to(self.config.DEVICE), idxs.to(self.config.DEVICE), weights.to(self.config.DEVICE)
