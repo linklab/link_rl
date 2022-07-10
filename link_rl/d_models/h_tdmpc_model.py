@@ -284,7 +284,7 @@ class TdmpcModel(SingleModel):
                                nn.Linear(512, 512), nn.ELU(),
                                nn.Linear(512, 1))
 
-        told_model = TdmpcEncoderModel.TOLDModel(
+        told_model = TdmpcModel.TOLDModel(
             encoder_net, dynamics_net, reward_net, pi_net, q1_net, q2_net
         )
 

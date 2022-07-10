@@ -174,6 +174,7 @@ class Actor(mp.Process):
                 info["actor_id"] = self.actor_id
                 info["env_id"] = 0
                 episode += (obs, action, reward, done, info)
+
             assert len(episode) == int(self.config.FIXED_TOTAL_TIME_STEPS_PER_EPISODE / self.config.ACTION_REPEAT)
             step += int(self.config.FIXED_TOTAL_TIME_STEPS_PER_EPISODE / self.config.ACTION_REPEAT)
 

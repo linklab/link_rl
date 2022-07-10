@@ -190,12 +190,18 @@ class ReplayBuffer():
         self._reward = torch.empty((self.capacity,), dtype=torch.float32, device=self.config.DEVICE)
         self._priorities = torch.ones((self.capacity,), dtype=torch.float32, device=self.config.DEVICE)
 
-        print("self.episode_length:", self.episode_length)
-        print("self._obs:", self._obs.shape)
-        print("self._last_obs:", self._last_obs.shape)
-        print("self._action:", self._action.shape)
-        print("self._reward:", self._reward.shape)
-        print("self._priorities:", self._priorities.shape)
+        # print("self.episode_length:", self.episode_length)
+        # print("self._obs:", self._obs.shape)
+        # print("self._last_obs:", self._last_obs.shape)
+        # print("self._action:", self._action.shape)
+        # print("self._reward:", self._reward.shape)
+        # print("self._priorities:", self._priorities.shape)
+        # self.episode_length: 250
+        # self._obs: torch.Size([300001, 3, 84, 84])
+        # self._last_obs: torch.Size([1200, 3, 84, 84])
+        # self._action: torch.Size([300000, 1])
+        # self._reward: torch.Size([300000])
+        # self._priorities: torch.Size([300000])
 
         self._eps = 1e-6
         self._full = False

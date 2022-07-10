@@ -222,7 +222,6 @@ def print_model_summary(agent, observation_space, action_space, config):
         config.MODEL_TYPE, observation_space.shape
     ), end="\n\n")
 
-
     # gather models
     models = []
     if config.AGENT_TYPE in ActorCriticAgentTypes:
