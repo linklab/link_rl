@@ -265,7 +265,6 @@ class ReplayBuffer():
 
         obs = self._get_obs(self._obs, idxs)
 
-        print(obs.shape, "!!!")
         next_obs_shape = self._last_obs.shape[1:] if not self.config.FROM_PIXELS else (self.obs_channel, *self._last_obs.shape[-2:])
         next_obs = torch.empty(
             (self.config.HORIZON + 1, self.config.BATCH_SIZE, *next_obs_shape),

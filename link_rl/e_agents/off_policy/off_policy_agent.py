@@ -52,6 +52,13 @@ class OffPolicyAgent(Agent):
         if self.config.AGENT_TYPE == AgentType.TDMPC:
             self.observations, self.next_observations, self.actions, self.rewards, self.idx, self.important_sampling_weights = \
             self.replay_buffer.sample()
+
+            # print("@@@ self.observations:", self.observations.shape)
+            # print("@@@ self.next_observations:", self.next_observations.shape)
+            # print("@@@ self.actions:", self.actions.shape)
+            # print("@@@ self.rewards:", self.rewards.shape)
+            # print("@@@ self.idx:", self.idx.shape)
+            # print("@@@ self.important_sampling_weights:", self.important_sampling_weights.shape)
             self.dones = None
         else:
             if self.config.USE_PER:

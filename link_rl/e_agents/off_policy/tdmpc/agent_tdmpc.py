@@ -92,13 +92,15 @@ class AgentTdmpc(OffPolicyAgent):
         num_pi_trajs = int(self.config.MIXTURE_COEF * self.config.NUM_SAMPLES)
         if num_pi_trajs > 0:
             pi_actions = torch.empty(horizon, num_pi_trajs, self.n_out_actions, device=self.config.DEVICE)
-            z = self.model.encode(obs).repeat(num_pi_trajs, 1)
+            z = self.encoder(obs)
+            z = self.model.representation(z).repeat(num_pi_trajs, 1)
             for t in range(horizon):
                 pi_actions[t] = self.model.pi(z, self.config.MIN_STD)
                 z, _ = self.model.next(z, pi_actions[t])
 
         # Initialize state and parameters
-        z = self.model.encode(obs).repeat(self.config.NUM_SAMPLES + num_pi_trajs, 1)
+        z = self.encoder(obs)
+        z = self.model.representation(z).repeat(self.config.NUM_SAMPLES + num_pi_trajs, 1)
         mean = torch.zeros(horizon, self.n_out_actions, device=self.config.DEVICE)
         std = 2 * torch.ones(horizon, self.n_out_actions, device=self.config.DEVICE)
         if not t0 and hasattr(self, '_train_prev_mean') and mode == AgentMode.TRAIN:
@@ -163,7 +165,8 @@ class AgentTdmpc(OffPolicyAgent):
     @torch.no_grad()
     def _td_target(self, next_obs, reward):
         """Compute the TD-target from a reward and the observation at the following time step."""
-        next_z = self.model.encode(next_obs)
+        next_z = self.encoder(next_obs)
+        next_z = self.model.representation(next_z)
         td_target = reward + self.config.GAMMA * \
                     torch.min(*self.model_target.Q(next_z, self.model.pi(next_z, self.config.MIN_STD)))
         return td_target
@@ -177,7 +180,8 @@ class AgentTdmpc(OffPolicyAgent):
         self.model.train()
 
         # Representation
-        z = self.model.encode(self.aug(obs))
+        z = self.encoder(self.aug(obs))
+        z = self.model.representation(z)
         zs = [z.detach()]
 
         consistency_loss, reward_loss, value_loss, priority_loss = 0, 0, 0, 0
@@ -188,7 +192,8 @@ class AgentTdmpc(OffPolicyAgent):
             z, reward_pred = self.model.next(z, action[t])
             with torch.no_grad():
                 next_obs = self.aug(next_obses[t])
-                next_z = self.model_target.encode(next_obs)
+                next_z = self.encoder(next_obs)
+                next_z = self.model_target.representation(next_z)
                 td_target = self._td_target(next_obs, reward[t])
             zs.append(z.detach())
 
@@ -236,7 +241,8 @@ class AgentTdmpc(OffPolicyAgent):
 
     def get_action_from_pi(self, obs):
         obs = torch.tensor(obs, dtype=torch.float32, device=self.config.DEVICE).unsqueeze(0)
-        z = self.model.encode(obs)
+        z = self.encoder(obs)
+        z = self.model.representation(z)
         pi_actions = self.model.pi(z)
 
         return pi_actions.detach().cpu().numpy()
