@@ -143,7 +143,7 @@ class RandomShiftsAug(nn.Module):
 
     def __init__(self, config):
         super().__init__()
-        self.pad = int(config.IMG_SIZE / 21) if config.FROM_PIXELS else None
+        self.pad = int(config.IMG_SIZE / 21) if config.FROM_PIXEL else None
 
     def forward(self, x):
         if not self.pad:
