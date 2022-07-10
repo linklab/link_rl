@@ -225,7 +225,7 @@ class ReplayBuffer():
     def add(self, episode: Episode):
         # episode.obs.shape: torch.Size([251, 3, 84, 84])
         # episode.obs[:-1, -3:].shape: torch.Size([250, 3, 84, 84])
-        print(torch.equal(episode.obs[:-1], episode.obs[:-1, -3:]), "###")
+        # print(torch.equal(episode.obs[:-1], episode.obs[:-1, -3:]), "###") --> True
 
         self._obs[self.idx:self.idx + self.episode_length] \
             = episode.obs[:-1] if not self.config.FROM_PIXELS else episode.obs[:-1, -3:]
@@ -239,10 +239,11 @@ class ReplayBuffer():
         mask = torch.arange(self.episode_length) >= self.episode_length - self.config.HORIZON
         new_priorities = torch.full((self.episode_length,), max_priority, device=self.config.DEVICE)
         new_priorities[mask] = 0
+
         self._priorities[self.idx:self.idx + self.episode_length] = new_priorities
         self.idx = (self.idx + self.episode_length) % self.capacity
         self._full = self._full or self.idx == 0
-        self.buffer_len = min(self.buffer_len+self.episode_length, self.config.BUFFER_CAPACITY)
+        self.buffer_len = min(self.buffer_len + self.episode_length, self.config.BUFFER_CAPACITY)
 
     def update_priorities(self, idxs, priorities):
         self._priorities[idxs] = priorities.squeeze(1).to(self.config.DEVICE) + self._eps
@@ -254,18 +255,33 @@ class ReplayBuffer():
         probs = (self._priorities if self._full else self._priorities[:self.idx]) ** self.config.PER_ALPHA
         probs /= probs.sum()
         total = len(probs)
+
         idxs = torch.from_numpy(
-            np.random.choice(total, self.config.BATCH_SIZE, p=probs.cpu().numpy(), replace=not self._full)).to(self.config.DEVICE)
+            np.random.choice(a=total, size=self.config.BATCH_SIZE, p=probs.cpu().numpy(), replace=not self._full)
+        ).to(self.config.DEVICE)
+
         weights = (total * probs[idxs]) ** (-self.config.PER_BETA)
         weights /= weights.max()
 
         obs = self._get_obs(self._obs, idxs)
+
+        print(obs.shape, "!!!")
         next_obs_shape = self._last_obs.shape[1:] if not self.config.FROM_PIXELS else (self.obs_channel, *self._last_obs.shape[-2:])
-        next_obs = torch.empty((self.config.HORIZON + 1, self.config.BATCH_SIZE, *next_obs_shape), dtype=obs.dtype,
-                               device=self.config.DEVICE)
-        action = torch.empty((self.config.HORIZON + 1, self.config.BATCH_SIZE, *self._action.shape[1:]), dtype=torch.float32,
-                             device=self.config.DEVICE)
-        reward = torch.empty((self.config.HORIZON + 1, self.config.BATCH_SIZE), dtype=torch.float32, device=self.config.DEVICE)
+        next_obs = torch.empty(
+            (self.config.HORIZON + 1, self.config.BATCH_SIZE, *next_obs_shape),
+            dtype=obs.dtype,
+            device=self.config.DEVICE
+        )
+        action = torch.empty(
+            (self.config.HORIZON + 1, self.config.BATCH_SIZE, *self._action.shape[1:]),
+            dtype=torch.float32,
+            device=self.config.DEVICE
+        )
+        reward = torch.empty(
+            (self.config.HORIZON + 1, self.config.BATCH_SIZE),
+            dtype=torch.float32,
+            device=self.config.DEVICE
+        )
         for t in range(self.config.HORIZON + 1):
             _idxs = idxs + t
             next_obs[t] = self._get_obs(self._obs, _idxs + 1)

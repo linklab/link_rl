@@ -63,9 +63,9 @@ class OffPolicyAgent(Agent):
                 self.observations, self.actions, self.next_observations, self.rewards, self.dones, self.infos \
                     = self.replay_buffer.sample(batch_size=self.config.BATCH_SIZE)
 
-                if self.config.USE_DRQ:
-                    self.observations = self.aug(self.observations)
-                    self.next_observations = self.aug(self.next_observations)
+            if self.config.USE_DRQ:
+                self.observations = self.aug(self.observations)
+                self.next_observations = self.aug(self.next_observations)
 
     def train(self, training_steps_v=None):
         count_training_steps = 0
