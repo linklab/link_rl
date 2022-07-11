@@ -696,6 +696,12 @@ from link_rl.a_configuration.b_single_config.ai_birds.config_ai_birds import Con
 config = ConfigAiBirdsPpo()
 
 
+###############################
+######### AI Economist ########
+###############################
+from link_rl.a_configuration.b_single_config.ai_economist.config_ai_economist import ConfigAiEconomistPpo
+config = ConfigAiEconomistPpo()
+
 if __name__ == "__main__":
     from link_rl.g_utils.commons import print_basic_info, get_env_info, set_config
 

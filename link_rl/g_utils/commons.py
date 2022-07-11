@@ -16,6 +16,7 @@ from gym.vector import AsyncVectorEnv
 import plotly.graph_objects as go
 
 from link_rl.a_configuration.a_base_config.a_environments.ai_birds.config_ai_birds import ConfigAiBirds
+from link_rl.a_configuration.a_base_config.a_environments.ai_economist.config_ai_economist import ConfigAiEconomist
 from link_rl.a_configuration.a_base_config.a_environments.competition_olympics import ConfigCompetitionOlympics
 from link_rl.a_configuration.a_base_config.a_environments.dm_control import ConfigDmControl
 from link_rl.a_configuration.a_base_config.a_environments.gym_robotics import ConfigGymRobotics
@@ -1106,6 +1107,13 @@ def get_single_env(config, no_graphics=True, train_mode=True, agent=None):
     elif isinstance(config, ConfigAiBirds):
         from link_rl.b_environments.ai_birds.ai_birds_wrapper import AIBirdsWrapper
         single_env = AIBirdsWrapper(train_mode=train_mode)
+
+    ####################
+    #   AI Economist   #
+    ####################
+    elif isinstance(config, ConfigAiEconomist):
+        from link_rl.b_environments.ai_economist.dummy_file import EconomistWrapper
+        single_env = EconomistWrapper()
 
     ############
     #   else   #
