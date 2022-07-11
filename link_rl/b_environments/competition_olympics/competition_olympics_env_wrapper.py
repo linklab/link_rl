@@ -329,17 +329,20 @@ class CompetitionOlympicsEnvWrapper(gym.Wrapper):
 
 		ball_average_x = np.average(np.unique(ball_position[0]))
 		ball_average_y = np.average(np.unique(ball_position[1]))
-		ball_average_position = np.asarray(ball_average_x, ball_average_y)
+		ball_average_position = np.asarray([ball_average_x, ball_average_y])
 
 		goal_line_average_x = np.average(np.unique(goal_line_position[0]))
 		goal_line_average_y = np.average(np.unique(goal_line_position[1]))
-		goal_line_average_postion = np.asarray(goal_line_average_x, goal_line_average_y)
+		goal_line_average_postion = np.asarray([goal_line_average_x, goal_line_average_y])
+
+		ball_goal_line_dist = np.linalg.norm(ball_average_position - goal_line_average_postion)
 
 		if np.nan_to_num(goal_line_average_x) and np.nan_to_num(ball_average_x):
-			pass
+			reward = (50 - ball_goal_line_dist) / 500
+		else:
+			reward = -0.1
 
-		# max : 0.51
-		return 0
+		return reward
 
 	def running_reward(self, obs, energy):
 		viewed_obs = obs[-20:-8][:, 10:31]
