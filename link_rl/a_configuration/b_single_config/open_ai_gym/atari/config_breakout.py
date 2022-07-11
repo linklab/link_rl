@@ -3,8 +3,8 @@ from link_rl.a_configuration.a_base_config.b_agents.config_agents_off_policy imp
 from link_rl.a_configuration.a_base_config.a_environments.open_ai_gym.config_gym_atari import ConfigBreakout
 from link_rl.a_configuration.a_base_config.b_agents.config_agents_on_policy import ConfigA2c, ConfigA3c, ConfigPpo, ConfigPpoTrajectory
 from link_rl.a_configuration.a_base_config.config_single_base import ConfigBase
-from link_rl.c_models_v2.b_q_model import Q_MODEL
-from link_rl.c_models_v2.d_basic_actor_critic_model import BASIC_ACTOR_CRITIC_MODEL
+from link_rl.d_models.b_q_model import Q_MODEL
+from link_rl.d_models.d_basic_actor_critic_model import BASIC_ACTOR_CRITIC_MODEL
 
 
 class ConfigBreakoutDqn(ConfigBase, ConfigBreakout, ConfigDqn):
@@ -58,7 +58,7 @@ class ConfigBreakoutA2c(ConfigBase, ConfigBreakout, ConfigA2c):
         ConfigA2c.__init__(self)
 
         self.MAX_TRAINING_STEPS = 1_000_000
-        self.MODEL_TYPE = BASIC_ACTOR_CRITIC_MODEL.DiscreteBasicActorCriticEncoderSharedModel.value
+        self.MODEL_TYPE = BASIC_ACTOR_CRITIC_MODEL.DiscreteBasicActorCriticSharedModel.value
 
 
 class ConfigBreakoutA3c(ConfigBase, ConfigBreakout, ConfigA3c):
@@ -68,7 +68,7 @@ class ConfigBreakoutA3c(ConfigBase, ConfigBreakout, ConfigA3c):
         ConfigA3c.__init__(self)
 
         self.MAX_TRAINING_STEPS = 1_000_000
-        self.MODEL_TYPE = BASIC_ACTOR_CRITIC_MODEL.DiscreteBasicActorCriticEncoderSharedModel.value
+        self.MODEL_TYPE = BASIC_ACTOR_CRITIC_MODEL.DiscreteBasicActorCriticSharedModel.value
 
 
 class ConfigBreakoutPpo(ConfigBase, ConfigBreakout, ConfigPpo):
@@ -78,7 +78,7 @@ class ConfigBreakoutPpo(ConfigBase, ConfigBreakout, ConfigPpo):
         ConfigPpo.__init__(self)
 
         self.MAX_TRAINING_STEPS = 1_000_000
-        self.MODEL_TYPE = BASIC_ACTOR_CRITIC_MODEL.DiscreteBasicActorCriticEncoderSharedModel.value
+        self.MODEL_TYPE = BASIC_ACTOR_CRITIC_MODEL.DiscreteBasicActorCriticSharedModel.value
 
 
 class ConfigBreakoutPpoTrajectory(ConfigBase, ConfigBreakout, ConfigPpoTrajectory):
@@ -88,4 +88,4 @@ class ConfigBreakoutPpoTrajectory(ConfigBase, ConfigBreakout, ConfigPpoTrajector
         ConfigPpoTrajectory.__init__(self)
 
         self.MAX_TRAINING_STEPS = 1_000_000
-        self.MODEL_TYPE = BASIC_ACTOR_CRITIC_MODEL.DiscreteBasicActorCriticEncoderSharedModel.value
+        self.MODEL_TYPE = BASIC_ACTOR_CRITIC_MODEL.DiscreteBasicActorCriticSharedModel.value

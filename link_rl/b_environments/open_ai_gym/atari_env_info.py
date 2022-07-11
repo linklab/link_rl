@@ -5,7 +5,7 @@ import time
 
 import gym
 
-from link_rl.g_utils.commons import get_train_env, get_single_env
+from link_rl.h_utils.commons import get_train_env, get_single_env
 
 CURRENT_PATH = os.path.dirname(os.path.realpath(__file__))
 PROJECT_HOME = os.path.abspath(os.path.join(CURRENT_PATH, os.pardir))
@@ -129,6 +129,6 @@ if __name__ == "__main__":
 
     from link_rl.a_configuration.b_single_config.open_ai_gym.atari.config_pong import ConfigPongDqn
     config = ConfigPongDqn()
-    config.MODEL_TYPE = "GymAtariQModel"
+    config.MODEL_TYPE = "NatureAtariQModel"
 
     main_env_info2(config)

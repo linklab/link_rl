@@ -19,8 +19,8 @@ from link_rl.b_environments.combinatorial_optimization.knapsack.boto3_knapsack i
 from link_rl.b_environments.combinatorial_optimization.knapsack.knapsack import STATIC_ITEMS_50, STATIC_INITIAL_STATE_50, \
     STATIC_INITIAL_STATE_50_OPTIMAL
 from link_rl.b_environments.combinatorial_optimization.knapsack.knapsack_gurobi import model_kp
-from link_rl.g_utils.commons import set_config
-from link_rl.g_utils.types import Transition, HerConstant
+from link_rl.h_utils.commons import set_config
+from link_rl.h_utils.types import Transition, HerConstant
 
 
 class DoneReasonType0(enum.Enum):

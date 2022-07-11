@@ -3,11 +3,11 @@ from link_rl.a_configuration.a_base_config.b_agents.config_agents_off_policy imp
     ConfigTdmpc
 from link_rl.a_configuration.a_base_config.b_agents.config_agents_on_policy import ConfigA2c, ConfigPpo, ConfigA3c
 from link_rl.a_configuration.a_base_config.config_single_base import ConfigBase
-from link_rl.c_models_v2.d_basic_actor_critic_model import BASIC_ACTOR_CRITIC_MODEL
-from link_rl.c_models_v2.e_ddpg_model import DDPG_MODEL
-from link_rl.c_models_v2.f_td3_model import TD3_MODEL
-from link_rl.c_models_v2.g_sac_model import SAC_MODEL
-from link_rl.c_models_v2.h_tdmpc_model import TDMPC_MODEL
+from link_rl.d_models.d_basic_actor_critic_model import BASIC_ACTOR_CRITIC_MODEL
+from link_rl.d_models.e_ddpg_model import DDPG_MODEL
+from link_rl.d_models.f_td3_model import TD3_MODEL
+from link_rl.d_models.g_sac_model import SAC_MODEL
+from link_rl.d_models.h_tdmpc_model import TDMPC_MODEL
 
 
 class ConfigDmControlCheetahRunA2c(ConfigBase, ConfigDmControlCheetahRun, ConfigA2c):
@@ -18,7 +18,7 @@ class ConfigDmControlCheetahRunA2c(ConfigBase, ConfigDmControlCheetahRun, Config
 
         self.MAX_TRAINING_STEPS = 1_000_000
         self.FROM_PIXELS = True
-        self.MODEL_TYPE = BASIC_ACTOR_CRITIC_MODEL.ContinuousBasicActorCriticEncoderSharedModel.value
+        self.MODEL_TYPE = BASIC_ACTOR_CRITIC_MODEL.ContinuousBasicActorCriticSharedModel.value
 
 
 class ConfigDmControlCheetahRunA3c(ConfigBase, ConfigDmControlCheetahRun, ConfigA3c):
@@ -29,7 +29,7 @@ class ConfigDmControlCheetahRunA3c(ConfigBase, ConfigDmControlCheetahRun, Config
 
         self.MAX_TRAINING_STEPS = 1_000_000
         self.FROM_PIXELS = True
-        self.MODEL_TYPE = BASIC_ACTOR_CRITIC_MODEL.ContinuousBasicActorCriticEncoderSharedModel.value
+        self.MODEL_TYPE = BASIC_ACTOR_CRITIC_MODEL.ContinuousBasicActorCriticSharedModel.value
 
 
 class ConfigDmControlCheetahRunPpo(ConfigBase, ConfigDmControlCheetahRun, ConfigPpo):
@@ -40,7 +40,7 @@ class ConfigDmControlCheetahRunPpo(ConfigBase, ConfigDmControlCheetahRun, Config
 
         self.MAX_TRAINING_STEPS = 1_000_000
         self.FROM_PIXELS = True
-        self.MODEL_TYPE = BASIC_ACTOR_CRITIC_MODEL.ContinuousBasicActorCriticEncoderSharedModel.value
+        self.MODEL_TYPE = BASIC_ACTOR_CRITIC_MODEL.ContinuousBasicActorCriticSharedModel.value
 
 
 class ConfigDmControlCheetahRunDdpg(ConfigBase, ConfigDmControlCheetahRun, ConfigDdpg):
@@ -62,7 +62,7 @@ class ConfigDmControlCheetahRunTd3(ConfigBase, ConfigDmControlCheetahRun, Config
 
         self.MAX_TRAINING_STEPS = 1_000_000
         self.FROM_PIXELS = True
-        self.MODEL_TYPE = TD3_MODEL.ContinuousTd3EncoderModel.value
+        self.MODEL_TYPE = TD3_MODEL.ContinuousTd3Model.value
 
 
 class ConfigDmControlCheetahRunSac(ConfigBase, ConfigDmControlCheetahRun, ConfigSac):
@@ -73,7 +73,7 @@ class ConfigDmControlCheetahRunSac(ConfigBase, ConfigDmControlCheetahRun, Config
 
         self.MAX_TRAINING_STEPS = 1_000_000
         self.FROM_PIXELS = True
-        self.MODEL_TYPE = SAC_MODEL.ContinuousSacEncoderModel.value
+        self.MODEL_TYPE = SAC_MODEL.ContinuousSacModel.value
 
 
 class ConfigDmControlCheetahRunTdmpc(ConfigBase, ConfigDmControlCheetahRun, ConfigTdmpc):
@@ -84,4 +84,4 @@ class ConfigDmControlCheetahRunTdmpc(ConfigBase, ConfigDmControlCheetahRun, Conf
 
         self.MAX_TRAINING_STEPS = 1_000_000
         self.FROM_PIXELS = True
-        self.MODEL_TYPE = TDMPC_MODEL.TdmpcEncoderModel.value
+        self.MODEL_TYPE = TDMPC_MODEL.TdmpcModel.value

@@ -8,7 +8,7 @@ import copy
 import numpy as np
 
 from link_rl.a_configuration.a_base_config.a_environments.task_allocation.config_basic_task_allocation import ConfigBasicTaskAllocation0
-from link_rl.g_utils.stats import CustomEnvStat
+from link_rl.h_utils.stats import CustomEnvStat
 
 
 class DoneReasonType0(enum.Enum):

@@ -3,7 +3,8 @@ from link_rl.a_configuration.a_base_config.a_environments.competition_olympics i
 
 class ConfigCompetitionOlympicsRunning(ConfigCompetitionOlympics):
     def __init__(self):
-        super(ConfigCompetitionOlympics, self).__init__()
+        super(ConfigCompetitionOlympicsRunning, self).__init__()
+
         self.ENV_NAME = "olympics-running"
         self.CONTROLLED_AGENT_INDEX = 1          # 0 or 1
         self.N_TEST_EPISODES = 5

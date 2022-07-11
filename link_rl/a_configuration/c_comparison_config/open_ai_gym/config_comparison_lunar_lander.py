@@ -4,7 +4,7 @@ from link_rl.a_configuration.a_base_config.config_comparison_base import ConfigC
 from link_rl.a_configuration.b_single_config.open_ai_gym.box2d.config_lunar_lander import ConfigLunarLanderDqn, \
     ConfigLunarLanderDoubleDqn, ConfigLunarLanderDuelingDqn, ConfigLunarLanderDoubleDuelingDqn
 from link_rl.b_environments import wrapper
-from link_rl.c_models_v2.b_q_model import Q_MODEL
+from link_rl.d_models.b_q_model import Q_MODEL
 
 
 class ConfigComparisonLunarLanderDqnRecurrent(ConfigComparisonBase):

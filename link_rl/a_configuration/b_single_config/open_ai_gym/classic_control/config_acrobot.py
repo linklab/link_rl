@@ -4,7 +4,9 @@ from link_rl.a_configuration.a_base_config.b_agents.config_agents_on_policy impo
     ConfigPpoTrajectory, ConfigA3c
 from link_rl.a_configuration.a_base_config.config_single_base import ConfigBase
 from link_rl.a_configuration.a_base_config.a_environments.open_ai_gym.config_gym_classic_control import ConfigAcrobot
-from link_rl.g_utils.types import ModelType
+from link_rl.d_models.b_q_model import Q_MODEL
+from link_rl.d_models.c_vanilla_policy_model import VANILLA_POLICY_MODEL
+from link_rl.d_models.d_basic_actor_critic_model import BASIC_ACTOR_CRITIC_MODEL
 
 
 class ConfigAcrobotDqn(ConfigBase, ConfigAcrobot, ConfigDqn):
@@ -16,7 +18,7 @@ class ConfigAcrobotDqn(ConfigBase, ConfigAcrobot, ConfigDqn):
         self.LEARNING_RATE = 0.001
         self.MAX_TRAINING_STEPS = 100_000
         self.BUFFER_CAPACITY = 50_000
-        self.MODEL_TYPE = ModelType.SMALL_LINEAR
+        self.MODEL_TYPE = Q_MODEL.QModel.value
 
 
 class ConfigAcrobotDoubleDqn(ConfigBase, ConfigAcrobot, ConfigDoubleDqn):
@@ -28,7 +30,7 @@ class ConfigAcrobotDoubleDqn(ConfigBase, ConfigAcrobot, ConfigDoubleDqn):
         self.LEARNING_RATE = 0.001
         self.MAX_TRAINING_STEPS = 100_000
         self.BUFFER_CAPACITY = 50_000
-        self.MODEL_TYPE = ModelType.SMALL_LINEAR
+        self.MODEL_TYPE = Q_MODEL.QModel.value
 
 
 class ConfigAcrobotDuelingDqn(ConfigBase, ConfigAcrobot, ConfigDuelingDqn):
@@ -40,7 +42,7 @@ class ConfigAcrobotDuelingDqn(ConfigBase, ConfigAcrobot, ConfigDuelingDqn):
         self.LEARNING_RATE = 0.001
         self.MAX_TRAINING_STEPS = 100_000
         self.BUFFER_CAPACITY = 50_000
-        self.MODEL_TYPE = ModelType.SMALL_LINEAR
+        self.MODEL_TYPE = Q_MODEL.DuelingQModel.value
 
 
 class ConfigAcrobotDoubleDuelingDqn(ConfigBase, ConfigAcrobot, ConfigDoubleDuelingDqn):
@@ -52,7 +54,7 @@ class ConfigAcrobotDoubleDuelingDqn(ConfigBase, ConfigAcrobot, ConfigDoubleDueli
         self.LEARNING_RATE = 0.001
         self.MAX_TRAINING_STEPS = 100_000
         self.BUFFER_CAPACITY = 50_000
-        self.MODEL_TYPE = ModelType.SMALL_LINEAR
+        self.MODEL_TYPE = Q_MODEL.DuelingQModel.value
 
 
 # OnPolicy
@@ -64,7 +66,7 @@ class ConfigAcrobotReinforce(ConfigBase, ConfigAcrobot, ConfigReinforce):
         ConfigReinforce.__init__(self)
 
         self.MAX_TRAINING_STEPS = 100_000
-        self.MODEL_TYPE = ModelType.SMALL_LINEAR
+        self.MODEL_TYPE = VANILLA_POLICY_MODEL.DiscreteVanillaPolicyModel.value
 
 
 class ConfigAcrobotA2c(ConfigBase, ConfigAcrobot, ConfigA2c):
@@ -74,7 +76,7 @@ class ConfigAcrobotA2c(ConfigBase, ConfigAcrobot, ConfigA2c):
         ConfigA2c.__init__(self)
 
         self.MAX_TRAINING_STEPS = 100_000
-        self.MODEL_TYPE = ModelType.SMALL_LINEAR
+        self.MODEL_TYPE = BASIC_ACTOR_CRITIC_MODEL.DiscreteBasicActorCriticSharedModel.value
 
 
 class ConfigAcrobotA3c(ConfigBase, ConfigAcrobot, ConfigA3c):
@@ -84,7 +86,7 @@ class ConfigAcrobotA3c(ConfigBase, ConfigAcrobot, ConfigA3c):
         ConfigA3c.__init__(self)
 
         self.MAX_TRAINING_STEPS = 100_000
-        self.MODEL_TYPE = ModelType.SMALL_LINEAR
+        self.MODEL_TYPE = BASIC_ACTOR_CRITIC_MODEL.DiscreteBasicActorCriticSharedModel.value
 
 
 class ConfigAcrobotPpo(ConfigBase, ConfigAcrobot, ConfigPpo):
@@ -94,7 +96,7 @@ class ConfigAcrobotPpo(ConfigBase, ConfigAcrobot, ConfigPpo):
         ConfigPpo.__init__(self)
 
         self.MAX_TRAINING_STEPS = 100_000
-        self.MODEL_TYPE = ModelType.SMALL_LINEAR
+        self.MODEL_TYPE = BASIC_ACTOR_CRITIC_MODEL.DiscreteBasicActorCriticSharedModel.value
 
 
 class ConfigAcrobotPpoTrajectory(ConfigBase, ConfigAcrobot, ConfigPpoTrajectory):
@@ -104,4 +106,4 @@ class ConfigAcrobotPpoTrajectory(ConfigBase, ConfigAcrobot, ConfigPpoTrajectory)
         ConfigPpoTrajectory.__init__(self)
 
         self.MAX_TRAINING_STEPS = 100_000
-        self.MODEL_TYPE = ModelType.SMALL_LINEAR
+        self.MODEL_TYPE = BASIC_ACTOR_CRITIC_MODEL.DiscreteBasicActorCriticSharedModel.value

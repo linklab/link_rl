@@ -1,5 +1,5 @@
 from link_rl.a_configuration.a_base_config.b_agents.config_agents import ConfigOffPolicyAgent
-from link_rl.g_utils.commons import AgentType
+from link_rl.h_utils.commons import AgentType
 
 
 class ConfigDqn(ConfigOffPolicyAgent):

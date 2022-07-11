@@ -2,7 +2,7 @@ import gym
 import numpy as np
 
 from link_rl.b_environments import wrapper
-from link_rl.c_models_v2.b_q_model import Q_MODEL
+from link_rl.d_models.b_q_model import Q_MODEL
 
 #################
 ## FROZEN_LAKE ##
@@ -94,33 +94,6 @@ config = ConfigCartPolePpo()
 from link_rl.a_configuration.b_single_config.open_ai_gym.classic_control.config_cart_pole import ConfigCartPolePpoTrajectory
 config = ConfigCartPolePpoTrajectory()
 config.WANDB_REPORT_URL = "https://wandb.ai/link-koreatech/CartPole-v1_PPO_TRAJECTORY_yhhan/reports/CartPole-PPO_TRAJECTORY--VmlldzoxNTUyNDQw?accessToken=7vs10v66vi6fyitrxma0p2g62pq4nfiiccaskfgv2x2b5jrmwfae38u4pfm1xfq1"
-
-#################################
-## CART_POLE_CONTINUOUS_BULLET ##
-#################################
-from link_rl.a_configuration.b_single_config.pybullet.config_cart_pole_continuous_bullet import ConfigCartPoleContinuousBulletReinforce
-config = ConfigCartPoleContinuousBulletReinforce()
-
-from link_rl.a_configuration.b_single_config.pybullet.config_cart_pole_continuous_bullet import ConfigCartPoleContinuousBulletA2c
-config = ConfigCartPoleContinuousBulletA2c()
-
-from link_rl.a_configuration.b_single_config.pybullet.config_cart_pole_continuous_bullet import ConfigCartPoleContinuousBulletA3c
-config = ConfigCartPoleContinuousBulletA3c()
-
-from link_rl.a_configuration.b_single_config.pybullet.config_cart_pole_continuous_bullet import ConfigCartPoleContinuousBulletPpo
-config = ConfigCartPoleContinuousBulletPpo()
-
-from link_rl.a_configuration.b_single_config.pybullet.config_cart_pole_continuous_bullet import ConfigCartPoleContinuousBulletPpoTrajectory
-config = ConfigCartPoleContinuousBulletPpoTrajectory()
-
-from link_rl.a_configuration.b_single_config.pybullet.config_cart_pole_continuous_bullet import ConfigCartPoleContinuousBulletDdpg
-config = ConfigCartPoleContinuousBulletDdpg()
-
-from link_rl.a_configuration.b_single_config.pybullet.config_cart_pole_continuous_bullet import ConfigCartPoleContinuousBulletTd3
-config = ConfigCartPoleContinuousBulletTd3()
-
-from link_rl.a_configuration.b_single_config.pybullet.config_cart_pole_continuous_bullet import ConfigCartPoleContinuousBulletSac
-config = ConfigCartPoleContinuousBulletSac()
 
 ##################
 ## LUNAR_LANDER ##
@@ -246,69 +219,11 @@ config = ConfigCarRacingTd3()
 from link_rl.a_configuration.b_single_config.open_ai_gym.box2d.config_car_racing import ConfigCarRacingSac
 config = ConfigCarRacingSac()
 
-
-######################
-##    ANT_BULLET    ##
-######################
-from link_rl.a_configuration.b_single_config.pybullet.config_ant_bullet import ConfigAntBulletA2c
-config = ConfigAntBulletA2c()
-
-from link_rl.a_configuration.b_single_config.pybullet.config_ant_bullet import ConfigAntBulletPpo
-config = ConfigAntBulletPpo()
-
-from link_rl.a_configuration.b_single_config.pybullet.config_ant_bullet import ConfigAntBulletPpoTrajectory
-config = ConfigAntBulletPpoTrajectory()
-
-from link_rl.a_configuration.b_single_config.pybullet.config_ant_bullet import ConfigAntBulletDdpg
-config = ConfigAntBulletDdpg()
-
-from link_rl.a_configuration.b_single_config.pybullet.config_ant_bullet import ConfigAntBulletTd3
-config = ConfigAntBulletTd3()
-
-from link_rl.a_configuration.b_single_config.pybullet.config_ant_bullet import ConfigAntBulletSac
-config = ConfigAntBulletSac()
-
-#########################
-##    HOPPER_BULLET    ##
-#########################
-from link_rl.a_configuration.b_single_config.pybullet.config_hopper_bullet import ConfigHopperBulletSac
-config = ConfigHopperBulletSac()
-config.WANDB_REPORT_URL = "https://wandb.ai/link-koreatech/HopperBulletEnv-v0_SAC_yhhan/reports/HopperBullet-SAC--VmlldzoxNTI4NTA3?accessToken=4irm57nvvd1ffqf7ggrjt7i47nfckc5d0e0libe5ifsgovz3tr3ewzvt9s2tgr0n"
-
-from link_rl.a_configuration.b_single_config.pybullet.config_hopper_bullet import ConfigHopperBulletPpo
-config = ConfigHopperBulletPpo()
-
-from link_rl.a_configuration.b_single_config.pybullet.config_hopper_bullet import ConfigHopperBulletPpoTrajectory
-config = ConfigHopperBulletPpoTrajectory()
-
-
 #########################################
 ##    InvertedDoublePendulumMujoco    ##
 #########################################
 from link_rl.a_configuration.b_single_config.open_ai_gym.mujoco.config_inverted_double_pendulum_mujoco import ConfigInvertedDoublePendulumMujocoPpo
 config = ConfigInvertedDoublePendulumMujocoPpo()
-
-#########################################
-##    InvertedDoublePendulum_BULLET    ##
-#########################################
-from link_rl.a_configuration.b_single_config.pybullet.config_inverted_double_pendulum_bullet import ConfigInvertedDoublePendulumBulletA2c
-config = ConfigInvertedDoublePendulumBulletA2c()
-
-from link_rl.a_configuration.b_single_config.pybullet.config_inverted_double_pendulum_bullet import ConfigInvertedDoublePendulumBulletSac
-config = ConfigInvertedDoublePendulumBulletSac()
-
-from link_rl.a_configuration.b_single_config.pybullet.config_inverted_double_pendulum_bullet import ConfigInvertedDoublePendulumBulletDdpg
-config = ConfigInvertedDoublePendulumBulletDdpg()
-
-from link_rl.a_configuration.b_single_config.pybullet.config_inverted_double_pendulum_bullet import ConfigInvertedDoublePendulumBulletTd3
-config = ConfigInvertedDoublePendulumBulletTd3()
-
-from link_rl.a_configuration.b_single_config.pybullet.config_inverted_double_pendulum_bullet import ConfigInvertedDoublePendulumBulletPpo
-config = ConfigInvertedDoublePendulumBulletPpo()
-
-from link_rl.a_configuration.b_single_config.pybullet.config_inverted_double_pendulum_bullet import ConfigInvertedDoublePendulumBulletPpoTrajectory
-config = ConfigInvertedDoublePendulumBulletPpoTrajectory()
-config.WANDB_REPORT_URL = "https://wandb.ai/link-koreatech/InvertedDoublePendulumBulletEnv-v0_PPO_TRAJECTORY_anonymous/reports/Inverted-Double-Pendulum-PPO_Trajectory--VmlldzoxNTAwNzg4?accessToken=j639pzfajkaiybgddbxkp552v0qjcv6zu0ogytbr6ec85qxg7j2gefdh56gvvdx7"
 
 ##########
 ## PONG ##
@@ -703,7 +618,7 @@ from link_rl.a_configuration.b_single_config.ai_economist.config_ai_economist im
 config = ConfigAiEconomistPpo()
 
 if __name__ == "__main__":
-    from link_rl.g_utils.commons import print_basic_info, get_env_info, set_config
+    from link_rl.h_utils.commons import print_basic_info, get_env_info, set_config
 
     set_config(config)
     observation_space, action_space = get_env_info(config)

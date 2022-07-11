@@ -2,8 +2,8 @@ from link_rl.a_configuration.a_base_config.a_environments.open_ai_gym.config_gym
 from link_rl.a_configuration.a_base_config.b_agents.config_agents_off_policy import ConfigSac
 from link_rl.a_configuration.a_base_config.b_agents.config_agents_on_policy import ConfigPpoTrajectory, ConfigPpo
 from link_rl.a_configuration.a_base_config.config_single_base import ConfigBase
-from link_rl.c_models_v2.d_basic_actor_critic_model import BASIC_ACTOR_CRITIC_MODEL
-from link_rl.c_models_v2.g_sac_model import SAC_MODEL
+from link_rl.d_models.d_basic_actor_critic_model import BASIC_ACTOR_CRITIC_MODEL
+from link_rl.d_models.g_sac_model import SAC_MODEL
 
 
 class ConfigWalker2dMujocoSac(ConfigBase, ConfigWalker2dMujoco, ConfigSac):

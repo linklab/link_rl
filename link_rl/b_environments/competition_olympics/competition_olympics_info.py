@@ -233,8 +233,8 @@ if __name__ == '__main__':
 
     config = ConfigCompetitionOlympicsIntegratedPpo()
 
-    #print_all_competition_olympics_info(config)
+    print_all_competition_olympics_info(config)
 
     #competition_olympics_controlled_agent_test(config, controlled_agent_index=1)
 
-    competition_olympics_controlled_agent_test_2(config, controlled_agent_index=1)
+    #competition_olympics_controlled_agent_test_2(config, controlled_agent_index=1)

@@ -2,7 +2,8 @@ import os
 import sys
 from typing import Callable, List, Tuple, Dict
 
-from link_rl.g_utils.types import LayerActivationType, LossFunctionType
+from link_rl.c_encoders.a_encoder import ENCODER
+from link_rl.h_utils.types import LossFunctionType
 
 
 class ConfigBase:
@@ -13,15 +14,11 @@ class ConfigBase:
         if self.PROJECT_HOME not in sys.path:
             sys.path.append(self.PROJECT_HOME)
 
-        self.MODEL_SAVE_DIR = os.path.join(self.PROJECT_HOME, "f_play", "models")
+        self.MODEL_SAVE_DIR = os.path.join(self.PROJECT_HOME, "g_play", "models")
         if not os.path.exists(self.MODEL_SAVE_DIR):
             os.mkdir(self.MODEL_SAVE_DIR)
 
         self.UNITY_ENV_DIR = os.path.join(self.PROJECT_HOME, "b_environments", "unity")
-        if not os.path.exists(self.UNITY_ENV_DIR):
-            os.mkdir(self.UNITY_ENV_DIR)
-
-        self.COMBINATORIAL_OPTIMIZATION_ENV_DIR = os.path.join(self.PROJECT_HOME, "b_environments", "combinatorial_optimization")
         if not os.path.exists(self.UNITY_ENV_DIR):
             os.mkdir(self.UNITY_ENV_DIR)
 
@@ -40,6 +37,8 @@ class ConfigBase:
         self.N_EPISODES_FOR_MEAN_CALCULATION = 32
         self.TEST_INTERVAL_TRAINING_STEPS = None
         self.CONSOLE_LOG_INTERVAL_TRAINING_STEPS = 100
+
+        self.ENCODER_TYPE = ENCODER.IdentityEncoder.value
         self.MODEL_TYPE = None
         self.MODEL_PARAMETER = None
 
@@ -60,12 +59,6 @@ class ConfigBase:
         self.SYSTEM_COMPUTER_NAME = None
 
         self.USE_LAYER_NORM = True
-
-        self.LAYER_ACTIVATION_TYPE = LayerActivationType.LEAKY_RELU
-        self.LAYER_ACTIVATION = None
-
-        self.VALUE_NETWORK_LAYER_ACTIVATION_TYPE = LayerActivationType.PReLU
-        self.VALUE_NETWORK_LAYER_ACTIVATION = None
 
         self.LOSS_FUNCTION_TYPE = LossFunctionType.HUBER_LOSS
         self.LOSS_FUNCTION = None

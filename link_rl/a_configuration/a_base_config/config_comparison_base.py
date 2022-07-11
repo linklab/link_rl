@@ -1,7 +1,7 @@
 import os
 import sys
 
-from link_rl.g_utils.types import LayerActivationType
+from link_rl.h_utils.types import LayerActivationType
 
 
 class ConfigComparisonBase:
@@ -12,7 +12,7 @@ class ConfigComparisonBase:
         if self.PROJECT_HOME not in sys.path:
             sys.path.append(self.PROJECT_HOME)
 
-        self.COMPARISON_RESULTS_SAVE_DIR = os.path.join(self.PROJECT_HOME, "e_main", "comparison_results")
+        self.COMPARISON_RESULTS_SAVE_DIR = os.path.join(self.PROJECT_HOME, "f_main", "comparison_results")
         if not os.path.exists(self.COMPARISON_RESULTS_SAVE_DIR):
             os.mkdir(self.COMPARISON_RESULTS_SAVE_DIR)
 
@@ -43,8 +43,6 @@ class ConfigComparisonBase:
         self.N_RUNS = 5
 
         self.USE_LAYER_NORM = False
-
-        self.LAYER_ACTIVATION_TYPE = LayerActivationType.LEAKY_RELU
 
         self.FORCE_USE_CPU = False
         self.DEVICE = None

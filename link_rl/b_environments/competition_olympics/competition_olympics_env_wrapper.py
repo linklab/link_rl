@@ -2,9 +2,9 @@ import gym
 import numpy as np
 import random
 
-from link_rl.g_utils.types import AgentType, AgentMode
+from link_rl.h_utils.types import AgentType, AgentMode
 from collections import deque
-from link_rl.d_agents.off_policy.tdmpc import helper as h
+from link_rl.e_agents.off_policy.tdmpc import helper as h
 
 np.set_printoptions(threshold=np.inf, linewidth=np.inf)
 
@@ -307,25 +307,41 @@ class CompetitionOlympicsEnvWrapper(gym.Wrapper):
 		return reward/100
 
 	def football_tablehockey_reward(self, obs, action):
-		goal_viewed_obs = obs[20:29][:, 10:30]
-		goal_reward = len(goal_viewed_obs[goal_viewed_obs == 2])
-		# action_reward = action / 100
+		# goal_viewed_obs = obs[20:29][:, 10:30]
+		# goal_reward = len(goal_viewed_obs[goal_viewed_obs == 2])
+		# # action_reward = action / 100
+		# #
+		# # if goal_reward > 1:
+		# # 	goal_reward = goal_reward
+		# # 	reward = goal_reward + action_reward
+		# # else:
+		# # 	reward = goal_reward
 		#
-		# if goal_reward > 1:
-		# 	goal_reward = goal_reward
-		# 	reward = goal_reward + action_reward
+		# if goal_reward > 30:
+		# 	line_viewed_obs = obs[15:29][:, 10:30]
+		# 	line_reward = len(line_viewed_obs[line_viewed_obs == 7]) * 10
 		# else:
-		# 	reward = goal_reward
+		# 	line_reward = 0
+		#
+		# reward = (goal_reward + line_reward) / 100
+		ball_position = np.where(obs == 2)
+		goal_line_position = np.where(obs == 7)
 
-		if goal_reward > 30:
-			line_viewed_obs = obs[15:29][:, 10:30]
-			line_reward = len(line_viewed_obs[line_viewed_obs == 7]) * 10
+		ball_average_x = np.average(np.unique(ball_position[0]))
+		ball_average_y = np.average(np.unique(ball_position[1]))
+		ball_average_position = np.asarray([ball_average_x, ball_average_y])
+
+		goal_line_average_x = np.average(np.unique(goal_line_position[0]))
+		goal_line_average_y = np.average(np.unique(goal_line_position[1]))
+		goal_line_average_postion = np.asarray([goal_line_average_x, goal_line_average_y])
+
+		ball_goal_line_dist = np.linalg.norm(ball_average_position - goal_line_average_postion)
+
+		if np.nan_to_num(goal_line_average_x) and np.nan_to_num(ball_average_x):
+			reward = (50 - ball_goal_line_dist) / 500
 		else:
-			line_reward = 0
+			reward = -0.1
 
-		reward = (goal_reward + line_reward) / 100
-
-		# max : 0.51
 		return reward
 
 	def running_reward(self, obs, energy):

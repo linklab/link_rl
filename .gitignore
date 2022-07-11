@@ -134,8 +134,8 @@ slprj
 # *.csv
 
 link_rl/a_configuration/a_base_config/config.ini
-link_rl/e_main/config_comparison.py
-link_rl/e_main/config_single.py
+link_rl/f_main/config_comparison.py
+link_rl/f_main/config_single.py
 
 
 *.para
@@ -147,13 +147,13 @@ wandb
 /temp/*.pth
 *.sh
 
-link_rl/f_play/models/**
+link_rl/g_play/models/**
 
-/link_rl/e_main/comparison_results/
+/link_rl/f_main/comparison_results/
 
 */*/wandb/!/i_temp/muszero_original/results/
 /temp/muzero/muszero_original/results/
 
-/link_rl/f_play/reference_history/
+/link_rl/g_play/reference_history/
 
 /temp/gurobi_result.csv

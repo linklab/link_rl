@@ -6,7 +6,7 @@ from gym.spaces import Discrete, Box
 from link_rl.a_configuration.a_base_config.c_models.config_recurrent_convolutional_models import \
     ConfigRecurrent2DConvolutionalModel, ConfigRecurrent1DConvolutionalModel
 from link_rl.a_configuration.a_base_config.c_models.config_recurrent_linear_models import ConfigRecurrentLinearModel
-from link_rl.g_utils.types import Transition
+from link_rl.h_utils.types import Transition
 
 
 class Buffer:

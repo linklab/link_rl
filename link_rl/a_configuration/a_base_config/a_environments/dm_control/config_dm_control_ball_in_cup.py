@@ -1,4 +1,5 @@
 from link_rl.a_configuration.a_base_config.a_environments.dm_control import ConfigDmControl
+from link_rl.c_encoders.a_encoder import ENCODER
 
 
 class ConfigDmControlBallInCupCatch(ConfigDmControl):

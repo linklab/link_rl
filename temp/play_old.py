@@ -13,22 +13,22 @@ from link_rl.a_configuration.a_base_config.a_environments.unity.config_unity_box
 from link_rl.a_configuration.a_base_config.c_models.config_recurrent_convolutional_models import \
     ConfigRecurrent2DConvolutionalModel, ConfigRecurrent1DConvolutionalModel
 from link_rl.a_configuration.a_base_config.c_models.config_recurrent_linear_models import ConfigRecurrentLinearModel
-from link_rl.g_utils.commons import set_config, get_specific_env_name
-from link_rl.g_utils.commons_rl import get_agent
+from link_rl.h_utils.commons import set_config, get_specific_env_name
+from link_rl.h_utils.commons_rl import get_agent
 
 warnings.filterwarnings("ignore")
 
 from gym.spaces import Discrete, Box
 
-from link_rl.g_utils.types import AgentMode
+from link_rl.h_utils.types import AgentMode
 
 CURRENT_PATH = os.path.dirname(os.path.realpath(__file__))
 PROJECT_HOME = os.path.abspath(os.path.join(CURRENT_PATH, os.pardir))
 if PROJECT_HOME not in sys.path:
     sys.path.append(PROJECT_HOME)
 
-from link_rl.e_main.config_single import config
-from link_rl.g_utils.commons import model_load, get_single_env, get_env_info
+from link_rl.f_main.config_single import config
+from link_rl.h_utils.commons import model_load, get_single_env, get_env_info
 
 is_recurrent_model = any([
     isinstance(config.MODEL_PARAMETER, ConfigRecurrentLinearModel),

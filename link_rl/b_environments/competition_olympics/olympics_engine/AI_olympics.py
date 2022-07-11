@@ -6,7 +6,7 @@ from link_rl.b_environments.competition_olympics.olympics_engine.generator impor
 from link_rl.b_environments.competition_olympics.olympics_engine.scenario import Running_competition, table_hockey, \
     wrestling
 from link_rl.b_environments.competition_olympics.olympics_engine.scenario import football
-from link_rl.e_main.config_single import config
+from link_rl.f_main.config_single import config
 import random
 
 

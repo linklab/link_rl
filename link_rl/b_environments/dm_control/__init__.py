@@ -24,7 +24,13 @@ def make(
         assert not visualize_reward, 'cannot use visualize reward when learning from pixels'
 
     # shorten episode length
+    # frame_skip = 1 --> max_episode_steps: 1_000 // 1 = 1_000
+    # frame_skip = 2 --> max_episode_steps: 1_001 // 2 = 500
+    # frame_skip = 3 --> max_episode_steps: 1_002 // 3 = 334
+    # frame_skip = 4 --> max_episode_steps: 1_003 // 4 = 250
     max_episode_steps = (episode_length + frame_skip - 1) // frame_skip
+
+    #print("**** max_episode_steps:", max_episode_steps)
 
     if not env_id in gym.envs.registry.env_specs:
         task_kwargs = {}

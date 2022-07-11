@@ -1,4 +1,4 @@
-from link_rl.g_utils.types import LossFunctionType
+from link_rl.h_utils.types import LossFunctionType
 
 
 class ConfigAgent:

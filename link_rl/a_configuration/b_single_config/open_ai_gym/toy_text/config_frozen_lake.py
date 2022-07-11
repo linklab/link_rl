@@ -1,7 +1,7 @@
 from link_rl.a_configuration.a_base_config.b_agents.config_agents_off_policy import ConfigDqn
 from link_rl.a_configuration.a_base_config.config_single_base import ConfigBase
 from link_rl.a_configuration.a_base_config.a_environments.open_ai_gym.config_gym_toy_text import ConfigFrozenLake
-from link_rl.c_models_v2.b_q_model import Q_MODEL
+from link_rl.d_models.b_q_model import Q_MODEL
 
 
 class ConfigFrozenLakeDqn(ConfigBase, ConfigFrozenLake, ConfigDqn):
@@ -13,11 +13,12 @@ class ConfigFrozenLakeDqn(ConfigBase, ConfigFrozenLake, ConfigDqn):
         self.MAX_TRAINING_STEPS = 100_000
         self.BUFFER_CAPACITY = 50_000
 
-        if self.BOX_OBSERVATION:
-            self.MODEL_TYPE = Q_MODEL.EncoderQModel.value
-        else:
-            self.MODEL_TYPE = Q_MODEL.QModel.value
+        # if self.BOX_OBSERVATION:
+        #     self.MODEL_TYPE = Q_MODEL.EncoderQModel.value
+        # else:
+        #     self.MODEL_TYPE = Q_MODEL.QModel.value
 
+        self.MODEL_TYPE = Q_MODEL.QModel.value
 
 # class ConfigFrozenLakeDoubleDqn(ConfigBase, ConfigFrozenLake, ConfigDoubleDqn):
 #     def __init__(self):
@@ -29,7 +30,7 @@ class ConfigFrozenLakeDqn(ConfigBase, ConfigFrozenLake, ConfigDqn):
 #         self.N_ACTORS = 1
 #         self.MAX_TRAINING_STEPS = 100_000
 #         self.BUFFER_CAPACITY = 50_000
-#         self.MODEL_TYPE = ModelType.SMALL_LINEAR
+#         self.MODEL_TYPE = Q_MODEL.QModel.value
 #
 #
 # class ConfigFrozenLakeDuelingDqn(ConfigBase, ConfigFrozenLake, ConfigDuelingDqn):
@@ -42,7 +43,7 @@ class ConfigFrozenLakeDqn(ConfigBase, ConfigFrozenLake, ConfigDqn):
 #         self.N_ACTORS = 1
 #         self.MAX_TRAINING_STEPS = 100_000
 #         self.BUFFER_CAPACITY = 50_000
-#         self.MODEL_TYPE = ModelType.SMALL_LINEAR
+#         self.MODEL_TYPE = Q_MODEL.DuelingQModel.value
 #
 #
 # class ConfigFrozenLakeDoubleDuelingDqn(ConfigBase, ConfigFrozenLake, ConfigDoubleDuelingDqn):
@@ -55,7 +56,7 @@ class ConfigFrozenLakeDqn(ConfigBase, ConfigFrozenLake, ConfigDqn):
 #         self.N_ACTORS = 1
 #         self.MAX_TRAINING_STEPS = 100_000
 #         self.BUFFER_CAPACITY = 50_000
-#         self.MODEL_TYPE = ModelType.SMALL_LINEAR
+#         self.MODEL_TYPE = Q_MODEL.DuelingQModel.value
 #
 # # OnPolicy
 #
@@ -67,7 +68,7 @@ class ConfigFrozenLakeDqn(ConfigBase, ConfigFrozenLake, ConfigDqn):
 #         ConfigReinforce.__init__(self)
 #
 #         self.MAX_TRAINING_STEPS = 100_000
-#         self.MODEL_TYPE = ModelType.SMALL_LINEAR
+#         VANILLA_POLICY_MODEL.DiscreteVanillaPolicyModel.value
 #
 #
 # class ConfigFrozenLakeA2c(ConfigBase, ConfigFrozenLake, ConfigA2c):
@@ -77,7 +78,7 @@ class ConfigFrozenLakeDqn(ConfigBase, ConfigFrozenLake, ConfigDqn):
 #         ConfigA2c.__init__(self)
 #
 #         self.MAX_TRAINING_STEPS = 100_000
-#         self.MODEL_TYPE = ModelType.SMALL_LINEAR
+#         self.MODEL_TYPE = BASIC_ACTOR_CRITIC_MODEL.DiscreteBasicActorCriticSharedModel.value
 #
 #
 # class ConfigFrozenLakePpo(ConfigBase, ConfigFrozenLake, ConfigPpo):
@@ -87,7 +88,7 @@ class ConfigFrozenLakeDqn(ConfigBase, ConfigFrozenLake, ConfigDqn):
 #         ConfigPpo.__init__(self)
 #
 #         self.MAX_TRAINING_STEPS = 100_000
-#         self.MODEL_TYPE = ModelType.SMALL_LINEAR
+#         self.MODEL_TYPE = BASIC_ACTOR_CRITIC_MODEL.DiscreteBasicActorCriticSharedModel.value
 #
 #
 # class ConfigFrozenLakePpoTrajectory(ConfigBase, ConfigFrozenLake, ConfigPpoTrajectory):
@@ -97,4 +98,4 @@ class ConfigFrozenLakeDqn(ConfigBase, ConfigFrozenLake, ConfigDqn):
 #         ConfigPpoTrajectory.__init__(self)
 #
 #         self.MAX_TRAINING_STEPS = 100_000
-#         self.MODEL_TYPE = ModelType.SMALL_LINEAR
+#         self.MODEL_TYPE = BASIC_ACTOR_CRITIC_MODEL.DiscreteBasicActorCriticSharedModel.value

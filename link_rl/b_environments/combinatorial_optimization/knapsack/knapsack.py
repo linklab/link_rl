@@ -16,9 +16,9 @@ from link_rl.a_configuration.a_base_config.c_models.config_recurrent_linear_mode
 from link_rl.a_configuration.a_base_config.config_parse import SYSTEM_USER_NAME, SYSTEM_COMPUTER_NAME
 from link_rl.b_environments.combinatorial_optimization.knapsack.boto3_knapsack import load_instance, upload_file, load_solution
 from link_rl.b_environments.combinatorial_optimization.knapsack.knapsack_gurobi import model_kp
-from link_rl.g_utils.commons import set_config
-from link_rl.g_utils.stats import CustomEnvStat, CustomEnvComparisonStat
-from link_rl.g_utils.types import HerConstant
+from link_rl.h_utils.commons import set_config
+from link_rl.h_utils.stats import CustomEnvStat, CustomEnvComparisonStat
+from link_rl.h_utils.types import HerConstant
 
 STATIC_ITEMS_50 = np.asarray([
     [12.000, 12.000],

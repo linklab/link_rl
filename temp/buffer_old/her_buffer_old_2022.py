@@ -4,7 +4,7 @@ from link_rl.a_configuration.a_base_config.c_models.config_convolutional_models 
 from link_rl.a_configuration.a_base_config.c_models.config_linear_models import ConfigLinearModel
 from link_rl.a_configuration.a_base_config.c_models.config_recurrent_convolutional_models import ConfigRecurrent1DConvolutionalModel
 from link_rl.a_configuration.a_base_config.c_models.config_recurrent_linear_models import ConfigRecurrentLinearModel
-from link_rl.g_utils.types import Transition
+from link_rl.h_utils.types import Transition
 
 
 
