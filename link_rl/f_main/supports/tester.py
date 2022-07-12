@@ -1,7 +1,7 @@
 import time
 
 import numpy as np
-from gym.spaces import Discrete, Box
+from gym.spaces import Discrete, Box, Dict
 
 from link_rl.a_configuration.a_base_config.a_environments.competition_olympics import ConfigCompetitionOlympics
 from link_rl.a_configuration.a_base_config.a_environments.open_ai_gym.config_gym_atari import ConfigGymAtari
@@ -87,12 +87,15 @@ class Tester:
                         )
 
                     if isinstance(self.agent.action_space, Discrete):
-                        if action.ndim == 0:
+                        if self.config.AGENT_TYPE in [AgentType.AIECONOMIST]:
                             scaled_action = action
-                        elif action.ndim == 1:
-                            scaled_action = action[0]
                         else:
-                            raise ValueError()
+                            if action.ndim == 0:
+                                scaled_action = action
+                            elif action.ndim == 1:
+                                scaled_action = action[0]
+                            else:
+                                raise ValueError()
                     elif isinstance(self.agent.action_space, Box):
                         if action.ndim == 1:
                             if self.agent.action_scale is not None:
@@ -113,7 +116,10 @@ class Tester:
 
                 episode_step += 1
 
-                episode_reward += reward
+                if self.config.AGENT_TYPE in [AgentType.AIECONOMIST]:
+                    episode_reward = reward
+                else:
+                    episode_reward += reward
                 observation = next_observation
 
                 if self.play:
@@ -136,4 +142,17 @@ class Tester:
 
         self.agent.model.train()
 
-        return min(episode_reward_lst)
+        if self.config.AGENT_TYPE in [AgentType.AIECONOMIST]:
+            reward_dict = {}
+            for idx in episode_reward_lst:
+                for reward_idx in idx:
+                    reward_dict[reward_idx] = 0
+
+            for idx in episode_reward_lst:
+                for reward_idx in idx:
+                    if reward_dict[reward_idx] > idx[reward_idx]:
+                        reward_dict[reward_idx] = idx[reward_idx]
+
+            return reward_dict
+        else:
+            return min(episode_reward_lst)

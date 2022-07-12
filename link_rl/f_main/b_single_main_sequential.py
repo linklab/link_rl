@@ -13,7 +13,7 @@ def main():
         observation_space=observation_space, action_space=action_space, config=config
     )
 
-    print_model_summary(agent=agent, observation_space=observation_space, action_space=action_space, config=config)
+    #print_model_summary(agent=agent, observation_space=observation_space, action_space=action_space, config=config)
 
     env_name = get_specific_env_name(config=config)
 

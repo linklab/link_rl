@@ -55,7 +55,8 @@ class Learner(mp.Process):
         self.transition_rolling_rate = mp.Value('d', 0.0)
         self.train_step_rate = mp.Value('d', 0.0)
 
-        self.single_actor_transition_generator = None
+        if self.config.AGENT_TYPE in [AgentType.AIECONOMIST]:
+            self.single_actor_transition_generator = None
 
         if self.config.ACTION_MASKING:
             assert isinstance(self.agent.action_space, Discrete)
@@ -69,6 +70,7 @@ class Learner(mp.Process):
 
         self.tester = None
 
+        self.test_episode_reward_min_dict = None
     def train_loop(self):
         if self.queue is None:
             self.single_actor = Actor(
@@ -200,6 +202,46 @@ class Learner(mp.Process):
 
         if self.config.AGENT_TYPE in OnPolicyAgentTypes:
             self.agent.buffer.append(n_step_transition)
+        elif self.config.AGENT_TYPE in [AgentType.AIECONOMIST]:
+            from link_rl.h_utils.types import Transition
+            # n_step_transition = {
+            # {obs_0, obs_1, ...},{act_0, act_1, ...},{next_obs_0, next_obs1, ...},
+            # {rew_0, rew_1, ...},{done}, {info_0, info_1, ..., actor_id, env_id, real_n_steps}
+            # }
+            # type
+            # obs : dict
+            # action : numpy.int64
+            # next obs : dict
+            # reward : float
+            # info : dict
+            each_transition = []
+            for transition_idx in n_step_transition:
+                for a_idx in transition_idx:
+                    if a_idx == "0":
+                        each_transition.append(transition_idx[a_idx])
+                    elif a_idx in ["actor_id", "env_id", "real_n_steps"]:
+                        each_transition.append(transition_idx[a_idx])
+
+            obs_temp = np.array([])
+            for key in each_transition[0]:
+                obs_temp = np.append(obs_temp, each_transition[0][key])
+
+            next_obs_temp = np.array([])
+            for key in each_transition[0]:
+                next_obs_temp = np.append(next_obs_temp, each_transition[0][key])
+
+
+            n_step_transition_0 = Transition(
+                observation=obs_temp,
+                action=each_transition[1],
+                next_observation=next_obs_temp,
+                reward=each_transition[3],
+                done=each_transition[4],
+                info=each_transition[5]
+            )
+
+            self.agent.buffer.append(n_step_transition_0)
+            #print(self.agent.buffer.sample(1))
         elif self.config.AGENT_TYPE in OffPolicyAgentTypes:
             self.agent.replay_buffer.append(n_step_transition)
 
@@ -223,7 +265,12 @@ class Learner(mp.Process):
         else:
             actor_id = n_step_transition.info["actor_id"]
             env_id = n_step_transition.info["env_id"]
-            self.episode_rewards[actor_id][env_id] += n_step_transition.reward
+            if self.config.AGENT_TYPE in [AgentType.AIECONOMIST]:
+                #print(n_step_transition.reward)
+                #self.episode_rewards[actor_id][env_id] += n_step_transition.reward
+                pass
+            else:
+                self.episode_rewards[actor_id][env_id] += n_step_transition.reward
             if n_step_transition.done:
                 self.total_episodes.value += 1
                 self.episode_reward_buffer.add(self.episode_rewards[actor_id][env_id])
@@ -275,7 +322,10 @@ class Learner(mp.Process):
         if self.config.AGENT_TYPE in [AgentType.A3C, AgentType.ASYNCHRONOUS_PPO]:
             self.shared_model_access_lock.acquire()
 
-        self.test_episode_reward_min.value = self.tester.play_for_testing(self.config.N_TEST_EPISODES)
+        if self.config.AGENT_TYPE in [AgentType.AIECONOMIST]:
+            self.test_episode_reward_min_dict = self.tester.play_for_testing(self.config.N_TEST_EPISODES)
+        else:
+            self.test_episode_reward_min.value = self.tester.play_for_testing(self.config.N_TEST_EPISODES)
 
         if self.config.AGENT_TYPE in [AgentType.A3C, AgentType.ASYNCHRONOUS_PPO]:
             self.shared_model_access_lock.release()
@@ -283,12 +333,20 @@ class Learner(mp.Process):
         elapsed_time = time.time() - self.train_start_time
         formatted_elapsed_time = time.strftime('%H:%M:%S', time.gmtime(elapsed_time))
 
-        test_str = "[Test: {0}, Training Step: {1:6,}] {2} Episodes Reward - Minimum: {3:.3f}".format(
-            self.test_idx.value + 1,
-            self.training_step.value,
-            self.config.N_TEST_EPISODES,
-            self.test_episode_reward_min.value
-        )
+        if self.config.AGENT_TYPE in [AgentType.AIECONOMIST]:
+            test_str = "[Test: {0}, Training Step: {1:6,}] {2} Episodes Reward - ".format(
+                self.test_idx.value + 1,
+                self.training_step.value,
+                self.config.N_TEST_EPISODES
+            )
+            #test_str += "Minimum: {0}]".format((key, value) for (key, value) in self.test_episode_reward_min_dict.items())
+        else:
+            test_str = "[Test: {0}, Training Step: {1:6,}] {2} Episodes Reward - Minimum: {3:.3f}".format(
+                self.test_idx.value + 1,
+                self.training_step.value,
+                self.config.N_TEST_EPISODES,
+                self.test_episode_reward_min.value
+            )
 
         if self.config.CUSTOM_ENV_STAT is not None:
             test_str += ", " + self.config.CUSTOM_ENV_STAT.test_evaluation_str()

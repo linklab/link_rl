@@ -3,7 +3,7 @@ from abc import abstractmethod
 import torch
 import torch.multiprocessing as mp
 from torch import optim
-from gym.spaces import Discrete, Box
+from gym.spaces import Discrete, Box, Dict
 
 import numpy as np
 

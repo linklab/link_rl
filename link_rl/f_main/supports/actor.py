@@ -74,6 +74,11 @@ class Actor(mp.Process):
         self.is_env_created.value = True
 
     def generate_transition_for_single_env(self):
+        # if self.config.AGENT_TYPE == AgentType.AIECONOMIST:
+        #     import matplotlib.pyplot as plt
+        #     from link_rl.b_environments.ai_economist.foundation.scenarios.utils import plotting
+        #     fig, ax = plt.subplots(1, 1, figsize=(10, 10))
+
         observation, info = self.train_env.reset(return_info=True)
 
         if self.agent.is_recurrent_model:
@@ -91,9 +96,20 @@ class Actor(mp.Process):
             else:
                 unavailable_actions = None
 
-            action, scaled_action = self._get_action(observations, unavailable_actions, vectorized_env=False)
+            if self.config.AGENT_TYPE == AgentType.AIECONOMIST:
+                action, scaled_action = self._get_action(observations, unavailable_actions, vectorized_env=True)
+            else:
+                action, scaled_action = self._get_action(observations, unavailable_actions,
+                                                         vectorized_env=False)
 
             next_observation, reward, done, info = self.train_env.step(scaled_action)
+
+            # ai economist fix
+            # if self.config.AGENT_TYPE == AgentType.AIECONOMIST:
+            #     if ((self.total_time_step + 1) % 100) == 0:
+            #         plotting.plot_env_state(self.train_env.env, ax)
+            #         ax.set_aspect('equal')
+            #         fig.show()
 
             self.total_time_step += 1
 
@@ -137,8 +153,12 @@ class Actor(mp.Process):
                     else:
                         yield n_step_transition
 
-            if done:
-                next_observation, info = self.train_env.reset(return_info=True)
+            if isinstance(done, dict):
+                if done["__all__"]:
+                    next_observation, info = self.train_env.reset(return_info=True)
+            else:
+                if done:
+                    next_observation, info = self.train_env.reset(return_info=True)
 
             observation = next_observation
 
@@ -296,8 +316,16 @@ class Actor(mp.Process):
 
         n_step_reward = 0.0
         for n_step_transition in reversed(n_step_transitions):
-            n_step_reward = n_step_transition.reward + \
-                            config.GAMMA * n_step_reward * (0.0 if n_step_transition.done else 1.0)
+            # ai economist fix
+            if config.AGENT_TYPE == AgentType.AIECONOMIST:
+                n_step_reward = {}
+                for a_idx in n_step_transition.reward:
+                    n_step_reward[a_idx] = 0.0
+                    n_step_reward[a_idx] = n_step_transition.reward[a_idx] + \
+                                config.GAMMA * n_step_reward[a_idx] * (0.0 if n_step_transition.done else 1.0)
+            else:
+                n_step_reward = n_step_transition.reward + \
+                                config.GAMMA * n_step_reward * (0.0 if n_step_transition.done else 1.0)
             # if n_step_transition.done:
             #     break
 

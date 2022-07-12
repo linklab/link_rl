@@ -11,7 +11,7 @@ import torch
 import os
 import torch.multiprocessing as mp
 import wandb
-from gym.spaces import Discrete, Box
+from gym.spaces import Discrete, Box, Dict
 from gym.vector import AsyncVectorEnv
 import plotly.graph_objects as go
 
@@ -179,6 +179,10 @@ def set_config(config):
         config.PPO_TRAJECTORY_SIZE = config.BATCH_SIZE * 10
         config.BUFFER_CAPACITY = config.PPO_TRAJECTORY_SIZE
         config.CONSOLE_LOG_INTERVAL_TRAINING_STEPS = 10 * config.PPO_K_EPOCH
+
+    elif config.AGENT_TYPE == AgentType.AIECONOMIST:
+        config.BUFFER_CAPACITY = config.BATCH_SIZE
+        config.CONSOLE_LOG_INTERVAL_TRAINING_STEPS = 30
 
     else:
         raise ValueError()
@@ -483,6 +487,8 @@ def print_env_info(observation_space, action_space, config):
         action_space_str += ", LOW_BOUND: {0}, HIGH_BOUND: {1}, SCALE: {2}, BIAS: {3}".format(
             action_bound_low[0], action_bound_high[0], action_scale, action_bias
         )
+    elif isinstance(action_space, Dict):
+        action_space_str += ", {0}".format(action_space)
     else:
         raise ValueError()
     print(action_space_str)

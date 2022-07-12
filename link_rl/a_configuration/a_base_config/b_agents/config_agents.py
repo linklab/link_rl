@@ -1,5 +1,5 @@
 from link_rl.h_utils.types import LossFunctionType
-
+from link_rl.h_utils.commons import AgentType
 
 class ConfigAgent:
     def __init__(self):
@@ -37,3 +37,9 @@ class ConfigOnPolicyAgent(ConfigAgent):
         self.ENTROPY_BETA = 0.001
 
         self.LOSS_FUNCTION_TYPE = LossFunctionType.HUBER_LOSS
+
+class ConfigAiEconomistAgent(ConfigAgent):
+    def __init__(self):
+        ConfigAgent.__init__(self)
+        self.AGENT_TYPE = AgentType.AIECONOMIST
+        self.TEST_INTERVAL_TRAINING_STEPS = 200

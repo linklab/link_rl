@@ -1,5 +1,5 @@
 import torch
-from gym.spaces import Box, Discrete
+from gym.spaces import Box, Discrete, Dict
 
 from link_rl.h_utils.types import AgentType
 
@@ -46,7 +46,7 @@ class Episode(object):
 
 
 def get_agent(observation_space, action_space, config=None, need_train=True):
-    assert isinstance(observation_space, Box)
+    assert config.AGENT_TYPE in [AgentType.AIECONOMIST] or isinstance(observation_space, Box)
 
     if config.AGENT_TYPE == AgentType.DQN:
         assert isinstance(action_space, Discrete)
@@ -125,6 +125,11 @@ def get_agent(observation_space, action_space, config=None, need_train=True):
     elif config.AGENT_TYPE == AgentType.TDMPC:
         from link_rl.e_agents.off_policy.tdmpc.agent_tdmpc import AgentTdmpc
         agent = AgentTdmpc(
+            observation_space=observation_space, action_space=action_space, config=config, need_train=need_train
+        )
+    elif config.AGENT_TYPE == AgentType.AIECONOMIST:
+        from link_rl.e_agents.ai_eoconomist_agent import AgentAiEconomist
+        agent = AgentAiEconomist(
             observation_space=observation_space, action_space=action_space, config=config, need_train=need_train
         )
     else:

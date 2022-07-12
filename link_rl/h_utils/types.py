@@ -94,6 +94,7 @@ class AgentType(enum.Enum):
     TD3 = 11
     SAC = 12
     TDMPC = 13
+    AIECONOMIST = 14
 
 
 class EncoderType(enum.Enum):

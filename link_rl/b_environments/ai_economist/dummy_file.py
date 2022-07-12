@@ -1,5 +1,6 @@
 from link_rl.b_environments.ai_economist import foundation
 from link_rl.b_environments.ai_economist.foundation.scenarios.utils import plotting
+from typing import Optional
 import numpy as np
 import gym
 from gym import spaces
@@ -8,25 +9,6 @@ import matplotlib.pyplot as plt
 
 
 _BIG_NUMBER = 1e20
-
-
-def recursive_list_to_np_array(d):
-    if isinstance(d, dict):
-        new_d = {}
-        for k, v in d.items():
-            if isinstance(v, list):
-                new_d[k] = np.array(v)
-            elif isinstance(v, dict):
-                new_d[k] = recursive_list_to_np_array(v)
-            elif isinstance(v, (float, int, np.floating, np.integer)):
-                new_d[k] = np.array([v])
-            elif isinstance(v, np.ndarray):
-                new_d[k] = v
-            else:
-                raise AssertionError
-        return new_d
-    raise AssertionError
-
 
 class EconomistWrapper(gym.Env):
     def __init__(self):
@@ -65,7 +47,7 @@ class EconomistWrapper(gym.Env):
             # In multi-action-mode, the policy selects an action for each action subspace (defined in component code).
             # Otherwise, the policy selects only 1 action.
             'multi_action_mode_agents': False,
-            'multi_action_mode_planner': False,
+            'multi_action_mode_planner': True,
 
             # When flattening observations, concatenate scalar & vector observations before output.
             # Otherwise, return observations with minimal processing.
@@ -77,24 +59,12 @@ class EconomistWrapper(gym.Env):
 
         self.env = foundation.make_env_instance(**self.env_config)
 
-        self.sample_agent_idx = str(self.env.all_agents[0].idx)
-
         obs = self.env.reset()
 
-        self.observation_space = self._dict_to_spaces_dict(obs["0"])
-        self.observation_space_pl = self._dict_to_spaces_dict(obs["p"])
+        self.observation_space = self._dict_to_obs_spaces_dict(obs)
+        self.action_space = self._dict_to_action_spaces_dict(obs)
 
-        self.action_space = spaces.Discrete(
-            self.env.get_agent(self.sample_agent_idx).action_spaces
-        )
-        self.action_space.dtype = np.int64
-
-        self.action_space_pl = spaces.Discrete(
-            self.env.get_agent("p").action_spaces
-        )
-        self.action_space_pl.dtype = np.int64
-
-    def _dict_to_spaces_dict(self, obs):
+    def _dict_to_obs_spaces_dict(self, obs):
         dict_of_spaces = {}
         for k, v in obs.items():
 
@@ -125,85 +95,125 @@ class EconomistWrapper(gym.Env):
                 dict_of_spaces[k] = box
 
             elif isinstance(_v, dict):
-                dict_of_spaces[k] = self._dict_to_spaces_dict(_v)
+                dict_of_spaces[k] = self._dict_to_obs_spaces_dict(_v)
             else:
                 raise TypeError
+
         return spaces.Dict(dict_of_spaces)
 
-    def n_agents(self):
-        return self.env.n_agents
+    def _dict_to_action_spaces_dict(self, obs):
+        dict_of_spaces = {}
 
-    def reset(self, *args, **kwargs):
-        obs = self.env.reset(*args, **kwargs)
-        return recursive_list_to_np_array(obs)
+        for k, v in obs.items():
+            if k != 'p' and self.env.world.agents[int(k)].multi_action_mode:
+                dict_of_spaces[k] = spaces.MultiDiscrete(
+                    self.env.get_agent(str(k)).action_spaces
+                )
+            elif k == 'p' and self.env.world.planner.multi_action_mode:
+                dict_of_spaces[k] = spaces.MultiDiscrete(
+                    self.env.get_agent("p").action_spaces
+                )
+            else:
+                dict_of_spaces[k] = spaces.Discrete(
+                    self.env.get_agent(str(k)).action_spaces
+                )
+
+        return spaces.Dict(dict_of_spaces)
+
+
+    # def n_agents(self):
+    #     return self.env.n_agents
+
+    def reset(self, *, seed: Optional[int] = None, return_info: bool = False, options: Optional[dict] = None):
+        observation = self.env.reset()
+
+        info = self.get_info()
+
+        if return_info:
+            return observation, info
+        else:
+            return observation
+
+    def get_info(self):
+        info = None
+        return info
 
     def step(self, action_dict):
         obs, rew, done, info = self.env.step(action_dict)
-        assert isinstance(obs[self.sample_agent_idx]["action_mask"], np.ndarray)
 
-        return recursive_list_to_np_array(obs), rew, done, info
+        return obs, rew, done, info
 
-
-class Dummy_Agent:
-    def sample_random_action(self, agent, mask):
-        """Sample random UNMASKED action(s) for agent."""
-        # Return a list of actions: 1 for each action subspace
-
-        return np.random.choice(np.arange(agent.action_spaces), p=mask / mask.sum())  # possible action 1, unpossible action 0
-
-    def get_action(self, env, observation):
-        assert observation is not None
-        """Samples random UNMASKED actions for each agent in obs."""
-
-        actions = {
-            a_idx: self.sample_random_action(env.get_agent(a_idx), a_obs['action_mask'])
-            for a_idx, a_obs in observation.items()
-        }
-
-        return actions
-
-
-def run_env(plot_every=100):
-    env = Env().get_env()
-    agents = Dummy_Agent()
-
-    total_episodes = 10
-
-    for ep in range(1, total_episodes + 1):
-        fig, ax = plt.subplots(1, 1, figsize=(10, 10))
-
-        # Reset
-        obs = env.reset(force_dense_logging=False)
-
-        # Interaction loop (w/ plotting)
-        for t in range(env.episode_length):
-            actions = agents.get_action(env, obs)
-            obs, rew, done, info = env.step(actions)
-
-            if ((t + 1) % plot_every) == 0:
-                plotting.plot_env_state(env, ax)
-                ax.set_aspect('equal')
-                fig.show()
-
-        if ((t + 1) % plot_every) != 0:
-            plotting.plot_env_state(env, ax)
-            ax.set_aspect('equal')
-            fig.show()
-
-def print_obs():
-    env = Env().get_env()
-    obs = env.reset(force_dense_logging=False)
-
-    for a_idx, a_obs in obs.items():
-        print(a_idx)
-        print("obs")
-        for key in a_obs:
-            print(key)
-        print()
-        #print(a_obs)
-
-
-
+#
+# class Dummy_Agent:
+#     def sample_random_action(self, agent, mask):
+#         """Sample random UNMASKED action(s) for agent."""
+#         # Return a list of actions: 1 for each action subspace
+#
+#         return np.random.choice(np.arange(agent.action_spaces), p=mask / mask.sum())  # possible action 1, unpossible action 0
+#
+#     def get_action(self, env, observation):
+#         assert observation is not None
+#         """Samples random UNMASKED actions for each agent in obs."""
+#
+#         actions = {
+#             a_idx: self.sample_random_action(env.get_agent(a_idx), a_obs['action_mask'])
+#             for a_idx, a_obs in observation.items()
+#         }
+#
+#         return actions
+#
+#
+# def run_env(plot_every=100):
+#     env = Env().get_env()
+#     agents = Dummy_Agent()
+#
+#     total_episodes = 10
+#
+#     for ep in range(1, total_episodes + 1):
+#         fig, ax = plt.subplots(1, 1, figsize=(10, 10))
+#
+#         # Reset
+#         obs = env.reset(force_dense_logging=False)
+#
+#         # Interaction loop (w/ plotting)
+#         for t in range(env.episode_length):
+#             actions = agents.get_action(env, obs)
+#             obs, rew, done, info = env.step(actions)
+#
+#             if ((t + 1) % plot_every) == 0:
+#                 plotting.plot_env_state(env, ax)
+#                 ax.set_aspect('equal')
+#                 fig.show()
+#
+#         if ((t + 1) % plot_every) != 0:
+#             plotting.plot_env_state(env, ax)
+#             ax.set_aspect('equal')
+#             fig.show()
+#
+# def print_obs():
+#     env = Env().get_env()
+#     obs = env.reset(force_dense_logging=False)
+#
+#     for a_idx, a_obs in obs.items():
+#         print(a_idx)
+#         print("obs")
+#         for key in a_obs:
+#             print(key)
+#         print()
+#         #print(a_obs)
+#
+#
+#
 if __name__ == "__main__":
+    env = EconomistWrapper()
+
+    # print(env.observation_space)
+    # print(len(env.observation_space))
+    #
+    # for key in env.observation_space:
+    #     print("key : ", key)
+    #     print(env.observation_space[key])
+
+    print(env.action_space)
     #run_env()
-    print_obs()
+    #print_obs()
