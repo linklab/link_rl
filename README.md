@@ -176,6 +176,20 @@ git rm -r --cached .
 git add .
 git commit -m "fixed untracked files"
 
+#### evolution gym 설치하기 (Ubuntu Only)
+- https://github.com/EvolutionGym/evogym
+sudo apt-get install freeglut3-dev
+sudo apt-get install xorg-dev libglu1-mesa-dev
+sudo apt-get install libglew-dev
+pip install Gpy
+pip install glfw
+pip install GpyOpt
+pip install imageio
+pip install opencv-python
+pip install PyOpenGL
+pip install PyOpenGL-accelerate
+
+
 #### To Do
 - git action 만들기
 - Learner 상속으로 if문 줄이기
