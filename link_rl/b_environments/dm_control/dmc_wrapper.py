@@ -88,7 +88,7 @@ class DMCWrapper(core.Env):
 			else:
 				shape = [3 * self._frame_stack, height, width]
 			self._observation_space = spaces.Box(
-				low=0, high=1, shape=shape, dtype=np.uint8
+				low=0, high=1, shape=shape, dtype=np.float64
 			)
 			self._frames = deque([], maxlen=self._frame_stack)
 		else:
