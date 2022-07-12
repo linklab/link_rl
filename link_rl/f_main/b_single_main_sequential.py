@@ -1,4 +1,9 @@
 from b_single_main_common import *
+import sys
+import os
+sys.path.append(os.path.abspath(
+    os.path.join(os.path.dirname(os.path.realpath(__file__)), os.pardir, os.pardir)
+))
 from link_rl.h_utils.commons import model_load, get_specific_env_name, print_model_summary
 from link_rl.h_utils.types import AgentType, ActorCriticAgentTypes
 
