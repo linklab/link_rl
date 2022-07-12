@@ -1,5 +1,4 @@
 import warnings
-from link_rl.h_utils.types import OffPolicyAgentTypes
 warnings.filterwarnings("ignore")
 warnings.simplefilter("ignore")
 
@@ -20,6 +19,7 @@ sys.path.append(os.path.abspath(
     os.path.join(os.path.dirname(os.path.realpath(__file__)), os.pardir, os.pardir)
 ))
 
+from link_rl.h_utils.types import OffPolicyAgentTypes
 from link_rl.f_main.config_single import config
 from link_rl.a_configuration.a_base_config.config_parse import SYSTEM_USER_NAME, SYSTEM_COMPUTER_NAME
 from link_rl.f_main.supports.learner import Learner
