@@ -46,7 +46,7 @@ class CompetitionOlympicsEnvWrapper(gym.Wrapper):
 		assert self.frame_stack > 0 or isinstance(self.frame_stack, int)
 		shape = [self.frame_stack, 40, 40]
 		self.observation_space = gym.spaces.Box(
-			low=0, high=1, shape=shape, dtype=np.uint8
+			low=0, high=1, shape=shape, dtype=np.float64
 		)
 		self.frames_controlled = deque([], maxlen=self.frame_stack)
 		self.frames_opponent = deque([], maxlen=self.frame_stack)
