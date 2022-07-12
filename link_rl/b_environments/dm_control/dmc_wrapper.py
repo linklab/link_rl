@@ -190,7 +190,7 @@ class DMCWrapper(core.Env):
 		obs = self.get_observation(time_step, first_step=True)
 		
 		if return_info:
-			return obs, None
+			return obs, {}
 		else:
 			return obs
 
