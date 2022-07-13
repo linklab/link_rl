@@ -100,7 +100,6 @@ class CompetitionOlympicsEnvWrapper(gym.Wrapper):
 		observation_controlled_agent = np.expand_dims(
 			observation[self.controlled_agent_index]['obs']['agent_obs'], axis=0
 		)
-
 		# print(list(observation_controlled_agent[0][-2]) == list(self.wrestling_reset_observation),
 		#       list(observation_controlled_agent[0][-2]) == list(self.football_reset_observation),
 		#       list(observation_controlled_agent[0][-2]) == list(self.table_hockey_reset_observation_0),
@@ -309,22 +308,9 @@ class CompetitionOlympicsEnvWrapper(gym.Wrapper):
 	def football_tablehockey_reward(self, obs, action):
 		goal_viewed_obs = obs[25:29][:, 10:30]
 		goal_reward = len(goal_viewed_obs[goal_viewed_obs == 2]) - 51  # -51 ~ 0
-		goal_reward = goal_reward / 1000  # -0.051 ~ 0.00
-		# # action_reward = action / 100
-		# #
-		# # if goal_reward > 1:
-		# # 	goal_reward = goal_reward
-		# # 	reward = goal_reward + action_reward
-		# # else:
-		# # 	reward = goal_reward
-		#
-		# if goal_reward > 30:
-		# 	line_viewed_obs = obs[15:29][:, 10:30]
-		# 	line_reward = len(line_viewed_obs[line_viewed_obs == 7]) * 10
-		# else:
-		# 	line_reward = 0
-		#
-		# reward = (goal_reward + line_reward) / 100
+
+		my_penalty_line_reward = len(obs[obs == 8.]) - 52 # 0 ~
+
 		ball_position = np.where(obs == 2)
 		goal_line_position = np.where(obs == 7)
 
@@ -336,21 +322,61 @@ class CompetitionOlympicsEnvWrapper(gym.Wrapper):
 		goal_line_average_y = np.average(np.unique(goal_line_position[1]))
 		goal_line_average_position = np.asarray([goal_line_average_x, goal_line_average_y])
 
-		if len(goal_viewed_obs[goal_viewed_obs == 2]) > 10:
-			if np.nan_to_num(goal_line_average_x) and np.nan_to_num(ball_average_x):
-				ball_goal_line_dist = np.linalg.norm(ball_average_position - goal_line_average_position)
-
-				dist_reward = 50 - ball_goal_line_dist  # 0 ~ 50
-				dist_reward = dist_reward / 50  # 0 ~ 1
-
-				reward = dist_reward
-			else:
-				reward = goal_reward
+		if np.nan_to_num(goal_line_average_x) and np.nan_to_num(ball_average_x):
+			ball_goal_line_dist = np.linalg.norm(ball_average_position - goal_line_average_position)
 		else:
-			reward = -0.1
+			ball_goal_line_dist = 100
+		dist_reward = -ball_goal_line_dist  # 0 ~ 100
+
+		reward = 0.01*goal_reward + 0.003*dist_reward - 0.001*my_penalty_line_reward
 
 		return reward
 
+	# def football_tablehockey_reward(self, obs, action):
+	# 	goal_viewed_obs = obs[25:29][:, 10:30]
+	# 	goal_reward = len(goal_viewed_obs[goal_viewed_obs == 2]) - 51  # -51 ~ 0
+	# 	goal_reward = goal_reward / 1000  # -0.051 ~ 0.00
+	# 	# # action_reward = action / 100
+	# 	# #
+	# 	# # if goal_reward > 1:
+	# 	# # 	goal_reward = goal_reward
+	# 	# # 	reward = goal_reward + action_reward
+	# 	# # else:
+	# 	# # 	reward = goal_reward
+	# 	#
+	# 	# if goal_reward > 30:
+	# 	# 	line_viewed_obs = obs[15:29][:, 10:30]
+	# 	# 	line_reward = len(line_viewed_obs[line_viewed_obs == 7]) * 10
+	# 	# else:
+	# 	# 	line_reward = 0
+	# 	#
+	# 	# reward = (goal_reward + line_reward) / 100
+	# 	ball_position = np.where(obs == 2)
+	# 	goal_line_position = np.where(obs == 7)
+	#
+	# 	ball_average_x = np.average(np.unique(ball_position[0]))
+	# 	ball_average_y = np.average(np.unique(ball_position[1]))
+	# 	ball_average_position = np.asarray([ball_average_x, ball_average_y])
+	#
+	# 	goal_line_average_x = np.average(np.unique(goal_line_position[0]))
+	# 	goal_line_average_y = np.average(np.unique(goal_line_position[1]))
+	# 	goal_line_average_position = np.asarray([goal_line_average_x, goal_line_average_y])
+	#
+	# 	if len(goal_viewed_obs[goal_viewed_obs == 2]) > 10:
+	# 		if np.nan_to_num(goal_line_average_x) and np.nan_to_num(ball_average_x):
+	# 			ball_goal_line_dist = np.linalg.norm(ball_average_position - goal_line_average_position)
+	#
+	# 			dist_reward = 50 - ball_goal_line_dist  # 0 ~ 50
+	# 			dist_reward = dist_reward / 50  # 0 ~ 1
+	#
+	# 			reward = dist_reward
+	# 		else:
+	# 			reward = goal_reward
+	# 	else:
+	# 		reward = -0.1
+	#
+	# 	return reward
+	#
 	def running_reward(self, obs, energy):
 		viewed_obs = obs[-20:-8][:, 10:31]
 		mask = np.zeros_like(viewed_obs, dtype=bool)
