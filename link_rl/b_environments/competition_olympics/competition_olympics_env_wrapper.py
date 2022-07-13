@@ -172,7 +172,7 @@ class CompetitionOlympicsEnvWrapper(gym.Wrapper):
 		action = [action_opponent, action_controlled] if self.config.CONTROLLED_AGENT_INDEX == 1 else [
 			action_controlled, action_opponent]
 		###############################################################################################################
-		action = [[[0.], [0.]], [[50.], [0.]]]
+
 		next_observation, reward, done, info_before, info_after = self.env.step(action)
 		# if next_observation[0]['obs']['game_mode'] == 'NEW GAME':
 		# 	if list(next_observation[0]['obs']['agent_obs'][-2]) == list(self.wrestling_reset_observation):
@@ -194,7 +194,6 @@ class CompetitionOlympicsEnvWrapper(gym.Wrapper):
 		next_observation_controlled_agent = np.expand_dims(
 			next_observation[self.controlled_agent_index]['obs']['agent_obs'], axis=0
 		)
-		print(next_observation[self.controlled_agent_index]['obs']['agent_obs'], "!!!!!!")
 
 		next_observation_controlled_agent = self._get_normalize_observation(next_observation_controlled_agent)
 		######### frame stack #########
@@ -221,7 +220,7 @@ class CompetitionOlympicsEnvWrapper(gym.Wrapper):
 		elif self.sub_game == "football" or self.sub_game == "table-hockey":
 			if next_observation[0]['obs']['done']:
 				if not reward_controlled == 100:
-					reward_controlled = -100
+					reward_controlled = 0
 			reward_shaped = self.football_tablehockey_reward(
 				next_observation[self.controlled_agent_index]['obs']['agent_obs'], action[self.controlled_agent_index][0][0]
 			)
