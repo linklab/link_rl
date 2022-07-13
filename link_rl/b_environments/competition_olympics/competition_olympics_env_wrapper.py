@@ -172,7 +172,7 @@ class CompetitionOlympicsEnvWrapper(gym.Wrapper):
 		action = [action_opponent, action_controlled] if self.config.CONTROLLED_AGENT_INDEX == 1 else [
 			action_controlled, action_opponent]
 		###############################################################################################################
-
+		action = [[[0.], [0.]], [[50.], [0.]]]
 		next_observation, reward, done, info_before, info_after = self.env.step(action)
 		# if next_observation[0]['obs']['game_mode'] == 'NEW GAME':
 		# 	if list(next_observation[0]['obs']['agent_obs'][-2]) == list(self.wrestling_reset_observation):
@@ -194,6 +194,7 @@ class CompetitionOlympicsEnvWrapper(gym.Wrapper):
 		next_observation_controlled_agent = np.expand_dims(
 			next_observation[self.controlled_agent_index]['obs']['agent_obs'], axis=0
 		)
+		print(next_observation[self.controlled_agent_index]['obs']['agent_obs'], "!!!!!!")
 
 		next_observation_controlled_agent = self._get_normalize_observation(next_observation_controlled_agent)
 		######### frame stack #########
@@ -306,8 +307,8 @@ class CompetitionOlympicsEnvWrapper(gym.Wrapper):
 		return reward/100
 
 	def football_tablehockey_reward(self, obs, action):
-		goal_viewed_obs = obs[25:29][:, 10:30]
-		goal_reward = len(goal_viewed_obs[goal_viewed_obs == 2]) - 51  # -51 ~ 0
+		goal_viewed_obs = obs[19:29][:, 15:25]
+		goal_reward = len(goal_viewed_obs[goal_viewed_obs == 2]) - 52  # -52 ~ 0
 
 		my_penalty_line_reward = len(obs[obs == 8.]) - 52 # 0 ~
 
@@ -324,17 +325,21 @@ class CompetitionOlympicsEnvWrapper(gym.Wrapper):
 
 		if np.nan_to_num(goal_line_average_x) and np.nan_to_num(ball_average_x):
 			ball_goal_line_dist = np.linalg.norm(ball_average_position - goal_line_average_position)
+			if ball_goal_line_dist < 20:
+				pass
+			else:
+				ball_goal_line_dist = 100
 		else:
 			ball_goal_line_dist = 100
 		dist_reward = -ball_goal_line_dist  # 0 ~ 100
 
-		reward = 0.01*goal_reward + 0.003*dist_reward - 0.001*my_penalty_line_reward
+		reward = 0.01*dist_reward + 0.01*goal_reward - 0.0001*my_penalty_line_reward
 
-		return reward
+		return reward * 0.5
 
 	# def football_tablehockey_reward(self, obs, action):
-	# 	goal_viewed_obs = obs[25:29][:, 10:30]
-	# 	goal_reward = len(goal_viewed_obs[goal_viewed_obs == 2]) - 51  # -51 ~ 0
+	# 	goal_viewed_obs = obs[19:29][:, 15:25]
+	# 	goal_reward = len(goal_viewed_obs[goal_viewed_obs == 2]) - 52  # -51 ~ 0
 	# 	goal_reward = goal_reward / 1000  # -0.051 ~ 0.00
 	# 	# # action_reward = action / 100
 	# 	# #
