@@ -394,15 +394,17 @@ class CompetitionOlympicsEnvWrapper(gym.Wrapper):
 		return obs
 
 	def get_action_opponent(self, obs):
-		coin = np.random.random()  # 0.0과 1.0사이의 임의의 값을 반환
-		opponent_random_action_ratio = h.linear_schedule(self.config.OPPONENT_AGENT_RANDOM_ACTION_RATIO,
-														 self.total_steps)
-		if coin > opponent_random_action_ratio:
-			actions = self.agent.get_action(obs=np.asarray([obs]))
-			opponent_scaled_actions = actions * self.agent.action_scale + self.agent.action_bias
-		else:
-			force = random.uniform(-100, 200)
-			angle = random.uniform(-30, 30)
-			opponent_scaled_actions = np.asarray([[force, angle]])
+		# coin = np.random.random()  # 0.0과 1.0사이의 임의의 값을 반환
+		# opponent_random_action_ratio = h.linear_schedule(self.config.OPPONENT_AGENT_RANDOM_ACTION_RATIO,
+		# 												 self.total_steps)
+		# if coin > opponent_random_action_ratio:
+		# 	actions = self.agent.get_action(obs=np.asarray([obs]))
+		# 	opponent_scaled_actions = actions * self.agent.action_scale + self.agent.action_bias
+		# else:
+		# 	force = random.uniform(-100, 200)
+		# 	angle = random.uniform(-30, 30)
+		# 	opponent_scaled_actions = np.asarray([[force, angle]])
+
+		opponent_scaled_actions = np.asarray([[0, 0]])
 
 		return opponent_scaled_actions[0]
