@@ -307,7 +307,7 @@ class CompetitionOlympicsEnvWrapper(gym.Wrapper):
 		return reward/100
 
 	def football_tablehockey_reward(self, obs, action):
-		goal_viewed_obs = obs[20:29][:, 10:30]
+		goal_viewed_obs = obs[25:29][:, 10:30]
 		goal_reward = len(goal_viewed_obs[goal_viewed_obs == 2]) - 51  # -51 ~ 0
 		goal_reward = goal_reward / 1000  # -0.051 ~ 0.00
 		# # action_reward = action / 100
@@ -341,9 +341,9 @@ class CompetitionOlympicsEnvWrapper(gym.Wrapper):
 				ball_goal_line_dist = np.linalg.norm(ball_average_position - goal_line_average_position)
 
 				dist_reward = 50 - ball_goal_line_dist  # 0 ~ 50
-				dist_reward = dist_reward / 25  # 0 ~ 2
+				dist_reward = dist_reward / 50  # 0 ~ 1
 
-				reward = goal_reward + dist_reward
+				reward = dist_reward
 			else:
 				reward = goal_reward
 		else:
