@@ -109,7 +109,7 @@ class Tester:
                     else:
                         raise ValueError()
 
-                next_observation, reward, done, info = self.test_env.step(scaled_action)
+                next_observation, reward, done, info = self.test_env.step(scaled_action, mode=AgentMode.TEST)
 
                 episode_step += 1
 
