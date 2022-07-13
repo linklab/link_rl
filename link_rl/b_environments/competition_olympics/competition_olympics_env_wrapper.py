@@ -264,7 +264,6 @@ class CompetitionOlympicsEnvWrapper(gym.Wrapper):
 		# 		raise ValueError()
 
 		# print(next_observation[0]['obs']['done'])
-
 		return next_observation_controlled_agent, reward_controlled, next_observation[0]['obs']['done'], info
 
 	def _get_reward_shaped(self, reward, done, controlled_agent_index):
