@@ -178,9 +178,14 @@ git commit -m "fixed untracked files"
 
 #### evolution gym 설치하기 (Ubuntu Only)
 - https://github.com/EvolutionGym/evogym
+
+git clone --recurse-submodules https://github.com/EvolutionGym/evogym.git
 sudo apt-get install freeglut3-dev
 sudo apt-get install xorg-dev libglu1-mesa-dev
 sudo apt-get install libglew-dev
+
+python setup.py install
+
 pip install Gpy
 pip install glfw
 pip install GpyOpt
@@ -188,6 +193,14 @@ pip install imageio
 pip install opencv-python
 pip install PyOpenGL
 pip install PyOpenGL-accelerate
+
+
+#### somo gym 설치하기
+- https://github.com/GrauleM/somogym
+
+pip install pybullet==3.1.7
+pip install sorotraj==0.14
+pip install git+https://github.com/graulem/somo@d65eaf19336898139a5a80a0e5f59d2bedbebfe9
 
 
 #### To Do

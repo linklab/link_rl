@@ -3,9 +3,10 @@ import evogym.envs
 from evogym import sample_robot
 
 if __name__ == '__main__':
-	body, connections = sample_robot((9, 9))
+	body, connections = sample_robot((5, 5))
 	env = gym.make('Walker-v0', body=body)
 
+	print("!!!!!")
 	for ep in range(1, 10):
 		observation = env.reset()
 		done = False
