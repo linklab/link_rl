@@ -157,3 +157,5 @@ link_rl/g_play/models/**
 /link_rl/g_play/reference_history/
 
 /temp/gurobi_result.csv
+
+*.urdf

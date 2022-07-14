@@ -43,13 +43,24 @@ def somogym_step_tester(
     print(env.observation_space)
     print(env.action_space)
 
-    run_config["seed"] = 10110
-    env.seed(run_config["seed"])
-    env.reset()
+    for ep in range(1, 2):
+        run_config["seed"] = 10110
+        env.seed(run_config["seed"])
+        observation = env.reset()
 
-    # run env for total_env_steps steps
-    for _ in range(total_env_steps):
-        env.step(env.action_space.sample())  # take a random action
+        done = False
+        step = 1
+
+        # run env for total_env_steps steps
+        while not done:
+            action = env.action_space.sample()
+            next_observation, reward, done, info = env.step(action)  # take a random action
+            print(
+                "[EP: {0}, STEP: {1}] Observation: {2}, Action: {3}, next_observation: {4}, Reward: {5:.5f}, Done: {6}".format(
+                    ep, step, observation.shape, action.shape, next_observation.shape, reward, done
+                ))
+            observation = next_observation
+            step += 1
 
     # make sure seeding works correctly for this env
     # seed once, reset, and take a step
@@ -57,6 +68,7 @@ def somogym_step_tester(
     env.reset()
     action_a = env.action_space.sample()
     step_result_a = env.step(action_a)  # take a random action
+
     # seed and reset again and take another step
     env.seed(run_config["seed"])
     env.reset()
