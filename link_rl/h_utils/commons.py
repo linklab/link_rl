@@ -62,6 +62,11 @@ def model_save(agent, env_name, agent_type_name, test_episode_reward_min, config
             test_episode_reward_min, local_now.year, local_now.month, local_now.day, local_now.hour, local_now.minute
         )
         torch.save(agent.model.state_dict(), os.path.join(model_name_dir, file_name))
+    encoder_file_name = "{0:.1f}_{1}_{2}_{3}_T_{4}_{5}_{6}.pth".format(
+        test_episode_reward_min, local_now.year, local_now.month, local_now.day, local_now.hour, local_now.minute,
+        config.ENCODER_TYPE
+    )
+    torch.save(agent.encoder.state_dict(), os.path.join(model_name_dir, encoder_file_name))
 
 
 def model_load(agent, env_name, agent_type_name, config):
@@ -76,25 +81,35 @@ def model_load(agent, env_name, agent_type_name, config):
     print("\n0. No use of pre-trained model")
 
     if config.AGENT_TYPE in ActorCriticAgentTypes:
-        assert len(model_file_list) % 2 == 0
+        assert len(model_file_list) % 3 == 0
         idx = 1
         for model_file_name in model_file_list:
-            if model_file_name.endswith("_ACTOR.pth"):
-                model_file_name_prefix = model_file_name.split("_ACTOR.pth")[0]
+            if model_file_name.endswith("_{}.pth".format(config.ENCODER_TYPE)):
+                model_file_name_prefix = model_file_name.split("_{}.pth".format(config.ENCODER_TYPE))[0]
                 actor_model_file_name = model_file_name_prefix + "_ACTOR.pth"
                 critic_model_file_name = model_file_name_prefix + "_CRITIC.pth"
-                assert actor_model_file_name in model_file_list and critic_model_file_name in model_file_list
+                encoder_model_file_name = model_file_name_prefix + "_{}.pth".format(config.ENCODER_TYPE)
+                assert actor_model_file_name in model_file_list and critic_model_file_name in model_file_list \
+                       and encoder_model_file_name in model_file_list
                 print("{0}.".format(idx))
                 print("{0}".format(actor_model_file_name))
                 print("{0}".format(critic_model_file_name))
-                model_file_dict[idx] = (actor_model_file_name, critic_model_file_name)
+                print("{0}".format(encoder_model_file_name))
+                model_file_dict[idx] = (actor_model_file_name, critic_model_file_name, encoder_model_file_name)
                 idx += 1
     else:
         idx = 1
         for model_file_name in model_file_list:
-            print("{0}. {1}".format(idx, model_file_name))
-            model_file_dict[idx] = model_file_name
-            idx += 1
+            if model_file_name.endswith("_{}.pth".format(config.ENCODER_TYPE)):
+                model_file_name_prefix = model_file_name.split("_{}.pth".format(config.ENCODER_TYPE))[0]
+                model_file_name = model_file_name_prefix + ".pth"
+                encoder_model_file_name = model_file_name_prefix + "_{}.pth".format(config.ENCODER_TYPE)
+                assert model_file_name in model_file_list and encoder_model_file_name in model_file_list
+                print("{0}.".format(idx))
+                print("{0}".format(model_file_name))
+                print("{0}".format(encoder_model_file_name))
+                model_file_dict[idx] = (model_file_name, encoder_model_file_name)
+                idx += 1
 
     print()
 
@@ -110,9 +125,11 @@ def model_load(agent, env_name, agent_type_name, config):
         if config.AGENT_TYPE in ActorCriticAgentTypes:
             actor_model_file_name = model_file_dict[chosen_number][0]
             critic_model_file_name = model_file_dict[chosen_number][1]
+            encoder_model_file_name = model_file_dict[chosen_number][2]
             print()
             print(actor_model_file_name)
             print(critic_model_file_name)
+            print(encoder_model_file_name)
 
             actor_model_params = torch.load(
                 os.path.join(model_name_dir, actor_model_file_name), map_location=torch.device('cpu')
@@ -122,20 +139,35 @@ def model_load(agent, env_name, agent_type_name, config):
                 os.path.join(model_name_dir, critic_model_file_name), map_location=torch.device('cpu')
             )
 
+            encoder_model_params = torch.load(
+                os.path.join(model_name_dir, encoder_model_file_name), map_location=torch.device('cpu')
+            )
+
             if config.AGENT_TYPE in [AgentType.A3C, AgentType.ASYNCHRONOUS_PPO]:
                 for working_agent in agent:
                     working_agent.actor_model.load_state_dict(actor_model_params)
                     working_agent.critic_model.load_state_dict(critic_model_params)
+                    working_agent.encoder.load_state_dict(encoder_model_params)
             else:
                 agent.actor_model.load_state_dict(actor_model_params)
                 agent.critic_model.load_state_dict(critic_model_params)
+                agent.encoder.load_state_dict(encoder_model_params)
         else:
-            model_file_name = model_file_dict[chosen_number]
+            model_file_name = model_file_dict[chosen_number][0]
+            encoder_model_file_name = model_file_dict[chosen_number][1]
             print(model_file_name)
+            print(encoder_model_file_name)
+
             model_params = torch.load(
                 os.path.join(model_name_dir, model_file_name), map_location=torch.device('cpu')
             )
+
+            encoder_model_params = torch.load(
+                os.path.join(model_name_dir, encoder_model_file_name), map_location=torch.device('cpu')
+            )
+
             agent.model.load_state_dict(model_params)
+            agent.encoder.load_state_dict(encoder_model_params)
     else:
         raise ValueError()
 
