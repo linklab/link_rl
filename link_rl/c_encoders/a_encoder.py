@@ -28,7 +28,7 @@ class BaseEncoder(ABC):
     def get_encoder_out(self, conv_layers, shape) -> int:
         conv_layers.eval()
         encoder_out = conv_layers(torch.zeros(1, *shape))
-        return int(np.prod(encoder_out.size()))
+        return encoder_out
 
     @abstractmethod
     def _create_encoder(self) -> nn.Module:
@@ -44,7 +44,7 @@ class BaseEncoder(ABC):
 
     @property
     def encoder_out(self):
-        return self._encoder_out
+        return np.asarray((3,40,40))
 
 
 encoder_registry = Registry(BaseEncoder)

@@ -63,18 +63,18 @@ class AgentSac(OffPolicyAgent):
         self.last_entropy = mp.Value('d', 0.0)
 
     def actor_forward(self, obs):
-        x = self.encoder(obs)
-        mu, var = self.actor_model(x)
+        # x = self.encoder(obs)
+        mu, var = self.actor_model(obs)
         return mu, var
 
     def critic_forward(self, obs, action):
-        x = self.encoder(obs)
-        q1, q2 = self.critic_model(x, action)
+        # x = self.encoder(obs)
+        q1, q2 = self.critic_model(obs, action)
         return q1, q2
 
     def target_critic_forward(self, obs, action):
-        x = self.target_encoder(obs)
-        q1, q2 = self.target_critic_model(x, action)
+        # x = self.target_encoder(obs)
+        q1, q2 = self.target_critic_model(obs, action)
         return q1, q2
 
     @torch.no_grad()
