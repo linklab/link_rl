@@ -208,7 +208,6 @@ class ContinuousOlympicSacModel(DoubleModel):
 
         def forward(self, obs, action):
             x = self.encoder(obs)
-            print(x.shape, "!!")
             x = self.representation_net(x)
             x = torch.cat([x, action], dim=-1).float()
             q1 = self.q1_critic_net(x)
