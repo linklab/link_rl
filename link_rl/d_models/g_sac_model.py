@@ -199,19 +199,18 @@ class ContinuousOlympicSacModel(DoubleModel):
             return mu, var
 
     class CriticModel(nn.Module):
-        def __init__(self, encoder, critic_net, representation_net, q1_critic_net, q2_critic_net):
+        def __init__(self, encoder, representation_net, q1_critic_net, q2_critic_net):
             super().__init__()
             self.encoder = encoder
-            self.critic_net = critic_net
             self.representation_net = representation_net
             self.q1_critic_net = q1_critic_net
             self.q2_critic_net = q2_critic_net
 
         def forward(self, obs, action):
             x = self.encoder(obs)
+            print(x.shape, "!!")
             x = self.representation_net(x)
             x = torch.cat([x, action], dim=-1).float()
-            x = self.critic_net(x)
             q1 = self.q1_critic_net(x)
             q2 = self.q2_critic_net(x)
 
@@ -232,55 +231,67 @@ class ContinuousOlympicSacModel(DoubleModel):
     @final
     def _create_model(self) -> Tuple[nn.Module, nn.Module]:
         encoder = nn.Sequential(
-            nn.Conv2d(in_channels=3, out_channels=16, kernel_size=(4, 4), stride=(2, 2)),
+            nn.Conv2d(in_channels=3, out_channels=16, kernel_size=(5, 5), stride=(2, 2)),
             nn.BatchNorm2d(16),
             nn.LeakyReLU(),
             nn.Conv2d(in_channels=16, out_channels=32, kernel_size=(4, 4), stride=(2, 2)),
             nn.BatchNorm2d(32),
             nn.LeakyReLU(),
-            nn.Conv2d(in_channels=32, out_channels=64, kernel_size=(4, 4), stride=(2, 2)),
-            nn.BatchNorm2d(64),
+            nn.Conv2d(in_channels=32, out_channels=32, kernel_size=(2, 2), stride=(2, 2)),
+            nn.BatchNorm2d(32),
             nn.LeakyReLU(),
-            nn.Conv2d(in_channels=64, out_channels=64, kernel_size=(3, 3), stride=(1, 1)),
-            nn.BatchNorm2d(64),
+            nn.Conv2d(in_channels=32, out_channels=32, kernel_size=(2, 2), stride=(2, 2)),
+            nn.BatchNorm2d(32),
             nn.LeakyReLU(),
             nn.Flatten(start_dim=1)
         )
 
         actor_net = nn.Sequential(
-            nn.Linear(64, 128),
-            nn.LayerNorm(128),
+            nn.Linear(128, 256),
+            nn.LayerNorm(256),
             nn.LeakyReLU(),
-            nn.Linear(128, 128),
-            nn.LayerNorm(128),
+            nn.Linear(256, 256),
+            nn.LayerNorm(256),
             nn.LeakyReLU(),
         )
 
         actor_mu_net = nn.Sequential(
-            nn.Linear(128, self._n_out_actions),
+            nn.Linear(256, self._n_out_actions),
             nn.Tanh()
         )
 
         actor_var_net = nn.Sequential(
-            nn.Linear(128, self._n_out_actions),
+            nn.Linear(256, self._n_out_actions),
             nn.Softplus()
         )
 
         representation_net = nn.Sequential(
-            nn.Linear(64, 128),
-            nn.LayerNorm(128),
+            nn.Linear(128, 256),
+            nn.LayerNorm(256),
             nn.LeakyReLU()
         )
 
-        critic_net = nn.Sequential(
-            nn.Linear(128 + self._n_out_actions, 128),
+        critic_net_1 = nn.Sequential(
+            nn.Linear(256 + self._n_out_actions, 128),
             nn.LayerNorm(128),
             nn.Tanh(),
+            nn.Linear(128, 128),
+            nn.ELU(),
+            nn.Linear(128, 1)
+        )
+
+        critic_net_2 = nn.Sequential(
+            nn.Linear(256 + self._n_out_actions, 128),
+            nn.LayerNorm(128),
+            nn.Tanh(),
+            nn.Linear(128, 128),
+            nn.ELU(),
+            nn.Linear(128, 1)
         )
 
         q1_critic_net = nn.Linear(128, 1)
         q2_critic_net = nn.Linear(128, 1)
 
         actor_model = ContinuousOlympicSacModel.ActorModel(encoder, actor_net, actor_mu_net, actor_var_net)
-        critic_model = ContinuousOlympicSacModel.CriticModel(encoder, critic_net, representation_net, q1_critic_net, q2_critic_net)
+        critic_model = ContinuousOlympicSacModel.CriticModel(encoder, representation_net, critic_net_1, critic_net_2)
         return actor_model, critic_model
