@@ -382,3 +382,10 @@ class FrameStackVectorizedEnvWrapper(gym.ObservationWrapper):
     def observation(self, observation):
         observation = np.swapaxes(observation, 0, 1)
         return observation
+
+
+class ReturnInfoEnvWrapper(gym.Wrapper):
+    def reset(self, return_info=False):
+        observation = self.env.reset()
+        info = None
+        return observation, info

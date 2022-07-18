@@ -18,6 +18,7 @@ import plotly.graph_objects as go
 from link_rl.a_configuration.a_base_config.a_environments.ai_birds.config_ai_birds import ConfigAiBirds
 from link_rl.a_configuration.a_base_config.a_environments.competition_olympics import ConfigCompetitionOlympics
 from link_rl.a_configuration.a_base_config.a_environments.dm_control import ConfigDmControl
+from link_rl.a_configuration.a_base_config.a_environments.evolution_gym import ConfigEvolutionGym
 from link_rl.a_configuration.a_base_config.a_environments.gym_robotics import ConfigGymRobotics
 from link_rl.a_configuration.a_base_config.a_environments.open_ai_gym.config_gym_atari import ConfigGymAtari
 from link_rl.a_configuration.a_base_config.a_environments.open_ai_gym.config_gym_box2d import ConfigHardcoreBipedalWalker, \
@@ -27,7 +28,7 @@ from link_rl.a_configuration.a_base_config.a_environments.unity.config_unity_box
 from link_rl.b_environments import wrapper
 from link_rl.b_environments.gym_robotics.gym_robotics_wrapper import GymRoboticsEnvWrapper
 from link_rl.b_environments.competition_olympics.competition_olympics_env_wrapper import CompetitionOlympicsEnvWrapper
-from link_rl.b_environments.wrapper import FrameStackVectorizedEnvWrapper
+from link_rl.b_environments.wrapper import FrameStackVectorizedEnvWrapper, ReturnInfoEnvWrapper
 from link_rl.h_utils.types import AgentType, ActorCriticAgentTypes, LayerActivationType, LossFunctionType, \
     OffPolicyAgentTypes, OnPolicyAgentTypes
 
@@ -913,6 +914,16 @@ def get_train_env(config, no_graphics=True):
                 from link_rl.b_environments.ai_birds.ai_birds_wrapper import AIBirdsWrapper
                 env = AIBirdsWrapper(train_mode=True)
 
+            #####################
+            #   Evolution Gym   #
+            #####################
+            elif isinstance(config, ConfigEvolutionGym):
+                import evogym.envs
+                from evogym import sample_robot
+                env = ReturnInfoEnvWrapper(gym.make(
+                    config.ENV_NAME, body=config.ROBOT_STRUCTURE, connections=config.ROBOT_CONNECTIONS
+                ))
+
             ############
             #   Else   #
             ############
@@ -1072,6 +1083,16 @@ def get_single_env(config, no_graphics=True, train_mode=True, agent=None):
     elif isinstance(config, ConfigAiBirds):
         from link_rl.b_environments.ai_birds.ai_birds_wrapper import AIBirdsWrapper
         single_env = AIBirdsWrapper(train_mode=train_mode)
+
+    #####################
+    #   Evolution Gym   #
+    #####################
+    elif isinstance(config, ConfigEvolutionGym):
+        import evogym.envs
+        from evogym import sample_robot
+        single_env = ReturnInfoEnvWrapper(gym.make(
+            config.ENV_NAME, body=config.ROBOT_STRUCTURE, connections=config.ROBOT_CONNECTIONS
+        ))
 
     ############
     #   else   #

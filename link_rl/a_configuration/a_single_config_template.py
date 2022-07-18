@@ -610,6 +610,50 @@ config = ConfigAiBirdsA2c()
 from link_rl.a_configuration.b_single_config.ai_birds.config_ai_birds import ConfigAiBirdsPpo
 config = ConfigAiBirdsPpo()
 
+###############################
+######## Evolution Gym ########
+###############################
+
+# Climber
+from link_rl.a_configuration.b_single_config.evolution_gym.config_evolution_gym_climber import ConfigEvolutionGymClimberV0Sac
+config = ConfigEvolutionGymClimberV0Sac()
+
+from link_rl.a_configuration.b_single_config.evolution_gym.config_evolution_gym_climber import ConfigEvolutionGymClimberV1Sac
+config = ConfigEvolutionGymClimberV1Sac()
+
+from link_rl.a_configuration.b_single_config.evolution_gym.config_evolution_gym_climber import ConfigEvolutionGymClimberV2Sac
+config = ConfigEvolutionGymClimberV2Sac()
+
+from link_rl.a_configuration.b_single_config.evolution_gym.config_evolution_gym_climber import ConfigEvolutionGymClimberV0Tdmpc
+config = ConfigEvolutionGymClimberV0Tdmpc()
+
+from link_rl.a_configuration.b_single_config.evolution_gym.config_evolution_gym_climber import ConfigEvolutionGymClimberV1Tdmpc
+config = ConfigEvolutionGymClimberV1Tdmpc()
+
+from link_rl.a_configuration.b_single_config.evolution_gym.config_evolution_gym_climber import ConfigEvolutionGymClimberV2Tdmpc
+config = ConfigEvolutionGymClimberV2Tdmpc()
+
+
+# Walker
+
+from link_rl.a_configuration.b_single_config.evolution_gym.config_evolution_gym_walker import ConfigEvolutionGymWalkerSac
+config = ConfigEvolutionGymWalkerSac()
+
+from link_rl.a_configuration.b_single_config.evolution_gym.config_evolution_gym_walker import ConfigEvolutionGymBridgeWalkerSac
+config = ConfigEvolutionGymBridgeWalkerSac()
+
+from link_rl.a_configuration.b_single_config.evolution_gym.config_evolution_gym_walker import ConfigEvolutionGymCaveCrawlerSac
+config = ConfigEvolutionGymCaveCrawlerSac()
+
+from link_rl.a_configuration.b_single_config.evolution_gym.config_evolution_gym_walker import ConfigEvolutionGymWalkerTdmpc
+config = ConfigEvolutionGymWalkerTdmpc()
+
+from link_rl.a_configuration.b_single_config.evolution_gym.config_evolution_gym_walker import ConfigEvolutionGymBridgeWalkerTdmpc
+config = ConfigEvolutionGymBridgeWalkerTdmpc()
+
+from link_rl.a_configuration.b_single_config.evolution_gym.config_evolution_gym_walker import ConfigEvolutionGymCaveCrawlerTdmpc
+config = ConfigEvolutionGymCaveCrawlerTdmpc()
+
 
 if __name__ == "__main__":
     from link_rl.h_utils.commons import print_basic_info, get_env_info, set_config
