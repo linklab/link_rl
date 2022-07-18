@@ -183,7 +183,7 @@ git clone --recurse-submodules https://github.com/EvolutionGym/evogym.git
 sudo apt-get install freeglut3-dev
 sudo apt-get install xorg-dev libglu1-mesa-dev
 sudo apt-get install libglew-dev
-sudo apt install cmake
+sudo apt-get install cmake
 
 python setup.py install
 
