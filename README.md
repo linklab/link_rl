@@ -21,8 +21,7 @@ Install package
   ```commandline
   pip install --upgrade pip
   sudo apt-get install swig
-  pip install gym[nomujoco]
-  pip install gym[atari,box2d,accept-rom-license]
+  pip install gym[atari,box2d,accept-rom-license]==0.22.0
   conda install -c conda-forge wandb
   conda install -c plotly plotly==5.6.0
   conda install -c conda-forge pandas
@@ -184,6 +183,7 @@ git clone --recurse-submodules https://github.com/EvolutionGym/evogym.git
 sudo apt-get install freeglut3-dev
 sudo apt-get install xorg-dev libglu1-mesa-dev
 sudo apt-get install libglew-dev
+sudo apt install cmake
 
 python setup.py install
 
