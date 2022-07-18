@@ -100,28 +100,32 @@ class ContinuousSacSharedModel(DoubleModel):
 @model_registry.add
 class ContinuousSacModel(DoubleModel):
     class ActorModel(nn.Module):
-        def __init__(self, actor_net, actor_mu_net, actor_var_net):
+        def __init__(self, encoder, actor_net, actor_mu_net, actor_var_net):
             super().__init__()
+            self.encoder = encoder
             self.actor_net = actor_net
             self.actor_mu_net = actor_mu_net
             self.actor_var_net = actor_var_net
 
         def forward(self, obs):
-            x = self.actor_net(obs)
+            x = self.encoder(obs)
+            x = self.actor_net(x)
             mu = self.actor_mu_net(x)
             var = self.actor_var_net(x)
             return mu, var
 
     class CriticModel(nn.Module):
-        def __init__(self, critic_net, representation_net, q1_critic_net, q2_critic_net):
+        def __init__(self, encoder, critic_net, representation_net, q1_critic_net, q2_critic_net):
             super().__init__()
+            self.encoder = encoder
             self.critic_net = critic_net
             self.representation_net = representation_net
             self.q1_critic_net = q1_critic_net
             self.q2_critic_net = q2_critic_net
 
         def forward(self, obs, action):
-            x = self.representation_net(obs)
+            x = self.encoder(obs)
+            x = self.representation_net(x)
             x = torch.cat([x, action], dim=-1).float()
             x = self.critic_net(x)
             q1 = self.q1_critic_net(x)
@@ -143,6 +147,22 @@ class ContinuousSacModel(DoubleModel):
 
     @final
     def _create_model(self) -> Tuple[nn.Module, nn.Module]:
+        encoder = nn.Sequential(
+            nn.Conv2d(in_channels=3, out_channels=16, kernel_size=(5, 5), stride=(2, 2)),
+            nn.BatchNorm2d(16),
+            nn.LeakyReLU(),
+            nn.Conv2d(in_channels=16, out_channels=32, kernel_size=(4, 4), stride=(2, 2)),
+            nn.BatchNorm2d(32),
+            nn.LeakyReLU(),
+            nn.Conv2d(in_channels=32, out_channels=32, kernel_size=(2, 2), stride=(2, 2)),
+            nn.BatchNorm2d(32),
+            nn.LeakyReLU(),
+            nn.Conv2d(in_channels=32, out_channels=32, kernel_size=(2, 2), stride=(2, 2)),
+            nn.BatchNorm2d(32),
+            nn.LeakyReLU(),
+            nn.Flatten(start_dim=1)
+        )
+
         actor_net = nn.Sequential(
             nn.Linear(self._n_input, 128),
             nn.LayerNorm(128),
@@ -176,8 +196,8 @@ class ContinuousSacModel(DoubleModel):
         q1_critic_net = nn.Linear(128, 1)
         q2_critic_net = nn.Linear(128, 1)
 
-        actor_model = ContinuousSacModel.ActorModel(actor_net, actor_mu_net, actor_var_net)
-        critic_model = ContinuousSacModel.CriticModel(critic_net, representation_net, q1_critic_net, q2_critic_net)
+        actor_model = ContinuousSacModel.ActorModel(encoder, actor_net, actor_mu_net, actor_var_net)
+        critic_model = ContinuousSacModel.CriticModel(encoder, critic_net, representation_net, q1_critic_net, q2_critic_net)
         return actor_model, critic_model
 
 
@@ -191,8 +211,10 @@ class ContinuousOlympicSacModel(DoubleModel):
             self.actor_mu_net = actor_mu_net
             self.actor_var_net = actor_var_net
 
-        def forward(self, obs):
+        def forward(self, obs, encoder_detach=False):
             x = self.encoder(obs)
+            if encoder_detach:
+                x = x.detach()
             x = self.actor_net(x)
             mu = self.actor_mu_net(x)
             var = self.actor_var_net(x)
@@ -206,8 +228,10 @@ class ContinuousOlympicSacModel(DoubleModel):
             self.q1_critic_net = q1_critic_net
             self.q2_critic_net = q2_critic_net
 
-        def forward(self, obs, action):
+        def forward(self, obs, action, encoder_detach=False):
             x = self.encoder(obs)
+            if encoder_detach:
+                x = x.detach()
             x = self.representation_net(x)
             x = torch.cat([x, action], dim=-1).float()
             q1 = self.q1_critic_net(x)

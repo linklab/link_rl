@@ -62,14 +62,14 @@ class AgentSac(OffPolicyAgent):
         self.last_actor_objective = mp.Value('d', 0.0)
         self.last_entropy = mp.Value('d', 0.0)
 
-    def actor_forward(self, obs):
+    def actor_forward(self, obs, encoder_detach=False):
         # x = self.encoder(obs)
-        mu, var = self.actor_model(obs)
+        mu, var = self.actor_model(obs, encoder_detach=encoder_detach)
         return mu, var
 
-    def critic_forward(self, obs, action):
+    def critic_forward(self, obs, action, encoder_detach=False):
         # x = self.encoder(obs)
-        q1, q2 = self.critic_model(obs, action)
+        q1, q2 = self.critic_model(obs, action, encoder_detach=encoder_detach)
         return q1, q2
 
     def target_critic_forward(self, obs, action):
@@ -163,7 +163,7 @@ class AgentSac(OffPolicyAgent):
         ###########################
         if training_steps_v % self.config.POLICY_UPDATE_FREQUENCY_PER_TRAINING_STEP == 0:
             action_v, log_prob_v, entropy_v = self._re_parameterization_trick_sample(self.observations)
-            q1_value, q2_value = self.critic_forward(self.observations, action_v)
+            q1_value, q2_value = self.critic_forward(self.observations, action_v, encoder_detach=True)
             actor_objectives = torch.min(q1_value, q2_value) - self.alpha.value * log_prob_v
             actor_objectives = actor_objectives.mean()
             loss_actor_v = -1.0 * actor_objectives
@@ -195,7 +195,7 @@ class AgentSac(OffPolicyAgent):
         return count_training_steps
 
     def _re_parameterization_trick_sample(self, obs):
-        mu, var = self.actor_forward(obs)
+        mu, var = self.actor_forward(obs, encoder_detach=True)
 
         dist = Normal(loc=mu, scale=torch.sqrt(var))
         dist = TransformedDistribution(
