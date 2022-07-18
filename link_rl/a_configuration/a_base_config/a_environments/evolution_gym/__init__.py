@@ -1,5 +1,4 @@
 import numpy as np
-from evogym import sample_robot
 
 from link_rl.c_encoders.a_encoder import ENCODER
 

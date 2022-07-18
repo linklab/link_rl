@@ -655,6 +655,13 @@ from link_rl.a_configuration.b_single_config.evolution_gym.config_evolution_gym_
 config = ConfigEvolutionGymCaveCrawlerTdmpc()
 
 
+###############################
+######## Somo Gym ########
+###############################
+
+from link_rl.a_configuration.b_single_config.somo_gym.config_somo_gym_in_hand_manipulation import ConfigSomoGymInHandManipulationSac
+config = ConfigSomoGymInHandManipulationSac()
+
 if __name__ == "__main__":
     from link_rl.h_utils.commons import print_basic_info, get_env_info, set_config
 

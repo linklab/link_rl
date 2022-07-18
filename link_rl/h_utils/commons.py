@@ -23,6 +23,7 @@ from link_rl.a_configuration.a_base_config.a_environments.gym_robotics import Co
 from link_rl.a_configuration.a_base_config.a_environments.open_ai_gym.config_gym_atari import ConfigGymAtari
 from link_rl.a_configuration.a_base_config.a_environments.open_ai_gym.config_gym_box2d import ConfigHardcoreBipedalWalker, \
     ConfigNormalBipedalWalker
+from link_rl.a_configuration.a_base_config.a_environments.somo_gym import ConfigSomoGym
 from link_rl.a_configuration.a_base_config.config_parse import SYSTEM_USER_NAME
 from link_rl.a_configuration.a_base_config.a_environments.unity.config_unity_box import ConfigUnityGymEnv
 from link_rl.b_environments import wrapper
@@ -924,6 +925,17 @@ def get_train_env(config, no_graphics=True):
                     config.ENV_NAME, body=config.ROBOT_STRUCTURE, connections=config.ROBOT_CONNECTIONS
                 ))
 
+            ################
+            #   Somo Gym   #
+            ################
+            elif isinstance(config, ConfigSomoGym):
+                from link_rl.b_environments.somo_gym.environments.utils.import_handler import import_environment
+                import_environment(config.ENV_NAME)
+
+                env = ReturnInfoEnvWrapper(gym.make(
+                    config.RUN_CONFIG["env_id"], run_config=config.RUN_CONFIG, debug=False
+                ))
+
             ############
             #   Else   #
             ############
@@ -1094,6 +1106,17 @@ def get_single_env(config, no_graphics=True, train_mode=True, agent=None):
             config.ENV_NAME, body=config.ROBOT_STRUCTURE, connections=config.ROBOT_CONNECTIONS
         ))
 
+    ################
+    #   Somo Gym   #
+    ################
+    elif isinstance(config, ConfigSomoGym):
+        from link_rl.b_environments.somo_gym.environments.utils.import_handler import import_environment
+        import_environment(config.ENV_NAME)
+
+        single_env = ReturnInfoEnvWrapper(gym.make(
+            config.RUN_CONFIG["env_id"], run_config=config.RUN_CONFIG, debug=False
+        ))
+
     ############
     #   else   #
     ############
@@ -1149,7 +1172,8 @@ def get_env_info(config):
     observation_space = single_env.observation_space
     action_space = single_env.action_space
 
-    single_env.close()
+    if not isinstance(config, ConfigSomoGym):
+        single_env.close()
 
     return observation_space, action_space
 

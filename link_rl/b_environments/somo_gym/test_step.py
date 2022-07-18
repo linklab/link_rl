@@ -110,7 +110,7 @@ def test_InHandManipulation_step():
 
 @pytest.mark.gui
 def test_InHandManipulation_step_gui():
-    somogym_step_tester("InHandManipulation", render=True, total_env_steps=100)
+    somogym_step_tester("InHandManipulation", render=True, total_env_steps=100, debug=False)
 
 
 # IN-HAND MANIPULATION INVERTED
