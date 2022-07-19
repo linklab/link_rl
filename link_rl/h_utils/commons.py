@@ -652,7 +652,7 @@ def get_wandb_obj(config, agent=None, comparison=False):
     now = datetime.datetime.now()
     local_now = now.astimezone()
     wandb.run.name = local_now.strftime('%Y-%m-%d_%H:%M:%S')
-    wandb.run.save()
+    #wandb.run.save()
     if agent:
         wandb.watch(agent.model, log="all")
 

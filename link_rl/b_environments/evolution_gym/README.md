@@ -1,5 +1,5 @@
 ###		body, connections = sample_robot((5, 5))
-###		env = gym.make(env_spec.id, body=body)
+###		env = gym.make(env_spec.id, body=body, connections=connections)
  1: env_id:              Walker-v0 | OBS_SPACE: <class 'gym.spaces.box.Box'>, SHAPE: (64,) -      | ACTION_SPACE: <class 'gym.spaces.box.Box'>, SHAPE: (9,), RANGE: Box([0.6 0.6 0.6 0.6 0.6 0.6 0.6 0.6 0.6], [1.6 1.6 1.6 1.6 1.6 1.6 1.6 1.6 1.6], (9,), float64)
  2: env_id:        BridgeWalker-v0 | OBS_SPACE: <class 'gym.spaces.box.Box'>, SHAPE: (69,) -      | ACTION_SPACE: <class 'gym.spaces.box.Box'>, SHAPE: (8,), RANGE: Box([0.6 0.6 0.6 0.6 0.6 0.6 0.6 0.6], [1.6 1.6 1.6 1.6 1.6 1.6 1.6 1.6], (8,), float64)
  3: env_id:         CaveCrawler-v0 | OBS_SPACE: <class 'gym.spaces.box.Box'>, SHAPE: (96,) -      | ACTION_SPACE: <class 'gym.spaces.box.Box'>, SHAPE: (9,), RANGE: Box([0.6 0.6 0.6 0.6 0.6 0.6 0.6 0.6 0.6], [1.6 1.6 1.6 1.6 1.6 1.6 1.6 1.6 1.6], (9,), float64)
