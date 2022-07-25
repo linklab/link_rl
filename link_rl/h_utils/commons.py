@@ -921,9 +921,9 @@ def get_train_env(config, no_graphics=True):
             #####################
             elif isinstance(config, ConfigEvolutionGym):
                 import evogym.envs
-                from evogym import sample_robot
+                from evogym import sample_robot, get_full_connectivity
                 env = ReturnInfoEnvWrapper(gym.make(
-                    config.ENV_NAME, body=config.ROBOT_STRUCTURE, connections=config.ROBOT_CONNECTIONS
+                    config.ENV_NAME, body=config.ROBOT_STRUCTURE, connections=get_full_connectivity(config.ROBOT_STRUCTURE)
                 ))
                 env = EvoGymActionMinusOneWrapper(env)
 
@@ -1103,9 +1103,9 @@ def get_single_env(config, no_graphics=True, train_mode=True, agent=None):
     #####################
     elif isinstance(config, ConfigEvolutionGym):
         import evogym.envs
-        from evogym import sample_robot
+        from evogym import sample_robot, get_full_connectivity
         single_env = ReturnInfoEnvWrapper(gym.make(
-            config.ENV_NAME, body=config.ROBOT_STRUCTURE, connections=config.ROBOT_CONNECTIONS
+            config.ENV_NAME, body=config.ROBOT_STRUCTURE, connections=get_full_connectivity(config.ROBOT_STRUCTURE)
         ))
         single_env = EvoGymActionMinusOneWrapper(single_env)
 
