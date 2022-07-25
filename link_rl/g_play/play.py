@@ -83,13 +83,8 @@ def main_play(n_episodes):
         dm_control_play(test_env, agent, n_episodes=1)
         test_env.close()
     else:
-        if isinstance(config, ConfigSomoGym):
-            player = Tester(agent=agent, config=config, play=True, max_episode_step=1_000)
-        else:
-            player = Tester(agent=agent, config=config, play=True)
-
+        player = Tester(agent=agent, config=config, play=True)
         player.play_for_testing(n_episodes=n_episodes)
-
         player.test_env.close()
 
 

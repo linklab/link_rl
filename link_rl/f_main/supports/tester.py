@@ -12,11 +12,15 @@ from link_rl.h_utils.types import AgentType, AgentMode
 
 
 class Tester:
-    def __init__(self, agent, config, play=False, max_episode_step=None):
+    def __init__(self, agent, config, play=False):
         self.agent = agent
         self.config = config
         self.play = play
-        self.max_episode_step = max_episode_step
+
+        if isinstance(config, ConfigSomoGym):
+            self.max_episode_step = 1_000
+        else:
+            self.max_episode_step = None
 
         if isinstance(self.config, ConfigCompetitionOlympics):
             self.test_env = get_single_env(self.config, train_mode=False, agent=self.agent)
@@ -24,8 +28,7 @@ class Tester:
             self.test_env = get_single_env(self.config, train_mode=False)
 
     def episode_continue(self, done, episode_step):
-        if self.play and isinstance(self.config, ConfigSomoGym):
-            assert self.max_episode_step is not None
+        if isinstance(self.config, ConfigSomoGym):
             return episode_step < self.max_episode_step
         else:
             return not done
