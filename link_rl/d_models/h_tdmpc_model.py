@@ -174,7 +174,8 @@ class TdmpcModel(SingleModel):
 class TdmpcModelParameterizedPlanAction(SingleModel):
     class TOLDModel(nn.Module):
         def __init__(
-                self, representation_net, dynamics_net, reward_net, pi_net, q1_net, q2_net, policy_parameterized_net
+                self, representation_net, dynamics_net, reward_net, pi_net, q1_net, q2_net, policy_parameterized_net,
+                n_out_action
                      ):
             super().__init__()
             self.representation_net = representation_net
@@ -184,6 +185,7 @@ class TdmpcModelParameterizedPlanAction(SingleModel):
             self.q1_net = q1_net
             self.q2_net = q2_net
             self.policy_parameterized_net = policy_parameterized_net
+            self.n_out_action = n_out_action
 
             self.apply(_orthogonal_init)
 
@@ -191,17 +193,17 @@ class TdmpcModelParameterizedPlanAction(SingleModel):
                 m[-1].weight.data.fill_(0)
                 m[-1].bias.data.fill_(0)
 
-        def policy_parameterized_pi(self, z):
-            mu = torch.zeros(self._n_out_actions)
+        def _policy_parameterized_pi(self, z):
+            mu = torch.zeros((z.shape[0], self.n_out_action), dtype=torch.float32)
             z = self.pi_net(z)
             for i in range(len(self.policy_parameterized_net)):
                 action_parameterized = self.policy_parameterized_net[i](z)
-                mu[i] = action_parameterized
+                mu[:, i] = action_parameterized[:, 0]
             return mu
 
         def forward(self, obs):
             z = self.representation(obs)
-            a = self.policy_parameterized_pi(z)
+            a = self._policy_parameterized_pi(z)
             q1, q2 = self.Q(z, a)
             dynamics, reward = self.next(z, a)
             return q1, q2, dynamics, reward
@@ -222,7 +224,7 @@ class TdmpcModelParameterizedPlanAction(SingleModel):
 
         def pi(self, z, std=0):
             """Samples an action from the learned policy (pi)."""
-            mu = torch.tanh(self.policy_parameterized_pi(z))
+            mu = torch.tanh(self._policy_parameterized_pi(z))
             if std > 0:
                 std = torch.ones_like(mu) * std
                 return _TruncatedNormal(mu, std).sample(clip=0.3)
@@ -290,7 +292,8 @@ class TdmpcModelParameterizedPlanAction(SingleModel):
         policy_parameterized_net = nn.Sequential(policy_parameterized_net_dict)
 
         told_model = TdmpcModelParameterizedPlanAction.TOLDModel(
-            representation_net, dynamics_net, reward_net, pi_net, q1_net, q2_net, policy_parameterized_net
+            representation_net, dynamics_net, reward_net, pi_net, q1_net, q2_net, policy_parameterized_net,
+            self._n_out_actions
         )
 
         return told_model
