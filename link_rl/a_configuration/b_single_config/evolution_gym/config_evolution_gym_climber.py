@@ -53,7 +53,8 @@ class ConfigEvolutionGymClimberV0Tdmpc(ConfigBase, ConfigEvolutionGymClimberV0, 
 
         self.MAX_TRAINING_STEPS = 1_000_000
         self.MODEL_TYPE = TDMPC_MODEL.TdmpcModel.value
-
+        self.FIXED_TOTAL_TIME_STEPS_PER_EPISODE = 400
+        self.ACTION_REPEAT = 1
 
 class ConfigEvolutionGymClimberV1Tdmpc(ConfigBase, ConfigEvolutionGymClimberV1, ConfigTdmpc):
     def __init__(self):
@@ -63,7 +64,8 @@ class ConfigEvolutionGymClimberV1Tdmpc(ConfigBase, ConfigEvolutionGymClimberV1, 
 
         self.MAX_TRAINING_STEPS = 1_000_000
         self.MODEL_TYPE = TDMPC_MODEL.TdmpcModel.value
-
+        self.FIXED_TOTAL_TIME_STEPS_PER_EPISODE = 600
+        self.ACTION_REPEAT = 1
 
 class ConfigEvolutionGymClimberV2Tdmpc(ConfigBase, ConfigEvolutionGymClimberV2, ConfigTdmpc):
     def __init__(self):
@@ -73,5 +75,6 @@ class ConfigEvolutionGymClimberV2Tdmpc(ConfigBase, ConfigEvolutionGymClimberV2, 
 
         self.MAX_TRAINING_STEPS = 1_000_000
         self.MODEL_TYPE = TDMPC_MODEL.TdmpcModel.value
-
+        self.FIXED_TOTAL_TIME_STEPS_PER_EPISODE = 1000
+        self.ACTION_REPEAT = 1
 

@@ -20,3 +20,5 @@ class ConfigEvolutionGym:
         ])
 
         self.ENCODER_TYPE = ENCODER.IdentityEncoder.value
+        self.FROM_PIXELS = False
+

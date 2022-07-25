@@ -173,10 +173,11 @@ class ReplayBuffer():
         self.config = config
         self.capacity = min(config.MAX_TRAINING_STEPS, config.BUFFER_CAPACITY)
 
-        if self.config.GRAY_SCALE:
-            self.obs_channel = self.config.FRAME_STACK
-        else:
-            self.obs_channel = 3 * self.config.FRAME_STACK
+        if self.config.FROM_PIXELS:
+            if self.config.GRAY_SCALE:
+                self.obs_channel = self.config.FRAME_STACK
+            else:
+                self.obs_channel = 3 * self.config.FRAME_STACK
 
         obs_shape = observation_space.shape
         action_space = action_space.shape[0]

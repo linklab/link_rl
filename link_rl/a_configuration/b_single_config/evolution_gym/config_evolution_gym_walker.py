@@ -53,6 +53,8 @@ class ConfigEvolutionGymWalkerTdmpc(ConfigBase, ConfigEvolutionGymWalker, Config
 
         self.MAX_TRAINING_STEPS = 1_000_000
         self.MODEL_TYPE = TDMPC_MODEL.TdmpcModel.value
+        self.FIXED_TOTAL_TIME_STEPS_PER_EPISODE = 500
+        self.ACTION_REPEAT = 1
 
 
 class ConfigEvolutionGymBridgeWalkerTdmpc(ConfigBase, ConfigEvolutionGymBridgeWalker, ConfigTdmpc):
@@ -63,6 +65,8 @@ class ConfigEvolutionGymBridgeWalkerTdmpc(ConfigBase, ConfigEvolutionGymBridgeWa
 
         self.MAX_TRAINING_STEPS = 1_000_000
         self.MODEL_TYPE = TDMPC_MODEL.TdmpcModel.value
+        self.FIXED_TOTAL_TIME_STEPS_PER_EPISODE = 500
+        self.ACTION_REPEAT = 1
 
 
 class ConfigEvolutionGymCaveCrawlerTdmpc(ConfigBase, ConfigEvolutionGymCaveCrawler, ConfigTdmpc):
@@ -73,5 +77,7 @@ class ConfigEvolutionGymCaveCrawlerTdmpc(ConfigBase, ConfigEvolutionGymCaveCrawl
 
         self.MAX_TRAINING_STEPS = 1_000_000
         self.MODEL_TYPE = TDMPC_MODEL.TdmpcModel.value
+        self.FIXED_TOTAL_TIME_STEPS_PER_EPISODE = 1000
+        self.ACTION_REPEAT = 1
 
 

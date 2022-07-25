@@ -161,12 +161,13 @@ class Actor(mp.Process):
 
             if type(obs) == LazyFrames:
                 obs = np.asarray(obs)
+            elif type(obs) == tuple:
+                obs = obs[0]
 
             episode = Episode(self.config, obs, self.agent.n_out_actions)
             while not episode.done:
                 action = self.agent.get_action(obs, step=step, t0=episode.first)
                 obs, reward, done, info = self.train_env.step(action.cpu().numpy())
-
                 if type(obs) == LazyFrames:
                     obs = np.asarray(obs)
 
