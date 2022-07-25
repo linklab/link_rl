@@ -325,7 +325,7 @@ class TdmpcModelParameterizedPolicyAction(SingleModel):
 
         def forward(self, obs):
             z = self.representation(obs)
-            a = self.pi_net(z)
+            a = self.pi(z)
             q1, q2 = self.Q(z, a)
             dynamics, reward = self.next(z, a)
             return q1, q2, dynamics, reward
