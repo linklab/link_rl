@@ -643,6 +643,7 @@ def get_wandb_obj(config, agent=None, comparison=False):
         env_name = get_specific_env_name(config=config)
         project = "{0}_{1}_{2}".format(env_name, config.AGENT_TYPE.name, SYSTEM_USER_NAME)
 
+    os.environ['WANDB_START_METHOD'] = 'thread'
     wandb_obj = wandb.init(
         project=project,
         config={
