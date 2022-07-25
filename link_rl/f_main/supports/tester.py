@@ -136,4 +136,4 @@ class Tester:
 
         self.agent.model.train()
 
-        return min(episode_reward_lst)
+        return sum(episode_reward_lst) / len(episode_reward_lst)

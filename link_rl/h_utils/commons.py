@@ -35,7 +35,7 @@ from link_rl.h_utils.types import AgentType, ActorCriticAgentTypes, LayerActivat
     OffPolicyAgentTypes, OnPolicyAgentTypes
 
 
-def model_save(agent, env_name, agent_type_name, test_episode_reward_min, config):
+def model_save(agent, env_name, agent_type_name, test_episode_reward_mean, config):
     env_name_dir = os.path.join(config.MODEL_SAVE_DIR, env_name)
     if not os.path.exists(env_name_dir):
         os.mkdir(env_name_dir)
@@ -53,20 +53,20 @@ def model_save(agent, env_name, agent_type_name, test_episode_reward_min, config
 
     if config.AGENT_TYPE in ActorCriticAgentTypes:
         actor_file_name = "{0:.1f}_{1}_{2}_{3}_T_{4}_{5}_ACTOR.pth".format(
-            test_episode_reward_min, local_now.year, local_now.month, local_now.day, local_now.hour, local_now.minute
+            test_episode_reward_mean, local_now.year, local_now.month, local_now.day, local_now.hour, local_now.minute
         )
         torch.save(agent.actor_model.state_dict(), os.path.join(model_name_dir, actor_file_name))
         critic_file_name = "{0:.1f}_{1}_{2}_{3}_T_{4}_{5}_CRITIC.pth".format(
-            test_episode_reward_min, local_now.year, local_now.month, local_now.day, local_now.hour, local_now.minute
+            test_episode_reward_mean, local_now.year, local_now.month, local_now.day, local_now.hour, local_now.minute
         )
         torch.save(agent.critic_model.state_dict(), os.path.join(model_name_dir, critic_file_name))
     else:
         file_name = "{0:.1f}_{1}_{2}_{3}_T_{4}_{5}.pth".format(
-            test_episode_reward_min, local_now.year, local_now.month, local_now.day, local_now.hour, local_now.minute
+            test_episode_reward_mean, local_now.year, local_now.month, local_now.day, local_now.hour, local_now.minute
         )
         torch.save(agent.model.state_dict(), os.path.join(model_name_dir, file_name))
     encoder_file_name = "{0:.1f}_{1}_{2}_{3}_T_{4}_{5}_{6}.pth".format(
-        test_episode_reward_min, local_now.year, local_now.month, local_now.day, local_now.hour, local_now.minute,
+        test_episode_reward_mean, local_now.year, local_now.month, local_now.day, local_now.hour, local_now.minute,
         config.ENCODER_TYPE
     )
     torch.save(agent.encoder.state_dict(), os.path.join(model_name_dir, encoder_file_name))
@@ -669,7 +669,7 @@ def wandb_log(learner, wandb_obj, config):
         raise ValueError()
 
     log_dict = {
-        "[TEST] Episode Reward": learner.test_episode_reward_min.value,
+        "[TEST] Episode Reward": learner.test_episode_reward_mean.value,
         "[TRAIN] Mean Episode Reward ({0})".format(config.N_EPISODES_FOR_MEAN_CALCULATION): learner.last_mean_episode_reward.value,
         "Episode": learner.total_episodes.value,
         "Buffer Size": len(buffer),
@@ -777,7 +777,7 @@ def wandb_log_comparison(
                 showlegend=True
             )
         )
-    test_episode_reward_min = go.Figure(data=data, layout=plotly_layout)
+    test_episode_reward_mean = go.Figure(data=data, layout=plotly_layout)
 
     ###############################################################################
     plotly_layout.yaxis.title = "[TRAIN] Mean Episode Reward"
@@ -798,7 +798,7 @@ def wandb_log_comparison(
     train_last_mean_episode_reward = go.Figure(data=data, layout=plotly_layout)
 
     log_dict = {
-        "[TEST] episode_reward_avg": test_episode_reward_min,
+        "[TEST] episode_reward_avg": test_episode_reward_mean,
         "[TRAIN] last_mean_episode_reward": train_last_mean_episode_reward,
     }
 
