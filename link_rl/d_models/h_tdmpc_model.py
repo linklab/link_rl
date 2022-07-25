@@ -195,7 +195,7 @@ class TdmpcModelEachParameterizedPolicyAction(SingleModel):
                 m[-1].bias.data.fill_(0)
 
         def _policy_parameterized_pi(self, z):
-            mu = torch.zeros((z.shape[0], self.n_out_action), dtype=torch.float32)
+            mu = torch.zeros((z.shape[0], self.n_out_action), dtype=torch.float32, device=z.device)
             z = self.pi_net(z)
             for i in range(len(self.policy_parameterized_net)):
                 action_parameterized = self.policy_parameterized_net[i](z)
