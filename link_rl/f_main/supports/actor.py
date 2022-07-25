@@ -66,9 +66,9 @@ class Actor(mp.Process):
     def set_train_env(self):
         if self.config.AGENT_TYPE == AgentType.TDMPC or self.config.N_VECTORIZED_ENVS == 1:
             if isinstance(self.config, ConfigCompetitionOlympics):
-                self.train_env = get_single_env(self.config, train_mode=True, agent=self.agent)
+                self.train_env = get_single_env(self.config, play=False, agent=self.agent)
             else:
-                self.train_env = get_single_env(self.config, train_mode=True)
+                self.train_env = get_single_env(self.config, play=False)
         else:
             self.train_env = get_train_env(self.config)
         self.is_env_created.value = True
