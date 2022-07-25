@@ -56,45 +56,46 @@ def somogym_step_tester(env_name, render=False, debug=False):
         observation = env.reset()
 
         done = False
-        step = 1
+        step = 0
 
         # run env for total_env_steps steps
-        while step < 1_000:
+        while not done:
             action = env.action_space.sample()
             next_observation, reward, done, info = env.step(action)  # take a random action
+            step += 1
             print(
                 "[EP: {0}, STEP: {1}] Observation: {2}, Action: {3}, next_observation: {4}, Reward: {5:.5f}, Done: {6}".format(
                     ep, step, observation.shape, action.shape, next_observation.shape, reward, done
                 ))
             observation = next_observation
-            step += 1
 
-    # make sure seeding works correctly for this env
-    # seed once, reset, and take a step
-    env.seed(run_config["seed"])
-    env.reset()
-    action_a = env.action_space.sample()
-    step_result_a = env.step(action_a)  # take a random action
 
-    # seed and reset again and take another step
-    env.seed(run_config["seed"])
-    env.reset()
-    action_b = env.action_space.sample()
-    step_result_b = env.step(action_b)  # take a random action
-
-    # compare results
-    assert (
-        step_result_a[0] == step_result_b[0]
-    ).all(), f"seeding does not work correctly for env {env_name}: observations are inconsistent"
-    assert (
-        step_result_a[1] == step_result_b[1]
-    ), f"seeding does not work correctly for env {env_name}: rewards are inconsistent"
-    assert (
-        step_result_a[2] == step_result_b[2]
-    ), f"seeding does not work correctly for env {env_name}: done flags are inconsistent"
-    assert (
-        step_result_a[3] == step_result_b[3]
-    ), f"seeding does not work correctly for env {env_name}: info entries are inconsistent"
+#     # make sure seeding works correctly for this env
+#     # seed once, reset, and take a step
+# #    env.seed(run_config["seed"])
+#     env.reset()
+#     action_a = env.action_space.sample()
+#     step_result_a = env.step(action_a)  # take a random action
+#
+#     # seed and reset again and take another step
+# #    env.seed(run_config["seed"])
+#     env.reset()
+#     action_b = env.action_space.sample()
+#     step_result_b = env.step(action_b)  # take a random action
+#
+#     # compare results
+#     assert (
+#         step_result_a[0] == step_result_b[0]
+#     ).all(), f"seeding does not work correctly for env {env_name}: observations are inconsistent"
+#     assert (
+#         step_result_a[1] == step_result_b[1]
+#     ), f"seeding does not work correctly for env {env_name}: rewards are inconsistent"
+#     assert (
+#         step_result_a[2] == step_result_b[2]
+#     ), f"seeding does not work correctly for env {env_name}: done flags are inconsistent"
+#     assert (
+#         step_result_a[3] == step_result_b[3]
+#     ), f"seeding does not work correctly for env {env_name}: info entries are inconsistent"
 
     # finally, close the env
     env.close()

@@ -628,12 +628,8 @@ class KnapsackEnvStat(CustomEnvStat):
 
 
 class KnapsackEnvComparisonStat(CustomEnvComparisonStat):
-    def __init__(
-            self, n_runs, agents_labels, num_stat_data_size, n_episodes_for_mean_calculation
-    ):
-        super(KnapsackEnvComparisonStat, self).__init__(
-            n_runs, agents_labels, num_stat_data_size, n_episodes_for_mean_calculation
-        )
+    def __init__(self, n_runs, agents_labels, num_stat_data_size):
+        super(KnapsackEnvComparisonStat, self).__init__(n_runs, agents_labels, num_stat_data_size)
 
         self.test_last_ep_value_of_all_items_selected_lst = []
         self.test_last_ep_ratio_lst = []
@@ -781,8 +777,8 @@ class KnapsackEnvComparisonStat(CustomEnvComparisonStat):
 
         ###############################################################################
         plotly_layout.yaxis.title = "[TRAIN] Ratio (Value to Optimal Value)"
-        plotly_layout.xaxis.title = "Training Steps ({0}, runs={1}, over {2} Episodes)".format(
-            training_steps_str, run + 1, self.n_episodes_for_mean_calculation
+        plotly_layout.xaxis.title = "Training Steps ({0}, runs={1})".format(
+            training_steps_str, run + 1
         )
         data = []
         for agent_idx in range(self.n_agents):

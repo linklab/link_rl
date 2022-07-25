@@ -36,7 +36,6 @@ class ConfigComparisonBase:
 
         # [NOTE]
         self.TEST_INTERVAL_TRAINING_STEPS = 1_000
-        self.N_EPISODES_FOR_MEAN_CALCULATION = 32
         self.MAX_TRAINING_STEPS = 100_000
         self.N_TEST_EPISODES = 3
 

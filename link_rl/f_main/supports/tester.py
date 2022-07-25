@@ -40,6 +40,7 @@ class Tester:
         self.agent.model.eval()
 
         episode_reward_lst = []
+        episode_step_lst = []
 
         if self.config.CUSTOM_ENV_STAT is not None:
             self.config.CUSTOM_ENV_STAT.test_reset()
@@ -137,6 +138,7 @@ class Tester:
                     time.sleep(delay)
 
             episode_reward_lst.append(episode_reward)
+            episode_step_lst.append(episode_step)
 
             if self.play:
                 print("[EPISODE: {0}] EPISODE_STEPS: {1:3d}, EPISODE REWARD: {2:4.1f}".format(
@@ -151,4 +153,14 @@ class Tester:
 
         self.agent.model.train()
 
-        return min(episode_reward_lst)
+        test_episode_reward_min = min(episode_reward_lst)
+
+        min_idx_lst = [i for i, val in enumerate(episode_reward_lst) if val == test_episode_reward_min]
+
+        episode_reward_min_step_sum = 0.0
+        for i in min_idx_lst:
+            episode_reward_min_step_sum += episode_step_lst[i]
+
+        test_episode_reward_min_step = episode_reward_min_step_sum / len(min_idx_lst)
+
+        return test_episode_reward_min, test_episode_reward_min_step

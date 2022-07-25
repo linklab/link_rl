@@ -214,12 +214,11 @@ class CustomEnvStat:
 
 class CustomEnvComparisonStat:
     def __init__(
-            self, n_runs, agents_labels, num_stat_data_size, n_episodes_for_mean_calculation
+            self, n_runs, agents_labels, num_stat_data_size
     ):
         self.n_runs = n_runs
         self.agent_labels = agents_labels
         self.n_agents = len(agents_labels)
-        self.n_episodes_for_mean_calculation = n_episodes_for_mean_calculation
         self.num_stat_data_size = num_stat_data_size
 
     def test_reset(self):

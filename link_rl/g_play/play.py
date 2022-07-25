@@ -84,7 +84,10 @@ def main_play(n_episodes):
         test_env.close()
     else:
         player = Tester(agent=agent, config=config, play=True)
-        player.play_for_testing(n_episodes=n_episodes)
+        test_episode_reward_min, test_episode_reward_min_step = player.play_for_testing(n_episodes=n_episodes)
+        print("test_episode_reward_min: {0}, test_episode_reward_min_step: {1}".format(
+            test_episode_reward_min, test_episode_reward_min_step
+        ))
         player.test_env.close()
 
 

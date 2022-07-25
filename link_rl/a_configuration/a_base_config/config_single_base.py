@@ -34,7 +34,6 @@ class ConfigBase:
 
         self.MAX_TRAINING_STEPS = None
 
-        self.N_EPISODES_FOR_MEAN_CALCULATION = 32
         self.TEST_INTERVAL_TRAINING_STEPS = None
         self.CONSOLE_LOG_INTERVAL_TRAINING_STEPS = 100
 

@@ -309,8 +309,7 @@ def print_basic_info(observation_space=None, action_space=None, config=None):
         ]:
             if param in [
                 "BATCH_SIZE", "BUFFER_CAPACITY", "CONSOLE_LOG_INTERVAL_TRAINING_STEPS", "MAX_TRAINING_STEPS",
-                "MIN_BUFFER_SIZE_FOR_TRAIN", "N_EPISODES_FOR_MEAN_CALCULATION",
-                "TEST_INTERVAL_TRAINING_STEPS"
+                "MIN_BUFFER_SIZE_FOR_TRAIN", "TEST_INTERVAL_TRAINING_STEPS"
             ]:
                 item = "{0}: {1:,}".format(param, getattr(config, param))
             else:
@@ -367,8 +366,7 @@ def print_comparison_basic_info(observation_space, action_space, config_c):
         if not param.startswith("__"):
             if param in [
                 "BATCH_SIZE", "BUFFER_CAPACITY", "CONSOLE_LOG_INTERVAL_TRAINING_STEPS", "MAX_TRAINING_STEPS",
-                "MIN_BUFFER_SIZE_FOR_TRAIN", "N_EPISODES_FOR_MEAN_CALCULATION",
-                "TEST_INTERVAL_TRAINING_STEPS"
+                "MIN_BUFFER_SIZE_FOR_TRAIN", "TEST_INTERVAL_TRAINING_STEPS"
             ]:
                 item = "{0}: {1:,}".format(param, getattr(config_c, param))
             else:
@@ -398,8 +396,7 @@ def print_comparison_basic_info(observation_space, action_space, config_c):
             ]:
                 if param in [
                     "BATCH_SIZE", "BUFFER_CAPACITY", "CONSOLE_LOG_INTERVAL_TRAINING_STEPS", "MAX_TRAINING_STEPS",
-                    "MIN_BUFFER_SIZE_FOR_TRAIN", "N_EPISODES_FOR_MEAN_CALCULATION",
-                    "TEST_INTERVAL_TRAINING_STEPS"
+                    "MIN_BUFFER_SIZE_FOR_TRAIN", "TEST_INTERVAL_TRAINING_STEPS"
                 ]:
                     item = "{0}: {1:,}".format(param, getattr(agent_config, param))
                 else:
@@ -527,15 +524,15 @@ def print_env_info(observation_space, action_space, config):
 
 
 def console_log(
-        total_episodes_v, last_mean_episode_reward_v, n_rollout_transitions_v, transition_rolling_rate_v,
+        total_episodes_v, last_episode_reward_v, n_rollout_transitions_v, transition_rolling_rate_v,
         train_steps_v, train_step_rate_v, agent, config
 ):
     console_log = "[Episodes: {0:5,}] " \
-                  "Mean Episode Reward: {1:6.2f}, Rolling Outs: {2:7,} ({3:7.3f}/sec.), " \
+                  "Last Episode Reward: {1:6.2f}, Rolling Outs: {2:7,} ({3:7.3f}/sec.), " \
                   "Training Steps: {4:4,} ({5:.3f}/sec.), " \
         .format(
             total_episodes_v,
-            last_mean_episode_reward_v,
+            last_episode_reward_v,
             n_rollout_transitions_v,
             transition_rolling_rate_v,
             train_steps_v,
@@ -583,19 +580,19 @@ def console_log(
 
 def console_log_comparison(
         run, total_time_step, total_episodes_per_agent,
-        last_mean_episode_reward_per_agent, n_rollout_transitions_per_agent, training_steps_per_agent,
+        last_episode_reward_per_agent, n_rollout_transitions_per_agent, training_steps_per_agent,
         agents, config_c
 ):
     for agent_idx, agent in enumerate(agents):
         agent_prefix = "[Agent: {0}]".format(agent_idx)
         console_log = agent_prefix + "[Run: {0}, Episodes: {1:5,}, Tot. Time Steps {2:7,}] " \
-                      "Mean Episode Reward: {3:6.2f}, Rolling Outs: {4:7,}, " \
+                      "Episode Reward: {3:6.2f}, Rolling Outs: {4:7,}, " \
                       "Train Steps: {5:4,}, " \
             .format(
                 run + 1,
                 total_episodes_per_agent[agent_idx],
                 total_time_step,
-                last_mean_episode_reward_per_agent[agent_idx],
+                last_episode_reward_per_agent[agent_idx],
                 n_rollout_transitions_per_agent[agent_idx],
                 training_steps_per_agent[agent_idx]
             )
@@ -670,14 +667,16 @@ def wandb_log(learner, wandb_obj, config):
         raise ValueError()
 
     log_dict = {
-        "[TEST] Episode Reward": learner.test_episode_reward_min.value,
-        "[TRAIN] Mean Episode Reward ({0})".format(config.N_EPISODES_FOR_MEAN_CALCULATION): learner.last_mean_episode_reward.value,
+        "[TEST] Min Episode Reward": learner.test_episode_reward_min.value,
+        "[TEST] Min Episode Reward - Episode Step": learner.test_episode_reward_min_step.value,
+        "[TRAIN] Last Episode Reward": learner.last_episode_reward.value,
+        "[TRAIN] Last Episode Step": learner.last_episode_step.value,
         "Episode": learner.total_episodes.value,
         "Buffer Size": len(buffer),
         "Training Steps": learner.training_step.value,
         "Total Time Steps": learner.total_time_step.value,
         "Transition Rolling Rate": learner.transition_rolling_rate.value,
-        "Train Step Rate": learner.train_step_rate.value
+        "Train Step Rate": learner.train_step_rate.value,
     }
 
     if config.AGENT_TYPE in [AgentType.DQN, AgentType.DUELING_DQN, AgentType.DOUBLE_DQN, AgentType.DOUBLE_DUELING_DQN]:
@@ -761,8 +760,7 @@ plotly_layout = go.Layout(
 
 
 def wandb_log_comparison(
-        run, training_steps_per_agent, agents, agent_labels, n_episodes_for_mean_calculation, comparison_stat,
-        wandb_obj, config_c
+        run, training_steps_per_agent, agents, agent_labels, comparison_stat, wandb_obj, config_c
 ):
     training_steps_str = str([training_step for training_step in training_steps_per_agent])
 
@@ -782,8 +780,8 @@ def wandb_log_comparison(
 
     ###############################################################################
     plotly_layout.yaxis.title = "[TRAIN] Mean Episode Reward"
-    plotly_layout.xaxis.title = "Training Steps ({0}, runs={1}, over {2} Episodes)".format(
-        training_steps_str, run + 1, n_episodes_for_mean_calculation
+    plotly_layout.xaxis.title = "Training Steps ({0}, runs={1})".format(
+        training_steps_str, run + 1
     )
     data = []
     for agent_idx, _ in enumerate(agents):

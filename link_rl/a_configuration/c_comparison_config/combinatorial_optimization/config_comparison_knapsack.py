@@ -32,7 +32,6 @@ class ConfigComparisonKnapsack0StaticTestLinearDqnA2cPpo(ConfigComparisonBase):
             n_runs=self.N_RUNS,
             agents_labels=self.AGENT_LABELS,
             num_stat_data_size=int(self.MAX_TRAINING_STEPS // self.TEST_INTERVAL_TRAINING_STEPS),
-            n_episodes_for_mean_calculation=self.N_EPISODES_FOR_MEAN_CALCULATION
         )
 
 
@@ -61,7 +60,6 @@ class ConfigComparisonKnapsack0StaticTestLinearDqn(ConfigComparisonBase):
             n_runs=self.N_RUNS,
             agents_labels=self.AGENT_LABELS,
             num_stat_data_size=int(self.MAX_TRAINING_STEPS // self.TEST_INTERVAL_TRAINING_STEPS),
-            n_episodes_for_mean_calculation=self.N_EPISODES_FOR_MEAN_CALCULATION
         )
 
 
@@ -89,7 +87,6 @@ class ConfigComparisonKnapsack0StaticTestLinearRecurrentDqn(ConfigComparisonBase
             n_runs=self.N_RUNS,
             agents_labels=self.AGENT_LABELS,
             num_stat_data_size=int(self.MAX_TRAINING_STEPS // self.TEST_INTERVAL_TRAINING_STEPS),
-            n_episodes_for_mean_calculation=self.N_EPISODES_FOR_MEAN_CALCULATION
         )
 
 
@@ -118,7 +115,6 @@ class ConfigComparisonKnapsack0StaticTestLinearDoubleDqn(ConfigComparisonBase):
             n_runs=self.N_RUNS,
             agents_labels=self.AGENT_LABELS,
             num_stat_data_size=int(self.MAX_TRAINING_STEPS // self.TEST_INTERVAL_TRAINING_STEPS),
-            n_episodes_for_mean_calculation=self.N_EPISODES_FOR_MEAN_CALCULATION
         )
 
 
@@ -147,7 +143,6 @@ class ConfigComparisonKnapsack0RandomTestLinearDoubleDqn(ConfigComparisonBase):
             n_runs=self.N_RUNS,
             agents_labels=self.AGENT_LABELS,
             num_stat_data_size=int(self.MAX_TRAINING_STEPS // self.TEST_INTERVAL_TRAINING_STEPS),
-            n_episodes_for_mean_calculation=self.N_EPISODES_FOR_MEAN_CALCULATION
         )
 
 
@@ -175,5 +170,4 @@ class ConfigComparisonKnapsack0RandomTestLinearDoubleDqnHer(ConfigComparisonBase
             n_runs=self.N_RUNS,
             agents_labels=self.AGENT_LABELS,
             num_stat_data_size=int(self.MAX_TRAINING_STEPS // self.TEST_INTERVAL_TRAINING_STEPS),
-            n_episodes_for_mean_calculation=self.N_EPISODES_FOR_MEAN_CALCULATION
         )
