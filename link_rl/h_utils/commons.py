@@ -29,7 +29,8 @@ from link_rl.a_configuration.a_base_config.a_environments.unity.config_unity_box
 from link_rl.b_environments import wrapper
 from link_rl.b_environments.gym_robotics.gym_robotics_wrapper import GymRoboticsEnvWrapper
 from link_rl.b_environments.competition_olympics.competition_olympics_env_wrapper import CompetitionOlympicsEnvWrapper
-from link_rl.b_environments.wrapper import FrameStackVectorizedEnvWrapper, ReturnInfoEnvWrapper
+from link_rl.b_environments.wrapper import FrameStackVectorizedEnvWrapper, ReturnInfoEnvWrapper, \
+    EvoGymActionMinusOneWrapper
 from link_rl.h_utils.types import AgentType, ActorCriticAgentTypes, LayerActivationType, LossFunctionType, \
     OffPolicyAgentTypes, OnPolicyAgentTypes
 
@@ -924,6 +925,7 @@ def get_train_env(config, no_graphics=True):
                 env = ReturnInfoEnvWrapper(gym.make(
                     config.ENV_NAME, body=config.ROBOT_STRUCTURE, connections=config.ROBOT_CONNECTIONS
                 ))
+                env = EvoGymActionMinusOneWrapper(env)
 
             ################
             #   Somo Gym   #
@@ -1105,6 +1107,7 @@ def get_single_env(config, no_graphics=True, train_mode=True, agent=None):
         single_env = ReturnInfoEnvWrapper(gym.make(
             config.ENV_NAME, body=config.ROBOT_STRUCTURE, connections=config.ROBOT_CONNECTIONS
         ))
+        single_env = EvoGymActionMinusOneWrapper(single_env)
 
     ################
     #   Somo Gym   #

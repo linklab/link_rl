@@ -389,3 +389,9 @@ class ReturnInfoEnvWrapper(gym.Wrapper):
         observation = self.env.reset()
         info = None
         return observation, info
+
+
+class EvoGymActionMinusOneWrapper(gym.Wrapper):
+    def step(self, action):
+        observation, reward, done, info = self.env.step(action - 1)
+        return observation, reward, done, info
