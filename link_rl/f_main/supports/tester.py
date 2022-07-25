@@ -6,20 +6,29 @@ from gym.spaces import Discrete, Box
 from link_rl.a_configuration.a_base_config.a_environments.competition_olympics import ConfigCompetitionOlympics
 from link_rl.a_configuration.a_base_config.a_environments.open_ai_gym.config_gym_atari import ConfigGymAtari
 from link_rl.a_configuration.a_base_config.a_environments.open_ai_gym.config_gym_mujoco import ConfigMujoco
+from link_rl.a_configuration.a_base_config.a_environments.somo_gym import ConfigSomoGym
 from link_rl.h_utils.commons import get_single_env
 from link_rl.h_utils.types import AgentType, AgentMode
 
 
 class Tester:
-    def __init__(self, agent, config, play=False):
+    def __init__(self, agent, config, play=False, max_episode_step=None):
         self.agent = agent
         self.config = config
         self.play = play
+        self.max_episode_step = max_episode_step
 
         if isinstance(self.config, ConfigCompetitionOlympics):
             self.test_env = get_single_env(self.config, train_mode=False, agent=self.agent)
         else:
             self.test_env = get_single_env(self.config, train_mode=False)
+
+    def episode_continue(self, done, episode_step):
+        if self.play and isinstance(self.config, ConfigSomoGym):
+            assert self.max_episode_step is not None
+            return episode_step < self.max_episode_step
+        else:
+            return not done
 
     def play_for_testing(self, n_episodes, delay=0.0):
         self.agent.model.eval()
@@ -58,7 +67,7 @@ class Tester:
 
             done = False
 
-            while not done:
+            while self.episode_continue(done, episode_step):
                 if not self.config.AGENT_TYPE == AgentType.TDMPC:
                     observation = np.expand_dims(observation, axis=0)
 
@@ -119,7 +128,7 @@ class Tester:
                 if self.play:
                     if not isinstance(self.config, ConfigGymAtari):
                         self.test_env.render()
-                    time.sleep(0.01)
+                    time.sleep(delay)
 
             episode_reward_lst.append(episode_reward)
 

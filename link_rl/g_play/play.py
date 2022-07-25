@@ -5,6 +5,7 @@ import warnings
 import numpy as np
 
 from link_rl.a_configuration.a_base_config.a_environments.dm_control import ConfigDmControl
+from link_rl.a_configuration.a_base_config.a_environments.somo_gym import ConfigSomoGym
 from link_rl.a_configuration.a_base_config.a_environments.unity.config_unity_box import ConfigUnityGymEnv
 from link_rl.a_configuration.a_base_config.c_models.config_recurrent_convolutional_models import \
     ConfigRecurrent2DConvolutionalModel, ConfigRecurrent1DConvolutionalModel
@@ -82,8 +83,13 @@ def main_play(n_episodes):
         dm_control_play(test_env, agent, n_episodes=1)
         test_env.close()
     else:
-        player = Tester(agent=agent, config=config, play=True)
+        if isinstance(config, ConfigSomoGym):
+            player = Tester(agent=agent, config=config, play=True, max_episode_step=1_000)
+        else:
+            player = Tester(agent=agent, config=config, play=True)
+
         player.play_for_testing(n_episodes=n_episodes)
+
         player.test_env.close()
 
 

@@ -19,9 +19,7 @@ def somogym_step_tester(env_name, render=False, debug=False):
 
     config = ConfigSomoGymInHandManipulationSac()
 
-    os.environ['WANDB_START_METHOD'] = 'thread'
-    wandb_obj = wandb.init()
-    print("!!!!!!!!!!!!!")
+    # os.environ['WANDB_START_METHOD'] = 'thread'
     # wandb_obj = wandb.init(
     #     project="somo_gym_test",
     #     # config={
@@ -52,7 +50,7 @@ def somogym_step_tester(env_name, render=False, debug=False):
     print(env.observation_space)
     print(env.action_space)
 
-    for ep in range(1, 3):
+    for ep in range(1, 2):
         run_config["seed"] = 10110
         env.seed(run_config["seed"])
         observation = env.reset()
@@ -61,7 +59,7 @@ def somogym_step_tester(env_name, render=False, debug=False):
         step = 1
 
         # run env for total_env_steps steps
-        while not done:
+        while not step > 100_000:
             action = env.action_space.sample()
             next_observation, reward, done, info = env.step(action)  # take a random action
             print(
@@ -103,5 +101,5 @@ def somogym_step_tester(env_name, render=False, debug=False):
 
 
 if __name__ == "__main__":
-    somogym_step_tester("InHandManipulation", render=False, debug=False)
+    somogym_step_tester("InHandManipulation", render=True, debug=False)
 
