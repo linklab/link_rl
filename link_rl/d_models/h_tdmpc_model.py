@@ -7,7 +7,6 @@ from torch import distributions as pyd
 from torch.distributions.utils import _standard_normal
 from link_rl.d_models.a_model import SingleModel, model_registry
 from collections import OrderedDict
-import numpy as np
 
 
 class TDMPC_MODEL(enum.Enum):
