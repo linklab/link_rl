@@ -8,5 +8,5 @@ class ConfigDmControl:
         self.FRAME_STACK = 3
         self.FIXED_TOTAL_TIME_STEPS_PER_EPISODE = 1_000
         self.GRAY_SCALE = True
-        self.FROM_PIXELS = True
-        self.ENCODER_TYPE = ENCODER.SimpleConvEncoder.value
+        self.FROM_PIXELS = False
+        self.ENCODER_TYPE = ENCODER.IdentityEncoder.value
