@@ -1118,7 +1118,7 @@ def get_single_env(config, no_graphics=True, train_mode=True, agent=None):
         import_environment(config.ENV_NAME)
 
         single_env = ReturnInfoEnvWrapper(gym.make(
-            config.RUN_CONFIG["env_id"], run_config=config.RUN_CONFIG, debug=False
+            config.RUN_CONFIG["env_id"], run_config=config.RUN_CONFIG, debug=False, render=not train_mode
         ))
 
     ############

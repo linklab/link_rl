@@ -17,9 +17,9 @@ class Tester:
         self.play = play
 
         if isinstance(self.config, ConfigCompetitionOlympics):
-            self.test_env = get_single_env(self.config, train_mode=True, agent=self.agent)
+            self.test_env = get_single_env(self.config, train_mode=False, agent=self.agent)
         else:
-            self.test_env = get_single_env(self.config, train_mode=True)
+            self.test_env = get_single_env(self.config, train_mode=False)
 
     def play_for_testing(self, n_episodes, delay=0.0):
         self.agent.model.eval()
