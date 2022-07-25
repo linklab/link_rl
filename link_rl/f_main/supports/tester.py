@@ -27,11 +27,14 @@ class Tester:
         else:
             self.test_env = get_single_env(self.config, play=self.play)
 
+    # def episode_continue(self, done, episode_step):
+    #     if isinstance(self.config, ConfigSomoGym):
+    #         return episode_step < self.max_episode_step
+    #     else:
+    #         return not done
+
     def episode_continue(self, done, episode_step):
-        if isinstance(self.config, ConfigSomoGym):
-            return episode_step < self.max_episode_step
-        else:
-            return not done
+        return not done
 
     def play_for_testing(self, n_episodes, delay=0.0):
         self.agent.model.eval()
