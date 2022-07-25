@@ -1002,7 +1002,7 @@ def get_train_env(config, no_graphics=True):
     return train_env
 
 
-def get_single_env(config, no_graphics=True, train_mode=True, agent=None):
+def get_single_env(config, no_graphics=True, play=False, agent=None):
     #############
     #   Unity   #
     #############
@@ -1072,7 +1072,7 @@ def get_single_env(config, no_graphics=True, train_mode=True, agent=None):
     #   Atari   #
     #############
     elif isinstance(config, ConfigGymAtari):
-        if not train_mode:
+        if play:
             single_env = gym.make(
                 config.ENV_NAME, render_mode="human", frameskip=config.FRAME_SKIP, repeat_action_probability=0.0
             )
@@ -1097,7 +1097,7 @@ def get_single_env(config, no_graphics=True, train_mode=True, agent=None):
     ################
     elif isinstance(config, ConfigAiBirds):
         from link_rl.b_environments.ai_birds.ai_birds_wrapper import AIBirdsWrapper
-        single_env = AIBirdsWrapper(train_mode=train_mode)
+        single_env = AIBirdsWrapper(train_mode=not play)
 
     #####################
     #   Evolution Gym   #
@@ -1118,7 +1118,7 @@ def get_single_env(config, no_graphics=True, train_mode=True, agent=None):
         import_environment(config.ENV_NAME)
 
         single_env = ReturnInfoEnvWrapper(gym.make(
-            config.RUN_CONFIG["env_id"], run_config=config.RUN_CONFIG, debug=False, render=not train_mode
+            config.RUN_CONFIG["env_id"], run_config=config.RUN_CONFIG, debug=False, render=play
         ))
 
     ############

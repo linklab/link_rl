@@ -59,7 +59,7 @@ def somogym_step_tester(env_name, render=False, debug=False):
         step = 1
 
         # run env for total_env_steps steps
-        while not step > 100_000:
+        while step < 1_000:
             action = env.action_space.sample()
             next_observation, reward, done, info = env.step(action)  # take a random action
             print(
@@ -101,5 +101,5 @@ def somogym_step_tester(env_name, render=False, debug=False):
 
 
 if __name__ == "__main__":
-    somogym_step_tester("InHandManipulation", render=True, debug=False)
+    somogym_step_tester("InHandManipulation", render=False, debug=False)
 

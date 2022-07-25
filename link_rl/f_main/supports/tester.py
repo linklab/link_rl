@@ -23,9 +23,9 @@ class Tester:
             self.max_episode_step = None
 
         if isinstance(self.config, ConfigCompetitionOlympics):
-            self.test_env = get_single_env(self.config, train_mode=False, agent=self.agent)
+            self.test_env = get_single_env(self.config, play=self.play, agent=self.agent)
         else:
-            self.test_env = get_single_env(self.config, train_mode=False)
+            self.test_env = get_single_env(self.config, play=self.play)
 
     def episode_continue(self, done, episode_step):
         if isinstance(self.config, ConfigSomoGym):
