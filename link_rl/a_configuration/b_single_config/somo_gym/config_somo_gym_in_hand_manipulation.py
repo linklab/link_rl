@@ -13,7 +13,7 @@ class ConfigSomoGymInHandManipulationSac(ConfigBase, ConfigSomoGymInHandManipula
         ConfigSac.__init__(self)
 
         self.MAX_TRAINING_STEPS = 1_000_000
-        self.BUFFER_CAPACITY = 500_000
+        self.BUFFER_CAPACITY = 1_000_000
         self.ALPHA_LEARNING_RATE = 0.000025
         self.MIN_ALPHA = 0.2
         self.MODEL_TYPE = SAC_MODEL.ContinuousSacModel.value

@@ -52,7 +52,6 @@ if config_c.SEED is not None:
 for agent_config in config_c.AGENT_PARAMETERS:
     # del agent_config.MAX_TRAINING_STEPS
     del agent_config.N_ACTORS
-    del agent_config.N_EPISODES_FOR_MEAN_CALCULATION
     del agent_config.N_TEST_EPISODES
     # del agent_config.N_VECTORIZED_ENVS
     del agent_config.PROJECT_HOME

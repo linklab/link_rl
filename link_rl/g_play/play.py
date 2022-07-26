@@ -5,6 +5,7 @@ import warnings
 import numpy as np
 
 from link_rl.a_configuration.a_base_config.a_environments.dm_control import ConfigDmControl
+from link_rl.a_configuration.a_base_config.a_environments.somo_gym import ConfigSomoGym
 from link_rl.a_configuration.a_base_config.a_environments.unity.config_unity_box import ConfigUnityGymEnv
 from link_rl.a_configuration.a_base_config.c_models.config_recurrent_convolutional_models import \
     ConfigRecurrent2DConvolutionalModel, ConfigRecurrent1DConvolutionalModel
@@ -83,7 +84,10 @@ def main_play(n_episodes):
         test_env.close()
     else:
         player = Tester(agent=agent, config=config, play=True)
-        player.play_for_testing(n_episodes=n_episodes)
+        test_episode_reward_min, test_episode_reward_min_step = player.play_for_testing(n_episodes=n_episodes)
+        print("test_episode_reward_min: {0}, test_episode_reward_min_step: {1}".format(
+            test_episode_reward_min, test_episode_reward_min_step
+        ))
         player.test_env.close()
 
 

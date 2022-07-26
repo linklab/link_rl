@@ -66,15 +66,16 @@ class Actor(mp.Process):
     def set_train_env(self):
         if self.config.AGENT_TYPE == AgentType.TDMPC or self.config.N_VECTORIZED_ENVS == 1:
             if isinstance(self.config, ConfigCompetitionOlympics):
-                self.train_env = get_single_env(self.config, train_mode=True, agent=self.agent)
+                self.train_env = get_single_env(self.config, play=False, agent=self.agent)
             else:
-                self.train_env = get_single_env(self.config, train_mode=True)
+                self.train_env = get_single_env(self.config, play=False)
         else:
             self.train_env = get_train_env(self.config)
         self.is_env_created.value = True
 
     def generate_transition_for_single_env(self):
         observation, info = self.train_env.reset(return_info=True)
+        episode_step = 0
 
         if self.agent.is_recurrent_model:
             self.agent.model.init_recurrent_hidden()
@@ -94,6 +95,7 @@ class Actor(mp.Process):
             action, scaled_action = self._get_action(observations, unavailable_actions, vectorized_env=False)
 
             next_observation, reward, done, info = self.train_env.step(scaled_action)
+            episode_step += 1
 
             self.total_time_step += 1
 
@@ -115,7 +117,7 @@ class Actor(mp.Process):
             if len(self.histories[0]) == self.config.N_STEP or done:
                 n_step_transition, real_n_steps = Actor.get_n_step_transition(
                     history=self.histories[0], env_id=0, actor_id=self.actor_id,
-                    info=info, done=done, total_time_step=self.total_time_step, config=self.config
+                    info=info, done=done, episode_step=episode_step, config=self.config
                 )
 
                 if self.working_actor:
@@ -127,7 +129,8 @@ class Actor(mp.Process):
                         "done": done,
                         "episode_reward": self.episode_rewards[0],
                         "last_train_env_info": self.last_train_env_info,
-                        "real_n_steps": real_n_steps
+                        "real_n_steps": real_n_steps,
+                        "episode_step": episode_step
                     })
                     if done:
                         self.episode_rewards[0] = 0.0
@@ -139,6 +142,7 @@ class Actor(mp.Process):
 
             if done:
                 next_observation, info = self.train_env.reset(return_info=True)
+                episode_step = 0
 
             observation = next_observation
 
@@ -194,6 +198,7 @@ class Actor(mp.Process):
 
     def generate_transition_for_vectorized_env(self):
         observations, infos = self.train_env.reset(return_info=True)
+        episode_steps = [0] * len(observations)
 
         if self.agent.is_recurrent_model:
             self.agent.model.init_recurrent_hidden()
@@ -216,6 +221,7 @@ class Actor(mp.Process):
             for env_id, (observation, action, next_observation, reward, done, info) in enumerate(
                     zip(observations, actions, next_observations, rewards, dones, infos)
             ):
+                episode_steps[env_id] += 1
                 self.total_time_step += 1
 
                 info["actor_id"] = self.actor_id
@@ -236,7 +242,7 @@ class Actor(mp.Process):
                 if len(self.histories[env_id]) == self.config.N_STEP or done:
                     n_step_transition, real_n_steps = Actor.get_n_step_transition(
                         history=self.histories[env_id], env_id=env_id,
-                        actor_id=self.actor_id, info=info, done=done, total_time_step=self.total_time_step,
+                        actor_id=self.actor_id, info=info, done=done, episode_step=episode_steps[env_id],
                         config=self.config
                     )
 
@@ -258,6 +264,9 @@ class Actor(mp.Process):
                             self.queue.put(n_step_transition)
                         else:
                             yield n_step_transition
+
+                if done:
+                    episode_steps[env_id] = 0
 
             observations = next_observations
 
@@ -291,7 +300,7 @@ class Actor(mp.Process):
             return actions[0], scaled_actions[0]
 
     @staticmethod
-    def get_n_step_transition(history, env_id, actor_id, info, done, total_time_step, config):
+    def get_n_step_transition(history, env_id, actor_id, info, done, episode_step, config):
         n_step_transitions = tuple(history)
         next_observation = n_step_transitions[-1].next_observation
 
@@ -305,6 +314,7 @@ class Actor(mp.Process):
         info["actor_id"] = actor_id
         info["env_id"] = env_id
         info["real_n_steps"] = len(n_step_transitions)
+        info["episode_step"] = episode_step
 
         if type(n_step_transitions[0].observation) == LazyFrames:
             observation = np.asarray(n_step_transitions[0].observation)

@@ -36,13 +36,12 @@ class LearnerComparison:
         self.train_envs_per_agent = []
         self.test_envs_per_agent = []
         self.episode_rewards_per_agent = []
-        self.episode_reward_buffer_per_agent = []
         self.transition_generators_per_agent = []
 
         self.total_episodes_per_agent = []
         self.training_steps_per_agent = []
         self.n_rollout_transitions_per_agent = []
-        self.last_mean_episode_reward_per_agent = []
+        self.last_episode_reward_per_agent = []
         self.last_loss_train_per_agent = []
         self.is_terminated_per_agent = []
         self.is_recurrent_model_per_agent = []
@@ -57,18 +56,17 @@ class LearnerComparison:
         for agent_idx, _ in enumerate(agents):
             if self.config_c.AGENT_PARAMETERS[agent_idx].AGENT_TYPE == AgentType.TDMPC:
                 self.train_envs_per_agent.append(
-                    get_single_env(self.config_c.AGENT_PARAMETERS[agent_idx], train_mode=True)
+                    get_single_env(self.config_c.AGENT_PARAMETERS[agent_idx], play=False)
                 )
             else:
                 self.train_envs_per_agent.append(get_train_env(self.config_c.AGENT_PARAMETERS[agent_idx]))
 
             self.episode_rewards_per_agent.append(np.zeros(shape=(self.n_actors, self.n_vectorized_envs)))
-            self.episode_reward_buffer_per_agent.append(MeanBuffer(self.config_c.N_EPISODES_FOR_MEAN_CALCULATION))
 
             self.total_episodes_per_agent.append(0)
             self.training_steps_per_agent.append(0)
             self.n_rollout_transitions_per_agent.append(0)
-            self.last_mean_episode_reward_per_agent.append(0.0)
+            self.last_episode_reward_per_agent.append(0.0)
 
             if self.config_c.CUSTOM_ENV_COMPARISON_STAT is not None:
                 self.config_c.CUSTOM_ENV_COMPARISON_STAT.train_reset()
@@ -139,11 +137,8 @@ class LearnerComparison:
                     if n_step_transition.done:
                         self.total_episodes_per_agent[agent_idx] += 1
 
-                        self.episode_reward_buffer_per_agent[agent_idx].add(
+                        self.last_episode_reward_per_agent[agent_idx] = \
                             self.episode_rewards_per_agent[agent_idx][actor_id][env_id]
-                        )
-                        self.last_mean_episode_reward_per_agent[agent_idx] = \
-                            self.episode_reward_buffer_per_agent[agent_idx].mean()
 
                         self.episode_rewards_per_agent[agent_idx][actor_id][env_id] = 0.0
 
@@ -165,7 +160,7 @@ class LearnerComparison:
                                 run=self.run,
                                 total_time_step=self.total_time_step,
                                 total_episodes_per_agent=self.total_episodes_per_agent,
-                                last_mean_episode_reward_per_agent=self.last_mean_episode_reward_per_agent,
+                                last_episode_reward_per_agent=self.last_episode_reward_per_agent,
                                 n_rollout_transitions_per_agent=self.n_rollout_transitions_per_agent,
                                 training_steps_per_agent=self.training_steps_per_agent,
                                 agents=self.agents,
@@ -183,7 +178,6 @@ class LearnerComparison:
                                     training_steps_per_agent=self.training_steps_per_agent,
                                     agents=self.agents,
                                     agent_labels=self.config_c.AGENT_LABELS,
-                                    n_episodes_for_mean_calculation=self.config_c.N_EPISODES_FOR_MEAN_CALCULATION,
                                     comparison_stat=self.comparison_stat,
                                     wandb_obj=self.wandb_obj,
                                     config_c=self.config_c
@@ -201,12 +195,12 @@ class LearnerComparison:
                 self.next_train_time_step += self.config_c.TRAIN_INTERVAL_GLOBAL_TIME_STEPS
 
     def testing(self, run, agent_idx, training_step):
-        test_episode_reward = self.tester_per_agent[agent_idx].play_for_testing(n_test_episodes=1)
+        test_episode_reward = self.tester_per_agent[agent_idx].play_for_testing(n_episodes=1)
 
         self.comparison_stat.test_episode_reward_per_agent[run, agent_idx, self.test_idx_per_agent[agent_idx]] \
             = test_episode_reward
         self.comparison_stat.train_mean_episode_reward_per_agent[run, agent_idx, self.test_idx_per_agent[agent_idx]] \
-            = self.last_mean_episode_reward_per_agent[agent_idx]
+            = self.last_episode_reward_per_agent[agent_idx]
 
         elapsed_time = time.time() - self.train_comparison_start_time
         formatted_elapsed_time = time.strftime('%H:%M:%S', time.gmtime(elapsed_time))
