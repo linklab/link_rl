@@ -7,7 +7,7 @@ class ConfigDmControlHumanoidWalk(ConfigDmControl):
         self.ENV_NAME = "dm_control_humanoid_walk"
         self.DOMAIN_NAME = "humanoid"
         self.TASK_NAME = "walk"
-        self.EPISODE_REWARD_MIN_SOLVED = 450
+        self.EPISODE_REWARD_MEAN_SOLVED = 450
 
 
 class ConfigDmControlHumanoidStand(ConfigDmControl):
@@ -16,7 +16,7 @@ class ConfigDmControlHumanoidStand(ConfigDmControl):
         self.ENV_NAME = "dm_control_humanoid_stand"
         self.DOMAIN_NAME = "humanoid"
         self.TASK_NAME = "stand"
-        self.EPISODE_REWARD_MIN_SOLVED = 450
+        self.EPISODE_REWARD_MEAN_SOLVED = 450
 
 
 class ConfigDmControlHumanoidRun(ConfigDmControl):
@@ -25,4 +25,4 @@ class ConfigDmControlHumanoidRun(ConfigDmControl):
         self.ENV_NAME = "dm_control_humanoid_run"
         self.DOMAIN_NAME = "humanoid"
         self.TASK_NAME = "run"
-        self.EPISODE_REWARD_MIN_SOLVED = 450
+        self.EPISODE_REWARD_MEAN_SOLVED = 450

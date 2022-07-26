@@ -4,7 +4,7 @@ from link_rl.c_encoders.a_encoder import ENCODER
 
 class ConfigBasicTaskAllocation:
     def __init__(self):
-        self.EPISODE_REWARD_MIN_SOLVED = 100
+        self.EPISODE_REWARD_MEAN_SOLVED = 100
 
         self.CONSOLE_LOG_INTERVAL_TRAINING_STEPS = 50
         self.MODEL_TYPE = None

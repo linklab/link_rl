@@ -7,5 +7,5 @@ class ConfigDmControlFingerSpin(ConfigDmControl):
         self.ENV_NAME = "dm_control_finger_spin"
         self.DOMAIN_NAME = "finger"
         self.TASK_NAME = "spin"
-        self.EPISODE_REWARD_MIN_SOLVED = 900
+        self.EPISODE_REWARD_MEAN_SOLVED = 900
         self.ACTION_REPEAT = 2

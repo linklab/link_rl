@@ -318,7 +318,9 @@ class Learner(mp.Process):
             print("[BEST TEST RESULT] MODEL SAVED!!!")
 
         # termination_conditions
-        if self.test_episode_reward_mean.value >= self.config.EPISODE_REWARD_MIN_SOLVED:
+
+        if self.test_episode_reward_mean.value >= self.config.EPISODE_REWARD_MEAN_SOLVED:
+
             # # Console ?? Wandb ?????? ???? ????
             # self.training_step.value += 1
 

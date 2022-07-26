@@ -303,7 +303,7 @@ def print_basic_info(observation_space=None, action_space=None, config=None):
     for param in dir(config):
         if not param.startswith("__") and param not in [
             "MODEL_PARAMETER", "NEURONS_PER_FULLY_CONNECTED_LAYER", "OUT_CHANNELS_PER_LAYER", "KERNEL_SIZE_PER_LAYER",
-            "STRIDE_PER_LAYER", "EPISODE_REWARD_MIN_SOLVED", "UNITY_ENV_DIR", "MODEL_SAVE_DIR", "PROJECT_HOME",
+            "STRIDE_PER_LAYER", "EPISODE_REWARD_MEAN_SOLVED", "UNITY_ENV_DIR", "MODEL_SAVE_DIR", "PROJECT_HOME",
             "LOSS_FUNCTION", "ENV_NAME", "MODEL_TYPE", "LEARNING_RATE", "ACTOR_LEARNING_RATE",
             "ALPHA_LEARNING_RATE", "MODEL_TYPE"
         ]:
@@ -390,7 +390,7 @@ def print_comparison_basic_info(observation_space, action_space, config_c):
         for param in dir(agent_config):
             if not param.startswith("__") and param not in [
                 "MODEL_PARAMETER", "NEURONS_PER_FULLY_CONNECTED_LAYER", "OUT_CHANNELS_PER_LAYER", "KERNEL_SIZE_PER_LAYER",
-                "STRIDE_PER_LAYER", "EPISODE_REWARD_MIN_SOLVED", "UNITY_ENV_DIR", "COMPARISON_RESULTS_SAVE_DIR",
+                "STRIDE_PER_LAYER", "EPISODE_REWARD_MEAN_SOLVED", "UNITY_ENV_DIR", "COMPARISON_RESULTS_SAVE_DIR",
                 "PROJECT_HOME", "LOSS_FUNCTION", "ENV_NAME", "MODEL_TYPE", "LEARNING_RATE", "ACTOR_LEARNING_RATE",
                 "ALPHA_LEARNING_RATE", "MODEL_TYPE"
             ]:
@@ -518,8 +518,8 @@ def print_env_info(observation_space, action_space, config):
         raise ValueError()
     print(action_space_str)
 
-    if hasattr(config, "EPISODE_REWARD_MIN_SOLVED"):
-        item1 = "{0}: {1:,}".format("EPISODE_REWARD_MIN_SOLVED", config.EPISODE_REWARD_MIN_SOLVED)
+    if hasattr(config, "EPISODE_REWARD_MEAN_SOLVED"):
+        item1 = "{0}: {1:,}".format("EPISODE_REWARD_MEAN_SOLVED", config.EPISODE_REWARD_MEAN_SOLVED)
         print("{0:55}".format(item1), end="\n")
 
 

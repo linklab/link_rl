@@ -7,4 +7,4 @@ class ConfigDmControlCheetahRun(ConfigDmControl):
         self.ENV_NAME = "dm_control_cheetah_run"
         self.DOMAIN_NAME = "cheetah"
         self.TASK_NAME = "run"
-        self.EPISODE_REWARD_MIN_SOLVED = 850
+        self.EPISODE_REWARD_MEAN_SOLVED = 850
