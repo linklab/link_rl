@@ -9,11 +9,11 @@ class Episode(object):
 
     def __init__(self, config, init_obs, n_out_action):
         self.config = config
-        self.episode_length = int(self.config.FIXED_TOTAL_TIME_STEPS_PER_EPISODE / config.ACTION_REPEAT)
-        self.obs = torch.empty((self.episode_length + 1, *init_obs.shape), dtype=torch.float32, device=self.config.DEVICE)
+        self.episode_step = int(self.config.FIXED_TOTAL_TIME_STEPS_PER_EPISODE / config.ACTION_REPEAT)
+        self.obs = torch.empty((self.episode_step + 1, *init_obs.shape), dtype=torch.float32, device=self.config.DEVICE)
         self.obs[0] = torch.tensor(init_obs, dtype=torch.float32, device=self.config.DEVICE)
-        self.action = torch.empty((self.episode_length, n_out_action), dtype=torch.float32, device=self.config.DEVICE)
-        self.reward = torch.empty((self.episode_length,), dtype=torch.float32, device=self.config.DEVICE)
+        self.action = torch.empty((self.episode_step, n_out_action), dtype=torch.float32, device=self.config.DEVICE)
+        self.reward = torch.empty((self.episode_step,), dtype=torch.float32, device=self.config.DEVICE)
         self.cumulative_reward = 0
         self.done = False
         self._idx = 0
