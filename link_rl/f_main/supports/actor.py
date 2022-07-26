@@ -1,4 +1,4 @@
-import time
+import random
 import warnings
 
 import numpy as np
@@ -74,6 +74,7 @@ class Actor(mp.Process):
         self.is_env_created.value = True
 
     def generate_transition_for_single_env(self):
+        self.train_env.seed(random.randint(0, 2**20))
         observation, info = self.train_env.reset(return_info=True)
         episode_step = 0
 
@@ -141,6 +142,7 @@ class Actor(mp.Process):
                         yield n_step_transition
 
             if done:
+                self.train_env.seed(random.randint(0, 2**20))
                 next_observation, info = self.train_env.reset(return_info=True)
                 episode_step = 0
 
@@ -161,6 +163,7 @@ class Actor(mp.Process):
         step = 0
         while True:
             # Collect trajectory
+            self.train_env.seed(random.randint(0, 2 ** 20))
             obs = self.train_env.reset()
 
             if type(obs) == LazyFrames:
@@ -196,6 +199,7 @@ class Actor(mp.Process):
             yield None
 
     def generate_transition_for_vectorized_env(self):
+        self.train_env.seed(random.randint(0, 2**20))
         observations, infos = self.train_env.reset(return_info=True)
         episode_steps = [0] * len(observations)
 

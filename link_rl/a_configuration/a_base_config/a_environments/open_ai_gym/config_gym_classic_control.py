@@ -5,6 +5,7 @@ class ConfigCartPole(ConfigGymClassicControl):
     def __init__(self):
         super(ConfigCartPole, self).__init__()
         self.ENV_NAME = "CartPole-v1"
+        self.PLAY_DELAY_BETWEEN_STEPS = 0.01
         self.EPISODE_REWARD_MEAN_SOLVED = 450
 
 

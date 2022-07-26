@@ -1,4 +1,5 @@
 import time
+import random
 
 import numpy as np
 from gym.spaces import Discrete, Box
@@ -36,7 +37,7 @@ class Tester:
     def episode_continue(self, done, episode_step):
         return not done
 
-    def play_for_testing(self, n_episodes, delay=0.0):
+    def play_for_testing(self, n_episodes):
         self.agent.model.eval()
 
         episode_reward_lst = []
@@ -64,6 +65,7 @@ class Tester:
             if all(render_before_reset_conditions):
                 self.test_env.render()
 
+            self.test_env.seed(random.randint(0, 2 ** 20))
             observation, info = self.test_env.reset(return_info=True)
 
             if self.agent.is_recurrent_model:
@@ -135,7 +137,7 @@ class Tester:
                 if self.play:
                     if not isinstance(self.config, ConfigGymAtari):
                         self.test_env.render()
-                    time.sleep(delay)
+                    time.sleep(self.config.PLAY_DELAY_BETWEEN_STEPS)
 
             episode_reward_lst.append(episode_reward)
             episode_step_lst.append(episode_step)
