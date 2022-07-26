@@ -50,7 +50,7 @@ def somogym_step_tester(env_name, render=False, debug=False):
     print(env.observation_space)
     print(env.action_space)
 
-    for ep in range(1, 3):
+    for ep in range(1, 10):
         # run_config["seed"] = 10110
         # env.seed(run_config["seed"])
         observation = env.reset()
