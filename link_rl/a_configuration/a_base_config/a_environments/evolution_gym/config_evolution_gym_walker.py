@@ -5,7 +5,7 @@ class ConfigEvolutionGymWalker(ConfigEvolutionGym):
     def __init__(self):
         super(ConfigEvolutionGymWalker, self).__init__()
         self.ENV_NAME = "Walker-v0"
-        self.EPISODE_REWARD_MIN_SOLVED = 1_000
+        self.EPISODE_REWARD_MEAN_SOLVED = 1_000
 
         self.ROBOT_SHAPE = (5, 5)
         # self.ROBOT_STRUCTURE, self.ROBOT_CONNECTIONS = sample_robot(self.ROBOT_SHAPE)
@@ -23,11 +23,11 @@ class ConfigEvolutionGymBridgeWalker(ConfigEvolutionGym):
     def __init__(self):
         super(ConfigEvolutionGymBridgeWalker, self).__init__()
         self.ENV_NAME = "BridgeWalker-v0"
-        self.EPISODE_REWARD_MIN_SOLVED = 1_000
+        self.EPISODE_REWARD_MEAN_SOLVED = 1_000
 
 
 class ConfigEvolutionGymCaveCrawler(ConfigEvolutionGym):
     def __init__(self):
         super(ConfigEvolutionGymCaveCrawler, self).__init__()
         self.ENV_NAME = "CaveCrawler-v0"
-        self.EPISODE_REWARD_MIN_SOLVED = 1_000
+        self.EPISODE_REWARD_MEAN_SOLVED = 1_000

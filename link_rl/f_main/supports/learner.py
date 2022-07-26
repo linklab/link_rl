@@ -41,8 +41,8 @@ class Learner(mp.Process):
 
         self.is_terminated = mp.Value('i', False)
 
-        self.test_episode_reward_min = mp.Value('d', 0.0)
-        self.test_episode_reward_min_step = mp.Value('d', 0.0)
+        self.test_episode_reward_mean = mp.Value('d', 0.0)
+        self.test_episode_reward_mean_step = mp.Value('d', 0.0)
 
         self.test_episode_reward_best = float('-inf')
 
@@ -274,7 +274,7 @@ class Learner(mp.Process):
         if self.config.AGENT_TYPE in [AgentType.A3C, AgentType.ASYNCHRONOUS_PPO]:
             self.shared_model_access_lock.acquire()
 
-        self.test_episode_reward_min.value, self.test_episode_reward_min_step.value = self.tester.play_for_testing(
+        self.test_episode_reward_mean.value, self.test_episode_reward_mean_step.value = self.tester.play_for_testing(
             self.config.N_TEST_EPISODES
         )
 
@@ -284,11 +284,11 @@ class Learner(mp.Process):
         elapsed_time = time.time() - self.train_start_time
         formatted_elapsed_time = time.strftime('%H:%M:%S', time.gmtime(elapsed_time))
 
-        test_str = "[Test: {0}, Training Step: {1:6,}] {2} Episodes Reward - Minimum: {3:.3f}".format(
+        test_str = "[Test: {0}, Training Step: {1:6,}] {2} Episodes Reward - Mean: {3:.3f}".format(
             self.test_idx.value + 1,
             self.training_step.value,
             self.config.N_TEST_EPISODES,
-            self.test_episode_reward_min.value
+            self.test_episode_reward_mean.value
         )
 
         if self.config.CUSTOM_ENV_STAT is not None:
@@ -299,19 +299,19 @@ class Learner(mp.Process):
         print(test_str)
 
         # model_save_conditions
-        if self.test_episode_reward_min.value > self.test_episode_reward_best:
-            self.test_episode_reward_best = self.test_episode_reward_min.value
+        if self.test_episode_reward_mean.value > self.test_episode_reward_best:
+            self.test_episode_reward_best = self.test_episode_reward_mean.value
             model_save(
                 agent=self.agent,
                 env_name=self.modified_env_name,
                 agent_type_name=self.config.AGENT_TYPE.name,
-                test_episode_reward_min=self.test_episode_reward_min.value,
+                test_episode_reward_mean=self.test_episode_reward_mean.value,
                 config=self.config
             )
             print("[BEST TEST RESULT] MODEL SAVED!!!")
 
         # termination_conditions
-        if self.test_episode_reward_min.value >= self.config.EPISODE_REWARD_MIN_SOLVED:
+        if self.test_episode_reward_mean.value >= self.config.EPISODE_REWARD_MEAN_SOLVED:
             # # Console ?? Wandb ?????? ???? ????
             # self.training_step.value += 1
 
@@ -323,7 +323,7 @@ class Learner(mp.Process):
                 agent=self.agent,
                 env_name=self.modified_env_name,
                 agent_type_name=self.config.AGENT_TYPE.name,
-                test_episode_reward_min=self.test_episode_reward_min.value,
+                test_episode_reward_mean=self.test_episode_reward_mean.value,
                 config=self.config
             )
             print("[TRAIN TERMINATION] TERMINATION CONDITION REACHES!!!")

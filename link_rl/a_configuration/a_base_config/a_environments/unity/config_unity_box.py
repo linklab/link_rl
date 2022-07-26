@@ -5,7 +5,7 @@ class ConfigUnityGymEnv:
 class Config3DBall(ConfigUnityGymEnv):
     def __init__(self):
         self.ENV_NAME = "Unity3DBall"
-        self.EPISODE_REWARD_MIN_SOLVED = 100
+        self.EPISODE_REWARD_MEAN_SOLVED = 100
         self.NO_TEST_GRAPHICS = True
         self.width = 600
         self.height = 600
@@ -15,7 +15,7 @@ class Config3DBall(ConfigUnityGymEnv):
 class ConfigWalker(ConfigUnityGymEnv):
     def __init__(self):
         self.ENV_NAME = "UnityWalker"
-        self.EPISODE_REWARD_MIN_SOLVED = 500
+        self.EPISODE_REWARD_MEAN_SOLVED = 500
         self.NO_TEST_GRAPHICS = True
         self.width = 600
         self.height = 600
@@ -25,7 +25,7 @@ class ConfigWalker(ConfigUnityGymEnv):
 class ConfigDrone(ConfigUnityGymEnv):
     def __init__(self):
         self.ENV_NAME = "UnityDrone"
-        self.EPISODE_REWARD_MIN_SOLVED = 200
+        self.EPISODE_REWARD_MEAN_SOLVED = 200
         self.NO_TEST_GRAPHICS = True
         self.width = 600
         self.height = 600
