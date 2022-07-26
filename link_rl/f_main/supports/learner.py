@@ -180,6 +180,8 @@ class Learner(mp.Process):
             if working_actor_message["done"]:
                 self.total_episodes.value += 1
                 self.last_episode_reward.value = working_actor_message["episode_reward"]
+                self.last_episode_step.value = working_actor_message['episode_step']
+
             self.total_time_step.value += working_actor_message["real_n_steps"]
 
         elif working_actor_message["message_type"] == "TRAIN":
