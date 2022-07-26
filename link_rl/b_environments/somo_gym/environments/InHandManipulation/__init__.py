@@ -2,7 +2,7 @@ import sys
 
 from gym.envs.registration import register
 
-default_max_episode_steps = 10_000_000
+default_max_episode_steps = 1_000
 
 register(
     id="InHandManipulation-v0",
