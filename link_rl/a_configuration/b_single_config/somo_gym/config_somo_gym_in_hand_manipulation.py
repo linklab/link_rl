@@ -14,7 +14,7 @@ class ConfigSomoGymInHandManipulationSac(ConfigBase, ConfigSomoGymInHandManipula
         ConfigSomoGymInHandManipulation.__init__(self)
         ConfigSac.__init__(self)
 
-        self.MAX_TRAINING_STEPS = 1_000_000
+        self.MAX_TRAINING_STEPS = 10_000_000
         self.BUFFER_CAPACITY = 1_000_000
         self.ALPHA_LEARNING_RATE = 0.000025
         self.MIN_ALPHA = 0.2
