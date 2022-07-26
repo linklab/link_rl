@@ -413,7 +413,8 @@ class TdmpcModelParameterizedPolicyAction(SingleModel):
                                nn.Linear(512, 1))
 
         original_parameterized_net = nn.Linear(512, self._n_out_actions)
-        scale_parameterized_net = nn.Linear(512, self._n_out_actions)
+        scale_parameterized_net = nn.Sequential(nn.Linear(512, self._n_out_actions),
+                                                nn.Sigmoid())
         bias_parameterized_net = nn.Linear(512, self._n_out_actions)
 
         told_model = TdmpcModelParameterizedPolicyAction.TOLDModel(
