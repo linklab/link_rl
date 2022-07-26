@@ -253,7 +253,7 @@ class Buffer:
                 (
                     next_observations,
                     # torch.unsqueeze(torch.from_numpy(self.next_observation_value.numpy()).to(self.config.DEVICE), dim=0)
-                    torch.unsqueeze(self.next_observation_value, dim=0)
+                    torch.unsqueeze(self.next_observation_value, dim=0).float()
                 ),
                 dim=0
             )
