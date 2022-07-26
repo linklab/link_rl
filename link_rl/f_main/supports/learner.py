@@ -5,7 +5,7 @@ import numpy as np
 import time
 
 from gym.spaces import Discrete
-
+from collections import deque
 from link_rl.f_main.supports.actor import Actor
 from link_rl.f_main.supports.tester import Tester
 
@@ -37,7 +37,9 @@ class Learner(mp.Process):
         self.last_episode_step = mp.Value('i', 0)
 
         self.train_start_time = None
+        self.mean_episode_reward = mp.Value('d', 0.0)
         self.last_episode_reward = mp.Value('d', 0.0)
+        self.mean_episode_list = deque(maxlen=10)
 
         self.is_terminated = mp.Value('i', False)
 
@@ -142,6 +144,7 @@ class Learner(mp.Process):
 
                 console_log(
                     total_episodes_v=self.total_episodes.value,
+                    mean_episode_reward_v=self.mean_episode_reward.value,
                     last_episode_reward_v=self.last_episode_reward.value,
                     n_rollout_transitions_v=self.total_time_step.value,
                     transition_rolling_rate_v=self.transition_rolling_rate.value,
@@ -179,7 +182,7 @@ class Learner(mp.Process):
         if working_actor_message["message_type"] == "TRANSITION":
             if working_actor_message["done"]:
                 self.total_episodes.value += 1
-                self.last_episode_reward.value = working_actor_message["episode_reward"]
+                self.mean_episode_reward.value = working_actor_message["episode_reward"]
             self.total_time_step.value += working_actor_message["real_n_steps"]
 
         elif working_actor_message["message_type"] == "TRAIN":
@@ -216,6 +219,8 @@ class Learner(mp.Process):
 
             self.episode_rewards[actor_id][env_id] = n_step_transition.cumulative_reward
             self.last_episode_reward.value = self.episode_rewards[actor_id][env_id]
+            self.mean_episode_list.append(self.episode_rewards[actor_id][env_id])
+            self.mean_episode_reward.value = sum(self.mean_episode_list) / len(self.mean_episode_list)
             self.last_episode_step.value = n_step_transition.episode_step
 
             self.episode_rewards[actor_id][env_id] = 0.0
@@ -226,6 +231,8 @@ class Learner(mp.Process):
             if n_step_transition.done:
                 self.total_episodes.value += 1
                 self.last_episode_reward.value = self.episode_rewards[actor_id][env_id]
+                self.mean_episode_list.append(self.episode_rewards[actor_id][env_id])
+                self.mean_episode_reward.value = sum(self.mean_episode_list) / len(self.mean_episode_list)
                 self.last_episode_step.value = n_step_transition.info['episode_step']
 
                 self.episode_rewards[actor_id][env_id] = 0.0

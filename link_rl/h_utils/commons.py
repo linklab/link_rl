@@ -524,14 +524,16 @@ def print_env_info(observation_space, action_space, config):
 
 
 def console_log(
-        total_episodes_v, last_episode_reward_v, n_rollout_transitions_v, transition_rolling_rate_v,
+        total_episodes_v, mean_episode_reward_v, last_episode_reward_v, n_rollout_transitions_v, transition_rolling_rate_v,
         train_steps_v, train_step_rate_v, agent, config
 ):
     console_log = "[Episodes: {0:5,}] " \
-                  "Last Episode Reward: {1:6.2f}, Rolling Outs: {2:7,} ({3:7.3f}/sec.), " \
-                  "Training Steps: {4:4,} ({5:.3f}/sec.), " \
+                  "Mean 10 Episode Reward: {1:6.2f}, Last Episode Reward: {2:6.2f}, " \
+                  "Rolling Outs: {3:7,} ({4:7.3f}/sec.), " \
+                  "Training Steps: {5:4,} ({6:.3f}/sec.), " \
         .format(
             total_episodes_v,
+            mean_episode_reward_v,
             last_episode_reward_v,
             n_rollout_transitions_v,
             transition_rolling_rate_v,
@@ -668,6 +670,7 @@ def wandb_log(learner, wandb_obj, config):
 
     log_dict = {
         "[TEST] Mean Episode Reward": learner.test_episode_reward_mean.value,
+        "[TRAIN] Mean Episode Reward": learner.mean_episode_reward.value,
         "[TRAIN] Last Episode Reward": learner.last_episode_reward.value,
         "[TRAIN] Last Episode Step": learner.last_episode_step.value,
         "Episode": learner.total_episodes.value,
