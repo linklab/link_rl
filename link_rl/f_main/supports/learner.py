@@ -42,7 +42,7 @@ class Learner(mp.Process):
         self.is_terminated = mp.Value('i', False)
 
         self.test_episode_reward_mean = mp.Value('d', 0.0)
-        self.test_episode_reward_min_step = mp.Value('d', 0.0)
+        self.test_episode_reward_mean_step = mp.Value('d', 0.0)
 
         self.test_episode_reward_best = float('-inf')
 
@@ -274,7 +274,7 @@ class Learner(mp.Process):
         if self.config.AGENT_TYPE in [AgentType.A3C, AgentType.ASYNCHRONOUS_PPO]:
             self.shared_model_access_lock.acquire()
 
-        self.test_episode_reward_mean.value, self.test_episode_reward_min_step.value = self.tester.play_for_testing(
+        self.test_episode_reward_mean.value, self.test_episode_reward_mean_step.value = self.tester.play_for_testing(
             self.config.N_TEST_EPISODES
         )
 

@@ -155,7 +155,7 @@ class Tester:
 
         test_episode_reward_mean = sum(episode_reward_lst) / len(episode_reward_lst)
 
-        min_idx_lst = [i for i, val in enumerate(episode_reward_lst) if val == test_episode_reward_min]
+        min_idx_lst = [i for i, val in enumerate(episode_reward_lst) if val == test_episode_reward_mean]
 
         episode_reward_min_step_sum = 0.0
         for i in min_idx_lst:
