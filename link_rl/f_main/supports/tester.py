@@ -154,13 +154,13 @@ class Tester:
         self.agent.model.train()
 
         test_episode_reward_mean = sum(episode_reward_lst) / len(episode_reward_lst)
+        #
+        # min_idx_lst = [i for i, val in enumerate(episode_reward_lst) if val == test_episode_reward_mean]
+        #
+        # episode_reward_min_step_sum = 0.0
+        # for i in min_idx_lst:
+        #     episode_reward_min_step_sum += episode_step_lst[i]
+        #
+        # test_episode_reward_min_step = episode_reward_min_step_sum / len(min_idx_lst)
 
-        min_idx_lst = [i for i, val in enumerate(episode_reward_lst) if val == test_episode_reward_mean]
-
-        episode_reward_min_step_sum = 0.0
-        for i in min_idx_lst:
-            episode_reward_min_step_sum += episode_step_lst[i]
-
-        test_episode_reward_min_step = episode_reward_min_step_sum / len(min_idx_lst)
-
-        return test_episode_reward_mean, test_episode_reward_min_step
+        return test_episode_reward_mean
