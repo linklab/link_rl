@@ -683,6 +683,9 @@ config = ConfigSomoGymInHandManipulationSac()
 from link_rl.a_configuration.b_single_config.somo_gym.config_somo_gym_in_hand_manipulation import ConfigSomoGymInHandManipulationPpo
 config = ConfigSomoGymInHandManipulationPpo()
 
+from link_rl.a_configuration.b_single_config.somo_gym.config_somo_gym_in_hand_manipulation import ConfigSomoGymInHandManipulationAsynchronousPpo
+config = ConfigSomoGymInHandManipulationAsynchronousPpo()
+
 if __name__ == "__main__":
     from link_rl.h_utils.commons import print_basic_info, get_env_info, set_config
 
