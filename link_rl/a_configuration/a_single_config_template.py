@@ -624,6 +624,15 @@ config = ConfigEvolutionGymClimberV1Sac()
 from link_rl.a_configuration.b_single_config.evolution_gym.config_evolution_gym_climber import ConfigEvolutionGymClimberV2Sac
 config = ConfigEvolutionGymClimberV2Sac()
 
+from link_rl.a_configuration.b_single_config.evolution_gym.config_evolution_gym_climber import ConfigEvolutionGymClimberV0Ppo
+config = ConfigEvolutionGymClimberV0Ppo()
+
+from link_rl.a_configuration.b_single_config.evolution_gym.config_evolution_gym_climber import ConfigEvolutionGymClimberV2Ppo
+config = ConfigEvolutionGymClimberV2Ppo()
+
+from link_rl.a_configuration.b_single_config.evolution_gym.config_evolution_gym_climber import ConfigEvolutionGymClimberV1Ppo
+config = ConfigEvolutionGymClimberV1Ppo()
+
 from link_rl.a_configuration.b_single_config.evolution_gym.config_evolution_gym_climber import ConfigEvolutionGymClimberV0Tdmpc
 config = ConfigEvolutionGymClimberV0Tdmpc()
 
@@ -645,6 +654,15 @@ config = ConfigEvolutionGymBridgeWalkerSac()
 from link_rl.a_configuration.b_single_config.evolution_gym.config_evolution_gym_walker import ConfigEvolutionGymCaveCrawlerSac
 config = ConfigEvolutionGymCaveCrawlerSac()
 
+from link_rl.a_configuration.b_single_config.evolution_gym.config_evolution_gym_walker import ConfigEvolutionGymWalkerPpo
+config = ConfigEvolutionGymWalkerPpo()
+
+from link_rl.a_configuration.b_single_config.evolution_gym.config_evolution_gym_walker import ConfigEvolutionGymBridgeWalkerPpo
+config = ConfigEvolutionGymBridgeWalkerPpo()
+
+from link_rl.a_configuration.b_single_config.evolution_gym.config_evolution_gym_walker import ConfigEvolutionGymCaveCrawlerPpo
+config = ConfigEvolutionGymCaveCrawlerPpo()
+
 from link_rl.a_configuration.b_single_config.evolution_gym.config_evolution_gym_walker import ConfigEvolutionGymWalkerTdmpc
 config = ConfigEvolutionGymWalkerTdmpc()
 
@@ -661,6 +679,9 @@ config = ConfigEvolutionGymCaveCrawlerTdmpc()
 
 from link_rl.a_configuration.b_single_config.somo_gym.config_somo_gym_in_hand_manipulation import ConfigSomoGymInHandManipulationSac
 config = ConfigSomoGymInHandManipulationSac()
+
+from link_rl.a_configuration.b_single_config.somo_gym.config_somo_gym_in_hand_manipulation import ConfigSomoGymInHandManipulationPpo
+config = ConfigSomoGymInHandManipulationPpo()
 
 if __name__ == "__main__":
     from link_rl.h_utils.commons import print_basic_info, get_env_info, set_config
