@@ -138,7 +138,7 @@ class OnPolicyAgent(Agent):
         return returns
 
     def get_target_values_and_advantages(self):
-        combined_observations = torch.vstack([self.observations, self.next_observations[-1:]])
+        combined_observations = torch.vstack([self.observations, self.next_observations[-1:]]).to(torch.float32)
         combined_values = self.critic_forward(combined_observations)
 
         # values.shape: (32, 1), next_values.shape: (32, 1)

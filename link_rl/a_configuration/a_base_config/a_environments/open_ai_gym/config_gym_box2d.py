@@ -12,6 +12,7 @@ class ConfigLunarLanderContinuous(ConfigGymBox2D):
     def __init__(self):
         super(ConfigLunarLanderContinuous, self).__init__()
         self.ENV_NAME = "LunarLanderContinuous-v2"
+        self.PLAY_DELAY_BETWEEN_STEPS = 0.01
         self.EPISODE_REWARD_MEAN_SOLVED = 190
 
 

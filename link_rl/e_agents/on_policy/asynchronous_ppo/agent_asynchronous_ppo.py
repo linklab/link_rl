@@ -33,7 +33,7 @@ class WorkingAsynchronousPpo(AgentPpo):
             #############################################
             #  Critic (Value) Loss 산출 & Update - BEGIN #
             #############################################
-            values = self.critic_model.v(self.observations)
+            values = self.critic_forward(self.observations)
             critic_loss = self.get_critic_loss(values=values, detached_target_values=detached_target_values)
 
             # calculate local gradients and push local worker parameters to master parameters

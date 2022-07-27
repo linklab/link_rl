@@ -146,15 +146,9 @@ def model_load(agent, env_name, agent_type_name, config):
                 os.path.join(model_name_dir, encoder_model_file_name), map_location=torch.device('cpu')
             )
 
-            if config.AGENT_TYPE in [AgentType.A3C, AgentType.ASYNCHRONOUS_PPO]:
-                for working_agent in agent:
-                    working_agent.actor_model.load_state_dict(actor_model_params)
-                    working_agent.critic_model.load_state_dict(critic_model_params)
-                    working_agent.encoder.load_state_dict(encoder_model_params)
-            else:
-                agent.actor_model.load_state_dict(actor_model_params)
-                agent.critic_model.load_state_dict(critic_model_params)
-                agent.encoder.load_state_dict(encoder_model_params)
+            agent.actor_model.load_state_dict(actor_model_params)
+            agent.critic_model.load_state_dict(critic_model_params)
+            agent.encoder.load_state_dict(encoder_model_params)
         else:
             model_file_name = model_file_dict[chosen_number][0]
             encoder_model_file_name = model_file_dict[chosen_number][1]

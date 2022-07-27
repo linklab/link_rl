@@ -79,7 +79,7 @@ def main_play(n_episodes):
     )
 
     if isinstance(config, ConfigDmControl):
-        test_env = get_single_env(config, config.NO_TEST_GRAPHICS, train_mode=False)
+        test_env = get_single_env(config, config.NO_TEST_GRAPHICS, play=True)
         dm_control_play(test_env, agent, n_episodes=1)
         test_env.close()
     else:
