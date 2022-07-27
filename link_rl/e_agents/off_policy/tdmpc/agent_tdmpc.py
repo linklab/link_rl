@@ -39,6 +39,7 @@ class AgentTdmpc(OffPolicyAgent):
         self.total_loss = mp.Value('d', 0.0)
         self.weighted_loss = mp.Value('d', 0.0)
         self.grad_norm = mp.Value('d', 0.0)
+        self.action_type = mp.Value('d', 0.0)  # 0 : plan action, 1 : policy action
 
         self.training_steps = 0
 
@@ -150,8 +151,10 @@ class AgentTdmpc(OffPolicyAgent):
                 pi_action_q = torch.min(*self.model.Q(torch.unsqueeze(z[0], 0), pi_action))
                 plan_action_q = torch.min(*self.model.Q(torch.unsqueeze(z[0], 0), torch.unsqueeze(a, 0)))
                 if pi_action_q > plan_action_q:
-                    return pi_action
+                    self.action_type.value = 1.0
+                    return pi_action[0]
                 else:
+                    self.action_type.value = 0.0
                     return a
 
         return a

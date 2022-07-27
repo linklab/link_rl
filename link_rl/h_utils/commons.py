@@ -560,10 +560,10 @@ def console_log(
             agent.last_critic_loss.value, agent.last_actor_objective.value
         )
     elif config.AGENT_TYPE == AgentType.TDMPC:
-        console_log += "consistency_loss: {0:7.3f}, value_loss: {1:7.3f}, policy_loss: {2:7.3f}, " \
-                       "reward_loss: {3:7.3f}, total_loss: {4:7.3f}".format(
-            agent.consistency_loss.value, agent.value_loss.value, agent.pi_loss.value, agent.reward_loss.value,
-            agent.total_loss.value
+        console_log += "action_type: {0}, consistency_loss: {1:7.3f}, value_loss: {2:7.3f}, policy_loss: {3:7.3f}, " \
+                       "reward_loss: {4:7.3f}, total_loss: {5:7.3f}".format(
+            agent.action_type.value, agent.consistency_loss.value, agent.value_loss.value, agent.pi_loss.value,
+            agent.reward_loss.value, agent.total_loss.value
         )
     else:
         pass
@@ -704,6 +704,7 @@ def wandb_log(learner, wandb_obj, config):
         log_dict["Reward Loss"] = learner.agent.reward_loss.value
         log_dict["Total Loss"] = learner.agent.total_loss.value
         log_dict["Weighted Loss"] = learner.agent.weighted_loss.value
+        log_dict["Action Type"] = learner.agent.action_type.value
     else:
         pass
 
