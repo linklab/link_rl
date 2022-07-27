@@ -148,7 +148,7 @@ class AgentTdmpc(OffPolicyAgent):
             if self.training_steps > self.config.CHOICE_ACTION_START_TRAINING_STEPS:
                 pi_action = self.model.pi(torch.unsqueeze(z[0], 0), self.std)
                 pi_action_q = torch.min(*self.model.Q(torch.unsqueeze(z[0], 0), pi_action))
-                plan_action_q = torch.min(*self.model.Q(torch.unsqueeze(z[0], 0), a))
+                plan_action_q = torch.min(*self.model.Q(torch.unsqueeze(z[0], 0), torch.unsqueeze(a, 0)))
                 if pi_action_q > plan_action_q:
                     return pi_action
                 else:
