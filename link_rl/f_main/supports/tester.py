@@ -126,7 +126,8 @@ class Tester:
                             raise ValueError()
                     else:
                         raise ValueError()
-
+                if not type(scaled_action) == np.ndarray:
+                    scaled_action = scaled_action.cpu().numpy()
                 next_observation, reward, done, info = self.test_env.step(scaled_action)
 
                 episode_step += 1

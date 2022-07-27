@@ -40,6 +40,8 @@ class AgentTdmpc(OffPolicyAgent):
         self.weighted_loss = mp.Value('d', 0.0)
         self.grad_norm = mp.Value('d', 0.0)
 
+        self.training_steps = 0
+
     def get_action(self, obs, mode=AgentMode.TRAIN, step=0, t0=False):
         if mode == AgentMode.PLAY:
             action = self.get_action_from_pi(obs)
@@ -141,7 +143,17 @@ class AgentTdmpc(OffPolicyAgent):
             self._train_prev_mean = mean
         else:
             self._test_prev_mean = mean
-            a = a.cpu().numpy()
+
+        if self.config.CHOICE_ACTION_POLICY_AND_PLAN_BY_Q:
+            if self.training_steps > self.config.CHOICE_ACTION_START_TRAINING_STEPS:
+                pi_action = self.model.pi(torch.unsqueeze(z[0], 0), self.std)
+                pi_action_q = torch.min(*self.model.Q(torch.unsqueeze(z[0], 0), pi_action))
+                plan_action_q = torch.min(*self.model.Q(torch.unsqueeze(z[0], 0), a))
+                if pi_action_q > plan_action_q:
+                    return pi_action
+                else:
+                    return a
+
         return a
 
     def update_pi(self, zs):
@@ -173,6 +185,7 @@ class AgentTdmpc(OffPolicyAgent):
 
     def train_tdmpc(self, training_steps_v):
         """Main update function. Corresponds to one iteration of the TOLD model learning."""
+        self.training_steps += 1
         obs, next_obses, action, reward, idxs, important_sampling_weights = \
             self.observations, self.next_observations, self.actions, self.rewards, self.idx, self.important_sampling_weights
         self.optim.zero_grad(set_to_none=True)

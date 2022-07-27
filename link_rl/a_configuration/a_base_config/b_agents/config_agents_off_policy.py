@@ -129,3 +129,7 @@ class ConfigTdmpc(ConfigOffPolicyAgent):
 
         self.TARGET_MODEL_UPDATE_FREQ = 2
         self.TEST_INTERVAL_TRAINING_STEPS = 2500
+
+        ####################IDEA CONFIG#######################
+        self.CHOICE_ACTION_POLICY_AND_PLAN_BY_Q = False
+        self.CHOICE_ACTION_START_TRAINING_STEPS = 100_000
