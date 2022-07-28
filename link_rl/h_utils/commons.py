@@ -19,6 +19,8 @@ from link_rl.a_configuration.a_base_config.a_environments.ai_birds.config_ai_bir
 from link_rl.a_configuration.a_base_config.a_environments.competition_olympics import ConfigCompetitionOlympics
 from link_rl.a_configuration.a_base_config.a_environments.dm_control import ConfigDmControl
 from link_rl.a_configuration.a_base_config.a_environments.evolution_gym import ConfigEvolutionGym
+from link_rl.a_configuration.a_base_config.a_environments.evolution_gym.config_evolution_gym_walker import \
+    ConfigEvolutionGymWalker
 from link_rl.a_configuration.a_base_config.a_environments.gym_robotics import ConfigGymRobotics
 from link_rl.a_configuration.a_base_config.a_environments.open_ai_gym.config_gym_atari import ConfigGymAtari
 from link_rl.a_configuration.a_base_config.a_environments.open_ai_gym.config_gym_box2d import ConfigHardcoreBipedalWalker, \
@@ -30,7 +32,7 @@ from link_rl.b_environments import wrapper
 from link_rl.b_environments.gym_robotics.gym_robotics_wrapper import GymRoboticsEnvWrapper
 from link_rl.b_environments.competition_olympics.competition_olympics_env_wrapper import CompetitionOlympicsEnvWrapper
 from link_rl.b_environments.wrapper import FrameStackVectorizedEnvWrapper, ReturnInfoEnvWrapper, \
-    EvoGymActionMinusOneWrapper
+    EvoGymActionMinusOneWrapper, EvoGymWalkerActionMinusOneTimeLimmitedWrapper
 from link_rl.h_utils.types import AgentType, ActorCriticAgentTypes, LayerActivationType, LossFunctionType, \
     OffPolicyAgentTypes, OnPolicyAgentTypes
 
@@ -921,7 +923,10 @@ def get_train_env(config, no_graphics=True):
                 env = ReturnInfoEnvWrapper(gym.make(
                     config.ENV_NAME, body=config.ROBOT_STRUCTURE, connections=get_full_connectivity(config.ROBOT_STRUCTURE)
                 ))
-                env = EvoGymActionMinusOneWrapper(env)
+                if isinstance(config, ConfigEvolutionGymWalker):
+                    env = EvoGymWalkerActionMinusOneTimeLimmitedWrapper(env)
+                else:
+                    env = EvoGymActionMinusOneWrapper(env)
 
             ################
             #   Somo Gym   #

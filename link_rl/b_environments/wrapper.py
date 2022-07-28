@@ -391,8 +391,14 @@ class ReturnInfoEnvWrapper(gym.Wrapper):
         return observation, info
 
 
+class EvoGymActionMinusOneWrapper(gym.Wrapper):
+    def step(self, action):
+        observation, reward, done, info = self.env.step(action - 1)
+        return observation, reward, done, info
+
+
 # For Evo Gym Walker
-class EvoGymActionMinusOneTimeLimmitedWrapper(gym.Wrapper):
+class EvoGymWalkerActionMinusOneTimeLimmitedWrapper(gym.Wrapper):
     def __init__(self, env, config):
         super().__init__(env)
         self.config = config

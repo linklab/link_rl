@@ -7,15 +7,13 @@ class ConfigEvolutionGymWalker(ConfigEvolutionGym):
         self.ENV_NAME = "Walker-v0"
         self.EPISODE_REWARD_MEAN_SOLVED = 1_000
 
-        self.ROBOT_SHAPE = (5, 5)
+        self.ROBOT_SHAPE = (3, 3)
         # self.ROBOT_STRUCTURE, self.ROBOT_CONNECTIONS = sample_robot(self.ROBOT_SHAPE)
 
         self.ROBOT_STRUCTURE = np.asarray([
-            [3, 3, 3, 3, 3],
-            [3, 3, 3, 3, 3],
-            [3, 3, 0, 3, 3],
-            [3, 3, 0, 3, 3],
-            [3, 3, 0, 3, 3],
+            [3, 3, 3],
+            [3, 0, 3],
+            [3, 0, 3]
         ])
 
 
