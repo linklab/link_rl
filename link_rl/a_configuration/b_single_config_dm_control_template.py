@@ -112,6 +112,41 @@ from link_rl.a_configuration.b_single_config.dm_control.config_dm_control_finger
 config = ConfigDmControlFingerSpinTdmpc()
 
 
+#################################
+## DM_CONTROL_FINGER_TURN_HARD ##
+#################################
+from link_rl.a_configuration.b_single_config.dm_control.config_dm_control_finger_turn_hard import ConfigDmControlFingerTurnHardSac
+config = ConfigDmControlFingerTurnHardSac()
+
+from link_rl.a_configuration.b_single_config.dm_control.config_dm_control_finger_turn_hard import ConfigDmControlFingerTurnHardTdmpc
+config = ConfigDmControlFingerTurnHardTdmpc()
+
+
+#################################
+## DM_CONTROL_Acrobot_Swing_Up ##
+#################################
+from link_rl.a_configuration.b_single_config.dm_control.config_dm_control_acrobot_swing_up import ConfigDmControlAcrobotSwingUpA2c
+config = ConfigDmControlAcrobotSwingUpA2c()
+
+from link_rl.a_configuration.b_single_config.dm_control.config_dm_control_acrobot_swing_up import ConfigDmControlAcrobotSwingUpA3c
+config = ConfigDmControlAcrobotSwingUpA3c()
+
+from link_rl.a_configuration.b_single_config.dm_control.config_dm_control_acrobot_swing_up import ConfigDmControlAcrobotSwingUpPpo
+config = ConfigDmControlAcrobotSwingUpPpo()
+
+from link_rl.a_configuration.b_single_config.dm_control.config_dm_control_acrobot_swing_up import ConfigDmControlAcrobotSwingUpDdpg
+config = ConfigDmControlAcrobotSwingUpDdpg()
+
+from link_rl.a_configuration.b_single_config.dm_control.config_dm_control_acrobot_swing_up import ConfigDmControlAcrobotSwingUpTd3
+config = ConfigDmControlAcrobotSwingUpTd3()
+
+from link_rl.a_configuration.b_single_config.dm_control.config_dm_control_acrobot_swing_up import ConfigDmControlAcrobotSwingUpSac
+config = ConfigDmControlAcrobotSwingUpSac()
+
+from link_rl.a_configuration.b_single_config.dm_control.config_dm_control_acrobot_swing_up import ConfigDmControlAcrobotSwingUpTdmpc
+config = ConfigDmControlAcrobotSwingUpTdmpc()
+
+
 #############################
 ## DM_CONTROL_HUMANOID_RUN ##
 #############################
