@@ -1,7 +1,6 @@
 import collections
 import datetime
 import numpy as np
-from torch import nn
 import torch.nn.functional as F
 import glob
 import os.path
@@ -33,8 +32,22 @@ from link_rl.b_environments.gym_robotics.gym_robotics_wrapper import GymRobotics
 from link_rl.b_environments.competition_olympics.competition_olympics_env_wrapper import CompetitionOlympicsEnvWrapper
 from link_rl.b_environments.wrapper import FrameStackVectorizedEnvWrapper, ReturnInfoEnvWrapper, \
     EvoGymActionMinusOneWrapper, EvoGymWalkerActionMinusOneTimeLimmitedWrapper
-from link_rl.h_utils.types import AgentType, ActorCriticAgentTypes, LayerActivationType, LossFunctionType, \
+from link_rl.h_utils.types import AgentType, ActorCriticAgentTypes, LossFunctionType, \
     OffPolicyAgentTypes, OnPolicyAgentTypes
+
+
+def get_current_best_test_episode_reward(env_name, agent_type_name, config):
+    model_file_list = []
+    model_name_dir = os.path.join(config.MODEL_SAVE_DIR, env_name, agent_type_name, config.MODEL_TYPE)
+    if os.path.isdir(model_name_dir):
+        model_file_list = glob.glob(os.path.join(model_name_dir, "*.pth"))
+
+    if len(model_file_list) > 0:
+        model_file_list.sort(key=lambda x: float(x.split(os.sep)[-1].split("_")[0]))
+        best_episode_reward = model_file_list[-1].split("/")[-1].split('_')[0]
+        return float(best_episode_reward)
+    else:
+        return float('-inf')
 
 
 def model_save(agent, env_name, agent_type_name, test_episode_reward_mean, config):

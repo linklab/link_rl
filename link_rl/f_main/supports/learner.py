@@ -12,7 +12,8 @@ from link_rl.f_main.supports.tester import Tester
 warnings.filterwarnings('ignore')
 warnings.simplefilter("ignore")
 
-from link_rl.h_utils.commons import model_save, console_log, wandb_log, get_wandb_obj
+from link_rl.h_utils.commons import model_save, console_log, wandb_log, get_wandb_obj, \
+    get_current_best_test_episode_reward
 from link_rl.h_utils.types import AgentType, OnPolicyAgentTypes, OffPolicyAgentTypes, HerConstant
 
 
@@ -309,8 +310,13 @@ class Learner(mp.Process):
         print(test_str)
 
         # model_save_conditions
-        if self.test_episode_reward_mean.value > self.test_episode_reward_best:
-            self.test_episode_reward_best = self.test_episode_reward_mean.value
+        current_best_test_episode_reward = get_current_best_test_episode_reward(
+            env_name=self.modified_env_name,
+            agent_type_name=self.config.AGENT_TYPE.name,
+            config=self.config
+        )
+        if self.test_episode_reward_mean.value > current_best_test_episode_reward:
+            # self.test_episode_reward_best = self.test_episode_reward_mean.value
             model_save(
                 agent=self.agent,
                 env_name=self.modified_env_name,
@@ -344,3 +350,6 @@ class Learner(mp.Process):
                 self.single_actor.is_terminated.value = True
 
         print("*" * 150)
+
+
+
