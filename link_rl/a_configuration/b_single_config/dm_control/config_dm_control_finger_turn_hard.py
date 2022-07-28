@@ -14,6 +14,7 @@ class ConfigDmControlFingerTurnHardTdmpc(ConfigBase, ConfigDmControlFingerTurnHa
         ConfigTdmpc.__init__(self)
 
         self.MAX_TRAINING_STEPS = 1_000_000
+        self.ACTION_REPEAT = 2
         self.MODEL_TYPE = TDMPC_MODEL.TdmpcModel.value
 
 
@@ -24,4 +25,5 @@ class ConfigDmControlFingerTurnHardSac(ConfigBase, ConfigDmControlFingerTurnHard
         ConfigSac.__init__(self)
 
         self.MAX_TRAINING_STEPS = 1_000_000
+        self.ACTION_REPEAT = 2
         self.MODEL_TYPE = SAC_MODEL.ContinuousSacModel.value
