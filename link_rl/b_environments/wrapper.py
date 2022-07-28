@@ -391,7 +391,27 @@ class ReturnInfoEnvWrapper(gym.Wrapper):
         return observation, info
 
 
-class EvoGymActionMinusOneWrapper(gym.Wrapper):
+# For Evo Gym Walker
+class EvoGymActionMinusOneTimeLimmitedWrapper(gym.Wrapper):
+    def __init__(self, env, config):
+        super().__init__(env)
+        self.config = config
+        self.episode_steps = 0
+        self.done_flag = False
+
     def step(self, action):
-        observation, reward, done, info = self.env.step(action - 1)
-        return observation, reward, done, info
+        self.episode_steps += 1
+        if not self.done_flag:
+            observation, reward, done, info = self.env.step(action - 1)
+            self.done_flag = done
+            if not self.config.FIXED_TOTAL_TIME_STEPS_PER_EPISODE == self.episode_steps and self.done_flag:
+                return np.zeros(shape=self.env.observation_space.shape, dtype=np.float32), -1., False, {}
+            else:
+                return observation, reward, done, info
+        else:
+            if self.config.FIXED_TOTAL_TIME_STEPS_PER_EPISODE == self.episode_steps:
+                self.episode_steps = 0
+                self.done_flag = False
+                return np.zeros(shape=self.env.observation_space.shape, dtype=np.float32), -1., True, {}
+            else:
+                return np.zeros(shape=self.env.observation_space.shape, dtype=np.float32), -1., False, {}
