@@ -8,6 +8,7 @@ from link_rl.d_models.d_basic_actor_critic_model import BASIC_ACTOR_CRITIC_MODEL
 from link_rl.d_models.e_ddpg_model import DDPG_MODEL
 from link_rl.d_models.f_td3_model import TD3_MODEL
 from link_rl.d_models.g_sac_model import SAC_MODEL
+from link_rl.d_models.h_tdmpc_model import TDMPC_MODEL
 
 
 class ConfigDmControlCartPoleThreePolesA2c(ConfigBase, ConfigDmControlCartpoleThreePoles, ConfigA2c):
