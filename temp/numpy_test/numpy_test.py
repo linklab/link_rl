@@ -22,4 +22,4 @@ print(c)
 
 b = np.array([[0, 0]])
 b[0] = np.array([1])
-print(b)
+print(b, type(b))

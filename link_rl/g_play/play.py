@@ -47,10 +47,11 @@ def dm_control_play(env, agent, n_episodes):
         if config.AGENT_TYPE not in [AgentType.TDMPC]:
             observation = np.expand_dims(observation, axis=0)
         actions = agent.get_action(observation, mode=AgentMode.PLAY)
-        actions_np = np.asarray(actions)
+        if not type(actions) == np.ndarray:
+            actions = actions.cpu().numpy()
         env.action_repeat_for_play(actions)
         dm_control_episode_reward += time_step.reward or 0
-        return actions_np
+        return actions
 
     for i in range(n_episodes):
         env.reset()
