@@ -177,6 +177,16 @@ from link_rl.a_configuration.b_single_config.dm_control.config_dm_control_humano
 config = ConfigDmControlHumanoidWalkTdmpc()
 
 
+###########################
+## DM_CONTROL_HOPPER_HOP ##
+###########################
+from link_rl.a_configuration.b_single_config.dm_control.config_dm_control_hopper_hop import ConfigDmControlHopperHopSac
+config = ConfigDmControlHopperHopSac()
+
+from link_rl.a_configuration.b_single_config.dm_control.config_dm_control_hopper_hop import ConfigDmControlHopperHopTdmpc
+config = ConfigDmControlHopperHopTdmpc()
+
+
 if __name__ == "__main__":
     from link_rl.h_utils.commons import print_basic_info, get_env_info, set_config
 
