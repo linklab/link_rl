@@ -44,10 +44,11 @@ class AgentTdmpc(OffPolicyAgent):
         self.training_steps = 0
 
     def get_action(self, obs, mode=AgentMode.TRAIN, step=0, t0=False):
-        if mode == AgentMode.PLAY:
-            action = self.get_action_from_pi(obs)
-        else:
-            action = self.plan(obs, mode, step, t0)
+        # if mode == AgentMode.PLAY:
+        #     action = self.get_action_from_pi(obs)
+        # else:
+        #     action = self.plan(obs, mode, step, t0)
+        action = self.plan(obs, mode, step, t0)
         return action
 
     # def state_dict(self):
