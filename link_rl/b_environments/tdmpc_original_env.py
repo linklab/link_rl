@@ -7,7 +7,10 @@ from dm_control.suite.wrappers import action_scale, pixels
 from dm_env import StepType, specs
 import gym
 import warnings
-warnings.filterwarnings("ignore", category=DeprecationWarning) 
+
+from link_rl.b_environments.wrapper import ReturnInfoEnvWrapper
+
+warnings.filterwarnings("ignore", category=DeprecationWarning)
 
 
 class ExtendedTimeStep(NamedTuple):
@@ -282,6 +285,7 @@ def make_env(config):
 	env = ExtendedTimeStepWrapper(env)
 	env = TimeStepToGymWrapper(env, config.DOMAIN_NAME, config.TASK_NAME, config.ACTION_REPEAT, config.FROM_PIXELS)
 	env = DefaultDictWrapper(env)
+	env = ReturnInfoEnvWrapper(env)
 
 	# # Convenience
 	# cfg.obs_shape = tuple(int(x) for x in env.observation_space.shape)
