@@ -244,7 +244,7 @@ class TimeStepToGymWrapper(object):
 	def close(self):
 		pass
 
-	def seed(self):
+	def seed(self, *args):
 		pass
 
 
