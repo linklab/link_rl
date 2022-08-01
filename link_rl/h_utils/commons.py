@@ -889,20 +889,22 @@ def get_train_env(config, no_graphics=True):
             #################
             elif isinstance(config, ConfigDmControl):
                 import link_rl.b_environments.dm_control as dmc_gym
+                from link_rl.b_environments.tdmpc_original_env import make_env
                 assert hasattr(config, "DOMAIN_NAME")
                 assert hasattr(config, "TASK_NAME")
-                if config.FROM_PIXELS:
-                    env = dmc_gym.make(
-                        domain_name=config.DOMAIN_NAME, task_name=config.TASK_NAME, seed=config.SEED,
-                        from_pixels=True, visualize_reward=False, frame_skip=config.ACTION_REPEAT,
-                        height=config.IMG_SIZE, width=config.IMG_SIZE, frame_stack=config.FRAME_STACK,
-                        grayscale=config.GRAY_SCALE
-                    )
-                else:
-                    env = dmc_gym.make(
-                        domain_name=config.DOMAIN_NAME, task_name=config.TASK_NAME, seed=config.SEED,
-                        frame_skip=config.ACTION_REPEAT, height=config.IMG_SIZE, width=config.IMG_SIZE
-                    )
+                # if config.FROM_PIXELS:
+                #     env = dmc_gym.make(
+                #         domain_name=config.DOMAIN_NAME, task_name=config.TASK_NAME, seed=config.SEED,
+                #         from_pixels=True, visualize_reward=False, frame_skip=config.ACTION_REPEAT,
+                #         height=config.IMG_SIZE, width=config.IMG_SIZE, frame_stack=config.FRAME_STACK,
+                #         grayscale=config.GRAY_SCALE
+                #     )
+                # else:
+                #     env = dmc_gym.make(
+                #         domain_name=config.DOMAIN_NAME, task_name=config.TASK_NAME, seed=config.SEED,
+                #         frame_skip=config.ACTION_REPEAT, height=config.IMG_SIZE, width=config.IMG_SIZE
+                #     )
+                env = make_env(config)
 
             #############
             #   Atari   #
@@ -1070,17 +1072,19 @@ def get_single_env(config, no_graphics=True, play=False, agent=None):
     #################
     elif isinstance(config, ConfigDmControl):
         import link_rl.b_environments.dm_control as dmc_gym
+        from link_rl.b_environments.tdmpc_original_env import make_env
         assert hasattr(config, "DOMAIN_NAME")
         assert hasattr(config, "TASK_NAME")
-        if config.FROM_PIXELS:
-            single_env = dmc_gym.make(
-                domain_name=config.DOMAIN_NAME, task_name=config.TASK_NAME, seed=config.SEED,
-                from_pixels=True, visualize_reward=False, frame_skip=config.ACTION_REPEAT,
-                height=config.IMG_SIZE, width=config.IMG_SIZE, frame_stack=config.FRAME_STACK, grayscale=config.GRAY_SCALE
-            )
-        else:
-            single_env = dmc_gym.make(domain_name=config.DOMAIN_NAME, task_name=config.TASK_NAME, seed=config.SEED,
-                                      frame_skip=config.ACTION_REPEAT, height=config.IMG_SIZE, width=config.IMG_SIZE)
+        # if config.FROM_PIXELS:
+        #     single_env = dmc_gym.make(
+        #         domain_name=config.DOMAIN_NAME, task_name=config.TASK_NAME, seed=config.SEED,
+        #         from_pixels=True, visualize_reward=False, frame_skip=config.ACTION_REPEAT,
+        #         height=config.IMG_SIZE, width=config.IMG_SIZE, frame_stack=config.FRAME_STACK, grayscale=config.GRAY_SCALE
+        #     )
+        # else:
+        #     single_env = dmc_gym.make(domain_name=config.DOMAIN_NAME, task_name=config.TASK_NAME, seed=config.SEED,
+        #                               frame_skip=config.ACTION_REPEAT, height=config.IMG_SIZE, width=config.IMG_SIZE)
+        single_env = make_env(config)
 
     #############
     #   Atari   #

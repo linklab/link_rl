@@ -7,8 +7,14 @@ sys.path.append(os.path.abspath(
 from link_rl.h_utils.commons import model_load, get_specific_env_name, print_model_summary
 from link_rl.h_utils.types import AgentType, ActorCriticAgentTypes
 
+def set_seed(seed):
+    random.seed(seed)
+    np.random.seed(seed)
+    torch.manual_seed(seed)
+    torch.cuda.manual_seed_all(seed)
 
 def main():
+    set_seed(1)
     set_config(config)
 
     observation_space, action_space = get_env_info(config)

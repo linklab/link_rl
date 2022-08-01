@@ -89,3 +89,5 @@ class ConfigBase:
         self.USE_DRQ = False
 
         self.PLAY_DELAY_BETWEEN_STEPS = 0.001
+
+        self.SEED = 1
