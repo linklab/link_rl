@@ -241,6 +241,12 @@ class TimeStepToGymWrapper(object):
 		camera_id = dict(quadruped=2).get(self.domain, camera_id)
 		return self.env.physics.render(height, width, camera_id)
 
+	def close(self):
+		pass
+
+	def seed(self):
+		pass
+
 
 class DefaultDictWrapper(gym.Wrapper):
 	def __init__(self, env):
