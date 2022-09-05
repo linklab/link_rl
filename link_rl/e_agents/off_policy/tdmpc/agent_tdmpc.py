@@ -23,7 +23,7 @@ class AgentTdmpc(OffPolicyAgent):
         self.std = h.linear_schedule(config.STD_SCHEDULE, 0)
 
         self.model = self._model_creator.create_model().to(config.DEVICE)
-        self.model_target = deepcopy(self.model).to(config.DEVICE)
+        self.model_target = deepcopy(self.model)
 
         self.optim = torch.optim.Adam(self.model.parameters(), lr=self.config.LEARNING_RATE)
         self.pi_optim = torch.optim.Adam(self.model.pi_net.parameters(), lr=self.config.LEARNING_RATE)
