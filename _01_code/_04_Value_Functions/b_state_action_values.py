@@ -52,6 +52,38 @@ env = gym.make("FrozenLake-v1", desc=MAP_4x4, is_slippery=False, render_mode=Non
 #  결정적 환경이므로:
 #  v(s) ← Σ_a π(a|s) * [r(s,a) + γ·v(s')]
 # ══════════════════════════════════════════════════
+def policy_evaluation_one_step(env, Q, gamma=GAMMA):
+    """
+    Bellman Expectation Equation for Q-function — one sweep over all states
+
+    Returns:
+        Q_new (np.ndarray): 갱신된 Q 함수 (shape: N_STATES x N_ACTIONS)
+        delta (float):      이번 스윕의 최대 변화량
+    """
+    delta = 0.0
+    Q_new = np.copy(Q)
+
+    for s in range(N_STATES):
+        row, col = divmod(s, WIDTH)
+
+        # Terminal states (H, G): Q = 0 fixed
+        if CELL[(row, col)] in ('H', 'G'):
+            Q_new[s, :] = 0.0
+            continue
+
+        for a in range(N_ACTIONS):
+            q_new = 0.0
+            for prob, next_s, reward, terminated in env.unwrapped.P[s][a]:
+                # V_pi(s') = sum_{a'} pi(a'|s') * Q(s',a')  (policy evaluation)
+                v_next = PI * np.sum(Q[next_s, :])
+                q_new += prob * (reward + gamma * v_next)
+
+            delta       = max(delta, abs(Q[s, a] - q_new))
+            Q_new[s, a] = q_new
+
+    return Q_new, delta
+
+
 def iterative_policy_evaluation(env, gamma=GAMMA, theta=1e-9, max_iter=100000):
     """
     Bellman Expectation Equation for Q-function (state-action value)
@@ -68,28 +100,7 @@ def iterative_policy_evaluation(env, gamma=GAMMA, theta=1e-9, max_iter=100000):
     delta_history = []
 
     for iteration in range(max_iter):
-        delta = 0.0
-        Q_new = np.copy(Q)
-
-        for s in range(N_STATES):
-            row, col = divmod(s, WIDTH)
-
-            # Terminal states (H, G): Q = 0 fixed
-            if CELL[(row, col)] in ('H', 'G'):
-                Q_new[s, :] = 0.0
-                continue
-
-            for a in range(N_ACTIONS):
-                q_new = 0.0
-                for prob, next_s, reward, terminated in env.unwrapped.P[s][a]:
-                    # V_pi(s') = sum_{a'} pi(a'|s') * Q(s',a')  (policy evaluation)
-                    v_next = PI * np.sum(Q[next_s, :])
-                    q_new += prob * (reward + gamma * v_next)
-
-                delta         = max(delta, abs(Q[s, a] - q_new))
-                Q_new[s, a]   = q_new
-
-        Q = Q_new
+        Q, delta = policy_evaluation_one_step(env, Q, gamma)
         delta_history.append(delta)
 
         if delta < theta:

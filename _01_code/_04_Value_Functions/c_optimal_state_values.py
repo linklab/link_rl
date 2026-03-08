@@ -49,28 +49,39 @@ env = gym.make("FrozenLake-v1", desc=MAP_4x4, is_slippery=False, render_mode=Non
 # 2. Iterative Policy Evaluation  (Bellman Expectation)
 #    v_π(s) = Σ_a π(a|s) Σ_{s'} p(s'|s,a)[r + γ v_π(s')]
 # ══════════════════════════════════════════════════
+def policy_evaluation_one_step(env, V, gamma=GAMMA):
+    """
+    Bellman Expectation Equation — one sweep over all states
+
+    Returns:
+        V_new (np.ndarray): 갱신된 가치 함수 (flat, N_STATES)
+        delta (float):      이번 스윕의 최대 변화량
+    """
+    delta = 0.0
+    V_new = np.copy(V)
+
+    for s in range(N_STATES):
+        r, c = divmod(s, WIDTH)
+        if CELL[(r, c)] in ('H', 'G'):
+            continue
+
+        v_new = 0.0
+        for a in range(N_ACTIONS):
+            for prob, ns, reward, _ in env.unwrapped.P[s][a]:
+                v_new += PI * prob * (reward + gamma * V[ns])
+
+        delta    = max(delta, abs(V[s] - v_new))
+        V_new[s] = v_new
+
+    return V_new, delta
+
+
 def policy_evaluation(env, gamma=GAMMA, theta=1e-9, max_iter=100000):
     V = np.zeros(N_STATES)
     delta_hist = []
 
     for iteration in range(max_iter):
-        delta = 0.0
-        V_new = np.copy(V)
-
-        for s in range(N_STATES):
-            r, c = divmod(s, WIDTH)
-            if CELL[(r, c)] in ('H', 'G'):
-                continue
-
-            v_new = 0.0
-            for a in range(N_ACTIONS):
-                for prob, ns, reward, _ in env.unwrapped.P[s][a]:
-                    v_new += PI * prob * (reward + gamma * V[ns])
-
-            delta    = max(delta, abs(V[s] - v_new))
-            V_new[s] = v_new
-
-        V = V_new
+        V, delta = policy_evaluation_one_step(env, V, gamma)
         delta_hist.append(delta)
         if delta < theta:
             print(f"  [Policy Evaluation]  Converged at iter {iteration+1}"
@@ -84,33 +95,44 @@ def policy_evaluation(env, gamma=GAMMA, theta=1e-9, max_iter=100000):
 # 3. Value Iteration  (Bellman Optimality)
 #    v*(s) = max_a  Σ_{s'} p(s'|s,a)[r + γ v*(s')]
 # ══════════════════════════════════════════════════
+def value_iteration_one_step(env, V, gamma=GAMMA):
+    """
+    Bellman Optimality Equation — one sweep over all states
+
+    Returns:
+        V_new (np.ndarray): 갱신된 가치 함수 (flat, N_STATES)
+        delta (float):      이번 스윕의 최대 변화량
+    """
+    delta = 0.0
+    V_new = np.copy(V)
+
+    for s in range(N_STATES):
+        r, c = divmod(s, WIDTH)
+        if CELL[(r, c)] in ('H', 'G'):
+            continue
+
+        # Q(s,a) for each action → take max
+        q_values = []
+        for a in range(N_ACTIONS):
+            q_sa = 0.0
+            for prob, ns, reward, _ in env.unwrapped.P[s][a]:
+                q_sa += prob * (reward + gamma * V[ns])
+            q_values.append(q_sa)
+
+        v_new = max(q_values)           # ← Bellman Optimality
+
+        delta    = max(delta, abs(V[s] - v_new))
+        V_new[s] = v_new
+
+    return V_new, delta
+
+
 def value_iteration(env, gamma=GAMMA, theta=1e-9, max_iter=100000):
     V = np.zeros(N_STATES)
     delta_hist = []
 
     for iteration in range(max_iter):
-        delta = 0.0
-        V_new = np.copy(V)
-
-        for s in range(N_STATES):
-            r, c = divmod(s, WIDTH)
-            if CELL[(r, c)] in ('H', 'G'):
-                continue
-
-            # Q(s,a) for each action → take max
-            q_values = []
-            for a in range(N_ACTIONS):
-                q_sa = 0.0
-                for prob, ns, reward, _ in env.unwrapped.P[s][a]:
-                    q_sa += prob * (reward + gamma * V[ns])
-                q_values.append(q_sa)
-
-            v_new = max(q_values)           # ← Bellman Optimality
-
-            delta    = max(delta, abs(V[s] - v_new))
-            V_new[s] = v_new
-
-        V = V_new
+        V, delta = value_iteration_one_step(env, V, gamma)
         delta_hist.append(delta)
         if delta < theta:
             print(f"  [Value Iteration]    Converged at iter {iteration+1}"

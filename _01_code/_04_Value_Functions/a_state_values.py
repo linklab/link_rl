@@ -53,6 +53,37 @@ env = gym.make("FrozenLake-v1", desc=MAP_4x4, is_slippery=False, render_mode=Non
 #  결정적 환경이므로:
 #  v(s) ← Σ_a π(a|s) * [r(s,a) + γ·v(s')]
 # ══════════════════════════════════════════════════
+def policy_evaluation_one_step(env, V, gamma=GAMMA):
+    """
+    벨만 기대 방정식을 모든 상태에 대해 한 번 적용 (one sweep)
+
+    Returns:
+        V_new (np.ndarray): 갱신된 가치 함수 (flat, N_STATES)
+        delta (float):      이번 스윕의 최대 변화량
+    """
+    delta = 0.0
+    V_new = np.copy(V)
+
+    for s in range(N_STATES):
+        row, col = divmod(s, WIDTH)
+
+        # 종료 상태(H, G)는 가치 = 0 고정
+        if CELL[(row, col)] in ('H', 'G'):
+            V_new[s] = 0.0
+            continue
+
+        v_new = 0.0
+        for a in range(N_ACTIONS):
+            # p(s'|s,a), r, done
+            for prob, next_s, reward, terminated in env.unwrapped.P[s][a]:
+                v_new += PI * prob * (reward + gamma * V[next_s])
+
+        delta    = max(delta, abs(V[s] - v_new))
+        V_new[s] = v_new
+
+    return V_new, delta
+
+
 def iterative_policy_evaluation(env, gamma=GAMMA, theta=1e-9, max_iter=100000):
     """
     gymnasium env.unwrapped.P 를 직접 활용하여
@@ -64,27 +95,7 @@ def iterative_policy_evaluation(env, gamma=GAMMA, theta=1e-9, max_iter=100000):
     delta_history = []
 
     for iteration in range(max_iter):
-        delta = 0.0
-        V_new = np.copy(V)
-
-        for s in range(N_STATES):
-            row, col = divmod(s, WIDTH)
-
-            # 종료 상태(H, G)는 가치 = 0 고정
-            if CELL[(row, col)] in ('H', 'G'):
-                V_new[s] = 0.0
-                continue
-
-            v_new = 0.0
-            for a in range(N_ACTIONS):
-                # p(s'|s,a), r, done
-                for prob, next_s, reward, terminated in env.unwrapped.P[s][a]:
-                    v_new += PI * prob * (reward + gamma * V[next_s])
-
-            delta      = max(delta, abs(V[s] - v_new))
-            V_new[s]   = v_new
-
-        V = V_new
+        V, delta = policy_evaluation_one_step(env, V, gamma)
         delta_history.append(delta)
 
         if delta < theta:

@@ -49,30 +49,41 @@ env = gym.make("FrozenLake-v1", desc=MAP_4x4, is_slippery=False, render_mode=Non
 # 2. Iterative Policy Evaluation  (Bellman Expectation for Q)
 #    q_π(s,a) = Σ_{s'} p(s'|s,a)[r + γ Σ_{a'} π(a'|s') q_π(s',a')]
 # ══════════════════════════════════════════════════
+def policy_evaluation_one_step(env, Q, gamma=GAMMA):
+    """
+    Bellman Expectation Equation for Q-function — one sweep over all states
+
+    Returns:
+        Q_new (np.ndarray): 갱신된 Q 함수 (shape: N_STATES x N_ACTIONS)
+        delta (float):      이번 스윕의 최대 변화량
+    """
+    delta = 0.0
+    Q_new = np.copy(Q)
+
+    for s in range(N_STATES):
+        r, c = divmod(s, WIDTH)
+        if CELL[(r, c)] in ('H', 'G'):
+            continue
+
+        for a in range(N_ACTIONS):
+            q_new = 0.0
+            for prob, ns, reward, _ in env.unwrapped.P[s][a]:
+                # V_π(s') = Σ_{a'} π(a'|s') * Q(s',a')
+                v_next = PI * np.sum(Q[ns, :])
+                q_new += prob * (reward + gamma * v_next)
+
+            delta       = max(delta, abs(Q[s, a] - q_new))
+            Q_new[s, a] = q_new
+
+    return Q_new, delta
+
+
 def policy_evaluation(env, gamma=GAMMA, theta=1e-9, max_iter=100000):
     Q = np.zeros((N_STATES, N_ACTIONS))
     delta_hist = []
 
     for iteration in range(max_iter):
-        delta = 0.0
-        Q_new = np.copy(Q)
-
-        for s in range(N_STATES):
-            r, c = divmod(s, WIDTH)
-            if CELL[(r, c)] in ('H', 'G'):
-                continue
-
-            for a in range(N_ACTIONS):
-                q_new = 0.0
-                for prob, ns, reward, _ in env.unwrapped.P[s][a]:
-                    # V_π(s') = Σ_{a'} π(a'|s') * Q(s',a')
-                    v_next = PI * np.sum(Q[ns, :])
-                    q_new += prob * (reward + gamma * v_next)
-
-                delta       = max(delta, abs(Q[s, a] - q_new))
-                Q_new[s, a] = q_new
-
-        Q = Q_new
+        Q, delta = policy_evaluation_one_step(env, Q, gamma)
         delta_hist.append(delta)
         if delta < theta:
             print(f"  [Policy Evaluation]  Converged at iter {iteration+1}"
@@ -86,29 +97,40 @@ def policy_evaluation(env, gamma=GAMMA, theta=1e-9, max_iter=100000):
 # 3. Q-Value Iteration  (Bellman Optimality for Q)
 #    q*(s,a) = Σ_{s'} p(s'|s,a)[r + γ max_{a'} q*(s',a')]
 # ══════════════════════════════════════════════════
+def value_iteration_one_step(env, Q, gamma=GAMMA):
+    """
+    Bellman Optimality Equation for Q-function — one sweep over all states
+
+    Returns:
+        Q_new (np.ndarray): 갱신된 Q 함수 (shape: N_STATES x N_ACTIONS)
+        delta (float):      이번 스윕의 최대 변화량
+    """
+    delta = 0.0
+    Q_new = np.copy(Q)
+
+    for s in range(N_STATES):
+        r, c = divmod(s, WIDTH)
+        if CELL[(r, c)] in ('H', 'G'):
+            continue
+
+        for a in range(N_ACTIONS):
+            q_new = 0.0
+            for prob, ns, reward, _ in env.unwrapped.P[s][a]:
+                # max_{a'} q*(s',a')  ← Bellman Optimality
+                q_new += prob * (reward + gamma * np.max(Q[ns, :]))
+
+            delta       = max(delta, abs(Q[s, a] - q_new))
+            Q_new[s, a] = q_new
+
+    return Q_new, delta
+
+
 def value_iteration(env, gamma=GAMMA, theta=1e-9, max_iter=100000):
     Q = np.zeros((N_STATES, N_ACTIONS))
     delta_hist = []
 
     for iteration in range(max_iter):
-        delta = 0.0
-        Q_new = np.copy(Q)
-
-        for s in range(N_STATES):
-            r, c = divmod(s, WIDTH)
-            if CELL[(r, c)] in ('H', 'G'):
-                continue
-
-            for a in range(N_ACTIONS):
-                q_new = 0.0
-                for prob, ns, reward, _ in env.unwrapped.P[s][a]:
-                    # max_{a'} q*(s',a')  ← Bellman Optimality
-                    q_new += prob * (reward + gamma * np.max(Q[ns, :]))
-
-                delta       = max(delta, abs(Q[s, a] - q_new))
-                Q_new[s, a] = q_new
-
-        Q = Q_new
+        Q, delta = value_iteration_one_step(env, Q, gamma)
         delta_hist.append(delta)
         if delta < theta:
             print(f"  [Q-Value Iteration]  Converged at iter {iteration+1}"
