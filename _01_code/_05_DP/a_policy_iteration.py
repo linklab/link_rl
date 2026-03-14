@@ -62,14 +62,14 @@ def policy_improvement(env, V, gamma=GAMMA):
     반환: new_policy (np.ndarray, shape=N_STATES), 변화된 상태 수
     """
     new_policy = np.zeros(N_STATES, dtype=int)
-    changes = 0
     for s in range(N_STATES):
         if get_tile(s) in ('H', 'G'):
             continue
         q = [
             sum(
                 p * (r + gamma * V[s_]) for p, s_, r, _ in env.unwrapped.P[s][a]
-            ) for a in range(N_ACTIONS)]
+            ) for a in range(N_ACTIONS)
+        ]
         new_policy[s] = int(np.argmax(q))
     return new_policy
 
@@ -118,7 +118,7 @@ def policy_iteration(env, gamma=GAMMA, theta=THETA, max_outer=MAX_OUTER):
     print(f"\n[정책 반복 완료]")
     print(f"  외부 반복 수 : {len(sweeps_per_iter)}")
     print(f"  외부 반복별 E-step 스윕: {sweeps_per_iter} = {sum(sweeps_per_iter)}")
-    print(f"  외부 반복별 정책 변화 상태 수: {changes_per_iter}")
+    print(f"  외부 반복별 정책에 변화가 일어난 상태 수: {changes_per_iter}")
 
     return (V_history, policy_history,
             sweeps_per_iter, changes_per_iter,
