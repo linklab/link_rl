@@ -13,17 +13,13 @@ Bellman Expectation Equation for Q (deterministic, p(s'|s,a)=1):
 
 import numpy as np
 import matplotlib.pyplot as plt
-import matplotlib.patches as mpatches
 import matplotlib.gridspec as gridspec
 import gymnasium as gym
 
 # ══════════════════════════════════════════════════
 # 1. 환경 설정
 # ══════════════════════════════════════════════════
-MAP_4x4 = ["SFFF",
-           "FHFH",
-           "FFFH",
-           "HFFG"]
+MAP_4x4 = ["SFFF", "FHFH", "FFFH", "HFFG"]
 
 GAMMA   = 0.99   # 감가율
 PI      = 0.25   # 균등 랜덤 정책
@@ -46,13 +42,13 @@ GOAL_STATES = [(r, c) for (r, c), t in CELL.items() if t == 'G']
 env = gym.make("FrozenLake-v1", desc=MAP_4x4, is_slippery=False, render_mode=None)
 
 # ══════════════════════════════════════════════════
-# 2. 반복 정책 평가 (Iterative Policy Evaluation)
+# 2. 벨만 기대 방정식 (Bellman Expectation)
 #
 #  v(s) ← Σ_a π(a|s) * Σ_{s'} p(s'|s,a) * [r + γ·v(s')]
 #  결정적 환경이므로:
 #  v(s) ← Σ_a π(a|s) * [r(s,a) + γ·v(s')]
 # ══════════════════════════════════════════════════
-def policy_evaluation_one_step(env, Q, gamma=GAMMA):
+def action_bellman_expectation_one_step(env, Q, gamma=GAMMA):
     """
     Bellman Expectation Equation for Q-function — one sweep over all states
 
@@ -75,7 +71,7 @@ def policy_evaluation_one_step(env, Q, gamma=GAMMA):
             q_new = 0.0
             for prob, next_s, reward, terminated in env.unwrapped.P[s][a]:
                 # V_pi(s') = sum_{a'} pi(a'|s') * Q(s',a')  (policy evaluation)
-                v_next = PI * np.sum(Q[next_s, :])
+                v_next = np.sum(PI * Q[next_s, :])
                 q_new += prob * (reward + gamma * v_next)
 
             delta       = max(delta, abs(Q[s, a] - q_new))
@@ -84,7 +80,7 @@ def policy_evaluation_one_step(env, Q, gamma=GAMMA):
     return Q_new, delta
 
 
-def iterative_policy_evaluation(env, gamma=GAMMA, theta=1e-9, max_iter=100000):
+def action_bellman_expectation(env, gamma=GAMMA, theta=1e-9, max_iter=100000):
     """
     Bellman Expectation Equation for Q-function (state-action value)
 
@@ -100,7 +96,7 @@ def iterative_policy_evaluation(env, gamma=GAMMA, theta=1e-9, max_iter=100000):
     delta_history = []
 
     for iteration in range(max_iter):
-        Q, delta = policy_evaluation_one_step(env, Q, gamma)
+        Q, delta = action_bellman_expectation_one_step(env, Q, gamma)
         delta_history.append(delta)
 
         if delta < theta:
@@ -113,7 +109,7 @@ def iterative_policy_evaluation(env, gamma=GAMMA, theta=1e-9, max_iter=100000):
     return Q.reshape(HEIGHT, WIDTH, N_ACTIONS), delta_history
 
 
-def print_value_function(Q_grid):
+def print_action_value_function(Q_grid):
     """Q_grid shape: (HEIGHT, WIDTH, N_ACTIONS)"""
     print(f"\n  Converged Q_pi(s,a)  (gamma={GAMMA}, uniform random policy pi=0.25)")
     print(f"  Action: 0=LEFT  1=DOWN  2=RIGHT  3=UP")
@@ -228,10 +224,10 @@ def visualize(env, Q_grid, delta_hist):
 
 def main():
     # ── Run ──────────────────────────────────────────
-    Q_grid, delta_hist = iterative_policy_evaluation(env, gamma=GAMMA)
+    Q_grid, delta_hist = action_bellman_expectation(env, gamma=GAMMA)
 
     # ── Console output ───────────────────────────────
-    print_value_function(Q_grid)
+    print_action_value_function(Q_grid)
 
     # ── Visualization ────────────────────────────────
     visualize(env, Q_grid, delta_hist)

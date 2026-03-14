@@ -14,19 +14,14 @@ import numpy as np
 import matplotlib.pyplot as plt
 import matplotlib.patches as mpatches
 import matplotlib.gridspec as gridspec
-import platform
 import gymnasium as gym
 
-plt.rcParams['font.family'] = 'DejaVu Sans'
-plt.rcParams['axes.unicode_minus'] = False
+from b_state_action_values import action_bellman_expectation
 
 # ══════════════════════════════════════════════════
 # 1. Environment Setup
 # ══════════════════════════════════════════════════
-MAP_4x4 = ["SFFF",
-           "FHFH",
-           "FFFH",
-           "HFFG"]
+MAP_4x4 = ["SFFF", "FHFH", "FFFH", "HFFG"]
 
 GAMMA     = 0.99
 HEIGHT    = 4
@@ -46,58 +41,10 @@ for r in range(HEIGHT):
 env = gym.make("FrozenLake-v1", desc=MAP_4x4, is_slippery=False, render_mode=None)
 
 # ══════════════════════════════════════════════════
-# 2. Iterative Policy Evaluation  (Bellman Expectation for Q)
-#    q_π(s,a) = Σ_{s'} p(s'|s,a)[r + γ Σ_{a'} π(a'|s') q_π(s',a')]
-# ══════════════════════════════════════════════════
-def policy_evaluation_one_step(env, Q, gamma=GAMMA):
-    """
-    Bellman Expectation Equation for Q-function — one sweep over all states
-
-    Returns:
-        Q_new (np.ndarray): 갱신된 Q 함수 (shape: N_STATES x N_ACTIONS)
-        delta (float):      이번 스윕의 최대 변화량
-    """
-    delta = 0.0
-    Q_new = np.copy(Q)
-
-    for s in range(N_STATES):
-        r, c = divmod(s, WIDTH)
-        if CELL[(r, c)] in ('H', 'G'):
-            continue
-
-        for a in range(N_ACTIONS):
-            q_new = 0.0
-            for prob, ns, reward, _ in env.unwrapped.P[s][a]:
-                # V_π(s') = Σ_{a'} π(a'|s') * Q(s',a')
-                v_next = PI * np.sum(Q[ns, :])
-                q_new += prob * (reward + gamma * v_next)
-
-            delta       = max(delta, abs(Q[s, a] - q_new))
-            Q_new[s, a] = q_new
-
-    return Q_new, delta
-
-
-def policy_evaluation(env, gamma=GAMMA, theta=1e-9, max_iter=100000):
-    Q = np.zeros((N_STATES, N_ACTIONS))
-    delta_hist = []
-
-    for iteration in range(max_iter):
-        Q, delta = policy_evaluation_one_step(env, Q, gamma)
-        delta_hist.append(delta)
-        if delta < theta:
-            print(f"  [Policy Evaluation]  Converged at iter {iteration+1}"
-                  f"  (Δ={delta:.2e})")
-            break
-
-    return Q.reshape(HEIGHT, WIDTH, N_ACTIONS), delta_hist
-
-
-# ══════════════════════════════════════════════════
-# 3. Q-Value Iteration  (Bellman Optimality for Q)
+# 1. Bellman Optimality for Q
 #    q*(s,a) = Σ_{s'} p(s'|s,a)[r + γ max_{a'} q*(s',a')]
 # ══════════════════════════════════════════════════
-def value_iteration_one_step(env, Q, gamma=GAMMA):
+def action_bellman_optimality_one_step(env, Q, gamma=GAMMA):
     """
     Bellman Optimality Equation for Q-function — one sweep over all states
 
@@ -125,15 +72,15 @@ def value_iteration_one_step(env, Q, gamma=GAMMA):
     return Q_new, delta
 
 
-def value_iteration(env, gamma=GAMMA, theta=1e-9, max_iter=100000):
+def action_bellman_optimality(env, gamma=GAMMA, theta=1e-9, max_iter=100000):
     Q = np.zeros((N_STATES, N_ACTIONS))
     delta_hist = []
 
     for iteration in range(max_iter):
-        Q, delta = value_iteration_one_step(env, Q, gamma)
+        Q, delta = action_bellman_optimality_one_step(env, Q, gamma)
         delta_hist.append(delta)
         if delta < theta:
-            print(f"  [Q-Value Iteration]  Converged at iter {iteration+1}"
+            print(f"  [Bellman Optimality]  Converged at iter {iteration+1}"
                   f"  (Δ={delta:.2e})")
             break
 
@@ -141,7 +88,7 @@ def value_iteration(env, gamma=GAMMA, theta=1e-9, max_iter=100000):
 
 
 # ══════════════════════════════════════════════════
-# 4. Extract Optimal Policy from Q*
+# 2. Extract Optimal Policy from Q*
 #    π*(s) = argmax_a  q*(s,a)
 # ══════════════════════════════════════════════════
 def extract_policy(env, Q_star, gamma=GAMMA):
@@ -156,7 +103,7 @@ def extract_policy(env, Q_star, gamma=GAMMA):
     return policy
 
 
-def print_results(Q_exp, Q_opt, policy_opt):
+def print_action_value_function(Q_exp, Q_opt, policy_opt):
     ACTION_LABELS = ['LEFT', 'DOWN', 'RIGHT', 'UP']
 
     for label, Q in [("Bellman Expectation  q_π(s,a)", Q_exp),
@@ -274,9 +221,9 @@ def visualize(env, Q_exp, Q_opt, delta_exp, delta_opt, policy_opt):
     # ── (C) Convergence Curves ────────────────────────────
     ax_conv = fig.add_subplot(gs[2, :2])
     ax_conv.semilogy(delta_exp, color='#1976D2', linewidth=2,
-                     label=f'Policy Evaluation  (Expectation, {len(delta_exp)} iters)')
+                     label=f'Bellman Expectation  ({len(delta_exp)} iters)')
     ax_conv.semilogy(delta_opt, color='#E53935', linewidth=2,
-                     label=f'Q-Value Iteration  (Optimality,  {len(delta_opt)} iters)')
+                     label=f'Bellman Optimality   ({len(delta_opt)} iters)')
     ax_conv.axhline(1e-9, color='gray', linestyle='--', linewidth=1,
                     label='Convergence threshold  θ=1e-9')
     ax_conv.set_xlabel("Iteration", fontsize=11)
@@ -349,12 +296,12 @@ def visualize(env, Q_exp, Q_opt, delta_exp, delta_opt, policy_opt):
 
 def main():
     # ── Run both algorithms ──────────────────────────
-    Q_exp, delta_exp = policy_evaluation(env, gamma=GAMMA)   # Expectation
-    Q_opt, delta_opt = value_iteration(env, gamma=GAMMA)     # Optimality
+    Q_exp, delta_exp = action_bellman_expectation(env, gamma=GAMMA)   # Expectation
+    Q_opt, delta_opt = action_bellman_optimality(env, gamma=GAMMA)    # Optimality
     policy_opt = extract_policy(env, Q_opt)
 
     # ── Console output ───────────────────────────────
-    print_results(Q_exp, Q_opt, policy_opt)
+    print_action_value_function(Q_exp, Q_opt, policy_opt)
 
     # ── Visualization ────────────────────────────────
     visualize(env, Q_exp, Q_opt, delta_exp, delta_opt, policy_opt)

@@ -21,12 +21,10 @@ import gymnasium as gym
 # ══════════════════════════════════════════════════
 # 1. 환경 설정
 # ══════════════════════════════════════════════════
-MAP_4x4 = ["SFFF",
-           "FHFH",
-           "FFFH",
-           "HFFG"]
+MAP_4x4 = ["SFFF", "FHFH", "FFFH", "HFFG"]
 
 GAMMA   = 0.99   # 감가율
+THETA   = 1e-9   # 수렴 기준
 PI      = 0.25   # 균등 랜덤 정책
 HEIGHT  = 4
 WIDTH   = 4
@@ -47,13 +45,13 @@ GOAL_STATES = [(r, c) for (r, c), t in CELL.items() if t == 'G']
 env = gym.make("FrozenLake-v1", desc=MAP_4x4, is_slippery=False, render_mode=None)
 
 # ══════════════════════════════════════════════════
-# 2. 반복 정책 평가 (Iterative Policy Evaluation)
+# 2. 벨만 기대 방정식 (Bellman Expectation)
 #
 #  v(s) ← Σ_a π(a|s) * Σ_{s'} p(s'|s,a) * [r + γ·v(s')]
 #  결정적 환경이므로:
 #  v(s) ← Σ_a π(a|s) * [r(s,a) + γ·v(s')]
 # ══════════════════════════════════════════════════
-def policy_evaluation_one_step(env, V, gamma=GAMMA):
+def bellman_expectation_one_step(env, V, gamma=GAMMA):
     """
     벨만 기대 방정식을 모든 상태에 대해 한 번 적용 (one sweep)
 
@@ -84,7 +82,7 @@ def policy_evaluation_one_step(env, V, gamma=GAMMA):
     return V_new, delta
 
 
-def iterative_policy_evaluation(env, gamma=GAMMA, theta=1e-9, max_iter=100000):
+def bellman_expectation(env, gamma=GAMMA, theta=THETA, max_iter=100000):
     """
     gymnasium env.unwrapped.P 를 직접 활용하여
     벨만 기대 방정식을 반복 적용
@@ -95,7 +93,7 @@ def iterative_policy_evaluation(env, gamma=GAMMA, theta=1e-9, max_iter=100000):
     delta_history = []
 
     for iteration in range(max_iter):
-        V, delta = policy_evaluation_one_step(env, V, gamma)
+        V, delta = bellman_expectation_one_step(env, V, gamma)
         delta_history.append(delta)
 
         if delta < theta:
@@ -148,7 +146,7 @@ def visualize(env, V_grid, delta_hist):
     cmap_main = plt.cm.RdYlGn.copy()
     cmap_main.set_bad(color='#cccccc')   # NaN 셀 회색
 
-    vmax = np.nanmax(np.abs(V_plot)) + 1e-9
+    vmax = np.nanmax(np.abs(V_plot)) + THETA
     im = ax1.imshow(V_plot, cmap=cmap_main,
                     vmin=-vmax, vmax=vmax, aspect='auto')
 
@@ -197,7 +195,7 @@ def visualize(env, V_grid, delta_hist):
     # ────────────────────────────────────────────────
     ax2 = fig.add_subplot(gs[0, 1])
     ax2.semilogy(delta_hist, color='#1976D2', linewidth=2)
-    ax2.axhline(1e-9, color='red', linestyle='--', linewidth=1.2,
+    ax2.axhline(THETA, color='red', linestyle='--', linewidth=1.2,
                 label='θ = 1e-9 (convergence threshold)')
     ax2.axvline(len(delta_hist)-1, color='green', linestyle=':',
                 linewidth=1.5, label=f'Converged ({len(delta_hist)} iters)')
@@ -220,14 +218,14 @@ def visualize(env, V_grid, delta_hist):
     axes_g = [fig.add_subplot(inner_gs[k]) for k in range(4)]
 
     for ax_g, g in zip(axes_g, gamma_list):
-        V_g, _ = iterative_policy_evaluation(env, gamma=g, theta=1e-9, max_iter=100000)
+        V_g, _ = bellman_expectation(env, gamma=g, theta=THETA, max_iter=100000)
         V_g_plot = V_g.copy().astype(float)
         for r in range(HEIGHT):
             for c in range(WIDTH):
                 if CELL[(r, c)] in ('H', 'G'):
                     V_g_plot[r, c] = np.nan
 
-        vmax_g = np.nanmax(np.abs(V_g_plot)) + 1e-9
+        vmax_g = np.nanmax(np.abs(V_g_plot)) + THETA
         cmap_g = plt.cm.RdYlGn.copy()
         cmap_g.set_bad(color='#cccccc')
         ax_g.imshow(V_g_plot, cmap=cmap_g,
@@ -267,7 +265,7 @@ def visualize(env, V_grid, delta_hist):
 
 def main():
     # ── 계산 실행 ────────────────────────────────────
-    V_grid, delta_hist = iterative_policy_evaluation(env, gamma=GAMMA)
+    V_grid, delta_hist = bellman_expectation(env, gamma=GAMMA)
 
     # ── 콘솔 출력 ────────────────────────────────────
     print_value_function(V_grid)

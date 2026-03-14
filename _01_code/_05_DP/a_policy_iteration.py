@@ -7,13 +7,12 @@
 
 import numpy as np
 import matplotlib.pyplot as plt
-import matplotlib.patches as mpatches
 import matplotlib.gridspec as gridspec
 import gymnasium as gym
 
 # ── 하이퍼파라미터 ─────────────────────────────────────────────
 GAMMA   = 0.99
-THETA   = 1e-6          # E-step 수렴 기준
+THETA   = 1e-9          # E-step 수렴 기준
 MAX_OUTER = 50          # 최대 정책 반복 횟수
 SHOW_ITERS = 5          # 시각화할 최대 반복 횟수
 
@@ -23,10 +22,7 @@ N_STATES, N_ACTIONS = 16, 4
 ACTION_SYMBOLS = ['←', '↓', '→', '↑']
 
 # ── 환경 생성 ──────────────────────────────────────────────────
-env = gym.make('FrozenLake-v1',
-               desc=MAP_4x4,
-               is_slippery=False,
-               render_mode=None)
+env = gym.make("FrozenLake-v1", desc=MAP_4x4, is_slippery=False, render_mode=None)
 
 # ── 유틸리티 ──────────────────────────────────────────────────
 def get_tile(s):
@@ -34,27 +30,31 @@ def get_tile(s):
     r, c = divmod(s, WIDTH)
     return MAP_4x4[r][c]
 
-def policy_evaluation(env, policy, gamma=GAMMA, theta=THETA):
+def policy_evaluation(env, policy, V=None, gamma=GAMMA, theta=THETA):
     """
     E-step: 현재 정책 policy 에 대한 가치 함수를 반복적으로 계산.
-    반환: V (np.ndarray, shape=N_STATES), sweep 횟수
+    반환: V (np.ndarray, shape=N_STATES), sweep 횟수, 스윕별 ||ΔV||∞ 목록
     """
-    V = np.zeros(N_STATES)
+    V = np.zeros(N_STATES) if V is None else V.copy()
     sweeps = 0
+    sweep_errors = []
     while True:
         delta = 0.0
+        V_prev = V.copy()
         for s in range(N_STATES):
             if get_tile(s) in ('H', 'G'):
                 continue
             a = policy[s]
-            v_new = sum(p * (r + gamma * V[s_])
-                        for p, s_, r, _ in env.unwrapped.P[s][a])
+            v_new = sum(
+                p * (r + gamma * V[s_]) for p, s_, r, _ in env.unwrapped.P[s][a]
+            )
             delta = max(delta, abs(v_new - V[s]))
             V[s] = v_new
         sweeps += 1
+        sweep_errors.append(np.max(np.abs(V - V_prev)))
         if delta < theta:
             break
-    return V, sweeps
+    return V, sweeps, sweep_errors
 
 def policy_improvement(env, V, gamma=GAMMA):
     """
@@ -66,9 +66,10 @@ def policy_improvement(env, V, gamma=GAMMA):
     for s in range(N_STATES):
         if get_tile(s) in ('H', 'G'):
             continue
-        q = [sum(p * (r + gamma * V[s_])
-                 for p, s_, r, _ in env.unwrapped.P[s][a])
-             for a in range(N_ACTIONS)]
+        q = [
+            sum(
+                p * (r + gamma * V[s_]) for p, s_, r, _ in env.unwrapped.P[s][a]
+            ) for a in range(N_ACTIONS)]
         new_policy[s] = int(np.argmax(q))
     return new_policy
 
@@ -80,8 +81,8 @@ def policy_iteration(env, gamma=GAMMA, theta=THETA, max_outer=MAX_OUTER):
         policy_history  : 각 반복 후 policy (list of np.ndarray)
         sweeps_per_iter : E-step 스윕 수 (list of int)
         changes_per_iter: I-step 정책 변화 수 (list of int)
-        v_error_trace   : 매 스윕마다 기록한 ||V - V_prev||_inf (list)
-        boundary_sweeps : 각 반복이 끝나는 누적 스윕 인덱스 (list of int)
+        delta_trace     : 매 스윕마다 기록한 ||V - V_prev||_inf (list)
+        cumulative_sweeps_list : 각 반복이 끝나는 누적 스윕 인덱스 (list of int)
     """
     policy = np.zeros(N_STATES, dtype=int)   # 초기 정책: 모두 행동 0
     V      = np.zeros(N_STATES)
@@ -90,30 +91,16 @@ def policy_iteration(env, gamma=GAMMA, theta=THETA, max_outer=MAX_OUTER):
     policy_history   = []
     sweeps_per_iter  = []
     changes_per_iter = []
-    v_error_trace    = []   # 매 스윕 후 최대 변화량
-    boundary_sweeps  = []
+    delta_trace      = []   # 매 스윕 후 최대 변화량
+    cumulative_sweeps_list  = []
     cumulative_sweeps = 0
 
     for _ in range(max_outer):
-        # ── E-step: 정책 평가 (스윕별 delta 기록) ─────────────────
-        sweep_count = 0
-        while True:
-            delta = 0.0
-            V_prev = V.copy()
-            for s in range(N_STATES):
-                if get_tile(s) in ('H', 'G'):
-                    continue
-                a = policy[s]
-                v_new = sum(p * (r + gamma * V[s_])
-                            for p, s_, r, _ in env.unwrapped.P[s][a])
-                delta = max(delta, abs(v_new - V[s]))
-                V[s] = v_new
-            sweep_count += 1
-            cumulative_sweeps += 1
-            v_error_trace.append(np.max(np.abs(V - V_prev)))
-            if delta < theta:
-                break
-        boundary_sweeps.append(cumulative_sweeps)
+        # ── E-step: 정책 평가 ──────────────────────────────────────
+        V, sweeps, sweep_errors = policy_evaluation(env, policy, V, gamma, theta)
+        delta_trace.extend(sweep_errors)
+        cumulative_sweeps += sweeps
+        cumulative_sweeps_list.append(cumulative_sweeps)
 
         # ── I-step: 정책 향상 ──────────────────────────────────────
         new_policy = policy_improvement(env, V, gamma)
@@ -121,7 +108,7 @@ def policy_iteration(env, gamma=GAMMA, theta=THETA, max_outer=MAX_OUTER):
 
         V_history.append(V.copy())
         policy_history.append(new_policy.copy())
-        sweeps_per_iter.append(sweep_count)
+        sweeps_per_iter.append(sweeps)
         changes_per_iter.append(changes)
 
         policy = new_policy
@@ -129,14 +116,13 @@ def policy_iteration(env, gamma=GAMMA, theta=THETA, max_outer=MAX_OUTER):
             break
 
     print(f"\n[정책 반복 완료]")
-    print(f"  총 외부 반복 수 : {len(sweeps_per_iter)}")
-    print(f"  총 E-step 스윕  : {sum(sweeps_per_iter)}")
-    print(f"  반복별 E-step 스윕: {sweeps_per_iter}")
-    print(f"  반복별 정책 변화: {changes_per_iter}")
+    print(f"  외부 반복 수 : {len(sweeps_per_iter)}")
+    print(f"  외부 반복별 E-step 스윕: {sweeps_per_iter} = {sum(sweeps_per_iter)}")
+    print(f"  외부 반복별 정책 변화 상태 수: {changes_per_iter}")
 
     return (V_history, policy_history,
             sweeps_per_iter, changes_per_iter,
-            v_error_trace, boundary_sweeps)
+            delta_trace, cumulative_sweeps_list)
 
 
 # ── 시각화 ────────────────────────────────────────────────────
@@ -166,28 +152,27 @@ def draw_heatmap(ax, V, policy, title, cmap):
 
 
 def visualize(V_history, policy_history,
-              sweeps_per_iter, changes_per_iter,
-              v_error_trace, boundary_sweeps):
+              sweeps_per_iter, changes_per_iter):
 
     n_iters  = len(V_history)
-    show_n   = min(n_iters, SHOW_ITERS)
+    show_n   = n_iters
     cmap     = plt.colormaps['YlOrRd'].copy()
     cmap.set_bad('lightgray')
 
-    fig = plt.figure(figsize=(18, 12))
+    fig = plt.figure(figsize=(18, 5))
     fig.suptitle(
         f"Policy Iteration  —  E-step (Policy Evaluation) + I-step (Policy Improvement)\n"
         f"FrozenLake 4×4  |  is_slippery=False  |  γ={GAMMA}  |  "
         f"θ={THETA}  |  Total outer iters: {n_iters}  |  "
         f"Total sweeps: {sum(sweeps_per_iter)}",
-        fontsize=12, fontweight='bold', y=0.98
+        fontsize=12, fontweight='bold', y=1.02
     )
 
-    gs = gridspec.GridSpec(3, show_n,
-                           top=0.90, bottom=0.07,
+    gs = gridspec.GridSpec(1, show_n,
+                           top=0.88, bottom=0.07,
                            hspace=0.55, wspace=0.35)
 
-    # ── Row 0: 반복별 V 히트맵 ─────────────────────────────────
+    # ── 반복별 V 히트맵 ────────────────────────────────────────
     for i in range(show_n):
         ax = fig.add_subplot(gs[0, i])
         sw = sweeps_per_iter[i]
@@ -198,62 +183,9 @@ def visualize(V_history, policy_history,
         im = draw_heatmap(ax, V_history[i], policy_history[i], title, cmap)
         plt.colorbar(im, ax=ax, fraction=0.046, pad=0.04)
 
-    # ── Row 1: E-step 스윕 수 & 정책 변화 수 ──────────────────
-    ax_sw = fig.add_subplot(gs[1, :show_n // 2 + show_n % 2])
-    ax_ch = fig.add_subplot(gs[1, show_n // 2 + show_n % 2:])
-
-    x = np.arange(1, n_iters + 1)
-    bars = ax_sw.bar(x, sweeps_per_iter, color='steelblue', edgecolor='navy', alpha=0.85)
-    ax_sw.bar_label(bars, fontsize=8)
-    ax_sw.set_xlabel("Policy Iteration #", fontsize=9)
-    ax_sw.set_ylabel("E-step Sweeps", fontsize=9)
-    ax_sw.set_title("(B) E-step Sweeps per Outer Iteration\n"
-                    "(Early iters need many sweeps; later iters converge quickly)",
-                    fontsize=9, fontweight='bold')
-    ax_sw.set_xticks(x)
-    ax_sw.set_ylim(0, max(sweeps_per_iter) * 1.25)
-    ax_sw.grid(axis='y', alpha=0.4)
-
-    bars2 = ax_ch.bar(x, changes_per_iter, color='tomato', edgecolor='darkred', alpha=0.85)
-    ax_ch.bar_label(bars2, fontsize=8)
-    ax_ch.set_xlabel("Policy Iteration #", fontsize=9)
-    ax_ch.set_ylabel("Policy Changes (# states)", fontsize=9)
-    ax_ch.set_title("(C) Policy Changes per I-step\n"
-                    "(0 = no change → optimal policy π* reached)",
-                    fontsize=9, fontweight='bold')
-    ax_ch.set_xticks(x)
-    ax_ch.set_ylim(0, max(changes_per_iter) * 1.3 + 1)
-    ax_ch.grid(axis='y', alpha=0.4)
-
-    # ── Row 2: 스윕별 V 변화량 (수렴 곡선) ────────────────────
-    ax_conv = fig.add_subplot(gs[2, :])
-    sweeps_x = np.arange(1, len(v_error_trace) + 1)
-    ax_conv.semilogy(sweeps_x, v_error_trace,
-                     color='royalblue', linewidth=1.5, label='||ΔV||∞ per sweep')
-
-    colors_bound = plt.cm.tab10.colors
-    for i, b in enumerate(boundary_sweeps):
-        col = colors_bound[i % 10]
-        ax_conv.axvline(x=b, color=col, linestyle='--', linewidth=1.2, alpha=0.8)
-        ax_conv.text(b, ax_conv.get_ylim()[0] * 1.5,
-                     f'Iter{i+1}\nend', ha='right', va='bottom',
-                     fontsize=7, color=col)
-
-    ax_conv.axhline(y=THETA, color='red', linestyle=':', linewidth=1,
-                    label=f'θ = {THETA}  (convergence threshold)')
-    ax_conv.set_xlabel("Cumulative E-step Sweeps", fontsize=9)
-    ax_conv.set_ylabel("||ΔV||∞  (log scale)", fontsize=9)
-    ax_conv.set_title(
-        "(D) Convergence of V over Every E-step Sweep\n"
-        "(Dashed lines = policy iteration boundary; "
-        "early iters require many sweeps to converge policy eval)",
-        fontsize=9, fontweight='bold')
-    ax_conv.legend(fontsize=8, loc='upper right')
-    ax_conv.grid(True, alpha=0.3)
-
     plt.savefig('./a_policy_iteration_img.png',
                 dpi=130, bbox_inches='tight')
-    print("\n[시각화 저장] a_policy_iteration.png")
+    print("\n[시각화 저장] a_policy_iteration_img.png")
     plt.show()
 
 
@@ -266,10 +198,9 @@ if __name__ == '__main__':
 
     (V_history, policy_history,
      sweeps_per_iter, changes_per_iter,
-     v_error_trace, boundary_sweeps) = policy_iteration(env)
+     delta_trace, cumulative_sweeps_list) = policy_iteration(env)
 
     visualize(V_history, policy_history,
-              sweeps_per_iter, changes_per_iter,
-              v_error_trace, boundary_sweeps)
+              sweeps_per_iter, changes_per_iter)
 
     env.close()

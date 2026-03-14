@@ -14,19 +14,14 @@ import numpy as np
 import matplotlib.pyplot as plt
 import matplotlib.patches as mpatches
 import matplotlib.gridspec as gridspec
-import platform
 import gymnasium as gym
 
-plt.rcParams['font.family'] = 'DejaVu Sans'
-plt.rcParams['axes.unicode_minus'] = False
+from a_state_values import bellman_expectation
 
 # ══════════════════════════════════════════════════
 # 1. Environment Setup
 # ══════════════════════════════════════════════════
-MAP_4x4 = ["SFFF",
-           "FHFH",
-           "FFFH",
-           "HFFG"]
+MAP_4x4 = ["SFFF", "FHFH", "FFFH", "HFFG"]
 
 GAMMA     = 0.99
 HEIGHT    = 4
@@ -45,57 +40,12 @@ for r in range(HEIGHT):
 
 env = gym.make("FrozenLake-v1", desc=MAP_4x4, is_slippery=False, render_mode=None)
 
-# ══════════════════════════════════════════════════
-# 2. Iterative Policy Evaluation  (Bellman Expectation)
-#    v_π(s) = Σ_a π(a|s) Σ_{s'} p(s'|s,a)[r + γ v_π(s')]
-# ══════════════════════════════════════════════════
-def policy_evaluation_one_step(env, V, gamma=GAMMA):
-    """
-    Bellman Expectation Equation — one sweep over all states
-
-    Returns:
-        V_new (np.ndarray): 갱신된 가치 함수 (flat, N_STATES)
-        delta (float):      이번 스윕의 최대 변화량
-    """
-    delta = 0.0
-    V_new = np.copy(V)
-
-    for s in range(N_STATES):
-        r, c = divmod(s, WIDTH)
-        if CELL[(r, c)] in ('H', 'G'):
-            continue
-
-        v_new = 0.0
-        for a in range(N_ACTIONS):
-            for prob, ns, reward, _ in env.unwrapped.P[s][a]:
-                v_new += PI * prob * (reward + gamma * V[ns])
-
-        delta    = max(delta, abs(V[s] - v_new))
-        V_new[s] = v_new
-
-    return V_new, delta
-
-
-def policy_evaluation(env, gamma=GAMMA, theta=1e-9, max_iter=100000):
-    V = np.zeros(N_STATES)
-    delta_hist = []
-
-    for iteration in range(max_iter):
-        V, delta = policy_evaluation_one_step(env, V, gamma)
-        delta_hist.append(delta)
-        if delta < theta:
-            print(f"  [Policy Evaluation]  Converged at iter {iteration+1}"
-                  f"  (Δ={delta:.2e})")
-            break
-
-    return V.reshape(HEIGHT, WIDTH), delta_hist
-
 
 # ══════════════════════════════════════════════════
-# 3. Value Iteration  (Bellman Optimality)
+# 1. Bellman Optimality
 #    v*(s) = max_a  Σ_{s'} p(s'|s,a)[r + γ v*(s')]
 # ══════════════════════════════════════════════════
-def value_iteration_one_step(env, V, gamma=GAMMA):
+def bellman_optimality_one_step(env, V, gamma=GAMMA):
     """
     Bellman Optimality Equation — one sweep over all states
 
@@ -127,15 +77,15 @@ def value_iteration_one_step(env, V, gamma=GAMMA):
     return V_new, delta
 
 
-def value_iteration(env, gamma=GAMMA, theta=1e-9, max_iter=100000):
+def bellman_optimality(env, gamma=GAMMA, theta=1e-9, max_iter=100000):
     V = np.zeros(N_STATES)
     delta_hist = []
 
     for iteration in range(max_iter):
-        V, delta = value_iteration_one_step(env, V, gamma)
+        V, delta = bellman_optimality_one_step(env, V, gamma)
         delta_hist.append(delta)
         if delta < theta:
-            print(f"  [Value Iteration]    Converged at iter {iteration+1}"
+            print(f"  [Bellman Optimality]  Converged at iter {iteration+1}"
                   f"  (Δ={delta:.2e})")
             break
 
@@ -143,7 +93,7 @@ def value_iteration(env, gamma=GAMMA, theta=1e-9, max_iter=100000):
 
 
 # ══════════════════════════════════════════════════
-# 4. Extract Optimal Policy from v*
+# 2. Extract Optimal Policy from v*
 #    π*(s) = argmax_a  Σ_{s'} p(s'|s,a)[r + γ v*(s')]
 # ══════════════════════════════════════════════════
 def extract_policy(env, V_star, gamma=GAMMA):
@@ -166,8 +116,8 @@ def extract_policy(env, V_star, gamma=GAMMA):
     return policy
 
 
-def print_results(V_exp, V_opt, policy_opt):
-    print(f"\n  Policy Evaluation  V_π(s)  [Uniform Random π=0.25, γ={GAMMA}]")
+def print_value_function(V_exp, V_opt, policy_opt):
+    print(f"\n  Bellman Expectation  V_π(s)  [Uniform Random π=0.25, γ={GAMMA}]")
     print("         col0     col1     col2     col3")
     for r in range(HEIGHT):
         row_str = f"  row{r}"
@@ -177,7 +127,7 @@ def print_results(V_exp, V_opt, policy_opt):
                        else f"  {V_exp[r,c]:7.4f}"
         print(row_str)
 
-    print(f"\n  Value Iteration    V*(s)   [Optimal policy, γ={GAMMA}]")
+    print(f"\n  Bellman Optimality   V*(s)   [Optimal policy, γ={GAMMA}]")
     print("         col0     col1     col2     col3")
     for r in range(HEIGHT):
         row_str = f"  row{r}"
@@ -318,9 +268,9 @@ def visualize(env, V_exp, V_opt, delta_exp, delta_opt, policy_opt):
     # ── (D) Convergence Curves ───────────────────────
     ax_conv = fig.add_subplot(gs[1, :2])
     ax_conv.semilogy(delta_exp, color='#1976D2', linewidth=2,
-                     label=f'Policy Evaluation  (Expectation, {len(delta_exp)} iters)')
+                     label=f'Bellman Expectation  ({len(delta_exp)} iters)')
     ax_conv.semilogy(delta_opt, color='#E53935', linewidth=2,
-                     label=f'Value Iteration    (Optimality,  {len(delta_opt)} iters)')
+                     label=f'Bellman Optimality   ({len(delta_opt)} iters)')
     ax_conv.axhline(1e-9, color='gray', linestyle='--', linewidth=1,
                     label='Convergence threshold  θ=1e-9')
     ax_conv.set_xlabel("Iteration", fontsize=11)
@@ -386,12 +336,12 @@ def visualize(env, V_exp, V_opt, delta_exp, delta_opt, policy_opt):
 
 def main():
     # ── Run both algorithms ──────────────────────────
-    V_exp, delta_exp = policy_evaluation(env, gamma=GAMMA)   # Expectation
-    V_opt, delta_opt = value_iteration(env, gamma=GAMMA)     # Optimality
+    V_exp, delta_exp = bellman_expectation(env, gamma=GAMMA)   # Expectation
+    V_opt, delta_opt = bellman_optimality(env, gamma=GAMMA)    # Optimality
     policy_opt = extract_policy(env, V_opt)
 
     # ── Console output ───────────────────────────────
-    print_results(V_exp, V_opt, policy_opt)
+    print_value_function(V_exp, V_opt, policy_opt)
 
     # ── Visualization ────────────────────────────────
     visualize(env, V_exp, V_opt, delta_exp, delta_opt, policy_opt)
