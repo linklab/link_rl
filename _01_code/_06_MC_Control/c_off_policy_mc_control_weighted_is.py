@@ -4,64 +4,64 @@ Weighted Importance Sampling 기반 Off-policy 몬테카를로 제어
 
 [핵심 원리]
   - 행동 정책(behavior policy) b ≠ 목표 정책(target policy) π  → Off-policy
-  - b: 균등 무작위 정책  (탐색 보장)
-  - π: 탐욕 정책  (Q 최대 행동)
+  - b : 균등 무작위 정책  (탐색 보장, b(a|s) = 1/|A| = 1/4)
+  - π : 탐욕 정책         (Q 최대 행동, π(a*|s) = 1)
   - 중요도 비율(Importance Sampling Ratio):
-      ρ_{t:T-1} = Π_{k=t}^{T-1} [π(A_k|S_k) / b(A_k|S_k)]
-  - Weighted IS 추정:
-      Q(s,a) ← Σ_i [W_i · G_i] / Σ_i [W_i]   (가중 평균)
+        ρ_{t:T-1} = Π_{k=t}^{T-1} [π(A_k|S_k) / b(A_k|S_k)]
 
-[알고리즘 개요]  ← Sutton & Barto 5.7절 기반
-  초기화: Q(s,a) ← 0,  C(s,a) ← 0 (누적 가중치 합 Σ W_i)
-  for 에피소드 in range(N_EPISODES):
+[Weighted IS 추정 공식  ← PDF p.38]
+  q_π(s,a) = Σ_{t∈J(s,a)} ρ_{t+1:T-1} · G_t  /  Σ_{t∈J(s,a)} ρ_{t+1:T-1}
+             ──────────────────────────────────────────────────────────────
+             분모: Σ W_i = 누적 가중치 합  (가중 평균)
+
+[Weighted IS 점진적 갱신 유도  ← PDF p.40-42]
+  C_n = Σ_{i=1}^{n} W_i           (누적 가중치 합)
+  Q_n = Σ_{i=1}^{n} W_i·G_i / C_n (가중 평균)
+
+  C_{n+1} = C_n + W_{n+1}
+  Q_{n+1} = Q_n + (W_{n+1} / C_{n+1}) · (G_{n+1} − Q_n)
+
+  ★ 여기서 분모 C_{n+1} = Σ W_i → C[s,a] += W (가중치 누적)
+
+[Ordinary IS와의 핵심 차이  ← PDF p.35, 40]
+  ┌──────────────────────────────────────────────────────────────┐
+  │          │  Ordinary IS            │  Weighted IS            │
+  ├──────────┼─────────────────────────┼─────────────────────────┤
+  │ 추정공식 │ Σ(ρ·G) / n             │ Σ(ρ·G) / Σ(ρ)          │
+  │ C[s,a]  │ 방문 횟수 n  (+=1)     │ 누적 가중치 Σ W  (+=W)  │
+  │ 편향     │ 불편 (unbiased)         │ 편향 (biased)           │
+  │ 분산     │ 높음 (ρ 폭발 위험)     │ 낮음 (안정적)           │
+  │ 실용성   │ 이론적 우위             │ 실용적 우위 (권장)      │
+  └──────────┴─────────────────────────┴─────────────────────────┘
+
+[알고리즘 개요  ← Sutton & Barto 5.7절 / PDF p.44 의사코드]
+  초기화: Q(s,a) ← 0,  C(s,a) ← 0,  π ← greedy(Q)
+  for 에피소드:
     1. 행동 정책 b (균등 랜덤)로 에피소드 생성
     2. G ← 0,  W ← 1
-    3. for t = T-1, T-2, ..., 0:  (역방향)
-         G  ← γ·G + R_{t+1}
-         C[St,At] += W                              (누적 가중치 합 갱신)
-         Q[St,At] += W/C[St,At] · (G - Q[St,At])   (가중 증분 갱신)
-         π(St) ← argmax_a Q(St,a)                  (탐욕 정책 갱신)
+    3. for t = T-1, T-2, ..., 0 (역방향):
+         G       ← γ·G + R_{t+1}
+         C[St,At] += W           ← ★ Weighted IS: 가중치 누적
+         Q[St,At] += (W / C[St,At]) · (G − Q[St,At])
+         π(St)   ← argmax_a Q(St,a)
          if At ≠ π(St): break
-         W ← W · [π(At|St) / b(At|St)]
-           = W · [1 / (1/N_ACTIONS)]  = W · N_ACTIONS
-
-[Ordinary IS vs Weighted IS 비교]
-  ┌──────────────────────────────────────────────────────────────┐
-  │          │ Ordinary IS             │ Weighted IS             │
-  ├──────────────────────────────────────────────────────────────┤
-  │ 추정 공식 │ Σ(ρ·G) / n             │ Σ(ρ·G) / Σ(ρ)          │
-  │ C[s,a]   │ 방문 횟수 n            │ 누적 가중치 합 Σ W_i    │
-  │ 편향      │ 불편(unbiased)         │ 편향(biased)            │
-  │ 분산      │ 높음 (ρ 폭발 위험)    │ 낮음 (안정적)           │
-  │ 수렴      │ n → ∞ 에서 수렴       │ 더 빠른 실용적 수렴     │
-  └──────────────────────────────────────────────────────────────┘
-
-  - Weighted IS는 샘플 수가 적을 때 더 안정적
-  - Ordinary IS는 이론적으로 불편이지만 실제로 높은 분산
-  - 실용적으로 Weighted IS 선호 (Sutton & Barto 권장)
-
-[증분 갱신 공식 유도]
-  Q_{n+1}(s,a) = Σ_{i=1}^{n} W_i · G_i / Σ_{i=1}^{n} W_i
-  C_n          = Σ_{i=1}^{n} W_i
-  C_{n+1}      = C_n + W_{n+1}
-  Q_{n+1}      = Q_n + (W_{n+1} / C_{n+1}) · (G_{n+1} - Q_n)
+         W       ← W · [π(At|St) / b(At|St)] = W · N_ACTIONS
 """
 
 import numpy as np
 import matplotlib.pyplot as plt
 import matplotlib.gridspec as gridspec
-import matplotlib.patches as mpatches
 import gymnasium as gym
 
 # ── 하이퍼파라미터 ─────────────────────────────────────────────
-GAMMA      = 0.99      # 감가율
+GAMMA      = 0.99       # 감가율
 N_EPISODES = 200_000    # 에피소드 수
 
 MAP_4x4 = ["SFFF", "FHFH", "FFFH", "HFFG"]
-HEIGHT, WIDTH   = 4, 4
-N_STATES        = HEIGHT * WIDTH   # 16
-N_ACTIONS       = 4               # LEFT=0, DOWN=1, RIGHT=2, UP=3
-ACTION_SYMBOLS  = ['←', '↓', '→', '↑']
+HEIGHT, WIDTH  = 4, 4
+N_STATES       = HEIGHT * WIDTH   # 16
+N_ACTIONS      = 4                # LEFT=0, DOWN=1, RIGHT=2, UP=3
+ACTION_SYMBOLS = ['←', '↓', '→', '↑']
 
 # ── 환경 생성 ──────────────────────────────────────────────────
 env = gym.make("FrozenLake-v1", desc=MAP_4x4, is_slippery=False, render_mode=None)
@@ -71,9 +71,10 @@ BEHAVIOR_PROB = 1.0 / N_ACTIONS    # b(a|s) = 1/4
 
 # ── 유틸리티 ──────────────────────────────────────────────────
 def get_tile(s):
-    """상태 s 의 타일 종류 반환"""
+    """상태 s의 타일 종류 반환 (S/F/H/G)"""
     r, c = divmod(s, WIDTH)
     return MAP_4x4[r][c]
+
 
 def generate_episode_behavior(env):
     """
@@ -93,6 +94,7 @@ def generate_episode_behavior(env):
             break
     return episode
 
+
 def greedy_action(Q, s):
     """목표 정책 π: Q 최대 행동 (탐욕)"""
     return int(np.argmax(Q[s]))
@@ -102,62 +104,66 @@ def greedy_action(Q, s):
 def off_policy_mc_weighted_is(env, n_episodes=N_EPISODES, gamma=GAMMA):
     """
     Weighted Importance Sampling 기반 Off-policy MC 제어
-    (Sutton & Barto Algorithm: Off-policy MC Control, Weighted IS)
+    (Sutton & Barto Algorithm 5.7절 기반)
 
-    [핵심 차이: C[s,a] 의 의미]
-      Ordinary IS  →  C[s,a] = 방문 횟수 n          (단순 카운트)
-      Weighted IS  →  C[s,a] = 누적 가중치 Σ W_i    (가중 합계)
+    핵심: C[s,a]는 누적 가중치 합 Σ W_i  → C[s,a] += W
+          (Ordinary IS와의 결정적 차이)
 
-    Args:
-        env:        Gymnasium 환경
-        n_episodes: 총 에피소드 수
-        gamma:      감가율
+    증분 갱신 공식  ← PDF p.40 수식:
+      C[s,a] += W                              ← 가중치 합 누적
+      Q[s,a] += (W / C[s,a]) * (G - Q[s,a])   ← 가중 평균 갱신
 
     Returns:
-        Q               (np.ndarray): 수렴된 Q(s,a)  [N_STATES × N_ACTIONS]
-        policy          (np.ndarray): 최적 탐욕 정책  [N_STATES]
-        C               (np.ndarray): 누적 가중치 합 Σ W_i  [N_STATES × N_ACTIONS]
-        episode_rewards (list):       에피소드별 누적 보상
-        is_ratios       (list):       에피소드별 최종 W (중요도 비율 추적)
+        Q               (ndarray [N_STATES × N_ACTIONS]): 수렴된 Q(s,a)
+        policy          (ndarray [N_STATES]):             최적 탐욕 정책
+        C               (ndarray [N_STATES × N_ACTIONS]): 누적 가중치 합 Σ W_i
+        episode_rewards (list): 에피소드별 누적 보상
+        is_ratios       (list): 에피소드별 최종 누적 중요도 비율 W
     """
     Q = np.zeros((N_STATES, N_ACTIONS))
-    C = np.zeros((N_STATES, N_ACTIONS))   # 누적 가중치 합 Σ W_i (Weighted IS 핵심)
+    # ★ Weighted IS: C[s,a] = 누적 가중치 합 Σ W_i  (Ordinary IS: 방문 횟수 n)
+    C = np.zeros((N_STATES, N_ACTIONS), dtype=float)
 
     episode_rewards = []
     is_ratios       = []
 
     for ep in range(n_episodes):
-        # ── 1. 행동 정책 b 로 에피소드 생성 ──────────────────
+        # ── 1. 행동 정책 b로 에피소드 생성 ──────────────────
         episode   = generate_episode_behavior(env)
         ep_reward = sum(r for _, _, r in episode)
         episode_rewards.append(ep_reward)
 
-        # ── 2. 역방향 순회: G 계산 & Weighted IS Q 갱신 ──────
+        # ── 2. 역방향 순회 ────────────────────────────────
         G = 0.0
-        W = 1.0   # 누적 중요도 비율: ρ_{t:T-1}
+        W = 1.0    # 누적 중요도 비율 ρ_{t:T-1}, 초기값 = 1
 
         for t in reversed(range(len(episode))):
             s, a, r = episode[t]
+
+            # 2-1. 반환값(Return) 계산
             G = gamma * G + r
 
-            # ── Weighted IS 증분 갱신 (Ordinary IS 와의 차이점) ──
-            #   C[s,a] : 누적 가중치 합 Σ W_i  (Ordinary IS: 단순 카운트)
-            #   Q[s,a] += W / C[s,a] * (G - Q[s,a])
-            #   → Q = Σ(W·G) / Σ(W)  (가중 평균)
-            C[s, a] += W                           # Σ W_i 누적
+            # 2-2. ★ Weighted IS 핵심: C[s,a] += W  (가중치 누적)
+            #      Ordinary IS라면 C[s,a] += 1 (방문 횟수 카운트)
+            C[s, a] += W
+
+            # 2-3. Q 증분 갱신
+            #      Q(s,a) ← Q(s,a) + (W / Σ W) · (G − Q(s,a))
+            #      = 가중 평균의 점진적 계산  (PDF p.40-42 수식)
             Q[s, a] += (W / C[s, a]) * (G - Q[s, a])
 
-            # 목표 정책 갱신: π(s) ← argmax_a Q(s,a)
+            # 2-4. 목표 정책 갱신: π(s) ← argmax_a Q(s,a)
             pi_a = greedy_action(Q, s)
 
-            # 목표 정책과 다른 행동이면 break (해당 에피소드 나머지 반영 불가)
+            # 2-5. 목표 정책과 다른 행동 → 이전 타임스텝 반영 불가 → break
+            #      (행동 정책 b가 목표 정책 π를 따른다고 보장할 수 없으므로)
             if a != pi_a:
                 break
 
-            # ── 중요도 비율 갱신 ────────────────────────────────
-            #   π(a|s) = 1 (탐욕: 최적 행동만 선택)
-            #   b(a|s) = 1/N_ACTIONS (균등)
-            #   W ← W * [π(a|s) / b(a|s)] = W * N_ACTIONS
+            # 2-6. 중요도 비율 누적
+            #      π(a|s) = 1   (탐욕 정책: 최적 행동 확률 1)
+            #      b(a|s) = 1/N_ACTIONS (균등 정책)
+            #      W ← W · π(a|s) / b(a|s) = W · N_ACTIONS
             W *= 1.0 / BEHAVIOR_PROB    # = W * N_ACTIONS
 
         is_ratios.append(W)
@@ -168,13 +174,13 @@ def off_policy_mc_weighted_is(env, n_episodes=N_EPISODES, gamma=GAMMA):
                   f"Avg Reward (last 10k): {avg_r:.4f} | "
                   f"W: {W:.2e}")
 
-    # ── 최적 탐욕 정책 산출 ─────────────────────────────────────
+    # ── 3. 최적 탐욕 정책 산출 ──────────────────────────────
     policy = np.array([greedy_action(Q, s) for s in range(N_STATES)])
 
     print(f"\n[Weighted IS Off-policy MC 제어 완료]")
-    print(f"  총 에피소드 수: {n_episodes}")
-    print(f"  평균 중요도 비율 W: {np.mean(is_ratios):.4f}")
-    print(f"  C (누적 가중치 합 Σ W) 최대값: {C.max():.2f}")
+    print(f"  총 에피소드 수             : {n_episodes}")
+    print(f"  평균 중요도 비율 W         : {np.mean(is_ratios):.4f}")
+    print(f"  C (누적 가중치 합 Σ W) 최대: {C.max():.2f}")
 
     return Q, policy, C, episode_rewards, is_ratios
 
@@ -219,18 +225,18 @@ def print_results(Q, policy, C):
 def visualize(Q, policy, C, episode_rewards, is_ratios):
     fig = plt.figure(figsize=(15, 5))
     fig.suptitle(
-        "Off-policy MC Control  (Weighted Importance Sampling)\n"
-        f"FrozenLake 4×4  |  is_slippery=True  |  γ={GAMMA}  |  "
-        f"Episodes={N_EPISODES}\n"
-        "Behavior Policy: Uniform Random  |  Target Policy: Greedy(Q)  |  "
-        "Q ← Σ(W·G) / Σ(W)",
-        fontsize=12, fontweight='bold'
+        "Off-policy MC Control  ─  Weighted Importance Sampling\n"
+        f"FrozenLake 4×4  |  is_slippery=False  |  γ={GAMMA}  |  "
+        f"Episodes={N_EPISODES:,}\n"
+        "Behavior Policy b: Uniform Random  |  Target Policy π: Greedy(Q)\n"
+        "Q ← Σ(W·G) / Σ(W)   [C += W, Biased · Low Variance, Recommended]",
+        fontsize=11, fontweight='bold'
     )
 
     gs = gridspec.GridSpec(1, 3, figure=fig, hspace=0.55, wspace=0.40,
-                          top=0.76, bottom=0.12)
+                           top=0.72, bottom=0.12)
 
-    # ── (A) 최적 정책 격자 ──────────────────────────────────────
+    # ── (A) 최적 정책 격자 ──────────────────────────────────
     ax_pol = fig.add_subplot(gs[0, 0])
     colors_cell = {'S': '#E8F5E9', 'F': '#E8F5E9',
                    'H': '#37474F', 'G': '#1565C0'}
@@ -242,10 +248,10 @@ def visualize(Q, policy, C, episode_rewards, is_ratios):
                          edgecolor='white', linewidth=2))
         if tile == 'H':
             ax_pol.text(c, r, 'H\n(Hole)', ha='center', va='center',
-                        fontsize=12, color='white', fontweight='bold', zorder=3)
+                        fontsize=11, color='white', fontweight='bold', zorder=3)
         elif tile == 'G':
             ax_pol.text(c, r, 'G\n(Goal)', ha='center', va='center',
-                        fontsize=12, color='white', fontweight='bold', zorder=3)
+                        fontsize=11, color='white', fontweight='bold', zorder=3)
         else:
             ax_pol.text(c, r, ACTION_SYMBOLS[policy[s]], ha='center', va='center',
                         fontsize=18, color='#1976D2', fontweight='bold', zorder=3)
@@ -260,31 +266,31 @@ def visualize(Q, policy, C, episode_rewards, is_ratios):
                      fontsize=10, fontweight='bold')
     ax_pol.set_aspect('equal')
 
-    # ── (B) 에피소드 보상 이동평균 ─────────────────────────────
+    # ── (B) 에피소드 보상 이동평균 ──────────────────────────
     ax_rw = fig.add_subplot(gs[0, 1])
     window = 1000
     moving_avg = np.convolve(episode_rewards,
-                              np.ones(window) / window, mode='valid')
+                             np.ones(window) / window, mode='valid')
     ax_rw.plot(moving_avg, color='#1976D2', linewidth=1.5,
-               label=f'Moving Avg (window={window})')
+               label=f'Moving Avg (w={window})')
     ax_rw.set_xlabel("Episode", fontsize=10)
     ax_rw.set_ylabel("Avg Reward", fontsize=10)
-    ax_rw.set_title(f"(B) Episode Reward (Moving Avg {window})\n"
-                    "Weighted IS Off-policy MC",
+    ax_rw.set_title(f"(B) Episode Reward  (Moving Avg {window})\n"
+                    "Weighted IS  |  Low Variance, Stable Convergence",
                     fontsize=10, fontweight='bold')
     ax_rw.legend(fontsize=9)
     ax_rw.grid(True, alpha=0.3)
 
-    # ── (C) 중요도 비율 (IS Ratio W) 이동평균 ───────────────────
+    # ── (C) 중요도 비율 이동평균 ────────────────────────────
     ax_is = fig.add_subplot(gs[0, 2])
     is_moving_avg = np.convolve(is_ratios,
                                 np.ones(window) / window, mode='valid')
     ax_is.plot(is_moving_avg, color='#E53935', linewidth=1.5,
-               label=f'Moving Avg (window={window})')
+               label=f'Moving Avg (w={window})')
     ax_is.set_xlabel("Episode", fontsize=10)
     ax_is.set_ylabel("IS Ratio  W", fontsize=10)
     ax_is.set_title(f"(C) Importance Sampling Ratio  W\n"
-                    "ρ = π(a|s) / b(a|s)  [Weighted IS]",
+                    "ρ = π(a|s) / b(a|s)  [Weighted IS: Biased]",
                     fontsize=10, fontweight='bold')
     ax_is.legend(fontsize=9)
     ax_is.grid(True, alpha=0.3)
@@ -298,15 +304,13 @@ def visualize(Q, policy, C, episode_rewards, is_ratios):
 # ── 메인 ──────────────────────────────────────────────────────
 if __name__ == '__main__':
     print("=" * 65)
-    print("  Weighted Importance Sampling 기반 Off-policy MC 제어")
-    print("  [행동 정책 b: 균등 무작위]  [목표 정책 π: 탐욕(Q)]")
-    print("  [편향 추정 | 낮은 분산 | Q ← Σ(ρ·G) / Σ(ρ)]")
+    print("  Weighted IS  Off-policy MC 제어")
+    print("  행동 정책 b : 균등 무작위   b(a|s) = 1/4")
+    print("  목표 정책 π : 탐욕(Q)       π(a*|s) = 1")
+    print("  추정 공식   : Q ← Σ(W·G) / Σ(W)  [C += W, 편향·저분산]")
     print("=" * 65)
 
-    (Q, policy,
-     C, episode_rewards, is_ratios) = off_policy_mc_weighted_is(env)
-
+    Q, policy, C, episode_rewards, is_ratios = off_policy_mc_weighted_is(env)
     print_results(Q, policy, C)
     visualize(Q, policy, C, episode_rewards, is_ratios)
-
     env.close()
