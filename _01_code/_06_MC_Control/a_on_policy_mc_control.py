@@ -41,6 +41,9 @@ EPSILON_START = 0.9    # 초기 ε
 EPSILON_MIN   = 0.05   # 최소 ε
 EPSILON_DECAY = 0.0001 # ε 감소 속도
 
+VALIDATION_EPISODES_INTERVAL = 100  # 검증 수행 간격 (훈련 에피소드 수)
+VALIDATION_NUM_EPISODES      = 3       # 검증 시 수행 에피소드 수
+
 MAP_4x4 = ["SFFF", "FHFH", "FFFH", "HFFG"]
 HEIGHT, WIDTH   = 4, 4
 N_STATES        = HEIGHT * WIDTH   # 16
@@ -55,6 +58,10 @@ def get_tile(s):
     """상태 s 의 타일 종류 반환"""
     r, c = divmod(s, WIDTH)
     return MAP_4x4[r][c]
+
+def greedy_action(Q, s):
+    """탐욕 정책: Q 최대 행동 선택 (ε=0)"""
+    return int(np.argmax(Q[s]))
 
 def epsilon_greedy_action(Q, s, epsilon):
     """
@@ -91,6 +98,29 @@ def generate_episode(Q, epsilon):
             break
     return episode
 
+def validate_policy(Q, n_episodes=VALIDATION_NUM_EPISODES):
+    """
+    현재 Q를 탐욕(ε=0) 정책으로 n_episodes 번 실행하여 평균 보상 반환
+
+    Args:
+        Q (np.ndarray): 상태-행동 가치 함수  (shape: N_STATES × N_ACTIONS)
+        n_episodes (int): 검증 에피소드 수
+
+    Returns:
+        avg_reward (float): 탐욕 정책의 평균 누적 보상
+    """
+    total_reward = 0.0
+    for _ in range(n_episodes):
+        state, _ = env.reset()
+        while True:
+            action = greedy_action(Q, state)
+            next_state, reward, terminated, truncated, _ = env.step(action)
+            total_reward += reward
+            state = next_state
+            if terminated or truncated:
+                break
+    return total_reward / n_episodes
+
 
 # ── On-policy MC 제어 (First-visit) ────────────────────────────
 def on_policy_mc_control(env, n_episodes=N_EPISODES,
@@ -110,19 +140,22 @@ def on_policy_mc_control(env, n_episodes=N_EPISODES,
         epsilon_decay:  ε 감소 계수
 
     Returns:
-        Q               (np.ndarray): 수렴된 Q(s,a)  [N_STATES × N_ACTIONS]
-        policy          (np.ndarray): 최적 탐욕 정책  [N_STATES]
-        returns_sum     (np.ndarray): Returns 합계    [N_STATES × N_ACTIONS]
-        returns_cnt     (np.ndarray): Returns 방문 수 [N_STATES × N_ACTIONS]
-        episode_rewards (list):       에피소드별 누적 보상
-        epsilon_history (list):       에피소드별 ε 값
+        Q                          (np.ndarray): 수렴된 Q(s,a)  [N_STATES × N_ACTIONS]
+        policy                     (np.ndarray): 최적 탐욕 정책  [N_STATES]
+        returns_sum                (np.ndarray): Returns 합계    [N_STATES × N_ACTIONS]
+        returns_cnt                (np.ndarray): Returns 방문 수 [N_STATES × N_ACTIONS]
+        episode_rewards            (list):       에피소드별 누적 보상
+        epsilon_history            (list):       에피소드별 ε 값
+        validation_episode_rewards (list):       검증 에피소드별 평균 보상
     """
+
     Q            = np.zeros((N_STATES, N_ACTIONS))
     returns_sum  = np.zeros((N_STATES, N_ACTIONS))
     returns_cnt  = np.zeros((N_STATES, N_ACTIONS), dtype=int)
 
-    episode_rewards = []
-    epsilon_history = []
+    episode_rewards            = []
+    epsilon_history            = []
+    validation_episode_rewards = []
 
     for ep in range(n_episodes):
         # ε 감소 스케줄
@@ -148,11 +181,14 @@ def on_policy_mc_control(env, n_episodes=N_EPISODES,
                 returns_cnt[s, a] += 1
                 Q[s, a] = returns_sum[s, a] / returns_cnt[s, a]
 
-        # ── 3. 진행 상황 출력 ─────────────────────────────────
-        if (ep + 1) % 10_000 == 0:
-            avg_r = np.mean(episode_rewards[-10_000:])
+        # ── 3. 검증 및 진행 상황 출력 ────────────────────────────
+        if (ep + 1) % VALIDATION_EPISODES_INTERVAL == 0:
+            train_avg = np.mean(episode_rewards[-VALIDATION_EPISODES_INTERVAL:])
+            val_avg   = validate_policy(Q, VALIDATION_NUM_EPISODES)
+            validation_episode_rewards.append(val_avg)
             print(f"  Episode {ep+1:>6} | ε={epsilon:.4f} | "
-                  f"Avg Reward (last 10k): {avg_r:.4f}")
+                  f"Train Episode Reward (Avg): {train_avg:.4f} | "
+                  f"Validation Episode Reward (Avg): {val_avg:.4f}")
 
     # ── 최적 탐욕 정책 산출 (ε=0) ──────────────────────────────
     policy = np.array([int(np.argmax(Q[s])) for s in range(N_STATES)])
@@ -161,7 +197,7 @@ def on_policy_mc_control(env, n_episodes=N_EPISODES,
     print(f"  총 에피소드 수: {n_episodes}")
     print(f"  최종 ε:        {epsilon_history[-1]:.4f}")
 
-    return Q, policy, returns_sum, returns_cnt, episode_rewards, epsilon_history
+    return Q, policy, returns_sum, returns_cnt, episode_rewards, epsilon_history, validation_episode_rewards
 
 
 # ── 콘솔 출력 ─────────────────────────────────────────────────
@@ -201,17 +237,17 @@ def print_results(Q, policy):
 
 
 # ── 시각화 ────────────────────────────────────────────────────
-def visualize(Q, policy, episode_rewards, epsilon_history):
-    fig = plt.figure(figsize=(15, 5))
+def visualize(Q, policy, episode_rewards, epsilon_history, validation_episode_rewards):
+    fig = plt.figure(figsize=(15, 10))
     fig.suptitle(
         "On-policy MC Control  (ε-Greedy, First-visit)\n"
-        f"FrozenLake 4×4  |  is_slippery=True  |  γ={GAMMA}  |  "
+        f"FrozenLake 4×4  |  is_slippery=False  |  γ={GAMMA}  |  "
         f"Episodes={N_EPISODES}",
         fontsize=13, fontweight='bold'
     )
 
-    gs = gridspec.GridSpec(1, 3, figure=fig, hspace=0.50, wspace=0.40,
-                          top=0.76, bottom=0.12)
+    gs = gridspec.GridSpec(2, 2, figure=fig, hspace=0.50, wspace=0.40,
+                          top=0.88, bottom=0.08)
 
     # ── (A) 최적 정책 격자 ──────────────────────────────────────
     ax_pol = fig.add_subplot(gs[0, 0])
@@ -243,30 +279,45 @@ def visualize(Q, policy, episode_rewards, epsilon_history):
                      fontsize=10, fontweight='bold')
     ax_pol.set_aspect('equal')
 
-    # ── (B) 에피소드 보상 이동평균 ─────────────────────────────
+    # ── (B) 훈련 에피소드 보상 이동평균 ────────────────────────
     ax_rw = fig.add_subplot(gs[0, 1])
     window = 1000
     moving_avg = np.convolve(episode_rewards,
                               np.ones(window) / window, mode='valid')
     ax_rw.plot(moving_avg, color='#1976D2', linewidth=1.5,
-               label=f'Moving Avg (window={window})')
+               label=f'Train Moving Avg (window={window})')
     ax_rw.set_xlabel("Episode", fontsize=10)
     ax_rw.set_ylabel("Avg Reward", fontsize=10)
-    ax_rw.set_title(f"(B) Episode Reward (Moving Avg {window})\n"
+    ax_rw.set_title(f"(B) Train Episode Reward (Moving Avg {window})\n"
                     f"On-policy MC  |  ε-greedy",
                     fontsize=10, fontweight='bold')
     ax_rw.legend(fontsize=9)
     ax_rw.grid(True, alpha=0.3)
 
-    # ── (C) ε 감소 곡선 ─────────────────────────────────────────
-    ax_eps = fig.add_subplot(gs[0, 2])
+    # ── (C) 검증 에피소드 평균 보상 ─────────────────────────────
+    ax_val = fig.add_subplot(gs[1, 0])
+    val_x = [(i + 1) * VALIDATION_EPISODES_INTERVAL
+             for i in range(len(validation_episode_rewards))]
+    ax_val.plot(val_x, validation_episode_rewards, color='#43A047',
+                linewidth=1.5, marker='o', markersize=4,
+                label=f'Validation Avg ({VALIDATION_NUM_EPISODES} eps, greedy)')
+    ax_val.set_xlabel("Episode", fontsize=10)
+    ax_val.set_ylabel("Avg Reward", fontsize=10)
+    ax_val.set_title(f"(C) Validation Reward (Greedy Policy, every {VALIDATION_EPISODES_INTERVAL//1000}k ep)\n"
+                     f"ε=0  |  {VALIDATION_NUM_EPISODES} episodes per validation",
+                     fontsize=10, fontweight='bold')
+    ax_val.legend(fontsize=9)
+    ax_val.grid(True, alpha=0.3)
+
+    # ── (D) ε 감소 곡선 ─────────────────────────────────────────
+    ax_eps = fig.add_subplot(gs[1, 1])
     ax_eps.plot(epsilon_history, color='#E53935', linewidth=1.5,
                 label='ε schedule')
     ax_eps.axhline(EPSILON_MIN, color='gray', linestyle='--', linewidth=1.2,
                    label=f'ε_min = {EPSILON_MIN}')
     ax_eps.set_xlabel("Episode", fontsize=10)
     ax_eps.set_ylabel("ε (epsilon)", fontsize=10)
-    ax_eps.set_title(f"(C) ε Decay Schedule\n"
+    ax_eps.set_title(f"(D) ε Decay Schedule\n"
                      f"ε = max(ε_min, ε_start / (1 + decay × ep))",
                      fontsize=10, fontweight='bold')
     ax_eps.legend(fontsize=9)
@@ -288,9 +339,10 @@ if __name__ == '__main__':
 
     (Q, policy,
      returns_sum, returns_cnt,
-     episode_rewards, epsilon_history) = on_policy_mc_control(env)
+     episode_rewards, epsilon_history,
+     validation_episode_rewards) = on_policy_mc_control(env)
 
     print_results(Q, policy)
-    visualize(Q, policy, episode_rewards, epsilon_history)
+    visualize(Q, policy, episode_rewards, epsilon_history, validation_episode_rewards)
 
     env.close()

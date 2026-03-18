@@ -57,6 +57,9 @@ import gymnasium as gym
 GAMMA      = 0.99       # 감가율
 N_EPISODES = 200_000    # 에피소드 수
 
+VALIDATION_EPISODES_INTERVAL = 100  # 검증 수행 간격 (훈련 에피소드 수)
+VALIDATION_NUM_EPISODES      = 3       # 검증 시 수행 에피소드 수
+
 MAP_4x4 = ["SFFF", "FHFH", "FFFH", "HFFG"]
 HEIGHT, WIDTH  = 4, 4
 N_STATES       = HEIGHT * WIDTH   # 16
@@ -100,6 +103,30 @@ def greedy_action(Q, s):
     return int(np.argmax(Q[s]))
 
 
+def validate_policy(Q, n_episodes=VALIDATION_NUM_EPISODES):
+    """
+    현재 Q를 탐욕(ε=0) 정책으로 n_episodes 번 실행하여 평균 보상 반환
+
+    Args:
+        Q (np.ndarray): 상태-행동 가치 함수  (shape: N_STATES × N_ACTIONS)
+        n_episodes (int): 검증 에피소드 수
+
+    Returns:
+        avg_reward (float): 탐욕 정책의 평균 누적 보상
+    """
+    total_reward = 0.0
+    for _ in range(n_episodes):
+        state, _ = env.reset()
+        while True:
+            action = greedy_action(Q, state)
+            next_state, reward, terminated, truncated, _ = env.step(action)
+            total_reward += reward
+            state = next_state
+            if terminated or truncated:
+                break
+    return total_reward / n_episodes
+
+
 # ── Ordinary IS Off-policy MC 제어 ────────────────────────────
 def off_policy_mc_ordinary_is(env, n_episodes=N_EPISODES, gamma=GAMMA):
     """
@@ -113,18 +140,18 @@ def off_policy_mc_ordinary_is(env, n_episodes=N_EPISODES, gamma=GAMMA):
       Q[s,a] += (W / C[s,a]) * (G - Q[s,a])   ← W/n 비율로 갱신
 
     Returns:
-        Q               (ndarray [N_STATES × N_ACTIONS]): 수렴된 Q(s,a)
-        policy          (ndarray [N_STATES]):             최적 탐욕 정책
-        C               (ndarray [N_STATES × N_ACTIONS]): 누적 방문 횟수
-        episode_rewards (list): 에피소드별 누적 보상
-        is_ratios       (list): 에피소드별 최종 누적 중요도 비율 W
+        Q                          (ndarray [N_STATES × N_ACTIONS]): 수렴된 Q(s,a)
+        policy                     (ndarray [N_STATES]):             최적 탐욕 정책
+        C                          (ndarray [N_STATES × N_ACTIONS]): 누적 방문 횟수
+        episode_rewards            (list): 에피소드별 누적 보상
+        validation_episode_rewards (list): 검증 에피소드별 평균 보상
     """
     Q = np.zeros((N_STATES, N_ACTIONS))
     # ★ Ordinary IS: C[s,a] = 방문 횟수 n  (Weighted IS: Σ W_i)
     C = np.zeros((N_STATES, N_ACTIONS), dtype=float)
 
-    episode_rewards = []
-    is_ratios       = []
+    episode_rewards            = []
+    validation_episode_rewards = []
 
     for ep in range(n_episodes):
         # ── 1. 행동 정책 b로 에피소드 생성 ──────────────────
@@ -180,23 +207,22 @@ def off_policy_mc_ordinary_is(env, n_episodes=N_EPISODES, gamma=GAMMA):
             #      W ← W · π(a|s) / b(a|s) = W · N_ACTIONS
             W *= 1.0 / BEHAVIOR_PROB    # = W * N_ACTIONS
 
-        is_ratios.append(W)
-
-        if (ep + 1) % 10_000 == 0:
-            avg_r = np.mean(episode_rewards[-10_000:])
+        if (ep + 1) % VALIDATION_EPISODES_INTERVAL == 0:
+            train_avg = np.mean(episode_rewards[-VALIDATION_EPISODES_INTERVAL:])
+            val_avg   = validate_policy(Q, VALIDATION_NUM_EPISODES)
+            validation_episode_rewards.append(val_avg)
             print(f"  Episode {ep+1:>6} | "
-                  f"Avg Reward (last 10k): {avg_r:.4f} | "
-                  f"W: {W:.2e}")
+                  f"Train Episode Reward (Avg): {train_avg:.4f} | "
+                  f"Validation Episode Reward (Avg): {val_avg:.4f}")
 
     # ── 3. 최적 탐욕 정책 산출 ──────────────────────────────
     policy = np.array([greedy_action(Q, s) for s in range(N_STATES)])
 
     print(f"\n[Ordinary IS Off-policy MC 제어 완료]")
-    print(f"  총 에피소드 수         : {n_episodes}")
-    print(f"  평균 중요도 비율 W     : {np.mean(is_ratios):.4f}")
-    print(f"  C (최대 방문 횟수)     : {int(C.max())}")
+    print(f"  총 에피소드 수     : {n_episodes}")
+    print(f"  C (최대 방문 횟수) : {int(C.max())}")
 
-    return Q, policy, C, episode_rewards, is_ratios
+    return Q, policy, C, episode_rewards, validation_episode_rewards
 
 
 # ── 콘솔 출력 ─────────────────────────────────────────────────
@@ -236,7 +262,7 @@ def print_results(Q, policy, C):
 
 
 # ── 시각화 ────────────────────────────────────────────────────
-def visualize(Q, policy, C, episode_rewards, is_ratios):
+def visualize(Q, policy, C, episode_rewards, validation_episode_rewards):
     fig = plt.figure(figsize=(15, 5))
     fig.suptitle(
         "Off-policy MC Control  ─  Ordinary Importance Sampling\n"
@@ -280,34 +306,35 @@ def visualize(Q, policy, C, episode_rewards, is_ratios):
                      fontsize=10, fontweight='bold')
     ax_pol.set_aspect('equal')
 
-    # ── (B) 에피소드 보상 이동평균 ──────────────────────────
+    # ── (B) 훈련 에피소드 보상 이동평균 ─────────────────────
     ax_rw = fig.add_subplot(gs[0, 1])
     window = 1000
     moving_avg = np.convolve(episode_rewards,
                              np.ones(window) / window, mode='valid')
     ax_rw.plot(moving_avg, color='#1976D2', linewidth=1.5,
-               label=f'Moving Avg (w={window})')
+               label=f'Train Moving Avg (window={window})')
     ax_rw.set_xlabel("Episode", fontsize=10)
     ax_rw.set_ylabel("Avg Reward", fontsize=10)
-    ax_rw.set_title(f"(B) Episode Reward  (Moving Avg {window})\n"
+    ax_rw.set_title(f"(B) Train Episode Reward  (Moving Avg {window})\n"
                     "Ordinary IS  |  High Variance",
                     fontsize=10, fontweight='bold')
     ax_rw.legend(fontsize=9)
     ax_rw.grid(True, alpha=0.3)
 
-    # ── (C) 중요도 비율 이동평균 ────────────────────────────
-    ax_is = fig.add_subplot(gs[0, 2])
-    is_moving_avg = np.convolve(is_ratios,
-                                np.ones(window) / window, mode='valid')
-    ax_is.plot(is_moving_avg, color='#E53935', linewidth=1.5,
-               label=f'Moving Avg (w={window})')
-    ax_is.set_xlabel("Episode", fontsize=10)
-    ax_is.set_ylabel("IS Ratio  W", fontsize=10)
-    ax_is.set_title(f"(C) Importance Sampling Ratio  W\n"
-                    "ρ = π(a|s) / b(a|s)  [Ordinary IS: Unbiased]",
-                    fontsize=10, fontweight='bold')
-    ax_is.legend(fontsize=9)
-    ax_is.grid(True, alpha=0.3)
+    # ── (C) 검증 에피소드 평균 보상 ─────────────────────────
+    ax_val = fig.add_subplot(gs[0, 2])
+    val_x = [(i + 1) * VALIDATION_EPISODES_INTERVAL
+             for i in range(len(validation_episode_rewards))]
+    ax_val.plot(val_x, validation_episode_rewards, color='#43A047',
+                linewidth=1.5, marker='o', markersize=4,
+                label=f'Validation Avg ({VALIDATION_NUM_EPISODES} eps, greedy)')
+    ax_val.set_xlabel("Episode", fontsize=10)
+    ax_val.set_ylabel("Avg Reward", fontsize=10)
+    ax_val.set_title(f"(C) Validation Reward (Greedy Policy, every {VALIDATION_EPISODES_INTERVAL//1000}k ep)\n"
+                     f"ε=0  |  {VALIDATION_NUM_EPISODES} episodes per validation",
+                     fontsize=10, fontweight='bold')
+    ax_val.legend(fontsize=9)
+    ax_val.grid(True, alpha=0.3)
 
     plt.savefig('./b_off_policy_mc_ordinary_is_img.png',
                 dpi=130, bbox_inches='tight')
@@ -324,7 +351,9 @@ if __name__ == '__main__':
     print("  추정 공식   : Q ← Σ(W·G) / n   [C += 1, 불편·고분산]")
     print("=" * 65)
 
-    Q, policy, C, episode_rewards, is_ratios = off_policy_mc_ordinary_is(env)
+    (Q, policy, C,
+     episode_rewards,
+     validation_episode_rewards) = off_policy_mc_ordinary_is(env)
     print_results(Q, policy, C)
-    visualize(Q, policy, C, episode_rewards, is_ratios)
+    visualize(Q, policy, C, episode_rewards, validation_episode_rewards)
     env.close()
