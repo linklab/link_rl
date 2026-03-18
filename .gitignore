@@ -211,3 +211,7 @@ __marimo__/
 
 .idea
 *.png
+
+models
+wandb
+video
