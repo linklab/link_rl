@@ -50,9 +50,6 @@ N_STATES        = HEIGHT * WIDTH   # 16
 N_ACTIONS       = 4               # LEFT=0, DOWN=1, RIGHT=2, UP=3
 ACTION_SYMBOLS  = ['←', '↓', '→', '↑']
 
-# ── 환경 생성 ──────────────────────────────────────────────────
-env = gym.make("FrozenLake-v1", desc=MAP_4x4, is_slippery=False, render_mode=None)
-
 # ── 유틸리티 ──────────────────────────────────────────────────
 def get_tile(s):
     """상태 s 의 타일 종류 반환"""
@@ -63,7 +60,7 @@ def greedy_action(Q, s):
     """탐욕 정책: Q 최대 행동 선택 (ε=0)"""
     return int(np.argmax(Q[s]))
 
-def epsilon_greedy_action(Q, s, epsilon):
+def epsilon_greedy_action(env, Q, s, epsilon):
     """
     ε-탐욕 정책: 확률 ε 로 무작위 행동, 확률 1-ε 로 Q 최대 행동 선택
 
@@ -80,7 +77,7 @@ def epsilon_greedy_action(Q, s, epsilon):
     else:
         return int(np.argmax(Q[s]))           # 활용 (탐욕)
 
-def generate_episode(Q, epsilon):
+def generate_episode(env, Q, epsilon):
     """
     현재 ε-탐욕 정책으로 에피소드 1개 생성
 
@@ -90,7 +87,7 @@ def generate_episode(Q, epsilon):
     episode = []
     state, _ = env.reset()
     while True:
-        action = epsilon_greedy_action(Q, state, epsilon)
+        action = epsilon_greedy_action(env, Q, state, epsilon)
         next_state, reward, terminated, truncated, _ = env.step(action)
         episode.append((state, action, reward))
         state = next_state
@@ -98,7 +95,7 @@ def generate_episode(Q, epsilon):
             break
     return episode
 
-def validate_policy(Q, n_episodes=VALIDATION_NUM_EPISODES):
+def validate_policy(env, Q, n_episodes=VALIDATION_NUM_EPISODES):
     """
     현재 Q를 탐욕(ε=0) 정책으로 n_episodes 번 실행하여 평균 보상 반환
 
@@ -132,7 +129,7 @@ def on_policy_mc_control(env, n_episodes=N_EPISODES,
     ε-탐욕 정책 기반 On-policy MC 제어 (First-visit)
 
     Args:
-        env:            Gymnasium 환경
+        env:            환경
         n_episodes:     총 에피소드 수
         gamma:          감가율
         epsilon_start:  초기 ε
@@ -163,7 +160,7 @@ def on_policy_mc_control(env, n_episodes=N_EPISODES,
         epsilon_history.append(epsilon)
 
         # ── 1. 에피소드 생성 ─────────────────────────────────
-        episode = generate_episode(Q, epsilon)
+        episode = generate_episode(env, Q, epsilon)
         ep_reward = sum(r for _, _, r in episode)
         episode_rewards.append(ep_reward)
 
@@ -184,7 +181,7 @@ def on_policy_mc_control(env, n_episodes=N_EPISODES,
         # ── 3. 검증 및 진행 상황 출력 ────────────────────────────
         if (ep + 1) % VALIDATION_EPISODES_INTERVAL == 0:
             train_avg = np.mean(episode_rewards[-VALIDATION_EPISODES_INTERVAL:])
-            val_avg   = validate_policy(Q, VALIDATION_NUM_EPISODES)
+            val_avg   = validate_policy(env, Q, VALIDATION_NUM_EPISODES)
             validation_episode_rewards.append(val_avg)
             print(f"  Episode {ep+1:>6} | ε={epsilon:.4f} | "
                   f"Train Episode Reward (Avg): {train_avg:.4f} | "
@@ -330,12 +327,15 @@ def visualize(Q, policy, episode_rewards, epsilon_history, validation_episode_re
 
 
 # ── 메인 ──────────────────────────────────────────────────────
-if __name__ == '__main__':
+def main():
     print("=" * 60)
     print("  ε-탐욕적 정책 기반 On-policy 몬테카를로 제어")
     print("  [행동 정책 = 목표 정책 = ε-탐욕(Q)]")
     print("  [First-visit MC  |  is_slippery=True]")
     print("=" * 60)
+
+    # ── 환경 생성 ──────────────────────────────────────────────────
+    env = gym.make("FrozenLake-v1", desc=MAP_4x4, is_slippery=False, render_mode=None)
 
     (Q, policy,
      returns_sum, returns_cnt,
@@ -346,3 +346,7 @@ if __name__ == '__main__':
     visualize(Q, policy, episode_rewards, epsilon_history, validation_episode_rewards)
 
     env.close()
+
+
+if __name__ == '__main__':
+    main()

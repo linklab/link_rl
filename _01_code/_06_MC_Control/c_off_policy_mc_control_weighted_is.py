@@ -103,7 +103,7 @@ def greedy_action(Q, s):
     return int(np.argmax(Q[s]))
 
 
-def validate_policy(Q, n_episodes=VALIDATION_NUM_EPISODES):
+def validate_policy(env, Q, n_episodes=VALIDATION_NUM_EPISODES):
     """
     현재 Q를 탐욕(ε=0) 정책으로 n_episodes 번 실행하여 평균 보상 반환
 
@@ -210,7 +210,7 @@ def off_policy_mc_weighted_is(env, n_episodes=N_EPISODES, gamma=GAMMA):
 
         if (ep + 1) % VALIDATION_EPISODES_INTERVAL == 0:
             train_avg = np.mean(episode_rewards[-VALIDATION_EPISODES_INTERVAL:])
-            val_avg   = validate_policy(Q, VALIDATION_NUM_EPISODES)
+            val_avg   = validate_policy(env, Q, VALIDATION_NUM_EPISODES)
             validation_episode_rewards.append(val_avg)
             print(f"  Episode {ep+1:>6} | "
                   f"Train Episode Reward (Avg): {train_avg:.4f} | "
@@ -344,7 +344,7 @@ def visualize(Q, policy, C, episode_rewards, validation_episode_rewards):
 
 
 # ── 메인 ──────────────────────────────────────────────────────
-if __name__ == '__main__':
+def main():
     print("=" * 65)
     print("  Weighted IS  Off-policy MC 제어")
     print("  행동 정책 b : 균등 무작위   b(a|s) = 1/4")
@@ -355,6 +355,12 @@ if __name__ == '__main__':
     (Q, policy, C,
      episode_rewards,
      validation_episode_rewards) = off_policy_mc_weighted_is(env)
+
     print_results(Q, policy, C)
+
     visualize(Q, policy, C, episode_rewards, validation_episode_rewards)
+
     env.close()
+
+if __name__ == '__main__':
+    main()
