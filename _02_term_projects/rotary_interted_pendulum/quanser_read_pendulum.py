@@ -1,24 +1,34 @@
 from quanser.hardware import HIL
-from array   import array
-import math, time
+from array import array
+import math
+import time
 
-card = HIL("qube_servo3_usb", "0")
-try:
-    enc_ch  = array('I', [1])
+
+def read_pendulum_angle(card):
+    enc_ch = array('I', [1])
     enc_val = array('l', [0])
-
-    # 각도가 안 맞을 시 펜듈럼 각도 리셋 시 사용
-    # zero_ct = array('l', [0])
-    # card.set_encoder_counts(enc_ch, len(enc_ch), zero_ct)
+    pend_init_count = 0
 
     while True:
         card.read_encoder(enc_ch, 1, enc_val)
 
-        alpha = enc_val[0] * 2*math.pi / 2048.0
-        alpha_deg = alpha * 180/math.pi
+        alpha = (enc_val[0] - pend_init_count) * 2 * math.pi / 2048.0
+        alpha = ((alpha + math.pi) % (2 * math.pi)) - math.pi
+        alpha_deg = alpha * 180 / math.pi
 
         print(f"pendulum α = {alpha_deg} °")
         time.sleep(0.5)
 
-finally:
-    card.close()
+
+def main():
+    card = HIL("qube_servo3_usb", "0")
+    try:
+        read_pendulum_angle(card)
+    except KeyboardInterrupt:
+        print("\nStopped by user.")
+    finally:
+        card.close()
+
+
+if __name__ == "__main__":
+    main()
