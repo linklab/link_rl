@@ -437,8 +437,8 @@ def visualize(V_online_td, V_batch_td, V_batch_mc,
     ax_e.set_title("(E) Batch Update Principle",
                    fontsize=10, fontweight='bold')
 
-    plt.savefig('./c_batch_td_prediction_img.png', dpi=130, bbox_inches='tight')
-    print("\n[시각화 저장] c_batch_td_prediction_img.png")
+    plt.savefig('./d_batch_td_prediction_img.png', dpi=130, bbox_inches='tight')
+    print("\n[시각화 저장] d_batch_td_prediction_img.png")
     plt.show()
 
 

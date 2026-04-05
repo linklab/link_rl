@@ -355,9 +355,9 @@ def visualize(results):
     ax_d.legend(fontsize=10)
     ax_d.grid(True, alpha=0.3)
 
-    plt.savefig('./b_n_step_td_prediction_img.png',
+    plt.savefig('./c_n_step_td_prediction_img.png',
                 dpi=130, bbox_inches='tight')
-    print("\n[시각화 저장] b_n_step_td_prediction_img.png")
+    print("\n[시각화 저장] c_n_step_td_prediction_img.png")
     plt.show()
 
 

@@ -216,8 +216,8 @@ def visualize(V, td_errors_history):
     ax_err.grid(True, alpha=0.3)
 
     plt.tight_layout()
-    plt.savefig('./a_td_prediction_img.png', dpi=130, bbox_inches='tight')
-    print("\n[시각화 저장] a_td_prediction_img.png")
+    plt.savefig('./b_td_prediction_img.png', dpi=130, bbox_inches='tight')
+    print("\n[시각화 저장] b_td_prediction_img.png")
     plt.show()
 
 
