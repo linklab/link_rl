@@ -9,7 +9,7 @@ import wandb
 print(f"gym.__version__: {gym.__version__}")
 
 ACTION_STRING_LIST = [" LEFT", " DOWN", "RIGHT", "   UP"]
-IS_SLIPPERY = False
+IS_SLIPPERY = True
 MAP_NAME = "4x4"
 DESC = None
 
@@ -50,8 +50,10 @@ class QTableAgent:
         episode_reward_list = []
         episode_td_error_list = []
 
-        training_time_steps = time_steps = 0
+        training_time_steps = 0
         is_train_success = False
+
+        last_avg_episode_reward_validation = 0.0
 
         for episode in range(self.config["num_episodes"]):
             episode_reward = 0.0
@@ -61,7 +63,6 @@ class QTableAgent:
             visited_states = [observation]
 
             episode_step = 0
-            avg_episode_reward_validation = 0.0
             done = False
 
             while not done:
@@ -94,10 +95,14 @@ class QTableAgent:
                             avg_episode_reward_validation
                         )
                     )
-                    if avg_episode_reward_validation == 1.0:
+                    last_avg_episode_reward_validation = avg_episode_reward_validation
+
+                    if avg_episode_reward_validation > 0.9:
                         print("***** TRAINING DONE!!! *****")
                         is_train_success = True
                         break
+
+            last_episode_reward = episode_reward
 
             if not is_train_success:
                 print(
@@ -105,7 +110,7 @@ class QTableAgent:
                         episode + 1, self.time_steps
                     ),
                     "Episode Steps: {0:>2}, Visited States Length: {1:>2}, Episode Reward: {2}".format(
-                        episode_step, len(visited_states), episode_reward
+                        episode_step, len(visited_states), last_episode_reward
                     ),
                     "GOAL" if done and observation == 15 else "",
                 )
@@ -113,9 +118,9 @@ class QTableAgent:
             if self.use_wandb:
                 wandb.log({
                     "[TRAIN] Length of Visited States": len(visited_states),
-                    "[TRAIN] Episode Reward": episode_reward,
+                    "[TRAIN] Episode Reward": last_episode_reward,
                     "[TRAIN] Average Episode TD Error": episode_td_error / episode_step,
-                    "[VALIDATION] Average Episode Reward": avg_episode_reward_validation
+                    "[VALIDATION] Average Episode Reward": last_avg_episode_reward_validation
                 })
 
             if is_train_success:
@@ -152,8 +157,8 @@ class QTableAgent:
 
 def main():
     config = {
-        "num_episodes": 200,
-        "validation_time_steps_interval": 30,
+        "num_episodes": 50_000,
+        "validation_time_steps_interval": 1_000,
         "validation_num_episodes": 10,
         "alpha": 0.1,
         "gamma": 0.95,
