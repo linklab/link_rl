@@ -1,6 +1,5 @@
 # https://gymnasium.farama.org/environments/classic_control/cart_pole/
 import random
-import time
 
 import gymnasium as gym
 import ale_py
@@ -54,6 +53,15 @@ def run_env():
         observation = next_observation
         done = terminated or truncated
         episode_step += 1
+
+    # 마지막 Observation 이미지를 스크립트와 동일한 폴더에 저장
+    import os
+    from PIL import Image
+    script_dir = os.path.dirname(os.path.abspath(__file__))
+    save_path = os.path.join(script_dir, "last_observation.png")
+    Image.fromarray(observation).save(save_path)
+    print(f"\n마지막 Observation 이미지 저장 완료: {save_path}")
+    print(f"  shape: {observation.shape}, dtype: {observation.dtype}")
 
 if __name__ == "__main__":
     run_env()

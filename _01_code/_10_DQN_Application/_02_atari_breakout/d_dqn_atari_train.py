@@ -2,10 +2,13 @@
 import gymnasium as gym
 import torch
 import ale_py
+
+from _01_code._09_DQN.d_dqn_train_test import DqnTrainer
+from _01_code._10_DQN_Application._02_atari_breakout.b_atari_preprocessing_with_dummy_agent import \
+    CroppedAtariPreprocessing
 from c_qnet import QNetCNN
 import os
 
-from _03_dqn_cartpole.d_dqn_train_test import DqnTrainer
 
 gym.register_envs(ale_py)
 
@@ -16,15 +19,18 @@ def main():
     ENV_NAME = "PongNoFrameskip-v4"
 
     env = gym.make(ENV_NAME)
-    env = gym.wrappers.AtariPreprocessing(
+    env = CroppedAtariPreprocessing(
         env,
         noop_max=30,
+        top_crop=34,  # 상단 점수판 영역
+        bottom_crop=16,  # 하단 여백
         frame_skip=4,
         screen_size=(84, 84),
         grayscale_obs=True,
         grayscale_newaxis=False,
         scale_obs=True
     )
+
     env = gym.wrappers.FrameStackObservation(env, stack_size=4)
 
     valid_env = gym.make(ENV_NAME)
