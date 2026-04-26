@@ -20,10 +20,10 @@ def main():
         noop_max=30,
         top_crop=34,  # 상단 점수판 영역
         bottom_crop=16,  # 하단 여백
-        frame_skip=4,
         screen_size=(84, 84),
         grayscale_obs=True,
         grayscale_newaxis=False,
+        frame_skip=4,
         scale_obs=True
     )
 
