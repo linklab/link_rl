@@ -34,13 +34,15 @@ def main():
     env = gym.wrappers.FrameStackObservation(env, stack_size=4)
 
     valid_env = gym.make(ENV_NAME)
-    valid_env = gym.wrappers.AtariPreprocessing(
+    valid_env = CroppedAtariPreprocessing(
         valid_env,
         noop_max=30,
-        frame_skip=4,
+        top_crop=34,  # 상단 점수판 영역
+        bottom_crop=16,  # 하단 여백
         screen_size=(84, 84),
         grayscale_obs=True,
         grayscale_newaxis=False,
+        frame_skip=4,
         scale_obs=True
     )
     valid_env = gym.wrappers.FrameStackObservation(valid_env, stack_size=4)
