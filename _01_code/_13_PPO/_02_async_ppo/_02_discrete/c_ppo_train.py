@@ -450,7 +450,7 @@ def main():
         "gamma": 0.99,                                      # 감가율
         "entropy_beta": 0.03,                               # 엔트로피 가중치
         "print_episode_interval": 20,                       # Episode 통계 출력에 관한 에피소드 간격
-        "validation_episodes_interval": 100,   # 검증 사이 마다 각 훈련 episode 간격
+        "validation_episodes_interval": 100,   # 검증 사이 마다 각 훈련 time steps 간격
         "validation_num_episodes": 3,                       # 검증에 수행하는 에피소드 횟수
         "episode_reward_avg_solved": -75,                   # 훈련 종료를 위한 테스트 에피소드 리워드의 Average
     }

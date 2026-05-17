@@ -86,6 +86,33 @@ class PPO:
                     policy_loss, critic_loss = self.train()
                     self.buffer.clear()
 
+                if self.time_steps % self.validation_time_steps_interval == 0:
+                    validation_episode_reward_lst, validation_episode_reward_avg = self.validate()
+
+                    total_training_time = time.time() - total_train_start_time
+                    total_training_time = time.strftime("%H:%M:%S", time.gmtime(total_training_time))
+
+                    print(
+                        "[Validation Episode Reward: {0}] Average: {1:.3f}, Elapsed Time: {2}".format(
+                            validation_episode_reward_lst, validation_episode_reward_avg, total_training_time
+                        )
+                    )
+
+                    if validation_episode_reward_avg > self.episode_reward_avg_solved:
+                        print("Solved in {0:,} time steps ({1:,} training steps)!".format(self.time_steps,
+                                                                                          self.training_time_steps))
+                        self.model_save(validation_episode_reward_avg)
+                        is_terminated = True
+
+                    if self.use_wandb:
+                        self.log_wandb(
+                            validation_episode_reward_avg,
+                            episode_reward,
+                            policy_loss,
+                            critic_loss,
+                            n_episode,
+                        )
+
             if n_episode % self.print_episode_interval == 0:
                 print(
                     "[Episode {:3,}, Time Steps {:6,}]".format(n_episode, self.time_steps),
@@ -94,32 +121,6 @@ class PPO:
                     "Critic Loss: {:>7.3f},".format(critic_loss),
                     "Training Steps: {:5,}, ".format(self.training_time_steps),
                 )
-
-            if self.time_steps % self.validation_time_steps_interval == 0:
-                validation_episode_reward_lst, validation_episode_reward_avg = self.validate()
-
-                total_training_time = time.time() - total_train_start_time
-                total_training_time = time.strftime("%H:%M:%S", time.gmtime(total_training_time))
-
-                print(
-                    "[Validation Episode Reward: {0}] Average: {1:.3f}, Elapsed Time: {2}".format(
-                        validation_episode_reward_lst, validation_episode_reward_avg, total_training_time
-                    )
-                )
-
-                if validation_episode_reward_avg > self.episode_reward_avg_solved:
-                    print("Solved in {0:,} time steps ({1:,} training steps)!".format(self.time_steps, self.training_time_steps))
-                    self.model_save(validation_episode_reward_avg)
-                    is_terminated = True
-
-                if self.use_wandb:
-                    self.log_wandb(
-                        validation_episode_reward_avg,
-                        episode_reward,
-                        policy_loss,
-                        critic_loss,
-                        n_episode,
-                    )
 
             if is_terminated:
                 if self.wandb:
@@ -265,7 +266,7 @@ def main() -> None:
         "gamma": 0.99,                              # 감가율
         "entropy_beta": 0.03,                       # 엔트로피 가중치
         "print_episode_interval": 20,               # Episode 통계 출력에 관한 에피소드 간격
-        "validation_time_steps_interval": 100,      # 검증 사이 마다 각 훈련 episode 간격
+        "validation_time_steps_interval": 50_000,   # 검증 사이 마다 각 훈련 time steps 간격
         "validation_num_episodes": 3,               # 검증에 수행하는 에피소드 횟수
         "episode_reward_avg_solved": -75,           # 훈련 종료를 위한 테스트 에피소드 리워드의 Average
     }
