@@ -244,7 +244,7 @@ def worker_loop(
                     print(
                         "[Worker: {:2}, Episode {:3,}, Time Steps {:6,}]".format(self.worker_id, n_episode, self.time_steps),
                         "Episode Reward: {:>9.3f},".format(episode_reward),
-                        "Police Loss: {:>7.3f},".format(policy_loss),
+                        "Actor Loss: {:>7.3f},".format(policy_loss),
                         "Critic Loss: {:>7.3f},".format(critic_loss),
                         "Training Steps: {:5,}".format(self.training_time_steps),
                     )
