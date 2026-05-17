@@ -122,6 +122,18 @@ class SAC:
                         self.model_save(validation_episode_reward_avg)
                         is_terminated = True
 
+                    if self.use_wandb:
+                        self.log_wandb(
+                            validation_episode_reward_avg,
+                            episode_reward,
+                            policy_loss,
+                            q_1_td_loss, q_2_td_loss,
+                            alpha_loss,
+                            mu,
+                            entropy,
+                            n_episode,
+                        )
+
             if n_episode % self.print_episode_interval == 0:
                 print(
                     "[Epi. {:3,}, Time Steps {:6,}]".format(n_episode, self.time_steps),
@@ -132,18 +144,6 @@ class SAC:
                     "Alpha: {:>7.3f},".format(self.alpha),
                     "Entropy: {:>7.3f},".format(entropy),
                     "Train Steps: {:5,}".format(self.training_time_steps),
-                )
-
-            if self.use_wandb and n_episode > self.validation_time_steps_interval:
-                self.log_wandb(
-                    validation_episode_reward_avg,
-                    episode_reward,
-                    policy_loss,
-                    q_1_td_loss, q_2_td_loss,
-                    alpha_loss,
-                    mu,
-                    entropy,
-                    n_episode,
                 )
 
             if is_terminated:

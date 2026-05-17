@@ -1,4 +1,4 @@
-# https://gymnasium.farama.org/environments/classic_control/cart_pole/
+# https://gymnasium.farama.org/environments/classic_control/pendulum/
 import os
 import time
 from datetime import datetime
@@ -9,12 +9,12 @@ import numpy as np
 import torch
 import torch.nn.functional as F
 import torch.optim as optim
-from a_actor_and_q_critic import MODEL_DIR, Actor, QCritic, ReplayBuffer, Transition
+from a_actor_and_twin_q_critic import MODEL_DIR, Actor, TwinQCritic, ReplayBuffer, Transition, DEVICE
 
 import wandb
 
 
-class DDPG:
+class TD3:
     def __init__(self, env: gym.Env, test_env: gym.Env, config: dict, use_wandb: bool):
         self.env = env
         self.test_env = test_env
@@ -25,7 +25,7 @@ class DDPG:
         self.current_time = datetime.now().astimezone().strftime("%Y-%m-%d_%H-%M-%S")
 
         if use_wandb:
-            self.wandb = wandb.init(project="DDPG_{0}".format(self.env_name), name=self.current_time, config=config)
+            self.wandb = wandb.init(project="TD3_{0}".format(self.env_name), name=self.current_time, config=config)
         else:
             self.wandb = None
 
@@ -41,15 +41,22 @@ class DDPG:
         self.soft_update_tau = config["soft_update_tau"]
         self.replay_buffer_size = config["replay_buffer_size"]
 
+        # TD3 고유 하이퍼파라미터
+        self.policy_update_delay = config["policy_update_delay"]       # Delayed Policy Update 주기
+        self.target_policy_noise = config["target_policy_noise"]       # Target Policy Smoothing 노이즈 표준편차
+        self.target_policy_noise_clip = config["target_policy_noise_clip"]  # 노이즈 클리핑 범위
+
+        # Actor
         self.actor = Actor(n_features=3, n_actions=1)
         self.target_actor = Actor(n_features=3, n_actions=1)
         self.target_actor.load_state_dict(self.actor.state_dict())
         self.actor_optimizer = optim.Adam(self.actor.parameters(), lr=self.learning_rate)
 
-        self.q_critic = QCritic(n_features=3, n_actions=1)
-        self.target_q_critic = QCritic(n_features=3, n_actions=1)
-        self.target_q_critic.load_state_dict(self.q_critic.state_dict())
-        self.q_critic_optimizer = optim.Adam(self.q_critic.parameters(), lr=self.learning_rate)
+        # Twin Q-Critic (TD3 핵심: 두 개의 Q 네트워크)
+        self.twin_q_critic = TwinQCritic(n_features=3, n_actions=1)
+        self.target_twin_q_critic = TwinQCritic(n_features=3, n_actions=1)
+        self.target_twin_q_critic.load_state_dict(self.twin_q_critic.state_dict())
+        self.twin_q_critic_optimizer = optim.Adam(self.twin_q_critic.parameters(), lr=self.learning_rate)
 
         self.replay_buffer = ReplayBuffer(capacity=self.replay_buffer_size)
 
@@ -168,33 +175,51 @@ class DDPG:
         observations, actions, next_observations, rewards, dones = self.replay_buffer.sample(self.batch_size)
 
         # CRITIC UPDATE
-        q_values = self.q_critic(observations, actions).squeeze(dim=-1)
-        next_mu_v = self.target_actor(next_observations)
-        next_q_values = self.target_q_critic(next_observations, next_mu_v).squeeze(dim=-1)
-        next_q_values[dones] = 0.0
-        target_values = rewards.squeeze(dim=-1) + self.gamma * next_q_values
-        critic_loss = F.mse_loss(target_values.detach(), q_values)
-        self.q_critic_optimizer.zero_grad()
+        with torch.no_grad():
+            # [TD3 개선 3] Target Policy Smoothing: 타겟 액션에 클리핑된 노이즈 추가
+            noise = torch.randn_like(actions) * self.target_policy_noise
+            noise = noise.clamp(-self.target_policy_noise_clip, self.target_policy_noise_clip)
+
+            next_mu_v = self.target_actor(next_observations)
+            next_actions = (next_mu_v + noise).clamp(-1.0, 1.0)
+
+            # [TD3 개선 1] Twin Critics: 두 Q값 중 최솟값을 타겟으로 사용 (과대평가 방지)
+            next_q1, next_q2 = self.target_twin_q_critic(next_observations, next_actions)
+            next_q_values = torch.min(next_q1, next_q2).squeeze(dim=-1)
+            next_q_values[dones] = 0.0
+            target_values = rewards.squeeze(dim=-1) + self.gamma * next_q_values
+
+        q1_values, q2_values = self.twin_q_critic(observations, actions)
+        q1_values = q1_values.squeeze(dim=-1)
+        q2_values = q2_values.squeeze(dim=-1)
+
+        critic_loss = F.mse_loss(target_values, q1_values) + F.mse_loss(target_values, q2_values)
+        self.twin_q_critic_optimizer.zero_grad()
         critic_loss.backward()
-        self.q_critic_optimizer.step()
+        self.twin_q_critic_optimizer.step()
 
-        # ACTOR UPDATE
-        mu_v = self.actor(observations)
-        q_v = self.q_critic(observations, mu_v)
-        actor_objective = q_v.mean()
-        actor_loss = -1.0 * actor_objective
+        # [TD3 개선 2] Delayed Policy Update: policy_update_delay 주기마다 Actor 및 타겟 네트워크 업데이트
+        actor_loss = torch.tensor(0.0)
+        mu_v = torch.tensor(0.0)
 
-        self.actor_optimizer.zero_grad()
-        actor_loss.backward()
-        self.actor_optimizer.step()
+        if self.training_time_steps % self.policy_update_delay == 0:
+            # ACTOR UPDATE: Q1만 사용하여 Actor 업데이트
+            mu_v = self.actor(observations)
+            q_v = self.twin_q_critic.q1_value(observations, mu_v)
+            actor_objective = q_v.mean()
+            actor_loss = -1.0 * actor_objective
 
-        # sync, TAU: 0.995
-        self.soft_synchronize_models(
-            source_model=self.actor, target_model=self.target_actor, tau=self.soft_update_tau
-        )
-        self.soft_synchronize_models(
-            source_model=self.q_critic, target_model=self.target_q_critic, tau=self.soft_update_tau
-        )
+            self.actor_optimizer.zero_grad()
+            actor_loss.backward()
+            self.actor_optimizer.step()
+
+            # sync, TAU: 0.995
+            self.soft_synchronize_models(
+                source_model=self.actor, target_model=self.target_actor, tau=self.soft_update_tau
+            )
+            self.soft_synchronize_models(
+                source_model=self.twin_q_critic, target_model=self.target_twin_q_critic, tau=self.soft_update_tau
+            )
 
         return actor_loss.item(), critic_loss.item(), mu_v.mean().item()
 
@@ -206,10 +231,10 @@ class DDPG:
         target_model.load_state_dict(target_model_state)
 
     def model_save(self, validation_episode_reward_avg: float) -> None:
-        filename = "ddpg_{0}_{1:4.1f}_{2}.pth".format(self.env_name, validation_episode_reward_avg, self.current_time)
+        filename = "td3_{0}_{1:4.1f}_{2}.pth".format(self.env_name, validation_episode_reward_avg, self.current_time)
         torch.save(self.actor.state_dict(), os.path.join(MODEL_DIR, filename))
 
-        copyfile(src=os.path.join(MODEL_DIR, filename), dst=os.path.join(MODEL_DIR, "ddpg_{0}_latest.pth".format(self.env_name)))
+        copyfile(src=os.path.join(MODEL_DIR, filename), dst=os.path.join(MODEL_DIR, "td3_{0}_latest.pth".format(self.env_name)))
 
     def validate(self) -> tuple[np.ndarray, float]:
         episode_reward_lst = np.zeros(shape=(self.validation_num_episodes,), dtype=float)
@@ -258,19 +283,23 @@ def main() -> None:
         "max_num_episodes": 200_000,                        # 훈련을 위한 최대 에피소드 횟수
         "batch_size": 256,                                  # 훈련시 배치에서 한번에 가져오는 랜덤 배치 사이즈
         "steps_between_train": 32,                          # 훈련 사이의 환경 스텝 수
-        "replay_buffer_size": 1_000_000,                       # 리플레이 버퍼 사이즈
+        "replay_buffer_size": 1_000_000,                    # 리플레이 버퍼 사이즈
         "learning_rate": 0.0003,                            # 학습율
         "gamma": 0.99,                                      # 감가율
-        "soft_update_tau": 0.995,                           # DDPG Soft Update Tau
+        "soft_update_tau": 0.995,                           # TD3 Soft Update Tau
         "print_episode_interval": 20,                       # Episode 통계 출력에 관한 에피소드 간격
-        "validation_time_steps_interval": 1_000,   # 검증 사이 마다 각 훈련 episode 간격
+        "validation_time_steps_interval": 1_000,            # 검증 사이 마다 각 훈련 episode 간격
         "validation_num_episodes": 3,                       # 검증에 수행하는 에피소드 횟수
         "episode_reward_avg_solved": -150,                  # 훈련 종료를 위한 테스트 에피소드 리워드의 Average
+        # TD3 고유 설정
+        "policy_update_delay": 2,                           # Delayed Policy Update: Critic 2번마다 Actor 1번 업데이트
+        "target_policy_noise": 0.2,                         # Target Policy Smoothing 노이즈 표준편차
+        "target_policy_noise_clip": 0.5,                    # 노이즈 클리핑 범위 [-0.5, 0.5]
     }
 
     use_wandb = True
-    ddpg = DDPG(env=env, test_env=test_env, config=config, use_wandb=use_wandb)
-    ddpg.train_loop()
+    td3 = TD3(env=env, test_env=test_env, config=config, use_wandb=use_wandb)
+    td3.train_loop()
 
 
 if __name__ == "__main__":

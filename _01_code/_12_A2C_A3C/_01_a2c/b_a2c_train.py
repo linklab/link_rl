@@ -95,7 +95,7 @@ class A2C:
                     "Training Steps: {:5,}, ".format(self.training_time_steps),
                 )
 
-            if n_episode % self.validation_time_steps_interval == 0:
+            if self.time_steps % self.validation_time_steps_interval == 0:
                 validation_episode_reward_lst, validation_episode_reward_avg = self.validate()
 
                 total_training_time = time.time() - total_train_start_time
@@ -112,17 +112,17 @@ class A2C:
                     self.model_save(validation_episode_reward_avg)
                     is_terminated = True
 
-            if self.use_wandb and n_episode > self.validation_time_steps_interval:
-                self.log_wandb(
-                    validation_episode_reward_avg,
-                    episode_reward,
-                    policy_loss,
-                    critic_loss,
-                    mu_v,
-                    avg_std_v,
-                    avg_action,
-                    n_episode,
-                )
+                if self.use_wandb:
+                    self.log_wandb(
+                        validation_episode_reward_avg,
+                        episode_reward,
+                        policy_loss,
+                        critic_loss,
+                        mu_v,
+                        avg_std_v,
+                        avg_action,
+                        n_episode,
+                    )
 
             if is_terminated:
                 if self.wandb:
