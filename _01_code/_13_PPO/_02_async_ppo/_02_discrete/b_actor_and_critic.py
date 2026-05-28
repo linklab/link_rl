@@ -38,9 +38,9 @@ class Actor(nn.Module):
         if exploration:
             dist = Categorical(probs=mu_v)
             action = dist.sample()
-            action = action.detach().numpy()
+            action = action.detach().cpu().numpy()
         else:
-            action = torch.argmax(mu_v).detach().numpy()
+            action = torch.argmax(mu_v).detach().cpu().numpy()
 
         return action
 
@@ -56,6 +56,7 @@ class Critic(nn.Module):
         self.fc1 = nn.Linear(n_features, 128)
         self.fc2 = nn.Linear(128, 128)
         self.fc3 = nn.Linear(128, 1)
+        self.to(DEVICE)
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:
         if isinstance(x, np.ndarray):
