@@ -44,7 +44,8 @@ class SAC:
         self.soft_update_tau = config["soft_update_tau"]
         self.replay_buffer_size = config["replay_buffer_size"]
         self.learning_starts = config["learning_starts"]
-        self.automatic_entropy_tuning = config["automatic_entropy_tuning"]
+        self.alpha_automatic_tuning = config["alpha_automatic_tuning"]
+        self.alpha = config["alpha"]
 
         n_features = env.observation_space.shape[0]
         n_actions = env.action_space.shape[0]
@@ -61,14 +62,12 @@ class SAC:
 
         self.replay_buffer = ReplayBuffer(capacity=self.replay_buffer_size)
 
-        if self.automatic_entropy_tuning:
+        if self.alpha_automatic_tuning:
             self.target_entropy = -torch.prod(torch.Tensor(env.action_space.shape).to(DEVICE)).item()
             print("TARGET ENTROPY: {0}".format(self.target_entropy))
-            self.log_alpha = torch.tensor(0.2, requires_grad=True, device=DEVICE)
+            self.log_alpha = torch.tensor(self.alpha, requires_grad=True, device=DEVICE)
             self.alpha_optimizer = optim.Adam([self.log_alpha], lr=self.learning_rate)
             self.alpha = self.log_alpha.exp().item()
-        else:
-            self.alpha = 0.2
 
         self.time_steps = 0
         self.training_time_steps = 0
@@ -241,7 +240,7 @@ class SAC:
         #################
         # Alpha UPDATE #
         #################
-        if self.automatic_entropy_tuning:
+        if self.alpha_automatic_tuning:
             with torch.no_grad():
                 _, log_pi, _, _ = self.policy.sample(observations)
 
@@ -343,7 +342,8 @@ def main() -> None:
         # "episode_reward_avg_solved": 9000,  # 훈련 종료를 위한 테스트 에피소드 리워드의 Average
         "episode_reward_avg_solved": -150,                  # 훈련 종료를 위한 테스트 에피소드 리워드의 Average
         "learning_starts": 5000,                            # 충분한 경험 데이터 수집
-        "automatic_entropy_tuning": True                    # Alpha Auto Tuning
+        "alpha_automatic_tuning": True,                     # Alpha Auto Tuning
+        "alpha": 0.2                                        # Alpha
     }
 
     use_wandb = True
