@@ -3,14 +3,13 @@ import os
 import time
 from datetime import datetime
 from shutil import copyfile
-
+import math
 import gymnasium as gym
 import numpy as np
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
 import torch.optim as optim
-from gymnasium.wrappers import NormalizeReward
 
 from a_sac_models import MODEL_DIR, GaussianPolicy, SoftQNetwork, ReplayBuffer, Transition, DEVICE
 
@@ -65,7 +64,7 @@ class SAC:
         if self.alpha_automatic_tuning:
             self.target_entropy = -torch.prod(torch.Tensor(env.action_space.shape).to(DEVICE)).item()
             print("TARGET ENTROPY: {0}".format(self.target_entropy))
-            self.log_alpha = torch.tensor(self.alpha, requires_grad=True, device=DEVICE)
+            self.log_alpha = torch.tensor(math.log(self.alpha), requires_grad=True, device=DEVICE)
             self.alpha_optimizer = optim.Adam([self.log_alpha], lr=self.learning_rate)
             self.alpha = self.log_alpha.exp().item()
 
@@ -343,7 +342,7 @@ def main() -> None:
         "episode_reward_avg_solved": -150,                  # 훈련 종료를 위한 테스트 에피소드 리워드의 Average
         "learning_starts": 5000,                            # 충분한 경험 데이터 수집
         "alpha_automatic_tuning": True,                     # Alpha Auto Tuning
-        "alpha": 0.2                                        # Alpha
+        "alpha": 2.0                                        # Alpha
     }
 
     use_wandb = True
